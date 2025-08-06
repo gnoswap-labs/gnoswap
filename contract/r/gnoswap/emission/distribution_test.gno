@@ -16,9 +16,6 @@ import (
 func TestChangeDistributionPct(t *testing.T) {
 	resetObject(t)
 
-	originCallback := stakerEmissionChangeCallback
-	stakerEmissionChangeCallback = func(amount int64) {}
-
 	tests := []struct {
 		name        string
 		shouldPanic bool
@@ -104,14 +101,10 @@ func TestChangeDistributionPct(t *testing.T) {
 			}
 		})
 	}
-	stakerEmissionChangeCallback = originCallback
 }
 
 func TestChangeDistributionPcts(t *testing.T) {
 	resetObject(t)
-
-	originCallback := stakerEmissionChangeCallback
-	stakerEmissionChangeCallback = func(amount int64) {}
 
 	changeDistributionPcts(
 		1, 1000,
@@ -123,8 +116,6 @@ func TestChangeDistributionPcts(t *testing.T) {
 	uassert.Equal(t, int64(2000), GetDistributionBpsPct(2))
 	uassert.Equal(t, int64(3000), GetDistributionBpsPct(3))
 	uassert.Equal(t, int64(4000), GetDistributionBpsPct(4))
-
-	stakerEmissionChangeCallback = originCallback
 }
 
 func TestCalculateAmount(t *testing.T) {

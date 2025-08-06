@@ -12,7 +12,6 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/halt"
 )
 
@@ -54,7 +53,6 @@ func CreateProject(
 	access.AssertIsAdmin(caller)
 
 	launchpadAddr := std.CurrentRealm().Address()
-	averageBlockTimeMs := gns.AvgBlockTimeInMs()
 	currentHeight := std.ChainHeight()
 	currentTime := time.Now().Unix()
 
@@ -71,7 +69,6 @@ func CreateProject(
 		startTime:             startTime,
 		currentTime:           currentTime,
 		currentHeight:         currentHeight,
-		averageBlockTimeMs:    averageBlockTimeMs,
 		minimumStartDelayTime: projectMinimumStartDelayTime,
 	}
 
@@ -116,14 +113,13 @@ func CreateProject(
 		"tier90Ratio", formatInt(params.tier90Ratio),
 		"tier180Ratio", formatInt(params.tier180Ratio),
 		"startTime", formatInt(params.startTime),
-		"startHeight", formatInt(project.StartHeight()),
 		"projectId", project.ID(),
 		"tier30Amount", formatInt(project.tiers[projectTier30].TotalDepositAmount()),
-		"tier30EndHeight", formatInt(project.tiers[projectTier30].EndHeight()),
+		"tier30EndTime", formatInt(project.tiers[projectTier30].EndTime()),
 		"tier90Amount", formatInt(project.tiers[projectTier90].TotalDepositAmount()),
-		"tier90EndHeight", formatInt(project.tiers[projectTier90].EndHeight()),
+		"tier90EndTime", formatInt(project.tiers[projectTier90].EndTime()),
 		"tier180Amount", formatInt(project.tiers[projectTier180].TotalDepositAmount()),
-		"tier180EndHeight", formatInt(project.tiers[projectTier180].EndHeight()),
+		"tier180EndTime", formatInt(project.tiers[projectTier180].EndTime()),
 	)
 
 	return project.ID()
@@ -145,20 +141,14 @@ func createProject(params *createProjectParams) (*Project, error) {
 		return nil, err
 	}
 
-	createdBlockTimeInfo := newBlockTimeInfoByTimeAndAverageBlockTimeMs(
-		params.currentTime,
-		params.currentHeight,
-		params.currentTime,
-		params.averageBlockTimeMs,
-	)
-
 	// create project
 	project := NewProject(
 		params.name,
 		params.tokenPath,
 		params.depositAmount,
 		params.recipient,
-		createdBlockTimeInfo,
+		params.currentHeight,
+		params.currentTime,
 	)
 
 	// check duplicate project
@@ -204,17 +194,15 @@ func createProject(params *createProjectParams) (*Project, error) {
 			tierDistributeAmount,
 			params.startTime,
 			params.startTime+tierDurationTime,
-			params.averageBlockTimeMs,
-			params.currentTime,
-			params.currentHeight,
 		)
 		project.addProjectTier(duration, projectTier)
 
 		projectTierRewardManagers.Set(projectTier.ID(), NewRewardManager(
 			projectTier.TotalDistributeAmount(),
-			projectTier.StartHeight(),
-			projectTier.EndHeight(),
-			params.currentHeight,
+			projectTier.StartTime(),
+			projectTier.EndTime(),
+			params.startTime,
+			params.startTime+tierDurationTime,
 		))
 	}
 
@@ -241,8 +229,9 @@ func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient std.A
 	access.AssertIsAdmin(caller)
 
 	currentHeight := std.ChainHeight()
+	currentTime := time.Now().Unix()
 
-	projectLeftReward, err := transferLeftFromProject(projectID, recipient, currentHeight)
+	projectLeftReward, err := transferLeftFromProject(projectID, recipient, currentTime)
 	if err != nil {
 		panic(err)
 	}
@@ -267,6 +256,8 @@ func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient std.A
 		"tier90Left", formatInt(project.tiers[projectTier90].calculateLeftReward()),
 		"tier180Full", formatInt(project.tiers[projectTier180].TotalDepositAmount()),
 		"tier180Left", formatInt(project.tiers[projectTier180].calculateLeftReward()),
+		"currentHeight", formatInt(currentHeight),
+		"currentTime", formatInt(currentTime),
 	)
 
 	return projectLeftReward
@@ -284,13 +275,13 @@ func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient std.A
 //
 // Returns:
 // - uint64: The amount of rewards transferred to the recipient.
-func transferLeftFromProject(projectID string, recipient std.Address, currentHeight int64) (int64, error) {
+func transferLeftFromProject(projectID string, recipient std.Address, currentTime int64) (int64, error) {
 	project, err := getProject(projectID)
 	if err != nil {
 		return 0, err
 	}
 
-	if err := validateRefundProject(project, recipient, currentHeight); err != nil {
+	if err := validateRefundProject(project, recipient, currentTime); err != nil {
 		return 0, err
 	}
 
@@ -302,7 +293,7 @@ func transferLeftFromProject(projectID string, recipient std.Address, currentHei
 
 	tierMap := project.getTiers()
 	for _, tier := range tierMap {
-		if !tier.isEnded(currentHeight) {
+		if !tier.isEnded(currentTime) {
 			return 0, errors.New(ufmt.Sprintf("tier(%d) is not ended", tier.ID()))
 		}
 
@@ -332,12 +323,12 @@ func transferLeftFromProject(projectID string, recipient std.Address, currentHei
 }
 
 // validateTransferLeft validates the transfer of remaining tokens
-func validateRefundProject(project *Project, recipient std.Address, height int64) error {
+func validateRefundProject(project *Project, recipient std.Address, currentTime int64) error {
 	if !recipient.IsValid() {
 		return errors.New(ufmt.Sprintf("invalid recipient address(%s)", recipient.String()))
 	}
 
-	return project.validateRefundRemainingAmount(height)
+	return project.validateRefundRemainingAmount(currentTime)
 }
 
 type createProjectParams struct {
@@ -353,7 +344,6 @@ type createProjectParams struct {
 	startTime             int64
 	currentTime           int64
 	currentHeight         int64
-	averageBlockTimeMs    int64
 	minimumStartDelayTime int64
 }
 

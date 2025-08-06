@@ -5,19 +5,21 @@ package staker
 // and manages the collection process once the lockup period expires.
 type DelegationWithdraw struct {
 	// delegationID is the unique identifier of the associated delegation
-	delegationID     int64
+	delegationID int64
 	// unDelegateAmount is the total amount that was undelegated
 	unDelegateAmount int64
+	// unDelegatedHeight is the height when the undelegation occurred
+	unDelegatedHeight int64
 	// unDelegatedAt is the timestamp when the undelegation occurred
-	unDelegatedAt    int64
+	unDelegatedAt int64
 	// collectedAmount is the amount that has already been collected
-	collectedAmount  int64
+	collectedAmount int64
 	// collectableTime is the timestamp when collection becomes available
-	collectableTime  int64
+	collectableTime int64
 	// collectedAt is the timestamp when collection occurred
-	collectedAt      int64
+	collectedAt int64
 	// collected indicates whether the withdrawal has been fully collected
-	collected        bool
+	collected bool
 }
 
 // DelegationID returns the unique identifier of the associated delegation.
@@ -76,7 +78,7 @@ func (d *DelegationWithdraw) IsCollectable(currentTime int64) bool {
 		return false
 	}
 
-	if d.unDelegateAmount - d.collectedAmount <= 0 {
+	if d.unDelegateAmount-d.collectedAmount <= 0 {
 		return false
 	}
 
@@ -130,17 +132,19 @@ func (d *DelegationWithdraw) collect(amount int64, currentTime int64) error {
 func NewDelegationWithdraw(
 	delegationID,
 	unDelegateAmount,
+	createdHeight,
 	createdAt,
 	unDelegationLockupPeriod int64,
 ) *DelegationWithdraw {
 	return &DelegationWithdraw{
-		delegationID:     delegationID,
-		unDelegateAmount: unDelegateAmount,
-		unDelegatedAt:    createdAt,
-		collectableTime:  createdAt + unDelegationLockupPeriod,
-		collectedAmount:  0,
-		collectedAt:      0,
-		collected:        false,
+		delegationID:      delegationID,
+		unDelegateAmount:  unDelegateAmount,
+		unDelegatedHeight: createdHeight,
+		unDelegatedAt:     createdAt,
+		collectableTime:   createdAt + unDelegationLockupPeriod,
+		collectedAmount:   0,
+		collectedAt:       0,
+		collected:         false,
 	}
 }
 
@@ -157,15 +161,17 @@ func NewDelegationWithdraw(
 func NewDelegationWithdrawWithoutLockup(
 	delegationID,
 	unDelegateAmount,
+	createdHeight,
 	createdAt int64,
 ) *DelegationWithdraw {
 	return &DelegationWithdraw{
-		delegationID:     delegationID,
-		unDelegateAmount: unDelegateAmount,
-		unDelegatedAt:    createdAt,
-		collectableTime:  createdAt,
-		collectedAmount:  unDelegateAmount,
-		collectedAt:      createdAt,
-		collected:        true,
+		delegationID:      delegationID,
+		unDelegateAmount:  unDelegateAmount,
+		unDelegatedHeight: createdHeight,
+		unDelegatedAt:     createdAt,
+		collectableTime:   createdAt,
+		collectedAmount:   unDelegateAmount,
+		collectedAt:       createdAt,
+		collected:         true,
 	}
 }

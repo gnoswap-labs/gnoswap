@@ -221,11 +221,10 @@ func startExternalIncentive() {
 	nowTime := time.Now().Unix()
 	timeLeft := externalStartTime - nowTime
 
-	blockAvgTime := milliToSec(blockTime)
-	blockLeft := timeLeft / blockAvgTime
+	blockLeft := timeLeft / 5
 
 	println("[INFO] skip blocks until external incentive starts")
-	testing.SkipHeights(int64(blockLeft) + std.ChainHeight()) // skip until external bar starts
+	testing.SkipHeights(int64(blockLeft)) // skip until external bar starts
 	ufmt.Printf("[INFO] external incentive started at timestamp: %d\n", externalStartTime)
 }
 
@@ -262,7 +261,7 @@ func endExternalGnsIncentive() {
 	nowTime := time.Now().Unix()
 	timeLeft := externalEndTime - nowTime
 
-	blockLeft := timeLeft
+	blockLeft := timeLeft/5 + 1
 
 	println("[INFO] skip blocks until external incentive ends")
 	testing.SkipHeights(int64(blockLeft)) // skip until external gns ends
@@ -328,10 +327,6 @@ func positionIdFrom(positionId any) grc721.TokenID {
 	}
 }
 
-func milliToSec(ms int64) int64 {
-	return ms / int64(1000)
-}
-
 // Output:
 // [SCENARIO] 1. Initialize account and settings
 // [INFO] set unstaking fee to 0
@@ -372,12 +367,12 @@ func milliToSec(ms int64) int64 {
 // [INFO] skip blocks until external incentive ends
 // [INFO] end external incentive and collect remaining GNS
 // [INFO] GNS balance before ending: 0
-// [INFO] GNS balance after ending: 1000296192
+// [INFO] GNS balance after ending: 1000005785
 // [EXPECTED] external creator should receive deposit amount minus penalty
 //
 // [SCENARIO] 11. Collect rewards after external incentive ends
 // [INFO] collect rewards after external incentive ends
-// [INFO] GNS balance before collection: 99990000001387
-// [INFO] GNS balance after collection: 99997247150993
-// [INFO] total reward collected: 7247149606
+// [INFO] GNS balance before collection: 99990000003470
+// [INFO] GNS balance after collection: 99997247440185
+// [INFO] total reward collected: 7247436715
 // [EXPECTED] positions should still receive rewards after external incentive ends

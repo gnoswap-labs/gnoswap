@@ -59,10 +59,10 @@ func (self *Incentives) GetByIncentiveId(incentiveId string) (*ExternalIncentive
 	return value.(*ExternalIncentive), true
 }
 
-// Get all incentives that is active in given [startHeight, endHeight)
-func (self *Incentives) GetAllInHeights(startHeight, endHeight int64) map[string]*ExternalIncentive {
+// Get all incentives that is active in given [startTimestamp, endTimestamp)
+func (self *Incentives) GetAllInTimestamps(startTimestamp, endTimestamp int64) map[string]*ExternalIncentive {
 	incentives := make(map[string]*ExternalIncentive)
-	// Iterate all incentives that has start height less than endHeight
+	// Iterate all incentives that has start timestamp less than endTimestamp
 
 	self.incentives.Iterate("", "", func(key string, value any) bool {
 		incentive, ok := value.(*ExternalIncentive)
@@ -71,7 +71,7 @@ func (self *Incentives) GetAllInHeights(startHeight, endHeight int64) map[string
 		}
 
 		// incentive is not active
-		if incentive.startHeight > endHeight || incentive.endHeight < startHeight {
+		if incentive.startTimestamp > endTimestamp || incentive.endTimestamp < startTimestamp {
 			return false
 		}
 
@@ -141,27 +141,32 @@ func (self *Incentives) calculateUnclaimableReward(incentiveId string) int64 {
 
 	blocks := int64(0)
 
-	self.unclaimablePeriods.ReverseIterate(0, incentive.startHeight, func(key int64, value any) bool {
-		endHeight := value.(int64)
-		if endHeight == 0 {
-			endHeight = incentive.endHeight
+	self.unclaimablePeriods.ReverseIterate(0, incentive.startTimestamp, func(key int64, value any) bool {
+		endTimestamp := value.(int64)
+		if endTimestamp == 0 {
+			endTimestamp = incentive.endTimestamp
 		}
-		if endHeight <= incentive.startHeight {
+
+		if endTimestamp <= incentive.startTimestamp {
 			return true
 		}
-		blocks += endHeight - incentive.startHeight
+
+		blocks += endTimestamp - incentive.startTimestamp
+
 		return true
 	})
 
-	self.unclaimablePeriods.Iterate(incentive.startHeight, incentive.endHeight, func(key int64, value any) bool {
-		startHeight := key
-		endHeight := value.(int64)
-		if endHeight == 0 {
-			endHeight = incentive.endHeight
+	self.unclaimablePeriods.Iterate(incentive.startTimestamp, incentive.endTimestamp, func(key int64, value any) bool {
+		startTimestamp := key
+		endTimestamp := value.(int64)
+		if endTimestamp == 0 {
+			endTimestamp = incentive.endTimestamp
 		}
-		blocks += endHeight - startHeight
+
+		blocks += endTimestamp - startTimestamp
+
 		return false
 	})
 
-	return int64(blocks) * incentive.rewardPerBlock
+	return int64(blocks) * incentive.rewardPerSecond
 }

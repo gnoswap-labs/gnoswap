@@ -40,10 +40,10 @@ func GetClaimableRewardByRewardID(rewardID string) string {
 	}(cross)
 
 	emissionDistributedAmount := emission.GetAccuDistributedToGovStaker()
-	emissionReward := emissionRewardManager.GetClaimableRewardAmount(emissionDistributedAmount, rewardID, std.ChainHeight())
+	emissionReward := emissionRewardManager.GetClaimableRewardAmount(emissionDistributedAmount, rewardID, time.Now().Unix())
 
 	protocolFeeDistributedAmounts := getDistributedProtocolFees()
-	protocolFeeRewards := protocolFeeRewardManager.GetClaimableRewardAmounts(protocolFeeDistributedAmounts, rewardID, std.ChainHeight())
+	protocolFeeRewards := protocolFeeRewardManager.GetClaimableRewardAmounts(protocolFeeDistributedAmounts, rewardID, time.Now().Unix())
 
 	if emissionReward == 0 && len(protocolFeeRewards) == 0 {
 		return ""
@@ -55,20 +55,18 @@ func GetClaimableRewardByRewardID(rewardID string) string {
 		WriteString("emissionReward", formatInt(emissionReward)).
 		Node()
 
-	if len(protocolFeeRewards) > 0 {
-		pfArr := json.ArrayNode("", nil)
-		for tokenPath, protocolFeeReward := range protocolFeeRewards {
-			if protocolFeeReward > 0 {
-				pfObj := json.Builder().
-					WriteString("tokenPath", tokenPath).
-					WriteString("amount", formatInt(protocolFeeReward)).
-					Node()
-				pfArr.AppendArray(pfObj)
-			}
+	// Always include protocolFees array, even if empty
+	pfArr := json.ArrayNode("", nil)
+	for tokenPath, protocolFeeReward := range protocolFeeRewards {
+		if protocolFeeReward > 0 {
+			pfObj := json.Builder().
+				WriteString("tokenPath", tokenPath).
+				WriteString("amount", formatInt(protocolFeeReward)).
+				Node()
+			pfArr.AppendArray(pfObj)
 		}
-
-		data.AppendObject("protocolFees", pfArr)
 	}
+	data.AppendObject("protocolFees", pfArr)
 
 	return marshal(data)
 }

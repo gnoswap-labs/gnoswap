@@ -3,6 +3,7 @@ package staker
 import (
 	"math"
 	"std"
+	"time"
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
@@ -266,7 +267,7 @@ func makeRewardTokensArray(rewardsTokenList []string) []*json.Node {
 	return rewardsTokenArray
 }
 
-func calculateInternalRewardPerBlockByPoolPath(poolPath string) string {
+func calculateInternalRewardPerSecondByPoolPath(poolPath string) string {
 	reward := poolTier.CurrentRewardPerPool(poolPath)
 	return ufmt.Sprintf("%d", reward)
 }
@@ -292,7 +293,7 @@ type ResponseApiGetRewardByLpTokenId struct {
 func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 	deposit := deposits.get(targetLpTokenId)
 
-	reward := calcPositionReward(std.ChainHeight(), targetLpTokenId)
+	reward := calcPositionReward(std.ChainHeight(), time.Now().Unix(), targetLpTokenId)
 
 	rewards := []ApiReward{}
 
@@ -304,7 +305,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 			RewardTokenPath:   GNS_PATH,
 			RewardTokenAmount: reward.Internal,
 			StakeTimestamp:    deposit.stakeTimestamp,
-			StakeHeight:       deposit.stakeHeight,
+			StakeTime:         deposit.stakeTime,
 			IncentiveStart:    deposit.stakeTimestamp,
 		})
 	}
@@ -321,7 +322,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 			RewardTokenPath:   incentive.rewardToken,
 			RewardTokenAmount: externalReward,
 			StakeTimestamp:    deposit.stakeTimestamp,
-			StakeHeight:       deposit.stakeHeight,
+			StakeTime:         deposit.stakeTime,
 			IncentiveStart:    incentive.startTimestamp,
 		})
 	}
@@ -340,7 +341,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 	stakers.IterateAll(std.Address(targetAddress), func(positionId uint64, deposit *Deposit) bool {
 		rewards := []ApiReward{}
 
-		reward := calcPositionReward(std.ChainHeight(), positionId)
+		reward := calcPositionReward(std.ChainHeight(), time.Now().Unix(), positionId)
 
 		// get internal gns reward
 		if reward.Internal > 0 {
@@ -351,7 +352,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 				RewardTokenPath:   GNS_PATH,
 				RewardTokenAmount: reward.Internal,
 				StakeTimestamp:    deposit.stakeTimestamp,
-				StakeHeight:       deposit.stakeHeight,
+				StakeTime:         deposit.stakeTime,
 				IncentiveStart:    deposit.stakeTimestamp,
 			})
 		}
@@ -369,7 +370,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 				RewardTokenPath:   incentive.rewardToken,
 				RewardTokenAmount: externalReward,
 				StakeTimestamp:    deposit.stakeTimestamp,
-				StakeHeight:       deposit.stakeHeight,
+				StakeTime:         deposit.stakeTime,
 				IncentiveStart:    incentive.startTimestamp,
 			})
 		}

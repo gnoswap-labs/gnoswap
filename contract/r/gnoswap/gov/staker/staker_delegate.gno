@@ -52,21 +52,21 @@ func Delegate(
 	access.AssertIsValidAddress(to)
 
 	assertIsValidDelegateAmount(amount)
-	
+
 	caller := prevRealm.Address()
 	from := caller
-	currentTime := time.Now().Unix()
 	currentRealm := std.CurrentRealm()
 	currentHeight := std.ChainHeight()
-	
+	currentTimestamp := time.Now().Unix()
+
 	emission.MintAndDistributeGns(cross)
 
 	delegation, err := delegate(
 		from,
 		to,
 		amount,
-		currentTime,
 		currentHeight,
+		currentTimestamp,
 	)
 	if err != nil {
 		panic(err)
@@ -127,17 +127,17 @@ func Undelegate(
 
 	assertIsValidDelegateAmount(amount)
 
-	currentTime := time.Now().Unix()
 	currentHeight := std.ChainHeight()
+	currentTimestamp := time.Now().Unix()
 
 	emission.MintAndDistributeGns(cross)
 
 	unDelegationAmount, err := unDelegate(
 		caller,
-		from, 
-		amount, 
-		currentTime,
+		from,
+		amount,
 		currentHeight,
+		currentTimestamp,
 	)
 	if err != nil {
 		panic(err)
@@ -194,9 +194,9 @@ func Redelegate(
 	access.AssertIsValidAddress(newDelegatee)
 
 	assertIsValidDelegateAmount(amount)
-	
-	currentTime := time.Now().Unix()
+
 	currentHeight := std.ChainHeight()
+	currentTimestamp := time.Now().Unix()
 	delegator := caller
 
 	emission.MintAndDistributeGns(cross)
@@ -205,7 +205,8 @@ func Redelegate(
 		delegator,
 		delegatee,
 		amount,
-		currentTime,
+		currentHeight,
+		currentTimestamp,
 	)
 	if err != nil {
 		panic(err)
@@ -215,8 +216,8 @@ func Redelegate(
 		delegator,
 		newDelegatee,
 		unDelegationAmount,
-		currentTime,
 		currentHeight,
+		currentTimestamp,
 	)
 
 	prevRealm := std.PreviousRealm()
@@ -306,7 +307,7 @@ func CollectUndelegatedGns(cur realm) int64 {
 //   - to: delegatee's address
 //   - amount: amount to delegate
 //   - currentTime: current timestamp
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 //
 // Returns:
 //   - *Delegation: created delegation instance
@@ -315,8 +316,8 @@ func delegate(
 	from std.Address,
 	to std.Address,
 	amount,
-	currentTime,
-	currentHeight int64,
+	currentHeight,
+	currentTimestamp int64,
 ) (*Delegation, error) {
 	delegationID := nextDelegationID()
 	delegation := NewDelegation(
@@ -324,14 +325,15 @@ func delegate(
 		from,
 		to,
 		amount,
-		currentTime,
+		currentHeight,
+		currentTimestamp,
 	)
 	delegationRecord := NewDelegationDelegateRecordBy(delegation)
 
 	addDelegation(delegationID, delegation)
 	addDelegationRecord(delegationRecord)
-	addStakeEmissionReward(from.String(), amount, currentHeight)
-	addStakeProtocolFeeReward(from.String(), amount, currentHeight)
+	addStakeEmissionReward(from.String(), amount, currentTimestamp)
+	addStakeProtocolFeeReward(from.String(), amount, time.Now().Unix())
 
 	return delegation, nil
 }
@@ -345,7 +347,7 @@ func delegate(
 //   - delegatee: delegatee's address
 //   - amount: amount to undelegate
 //   - currentTime: current timestamp
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 //
 // Returns:
 //   - int64: amount undelegated
@@ -354,8 +356,8 @@ func unDelegate(
 	delegator,
 	delegatee std.Address,
 	amount,
-	currentTime,
-	currentHeight int64,
+	currentHeight,
+	currentTimestamp int64,
 ) (int64, error) {
 	delegations := getUserDelegationsWithDelegatee(delegator, delegatee)
 	if len(delegations) == 0 {
@@ -379,16 +381,17 @@ func unDelegate(
 
 		delegation.unDelegate(
 			currentUnDelegationAmount,
-			currentTime,
+			currentHeight,
+			currentTimestamp,
 			unDelegationLockupPeriod,
 		)
 
-		delegationRecord := NewDelegationWithdrawRecordBy(delegation, currentUnDelegationAmount, currentTime)
+		delegationRecord := NewDelegationWithdrawRecordBy(delegation, currentUnDelegationAmount, currentTimestamp)
 
 		setDelegation(delegation.ID(), delegation)
 		addDelegationRecord(delegationRecord)
-		removeStakeEmissionReward(delegator.String(), currentUnDelegationAmount, currentHeight)
-		removeStakeProtocolFeeReward(delegator.String(), currentUnDelegationAmount, currentHeight)
+		removeStakeEmissionReward(delegator.String(), currentUnDelegationAmount, currentTimestamp)
+		removeStakeProtocolFeeReward(delegator.String(), currentUnDelegationAmount, currentTimestamp)
 
 		unDelegationAmount -= currentUnDelegationAmount
 		if unDelegationAmount <= 0 {
@@ -415,6 +418,7 @@ func unDelegateWithoutLockup(
 	delegator,
 	delegatee std.Address,
 	amount,
+	currentHeight,
 	currentTime int64,
 ) (int64, error) {
 	delegations := getUserDelegationsWithDelegatee(delegator, delegatee)
@@ -439,6 +443,7 @@ func unDelegateWithoutLockup(
 
 		delegation.unDelegateWithoutLockup(
 			currentUnDelegationAmount,
+			currentHeight,
 			currentTime,
 		)
 

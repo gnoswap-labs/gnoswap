@@ -4,6 +4,7 @@ package main
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
@@ -59,7 +60,7 @@ func main() {
 
 func initEmission() {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartBlockHeight(cross, 124)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 	emission.MintAndDistributeGns(cross)
 }
 
@@ -123,11 +124,11 @@ func changeDistributionTarget() {
 //
 // [SCENARIO] 2. Mint to distribution target (before upgrade)
 // [INFO] current block height 124
-// [EXPECTED] total minted amount should be 14269406
-// [EXPECTED] (v1) staker balance change should be 10702054
+// [EXPECTED] total minted amount should be 35673515
+// [EXPECTED] (v1) staker balance change should be 26755136
 // [EXPECTED] (v1) gov staker balance change should be 0
-// [EXPECTED] (v1) dev ops balance change should be 2853881
-// [EXPECTED] (v1) community pool balance change should be 713470
+// [EXPECTED] (v1) dev ops balance change should be 7134703
+// [EXPECTED] (v1) community pool balance change should be 1783675
 // [EXPECTED] (new) staker balance change should be 0
 // [EXPECTED] (new) gov staker balance change should be 0
 // [EXPECTED] (new) dev ops balance change should be 0
@@ -141,12 +142,12 @@ func changeDistributionTarget() {
 //
 // [SCENARIO] 4. Mint to distribution target (after upgrade)
 // [INFO] current block height 125
-// [EXPECTED] total minted amount should be 28538812
+// [EXPECTED] total minted amount should be 71347030
 // [EXPECTED] (v1) staker balance change should be 0
 // [EXPECTED] (v1) gov staker balance change should be 0
 // [EXPECTED] (v1) dev ops balance change should be 0
 // [EXPECTED] (v1) community pool balance change should be 0
-// [EXPECTED] (new) staker balance change should be 10702055
+// [EXPECTED] (new) staker balance change should be 26755137
 // [EXPECTED] (new) gov staker balance change should be 0
-// [EXPECTED] (new) dev ops balance change should be 2853881
-// [EXPECTED] (new) community pool balance change should be 713470
+// [EXPECTED] (new) dev ops balance change should be 7134703
+// [EXPECTED] (new) community pool balance change should be 1783675

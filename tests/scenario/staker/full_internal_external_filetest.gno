@@ -8,6 +8,7 @@ import (
 	"std"
 	"strconv"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/testutils"
@@ -134,7 +135,7 @@ func main() {
 
 func initAccount() {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartBlockHeight(cross, 124)
+	emission.SetDistributionStartTime(cross, time.Now().Unix() + 1)
 
 	println("[INFO] set unstaking fee to 0")
 	sr.SetUnStakingFee(cross, 0)
@@ -319,9 +320,8 @@ func collectRewardsAllWarmUp() {
 
 	// Skip to different warm-up periods and collect rewards
 	println("[INFO] progress to 50% warm-up")
-	msInDay := int64(86400000)
-	blocksInDay := msInDay / int64(gns.AvgBlockTimeInMs())
-	blocksIn5Days := int64(5 * blocksInDay)
+	secondsInDay := int64(86400)
+	blocksIn5Days := int64(5 * secondsInDay / 5)
 	testing.SkipHeights(blocksIn5Days)
 
 	for i := 1; i <= 6; i++ {
@@ -521,7 +521,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] perform exact-in swaps
 // [EXPECTED] swap result - tokenIn: 500, tokenOut: -497
 // [INFO] check reward for position 01 after swap
-// [EXPECTED] position 01 reward after swap: 7491949
+// [EXPECTED] position 01 reward after swap: 18729873
 //
 // [SCENARIO] 10. Create bar:foo:100 pool (tier 3)
 // [INFO] create bar:foo:100 pool
@@ -532,11 +532,11 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] mint and stake result - ID: 7, liquidity: 166674
 // [EXPECTED] amounts - 0: 0, 1: 1000, pool: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100
 // [INFO] collect reward for position 07
-// [EXPECTED] reward to community pool: 4280820
+// [EXPECTED] reward to community pool: 10702050
 //
 // [SCENARIO] 12. Unstake token 01
 // [INFO] unstake token 01
-// [EXPECTED] reward from unstaking: 15519260
+// [EXPECTED] reward from unstaking: 38798148
 //
 // [SCENARIO] 13. Create pool with external incentive only
 // [INFO] create baz:qux:3000 pool (external only)

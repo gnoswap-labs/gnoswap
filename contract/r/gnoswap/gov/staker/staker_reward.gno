@@ -2,6 +2,7 @@ package staker
 
 import (
 	"std"
+	"time"
 
 	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
@@ -42,9 +43,9 @@ func CollectReward(cur realm) {
 
 	caller := std.PreviousRealm().Address()
 	from := std.CurrentRealm().Address()
-	currentHeight := std.ChainHeight()
+	currentTimestamp := time.Now().Unix()
 
-	emissionReward, protocolFeeRewards, err := claimRewards(caller.String(), currentHeight)
+	emissionReward, protocolFeeRewards, err := claimRewards(caller.String(), currentTimestamp)
 	if err != nil {
 		panic(err)
 	}
@@ -116,7 +117,7 @@ func CollectRewardFromLaunchPad(cur realm, to std.Address) {
 	access.AssertIsLaunchpad(caller)
 
 	from := std.CurrentRealm().Address()
-	currentHeight := std.ChainHeight()
+	currentTimestamp := time.Now().Unix()
 
 	launchpadRewardID := makeLaunchpadRewardID(to.String())
 	_, exists := getLaunchpadProjectDeposit(launchpadRewardID)
@@ -127,7 +128,7 @@ func CollectRewardFromLaunchPad(cur realm, to std.Address) {
 		))
 	}
 
-	emissionReward, protocolFeeRewards, err := claimRewardsFromLaunchpad(to.String(), currentHeight)
+	emissionReward, protocolFeeRewards, err := claimRewardsFromLaunchpad(to.String(), currentTimestamp)
 	if err != nil {
 		panic(err)
 	}
@@ -192,7 +193,7 @@ func SetAmountByProjectWallet(cur realm, addr std.Address, amount int64, add boo
 	halt.AssertIsNotHaltedWithdraw()
 
 	caller := std.PreviousRealm().Address()
-	currentHeight := std.ChainHeight()
+	currentTimestamp := time.Now().Unix()
 
 	access.AssertIsLaunchpad(caller)
 
@@ -203,11 +204,11 @@ func SetAmountByProjectWallet(cur realm, addr std.Address, amount int64, add boo
 
 	if add {
 		// Add stake for the project wallet and mint xGNS to launchpad
-		addStakeFromLaunchpad(addr.String(), amount, currentHeight)
+		addStakeFromLaunchpad(addr.String(), amount, currentTimestamp)
 		xgns.Mint(cross, launchpadAddr, amount)
 	} else {
 		// Remove stake for the project wallet and burn xGNS from launchpad
-		removeStakeFromLaunchpad(addr.String(), amount, currentHeight)
+		removeStakeFromLaunchpad(addr.String(), amount, currentTimestamp)
 		xgns.Burn(cross, launchpadAddr, amount)
 	}
 }
@@ -217,19 +218,19 @@ func SetAmountByProjectWallet(cur realm, addr std.Address, amount int64, add boo
 //
 // Parameters:
 //   - rewardID: identifier for the reward account (typically user address)
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 //
 // Returns:
 //   - int64: emission reward amount claimed
 //   - map[string]int64: protocol fee rewards claimed by token
 //   - error: nil on success, error if claiming fails
-func claimRewards(rewardID string, currentHeight int64) (int64, map[string]int64, error) {
-	emissionReward, err := claimRewardsEmissionReward(rewardID, currentHeight)
+func claimRewards(rewardID string, currentTimestamp int64) (int64, map[string]int64, error) {
+	emissionReward, err := claimRewardsEmissionReward(rewardID, currentTimestamp)
 	if err != nil {
 		return 0, nil, err
 	}
 
-	protocolFeeRewards, err := claimRewardsProtocolFeeReward(rewardID, currentHeight)
+	protocolFeeRewards, err := claimRewardsProtocolFeeReward(rewardID, currentTimestamp)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -242,16 +243,16 @@ func claimRewards(rewardID string, currentHeight int64) (int64, map[string]int64
 //
 // Parameters:
 //   - address: project wallet address
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 //
 // Returns:
 //   - int64: emission reward amount claimed
 //   - map[string]int64: protocol fee rewards claimed by token
 //   - error: nil on success, error if claiming fails
-func claimRewardsFromLaunchpad(address string, currentHeight int64) (int64, map[string]int64, error) {
+func claimRewardsFromLaunchpad(address string, currentTimestamp int64) (int64, map[string]int64, error) {
 	launchpadRewardID := makeLaunchpadRewardID(address)
 
-	return claimRewards(launchpadRewardID, currentHeight)
+	return claimRewards(launchpadRewardID, currentTimestamp)
 }
 
 // transferToken transfers tokens from the staker contract to a recipient address.

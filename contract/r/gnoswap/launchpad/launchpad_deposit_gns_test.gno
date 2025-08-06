@@ -45,7 +45,10 @@ func TestDepositGns(t *testing.T) {
 				depositCounter = NewCounter()
 
 				// Set initial block height
-				testing.SetHeight(123)
+				ctx := testing.GetContext()
+				ctx.Height = 123
+				ctx.Time = time.Unix(1234567890, 0)
+				testing.SetContext(ctx)
 
 				// Create project as admin
 				testing.SetRealm(std.NewUserRealm(adminAddr))
@@ -115,7 +118,10 @@ func TestDepositGns(t *testing.T) {
 				launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 
 				// Set initial block height
-				testing.SetHeight(123)
+				ctx := testing.GetContext()
+				ctx.Height = 123
+				ctx.Time = time.Unix(1234567890, 0)
+				testing.SetContext(ctx)
 
 				// Create project as admin
 				testing.SetRealm(std.NewUserRealm(adminAddr))
@@ -180,7 +186,10 @@ func TestDepositGns(t *testing.T) {
 				depositCounter = NewCounter()
 
 				// Set initial block height
-				testing.SetHeight(123)
+				ctx := testing.GetContext()
+				ctx.Height = 123
+				ctx.Time = time.Unix(1234567890, 0)
+				testing.SetContext(ctx)
 
 				// Create project as admin
 				testing.SetRealm(std.NewUserRealm(adminAddr))
@@ -237,9 +246,9 @@ func TestDepositGns(t *testing.T) {
 				adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 				testing.SetRealm(std.NewUserRealm(adminAddr))
 				halt.SetHaltLevel(cross, halt.HaltLevelNone)
-				
+
 				userAddr := testutils.TestAddress("user5")
-				
+
 				// Return a valid project tier ID format
 				return "gno.land/r/onbloc/obl:123:30", userAddr
 			},
@@ -307,7 +316,10 @@ func TestDepositGns(t *testing.T) {
 				depositCounter = NewCounter()
 
 				// Set initial block height
-				testing.SetHeight(123)
+				ctx := testing.GetContext()
+				ctx.Height = 123
+				ctx.Time = time.Unix(1234567890, 0)
+				testing.SetContext(ctx)
 
 				// Create project as admin
 				testing.SetRealm(std.NewUserRealm(adminAddr))
@@ -365,7 +377,10 @@ func TestDepositGns(t *testing.T) {
 				depositCounter = NewCounter()
 
 				// Set initial block height
-				testing.SetHeight(123)
+				ctx := testing.GetContext()
+				ctx.Height = 123
+				ctx.Time = time.Unix(1234567890, 0)
+				testing.SetContext(ctx)
 
 				// Create project as admin
 				testing.SetRealm(std.NewUserRealm(adminAddr))
@@ -422,7 +437,10 @@ func TestDepositGns(t *testing.T) {
 				depositCounter = NewCounter()
 
 				// Set initial block height
-				testing.SetHeight(123)
+				ctx := testing.GetContext()
+				ctx.Height = 123
+				ctx.Time = time.Unix(1234567890, 0)
+				testing.SetContext(ctx)
 
 				// Create project as admin
 				testing.SetRealm(std.NewUserRealm(adminAddr))

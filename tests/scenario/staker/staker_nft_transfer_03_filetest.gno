@@ -9,6 +9,7 @@ import (
 	"std"
 	"strconv"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
@@ -84,7 +85,7 @@ func main() {
 
 func initAccountAndEmission() {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartBlockHeight(cross, 124)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
 	sr.SetUnStakingFee(cross, 0)
@@ -319,9 +320,9 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 5. Collect rewards for different users
 // [INFO] skip blocks to accumulate rewards
 // [INFO] admin: collect reward for position 01
-// [EXPECTED] admin reward from position 01: 8829194
+// [EXPECTED] admin reward from position 01: 22072982
 // [INFO] user2: collect reward for position 02
-// [EXPECTED] user2 reward from position 02: 8829194
+// [EXPECTED] user2 reward from position 02: 22072982
 //
 // [SCENARIO] 6. Unstake and verify NFT ownership
 // [INFO] admin: unstake position 01

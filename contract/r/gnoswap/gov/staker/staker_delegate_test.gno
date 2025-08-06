@@ -519,7 +519,7 @@ func TestStakerDelegate_LockupPeriodAndWithdrawal(t *testing.T) {
 			// Simulate time passage for lockup period
 			// In real implementation, would advance blockchain time
 			blockTime := int64(5)
-			testing.SkipHeights(tt.waitTime/blockTime)
+			testing.SkipHeights(tt.waitTime / blockTime)
 
 			// When & Then: Try to collect
 			if tt.shouldFail {
@@ -808,7 +808,7 @@ func setupStakerDelegateTestGNSBalance(t *testing.T) {
 
 func setupStakerDelegateTestDelegation(t *testing.T, from, to std.Address, amount int64) {
 	delegationID := nextDelegationID()
-	delegation := NewDelegation(delegationID, from, to, amount, 100)
+	delegation := NewDelegation(delegationID, from, to, amount, 100, 100)
 	addDelegation(delegationID, delegation)
 
 	testing.SetRealm(std.NewUserRealm(from))
@@ -821,10 +821,10 @@ func setupStakerDelegateTestDelegation(t *testing.T, from, to std.Address, amoun
 func setupStakerDelegateTestCollectableAmount(t *testing.T, user std.Address, amount int64) {
 	// Create a delegation that has been undelegated and is collectable
 	delegationID := nextDelegationID()
-	delegation := NewDelegation(delegationID, user, testutils.TestAddress("validator1"), amount, 100)
+	delegation := NewDelegation(delegationID, user, testutils.TestAddress("validator1"), amount, 100, 100)
 
 	// Undelegate with zero lockup period for immediate collection
-	delegation.unDelegate(amount, 200, 0)
+	delegation.unDelegate(amount, 200, 100, 0)
 
 	addDelegation(delegationID, delegation)
 

@@ -89,7 +89,6 @@ func TestTierAllocationNoLeftover(t *testing.T) {
 					tier30Ratio:        tt.tier30Ratio,
 					tier90Ratio:        tt.tier90Ratio,
 					tier180Ratio:       tt.tier180Ratio,
-					averageBlockTimeMs: 2000,
 					recipient:          testutils.TestAddress("project"),
 					startTime:          currentTime,
 					currentTime:        currentTime,
@@ -151,7 +150,6 @@ func TestTierAllocationRemainder(t *testing.T) {
 			tier30Ratio:        33, // 1000 * 33 / 100 = 330
 			tier90Ratio:        33, // 1000 * 33 / 100 = 330
 			tier180Ratio:       34, // 1000 * 34 / 100 = 340
-			averageBlockTimeMs: 2000,
 			recipient:          testutils.TestAddress("project"),
 			startTime:          currentTime,
 			currentTime:        currentTime,

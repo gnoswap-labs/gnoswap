@@ -1,7 +1,6 @@
 package staker
 
 import (
-	"std"
 	"testing"
 	"time"
 
@@ -14,7 +13,7 @@ func TestQueryPoolData(t *testing.T) {
 	testAddr := testutils.TestAddress("test_address")
 	poolPath := "test_pool"
 
-	pool := NewPool(poolPath, std.ChainHeight())
+	pool := NewPool(poolPath, time.Now().Unix())
 	pools.set(poolPath, pool)
 
 	// Add test incentive to pool
@@ -27,8 +26,6 @@ func TestQueryPoolData(t *testing.T) {
 		incentiveId:    "incentive1",
 		startTimestamp: startTime,
 		endTimestamp:   endTime,
-		startHeight:    std.ChainHeight(),
-		endHeight:      std.ChainHeight() + 100,
 		rewardToken:    rewardToken,
 		rewardAmount:   rewardAmount,
 		refundee:       testAddr,
@@ -95,8 +92,6 @@ func TestFilterActiveIncentives(t *testing.T) {
 		incentiveId:    "incentive1",
 		startTimestamp: 150,
 		endTimestamp:   250,
-		startHeight:    100,
-		endHeight:      200,
 		rewardToken:    rewardToken,
 		rewardAmount:   1000,
 		refundee:       refundee,
@@ -106,8 +101,6 @@ func TestFilterActiveIncentives(t *testing.T) {
 		incentiveId:    "incentive2",
 		startTimestamp: 200,
 		endTimestamp:   300,
-		startHeight:    150,
-		endHeight:      250,
 		rewardToken:    rewardToken,
 		rewardAmount:   2000,
 		refundee:       refundee,
@@ -120,34 +113,34 @@ func TestFilterActiveIncentives(t *testing.T) {
 	// test cases
 	tests := []struct {
 		name          string
-		currentHeight int64
+		currentTimestamp int64
 		expectedCount int
 	}{
 		{
 			name:          "current height is lower than all incentives' start height",
-			currentHeight: 50,
+			currentTimestamp: 50,
 			expectedCount: 0,
 		},
 		{
 			name:          "current height is within the range of the first incentive",
-			currentHeight: 120,
+			currentTimestamp: 150,
 			expectedCount: 1,
 		},
 		{
 			name:          "current height is within the range of the two incentives",
-			currentHeight: 180,
+			currentTimestamp: 220,
 			expectedCount: 2,
 		},
 		{
 			name:          "current height is higher than all incentives' end height",
-			currentHeight: 400,
+			currentTimestamp: 400,
 			expectedCount: 0,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			activeIncentives := filterActiveIncentives(pool, tc.currentHeight)
+			activeIncentives := filterActiveIncentives(pool, tc.currentTimestamp)
 
 			if len(activeIncentives) != tc.expectedCount {
 				t.Errorf("expected %d active incentives, got %d", tc.expectedCount, len(activeIncentives))

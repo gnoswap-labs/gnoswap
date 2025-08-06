@@ -23,15 +23,16 @@ import (
 // - tiersRatios (map[int64]int64): A map of tier durations to their associated ratios.
 // - createdBlockTimeInfo (BlockTimeInfo): The block time and height information for the creation of the project.
 type Project struct {
-	id                   string // 'tokenPath:createdHeight'
-	name                 string
-	tokenPath            string
-	depositAmount        int64
-	recipient            std.Address                  // string
-	conditions           map[string]*ProjectCondition // tokenPath -> Condition
-	tiers                map[int64]*ProjectTier
-	tiersRatios          map[int64]int64
-	createdBlockTimeInfo *BlockTimeInfo
+	id            string // 'tokenPath:createdHeight'
+	name          string
+	tokenPath     string
+	depositAmount int64
+	recipient     std.Address                  // string
+	conditions    map[string]*ProjectCondition // tokenPath -> Condition
+	tiers         map[int64]*ProjectTier
+	tiersRatios   map[int64]int64
+	createdHeight int64
+	createdAt     int64
 }
 
 func (p *Project) ID() string {
@@ -58,40 +59,28 @@ func (p *Project) TiersRatios() map[int64]int64 {
 	return p.tiersRatios
 }
 
-func (p *Project) CreatedBlockTimeInfo() *BlockTimeInfo {
-	return p.createdBlockTimeInfo
-}
-
 func (p *Project) CreatedAt() int64 {
-	return p.createdBlockTimeInfo.BlockTime()
+	return p.createdAt
 }
 
 func (p *Project) CreatedHeight() int64 {
-	return p.createdBlockTimeInfo.BlockHeight()
+	return p.createdHeight
 }
 
 func (p *Project) StartTime() int64 {
 	return p.standardTier().StartTime()
 }
 
-func (p *Project) StartHeight() int64 {
-	return p.standardTier().StartHeight()
-}
-
 func (p *Project) EndTime() int64 {
 	return p.standardTier().EndTime()
 }
 
-func (p *Project) EndHeight() int64 {
-	return p.standardTier().EndHeight()
+func (p *Project) IsActive(currentTime int64) bool {
+	return p.standardTier().isActivated(currentTime)
 }
 
-func (p *Project) IsActive(currentHeight int64) bool {
-	return p.standardTier().isActivated(currentHeight)
-}
-
-func (p *Project) IsEnded(currentHeight int64) bool {
-	return p.standardTier().isEnded(currentHeight)
+func (p *Project) IsEnded(currentTime int64) bool {
+	return p.standardTier().isEnded(currentTime)
 }
 
 func (p *Project) IsOwner(caller std.Address) bool {
@@ -207,10 +196,10 @@ func (p *Project) standardTier() *ProjectTier {
 	return projectTier
 }
 
-func (p *Project) validateRefundRemainingAmount(currentHeight int64) error {
-	if !p.IsEnded(currentHeight) {
+func (p *Project) validateRefundRemainingAmount(currentTime int64) error {
+	if !p.IsEnded(currentTime) {
 		return errors.New(
-			ufmt.Sprintf("project not ended yet(current:%d, endHeight: %d)", currentHeight, p.EndHeight()),
+			ufmt.Sprintf("project not ended yet(current:%d, endTime: %d)", currentTime, p.EndTime()),
 		)
 	}
 
@@ -236,18 +225,20 @@ func NewProject(
 	tokenPath string,
 	depositAmount int64,
 	recipient std.Address,
-	createdBlockTimeInfo *BlockTimeInfo,
+	createdHeight int64,
+	createdAt int64,
 ) *Project {
 
 	return &Project{
-		id:                   makeProjectID(tokenPath, createdBlockTimeInfo.BlockHeight()),
-		name:                 name,
-		tokenPath:            tokenPath,
-		depositAmount:        depositAmount,
-		recipient:            recipient,
-		conditions:           make(map[string]*ProjectCondition),
-		tiers:                make(map[int64]*ProjectTier),
-		createdBlockTimeInfo: createdBlockTimeInfo,
+		id:            makeProjectID(tokenPath, createdHeight),
+		name:          name,
+		tokenPath:     tokenPath,
+		depositAmount: depositAmount,
+		recipient:     recipient,
+		conditions:    make(map[string]*ProjectCondition),
+		tiers:         make(map[int64]*ProjectTier),
+		createdHeight: createdHeight,
+		createdAt:     createdAt,
 	}
 }
 

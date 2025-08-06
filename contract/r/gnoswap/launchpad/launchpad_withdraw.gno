@@ -2,6 +2,7 @@ package launchpad
 
 import (
 	"std"
+	"time"
 
 	"gno.land/p/demo/ufmt"
 
@@ -35,8 +36,9 @@ func CollectDepositGns(cur realm, depositID string) (int64, error) {
 	emission.MintAndDistributeGns(cross)
 
 	deposit := mustGetDeposit(depositID)
-	
-	recipient, withdrawalAmount, err := withdrawDeposit(deposit, std.ChainHeight())
+
+	currentTime := time.Now().Unix()
+	recipient, withdrawalAmount, err := withdrawDeposit(deposit, std.ChainHeight(), currentTime)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -73,14 +75,14 @@ func CollectDepositGns(cur realm, depositID string) (int64, error) {
 // 3. Processes the withdrawal
 // 4. Updates rewards after withdrawal
 // 5. Finalizes the withdrawal
-func withdrawDeposit(deposit *Deposit, currentHeight int64) (std.Address, int64, error) {
+func withdrawDeposit(deposit *Deposit, currentHeight, currentTime int64) (std.Address, int64, error) {
 	// Input validation
 	if deposit == nil {
 		return "", 0, makeErrorWithDetails(errNotExistDeposit, "deposit is nil")
 	}
 
-	if currentHeight <= 0 {
-		return "", 0, makeErrorWithDetails(errInvalidHeight, "currentHeight must be positive")
+	if currentTime <= 0 {
+		return "", 0, makeErrorWithDetails(errInvalidTime, "currentTime must be positive")
 	}
 
 	// State validation
@@ -88,7 +90,7 @@ func withdrawDeposit(deposit *Deposit, currentHeight int64) (std.Address, int64,
 		return "", 0, makeErrorWithDetails(errAlreadyCollected, ufmt.Sprintf("(%s)", deposit.ID()))
 	}
 
-	if !deposit.IsEnded(currentHeight) {
+	if !deposit.IsEnded(currentTime) {
 		return "", 0, makeErrorWithDetails(errNotYetEndedProject, ufmt.Sprintf("(%s)", deposit.ID()))
 	}
 
@@ -110,7 +112,7 @@ func withdrawDeposit(deposit *Deposit, currentHeight int64) (std.Address, int64,
 	}
 
 	// Update rewards with current deposit amount
-	err = rewardManager.updateRewardPerDepositX128(projectTier.CurrentDepositAmount(), currentHeight)
+	err = rewardManager.updateRewardPerDepositX128(projectTier.CurrentDepositAmount(), currentHeight, currentTime)
 	if err != nil {
 		return "", 0, err
 	}
@@ -119,13 +121,13 @@ func withdrawDeposit(deposit *Deposit, currentHeight int64) (std.Address, int64,
 	projectTier.withdraw(deposit)
 
 	// Update rewards with new deposit amount after withdrawal
-	err = rewardManager.updateRewardPerDepositX128(projectTier.CurrentDepositAmount(), currentHeight)
+	err = rewardManager.updateRewardPerDepositX128(projectTier.CurrentDepositAmount(), currentHeight, currentTime)
 	if err != nil {
 		return "", 0, err
 	}
 
 	// Finalize withdrawal
-	withdrawalAmount := deposit.withdraw(currentHeight)
+	withdrawalAmount := deposit.withdraw(currentHeight, currentTime)
 	deposits.Set(deposit.ID(), deposit)
 
 	return project.Recipient(), withdrawalAmount, nil

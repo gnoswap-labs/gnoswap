@@ -32,6 +32,7 @@ type Delegation struct {
 	collectedAmount  int64
 	delegateFrom     std.Address
 	delegateTo       std.Address
+	createdHeight    int64
 	createdAt        int64
 
 	withdraws []*DelegationWithdraw
@@ -89,7 +90,8 @@ func (d *Delegation) IsEmpty() bool {
 
 func (d *Delegation) unDelegate(
 	amount,
-	currentTime,
+	currentHeight,
+	currentTimestamp,
 	unDelegationLockupPeriod int64,
 ) {
 	d.unDelegateAmount += amount
@@ -97,13 +99,15 @@ func (d *Delegation) unDelegate(
 	d.withdraws = append(d.withdraws, NewDelegationWithdraw(
 		d.id,
 		amount,
-		currentTime,
+		currentHeight,
+		currentTimestamp,
 		unDelegationLockupPeriod,
 	))
 }
 
 func (d *Delegation) unDelegateWithoutLockup(
 	amount,
+	currentHeight,
 	currentTime int64,
 ) {
 	d.unDelegateAmount += amount
@@ -112,6 +116,7 @@ func (d *Delegation) unDelegateWithoutLockup(
 	d.withdraws = append(d.withdraws, NewDelegationWithdrawWithoutLockup(
 		d.id,
 		amount,
+		currentHeight,
 		currentTime,
 	))
 }
@@ -159,6 +164,7 @@ func NewDelegation(
 	delegateFrom std.Address,
 	delegateTo std.Address,
 	delegateAmount int64,
+	createdHeight int64,
 	createdAt int64,
 ) *Delegation {
 	return &Delegation{
@@ -166,6 +172,7 @@ func NewDelegation(
 		delegateFrom:     delegateFrom,
 		delegateTo:       delegateTo,
 		delegateAmount:   delegateAmount,
+		createdHeight:    createdHeight,
 		createdAt:        createdAt,
 		unDelegateAmount: 0,
 		collectedAmount:  0,
