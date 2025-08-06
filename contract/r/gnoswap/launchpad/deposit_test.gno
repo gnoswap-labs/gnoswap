@@ -266,7 +266,7 @@ func TestNewDeposit(t *testing.T) {
 			uassert.Equal(t, tt.tier, deposit.Tier())
 			uassert.Equal(t, tt.depositor, deposit.Depositor())
 			uassert.Equal(t, tt.depositAmount, deposit.DepositAmount())
-			uassert.Equal(t, tt.createdBlockTime, deposit.CreatedTime())
+			uassert.Equal(t, tt.createdBlockTime, deposit.DepositTime())
 			uassert.Equal(t, tt.createdBlockHeight, deposit.CreatedHeight())
 			uassert.Equal(t, tt.endBlockTime, deposit.EndTime())
 			uassert.Equal(t, int64(0), deposit.withdrawnHeight)

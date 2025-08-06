@@ -87,6 +87,6 @@ func ApiGetProjectActiveOf(projectId string) string {
 		WriteString("projectId", project.id).
 		WriteString("isActive", strconv.FormatBool(projectActiveResult)).
 		WriteString("currentHeight", strconv.FormatInt(std.ChainHeight(), 10))).
-		WriteString("started.height", strconv.FormatInt(project.standardTier().startBlockTimeInfo.BlockHeight(), 10))
+		WriteString("startTime", strconv.FormatInt(project.standardTier().startTime, 10))
 	return marshal(builder.Node())
 }

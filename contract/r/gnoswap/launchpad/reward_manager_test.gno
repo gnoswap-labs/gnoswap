@@ -301,7 +301,10 @@ func TestRewardManager_CollectReward(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testing.SetHeight(123)
+			ctx := testing.GetContext()
+			ctx.Height = 123
+			ctx.Time = time.Unix(1234567890, 0)
+			testing.SetContext(ctx)
 
 			// Setup
 			// Use current time as base and simulate timing
@@ -418,6 +421,7 @@ func TestTimestampBasedRewardCalculation_ConstantTime(t *testing.T) {
 		30,
 		"",
 		1000, // deposit amount
+		1,
 		baseTime,
 		distributeEndTime,
 	)
@@ -428,26 +432,27 @@ func TestTimestampBasedRewardCalculation_ConstantTime(t *testing.T) {
 		30,
 		"",
 		1000, // deposit amount
+		1,
 		baseTime,
 		distributeEndTime,
 	)
 	
 	// Add both deposits at start time
-	err := manager.updateRewardPerDepositX128(1000, distributeStartHeight, baseTime)
+	err := manager.updateRewardPerDepositX128(1000, distributeStartTime, baseTime)
 	uassert.NoError(t, err)
 	manager.addRewardStateByDeposit(deposit1, 2000)
 	
-	err = manager.updateRewardPerDepositX128(2000, distributeStartHeight, baseTime)
+	err = manager.updateRewardPerDepositX128(2000, distributeStartTime, baseTime)
 	uassert.NoError(t, err)
 	manager.addRewardStateByDeposit(deposit2, 2000)
 	
 	// Move time forward by 50 seconds (half way through)
 	halfwayTime := baseTime + 50
-	err = manager.updateRewardPerDepositX128(2000, distributeStartHeight + 25, halfwayTime)
+	err = manager.updateRewardPerDepositX128(2000, distributeStartTime + 25, halfwayTime)
 	uassert.NoError(t, err)
 	
 	// Collect reward for deposit1 after 50 seconds
-	reward1, err := manager.collectReward("1", distributeStartHeight + 25)
+	reward1, err := manager.collectReward("1", distributeStartTime + 25)
 	uassert.NoError(t, err)
 	
 	// Each deposit should get 250 tokens (50% of 1000 / 2 deposits)
@@ -455,11 +460,11 @@ func TestTimestampBasedRewardCalculation_ConstantTime(t *testing.T) {
 	uassert.Equal(t, true, reward1 >= 245 && reward1 <= 255, "reward1 should be ~250")
 	
 	// Move to end of distribution period
-	err = manager.updateRewardPerDepositX128(2000, distributeEndHeight, distributeEndTime)
+	err = manager.updateRewardPerDepositX128(2000, distributeEndTime, distributeEndTime)
 	uassert.NoError(t, err)
 	
 	// Collect reward for deposit2 after 100 seconds
-	reward2, err := manager.collectReward("2", distributeEndHeight)
+	reward2, err := manager.collectReward("2", distributeEndTime)
 	uassert.NoError(t, err)
 	
 	// Deposit2 should get 500 tokens (100% of 1000 / 2 deposits)
@@ -477,22 +482,19 @@ func TestTimestampBasedRewardCalculation_VariableBlockTime(t *testing.T) {
 	// Scenario: Blocks come at irregular intervals, but rewards should still be time-based
 	
 	totalDistributeAmount := int64(1000)
-	distributeStartHeight := int64(100)
-	distributeEndHeight := int64(110) // Only 10 blocks but 100 seconds
 	
 	// Set up timestamps: blocks at irregular intervals
 	baseTime := time.Now().Unix()
+	currentHeight := int64(1)
 	distributeStartTime := baseTime
 	distributeEndTime := baseTime + 100 // 100 seconds for just 10 blocks
 	currentTime := baseTime
 	
 	manager := NewRewardManager(
 		totalDistributeAmount,
-		distributeStartHeight,
-		distributeEndHeight,
 		distributeStartTime,
 		distributeEndTime,
-		distributeStartHeight,
+		currentHeight,
 		currentTime,
 	)
 	
@@ -503,18 +505,19 @@ func TestTimestampBasedRewardCalculation_VariableBlockTime(t *testing.T) {
 		30,
 		"",
 		1000,
+		currentHeight,
 		baseTime,
 		distributeEndTime,
 	)
 	
-	err := manager.updateRewardPerDepositX128(1000, distributeStartHeight, baseTime)
+	err := manager.updateRewardPerDepositX128(1000, distributeStartTime, baseTime)
 	uassert.NoError(t, err)
 	manager.addRewardStateByDeposit(deposit1, 2000)
 	
 	// Simulate irregular block times:
 	// Block 101 comes after 30 seconds (normally would be 1 second)
 	time1 := baseTime + 30
-	err = manager.updateRewardPerDepositX128(1000, distributeStartHeight + 1, time1)
+	err = manager.updateRewardPerDepositX128(1000, distributeStartTime + 1, time1)
 	uassert.NoError(t, err)
 	
 	// Add second deposit
@@ -524,31 +527,32 @@ func TestTimestampBasedRewardCalculation_VariableBlockTime(t *testing.T) {
 		30,
 		"",
 		1000,
+		currentHeight,
 		time1,
 		distributeEndTime,
 	)
 	
 	totalDeposits := int64(2000)
-	err = manager.updateRewardPerDepositX128(totalDeposits, distributeStartHeight + 1, time1)
+	err = manager.updateRewardPerDepositX128(totalDeposits, distributeStartTime + 1, time1)
 	uassert.NoError(t, err)
 	manager.addRewardStateByDeposit(deposit2, 2000)
 	
 	// Block 105 comes after 80 seconds total (another 50 seconds gap)
 	time2 := baseTime + 80
-	err = manager.updateRewardPerDepositX128(totalDeposits, distributeStartHeight + 5, time2)
+	err = manager.updateRewardPerDepositX128(totalDeposits, distributeStartTime + 5, time2)
 	uassert.NoError(t, err)
 	
 	// Check rewards for deposit1 (active for 80 seconds)
 	// First 30 seconds: got all rewards (300 tokens)
 	// Next 50 seconds: shared with deposit2 (250 tokens)
 	// Total: ~550 tokens
-	reward1, err := manager.collectReward("1", distributeStartHeight + 5)
+	reward1, err := manager.collectReward("1", distributeStartTime + 5)
 	uassert.NoError(t, err)
 	uassert.Equal(t, true, reward1 >= 545 && reward1 <= 555)
 	
 	// Check rewards for deposit2 (active for 50 seconds, sharing with deposit1)
 	// Should get 250 tokens
-	reward2, err := manager.collectReward("2", distributeStartHeight + 5)
+	reward2, err := manager.collectReward("2", distributeStartTime + 5)
 	uassert.NoError(t, err)
 	uassert.Equal(t, true, reward2 >= 245 && reward2 <= 255)
 	
@@ -563,8 +567,6 @@ func TestRewardManager_VaryingBlockTime_FastBlocks(t *testing.T) {
 	// This should NOT affect time-based rewards
 	
 	totalDistributeAmount := int64(1000)
-	distributeStartHeight := int64(100)
-	distributeEndHeight := int64(200) // 100 blocks
 	distributeStartTime := int64(1000)
 	distributeEndTime := int64(1100) // 100 seconds duration
 	currentHeight := int64(100)
@@ -572,12 +574,10 @@ func TestRewardManager_VaryingBlockTime_FastBlocks(t *testing.T) {
 	
 	manager := NewRewardManager(
 		totalDistributeAmount,
-		distributeStartHeight,
-		distributeEndHeight,
 		distributeStartTime,
 		distributeEndTime,
 		currentHeight,
-		currentTime,
+		currentTime,	
 	)
 	
 	// Add deposit at start
@@ -587,13 +587,14 @@ func TestRewardManager_VaryingBlockTime_FastBlocks(t *testing.T) {
 		30,
 		"",
 		1000000,
+		currentHeight,
 		distributeStartTime,
 		distributeEndTime,
 	)
 	manager.addRewardStateByDeposit(deposit, 5000)
 	
 	// Simulate fast blocks: 50 blocks in 50 seconds (1 block/second)
-	midHeight := distributeStartHeight + 50
+	midHeight := distributeStartTime + 50
 	midTime := distributeStartTime + 50
 	
 	// Update reward state
@@ -601,7 +602,7 @@ func TestRewardManager_VaryingBlockTime_FastBlocks(t *testing.T) {
 	uassert.NoError(t, err)
 	
 	// Collect rewards after 50 seconds
-	reward, err := manager.collectReward("1", midHeight)
+	reward, err := manager.collectReward("1", midTime)
 	uassert.NoError(t, err)
 	
 	// Should get ~500 tokens (50% of time elapsed)
@@ -615,8 +616,6 @@ func TestRewardManager_VaryingBlockTime_SlowBlocks(t *testing.T) {
 	// This should NOT affect time-based rewards
 	
 	totalDistributeAmount := int64(1000)
-	distributeStartHeight := int64(100)
-	distributeEndHeight := int64(105) // Only 5 blocks
 	distributeStartTime := int64(1000)
 	distributeEndTime := int64(1100) // 100 seconds duration
 	currentHeight := int64(100)
@@ -624,8 +623,6 @@ func TestRewardManager_VaryingBlockTime_SlowBlocks(t *testing.T) {
 	
 	manager := NewRewardManager(
 		totalDistributeAmount,
-		distributeStartHeight,
-		distributeEndHeight,
 		distributeStartTime,
 		distributeEndTime,
 		currentHeight,
@@ -639,13 +636,14 @@ func TestRewardManager_VaryingBlockTime_SlowBlocks(t *testing.T) {
 		30,
 		"",
 		1000000,
+		currentHeight,
 		distributeStartTime,
 		distributeEndTime,
 	)
 	manager.addRewardStateByDeposit(deposit, 5000)
 	
 	// Simulate slow blocks: only 3 blocks in 60 seconds (20 seconds/block)
-	midHeight := distributeStartHeight + 3
+	midHeight := distributeStartTime + 3
 	midTime := distributeStartTime + 60
 	
 	// Update reward state
@@ -653,7 +651,7 @@ func TestRewardManager_VaryingBlockTime_SlowBlocks(t *testing.T) {
 	uassert.NoError(t, err)
 	
 	// Collect rewards after 60 seconds
-	reward, err := manager.collectReward("1", midHeight)
+	reward, err := manager.collectReward("1", midTime)
 	uassert.NoError(t, err)
 	
 	// Should get ~600 tokens (60% of time elapsed)
@@ -667,8 +665,6 @@ func TestRewardManager_VaryingBlockTime_IrregularBlocks(t *testing.T) {
 	// Block pattern: 1s, 1s, 1s, 30s, 1s, 1s, 30s, 1s, 1s, 1s (total 70s for 10 blocks)
 	
 	totalDistributeAmount := int64(1000)
-	distributeStartHeight := int64(100)
-	distributeEndHeight := int64(110) 
 	distributeStartTime := int64(1000)
 	distributeEndTime := int64(1100) // 100 seconds duration
 	currentHeight := int64(100)
@@ -676,8 +672,6 @@ func TestRewardManager_VaryingBlockTime_IrregularBlocks(t *testing.T) {
 	
 	manager := NewRewardManager(
 		totalDistributeAmount,
-		distributeStartHeight,
-		distributeEndHeight,
 		distributeStartTime,
 		distributeEndTime,
 		currentHeight,
@@ -691,13 +685,14 @@ func TestRewardManager_VaryingBlockTime_IrregularBlocks(t *testing.T) {
 		30,
 		"",
 		1000000,
+		currentHeight,
 		distributeStartTime,
 		distributeEndTime,
 	)
 	manager.addRewardStateByDeposit(deposit, 5000)
 	
 	// Simulate irregular blocks over 70 seconds
-	irregularHeight := distributeStartHeight + 10
+	irregularHeight := distributeStartTime + 10
 	irregularTime := distributeStartTime + 70
 	
 	// Update reward state
@@ -705,7 +700,7 @@ func TestRewardManager_VaryingBlockTime_IrregularBlocks(t *testing.T) {
 	uassert.NoError(t, err)
 	
 	// Collect rewards after 70 seconds
-	reward, err := manager.collectReward("1", irregularHeight)
+	reward, err := manager.collectReward("1", irregularTime)
 	uassert.NoError(t, err)
 	
 	// Should get ~700 tokens (70% of time elapsed)
@@ -716,8 +711,6 @@ func TestRewardManager_VaryingBlockTime_IrregularBlocks(t *testing.T) {
 // TestRewardManager_EdgeCase_ZeroDuration tests edge case with zero duration
 func TestRewardManager_EdgeCase_ZeroDuration(t *testing.T) {
 	totalDistributeAmount := int64(1000)
-	distributeStartHeight := int64(100)
-	distributeEndHeight := int64(100) // Same as start
 	distributeStartTime := int64(1000)
 	distributeEndTime := int64(1000) // Same as start (zero duration)
 	currentHeight := int64(100)
@@ -725,8 +718,6 @@ func TestRewardManager_EdgeCase_ZeroDuration(t *testing.T) {
 	
 	manager := NewRewardManager(
 		totalDistributeAmount,
-		distributeStartHeight,
-		distributeEndHeight,
 		distributeStartTime,
 		distributeEndTime,
 		currentHeight,
@@ -741,8 +732,6 @@ func TestRewardManager_EdgeCase_ZeroDuration(t *testing.T) {
 // TestRewardManager_EdgeCase_TimeGoesBackward tests that time cannot go backward
 func TestRewardManager_EdgeCase_TimeGoesBackward(t *testing.T) {
 	totalDistributeAmount := int64(1000)
-	distributeStartHeight := int64(100)
-	distributeEndHeight := int64(200)
 	distributeStartTime := int64(1000)
 	distributeEndTime := int64(2000)
 	currentHeight := int64(100)
@@ -750,8 +739,6 @@ func TestRewardManager_EdgeCase_TimeGoesBackward(t *testing.T) {
 	
 	manager := NewRewardManager(
 		totalDistributeAmount,
-		distributeStartHeight,
-		distributeEndHeight,
 		distributeStartTime,
 		distributeEndTime,
 		currentHeight,
@@ -765,6 +752,7 @@ func TestRewardManager_EdgeCase_TimeGoesBackward(t *testing.T) {
 		30,
 		"",
 		1000000,
+		currentHeight,
 		distributeStartTime,
 		distributeEndTime,
 	)
@@ -785,8 +773,6 @@ func TestRewardManager_EdgeCase_TimeGoesBackward(t *testing.T) {
 // TestRewardManager_EdgeCase_RewardAfterEnd tests reward collection after distribution end
 func TestRewardManager_EdgeCase_RewardAfterEnd(t *testing.T) {
 	totalDistributeAmount := int64(1000)
-	distributeStartHeight := int64(100)
-	distributeEndHeight := int64(200)
 	distributeStartTime := int64(1000)
 	distributeEndTime := int64(2000)
 	currentHeight := int64(100)
@@ -794,8 +780,6 @@ func TestRewardManager_EdgeCase_RewardAfterEnd(t *testing.T) {
 	
 	manager := NewRewardManager(
 		totalDistributeAmount,
-		distributeStartHeight,
-		distributeEndHeight,
 		distributeStartTime,
 		distributeEndTime,
 		currentHeight,
@@ -809,6 +793,7 @@ func TestRewardManager_EdgeCase_RewardAfterEnd(t *testing.T) {
 		30,
 		"",
 		1000000,
+		currentHeight,
 		distributeStartTime,
 		distributeEndTime,
 	)
@@ -830,8 +815,6 @@ func TestRewardManager_EdgeCase_RewardAfterEnd(t *testing.T) {
 // TestRewardManager_MultipleDeposits_DifferentTimings tests multiple deposits joining at different times
 func TestRewardManager_MultipleDeposits_DifferentTimings(t *testing.T) {
 	totalDistributeAmount := int64(1000)
-	distributeStartHeight := int64(100)
-	distributeEndHeight := int64(200)
 	distributeStartTime := int64(1000)
 	distributeEndTime := int64(2000) // 1000 seconds duration
 	currentHeight := int64(100)
@@ -839,8 +822,6 @@ func TestRewardManager_MultipleDeposits_DifferentTimings(t *testing.T) {
 	
 	manager := NewRewardManager(
 		totalDistributeAmount,
-		distributeStartHeight,
-		distributeEndHeight,
 		distributeStartTime,
 		distributeEndTime,
 		currentHeight,
@@ -854,6 +835,7 @@ func TestRewardManager_MultipleDeposits_DifferentTimings(t *testing.T) {
 		30,
 		"",
 		1000000,
+		currentHeight,
 		distributeStartTime,
 		distributeEndTime,
 	)
@@ -870,6 +852,7 @@ func TestRewardManager_MultipleDeposits_DifferentTimings(t *testing.T) {
 		30,
 		"",
 		1000000,
+		currentHeight,
 		1250,
 		distributeEndTime,
 	)
@@ -886,21 +869,22 @@ func TestRewardManager_MultipleDeposits_DifferentTimings(t *testing.T) {
 		30,
 		"",
 		2000000, // Double amount
+		currentHeight,
 		1500,
 		distributeEndTime,
 	)
 	manager.addRewardStateByDeposit(deposit3, 5000)
 	
 	// Final update at end (500 seconds with 3 deposits)
-	err = manager.updateRewardPerDepositX128(4000000, 200, 2000)
+	err = manager.updateRewardPerDepositX128(4000000, 1200, 2000)
 	uassert.NoError(t, err)
 	
 	// Collect all rewards
-	reward1, err := manager.collectReward("1", 200)
+	reward1, err := manager.collectReward("1", 1600)
 	uassert.NoError(t, err)
-	reward2, err := manager.collectReward("2", 200)
+	reward2, err := manager.collectReward("2", 1600)
 	uassert.NoError(t, err)
-	reward3, err := manager.collectReward("3", 200)
+	reward3, err := manager.collectReward("3", 1600)
 	uassert.NoError(t, err)
 	
 	// Expected rewards:

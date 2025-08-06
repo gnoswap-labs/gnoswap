@@ -118,9 +118,12 @@ func TestProject_Getters(t *testing.T) {
 				recipient:     tt.recipient,
 				conditions:    make(map[string]*ProjectCondition),
 				tiers:         make(map[int64]*ProjectTier),
-				createdBlockTimeInfo: &BlockTimeInfo{
-					blockTime:   tt.createdTime,
-					blockHeight: tt.createdHeight,
+				createdAt:     tt.createdTime,
+				createdHeight:       tt.createdHeight,
+				tiersRatios: map[int64]int64{
+					30: 33,
+					90: 33,
+					180: 34,
 				},
 			}
 
@@ -196,12 +199,8 @@ func TestProject_Status(t *testing.T) {
 			project := &Project{
 				tiers: map[int64]*ProjectTier{
 					projectTier180: {
-						startBlockTimeInfo: &BlockTimeInfo{
-							blockHeight: tt.startHeight,
-						},
-						endBlockTimeInfo: &BlockTimeInfo{
-							blockHeight: tt.endHeight,
-						},
+						startTime: tt.startHeight,
+						endTime:   tt.endHeight,
 					},
 				},
 			}
@@ -575,9 +574,7 @@ func TestProject_ValidateRefundRemainingAmount(t *testing.T) {
 			name: "validate refund with ended project and remaining amount",
 			tiers: map[int64]*ProjectTier{
 				180: {
-					endBlockTimeInfo: &BlockTimeInfo{
-						blockHeight: 200,
-					},
+					endTime: 200,
 					totalDistributeAmount: 1000,
 					totalCollectedAmount:  600,
 				},
@@ -589,9 +586,7 @@ func TestProject_ValidateRefundRemainingAmount(t *testing.T) {
 			name: "validate refund with project not ended",
 			tiers: map[int64]*ProjectTier{
 				180: {
-					endBlockTimeInfo: &BlockTimeInfo{
-						blockHeight: 200,
-					},
+					endTime: 200,
 					totalDistributeAmount: 1000,
 					totalCollectedAmount:  600,
 				},
@@ -604,9 +599,7 @@ func TestProject_ValidateRefundRemainingAmount(t *testing.T) {
 			name: "validate refund with no remaining amount",
 			tiers: map[int64]*ProjectTier{
 				180: {
-					endBlockTimeInfo: &BlockTimeInfo{
-						blockHeight: 200,
-					},
+					endTime: 200,
 					totalDistributeAmount: 1000,
 					totalCollectedAmount:  1000,
 				},
@@ -817,7 +810,8 @@ func TestNewProject(t *testing.T) {
 		tokenPath             string
 		depositAmount         int64
 		recipient             std.Address
-		createdBlockTimeInfo  *BlockTimeInfo
+		createdAt             int64
+		createdHeight         int64
 		expectedID            string
 		expectedName          string
 		expectedTokenPath     string
@@ -830,10 +824,8 @@ func TestNewProject(t *testing.T) {
 			tokenPath:     "gno.land/r/test/token",
 			depositAmount: 1000000,
 			recipient:     testutils.TestAddress("recipient"),
-			createdBlockTimeInfo: &BlockTimeInfo{
-				blockTime:   1000,
-				blockHeight: 123,
-			},
+			createdAt:     1000,
+			createdHeight: 123,
 			expectedID:            "gno.land/r/test/token:123",
 			expectedName:          "Test Project",
 			expectedTokenPath:     "gno.land/r/test/token",
@@ -846,10 +838,8 @@ func TestNewProject(t *testing.T) {
 			tokenPath:     "gno.land/r/test/token",
 			depositAmount: 0,
 			recipient:     testutils.TestAddress("recipient"),
-			createdBlockTimeInfo: &BlockTimeInfo{
-				blockTime:   2000,
-				blockHeight: 456,
-			},
+			createdAt:     2000,
+			createdHeight: 456,
 			expectedID:            "gno.land/r/test/token:456",
 			expectedName:          "Zero Deposit Project",
 			expectedTokenPath:     "gno.land/r/test/token",
@@ -866,7 +856,8 @@ func TestNewProject(t *testing.T) {
 				tt.tokenPath,
 				tt.depositAmount,
 				tt.recipient,
-				tt.createdBlockTimeInfo,
+				tt.createdAt,
+				tt.createdHeight,
 			)
 
 			// Verify
@@ -877,9 +868,8 @@ func TestNewProject(t *testing.T) {
 			uassert.Equal(t, project.Recipient(), tt.expectedRecipient, "different recipient")
 			uassert.NotNil(t, project.conditions)
 			uassert.NotNil(t, project.tiers)
-			if project.CreatedBlockTimeInfo() != tt.createdBlockTimeInfo {
-				t.Errorf("createdBlockTimeInfo is different")
-			}
+			uassert.Equal(t, project.CreatedAt(), tt.createdAt)
+			uassert.Equal(t, project.CreatedHeight(), tt.createdHeight)
 		})
 	}
 }
@@ -940,14 +930,8 @@ func TestProject_TimeMethods(t *testing.T) {
 		{
 			name: "get time information from standard tier",
 			standardTier: &ProjectTier{
-				startBlockTimeInfo: &BlockTimeInfo{
-					blockTime:   1000,
-					blockHeight: 100,
-				},
-				endBlockTimeInfo: &BlockTimeInfo{
-					blockTime:   2000,
-					blockHeight: 200,
-				},
+				startTime: 1000,
+				endTime:   2000,
 			},
 			expectedStartTime:   1000,
 			expectedEndTime:     2000,
@@ -957,14 +941,8 @@ func TestProject_TimeMethods(t *testing.T) {
 		{
 			name: "get time information with zero values",
 			standardTier: &ProjectTier{
-				startBlockTimeInfo: &BlockTimeInfo{
-					blockTime:   0,
-					blockHeight: 0,
-				},
-				endBlockTimeInfo: &BlockTimeInfo{
-					blockTime:   0,
-					blockHeight: 0,
-				},
+				startTime: 0,
+				endTime:   0,
 			},
 			expectedStartTime:   0,
 			expectedEndTime:     0,
@@ -985,8 +963,8 @@ func TestProject_TimeMethods(t *testing.T) {
 			// Execute and verify
 			startTime := project.StartTime()
 			endTime := project.EndTime()
-			startHeight := project.StartHeight()
-			endHeight := project.EndHeight()
+			startHeight := project.standardTier().startTime
+			endHeight := project.standardTier().endTime
 
 			uassert.Equal(t, startTime, tt.expectedStartTime)
 			uassert.Equal(t, endTime, tt.expectedEndTime)

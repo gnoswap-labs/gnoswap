@@ -68,14 +68,8 @@ func TestProjectTier_Getters(t *testing.T) {
 				id:                           tt.id,
 				totalDistributeAmount:        tt.totalDistributeAmount,
 				distributeAmountPerSecondX128: tt.distributeAmountPerSecondX128,
-				startBlockTimeInfo: &BlockTimeInfo{
-					blockTime:   tt.startTime,
-					blockHeight: tt.startHeight,
-				},
-				endBlockTimeInfo: &BlockTimeInfo{
-					blockTime:   tt.endTime,
-					blockHeight: tt.endHeight,
-				},
+				startTime: tt.startTime,
+				endTime:   tt.endTime,
 				totalDepositAmount:   tt.totalDepositAmount,
 				totalWithdrawAmount:  tt.totalWithdrawAmount,
 				totalDepositCount:    tt.totalDepositCount,
@@ -151,12 +145,8 @@ func TestProjectTier_Status(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
 			tier := &ProjectTier{
-				startBlockTimeInfo: &BlockTimeInfo{
-					blockHeight: tt.startHeight,
-				},
-				endBlockTimeInfo: &BlockTimeInfo{
-					blockHeight: tt.endHeight,
-				},
+				startTime: tt.startHeight,
+				endTime:   tt.endHeight,
 			}
 
 			// Execute and verify
@@ -258,12 +248,11 @@ func TestNewProjectTier(t *testing.T) {
 		totalDistributeAmount int64
 		startBlockTime        int64
 		endBlockTime          int64
-		averageBlockTimeMs    int64
 		currentBlockTime      int64
 		currentBlockHeight    int64
 		expectedID            string
-		expectedStartHeight   int64
-		expectedEndHeight     int64
+		expectedStartTime   int64
+		expectedEndTime     int64
 		expectedHasError      bool
 		expectedError         string
 	}{
@@ -274,12 +263,11 @@ func TestNewProjectTier(t *testing.T) {
 			totalDistributeAmount: 1000,
 			startBlockTime:        1000,
 			endBlockTime:          2000,
-			averageBlockTimeMs:    1000,
 			currentBlockTime:      500,
 			currentBlockHeight:    50,
 			expectedID:            "test:180",
-			expectedStartHeight:   550,
-			expectedEndHeight:     1550,
+			expectedStartTime:   550,
+			expectedEndTime:     1550,
 			expectedHasError:      false,
 		},
 	}
@@ -293,15 +281,12 @@ func TestNewProjectTier(t *testing.T) {
 				tt.totalDistributeAmount,
 				tt.startBlockTime,
 				tt.endBlockTime,
-				tt.averageBlockTimeMs,
-				tt.currentBlockTime,
-				tt.currentBlockHeight,
 			)
 
 			// Verify
 			uassert.Equal(t, tier.ID(), tt.expectedID)
-			uassert.Equal(t, tier.StartHeight(), tt.expectedStartHeight)
-			uassert.Equal(t, tier.EndHeight(), tt.expectedEndHeight)
+			uassert.Equal(t, tier.StartTime(), tt.expectedStartTime)
+			uassert.Equal(t, tier.EndTime(), tt.expectedEndTime)
 		})
 	}
 }
@@ -356,8 +341,8 @@ func TestProjectTier_UpdateDistributeAmountPerSecond(t *testing.T) {
 			tier := &ProjectTier{
 				id:                   "test:30",
 				totalDistributeAmount: tt.totalDistributeAmount,
-				startBlockTimeInfo:   &BlockTimeInfo{blockTime: tt.startTime, blockHeight: 100},
-				endBlockTimeInfo:     &BlockTimeInfo{blockTime: tt.endTime, blockHeight: 200},
+				startTime:   tt.startTime,
+				endTime:     tt.endTime,
 			}
 			
 			// Update distribute amount per second
@@ -383,8 +368,8 @@ func TestProjectTier_VaryingBlockTimes(t *testing.T) {
 	fastBlockTier := &ProjectTier{
 		id:                    "fast:30",
 		totalDistributeAmount: 1000,
-		startBlockTimeInfo:    &BlockTimeInfo{blockTime: 1000, blockHeight: 100},
-		endBlockTimeInfo:      &BlockTimeInfo{blockTime: 1100, blockHeight: 200}, // 100 blocks in 100 seconds
+		startTime:   1000,
+		endTime:     1100, // 100 blocks in 100 seconds
 	}
 	fastBlockTier.updateDistributeAmountPerSecond()
 	
@@ -392,8 +377,8 @@ func TestProjectTier_VaryingBlockTimes(t *testing.T) {
 	slowBlockTier := &ProjectTier{
 		id:                    "slow:30",
 		totalDistributeAmount: 1000,
-		startBlockTimeInfo:    &BlockTimeInfo{blockTime: 1000, blockHeight: 100},
-		endBlockTimeInfo:      &BlockTimeInfo{blockTime: 1100, blockHeight: 110}, // 10 blocks in 100 seconds
+		startTime:   1000,
+		endTime:     1100, // 10 blocks in 100 seconds
 	}
 	slowBlockTier.updateDistributeAmountPerSecond()
 	
@@ -410,8 +395,8 @@ func TestProjectTier_EdgeCases(t *testing.T) {
 	zeroDurationTier := &ProjectTier{
 		id:                    "zero:30",
 		totalDistributeAmount: 1000,
-		startBlockTimeInfo:    &BlockTimeInfo{blockTime: 1000, blockHeight: 100},
-		endBlockTimeInfo:      &BlockTimeInfo{blockTime: 1000, blockHeight: 100}, // Same time
+		startTime:   1000,
+		endTime:     1000, // Same time
 		distributeAmountPerSecondX128: u256.Zero(),
 	}
 	zeroDurationTier.updateDistributeAmountPerSecond()
@@ -424,8 +409,8 @@ func TestProjectTier_EdgeCases(t *testing.T) {
 	invalidTier := &ProjectTier{
 		id:                    "invalid:30",
 		totalDistributeAmount: 1000,
-		startBlockTimeInfo:    &BlockTimeInfo{blockTime: 2000, blockHeight: 200},
-		endBlockTimeInfo:      &BlockTimeInfo{blockTime: 1000, blockHeight: 100}, // End before start
+		startTime:   2000,
+		endTime:     1000, // End before start
 		distributeAmountPerSecondX128: u256.Zero(),
 	}
 	invalidTier.updateDistributeAmountPerSecond()
