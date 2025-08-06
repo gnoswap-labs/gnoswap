@@ -13,6 +13,7 @@ import (
 	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/governance"
+	"gno.land/r/gnoswap/v1/pool"
 
 	govStaker "gno.land/r/gnoswap/v1/gov/staker"
 )
@@ -53,7 +54,8 @@ func main() {
 	println()
 
 	println("[SCENARIO] 7. Execute the change average block time proposal")
-	executeChangeAvgBlockTime(proposalID)
+	println("[INFO] Set pool creation fee to 0")
+	executeSetPoolCreationFee(proposalID)
 	println()
 }
 
@@ -94,11 +96,11 @@ func vote(proposalID int64, yea bool) {
 func executeSetPoolCreationFee(proposalID int64) {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
 
-	prevPoolCreationFee := gns.GetPoolCreationFee()
+	prevPoolCreationFee := pool.GetPoolCreationFee()
 
 	governance.Execute(cross, proposalID)
 
-	afterPoolCreationFee := gns.GetPoolCreationFee()
+	afterPoolCreationFee := pool.GetPoolCreationFee()
 
 	ufmt.Printf("[EXPECTED] before proposal %d executing - pool creation fee: %d\n", proposalID, prevPoolCreationFee)
 	ufmt.Printf("[EXPECTED] after proposal %d executing - pool creation fee: %d\n", proposalID, afterPoolCreationFee)
@@ -112,7 +114,7 @@ func executeSetPoolCreationFee(proposalID int64) {
 // [INFO] current height: 43323
 //
 // [SCENARIO] 3. Propose Change Average Block Time
-// [INFO] Change Average Block Time Proposal ID: 1
+// [INFO] Change Pool Creation Fee Proposal ID: 1
 //
 // [SCENARIO] 4. Skip voting start delay for ready to vote
 // [INFO] current height: 86523
@@ -125,5 +127,6 @@ func executeSetPoolCreationFee(proposalID int64) {
 // [INFO] current height: 388923
 //
 // [SCENARIO] 7. Execute the change average block time proposal
-// [EXPECTED] before proposal 1 executing - avg block time: 2000ms
-// [EXPECTED] after proposal 1 executing - avg block time: 5000ms
+// [INFO] Set pool creation fee to 0
+// [EXPECTED] before proposal 1 executing - pool creation fee: 100000000
+// [EXPECTED] after proposal 1 executing - pool creation fee: 0

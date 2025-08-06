@@ -64,7 +64,7 @@ func main() {
 func delegateGnsToAdmin() {
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	emission.SetDistributionStartTime(cross, time.Now().Unix() + 1)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	govStakerAddr := std.Address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
 	gns.Approve(cross, govStakerAddr, delegatedAmount)
@@ -106,11 +106,11 @@ func voteProposal(proposalID int64) {
 func executeMultiProposal(proposalID int64) {
 	communityPoolAddr := std.Address("g100fnnlz5eh87p5hvwt8pf279lxaelm8k8md049")
 
-	prevBlockTime := gns.AvgBlockTimeInMs()
+	prevBlockTime := currentBlockTime
 	prevCommunityPool := gns.BalanceOf(communityPoolAddr)
 	governance.Execute(cross, proposalID)
 
-	afterBlockTime := gns.AvgBlockTimeInMs()
+	afterBlockTime := currentBlockTime
 	afterCommunityPool := gns.BalanceOf(communityPoolAddr)
 	ufmt.Printf("[EXPECTED] before executing - block time: %d, community pool: %d\n", prevBlockTime, prevCommunityPool)
 	ufmt.Printf("[EXPECTED] after executing - block time: %d, community pool: %d\n", afterBlockTime, afterCommunityPool)
@@ -140,6 +140,6 @@ func executeMultiProposal(proposalID int64) {
 // [INFO] current height: 432123
 //
 // [SCENARIO] 7. Execute Multi Proposal
-// [EXPECTED] before executing - block time: 2000, community pool: 61643833920
-// [EXPECTED] after executing - block time: 123, community pool: 308219168695
+// [EXPECTED] before executing - block time: 2, community pool: 154109584800
+// [EXPECTED] after executing - block time: 2, community pool: 770547923095
 // [EXPECTED] proposal executed: executed
