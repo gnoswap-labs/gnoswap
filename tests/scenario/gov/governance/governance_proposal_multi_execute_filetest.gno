@@ -36,7 +36,7 @@ func main() {
 	println("[INFO] current height:", std.ChainHeight())
 	println()
 
-	println("[SCENARIO] 3. Propose Multi Execute (SetAvgBlockTimeInMs + CommunityPoolSpend)")
+	println("[SCENARIO] 3. Propose Multi Execute (SetPoolCreationFee + CommunityPoolSpend)")
 	proposalID := proposeMultiExecute()
 	println()
 
@@ -126,7 +126,7 @@ func executeMultiProposal(proposalID int64) {
 // [SCENARIO] 2. Skip vote weight smoothing duration for create proposal
 // [INFO] current height: 43323
 //
-// [SCENARIO] 3. Propose Multi Execute (SetAvgBlockTimeInMs + CommunityPoolSpend)
+// [SCENARIO] 3. Propose Multi Execute (SetPoolCreationFee + CommunityPoolSpend)
 // [INFO] Multi Execute Proposal ID: 1
 //
 // [SCENARIO] 4. Skip voting start delay for ready to vote
