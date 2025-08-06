@@ -84,6 +84,7 @@ func TestNewDelegation(t *testing.T) {
 				tt.delegateTo,
 				tt.delegateAmount,
 				tt.createdAt,
+				tt.createdAt,
 			)
 
 			// Then: Should initialize correctly
@@ -127,6 +128,7 @@ func TestDelegationGetters(t *testing.T) {
 					std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 					1000,
 					100,
+					100,
 				)
 			},
 			currentTime:            100,
@@ -147,8 +149,9 @@ func TestDelegationGetters(t *testing.T) {
 					std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 					1000,
 					100,
+					100,
 				)
-				delegation.unDelegate(300, 200, 7*24*60*60) // 7 days lockup
+				delegation.unDelegate(300, 200, 200, 7*24*60*60) // 7 days lockup
 				return delegation
 			},
 			currentTime:            200,
@@ -169,8 +172,9 @@ func TestDelegationGetters(t *testing.T) {
 					std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 					1000,
 					100,
+					100,
 				)
-				delegation.unDelegateWithoutLockup(200, 150)
+				delegation.unDelegateWithoutLockup(200, 150, 150)
 				return delegation
 			},
 			currentTime:            150,
@@ -191,8 +195,9 @@ func TestDelegationGetters(t *testing.T) {
 					std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 					500,
 					100,
+					100,
 				)
-				delegation.unDelegateWithoutLockup(500, 150) // Undelegate all without lockup
+				delegation.unDelegateWithoutLockup(500, 150, 150) // Undelegate all without lockup
 				return delegation
 			},
 			currentTime:            150,
@@ -273,10 +278,11 @@ func TestDelegation_unDelegate(t *testing.T) {
 				std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 				tt.initialAmount,
 				100,
+				100,
 			)
 
 			// When: Undelegate
-			delegation.unDelegate(tt.unDelegateAmount, tt.currentTime, tt.lockupPeriod)
+			delegation.unDelegate(tt.unDelegateAmount, tt.currentTime, tt.currentTime, tt.lockupPeriod)
 
 			// Then: Should update state correctly
 			uassert.Equal(t, delegation.UnDelegatedAmount(), tt.expectedUnDelegated)
@@ -330,10 +336,11 @@ func TestDelegation_unDelegateWithoutLockup(t *testing.T) {
 				std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 				tt.initialAmount,
 				100,
+				100,
 			)
 
 			// When: Undelegate without lockup
-			delegation.unDelegateWithoutLockup(tt.unDelegateAmount, tt.currentTime)
+			delegation.unDelegateWithoutLockup(tt.unDelegateAmount, tt.currentTime, tt.currentTime)
 
 			// Then: Should update state correctly
 			uassert.Equal(t, delegation.UnDelegatedAmount(), tt.expectedUnDelegated)
@@ -367,9 +374,10 @@ func TestDelegation_collect(t *testing.T) {
 					std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 					1000,
 					100,
+					100,
 				)
 				// Undelegate with lockup that has passed
-				delegation.unDelegate(300, 200, 100) // Short lockup for testing
+				delegation.unDelegate(300, 200, 200, 100) // Short lockup for testing
 				return delegation
 			},
 			collectAmount:     300,
@@ -386,8 +394,9 @@ func TestDelegation_collect(t *testing.T) {
 					std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 					1000,
 					100,
+					100,
 				)
-				delegation.unDelegate(200, 200, 100)
+				delegation.unDelegate(200, 200, 200, 100)
 				return delegation
 			},
 			collectAmount: 500, // More than available
@@ -403,8 +412,9 @@ func TestDelegation_collect(t *testing.T) {
 					std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 					1000,
 					100,
+					100,
 				)
-				delegation.unDelegate(500, 200, 100)
+				delegation.unDelegate(500, 200, 200, 100)
 				return delegation
 			},
 			collectAmount:     300, // Partial collection
@@ -445,17 +455,17 @@ func TestDelegation_ComplexScenarios(t *testing.T) {
 			name: "Multiple undelegations with different lockup periods",
 			operations: func(d *Delegation) {
 				// First undelegation with 7 day lockup
-				d.unDelegate(200, 100, 7*24*60*60)
+				d.unDelegate(200, 100, 100, 7*24*60*60)
 				uassert.Equal(t, d.UnDelegatedAmount(), int64(200))
 				uassert.Equal(t, len(d.withdraws), 1)
 
 				// Second undelegation with 3 day lockup
-				d.unDelegate(150, 200, 3*24*60*60)
+				d.unDelegate(150, 200, 200, 3*24*60*60)
 				uassert.Equal(t, d.UnDelegatedAmount(), int64(350))
 				uassert.Equal(t, len(d.withdraws), 2)
 
 				// Third undelegation without lockup
-				d.unDelegateWithoutLockup(100, 300)
+				d.unDelegateWithoutLockup(100, 300, 300)
 				uassert.Equal(t, d.UnDelegatedAmount(), int64(450))
 				uassert.Equal(t, d.CollectedAmount(), int64(100)) // Immediate collection
 				uassert.Equal(t, len(d.withdraws), 3)
@@ -466,8 +476,8 @@ func TestDelegation_ComplexScenarios(t *testing.T) {
 			name: "Partial collections from multiple withdraws",
 			operations: func(d *Delegation) {
 				// Setup multiple undelegations
-				d.unDelegate(300, 100, 100) // Short lockup
-				d.unDelegate(200, 150, 50)  // Very short lockup
+				d.unDelegate(300, 100, 100, 100) // Short lockup
+				d.unDelegate(200, 150, 150, 50)  // Very short lockup
 
 				// After sufficient time, both should be collectable
 				currentTime := int64(400)
@@ -490,11 +500,11 @@ func TestDelegation_ComplexScenarios(t *testing.T) {
 				initialAmount := d.TotalDelegatedAmount()
 
 				// Undelegate some with lockup
-				d.unDelegate(300, 100, 200)
+				d.unDelegate(300, 100, 100, 200)
 				uassert.Equal(t, d.DelegatedAmount(), initialAmount-300)
 
 				// Undelegate some without lockup
-				d.unDelegateWithoutLockup(200, 150)
+				d.unDelegateWithoutLockup(200, 150, 150)
 				uassert.Equal(t, d.DelegatedAmount(), initialAmount-500)
 				uassert.Equal(t, d.CollectedAmount(), int64(200))
 
@@ -504,7 +514,7 @@ func TestDelegation_ComplexScenarios(t *testing.T) {
 				uassert.Equal(t, d.CollectedAmount(), int64(500))
 
 				// Undelegate and collect remaining
-				d.unDelegateWithoutLockup(500, 500) // Remaining amount
+				d.unDelegateWithoutLockup(500, 500, 500) // Remaining amount
 				uassert.Equal(t, d.CollectedAmount(), initialAmount)
 				uassert.True(t, d.IsEmpty())
 			},
@@ -520,6 +530,7 @@ func TestDelegation_ComplexScenarios(t *testing.T) {
 				std.Address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
 				std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 				1000,
+				50,
 				50,
 			)
 
@@ -548,6 +559,7 @@ func TestDelegation_EdgeCases(t *testing.T) {
 					std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 					1000,
 					100,
+					100,
 				)
 
 				err := delegation.collect(100, 200)
@@ -564,10 +576,11 @@ func TestDelegation_EdgeCases(t *testing.T) {
 					std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 					1000,
 					100,
+					100,
 				)
 
 				// Zero undelegation
-				delegation.unDelegate(0, 200, 100)
+				delegation.unDelegate(0, 200, 200, 100)
 				uassert.Equal(t, delegation.UnDelegatedAmount(), int64(0))
 
 				// Zero collection should succeed but do nothing
@@ -586,10 +599,11 @@ func TestDelegation_EdgeCases(t *testing.T) {
 					std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 					1000,
 					100,
+					100,
 				)
 
 				// Undelegate with long lockup
-				delegation.unDelegate(300, 200, 1000000) // Very long lockup
+				delegation.unDelegate(300, 200, 200, 1000000) // Very long lockup
 
 				// Try to collect immediately - should fail or collect nothing
 				err := delegation.collect(300, 250)

@@ -159,14 +159,14 @@ func (e *EmissionRewardManager) updateAccumulatedRewardX128PerStake(
 //   - address: staker's address
 //   - amount: amount of stake to add
 //   - currentTimestamp: current timestamp
-func (e *EmissionRewardManager) addStake(address string, amount int64, currentHeight int64) {
+func (e *EmissionRewardManager) addStake(address string, amount int64, currentTimestamp int64) {
 	rewardStateI, ok := e.rewardStates.Get(address)
 	if !ok {
 		rewardStateI = NewEmissionRewardState(e.accumulatedRewardX128PerStake)
 	}
 
 	rewardState := rewardStateI.(*EmissionRewardState)
-	rewardState.addStakeWithUpdateRewardDebtX128(amount, e.accumulatedRewardX128PerStake, currentHeight)
+	rewardState.addStakeWithUpdateRewardDebtX128(amount, e.accumulatedRewardX128PerStake, currentTimestamp)
 
 	e.rewardStates.Set(address, rewardState)
 
@@ -180,14 +180,14 @@ func (e *EmissionRewardManager) addStake(address string, amount int64, currentHe
 //   - address: staker's address
 //   - amount: amount of stake to remove
 //   - currentTimestamp: current timestamp
-func (e *EmissionRewardManager) removeStake(address string, amount int64, currentHeight int64) {
+func (e *EmissionRewardManager) removeStake(address string, amount int64, currentTimestamp int64) {
 	rewardStateI, ok := e.rewardStates.Get(address)
 	if !ok {
 		rewardStateI = NewEmissionRewardState(e.accumulatedRewardX128PerStake.Clone())
 	}
 
 	rewardState := rewardStateI.(*EmissionRewardState)
-	rewardState.removeStakeWithUpdateRewardDebtX128(amount, e.accumulatedRewardX128PerStake, currentHeight)
+	rewardState.removeStakeWithUpdateRewardDebtX128(amount, e.accumulatedRewardX128PerStake, currentTimestamp)
 
 	e.rewardStates.Set(address, rewardState)
 
@@ -204,7 +204,7 @@ func (e *EmissionRewardManager) removeStake(address string, amount int64, curren
 // Returns:
 //   - int64: amount of rewards claimed
 //   - error: nil on success, error if claiming fails
-func (e *EmissionRewardManager) claimRewards(address string, currentHeight int64) (int64, error) {
+func (e *EmissionRewardManager) claimRewards(address string, currentTimestamp int64) (int64, error) {
 	rewardStateI, ok := e.rewardStates.Get(address)
 	if !ok {
 		return 0, nil
@@ -212,7 +212,7 @@ func (e *EmissionRewardManager) claimRewards(address string, currentHeight int64
 
 	rewardState := rewardStateI.(*EmissionRewardState)
 
-	claimedRewardAmount, err := rewardState.claimRewardsWithUpdateRewardDebtX128(e.accumulatedRewardX128PerStake, currentHeight)
+	claimedRewardAmount, err := rewardState.claimRewardsWithUpdateRewardDebtX128(e.accumulatedRewardX128PerStake, currentTimestamp)
 	if err != nil {
 		return 0, err
 	}
