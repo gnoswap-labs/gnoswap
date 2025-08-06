@@ -4,6 +4,7 @@ import (
 	"std"
 	"time"
 
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/halt"
 )
@@ -16,14 +17,42 @@ var (
 
 	// emissionAddr is the address of the emission realm
 	emissionAddr = std.CurrentRealm().Address()
+
+	// distributionStartBlockHeight is the block height from which emission distribution starts
+	// Default is 0, meaning distribution is not started until explicitly set
+	distributionStartBlockHeight int64
 )
+
+// GetLeftGNSAmount returns the amount of undistributed GNS tokens
+func GetLeftGNSAmount() int64 { return leftGNSAmount }
+
+// GetDistributionStartBlockHeight returns the block height from which emission distribution starts
+func GetDistributionStartBlockHeight() int64 { return distributionStartBlockHeight }
+
+// setLeftGNSAmount updates the undistributed GNS token amount
+func setLeftGNSAmount(amount int64) { leftGNSAmount = amount }
+
+// GetLastExecutedHeight returns the last block height when distribution was executed
+func GetLastExecutedHeight() int64 { return lastExecutedHeight }
+
+// setLastExecutedHeight updates the last executed block height
+func setLastExecutedHeight(height int64) { lastExecutedHeight = height }
 
 // MintAndDistributeGns mints new GNS tokens and distributes them to targets
 // Returns the total amount of GNS distributed
 func MintAndDistributeGns(cur realm) int64 {
 	halt.AssertIsNotHaltedEmission()
+	halt.AssertIsNotHaltedWithdraw()
 
 	currentHeight := std.ChainHeight()
+
+	// Check if distribution start block height is set and if current height has reached it
+	// If distributionStartBlockHeight is 0 (default), skip distribution to prevent immediate start
+	// If current height is below start height, skip distribution
+	if distributionStartBlockHeight == 0 || currentHeight < distributionStartBlockHeight {
+		return 0
+	}
+
 	lastMintedHeight := gns.LastMintedHeight()
 	if lastMintedHeight >= currentHeight {
 		// Skip if we've already minted tokens at this height
@@ -35,7 +64,7 @@ func MintAndDistributeGns(cur realm) int64 {
 
 	distributableAmount := mintedEmissionRewardAmount
 	prevLeftAmount := GetLeftGNSAmount()
-	if hasLeftGNSAmount() {
+	if leftGNSAmount > 0 {
 		distributableAmount += prevLeftAmount
 		setLeftGNSAmount(0)
 	}
@@ -45,7 +74,7 @@ func MintAndDistributeGns(cur realm) int64 {
 	if err != nil {
 		panic(err)
 	}
-	
+
 	if distributableAmount != distributedGNSAmount {
 		setLeftGNSAmount(distributableAmount - distributedGNSAmount)
 	}
@@ -71,27 +100,47 @@ func MintAndDistributeGns(cur realm) int64 {
 	return distributedGNSAmount
 }
 
-// GetLeftGNSAmount returns the amount of undistributed GNS tokens
-func GetLeftGNSAmount() int64 {
-	return leftGNSAmount
-}
+// SetDistributionStartBlockHeight sets the block height from which emission distribution starts
+// Only admin or governance can call this function
+func SetDistributionStartBlockHeight(cur realm, height int64) {
+	halt.AssertIsNotHaltedEmission()
+	halt.AssertIsNotHaltedWithdraw()
 
-// setLeftGNSAmount updates the undistributed GNS token amount
-func setLeftGNSAmount(amount int64) {
-	leftGNSAmount = amount
-}
+	caller := std.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernance(caller)
 
-// GetLastExecutedHeight returns the last block height when distribution was executed
-func GetLastExecutedHeight() int64 {
-	return lastExecutedHeight
-}
+	// this check will also prevent the overflow of int64 value
+	if height < 0 {
+		panic("distribution start block height cannot be negative")
+	}
 
-// setLastExecutedHeight updates the last executed block height
-func setLastExecutedHeight(height int64) {
-	lastExecutedHeight = height
-}
+	currentHeight := std.ChainHeight()
 
-// hasLeftGNSAmount checks if there are any undistributed GNS tokens
-func hasLeftGNSAmount() bool {
-	return leftGNSAmount > 0
+	// Prevent changing start height after distribution has already started
+	if distributionStartBlockHeight != 0 && distributionStartBlockHeight <= currentHeight {
+		panic("distribution has already started, cannot change start block height")
+	}
+
+	// Prevent setting distribution start height to a past block
+	if height > 0 && height <= currentHeight {
+		panic("distribution start block height must be greater than current block height")
+	}
+
+	oldHeight := distributionStartBlockHeight
+
+	// If setting a future start height and no emission has occurred yet,
+	// reinitialize the emission state to adjust halving years
+	if height > currentHeight && gns.MintedEmissionAmount() == 0 {
+		gns.ReinitializeEmissionState(cross, height)
+	}
+
+	distributionStartBlockHeight = height
+
+	std.Emit(
+		"SetDistributionStartBlockHeight",
+		"caller", caller.String(),
+		"oldHeight", formatInt(oldHeight),
+		"newHeight", formatInt(height),
+		"currentChainHeight", formatInt(currentHeight),
+	)
 }

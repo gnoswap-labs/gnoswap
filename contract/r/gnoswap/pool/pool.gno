@@ -58,8 +58,9 @@ func Mint(cur realm,
 	liquidityAmount string,
 	positionCaller std.Address,
 ) (string, string) {
-	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedPool()
+
+	caller := std.PreviousRealm().Address()
 	access.AssertIsPosition(caller)
 	access.AssertIsValidAddress(positionCaller)
 
@@ -68,7 +69,7 @@ func Mint(cur realm,
 		panic(errZeroLiquidity)
 	}
 
-	pool := GetPool(token0Path, token1Path, fee)
+	pool := mustGetPoolBy(token0Path, token1Path, fee)
 	liquidityDelta := safeConvertToInt128(liquidity)
 	positionParam := newModifyPositionParams(positionCaller, tickLower, tickUpper, liquidityDelta)
 	_, amount0, amount1, err := pool.modifyPosition(positionParam)
@@ -117,12 +118,13 @@ func Burn(
 	liquidityAmount string, // uint128
 	positionCaller std.Address,
 ) (string, string) { // uint256 x2
-	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedPool()
+
+	caller := std.PreviousRealm().Address()
 	access.AssertIsPosition(caller)
 	access.AssertIsValidAddress(positionCaller)
 
-	pool := GetPool(token0Path, token1Path, fee)
+	pool := mustGetPoolBy(token0Path, token1Path, fee)
 
 	liqAmount := u256.MustFromDecimal(liquidityAmount)
 	liqAmountInt256 := safeConvertToInt128(liqAmount)
@@ -136,8 +138,8 @@ func Burn(
 	if amount0.Gt(u256.Zero()) || amount1.Gt(u256.Zero()) {
 		amount0 = toUint128(amount0)
 		amount1 = toUint128(amount1)
-		position.tokensOwed0 = new(u256.Uint).Add(position.tokensOwed0, amount0)
-		position.tokensOwed1 = new(u256.Uint).Add(position.tokensOwed1, amount1)
+		position.tokensOwed0 = u256.Zero().Add(position.tokensOwed0, amount0)
+		position.tokensOwed1 = u256.Zero().Add(position.tokensOwed1, amount1)
 	}
 
 	positionKey, err := getPositionKey(positionCaller, tickLower, tickUpper)
@@ -176,7 +178,8 @@ func Burn(
 //   - string: The actual amount of token 1 collected, as a string.
 //
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#collect
-func Collect(cur realm,
+func Collect(
+	cur realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -186,12 +189,14 @@ func Collect(cur realm,
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedPool()
+	halt.AssertIsNotHaltedWithdraw()
+
+	caller := std.PreviousRealm().Address()
 	access.AssertIsPosition(caller)
 	access.AssertIsValidAddress(recipient)
 
-	pool := GetPool(token0Path, token1Path, fee)
+	pool := mustGetPoolBy(token0Path, token1Path, fee)
 	// Use recipient address instead of getPrevAddr() for position key generation
 	// because positions are created with the recipient's address in Mint function,
 	// and we need to access the same position that was originally created.
@@ -201,7 +206,7 @@ func Collect(cur realm,
 	if err != nil {
 		panic(err)
 	}
-	
+
 	position := pool.mustGetPosition(positionKey)
 
 	var amount0, amount1 *u256.Uint
@@ -213,13 +218,13 @@ func Collect(cur realm,
 	amount1 = collectToken(amount1Req, position.tokensOwed1, pool.BalanceToken1())
 
 	if amount0.Gt(u256.Zero()) {
-		position.tokensOwed0 = new(u256.Uint).Sub(position.tokensOwed0, amount0)
-		pool.balances.token0 = new(u256.Uint).Sub(pool.balances.token0, amount0)
+		position.tokensOwed0 = u256.Zero().Sub(position.tokensOwed0, amount0)
+		pool.balances.token0 = u256.Zero().Sub(pool.balances.token0, amount0)
 		checkTransferError(common.Transfer(cross, pool.token0Path, recipient, amount0.Int64()))
 	}
 	if amount1.Gt(u256.Zero()) {
-		position.tokensOwed1 = new(u256.Uint).Sub(position.tokensOwed1, amount1)
-		pool.balances.token1 = new(u256.Uint).Sub(pool.balances.token1, amount1)
+		position.tokensOwed1 = u256.Zero().Sub(position.tokensOwed1, amount1)
+		pool.balances.token1 = u256.Zero().Sub(pool.balances.token1, amount1)
 		checkTransferError(common.Transfer(cross, pool.token1Path, recipient, amount1.Int64()))
 	}
 
@@ -250,53 +255,12 @@ func collectToken(
 	return amount.Clone()
 }
 
-// CollectProtocolByAdmin collects protocol fees for the given pool that accumulated while it was being used for swap
-// Returns collected amount0, amount1 in string
-func CollectProtocolByAdmin(cur realm,
-	token0Path string,
-	token1Path string,
-	fee uint32,
-	recipient std.Address,
-	amount0Requested string,
-	amount1Requested string,
-) (string, string) {
-	caller := std.PreviousRealm().Address()
-	halt.AssertIsNotHaltedPool()
-	access.AssertIsAdmin(caller)
-
-	common.MustRegistered(token0Path)
-	common.MustRegistered(token1Path)
-
-	amount0, amount1 := collectProtocol(
-		token0Path,
-		token1Path,
-		fee,
-		recipient,
-		amount0Requested,
-		amount1Requested,
-	)
-
-	previousRealm := std.PreviousRealm()
-	std.Emit(
-		"CollectProtocolByAdmin",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"token0Path", token0Path,
-		"token1Path", token1Path,
-		"fee", formatUint(fee),
-		"recipient", recipient.String(),
-		"collectedAmount0", amount0,
-		"collectedAmount1", amount1,
-	)
-
-	return amount0, amount1
-}
-
 // CollectProtocol collects protocol fees for the given pool that accumulated while it was being used for swap
 // Only governance contract can execute this function via proposal
 // Returns collected amount0, amount1 in string
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#collectprotocol
-func CollectProtocol(cur realm,
+func CollectProtocol(
+	cur realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -304,9 +268,11 @@ func CollectProtocol(cur realm,
 	amount0Requested string, // uint128
 	amount1Requested string, // uint128
 ) (string, string) {
-	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedPool()
-	access.AssertIsGovernance(caller)
+	halt.AssertIsNotHaltedWithdraw()
+
+	caller := std.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernance(caller)
 
 	common.MustRegistered(token0Path)
 	common.MustRegistered(token1Path)
@@ -361,7 +327,7 @@ func collectProtocol(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	pool := GetPool(token0Path, token1Path, fee)
+	pool := mustGetPoolBy(token0Path, token1Path, fee)
 
 	amount0Req := u256.MustFromDecimal(amount0Requested)
 	amount1Req := u256.MustFromDecimal(amount1Requested)
@@ -401,8 +367,8 @@ func collectProtocol(
 //
 // Returns the adjusted amounts that will actually be collected for both tokens.
 func (p *Pool) saveProtocolFees(amount0, amount1 *u256.Uint) (*u256.Uint, *u256.Uint) {
-	p.protocolFees.token0 = new(u256.Uint).Sub(p.ProtocolFeesToken0(), amount0)
-	p.protocolFees.token1 = new(u256.Uint).Sub(p.ProtocolFeesToken1(), amount1)
+	p.protocolFees.token0 = u256.Zero().Sub(p.ProtocolFeesToken0(), amount0)
+	p.protocolFees.token1 = u256.Zero().Sub(p.ProtocolFeesToken1(), amount1)
 
 	return amount0, amount1
 }

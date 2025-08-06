@@ -154,9 +154,9 @@ func toUint128(value *u256.Uint) *u256.Uint {
 	}
 
 	if value.Gt(u256.MustFromDecimal(MAX_UINT128)) {
-		mask := new(u256.Uint).Lsh(u256.One(), Q128_RESOLUTION)
-		mask = new(u256.Uint).Sub(mask, u256.One())
-		return new(u256.Uint).And(value, mask)
+		mask := u256.Zero().Lsh(u256.One(), Q128_RESOLUTION)
+		mask = u256.Zero().Sub(mask, u256.One())
+		return u256.Zero().And(value, mask)
 	}
 	return value
 }

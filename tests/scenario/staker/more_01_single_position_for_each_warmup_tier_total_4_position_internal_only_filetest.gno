@@ -85,12 +85,13 @@ func main() {
 
 func initAndSetupSinglePool() {
 	testing.SetRealm(adminRealm)
+	emission.SetDistributionStartBlockHeight(cross, 124)
 
 	println("[INFO] set unstaking fee to 0")
 	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	println("[INFO] set community pool distribution to 0%")
 	emission.ChangeDistributionPct(

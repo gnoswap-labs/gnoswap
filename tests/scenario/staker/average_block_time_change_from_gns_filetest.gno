@@ -18,6 +18,7 @@ import (
 	"gno.land/r/demo/wugnot"
 
 	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/emission"
 
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
@@ -87,6 +88,8 @@ func main() {
 func initAccountAndEmission() {
 	println("[INFO] send coins to admin")
 	testing.SetRealm(adminRealm)
+	emission.SetDistributionStartBlockHeight(cross, 124)
+
 	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
 
 	testing.SetRealm(adminRealm)
@@ -110,7 +113,7 @@ func createPool() {
 
 	println("[INFO] set pool creation fee to 0")
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	println("[INFO] create pool gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000 at tick 0")
 	pl.CreatePool(

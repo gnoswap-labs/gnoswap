@@ -14,9 +14,8 @@ type ProposalActionStatus struct {
 	executedAt     int64       // Timestamp when proposal was executed
 	executedHeight int64       // Block height when proposal was executed
 	executedBy     std.Address // Who executed the proposal
-	
+
 	executable bool // Whether this proposal type supports execution
-	success    bool // Whether the execution was successful (only meaningful if executed)
 }
 
 // IsCanceled returns whether the proposal has been canceled.
@@ -77,7 +76,7 @@ func (p *ProposalActionStatus) cancel(canceledAt int64, canceledHeight int64, ca
 	if !p.executable {
 		return errProposalNotExecutable
 	}
-	
+
 	// Record cancellation details
 	p.canceled = true
 	p.canceledAt = canceledAt
@@ -112,29 +111,6 @@ func (p *ProposalActionStatus) execute(executedAt int64, executedHeight int64, e
 	return nil
 }
 
-// IsSuccess returns whether the proposal execution was successful.
-// Only meaningful for executed proposals.
-//
-// Returns:
-//   - bool: true if proposal was executed successfully
-func (p *ProposalActionStatus) IsSuccess() bool {
-	// Can only be successful if actually executed
-	if !p.executed {
-		return false
-	}
-
-	return p.success
-}
-
-// updateResult updates the execution success status.
-// This is called after execution attempt to record the outcome.
-//
-// Parameters:
-//   - success: true if execution was successful
-func (p *ProposalActionStatus) updateResult(success bool) {
-	p.success = success
-}
-
 // NewProposalActionStatus creates a new action status for a proposal.
 // Initializes the status with default values and the executable flag.
 //
@@ -145,9 +121,8 @@ func (p *ProposalActionStatus) updateResult(success bool) {
 //   - *ProposalActionStatus: new action status instance
 func NewProposalActionStatus(executable bool) *ProposalActionStatus {
 	return &ProposalActionStatus{
-		canceled:   false, // Proposal starts as not canceled
-		executed:   false, // Proposal starts as not executed
-		success:    false, // Execution success starts as false
+		canceled:   false,      // Proposal starts as not canceled
+		executed:   false,      // Proposal starts as not executed
 		executable: executable, // Set based on proposal type
 	}
 }

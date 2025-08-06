@@ -299,7 +299,7 @@ func TestComputeSwap(t *testing.T) {
 
 func TestDrySwap_Failures(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	SetPoolCreationFeeByAdmin(cross, 0)
+	SetPoolCreationFee(cross, 0)
 	CreatePool(cross, barPath, bazPath, fee100, "79228162514264337593543950336")
 
 	tests := []struct {
@@ -355,7 +355,6 @@ func TestDrySwap_Failures(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			amount0, amount1, success := DrySwap(
-				cross,
 				tt.token0Path,
 				tt.token1Path,
 				tt.fee,
@@ -391,7 +390,7 @@ func TestSwap_Failures(t *testing.T) {
 			name: "locked pool",
 			setupFn: func(t *testing.T) {
 				InitialisePoolTest(t)
-				pool := GetPool(wugnotPath, gnsPath, fee3000)
+				pool := mustGetPoolBy(wugnotPath, gnsPath, fee3000)
 				pool.slot0.unlocked = false
 			},
 			token0Path:        wugnotPath,
@@ -409,7 +408,7 @@ func TestSwap_Failures(t *testing.T) {
 			setupFn: func(t *testing.T) {
 				InitialisePoolTest(t)
 				// unlock pool
-				pool := GetPool(wugnotPath, gnsPath, fee3000)
+				pool := mustGetPoolBy(wugnotPath, gnsPath, fee3000)
 				pool.slot0.unlocked = true
 			},
 			token0Path:        wugnotPath,
@@ -506,7 +505,6 @@ func TestSwapAndDrySwapComparison(t *testing.T) {
 			}
 
 			dryAmount0, dryAmount1, drySuccess := DrySwap(
-				cross,
 				tt.token0Path,
 				tt.token1Path,
 				tt.fee,
@@ -564,7 +562,6 @@ func TestSwapAndDrySwapComparison_amount_zero(t *testing.T) {
 			},
 			action: func(t *testing.T) {
 				dryAmount0, dryAmount1, drySuccess := DrySwap(
-					cross,
 					wugnotPath,
 					gnsPath,
 					fee3000,

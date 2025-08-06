@@ -30,18 +30,12 @@ func CollectDepositGns(cur realm, depositID string) (int64, error) {
 	access.AssertIsUser(previousRealm)
 
 	caller := previousRealm.Address()
+	assertIsDepositOwner(depositID, caller)
 
 	emission.MintAndDistributeGns(cross)
 
-	deposit, err := getDeposit(depositID)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	if !deposit.IsOwner(caller) {
-		panic(makeErrorWithDetails(errInvalidOwner, ufmt.Sprintf("(%s)", caller.String())).Error())
-	}
-
+	deposit := mustGetDeposit(depositID)
+	
 	recipient, withdrawalAmount, err := withdrawDeposit(deposit, std.ChainHeight())
 	if err != nil {
 		panic(err.Error())

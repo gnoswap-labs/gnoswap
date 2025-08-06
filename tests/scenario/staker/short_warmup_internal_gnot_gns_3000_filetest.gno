@@ -76,6 +76,7 @@ func main() {
 
 func initWithShortWarmUp() {
 	testing.SetRealm(adminRealm)
+	emission.SetDistributionStartBlockHeight(cross, 124)
 
 	println("[INFO] override warm-up periods for testing")
 	sr.SetWarmUp(cross, 30, 150)
@@ -87,7 +88,7 @@ func initWithShortWarmUp() {
 	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	println("[INFO] set community pool distribution to 0%")
 	emission.ChangeDistributionPct(

@@ -134,6 +134,7 @@ func main() {
 
 func initAccount() {
 	testing.SetRealm(adminRealm)
+	emission.SetDistributionStartBlockHeight(cross, 124)
 
 	println("[INFO] set unstaking fee to 0")
 	sr.SetUnStakingFee(cross, 0)
@@ -166,7 +167,7 @@ func createPoolWugnotGns3000Tier01() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	println("[INFO] approve gns and create pool")
 	gns.Approve(cross, poolAddr, maxInt64)

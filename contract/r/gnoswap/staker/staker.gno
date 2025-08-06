@@ -281,7 +281,7 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 		lastExternalAccumulations: make(map[string]*u256.Uint),
 	}
 
-	currentTick := pl.PoolGetSlot0Tick(poolPath)
+	currentTick := pl.GetSlot0Tick(poolPath)
 
 	deposits.set(positionId, deposit)
 	stakers.addDeposit(caller, positionId, deposit)
@@ -682,7 +682,7 @@ func applyUnStake(positionId uint64) error {
 	}
 
 	currentHeight := std.ChainHeight()
-	currentTick := pl.PoolGetSlot0Tick(deposit.targetPoolPath)
+	currentTick := pl.GetSlot0Tick(deposit.targetPoolPath)
 	signedLiquidity := i256.FromUint256(deposit.liquidity)
 	signedLiquidity = signedLiquidity.Neg(signedLiquidity)
 	if pn.PositionIsInRange(positionId) {
