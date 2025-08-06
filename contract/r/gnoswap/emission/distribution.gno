@@ -80,16 +80,18 @@ func init() {
 //   - System is halted
 //
 // Events:
-//   Emits ChangeDistributionPct event with all target and percentage details
+//
+//	Emits ChangeDistributionPct event with all target and percentage details
 //
 // Example:
-//   // Set distribution: 75% stakers, 20% devops, 5% community, 0% gov stakers
-//   ChangeDistributionPct(
-//     LIQUIDITY_STAKER, 7500,
-//     DEVOPS, 2000,
-//     COMMUNITY_POOL, 500,
-//     GOV_STAKER, 0
-//   )
+//
+//	// Set distribution: 75% stakers, 20% devops, 5% community, 0% gov stakers
+//	ChangeDistributionPct(
+//	  LIQUIDITY_STAKER, 7500,
+//	  DEVOPS, 2000,
+//	  COMMUNITY_POOL, 500,
+//	  GOV_STAKER, 0
+//	)
 func ChangeDistributionPct(
 	cur realm,
 	target01 int, pct01 int64,
@@ -269,9 +271,9 @@ func transferToTarget(target int, amount int64) error {
 //   - Target not found in distribution tree
 //
 // Example:
-//   pct := GetDistributionBpsPct(LIQUIDITY_STAKER)
-//   // pct = 7500 (75%)
 //
+//	pct := GetDistributionBpsPct(LIQUIDITY_STAKER)
+//	// pct = 7500 (75%)
 func GetDistributionBpsPct(target int) int64 {
 	assertValidDistributionTarget(target)
 	if distributionBpsPct == nil {
@@ -296,7 +298,6 @@ func GetDistributionBpsPct(target int) int64 {
 //
 // Returns:
 //   - int64: GNS amount distributed but not yet processed
-//
 func GetDistributedToStaker() int64 {
 	return distributedToStaker
 }
@@ -308,7 +309,6 @@ func GetDistributedToStaker() int64 {
 //
 // Returns:
 //   - int64: GNS amount distributed to DevOps
-//
 func GetDistributedToDevOps() int64 {
 	return distributedToDevOps
 }
@@ -320,7 +320,6 @@ func GetDistributedToDevOps() int64 {
 //
 // Returns:
 //   - int64: GNS amount distributed to Community Pool
-//
 func GetDistributedToCommunityPool() int64 {
 	return distributedToCommunityPool
 }
@@ -332,7 +331,6 @@ func GetDistributedToCommunityPool() int64 {
 //
 // Returns:
 //   - int64: GNS amount distributed but not yet processed
-//
 func GetDistributedToGovStaker() int64 {
 	return distributedToGovStaker
 }
@@ -344,7 +342,6 @@ func GetDistributedToGovStaker() int64 {
 //
 // Returns:
 //   - int64: Total GNS ever distributed to stakers
-//
 func GetAccuDistributedToStaker() int64 {
 	return accuDistributedToStaker
 }
@@ -356,7 +353,6 @@ func GetAccuDistributedToStaker() int64 {
 //
 // Returns:
 //   - int64: Total GNS ever distributed to DevOps
-//
 func GetAccuDistributedToDevOps() int64 {
 	return accuDistributedToDevOps
 }
@@ -368,7 +364,6 @@ func GetAccuDistributedToDevOps() int64 {
 //
 // Returns:
 //   - int64: Total GNS ever distributed to Community Pool
-//
 func GetAccuDistributedToCommunityPool() int64 {
 	return accuDistributedToCommunityPool
 }
@@ -380,17 +375,16 @@ func GetAccuDistributedToCommunityPool() int64 {
 //
 // Returns:
 //   - int64: Total GNS ever distributed to governance stakers
-//
 func GetAccuDistributedToGovStaker() int64 {
 	return accuDistributedToGovStaker
 }
 
-func GetStakerEmissionAmountPerSeconds() int64 {
+func GetStakerEmissionAmountPerSecond() int64 {
 	currentTimestamp := time.Now().Unix()
-	return calculateAmount(gns.GetEmissionAmountPerSecondsByTimestamp(currentTimestamp), GetDistributionBpsPct(LIQUIDITY_STAKER))
+	return calculateAmount(gns.GetEmissionAmountPerSecondByTimestamp(currentTimestamp), GetDistributionBpsPct(LIQUIDITY_STAKER))
 }
 
-// GetStakerEmissionAmountPerSecondsInRange returns emission amounts allocated to liquidity stakers for a time range.
+// GetStakerEmissionAmountPerSecondInRange returns emission amounts allocated to liquidity stakers for a time range.
 //
 // This function calculates the portion of total emissions that should go to liquidity stakers
 // based on the current distribution percentage. It handles halving transitions within the
@@ -405,20 +399,21 @@ func GetStakerEmissionAmountPerSeconds() int64 {
 //   - []int64: Array of emission amounts per second for stakers at each period
 //
 // Note:
-//   When distribution percentages change, the staker contract flushes pending rewards first,
-//   ensuring this function can use current percentages for historical calculations.
+//
+//	When distribution percentages change, the staker contract flushes pending rewards first,
+//	ensuring this function can use current percentages for historical calculations.
 //
 // Example:
-//   times, amounts := GetStakerEmissionAmountPerSecondsInRange(startTime, endTime)
-//   // times[0] = 1234567890, amounts[0] = 5345674 (75% of 7127566 GNS/second)
 //
-func GetStakerEmissionAmountPerSecondsInRange(start, end int64) ([]int64, []int64) {
-	halvingBlocks, halvingEmissions := gns.GetEmissionAmountPerSecondsInRange(start, end)
+//	times, amounts := GetStakerEmissionAmountPerSecondInRange(startTime, endTime)
+//	// times[0] = 1234567890, amounts[0] = 5345674 (75% of 7127566 GNS/second)
+func GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64) {
+	halvingBlocks, halvingEmissions := gns.GetEmissionAmountPerSecondInRange(start, end)
 	for i := range halvingBlocks {
 		// Applying staker ratio for past halving blocks
 		halvingEmissions[i] = calculateAmount(halvingEmissions[i], GetDistributionBpsPct(LIQUIDITY_STAKER))
 	}
-	
+
 	return halvingBlocks, halvingEmissions
 }
 
@@ -434,8 +429,8 @@ func GetStakerEmissionAmountPerSecondsInRange(start, end int64) ([]int64, []int6
 //   - Caller is not the staker contract
 //
 // Note:
-//   This only clears the pending amount, not the historical accumulated amount.
 //
+//	This only clears the pending amount, not the historical accumulated amount.
 func ClearDistributedToStaker(cur realm) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
@@ -456,8 +451,8 @@ func ClearDistributedToStaker(cur realm) {
 //   - Caller is not the governance staker contract
 //
 // Note:
-//   This only clears the pending amount, not the historical accumulated amount.
 //
+//	This only clears the pending amount, not the historical accumulated amount.
 func ClearDistributedToGovStaker(cur realm) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsGovStaker(caller)

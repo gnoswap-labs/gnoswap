@@ -12,7 +12,6 @@ import (
 //
 // Returns:
 //   - bool: true if emission state is initialized, false otherwise
-//
 func IsEmissionInitialized() bool {
 	return getEmissionState().isInitialized()
 }
@@ -24,7 +23,6 @@ func IsEmissionInitialized() bool {
 //
 // Returns:
 //   - bool: true if emissions are currently being distributed, false otherwise
-//
 func IsEmissionActive() bool {
 	return getEmissionState().isActive(time.Now().Unix())
 }
@@ -33,7 +31,6 @@ func IsEmissionActive() bool {
 //
 // Returns:
 //   - bool: true if all emission periods have ended, false otherwise
-//
 func IsEmissionEnded() bool {
 	return getEmissionState().isEnded(time.Now().Unix())
 }
@@ -49,12 +46,11 @@ func GetHalvingYear(timestamp int64) int64 {
 //
 // Returns:
 //   - int64: Current halving year (1-13) or 0 if not active
-//
 func GetCurrentYear() int64 {
 	return getEmissionState().getCurrentYear(time.Now().Unix())
 }
 
-// GetEmissionAmountPerSecondsInRange returns halving timestamps and emission rates within a time range.
+// GetEmissionAmountPerSecondInRange returns halving timestamps and emission rates within a time range.
 //
 // This function provides the emission schedule data for a specified time period,
 // useful for calculating expected emissions or displaying emission curves.
@@ -68,11 +64,11 @@ func GetCurrentYear() int64 {
 //   - []int64: Array of emission amounts per second for each period
 //
 // Example:
-//   times, rates := GetEmissionAmountPerSecondsInRange(startTime, endTime)
-//   // times[0] = 1234567890 (start of year 2)
-//   // rates[0] = 7127566 (GNS per second in year 2)
 //
-func GetEmissionAmountPerSecondsInRange(fromTime, toTime int64) ([]int64, []int64) {
+//	times, rates := GetEmissionAmountPerSecondInRange(startTime, endTime)
+//	// times[0] = 1234567890 (start of year 2)
+//	// rates[0] = 7127566 (GNS per second in year 2)
+func GetEmissionAmountPerSecondInRange(fromTime, toTime int64) ([]int64, []int64) {
 	halvingData := getEmissionState().getHalvingData()
 	halvingTimes := make([]int64, 0)
 	halvingEmissions := make([]int64, 0)
@@ -82,21 +78,21 @@ func GetEmissionAmountPerSecondsInRange(fromTime, toTime int64) ([]int64, []int6
 		if startTimestamp < fromTime {
 			continue
 		}
-		
+
 		if toTime < startTimestamp {
 			break
 		}
 
 		halvingTimes = append(halvingTimes, startTimestamp)
-		halvingEmissions = append(halvingEmissions, halvingData.getAmountPerSeconds(year))
+		halvingEmissions = append(halvingEmissions, halvingData.getAmountPerSecond(year))
 	}
 
 	return halvingTimes, halvingEmissions
 }
 
-func GetEmissionAmountPerSecondsByTimestamp(timestamp int64) int64 {
+func GetEmissionAmountPerSecondByTimestamp(timestamp int64) int64 {
 	year := getEmissionState().getCurrentYear(timestamp)
-	return getEmissionState().getHalvingYearAmountPerSeconds(year)
+	return getEmissionState().getHalvingYearAmountPerSecond(year)
 }
 
 func GetEmissionLeftAmountByTimestamp(timestamp int64) int64 {
@@ -151,10 +147,10 @@ func GetHalvingYearAccuAmount(year int64) int64 {
 	return halvingData.getAccumAmount(year)
 }
 
-// GetAmountPerSecondsPerHalvingYear returns the issuance amount per second for a specific halving year
-func GetAmountPerSecondsPerHalvingYear(year int64) int64 {
+// GetAmountPerSecondPerHalvingYear returns the issuance amount per second for a specific halving year
+func GetAmountPerSecondPerHalvingYear(year int64) int64 {
 	halvingData := getEmissionState().getHalvingData()
-	return halvingData.getAmountPerSeconds(year)
+	return halvingData.getAmountPerSecond(year)
 }
 
 // GetHalvingAmountsPerYear returns the halving amount for a specific year
@@ -193,16 +189,16 @@ func GetHalvingInfo() string {
 
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		halvings = append(halvings, json.ObjectNode("", map[string]*json.Node{
-			"year":   json.StringNode("year", strconv.FormatInt(year, 10)),
+			"year":      json.StringNode("year", strconv.FormatInt(year, 10)),
 			"timestamp": json.NumberNode("timestamp", float64(GetHalvingYearTimestamp(year))),
-			"amount": json.NumberNode("amount", float64(GetAmountPerSecondsPerHalvingYear(year))),
+			"amount":    json.NumberNode("amount", float64(GetAmountPerSecondPerHalvingYear(year))),
 		}))
 	}
 
 	node := json.ObjectNode("", map[string]*json.Node{
-		"height":         json.NumberNode("height", float64(currentHeight)),
-		"currentTime":      json.NumberNode("timestamp", float64(currentTime)),
-		"halvings":       json.ArrayNode("", halvings),
+		"height":      json.NumberNode("height", float64(currentHeight)),
+		"currentTime": json.NumberNode("timestamp", float64(currentTime)),
+		"halvings":    json.ArrayNode("", halvings),
 	})
 
 	b, err := json.Marshal(node)

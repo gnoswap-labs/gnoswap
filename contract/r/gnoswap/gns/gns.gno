@@ -49,21 +49,18 @@ func init() {
 //
 // Returns:
 //   - string: "Gnoswap"
-//
 func Name() string { return token.GetName() }
 
 // Symbol returns the symbol of the GNS token.
 //
 // Returns:
 //   - string: "GNS"
-//
 func Symbol() string { return token.GetSymbol() }
 
 // Decimals returns the number of decimal places for GNS token.
 //
 // Returns:
 //   - int: 6 (1 GNS = 1,000,000 base units)
-//
 func Decimals() int { return token.GetDecimals() }
 
 // TotalSupply returns the total supply of GNS tokens in circulation.
@@ -73,14 +70,12 @@ func Decimals() int { return token.GetDecimals() }
 //
 // Returns:
 //   - int64: Total GNS supply in base units
-//
 func TotalSupply() int64 { return token.TotalSupply() }
 
 // KnownAccounts returns the number of addresses that have held GNS.
 //
 // Returns:
 //   - int: Count of unique addresses that have interacted with GNS
-//
 func KnownAccounts() int { return token.KnownAccounts() }
 
 // BalanceOf returns the GNS balance of a specific address.
@@ -90,7 +85,6 @@ func KnownAccounts() int { return token.KnownAccounts() }
 //
 // Returns:
 //   - int64: GNS balance in base units
-//
 func BalanceOf(owner std.Address) int64 { return token.BalanceOf(owner) }
 
 // Allowance returns the amount of GNS that a spender is allowed to transfer from an owner.
@@ -101,7 +95,6 @@ func BalanceOf(owner std.Address) int64 { return token.BalanceOf(owner) }
 //
 // Returns:
 //   - int64: Approved amount in base units
-//
 func Allowance(owner, spender std.Address) int64 { return token.Allowance(owner, spender) }
 
 // MintGns mints new GNS tokens according to the emission schedule.
@@ -129,8 +122,8 @@ func Allowance(owner, spender std.Address) int64 { return token.Allowance(owner,
 //   - Updates lastMintedTimestamp and emission tracking
 //
 // Events:
-//   Emits MintGNS event with mint details
 //
+//	Emits MintGNS event with mint details
 func MintGns(cur realm, address std.Address) int64 {
 	halt.AssertIsNotHaltedEmission()
 
@@ -196,12 +189,12 @@ func MintGns(cur realm, address std.Address) int64 {
 //   - Amount is negative
 //
 // Events:
-//   Emits Burn event with burn details
+//
+//	Emits Burn event with burn details
 //
 // Note:
 //   - Permanently reduces total supply
 //   - Updates burnAmount tracking
-//
 func Burn(cur realm, from std.Address, amount int64) {
 	owner.AssertOwnedByCurrent()
 	checkErr(privateLedger.Burn(from, amount))
@@ -276,7 +269,7 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
 	if fromTimestamp < startTimestamp {
 		fromTimestamp = startTimestamp
 	}
-	
+
 	if toTimestamp < startTimestamp {
 		return 0
 	}
@@ -302,7 +295,7 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
 		}
 
 		// amount of gns to mint for each second for current year
-		amountPerSecond := GetAmountPerSecondsPerHalvingYear(year)
+		amountPerSecond := GetAmountPerSecondPerHalvingYear(year)
 
 		// amount of gns to mint for current year
 		yearAmountToMint := amountPerSecond * seconds
@@ -325,7 +318,7 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
 			"year", formatInt(year),
 			"amountPerSecond", formatInt(amountPerSecond),
 		)
-		
+
 		// update fromHeight for next year (if necessary)
 		fromTimestamp = currentToTimestamp + 1
 
@@ -371,5 +364,5 @@ func LeftEmissionAmount() int64 { return leftEmissionAmount }
 func MintedEmissionAmount() int64 { return mintedEmissionAmount }
 
 func setLastMintedTimestamp(timestamp int64) { lastMintedTimestamp = timestamp }
-func setLeftEmissionAmount(amount int64)   { leftEmissionAmount = amount }
-func setMintedEmissionAmount(amount int64) { mintedEmissionAmount = amount }
+func setLeftEmissionAmount(amount int64)     { leftEmissionAmount = amount }
+func setMintedEmissionAmount(amount int64)   { mintedEmissionAmount = amount }

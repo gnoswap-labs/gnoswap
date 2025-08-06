@@ -15,9 +15,9 @@ func init() {
 
 // EmissionState is a struct for managing emission state
 type EmissionState struct {
-	startHeight    int64       // emission start block height
-	startTimestamp int64       // emission start timestamp
-	endTimestamp   int64       // emission end timestamp
+	startHeight    int64        // emission start block height
+	startTimestamp int64        // emission start timestamp
+	endTimestamp   int64        // emission end timestamp
 	halvingData    *HalvingData // halving data
 }
 
@@ -82,8 +82,8 @@ func (e *EmissionState) getHalvingYearEndTimestamp(year int64) int64 {
 	return e.halvingData.getEndTimestamp(year)
 }
 
-func (e *EmissionState) getHalvingYearAmountPerSeconds(year int64) int64 {
-	return e.halvingData.getAmountPerSeconds(year)
+func (e *EmissionState) getHalvingYearAmountPerSecond(year int64) int64 {
+	return e.halvingData.getAmountPerSecond(year)
 }
 
 func (e *EmissionState) getHalvingYearAccumulatedAmount(year int64) int64 {
@@ -133,7 +133,7 @@ func NewEmissionState(startHeight int64, startTimestamp int64) *EmissionState {
 		startHeight:    startHeight,
 		startTimestamp: startTimestamp,
 		endTimestamp:   emissionEndTime,
-		halvingData:   NewHalvingData(startTimestamp),
+		halvingData:    NewHalvingData(startTimestamp),
 	}
 }
 

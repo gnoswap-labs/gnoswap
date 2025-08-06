@@ -208,8 +208,8 @@ func init() {
 		std.ChainHeight(),
 		time.Now().Unix(),
 		MUST_EXISTS_IN_TIER_1,
-		en.GetStakerEmissionAmountPerSeconds,
-		en.GetStakerEmissionAmountPerSecondsInRange,
+		en.GetStakerEmissionAmountPerSecond,
+		en.GetStakerEmissionAmountPerSecondInRange,
 	)
 }
 
@@ -274,15 +274,15 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 
 	// staked status
 	deposit := &Deposit{
-		owner:             caller,
-		stakeTimestamp:    currentTime,
-		stakeTime:         currentTime,
-		targetPoolPath:    poolPath,
-		tickLower:         tickLower,
-		tickUpper:         tickUpper,
-		liquidity:         liquidity,
-		lastCollectTime:   currentTime,
-		warmups:           instantiateWarmup(currentTime),
+		owner:           caller,
+		stakeTimestamp:  currentTime,
+		stakeTime:       currentTime,
+		targetPoolPath:  poolPath,
+		tickLower:       tickLower,
+		tickUpper:       tickUpper,
+		liquidity:       liquidity,
+		lastCollectTime: currentTime,
+		warmups:         instantiateWarmup(currentTime),
 	}
 
 	currentTick := pl.GetSlot0Tick(poolPath)
@@ -743,7 +743,7 @@ func getLiquidity(positionId uint64) *u256.Uint {
 
 func getTokenPairBalanceFromPosition(poolPath string, positionId uint64) (string, string) {
 	position := pn.MustGetPosition(positionId)
-	
+
 	return position.Token0Balance().ToString(), position.Token1Balance().ToString()
 }
 

@@ -63,15 +63,16 @@ func setLastExecutedTimestamp(timestamp int64) { lastExecutedTimestamp = timesta
 //   - Distribution error occurs
 //
 // Events:
-//   Emits MintAndDistributeGns event with distribution details
+//
+//	Emits MintAndDistributeGns event with distribution details
 //
 // Example:
-//   // Called by external system every block or periodically
-//   distributed := MintAndDistributeGns()
-//   // distributed = 1000000 (1 GNS distributed)
+//
+//	// Called by external system every block or periodically
+//	distributed := MintAndDistributeGns()
+//	// distributed = 1000000 (1 GNS distributed)
 func MintAndDistributeGns(cur realm) int64 {
 	halt.AssertIsNotHaltedEmission()
-	halt.AssertIsNotHaltedWithdraw()
 
 	currentHeight := std.ChainHeight()
 	currentTimestamp := time.Now().Unix()
@@ -152,16 +153,19 @@ func MintAndDistributeGns(cur realm) int64 {
 //   - Distribution has already started
 //
 // Events:
-//   Emits SetDistributionStartTime event with configuration details
+//
+//	Emits SetDistributionStartTime event with configuration details
 //
 // Example:
-//   // Set distribution to start at specific timestamp
-//   futureTime := time.Now().Unix() + 86400 // 24 hours from now
-//   SetDistributionStartTime(futureTime)
+//
+//	// Set distribution to start at specific timestamp
+//	futureTime := time.Now().Unix() + 86400 // 24 hours from now
+//	SetDistributionStartTime(futureTime)
 //
 // Note:
-//   If no emissions have occurred yet, this also reinitializes the emission
-//   state to adjust halving year calculations based on the new start time.
+//
+//	If no emissions have occurred yet, this also reinitializes the emission
+//	state to adjust halving year calculations based on the new start time.
 func SetDistributionStartTime(cur realm, startTimestamp int64) {
 	halt.AssertIsNotHaltedEmission()
 	halt.AssertIsNotHaltedWithdraw()
