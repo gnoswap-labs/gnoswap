@@ -12,29 +12,29 @@ import (
 type ProtocolFeeRewardState struct {
 	// rewardDebtX128 maps token path to reward debt with 128-bit precision scaling
 	// Used to calculate rewards earned since the last update for each token
-	rewardDebtX128     map[string]*u256.Uint
+	rewardDebtX128 map[string]*u256.Uint
 	// accumulatedRewards maps token path to total rewards accumulated but not yet claimed
 	accumulatedRewards map[string]int64
 	// claimedRewards maps token path to total amount of rewards that have been claimed
-	claimedRewards     map[string]int64
-	// accumulatedHeight is the last block height when rewards were accumulated
-	accumulatedHeight  int64
-	// claimedHeight is the last block height when rewards were claimed
-	claimedHeight      int64
+	claimedRewards map[string]int64
+	// accumulatedTimestamp is the last timestamp when rewards were accumulated
+	accumulatedTimestamp int64
+	// claimedTimestamp is the last timestamp when rewards were claimed
+	claimedTimestamp int64
 	// stakedAmount is the current amount of tokens staked by this address
-	stakedAmount       int64
+	stakedAmount int64
 }
 
-// IsClaimable checks if rewards can be claimed at the given height.
-// Rewards are claimable if the current height is greater than the last claimed height.
+// IsClaimable checks if rewards can be claimed at the given timestamp.
+// Rewards are claimable if the current timestamp is greater than the last claimed timestamp.
 //
 // Parameters:
-//   - currentHeight: current block height to check against
+//   - currentTimestamp: current timestamp to check against
 //
 // Returns:
 //   - bool: true if rewards can be claimed, false otherwise
-func (p *ProtocolFeeRewardState) IsClaimable(currentHeight int64) bool {
-	return p.claimedHeight < currentHeight
+func (p *ProtocolFeeRewardState) IsClaimable(currentTimestamp int64) bool {
+	return p.claimedTimestamp < currentTimestamp
 }
 
 // GetClaimableRewardAmounts calculates the claimable reward amounts for all tokens.
@@ -42,15 +42,15 @@ func (p *ProtocolFeeRewardState) IsClaimable(currentHeight int64) bool {
 //
 // Parameters:
 //   - accumulatedRewardsX128PerStake: current system-wide accumulated rewards per stake for all tokens
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 //
 // Returns:
 //   - map[string]int64: map of token path to claimable reward amount
 func (p *ProtocolFeeRewardState) GetClaimableRewardAmounts(
 	accumulatedRewardsX128PerStake map[string]*u256.Uint,
-	currentHeight int64,
+	currentTimestamp int64,
 ) map[string]int64 {
-	rewardAmounts := p.calculateClaimableRewards(accumulatedRewardsX128PerStake, currentHeight)
+	rewardAmounts := p.calculateClaimableRewards(accumulatedRewardsX128PerStake, currentTimestamp)
 
 	return rewardAmounts
 }
@@ -60,16 +60,16 @@ func (p *ProtocolFeeRewardState) GetClaimableRewardAmounts(
 //
 // Parameters:
 //   - accumulatedRewardsX128PerStake: current system-wide accumulated rewards per stake for all tokens
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 //
 // Returns:
 //   - map[string]int64: map of token path to newly earned reward amount
 func (p *ProtocolFeeRewardState) calculateClaimableRewards(
 	accumulatedRewardsX128PerStake map[string]*u256.Uint,
-	currentHeight int64,
+	currentTimestamp int64,
 ) map[string]int64 {
-	// Don't calculate rewards for past heights
-	if p.accumulatedHeight >= currentHeight {
+	// Don't calculate rewards for past timestamps
+	if p.accumulatedTimestamp >= currentTimestamp {
 		return p.accumulatedRewards
 	}
 
@@ -87,13 +87,13 @@ func (p *ProtocolFeeRewardState) calculateClaimableRewards(
 			accumulatedRewardX128PerStake,
 			p.rewardDebtX128[token],
 		)
-		
+
 		// Multiply by staked amount to get total reward for this staker and token
 		rewardAmountX128 := u256.Zero().Mul(
 			rewardDebtDeltaX128,
 			u256.NewUintFromInt64(p.stakedAmount),
 		)
-		
+
 		// Scale down by 2^128 to get the actual reward amount
 		rewardAmount := u256.Zero().Rsh(rewardAmountX128, 128)
 
@@ -125,17 +125,17 @@ func (p *ProtocolFeeRewardState) removeStake(amount int64) {
 // This method validates claimability and transfers accumulated rewards to claimed status.
 //
 // Parameters:
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 //
 // Returns:
 //   - map[string]int64: map of token path to claimed reward amount
 //   - error: nil on success, error if claiming is not allowed
-func (p *ProtocolFeeRewardState) claimRewards(currentHeight int64) (map[string]int64, error) {
-	if !p.IsClaimable(currentHeight) {
+func (p *ProtocolFeeRewardState) claimRewards(currentTimestamp int64) (map[string]int64, error) {
+	if !p.IsClaimable(currentTimestamp) {
 		return nil, errors.New("not claimable")
 	}
 
-	if p.accumulatedHeight < currentHeight {
+	if p.accumulatedTimestamp < currentTimestamp {
 		return nil, errors.New("must update reward debt before claiming rewards")
 	}
 
@@ -147,7 +147,7 @@ func (p *ProtocolFeeRewardState) claimRewards(currentHeight int64) (map[string]i
 		p.claimedRewards[token] = rewardAmount
 	}
 
-	p.claimedHeight = currentHeight
+	p.claimedTimestamp = currentTimestamp
 
 	return currentClaimedRewards, nil
 }
@@ -157,18 +157,18 @@ func (p *ProtocolFeeRewardState) claimRewards(currentHeight int64) (map[string]i
 //
 // Parameters:
 //   - accumulatedProtocolFeeX128PerStake: current system-wide accumulated protocol fees per stake for all tokens
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 func (p *ProtocolFeeRewardState) updateRewardDebtX128(
 	accumulatedProtocolFeeX128PerStake map[string]*u256.Uint,
-	currentHeight int64,
+	currentTimestamp int64,
 ) {
-	// Don't update if we're looking at a past height
-	if p.accumulatedHeight >= currentHeight {
+	// Don't update if we're looking at a past timestamp
+	if p.accumulatedTimestamp >= currentTimestamp {
 		return
 	}
 
 	// Calculate and accumulate new rewards for all tokens
-	rewardAmounts := p.calculateClaimableRewards(accumulatedProtocolFeeX128PerStake, currentHeight)
+	rewardAmounts := p.calculateClaimableRewards(accumulatedProtocolFeeX128PerStake, currentTimestamp)
 	p.rewardDebtX128 = cloneAccumulatedProtocolFeeX128PerStake(accumulatedProtocolFeeX128PerStake)
 
 	// Add newly calculated rewards to accumulated amounts
@@ -176,7 +176,7 @@ func (p *ProtocolFeeRewardState) updateRewardDebtX128(
 		p.accumulatedRewards[token] = p.accumulatedRewards[token] + rewardAmount
 	}
 
-	p.accumulatedHeight = currentHeight
+	p.accumulatedTimestamp = currentTimestamp
 }
 
 // addStakeWithUpdateRewardDebtX128 adds stake and updates reward debt in one operation.
@@ -185,13 +185,13 @@ func (p *ProtocolFeeRewardState) updateRewardDebtX128(
 // Parameters:
 //   - amount: amount of stake to add
 //   - accumulatedProtocolFeeX128PerStake: current system-wide accumulated protocol fees per stake
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 func (p *ProtocolFeeRewardState) addStakeWithUpdateRewardDebtX128(
 	amount int64,
 	accumulatedProtocolFeeX128PerStake map[string]*u256.Uint,
-	currentHeight int64,
+	currentTimestamp int64,
 ) {
-	p.updateRewardDebtX128(accumulatedProtocolFeeX128PerStake, currentHeight)
+	p.updateRewardDebtX128(accumulatedProtocolFeeX128PerStake, currentTimestamp)
 	p.addStake(amount)
 }
 
@@ -201,13 +201,13 @@ func (p *ProtocolFeeRewardState) addStakeWithUpdateRewardDebtX128(
 // Parameters:
 //   - amount: amount of stake to remove
 //   - accumulatedProtocolFeeX128PerStake: current system-wide accumulated protocol fees per stake
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 func (p *ProtocolFeeRewardState) removeStakeWithUpdateRewardDebtX128(
 	amount int64,
 	accumulatedProtocolFeeX128PerStake map[string]*u256.Uint,
-	currentHeight int64,
+	currentTimestamp int64,
 ) {
-	p.updateRewardDebtX128(accumulatedProtocolFeeX128PerStake, currentHeight)
+	p.updateRewardDebtX128(accumulatedProtocolFeeX128PerStake, currentTimestamp)
 	p.removeStake(amount)
 }
 
@@ -216,18 +216,18 @@ func (p *ProtocolFeeRewardState) removeStakeWithUpdateRewardDebtX128(
 //
 // Parameters:
 //   - accumulatedProtocolFeeX128PerStake: current system-wide accumulated protocol fees per stake
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 //
 // Returns:
 //   - map[string]int64: map of token path to claimed reward amount
 //   - error: nil on success, error if claiming fails
 func (p *ProtocolFeeRewardState) claimRewardsWithUpdateRewardDebtX128(
 	accumulatedProtocolFeeX128PerStake map[string]*u256.Uint,
-	currentHeight int64,
+	currentTimestamp int64,
 ) (map[string]int64, error) {
-	p.updateRewardDebtX128(accumulatedProtocolFeeX128PerStake, currentHeight)
+	p.updateRewardDebtX128(accumulatedProtocolFeeX128PerStake, currentTimestamp)
 
-	return p.claimRewards(currentHeight)
+	return p.claimRewards(currentTimestamp)
 }
 
 // NewProtocolFeeRewardState creates a new protocol fee reward state for a staker.
@@ -249,12 +249,12 @@ func NewProtocolFeeRewardState(
 	}
 
 	return &ProtocolFeeRewardState{
-		rewardDebtX128:     rewardDebtX128,
-		claimedRewards:     map[string]int64{},
-		accumulatedRewards: map[string]int64{},
-		stakedAmount:       0,
-		accumulatedHeight:  0,
-		claimedHeight:      0,
+		rewardDebtX128:       rewardDebtX128,
+		claimedRewards:       map[string]int64{},
+		accumulatedRewards:   map[string]int64{},
+		stakedAmount:         0,
+		accumulatedTimestamp: 0,
+		claimedTimestamp:     0,
 	}
 }
 

@@ -55,20 +55,18 @@ func GetClaimableRewardByRewardID(rewardID string) string {
 		WriteString("emissionReward", formatInt(emissionReward)).
 		Node()
 
-	if len(protocolFeeRewards) > 0 {
-		pfArr := json.ArrayNode("", nil)
-		for tokenPath, protocolFeeReward := range protocolFeeRewards {
-			if protocolFeeReward > 0 {
-				pfObj := json.Builder().
-					WriteString("tokenPath", tokenPath).
-					WriteString("amount", formatInt(protocolFeeReward)).
-					Node()
-				pfArr.AppendArray(pfObj)
-			}
+	// Always include protocolFees array, even if empty
+	pfArr := json.ArrayNode("", nil)
+	for tokenPath, protocolFeeReward := range protocolFeeRewards {
+		if protocolFeeReward > 0 {
+			pfObj := json.Builder().
+				WriteString("tokenPath", tokenPath).
+				WriteString("amount", formatInt(protocolFeeReward)).
+				Node()
+			pfArr.AppendArray(pfObj)
 		}
-
-		data.AppendObject("protocolFees", pfArr)
 	}
+	data.AppendObject("protocolFees", pfArr)
 
 	return marshal(data)
 }

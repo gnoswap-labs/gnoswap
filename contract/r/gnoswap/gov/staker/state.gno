@@ -2,7 +2,6 @@ package staker
 
 import (
 	"std"
-	"time"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
@@ -312,14 +311,14 @@ func claimRewardsEmissionReward(address string, currentTimestamp int64) (int64, 
 // Parameters:
 //   - address: staker's address
 //   - amount: amount of stake to add
-//   - currentHeight: current block height
-func addStakeProtocolFeeReward(address string, amount int64, currentHeight int64) {
+//   - currentTimestamp: current timestamp
+func addStakeProtocolFeeReward(address string, amount int64, currentTimestamp int64) {
 	protocol_fee.DistributeProtocolFee(cross)
 
 	distributedAmounts := getDistributedProtocolFees()
 
-	protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentHeight)
-	protocolFeeRewardManager.addStake(address, amount, currentHeight)
+	protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
+	protocolFeeRewardManager.addStake(address, amount, currentTimestamp)
 }
 
 // removeStakeProtocolFeeReward removes stake from protocol fee reward tracking for an address.
@@ -328,14 +327,14 @@ func addStakeProtocolFeeReward(address string, amount int64, currentHeight int64
 // Parameters:
 //   - address: staker's address
 //   - amount: amount of stake to remove
-//   - currentHeight: current block height
-func removeStakeProtocolFeeReward(address string, amount int64, currentHeight int64) {
+//   - currentTimestamp: current timestamp
+func removeStakeProtocolFeeReward(address string, amount int64, currentTimestamp int64) {
 	protocol_fee.DistributeProtocolFee(cross)
 
 	distributedAmounts := getDistributedProtocolFees()
 
-	protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentHeight)
-	protocolFeeRewardManager.removeStake(address, amount, currentHeight)
+	protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
+	protocolFeeRewardManager.removeStake(address, amount, currentTimestamp)
 }
 
 // claimRewardsProtocolFeeReward claims protocol fee rewards for an address.
@@ -343,18 +342,18 @@ func removeStakeProtocolFeeReward(address string, amount int64, currentHeight in
 //
 // Parameters:
 //   - address: staker's address claiming rewards
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 //
 // Returns:
 //   - map[string]int64: protocol fee rewards claimed by token
 //   - error: nil on success, error if claiming fails
-func claimRewardsProtocolFeeReward(address string, currentHeight int64) (map[string]int64, error) {
+func claimRewardsProtocolFeeReward(address string, currentTimestamp int64) (map[string]int64, error) {
 	protocol_fee.DistributeProtocolFee(cross)
 
 	distributedAmounts := getDistributedProtocolFees()
 
-	protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentHeight)
-	return protocolFeeRewardManager.claimRewards(address, currentHeight)
+	protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
+	return protocolFeeRewardManager.claimRewards(address, currentTimestamp)
 }
 
 // getDistributedProtocolFees retrieves the current distributed protocol fee amounts for all tokens.
@@ -420,7 +419,7 @@ func removeLaunchpadProjectDeposit(ownerAddress string) bool {
 func addStakeFromLaunchpad(address string, amount int64, currentTimestamp int64) {
 	launchpadRewardID := makeLaunchpadRewardID(address)
 	addStakeEmissionReward(launchpadRewardID, amount, currentTimestamp)
-	addStakeProtocolFeeReward(launchpadRewardID, amount, time.Now().Unix())
+	addStakeProtocolFeeReward(launchpadRewardID, amount, currentTimestamp)
 
 	deposit, exists := getLaunchpadProjectDeposit(launchpadRewardID)
 	if !exists {
@@ -441,7 +440,7 @@ func addStakeFromLaunchpad(address string, amount int64, currentTimestamp int64)
 func removeStakeFromLaunchpad(address string, amount int64, currentTimestamp int64) {
 	launchpadRewardID := makeLaunchpadRewardID(address)
 	removeStakeEmissionReward(launchpadRewardID, amount, currentTimestamp)
-	removeStakeProtocolFeeReward(launchpadRewardID, amount, time.Now().Unix())
+	removeStakeProtocolFeeReward(launchpadRewardID, amount, currentTimestamp)
 
 	deposit, exists := getLaunchpadProjectDeposit(launchpadRewardID)
 	if !exists {
