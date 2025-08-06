@@ -104,7 +104,7 @@ func Swap(
 	if err != nil {
 		panic(err)
 	}
-	
+
 	applySwapResult(pool, result)
 
 	// update TWAP state
@@ -138,6 +138,9 @@ func Swap(
 		"balanceToken0", pool.BalanceToken0().ToString(),
 		"balanceToken1", pool.BalanceToken1().ToString(),
 		"ticks", pool.Ticks(),
+		"tickCumulative", formatInt(pool.Observation().TickCumulative()),
+		"liquidityCumulative", pool.Observation().LiquidityCumulative(),
+		"lastCumulativeUpdateTime", formatInt(pool.Observation().LastCumulativeUpdateTime()),
 	)
 
 	return result.Amount0.ToString(), result.Amount1.ToString()

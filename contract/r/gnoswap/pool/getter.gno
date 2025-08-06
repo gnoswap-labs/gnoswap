@@ -233,7 +233,7 @@ func ExistsPoolPath(poolPath string) bool {
 	return pools.Has(poolPath)
 }
 
-func GetSqrtPriceCumulativeX96(poolPath string, secondsAgo int64) string {
+func GetTickCumulative(poolPath string, secondsAgo int64) int64 {
 	pool := mustGetPool(poolPath)
-	return pool.twap.sqrtPriceCumulativeX96.ToString()
+	return pool.Observation().TickCumulative()
 }

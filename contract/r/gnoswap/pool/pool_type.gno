@@ -79,7 +79,7 @@ type Pool struct {
 	tickBitmaps          *avl.Tree  // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(*u256.Uint)
 	positions            *avl.Tree  // maps the key (caller, lower tick, upper tick) to a unique position
 
-	twap TWAP
+	observation *Observation
 }
 
 func (p *Pool) PoolPath() string                 { return GetPoolPath(p.token0Path, p.token1Path, p.fee) }
@@ -100,17 +100,7 @@ func (p *Pool) FeeGrowthGlobal1X128() *u256.Uint { return p.feeGrowthGlobal1X128
 func (p *Pool) ProtocolFeesToken0() *u256.Uint   { return p.protocolFees.token0 }
 func (p *Pool) ProtocolFeesToken1() *u256.Uint   { return p.protocolFees.token1 }
 func (p *Pool) Liquidity() *u256.Uint            { return p.liquidity }
-func (p *Pool) TWAP() TWAP                       { return p.twap }
-
-type TWAP struct {
-	lastCumulativeUpdateTime int64      // last cumulative update time (in seconds)
-	sqrtPriceCumulativeX96   *u256.Uint // cumulative sqrt price (Q64.96 precision)
-	liquidityCumulative      *u256.Uint // cumulative liquidity (time-weighted average calculation)
-}
-
-func (t *TWAP) LastCumulativeUpdateTime() int64    { return t.lastCumulativeUpdateTime }
-func (t *TWAP) SqrtPriceCumulativeX96() string     { return t.sqrtPriceCumulativeX96.ToString() }
-func (t *TWAP) LiquidityCumulative() string        { return t.liquidityCumulative.ToString() }
+func (p *Pool) Observation() *Observation        { return p.observation }
 
 func (p *Pool) Ticks() string {
 	if p.ticks == nil {
@@ -203,39 +193,64 @@ func (p *Pool) Clone() *Pool {
 		ticks:                ticks,
 		tickBitmaps:          tickBitmaps,
 		positions:            positions,
+		observation:          &Observation{
+			lastCumulativeUpdateTime: p.observation.lastCumulativeUpdateTime,
+			tickCumulative:           p.observation.tickCumulative,
+			liquidityCumulative:      u256.Zero().Set(p.observation.liquidityCumulative),
+		},
 	}
 }
 
-func (p *Pool) calculatePriceCumulatives(currentTime int64) (*u256.Uint, *u256.Uint, int64) {
+func (p *Pool) calculateTickCumulative(currentTime int64) (int64, *u256.Uint, int64) {
 	// calculate time delta
-	twap := p.TWAP()
-	timeDelta := currentTime - twap.lastCumulativeUpdateTime
+	observation := p.Observation()
+	timeDelta := currentTime - observation.lastCumulativeUpdateTime
 	if timeDelta <= 0 {
-		return twap.sqrtPriceCumulativeX96, twap.liquidityCumulative, twap.lastCumulativeUpdateTime
+		return observation.tickCumulative, observation.liquidityCumulative, observation.lastCumulativeUpdateTime
 	}
-
-	timeDeltaUint := u256.NewUintFromInt64(timeDelta)
 
 	// update cumulative values (only price is used)
 	// sqrtPriceCumulativeX96 = sqrtPriceCumulativeX96 + sqrtPriceX96 * timeDelta
-	priceDelta := u256.Zero().Mul(p.slot0.sqrtPriceX96, timeDeltaUint)
+	tickDelta := int64(p.slot0.Tick()) * timeDelta
 
 	// liquidityCumulative = liquidityCumulative + liquidity * timeDelta
-	liquidityDelta := u256.Zero().Mul(p.liquidity, timeDeltaUint)
+	liquidityDelta := u256.Zero().Mul(p.liquidity, u256.NewUintFromInt64(timeDelta))
 
-	sqrtPriceCumulativeX96 := u256.Zero().Add(twap.sqrtPriceCumulativeX96, priceDelta)
-	liquidityCumulative := u256.Zero().Add(twap.liquidityCumulative, liquidityDelta)
+	tickCumulative := observation.tickCumulative + tickDelta
+	liquidityCumulative := u256.Zero().Add(observation.liquidityCumulative, liquidityDelta)
 	lastCumulativeUpdateTime := currentTime
 
-	return sqrtPriceCumulativeX96, liquidityCumulative, lastCumulativeUpdateTime
+	return tickCumulative, liquidityCumulative, lastCumulativeUpdateTime
 }
 
 // updatePriceCumulatives updates cumulative price values when pool price changes
 // This should be called whenever the pool's price changes (swap, mint, burn)
 func (p *Pool) updatePriceCumulatives(currentTime int64) {
-	sqrtPriceCumulativeX96, liquidityCumulative, lastCumulativeUpdateTime := p.calculatePriceCumulatives(currentTime)
+	if currentTime < p.observation.lastCumulativeUpdateTime {
+		return
+	}
 
-	p.twap.sqrtPriceCumulativeX96 = sqrtPriceCumulativeX96
-	p.twap.liquidityCumulative = liquidityCumulative
-	p.twap.lastCumulativeUpdateTime = lastCumulativeUpdateTime
+	tickCumulative, liquidityCumulative, lastCumulativeUpdateTime := p.calculateTickCumulative(currentTime)
+
+	p.observation.liquidityCumulative = liquidityCumulative
+	p.observation.tickCumulative = tickCumulative
+	p.observation.lastCumulativeUpdateTime = lastCumulativeUpdateTime
+}
+
+type Observation struct {
+	lastCumulativeUpdateTime int64      // last cumulative update time (in seconds)
+	tickCumulative           int64      // cumulative tick
+	liquidityCumulative      *u256.Uint // cumulative liquidity (time-weighted average calculation)
+}
+
+func (t *Observation) LastCumulativeUpdateTime() int64 { return t.lastCumulativeUpdateTime }
+func (t *Observation) TickCumulative() int64           { return t.tickCumulative }
+func (t *Observation) LiquidityCumulative() string     { return t.liquidityCumulative.ToString() }
+
+func newObservation(currentTime int64) *Observation {
+	return &Observation{
+		lastCumulativeUpdateTime: currentTime,
+		tickCumulative:           0,
+		liquidityCumulative:      u256.Zero(),
+	}
 }
