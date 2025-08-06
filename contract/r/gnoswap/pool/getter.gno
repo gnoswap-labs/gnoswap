@@ -235,5 +235,5 @@ func ExistsPoolPath(poolPath string) bool {
 
 func GetSqrtPriceCumulativeX96(poolPath string, secondsAgo int64) string {
 	pool := mustGetPool(poolPath)
-	return pool.sqrtPriceCumulativeX96.ToString()
+	return pool.twap.sqrtPriceCumulativeX96.ToString()
 }

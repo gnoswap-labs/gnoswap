@@ -24,10 +24,12 @@ func TestPool_CalculatePriceCumulatives(t *testing.T) {
 				slot0: Slot0{
 					sqrtPriceX96: u256.NewUint(2000000000), // Price
 				},
-				liquidity:                u256.NewUint(1000000), // Liquidity
-				lastCumulativeUpdateTime: 100,
-				sqrtPriceCumulativeX96:   u256.NewUint(5000000000),
-				liquidityCumulative:      u256.NewUint(3000000),
+				twap: TWAP{
+					lastCumulativeUpdateTime: 100,
+					sqrtPriceCumulativeX96:   u256.NewUint(5000000000),
+					liquidityCumulative:      u256.NewUint(3000000),
+				},
+				liquidity: u256.NewUint(1000000), // Liquidity
 			},
 			currentTime: 150, // 50 seconds elapsed
 			want: struct {
@@ -39,7 +41,7 @@ func TestPool_CalculatePriceCumulatives(t *testing.T) {
 				sqrtPriceCumulative: u256.NewUint(105000000000),
 				// Previous cumulative + (liquidity * timeDelta)
 				liquidityCumulative: u256.NewUint(53000000),
-				lastUpdateTime: 150,
+				lastUpdateTime:      150,
 			},
 		},
 		{
@@ -48,10 +50,12 @@ func TestPool_CalculatePriceCumulatives(t *testing.T) {
 				slot0: Slot0{
 					sqrtPriceX96: u256.NewUint(2000000000),
 				},
-				liquidity:                u256.NewUint(1000000),
-				lastCumulativeUpdateTime: 0,
-				sqrtPriceCumulativeX96:   u256.Zero(),
-				liquidityCumulative:      u256.Zero(),
+				twap: TWAP{
+					lastCumulativeUpdateTime: 0,
+					sqrtPriceCumulativeX96:   u256.Zero(),
+					liquidityCumulative:      u256.Zero(),
+				},
+				liquidity: u256.NewUint(1000000),
 			},
 			currentTime: 100,
 			want: struct {
@@ -70,10 +74,12 @@ func TestPool_CalculatePriceCumulatives(t *testing.T) {
 				slot0: Slot0{
 					sqrtPriceX96: u256.NewUint(2000000000),
 				},
-				liquidity:                u256.Zero(),
-				lastCumulativeUpdateTime: 100,
-				sqrtPriceCumulativeX96:   u256.NewUint(5000000000),
-				liquidityCumulative:      u256.NewUint(3000000),
+				twap: TWAP{
+					lastCumulativeUpdateTime: 100,
+					sqrtPriceCumulativeX96:   u256.NewUint(5000000000),
+					liquidityCumulative:      u256.NewUint(3000000),
+				},
+				liquidity: u256.Zero(),
 			},
 			currentTime: 150,
 			want: struct {
@@ -100,7 +106,6 @@ func TestPool_CalculatePriceCumulatives(t *testing.T) {
 }
 
 func TestPool_UpdatePriceCumulatives(t *testing.T) {
-	// Test cases
 	tests := []struct {
 		name        string
 		pool        *Pool
@@ -118,6 +123,10 @@ func TestPool_UpdatePriceCumulatives(t *testing.T) {
 					sqrtPriceX96: u256.NewUint(2000000000), // Example price
 				},
 				liquidity: u256.NewUint(1000000), // Example liquidity
+				twap: TWAP{
+					sqrtPriceCumulativeX96: u256.Zero(),
+					liquidityCumulative:    u256.Zero(),
+				},
 			},
 			currentTime: 0,
 			want: struct {
@@ -136,8 +145,12 @@ func TestPool_UpdatePriceCumulatives(t *testing.T) {
 				slot0: Slot0{
 					sqrtPriceX96: u256.NewUint(2000000000),
 				},
-				liquidity:                u256.NewUint(1000000),
-				lastCumulativeUpdateTime: 100,
+				twap: TWAP{
+					lastCumulativeUpdateTime: 100,
+					sqrtPriceCumulativeX96:   u256.Zero(),
+					liquidityCumulative:      u256.Zero(),
+				},
+				liquidity: u256.NewUint(1000000),
 			},
 			currentTime: 200,
 			want: struct {
@@ -152,20 +165,15 @@ func TestPool_UpdatePriceCumulatives(t *testing.T) {
 		},
 	}
 
-	// Run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.pool.updatePriceCumulatives(tt.currentTime)
 
-			if !tt.pool.sqrtPriceCumulativeX96.Eq(tt.want.sqrtPriceCumulative) {
-				t.Errorf("sqrtPriceCumulativeX96 = %v, want %v", tt.pool.sqrtPriceCumulativeX96, tt.want.sqrtPriceCumulative)
-			}
-			if !tt.pool.liquidityCumulative.Eq(tt.want.liquidityCumulative) {
-				t.Errorf("liquidityCumulative = %v, want %v", tt.pool.liquidityCumulative, tt.want.liquidityCumulative)
-			}
-			if tt.pool.lastCumulativeUpdateTime != tt.want.lastUpdateTime {
-				t.Errorf("lastCumulativeUpdateTime = %v, want %v", tt.pool.lastCumulativeUpdateTime, tt.want.lastUpdateTime)
-			}
+			twap := tt.pool.TWAP()
+
+			uassert.Equal(t, twap.SqrtPriceCumulativeX96(), tt.want.sqrtPriceCumulative.ToString())
+			uassert.Equal(t, twap.LiquidityCumulative(), tt.want.liquidityCumulative.ToString())
+			uassert.Equal(t, twap.lastCumulativeUpdateTime, tt.want.lastUpdateTime)
 		})
 	}
 }

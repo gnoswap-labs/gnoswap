@@ -287,9 +287,11 @@ func newPool(poolInfo *poolCreateConfig) *Pool {
 		ticks:                    avl.NewTree(),
 		tickBitmaps:              avl.NewTree(),
 		positions:                avl.NewTree(),
-		lastCumulativeUpdateTime: time.Now().Unix(),
-		sqrtPriceCumulativeX96:   u256.Zero(),
-		liquidityCumulative:      u256.Zero(),
+		twap: TWAP{
+			lastCumulativeUpdateTime: time.Now().Unix(),
+			sqrtPriceCumulativeX96:   u256.Zero(),
+			liquidityCumulative:      u256.Zero(),
+		},
 	}
 }
 

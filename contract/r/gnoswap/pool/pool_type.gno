@@ -79,10 +79,7 @@ type Pool struct {
 	tickBitmaps          *avl.Tree  // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(*u256.Uint)
 	positions            *avl.Tree  // maps the key (caller, lower tick, upper tick) to a unique position
 
-	// TWAP related fields
-	lastCumulativeUpdateTime int64      // last cumulative update time (in seconds)
-	sqrtPriceCumulativeX96   *u256.Uint // cumulative sqrt price (Q64.96 precision)
-	liquidityCumulative      *u256.Uint // cumulative liquidity (time-weighted average calculation)
+	twap TWAP
 }
 
 func (p *Pool) PoolPath() string                 { return GetPoolPath(p.token0Path, p.token1Path, p.fee) }
@@ -103,6 +100,17 @@ func (p *Pool) FeeGrowthGlobal1X128() *u256.Uint { return p.feeGrowthGlobal1X128
 func (p *Pool) ProtocolFeesToken0() *u256.Uint   { return p.protocolFees.token0 }
 func (p *Pool) ProtocolFeesToken1() *u256.Uint   { return p.protocolFees.token1 }
 func (p *Pool) Liquidity() *u256.Uint            { return p.liquidity }
+func (p *Pool) TWAP() TWAP                       { return p.twap }
+
+type TWAP struct {
+	lastCumulativeUpdateTime int64      // last cumulative update time (in seconds)
+	sqrtPriceCumulativeX96   *u256.Uint // cumulative sqrt price (Q64.96 precision)
+	liquidityCumulative      *u256.Uint // cumulative liquidity (time-weighted average calculation)
+}
+
+func (t *TWAP) LastCumulativeUpdateTime() int64    { return t.lastCumulativeUpdateTime }
+func (t *TWAP) SqrtPriceCumulativeX96() string     { return t.sqrtPriceCumulativeX96.ToString() }
+func (t *TWAP) LiquidityCumulative() string        { return t.liquidityCumulative.ToString() }
 
 func (p *Pool) Ticks() string {
 	if p.ticks == nil {
@@ -200,9 +208,10 @@ func (p *Pool) Clone() *Pool {
 
 func (p *Pool) calculatePriceCumulatives(currentTime int64) (*u256.Uint, *u256.Uint, int64) {
 	// calculate time delta
-	timeDelta := currentTime - p.lastCumulativeUpdateTime
+	twap := p.TWAP()
+	timeDelta := currentTime - twap.lastCumulativeUpdateTime
 	if timeDelta <= 0 {
-		return p.sqrtPriceCumulativeX96, p.liquidityCumulative, p.lastCumulativeUpdateTime
+		return twap.sqrtPriceCumulativeX96, twap.liquidityCumulative, twap.lastCumulativeUpdateTime
 	}
 
 	timeDeltaUint := u256.NewUintFromInt64(timeDelta)
@@ -214,8 +223,8 @@ func (p *Pool) calculatePriceCumulatives(currentTime int64) (*u256.Uint, *u256.U
 	// liquidityCumulative = liquidityCumulative + liquidity * timeDelta
 	liquidityDelta := u256.Zero().Mul(p.liquidity, timeDeltaUint)
 
-	sqrtPriceCumulativeX96 := u256.Zero().Add(p.sqrtPriceCumulativeX96, priceDelta)
-	liquidityCumulative := u256.Zero().Add(p.liquidityCumulative, liquidityDelta)
+	sqrtPriceCumulativeX96 := u256.Zero().Add(twap.sqrtPriceCumulativeX96, priceDelta)
+	liquidityCumulative := u256.Zero().Add(twap.liquidityCumulative, liquidityDelta)
 	lastCumulativeUpdateTime := currentTime
 
 	return sqrtPriceCumulativeX96, liquidityCumulative, lastCumulativeUpdateTime
@@ -226,7 +235,7 @@ func (p *Pool) calculatePriceCumulatives(currentTime int64) (*u256.Uint, *u256.U
 func (p *Pool) updatePriceCumulatives(currentTime int64) {
 	sqrtPriceCumulativeX96, liquidityCumulative, lastCumulativeUpdateTime := p.calculatePriceCumulatives(currentTime)
 
-	p.sqrtPriceCumulativeX96 = sqrtPriceCumulativeX96
-	p.liquidityCumulative = liquidityCumulative
-	p.lastCumulativeUpdateTime = lastCumulativeUpdateTime
+	p.twap.sqrtPriceCumulativeX96 = sqrtPriceCumulativeX96
+	p.twap.liquidityCumulative = liquidityCumulative
+	p.twap.lastCumulativeUpdateTime = lastCumulativeUpdateTime
 }
