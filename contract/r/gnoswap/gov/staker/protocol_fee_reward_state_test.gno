@@ -385,7 +385,7 @@ func TestProtocolFeeRewardState_updateRewardDebtX128(t *testing.T) {
 			// Given: Protocol fee reward state setup
 			state := NewProtocolFeeRewardState(make(map[string]*u256.Uint))
 			tt.setupState(state)
-			initialTimestamp := state.accumulatedTimestamp
+			startedAt := state.accumulatedTimestamp
 
 			// When: Update reward debt X128
 			state.updateRewardDebtX128(tt.accumulatedProtocolFeeX128PerStake, tt.currentTimestamp)
@@ -394,7 +394,7 @@ func TestProtocolFeeRewardState_updateRewardDebtX128(t *testing.T) {
 			if tt.shouldUpdate {
 				uassert.Equal(t, state.accumulatedTimestamp, tt.currentTimestamp)
 			} else {
-				uassert.Equal(t, state.accumulatedTimestamp, initialTimestamp)
+				uassert.Equal(t, state.accumulatedTimestamp, startedAt)
 			}
 		})
 	}
@@ -458,14 +458,8 @@ func TestProtocolFeeRewardState_CombinedOperations(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Given: Fresh protocol fee reward state
 			state := NewProtocolFeeRewardState(make(map[string]*u256.Uint))
-
-			// When: Execute operations
 			tt.operations(state)
-
-			// Then: Operations should complete successfully
-			// Assertions are done within the operations function
 		})
 	}
 }
@@ -531,14 +525,8 @@ func TestProtocolFeeRewardState_EdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Given: Fresh protocol fee reward state
 			state := NewProtocolFeeRewardState(make(map[string]*u256.Uint))
-
-			// When: Execute test setup
 			tt.setupTest(state)
-
-			// Then: Test should complete without panicking
-			// Additional assertions are done within setupTest
 		})
 	}
 }

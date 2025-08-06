@@ -124,6 +124,6 @@ func emissionRewardScenario() {
 // [INFO] skipped 10 blocks and distributed emission
 //
 // [SCENARIO] 5. Check and collect emission reward
-// [INFO] claimable reward (dummy): {"height":"133","now":"1234567940","emissionReward":"5945585"}
+// [INFO] claimable reward (dummy): {"height":"133","now":"1234567940","emissionReward":"14863964","protocolFees":[]}
 // [INFO] collected emission reward for dummy
-// [EXPECTED] dummy GNS balance after collect: 5945585
+// [EXPECTED] dummy GNS balance after collect: 14863964
