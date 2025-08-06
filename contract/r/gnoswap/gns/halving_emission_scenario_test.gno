@@ -57,8 +57,8 @@ func testBasicEmissionUpdateFlow(t *testing.T) {
 	testing.SetOriginCaller(adminAddr)
 
 	// Step 6: Verify amount per seconds calculation
-	amountPerSeconds1 := GetAmountPerSecondsPerHalvingYear(1)
-	amountPerSeconds2 := GetAmountPerSecondsPerHalvingYear(2)
+	amountPerSeconds1 := GetAmountPerSecondPerHalvingYear(1)
+	amountPerSeconds2 := GetAmountPerSecondPerHalvingYear(2)
 	t.Logf("Year 1 emission E1: %d", amountPerSeconds1)
 	t.Logf("Year 2 emission E2: %d", amountPerSeconds2)
 
@@ -71,7 +71,7 @@ func testBasicEmissionUpdateFlow(t *testing.T) {
 }
 
 /*
-Purpose: Ensure GetAmountPerSecondsPerHalvingYear returns correct historical emissions
+Purpose: Ensure GetAmountPerSecondPerHalvingYear returns correct historical emissions
 
 Flow:
 1. Initialize emission state
@@ -91,8 +91,8 @@ func testHistoricalBlockEmissionAccuracy(t *testing.T) {
 	testing.SetOriginCaller(adminAddr)
 
 	// Step 1: Get emission rates for year 1 and 2
-	amountPerSeconds1 := GetAmountPerSecondsPerHalvingYear(1)
-	amountPerSeconds2 := GetAmountPerSecondsPerHalvingYear(2)
+	amountPerSeconds1 := GetAmountPerSecondPerHalvingYear(1)
+	amountPerSeconds2 := GetAmountPerSecondPerHalvingYear(2)
 	t.Logf("Year 1 emission E1: %d", amountPerSeconds1)
 	t.Logf("Year 2 emission E2: %d", amountPerSeconds2)
 
@@ -129,8 +129,8 @@ func testCacheRewardIntegration(t *testing.T) {
 	testing.SetOriginCaller(adminAddr)
 
 	// Step 1: Get emission rates for year 1 and 2
-	amountPerSeconds1 := GetAmountPerSecondsPerHalvingYear(1)
-	amountPerSeconds2 := GetAmountPerSecondsPerHalvingYear(2)
+	amountPerSeconds1 := GetAmountPerSecondPerHalvingYear(1)
+	amountPerSeconds2 := GetAmountPerSecondPerHalvingYear(2)
 	t.Logf("Year 1 emission E1: %d", amountPerSeconds1)
 	t.Logf("Year 2 emission E2: %d", amountPerSeconds2)
 
@@ -167,17 +167,17 @@ func testMultipleBlockTimeChanges(t *testing.T) {
 	testing.SetOriginCaller(adminAddr)
 
 	// Step 1: Test emission for year 1 and 2 (should be same)
-	amountPerSeconds1 := GetAmountPerSecondsPerHalvingYear(1)
-	amountPerSeconds2 := GetAmountPerSecondsPerHalvingYear(2)
+	amountPerSeconds1 := GetAmountPerSecondPerHalvingYear(1)
+	amountPerSeconds2 := GetAmountPerSecondPerHalvingYear(2)
 	t.Logf("Year 1 emission E1: %d", amountPerSeconds1)
 	t.Logf("Year 2 emission E2: %d", amountPerSeconds2)
 
 	// Step 2: Test emission for year 3 (after first halving)
-	amountPerSeconds3 := GetAmountPerSecondsPerHalvingYear(3)
+	amountPerSeconds3 := GetAmountPerSecondPerHalvingYear(3)
 	t.Logf("Year 3 emission E3: %d", amountPerSeconds3)
 
 	// Step 3: Test emission for year 5 (after second halving)
-	amountPerSeconds5 := GetAmountPerSecondsPerHalvingYear(5)
+	amountPerSeconds5 := GetAmountPerSecondPerHalvingYear(5)
 	t.Logf("Year 5 emission E5: %d", amountPerSeconds5)
 
 	// Step 4: Verify year 1-2 have same emissions

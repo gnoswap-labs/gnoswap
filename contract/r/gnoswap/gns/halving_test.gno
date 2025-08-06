@@ -101,7 +101,7 @@ func TestAmountPerSecondsPerHalvingYear(t *testing.T) {
 	InitGnsTest(t)
 
 	// Test that we can get the amount per seconds for a valid year
-	amountPerSeconds := GetAmountPerSecondsPerHalvingYear(6)
+	amountPerSeconds := GetAmountPerSecondPerHalvingYear(6)
 	uassert.True(t, amountPerSeconds > 0)
 }
 

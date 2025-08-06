@@ -54,9 +54,9 @@ func TestEmissionDistributionAcrossYears(t *testing.T) {
 			midTs := startTs + (endTs-startTs)/2
 
 			// Check emission rates at different timestamps
-			startRate := GetEmissionAmountPerSecondsByTimestamp(startTs)
-			midRate := GetEmissionAmountPerSecondsByTimestamp(midTs)
-			endRate := GetEmissionAmountPerSecondsByTimestamp(endTs)
+			startRate := GetEmissionAmountPerSecondByTimestamp(startTs)
+			midRate := GetEmissionAmountPerSecondByTimestamp(midTs)
+			endRate := GetEmissionAmountPerSecondByTimestamp(endTs)
 
 			// All rates should be equal within the same year
 			uassert.Equal(t, sc.expectedRate, startRate,

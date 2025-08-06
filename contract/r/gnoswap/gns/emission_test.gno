@@ -64,7 +64,7 @@ func TestEmissionBoundaryConditions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			amount := GetEmissionAmountPerSecondsByTimestamp(tt.timestamp)
+			amount := GetEmissionAmountPerSecondByTimestamp(tt.timestamp)
 			uassert.Equal(t, tt.expectedAmount, amount,
 				"%s: %s", tt.name, tt.description)
 		})
@@ -127,7 +127,7 @@ func TestEmissionAmountCalculation(t *testing.T) {
 			duration := endTs - startTs
 			
 			targetTs := startTs + (duration * int64(tt.timestampPct) / 100)
-			amount := GetEmissionAmountPerSecondsByTimestamp(targetTs)
+			amount := GetEmissionAmountPerSecondByTimestamp(targetTs)
 			
 			uassert.Equal(t, tt.expectedAmount, amount,
 				"%s: %s", tt.name, tt.description)
@@ -240,8 +240,8 @@ func TestYearTransitions(t *testing.T) {
 				"Timestamps should be continuous at year boundary")
 			
 			// Get emission amounts
-			amountBefore := GetEmissionAmountPerSecondsByTimestamp(endTs)
-			amountAfter := GetEmissionAmountPerSecondsByTimestamp(nextStartTs)
+			amountBefore := GetEmissionAmountPerSecondByTimestamp(endTs)
+			amountAfter := GetEmissionAmountPerSecondByTimestamp(nextStartTs)
 			
 			// Check halving if applicable
 			if tt.fromYear == 6 && tt.toYear == 7 {
@@ -289,11 +289,11 @@ func TestEmissionTotalAmount(t *testing.T) {
 		midTs := startTs + SECONDS_IN_YEAR/2
 		nearEndTs := GetHalvingYearEndTimestamp(year) - 100
 		
-		uassert.Equal(t, expectedPerSecond, GetEmissionAmountPerSecondsByTimestamp(startTs),
+		uassert.Equal(t, expectedPerSecond, GetEmissionAmountPerSecondByTimestamp(startTs),
 			ufmt.Sprintf("Year %d start emission rate incorrect", year))
-		uassert.Equal(t, expectedPerSecond, GetEmissionAmountPerSecondsByTimestamp(midTs),
+		uassert.Equal(t, expectedPerSecond, GetEmissionAmountPerSecondByTimestamp(midTs),
 			ufmt.Sprintf("Year %d middle emission rate incorrect", year))
-		uassert.Equal(t, expectedPerSecond, GetEmissionAmountPerSecondsByTimestamp(nearEndTs),
+		uassert.Equal(t, expectedPerSecond, GetEmissionAmountPerSecondByTimestamp(nearEndTs),
 			ufmt.Sprintf("Year %d near-end emission rate incorrect", year))
 
 	}

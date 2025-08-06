@@ -69,7 +69,7 @@ func verifyMintedGNSRemainingAmount() {
 
 	remainingAmountPerBlock := remainingAmount / remainingBlockTime
 
-	currentAmountPerBlock := gns.GetAmountPerSecondsPerHalvingYear(currentYear)
+	currentAmountPerBlock := gns.GetAmountPerSecondPerHalvingYear(currentYear)
 
 	println("[INFO] current year", currentYear)
 	println("[INFO] current block time", time.Now().Unix())
