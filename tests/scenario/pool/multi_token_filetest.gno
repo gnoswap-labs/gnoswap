@@ -231,8 +231,8 @@ func TestCollectFooBarFees() {
 	testing.SetRealm(posRealm)
 
 	poolPath := ufmt.Sprintf("%s:%s:%d", barPath, fooPath, fee500)
-	oldToken0Balance := pool.PoolGetBalanceToken0(poolPath)
-	oldToken1Balance := pool.PoolGetBalanceToken1(poolPath)
+	oldToken0Balance := pool.GetBalanceToken0(poolPath)
+	oldToken1Balance := pool.GetBalanceToken1(poolPath)
 
 	// burn 0 to collect swap fees
 	pool.Burn(cross, barPath, fooPath, fee500, -test_tickUpper, -test_tickLower, "0", adminAddr)
@@ -253,8 +253,8 @@ func TestCollectFooBarFees() {
 	println("[EXPECTED] c0:", c0, "expected: should not be 0") // swap was foo > bar, so only foo has fees
 	println("[EXPECTED] c1:", c1, "expected: should be 0")     // swap was foo > bar, so bar has no fees
 
-	newToken0Balance := pool.PoolGetBalanceToken0(poolPath)
-	newToken1Balance := pool.PoolGetBalanceToken1(poolPath)
+	newToken0Balance := pool.GetBalanceToken0(poolPath)
+	newToken1Balance := pool.GetBalanceToken1(poolPath)
 
 	println("[EXPECTED] oldToken0Balance:", oldToken0Balance)
 	println("[EXPECTED] oldToken1Balance:", oldToken1Balance)
@@ -267,8 +267,8 @@ func TestCollectBarBazFees() {
 	testing.SetRealm(posRealm)
 
 	poolPath := ufmt.Sprintf("%s:%s:%d", barPath, bazPath, fee500)
-	oldToken0Balance := pool.PoolGetBalanceToken1(poolPath)
-	oldToken1Balance := pool.PoolGetBalanceToken0(poolPath)
+	oldToken0Balance := pool.GetBalanceToken1(poolPath)
+	oldToken1Balance := pool.GetBalanceToken0(poolPath)
 
 	// burn 0 to collect swap fees
 	pool.Burn(cross, barPath, bazPath, fee500, test_tickLower, test_tickUpper, "0", adminAddr)
@@ -289,8 +289,8 @@ func TestCollectBarBazFees() {
 	println("[EXPECTED] c0:", c0, "expected: should not be 0") // swap was bar > baz, so only bar has fees
 	println("[EXPECTED] c1:", c1, "expected: should be 0")     // swap was bar > baz, so baz has no fees
 
-	newToken0Balance := pool.PoolGetBalanceToken0(poolPath)
-	newToken1Balance := pool.PoolGetBalanceToken1(poolPath)
+	newToken0Balance := pool.GetBalanceToken0(poolPath)
+	newToken1Balance := pool.GetBalanceToken1(poolPath)
 
 	println("[EXPECTED] oldToken0Balance:", oldToken0Balance)
 	println("[EXPECTED] oldToken1Balance:", oldToken1Balance)
@@ -358,8 +358,8 @@ func TestCollectFooBarLiquidity() {
 	testing.SetRealm(posRealm)
 
 	poolPath := ufmt.Sprintf("%s:%s:%d", barPath, fooPath, fee500)
-	oldToken0Balance := pool.PoolGetBalanceToken0(poolPath)
-	oldToken1Balance := pool.PoolGetBalanceToken1(poolPath)
+	oldToken0Balance := pool.GetBalanceToken0(poolPath)
+	oldToken1Balance := pool.GetBalanceToken1(poolPath)
 
 	c0, c1 := pool.Collect(
 		cross,
@@ -376,8 +376,8 @@ func TestCollectFooBarLiquidity() {
 	println("[EXPECTED] c0:", c0, "expected: should not be 0")
 	println("[EXPECTED] c1:", c1, "expected: should not be 0")
 
-	newToken0Balance := pool.PoolGetBalanceToken0(poolPath)
-	newToken1Balance := pool.PoolGetBalanceToken1(poolPath)
+	newToken0Balance := pool.GetBalanceToken0(poolPath)
+	newToken1Balance := pool.GetBalanceToken1(poolPath)
 
 	println("[EXPECTED] oldToken0Balance:", oldToken0Balance)
 	println("[EXPECTED] oldToken1Balance:", oldToken1Balance)
@@ -391,8 +391,8 @@ func TestCollectBarBazLiquidity() {
 	testing.SetRealm(posRealm)
 
 	poolPath := ufmt.Sprintf("%s:%s:%d", barPath, bazPath, fee500)
-	oldToken0Balance := pool.PoolGetBalanceToken1(poolPath)
-	oldToken1Balance := pool.PoolGetBalanceToken0(poolPath)
+	oldToken0Balance := pool.GetBalanceToken1(poolPath)
+	oldToken1Balance := pool.GetBalanceToken0(poolPath)
 
 	c0, c1 := pool.Collect(
 		cross,
@@ -409,8 +409,8 @@ func TestCollectBarBazLiquidity() {
 	println("[EXPECTED] c0:", c0, "expected: should not be 0")
 	println("[EXPECTED] c1:", c1, "expected: should not be 0")
 
-	newToken0Balance := pool.PoolGetBalanceToken0(poolPath)
-	newToken1Balance := pool.PoolGetBalanceToken1(poolPath)
+	newToken0Balance := pool.GetBalanceToken0(poolPath)
+	newToken1Balance := pool.GetBalanceToken1(poolPath)
 
 	println("[EXPECTED] oldToken0Balance:", oldToken0Balance)
 	println("[EXPECTED] oldToken1Balance:", oldToken1Balance)
