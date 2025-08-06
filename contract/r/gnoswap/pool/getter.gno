@@ -232,3 +232,8 @@ func GetPositionLiquidity(poolPath, key string) *u256.Uint {
 func ExistsPoolPath(poolPath string) bool {
 	return pools.Has(poolPath)
 }
+
+func GetTickCumulative(poolPath string, secondsAgo int64) int64 {
+	pool := mustGetPool(poolPath)
+	return pool.Observation().TickCumulative()
+}
