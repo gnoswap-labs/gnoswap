@@ -113,14 +113,13 @@ func CreateProject(
 		"tier90Ratio", formatInt(params.tier90Ratio),
 		"tier180Ratio", formatInt(params.tier180Ratio),
 		"startTime", formatInt(params.startTime),
-		"startHeight", formatInt(project.StartHeight()),
 		"projectId", project.ID(),
 		"tier30Amount", formatInt(project.tiers[projectTier30].TotalDepositAmount()),
-		"tier30EndHeight", formatInt(project.tiers[projectTier30].EndHeight()),
+		"tier30EndTime", formatInt(project.tiers[projectTier30].EndTime()),
 		"tier90Amount", formatInt(project.tiers[projectTier90].TotalDepositAmount()),
-		"tier90EndHeight", formatInt(project.tiers[projectTier90].EndHeight()),
+		"tier90EndTime", formatInt(project.tiers[projectTier90].EndTime()),
 		"tier180Amount", formatInt(project.tiers[projectTier180].TotalDepositAmount()),
-		"tier180EndHeight", formatInt(project.tiers[projectTier180].EndHeight()),
+		"tier180EndTime", formatInt(project.tiers[projectTier180].EndTime()),
 	)
 
 	return project.ID()
@@ -142,19 +141,14 @@ func createProject(params *createProjectParams) (*Project, error) {
 		return nil, err
 	}
 
-	createdBlockTimeInfo := newBlockTimeInfoByTimeAndAverageBlockTimeMs(
-		params.currentTime,
-		params.currentHeight,
-		params.currentTime,
-	)
-
 	// create project
 	project := NewProject(
 		params.name,
 		params.tokenPath,
 		params.depositAmount,
 		params.recipient,
-		createdBlockTimeInfo,
+		params.currentHeight,
+		params.currentTime,
 	)
 
 	// check duplicate project
@@ -200,19 +194,15 @@ func createProject(params *createProjectParams) (*Project, error) {
 			tierDistributeAmount,
 			params.startTime,
 			params.startTime+tierDurationTime,
-			params.currentTime,
-			params.currentHeight,
 		)
 		project.addProjectTier(duration, projectTier)
 
 		projectTierRewardManagers.Set(projectTier.ID(), NewRewardManager(
 			projectTier.TotalDistributeAmount(),
-			projectTier.StartHeight(),
-			projectTier.EndHeight(),
 			projectTier.StartTime(),
 			projectTier.EndTime(),
-			params.currentHeight,
-			params.currentTime,
+			params.startTime,
+			params.startTime+tierDurationTime,
 		))
 	}
 

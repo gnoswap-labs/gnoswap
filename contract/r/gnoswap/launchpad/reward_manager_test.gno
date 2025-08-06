@@ -27,7 +27,7 @@ func TestRewardManager_IsInitialized(t *testing.T) {
 		{
 			name: "is initialized return true when rewards exist",
 			rewardStates: map[string]*RewardState{
-				"test": NewRewardState(u256.Zero(), 1000, 100, 200, &BlockTimeInfo{}),
+				"test": NewRewardState(u256.Zero(), 1000, 100, 200, 0),
 			},
 			expectedResult:   true,
 			expectedHasError: false,
@@ -96,8 +96,6 @@ func TestRewardManager_UpdateRewardPerDepositX128(t *testing.T) {
 			currentTime := now - 1000 + tt.currentHeight
 			manager := NewRewardManager(
 				tt.totalDistributeAmount,
-				tt.distributeStartHeight,
-				tt.distributeEndHeight,
 				distributeStartTime,
 				distributeEndTime,
 				tt.currentHeight,
@@ -142,8 +140,9 @@ func TestRewardManager_AddRewardStateByDeposit(t *testing.T) {
 				30,
 				"",
 				1000,
-				&BlockTimeInfo{blockTime: 1000, blockHeight: 150},
-				&BlockTimeInfo{blockTime: 1000, blockHeight: 150},
+				1000,
+				1000,
+				1000,
 			),
 			totalDistributeAmount: 1000,
 			distributeStart:       150,
@@ -163,8 +162,9 @@ func TestRewardManager_AddRewardStateByDeposit(t *testing.T) {
 				30,
 				"",
 				1000,
-				&BlockTimeInfo{blockTime: 1000, blockHeight: 150},
-				&BlockTimeInfo{blockTime: 1000, blockHeight: 250},
+				1000,
+				1000,
+				1000,
 			),
 			totalDistributeAmount: 1000,
 			distributeStart:       150,
@@ -177,8 +177,9 @@ func TestRewardManager_AddRewardStateByDeposit(t *testing.T) {
 					500,
 					"",
 					500,
-					&BlockTimeInfo{blockTime: 1000, blockHeight: 150},
-					&BlockTimeInfo{blockTime: 1000, blockHeight: 250},
+					1000,
+					1000,
+					1000,
 				),
 			},
 			collectHeight:       250,
@@ -200,8 +201,6 @@ func TestRewardManager_AddRewardStateByDeposit(t *testing.T) {
 			currentTime := now
 			manager := NewRewardManager(
 				tt.totalDistributeAmount,
-				tt.distributeStart,
-				tt.distributeEnd,
 				distributeStartTime,
 				distributeEndTime,
 				currentHeight,
@@ -213,16 +212,16 @@ func TestRewardManager_AddRewardStateByDeposit(t *testing.T) {
 			for _, deposit := range tt.existingDeposits {
 				totalDepositAmount += int64(deposit.depositAmount)
 				// Use timestamp based on deposit height offset
-				depositTime := now - 1000 + deposit.DepositHeight()
-				manager.updateRewardPerDepositX128(totalDepositAmount, deposit.DepositHeight(), depositTime)
+				depositTime := now - 1000 + deposit.DepositTime()
+				manager.updateRewardPerDepositX128(totalDepositAmount, deposit.CreatedHeight(), depositTime)
 				manager.addRewardStateByDeposit(deposit, tt.averageBlockTimeMs)
 			}
 
 			// Execute
 			totalDepositAmount += tt.deposit.depositAmount
 			// Use timestamp based on deposit height offset
-			depositTime := now - 1000 + tt.deposit.DepositHeight()
-			manager.updateRewardPerDepositX128(totalDepositAmount, tt.deposit.DepositHeight(), depositTime)
+			depositTime := now - 1000 + tt.deposit.DepositTime()
+			manager.updateRewardPerDepositX128(totalDepositAmount, tt.deposit.CreatedHeight(), depositTime)
 			rewardState := manager.addRewardStateByDeposit(tt.deposit, tt.averageBlockTimeMs)
 
 			// Use timestamp based on collection height offset
@@ -233,7 +232,7 @@ func TestRewardManager_AddRewardStateByDeposit(t *testing.T) {
 				uassert.NoError(t, err)
 			}
 
-			uassert.Equal(t, tt.expectedStartHeight, rewardState.DistributeStartHeight())
+			uassert.Equal(t, tt.expectedStartHeight, rewardState.DistributeStartTime())
 			uassert.Equal(t, tt.expectedReward, reward)
 		})
 	}
@@ -243,8 +242,8 @@ func TestRewardManager_CollectReward(t *testing.T) {
 	tests := []struct {
 		name                  string
 		totalDistributeAmount int64
-		distributeStartHeight int64
-		distributeEndHeight   int64
+		distributeStartTime       int64
+		distributeEndTime         int64
 		currentHeight         int64
 		depositId             string
 		deposit               *Deposit
@@ -258,8 +257,8 @@ func TestRewardManager_CollectReward(t *testing.T) {
 		{
 			name:                  "collect reward succeed with valid deposit",
 			totalDistributeAmount: 1000,
-			distributeStartHeight: 100,
-			distributeEndHeight:   200,
+			distributeStartTime: 100,
+			distributeEndTime:   200,
 			currentHeight:         150,
 			deposit: NewDeposit(
 				"1",
@@ -267,8 +266,9 @@ func TestRewardManager_CollectReward(t *testing.T) {
 				30,
 				"",
 				1000,
-				&BlockTimeInfo{blockTime: 1000, blockHeight: 150},
-				&BlockTimeInfo{blockTime: 1000, blockHeight: 200},
+				1000,
+				1000,
+				1000,
 			),
 			depositId:          "1",
 			averageBlockTimeMs: 2000,
@@ -284,9 +284,10 @@ func TestRewardManager_CollectReward(t *testing.T) {
 				"test",
 				30,
 				"",
+				100,
 				1000,
-				&BlockTimeInfo{blockTime: 1000, blockHeight: 150},
-				&BlockTimeInfo{blockTime: 1000, blockHeight: 250},
+				1000,
+				1000,
 			),
 			depositId:          "nonexistent",
 			collectHeight:      150,
@@ -305,13 +306,11 @@ func TestRewardManager_CollectReward(t *testing.T) {
 			// Setup
 			// Use current time as base and simulate timing
 			now := time.Now().Unix()
-			distributeStartTime := now - 1000 + tt.distributeStartHeight
-			distributeEndTime := now - 1000 + tt.distributeEndHeight
+			distributeStartTime := now - 1000 + tt.distributeStartTime
+			distributeEndTime := now - 1000 + tt.distributeEndTime
 			currentTime := now - 1000 + tt.currentHeight
 			manager := NewRewardManager(
 				tt.totalDistributeAmount,
-				tt.distributeStartHeight,
-				tt.distributeEndHeight,
 				distributeStartTime,
 				distributeEndTime,
 				tt.currentHeight,
@@ -320,14 +319,14 @@ func TestRewardManager_CollectReward(t *testing.T) {
 
 			for _, deposit := range tt.existingDeposits {
 				// Use timestamp based on deposit height offset
-				depositTime := now - 1000 + deposit.DepositHeight()
-				manager.updateRewardPerDepositX128(tt.totalDistributeAmount, deposit.DepositHeight(), depositTime)
+				depositTime := now - 1000 + deposit.DepositTime()
+				manager.updateRewardPerDepositX128(tt.totalDistributeAmount, deposit.CreatedHeight(), depositTime)
 				manager.addRewardStateByDeposit(deposit, tt.averageBlockTimeMs)
 			}
 
 			// Use timestamp based on deposit height offset
-			depositTime := now - 1000 + tt.deposit.DepositHeight()
-			manager.updateRewardPerDepositX128(tt.totalDistributeAmount, tt.deposit.DepositHeight(), depositTime)
+			depositTime := now - 1000 + tt.deposit.DepositTime()
+			manager.updateRewardPerDepositX128(tt.totalDistributeAmount, tt.deposit.CreatedHeight(), depositTime)
 			manager.addRewardStateByDeposit(tt.deposit, tt.averageBlockTimeMs)
 
 			// Execute
@@ -351,8 +350,8 @@ func TestNewRewardManager(t *testing.T) {
 	tests := []struct {
 		name                         string
 		totalDistributeAmount        int64
-		distributeStartHeight        int64
-		distributeEndHeight          int64
+		distributeStartTime        int64
+		distributeEndTime          int64
 		distributeAmountPerSecondX128 *u256.Uint
 		currentHeight                int64
 		expectedHasError             bool
@@ -361,8 +360,8 @@ func TestNewRewardManager(t *testing.T) {
 		{
 			name:                         "new reward manager create valid manager with correct values",
 			totalDistributeAmount:        1000,
-			distributeStartHeight:        100,
-			distributeEndHeight:          200,
+			distributeStartTime:        100,
+			distributeEndTime:          200,
 			distributeAmountPerSecondX128: u256.NewUintFromInt64(100),
 			currentHeight:                100,
 			expectedHasError:             false,
@@ -374,13 +373,11 @@ func TestNewRewardManager(t *testing.T) {
 			// Execute
 			// Use current time as base and simulate timing
 			now := time.Now().Unix()
-			distributeStartTime := now - 1000 + tt.distributeStartHeight
-			distributeEndTime := now - 1000 + tt.distributeEndHeight
+			distributeStartTime := now - 1000 + tt.distributeStartTime
+			distributeEndTime := now - 1000 + tt.distributeEndTime
 			currentTime := now - 1000 + tt.currentHeight
 			manager := NewRewardManager(
 				tt.totalDistributeAmount,
-				tt.distributeStartHeight,
-				tt.distributeEndHeight,
 				distributeStartTime,
 				distributeEndTime,
 				tt.currentHeight,
@@ -398,22 +395,19 @@ func TestTimestampBasedRewardCalculation_ConstantTime(t *testing.T) {
 	// Scenario: 100 seconds duration should distribute rewards evenly per second
 	
 	totalDistributeAmount := int64(1000)
-	distributeStartHeight := int64(100)
-	distributeEndHeight := int64(200)
+	currentHeight := int64(100)
 	
 	// Set up timestamps: 100 seconds duration
 	baseTime := time.Now().Unix()
-	distributeStartTime := baseTime
-	distributeEndTime := baseTime + 100 // 100 seconds later
+	distributeStartTime := baseTime + 100
+	distributeEndTime := baseTime + 200 // 100 seconds later
 	currentTime := baseTime
 	
 	manager := NewRewardManager(
 		totalDistributeAmount,
-		distributeStartHeight,
-		distributeEndHeight,
 		distributeStartTime,
 		distributeEndTime,
-		distributeStartHeight,
+		currentHeight,
 		currentTime,
 	)
 	
@@ -424,8 +418,8 @@ func TestTimestampBasedRewardCalculation_ConstantTime(t *testing.T) {
 		30,
 		"",
 		1000, // deposit amount
-		&BlockTimeInfo{blockTime: baseTime, blockHeight: distributeStartHeight},
-		&BlockTimeInfo{blockTime: distributeEndTime, blockHeight: distributeEndHeight},
+		baseTime,
+		distributeEndTime,
 	)
 	
 	deposit2 := NewDeposit(
@@ -434,8 +428,8 @@ func TestTimestampBasedRewardCalculation_ConstantTime(t *testing.T) {
 		30,
 		"",
 		1000, // deposit amount
-		&BlockTimeInfo{blockTime: baseTime, blockHeight: distributeStartHeight},
-		&BlockTimeInfo{blockTime: distributeEndTime, blockHeight: distributeEndHeight},
+		baseTime,
+		distributeEndTime,
 	)
 	
 	// Add both deposits at start time
@@ -509,8 +503,8 @@ func TestTimestampBasedRewardCalculation_VariableBlockTime(t *testing.T) {
 		30,
 		"",
 		1000,
-		&BlockTimeInfo{blockTime: baseTime, blockHeight: distributeStartHeight},
-		&BlockTimeInfo{blockTime: distributeEndTime, blockHeight: distributeEndHeight},
+		baseTime,
+		distributeEndTime,
 	)
 	
 	err := manager.updateRewardPerDepositX128(1000, distributeStartHeight, baseTime)
@@ -530,8 +524,8 @@ func TestTimestampBasedRewardCalculation_VariableBlockTime(t *testing.T) {
 		30,
 		"",
 		1000,
-		&BlockTimeInfo{blockTime: time1, blockHeight: distributeStartHeight + 1},
-		&BlockTimeInfo{blockTime: distributeEndTime, blockHeight: distributeEndHeight},
+		time1,
+		distributeEndTime,
 	)
 	
 	totalDeposits := int64(2000)
@@ -593,8 +587,8 @@ func TestRewardManager_VaryingBlockTime_FastBlocks(t *testing.T) {
 		30,
 		"",
 		1000000,
-		&BlockTimeInfo{blockTime: distributeStartTime, blockHeight: distributeStartHeight},
-		&BlockTimeInfo{blockTime: distributeEndTime, blockHeight: distributeEndHeight},
+		distributeStartTime,
+		distributeEndTime,
 	)
 	manager.addRewardStateByDeposit(deposit, 5000)
 	
@@ -645,8 +639,8 @@ func TestRewardManager_VaryingBlockTime_SlowBlocks(t *testing.T) {
 		30,
 		"",
 		1000000,
-		&BlockTimeInfo{blockTime: distributeStartTime, blockHeight: distributeStartHeight},
-		&BlockTimeInfo{blockTime: distributeEndTime, blockHeight: distributeEndHeight},
+		distributeStartTime,
+		distributeEndTime,
 	)
 	manager.addRewardStateByDeposit(deposit, 5000)
 	
@@ -697,8 +691,8 @@ func TestRewardManager_VaryingBlockTime_IrregularBlocks(t *testing.T) {
 		30,
 		"",
 		1000000,
-		&BlockTimeInfo{blockTime: distributeStartTime, blockHeight: distributeStartHeight},
-		&BlockTimeInfo{blockTime: distributeEndTime, blockHeight: distributeEndHeight},
+		distributeStartTime,
+		distributeEndTime,
 	)
 	manager.addRewardStateByDeposit(deposit, 5000)
 	
@@ -771,8 +765,8 @@ func TestRewardManager_EdgeCase_TimeGoesBackward(t *testing.T) {
 		30,
 		"",
 		1000000,
-		&BlockTimeInfo{blockTime: distributeStartTime, blockHeight: distributeStartHeight},
-		&BlockTimeInfo{blockTime: distributeEndTime, blockHeight: distributeEndHeight},
+		distributeStartTime,
+		distributeEndTime,
 	)
 	manager.addRewardStateByDeposit(deposit, 5000)
 	
@@ -815,8 +809,8 @@ func TestRewardManager_EdgeCase_RewardAfterEnd(t *testing.T) {
 		30,
 		"",
 		1000000,
-		&BlockTimeInfo{blockTime: distributeStartTime, blockHeight: distributeStartHeight},
-		&BlockTimeInfo{blockTime: distributeEndTime, blockHeight: distributeEndHeight},
+		distributeStartTime,
+		distributeEndTime,
 	)
 	manager.addRewardStateByDeposit(deposit, 5000)
 	
@@ -860,8 +854,8 @@ func TestRewardManager_MultipleDeposits_DifferentTimings(t *testing.T) {
 		30,
 		"",
 		1000000,
-		&BlockTimeInfo{blockTime: distributeStartTime, blockHeight: 100},
-		&BlockTimeInfo{blockTime: distributeEndTime, blockHeight: 200},
+		distributeStartTime,
+		distributeEndTime,
 	)
 	manager.addRewardStateByDeposit(deposit1, 5000)
 	
@@ -876,8 +870,8 @@ func TestRewardManager_MultipleDeposits_DifferentTimings(t *testing.T) {
 		30,
 		"",
 		1000000,
-		&BlockTimeInfo{blockTime: 1250, blockHeight: 125},
-		&BlockTimeInfo{blockTime: distributeEndTime, blockHeight: 200},
+		1250,
+		distributeEndTime,
 	)
 	manager.addRewardStateByDeposit(deposit2, 5000)
 	
@@ -892,8 +886,8 @@ func TestRewardManager_MultipleDeposits_DifferentTimings(t *testing.T) {
 		30,
 		"",
 		2000000, // Double amount
-		&BlockTimeInfo{blockTime: 1500, blockHeight: 150},
-		&BlockTimeInfo{blockTime: distributeEndTime, blockHeight: 200},
+		1500,
+		distributeEndTime,
 	)
 	manager.addRewardStateByDeposit(deposit3, 5000)
 	

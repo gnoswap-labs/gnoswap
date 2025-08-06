@@ -89,7 +89,6 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 			"targetProjectTierId", targetProjectTierID,
 			"amount", formatInt(depositAmount),
 			"depositId", deposit.ID(),
-			"claimableHeight", formatInt(rewardState.ClaimableHeight()),
 			"claimableTime", formatInt(rewardState.ClaimableTime()),
 			"tierAmountPerSecondX128", distributeAmountPerSecondX128,
 		)
@@ -102,7 +101,6 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 		"targetProjectTierId", targetProjectTierID,
 		"amount", formatInt(depositAmount),
 		"depositId", deposit.ID(),
-		"claimableHeight", formatInt(rewardState.ClaimableHeight()),
 		"claimableTime", formatInt(rewardState.ClaimableTime()),
 		"referrer", actualReferrer,
 	)
@@ -174,7 +172,6 @@ func depositGns(
 	}
 
 	currentTime := time.Now().Unix()
-	createdBlockTimeInfo := newBlockTimeInfo(currentTime, currentHeight)
 	depositID := nextDepositID()
 	deposit := NewDeposit(
 		depositID,
@@ -182,8 +179,9 @@ func depositGns(
 		tierDuration,
 		callerAddress,
 		depositAmount,
-		createdBlockTimeInfo,
-		projectTier.endBlockTimeInfo,
+		currentHeight,
+		currentTime,
+		projectTier.endTime,
 	)
 	deposits.Set(depositID, deposit)
 

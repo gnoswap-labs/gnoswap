@@ -13,8 +13,8 @@ import (
 //
 // Fields:
 // - distributeAmountPerSecondX128 (u256.Uint): The amount of tokens to be distributed per second, represented as a Q128 fixed-point number.
-// - startBlockTimeInfo (BlockTimeInfo): The block time and height information for the start of the tier.
-// - endBlockTimeInfo (BlockTimeInfo): The block time and height information for the end of the tier.
+// - startTime (int64): The time for the start of the tier.
+// - endTime (int64): The time for the end of the tier.
 // - id (string): The unique identifier for the tier, formatted as "{projectID}:duration".
 // - totalDistributeAmount (int64): The total amount of tokens to be distributed for the tier.
 // - totalDepositAmount (int64): The total amount of tokens deposited for the tier.
@@ -23,9 +23,9 @@ import (
 // - totalWithdrawCount (int64): The total number of withdrawals from the tier.
 // - totalCollectedAmount (int64): The total amount of tokens collected as rewards for the tier.
 type ProjectTier struct {
-	distributeAmountPerSecondX128 *u256.Uint     // distribute amount per second, Q128
-	startBlockTimeInfo           *BlockTimeInfo // project tier start block time
-	endBlockTimeInfo             *BlockTimeInfo // project tier end block time
+	distributeAmountPerSecondX128 *u256.Uint // distribute amount per second, Q128
+	startTime                     int64
+	endTime                       int64
 
 	id                    string // '{projectId}:duration' // duartion == 30, 90, 180
 	totalDistributeAmount int64
@@ -76,12 +76,12 @@ func (t *ProjectTier) DistributeAmountPerSecondX128() *u256.Uint {
 	return t.distributeAmountPerSecondX128
 }
 
-func (t *ProjectTier) isActivated(currentHeight int64) bool {
-	return t.startBlockTimeInfo.BlockHeight() <= currentHeight && currentHeight < t.endBlockTimeInfo.BlockHeight()
+func (t *ProjectTier) isActivated(currentTime int64) bool {
+	return t.startTime <= currentTime && currentTime < t.endTime
 }
 
-func (t *ProjectTier) isEnded(currentHeight int64) bool {
-	return t.endBlockTimeInfo.BlockHeight() < currentHeight
+func (t *ProjectTier) isEnded(currentTime int64) bool {
+	return t.endTime < currentTime
 }
 
 func (t *ProjectTier) isFirstDeposit() bool {
@@ -89,19 +89,11 @@ func (t *ProjectTier) isFirstDeposit() bool {
 }
 
 func (t *ProjectTier) StartTime() int64 {
-	return t.startBlockTimeInfo.BlockTime()
-}
-
-func (t *ProjectTier) StartHeight() int64 {
-	return t.startBlockTimeInfo.BlockHeight()
+	return t.startTime
 }
 
 func (t *ProjectTier) EndTime() int64 {
-	return t.endBlockTimeInfo.BlockTime()
-}
-
-func (t *ProjectTier) EndHeight() int64 {
-	return t.endBlockTimeInfo.BlockHeight()
+	return t.endTime
 }
 
 func (t *ProjectTier) deposit(deposit *Deposit) {
@@ -114,14 +106,12 @@ func (t *ProjectTier) withdraw(deposit *Deposit) {
 	t.totalWithdrawCount++
 }
 
-func (t *ProjectTier) updateStartBlockTimeInfo(blockTime, blockHeight int64) {
-	t.startBlockTimeInfo.setBlockTime(blockTime)
-	t.startBlockTimeInfo.setBlockHeight(blockHeight)
+func (t *ProjectTier) setStartTime(time int64) {
+	t.startTime = time
 }
 
-func (t *ProjectTier) updateEndBlockTimeInfo(blockTime, blockHeight int64) {
-	t.endBlockTimeInfo.setBlockTime(blockTime)
-	t.endBlockTimeInfo.setBlockHeight(blockHeight)
+func (t *ProjectTier) setEndTime(time int64) {
+	t.endTime = time
 }
 
 func (t *ProjectTier) calculateLeftReward() int64 {
@@ -130,11 +120,11 @@ func (t *ProjectTier) calculateLeftReward() int64 {
 
 func (t *ProjectTier) updateDistributeAmountPerSecond() {
 	// Use time duration instead of block count
-	distributeTimeDuration := t.endBlockTimeInfo.BlockTime() - t.startBlockTimeInfo.BlockTime()
+	distributeTimeDuration := t.endTime - t.startTime
 	if distributeTimeDuration <= 0 {
 		return
 	}
-	
+
 	totalDistributeAmountX128 := new(u256.Uint).Mul(u256.NewUintFromInt64(t.totalDistributeAmount), q128.Clone())
 	// Divide by time duration in seconds
 	distributeAmountPerSecondX128 := new(u256.Uint).Div(totalDistributeAmountX128, u256.NewUintFromInt64(distributeTimeDuration))
@@ -147,36 +137,20 @@ func NewProjectTier(
 	projectID string,
 	tierDuration int64,
 	totalDistributeAmount int64,
-	startBlockTime,
-	endBlockTime,
-	averageBlockTimeMs,
-	currentBlockTime,
-	currentBlockHeight int64,
+	startTime int64,
+	endTime int64,
 ) *ProjectTier {
-	startBlockTimeInfo := newBlockTimeInfoByTimeAndAverageBlockTimeMs(
-		currentBlockTime,
-		currentBlockHeight,
-		startBlockTime,
-		averageBlockTimeMs,
-	)
-	endBlockTimeInfo := newBlockTimeInfoByTimeAndAverageBlockTimeMs(
-		currentBlockTime,
-		currentBlockHeight,
-		endBlockTime,
-		averageBlockTimeMs,
-	)
-
 	tier := &ProjectTier{
-		id:                           makeProjectTierID(projectID, tierDuration),
-		totalDistributeAmount:        totalDistributeAmount,
+		id:                            makeProjectTierID(projectID, tierDuration),
+		totalDistributeAmount:         totalDistributeAmount,
 		distributeAmountPerSecondX128: u256.Zero(),
-		startBlockTimeInfo:           startBlockTimeInfo,
-		endBlockTimeInfo:             endBlockTimeInfo,
-		totalDepositAmount:           0,
-		totalWithdrawAmount:          0,
-		totalDepositCount:            0,
-		totalWithdrawCount:           0,
-		totalCollectedAmount:         0,
+		startTime:                     startTime,
+		endTime:                       endTime,
+		totalDepositAmount:            0,
+		totalWithdrawAmount:           0,
+		totalDepositCount:             0,
+		totalWithdrawCount:            0,
+		totalCollectedAmount:          0,
 	}
 
 	tier.updateDistributeAmountPerSecond()

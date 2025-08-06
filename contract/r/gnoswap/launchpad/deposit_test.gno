@@ -134,40 +134,40 @@ func TestDeposit_IsOwner(t *testing.T) {
 
 func TestDeposit_IsEnded(t *testing.T) {
 	tests := []struct {
-		name          string
-		deposit       *Deposit
-		currentHeight int64
-		expected      bool
+		name        string
+		deposit     *Deposit
+		currentTime int64
+		expected    bool
 	}{
 		{
 			name: "check is ended successfully - true case",
 			deposit: &Deposit{
-				endBlockTimeInfo: newBlockTimeInfo(1000, 100),
+				endTime: 100,
 			},
-			currentHeight: 101,
-			expected:      true,
+			currentTime: 101,
+			expected:    true,
 		},
 		{
 			name: "check is ended successfully - false case",
 			deposit: &Deposit{
-				endBlockTimeInfo: newBlockTimeInfo(1000, 100),
+				endTime: 100,
 			},
-			currentHeight: 99,
-			expected:      false,
+			currentTime: 99,
+			expected:    false,
 		},
 		{
 			name: "check is ended successfully - equal height case",
 			deposit: &Deposit{
-				endBlockTimeInfo: newBlockTimeInfo(1000, 100),
+				endTime: 100,
 			},
-			currentHeight: 100,
-			expected:      false,
+			currentTime: 100,
+			expected:    false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			uassert.Equal(t, tt.expected, tt.deposit.IsEnded(tt.currentHeight))
+			uassert.Equal(t, tt.expected, tt.deposit.IsEnded(tt.currentTime))
 		})
 	}
 }
@@ -176,7 +176,7 @@ func TestDeposit_Withdraw(t *testing.T) {
 	tests := []struct {
 		name              string
 		deposit           *Deposit
-		currentHeight     int64
+		currentTime       int64
 		expectedAmount    int64
 		expectedWithdrawn bool
 		expectedRemaining int64
@@ -187,7 +187,7 @@ func TestDeposit_Withdraw(t *testing.T) {
 				depositAmount:   1000,
 				withdrawnHeight: 0,
 			},
-			currentHeight:     100,
+			currentTime:       100,
 			expectedAmount:    1000,
 			expectedWithdrawn: true,
 			expectedRemaining: 0,
@@ -198,7 +198,7 @@ func TestDeposit_Withdraw(t *testing.T) {
 				depositAmount:   0,
 				withdrawnHeight: 0,
 			},
-			currentHeight:     100,
+			currentTime:       100,
 			expectedAmount:    0,
 			expectedWithdrawn: true,
 			expectedRemaining: 0,
@@ -207,9 +207,9 @@ func TestDeposit_Withdraw(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			amount := tt.deposit.withdraw(tt.currentHeight)
+			amount := tt.deposit.withdraw(1, tt.currentTime)
 			uassert.Equal(t, tt.expectedAmount, amount)
-			uassert.Equal(t, tt.currentHeight, tt.deposit.withdrawnHeight)
+			uassert.Equal(t, tt.currentTime, tt.deposit.withdrawnTime)
 			uassert.Equal(t, tt.expectedRemaining, tt.deposit.depositAmount)
 			uassert.Equal(t, tt.expectedWithdrawn, tt.deposit.IsWithdrawn())
 		})
@@ -250,17 +250,15 @@ func TestNewDeposit(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			createdBlockTimeInfo := newBlockTimeInfo(tt.createdBlockTime, tt.createdBlockHeight)
-			endBlockTimeInfo := newBlockTimeInfo(tt.endBlockTime, tt.endBlockHeight)
-
 			deposit := NewDeposit(
 				tt.depositID,
 				tt.projectID,
 				tt.tier,
 				tt.depositor,
 				tt.depositAmount,
-				createdBlockTimeInfo,
-				endBlockTimeInfo,
+				tt.createdBlockHeight,
+				tt.createdBlockTime,
+				tt.endBlockTime,
 			)
 
 			uassert.Equal(t, tt.expectedID, deposit.ID())
@@ -268,10 +266,9 @@ func TestNewDeposit(t *testing.T) {
 			uassert.Equal(t, tt.tier, deposit.Tier())
 			uassert.Equal(t, tt.depositor, deposit.Depositor())
 			uassert.Equal(t, tt.depositAmount, deposit.DepositAmount())
-			uassert.Equal(t, tt.createdBlockTime, deposit.DepositTime())
-			uassert.Equal(t, tt.createdBlockHeight, deposit.DepositHeight())
+			uassert.Equal(t, tt.createdBlockTime, deposit.CreatedTime())
+			uassert.Equal(t, tt.createdBlockHeight, deposit.CreatedHeight())
 			uassert.Equal(t, tt.endBlockTime, deposit.EndTime())
-			uassert.Equal(t, tt.endBlockHeight, deposit.EndHeight())
 			uassert.Equal(t, int64(0), deposit.withdrawnHeight)
 		})
 	}

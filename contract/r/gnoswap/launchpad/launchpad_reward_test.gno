@@ -13,7 +13,7 @@ func TestCollectDepositReward(t *testing.T) {
 		name           string
 		setupFunc      func() (*Deposit, map[string]interface{})
 		deposit        *Deposit
-		currentHeight  int64
+		currentTime    int64
 		expectedAmount int64
 		expectedError  string
 	}{
@@ -29,7 +29,7 @@ func TestCollectDepositReward(t *testing.T) {
 				return deposit, nil
 			},
 			deposit:        &Deposit{id: "deposit_1"},
-			currentHeight:  0,
+			currentTime:    0,
 			expectedAmount: 0,
 			expectedError:  "[GNOSWAP-LAUNCHPAD-028] invalid height || currentHeight must be positive",
 		},
@@ -48,7 +48,7 @@ func TestCollectDepositReward(t *testing.T) {
 				return deposit, nil
 			},
 			deposit:        &Deposit{id: "deposit_1", projectID: "project_not_exist", tier: 30},
-			currentHeight:  100,
+			currentTime:    100,
 			expectedAmount: 0,
 			expectedError:  "[GNOSWAP-LAUNCHPAD-003] requested data not found || project(project_not_exist) not found",
 		},
@@ -79,7 +79,7 @@ func TestCollectDepositReward(t *testing.T) {
 				return deposit, nil
 			},
 			deposit:        &Deposit{id: "deposit_1", projectID: "project_1", tier: 30},
-			currentHeight:  100,
+			currentTime:    100,
 			expectedAmount: 0,
 			expectedError:  "[GNOSWAP-LAUNCHPAD-003] requested data not found || reward manager(project_1:30) not found",
 		},
@@ -91,10 +91,7 @@ func TestCollectDepositReward(t *testing.T) {
 					projectID:     "project_1",
 					tier:          30,
 					depositAmount: 1000,
-					createdBlockTimeInfo: &BlockTimeInfo{
-						blockTime:   1000,
-						blockHeight: 50,
-					},
+					createdAt:    50,
 				}
 
 				// Create project with tier
@@ -116,22 +113,19 @@ func TestCollectDepositReward(t *testing.T) {
 					accumulatedRewardPerDepositX128: u256.Zero(),
 					distributeAmountPerSecondX128:   u256.NewUintFromInt64(1), // Small non-zero value
 					accumulatedHeight:               50,
-					distributeStartHeight:           40,
-					distributeEndHeight:             200,
+					distributeStartTime:             40,
+					distributeEndTime:               200,
 					totalDistributeAmount:           1000,
 				}
 
 				// Add reward state for the deposit
 				rewardState := &RewardState{
-					priceDebtX128:         u256.Zero(),
-					depositAmount:         1000,
-					claimedAmount:         0,
-					distributeStartHeight: 40,
-					distributeEndHeight:   200,
-					claimableBlockTimeInfo: &BlockTimeInfo{
-						blockTime:   1000,
-						blockHeight: 50,
-					},
+					priceDebtX128:       u256.Zero(),
+					depositAmount:       1000,
+					claimedAmount:       0,
+					distributeStartTime: 40,
+					distributeEndTime:   200,
+					claimableTime:       1000,
 				}
 				rewardManager.rewards.Set("deposit_1", rewardState)
 
@@ -144,7 +138,7 @@ func TestCollectDepositReward(t *testing.T) {
 				}
 			},
 			deposit:        &Deposit{id: "deposit_1", projectID: "project_1", tier: 30},
-			currentHeight:  100,
+			currentTime:    100,
 			expectedAmount: 0,
 			expectedError:  "",
 		},
@@ -156,10 +150,7 @@ func TestCollectDepositReward(t *testing.T) {
 					projectID:     "project_1",
 					tier:          30,
 					depositAmount: 1000,
-					createdBlockTimeInfo: &BlockTimeInfo{
-						blockTime:   1000,
-						blockHeight: 50,
-					},
+					createdAt:    1000,
 				}
 
 				// Create project with tier
@@ -185,23 +176,20 @@ func TestCollectDepositReward(t *testing.T) {
 					accumulatedRewardPerDepositX128: accumulatedReward,
 					distributeAmountPerSecondX128:   rewardPerSecond,
 					accumulatedHeight:               90,
-					distributeStartHeight:           40,
-					distributeEndHeight:             200,
+					distributeStartTime:             40,
+					distributeEndTime:               200,
 					totalDistributeAmount:           10000,
 					totalClaimedAmount:              0,
 				}
 
 				// Add reward state for the deposit with some accumulated rewards
 				rewardState := &RewardState{
-					priceDebtX128:         u256.Zero(),
-					depositAmount:         1000,
-					claimedAmount:         0,
-					distributeStartHeight: 40,
-					distributeEndHeight:   200,
-					claimableBlockTimeInfo: &BlockTimeInfo{
-						blockTime:   1000,
-						blockHeight: 50,
-					},
+					priceDebtX128:       u256.Zero(),
+					depositAmount:       1000,
+					claimedAmount:       0,
+					distributeStartTime: 40,
+					distributeEndTime:   200,
+					claimableTime:       50,
 				}
 				rewardManager.rewards.Set("deposit_2", rewardState)
 
@@ -215,7 +203,7 @@ func TestCollectDepositReward(t *testing.T) {
 				}
 			},
 			deposit:        &Deposit{id: "deposit_2", projectID: "project_1", tier: 30},
-			currentHeight:  100,
+			currentTime:    100,
 			expectedAmount: 1000000,
 			expectedError:  "",
 		},
@@ -248,8 +236,8 @@ func TestCollectDepositReward(t *testing.T) {
 					accumulatedRewardPerDepositX128: u256.Zero(),
 					distributeAmountPerSecondX128:   u256.Zero(),
 					accumulatedHeight:               150, // Higher than current height
-					distributeStartHeight:           40,
-					distributeEndHeight:             200,
+					distributeStartTime:             40,
+					distributeEndTime:               200,
 				}
 
 				projectTierRewardManagers.Set("project_1:30", rewardManager)
@@ -257,7 +245,7 @@ func TestCollectDepositReward(t *testing.T) {
 				return deposit, nil
 			},
 			deposit:        &Deposit{id: "deposit_3", projectID: "project_1", tier: 30},
-			currentHeight:  100,
+			currentTime:    100,
 			expectedAmount: 0,
 			expectedError:  "[GNOSWAP-LAUNCHPAD-001] no left reward || rewardPerSecond(%!d((unhandled)))",
 		},
@@ -279,7 +267,7 @@ func TestCollectDepositReward(t *testing.T) {
 				deposit = tt.deposit
 			}
 
-			amount, err := collectDepositReward(deposit, tt.currentHeight)
+			amount, err := collectDepositReward(deposit, tt.currentTime)
 
 			if tt.expectedError != "" {
 				uassert.Error(t, err)
@@ -299,7 +287,7 @@ func TestCollectDepositReward(t *testing.T) {
 // TestCollectDepositReward_VaryingBlockTimes tests reward collection with varying block times
 func TestCollectDepositReward_VaryingBlockTimes(t *testing.T) {
 	// These tests ensure rewards are calculated based on time elapsed, not blocks elapsed
-	
+
 	tests := []struct {
 		name           string
 		scenario       string
@@ -329,13 +317,13 @@ func TestCollectDepositReward_VaryingBlockTimes(t *testing.T) {
 			tolerance:      5,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Reset state
 			projects = avl.NewTree()
 			projectTierRewardManagers = avl.NewTree()
-			
+
 			// Setup project
 			project := &Project{
 				id:        "test_project",
@@ -344,55 +332,49 @@ func TestCollectDepositReward_VaryingBlockTimes(t *testing.T) {
 					30: &ProjectTier{
 						id:                    "test_project:30",
 						totalDistributeAmount: 1000,
-						startBlockTimeInfo:    &BlockTimeInfo{blockTime: 1000, blockHeight: 100},
-						endBlockTimeInfo:      &BlockTimeInfo{blockTime: 1200, blockHeight: 300}, // 200 seconds duration
+						startTime:             100,
+						endTime:               300, // 200 seconds duration
 					},
 				},
 			}
 			projects.Set(project.ID(), project)
-			
+
 			// Setup reward manager based on block pattern
 			var rewardManager *RewardManager
-			
+
 			switch tt.blockPattern {
 			case "fast":
 				// 100 blocks in 100 seconds (1 block/second)
 				rewardManager = NewRewardManager(
-					1000,  // total amount
-					100,   // start height
-					200,   // end height (100 blocks)
-					1000,  // start time
-					1200,  // end time (200 seconds)
-					150,   // current height (50 blocks)
-					1100,  // current time (100 seconds elapsed)
+					1000, // total amount
+					100,  // start height
+					200,  // end height (100 blocks)
+					150,  // current height (50 blocks)
+					150,  // current time (100 seconds elapsed)
 				)
 				// Update to simulate 50% time elapsed
 				rewardManager.updateRewardPerDepositX128(1000000, 150, 1100)
-				
+
 			case "slow":
 				// 5 blocks in 100 seconds (20 seconds/block)
 				rewardManager = NewRewardManager(
-					1000,  // total amount
-					100,   // start height
-					110,   // end height (10 blocks total)
-					1000,  // start time
-					1200,  // end time (200 seconds)
-					105,   // current height (5 blocks)
-					1100,  // current time (100 seconds elapsed)
+					1000, // total amount
+					100,  // start height
+					110,  // end height (10 blocks total)
+					105,  // current height (5 blocks)
+					105,  // current time (100 seconds elapsed)
 				)
 				// Update to simulate 50% time elapsed
 				rewardManager.updateRewardPerDepositX128(1000000, 105, 1100)
-				
+
 			case "irregular":
 				// Irregular block pattern
 				rewardManager = NewRewardManager(
-					1000,  // total amount
-					100,   // start height
-					110,   // end height
-					1000,  // start time
-					1200,  // end time (200 seconds)
-					100,   // current height
-					1000,  // current time
+					1000, // total amount
+					100,  // start height
+					110,  // end height
+					100,  // current height
+					100,  // current time
 				)
 				// Simulate irregular updates:
 				// Block 101 at +1 second
@@ -406,34 +388,34 @@ func TestCollectDepositReward_VaryingBlockTimes(t *testing.T) {
 				// Block 105 at +73 seconds
 				rewardManager.updateRewardPerDepositX128(1000000, 105, 1073)
 			}
-			
+
 			// Add reward state for deposit
 			deposit := &Deposit{
 				id:        "test_deposit",
 				projectID: "test_project",
 				tier:      30,
 			}
-			
+
 			// Create reward state
 			rewardState := &RewardState{
-				depositAmount:              1000000,
-				distributeStartHeight:      100,
-				distributeEndHeight:        300,
-				accumulatedHeight:          100,
-				priceDebtX128:              u256.Zero(),
-				claimableBlockTimeInfo:     &BlockTimeInfo{blockTime: 1000, blockHeight: 100},
+				depositAmount:       1000000,
+				distributeStartTime: 100,
+				distributeEndTime:   300,
+				accumulatedHeight:   100,
+				priceDebtX128:       u256.Zero(),
+				claimableTime:       100,
 			}
 			rewardManager.rewards.Set(deposit.ID(), rewardState)
-			
+
 			projectTierRewardManagers.Set("test_project:30", rewardManager)
-			
+
 			// Collect reward
 			amount, err := collectDepositReward(deposit, 200)
 			uassert.NoError(t, err)
-			
+
 			// Verify reward is within expected range
 			if amount < (tt.expectedReward-tt.tolerance) || amount > (tt.expectedReward+tt.tolerance) {
-				t.Errorf("Reward should be based on time elapsed, not blocks. Expected ~%d, got %d", 
+				t.Errorf("Reward should be based on time elapsed, not blocks. Expected ~%d, got %d",
 					tt.expectedReward, amount)
 			}
 		})
@@ -452,44 +434,44 @@ func TestCollectDepositReward_TimeBoundaries(t *testing.T) {
 	}{
 		{
 			name:           "before distribution start",
-			currentTime:    900,
-			startTime:      1000,
-			endTime:        2000,
+			currentTime:    90,
+			startTime:      100,
+			endTime:        200,
 			expectedReward: 0,
 			description:    "No rewards before distribution starts",
 		},
 		{
 			name:           "exactly at start",
-			currentTime:    1000,
-			startTime:      1000,
-			endTime:        2000,
+			currentTime:    100,
+			startTime:      100,
+			endTime:        200,
 			expectedReward: 0,
 			description:    "No rewards at exact start time",
 		},
 		{
 			name:           "exactly at end",
-			currentTime:    2000,
-			startTime:      1000,
-			endTime:        2000,
+			currentTime:    200,
+			startTime:      100,
+			endTime:        200,
 			expectedReward: 1000,
 			description:    "Full rewards at end time",
 		},
 		{
 			name:           "after distribution end",
-			currentTime:    3000,
-			startTime:      1000,
-			endTime:        2000,
+			currentTime:    300,
+			startTime:      100,
+			endTime:        200,
 			expectedReward: 1000,
 			description:    "Full rewards after end time",
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Reset state
 			projects = avl.NewTree()
 			projectTierRewardManagers = avl.NewTree()
-			
+
 			// Setup project
 			project := &Project{
 				id:        "boundary_test",
@@ -502,46 +484,44 @@ func TestCollectDepositReward_TimeBoundaries(t *testing.T) {
 				},
 			}
 			projects.Set(project.ID(), project)
-			
+
 			// Setup reward manager
 			rewardManager := NewRewardManager(
-				1000,      // total amount
-				100,       // start height
-				200,       // end height
+				1000, // total amount
 				tt.startTime,
 				tt.endTime,
-				100,       // current height
+				100,          // current height
 				tt.startTime, // initial time
 			)
-			
+
 			// Add deposit reward state
 			deposit := &Deposit{
 				id:        "boundary_deposit",
 				projectID: "boundary_test",
 				tier:      30,
 			}
-			
+
 			rewardState := &RewardState{
-				depositAmount:         1000000,
-				distributeStartHeight: 100,
-				distributeEndHeight:   200,
-				accumulatedHeight:     100,
-				priceDebtX128:         u256.Zero(),
-				claimableBlockTimeInfo: &BlockTimeInfo{blockTime: tt.startTime, blockHeight: 100},
+				depositAmount:       1000000,
+				distributeStartTime: 100,
+				distributeEndTime:   200,
+				accumulatedHeight:   100,
+				priceDebtX128:       u256.Zero(),
+				claimableTime:       100,
 			}
 			rewardManager.rewards.Set(deposit.ID(), rewardState)
-			
+
 			// Update to current time
 			if tt.currentTime > tt.startTime {
 				rewardManager.updateRewardPerDepositX128(1000000, 150, tt.currentTime)
 			}
-			
+
 			projectTierRewardManagers.Set("boundary_test:30", rewardManager)
-			
+
 			// Collect reward
 			amount, err := collectDepositReward(deposit, 150)
 			uassert.NoError(t, err)
-			
+
 			// Verify reward
 			if amount < (tt.expectedReward-5) || amount > (tt.expectedReward+5) {
 				t.Errorf("%s: expected ~%d, got %d", tt.description, tt.expectedReward, amount)

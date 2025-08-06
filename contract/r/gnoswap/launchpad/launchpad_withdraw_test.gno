@@ -94,7 +94,8 @@ func TestWithdrawDeposit(t *testing.T) {
 
 			deposit, _ := getDeposit(tt.depositID)
 
-			_, amount, err := withdrawDeposit(deposit, std.ChainHeight())
+			currentTime := time.Now().Unix()
+			_, amount, err := withdrawDeposit(deposit, std.ChainHeight(), currentTime)
 
 			if tt.expectedHasError {
 				uassert.Equal(t, tt.expectedErrorMessage, err.Error())
@@ -129,7 +130,6 @@ func initLaunchpadWithdrawTest(t *testing.T) {
 			tier30Ratio:        30,
 			tier90Ratio:        30,
 			tier180Ratio:       40,
-			averageBlockTimeMs: 2000,
 			recipient:          testutils.TestAddress("project"), // TODO: change to real address
 			startTime:          currentTime + 10,
 			currentTime:        currentTime,
@@ -154,5 +154,5 @@ func initLaunchpadWithdrawTest(t *testing.T) {
 	xgns.Mint(cross, launchpadAddr, depositAmount)
 
 	projectTier, _ := project.getTier(30)
-	testing.SetHeight(projectTier.EndHeight() + 1)
+	testing.SetHeight(projectTier.EndTime() + 1)
 }

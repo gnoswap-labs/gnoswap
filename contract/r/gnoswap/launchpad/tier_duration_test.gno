@@ -110,7 +110,6 @@ func TestTierDurationConsistency(t *testing.T) {
 					tier30Ratio:        tier30Ratio,
 					tier90Ratio:        tier90Ratio,
 					tier180Ratio:       tier180Ratio,
-					averageBlockTimeMs: 2000, // 2 seconds per block
 					recipient:          testutils.TestAddress("project"),
 					startTime:          currentTime,
 					currentTime:        currentTime,
@@ -120,15 +119,15 @@ func TestTierDurationConsistency(t *testing.T) {
 			projects.Set(project.ID(), project)
 			tier, _ := project.getTier(tt.tierType)
 
-			initialStartHeight := tier.StartHeight()
-			initialEndHeight := tier.EndHeight()
+			initialStartTime := tier.StartTime()
+			initialEndTime := tier.EndTime()
 			initialDistributePerSecond := tier.DistributeAmountPerSecondX128().ToString()
 
 			// calculate expected duration in blocks
 			expectedDurationBlocks := tt.expectedDurationDays * 24 * 60 * 60 / 2
 
 			// verify initial duration
-			actualInitialDuration := initialEndHeight - initialStartHeight
+			actualInitialDuration := initialEndTime - initialStartTime
 			uassert.Equal(t, expectedDurationBlocks, actualInitialDuration,
 				"Initial tier duration mismatch")
 
@@ -161,15 +160,15 @@ func TestTierDurationConsistency(t *testing.T) {
 			tierAfterDeposits, _ := project.getTier(tt.tierType)
 
 			// Verify nothing changed
-			uassert.Equal(t, initialStartHeight, tierAfterDeposits.StartHeight(),
+			uassert.Equal(t, initialStartTime, tierAfterDeposits.StartTime(),
 				"%s: Start height should not change", tt.name)
-			uassert.Equal(t, initialEndHeight, tierAfterDeposits.EndHeight(),
+			uassert.Equal(t, initialEndTime, tierAfterDeposits.EndTime(),
 				"%s: End height should not change", tt.name)
 			uassert.Equal(t, initialDistributePerSecond, tierAfterDeposits.DistributeAmountPerSecondX128().ToString(),
 				"%s: Distribute per second should not change", tt.name)
 
 			// Verify duration remains consistent
-			finalDuration := tierAfterDeposits.EndHeight() - tierAfterDeposits.StartHeight()
+			finalDuration := tierAfterDeposits.EndTime() - tierAfterDeposits.StartTime()
 			uassert.Equal(t, expectedDurationBlocks, finalDuration,
 				"Duration should remain consistent")
 		})
@@ -177,17 +176,11 @@ func TestTierDurationConsistency(t *testing.T) {
 }
 
 // calculateEndTimeByTierType calculates the end time based on tier type
-func calculateEndTimeByTierType(tierType int64, startTime int64, startHeight int64, averageBlockTimeMs int64) *BlockTimeInfo {
+func calculateEndTimeByTierType(tierType int64, startTime int64) int64 {
 	// Calculate end time based on tier duration
 	endTime := startTime + projectTierDurationTimes[tierType]
-	
-	// Create and return block time info
-	return newBlockTimeInfoByTimeAndAverageBlockTimeMs(
-		startTime,
-		startHeight,
-		endTime,
-		averageBlockTimeMs,
-	)
+
+	return endTime
 }
 
 // TestTierDuration_TimestampBasedCalculation tests that tier duration calculations are time-based
@@ -248,12 +241,10 @@ func TestTierDuration_TimestampBasedCalculation(t *testing.T) {
 			endTimeInfo := calculateEndTimeByTierType(
 				tt.tierType,
 				tt.startTime,
-				100, // start height
-				tt.averageBlockTimeMs,
 			)
 			
 			// Calculate actual duration in seconds
-			actualDurationSeconds := endTimeInfo.BlockTime() - tt.startTime
+			actualDurationSeconds := endTimeInfo - tt.startTime
 			actualDurationDays := actualDurationSeconds / 86400 // seconds per day
 			
 			// Verify the duration matches expected days
@@ -305,11 +296,9 @@ func TestTierDuration_BlockHeightEstimation(t *testing.T) {
 			endTimeInfo := calculateEndTimeByTierType(
 				tt.tierType,
 				startTime,
-				tt.startHeight,
-				tt.averageBlockTimeMs,
 			)
 			
-			actualBlockCount := endTimeInfo.BlockHeight() - tt.startHeight
+			actualBlockCount := endTimeInfo - tt.startHeight
 			
 			// Verify block count is in expected range
 			uassert.Equal(t, true, 
