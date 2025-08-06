@@ -50,14 +50,14 @@ func (p ProposalType) IsExecutable() bool {
 // Proposal represents a governance proposal with all its associated data and state.
 // This is the core structure that tracks proposal lifecycle from creation to execution.
 type Proposal struct {
-	id            int64               // Unique identifier for the proposal
-	proposer      std.Address         // The address of the proposer
-	configVersion int64               // The version of the governance config used
-	status        *ProposalStatus     // Current status and voting information
-	metadata      *ProposalMetadata   // Title and description
-	data          *ProposalData       // Type-specific proposal data
-	createdAt     int64               // Creation timestamp
-	createdHeight int64               // Block height at creation
+	id            int64             // Unique identifier for the proposal
+	proposer      std.Address       // The address of the proposer
+	configVersion int64             // The version of the governance config used
+	status        *ProposalStatus   // Current status and voting information
+	metadata      *ProposalMetadata // Title and description
+	data          *ProposalData     // Type-specific proposal data
+	createdAt     int64             // Creation timestamp
+	createdHeight int64             // Block height at creation
 }
 
 // ID returns the unique identifier of the proposal.
@@ -333,15 +333,6 @@ func (p *Proposal) execute(executedAt int64, executedHeight int64, executedBy st
 
 	// Mark proposal as executed
 	return p.status.execute(executedAt, executedHeight, executedBy)
-}
-
-// updateExecuteResult updates the execution result status.
-// This is called after execution attempt to record success or failure.
-//
-// Parameters:
-//   - success: true if execution was successful
-func (p *Proposal) updateExecuteResult(success bool) {
-	p.status.updateExecuteResult(success)
 }
 
 // cancel marks the proposal as canceled and records cancellation details.

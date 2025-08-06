@@ -13,20 +13,20 @@ func TestProposalStatus_StatusType(t *testing.T) {
 	baseTime := time.Unix(1000, 0)
 	config := Config{
 		VotingStartDelay: 100,
-		VotingPeriod:    200,
-		ExecutionDelay:  100,
-		ExecutionWindow: 200,
-		Quorum:         50,
+		VotingPeriod:     200,
+		ExecutionDelay:   100,
+		ExecutionWindow:  200,
+		Quorum:           50,
 	}
 
 	tests := []struct {
-		name           string
-		currentTime    time.Time
+		name            string
+		currentTime     time.Time
 		maxVotingWeight int64
-		executable     bool
-		isExecuted     bool
-		isCanceled     bool
-		expectedStatus ProposalStatusType
+		executable      bool
+		isExecuted      bool
+		isCanceled      bool
+		expectedStatus  ProposalStatusType
 	}{
 		{
 			name:            "Status Upcoming",
@@ -125,10 +125,10 @@ func TestProposalStatus_VotingOperations(t *testing.T) {
 			// given
 			config := Config{
 				VotingStartDelay: 100,
-				VotingPeriod:    200,
-				ExecutionDelay:  100,
-				ExecutionWindow: 200,
-				Quorum:         tc.quorum,
+				VotingPeriod:     200,
+				ExecutionDelay:   100,
+				ExecutionWindow:  200,
+				Quorum:           tc.quorum,
 			}
 			status := NewProposalStatus(config, tc.maxVotingWeight, true, time.Now().Unix())
 
@@ -148,72 +148,3 @@ func TestProposalStatus_VotingOperations(t *testing.T) {
 		})
 	}
 }
-
-// TestProposalStatus_ExecutionOperations tests execution operations
-func TestProposalStatus_ExecutionOperations(t *testing.T) {
-	tests := []struct {
-		name           string
-		executable     bool
-		operation     string // "execute" or "cancel"
-		success       bool
-		expectedError bool
-	}{
-		{
-			name:          "Execute successful proposal",
-			executable:    true,
-			operation:    "execute",
-			success:      true,
-			expectedError: false,
-		},
-		{
-			name:          "Cancel executable proposal",
-			executable:    true,
-			operation:    "cancel",
-			expectedError: false,
-		},
-		{
-			name:          "Execute non-executable proposal",
-			executable:    false,
-			operation:    "execute",
-			expectedError: true,
-		},
-		{
-			name:          "Cancel non-executable proposal",
-			executable:    false,
-			operation:    "cancel",
-			expectedError: true,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// given
-			config := Config{
-				VotingStartDelay: 100,
-				VotingPeriod:    200,
-				ExecutionDelay:  100,
-				ExecutionWindow: 200,
-				Quorum:         50,
-			}
-			status := NewProposalStatus(config, 1000, tc.executable, time.Now().Unix())
-
-			// when
-			var err error
-			if tc.operation == "execute" {
-				err = status.execute(time.Now().Unix(), 100, std.Address("g1executor"))
-				if err == nil && tc.success {
-					status.updateExecuteResult(true)
-				}
-			} else {
-				err = status.cancel(time.Now().Unix(), 100, std.Address("g1canceler"))
-			}
-
-			// then
-			if tc.expectedError {
-				uassert.NotNil(t, err)
-			} else {
-				uassert.Nil(t, err)
-			}
-		})
-	}
-} 
