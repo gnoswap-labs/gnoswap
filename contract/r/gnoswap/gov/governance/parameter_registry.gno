@@ -6,6 +6,7 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/r/gnoswap/v1/access"
 	cp "gno.land/r/gnoswap/v1/community_pool"
 	en "gno.land/r/gnoswap/v1/emission"
 
@@ -20,6 +21,7 @@ import (
 // Package paths
 const (
 	COMMON_PATH         = "gno.land/r/gnoswap/v1/common"
+	ACCESS_PATH         = "gno.land/r/gnoswap/v1/access"
 	COMMUNITY_POOL_PATH = "gno.land/r/gnoswap/v1/community_pool"
 	EMISSION_PATH       = "gno.land/r/gnoswap/v1/emission"
 	GNS_PATH            = "gno.land/r/gnoswap/v1/gns"
@@ -176,18 +178,29 @@ func createParameterHandlers() *ParameterRegistry {
 
 	// Define all handler configurations for different system components
 	handlers := []*ParameterHandlerOptions{
-		// Common system controls
+		// Access control
 		{
-			pkgPath:    COMMON_PATH,
-			function:   "SetHaltLevel",
+			pkgPath:    ACCESS_PATH,
+			function:   "UpdateSwapWhiteList",
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
-				// Set system halt status (emergency stop mechanism)
-				halt.SetHaltLevel(cross, halt.HaltLevel(params[0])) // halt
+				// Update swap whitelist
+				access.UpdateSwapWhiteList(cross, std.Address(params[0]))
+
 				return nil
 			},
 		},
+		{
+			pkgPath:    ACCESS_PATH,
+			function:   "RemoveFromSwapWhiteList",
+			paramCount: 1,
+			handlerFunc: func(params []string) error {
+				// Remove from swap whitelist
+				access.RemoveFromSwapWhiteList(cross, std.Address(params[0]))
 
+				return nil
+			},
+		},
 		// Community pool token transfers
 		{
 			pkgPath:    COMMUNITY_POOL_PATH,
@@ -205,8 +218,18 @@ func createParameterHandlers() *ParameterRegistry {
 				return nil
 			},
 		},
-
 		// Emission distribution configuration
+		{
+			pkgPath:    EMISSION_PATH,
+			function:   "SetDistributionStartTime",
+			paramCount: 1,
+			handlerFunc: func(params []string) error {
+				// Set distribution start time
+				en.SetDistributionStartTime(cross, parseInt64(params[0]))
+
+				return nil
+			},
+		},
 		{
 			pkgPath:    EMISSION_PATH,
 			function:   "ChangeDistributionPct",
@@ -238,17 +261,6 @@ func createParameterHandlers() *ParameterRegistry {
 				return nil
 			},
 		},
-
-		// GNS token configuration
-		{
-			pkgPath:    GNS_PATH,
-			function:   "SetAvgBlockTimeInMs",
-			paramCount: 1,
-			handlerFunc: func(params []string) error {
-				return nil
-			},
-		},
-
 		// Governance configuration changes
 		{
 			pkgPath:    GOV_GOVERNANCE_PATH,
@@ -281,6 +293,25 @@ func createParameterHandlers() *ParameterRegistry {
 		},
 
 		// Pool protocol fee configuration
+		{
+			pkgPath:    POOL_PATH,
+			function:   "CollectProtocol",
+			paramCount: 6,
+			handlerFunc: func(params []string) error {
+				// Collect protocol fees
+				pl.CollectProtocol(
+					cross,
+					params[0],                      // token0Path
+					params[1],                      // token1Path
+					uint32(parseUint64(params[2])), // fee
+					std.Address(params[3]),         // recipient
+					params[4],                      // amount0Requested
+					params[5],                      // amount1Requested
+				)
+
+				return nil
+			},
+		},
 		{
 			pkgPath:    POOL_PATH,
 			function:   "SetFeeProtocol",
@@ -316,7 +347,7 @@ func createParameterHandlers() *ParameterRegistry {
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
 				// Set fee required to create new pools
-				pl.SetPoolCreationFee(cross, parseNumber(params[0], kindInt64).(int64)) // fee
+				pl.SetPoolCreationFee(cross, parseInt64(params[0])) // fee
 				return nil
 			},
 		},
@@ -363,7 +394,28 @@ func createParameterHandlers() *ParameterRegistry {
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
 				// Set minimum GNS amount required for staking deposits
-				sr.SetDepositGnsAmount(cross, parseNumber(params[0], kindInt64).(int64)) // amount
+				sr.SetDepositGnsAmount(cross, parseInt64(params[0])) // amount
+				return nil
+			},
+		},
+		{
+			pkgPath:    STAKER_PATH,
+			function:   "SetMinimumRewardAmount",
+			paramCount: 1,
+			handlerFunc: func(params []string) error {
+				// Set minimum GNS amount required for staking deposits
+				sr.SetMinimumRewardAmount(cross, parseInt64(params[0])) // amount
+				return nil
+			},
+		},
+		{
+			pkgPath:    STAKER_PATH,
+			function:   "SetTokenMinimumRewardAmount",
+			paramCount: 1,
+			handlerFunc: func(params []string) error {
+				// Set minimum GNS amount required for staking deposits
+				// params[0] is a string in the format "tokenPath:amount"
+				sr.SetTokenMinimumRewardAmount(cross, params[0]) // amount
 				return nil
 			},
 		},
@@ -411,7 +463,7 @@ func createParameterHandlers() *ParameterRegistry {
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
 				// Set fee charged for unstaking operations
-				fee := parseNumber(params[0], kindInt64).(int64)
+				fee := parseInt64(params[0])
 				sr.SetUnStakingFee(cross, fee)
 				return nil
 			},
@@ -422,7 +474,7 @@ func createParameterHandlers() *ParameterRegistry {
 			paramCount: 2,
 			handlerFunc: func(params []string) error {
 				// Set warm-up period configuration for staking
-				percent := parseNumber(params[0], kindInt64).(int64)
+				percent := parseInt64(params[0])
 				block := parseNumber(params[1], kindInt64).(int64)
 				sr.SetWarmUp(cross, percent, block)
 
