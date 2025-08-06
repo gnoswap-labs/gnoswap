@@ -2,6 +2,7 @@ package staker
 
 import (
 	"std"
+	"time"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
@@ -17,17 +18,17 @@ var (
 	// delegationCounter provides unique delegation IDs for new delegations
 	delegationCounter *Counter
 	// delegations stores all delegation records indexed by delegation ID
-	delegations       *avl.Tree
+	delegations *avl.Tree
 	// delegationManager tracks user delegation relationships and provides efficient lookup
 	delegationManager *DelegationManager
 
 	// delegationHistory maintains chronological record of all delegation events for snapshot calculations
-	delegationHistory   DelegationHistory
+	delegationHistory DelegationHistory
 	// delegationSnapshots stores current delegation state for each delegatee
 	delegationSnapshots DelegationSnapshot
 
 	// emissionRewardManager handles distribution and tracking of GNS emission rewards to stakers
-	emissionRewardManager    *EmissionRewardManager
+	emissionRewardManager *EmissionRewardManager
 	// protocolFeeRewardManager handles distribution and tracking of multi-token protocol fee rewards
 	protocolFeeRewardManager *ProtocolFeeRewardManager
 
@@ -37,7 +38,7 @@ var (
 	// emissionRewardBalance tracks the current balance of emission rewards (unused)
 	emissionRewardBalance int64
 	// protocolFeeBalances tracks current balances of protocol fees by token (unused)
-	protocolFeeBalances   map[string]int64
+	protocolFeeBalances map[string]int64
 )
 
 // init initializes the global state variables with default values and empty structures
@@ -266,12 +267,12 @@ func setDelegationSnapshots(snapshot DelegationSnapshot) {
 // Parameters:
 //   - address: staker's address
 //   - amount: amount of stake to add
-//   - currentHeight: current block height
-func addStakeEmissionReward(address string, amount int64, currentHeight int64) {
+//   - currentTimestamp: current timestamp
+func addStakeEmissionReward(address string, amount int64, currentTimestamp int64) {
 	distributedAmount := emission.GetAccuDistributedToGovStaker()
 
-	emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentHeight)
-	emissionRewardManager.addStake(address, amount, currentHeight)
+	emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
+	emissionRewardManager.addStake(address, amount, currentTimestamp)
 }
 
 // removeStakeEmissionReward removes stake from emission reward tracking for an address.
@@ -280,12 +281,12 @@ func addStakeEmissionReward(address string, amount int64, currentHeight int64) {
 // Parameters:
 //   - address: staker's address
 //   - amount: amount of stake to remove
-//   - currentHeight: current block height
-func removeStakeEmissionReward(address string, amount int64, currentHeight int64) {
+//   - currentTimestamp: current timestamp
+func removeStakeEmissionReward(address string, amount int64, currentTimestamp int64) {
 	distributedAmount := emission.GetAccuDistributedToGovStaker()
 
-	emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentHeight)
-	emissionRewardManager.removeStake(address, amount, currentHeight)
+	emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
+	emissionRewardManager.removeStake(address, amount, currentTimestamp)
 }
 
 // claimRewardsEmissionReward claims emission rewards for an address.
@@ -293,16 +294,16 @@ func removeStakeEmissionReward(address string, amount int64, currentHeight int64
 //
 // Parameters:
 //   - address: staker's address claiming rewards
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 //
 // Returns:
 //   - int64: amount of emission rewards claimed
 //   - error: nil on success, error if claiming fails
-func claimRewardsEmissionReward(address string, currentHeight int64) (int64, error) {
+func claimRewardsEmissionReward(address string, currentTimestamp int64) (int64, error) {
 	distributedAmount := emission.GetAccuDistributedToGovStaker()
 
-	emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentHeight)
-	return emissionRewardManager.claimRewards(address, currentHeight)
+	emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
+	return emissionRewardManager.claimRewards(address, currentTimestamp)
 }
 
 // addStakeProtocolFeeReward adds stake to protocol fee reward tracking for an address.
@@ -415,11 +416,11 @@ func removeLaunchpadProjectDeposit(ownerAddress string) bool {
 // Parameters:
 //   - address: project wallet address
 //   - amount: amount of stake to add
-//   - currentHeight: current block height
-func addStakeFromLaunchpad(address string, amount int64, currentHeight int64) {
+//   - currentTimestamp: current timestamp
+func addStakeFromLaunchpad(address string, amount int64, currentTimestamp int64) {
 	launchpadRewardID := makeLaunchpadRewardID(address)
-	addStakeEmissionReward(launchpadRewardID, amount, currentHeight)
-	addStakeProtocolFeeReward(launchpadRewardID, amount, currentHeight)
+	addStakeEmissionReward(launchpadRewardID, amount, currentTimestamp)
+	addStakeProtocolFeeReward(launchpadRewardID, amount, time.Now().Unix())
 
 	deposit, exists := getLaunchpadProjectDeposit(launchpadRewardID)
 	if !exists {
@@ -436,11 +437,11 @@ func addStakeFromLaunchpad(address string, amount int64, currentHeight int64) {
 // Parameters:
 //   - address: project wallet address
 //   - amount: amount of stake to remove
-//   - currentHeight: current block height
-func removeStakeFromLaunchpad(address string, amount int64, currentHeight int64) {
+//   - currentTimestamp: current timestamp
+func removeStakeFromLaunchpad(address string, amount int64, currentTimestamp int64) {
 	launchpadRewardID := makeLaunchpadRewardID(address)
-	removeStakeEmissionReward(launchpadRewardID, amount, currentHeight)
-	removeStakeProtocolFeeReward(launchpadRewardID, amount, currentHeight)
+	removeStakeEmissionReward(launchpadRewardID, amount, currentTimestamp)
+	removeStakeProtocolFeeReward(launchpadRewardID, amount, time.Now().Unix())
 
 	deposit, exists := getLaunchpadProjectDeposit(launchpadRewardID)
 	if !exists {

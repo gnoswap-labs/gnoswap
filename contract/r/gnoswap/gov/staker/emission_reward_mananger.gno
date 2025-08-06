@@ -15,11 +15,11 @@ type EmissionRewardManager struct {
 	// accumulatedRewardX128PerStake tracks the cumulative reward per unit of stake with 128-bit precision
 	accumulatedRewardX128PerStake *u256.Uint
 	// distributedAmount tracks the total amount of rewards distributed
-	distributedAmount             int64
-	// accumulatedHeight tracks the last block height when rewards were accumulated
-	accumulatedHeight             int64
+	distributedAmount int64
+	// accumulatedTimestamp tracks the last timestamp when rewards were accumulated
+	accumulatedTimestamp int64
 	// totalStakedAmount tracks the total amount of tokens staked in the system
-	totalStakedAmount             int64
+	totalStakedAmount int64
 }
 
 // GetAccumulatedRewardX128PerStake returns the accumulated reward per stake with 128-bit precision.
@@ -30,12 +30,12 @@ func (e *EmissionRewardManager) GetAccumulatedRewardX128PerStake() *u256.Uint {
 	return e.accumulatedRewardX128PerStake
 }
 
-// GetAccumulatedHeight returns the last block height when rewards were accumulated.
+// GetAccumulatedTimestamp returns the last timestamp when rewards were accumulated.
 //
 // Returns:
-//   - int64: last accumulated block height
-func (e *EmissionRewardManager) GetAccumulatedHeight() int64 {
-	return e.accumulatedHeight
+//   - int64: last accumulated timestamp
+func (e *EmissionRewardManager) GetAccumulatedTimestamp() int64 {
+	return e.accumulatedTimestamp
 }
 
 // GetTotalStakedAmount returns the total amount of tokens staked in the system.
@@ -60,14 +60,14 @@ func (e *EmissionRewardManager) GetDistributedAmount() int64 {
 // Parameters:
 //   - currentDistributedAmount: current total distributed amount from emission contract
 //   - address: staker's address to calculate rewards for
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 //
 // Returns:
 //   - int64: amount of rewards that can be claimed
 func (e *EmissionRewardManager) GetClaimableRewardAmount(
 	currentDistributedAmount int64,
 	address string,
-	currentHeight int64,
+	currentTimestamp int64,
 ) int64 {
 	rewardStateI, ok := e.rewardStates.Get(address)
 	if !ok {
@@ -75,9 +75,9 @@ func (e *EmissionRewardManager) GetClaimableRewardAmount(
 	}
 
 	rewardState := rewardStateI.(*EmissionRewardState)
-	accumulatedRewardX128PerStake := e.calculateAccumulatedRewardX128PerStake(currentDistributedAmount, currentHeight)
+	accumulatedRewardX128PerStake := e.calculateAccumulatedRewardX128PerStake(currentDistributedAmount, currentTimestamp)
 
-	return rewardState.GetClaimableRewardAmount(accumulatedRewardX128PerStake, currentHeight)
+	return rewardState.GetClaimableRewardAmount(accumulatedRewardX128PerStake, currentTimestamp)
 }
 
 // calculateAccumulatedRewardX128PerStake calculates the updated accumulated reward per stake.
@@ -85,16 +85,16 @@ func (e *EmissionRewardManager) GetClaimableRewardAmount(
 //
 // Parameters:
 //   - currentDistributedAmount: current total distributed amount
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 //
 // Returns:
 //   - *u256.Uint: updated accumulated reward per stake
 func (e *EmissionRewardManager) calculateAccumulatedRewardX128PerStake(
 	currentDistributedAmount int64,
-	currentHeight int64,
+	currentTimestamp int64,
 ) *u256.Uint {
-	// If we're looking at a past height, return current state
-	if e.accumulatedHeight > currentHeight {
+	// If we're looking at a past timestamp, return current state
+	if e.accumulatedTimestamp > currentTimestamp {
 		return e.accumulatedRewardX128PerStake
 	}
 
@@ -128,13 +128,13 @@ func (e *EmissionRewardManager) calculateAccumulatedRewardX128PerStake(
 //
 // Parameters:
 //   - currentDistributedAmount: current total distributed amount
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 func (e *EmissionRewardManager) updateAccumulatedRewardX128PerStake(
 	currentDistributedAmount int64,
-	currentHeight int64,
+	currentTimestamp int64,
 ) {
-	// Don't update if we're looking at a past height
-	if e.accumulatedHeight > currentHeight {
+	// Don't update if we're looking at a past timestamp
+	if e.accumulatedTimestamp > currentTimestamp {
 		return
 	}
 
@@ -145,11 +145,11 @@ func (e *EmissionRewardManager) updateAccumulatedRewardX128PerStake(
 
 	// Update accumulated reward state
 	e.accumulatedRewardX128PerStake = e.calculateAccumulatedRewardX128PerStake(
-		currentDistributedAmount, 
-		currentHeight,
+		currentDistributedAmount,
+		currentTimestamp,
 	)
 	e.distributedAmount = currentDistributedAmount
-	e.accumulatedHeight = currentHeight
+	e.accumulatedTimestamp = currentTimestamp
 }
 
 // addStake adds a stake for an address and updates their reward state.
@@ -158,7 +158,7 @@ func (e *EmissionRewardManager) updateAccumulatedRewardX128PerStake(
 // Parameters:
 //   - address: staker's address
 //   - amount: amount of stake to add
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 func (e *EmissionRewardManager) addStake(address string, amount int64, currentHeight int64) {
 	rewardStateI, ok := e.rewardStates.Get(address)
 	if !ok {
@@ -179,7 +179,7 @@ func (e *EmissionRewardManager) addStake(address string, amount int64, currentHe
 // Parameters:
 //   - address: staker's address
 //   - amount: amount of stake to remove
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 func (e *EmissionRewardManager) removeStake(address string, amount int64, currentHeight int64) {
 	rewardStateI, ok := e.rewardStates.Get(address)
 	if !ok {
@@ -199,7 +199,7 @@ func (e *EmissionRewardManager) removeStake(address string, amount int64, curren
 //
 // Parameters:
 //   - address: staker's address claiming rewards
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 //
 // Returns:
 //   - int64: amount of rewards claimed
@@ -211,7 +211,7 @@ func (e *EmissionRewardManager) claimRewards(address string, currentHeight int64
 	}
 
 	rewardState := rewardStateI.(*EmissionRewardState)
-	
+
 	claimedRewardAmount, err := rewardState.claimRewardsWithUpdateRewardDebtX128(e.accumulatedRewardX128PerStake, currentHeight)
 	if err != nil {
 		return 0, err
@@ -230,7 +230,7 @@ func (e *EmissionRewardManager) claimRewards(address string, currentHeight int64
 func NewEmissionRewardManager() *EmissionRewardManager {
 	return &EmissionRewardManager{
 		accumulatedRewardX128PerStake: u256.NewUint(0),
-		accumulatedHeight:             0,
+		accumulatedTimestamp:          0,
 		totalStakedAmount:             0,
 		distributedAmount:             0,
 		rewardStates:                  avl.NewTree(),

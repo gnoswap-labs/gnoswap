@@ -40,7 +40,7 @@ func GetClaimableRewardByRewardID(rewardID string) string {
 	}(cross)
 
 	emissionDistributedAmount := emission.GetAccuDistributedToGovStaker()
-	emissionReward := emissionRewardManager.GetClaimableRewardAmount(emissionDistributedAmount, rewardID, std.ChainHeight())
+	emissionReward := emissionRewardManager.GetClaimableRewardAmount(emissionDistributedAmount, rewardID, time.Now().Unix())
 
 	protocolFeeDistributedAmounts := getDistributedProtocolFees()
 	protocolFeeRewards := protocolFeeRewardManager.GetClaimableRewardAmounts(protocolFeeDistributedAmounts, rewardID, std.ChainHeight())
