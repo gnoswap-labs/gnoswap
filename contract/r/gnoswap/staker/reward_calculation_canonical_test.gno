@@ -18,7 +18,7 @@ func Setup(t *testing.T) *canonicalRewardState {
 	pools := NewPools()
 	deposits := NewDeposits()
 
-	return NewCanonicalRewardState(t, pools, deposits, TickCrossHook)
+	return NewCanonicalRewardState(t, pools, deposits, tickCrossHook)
 }
 
 func TestCanonicalSimple(t *testing.T) {
