@@ -142,9 +142,9 @@ func (self *Tick) updateCurrentOutsideAccumulation(timestamp int64, acc *u256.Ui
 	self.outsideAccumulation.set(timestamp, newOutsideAccumulation)
 }
 
-// TickCrossHook is a hook that is called when a tick is crossed.
+// tickCrossHook is a hook that is called when a tick is crossed.
 // Modifies the tick's outside accumulation and updates the tick's liquidity info
-func TickCrossHook(pools *Pools, timestamp func() int64) func(poolPath string, tickId int32, zeroForOne bool) {
+func tickCrossHook(pools *Pools, timestamp func() int64) func(poolPath string, tickId int32, zeroForOne bool) {
 	return func(poolPath string, tickId int32, zeroForOne bool) {
 		pool, ok := pools.Get(poolPath)
 		if !ok {
@@ -177,7 +177,7 @@ func TickCrossHook(pools *Pools, timestamp func() int64) func(poolPath string, t
 
 func setTickCrossHook() {
 	// Sets tick cross hook for pool contract
-	pl.SetTickCrossHook(cross, TickCrossHook(pools, func() int64 {
+	pl.SetTickCrossHook(cross, tickCrossHook(pools, func() int64 {
 		return time.Now().Unix()
 	}))
 }
