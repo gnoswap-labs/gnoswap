@@ -396,24 +396,32 @@ func collectFee(
 	position.tokensOwed1 = new(u256.Uint).Sub(tokensOwed1, u256.MustFromDecimal(amount1))
 	mustUpdatePosition(positionId, position)
 
-	// handle withdrawal fee
-	withoutFee0, withoutFee1 := pl.HandleWithdrawalFee(
-		cross,
-		positionId,
-		token0,
-		amount0,
-		token1,
-		amount1,
-		position.poolKey,
-		caller,
-	)
+	withdrawalFeeBps := pl.GetWithdrawalFee()
+	amount0WithoutFee, fee0 := calculateAmountWithWithdrawalFee(amount0, withdrawalFeeBps)
+	amount1WithoutFee, fee1 := calculateAmountWithWithdrawalFee(amount1, withdrawalFeeBps)
 
-	// UNWRAP
-	pToken0, pToken1, _ := splitOf(position.poolKey)
-	err = handleUnwrap(pToken0, pToken1, unwrapResult, userWugnot, caller)
-	if err != nil {
-		panic(err)
+	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
+
+	if isWrappedToken(token0) && unwrapResult {
+		unwrapWithTransferFrom(poolAddr, caller, amount0WithoutFee)
+	} else {
+		common.TransferFrom(cross, token0, poolAddr, caller, amount0WithoutFee)
 	}
+
+	if isWrappedToken(token1) && unwrapResult {
+		unwrapWithTransferFrom(poolAddr, caller, amount1WithoutFee)
+	} else {
+		common.TransferFrom(cross, token1, poolAddr, caller, amount1WithoutFee)
+	}
+
+	protocolFeeAddr, _ := access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	common.TransferFrom(cross, token0, poolAddr, protocolFeeAddr, fee0)
+	common.TransferFrom(cross, token1, poolAddr, protocolFeeAddr, fee1)
+
+	amount0WithoutFeeStr := formatInt(amount0WithoutFee)
+	amount1WithoutFeeStr := formatInt(amount1WithoutFee)
+	fee0Str := formatInt(fee0)
+	fee1Str := formatInt(fee1)
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(

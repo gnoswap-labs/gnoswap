@@ -3,6 +3,7 @@ package pool
 import (
 	"std"
 	"strconv"
+	"strings"
 	"testing"
 
 	"gno.land/p/demo/uassert"

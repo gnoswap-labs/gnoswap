@@ -7,7 +7,9 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/halt"
+	pf "gno.land/r/gnoswap/v1/protocol_fee"
 )
 
 var (
