@@ -68,7 +68,6 @@ func CreateExternalIncentive(
 		std.ChainHeight(),
 		depositGnsAmount,
 		time.Now().Unix(),
-		gns.AvgBlockTimeInMs(),
 	)
 
 	if externalIncentives.Has(incentiveId) {
@@ -102,7 +101,6 @@ func CreateExternalIncentive(
 		"depositGnsAmount", formatInt(depositGnsAmount),
 		"currentHeight", formatInt(std.ChainHeight()),
 		"currentTime", formatInt(time.Now().Unix()),
-		"avgBlockTimeInMs", formatInt(gns.AvgBlockTimeInMs()),
 	)
 }
 
@@ -123,7 +121,8 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 	}
 
 	caller := std.PreviousRealm().Address()
-	incentive, refund, err := endExternalIncentive(pool, incentiveId, caller, std.ChainHeight())
+	currentTime := time.Now().Unix()
+	incentive, refund, err := endExternalIncentive(pool, incentiveId, caller, currentTime)
 	if err != nil {
 		panic(err)
 	}
@@ -161,7 +160,7 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 	)
 }
 
-func endExternalIncentive(pool *Pool, incentiveId string, caller std.Address, currentHeight int64) (*ExternalIncentive, int64, error) {
+func endExternalIncentive(pool *Pool, incentiveId string, caller std.Address, currentTime int64) (*ExternalIncentive, int64, error) {
 	incentive, exists := pool.incentives.Get(incentiveId)
 	if !exists {
 		return nil, 0, makeErrorWithDetails(
@@ -170,10 +169,10 @@ func endExternalIncentive(pool *Pool, incentiveId string, caller std.Address, cu
 		)
 	}
 
-	if int64(currentHeight) < incentive.endHeight {
+	if currentTime < incentive.endTimestamp {
 		return nil, 0, makeErrorWithDetails(
 			errCannotEndIncentive,
-			ufmt.Sprintf("cannot end incentive before endHeight(%d), current(%d)", incentive.endHeight, currentHeight),
+			ufmt.Sprintf("cannot end incentive before endTime(%d), current(%d)", incentive.endTimestamp, currentTime),
 		)
 	}
 

@@ -329,9 +329,6 @@ stdout '(0 uint64)'
 gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gns -func GetAvgBlockTimeInMs -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stdout 2000
 
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gns -func SetAvgBlockTimeInMsByAdmin -args 4000 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
-stdout OK
-
 gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gns -func GetAvgBlockTimeInMs -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stdout 4000
 

@@ -8,6 +8,7 @@ import (
 	"std"
 	"strconv"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
@@ -76,18 +77,14 @@ func main() {
 	collectRewardWithSkippingBlocks(1, 1)
 	println()
 
-	println("[SCENARIO] 6. Change avg block time (2000ms -> 4000ms)")
-	changeAvgBlockTime(4000)
-	println()
-
-	println("[SCENARIO] 7. Collect reward for 1 blocks")
+	println("[SCENARIO] 6. Collect reward for 1 blocks")
 	collectRewardWithSkippingBlocks(1, 1)
 }
 
 func initAccountAndEmission() {
 	println("[INFO] send coins to admin")
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartBlockHeight(cross, 124)
+	emission.SetDistributionStartTime(cross, time.Now().Unix() + 1)
 
 	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
 
@@ -181,12 +178,6 @@ func collectRewardWithSkippingBlocks(positionId uint64, blocks int64) {
 	ufmt.Printf("[EXPECTED] position %d's reward for %d blocks: %d\n", positionId, blocks, diff)
 }
 
-func changeAvgBlockTime(blockTimeMs int64) {
-	println("[INFO] change avg block time to", blockTimeMs, "ms")
-	testing.SetRealm(adminRealm)
-	gns.SetAvgBlockTimeInMs(cross, blockTimeMs)
-}
-
 func positionIdFrom(positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic("positionId is nil")
@@ -221,13 +212,10 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] mint in-range position (tick range: -60 ~ 60, requested amount: 50, 50)
 //
 // [SCENARIO] 4. Stake position 01
-// [INFO] balance changes by 100 blocks 321061619
+// [INFO] balance changes by 100 blocks 802654049
 //
 // [SCENARIO] 5. Collect reward for 1 blocks
-// [EXPECTED] position 1's reward for 1 blocks: 3210615
+// [EXPECTED] position 1's reward for 1 blocks: 8026540
 //
-// [SCENARIO] 6. Change avg block time (2000ms -> 4000ms)
-// [INFO] change avg block time to 4000 ms
-//
-// [SCENARIO] 7. Collect reward for 1 blocks
-// [EXPECTED] position 1's reward for 1 blocks: 6421232
+// [SCENARIO] 6. Collect reward for 1 blocks
+// [EXPECTED] position 1's reward for 1 blocks: 8026540

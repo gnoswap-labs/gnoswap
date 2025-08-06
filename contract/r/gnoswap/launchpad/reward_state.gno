@@ -13,20 +13,22 @@ import (
 // - priceDebtX128 (u256.Uint): The price debt per GNS stake, represented as a Q128 fixed-point number.
 // - claimableBlockTimeInfo (BlockTimeInfo): The block time and height information for the claimable reward.
 // - depositAmount (int64): The amount of GNS staked.
-// - distributeStartHeight (int64): The start height of the reward calculation.
-// - distributeEndHeight (int64): The end height of the reward calculation.
+// - distributeStartTime (int64): The start time of the reward calculation.
+// - distributeEndTime (int64): The end time of the reward calculation.
 // - accumulatedRewardAmount (int64): The accumulated amount of reward.
 // - accumulatedHeight (int64): The last height when reward was calculated.
+// - accumulatedTime (int64): The last time when reward was calculated.
 // - claimedAmount (int64): The amount of reward claimed so far.
 type RewardState struct {
 	priceDebtX128          *u256.Uint // price debt per GNS stake, Q128
-	claimableBlockTimeInfo *BlockTimeInfo
+	claimableTime         int64 // time when reward can be claimed
 
 	depositAmount           int64 // amount of GNS staked
-	distributeStartHeight   int64 // height when launchpad started staking
-	distributeEndHeight     int64 // end height of reward calculation
+	distributeStartTime     int64 // time when launchpad started staking
+	distributeEndTime       int64 // end time of reward calculation
 	accumulatedRewardAmount int64 // calculated, not collected
 	accumulatedHeight       int64 // last height when reward was calculated
+	accumulatedTime         int64 // last time when reward was calculated
 	claimedAmount           int64 // amount of reward claimed so far
 }
 
@@ -62,20 +64,20 @@ func (r *RewardState) setClaimedAmount(v int64) {
 	r.claimedAmount = v
 }
 
-func (r *RewardState) DistributeStartHeight() int64 {
-	return r.distributeStartHeight
+func (r *RewardState) DistributeStartTime() int64 {
+	return r.distributeStartTime
 }
 
-func (r *RewardState) setDistributeStartHeight(v int64) {
-	r.distributeStartHeight = v
+func (r *RewardState) setDistributeStartTime(v int64) {
+	r.distributeStartTime = v
 }
 
-func (r *RewardState) DistributeEndHeight() int64 {
-	return r.distributeEndHeight
+func (r *RewardState) DistributeEndTime() int64 {
+	return r.distributeEndTime
 }
 
-func (r *RewardState) setDistributeEndHeight(v int64) {
-	r.distributeEndHeight = v
+func (r *RewardState) setDistributeEndTime(v int64) {
+	r.distributeEndTime = v
 }
 
 func (r *RewardState) AccumulatedHeight() int64 {
@@ -86,16 +88,24 @@ func (r *RewardState) setAccumulatedHeight(v int64) {
 	r.accumulatedHeight = v
 }
 
-func (r *RewardState) IsClaimable(currentHeight int64) bool {
-	return currentHeight >= r.claimableBlockTimeInfo.BlockHeight()
+func (r *RewardState) AccumulatedTime() int64 {
+	return r.accumulatedTime
 }
 
-func (r *RewardState) ClaimableHeight() int64 {
-	return r.claimableBlockTimeInfo.BlockHeight()
+func (r *RewardState) setAccumulatedTime(v int64) {
+	r.accumulatedTime = v
+}
+
+func (r *RewardState) IsClaimable(currentTime int64) bool {
+	return currentTime >= r.claimableTime
 }
 
 func (r *RewardState) ClaimableTime() int64 {
-	return r.claimableBlockTimeInfo.BlockTime()
+	return r.claimableTime
+}
+
+func (r *RewardState) setClaimableTime(v int64) {
+	r.claimableTime = v
 }
 
 // calculateReward calculates the total reward amount based on
@@ -154,16 +164,16 @@ func (r *RewardState) calculateClaimableReward(accumRewardPerDepositX128 *u256.U
 func NewRewardState(
 	accumulatedRewardPerDepositX128 *u256.Uint,
 	depositAmount,
-	distributeStartHeight,
-	distributeEndHeight int64,
-	claimableBlockTimeInfo *BlockTimeInfo,
+	distributeStartTime,
+	distributeEndTime int64,
+	claimableTime int64,
 ) *RewardState {
 	return &RewardState{
 		priceDebtX128:           accumulatedRewardPerDepositX128,
 		depositAmount:           depositAmount,
-		distributeStartHeight:   distributeStartHeight,
-		distributeEndHeight:     distributeEndHeight,
-		claimableBlockTimeInfo:  claimableBlockTimeInfo,
+		distributeStartTime:     distributeStartTime,
+		distributeEndTime:       distributeEndTime,
+		claimableTime:           claimableTime,
 		accumulatedRewardAmount: 0,
 		claimedAmount:           0,
 		accumulatedHeight:       0,

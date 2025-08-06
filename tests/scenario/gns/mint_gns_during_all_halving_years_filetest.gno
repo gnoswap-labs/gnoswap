@@ -4,11 +4,13 @@ package main
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 
 	_ "gno.land/r/gnoswap/v1/staker"
@@ -27,8 +29,8 @@ var (
 
 const (
 	halvingYear      = 12
-	yearMs           = 31536000000 // 365 * 24 * 60 * 60 * 1000
-	defaultBlockTime = 2000        // 2000ms
+	yearMs           = 365 * 24 * 60 * 60
+	defaultBlockTime = 5
 )
 
 func main() {
@@ -55,7 +57,10 @@ func main() {
 	}
 }
 
-func initEmission() {}
+func initEmission() {
+	testing.SetOriginCaller(adminAddr)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+}
 
 func mintGNS() {
 	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/emission"))

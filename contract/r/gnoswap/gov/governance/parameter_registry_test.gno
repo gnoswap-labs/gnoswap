@@ -151,7 +151,6 @@ func TestCreateParameterHandlers(t *testing.T) {
 		{"gno.land/r/gnoswap/v1/halt", "SetHaltLevel"},
 		{"gno.land/r/gnoswap/v1/community_pool", "TransferToken"},
 		{"gno.land/r/gnoswap/v1/emission", "ChangeDistributionPct"},
-		{"gno.land/r/gnoswap/v1/gns", "SetAvgBlockTimeInMs"},
 	}
 
 	for _, tc := range testCases {

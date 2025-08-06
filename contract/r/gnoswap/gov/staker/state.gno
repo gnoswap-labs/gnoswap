@@ -6,7 +6,7 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/gnoswap/v1/emission"
-	protocol_fee "gno.land/r/gnoswap/v1/protocol_fee"
+	pf "gno.land/r/gnoswap/v1/protocol_fee"
 )
 
 // Global state variables for staker contract
@@ -17,17 +17,17 @@ var (
 	// delegationCounter provides unique delegation IDs for new delegations
 	delegationCounter *Counter
 	// delegations stores all delegation records indexed by delegation ID
-	delegations       *avl.Tree
+	delegations *avl.Tree
 	// delegationManager tracks user delegation relationships and provides efficient lookup
 	delegationManager *DelegationManager
 
 	// delegationHistory maintains chronological record of all delegation events for snapshot calculations
-	delegationHistory   DelegationHistory
+	delegationHistory DelegationHistory
 	// delegationSnapshots stores current delegation state for each delegatee
 	delegationSnapshots DelegationSnapshot
 
 	// emissionRewardManager handles distribution and tracking of GNS emission rewards to stakers
-	emissionRewardManager    *EmissionRewardManager
+	emissionRewardManager *EmissionRewardManager
 	// protocolFeeRewardManager handles distribution and tracking of multi-token protocol fee rewards
 	protocolFeeRewardManager *ProtocolFeeRewardManager
 
@@ -37,7 +37,7 @@ var (
 	// emissionRewardBalance tracks the current balance of emission rewards (unused)
 	emissionRewardBalance int64
 	// protocolFeeBalances tracks current balances of protocol fees by token (unused)
-	protocolFeeBalances   map[string]int64
+	protocolFeeBalances map[string]int64
 )
 
 // init initializes the global state variables with default values and empty structures
@@ -266,12 +266,12 @@ func setDelegationSnapshots(snapshot DelegationSnapshot) {
 // Parameters:
 //   - address: staker's address
 //   - amount: amount of stake to add
-//   - currentHeight: current block height
-func addStakeEmissionReward(address string, amount int64, currentHeight int64) {
+//   - currentTimestamp: current timestamp
+func addStakeEmissionReward(address string, amount int64, currentTimestamp int64) {
 	distributedAmount := emission.GetAccuDistributedToGovStaker()
 
-	emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentHeight)
-	emissionRewardManager.addStake(address, amount, currentHeight)
+	emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
+	emissionRewardManager.addStake(address, amount, currentTimestamp)
 }
 
 // removeStakeEmissionReward removes stake from emission reward tracking for an address.
@@ -280,12 +280,12 @@ func addStakeEmissionReward(address string, amount int64, currentHeight int64) {
 // Parameters:
 //   - address: staker's address
 //   - amount: amount of stake to remove
-//   - currentHeight: current block height
-func removeStakeEmissionReward(address string, amount int64, currentHeight int64) {
+//   - currentTimestamp: current timestamp
+func removeStakeEmissionReward(address string, amount int64, currentTimestamp int64) {
 	distributedAmount := emission.GetAccuDistributedToGovStaker()
 
-	emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentHeight)
-	emissionRewardManager.removeStake(address, amount, currentHeight)
+	emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
+	emissionRewardManager.removeStake(address, amount, currentTimestamp)
 }
 
 // claimRewardsEmissionReward claims emission rewards for an address.
@@ -293,16 +293,16 @@ func removeStakeEmissionReward(address string, amount int64, currentHeight int64
 //
 // Parameters:
 //   - address: staker's address claiming rewards
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 //
 // Returns:
 //   - int64: amount of emission rewards claimed
 //   - error: nil on success, error if claiming fails
-func claimRewardsEmissionReward(address string, currentHeight int64) (int64, error) {
+func claimRewardsEmissionReward(address string, currentTimestamp int64) (int64, error) {
 	distributedAmount := emission.GetAccuDistributedToGovStaker()
 
-	emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentHeight)
-	return emissionRewardManager.claimRewards(address, currentHeight)
+	emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
+	return emissionRewardManager.claimRewards(address, currentTimestamp)
 }
 
 // addStakeProtocolFeeReward adds stake to protocol fee reward tracking for an address.
@@ -311,14 +311,14 @@ func claimRewardsEmissionReward(address string, currentHeight int64) (int64, err
 // Parameters:
 //   - address: staker's address
 //   - amount: amount of stake to add
-//   - currentHeight: current block height
-func addStakeProtocolFeeReward(address string, amount int64, currentHeight int64) {
-	protocol_fee.DistributeProtocolFee(cross)
+//   - currentTimestamp: current timestamp
+func addStakeProtocolFeeReward(address string, amount int64, currentTimestamp int64) {
+	pf.DistributeProtocolFee(cross)
 
 	distributedAmounts := getDistributedProtocolFees()
 
-	protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentHeight)
-	protocolFeeRewardManager.addStake(address, amount, currentHeight)
+	protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
+	protocolFeeRewardManager.addStake(address, amount, currentTimestamp)
 }
 
 // removeStakeProtocolFeeReward removes stake from protocol fee reward tracking for an address.
@@ -327,14 +327,14 @@ func addStakeProtocolFeeReward(address string, amount int64, currentHeight int64
 // Parameters:
 //   - address: staker's address
 //   - amount: amount of stake to remove
-//   - currentHeight: current block height
-func removeStakeProtocolFeeReward(address string, amount int64, currentHeight int64) {
-	protocol_fee.DistributeProtocolFee(cross)
+//   - currentTimestamp: current timestamp
+func removeStakeProtocolFeeReward(address string, amount int64, currentTimestamp int64) {
+	pf.DistributeProtocolFee(cross)
 
 	distributedAmounts := getDistributedProtocolFees()
 
-	protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentHeight)
-	protocolFeeRewardManager.removeStake(address, amount, currentHeight)
+	protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
+	protocolFeeRewardManager.removeStake(address, amount, currentTimestamp)
 }
 
 // claimRewardsProtocolFeeReward claims protocol fee rewards for an address.
@@ -342,18 +342,18 @@ func removeStakeProtocolFeeReward(address string, amount int64, currentHeight in
 //
 // Parameters:
 //   - address: staker's address claiming rewards
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 //
 // Returns:
 //   - map[string]int64: protocol fee rewards claimed by token
 //   - error: nil on success, error if claiming fails
-func claimRewardsProtocolFeeReward(address string, currentHeight int64) (map[string]int64, error) {
-	protocol_fee.DistributeProtocolFee(cross)
+func claimRewardsProtocolFeeReward(address string, currentTimestamp int64) (map[string]int64, error) {
+	pf.DistributeProtocolFee(cross)
 
 	distributedAmounts := getDistributedProtocolFees()
 
-	protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentHeight)
-	return protocolFeeRewardManager.claimRewards(address, currentHeight)
+	protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
+	return protocolFeeRewardManager.claimRewards(address, currentTimestamp)
 }
 
 // getDistributedProtocolFees retrieves the current distributed protocol fee amounts for all tokens.
@@ -362,7 +362,7 @@ func claimRewardsProtocolFeeReward(address string, currentHeight int64) (map[str
 // Returns:
 //   - map[string]int64: distributed amounts by token path
 func getDistributedProtocolFees() map[string]int64 {
-	return protocol_fee.GetAccuTransfersToGovStaker()
+	return pf.GetAccuTransfersToGovStaker()
 }
 
 // getLaunchpadProjectDeposit retrieves the deposit amount for a launchpad project.
@@ -415,11 +415,11 @@ func removeLaunchpadProjectDeposit(ownerAddress string) bool {
 // Parameters:
 //   - address: project wallet address
 //   - amount: amount of stake to add
-//   - currentHeight: current block height
-func addStakeFromLaunchpad(address string, amount int64, currentHeight int64) {
+//   - currentTimestamp: current timestamp
+func addStakeFromLaunchpad(address string, amount int64, currentTimestamp int64) {
 	launchpadRewardID := makeLaunchpadRewardID(address)
-	addStakeEmissionReward(launchpadRewardID, amount, currentHeight)
-	addStakeProtocolFeeReward(launchpadRewardID, amount, currentHeight)
+	addStakeEmissionReward(launchpadRewardID, amount, currentTimestamp)
+	addStakeProtocolFeeReward(launchpadRewardID, amount, currentTimestamp)
 
 	deposit, exists := getLaunchpadProjectDeposit(launchpadRewardID)
 	if !exists {
@@ -436,11 +436,11 @@ func addStakeFromLaunchpad(address string, amount int64, currentHeight int64) {
 // Parameters:
 //   - address: project wallet address
 //   - amount: amount of stake to remove
-//   - currentHeight: current block height
-func removeStakeFromLaunchpad(address string, amount int64, currentHeight int64) {
+//   - currentTimestamp: current timestamp
+func removeStakeFromLaunchpad(address string, amount int64, currentTimestamp int64) {
 	launchpadRewardID := makeLaunchpadRewardID(address)
-	removeStakeEmissionReward(launchpadRewardID, amount, currentHeight)
-	removeStakeProtocolFeeReward(launchpadRewardID, amount, currentHeight)
+	removeStakeEmissionReward(launchpadRewardID, amount, currentTimestamp)
+	removeStakeProtocolFeeReward(launchpadRewardID, amount, currentTimestamp)
 
 	deposit, exists := getLaunchpadProjectDeposit(launchpadRewardID)
 	if !exists {

@@ -1,6 +1,8 @@
 package staker
 
 import (
+	"time"
+
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -25,9 +27,11 @@ type Reward struct {
 }
 
 // calculate position reward by each warmup
-func calcPositionRewardByWarmups(currentHeight int64, positionId uint64) []Reward {
+func calcPositionRewardByWarmups(currentTimestamp int64, positionId uint64) []Reward {
+	currentTime := time.Now().Unix()
 	rewards := calculatePositionReward(CalcPositionRewardParam{
-		CurrentHeight: currentHeight,
+		CurrentHeight: currentTimestamp,
+		CurrentTime:   currentTime,
 		Deposits:      deposits,
 		Pools:         pools,
 		PoolTier:      poolTier,
@@ -38,9 +42,10 @@ func calcPositionRewardByWarmups(currentHeight int64, positionId uint64) []Rewar
 }
 
 // calculate total position rewards and penalties
-func calcPositionReward(currentHeight int64, positionId uint64) Reward {
+func calcPositionReward(currentHeight, currentTimestamp int64, positionId uint64) Reward {
 	rewards := calculatePositionReward(CalcPositionRewardParam{
 		CurrentHeight: currentHeight,
+		CurrentTime:   currentTimestamp,
 		Deposits:      deposits,
 		Pools:         pools,
 		PoolTier:      poolTier,
@@ -87,6 +92,7 @@ func calcPositionReward(currentHeight int64, positionId uint64) Reward {
 type CalcPositionRewardParam struct {
 	// Environmental variables
 	CurrentHeight int64
+	CurrentTime   int64
 	Deposits      *Deposits
 	Pools         *Pools
 	PoolTier      *PoolTier
@@ -97,18 +103,18 @@ type CalcPositionRewardParam struct {
 
 func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 	// cache per-pool rewards in the internal incentive(tiers)
-	param.PoolTier.cacheReward(param.CurrentHeight, param.Pools)
+	param.PoolTier.cacheReward(param.CurrentHeight, param.CurrentTime, param.Pools)
 
 	deposit := param.Deposits.get(param.PositionId)
 	poolPath := deposit.targetPoolPath
 
 	pool, ok := param.Pools.Get(poolPath)
 	if !ok {
-		pool = NewPool(poolPath, param.CurrentHeight)
+		pool = NewPool(poolPath, param.CurrentTime)
 		param.Pools.set(poolPath, pool)
 	}
 
-	lastCollectHeight := deposit.lastCollectHeight
+	lastCollectTime := deposit.lastCollectTime
 
 	// Initializes reward/penalty arrays for rewards and penalties for each warmup
 	internalRewards := make([]int64, len(deposit.warmups))
@@ -119,11 +125,11 @@ func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 	if param.PoolTier.CurrentTier(poolPath) != 0 {
 		// Internal incentivized pool.
 		// Calculate reward for each warmup
-		internalRewards, internalPenalties = pool.RewardStateOf(deposit).calculateInternalReward(lastCollectHeight, param.CurrentHeight)
+		internalRewards, internalPenalties = pool.RewardStateOf(deposit).calculateInternalReward(lastCollectTime, param.CurrentTime)
 	}
 
 	// All active incentives
-	allIncentives := pool.incentives.GetAllInHeights(lastCollectHeight, param.CurrentHeight)
+	allIncentives := pool.incentives.GetAllInTimestamps(lastCollectTime, param.CurrentTime)
 
 	for i := range externalRewards {
 		externalRewards[i] = make(map[string]int64)
@@ -133,7 +139,7 @@ func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 	for incentiveId, incentive := range allIncentives {
 		// External incentivized pool.
 		// Calculate reward for each warmup
-		externalReward, externalPenalty := pool.RewardStateOf(deposit).calculateExternalReward(int64(lastCollectHeight), int64(param.CurrentHeight), incentive)
+		externalReward, externalPenalty := pool.RewardStateOf(deposit).calculateExternalReward(lastCollectTime, param.CurrentTime, incentive)
 
 		for i := range externalReward {
 			externalRewards[i][incentiveId] = externalReward[i]
@@ -155,10 +161,10 @@ func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 }
 
 // calculates internal unclaimable reward for the pool
-func processUnClaimableReward(poolPath string, endHeight int64) int64 {
+func processUnClaimableReward(poolPath string, endTimestamp int64) int64 {
 	pool, ok := pools.Get(poolPath)
 	if !ok {
 		return 0
 	}
-	return pool.processUnclaimableReward(poolTier, endHeight)
+	return pool.processUnclaimableReward(poolTier, endTimestamp)
 }

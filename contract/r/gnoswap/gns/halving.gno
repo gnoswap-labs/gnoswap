@@ -1,119 +1,68 @@
 package gns
 
-import (
-	"std"
-	"time"
-
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/ufmt"
-	"gno.land/r/gnoswap/v1/access"
-)
-
-const (
-	DAY_PER_YEAR    = 365
-	SECONDS_IN_YEAR = 31536000
-
-	HALVING_START_YEAR = int64(1)
-	HALVING_END_YEAR   = int64(12)
-
-	// Maximum allowed block time in milliseconds (1 second)
-	MAX_BLOCK_TIME_MS = 1e9
-)
-
-// Annual halving amount - maximum issuance per year
-var halvingAmountsPerYear = [HALVING_END_YEAR]int64{
-	18_750_000_000_000 * 12, // Year 1:  225000000000000
-	18_750_000_000_000 * 12, // Year 2:  225000000000000
-	9_375_000_000_000 * 12,  // Year 3:  112500000000000
-	9_375_000_000_000 * 12,  // Year 4:  112500000000000
-	4_687_500_000_000 * 12,  // Year 5:  56250000000000
-	4_687_500_000_000 * 12,  // Year 6:  56250000000000
-	2_343_750_000_000 * 12,  // Year 7:  28125000000000
-	2_343_750_000_000 * 12,  // Year 8:  28125000000000
-	1_171_875_000_000 * 12,  // Year 9:  14062500000000
-	1_171_875_000_000 * 12,  // Year 10: 14062500000000
-	1_171_875_000_000 * 12,  // Year 11: 14062500000000
-	1_171_875_000_000 * 12,  // Year 12: 14062500000000
-}
-
-const (
-	// Default block generation interval, in milliseconds, used to estimate
-	// how many blocks will be produced over a given timeframe.
-	// GnoSwap’s emission logic relies on this as an initial value,
-	// but actual block times may vary (e.g. due to network conditions).
-	// Governance or an admin can adjust it dynamically by calling
-	// [SetAvgBlockTimeInMs](https://github.com/gnoswap-labs/gnoswap/blob/a29e0f994466430618548ae992cca11a52f5102a/contract/r/gnoswap/gns/halving.gno#L359) to keep emission schedules accurate.
-	BLOCK_GENERATION_INTERVAL int64 = 2000
-	MILLISECONDS_PER_SECOND   int64 = 1000
-
-	SECONDS_PER_DAY = 86400
-)
-
-var (
-	blockGenMs   = milliToSec(BLOCK_GENERATION_INTERVAL)
-	blockPerYear = SECONDS_IN_YEAR / blockGenMs
-	blockPerDay  = SECONDS_PER_DAY / blockGenMs
-
-	avgBlockTimeMs = BLOCK_GENERATION_INTERVAL
-	perBlockMint   = avl.NewTree() // height => uint64
-)
-
 // HalvingData is a struct that stores data for each halving period
 type HalvingData struct {
-	startBlockHeight []int64 // starting block height
-	endBlockHeight   []int64 // ending block height
-	startTimestamp   []int64 // starting timestamp
-	maxAmount        []int64 // maximum issuance amount
-	mintedAmount     []int64 // amount already minted
-	leftAmount       []int64 // remaining amount to be minted
-	accumAmount      []int64 // accumulated amount
-	amountPerBlock   []int64 // amount per block
+	startTimestamps []int64 // starting timestamp
+	endTimestamps   []int64 // ending timestamp
+	maxAmount       []int64 // maximum issuance amount
+	mintedAmount    []int64 // amount already minted
+	leftAmount      []int64 // remaining amount to be minted
+	accumAmount     []int64 // accumulated amount
+	amountPerSecond []int64 // amount per second
 }
 
 // Getter/setter methods for each field
 // Each slice is 0-indexed but year is 1-indexed, so index adjustment is needed
-func (h *HalvingData) getStartBlockHeight(year int64) int64 {
-	if year <= 0 {
-		return 0
-	}
-	return h.startBlockHeight[year-1]
-}
-
-func (h *HalvingData) setStartBlockHeight(year int64, height int64) error {
-	err := validYear(year)
-	if err != nil {
-		return err
-	}
-
-	h.startBlockHeight[year-1] = height
-
-	return nil
-}
-
-func (h *HalvingData) getEndBlockHeight(year int64) int64 {
-	if year == 0 {
-		return 0
-	}
-
-	return h.endBlockHeight[year-1]
-}
-
-func (h *HalvingData) setEndBlockHeight(year int64, height int64) error {
-	err := validYear(year)
-	if err != nil {
-		return err
-	}
-
-	h.endBlockHeight[year-1] = height
-
-	return nil
-}
-
 func (h *HalvingData) getStartTimestamp(year int64) int64 {
-	if year == 0 {
+	if validYear(year) != nil {
 		return 0
 	}
-	return h.startTimestamp[year-1]
+
+	return h.startTimestamps[year-1]
+}
+
+func (h *HalvingData) getEndTimestamp(year int64) int64 {
+	if validYear(year) != nil {
+		return 0
+	}
+
+	return h.endTimestamps[year-1]
+}
+
+func (h *HalvingData) getMaxAmount(year int64) int64 {
+	if validYear(year) != nil {
+		return 0
+	}
+
+	return h.maxAmount[year-1]
+}
+
+func (h *HalvingData) getMintedAmount(year int64) int64 {
+	if validYear(year) != nil {
+		return 0
+	}
+	return h.mintedAmount[year-1]
+}
+
+func (h *HalvingData) getAccumAmount(year int64) int64 {
+	if validYear(year) != nil {
+		return 0
+	}
+	return h.accumAmount[year-1]
+}
+
+func (h *HalvingData) getLeftAmount(year int64) int64 {
+	if validYear(year) != nil {
+		return 0
+	}
+	return h.leftAmount[year-1]
+}
+
+func (h *HalvingData) getAmountPerSecond(year int64) int64 {
+	if validYear(year) != nil {
+		return 0
+	}
+	return h.amountPerSecond[year-1]
 }
 
 func (h *HalvingData) setStartTimestamp(year int64, timestamp int64) error {
@@ -122,16 +71,20 @@ func (h *HalvingData) setStartTimestamp(year int64, timestamp int64) error {
 		return err
 	}
 
-	h.startTimestamp[year-1] = timestamp
+	h.startTimestamps[year-1] = timestamp
 
 	return nil
 }
 
-func (h *HalvingData) getMaxAmount(year int64) int64 {
-	if year == 0 {
-		return 0
+func (h *HalvingData) setEndTimestamp(year int64, timestamp int64) error {
+	err := validYear(year)
+	if err != nil {
+		return err
 	}
-	return h.maxAmount[year-1]
+
+	h.endTimestamps[year-1] = timestamp
+
+	return nil
 }
 
 func (h *HalvingData) setMaxAmount(year, amount int64) error {
@@ -145,13 +98,6 @@ func (h *HalvingData) setMaxAmount(year, amount int64) error {
 	return nil
 }
 
-func (h *HalvingData) getMintedAmount(year int64) int64 {
-	if year == 0 {
-		return 0
-	}
-	return h.mintedAmount[year-1]
-}
-
 func (h *HalvingData) setMintedAmount(year, amount int64) error {
 	err := validYear(year)
 	if err != nil {
@@ -163,11 +109,15 @@ func (h *HalvingData) setMintedAmount(year, amount int64) error {
 	return nil
 }
 
-func (h *HalvingData) getLeftAmount(year int64) int64 {
-	if year == 0 {
-		return 0
+func (h *HalvingData) setAccumAmount(year, amount int64) error {
+	err := validYear(year)
+	if err != nil {
+		return err
 	}
-	return h.leftAmount[year-1]
+
+	h.accumAmount[year-1] = amount
+
+	return nil
 }
 
 func (h *HalvingData) setLeftAmount(year, amount int64) error {
@@ -177,24 +127,6 @@ func (h *HalvingData) setLeftAmount(year, amount int64) error {
 	}
 
 	h.leftAmount[year-1] = amount
-
-	return nil
-}
-
-func (h *HalvingData) getAccumAmount(year int64) int64 {
-	if year == 0 {
-		return 0
-	}
-	return h.accumAmount[year-1]
-}
-
-func (h *HalvingData) setAccumAmount(year, amount int64) error {
-	err := validYear(year)
-	if err != nil {
-		return err
-	}
-
-	h.accumAmount[year-1] = amount
 
 	return nil
 }
@@ -210,323 +142,42 @@ func (h *HalvingData) addAccumAmount(year, amount int64) error {
 	return nil
 }
 
-func (h *HalvingData) getAmountPerBlock(year int64) int64 {
-	if year == 0 {
-		return 0
-	}
-	return h.amountPerBlock[year-1]
-}
-
-func (h *HalvingData) setAmountPerBlock(year, amount int64) error {
+func (h *HalvingData) setAmountPerSecond(year, amount int64) error {
 	err := validYear(year)
 	if err != nil {
 		return err
 	}
 
-	h.amountPerBlock[year-1] = amount
+	h.amountPerSecond[year-1] = amount
 
 	return nil
 }
 
-// initialize halving data according to emission schedule
-// Reference: https://docs.gnoswap.io/gnoswap-token/release-schedule
-func (h *HalvingData) initialize(startHeight, startTimestamp int64) {
-	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
-		// Set maximum issuance amount for the year
-		currentYearMaxAmount := GetHalvingAmountsPerYear(year)
-		h.setMaxAmount(year, currentYearMaxAmount)
-
-		// For the first year, directly set start height and timestamp
-		if year == HALVING_START_YEAR {
-			h.setAccumAmount(year, currentYearMaxAmount)
-			h.setStartBlockHeight(year, startHeight)
-			h.setEndBlockHeight(year, startHeight+(blockPerYear)-1)
-		} else {
-			// Add current year's max amount to previous year's accumulated amount
-			h.setAccumAmount(year, currentYearMaxAmount+h.getAccumAmount(year-1))
-
-			// Current year's start block is previous year's end block + 1
-			h.setStartBlockHeight(year, h.getEndBlockHeight(year-1)+1)
-
-			// Current year's end block is start block + blocks per year - 1
-			h.setEndBlockHeight(year, h.getStartBlockHeight(year)+blockPerYear-1)
-		}
-
-		// Set start timestamp
-		h.setStartTimestamp(year, startTimestamp+(SECONDS_IN_YEAR*(year-1)))
-
-		// Calculate and set amount per block
-		amountPerDay := currentYearMaxAmount / DAY_PER_YEAR
-		amountPerBlock := amountPerDay / blockPerDay
-		h.setAmountPerBlock(year, amountPerBlock)
-
-		// Set initial minted amount and remaining amount
-		h.setMintedAmount(year, 0)
-		h.setLeftAmount(year, currentYearMaxAmount)
-	}
-}
-
-// Emission change callback function
-var emissionChangeCallback func(amount int64)
-
-func SetEmissionChangeCallback(cur realm, callback func(amount int64)) {
-	caller := std.PreviousRealm().Address()
-	access.AssertIsEmission(caller)
-
-	emissionChangeCallback = callback
-}
-
-// EmissionState is a struct for managing emission state
-type EmissionState struct {
-	startHeight    int64       // emission start block height
-	startTimestamp int64       // emission start timestamp
-	endTimestamp   int64       // emission end timestamp
-	halvingData    HalvingData // halving data
-}
-
-// Global variable for singleton pattern
-var emissionState *EmissionState
-
-// getEmissionState returns emission state (singleton pattern)
-func getEmissionState() *EmissionState {
-	if emissionState == nil {
-		emissionState = NewEmissionState()
-		emissionState.initializeHalvingData()
-	}
-	return emissionState
-}
-
-// NewEmissionState creates a new emission state
-func NewEmissionState() *EmissionState {
-	now := time.Now().Unix() + milliToSec(BLOCK_GENERATION_INTERVAL)
-	emissionEndTime := now + SECONDS_IN_YEAR*HALVING_END_YEAR
-
-	return &EmissionState{
-		startHeight:    std.ChainHeight() + 1,
-		startTimestamp: now,
-		endTimestamp:   emissionEndTime,
-		halvingData: HalvingData{
-			startBlockHeight: make([]int64, HALVING_END_YEAR),
-			endBlockHeight:   make([]int64, HALVING_END_YEAR),
-			startTimestamp:   make([]int64, HALVING_END_YEAR),
-			maxAmount:        make([]int64, HALVING_END_YEAR),
-			mintedAmount:     make([]int64, HALVING_END_YEAR),
-			leftAmount:       make([]int64, HALVING_END_YEAR),
-			accumAmount:      make([]int64, HALVING_END_YEAR),
-			amountPerBlock:   make([]int64, HALVING_END_YEAR),
-		},
-	}
-}
-
-func EmissionStartHeight() int64 { return getEmissionState().getStartHeight() }
-
-func (e *EmissionState) getStartHeight() int64             { return e.startHeight }
-func (e *EmissionState) setStartHeight(height int64)       { e.startHeight = height }
-func (e *EmissionState) getStartTimestamp() int64          { return e.startTimestamp }
-func (e *EmissionState) setStartTimestamp(timestamp int64) { e.startTimestamp = timestamp }
-func (e *EmissionState) getEndTimestamp() int64            { return e.endTimestamp }
-func (e *EmissionState) setEndTimestamp(timestamp int64)   { e.endTimestamp = timestamp }
-func (e *EmissionState) getHalvingData() HalvingData       { return e.halvingData }
-func (e *EmissionState) setHalvingData(data HalvingData)   { e.halvingData = data }
-
-// initializeHalvingData initializes halving data
-func (e *EmissionState) initializeHalvingData() {
-	halvingData := e.getHalvingData()
-	halvingData.initialize(e.getStartHeight(), e.getStartTimestamp())
-	e.setHalvingData(halvingData)
-}
-
-// reinitializeWithStartHeight reinitializes emission state with a new start height
-// This is used when distribution start block height is set
-func ReinitializeEmissionState(cur realm, height int64) {
-	caller := std.PreviousRealm().Address()
-	access.AssertIsEmission(caller)
-
-	emissionState.reinitializeWithStartHeight(height)
-}
-
-func (e *EmissionState) reinitializeWithStartHeight(newStartHeight int64) {
-	// Set new start height and timestamp
-	e.setStartHeight(newStartHeight)
-
-	// Calculate new start timestamp based on current time and block difference
-	currentHeight := std.ChainHeight()
-	blockDiff := newStartHeight - currentHeight
-	if blockDiff > 0 {
-		// Future start: add expected time for blocks
-		additionalTime := blockDiff * avgBlockTimeMs / MILLISECONDS_PER_SECOND
-		e.setStartTimestamp(time.Now().Unix() + additionalTime)
-	} else {
-		// Start now or in the past
-		e.setStartTimestamp(time.Now().Unix())
-	}
-
-	// Update end timestamp to maintain full emission period
-	e.setEndTimestamp(e.getStartTimestamp() + SECONDS_IN_YEAR*HALVING_END_YEAR)
-
-	// Reinitialize halving data with new parameters
-	e.initializeHalvingData()
-}
-
-// init package initialization function
-func init() {
-	emissionState = getEmissionState()
-}
-
-// AvgBlockTimeInMs returns average block time in milliseconds
-func AvgBlockTimeInMs() int64 {
-	return avgBlockTimeMs
-}
-
-// SetAvgBlockTimeInMs sets average block time through governance proposal
-func SetAvgBlockTimeInMs(cur realm, ms int64) {
-	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
-
-	prevAvgBlockTimeInMs := AvgBlockTimeInMs()
-	err := setAvgBlockTimeInMs(ms)
-	if err != nil {
-		panic(err)
-	}
-
-	// Log event generation
-	halvingData := getEmissionState().getHalvingData()
-	previousRealm := std.PreviousRealm()
-	emitBlockTimeChangeEvent(
-		"SetAvgBlockTimeInMs",
-		previousRealm.Address().String(),
-		previousRealm.PkgPath(),
-		prevAvgBlockTimeInMs,
-		ms,
-		halvingData,
-	)
-}
-
-// Helper function to emit event to remove duplicate code
-func emitBlockTimeChangeEvent(eventName, prevAddr, prevPkgPath string, prevTime, newTime int64, halvingData HalvingData) {
-	eventParams := []string{
-		eventName,
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
-		"prevAvgBlockTimeMs", formatInt(prevTime),
-		"newAvgBlockTimeMs", formatInt(newTime),
-	}
-
-	// add end block heights for all years
-	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
-		eventParams = append(eventParams,
-			ufmt.Sprintf("endBlock%dYear", year),
-			formatInt(halvingData.getEndBlockHeight(year)))
-	}
-}
-
-// setAvgBlockTimeInMs sets the new average block time (ms) and updates all halving schedules.
-func setAvgBlockTimeInMs(ms int64) error {
-	// prevent division errors due to very large values or zero.
-	// block time values outside of practical range are blocked
-	err := validBlockTime(ms)
-	if err != nil {
-		return errInvalidAvgBlockTimeInMs
-	}
-
-	now := time.Now().Unix()
-
-	// sync blockPerYear, blockPerDay
-	// SECONDS_IN_YEAR, SECONDS_PER_DAY must be in seconds
-	blockPerYear = secToMs(SECONDS_IN_YEAR) / ms
-	blockPerDay = secToMs(SECONDS_PER_DAY) / ms
-
-	// recalculate all remaining years (amountPerBlock)
-	es := getEmissionState()
-
-	currentHeight := std.ChainHeight()
-	currentYear := HalvingYearByHeight(currentHeight)
-	prevBlockTimeMs := AvgBlockTimeInMs()
-
-	hd := &es.halvingData
-	for year := currentYear; year <= HALVING_END_YEAR; year++ {
-		maxMintedAmount := hd.getMaxAmount(year)
-		halvingEndHeight := hd.getEndBlockHeight(year)
-
-		// Calculate remaining blocks with new block time
-		remainBlockNum := halvingEndHeight - currentHeight
-		changedRemainBlockNum := remainBlockNum * prevBlockTimeMs / ms
-
-		// For current year, use remaining amount to avoid over/under emission
-		if year == currentYear {
-			startHeight := hd.getStartBlockHeight(year)
-			lastGNSMintedHeight := LastMintedHeight() + 1
-			if lastGNSMintedHeight < startHeight {
-				lastGNSMintedHeight = startHeight
-			}
-
-			mintedAmount := hd.getMintedAmount(year)
-			leftAmount := maxMintedAmount - mintedAmount
-
-			if changedRemainBlockNum > 0 {
-				changedAmountPerBlock := leftAmount / changedRemainBlockNum
-				hd.setAmountPerBlock(year, changedAmountPerBlock)
-			}
-		} else {
-			// For future years, use total year amount
-			dailyAmount := maxMintedAmount / DAY_PER_YEAR
-			changedAmountPerBlock := dailyAmount / blockPerDay
-			hd.setAmountPerBlock(year, changedAmountPerBlock)
-		}
-
-		changedEndHeight := currentHeight + changedRemainBlockNum
-		hd.setEndBlockHeight(year, changedEndHeight)
-
-		// next year's start block height is updated by calculated end block heightAdd commentMore actions
-		if year < HALVING_END_YEAR {
-			hd.setStartBlockHeight(year+1, changedEndHeight+1)
-		}
-	}
-
-	// adjust the current year's amount per block
-	currentYear, _ = getHalvingYearAndEndTimestamp(now)
-
-	// Validate that we're still within the emission period
-	if currentYear == 0 {
-		panic("cannot set average block time after emission period has ended")
-	}
-
-	adjusted := hd.getAmountPerBlock(currentYear)
-
-	if emissionChangeCallback == nil {
-		return errEmissionChangeIsNilCallback
-	}
-
-	emissionChangeCallback(adjusted)
-
-	// final update of global variables
-	avgBlockTimeMs = ms
-
-	return nil
-}
-
-// AmountByHeight returns emission amount based on block height
-func AmountByHeight(height int64) int64 {
-	if isEmissionEnded(height) {
-		return 0
-	}
-
-	halvingYear := HalvingYearByHeight(height)
-	return GetAmountPerBlockPerHalvingYear(halvingYear)
-}
-
-// HalvingYearByHeight returns halving year based on block height
-func HalvingYearByHeight(height int64) int64 {
-	if isEmissionEnded(height) {
-		return 0
+func NewHalvingData(startTimestamp int64) *HalvingData {
+	halvingData := &HalvingData{
+		startTimestamps: make([]int64, HALVING_END_YEAR),
+		endTimestamps:   make([]int64, HALVING_END_YEAR),
+		maxAmount:       make([]int64, HALVING_END_YEAR),
+		mintedAmount:    make([]int64, HALVING_END_YEAR),
+		leftAmount:      make([]int64, HALVING_END_YEAR),
+		accumAmount:     make([]int64, HALVING_END_YEAR),
+		amountPerSecond: make([]int64, HALVING_END_YEAR),
 	}
 
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
-		endBlock := GetHalvingYearEndBlock(year)
-		if height <= endBlock {
-			return year
-		}
+		yearStartTimestamp := startTimestamp + (SECONDS_IN_YEAR * (year - 1))
+		yearEndTimestamp := yearStartTimestamp + SECONDS_IN_YEAR - 1
+		yearDistributionAmount := GetHalvingAmountsPerYear(year)
+		yearAmountPerSecond := yearDistributionAmount / SECONDS_IN_YEAR
+
+		halvingData.setStartTimestamp(year, yearStartTimestamp)
+		halvingData.setEndTimestamp(year, yearEndTimestamp)
+		halvingData.setMaxAmount(year, yearDistributionAmount)
+		halvingData.setMintedAmount(year, 0)
+		halvingData.setAccumAmount(year, 0)
+		halvingData.setAmountPerSecond(year, yearAmountPerSecond)
+		halvingData.setLeftAmount(year, yearDistributionAmount)
 	}
 
-	return 0
+	return halvingData
 }

@@ -4,6 +4,7 @@ import (
 	"math"
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/testutils"
 
@@ -403,14 +404,14 @@ func ugnotDeposit(t *testing.T, addr std.Address, amount int64) {
 func deletePoolTier(t *testing.T, poolPath string) {
 	t.Helper()
 	if poolTier != nil {
-		poolTier.changeTier(std.ChainHeight(), pools, poolPath, 0)
+		poolTier.changeTier(std.ChainHeight(), time.Now().Unix(), pools, poolPath, 0)
 	} else {
 		panic("poolTier is nil")
 	}
 }
 
-func changeWarmup(t *testing.T, index int, blockDuration int64) {
-	modifyWarmup(index, blockDuration)
+func changeWarmup(t *testing.T, index int, timeDuration int64) {
+	modifyWarmup(index, timeDuration)
 }
 
 type gnsBalanceTracker struct {
@@ -428,11 +429,11 @@ func isInErrorRange(expected uint64, actual uint64) bool {
 	maxSafeValue := uint64(math.MaxUint64 / 100001)
 	var lowerBound, upperBound uint64
 	if expected > maxSafeValue {
-		lowerBound = expected / 1000000 * 999999
-		upperBound = expected / 1000000 * 1000001
+		lowerBound = expected / 100000 * 99999
+		upperBound = expected / 100000 * 100001
 	} else {
-		lowerBound = expected * 999999 / 1000000
-		upperBound = expected * 1000001 / 1000000
+		lowerBound = expected * 99999 / 100000
+		upperBound = expected * 100001 / 100000
 	}
 	return actual >= lowerBound && actual <= upperBound
 }

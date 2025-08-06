@@ -4,11 +4,13 @@ package main
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gns"
 
 	_ "gno.land/r/gnoswap/v1/staker"
@@ -43,7 +45,9 @@ func main() {
 }
 
 func initEmissionCallback() {
-
+	testing.SetOriginCaller(adminAddr)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	testing.SkipHeights(1)
 }
 
 func mintGNS() {
@@ -58,9 +62,9 @@ func mintGNS() {
 // [SCENARIO] 1. Initialize emission callback
 //
 // [SCENARIO] 2. Mint GNS when initialized
-// [EXPECTED] minted amount should be 0
+// [EXPECTED] minted amount should be 35673515
 //
 // [SCENARIO] 3. Skip 50 blocks
 //
 // [SCENARIO] 4. Mint GNS when skipped 50 blocks
-// [EXPECTED] minted amount should be 713470300
+// [EXPECTED] minted amount should be 1783675750

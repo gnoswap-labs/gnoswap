@@ -15,11 +15,11 @@ type ProtocolFeeRewardManager struct {
 	// accumulatedProtocolFeeX128PerStake maps token path to accumulated fee per stake with 128-bit precision
 	accumulatedProtocolFeeX128PerStake map[string]*u256.Uint
 	// protocolFeeAmounts maps token path to total distributed protocol fee amounts
-	protocolFeeAmounts                 map[string]int64
-	// accumulatedHeight tracks the last block height when fees were accumulated
-	accumulatedHeight                  int64
+	protocolFeeAmounts map[string]int64
+	// accumulatedTimestamp tracks the last timestamp when fees were accumulated
+	accumulatedTimestamp int64
 	// totalStakedAmount tracks the total amount of tokens staked in the system
-	totalStakedAmount                  int64
+	totalStakedAmount int64
 }
 
 // GetAccumulatedProtocolFeeX128PerStake returns the accumulated protocol fee per stake for a specific token.
@@ -33,12 +33,12 @@ func (p *ProtocolFeeRewardManager) GetAccumulatedProtocolFeeX128PerStake(token s
 	return p.accumulatedProtocolFeeX128PerStake[token]
 }
 
-// GetAccumulatedHeight returns the last block height when protocol fees were accumulated.
+// GetAccumulatedTimestamp returns the last timestamp when protocol fees were accumulated.
 //
 // Returns:
-//   - int64: last accumulated block height
-func (p *ProtocolFeeRewardManager) GetAccumulatedHeight() int64 {
-	return p.accumulatedHeight
+//   - int64: last accumulated timestamp
+func (p *ProtocolFeeRewardManager) GetAccumulatedTimestamp() int64 {
+	return p.accumulatedTimestamp
 }
 
 // GetClaimableRewardAmounts calculates the claimable reward amounts for all tokens for a specific address.
@@ -47,14 +47,14 @@ func (p *ProtocolFeeRewardManager) GetAccumulatedHeight() int64 {
 // Parameters:
 //   - protocolFeeAmounts: current protocol fee amounts for all tokens
 //   - address: staker's address to calculate rewards for
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 //
 // Returns:
 //   - map[string]int64: map of token path to claimable reward amount
 func (p *ProtocolFeeRewardManager) GetClaimableRewardAmounts(
 	protocolFeeAmounts map[string]int64,
 	address string,
-	currentHeight int64,
+	currentTimestamp int64,
 ) map[string]int64 {
 	rewardStateI, ok := p.rewardStates.Get(address)
 	if !ok {
@@ -62,9 +62,9 @@ func (p *ProtocolFeeRewardManager) GetClaimableRewardAmounts(
 	}
 
 	rewardState := rewardStateI.(*ProtocolFeeRewardState)
-	accumulatedRewardX128PerStake, _ := p.calculateAccumulatedRewardX128PerStake(protocolFeeAmounts, currentHeight)
+	accumulatedRewardX128PerStake, _ := p.calculateAccumulatedRewardX128PerStake(protocolFeeAmounts, currentTimestamp)
 
-	return rewardState.GetClaimableRewardAmounts(accumulatedRewardX128PerStake, currentHeight)
+	return rewardState.GetClaimableRewardAmounts(accumulatedRewardX128PerStake, currentTimestamp)
 }
 
 // calculateAccumulatedRewardX128PerStake calculates the updated accumulated reward per stake for all tokens.
@@ -72,17 +72,17 @@ func (p *ProtocolFeeRewardManager) GetClaimableRewardAmounts(
 //
 // Parameters:
 //   - protocolFeeAmounts: current protocol fee amounts for all tokens
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 //
 // Returns:
 //   - map[string]*u256.Uint: updated accumulated reward per stake for each token
 //   - map[string]int64: updated protocol fee amounts for each token
 func (p *ProtocolFeeRewardManager) calculateAccumulatedRewardX128PerStake(
 	protocolFeeAmounts map[string]int64,
-	currentHeight int64,
+	currentTimestamp int64,
 ) (map[string]*u256.Uint, map[string]int64) {
-	// If we're looking at a past height, return current state
-	if p.accumulatedHeight > currentHeight {
+	// If we're looking at a past timestamp, return current state
+	if p.accumulatedTimestamp > currentTimestamp {
 		return p.accumulatedProtocolFeeX128PerStake, p.protocolFeeAmounts
 	}
 
@@ -97,13 +97,13 @@ func (p *ProtocolFeeRewardManager) calculateAccumulatedRewardX128PerStake(
 		}
 
 		protocolFeeDelta := protocolFeeAmount - previousProtocolFeeAmount
-		
+
 		// If no new fees for this token, keep existing rate
 		if protocolFeeDelta <= 0 {
 			accumulatedProtocolFeesX128PerStake[token] = p.accumulatedProtocolFeeX128PerStake[token]
 			if accumulatedProtocolFeesX128PerStake[token] == nil {
 				accumulatedProtocolFeesX128PerStake[token] = u256.NewUint(0)
-			} 
+			}
 		}
 
 		// Scale the fee delta by 2^128 for precision
@@ -144,21 +144,21 @@ func (p *ProtocolFeeRewardManager) calculateAccumulatedRewardX128PerStake(
 //
 // Parameters:
 //   - protocolFeeAmounts: current protocol fee amounts for all tokens
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 func (p *ProtocolFeeRewardManager) updateAccumulatedProtocolFeeX128PerStake(
 	protocolFeeAmounts map[string]int64,
-	currentHeight int64,
+	currentTimestamp int64,
 ) {
-	// Don't update if we're looking at a past height
-	if p.accumulatedHeight > currentHeight {
+	// Don't update if we're looking at a past timestamp
+	if p.accumulatedTimestamp > currentTimestamp {
 		return
 	}
 
-	accumulatedProtocolFeeX128PerStake, changedProtocolFeeAmounts := p.calculateAccumulatedRewardX128PerStake(protocolFeeAmounts, currentHeight)
+	accumulatedProtocolFeeX128PerStake, changedProtocolFeeAmounts := p.calculateAccumulatedRewardX128PerStake(protocolFeeAmounts, currentTimestamp)
 
 	p.accumulatedProtocolFeeX128PerStake = accumulatedProtocolFeeX128PerStake
 	p.protocolFeeAmounts = changedProtocolFeeAmounts
-	p.accumulatedHeight = currentHeight
+	p.accumulatedTimestamp = currentTimestamp
 }
 
 // addStake adds a stake for an address and updates their protocol fee reward state.
@@ -167,15 +167,15 @@ func (p *ProtocolFeeRewardManager) updateAccumulatedProtocolFeeX128PerStake(
 // Parameters:
 //   - address: staker's address
 //   - amount: amount of stake to add
-//   - currentHeight: current block height
-func (p *ProtocolFeeRewardManager) addStake(address string, amount int64, currentHeight int64) {
+//   - currentTimestamp: current timestamp
+func (p *ProtocolFeeRewardManager) addStake(address string, amount int64, currentTimestamp int64) {
 	rewardStateI, ok := p.rewardStates.Get(address)
 	if !ok {
 		rewardStateI = NewProtocolFeeRewardState(p.accumulatedProtocolFeeX128PerStake)
 	}
 
 	rewardState := rewardStateI.(*ProtocolFeeRewardState)
-	rewardState.addStakeWithUpdateRewardDebtX128(amount, p.accumulatedProtocolFeeX128PerStake, currentHeight)
+	rewardState.addStakeWithUpdateRewardDebtX128(amount, p.accumulatedProtocolFeeX128PerStake, currentTimestamp)
 
 	p.rewardStates.Set(address, rewardState)
 
@@ -188,15 +188,15 @@ func (p *ProtocolFeeRewardManager) addStake(address string, amount int64, curren
 // Parameters:
 //   - address: staker's address
 //   - amount: amount of stake to remove
-//   - currentHeight: current block height
-func (p *ProtocolFeeRewardManager) removeStake(address string, amount int64, currentHeight int64) {
+//   - currentTimestamp: current timestamp
+func (p *ProtocolFeeRewardManager) removeStake(address string, amount int64, currentTimestamp int64) {
 	rewardStateI, ok := p.rewardStates.Get(address)
 	if !ok {
 		rewardStateI = NewProtocolFeeRewardState(p.accumulatedProtocolFeeX128PerStake)
 	}
 
 	rewardState := rewardStateI.(*ProtocolFeeRewardState)
-	rewardState.removeStakeWithUpdateRewardDebtX128(amount, p.accumulatedProtocolFeeX128PerStake, currentHeight)
+	rewardState.removeStakeWithUpdateRewardDebtX128(amount, p.accumulatedProtocolFeeX128PerStake, currentTimestamp)
 
 	p.rewardStates.Set(address, rewardState)
 
@@ -208,22 +208,22 @@ func (p *ProtocolFeeRewardManager) removeStake(address string, amount int64, cur
 //
 // Parameters:
 //   - address: staker's address claiming rewards
-//   - currentHeight: current block height
+//   - currentTimestamp: current timestamp
 //
 // Returns:
 //   - map[string]int64: map of token path to claimed reward amount
 //   - error: nil on success, error if claiming fails
-func (p *ProtocolFeeRewardManager) claimRewards(address string, currentHeight int64) (map[string]int64, error) {
+func (p *ProtocolFeeRewardManager) claimRewards(address string, currentTimestamp int64) (map[string]int64, error) {
 	rewardStateI, ok := p.rewardStates.Get(address)
 	if !ok {
 		return make(map[string]int64), nil
 	}
-	
+
 	rewardState := rewardStateI.(*ProtocolFeeRewardState)
 
 	claimedRewards, err := rewardState.claimRewardsWithUpdateRewardDebtX128(
 		p.accumulatedProtocolFeeX128PerStake,
-		currentHeight,
+		currentTimestamp,
 	)
 	if err != nil {
 		return nil, err
@@ -244,7 +244,7 @@ func NewProtocolFeeRewardManager() *ProtocolFeeRewardManager {
 		rewardStates:                       avl.NewTree(),
 		protocolFeeAmounts:                 make(map[string]int64),
 		accumulatedProtocolFeeX128PerStake: make(map[string]*u256.Uint),
-		accumulatedHeight:                  0,
+		accumulatedTimestamp:               0,
 		totalStakedAmount:                  0,
 	}
 }

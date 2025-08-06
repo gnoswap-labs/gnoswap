@@ -72,7 +72,7 @@ func TestModifyDepositLower(t *testing.T) {
 
 	// deposit +10
 	liquidityDelta := i256.NewInt(10) // +10
-	tick.modifyDepositLower(50, 95, liquidityDelta)
+	tick.modifyDepositLower(50, liquidityDelta)
 
 	// stakedLiquidityGross += +10 => 10
 	// stakedLiquidityDelta += +10 => 10
@@ -82,7 +82,7 @@ func TestModifyDepositLower(t *testing.T) {
 	}
 
 	// deposit another +5
-	tick.modifyDepositLower(60, 95, i256.NewInt(5))
+	tick.modifyDepositLower(60, i256.NewInt(5))
 	// gross=15, delta=15
 	if tick.stakedLiquidityGross.ToString() != "15" || tick.stakedLiquidityDelta.ToString() != "15" {
 		t.Errorf("After deposit +5, stakedLiquidityGross=%v, stakedLiquidityDelta=%v; want 15,15",
@@ -95,7 +95,7 @@ func TestModifyDepositUpper(t *testing.T) {
 	tick := ticks.Get(200)
 
 	// deposit +10 => modifyDepositUpper
-	tick.modifyDepositUpper(70, 195, i256.NewInt(10))
+	tick.modifyDepositUpper(70, i256.NewInt(10))
 
 	// stakedLiquidityGross=10, stakedLiquidityDelta = -10
 	// 	upper => delta = stakedLiquidityDelta - liquidity

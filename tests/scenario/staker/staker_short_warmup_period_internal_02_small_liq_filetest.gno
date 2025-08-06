@@ -5,6 +5,7 @@ import (
 	"std"
 	"strconv"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
@@ -78,7 +79,7 @@ func main() {
 
 func initAndSetup() {
 	testing.SetRealm(adminRealm)
-	en.SetDistributionStartBlockHeight(cross, 124)
+	en.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	// override warm-up period for testing
 	sr.SetWarmUp(cross, 30, 150)
@@ -283,6 +284,6 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 7. Collect rewards and verify distribution
 // [INFO] collecting reward for position 01 (large liquidity)
-// [EXPECTED] position 01 reward: 1605306 GNS
+// [EXPECTED] position 01 reward: 4013265 GNS
 // [INFO] collecting reward for position 02 (small liquidity)
-// [EXPECTED] position 02 reward: 1 GNS
+// [EXPECTED] position 02 reward: 3 GNS

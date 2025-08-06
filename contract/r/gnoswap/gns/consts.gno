@@ -1,0 +1,29 @@
+package gns
+
+const (
+	DAY_PER_YEAR    = 365
+	SECONDS_PER_DAY = 86400
+	SECONDS_IN_YEAR = 31536000
+
+	HALVING_START_YEAR = int64(1)
+	HALVING_END_YEAR   = int64(12)
+
+	// Maximum allowed block time in milliseconds (1 second)
+	MAX_BLOCK_TIME_MS = 1e9
+)
+
+// Annual halving amount - maximum issuance per year
+var halvingAmountsPerYear = [HALVING_END_YEAR]int64{
+	18_750_000_000_000 * 12, // Year 1:  225000000000000
+	18_750_000_000_000 * 12, // Year 2:  225000000000000
+	9_375_000_000_000 * 12,  // Year 3:  112500000000000
+	9_375_000_000_000 * 12,  // Year 4:  112500000000000
+	4_687_500_000_000 * 12,  // Year 5:  56250000000000
+	4_687_500_000_000 * 12,  // Year 6:  56250000000000
+	2_343_750_000_000 * 12,  // Year 7:  28125000000000
+	2_343_750_000_000 * 12,  // Year 8:  28125000000000
+	1_171_875_000_000 * 12,  // Year 9:  14062500000000
+	1_171_875_000_000 * 12,  // Year 10: 14062500000000
+	1_171_875_000_000 * 12,  // Year 11: 14062500000000
+	1_171_875_000_000 * 12,  // Year 12: 14062500000000
+}

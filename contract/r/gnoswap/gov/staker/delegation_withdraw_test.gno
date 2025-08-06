@@ -47,6 +47,7 @@ func TestNewDelegationWithdraw(t *testing.T) {
 				tc.delegationID,
 				tc.unDelegateAmount,
 				tc.createdAt,
+				tc.createdAt,
 				tc.unDelegationLockupPeriod,
 			)
 
@@ -86,6 +87,7 @@ func TestNewDelegationWithdrawWithoutLockup(t *testing.T) {
 				tc.delegationID,
 				tc.unDelegateAmount,
 				tc.createdAt,
+				tc.createdAt,
 			)
 
 			// then
@@ -102,9 +104,9 @@ func TestNewDelegationWithdrawWithoutLockup(t *testing.T) {
 // TestDelegationWithdraw_IsCollectable tests the collectable status
 func TestDelegationWithdraw_IsCollectable(t *testing.T) {
 	tests := []struct {
-		name               string
-		withdraw           *DelegationWithdraw
-		currentTime        int64
+		name                string
+		withdraw            *DelegationWithdraw
+		currentTime         int64
 		expectedCollectable bool
 	}{
 		{
@@ -171,12 +173,12 @@ func TestDelegationWithdraw_IsCollectable(t *testing.T) {
 // TestDelegationWithdraw_Collect tests the collection functionality
 func TestDelegationWithdraw_Collect(t *testing.T) {
 	tests := []struct {
-		name                string
-		withdraw            *DelegationWithdraw
-		collectAmount       int64
-		currentTime         int64
-		expectedError       error
-		expectedCollected   bool
+		name                    string
+		withdraw                *DelegationWithdraw
+		collectAmount           int64
+		currentTime             int64
+		expectedError           error
+		expectedCollected       bool
 		expectedCollectedAmount int64
 	}{
 		{
@@ -231,4 +233,4 @@ func TestDelegationWithdraw_Collect(t *testing.T) {
 			}
 		})
 	}
-} 
+}

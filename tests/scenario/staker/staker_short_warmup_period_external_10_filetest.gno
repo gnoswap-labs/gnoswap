@@ -369,7 +369,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 8. Collect rewards after duration
 // [INFO] skip duration 200 blocks
 // [INFO] collect reward for position 01
-// [EXPECTED] collected reward: 409808 BAR tokens
+// [EXPECTED] collected reward: 4413955 BAR tokens
 //
 // [SCENARIO] 9. Mint and stake position 02
 // [INFO] approve tokens for minting position 02
@@ -382,7 +382,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] clear previous rewards
 // [INFO] skip 10 blocks to accumulate rewards
 // [INFO] collect reward for position 01
-// [EXPECTED] position 01 reward (70% warm-up): 8098
+// [EXPECTED] position 01 reward (70% warm-up): 28924
 // [INFO] collect reward for position 02
-// [EXPECTED] position 02 reward (30% warm-up): 3470
+// [EXPECTED] position 02 reward (30% warm-up): 8677
 // [INFO] external incentive warm-up period test completed successfully

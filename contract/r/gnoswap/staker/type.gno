@@ -18,16 +18,14 @@ type ExternalIncentive struct {
 	rewardToken      string      // external reward token path
 	rewardAmount     int64       // total reward amount
 	rewardLeft       int64       // remaining reward amount
-	startHeight      int64       // start height for external reward
-	endHeight        int64       // end height for external reward
-	rewardPerBlock   int64       // reward per block
+	rewardPerSecond  int64       // reward per second
 	refundee         std.Address // refundee address
 
 	unclaimableRefunded bool // whether unclaimable reward is refunded
 }
 
-func (e ExternalIncentive) IsStarted(currentHeight int64) bool {
-	return currentHeight >= e.startHeight
+func (e ExternalIncentive) IsStarted(currentTimestamp int64) bool {
+	return currentTimestamp >= e.startTimestamp
 }
 
 // safeMulInt64 performs safe multiplication of int64 values, panicking on overflow
@@ -93,35 +91,51 @@ func (e ExternalIncentive) RewardAmount() int64 {
 	return e.rewardAmount
 }
 
-func (self *ExternalIncentive) RewardSpent(currentHeight uint64) int64 {
-	if currentHeight < uint64(self.startHeight) {
+func (self *ExternalIncentive) RewardSpent(currentTimestamp int64) int64 {
+	// Still check heights for state validation
+	if currentTimestamp < self.startTimestamp {
 		return 0
 	}
 
-	if currentHeight > uint64(self.endHeight) {
+	if currentTimestamp > self.endTimestamp {
 		return int64(self.rewardAmount)
 	}
 
-	blocks := currentHeight - uint64(self.startHeight)
-	rewardSpent := safeMulInt64(int64(blocks), self.rewardPerBlock)
+	// But use time for calculation
+	if currentTimestamp < self.startTimestamp {
+		return 0
+	}
+
+	if currentTimestamp > self.endTimestamp {
+		return int64(self.rewardAmount)
+	}
+
+	timeDuration := currentTimestamp - self.startTimestamp
+	rewardSpent := safeMulInt64(timeDuration, self.rewardPerSecond)
 	return rewardSpent
 }
 
-func (self *ExternalIncentive) RewardLeft(currentHeight uint64) int64 {
-	if currentHeight <= uint64(self.startHeight) {
+func (self *ExternalIncentive) RewardLeft(currentTimestamp int64) int64 {
+	// Still check heights for state validation
+	if currentTimestamp <= self.startTimestamp {
 		return int64(self.rewardAmount)
 	}
 
-	if currentHeight > uint64(self.endHeight) {
+	if currentTimestamp > self.endTimestamp {
 		return 0
 	}
 
-	if currentHeight == uint64(self.endHeight) {
-		return self.rewardPerBlock
+	// But use time for calculation
+	if currentTimestamp <= self.startTimestamp {
+		return int64(self.rewardAmount)
 	}
 
-	blocks := uint64(self.endHeight) - currentHeight
-	rewardLeft := safeMulInt64(int64(blocks), self.rewardPerBlock)
+	if currentTimestamp > self.endTimestamp {
+		return 0
+	}
+
+	timeDuration := self.endTimestamp - currentTimestamp
+	rewardLeft := safeMulInt64(timeDuration, self.rewardPerSecond)
 	return rewardLeft
 }
 
@@ -136,9 +150,7 @@ func (self *ExternalIncentive) Clone() *ExternalIncentive {
 		rewardToken:         self.rewardToken,
 		rewardAmount:        self.rewardAmount,
 		rewardLeft:          self.rewardLeft,
-		startHeight:         self.startHeight,
-		endHeight:           self.endHeight,
-		rewardPerBlock:      self.rewardPerBlock,
+		rewardPerSecond:     self.rewardPerSecond,
 		refundee:            self.refundee,
 		unclaimableRefunded: self.unclaimableRefunded,
 	}
@@ -160,17 +172,9 @@ func NewExternalIncentive(
 	createdHeight int64,
 	depositGnsAmount int64,
 	currentTime int64, // current time in unix time(seconds)
-	msPerBlock int64, // msPerBlock is in milliseconds
 ) *ExternalIncentive {
 	incentiveDuration := endTimestamp - startTimestamp
-	incentiveBlock := incentiveDuration * 1000 / msPerBlock
-	rewardPerBlock := rewardAmount / int64(incentiveBlock)
-
-	blocksLeftUntilStartHeight := (startTimestamp - currentTime) * 1000 / msPerBlock
-	blocksLeftUntilEndHeight := (endTimestamp - currentTime) * 1000 / msPerBlock
-
-	startHeight := std.ChainHeight() + blocksLeftUntilStartHeight
-	endHeight := std.ChainHeight() + blocksLeftUntilEndHeight
+	rewardPerSecond := rewardAmount / incentiveDuration
 
 	return &ExternalIncentive{
 		incentiveId:         incentiveId,
@@ -179,9 +183,7 @@ func NewExternalIncentive(
 		rewardAmount:        rewardAmount,
 		startTimestamp:      startTimestamp,
 		endTimestamp:        endTimestamp,
-		startHeight:         startHeight,
-		endHeight:           endHeight,
-		rewardPerBlock:      rewardPerBlock,
+		rewardPerSecond:     rewardPerSecond,
 		refundee:            refundee,
 		createdHeight:       createdHeight,
 		depositGnsAmount:    depositGnsAmount,
@@ -192,11 +194,11 @@ func NewExternalIncentive(
 type Deposit struct {
 	owner             std.Address // owner address
 	stakeTimestamp    int64       // staked time
-	stakeHeight       int64       // staked block height
+	stakeTime         int64       // staked time (same as stakeTimestamp)
 	targetPoolPath    string      // staked position's pool path
 	tickLower         int32       // tick lower
 	tickUpper         int32       // tick upper
 	liquidity         *u256.Uint  // liquidity
-	lastCollectHeight int64       // last collect block height
+	lastCollectTime   int64       // last collect time
 	warmups           []Warmup    // warmup information
 }

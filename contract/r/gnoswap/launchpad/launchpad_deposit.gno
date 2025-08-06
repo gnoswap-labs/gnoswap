@@ -66,7 +66,7 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 	projectID, tierDuration := parseProjectTierID(targetProjectTierID)
 	caller := previousRealm.Address()
 
-	deposit, rewardState, isFirstDeposit, distributeAmountPerBlockX128, err := depositGns(
+	deposit, rewardState, isFirstDeposit, distributeAmountPerSecondX128, err := depositGns(
 		projectID,
 		tierDuration,
 		depositAmount,
@@ -89,9 +89,8 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 			"targetProjectTierId", targetProjectTierID,
 			"amount", formatInt(depositAmount),
 			"depositId", deposit.ID(),
-			"claimableHeight", formatInt(rewardState.ClaimableHeight()),
 			"claimableTime", formatInt(rewardState.ClaimableTime()),
-			"tierAmountPerBlockX128", distributeAmountPerBlockX128,
+			"tierAmountPerSecondX128", distributeAmountPerSecondX128,
 		)
 	}
 
@@ -102,7 +101,6 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 		"targetProjectTierId", targetProjectTierID,
 		"amount", formatInt(depositAmount),
 		"depositId", deposit.ID(),
-		"claimableHeight", formatInt(rewardState.ClaimableHeight()),
 		"claimableTime", formatInt(rewardState.ClaimableTime()),
 		"referrer", actualReferrer,
 	)
@@ -167,14 +165,13 @@ func depositGns(
 		return nil, nil, false, "", err
 	}
 
+	currentTime := time.Now().Unix()
 	currentHeight := std.ChainHeight()
 
-	if !projectTier.isActivated(currentHeight) {
+	if !projectTier.isActivated(currentTime) {
 		return nil, nil, false, "", makeErrorWithDetails(errInactiveProject, projectID)
 	}
 
-	currentTime := time.Now().Unix()
-	createdBlockTimeInfo := newBlockTimeInfo(currentTime, currentHeight)
 	depositID := nextDepositID()
 	deposit := NewDeposit(
 		depositID,
@@ -182,8 +179,9 @@ func depositGns(
 		tierDuration,
 		callerAddress,
 		depositAmount,
-		createdBlockTimeInfo,
-		projectTier.endBlockTimeInfo,
+		currentHeight,
+		currentTime,
+		projectTier.endTime,
 	)
 	deposits.Set(depositID, deposit)
 
@@ -196,9 +194,9 @@ func depositGns(
 
 	isFirstDeposit := !rewardManager.IsInitialized()
 
-	rewardState := rewardManager.addRewardStateByDeposit(deposit, currentHeight)
+	rewardState := rewardManager.addRewardStateByDeposit(deposit)
 
-	err = rewardManager.updateRewardPerDepositX128(projectTier.CurrentDepositAmount(), currentHeight)
+	err = rewardManager.updateRewardPerDepositX128(projectTier.CurrentDepositAmount(), currentHeight, currentTime)
 	if err != nil {
 		return nil, nil, false, "", err
 	}
@@ -206,7 +204,7 @@ func depositGns(
 	return deposit,
 		rewardState,
 		isFirstDeposit,
-		rewardManager.DistributeAmountPerBlockX128().ToString(),
+		rewardManager.DistributeAmountPerSecondX128().ToString(),
 		nil
 }
 

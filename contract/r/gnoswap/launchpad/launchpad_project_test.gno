@@ -11,7 +11,6 @@ import (
 	"gno.land/p/demo/uassert"
 
 	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/onbloc/obl"
 
 	_ "gno.land/r/onbloc/bar"
@@ -56,7 +55,6 @@ func TestCreateProject(t *testing.T) {
 			tier180Ratio:         70,
 			startTime:            time.Now().Unix() + 3600, // 1 hour
 			callerAddress:        adminAddr,
-			averageBlockTimeMs:   2000,
 			expectedProjectID:    "gno.land/r/onbloc/obl:123",
 			expectedStartHeight:  std.ChainHeight() + 3600/2, // 1 hour / 2
 			expectedHasAbort:     false,
@@ -75,7 +73,6 @@ func TestCreateProject(t *testing.T) {
 			tier180Ratio:         70,
 			startTime:            time.Now().Unix() + 3600, // 1 hour
 			callerAddress:        adminAddr,
-			averageBlockTimeMs:   1000,
 			expectedProjectID:    "gno.land/r/onbloc/obl:123",
 			expectedStartHeight:  std.ChainHeight() + 3600,
 			expectedHasAbort:     false,
@@ -94,7 +91,6 @@ func TestCreateProject(t *testing.T) {
 			tier180Ratio:         70,
 			startTime:            time.Now().Unix() + 3600, // 1 hour
 			callerAddress:        testutils.TestAddress("non-admin"),
-			averageBlockTimeMs:   2000,
 			expectedHasAbort:     true,
 			expectedAbortMessage: "unauthorized: caller g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj is not admin",
 		},
@@ -111,7 +107,6 @@ func TestCreateProject(t *testing.T) {
 			tier180Ratio:         70,
 			startTime:            time.Now().Unix() - 3600, // 1 hour
 			callerAddress:        adminAddr,
-			averageBlockTimeMs:   2000,
 			expectedHasAbort:     true,
 			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1234564290) must be greater than now(1234571490)",
 		},
@@ -128,7 +123,6 @@ func TestCreateProject(t *testing.T) {
 			tier180Ratio:         70,
 			startTime:            time.Now().Unix() + 3600 - 1, // 1 hour
 			callerAddress:        adminAddr,
-			averageBlockTimeMs:   2000,
 			expectedHasAbort:     true,
 			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || start time(1234571489) must be greater than now(1234571490)",
 		},
@@ -169,7 +163,7 @@ func TestCreateProject(t *testing.T) {
 			uassert.NoError(t, err)
 
 			uassert.Equal(t, project.ID(), tt.expectedProjectID)
-			uassert.Equal(t, project.StartHeight(), tt.expectedStartHeight)
+			uassert.Equal(t, project.StartTime(), tt.startTime)
 		})
 	}
 }
@@ -200,7 +194,6 @@ func TestCreateProjectPrivate(t *testing.T) {
 				currentTime:        int64(time.Now().Unix()),
 				currentHeight:      std.ChainHeight(),
 				startTime:          int64(time.Now().Unix() + 3600), // 1 hour
-				averageBlockTimeMs: 2000,
 			},
 			expectedProjectID:    "gno.land/r/onbloc/obl:123",
 			expectedHasError:     false,
@@ -221,7 +214,6 @@ func TestCreateProjectPrivate(t *testing.T) {
 				currentTime:        int64(time.Now().Unix()),
 				currentHeight:      std.ChainHeight(),
 				startTime:          int64(time.Now().Unix() + 3600),
-				averageBlockTimeMs: 2000,
 			},
 			expectedProjectID:    "gno.land/r/onbloc/obl:123",
 			expectedHasError:     false,
@@ -242,7 +234,6 @@ func TestCreateProjectPrivate(t *testing.T) {
 				currentTime:        int64(time.Now().Unix()),
 				currentHeight:      std.ChainHeight(),
 				startTime:          int64(time.Now().Unix() + 3600),
-				averageBlockTimeMs: 2000,
 			},
 			expectedHasError:     true,
 			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || invalid ratio, sum of all tiers(30:10, 90:20, 180:60) should be 100",
@@ -262,7 +253,6 @@ func TestCreateProjectPrivate(t *testing.T) {
 				currentTime:        int64(time.Now().Unix()),
 				currentHeight:      std.ChainHeight(),
 				startTime:          int64(time.Now().Unix() + 3600),
-				averageBlockTimeMs: 2000,
 			},
 			expectedHasError:     true,
 			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-007] invalid input data || project name cannot be empty",
@@ -282,7 +272,6 @@ func TestCreateProjectPrivate(t *testing.T) {
 				currentTime:        int64(time.Now().Unix()),
 				currentHeight:      std.ChainHeight(),
 				startTime:          int64(time.Now().Unix() + 3600),
-				averageBlockTimeMs: 2000,
 			},
 			expectedHasError:     true,
 			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-002] invalid address || recipient address(abcdef)",
@@ -302,7 +291,6 @@ func TestCreateProjectPrivate(t *testing.T) {
 				currentTime:           int64(time.Now().Unix()),
 				currentHeight:         std.ChainHeight(),
 				startTime:             int64(time.Now().Unix() + 3600 - 1), // 1 hour - 1 second
-				averageBlockTimeMs:    2000,
 				minimumStartDelayTime: 3600,
 			},
 			expectedHasError:     true,
@@ -323,7 +311,6 @@ func TestCreateProjectPrivate(t *testing.T) {
 				currentTime:           int64(time.Now().Unix()),
 				currentHeight:         std.ChainHeight(),
 				startTime:             int64(time.Now().Unix() + 3600 - 1), // 1 hour - 1 second
-				averageBlockTimeMs:    2000,
 				minimumStartDelayTime: 3600,
 			},
 			expectedHasError:     true,
@@ -380,7 +367,6 @@ func TestCreateProjectPrivate_Multiple(t *testing.T) {
 				currentTime:        int64(time.Now().Unix()),
 				currentHeight:      std.ChainHeight(),
 				startTime:          int64(time.Now().Unix() + 3600), // 1 hour
-				averageBlockTimeMs: 2000,
 			},
 			expectedProjectID:    "gno.land/r/onbloc/obl:123",
 			expectedHasError:     false,
@@ -404,7 +390,6 @@ func TestCreateProjectPrivate_Multiple(t *testing.T) {
 				currentTime:        int64(time.Now().Unix()),
 				currentHeight:      std.ChainHeight(),
 				startTime:          int64(time.Now().Unix() + 3600), // 1 hour
-				averageBlockTimeMs: 2000,
 			},
 			expectedHasError:     true,
 			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-008] can not create same project in same block || project(gno.land/r/onbloc/obl:123) already exists",
@@ -744,11 +729,9 @@ func initLaunchpadProjectTest(t *testing.T) {
 func initLaunchpadProjectTestAvgBlockTime(t *testing.T, avgBlockTimeMs int64) {
 	emissionAddr, _ := access.GetAddress(prbac.ROLE_EMISSION.String())
 	testing.SetOriginCaller(emissionAddr)
-	gns.SetEmissionChangeCallback(cross, func(amount int64) {})
 
 	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 	testing.SetOriginCaller(adminAddr)
-	gns.SetAvgBlockTimeInMs(cross, avgBlockTimeMs)
 }
 
 func setupLaunchpadProjectTestEmptyProject(t *testing.T, projectID string) {

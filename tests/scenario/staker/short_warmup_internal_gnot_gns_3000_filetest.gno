@@ -9,6 +9,7 @@ import (
 	"std"
 	"strconv"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
@@ -76,7 +77,7 @@ func main() {
 
 func initWithShortWarmUp() {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartBlockHeight(cross, 124)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	println("[INFO] override warm-up periods for testing")
 	sr.SetWarmUp(cross, 30, 150)
@@ -253,5 +254,5 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] user GNS balance before: 99999999999950
 // [INFO] community pool GNS balance before: 0
 // [INFO] collect reward for position 01
-// [EXPECTED] user reward: 3210615
-// [EXPECTED] community pool reward: 28895546
+// [EXPECTED] user reward: 8026540
+// [EXPECTED] community pool reward: 93642972

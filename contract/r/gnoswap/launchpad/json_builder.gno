@@ -9,13 +9,6 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-// timeInfoBuilder adds TimeInfo fields to JSON
-func timeInfoBuilder(b *json.NodeBuilder, prefix string, info *BlockTimeInfo) *json.NodeBuilder {
-	return b.
-		WriteString(prefix+"Height", ufmt.Sprintf("%d", info.BlockHeight())).
-		WriteString(prefix+"Time", ufmt.Sprintf("%d", info.BlockTime()))
-}
-
 // projectStatsBuilder adds ProjectStats fields to JSON
 func projectStatsBuilder(b *json.NodeBuilder, project *Project) *json.NodeBuilder {
 	return b.
@@ -37,9 +30,9 @@ func tierBuilder(b *json.NodeBuilder, prefix string, tier *ProjectTier) *json.No
 	// Add tiers info
 	b.WriteString(prefix+"Id", tier.id)
 	b.WriteString(prefix+"TierAmount", ufmt.Sprintf("%d", tier.TotalDistributeAmount()))
-	b.WriteString(prefix+"TierAmountPerBlockX128", tier.DistributeAmountPerBlockX128().ToString())
-	timeInfoBuilder(b, prefix+"Started", tier.startBlockTimeInfo)
-	timeInfoBuilder(b, prefix+"Ended", tier.endBlockTimeInfo)
+	b.WriteString(prefix+"TierAmountPerSecondX128", tier.DistributeAmountPerSecondX128().ToString())
+	b.WriteString(prefix+"Started", ufmt.Sprintf("%d", tier.StartTime()))
+	b.WriteString(prefix+"Ended", ufmt.Sprintf("%d", tier.EndTime()))
 	b.WriteString(prefix+"TotalDepositAmount", ufmt.Sprintf("%d", tier.TotalDepositAmount()))
 	b.WriteString(prefix+"ActualDepositAmount", ufmt.Sprintf("%d", tier.CurrentDepositAmount()))
 	b.WriteString(prefix+"TotalParticipant", ufmt.Sprintf("%d", tier.TotalDepositCount()))
@@ -66,9 +59,9 @@ func projectBuilder(b *json.NodeBuilder, project *Project) *json.NodeBuilder {
 	b.WriteString("conditionsAmount", strings.Join(amounts, ","))
 
 	// Add time info
-	timeInfoBuilder(b, "created", project.CreatedBlockTimeInfo())
-	timeInfoBuilder(b, "started", project.standardTier().startBlockTimeInfo)
-	timeInfoBuilder(b, "ended", project.standardTier().endBlockTimeInfo)
+	b.WriteString("createdTime", ufmt.Sprintf("%d", project.CreatedAt()))
+	b.WriteString("startedTime", ufmt.Sprintf("%d", project.standardTier().StartTime()))
+	b.WriteString("endedTime", ufmt.Sprintf("%d", project.standardTier().EndTime()))
 
 	// Add refund info
 	refundInfoBuilder(b, project)
@@ -84,7 +77,7 @@ func depositBuilder(b *json.NodeBuilder, deposit *Deposit) *json.NodeBuilder {
 		WriteString("tier", ufmt.Sprintf("%d", deposit.Tier())).
 		WriteString("depositor", deposit.Depositor().String()).
 		WriteString("amount", ufmt.Sprintf("%d", deposit.DepositAmount())).
-		WriteString("depositHeight", ufmt.Sprintf("%d", deposit.DepositHeight())).
+		WriteString("depositHeight", ufmt.Sprintf("%d", deposit.CreatedHeight())).
 		WriteString("depositTime", ufmt.Sprintf("%d", deposit.DepositTime()))
 }
 

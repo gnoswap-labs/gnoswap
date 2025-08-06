@@ -92,6 +92,8 @@ type PoolTier struct {
 
 	tierRatio TierRatio
 
+	lastRewardCacheTimestamp int64
+
 	lastRewardCacheHeight int64
 
 	currentEmission int64
@@ -115,18 +117,19 @@ type PoolTier struct {
 //
 // Returns:
 // - *PoolTier: The new PoolTier instance.
-func NewPoolTier(pools *Pools, currentHeight int64, initialPoolPath string, getEmission func() int64, getHalvingBlocksInRange func(start, end int64) ([]int64, []int64)) *PoolTier {
+func NewPoolTier(pools *Pools, currentHeight int64, currentTime int64, initialPoolPath string, getEmission func() int64, getHalvingBlocksInRange func(start, end int64) ([]int64, []int64)) *PoolTier {
 	result := &PoolTier{
-		membership:              avl.NewTree(),
-		tierRatio:               TierRatioFromCounts(1, 0, 0),
-		lastRewardCacheHeight:   currentHeight + 1,
-		getEmission:             getEmission,
-		getHalvingBlocksInRange: getHalvingBlocksInRange,
-		currentEmission:         getEmission(),
+		membership:               avl.NewTree(),
+		tierRatio:                TierRatioFromCounts(1, 0, 0),
+		lastRewardCacheTimestamp: currentTime + 1,
+		lastRewardCacheHeight:    currentHeight + 1,
+		getEmission:              getEmission,
+		getHalvingBlocksInRange:  getHalvingBlocksInRange,
+		currentEmission:          getEmission(),
 	}
 
-	pools.set(initialPoolPath, NewPool(initialPoolPath, currentHeight+1))
-	result.changeTier(currentHeight+1, pools, initialPoolPath, 1)
+	pools.set(initialPoolPath, NewPool(initialPoolPath, currentTime+1))
+	result.changeTier(currentHeight+1, currentTime + 1, pools, initialPoolPath, 1)
 	return result
 }
 
@@ -169,8 +172,8 @@ func (self *PoolTier) CurrentTier(poolPath string) uint64 {
 
 // changeTier updates the tier of a pool, recalculates ratios, and applies
 // updated per-pool reward to each of the pools.
-func (self *PoolTier) changeTier(currentHeight int64, pools *Pools, poolPath string, nextTier uint64) {
-	self.cacheReward(currentHeight, pools)
+func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *Pools, poolPath string, nextTier uint64) {
+	self.cacheReward(currentHeight, currentTime, pools)
 	// same as prev. no need to update
 	currentTier := self.CurrentTier(poolPath)
 	if currentTier == nextTier {
@@ -185,8 +188,9 @@ func (self *PoolTier) changeTier(currentHeight int64, pools *Pools, poolPath str
 		if !ok {
 			panic("changeTier: pool not found")
 		}
+		
 		// caching reward to 0
-		pool.cacheReward(currentHeight, int64(0))
+		pool.cacheReward(currentTime, int64(0))
 	} else {
 		self.membership.Set(poolPath, nextTier)
 	}
@@ -204,7 +208,7 @@ func (self *PoolTier) changeTier(currentHeight int64, pools *Pools, poolPath str
 		}
 		tier := value.(uint64)
 		poolReward := currentEmission * int64(self.tierRatio.Get(tier)) / 100 / int64(counts[tier])
-		pool.cacheReward(currentHeight, poolReward)
+		pool.cacheReward(currentTime, poolReward)
 		return false
 	})
 
@@ -213,43 +217,45 @@ func (self *PoolTier) changeTier(currentHeight int64, pools *Pools, poolPath str
 
 // cacheReward MUST be called before calculating any position reward
 // cacheReward updates the reward cache for each pools, accounting for any halving event in between the last cached height and the current height.
-func (self *PoolTier) cacheReward(currentHeight int64, pools *Pools) {
-	lastHeight := self.lastRewardCacheHeight
+func (self *PoolTier) cacheReward(currentHeight int64, currentTimestamp int64, pools *Pools) {
+	lastTimestamp := self.lastRewardCacheTimestamp
 
-	if currentHeight <= lastHeight {
+	if currentTimestamp <= lastTimestamp {
 		// no need to check
 		return
 	}
 
 	// find halving blocks in range
-	halvingBlocks, halvingEmissions := self.getHalvingBlocksInRange(lastHeight, currentHeight)
+	halvingTimestamps, halvingEmissions := self.getHalvingBlocksInRange(lastTimestamp, currentTimestamp)
 
-	if len(halvingBlocks) == 0 {
-		self.applyCacheToAllPools(pools, currentHeight, self.currentEmission)
+	if len(halvingTimestamps) == 0 {
+		self.applyCacheToAllPools(pools, currentTimestamp, self.currentEmission)
+		self.lastRewardCacheTimestamp = currentTimestamp
 		return
 	}
 
-	for i, hvBlock := range halvingBlocks {
+	for i, hvTimestamp := range halvingTimestamps {
 		emission := halvingEmissions[i]
 		// caching: [lastHeight, hvBlock)
-		self.applyCacheToAllPools(pools, hvBlock, emission)
+		self.applyCacheToAllPools(pools, hvTimestamp, emission)
 
 		// halve emissions when halvingBlock is reached
 		self.currentEmission = emission
 	}
 
-	// remaining range [lastHalvingBlock, currentHeight)
-	self.applyCacheToAllPools(pools, currentHeight, self.currentEmission)
+	// remaining range [lastHalvingBlock, currentTimestamp)
+	self.applyCacheToAllPools(pools, currentTimestamp, self.currentEmission)
 
 	// update lastRewardCacheHeight and currentEmission
+	self.lastRewardCacheTimestamp = currentTimestamp
 	self.lastRewardCacheHeight = currentHeight
 }
 
 // applyCacheToAllPools applies the cached reward to all tiered pools.
-func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentBlock int64, emissionInThisInterval int64) {
+func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentTimestamp, emissionInThisInterval int64) {
 	// calculate denominator and number of pools in each tier
 	counts := self.CurrentAllTierCounts()
-
+	
 	// apply cache to all pools
 	self.membership.Iterate("", "", func(key string, value any) bool {
 		tierNum := value.(uint64)
@@ -261,7 +267,7 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentBlock int64, emi
 		// real reward
 		reward := emissionInThisInterval * int64(self.tierRatio.Get(tierNum)) / 100 / int64(counts[tierNum])
 		// accumulate the reward for the interval (startBlock to endBlock) in the Pool
-		pool.cacheInternalReward(currentBlock, reward)
+		pool.cacheInternalReward(currentTimestamp, reward)
 		return false
 	})
 }

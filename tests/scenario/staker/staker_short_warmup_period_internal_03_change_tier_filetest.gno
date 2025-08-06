@@ -4,6 +4,7 @@ package main
 import (
 	"std"
 	"strconv"
+	"time"
 
 	"testing"
 
@@ -95,7 +96,7 @@ func main() {
 
 func initAndSetup() {
 	testing.SetRealm(adminRealm)
-	en.SetDistributionStartBlockHeight(cross, 124)
+	en.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	// override warm-up period for testing
 	sr.SetWarmUp(cross, 30, 150)
@@ -324,9 +325,9 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 9. Stake position 02 and check tier 2 reward
 // [EXPECTED] position 02 staked
 // [INFO] collecting reward when position 02 is in tier 2
-// [EXPECTED] position 02 tier 2 reward: 963184 GNS
+// [EXPECTED] position 02 tier 2 reward: 2407961 GNS
 //
 // [SCENARIO] 10. Change pool tier to 1 and check reward
 // [EXPECTED] pool tier changed to 1
 // [INFO] checking reward when position 02 is in tier 1
-// [EXPECTED] position 02 tier 1 reward: 1070205 GNS
+// [EXPECTED] position 02 tier 1 reward: 2675512 GNS

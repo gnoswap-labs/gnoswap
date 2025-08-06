@@ -8,6 +8,7 @@ import (
 	"std"
 	"strconv"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
@@ -87,7 +88,7 @@ func main() {
 
 func initAndSetup() {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartBlockHeight(cross, 124)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
 	sr.SetUnStakingFee(cross, 0)
@@ -306,7 +307,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 5. Collect reward with tier 2
 // [INFO] skip blocks to accumulate rewards with tier 2
 // [INFO] collect reward with tier 2
-// [EXPECTED] reward with tier 2: 10595032
+// [EXPECTED] reward with tier 2: 26487581
 // [INFO] confirmed: rewards are distributed with tier 2
 //
 // [SCENARIO] 6. Remove pool from tier system
@@ -327,6 +328,6 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] restored pool tier: 1
 // [INFO] skip blocks to test rewards after restoration
 // [INFO] collect reward after tier restoration
-// [EXPECTED] reward after tier restoration: 8026540
+// [EXPECTED] reward after tier restoration: 20066347
 // [INFO] pool tier removal and restoration scenario completed successfully
 // [INFO] confirmed: tier removal stops rewards, tier restoration resumes rewards

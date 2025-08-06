@@ -8,6 +8,7 @@ import (
 	"std"
 	"strconv"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
@@ -85,7 +86,7 @@ func main() {
 
 func initAndSetup() {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartBlockHeight(cross, 124)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
 	sr.SetUnStakingFee(cross, 0)
@@ -289,10 +290,10 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 4. Check emission when no positions are staked
 // [INFO] check emission allocation when no positions are staked
 // [INFO] emission GNS balance before: 1
-// [INFO] staker GNS balance before: 10702054
+// [INFO] staker GNS balance before: 26755136
 // [INFO] skip blocks to trigger emission
 // [EXPECTED] emission GNS balance after: 1
-// [EXPECTED] staker GNS balance after: 10702054
+// [EXPECTED] staker GNS balance after: 26755136
 // [EXPECTED] staker GNS increase: 0
 // [INFO] staker did not receive GNS with no positions staked
 //
@@ -306,10 +307,10 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 6. Check emission with position minted but not staked
 // [INFO] check emission when position exists but is not staked
-// [INFO] staker GNS balance before: 149828763
+// [INFO] staker GNS balance before: 374571908
 // [INFO] admin GNS balance before: 100000000000000
 // [INFO] skip blocks to trigger more emission
-// [EXPECTED] staker GNS balance after: 149828763
+// [EXPECTED] staker GNS balance after: 374571908
 // [EXPECTED] admin GNS balance after: 100000000000000
 // [EXPECTED] staker GNS increase: 0
 // [EXPECTED] admin GNS change: 0
@@ -320,6 +321,6 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] position owner after staking: g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu
 // [INFO] skip blocks to accumulate rewards
 // [INFO] collect reward for staked position
-// [EXPECTED] reward collected: 8026540
+// [EXPECTED] reward collected: 20066347
 // [INFO] confirmed: rewards are distributed when positions are staked
 // [INFO] no position to give reward scenario test completed

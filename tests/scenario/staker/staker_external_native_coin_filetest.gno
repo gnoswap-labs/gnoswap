@@ -323,19 +323,19 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] skip blocks to accumulate rewards
 // [INFO] check balances before collecting with unwrap
 // [INFO] ugnot balance before: 99999000000000
-// [INFO] wugnot balance before: 4394
+// [INFO] wugnot balance before: 108288
 // [INFO] collect reward with unwrap=true
-// [EXPECTED] ugnot balance after: 99999000000076
-// [EXPECTED] wugnot balance after: 4394
-// [EXPECTED] ugnot increase (unwrapped): 76
+// [EXPECTED] ugnot balance after: 99999000000191
+// [EXPECTED] wugnot balance after: 108288
+// [EXPECTED] ugnot increase (unwrapped): 191
 // [EXPECTED] wugnot change (should be 0): 0
 //
 // [SCENARIO] 7. Collect external reward without unwrap
 // [INFO] check balances before collecting without unwrap
-// [INFO] ugnot balance before: 99999000000076
-// [INFO] wugnot balance before: 4394
+// [INFO] ugnot balance before: 99999000000191
+// [INFO] wugnot balance before: 108288
 // [INFO] collect reward with unwrap=false
-// [EXPECTED] ugnot balance after: 99999000000076
-// [EXPECTED] wugnot balance after: 4470
+// [EXPECTED] ugnot balance after: 99999000000191
+// [EXPECTED] wugnot balance after: 108480
 // [EXPECTED] ugnot change (should be 0): 0
-// [EXPECTED] wugnot increase (wrapped): 76
+// [EXPECTED] wugnot increase (wrapped): 192

@@ -10,7 +10,7 @@ import (
 func TestRewardState_IsClaimable(t *testing.T) {
 	tests := []struct {
 		name                string
-		claimableHeight     int64
+		claimableTime     int64
 		currentHeight       int64
 		expectedIsClaimable bool
 		expectedHasError    bool
@@ -18,21 +18,21 @@ func TestRewardState_IsClaimable(t *testing.T) {
 	}{
 		{
 			name:                "is claimable return false when current height is before claimable height",
-			claimableHeight:     100,
+			claimableTime:     100,
 			currentHeight:       50,
 			expectedIsClaimable: false,
 			expectedHasError:    false,
 		},
 		{
 			name:                "is claimable return true when current height equals claimable height",
-			claimableHeight:     100,
+			claimableTime:     100,
 			currentHeight:       100,
 			expectedIsClaimable: true,
 			expectedHasError:    false,
 		},
 		{
 			name:                "is claimable return true when current height is after claimable height",
-			claimableHeight:     100,
+			claimableTime:     100,
 			currentHeight:       150,
 			expectedIsClaimable: true,
 			expectedHasError:    false,
@@ -43,9 +43,7 @@ func TestRewardState_IsClaimable(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
 			state := &RewardState{
-				claimableBlockTimeInfo: &BlockTimeInfo{
-					blockHeight: tt.claimableHeight,
-				},
+				claimableTime: tt.claimableTime,
 			}
 
 			// Execute
@@ -127,10 +125,9 @@ func TestNewRewardState(t *testing.T) {
 		name                  string
 		priceDebt             *u256.Uint
 		depositAmount         int64
-		distributeStartHeight int64
-		distributeEndHeight   int64
+		distributeStartTime int64
+		distributeEndTime   int64
 		claimableTime         int64
-		claimableHeight       int64
 		expectedHasError      bool
 		expectedError         string
 	}{
@@ -138,10 +135,9 @@ func TestNewRewardState(t *testing.T) {
 			name:                  "new reward state create valid state with correct values",
 			priceDebt:             u256.NewUintFromInt64(100),
 			depositAmount:         1000,
-			distributeStartHeight: 100,
-			distributeEndHeight:   200,
-			claimableTime:         1000,
-			claimableHeight:       100,
+			distributeStartTime: 100,
+			distributeEndTime:   200,
+			claimableTime:         100,
 			expectedHasError:      false,
 		},
 	}
@@ -149,28 +145,22 @@ func TestNewRewardState(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			claimableBlockTimeInfo := &BlockTimeInfo{
-				blockTime:   tt.claimableTime,
-				blockHeight: tt.claimableHeight,
-			}
-
 			accumulatedRewardPerDepositX128 := u256.Zero().Lsh(tt.priceDebt, 128)
 			// Execute
 			state := NewRewardState(
 				accumulatedRewardPerDepositX128,
 				tt.depositAmount,
-				tt.distributeStartHeight,
-				tt.distributeEndHeight,
-				claimableBlockTimeInfo,
+				tt.distributeStartTime,
+				tt.distributeEndTime,
+				tt.claimableTime,
 			)
 
 			// Verify
 			statePriceDebt := u256.Zero().Rsh(state.PriceDebtX128(), 128).Int64()
 			uassert.Equal(t, tt.priceDebt.Int64(), statePriceDebt)
 			uassert.Equal(t, tt.depositAmount, state.DepositAmount())
-			uassert.Equal(t, tt.distributeStartHeight, state.DistributeStartHeight())
-			uassert.Equal(t, tt.distributeEndHeight, state.DistributeEndHeight())
-			uassert.Equal(t, tt.claimableHeight, state.ClaimableHeight())
+			uassert.Equal(t, tt.distributeStartTime, state.DistributeStartTime())
+			uassert.Equal(t, tt.distributeEndTime, state.DistributeEndTime())
 			uassert.Equal(t, tt.claimableTime, state.ClaimableTime())
 		})
 	}

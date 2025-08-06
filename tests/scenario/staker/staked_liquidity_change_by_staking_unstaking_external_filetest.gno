@@ -354,11 +354,11 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 6. Collect external rewards for both positions
 // [INFO] clear any accumulated rewards first
 // [INFO] collect external reward for position 01
-// [EXPECTED] position 01 external reward: 3471
-// [WARNING] expected around 500000000, got 3471
+// [EXPECTED] position 01 external reward: 8680
+// [WARNING] expected around 500000000, got 8680
 // [INFO] collect external reward for position 02
-// [EXPECTED] position 02 external reward: 3471
-// [WARNING] expected around 500000000, got 3471
+// [EXPECTED] position 02 external reward: 8680
+// [WARNING] expected around 500000000, got 8680
 //
 // [SCENARIO] 7. Unstake position 02
 // [INFO] unstake position 02
@@ -366,6 +366,6 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 8. Collect external rewards after unstaking
 // [INFO] collect external reward for position 01 after position 02 unstaked
-// [EXPECTED] position 01 external reward after unstaking pos 02: 6944
-// [WARNING] expected around 1000000000, got 6944
+// [EXPECTED] position 01 external reward after unstaking pos 02: 17360
+// [WARNING] expected around 1000000000, got 17360
 // [INFO] position 01 now receives full external rewards since position 02 is unstaked

@@ -24,7 +24,7 @@ func TestNewProtocolFeeRewardManager(t *testing.T) {
 
 			// Then: Should initialize with empty values
 			uassert.NotEqual(t, manager, nil)
-			uassert.Equal(t, manager.GetAccumulatedHeight(), int64(0))
+			uassert.Equal(t, manager.GetAccumulatedTimestamp(), int64(0))
 			uassert.Equal(t, len(manager.accumulatedProtocolFeeX128PerStake), 0)
 			uassert.Equal(t, len(manager.protocolFeeAmounts), 0)
 		})
@@ -84,7 +84,7 @@ func TestProtocolFeeRewardManager_GetClaimableRewardAmounts(t *testing.T) {
 		setupManager       func(*ProtocolFeeRewardManager)
 		protocolFeeAmounts map[string]int64
 		address            string
-		currentHeight      int64
+		currentTimestamp   int64
 		expectedLength     int
 	}{
 		{
@@ -93,9 +93,9 @@ func TestProtocolFeeRewardManager_GetClaimableRewardAmounts(t *testing.T) {
 			protocolFeeAmounts: map[string]int64{
 				"token1": 1000,
 			},
-			address:        "user1",
-			currentHeight:  100,
-			expectedLength: 0,
+			address:          "user1",
+			currentTimestamp: 100,
+			expectedLength:   0,
 		},
 		{
 			name: "With existing reward state",
@@ -108,9 +108,9 @@ func TestProtocolFeeRewardManager_GetClaimableRewardAmounts(t *testing.T) {
 				"token1": 1000,
 				"token2": 500,
 			},
-			address:        "user1",
-			currentHeight:  100,
-			expectedLength: 2,
+			address:          "user1",
+			currentTimestamp: 100,
+			expectedLength:   2,
 		},
 	}
 
@@ -124,7 +124,7 @@ func TestProtocolFeeRewardManager_GetClaimableRewardAmounts(t *testing.T) {
 			result := manager.GetClaimableRewardAmounts(
 				tt.protocolFeeAmounts,
 				tt.address,
-				tt.currentHeight,
+				tt.currentTimestamp,
 			)
 
 			// Then: Should return expected number of rewards
@@ -136,25 +136,25 @@ func TestProtocolFeeRewardManager_GetClaimableRewardAmounts(t *testing.T) {
 // Test addStake
 func TestProtocolFeeRewardManager_addStake(t *testing.T) {
 	tests := []struct {
-		name          string
-		address       string
-		amount        int64
-		currentHeight int64
-		expectedTotal int64
+		name             string
+		address          string
+		amount           int64
+		currentTimestamp int64
+		expectedTotal    int64
 	}{
 		{
-			name:          "Add stake for new user",
-			address:       "user1",
-			amount:        1000,
-			currentHeight: 100,
-			expectedTotal: 1000,
+			name:             "Add stake for new user",
+			address:          "user1",
+			amount:           1000,
+			currentTimestamp: 100,
+			expectedTotal:    1000,
 		},
 		{
-			name:          "Add stake for existing user",
-			address:       "user1",
-			amount:        500,
-			currentHeight: 200,
-			expectedTotal: 1500,
+			name:             "Add stake for existing user",
+			address:          "user1",
+			amount:           500,
+			currentTimestamp: 200,
+			expectedTotal:    1500,
 		},
 	}
 
@@ -163,7 +163,7 @@ func TestProtocolFeeRewardManager_addStake(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// When: Add stake
-			manager.addStake(tt.address, tt.amount, tt.currentHeight)
+			manager.addStake(tt.address, tt.amount, tt.currentTimestamp)
 
 			// Then: Total staked amount should be updated
 			uassert.Equal(t, manager.totalStakedAmount, tt.expectedTotal)
@@ -179,25 +179,25 @@ func TestProtocolFeeRewardManager_addStake(t *testing.T) {
 // Test removeStake
 func TestProtocolFeeRewardManager_removeStake(t *testing.T) {
 	tests := []struct {
-		name           string
-		initialAmount  int64
-		removeAmount   int64
-		currentHeight  int64
-		expectedAmount int64
+		name             string
+		initialAmount    int64
+		removeAmount     int64
+		currentTimestamp int64
+		expectedAmount   int64
 	}{
 		{
-			name:           "Remove partial stake",
-			initialAmount:  1000,
-			removeAmount:   300,
-			currentHeight:  100,
-			expectedAmount: 700,
+			name:             "Remove partial stake",
+			initialAmount:    1000,
+			removeAmount:     300,
+			currentTimestamp: 100,
+			expectedAmount:   700,
 		},
 		{
-			name:           "Remove all stake",
-			initialAmount:  700,
-			removeAmount:   700,
-			currentHeight:  200,
-			expectedAmount: 0,
+			name:             "Remove all stake",
+			initialAmount:    700,
+			removeAmount:     700,
+			currentTimestamp: 200,
+			expectedAmount:   0,
 		},
 	}
 
@@ -208,7 +208,7 @@ func TestProtocolFeeRewardManager_removeStake(t *testing.T) {
 			manager.addStake("user1", tt.initialAmount, 50)
 
 			// When: Remove stake
-			manager.removeStake("user1", tt.removeAmount, tt.currentHeight)
+			manager.removeStake("user1", tt.removeAmount, tt.currentTimestamp)
 
 			// Then: Total staked amount should be updated
 			uassert.Equal(t, manager.totalStakedAmount, tt.expectedAmount)
@@ -219,18 +219,18 @@ func TestProtocolFeeRewardManager_removeStake(t *testing.T) {
 // Test claimRewards
 func TestProtocolFeeRewardManager_claimRewards(t *testing.T) {
 	tests := []struct {
-		name          string
-		setupManager  func(*ProtocolFeeRewardManager)
-		address       string
-		currentHeight int64
-		expectError   bool
+		name             string
+		setupManager     func(*ProtocolFeeRewardManager)
+		address          string
+		currentTimestamp int64
+		expectError      bool
 	}{
 		{
-			name:         "Claim rewards for non-existent user",
-			setupManager: func(m *ProtocolFeeRewardManager) {},
-			address:      "user1",
-			currentHeight: 100,
-			expectError:  false,
+			name:             "Claim rewards for non-existent user",
+			setupManager:     func(m *ProtocolFeeRewardManager) {},
+			address:          "user1",
+			currentTimestamp: 100,
+			expectError:      false,
 		},
 		{
 			name: "Claim rewards for existing user",
@@ -239,9 +239,9 @@ func TestProtocolFeeRewardManager_claimRewards(t *testing.T) {
 				// Simulate some protocol fees
 				m.accumulatedProtocolFeeX128PerStake["token1"] = u256.NewUintFromInt64(1000).Lsh(u256.NewUintFromInt64(1000), 128)
 			},
-			address:       "user1",
-			currentHeight: 100,
-			expectError:   false,
+			address:          "user1",
+			currentTimestamp: 100,
+			expectError:      false,
 		},
 	}
 
@@ -252,7 +252,7 @@ func TestProtocolFeeRewardManager_claimRewards(t *testing.T) {
 			tt.setupManager(manager)
 
 			// When: Claim rewards
-			rewards, err := manager.claimRewards(tt.address, tt.currentHeight)
+			rewards, err := manager.claimRewards(tt.address, tt.currentTimestamp)
 
 			// Then: Check result
 			if tt.expectError {
@@ -272,24 +272,24 @@ func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(t *test
 		name               string
 		setupManager       func(*ProtocolFeeRewardManager)
 		protocolFeeAmounts map[string]int64
-		currentHeight      int64
+		currentTimestamp   int64
 		shouldIncrease     bool
 	}{
 		{
-			name: "Current height less than accumulated height",
+			name: "Current timestamp less than accumulated timestamp",
 			setupManager: func(m *ProtocolFeeRewardManager) {
-				m.accumulatedHeight = 200
+				m.accumulatedTimestamp = 200
 			},
 			protocolFeeAmounts: map[string]int64{
 				"token1": 1000,
 			},
-			currentHeight:  100,
-			shouldIncrease: false,
+			currentTimestamp: 100,
+			shouldIncrease:   false,
 		},
 		{
 			name: "Normal calculation with positive protocol fee delta",
 			setupManager: func(m *ProtocolFeeRewardManager) {
-				m.accumulatedHeight = 50
+				m.accumulatedTimestamp = 50
 				m.totalStakedAmount = 1000
 				m.protocolFeeAmounts["token1"] = 500
 				m.accumulatedProtocolFeeX128PerStake["token1"] = u256.NewUint(0)
@@ -297,13 +297,13 @@ func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(t *test
 			protocolFeeAmounts: map[string]int64{
 				"token1": 1000, // Increase from 500 to 1000
 			},
-			currentHeight:  100,
-			shouldIncrease: true,
+			currentTimestamp: 100,
+			shouldIncrease:   true,
 		},
 		{
 			name: "No increase when protocol fee delta is zero",
 			setupManager: func(m *ProtocolFeeRewardManager) {
-				m.accumulatedHeight = 50
+				m.accumulatedTimestamp = 50
 				m.totalStakedAmount = 1000
 				m.protocolFeeAmounts["token1"] = 1000
 				m.accumulatedProtocolFeeX128PerStake["token1"] = u256.NewUint(500)
@@ -311,21 +311,21 @@ func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(t *test
 			protocolFeeAmounts: map[string]int64{
 				"token1": 1000, // No change
 			},
-			currentHeight:  100,
-			shouldIncrease: false,
+			currentTimestamp: 100,
+			shouldIncrease:   false,
 		},
 		{
 			name: "No increase when no staked amount",
 			setupManager: func(m *ProtocolFeeRewardManager) {
-				m.accumulatedHeight = 50
+				m.accumulatedTimestamp = 50
 				m.totalStakedAmount = 0
 				m.protocolFeeAmounts["token1"] = 500
 			},
 			protocolFeeAmounts: map[string]int64{
 				"token1": 1000,
 			},
-			currentHeight:  100,
-			shouldIncrease: false,
+			currentTimestamp: 100,
+			shouldIncrease:   false,
 		},
 	}
 
@@ -334,7 +334,7 @@ func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(t *test
 			// Given: Protocol fee reward manager setup
 			manager := NewProtocolFeeRewardManager()
 			tt.setupManager(manager)
-			
+
 			initialRewards := make(map[string]*u256.Uint)
 			for token, reward := range manager.accumulatedProtocolFeeX128PerStake {
 				initialRewards[token] = reward.Clone()
@@ -343,7 +343,7 @@ func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(t *test
 			// When: Calculate accumulated reward X128 per stake
 			result, _ := manager.calculateAccumulatedRewardX128PerStake(
 				tt.protocolFeeAmounts,
-				tt.currentHeight,
+				tt.currentTimestamp,
 			)
 
 			// Then: Check if result increased as expected
@@ -354,7 +354,7 @@ func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(t *test
 				}
 
 				initialReward, _ := initialRewards[token]
-				
+
 				if tt.shouldIncrease {
 					if initialReward != nil {
 						uassert.True(t, resultReward.Gt(initialReward))
@@ -379,42 +379,42 @@ func TestProtocolFeeRewardManager_updateAccumulatedProtocolFeeX128PerStake(t *te
 		name               string
 		setupManager       func(*ProtocolFeeRewardManager)
 		protocolFeeAmounts map[string]int64
-		currentHeight      int64
+		currentTimestamp   int64
 		shouldUpdate       bool
 	}{
 		{
-			name: "Should not update when current height is less",
+			name: "Should not update when current timestamp is less",
 			setupManager: func(m *ProtocolFeeRewardManager) {
-				m.accumulatedHeight = 200
+				m.accumulatedTimestamp = 200
 			},
 			protocolFeeAmounts: map[string]int64{
 				"token1": 1000,
 			},
-			currentHeight: 100,
-			shouldUpdate:  false,
+			currentTimestamp: 100,
+			shouldUpdate:     false,
 		},
 		{
-			name: "Should not update when current height equals accumulated height",
+			name: "Should not update when current timestamp equals accumulated timestamp",
 			setupManager: func(m *ProtocolFeeRewardManager) {
-				m.accumulatedHeight = 100
+				m.accumulatedTimestamp = 100
 			},
 			protocolFeeAmounts: map[string]int64{
 				"token1": 1000,
 			},
-			currentHeight: 100,
-			shouldUpdate:  false,
+			currentTimestamp: 100,
+			shouldUpdate:     false,
 		},
 		{
-			name: "Should update when current height is greater",
+			name: "Should update when current timestamp is greater",
 			setupManager: func(m *ProtocolFeeRewardManager) {
-				m.accumulatedHeight = 50
+				m.accumulatedTimestamp = 50
 				m.totalStakedAmount = 1000
 			},
 			protocolFeeAmounts: map[string]int64{
 				"token1": 1000,
 			},
-			currentHeight: 100,
-			shouldUpdate:  true,
+			currentTimestamp: 100,
+			shouldUpdate:     true,
 		},
 	}
 
@@ -423,19 +423,19 @@ func TestProtocolFeeRewardManager_updateAccumulatedProtocolFeeX128PerStake(t *te
 			// Given: Protocol fee reward manager setup
 			manager := NewProtocolFeeRewardManager()
 			tt.setupManager(manager)
-			initialHeight := manager.accumulatedHeight
+			initialTimestamp := manager.accumulatedTimestamp
 
 			// When: Update accumulated protocol fee X128 per stake
 			manager.updateAccumulatedProtocolFeeX128PerStake(
 				tt.protocolFeeAmounts,
-				tt.currentHeight,
+				tt.currentTimestamp,
 			)
 
 			// Then: Check if state was updated as expected
 			if tt.shouldUpdate {
-				uassert.Equal(t, manager.accumulatedHeight, tt.currentHeight)
+				uassert.Equal(t, manager.accumulatedTimestamp, tt.currentTimestamp)
 			} else {
-				uassert.Equal(t, manager.accumulatedHeight, initialHeight)
+				uassert.Equal(t, manager.accumulatedTimestamp, initialTimestamp)
 			}
 		})
 	}
@@ -453,23 +453,23 @@ func TestProtocolFeeRewardManager_EdgeCases(t *testing.T) {
 			setupTest: func(m *ProtocolFeeRewardManager) {
 				// Setup multiple tokens
 				m.totalStakedAmount = 1000
-				m.accumulatedHeight = 50
-				
+				m.accumulatedTimestamp = 50
+
 				// Add stake for a user
 				m.addStake("user1", 1000, 50)
-				
+
 				// Simulate protocol fees for multiple tokens
 				protocolFeeAmounts := map[string]int64{
 					"token1": 1000,
 					"token2": 500,
 					"token3": 750,
 				}
-				
+
 				m.updateAccumulatedProtocolFeeX128PerStake(protocolFeeAmounts, 100)
-				
+
 				// Verify claimable amounts
 				claimableAmounts := m.GetClaimableRewardAmounts(protocolFeeAmounts, "user1", 100)
-				
+
 				uassert.Equal(t, len(claimableAmounts), 3)
 				for token, amount := range claimableAmounts {
 					uassert.True(t, amount >= 0, "Amount should be non-negative for token: "+token)
@@ -481,11 +481,11 @@ func TestProtocolFeeRewardManager_EdgeCases(t *testing.T) {
 			name: "Zero protocol fee amounts",
 			setupTest: func(m *ProtocolFeeRewardManager) {
 				m.addStake("user1", 1000, 50)
-				
+
 				protocolFeeAmounts := map[string]int64{
 					"token1": 0,
 				}
-				
+
 				claimableAmounts := m.GetClaimableRewardAmounts(protocolFeeAmounts, "user1", 100)
 				uassert.Equal(t, claimableAmounts["token1"], int64(0))
 			},
@@ -497,12 +497,12 @@ func TestProtocolFeeRewardManager_EdgeCases(t *testing.T) {
 				m.totalStakedAmount = 1000
 				m.protocolFeeAmounts["token1"] = 1000
 				m.accumulatedProtocolFeeX128PerStake["token1"] = u256.NewUintFromInt64(500)
-				
+
 				// Try with smaller amount (negative delta)
 				protocolFeeAmounts := map[string]int64{
 					"token1": 500, // Less than stored amount
 				}
-				
+
 				uassert.PanicsWithMessage(t, "val is negative", func() {
 					m.calculateAccumulatedRewardX128PerStake(protocolFeeAmounts, 100)
 				})
@@ -523,4 +523,4 @@ func TestProtocolFeeRewardManager_EdgeCases(t *testing.T) {
 			// Additional assertions are done within setupTest
 		})
 	}
-} 
+}

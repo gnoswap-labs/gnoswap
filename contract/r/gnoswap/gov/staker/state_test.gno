@@ -10,9 +10,9 @@ import (
 // Test lockup period management
 func TestUnDelegationLockupPeriod(t *testing.T) {
 	tests := []struct {
-		name            string
-		setPeriod       int64
-		expectedPeriod  int64
+		name           string
+		setPeriod      int64
+		expectedPeriod int64
 	}{
 		{
 			name:           "Set standard lockup period",
@@ -71,11 +71,11 @@ func TestDelegationIDManagement(t *testing.T) {
 // Test delegation management
 func TestDelegationManagement(t *testing.T) {
 	tests := []struct {
-		name              string
-		delegateFrom      std.Address
-		delegateTo        std.Address
-		delegateAmount    int64
-		expectSuccess     bool
+		name           string
+		delegateFrom   std.Address
+		delegateTo     std.Address
+		delegateAmount int64
+		expectSuccess  bool
 	}{
 		{
 			name:           "Add valid delegation",
@@ -103,6 +103,7 @@ func TestDelegationManagement(t *testing.T) {
 				tt.delegateTo,
 				tt.delegateAmount,
 				100,
+				100,
 			)
 
 			// When: Add delegation
@@ -128,8 +129,8 @@ func TestDelegationManagement(t *testing.T) {
 // Test user delegation retrieval
 func TestGetUserDelegations(t *testing.T) {
 	tests := []struct {
-		name         string
-		setupState   func() (std.Address, []int64)
+		name          string
+		setupState    func() (std.Address, []int64)
 		expectedCount int
 	}{
 		{
@@ -146,6 +147,7 @@ func TestGetUserDelegations(t *testing.T) {
 						user,
 						std.Address("g1validator1234567890abcdefghijklmnop"),
 						int64(1000*(i+1)),
+						100,
 						100,
 					)
 					addDelegation(delegationID, delegation)
@@ -200,6 +202,7 @@ func TestRemoveDelegation(t *testing.T) {
 					std.Address("g1user1234567890abcdefghijklmnopqrst"),
 					std.Address("g1validator1234567890abcdefghijklmno"),
 					1000,
+					100,
 					100,
 				)
 				addDelegation(delegationID, delegation)
@@ -257,7 +260,7 @@ func TestDelegationHistoryManagement(t *testing.T) {
 				delegateFrom:   std.Address("g1user1234567890abcdefghijklmnopqrst"),
 				delegateTo:     std.Address("g1validator1234567890abcdefghijklmno"),
 				delegateAmount: 1000,
-				delegationType:   DelegateType,
+				delegationType: DelegateType,
 				createdAt:      100,
 			}
 
@@ -296,7 +299,7 @@ func TestDelegationSnapshotsManagement(t *testing.T) {
 			// Then: Should retrieve the same snapshot
 			retrievedSnapshot := getDelegationSnapshots()
 			uassert.Equal(t, len(retrievedSnapshot), len(newSnapshot))
-			
+
 			if item, exists := retrievedSnapshot["user1"]; exists {
 				uassert.Equal(t, item.delegationAmount, int64(1000))
 				uassert.Equal(t, item.delegatorAddress, std.Address("user1"))
@@ -350,8 +353,8 @@ func TestLaunchpadProjectDeposits(t *testing.T) {
 // Test launchpad deposit removal
 func TestRemoveLaunchpadProjectDeposit(t *testing.T) {
 	tests := []struct {
-		name         string
-		setupState   func() string
+		name          string
+		setupState    func() string
 		expectSuccess bool
 	}{
 		{
@@ -452,7 +455,7 @@ func TestLaunchpadStakeOperations(t *testing.T) {
 			// When: Remove stake from launchpad
 			removeStakeFromLaunchpad(tt.address, tt.amount, tt.currentHeight)
 
-			// Then: 
+			// Then:
 			launchpadDepositAmount, _ := getLaunchpadProjectDeposit(launchpadRewardID)
 			uassert.Equal(t, launchpadDepositAmount, int64(0))
 		})
@@ -462,12 +465,12 @@ func TestLaunchpadStakeOperations(t *testing.T) {
 // Test partial launchpad stake removal
 func TestPartialLaunchpadStakeRemoval(t *testing.T) {
 	tests := []struct {
-		name            string
-		address         string
-		initialAmount   int64
-		removeAmount    int64
+		name              string
+		address           string
+		initialAmount     int64
+		removeAmount      int64
 		expectedRemaining int64
-		currentHeight   int64
+		currentHeight     int64
 	}{
 		{
 			name:              "Partial removal leaves remaining deposit",
@@ -494,4 +497,4 @@ func TestPartialLaunchpadStakeRemoval(t *testing.T) {
 			uassert.Equal(t, deposit, tt.expectedRemaining)
 		})
 	}
-} 
+}
