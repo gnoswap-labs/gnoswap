@@ -194,7 +194,7 @@ func depositGns(
 
 	isFirstDeposit := !rewardManager.IsInitialized()
 
-	rewardState := rewardManager.addRewardStateByDeposit(deposit, currentTime)
+	rewardState := rewardManager.addRewardStateByDeposit(deposit)
 
 	err = rewardManager.updateRewardPerDepositX128(projectTier.CurrentDepositAmount(), currentHeight, currentTime)
 	if err != nil {

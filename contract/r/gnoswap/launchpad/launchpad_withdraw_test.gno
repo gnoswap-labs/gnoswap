@@ -53,6 +53,7 @@ func TestCollectDepositGns(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			initLaunchpadWithdrawTest(t)
 			testing.SetOriginCaller(tt.callerAddress)
+			testing.SkipHeights(60*60*24*180/5 + 2)
 
 			collectDepositFn := func() {
 				CollectDepositGns(cross, tt.depositID)
@@ -64,6 +65,7 @@ func TestCollectDepositGns(t *testing.T) {
 			}
 
 			amount, err := CollectDepositGns(cross, tt.depositID)
+			testing.SkipHeights(-(60*60*24*180/5 + 2))
 			uassert.NoError(t, err)
 			uassert.Equal(t, tt.expectedAmount, amount)
 		})
@@ -79,19 +81,21 @@ func TestWithdrawDeposit(t *testing.T) {
 		expectedHasError     bool
 		expectedErrorMessage string
 		expectedAmount       int64
+		skipHeight           int64
 	}{
 		{
 			name:             "withdraw deposit successfully",
 			depositID:        currentDepositID,
 			expectedHasError: false,
 			expectedAmount:   1000000000,
+			skipHeight:       60*60*24*180/5 + 2,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initLaunchpadWithdrawTest(t)
-
+			testing.SkipHeights(tt.skipHeight)
 			deposit, _ := getDeposit(tt.depositID)
 
 			currentTime := time.Now().Unix()
@@ -102,6 +106,7 @@ func TestWithdrawDeposit(t *testing.T) {
 				return
 			}
 
+			testing.SkipHeights(-tt.skipHeight)
 			uassert.NoError(t, err)
 			uassert.Equal(t, tt.expectedAmount, amount)
 		})
@@ -124,16 +129,16 @@ func initLaunchpadWithdrawTest(t *testing.T) {
 	// Setup test project
 	project, _ := createProject(
 		&createProjectParams{
-			name:               "Test Project",
-			tokenPath:          "gno.land/r/onbloc/obl",
-			depositAmount:      1000000,
-			tier30Ratio:        30,
-			tier90Ratio:        30,
-			tier180Ratio:       40,
-			recipient:          testutils.TestAddress("project"), // TODO: change to real address
-			startTime:          currentTime + 10,
-			currentTime:        currentTime,
-			currentHeight:      currentHeight,
+			name:          "Test Project",
+			tokenPath:     "gno.land/r/onbloc/obl",
+			depositAmount: 1000000,
+			tier30Ratio:   30,
+			tier90Ratio:   30,
+			tier180Ratio:  40,
+			recipient:     testutils.TestAddress("project"), // TODO: change to real address
+			startTime:     currentTime + 10,
+			currentTime:   currentTime,
+			currentHeight: currentHeight,
 		},
 	)
 	projects.Set(project.ID(), project)

@@ -34,7 +34,7 @@ var (
 	errInvalidCaller       = errors.New("[GNOSWAP-LAUNCHPAD-025] invalid caller")
 	errInvalidOwner        = errors.New("[GNOSWAP-LAUNCHPAD-026] invalid owner")
 	errInvalidAvgBlockTime = errors.New("[GNOSWAP-LAUNCHPAD-027] invalid average block time")
-	errInvalidHeight       = errors.New("[GNOSWAP-LAUNCHPAD-028] invalid height")
+	errInvalidTime         = errors.New("[GNOSWAP-LAUNCHPAD-028] invalid time")
 	errTierHasParticipants = errors.New("[GNOSWAP-LAUNCHPAD-029] tier has participants")
 	errNotYetEndedProject  = errors.New("[GNOSWAP-LAUNCHPAD-030] project lock period is not over yet")
 	errTransferFailed      = errors.New("[GNOSWAP-LAUNCHPAD-031] transfer failed")

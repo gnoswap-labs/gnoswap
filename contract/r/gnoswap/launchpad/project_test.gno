@@ -119,10 +119,10 @@ func TestProject_Getters(t *testing.T) {
 				conditions:    make(map[string]*ProjectCondition),
 				tiers:         make(map[int64]*ProjectTier),
 				createdAt:     tt.createdTime,
-				createdHeight:       tt.createdHeight,
+				createdHeight: tt.createdHeight,
 				tiersRatios: map[int64]int64{
-					30: 33,
-					90: 33,
+					30:  33,
+					90:  33,
 					180: 34,
 				},
 			}
@@ -574,7 +574,7 @@ func TestProject_ValidateRefundRemainingAmount(t *testing.T) {
 			name: "validate refund with ended project and remaining amount",
 			tiers: map[int64]*ProjectTier{
 				180: {
-					endTime: 200,
+					endTime:               200,
 					totalDistributeAmount: 1000,
 					totalCollectedAmount:  600,
 				},
@@ -586,20 +586,20 @@ func TestProject_ValidateRefundRemainingAmount(t *testing.T) {
 			name: "validate refund with project not ended",
 			tiers: map[int64]*ProjectTier{
 				180: {
-					endTime: 200,
+					endTime:               200,
 					totalDistributeAmount: 1000,
 					totalCollectedAmount:  600,
 				},
 			},
 			currentHeight:    150,
 			expectedHasError: true,
-			expectedError:    "project not ended yet(current:150, endHeight: 200)",
+			expectedError:    "project not ended yet(current:150, endTime: 200)",
 		},
 		{
 			name: "validate refund with no remaining amount",
 			tiers: map[int64]*ProjectTier{
 				180: {
-					endTime: 200,
+					endTime:               200,
 					totalDistributeAmount: 1000,
 					totalCollectedAmount:  1000,
 				},
@@ -819,13 +819,13 @@ func TestNewProject(t *testing.T) {
 		expectedRecipient     std.Address
 	}{
 		{
-			name:          "create new project with valid parameters",
-			projectName:   "Test Project",
-			tokenPath:     "gno.land/r/test/token",
-			depositAmount: 1000000,
-			recipient:     testutils.TestAddress("recipient"),
-			createdAt:     1000,
-			createdHeight: 123,
+			name:                  "create new project with valid parameters",
+			projectName:           "Test Project",
+			tokenPath:             "gno.land/r/test/token",
+			depositAmount:         1000000,
+			recipient:             testutils.TestAddress("recipient"),
+			createdAt:             1000,
+			createdHeight:         123,
 			expectedID:            "gno.land/r/test/token:123",
 			expectedName:          "Test Project",
 			expectedTokenPath:     "gno.land/r/test/token",
@@ -833,13 +833,13 @@ func TestNewProject(t *testing.T) {
 			expectedRecipient:     testutils.TestAddress("recipient"),
 		},
 		{
-			name:          "create new project with zero deposit amount",
-			projectName:   "Zero Deposit Project",
-			tokenPath:     "gno.land/r/test/token",
-			depositAmount: 0,
-			recipient:     testutils.TestAddress("recipient"),
-			createdAt:     2000,
-			createdHeight: 456,
+			name:                  "create new project with zero deposit amount",
+			projectName:           "Zero Deposit Project",
+			tokenPath:             "gno.land/r/test/token",
+			depositAmount:         0,
+			recipient:             testutils.TestAddress("recipient"),
+			createdAt:             2000,
+			createdHeight:         456,
 			expectedID:            "gno.land/r/test/token:456",
 			expectedName:          "Zero Deposit Project",
 			expectedTokenPath:     "gno.land/r/test/token",
@@ -856,8 +856,8 @@ func TestNewProject(t *testing.T) {
 				tt.tokenPath,
 				tt.depositAmount,
 				tt.recipient,
-				tt.createdAt,
 				tt.createdHeight,
+				tt.createdAt,
 			)
 
 			// Verify
@@ -920,12 +920,10 @@ func TestMakeProjectID(t *testing.T) {
 
 func TestProject_TimeMethods(t *testing.T) {
 	tests := []struct {
-		name                string
-		standardTier        *ProjectTier
-		expectedStartTime   int64
-		expectedEndTime     int64
-		expectedStartHeight int64
-		expectedEndHeight   int64
+		name              string
+		standardTier      *ProjectTier
+		expectedStartTime int64
+		expectedEndTime   int64
 	}{
 		{
 			name: "get time information from standard tier",
@@ -933,10 +931,8 @@ func TestProject_TimeMethods(t *testing.T) {
 				startTime: 1000,
 				endTime:   2000,
 			},
-			expectedStartTime:   1000,
-			expectedEndTime:     2000,
-			expectedStartHeight: 100,
-			expectedEndHeight:   200,
+			expectedStartTime: 1000,
+			expectedEndTime:   2000,
 		},
 		{
 			name: "get time information with zero values",
@@ -944,10 +940,8 @@ func TestProject_TimeMethods(t *testing.T) {
 				startTime: 0,
 				endTime:   0,
 			},
-			expectedStartTime:   0,
-			expectedEndTime:     0,
-			expectedStartHeight: 0,
-			expectedEndHeight:   0,
+			expectedStartTime: 0,
+			expectedEndTime:   0,
 		},
 	}
 
@@ -963,13 +957,9 @@ func TestProject_TimeMethods(t *testing.T) {
 			// Execute and verify
 			startTime := project.StartTime()
 			endTime := project.EndTime()
-			startHeight := project.standardTier().startTime
-			endHeight := project.standardTier().endTime
 
 			uassert.Equal(t, startTime, tt.expectedStartTime)
 			uassert.Equal(t, endTime, tt.expectedEndTime)
-			uassert.Equal(t, startHeight, tt.expectedStartHeight)
-			uassert.Equal(t, endHeight, tt.expectedEndHeight)
 		})
 	}
 }

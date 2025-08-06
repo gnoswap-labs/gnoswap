@@ -117,7 +117,7 @@ func (r *RewardManager) calculateRewardPerDepositX128(rewardPerSecondX128 *u256.
 	return rewardPerDepositX128, nil
 }
 
-func (r *RewardManager) addRewardStateByDeposit(deposit *Deposit, averageBlickTimeMs int64) *RewardState {
+func (r *RewardManager) addRewardStateByDeposit(deposit *Deposit) *RewardState {
 	claimableTime := deposit.DepositTime() + r.rewardClaimableDuration
 
 	rewardState := NewRewardState(
@@ -175,13 +175,8 @@ func (r *RewardManager) addRewardPerDepositX128(rewardPerDepositX128 *u256.Uint,
 // Returns:
 // - error: If the update fails
 func (r *RewardManager) updateRewardPerDepositX128(totalDepositAmount int64, currentHeight, currentTime int64) error {
-	// Input validation
-	if currentHeight <= 0 {
-		return makeErrorWithDetails(errInvalidHeight, "height must be positive")
-	}
-
 	if currentTime <= 0 {
-		return makeErrorWithDetails(errInvalidHeight, "time must be positive")
+		return makeErrorWithDetails(errInvalidTime, "time must be positive")
 	}
 
 	// Calculate and update rewards

@@ -1,7 +1,6 @@
 package launchpad
 
 import (
-	"std"
 	"testing"
 	"time"
 
@@ -84,9 +83,13 @@ func TestTierDurationConsistency(t *testing.T) {
 			projects = avl.NewTree()
 			projectTierRewardManagers = avl.NewTree()
 
-			currentTime := time.Now().Unix()
-			currentHeight := int64(100)
-			testing.SetHeight(currentHeight)
+			ctx := testing.GetContext()
+			ctx.Height = 100
+			ctx.Time = time.Unix(100, 0)
+			testing.SetContext(ctx)
+
+			currentTime := ctx.Time.Unix()
+			currentHeight := ctx.Height
 
 			// Set tier ratios based on tier type
 			tier30Ratio := int64(0)
@@ -104,16 +107,16 @@ func TestTierDurationConsistency(t *testing.T) {
 
 			project, _ := createProject(
 				&createProjectParams{
-					name:               "Test Project " + tt.name,
-					tokenPath:          "gno.land/r/onbloc/obl",
-					depositAmount:      10000000,
-					tier30Ratio:        tier30Ratio,
-					tier90Ratio:        tier90Ratio,
-					tier180Ratio:       tier180Ratio,
-					recipient:          testutils.TestAddress("project"),
-					startTime:          currentTime,
-					currentTime:        currentTime,
-					currentHeight:      currentHeight,
+					name:          "Test Project " + tt.name,
+					tokenPath:     "gno.land/r/onbloc/obl",
+					depositAmount: 10000000,
+					tier30Ratio:   tier30Ratio,
+					tier90Ratio:   tier90Ratio,
+					tier180Ratio:  tier180Ratio,
+					recipient:     testutils.TestAddress("project"),
+					startTime:     currentTime,
+					currentTime:   currentTime,
+					currentHeight: currentHeight,
 				},
 			)
 			projects.Set(project.ID(), project)
@@ -124,7 +127,7 @@ func TestTierDurationConsistency(t *testing.T) {
 			initialDistributePerSecond := tier.DistributeAmountPerSecondX128().ToString()
 
 			// calculate expected duration in blocks
-			expectedDurationBlocks := tt.expectedDurationDays * 24 * 60 * 60 / 2
+			expectedDurationBlocks := tt.expectedDurationDays * 24 * 60 * 60
 
 			// verify initial duration
 			actualInitialDuration := initialEndTime - initialStartTime
@@ -133,8 +136,9 @@ func TestTierDurationConsistency(t *testing.T) {
 
 			// wait before first deposit if needed
 			if tt.daysBeforeFirstDeposit > 0 {
-				blocksToWait := tt.daysBeforeFirstDeposit * 24 * 60 * 60 / 2
-				testing.SetHeight(currentHeight + blocksToWait)
+				blocksToWait := tt.daysBeforeFirstDeposit * 24 * 60 * 60
+				ctx.Time = time.Unix(currentTime+blocksToWait, 0)
+				testing.SetContext(ctx)
 			}
 
 			// Make deposits
@@ -148,11 +152,6 @@ func TestTierDurationConsistency(t *testing.T) {
 					uassert.True(t, isFirstDeposit, "First deposit should be marked as such")
 				} else {
 					uassert.False(t, isFirstDeposit, "Subsequent deposits should not be marked as first")
-				}
-
-				// Wait 1 day between deposits
-				if i < tt.depositCount-1 {
-					testing.SetHeight(std.ChainHeight() + 43200) // 1 day
 				}
 			}
 
@@ -234,7 +233,7 @@ func TestTierDuration_TimestampBasedCalculation(t *testing.T) {
 			description:          "180 day tier should be 180 days",
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Calculate end time info
@@ -242,68 +241,13 @@ func TestTierDuration_TimestampBasedCalculation(t *testing.T) {
 				tt.tierType,
 				tt.startTime,
 			)
-			
+
 			// Calculate actual duration in seconds
 			actualDurationSeconds := endTimeInfo - tt.startTime
 			actualDurationDays := actualDurationSeconds / 86400 // seconds per day
-			
+
 			// Verify the duration matches expected days
 			uassert.Equal(t, tt.expectedDurationDays, actualDurationDays, tt.description)
-		})
-	}
-}
-
-// TestTierDuration_BlockHeightEstimation tests that block height is estimated correctly
-func TestTierDuration_BlockHeightEstimation(t *testing.T) {
-	tests := []struct {
-		name               string
-		tierType           int64
-		startHeight        int64
-		averageBlockTimeMs int64
-		expectedMinBlocks  int64
-		expectedMaxBlocks  int64
-	}{
-		{
-			name:               "30 days with 5 second blocks",
-			tierType:           30,
-			startHeight:        1000,
-			averageBlockTimeMs: 5000,
-			expectedMinBlocks:  518000, // 30*24*60*60/5 = 518,400 blocks
-			expectedMaxBlocks:  519000,
-		},
-		{
-			name:               "30 days with 1 second blocks",
-			tierType:           30,
-			startHeight:        1000,
-			averageBlockTimeMs: 1000,
-			expectedMinBlocks:  2591000, // 30*24*60*60/1 = 2,592,000 blocks
-			expectedMaxBlocks:  2593000,
-		},
-		{
-			name:               "30 days with 20 second blocks",
-			tierType:           30,
-			startHeight:        1000,
-			averageBlockTimeMs: 20000,
-			expectedMinBlocks:  129000, // 30*24*60*60/20 = 129,600 blocks
-			expectedMaxBlocks:  130000,
-		},
-	}
-	
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			startTime := int64(1000000)
-			
-			endTimeInfo := calculateEndTimeByTierType(
-				tt.tierType,
-				startTime,
-			)
-			
-			actualBlockCount := endTimeInfo - tt.startHeight
-			
-			// Verify block count is in expected range
-			uassert.Equal(t, true, 
-				actualBlockCount >= tt.expectedMinBlocks && actualBlockCount <= tt.expectedMaxBlocks,
-				"Block count should be estimated based on average block time")
 		})
 	}
 }

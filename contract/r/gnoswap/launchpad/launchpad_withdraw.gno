@@ -82,7 +82,7 @@ func withdrawDeposit(deposit *Deposit, currentHeight, currentTime int64) (std.Ad
 	}
 
 	if currentTime <= 0 {
-		return "", 0, makeErrorWithDetails(errInvalidHeight, "currentTime must be positive")
+		return "", 0, makeErrorWithDetails(errInvalidTime, "currentTime must be positive")
 	}
 
 	// State validation

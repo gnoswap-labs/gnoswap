@@ -35,7 +35,8 @@ func CollectRewardByDepositId(cur realm, depositID string) int64 {
 
 	deposit := mustGetDeposit(depositID)
 	currentHeight := std.ChainHeight()
-	rewardAmount, err := collectDepositReward(deposit, currentHeight)
+	currentTime := time.Now().Unix()
+	rewardAmount, err := collectDepositReward(deposit, currentHeight, currentTime)
 	if err != nil {
 		panic(err)
 	}
@@ -62,9 +63,9 @@ func CollectRewardByDepositId(cur realm, depositID string) int64 {
 // Returns:
 // - int64: The amount of reward collected
 // - error: If the collection fails
-func collectDepositReward(deposit *Deposit, currentHeight int64) (int64, error) {
-	if currentHeight <= 0 {
-		return 0, makeErrorWithDetails(errInvalidHeight, "currentHeight must be positive")
+func collectDepositReward(deposit *Deposit, currentHeight, currentTime int64) (int64, error) {
+	if currentTime <= 0 {
+		return 0, makeErrorWithDetails(errInvalidTime, "currentTime must be positive")
 	}
 
 	// Get project tier and reward manager
@@ -79,14 +80,13 @@ func collectDepositReward(deposit *Deposit, currentHeight int64) (int64, error) 
 	}
 
 	// Update reward state before collection
-	currentTime := time.Now().Unix()
 	err = rewardManager.updateRewardPerDepositX128(projectTier.CurrentDepositAmount(), currentHeight, currentTime)
 	if err != nil {
 		return 0, err
 	}
 
 	// Collect reward
-	rewardAmount, err := rewardManager.collectReward(deposit.ID(), currentHeight)
+	rewardAmount, err := rewardManager.collectReward(deposit.ID(), currentTime)
 	if err != nil {
 		return 0, err
 	}
