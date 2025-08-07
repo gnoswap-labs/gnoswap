@@ -17,6 +17,34 @@ import (
 
 const MAX_INT256 string = "57896044618658097711785492504343953926634992332820282019728792003956564819967"
 
+// Hook functions for external contracts
+var (
+	swapStartHook func(poolPath string, timestamp int64)
+	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)
+	swapEndHook   func(poolPath string)
+)
+
+// SetTickCrossHook sets the tick cross hook function
+func SetTickCrossHook(cur realm, hook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
+	caller := std.PreviousRealm().Address()
+	access.AssertIsStaker(caller)
+	tickCrossHook = hook
+}
+
+// SetSwapStartHook sets the swap start hook function
+func SetSwapStartHook(cur realm, hook func(poolPath string, timestamp int64)) {
+	caller := std.PreviousRealm().Address()
+	access.AssertIsStaker(caller)
+	swapStartHook = hook
+}
+
+// SetSwapEndHook sets the swap end hook function
+func SetSwapEndHook(cur realm, hook func(poolPath string)) {
+	caller := std.PreviousRealm().Address()
+	access.AssertIsStaker(caller)
+	swapEndHook = hook
+}
+
 // SwapResult encapsulates all state changes that occur as a result of a swap
 // This type ensure all state transitions are atomic and can be applied at once.
 type SwapResult struct {
@@ -80,7 +108,12 @@ func Swap(
 	}
 
 	pool.slot0.unlocked = false
-	defer func() { pool.slot0.unlocked = true }()
+
+	// Call swap start hook if set
+	if swapStartHook != nil {
+		currentTime := time.Now().Unix()
+		swapStartHook(pool.PoolPath(), currentTime)
+	}
 
 	sqrtPriceLimit := u256.MustFromDecimal(sqrtPriceLimitX96)
 	validatePriceLimits(slot0Start, zeroForOne, sqrtPriceLimit)
@@ -113,6 +146,12 @@ func Swap(
 
 	// actual swap
 	pool.swapTransfers(zeroForOne, payer, recipient, result.Amount0, result.Amount1)
+
+	pool.slot0.unlocked = true
+	// Call swap end hook if set
+	if swapEndHook != nil {
+		swapEndHook(pool.PoolPath())
+	}
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(
@@ -523,7 +562,8 @@ func tickTransition(step StepComputations, zeroForOne bool, state SwapState, poo
 		newState.liquidity = liquidityMathAddDelta(state.liquidity, liquidityNet)
 
 		if tickCrossHook != nil {
-			tickCrossHook(pool.PoolPath(), step.tickNext, zeroForOne)
+			currentTime := time.Now().Unix()
+			tickCrossHook(pool.PoolPath(), step.tickNext, zeroForOne, currentTime)
 		}
 	}
 
