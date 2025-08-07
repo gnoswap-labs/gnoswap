@@ -159,7 +159,7 @@ func DrySwap(
 		return "0", "0", false
 	}
 
-	pool := GetPool(token0Path, token1Path, fee)
+	pool := mustGetPoolBy(token0Path, token1Path, fee)
 
 	// no liquidity -> simulation fails
 	if pool.liquidity.IsZero() {
