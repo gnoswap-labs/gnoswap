@@ -22,6 +22,15 @@ class GnoModuleManager
     end
   end
 
+  # Generate module name based on path structure
+  def generate_module_name(path_parts)
+    # Skip 'r' prefix and keep the rest of the path structure
+    # r/gnoswap/module_name -> gnoswap/module_name
+    # r/gnoswap/v1/module_name -> gnoswap/v1/module_name
+    # r/gnoswap/v1/gov/module_name -> gnoswap/v1/gov/module_name
+    path_parts[1..-1].join('/')
+  end
+
   # generate matrix for github actions
   #
   # traverse all directories and find gnomod.toml
@@ -43,14 +52,9 @@ class GnoModuleManager
         relative_path = module_path.sub("gno.land/", "")
         folder = "gno/examples/gno.land/#{relative_path}"
 
-        # Generate name by combining the first and last parts of the path
+        # Generate name based on path structure
         path_parts = relative_path.split('/')
-        name = if path_parts.include?('gov')
-          # Special handling for governance modules
-          "#{path_parts[0]}/gov/#{path_parts[-1]}"
-        else
-          "#{path_parts[0]}/#{path_parts[-1]}"
-        end
+        name = generate_module_name(path_parts)
 
         matrix[:include] << {
           name: name,
@@ -75,7 +79,7 @@ class GnoModuleManager
             # Special handling for scenario modules
             "scenario/#{path_parts[-1]}"
           else
-            "#{path_parts[0]}/#{path_parts[-1]}"
+            generate_module_name(path_parts)
           end
 
           matrix[:include] << {

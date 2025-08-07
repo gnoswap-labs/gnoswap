@@ -1,0 +1,519 @@
+package staker
+
+import (
+	"std"
+	"time"
+
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/referral"
+	"gno.land/r/gnoswap/v1/gov/xgns"
+)
+
+// Delegate delegates GNS tokens to a specified address.
+// This function transfers GNS tokens from the caller to the staker contract,
+// mints corresponding xGNS tokens, and starts earning rewards.
+//
+// The delegation process involves:
+// 1. Validating the delegatee address
+// 2. Minting and distributing GNS rewards
+// 3. Creating a delegation record
+// 4. Transferring GNS tokens to the contract
+// 5. Minting xGNS tokens to the delegator
+// 6. Registering referrer if applicable
+//
+// Parameters:
+//   - cur: realm context for cross-realm calls
+//   - to: address to delegate tokens to
+//   - amount: amount of GNS tokens to delegate
+//   - referrer: referrer address for referral rewards
+//
+// Returns:
+//   - int64: amount of tokens delegated
+//
+// Panics:
+//   - if delegatee address is invalid
+//   - if delegation amount is invalid
+//   - if GNS transfer fails
+//
+// Reference: https://docs.gnoswap.io/contracts/governance/staker.gno#delegate
+func Delegate(
+	cur realm,
+	to std.Address,
+	amount int64,
+	referrer string,
+) int64 {
+	halt.AssertIsNotHaltedGovStaker()
+
+	prevRealm := std.PreviousRealm()
+	access.AssertIsUser(prevRealm)
+	access.AssertIsValidAddress(to)
+
+	assertIsValidDelegateAmount(amount)
+
+	caller := prevRealm.Address()
+	from := caller
+	currentRealm := std.CurrentRealm()
+	currentHeight := std.ChainHeight()
+	currentTimestamp := time.Now().Unix()
+
+	emission.MintAndDistributeGns(cross)
+
+	delegation, err := delegate(
+		from,
+		to,
+		amount,
+		currentHeight,
+		currentTimestamp,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	gns.TransferFrom(cross, from, currentRealm.Address(), amount)
+	xgns.Mint(cross, from, amount)
+
+	registeredReferrer := registerReferrer(caller, referrer)
+
+	std.Emit(
+		"Delegate",
+		"prevAddr", prevRealm.Address().String(),
+		"prevRealm", prevRealm.PkgPath(),
+		"from", delegation.DelegateFrom().String(),
+		"to", delegation.DelegateTo().String(),
+		"amount", formatInt(delegation.TotalDelegatedAmount()),
+		"referrer", registeredReferrer,
+	)
+
+	return amount
+}
+
+// Undelegate undelegates xGNS from the existing delegate.
+// This function initiates the undelegation process with a lockup period,
+// during which the tokens cannot be withdrawn. After the lockup period,
+// tokens can be collected using CollectUndelegatedGns.
+//
+// The undelegation process involves:
+// 1. Validating the delegatee address
+// 2. Minting and distributing GNS rewards
+// 3. Processing the undelegation with lockup period
+// 4. Creating withdrawal records for tracking
+//
+// Parameters:
+//   - cur: realm context for cross-realm calls
+//   - from: address to undelegate tokens from
+//   - amount: amount of xGNS tokens to undelegate
+//
+// Returns:
+//   - int64: amount of tokens undelegated
+//
+// Panics:
+//   - if delegatee address is invalid
+//   - if undelegation amount is invalid
+//   - if insufficient delegated amount
+//
+// Reference: https://docs.gnoswap.io/contracts/governance/staker.gno#undelegate
+func Undelegate(
+	cur realm,
+	from std.Address,
+	amount int64,
+) int64 {
+	halt.AssertIsNotHaltedGovStaker()
+
+	caller := std.PreviousRealm().Address()
+	access.AssertIsValidAddress(from)
+
+	assertIsValidDelegateAmount(amount)
+
+	currentHeight := std.ChainHeight()
+	currentTimestamp := time.Now().Unix()
+
+	emission.MintAndDistributeGns(cross)
+
+	unDelegationAmount, err := unDelegate(
+		caller,
+		from,
+		amount,
+		currentHeight,
+		currentTimestamp,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	prevRealm := std.PreviousRealm()
+	std.Emit(
+		"Undelegate",
+		"prevAddr", prevRealm.Address().String(),
+		"prevRealm", prevRealm.PkgPath(),
+		"from", caller.String(),
+		"to", from.String(),
+		"amount", formatInt(unDelegationAmount),
+	)
+
+	return unDelegationAmount
+}
+
+// Redelegate redelegates xGNS from existing delegate to another.
+// This function allows changing delegation target without going through
+// the undelegation lockup period. The redelegation is processed immediately.
+//
+// The redelegation process involves:
+// 1. Validating both delegatee addresses
+// 2. Minting and distributing GNS rewards
+// 3. Undelegating from the current delegatee without lockup
+// 4. Immediately delegating to the new delegatee
+//
+// Parameters:
+//   - cur: realm context for cross-realm calls
+//   - delegatee: current delegatee address to move tokens from
+//   - newDelegatee: new delegatee address to move tokens to
+//   - amount: amount of xGNS tokens to redelegate
+//
+// Returns:
+//   - int64: amount of tokens redelegated
+//
+// Panics:
+//   - if either delegatee address is invalid
+//   - if redelegation amount is invalid
+//   - if insufficient delegated amount
+//
+// Reference: https://docs.gnoswap.io/contracts/governance/staker.gno#redelegate
+func Redelegate(
+	cur realm,
+	delegatee,
+	newDelegatee std.Address,
+	amount int64,
+) int64 {
+	halt.AssertIsNotHaltedGovStaker()
+
+	caller := std.PreviousRealm().Address()
+	access.AssertIsValidAddress(delegatee)
+	access.AssertIsValidAddress(newDelegatee)
+
+	assertIsValidDelegateAmount(amount)
+
+	currentHeight := std.ChainHeight()
+	currentTimestamp := time.Now().Unix()
+	delegator := caller
+
+	emission.MintAndDistributeGns(cross)
+
+	unDelegationAmount, err := unDelegateWithoutLockup(
+		delegator,
+		delegatee,
+		amount,
+		currentHeight,
+		currentTimestamp,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	delegation, err := delegate(
+		delegator,
+		newDelegatee,
+		unDelegationAmount,
+		currentHeight,
+		currentTimestamp,
+	)
+
+	prevRealm := std.PreviousRealm()
+	std.Emit(
+		"Undelegate",
+		"prevAddr", prevRealm.Address().String(),
+		"prevRealm", prevRealm.PkgPath(),
+		"from", delegation.DelegateFrom().String(),
+		"to", delegation.DelegateTo().String(),
+		"amount", formatInt(delegation.DelegatedAmount()),
+	)
+
+	std.Emit(
+		"Redelegate",
+		"prevAddr", prevRealm.Address().String(),
+		"prevRealm", prevRealm.PkgPath(),
+		"from", delegation.DelegateFrom().String(),
+		"to", delegation.DelegateTo().String(),
+		"amount", formatInt(delegation.DelegatedAmount()),
+	)
+
+	return amount
+}
+
+// CollectUndelegatedGns collects the amount of the undelegated GNS.
+// This function allows users to collect GNS tokens that have completed
+// their undelegation lockup period. It burns xGNS and returns GNS tokens.
+//
+// The collection process involves:
+// 1. Checking system halt status
+// 2. Minting and distributing GNS rewards
+// 3. Collecting available undelegated amounts
+// 4. Burning xGNS tokens
+// 5. Transferring GNS tokens to the user
+//
+// Parameters:
+//   - cur: realm context for cross-realm calls
+//
+// Returns:
+//   - int64: amount of GNS tokens collected
+//
+// Panics:
+//   - if system is halted for withdrawals
+//   - if no undelegated tokens are available for collection
+//
+// Reference: https://docs.gnoswap.io/contracts/governance/staker.gno#collectundelegatedgns
+func CollectUndelegatedGns(cur realm) int64 {
+	halt.AssertIsNotHaltedGovStaker()
+	halt.AssertIsNotHaltedWithdraw()
+
+	prevRealm := std.PreviousRealm()
+	caller := prevRealm.Address()
+	currentTime := time.Now().Unix()
+
+	emission.MintAndDistributeGns(cross)
+
+	collectedAmount, err := collectDelegations(caller, currentTime)
+	if err != nil {
+		panic(err)
+	}
+
+	if collectedAmount == 0 {
+		return 0
+	}
+
+	xgns.Burn(cross, caller, collectedAmount)
+	gns.Transfer(cross, caller, collectedAmount)
+
+	std.Emit(
+		"CollectUndelegatedGns",
+		"prevAddr", prevRealm.Address().String(),
+		"prevRealm", prevRealm.PkgPath(),
+		"from", prevRealm.Address().String(),
+		"to", caller.String(),
+		"collectedAmount", formatInt(collectedAmount),
+	)
+
+	return collectedAmount
+}
+
+// delegate is the internal function that processes delegation operations.
+// This function validates the delegation amount, creates delegation records,
+// and updates reward tracking systems.
+//
+// Parameters:
+//   - from: delegator's address
+//   - to: delegatee's address
+//   - amount: amount to delegate
+//   - currentTime: current timestamp
+//   - currentTimestamp: current timestamp
+//
+// Returns:
+//   - *Delegation: created delegation instance
+//   - error: nil on success, error if delegation fails
+func delegate(
+	from std.Address,
+	to std.Address,
+	amount,
+	currentHeight,
+	currentTimestamp int64,
+) (*Delegation, error) {
+	delegationID := nextDelegationID()
+	delegation := NewDelegation(
+		delegationID,
+		from,
+		to,
+		amount,
+		currentHeight,
+		currentTimestamp,
+	)
+	delegationRecord := NewDelegationDelegateRecordBy(delegation)
+
+	addDelegation(delegationID, delegation)
+	addDelegationRecord(delegationRecord)
+	addStakeEmissionReward(from.String(), amount, currentTimestamp)
+	addStakeProtocolFeeReward(from.String(), amount, time.Now().Unix())
+
+	return delegation, nil
+}
+
+// unDelegate is the internal function that processes undelegation operations with lockup.
+// This function validates the undelegation amount, processes withdrawals,
+// and updates reward tracking systems.
+//
+// Parameters:
+//   - delegator: delegator's address
+//   - delegatee: delegatee's address
+//   - amount: amount to undelegate
+//   - currentTime: current timestamp
+//   - currentTimestamp: current timestamp
+//
+// Returns:
+//   - int64: amount undelegated
+//   - error: nil on success, error if undelegation fails
+func unDelegate(
+	delegator,
+	delegatee std.Address,
+	amount,
+	currentHeight,
+	currentTimestamp int64,
+) (int64, error) {
+	delegations := getUserDelegationsWithDelegatee(delegator, delegatee)
+	if len(delegations) == 0 {
+		return 0, nil
+	}
+
+	unDelegationAmount := amount
+
+	// Process undelegation across multiple delegation records if necessary
+	for _, delegation := range delegations {
+		if delegation.IsEmpty() {
+			removeDelegation(delegation.ID())
+			continue
+		}
+
+		currentUnDelegationAmount := unDelegationAmount
+
+		if currentUnDelegationAmount > delegation.DelegatedAmount() {
+			currentUnDelegationAmount = delegation.DelegatedAmount()
+		}
+
+		delegation.unDelegate(
+			currentUnDelegationAmount,
+			currentHeight,
+			currentTimestamp,
+			unDelegationLockupPeriod,
+		)
+
+		delegationRecord := NewDelegationWithdrawRecordBy(delegation, currentUnDelegationAmount, currentTimestamp)
+
+		setDelegation(delegation.ID(), delegation)
+		addDelegationRecord(delegationRecord)
+		removeStakeEmissionReward(delegator.String(), currentUnDelegationAmount, currentTimestamp)
+		removeStakeProtocolFeeReward(delegator.String(), currentUnDelegationAmount, currentTimestamp)
+
+		unDelegationAmount -= currentUnDelegationAmount
+		if unDelegationAmount <= 0 {
+			break
+		}
+	}
+
+	return amount, nil
+}
+
+// unDelegateWithoutLockup is the internal function that processes undelegation without lockup.
+// This function is used for redelegation where tokens are immediately available.
+//
+// Parameters:
+//   - delegator: delegator's address
+//   - delegatee: delegatee's address
+//   - amount: amount to undelegate
+//   - currentTime: current timestamp
+//
+// Returns:
+//   - int64: amount undelegated
+//   - error: nil on success, error if undelegation fails
+func unDelegateWithoutLockup(
+	delegator,
+	delegatee std.Address,
+	amount,
+	currentHeight,
+	currentTime int64,
+) (int64, error) {
+	delegations := getUserDelegationsWithDelegatee(delegator, delegatee)
+	if len(delegations) == 0 {
+		return 0, nil
+	}
+
+	unDelegationAmount := amount
+
+	// Process undelegation across multiple delegation records if necessary
+	for _, delegation := range delegations {
+		if delegation.IsEmpty() {
+			removeDelegation(delegation.ID())
+			continue
+		}
+
+		currentUnDelegationAmount := unDelegationAmount
+
+		if currentUnDelegationAmount > delegation.DelegatedAmount() {
+			currentUnDelegationAmount = delegation.DelegatedAmount()
+		}
+
+		delegation.unDelegateWithoutLockup(
+			currentUnDelegationAmount,
+			currentHeight,
+			currentTime,
+		)
+
+		unDelegationAmount -= currentUnDelegationAmount
+		if unDelegationAmount <= 0 {
+			break
+		}
+	}
+
+	return amount, nil
+}
+
+// collectDelegations is the internal function that processes collection of undelegated tokens.
+// This function iterates through user delegations and collects any available amounts.
+//
+// Parameters:
+//   - user: user's address
+//   - currentTime: current timestamp
+//
+// Returns:
+//   - map[int64]int64: delegationID -> amount collected
+//   - error: nil on success, error if collection fails
+func collectDelegations(user std.Address, currentTime int64) (int64, error) {
+	collectedAmount := int64(0)
+
+	delegations := getUserDelegations(user)
+	if len(delegations) == 0 {
+		return collectedAmount, nil
+	}
+
+	// Collect from all available delegations
+	for _, delegation := range delegations {
+		collectableAmount := delegation.CollectableAmount(currentTime)
+
+		if collectableAmount == 0 {
+			continue
+		}
+
+		err := delegation.collect(collectableAmount, currentTime)
+		if err != nil {
+			return collectedAmount, err
+		}
+
+		collectedAmount += collectableAmount
+
+		// Remove empty delegations to keep storage clean
+		if delegation.IsEmpty() {
+			removeDelegation(delegation.ID())
+		}
+	}
+
+	return collectedAmount, nil
+}
+
+// registerReferrer registers or validates a referrer for the delegation.
+// This function handles referral system integration for delegation operations.
+//
+// Parameters:
+//   - caller: address of the user making the delegation
+//   - referrer: referrer identifier
+//
+// Returns:
+//   - string: actual referrer used (may differ from input if validation fails)
+func registerReferrer(caller std.Address, referrer string) string {
+	success := referral.TryRegister(cross, caller, referrer)
+	actualReferrer := referrer
+
+	if !success {
+		actualReferrer = referral.GetReferral(referrer)
+	}
+
+	return actualReferrer
+}

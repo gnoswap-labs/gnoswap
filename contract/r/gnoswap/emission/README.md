@@ -36,8 +36,4 @@ Tokens are distributed to four main targets as follows by default:
 
 There is a halving mechanism that reduces the issuance amount by half every two years. For details, refer to [halving.gno](../gns/halving.gno).
 
-### Callback Mechanisms
-
-Provides callback function for inter-contract communication. This will notify relevant components when distribution ratios change. Details to be found on our [bridge contract](https://github.com/gnoswap-labs/gnoswap/tree/main/contract/r/gnoswap/bridge#bridge).
-
 For more details about the emission, check out the [GnoSwap docs](https://docs.gnoswap.io/gnoswap-token/emission).

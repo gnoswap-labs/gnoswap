@@ -11,7 +11,7 @@ func TestGetAddress(t *testing.T) {
 	// Setup test data
 	testAddr := std.Address("g1test123456789abcdef")
 	testRole := "test_role"
-	
+
 	// Save original state
 	originalRoles := make(map[string]std.Address)
 	for k, v := range roleAddresses {
@@ -20,7 +20,7 @@ func TestGetAddress(t *testing.T) {
 	defer func() {
 		roleAddresses = originalRoles
 	}()
-	
+
 	tests := []struct {
 		name           string
 		setupRole      string
@@ -54,17 +54,17 @@ func TestGetAddress(t *testing.T) {
 			expectedExists: false,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
 			if tt.setupRole != "" {
 				roleAddresses[tt.setupRole] = tt.setupAddr
 			}
-			
+
 			// Test
 			addr, ok := GetAddress(tt.queryRole)
-			
+
 			// Verify
 			if ok != tt.expectedExists {
 				t.Errorf("Expected exists=%v, got %v", tt.expectedExists, ok)
@@ -72,7 +72,7 @@ func TestGetAddress(t *testing.T) {
 			if addr != tt.expectedAddr {
 				t.Errorf("Expected address=%s, got %s", tt.expectedAddr, addr)
 			}
-			
+
 			// Cleanup
 			if tt.setupRole != "" {
 				delete(roleAddresses, tt.setupRole)
@@ -90,9 +90,9 @@ func TestGetRoleAddresses(t *testing.T) {
 	defer func() {
 		roleAddresses = originalRoles
 	}()
-	
+
 	tests := []struct {
-		name      string
+		name       string
 		setupRoles map[string]std.Address
 		expected   map[string]std.Address
 	}{
@@ -124,7 +124,7 @@ func TestGetRoleAddresses(t *testing.T) {
 			},
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
@@ -132,15 +132,15 @@ func TestGetRoleAddresses(t *testing.T) {
 			for role, addr := range tt.setupRoles {
 				roleAddresses[role] = addr
 			}
-			
+
 			// Test
 			addresses := GetRoleAddresses()
-			
+
 			// Verify length
 			if len(addresses) != len(tt.expected) {
 				t.Errorf("Expected %d addresses, got %d", len(tt.expected), len(addresses))
 			}
-			
+
 			// Verify each address
 			for role, expectedAddr := range tt.expected {
 				if actualAddr, exists := addresses[role]; !exists {
@@ -149,7 +149,7 @@ func TestGetRoleAddresses(t *testing.T) {
 					t.Errorf("Expected %s for role %s, got %s", expectedAddr, role, actualAddr)
 				}
 			}
-			
+
 			// Verify original map is not modified by modifying returned map
 			addresses["new_role"] = std.Address("g1new123456789abcdef")
 			if len(roleAddresses) != len(tt.setupRoles) {
@@ -163,7 +163,7 @@ func TestIsAuthorized(t *testing.T) {
 	testAddr := std.Address("g1test123456789abcdef")
 	otherAddr := std.Address("g1other123456789abcde")
 	testRole := "test_role"
-	
+
 	// Save original state
 	originalRoles := make(map[string]std.Address)
 	for k, v := range roleAddresses {
@@ -172,7 +172,7 @@ func TestIsAuthorized(t *testing.T) {
 	defer func() {
 		roleAddresses = originalRoles
 	}()
-	
+
 	tests := []struct {
 		name         string
 		setupRole    string
@@ -214,22 +214,22 @@ func TestIsAuthorized(t *testing.T) {
 			expectedAuth: false,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
 			if tt.setupRole != "" {
 				roleAddresses[tt.setupRole] = tt.setupAddr
 			}
-			
+
 			// Test
 			authorized := IsAuthorized(tt.queryRole, tt.queryAddr)
-			
+
 			// Verify
 			if authorized != tt.expectedAuth {
 				t.Errorf("Expected authorized=%v, got %v", tt.expectedAuth, authorized)
 			}
-			
+
 			// Cleanup
 			if tt.setupRole != "" {
 				delete(roleAddresses, tt.setupRole)
@@ -247,10 +247,10 @@ func TestSetRoleAddresses(t *testing.T) {
 	defer func() {
 		roleAddresses = originalRoles
 	}()
-	
+
 	tests := []struct {
-		name      string
-		newRoles  map[string]std.Address
+		name        string
+		newRoles    map[string]std.Address
 		verifyRoles []struct {
 			role     string
 			expected std.Address
@@ -289,13 +289,13 @@ func TestSetRoleAddresses(t *testing.T) {
 			},
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// We can't directly test SetRoleAddresses due to assertIsRBAC
 			// but we can test the logic by directly setting roleAddresses
 			roleAddresses = tt.newRoles
-			
+
 			// Verify each role was set correctly
 			for _, verify := range tt.verifyRoles {
 				addr, ok := GetAddress(verify.role)

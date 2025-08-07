@@ -9,7 +9,7 @@ import (
 
 	prabc "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 )
 
 func TestUtility_GlobalTryRegister(t *testing.T) {
@@ -327,23 +327,23 @@ func TestUtility_StateManipulation(t *testing.T) {
 			case "multiple_ops_same_addr":
 				// Create a test keeper to test the full cycle
 				testKeeper := setupUtilityKeeper()
-				
+
 				// Register
 				err := testKeeper.register(tc.userAddr, tc.refAddr1)
 				uassert.NoError(t, err)
 				uassert.True(t, testKeeper.has(tc.userAddr))
-				
+
 				// Set keeper for global functions
 				gReferralKeeper = testKeeper
 				uassert.True(t, HasReferral(tc.userAddr.String()))
 				uassert.Equal(t, tc.refAddr1.String(), GetReferral(tc.userAddr.String()))
-				
+
 				// Test removal with rate limit bypass (separate test keeper)
-				testKeeper2 := setupUtilityKeeper() 
+				testKeeper2 := setupUtilityKeeper()
 				testKeeper2.register(tc.userAddr, tc.refAddr1)
 				// Manipulate the lastOps to bypass rate limiting
 				testKeeper2.lastOps[tc.userAddr.String()] = 0
-				
+
 				// Remove
 				err = testKeeper2.remove(tc.userAddr)
 				uassert.NoError(t, err)
@@ -439,7 +439,7 @@ func TestUtility_GlobalStateConsistency(t *testing.T) {
 				for i := 0; i < tc.numUsers/2; i++ {
 					testKeeper := setupUtilityKeeper()
 					testKeeper.register(users[i], testutils.TestAddress("ref"+string(rune(i+'0'))))
-					testKeeper.lastOps[users[i].String()] = 0  // Bypass rate limiting
+					testKeeper.lastOps[users[i].String()] = 0 // Bypass rate limiting
 					err := testKeeper.remove(users[i])
 					uassert.NoError(t, err)
 				}

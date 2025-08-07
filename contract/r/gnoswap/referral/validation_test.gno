@@ -10,7 +10,7 @@ import (
 
 	prabc "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 )
 
 func TestValidation_SelfReferralPrevention(t *testing.T) {
@@ -291,29 +291,29 @@ func TestValidation_CallerAuthorization(t *testing.T) {
 				cleanup = setupSpecificCaller(tc.caller)
 			}
 
-		// when
-		var err error
-		switch tc.operation {
-		case "register":
-			err = k.register(tc.addr, tc.refAddr)
-		case "update":
-			err = k.update(tc.addr, tc.refAddr)
-		case "remove":
-			err = k.remove(tc.addr)
-		}
-
-		// then
-		if tc.expectedError {
-			uassert.Error(t, err)
-			if tc.expectedType != nil {
-				uassert.ErrorIs(t, err, tc.expectedType)
-			} else if tc.caller == "unauthorized" {
-				// For unauthorized callers, check that error message contains "unauthorized caller"
-				uassert.True(t, strings.Contains(err.Error(), "unauthorized caller"))
+			// when
+			var err error
+			switch tc.operation {
+			case "register":
+				err = k.register(tc.addr, tc.refAddr)
+			case "update":
+				err = k.update(tc.addr, tc.refAddr)
+			case "remove":
+				err = k.remove(tc.addr)
 			}
-		} else {
-			uassert.NoError(t, err)
-		}
+
+			// then
+			if tc.expectedError {
+				uassert.Error(t, err)
+				if tc.expectedType != nil {
+					uassert.ErrorIs(t, err, tc.expectedType)
+				} else if tc.caller == "unauthorized" {
+					// For unauthorized callers, check that error message contains "unauthorized caller"
+					uassert.True(t, strings.Contains(err.Error(), "unauthorized caller"))
+				}
+			} else {
+				uassert.NoError(t, err)
+			}
 		})
 	}
 }
@@ -402,8 +402,8 @@ func TestValidation_EdgeCases(t *testing.T) {
 
 func TestValidation_ConsistencyChecks(t *testing.T) {
 	tests := []struct {
-		name          string
-		operations    []struct {
+		name       string
+		operations []struct {
 			addr    std.Address
 			refAddr std.Address
 			op      string

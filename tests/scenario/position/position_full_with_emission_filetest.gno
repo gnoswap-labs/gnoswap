@@ -15,9 +15,9 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/position"
 )
@@ -44,7 +44,7 @@ var (
 	bobRealm   = std.NewUserRealm(bobAddr)
 
 	token0Path = "gno.land/r/demo/wugnot"
-	token1Path = "gno.land/r/gnoswap/v1/gns"
+	token1Path = "gno.land/r/gnoswap/gns"
 	fee        = uint32(3000)
 )
 
@@ -246,7 +246,7 @@ func verifyFinalBalances() {
 // [INFO] Collecting fees and rewards
 // [EXPECTED] Collected fee0 should be 29700
 // [EXPECTED] Collected fee1 should be 0
-// [EXPECTED] Collected emission0 should be gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000
+// [EXPECTED] Collected emission0 should be gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000
 // [EXPECTED] Collected emission1 should be 29999
 //
 // [SCENARIO] 7. Verify final balances

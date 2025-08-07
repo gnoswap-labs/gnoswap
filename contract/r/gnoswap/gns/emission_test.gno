@@ -84,39 +84,39 @@ func TestEmissionAmountCalculation(t *testing.T) {
 		description    string
 	}{
 		{
-			name:         "Start of year 1",
-			year:         1,
-			timestampPct: 0,
+			name:           "Start of year 1",
+			year:           1,
+			timestampPct:   0,
 			expectedAmount: GetHalvingAmountsPerYear(1) / SECONDS_IN_YEAR,
-			description:  "Should return year 1 rate at start",
+			description:    "Should return year 1 rate at start",
 		},
 		{
-			name:         "Middle of year 3",
-			year:         3,
-			timestampPct: 50,
+			name:           "Middle of year 3",
+			year:           3,
+			timestampPct:   50,
 			expectedAmount: GetHalvingAmountsPerYear(3) / SECONDS_IN_YEAR,
-			description:  "Should return year 3 rate at middle",
+			description:    "Should return year 3 rate at middle",
 		},
 		{
-			name:         "End of year 5",
-			year:         5,
-			timestampPct: 99,
+			name:           "End of year 5",
+			year:           5,
+			timestampPct:   99,
 			expectedAmount: GetHalvingAmountsPerYear(5) / SECONDS_IN_YEAR,
-			description:  "Should return year 5 rate near end",
+			description:    "Should return year 5 rate near end",
 		},
 		{
-			name:         "Start of halving period (year 7)",
-			year:         7,
-			timestampPct: 0,
+			name:           "Start of halving period (year 7)",
+			year:           7,
+			timestampPct:   0,
 			expectedAmount: GetHalvingAmountsPerYear(7) / SECONDS_IN_YEAR,
-			description:  "Should return halved rate at year 7",
+			description:    "Should return halved rate at year 7",
 		},
 		{
-			name:         "Last year emission",
-			year:         12,
-			timestampPct: 50,
+			name:           "Last year emission",
+			year:           12,
+			timestampPct:   50,
 			expectedAmount: GetHalvingAmountsPerYear(12) / SECONDS_IN_YEAR,
-			description:  "Should return year 12 rate",
+			description:    "Should return year 12 rate",
 		},
 	}
 
@@ -125,10 +125,10 @@ func TestEmissionAmountCalculation(t *testing.T) {
 			startTs := GetHalvingYearStartTimestamp(tt.year)
 			endTs := GetHalvingYearEndTimestamp(tt.year)
 			duration := endTs - startTs
-			
+
 			targetTs := startTs + (duration * int64(tt.timestampPct) / 100)
 			amount := GetEmissionAmountPerSecondByTimestamp(targetTs)
-			
+
 			uassert.Equal(t, tt.expectedAmount, amount,
 				"%s: %s", tt.name, tt.description)
 		})
@@ -156,7 +156,7 @@ func TestEmissionStateConsistency(t *testing.T) {
 					totalMaxAmount += GetHalvingYearMaxAmount(year)
 
 					uassert.Equal(t, GetHalvingYearMaxAmount(year), GetHalvingYearLeftAmount(year),
-					"Year 1 left amount should equal max amount")
+						"Year 1 left amount should equal max amount")
 
 					// Verify initial minted/left amounts
 					uassert.Equal(t, int64(0), GetHalvingYearMintAmount(year),
@@ -230,19 +230,18 @@ func TestYearTransitions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			// Test at the boundary
 			endTs := GetHalvingYearEndTimestamp(tt.fromYear)
 			nextStartTs := GetHalvingYearStartTimestamp(tt.toYear)
-			
+
 			// Verify continuity
 			uassert.Equal(t, endTs+1, nextStartTs,
 				"Timestamps should be continuous at year boundary")
-			
+
 			// Get emission amounts
 			amountBefore := GetEmissionAmountPerSecondByTimestamp(endTs)
 			amountAfter := GetEmissionAmountPerSecondByTimestamp(nextStartTs)
-			
+
 			// Check halving if applicable
 			if tt.fromYear == 6 && tt.toYear == 7 {
 				// Should be approximately half (allowing for rounding)
@@ -278,17 +277,17 @@ func TestEmissionTotalAmount(t *testing.T) {
 	// Should equal MAX_EMISSION_AMOUNT (900 billion with 6 decimals)
 	uassert.Equal(t, MAX_EMISSION_AMOUNT, totalEmission,
 		"Total emission should equal MAX_EMISSION_AMOUNT")
-	
+
 	// Test emission per second consistency
 	for year := int64(1); year <= HALVING_END_YEAR; year++ {
 		yearAmount := GetHalvingAmountsPerYear(year)
 		expectedPerSecond := yearAmount / SECONDS_IN_YEAR
-		
+
 		// Test at various points in the year
 		startTs := GetHalvingYearStartTimestamp(year)
 		midTs := startTs + SECONDS_IN_YEAR/2
 		nearEndTs := GetHalvingYearEndTimestamp(year) - 100
-		
+
 		uassert.Equal(t, expectedPerSecond, GetEmissionAmountPerSecondByTimestamp(startTs),
 			ufmt.Sprintf("Year %d start emission rate incorrect", year))
 		uassert.Equal(t, expectedPerSecond, GetEmissionAmountPerSecondByTimestamp(midTs),

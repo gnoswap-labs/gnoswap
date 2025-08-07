@@ -4,7 +4,7 @@ import (
 	"std"
 	"strconv"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 )
 
 // Global halt configuration that controls all operation permissions

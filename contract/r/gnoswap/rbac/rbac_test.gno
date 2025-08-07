@@ -432,7 +432,7 @@ func TestAddressChangeComplete(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set realm to rbac for access package calls
-			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/rbac"))
+			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/rbac"))
 
 			// Setup
 			tt.setup()
@@ -525,7 +525,7 @@ func TestRBACToAccessSync(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set realm to rbac for access package calls
-			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/rbac"))
+			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/rbac"))
 
 			// Reset manager
 			manager = prbac.NewRBACWithAddress(ADMIN)

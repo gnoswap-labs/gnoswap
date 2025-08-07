@@ -10,9 +10,9 @@ import (
 
 	prabc "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 
-	_ "gno.land/r/gnoswap/v1/rbac" // initialize rbac package
+	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
 )
 
 func resetObject(t *testing.T) {

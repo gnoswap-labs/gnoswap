@@ -17,15 +17,15 @@ import (
 
 	"gno.land/r/demo/wugnot"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/emission"
 
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/gns"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
@@ -49,7 +49,7 @@ var (
 	barPath = "gno.land/r/onbloc/bar"
 	fooPath = "gno.land/r/onbloc/foo"
 
-	gnsPath    = "gno.land/r/gnoswap/v1/gns"
+	gnsPath    = "gno.land/r/gnoswap/gns"
 	wugnotPath = "gno.land/r/demo/wugnot"
 
 	fee500 uint32 = 500
@@ -147,14 +147,14 @@ func createPools() {
 	pl.CreatePool(
 		cross,
 		"gno.land/r/demo/wugnot",
-		"gno.land/r/gnoswap/v1/gns",
+		"gno.land/r/gnoswap/gns",
 		500,
 		common.TickMathGetSqrtRatioAtTick(-10000).ToString(),
 	)
 
 	println("[INFO] set pool tiers")
 	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", 1)
-	sr.SetPoolTier(cross, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500", 2)
+	sr.SetPoolTier(cross, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500", 2)
 
 	testing.SkipHeights(18)
 }
@@ -194,7 +194,7 @@ func mintNativePosition01() {
 	println("[INFO] mint native position 01 (gns:gnot)")
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
-		"gno.land/r/gnoswap/v1/gns",
+		"gno.land/r/gnoswap/gns",
 		"gnot",
 		fee500,
 		int32(9000),
@@ -245,7 +245,7 @@ func mintNativePosition02() {
 	println("[INFO] mint native position 02 (gns:gnot)")
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
-		"gno.land/r/gnoswap/v1/gns",
+		"gno.land/r/gnoswap/gns",
 		"gnot",
 		fee500,
 		int32(9000),
@@ -293,7 +293,7 @@ func createExternalIncentiveNative() {
 
 	sr.CreateExternalIncentive(
 		cross,
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500", // targetPoolPath
+		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500", // targetPoolPath
 		"gnot",                      // rewardToken (native)
 		10_000_000_000,              // rewardAmount
 		1234569600,                  // startTimestamp
@@ -419,7 +419,7 @@ func endExternalIncentive() {
 	incentiveID := "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d:150:1"
 	sr.EndExternalIncentive(
 		cross,
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500",
+		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500",
 		incentiveID,
 	)
 	testing.SkipHeights(1)

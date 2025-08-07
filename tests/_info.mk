@@ -10,7 +10,7 @@ ADDR_PROTOCOL_FEE := g1f7wpek7q67tkns27sw495u5yuu3a5wwjxw5l6l
 ADDR_GOV_STAKER := g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa
 ADR_GOV_GOV := g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd
 ADDR_LAUNCHPAD := g122mau2lp2rc0scs8d27pkkuys4w54mdy2tuer3
-ADDR_GNS := g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m
+ADDR_GNS := g13ffa5r3mqfxu3s7ejl02scq9536wt6c2t789dm
 ADDR_GNFT := g1wxv2rdfn53qc84nt3nn646f9yh3nly8lm7j89t
 
 # username address
