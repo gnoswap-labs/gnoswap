@@ -48,7 +48,8 @@ var (
 //   - Any failure during token transfers or position modifications.
 //
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#mint
-func Mint(cur realm,
+func Mint(
+	cur realm,
 	token0Path string,
 	token1Path string,
 	fee uint32,

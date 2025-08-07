@@ -186,9 +186,9 @@ func wrapWithTransfer(ugnotAmount int64, toAddress std.Address) error {
 
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(currentRealmAddr, wugnotAddr, std.Coins{{"ugnot", ugnotAmount}})
-	wugnot.Deposit(cross) // ROUTER HAS WUGNOT
+	wugnot.Deposit(cross) // Position has wugnot
 
-	// SEND WUGNOT: ROUTER -> USER
+	// SEND WUGNOT: Position -> User
 	wugnot.Transfer(cross, toAddress, ugnotAmount)
 
 	return nil
