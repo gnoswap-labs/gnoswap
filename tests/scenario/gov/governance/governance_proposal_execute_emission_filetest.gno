@@ -10,9 +10,9 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gov/governance"
 
 	govStaker "gno.land/r/gnoswap/v1/gov/staker"
@@ -71,7 +71,7 @@ func delegateGnsToAdmin() {
 
 func proposeChangeEmissionDistributionPct() int64 {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	proposalID := governance.ProposeParameterChange(cross, "emission", "change", 1, "gno.land/r/gnoswap/v1/emission*EXE*ChangeDistributionPct*EXE*1,7000,2,1500,3,1000,4,500")
+	proposalID := governance.ProposeParameterChange(cross, "emission", "change", 1, "gno.land/r/gnoswap/emission*EXE*ChangeDistributionPct*EXE*1,7000,2,1500,3,1000,4,500")
 
 	ufmt.Printf("[INFO] Change Emission Distribution Percentages Proposal ID: %d\n", proposalID)
 	return proposalID

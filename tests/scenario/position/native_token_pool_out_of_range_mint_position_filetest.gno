@@ -11,16 +11,16 @@ import (
 	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 
 	"gno.land/r/demo/wugnot"
 )
 
-const INT64_MAX int64  = 9223372036854775807
+const INT64_MAX int64 = 9223372036854775807
 
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
@@ -32,7 +32,7 @@ var (
 
 	gnotPath   = "gnot"
 	wugnotPath = "gno.land/r/demo/wugnot"
-	gnsPath    = "gno.land/r/gnoswap/v1/gns"
+	gnsPath    = "gno.land/r/gnoswap/gns"
 )
 
 func main() {
@@ -40,7 +40,7 @@ func main() {
 	initializeSetup()
 	println()
 
-	println("[SCENARIO] 2. Create Pool (gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000)")
+	println("[SCENARIO] 2. Create Pool (gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000)")
 	createPool(wugnotPath, gnsPath, 3000, 0)
 	println()
 
@@ -131,8 +131,8 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 // [INFO] WUGNOT Balance of admin: 100000000000000
 // [INFO] ugnot Balance of admin: 1000000000000000ugnot
 //
-// [SCENARIO] 2. Create Pool (gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000)
-// [EXPECTED] created gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000 pool at tick 0
+// [SCENARIO] 2. Create Pool (gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000)
+// [EXPECTED] created gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000 pool at tick 0
 //
 // [SCENARIO] 3. Mint InRange Position (-6960 ~ 6960)
 // [INFO] Minting position

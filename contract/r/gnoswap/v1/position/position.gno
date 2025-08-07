@@ -1,0 +1,529 @@
+package position
+
+import (
+	"encoding/base64"
+	"std"
+
+	"gno.land/p/demo/ufmt"
+	prabc "gno.land/p/gnoswap/rbac"
+	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/rbac"
+	"gno.land/r/gnoswap/referral"
+	"gno.land/r/gnoswap/v1/common"
+	pl "gno.land/r/gnoswap/v1/pool"
+)
+
+var (
+	positionAddr = rbac.DefaultRoleAddresses[prabc.ROLE_POSITION]
+	stakerAddr   = rbac.DefaultRoleAddresses[prabc.ROLE_STAKER]
+)
+
+const (
+	ZERO_LIQUIDITY_FOR_FEE_COLLECTION = "0"
+)
+
+// Mint creates a new liquidity position by depositing token pairs into the pool and minting a new LP token.
+//
+// Parameters:
+//   - token0: The address of token0.
+//   - token1: The address of token1.
+//   - fee: The fee tier of the pool, in basis points.
+//   - tickLower: The lower tick boundary of the position.
+//   - tickUpper: The upper tick boundary of the position.
+//   - amount0Desired: Desired amount of token0 to add as liquidity, as a string.
+//   - amount1Desired: Desired amount of token1 to add as liquidity, as a string.
+//   - amount0Min: Minimum acceptable amount of token0 to add as liquidity, as a string.
+//   - amount1Min: Minimum acceptable amount of token1 to add as liquidity, as a string.
+//   - deadline: Expiration timestamp for the transaction.
+//   - mintTo: Address to receive the minted LP token.
+//   - caller: The address of the entity (contract or user) providing liquidity; assets will be withdrawn from this address.
+//
+// Returns:
+//   - uint64: The ID of the newly minted liquidity position.
+//   - string: The amount of liquidity provided to the position.
+//   - string: The amount of token0 used in the mint.
+//   - string: The amount of token1 used in the mint.
+//
+// Behavior:
+//  1. **Validation**:
+//     - Ensures the contract is not halted.
+//     - Validates that the caller is either a user or a staker contract.
+//     - If the caller is a user, validates the `mintTo` and `caller` addresses to ensure they match.
+//     - Checks the transaction's deadline to prevent expired transactions.
+//  2. **Pre-Mint Setup**:
+//     - Calls `MintAndDistributeGns` to handle GNS emissions.
+//     - Processes the input parameters for minting (`processMintInput`) to standardize and validate the inputs.
+//  3. **Mint Execution**:
+//     - Executes the mint operation using the processed parameters.
+//     - Withdraws the required token amounts (`token0` and `token1`) from the `caller` address.
+//     - Mints a new LP token, and the resulting LP token is sent to the `mintTo` address.
+//  4. **Post-Mint Cleanup**:
+//     - If native tokens were used (e.g., `ugnot`), unwraps any leftover wrapped tokens (`wugnot`) and refunds them to the `caller` address.
+//  5. **Event Emission**:
+//     - Emits a "Mint" event containing detailed information about the mint operation.
+//
+// Panics:
+//   - If the contract is halted.
+//   - If the caller is not authorized.
+//   - If the transaction deadline has passed.
+//   - If input validation fails.
+//   - If errors occur during the minting process or leftover token unwrapping.
+//
+// ref: https://docs.gnoswap.io/contracts/position/position.gno#mint
+func Mint(
+	cur realm,
+	token0 string,
+	token1 string,
+	fee uint32,
+	tickLower int32,
+	tickUpper int32,
+	amount0Desired string,
+	amount1Desired string,
+	amount0Min string,
+	amount1Min string,
+	deadline int64,
+	mintTo std.Address,
+	caller std.Address,
+	referrer string,
+) (uint64, string, string, string) {
+	halt.AssertIsNotHaltedPosition()
+
+	previousRealm := std.PreviousRealm()
+	if !previousRealm.IsUser() {
+		access.AssertIsStaker(previousRealm.Address())
+	} else {
+		assertEqualsAddress(previousRealm.Address(), mintTo)
+		assertEqualsAddress(previousRealm.Address(), caller)
+	}
+
+	assertIsNotExpired(deadline)
+
+	referral.TryRegister(cross, caller, referrer)
+
+	emission.MintAndDistributeGns(cross)
+
+	mintInput := MintInput{
+		token0:         token0,
+		token1:         token1,
+		fee:            fee,
+		tickLower:      tickLower,
+		tickUpper:      tickUpper,
+		amount0Desired: amount0Desired,
+		amount1Desired: amount1Desired,
+		amount0Min:     amount0Min,
+		amount1Min:     amount1Min,
+		deadline:       deadline,
+		mintTo:         mintTo,
+		caller:         caller,
+	}
+	processedInput, err := processMintInput(mintInput)
+	if err != nil {
+		panic(newErrorWithDetail(errInvalidInput, err.Error()))
+	}
+
+	// mint liquidity
+	params := newMintParams(processedInput, mintInput)
+	id, liquidity, amount0, amount1 := mint(params)
+
+	// refund leftover wrapped tokens
+	if processedInput.tokenPair.token0IsNative && processedInput.tokenPair.wrappedAmount > amount0.Int64() {
+		err = unwrap(processedInput.tokenPair.wrappedAmount-amount0.Int64(), caller)
+		if err != nil {
+			panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
+		}
+	}
+
+	if processedInput.tokenPair.token1IsNative && processedInput.tokenPair.wrappedAmount > amount1.Int64() {
+		err = unwrap(processedInput.tokenPair.wrappedAmount-amount1.Int64(), caller)
+		if err != nil {
+			panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
+		}
+	}
+
+	poolSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(processedInput.poolPath)
+
+	std.Emit(
+		"Mint",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"tickLower", formatInt(processedInput.tickLower),
+		"tickUpper", formatInt(processedInput.tickUpper),
+		"poolPath", processedInput.poolPath,
+		"mintTo", mintTo.String(),
+		"caller", caller.String(),
+		"lpPositionId", formatUint(id),
+		"liquidity", liquidity.ToString(),
+		"amount0", amount0.ToString(),
+		"amount1", amount1.ToString(),
+		"sqrtPriceX96", poolSqrtPriceX96.ToString(),
+		"token0Balance", pl.GetBalanceToken0(processedInput.poolPath),
+		"token1Balance", pl.GetBalanceToken1(processedInput.poolPath),
+	)
+
+	return id, liquidity.ToString(), amount0.ToString(), amount1.ToString()
+}
+
+// IncreaseLiquidity increases liquidity of the existing position
+// Returns position ID, liquidity, amount0, amount1, poolPath
+// ref: https://docs.gnoswap.io/contracts/position/position.gno#increaseliquidity
+func IncreaseLiquidity(
+	cur realm,
+	positionId uint64,
+	amount0DesiredStr string,
+	amount1DesiredStr string,
+	amount0MinStr string,
+	amount1MinStr string,
+	deadline int64,
+) (uint64, string, string, string, string) {
+	halt.AssertIsNotHaltedPosition()
+
+	caller := std.PreviousRealm().Address()
+	assertIsOwnerForToken(positionId, caller)
+
+	assertValidNumberString(amount0DesiredStr)
+	assertValidNumberString(amount1DesiredStr)
+	assertValidNumberString(amount0MinStr)
+	assertValidNumberString(amount1MinStr)
+	assertIsNotExpired(deadline)
+
+	emission.MintAndDistributeGns(cross)
+
+	position := MustGetPosition(positionId)
+	token0, token1, _ := splitOf(position.poolKey)
+	err := validateTokenPath(token0, token1)
+	if err != nil {
+		panic(newErrorWithDetail(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
+	}
+
+	wrappedAmount := int64(0)
+	if isWrappedToken(token0) {
+		amount0DesiredInt := mustParseInt64(amount0DesiredStr)
+		wrappedAmount, err = safeWrapNativeToken(amount0DesiredInt, caller)
+		if err != nil {
+			panic(err)
+		}
+	} else if isWrappedToken(token1) {
+		amount1DesiredInt := mustParseInt64(amount1DesiredStr)
+		wrappedAmount, err = safeWrapNativeToken(amount1DesiredInt, caller)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	amount0Desired, amount1Desired, amount0Min, amount1Min := parseAmounts(amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr)
+	increaseLiquidityParams := IncreaseLiquidityParams{
+		positionId:     positionId,
+		amount0Desired: amount0Desired,
+		amount1Desired: amount1Desired,
+		amount0Min:     amount0Min,
+		amount1Min:     amount1Min,
+		deadline:       deadline,
+		caller:         caller,
+	}
+
+	_, liquidity, amount0, amount1, poolPath, err := increaseLiquidity(increaseLiquidityParams)
+	if err != nil {
+		panic(err)
+	}
+
+	if err := unwrapLeftoverWrappedToken(token0, wrappedAmount, amount0.Int64(), caller); err != nil {
+		panic(err)
+	}
+	if err := unwrapLeftoverWrappedToken(token1, wrappedAmount, amount1.Int64(), caller); err != nil {
+		panic(err)
+	}
+
+	previousRealm := std.PreviousRealm()
+	std.Emit(
+		"IncreaseLiquidity",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"poolPath", poolPath,
+		"caller", caller.String(),
+		"lpPositionId", formatUint(positionId),
+		"liquidity", liquidity.ToString(),
+		"amount0", amount0.ToString(),
+		"amount1", amount1.ToString(),
+		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath).ToString(),
+		"positionLiquidity", PositionGetPositionLiquidityStr(positionId),
+		"token0Balance", pl.GetBalanceToken0(poolPath),
+		"token1Balance", pl.GetBalanceToken1(poolPath),
+	)
+
+	return positionId, liquidity.ToString(), amount0.ToString(), amount1.ToString(), poolPath
+}
+
+func unwrapLeftoverWrappedToken(token string, wrapped, amount int64, caller std.Address) error {
+	unwrappable := isWrappedToken(token) && wrapped > amount
+	if !unwrappable {
+		return nil
+	}
+
+	err := unwrap(wrapped-amount, caller)
+	if err != nil {
+		return makeErrorWithDetails(errWrapUnwrap, err.Error())
+	}
+
+	return nil
+}
+
+// DecreaseLiquidity decreases liquidity of the existing position
+// It also handles the conversion between GNOT and WUGNOT transparently for the user.
+// Returns position ID, liquidity, fee0, fee1, amount0, amount1, poolPath
+// ref: https://docs.gnoswap.io/contracts/position/position.gno#decreaseliquidity
+func DecreaseLiquidity(
+	cur realm,
+	positionId uint64,
+	liquidityStr string,
+	amount0MinStr string,
+	amount1MinStr string,
+	deadline int64,
+	unwrapResult bool,
+) (uint64, string, string, string, string, string, string) {
+	halt.AssertIsNotHaltedPosition()
+	halt.AssertIsNotHaltedWithdraw()
+
+	caller := std.PreviousRealm().Address()
+	assertIsOwnerForToken(positionId, caller)
+	assertIsNotExpired(deadline)
+	assertValidLiquidityAmount(liquidityStr)
+
+	emission.MintAndDistributeGns(cross)
+
+	amount0Min := u256.MustFromDecimal(amount0MinStr)
+	amount1Min := u256.MustFromDecimal(amount1MinStr)
+	decreaseLiquidityParams := DecreaseLiquidityParams{
+		positionId:   positionId,
+		liquidity:    liquidityStr,
+		amount0Min:   amount0Min,
+		amount1Min:   amount1Min,
+		deadline:     deadline,
+		unwrapResult: unwrapResult,
+		caller:       caller,
+	}
+
+	positionId, liquidity, fee0, fee1, amount0, amount1, poolPath, err := decreaseLiquidity(decreaseLiquidityParams)
+	if err != nil {
+		panic(err)
+	}
+
+	previousRealm := std.PreviousRealm()
+	std.Emit(
+		"DecreaseLiquidity",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"lpPositionId", formatUint(positionId),
+		"poolPath", poolPath,
+		"decreasedLiquidity", liquidity.ToString(),
+		"feeAmount0", fee0.ToString(),
+		"feeAmount1", fee1.ToString(),
+		"amount0", amount0.ToString(),
+		"amount1", amount1.ToString(),
+		"unwrapResult", formatBool(unwrapResult),
+		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath).ToString(),
+		"positionLiquidity", PositionGetPositionLiquidityStr(positionId),
+		"token0Balance", pl.GetBalanceToken0(poolPath),
+		"token1Balance", pl.GetBalanceToken1(poolPath),
+	)
+
+	return positionId, liquidity.ToString(), fee0.ToString(), fee1.ToString(), amount0.ToString(), amount1.ToString(), poolPath
+}
+
+// CollectFee collects swap fee from the position
+// Returns position ID, afterFee0, afterFee1, poolPath, origFee0, origFee1
+// ref: https://docs.gnoswap.io/contracts/position/position.gno#collectfee
+func CollectFee(
+	cur realm,
+	positionId uint64,
+	unwrapResult bool,
+) (uint64, string, string, string, string, string) {
+	halt.AssertIsNotHaltedPosition()
+	halt.AssertIsNotHaltedWithdraw()
+
+	caller := std.PreviousRealm().Address()
+	assertIsOwnerOrOperatorForToken(positionId, caller)
+
+	return collectFee(positionId, unwrapResult, caller)
+}
+
+func collectFee(
+	positionId uint64,
+	unwrapResult bool,
+	caller std.Address,
+) (uint64, string, string, string, string, string) {
+	emission.MintAndDistributeGns(cross)
+
+	// verify position
+	position := MustGetPosition(positionId)
+	token0, token1, fee := splitOf(position.poolKey)
+
+	pl.Burn(
+		cross,
+		token0,
+		token1,
+		fee,
+		position.tickLower,
+		position.tickUpper,
+		ZERO_LIQUIDITY_FOR_FEE_COLLECTION, // burn '0' liquidity to collect fee
+		caller,
+	)
+
+	currentFeeGrowth, err := getCurrentFeeGrowth(position, caller)
+	if err != nil {
+		panic(newErrorWithDetail(err, "failed to get current fee growth"))
+	}
+
+	tokensOwed0, tokensOwed1 := calculateFees(position, currentFeeGrowth)
+
+	position.feeGrowthInside0LastX128 = u256.Zero().Set(currentFeeGrowth.feeGrowthInside0LastX128)
+	position.feeGrowthInside1LastX128 = u256.Zero().Set(currentFeeGrowth.feeGrowthInside1LastX128)
+
+	// collect fee
+	amount0, amount1 := pl.Collect(
+		cross,
+		token0, token1, fee,
+		caller,
+		position.tickLower, position.tickUpper,
+		tokensOwed0.ToString(), tokensOwed1.ToString(),
+	)
+
+	// sometimes there will be a few less uBase amount than expected due to rounding down in core, but we just subtract the full amount expected
+	// instead of the actual amount so we can burn the token
+	position.tokensOwed0 = u256.Zero().Sub(tokensOwed0, u256.MustFromDecimal(amount0))
+	position.tokensOwed1 = u256.Zero().Sub(tokensOwed1, u256.MustFromDecimal(amount1))
+	mustUpdatePosition(positionId, position)
+
+	withdrawalFeeBps := pl.GetWithdrawalFee()
+	amount0WithoutFee, fee0 := calculateAmountWithWithdrawalFee(amount0, withdrawalFeeBps)
+	amount1WithoutFee, fee1 := calculateAmountWithWithdrawalFee(amount1, withdrawalFeeBps)
+
+	poolAddr, ok := access.GetAddress(prabc.ROLE_POOL.String())
+	if !ok {
+		panic("pool address not found")
+	}
+
+	if isWrappedToken(token0) && unwrapResult {
+		unwrapWithTransferFrom(poolAddr, caller, amount0WithoutFee)
+	} else {
+		common.TransferFrom(cross, token0, poolAddr, caller, amount0WithoutFee)
+	}
+
+	if isWrappedToken(token1) && unwrapResult {
+		unwrapWithTransferFrom(poolAddr, caller, amount1WithoutFee)
+	} else {
+		common.TransferFrom(cross, token1, poolAddr, caller, amount1WithoutFee)
+	}
+
+	protocolFeeAddr, ok := access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	if !ok {
+		panic("protocol fee address not found")
+	}
+
+	common.TransferFrom(cross, token0, poolAddr, protocolFeeAddr, fee0)
+	common.TransferFrom(cross, token1, poolAddr, protocolFeeAddr, fee1)
+
+	amount0WithoutFeeStr := formatInt(amount0WithoutFee)
+	amount1WithoutFeeStr := formatInt(amount1WithoutFee)
+
+	previousRealm := std.PreviousRealm()
+	std.Emit(
+		"CollectSwapFee",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"lpPositionId", formatUint(positionId),
+		"feeAmount0", amount0WithoutFeeStr,
+		"feeAmount1", amount1WithoutFeeStr,
+		"poolPath", position.poolKey,
+		"unwrapResult", formatBool(unwrapResult),
+	)
+
+	std.Emit(
+		"WithdrawalFee",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"lpTokenId", formatUint(positionId),
+		"poolPath", position.poolKey,
+		"feeAmount0", formatInt(fee0),
+		"feeAmount1", formatInt(fee1),
+		"amount0WithoutFee", amount0WithoutFeeStr,
+		"amount1WithoutFee", amount1WithoutFeeStr,
+	)
+
+	return positionId, amount0WithoutFeeStr, amount1WithoutFeeStr, position.poolKey, amount0, amount1
+}
+
+var feeAmountDivisor = u256.NewUint(10000)
+
+func calculateAmountWithWithdrawalFee(amount string, fee uint64) (int64, int64) {
+	if fee == 0 {
+		return u256.MustFromDecimal(amount).Int64(), 0
+	}
+
+	amountUint := u256.MustFromDecimal(amount)
+	feeUint := u256.NewUint(fee)
+
+	feeAmount := u256.Zero().Mul(amountUint, feeUint)
+	feeAmount = u256.Zero().Div(feeAmount, feeAmountDivisor)
+	amountWithoutFee := u256.Zero().Sub(amountUint, feeAmount)
+
+	return amountWithoutFee.Int64(), feeAmount.Int64()
+}
+
+func SetPositionOperator(
+	cur realm,
+	id uint64,
+	operator std.Address,
+) {
+	halt.AssertIsNotHaltedPosition()
+
+	caller := std.PreviousRealm().Address()
+	access.AssertIsStaker(caller)
+
+	position := MustGetPosition(id)
+	position.operator = operator
+	mustUpdatePosition(id, position)
+}
+
+// computePositionKey generates a unique base64-encoded key for a liquidity position.
+//
+// This function takes an owner's address and the lower and upper tick bounds of a position,
+// and generates a unique key by concatenating the parameters into a string. The resulting
+// string is base64 encoded to ensure it is compact and unique.
+//
+// Parameters:
+//   - owner (std.Address): The address of the position owner.
+//   - tickLower (int32): The lower tick boundary of the position.
+//   - tickUpper (int32): The upper tick boundary of the position.
+//
+// Returns:
+//   - string: A base64-encoded string representing the unique key for the position.
+//
+// Notes:
+//   - This function is useful in scenarios where unique identifiers for liquidity positions
+//     are required (e.g., decentralized exchange positions).
+//   - The key format follows the pattern "ownerAddress__tickLower__tickUpper" to ensure uniqueness.
+func computePositionKey(
+	owner std.Address,
+	tickLower int32,
+	tickUpper int32,
+) string {
+	key := ufmt.Sprintf("%s__%d__%d", owner.String(), tickLower, tickUpper)
+	encoded := base64.StdEncoding.EncodeToString([]byte(key))
+	return encoded
+}
+
+func getCurrentFeeGrowth(position Position, owner std.Address) (FeeGrowthInside, error) {
+	positionKey := computePositionKey(owner, position.tickLower, position.tickUpper)
+	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.poolKey, positionKey)
+
+	feeGrowthInside := FeeGrowthInside{
+		feeGrowthInside0LastX128: feeGrowthInside0LastX128,
+		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
+	}
+
+	return feeGrowthInside, nil
+}

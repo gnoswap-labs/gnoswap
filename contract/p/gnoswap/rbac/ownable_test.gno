@@ -90,6 +90,7 @@ func TestOwnedByOriginCallerUnauthorized(t *testing.T) {
 	testing.SetRealm(std.NewUserRealm(unauthorizedCaller))
 	uassert.False(t, o.OwnedByOriginCaller())
 }
+
 func TestDropOwnership(t *testing.T) {
 	testing.SetOriginCaller(alice)
 

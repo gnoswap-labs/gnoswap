@@ -12,9 +12,9 @@ import (
 	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gov/governance"
 	gs "gno.land/r/gnoswap/v1/gov/staker"
 )
@@ -81,7 +81,7 @@ func proposeMultiExecute() int64 {
 		"test_title",
 		"test_description",
 		int64(2),
-		"gno.land/r/gnoswap/v1/pool*EXE*SetPoolCreationFee*EXE*1000*GOV*gno.land/r/gnoswap/v1/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/v1/gns,g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d,905",
+		"gno.land/r/gnoswap/v1/pool*EXE*SetPoolCreationFee*EXE*1000*GOV*gno.land/r/gnoswap/v1/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d,905",
 	)
 	ufmt.Printf("[INFO] Multi Execute Proposal ID: %d\n", proposalID)
 	return proposalID

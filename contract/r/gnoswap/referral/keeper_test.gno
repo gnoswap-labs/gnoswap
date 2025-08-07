@@ -68,7 +68,7 @@ func TestKeeper_Register(t *testing.T) {
 	}
 }
 
-// Since there are no public update/remove functions in the API, 
+// Since there are no public update/remove functions in the API,
 // these tests have been removed as they test internal implementation
 // that requires realm context not available in unit tests.
 
@@ -108,7 +108,7 @@ func TestKeeper_Has(t *testing.T) {
 
 			// given
 			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
-			
+
 			if tc.setupReferral {
 				TryRegister(cross, tc.addr, tc.refAddr.String())
 			}
@@ -162,7 +162,7 @@ func TestKeeper_Get(t *testing.T) {
 
 			// given
 			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
-			
+
 			if tc.setupReferral {
 				TryRegister(cross, tc.addr, tc.refAddr.String())
 			}
@@ -178,16 +178,16 @@ func TestKeeper_Get(t *testing.T) {
 
 func TestKeeper_IsEmpty(t *testing.T) {
 	tests := []struct {
-		name            string
-		setupReferrals  []struct {
+		name           string
+		setupReferrals []struct {
 			addr    std.Address
 			refAddr std.Address
 		}
 		expectedIsEmpty bool
 	}{
 		{
-			name:            "True when no referrals exist",
-			setupReferrals:  []struct {
+			name: "True when no referrals exist",
+			setupReferrals: []struct {
 				addr    std.Address
 				refAddr std.Address
 			}{},
@@ -222,7 +222,7 @@ func TestKeeper_IsEmpty(t *testing.T) {
 
 			// given
 			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
-			
+
 			for _, ref := range tc.setupReferrals {
 				TryRegister(cross, ref.addr, ref.refAddr.String())
 			}

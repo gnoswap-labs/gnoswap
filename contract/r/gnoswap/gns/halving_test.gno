@@ -262,12 +262,12 @@ func TestHalvingDataGettersWithInvalidYear(t *testing.T) {
 	InitGnsTest(t)
 
 	hd := &HalvingData{
-		startTimestamps:  make([]int64, HALVING_END_YEAR),
-		endTimestamps:    make([]int64, HALVING_END_YEAR),
-		maxAmount:        make([]int64, HALVING_END_YEAR),
-		mintedAmount:     make([]int64, HALVING_END_YEAR),
-		leftAmount:       make([]int64, HALVING_END_YEAR),
-		accumAmount:      make([]int64, HALVING_END_YEAR),
+		startTimestamps: make([]int64, HALVING_END_YEAR),
+		endTimestamps:   make([]int64, HALVING_END_YEAR),
+		maxAmount:       make([]int64, HALVING_END_YEAR),
+		mintedAmount:    make([]int64, HALVING_END_YEAR),
+		leftAmount:      make([]int64, HALVING_END_YEAR),
+		accumAmount:     make([]int64, HALVING_END_YEAR),
 		amountPerSecond: make([]int64, HALVING_END_YEAR),
 	}
 

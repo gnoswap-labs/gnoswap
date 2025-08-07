@@ -13,8 +13,8 @@ import (
 	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gov/staker"
 	"gno.land/r/gnoswap/v1/launchpad"
 	"gno.land/r/gnoswap/v1/protocol_fee"
@@ -149,7 +149,6 @@ func createOBLProject() {
 	tier180Stats := unmarshal(launchpad.ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:180", projectId)))
 	println("[EXPECTED] Tier 180 amount:", tier180Stats["tierAmount"])
 	println("[EXPECTED] Tier 180 collect wait duration:", tier180Stats["collectWaitDuration"])
-
 }
 
 // Mock protocol fee setup

@@ -10,18 +10,18 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/emission"
 
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
@@ -49,7 +49,7 @@ var (
 
 	depositGnsAmount      int64 = 100000000000
 	TIMESTAMP_90DAYS            = int64(7776000)
-	MUST_EXISTS_IN_TIER_1       = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"
+	MUST_EXISTS_IN_TIER_1       = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"
 )
 
 func main() {
@@ -180,7 +180,7 @@ func createExternalIncentiveGns() {
 	sr.CreateExternalIncentive(
 		cross,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
-		"gno.land/r/gnoswap/v1/gns",
+		"gno.land/r/gnoswap/gns",
 		5_000_000_000,
 		1234569600,
 		1234569600+TIMESTAMP_90DAYS,

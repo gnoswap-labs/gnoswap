@@ -10,12 +10,12 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/gns"
 
 	_ "gno.land/r/gnoswap/v1/staker"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 )
 
 var t *testing.T
@@ -51,7 +51,7 @@ func initEmissionCallback() {
 }
 
 func mintGNS() {
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/emission"))
+	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/emission"))
 
 	mintedAmount := gns.MintGns(cross, user01Addr)
 

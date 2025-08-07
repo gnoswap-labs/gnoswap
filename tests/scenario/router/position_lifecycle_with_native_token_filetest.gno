@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/pool"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
@@ -21,7 +21,7 @@ import (
 
 	"gno.land/p/demo/testutils"
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/demo/wugnot"
 )
@@ -39,7 +39,7 @@ var (
 	userRealm = std.NewUserRealm(userAddr)
 
 	wugnotPath = "gno.land/r/demo/wugnot"
-	gnsPath    = "gno.land/r/gnoswap/v1/gns"
+	gnsPath    = "gno.land/r/gnoswap/gns"
 
 	fee500 uint32 = 500
 
@@ -175,7 +175,7 @@ func testExecuteSwapsForFees() {
 			gnsPath,
 			wugnotPath,
 			"10000000",
-			"gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:500",
+			"gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500",
 			"100",
 			"0",
 			time.Now().Add(time.Hour).Unix(),
@@ -233,7 +233,7 @@ func testBurnPositionWithUnwrap() {
 	testing.SetRealm(userRealm)
 
 	// Get current position info
-	currentLiquidity := pool.GetLiquidity("gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500")
+	currentLiquidity := pool.GetLiquidity("gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500")
 
 	// Calculate 50% liquidity to burn
 	liquidityInt, _ := strconv.ParseInt(currentLiquidity, 10, 64)

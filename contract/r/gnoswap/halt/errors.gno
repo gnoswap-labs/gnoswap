@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	errHalted = errors.New("halted")
-	errInvalidOpType = errors.New("invalid operation type")
+	errHalted           = errors.New("halted")
+	errInvalidOpType    = errors.New("invalid operation type")
 	errInvalidHaltLevel = errors.New("invalid halt level")
 )
 

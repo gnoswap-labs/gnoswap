@@ -128,7 +128,7 @@ func TestAssertIsAdmin(t *testing.T) {
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
 
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/rbac"))
+	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/rbac"))
 	initRbac()
 
 	tests := []struct {
@@ -219,7 +219,7 @@ func TestAssertIsAdminWithRoleUpdate(t *testing.T) {
 func TestAssertFunctionsIntegration(t *testing.T) {
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/rbac"))
+	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/rbac"))
 	initRbac()
 
 	// Test complete ownership transfer workflow with assertions
@@ -238,7 +238,7 @@ func TestAssertFunctionsIntegration(t *testing.T) {
 	t.Run("Pending owner assertions after transfer", func(t *testing.T) {
 		// Transfer ownership
 		manager = prbac.NewRBACWithAddress(ADMIN)
-		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/rbac"))
+		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/rbac"))
 		initRbac()
 
 		testing.SetRealm(std.NewUserRealm(ADMIN))
@@ -259,7 +259,7 @@ func TestAssertFunctionsIntegration(t *testing.T) {
 	t.Run("Admin assertions", func(t *testing.T) {
 		// Reset for clean admin test
 		manager = prbac.NewRBACWithAddress(ADMIN)
-		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/rbac"))
+		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/rbac"))
 		initRbac()
 
 		// ADMIN should pass admin assertion

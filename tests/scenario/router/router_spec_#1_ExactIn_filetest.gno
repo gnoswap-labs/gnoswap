@@ -7,18 +7,18 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	"gno.land/r/gnoswap/v1/router"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
 )
 
 var (
@@ -51,7 +51,7 @@ func main() {
 	testcreatePool()
 	testPositionMint()
 	testExactInputSinglePool()
-	
+
 	println("[INFO] Scenario completed")
 }
 
@@ -62,13 +62,13 @@ func testcreatePool() {
 
 	println("[INFO] Approving pool creation fee")
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
-	
+
 	println("[INFO] Creating bar-baz pool (fee: 3000)")
 	pl.CreatePool(cross, barPath, bazPath, FEE_MEDIUM, "79228162514264337593543950336")
 
 	println("[INFO] Transferring 10000 bar tokens to user1")
 	bar.Transfer(cross, user1Addr, 10000)
-	
+
 	println("[EXPECTED] Pool creation completed")
 	println()
 }
@@ -77,7 +77,7 @@ func testPositionMint() {
 	println("[SCENARIO] Given: Position minting preparation")
 	println("[INFO] Setting position minting permission with admin account")
 	testing.SetRealm(adminRealm)
-	
+
 	println("[INFO] Approving bar and baz tokens for pool")
 	bar.Approve(cross, poolAddr, 100000000)
 	baz.Approve(cross, poolAddr, 100000000)
@@ -122,7 +122,7 @@ func testExactInputSinglePool() {
 	poolToken1Before := baz.BalanceOf(poolAddr)
 	user1Token0Before := bar.BalanceOf(user1Addr)
 	user1Token1Before := baz.BalanceOf(user1Addr)
-	
+
 	println("[INFO] Pool bar balance:", poolToken0Before)
 	println("[INFO] Pool baz balance:", poolToken1Before)
 	println("[INFO] user1 bar balance:", user1Token0Before)

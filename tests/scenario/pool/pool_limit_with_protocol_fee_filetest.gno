@@ -11,11 +11,11 @@ import (
 	"gno.land/r/onbloc/foo"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/pool"
 
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
 )
 
 var t *testing.T
@@ -150,7 +150,7 @@ func main() {
 	thisPool = pool.GetPool(barPath, fooPath, fee100)
 	slotTick := thisPool.Slot0Tick()
 	println("[EXPECTED] Pool tick:", slotTick, "expected: >= 120")
-	uassert.True(t, slotTick >= 120, ufmt.Sprintf("tick(%d) should be >= 120", slotTick)) //temporary fix (cc @jinoosss)
+	uassert.True(t, slotTick >= 120, ufmt.Sprintf("tick(%d) should be >= 120", slotTick)) // temporary fix (cc @jinoosss)
 	println()
 	println("[INFO] Scenario completed")
 }

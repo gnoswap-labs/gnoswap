@@ -3,7 +3,7 @@ package gns
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 )
 
 // InitEmissionState initializes the emission schedule with a new start timestamp.
@@ -21,14 +21,14 @@ import (
 //   - Caller is not the emission contract
 //
 // Events:
-//   Emits InitEmissionState event with schedule details
+//
+//	Emits InitEmissionState event with schedule details
 //
 // Note:
 //   - Sets up 13 halving periods (years 1-13)
 //   - Each period lasts 4 years
 //   - Emission rate halves each period
 //   - Total emission period: 52 years
-//
 func InitEmissionState(cur realm, height int64, timestamp int64) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsEmission(caller)

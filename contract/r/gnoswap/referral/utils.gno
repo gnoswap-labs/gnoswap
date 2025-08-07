@@ -7,8 +7,8 @@ import (
 
 	prabc "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	"gno.land/r/gnoswap/access"
+	_ "gno.land/r/gnoswap/rbac"
 )
 
 // validCallerRoles is a list of roles that are authorized to modify referral data.

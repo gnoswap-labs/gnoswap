@@ -290,7 +290,6 @@ func TestMulDivBoundary(t *testing.T) {
 
 // This test verifies that the MulDiv function does not modify its input parameters
 func TestMulDivInputPreservation(t *testing.T) {
-
 	tests := []struct {
 		name  string
 		x     string

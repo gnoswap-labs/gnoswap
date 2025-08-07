@@ -11,9 +11,9 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/gns"
 )
 
 const (
@@ -22,7 +22,7 @@ const (
 )
 
 var (
-	emissionAddr = std.DerivePkgAddr("gno.land/r/gnoswap/v1/emission")
+	emissionAddr = std.DerivePkgAddr("gno.land/r/gnoswap/emission")
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	userAddr     = testutils.TestAddress("user")
 
@@ -99,7 +99,7 @@ func testScenario4EmissionAfterStartHeight() {
 	ufmt.Printf("[INFO] Current chain height after skipping: %d\n", currentHeight)
 
 	// Try to mint
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/emission"))
+	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/emission"))
 	distributedAmount := emission.MintAndDistributeGns(cross)
 	ufmt.Printf("[INFO] Distributed amount: %d\n", distributedAmount)
 	ufmt.Printf("[EXPECTED] Should be > 0 (distribution started)\n")

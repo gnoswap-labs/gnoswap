@@ -11,9 +11,9 @@ import (
 	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 
@@ -32,7 +32,7 @@ var (
 
 	gnotPath   = "gnot"
 	wugnotPath = "gno.land/r/demo/wugnot"
-	gnsPath    = "gno.land/r/gnoswap/v1/gns"
+	gnsPath    = "gno.land/r/gnoswap/gns"
 )
 
 func main() {
@@ -40,7 +40,7 @@ func main() {
 	initializeSetup()
 	println()
 
-	println("[SCENARIO] 2. Create Pool (gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:100)")
+	println("[SCENARIO] 2. Create Pool (gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:100)")
 	createPool(wugnotPath, gnsPath, 100, 0)
 	println()
 
@@ -148,8 +148,8 @@ func removePosition(positionId uint64) {
 // [INFO] WUGNOT Balance of admin: 100000000000000
 // [INFO] ugnot Balance of admin: 1000000000000000ugnot
 //
-// [SCENARIO] 2. Create Pool (gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:100)
-// [EXPECTED] created gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:100 pool at tick 0
+// [SCENARIO] 2. Create Pool (gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:100)
+// [EXPECTED] created gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:100 pool at tick 0
 //
 // [SCENARIO] 3. Mint Position (-1 ~ 1)
 // [INFO] Minting position

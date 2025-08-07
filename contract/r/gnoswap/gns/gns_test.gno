@@ -8,7 +8,7 @@ import (
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/halt"
+	"gno.land/r/gnoswap/halt"
 )
 
 const (
@@ -18,7 +18,7 @@ const (
 )
 
 var (
-	emissionRealm = std.NewCodeRealm("gno.land/r/gnoswap/v1/emission")
+	emissionRealm = std.NewCodeRealm("gno.land/r/gnoswap/emission")
 	adminRealm    = std.NewUserRealm(adminAddr)
 )
 
@@ -211,7 +211,7 @@ func TestGrc20Methods(t *testing.T) {
 			},
 			shouldPanic:   true,
 			exceptionKind: "abort",
-			panicMsg:      `unauthorized: caller g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m is not emission`,
+			panicMsg:      `unauthorized: caller g13ffa5r3mqfxu3s7ejl02scq9536wt6c2t789dm is not emission`,
 		},
 		{
 			name: "Burn without permission should panic",
@@ -307,82 +307,82 @@ func TestCalculateAmountToMint(t *testing.T) {
 	startTimestamp := GetHalvingYearStartTimestamp(1)
 
 	tests := []struct {
-		name                 string
-		inputFromTimestamp   int64
-		inputToTimestamp     int64
-		expectedAmount       int64
+		name               string
+		inputFromTimestamp int64
+		inputToTimestamp   int64
+		expectedAmount     int64
 	}{
 		{
-			name:                 "calculate amount to mint by 1 second for same year(1st year)",
-			inputFromTimestamp:   startTimestamp,
-			inputToTimestamp:     startTimestamp,
-			expectedAmount:       7134703, // 225M / SECONDS_IN_YEAR
+			name:               "calculate amount to mint by 1 second for same year(1st year)",
+			inputFromTimestamp: startTimestamp,
+			inputToTimestamp:   startTimestamp,
+			expectedAmount:     7134703, // 225M / SECONDS_IN_YEAR
 		},
 		{
-			name:                 "calculate amount to mint by 1 second for same year(2nd year)",
-			inputFromTimestamp:   GetHalvingYearStartTimestamp(2),
-			inputToTimestamp:     GetHalvingYearStartTimestamp(2),
-			expectedAmount:       7134703, // 225M / SECONDS_IN_YEAR
+			name:               "calculate amount to mint by 1 second for same year(2nd year)",
+			inputFromTimestamp: GetHalvingYearStartTimestamp(2),
+			inputToTimestamp:   GetHalvingYearStartTimestamp(2),
+			expectedAmount:     7134703, // 225M / SECONDS_IN_YEAR
 		},
 		{
-			name:                 "calculate amount to mint by 1 second for same year(7th year, after halving)",
-			inputFromTimestamp:   GetHalvingYearStartTimestamp(7),
-			inputToTimestamp:     GetHalvingYearStartTimestamp(7),
-			expectedAmount:       891837, // 112.5M / SECONDS_IN_YEAR
+			name:               "calculate amount to mint by 1 second for same year(7th year, after halving)",
+			inputFromTimestamp: GetHalvingYearStartTimestamp(7),
+			inputToTimestamp:   GetHalvingYearStartTimestamp(7),
+			expectedAmount:     891837, // 112.5M / SECONDS_IN_YEAR
 		},
 		{
-			name:                 "calculate amount to mint by 2 seconds for same year(1st year)",
-			inputFromTimestamp:   startTimestamp,
-			inputToTimestamp:     startTimestamp + 1,
-			expectedAmount:       14269406,
+			name:               "calculate amount to mint by 2 seconds for same year(1st year)",
+			inputFromTimestamp: startTimestamp,
+			inputToTimestamp:   startTimestamp + 1,
+			expectedAmount:     14269406,
 		},
 		{
-			name:                 "calculate amount to mint by 1st year's entire period - 1 second",
-			inputFromTimestamp:   GetHalvingYearStartTimestamp(1),
-			inputToTimestamp:     GetHalvingYearEndTimestamp(1) - 1,
-			expectedAmount:       224_999_986_673_297, // almost 225M
+			name:               "calculate amount to mint by 1st year's entire period - 1 second",
+			inputFromTimestamp: GetHalvingYearStartTimestamp(1),
+			inputToTimestamp:   GetHalvingYearEndTimestamp(1) - 1,
+			expectedAmount:     224_999_986_673_297, // almost 225M
 		},
 		{
-			name:                 "calculate amount to mint by 1st year's entire period",
-			inputFromTimestamp:   GetHalvingYearStartTimestamp(1),
-			inputToTimestamp:     GetHalvingYearEndTimestamp(1),
-			expectedAmount:       225_000_000_000_000, // 225M
+			name:               "calculate amount to mint by 1st year's entire period",
+			inputFromTimestamp: GetHalvingYearStartTimestamp(1),
+			inputToTimestamp:   GetHalvingYearEndTimestamp(1),
+			expectedAmount:     225_000_000_000_000, // 225M
 		},
 		{
-			name:                 "calculate amount to mint by 2nd year's entire period",
-			inputFromTimestamp:   GetHalvingYearStartTimestamp(2),
-			inputToTimestamp:     GetHalvingYearEndTimestamp(2),
-			expectedAmount:       225_000_000_000_000, // 225M
+			name:               "calculate amount to mint by 2nd year's entire period",
+			inputFromTimestamp: GetHalvingYearStartTimestamp(2),
+			inputToTimestamp:   GetHalvingYearEndTimestamp(2),
+			expectedAmount:     225_000_000_000_000, // 225M
 		},
 		{
-			name:                 "calculate amount to mint by 7th year's entire period",
-			inputFromTimestamp:   GetHalvingYearStartTimestamp(7),
-			inputToTimestamp:     GetHalvingYearEndTimestamp(7),
-			expectedAmount:       28_125_000_000_000, // 112.5M (halved)
+			name:               "calculate amount to mint by 7th year's entire period",
+			inputFromTimestamp: GetHalvingYearStartTimestamp(7),
+			inputToTimestamp:   GetHalvingYearEndTimestamp(7),
+			expectedAmount:     28_125_000_000_000, // 112.5M (halved)
 		},
 		{
-			name:                 "calculate amount to mint by 1st year's entire period and 2nd year's 1 second",
-			inputFromTimestamp:   GetHalvingYearStartTimestamp(1),
-			inputToTimestamp:     GetHalvingYearStartTimestamp(2),
-			expectedAmount:       225_000_007_134_703, // 225M + 7134
+			name:               "calculate amount to mint by 1st year's entire period and 2nd year's 1 second",
+			inputFromTimestamp: GetHalvingYearStartTimestamp(1),
+			inputToTimestamp:   GetHalvingYearStartTimestamp(2),
+			expectedAmount:     225_000_007_134_703, // 225M + 7134
 		},
 		{
-			name:                 "calculate amount to mint by entire period for 12 years",
-			inputFromTimestamp:   GetHalvingYearStartTimestamp(1),
-			inputToTimestamp:     GetHalvingYearEndTimestamp(12),
-			expectedAmount:       900_000_000_000_000, // 900M total
+			name:               "calculate amount to mint by entire period for 12 years",
+			inputFromTimestamp: GetHalvingYearStartTimestamp(1),
+			inputToTimestamp:   GetHalvingYearEndTimestamp(12),
+			expectedAmount:     900_000_000_000_000, // 900M total
 		},
 		{
-			name:                 "calculate amount to mint is zero amount by after emission end timestamp",
-			inputFromTimestamp:   GetHalvingYearEndTimestamp(12) + 1,
-			inputToTimestamp:     GetHalvingYearEndTimestamp(12) + 10000,
-			expectedAmount:       0,
+			name:               "calculate amount to mint is zero amount by after emission end timestamp",
+			inputFromTimestamp: GetHalvingYearEndTimestamp(12) + 1,
+			inputToTimestamp:   GetHalvingYearEndTimestamp(12) + 10000,
+			expectedAmount:     0,
 		},
 		{
-			name:                 "calculate amount to mint is zero amount by before emission start timestamp",
-			inputFromTimestamp:   GetHalvingYearStartTimestamp(1) - 100,
-			inputToTimestamp:     GetHalvingYearStartTimestamp(1) - 1,
-			expectedAmount:       0,
+			name:               "calculate amount to mint is zero amount by before emission start timestamp",
+			inputFromTimestamp: GetHalvingYearStartTimestamp(1) - 100,
+			inputToTimestamp:   GetHalvingYearStartTimestamp(1) - 1,
+			expectedAmount:     0,
 		},
 	}
 

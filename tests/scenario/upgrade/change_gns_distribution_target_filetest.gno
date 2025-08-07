@@ -11,10 +11,10 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/gns"
-	"gno.land/r/gnoswap/v1/rbac"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/rbac"
 )
 
 var t *testing.T
@@ -67,7 +67,7 @@ func initEmission() {
 func mintAndDistribute() {
 	testing.SetRealm(adminRealm)
 
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/emission"))
+	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/emission"))
 
 	previousStakerBalance := gns.BalanceOf(stakerAddr)
 	previousGovStakerBalance := gns.BalanceOf(govStakerAddr)
@@ -102,7 +102,6 @@ func mintAndDistribute() {
 	ufmt.Printf("[EXPECTED] (new) gov staker balance change should be %d\n", newGovStakerBalanceChange)
 	ufmt.Printf("[EXPECTED] (new) dev ops balance change should be %d\n", newDevOpsBalanceChange)
 	ufmt.Printf("[EXPECTED] (new) community pool balance change should be %d\n", newCommunityPoolBalanceChange)
-
 }
 
 func changeDistributionTarget() {

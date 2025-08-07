@@ -40,7 +40,7 @@ func assertValidDistributionTarget(target int) {
 		COMMUNITY_POOL:   false,
 		GOV_STAKER:       false,
 	}
-	
+
 	if _, ok := validTargets[target]; !ok {
 		panic(makeErrorWithDetails(
 			errInvalidEmissionTarget,
