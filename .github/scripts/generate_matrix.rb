@@ -24,28 +24,11 @@ class GnoModuleManager
 
   # Generate module name based on path structure
   def generate_module_name(path_parts)
-    case path_parts.length
-    when 2
-      # r/gnoswap/module_name -> gnoswap/module_name
-      "#{path_parts[0]}/#{path_parts[-1]}"
-    when 3
-      if path_parts[1] == 'v1'
-        # r/gnoswap/v1/module_name -> gnoswap/v1/module_name
-        "#{path_parts[0]}/v1/#{path_parts[-1]}"
-      else
-        "#{path_parts[0]}/#{path_parts[-1]}"
-      end
-    when 4
-      if path_parts[1] == 'v1' && path_parts[2] == 'gov'
-        # r/gnoswap/v1/gov/module_name -> gnoswap/v1/gov/module_name
-        "#{path_parts[0]}/v1/gov/#{path_parts[-1]}"
-      else
-        "#{path_parts[0]}/#{path_parts[-1]}"
-      end
-    else
-      # Fallback for other structures
-      "#{path_parts[0]}/#{path_parts[-1]}"
-    end
+    # Skip 'r' prefix and keep the rest of the path structure
+    # r/gnoswap/module_name -> gnoswap/module_name
+    # r/gnoswap/v1/module_name -> gnoswap/v1/module_name
+    # r/gnoswap/v1/gov/module_name -> gnoswap/v1/gov/module_name
+    path_parts[1..-1].join('/')
   end
 
   # generate matrix for github actions
