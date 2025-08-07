@@ -331,12 +331,16 @@ func validatePriceLimits(slot0 Slot0, zeroForOne bool, sqrtPriceLimitX96 *u256.U
 	}
 }
 
-// getFeeProtocol returns the appropriate fee protocol based on zero for one
+// getFeeProtocol returns the appropriate fee protocol based on zero for one.
+//
+// When zeroForOne is true, we want the lower 4 bits (% 16)
+// Otherwise, we want the upper 4 bits (/ 16)
 func getFeeProtocol(slot0 Slot0, zeroForOne bool) uint8 {
-	if zeroForOne {
-		return slot0.feeProtocol % 16
+	shift := uint8(0)
+	if !zeroForOne {
+		shift = 4
 	}
-	return slot0.feeProtocol / 16
+	return (slot0.feeProtocol >> shift) & uint8(0xF)
 }
 
 // getFeeGrowthGlobal returns the appropriate fee growth global based on zero for one
@@ -446,12 +450,10 @@ func computeTargetSqrtRatio(step StepComputations, sqrtPriceLimitX96 *u256.Uint,
 
 // shouldUsePriceLimit returns true if the price limit should be used instead of the next tick price
 func shouldUsePriceLimit(sqrtPriceNext, sqrtPriceLimit *u256.Uint, zeroForOne bool) bool {
-	isLower := sqrtPriceNext.Lt(sqrtPriceLimit)
-	isHigher := sqrtPriceNext.Gt(sqrtPriceLimit)
 	if zeroForOne {
-		return isLower
+		return sqrtPriceNext.Lt(sqrtPriceLimit)
 	}
-	return isHigher
+	return sqrtPriceNext.Gt(sqrtPriceLimit)
 }
 
 // computeAmounts calculates the input and output amounts for the current swap step.
@@ -534,11 +536,11 @@ func tickTransition(step StepComputations, zeroForOne bool, state SwapState, poo
 		}
 	}
 
+	decrement := int32(0)
 	if zeroForOne {
-		newState.tick = step.tickNext - 1
-	} else {
-		newState.tick = step.tickNext
+		decrement = 1
 	}
+	newState.tick = step.tickNext - decrement
 
 	return newState
 }
