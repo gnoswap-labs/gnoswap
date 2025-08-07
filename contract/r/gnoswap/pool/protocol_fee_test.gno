@@ -334,6 +334,7 @@ func TestCalculateAmountWithFee(t *testing.T) {
 }
 
 func TestProtocolFee(t *testing.T) {
+	InitPoolTest(t)
 	tests := []struct {
 		name        string
 		action      func(t *testing.T)
