@@ -133,7 +133,13 @@ func executeSwap() {
 	p := pool.GetPool(barPath, fooPath, fee500)
 	println("[DEBUG] Tick before swap:", p.Slot0Tick())
 
-	testing.SetRealm(routerRealm)
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = routerRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	ufmt.Println("[INFO] Executing swap to change price")
 	amount0, amount1 := pool.Swap(
 		cross,
@@ -210,7 +216,13 @@ func executeSwapInNewRange() {
 	testing.SetRealm(adminRealm)
 	foo.Approve(cross, poolAddr, INT64_MAX)
 
-	testing.SetRealm(routerRealm)
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = routerRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	ufmt.Println("[INFO] Executing swap in new range")
 	amount0, amount1 := pool.Swap(
 		cross,

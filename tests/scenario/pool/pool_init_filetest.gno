@@ -156,7 +156,13 @@ func main() {
 	nowLiq = thisPool.Liquidity().ToString()
 	println("[INFO] Now liquidity:", nowLiq)
 
-	testing.SetRealm(rouRealm)
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = rouRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	println("[INFO] Executing swap to move tick")
 	pool.Swap(
 		cross,
@@ -197,7 +203,13 @@ func main() {
 	nowLiq = thisPool.Liquidity().ToString()
 	println("[INFO] Now liquidity:", nowLiq)
 
-	testing.SetRealm(rouRealm)
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = rouRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	println("[INFO] Executing swap to move tick")
 	pool.Swap(
 		cross,

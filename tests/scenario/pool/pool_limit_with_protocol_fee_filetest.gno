@@ -100,8 +100,14 @@ func main() {
 
 	println("[INFO] Minted position:", mint0, mint1)
 
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = rouRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	// SWAP 1 -> 0
-	testing.SetRealm(rouRealm)
 	swap0, swap1 := pool.Swap(
 		cross,
 		barPath,

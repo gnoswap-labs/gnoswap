@@ -1265,7 +1265,7 @@ func TestSwap_FeeTier100(t *testing.T) {
 				wugnot.Transfer(cross, routerAddr, 20000000)
 				gns.Transfer(cross, routerAddr, 20000000)
 
-				testing.SetOriginCaller(routerAddr)
+				testing.SetRealm(std.NewUserRealm(routerAddr))
 				wugnot.Approve(cross, poolAddr, maxApprove)
 
 				actualAmount0, actualAmount1 := Swap(
@@ -1277,7 +1277,7 @@ func TestSwap_FeeTier100(t *testing.T) {
 					true,
 					"40012000",
 					common.TickMathGetSqrtRatioAtTick(-887220).ToString(),
-					adminAddr,
+					routerAddr,
 				)
 
 				return actualAmount0, actualAmount1
