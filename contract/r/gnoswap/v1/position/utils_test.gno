@@ -509,7 +509,7 @@ func TestSubUint256(t *testing.T) {
 			y:    u256.NewUint(1),
 			expected: func() *u256.Uint {
 				// 0 - 1 = -1 mod 2^256 = 2^256 - 1
-				return new(u256.Uint).Sub(u256.NewUint(0), u256.NewUint(1))
+				return u256.Zero().Sub(u256.NewUint(0), u256.NewUint(1))
 			}(),
 		},
 		{
@@ -517,7 +517,7 @@ func TestSubUint256(t *testing.T) {
 			x:    u256.NewUint(50),
 			y:    u256.NewUint(100),
 			expected: func() *u256.Uint {
-				return new(u256.Uint).Sub(u256.NewUint(50), u256.NewUint(100))
+				return u256.Zero().Sub(u256.NewUint(50), u256.NewUint(100))
 			}(),
 		},
 		{
@@ -525,7 +525,7 @@ func TestSubUint256(t *testing.T) {
 			x:    u256.NewUint(10),
 			y:    u256.NewUint(11),
 			expected: func() *u256.Uint {
-				return new(u256.Uint).Sub(u256.NewUint(10), u256.NewUint(11))
+				return u256.Zero().Sub(u256.NewUint(10), u256.NewUint(11))
 			}(),
 		},
 	}
