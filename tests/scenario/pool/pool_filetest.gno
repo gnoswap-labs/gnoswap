@@ -4,8 +4,6 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/json"
-
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
@@ -130,19 +128,9 @@ func TestMintBarBazLiquidity() {
 
 // GETTER_API TEST
 func TestApiGetPools() {
-	gpls := pool.ApiGetPools()
+	pools := pool.GetPoolList()
 
-	root, err := json.Unmarshal([]byte(gpls))
-	if err != nil {
-		panic(err.Error())
-	}
-
-	response, err := root.GetKey("response")
-	if err != nil {
-		panic(err.Error())
-	}
-
-	println("[EXPECTED] response.Size():", response.Size(), "expected: should be 2")
+	println("[EXPECTED] response.Size():", len(pools), "expected: should be 2")
 	println()
 }
 

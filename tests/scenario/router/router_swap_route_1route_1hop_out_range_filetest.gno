@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/json"
 	"gno.land/p/demo/uassert"
 
 	"gno.land/r/gnoswap/v1/common"
@@ -61,18 +60,9 @@ func main() {
 	pl.CreatePool(cross, barPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(10000).ToString())
 
 	println("[INFO] Checking pool creation")
-	jsonStr := pl.ApiGetPools()
-	root, err := json.Unmarshal([]byte(jsonStr))
-	if err != nil {
-		panic(err.Error())
-	}
+	pools := pl.GetPoolList()
 
-	response, err := root.GetKey("response")
-	if err != nil {
-		panic(err.Error())
-	}
-
-	println("[EXPECTED] Number of pools:", response.Size(), "expected: 1")
+	println("[EXPECTED] Number of pools:", len(pools), "expected: 1")
 
 	println("[INFO] Approving tokens for pool operations")
 	bar.Approve(cross, poolAddr, max_approve)
