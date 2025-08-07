@@ -3,15 +3,12 @@ package pool
 import (
 	"std"
 	"testing"
-	_ "time"
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	_ "gno.land/r/demo/wugnot"
-	_ "gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
