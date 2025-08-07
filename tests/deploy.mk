@@ -7,7 +7,7 @@ include _info.mk
 
 ## INIT
 .PHONY: init
-init: send-ugnot-must deploy-test-tokens deploy-libraries deploy-base-contracts deploy-base-tokens deploy-gnoswap-realms
+init: send-ugnot-must deploy-test-tokens deploy-libraries deploy-base-contracts deploy-gnoswap-realms
 
 .PHONY: deploy-test-tokens
 deploy-test-tokens: deploy-bar deploy-baz deploy-foo deploy-obl deploy-qux deploy-usdc
@@ -16,13 +16,10 @@ deploy-test-tokens: deploy-bar deploy-baz deploy-foo deploy-obl deploy-qux deplo
 deploy-libraries: deploy-uint256 deploy-int256 deploy-rbac deploy-gnsmath
 
 .PHONY: deploy-base-contracts
-deploy-base-contracts: deploy-access deploy-rbac-realm deploy-halt-realm deploy-common deploy-referral
-
-.PHONY: deploy-base-tokens
-deploy-base-tokens: deploy-gnft deploy-gns
+deploy-base-contracts: deploy-access deploy-rbac-realm deploy-halt-realm deploy-referral deploy-gns deploy-emission
 
 .PHONY: deploy-gnoswap-realms
-deploy-gnoswap-realms: deploy-community_pool deploy-emission deploy-protocol_fee deploy-pool deploy-position deploy-router deploy-staker deploy-xgns deploy-gov-staker deploy-governance deploy-launchpad
+deploy-gnoswap-realms: deploy-common deploy-community_pool deploy-protocol_fee deploy-pool deploy-gnft deploy-position deploy-router deploy-staker deploy-xgns deploy-gov-staker deploy-governance deploy-launchpad
 
 # send ugnot to necessary accounts
 send-ugnot-must:
