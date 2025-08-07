@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	UGNOT_MIN_DEPOSIT_TO_WRAP = uint64(1000)
+	UGNOT_MIN_DEPOSIT_TO_WRAP = int64(1000)
 	WUGNOT_PATH               = "gno.land/r/demo/wugnot"
 	GNOT_DENOM                = "ugnot"
 )
@@ -36,7 +36,7 @@ var (
 // Errors:
 //   - Returns an error if `ugnotAmount` is zero or less than the minimum deposit threshold.
 func wrap(ugnotAmount int64, to std.Address) error {
-	if ugnotAmount == 0 || ugnotAmount < int64(UGNOT_MIN_DEPOSIT_TO_WRAP) {
+	if ugnotAmount == 0 || ugnotAmount < UGNOT_MIN_DEPOSIT_TO_WRAP {
 		return ufmt.Errorf("amount(%d) < minimum(%d)", ugnotAmount, UGNOT_MIN_DEPOSIT_TO_WRAP)
 	}
 
@@ -91,13 +91,13 @@ func transferUGNOT(from, to std.Address, amount int64) {
 
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	fromBalance := banker.GetCoins(from).AmountOf(UGNOT)
-	if fromBalance < int64(amount) {
+	if fromBalance < amount {
 		panic(newErrorWithDetail(
 			errInsufficientUGNOT,
 			ufmt.Sprintf("from(%s) balance(%d) is less than amount(%d)", from, fromBalance, amount)))
 	}
 	banker.SendCoins(from, to, std.Coins{
-		{Denom: UGNOT, Amount: int64(amount)},
+		{Denom: UGNOT, Amount: amount},
 	})
 }
 
@@ -173,7 +173,7 @@ func wrapWithTransfer(ugnotAmount int64, toAddress std.Address) error {
 		return makeErrorWithDetails(errWrapUnwrap, errFailedToWrapZeroUgnot)
 	}
 
-	if ugnotAmount < int64(UGNOT_MIN_DEPOSIT_TO_WRAP) {
+	if ugnotAmount < UGNOT_MIN_DEPOSIT_TO_WRAP {
 		return makeErrorWithDetails(
 			errWugnotMinimum,
 			ufmt.Sprintf(errFailedToWrapBelowMin, ugnotAmount, UGNOT_MIN_DEPOSIT_TO_WRAP),
@@ -185,7 +185,7 @@ func wrapWithTransfer(ugnotAmount int64, toAddress std.Address) error {
 	currentRealmAddr := std.CurrentRealm().Address()
 
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(currentRealmAddr, wugnotAddr, std.Coins{{"ugnot", int64(ugnotAmount)}})
+	banker.SendCoins(currentRealmAddr, wugnotAddr, std.Coins{{"ugnot", ugnotAmount}})
 	wugnot.Deposit(cross) // ROUTER HAS WUGNOT
 
 	// SEND WUGNOT: ROUTER -> USER
@@ -207,7 +207,7 @@ func unwrapWithTransferFrom(fromAddress, toAddress std.Address, wugnotAmount int
 	wugnot.Withdraw(cross, wugnotAmount)
 
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(currentRealmAddr, toAddress, std.Coins{{"ugnot", int64(wugnotAmount)}})
+	banker.SendCoins(currentRealmAddr, toAddress, std.Coins{{"ugnot", wugnotAmount}})
 
 	return nil
 }
