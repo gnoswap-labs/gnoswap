@@ -14,22 +14,20 @@ import (
 // If unwrapResult is true and the position involves WUGNOT, any leftover WUGNOT will be
 // unwrapped to GNOT at the end of the operation.
 // Returns position ID, liquidity, fee0, fee1, amount0, amount1, poolPath
-func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, string, error) {
+func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, string, string, string, string, error) {
 	caller := params.caller
 
 	// BEFORE DECREASE LIQUIDITY, COLLECT FEE FIRST
 	_, fee0Str, fee1Str, _, _, _ := collectFee(params.positionId, params.unwrapResult, params.caller)
-	fee0 := u256.MustFromDecimal(fee0Str)
-	fee1 := u256.MustFromDecimal(fee1Str)
 
 	position := MustGetPosition(params.positionId)
 	positionLiquidity := position.liquidity
 	if positionLiquidity.IsZero() {
 		return params.positionId,
-			nil,
-			fee0,
-			fee1,
-			nil, nil,
+			"",
+			fee0Str,
+			fee1Str,
+			"", "",
 			position.poolKey,
 			makeErrorWithDetails(
 				errZeroLiquidity,
@@ -40,10 +38,10 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	liquidityToRemove := u256.MustFromDecimal(params.liquidity)
 	if liquidityToRemove.Gt(positionLiquidity) {
 		return params.positionId,
-			liquidityToRemove,
-			fee0,
-			fee1,
-			nil, nil,
+			liquidityToRemove.ToString(),
+			fee0Str,
+			fee1Str,
+			"", "",
 			position.poolKey,
 			makeErrorWithDetails(
 				errInvalidLiquidity,
@@ -58,11 +56,11 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	burnedAmount1 := u256.MustFromDecimal(burn1)
 	if isSlippageExceeded(burnedAmount0, burnedAmount1, params.amount0Min, params.amount1Min) {
 		return params.positionId,
-			liquidityToRemove,
-			fee0,
-			fee1,
-			burnedAmount0,
-			burnedAmount1,
+			liquidityToRemove.ToString(),
+			fee0Str,
+			fee1Str,
+			burn0,
+			burn1,
 			position.poolKey,
 			makeErrorWithDetails(
 				errSlippage,
@@ -146,11 +144,11 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	position.tokensOwed0, underflow = u256.Zero().SubOverflow(position.tokensOwed0, collectAmount0)
 	if underflow {
 		return params.positionId,
-			liquidityToRemove,
-			fee0,
-			fee1,
-			collectAmount0,
-			collectAmount1,
+			liquidityToRemove.ToString(),
+			fee0Str,
+			fee1Str,
+			collect0,
+			collect1,
 			position.poolKey,
 			makeErrorWithDetails(
 				errUnderflow,
@@ -160,11 +158,11 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	position.tokensOwed1, underflow = u256.Zero().SubOverflow(position.tokensOwed1, collectAmount1)
 	if underflow {
 		return params.positionId,
-			liquidityToRemove,
-			fee0,
-			fee1,
-			collectAmount0,
-			collectAmount1,
+			liquidityToRemove.ToString(),
+			fee0Str,
+			fee1Str,
+			collect0,
+			collect1,
 			position.poolKey,
 			makeErrorWithDetails(
 				errUnderflow,
@@ -178,7 +176,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	mustUpdatePosition(params.positionId, position)
 
-	return params.positionId, liquidityToRemove, fee0, fee1, collectAmount0, collectAmount1, position.poolKey, nil
+	return params.positionId, liquidityToRemove.ToString(), fee0Str, fee1Str, collect0, collect1, position.poolKey, nil
 }
 
 func updateTokensOwed(
