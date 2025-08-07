@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/avl"
+	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -420,6 +421,24 @@ func TestSwap_Failures(t *testing.T) {
 			sqrtPriceLimitX96: "79228162514264337593543950336",
 			payer:             alice,
 			expectedMsg:       "[GNOSWAP-POOL-015] invalid swap amount || amountSpecified == 0",
+		},
+		{
+			name: "invalid payer",
+			setupFn: func(t *testing.T) {
+				InitialisePoolTest(t)
+				// unlock pool
+				pool := mustGetPoolBy(wugnotPath, gnsPath, fee3000)
+				pool.slot0.unlocked = true
+			},
+			token0Path:        wugnotPath,
+			token1Path:        gnsPath,
+			fee:               fee3000,
+			recipient:         alice,
+			zeroForOne:        true,
+			amountSpecified:   "1000",
+			sqrtPriceLimitX96: "79228162514264337593543950336",
+			payer:             testutils.TestAddress("stranger"),
+			expectedMsg:       "[GNOSWAP-POOL-028] invalid payer || expected payer(g1wd68yctwvajhyh6lta047h6lta047h6lehrd0s) to be the previous realm or the caller",
 		},
 	}
 

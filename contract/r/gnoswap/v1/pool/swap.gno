@@ -56,9 +56,11 @@ func Swap(
 	sqrtPriceLimitX96 string,
 	payer std.Address, // router
 ) (string, string) {
-	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedPool()
+	
+	caller := std.PreviousRealm().Address()
 	access.AssertIsSwapWhitelisted(caller)
+	assertPayerIsPreviousRealmOrOriginCaller(payer)
 
 	if amountSpecified == "0" {
 		panic(newErrorWithDetail(
