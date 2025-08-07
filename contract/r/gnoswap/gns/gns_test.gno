@@ -211,7 +211,7 @@ func TestGrc20Methods(t *testing.T) {
 			},
 			shouldPanic:   true,
 			exceptionKind: "abort",
-			panicMsg:      `unauthorized: caller g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m is not emission`,
+			panicMsg:      `unauthorized: caller g13ffa5r3mqfxu3s7ejl02scq9536wt6c2t789dm is not emission`,
 		},
 		{
 			name: "Burn without permission should panic",

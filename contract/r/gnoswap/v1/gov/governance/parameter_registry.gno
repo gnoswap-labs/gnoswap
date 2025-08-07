@@ -20,17 +20,17 @@ import (
 
 // Package paths
 const (
-	COMMON_PATH         = "gno.land/r/gnoswap/v1/common"
-	ACCESS_PATH         = "gno.land/r/gnoswap/access"
-	COMMUNITY_POOL_PATH = "gno.land/r/gnoswap/v1/community_pool"
-	EMISSION_PATH       = "gno.land/r/gnoswap/emission"
 	GNS_PATH            = "gno.land/r/gnoswap/gns"
-	GOV_GOVERNANCE_PATH = "gno.land/r/gnoswap/v1/gov/governance"
+	HALT_PATH           = "gno.land/r/gnoswap/halt"
+	ACCESS_PATH         = "gno.land/r/gnoswap/access"
+	EMISSION_PATH       = "gno.land/r/gnoswap/emission"
+	COMMON_PATH         = "gno.land/r/gnoswap/v1/common"
 	POOL_PATH           = "gno.land/r/gnoswap/v1/pool"
-	PROTOCOL_FEE_PATH   = "gno.land/r/gnoswap/v1/protocol_fee"
 	ROUTER_PATH         = "gno.land/r/gnoswap/v1/router"
 	STAKER_PATH         = "gno.land/r/gnoswap/v1/staker"
-	HALT_PATH           = "gno.land/r/gnoswap/halt
+	PROTOCOL_FEE_PATH   = "gno.land/r/gnoswap/v1/protocol_fee"
+	COMMUNITY_POOL_PATH = "gno.land/r/gnoswap/v1/community_pool"
+	GOV_GOVERNANCE_PATH = "gno.land/r/gnoswap/v1/gov/governance"
 )
 
 // ParameterHandler interface defines the contract for parameter execution handlers.
