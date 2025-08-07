@@ -75,7 +75,7 @@ func handleSwapFee(
 	}
 
 	if outputToken == gnot {
-		outputToken = wrappedWugnot
+		outputToken = wugnotPath
 	}
 
 	feeAmount := new(u256.Uint).Mul(amount, u256.NewUint(swapFee))

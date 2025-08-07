@@ -166,6 +166,15 @@ func formatBool(v bool) string {
 	return strconv.FormatBool(v)
 }
 
+func mustParseInt64(v string) int64 {
+	amountInt, err := strconv.ParseInt(v, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+
+	return amountInt
+}
+
 func isTokenOwner(positionId uint64, caller std.Address) bool {
 	owner, err := gnft.OwnerOf(positionIdFrom(positionId))
 	if err != nil {

@@ -8,8 +8,8 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/halt"
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -99,7 +99,7 @@ func Mint(
 		assertEqualsAddress(previousRealm.Address(), mintTo)
 		assertEqualsAddress(previousRealm.Address(), caller)
 	}
-	
+
 	assertIsNotExpired(deadline)
 
 	referral.TryRegister(cross, caller, referrer)
@@ -125,11 +125,9 @@ func Mint(
 		panic(newErrorWithDetail(errInvalidInput, err.Error()))
 	}
 
-	// create MintParams
-	mintParams := newMintParams(processedInput, mintInput)
-
 	// mint liquidity
-	id, liquidity, amount0, amount1 := mint(mintParams)
+	params := newMintParams(processedInput, mintInput)
+	id, liquidity, amount0, amount1 := mint(params)
 
 	// refund leftover wrapped tokens
 	if processedInput.tokenPair.token0IsNative && processedInput.tokenPair.wrappedAmount > amount0.Int64() {
@@ -138,7 +136,7 @@ func Mint(
 			panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
 		}
 	}
-	
+
 	if processedInput.tokenPair.token1IsNative && processedInput.tokenPair.wrappedAmount > amount1.Int64() {
 		err = unwrap(processedInput.tokenPair.wrappedAmount-amount1.Int64(), caller)
 		if err != nil {
@@ -147,7 +145,7 @@ func Mint(
 	}
 
 	poolSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(processedInput.poolPath)
-	
+
 	std.Emit(
 		"Mint",
 		"prevAddr", previousRealm.Address().String(),
@@ -203,12 +201,14 @@ func IncreaseLiquidity(
 
 	wrappedAmount := int64(0)
 	if isWrappedToken(token0) {
-		wrappedAmount, err = safeWrapNativeToken(amount0DesiredStr, caller)
+		amount0DesiredInt := mustParseInt64(amount0DesiredStr)
+		wrappedAmount, err = safeWrapNativeToken(amount0DesiredInt, caller)
 		if err != nil {
 			panic(err)
 		}
 	} else if isWrappedToken(token1) {
-		wrappedAmount, err = safeWrapNativeToken(amount1DesiredStr, caller)
+		amount1DesiredInt := mustParseInt64(amount1DesiredStr)
+		wrappedAmount, err = safeWrapNativeToken(amount1DesiredInt, caller)
 		if err != nil {
 			panic(err)
 		}
@@ -230,22 +230,11 @@ func IncreaseLiquidity(
 		panic(err)
 	}
 
-	amount0Int64 := amount0.Int64()
-	amount1Int64 := amount1.Int64()
-
-	if isWrappedToken(token0) && wrappedAmount > amount0Int64 {
-		// unwrap leftover wugnot
-		err = unwrap(wrappedAmount-amount0Int64, caller)
-		if err != nil {
-			panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
-		}
+	if err := unwrapLeftoverWrappedToken(token0, wrappedAmount, amount0.Int64(), caller); err != nil {
+		panic(err)
 	}
-	if isWrappedToken(token1) && wrappedAmount > amount1Int64 {
-		// unwrap leftover wugnot
-		err = unwrap(wrappedAmount-amount1Int64, caller)
-		if err != nil {
-			panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
-		}
+	if err := unwrapLeftoverWrappedToken(token1, wrappedAmount, amount1.Int64(), caller); err != nil {
+		panic(err)
 	}
 
 	previousRealm := std.PreviousRealm()
@@ -266,6 +255,20 @@ func IncreaseLiquidity(
 	)
 
 	return positionId, liquidity.ToString(), amount0.ToString(), amount1.ToString(), poolPath
+}
+
+func unwrapLeftoverWrappedToken(token string, wrapped, amount int64, caller std.Address) error {
+	unwrappable := isWrappedToken(token) && wrapped > amount
+	if !unwrappable {
+		return nil
+	}
+
+	err := unwrap(wrapped-amount, caller)
+	if err != nil {
+		return makeErrorWithDetails(errWrapUnwrap, err.Error())
+	}
+
+	return nil
 }
 
 // DecreaseLiquidity decreases liquidity of the existing position
@@ -376,12 +379,8 @@ func collectFee(
 
 	tokensOwed0, tokensOwed1 := calculateFees(position, currentFeeGrowth)
 
-	position.feeGrowthInside0LastX128 = new(u256.Uint).Set(currentFeeGrowth.feeGrowthInside0LastX128)
-	position.feeGrowthInside1LastX128 = new(u256.Uint).Set(currentFeeGrowth.feeGrowthInside1LastX128)
-
-	// check user wugnot amount
-	// need this value to unwrap fee
-	userWugnot := wugnot.BalanceOf(caller)
+	position.feeGrowthInside0LastX128 = u256.Zero().Set(currentFeeGrowth.feeGrowthInside0LastX128)
+	position.feeGrowthInside1LastX128 = u256.Zero().Set(currentFeeGrowth.feeGrowthInside1LastX128)
 
 	// collect fee
 	amount0, amount1 := pl.Collect(
@@ -394,28 +393,41 @@ func collectFee(
 
 	// sometimes there will be a few less uBase amount than expected due to rounding down in core, but we just subtract the full amount expected
 	// instead of the actual amount so we can burn the token
-	position.tokensOwed0 = new(u256.Uint).Sub(tokensOwed0, u256.MustFromDecimal(amount0))
-	position.tokensOwed1 = new(u256.Uint).Sub(tokensOwed1, u256.MustFromDecimal(amount1))
+	position.tokensOwed0 = u256.Zero().Sub(tokensOwed0, u256.MustFromDecimal(amount0))
+	position.tokensOwed1 = u256.Zero().Sub(tokensOwed1, u256.MustFromDecimal(amount1))
 	mustUpdatePosition(positionId, position)
 
-	// handle withdrawal fee
-	withoutFee0, withoutFee1 := pl.HandleWithdrawalFee(
-		cross,
-		positionId,
-		token0,
-		amount0,
-		token1,
-		amount1,
-		position.poolKey,
-		caller,
-	)
+	withdrawalFeeBps := pl.GetWithdrawalFee()
+	amount0WithoutFee, fee0 := calculateAmountWithWithdrawalFee(amount0, withdrawalFeeBps)
+	amount1WithoutFee, fee1 := calculateAmountWithWithdrawalFee(amount1, withdrawalFeeBps)
 
-	// UNWRAP
-	pToken0, pToken1, _ := splitOf(position.poolKey)
-	err = handleUnwrap(pToken0, pToken1, unwrapResult, userWugnot, caller)
-	if err != nil {
-		panic(err)
+	poolAddr, ok := access.GetAddress(prabc.ROLE_POOL.String())
+	if !ok {
+		panic("pool address not found")
 	}
+
+	if isWrappedToken(token0) && unwrapResult {
+		unwrapWithTransferFrom(poolAddr, caller, amount0WithoutFee)
+	} else {
+		common.TransferFrom(cross, token0, poolAddr, caller, amount0WithoutFee)
+	}
+
+	if isWrappedToken(token1) && unwrapResult {
+		unwrapWithTransferFrom(poolAddr, caller, amount1WithoutFee)
+	} else {
+		common.TransferFrom(cross, token1, poolAddr, caller, amount1WithoutFee)
+	}
+
+	protocolFeeAddr, ok := access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	if !ok {
+		panic("protocol fee address not found")
+	}
+
+	common.TransferFrom(cross, token0, poolAddr, protocolFeeAddr, fee0)
+	common.TransferFrom(cross, token1, poolAddr, protocolFeeAddr, fee1)
+
+	amount0WithoutFeeStr := formatInt(amount0WithoutFee)
+	amount1WithoutFeeStr := formatInt(amount1WithoutFee)
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(
@@ -423,13 +435,42 @@ func collectFee(
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"lpPositionId", formatUint(positionId),
-		"feeAmount0", withoutFee0,
-		"feeAmount1", withoutFee1,
+		"feeAmount0", amount0WithoutFeeStr,
+		"feeAmount1", amount1WithoutFeeStr,
 		"poolPath", position.poolKey,
 		"unwrapResult", formatBool(unwrapResult),
 	)
 
-	return positionId, withoutFee0, withoutFee1, position.poolKey, amount0, amount1
+	std.Emit(
+		"WithdrawalFee",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"lpTokenId", formatUint(positionId),
+		"poolPath", position.poolKey,
+		"feeAmount0", formatInt(fee0),
+		"feeAmount1", formatInt(fee1),
+		"amount0WithoutFee", amount0WithoutFeeStr,
+		"amount1WithoutFee", amount1WithoutFeeStr,
+	)
+
+	return positionId, amount0WithoutFeeStr, amount1WithoutFeeStr, position.poolKey, amount0, amount1
+}
+
+var feeAmountDivisor = u256.NewUint(10000)
+
+func calculateAmountWithWithdrawalFee(amount string, fee uint64) (int64, int64) {
+	if fee == 0 {
+		return u256.MustFromDecimal(amount).Int64(), 0
+	}
+
+	amountUint := u256.MustFromDecimal(amount)
+	feeUint := u256.NewUint(fee)
+
+	feeAmount := u256.Zero().Mul(amountUint, feeUint)
+	feeAmount = u256.Zero().Div(feeAmount, feeAmountDivisor)
+	amountWithoutFee := u256.Zero().Sub(amountUint, feeAmount)
+
+	return amountWithoutFee.Int64(), feeAmount.Int64()
 }
 
 func SetPositionOperator(

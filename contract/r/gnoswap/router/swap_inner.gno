@@ -50,7 +50,6 @@ func swapInner(
 
 	// approves pool as spender
 	common.Approve(cross, data.tokenIn, poolAddr, approveAmount)
-	common.Approve(cross, data.tokenOut, poolAddr, approveAmount)
 
 	amount0Str, amount1Str := pl.Swap(
 		cross,
@@ -79,13 +78,17 @@ func swapInner(
 type RealSwapExecutor struct{}
 
 func (e *RealSwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
-	previousRealmAddr := std.PreviousRealm().Address()
+	caller := std.PreviousRealm().Address()
+	recipient := caller
+	if p.withUnwrap {
+		recipient = routerAddr
+	}
 
 	return swapInner(
 		p.amountSpecified,
-		previousRealmAddr, // if single swap => user will receive
-		zero,              // sqrtPriceLimitX96
-		newSwapCallbackData(p, previousRealmAddr),
+		recipient, // if single swap => user will receive
+		zero,      // sqrtPriceLimitX96
+		newSwapCallbackData(p, caller),
 	)
 }
 

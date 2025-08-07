@@ -497,7 +497,14 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 			"currentHeight", formatInt(blockHeight),
 		)
 		if toUser > 0 {
-			common.Transfer(cross, rewardToken, deposit.owner, toUser)
+			if unwrapResult {
+				tErr := unwrapWithTransfer(deposit.owner, toUser)
+				if tErr != nil {
+					panic(tErr)
+				}
+			} else {
+				common.Transfer(cross, rewardToken, deposit.owner, toUser)
+			}
 		}
 
 		// process external penalty
@@ -509,10 +516,6 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		// update
 		externalIncentives.set(incentiveId, incentive)
 
-		// unwrap if necessary
-		if unwrapResult && rewardToken == WUGNOT_PATH {
-			unwrap(toUser)
-		}
 		std.Emit(
 			"CollectReward",
 			"prevAddr", previousRealm.Address().String(),
