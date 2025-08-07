@@ -22,6 +22,32 @@ class GnoModuleManager
     end
   end
 
+  # Generate module name based on path structure
+  def generate_module_name(path_parts)
+    case path_parts.length
+    when 2
+      # r/gnoswap/module_name -> gnoswap/module_name
+      "#{path_parts[0]}/#{path_parts[-1]}"
+    when 3
+      if path_parts[1] == 'v1'
+        # r/gnoswap/v1/module_name -> gnoswap/v1/module_name
+        "#{path_parts[0]}/v1/#{path_parts[-1]}"
+      else
+        "#{path_parts[0]}/#{path_parts[-1]}"
+      end
+    when 4
+      if path_parts[1] == 'v1' && path_parts[2] == 'gov'
+        # r/gnoswap/v1/gov/module_name -> gnoswap/v1/gov/module_name
+        "#{path_parts[0]}/v1/gov/#{path_parts[-1]}"
+      else
+        "#{path_parts[0]}/#{path_parts[-1]}"
+      end
+    else
+      # Fallback for other structures
+      "#{path_parts[0]}/#{path_parts[-1]}"
+    end
+  end
+
   # generate matrix for github actions
   #
   # traverse all directories and find gnomod.toml
@@ -43,14 +69,9 @@ class GnoModuleManager
         relative_path = module_path.sub("gno.land/", "")
         folder = "gno/examples/gno.land/#{relative_path}"
 
-        # Generate name by combining the first and last parts of the path
+        # Generate name based on path structure
         path_parts = relative_path.split('/')
-        name = if path_parts.include?('gov')
-          # Special handling for governance modules
-          "#{path_parts[0]}/gov/#{path_parts[-1]}"
-        else
-          "#{path_parts[0]}/#{path_parts[-1]}"
-        end
+        name = generate_module_name(path_parts)
 
         matrix[:include] << {
           name: name,
@@ -75,7 +96,7 @@ class GnoModuleManager
             # Special handling for scenario modules
             "scenario/#{path_parts[-1]}"
           else
-            "#{path_parts[0]}/#{path_parts[-1]}"
+            generate_module_name(path_parts)
           end
 
           matrix[:include] << {
