@@ -9,10 +9,10 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/halt"
 )
 
 // CreateProject creates a new project with specified tiers, conditions, and token deposit.

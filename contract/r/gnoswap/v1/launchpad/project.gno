@@ -228,7 +228,6 @@ func NewProject(
 	createdHeight int64,
 	createdAt int64,
 ) *Project {
-
 	return &Project{
 		id:            makeProjectID(tokenPath, createdHeight),
 		name:          name,

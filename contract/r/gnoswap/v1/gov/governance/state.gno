@@ -8,13 +8,13 @@ import (
 
 // Global state variables for governance system
 var (
-	configCounter   *Counter  // Counter for generating config version numbers
-	proposalCounter *Counter  // Counter for generating unique proposal IDs
-	
-	configs                 *avl.Tree // Tree storing governance configurations by version
-	proposals               *avl.Tree // Tree storing all proposals by ID
+	configCounter   *Counter // Counter for generating config version numbers
+	proposalCounter *Counter // Counter for generating unique proposal IDs
+
+	configs                 *avl.Tree        // Tree storing governance configurations by version
+	proposals               *avl.Tree        // Tree storing all proposals by ID
 	proposalManager         *ProposalManager // Manager for user-proposal associations
-	proposalUserVotingInfos *avl.Tree // Tree storing voting info for each proposal by user
+	proposalUserVotingInfos *avl.Tree        // Tree storing voting info for each proposal by user
 
 	// Function to retrieve user voting snapshots (can be overridden for testing)
 	getUserVotingInfoSnapshotFn func(snapshotTime int64) (map[string]*VotingInfo, int64, bool)
@@ -148,7 +148,7 @@ func getProposal(proposalID int64) (*Proposal, bool) {
 	if !exists {
 		return nil, false
 	}
-	
+
 	return val.(*Proposal), true
 }
 
@@ -163,7 +163,7 @@ func getProposal(proposalID int64) (*Proposal, bool) {
 func addProposal(proposal *Proposal) bool {
 	// Store proposal in main proposals tree
 	proposals.Set(formatInt(proposal.ID()), proposal)
-	
+
 	// Register proposal with user in proposal manager
 	proposalManager.addProposal(proposal.Proposer(), proposal.ID())
 
@@ -191,7 +191,7 @@ func getUserProposals(user std.Address) []*Proposal {
 
 		proposals = append(proposals, proposal)
 	}
-	
+
 	return proposals
 }
 
@@ -230,7 +230,7 @@ func getProposalUserVotingInfos(proposalID int64) (map[string]*VotingInfo, bool)
 //   - bool: true if voting information exists for the user
 func getProposalUserVotingInfo(proposalID int64, userAddress std.Address) (*VotingInfo, bool) {
 	// First get all voting info for the proposal
-	userVotingInfos, exists := getProposalUserVotingInfos(proposalID)	
+	userVotingInfos, exists := getProposalUserVotingInfos(proposalID)
 	if !exists {
 		return nil, false
 	}

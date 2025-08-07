@@ -111,10 +111,10 @@ func TestParseNumber(t *testing.T) {
 // TestParseBool tests boolean parsing
 func TestParseBool(t *testing.T) {
 	tests := []struct {
-		name          string
-		input         string
-		expected      bool
-		expectedPanic bool
+		name                 string
+		input                string
+		expected             bool
+		expectedPanic        bool
 		expectedPanicMessage string
 	}{
 		{
@@ -128,9 +128,9 @@ func TestParseBool(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:          "Invalid boolean",
-			input:         "invalid",
-			expectedPanic: true,
+			name:                 "Invalid boolean",
+			input:                "invalid",
+			expectedPanic:        true,
 			expectedPanicMessage: "invalid bool value: invalid",
 		},
 	}

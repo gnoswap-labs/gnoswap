@@ -8,10 +8,10 @@ import (
 )
 
 type Warmup struct {
-	Index            int
-	TimeDuration     int64
-	NextWarmupTime   int64 // time when this warmup period ends
-	WarmupRatio      uint64
+	Index          int
+	TimeDuration   int64
+	NextWarmupTime int64 // time when this warmup period ends
+	WarmupRatio    uint64
 }
 
 var warmupTemplate []Warmup = DefaultWarmupTemplate()
@@ -26,29 +26,29 @@ func DefaultWarmupTemplate() []Warmup {
 	// They will be set by InstantiateWarmup()
 	return []Warmup{
 		{
-			Index:         0,
-			TimeDuration:  secondsIn5Days,
+			Index:        0,
+			TimeDuration: secondsIn5Days,
 			// NextWarmupTime will be set based on currentTime
 			// NextWarmupTime: currentTime + secondsIn5Days,
 			WarmupRatio: 30,
 		},
 		{
-			Index:         1,
-			TimeDuration:  secondsIn10Days,
+			Index:        1,
+			TimeDuration: secondsIn10Days,
 			// NextWarmupTime will be set based on currentTime
 			// NextWarmupTime: currentTime + secondsIn10Days,
 			WarmupRatio: 50,
 		},
 		{
-			Index:         2,
-			TimeDuration:  secondsIn30Days,
+			Index:        2,
+			TimeDuration: secondsIn30Days,
 			// NextWarmupTime will be set based on currentTime
 			// NextWarmupTime: currentTime + secondsIn30Days,
 			WarmupRatio: 70,
 		},
 		{
-			Index:         3,
-			TimeDuration:  math.MaxInt64,
+			Index:        3,
+			TimeDuration: math.MaxInt64,
 			// NextWarmupTime will be set to math.MaxInt64
 			// NextWarmupTime: math.MaxInt64,
 			WarmupRatio: 100,
@@ -74,10 +74,10 @@ func instantiateWarmup(currentTime int64) []Warmup {
 		}
 
 		warmups = append(warmups, Warmup{
-			Index:            warmup.Index,
-			TimeDuration:     warmup.TimeDuration,
-			NextWarmupTime:   nextWarmupTime,
-			WarmupRatio:      warmup.WarmupRatio,
+			Index:          warmup.Index,
+			TimeDuration:   warmup.TimeDuration,
+			NextWarmupTime: nextWarmupTime,
+			WarmupRatio:    warmup.WarmupRatio,
 		})
 		currentTime += warmup.TimeDuration
 	}

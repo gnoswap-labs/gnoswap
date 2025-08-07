@@ -76,4 +76,4 @@ func TestRegistryHandler_Execute(t *testing.T) {
 			}
 		})
 	}
-} 
+}

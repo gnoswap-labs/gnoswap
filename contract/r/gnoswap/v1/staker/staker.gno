@@ -8,20 +8,20 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/halt"
 
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/gns"
 
-	en "gno.land/r/gnoswap/v1/emission"
+	en "gno.land/r/gnoswap/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/v1/referral"
+	"gno.land/r/gnoswap/referral"
 )
 
 const ZERO_ADDRESS = std.Address("")
@@ -190,7 +190,7 @@ const (
 
 	MAX_UNIX_EPOCH_TIME = 253402300799 // 9999-12-31 23:59:59
 
-	MUST_EXISTS_IN_TIER_1 = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"
+	MUST_EXISTS_IN_TIER_1 = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"
 
 	INTERNAL = true
 	EXTERNAL = false

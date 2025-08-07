@@ -66,7 +66,7 @@
 //
 //	import (
 //	    "std"
-//	    "gno.land/r/gnoswap/v1/referral"
+//	    "gno.land/r/gnoswap/referral"
 //	    "gno.land/p/demo/mystaking"        // example staking contract
 //	)
 //

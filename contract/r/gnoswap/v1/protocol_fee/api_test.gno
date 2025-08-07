@@ -5,7 +5,7 @@ import (
 
 	"gno.land/p/demo/uassert"
 
-	_ "gno.land/r/gnoswap/v1/rbac" // initialize rbac package
+	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
 )
 
 func TestApiGetAccuTransferToGovStaker(t *testing.T) {

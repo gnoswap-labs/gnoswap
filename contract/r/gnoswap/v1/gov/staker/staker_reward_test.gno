@@ -8,7 +8,7 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
 )
 
 // Test CollectReward function
@@ -544,7 +544,7 @@ func TestStakerReward_TokenTransferScenarios(t *testing.T) {
 			amount:        100_000_000,
 			fromBalance:   500_000_000,
 			shouldFail:    true,
-			expectedError: "[GNOSWAP-GOV_STAKER-010] not enough balance || not enough gno.land/r/gnoswap/v1/gns balance(0) to collect(100000000)",
+			expectedError: "[GNOSWAP-GOV_STAKER-010] not enough balance || not enough gno.land/r/gnoswap/gns balance(0) to collect(100000000)",
 		},
 		{
 			name:        "success - WUGNOT native coin transfer",

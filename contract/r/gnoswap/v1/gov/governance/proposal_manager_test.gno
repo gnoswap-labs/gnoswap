@@ -61,7 +61,7 @@ func TestProposalManager_AddAndRemoveProposal(t *testing.T) {
 			// given
 			pm := NewProposalManager()
 			for i := 0; i < tc.proposalCount; i++ {
-				pm.addProposal(tc.user, int64(i + 1))
+				pm.addProposal(tc.user, int64(i+1))
 			}
 
 			if tc.operation == "add" {
@@ -129,4 +129,4 @@ func TestNewProposalManager(t *testing.T) {
 	uassert.NotNil(t, pm)
 	uassert.NotNil(t, pm.userProposals)
 	uassert.Equal(t, len(pm.userProposals), 0)
-} 
+}

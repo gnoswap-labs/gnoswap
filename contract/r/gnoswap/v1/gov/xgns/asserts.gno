@@ -5,7 +5,7 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 )
 
 // assertCallerHasBurnPermission asserts that the caller has the permission to burn xGNS.

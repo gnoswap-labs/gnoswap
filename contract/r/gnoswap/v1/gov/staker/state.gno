@@ -5,7 +5,7 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/emission"
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
 )
 

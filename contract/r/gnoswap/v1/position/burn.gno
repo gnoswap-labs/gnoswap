@@ -5,7 +5,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 	pl "gno.land/r/gnoswap/v1/pool"
 )

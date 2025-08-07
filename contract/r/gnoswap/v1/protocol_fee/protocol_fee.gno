@@ -8,9 +8,9 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/halt"
 )
 
 // DistributeProtocolFee distributes the protocol fee to devOps and gov/staker.
@@ -51,7 +51,7 @@ func DistributeProtocolFee(cur realm) map[string]uint64 {
 		}
 
 		toDevOpsAmount := distributeAmount * protocolFeeState.GetDevOpsPct() / 10000 // default 0%
-		toGovStakerAmount := distributeAmount - toDevOpsAmount                  // default 100%
+		toGovStakerAmount := distributeAmount - toDevOpsAmount                       // default 100%
 
 		// Distribute to DevOps
 		if err := protocolFeeState.distributeToDevOps(token, toDevOpsAmount); err != nil {
@@ -89,7 +89,7 @@ func DistributeProtocolFee(cur realm) map[string]uint64 {
 // Only admin or governance contract can execute this function via proposal
 func SetDevOpsPct(cur realm, pct uint64) {
 	halt.AssertIsNotHaltedProtocolFee()
-	
+
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
@@ -120,7 +120,7 @@ func SetDevOpsPct(cur realm, pct uint64) {
 // Only admin or governance contract can execute this function via proposal
 func SetGovStakerPct(cur realm, pct uint64) {
 	halt.AssertIsNotHaltedProtocolFee()
-	
+
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
@@ -162,7 +162,7 @@ func AddToProtocolFee(cur realm, tokenPath string, amount uint64) {
 // only `gov/staker` can execute this function.
 func ClearTokenListWithAmount(cur realm) {
 	halt.AssertIsNotHaltedProtocolFee()
-	
+
 	caller := std.PreviousRealm().Address()
 	access.AssertIsGovStaker(caller)
 

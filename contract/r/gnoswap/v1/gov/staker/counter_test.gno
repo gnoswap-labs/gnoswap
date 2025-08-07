@@ -9,8 +9,8 @@ import (
 // TestCounter_NewCounter tests the creation of new Counter instances
 func TestCounter_NewCounter(t *testing.T) {
 	tests := []struct {
-		name        string
-		expectedID  int64
+		name       string
+		expectedID int64
 	}{
 		{
 			name:       "Create new counter",
@@ -111,4 +111,4 @@ func TestCounter_Get(t *testing.T) {
 			uassert.Equal(t, value, tc.expectedValue)
 		})
 	}
-} 
+}

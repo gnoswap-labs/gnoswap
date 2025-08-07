@@ -7,15 +7,15 @@ import (
 
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
 
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/onbloc/bar"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/v1/rbac"
+	"gno.land/r/gnoswap/rbac"
 )
 
 const (
@@ -27,7 +27,7 @@ const (
 
 func TestCollectRewardGracefulDegradation(t *testing.T) {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix() + 1)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	// setup
 	govAddr := rbac.DefaultRoleAddresses[prabc.ROLE_GOVERNANCE]

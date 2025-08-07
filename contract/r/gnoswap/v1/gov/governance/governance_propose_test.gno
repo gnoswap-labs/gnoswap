@@ -10,32 +10,32 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v1/gns"
-	"gno.land/r/gnoswap/v1/halt"
+	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/halt"
 )
 
 func TestGovernancePropose_ProposeText(t *testing.T) {
 	tests := []struct {
-		name                string
+		name string
 		// given
-		title              string
-		description        string
-		callerAddress      std.Address
-		setupConfig        *Config
-		setupGnsBalance    int64
+		title               string
+		description         string
+		callerAddress       std.Address
+		setupConfig         *Config
+		setupGnsBalance     int64
 		setupActiveProposal bool
-		setupUserVotes     map[string]*VotingInfo
-		maxVotingWeight    int64
+		setupUserVotes      map[string]*VotingInfo
+		maxVotingWeight     int64
 		// then
 		expectedProposalId int64
 		expectedHasAbort   bool
 		expectedAbortMsg   string
 	}{
 		{
-			name:               "success - create text proposal",
-			title:              "Test Text Proposal",
-			description:        "This is a test text proposal for governance",
-			callerAddress:      testutils.TestAddress("proposer"),
+			name:          "success - create text proposal",
+			title:         "Test Text Proposal",
+			description:   "This is a test text proposal for governance",
+			callerAddress: testutils.TestAddress("proposer"),
 			setupConfig: &Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
@@ -45,7 +45,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 				ExecutionDelay:                86400,
 				ExecutionWindow:               2592000,
 			},
-			setupGnsBalance:    10_000_000_000,
+			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*VotingInfo{
 				testutils.TestAddress("proposer").String(): NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
@@ -55,10 +55,10 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			expectedProposalId: 1,
 		},
 		{
-			name:               "fail - insufficient GNS balance",
-			title:              "Test Text Proposal",
-			description:        "This is a test text proposal for governance",
-			callerAddress:      testutils.TestAddress("poor_proposer"),
+			name:          "fail - insufficient GNS balance",
+			title:         "Test Text Proposal",
+			description:   "This is a test text proposal for governance",
+			callerAddress: testutils.TestAddress("poor_proposer"),
 			setupConfig: &Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
@@ -73,15 +73,15 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			setupUserVotes: map[string]*VotingInfo{
 				testutils.TestAddress("poor_proposer").String(): NewVotingInfo(5_000_000_000, testutils.TestAddress("poor_proposer")),
 			},
-			maxVotingWeight:   5_000_000_000,
-			expectedHasAbort:  true,
-			expectedAbortMsg:  "[GNOSWAP-GOVERNANCE-004] not enough balance",
+			maxVotingWeight:  5_000_000_000,
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-004] not enough balance",
 		},
 		{
-			name:               "fail - empty title",
-			title:              "",
-			description:        "This is a test text proposal for governance",
-			callerAddress:      testutils.TestAddress("proposer"),
+			name:          "fail - empty title",
+			title:         "",
+			description:   "This is a test text proposal for governance",
+			callerAddress: testutils.TestAddress("proposer"),
 			setupConfig: &Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
@@ -96,15 +96,15 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			setupUserVotes: map[string]*VotingInfo{
 				testutils.TestAddress("proposer").String(): NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
 			},
-			maxVotingWeight:   5_000_000_000,
-			expectedHasAbort:  true,
-			expectedAbortMsg:  "[GNOSWAP-GOVERNANCE-002] invalid input || title is empty",
+			maxVotingWeight:  5_000_000_000,
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || title is empty",
 		},
 		{
-			name:               "fail - empty description",
-			title:              "Test Text Proposal",
-			description:        "",
-			callerAddress:      testutils.TestAddress("proposer"),
+			name:          "fail - empty description",
+			title:         "Test Text Proposal",
+			description:   "",
+			callerAddress: testutils.TestAddress("proposer"),
 			setupConfig: &Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
@@ -119,15 +119,15 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			setupUserVotes: map[string]*VotingInfo{
 				testutils.TestAddress("proposer").String(): NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
 			},
-			maxVotingWeight:   5_000_000_000,
-			expectedHasAbort:  true,
-			expectedAbortMsg:  "[GNOSWAP-GOVERNANCE-002] invalid input || description is empty",
+			maxVotingWeight:  5_000_000_000,
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || description is empty",
 		},
 		{
-			name:               "fail - already has active proposal",
-			title:              "Test Text Proposal",
-			description:        "This is a test text proposal for governance",
-			callerAddress:      testutils.TestAddress("active_proposer"),
+			name:          "fail - already has active proposal",
+			title:         "Test Text Proposal",
+			description:   "This is a test text proposal for governance",
+			callerAddress: testutils.TestAddress("active_proposer"),
 			setupConfig: &Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
@@ -142,15 +142,15 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			setupUserVotes: map[string]*VotingInfo{
 				testutils.TestAddress("active_proposer").String(): NewVotingInfo(5_000_000_000, testutils.TestAddress("active_proposer")),
 			},
-			maxVotingWeight:   5_000_000_000,
-			expectedHasAbort:  true,
-			expectedAbortMsg:  "[GNOSWAP-GOVERNANCE-019] already active proposal",
+			maxVotingWeight:  5_000_000_000,
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-019] already active proposal",
 		},
 		{
-			name:               "fail - not enough voting weight",
-			title:              "Test Text Proposal",
-			description:        "This is a test text proposal for governance",
-			callerAddress:      testutils.TestAddress("proposer"),
+			name:          "fail - not enough voting weight",
+			title:         "Test Text Proposal",
+			description:   "This is a test text proposal for governance",
+			callerAddress: testutils.TestAddress("proposer"),
 			setupConfig: &Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
@@ -162,10 +162,10 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			},
 			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
-			setupUserVotes:     map[string]*VotingInfo{}, // Empty voting info
-			maxVotingWeight:    0,
-			expectedHasAbort:   true,
-			expectedAbortMsg:   "[GNOSWAP-GOVERNANCE-007] not enough voting power",
+			setupUserVotes:      map[string]*VotingInfo{}, // Empty voting info
+			maxVotingWeight:     0,
+			expectedHasAbort:    true,
+			expectedAbortMsg:    "[GNOSWAP-GOVERNANCE-007] not enough voting power",
 		},
 	}
 
@@ -176,7 +176,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			setupTestConfig(t, tt.setupConfig)
 			setupTestGnsBalance(t, tt.callerAddress, tt.setupGnsBalance)
 			setupTestUserVotesWithDelegation(t, tt.setupUserVotes, tt.maxVotingWeight)
-			
+
 			if tt.setupActiveProposal {
 				setupTestActiveProposal(t, tt.callerAddress)
 			}
@@ -195,7 +195,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 
 			// then
 			uassert.Equal(t, tt.expectedProposalId, proposalId)
-			
+
 			proposal, ok := getProposal(proposalId)
 			uassert.Equal(t, true, ok)
 			uassert.Equal(t, tt.title, proposal.Title())
@@ -208,32 +208,32 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 
 func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 	tests := []struct {
-		name                string
+		name string
 		// given
-		title              string
-		description        string
-		to                 std.Address
-		tokenPath          string
-		amount             int64
-		callerAddress      std.Address
-		setupConfig        *Config
-		setupGnsBalance    int64
+		title               string
+		description         string
+		to                  std.Address
+		tokenPath           string
+		amount              int64
+		callerAddress       std.Address
+		setupConfig         *Config
+		setupGnsBalance     int64
 		setupActiveProposal bool
-		setupUserVotes     map[string]*VotingInfo
-		maxVotingWeight    int64
+		setupUserVotes      map[string]*VotingInfo
+		maxVotingWeight     int64
 		// then
 		expectedProposalId int64
 		expectedHasAbort   bool
 		expectedAbortMsg   string
 	}{
 		{
-			name:               "success - create community pool spend proposal",
-			title:              "Community Pool Spend",
-			description:        "Spend from community pool for development",
-			to:                 testutils.TestAddress("recipient"),
-			tokenPath:          "gno.land/r/demo/gns",
-			amount:             5_000_000_000,
-			callerAddress:      testutils.TestAddress("proposer"),
+			name:          "success - create community pool spend proposal",
+			title:         "Community Pool Spend",
+			description:   "Spend from community pool for development",
+			to:            testutils.TestAddress("recipient"),
+			tokenPath:     "gno.land/r/demo/gns",
+			amount:        5_000_000_000,
+			callerAddress: testutils.TestAddress("proposer"),
 			setupConfig: &Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
@@ -243,7 +243,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 				ExecutionDelay:                86400,
 				ExecutionWindow:               2592000,
 			},
-			setupGnsBalance:    10_000_000_000,
+			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*VotingInfo{
 				testutils.TestAddress("proposer").String(): NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
@@ -253,13 +253,13 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			expectedProposalId: 1,
 		},
 		{
-			name:               "fail - invalid recipient address",
-			title:              "Community Pool Spend",
-			description:        "Spend from community pool for development",
-			to:                 std.Address("invalid"),
-			tokenPath:          "gno.land/r/demo/gns",
-			amount:             5_000_000_000,
-			callerAddress:      testutils.TestAddress("proposer"),
+			name:          "fail - invalid recipient address",
+			title:         "Community Pool Spend",
+			description:   "Spend from community pool for development",
+			to:            std.Address("invalid"),
+			tokenPath:     "gno.land/r/demo/gns",
+			amount:        5_000_000_000,
+			callerAddress: testutils.TestAddress("proposer"),
 			setupConfig: &Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
@@ -274,18 +274,18 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			setupUserVotes: map[string]*VotingInfo{
 				testutils.TestAddress("proposer").String(): NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
 			},
-			maxVotingWeight:   5_000_000_000,
-			expectedHasAbort:  true,
-			expectedAbortMsg:  "[GNOSWAP-GOVERNANCE-002] invalid input || to is invalid address",
+			maxVotingWeight:  5_000_000_000,
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || to is invalid address",
 		},
 		{
-			name:               "fail - zero amount",
-			title:              "Community Pool Spend",
-			description:        "Spend from community pool for development",
-			to:                 testutils.TestAddress("recipient"),
-			tokenPath:          "gno.land/r/demo/gns",
-			amount:             0,
-			callerAddress:      testutils.TestAddress("proposer"),
+			name:          "fail - zero amount",
+			title:         "Community Pool Spend",
+			description:   "Spend from community pool for development",
+			to:            testutils.TestAddress("recipient"),
+			tokenPath:     "gno.land/r/demo/gns",
+			amount:        0,
+			callerAddress: testutils.TestAddress("proposer"),
 			setupConfig: &Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
@@ -300,18 +300,18 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			setupUserVotes: map[string]*VotingInfo{
 				testutils.TestAddress("proposer").String(): NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
 			},
-			maxVotingWeight:   5_000_000_000,
-			expectedHasAbort:  true,
-			expectedAbortMsg:  "[GNOSWAP-GOVERNANCE-002] invalid input || amount is 0",
+			maxVotingWeight:  5_000_000_000,
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || amount is 0",
 		},
 		{
-			name:               "fail - empty token path",
-			title:              "Community Pool Spend",
-			description:        "Spend from community pool for development",
-			to:                 testutils.TestAddress("recipient"),
-			tokenPath:          "",
-			amount:             5_000_000_000,
-			callerAddress:      testutils.TestAddress("proposer"),
+			name:          "fail - empty token path",
+			title:         "Community Pool Spend",
+			description:   "Spend from community pool for development",
+			to:            testutils.TestAddress("recipient"),
+			tokenPath:     "",
+			amount:        5_000_000_000,
+			callerAddress: testutils.TestAddress("proposer"),
 			setupConfig: &Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
@@ -326,9 +326,9 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			setupUserVotes: map[string]*VotingInfo{
 				testutils.TestAddress("proposer").String(): NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
 			},
-			maxVotingWeight:   5_000_000_000,
-			expectedHasAbort:  true,
-			expectedAbortMsg:  "[GNOSWAP-GOVERNANCE-002] invalid input || tokenPath is empty",
+			maxVotingWeight:  5_000_000_000,
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || tokenPath is empty",
 		},
 	}
 
@@ -339,7 +339,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			setupTestConfig(t, tt.setupConfig)
 			setupTestGnsBalance(t, tt.callerAddress, tt.setupGnsBalance)
 			setupTestUserVotesWithDelegation(t, tt.setupUserVotes, tt.maxVotingWeight)
-			
+
 			if tt.setupActiveProposal {
 				setupTestActiveProposal(t, tt.callerAddress)
 			}
@@ -358,7 +358,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 
 			// then
 			uassert.Equal(t, tt.expectedProposalId, proposalId)
-			
+
 			proposal, ok := getProposal(proposalId)
 			uassert.Equal(t, true, ok)
 			uassert.Equal(t, CommunityPoolSpend.String(), proposal.Type().String())
@@ -371,30 +371,30 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 
 func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 	tests := []struct {
-		name                string
+		name string
 		// given
-		title              string
-		description        string
-		numToExecute       int64
-		executions         string
-		callerAddress      std.Address
-		setupConfig        *Config
-		setupGnsBalance    int64
+		title               string
+		description         string
+		numToExecute        int64
+		executions          string
+		callerAddress       std.Address
+		setupConfig         *Config
+		setupGnsBalance     int64
 		setupActiveProposal bool
-		setupUserVotes     map[string]*VotingInfo
-		maxVotingWeight    int64
+		setupUserVotes      map[string]*VotingInfo
+		maxVotingWeight     int64
 		// then
 		expectedProposalId int64
 		expectedHasAbort   bool
 		expectedAbortMsg   string
 	}{
 		{
-			name:               "success - create parameter change proposal",
-			title:              "Parameter Change",
-			description:        "Change system parameters",
-			numToExecute:       2,
-			executions:         "gno.land/r/demo/token*EXE*setParam*EXE*100*GOV*gno.land/r/demo/pool*EXE*setFee*EXE*500",
-			callerAddress:      testutils.TestAddress("proposer"),
+			name:          "success - create parameter change proposal",
+			title:         "Parameter Change",
+			description:   "Change system parameters",
+			numToExecute:  2,
+			executions:    "gno.land/r/demo/token*EXE*setParam*EXE*100*GOV*gno.land/r/demo/pool*EXE*setFee*EXE*500",
+			callerAddress: testutils.TestAddress("proposer"),
 			setupConfig: &Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
@@ -404,7 +404,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 				ExecutionDelay:                86400,
 				ExecutionWindow:               2592000,
 			},
-			setupGnsBalance:    10_000_000_000,
+			setupGnsBalance:     10_000_000_000,
 			setupActiveProposal: false,
 			setupUserVotes: map[string]*VotingInfo{
 				testutils.TestAddress("proposer").String(): NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
@@ -414,12 +414,12 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			expectedProposalId: 1,
 		},
 		{
-			name:               "fail - zero executions",
-			title:              "Parameter Change",
-			description:        "Change system parameters",
-			numToExecute:       0,
-			executions:         "",
-			callerAddress:      testutils.TestAddress("proposer"),
+			name:          "fail - zero executions",
+			title:         "Parameter Change",
+			description:   "Change system parameters",
+			numToExecute:  0,
+			executions:    "",
+			callerAddress: testutils.TestAddress("proposer"),
 			setupConfig: &Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
@@ -434,17 +434,17 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			setupUserVotes: map[string]*VotingInfo{
 				testutils.TestAddress("proposer").String(): NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
 			},
-			maxVotingWeight:   5_000_000_000,
-			expectedHasAbort:  true,
-			expectedAbortMsg:  "[GNOSWAP-GOVERNANCE-002] invalid input || numToExecute is less than or equal to 0",
+			maxVotingWeight:  5_000_000_000,
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || numToExecute is less than or equal to 0",
 		},
 		{
-			name:               "fail - invalid execution format",
-			title:              "Parameter Change",
-			description:        "Change system parameters",
-			numToExecute:       1,
-			executions:         "invalid_format",
-			callerAddress:      testutils.TestAddress("proposer"),
+			name:          "fail - invalid execution format",
+			title:         "Parameter Change",
+			description:   "Change system parameters",
+			numToExecute:  1,
+			executions:    "invalid_format",
+			callerAddress: testutils.TestAddress("proposer"),
 			setupConfig: &Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
@@ -459,9 +459,9 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			setupUserVotes: map[string]*VotingInfo{
 				testutils.TestAddress("proposer").String(): NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
 			},
-			maxVotingWeight:   5_000_000_000,
-			expectedHasAbort:  true,
-			expectedAbortMsg:  "[GNOSWAP-GOVERNANCE-002] invalid input || invalid parameter change info",
+			maxVotingWeight:  5_000_000_000,
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || invalid parameter change info",
 		},
 	}
 
@@ -472,7 +472,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			setupTestConfig(t, tt.setupConfig)
 			setupTestGnsBalance(t, tt.callerAddress, tt.setupGnsBalance)
 			setupTestUserVotesWithDelegation(t, tt.setupUserVotes, tt.maxVotingWeight)
-			
+
 			if tt.setupActiveProposal {
 				setupTestActiveProposal(t, tt.callerAddress)
 			}
@@ -491,7 +491,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 
 			// then
 			uassert.Equal(t, tt.expectedProposalId, proposalId)
-			
+
 			proposal, ok := getProposal(proposalId)
 			uassert.Equal(t, true, ok)
 			uassert.Equal(t, ParameterChange.String(), proposal.Type().String())
@@ -575,7 +575,7 @@ func TestGovernancePropose_ProposeTextInputValidation(t *testing.T) {
 				ExecutionDelay:                86400,
 				ExecutionWindow:               2592000,
 			})
-			
+
 			caller := testutils.TestAddress("proposer")
 			setupTestGnsBalance(t, caller, 10_000_000_000)
 			setupTestUserVotesWithDelegation(t, map[string]*VotingInfo{
@@ -592,7 +592,7 @@ func TestGovernancePropose_ProposeTextInputValidation(t *testing.T) {
 			} else {
 				proposalId := ProposeText(cross, tt.title, tt.description)
 				uassert.Equal(t, int64(1), proposalId)
-				
+
 				proposal, ok := getProposal(proposalId)
 				uassert.Equal(t, true, ok)
 				uassert.Equal(t, tt.title, proposal.Title())
@@ -605,11 +605,11 @@ func TestGovernancePropose_ProposeTextInputValidation(t *testing.T) {
 // Test proposal state validation
 func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 	tests := []struct {
-		name                 string
-		setupActiveProposal  func() *Proposal
-		expectedError        string
-		shouldFail           bool
-		description          string
+		name                string
+		setupActiveProposal func() *Proposal
+		expectedError       string
+		shouldFail          bool
+		description         string
 	}{
 		{
 			name: "fail - upcoming proposal exists",
@@ -777,7 +777,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 				ExecutionDelay:                86400,
 				ExecutionWindow:               2592000,
 			})
-			
+
 			caller := testutils.TestAddress("proposer")
 			setupTestGnsBalance(t, caller, 10_000_000_000)
 			setupTestUserVotesWithDelegation(t, map[string]*VotingInfo{
@@ -814,10 +814,10 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 		shouldFail    bool
 	}{
 		{
-			name:      "success - valid parameters",
-			to:        testutils.TestAddress("recipient"),
-			tokenPath: "gno.land/r/demo/gns",
-			amount:    1_000_000_000,
+			name:       "success - valid parameters",
+			to:         testutils.TestAddress("recipient"),
+			tokenPath:  "gno.land/r/demo/gns",
+			amount:     1_000_000_000,
 			shouldFail: false,
 		},
 		{
@@ -845,10 +845,10 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 			shouldFail:    true,
 		},
 		{
-			name:      "success - max int64 amount",
-			to:        testutils.TestAddress("recipient"),
-			tokenPath: "gno.land/r/demo/gns",
-			amount:    9223372036854775807, // MAX_INT64
+			name:       "success - max int64 amount",
+			to:         testutils.TestAddress("recipient"),
+			tokenPath:  "gno.land/r/demo/gns",
+			amount:     9223372036854775807, // MAX_INT64
 			shouldFail: false,
 		},
 		{
@@ -874,7 +874,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 				ExecutionDelay:                86400,
 				ExecutionWindow:               2592000,
 			})
-			
+
 			caller := testutils.TestAddress("proposer")
 			setupTestGnsBalance(t, caller, 10_000_000_000)
 			setupTestUserVotesWithDelegation(t, map[string]*VotingInfo{
@@ -891,7 +891,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 			} else {
 				proposalId := ProposeCommunityPoolSpend(cross, "Community Pool Spend", "Description", tt.to, tt.tokenPath, tt.amount)
 				uassert.Equal(t, proposalId, getCurrentProposalID())
-				
+
 				proposal, ok := getProposal(proposalId)
 				uassert.Equal(t, true, ok)
 				uassert.Equal(t, CommunityPoolSpend.String(), proposal.Type().String())
@@ -1001,7 +1001,7 @@ func TestGovernancePropose_ParameterChangeValidation(t *testing.T) {
 				ExecutionDelay:                86400,
 				ExecutionWindow:               2592000,
 			})
-			
+
 			caller := testutils.TestAddress("proposer")
 			setupTestGnsBalance(t, caller, 10_000_000_000)
 			setupTestUserVotesWithDelegation(t, map[string]*VotingInfo{
@@ -1018,7 +1018,7 @@ func TestGovernancePropose_ParameterChangeValidation(t *testing.T) {
 			} else {
 				proposalId := ProposeParameterChange(cross, "Parameter Change", "Description", tt.numToExecute, tt.executions)
 				uassert.Equal(t, proposalId, getCurrentProposalID())
-				
+
 				proposal, ok := getProposal(proposalId)
 				uassert.Equal(t, true, ok)
 				uassert.Equal(t, ParameterChange.String(), proposal.Type().String())
@@ -1041,7 +1041,7 @@ func TestGovernancePropose_ProposalIDGeneration(t *testing.T) {
 			ExecutionDelay:                86400,
 			ExecutionWindow:               2592000,
 		})
-		
+
 		caller1 := testutils.TestAddress("proposer1")
 		caller2 := testutils.TestAddress("proposer2")
 		caller3 := testutils.TestAddress("proposer3")
@@ -1140,4 +1140,3 @@ func setupTestActiveProposal(t *testing.T, proposerAddress std.Address) {
 
 	addProposal(proposal)
 }
-

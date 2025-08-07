@@ -4,9 +4,9 @@ import (
 	"std"
 	"time"
 
+	en "gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/common"
-	en "gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/halt"
 )
 
 // Execute executes an approved proposal with the given ID.
@@ -119,7 +119,6 @@ func executeProposal(
 			return nil, err
 		}
 	}
-
 
 	return proposal, nil
 }

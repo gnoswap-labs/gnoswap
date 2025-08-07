@@ -10,11 +10,11 @@ import (
 	plp "gno.land/p/gnoswap/gnsmath"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/pool"
 
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
@@ -151,7 +151,7 @@ func main() {
 		MIN_PRICE,
 		adminAddr,
 	)
-	
+
 	thisPool = pool.GetPool(barPath, fooPath, fee100)
 	println("[EXPECTED] Pool tick after swap:", thisPool.Slot0Tick(), "expected: -24082")
 	println("[EXPECTED] Pool sqrt price after swap:", thisPool.Slot0SqrtPriceX96().ToString(), "expected:", testSqrtSubOne.ToString())

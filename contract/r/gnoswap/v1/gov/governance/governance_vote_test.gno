@@ -8,7 +8,7 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	"gno.land/r/gnoswap/v1/halt"
+	"gno.land/r/gnoswap/halt"
 )
 
 var testConfig = Config{

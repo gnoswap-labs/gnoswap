@@ -17,17 +17,17 @@ import (
 
 	"gno.land/r/gnoswap/v1/gnft"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/emission"
 
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"

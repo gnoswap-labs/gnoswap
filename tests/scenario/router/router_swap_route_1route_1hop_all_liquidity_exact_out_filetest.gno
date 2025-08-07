@@ -9,19 +9,19 @@ import (
 
 	"gno.land/r/gnoswap/v1/common"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	"gno.land/r/gnoswap/v1/router"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
 )
 
 var (
@@ -41,7 +41,7 @@ var (
 )
 
 var (
-	fee500 uint32 = 500
+	fee500  uint32 = 500
 	fee3000 uint32 = 3000
 
 	tier1 uint64 = 1
@@ -52,7 +52,7 @@ var t *testing.T
 func main() {
 	println("[SCENARIO] #2 All Liquidity ExactOut 1route 1hop")
 	println("[INFO] Starting scenario: All liquidity exact out 1route 1hop")
-	
+
 	println("[INFO] Setting up pool and position")
 	testing.SetRealm(adminRealm)
 
@@ -106,18 +106,18 @@ func main() {
 		t,
 		`[GNOSWAP-ROUTER-002] slippage check failed || ExactOut: too much spent (max:0, used:168406)`,
 		func() {
-		router.ExactOutSwapRoute(
-			cross,
-			barPath,  // inputToken
-			bazPath,  // outputToken
-			"120000", // amountSpecified
-			poolPath, // strRouteArr
-			"100",    // quoteArr
-			"0",      // tokenAmountLimit
-			time.Now().Add(time.Hour).Unix(),
-			"", // referrer
-		)
-	})
+			router.ExactOutSwapRoute(
+				cross,
+				barPath,  // inputToken
+				bazPath,  // outputToken
+				"120000", // amountSpecified
+				poolPath, // strRouteArr
+				"100",    // quoteArr
+				"0",      // tokenAmountLimit
+				time.Now().Add(time.Hour).Unix(),
+				"", // referrer
+			)
+		})
 	println("[INFO] Scenario completed")
 }
 

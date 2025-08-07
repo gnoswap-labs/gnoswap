@@ -112,29 +112,29 @@ func TestFilterActiveIncentives(t *testing.T) {
 
 	// test cases
 	tests := []struct {
-		name          string
+		name             string
 		currentTimestamp int64
-		expectedCount int
+		expectedCount    int
 	}{
 		{
-			name:          "current height is lower than all incentives' start height",
+			name:             "current height is lower than all incentives' start height",
 			currentTimestamp: 50,
-			expectedCount: 0,
+			expectedCount:    0,
 		},
 		{
-			name:          "current height is within the range of the first incentive",
+			name:             "current height is within the range of the first incentive",
 			currentTimestamp: 150,
-			expectedCount: 1,
+			expectedCount:    1,
 		},
 		{
-			name:          "current height is within the range of the two incentives",
+			name:             "current height is within the range of the two incentives",
 			currentTimestamp: 220,
-			expectedCount: 2,
+			expectedCount:    2,
 		},
 		{
-			name:          "current height is higher than all incentives' end height",
+			name:             "current height is higher than all incentives' end height",
 			currentTimestamp: 400,
-			expectedCount: 0,
+			expectedCount:    0,
 		},
 	}
 

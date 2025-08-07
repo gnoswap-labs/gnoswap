@@ -25,7 +25,7 @@ import (
 // - Ensure that the tokens and fee tier provided are valid and registered in the system.
 //
 // Example:
-// pool := GetPool("gno.land/r/demo/wugnot", "gno.land/r/gnoswap/v1/gns", 3000)
+// pool := GetPool("gno.land/r/demo/wugnot", "gno.land/r/gnoswap/gns", 3000)
 func GetPool(token0Path, token1Path string, fee uint32) *Pool {
 	poolPath := GetPoolPath(token0Path, token1Path, fee)
 	return mustGetPool(poolPath).Clone()

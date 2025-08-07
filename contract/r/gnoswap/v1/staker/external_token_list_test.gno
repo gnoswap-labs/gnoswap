@@ -7,7 +7,7 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 
 	prbac "gno.land/p/gnoswap/rbac"
 )
@@ -128,7 +128,7 @@ func TestRemoveToken(t *testing.T) {
 			inputTokenPath:        GNS_PATH,
 			expectedAllowedTokens: []string{GNS_PATH, GNOT, customTokenPath},
 			expectedHasAbort:      true,
-			expectedAbortMsg:      "[GNOSWAP-STAKER-018] can not delete default external token: can not remove default token(gno.land/r/gnoswap/v1/gns)",
+			expectedAbortMsg:      "[GNOSWAP-STAKER-018] can not delete default external token: can not remove default token(gno.land/r/gnoswap/gns)",
 			expectedHasPanic:      false,
 			expectedPanicMsg:      "",
 		},

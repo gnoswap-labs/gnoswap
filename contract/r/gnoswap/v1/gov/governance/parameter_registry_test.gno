@@ -10,18 +10,18 @@ import (
 // TestParameterRegistry_RegisterAndHandler tests registration and handler retrieval
 func TestParameterRegistry_RegisterAndHandler(t *testing.T) {
 	tests := []struct {
-		name              string
-		pkgPath           string
-		function          string
-		paramCount        int
-		handlerFunc       func([]string) error
-		expectedError     bool
-		expectedErrorMsg  string
+		name             string
+		pkgPath          string
+		function         string
+		paramCount       int
+		handlerFunc      func([]string) error
+		expectedError    bool
+		expectedErrorMsg string
 	}{
 		{
-			name:     "Success - Register and retrieve handler",
-			pkgPath:  "test/pkg",
-			function: "testFunc",
+			name:       "Success - Register and retrieve handler",
+			pkgPath:    "test/pkg",
+			function:   "testFunc",
 			paramCount: 1,
 			handlerFunc: func([]string) error {
 				return nil
@@ -29,12 +29,12 @@ func TestParameterRegistry_RegisterAndHandler(t *testing.T) {
 			expectedError: false,
 		},
 		{
-			name:     "Failure - Handler not found",
-			pkgPath:  "nonexistent/pkg",
-			function: "nonexistentFunc",
-			paramCount: 0,
-			handlerFunc: nil,
-			expectedError: true,
+			name:             "Failure - Handler not found",
+			pkgPath:          "nonexistent/pkg",
+			function:         "nonexistentFunc",
+			paramCount:       0,
+			handlerFunc:      nil,
+			expectedError:    true,
 			expectedErrorMsg: "handler not found for nonexistent/pkg:nonexistentFunc",
 		},
 	}
@@ -46,9 +46,9 @@ func TestParameterRegistry_RegisterAndHandler(t *testing.T) {
 
 			if tc.handlerFunc != nil {
 				handler := ParameterHandlerOptions{
-					pkgPath:    tc.pkgPath,
-					function:   tc.function,
-					paramCount: tc.paramCount,
+					pkgPath:     tc.pkgPath,
+					function:    tc.function,
+					paramCount:  tc.paramCount,
 					handlerFunc: tc.handlerFunc,
 				}
 				registry.register(handler)
@@ -72,12 +72,12 @@ func TestParameterRegistry_RegisterAndHandler(t *testing.T) {
 // TestParameterHandlerOptions_Execute tests parameter handler execution
 func TestParameterHandlerOptions_Execute(t *testing.T) {
 	tests := []struct {
-		name              string
-		paramCount        int
-		params            []string
-		handlerFunc       func([]string) error
-		expectedError     bool
-		expectedErrorMsg  string
+		name             string
+		paramCount       int
+		params           []string
+		handlerFunc      func([]string) error
+		expectedError    bool
+		expectedErrorMsg string
 	}{
 		{
 			name:       "Success - Execute with correct param count",
@@ -95,7 +95,7 @@ func TestParameterHandlerOptions_Execute(t *testing.T) {
 			handlerFunc: func([]string) error {
 				return nil
 			},
-			expectedError: true,
+			expectedError:    true,
 			expectedErrorMsg: "expected 2 parameters, got 1",
 		},
 		{
@@ -105,7 +105,7 @@ func TestParameterHandlerOptions_Execute(t *testing.T) {
 			handlerFunc: func([]string) error {
 				return ufmt.Errorf("handler error")
 			},
-			expectedError: true,
+			expectedError:    true,
 			expectedErrorMsg: "handler error",
 		},
 	}
@@ -148,9 +148,9 @@ func TestCreateParameterHandlers(t *testing.T) {
 		pkgPath  string
 		function string
 	}{
-		{"gno.land/r/gnoswap/v1/halt", "SetHaltLevel"},
+		{"gno.land/r/gnoswap/halt", "SetHaltLevel"},
 		{"gno.land/r/gnoswap/v1/community_pool", "TransferToken"},
-		{"gno.land/r/gnoswap/v1/emission", "ChangeDistributionPct"},
+		{"gno.land/r/gnoswap/emission", "ChangeDistributionPct"},
 	}
 
 	for _, tc := range testCases {
@@ -158,4 +158,4 @@ func TestCreateParameterHandlers(t *testing.T) {
 		uassert.Nil(t, err)
 		uassert.NotNil(t, handler)
 	}
-} 
+}

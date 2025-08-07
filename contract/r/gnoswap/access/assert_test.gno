@@ -388,7 +388,7 @@ func TestAssertIsAuthorized(t *testing.T) {
 }
 
 func TestAssertIsRBAC(t *testing.T) {
-	rbacAddr := std.NewCodeRealm("gno.land/r/gnoswap/v1/rbac").Address()
+	rbacAddr := std.NewCodeRealm("gno.land/r/gnoswap/rbac").Address()
 	unauthorizedAddr := std.Address("g1unauthorized123456789")
 
 	tests := []struct {
@@ -424,7 +424,6 @@ func TestAssertIsRBAC(t *testing.T) {
 		})
 	}
 }
-
 
 func TestAssertIsSwapWhitelisted(t *testing.T) {
 	officialRouter := testutils.TestAddress("official")

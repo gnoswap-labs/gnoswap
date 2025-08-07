@@ -9,9 +9,9 @@ import (
 // TestProposalVoteStatus_VotingOperations tests voting operations and status
 func TestProposalVoteStatus_VotingOperations(t *testing.T) {
 	tests := []struct {
-		name              string
-		maxVotingWeight   int64
-		quorum            int64
+		name             string
+		maxVotingWeight  int64
+		quorum           int64
 		yesVotes         int64
 		noVotes          int64
 		expectedFinished bool
@@ -19,9 +19,9 @@ func TestProposalVoteStatus_VotingOperations(t *testing.T) {
 		expectedPassed   bool
 	}{
 		{
-			name:              "Not reached quorum",
-			maxVotingWeight:   1000,
-			quorum:            60,
+			name:             "Not reached quorum",
+			maxVotingWeight:  1000,
+			quorum:           60,
 			yesVotes:         300,
 			noVotes:          200,
 			expectedFinished: false,
@@ -29,9 +29,9 @@ func TestProposalVoteStatus_VotingOperations(t *testing.T) {
 			expectedPassed:   false,
 		},
 		{
-			name:              "Passed with quorum",
-			maxVotingWeight:   1000,
-			quorum:            60,
+			name:             "Passed with quorum",
+			maxVotingWeight:  1000,
+			quorum:           60,
 			yesVotes:         600,
 			noVotes:          300,
 			expectedFinished: true,
@@ -39,9 +39,9 @@ func TestProposalVoteStatus_VotingOperations(t *testing.T) {
 			expectedPassed:   true,
 		},
 		{
-			name:              "Rejected with quorum",
-			maxVotingWeight:   1000,
-			quorum:            60,
+			name:             "Rejected with quorum",
+			maxVotingWeight:  1000,
+			quorum:           60,
 			yesVotes:         300,
 			noVotes:          600,
 			expectedFinished: true,
@@ -49,9 +49,9 @@ func TestProposalVoteStatus_VotingOperations(t *testing.T) {
 			expectedPassed:   false,
 		},
 		{
-			name:              "Equal votes with quorum",
-			maxVotingWeight:   1000,
-			quorum:            60,
+			name:             "Equal votes with quorum",
+			maxVotingWeight:  1000,
+			quorum:           60,
 			yesVotes:         300,
 			noVotes:          300,
 			expectedFinished: false,
@@ -87,12 +87,12 @@ func TestProposalVoteStatus_VotingOperations(t *testing.T) {
 // TestProposalVoteStatus_UpdateVoteStatus tests vote status updates
 func TestProposalVoteStatus_UpdateVoteStatus(t *testing.T) {
 	tests := []struct {
-		name            string
-		initialMax      int64
-		initialQuorum   int64
-		newMax          int64
-		newQuorum       int64
-		expectedQuorum  int64
+		name           string
+		initialMax     int64
+		initialQuorum  int64
+		newMax         int64
+		newQuorum      int64
+		expectedQuorum int64
 	}{
 		{
 			name:           "Update with higher values",
@@ -176,4 +176,4 @@ func TestNewProposalVoteStatus(t *testing.T) {
 			uassert.Equal(t, status.nay, int64(0))
 		})
 	}
-} 
+}

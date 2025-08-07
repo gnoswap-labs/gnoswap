@@ -10,8 +10,8 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gns"
 )
 
 func TestSaveProtocolFees(t *testing.T) {
@@ -1186,7 +1186,7 @@ func TestSwap_ExtremeGaps(t *testing.T) {
 
 func TestSwap_FeeTier100(t *testing.T) {
 	const wugnotTokenPath = "gno.land/r/demo/wugnot"
-	const gnsTokenPath = "gno.land/r/gnoswap/v1/gns"
+	const gnsTokenPath = "gno.land/r/gnoswap/gns"
 
 	tests := []struct {
 		name        string

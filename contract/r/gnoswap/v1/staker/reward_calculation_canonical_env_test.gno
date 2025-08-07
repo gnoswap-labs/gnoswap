@@ -67,9 +67,9 @@ type canonicalRewardState struct {
 
 	emissionUpdates *UintTree
 
-	SecondsPerBlock     int64  // How many seconds per block (1 for testing)
-	PerBlockEmission    uint64  // This will be converted to per-second internally
-	PerSecondEmission   uint64  // Actual per-second emission rate
+	SecondsPerBlock   int64  // How many seconds per block (1 for testing)
+	PerBlockEmission  uint64 // This will be converted to per-second internally
+	PerSecondEmission uint64 // Actual per-second emission rate
 
 	// emulated reward claimed by unstake
 	emulatedClaimedReward map[uint64]int64
@@ -85,12 +85,12 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 			pools:    pools,
 			deposits: deposits,
 		},
-		Pool:             make(map[string]*canonicalPool),
-		Reward:           make([]map[uint64]Reward, 124),
-		emissionUpdates:  NewUintTree(),
-		SecondsPerBlock:   1,  // 1 second per block
+		Pool:              make(map[string]*canonicalPool),
+		Reward:            make([]map[uint64]Reward, 124),
+		emissionUpdates:   NewUintTree(),
+		SecondsPerBlock:   1, // 1 second per block
 		PerBlockEmission:  1000000000,
-		PerSecondEmission: 1000000000,  // Same as per-block since 1 block = 1 second
+		PerSecondEmission: 1000000000, // Same as per-block since 1 block = 1 second
 
 		emulatedClaimedReward: make(map[uint64]int64),
 	}
@@ -134,7 +134,7 @@ func (self *canonicalRewardState) isInRange(deposit *Deposit) bool {
 func (self *canonicalRewardState) SetEmissionUpdate(emission uint64) {
 	self.emissionUpdates.set(time.Now().Unix(), emission)
 	self.PerBlockEmission = emission
-	self.PerSecondEmission = emission  // Since 1 block = 1 second in tests
+	self.PerSecondEmission = emission // Since 1 block = 1 second in tests
 }
 
 func (self *canonicalRewardState) LiquidityPerPool() map[string]*u256.Uint {
@@ -261,7 +261,7 @@ func (self *canonicalRewardState) CanonicalRewardOfHeight(depositId uint64, heig
 }
 
 func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) ([]int64, []int64, []map[string]int64, []map[string]int64) {
-	currentTimestamp := self.CurrentTime()	
+	currentTimestamp := self.CurrentTime()
 	currentHeight := std.ChainHeight()
 	// cache per-tier and per-pool rewards
 	self.global.poolTier.cacheReward(currentHeight, currentTimestamp, self.global.pools)
@@ -362,15 +362,15 @@ func (self *canonicalRewardState) StakeToken(positionId uint64, targetPoolPath s
 	}
 
 	deposit := &Deposit{
-		owner:             owner,
-		stakeTimestamp:    currentTimestamp,
-		stakeTime:         currentTimestamp,  // Keep for backward compatibility
-		targetPoolPath:    targetPoolPath,
-		tickLower:         tickLower,
-		tickUpper:         tickUpper,
-		liquidity:         liquidity,
-		lastCollectTime:   currentTimestamp,
-		warmups:           instantiateWarmup(currentTimestamp),
+		owner:           owner,
+		stakeTimestamp:  currentTimestamp,
+		stakeTime:       currentTimestamp, // Keep for backward compatibility
+		targetPoolPath:  targetPoolPath,
+		tickLower:       tickLower,
+		tickUpper:       tickUpper,
+		liquidity:       liquidity,
+		lastCollectTime: currentTimestamp,
+		warmups:         instantiateWarmup(currentTimestamp),
 	}
 	canonicalPool, ok := self.Pool[deposit.targetPoolPath]
 	if !ok {

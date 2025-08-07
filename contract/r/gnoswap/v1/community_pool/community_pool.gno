@@ -4,9 +4,9 @@ import (
 	"std"
 	"strconv"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/halt"
 )
 
 // TransferToken transfers token to the given address.

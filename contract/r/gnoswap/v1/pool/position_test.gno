@@ -24,7 +24,7 @@ func TestPositionGetKey(t *testing.T) {
 		errorMsg    string
 		expectedKey string
 	}{
-		{invalidAddr, 100, 200, true, `[GNOSWAP-POOL-023] invalid address || owner(invalidAddr) is invalid`, ""},                                                    // invalid address
+		{invalidAddr, 100, 200, true, `[GNOSWAP-POOL-023] invalid address || owner(invalidAddr) is invalid`, ""},                                    // invalid address
 		{validAddr, 200, 100, true, `[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)`, ""},     // tickLower > tickUpper
 		{validAddr, -100, -200, true, `[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(-100), tickUpper(-200)`, ""}, // tickLower > tickUpper
 		{validAddr, 100, 100, true, "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(100), tickUpper(100)", ""},     // tickLower == tickUpper
@@ -59,7 +59,8 @@ func TestPositionUpdateWithKey(t *testing.T) {
 			testutils.TestAddress("dummyAddr"),
 			100,
 			200,
-		)})
+		)
+	})
 
 	tests := []struct {
 		liquidity         *i256.Int

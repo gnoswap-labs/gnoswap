@@ -93,7 +93,7 @@ func TestNewPoolParam(t *testing.T) {
 
 func TestIsInOrder(t *testing.T) {
 	const (
-		gnsPath    = "gno.land/r/gnoswap/v1/gns"
+		gnsPath    = "gno.land/r/gnoswap/gns"
 		wugnotPath = "gno.land/r/gnoswap/v1/wugnot"
 	)
 
@@ -124,7 +124,7 @@ func TestIsInOrder(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			params := newPoolParams(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPriceX96Str, tt.tickSpacing)
 			poolPath := params.poolPath()
-			uassert.Equal(t, poolPath, "gno.land/r/gnoswap/v1/gns:gno.land/r/gnoswap/v1/wugnot:3000", "Pool path should match")
+			uassert.Equal(t, poolPath, "gno.land/r/gnoswap/gns:gno.land/r/gnoswap/v1/wugnot:3000", "Pool path should match")
 			uassert.Equal(t, params.isInOrder(), true, "Tokens order should match")
 		})
 	}
@@ -132,7 +132,7 @@ func TestIsInOrder(t *testing.T) {
 
 func TestUpdateWithWrapping(t *testing.T) {
 	const (
-		gnsPath    = "gno.land/r/gnoswap/v1/gns"
+		gnsPath    = "gno.land/r/gnoswap/gns"
 		wugnotPath = "gno.land/r/gnoswap/v1/wugnot"
 	)
 

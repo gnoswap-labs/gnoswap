@@ -31,7 +31,7 @@ func assertIsValidAmount(amount int64) {
 			ufmt.Sprintf("amount(%d) should greater than minimum deposit amount(%d)", amount, minimumDepositAmount),
 		))
 	}
-	
+
 	if (amount % minimumDepositAmount) != 0 {
 		panic(makeErrorWithDetails(
 			errInvalidAmount,

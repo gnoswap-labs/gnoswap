@@ -9,8 +9,8 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gns"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
@@ -140,7 +140,6 @@ func TestStakeGovernance(t *testing.T) {
 			}
 
 			uassert.NoError(t, err)
-
 		})
 	}
 }
@@ -160,16 +159,16 @@ func initLaunchpadDepositTest(t *testing.T) {
 	// Setup test project
 	project, _ := createProject(
 		&createProjectParams{
-			name:               "Test Project",
-			tokenPath:          "gno.land/r/onbloc/obl",
-			depositAmount:      1000000,
-			tier30Ratio:        30,
-			tier90Ratio:        30,
-			tier180Ratio:       40,
-			recipient:          testutils.TestAddress("project"), // TODO: change to real address
-			startTime:          currentTime + 10,
-			currentTime:        currentTime,
-			currentHeight:      currentHeight,
+			name:          "Test Project",
+			tokenPath:     "gno.land/r/onbloc/obl",
+			depositAmount: 1000000,
+			tier30Ratio:   30,
+			tier90Ratio:   30,
+			tier180Ratio:  40,
+			recipient:     testutils.TestAddress("project"), // TODO: change to real address
+			startTime:     currentTime + 10,
+			currentTime:   currentTime,
+			currentHeight: currentHeight,
 		},
 	)
 	projects.Set(project.ID(), project)

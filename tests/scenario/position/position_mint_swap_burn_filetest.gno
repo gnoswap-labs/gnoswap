@@ -14,7 +14,7 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/position"
@@ -31,12 +31,12 @@ const (
 )
 
 var (
-	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm    = std.NewUserRealm(adminAddr)
-	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
-	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
+	adminAddr, _       = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm         = std.NewUserRealm(adminAddr)
+	poolAddr, _        = access.GetAddress(prbac.ROLE_POOL.String())
+	routerAddr, _      = access.GetAddress(prbac.ROLE_ROUTER.String())
 	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
-	routerRealm   = std.NewUserRealm(routerAddr)
+	routerRealm        = std.NewUserRealm(routerAddr)
 
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = std.NewUserRealm(aliceAddr)
@@ -189,7 +189,7 @@ func collectFees() {
 	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees")
-	
+
 	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1, false)
 
 	ufmt.Printf("[EXPECTED] Collected fee0 should be %s\n", fee0)

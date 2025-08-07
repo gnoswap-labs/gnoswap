@@ -6,31 +6,31 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	en "gno.land/r/gnoswap/emission"
 	cp "gno.land/r/gnoswap/v1/community_pool"
-	en "gno.land/r/gnoswap/v1/emission"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
 	rr "gno.land/r/gnoswap/v1/router"
 	sr "gno.land/r/gnoswap/v1/staker"
 
-	"gno.land/r/gnoswap/v1/halt"
+	"gno.land/r/gnoswap/halt"
 )
 
 // Package paths
 const (
 	COMMON_PATH         = "gno.land/r/gnoswap/v1/common"
-	ACCESS_PATH         = "gno.land/r/gnoswap/v1/access"
+	ACCESS_PATH         = "gno.land/r/gnoswap/access"
 	COMMUNITY_POOL_PATH = "gno.land/r/gnoswap/v1/community_pool"
-	EMISSION_PATH       = "gno.land/r/gnoswap/v1/emission"
-	GNS_PATH            = "gno.land/r/gnoswap/v1/gns"
+	EMISSION_PATH       = "gno.land/r/gnoswap/emission"
+	GNS_PATH            = "gno.land/r/gnoswap/gns"
 	GOV_GOVERNANCE_PATH = "gno.land/r/gnoswap/v1/gov/governance"
 	POOL_PATH           = "gno.land/r/gnoswap/v1/pool"
 	PROTOCOL_FEE_PATH   = "gno.land/r/gnoswap/v1/protocol_fee"
 	ROUTER_PATH         = "gno.land/r/gnoswap/v1/router"
 	STAKER_PATH         = "gno.land/r/gnoswap/v1/staker"
-	HALT_PATH           = "gno.land/r/gnoswap/v1/halt"
+	HALT_PATH           = "gno.land/r/gnoswap/halt
 )
 
 // ParameterHandler interface defines the contract for parameter execution handlers.

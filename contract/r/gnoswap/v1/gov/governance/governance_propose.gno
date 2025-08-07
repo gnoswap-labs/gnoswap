@@ -4,9 +4,9 @@ import (
 	"std"
 	"time"
 
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/gov/staker"
-	"gno.land/r/gnoswap/v1/halt"
 )
 
 // ProposeText creates a new text proposal with the given data.

@@ -10,12 +10,12 @@ import (
 // TestNewDelegationRecord tests the creation of new delegation records
 func TestNewDelegationRecord(t *testing.T) {
 	tests := []struct {
-		name                  string
-		delegationType        DelegationType
-		delegationAmount      int64
-		delegateFrom          std.Address
-		delegateTo            std.Address
-		createdAt             int64
+		name                     string
+		delegationType           DelegationType
+		delegationAmount         int64
+		delegateFrom             std.Address
+		delegateTo               std.Address
+		createdAt                int64
 		expectedDelegateAmount   int64
 		expectedUnDelegateAmount int64
 	}{

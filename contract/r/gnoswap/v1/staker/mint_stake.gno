@@ -5,7 +5,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/halt"
+	"gno.land/r/gnoswap/halt"
 
 	pn "gno.land/r/gnoswap/v1/position"
 )

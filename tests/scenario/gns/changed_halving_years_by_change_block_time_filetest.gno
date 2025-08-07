@@ -7,11 +7,11 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/gns"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	_ "gno.land/r/gnoswap/v1/staker"
 )
 

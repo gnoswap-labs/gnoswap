@@ -6,7 +6,7 @@ import (
 	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 )
 
 // assertIsPoolOrRouterOrStaker panics if the caller is not the pool, router, or staker contract.

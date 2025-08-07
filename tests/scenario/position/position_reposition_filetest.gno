@@ -9,7 +9,7 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/position"
 
@@ -203,7 +203,6 @@ func checkRepositionedState() {
 }
 
 func executeSwapInNewRange() {
-
 	p := pool.GetPool(barPath, fooPath, fee500)
 	println("[DEBUG] Tick before second swap:", p.Slot0Tick())
 	println("[DEBUG] Pool liquidity:", p.Liquidity().ToString())

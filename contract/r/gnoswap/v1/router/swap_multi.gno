@@ -77,7 +77,7 @@ func NewMultiSwapProcessor(isSimulate bool, direction SwapDirection) *MultiSwapP
 // processForwardSwap handles forward direction swaps (exactIn)
 func (p *MultiSwapProcessor) processForwardSwap(sp SwapParams, numPools int, swapPath string) (*u256.Uint, *u256.Uint, error) {
 	payer := std.PreviousRealm().Address() // Initial payer is the user
-	
+
 	firstAmountIn := zero
 	currentPoolIndex := 0
 

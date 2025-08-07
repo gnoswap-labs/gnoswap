@@ -95,26 +95,26 @@ func (r ApiExternalIncentive) JSON() *json.Node {
 }
 
 type ApiInternalIncentive struct {
-	PoolPath       string `json:"poolPath"`
-	Tier           uint64 `json:"tier"`
-	StartTimestamp int64  `json:"startTimestamp"`
+	PoolPath        string `json:"poolPath"`
+	Tier            uint64 `json:"tier"`
+	StartTimestamp  int64  `json:"startTimestamp"`
 	RewardPerSecond string `json:"rewardPerSecond"`
 }
 
 func newApiInternalIncentive(poolPath string, tier uint64) ApiInternalIncentive {
 	perSecond := calculateInternalRewardPerSecondByPoolPath(poolPath)
 	return ApiInternalIncentive{
-		PoolPath:       poolPath,
-		Tier:           tier,
+		PoolPath:        poolPath,
+		Tier:            tier,
 		RewardPerSecond: perSecond,
 	}
 }
 
 func (r ApiInternalIncentive) JSON() *json.Node {
 	return json.ObjectNode("", map[string]*json.Node{
-		"poolPath":       json.StringNode("poolPath", r.PoolPath),
-		"rewardToken":    json.StringNode("rewardToken", GNS_PATH),
-		"tier":           json.NumberNode("tier", float64(r.Tier)),
+		"poolPath":        json.StringNode("poolPath", r.PoolPath),
+		"rewardToken":     json.StringNode("rewardToken", GNS_PATH),
+		"tier":            json.NumberNode("tier", float64(r.Tier)),
 		"rewardPerSecond": json.StringNode("rewardPerSecond", r.RewardPerSecond),
 	})
 }

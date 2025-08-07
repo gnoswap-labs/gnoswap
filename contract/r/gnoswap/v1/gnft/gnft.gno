@@ -6,7 +6,7 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ownable"
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/gnoswap/v1/halt"
+	"gno.land/r/gnoswap/halt"
 )
 
 var (

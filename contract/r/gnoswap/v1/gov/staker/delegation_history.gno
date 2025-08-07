@@ -32,7 +32,7 @@ func (dh DelegationHistory) getRecordsBy(snapshotTime int64) DelegationHistory {
 
 	// Return all records from the found index onwards
 	records = append(records, dh[historyIndex:]...)
-	
+
 	return records
 }
 

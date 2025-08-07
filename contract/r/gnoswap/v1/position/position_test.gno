@@ -14,8 +14,8 @@ import (
 
 	pl "gno.land/r/gnoswap/v1/pool"
 
+	"gno.land/r/gnoswap/referral"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/referral"
 )
 
 var mockRegistry = make(map[string]bool)
@@ -481,7 +481,7 @@ func TestProcessTokens(t *testing.T) {
 			isNative1:      false,
 			expectedWrap:   0,
 			expectPanic:    true,
-			expectMsg:      "[GNOSWAP-POSITION-016] invalid token address || token0(gno.land/r/gnoswap/v1/gns), token1(tokenB)",
+			expectMsg:      "[GNOSWAP-POSITION-016] invalid token address || token0(gno.land/r/gnoswap/gns), token1(tokenB)",
 		},
 		{
 			name:           "processTokens is failed by token0 is native",
@@ -491,12 +491,12 @@ func TestProcessTokens(t *testing.T) {
 			amount1Desired: "200",
 			caller:         alice,
 			expected0:      WRAPPED_WUGNOT,
-			expected1:      "gno.land/r/gnoswap/v1/gns",
+			expected1:      "gno.land/r/gnoswap/gns",
 			isNative0:      true,
 			isNative1:      false,
 			expectedWrap:   1300,
 			expectPanic:    false,
-			expectMsg:      "[GNOSWAP-POSITION-016] invalid token address || token0(gnot), token1(gno.land/r/gnoswap/v1/gns)",
+			expectMsg:      "[GNOSWAP-POSITION-016] invalid token address || token0(gnot), token1(gno.land/r/gnoswap/gns)",
 		},
 		{
 			name:           "processTokens is failed by token1 is native",
@@ -505,7 +505,7 @@ func TestProcessTokens(t *testing.T) {
 			amount0Desired: "150",
 			amount1Desired: "1250",
 			caller:         testutils.TestAddress("user3"),
-			expected0:      "gno.land/r/gnoswap/v1/gns",
+			expected0:      "gno.land/r/gnoswap/gns",
 			expected1:      WRAPPED_WUGNOT,
 			isNative0:      false,
 			isNative1:      true,

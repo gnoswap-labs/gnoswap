@@ -9,7 +9,7 @@ import (
 	"gno.land/p/demo/uassert"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
 )

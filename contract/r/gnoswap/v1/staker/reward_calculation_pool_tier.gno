@@ -129,7 +129,7 @@ func NewPoolTier(pools *Pools, currentHeight int64, currentTime int64, initialPo
 	}
 
 	pools.set(initialPoolPath, NewPool(initialPoolPath, currentTime+1))
-	result.changeTier(currentHeight+1, currentTime + 1, pools, initialPoolPath, 1)
+	result.changeTier(currentHeight+1, currentTime+1, pools, initialPoolPath, 1)
 	return result
 }
 
@@ -188,7 +188,7 @@ func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *
 		if !ok {
 			panic("changeTier: pool not found")
 		}
-		
+
 		// caching reward to 0
 		pool.cacheReward(currentTime, int64(0))
 	} else {
@@ -255,7 +255,7 @@ func (self *PoolTier) cacheReward(currentHeight int64, currentTimestamp int64, p
 func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentTimestamp, emissionInThisInterval int64) {
 	// calculate denominator and number of pools in each tier
 	counts := self.CurrentAllTierCounts()
-	
+
 	// apply cache to all pools
 	self.membership.Iterate("", "", func(key string, value any) bool {
 		tierNum := value.(uint64)

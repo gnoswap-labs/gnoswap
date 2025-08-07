@@ -3,9 +3,9 @@ package launchpad
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/halt"
 	gov_staker "gno.land/r/gnoswap/v1/gov/staker"
-	"gno.land/r/gnoswap/v1/halt"
 )
 
 // CollectProtocolFee collects protocol fee from gov/staker

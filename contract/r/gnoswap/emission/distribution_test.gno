@@ -9,8 +9,8 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gns"
 )
 
 func TestChangeDistributionPct(t *testing.T) {
@@ -428,7 +428,7 @@ func TestDistributeToTarget(t *testing.T) {
 		resetObject(t)
 		setupTestEnv(t)
 		amount := int64(1000000)
-		
+
 		totalSent, _ := distributeToTarget(amount)
 
 		// Expected distribution amounts

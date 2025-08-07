@@ -2,7 +2,7 @@ package protocol_fee
 
 import (
 	prabc "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 )
 
 var (

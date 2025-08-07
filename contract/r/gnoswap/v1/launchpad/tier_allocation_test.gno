@@ -83,16 +83,16 @@ func TestTierAllocationNoLeftover(t *testing.T) {
 
 			project, _ := createProject(
 				&createProjectParams{
-					name:               "Test Project",
-					tokenPath:          "gno.land/r/onbloc/obl",
-					depositAmount:      tt.depositAmount,
-					tier30Ratio:        tt.tier30Ratio,
-					tier90Ratio:        tt.tier90Ratio,
-					tier180Ratio:       tt.tier180Ratio,
-					recipient:          testutils.TestAddress("project"),
-					startTime:          currentTime,
-					currentTime:        currentTime,
-					currentHeight:      currentHeight,
+					name:          "Test Project",
+					tokenPath:     "gno.land/r/onbloc/obl",
+					depositAmount: tt.depositAmount,
+					tier30Ratio:   tt.tier30Ratio,
+					tier90Ratio:   tt.tier90Ratio,
+					tier180Ratio:  tt.tier180Ratio,
+					recipient:     testutils.TestAddress("project"),
+					startTime:     currentTime,
+					currentTime:   currentTime,
+					currentHeight: currentHeight,
 				},
 			)
 			projects.Set(project.ID(), project)
@@ -144,16 +144,16 @@ func TestTierAllocationRemainder(t *testing.T) {
 
 	project, _ := createProject(
 		&createProjectParams{
-			name:               "Remainder Test",
-			tokenPath:          "gno.land/r/onbloc/obl",
-			depositAmount:      depositAmount,
-			tier30Ratio:        33, // 1000 * 33 / 100 = 330
-			tier90Ratio:        33, // 1000 * 33 / 100 = 330
-			tier180Ratio:       34, // 1000 * 34 / 100 = 340
-			recipient:          testutils.TestAddress("project"),
-			startTime:          currentTime,
-			currentTime:        currentTime,
-			currentHeight:      currentHeight,
+			name:          "Remainder Test",
+			tokenPath:     "gno.land/r/onbloc/obl",
+			depositAmount: depositAmount,
+			tier30Ratio:   33, // 1000 * 33 / 100 = 330
+			tier90Ratio:   33, // 1000 * 33 / 100 = 330
+			tier180Ratio:  34, // 1000 * 34 / 100 = 340
+			recipient:     testutils.TestAddress("project"),
+			startTime:     currentTime,
+			currentTime:   currentTime,
+			currentHeight: currentHeight,
 		},
 	)
 	projects.Set(project.ID(), project)

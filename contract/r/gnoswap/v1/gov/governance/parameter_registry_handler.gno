@@ -85,7 +85,7 @@ func (sm *stateManager) RestoreStates() error {
 // handlerState stores the preserved state information for a parameter handler.
 type handlerState struct {
 	pkgPath  string           // Package path of the handler
-	function string           // Function name of the handler  
+	function string           // Function name of the handler
 	state    any              // Preserved state data
 	handler  ParameterHandler // Reference to the handler instance
 }
@@ -116,8 +116,8 @@ func NewRegistryHandler(fn func(params []string) error) ParameterRegistryHandler
 //
 // Returns:
 //   - error: execution error from the wrapped function
-func (h *registryHandler) Execute(params []string) error { 
-	return h.fn(params) 
+func (h *registryHandler) Execute(params []string) error {
+	return h.fn(params)
 }
 
 // RestoreState is a no-op for simple registry handlers since they don't manage state.
@@ -127,14 +127,14 @@ func (h *registryHandler) Execute(params []string) error {
 //
 // Returns:
 //   - error: always nil
-func (h *registryHandler) RestoreState(state interface{}) error { 
-	return nil 
+func (h *registryHandler) RestoreState(state interface{}) error {
+	return nil
 }
 
 // GetState returns nil for simple registry handlers since they don't manage state.
 //
 // Returns:
 //   - interface{}: always nil
-func (h *registryHandler) GetState() interface{} { 
-	return nil 
+func (h *registryHandler) GetState() interface{} {
+	return nil
 }

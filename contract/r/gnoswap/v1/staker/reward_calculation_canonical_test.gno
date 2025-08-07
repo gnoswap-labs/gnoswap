@@ -884,9 +884,9 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 }
 
 func TestCanonicalWarmup_1(t *testing.T) {
-	modifyWarmup(0, 10 * blockPerSecond)
-	modifyWarmup(1, 10 * blockPerSecond)
-	modifyWarmup(2, 10 * blockPerSecond)
+	modifyWarmup(0, 10*blockPerSecond)
+	modifyWarmup(1, 10*blockPerSecond)
+	modifyWarmup(2, 10*blockPerSecond)
 
 	canonical := Setup(t)
 
@@ -963,9 +963,9 @@ func TestCanonicalWarmup_1(t *testing.T) {
 }
 
 func TestCanonicalWarmup_2(t *testing.T) {
-	modifyWarmup(0, 10 * blockPerSecond)
-	modifyWarmup(1, 10 * blockPerSecond)
-	modifyWarmup(2, 10 * blockPerSecond)
+	modifyWarmup(0, 10*blockPerSecond)
+	modifyWarmup(1, 10*blockPerSecond)
+	modifyWarmup(2, 10*blockPerSecond)
 
 	canonical := Setup(t)
 
@@ -1439,7 +1439,7 @@ func events(
 			tick:     moveTicks[i],
 		})
 	}
-	if poolPath == "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000" {
+	if poolPath == "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000" {
 		return result
 	}
 	for i := 0; i < 4; i++ {
@@ -1454,7 +1454,7 @@ func events(
 func TestCanonicalSimulation_0(t *testing.T) {
 	t.Skip("PASS: need to run manually")
 	wugnotgns := events(
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000",
+		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000",
 		1,
 		200,
 		[]tokenStake{
@@ -1490,7 +1490,7 @@ func TestCanonicalSimulation_0(t *testing.T) {
 	)
 
 	quuxgns := events(
-		"gno.land/r/demo/quux:gno.land/r/gnoswap/v1/gns:3000",
+		"gno.land/r/demo/quux:gno.land/r/gnoswap/gns:3000",
 		0,
 		200,
 		[]tokenStake{

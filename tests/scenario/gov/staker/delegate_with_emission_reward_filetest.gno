@@ -12,25 +12,25 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
-	en "gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/access"
+	en "gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gov/staker"
 )
 
 var (
-	admin, _     = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(admin)
+	admin, _   = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm = std.NewUserRealm(admin)
 
 	govStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
 
 	dummyToAddr  = testutils.TestAddress("dummyTo")
 	dummyToRealm = std.NewUserRealm(dummyToAddr)
 
-	dummyAddr    = testutils.TestAddress("dummy")
-	dummyRealm   = std.NewUserRealm(dummyAddr)
+	dummyAddr  = testutils.TestAddress("dummy")
+	dummyRealm = std.NewUserRealm(dummyAddr)
 
-	minAmount    = int64(1_000_000)
+	minAmount = int64(1_000_000)
 )
 
 func main() {
@@ -59,7 +59,7 @@ func main() {
 func changeEmissionDistribution() {
 	// change emission distribution ratio
 	testing.SetRealm(adminRealm)
-	en.SetDistributionStartTime(cross, time.Now().Unix() + 1)
+	en.SetDistributionStartTime(cross, time.Now().Unix()+1)
 	en.ChangeDistributionPct(
 		cross,
 		int(1), 7000,

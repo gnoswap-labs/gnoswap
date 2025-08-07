@@ -106,7 +106,7 @@ func newSwapParams(tokenIn, tokenOut string, fee uint32, recipient std.Address, 
 			amountSpecified: amountSpecified,
 		},
 		withUnwrap: withUnwrap,
-		recipient: recipient,
+		recipient:  recipient,
 	}
 }
 

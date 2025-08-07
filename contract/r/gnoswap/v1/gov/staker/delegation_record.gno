@@ -9,17 +9,17 @@ import (
 // and is used for historical tracking and snapshot calculations.
 type DelegationRecord struct {
 	// delegationType indicates whether this is a delegation or undelegation action
-	delegationType   DelegationType
+	delegationType DelegationType
 	// delegateFrom is the address of the user who initiated the delegation
-	delegateFrom     std.Address
+	delegateFrom std.Address
 	// delegateTo is the address of the user who received the delegation
-	delegateTo       std.Address
+	delegateTo std.Address
 	// delegateAmount is the amount delegated (set only for delegation actions)
-	delegateAmount   int64
+	delegateAmount int64
 	// unDelegateAmount is the amount undelegated (set only for undelegation actions)
 	unDelegateAmount int64
 	// createdAt is the timestamp when this record was created
-	createdAt        int64
+	createdAt int64
 }
 
 // DelegationType returns the type of delegation action (DELEGATE or UNDELEGATE).

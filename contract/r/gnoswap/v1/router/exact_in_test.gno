@@ -9,9 +9,9 @@ import (
 	"gno.land/p/demo/uassert"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gns"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
@@ -272,7 +272,7 @@ func TestExactInSwapRouteWithReferral(t *testing.T) {
 
 func TestExactInZeroForOneFalse(t *testing.T) {
 	const maxTimeout int64 = 9999999999
-	const wugnotGnsPoolPath = "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:500"
+	const wugnotGnsPoolPath = "gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500"
 
 	alice := testutils.TestAddress("alice")
 	positionOwner := adminAddr

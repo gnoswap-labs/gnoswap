@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-	"gno.land/r/gnoswap/v1/halt"
+	"gno.land/r/gnoswap/halt"
 )
 
 // Test for Reconfigure function.
@@ -96,7 +96,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			}
 
 			testing.SetRealm(std.NewUserRealm(std.Address("notgov")))
-			
+
 			if tc.isAdmin {
 				testing.SetRealm(adminRealm)
 			}

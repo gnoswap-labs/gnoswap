@@ -20,8 +20,8 @@ import (
 // - accumulatedTime (int64): The last time when reward was calculated.
 // - claimedAmount (int64): The amount of reward claimed so far.
 type RewardState struct {
-	priceDebtX128          *u256.Uint // price debt per GNS stake, Q128
-	claimableTime         int64 // time when reward can be claimed
+	priceDebtX128 *u256.Uint // price debt per GNS stake, Q128
+	claimableTime int64      // time when reward can be claimed
 
 	depositAmount           int64 // amount of GNS staked
 	distributeStartTime     int64 // time when launchpad started staking

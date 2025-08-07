@@ -10,7 +10,7 @@ import (
 func TestRewardState_IsClaimable(t *testing.T) {
 	tests := []struct {
 		name                string
-		claimableTime     int64
+		claimableTime       int64
 		currentHeight       int64
 		expectedIsClaimable bool
 		expectedHasError    bool
@@ -18,21 +18,21 @@ func TestRewardState_IsClaimable(t *testing.T) {
 	}{
 		{
 			name:                "is claimable return false when current height is before claimable height",
-			claimableTime:     100,
+			claimableTime:       100,
 			currentHeight:       50,
 			expectedIsClaimable: false,
 			expectedHasError:    false,
 		},
 		{
 			name:                "is claimable return true when current height equals claimable height",
-			claimableTime:     100,
+			claimableTime:       100,
 			currentHeight:       100,
 			expectedIsClaimable: true,
 			expectedHasError:    false,
 		},
 		{
 			name:                "is claimable return true when current height is after claimable height",
-			claimableTime:     100,
+			claimableTime:       100,
 			currentHeight:       150,
 			expectedIsClaimable: true,
 			expectedHasError:    false,
@@ -84,7 +84,7 @@ func TestRewardState_CalculateReward(t *testing.T) {
 			claimedAmount:           50,
 			accumRewardPerDeposit:   u256.NewUintFromInt64(200),
 			expectedReward:          100 * 1000,
-			expectedClaimableReward: 100 * 1000 - 50,
+			expectedClaimableReward: 100*1000 - 50,
 			expectedHasError:        false,
 		},
 		{
@@ -122,23 +122,23 @@ func TestRewardState_CalculateReward(t *testing.T) {
 
 func TestNewRewardState(t *testing.T) {
 	tests := []struct {
-		name                  string
-		priceDebt             *u256.Uint
-		depositAmount         int64
+		name                string
+		priceDebt           *u256.Uint
+		depositAmount       int64
 		distributeStartTime int64
 		distributeEndTime   int64
-		claimableTime         int64
-		expectedHasError      bool
-		expectedError         string
+		claimableTime       int64
+		expectedHasError    bool
+		expectedError       string
 	}{
 		{
-			name:                  "new reward state create valid state with correct values",
-			priceDebt:             u256.NewUintFromInt64(100),
-			depositAmount:         1000,
+			name:                "new reward state create valid state with correct values",
+			priceDebt:           u256.NewUintFromInt64(100),
+			depositAmount:       1000,
 			distributeStartTime: 100,
 			distributeEndTime:   200,
-			claimableTime:         100,
-			expectedHasError:      false,
+			claimableTime:       100,
+			expectedHasError:    false,
 		},
 	}
 

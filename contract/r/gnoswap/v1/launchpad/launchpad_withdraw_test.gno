@@ -8,7 +8,7 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/gov/xgns"
 
 	prbac "gno.land/p/gnoswap/rbac"

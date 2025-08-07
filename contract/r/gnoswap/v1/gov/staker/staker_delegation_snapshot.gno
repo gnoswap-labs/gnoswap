@@ -4,8 +4,8 @@ import (
 	"std"
 	"time"
 
-	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/halt"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/halt"
 )
 
 // CleanStakerDelegationSnapshotByAdmin cleans old delegation history records.
@@ -37,7 +37,7 @@ func CleanStakerDelegationSnapshotByAdmin(cur realm, threshold int64) {
 	// Filter records after cutoff time
 	delegationHistory := getDelegationHistory()
 	recentDelegationHistory := delegationHistory.getRecordsBy(cutoffTimestamp)
-	
+
 	// Update delegation history with filtered records
 	setDelegationHistory(recentDelegationHistory)
 }

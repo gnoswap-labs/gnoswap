@@ -24,7 +24,7 @@ func (v *VotingInfo) VotingType() string {
 	if v.votedYes {
 		return "yes"
 	}
-	
+
 	return "no"
 }
 

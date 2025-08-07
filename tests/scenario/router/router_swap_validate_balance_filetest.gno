@@ -11,16 +11,16 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gns"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	"gno.land/r/gnoswap/v1/router"
 
 	"gno.land/p/demo/testutils"
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/demo/wugnot"
 )
@@ -37,7 +37,7 @@ var (
 	userRealm = std.NewUserRealm(userAddr)
 
 	wugnotPath = "gno.land/r/demo/wugnot"
-	gnsPath    = "gno.land/r/gnoswap/v1/gns"
+	gnsPath    = "gno.land/r/gnoswap/gns"
 	gnotPath   = "gnot"
 
 	fee500 uint32 = 500
@@ -240,7 +240,7 @@ func performSwaps() BalanceSnapshot {
 		gnotPath,
 		gnsPath,
 		"10000000",
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500",
+		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500",
 		"100",
 		"0",
 		time.Now().Add(time.Hour).Unix(),
@@ -258,7 +258,7 @@ func performSwaps() BalanceSnapshot {
 		gnsPath,
 		gnotPath,
 		"5000000",
-		"gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:500",
+		"gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500",
 		"100",
 		"10000000",
 		time.Now().Add(time.Hour).Unix(),
@@ -300,7 +300,7 @@ func removeLiquidityToGnot() BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
 	// Get current position liquidity
-	currentLiquidity := pl.GetLiquidity("gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500")
+	currentLiquidity := pl.GetLiquidity("gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500")
 
 	// Remove 30% liquidity
 	liquidityInt, _ := strconv.ParseInt(currentLiquidity, 10, 64)
@@ -345,7 +345,7 @@ func closePositionToGnot() BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
 	// Get current position liquidity
-	currentLiquidity := pl.GetLiquidity("gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500")
+	currentLiquidity := pl.GetLiquidity("gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500")
 
 	// Remove 30% liquidity
 	liquidityInt, _ := strconv.ParseInt(currentLiquidity, 10, 64)
@@ -361,7 +361,7 @@ func closePositionToGnot() BalanceSnapshot {
 		true, // unwrap to GNOT
 	)
 
-	remainingLiquidity := pl.GetLiquidity("gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500")
+	remainingLiquidity := pl.GetLiquidity("gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500")
 
 	println("[INFO] Final liquidity removed:", remainingLiquidity)
 	println("[INFO] Final GNS returned:", amount0)

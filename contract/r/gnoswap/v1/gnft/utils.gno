@@ -9,8 +9,8 @@ import (
 	"gno.land/p/demo/ufmt"
 	prabc "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/rbac"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/rbac"
 )
 
 func getPositionAddress() std.Address {

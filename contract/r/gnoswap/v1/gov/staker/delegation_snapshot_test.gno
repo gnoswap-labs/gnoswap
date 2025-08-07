@@ -10,11 +10,11 @@ import (
 // TestDelegationSnapshot_AddRecord tests adding records to delegation snapshot
 func TestDelegationSnapshot_AddRecord(t *testing.T) {
 	tests := []struct {
-		name           string
+		name            string
 		initialSnapshot DelegationSnapshot
-		record         *DelegationRecord
-		expectedAmount int64
-		shouldExist    bool
+		record          *DelegationRecord
+		expectedAmount  int64
+		shouldExist     bool
 	}{
 		{
 			name:            "Add delegate record to empty snapshot",
@@ -87,10 +87,10 @@ func TestDelegationSnapshot_AddRecord(t *testing.T) {
 // TestDelegationSnapshot_SubRecord tests subtracting records from delegation snapshot
 func TestDelegationSnapshot_SubRecord(t *testing.T) {
 	tests := []struct {
-		name           string
+		name            string
 		initialSnapshot DelegationSnapshot
-		record         *DelegationRecord
-		expectedAmount int64
+		record          *DelegationRecord
+		expectedAmount  int64
 	}{
 		{
 			name: "Subtract delegate record",
@@ -225,4 +225,4 @@ func TestDelegationSnapshotItem_Methods(t *testing.T) {
 			uassert.Equal(t, cloned.DelegationAmount(), tc.delegationAmount)
 		})
 	}
-} 
+}

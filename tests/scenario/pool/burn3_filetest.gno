@@ -7,7 +7,7 @@ import (
 	"gno.land/p/demo/uassert"
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 
 	"gno.land/r/gnoswap/v1/pool"
 )
@@ -22,9 +22,9 @@ const (
 
 // Variables for test addresses and realms
 var (
-	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm     = std.NewUserRealm(positionAddr)
+	posRealm        = std.NewUserRealm(positionAddr)
 )
 
 func main() {

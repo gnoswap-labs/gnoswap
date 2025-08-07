@@ -6,7 +6,7 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
 )
 
 func TestLeftAmountFix(t *testing.T) {

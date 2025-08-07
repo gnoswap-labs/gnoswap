@@ -8,10 +8,12 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-const UGNOT_MIN_DEPOSIT_TO_WRAP uint64 = 1000
-const WUGNOT_PATH = "gno.land/r/demo/wugnot"
-const GNOT = "gnot"
-const GNOT_DENOM = "ugnot"
+const (
+	UGNOT_MIN_DEPOSIT_TO_WRAP uint64 = 1000
+	WUGNOT_PATH                      = "gno.land/r/demo/wugnot"
+	GNOT                             = "gnot"
+	GNOT_DENOM                       = "ugnot"
+)
 
 var (
 	errFailedToWrapZeroUgnot = "cannot wrap 0 ugnot"

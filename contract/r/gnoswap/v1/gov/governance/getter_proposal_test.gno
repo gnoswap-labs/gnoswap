@@ -11,13 +11,13 @@ import (
 // TestGetterProposal_All tests all getter functions related to Proposal using table-driven tests.
 func TestGetterProposal_All(t *testing.T) {
 	tests := []struct {
-		name           string
-		proposalId     int64
-		proposal  *Proposal
-		getterFunc     func(int64) interface{}
-		expectedValue  interface{}
-		expectedPanic  bool
-		panicMessage   string
+		name          string
+		proposalId    int64
+		proposal      *Proposal
+		getterFunc    func(int64) interface{}
+		expectedValue interface{}
+		expectedPanic bool
+		panicMessage  string
 	}{
 		{
 			name:       "Get proposer address",
@@ -29,8 +29,8 @@ func TestGetterProposal_All(t *testing.T) {
 				status: &ProposalStatus{
 					voteStatus: &ProposalVoteStatus{
 						quorumAmount: 100,
-						yea:         10,
-						nay:         5,
+						yea:          10,
+						nay:          5,
 					},
 				},
 				metadata: &ProposalMetadata{title: "TestTitle", description: "TestDesc"},
@@ -49,8 +49,8 @@ func TestGetterProposal_All(t *testing.T) {
 				status: &ProposalStatus{
 					voteStatus: &ProposalVoteStatus{
 						quorumAmount: 100,
-						yea:         10,
-						nay:         5,
+						yea:          10,
+						nay:          5,
 					},
 				},
 				metadata: &ProposalMetadata{title: "TestTitle", description: "TestDesc"},
@@ -62,17 +62,17 @@ func TestGetterProposal_All(t *testing.T) {
 		{
 			name:          "Get non-existent proposal",
 			proposalId:    999,
-			proposal: nil,
+			proposal:      nil,
 			getterFunc:    func(id int64) interface{} { return GetProposerByProposalId(id) },
 			expectedPanic: true,
-			panicMessage: "[GNOSWAP-GOVERNANCE-003] requested data not found",
+			panicMessage:  "[GNOSWAP-GOVERNANCE-003] requested data not found",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			proposals = avl.NewTree() // reset proposals state
+			proposals = avl.NewTree()              // reset proposals state
 			proposalManager = NewProposalManager() // reset proposalManager state
 
 			if tc.proposal != nil {
@@ -90,4 +90,4 @@ func TestGetterProposal_All(t *testing.T) {
 			}
 		})
 	}
-} 
+}

@@ -91,7 +91,7 @@ func TestCacheReward(t *testing.T) {
 	}
 }
 
-var test_gnousdc = pl.GetPoolPath("gno.land/r/demo/wugnot", "gno.land/r/gnoswap/v1/gns", 3000)
+var test_gnousdc = pl.GetPoolPath("gno.land/r/demo/wugnot", "gno.land/r/gnoswap/gns", 3000)
 
 func SetupPoolTier(t *testing.T) *PoolTier {
 	poolTier := NewPoolTier(NewPools(), 1, int64(1000), test_gnousdc, func() int64 { return 1000 }, func(start, end int64) ([]int64, []int64) { return nil, nil })

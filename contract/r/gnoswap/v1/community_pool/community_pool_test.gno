@@ -9,9 +9,9 @@ import (
 
 	prabc "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/gns"
-	"gno.land/r/gnoswap/v1/halt"
-	"gno.land/r/gnoswap/v1/rbac" // initialize rbac package
+	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/rbac" // initialize rbac package
 )
 
 var (
@@ -20,7 +20,7 @@ var (
 
 	communityPoolAddr = rbac.DefaultRoleAddresses[prabc.ROLE_COMMUNITY_POOL]
 
-	gnsPath  = "gno.land/r/gnoswap/v1/gns"
+	gnsPath  = "gno.land/r/gnoswap/gns"
 	govRealm = std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/governance")
 
 	dummyCaller   = std.NewUserRealm(testutils.TestAddress("dummyCaller"))

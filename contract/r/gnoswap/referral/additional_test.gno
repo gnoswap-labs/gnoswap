@@ -10,9 +10,9 @@ import (
 
 	prabc "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 
-	_ "gno.land/r/gnoswap/v1/rbac" // initialize rbac package
+	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
 )
 
 func TestAdditional_ChainedReferrals(t *testing.T) {
@@ -222,7 +222,7 @@ func TestAdditional_PermissionValidation(t *testing.T) {
 			if tc.expectError {
 				uassert.Error(t, err)
 				if tc.errorContains != "" && err != nil {
-					uassert.True(t, len(err.Error()) > 0 && 
+					uassert.True(t, len(err.Error()) > 0 &&
 						strings.Contains(err.Error(), tc.errorContains))
 				}
 			} else {

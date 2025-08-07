@@ -12,15 +12,15 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/emission"
 
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
@@ -65,7 +65,7 @@ func main() {
 
 func initPool() {
 	testing.SetRealm(adminRealm)
-	emission.SetDistributionStartTime(cross, time.Now().Unix() + 1)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 	pool.SetPoolCreationFee(cross, 0)
 
 	defaultTokenAmount := int64(100000000)

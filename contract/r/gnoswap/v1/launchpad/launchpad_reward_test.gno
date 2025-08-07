@@ -342,7 +342,7 @@ func TestCollectDepositReward_TimeBoundaries(t *testing.T) {
 				id:        "boundary_test",
 				tokenPath: "gno.land/r/onbloc/obl",
 				tiers: map[int64]*ProjectTier{
-					30: &ProjectTier{
+					30: {
 						id:                    "boundary_test:30",
 						totalDistributeAmount: 1000,
 					},

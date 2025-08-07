@@ -9,9 +9,9 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/gns"
 )
 
 var adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())

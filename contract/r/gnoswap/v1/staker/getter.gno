@@ -10,7 +10,7 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
 )
 
 // getPoolByPoolPath retrieves the pool's path using the provided pool path.
@@ -627,18 +627,18 @@ type ApiExternalDebugPosition struct {
 }
 
 type ApiExternalDebugIncentive struct {
-	PoolPath          string      `json:"poolPath"`
-	IncentiveId       string      `json:"incentiveId"`
-	RewardToken       string      `json:"rewardToken"`
-	RewardAmount      string      `json:"rewardAmount"`
-	RewardLeft        string      `json:"rewardLeft"`
-	StartTimestamp    int64       `json:"startTimestamp"`
-	EndTimestamp      int64       `json:"endTimestamp"`
-	RewardPerSecondX96 string     `json:"rewardPerSecondX96"`
-	RewardPerSecond   string      `json:"rewardPerSecond"`
-	Refundee          std.Address `json:"refundee"`
-	StartHeight       int64       `json:"startHeight"`
-	EndHeight         int64       `json:"endHeight"`
+	PoolPath           string      `json:"poolPath"`
+	IncentiveId        string      `json:"incentiveId"`
+	RewardToken        string      `json:"rewardToken"`
+	RewardAmount       string      `json:"rewardAmount"`
+	RewardLeft         string      `json:"rewardLeft"`
+	StartTimestamp     int64       `json:"startTimestamp"`
+	EndTimestamp       int64       `json:"endTimestamp"`
+	RewardPerSecondX96 string      `json:"rewardPerSecondX96"`
+	RewardPerSecond    string      `json:"rewardPerSecond"`
+	Refundee           std.Address `json:"refundee"`
+	StartHeight        int64       `json:"startHeight"`
+	EndHeight          int64       `json:"endHeight"`
 	// FROM positionExternal -> externalRewards
 	TokenAmountX96    *u256.Uint `json:"tokenAmountX96"`
 	TokenAmount       int64      `json:"tokenAmount"`

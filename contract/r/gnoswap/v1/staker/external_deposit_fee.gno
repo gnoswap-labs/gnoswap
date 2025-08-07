@@ -8,12 +8,14 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/halt"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/halt"
 )
 
-var depositGnsAmount = int64(1_000_000_000)    // 1_000 GNS
-var minimumRewardAmount = int64(1_000_000_000) // Default 1000 (ugnot equivalent for GNS)
+var (
+	depositGnsAmount    = int64(1_000_000_000) // 1_000 GNS
+	minimumRewardAmount = int64(1_000_000_000) // Default 1000 (ugnot equivalent for GNS)
+)
 
 // tokenSpecificMinimumRewards stores minimum reward amounts for specific tokens.
 // Key: tokenPath (string), Value: minimumAmount (int64)

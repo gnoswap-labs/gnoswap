@@ -115,7 +115,7 @@ type Pool struct {
 	stakedLiquidity *UintTree // uint64 timestamp -> *u256.Uint(Q128)
 
 	lastUnclaimableTime int64
-	unclaimableAcc        int64
+	unclaimableAcc      int64
 
 	rewardCache *UintTree // uint64 timestamp -> int64 gnsReward
 

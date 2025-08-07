@@ -6,8 +6,8 @@ import (
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/halt"
+	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/halt"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
@@ -35,7 +35,7 @@ func Reposition(
 
 	caller := std.PreviousRealm().Address()
 	assertIsOwnerForToken(positionId, caller)
-	
+
 	emission.MintAndDistributeGns(cross)
 
 	// position should be burned to reposition
@@ -105,7 +105,7 @@ func Reposition(
 	poolSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(position.poolKey)
 	token0Balance := pl.GetBalanceToken0(position.poolKey)
 	token1Balance := pl.GetBalanceToken1(position.poolKey)
-	
+
 	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"Reposition",

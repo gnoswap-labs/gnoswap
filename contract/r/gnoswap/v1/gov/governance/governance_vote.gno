@@ -4,8 +4,8 @@ import (
 	"std"
 	"time"
 
-	en "gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/halt"
+	en "gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/halt"
 )
 
 // Vote allows a user to vote on a given proposal.

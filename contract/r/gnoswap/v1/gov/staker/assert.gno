@@ -23,5 +23,5 @@ func assertIsValidDelegateAmount(amount int64) {
 			errInvalidAmount,
 			ufmt.Sprintf("amount must be multiple of %d", minimumAmount),
 		))
-	}	
+	}
 }

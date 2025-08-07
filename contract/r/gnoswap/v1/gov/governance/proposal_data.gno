@@ -121,9 +121,9 @@ func NewProposalMetadata(title string, description string) *ProposalMetadata {
 // ProposalData contains the type-specific data for a proposal.
 // This structure holds different data depending on the proposal type.
 type ProposalData struct {
-	proposalType       ProposalType             // Type of proposal (Text, CommunityPoolSpend, ParameterChange)
-	communityPoolSpend CommunityPoolSpendInfo   // Data for community pool spending proposals
-	execution          ExecutionInfo            // Data for parameter change proposals
+	proposalType       ProposalType           // Type of proposal (Text, CommunityPoolSpend, ParameterChange)
+	communityPoolSpend CommunityPoolSpendInfo // Data for community pool spending proposals
+	execution          ExecutionInfo          // Data for parameter change proposals
 }
 
 // ProposalType returns the type of this proposal.

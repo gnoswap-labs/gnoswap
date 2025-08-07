@@ -3,9 +3,9 @@ package governance
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v1/access"
-	en "gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/halt"
+	"gno.land/r/gnoswap/access"
+	en "gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/halt"
 )
 
 // Config represents the configuration of the governor contract

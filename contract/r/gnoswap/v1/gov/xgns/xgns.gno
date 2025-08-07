@@ -8,9 +8,9 @@ import (
 	"gno.land/p/demo/ownable"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/halt"
-	"gno.land/r/gnoswap/v1/rbac"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/rbac"
 
 	prbac "gno.land/p/gnoswap/rbac"
 )

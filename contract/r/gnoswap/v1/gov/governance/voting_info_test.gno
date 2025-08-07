@@ -21,12 +21,12 @@ func TestVotingInfo_NewVotingInfo(t *testing.T) {
 			voterAddress:    std.Address("g1voter"),
 			expectedVotingInfo: &VotingInfo{
 				availableVoteWeight: 100,
-				voterAddress:       std.Address("g1voter"),
-				votedWeight:        0,
-				votedHeight:        0,
-				votedAt:            0,
-				votedYes:          false,
-				voted:             false,
+				voterAddress:        std.Address("g1voter"),
+				votedWeight:         0,
+				votedHeight:         0,
+				votedAt:             0,
+				votedYes:            false,
+				voted:               false,
 			},
 		},
 		{
@@ -35,12 +35,12 @@ func TestVotingInfo_NewVotingInfo(t *testing.T) {
 			voterAddress:    std.Address("g1voter2"),
 			expectedVotingInfo: &VotingInfo{
 				availableVoteWeight: 0,
-				voterAddress:       std.Address("g1voter2"),
-				votedWeight:        0,
-				votedHeight:        0,
-				votedAt:            0,
-				votedYes:          false,
-				voted:             false,
+				voterAddress:        std.Address("g1voter2"),
+				votedWeight:         0,
+				votedHeight:         0,
+				votedAt:             0,
+				votedYes:            false,
+				voted:               false,
 			},
 		},
 	}
@@ -66,56 +66,56 @@ func TestVotingInfo_NewVotingInfo(t *testing.T) {
 func TestVotingInfo_VoteExecution(t *testing.T) {
 	tests := []struct {
 		name            string
-		votingInfo     *VotingInfo
-		voteYes        bool
-		weight         int64
-		height         int64
-		timestamp      int64
-		expectedError  error
-		expectedVoted  bool
+		votingInfo      *VotingInfo
+		voteYes         bool
+		weight          int64
+		height          int64
+		timestamp       int64
+		expectedError   error
+		expectedVoted   bool
 		expectedVoteYes bool
 	}{
 		{
 			name: "Vote yes successfully",
 			votingInfo: &VotingInfo{
 				availableVoteWeight: 100,
-				voterAddress:       std.Address("g1voter"),
+				voterAddress:        std.Address("g1voter"),
 			},
-			voteYes:        true,
-			weight:         50,
-			height:         1000,
-			timestamp:      1234567890,
-			expectedError:  nil,
-			expectedVoted:  true,
+			voteYes:         true,
+			weight:          50,
+			height:          1000,
+			timestamp:       1234567890,
+			expectedError:   nil,
+			expectedVoted:   true,
 			expectedVoteYes: true,
 		},
 		{
 			name: "Vote no successfully",
 			votingInfo: &VotingInfo{
 				availableVoteWeight: 100,
-				voterAddress:       std.Address("g1voter"),
+				voterAddress:        std.Address("g1voter"),
 			},
-			voteYes:        false,
-			weight:         50,
-			height:         1000,
-			timestamp:      1234567890,
-			expectedError:  nil,
-			expectedVoted:  true,
+			voteYes:         false,
+			weight:          50,
+			height:          1000,
+			timestamp:       1234567890,
+			expectedError:   nil,
+			expectedVoted:   true,
 			expectedVoteYes: false,
 		},
 		{
 			name: "Cannot vote twice",
 			votingInfo: &VotingInfo{
 				availableVoteWeight: 100,
-				voterAddress:       std.Address("g1voter"),
-				voted:             true,
+				voterAddress:        std.Address("g1voter"),
+				voted:               true,
 			},
-			voteYes:        true,
-			weight:         50,
-			height:         1000,
-			timestamp:      1234567890,
-			expectedError:  errAlreadyVoted,
-			expectedVoted:  true,
+			voteYes:         true,
+			weight:          50,
+			height:          1000,
+			timestamp:       1234567890,
+			expectedError:   errAlreadyVoted,
+			expectedVoted:   true,
 			expectedVoteYes: false,
 		},
 	}
@@ -143,7 +143,7 @@ func TestVotingInfo_VoteExecution(t *testing.T) {
 func TestVotingInfo_VotingTypeAndStatus(t *testing.T) {
 	tests := []struct {
 		name               string
-		votingInfo        *VotingInfo
+		votingInfo         *VotingInfo
 		expectedVotingType string
 		expectedIsVoted    bool
 		expectedVotedYes   bool
@@ -198,40 +198,40 @@ func TestVotingInfo_VotingTypeAndStatus(t *testing.T) {
 // TestVotingInfo_VoteWeights tests the vote weight getters
 func TestVotingInfo_VoteWeights(t *testing.T) {
 	tests := []struct {
-		name                      string
-		votingInfo               *VotingInfo
-		expectedAvailableWeight   int64
-		expectedVotedWeight       int64
+		name                    string
+		votingInfo              *VotingInfo
+		expectedAvailableWeight int64
+		expectedVotedWeight     int64
 	}{
 		{
 			name: "Get weights before voting",
 			votingInfo: &VotingInfo{
 				availableVoteWeight: 100,
-				votedWeight:        0,
-				voted:             false,
+				votedWeight:         0,
+				voted:               false,
 			},
 			expectedAvailableWeight: 100,
-			expectedVotedWeight:    0,
+			expectedVotedWeight:     0,
 		},
 		{
 			name: "Get weights after voting",
 			votingInfo: &VotingInfo{
 				availableVoteWeight: 100,
-				votedWeight:        50,
-				voted:             true,
+				votedWeight:         50,
+				voted:               true,
 			},
 			expectedAvailableWeight: 100,
-			expectedVotedWeight:    50,
+			expectedVotedWeight:     50,
 		},
 		{
 			name: "Get weights with zero available weight",
 			votingInfo: &VotingInfo{
 				availableVoteWeight: 0,
-				votedWeight:        0,
-				voted:             false,
+				votedWeight:         0,
+				voted:               false,
 			},
 			expectedAvailableWeight: 0,
-			expectedVotedWeight:    0,
+			expectedVotedWeight:     0,
 		},
 	}
 
@@ -242,4 +242,4 @@ func TestVotingInfo_VoteWeights(t *testing.T) {
 			uassert.Equal(t, tc.votingInfo.VotedWeight(), tc.expectedVotedWeight)
 		})
 	}
-} 
+}

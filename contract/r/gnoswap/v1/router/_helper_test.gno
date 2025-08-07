@@ -6,9 +6,9 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/gns"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
@@ -20,14 +20,14 @@ import (
 
 	prabc "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 )
 
 const (
 	ugnotDenom string = "ugnot"
 	ugnotPath  string = "ugnot"
 
-	gnsPath string = "gno.land/r/gnoswap/v1/gns"
+	gnsPath string = "gno.land/r/gnoswap/gns"
 	barPath string = "gno.land/r/onbloc/bar"
 	bazPath string = "gno.land/r/onbloc/baz"
 	fooPath string = "gno.land/r/onbloc/foo"

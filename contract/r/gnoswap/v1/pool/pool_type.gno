@@ -193,7 +193,7 @@ func (p *Pool) Clone() *Pool {
 		ticks:                ticks,
 		tickBitmaps:          tickBitmaps,
 		positions:            positions,
-		observation:          &Observation{
+		observation: &Observation{
 			lastCumulativeUpdateTime: p.observation.lastCumulativeUpdateTime,
 			tickCumulative:           p.observation.tickCumulative,
 			liquidityCumulative:      u256.Zero().Set(p.observation.liquidityCumulative),

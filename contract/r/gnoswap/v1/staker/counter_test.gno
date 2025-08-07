@@ -9,34 +9,34 @@ import (
 // Test for NewCounter, next, and Get methods.
 func TestCounter_Behavior(t *testing.T) {
 	tests := []struct {
-		name string
-		initValue int64
+		name          string
+		initValue     int64
 		callNextTimes int
-		expectedId int64
+		expectedId    int64
 	}{
 		{
-			name: "Initial value is zero",
-			initValue: 0,
+			name:          "Initial value is zero",
+			initValue:     0,
 			callNextTimes: 0,
-			expectedId: 0,
+			expectedId:    0,
 		},
 		{
-			name: "Call next once",
-			initValue: 0,
+			name:          "Call next once",
+			initValue:     0,
 			callNextTimes: 1,
-			expectedId: 1,
+			expectedId:    1,
 		},
 		{
-			name: "Call next multiple times",
-			initValue: 0,
+			name:          "Call next multiple times",
+			initValue:     0,
 			callNextTimes: 5,
-			expectedId: 5,
+			expectedId:    5,
 		},
 		{
-			name: "Start from non-zero, call next",
-			initValue: 10,
+			name:          "Start from non-zero, call next",
+			initValue:     10,
 			callNextTimes: 3,
-			expectedId: 13,
+			expectedId:    13,
 		},
 	}
 
@@ -57,4 +57,4 @@ func TestCounter_Behavior(t *testing.T) {
 			uassert.Equal(t, c.Get(), tc.expectedId)
 		})
 	}
-} 
+}

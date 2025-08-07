@@ -14,7 +14,7 @@ import (
 	pl "gno.land/r/gnoswap/v1/pool"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
@@ -22,14 +22,14 @@ import (
 	"gno.land/r/onbloc/qux"
 	"gno.land/r/onbloc/usdc"
 
-	"gno.land/r/gnoswap/v1/rbac"
+	"gno.land/r/gnoswap/rbac"
 )
 
 const (
 	ugnotDenom string = "ugnot"
 	ugnotPath  string = "ugnot"
 	wugnotPath string = "gno.land/r/demo/wugnot"
-	gnsPath    string = "gno.land/r/gnoswap/v1/gns"
+	gnsPath    string = "gno.land/r/gnoswap/gns"
 	barPath    string = "gno.land/r/onbloc/bar"
 	bazPath    string = "gno.land/r/onbloc/baz"
 	fooPath    string = "gno.land/r/onbloc/foo"

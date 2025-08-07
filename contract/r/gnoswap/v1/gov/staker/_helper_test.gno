@@ -11,12 +11,12 @@ import (
 
 	"gno.land/r/demo/wugnot"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 )
 
 // contract Paths
 const (
-	GNS_PATH    string      = "gno.land/r/gnoswap/v1/gns"
+	GNS_PATH    string      = "gno.land/r/gnoswap/gns"
 	WUGNOT_ADDR std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
 )
 

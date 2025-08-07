@@ -109,7 +109,7 @@ Purpose: Verify emission calculation integration across different years
 
 Test Setup:
 Year 1: Emission = E1 GNS/second
-Year 2: Emission = E2 GNS/second 
+Year 2: Emission = E2 GNS/second
 
 Flow:
 1. Initialize emission state
@@ -154,7 +154,7 @@ Flow:
 
 Expected behavior:
 - Year 1-2: Use same emission rate
-- Year 3-4: Use halved emission rate  
+- Year 3-4: Use halved emission rate
 - Year 5+: Use progressively halved rates
 
 Note: Halving reduces emission rate by half every 2 years

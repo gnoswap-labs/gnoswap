@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
@@ -18,19 +18,19 @@ import (
 
 	prabc "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/p/demo/uassert"
 
-	_ "gno.land/r/gnoswap/v1/rbac" // initialize rbac package
+	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
 )
 
 const (
 	ugnotDenom string = "ugnot"
 	ugnotPath  string = "ugnot"
 	wugnotPath string = "gno.land/r/demo/wugnot"
-	gnsPath    string = "gno.land/r/gnoswap/v1/gns"
+	gnsPath    string = "gno.land/r/gnoswap/gns"
 	barPath    string = "gno.land/r/onbloc/bar"
 	bazPath    string = "gno.land/r/onbloc/baz"
 	fooPath    string = "gno.land/r/onbloc/foo"
@@ -598,8 +598,8 @@ func burnUsdc(addr std.Address) {
 func TestBeforeResetObject(t *testing.T) {
 	// make some data
 	pools = avl.NewTree()
-	pools.Set("gno.land/r/gnoswap/v1/gns:gno.land/r/onbloc/usdc", &Pool{
-		token0Path: "gno.land/r/gnoswap/v1/gns",
+	pools.Set("gno.land/r/gnoswap/gns:gno.land/r/onbloc/usdc", &Pool{
+		token0Path: "gno.land/r/gnoswap/gns",
 		token1Path: "gno.land/r/onbloc/usdc",
 	})
 

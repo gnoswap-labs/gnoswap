@@ -24,7 +24,7 @@ func TestWrap(t *testing.T) {
 		expectedError         error
 	}{
 		{
-			name: "success by native token",
+			name:                  "success by native token",
 			callerAddr:            user1Addr,
 			toAddr:                stakerAddr,
 			tokenPath:             "gnot",
@@ -34,7 +34,7 @@ func TestWrap(t *testing.T) {
 			expectedError:         nil,
 		},
 		{
-			name: "success by grc20 token amount is 999",
+			name:                  "success by grc20 token amount is 999",
 			callerAddr:            user1Addr,
 			toAddr:                stakerAddr,
 			tokenPath:             wugnotPath,
@@ -44,7 +44,7 @@ func TestWrap(t *testing.T) {
 			expectedError:         nil,
 		},
 		{
-			name: "success by token amount is 0",
+			name:                  "success by token amount is 0",
 			callerAddr:            user1Addr,
 			toAddr:                stakerAddr,
 			tokenPath:             wugnotPath,
@@ -54,7 +54,7 @@ func TestWrap(t *testing.T) {
 			expectedError:         nil,
 		},
 		{
-			name: "failure by native token amount is 999",
+			name:                  "failure by native token amount is 999",
 			callerAddr:            user1Addr,
 			toAddr:                stakerAddr,
 			tokenPath:             "gnot",
@@ -80,7 +80,7 @@ func TestWrap(t *testing.T) {
 				ugnotFaucet(t, tc.callerAddr, 1_000)
 				ugnotDeposit(t, tc.callerAddr, 1_000)
 			}
-			
+
 			testing.SetRealm(std.NewUserRealm(tc.callerAddr))
 			wugnot.Approve(cross, tc.toAddr, tc.amount)
 

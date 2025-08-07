@@ -8,11 +8,11 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/gov/xgns"
-	"gno.land/r/gnoswap/v1/halt"
 )
 
 const WUGNOT_PATH string = "gno.land/r/demo/wugnot"

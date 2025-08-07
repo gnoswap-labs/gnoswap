@@ -104,7 +104,7 @@ func TestProposalScheduleStatus_TimeChecks(t *testing.T) {
 				case "IsPassedExpiredAt":
 					result = status.IsPassedExpiredAt(tc.currentTime.Unix())
 				}
-				
+
 				uassert.Equal(t, result, expectedResult)
 			}
 		})
@@ -159,4 +159,4 @@ func TestNewProposalScheduleStatus(t *testing.T) {
 			uassert.Equal(t, status.expiredTime, status.executableTime+tc.executionWindow)
 		})
 	}
-} 
+}

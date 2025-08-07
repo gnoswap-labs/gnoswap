@@ -14,8 +14,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gns"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 
@@ -164,9 +164,9 @@ func TestFinalizeSwap(t *testing.T) {
 
 func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 	const wugnotTokenPath = "gno.land/r/demo/wugnot"
-	const gnsTokenPath = "gno.land/r/gnoswap/v1/gns"
+	const gnsTokenPath = "gno.land/r/gnoswap/gns"
 	const maxTimeout int64 = 9999999999
-	const wugnotGnsPoolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500"
+	const wugnotGnsPoolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500"
 
 	routerContract := routerAddr
 	poolContract := poolAddr
@@ -326,9 +326,9 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 
 func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 	const wugnotTokenPath = "gno.land/r/demo/wugnot"
-	const gnsTokenPath = "gno.land/r/gnoswap/v1/gns"
+	const gnsTokenPath = "gno.land/r/gnoswap/gns"
 	const maxTimeout int64 = 9999999999
-	const wugnotGnsPoolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500"
+	const wugnotGnsPoolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500"
 
 	routerContract := routerAddr
 	poolContract := poolAddr
@@ -513,9 +513,9 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 
 func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 	const wugnotTokenPath = "gno.land/r/demo/wugnot"
-	const gnsTokenPath = "gno.land/r/gnoswap/v1/gns"
+	const gnsTokenPath = "gno.land/r/gnoswap/gns"
 	const maxTimeout int64 = 9999999999
-	const gnsWugnotPoolPath = "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:10000"
+	const gnsWugnotPoolPath = "gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:10000"
 
 	routerContract := routerAddr
 	poolContract := poolAddr

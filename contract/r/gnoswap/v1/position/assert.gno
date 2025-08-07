@@ -6,7 +6,7 @@ import (
 
 	ufmt "gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 )
 
 // assertIsNotExpired checks if the deadline is expired.
@@ -16,7 +16,7 @@ import (
 //   - deadline: the deadline to check
 func assertIsNotExpired(deadline int64) {
 	now := time.Now().Unix()
-	
+
 	if now > deadline {
 		panic(makeErrorWithDetails(
 			errExpired,
@@ -24,7 +24,6 @@ func assertIsNotExpired(deadline int64) {
 		))
 	}
 }
-
 
 // assertValidNumberString verifies that the input string represents a valid integer.
 //
@@ -98,7 +97,7 @@ func assertIsOwnerForToken(positionId uint64, caller std.Address) {
 
 func assertIsOwnerOrOperatorForToken(positionId uint64, caller std.Address) {
 	assertExistsPosition(positionId)
-	
+
 	if !isOwnerOrOperator(positionId, caller) {
 		panic(newErrorWithDetail(
 			errNoPermission,

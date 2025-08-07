@@ -3,9 +3,9 @@ package router
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/halt"
 
 	"gno.land/p/demo/ufmt"
 
@@ -32,7 +32,7 @@ func GetSwapFee() uint64 {
 func SetSwapFee(cur realm, fee uint64) {
 	halt.AssertIsNotHaltedRouter()
 	halt.AssertIsNotHaltedProtocolFee()
-	
+
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 

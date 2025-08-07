@@ -6,10 +6,10 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/halt"
 	gov_staker "gno.land/r/gnoswap/v1/gov/staker"
-	"gno.land/r/gnoswap/v1/halt"
 )
 
 // CollectDepositGns collects rewards from all deposits associated with the caller.

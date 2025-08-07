@@ -6,17 +6,17 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/halt"
 
-	en "gno.land/r/gnoswap/v1/emission"
+	en "gno.land/r/gnoswap/emission"
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
 
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
 )
 
-const GNS_PATH string = "gno.land/r/gnoswap/v1/gns"
+const GNS_PATH string = "gno.land/r/gnoswap/gns"
 
 var (
 	feeAmountTickSpacing = avl.NewTree() // feeBps(uint32) -> tickSpacing(int32)

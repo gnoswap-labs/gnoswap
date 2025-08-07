@@ -4,8 +4,8 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/halt"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/halt"
 )
 
 // defaultAllowed is the list of default allowed tokens to create external incentive

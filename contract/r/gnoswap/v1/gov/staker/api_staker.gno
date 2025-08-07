@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/json"
-	"gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/v1/protocol_fee"
 )
 

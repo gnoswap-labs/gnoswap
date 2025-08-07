@@ -25,7 +25,7 @@ func (pm *ProposalManager) GetUserProposals(user std.Address) []int64 {
 	}
 
 	proposalIDs := make([]int64, 0)
-	
+
 	// Collect all proposal IDs for this user
 	for proposalID := range pm.userProposals[user.String()] {
 		proposalIDs = append(proposalIDs, proposalID)

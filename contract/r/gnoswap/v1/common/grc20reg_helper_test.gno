@@ -155,7 +155,7 @@ func TestMustRegistered(t *testing.T) {
 func TestExtractTokenPathsFromRender(t *testing.T) {
 	var (
 		wugnotPath = "gno.land/r/demo/wugnot"
-		gnsPath    = "gno.land/r/gnoswap/v1/gns"
+		gnsPath    = "gno.land/r/gnoswap/gns"
 		fooPath    = "gno.land/r/onbloc/foo"
 		quxPath    = "gno.land/r/onbloc/qux"
 	)
@@ -170,12 +170,12 @@ func TestExtractTokenPathsFromRender(t *testing.T) {
 
 		// 2 tokens
 		`- **wrapped GNOT** - [gno.land/r/demo/wugnot](/r/demo/wugnot) - [info](/r/demo/grc20reg:gno.land/r/demo/wugnot)
-- **Gnoswap** - [gno.land/r/gnoswap/v1/gns](/r/gnoswap/v1/gns) - [info](/r/demo/grc20reg:gno.land/r/gnoswap/v1/gns)
+- **Gnoswap** - [gno.land/r/gnoswap/gns](/r/gnoswap/v1/gns) - [info](/r/demo/grc20reg:gno.land/r/gnoswap/gns)
 `,
 
 		// 4 tokens
 		`- **wrapped GNOT** - [gno.land/r/demo/wugnot](/r/demo/wugnot) - [info](/r/demo/grc20reg:gno.land/r/demo/wugnot)
-- **Gnoswap** - [gno.land/r/gnoswap/v1/gns](/r/gnoswap/v1/gns) - [info](/r/demo/grc20reg:gno.land/r/gnoswap/v1/gns)
+- **Gnoswap** - [gno.land/r/gnoswap/gns](/r/gnoswap/v1/gns) - [info](/r/demo/grc20reg:gno.land/r/gnoswap/gns)
 - **Baz** - [gno.land/r/onbloc/foo](/r/onbloc/foo) - [info](/r/demo/grc20reg:gno.land/r/onbloc/foo)
 - **Qux** - [gno.land/r/onbloc/qux](/r/onbloc/qux) - [info](/r/demo/grc20reg:gno.land/r/onbloc/qux)
 `,
