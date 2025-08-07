@@ -396,8 +396,9 @@ func ugnotFaucet(t *testing.T, to std.Address, amount int64) {
 func ugnotDeposit(t *testing.T, addr std.Address, amount int64) {
 	t.Helper()
 	testing.SetRealm(std.NewUserRealm(addr))
+	wugnotAddr := std.DerivePkgAddr(wugnotPath)
 	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(addr, WUGNOT_ADDR, std.Coins{{ugnotDenom, amount}})
+	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, amount}})
 	wugnot.Deposit(cross)
 }
 

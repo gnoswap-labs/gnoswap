@@ -62,14 +62,16 @@ func (h *GnotSwapHandler) HandleInputSwap() error {
 	}
 
 	toUnwrap := h.WrappedAmount - spend
-	unwrap(toUnwrap)
-	return nil
+
+	caller := std.PreviousRealm().Address()
+	return unwrapWithTransferFrom(caller, caller, toUnwrap)
 }
 
 // HandleOutputSwap manages unwrapping logic for GNOT output tokens
-func (h *GnotSwapHandler) HandleOutputSwap() {
+func (h *GnotSwapHandler) HandleOutputSwap() error {
 	userRecvWugnot := h.NewBalance - h.BeforeBalance - h.WrappedAmount
-	unwrap(userRecvWugnot)
+	caller := std.PreviousRealm().Address()
+	return unwrapWithTransfer(caller, userRecvWugnot)
 }
 
 // SwapValidator provides validation methods for swap operations
@@ -243,8 +245,6 @@ func finalizeSwap(
 	var err error
 	if inputToken == gnot {
 		err = handler.HandleInputSwap()
-	} else if outputToken == gnot {
-		handler.HandleOutputSwap()
 	}
 
 	if err != nil {
@@ -257,9 +257,9 @@ func finalizeSwap(
 
 	// calculate final amounts
 	intAmountOut := i256.FromUint256(resultAmountOutWithoutFee)
-	negativeOut := i256.Zero().Neg(intAmountOut).ToString()
+	negativeOut := i256.Zero().Neg(intAmountOut)
 
-	return resultAmountIn.ToString(), negativeOut
+	return resultAmountIn.ToString(), negativeOut.ToString()
 }
 
 // validateRoutesAndQuotes is a convenience function that parses and validates routes in one call

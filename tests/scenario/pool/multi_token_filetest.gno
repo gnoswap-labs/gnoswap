@@ -9,6 +9,7 @@ import (
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 
+	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/v1/access"
@@ -215,12 +216,12 @@ func TestSwapBarBazBarToBaz() {
 	println()
 
 	newTest1Token0Balance := bar.BalanceOf(adminAddr)
-	newadminBazBalance := baz.BalanceOf(adminAddr)
+	newAdminBazBalance := baz.BalanceOf(adminAddr)
 	newPoolToken0Balance := bar.BalanceOf(poolAddr)
 	newPoolBazBalance := baz.BalanceOf(poolAddr)
 
 	println("[EXPECTED] oldTest1Token0Balance-newTest1Token0Balance:", oldTest1Token0Balance-newTest1Token0Balance, "expected: 16000")
-	println("[EXPECTED] newadminBazBalance-oldadminBazBalance:", newadminBazBalance-oldadminBazBalance, "expected: 43457")
+	println("[EXPECTED] newAdminBazBalance-oldadminBazBalance:", newAdminBazBalance-oldadminBazBalance, "expected: 43457")
 	println("[EXPECTED] newPoolToken0Balance-oldPoolToken0Balance:", newPoolToken0Balance-oldPoolToken0Balance, "expected: 16000")
 	println("[EXPECTED] oldPoolBazBalance-newPoolBazBalance:", oldPoolBazBalance-newPoolBazBalance, "expected: 43457")
 	println()
@@ -229,18 +230,17 @@ func TestSwapBarBazBarToBaz() {
 func TestCollectFooBarFees() {
 	testing.SetRealm(posRealm)
 
-	oldTest1Token1Balance := foo.BalanceOf(adminAddr)
-	oldTest1Token0Balance := bar.BalanceOf(adminAddr)
-	oldPoolToken1Balance := foo.BalanceOf(poolAddr)
-	oldPoolToken0Balance := bar.BalanceOf(poolAddr)
+	poolPath := ufmt.Sprintf("%s:%s:%d", barPath, fooPath, fee500)
+	oldToken0Balance := pool.GetBalanceToken0(poolPath)
+	oldToken1Balance := pool.GetBalanceToken1(poolPath)
 
 	// burn 0 to collect swap fees
-	pool.Burn(cross, fooPath, barPath, fee500, -test_tickUpper, -test_tickLower, "0", adminAddr)
+	pool.Burn(cross, barPath, fooPath, fee500, -test_tickUpper, -test_tickLower, "0", adminAddr)
 
 	c0, c1 := pool.Collect(
 		cross,
-		fooPath,
 		barPath,
+		fooPath,
 		fee500,
 		adminAddr,
 		-test_tickUpper,
@@ -253,25 +253,22 @@ func TestCollectFooBarFees() {
 	println("[EXPECTED] c0:", c0, "expected: should not be 0") // swap was foo > bar, so only foo has fees
 	println("[EXPECTED] c1:", c1, "expected: should be 0")     // swap was foo > bar, so bar has no fees
 
-	newTest1Token1Balance := foo.BalanceOf(adminAddr)
-	newTest1Token0Balance := bar.BalanceOf(adminAddr)
-	newPoolToken1Balance := foo.BalanceOf(poolAddr)
-	newPoolToken0Balance := bar.BalanceOf(poolAddr)
+	newToken0Balance := pool.GetBalanceToken0(poolPath)
+	newToken1Balance := pool.GetBalanceToken1(poolPath)
 
-	println("[EXPECTED] newTest1Token1Balance-oldTest1Token1Balance:", newTest1Token1Balance-oldTest1Token1Balance, "expected: should be", strToUint64(c1))
-	println("[EXPECTED] newTest1Token0Balance-oldTest1Token0Balance:", newTest1Token0Balance-oldTest1Token0Balance, "expected: should be", strToUint64(c0))
-	println("[EXPECTED] oldPoolToken1Balance-newPoolToken1Balance:", oldPoolToken1Balance-newPoolToken1Balance, "expected: should be", strToUint64(c1))
-	println("[EXPECTED] oldPoolToken0Balance-newPoolToken0Balance:", oldPoolToken0Balance-newPoolToken0Balance, "expected: should be", strToUint64(c0))
+	println("[EXPECTED] oldToken0Balance:", oldToken0Balance)
+	println("[EXPECTED] oldToken1Balance:", oldToken1Balance)
+	println("[EXPECTED] newToken0Balance:", newToken0Balance)
+	println("[EXPECTED] newToken1Balance:", newToken1Balance)
 	println()
 }
 
 func TestCollectBarBazFees() {
 	testing.SetRealm(posRealm)
 
-	oldTest1Token0Balance := bar.BalanceOf(adminAddr)
-	oldadminBazBalance := baz.BalanceOf(adminAddr)
-	oldPoolToken0Balance := bar.BalanceOf(poolAddr)
-	oldPoolBazBalance := baz.BalanceOf(poolAddr)
+	poolPath := ufmt.Sprintf("%s:%s:%d", barPath, bazPath, fee500)
+	oldToken0Balance := pool.GetBalanceToken1(poolPath)
+	oldToken1Balance := pool.GetBalanceToken0(poolPath)
 
 	// burn 0 to collect swap fees
 	pool.Burn(cross, barPath, bazPath, fee500, test_tickLower, test_tickUpper, "0", adminAddr)
@@ -292,15 +289,13 @@ func TestCollectBarBazFees() {
 	println("[EXPECTED] c0:", c0, "expected: should not be 0") // swap was bar > baz, so only bar has fees
 	println("[EXPECTED] c1:", c1, "expected: should be 0")     // swap was bar > baz, so baz has no fees
 
-	newTest1Token0Balance := bar.BalanceOf(adminAddr)
-	newadminBazBalance := baz.BalanceOf(adminAddr)
-	newPoolToken0Balance := bar.BalanceOf(poolAddr)
-	newPoolBazBalance := baz.BalanceOf(poolAddr)
+	newToken0Balance := pool.GetBalanceToken0(poolPath)
+	newToken1Balance := pool.GetBalanceToken1(poolPath)
 
-	println("[EXPECTED] newTest1Token0Balance-oldTest1Token0Balance:", newTest1Token0Balance-oldTest1Token0Balance, "expected: should be", strToUint64(c0))
-	println("[EXPECTED] newadminBazBalance-oldadminBazBalance:", newadminBazBalance-oldadminBazBalance, "expected: should be", strToUint64(c1))
-	println("[EXPECTED] oldPoolToken0Balance-newPoolToken0Balance:", oldPoolToken0Balance-newPoolToken0Balance, "expected: should be", strToUint64(c0))
-	println("[EXPECTED] oldPoolBazBalance-newPoolBazBalance:", oldPoolBazBalance-newPoolBazBalance, "expected: should be", strToUint64(c1))
+	println("[EXPECTED] oldToken0Balance:", oldToken0Balance)
+	println("[EXPECTED] oldToken1Balance:", oldToken1Balance)
+	println("[EXPECTED] newToken0Balance:", newToken0Balance)
+	println("[EXPECTED] newToken1Balance:", newToken1Balance)
 	println()
 }
 
@@ -362,15 +357,14 @@ func TestBurnBarBazLiquidity() {
 func TestCollectFooBarLiquidity() {
 	testing.SetRealm(posRealm)
 
-	oldTest1Token1Balance := foo.BalanceOf(adminAddr)
-	oldTest1Token0Balance := bar.BalanceOf(adminAddr)
-	oldPoolToken1Balance := foo.BalanceOf(poolAddr)
-	oldPoolToken0Balance := bar.BalanceOf(poolAddr)
+	poolPath := ufmt.Sprintf("%s:%s:%d", barPath, fooPath, fee500)
+	oldToken0Balance := pool.GetBalanceToken0(poolPath)
+	oldToken1Balance := pool.GetBalanceToken1(poolPath)
 
 	c0, c1 := pool.Collect(
 		cross,
-		fooPath,
 		barPath,
+		fooPath,
 		fee500,
 		adminAddr,
 		-test_tickUpper,
@@ -382,15 +376,13 @@ func TestCollectFooBarLiquidity() {
 	println("[EXPECTED] c0:", c0, "expected: should not be 0")
 	println("[EXPECTED] c1:", c1, "expected: should not be 0")
 
-	newTest1Token1Balance := foo.BalanceOf(adminAddr)
-	newTest1Token0Balance := bar.BalanceOf(adminAddr)
-	newPoolToken1Balance := foo.BalanceOf(poolAddr)
-	newPoolToken0Balance := bar.BalanceOf(poolAddr)
+	newToken0Balance := pool.GetBalanceToken0(poolPath)
+	newToken1Balance := pool.GetBalanceToken1(poolPath)
 
-	println("[EXPECTED] newTest1Token1Balance-oldTest1Token1Balance:", newTest1Token1Balance-oldTest1Token1Balance, "expected: should be", strToUint64(c0))
-	println("[EXPECTED] newTest1Token0Balance-oldTest1Token0Balance:", newTest1Token0Balance-oldTest1Token0Balance, "expected: should be", strToUint64(c1))
-	println("[EXPECTED] oldPoolToken1Balance-newPoolToken1Balance:", oldPoolToken1Balance-newPoolToken1Balance, "expected: should be", strToUint64(c0))
-	println("[EXPECTED] oldPoolToken0Balance-newPoolToken0Balance:", oldPoolToken0Balance-newPoolToken0Balance, "expected: should be", strToUint64(c1))
+	println("[EXPECTED] oldToken0Balance:", oldToken0Balance)
+	println("[EXPECTED] oldToken1Balance:", oldToken1Balance)
+	println("[EXPECTED] newToken0Balance:", newToken0Balance)
+	println("[EXPECTED] newToken1Balance:", newToken1Balance)
 	println()
 }
 
@@ -398,10 +390,9 @@ func TestCollectFooBarLiquidity() {
 func TestCollectBarBazLiquidity() {
 	testing.SetRealm(posRealm)
 
-	oldTest1Token0Balance := bar.BalanceOf(adminAddr)
-	oldadminBazBalance := baz.BalanceOf(adminAddr)
-	oldPoolToken0Balance := bar.BalanceOf(poolAddr)
-	oldPoolBazBalance := baz.BalanceOf(poolAddr)
+	poolPath := ufmt.Sprintf("%s:%s:%d", barPath, bazPath, fee500)
+	oldToken0Balance := pool.GetBalanceToken1(poolPath)
+	oldToken1Balance := pool.GetBalanceToken0(poolPath)
 
 	c0, c1 := pool.Collect(
 		cross,
@@ -418,15 +409,13 @@ func TestCollectBarBazLiquidity() {
 	println("[EXPECTED] c0:", c0, "expected: should not be 0")
 	println("[EXPECTED] c1:", c1, "expected: should not be 0")
 
-	newTest1Token0Balance := bar.BalanceOf(adminAddr)
-	newadminBazBalance := baz.BalanceOf(adminAddr)
-	newPoolToken0Balance := bar.BalanceOf(poolAddr)
-	newPoolBazBalance := baz.BalanceOf(poolAddr)
+	newToken0Balance := pool.GetBalanceToken0(poolPath)
+	newToken1Balance := pool.GetBalanceToken1(poolPath)
 
-	println("[EXPECTED] newTest1Token0Balance-oldTest1Token0Balance:", newTest1Token0Balance-oldTest1Token0Balance, "expected: should be", strToUint64(c0))
-	println("[EXPECTED] newadminBazBalance-oldadminBazBalance:", newadminBazBalance-oldadminBazBalance, "expected: should be", strToUint64(c1))
-	println("[EXPECTED] oldPoolToken0Balance-newPoolToken0Balance:", oldPoolToken0Balance-newPoolToken0Balance, "expected: should be", strToUint64(c0))
-	println("[EXPECTED] oldPoolBazBalance-newPoolBazBalance:", oldPoolBazBalance-newPoolBazBalance, "expected: should be", strToUint64(c1))
+	println("[EXPECTED] oldToken0Balance:", oldToken0Balance)
+	println("[EXPECTED] oldToken1Balance:", oldToken1Balance)
+	println("[EXPECTED] newToken0Balance:", newToken0Balance)
+	println("[EXPECTED] newToken1Balance:", newToken1Balance)
 	println()
 }
 
@@ -464,7 +453,7 @@ func strToUint64(s string) uint64 {
 // [EXPECTED] poolOut: 0 expected: -43457
 //
 // [EXPECTED] oldTest1Token0Balance-newTest1Token0Balance: 0 expected: 16000
-// [EXPECTED] newadminBazBalance-oldadminBazBalance: 0 expected: 43457
+// [EXPECTED] newAdminBazBalance-oldadminBazBalance: 0 expected: 43457
 // [EXPECTED] newPoolToken0Balance-oldPoolToken0Balance: 0 expected: 16000
 // [EXPECTED] oldPoolBazBalance-newPoolBazBalance: 0 expected: 43457
 //
@@ -472,19 +461,19 @@ func strToUint64(s string) uint64 {
 // [INFO] Swap: foo -> bar, thus only foo has fees
 // [EXPECTED] c0: 7 expected: should not be 0
 // [EXPECTED] c1: 0 expected: should be 0
-// [EXPECTED] newTest1Token1Balance-oldTest1Token1Balance: 0 expected: should be 0
-// [EXPECTED] newTest1Token0Balance-oldTest1Token0Balance: 7 expected: should be 7
-// [EXPECTED] oldPoolToken1Balance-newPoolToken1Balance: 0 expected: should be 0
-// [EXPECTED] oldPoolToken0Balance-newPoolToken0Balance: 7 expected: should be 7
+// [EXPECTED] oldToken0Balance: 8056316
+// [EXPECTED] oldToken1Balance: 2952133
+// [EXPECTED] newToken0Balance: 8056309
+// [EXPECTED] newToken1Balance: 2952133
 //
 // [SCENARIO] 6. Collect Bar:Baz Fees
 // [INFO] Swap: bar -> baz, thus only bar has fees
 // [EXPECTED] c0: 0 expected: should not be 0
 // [EXPECTED] c1: 0 expected: should be 0
-// [EXPECTED] newTest1Token0Balance-oldTest1Token0Balance: 0 expected: should be 0
-// [EXPECTED] newadminBazBalance-oldadminBazBalance: 0 expected: should be 0
-// [EXPECTED] oldPoolToken0Balance-newPoolToken0Balance: 0 expected: should be 0
-// [EXPECTED] oldPoolBazBalance-newPoolBazBalance: 0 expected: should be 0
+// [EXPECTED] oldToken0Balance: 0
+// [EXPECTED] oldToken1Balance: 6067683
+// [EXPECTED] newToken0Balance: 6067683
+// [EXPECTED] newToken1Balance: 0
 //
 // [SCENARIO] 7. Burn Foo:Bar Liquidity
 // [EXPECTED] b0: 8056307 expected: should not be 0
@@ -499,15 +488,15 @@ func strToUint64(s string) uint64 {
 // [SCENARIO] 9. Collect Foo:Bar burned Liquidity
 // [EXPECTED] c0: 100000 expected: should not be 0
 // [EXPECTED] c1: 100000 expected: should not be 0
-// [EXPECTED] newTest1Token1Balance-oldTest1Token1Balance: 100000 expected: should be 100000
-// [EXPECTED] newTest1Token0Balance-oldTest1Token0Balance: 100000 expected: should be 100000
-// [EXPECTED] oldPoolToken1Balance-newPoolToken1Balance: 100000 expected: should be 100000
-// [EXPECTED] oldPoolToken0Balance-newPoolToken0Balance: 100000 expected: should be 100000
+// [EXPECTED] oldToken0Balance: 8056309
+// [EXPECTED] oldToken1Balance: 2952133
+// [EXPECTED] newToken0Balance: 7956309
+// [EXPECTED] newToken1Balance: 2852133
 //
 // [SCENARIO] 10. Collect Bar:Baz burned Liquidity
 // [EXPECTED] c0: 100000 expected: should not be 0
 // [EXPECTED] c1: 0 expected: should not be 0
-// [EXPECTED] newTest1Token0Balance-oldTest1Token0Balance: 100000 expected: should be 100000
-// [EXPECTED] newadminBazBalance-oldadminBazBalance: 0 expected: should be 0
-// [EXPECTED] oldPoolToken0Balance-newPoolToken0Balance: 100000 expected: should be 100000
-// [EXPECTED] oldPoolBazBalance-newPoolBazBalance: 0 expected: should be 0
+// [EXPECTED] oldToken0Balance: 0
+// [EXPECTED] oldToken1Balance: 6067683
+// [EXPECTED] newToken0Balance: 5967683
+// [EXPECTED] newToken1Balance: 0

@@ -837,6 +837,7 @@ func TestHandleMultiSwap(t *testing.T) {
 					tt.route,
 					tt.numHops,
 					amountSpecified,
+					false,
 				)
 			}
 

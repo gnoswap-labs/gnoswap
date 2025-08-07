@@ -2,9 +2,10 @@ package position
 
 import (
 	"gno.land/p/demo/ufmt"
+	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
@@ -49,8 +50,6 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 				ufmt.Sprintf("Liquidity requested(%s) is greater than liquidity held(%s)", liquidityToRemove.ToString(), positionLiquidity.ToString()),
 			)
 	}
-
-	beforeWugnotBalance := wugnot.BalanceOf(caller) // before unwrap
 
 	pToken0, pToken1, pFee := splitOf(position.poolKey)
 	burn0, burn1 := pl.Burn(cross, pToken0, pToken1, pFee, position.tickLower, position.tickUpper, liquidityToRemove.ToString(), caller)
@@ -129,6 +128,20 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	collectAmount0 := u256.MustFromDecimal(collect0)
 	collectAmount1 := u256.MustFromDecimal(collect1)
 
+	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
+
+	if isWrappedToken(pToken0) && params.unwrapResult {
+		unwrapWithTransferFrom(poolAddr, caller, collectAmount0.Int64())
+	} else {
+		common.TransferFrom(cross, pToken0, poolAddr, caller, collectAmount0.Int64())
+	}
+
+	if isWrappedToken(pToken1) && params.unwrapResult {
+		unwrapWithTransferFrom(poolAddr, caller, collectAmount1.Int64())
+	} else {
+		common.TransferFrom(cross, pToken1, poolAddr, caller, collectAmount1.Int64())
+	}
+
 	underflow := false
 	position.tokensOwed0, underflow = new(u256.Uint).SubOverflow(position.tokensOwed0, collectAmount0)
 	if underflow {
@@ -164,21 +177,6 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	}
 
 	mustUpdatePosition(params.positionId, position)
-
-	// NO UNWRAP
-	if params.unwrapResult {
-		err := handleUnwrap(pToken0, pToken1, params.unwrapResult, beforeWugnotBalance, caller)
-		if err != nil {
-			return params.positionId,
-				liquidityToRemove,
-				fee0,
-				fee1,
-				collectAmount0,
-				collectAmount1,
-				position.poolKey,
-				err
-		}
-	}
 
 	return params.positionId, liquidityToRemove, fee0, fee1, collectAmount0, collectAmount1, position.poolKey, nil
 }
