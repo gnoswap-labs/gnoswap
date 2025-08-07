@@ -74,7 +74,7 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 //
 // Panics:
 //   - If the fee amount is not registered in feeAmountTickSpacing
-func GetFeeAmountTickSpacing(fee uint32) int32 {
+func GetFeeAmountTickSpacing(fee uint32) (spacing int32) {
 	feeStr := formatUint(fee)
 	iTickSpacing, exist := feeAmountTickSpacing.Get(feeStr)
 	if !exist {
@@ -84,14 +84,18 @@ func GetFeeAmountTickSpacing(fee uint32) int32 {
 		))
 	}
 
-	return iTickSpacing.(int32)
+	spacing, ok := iTickSpacing.(int32)
+	if !ok {
+		panic("failed to cast tick spacing to int32")
+	}
+
+	return spacing
 }
 
 func GetPoolList() []string {
 	poolPaths := []string{}
 	pools.Iterate("", "", func(poolPath string, _ any) bool {
 		poolPaths = append(poolPaths, poolPath)
-
 		return false
 	})
 

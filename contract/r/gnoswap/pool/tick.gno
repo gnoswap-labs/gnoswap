@@ -258,7 +258,7 @@ func (p *Pool) deleteTick(tick int32) {
 // This function ensures the retrieved tick data is always valid and safe for further operations,
 // such as calculations or updates, by sanitizing nil fields in the TickInfo structure.
 func (p *Pool) getTick(tick int32) TickInfo {
-	tickStr := strconv.Itoa(int(tick))
+	tickStr := formatInt(tick)
 	iTickInfo, exist := p.ticks.Get(tickStr)
 	if !exist {
 		tickInfo := TickInfo{}
@@ -266,7 +266,12 @@ func (p *Pool) getTick(tick int32) TickInfo {
 		return tickInfo
 	}
 
-	return iTickInfo.(TickInfo)
+	info, ok := iTickInfo.(TickInfo)
+	if !ok {
+		panic("failed to cast tick info to TickInfo")
+	}
+
+	return info
 }
 
 // mustGetTick retrieves the TickInfo for a specific tick, panicking if the tick does not exist.
@@ -297,7 +302,7 @@ func (p *Pool) getTick(tick int32) TickInfo {
 //
 // ```
 func (p *Pool) mustGetTick(tick int32) TickInfo {
-	tickStr := strconv.Itoa(int(tick))
+	tickStr := formatInt(tick)
 	iTickInfo, exist := p.ticks.Get(tickStr)
 	if !exist {
 		panic(newErrorWithDetail(
@@ -306,7 +311,12 @@ func (p *Pool) mustGetTick(tick int32) TickInfo {
 		))
 	}
 
-	return iTickInfo.(TickInfo)
+	info, ok := iTickInfo.(TickInfo)
+	if !ok {
+		panic("failed to cast tick info to TickInfo")
+	}
+
+	return info
 }
 
 // calculateMaxLiquidityPerTick calculates the maximum liquidity

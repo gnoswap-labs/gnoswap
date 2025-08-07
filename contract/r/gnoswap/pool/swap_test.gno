@@ -209,8 +209,7 @@ func TestComputeSwap(t *testing.T) {
 		positions:            avl.NewTree(),
 	}
 
-	wordPos, _ := tickBitmapPosition(0)
-	mockPool.setTickBitmap(wordPos, u256.NewUint(1))
+	mockPool.setTickBitmap(NewTickPosition(0).wordPos, u256.NewUint(1))
 
 	t.Run("basic swap", func(t *testing.T) {
 		comp := SwapComputation{
