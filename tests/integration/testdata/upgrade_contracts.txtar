@@ -16,10 +16,9 @@ loadpkg gno.land/p/gnoswap/uint256
 loadpkg gno.land/p/gnoswap/int256
 loadpkg gno.land/p/gnoswap/rbac
 loadpkg gno.land/p/gnoswap/gnsmath
-loadpkg gno.land/r/gnoswap/v1/access
+loadpkg gno.land/r/gnoswap/access
 loadpkg gno.land/r/gnoswap/v1/rbac
 loadpkg gno.land/r/gnoswap/v1/halt
-loadpkg gno.land/r/gnoswap/v1/bridge
 loadpkg gno.land/r/gnoswap/v1/common
 loadpkg gno.land/r/gnoswap/v1/gns
 loadpkg gno.land/r/gnoswap/v1/emission

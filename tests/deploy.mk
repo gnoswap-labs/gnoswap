@@ -16,7 +16,7 @@ deploy-test-tokens: deploy-bar deploy-baz deploy-foo deploy-obl deploy-qux deplo
 deploy-libraries: deploy-uint256 deploy-int256 deploy-rbac deploy-gnsmath
 
 .PHONY: deploy-base-contracts
-deploy-base-contracts: deploy-access deploy-rbac-realm deploy-halt-realm deploy-bridge deploy-common deploy-referral
+deploy-base-contracts: deploy-access deploy-rbac-realm deploy-halt-realm deploy-common deploy-referral
 
 .PHONY: deploy-base-tokens
 deploy-base-tokens: deploy-gnft deploy-gns
@@ -52,11 +52,6 @@ deploy-uint256:
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/uint256 -pkgpath gno.land/p/gnoswap/uint256 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
 	@echo
 
-deploy-bridge:
-	$(info ************ deploy brideg ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/bridge -pkgpath gno.land/r/gnoswap/v1/bridge -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
-	@echo
-
 deploy-rbac-realm:
 	$(info ************ deploy rbac ************)
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/rbac -pkgpath gno.land/r/gnoswap/v1/rbac -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
@@ -64,7 +59,7 @@ deploy-rbac-realm:
 
 deploy-access:
 	$(info ************ deploy access ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/access -pkgpath gno.land/r/gnoswap/v1/access -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/access -pkgpath gno.land/r/gnoswap/access -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
 	@echo
 
 deploy-common:
