@@ -11,6 +11,9 @@ import (
 // bitMask8 is used for efficient modulo 256 operations
 const bitMask8 = 0xff // 256 - 1
 
+// one is a constant for u256.One() to avoid repeated allocations
+var one = u256.One()
+
 // tickBitmapFlipTick flips the state of a tick in the tick bitmap.
 //
 // This function toggles the "initialized" state of a tick in the tick bitmap.
@@ -129,18 +132,16 @@ func getWordAndBitPos(tick int32, lte bool) (int16, uint8) {
 // getMaskBit generates a mask based on the provided bit position (bitPos) and a boolean flag (lte).
 // The function constructs a bitmask with a shift depending on the bit position and the boolean value.
 // It either returns the mask or its negation, based on the value of 'lte' (swap direction).
-//
-// TODO: We could reduce the number of calls of u256.One() by using a constant
 func getMaskBit(bitPos uint, lte bool) *u256.Uint {
 	if lte {
 		// Simplified: (1 << bitPos) - 1 + (1 << bitPos) = (1 << (bitPos + 1)) - 1
-		shifted := u256.Zero().Lsh(u256.One(), bitPos+1)
-		return u256.Zero().Sub(shifted, u256.One())
+		shifted := u256.Zero().Lsh(one, bitPos+1)
+		return u256.Zero().Sub(shifted, one)
 	}
 
 	// ~((1 << bitPos) - 1)
-	shifted := u256.Zero().Lsh(u256.One(), bitPos)
-	mask := u256.Zero().Sub(shifted, u256.One())
+	shifted := u256.Zero().Lsh(one, bitPos)
+	mask := u256.Zero().Sub(shifted, one)
 	return u256.Zero().Not(mask)
 }
 

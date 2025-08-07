@@ -27,7 +27,6 @@ import (
 //   - The result must be greater than or equal to `x`. Otherwise, the function panics to prevent overflow.
 //
 // - The function ensures correctness by validating the results of the arithmetic operations.
-// TODO: consider to reduce branches
 func liquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 	if x == nil || y == nil {
 		panic(newErrorWithDetail(
@@ -48,14 +47,13 @@ func liquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 			))
 		}
 		return z
-	} else {
-		z := u256.Zero().Add(x, absDelta)
-		if z.Lt(x) {
-			panic(newErrorWithDetail(
-				errLiquidityCalculation,
-				ufmt.Sprintf("Condition failed: (z must be >= x) (x: %s, y: %s, z:%s)", x.ToString(), y.ToString(), z.ToString()),
-			))
-		}
-		return z
 	}
+	z := u256.Zero().Add(x, absDelta)
+	if z.Lt(x) {
+		panic(newErrorWithDetail(
+			errLiquidityCalculation,
+			ufmt.Sprintf("Condition failed: (z must be >= x) (x: %s, y: %s, z:%s)", x.ToString(), y.ToString(), z.ToString()),
+		))
+	}
+	return z
 }

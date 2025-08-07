@@ -20,7 +20,7 @@ const MAX_INT256 string = "57896044618658097711785492504343953926634992332820282
 var (
 	// MUST BE IMMUTABLE.
 	// DO NOT USE THIS VALUE IN ANY ARITHMETIC OPERATIONS' INITIALIZATION
-	zero = u256.Zero()
+	zero           = u256.Zero()
 	fixedPointQ128 = u256.MustFromDecimal(Q128)
 
 	maxInt256 = u256.MustFromDecimal(MAX_INT256)
@@ -301,7 +301,6 @@ func applySwapResult(pool *Pool, result *SwapResult) {
 // For !zeroForOne (selling token1):
 //   - Price limit must be above current price
 //   - Price limit must be below MAX_SQRT_RATIO
-// TODO: consider to reduce branches
 func validatePriceLimits(slot0 Slot0, zeroForOne bool, sqrtPriceLimitX96 *u256.Uint) {
 	if zeroForOne {
 		cond1 := sqrtPriceLimitX96.Lt(slot0.sqrtPriceX96)
@@ -369,7 +368,7 @@ func computeSwapStep(
 	// computing the amounts to be swapped at this step
 	var (
 		newState SwapState
-		err error
+		err      error
 	)
 
 	newState, step = computeAmounts(state, sqrtRatioTargetX96, pool, step)
@@ -544,7 +543,6 @@ func tickTransition(step StepComputations, zeroForOne bool, state SwapState, poo
 	return newState
 }
 
-// TODO: consider to reduce branches
 func (p *Pool) swapTransfers(zeroForOne bool, payer, recipient std.Address, amount0, amount1 *i256.Int) {
 	if zeroForOne {
 		// payer > POOL
