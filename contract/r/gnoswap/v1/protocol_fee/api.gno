@@ -12,26 +12,6 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 )
 
-func ApiGetTokenListWithAmountOverZero() string {
-	tokenList := GetTokenListWithAmount()
-	if tokenList == nil {
-		return ""
-	}
-
-	data := json.Builder().
-		WriteString("height", formatInt(std.ChainHeight())).
-		WriteString("now", formatInt(time.Now().Unix()))
-
-	for token, amount := range tokenList {
-		if amount == 0 {
-			continue
-		}
-		data.WriteString(token, formatInt64(amount))
-	}
-
-	return marshal(data.Node())
-}
-
 func ApiGetAccuTransferToGovStaker() string {
 	distributedAmountList := protocolFeeState.accuToGovStaker
 	if distributedAmountList == nil {

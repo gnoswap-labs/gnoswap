@@ -467,6 +467,10 @@ func TestSwap_ExecutionAndSecurity(t *testing.T) {
 
 			// When & Then: Proper blocking in security risk situations
 			testing.SetRealm(rouRealm)
+
+			TokenApprove(t, pool.token0Path, routerAddr, poolAddr, maxApprove)
+			TokenApprove(t, pool.token1Path, routerAddr, poolAddr, maxApprove)
+
 			uassert.AbortsWithMessage(t, test.expectedError, func() {
 				Swap(cross, pool.token0Path, pool.token1Path, pool.fee,
 					alice, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
@@ -537,6 +541,10 @@ func TestSwapConsistency_DryVsActual(t *testing.T) {
 
 			// Execute actual swap
 			testing.SetOriginCaller(routerAddr)
+
+			TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+			TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+
 			actualAmount0, actualAmount1 := Swap(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER,
 				routerAddr, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 				test.swapParams.priceLimit, routerAddr)
@@ -634,6 +642,10 @@ func TestSwap_TradingPatterns(t *testing.T) {
 
 			// When: Execute swap with specified pattern
 			testing.SetOriginCaller(routerAddr)
+
+			TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+			TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+
 			actualAmount0, actualAmount1 := Swap(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER,
 				alice, pattern.swapParams.zeroForOne, pattern.swapParams.amountSpecified,
 				pattern.swapParams.priceLimit, routerAddr)
@@ -701,6 +713,10 @@ func TestSwap_ExtremeMarketConditions(t *testing.T) {
 			// When: Execute swap in extreme conditions
 			testing.SetOriginCaller(routerAddr)
 			testing.SetRealm(rouRealm)
+
+			TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+			TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+
 			actualAmount0, actualAmount1 := Swap(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER,
 				alice, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 				test.swapParams.priceLimit, routerAddr)
@@ -721,10 +737,15 @@ func TestSwap_FeeTierOptimization(t *testing.T) {
 	// Test ultra-low fee tier (stablecoin)
 	t.Run("ultra_low_fee_stablecoin_swap", func(t *testing.T) {
 		// Given: Ultra-low fee tier stablecoin pool
+		resetObject(t)
 		setupUltraLowFeePool(t)
 
 		// When: Large stablecoin swap
 		testing.SetOriginCaller(routerAddr)
+
+		TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+		TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+		
 		actualAmount0, actualAmount1 := Swap(cross, wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER,
 			adminAddr, true, "40012000",
 			common.TickMathGetSqrtRatioAtTick(-887220).ToString(), routerAddr)

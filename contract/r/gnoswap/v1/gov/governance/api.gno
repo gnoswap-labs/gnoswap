@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"gno.land/p/demo/json"
-	"gno.land/p/demo/ufmt"
 )
 
 func createProposalJsonNode(id int64, proposal *Proposal) *json.Node {
@@ -22,31 +21,6 @@ func createProposalJsonNode(id int64, proposal *Proposal) *json.Node {
 		WriteString("vote", b64Encode(getProposalVotes(id))).
 		WriteString("extra", b64Encode(getProposalExtraData(id))).
 		Node()
-}
-
-// GetProposals returns all proposals with necessary information.
-func GetProposals() string {
-	proposalsObj := metaNode()
-	proposalArr := json.ArrayNode("", nil)
-
-	proposals.Iterate("", "", func(key string, value interface{}) bool {
-		if value == nil {
-			return false
-		}
-
-		proposal, ok := value.(*Proposal)
-		if !ok {
-			panic(ufmt.Sprintf("failed to cast proposals's element to *Proposal: %T", value))
-		}
-		proposalObj := createProposalJsonNode(proposal.ID(), proposal)
-		proposalArr.AppendArray(proposalObj)
-
-		return false
-	})
-
-	proposalsObj.AppendObject("proposals", proposalArr)
-
-	return marshal(proposalsObj)
 }
 
 // GetProposalById returns a single proposal with necessary information.

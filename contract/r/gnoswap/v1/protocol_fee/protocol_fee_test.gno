@@ -68,19 +68,6 @@ func TestDistributeProtocolFee(t *testing.T) {
 	uassert.Equal(t, qux.BalanceOf(govStakerAddr), int64(1000))
 }
 
-func TestTokenList(t *testing.T) {
-	// Reset and setup test data
-	protocolFeeState = NewProtocolFeeState()
-	protocolFeeState.tokenListWithAmount = map[string]int64{
-		"gno.land/r/foo": 100,
-		"gno.land/r/bar": 0,
-		"gno.land/r/baz": 200,
-	}
-
-	uassert.Equal(t, len(TokenList(true)), 2)
-	uassert.Equal(t, len(TokenList(false)), 3)
-}
-
 func TestAddToProtocolFee(t *testing.T) {
 	// Reset protocol fee state for clean test
 	protocolFeeState = NewProtocolFeeState()

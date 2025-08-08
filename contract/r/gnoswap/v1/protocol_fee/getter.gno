@@ -5,20 +5,6 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-// TokenList returns only the list of token path.
-// If positive is true, it returns only the token path with amount > 0.
-// If positive is false, it returns all the token path.
-func TokenList(positive bool) []string {
-	tokens := []string{}
-	for tokenPath, amount := range protocolFeeState.tokenListWithAmount {
-		if positive && amount == 0 {
-			continue
-		}
-		tokens = append(tokens, tokenPath)
-	}
-	return tokens
-}
-
 func GetDevOpsPct() int64 {
 	return protocolFeeState.DevOpsPct()
 }

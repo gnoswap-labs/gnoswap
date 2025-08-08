@@ -179,10 +179,6 @@ func depositGnsTo(projectId, projectTierId string, depositAmount int64) {
 
 	println("[INFO] Depositing GNS to OBL project tier 30")
 
-	data := unmarshal(protocol_fee.ApiGetTokenListWithAmountOverZero())
-	println("[INFO] Bar amount in protocol fee:", data["gno.land/r/onbloc/bar"])
-	println("[INFO] Qux amount in protocol fee:", data["gno.land/r/onbloc/qux"])
-
 	println("[INFO] Admin transferring GNS to Bob for deposit")
 	testing.SetRealm(adminRealm)
 	gns.Transfer(cross, bobAddr, depositAmount*2) // to deposit
@@ -217,12 +213,6 @@ func depositGnsTo(projectId, projectTierId string, depositAmount int64) {
 func collectProtocolFeeForOBLProjectRecipient() {
 	println("[INFO] Collecting protocol fee for OBL project recipient")
 
-	data := unmarshal(protocol_fee.ApiGetTokenListWithAmountOverZero())
-	println("[INFO] Protocol fee height:", data["height"])
-	println("[INFO] Protocol fee now:", data["now"])
-	println("[INFO] Bar amount:", data["gno.land/r/onbloc/bar"])
-	println("[INFO] Qux amount:", data["gno.land/r/onbloc/qux"])
-
 	println("[INFO] Project recipient collecting protocol fee")
 	testing.SetRealm(projectRealm)
 
@@ -247,12 +237,6 @@ func collectProtocolFeeForOBLProjectRecipient() {
 // Collect protocol fee for OBL project recipient 2
 func collectProtocolFeeForOBLProjectRecipient2() {
 	println("[INFO] Collecting protocol fee for OBL project recipient 2")
-
-	data := unmarshal(protocol_fee.ApiGetTokenListWithAmountOverZero())
-	println("[INFO] Protocol fee height:", data["height"])
-	println("[INFO] Protocol fee now:", data["now"])
-	println("[INFO] Bar amount:", data["gno.land/r/onbloc/bar"])
-	println("[INFO] Qux amount:", data["gno.land/r/onbloc/qux"])
 
 	println("[INFO] Project recipient collecting protocol fee")
 	testing.SetRealm(projectRealm)
@@ -336,8 +320,6 @@ func unmarshal(data string) map[string]interface{} {
 //
 // [SCENARIO] 3. Deposit GNS to OBL project tier 30
 // [INFO] Depositing GNS to OBL project tier 30
-// [INFO] Bar amount in protocol fee: 1000
-// [INFO] Qux amount in protocol fee: 2500
 // [INFO] Admin transferring GNS to Bob for deposit
 // [INFO] Bob delegating GNS to gov staker
 // [INFO] Skipping blocks to make project active
@@ -360,10 +342,6 @@ func unmarshal(data string) map[string]interface{} {
 //
 // [SCENARIO] 5. Collect protocol fee for OBL project recipient
 // [INFO] Collecting protocol fee for OBL project recipient
-// [INFO] Protocol fee height: 123
-// [INFO] Protocol fee now: 1234567890
-// [INFO] Bar amount: 1000
-// [INFO] Qux amount: 2500
 // [INFO] Project recipient collecting protocol fee
 // [INFO] Bar balance in protocol fee: 0
 // [INFO] Qux balance in protocol fee: 0
@@ -374,8 +352,6 @@ func unmarshal(data string) map[string]interface{} {
 //
 // [SCENARIO] 6. Deposit GNS to OBL project tier 30 again
 // [INFO] Depositing GNS to OBL project tier 30
-// [INFO] Bar amount in protocol fee: 1000
-// [INFO] Qux amount in protocol fee: 2500
 // [INFO] Admin transferring GNS to Bob for deposit
 // [INFO] Bob delegating GNS to gov staker
 // [INFO] Skipping blocks to make project active
@@ -398,10 +374,6 @@ func unmarshal(data string) map[string]interface{} {
 //
 // [SCENARIO] 8. Collect protocol fee for OBL project recipient 2
 // [INFO] Collecting protocol fee for OBL project recipient 2
-// [INFO] Protocol fee height: 123
-// [INFO] Protocol fee now: 1234567890
-// [INFO] Bar amount: 1000
-// [INFO] Qux amount: 2500
 // [INFO] Project recipient collecting protocol fee
 // [INFO] Bar balance in protocol fee: 0
 // [INFO] Qux balance in protocol fee: 0
