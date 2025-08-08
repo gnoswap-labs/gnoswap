@@ -1,5 +1,10 @@
 package protocol_fee
 
+import (
+	"gno.land/p/demo/avl"
+	"gno.land/p/demo/ufmt"
+)
+
 // TokenList returns only the list of token path.
 // If positive is true, it returns only the token path with amount > 0.
 // If positive is false, it returns all the token path.
@@ -80,18 +85,24 @@ func GetAccuTransferToDevOpsByTokenPath(path string) uint64 {
 
 // GetHistoryOfDistributedToGovStakerByTokenPath returns the history of distributed to gov/staker by token path.
 func GetHistoryOfDistributedToGovStakerByTokenPath(path string) uint64 {
-	amountI, exists := protocolFeeState.distributedToGovStakerHistory.Get(path)
-	if !exists {
-		return 0
-	}
-	return amountI.(uint64)
+	history := protocolFeeState.distributedToGovStakerHistory
+	return retrieveHistory(history, path)
 }
 
 // GetHistoryOfDistributedToDevOpsByTokenPath returns the history of distributed to devOps by token path.
 func GetHistoryOfDistributedToDevOpsByTokenPath(path string) uint64 {
-	amountI, exists := protocolFeeState.distributedToDevOpsHistory.Get(path)
+	history := protocolFeeState.distributedToDevOpsHistory
+	return retrieveHistory(history, path)
+}
+
+func retrieveHistory(tree *avl.Tree, key string) uint64 {
+	amountI, exists := tree.Get(key)
 	if !exists {
 		return 0
 	}
-	return amountI.(uint64)
+	res, ok := amountI.(uint64)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast amount to uint64: %T", amountI))
+	}
+	return res
 }

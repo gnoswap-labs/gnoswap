@@ -2,6 +2,8 @@ package staker
 
 import (
 	"gno.land/p/demo/avl"
+	"gno.land/p/demo/ufmt"
+
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -74,7 +76,13 @@ func (e *EmissionRewardManager) GetClaimableRewardAmount(
 		return 0
 	}
 
-	rewardState := rewardStateI.(*EmissionRewardState)
+	rewardState, ok := rewardStateI.(*EmissionRewardState)
+	if !ok {
+		panic(ufmt.Sprintf(
+			"failed to cast rewardStates's element to *EmissionRewardState: %T",
+			rewardStateI,
+		))
+	}
 	accumulatedRewardX128PerStake := e.calculateAccumulatedRewardX128PerStake(currentDistributedAmount, currentTimestamp)
 
 	return rewardState.GetClaimableRewardAmount(accumulatedRewardX128PerStake, currentTimestamp)
@@ -165,7 +173,13 @@ func (e *EmissionRewardManager) addStake(address string, amount int64, currentTi
 		rewardStateI = NewEmissionRewardState(e.accumulatedRewardX128PerStake)
 	}
 
-	rewardState := rewardStateI.(*EmissionRewardState)
+	rewardState, ok := rewardStateI.(*EmissionRewardState)
+	if !ok {
+		panic(ufmt.Sprintf(
+			"failed to cast rewardStates's element to *EmissionRewardState: %T",
+			rewardStateI,
+		))
+	}
 	rewardState.addStakeWithUpdateRewardDebtX128(amount, e.accumulatedRewardX128PerStake, currentTimestamp)
 
 	e.rewardStates.Set(address, rewardState)
@@ -186,10 +200,12 @@ func (e *EmissionRewardManager) removeStake(address string, amount int64, curren
 		rewardStateI = NewEmissionRewardState(e.accumulatedRewardX128PerStake.Clone())
 	}
 
-	rewardState := rewardStateI.(*EmissionRewardState)
-	rewardState.removeStakeWithUpdateRewardDebtX128(amount, e.accumulatedRewardX128PerStake, currentTimestamp)
-
-	e.rewardStates.Set(address, rewardState)
+	if rewardState, ok := rewardStateI.(*EmissionRewardState); !ok {
+		panic(ufmt.Sprintf("failed to cast rewardStates's element to *EmissionRewardState: %T", rewardStateI))
+	} else {
+		rewardState.removeStakeWithUpdateRewardDebtX128(amount, e.accumulatedRewardX128PerStake, currentTimestamp)
+		e.rewardStates.Set(address, rewardState)
+	}
 
 	e.totalStakedAmount = e.totalStakedAmount - amount
 }
@@ -204,22 +220,27 @@ func (e *EmissionRewardManager) removeStake(address string, amount int64, curren
 // Returns:
 //   - int64: amount of rewards claimed
 //   - error: nil on success, error if claiming fails
-func (e *EmissionRewardManager) claimRewards(address string, currentTimestamp int64) (int64, error) {
+func (e *EmissionRewardManager) claimRewards(address string, currentTimestamp int64) (claimedRewardAmount int64, err error) {
 	rewardStateI, ok := e.rewardStates.Get(address)
 	if !ok {
 		return 0, nil
 	}
 
-	rewardState := rewardStateI.(*EmissionRewardState)
+	rewardState, ok := rewardStateI.(*EmissionRewardState)
+	if !ok {
+		return 0, ufmt.Errorf(
+			"failed to cast rewardStates's element to *EmissionRewardState: %T",
+			rewardStateI)
+	}
 
-	claimedRewardAmount, err := rewardState.claimRewardsWithUpdateRewardDebtX128(e.accumulatedRewardX128PerStake, currentTimestamp)
+	claimedRewardAmount, err = rewardState.claimRewardsWithUpdateRewardDebtX128(e.accumulatedRewardX128PerStake, currentTimestamp)
 	if err != nil {
 		return 0, err
 	}
 
 	e.rewardStates.Set(address, rewardState)
 
-	return claimedRewardAmount, nil
+	return
 }
 
 // NewEmissionRewardManager creates a new instance of EmissionRewardManager.

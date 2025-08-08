@@ -128,48 +128,53 @@ func (pfs *ProtocolFeeState) addAccuToDevOps(tokenPath string, amount uint64) {
 
 // GetAccuTransferToGovStakerByTokenPath gets the accumulated amount to gov/staker by token path.
 func (pfs *ProtocolFeeState) GetAccuTransferToGovStakerByTokenPath(tokenPath string) uint64 {
-	amountI, exists := pfs.accuToGovStaker.Get(tokenPath)
-	if !exists {
-		return 0
-	}
-	return amountI.(uint64)
+	return retrieveAmount(pfs.accuToGovStaker, tokenPath)
 }
 
 // GetAccuTransferToDevOpsByTokenPath gets the accumulated amount to devOps by token path.
 func (pfs *ProtocolFeeState) GetAccuTransferToDevOpsByTokenPath(tokenPath string) uint64 {
-	amountI, exists := pfs.accuToDevOps.Get(tokenPath)
+	return retrieveAmount(pfs.accuToDevOps, tokenPath)
+}
+
+func retrieveAmount(tree *avl.Tree, key string) uint64 {
+	amountI, exists := tree.Get(key)
 	if !exists {
 		return 0
 	}
-	return amountI.(uint64)
+	res, ok := amountI.(uint64)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast amount to uint64: %T", amountI))
+	}
+	return res
 }
 
 // updateDistributedToGovStakerHistory updates the distributedToGovStakerHistory.
 func (pfs *ProtocolFeeState) updateDistributedToGovStakerHistory(tokenPath string, amount uint64) {
-	// get the previous amount
-	prevAmountI, exists := pfs.distributedToGovStakerHistory.Get(tokenPath)
-	prevAmount := uint64(0)
-	if exists {
-		prevAmount = prevAmountI.(uint64)
-	}
-
-	// update the amount
+	prevAmount := retrievePrevAmount(pfs.distributedToGovStakerHistory, tokenPath)
 	afterAmount := prevAmount + amount
+
 	pfs.distributedToGovStakerHistory.Set(tokenPath, afterAmount)
 }
 
 // updateDistributedToDevOpsHistory updates the distributedToDevOpsHistory.
 func (pfs *ProtocolFeeState) updateDistributedToDevOpsHistory(tokenPath string, amount uint64) {
-	// get the previous amount
-	prevAmountI, exists := pfs.distributedToDevOpsHistory.Get(tokenPath)
-	prevAmount := uint64(0)
-	if exists {
-		prevAmount = prevAmountI.(uint64)
-	}
-
-	// update the amount
+	prevAmount := retrievePrevAmount(pfs.distributedToDevOpsHistory, tokenPath)
 	afterAmount := prevAmount + amount
+
 	pfs.distributedToDevOpsHistory.Set(tokenPath, afterAmount)
+}
+
+func retrievePrevAmount(tree *avl.Tree, key string) (amount uint64) {
+	if prevAmountI, exists := tree.Get(key); !exists {
+		return 0
+	} else {
+		v, ok := prevAmountI.(uint64)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast prevAmount to uint64: %T", prevAmountI))
+		}
+		amount = v
+	}
+	return
 }
 
 // clearTokenListWithAmount clears the tokenListWithAmount.

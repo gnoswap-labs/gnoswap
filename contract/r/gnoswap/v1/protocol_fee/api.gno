@@ -7,6 +7,7 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/json"
+	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
 )
@@ -72,7 +73,11 @@ func buildByAvlTree(tree *avl.Tree) *json.Node {
 		WriteString("now", formatInt(time.Now().Unix()))
 
 	tree.Iterate("", "", func(key string, value any) bool {
-		data.WriteString(key, formatUint(value.(uint64)))
+		if iv, ok := value.(uint64); !ok {
+			panic(ufmt.Sprintf("failed to cast value to uint64: %T", value))
+		} else {
+			data.WriteString(key, formatUint(iv))
+		}
 		return false
 	})
 
@@ -101,6 +106,7 @@ func ApiGetActualBalance() string {
 	tokenMap := make(map[string]uint64)
 
 	// get all recorded tokens
+	// TODO: make tokenMap a map[string]int64 to avoid unnecessary uint64 conversion
 	for token := range protocolFeeState.tokenListWithAmount {
 		actualBalance := uint64(common.BalanceOf(token, protocolFeeAddr))
 		tokenMap[token] = actualBalance
