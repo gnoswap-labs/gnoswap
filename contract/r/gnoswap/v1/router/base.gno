@@ -82,7 +82,7 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 	}
 
 	sent := std.OriginSend()
-	ugnotSentByUser := int64(sent.AmountOf("ugnot"))
+	ugnotSentByUser := sent.AmountOf("ugnot")
 	amountSpecified := specifiedAmount.Int64()
 
 	if ugnotSentByUser != amountSpecified {
