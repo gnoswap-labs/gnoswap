@@ -9,24 +9,9 @@ import (
 	"gno.land/r/gnoswap/v1/gov/staker"
 )
 
-// ProposeText creates a new text proposal with the given data.
-// Text proposals are informational only and cannot be executed.
-// They are used for community discussions and non-binding votes.
-//
-// Parameters:
-//   - cur: realm context for cross-realm calls
-//   - title: proposal title (max 255 characters)
-//   - description: detailed proposal description (max 10,000 characters)
-//
-// Returns:
-//   - int64: unique ID of the created proposal
-//
-// Panics:
-//   - if proposer doesn't have enough voting weight
-//   - if proposer has an active proposal
-//   - if input validation fails
-//
-// ref: https://docs.gnoswap.io/contracts/governance/proposal.gno#proposetext
+// ProposeText creates text proposal for discussion.
+// Text proposals are informational only.
+// Returns proposal ID.
 func ProposeText(
 	cur realm,
 	title string,
@@ -34,15 +19,12 @@ func ProposeText(
 ) (newProposalId int64) {
 	halt.AssertIsNotHaltedGovernance()
 
-	// Get caller information for proposal creation
 	callerAddress := std.PreviousRealm().Address()
 
-	// Get current blockchain state
 	createdAt := time.Now().Unix()
 	createdHeight := std.ChainHeight()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
-	// Retrieve current governance configuration
 	config, ok := getCurrentConfig()
 	if !ok {
 		panic(errDataNotFound)
@@ -135,15 +117,12 @@ func ProposeCommunityPoolSpend(
 	halt.AssertIsNotHaltedGovernance()
 	halt.AssertIsNotHaltedWithdraw()
 
-	// Get caller information for proposal creation
 	callerAddress := std.PreviousRealm().Address()
 
-	// Get current blockchain state
 	createdAt := time.Now().Unix()
 	createdHeight := std.ChainHeight()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
-	// Retrieve current governance configuration
 	config, ok := getCurrentConfig()
 	if !ok {
 		panic(errDataNotFound)
@@ -237,15 +216,12 @@ func ProposeParameterChange(
 ) (newProposalId int64) {
 	halt.AssertIsNotHaltedGovernance()
 
-	// Get caller information for proposal creation
 	callerAddress := std.PreviousRealm().Address()
 
-	// Get current blockchain state
 	createdAt := time.Now().Unix()
 	createdHeight := std.ChainHeight()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
-	// Retrieve current governance configuration
 	config, ok := getCurrentConfig()
 	if !ok {
 		panic(errDataNotFound)

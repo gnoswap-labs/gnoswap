@@ -26,27 +26,8 @@ const (
 	ZERO_LIQUIDITY_FOR_FEE_COLLECTION = "0"
 )
 
-// Mint creates a new liquidity position by depositing token pairs into the pool and minting a new LP token.
-//
-// Parameters:
-//   - token0: The address of token0.
-//   - token1: The address of token1.
-//   - fee: The fee tier of the pool, in basis points.
-//   - tickLower: The lower tick boundary of the position.
-//   - tickUpper: The upper tick boundary of the position.
-//   - amount0Desired: Desired amount of token0 to add as liquidity, as a string.
-//   - amount1Desired: Desired amount of token1 to add as liquidity, as a string.
-//   - amount0Min: Minimum acceptable amount of token0 to add as liquidity, as a string.
-//   - amount1Min: Minimum acceptable amount of token1 to add as liquidity, as a string.
-//   - deadline: Expiration timestamp for the transaction.
-//   - mintTo: Address to receive the minted LP token.
-//   - caller: The address of the entity (contract or user) providing liquidity; assets will be withdrawn from this address.
-//
-// Returns:
-//   - uint64: The ID of the newly minted liquidity position.
-//   - string: The amount of liquidity provided to the position.
-//   - string: The amount of token0 used in the mint.
-//   - string: The amount of token1 used in the mint.
+// Mint creates new liquidity position.
+// Returns position ID, liquidity amount, and amounts of tokens used.
 //
 // Behavior:
 //  1. **Validation**:

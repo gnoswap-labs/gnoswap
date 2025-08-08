@@ -34,7 +34,7 @@ var baseTempalte = `<svg width="135" height="135" viewBox="0 0 135 135" fill="no
 </svg>
 `
 
-// range for hex color
+// charset for hex color generation.
 const charset = "0123456789ABCDEF"
 
 func genImageURI(r *rand.Rand) string {

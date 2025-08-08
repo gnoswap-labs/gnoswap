@@ -9,7 +9,7 @@ import (
 	"gno.land/r/gnoswap/v1/protocol_fee"
 )
 
-// GetLockedAmount gets the total locked amount of GNS.
+// GetLockedAmount returns total locked GNS.
 func GetLockedAmount() int64 {
 	lockedAmount := int64(0)
 
@@ -22,17 +22,17 @@ func GetLockedAmount() int64 {
 	return lockedAmount
 }
 
-// GetClaimableRewardByAddress gets the claimable reward of an address.
+// GetClaimableRewardByAddress returns claimable reward for address.
 func GetClaimableRewardByAddress(addr std.Address) string {
 	return GetClaimableRewardByRewardID(addr.String())
 }
 
-// GetClaimableRewardByAddress gets the claimable reward of an address.
+// GetClaimableRewardByLaunchpad returns claimable reward for launchpad.
 func GetClaimableRewardByLaunchpad(addr std.Address) string {
 	return GetClaimableRewardByRewardID(makeLaunchpadRewardID(addr.String()))
 }
 
-// GetClaimableRewardByRewardID gets the claimable reward of an address.
+// GetClaimableRewardByRewardID returns claimable reward by ID.
 func GetClaimableRewardByRewardID(rewardID string) string {
 	func(cur realm) {
 		emission.MintAndDistributeGns(cross)

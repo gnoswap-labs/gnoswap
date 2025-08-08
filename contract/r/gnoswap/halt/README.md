@@ -1,9 +1,15 @@
 # Halt
 
-## Overview
+Emergency pause mechanism for protocol safety.
 
-The halt contract uses the core framwork in the [halt package](../../../p/gnoswap/halt/README.md).
+## Features
 
-## For Beta Mainnet
+- Selective halting of protocol functions
+- Admin/governance control
+- Safety mode for beta mainnet
 
-The protocol will be initially deployed in `MainnetSafeMode`, which disables the withdrawal function during the beta mainnet period for safety reasons. The withdrawal function will be enabled by governance once the stability of the network is confirmed.
+## Beta Mainnet
+
+Protocol starts in `MainnetSafeMode` with withdrawals disabled. Governance enables withdrawals after network stability is confirmed.
+
+See [halt package](../../../p/gnoswap/halt) for implementation details.

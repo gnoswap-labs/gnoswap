@@ -22,8 +22,7 @@ var (
 	}()
 )
 
-// toAscendingOrder checks if the first value is greater than
-// the second then swaps two values.
+// toAscendingOrder ensures values are in ascending order.
 func toAscendingOrder(a, b *u256.Uint) (*u256.Uint, *u256.Uint) {
 	if a.Gt(b) {
 		return b, a
@@ -32,22 +31,7 @@ func toAscendingOrder(a, b *u256.Uint) (*u256.Uint, *u256.Uint) {
 	return a, b
 }
 
-// toUint128 ensures a *u256.Uint value fits within the uint128 range.
-//
-// This function validates that the given `value` is properly initialized (not nil) and checks whether
-// it exceeds the maximum value of uint128. If the value exceeds the uint128 range,
-// it applies a masking operation to truncate the value to fit within the uint128 limit.
-//
-// Parameters:
-//   - value: *u256.Uint, the value to be checked and possibly truncated.
-//
-// Returns:
-//   - *u256.Uint: A value guaranteed to fit within the uint128 range.
-//
-// Notes:
-//   - The function first checks if the value is not nil to avoid potential runtime errors.
-//   - The mask ensures that only the lower 128 bits of the value are retained.
-//   - If the input value is already within the uint128 range, it is returned unchanged.
+// toUint128 ensures value fits within uint128 range.
 //   - If masking is required, a new instance is returned without modifying the input.
 //   - MAX_UINT128 is a constant representing `2^128 - 1`.
 func toUint128(value *u256.Uint) *u256.Uint {

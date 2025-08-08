@@ -15,25 +15,9 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 )
 
-// CreateProject creates a new project with specified tiers, conditions, and token deposit.
-//
-// This function initializes a project by validating the input, transferring the deposit amount,
-// and creating the project's tiers. The project is stored globally and an event is emitted.
-//
-// Parameters:
-// - name (string): The name of the project.
-// - tokenPath (string): The token path for the deposit token.
-// - recipient (std.Address): The address to receive the project's rewards.
-// - depositAmount (uint64): The total amount of tokens to be deposited for the project.
-// - conditionsToken (string): The token used for reward conditions.
-// - conditionsAmount (string): The amount of the conditions token required.
-// - tier30Ratio (uint64): The percentage of the deposit allocated to the 30-day tier.
-// - tier90Ratio (uint64): The percentage of the deposit allocated to the 90-day tier.
-// - tier180Ratio (uint64): The percentage of the deposit allocated to the 180-day tier.
-// - startTime (uint64): The project's start time in Unix timestamp (seconds), must be greater than now + 1 hour.
-//
-// Returns:
-// - string: The unique ID of the created project.
+// CreateProject creates new launchpad project.
+// Validates input, transfers deposit, creates tiers.
+// Returns project ID.
 func CreateProject(
 	cur realm,
 	name string,

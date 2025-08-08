@@ -9,8 +9,8 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 )
 
-// TransferToken transfers token to the given address.
-// Only governance contract can execute this function via proposal
+// TransferToken transfers token to address.
+// Only callable by admin or governance.
 func TransferToken(cur realm, tokenPath string, to std.Address, amount int64) {
 	halt.AssertIsNotHaltedCommunityPool()
 	halt.AssertIsNotHaltedWithdraw()
@@ -24,7 +24,7 @@ func TransferToken(cur realm, tokenPath string, to std.Address, amount int64) {
 	}
 }
 
-// transferToken transfers token to the given address.
+// transferToken performs actual token transfer.
 func transferToken(tokenPath string, to std.Address, amount int64) error {
 	err := common.Transfer(cross, tokenPath, to, amount)
 	if err != nil {

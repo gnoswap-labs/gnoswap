@@ -12,33 +12,9 @@ import (
 	"gno.land/r/gnoswap/v1/gov/xgns"
 )
 
-// Delegate delegates GNS tokens to a specified address.
-// This function transfers GNS tokens from the caller to the staker contract,
-// mints corresponding xGNS tokens, and starts earning rewards.
-//
-// The delegation process involves:
-// 1. Validating the delegatee address
-// 2. Minting and distributing GNS rewards
-// 3. Creating a delegation record
-// 4. Transferring GNS tokens to the contract
-// 5. Minting xGNS tokens to the delegator
-// 6. Registering referrer if applicable
-//
-// Parameters:
-//   - cur: realm context for cross-realm calls
-//   - to: address to delegate tokens to
-//   - amount: amount of GNS tokens to delegate
-//   - referrer: referrer address for referral rewards
-//
-// Returns:
-//   - int64: amount of tokens delegated
-//
-// Panics:
-//   - if delegatee address is invalid
-//   - if delegation amount is invalid
-//   - if GNS transfer fails
-//
-// Reference: https://docs.gnoswap.io/contracts/governance/staker.gno#delegate
+// Delegate delegates GNS tokens to address.
+// Transfers GNS, mints xGNS, starts earning rewards.
+// Returns delegated amount.
 func Delegate(
 	cur realm,
 	to std.Address,

@@ -21,33 +21,9 @@ var (
 	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 )
 
-// Mint adds liquidity to a pool by minting a new position.
-//
-// This function mints a liquidity position within the specified tick range in a pool.
-// It verifies caller permissions, validates inputs, and updates the pool's state. Additionally,
-// it transfers the required amounts of token0 and token1 from the caller to the pool.
-//
-// Parameters:
-//   - token0Path: string, the path or identifier for token 0.
-//   - token1Path: string, the path or identifier for token 1.
-//   - fee: uint32, the fee tier of the pool.
-//   - recipient: std.Address, the address to receive the newly created position.
-//   - tickLower: int32, the lower tick boundary of the position.
-//   - tickUpper: int32, the upper tick boundary of the position.
-//   - liquidityAmount: string, the amount of liquidity to add, provided as a decimal string.
-//   - positionCaller: std.Address, the address of the entity calling the function (e.g., the position owner).
-//
-// Returns:
-//   - string: The amount of token 0 transferred to the pool as a string.
-//   - string: The amount of token 1 transferred to the pool as a string.
-//
-// Panic Conditions:
-//   - The system is halted (`halt.IsHalted()`).
-//   - Caller is not the position contract.
-//   - The provided `liquidityAmount` is zero.
-//   - Any failure during token transfers or position modifications.
-//
-// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#mint
+// Mint adds liquidity to pool.
+// Only callable by position contract.
+// Returns amounts of token0 and token1 transferred.
 func Mint(
 	cur realm,
 	token0Path string,

@@ -13,12 +13,12 @@ func init() {
 	emissionState = NewEmissionState(0, 0)
 }
 
-// EmissionState is a struct for managing emission state
+// EmissionState manages emission state and halving data.
 type EmissionState struct {
-	startHeight    int64        // emission start block height
-	startTimestamp int64        // emission start timestamp
-	endTimestamp   int64        // emission end timestamp
-	halvingData    *HalvingData // halving data
+	startHeight    int64
+	startTimestamp int64
+	endTimestamp   int64
+	halvingData    *HalvingData
 }
 
 func (e *EmissionState) isInitialized() bool {
@@ -94,7 +94,7 @@ func (e *EmissionState) getHalvingYearLeftAmount(year int64) int64 {
 	return e.halvingData.getLeftAmount(year)
 }
 
-// addHalvingYearAccumulatedAmount adds the amount to the accumulated amount of the halving year
+// addHalvingYearAccumulatedAmount adds to accumulated amount for halving year.
 func (e *EmissionState) addHalvingYearAccumulatedAmount(year int64, amount int64) error {
 	if year == 0 {
 		return makeErrorWithDetails(errInvalidYear, ufmt.Sprintf("year: %d", year))
@@ -107,7 +107,7 @@ func (e *EmissionState) addHalvingYearAccumulatedAmount(year int64, amount int64
 	return nil
 }
 
-// subHalvingYearLeftAmount subtracts the amount from the left amount of the halving year
+// subHalvingYearLeftAmount subtracts from remaining amount for halving year.
 func (e *EmissionState) subHalvingYearLeftAmount(year int64, amount int64) error {
 	if year == 0 {
 		return makeErrorWithDetails(errInvalidYear, ufmt.Sprintf("year: %d", year))
@@ -120,12 +120,12 @@ func (e *EmissionState) subHalvingYearLeftAmount(year int64, amount int64) error
 	return nil
 }
 
-// updateHalvingData initializes halving data
+// updateHalvingData initializes halving data.
 func (e *EmissionState) updateHalvingData(startTimestamp int64) {
 	e.halvingData = NewHalvingData(startTimestamp)
 }
 
-// NewEmissionState creates a new emission state
+// NewEmissionState creates new emission state.
 func NewEmissionState(startHeight int64, startTimestamp int64) *EmissionState {
 	emissionEndTime := startTimestamp + SECONDS_IN_YEAR*HALVING_END_YEAR - 1
 
@@ -137,7 +137,7 @@ func NewEmissionState(startHeight int64, startTimestamp int64) *EmissionState {
 	}
 }
 
-// getEmissionState returns emission state (singleton pattern)
+// getEmissionState returns singleton emission state.
 func getEmissionState() *EmissionState {
 	if emissionState == nil {
 		emissionState = NewEmissionState(std.ChainHeight(), time.Now().Unix())

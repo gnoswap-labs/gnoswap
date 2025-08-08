@@ -133,26 +133,21 @@ func MintGns(cur realm, address std.Address) int64 {
 	lastGNSMintedTimestamp := LastMintedTimestamp()
 	currentTime := time.Now().Unix()
 
-	// skip minting process if following conditions are met
-	// - if gns for current block is already minted
-	// - if last minted height is same or later than emission end height
+	// Skip if already minted this timestamp or emission ended.
 	if lastGNSMintedTimestamp == currentTime || lastGNSMintedTimestamp >= GetEmissionEndTimestamp() {
 		return 0
 	}
 
-	// calculate gns amount to mint
 	amountToMint := calculateAmountToMint(lastGNSMintedTimestamp+1, currentTime)
 	err := validEmissionAmount(amountToMint)
 	if err != nil {
 		panic(err)
 	}
 
-	// update
 	setLastMintedTimestamp(currentTime)
 	setMintedEmissionAmount(MintedEmissionAmount() + amountToMint)
 	setLeftEmissionAmount(LeftEmissionAmount() - amountToMint)
 
-	// mint calculated amount to address
 	err = privateLedger.Mint(address, amountToMint)
 	if err != nil {
 		panic(err.Error())
@@ -250,11 +245,8 @@ func checkErr(err error) {
 	}
 }
 
-// calculateAmountToMint calculates the amount of gns to mint
-// It calculates the amount of gns to mint for each halving year for block range.
-// It also handles the left emission amount if the current block range includes halving year end block.
+// calculateAmountToMint calculates GNS to mint for timestamp range.
 func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
-	// if toHeight is greater than emission end height, set toHeight to emission end height
 	endTimestamp := GetEmissionEndTimestamp()
 	if toTimestamp > endTimestamp {
 		toTimestamp = endTimestamp
@@ -264,7 +256,6 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
 		return 0
 	}
 
-	// handle negative block height or block height before emission start
 	startTimestamp := getEmissionState().getStartTimestamp()
 	if fromTimestamp < startTimestamp {
 		fromTimestamp = startTimestamp
@@ -277,7 +268,6 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
 	fromYear := getEmissionState().getCurrentYear(fromTimestamp)
 	toYear := getEmissionState().getCurrentYear(toTimestamp)
 
-	// if invalid halving year is returned, return 0
 	if fromYear == 0 || toYear == 0 {
 		return 0
 	}
@@ -288,19 +278,15 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
 		yearEndTimestamp := GetHalvingYearEndTimestamp(year)
 		currentToTimestamp := i64Min(toTimestamp, yearEndTimestamp)
 
-		// how many seconds to calculate
 		seconds := currentToTimestamp - fromTimestamp + 1
 		if seconds <= 0 {
 			break
 		}
 
-		// amount of gns to mint for each second for current year
 		amountPerSecond := GetAmountPerSecondPerHalvingYear(year)
 
-		// amount of gns to mint for current year
 		yearAmountToMint := amountPerSecond * seconds
 
-		// if last block of halving year, handle left emission amount
 		if currentToTimestamp >= yearEndTimestamp {
 			leftover := handleLeftEmissionAmount(year, yearAmountToMint)
 			yearAmountToMint += leftover
@@ -319,7 +305,6 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
 			"amountPerSecond", formatInt(amountPerSecond),
 		)
 
-		// update fromHeight for next year (if necessary)
 		fromTimestamp = currentToTimestamp + 1
 
 		if fromTimestamp > toTimestamp {
@@ -330,7 +315,7 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
 	return totalAmountToMint
 }
 
-// isLastSecondOfHalvingYear returns true if the current timestamp is the last second of a halving year.
+// isLastSecondOfHalvingYear checks if timestamp is last second of halving year.
 func isLastSecondOfHalvingYear(timestamp int64) bool {
 	year := getEmissionState().getCurrentYear(timestamp)
 	lastSecond := GetHalvingYearEndTimestamp(year)
@@ -338,29 +323,26 @@ func isLastSecondOfHalvingYear(timestamp int64) bool {
 	return timestamp == lastSecond
 }
 
-// handleLeftEmissionAmount handles the left emission amount for a halving year.
-// It calculates the left emission amount by subtracting the halving year mint amount from the halving year amount.
+// handleLeftEmissionAmount returns remaining amount for halving year.
 func handleLeftEmissionAmount(year, amount int64) int64 {
 	return GetHalvingYearLeftAmount(year) - amount
 }
 
-// skipIfSameHeight returns true if the current block height is the same as the last minted height.
-// This prevents multiple gns minting inside the same block.
+// skipIfSameHeight prevents multiple mints in same block.
 func skipIfSameHeight(lastMintedHeight, currentHeight int64) bool {
 	return lastMintedHeight == currentHeight
 }
 
-// BurnAmount returns the amount of GNS that has been burned.
+// BurnAmount returns total burned GNS.
 func BurnAmount() int64 { return burnAmount }
 
-// LastMintedHeight returns the last block height that gns was minted.
+// LastMintedTimestamp returns last mint timestamp.
 func LastMintedTimestamp() int64 { return lastMintedTimestamp }
 
-// LeftEmissionAmount returns the amount of GNS can be minted.
+// LeftEmissionAmount returns remaining mintable GNS.
 func LeftEmissionAmount() int64 { return leftEmissionAmount }
 
-// MintedEmissionAmount returns the amount of GNS that has been minted by the emission contract.
-// It does not include initial minted amount.
+// MintedEmissionAmount returns GNS minted through emission (excludes initial mint).
 func MintedEmissionAmount() int64 { return mintedEmissionAmount }
 
 func setLastMintedTimestamp(timestamp int64) { lastMintedTimestamp = timestamp }

@@ -197,9 +197,7 @@ const (
 )
 
 func init() {
-	// init pool tier
-	// tier 1
-	// only gnot:gns 0.3%
+	// Initialize tier 1 with GNOT:GNS 0.3% pool
 
 	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1)
 
@@ -213,29 +211,10 @@ func init() {
 	)
 }
 
-// StakeToken stakes an LP token into the staker contract. It transfer the LP token
-// ownership to the staker contract.
-//
-// State Transition:
-//  1. Token ownership transfers from user -> staker contract
-//  2. Position operator changes to caller
-//  3. Deposit record is created and stored
-//  4. Internal warm up amount is set to 0
-//
-// Requirements:
-//  1. Token must have non-zero liquidity
-//  2. Pool must have either internal or external incentives
-//  3. Caller must be token owner or approved operator
-//
-// Parameters:
-//   - positionId (uint64): The ID of the LP token to stake
-//
-// Returns:
-//   - poolPath (string): The path of the pool to which the LP token is staked
-//   - token0Amount (string): The amount of token0 in the LP token
-//   - token1Amount (string): The amount of token1 in the LP token
-//
-// ref: https://docs.gnoswap.io/contracts/staker/staker.gno#staketoken
+// StakeToken stakes LP token into staker contract.
+// Transfers ownership to staker, creates deposit record, initializes warmup.
+// Requirements: Non-zero liquidity, pool has incentives, caller is owner/approved.
+// Returns pool path and token amounts.
 func StakeToken(cur realm, positionId uint64, referrer string) (string, string, string) {
 	halt.AssertIsNotHaltedStaker()
 

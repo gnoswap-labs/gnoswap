@@ -1,32 +1,28 @@
 # GNS Token
 
-The `GNS` token is the governance and main utility token of the GnoSwap protocol
+The governance and utility token of GnoSwap protocol.
 
-## Token Implementation
+## Token Details
 
-- Follows the `grc20` token specs ([grc spec](https://github.com/gnolang/gno/tree/master/examples/gno.land/p/demo/grc))
-- Symbol: `GNS`
+- Symbol: GNS
 - Decimals: 6
-- Max Supply: 1_000_000_000 (1B)
+- Max Supply: 1,000,000,000
+- Initial Mint: 100,000,000
 
-See the details on the GNS tokenomics [here](https://docs.gnoswap.io/gnoswap-token/whats-gns).
+## Emission Schedule
 
-## Emission Mechanism
+Timestamp-based emission with halving every 2 years over 12 years total:
 
-- Timestamp-based token emission with predefined schedule.
-- Token emission follows a halving model over 12 years.
-- Each halving period adjusts the amounts of tokens minted per time interval.
-
-## Halving Schedule
-
-- 12 years emission period divided into halving periods
-
-| Years | Description |
+| Years | Emission Rate |
 | --- | --- |
-| 1-2 | Full emission rate |
-| 3-4 | 50% of initial emission rate |
-| 5-6 | 25% of initial emission rate |
-| 7-8 | 12.5% of initial emission rate |
-| 9-12 | 6.25% of initial emission rate |
+| 1-2 | 225,000,000 per year |
+| 3-4 | 112,500,000 per year |
+| 5-6 | 56,250,000 per year |
+| 7-8 | 28,125,000 per year |
+| 9-12 | 14,062,500 per year |
 
-For details about the emission and distribution of the GNS tokens, refer to our [emission contract](https://github.com/gnoswap-labs/gnoswap/tree/main/contract/r/gnoswap/emission).
+Total emission: 900,000,000 GNS
+
+## Distribution
+
+See [emission contract](../emission) for distribution details.

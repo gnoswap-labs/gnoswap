@@ -2,37 +2,32 @@ package referral
 
 import "std"
 
-// zeroAddress represents an empty address used for validation and comparison.
 var zeroAddress = std.Address("")
 
-// Event types for each referral actions.
+// Event types for referral actions.
 const (
 	EventTypeRegister = "RegisterReferral"
 	EventTypeUpdate   = "UpdateReferral"
 	EventTypeRemove   = "RemoveReferral"
 )
 
-// ReferralKeeper defines the interface for managing referral relationships.
+// ReferralKeeper manages referral relationships.
 type ReferralKeeper interface {
-	// register creates a new refferal relationship betwwen address and referral address.
-	// returns an error if the addresses are invalid or if the caller is not authorized.
+	// register creates new referral relationship.
 	register(addr, refAddr std.Address) error
 
-	// update updates the referral address for a given address.
-	// returns an error if the addresses are invalid or if the caller is not authorized.
+	// update modifies referral address.
 	update(addr, newRefAddr std.Address) error
 
-	// remove removes the referral relationship for a given address.
-	// returns an error if the address is invalid or if the caller is not authorized.
+	// remove deletes referral relationship.
 	remove(addr std.Address) error
 
-	// has checks if a referral relationship exists for a given address.
+	// has checks if referral exists.
 	has(addr std.Address) bool
 
-	// get retrieves the referral address for a given address.
-	// returns an error if the address is invalid or if the referral relationship does not exist.
+	// get retrieves referral address.
 	get(addr std.Address) (std.Address, error)
 
-	// isEmpty checks if the referral relationship is empty.
+	// isEmpty checks if no referrals exist.
 	isEmpty() bool
 }

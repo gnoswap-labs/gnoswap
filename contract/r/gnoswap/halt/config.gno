@@ -1,26 +1,22 @@
 package halt
 
-// HaltConfig is a map that stores halt options for each operation type
-// It provides centralized control over access and withdrawal permissions
+// HaltConfig stores halt state for each operation type.
 type HaltConfig map[OpType]bool
 
-// IsEnabled checks if both access and withdrawal are enabled for the specified operation type
-// Returns true only if both access and withdrawal permissions are enabled
+// IsHalted checks if operation is halted.
 func (c HaltConfig) IsHalted(op OpType) bool {
 	halted, exists := c[op]
 	if !exists {
-		return false // Return false if operation type is not configured
+		return false
 	}
 
 	return halted
 }
 
-// Clone creates a deep copy of the halt configuration
-// This ensures that modifications to the clone don't affect the original
+// Clone creates deep copy of halt configuration.
 func (c HaltConfig) Clone() HaltConfig {
 	clone := make(HaltConfig)
 
-	// Copy each halt option by creating a new instance
 	for op, option := range c {
 		clone[op] = option
 	}
@@ -28,8 +24,7 @@ func (c HaltConfig) Clone() HaltConfig {
 	return clone
 }
 
-// get retrieves the halt option for the specified operation type
-// Returns nil if the operation type is not configured
+// get retrieves halt state for operation type.
 func (c HaltConfig) get(op OpType) (bool, error) {
 	enabled, exists := c[op]
 	if !exists {
@@ -49,10 +44,7 @@ func (c HaltConfig) set(op OpType, enabled bool) error {
 	return nil
 }
 
-// Configuration factory functions for predefined halt levels
-
-// newNoneConfig creates a configuration where all operations are fully enabled
-// This represents the normal operational state (HaltLevelNone)
+// newNoneConfig creates configuration with all operations enabled.
 func newNoneConfig() HaltConfig {
 	return HaltConfig{
 		OpTypePool:          false,
@@ -70,8 +62,7 @@ func newNoneConfig() HaltConfig {
 	}
 }
 
-// newSafeModeConfig creates a configuration for safe mode operations
-// All operations can be accessed but withdrawals are disabled (HaltLevelSafeMode)
+// newSafeModeConfig creates configuration with withdrawals disabled.
 func newSafeModeConfig() HaltConfig {
 	return HaltConfig{
 		OpTypePool:          false,
@@ -85,12 +76,11 @@ func newSafeModeConfig() HaltConfig {
 		OpTypeXGns:          false,
 		OpTypeCommunityPool: false,
 		OpTypeEmission:      false,
-		OpTypeWithdraw:      true, // halt withdraw
+		OpTypeWithdraw:      true,
 	}
 }
 
-// newEmergencyConfig creates a configuration for emergency situations
-// Only governance operations are fully enabled, others enable only withdrawals (HaltLevelEmergency)
+// newEmergencyConfig creates configuration for emergency mode.
 func newEmergencyConfig() HaltConfig {
 	return HaltConfig{
 		OpTypePool:          true,
@@ -99,17 +89,16 @@ func newEmergencyConfig() HaltConfig {
 		OpTypeRouter:        true,
 		OpTypeStaker:        true,
 		OpTypeLaunchpad:     true,
-		OpTypeGovernance:    false, // not halt governance
+		OpTypeGovernance:    false,
 		OpTypeGovStaker:     true,
 		OpTypeXGns:          true,
 		OpTypeCommunityPool: true,
 		OpTypeEmission:      true,
-		OpTypeWithdraw:      false, // not halt withdraw
+		OpTypeWithdraw:      false,
 	}
 }
 
-// newCompleteConfig creates a configuration where all operations are completely disabled
-// This represents a full system halt (HaltLevelComplete)
+// newCompleteConfig creates configuration with all operations disabled.
 func newCompleteConfig() HaltConfig {
 	return HaltConfig{
 		OpTypePool:          true,

@@ -1,18 +1,15 @@
 package gns
 
-// HalvingData is a struct that stores data for each halving period
+// HalvingData stores emission data for each halving period.
 type HalvingData struct {
-	startTimestamps []int64 // starting timestamp
-	endTimestamps   []int64 // ending timestamp
-	maxAmount       []int64 // maximum issuance amount
-	mintedAmount    []int64 // amount already minted
-	leftAmount      []int64 // remaining amount to be minted
-	accumAmount     []int64 // accumulated amount
-	amountPerSecond []int64 // amount per second
+	startTimestamps []int64
+	endTimestamps   []int64
+	maxAmount       []int64
+	mintedAmount    []int64
+	leftAmount      []int64
+	accumAmount     []int64
+	amountPerSecond []int64
 }
-
-// Getter/setter methods for each field
-// Each slice is 0-indexed but year is 1-indexed, so index adjustment is needed
 func (h *HalvingData) getStartTimestamp(year int64) int64 {
 	if validYear(year) != nil {
 		return 0

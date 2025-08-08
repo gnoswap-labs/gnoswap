@@ -2,7 +2,6 @@ package referral
 
 import "std"
 
-// gReferralKeeper is the global instance of the referral keeper
 var gReferralKeeper ReferralKeeper
 
 const (
@@ -17,13 +16,7 @@ func init() {
 	}
 }
 
-// GetKeeper returns the global instance of the referral keeper
-//
-// Example:
-//
-//	// In other packages:
-//	keeper := referral.GetKeeper()
-//	keeper.register(addr, refAddr)
+// getKeeper returns global referral keeper instance.
 func getKeeper() ReferralKeeper {
 	return gReferralKeeper
 }
@@ -48,7 +41,7 @@ func IsEmpty() bool {
 	return gReferralKeeper.isEmpty()
 }
 
-// TryRegister attempts to register a new referral for an address.
+// TryRegister attempts to register new referral.
 func TryRegister(cur realm, addr std.Address, referral string) bool {
 	refAddr := std.Address(referral)
 	err := gReferralKeeper.register(addr, refAddr)

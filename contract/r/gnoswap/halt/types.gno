@@ -1,30 +1,29 @@
 package halt
 
-// Halt levels define different states of system operation restriction
+// Halt levels define different states of system operation restriction.
 const (
-	HaltLevelNone      HaltLevel = "NONE"      // All operations enabled
-	HaltLevelSafeMode  HaltLevel = "SAFE_MODE" // All operations enabled except withdrawals
-	HaltLevelEmergency HaltLevel = "EMERGENCY" // Only governance and withdrawal operations enabled
-	HaltLevelComplete  HaltLevel = "COMPLETE"  // All operations disabled
+	HaltLevelNone      HaltLevel = "NONE"      // All operations enabled.
+	HaltLevelSafeMode  HaltLevel = "SAFE_MODE" // All operations enabled except withdrawals.
+	HaltLevelEmergency HaltLevel = "EMERGENCY" // Only governance and withdrawal operations enabled.
+	HaltLevelComplete  HaltLevel = "COMPLETE"  // All operations disabled.
 )
 
-// Operation types representing individual contracts and their capabilities
+// Operation types representing individual contracts.
 const (
-	OpTypePool          OpType = "pool"           // Pool contract operations
-	OpTypePosition      OpType = "position"       // Position management operations
-	OpTypeProtocolFee   OpType = "protocol_fee"   // Protocol fee operations
-	OpTypeRouter        OpType = "router"         // Router contract operations
-	OpTypeStaker        OpType = "staker"         // Staker contract operations
-	OpTypeLaunchpad     OpType = "launchpad"      // Launchpad contract operations
-	OpTypeGovernance    OpType = "governance"     // Governance contract operations
-	OpTypeGovStaker     OpType = "gov_staker"     // Governance staker operations
-	OpTypeXGns          OpType = "xgns"           // xGNS token operations
-	OpTypeCommunityPool OpType = "community_pool" // Community pool operations
-	OpTypeEmission      OpType = "emission"       // Token emission operations
-	OpTypeWithdraw      OpType = "withdraw"       // Withdraw operations
+	OpTypePool          OpType = "pool"
+	OpTypePosition      OpType = "position"
+	OpTypeProtocolFee   OpType = "protocol_fee"
+	OpTypeRouter        OpType = "router"
+	OpTypeStaker        OpType = "staker"
+	OpTypeLaunchpad     OpType = "launchpad"
+	OpTypeGovernance    OpType = "governance"
+	OpTypeGovStaker     OpType = "gov_staker"
+	OpTypeXGns          OpType = "xgns"
+	OpTypeCommunityPool OpType = "community_pool"
+	OpTypeEmission      OpType = "emission"
+	OpTypeWithdraw      OpType = "withdraw"
 )
 
-// Core types and descriptions mapping for halt levels
 var haltLevelDescriptions = map[HaltLevel]string{
 	HaltLevelNone:      "All operations enabled",
 	HaltLevelSafeMode:  "All operations enabled except withdrawals",
@@ -32,15 +31,15 @@ var haltLevelDescriptions = map[HaltLevel]string{
 	HaltLevelComplete:  "All operations disabled",
 }
 
-// HaltLevel represents the current system halt state
+// HaltLevel represents current system halt state.
 type HaltLevel string
 
-// String returns the string representation of the halt level
+// String returns string representation of halt level.
 func (h HaltLevel) String() string {
 	return string(h)
 }
 
-// Description returns a human-readable description of what the halt level allows
+// Description returns human-readable description of halt level.
 func (h HaltLevel) Description() string {
 	desc, ok := haltLevelDescriptions[h]
 	if !ok {
@@ -50,7 +49,7 @@ func (h HaltLevel) Description() string {
 	return desc
 }
 
-// IsValid checks if the halt level is one of the predefined valid levels
+// IsValid checks if halt level is valid.
 func (h HaltLevel) IsValid() bool {
 	switch h {
 	case HaltLevelNone, HaltLevelSafeMode, HaltLevelEmergency, HaltLevelComplete:
@@ -60,15 +59,15 @@ func (h HaltLevel) IsValid() bool {
 	}
 }
 
-// OpType represents different operation types that can be controlled independently
+// OpType represents operation types that can be controlled independently.
 type OpType string
 
-// String returns the string representation of the operation type
+// String returns string representation of operation type.
 func (o OpType) String() string {
 	return string(o)
 }
 
-// IsValid checks if the operation type is one of the predefined valid operation types
+// IsValid checks if operation type is valid.
 func (o OpType) IsValid() bool {
 	switch o {
 	case OpTypePool,

@@ -1,17 +1,13 @@
 # Referral
 
-The Referral contract implementation for managing referral relationships in the GnoSwap. It provides functionality to register, update, and remove referral relationships between addresses.
+Manages referral relationships between addresses in GnoSwap.
 
 ## Features
 
-- Register referral relationships between addresses
-- Update existing referral relationships
-- Remove referral relationships
+- Register referral relationships
+- Update existing relationships
+- Remove relationships
 - Query referral information
-- Rate limiting for operations (24-hour cooldown period)
+- 24-hour cooldown between operations
 
-### Keeper
-
-The underlying implementation handles the actual storage and validation of referral relationships using an AVL tree data structure.
-
-For the implementation details, refer to the [referral doc.gno](https://github.com/gnoswap-labs/gnoswap/blob/main/contract/r/gnoswap/referral/doc.gno).
+Uses AVL tree for efficient storage and lookup.
