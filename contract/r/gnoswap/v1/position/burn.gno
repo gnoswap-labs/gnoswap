@@ -17,7 +17,7 @@ import (
 func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, string, error) {
 	caller := params.caller
 
-	// BEFORE DECREASE LIQUIDITY, COLLECT FEE FIRST
+	// before decrease liquidity, collect fee first
 	_, fee0Str, fee1Str, _, _, _ := collectFee(params.positionId, params.unwrapResult, params.caller)
 	fee0 := u256.MustFromDecimal(fee0Str)
 	fee1 := u256.MustFromDecimal(fee1Str)

@@ -2,6 +2,8 @@ package access
 
 import (
 	"std"
+
+	"gno.land/p/demo/ufmt"
 )
 
 var roleAddresses map[string]std.Address
@@ -38,6 +40,13 @@ func GetRoleAddresses() map[string]std.Address {
 func SetRoleAddresses(cur realm, newRoleAddresses map[string]std.Address) {
 	caller := std.PreviousRealm().Address()
 	assertIsRBAC(caller)
+
+	// Validate all addresses before applying updates
+	for role, addr := range newRoleAddresses {
+		if !addr.IsValid() || addr == std.Address("") {
+			panic(ufmt.Errorf("invalid address for role %s: %s", role, addr))
+		}
+	}
 
 	roleAddresses = newRoleAddresses
 }

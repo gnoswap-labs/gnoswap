@@ -20,7 +20,7 @@ const (
 
 	// Backward indicates a swap processing direction from the last pool to the first pool.
 	// Used primarily for exactOut swaps where the output amount is known and input amounts
-	// need to be calculated in reverse order.
+	// Need to be calculated in reverse order.
 	Backward
 )
 

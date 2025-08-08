@@ -27,10 +27,24 @@ func NewExactInSwapOperation(pp ExactInParams) *ExactInSwapOperation {
 	}
 }
 
-// ExactInSwapRoute is a function that performs an exact-in swap operation.
-// exact-in swap means that the user wants to swap an exact amount of input tokens for output tokens.
-func ExactInSwapRoute(
-	cur realm,
+// ExactInSwapRoute performs an exact-in swap operation where the user swaps
+// an exact amount of input tokens for a variable amount of output tokens.
+//
+// Parameters:
+//   - cur: Current realm
+//   - inputToken: Address of the token to swap from
+//   - outputToken: Address of the token to swap to
+//   - amountIn: Exact amount of input tokens to swap
+//   - RouteArr: Comma-separated list of pool paths for the swap route
+//   - quoteArr: Comma-separated list of percentages for splitting across routes
+//   - amountOutMin: Minimum acceptable amount of output tokens
+//   - deadline: Unix timestamp after which the transaction reverts
+//   - referrer: Address of the referrer (if any)
+//
+// Returns:
+//   - string: Actual amount of input tokens used
+//   - string: Actual amount of output tokens received
+func ExactInSwapRoute(cur realm,
 	inputToken string,
 	outputToken string,
 	amountIn string,

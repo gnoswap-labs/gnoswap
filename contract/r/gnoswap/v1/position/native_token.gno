@@ -43,8 +43,8 @@ func wrap(ugnotAmount int64, to std.Address) error {
 	wugnotAddr := std.DerivePkgAddr(WRAPPED_WUGNOT)
 	transferUGNOT(positionAddr, wugnotAddr, ugnotAmount)
 
-	wugnot.Deposit(cross)                   // POSITION HAS WUGNOT
-	wugnot.Transfer(cross, to, ugnotAmount) // SEND WUGNOT: POSITION -> USER
+	wugnot.Deposit(cross)                   // position has wugnot
+	wugnot.Transfer(cross, to, ugnotAmount) // send wugnot: position -> user
 
 	return nil
 }
@@ -64,9 +64,9 @@ func unwrap(wugnotAmount int64, to std.Address) error {
 		return ufmt.Errorf("amount(%d) is zero or negative", wugnotAmount)
 	}
 
-	wugnot.TransferFrom(cross, to, positionAddr, wugnotAmount) // SEND WUGNOT: USER -> POSITION
-	wugnot.Withdraw(cross, wugnotAmount)                       // POSITION HAS UGNOT
-	transferUGNOT(positionAddr, to, wugnotAmount)              // SEND UGNOT: POSITION -> USER
+	wugnot.TransferFrom(cross, to, positionAddr, wugnotAmount) // send wugnot: user -> position
+	wugnot.Withdraw(cross, wugnotAmount)                       // position has ugnot
+	transferUGNOT(positionAddr, to, wugnotAmount)              // send ugnot: position -> user
 	return nil
 }
 
@@ -106,7 +106,7 @@ func isNative(token string) bool {
 	return token == GNOT
 }
 
-// isWrappedToken checks whether the tokenPath is wrapped token
+// isWrappedToken checks whether the tokenPath is wrapped token.
 func isWrappedToken(tokenPath string) bool {
 	return tokenPath == WRAPPED_WUGNOT
 }
@@ -143,7 +143,7 @@ func safeWrapNativeToken(amount int64, toAddress std.Address) (int64, error) {
 		return 0, makeErrorWithDetails(errInsufficientUGNOT, "amount of ugnot is less than desired amount")
 	}
 
-	// if nativeSentAmount is greater than amount, refund the excess amount
+	// If nativeSentAmount is greater than amount, refund the excess amount.
 	if nativeSentAmount > amount {
 		excessAmount := nativeSentAmount - amount
 		transferUGNOT(positionAddr, toAddress, excessAmount)
@@ -180,7 +180,7 @@ func wrapWithTransfer(ugnotAmount int64, toAddress std.Address) error {
 		)
 	}
 
-	// WRAP IT
+	// wrap it
 	wugnotAddr := std.DerivePkgAddr(WUGNOT_PATH)
 	currentRealmAddr := std.CurrentRealm().Address()
 
@@ -188,7 +188,7 @@ func wrapWithTransfer(ugnotAmount int64, toAddress std.Address) error {
 	banker.SendCoins(currentRealmAddr, wugnotAddr, std.Coins{{"ugnot", ugnotAmount}})
 	wugnot.Deposit(cross) // Position has wugnot
 
-	// SEND WUGNOT: Position -> User
+	// send wugnot: position -> user
 	wugnot.Transfer(cross, toAddress, ugnotAmount)
 
 	return nil

@@ -25,10 +25,9 @@ import (
 //	Emits InitEmissionState event with schedule details
 //
 // Note:
-//   - Sets up 13 halving periods (years 1-13)
-//   - Each period lasts 4 years
-//   - Emission rate halves each period
-//   - Total emission period: 52 years
+//   - Sets up 12 halving years (years 1-12)
+//   - Emission rate halves every 2 years
+//   - Total emission period: 12 years
 func InitEmissionState(cur realm, height int64, timestamp int64) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsEmission(caller)

@@ -15,12 +15,12 @@ func ApiGetRewardTokens() string {
 	pools.IterateAll(func(key string, pool *Pool) bool {
 		thisPoolRewardTokens := []string{}
 
-		// HANDLE INTERNAL
+		// handle internal
 		if poolTier.IsInternallyIncentivizedPool(pool.poolPath) {
 			thisPoolRewardTokens = append(thisPoolRewardTokens, GNS_PATH)
 		}
 
-		// HANDLE EXTERNAL
+		// handle external
 		if pool.IsExternallyIncentivizedPool() {
 			pool.incentives.incentives.Iterate("", "", func(key string, value any) bool {
 				ictv := value.(*ExternalIncentive)
@@ -59,12 +59,12 @@ func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 
 	thisPoolRewardTokens := []string{}
 
-	// HANDLE INTERNAL
+	// handle internal
 	if poolTier.IsInternallyIncentivizedPool(pool.poolPath) {
 		thisPoolRewardTokens = append(thisPoolRewardTokens, GNS_PATH)
 	}
 
-	// HANDLE EXTERNAL
+	// handle external
 	if pool.IsExternallyIncentivizedPool() {
 		pool.incentives.incentives.Iterate("", "", func(key string, value any) bool {
 			ictv := value.(*ExternalIncentive)

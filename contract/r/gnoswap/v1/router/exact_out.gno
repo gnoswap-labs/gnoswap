@@ -27,8 +27,23 @@ func NewExactOutSwapOperation(pp ExactOutParams) *ExactOutSwapOperation {
 	}
 }
 
-// ExactOutSwapRoute is a function that performs an exact-out swap operation.
-// exact-out swap means that the user wants to swap an exact amount of output tokens for input tokens.
+// ExactOutSwapRoute performs an exact-out swap operation where the user receives
+// an exact amount of output tokens for a variable amount of input tokens.
+//
+// Parameters:
+//   - cur: Current realm
+//   - inputToken: Address of the token to swap from
+//   - outputToken: Address of the token to swap to
+//   - amountOut: Exact amount of output tokens to receive
+//   - routeArr: Comma-separated list of pool paths for the swap route
+//   - quoteArr: Comma-separated list of percentages for splitting across routes
+//   - amountInMax: Maximum acceptable amount of input tokens to spend
+//   - deadline: Unix timestamp after which the transaction reverts
+//   - referrer: Address of the referrer (if any)
+//
+// Returns:
+//   - string: Actual amount of input tokens used
+//   - string: Actual amount of output tokens received
 func ExactOutSwapRoute(cur realm,
 	inputToken string,
 	outputToken string,

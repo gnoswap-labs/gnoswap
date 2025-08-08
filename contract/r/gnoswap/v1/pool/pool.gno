@@ -199,9 +199,9 @@ func Collect(
 
 	pool := mustGetPoolBy(token0Path, token1Path, fee)
 	// Use recipient address instead of getPrevAddr() for position key generation
-	// because positions are created with the recipient's address in Mint function,
+	// Because positions are created with the recipient's address in Mint function,
 	// and we need to access the same position that was originally created.
-	// getPrevAddr() would return the position contract address, but the actual
+	// GetPrevAddr() would return the position contract address, but the actual
 	// position is stored under the recipient's address key.
 	positionKey, err := getPositionKey(recipient, tickLower, tickUpper)
 	if err != nil {

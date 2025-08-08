@@ -38,12 +38,14 @@ var (
 	errBalanceUpdateFailed       = errors.New("[GNOSWAP-POOL-027] balance update failed")
 )
 
-// newErrorWithDetail adds detail to an error message
+// newErrorWithDetail adds detail to an error message.
 //
-// input
-// err: error - the error message that is one of above list
-// detail: string - the detail to add to the error message
-// Returns: string - the final error message
+// Parameters:
+//   - err: The error message that is one of above list
+//   - detail: The detail to add to the error message
+//
+// Returns:
+//   - string: The final error message
 func newErrorWithDetail(err error, detail string) string {
 	finalErr := ufmt.Errorf("%s || %s", err.Error(), detail)
 	return finalErr.Error()

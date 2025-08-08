@@ -199,7 +199,7 @@ const (
 func init() {
 	// init pool tier
 	// tier 1
-	// ONLY GNOT:GNS 0.3%
+	// only gnot:gns 0.3%
 
 	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1)
 
@@ -309,8 +309,8 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 	// historical tick must be set regardless of the deposit's range
 	pool.historicalTick.set(currentTime, currentTick)
 
-	// this could happen because of how position stores the ticks.
-	// ticks are negated if the token1 < token0
+	// This could happen because of how position stores the ticks.
+	// Ticks are negated if the token1 < token0.
 	upperTick := pool.ticks.Get(tickUpper)
 	lowerTick := pool.ticks.Get(tickLower)
 

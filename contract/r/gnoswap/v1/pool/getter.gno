@@ -55,7 +55,7 @@ func GetPool(token0Path, token1Path string, fee uint32) *Pool {
 // poolPath := GetPoolPath("path/to/token0", "path/to/token1", 3000)
 // // Output: "path/to/token0:path/to/token1:3000"
 func GetPoolPath(token0Path, token1Path string, fee uint32) string {
-	// all the token paths in the pool are sorted in alphabetical order.
+	// All the token paths in the pool are sorted in alphabetical order.
 	if strings.Compare(token1Path, token0Path) < 0 {
 		token0Path, token1Path = token1Path, token0Path
 	}

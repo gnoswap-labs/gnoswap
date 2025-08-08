@@ -8,8 +8,8 @@ The emission contract manages minting and distributing the `GNS` token. The GNS 
 
 ### Token Emission and Distribution
 
-- **Block-Time-Based Distribution**: The GNS distribution is designed to follow the network’s block generation time, initially set. This value can be adjusted through governance if needed, such as in response to network delays.
-- **Triggering Mechanism**: The MintAndDistributeGns() function is integrated into key user transaction entry points. This means that whenever users interact with GnoSwap through transactions, the function is triggered, making it appear as though GNS is minted and distributed on a per-block basis, as long as GnoSwap remains active.
+- **Timestamp-Based Distribution**: The GNS distribution is designed to follow timestamp intervals rather than block generation time. This ensures consistent distribution periods regardless of block production variations.
+- **Triggering Mechanism**: The MintAndDistributeGns() function is integrated into key user transaction entry points. This means that whenever users interact with GnoSwap through transactions, the function is triggered, ensuring continuous GNS minting and distribution based on timestamp intervals, as long as GnoSwap remains active.
 - **Distribution to Defined Targets**: Each call to MintAndDistributeGns() mints new tokens and distributes them to predefined targets, ensuring continuous and fair token emission.
 
 ### Distribution Targets

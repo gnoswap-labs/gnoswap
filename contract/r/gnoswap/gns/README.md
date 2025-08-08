@@ -13,13 +13,13 @@ See the details on the GNS tokenomics [here](https://docs.gnoswap.io/gnoswap-tok
 
 ## Emission Mechanism
 
-- Block-based token emission with predefined schedule.
+- Timestamp-based token emission with predefined schedule.
 - Token emission follows a halving model over 12 years.
-- Each halving period adjusts the amounts of tokens minted per block.
+- Each halving period adjusts the amounts of tokens minted per time interval.
 
 ## Halving Schedule
 
-- 12 years emission period devided into halving periods
+- 12 years emission period divided into halving periods
 
 | Years | Description |
 | --- | --- |
