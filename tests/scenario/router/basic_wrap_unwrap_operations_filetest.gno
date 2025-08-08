@@ -89,7 +89,7 @@ func testBasicWrap() {
 	prevWugnotBalance := wugnot.BalanceOf(user1Addr)
 
 	// Wrap GNOT to WUGNOT through router
-	amountWrapped := int64(10000000)
+	amountWrapped := int64(10_000_000)
 	testing.SetOriginSend(std.Coins{{"ugnot", amountWrapped}})
 	banker.SendCoins(user1Addr, std.DerivePkgAddr(wugnotPath), std.Coins{{"ugnot", amountWrapped}})
 	wugnot.Deposit(cross)
@@ -98,13 +98,12 @@ func testBasicWrap() {
 	afterGnotBalance := banker.GetCoins(user1Addr).AmountOf("ugnot")
 	afterWugnotBalance := wugnot.BalanceOf(user1Addr)
 
-	println("[INFO] Amount wrapped:", amountWrapped)
+	println("[INFO] Amount wrapped actual:", amountWrapped, "expected: 10000000")
 	println("[INFO] User1 GNOT balance change:", prevGnotBalance-afterGnotBalance)
 	println("[INFO] User1 WUGNOT balance change:", afterWugnotBalance-prevWugnotBalance)
 
-	println("[EXPECTED] Amount wrapped: 1000000")
-	println("[EXPECTED] GNOT decreased by: 1000000")
-	println("[EXPECTED] WUGNOT increased by: 1000000")
+	println("[EXPECTED] GNOT decreased by: 10000000")
+	println("[EXPECTED] WUGNOT increased by: 10000000")
 
 	// Verify total balance conservation
 	if (prevGnotBalance - afterGnotBalance) != (afterWugnotBalance - prevWugnotBalance) {
@@ -177,12 +176,11 @@ func testMinimumAmountBoundary() {
 //
 // [SCENARIO] 2. Basic Wrap (User1)
 // [INFO] User1 wrapping 1,000,000 GNOT to WUGNOT
-// [INFO] Amount wrapped: 10000000
+// [INFO] Amount wrapped actual: 10000000 expected: 10000000
 // [INFO] User1 GNOT balance change: 10000000
 // [INFO] User1 WUGNOT balance change: 10000000
-// [EXPECTED] Amount wrapped: 1000000
-// [EXPECTED] GNOT decreased by: 1000000
-// [EXPECTED] WUGNOT increased by: 1000000
+// [EXPECTED] GNOT decreased by: 10000000
+// [EXPECTED] WUGNOT increased by: 10000000
 //
 // [SCENARIO] 3. Basic Unwrap (User2)
 // [INFO] User2 unwrapping 1,000,000 WUGNOT to GNOT
