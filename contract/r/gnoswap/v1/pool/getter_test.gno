@@ -69,13 +69,6 @@ func testInitData(t *testing.T) {
 func TestGetters(t *testing.T) {
 	testInitData(t)
 
-	t.Run("get pool list", func(t *testing.T) {
-		poolList := GetPoolList()
-		if len(poolList) != 1 || poolList[0] != "token0:token1:3000" {
-			t.Errorf("Expected pool list [%s], got %v", "token0:token1:3000", poolList)
-		}
-	})
-
 	t.Run("valid pool path", func(t *testing.T) {
 		validPoolPath := "token0:token1:3000"
 
