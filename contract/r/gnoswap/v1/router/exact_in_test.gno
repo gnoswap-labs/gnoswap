@@ -161,6 +161,7 @@ func TestExactInSwapRoute(t *testing.T) {
 				}
 			}()
 
+			testing.SetOriginCaller(user1Addr)
 			amountIn, amountOut := ExactInSwapRoute(
 				cross,
 				tt.inputToken,

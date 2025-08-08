@@ -132,7 +132,13 @@ func executeMultipleSwaps() {
 	bar.Approve(cross, poolAddr, INT64_MAX)
 	foo.Approve(cross, poolAddr, INT64_MAX)
 
-	testing.SetRealm(routerRealm)
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = routerRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	ufmt.Println("[INFO] Executing first swap BAR -> FOO")
 	amount0, amount1 := pool.Swap(
 		cross,
@@ -192,7 +198,13 @@ func executeMoreSwaps() {
 	bar.Approve(cross, poolAddr, INT64_MAX)
 	foo.Approve(cross, poolAddr, INT64_MAX)
 
-	testing.SetRealm(routerRealm)
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = routerRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	ufmt.Println("[INFO] Executing additional swap BAR -> FOO")
 	amount0, amount1 := pool.Swap(
 		cross,

@@ -181,7 +181,14 @@ func testPoolSwapping(t *testing.T) {
 
 	// When: Swap Bar to Foo in Foo:Bar pool
 	println("[INFO] Performing Bar to Foo swap")
-	testing.SetRealm(rouRealm)
+
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = rouRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	swapIn, swapOut := pool.Swap(
 		cross,
 		barPath,
@@ -288,7 +295,13 @@ func testPoolMultiToken(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	bar.Approve(cross, poolAddr, 16000)
 
-	testing.SetRealm(rouRealm)
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = rouRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	swapIn, swapOut := pool.Swap(
 		cross,
 		barPath,

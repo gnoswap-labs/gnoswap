@@ -102,7 +102,14 @@ func main() {
 	println()
 
 	println("[SCENARIO] 2. Swapping 0 -> 1")
-	testing.SetRealm(rouRealm)
+
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = rouRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	swap0, swap1 := pool.Swap(
 		cross,
 		barPath,
