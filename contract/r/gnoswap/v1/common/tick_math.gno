@@ -115,8 +115,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 }
 
 // getMostSignificantBit calculates the most significant bit position more efficiently
-func getMostSignificantBit(r *u256.Uint) uint64 {
-	msb := uint64(0)
+func getMostSignificantBit(r *u256.Uint) (msb uint64) {
 	temp := r.Clone()
 
 	// Optimized MSB calculation using pre-computed thresholds
@@ -159,7 +158,7 @@ func getMostSignificantBit(r *u256.Uint) uint64 {
 		msb |= 1
 	}
 
-	return msb
+	return
 }
 
 // TickMathGetTickAtSqrtRatio calculates the greatest tick value such that getSqrtRatioAtTick(tick) <= ratio

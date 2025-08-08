@@ -78,7 +78,7 @@ func handleSwapFee(
 		outputToken = wugnotPath
 	}
 
-	feeAmount := new(u256.Uint).Mul(amount, u256.NewUint(swapFee))
+	feeAmount := u256.Zero().Mul(amount, u256.NewUint(swapFee))
 	feeAmount.Div(feeAmount, u256.NewUint(10000))
 	feeAmountInt64 := feeAmount.Int64()
 
@@ -94,6 +94,6 @@ func handleSwapFee(
 		"amount", formatInt64(feeAmountInt64),
 	)
 
-	toUserAfterProtocol := new(u256.Uint).Sub(amount, feeAmount)
+	toUserAfterProtocol := u256.Zero().Sub(amount, feeAmount)
 	return toUserAfterProtocol
 }
