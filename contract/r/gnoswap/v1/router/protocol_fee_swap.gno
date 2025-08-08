@@ -83,7 +83,7 @@ func handleSwapFee(
 	feeAmountInt64 := feeAmount.Int64()
 
 	common.TransferFrom(cross, outputToken, std.PreviousRealm().Address(), protocolFeeAddr, feeAmountInt64)
-	pf.AddToProtocolFee(cross, outputToken, uint64(feeAmountInt64))
+	pf.AddToProtocolFee(cross, outputToken, feeAmountInt64)
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(
