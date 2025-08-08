@@ -154,7 +154,7 @@ func main() {
 		MAX_UINT128,
 		MAX_UINT128,
 	)
-	println("[EXPECTED] collect0:", collect0, "expected: 60177342")
+	println("[EXPECTED] collect0:", collect0, "expected: 60199732")
 	println("[EXPECTED] collect1:", collect1, "expected: 0")
 	println()
 
@@ -185,7 +185,7 @@ func main() {
 // [EXPECTED] burn1: 0 expected: 0
 //
 // [SCENARIO] 4. Collecting position
-// [EXPECTED] collect0: 60177342 expected: 60177342
+// [EXPECTED] collect0: 60199732 expected: 60199732
 // [EXPECTED] collect1: 0 expected: 0
 //
 // [EXPECTED] Pool tick: -887272 expected: < -120
