@@ -132,7 +132,7 @@ func SwapMathComputeSwapStep(
 	// If exactIn and we haven't hit the target, the difference is the fee
 	// Else, compute fee from feePips
 	if exactIn && !sqrtRatioNextX96.Eq(sqrtRatioTargetX96) {
-		feeAmount = new(u256.Uint).Sub(amountRemainingAbs, amountIn)
+		feeAmount = u256.Zero().Sub(amountRemainingAbs, amountIn)
 	} else {
 		feeAmount = u256.MulDivRoundingUp(
 			amountIn,
