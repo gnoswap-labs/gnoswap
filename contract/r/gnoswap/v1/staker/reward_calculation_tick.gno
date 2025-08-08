@@ -145,22 +145,28 @@ func (self *Tick) updateCurrentOutsideAccumulation(timestamp int64, acc *u256.Ui
 }
 
 // SwapTickCross stores information about a tick cross during a swap
+// This struct is used to accumulate tick cross events during a single swap transaction
+// for batch processing to optimize gas usage and computational efficiency
 type SwapTickCross struct {
-	tickId     int32
-	zeroForOne bool
-	delta      *i256.Int // pre-calculated liquidity delta
+	tickId     int32     // The tick index that was crossed
+	zeroForOne bool      // Direction of the swap (true: token0->token1, false: token1->token0)
+	delta      *i256.Int // Pre-calculated liquidity delta for this tick cross
 }
 
 // SwapBatchProcessor processes tick crosses in batch for a swap
+// This processor accumulates all tick crosses that occur during a single swap
+// and processes them together at the end, reducing redundant calculations
+// and state updates that would occur with individual tick processing
 type SwapBatchProcessor struct {
-	poolPath  string
-	pool      *Pool
-	crosses   []SwapTickCross
-	timestamp int64
-	isActive  bool
+	poolPath  string          // The pool path identifier for this swap
+	pool      *Pool           // Reference to the pool being swapped in
+	crosses   []SwapTickCross // Accumulated tick crosses during the swap
+	timestamp int64           // Timestamp when the swap started
+	isActive  bool            // Flag to prevent accumulation after swap ends
 }
 
 // swapStartHook is called when a swap starts
+// This hook initializes the batch processor for accumulating tick crosses
 func swapStartHook(pools *Pools) func(poolPath string, timestamp int64) {
 	return func(poolPath string, timestamp int64) {
 		func(cur realm) {
@@ -169,36 +175,45 @@ func swapStartHook(pools *Pools) func(poolPath string, timestamp int64) {
 				return
 			}
 
-			// Initialize batch processor
+			// Initialize batch processor for this swap
+			// This will accumulate all tick crosses until swap completion
 			currentSwapBatch = &SwapBatchProcessor{
 				poolPath:  poolPath,
 				pool:      pool,
-				crosses:   make([]SwapTickCross, 0), // Pre-allocate for typical swap
+				crosses:   make([]SwapTickCross, 0), // Pre-allocate slice for tick crosses
 				timestamp: timestamp,
-				isActive:  true,
+				isActive:  true, // Enable accumulation mode
 			}
 		}(cross)
 	}
 }
 
 // swapEndHook is called when a swap ends
+// This hook processes all accumulated tick crosses in a single batch operation
+// and cleans up the batch processor. The batch processing approach provides:
+// 1. O(1) pool state updates instead of O(n) where n = number of tick crosses
+// 2. Reduced computational overhead for reward calculations
+// 3. Atomic processing ensuring consistency across all tick updates
 func swapEndHook(pools *Pools) func(poolPath string) error {
 	return func(poolPath string) error {
 		return func(cur realm) error {
+			// Validate batch processor state
 			if currentSwapBatch == nil || !currentSwapBatch.isActive || currentSwapBatch.poolPath != poolPath {
 				return nil
 			}
 
-			// Mark as inactive to prevent further accumulation
+			// Disable further accumulation
 			currentSwapBatch.isActive = false
 
-			// Process all accumulated tick crosses
+			// Process all accumulated tick crosses in a single batch
+			// This is where the optimization happens - instead of processing
+			// each tick cross individually, we calculate cumulative effects
 			err := processBatchedTickCrosses()
 			if err != nil {
 				return err
 			}
 
-			// Clean up
+			// Clean up batch processor
 			currentSwapBatch = nil
 
 			return nil
@@ -206,9 +221,11 @@ func swapEndHook(pools *Pools) func(poolPath string) error {
 	}
 }
 
-
 // tickCrossHook is called when a tick is crossed
-// Optimized to batch process tick crosses during swaps
+// This hook implements intelligent routing between batch processing and immediate processing:
+// - During swaps: accumulates tick crosses for batch processing at swap end
+// - Outside swaps: processes tick crosses immediately for real-time updates
+// The hybrid approach optimizes for both swap performance and non-swap responsiveness
 func tickCrossHook(pools *Pools) func(poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
 	return func(poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
 		func(cur realm) {
@@ -218,53 +235,73 @@ func tickCrossHook(pools *Pools) func(poolPath string, tickId int32, zeroForOne 
 			}
 
 			tick := pool.ticks.Get(tickId)
+			// Skip ticks with zero staked liquidity (no reward impact)
 			if tick.stakedLiquidityDelta.Sign() == 0 {
 				return
 			}
 
-			// If batch processor is active for this pool, accumulate
+			// Batch processing path: accumulate tick crosses during active swap
 			if currentSwapBatch != nil && currentSwapBatch.isActive && currentSwapBatch.poolPath == poolPath {
+				// Pre-calculate liquidity delta with direction consideration
+				// zeroForOne swap: liquidity delta is negated (liquidity being removed from current tick)
 				liquidityDelta := tick.stakedLiquidityDelta
 				if zeroForOne {
 					liquidityDelta = i256.Zero().Neg(liquidityDelta)
 				}
 
+				// Accumulate this tick cross for batch processing
 				currentSwapBatch.crosses = append(currentSwapBatch.crosses, SwapTickCross{
 					tickId:     tickId,
 					zeroForOne: zeroForOne,
-					delta:      liquidityDelta,
+					delta:      liquidityDelta, // Store pre-calculated delta for efficiency
 				})
 				return
 			}
 
-			// Fallback: process immediately (for non-swap tick crosses)
+			// Immediate processing path: handle tick crosses outside of swap context
+			// This ensures real-time updates for non-swap operations (e.g., position modifications)
 			processTickCrossImmediate(pool, tick, tickId, zeroForOne, timestamp)
 		}(cross)
 	}
 }
 
 // processTickCrossImmediate processes a single tick cross immediately
+// This function handles individual tick crosses for non-swap operations
+// where batch processing is not applicable (e.g., position modifications, liquidations)
 func processTickCrossImmediate(pool *Pool, tick *Tick, tickId int32, zeroForOne bool, timestamp int64) {
+	// Calculate the effective tick position after crossing
+	// For zeroForOne swaps, liquidity becomes effective one tick lower
 	nextTick := tickId
 	if zeroForOne {
-		nextTick--
+		nextTick-- // Move to the lower tick where liquidity becomes active
 	}
 
+	// Calculate liquidity delta with direction consideration
 	liquidityDelta := tick.stakedLiquidityDelta
 	if zeroForOne {
+		// Negate delta for zeroForOne direction (liquidity being removed from current range)
 		liquidityDelta = i256.Zero().Neg(liquidityDelta)
 	}
 
+	// Update pool's cumulative deposit with the liquidity change
 	newAcc := pool.modifyDeposit(liquidityDelta, timestamp, nextTick)
+
+	// Update the tick's outside accumulation for reward calculations
+	// This ensures proper reward distribution tracking across tick boundaries
 	tick.updateCurrentOutsideAccumulation(timestamp, newAcc)
 }
 
 // processBatchedTickCrosses processes all accumulated tick crosses at once
+// This is the core optimization function that processes multiple tick crosses in a single operation.
+// Instead of updating pool state for each tick cross individually (O(n) operations),
+// it calculates the cumulative effect and applies it once (O(1) pool updates + O(n) tick updates).
 func processBatchedTickCrosses() error {
+	// Early exit for empty batches
 	if currentSwapBatch == nil || len(currentSwapBatch.crosses) == 0 {
 		return nil
 	}
 
+	// Validate pool reference
 	if currentSwapBatch.pool == nil {
 		return errPoolNotFound
 	}
@@ -272,23 +309,28 @@ func processBatchedTickCrosses() error {
 	batch := currentSwapBatch
 	timestamp := batch.timestamp
 
-	// Calculate cumulative liquidity delta
+	// Phase 1: Calculate cumulative liquidity delta across all tick crosses
+	// This replaces multiple individual pool updates with a single cumulative update
 	cumulativeDelta := i256.Zero()
 	for _, tickCross := range batch.crosses {
 		cumulativeDelta = i256.Zero().Add(cumulativeDelta, tickCross.delta)
 	}
 
-	// Get the last tick for historical tick update
+	// Phase 2: Determine the effective tick position for pool state update
+	// Use the last crossed tick as the reference point for cumulative changes
 	lastCross := batch.crosses[len(batch.crosses)-1]
 	lastTick := lastCross.tickId
 	if lastCross.zeroForOne {
-		lastTick--
+		lastTick-- // Adjust for zeroForOne direction
 	}
 
-	// Update pool state once with cumulative changes
+	// Phase 3: Apply cumulative changes to pool state in a single operation
+	// This is the key optimization - one pool update instead of many
 	newAcc := batch.pool.modifyDeposit(cumulativeDelta, timestamp, lastTick)
 
-	// Update outside accumulations for all crossed ticks
+	// Phase 4: Update individual tick outside accumulations for reward tracking
+	// While we optimize pool updates, each tick still needs its accumulation updated
+	// for proper reward distribution calculations
 	for _, tickCross := range batch.crosses {
 		tick := batch.pool.ticks.Get(tickCross.tickId)
 		tick.updateCurrentOutsideAccumulation(timestamp, newAcc)
