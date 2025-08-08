@@ -38,12 +38,21 @@ var (
 	emissionRewardBalance int64
 	// protocolFeeBalances tracks current balances of protocol fees by token (unused)
 	protocolFeeBalances map[string]int64
+
+	// totalDelegated tracks the total amount of xGNS delegated
+	totalDelegatedAmount int64
+	// totalLockedAmount tracks the total amount of locked GNS
+	totalLockedAmount int64
 )
 
 // init initializes the global state variables with default values and empty structures
 func init() {
 	// Default lockup period is 7 days
 	unDelegationLockupPeriod = 60 * 60 * 24 * 7 // 7 days
+
+	// Initialize totalDelegated and totalLockedAmount
+	totalDelegatedAmount = 0
+	totalLockedAmount = 0
 
 	// Initialize delegation tracking structures
 	delegationCounter = NewCounter()
