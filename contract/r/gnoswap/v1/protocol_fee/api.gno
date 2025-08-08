@@ -7,6 +7,7 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/json"
+	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
 )
@@ -52,7 +53,11 @@ func buildByAvlTree(tree *avl.Tree) *json.Node {
 		WriteString("now", formatInt(time.Now().Unix()))
 
 	tree.Iterate("", "", func(key string, value any) bool {
-		data.WriteString(key, formatUint(value.(uint64)))
+		if iv, ok := value.(int64); !ok {
+			panic(ufmt.Sprintf("failed to cast value to int64: %T", value))
+		} else {
+			data.WriteString(key, formatInt(iv))
+		}
 		return false
 	})
 
@@ -61,6 +66,10 @@ func buildByAvlTree(tree *avl.Tree) *json.Node {
 
 func formatUint(v uint64) string {
 	return strconv.FormatUint(v, 10)
+}
+
+func formatInt64(v int64) string {
+	return strconv.FormatInt(v, 10)
 }
 
 func formatInt(v int64) string {
@@ -78,11 +87,11 @@ func marshal(node *json.Node) string {
 
 // ApiGetActualBalance returns all tokens with their current balances (recorded + unrecorded)
 func ApiGetActualBalance() string {
-	tokenMap := make(map[string]uint64)
+	tokenMap := make(map[string]int64)
 
 	// get all recorded tokens
 	for token := range protocolFeeState.tokenListWithAmount {
-		actualBalance := uint64(common.BalanceOf(token, protocolFeeAddr))
+		actualBalance := common.BalanceOf(token, protocolFeeAddr)
 		tokenMap[token] = actualBalance
 	}
 
@@ -94,7 +103,7 @@ func ApiGetActualBalance() string {
 		WriteString("now", formatInt(time.Now().Unix()))
 
 	for token, balance := range tokenMap {
-		data.WriteString(token, formatUint(balance))
+		data.WriteString(token, formatInt64(balance))
 	}
 
 	return marshal(data.Node())
@@ -112,7 +121,7 @@ func ApiGetRecordedBalance() string {
 		WriteString("now", formatInt(time.Now().Unix()))
 
 	for token, amount := range tokenList {
-		data.WriteString(token, formatUint(amount))
+		data.WriteString(token, formatInt64(amount))
 	}
 
 	return marshal(data.Node())
@@ -120,11 +129,11 @@ func ApiGetRecordedBalance() string {
 
 // ApiGetUnrecordedBalance returns tokens with unrecorded balances
 func ApiGetUnrecordedBalance() string {
-	unrecordedMap := make(map[string]uint64)
+	unrecordedMap := make(map[string]int64)
 
 	// Check all recorded tokens for discrepancies
 	for token, recordedAmount := range protocolFeeState.tokenListWithAmount {
-		actualBalance := uint64(common.BalanceOf(token, protocolFeeAddr))
+		actualBalance := common.BalanceOf(token, protocolFeeAddr)
 		if actualBalance > recordedAmount {
 			unrecordedAmount := actualBalance - recordedAmount
 			unrecordedMap[token] = unrecordedAmount
@@ -136,7 +145,7 @@ func ApiGetUnrecordedBalance() string {
 		WriteString("now", formatInt(time.Now().Unix()))
 
 	for token, unrecordedBalance := range unrecordedMap {
-		data.WriteString(token, formatUint(unrecordedBalance))
+		data.WriteString(token, formatInt64(unrecordedBalance))
 	}
 
 	return marshal(data.Node())

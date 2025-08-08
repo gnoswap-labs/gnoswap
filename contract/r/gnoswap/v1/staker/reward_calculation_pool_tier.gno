@@ -155,19 +155,27 @@ func (self *PoolTier) CurrentCount(tier uint64) int {
 func (self *PoolTier) CurrentAllTierCounts() []uint64 {
 	count := make([]uint64, AllTierCount)
 	self.membership.Iterate("", "", func(key string, value any) bool {
-		count[value.(uint64)]++
+		if v, ok := value.(uint64); !ok {
+			panic("failed to cast value to uint64")
+		} else {
+			count[v]++
+		}
 		return false
 	})
 	return count
 }
 
 // CurrentTier returns the tier of the given pool.
-func (self *PoolTier) CurrentTier(poolPath string) uint64 {
-	tier, ok := self.membership.Get(poolPath)
-	if !ok {
+func (self *PoolTier) CurrentTier(poolPath string) (tier uint64) {
+	if tierI, ok := self.membership.Get(poolPath); !ok {
 		return 0
+	} else {
+		tier, ok = tierI.(uint64)
+		if !ok {
+			panic("failed to cast tier to uint64")
+		}
+		return
 	}
-	return tier.(uint64)
 }
 
 // changeTier updates the tier of a pool, recalculates ratios, and applies
@@ -206,7 +214,10 @@ func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *
 		if !ok {
 			panic("changeTier: pool not found")
 		}
-		tier := value.(uint64)
+		tier, ok := value.(uint64)
+		if !ok {
+			panic("failed to cast value to uint64")
+		}
 		poolReward := currentEmission * int64(self.tierRatio.Get(tier)) / 100 / int64(counts[tier])
 		pool.cacheReward(currentTime, poolReward)
 		return false

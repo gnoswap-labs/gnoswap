@@ -82,7 +82,7 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 	}
 
 	sent := std.OriginSend()
-	ugnotSentByUser := int64(sent.AmountOf("ugnot"))
+	ugnotSentByUser := sent.AmountOf("ugnot")
 	amountSpecified := specifiedAmount.Int64()
 
 	if ugnotSentByUser != amountSpecified {
@@ -132,7 +132,7 @@ func (op *baseSwapOperation) processRoutes(swapType SwapType) (*u256.Uint, *u256
 			}
 
 			// update the remaining amount
-			remainRequestAmount = new(i256.Int).Sub(remainRequestAmount, swapAmount)
+			remainRequestAmount = i256.Zero().Sub(remainRequestAmount, swapAmount)
 			toSwapAmount = swapAmount
 		} else {
 			toSwapAmount = remainRequestAmount
@@ -143,8 +143,8 @@ func (op *baseSwapOperation) processRoutes(swapType SwapType) (*u256.Uint, *u256
 			return nil, nil, err
 		}
 
-		resultAmountIn = new(u256.Uint).Add(resultAmountIn, amountIn)
-		resultAmountOut = new(u256.Uint).Add(resultAmountOut, amountOut)
+		resultAmountIn = u256.Zero().Add(resultAmountIn, amountIn)
+		resultAmountOut = u256.Zero().Add(resultAmountOut, amountOut)
 	}
 
 	return resultAmountIn, resultAmountOut, nil
@@ -154,11 +154,9 @@ func (op *baseSwapOperation) processRoute(
 	route string,
 	toSwap *i256.Int,
 	swapType SwapType,
-) (*u256.Uint, *u256.Uint, error) {
+) (amountIn, amountOut *u256.Uint, err error) {
 	numHops := strings.Count(route, POOL_SEPARATOR) + 1
 	assertHopsInRange(numHops)
-
-	var amountIn, amountOut *u256.Uint
 
 	switch numHops {
 	case SINGLE_HOP_ROUTE:
@@ -205,7 +203,7 @@ func handleMultiSwap(
 	case ExactOut:
 		input, output, fee := getDataForMultiPath(route, numHops-1) // last data
 		sp := newSwapParams(input, output, fee, previousRealmAddr, amountSpecified, withUnwrap)
-		return multiSwapNegative(*sp, numHops-1, route)
+		return multiSwapNegative(*sp, numHops, route)
 	default:
 		panic(errInvalidSwapType)
 	}

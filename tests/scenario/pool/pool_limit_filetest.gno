@@ -85,7 +85,14 @@ func main() {
 	println()
 
 	println("[SCENARIO] 2. Mint Position (Limit selling 0 for 1 at tick 0 thru 120)")
-	testing.SetRealm(rouRealm)
+
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = rouRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	swap0, swap1 := pool.Swap(
 		cross,
 		barPath,

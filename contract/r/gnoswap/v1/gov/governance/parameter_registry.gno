@@ -370,7 +370,7 @@ func createParameterHandlers() *ParameterRegistry {
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
 				// Set percentage of protocol fees going to development operations
-				pf.SetDevOpsPct(cross, parseUint64(params[0])) // pct
+				pf.SetDevOpsPct(cross, parseInt64(params[0])) // pct
 				return nil
 			},
 		},

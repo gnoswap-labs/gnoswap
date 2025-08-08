@@ -10,31 +10,31 @@ func TestProtocolFeeStateAddAccuToGovStaker(t *testing.T) {
 	tests := []struct {
 		name        string
 		tokenPath   string
-		amounts     []uint64
-		expectedSum uint64
+		amounts     []int64
+		expectedSum int64
 	}{
 		{
 			name:        "add single amount to new token",
 			tokenPath:   "test_token",
-			amounts:     []uint64{100},
+			amounts:     []int64{100},
 			expectedSum: 100,
 		},
 		{
 			name:        "add multiple amounts to same token",
 			tokenPath:   "test_token",
-			amounts:     []uint64{100, 50},
+			amounts:     []int64{100, 50},
 			expectedSum: 150,
 		},
 		{
 			name:        "add zero amount",
 			tokenPath:   "test_token",
-			amounts:     []uint64{0},
+			amounts:     []int64{0},
 			expectedSum: 0,
 		},
 		{
 			name:        "add multiple amounts including zero",
 			tokenPath:   "test_token",
-			amounts:     []uint64{100, 0, 75},
+			amounts:     []int64{100, 0, 75},
 			expectedSum: 175,
 		},
 	}
@@ -44,7 +44,7 @@ func TestProtocolFeeStateAddAccuToGovStaker(t *testing.T) {
 			pfs := NewProtocolFeeState()
 
 			// Initially should be 0
-			uassert.Equal(t, pfs.GetAccuTransferToGovStakerByTokenPath(test.tokenPath), uint64(0))
+			uassert.Equal(t, pfs.GetAccuTransferToGovStakerByTokenPath(test.tokenPath), int64(0))
 
 			// Add amounts sequentially
 			for _, amount := range test.amounts {
@@ -61,31 +61,31 @@ func TestProtocolFeeStateAddAccuToDevOps(t *testing.T) {
 	tests := []struct {
 		name        string
 		tokenPath   string
-		amounts     []uint64
-		expectedSum uint64
+		amounts     []int64
+		expectedSum int64
 	}{
 		{
 			name:        "add single amount to new token",
 			tokenPath:   "test_token",
-			amounts:     []uint64{200},
+			amounts:     []int64{200},
 			expectedSum: 200,
 		},
 		{
 			name:        "add multiple amounts to same token",
 			tokenPath:   "test_token",
-			amounts:     []uint64{200, 75},
+			amounts:     []int64{200, 75},
 			expectedSum: 275,
 		},
 		{
 			name:        "add zero amount",
 			tokenPath:   "test_token",
-			amounts:     []uint64{0},
+			amounts:     []int64{0},
 			expectedSum: 0,
 		},
 		{
 			name:        "add large amounts",
 			tokenPath:   "test_token",
-			amounts:     []uint64{1000, 2000, 3000},
+			amounts:     []int64{1000, 2000, 3000},
 			expectedSum: 6000,
 		},
 	}
@@ -95,7 +95,7 @@ func TestProtocolFeeStateAddAccuToDevOps(t *testing.T) {
 			pfs := NewProtocolFeeState()
 
 			// Initially should be 0
-			uassert.Equal(t, pfs.GetAccuTransferToDevOpsByTokenPath(test.tokenPath), uint64(0))
+			uassert.Equal(t, pfs.GetAccuTransferToDevOpsByTokenPath(test.tokenPath), int64(0))
 
 			// Add amounts sequentially
 			for _, amount := range test.amounts {
@@ -111,10 +111,10 @@ func TestProtocolFeeStateAddAccuToDevOps(t *testing.T) {
 func TestProtocolFeeStateSetDevOpsPct(t *testing.T) {
 	tests := []struct {
 		name        string
-		percentage  uint64
+		percentage  int64
 		shouldError bool
 		errorMsg    string
-		expectedPct uint64
+		expectedPct int64
 	}{
 		{
 			name:        "set valid percentage - 0%",
@@ -153,7 +153,7 @@ func TestProtocolFeeStateSetDevOpsPct(t *testing.T) {
 			pfs := NewProtocolFeeState()
 
 			// Initially should be 0
-			uassert.Equal(t, pfs.devOpsPct, uint64(0))
+			uassert.Equal(t, pfs.devOpsPct, int64(0))
 			_, err := pfs.setDevOpsPct(test.percentage)
 
 			if test.shouldError {
@@ -168,24 +168,24 @@ func TestProtocolFeeStateSetDevOpsPct(t *testing.T) {
 func TestProtocolFeeStateClearTokenListWithAmount(t *testing.T) {
 	tests := []struct {
 		name        string
-		initialData map[string]uint64
+		initialData map[string]int64
 		expectedLen int
 	}{
 		{
 			name:        "clear empty list",
-			initialData: map[string]uint64{},
+			initialData: map[string]int64{},
 			expectedLen: 0,
 		},
 		{
 			name: "clear list with single token",
-			initialData: map[string]uint64{
+			initialData: map[string]int64{
 				"token1": 100,
 			},
 			expectedLen: 0,
 		},
 		{
 			name: "clear list with multiple tokens",
-			initialData: map[string]uint64{
+			initialData: map[string]int64{
 				"token1": 100,
 				"token2": 200,
 				"token3": 300,
@@ -219,31 +219,31 @@ func TestProtocolFeeStateUpdateDistributedToGovStakerHistory(t *testing.T) {
 	tests := []struct {
 		name        string
 		tokenPath   string
-		amounts     []uint64
-		expectedSum uint64
+		amounts     []int64
+		expectedSum int64
 	}{
 		{
 			name:        "update history with single amount",
 			tokenPath:   "test_token",
-			amounts:     []uint64{100},
+			amounts:     []int64{100},
 			expectedSum: 100,
 		},
 		{
 			name:        "update history with multiple amounts",
 			tokenPath:   "test_token",
-			amounts:     []uint64{100, 50},
+			amounts:     []int64{100, 50},
 			expectedSum: 150,
 		},
 		{
 			name:        "update history with zero amount",
 			tokenPath:   "test_token",
-			amounts:     []uint64{0},
+			amounts:     []int64{0},
 			expectedSum: 0,
 		},
 		{
 			name:        "update history multiple times",
 			tokenPath:   "test_token",
-			amounts:     []uint64{25, 75, 100, 200},
+			amounts:     []int64{25, 75, 100, 200},
 			expectedSum: 400,
 		},
 	}
@@ -260,7 +260,7 @@ func TestProtocolFeeStateUpdateDistributedToGovStakerHistory(t *testing.T) {
 			// Check if history was updated correctly
 			historyValue, exists := pfs.distributedToGovStakerHistory.Get(test.tokenPath)
 			uassert.True(t, exists)
-			uassert.Equal(t, historyValue.(uint64), test.expectedSum)
+			uassert.Equal(t, historyValue.(int64), test.expectedSum)
 		})
 	}
 }
@@ -269,31 +269,31 @@ func TestProtocolFeeStateUpdateDistributedToDevOpsHistory(t *testing.T) {
 	tests := []struct {
 		name        string
 		tokenPath   string
-		amounts     []uint64
-		expectedSum uint64
+		amounts     []int64
+		expectedSum int64
 	}{
 		{
 			name:        "update history with single amount",
 			tokenPath:   "test_token",
-			amounts:     []uint64{200},
+			amounts:     []int64{200},
 			expectedSum: 200,
 		},
 		{
 			name:        "update history with multiple amounts",
 			tokenPath:   "test_token",
-			amounts:     []uint64{200, 75},
+			amounts:     []int64{200, 75},
 			expectedSum: 275,
 		},
 		{
 			name:        "update history with zero amount",
 			tokenPath:   "test_token",
-			amounts:     []uint64{0},
+			amounts:     []int64{0},
 			expectedSum: 0,
 		},
 		{
 			name:        "update history multiple times",
 			tokenPath:   "test_token",
-			amounts:     []uint64{50, 150, 300, 100},
+			amounts:     []int64{50, 150, 300, 100},
 			expectedSum: 600,
 		},
 	}
@@ -310,7 +310,7 @@ func TestProtocolFeeStateUpdateDistributedToDevOpsHistory(t *testing.T) {
 			// Check if history was updated correctly
 			historyValue, exists := pfs.distributedToDevOpsHistory.Get(test.tokenPath)
 			uassert.True(t, exists)
-			uassert.Equal(t, historyValue.(uint64), test.expectedSum)
+			uassert.Equal(t, historyValue.(int64), test.expectedSum)
 		})
 	}
 }

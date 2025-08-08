@@ -53,7 +53,8 @@ func (self *Deposits) Has(positionId uint64) bool {
 
 func (self *Deposits) Iterate(start uint64, end uint64, fn func(positionId uint64, deposit *Deposit) bool) {
 	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(positionId string, depositI any) bool {
-		return fn(DecodeUint(positionId), depositI.(*Deposit))
+		dpst := retrieveDeposit(depositI)
+		return fn(DecodeUint(positionId), dpst)
 	})
 }
 
@@ -69,7 +70,14 @@ func (self *Deposits) get(positionId uint64) *Deposit {
 			ufmt.Sprintf("positionId(%d) not found", positionId),
 		))
 	}
-	deposit := depositI.(*Deposit)
+	return retrieveDeposit(depositI)
+}
+
+func retrieveDeposit(data any) *Deposit {
+	deposit, ok := data.(*Deposit)
+	if !ok {
+		panic("failed to cast value to *Deposit")
+	}
 	return deposit
 }
 
@@ -91,13 +99,8 @@ func NewExternalIncentives() *ExternalIncentives {
 	}
 }
 
-func (self *ExternalIncentives) Has(incentiveId string) bool {
-	return self.tree.Has(incentiveId)
-}
-
-func (self *ExternalIncentives) Size() int {
-	return self.tree.Size()
-}
+func (self *ExternalIncentives) Has(incentiveId string) bool { return self.tree.Has(incentiveId) }
+func (self *ExternalIncentives) Size() int                   { return self.tree.Size() }
 
 func (self *ExternalIncentives) get(incentiveId string) *ExternalIncentive {
 	incentiveI, ok := self.tree.Get(incentiveId)
@@ -108,7 +111,10 @@ func (self *ExternalIncentives) get(incentiveId string) *ExternalIncentive {
 		))
 	}
 
-	incentive := incentiveI.(*ExternalIncentive)
+	incentive, ok := incentiveI.(*ExternalIncentive)
+	if !ok {
+		panic("failed to cast value to *ExternalIncentive")
+	}
 	return incentive
 }
 
@@ -135,9 +141,12 @@ func (self *Stakers) IterateAll(address std.Address, fn func(depositId uint64, d
 	if !ok {
 		return
 	}
-	depositTree := depositTreeI.(*avl.Tree)
+	depositTree := retrieveDepositTree(depositTreeI)
 	depositTree.Iterate("", "", func(depositId string, depositI any) bool {
-		deposit := depositI.(*Deposit)
+		deposit, ok := depositI.(*Deposit)
+		if !ok {
+			panic("failed to cast value to *Deposit")
+		}
 		return fn(DecodeUint(depositId), deposit)
 	})
 }
@@ -149,7 +158,8 @@ func (self *Stakers) addDeposit(address std.Address, depositId uint64, deposit *
 		self.tree.Set(address.String(), depositTree)
 		depositTreeI = depositTree
 	}
-	depositTree := depositTreeI.(*avl.Tree)
+
+	depositTree := retrieveDepositTree(depositTreeI)
 	depositTree.Set(EncodeUint(depositId), deposit)
 }
 
@@ -158,8 +168,17 @@ func (self *Stakers) removeDeposit(address std.Address, depositId uint64) {
 	if !ok {
 		return
 	}
-	depositTree := depositTreeI.(*avl.Tree)
+
+	depositTree := retrieveDepositTree(depositTreeI)
 	depositTree.Remove(EncodeUint(depositId))
+}
+
+func retrieveDepositTree(data any) *avl.Tree {
+	depositTree, ok := data.(*avl.Tree)
+	if !ok {
+		panic("failed to cast depositTree to *avl.Tree")
+	}
+	return depositTree
 }
 
 var (
@@ -326,9 +345,9 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 		"amount0", token0Amount,
 		"amount1", token1Amount,
 		"liquidity", liquidity.ToString(),
-		"positionUpperTick", formatInt(int64(tickUpper)),
-		"positionLowerTick", formatInt(int64(tickLower)),
-		"currentTick", formatInt(int64(currentTick)),
+		"positionUpperTick", formatAnyInt(tickUpper),
+		"positionLowerTick", formatAnyInt(tickLower),
+		"currentTick", formatAnyInt(currentTick),
 		"isInRange", formatBool(isInRange),
 		"referrer", actualReferrer,
 	)
@@ -485,7 +504,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		incentive.rewardAmount = safeSubInt64(incentive.rewardAmount, rewardAmount)
 		rewardToken := incentive.rewardToken
 		toUserExternalReward[rewardToken] = safeAddInt64(toUserExternalReward[rewardToken], rewardAmount)
-		toUser, feeAmount, err := handleUnStakingFee(rewardToken, int64(rewardAmount), false, positionId, incentive.targetPoolPath)
+		toUser, feeAmount, err := handleUnStakingFee(rewardToken, rewardAmount, false, positionId, incentive.targetPoolPath)
 		if err != nil {
 			panic(err.Error())
 		}
@@ -532,7 +551,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 			"rewardToken", rewardToken,
 			"rewardAmount", formatInt(rewardAmount),
 			"rewardToUser", formatInt(toUser),
-			"rewardToFee", formatInt(int64(rewardAmount)-toUser),
+			"rewardToFee", formatInt(rewardAmount-toUser),
 			"rewardPenalty", formatInt(externalPenalty),
 			"isRequestUnwrap", formatBool(unwrapResult),
 			"currentTime", formatInt(currentTime),
@@ -543,7 +562,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 	communityPoolAddr := getRoleAddress(prbac.ROLE_COMMUNITY_POOL)
 
 	// internal reward to user
-	toUser, feeAmount, err := handleUnStakingFee(GNS_PATH, int64(reward.Internal), true, positionId, deposit.targetPoolPath)
+	toUser, feeAmount, err := handleUnStakingFee(GNS_PATH, reward.Internal, true, positionId, deposit.targetPoolPath)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -565,15 +584,18 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 
 		// internal penalty to community pool
 		totalEmissionSent = safeAddInt64(totalEmissionSent, reward.InternalPenalty)
-		gns.Transfer(cross, communityPoolAddr, int64(reward.InternalPenalty))
+		gns.Transfer(cross, communityPoolAddr, reward.InternalPenalty)
 	}
 
 	unClaimableInternal := processUnClaimableReward(deposit.targetPoolPath, currentTime)
 	if unClaimableInternal > 0 {
 		// internal unClaimable to community pool
 		totalEmissionSent = safeAddInt64(totalEmissionSent, unClaimableInternal)
-		gns.Transfer(cross, communityPoolAddr, int64(unClaimableInternal))
+		gns.Transfer(cross, communityPoolAddr, unClaimableInternal)
 	}
+
+	rewardToUser := formatInt(toUser)
+	rewardPenalty := formatInt(reward.InternalPenalty)
 
 	std.Emit(
 		"CollectReward",
@@ -584,14 +606,14 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		"recipient", deposit.owner.String(),
 		"rewardToken", GNS_PATH,
 		"rewardAmount", formatInt(reward.Internal),
-		"rewardToUser", formatInt(toUser),
-		"rewardToFee", formatInt(int64(reward.Internal)-toUser),
-		"rewardPenalty", formatInt(reward.InternalPenalty),
+		"rewardToUser", rewardToUser,
+		"rewardToFee", formatInt(reward.Internal-toUser),
+		"rewardPenalty", rewardPenalty,
 		"rewardUnClaimableAmount", formatInt(unClaimableInternal),
 		"currentTime", formatInt(currentTime),
 	)
 
-	return formatInt(toUser), formatInt(reward.InternalPenalty), toUserExternalReward, toUserExternalPenalty
+	return rewardToUser, rewardPenalty, toUserExternalReward, toUserExternalPenalty
 }
 
 // UnStakeToken withdraws an LP token from staking, collecting all pending rewards
@@ -674,8 +696,7 @@ func applyUnStake(positionId uint64) error {
 
 	currentTime := time.Now().Unix()
 	currentTick := pl.GetSlot0Tick(deposit.targetPoolPath)
-	signedLiquidity := i256.FromUint256(deposit.liquidity)
-	signedLiquidity = signedLiquidity.Neg(signedLiquidity)
+	signedLiquidity := i256.Zero().Neg(i256.FromUint256(deposit.liquidity))
 	if pn.PositionIsInRange(positionId) {
 		pool.modifyDeposit(signedLiquidity, currentTime, currentTick)
 	}

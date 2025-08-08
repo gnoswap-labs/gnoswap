@@ -41,7 +41,12 @@ func getUint64FromTree(tree *avl.Tree, key string) uint64 {
 		return 0
 	}
 
-	return value.(uint64)
+	v, ok := value.(uint64)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast value to uint64: %T", value))
+	}
+
+	return v
 }
 
 // updateUint64InTree updates the uint64 value in the tree
@@ -74,7 +79,12 @@ func getOrCreateInnerTree(tree *avl.Tree, key string) *avl.Tree {
 		return innerTree
 	}
 
-	return value.(*avl.Tree)
+	v, ok := value.(*avl.Tree)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast value to *avl.Tree: %T", value))
+	}
+
+	return v
 }
 
 // milliToSec converts milliseconds to seconds

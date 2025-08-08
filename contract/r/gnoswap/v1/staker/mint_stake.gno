@@ -36,7 +36,7 @@ func MintAndStake(
 		ugnotSent := sent.AmountOf("ugnot")
 
 		// not enough ugnot sent
-		if ugnotSent < int64(UGNOT_MIN_DEPOSIT_TO_WRAP) {
+		if ugnotSent < UGNOT_MIN_DEPOSIT_TO_WRAP {
 			panic(ufmt.Errorf(
 				"%v: too less ugnot sent(%d), minimum:%d",
 				errWugnotMinimum, ugnotSent, UGNOT_MIN_DEPOSIT_TO_WRAP,

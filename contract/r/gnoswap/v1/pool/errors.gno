@@ -36,6 +36,7 @@ var (
 	errUnderflow                 = errors.New("[GNOSWAP-POOL-025] underflow")
 	errOverFlow                  = errors.New("[GNOSWAP-POOL-026] overflow")
 	errBalanceUpdateFailed       = errors.New("[GNOSWAP-POOL-027] balance update failed")
+	errInvalidPayer              = errors.New("[GNOSWAP-POOL-028] invalid payer")
 )
 
 // newErrorWithDetail adds detail to an error message

@@ -7,7 +7,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-var Q192 = new(u256.Uint).Lsh(u256.One(), 192)
+var Q192 = u256.Zero().Lsh(u256.One(), 192)
 
 var (
 	minSqrtRatio = u256.MustFromDecimal(MIN_SQRT_RATIO)

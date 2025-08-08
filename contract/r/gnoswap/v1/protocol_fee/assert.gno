@@ -27,7 +27,7 @@ func assertIsAdminOrGovStaker(caller std.Address) {
 	)
 }
 
-func assertIsValidPercent(pct uint64) {
+func assertIsValidPercent(pct int64) {
 	if pct > 10000 {
 		panic(makeErrorWithDetail(
 			errInvalidPct,

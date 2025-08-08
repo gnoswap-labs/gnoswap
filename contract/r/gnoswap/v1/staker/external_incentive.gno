@@ -62,8 +62,8 @@ func CreateExternalIncentive(
 		targetPoolPath,
 		rewardToken,
 		rewardAmount,
-		int64(startTimestamp),
-		int64(endTimestamp),
+		startTimestamp,
+		endTimestamp,
 		caller,
 		std.ChainHeight(),
 		depositGnsAmount,
@@ -139,7 +139,7 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 	}
 
 	// also refund deposit gns amount
-	gns.Transfer(cross, incentive.refundee, int64(incentive.depositGnsAmount))
+	gns.Transfer(cross, incentive.refundee, incentive.depositGnsAmount)
 
 	pool.incentives.update(incentive.refundee, incentive)
 

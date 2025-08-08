@@ -125,9 +125,9 @@ func (t *ProjectTier) updateDistributeAmountPerSecond() {
 		return
 	}
 
-	totalDistributeAmountX128 := new(u256.Uint).Mul(u256.NewUintFromInt64(t.totalDistributeAmount), q128.Clone())
+	totalDistributeAmountX128 := u256.Zero().Mul(u256.NewUintFromInt64(t.totalDistributeAmount), q128.Clone())
 	// Divide by time duration in seconds
-	distributeAmountPerSecondX128 := new(u256.Uint).Div(totalDistributeAmountX128, u256.NewUintFromInt64(distributeTimeDuration))
+	distributeAmountPerSecondX128 := u256.Zero().Div(totalDistributeAmountX128, u256.NewUintFromInt64(distributeTimeDuration))
 
 	t.distributeAmountPerSecondX128 = distributeAmountPerSecondX128
 }

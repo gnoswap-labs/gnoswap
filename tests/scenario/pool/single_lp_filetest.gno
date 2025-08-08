@@ -256,6 +256,13 @@ func TestSwap() {
 		userOldToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(adminAddr)
 		userOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
 
+		// set current realm and origin caller
+		func() {
+			ctx := testing.GetContext()
+			ctx.CurrentRealm = rouRealm
+			ctx.OriginCaller = adminAddr
+			testing.SetContext(ctx)
+		}()
 		amount0, amount1 := pl.Swap(
 			cross,
 			fooPath,    // token0Path
@@ -292,6 +299,13 @@ func TestSwap() {
 		userOldToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(adminAddr)
 		userOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
 
+		// set current realm and origin caller
+		func() {
+			ctx := testing.GetContext()
+			ctx.CurrentRealm = rouRealm
+			ctx.OriginCaller = adminAddr
+			testing.SetContext(ctx)
+		}()
 		amount0, amount1 := pl.Swap(cross, barPath, fooPath, fee500, adminAddr, true, "5000", test_price, adminAddr) // give enough amount to take fees away
 
 		intAmount0, _ := strconv.Atoi(amount0)
@@ -316,6 +330,13 @@ func TestSwap() {
 		userOldToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(adminAddr)
 		userOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
 
+		// set current realm and origin caller
+		func() {
+			ctx := testing.GetContext()
+			ctx.CurrentRealm = rouRealm
+			ctx.OriginCaller = adminAddr
+			testing.SetContext(ctx)
+		}()
 		amount0, amount1 := pl.Swap(cross, barPath, fooPath, fee500, adminAddr, true, "1000", test_price, adminAddr) // give enough amount to take fees away
 
 		intAmount0, _ := strconv.Atoi(amount0)
@@ -341,6 +362,13 @@ func TestSwap() {
 		userOldToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(adminAddr)
 		userOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
 
+		// set current realm and origin caller
+		func() {
+			ctx := testing.GetContext()
+			ctx.CurrentRealm = rouRealm
+			ctx.OriginCaller = adminAddr
+			testing.SetContext(ctx)
+		}()
 		amount0, amount1 := pl.Swap(cross, barPath, fooPath, fee500, adminAddr, false, "16000", MAX_PRICE, adminAddr) // give enough amount to take fees away
 
 		intAmount0, _ := strconv.Atoi(amount0)

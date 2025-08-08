@@ -85,7 +85,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 		ratio = ratio1.Clone()
 	}
 
-	temp := new(u256.Uint)
+	temp := u256.Zero()
 
 	// Apply bit masks using optimized loop - maintains exact same logic
 	for i := 1; i < 20; i++ {
@@ -103,20 +103,19 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 
 	// Convert from Q128.128 to Q128.96 with rounding up
 	// This divides by 1<<32 rounding up to go from a Q128.128 to a Q128.96
-	upper := new(u256.Uint).Rsh(ratio, 32)           // ratio >> 32
-	remainder := new(u256.Uint).Mod(ratio, oneLsh32) // ratio % (1 << 32)
+	upper := u256.Zero().Rsh(ratio, 32)           // ratio >> 32
+	remainder := u256.Zero().Mod(ratio, oneLsh32) // ratio % (1 << 32)
 
 	// Round up: add 1 if remainder != 0
 	if !remainder.IsZero() {
-		upper = new(u256.Uint).Add(upper, u256.One())
+		upper = u256.Zero().Add(upper, u256.One())
 	}
 
 	return upper
 }
 
 // getMostSignificantBit calculates the most significant bit position more efficiently
-func getMostSignificantBit(r *u256.Uint) uint64 {
-	msb := uint64(0)
+func getMostSignificantBit(r *u256.Uint) (msb uint64) {
 	temp := r.Clone()
 
 	// Optimized MSB calculation using pre-computed thresholds
@@ -159,7 +158,7 @@ func getMostSignificantBit(r *u256.Uint) uint64 {
 		msb |= 1
 	}
 
-	return msb
+	return
 }
 
 // TickMathGetTickAtSqrtRatio calculates the greatest tick value such that getSqrtRatioAtTick(tick) <= ratio
@@ -180,7 +179,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	}
 
 	// Scale ratio by 32 bits to convert from Q64.96 to Q96.128
-	ratio := new(u256.Uint).Lsh(sqrtPriceX96, 32)
+	ratio := u256.Zero().Lsh(sqrtPriceX96, 32)
 
 	// Find MSB using optimized calculation
 	msb := getMostSignificantBit(ratio)
@@ -189,9 +188,9 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	var r *u256.Uint
 
 	if msb >= 128 {
-		r = new(u256.Uint).Rsh(ratio, uint(msb-127))
+		r = u256.Zero().Rsh(ratio, uint(msb-127))
 	} else {
-		r = new(u256.Uint).Lsh(ratio, uint(127-msb))
+		r = u256.Zero().Lsh(ratio, uint(127-msb))
 	}
 
 	// Calculate log_2 using fixed-point arithmetic
@@ -199,14 +198,14 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	log2 = log2.Lsh(log2, 64)
 
 	// Define temporary variables for optimization
-	tempR := new(u256.Uint)
-	tempF := new(u256.Uint)
-	tempI256 := new(i256.Int)
+	tempR := u256.Zero()
+	tempF := u256.Zero()
+	tempI256 := i256.Zero()
 
 	// Optimized iterative calculation using loop - maintains exact same logic
 	for i := 0; i < 14; i++ {
 		tempR = tempR.Mul(r, r)
-		r = new(u256.Uint).Rsh(tempR, 127)
+		r = u256.Zero().Rsh(tempR, 127)
 
 		tempF = tempF.Rsh(r, 128)
 		tempI256 = i256.FromUint256(tempF)
@@ -214,18 +213,18 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 
 		tempI256 = tempI256.Lsh(tempI256, uint(63-i))
 		log2 = log2.Or(log2, tempI256)
-		r = new(u256.Uint).Rsh(r, uint(f.Uint64()))
+		r = u256.Zero().Rsh(r, uint(f.Uint64()))
 	}
 
 	// Calculate tick from log_sqrt10001
-	logSqrt10001 := new(i256.Int).Mul(log2, log2Multiplier)
+	logSqrt10001 := i256.Zero().Mul(log2, log2Multiplier)
 
 	// Calculate tick bounds
-	tickLow := new(i256.Int).Sub(logSqrt10001, tickLowOffset)
+	tickLow := i256.Zero().Sub(logSqrt10001, tickLowOffset)
 	tickLow = tickLow.Rsh(tickLow, 128)
 	tickLowInt32 := int32(tickLow.Int64())
 
-	tickHi := new(i256.Int).Add(logSqrt10001, tickHiOffset)
+	tickHi := i256.Zero().Add(logSqrt10001, tickHiOffset)
 	tickHi = tickHi.Rsh(tickHi, 128)
 	tickHiInt32 := int32(tickHi.Int64())
 

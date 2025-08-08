@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	ufmt "gno.land/p/demo/ufmt"
+	"gno.land/p/demo/ufmt"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -22,7 +22,7 @@ type canonicalPool struct {
 	tick      int32
 	incentive []*ExternalIncentive
 
-	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool)
+	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)
 }
 
 func (self *canonicalPool) InternalReward(emission uint64, ratio TierRatio, count uint64) int64 {
@@ -61,7 +61,7 @@ type canonicalRewardState struct {
 	global *emulatedGlobalState
 
 	Pool          map[string]*canonicalPool
-	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool)
+	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)
 
 	Reward []map[uint64]Reward // blockNumber -> depositId -> reward
 
@@ -75,7 +75,7 @@ type canonicalRewardState struct {
 	emulatedClaimedReward map[uint64]int64
 }
 
-func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tickCrossHook func(pools *Pools, height func() int64) func(poolPath string, tickId int32, zeroForOne bool)) *canonicalRewardState {
+func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tickCrossHook func(pools *Pools) func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)) *canonicalRewardState {
 	testing.SkipHeights(1)
 
 	result := &canonicalRewardState{
@@ -94,20 +94,17 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 
 		emulatedClaimedReward: make(map[uint64]int64),
 	}
-	result.tickCrossHook = tickCrossHook(pools, func() int64 {
-		return result.CurrentTime()
-	})
+	result.tickCrossHook = tickCrossHook(pools)
 
 	currentTime := time.Now().Unix()
 
 	// Technically, the block number being provided to the NewPoolTier should be 124, but because of duplicate creation of the default pool, we put 123 here to just make rewardCache work for the testing.
-	// XXXX: type changed. need to check if this is correct.
 	result.global.poolTier = NewPoolTier(pools, 123, currentTime, test_gnousdc, func() int64 { return int64(result.PerSecondEmission) }, func(start, end int64) ([]int64, []int64) {
 		heights := make([]int64, 0)
 		emissions := make([]int64, 0)
 		result.emissionUpdates.Iterate(start, end, func(key int64, value any) bool {
 			heights = append(heights, key)
-			emissions = append(emissions, int64(value.(uint64))) // <- here
+			emissions = append(emissions, int64(value.(uint64)))
 			return false
 		})
 		return heights, emissions
@@ -555,7 +552,7 @@ func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {
 			}
 
 			// update global state
-			pool.tickCrossHook(pool.poolPath, i, zeroForOne)
+			pool.tickCrossHook(pool.poolPath, i, zeroForOne, self.CurrentTime())
 		}
 	} else {
 		// forward
@@ -566,7 +563,7 @@ func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {
 			}
 
 			// update global state
-			pool.tickCrossHook(pool.poolPath, i, zeroForOne)
+			pool.tickCrossHook(pool.poolPath, i, zeroForOne, self.CurrentTime())
 		}
 	}
 
