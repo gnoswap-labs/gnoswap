@@ -10,7 +10,6 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
-	"gno.land/r/gnoswap/rbac"
 
 	prbac "gno.land/p/gnoswap/rbac"
 )
@@ -97,14 +96,4 @@ func BurnByLaunchPad(cur realm, from std.Address, amount int64) {
 	access.AssertIsLaunchpad(caller)
 
 	checkErr(ledger.Burn(from, amount))
-}
-
-// getContractAddress retrieves address for role.
-func getContractAddress(roleName string) std.Address {
-	addr, exists := access.GetAddress(roleName)
-	if !exists {
-		return rbac.DefaultRoleAddresses[prbac.SystemRole(roleName)]
-	}
-
-	return addr
 }

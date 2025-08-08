@@ -315,19 +315,24 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 	return poolPath, token0Amount, token1Amount
 }
 
-// calculateStakeData validates staking requirements and prepares staking data.
+// getPositionStakeTokenAmount validates staking requirements and returns token amounts.
 //
-// It checks if the token is already staked, verifies ownership, and ensures the pool has incentives.
-// If successful, it returns the staking data; otherwise, it returns an error.
+// This function performs the following validations:
+// - Checks if position is already staked
+// - Verifies token ownership
+// - Validates position has liquidity
+// - Ensures pool has active incentives
+// Then returns the token amounts for the position.
 //
 // Parameters:
-//   - positionId: The ID of the LP token to stake
-//   - owner: The owner of the LP token
-//   - caller: The caller of the staking operation
+//   - positionId: Position NFT ID to stake
+//   - owner: Position NFT owner address
+//   - caller: Transaction caller address
 //
 // Returns:
-//   - *stakeResult: The staking data if successful
-//   - error: An error if any validation fails
+//   - string: Amount of token0 in the position
+//   - string: Amount of token1 in the position
+//   - error: Error if validation fails
 func getPositionStakeTokenAmount(positionId uint64, owner, caller std.Address) (string, string, error) {
 	exist := deposits.Has(positionId)
 	if exist {
