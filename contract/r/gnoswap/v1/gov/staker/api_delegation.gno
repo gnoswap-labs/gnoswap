@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"gno.land/p/demo/ufmt"
 	"gno.land/r/gnoswap/v1/gov/xgns"
 )
 
@@ -19,8 +20,11 @@ func GetTotalDelegated() int64 {
 	delegatedAmount := int64(0)
 
 	func(cur realm) {
-		delegations.Iterate("", "", func(key string, value interface{}) bool {
-			delegation := value.(*Delegation)
+		delegations.Iterate("", "", func(key string, value any) bool {
+			delegation, ok := value.(*Delegation)
+			if !ok {
+				panic(ufmt.Sprintf("failed to cast delegations's element to *Delegation: %T", value))
+			}
 			delegatedAmount += delegation.DelegatedAmount()
 
 			return false
@@ -35,8 +39,11 @@ func GetTotalLockedAmount() int64 {
 	delegatedAmount := int64(0)
 
 	func(cur realm) {
-		delegations.Iterate("", "", func(key string, value interface{}) bool {
-			delegation := value.(*Delegation)
+		delegations.Iterate("", "", func(key string, value any) bool {
+			delegation, ok := value.(*Delegation)
+			if !ok {
+				panic(ufmt.Sprintf("failed to cast delegations's element to *Delegation: %T", value))
+			}
 			delegatedAmount += delegation.LockedAmount()
 
 			return false

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/json"
+	"gno.land/p/demo/ufmt"
 )
 
 func createProposalJsonNode(id int64, proposal *Proposal) *json.Node {
@@ -33,7 +34,10 @@ func GetProposals() string {
 			return false
 		}
 
-		proposal := value.(*Proposal)
+		proposal, ok := value.(*Proposal)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast proposals's element to *Proposal: %T", value))
+		}
 		proposalObj := createProposalJsonNode(proposal.ID(), proposal)
 		proposalArr.AppendArray(proposalObj)
 

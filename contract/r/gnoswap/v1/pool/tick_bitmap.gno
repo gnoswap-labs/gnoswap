@@ -95,7 +95,7 @@ func (p *Pool) getTickBitmap(wordPos int16) *u256.Uint {
 
 	bitmap, ok := value.(*u256.Uint)
 	if !ok {
-		panic("failed to get tick bitmap")
+		panic(ufmt.Sprintf("failed to cast tickBitmap to *u256.Uint: %T", value))
 	}
 	return bitmap
 }

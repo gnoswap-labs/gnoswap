@@ -5,6 +5,7 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
+
 	"gno.land/r/gnoswap/emission"
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
 )
@@ -117,7 +118,11 @@ func getDelegation(delegationID int64) *Delegation {
 		return nil
 	}
 
-	return delegation.(*Delegation)
+	if delegation, ok := delegation.(*Delegation); !ok {
+		panic(ufmt.Sprintf("failed to cast delegations's element to *Delegation: %T", delegation))
+	} else {
+		return delegation
+	}
 }
 
 // setDelegation stores or updates a delegation in the storage tree.
@@ -190,14 +195,11 @@ func removeDelegation(delegationID int64) bool {
 //
 // Returns:
 //   - []*Delegation: list of user's delegations
-func getUserDelegations(user std.Address) []*Delegation {
-	delegations := make([]*Delegation, 0)
-
+func getUserDelegations(user std.Address) (delegations []*Delegation) {
 	for _, delegationID := range delegationManager.GetUserDelegationIDs(user) {
 		delegations = append(delegations, getDelegation(delegationID))
 	}
-
-	return delegations
+	return
 }
 
 // getUserDelegationsWithDelegatee retrieves all delegations from a user to a specific delegatee.
@@ -209,14 +211,11 @@ func getUserDelegations(user std.Address) []*Delegation {
 //
 // Returns:
 //   - []*Delegation: list of user's delegations to the delegatee
-func getUserDelegationsWithDelegatee(user std.Address, delegatee std.Address) []*Delegation {
-	delegations := make([]*Delegation, 0)
-
+func getUserDelegationsWithDelegatee(user std.Address, delegatee std.Address) (delegations []*Delegation) {
 	for _, delegationID := range delegationManager.GetUserDelegationIDs(user) {
 		delegations = append(delegations, getDelegation(delegationID))
 	}
-
-	return delegations
+	return
 }
 
 // getDelegationHistory returns the current delegation history.
@@ -379,7 +378,12 @@ func getLaunchpadProjectDeposit(ownerAddress string) (int64, bool) {
 		return 0, false
 	}
 
-	return deposit.(int64), true
+	amount, ok := deposit.(int64)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast deposit to int64: %T", deposit))
+	}
+
+	return amount, true
 }
 
 // setLaunchpadProjectDeposit sets the deposit amount for a launchpad project.

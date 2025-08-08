@@ -72,9 +72,9 @@ func HandleWithdrawalFee(
 	feeAmount1, afterAmount1 := calculateAmountWithFee(u256.MustFromDecimal(amount1), u256.NewUint(fee))
 
 	checkTransferError(common.TransferFrom(cross, token0Path, positionCaller, protocolFeeAddr, feeAmount0.Int64()))
-	pf.AddToProtocolFee(cross, token0Path, feeAmount0.Uint64())
+	pf.AddToProtocolFee(cross, token0Path, feeAmount0.Int64())
 	checkTransferError(common.TransferFrom(cross, token1Path, positionCaller, protocolFeeAddr, feeAmount1.Int64()))
-	pf.AddToProtocolFee(cross, token1Path, feeAmount1.Uint64())
+	pf.AddToProtocolFee(cross, token1Path, feeAmount1.Int64())
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(

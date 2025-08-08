@@ -141,7 +141,7 @@ func (p *Pool) Clone() *Pool {
 	p.ticks.Iterate("", "", func(tickKey string, tickValue any) bool {
 		tickInfo, ok := tickValue.(TickInfo)
 		if !ok {
-			panic("failed to cast tick info to TickInfo")
+			panic(ufmt.Sprintf("failed to cast tickValue to TickInfo: %T", tickValue))
 		}
 
 		ticks.Set(tickKey, TickInfo{
@@ -161,7 +161,7 @@ func (p *Pool) Clone() *Pool {
 	p.tickBitmaps.Iterate("", "", func(tickKey string, tickValue any) bool {
 		tickBitmap, ok := tickValue.(*u256.Uint)
 		if !ok {
-			panic("failed to cast tick bitmap to *u256.Uint")
+			panic(ufmt.Sprintf("failed to cast tickValue to *u256.Uint: %T", tickValue))
 		}
 		tickBitmaps.Set(tickKey, u256.Zero().Set(tickBitmap))
 		return false
@@ -171,7 +171,7 @@ func (p *Pool) Clone() *Pool {
 	p.positions.Iterate("", "", func(positionKey string, positionValue any) bool {
 		positionInfo, ok := positionValue.(PositionInfo)
 		if !ok {
-			panic("failed to cast position info to PositionInfo")
+			panic(ufmt.Sprintf("failed to cast positionValue to PositionInfo: %T", positionValue))
 		}
 		positions.Set(positionKey, PositionInfo{
 			liquidity:                u256.Zero().Set(positionInfo.liquidity),

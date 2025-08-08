@@ -12,6 +12,11 @@ import (
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
+var (
+	zeroUint256 = u256.Zero()
+	zeroInt256  = i256.Zero()
+)
+
 // Global batch processor for current swap
 var currentSwapBatch *SwapBatchProcessor
 
@@ -68,7 +73,12 @@ func (self *Ticks) Get(tickId int32) *Tick {
 		self.tree.Set(EncodeInt(tickId), tick)
 		return tick
 	}
-	return v.(*Tick)
+
+	tick, ok := v.(*Tick)
+	if !ok {
+		panic("failed to cast value to *Tick")
+	}
+	return tick
 }
 
 func (self *Ticks) set(tickId int32, tick *Tick) {
@@ -106,7 +116,7 @@ type Tick struct {
 
 // CurrentOutsideAccumulation returns the latest outside accumulation for the tick
 func (self *Tick) CurrentOutsideAccumulation(timestamp int64) *u256.Uint {
-	var acc *u256.Uint
+	acc := u256.Zero()
 	self.outsideAccumulation.ReverseIterate(0, timestamp, func(key int64, value any) bool {
 		acc = value.(*u256.Uint)
 		return true
@@ -121,7 +131,7 @@ func (self *Tick) CurrentOutsideAccumulation(timestamp int64) *u256.Uint {
 func (self *Tick) modifyDepositLower(currentTime int64, liquidity *i256.Int) {
 	// update staker side tick info
 	self.stakedLiquidityGross = liquidityMathAddDelta(self.stakedLiquidityGross, liquidity)
-	if self.stakedLiquidityGross.Lt(u256.Zero()) {
+	if self.stakedLiquidityGross.Lt(zeroUint256) {
 		panic("stakedLiquidityGross is negative")
 	}
 	self.stakedLiquidityDelta = i256.Zero().Add(self.stakedLiquidityDelta, liquidity)
@@ -130,7 +140,7 @@ func (self *Tick) modifyDepositLower(currentTime int64, liquidity *i256.Int) {
 // modifyDepositUpper updates the tick's liquidity info by treating the deposit as an upper tick
 func (self *Tick) modifyDepositUpper(currentTime int64, liquidity *i256.Int) {
 	self.stakedLiquidityGross = liquidityMathAddDelta(self.stakedLiquidityGross, liquidity)
-	if self.stakedLiquidityGross.Lt(u256.Zero()) {
+	if self.stakedLiquidityGross.Lt(zeroUint256) {
 		panic("stakedLiquidityGross is negative")
 	}
 	self.stakedLiquidityDelta = i256.Zero().Sub(self.stakedLiquidityDelta, liquidity)

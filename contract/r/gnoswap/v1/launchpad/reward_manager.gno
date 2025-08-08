@@ -73,7 +73,12 @@ func (r *RewardManager) getDepositRewardState(depositId string) (*RewardState, e
 		return nil, makeErrorWithDetails(errNotExistDeposit, ufmt.Sprintf("(%s)", depositId))
 	}
 
-	return rewardStateI.(*RewardState), nil
+	rewardState, ok := rewardStateI.(*RewardState)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast rewardState to *RewardState: %T", rewardStateI))
+	}
+
+	return rewardState, nil
 }
 
 func (r *RewardManager) calculateRewardPerDepositX128(rewardPerSecondX128 *u256.Uint, totalStaked int64, currentTime int64) (*u256.Uint, error) {

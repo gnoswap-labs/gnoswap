@@ -74,7 +74,7 @@ func CreatePool(
 
 	if poolCreationFee > 0 {
 		gns.TransferFrom(cross, std.PreviousRealm().Address(), protocolFeeAddr, poolCreationFee)
-		pf.AddToProtocolFee(cross, GNS_PATH, uint64(poolCreationFee))
+		pf.AddToProtocolFee(cross, GNS_PATH, poolCreationFee)
 
 		previousRealm := std.PreviousRealm()
 		std.Emit(
@@ -157,9 +157,8 @@ func mustGetPool(poolPath string) (pool *Pool) {
 
 	pool, ok := iPool.(*Pool)
 	if !ok {
-		panic("failed to cast pool to *Pool")
+		panic(ufmt.Sprintf("failed to cast pool to *Pool: %T", iPool))
 	}
-
 	return pool
 }
 

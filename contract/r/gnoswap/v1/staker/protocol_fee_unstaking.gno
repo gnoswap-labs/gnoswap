@@ -61,7 +61,7 @@ func handleUnStakingFee(
 
 	// external contract has fee
 	common.Transfer(cross, tokenPath, protocolFeeAddr, feeAmount)
-	pf.AddToProtocolFee(cross, tokenPath, uint64(feeAmount))
+	pf.AddToProtocolFee(cross, tokenPath, feeAmount)
 
 	return amount - feeAmount, feeAmount, nil
 }

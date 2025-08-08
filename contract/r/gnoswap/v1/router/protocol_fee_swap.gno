@@ -73,8 +73,8 @@ func handleSwapFee(
 	if swapFee <= 0 {
 		return amount
 	}
-
-	feeAmount := new(u256.Uint).Mul(amount, u256.NewUint(swapFee))
+	
+	feeAmount := u256.Zero().Mul(amount, u256.NewUint(swapFee))
 	feeAmount.Div(feeAmount, u256.NewUint(10000))
 	feeAmountInt64 := feeAmount.Int64()
 	
@@ -85,7 +85,7 @@ func handleSwapFee(
 		common.TransferFrom(cross, outputToken, poolAddr, protocolFeeAddr, feeAmountInt64)
 	}
 
-	pf.AddToProtocolFee(cross, outputToken, uint64(feeAmountInt64))
+	pf.AddToProtocolFee(cross, outputToken, feeAmountInt64)
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(
@@ -96,6 +96,6 @@ func handleSwapFee(
 		"amount", formatInt64(feeAmountInt64),
 	)
 
-	toUserAfterProtocol := new(u256.Uint).Sub(amount, feeAmount)
+	toUserAfterProtocol := u256.Zero().Sub(amount, feeAmount)
 	return toUserAfterProtocol
 }
