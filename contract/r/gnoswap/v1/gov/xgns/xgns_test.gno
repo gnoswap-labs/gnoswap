@@ -5,8 +5,10 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
+	"gno.land/r/gnoswap/access"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/rbac"
 )
 
 var (
@@ -84,4 +86,14 @@ func TestBurnFail(t *testing.T) {
 	uassert.AbortsWithMessage(t, "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not launchpad", func() {
 		BurnByLaunchPad(cross, govStakerAddress, amount)
 	})
+}
+
+// getContractAddress retrieves the address which registered the role
+func getContractAddress(roleName string) std.Address {
+	addr, exists := access.GetAddress(roleName)
+	if !exists {
+		return rbac.DefaultRoleAddresses[prbac.SystemRole(roleName)]
+	}
+
+	return addr
 }
