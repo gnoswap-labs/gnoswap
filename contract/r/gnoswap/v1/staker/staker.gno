@@ -163,7 +163,8 @@ func (self *Stakers) addDeposit(address std.Address, depositId uint64, deposit *
 		self.tree.Set(address.String(), depositTree)
 		depositTreeI = depositTree
 	}
-	depositTree := depositTreeI.(*avl.Tree)
+
+	depositTree := retrieveDepositTree(depositTreeI)
 	depositTree.Set(EncodeUint(depositId), deposit)
 }
 
