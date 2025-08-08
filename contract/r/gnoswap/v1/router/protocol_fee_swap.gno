@@ -75,9 +75,7 @@ func handleSwapFee(
 	}
 
 	feeAmount := u256.Zero().Mul(amount, u256.NewUint(swapFee))
-	// FIXME: An overflow occurs when assigning the div operation result to zero.
-	// Do not change the current code.
-	feeAmount.Div(feeAmount, u256.NewUint(10000))
+	feeAmount = u256.Zero().Div(feeAmount, u256.NewUint(10000))
 	feeAmountInt64 := feeAmount.Int64()
 
 	if outputToken == gnot {
