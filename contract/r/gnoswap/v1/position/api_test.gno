@@ -20,16 +20,6 @@ func TestApiGetPositionsFee(t *testing.T) {
 		validator    func(*ApiTestHelper, *json.Node)
 	}{
 		{
-			name: "Unclaimed Fee",
-			apiCall: func() string {
-				return ApiGetPositionsUnclaimedFee()
-			},
-			expectedSize: 1,
-			validator: func(helper *ApiTestHelper, feeData *json.Node) {
-				helper.AssertFeeFields(feeData)
-			},
-		},
-		{
 			name: "Unclaimed Fee By LP Position ID",
 			apiCall: func() string {
 				return ApiGetPositionUnclaimedFeeByLpPositionId(1)

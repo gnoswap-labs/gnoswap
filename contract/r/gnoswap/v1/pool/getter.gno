@@ -87,17 +87,6 @@ func GetFeeAmountTickSpacing(fee uint32) int32 {
 	return iTickSpacing.(int32)
 }
 
-func GetPoolList() []string {
-	poolPaths := []string{}
-	pools.Iterate("", "", func(poolPath string, _ any) bool {
-		poolPaths = append(poolPaths, poolPath)
-
-		return false
-	})
-
-	return poolPaths
-}
-
 func GetToken0Path(poolPath string) string {
 	return mustGetPool(poolPath).Token0Path()
 }

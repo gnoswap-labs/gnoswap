@@ -70,9 +70,6 @@ func main() {
 	println("[SCENARIO] 2. Mint Bar:Baz Liquidity by admin")
 	TestMintBarBazLiquidity()
 
-	println("[SCENARIO] 3. Get Pools")
-	TestApiGetPools()
-
 	println("[INFO] Passed all tests")
 }
 
@@ -126,14 +123,6 @@ func TestMintBarBazLiquidity() {
 	testing.SkipHeights(1)
 }
 
-// GETTER_API TEST
-func TestApiGetPools() {
-	pools := pool.GetPoolList()
-
-	println("[EXPECTED] response.Size():", len(pools), "expected: should be 2")
-	println()
-}
-
 // Output:
 // [INFO] Create Foo:Bar Pool
 // [INFO] Create Bar:Baz Pool
@@ -144,8 +133,5 @@ func TestApiGetPools() {
 // [SCENARIO] 2. Mint Bar:Baz Liquidity by admin
 // [EXPECTED] amount0: 2958015 expected: should be 2958015
 // [EXPECTED] amount1: 8040316 expected: should be 8040316
-//
-// [SCENARIO] 3. Get Pools
-// [EXPECTED] response.Size(): 2 expected: should be 2
 //
 // [INFO] Passed all tests

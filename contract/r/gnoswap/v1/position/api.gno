@@ -23,21 +23,6 @@ func ApiGetPosition(id uint64) string {
 	return makeJsonResponse(&baseStat, &PositionsResponse{Positions: []RpcPosition{rpcPosition}})
 }
 
-func ApiGetPositionsUnclaimedFee() string {
-	rpcUnclaimedFee := []RpcUnclaimedFee{}
-	for id := uint64(1); id < nextId; id++ {
-		unclaimedFee0, unclaimedFee1 := unclaimedFee(id)
-		rpcUnclaimedFee = append(rpcUnclaimedFee, RpcUnclaimedFee{
-			LpPositionId: id,
-			Fee0:         unclaimedFee0.ToString(),
-			Fee1:         unclaimedFee1.ToString(),
-		})
-	}
-
-	baseStat := NewResponseQueryBase(std.ChainHeight(), time.Now().Unix())
-	return makeJsonResponse(&baseStat, &UnclaimedFeesResponse{Fees: rpcUnclaimedFee})
-}
-
 func ApiGetPositionUnclaimedFeeByLpPositionId(lpPositionId uint64) string {
 	unclaimedFee0, unclaimedFee1 := unclaimedFee(lpPositionId)
 	fee := RpcUnclaimedFee{
