@@ -264,9 +264,8 @@ func (self *Pool) calculateGlobalRewardRatioAccumulation(currentTime int64, curr
 		return oldAcc.Clone()
 	}
 
-	acc := u256.NewUint(uint64(timeDiff))
-	acc = acc.Mul(acc, q128)
-	acc = acc.Div(acc, currentStakedLiquidity)
+	acc := u256.Zero().Mul(u256.NewUintFromInt64(timeDiff), q128)
+	acc = u256.Zero().Div(acc, currentStakedLiquidity)
 
 	return u256.Zero().Add(oldAcc, acc)
 }

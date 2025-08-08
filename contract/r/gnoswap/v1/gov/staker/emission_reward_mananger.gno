@@ -114,7 +114,7 @@ func (e *EmissionRewardManager) calculateAccumulatedRewardX128PerStake(
 	// Calculate the newly distributed rewards since last update
 	distributedAmountDelta := currentDistributedAmount - e.distributedAmount
 	distributedAmountDeltaX128 := u256.NewUintFromInt64(distributedAmountDelta)
-	distributedAmountDeltaX128 = distributedAmountDeltaX128.Lsh(distributedAmountDeltaX128, 128)
+	distributedAmountDeltaX128 = u256.Zero().Lsh(distributedAmountDeltaX128, 128)
 
 	// Calculate reward per stake for the new distribution
 	distributedAmountDeltaX128PerStake := u256.Zero().Div(
