@@ -22,7 +22,7 @@ type canonicalPool struct {
 	tick      int32
 	incentive []*ExternalIncentive
 
-	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool)
+	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)
 }
 
 func (self *canonicalPool) InternalReward(emission uint64, ratio TierRatio, count uint64) int64 {
@@ -61,7 +61,7 @@ type canonicalRewardState struct {
 	global *emulatedGlobalState
 
 	Pool          map[string]*canonicalPool
-	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool)
+	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)
 
 	Reward []map[uint64]Reward // blockNumber -> depositId -> reward
 
@@ -75,7 +75,7 @@ type canonicalRewardState struct {
 	emulatedClaimedReward map[uint64]int64
 }
 
-func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tickCrossHook func(pools *Pools, height func() int64) func(poolPath string, tickId int32, zeroForOne bool)) *canonicalRewardState {
+func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tickCrossHook func(pools *Pools) func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)) *canonicalRewardState {
 	testing.SkipHeights(1)
 
 	result := &canonicalRewardState{
@@ -94,9 +94,7 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 
 		emulatedClaimedReward: make(map[uint64]int64),
 	}
-	result.tickCrossHook = tickCrossHook(pools, func() int64 {
-		return result.CurrentTime()
-	})
+	result.tickCrossHook = tickCrossHook(pools)
 
 	currentTime := time.Now().Unix()
 
@@ -554,7 +552,7 @@ func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {
 			}
 
 			// update global state
-			pool.tickCrossHook(pool.poolPath, i, zeroForOne)
+			pool.tickCrossHook(pool.poolPath, i, zeroForOne, self.CurrentTime())
 		}
 	} else {
 		// forward
@@ -565,7 +563,7 @@ func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {
 			}
 
 			// update global state
-			pool.tickCrossHook(pool.poolPath, i, zeroForOne)
+			pool.tickCrossHook(pool.poolPath, i, zeroForOne, self.CurrentTime())
 		}
 	}
 

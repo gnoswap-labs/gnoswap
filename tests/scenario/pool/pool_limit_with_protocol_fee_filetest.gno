@@ -165,7 +165,7 @@ func main() {
 // [INFO] Minted position: 59817378 0
 // [INFO] Swapped: -59817377 60183363
 // [INFO] Burned: 0 60177342
-// [INFO] Collected: 0 60177342
+// [INFO] Collected: 0 60181856
 // [EXPECTED] Pool tick: 120 expected: >= 120
 //
 // [INFO] Scenario completed

@@ -146,7 +146,7 @@ func setFeeAmountTickSpacing(fee uint32, tickSpacing int32) {
 // Panics:
 //   - If the pool does not exist, an error is thrown with the message
 //     "expected poolPath(<poolPath>) to exist".
-func mustGetPool(poolPath string) *Pool {
+func mustGetPool(poolPath string) (pool *Pool) {
 	iPool, exist := pools.Get(poolPath)
 	if !exist {
 		panic(newErrorWithDetail(
@@ -250,7 +250,10 @@ func setFeeProtocol(feeProtocol0, feeProtocol1 uint8) (uint8, error) {
 
 	// Update slot0 for each pool
 	pools.Iterate("", "", func(poolPath string, iPool any) bool {
-		pool := iPool.(*Pool)
+		pool, ok := iPool.(*Pool)
+		if !ok {
+			panic("failed to cast pool to *Pool")
+		}
 		pool.slot0.feeProtocol = newFee
 
 		return false

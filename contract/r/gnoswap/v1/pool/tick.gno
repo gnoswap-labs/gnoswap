@@ -109,8 +109,8 @@ func (p *Pool) getFeeGrowthInside(
 	feeGrowthBelow0X128, feeGrowthBelow1X128 := getFeeGrowthBelowX128(tickLower, tickCurrent, feeGrowthGlobal0X128, feeGrowthGlobal1X128, lower)
 	feeGrowthAbove0X128, feeGrowthAbove1X128 := getFeeGrowthAboveX128(tickUpper, tickCurrent, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper)
 
-	feeGrowthInside0X128 := new(u256.Uint).Sub(new(u256.Uint).Sub(feeGrowthGlobal0X128, feeGrowthBelow0X128), feeGrowthAbove0X128)
-	feeGrowthInside1X128 := new(u256.Uint).Sub(new(u256.Uint).Sub(feeGrowthGlobal1X128, feeGrowthBelow1X128), feeGrowthAbove1X128)
+	feeGrowthInside0X128 := u256.Zero().Sub(u256.Zero().Sub(feeGrowthGlobal0X128, feeGrowthBelow0X128), feeGrowthAbove0X128)
+	feeGrowthInside1X128 := u256.Zero().Sub(u256.Zero().Sub(feeGrowthGlobal1X128, feeGrowthBelow1X128), feeGrowthAbove1X128)
 
 	return feeGrowthInside0X128, feeGrowthInside1X128
 }
@@ -220,8 +220,8 @@ func (p *Pool) tickCross(
 ) *i256.Int {
 	thisTick := p.getTick(tick)
 
-	thisTick.feeGrowthOutside0X128 = new(u256.Uint).Sub(feeGrowthGlobal0X128, thisTick.feeGrowthOutside0X128)
-	thisTick.feeGrowthOutside1X128 = new(u256.Uint).Sub(feeGrowthGlobal1X128, thisTick.feeGrowthOutside1X128)
+	thisTick.feeGrowthOutside0X128 = u256.Zero().Sub(feeGrowthGlobal0X128, thisTick.feeGrowthOutside0X128)
+	thisTick.feeGrowthOutside1X128 = u256.Zero().Sub(feeGrowthGlobal1X128, thisTick.feeGrowthOutside1X128)
 
 	p.setTick(tick, thisTick)
 
@@ -258,7 +258,7 @@ func (p *Pool) deleteTick(tick int32) {
 // This function ensures the retrieved tick data is always valid and safe for further operations,
 // such as calculations or updates, by sanitizing nil fields in the TickInfo structure.
 func (p *Pool) getTick(tick int32) TickInfo {
-	tickStr := strconv.Itoa(int(tick))
+	tickStr := formatInt(tick)
 	iTickInfo, exist := p.ticks.Get(tickStr)
 	if !exist {
 		tickInfo := TickInfo{}
@@ -301,7 +301,7 @@ func (p *Pool) getTick(tick int32) TickInfo {
 //
 // ```
 func (p *Pool) mustGetTick(tick int32) TickInfo {
-	tickStr := strconv.Itoa(int(tick))
+	tickStr := formatInt(tick)
 	iTickInfo, exist := p.ticks.Get(tickStr)
 	if !exist {
 		panic(newErrorWithDetail(
@@ -310,7 +310,12 @@ func (p *Pool) mustGetTick(tick int32) TickInfo {
 		))
 	}
 
-	return iTickInfo.(TickInfo)
+	info, ok := iTickInfo.(TickInfo)
+	if !ok {
+		panic("failed to cast tick info to TickInfo")
+	}
+
+	return info
 }
 
 // calculateMaxLiquidityPerTick calculates the maximum liquidity
@@ -324,7 +329,7 @@ func calculateMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
 	maxTick := (MAX_TICK / tickSpacing) * tickSpacing
 	numTicks := uint64((maxTick-minTick)/tickSpacing) + 1
 
-	return new(u256.Uint).Div(u256.MustFromDecimal(MAX_UINT128), u256.NewUint(numTicks))
+	return u256.Zero().Div(u256.MustFromDecimal(MAX_UINT128), u256.NewUint(numTicks))
 }
 
 // getFeeGrowthBelowX128 calculates the fee growth below a specified tick.
@@ -374,8 +379,8 @@ func getFeeGrowthBelowX128(
 		return lowerTick.feeGrowthOutside0X128, lowerTick.feeGrowthOutside1X128
 	}
 
-	feeGrowthBelow0X128 := new(u256.Uint).Sub(feeGrowthGlobal0X128, lowerTick.feeGrowthOutside0X128)
-	feeGrowthBelow1X128 := new(u256.Uint).Sub(feeGrowthGlobal1X128, lowerTick.feeGrowthOutside1X128)
+	feeGrowthBelow0X128 := u256.Zero().Sub(feeGrowthGlobal0X128, lowerTick.feeGrowthOutside0X128)
+	feeGrowthBelow1X128 := u256.Zero().Sub(feeGrowthGlobal1X128, lowerTick.feeGrowthOutside1X128)
 
 	return feeGrowthBelow0X128, feeGrowthBelow1X128
 }
@@ -427,8 +432,8 @@ func getFeeGrowthAboveX128(
 		return upperTick.feeGrowthOutside0X128, upperTick.feeGrowthOutside1X128
 	}
 
-	feeGrowthAbove0X128 := new(u256.Uint).Sub(feeGrowthGlobal0X128, upperTick.feeGrowthOutside0X128)
-	feeGrowthAbove1X128 := new(u256.Uint).Sub(feeGrowthGlobal1X128, upperTick.feeGrowthOutside1X128)
+	feeGrowthAbove0X128 := u256.Zero().Sub(feeGrowthGlobal0X128, upperTick.feeGrowthOutside0X128)
+	feeGrowthAbove1X128 := u256.Zero().Sub(feeGrowthGlobal1X128, upperTick.feeGrowthOutside1X128)
 
 	return feeGrowthAbove0X128, feeGrowthAbove1X128
 }
