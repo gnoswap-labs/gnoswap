@@ -122,10 +122,8 @@ func (p *ProtocolFeeRewardManager) calculateAccumulatedRewardX128PerStake(
 
 		// Calculate fee per stake if there are staked tokens
 		if p.totalStakedAmount > 0 {
-			protocolFeeDeltaX128PerStake = protocolFeeDeltaX128.Div(
-				protocolFeeDeltaX128,
-				u256.NewUintFromInt64(p.totalStakedAmount),
-			)
+			feePerStake := u256.Zero().Div(protocolFeeDeltaX128, u256.NewUintFromInt64(p.totalStakedAmount))
+			protocolFeeDeltaX128PerStake = feePerStake
 		}
 
 		// Get current accumulated fee per stake for this token
