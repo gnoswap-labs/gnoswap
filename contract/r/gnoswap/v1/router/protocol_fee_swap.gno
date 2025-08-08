@@ -81,8 +81,14 @@ func handleSwapFee(
 	feeAmount := u256.Zero().Mul(amount, u256.NewUint(swapFee))
 	feeAmount.Div(feeAmount, u256.NewUint(10000))
 	feeAmountInt64 := feeAmount.Int64()
+	
+	if outputToken == gnot {
+		outputToken = wugnotPath
+		common.Transfer(cross, outputToken, protocolFeeAddr, feeAmountInt64)
+	} else {
+		common.TransferFrom(cross, outputToken, poolAddr, protocolFeeAddr, feeAmountInt64)
+	}
 
-	common.TransferFrom(cross, outputToken, std.PreviousRealm().Address(), protocolFeeAddr, feeAmountInt64)
 	pf.AddToProtocolFee(cross, outputToken, feeAmountInt64)
 
 	previousRealm := std.PreviousRealm()

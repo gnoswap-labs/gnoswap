@@ -11,8 +11,8 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 const (
@@ -470,7 +470,7 @@ func TestSwap_ExecutionAndSecurity(t *testing.T) {
 			uassert.AbortsWithMessage(t, test.expectedError, func() {
 				Swap(cross, pool.token0Path, pool.token1Path, pool.fee,
 					alice, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
-					test.swapParams.priceLimit, alice)
+					test.swapParams.priceLimit, routerAddr)
 			})
 
 			t.Logf("✓ %s: Properly blocked (Risk factor: %s)", test.description, test.riskFactor)
@@ -727,7 +727,7 @@ func TestSwap_FeeTierOptimization(t *testing.T) {
 		testing.SetOriginCaller(routerAddr)
 		actualAmount0, actualAmount1 := Swap(cross, wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER,
 			adminAddr, true, "40012000",
-			common.TickMathGetSqrtRatioAtTick(-887220).ToString(), adminAddr)
+			common.TickMathGetSqrtRatioAtTick(-887220).ToString(), routerAddr)
 
 		// Then: Verify fee efficiency
 		uassert.Equal(t, "100257", actualAmount0, "Token0 calculation in ultra-low fee environment")

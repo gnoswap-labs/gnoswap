@@ -131,8 +131,15 @@ func testDrySwapVsActualSwap(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	bar.Approve(cross, poolAddr, 16000)
 
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = rouRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
+
 	// Execute actual swap
-	testing.SetRealm(rouRealm)
 	actualPoolIn, actualPoolOut := pool.Swap(
 		cross,
 		barPath,

@@ -139,7 +139,14 @@ func main() {
 	println()
 
 	println("[SCENARIO] 4. Executing swap to move tick")
-	testing.SetRealm(rouRealm)
+
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = rouRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	pool.Swap(
 		cross,
 		barPath,

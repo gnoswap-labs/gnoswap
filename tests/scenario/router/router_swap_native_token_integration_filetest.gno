@@ -297,7 +297,6 @@ func testMultiHopUsdcToGnot() {
 		time.Now().Add(time.Hour).Unix(),
 		"", // referrer
 	)
-
 	afterUsdcBalance := usdc.BalanceOf(userAddr)
 	afterGnotBalance := banker.GetCoins(userAddr).AmountOf("ugnot")
 
@@ -354,7 +353,7 @@ func testMultiHopUsdcToGnot() {
 // [SCENARIO] 3. ExactOut: GNS → GNOT
 // [INFO] Testing ExactOut swap: GNS → 1,000,000 GNOT
 // [INFO] GNS spent: 997574
-// [INFO] GNOT received: 1000000
+// [INFO] GNOT received: 998500
 // [INFO] Pool fee (0.05%): 498
 // [INFO] Router fee (0.15%): 1500
 // [INFO] AmountIn reported: 997574
@@ -362,7 +361,7 @@ func testMultiHopUsdcToGnot() {
 // [EXPECTED] User receives 1,000,000 GNOT
 // [EXPECTED] Router fee charged on output side
 // [EXPECTED] Unwrap happens internally
-// [INFO] Router total fees accumulated: 0
+// [INFO] Router total fees accumulated: 1500
 //
 // [SCENARIO] 4. Multi-hop: GNOT → GNS → USDC
 // [INFO] Testing Multi-hop: 1,000,000 GNOT → GNS → USDC
@@ -377,7 +376,7 @@ func testMultiHopUsdcToGnot() {
 // [SCENARIO] 5. Multi-hop: USDC → GNS → GNOT
 // [INFO] Testing Multi-hop: USDC → GNS → 1,000,000 GNOT
 // [INFO] USDC spent: 995169
-// [INFO] GNOT received: 1000000
+// [INFO] GNOT received: 998500
 // [INFO] AmountIn reported: 995169
 // [INFO] AmountOut reported: -998500
 // [EXPECTED] Only last hop unwraps to GNOT

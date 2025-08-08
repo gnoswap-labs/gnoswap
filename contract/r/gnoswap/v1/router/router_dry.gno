@@ -79,7 +79,7 @@ func (p *SwapProcessor) ProcessMultiSwap(
 	case ExactIn:
 		return multiDrySwap(*swapParams, numHops, route)
 	case ExactOut:
-		return multiDrySwapNegative(*swapParams, pathIndex, route)
+		return multiDrySwapNegative(*swapParams, numHops, route)
 	default:
 		return nil, nil, ufmt.Errorf(ErrUnknownSwapType, swapType)
 	}

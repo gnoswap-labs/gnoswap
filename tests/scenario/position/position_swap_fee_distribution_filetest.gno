@@ -148,7 +148,13 @@ func executeSwap() {
 	testing.SetRealm(adminRealm)
 	bar.Approve(cross, poolAddr, 1234567)
 
-	testing.SetRealm(routerRealm)
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = routerRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	ufmt.Println("[INFO] Executing swap")
 	amount0, amount1 := pool.Swap(
 		cross,

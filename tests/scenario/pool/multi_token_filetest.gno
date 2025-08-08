@@ -160,7 +160,13 @@ func TestSwapFooBarFooToBar() {
 	testing.SetRealm(adminRealm)
 	bar.Approve(cross, poolAddr, 16000)
 
-	testing.SetRealm(rouRealm)
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = rouRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	poolIn, poolOut := pool.Swap(
 		cross,
 		barPath,
@@ -198,7 +204,13 @@ func TestSwapBarBazBarToBaz() {
 	testing.SetRealm(adminRealm)
 	bar.Approve(cross, poolAddr, 16000)
 
-	testing.SetRealm(rouRealm)
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = rouRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	poolIn, poolOut := pool.Swap(
 		cross,
 		barPath,
