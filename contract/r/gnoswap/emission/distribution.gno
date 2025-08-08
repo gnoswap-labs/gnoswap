@@ -54,44 +54,9 @@ func init() {
 	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), int64(0))
 }
 
-// ChangeDistributionPct modifies the distribution percentages for GNS emission targets.
-//
-// This function allows administrators or governance to adjust how newly minted GNS tokens
-// are distributed among different protocol components. All four targets must be specified
-// and percentages must sum to exactly 10000 basis points (100%).
-//
-// Parameters:
-//   - cur realm: Current execution context realm
-//   - target01-04: Distribution target identifiers (LIQUIDITY_STAKER=1, DEVOPS=2, COMMUNITY_POOL=3, GOV_STAKER=4)
-//   - pct01-04: Percentage in basis points (1 bp = 0.01%, 10000 bp = 100%)
-//
-// Requirements:
-//   - Caller must be admin or governance
-//   - All targets must be valid (1-4)
-//   - No duplicate targets
-//   - Sum of all percentages must equal 10000
-//   - System must not be halted for emission
-//
-// Panics:
-//   - Caller is not admin or governance
-//   - Invalid target specified
-//   - Duplicate targets provided
-//   - Percentages don't sum to 10000
-//   - System is halted
-//
-// Events:
-//
-//	Emits ChangeDistributionPct event with all target and percentage details
-//
-// Example:
-//
-//	// Set distribution: 75% stakers, 20% devops, 5% community, 0% gov stakers
-//	ChangeDistributionPct(
-//	  LIQUIDITY_STAKER, 7500,
-//	  DEVOPS, 2000,
-//	  COMMUNITY_POOL, 500,
-//	  GOV_STAKER, 0
-//	)
+// ChangeDistributionPct changes distribution percentages for emission targets.
+// All four targets must be specified and sum to 10000 basis points (100%).
+// Only callable by admin or governance.
 func ChangeDistributionPct(
 	cur realm,
 	target01 int, pct01 int64,
@@ -291,24 +256,12 @@ func GetDistributionBpsPct(target int) int64 {
 	return iInt64.(int64)
 }
 
-// GetDistributedToStaker returns the amount of GNS distributed to liquidity stakers since last clear.
-//
-// This value accumulates until cleared by the staker contract when it processes
-// the distributed rewards. Used for tracking pending distributions.
-//
-// Returns:
-//   - int64: GNS amount distributed but not yet processed
+// GetDistributedToStaker returns pending GNS for liquidity stakers.
 func GetDistributedToStaker() int64 {
 	return distributedToStaker
 }
 
-// GetDistributedToDevOps returns the amount of GNS distributed to DevOps address.
-//
-// This value accumulates continuously as it's not cleared by any contract.
-// Represents the current unclaimed DevOps rewards.
-//
-// Returns:
-//   - int64: GNS amount distributed to DevOps
+// GetDistributedToDevOps returns accumulated GNS for DevOps.
 func GetDistributedToDevOps() int64 {
 	return distributedToDevOps
 }

@@ -7,69 +7,69 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
-// AssertIsAdminOrGovernance checks if the caller is the admin or governance and optionally updates the admin or governance address
+// AssertIsAdminOrGovernance requires caller to be admin or governance.
 func AssertIsAdminOrGovernance(caller std.Address) {
 	if !IsAuthorized(prbac.ROLE_ADMIN.String(), caller) && !IsAuthorized(prbac.ROLE_GOVERNANCE.String(), caller) {
 		panic(ufmt.Errorf("unauthorized: caller %s is not admin or governance", caller))
 	}
 }
 
-// AssertIsAdmin checks if the caller is the admin and optionally updates the admin address
+// AssertIsAdmin requires caller to be admin.
 func AssertIsAdmin(caller std.Address) {
 	AssertIsAuthorized(prbac.ROLE_ADMIN.String(), caller)
 }
 
-// AssertIsGovernance checks if the caller is the governance and optionally updates the governance address
+// AssertIsGovernance requires caller to be governance.
 func AssertIsGovernance(caller std.Address) {
 	AssertIsAuthorized(prbac.ROLE_GOVERNANCE.String(), caller)
 }
 
-// AssertIsGovStaker checks if the caller is the gov staker and optionally updates the gov staker address
+// AssertIsGovStaker requires caller to be governance staker.
 func AssertIsGovStaker(caller std.Address) {
 	AssertIsAuthorized(prbac.ROLE_GOV_STAKER.String(), caller)
 }
 
-// AssertIsRouter checks if the caller is the router and optionally updates the router address
+// AssertIsRouter requires caller to be router.
 func AssertIsRouter(caller std.Address) {
 	AssertIsAuthorized(prbac.ROLE_ROUTER.String(), caller)
 }
 
-// AssertIsPool checks if the caller is the pool and optionally updates the pool address
+// AssertIsPool requires caller to be pool.
 func AssertIsPool(caller std.Address) {
 	AssertIsAuthorized(prbac.ROLE_POOL.String(), caller)
 }
 
-// AssertIsPosition checks if the caller is the position and optionally updates the position address
+// AssertIsPosition requires caller to be position.
 func AssertIsPosition(caller std.Address) {
 	AssertIsAuthorized(prbac.ROLE_POSITION.String(), caller)
 }
 
-// AssertIsStaker checks if the caller is the staker and optionally updates the staker address
+// AssertIsStaker requires caller to be staker.
 func AssertIsStaker(caller std.Address) {
 	AssertIsAuthorized(prbac.ROLE_STAKER.String(), caller)
 }
 
-// AssertIsLaunchpad checks if the caller is the launchpad and optionally updates the launchpad address
+// AssertIsLaunchpad requires caller to be launchpad.
 func AssertIsLaunchpad(caller std.Address) {
 	AssertIsAuthorized(prbac.ROLE_LAUNCHPAD.String(), caller)
 }
 
-// AssertIsEmission checks if the caller is the emission and optionally updates the emission address
+// AssertIsEmission requires caller to be emission.
 func AssertIsEmission(caller std.Address) {
 	AssertIsAuthorized(prbac.ROLE_EMISSION.String(), caller)
 }
 
-// AssertIsProtocolFee checks if the caller is the protocol fee and optionally updates the protocol fee address
+// AssertIsProtocolFee requires caller to be protocol fee.
 func AssertIsProtocolFee(caller std.Address) {
 	AssertIsAuthorized(prbac.ROLE_PROTOCOL_FEE.String(), caller)
 }
 
-// AssertIsGovXGNS checks if the caller is the gov xgns and optionally updates the gov xgns address
+// AssertIsGovXGNS requires caller to be xGNS governance.
 func AssertIsGovXGNS(caller std.Address) {
 	AssertIsAuthorized(prbac.ROLE_XGNS.String(), caller)
 }
 
-// AssertIsAuthorized checks if the caller has the given role by comparing addresses
+// AssertIsAuthorized requires caller to have the specified role.
 func AssertIsAuthorized(roleName string, caller std.Address) {
 	roleAddr, ok := GetAddress(roleName)
 	if !ok {
@@ -81,7 +81,7 @@ func AssertIsAuthorized(roleName string, caller std.Address) {
 	}
 }
 
-// AssertHasAnyRole checks if the caller has any of the given roles by comparing address
+// AssertHasAnyRole requires caller to have at least one of the specified roles.
 func AssertHasAnyRole(caller std.Address, roleNames ...string) {
 	for _, roleName := range roleNames {
 		roleAddr, ok := GetAddress(roleName)
@@ -97,29 +97,28 @@ func AssertHasAnyRole(caller std.Address, roleNames ...string) {
 	panic(ufmt.Errorf("unauthorized: caller %s is not any of the roles %v", caller, roleNames))
 }
 
-// AssertIsValidAddress checks if the address is valid
+// AssertIsValidAddress requires a valid address.
 func AssertIsValidAddress(addr std.Address) {
 	if !addr.IsValid() {
 		panic(ufmt.Errorf("invalid address: %s", addr))
 	}
 }
 
-// AssertIsUser checks if the caller is the user and optionally updates the user address
+// AssertIsUser requires caller to be a user realm.
 func AssertIsUser(r std.Realm) {
 	if !r.IsUser() {
 		panic(ufmt.Errorf("caller is not user"))
 	}
 }
 
-// AssertIsSwapWhitelisted checks if the caller is a whitelisted router
-// This replaces the old AssertIsRouter for multi-router support
+// AssertIsSwapWhitelisted requires caller to be on the swap whitelist.
 func AssertIsSwapWhitelisted(caller std.Address) {
 	if !IsSwapWhitelisted(caller) {
 		panic(ufmt.Errorf("unauthorized: caller %s is not a whitelisted router", caller))
 	}
 }
 
-// assertIsRBAC checks if the caller is the rbac and optionally updates the rbac address
+// assertIsRBAC requires caller to be the RBAC contract.
 func assertIsRBAC(caller std.Address) {
 	rbacAddress := std.DerivePkgAddr(rbacPackagePath)
 

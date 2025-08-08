@@ -1,105 +1,63 @@
-# Access Control
+# Access
 
-The `access` package provides a configuration-based wrapper around the `p/rbac` package, offering simplified role management and access control for Gno smart contracts.
+Role-based access control for GnoSwap contracts.
 
-## Key Features
+## Roles
 
-- **Configuration-based Setup**: Initialize access control with a simple configuration containing role-to-address mappings
-- **Predefined Roles**: Built-in roles for common access patterns (admin, governance, router, pool, etc.)
-- **Dynamic Role Management**: Support for creating new roles and updating role addresses at runtime
-- **Simple Permission Checks**: Utility functions for checking role-based permissions
+- `admin` - Protocol administrator
+- `governance` - Governance contract
+- `gov_staker` - Governance staking contract
+- `router` - Swap router contract
+- `pool` - Pool management contract
+- `position` - Position NFT contract
+- `staker` - Liquidity staking contract
+- `launchpad` - Token launchpad contract
+- `emission` - GNS emission contract
+- `protocol_fee` - Protocol fee collector
+- `gov_xgns` - xGNS governance token contract
 
-## Predefined Roles
-
-| Role Name         | Value        | Description            |
-| ----------------- | ------------ | ---------------------- |
-| `ROLE_ADMIN`      | `admin`      | Admin role             |
-| `ROLE_GOVERNANCE` | `governance` | Governance role        |
-| `ROLE_GOV_STAKER` | `gov_staker` | Governance staker role |
-| `ROLE_ROUTER`     | `router`     | Router role            |
-| `ROLE_POOL`       | `pool`       | Pool role              |
-| `ROLE_POSITION`   | `position`   | Position role          |
-| `ROLE_STAKER`     | `staker`     | Staker role            |
-| `ROLE_LAUNCHPAD`  | `launchpad`  | Launchpad role         |
-| `ROLE_EMISSION`   | `emission`   | Emission role          |
-
-## API Overview
-
-### Configuration
-
-```go
-type Config struct {
-    Roles map[string]std.Address
-}
-
-// Set configuration
-func SetConfig(cfg *Config) error
-
-// Get current configuration
-func GetCurrentConfig() *Config
-```
+## Functions
 
 ### Role Management
 
-```go
-// Set or update a role with address
-func SetRole(roleName string, address std.Address) error
+- `GetAddress(role string) (std.Address, bool)` - Get address for a role
+- `GetRoleAddresses() map[string]std.Address` - Get all role addresses
+- `SetRoleAddresses(cur realm, addresses map[string]std.Address)` - Update all role addresses (RBAC only)
+- `IsAuthorized(role string, caller std.Address) bool` - Check if address has role
 
-// Create a new role with address
-func CreateRole(roleName string, address std.Address) error
+### Permission Assertions
 
-// Update address for a specific role
-func UpdateRoleAddress(roleName string, newAddress std.Address) error
+- `AssertIsAdmin(caller std.Address)` - Require admin role
+- `AssertIsGovernance(caller std.Address)` - Require governance role
+- `AssertIsAdminOrGovernance(caller std.Address)` - Require admin or governance
+- `AssertIsRouter(caller std.Address)` - Require router role
+- `AssertIsPool(caller std.Address)` - Require pool role
+- `AssertIsPosition(caller std.Address)` - Require position role
+- `AssertIsStaker(caller std.Address)` - Require staker role
+- `AssertIsLaunchpad(caller std.Address)` - Require launchpad role
+- `AssertIsEmission(caller std.Address)` - Require emission role
+- `AssertIsProtocolFee(caller std.Address)` - Require protocol fee role
+- `AssertIsGovXGNS(caller std.Address)` - Require xGNS role
+- `AssertIsGovStaker(caller std.Address)` - Require governance staker role
 
-// Check if a role exists
-func RoleExists(roleName string) bool
+### Swap Whitelist
 
-// Get all registered roles
-func GetRoles() []string
-```
+- `UpdateSwapWhiteList(cur realm, router std.Address)` - Add router to whitelist (admin/governance only)
+- `RemoveFromSwapWhiteList(cur realm, router std.Address)` - Remove from whitelist (admin only)
+- `IsSwapWhitelisted(addr std.Address) bool` - Check if address is whitelisted
+- `GetWhitelistedSwaps() []std.Address` - Get all whitelisted addresses
 
-### Permission Checks
-
-`XXXOnly` functions are used to check if the caller has the given role.
-
-It follows the pattern of `XXXOnly(caller std.Address) error`.
-
-For example, `AdminOnly` function is defined as follows:
-
-```go
-// Check if caller has admin role
-func AdminOnly(caller std.Address) error
-```
-
-Parameters:
-
-- `caller`: The address to check for role permission
-
-Example usage:
+## Usage
 
 ```go
-// Simple permission check
-if err := access.AdminOnly(callerAddr); err != nil {
-    return err
+// Check permission
+if !access.IsAuthorized("admin", caller) {
+    panic("unauthorized")
 }
+
+// Assert permission (panics if unauthorized)
+access.AssertIsAdmin(caller)
+
+// Get role address
+addr, exists := access.GetAddress("router")
 ```
-
-## Implementation Details
-
-1. **Configuration**: The package maintains a global configuration storing role-to-address mappings.
-
-2. **Permission Checking**: Each role is associated with an address checker that validates if a caller matches the configured address.
-
-3. **Role Management**:
-   - Roles can be pre-configured during initialization
-   - New roles can be created at runtime
-   - Role addresses can be updated dynamically
-
-The sequence diagram above illustrates the flow of initialization and role management operations in the Access Control system.
-
-## Limitations
-
-- Only supports single-address to role mapping
-- All roles use the same permission type ("access")
-- Configuration must be initialized before using any functionality
-- Global configuration state may need careful management in complex applications
