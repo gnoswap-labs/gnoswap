@@ -470,28 +470,6 @@ func GetPoolReward(tier uint64) int64 {
 	return poolTier.CurrentReward(tier)
 }
 
-// getExternalIncentive retrieves an external incentive by its ID.
-//
-// This function looks up an external incentive in the global `externalIncentives` tree using the specified `incentiveId`.
-// If the incentive does not exist, the function panics with an appropriate error message.
-//
-// Parameters:
-// - incentiveId (string): The ID of the incentive to retrieve.
-//
-// Returns:
-// - *ExternalIncentive: A pointer to the retrieved `ExternalIncentive` object.
-func getExternalIncentive(incentiveId string) *ExternalIncentive {
-	incentive, exist := externalIncentives.tree.Get(incentiveId)
-	if !exist {
-		panic(makeErrorWithDetails(
-			errDataNotFound,
-			ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId)),
-		)
-	}
-
-	return incentive.(*ExternalIncentive)
-}
-
 // GetExternalIncentiveByPoolPath retrieves all external incentives associated with a specific pool path.
 //
 // This function iterates through all external incentives in the global `externalIncentives` tree
@@ -531,7 +509,10 @@ func GetPrintExternalInfo() string {
 
 		externalIncentivesList := []ApiExternalDebugIncentive{}
 		externalIncentives.tree.Iterate("", "", func(key string, value any) bool {
-			incentive := value.(*ExternalIncentive)
+			incentive, ok := value.(*ExternalIncentive)
+			if !ok {
+				panic("failed to cast value to *ExternalIncentive")
+			}
 			if incentive.targetPoolPath == deposit.targetPoolPath {
 				externalIncentive := ApiExternalDebugIncentive{
 					PoolPath:          incentive.targetPoolPath,

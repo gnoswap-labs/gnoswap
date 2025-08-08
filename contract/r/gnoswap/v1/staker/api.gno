@@ -151,7 +151,10 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 	}
 
 	pool.incentives.incentives.Iterate("", "", func(key string, value any) bool {
-		incentive := value.(*ExternalIncentive)
+		incentive, ok := value.(*ExternalIncentive)
+		if !ok {
+			panic("failed to cast value to *ExternalIncentive")
+		}
 		if incentive.targetPoolPath != targetPoolPath {
 			return false
 		}
@@ -174,9 +177,15 @@ func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 	apiExternalIncentives := []ApiExternalIncentive{}
 
 	pools.tree.Iterate("", "", func(key string, value any) bool {
-		pool := value.(*Pool)
+		pool, ok := value.(*Pool)
+		if !ok {
+			panic("failed to cast value to *Pool")
+		}
 		pool.incentives.incentives.Iterate("", "", func(key string, value any) bool {
-			incentive := value.(*ExternalIncentive)
+			incentive, ok := value.(*ExternalIncentive)
+			if !ok {
+				panic("failed to cast value to *ExternalIncentive")
+			}
 			if incentive.rewardToken != rewardTokenPath {
 				return false
 			}
@@ -202,7 +211,10 @@ func ApiGetInternalIncentives() string {
 
 	poolTier.membership.Iterate("", "", func(key string, value any) bool {
 		poolPath := key
-		internalTier := value.(uint64)
+		internalTier, ok := value.(uint64)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast value to uint64: %T", value))
+		}
 		internalIctv := newApiInternalIncentive(poolPath, internalTier)
 		apiInternalIncentives = append(apiInternalIncentives, internalIctv)
 		return false

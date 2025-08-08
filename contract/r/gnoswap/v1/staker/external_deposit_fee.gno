@@ -67,10 +67,14 @@ func GetMinimumRewardAmountForToken(tokenPath string) int64 {
 // - bool: True if a specific minimum was found, false otherwise.
 func GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool) {
 	amountI, found := tokenSpecificMinimumRewards.Get(tokenPath)
-	if found {
-		return amountI.(int64), true
+	if !found {
+		return 0, false
 	}
-	return 0, false
+	v, ok := amountI.(int64)
+	if !ok {
+		panic("failed to cast amount to int64")
+	}
+	return v, true
 }
 
 // SetDepositGnsAmount modifies the deposit gns amount

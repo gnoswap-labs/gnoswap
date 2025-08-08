@@ -53,7 +53,8 @@ func (self *Deposits) Has(positionId uint64) bool {
 
 func (self *Deposits) Iterate(start uint64, end uint64, fn func(positionId uint64, deposit *Deposit) bool) {
 	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(positionId string, depositI any) bool {
-		return fn(DecodeUint(positionId), depositI.(*Deposit))
+		dpst := retrieveDeposit(depositI)
+		return fn(DecodeUint(positionId), dpst)
 	})
 }
 
@@ -69,7 +70,14 @@ func (self *Deposits) get(positionId uint64) *Deposit {
 			ufmt.Sprintf("positionId(%d) not found", positionId),
 		))
 	}
-	deposit := depositI.(*Deposit)
+	return retrieveDeposit(depositI)
+}
+
+func retrieveDeposit(data any) *Deposit {
+	deposit, ok := data.(*Deposit)
+	if !ok {
+		panic("failed to cast value to *Deposit")
+	}
 	return deposit
 }
 
@@ -108,7 +116,10 @@ func (self *ExternalIncentives) get(incentiveId string) *ExternalIncentive {
 		))
 	}
 
-	incentive := incentiveI.(*ExternalIncentive)
+	incentive, ok := incentiveI.(*ExternalIncentive)
+	if !ok {
+		panic("failed to cast value to *ExternalIncentive")
+	}
 	return incentive
 }
 
@@ -135,9 +146,12 @@ func (self *Stakers) IterateAll(address std.Address, fn func(depositId uint64, d
 	if !ok {
 		return
 	}
-	depositTree := depositTreeI.(*avl.Tree)
+	depositTree := retrieveDepositTree(depositTreeI)
 	depositTree.Iterate("", "", func(depositId string, depositI any) bool {
-		deposit := depositI.(*Deposit)
+		deposit, ok := depositI.(*Deposit)
+		if !ok {
+			panic("failed to cast value to *Deposit")
+		}
 		return fn(DecodeUint(depositId), deposit)
 	})
 }
@@ -158,8 +172,17 @@ func (self *Stakers) removeDeposit(address std.Address, depositId uint64) {
 	if !ok {
 		return
 	}
-	depositTree := depositTreeI.(*avl.Tree)
+
+	depositTree := retrieveDepositTree(depositTreeI)
 	depositTree.Remove(EncodeUint(depositId))
+}
+
+func retrieveDepositTree(data any) *avl.Tree {
+	depositTree, ok := data.(*avl.Tree)
+	if !ok {
+		panic("failed to cast depositTree to *avl.Tree")
+	}
+	return depositTree
 }
 
 var (
