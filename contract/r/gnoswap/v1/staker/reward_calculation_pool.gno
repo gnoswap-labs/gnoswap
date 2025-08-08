@@ -40,7 +40,11 @@ func (self *Pools) Get(poolPath string) (*Pool, bool) {
 	if !ok {
 		return nil, false
 	}
-	return v.(*Pool), true
+	p, ok := v.(*Pool)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast v to *Pool: %T", v))
+	}
+	return p, true
 }
 
 // GetOrCreate returns the pool for the given poolPath, or creates a new pool if it does not exist
@@ -296,9 +300,12 @@ func (self *RewardState) calculateInternalReward(startTime, endTime int64) ([]in
 	currentReward := self.pool.CurrentReward(startTime)
 	self.pool.rewardCache.Iterate(startTime, endTime, func(key int64, value any) bool {
 		// we calculate per-position reward
-		self.rewardPerWarmup(startTime, int64(key), currentReward)
-		currentReward = value.(int64)
-		startTime = int64(key)
+		self.rewardPerWarmup(startTime, key, currentReward)
+		currentReward, ok := value.(int64)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast value to int64: %T", value))
+		}
+		startTime = key
 		return false
 	})
 

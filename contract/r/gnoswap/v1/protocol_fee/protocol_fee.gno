@@ -163,9 +163,9 @@ func AddToProtocolFee(cur realm, tokenPath string, amount int64) {
 	}
 
 	currentAmount := protocolFeeState.tokenListWithAmount[tokenPath]
-	
+
 	// Check for overflow
-	if amount > 0 && currentAmount > 0 && currentAmount > (9223372036854775807 - amount) {
+	if amount > 0 && currentAmount > 0 && currentAmount > (9223372036854775807-amount) {
 		panic(makeErrorWithDetail(
 			errInvalidAmount,
 			ufmt.Sprintf("overflow detected: current(%d) + amount(%d) would exceed int64 max", currentAmount, amount),

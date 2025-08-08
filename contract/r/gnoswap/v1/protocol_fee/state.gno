@@ -48,10 +48,10 @@ func NewProtocolFeeState() *ProtocolFeeState {
 // Global instance of the protocol fee state
 var protocolFeeState = NewProtocolFeeState()
 
-func (pfs *ProtocolFeeState) DevOpsPct() int64 { return pfs.devOpsPct }
-func (pfs *ProtocolFeeState) GovStakerPct() int64 { return 10000 - pfs.devOpsPct }
+func (pfs *ProtocolFeeState) DevOpsPct() int64           { return pfs.devOpsPct }
+func (pfs *ProtocolFeeState) GovStakerPct() int64        { return 10000 - pfs.devOpsPct }
 func (pfs *ProtocolFeeState) AccuToGovStaker() *avl.Tree { return pfs.accuToGovStaker }
-func (pfs *ProtocolFeeState) AccuToDevOps() *avl.Tree { return pfs.accuToDevOps }
+func (pfs *ProtocolFeeState) AccuToDevOps() *avl.Tree    { return pfs.accuToDevOps }
 
 // distributeToDevOps distributes tokens to DevOps and updates related state
 // amount should be greater than 0 (already checked in DistributeProtocolFee)
@@ -61,7 +61,6 @@ func (pfs *ProtocolFeeState) distributeToDevOps(token string, amount int64) erro
 	if err := common.Transfer(cross, token, devOpsAddr, amount); err != nil {
 		return ufmt.Errorf("transfer failed: token(%s), amount(%d)", token, amount)
 	}
-
 	return nil
 }
 
@@ -73,7 +72,6 @@ func (pfs *ProtocolFeeState) distributeToGovStaker(token string, amount int64) e
 	if err := common.Transfer(cross, token, govStakerAddr, amount); err != nil {
 		return ufmt.Errorf("transfer failed: token(%s), amount(%d)", token, amount)
 	}
-
 	return nil
 }
 
@@ -116,15 +114,15 @@ func (pfs *ProtocolFeeState) setGovStakerPct(pct int64) (int64, error) {
 // addAccuToGovStaker adds the amount to the accuToGovStaker by token path.
 func (pfs *ProtocolFeeState) addAccuToGovStaker(tokenPath string, amount int64) {
 	before := pfs.GetAccuTransferToGovStakerByTokenPath(tokenPath)
-	
+
 	// Check for overflow
-	if amount > 0 && before > 0 && before > (9223372036854775807 - amount) {
+	if amount > 0 && before > 0 && before > (9223372036854775807-amount) {
 		panic(makeErrorWithDetail(
 			errInvalidAmount,
 			ufmt.Sprintf("overflow detected: before(%d) + amount(%d) would exceed int64 max", before, amount),
 		))
 	}
-	
+
 	after := before + amount
 	pfs.accuToGovStaker.Set(tokenPath, after)
 }
@@ -132,15 +130,15 @@ func (pfs *ProtocolFeeState) addAccuToGovStaker(tokenPath string, amount int64) 
 // addAccuToDevOps adds the amount to the accuToDevOps by token path.
 func (pfs *ProtocolFeeState) addAccuToDevOps(tokenPath string, amount int64) {
 	before := pfs.GetAccuTransferToDevOpsByTokenPath(tokenPath)
-	
+
 	// Check for overflow
-	if amount > 0 && before > 0 && before > (9223372036854775807 - amount) {
+	if amount > 0 && before > 0 && before > (9223372036854775807-amount) {
 		panic(makeErrorWithDetail(
 			errInvalidAmount,
 			ufmt.Sprintf("overflow detected: before(%d) + amount(%d) would exceed int64 max", before, amount),
 		))
 	}
-	
+
 	after := before + amount
 	pfs.accuToDevOps.Set(tokenPath, after)
 }

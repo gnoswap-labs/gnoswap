@@ -99,13 +99,8 @@ func NewExternalIncentives() *ExternalIncentives {
 	}
 }
 
-func (self *ExternalIncentives) Has(incentiveId string) bool {
-	return self.tree.Has(incentiveId)
-}
-
-func (self *ExternalIncentives) Size() int {
-	return self.tree.Size()
-}
+func (self *ExternalIncentives) Has(incentiveId string) bool { return self.tree.Has(incentiveId) }
+func (self *ExternalIncentives) Size() int                   { return self.tree.Size() }
 
 func (self *ExternalIncentives) get(incentiveId string) *ExternalIncentive {
 	incentiveI, ok := self.tree.Get(incentiveId)
@@ -509,7 +504,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		incentive.rewardAmount = safeSubInt64(incentive.rewardAmount, rewardAmount)
 		rewardToken := incentive.rewardToken
 		toUserExternalReward[rewardToken] = safeAddInt64(toUserExternalReward[rewardToken], rewardAmount)
-		toUser, feeAmount, err := handleUnStakingFee(rewardToken, int64(rewardAmount), false, positionId, incentive.targetPoolPath)
+		toUser, feeAmount, err := handleUnStakingFee(rewardToken, rewardAmount, false, positionId, incentive.targetPoolPath)
 		if err != nil {
 			panic(err.Error())
 		}
@@ -556,7 +551,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 			"rewardToken", rewardToken,
 			"rewardAmount", formatInt(rewardAmount),
 			"rewardToUser", formatInt(toUser),
-			"rewardToFee", formatInt(int64(rewardAmount)-toUser),
+			"rewardToFee", formatInt(rewardAmount-toUser),
 			"rewardPenalty", formatInt(externalPenalty),
 			"isRequestUnwrap", formatBool(unwrapResult),
 			"currentTime", formatInt(currentTime),
@@ -567,7 +562,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 	communityPoolAddr := getRoleAddress(prbac.ROLE_COMMUNITY_POOL)
 
 	// internal reward to user
-	toUser, feeAmount, err := handleUnStakingFee(GNS_PATH, int64(reward.Internal), true, positionId, deposit.targetPoolPath)
+	toUser, feeAmount, err := handleUnStakingFee(GNS_PATH, reward.Internal, true, positionId, deposit.targetPoolPath)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -599,6 +594,9 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		gns.Transfer(cross, communityPoolAddr, unClaimableInternal)
 	}
 
+	rewardToUser := formatInt(toUser)
+	rewardPenalty := formatInt(reward.InternalPenalty)
+
 	std.Emit(
 		"CollectReward",
 		"prevAddr", previousRealm.Address().String(),
@@ -608,14 +606,14 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		"recipient", deposit.owner.String(),
 		"rewardToken", GNS_PATH,
 		"rewardAmount", formatInt(reward.Internal),
-		"rewardToUser", formatInt(toUser),
+		"rewardToUser", rewardToUser,
 		"rewardToFee", formatInt(reward.Internal-toUser),
-		"rewardPenalty", formatInt(reward.InternalPenalty),
+		"rewardPenalty", rewardPenalty,
 		"rewardUnClaimableAmount", formatInt(unClaimableInternal),
 		"currentTime", formatInt(currentTime),
 	)
 
-	return formatInt(toUser), formatInt(reward.InternalPenalty), toUserExternalReward, toUserExternalPenalty
+	return rewardToUser, rewardPenalty, toUserExternalReward, toUserExternalPenalty
 }
 
 // UnStakeToken withdraws an LP token from staking, collecting all pending rewards
