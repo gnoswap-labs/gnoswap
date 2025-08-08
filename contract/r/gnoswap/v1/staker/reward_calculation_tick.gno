@@ -182,21 +182,26 @@ func swapStartHook(pools *Pools) func(poolPath string, timestamp int64) {
 }
 
 // swapEndHook is called when a swap ends
-func swapEndHook(pools *Pools) func(poolPath string) {
-	return func(poolPath string) {
-		func(cur realm) {
+func swapEndHook(pools *Pools) func(poolPath string) error {
+	return func(poolPath string) error {
+		return func(cur realm) error {
 			if currentSwapBatch == nil || !currentSwapBatch.isActive || currentSwapBatch.poolPath != poolPath {
-				return
+				return nil
 			}
 
 			// Mark as inactive to prevent further accumulation
 			currentSwapBatch.isActive = false
 
 			// Process all accumulated tick crosses
-			processBatchedTickCrosses()
+			err := processBatchedTickCrosses()
+			if err != nil {
+				return err
+			}
 
 			// Clean up
 			currentSwapBatch = nil
+
+			return nil
 		}(cross)
 	}
 }
@@ -255,13 +260,16 @@ func processTickCrossImmediate(pool *Pool, tick *Tick, tickId int32, zeroForOne 
 }
 
 // processBatchedTickCrosses processes all accumulated tick crosses at once
-func processBatchedTickCrosses() {
+func processBatchedTickCrosses() error {
 	if currentSwapBatch == nil || len(currentSwapBatch.crosses) == 0 {
-		return
+		return nil
+	}
+
+	if currentSwapBatch.pool == nil {
+		return errPoolNotFound
 	}
 
 	batch := currentSwapBatch
-	pool := batch.pool
 	timestamp := batch.timestamp
 
 	// Calculate cumulative liquidity delta
@@ -278,13 +286,15 @@ func processBatchedTickCrosses() {
 	}
 
 	// Update pool state once with cumulative changes
-	newAcc := pool.modifyDeposit(cumulativeDelta, timestamp, lastTick)
+	newAcc := batch.pool.modifyDeposit(cumulativeDelta, timestamp, lastTick)
 
 	// Update outside accumulations for all crossed ticks
 	for _, tickCross := range batch.crosses {
-		tick := pool.ticks.Get(tickCross.tickId)
+		tick := batch.pool.ticks.Get(tickCross.tickId)
 		tick.updateCurrentOutsideAccumulation(timestamp, newAcc)
 	}
+
+	return nil
 }
 
 func setHooks() {

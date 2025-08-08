@@ -21,7 +21,7 @@ const MAX_INT256 string = "57896044618658097711785492504343953926634992332820282
 var (
 	swapStartHook func(poolPath string, timestamp int64)
 	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)
-	swapEndHook   func(poolPath string)
+	swapEndHook   func(poolPath string) error
 )
 
 // SetTickCrossHook sets the tick cross hook function
@@ -39,7 +39,7 @@ func SetSwapStartHook(cur realm, hook func(poolPath string, timestamp int64)) {
 }
 
 // SetSwapEndHook sets the swap end hook function
-func SetSwapEndHook(cur realm, hook func(poolPath string)) {
+func SetSwapEndHook(cur realm, hook func(poolPath string) error) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
 	swapEndHook = hook
@@ -150,7 +150,10 @@ func Swap(
 	pool.slot0.unlocked = true
 	// Call swap end hook if set
 	if swapEndHook != nil {
-		swapEndHook(pool.PoolPath())
+		err := swapEndHook(pool.PoolPath())
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	previousRealm := std.PreviousRealm()
