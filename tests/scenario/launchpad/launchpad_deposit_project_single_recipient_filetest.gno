@@ -157,8 +157,8 @@ func setupProtocolFee(barAmount, quxAmount int64) {
 
 	println("[INFO] Adding tokens to protocol fee")
 	testing.SetRealm(stakerRealm)
-	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", uint64(barAmount))
-	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/qux", uint64(quxAmount))
+	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/bar", barAmount)
+	protocol_fee.AddToProtocolFee(cross, "gno.land/r/onbloc/qux", quxAmount)
 	testing.SkipHeights(1)
 
 	println("[INFO] Validating protocol fee balances")
