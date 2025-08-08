@@ -159,7 +159,10 @@ func (p *Pool) Clone() *Pool {
 
 	// clone tickBitmaps
 	p.tickBitmaps.Iterate("", "", func(tickKey string, tickValue any) bool {
-		tickBitmap := tickValue.(*u256.Uint)
+		tickBitmap, ok := tickValue.(*u256.Uint)
+		if !ok {
+			panic("failed to cast tick bitmap to *u256.Uint")
+		}
 		tickBitmaps.Set(tickKey, u256.Zero().Set(tickBitmap))
 		return false
 	})

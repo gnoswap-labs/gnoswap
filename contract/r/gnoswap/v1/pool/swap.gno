@@ -405,8 +405,7 @@ func computeSwapStep(
 
 // updateFeeProtocol calculates and updates protocol fees for the current step.
 func updateFeeProtocol(step StepComputations, feeProtocol uint8, state SwapState) (SwapState, StepComputations, error) {
-	delta := step.feeAmount
-	delta.Div(delta, u256.NewUint(uint64(feeProtocol)))
+	delta := u256.Zero().Div(step.feeAmount, u256.NewUint(uint64(feeProtocol)))
 
 	newFeeAmount, overflow := u256.Zero().SubOverflow(step.feeAmount, delta)
 	if overflow {

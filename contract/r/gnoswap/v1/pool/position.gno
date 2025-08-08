@@ -127,7 +127,7 @@ func positionUpdate(
 		tokensOwed1 = u256.MulDiv(diff1, position.liquidity, convertedQ128)
 	}
 
-	if !(liquidityDelta.IsZero()) {
+	if !liquidityDelta.IsZero() {
 		position.liquidity = liquidityNext
 	}
 
@@ -135,9 +135,11 @@ func positionUpdate(
 	position.feeGrowthInside1LastX128 = feeGrowthInside1X128
 
 	// add tokensOwed only when it's greater than 0
-	if tokensOwed0.Gt(u256.Zero()) || tokensOwed1.Gt(u256.Zero()) {
-		position.tokensOwed0 = position.tokensOwed0.Add(position.tokensOwed0, tokensOwed0)
-		position.tokensOwed1 = position.tokensOwed1.Add(position.tokensOwed1, tokensOwed1)
+	if tokensOwed0.Gt(zero) || tokensOwed1.Gt(zero) {
+		owed0 := u256.Zero().Add(position.tokensOwed0, tokensOwed0)
+		owed1 := u256.Zero().Add(position.tokensOwed1, tokensOwed1)
+		position.tokensOwed0 = owed0
+		position.tokensOwed1 = owed1
 	}
 
 	return position, nil
@@ -185,15 +187,18 @@ func (p *Pool) GetPosition(key string) (PositionInfo, bool) {
 		return newPosition, false
 	}
 
-	return iPositionInfo.(PositionInfo), true
+	positionInfo, ok := iPositionInfo.(PositionInfo)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast iPositionInfo to PositionInfo: %T", iPositionInfo))
+	}
+	return positionInfo, true
 }
 
 // positionUpdateWithKey updates a position in the pool and returns the updated position.
 func (p *Pool) positionUpdateWithKey(
 	positionKey string,
 	liquidityDelta *i256.Int,
-	feeGrowthInside0X128 *u256.Uint,
-	feeGrowthInside1X128 *u256.Uint,
+	feeGrowthInside0X128, feeGrowthInside1X128 *u256.Uint,
 ) (PositionInfo, error) {
 	// if pointer is nil, set to zero for calculation
 	liquidityDelta = liquidityDelta.NilToZero()
@@ -247,7 +252,7 @@ func (p *Pool) mustGetPosition(positionKey string) PositionInfo {
 //   - *u256.Uint: amount of token1 needed/returned
 func (p *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.Uint, *u256.Uint, error) {
 	if err := validateTicks(params.tickLower, params.tickUpper); err != nil {
-		return PositionInfo{}, u256.Zero(), u256.Zero(), err
+		return PositionInfo{}, zero, zero, err
 	}
 
 	// get current state and price bounds
@@ -255,7 +260,7 @@ func (p *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.
 	// update position state
 	position, err := p.updatePosition(params, tick)
 	if err != nil {
-		return PositionInfo{}, u256.Zero(), u256.Zero(), err
+		return PositionInfo{}, zero, zero, err
 	}
 
 	liqDelta := params.liquidityDelta

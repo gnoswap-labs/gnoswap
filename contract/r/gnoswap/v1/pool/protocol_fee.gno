@@ -164,11 +164,11 @@ func SetWithdrawalFee(cur realm, fee uint64) {
 // Outputs:
 // - the fee amount
 // - the amount after the fee applied
-func calculateAmountWithFee(amount *u256.Uint, fee *u256.Uint) (*u256.Uint, *u256.Uint) {
-	feeAmount := u256.Zero().Mul(amount, fee)
+func calculateAmountWithFee(amount, fee *u256.Uint) (feeAmount, afterAmount *u256.Uint) {
+	feeAmount = u256.Zero().Mul(amount, fee)
 	feeAmount = u256.Zero().Div(feeAmount, u256.NewUint(MaxBpsValue))
-	afterAmount := u256.Zero().Sub(amount, feeAmount)
-	return feeAmount, afterAmount
+	afterAmount = u256.Zero().Sub(amount, feeAmount)
+	return
 }
 
 // setPoolCreationFee this function is internal function called by SetPoolCreationFee
@@ -190,7 +190,6 @@ func setPoolCreationFee(fee int64) error {
 // setWithdrawalFee this function is internal function called by SetWithdrawalFee
 // function and SetWithdrawalFee function
 func setWithdrawalFee(fee uint64) error {
-	// 10000 (bps) = 100%
 	if fee > MaxBpsValue {
 		return makeErrorWithDetails(
 			errInvalidWithdrawalFeePct,
@@ -198,7 +197,6 @@ func setWithdrawalFee(fee uint64) error {
 		)
 	}
 
-	// update withdrawal fee
 	withdrawalFeeBPS = fee
 
 	return nil
