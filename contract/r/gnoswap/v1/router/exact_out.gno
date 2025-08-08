@@ -29,7 +29,8 @@ func NewExactOutSwapOperation(pp ExactOutParams) *ExactOutSwapOperation {
 
 // ExactOutSwapRoute is a function that performs an exact-out swap operation.
 // exact-out swap means that the user wants to swap an exact amount of output tokens for input tokens.
-func ExactOutSwapRoute(cur realm,
+func ExactOutSwapRoute(
+	cur realm,
 	inputToken string,
 	outputToken string,
 	amountOut string,
@@ -62,9 +63,13 @@ func ExactOutSwapRoute(cur realm,
 	}
 
 	if params.IsUnwrap() {
-		amount, err := strconv.ParseInt(params.exactAmount, 10, 64)
+		amount, err := strconv.ParseInt(outputAmount, 10, 64)
 		if err != nil {
 			panic(err)
+		}
+
+		if amount < 0 {
+			amount = amount * -1
 		}
 
 		err = unwrapWithTransfer(std.PreviousRealm().Address(), amount)
