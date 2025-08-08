@@ -2,6 +2,8 @@ package staker
 
 import (
 	"gno.land/p/demo/avl"
+	"gno.land/p/demo/ufmt"
+
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -61,7 +63,13 @@ func (p *ProtocolFeeRewardManager) GetClaimableRewardAmounts(
 		return make(map[string]int64)
 	}
 
-	rewardState := rewardStateI.(*ProtocolFeeRewardState)
+	rewardState, ok := rewardStateI.(*ProtocolFeeRewardState)
+	if !ok {
+		panic(ufmt.Sprintf(
+			"failed to cast rewardStates's element to *ProtocolFeeRewardState: %T",
+			rewardStateI,
+		))
+	}
 	accumulatedRewardX128PerStake, _ := p.calculateAccumulatedRewardX128PerStake(protocolFeeAmounts, currentTimestamp)
 
 	return rewardState.GetClaimableRewardAmounts(accumulatedRewardX128PerStake, currentTimestamp)
@@ -114,10 +122,8 @@ func (p *ProtocolFeeRewardManager) calculateAccumulatedRewardX128PerStake(
 
 		// Calculate fee per stake if there are staked tokens
 		if p.totalStakedAmount > 0 {
-			protocolFeeDeltaX128PerStake = protocolFeeDeltaX128.Div(
-				protocolFeeDeltaX128,
-				u256.NewUintFromInt64(p.totalStakedAmount),
-			)
+			feePerStake := u256.Zero().Div(protocolFeeDeltaX128, u256.NewUintFromInt64(p.totalStakedAmount))
+			protocolFeeDeltaX128PerStake = feePerStake
 		}
 
 		// Get current accumulated fee per stake for this token
@@ -174,7 +180,13 @@ func (p *ProtocolFeeRewardManager) addStake(address string, amount int64, curren
 		rewardStateI = NewProtocolFeeRewardState(p.accumulatedProtocolFeeX128PerStake)
 	}
 
-	rewardState := rewardStateI.(*ProtocolFeeRewardState)
+	rewardState, ok := rewardStateI.(*ProtocolFeeRewardState)
+	if !ok {
+		panic(ufmt.Sprintf(
+			"failed to cast rewardStates's element to *ProtocolFeeRewardState: %T",
+			rewardStateI,
+		))
+	}
 	rewardState.addStakeWithUpdateRewardDebtX128(amount, p.accumulatedProtocolFeeX128PerStake, currentTimestamp)
 
 	p.rewardStates.Set(address, rewardState)
@@ -195,7 +207,13 @@ func (p *ProtocolFeeRewardManager) removeStake(address string, amount int64, cur
 		rewardStateI = NewProtocolFeeRewardState(p.accumulatedProtocolFeeX128PerStake)
 	}
 
-	rewardState := rewardStateI.(*ProtocolFeeRewardState)
+	rewardState, ok := rewardStateI.(*ProtocolFeeRewardState)
+	if !ok {
+		panic(ufmt.Sprintf(
+			"failed to cast rewardStates's element to *ProtocolFeeRewardState: %T",
+			rewardStateI,
+		))
+	}
 	rewardState.removeStakeWithUpdateRewardDebtX128(amount, p.accumulatedProtocolFeeX128PerStake, currentTimestamp)
 
 	p.rewardStates.Set(address, rewardState)
@@ -219,7 +237,13 @@ func (p *ProtocolFeeRewardManager) claimRewards(address string, currentTimestamp
 		return make(map[string]int64), nil
 	}
 
-	rewardState := rewardStateI.(*ProtocolFeeRewardState)
+	rewardState, ok := rewardStateI.(*ProtocolFeeRewardState)
+	if !ok {
+		panic(ufmt.Sprintf(
+			"failed to cast rewardStates's element to *ProtocolFeeRewardState: %T",
+			rewardStateI,
+		))
+	}
 
 	claimedRewards, err := rewardState.claimRewardsWithUpdateRewardDebtX128(
 		p.accumulatedProtocolFeeX128PerStake,

@@ -91,16 +91,17 @@ func (warmup *Warmup) apply(poolReward int64, positionLiquidity, stakedLiquidity
 		return 0, 0
 	}
 
+	divisor := u256.NewUint(100)
 	poolRewardUint := u256.NewUintFromInt64(poolReward)
 	perPositionReward := u256.Zero().Mul(poolRewardUint, positionLiquidity)
 	perPositionReward = u256.Zero().Div(perPositionReward, stakedLiquidity)
 	rewardRatio := u256.NewUint(warmup.WarmupRatio)
 	penaltyRatio := u256.NewUint(100 - warmup.WarmupRatio)
 	totalReward := u256.Zero().Mul(perPositionReward, rewardRatio)
-	totalReward = u256.Zero().Div(totalReward, u256.NewUint(100))
+	totalReward = u256.Zero().Div(totalReward, divisor)
 	totalPenalty := u256.Zero().Mul(perPositionReward, penaltyRatio)
-	totalPenalty = u256.Zero().Div(totalPenalty, u256.NewUint(100))
-	return int64(totalReward.Uint64()), int64(totalPenalty.Uint64())
+	totalPenalty = u256.Zero().Div(totalPenalty, divisor)
+	return totalReward.Int64(), totalPenalty.Int64()
 }
 
 func (self *Deposit) FindWarmup(currentTime int64) int {

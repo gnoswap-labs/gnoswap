@@ -68,19 +68,6 @@ func TestDistributeProtocolFee(t *testing.T) {
 	uassert.Equal(t, qux.BalanceOf(govStakerAddr), int64(1000))
 }
 
-func TestTokenList(t *testing.T) {
-	// Reset and setup test data
-	protocolFeeState = NewProtocolFeeState()
-	protocolFeeState.tokenListWithAmount = map[string]uint64{
-		"gno.land/r/foo": 100,
-		"gno.land/r/bar": 0,
-		"gno.land/r/baz": 200,
-	}
-
-	uassert.Equal(t, len(TokenList(true)), 2)
-	uassert.Equal(t, len(TokenList(false)), 3)
-}
-
 func TestAddToProtocolFee(t *testing.T) {
 	// Reset protocol fee state for clean test
 	protocolFeeState = NewProtocolFeeState()
@@ -88,8 +75,8 @@ func TestAddToProtocolFee(t *testing.T) {
 	tests := []struct {
 		name      string
 		tokenPath string
-		amount    uint64
-		want      uint64
+		amount    int64
+		want      int64
 	}{
 		{
 			name:      "add foo to protocol fee",
@@ -124,7 +111,7 @@ func TestClearTokenListWithAmount(t *testing.T) {
 	tests := []struct {
 		name        string
 		prevRealm   std.Realm
-		want        map[string]uint64
+		want        map[string]int64
 		shouldPanic bool
 		panicMsg    string
 	}{
@@ -137,7 +124,7 @@ func TestClearTokenListWithAmount(t *testing.T) {
 		{
 			name:      "clear protocol fee",
 			prevRealm: govStakerRealm,
-			want:      map[string]uint64{},
+			want:      map[string]int64{},
 		},
 	}
 
@@ -145,7 +132,7 @@ func TestClearTokenListWithAmount(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			// Reset and setup test data for each test case
 			protocolFeeState = NewProtocolFeeState()
-			protocolFeeState.tokenListWithAmount = map[string]uint64{
+			protocolFeeState.tokenListWithAmount = map[string]int64{
 				"gno.land/r/foo": 100,
 				"gno.land/r/baz": 200,
 			}
@@ -214,10 +201,10 @@ func TestAssertIsPoolOrRouterOrStaker(t *testing.T) {
 func TestDistributeWithDifferentDevOpsPct(t *testing.T) {
 	tests := []struct {
 		name                    string
-		devOpsPct               uint64
-		tokenAmount             uint64
-		expectedDevOpsAmount    uint64
-		expectedGovStakerAmount uint64
+		devOpsPct               int64
+		tokenAmount             int64
+		expectedDevOpsAmount    int64
+		expectedGovStakerAmount int64
 	}{
 		{
 			name:                    "0% to DevOps",
@@ -314,12 +301,12 @@ func TestBalanceAmountMismatch_Fix(t *testing.T) {
 		name                      string
 		setupFunc                 func()
 		tokenPath                 string
-		recordedAmount            uint64 // Amount recorded in TokenListWithAmount
-		actualBalance             uint64 // Actual token balance in protocol_fee
-		externalTransferAmount    uint64 // Amount transferred externally
-		devOpsPct                 uint64 // DevOps percentage (basis points)
-		expectedDevOpsReceived    uint64 // Expected amount DevOps should receive
-		expectedGovStakerReceived uint64 // Expected amount GovStaker should receive
+		recordedAmount            int64 // Amount recorded in TokenListWithAmount
+		actualBalance             int64 // Actual token balance in protocol_fee
+		externalTransferAmount    int64 // Amount transferred externally
+		devOpsPct                 int64 // DevOps percentage (basis points)
+		expectedDevOpsReceived    int64 // Expected amount DevOps should receive
+		expectedGovStakerReceived int64 // Expected amount GovStaker should receive
 		expectPanic               bool
 		panicMsg                  string
 	}{

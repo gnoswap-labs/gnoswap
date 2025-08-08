@@ -42,28 +42,31 @@ func NewIncentives(targetPoolPath string) Incentives {
 
 // Get incentive by incentiveId
 func (self *Incentives) Get(incentiveId string) (*ExternalIncentive, bool) {
-	value, ok := self.incentives.Get(incentiveId)
-	if !ok {
-		return nil, false
-	}
-
-	return value.(*ExternalIncentive), true
+	return retrieveIncentive(self.incentives, incentiveId)
 }
 
 // Get incentive by full incentiveId(by time)
 func (self *Incentives) GetByIncentiveId(incentiveId string) (*ExternalIncentive, bool) {
-	value, ok := self.incentives.Get(incentiveId)
+	return retrieveIncentive(self.incentives, incentiveId)
+}
+
+func retrieveIncentive(tree *avl.Tree, id string) (*ExternalIncentive, bool) {
+	value, ok := tree.Get(id)
 	if !ok {
 		return nil, false
 	}
-	return value.(*ExternalIncentive), true
+	v, ok := value.(*ExternalIncentive)
+	if !ok {
+		panic("failed to cast value to *ExternalIncentive")
+	}
+	return v, true
 }
 
 // Get all incentives that is active in given [startTimestamp, endTimestamp)
 func (self *Incentives) GetAllInTimestamps(startTimestamp, endTimestamp int64) map[string]*ExternalIncentive {
 	incentives := make(map[string]*ExternalIncentive)
-	// Iterate all incentives that has start timestamp less than endTimestamp
 
+	// Iterate all incentives that has start timestamp less than endTimestamp
 	self.incentives.Iterate("", "", func(key string, value any) bool {
 		incentive, ok := value.(*ExternalIncentive)
 		if !ok {
@@ -158,7 +161,10 @@ func (self *Incentives) calculateUnclaimableReward(incentiveId string) int64 {
 
 	self.unclaimablePeriods.Iterate(incentive.startTimestamp, incentive.endTimestamp, func(key int64, value any) bool {
 		startTimestamp := key
-		endTimestamp := value.(int64)
+		endTimestamp, ok := value.(int64)
+		if !ok {
+			panic("failed to cast value to int64")
+		}
 		if endTimestamp == 0 {
 			endTimestamp = incentive.endTimestamp
 		}

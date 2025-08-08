@@ -16,32 +16,10 @@ func GetTotalVoteWeight() int64 {
 
 // GetTotalDelegated returns the total amount of xGNS delegated.
 func GetTotalDelegated() int64 {
-	delegatedAmount := int64(0)
-
-	func(cur realm) {
-		delegations.Iterate("", "", func(key string, value interface{}) bool {
-			delegation := value.(*Delegation)
-			delegatedAmount += delegation.DelegatedAmount()
-
-			return false
-		})
-	}(cross)
-
-	return delegatedAmount
+	return totalDelegatedAmount
 }
 
 // GetTotalLockedAmount returns the total amount of locked GNS.
 func GetTotalLockedAmount() int64 {
-	delegatedAmount := int64(0)
-
-	func(cur realm) {
-		delegations.Iterate("", "", func(key string, value interface{}) bool {
-			delegation := value.(*Delegation)
-			delegatedAmount += delegation.LockedAmount()
-
-			return false
-		})
-	}(cross)
-
-	return delegatedAmount
+	return totalLockedAmount
 }

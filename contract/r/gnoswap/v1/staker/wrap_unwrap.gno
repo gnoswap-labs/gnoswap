@@ -22,7 +22,7 @@ func wrapWithTransfer(toAddress std.Address, amount int64) error {
 		return nil
 	}
 
-	if amount < int64(UGNOT_MIN_DEPOSIT_TO_WRAP) {
+	if amount < UGNOT_MIN_DEPOSIT_TO_WRAP {
 		return makeErrorWithDetails(
 			errWugnotMinimum,
 			ufmt.Sprintf("amount(%d) < minimum(%d)", amount, UGNOT_MIN_DEPOSIT_TO_WRAP),

@@ -4,8 +4,6 @@ import (
 	"std"
 	"time"
 
-	"gno.land/p/demo/json"
-	ufmt "gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
@@ -13,17 +11,6 @@ import (
 )
 
 const MAX_UINT256 string = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
-
-func ApiGetPositions() string {
-	rpcPositions := []RpcPosition{}
-	for positionId := uint64(1); positionId < nextId; positionId++ {
-		rpcPosition := rpcMakePosition(positionId)
-		rpcPositions = append(rpcPositions, rpcPosition)
-	}
-
-	baseStat := NewResponseQueryBase(std.ChainHeight(), time.Now().Unix())
-	return makeJsonResponse(&baseStat, &PositionsResponse{Positions: rpcPositions})
-}
 
 func ApiGetPosition(id uint64) string {
 	_, exist := GetPosition(id)
@@ -34,80 +21,6 @@ func ApiGetPosition(id uint64) string {
 	rpcPosition := rpcMakePosition(id)
 	baseStat := NewResponseQueryBase(std.ChainHeight(), time.Now().Unix())
 	return makeJsonResponse(&baseStat, &PositionsResponse{Positions: []RpcPosition{rpcPosition}})
-}
-
-func ApiGetPositionsByPoolPath(poolPath string) string {
-	rpcPositions := []RpcPosition{}
-	for id := uint64(1); id < nextId; id++ {
-		position := MustGetPosition(id)
-		if position.poolKey != poolPath {
-			continue
-		}
-		rpcPosition := rpcMakePosition(id)
-		rpcPositions = append(rpcPositions, rpcPosition)
-	}
-
-	baseStat := NewResponseQueryBase(std.ChainHeight(), time.Now().Unix())
-	return makeJsonResponse(&baseStat, &PositionsResponse{Positions: rpcPositions})
-}
-
-func ApiGetPositionsUnclaimedFee() string {
-	rpcUnclaimedFee := []RpcUnclaimedFee{}
-	for id := uint64(1); id < nextId; id++ {
-		unclaimedFee0, unclaimedFee1 := unclaimedFee(id)
-		rpcUnclaimedFee = append(rpcUnclaimedFee, RpcUnclaimedFee{
-			LpPositionId: id,
-			Fee0:         unclaimedFee0.ToString(),
-			Fee1:         unclaimedFee1.ToString(),
-		})
-	}
-
-	baseStat := NewResponseQueryBase(std.ChainHeight(), time.Now().Unix())
-	return makeJsonResponse(&baseStat, &UnclaimedFeesResponse{Fees: rpcUnclaimedFee})
-}
-
-func ApiGetPositionsByAddress(address std.Address) string {
-	rpcPositions := []RpcPosition{}
-	for lpPositionId := uint64(1); lpPositionId < nextId; lpPositionId++ {
-		position := MustGetPosition(lpPositionId)
-		owner, err := gnft.OwnerOf(positionIdFrom(lpPositionId))
-		if err != nil {
-			panic(ufmt.Sprintf("owner not found for positionId: %d", lpPositionId))
-		}
-
-		if !(position.operator == address || owner == address) {
-			continue
-		}
-
-		rpcPosition := rpcMakePosition(lpPositionId)
-		rpcPositions = append(rpcPositions, rpcPosition)
-	}
-
-	baseStat := NewResponseQueryBase(std.ChainHeight(), time.Now().Unix())
-	r := NewResponseApiGetPositions(baseStat, rpcPositions)
-	stat := baseStat.JSON()
-
-	// RESPONSE (ARRAY) NODE
-	rsps := json.ArrayNode("", []*json.Node{})
-	for _, position := range r.Response {
-		owner, err := gnft.OwnerOf(positionIdFrom(position.LpPositionId))
-		if err != nil {
-			owner = zeroAddress
-		}
-		rsps.AppendArray(position.JSON(owner))
-	}
-
-	node := json.ObjectNode("", map[string]*json.Node{
-		"stat":     stat,
-		"response": rsps,
-	})
-
-	b, err := json.Marshal(node)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return string(b)
 }
 
 func ApiGetPositionUnclaimedFeeByLpPositionId(lpPositionId uint64) string {

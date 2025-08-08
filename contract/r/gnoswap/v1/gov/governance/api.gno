@@ -23,28 +23,6 @@ func createProposalJsonNode(id int64, proposal *Proposal) *json.Node {
 		Node()
 }
 
-// GetProposals returns all proposals with necessary information.
-func GetProposals() string {
-	proposalsObj := metaNode()
-	proposalArr := json.ArrayNode("", nil)
-
-	proposals.Iterate("", "", func(key string, value interface{}) bool {
-		if value == nil {
-			return false
-		}
-
-		proposal := value.(*Proposal)
-		proposalObj := createProposalJsonNode(proposal.ID(), proposal)
-		proposalArr.AppendArray(proposalObj)
-
-		return false
-	})
-
-	proposalsObj.AppendObject("proposals", proposalArr)
-
-	return marshal(proposalsObj)
-}
-
 // GetProposalById returns a single proposal with necessary information.
 func GetProposalById(id int64) string {
 	_, exists := getProposal(id)

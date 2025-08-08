@@ -220,6 +220,10 @@ func (p *Proposal) ConfigVersion() int64 {
 	return p.configVersion
 }
 
+func (p *Proposal) IsProposer(addr std.Address) bool {
+	return p.proposer == addr
+}
+
 // Proposer returns the address of the proposal creator.
 //
 // Returns:

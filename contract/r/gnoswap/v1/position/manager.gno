@@ -21,7 +21,11 @@ func GetPosition(id uint64) (Position, bool) {
 		return Position{}, false
 	}
 
-	return iPosition.(Position), true
+	pos, ok := iPosition.(Position)
+	if !ok {
+		panic("cannot cast position to Position")
+	}
+	return pos, ok
 }
 
 // MustGetPosition returns a position for a given position ID.

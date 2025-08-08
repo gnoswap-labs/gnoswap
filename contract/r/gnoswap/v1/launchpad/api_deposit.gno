@@ -8,7 +8,11 @@ func ApiGetDepositByDepositId(depositId string) string {
 	}
 
 	builder := metaBuilder()
-	depositBuilder(builder, deposit.(*Deposit))
+	d, ok := deposit.(*Deposit)
+	if !ok {
+		panic("failed to cast deposit to *Deposit")
+	}
+	depositBuilder(builder, d)
 
 	return marshal(builder.Node())
 }
