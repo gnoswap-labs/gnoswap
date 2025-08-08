@@ -156,38 +156,46 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 
 // Get the latest global reward ratio accumulation in [0, currentTime] range.
 // Returns the time and the accumulation.
-func (self *Pool) CurrentGlobalRewardRatioAccumulation(currentTime int64) (int64, *u256.Uint) {
-	var time int64
-	var acc *u256.Uint
+func (self *Pool) CurrentGlobalRewardRatioAccumulation(currentTime int64) (time int64, acc *u256.Uint) {
 	self.globalRewardRatioAccumulation.ReverseIterate(0, currentTime, func(key int64, value any) bool {
 		time = key
-		acc = value.(*u256.Uint)
+		v, ok := value.(*u256.Uint)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast value to *u256.Uint: %T", value))
+		}
+		acc = v
 		return true
 	})
 	if acc == nil {
 		panic("should not happen, globalRewardRatioAccumulation must be set when pool is created")
 	}
-	return time, acc
+	return
 }
 
 // Get the latest tick in [0, currentTime] range.
 // Returns the tick.
-func (self *Pool) CurrentTick(currentTime int64) int32 {
-	var tick int32
+func (self *Pool) CurrentTick(currentTime int64) (tick int32) {
 	self.historicalTick.ReverseIterate(0, currentTime, func(key int64, value any) bool {
-		tick = value.(int32)
+		res, ok := value.(int32)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast value to int32: %T", value))
+		}
+		tick = res
 		return true
 	})
-	return tick
+	return
 }
 
-func (self *Pool) CurrentStakedLiquidity(currentTime int64) *u256.Uint {
-	liquidity := u256.Zero()
+func (self *Pool) CurrentStakedLiquidity(currentTime int64) (liquidity *u256.Uint) {
 	self.stakedLiquidity.ReverseIterate(0, currentTime, func(key int64, value any) bool {
-		liquidity = value.(*u256.Uint)
+		res, ok := value.(*u256.Uint)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast value to *u256.Uint: %T", value))
+		}
+		liquidity = res
 		return true
 	})
-	return liquidity
+	return
 }
 
 // IsExternallyIncentivizedPool returns true if the pool has any external incentives.
@@ -197,13 +205,16 @@ func (self *Pool) IsExternallyIncentivizedPool() bool {
 
 // Get the latest reward in [0, currentTime] range.
 // Returns the reward.
-func (self *Pool) CurrentReward(currentTime int64) int64 {
-	var reward int64
+func (self *Pool) CurrentReward(currentTime int64) (reward int64) {
 	self.rewardCache.ReverseIterate(0, currentTime, func(key int64, value any) bool {
-		reward = value.(int64)
+		res, ok := value.(int64)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast value to int64: %T", value))
+		}
+		reward = res
 		return true
 	})
-	return reward
+	return
 }
 
 // cacheReward sets the current reward for the pool
