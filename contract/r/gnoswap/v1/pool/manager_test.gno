@@ -8,13 +8,13 @@ import (
 )
 
 func TestGetPoolPath(t *testing.T) {
-	path := GetPoolPath("gno.land/r/onbloc/bar", "gno.land/r/onbloc/foo", 500)
+	path := GetPoolPath(barTokenPath, fooTokenPath, 500)
 	expected := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
 	if path != expected {
 		t.Errorf("Expected path %s, got %s", expected, path)
 	}
 
-	path = GetPoolPath("gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", 500)
+	path = GetPoolPath(fooTokenPath, barTokenPath, 500)
 	if path != expected {
 		t.Errorf("Expected tokens to be sorted, expected %s, got %s", expected, path)
 	}
