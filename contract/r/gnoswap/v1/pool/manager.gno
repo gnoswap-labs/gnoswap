@@ -155,7 +155,11 @@ func mustGetPool(poolPath string) *Pool {
 		))
 	}
 
-	return iPool.(*Pool)
+	pool, ok := iPool.(*Pool)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast pool to *Pool: %T", iPool))
+	}
+	return pool
 }
 
 func mustGetPoolBy(token0Path, token1Path string, fee uint32) *Pool {

@@ -48,21 +48,10 @@ func NewProtocolFeeState() *ProtocolFeeState {
 // Global instance of the protocol fee state
 var protocolFeeState = NewProtocolFeeState()
 
-func (pfs *ProtocolFeeState) GetDevOpsPct() int64 {
-	return pfs.devOpsPct
-}
-
-func (pfs *ProtocolFeeState) GetGovStakerPct() int64 {
-	return 10000 - pfs.devOpsPct
-}
-
-func (pfs *ProtocolFeeState) GetAccuToGovStaker() *avl.Tree {
-	return pfs.accuToGovStaker
-}
-
-func (pfs *ProtocolFeeState) GetAccuToDevOps() *avl.Tree {
-	return pfs.accuToDevOps
-}
+func (pfs *ProtocolFeeState) DevOpsPct() int64 { return pfs.devOpsPct }
+func (pfs *ProtocolFeeState) GovStakerPct() int64 { return 10000 - pfs.devOpsPct }
+func (pfs *ProtocolFeeState) AccuToGovStaker() *avl.Tree { return pfs.accuToGovStaker }
+func (pfs *ProtocolFeeState) AccuToDevOps() *avl.Tree { return pfs.accuToDevOps }
 
 // distributeToDevOps distributes tokens to DevOps and updates related state
 // amount should be greater than 0 (already checked in DistributeProtocolFee)

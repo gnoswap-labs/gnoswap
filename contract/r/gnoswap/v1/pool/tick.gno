@@ -266,7 +266,11 @@ func (p *Pool) getTick(tick int32) TickInfo {
 		return tickInfo
 	}
 
-	return iTickInfo.(TickInfo)
+	tickInfo, ok := iTickInfo.(TickInfo)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast tickInfo to TickInfo: %T", iTickInfo))
+	}
+	return tickInfo
 }
 
 // mustGetTick retrieves the TickInfo for a specific tick, panicking if the tick does not exist.

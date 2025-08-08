@@ -93,7 +93,11 @@ func (p *Pool) getTickBitmap(wordPos int16) *u256.Uint {
 		}
 	}
 
-	return value.(*u256.Uint)
+	bitmap, ok := value.(*u256.Uint)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast tickBitmap to *u256.Uint: %T", value))
+	}
+	return bitmap
 }
 
 // setTickBitmap sets the tick bitmap for the given word position

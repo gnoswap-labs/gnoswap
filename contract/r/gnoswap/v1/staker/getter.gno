@@ -81,7 +81,11 @@ func getIncentive(poolPath string, incentiveId string) *ExternalIncentive {
 		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
 	}
 
-	return incentive.(*ExternalIncentive)
+	ictv, ok := incentive.(*ExternalIncentive)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast incentive to *ExternalIncentive: %T", incentive))
+	}
+	return ictv
 }
 
 // GetIncentiveStartTimestamp returns the start timestamp for a given incentive

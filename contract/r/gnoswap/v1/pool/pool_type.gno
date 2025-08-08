@@ -111,7 +111,10 @@ func (p *Pool) Ticks() string {
 
 	p.ticks.Iterate("", "", func(tickKey string, tickValue any) bool {
 		tick, _ := strconv.Atoi(tickKey)
-		tickInfo := tickValue.(TickInfo)
+		tickInfo, ok := tickValue.(TickInfo)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast tickValue to TickInfo: %T", tickValue))
+		}
 
 		tickInfoStrings = append(tickInfoStrings, ufmt.Sprintf(
 			`{"tick":%d,"feeGrowthOutside0X128":"%s","feeGrowthOutside1X128":"%s"}`,
@@ -133,7 +136,10 @@ func (p *Pool) Clone() *Pool {
 
 	// clone ticks
 	p.ticks.Iterate("", "", func(tickKey string, tickValue any) bool {
-		tickInfo := tickValue.(TickInfo)
+		tickInfo, ok := tickValue.(TickInfo)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast tickValue to TickInfo: %T", tickValue))
+		}
 		ticks.Set(tickKey, TickInfo{
 			feeGrowthOutside0X128:          u256.Zero().Set(tickInfo.feeGrowthOutside0X128),
 			feeGrowthOutside1X128:          u256.Zero().Set(tickInfo.feeGrowthOutside1X128),
@@ -149,14 +155,20 @@ func (p *Pool) Clone() *Pool {
 
 	// clone tickBitmaps
 	p.tickBitmaps.Iterate("", "", func(tickKey string, tickValue any) bool {
-		tickBitmap := tickValue.(*u256.Uint)
+		tickBitmap, ok := tickValue.(*u256.Uint)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast tickValue to *u256.Uint: %T", tickValue))
+		}
 		tickBitmaps.Set(tickKey, u256.Zero().Set(tickBitmap))
 		return false
 	})
 
 	// clone positions
 	p.positions.Iterate("", "", func(positionKey string, positionValue any) bool {
-		positionInfo := positionValue.(PositionInfo)
+		positionInfo, ok := positionValue.(PositionInfo)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast positionValue to PositionInfo: %T", positionValue))
+		}
 		positions.Set(positionKey, PositionInfo{
 			liquidity:                u256.Zero().Set(positionInfo.liquidity),
 			feeGrowthInside0LastX128: u256.Zero().Set(positionInfo.feeGrowthInside0LastX128),

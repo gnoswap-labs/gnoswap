@@ -20,11 +20,11 @@ func TokenList(positive bool) []string {
 }
 
 func GetDevOpsPct() int64 {
-	return protocolFeeState.GetDevOpsPct()
+	return protocolFeeState.DevOpsPct()
 }
 
 func GetGovStakerPct() int64 {
-	return protocolFeeState.GetGovStakerPct()
+	return protocolFeeState.GovStakerPct()
 }
 
 // GetTokenListWithAmount returns the token path and amount.

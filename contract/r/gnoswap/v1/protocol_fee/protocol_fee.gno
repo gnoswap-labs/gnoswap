@@ -50,8 +50,8 @@ func DistributeProtocolFee(cur realm) map[string]int64 {
 			distributeAmount = balance
 		}
 
-		toDevOpsAmount := distributeAmount * protocolFeeState.GetDevOpsPct() / 10000 // default 0%
-		toGovStakerAmount := distributeAmount - toDevOpsAmount                       // default 100%
+		toDevOpsAmount := distributeAmount * protocolFeeState.DevOpsPct() / 10000 // default 0%
+		toGovStakerAmount := distributeAmount - toDevOpsAmount                    // default 100%
 
 		// Distribute to DevOps
 		if err := protocolFeeState.distributeToDevOps(token, toDevOpsAmount); err != nil {
@@ -95,14 +95,14 @@ func SetDevOpsPct(cur realm, pct int64) {
 
 	assertIsValidPercent(pct)
 
-	prevDevOpsPct := protocolFeeState.GetDevOpsPct()
-	prevGovStakerPct := protocolFeeState.GetGovStakerPct()
+	prevDevOpsPct := protocolFeeState.DevOpsPct()
+	prevGovStakerPct := protocolFeeState.GovStakerPct()
 
 	newDevOpsPct, err := protocolFeeState.setDevOpsPct(pct)
 	if err != nil {
 		panic(err)
 	}
-	newGovStakerPct := protocolFeeState.GetGovStakerPct()
+	newGovStakerPct := protocolFeeState.GovStakerPct()
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(
@@ -126,14 +126,14 @@ func SetGovStakerPct(cur realm, pct int64) {
 
 	assertIsValidPercent(pct)
 
-	prevDevOpsPct := protocolFeeState.GetDevOpsPct()
-	prevGovStakerPct := protocolFeeState.GetGovStakerPct()
+	prevDevOpsPct := protocolFeeState.DevOpsPct()
+	prevGovStakerPct := protocolFeeState.GovStakerPct()
 
 	newGovStakerPct, err := protocolFeeState.setGovStakerPct(pct)
 	if err != nil {
 		panic(err)
 	}
-	newDevOpsPct := protocolFeeState.GetDevOpsPct()
+	newDevOpsPct := protocolFeeState.DevOpsPct()
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(
