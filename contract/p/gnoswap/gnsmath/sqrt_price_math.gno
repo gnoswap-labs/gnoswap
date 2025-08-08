@@ -382,8 +382,7 @@ func GetAmount0Delta(
 		}
 
 		// Convert to i256 and negate properly
-		result := i256.FromUint256(u)
-		return result.Neg(result)
+		return i256.Zero().Neg(i256.FromUint256(u))
 	}
 
 	u := getAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), true)
@@ -431,8 +430,7 @@ func GetAmount1Delta(
 		}
 
 		// Convert to i256 and negate properly
-		result := i256.FromUint256(u)
-		return result.Neg(result)
+		return i256.Zero().Neg(i256.FromUint256(u))
 	}
 
 	u := getAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), true)

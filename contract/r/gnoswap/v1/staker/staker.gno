@@ -696,8 +696,7 @@ func applyUnStake(positionId uint64) error {
 
 	currentTime := time.Now().Unix()
 	currentTick := pl.GetSlot0Tick(deposit.targetPoolPath)
-	signedLiquidity := i256.FromUint256(deposit.liquidity)
-	signedLiquidity = signedLiquidity.Neg(signedLiquidity)
+	signedLiquidity := i256.Zero().Neg(i256.FromUint256(deposit.liquidity))
 	if pn.PositionIsInRange(positionId) {
 		pool.modifyDeposit(signedLiquidity, currentTime, currentTick)
 	}
