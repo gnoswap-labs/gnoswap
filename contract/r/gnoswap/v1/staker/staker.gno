@@ -350,9 +350,9 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 		"amount0", token0Amount,
 		"amount1", token1Amount,
 		"liquidity", liquidity.ToString(),
-		"positionUpperTick", formatInt(int64(tickUpper)),
-		"positionLowerTick", formatInt(int64(tickLower)),
-		"currentTick", formatInt(int64(currentTick)),
+		"positionUpperTick", formatAnyInt(tickUpper),
+		"positionLowerTick", formatAnyInt(tickLower),
+		"currentTick", formatAnyInt(currentTick),
 		"isInRange", formatBool(isInRange),
 		"referrer", actualReferrer,
 	)
@@ -589,14 +589,14 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 
 		// internal penalty to community pool
 		totalEmissionSent = safeAddInt64(totalEmissionSent, reward.InternalPenalty)
-		gns.Transfer(cross, communityPoolAddr, int64(reward.InternalPenalty))
+		gns.Transfer(cross, communityPoolAddr, reward.InternalPenalty)
 	}
 
 	unClaimableInternal := processUnClaimableReward(deposit.targetPoolPath, currentTime)
 	if unClaimableInternal > 0 {
 		// internal unClaimable to community pool
 		totalEmissionSent = safeAddInt64(totalEmissionSent, unClaimableInternal)
-		gns.Transfer(cross, communityPoolAddr, int64(unClaimableInternal))
+		gns.Transfer(cross, communityPoolAddr, unClaimableInternal)
 	}
 
 	std.Emit(
@@ -609,7 +609,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		"rewardToken", GNS_PATH,
 		"rewardAmount", formatInt(reward.Internal),
 		"rewardToUser", formatInt(toUser),
-		"rewardToFee", formatInt(int64(reward.Internal)-toUser),
+		"rewardToFee", formatInt(reward.Internal-toUser),
 		"rewardPenalty", formatInt(reward.InternalPenalty),
 		"rewardUnClaimableAmount", formatInt(unClaimableInternal),
 		"currentTime", formatInt(currentTime),

@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	UGNOT_MIN_DEPOSIT_TO_WRAP uint64 = 1000
+	UGNOT_MIN_DEPOSIT_TO_WRAP int64  = 1000
 	WUGNOT_PATH                      = "gno.land/r/demo/wugnot"
 	GNOT                             = "gnot"
 	GNOT_DENOM                       = "ugnot"
@@ -34,7 +34,7 @@ func wrapWithTransfer(toAddress std.Address, amount int64) error {
 		return nil
 	}
 
-	if amount < int64(UGNOT_MIN_DEPOSIT_TO_WRAP) {
+	if amount < UGNOT_MIN_DEPOSIT_TO_WRAP {
 		return makeErrorWithDetails(
 			errWugnotMinimum,
 			ufmt.Sprintf("amount(%d) < minimum(%d)", amount, UGNOT_MIN_DEPOSIT_TO_WRAP),

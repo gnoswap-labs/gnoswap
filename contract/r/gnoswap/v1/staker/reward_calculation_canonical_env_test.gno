@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	ufmt "gno.land/p/demo/ufmt"
+	"gno.land/p/demo/ufmt"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -101,13 +101,12 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 	currentTime := time.Now().Unix()
 
 	// Technically, the block number being provided to the NewPoolTier should be 124, but because of duplicate creation of the default pool, we put 123 here to just make rewardCache work for the testing.
-	// XXXX: type changed. need to check if this is correct.
 	result.global.poolTier = NewPoolTier(pools, 123, currentTime, test_gnousdc, func() int64 { return int64(result.PerSecondEmission) }, func(start, end int64) ([]int64, []int64) {
 		heights := make([]int64, 0)
 		emissions := make([]int64, 0)
 		result.emissionUpdates.Iterate(start, end, func(key int64, value any) bool {
 			heights = append(heights, key)
-			emissions = append(emissions, int64(value.(uint64))) // <- here
+			emissions = append(emissions, int64(value.(uint64)))
 			return false
 		})
 		return heights, emissions
