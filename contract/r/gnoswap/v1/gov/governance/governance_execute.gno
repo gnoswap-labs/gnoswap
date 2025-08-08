@@ -122,34 +122,35 @@ func executeProposal(
 
 	return proposal, nil
 }
-
-// Cancel cancels a proposal in upcoming status.
-// This function allows cancellation of proposals that are in the upcoming state,
-// before entering the voting period. Only the proposal creator can cancel their proposal
-// during this upcoming window.
+// Cancel cancels a proposal that is in the upcoming status.
+// Only the original proposer can cancel their proposal during the upcoming window,
+// which is the period before voting begins. This provides a safety mechanism
+// for proposers to withdraw proposals if needed before voting starts.
 //
 // Parameters:
-//   - cur: realm context for cross-realm calls and contract interactions
-//   - proposalID: unique identifier of the proposal to cancel (must be positive)
+//   - cur: realm context for executing cross-realm calls and contract interactions
+//   - proposalID: unique identifier of the proposal to cancel (must be positive integer)
 //
 // Returns:
-//   - int64: the ID of the successfully canceled proposal
+//   - int64: ID of the successfully canceled proposal
 //
 // Panics:
-//   - if governance system is in halted state
-//   - if proposal does not exist
-//   - if proposal is not in upcoming status
-//   - if proposal is already executed or canceled
-//   - if caller is not the original proposer
+//   - if the governance system is currently halted
+//   - if the specified proposal does not exist in storage
+//   - if the proposal status is not in upcoming state
+//   - if the proposal has already been executed or canceled
+//   - if the caller is not the original proposal creator
 //
 // ref: https://docs.gnoswap.io/contracts/governance/vote.gno#cancel
 func Cancel(cur realm, proposalID int64) int64 {
 	halt.AssertIsNotHaltedGovernance()
 
+	caller := std.PreviousRealm().Address()
+	assertCallerIsProposer(proposalID, caller)
+
 	// Get current blockchain state and caller information
 	currentHeight := std.ChainHeight()
 	currentAt := time.Now().Unix()
-	caller := std.PreviousRealm().Address()
 
 	// Mint and distribute GNS tokens as part of the process
 	en.MintAndDistributeGns(cross)
