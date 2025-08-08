@@ -169,8 +169,8 @@ func (p *MultiSwapProcessor) processBackwardRealSwap(sp SwapParams, numPools int
 
 // collectBackwardSwapInfo simulates swaps backward to collect parameters
 func (p *MultiSwapProcessor) collectBackwardSwapInfo(sp SwapParams, numPools int, swapPath string) []SingleSwapParams {
-	swapInfo := make([]SingleSwapParams, 0, numPools)
-	currentPoolIndex := numPools
+	swapInfo := make([]SingleSwapParams, 0, numPools - 1)
+	currentPoolIndex := numPools - 1
 
 	for currentPoolIndex >= 0 {
 		thisSwap := SingleSwapParams{
@@ -262,7 +262,7 @@ func multiDrySwap(p SwapParams, numPool int, swapPath string) (*u256.Uint, *u256
 }
 
 // multiDrySwapNegative simulates a multi-hop swap in backward direction
-func multiDrySwapNegative(p SwapParams, currentPoolIndex int, swapPath string) (*u256.Uint, *u256.Uint, error) {
+func multiDrySwapNegative(p SwapParams, numPool int, swapPath string) (*u256.Uint, *u256.Uint, error) {
 	return NewMultiSwapProcessor(true, Backward).
-		processBackwardSwap(p, currentPoolIndex+1, swapPath)
+		processBackwardSwap(p, numPool, swapPath)
 }

@@ -205,7 +205,7 @@ func handleMultiSwap(
 	case ExactOut:
 		input, output, fee := getDataForMultiPath(route, numHops-1) // last data
 		sp := newSwapParams(input, output, fee, previousRealmAddr, amountSpecified, withUnwrap)
-		return multiSwapNegative(*sp, numHops-1, route)
+		return multiSwapNegative(*sp, numHops, route)
 	default:
 		panic(errInvalidSwapType)
 	}
