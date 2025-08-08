@@ -5,8 +5,8 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-func GetDevOpsPct() uint64 {
-	return protocolFeeState.GetDevOpsPct()
+func GetDevOpsPct() int64 {
+	return protocolFeeState.DevOpsPct()
 }
 
 func GetGovStakerPct() int64 {
