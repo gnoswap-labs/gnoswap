@@ -22,6 +22,8 @@ var (
 	feeAmountTickSpacing = avl.NewTree() // feeBps(uint32) -> tickSpacing(int32)
 	pools                = avl.NewTree() // poolPath -> *Pool
 
+	// slot0FeeProtocol represents the protocol fee percentage (0-10).
+	// This parameter can be modified through governance.
 	slot0FeeProtocol uint8 = 0
 )
 

@@ -22,3 +22,11 @@ Core component managing liquidity pools for GRC20 token pairs.
 - Gas efficient - no multiple contract deployments
 - Unified management and governance
 - Streamlined user experience
+
+## Notes
+
+### Configurable Parameters
+The following parameters can be modified:
+- **Pool Creation Fee**: 100 GNS (default)
+- **Protocol Fee**: 0-10% of trading fees (per token)
+- **Withdrawal Fee**: 1% (default)

@@ -42,3 +42,16 @@ The governance system comprises several key realms:
 4. **Execution**: Approved proposals are executed, implementing the proposed changes within the protocol.
 
 For more detailed information about the rationale behind the governance module, please refer to [GnopSwap Docs](https://docs.gnoswap.io/core-concepts/governance).
+
+## Notes
+
+### Configurable Parameters
+The following parameters can be modified:
+- **Voting Start Delay**: 1 day (default) - delay before voting starts after proposal creation
+- **Voting Period**: 7 days (default) - duration for collecting votes
+- **Voting Weight Smoothing Duration**: 1 day (default) - period for averaging voting weight
+- **Quorum**: 50% (default) - percentage of total GNS supply required for approval
+- **Proposal Creation Threshold**: 1,000,000,000 GNS (default) - minimum voting weight to create proposals
+- **Execution Delay**: 1 day (default) - waiting period before execution
+- **Execution Window**: 30 days (default) - time window for execution
+- **Undelegation Lockup Period**: 7 days (default) - lockup period for undelegated tokens

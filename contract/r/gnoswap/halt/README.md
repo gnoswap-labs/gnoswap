@@ -13,3 +13,10 @@ Emergency pause mechanism for protocol safety.
 Protocol starts in `MainnetSafeMode` with withdrawals disabled. Governance enables withdrawals after network stability is confirmed.
 
 See [halt package](../../../p/gnoswap/halt) for implementation details.
+
+## Notes
+
+### Configurable Parameters
+The following parameters can be modified:
+- **Halt Level**: System-wide halt status (Unhalt, MainnetSafeMode, PartialHalt, CompleteHalt)
+- **Operation Status**: Individual operation controls (Swap, Stake, Unstake, Withdraw, etc.)

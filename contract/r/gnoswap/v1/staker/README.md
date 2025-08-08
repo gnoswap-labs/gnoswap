@@ -24,13 +24,24 @@ Manages LP token staking and reward distribution with both protocol and user-cre
 
 The **Staker** module handles the distribution of both **internal** (GNS emission) and **external** (user-provided) rewards to stakers:
 
-- **[Internal rewards](https://docs.gnoswap.io/references/warm-up-periods)** (GNS emission) are allocated to “tiered” pools (tiers 1, 2, and 3). First, emission is split across the tiers according to the **TierRatio**. Then, within each tier, the emission is shared evenly among member pools and finally distributed proportionally to each staked position’s in-range liquidity.
+- **[Internal rewards](https://docs.gnoswap.io/references/warm-up-periods)** (GNS emission) are allocated to "tiered" pools (tiers 1, 2, and 3). First, emission is split across the tiers according to the **TierRatio**. Then, within each tier, the emission is shared evenly among member pools and finally distributed proportionally to each staked position's in-range liquidity.
 
 - **[External rewards](https://docs.gnoswap.io/references/warm-up-periods)** (user-provided incentives) can be created for specific pools. Each external incentive emits a constant reward per block. Any user with in-range staked liquidity on that pool can claim a share of the reward, proportional to their staked liquidity.
 
 - If, during a given block, no staked liquidity is in range, the internal emission is diverted to the community pool, and any external reward for that block is returned to the incentive creator.
 
 - Every staked position has a designated [warmup schedule](https://docs.gnoswap.io/references/warm-up-periods). As it remains staked, the position progresses through multiple warmup periods. In each warmup period, a certain percentage of the reward is awarded to the position, and the remainder goes either to the community pool (for internal incentives) or is returned to the incentive creator (for external incentives).
+
+## Notes
+
+### Configurable Parameters
+The following parameters can be modified:
+- **Deposit GNS Amount**: 1,000 GNS (default) - minimum GNS required for deposits
+- **Minimum Reward Amount**: 1,000 GNS (default) - minimum reward amount for incentives
+- **Unstaking Fee**: 1% (default) - fee charged when unstaking positions
+- **Pool Tier**: Tier assignments for pools (1, 2, or 3)
+- **Warmup Parameters**: Percentage and duration for reward vesting
+- **External Token Whitelist**: Tokens allowed for external incentives
 
 ## Main Reward Calculation Logic
 

@@ -14,6 +14,8 @@ import (
 
 const FEE_PRECISION = 10000
 
+// unstakingFee is the fee charged when unstaking positions.
+// This parameter can be modified through governance.
 var unstakingFee = int64(100) // 1%
 
 // GetUnstakingFee returns current rate of unstaking fee

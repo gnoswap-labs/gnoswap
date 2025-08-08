@@ -13,7 +13,12 @@ import (
 )
 
 var (
+	// depositGnsAmount is the amount of GNS required to create an external incentive.
+	// This parameter can be modified through governance.
 	depositGnsAmount    = int64(1_000_000_000) // 1_000 GNS
+	
+	// minimumRewardAmount is the default minimum reward amount for external incentives.
+	// This parameter can be modified through governance.
 	minimumRewardAmount = int64(1_000_000_000) // Default 1000 (ugnot equivalent for GNS)
 )
 

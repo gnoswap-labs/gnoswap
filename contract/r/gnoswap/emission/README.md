@@ -33,3 +33,14 @@ Manages GNS token emission and distribution. The `MintAndDistributeGns()` functi
 ### Halving
 
 Emission rate halves every 2 years. See [gns/halving.gno](../gns/halving.gno) for details.
+
+## Notes
+
+### Configurable Parameters
+The following parameters can be modified:
+- **Distribution Percentages**: 
+  - Liquidity Staker: 75% (default)
+  - DevOps: 20% (default)
+  - Community Pool: 5% (default)
+  - Governance Staker: 0% (default)
+- **Distribution Start Time**: When emission distribution begins

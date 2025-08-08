@@ -10,6 +10,7 @@ import (
 // ProtocolFeeState holds all the state variables for protocol fee management
 type ProtocolFeeState struct {
 	// by default, devOps will get 0% of the protocol fee (which means gov/staker will get 100% of the protocol fee)
+	// This percentage can be modified through governance.
 	devOpsPct uint64 // 0%
 
 	// accumulated amount distributed to gov/staker by token path

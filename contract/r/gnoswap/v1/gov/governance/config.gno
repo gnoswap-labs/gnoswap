@@ -10,6 +10,7 @@ import (
 
 // Config represents the configuration of the governor contract
 // ref: https://docs.gnoswap.io/core-concepts/governance#scope-of-proposals-5
+// All parameters in this struct can be modified through governance.
 type Config struct {
 	// VotingStartDelay is the delay before voting starts after proposal creation (in seconds)
 	VotingStartDelay int64

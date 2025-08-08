@@ -33,3 +33,8 @@ All fees distributed to xGNS holders.
 
 - Be aware of applicable fees
 - xGNS holders receive fee share
+
+### Configurable Parameters
+The following parameters can be modified:
+- **DevOps Percentage**: 0% (default) - portion of protocol fees allocated to development operations
+- **GovStaker Percentage**: 100% (default) - portion of protocol fees allocated to xGNS holders

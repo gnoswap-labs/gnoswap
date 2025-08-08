@@ -61,3 +61,9 @@ access.AssertIsAdmin(caller)
 // Get role address
 addr, exists := access.GetAddress("router")
 ```
+
+## Notes
+
+### Configurable Parameters
+The following parameters can be modified:
+- **Swap Whitelist**: Addresses allowed to perform swaps without restrictions

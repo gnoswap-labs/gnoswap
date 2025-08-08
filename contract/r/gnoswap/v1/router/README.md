@@ -26,3 +26,9 @@ Executes token swaps and manages swap routes across liquidity pools.
 4. **Fee Management**
    - Router fee percentage
    - Governance adjustable
+
+## Notes
+
+### Configurable Parameters
+The following parameters can be modified:
+- **Swap Fee**: 0.15% (default)

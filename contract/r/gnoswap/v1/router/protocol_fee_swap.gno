@@ -18,6 +18,8 @@ const (
 	defaultSwapFeeBPS = uint64(15) // 0.15%
 )
 
+// swapFee is the fee charged on each swap transaction.
+// This parameter can be modified through governance.
 var swapFee = defaultSwapFeeBPS
 
 // GetSwapFee returns current rate of swap fee

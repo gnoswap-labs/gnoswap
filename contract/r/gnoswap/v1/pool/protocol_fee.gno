@@ -15,11 +15,13 @@ import (
 var (
 	// poolCreationFee is the fee that is charged when a user creates a pool.
 	// The fee is denominated in GNS tokens.
+	// This parameter can be modified through governance.
 	poolCreationFee = int64(100_000_000) // 100_GNS
 
 	// withdrawalFeeBPS is the fee that is charged when a user withdraws their collected fees
 	// The fee is denominated in BPS (Basis Points)
 	// Example: 100 BPS = 1%
+	// This parameter can be modified through governance.
 	withdrawalFeeBPS = uint64(100) // 1%
 )
 
