@@ -105,13 +105,13 @@ func (rb *RBAC) UpdateRoleAddress(roleName string, addr std.Address) error {
 
 // RemoveRoleAddress removes the address assignment from roleName. Only the owner can call this function. Returns ErrUnauthorized if caller is not owner or ErrRoleDoesNotExist if role doesn't exist.
 func (rb *RBAC) RemoveRoleAddress(roleName string) error {
+	if !rb.ownable.OwnedByOriginCaller() {
+		return ErrUnauthorized
+	}
+
 	role, exists := rb.roles[roleName]
 	if !exists {
 		return ErrRoleDoesNotExist
-	}
-
-	if !rb.ownable.OwnedByOriginCaller() {
-		return ErrUnauthorized
 	}
 
 	role.setAddress("")
