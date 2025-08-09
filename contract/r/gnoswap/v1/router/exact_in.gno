@@ -29,21 +29,6 @@ func NewExactInSwapOperation(pp ExactInParams) *ExactInSwapOperation {
 
 // ExactInSwapRoute performs an exact-in swap operation where the user swaps
 // an exact amount of input tokens for a variable amount of output tokens.
-//
-// Parameters:
-//   - cur: Current realm
-//   - inputToken: Address of the token to swap from
-//   - outputToken: Address of the token to swap to
-//   - amountIn: Exact amount of input tokens to swap
-//   - RouteArr: Comma-separated list of pool paths for the swap route
-//   - quoteArr: Comma-separated list of percentages for splitting across routes
-//   - amountOutMin: Minimum acceptable amount of output tokens
-//   - deadline: Unix timestamp after which the transaction reverts
-//   - referrer: Address of the referrer (if any)
-//
-// Returns:
-//   - string: Actual amount of input tokens used
-//   - string: Actual amount of output tokens received
 func ExactInSwapRoute(cur realm,
 	inputToken string,
 	outputToken string,
@@ -114,6 +99,7 @@ func ExactInSwapRoute(cur realm,
 	return inputAmount, outputAmount
 }
 
+// Validate validates the exact-in swap operation parameters.
 func (op *ExactInSwapOperation) Validate() error {
 	amountIn := i256.MustFromDecimal(op.params.AmountIn)
 	if amountIn.IsZero() || amountIn.IsNeg() {
@@ -135,6 +121,7 @@ func (op *ExactInSwapOperation) Validate() error {
 	return nil
 }
 
+// Process executes the exact-in swap operation.
 func (op *ExactInSwapOperation) Process() (*SwapResult, error) {
 	if err := op.handleNativeTokenWrapping(); err != nil {
 		return nil, err
@@ -155,6 +142,7 @@ func (op *ExactInSwapOperation) Process() (*SwapResult, error) {
 	}, nil
 }
 
+// handleNativeTokenWrapping handles the wrapping of native tokens if needed.
 func (op *ExactInSwapOperation) handleNativeTokenWrapping() error {
 	return op.baseSwapOperation.handleNativeTokenWrapping(
 		op.params.InputToken,

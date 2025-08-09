@@ -26,35 +26,8 @@ const (
 	ZERO_LIQUIDITY_FOR_FEE_COLLECTION = "0"
 )
 
-// Mint creates new liquidity position.
-// Returns position ID, liquidity amount, and amounts of tokens used.
-//
-// Behavior:
-//  1. **Validation**:
-//     - Ensures the contract is not halted.
-//     - Validates that the caller is either a user or a staker contract.
-//     - If the caller is a user, validates the `mintTo` and `caller` addresses to ensure they match.
-//     - Checks the transaction's deadline to prevent expired transactions.
-//  2. **Pre-Mint Setup**:
-//     - Calls `MintAndDistributeGns` to handle GNS emissions.
-//     - Processes the input parameters for minting (`processMintInput`) to standardize and validate the inputs.
-//  3. **Mint Execution**:
-//     - Executes the mint operation using the processed parameters.
-//     - Withdraws the required token amounts (`token0` and `token1`) from the `caller` address.
-//     - Mints a new LP token, and the resulting LP token is sent to the `mintTo` address.
-//  4. **Post-Mint Cleanup**:
-//     - If native tokens were used (e.g., `ugnot`), unwraps any leftover wrapped tokens (`wugnot`) and refunds them to the `caller` address.
-//  5. **Event Emission**:
-//     - Emits a "Mint" event containing detailed information about the mint operation.
-//
-// Panics:
-//   - If the contract is halted.
-//   - If the caller is not authorized.
-//   - If the transaction deadline has passed.
-//   - If input validation fails.
-//   - If errors occur during the minting process or leftover token unwrapping.
-//
-// ref: https://docs.gnoswap.io/contracts/position/position.gno#mint
+// Mint creates a new liquidity position NFT.
+// Only user or staker can call this function.
 func Mint(
 	cur realm,
 	token0 string,
@@ -148,9 +121,7 @@ func Mint(
 	return id, liquidity.ToString(), amount0.ToString(), amount1.ToString()
 }
 
-// IncreaseLiquidity increases liquidity of the existing position
-// Returns position ID, liquidity, amount0, amount1, poolPath
-// ref: https://docs.gnoswap.io/contracts/position/position.gno#increaseliquidity
+// IncreaseLiquidity increases liquidity of an existing position.
 func IncreaseLiquidity(
 	cur realm,
 	positionId uint64,
@@ -238,6 +209,7 @@ func IncreaseLiquidity(
 	return positionId, liquidity.ToString(), amount0.ToString(), amount1.ToString(), poolPath
 }
 
+// unwrapLeftoverWrappedToken unwraps leftover wrapped tokens to native tokens.
 func unwrapLeftoverWrappedToken(token string, wrapped, amount int64, caller std.Address) error {
 	unwrappable := isWrappedToken(token) && wrapped > amount
 	if !unwrappable {
@@ -252,10 +224,7 @@ func unwrapLeftoverWrappedToken(token string, wrapped, amount int64, caller std.
 	return nil
 }
 
-// DecreaseLiquidity decreases liquidity of the existing position
-// It also handles the conversion between GNOT and WUGNOT transparently for the user.
-// Returns position ID, liquidity, fee0, fee1, amount0, amount1, poolPath
-// ref: https://docs.gnoswap.io/contracts/position/position.gno#decreaseliquidity
+// DecreaseLiquidity decreases liquidity of an existing position.
 func DecreaseLiquidity(
 	cur realm,
 	positionId uint64,
@@ -314,9 +283,7 @@ func DecreaseLiquidity(
 	return positionId, liquidity, fee0, fee1, amount0, amount1, poolPath
 }
 
-// CollectFee collects swap fee from the position
-// Returns position ID, afterFee0, afterFee1, poolPath, origFee0, origFee1
-// ref: https://docs.gnoswap.io/contracts/position/position.gno#collectfee
+// CollectFee collects swap fee from the position.
 func CollectFee(
 	cur realm,
 	positionId uint64,
@@ -331,6 +298,7 @@ func CollectFee(
 	return collectFee(positionId, unwrapResult, caller)
 }
 
+// collectFee performs fee collection and withdrawal fee calculation.
 func collectFee(
 	positionId uint64,
 	unwrapResult bool,
@@ -439,6 +407,7 @@ func collectFee(
 
 var feeAmountDivisor = u256.NewUint(10000)
 
+// calculateAmountWithWithdrawalFee calculates amount after deducting withdrawal fee.
 func calculateAmountWithWithdrawalFee(amount string, fee uint64) (int64, int64) {
 	if fee == 0 {
 		return u256.MustFromDecimal(amount).Int64(), 0
@@ -454,6 +423,8 @@ func calculateAmountWithWithdrawalFee(amount string, fee uint64) (int64, int64) 
 	return amountWithoutFee.Int64(), feeAmount.Int64()
 }
 
+// SetPositionOperator sets an operator for a position.
+// Only staker can call this function.
 func SetPositionOperator(
 	cur realm,
 	id uint64,
@@ -470,23 +441,6 @@ func SetPositionOperator(
 }
 
 // computePositionKey generates a unique base64-encoded key for a liquidity position.
-//
-// This function takes an owner's address and the lower and upper tick bounds of a position,
-// and generates a unique key by concatenating the parameters into a string. The resulting
-// string is base64 encoded to ensure it is compact and unique.
-//
-// Parameters:
-//   - owner (std.Address): The address of the position owner.
-//   - tickLower (int32): The lower tick boundary of the position.
-//   - tickUpper (int32): The upper tick boundary of the position.
-//
-// Returns:
-//   - string: A base64-encoded string representing the unique key for the position.
-//
-// Notes:
-//   - This function is useful in scenarios where unique identifiers for liquidity positions
-//     are required (e.g., decentralized exchange positions).
-//   - The key format follows the pattern "ownerAddress__tickLower__tickUpper" to ensure uniqueness.
 func computePositionKey(
 	owner std.Address,
 	tickLower int32,
@@ -497,6 +451,7 @@ func computePositionKey(
 	return encoded
 }
 
+// getCurrentFeeGrowth retrieves current fee growth values for a position.
 func getCurrentFeeGrowth(position Position, owner std.Address) (FeeGrowthInside, error) {
 	positionKey := computePositionKey(owner, position.tickLower, position.tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.poolKey, positionKey)

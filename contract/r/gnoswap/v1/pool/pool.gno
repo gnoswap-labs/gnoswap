@@ -21,9 +21,9 @@ var (
 	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 )
 
-// Mint adds liquidity to pool.
-// Only callable by position contract.
-// Returns amounts of token0 and token1 transferred.
+// Mint adds liquidity to a pool position.
+// Only callable by the position contract.
+// Returns amount0, amount1 representing tokens transferred from the position owner.
 func Mint(
 	cur realm,
 	token0Path string,
@@ -65,26 +65,10 @@ func Mint(
 	return amount0.ToString(), amount1.ToString()
 }
 
-// Burn removes liquidity from a position in the pool.
-//
-// This function allows the caller to burn (remove) a specified amount of liquidity from a position.
-// It calculates the amounts of token0 and token1 released when liquidity is removed and updates
-// the position's owed token amounts. The actual transfer of tokens back to the caller happens
-// during a separate `Collect()` operation.
-//
-// Parameters:
-//   - token0Path: string, the path or identifier for token 0.
-//   - token1Path: string, the path or identifier for token 1.
-//   - fee: uint32, the fee tier of the pool.
-//   - tickLower: int32, the lower tick boundary of the position.
-//   - tickUpper: int32, the upper tick boundary of the position.
-//   - liquidityAmount: string, the amount of liquidity to remove, provided as a decimal string (uint128).
-//
-// Returns:
-//   - string: The amount of token0 owed after removing liquidity, as a string.
-//   - string: The amount of token1 owed after removing liquidity, as a string.
-//
-// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#burn
+// Burn removes liquidity from a position and updates the owed token amounts.
+// The actual token transfer happens in a separate Collect operation.
+// Returns amount0, amount1 representing tokens owed to the position owner.
+// Panics if the position has zero liquidity or doesn't exist.
 func Burn(
 	cur realm,
 	token0Path string,
@@ -133,28 +117,12 @@ func Burn(
 	return amount0.ToString(), amount1.ToString()
 }
 
-// Collect handles the collection of tokens (token0 and token1) from a liquidity position.
-//
-// This function allows the caller to collect a specified amount of tokens owed to a position
-// in a liquidity pool. It calculates the collectible amount based on three constraints:
-// the requested amount, the tokens owed to the position, and the pool's available balance.
-// The collected tokens are transferred to the specified recipient.
-//
-// Parameters:
-//   - token0Path: string, the path or identifier for token 0.
-//   - token1Path: string, the path or identifier for token 1.
-//   - fee: uint32, the fee tier of the pool.
-//   - recipient: std.Address, the address to receive the collected tokens.
-//   - tickLower: int32, the lower tick boundary of the position.
-//   - tickUpper: int32, the upper tick boundary of the position.
-//   - amount0Requested: string, the requested amount of token 0 to collect (decimal string).
-//   - amount1Requested: string, the requested amount of token 1 to collect (decimal string).
-//
-// Returns:
-//   - string: The actual amount of token 0 collected, as a string.
-//   - string: The actual amount of token 1 collected, as a string.
-//
-// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#collect
+// Collect transfers owed tokens from a position to the recipient.
+// The collected amount is the minimum of: requested amount, tokens owed, and pool balance.
+// Returns amount0, amount1 representing actual tokens collected.
+// 
+// Note: Uses recipient address for position key lookup as positions are created
+// with the recipient's address during Mint, not the caller's address.
 func Collect(
 	cur realm,
 	token0Path string,
@@ -215,18 +183,8 @@ func Collect(
 }
 
 // collectToken calculates the actual amount of tokens that can be collected.
-//
-// This function determines the smallest possible value among the requested amount (`amountReq`),
-// the tokens owed (`tokensOwed`), and the pool's available balance (`poolBalance`). It ensures
-// the collected amount does not exceed any of these constraints.
-//
-// Parameters:
-//   - amountReq: *u256.Uint, the amount of tokens requested for collection.
-//   - tokensOwed: *u256.Uint, the total amount of tokens owed to the position.
-//   - poolBalance: *u256.Uint, the current balance of tokens available in the pool.
-//
-// Returns:
-//   - amount: *u256.Uint, the actual amount that can be collected (minimum of the three inputs).
+// It returns the minimum of: requested amount, tokens owed, and pool balance.
+// This ensures collection never exceeds available funds.
 func collectToken(
 	amountReq, tokensOwed, poolBalance *u256.Uint,
 ) (amount *u256.Uint) {
@@ -236,10 +194,9 @@ func collectToken(
 	return amount.Clone()
 }
 
-// CollectProtocol collects protocol fees for the given pool that accumulated while it was being used for swap
-// Only governance contract can execute this function via proposal
-// Returns collected amount0, amount1 in string
-// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#collectprotocol
+// CollectProtocol collects accumulated protocol fees from swap operations.
+// Only callable by admin or governance.
+// Returns amount0, amount1 representing protocol fees collected.
 func CollectProtocol(
 	cur realm,
 	token0Path string,
@@ -283,23 +240,9 @@ func CollectProtocol(
 	return amount0, amount1
 }
 
-// collectProtocol collects protocol fees for token0 and token1 from the specified pool.
-//
-// This function allows the collection of accumulated protocol fees for token0 and token1. It ensures
-// the requested amounts do not exceed the available protocol fees in the pool and transfers the
-// collected amounts to the specified recipient.
-//
-// Parameters:
-//   - token0Path: string, the path or identifier for token0.
-//   - token1Path: string, the path or identifier for token1.
-//   - fee: uint32, the fee tier of the pool.
-//   - recipient: std.Address, the address to receive the collected protocol fees.
-//   - amount0Requested: string, the requested amount of token0 to collect (decimal string).
-//   - amount1Requested: string, the requested amount of token1 to collect (decimal string).
-//
-// Returns:
-//   - string: The actual amount of token0 collected, as a string.
-//   - string: The actual amount of token1 collected, as a string.
+// collectProtocol performs the actual protocol fee collection.
+// It ensures requested amounts don't exceed available protocol fees.
+// Returns amount0, amount1 as strings representing collected fees.
 func collectProtocol(
 	token0Path string,
 	token1Path string,
@@ -341,12 +284,7 @@ func collectProtocol(
 }
 
 // saveProtocolFees updates the protocol fee balances after collection.
-//
-// Parameters:
-//   - amount0: amount of token0 fees to collect
-//   - amount1: amount of token1 fees to collect
-//
-// Returns the adjusted amounts that will actually be collected for both tokens.
+// Returns amount0, amount1 representing the fees deducted from protocol reserves.
 func (p *Pool) saveProtocolFees(amount0, amount1 *u256.Uint) (*u256.Uint, *u256.Uint) {
 	p.protocolFees.token0 = u256.Zero().Sub(p.ProtocolFeesToken0(), amount0)
 	p.protocolFees.token1 = u256.Zero().Sub(p.ProtocolFeesToken1(), amount1)

@@ -15,9 +15,9 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 )
 
-// CreateProject creates new launchpad project.
-// Validates input, transfers deposit, creates tiers.
-// Returns project ID.
+// CreateProject creates a new launchpad project with tiered allocations.
+// It validates inputs, transfers the deposit amount, and sets up tier conditions.
+// Only admin can call this function. Returns the project ID.
 func CreateProject(
 	cur realm,
 	name string,
@@ -110,16 +110,9 @@ func CreateProject(
 }
 
 // createProject creates a new project with the given parameters.
-//
 // This function validates the input parameters, creates the project structure,
 // and sets up the project tiers and reward managers.
-//
-// Parameters:
-// - params (createProjectParams): The parameters for creating the project.
-//
-// Returns:
-// - *Project: The created project.
-// - error: If the project creation fails, returns an error.
+// Returns the created project and any error.
 func createProject(params *createProjectParams) (*Project, error) {
 	if err := params.validate(); err != nil {
 		return nil, err
@@ -196,16 +189,7 @@ func createProject(params *createProjectParams) (*Project, error) {
 }
 
 // TransferLeftFromProjectByAdmin transfers the remaining rewards of a project to a specified recipient.
-//
-// This function is called by an admin to transfer any unclaimed rewards from a project to a recipient address.
-// It validates the project ID, checks the recipient conditions, calculates the remaining rewards, and performs the transfer.
-//
-// Parameters:
-// - projectId (string): The unique identifier of the project.
-// - recipient (std.Address): The recipient address to transfer the remaining rewards.
-//
-// Returns:
-// - uint64: The amount of rewards transferred to the recipient.
+// Only admin can call this function. Returns the amount of rewards transferred.
 func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient std.Address) int64 {
 	halt.AssertIsNotHaltedLaunchpad()
 
@@ -248,17 +232,9 @@ func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient std.A
 }
 
 // transferLeftFromProject transfers the remaining rewards of a project to a specified recipient.
-//
 // This function is called by an admin to transfer any unclaimed rewards from a project to a recipient address.
 // It validates the project ID, checks the recipient conditions, calculates the remaining rewards, and performs the transfer.
-//
-// Parameters:
-// - projectId (string): The unique identifier of the project.
-// - recipient (std.Address): The recipient address to transfer the remaining rewards.
-// - currentHeight (int64): The current height of the chain.
-//
-// Returns:
-// - uint64: The amount of rewards transferred to the recipient.
+// Returns the amount of rewards transferred to the recipient and any error.
 func transferLeftFromProject(projectID string, recipient std.Address, currentTime int64) (int64, error) {
 	project, err := getProject(projectID)
 	if err != nil {
@@ -363,10 +339,7 @@ func (p *createProjectParams) validate() error {
 	return nil
 }
 
-// ValidateName checks if the project name is valid.
-//
-// Returns:
-// - error: If the name is empty, returns an error.
+// validateName checks if the project name is valid.
 func (p *createProjectParams) validateName() error {
 	if p.name == "" {
 		return makeErrorWithDetails(errInvalidInput, "project name cannot be empty")
@@ -379,12 +352,7 @@ func (p *createProjectParams) validateName() error {
 	return nil
 }
 
-// ValidateTokenPath validates the token path.
-//
-// Ensures that the token path is not empty and is registered.
-//
-// Returns:
-// - error: If the token path is invalid or unregistered, returns an error.
+// validateTokenPath validates the token path is not empty and is registered.
 func (p *createProjectParams) validateTokenPath() error {
 	if p.tokenPath == "" {
 		return makeErrorWithDetails(errInvalidInput, "tokenPath cannot be empty")
@@ -397,10 +365,7 @@ func (p *createProjectParams) validateTokenPath() error {
 	return nil
 }
 
-// ValidateRecipient checks if the recipient address is valid.
-//
-// Returns:
-// - error: If the recipient address is invalid, returns an error.
+// validateRecipient checks if the recipient address is valid.
 func (p *createProjectParams) validateRecipient() error {
 	if !p.recipient.IsValid() {
 		return makeErrorWithDetails(errInvalidAddress, ufmt.Sprintf("recipient address(%s)", p.recipient.String()))
@@ -409,10 +374,7 @@ func (p *createProjectParams) validateRecipient() error {
 	return nil
 }
 
-// ValidateDepositAmount ensures that the deposit amount is greater than zero.
-//
-// Returns:
-// - error: If the deposit amount is zero, returns an error.
+// validateDepositAmount ensures that the deposit amount is greater than zero.
 func (p *createProjectParams) validateDepositAmount() error {
 	if p.depositAmount == 0 {
 		return makeErrorWithDetails(errInvalidInput, "deposit amount cannot be 0")
@@ -425,10 +387,7 @@ func (p *createProjectParams) validateDepositAmount() error {
 	return nil
 }
 
-// ValidateRatio checks if the sum of the tier ratios equals 100.
-//
-// Returns:
-// - error: If the sum of `Tier30Ratio`, `Tier90Ratio`, and `Tier180Ratio` is not 100, returns an error.
+// validateRatio checks if the sum of the tier ratios equals 100.
 func (p *createProjectParams) validateRatio() error {
 	sum := p.tier30Ratio + p.tier90Ratio + p.tier180Ratio
 	if sum != 100 {
@@ -441,14 +400,7 @@ func (p *createProjectParams) validateRatio() error {
 	return nil
 }
 
-// ValidateStartTime checks if the start time is available.
-//
-// Parameters:
-// - now (uint64): The current time in Unix timestamp.
-// - minimumStartDelayTime (uint64): The minimum start delay time in Unix timestamp. (default: 1 hour)
-//
-// Returns:
-// - error: If the start time is in the past or equal to `now`, returns an error.
+// validateStartTime checks if the start time is available with minimum delay requirement.
 func (p *createProjectParams) validateStartTime(now int64, minimumStartDelayTime int64) error {
 	availableStartTime := now + minimumStartDelayTime
 

@@ -36,21 +36,24 @@ var (
 	positionAddr      = getRoleAddress(prbac.ROLE_POSITION)
 )
 
-// list of staked positions
+// Deposits manages all staked positions.
 type Deposits struct {
 	tree *avl.Tree
 }
 
+// NewDeposits creates a new Deposits instance.
 func NewDeposits() *Deposits {
 	return &Deposits{
 		tree: avl.NewTree(), // positionId -> *Deposit
 	}
 }
 
+// Has checks if a position ID exists in deposits.
 func (self *Deposits) Has(positionId uint64) bool {
 	return self.tree.Has(EncodeUint(positionId))
 }
 
+// Iterate traverses deposits within the specified range.
 func (self *Deposits) Iterate(start uint64, end uint64, fn func(positionId uint64, deposit *Deposit) bool) {
 	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(positionId string, depositI any) bool {
 		dpst := retrieveDeposit(depositI)
@@ -58,10 +61,12 @@ func (self *Deposits) Iterate(start uint64, end uint64, fn func(positionId uint6
 	})
 }
 
+// Size returns the number of deposits.
 func (self *Deposits) Size() int {
 	return self.tree.Size()
 }
 
+// get retrieves a deposit by position ID.
 func (self *Deposits) get(positionId uint64) *Deposit {
 	depositI, ok := self.tree.Get(EncodeUint(positionId))
 	if !ok {
@@ -73,6 +78,7 @@ func (self *Deposits) get(positionId uint64) *Deposit {
 	return retrieveDeposit(depositI)
 }
 
+// retrieveDeposit safely casts data to Deposit type.
 func retrieveDeposit(data any) *Deposit {
 	deposit, ok := data.(*Deposit)
 	if !ok {
@@ -81,27 +87,35 @@ func retrieveDeposit(data any) *Deposit {
 	return deposit
 }
 
+// set stores a deposit for a position ID.
 func (self *Deposits) set(positionId uint64, deposit *Deposit) {
 	self.tree.Set(EncodeUint(positionId), deposit)
 }
 
+// remove deletes a deposit by position ID.
 func (self *Deposits) remove(positionId uint64) {
 	self.tree.Remove(EncodeUint(positionId))
 }
 
+// ExternalIncentives manages external incentive programs.
 type ExternalIncentives struct {
 	tree *avl.Tree
 }
 
+// NewExternalIncentives creates a new ExternalIncentives instance.
 func NewExternalIncentives() *ExternalIncentives {
 	return &ExternalIncentives{
 		tree: avl.NewTree(),
 	}
 }
 
+// Has checks if an incentive ID exists.
 func (self *ExternalIncentives) Has(incentiveId string) bool { return self.tree.Has(incentiveId) }
+
+// Size returns the number of external incentives.
 func (self *ExternalIncentives) Size() int                   { return self.tree.Size() }
 
+// get retrieves an external incentive by ID.
 func (self *ExternalIncentives) get(incentiveId string) *ExternalIncentive {
 	incentiveI, ok := self.tree.Get(incentiveId)
 	if !ok {
@@ -118,24 +132,29 @@ func (self *ExternalIncentives) get(incentiveId string) *ExternalIncentive {
 	return incentive
 }
 
+// set stores an external incentive.
 func (self *ExternalIncentives) set(incentiveId string, incentive *ExternalIncentive) {
 	self.tree.Set(incentiveId, incentive)
 }
 
+// remove deletes an external incentive by ID.
 func (self *ExternalIncentives) remove(incentiveId string) {
 	self.tree.Remove(incentiveId)
 }
 
+// Stakers manages deposits by staker address.
 type Stakers struct {
 	tree *avl.Tree // address -> depositId -> *Deposit
 }
 
+// NewStakers creates a new Stakers instance.
 func NewStakers() *Stakers {
 	return &Stakers{
 		tree: avl.NewTree(),
 	}
 }
 
+// IterateAll traverses all deposits for a specific address.
 func (self *Stakers) IterateAll(address std.Address, fn func(depositId uint64, deposit *Deposit) bool) {
 	depositTreeI, ok := self.tree.Get(address.String())
 	if !ok {
@@ -151,6 +170,7 @@ func (self *Stakers) IterateAll(address std.Address, fn func(depositId uint64, d
 	})
 }
 
+// addDeposit adds a deposit for a staker address.
 func (self *Stakers) addDeposit(address std.Address, depositId uint64, deposit *Deposit) {
 	depositTreeI, ok := self.tree.Get(address.String())
 	if !ok {
@@ -163,6 +183,7 @@ func (self *Stakers) addDeposit(address std.Address, depositId uint64, deposit *
 	depositTree.Set(EncodeUint(depositId), deposit)
 }
 
+// removeDeposit removes a deposit for a staker address.
 func (self *Stakers) removeDeposit(address std.Address, depositId uint64) {
 	depositTreeI, ok := self.tree.Get(address.String())
 	if !ok {
@@ -173,6 +194,7 @@ func (self *Stakers) removeDeposit(address std.Address, depositId uint64) {
 	depositTree.Remove(EncodeUint(depositId))
 }
 
+// retrieveDepositTree safely casts data to AVL tree type.
 func retrieveDepositTree(data any) *avl.Tree {
 	depositTree, ok := data.(*avl.Tree)
 	if !ok {
@@ -215,6 +237,7 @@ const (
 	EXTERNAL = false
 )
 
+// init initializes the staker contract with tier 1 pool.
 func init() {
 	// Initialize tier 1 with GNOT:GNS 0.3% pool
 
@@ -431,8 +454,6 @@ func transferDeposit(positionId uint64, owner, caller, to std.Address) error {
 //
 // Returns:
 //   - poolPath (string): The path of the pool to which the LP token is staked
-//
-// ref: https://docs.gnoswap.io/contracts/staker/staker.gno#collectreward
 func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, string, map[string]int64, map[string]int64) {
 	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedStaker()
@@ -621,8 +642,6 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 // - poolPath (string): The pool path associated with the unstaked position
 // - token0Amount (string): Final amount of token0 in the position
 // - token1Amount (string): Final amount of token1 in the position
-//
-// ref: https://docs.gnoswap.io/contracts/staker/staker.gno#unstaketoken
 func UnStakeToken(cur realm, positionId uint64, unwrapResult bool) (string, string, string) { // poolPath, token0Amount, token1Amount
 	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedStaker()

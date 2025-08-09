@@ -17,7 +17,7 @@ import (
 
 const MAX_INT256 string = "57896044618658097711785492504343953926634992332820282019728792003956564819967"
 
-// Hook functions for external contracts
+// Hook functions allow external contracts to be notified of swap events.
 var (
 	// MUST BE IMMUTABLE.
 	// DO NOT USE THIS VALUE IN ANY ARITHMETIC OPERATIONS' INITIALIZATION
@@ -31,29 +31,29 @@ var (
 	swapEndHook   func(poolPath string) error
 )
 
-// SetTickCrossHook sets the tick cross hook function
+// SetTickCrossHook sets the hook function called when a tick is crossed during swaps.
 func SetTickCrossHook(cur realm, hook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
 	tickCrossHook = hook
 }
 
-// SetSwapStartHook sets the swap start hook function
+// SetSwapStartHook sets the hook function called at the beginning of a swap.
 func SetSwapStartHook(cur realm, hook func(poolPath string, timestamp int64)) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
 	swapStartHook = hook
 }
 
-// SetSwapEndHook sets the swap end hook function
+// SetSwapEndHook sets the hook function called at the end of a swap.
 func SetSwapEndHook(cur realm, hook func(poolPath string) error) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
 	swapEndHook = hook
 }
 
-// SwapResult encapsulates all state changes that occur as a result of a swap
-// This type ensure all state transitions are atomic and can be applied at once.
+// SwapResult encapsulates all state changes from a swap.
+// It ensures atomic state transitions that can be applied at once.
 type SwapResult struct {
 	Amount0              *i256.Int
 	Amount1              *i256.Int
@@ -65,7 +65,7 @@ type SwapResult struct {
 	FeeGrowthGlobal1X128 *u256.Uint
 }
 
-// SwapComputation encapsulates pure computation logic for swap
+// SwapComputation encapsulates the pure computation logic for swaps.
 type SwapComputation struct {
 	AmountSpecified   *i256.Int
 	SqrtPriceLimitX96 *u256.Uint
@@ -75,9 +75,10 @@ type SwapComputation struct {
 	Cache             SwapCache
 }
 
-// Swap swaps token0 for token1, or token1 for token0
-// Returns swapped amount0, amount1 in string
-// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#swap
+// Swap executes a token swap in the pool.
+// It swaps token0 for token1 (if zeroForOne is true) or token1 for token0.
+// Returns amount0, amount1 representing tokens swapped (negative for tokens out).
+// Panics if pool is locked, amount is zero, or price limit is invalid.
 func Swap(
 	cur realm,
 	token0Path string,
@@ -195,7 +196,9 @@ func Swap(
 	return result.Amount0.ToString(), result.Amount1.ToString()
 }
 
-// DrySwap simulates a swap and returns the amount0, amount1 that would be received and a boolean indicating if the swap is possible
+// DrySwap simulates a swap without modifying pool state.
+// Returns amount0, amount1 and a success boolean.
+// Returns false if pool is locked, has no liquidity, or computation fails.
 func DrySwap(
 	token0Path string,
 	token1Path string,
@@ -257,22 +260,14 @@ func DrySwap(
 	return result.Amount0.ToString(), result.Amount1.ToString(), true
 }
 
-// computeSwap performs the core swap computation without modifying pool state
-// The function follows these state transitions:
-// 1. Initial State: Provided by `SwapComputation.InitialState`
-// 2. Stepping State: For each step:
-//   - Compute next tick and price target
-//   - Calculate amounts and fees
-//   - Update state (remaining amount, fees, liquidity)
-//   - Handle tick transitions if necessary
-//
-// 3. Final State: Aggregated in SwapResult
-//
+// computeSwap performs the core swap computation without modifying pool state.
 // The computation continues until either:
-// - The entire amount is consumed (`amountSpecifiedRemaining` = 0)
-// - The price limit is reached (`sqrtPriceX96` = `sqrtPriceLimitX96`)
-//
-// Returns an error if the computation fails at any step
+// - The entire amount is consumed (amountSpecifiedRemaining = 0)
+// - The price limit is reached (sqrtPriceX96 = sqrtPriceLimitX96)
+// 
+// Important: This function is critical for AMM price discovery. It iterates through
+// tick ranges, calculating swap amounts and fees for each liquidity segment.
+// Returns an error if the computation fails at any step.
 func computeSwap(pool *Pool, comp SwapComputation) (*SwapResult, error) {
 	state := comp.InitialState
 	var err error
@@ -374,9 +369,8 @@ func validatePriceLimits(slot0 Slot0, zeroForOne bool, sqrtPriceLimitX96 *u256.U
 }
 
 // getFeeProtocol returns the appropriate fee protocol based on zero for one.
-//
-// When zeroForOne is true, we want the lower 4 bits (% 16)
-// Otherwise, we want the upper 4 bits (/ 16)
+// When zeroForOne is true, we want the lower 4 bits (% 16).
+// Otherwise, we want the upper 4 bits (/ 16).
 func getFeeProtocol(slot0 Slot0, zeroForOne bool) uint8 {
 	shift := uint8(0)
 	if !zeroForOne {
@@ -385,7 +379,7 @@ func getFeeProtocol(slot0 Slot0, zeroForOne bool) uint8 {
 	return (slot0.feeProtocol >> shift) & uint8(0xF)
 }
 
-// getFeeGrowthGlobal returns the appropriate fee growth global based on zero for one
+// getFeeGrowthGlobal returns the appropriate fee growth global based on zero for one.
 func getFeeGrowthGlobal(pool *Pool, zeroForOne bool) *u256.Uint {
 	if zeroForOne {
 		return pool.feeGrowthGlobal0X128.Clone()
@@ -393,6 +387,7 @@ func getFeeGrowthGlobal(pool *Pool, zeroForOne bool) *u256.Uint {
 	return pool.feeGrowthGlobal1X128.Clone()
 }
 
+// shouldContinueSwap checks if swap should continue based on remaining amount and price limit.
 func shouldContinueSwap(state SwapState, sqrtPriceLimitX96 *u256.Uint) bool {
 	return !state.amountSpecifiedRemaining.IsZero() && !state.sqrtPriceX96.Eq(sqrtPriceLimitX96)
 }
@@ -516,11 +511,10 @@ func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *Pool, 
 	return state, step
 }
 
-// updateAmounts calculates new remaining and calculated amounts based on the swap step
+// updateAmounts calculates new remaining and calculated amounts based on the swap step.
 // For exact input swaps:
 //   - Decrements remaining input amount by (amountIn + feeAmount)
 //   - Decrements calculated amount by amountOut
-//
 // For exact output swaps:
 //   - Increments remaining output amount by amountOut
 //   - Increments calculated amount by (amountIn + feeAmount)
@@ -587,6 +581,9 @@ func tickTransition(step StepComputations, zeroForOne bool, state SwapState, poo
 	return newState
 }
 
+// swapTransfers handles token transfers for a swap transaction.
+// For zeroForOne swaps: transfers token0 from payer to pool and token1 from pool to recipient.
+// For oneForZero swaps: transfers token1 from payer to pool and token0 from pool to recipient.
 func (p *Pool) swapTransfers(zeroForOne bool, payer, recipient std.Address, amount0, amount1 *i256.Int) {
 	if zeroForOne {
 		// payer > POOL

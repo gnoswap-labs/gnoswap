@@ -4,7 +4,8 @@ import (
 	"gno.land/p/demo/json"
 )
 
-// IsHalted checks if any operation types are halted.
+// IsHalted returns true if any of the specified operation types are halted.
+// Returns error if any operation type is invalid.
 func IsHalted(opTypes ...OpType) (bool, error) {
 	for _, op := range opTypes {
 		if !op.IsValid() {
@@ -24,12 +25,12 @@ func IsHalted(opTypes ...OpType) (bool, error) {
 	return false, nil
 }
 
-// GetHaltConfig returns copy of current halt configuration.
+// GetHaltConfig returns a copy of the current halt configuration.
 func GetHaltConfig() HaltConfig {
 	return haltConfig.Clone()
 }
 
-// GetHaltConfigJson returns halt configuration as JSON.
+// GetHaltConfigJson returns the halt configuration as a JSON string.
 func GetHaltConfigJson() string {
 	haltConfig := GetHaltConfig()
 
@@ -44,67 +45,68 @@ func GetHaltConfigJson() string {
 	return objectNode.String()
 }
 
-// IsHaltedPool checks if pool operations are halted.
+// IsHaltedPool returns true if pool operations are halted.
 func IsHaltedPool() bool {
 	return isHaltedOperation(OpTypePool)
 }
 
-// IsHaltedPosition checks if position operations are halted.
+// IsHaltedPosition returns true if position operations are halted.
 func IsHaltedPosition() bool {
 	return isHaltedOperation(OpTypePosition)
 }
 
-// IsHaltedProtocolFee checks if protocol fee operations are halted.
+// IsHaltedProtocolFee returns true if protocol fee operations are halted.
 func IsHaltedProtocolFee() bool {
 	return isHaltedOperation(OpTypeProtocolFee)
 }
 
-// IsHaltedRouter checks if router operations are halted.
+// IsHaltedRouter returns true if router operations are halted.
 func IsHaltedRouter() bool {
 	return isHaltedOperation(OpTypeRouter)
 }
 
-// IsHaltedStaker checks if staker operations are halted.
+// IsHaltedStaker returns true if staker operations are halted.
 func IsHaltedStaker() bool {
 	return isHaltedOperation(OpTypeStaker)
 }
 
-// IsHaltedLaunchpad checks if launchpad operations are halted.
+// IsHaltedLaunchpad returns true if launchpad operations are halted.
 func IsHaltedLaunchpad() bool {
 	return isHaltedOperation(OpTypeLaunchpad)
 }
 
-// IsHaltedGovernance checks if governance operations are halted.
+// IsHaltedGovernance returns true if governance operations are halted.
 func IsHaltedGovernance() bool {
 	return isHaltedOperation(OpTypeGovernance)
 }
 
-// IsHaltedGovStaker checks if governance staker operations are halted.
+// IsHaltedGovStaker returns true if governance staker operations are halted.
 func IsHaltedGovStaker() bool {
 	return isHaltedOperation(OpTypeGovStaker)
 }
 
-// IsHaltedXGns checks if xGNS operations are halted.
+// IsHaltedXGns returns true if xGNS operations are halted.
 func IsHaltedXGns() bool {
 	return isHaltedOperation(OpTypeXGns)
 }
 
-// IsHaltedCommunityPool checks if community pool operations are halted.
+// IsHaltedCommunityPool returns true if community pool operations are halted.
 func IsHaltedCommunityPool() bool {
 	return isHaltedOperation(OpTypeCommunityPool)
 }
 
-// IsHaltedEmission checks if emission operations are halted.
+// IsHaltedEmission returns true if emission operations are halted.
 func IsHaltedEmission() bool {
 	return isHaltedOperation(OpTypeEmission)
 }
 
-// IsHaltedWithdraw checks if withdraw operations are halted.
+// IsHaltedWithdraw returns true if withdraw operations are halted.
 func IsHaltedWithdraw() bool {
 	return isHaltedOperation(OpTypeWithdraw)
 }
 
-// isHaltedOperation checks halt status, panics on invalid operation.
+// isHaltedOperation returns halt status for the specified operation type.
+// Panics if operation type is invalid.
 func isHaltedOperation(op OpType) bool {
 	halted, err := haltConfig.get(op)
 	if err != nil {

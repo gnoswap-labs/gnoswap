@@ -8,6 +8,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
+// assertIsOwner panics if addr is not the current owner.
 func assertIsOwner(addr std.Address) {
 	if manager.Owner() != addr {
 		panic(makeErrorWithDetails(
@@ -17,6 +18,7 @@ func assertIsOwner(addr std.Address) {
 	}
 }
 
+// assertIsPendingOwner panics if addr is not the pending owner.
 func assertIsPendingOwner(addr std.Address) {
 	if manager.PendingOwner() != addr {
 		panic(makeErrorWithDetails(
@@ -26,6 +28,7 @@ func assertIsPendingOwner(addr std.Address) {
 	}
 }
 
+// assertIsAdmin panics if addr is not authorized for admin role.
 func assertIsAdmin(addr std.Address) {
 	if !manager.IsAuthorized(prbac.ROLE_ADMIN.String(), addr) {
 		panic(
@@ -37,6 +40,7 @@ func assertIsAdmin(addr std.Address) {
 	}
 }
 
+// assertIsValidRoleName panics if roleName is invalid (empty).
 func assertIsValidRoleName(roleName string) {
 	if roleName == "" {
 		panic(makeErrorWithDetails(

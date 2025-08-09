@@ -19,6 +19,7 @@ func assertIsPoolOrRouterOrStaker(caller std.Address) {
 	)
 }
 
+// assertIsAdminOrGovStaker panics if the caller is not admin or gov/staker.
 func assertIsAdminOrGovStaker(caller std.Address) {
 	access.AssertHasAnyRole(
 		caller,
@@ -27,6 +28,7 @@ func assertIsAdminOrGovStaker(caller std.Address) {
 	)
 }
 
+// assertIsValidPercent panics if the percentage is invalid (not between 0-10000).
 func assertIsValidPercent(pct int64) {
 	if pct > 10000 {
 		panic(makeErrorWithDetail(

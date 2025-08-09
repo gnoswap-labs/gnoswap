@@ -3,7 +3,8 @@ package halt
 // HaltConfig stores halt state for each operation type.
 type HaltConfig map[OpType]bool
 
-// IsHalted checks if operation is halted.
+// IsHalted returns true if the specified operation is halted, false otherwise.
+// Returns false if operation type is not found in configuration.
 func (c HaltConfig) IsHalted(op OpType) bool {
 	halted, exists := c[op]
 	if !exists {
@@ -13,7 +14,7 @@ func (c HaltConfig) IsHalted(op OpType) bool {
 	return halted
 }
 
-// Clone creates deep copy of halt configuration.
+// Clone creates a deep copy of the halt configuration and returns it.
 func (c HaltConfig) Clone() HaltConfig {
 	clone := make(HaltConfig)
 
@@ -24,7 +25,8 @@ func (c HaltConfig) Clone() HaltConfig {
 	return clone
 }
 
-// get retrieves halt state for operation type.
+// get retrieves halt state for the specified operation type.
+// Returns error if operation type is invalid.
 func (c HaltConfig) get(op OpType) (bool, error) {
 	enabled, exists := c[op]
 	if !exists {
@@ -34,6 +36,8 @@ func (c HaltConfig) get(op OpType) (bool, error) {
 	return enabled, nil
 }
 
+// set updates halt state for the specified operation type.
+// Returns error if operation type is invalid.
 func (c HaltConfig) set(op OpType, enabled bool) error {
 	if !op.IsValid() {
 		return makeErrorWithDetails(errInvalidOpType, op.String())
@@ -44,7 +48,7 @@ func (c HaltConfig) set(op OpType, enabled bool) error {
 	return nil
 }
 
-// newNoneConfig creates configuration with all operations enabled.
+// newNoneConfig creates configuration with all operations enabled (no halts).
 func newNoneConfig() HaltConfig {
 	return HaltConfig{
 		OpTypePool:          false,
@@ -62,7 +66,7 @@ func newNoneConfig() HaltConfig {
 	}
 }
 
-// newSafeModeConfig creates configuration with withdrawals disabled.
+// newSafeModeConfig creates configuration for safe mode with only withdrawals halted.
 func newSafeModeConfig() HaltConfig {
 	return HaltConfig{
 		OpTypePool:          false,
@@ -80,7 +84,8 @@ func newSafeModeConfig() HaltConfig {
 	}
 }
 
-// newEmergencyConfig creates configuration for emergency mode.
+// newEmergencyConfig creates configuration for emergency mode with most operations halted.
+// Only governance and withdraw operations remain enabled for emergency recovery.
 func newEmergencyConfig() HaltConfig {
 	return HaltConfig{
 		OpTypePool:          true,
@@ -98,7 +103,7 @@ func newEmergencyConfig() HaltConfig {
 	}
 }
 
-// newCompleteConfig creates configuration with all operations disabled.
+// newCompleteConfig creates configuration with all operations halted for complete lockdown.
 func newCompleteConfig() HaltConfig {
 	return HaltConfig{
 		OpTypePool:          true,

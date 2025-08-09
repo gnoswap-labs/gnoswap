@@ -6,11 +6,7 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-// assertIsNotExpired checks if the deadline is expired.
-// If the deadline is expired, it panics.
-// The deadline is expired if the current time is greater than the deadline.
-// Input:
-//   - deadline: the deadline to check
+// assertIsNotExpired ensures the transaction deadline has not passed.
 func assertIsNotExpired(deadline int64) {
 	now := time.Now().Unix()
 

@@ -49,13 +49,17 @@ func NewProtocolFeeState() *ProtocolFeeState {
 // Global instance of the protocol fee state
 var protocolFeeState = NewProtocolFeeState()
 
+// DevOpsPct returns the percentage of protocol fees allocated to DevOps.
 func (pfs *ProtocolFeeState) DevOpsPct() int64           { return pfs.devOpsPct }
+// GovStakerPct returns the percentage of protocol fees allocated to Gov/Staker.
 func (pfs *ProtocolFeeState) GovStakerPct() int64        { return 10000 - pfs.devOpsPct }
+// AccuToGovStaker returns the accumulated amounts distributed to Gov/Staker.
 func (pfs *ProtocolFeeState) AccuToGovStaker() *avl.Tree { return pfs.accuToGovStaker }
+// AccuToDevOps returns the accumulated amounts distributed to DevOps.
 func (pfs *ProtocolFeeState) AccuToDevOps() *avl.Tree    { return pfs.accuToDevOps }
 
-// distributeToDevOps distributes tokens to DevOps and updates related state
-// amount should be greater than 0 (already checked in DistributeProtocolFee)
+// distributeToDevOps distributes tokens to DevOps and updates related state.
+// Amount should be greater than 0 (already checked in DistributeProtocolFee).
 func (pfs *ProtocolFeeState) distributeToDevOps(token string, amount int64) error {
 	pfs.addAccuToDevOps(token, amount)
 	pfs.updateDistributedToDevOpsHistory(token, amount)
@@ -65,8 +69,8 @@ func (pfs *ProtocolFeeState) distributeToDevOps(token string, amount int64) erro
 	return nil
 }
 
-// distributeToGovStaker distributes tokens to Gov/Staker and updates related state
-// amount should be greater than 0 (already checked in DistributeProtocolFee)
+// distributeToGovStaker distributes tokens to Gov/Staker and updates related state.
+// Amount should be greater than 0 (already checked in DistributeProtocolFee).
 func (pfs *ProtocolFeeState) distributeToGovStaker(token string, amount int64) error {
 	pfs.addAccuToGovStaker(token, amount)
 	pfs.updateDistributedToGovStakerHistory(token, amount)
@@ -96,7 +100,7 @@ func (pfs *ProtocolFeeState) setDevOpsPct(pct int64) (int64, error) {
 	return pct, nil
 }
 
-// setGovStakerPct sets the devOpsPct.
+// setGovStakerPct sets the govStakerPct by calculating devOpsPct.
 func (pfs *ProtocolFeeState) setGovStakerPct(pct int64) (int64, error) {
 	if pct < 0 {
 		return 0, makeErrorWithDetail(

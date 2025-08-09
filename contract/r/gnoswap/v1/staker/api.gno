@@ -8,6 +8,7 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
+// ApiGetRewardTokensByPoolPath returns all reward tokens for a specific pool.
 func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 	rewardTokens := []RewardToken{}
 
@@ -46,6 +47,7 @@ func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 	return makeApiResponse(rsps)
 }
 
+// ApiGetExternalIncentives returns all external incentives across all pools.
 func ApiGetExternalIncentives() string {
 	apiExternalIncentives := []ApiExternalIncentive{}
 
@@ -68,6 +70,7 @@ func ApiGetExternalIncentives() string {
 	return makeApiResponse(rsps)
 }
 
+// ApiGetExternalIncentiveById returns a specific external incentive by pool path and incentive ID.
 func ApiGetExternalIncentiveById(poolPath, incentiveId string) string {
 	apiExternalIncentives := []ApiExternalIncentive{}
 
@@ -98,6 +101,7 @@ func ApiGetExternalIncentiveById(poolPath, incentiveId string) string {
 	return makeApiResponse(rsps)
 }
 
+// ApiGetExternalIncentivesByPoolPath returns all external incentives for a specific pool.
 func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 	apiExternalIncentives := []ApiExternalIncentive{}
 
@@ -132,6 +136,7 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 	return makeApiResponse(rsps)
 }
 
+// ApiGetInternalIncentives returns all internal incentives across all pools.
 func ApiGetInternalIncentives() string {
 	apiInternalIncentives := []ApiInternalIncentive{}
 
@@ -154,6 +159,7 @@ func ApiGetInternalIncentives() string {
 	return makeApiResponse(rsps)
 }
 
+// ApiGetInternalIncentivesByPoolPath returns internal incentives for a specific pool.
 func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
 	apiInternalIncentives := []ApiInternalIncentive{}
 
@@ -173,6 +179,7 @@ func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
 	return makeApiResponse(rsps)
 }
 
+// ApiGetInternalIncentivesByTiers returns all internal incentives for a specific tier.
 func ApiGetInternalIncentivesByTiers(targetTier uint64) string {
 	apiInternalIncentives := []ApiInternalIncentive{}
 
@@ -197,6 +204,7 @@ func ApiGetInternalIncentivesByTiers(targetTier uint64) string {
 	return makeApiResponse(rsps)
 }
 
+// makeRewardTokensArray creates a JSON array of reward tokens.
 func makeRewardTokensArray(rewardsTokenList []string) []*json.Node {
 	rewardsTokenArray := make([]*json.Node, len(rewardsTokenList))
 	for i, rewardToken := range rewardsTokenList {
@@ -205,6 +213,7 @@ func makeRewardTokensArray(rewardsTokenList []string) []*json.Node {
 	return rewardsTokenArray
 }
 
+// calculateInternalRewardPerSecondByPoolPath calculates the internal reward per second for a pool.
 func calculateInternalRewardPerSecondByPoolPath(poolPath string) string {
 	reward := poolTier.CurrentRewardPerPool(poolPath)
 	return ufmt.Sprintf("%d", reward)
@@ -228,6 +237,7 @@ type ResponseApiGetRewardByLpTokenId struct {
 	Response LpTokenReward     `json:"response"` // The LpTokenReward for the specified LP token
 }
 
+// ApiGetRewardsByLpTokenId returns all rewards for a specific LP token ID.
 func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 	deposit := deposits.get(targetLpTokenId)
 
@@ -273,6 +283,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 	return makeApiResponse(rsps)
 }
 
+// ApiGetStakesByLpTokenId returns stake information for a specific LP token ID.
 func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 	stakes := []ApiStake{}
 
@@ -288,11 +299,12 @@ func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 	return makeApiResponse(rsps)
 }
 
-// for off chain to check if lpTokenId is staked via RPC
+// IsStaked checks if a position ID is currently staked.
 func IsStaked(positionId uint64) bool {
 	return deposits.Has(positionId)
 }
 
+// formatInt formats an int64 value to string.
 func formatInt(value int64) string {
 	return ufmt.Sprintf("%d", value)
 }

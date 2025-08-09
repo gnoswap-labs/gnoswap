@@ -8,31 +8,33 @@ import (
 	"gno.land/p/demo/json"
 )
 
-// IsEmissionInitialized checks if emission schedule is initialized.
+// IsEmissionInitialized returns true if emission schedule has been initialized.
 func IsEmissionInitialized() bool {
 	return getEmissionState().isInitialized()
 }
 
-// IsEmissionActive checks if emission is currently active.
+// IsEmissionActive returns true if emission is currently active based on current time.
 func IsEmissionActive() bool {
 	return getEmissionState().isActive(time.Now().Unix())
 }
 
-// IsEmissionEnded checks if emission schedule has completed.
+// IsEmissionEnded returns true if emission schedule has completed.
 func IsEmissionEnded() bool {
 	return getEmissionState().isEnded(time.Now().Unix())
 }
 
+// GetHalvingYear returns the halving year (1-12) for a given timestamp.
 func GetHalvingYear(timestamp int64) int64 {
 	return getEmissionState().getCurrentYear(timestamp)
 }
 
-// GetCurrentYear returns current halving year (1-12) or 0 if not active.
+// GetCurrentYear returns the current halving year (1-12) or 0 if emission is not active.
 func GetCurrentYear() int64 {
 	return getEmissionState().getCurrentYear(time.Now().Unix())
 }
 
-// GetEmissionAmountPerSecondInRange returns halving timestamps and emission rates within time range.
+// GetEmissionAmountPerSecondInRange returns halving timestamps and emission rates for the given time range.
+// Returns two slices: timestamps when halving periods start and corresponding emission rates per second.
 func GetEmissionAmountPerSecondInRange(fromTime, toTime int64) ([]int64, []int64) {
 	halvingData := getEmissionState().getHalvingData()
 	halvingTimes := make([]int64, 0)
@@ -55,85 +57,92 @@ func GetEmissionAmountPerSecondInRange(fromTime, toTime int64) ([]int64, []int64
 	return halvingTimes, halvingEmissions
 }
 
+// GetEmissionAmountPerSecondByTimestamp returns the emission rate per second for a given timestamp.
+// Returns 0 if timestamp is outside emission period.
 func GetEmissionAmountPerSecondByTimestamp(timestamp int64) int64 {
 	year := getEmissionState().getCurrentYear(timestamp)
 	return getEmissionState().getHalvingYearAmountPerSecond(year)
 }
 
+// GetEmissionLeftAmountByTimestamp returns the remaining emission amount for the halving year at given timestamp.
+// Returns 0 if timestamp is outside emission period.
 func GetEmissionLeftAmountByTimestamp(timestamp int64) int64 {
 	year := getEmissionState().getCurrentYear(timestamp)
 	return getEmissionState().getHalvingYearLeftAmount(year)
 }
 
+// GetEmissionAccumulatedAmountByTimestamp returns the accumulated emission amount for the halving year at given timestamp.
+// Returns 0 if timestamp is outside emission period.
 func GetEmissionAccumulatedAmountByTimestamp(timestamp int64) int64 {
 	year := getEmissionState().getCurrentYear(timestamp)
 	return getEmissionState().getHalvingYearAccumulatedAmount(year)
 }
 
-// GetHalvingYearStartTimestamp returns start timestamp for halving year.
+// GetHalvingYearStartTimestamp returns the start timestamp for the specified halving year.
 func GetHalvingYearStartTimestamp(year int64) int64 {
 	halvingData := getEmissionState().getHalvingData()
 	return halvingData.getStartTimestamp(year)
 }
 
-// GetHalvingYearEndTimestamp returns end timestamp for halving year.
+// GetHalvingYearEndTimestamp returns the end timestamp for the specified halving year.
 func GetHalvingYearEndTimestamp(year int64) int64 {
 	halvingData := getEmissionState().getHalvingData()
 	return halvingData.getEndTimestamp(year)
 }
 
-// GetHalvingYearTimestamp returns start timestamp for halving year.
+// GetHalvingYearTimestamp returns the start timestamp for the specified halving year.
 func GetHalvingYearTimestamp(year int64) int64 {
 	halvingData := getEmissionState().getHalvingData()
 	return halvingData.getStartTimestamp(year)
 }
 
-// GetHalvingYearMaxAmount returns max issuance for halving year.
+// GetHalvingYearMaxAmount returns the maximum token issuance for the specified halving year.
 func GetHalvingYearMaxAmount(year int64) int64 {
 	halvingData := getEmissionState().getHalvingData()
 	return halvingData.getMaxAmount(year)
 }
 
-// GetHalvingYearMintAmount returns minted amount for halving year.
+// GetHalvingYearMintAmount returns the amount of tokens minted for the specified halving year.
 func GetHalvingYearMintAmount(year int64) int64 {
 	halvingData := getEmissionState().getHalvingData()
 	return halvingData.getMintedAmount(year)
 }
 
-// GetHalvingYearLeftAmount returns remaining issuance for halving year.
+// GetHalvingYearLeftAmount returns the remaining token issuance for the specified halving year.
 func GetHalvingYearLeftAmount(year int64) int64 {
 	halvingData := getEmissionState().getHalvingData()
 	return halvingData.getLeftAmount(year)
 }
 
-// GetHalvingYearAccuAmount returns accumulated issuance for halving year.
+// GetHalvingYearAccuAmount returns the accumulated token issuance for the specified halving year.
 func GetHalvingYearAccuAmount(year int64) int64 {
 	halvingData := getEmissionState().getHalvingData()
 	return halvingData.getAccumAmount(year)
 }
 
-// GetAmountPerSecondPerHalvingYear returns emission rate per second for halving year.
+// GetAmountPerSecondPerHalvingYear returns the emission rate per second for the specified halving year.
 func GetAmountPerSecondPerHalvingYear(year int64) int64 {
 	halvingData := getEmissionState().getHalvingData()
 	return halvingData.getAmountPerSecond(year)
 }
 
-// GetHalvingAmountsPerYear returns total emission amount for specific year.
+// GetHalvingAmountsPerYear returns the total emission amount allocated for the specified year.
 func GetHalvingAmountsPerYear(year int64) int64 {
 	return halvingAmountsPerYear[year-1]
 }
 
-// GetEmissionStartTimestamp returns emission start timestamp.
+// GetEmissionStartTimestamp returns the timestamp when emission schedule begins.
 func GetEmissionStartTimestamp() int64 {
 	return getEmissionState().getStartTimestamp()
 }
 
-// GetEmissionEndTimestamp returns emission end timestamp.
+// GetEmissionEndTimestamp returns the timestamp when emission schedule ends.
 func GetEmissionEndTimestamp() int64 {
 	return getEmissionState().getEndTimestamp()
 }
 
-// GetHalvingYearInfo returns halving year and timestamps for given timestamp.
+// GetHalvingYearInfo returns the halving year, start timestamp, and end timestamp for a given timestamp.
+// Returns (year, startTimestamp, endTimestamp). Year is 0 if outside emission period.
 func GetHalvingYearInfo(timestamp int64) (int64, int64, int64) {
 	state := getEmissionState()
 
@@ -145,7 +154,8 @@ func GetHalvingYearInfo(timestamp int64) (int64, int64, int64) {
 	return year, startTimestamp + (SECONDS_IN_YEAR * year), endTimestamp
 }
 
-// GetHalvingInfo returns halving information as JSON.
+// GetHalvingInfo returns comprehensive halving information as JSON string.
+// Includes current height, timestamp, and details for all halving years (1-12). Panics on JSON marshal error.
 func GetHalvingInfo() string {
 	currentTime := time.Now().Unix()
 	currentHeight := std.ChainHeight()

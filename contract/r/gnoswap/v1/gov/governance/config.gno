@@ -9,7 +9,6 @@ import (
 )
 
 // Config represents the configuration of the governor contract
-// ref: https://docs.gnoswap.io/core-concepts/governance#scope-of-proposals-5
 // All parameters in this struct can be modified through governance.
 type Config struct {
 	// VotingStartDelay is the delay before voting starts after proposal creation (in seconds)
@@ -29,28 +28,9 @@ type Config struct {
 	ExecutionWindow int64
 }
 
-// Reconfigure updates the governance configuration by admin or governance contract.
-// This function allows administrative updates to governance parameters without going through proposal process.
+// Reconfigure updates governance configuration.
 // Only admin or governance contract can call this function.
-// After successful reconfiguration, it emits a "Reconfigure" event with all updated parameters.
-//
-// Parameters:
-//   - cur: realm context (for cross-realm calls)
-//   - votingStartDelay: delay before voting starts (seconds)
-//   - votingPeriod: duration for collecting votes (seconds)
-//   - votingWeightSmoothingDuration: period for averaging voting weight (seconds)
-//   - quorum: percentage of total supply required for approval (0-100)
-//   - proposalCreationThreshold: minimum voting weight to create proposals (in GNS)
-//   - executionDelay: waiting period before execution (seconds)
-//   - executionWindow: time window for execution (seconds)
-//
-// Returns:
-//   - int64: new configuration version number
-//
-// Panics:
-//   - if system is halted
-//   - if caller is not admin or governance
-//   - if any parameter validation fails
+// Updates all governance parameters and emits a "Reconfigure" event.
 func Reconfigure(
 	cur realm,
 	votingStartDelay int64,
@@ -104,21 +84,8 @@ func Reconfigure(
 	return nextVersion
 }
 
-// reconfigure is the internal function that updates the Governor's configuration.
-// This function creates a new configuration and stores it with an incremented version number.
-//
-// Parameters:
-//   - votingStartDelay: delay before voting starts (seconds)
-//   - votingPeriod: duration for collecting votes (seconds)
-//   - votingWeightSmoothingDuration: period for averaging voting weight (seconds)
-//   - quorum: percentage of total supply required for approval
-//   - proposalCreationThreshold: minimum voting weight to create proposals
-//   - executionDelay: waiting period before execution (seconds)
-//   - executionWindow: time window for execution (seconds)
-//
-// Returns:
-//   - int64: new configuration version number
-//   - Config: the newly created configuration
+// reconfigure updates the Governor's configuration.
+// Creates new configuration and stores it with incremented version number.
 func reconfigure(
 	votingStartDelay int64,
 	votingPeriod int64,

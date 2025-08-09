@@ -4,24 +4,24 @@ import (
 	"gno.land/p/gnoswap/uint256"
 )
 
-// Abs returns |z|
+// Abs returns the absolute value of z.
 func (z *Int) Abs() *uint256.Uint {
 	return z.abs.Clone()
 }
 
-// AbsGt returns true if |z| > x, where x is a uint256
+// AbsGt returns true if the absolute value of z is greater than x.
 func (z *Int) AbsGt(x *uint256.Uint) bool {
 	return z.abs.Gt(x)
 }
 
-// AbsLt returns true if |z| < x, where x is a uint256
+// AbsLt returns true if the absolute value of z is less than x.
 func (z *Int) AbsLt(x *uint256.Uint) bool {
 	return z.abs.Lt(x)
 }
 
-// AbsOverflow returns z = |x|, and true if overflow occurs.
-//
-// The overflow can be happen when negating a minimum or a maximum value.
+// AbsOverflow sets z to the absolute value of x and returns z and whether overflow occurred.
+// Overflow occurs when x is the minimum int256 value (-2^255), as its absolute value (2^255)
+// cannot be represented in a signed 256-bit integer.
 func (z *Int) AbsOverflow(x *Int) (*Int, bool) {
 	z = z.initiateAbs()
 

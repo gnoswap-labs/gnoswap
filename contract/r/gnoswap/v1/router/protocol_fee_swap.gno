@@ -22,15 +22,13 @@ const (
 // This parameter can be modified through governance.
 var swapFee = defaultSwapFeeBPS
 
-// GetSwapFee returns current rate of swap fee
-// ref: https://docs.gnoswap.io/contracts/router/protocol_fee_swap.gno#getswapfee
+// GetSwapFee returns the current swap fee rate in basis points.
 func GetSwapFee() uint64 {
 	return swapFee
 }
 
-// SetSwapFee modifies the swap fee
-// Only governance contract can execute this function via proposal
-// ref: https://docs.gnoswap.io/contracts/router/protocol_fee_swap.gno#setswapfee
+// SetSwapFee sets the swap fee rate in basis points.
+// Only admin or governance can call this function.
 func SetSwapFee(cur realm, fee uint64) {
 	halt.AssertIsNotHaltedRouter()
 	halt.AssertIsNotHaltedProtocolFee()
@@ -53,6 +51,7 @@ func SetSwapFee(cur realm, fee uint64) {
 	)
 }
 
+// setSwapFee validates and updates the swap fee rate.
 func setSwapFee(fee uint64) error {
 	// 10000 (bps) = 100%
 	if fee > 10000 {
@@ -66,8 +65,7 @@ func setSwapFee(fee uint64) error {
 	return nil
 }
 
-// handleSwapFee deducts the protocol fee from the amount and sends it to the protocol_fee contract
-// and returns the amount after deducting the protocol fee
+// handleSwapFee deducts the protocol fee from the swap amount and transfers it to the protocol fee contract.
 func handleSwapFee(
 	outputToken string,
 	amount *u256.Uint,

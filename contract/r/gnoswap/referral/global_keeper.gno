@@ -16,11 +16,13 @@ func init() {
 	}
 }
 
-// getKeeper returns global referral keeper instance.
+// getKeeper returns the global referral keeper instance.
 func getKeeper() ReferralKeeper {
 	return gReferralKeeper
 }
 
+// GetReferral returns the referral address for the given address.
+// Returns empty string if no referral exists.
 func GetReferral(addr string) string {
 	referral, err := gReferralKeeper.get(std.Address(addr))
 	if err != nil {
@@ -29,6 +31,7 @@ func GetReferral(addr string) string {
 	return referral.String()
 }
 
+// HasReferral returns true if the given address has a referral.
 func HasReferral(addr string) bool {
 	referral, err := gReferralKeeper.get(std.Address(addr))
 	if err != nil {
@@ -37,11 +40,13 @@ func HasReferral(addr string) bool {
 	return referral != zeroAddress
 }
 
+// IsEmpty returns true if no referrals exist in the system.
 func IsEmpty() bool {
 	return gReferralKeeper.isEmpty()
 }
 
-// TryRegister attempts to register new referral.
+// TryRegister attempts to register a new referral.
+// Returns true on success, false on failure. Emits events for both cases.
 func TryRegister(cur realm, addr std.Address, referral string) bool {
 	refAddr := std.Address(referral)
 	err := gReferralKeeper.register(addr, refAddr)

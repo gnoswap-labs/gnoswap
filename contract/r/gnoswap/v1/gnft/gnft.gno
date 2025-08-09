@@ -14,22 +14,22 @@ var (
 	owner = ownable.NewWithAddress(getPositionAddress())
 )
 
-// Name returns NFT collection name.
+// Name returns the NFT collection name.
 func Name() string {
 	return nft.Name()
 }
 
-// Symbol returns NFT symbol.
+// Symbol returns the NFT symbol.
 func Symbol() string {
 	return nft.Symbol()
 }
 
-// TotalSupply returns total NFTs minted.
+// TotalSupply returns the total number of NFTs minted.
 func TotalSupply() int64 {
 	return nft.TokenCount()
 }
 
-// TokenURI returns metadata URI for token ID.
+// TokenURI returns the metadata URI for the specified token ID.
 func TokenURI(tid grc721.TokenID) (string, error) {
 	uri, err := nft.TokenURI(tid)
 	if err != nil {
@@ -40,12 +40,6 @@ func TokenURI(tid grc721.TokenID) (string, error) {
 }
 
 // BalanceOf returns the number of NFTs owned by the specified address.
-// Parameters:
-//   - owner (std.Address): The address to check the NFT balance for.
-//
-// Returns:
-//   - int64: The number of NFTs owned by the address.
-//   - error: Returns an error if the balance retrieval fails.
 func BalanceOf(owner std.Address) (int64, error) {
 	assertIsValidAddress(owner)
 
@@ -56,7 +50,7 @@ func BalanceOf(owner std.Address) (int64, error) {
 	return balance, nil
 }
 
-// OwnerOf returns owner address for token ID.
+// OwnerOf returns the owner address for the specified token ID.
 func OwnerOf(tid grc721.TokenID) (std.Address, error) {
 	ownerAddr, err := nft.OwnerOf(tid)
 	if err != nil {
@@ -66,8 +60,8 @@ func OwnerOf(tid grc721.TokenID) (std.Address, error) {
 	return ownerAddr, nil
 }
 
-// MustOwnerOf returns owner address for token ID.
-// Panics if token ID is invalid.
+// MustOwnerOf returns the owner address for the specified token ID.
+// It panics if the token ID is invalid.
 func MustOwnerOf(tid grc721.TokenID) std.Address {
 	ownerAddr, err := OwnerOf(tid)
 	if err != nil {
@@ -77,7 +71,7 @@ func MustOwnerOf(tid grc721.TokenID) std.Address {
 	return ownerAddr
 }
 
-// SetTokenURI sets metadata URI for token.
+// SetTokenURI sets the metadata URI for the specified token.
 // Only callable by position contract.
 func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, error) {
 	halt.AssertIsNotHaltedPosition()
@@ -93,7 +87,6 @@ func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, err
 }
 
 // SafeTransferFrom transfers token ownership.
-// Validates addresses and checks caller authorization.
 func SafeTransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
 	halt.AssertIsNotHaltedPosition()
 
@@ -105,16 +98,8 @@ func SafeTransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error
 	return nil
 }
 
-// TransferFrom transfers a token from one address to another
-// This function is a direct wrapper around `SafeTransferFrom`, which performs the actual transfer.
-//
-// Parameters:
-//   - from (std.Address): The current owner's address of the token being transferred.
-//   - to (std.Address): The recipient's address to receive the token.
-//   - tid (grc721.TokenID): The ID of the token to be transferred.
-//
-// Returns:
-//   - error: Returns `nil` if the transfer is successful; otherwise, returns an error.
+// TransferFrom transfers a token from one address to another.
+// This function is a direct wrapper around SafeTransferFrom.
 func TransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
 	halt.AssertIsNotHaltedPosition()
 
@@ -127,18 +112,6 @@ func TransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
 }
 
 // Approve grants permission to transfer a specific token ID to another address.
-//
-// Parameters:
-//   - approved (std.Address): The address to grant transfer approval to.
-//   - tid (grc721.TokenID): The token ID to approve for transfer.
-//
-// Returns:
-//   - error: Returns `nil` if the approval is successful, otherwise returns an error.
-//
-// Panics:
-//   - If the contract is halted.
-//   - If the caller is not the token owner.
-//   - If the `Approve` call fails.
 func Approve(cur realm, approved std.Address, tid grc721.TokenID) error {
 	halt.AssertIsNotHaltedPosition()
 	assertIsValidAddress(approved)
@@ -199,9 +172,7 @@ func Exists(tid grc721.TokenID) bool {
 	return true
 }
 
-// Burn removes a specific token ID (only callable by owner)
-// Parameters:
-//   - tid: The token ID to burn
+// Burn removes a specific token ID (only callable by owner).
 func Burn(cur realm, tid grc721.TokenID) {
 	halt.AssertIsNotHaltedPosition()
 	owner.AssertOwnedByPrevious()
@@ -209,12 +180,8 @@ func Burn(cur realm, tid grc721.TokenID) {
 	checkErr(nft.Burn(tid))
 }
 
-// Render returns the HTML representation of the NFT
-// Parameters:
-//   - path: The path to render
-//
-// Returns:
-//   - string: HTML representation of the NFT or 404 if path is invalid
+// Render returns the HTML representation of the NFT.
+// Returns 404 if path is invalid.
 func Render(path string) string {
 	switch {
 	case path == "":
@@ -224,7 +191,7 @@ func Render(path string) string {
 	}
 }
 
-// setTokenURI sets the metadata URI for a specific token ID
+// setTokenURI sets the metadata URI for a specific token ID.
 func setTokenURI(tid grc721.TokenID, tURI grc721.TokenURI) error {
 	_, err := nft.SetTokenURI(tid, tURI)
 	if err != nil {

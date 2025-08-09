@@ -10,7 +10,7 @@ import (
 )
 
 // TransferToken transfers token to address.
-// Only callable by admin or governance.
+// Only admin or governance can call this function.
 func TransferToken(cur realm, tokenPath string, to std.Address, amount int64) {
 	halt.AssertIsNotHaltedCommunityPool()
 	halt.AssertIsNotHaltedWithdraw()

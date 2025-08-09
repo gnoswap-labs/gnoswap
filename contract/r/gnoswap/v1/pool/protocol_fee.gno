@@ -43,8 +43,6 @@ const (
 // Output:
 // - the amount of token0 after the fee
 // - the amount of token1 after the fee
-//
-// ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_withdrawal.gno#handlewithdrawalfee
 func HandleWithdrawalFee(
 	cur realm,
 	positionId uint64,
@@ -95,14 +93,12 @@ func HandleWithdrawalFee(
 }
 
 // GetPoolCreationFee returns the poolCreationFee
-// ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_pool_creation.gno#getpoolcreationfee
 func GetPoolCreationFee() int64 {
 	return poolCreationFee
 }
 
 // SetPoolCreationFee sets the poolCreationFee.
-// Only governance contract can execute this function via proposal
-// ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_pool_creation.gno#setpoolcreationfee
+// Only admin or governance can call this function.
 func SetPoolCreationFee(cur realm, fee int64) {
 	halt.AssertIsNotHaltedPool()
 
@@ -126,14 +122,12 @@ func SetPoolCreationFee(cur realm, fee int64) {
 }
 
 // GetWithdrawalFee returns the withdrawal fee
-// ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_withdrawal.gno#getwithdrawalfee
 func GetWithdrawalFee() uint64 {
 	return withdrawalFeeBPS
 }
 
 // SetWithdrawalFee sets the withdrawal fee.
-// Only governance contract can execute this function via proposal
-// ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_withdrawal.gno#setwithdrawalfee
+// Only admin or governance can call this function.
 func SetWithdrawalFee(cur realm, fee uint64) {
 	halt.AssertIsNotHaltedPool()
 

@@ -19,22 +19,8 @@ var (
 	errFailedToWrapBelowMin  = "amount(%d) < minimum(%d)"
 )
 
-// wrap wraps the specified amount of the native token `ugnot` into the wrapped token `wugnot`.
-//
-// Parameters:
-//   - ugnotAmount (uint64): The amount of `ugnot` tokens to wrap into `wugnot`.
-//   - to (std.Address): The recipient's address to receive the wrapped tokens.
-//
-// Returns:
-//   - error: An error if the `ugnot` amount is zero, below the minimum wrapping threshold, or any other issue occurs.
-//
-// Example:
-//
-//	wrap(1000, userAddress)
-//	- Wraps 1000 UGNOT into WUGNOT and transfers the WUGNOT to `userAddress`.
-//
-// Errors:
-//   - Returns an error if `ugnotAmount` is zero or less than the minimum deposit threshold.
+// wrap wraps the specified amount of the native token ugnot into the wrapped token wugnot.
+// Returns an error if ugnotAmount is zero or less than the minimum deposit threshold.
 func wrap(ugnotAmount int64, to std.Address) error {
 	if ugnotAmount == 0 || ugnotAmount < UGNOT_MIN_DEPOSIT_TO_WRAP {
 		return ufmt.Errorf("amount(%d) < minimum(%d)", ugnotAmount, UGNOT_MIN_DEPOSIT_TO_WRAP)
@@ -49,16 +35,8 @@ func wrap(ugnotAmount int64, to std.Address) error {
 	return nil
 }
 
-// unwrap converts a specified amount of `WUGNOT` tokens into `UGNOT` tokens
-// and transfers the resulting `UGNOT` back to the specified recipient address.
-//
-// Parameters:
-// - `wugnotAmount`: The amount of `WUGNOT` tokens to unwrap (uint64).
-// - `to`: The recipient's address (std.Address) to receive the unwrapped `UGNOT`.
-//
-// Example:
-// unwrap(100, userAddress)
-// - Converts 100 WUGNOT into UGNOT and sends the resulting UGNOT to `userAddress`.
+// unwrap converts a specified amount of WUGNOT tokens into UGNOT tokens
+// and transfers the resulting UGNOT back to the specified recipient address.
 func unwrap(wugnotAmount int64, to std.Address) error {
 	if wugnotAmount <= 0 {
 		return ufmt.Errorf("amount(%d) is zero or negative", wugnotAmount)
@@ -70,17 +48,9 @@ func unwrap(wugnotAmount int64, to std.Address) error {
 	return nil
 }
 
-// transferUGNOT transfers a specified amount of `UGNOT` tokens from one address to another.
+// transferUGNOT transfers a specified amount of UGNOT tokens from one address to another.
 // The function ensures that no transaction occurs if the transfer amount is zero.
-// It uses the `std.BankerTypeRealmSend` banker type to facilitate the transfer.
-//
-// Parameters:
-// - `from`: The sender's address (std.Address).
-// - `to`: The recipient's address (std.Address).
-// - `amount`: The amount of UGNOT tokens to transfer (uint64).
-//
-// Example:
-// transferUGNOT(sender, receiver, 100) // Transfers 100 UGNOT from `sender` to `receiver`.
+// Panics if amount is negative or if sender has insufficient balance.
 func transferUGNOT(from, to std.Address, amount int64) {
 	if amount < 0 {
 		panic(ufmt.Sprintf("amount(%d) is negative", amount))
@@ -111,21 +81,9 @@ func isWrappedToken(tokenPath string) bool {
 	return tokenPath == WRAPPED_WUGNOT
 }
 
-// safeWrapNativeToken safely wraps the native token `ugnot` into the wrapped token `wugnot` for a user.
-//
-// Parameters:
-//   - amount: The desired amount of `ugnot` to be wrapped.
-//   - toAddress: The address of the user initiating the wrapping process.
-//
-// Returns:
-//   - uint64: The amount of `ugnot` that was successfully wrapped into `wugnot`.
-//
-// Panics:
-//   - If the sent `ugnot` amount is zero.
-//   - If `amount` cannot be parsed into a valid uint64 value.
-//   - If the sent `ugnot` amount is less than `amount`.
-//   - If the `wrap` function fails to wrap the tokens.
-//   - If there is a mismatch between the expected wrapped token amount and the user's balance after wrapping.
+// safeWrapNativeToken safely wraps the native token ugnot into the wrapped token wugnot for a user.
+// Returns the amount of ugnot that was successfully wrapped into wugnot.
+// Returns an error if the sent ugnot amount is zero, less than requested, or if wrapping fails.
 func safeWrapNativeToken(amount int64, toAddress std.Address) (int64, error) {
 	// if amount is zero, return 0
 	if amount == 0 {

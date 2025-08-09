@@ -7,11 +7,7 @@ import (
 )
 
 // assertIsDepositOwner asserts that the caller is the owner of the deposit.
-// If the caller is not the owner of the deposit, it panics with an error.
-//
-// Parameters:
-//   - depositID (string): The ID of the deposit to check ownership for
-//   - caller (std.Address): The address of the caller to check ownership for
+// Panics if the caller is not the owner of the deposit.
 func assertIsDepositOwner(depositID string, caller std.Address) {
 	deposit, err := getDeposit(depositID)
 	if err != nil {
@@ -41,10 +37,7 @@ func assertIsValidAmount(amount int64) {
 }
 
 // assertHasProject asserts that the caller is the owner of at least one project.
-// If the caller is not the owner of any project, it panics with an error.
-//
-// Parameters:
-//   - caller (std.Address): The address of the caller to check ownership for
+// Panics if the caller is not the owner of any project.
 func assertHasProject(caller std.Address) {
 	hasProject := false
 

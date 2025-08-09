@@ -24,7 +24,7 @@ var (
 	zero = u256.Zero()
 )
 
-// toAscendingOrder ensures values are in ascending order.
+// toAscendingOrder returns the two values in ascending order.
 func toAscendingOrder(a, b *u256.Uint) (*u256.Uint, *u256.Uint) {
 	if a.Gt(b) {
 		return b, a
@@ -33,9 +33,8 @@ func toAscendingOrder(a, b *u256.Uint) (*u256.Uint, *u256.Uint) {
 	return a, b
 }
 
-// toUint128 ensures value fits within uint128 range.
-//   - If masking is required, a new instance is returned without modifying the input.
-//   - MAX_UINT128 is a constant representing `2^128 - 1`.
+// toUint128 ensures the value fits within uint128 range.
+// If the value exceeds uint128, it returns a masked value.
 func toUint128(value *u256.Uint) *u256.Uint {
 	if value == nil {
 		panic(newErrorWithDetail(

@@ -19,6 +19,7 @@ var (
 	token, ledger = grc20.NewToken("XGNS", "xGNS", 6)
 )
 
+// TotalSupply returns the total supply of xGNS tokens.
 func TotalSupply() int64 {
 	return token.TotalSupply()
 }
@@ -40,6 +41,7 @@ func BalanceOf(owner std.Address) int64 {
 	return token.BalanceOf(owner)
 }
 
+// Render returns a formatted representation of the token state.
 // xGNS is non-transferable - no transfer functions.
 func Render(path string) string {
 	parts := strings.Split(path, "/")
@@ -89,6 +91,8 @@ func Burn(cur realm, from std.Address, amount int64) {
 	checkErr(ledger.Burn(from, amount))
 }
 
+// BurnByLaunchPad burns tokens from address.
+// Only callable by launchpad contract.
 func BurnByLaunchPad(cur realm, from std.Address, amount int64) {
 	halt.AssertIsNotHaltedXGns()
 

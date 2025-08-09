@@ -23,22 +23,7 @@ import (
 )
 
 // MulDiv calculates (a * b) / denominator with full 512-bit intermediate precision.
-// This function is crucial for maintaining precision in Uniswap V3's tick math.
-//
-// The implementation uses Remco Bloemen's multiplication and division algorithm
-// which computes the 512-bit product and divides it by the denominator.
-//
-// Parameters:
-//   - a: First multiplicand
-//   - b: Second multiplicand
-//   - denominator: The divisor (must be greater than 0)
-//
-// Returns:
-//   - The result of (a * b) / denominator, rounded down
-//
-// Panics:
-//   - If denominator is 0
-//   - If the result would overflow 256 bits (i.e., if a * b / denominator > 2^256 - 1)
+// Panics if denominator is zero or if the result overflows 256 bits.
 func MulDiv(a, b, denominator *Uint) *Uint {
 	// Compute the 512-bit product of a * b
 	p := umul(a, b)
@@ -109,21 +94,8 @@ func MulDiv(a, b, denominator *Uint) *Uint {
 	return result
 }
 
-// MulDivRoundingUp calculates ceil((a * b) / denominator).
-// This is useful for ensuring that rounding errors favor the protocol
-// rather than users, which is important for security.
-//
-// Parameters:
-//   - a: First multiplicand
-//   - b: Second multiplicand
-//   - denominator: The divisor (must be greater than 0)
-//
-// Returns:
-//   - The result of (a * b) / denominator, rounded up
-//
-// Panics:
-//   - If denominator is 0
-//   - If the result would overflow 256 bits
+// MulDivRoundingUp calculates ceil((a * b) / denominator) with full 512-bit intermediate precision.
+// Panics if denominator is zero or if the result overflows 256 bits.
 func MulDivRoundingUp(a, b, denominator *Uint) *Uint {
 	result := MulDiv(a, b, denominator)
 
@@ -143,18 +115,8 @@ func MulDivRoundingUp(a, b, denominator *Uint) *Uint {
 	return new(Uint).Add(result, one)
 }
 
-// DivRoundingUp performs division with rounding up.
-// This is a simpler operation that doesn't require the full precision of MulDiv.
-//
-// Parameters:
-//   - x: Dividend
-//   - y: Divisor (must be greater than 0)
-//
-// Returns:
-//   - The result of x / y, rounded up
-//
-// Panics:
-//   - If y is 0
+// DivRoundingUp calculates ceil(x / y) and returns the result.
+// Panics if y is zero.
 func DivRoundingUp(x, y *Uint) *Uint {
 	if y.IsZero() {
 		panic("division by zero")
@@ -165,15 +127,7 @@ func DivRoundingUp(x, y *Uint) *Uint {
 	return z
 }
 
-// gt returns one if x is greater than y, zero otherwise.
-// This is a branchless helper for conditional increment.
-//
-// Parameters:
-//   - x: First number to compare
-//   - y: Second number to compare
-//
-// Returns:
-//   - one if x > y, zero otherwise
+// gt returns One() if x > y, otherwise returns Zero().
 func gt(x, y *Uint) *Uint {
 	if x.Gt(y) {
 		return one

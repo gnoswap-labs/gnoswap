@@ -2,28 +2,28 @@ package rbac
 
 import "std"
 
-// IsOwner checks if address is current owner.
+// IsOwner returns true if addr is the current owner.
 func IsOwner(addr std.Address) bool {
 	return manager.Owner() == addr
 }
 
-// IsPendingOwner checks if address is pending owner.
+// IsPendingOwner returns true if addr is the pending owner.
 func IsPendingOwner(addr std.Address) bool {
 	return manager.PendingOwner() == addr
 }
 
-// GetOwner returns current owner address.
+// GetOwner returns the current owner address.
 func GetOwner() std.Address {
 	return manager.Owner()
 }
 
-// GetPendingOwner returns pending owner address.
+// GetPendingOwner returns the pending owner address.
 func GetPendingOwner() std.Address {
 	return manager.PendingOwner()
 }
 
-// AcceptOwnership completes ownership transfer.
-// Only callable by pending owner.
+// AcceptOwnership completes the ownership transfer process.
+// Only callable by pending owner. Panics if caller is not pending owner.
 func AcceptOwnership(cur realm) {
 	err := manager.AcceptOwnership()
 	if err != nil {
@@ -31,8 +31,8 @@ func AcceptOwnership(cur realm) {
 	}
 }
 
-// TransferOwnership initiates ownership transfer.
-// Only callable by current owner.
+// TransferOwnership initiates the ownership transfer process to addr.
+// Only callable by current owner. Panics if caller is not owner.
 func TransferOwnership(cur realm, addr std.Address) {
 	err := manager.TransferOwnership(addr)
 	if err != nil {

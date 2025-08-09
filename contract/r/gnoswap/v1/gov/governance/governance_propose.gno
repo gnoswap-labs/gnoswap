@@ -9,9 +9,7 @@ import (
 	"gno.land/r/gnoswap/v1/gov/staker"
 )
 
-// ProposeText creates text proposal for discussion.
-// Text proposals are informational only.
-// Returns proposal ID.
+// ProposeText creates a text proposal for discussion.
 func ProposeText(
 	cur realm,
 	title string,
@@ -85,27 +83,6 @@ func ProposeText(
 }
 
 // ProposeCommunityPoolSpend creates a new community pool spend proposal.
-// This type of proposal allows transferring tokens from the community pool to specified recipients.
-// Upon execution, tokens are transferred from the community pool to the designated address.
-//
-// Parameters:
-//   - cur: realm context for cross-realm calls
-//   - title: proposal title (max 255 characters)
-//   - description: detailed proposal description (max 10,000 characters)
-//   - to: recipient address for token transfer
-//   - tokenPath: path of the token to transfer
-//   - amount: amount of tokens to transfer
-//
-// Returns:
-//   - int64: unique ID of the created proposal
-//
-// Panics:
-//   - if proposer doesn't have enough voting weight
-//   - if proposer has an active proposal
-//   - if input validation fails
-//   - if token is not registered
-//
-// ref: https://docs.gnoswap.io/contracts/governance/proposal.gno#proposecommunitypoolspend
 func ProposeCommunityPoolSpend(
 	cur realm,
 	title string,
@@ -186,27 +163,6 @@ func ProposeCommunityPoolSpend(
 }
 
 // ProposeParameterChange creates a new parameter change proposal.
-// This type of proposal allows modifying governance and system parameters.
-// The execution string format: <pkgPath>*EXE*<function>*EXE*<params>*GOV*<pkgPath>*EXE*<function>*EXE*<params>
-// Multiple parameter changes can be batched using *GOV* separator.
-//
-// Parameters:
-//   - cur: realm context for cross-realm calls
-//   - title: proposal title (max 255 characters)
-//   - description: detailed proposal description (max 10,000 characters)
-//   - numToExecute: number of parameter changes to execute
-//   - executions: encoded string containing execution instructions
-//
-// Returns:
-//   - int64: unique ID of the created proposal
-//
-// Panics:
-//   - if proposer doesn't have enough voting weight
-//   - if proposer has an active proposal
-//   - if input validation fails
-//   - if execution string format is invalid
-//
-// ref: https://docs.gnoswap.io/contracts/governance/proposal.gno#proposeparameterchange
 func ProposeParameterChange(
 	cur realm,
 	title string,
@@ -283,23 +239,8 @@ func ProposeParameterChange(
 	return proposal.ID()
 }
 
-// createProposal is the internal function that handles proposal creation logic.
-// This function validates input data, checks proposer eligibility, and creates the proposal object.
-//
-// Parameters:
-//   - proposalType: type of proposal (Text, CommunityPoolSpend, ParameterChange)
-//   - config: current governance configuration
-//   - maxVotingWeight: total voting weight available at creation time
-//   - proposalMetadata: title and description
-//   - proposalData: type-specific proposal data
-//   - proposerAddress: address of the proposer
-//   - proposerGnsBalance: GNS balance of proposer
-//   - createdAt: creation timestamp
-//   - createdHeight: creation block height
-//
-// Returns:
-//   - *Proposal: pointer to the created proposal
-//   - error: creation error if any
+// createProposal handles proposal creation logic.
+// Validates input data, checks proposer eligibility, and creates proposal object.
 func createProposal(
 	proposalType ProposalType,
 	config Config,
@@ -364,16 +305,7 @@ func createProposal(
 }
 
 // getUserVotingInfoSnapshot retrieves voting information snapshot for proposal creation.
-// This function calculates voting weights at a specific time point for fair voting.
-//
-// Parameters:
-//   - current: current timestamp
-//   - smoothingPeriod: period to look back for weight calculation
-//
-// Returns:
-//   - map[string]*VotingInfo: mapping of voter addresses to their voting info
-//   - int64: total maximum voting weight
-//   - bool: success flag
+// Calculates voting weights at specific time point for fair voting.
 func getUserVotingInfoSnapshot(
 	current,
 	smoothingPeriod int64,
@@ -400,15 +332,7 @@ func getUserVotingInfoSnapshot(
 }
 
 // getUserVotingInfotWithDelegationSnapshots retrieves voting info from staker delegation snapshots.
-// This function integrates with the staker contract to get actual delegation amounts.
-//
-// Parameters:
-//   - snapshotTime: time point for snapshot calculation
-//
-// Returns:
-//   - map[string]*VotingInfo: mapping of voter addresses to their voting info
-//   - int64: total maximum voting weight
-//   - bool: success flag
+// Integrates with staker contract to get actual delegation amounts.
 func getUserVotingInfotWithDelegationSnapshots(
 	snapshotTime int64,
 ) (map[string]*VotingInfo, int64, bool) {
@@ -434,15 +358,8 @@ func getUserVotingInfotWithDelegationSnapshots(
 	return userVotes, maxVotingWeight, true
 }
 
-// updateProposalUserVotes stores voting information for a specific proposal.
-// This function links voting eligibility data to the proposal for later use during voting.
-//
-// Parameters:
-//   - proposal: the proposal to associate voting info with
-//   - userVotingInfos: mapping of user addresses to their voting information
-//
-// Returns:
-//   - bool: success flag
+// updateProposalUserVotes stores voting information for specific proposal.
+// Links voting eligibility data to proposal for later use during voting.
 func updateProposalUserVotes(
 	proposal *Proposal,
 	userVotingInfos map[string]*VotingInfo,
@@ -453,15 +370,8 @@ func updateProposalUserVotes(
 	return true
 }
 
-// hasActiveProposal checks if an address already has an active proposal.
-// This enforces the one-proposal-per-address rule to prevent spam.
-//
-// Parameters:
-//   - proposerAddress: address to check for active proposals
-//   - current: current timestamp for activity check
-//
-// Returns:
-//   - bool: true if address has an active proposal
+// hasActiveProposal checks if address already has active proposal.
+// Enforces one-proposal-per-address rule to prevent spam.
 func hasActiveProposal(proposerAddress std.Address, current int64) bool {
 	// Get all proposals for this address
 	proposals := getUserProposals(proposerAddress)

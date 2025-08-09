@@ -23,24 +23,26 @@ var (
 	distributionStartTimestamp int64
 )
 
-// GetLeftGNSAmount returns undistributed GNS from previous distributions.
+// GetLeftGNSAmount returns the amount of undistributed GNS tokens from previous distributions.
 func GetLeftGNSAmount() int64 { return leftGNSAmount }
 
-// GetDistributionStartTimestamp returns when emission started.
+// GetDistributionStartTimestamp returns the timestamp when emission distribution started.
+// Returns 0 if distribution has not been started yet.
 func GetDistributionStartTimestamp() int64 { return distributionStartTimestamp }
 
-// setLeftGNSAmount updates undistributed GNS amount.
+// setLeftGNSAmount updates the amount of undistributed GNS tokens.
 func setLeftGNSAmount(amount int64) { leftGNSAmount = amount }
 
-// GetLastExecutedTimestamp returns last distribution timestamp.
+// GetLastExecutedTimestamp returns the timestamp of the last emission distribution execution.
 func GetLastExecutedTimestamp() int64 { return lastExecutedTimestamp }
 
-// setLastExecutedTimestamp updates last distribution timestamp.
+// setLastExecutedTimestamp updates the timestamp of the last emission distribution execution.
 func setLastExecutedTimestamp(timestamp int64) { lastExecutedTimestamp = timestamp }
 
 // MintAndDistributeGns mints and distributes GNS tokens according to the emission schedule.
-// Called by any contract to trigger emission based on elapsed time since last execution.
-// Returns the total amount distributed.
+// Can be called by any contract to trigger emission based on elapsed time since last execution.
+// Returns the total amount distributed. Skips distribution if not started or already executed
+// at current timestamp. Emits MintAndDistributeGns event on successful execution.
 func MintAndDistributeGns(cur realm) int64 {
 	halt.AssertIsNotHaltedEmission()
 
@@ -99,8 +101,10 @@ func MintAndDistributeGns(cur realm) int64 {
 	return distributedGNSAmount
 }
 
-// SetDistributionStartTime sets when emission distribution starts.
-// Only callable by admin or governance before distribution begins.
+// SetDistributionStartTime sets the timestamp when emission distribution starts.
+// Only callable by admin or governance before distribution begins. Timestamp must be
+// in the future and cannot be changed once distribution has started. Panics if timestamp
+// is negative, in the past, or distribution has already started. Emits SetDistributionStartTime event.
 func SetDistributionStartTime(cur realm, startTimestamp int64) {
 	halt.AssertIsNotHaltedEmission()
 	halt.AssertIsNotHaltedWithdraw()

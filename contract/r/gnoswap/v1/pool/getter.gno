@@ -8,52 +8,12 @@ import (
 )
 
 // GetPool retrieves a pool instance based on the provided token paths and fee tier.
-//
-// This function determines the pool path by combining the paths of token0 and token1 along with the fee tier,
-// and then retrieves the corresponding pool instance using that path.
-//
-// Parameters:
-// - token0Path (string): The unique path for token0.
-// - token1Path (string): The unique path for token1.
-// - fee (uint32): The fee tier for the pool, expressed in basis points (e.g., 3000 for 0.3%).
-//
-// Returns:
-// - *Pool: A pointer to the Pool instance corresponding to the provided tokens and fee tier.
-//
-// Notes:
-// - The order of token paths (token0Path and token1Path) matters and should match the pool's configuration.
-// - Ensure that the tokens and fee tier provided are valid and registered in the system.
-//
-// Example:
-// pool := GetPool("gno.land/r/demo/wugnot", "gno.land/r/gnoswap/gns", 3000)
 func GetPool(token0Path, token1Path string, fee uint32) *Pool {
 	poolPath := GetPoolPath(token0Path, token1Path, fee)
 	return mustGetPool(poolPath).Clone()
 }
 
 // GetPoolPath generates a unique pool path string based on the token paths and fee tier.
-//
-// This function ensures that the token paths are registered and sorted in alphabetical order
-// before combining them with the fee tier to create a unique identifier for the pool.
-//
-// Parameters:
-// - token0Path (string): The unique identifier or path for token0.
-// - token1Path (string): The unique identifier or path for token1.
-// - fee (uint32): The fee tier for the pool, expressed in basis points (e.g., 3000 for 0.3%).
-//
-// Returns:
-// - string: A unique pool path string in the format "token0Path:token1Path:fee".
-//
-// Notes:
-//   - The function validates that both `token0Path` and `token1Path` are registered in the system
-//     using `common.MustRegistered`.
-//   - The token paths are sorted alphabetically to ensure consistent pool path generation, regardless
-//     of the input order.
-//   - This sorting guarantees that the pool path remains deterministic for the same pair of tokens and fee.
-//
-// Example:
-// poolPath := GetPoolPath("path/to/token0", "path/to/token1", 3000)
-// // Output: "path/to/token0:path/to/token1:3000"
 func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 	// All the token paths in the pool are sorted in alphabetical order.
 	if strings.Compare(token1Path, token0Path) < 0 {
@@ -64,16 +24,6 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 }
 
 // GetFeeAmountTickSpacing retrieves the tick spacing associated with a given fee amount.
-// The tick spacing determines the minimum distance between ticks in the pool.
-//
-// Parameters:
-//   - fee (uint32): The fee tier in basis points (e.g., 3000 for 0.3%)
-//
-// Returns:
-//   - int32: The tick spacing value for the given fee tier
-//
-// Panics:
-//   - If the fee amount is not registered in feeAmountTickSpacing
 func GetFeeAmountTickSpacing(fee uint32) (spacing int32) {
 	feeStr := formatUint(fee)
 	iTickSpacing, exist := feeAmountTickSpacing.Get(feeStr)

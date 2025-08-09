@@ -23,8 +23,8 @@ var validCallerRoles = []string{
 }
 
 // isValidCaller checks if the caller address has permission to modify referral data.
-// Only addresses with specific roles (governance, router, position manager, staker, etc.)
-// defined in validCallerRoles are allowed to register, update, or remove referrals.
+// Only addresses with specific roles defined in validCallerRoles are authorized.
+// Returns an error if the caller is not authorized.
 func isValidCaller(caller std.Address) error {
 	roleAddresses := access.GetRoleAddresses()
 

@@ -34,12 +34,12 @@ var haltLevelDescriptions = map[HaltLevel]string{
 // HaltLevel represents current system halt state.
 type HaltLevel string
 
-// String returns string representation of halt level.
+// String returns the string representation of the halt level.
 func (h HaltLevel) String() string {
 	return string(h)
 }
 
-// Description returns human-readable description of halt level.
+// Description returns a human-readable description of the halt level.
 func (h HaltLevel) Description() string {
 	desc, ok := haltLevelDescriptions[h]
 	if !ok {
@@ -49,7 +49,7 @@ func (h HaltLevel) Description() string {
 	return desc
 }
 
-// IsValid checks if halt level is valid.
+// IsValid returns true if the halt level is valid.
 func (h HaltLevel) IsValid() bool {
 	switch h {
 	case HaltLevelNone, HaltLevelSafeMode, HaltLevelEmergency, HaltLevelComplete:
@@ -62,12 +62,12 @@ func (h HaltLevel) IsValid() bool {
 // OpType represents operation types that can be controlled independently.
 type OpType string
 
-// String returns string representation of operation type.
+// String returns the string representation of the operation type.
 func (o OpType) String() string {
 	return string(o)
 }
 
-// IsValid checks if operation type is valid.
+// IsValid returns true if the operation type is valid.
 func (o OpType) IsValid() bool {
 	switch o {
 	case OpTypePool,

@@ -15,7 +15,7 @@ func init() {
 	initRbac()
 }
 
-// initRbac initializes RBAC manager with default admin and roles.
+// initRbac initializes RBAC manager with default admin and role mappings.
 func initRbac() {
 	manager = prbac.NewRBACWithAddress(ADMIN)
 
@@ -27,8 +27,8 @@ func initRbac() {
 	updateAccessRoleAddresses(manager.GetRoleAddresses())
 }
 
-// RegisterRole registers new role in RBAC system.
-// Only callable by admin.
+// RegisterRole registers roleName in the RBAC system.
+// Only callable by admin. Panics if caller is not admin or roleName is invalid.
 func RegisterRole(cur realm, roleName string) {
 	caller := std.PreviousRealm().Address()
 	assertIsAdmin(caller)
@@ -48,8 +48,8 @@ func RegisterRole(cur realm, roleName string) {
 	emitRegisterRoleEvent(roleName)
 }
 
-// RemoveRole removes role from RBAC system.
-// Only callable by admin.
+// RemoveRole removes roleName from the RBAC system.
+// Only callable by admin. Panics if caller is not admin or roleName is invalid.
 func RemoveRole(cur realm, roleName string) {
 	caller := std.PreviousRealm().Address()
 	assertIsAdmin(caller)
@@ -69,13 +69,13 @@ func RemoveRole(cur realm, roleName string) {
 	emitRemoveRoleEvent(roleName)
 }
 
-// GetRoleAddress returns address for role.
+// GetRoleAddress returns the address assigned to roleName.
 func GetRoleAddress(roleName string) (std.Address, error) {
 	return manager.GetRoleAddress(roleName)
 }
 
-// UpdateRoleAddress updates address for role.
-// Only callable by admin.
+// UpdateRoleAddress updates the address assigned to roleName to addr.
+// Only callable by admin. Panics if caller is not admin or update fails.
 func UpdateRoleAddress(cur realm, roleName string, addr std.Address) {
 	caller := std.PreviousRealm().Address()
 	assertIsAdmin(caller)
@@ -93,7 +93,7 @@ func UpdateRoleAddress(cur realm, roleName string, addr std.Address) {
 	emitUpdateRoleAddressEvent(roleName, addr)
 }
 
-// updateAccessRoleAddresses syncs role addresses to access package.
+// updateAccessRoleAddresses synchronizes role addresses with the access package.
 func updateAccessRoleAddresses(newRoleAddresses map[string]std.Address) {
 	access.SetRoleAddresses(cross, newRoleAddresses)
 }

@@ -14,28 +14,11 @@ import (
 )
 
 // GetOrigPkgAddr returns the original package address.
-// In staker contract, original package address is the staker address.
 func GetOrigPkgAddr() std.Address {
 	return stakerAddr
 }
 
-// poolPathAlign ensures that a pool path is formatted with tokens in lexicographical order.
-//
-// This function takes a pool path string and splits it into three components:
-// - Token0 address
-// - Token1 address
-// - Fee tier
-// It ensures that the tokens are ordered lexicographically (Token0 < Token1) and reconstructs
-// the pool path in the correct order.
-//
-// Parameters:
-// - poolPath (string): The input pool path string in the format "Token0:Token1:Fee".
-//
-// Returns:
-// - string: A lexicographically ordered pool path string.
-//
-// Panics:
-// - If the input `poolPath` is invalid or cannot be split into exactly three parts.
+// poolPathAlign ensures pool path tokens are in lexicographical order.
 func poolPathAlign(poolPath string) string {
 	pToken0, pToken1, fee := poolPathDivide(poolPath)
 
@@ -46,24 +29,7 @@ func poolPathAlign(poolPath string) string {
 	return ufmt.Sprintf("%s:%s:%s", pToken1, pToken0, fee)
 }
 
-// poolPathDivide splits a pool path string into its components.
-//
-// The function takes a pool path string in the format "Token0:Token1:Fee",
-// splits it using the `:` separator, and returns the three components:
-// - `pToken0`: The first token address.
-// - `pToken1`: The second token address.
-// - `fee`: The fee tier.
-//
-// Parameters:
-// - poolPath (string): The input pool path string.
-//
-// Returns:
-// - string: `pToken0` - The first token address.
-// - string: `pToken1` - The second token address.
-// - string: `fee` - The fee tier.
-//
-// Panics:
-// - If the `poolPath` cannot be split into exactly three components.
+// poolPathDivide splits a pool path into token addresses and fee tier.
 func poolPathDivide(poolPath string) (string, string, string) {
 	res := strings.Split(poolPath, ":")
 	if len(res) != 3 {
@@ -74,13 +40,7 @@ func poolPathDivide(poolPath string) (string, string, string) {
 	return pToken0, pToken1, fee
 }
 
-// positionIdFrom converts uint64 to grc721.TokenID.
-//
-// Input:
-//   - id: the uint64 to convert
-//
-// Output:
-//   - grc721.TokenID: the converted token ID
+// positionIdFrom converts various types to grc721.TokenID.
 func positionIdFrom(positionId any) grc721.TokenID {
 	if positionId == nil {
 		panic(makeErrorWithDetails(
@@ -106,7 +66,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 	}
 }
 
-// max returns the larger of x or y.
+// max returns the larger of two int64 values.
 func max(x, y int64) int64 {
 	if x > y {
 		return x
@@ -114,7 +74,7 @@ func max(x, y int64) int64 {
 	return y
 }
 
-// min returns the smaller of x or y.
+// min returns the smaller of two uint64 values.
 func min(x, y uint64) uint64 {
 	if x < y {
 		return x
@@ -122,7 +82,7 @@ func min(x, y uint64) uint64 {
 	return y
 }
 
-// contains checks if a string is present in a slice of strings.
+// contains checks if a string exists in a slice.
 func contains(slice []string, item string) bool {
 	// We can use strings.EqualFold here, but this function should be case-sensitive.
 	// So, it is better to compare strings directly.
@@ -134,6 +94,7 @@ func contains(slice []string, item string) bool {
 	return false
 }
 
+// formatUint formats an unsigned integer to string.
 func formatUint(v any) string {
 	switch v := v.(type) {
 	case uint8:
@@ -147,6 +108,7 @@ func formatUint(v any) string {
 	}
 }
 
+// formatAnyInt formats a signed integer to string.
 func formatAnyInt(v any) string {
 	switch v := v.(type) {
 	case int32:
@@ -160,10 +122,12 @@ func formatAnyInt(v any) string {
 	}
 }
 
+// formatBool formats a boolean to string.
 func formatBool(v bool) string {
 	return strconv.FormatBool(v)
 }
 
+// getRoleAddress retrieves the address for a system role.
 func getRoleAddress(role prbac.SystemRole) std.Address {
 	addr, exists := access.GetAddress(role.String())
 	if !exists {

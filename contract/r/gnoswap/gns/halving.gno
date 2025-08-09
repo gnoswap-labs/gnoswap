@@ -1,6 +1,7 @@
 package gns
 
 // HalvingData stores emission data for each halving period.
+// Contains timestamps, amounts, and rates for the 12-year emission schedule.
 type HalvingData struct {
 	startTimestamps []int64
 	endTimestamps   []int64
@@ -10,6 +11,8 @@ type HalvingData struct {
 	accumAmount     []int64
 	amountPerSecond []int64
 }
+// getStartTimestamp returns the start timestamp for the specified halving year.
+// Returns 0 if year is invalid.
 func (h *HalvingData) getStartTimestamp(year int64) int64 {
 	if validYear(year) != nil {
 		return 0
@@ -18,6 +21,8 @@ func (h *HalvingData) getStartTimestamp(year int64) int64 {
 	return h.startTimestamps[year-1]
 }
 
+// getEndTimestamp returns the end timestamp for the specified halving year.
+// Returns 0 if year is invalid.
 func (h *HalvingData) getEndTimestamp(year int64) int64 {
 	if validYear(year) != nil {
 		return 0
@@ -26,6 +31,8 @@ func (h *HalvingData) getEndTimestamp(year int64) int64 {
 	return h.endTimestamps[year-1]
 }
 
+// getMaxAmount returns the maximum emission amount for the specified halving year.
+// Returns 0 if year is invalid.
 func (h *HalvingData) getMaxAmount(year int64) int64 {
 	if validYear(year) != nil {
 		return 0
@@ -34,6 +41,7 @@ func (h *HalvingData) getMaxAmount(year int64) int64 {
 	return h.maxAmount[year-1]
 }
 
+// getMintedAmount returns the amount already minted for the specified halving year.
 func (h *HalvingData) getMintedAmount(year int64) int64 {
 	if validYear(year) != nil {
 		return 0
@@ -41,6 +49,7 @@ func (h *HalvingData) getMintedAmount(year int64) int64 {
 	return h.mintedAmount[year-1]
 }
 
+// getAccumAmount returns the accumulated emission amount for the specified halving year.
 func (h *HalvingData) getAccumAmount(year int64) int64 {
 	if validYear(year) != nil {
 		return 0
@@ -48,6 +57,7 @@ func (h *HalvingData) getAccumAmount(year int64) int64 {
 	return h.accumAmount[year-1]
 }
 
+// getLeftAmount returns the remaining emission amount for the specified halving year.
 func (h *HalvingData) getLeftAmount(year int64) int64 {
 	if validYear(year) != nil {
 		return 0
@@ -55,6 +65,8 @@ func (h *HalvingData) getLeftAmount(year int64) int64 {
 	return h.leftAmount[year-1]
 }
 
+// getAmountPerSecond returns the emission rate per second for the specified halving year.
+// Returns 0 if year is invalid.
 func (h *HalvingData) getAmountPerSecond(year int64) int64 {
 	if validYear(year) != nil {
 		return 0
@@ -62,6 +74,8 @@ func (h *HalvingData) getAmountPerSecond(year int64) int64 {
 	return h.amountPerSecond[year-1]
 }
 
+// setStartTimestamp sets the start timestamp for the specified halving year.
+// Returns error if year is invalid.
 func (h *HalvingData) setStartTimestamp(year int64, timestamp int64) error {
 	err := validYear(year)
 	if err != nil {
@@ -73,6 +87,7 @@ func (h *HalvingData) setStartTimestamp(year int64, timestamp int64) error {
 	return nil
 }
 
+// setEndTimestamp sets the end timestamp for the specified halving year.
 func (h *HalvingData) setEndTimestamp(year int64, timestamp int64) error {
 	err := validYear(year)
 	if err != nil {
@@ -84,6 +99,7 @@ func (h *HalvingData) setEndTimestamp(year int64, timestamp int64) error {
 	return nil
 }
 
+// setMaxAmount sets the maximum emission amount for the specified halving year.
 func (h *HalvingData) setMaxAmount(year, amount int64) error {
 	err := validYear(year)
 	if err != nil {
@@ -95,6 +111,7 @@ func (h *HalvingData) setMaxAmount(year, amount int64) error {
 	return nil
 }
 
+// setMintedAmount sets the minted amount for the specified halving year.
 func (h *HalvingData) setMintedAmount(year, amount int64) error {
 	err := validYear(year)
 	if err != nil {
@@ -106,6 +123,7 @@ func (h *HalvingData) setMintedAmount(year, amount int64) error {
 	return nil
 }
 
+// setAccumAmount sets the accumulated amount for the specified halving year.
 func (h *HalvingData) setAccumAmount(year, amount int64) error {
 	err := validYear(year)
 	if err != nil {
@@ -117,6 +135,7 @@ func (h *HalvingData) setAccumAmount(year, amount int64) error {
 	return nil
 }
 
+// setLeftAmount sets the remaining amount for the specified halving year.
 func (h *HalvingData) setLeftAmount(year, amount int64) error {
 	err := validYear(year)
 	if err != nil {
@@ -128,6 +147,7 @@ func (h *HalvingData) setLeftAmount(year, amount int64) error {
 	return nil
 }
 
+// addAccumAmount adds to the accumulated amount for the specified halving year.
 func (h *HalvingData) addAccumAmount(year, amount int64) error {
 	err := validYear(year)
 	if err != nil {
@@ -139,6 +159,8 @@ func (h *HalvingData) addAccumAmount(year, amount int64) error {
 	return nil
 }
 
+// setAmountPerSecond sets the emission rate per second for the specified halving year.
+// Returns error if year is invalid.
 func (h *HalvingData) setAmountPerSecond(year, amount int64) error {
 	err := validYear(year)
 	if err != nil {
@@ -150,6 +172,8 @@ func (h *HalvingData) setAmountPerSecond(year, amount int64) error {
 	return nil
 }
 
+// NewHalvingData creates a new HalvingData instance with emission schedule.
+// Initializes 12 years of halving periods with timestamps, amounts, and rates based on startTimestamp.
 func NewHalvingData(startTimestamp int64) *HalvingData {
 	halvingData := &HalvingData{
 		startTimestamps: make([]int64, HALVING_END_YEAR),

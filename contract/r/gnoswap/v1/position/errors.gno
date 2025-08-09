@@ -29,17 +29,11 @@ var (
 )
 
 // newErrorWithDetail appends additional context or details to an existing error message.
-//
-// Parameters:
-//   - err: The original error (error).
-//   - detail: Additional context or detail to append to the error message (string).
-//
-// Returns:
-//   - string: The combined error message in the format "<original_error> || <detail>".
 func newErrorWithDetail(err error, detail string) string {
 	return ufmt.Errorf("%s || %s", err.Error(), detail).Error()
 }
 
+// makeErrorWithDetails creates an error with additional context.
 func makeErrorWithDetails(err error, details string) error {
 	return ufmt.Errorf("%s || %s", err.Error(), details)
 }

@@ -14,8 +14,8 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 )
 
-// CreateExternalIncentive creates an incentive program for a pool.
-// ref: https://docs.gnoswap.io/contracts/staker/staker.gno#createexternalincentive
+// CreateExternalIncentive creates an external incentive program for a pool.
+// Only users can call this function.
 func CreateExternalIncentive(
 	cur realm,
 	targetPoolPath string,
@@ -98,8 +98,8 @@ func CreateExternalIncentive(
 	)
 }
 
-// EndExternalIncentive ends the external incentive and refunds the remaining reward
-// ref: https://docs.gnoswap.io/contracts/staker/staker.gno#endexternalincentive
+// EndExternalIncentive ends an external incentive and refunds remaining rewards.
+// Can be called by refundee or admin.
 func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 	halt.AssertIsNotHaltedStaker()
 	halt.AssertIsNotHaltedWithdraw()
@@ -159,6 +159,7 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 	)
 }
 
+// endExternalIncentive processes the end of an external incentive program.
 func endExternalIncentive(pool *Pool, incentiveId string, caller std.Address, currentTime int64) (*ExternalIncentive, int64, error) {
 	incentive, exists := pool.incentives.Get(incentiveId)
 	if !exists {
