@@ -23,11 +23,13 @@ var (
 	errSameTokenSwap          = errors.New("[GNOSWAP-ROUTER-014] cannot swap same token")
 )
 
+// addDetailToError adds detail to an error message.
 func addDetailToError(err error, detail string) string {
 	finalErr := ufmt.Errorf("%s || %s", err.Error(), detail)
 	return finalErr.Error()
 }
 
+// makeErrorWithDetails creates an error with additional context.
 func makeErrorWithDetails(err error, detail string) error {
 	return ufmt.Errorf("%s || %s", err.Error(), detail)
 }

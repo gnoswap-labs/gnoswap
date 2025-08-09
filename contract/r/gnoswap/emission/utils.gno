@@ -6,6 +6,8 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
+// formatUint converts various unsigned integer types to string representation.
+// Panics if the type is not supported.
 func formatUint(v any) string {
 	switch v := v.(type) {
 	case uint8:
@@ -19,6 +21,8 @@ func formatUint(v any) string {
 	}
 }
 
+// formatInt converts various signed integer types to string representation.
+// Panics if the type is not supported.
 func formatInt(v any) string {
 	switch v := v.(type) {
 	case int32:

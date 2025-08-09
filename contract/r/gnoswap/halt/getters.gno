@@ -4,11 +4,9 @@ import (
 	"gno.land/p/demo/json"
 )
 
-// Checks if any of the given operation types are halted
-// Returns true if any operation type is not enabled in the halt configuration
-// Returns error if an invalid operation type is provided
+// IsHalted returns true if any of the specified operation types are halted.
+// Returns error if any operation type is invalid.
 func IsHalted(opTypes ...OpType) (bool, error) {
-	// Validate and check halt status for each operation
 	for _, op := range opTypes {
 		if !op.IsValid() {
 			return true, makeErrorWithDetails(errInvalidOpType, op.String())
@@ -20,23 +18,19 @@ func IsHalted(opTypes ...OpType) (bool, error) {
 		}
 
 		if halted {
-			return true, nil // Operation is halted
+			return true, nil
 		}
 	}
 
-	// No operations are halted
 	return false, nil
 }
 
-// GetHaltConfig returns a deep copy of the current halt configuration
-// This ensures that external modifications cannot affect the internal state
+// GetHaltConfig returns a copy of the current halt configuration.
 func GetHaltConfig() HaltConfig {
 	return haltConfig.Clone()
 }
 
-// GetHaltConfigJson returns a JSON string representation of the current halt configuration
-// The returned JSON object contains operation types as keys and their enabled status as boolean values
-// Example: {"status": {"pool": true, "position": false, ...}}
+// GetHaltConfigJson returns the halt configuration as a JSON string.
 func GetHaltConfigJson() string {
 	haltConfig := GetHaltConfig()
 
@@ -51,80 +45,68 @@ func GetHaltConfigJson() string {
 	return objectNode.String()
 }
 
-// Checks if pool operations are currently halted
-// Returns true if halted, panics if operation type is invalid
+// IsHaltedPool returns true if pool operations are halted.
 func IsHaltedPool() bool {
 	return isHaltedOperation(OpTypePool)
 }
 
-// Checks if position operations are currently halted
-// Returns true if halted, panics if operation type is invalid
+// IsHaltedPosition returns true if position operations are halted.
 func IsHaltedPosition() bool {
 	return isHaltedOperation(OpTypePosition)
 }
 
-// Checks if protocol fee operations are currently halted
-// Returns true if halted, panics if operation type is invalid
+// IsHaltedProtocolFee returns true if protocol fee operations are halted.
 func IsHaltedProtocolFee() bool {
 	return isHaltedOperation(OpTypeProtocolFee)
 }
 
-// Checks if router operations are currently halted
-// Returns true if halted, panics if operation type is invalid
+// IsHaltedRouter returns true if router operations are halted.
 func IsHaltedRouter() bool {
 	return isHaltedOperation(OpTypeRouter)
 }
 
-// Checks if staker operations are currently halted
-// Returns true if halted, panics if operation type is invalid
+// IsHaltedStaker returns true if staker operations are halted.
 func IsHaltedStaker() bool {
 	return isHaltedOperation(OpTypeStaker)
 }
 
-// Checks if launchpad operations are currently halted
-// Returns true if halted, panics if operation type is invalid
+// IsHaltedLaunchpad returns true if launchpad operations are halted.
 func IsHaltedLaunchpad() bool {
 	return isHaltedOperation(OpTypeLaunchpad)
 }
 
-// Checks if governance operations are currently halted
-// Returns true if halted, panics if operation type is invalid
+// IsHaltedGovernance returns true if governance operations are halted.
 func IsHaltedGovernance() bool {
 	return isHaltedOperation(OpTypeGovernance)
 }
 
-// Checks if governance staker operations are currently halted
-// Returns true if halted, panics if operation type is invalid
+// IsHaltedGovStaker returns true if governance staker operations are halted.
 func IsHaltedGovStaker() bool {
 	return isHaltedOperation(OpTypeGovStaker)
 }
 
-// Checks if xGNS operations are currently halted
-// Returns true if halted, panics if operation type is invalid
+// IsHaltedXGns returns true if xGNS operations are halted.
 func IsHaltedXGns() bool {
 	return isHaltedOperation(OpTypeXGns)
 }
 
-// Checks if community pool operations are currently halted
-// Returns true if halted, panics if operation type is invalid
+// IsHaltedCommunityPool returns true if community pool operations are halted.
 func IsHaltedCommunityPool() bool {
 	return isHaltedOperation(OpTypeCommunityPool)
 }
 
-// Checks if emission operations are currently halted
-// Returns true if halted, panics if operation type is invalid
+// IsHaltedEmission returns true if emission operations are halted.
 func IsHaltedEmission() bool {
 	return isHaltedOperation(OpTypeEmission)
 }
 
-// Checks if withdraw operations are currently halted
-// Returns true if halted, panics if operation type is invalid
+// IsHaltedWithdraw returns true if withdraw operations are halted.
 func IsHaltedWithdraw() bool {
 	return isHaltedOperation(OpTypeWithdraw)
 }
 
-// Helper function to check halt status with panic on invalid operation type
-// Returns true if operation is halted
+// isHaltedOperation returns halt status for the specified operation type.
+// Panics if operation type is invalid.
 func isHaltedOperation(op OpType) bool {
 	halted, err := haltConfig.get(op)
 	if err != nil {

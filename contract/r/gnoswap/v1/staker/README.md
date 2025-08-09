@@ -1,49 +1,22 @@
 # Staker
 
-## Overview
-
-The **Staker** contract manages LP token staking and reward distribution in GnoSwap. It incentivizes liquidity provision by enabling users to stake LP tokens and earn rewards through both protocol-native and external incentive programs.
+Manages LP token staking and reward distribution with both protocol and user-created incentives.
 
 ## Key Features
 
-- **LP Token Staking**: Users can stake LP tokens to earn rewards.
-- **[Warm-up Periods](https://docs.gnoswap.io/references/warm-up-periods)**: A dynamic multiplier reward mechanism applied to staked positions based on its total duration staked in range.
-- **Reward Collection**: Stakers can claim accumulated rewards from their staked positions.
-- **Unstaking Mechanism**: Users can withdraw their staked LP tokens and collect all pending rewards at any time.
-- **External Incentive Creation**: Users can create additional reward incentives for specific liquidity pools.
-- **External Incentive Termination**: The creator or an admin can end an external incentive and refund remaining rewards.
-- **Support for Native and Wrapped Tokens**: Handles rewards in both `GNOT` and `WUGNOT`.
-- **Protocol and User-Defined Incentives**: Supports both internal (protocol-native) and external (user-created) incentives.
-- **Flexible Reward Distribution**: Implements various reward mechanisms tailored to different incentive types.
-- **Security and Safety Checks**: Ensures proper staking, unstaking, and reward distribution.
+- **LP Token Staking**: Stake to earn rewards
+- **[Warm-up Periods](https://docs.gnoswap.io/references/warm-up-periods)**: Dynamic reward multiplier based on duration staked in range
+- **Dual Incentives**: Protocol (internal) and user-created (external) rewards
+- **Flexible Operations**: Stake, unstake, collect rewards anytime
+- **Native Token Support**: GNOT and WUGNOT
 
-## Functionality
+## Core Functions
 
-1. **Stake LP Tokens**
-   - Users deposit LP tokens into the staking contract.
-   - Staked tokens qualify for reward accumulation based on the incentive model.
-
-2. **Collect Rewards**
-   - Users claim earned rewards at any time.
-   - Rewards are distributed proportionally to staked amounts and duration.
-
-3. **Unstake LP Tokens**
-   - Users can withdraw their staked LP tokens at any time.
-   - All pending rewards are collected upon unstaking.
-
-4. **Create External Incentives**
-   - Users can allocate additional rewards to encourage liquidity provision in specific pools.
-   - External incentives can be configured with custom reward parameters.
-
-5. **End External Incentives**
-   - Incentive creators or governance admins can terminate an incentive.
-   - Any remaining unclaimed rewards are refunded to the creator.
-
-## Importance in GnoSwap Tokenomics
-
-The **Staker** is a crucial component of GnoSwap’s tokenomics, encouraging long-term liquidity provision and community-driven reward programs. By allowing both protocol-driven and user-created incentives, it enhances overall ecosystem sustainability and growth.
-
-For more details, visit [GnoSwap Docs](https://docs.gnoswap.io/contracts/staker/staker.gno).
+1. **Stake**: Deposit LP tokens to earn rewards
+2. **Collect**: Claim rewards proportional to stake and duration
+3. **Unstake**: Withdraw LP tokens and auto-collect rewards
+4. **Create Incentives**: Users add custom rewards for specific pools
+5. **End Incentives**: Terminate and refund unused rewards
 
 # Staker Reward
 
@@ -51,13 +24,24 @@ For more details, visit [GnoSwap Docs](https://docs.gnoswap.io/contracts/staker/
 
 The **Staker** module handles the distribution of both **internal** (GNS emission) and **external** (user-provided) rewards to stakers:
 
-- **[Internal rewards](https://docs.gnoswap.io/references/warm-up-periods)** (GNS emission) are allocated to “tiered” pools (tiers 1, 2, and 3). First, emission is split across the tiers according to the **TierRatio**. Then, within each tier, the emission is shared evenly among member pools and finally distributed proportionally to each staked position’s in-range liquidity.
+- **[Internal rewards](https://docs.gnoswap.io/references/warm-up-periods)** (GNS emission) are allocated to "tiered" pools (tiers 1, 2, and 3). First, emission is split across the tiers according to the **TierRatio**. Then, within each tier, the emission is shared evenly among member pools and finally distributed proportionally to each staked position's in-range liquidity.
 
 - **[External rewards](https://docs.gnoswap.io/references/warm-up-periods)** (user-provided incentives) can be created for specific pools. Each external incentive emits a constant reward per block. Any user with in-range staked liquidity on that pool can claim a share of the reward, proportional to their staked liquidity.
 
 - If, during a given block, no staked liquidity is in range, the internal emission is diverted to the community pool, and any external reward for that block is returned to the incentive creator.
 
 - Every staked position has a designated [warmup schedule](https://docs.gnoswap.io/references/warm-up-periods). As it remains staked, the position progresses through multiple warmup periods. In each warmup period, a certain percentage of the reward is awarded to the position, and the remainder goes either to the community pool (for internal incentives) or is returned to the incentive creator (for external incentives).
+
+## Notes
+
+### Configurable Parameters
+The following parameters can be modified:
+- **Deposit GNS Amount**: 1,000 GNS (default) - minimum GNS required for deposits
+- **Minimum Reward Amount**: 1,000 GNS (default) - minimum reward amount for incentives
+- **Unstaking Fee**: 1% (default) - fee charged when unstaking positions
+- **Pool Tier**: Tier assignments for pools (1, 2, or 3)
+- **Warmup Parameters**: Percentage and duration for reward vesting
+- **External Token Whitelist**: Tokens allowed for external incentives
 
 ## Main Reward Calculation Logic
 

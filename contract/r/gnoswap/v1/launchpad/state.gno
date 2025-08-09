@@ -93,18 +93,12 @@ func getDeposit(depositID string) (*Deposit, error) {
 }
 
 // getCurrentDepositID returns the current deposit ID (last assigned).
-//
-// Returns:
-//   - string: current deposit ID
 func getCurrentDepositID() string {
 	return formatInt(depositCounter.Get())
 }
 
 // nextDepositID increments and returns the next unique deposit ID.
 // This is used when creating new deposits.
-//
-// Returns:
-//   - string: next unique deposit ID
 func nextDepositID() string {
 	return formatInt(depositCounter.next())
 }

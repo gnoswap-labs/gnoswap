@@ -32,6 +32,7 @@ type RouterOperation interface {
 	Process() (*SwapResult, error)
 }
 
+// executeSwapOperation validates and processes a swap operation.
 func executeSwapOperation(op RouterOperation) (*SwapResult, error) {
 	if err := op.Validate(); err != nil {
 		return nil, err
@@ -63,6 +64,7 @@ type baseSwapOperation struct {
 	amountSpecified         *i256.Int
 }
 
+// handleNativeTokenWrapping handles wrapping and unwrapping of native tokens.
 func (op *baseSwapOperation) handleNativeTokenWrapping(
 	inputToken string,
 	outputToken string,
@@ -101,6 +103,7 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 	return nil
 }
 
+// validateRouteQuote validates and converts a route quote to swap amount.
 func (op *baseSwapOperation) validateRouteQuote(quote string, i int) (*i256.Int, error) {
 	qt, err := strconv.Atoi(quote)
 	if err != nil {
@@ -114,6 +117,7 @@ func (op *baseSwapOperation) validateRouteQuote(quote string, i int) (*i256.Int,
 	return toSwap, nil
 }
 
+// processRoutes processes all swap routes and returns total amounts.
 func (op *baseSwapOperation) processRoutes(swapType SwapType) (*u256.Uint, *u256.Uint, error) {
 	zero := u256.Zero()
 	resultAmountIn, resultAmountOut := zero, zero
@@ -150,6 +154,7 @@ func (op *baseSwapOperation) processRoutes(swapType SwapType) (*u256.Uint, *u256
 	return resultAmountIn, resultAmountOut, nil
 }
 
+// processRoute processes a single route with specified swap amount.
 func (op *baseSwapOperation) processRoute(
 	route string,
 	toSwap *i256.Int,
@@ -172,7 +177,7 @@ func (op *baseSwapOperation) processRoute(
 	return amountIn, amountOut, nil
 }
 
-// handleSingleSwap handles a single swap operation.
+// handleSingleSwap executes a single-hop swap with the specified amount.
 func handleSingleSwap(route string, amountSpecified *i256.Int, withUnwrap bool) (*u256.Uint, *u256.Uint) {
 	input, output, fee := getDataForSinglePath(route)
 	singleParams := SingleSwapParams{
@@ -186,6 +191,7 @@ func handleSingleSwap(route string, amountSpecified *i256.Int, withUnwrap bool) 
 	return singleSwap(&singleParams)
 }
 
+// handleMultiSwap processes multi-hop swaps across multiple pools.
 func handleMultiSwap(
 	swapType SwapType,
 	route string,
@@ -221,11 +227,12 @@ type SwapRouteParams struct {
 	limitAmount string // amountOutMin for ExactIn, amountInMax for ExactOut
 }
 
+// IsUnwrap checks if the swap output is native token.
 func (p *SwapRouteParams) IsUnwrap() bool {
 	return p.outputToken == gnot
 }
 
-// createSwapOperation creates the appropriate swap operation based on swap type
+// createSwapOperation creates the appropriate swap operation based on swap type.
 func createSwapOperation(params SwapRouteParams) (RouterOperation, error) {
 	baseParams := BaseSwapParams{
 		InputToken:  params.inputToken,
@@ -247,7 +254,7 @@ func createSwapOperation(params SwapRouteParams) (RouterOperation, error) {
 	}
 }
 
-// extractSwapOperationData extracts common data from swap operation
+// extractSwapOperationData extracts common data from swap operation.
 func extractSwapOperationData(op RouterOperation) (int64, int64, error) {
 	var baseOp *baseSwapOperation
 	switch typedOp := op.(type) {
@@ -262,8 +269,7 @@ func extractSwapOperationData(op RouterOperation) (int64, int64, error) {
 	return baseOp.userBeforeWugnotBalance, baseOp.userWrappedWugnot, nil
 }
 
-// commonSwapRoute handles the common logic for both ExactIn and ExactOut swaps
-// Returns inputAmount, outputAmount, and actualReferrer
+// commonSwapRoute handles the common logic for both ExactIn and ExactOut swaps.
 func commonSwapRoute(params SwapRouteParams) (string, string, error) {
 	op, err := createSwapOperation(params)
 	if err != nil {

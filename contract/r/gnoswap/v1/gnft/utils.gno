@@ -23,19 +23,11 @@ func getPositionAddress() std.Address {
 }
 
 // tid converts uint64 to grc721.TokenID.
-//
-// Input:
-//   - id: the uint64 to convert
-//
-// Output:
-//   - grc721.TokenID: the converted token ID
 func tid(id uint64) grc721.TokenID {
 	return grc721.TokenID(ufmt.Sprintf("%d", id))
 }
 
-// generateRandInstnace generates a new random instance
-// Returns:
-//   - *rand.Rand: A new random instance
+// generateRandInstance generates a new random instance.
 func generateRandInstance() *rand.Rand {
 	seed1 := time.Now().Unix() + TotalSupply()
 	seed2 := time.Now().UnixNano() + TotalSupply()
@@ -43,16 +35,14 @@ func generateRandInstance() *rand.Rand {
 	return rand.New(pcg)
 }
 
-// checkErr helper function to panic if an error occurs
-// Parameters:
-//   - err: The error to check
+// checkErr panics if an error occurs.
 func checkErr(err error) {
 	if err != nil {
 		panic(err.Error())
 	}
 }
 
-// checkTransferErr wraps transfer errors with more specific context
+// checkTransferErr wraps transfer errors with more specific context.
 func checkTransferErr(err error, from, to std.Address, tid grc721.TokenID) {
 	if err == nil {
 		return
@@ -96,7 +86,7 @@ func checkTransferErr(err error, from, to std.Address, tid grc721.TokenID) {
 	}
 }
 
-// checkApproveErr wraps approve errors with more specific context
+// checkApproveErr wraps approve errors with more specific context.
 func checkApproveErr(err error, approved std.Address, tid grc721.TokenID) {
 	if err == nil {
 		return

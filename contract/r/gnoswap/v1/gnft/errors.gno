@@ -25,6 +25,7 @@ var (
 	errNotApprovedForAll  = errors.New("[GNOSWAP-GNFT-009] not approved for all tokens")
 )
 
+// makeErrorWithDetails creates an error with additional context.
 func makeErrorWithDetails(err error, details string) error {
 	return ufmt.Errorf("%s || %s", err.Error(), details)
 }

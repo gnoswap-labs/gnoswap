@@ -3,7 +3,7 @@
 // These operations are crucial for manipulating individual bits within a 256-bit unsigned integer.
 package uint256
 
-// Or sets z = x | y and returns z.
+// Or sets z to the bitwise OR of x and y and returns z.
 func (z *Uint) Or(x, y *Uint) *Uint {
 	z.arr[0] = x.arr[0] | y.arr[0]
 	z.arr[1] = x.arr[1] | y.arr[1]
@@ -12,7 +12,7 @@ func (z *Uint) Or(x, y *Uint) *Uint {
 	return z
 }
 
-// And sets z = x & y and returns z.
+// And sets z to the bitwise AND of x and y and returns z.
 func (z *Uint) And(x, y *Uint) *Uint {
 	z.arr[0] = x.arr[0] & y.arr[0]
 	z.arr[1] = x.arr[1] & y.arr[1]
@@ -21,13 +21,13 @@ func (z *Uint) And(x, y *Uint) *Uint {
 	return z
 }
 
-// Not sets z = ^x and returns z.
+// Not sets z to the bitwise NOT of x and returns z.
 func (z *Uint) Not(x *Uint) *Uint {
 	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = ^x.arr[3], ^x.arr[2], ^x.arr[1], ^x.arr[0]
 	return z
 }
 
-// AndNot sets z = x &^ y and returns z.
+// AndNot sets z to x AND NOT y and returns z.
 func (z *Uint) AndNot(x, y *Uint) *Uint {
 	z.arr[0] = x.arr[0] &^ y.arr[0]
 	z.arr[1] = x.arr[1] &^ y.arr[1]
@@ -36,7 +36,7 @@ func (z *Uint) AndNot(x, y *Uint) *Uint {
 	return z
 }
 
-// Xor sets z = x ^ y and returns z.
+// Xor sets z to the bitwise XOR of x and y and returns z.
 func (z *Uint) Xor(x, y *Uint) *Uint {
 	z.arr[0] = x.arr[0] ^ y.arr[0]
 	z.arr[1] = x.arr[1] ^ y.arr[1]
@@ -45,7 +45,8 @@ func (z *Uint) Xor(x, y *Uint) *Uint {
 	return z
 }
 
-// Lsh sets z = x << n and returns z.
+// Lsh sets z to x left-shifted by n bits and returns z.
+// If n >= 256, z is set to 0.
 func (z *Uint) Lsh(x *Uint, n uint) *Uint {
 	// n % 64 == 0
 	if n&0x3f == 0 {
@@ -102,7 +103,8 @@ sh192:
 	return z
 }
 
-// Rsh sets z = x >> n and returns z.
+// Rsh sets z to x right-shifted by n bits and returns z.
+// If n >= 256, z is set to 0.
 func (z *Uint) Rsh(x *Uint, n uint) *Uint {
 	// n % 64 == 0
 	if n&0x3f == 0 {
@@ -159,9 +161,9 @@ sh192:
 	return z
 }
 
-// SRsh (Signed/Arithmetic right shift)
-// considers z to be a signed integer, during right-shift
-// and sets z = x >> n and returns z.
+// SRsh sets z to x arithmetically right-shifted by n bits and returns z.
+// It treats x as a signed two's complement integer. For negative values,
+// high-order bits are filled with 1s instead of 0s. If n >= 256 and x is negative, z is set to all 1s.
 func (z *Uint) SRsh(x *Uint, n uint) *Uint {
 	// If the MSB is 0, SRsh is same as Rsh.
 	if !x.isBitSet(255) {

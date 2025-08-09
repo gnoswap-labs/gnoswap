@@ -8,21 +8,20 @@ import (
 )
 
 const (
-	// MinTimeBetweenUpdates represents minimum duration between operations
+	// MinTimeBetweenUpdates is minimum duration between operations (24 hours).
 	MinTimeBetweenUpdates int64 = 24 * 60 * 60
 )
 
-// keeper implements the `ReferralKeeper` interface using an AVL tree for storage.
+// keeper implements ReferralKeeper using AVL tree storage.
+// It includes rate limiting to prevent abuse.
 type keeper struct {
 	store   *avl.Tree
 	lastOps map[string]int64
 }
 
-// check interface implementation at compile time
 var _ ReferralKeeper = &keeper{}
 
-// NewKeeper creates and returns a new instance of ReferralKeeper.
-// The keeper is initialized with an empty AVL tree for storing referral relationships.
+// NewKeeper creates a new ReferralKeeper instance.
 func NewKeeper() ReferralKeeper {
 	return &keeper{
 		store:   avl.NewTree(),
@@ -30,25 +29,21 @@ func NewKeeper() ReferralKeeper {
 	}
 }
 
-// register implements the `register` method of the `ReferralKeeper` interface.
-// It sets a new referral relationship between the given address and referral address.
+// register creates a new referral relationship between addresses.
+// Caller must have valid permissions.
 func (k *keeper) register(addr, refAddr std.Address) error {
 	return k.setReferral(addr, refAddr, EventTypeRegister)
 }
 
-// update implements the `update` method of the `ReferralKeeper` interface.
-// It updates the referral address for a given address.
+// update modifies an existing referral address.
+// Caller must have valid permissions.
 func (k *keeper) update(addr, newRefAddr std.Address) error {
 	return k.setReferral(addr, newRefAddr, EventTypeUpdate)
 }
 
-// setReferral handles the common logic for registering and updating referrals.
-// It validates the addresses and caller, then stores the referral relationship.
-//
-// Note: The current implementation allows circular references, but since it only manages
-// simple reference relationships, cycles are not a significant issue. However, when introducing
-// a referral-based reward system in the future or adding business logic where cycles could cause problems,
-// it will be necessary to implement validation checks.
+// setReferral handles common logic for registering and updating referrals.
+// Setting refAddr to zero address removes the referral.
+// Rate limiting applies to prevent abuse.
 func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error {
 	if err := isValidCaller(std.PreviousRealm().Address()); err != nil {
 		return err
@@ -63,7 +58,6 @@ func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error 
 
 	if refAddr == zeroAddress {
 		if k.has(addr) {
-			// remove only if the address is already registered
 			_, ok := k.store.Remove(addrStr)
 			if !ok {
 				return ErrNotFound
@@ -88,7 +82,7 @@ func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error 
 	return nil
 }
 
-// validateAddresses checks if the given addresses are valid for referral
+// validateAddresses validates that addresses are properly formatted and not self-referencing.
 func (k *keeper) validateAddresses(addr, refAddr std.Address) error {
 	if !addr.IsValid() || (refAddr != zeroAddress && !refAddr.IsValid()) {
 		return ErrInvalidAddress
@@ -99,8 +93,8 @@ func (k *keeper) validateAddresses(addr, refAddr std.Address) error {
 	return nil
 }
 
-// remove implements the `remove` method of the `ReferralKeeper` interface.
-// It validates the caller and address before removing the referral relationship.
+// remove deletes a referral relationship.
+// Caller must have valid permissions and rate limiting applies.
 func (k *keeper) remove(target std.Address) error {
 	if err := isValidCaller(std.PreviousRealm().Address()); err != nil {
 		return err
@@ -129,15 +123,14 @@ func (k *keeper) remove(target std.Address) error {
 	return nil
 }
 
-// has implements the `has` method of the `ReferralKeeper` interface.
-// It checks if a referral relationship exists for a given address.
+// has returns true if a referral exists for the given address.
 func (k *keeper) has(addr std.Address) bool {
 	_, exists := k.store.Get(addr.String())
 	return exists
 }
 
-// get implements the `get` method of the `ReferralKeeper` interface.
-// It retrieves the referral address for a given address.
+// get retrieves the referral address for a given address.
+// Returns ErrNotFound if no referral exists.
 func (k *keeper) get(addr std.Address) (std.Address, error) {
 	if !addr.IsValid() {
 		return zeroAddress, ErrInvalidAddress
@@ -156,6 +149,7 @@ func (k *keeper) get(addr std.Address) (std.Address, error) {
 	return std.Address(refAddr), nil
 }
 
+// isEmpty returns true if no referrals exist in the store.
 func (k *keeper) isEmpty() bool {
 	empty := true
 	k.store.Iterate("", "", func(key string, value any) bool {
@@ -165,7 +159,8 @@ func (k *keeper) isEmpty() bool {
 	return empty
 }
 
-// checkRateLimit verifies if enough time has passed since the last operation
+// checkRateLimit verifies if enough time has passed since the last operation.
+// Returns ErrTooManyRequests if rate limit is exceeded.
 func (k *keeper) checkRateLimit(addr string) error {
 	now := time.Now().Unix()
 

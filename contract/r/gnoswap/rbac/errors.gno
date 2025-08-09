@@ -14,6 +14,7 @@ var (
 	errInvalidRoleName         = errors.New("invalid role name")
 )
 
+// makeErrorWithDetails combines an error with additional details.
 func makeErrorWithDetails(err error, details string) error {
 	return ufmt.Errorf("%s || %s", err.Error(), details)
 }

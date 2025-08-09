@@ -1,5 +1,5 @@
-# RBAC (Realm)
+# RBAC
 
-This package implements p/rbac at the realm level. In particular, it is used to store states such as permissions for each contract.
+Role-based access control for GnoSwap contracts.
 
-For more information, please refer to the documentation in [p/rbac](contract/p/gnoswap/rbac/README.md).
+Stores permissions and addresses for system roles. Uses [p/rbac](../../../p/gnoswap/rbac) for role definitions.

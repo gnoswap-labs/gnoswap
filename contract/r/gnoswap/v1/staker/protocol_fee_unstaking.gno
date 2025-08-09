@@ -14,26 +14,14 @@ import (
 
 const FEE_PRECISION = 10000
 
+// unstakingFee is the fee charged when unstaking positions.
+// This parameter can be modified through governance.
 var unstakingFee = int64(100) // 1%
 
-// GetUnstakingFee returns current rate of unstaking fee
-// ref: https://docs.gnoswap.io/contracts/staker/protocol_fee_unstaking.gno#getunstakingfee
+// GetUnstakingFee returns the current unstaking fee rate in basis points.
 func GetUnstakingFee() int64 { return unstakingFee }
 
 // handleUnStakingFee calculates and applies the unstaking fee.
-//
-// The function deducts a fee from the unstaked amount based on the `unstakingFee` rate,
-// sends the fee to the protocol fee address, and emits an event indicating the fee transfer.
-//
-// Parameters:
-// - tokenPath (string): The token path (e.g., the contract managing the token).
-// - amount (uint64): The total unstaked amount.
-// - internal (bool): Indicates if the fee is for internal or external use.
-// - positionId (uint64): The token ID associated with the unstaking action.
-// - poolPath (string): The pool path related to the unstaking.
-//
-// Returns:
-// - uint64: The amount after deducting the unstaking fee.
 func handleUnStakingFee(
 	tokenPath string,
 	amount int64,
@@ -66,9 +54,8 @@ func handleUnStakingFee(
 	return amount - feeAmount, feeAmount, nil
 }
 
-// SetUnStakingFee modifies the unstaking fee
-// Only governance contract can execute this function via proposal
-// ref: https://docs.gnoswap.io/contracts/staker/protocol_fee_unstaking.gno#setunstakingfee
+// SetUnStakingFee sets the unstaking fee rate in basis points.
+// Only admin or governance can call this function.
 func SetUnStakingFee(cur realm, fee int64) {
 	halt.AssertIsNotHaltedStaker()
 
@@ -91,6 +78,7 @@ func SetUnStakingFee(cur realm, fee int64) {
 	)
 }
 
+// setUnStakingFee internally updates the unstaking fee.
 func setUnStakingFee(fee int64) {
 	unstakingFee = fee
 }

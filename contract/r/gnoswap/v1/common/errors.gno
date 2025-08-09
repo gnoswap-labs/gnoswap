@@ -19,14 +19,7 @@ var (
 	errIdenticalTicks    = errors.New("[GNOSWAP-COMMON-010] identical ticks")
 )
 
-// newErrorWithDetail appends additional context or details to an existing error message.
-//
-// Parameters:
-//   - err: The original error (error).
-//   - detail: Additional context or detail to append to the error message (string).
-//
-// Returns:
-//   - string: The combined error message in the format "<original_error> || <detail>".
+// newErrorWithDetail creates an error message with additional context in format "<original_error> || <detail>".
 func newErrorWithDetail(err error, detail string) string {
 	return ufmt.Errorf("%s || %s", err.Error(), detail).Error()
 }

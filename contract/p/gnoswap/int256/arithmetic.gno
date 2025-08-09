@@ -2,6 +2,7 @@ package int256
 
 import "gno.land/p/gnoswap/uint256"
 
+// Add sets z to the sum x+y and returns z.
 func (z *Int) Add(x, y *Int) *Int {
 	z = z.initiateAbs()
 
@@ -28,6 +29,8 @@ func (z *Int) Add(x, y *Int) *Int {
 	return z
 }
 
+// AddOverflow sets z to the sum x+y and returns z and whether overflow occurred.
+// Overflow occurs when the result exceeds the int256 range [-2^255, 2^255-1].
 func (z *Int) AddOverflow(x, y *Int) (*Int, bool) {
 	z = z.initiateAbs()
 
@@ -70,7 +73,7 @@ func (z *Int) AddOverflow(x, y *Int) (*Int, bool) {
 	return z, false
 }
 
-// AddUint256 set z to the sum x + y, where y is a uint256, and returns z
+// AddUint256 sets z to the sum x+y, where y is a uint256, and returns z.
 func (z *Int) AddUint256(x *Int, y *uint256.Uint) *Int {
 	z = z.initiateAbs()
 
@@ -89,7 +92,7 @@ func (z *Int) AddUint256(x *Int, y *uint256.Uint) *Int {
 	return z
 }
 
-// Sets z to the sum x + y, where z and x are uint256s and y is an int256.
+// AddDelta adds a signed int256 value y to an unsigned uint256 value x and stores the result in z.
 func AddDelta(z, x *uint256.Uint, y *Int) {
 	if y.neg {
 		z.Sub(x, y.abs)
@@ -98,7 +101,8 @@ func AddDelta(z, x *uint256.Uint, y *Int) {
 	}
 }
 
-// Sets z to the sum x + y, where z and x are uint256s and y is an int256.
+// AddDeltaOverflow adds a signed int256 value y to an unsigned uint256 value x, stores the result in z,
+// and returns true if overflow occurs.
 func AddDeltaOverflow(z, x *uint256.Uint, y *Int) bool {
 	var overflow bool
 	if y.neg {
@@ -135,7 +139,7 @@ func (z *Int) Sub(x, y *Int) *Int {
 	return z
 }
 
-// SubUint256 set z to the difference x - y, where y is a uint256, and returns z
+// SubUint256 sets z to the difference x-y, where y is a uint256, and returns z.
 func (z *Int) SubUint256(x *Int, y *uint256.Uint) *Int {
 	z = z.initiateAbs()
 
@@ -154,10 +158,9 @@ func (z *Int) SubUint256(x *Int, y *uint256.Uint) *Int {
 	return z
 }
 
-// SubOverflow returns z = x - y, and true if overflow occurs.
-//
-// The overflow can be happen when subtracting a positive number from
-// a minimum or a negative number from a maximum.
+// SubOverflow sets z to the difference x-y and returns z and whether overflow occurred.
+// Overflow occurs when subtracting a positive number from the minimum int256 value
+// or a negative number from the maximum int256 value.
 func (z *Int) SubOverflow(x, y *Int) (*Int, bool) {
 	z = z.initiateAbs()
 
@@ -178,7 +181,7 @@ func (z *Int) Mul(x, y *Int) *Int {
 	return z
 }
 
-// MulUint256 sets z to the product x*y, where y is a uint256, and returns z
+// MulUint256 sets z to the product x*y, where y is a uint256, and returns z.
 func (z *Int) MulUint256(x *Int, y *uint256.Uint) *Int {
 	z = z.initiateAbs()
 
@@ -191,11 +194,9 @@ func (z *Int) MulUint256(x *Int, y *uint256.Uint) *Int {
 	return z
 }
 
-// MulOverflow calculates z = x * y, and returns z and true if overflow occurs.
-//
-// In general, multiplication is more likely to overflow frequently, especially
-// when multiplying large numbers or when the result of the product
-// of a negative and a positive number exceeds the range.
+// MulOverflow sets z to the product x*y and returns z and whether overflow occurred.
+// Multiplication frequently overflows when multiplying large numbers or when
+// the product exceeds the int256 range [-2^255, 2^255-1].
 func (z *Int) MulOverflow(x, y *Int) (*Int, bool) {
 	z = z.initiateAbs()
 
@@ -231,6 +232,7 @@ func (z *Int) MulOverflow(x, y *Int) (*Int, bool) {
 }
 
 // Div sets z to the quotient x/y for y != 0 and returns z.
+// Panics if y == 0.
 func (z *Int) Div(x, y *Int) *Int {
 	z = z.initiateAbs()
 
@@ -244,8 +246,8 @@ func (z *Int) Div(x, y *Int) *Int {
 	return z
 }
 
-// DivUint256 sets z to the quotient x/y, where y is a uint256, and returns z
-// If y == 0, z is set to 0
+// DivUint256 sets z to the quotient x/y, where y is a uint256, and returns z.
+// If y == 0, z is set to 0.
 func (z *Int) DivUint256(x *Int, y *uint256.Uint) *Int {
 	z = z.initiateAbs()
 
@@ -259,9 +261,8 @@ func (z *Int) DivUint256(x *Int, y *uint256.Uint) *Int {
 }
 
 // Quo sets z to the quotient x/y for y != 0 and returns z.
-// If y == 0, a division-by-zero run-time panic occurs.
-// OBS: differs from mempooler int256, we need to panic manually if y == 0
-// Quo implements truncated division (like Go); see QuoRem for more details.
+// It implements truncated division (like Go). Panics if y == 0.
+// This differs from mempooler int256 which requires manual panic handling.
 func (z *Int) Quo(x, y *Int) *Int {
 	if y.IsZero() {
 		panic("division by zero")
@@ -275,9 +276,8 @@ func (z *Int) Quo(x, y *Int) *Int {
 }
 
 // Rem sets z to the remainder x%y for y != 0 and returns z.
-// If y == 0, a division-by-zero run-time panic occurs.
-// OBS: differs from mempooler int256, we need to panic manually if y == 0
-// Rem implements truncated modulus (like Go); see QuoRem for more details.
+// It implements truncated modulus (like Go). Panics if y == 0.
+// This differs from mempooler int256 which requires manual panic handling.
 func (z *Int) Rem(x, y *Int) *Int {
 	if y.IsZero() {
 		panic("division by zero")
@@ -291,7 +291,7 @@ func (z *Int) Rem(x, y *Int) *Int {
 }
 
 // Mod sets z to the modulus x%y for y != 0 and returns z.
-// If y == 0, z is set to 0 (OBS: differs from the big.Int)
+// If y == 0, z is set to 0 (differs from big.Int behavior).
 func (z *Int) Mod(x, y *Int) *Int {
 	z = z.initiateAbs()
 
@@ -308,12 +308,12 @@ func (z *Int) Mod(x, y *Int) *Int {
 	return z
 }
 
-// 2^255 - 1
+// MaxInt256 returns the maximum value for a 256-bit signed integer (2^255 - 1).
 func MaxInt256() *Int {
 	return MustFromDecimal("57896044618658097711785492504343953926634992332820282019728792003956564819967")
 }
 
-// -2^255
+// MinInt256 returns the minimum value for a 256-bit signed integer (-2^255).
 func MinInt256() *Int {
 	return MustFromDecimal("-57896044618658097711785492504343953926634992332820282019728792003956564819968")
 }

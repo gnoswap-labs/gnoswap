@@ -17,7 +17,8 @@ const (
 	NOT_EMISSION_TARGET_TIER uint64 = 0
 )
 
-// SetPoolTier sets the tier of a pool by governance
+// SetPoolTier assigns a tier level to a pool for internal GNS emission rewards.
+// Only admin or governance can call this function.
 func SetPoolTier(cur realm, poolPath string, tier uint64) {
 	halt.AssertIsNotHaltedStaker()
 
@@ -42,7 +43,8 @@ func SetPoolTier(cur realm, poolPath string, tier uint64) {
 	)
 }
 
-// ChangePoolTier changes the tier of a pool by governance
+// ChangePoolTier modifies the tier level of an existing pool.
+// Only admin or governance can call this function.
 func ChangePoolTier(cur realm, poolPath string, tier uint64) {
 	halt.AssertIsNotHaltedStaker()
 
@@ -68,7 +70,8 @@ func ChangePoolTier(cur realm, poolPath string, tier uint64) {
 	)
 }
 
-// RemovePoolTier removes the tier of a pool by governance
+// RemovePoolTier removes a pool from internal GNS emission rewards.
+// Only admin or governance can call this function.
 func RemovePoolTier(cur realm, poolPath string) {
 	halt.AssertIsNotHaltedStaker()
 
@@ -91,7 +94,8 @@ func RemovePoolTier(cur realm, poolPath string) {
 	)
 }
 
-// SetWarmUp sets the warmup percentage and time duration by governance
+// SetWarmUp configures the warm-up percentage and duration for rewards.
+// Only admin or governance can call this function.
 func SetWarmUp(cur realm, pct, timeDuration int64) {
 	halt.AssertIsNotHaltedStaker()
 
@@ -110,6 +114,7 @@ func SetWarmUp(cur realm, pct, timeDuration int64) {
 	)
 }
 
+// setPoolTier internally sets the pool tier.
 func setPoolTier(poolPath string, tier uint64, currentTime int64) {
 	en.MintAndDistributeGns(cross)
 
@@ -117,6 +122,7 @@ func setPoolTier(poolPath string, tier uint64, currentTime int64) {
 	poolTier.changeTier(std.ChainHeight(), currentTime, pools, poolPath, tier)
 }
 
+// changePoolTier internally changes the pool tier and returns old and new tiers.
 func changePoolTier(poolPath string, tier uint64, currentTime int64) (uint64, uint64) {
 	en.MintAndDistributeGns(cross)
 	previousTier := poolTier.CurrentTier(poolPath)
@@ -126,18 +132,21 @@ func changePoolTier(poolPath string, tier uint64, currentTime int64) (uint64, ui
 	return previousTier, tier
 }
 
+// removePoolTier internally removes the pool from tier system.
 func removePoolTier(poolPath string, currentTime int64) {
 	en.MintAndDistributeGns(cross)
 
 	poolTier.changeTier(std.ChainHeight(), currentTime, pools, poolPath, NOT_EMISSION_TARGET_TIER)
 }
 
+// setWarmUp internally sets the warm-up parameters.
 func setWarmUp(pct, timeDuration int64) {
 	en.MintAndDistributeGns(cross)
 
 	modifyWarmup(pctToIndex(pct), timeDuration)
 }
 
+// pctToIndex converts percentage to warmup index.
 func pctToIndex(pct int64) int {
 	switch pct {
 	case 30:
@@ -153,6 +162,7 @@ func pctToIndex(pct int64) int {
 	}
 }
 
+// assertPoolMustExist panics if the pool doesn't exist.
 func assertPoolMustExist(poolPath string) {
 	if !pl.ExistsPoolPath(poolPath) {
 		panic(makeErrorWithDetails(

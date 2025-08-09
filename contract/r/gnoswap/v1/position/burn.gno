@@ -17,7 +17,7 @@ import (
 func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, string, string, string, string, error) {
 	caller := params.caller
 
-	// BEFORE DECREASE LIQUIDITY, COLLECT FEE FIRST
+	// before decrease liquidity, collect fee first
 	_, fee0Str, fee1Str, _, _, _ := collectFee(params.positionId, params.unwrapResult, params.caller)
 
 	position := MustGetPosition(params.positionId)

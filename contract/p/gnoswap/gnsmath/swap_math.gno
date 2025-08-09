@@ -8,21 +8,10 @@ import (
 const denominator = uint64(1_000_000)
 
 // SwapMathComputeSwapStep computes the next sqrt price, amount in, amount out, and fee amount
-// Computes the result of swapping some amount in, or amount out, given the parameters of the swap
-// The fee, plus the amount in, will never exceed the amount remaining if the swap's `amountSpecified` is positive
-//
-// input:
-// - sqrtRatioCurrentX96: the current sqrt price of the pool
-// - sqrtRatioTargetX96: The price that cannot be exceeded, from which the direction of the swap is inferred
-// - liquidity: The usable liquidity of the pool
-// - amountRemaining: How much input or output amount is remaining to be swapped in/out
-// - feePips: The fee taken from the input amount, expressed in hundredths of a bip
-//
-// output:
-// - sqrtRatioNextX96: The price after swapping the amount in/out, not to exceed the price target
-// - amountIn: The amount to be swapped in, of either token0 or token1, based on the direction of the swap
-// - amountOut: The amount to be received, of either token0 or token1, based on the direction of the swap
-// - feeAmount: The amount of input that will be taken as a fee
+// for a swap step in the AMM. The feePips parameter is expressed in hundredths of a bip (e.g., 3000 = 0.3%).
+// Returns sqrtRatioNextX96, amountIn, amountOut, and feeAmount.
+// This is the core function for calculating swap parameters in concentrated liquidity pools.
+// Panics if any input is nil, if feePips exceeds 1,000,000, or if the resulting price is out of bounds.
 func SwapMathComputeSwapStep(
 	sqrtRatioCurrentX96 *u256.Uint,
 	sqrtRatioTargetX96 *u256.Uint,
@@ -149,7 +138,9 @@ func SwapMathComputeSwapStep(
 	return sqrtRatioNextX96, amountIn, amountOut, feeAmount
 }
 
-// handleExactIn handles the EXACT_IN scenario and returns (nextSqrtPrice, provisionalAmountIn).
+// handleExactIn handles the EXACT_IN scenario for swaps, returning the next sqrt price and provisional
+// amount in while accounting for fees by reducing the input amount.
+// This internal function processes swaps where the input amount is specified exactly.
 func handleExactIn(
 	zeroForOne bool,
 	sqrtRatioCurrentX96,
@@ -206,7 +197,9 @@ func handleExactIn(
 	return nextSqrt, amountRemainingLessFee
 }
 
-// handleExactOut handles the EXACT_OUT scenario and returns (nextSqrtPrice, provisionalAmountOut).
+// handleExactOut handles the EXACT_OUT scenario for swaps, returning the next sqrt price and provisional
+// amount out while checking if sufficient liquidity exists to fulfill the requested output amount.
+// This internal function processes swaps where the output amount is specified exactly.
 func handleExactOut(
 	zeroForOne bool,
 	sqrtRatioCurrentX96, sqrtRatioTargetX96, liquidity, amountRemainingAbs *u256.Uint,

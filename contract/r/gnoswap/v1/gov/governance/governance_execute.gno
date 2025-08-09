@@ -12,19 +12,7 @@ import (
 // Execute executes an approved proposal with the given ID.
 // This function can be called by anyone once a proposal is in executable state.
 // It processes the proposal based on its type (CommunityPoolSpend or ParameterChange).
-//
-// Parameters:
-//   - cur: realm context for cross-realm calls
-//   - proposalID: unique identifier of the proposal to execute
-//
-// Returns:
-//   - int64: the executed proposal ID
-//
-// Panics:
-//   - if system is halted during execution phase
-//   - if proposal execution fails for any reason
-//
-// ref: https://docs.gnoswap.io/contracts/governance/vote.gno#execute
+// Returns the executed proposal ID.
 func Execute(cur realm, proposalID int64) int64 {
 	// Check if execution is allowed (system not halted for execution)
 	halt.AssertIsNotHaltedGovernance()
@@ -60,19 +48,8 @@ func Execute(cur realm, proposalID int64) int64 {
 	return proposal.ID()
 }
 
-// executeProposal handles the core logic of proposal execution.
-// This internal function validates the proposal state, executes the appropriate actions,
-// and updates the proposal status.
-//
-// Parameters:
-//   - proposalID: unique identifier of the proposal
-//   - executedAt: timestamp when execution is performed
-//   - executedHeight: blockchain height at execution
-//   - executedBy: address of the executor
-//
-// Returns:
-//   - *Proposal: pointer to the executed proposal
-//   - error: execution error if any
+// executeProposal handles core logic of proposal execution.
+// Validates proposal state, executes appropriate actions, and updates proposal status.
 func executeProposal(
 	proposalID int64,
 	executedAt int64,
@@ -122,26 +99,10 @@ func executeProposal(
 
 	return proposal, nil
 }
-// Cancel cancels a proposal that is in the upcoming status.
-// Only the original proposer can cancel their proposal during the upcoming window,
-// which is the period before voting begins. This provides a safety mechanism
-// for proposers to withdraw proposals if needed before voting starts.
-//
-// Parameters:
-//   - cur: realm context for executing cross-realm calls and contract interactions
-//   - proposalID: unique identifier of the proposal to cancel (must be positive integer)
-//
-// Returns:
-//   - int64: ID of the successfully canceled proposal
-//
-// Panics:
-//   - if the governance system is currently halted
-//   - if the specified proposal does not exist in storage
-//   - if the proposal status is not in upcoming state
-//   - if the proposal has already been executed or canceled
-//   - if the caller is not the original proposal creator
-//
-// ref: https://docs.gnoswap.io/contracts/governance/vote.gno#cancel
+
+// Cancel cancels a proposal in upcoming status.
+// Only the original proposer can cancel their proposal before voting begins.
+// Provides safety mechanism for proposers to withdraw proposals before voting starts.
 func Cancel(cur realm, proposalID int64) int64 {
 	halt.AssertIsNotHaltedGovernance()
 
@@ -173,19 +134,8 @@ func Cancel(cur realm, proposalID int64) int64 {
 	return proposal.ID()
 }
 
-// cancel handles the core logic of proposal cancellation.
-// This internal function validates the proposal state and updates its status to canceled.
-// It checks if the proposal exists and can be canceled, then updates its status.
-//
-// Parameters:
-//   - proposalID: unique identifier of the proposal to be canceled
-//   - canceledAt: unix timestamp when cancellation is requested
-//   - canceledHeight: blockchain height at time of cancellation
-//   - canceledBy: address of the account requesting cancellation
-//
-// Returns:
-//   - *Proposal: the canceled proposal if successful
-//   - error: returns error if proposal not found or cancellation fails
+// cancel handles core logic of proposal cancellation.
+// Validates proposal state and updates status to canceled.
 func cancel(proposalID, canceledAt, canceledHeight int64, canceledBy std.Address) (proposal *Proposal, err error) {
 	// Retrieve the proposal from storage
 	proposal, ok := getProposal(proposalID)
@@ -203,17 +153,7 @@ func cancel(proposalID, canceledAt, canceledHeight int64, canceledBy std.Address
 }
 
 // executeCommunityPoolSpend executes community pool spending proposals.
-// This function handles token transfers from the community pool to specified recipients.
-//
-// Parameters:
-//   - proposal: the proposal containing spending details
-//   - parameterRegistry: registry of parameter handlers for execution
-//   - executedAt: execution timestamp
-//   - executedHeight: execution block height
-//   - executedBy: executor address
-//
-// Returns:
-//   - error: execution error if any
+// Handles token transfers from community pool to specified recipients.
 func executeCommunityPoolSpend(
 	proposal *Proposal,
 	parameterRegistry *ParameterRegistry,
@@ -246,17 +186,7 @@ func executeCommunityPoolSpend(
 }
 
 // executeParameterChange executes parameter change proposals.
-// This function handles governance configuration updates and system parameter modifications.
-//
-// Parameters:
-//   - proposal: the proposal containing parameter changes
-//   - parameterRegistry: registry of parameter handlers for execution
-//   - executedAt: execution timestamp
-//   - executedHeight: execution block height
-//   - executedBy: executor address
-//
-// Returns:
-//   - error: execution error if any
+// Handles governance configuration updates and system parameter modifications.
 func executeParameterChange(
 	proposal *Proposal,
 	parameterRegistry *ParameterRegistry,

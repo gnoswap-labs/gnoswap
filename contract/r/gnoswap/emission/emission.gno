@@ -23,54 +23,26 @@ var (
 	distributionStartTimestamp int64
 )
 
-// GetLeftGNSAmount returns the amount of undistributed GNS tokens
+// GetLeftGNSAmount returns the amount of undistributed GNS tokens from previous distributions.
 func GetLeftGNSAmount() int64 { return leftGNSAmount }
 
-// GetDistributionStartBlockHeight returns the block height from which emission distribution starts
+// GetDistributionStartTimestamp returns the timestamp when emission distribution started.
+// Returns 0 if distribution has not been started yet.
 func GetDistributionStartTimestamp() int64 { return distributionStartTimestamp }
 
-// setLeftGNSAmount updates the undistributed GNS token amount
+// setLeftGNSAmount updates the amount of undistributed GNS tokens.
 func setLeftGNSAmount(amount int64) { leftGNSAmount = amount }
 
-// GetLastExecutedTimestamp returns the last timestamp when distribution was executed
+// GetLastExecutedTimestamp returns the timestamp of the last emission distribution execution.
 func GetLastExecutedTimestamp() int64 { return lastExecutedTimestamp }
 
-// setLastExecutedTimestamp updates the last executed timestamp
+// setLastExecutedTimestamp updates the timestamp of the last emission distribution execution.
 func setLastExecutedTimestamp(timestamp int64) { lastExecutedTimestamp = timestamp }
 
-// MintAndDistributeGns mints new GNS tokens according to the emission schedule and distributes them to target modules.
-//
-// This function is called by external systems (e.g., cron jobs) to trigger periodic GNS emission.
-// It handles the minting process based on the halving schedule, manages any undistributed amounts
-// from previous distributions, and distributes tokens to staking and governance modules.
-//
-// Parameters:
-//   - cur realm: Current execution context realm
-//
-// Returns:
-//   - int64: Total amount of GNS tokens distributed in this execution
-//
-// Behavior:
-//   - Checks if distribution has started (distributionStartTimestamp > 0)
-//   - Skips if already minted for current timestamp
-//   - Mints new tokens based on time elapsed and halving schedule
-//   - Adds any leftover amounts from previous distributions
-//   - Distributes to target modules (staking, governance)
-//   - Stores any undistributed amount for next execution
-//
-// Panics:
-//   - System is halted for emission or withdrawal
-//   - Distribution error occurs
-//
-// Events:
-//
-//	Emits MintAndDistributeGns event with distribution details
-//
-// Example:
-//
-//	// Called by external system every block or periodically
-//	distributed := MintAndDistributeGns()
-//	// distributed = 1000000 (1 GNS distributed)
+// MintAndDistributeGns mints and distributes GNS tokens according to the emission schedule.
+// Can be called by any contract to trigger emission based on elapsed time since last execution.
+// Returns the total amount distributed. Skips distribution if not started or already executed
+// at current timestamp. Emits MintAndDistributeGns event on successful execution.
 func MintAndDistributeGns(cur realm) int64 {
 	halt.AssertIsNotHaltedEmission()
 
@@ -129,43 +101,10 @@ func MintAndDistributeGns(cur realm) int64 {
 	return distributedGNSAmount
 }
 
-// SetDistributionStartTime configures when GNS emission distribution should begin.
-//
-// This function sets the timestamp from which the emission schedule starts. It must be
-// called before any emissions can occur. Once distribution has started, the timestamp
-// cannot be changed. This ensures the integrity of the emission schedule.
-//
-// Parameters:
-//   - cur realm: Current execution context realm
-//   - startTimestamp: Unix timestamp when distribution should start
-//
-// Requirements:
-//   - Caller must be admin or governance
-//   - startTimestamp must be positive
-//   - startTimestamp must be in the future
-//   - Cannot change after distribution has started
-//
-// Panics:
-//   - System is halted for emission or withdrawal
-//   - Caller is not admin or governance
-//   - startTimestamp is negative
-//   - startTimestamp is in the past
-//   - Distribution has already started
-//
-// Events:
-//
-//	Emits SetDistributionStartTime event with configuration details
-//
-// Example:
-//
-//	// Set distribution to start at specific timestamp
-//	futureTime := time.Now().Unix() + 86400 // 24 hours from now
-//	SetDistributionStartTime(futureTime)
-//
-// Note:
-//
-//	If no emissions have occurred yet, this also reinitializes the emission
-//	state to adjust halving year calculations based on the new start time.
+// SetDistributionStartTime sets the timestamp when emission distribution starts.
+// Only callable by admin or governance before distribution begins. Timestamp must be
+// in the future and cannot be changed once distribution has started. Panics if timestamp
+// is negative, in the past, or distribution has already started. Emits SetDistributionStartTime event.
 func SetDistributionStartTime(cur realm, startTimestamp int64) {
 	halt.AssertIsNotHaltedEmission()
 	halt.AssertIsNotHaltedWithdraw()
@@ -173,27 +112,26 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	// this check will also prevent the overflow of int64 value
+	// Prevent negative timestamps.
 	if startTimestamp < 0 {
 		panic("distribution start timestamp cannot be negative")
 	}
 
 	currentTimestamp := time.Now().Unix()
 
-	// Prevent changing start height after distribution has already started
+	// Cannot change after distribution started.
 	if distributionStartTimestamp != 0 && distributionStartTimestamp <= currentTimestamp {
 		panic("distribution has already started, cannot change start timestamp")
 	}
 
-	// Prevent setting distribution start height to a past block
+	// Must be in the future.
 	if startTimestamp > 0 && startTimestamp <= currentTimestamp {
 		panic("distribution start timestamp must be greater than current timestamp")
 	}
 
 	prevStartTimestamp := distributionStartTimestamp
 
-	// If setting a future start height and no emission has occurred yet,
-	// reinitialize the emission state to adjust halving years
+	// Reinitialize emission state if not started yet.
 	if startTimestamp > currentTimestamp && gns.MintedEmissionAmount() == 0 {
 		gns.InitEmissionState(cross, startTimestamp, startTimestamp)
 	}

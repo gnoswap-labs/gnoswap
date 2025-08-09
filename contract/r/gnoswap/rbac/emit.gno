@@ -2,6 +2,7 @@ package rbac
 
 import "std"
 
+// emitRegisterRoleEvent emits a RegisterRole event with roleName information.
 func emitRegisterRoleEvent(roleName string) {
 	prevRealm := std.PreviousRealm()
 	std.Emit(
@@ -13,6 +14,7 @@ func emitRegisterRoleEvent(roleName string) {
 	)
 }
 
+// emitRemoveRoleEvent emits a RemoveRole event with roleName information.
 func emitRemoveRoleEvent(roleName string) {
 	prevRealm := std.PreviousRealm()
 	std.Emit(
@@ -24,6 +26,7 @@ func emitRemoveRoleEvent(roleName string) {
 	)
 }
 
+// emitUpdateRoleAddressEvent emits an UpdateRoleAddress event with roleName and address information.
 func emitUpdateRoleAddressEvent(roleName string, address std.Address) {
 	prevRealm := std.PreviousRealm()
 	std.Emit(

@@ -14,8 +14,9 @@ func init() {
 	swapWhitelist = make(map[std.Address]bool)
 }
 
-// UpdateSwapWhiteList adds a address to the whitelist
-// Only admin or governance can add custom routers
+// UpdateSwapWhiteList adds a router address to the swap whitelist.
+// Panics if router address is invalid.
+// Only admin or governance can call this function.
 func UpdateSwapWhiteList(cur realm, router std.Address) {
 	caller := std.PreviousRealm().Address()
 	AssertIsAdminOrGovernance(caller)
@@ -24,11 +25,13 @@ func UpdateSwapWhiteList(cur realm, router std.Address) {
 		panic(ufmt.Errorf("invalid router address: %s", router))
 	}
 
+	// Add or update the router in the whitelist
 	swapWhitelist[router] = true
 }
 
-// RemoveFromSwapWhiteList removes a router address from the whitelist
-// Only admin or governance can remove routers
+// RemoveFromSwapWhiteList removes a router address from the swap whitelist.
+// Does nothing if the router is not in the whitelist.
+// Only admin or governance can call this function.
 func RemoveFromSwapWhiteList(cur realm, router std.Address) {
 	caller := std.PreviousRealm().Address()
 	AssertIsAdminOrGovernance(caller)
@@ -36,7 +39,8 @@ func RemoveFromSwapWhiteList(cur realm, router std.Address) {
 	delete(swapWhitelist, router)
 }
 
-// IsSwapWhitelisted checks if an address is in the swap whitelist
+// IsSwapWhitelisted returns true if the address is either the official router
+// or is in the swap whitelist. Returns false otherwise.
 func IsSwapWhitelisted(addr std.Address) bool {
 	// Check if it's the official router first
 	//
@@ -53,7 +57,8 @@ func IsSwapWhitelisted(addr std.Address) bool {
 	return swapWhitelist[addr]
 }
 
-// GetWhitelistedSwaps returns all whitelisted router addresses
+// GetWhitelistedSwaps returns all whitelisted router addresses including
+// the official router address if it exists.
 func GetWhitelistedSwaps() []std.Address {
 	routers := make([]std.Address, 0, len(swapWhitelist)+1)
 

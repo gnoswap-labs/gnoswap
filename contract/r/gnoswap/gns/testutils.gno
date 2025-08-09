@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// InitGnsTest initializes GNS state for testing by resetting emission amounts and state.
 func InitGnsTest(t *testing.T) {
 	t.Helper()
 

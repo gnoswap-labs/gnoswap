@@ -15,6 +15,7 @@ var (
 	errDistributionAddressNotFound = errors.New("[GNOSWAP-EMISSION-006] distribution address not found")
 )
 
+// makeErrorWithDetails creates a new error by combining a base error with additional details.
 func makeErrorWithDetails(err error, detail string) error {
 	return ufmt.Errorf("%s || %s", err.Error(), detail)
 }

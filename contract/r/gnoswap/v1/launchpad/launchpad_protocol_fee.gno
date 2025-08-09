@@ -8,9 +8,8 @@ import (
 	gov_staker "gno.land/r/gnoswap/v1/gov/staker"
 )
 
-// CollectProtocolFee collects protocol fee from gov/staker
-// each project's recipient wallet will be rewarded
-// ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_reward.gno#collectprotocolfee
+// CollectProtocolFee collects protocol fee from gov/staker for project recipient wallets.
+// Only users can call this function.
 func CollectProtocolFee(cur realm) {
 	halt.AssertIsNotHaltedLaunchpad()
 	halt.AssertIsNotHaltedWithdraw()

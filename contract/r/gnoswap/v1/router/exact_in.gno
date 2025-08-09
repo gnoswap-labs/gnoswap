@@ -27,10 +27,9 @@ func NewExactInSwapOperation(pp ExactInParams) *ExactInSwapOperation {
 	}
 }
 
-// ExactInSwapRoute is a function that performs an exact-in swap operation.
-// exact-in swap means that the user wants to swap an exact amount of input tokens for output tokens.
-func ExactInSwapRoute(
-	cur realm,
+// ExactInSwapRoute performs an exact-in swap operation where the user swaps
+// an exact amount of input tokens for a variable amount of output tokens.
+func ExactInSwapRoute(cur realm,
 	inputToken string,
 	outputToken string,
 	amountIn string,
@@ -100,6 +99,7 @@ func ExactInSwapRoute(
 	return inputAmount, outputAmount
 }
 
+// Validate validates the exact-in swap operation parameters.
 func (op *ExactInSwapOperation) Validate() error {
 	amountIn := i256.MustFromDecimal(op.params.AmountIn)
 	if amountIn.IsZero() || amountIn.IsNeg() {
@@ -121,6 +121,7 @@ func (op *ExactInSwapOperation) Validate() error {
 	return nil
 }
 
+// Process executes the exact-in swap operation.
 func (op *ExactInSwapOperation) Process() (*SwapResult, error) {
 	if err := op.handleNativeTokenWrapping(); err != nil {
 		return nil, err
@@ -141,6 +142,7 @@ func (op *ExactInSwapOperation) Process() (*SwapResult, error) {
 	}, nil
 }
 
+// handleNativeTokenWrapping handles the wrapping of native tokens if needed.
 func (op *ExactInSwapOperation) handleNativeTokenWrapping() error {
 	return op.baseSwapOperation.handleNativeTokenWrapping(
 		op.params.InputToken,

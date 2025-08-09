@@ -25,27 +25,8 @@ const (
 )
 
 // safeConvertToUint64 safely converts a *u256.Uint value to a uint64, ensuring no overflow.
-//
-// This function attempts to convert the given *u256.Uint value to a uint64. If the value exceeds
-// the maximum allowable range for uint64 (`2^64 - 1`), it triggers a panic with a descriptive error message.
-//
-// Parameters:
-// - value (*u256.Uint): The unsigned 256-bit integer to be converted.
-//
-// Returns:
-// - uint64: The converted value if it falls within the uint64 range.
-//
-// Panics:
-//   - If the `value` exceeds the range of uint64, the function will panic with an error indicating
-//     the overflow and the original value.
-//
-// Notes:
-// - This function uses the `Uint64WithOverflow` method to detect overflow during the conversion.
-// - It is essential to validate large values before calling this function to avoid unexpected panics.
-//
-// Example:
-// safeValue := safeConvertToUint64(u256.MustFromDecimal("18446744073709551615")) // Valid conversion
-// safeConvertToUint64(u256.MustFromDecimal("18446744073709551616")) // Panics due to overflow
+// This function attempts to convert the given *u256.Uint value to a uint64.
+// If the value exceeds the maximum allowable range for uint64 (2^64 - 1), it panics.
 func safeConvertToUint64(value *u256.Uint) uint64 {
 	res, overflow := value.Uint64WithOverflow()
 	if overflow {
@@ -60,27 +41,8 @@ func safeConvertToUint64(value *u256.Uint) uint64 {
 }
 
 // safeConvertToInt64 safely converts a *u256.Uint value to an int64, ensuring no overflow.
-//
-// This function attempts to convert the given *u256.Uint value to an int64. If the value exceeds
-// the maximum allowable range for int64 (`2^63 - 1`), it triggers a panic with a descriptive error message.
-//
-// Parameters:
-// - value (*u256.Uint): The unsigned 256-bit integer to be converted.
-//
-// Returns:
-// - int64: The converted value if it falls within the int64 range.
-//
-// Panics:
-//   - If the `value` exceeds the range of int64, the function will panic with an error indicating
-//     the overflow and the original value.
-//
-// Notes:
-// - This function first checks for uint64 overflow, then validates the int64 range.
-// - The maximum value for int64 is 9,223,372,036,854,775,807 (2^63 - 1).
-//
-// Example:
-// safeValue := safeConvertToInt64(u256.MustFromDecimal("9223372036854775807")) // Valid conversion
-// safeConvertToInt64(u256.MustFromDecimal("9223372036854775808")) // Panics due to overflow
+// This function attempts to convert the given *u256.Uint value to an int64.
+// If the value exceeds the maximum allowable range for int64 (2^63 - 1), it panics.
 func safeConvertToInt64(value *u256.Uint) int64 {
 	res, overflow := value.Uint64WithOverflow()
 	if overflow || res > uint64(INT64_MAX) {
@@ -95,28 +57,8 @@ func safeConvertToInt64(value *u256.Uint) int64 {
 }
 
 // safeConvertToInt128 safely converts a *u256.Uint value to an *i256.Int, ensuring it does not exceed the int128 range.
-//
-// This function converts an unsigned 256-bit integer (*u256.Uint) into a signed 256-bit integer (*i256.Int).
-// It checks whether the resulting value falls within the valid range of int128 (`-2^127` to `2^127 - 1`).
-// If the value exceeds the maximum allowable int128 range, it triggers a panic with a descriptive error message.
-//
-// Parameters:
-// - value (*u256.Uint): The unsigned 256-bit integer to be converted.
-//
-// Returns:
-// - *i256.Int: The converted value if it falls within the int128 range.
-//
-// Panics:
-//   - If the converted value exceeds the maximum int128 value (`2^127 - 1`), the function will panic with an
-//     error message indicating the overflow and the original value.
-//
-// Notes:
-// - The function uses `i256.FromUint256` to perform the conversion.
-// - The constant `MAX_INT128` is used to define the upper bound of the int128 range (`170141183460469231731687303715884105727`).
-//
-// Example:
-// validInt128 := safeConvertToInt128(u256.MustFromDecimal("170141183460469231731687303715884105727")) // Valid conversion
-// safeConvertToInt128(u256.MustFromDecimal("170141183460469231731687303715884105728")) // Panics due to overflow
+// This function converts an unsigned 256-bit integer to a signed 256-bit integer.
+// If the value exceeds the maximum allowable int128 range (2^127 - 1), it panics.
 func safeConvertToInt128(value *u256.Uint) *i256.Int {
 	liquidityDelta := i256.FromUint256(value)
 	if liquidityDelta.Gt(i256.MustFromDecimal(MAX_INT128)) {

@@ -13,20 +13,7 @@ func formatInt(value int64) string {
 }
 
 // parseProjectTierID parses a project tier ID into its project ID and duration.
-//
-// This function splits the project tier ID into its components and extracts
-// the project ID and duration. It also validates the format of the ID.
-//
-// Parameters:
-// - projectTierID (string): The ID of the project tier to parse.
-//
-// Returns:
-// - string: The project ID {tokenPath}:{createdHeight}.
-// - int64: The duration of the project tier (30, 90, 180).
-//
-// Panics:
-// - If the project tier ID is not in the correct format.
-// - If the duration is not a valid integer.
+// Returns the project ID {tokenPath}:{createdHeight} and the duration of the project tier (30, 90, 180).
 func parseProjectTierID(projectTierID string) (string, int64) {
 	parts := strings.Split(projectTierID, ":")
 	if len(parts) != 3 {

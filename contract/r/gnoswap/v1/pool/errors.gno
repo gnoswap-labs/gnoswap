@@ -39,17 +39,13 @@ var (
 	errInvalidPayer              = errors.New("[GNOSWAP-POOL-028] invalid payer")
 )
 
-// newErrorWithDetail adds detail to an error message
-//
-// input
-// err: error - the error message that is one of above list
-// detail: string - the detail to add to the error message
-// Returns: string - the final error message
+// newErrorWithDetail adds detail to an error message.
 func newErrorWithDetail(err error, detail string) string {
 	finalErr := ufmt.Errorf("%s || %s", err.Error(), detail)
 	return finalErr.Error()
 }
 
+// makeErrorWithDetails creates an error with additional context.
 func makeErrorWithDetails(err error, details string) error {
 	return ufmt.Errorf("%s || %s", err.Error(), details)
 }

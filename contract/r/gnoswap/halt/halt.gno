@@ -7,30 +7,26 @@ import (
 	"gno.land/r/gnoswap/access"
 )
 
-// Global halt configuration that controls all operation permissions
 var (
 	haltConfig HaltConfig
 )
 
-// Initialize the halt system with all operations enabled
 func init() {
 	haltConfig = newNoneConfig()
 }
 
-// SetHaltLevel sets the global halt level for the entire system
-// Only admin or governance can call this function
-// This function overrides all individual operation settings
+// SetHaltLevel sets the global halt level, overriding individual operation settings.
+// Only accessible by admin or governance roles. Panics if level is invalid.
+// Emits SetHaltLevel event with level details and caller address.
 func SetHaltLevel(cur realm, level HaltLevel) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	// Apply the new halt level configuration
 	err := setHaltLevel(level)
 	if err != nil {
 		panic(err)
 	}
 
-	// Emit event for monitoring and debugging
 	std.Emit(
 		"SetHaltLevel",
 		"level", level.String(),
@@ -39,8 +35,9 @@ func SetHaltLevel(cur realm, level HaltLevel) {
 	)
 }
 
-// SetOperationStatus sets both access and withdrawal status for a specific operation type
-// Only admin or governance can call this function
+// SetOperationStatus sets halt status for a specific operation type.
+// Only accessible by admin or governance roles. Panics if operation type is invalid.
+// Emits SetOperationStatus event with operation details and caller address.
 func SetOperationStatus(cur realm, op OpType, halted bool) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
@@ -49,10 +46,8 @@ func SetOperationStatus(cur realm, op OpType, halted bool) {
 		panic(makeErrorWithDetails(errInvalidOpType, op.String()))
 	}
 
-	// Save the updated configuration
 	haltConfig.set(op, halted)
 
-	// Emit event for monitoring
 	std.Emit(
 		"SetOperationStatus",
 		"operation", string(op),
@@ -61,12 +56,11 @@ func SetOperationStatus(cur realm, op OpType, halted bool) {
 	)
 }
 
-// setHaltLevel is an internal function that applies a predefined halt level configuration
-// This replaces the entire halt configuration with the level's default settings
+// setHaltLevel applies predefined halt level configuration.
+// Returns error if halt level is invalid.
 func setHaltLevel(level HaltLevel) error {
 	var config HaltConfig
 
-	// Select the appropriate configuration based on halt level
 	switch level {
 	case HaltLevelNone:
 		config = newNoneConfig()
@@ -80,7 +74,6 @@ func setHaltLevel(level HaltLevel) error {
 		return makeErrorWithDetails(errInvalidHaltLevel, level.String())
 	}
 
-	// Apply the new configuration
 	haltConfig = config
 
 	return nil

@@ -14,47 +14,10 @@ import (
 )
 
 // DepositGns handles the deposit process for a specific project tier.
-//
 // This function validates the deposit conditions, checks the activation status of the project and tier,
 // and creates a new deposit for the caller. It updates the project, tier, and reward states accordingly.
-//
-// Parameters:
-// - targetProjectTierId (string): The ID of the target project and tier in the format "{projectId}:{tierType}".
-// - amount (uint64): The amount to deposit.
-// - referrer (string): The referrer address.
-//
-// Returns:
-// - string: The ID of the newly created deposit.
-//
-// Panics:
-// - If the system is halted.
-// - If the amount is invalid (e.g., zero).
-// - If the project or tier is inactive.
-// - If the deposit conditions are not satisfied.
-// - If an error occurs during deposit creation or reward state update.
-//
-// Logic:
-// 1. **Validation**:
-//   - Check if the system is halted or the deposit amount is valid.
-//   - Retrieve the project and validate its activation status.
-//   - Validate deposit conditions for the caller.
-//   - Retrieve and validate the tier's activation status.
-//
-// 2. **Deposit Creation**:
-//   - Create a deposit using the project and tier information.
-//   - Update deposit indices and tier details (e.g., `StartHeight`, `TierAmountPerBlockX128`).
-//
-// 3. **Reward Updates**:
-//   - Update the tier's reward state, including reward per deposit and participant counts.
-//   - Update the project's stats (e.g., total deposit amount, participant count).
-//
-// 4. **Transfer and Lock Tokens**:
-//   - Transfer the deposit amount to the `launchpad` contract and mint `xGNS` tokens.
-//
-// 5. **Emit Events**:
-//   - Emit events for both the deposit and the first deposit for the tier (if applicable).
-//
-// ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_deposit.gno#depositgns
+// The targetProjectTierId must be in the format "{projectId}:{tierType}".
+// Returns the ID of the newly created deposit.
 func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, referrer string) string {
 	halt.AssertIsNotHaltedLaunchpad()
 
@@ -116,26 +79,8 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 	return deposit.ID()
 }
 
-// depositGns deposits GNS to a project tier
-//
-// Parameters:
-// - projectID (string): The ID of the project.
-// - tierDuration (int64): The duration of the tier.
-// - depositAmount (int64): The amount of the deposit.
-// - callerAddress (std.Address): The address of the caller.
-//
-// Returns:
-// - *Deposit: The deposit created.
-// - *RewardState: The reward state for the deposit.
-// - bool: Whether this is the first deposit for the tier.
-// - string: The distribute amount per block in Q128 format.
-// - error: If the deposit creation fails, returns an error.
-//
-// Panics:
-// - If the project is not found.
-// - If the project tier is not found.
-// - If the reward manager is not found.
-// - If the deposit creation fails.
+// depositGns deposits GNS to a project tier and returns the created deposit,
+// reward state, whether this is the first deposit, distribute amount per second in Q128 format, and any error.
 func depositGns(
 	projectID string,
 	tierDuration int64,
@@ -208,18 +153,8 @@ func depositGns(
 		nil
 }
 
-// registerReferral registers a referral for a caller
-//
-// Parameters:
-// - referrer (string): The referrer address.
-// - callerAddress (std.Address): The address of the caller.
-//
-// Returns:
-// - string: The actual referrer address.
-// - bool: Whether the referral registration was successful.
-//
-// Panics:
-// - If the referral registration fails.
+// registerReferral registers a referral for a caller and returns the actual referrer address
+// and whether the registration was successful.
 func registerReferral(referrer string, callerAddress std.Address) (string, bool) {
 	success := referral.TryRegister(cross, callerAddress, referrer)
 	actualReferrer := referrer
@@ -230,19 +165,8 @@ func registerReferral(referrer string, callerAddress std.Address) (string, bool)
 	return actualReferrer, success
 }
 
-// stakeGovernance stakes governance token to the project
-//
-// Parameters:
-// - projectID (string): The ID of the project.
-// - depositAmount (int64): The amount of the deposit.
-// - launchpadAddress (std.Address): The address of the launchpad.
-// - callerAddress (std.Address): The address of the caller.
-//
-// Returns:
-// - error: If the governance token staking fails, returns an error.
-//
-// Panics:
-// - If the project is not found.
+// stakeGovernance stakes governance token to the project by transferring GNS from caller to launchpad
+// and minting equivalent xGNS for governance staking.
 func stakeGovernance(projectID string, depositAmount int64, launchpadAddress std.Address, callerAddress std.Address) error {
 	project, err := getProject(projectID)
 	if err != nil {

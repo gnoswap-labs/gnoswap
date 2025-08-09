@@ -12,6 +12,7 @@ var (
 	errInvalidAmount = errors.New("[GNOSWAP-PROTOCOL_FEE-003] invalid amount")
 )
 
+// makeErrorWithDetail creates an error with additional context.
 func makeErrorWithDetail(err error, detail string) error {
 	return ufmt.Errorf("%s || %s", err.Error(), detail)
 }

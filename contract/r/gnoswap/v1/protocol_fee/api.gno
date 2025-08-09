@@ -12,6 +12,7 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 )
 
+// ApiGetAccuTransferToGovStaker returns accumulated transfers to gov/staker as JSON.
 func ApiGetAccuTransferToGovStaker() string {
 	distributedAmountList := protocolFeeState.accuToGovStaker
 	if distributedAmountList == nil {
@@ -21,6 +22,7 @@ func ApiGetAccuTransferToGovStaker() string {
 	return marshal(buildByAvlTree(distributedAmountList))
 }
 
+// ApiGetAccuTransferToDevOps returns accumulated transfers to devOps as JSON.
 func ApiGetAccuTransferToDevOps() string {
 	distributedAmountList := protocolFeeState.accuToDevOps
 	if distributedAmountList == nil {
@@ -30,6 +32,7 @@ func ApiGetAccuTransferToDevOps() string {
 	return marshal(buildByAvlTree(distributedAmountList))
 }
 
+// ApiGetHistoryTransferToGovStaker returns transfer history to gov/staker as JSON.
 func ApiGetHistoryTransferToGovStaker() string {
 	historyTransferList := distributedToGovStakerHistory()
 	if historyTransferList == nil {
@@ -39,6 +42,7 @@ func ApiGetHistoryTransferToGovStaker() string {
 	return marshal(buildByAvlTree(historyTransferList))
 }
 
+// ApiGetHistoryTransferToDevOps returns transfer history to devOps as JSON.
 func ApiGetHistoryTransferToDevOps() string {
 	historyTransferList := distributedToDevOpsHistory()
 	if historyTransferList == nil {
@@ -47,6 +51,7 @@ func ApiGetHistoryTransferToDevOps() string {
 	return marshal(buildByAvlTree(historyTransferList))
 }
 
+// buildByAvlTree builds a JSON node from AVL tree data.
 func buildByAvlTree(tree *avl.Tree) *json.Node {
 	data := json.Builder().
 		WriteString("height", formatInt(std.ChainHeight())).
@@ -64,18 +69,22 @@ func buildByAvlTree(tree *avl.Tree) *json.Node {
 	return data.Node()
 }
 
+// formatUint formats uint64 to string.
 func formatUint(v uint64) string {
 	return strconv.FormatUint(v, 10)
 }
 
+// formatInt64 formats int64 to string.
 func formatInt64(v int64) string {
 	return strconv.FormatInt(v, 10)
 }
 
+// formatInt formats int64 to string.
 func formatInt(v int64) string {
 	return strconv.FormatInt(v, 10)
 }
 
+// marshal converts JSON node to string.
 func marshal(node *json.Node) string {
 	b, err := json.Marshal(node)
 	if err != nil {

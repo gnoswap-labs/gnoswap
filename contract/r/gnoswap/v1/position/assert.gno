@@ -9,11 +9,7 @@ import (
 	"gno.land/r/gnoswap/access"
 )
 
-// assertIsNotExpired checks if the deadline is expired.
-// If the deadline is expired, it panics.
-// The deadline is expired if the current time is greater than the deadline.
-// Input:
-//   - deadline: the deadline to check
+// assertIsNotExpired panics if the deadline is expired.
 func assertIsNotExpired(deadline int64) {
 	now := time.Now().Unix()
 
@@ -25,27 +21,7 @@ func assertIsNotExpired(deadline int64) {
 	}
 }
 
-// assertValidNumberString verifies that the input string represents a valid integer.
-//
-// This function checks each character in the string to ensure it falls within the numeric ASCII range ('0' to '9').
-// The first character is allowed to be a negative sign ('-'), indicating a negative number. If the input does not
-// meet these criteria, the function panics with a detailed error message.
-//
-// Parameters:
-//   - input (string): The string to validate.
-//
-// Panics:
-//   - If the input string is empty.
-//   - If the input contains non-numeric characters (excluding an optional leading '-').
-//   - If the input is not a valid integer representation.
-//
-// Example:
-//
-//	assertValidNumberString("12345")       -> Pass (valid positive number)
-//	assertValidNumberString("-98765")      -> Pass (valid negative number)
-//	assertValidNumberString("12a45")       -> Panic (invalid character 'a')
-//	assertValidNumberString("")            -> Panic (empty input)
-//	assertValidNumberString("++123")       -> Panic (invalid leading '+')
+// assertValidNumberString panics if the input string does not represent a valid integer.
 func assertValidNumberString(input string) {
 	if len(input) == 0 {
 		panic(newErrorWithDetail(
@@ -66,6 +42,7 @@ func assertValidNumberString(input string) {
 	}
 }
 
+// assertValidLiquidityAmount panics if the liquidity amount is zero.
 func assertValidLiquidityAmount(liquidity string) {
 	if u256.MustFromDecimal(liquidity).IsZero() {
 		panic(newErrorWithDetail(
@@ -75,6 +52,7 @@ func assertValidLiquidityAmount(liquidity string) {
 	}
 }
 
+// assertExistsPosition panics if the position does not exist.
 func assertExistsPosition(positionId uint64) {
 	if !exists(positionId) {
 		panic(newErrorWithDetail(
@@ -84,6 +62,7 @@ func assertExistsPosition(positionId uint64) {
 	}
 }
 
+// assertIsOwnerForToken panics if caller is not the owner of the position.
 func assertIsOwnerForToken(positionId uint64, caller std.Address) {
 	assertExistsPosition(positionId)
 
@@ -95,6 +74,7 @@ func assertIsOwnerForToken(positionId uint64, caller std.Address) {
 	}
 }
 
+// assertIsOwnerOrOperatorForToken panics if caller is not the owner or operator of the position.
 func assertIsOwnerOrOperatorForToken(positionId uint64, caller std.Address) {
 	assertExistsPosition(positionId)
 
@@ -106,8 +86,7 @@ func assertIsOwnerOrOperatorForToken(positionId uint64, caller std.Address) {
 	}
 }
 
-// assertEqualsAddress panics if the address is invalid or previous address is not
-// different from the other address.
+// assertEqualsAddress panics if addresses are invalid or not equal.
 func assertEqualsAddress(prevAddr, otherAddr std.Address) {
 	access.AssertIsValidAddress(prevAddr)
 	access.AssertIsValidAddress(otherAddr)
@@ -120,6 +99,7 @@ func assertEqualsAddress(prevAddr, otherAddr std.Address) {
 	}
 }
 
+// assertSlippageIsNotExceeded panics if slippage tolerance is exceeded.
 func assertSlippageIsNotExceeded(amount0, amount1, amount0Min, amount1Min *u256.Uint) {
 	if !(amount0.Gte(amount0Min) && amount1.Gte(amount1Min)) {
 		panic(newErrorWithDetail(

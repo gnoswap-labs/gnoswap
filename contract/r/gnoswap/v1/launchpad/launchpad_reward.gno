@@ -9,20 +9,9 @@ import (
 )
 
 // CollectRewardByDepositId collects reward from a specific deposit.
-// This function ensures that only the deposit owner can collect rewards
-// and that the system is not halted.
-//
-// Parameters:
-// - depositID (string): The ID of the deposit to collect reward from.
-//
-// Returns:
-// - int64: The amount of reward collected.
-//
-// Panics:
-// - If the system is halted
-// - If the deposit is not found
-// - If the caller is not the owner
-// - If reward collection fails
+// Only the deposit owner can call this function.
+// Returns the amount of reward collected.
+// Panics if the deposit is not found or caller is not the owner.
 func CollectRewardByDepositId(cur realm, depositID string) int64 {
 	halt.AssertIsNotHaltedLaunchpad()
 	halt.AssertIsNotHaltedWithdraw()
@@ -53,16 +42,8 @@ func CollectRewardByDepositId(cur realm, depositID string) int64 {
 }
 
 // collectDepositReward calculates and collects the reward for a deposit.
-// This function ensures accurate reward calculation by updating the reward state
-// before collection.
-//
-// Parameters:
-// - deposit (Deposit): The deposit to collect reward from
-// - currentHeight (int64): Current blockchain height
-//
-// Returns:
-// - int64: The amount of reward collected
-// - error: If the collection fails
+// It ensures accurate reward calculation by updating the reward state before collection.
+// Returns the amount of reward collected and an error if collection fails.
 func collectDepositReward(deposit *Deposit, currentHeight, currentTime int64) (int64, error) {
 	if currentTime <= 0 {
 		return 0, makeErrorWithDetails(errInvalidTime, "currentTime must be positive")

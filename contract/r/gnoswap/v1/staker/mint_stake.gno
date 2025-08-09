@@ -11,8 +11,8 @@ import (
 )
 
 // MintAndStake mints LP tokens and stakes them in a single transaction.
-// Returns positionId, liquidity, amount0, amount1, poolPath
-// ref: https://docs.gnoswap.io/contracts/staker/mint_stake.gno#mintandstake
+// It handles native token wrapping when GNOT is involved and supports referral tracking.
+// Returns the position ID, liquidity amount, actual token amounts used, and pool path.
 func MintAndStake(
 	cur realm,
 	token0 string,

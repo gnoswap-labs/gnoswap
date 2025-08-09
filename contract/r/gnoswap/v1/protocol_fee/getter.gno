@@ -5,10 +5,12 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
+// GetDevOpsPct returns the percentage allocated to devOps.
 func GetDevOpsPct() int64 {
 	return protocolFeeState.DevOpsPct()
 }
 
+// GetGovStakerPct returns the percentage allocated to gov/staker.
 func GetGovStakerPct() int64 {
 	return protocolFeeState.GovStakerPct()
 }
@@ -27,6 +29,7 @@ func GetAmountOfToken(tokenPath string) int64 {
 	return amount
 }
 
+// GetAccuTransfersToGovStaker returns all accumulated transfers to gov/staker.
 func GetAccuTransfersToGovStaker() map[string]int64 {
 	accuTransfers := make(map[string]int64)
 
@@ -43,6 +46,7 @@ func GetAccuTransfersToGovStaker() map[string]int64 {
 	return accuTransfers
 }
 
+// GetAccuTransfersToDevOps returns all accumulated transfers to devOps.
 func GetAccuTransfersToDevOps() map[string]int64 {
 	accuTransfers := make(map[string]int64)
 
@@ -81,6 +85,7 @@ func GetHistoryOfDistributedToDevOpsByTokenPath(path string) int64 {
 	return retrieveHistory(history, path)
 }
 
+// retrieveHistory retrieves distribution history amount from AVL tree.
 func retrieveHistory(tree *avl.Tree, key string) int64 {
 	amountI, exists := tree.Get(key)
 	if !exists {

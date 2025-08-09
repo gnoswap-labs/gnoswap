@@ -5,20 +5,7 @@ import (
 )
 
 // RewardState represents the state of a reward for a deposit.
-//
-// This struct contains the necessary data and methods to manage and distribute
-// rewards for a specific deposit.
-//
-// Fields:
-// - priceDebtX128 (u256.Uint): The price debt per GNS stake, represented as a Q128 fixed-point number.
-// - claimableBlockTimeInfo (BlockTimeInfo): The block time and height information for the claimable reward.
-// - depositAmount (int64): The amount of GNS staked.
-// - distributeStartTime (int64): The start time of the reward calculation.
-// - distributeEndTime (int64): The end time of the reward calculation.
-// - accumulatedRewardAmount (int64): The accumulated amount of reward.
-// - accumulatedHeight (int64): The last height when reward was calculated.
-// - accumulatedTime (int64): The last time when reward was calculated.
-// - claimedAmount (int64): The amount of reward claimed so far.
+// It contains the necessary data to manage and distribute rewards for a specific deposit.
 type RewardState struct {
 	priceDebtX128 *u256.Uint // price debt per GNS stake, Q128
 	claimableTime int64      // time when reward can be claimed
@@ -110,12 +97,7 @@ func (r *RewardState) setClaimableTime(v int64) {
 
 // calculateReward calculates the total reward amount based on
 // the accumulated reward per deposit.
-//
-// Parameters:
-// - accumRewardPerDepositX128 (*u256.Uint): Current accumulated reward per deposit
-//
-// Returns:
-// - int64: The total reward amount
+// Returns the total reward amount.
 func (r *RewardState) calculateReward(accumRewardPerDepositX128 *u256.Uint) int64 {
 	if accumRewardPerDepositX128 == nil || r.PriceDebtX128() == nil {
 		return 0
@@ -134,12 +116,7 @@ func (r *RewardState) calculateReward(accumRewardPerDepositX128 *u256.Uint) int6
 
 // calculateClaimableReward calculates the amount of reward that can be claimed
 // based on the current accumulated reward per deposit.
-//
-// Parameters:
-// - accumRewardPerDepositX128 (*u256.Uint): Current accumulated reward per deposit
-//
-// Returns:
-// - int64: The amount of reward that can be claimed
+// Returns the amount of reward that can be claimed.
 func (r *RewardState) calculateClaimableReward(accumRewardPerDepositX128 *u256.Uint) int64 {
 	if accumRewardPerDepositX128 == nil {
 		return 0

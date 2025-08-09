@@ -13,9 +13,8 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 )
 
-// DistributeProtocolFee distributes the protocol fee to devOps and gov/staker.
-// only `gov/staker` can execute this function.
-// It returns list of token with amount has been sent to gov/staker.
+// DistributeProtocolFee distributes collected protocol fees to devOps and gov/staker addresses.
+// Only admin or gov/staker can execute this function.
 func DistributeProtocolFee(cur realm) map[string]int64 {
 	halt.AssertIsNotHaltedProtocolFee()
 
@@ -29,9 +28,7 @@ func DistributeProtocolFee(cur realm) map[string]int64 {
 	for token, amount := range protocolFeeState.tokenListWithAmount {
 		balance := common.BalanceOf(token, protocolFeeAddr)
 
-		// anyone can just send certain grc20 token to `protocol_fee` contract
-		// therefore, we don't need any guard logic to check whether protocol_fee's xxx token balance is equal to `amount`
-		// however, amount always should be less than or equal to balance
+		// amount should be less than or equal to balance
 		if amount > balance {
 			panic(makeErrorWithDetail(
 				errInvalidAmount,
@@ -86,7 +83,7 @@ func DistributeProtocolFee(cur realm) map[string]int64 {
 }
 
 // SetDevOpsPct sets the devOpsPct.
-// Only admin or governance contract can execute this function via proposal
+// Only admin or governance contract can execute this function via proposal.
 func SetDevOpsPct(cur realm, pct int64) {
 	halt.AssertIsNotHaltedProtocolFee()
 
@@ -117,7 +114,7 @@ func SetDevOpsPct(cur realm, pct int64) {
 }
 
 // SetGovStakerPct sets the stakerPct.
-// Only admin or governance contract can execute this function via proposal
+// Only admin or governance contract can execute this function via proposal.
 func SetGovStakerPct(cur realm, pct int64) {
 	halt.AssertIsNotHaltedProtocolFee()
 
@@ -147,8 +144,8 @@ func SetGovStakerPct(cur realm, pct int64) {
 	)
 }
 
-// AddToProtocolFee adds the amount to the tokenListWithAmount
-// Only `pool + router + staker` can execute this function.
+// AddToProtocolFee adds the amount to the tokenListWithAmount.
+// Only pool, router or staker can execute this function.
 func AddToProtocolFee(cur realm, tokenPath string, amount int64) {
 	halt.AssertIsNotHaltedProtocolFee()
 
@@ -176,7 +173,7 @@ func AddToProtocolFee(cur realm, tokenPath string, amount int64) {
 }
 
 // ClearTokenListWithAmount clears the tokenListWithAmount.
-// only `gov/staker` can execute this function.
+// Only gov/staker can execute this function.
 func ClearTokenListWithAmount(cur realm) {
 	halt.AssertIsNotHaltedProtocolFee()
 
@@ -188,9 +185,9 @@ func ClearTokenListWithAmount(cur realm) {
 
 // ClearAccuTransferToGovStaker clears the accuToGovStaker.
 // Only gov/staker can execute this function.
-// protocol_fee just sends the accumulated amount to gov/staker
-// which means gov/staker doesn't known how much protocol_fee has been distributed from last time
-// Therefore, gov/staker calls GetAccuTransferToGovStaker to get the accumulated amount and clear it
+// Protocol_fee just sends the accumulated amount to gov/staker
+// which means gov/staker doesn't know how much protocol_fee has been distributed from last time.
+// Therefore, gov/staker calls GetAccuTransferToGovStaker to get the accumulated amount and clear it.
 func ClearAccuTransferToGovStaker(cur realm) {
 	halt.AssertIsNotHaltedProtocolFee()
 

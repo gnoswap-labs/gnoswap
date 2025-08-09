@@ -4,7 +4,8 @@ import (
 	"gno.land/p/gnoswap/uint256"
 )
 
-// Or sets z = x | y and returns z.
+// Or sets z to the bitwise OR of x and y and returns z.
+// The operation handles two's complement representation for negative numbers.
 func (z *Int) Or(x, y *Int) *Int {
 	if x.neg == y.neg {
 		if x.neg {
@@ -35,7 +36,8 @@ func (z *Int) Or(x, y *Int) *Int {
 	return z
 }
 
-// And sets z = x & y and returns z.
+// And sets z to the bitwise AND of x and y and returns z.
+// The operation handles two's complement representation for negative numbers.
 func (z *Int) And(x, y *Int) *Int {
 	if x.neg == y.neg {
 		if x.neg {
@@ -66,8 +68,9 @@ func (z *Int) And(x, y *Int) *Int {
 	return z
 }
 
-// Rsh sets z = x >> n and returns z.
-// OBS: Different from original implementation it was using math.Big
+// Rsh sets z to x right-shifted by n bits and returns z.
+// It performs arithmetic right shift, preserving the sign bit.
+// This differs from the original implementation which used math/big.
 func (z *Int) Rsh(x *Int, n uint) *Int {
 	if !x.neg {
 		z.abs.Rsh(x.abs, n)
@@ -86,7 +89,7 @@ func (z *Int) Rsh(x *Int, n uint) *Int {
 	return z
 }
 
-// Lsh sets z = x << n and returns z.
+// Lsh sets z to x left-shifted by n bits and returns z.
 func (z *Int) Lsh(x *Int, n uint) *Int {
 	z.abs.Lsh(x.abs, n)
 	if z.abs.IsZero() {

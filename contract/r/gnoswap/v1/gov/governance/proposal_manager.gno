@@ -11,12 +11,6 @@ type ProposalManager struct {
 
 // GetUserProposals retrieves all proposal IDs created by a specific user.
 // Returns an empty slice if the user has no proposals.
-//
-// Parameters:
-//   - user: address of the user to query
-//
-// Returns:
-//   - []int64: slice of proposal IDs created by the user
 func (pm *ProposalManager) GetUserProposals(user std.Address) []int64 {
 	// Check if user has any proposals
 	_, ok := pm.userProposals[user.String()]
@@ -35,14 +29,7 @@ func (pm *ProposalManager) GetUserProposals(user std.Address) []int64 {
 }
 
 // HasProposal checks if a specific user has created a specific proposal.
-// This is used for validation and authorization checks.
-//
-// Parameters:
-//   - user: address of the user to check
-//   - proposalID: ID of the proposal to check
-//
-// Returns:
-//   - bool: true if the user created the specified proposal
+// Returns true if the user created the specified proposal.
 func (pm *ProposalManager) HasProposal(user std.Address, proposalID int64) bool {
 	// First check if user has any proposals
 	proposals, ok := pm.userProposals[user.String()]

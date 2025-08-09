@@ -1,5 +1,6 @@
 package rbac
 
+// SystemRole represents a predefined system role that cannot be removed.
 type SystemRole string
 
 var (
@@ -34,6 +35,8 @@ var systemRoleNames = map[string]SystemRole{
 	"protocol_fee":   ROLE_PROTOCOL_FEE,
 }
 
+// String returns the string representation of the SystemRole.
+// Returns "Unknown" if the role is not a valid system role.
 func (r SystemRole) String() string {
 	roleName := string(r)
 	if _, ok := systemRoleNames[roleName]; !ok {
@@ -43,6 +46,7 @@ func (r SystemRole) String() string {
 	return roleName
 }
 
+// IsSystemRole returns true if roleName is a system role.
 func IsSystemRole(roleName string) bool {
 	_, ok := systemRoleNames[roleName]
 
