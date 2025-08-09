@@ -35,6 +35,11 @@ func SwapMathComputeSwapStep(
 		panic("SwapMathComputeSwapStep: invalid input")
 	}
 
+	// Check for zero liquidity early to ensure consistent behavior
+	if liquidity.IsZero() {
+		panic(errLiquidityZero)
+	}
+
 	// This function is publicly accessible and can be called by external users or contracts.
 	// While the pool realm only uses predefined fee values (100, 500, 3000, 10000) which are safely within range,
 	// external callers could potentially pass any feePips value. The fee calculation involves subtracting feePips
