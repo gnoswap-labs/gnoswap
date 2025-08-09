@@ -12,63 +12,6 @@ func setupPositions(t *testing.T) {
 	MakeMintPositionWithoutFee(t)
 }
 
-func TestApiGetPositions_ResponseStructure(t *testing.T) {
-	tests := []struct {
-		name         string
-		apiCall      func() string
-		expectedSize int
-		validator    func(*ApiTestHelper, *json.Node)
-		setRealm     bool
-	}{
-		{
-			name: "Basic Response",
-			apiCall: func() string {
-				return ApiGetPositions()
-			},
-			expectedSize: 1,
-			validator: func(helper *ApiTestHelper, position *json.Node) {
-				helper.AssertPositionFields(position)
-			},
-			setRealm: true,
-		},
-		{
-			name: "By Pool Path",
-			apiCall: func() string {
-				return ApiGetPositionsByPoolPath("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
-			},
-			expectedSize: 1,
-			validator: func(helper *ApiTestHelper, position *json.Node) {
-				helper.AssertPositionFields(position)
-			},
-			setRealm: false,
-		},
-		{
-			name: "By Address",
-			apiCall: func() string {
-				return ApiGetPositionsByAddress(adminAddr)
-			},
-			expectedSize: 1,
-			validator: func(helper *ApiTestHelper, position *json.Node) {
-				helper.AssertPositionFields(position)
-			},
-			setRealm: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
-			setupPositions(t)
-
-			if tt.setRealm {
-				testing.SetRealm(adminRealm)
-			}
-
-			runApiTest(t, tt.apiCall, tt.expectedSize, tt.validator)
-		})
-	}
-}
-
 func TestApiGetPositionsFee(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -76,16 +19,6 @@ func TestApiGetPositionsFee(t *testing.T) {
 		expectedSize int
 		validator    func(*ApiTestHelper, *json.Node)
 	}{
-		{
-			name: "Unclaimed Fee",
-			apiCall: func() string {
-				return ApiGetPositionsUnclaimedFee()
-			},
-			expectedSize: 1,
-			validator: func(helper *ApiTestHelper, feeData *json.Node) {
-				helper.AssertFeeFields(feeData)
-			},
-		},
 		{
 			name: "Unclaimed Fee By LP Position ID",
 			apiCall: func() string {

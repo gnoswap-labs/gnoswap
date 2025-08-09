@@ -16,10 +16,12 @@ var (
 	maxUint128 = u256.MustFromDecimal(MAX_UINT128)
 	q96Uint    = u256.MustFromDecimal(Q96)
 	q128Mask   = func() *u256.Uint {
-		mask := new(u256.Uint).Lsh(u256.One(), Q128_RESOLUTION)
-		mask = mask.Sub(mask, u256.One())
+		mask := u256.Zero().Lsh(u256.One(), Q128_RESOLUTION)
+		mask = u256.Zero().Sub(mask, u256.One())
 		return mask
 	}()
+	// only used for return value
+	zero = u256.Zero()
 )
 
 // toAscendingOrder ensures values are in ascending order.
@@ -43,7 +45,7 @@ func toUint128(value *u256.Uint) *u256.Uint {
 	}
 
 	if value.Gt(maxUint128) {
-		return new(u256.Uint).And(value, q128Mask)
+		return u256.Zero().And(value, q128Mask)
 	}
 	return value
 }
@@ -98,7 +100,7 @@ func computeLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0 *u256.Uint
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 	intermediate := u256.MulDiv(sqrtRatioAX96, sqrtRatioBX96, q96Uint)
 
-	diff := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
+	diff := u256.Zero().Sub(sqrtRatioBX96, sqrtRatioAX96)
 	if diff.IsZero() {
 		panic(newErrorWithDetail(
 			errIdenticalTicks,
@@ -133,7 +135,7 @@ func computeLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0 *u256.Uint
 func computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1 *u256.Uint) *u256.Uint {
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 
-	diff := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
+	diff := u256.Zero().Sub(sqrtRatioBX96, sqrtRatioAX96)
 	if diff.IsZero() {
 		panic(newErrorWithDetail(
 			errIdenticalTicks,
@@ -165,9 +167,10 @@ func computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1 *u256.Uint
 //   - The `Clone` method is used to prevent modification of the original values during computation.
 //   - The function ensures that liquidity calculations handle edge cases when the current price
 //     is outside the specified range by returning liquidity based on the dominant token.
-func GetLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0, amount1 *u256.Uint) *u256.Uint {
+//
+// TODO: consider to reduce the number of clones (after confirmed this logic is correct)
+func GetLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0, amount1 *u256.Uint) (liquidity *u256.Uint) {
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96.Clone(), sqrtRatioBX96.Clone())
-	var liquidity *u256.Uint
 
 	if sqrtRatioX96.Lte(sqrtRatioAX96) {
 		liquidity = computeLiquidityForAmount0(sqrtRatioAX96.Clone(), sqrtRatioBX96.Clone(), amount0.Clone())
@@ -207,11 +210,11 @@ func GetLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0,
 func computeAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Uint) *u256.Uint {
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 	if sqrtRatioAX96.IsZero() || sqrtRatioBX96.IsZero() || liquidity.IsZero() || sqrtRatioAX96.Eq(sqrtRatioBX96) {
-		return u256.Zero()
+		return zero
 	}
 
-	val1 := new(u256.Uint).Lsh(liquidity, Q96_RESOLUTION)
-	val2 := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
+	val1 := u256.Zero().Lsh(liquidity, Q96_RESOLUTION)
+	val2 := u256.Zero().Sub(sqrtRatioBX96, sqrtRatioAX96)
 
 	res := u256.MulDiv(val1, val2, sqrtRatioBX96)
 	res = res.Div(res, sqrtRatioAX96)
@@ -242,10 +245,10 @@ func computeAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Ui
 func computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Uint) *u256.Uint {
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 	if liquidity.IsZero() || sqrtRatioAX96.Eq(sqrtRatioBX96) {
-		return u256.Zero()
+		return zero
 	}
 
-	diff := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
+	diff := u256.Zero().Sub(sqrtRatioBX96, sqrtRatioAX96)
 	res := u256.MulDiv(liquidity, diff, q96Uint)
 
 	return res

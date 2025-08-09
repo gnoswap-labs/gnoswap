@@ -299,11 +299,11 @@ func DecreaseLiquidity(
 		"prevRealm", previousRealm.PkgPath(),
 		"lpPositionId", formatUint(positionId),
 		"poolPath", poolPath,
-		"decreasedLiquidity", liquidity.ToString(),
-		"feeAmount0", fee0.ToString(),
-		"feeAmount1", fee1.ToString(),
-		"amount0", amount0.ToString(),
-		"amount1", amount1.ToString(),
+		"decreasedLiquidity", liquidity,
+		"feeAmount0", fee0,
+		"feeAmount1", fee1,
+		"amount0", amount0,
+		"amount1", amount1,
 		"unwrapResult", formatBool(unwrapResult),
 		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath).ToString(),
 		"positionLiquidity", PositionGetPositionLiquidityStr(positionId),
@@ -311,7 +311,7 @@ func DecreaseLiquidity(
 		"token1Balance", pl.GetBalanceToken1(poolPath),
 	)
 
-	return positionId, liquidity.ToString(), fee0.ToString(), fee1.ToString(), amount0.ToString(), amount1.ToString(), poolPath
+	return positionId, liquidity, fee0, fee1, amount0, amount1, poolPath
 }
 
 // CollectFee collects swap fee from the position

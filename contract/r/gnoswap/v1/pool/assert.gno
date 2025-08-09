@@ -1,6 +1,8 @@
 package pool
 
 import (
+	"std"
+
 	"gno.land/p/demo/ufmt"
 )
 
@@ -49,6 +51,15 @@ func assertAmountSpecifiedIsNotZero(amountSpecified string) {
 		panic(newErrorWithDetail(
 			errInvalidSwapAmount,
 			ufmt.Sprintf("amountSpecified == 0"),
+		))
+	}
+}
+
+func assertPayerIsPreviousRealmOrOriginCaller(payer std.Address) {
+	if payer != std.PreviousRealm().Address() && payer != std.OriginCaller() {
+		panic(newErrorWithDetail(
+			errInvalidPayer,
+			ufmt.Sprintf("expected payer(%s) to be the previous realm or the caller", payer),
 		))
 	}
 }

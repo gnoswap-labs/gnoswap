@@ -32,6 +32,8 @@ var (
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 
+	routerRealm = std.NewUserRealm(routerAddr)
+
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = std.NewUserRealm(aliceAddr)
 
@@ -154,7 +156,7 @@ func testNonWhitelistedRouterFails() {
 
 	// Try to call pool directly from a non-whitelisted address
 	testing.SetRealm(std.NewUserRealm(user2Addr))
-
+	
 	expectedPanicMsg := ufmt.Sprintf("unauthorized: caller %s is not a whitelisted router", user2Addr.String())
 	uassert.AbortsWithMessage(t, expectedPanicMsg, func() {
 		pool.Swap(cross, token0Path, token1Path, FEE_MEDIUM, user2Addr, true, "100", "4295128740", user2Addr)
@@ -199,6 +201,13 @@ func testWhitelistedCustomRouterSwap() {
 	bar.TransferFrom(cross, user2Addr, customRouter1Addr, balance)
 	bar.Approve(cross, poolAddr, maxApprove)
 
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = std.NewUserRealm(customRouter1Addr)
+		ctx.OriginCaller = user2Addr
+		testing.SetContext(ctx)
+	}()
 	// Execute swap through custom router
 	amount0, amount1 := pool.Swap(cross, token0Path, token1Path, FEE_MEDIUM, user2Addr, true, "100", "4295128740", customRouter1Addr)
 
@@ -228,7 +237,12 @@ func testRemovedRouterFails() {
 	println("[SCENARIO] 7. Testing removed router fails")
 
 	// Try to call pool from removed router
-	testing.SetRealm(std.NewUserRealm(customRouter1Addr))
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = std.NewUserRealm(customRouter1Addr)
+		ctx.OriginCaller = user2Addr
+		testing.SetContext(ctx)
+	}()
 
 	// This should panic
 	expectedPanicMsg := ufmt.Sprintf("unauthorized: caller %s is not a whitelisted router", customRouter1Addr.String())

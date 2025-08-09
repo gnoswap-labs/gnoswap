@@ -59,7 +59,7 @@ func Delegate(
 		"prevRealm", prevRealm.PkgPath(),
 		"from", delegation.DelegateFrom().String(),
 		"to", delegation.DelegateTo().String(),
-		"amount", formatInt(delegation.TotalDelegatedAmount()),
+		"amount", formatInt(delegation.DelegatedAmount()),
 		"referrer", registeredReferrer,
 	)
 
@@ -262,6 +262,11 @@ func CollectUndelegatedGns(cur realm) int64 {
 	xgns.Burn(cross, caller, collectedAmount)
 	gns.Transfer(cross, caller, collectedAmount)
 
+	totalLockedAmount -= collectedAmount
+	if totalLockedAmount < 0 {
+		totalLockedAmount = 0
+	}
+
 	std.Emit(
 		"CollectUndelegatedGns",
 		"prevAddr", prevRealm.Address().String(),
@@ -310,6 +315,9 @@ func delegate(
 	addDelegationRecord(delegationRecord)
 	addStakeEmissionReward(from.String(), amount, currentTimestamp)
 	addStakeProtocolFeeReward(from.String(), amount, time.Now().Unix())
+
+	totalDelegatedAmount += amount
+	totalLockedAmount += amount
 
 	return delegation, nil
 }
@@ -375,6 +383,12 @@ func unDelegate(
 		}
 	}
 
+	totalDelegatedAmount -= amount
+
+	if totalDelegatedAmount < 0 {
+		totalDelegatedAmount = 0
+	}
+
 	return amount, nil
 }
 
@@ -427,6 +441,12 @@ func unDelegateWithoutLockup(
 		if unDelegationAmount <= 0 {
 			break
 		}
+	}
+
+	totalDelegatedAmount -= amount
+	
+	if totalDelegatedAmount < 0 {
+		totalDelegatedAmount = 0
 	}
 
 	return amount, nil

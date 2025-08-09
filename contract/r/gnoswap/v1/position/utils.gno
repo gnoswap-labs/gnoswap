@@ -71,8 +71,7 @@ func isOwner(positionId uint64, addr std.Address) bool {
 // input: positionId uint64, addr std.Address
 // output: bool
 func isOperator(positionId uint64, addr std.Address) bool {
-	operator := PositionGetPositionOperator(positionId)
-	return operator == addr
+	return PositionGetPositionOperator(positionId) == addr
 }
 
 // isStaked checks whether positionId is staked
@@ -96,16 +95,11 @@ func isStaked(positionId grc721.TokenID) bool {
 // input: addr std.Address, positionId uint64
 // output: bool
 func isOwnerOrOperator(positionId uint64, addr std.Address) bool {
-	if !addr.IsValid() {
+	if !addr.IsValid() || !exists(positionId) {
 		return false
 	}
 
-	if !exists(positionId) {
-		return false
-	}
-
-	staked := isStaked(positionIdFrom(positionId))
-	if staked {
+	if isStaked(positionIdFrom(positionId)) {
 		return isOperator(positionId, addr)
 	}
 

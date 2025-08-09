@@ -30,10 +30,10 @@ var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminRealm   = std.NewUserRealm(adminAddr)
 
-	poolAddr, _     = access.GetAddress(prabc.ROLE_POOL.String())
-	positionAddr, _ = access.GetAddress(prabc.ROLE_POSITION.String())
-
-	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
+	poolAddr, _        = access.GetAddress(prabc.ROLE_POOL.String())
+	positionAddr, _    = access.GetAddress(prabc.ROLE_POSITION.String())
+	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 
 	userAddr  = testutils.TestAddress("user")
 	userRealm = std.NewUserRealm(userAddr)
@@ -189,8 +189,13 @@ func testExecuteSwapsForFees() {
 
 	// Get accumulated fees info
 	_, _, _, _, amount0, amount1 := pn.CollectFee(cross, 1, false)
+	protocolFeeWugnot := wugnot.BalanceOf(protocolFeeAddr)
+	protocolFeeGns := gns.BalanceOf(protocolFeeAddr)
+
 	println("[INFO] Accumulated GNS fees:", amount0)
 	println("[INFO] Accumulated WUGNOT fees:", amount1)
+	println("[INFO] Protocol fee balance WUGNOT:", protocolFeeWugnot)
+	println("[INFO] Protocol fee balance GNS:", protocolFeeGns)
 	println("[EXPECTED] Pool fee (0.5%) accumulated correctly")
 	println("[EXPECTED] Router fee (0.15%) accumulated correctly")
 }
@@ -317,6 +322,8 @@ func testBurnPositionWithUnwrap() {
 // [INFO] Swap 1 - GNS in: 10000000 WUGNOT out: -9695218
 // [INFO] Accumulated GNS fees: 0
 // [INFO] Accumulated WUGNOT fees: 50001
+// [INFO] Protocol fee balance WUGNOT: 0
+// [INFO] Protocol fee balance GNS: 500
 // [EXPECTED] Pool fee (0.5%) accumulated correctly
 // [EXPECTED] Router fee (0.15%) accumulated correctly
 //

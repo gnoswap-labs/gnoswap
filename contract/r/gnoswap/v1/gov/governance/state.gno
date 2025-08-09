@@ -108,13 +108,14 @@ func nextProposalID() int64 {
 // Returns:
 //   - Config: governance configuration for the specified version
 //   - bool: true if configuration exists, false otherwise
-func getConfig(version int64) (Config, bool) {
-	val, exists := configs.Get(formatInt(version))
-	if !exists {
-		return Config{}, false
+func getConfig(version int64) (cfg Config, ok bool) {
+	if val, exists := configs.Get(formatInt(version)); !exists {
+		return
+	} else {
+		cfg, ok = val.(Config)
 	}
 
-	return val.(Config), true
+	return
 }
 
 // setConfig stores a governance configuration with the specified version number.
@@ -143,13 +144,13 @@ func getCurrentConfig() (Config, bool) {
 // Returns:
 //   - *Proposal: pointer to the proposal if found
 //   - bool: true if proposal exists, false otherwise
-func getProposal(proposalID int64) (*Proposal, bool) {
-	val, exists := proposals.Get(formatInt(proposalID))
-	if !exists {
-		return nil, false
+func getProposal(proposalID int64) (proposal *Proposal, ok bool) {
+	if val, exists := proposals.Get(formatInt(proposalID)); !exists {
+		return
+	} else {
+		proposal, ok = val.(*Proposal)
 	}
-
-	return val.(*Proposal), true
+	return
 }
 
 // addProposal stores a new proposal in the system.
@@ -161,11 +162,12 @@ func getProposal(proposalID int64) (*Proposal, bool) {
 // Returns:
 //   - bool: true if proposal was successfully added
 func addProposal(proposal *Proposal) bool {
+	id := proposal.ID()
 	// Store proposal in main proposals tree
-	proposals.Set(formatInt(proposal.ID()), proposal)
+	proposals.Set(formatInt(id), proposal)
 
 	// Register proposal with user in proposal manager
-	proposalManager.addProposal(proposal.Proposer(), proposal.ID())
+	proposalManager.addProposal(proposal.Proposer(), id)
 
 	return true
 }
@@ -177,22 +179,19 @@ func addProposal(proposal *Proposal) bool {
 //
 // Returns:
 //   - []*Proposal: slice of proposals created by the user
-func getUserProposals(user std.Address) []*Proposal {
+func getUserProposals(user std.Address) (proposals []*Proposal) {
 	// Get proposal IDs for this user
 	proposalIDs := proposalManager.GetUserProposals(user)
-	proposals := make([]*Proposal, 0)
 
 	// Retrieve each proposal by ID
 	for _, proposalID := range proposalIDs {
-		proposal, ok := getProposal(proposalID)
-		if !ok {
+		if proposal, ok := getProposal(proposalID); !ok {
 			continue // Skip if proposal not found (shouldn't happen)
+		} else {
+			proposals = append(proposals, proposal)
 		}
-
-		proposals = append(proposals, proposal)
 	}
-
-	return proposals
+	return
 }
 
 // getProposalUserVotingInfos retrieves all voting information for a specific proposal.
@@ -204,19 +203,14 @@ func getUserProposals(user std.Address) []*Proposal {
 // Returns:
 //   - map[string]*VotingInfo: mapping of user addresses to voting information
 //   - bool: true if voting information exists for the proposal
-func getProposalUserVotingInfos(proposalID int64) (map[string]*VotingInfo, bool) {
-	userVotingInfosI, exists := proposalUserVotingInfos.Get(formatInt(proposalID))
-	if !exists {
-		return map[string]*VotingInfo{}, false
+func getProposalUserVotingInfos(proposalID int64) (userVotingInfos map[string]*VotingInfo, ok bool) {
+	id := formatInt(proposalID)
+	if userVotingInfosI, exists := proposalUserVotingInfos.Get(id); !exists {
+		return
+	} else {
+		userVotingInfos, ok = userVotingInfosI.(map[string]*VotingInfo)
 	}
-
-	// Type assertion to convert interface{} to the expected map type
-	userVotingInfos, ok := userVotingInfosI.(map[string]*VotingInfo)
-	if !ok {
-		return map[string]*VotingInfo{}, false
-	}
-
-	return userVotingInfos, true
+	return
 }
 
 // getProposalUserVotingInfo retrieves voting information for a specific user on a specific proposal.

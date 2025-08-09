@@ -125,7 +125,11 @@ func distributeToTarget(amount int64) (int64, error) {
 			return true
 		}
 
-		pct := iPct.(int64)
+		pct, ok := iPct.(int64)
+		if !ok {
+			panic("failed to cast distributionBpsPct's element to int64")
+		}
+
 		distAmount := calculateAmount(amount, pct)
 		totalSent += distAmount
 
@@ -254,7 +258,12 @@ func GetDistributionBpsPct(target int) int64 {
 		))
 	}
 
-	return iInt64.(int64)
+	pct, ok := iInt64.(int64)
+	if !ok {
+		panic("failed to cast distributionBpsPct's element to int64")
+	}
+
+	return pct
 }
 
 // GetDistributedToStaker returns pending GNS for liquidity stakers.

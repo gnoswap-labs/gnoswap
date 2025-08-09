@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"gno.land/p/demo/json"
+	"gno.land/p/demo/ufmt"
+
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/v1/protocol_fee"
 )
@@ -13,8 +15,11 @@ import (
 func GetLockedAmount() int64 {
 	lockedAmount := int64(0)
 
-	delegations.Iterate("", "", func(key string, value interface{}) bool {
-		delegation := value.(*Delegation)
+	delegations.Iterate("", "", func(key string, value any) bool {
+		delegation, ok := value.(*Delegation)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast delegations's element to *Delegation: %T", value))
+		}
 		lockedAmount += delegation.DelegatedAmount()
 		return false
 	})

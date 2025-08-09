@@ -399,7 +399,7 @@ func TestGovernanceExecute_Cancel(t *testing.T) {
 			expectedProposalId: 1,
 		},
 		{
-			name:       "success - cancel proposal by others when proposer stake below threshold",
+			name:       "fail - cancel proposal by others when proposer stake below threshold",
 			proposalId: 1,
 			canceler:   testutils.TestAddress("other"),
 			setupProposal: NewProposal(
@@ -422,14 +422,15 @@ func TestGovernanceExecute_Cancel(t *testing.T) {
 				time.Now().Unix()-executableDelay,
 				100,
 			),
-			expectedProposalId: 1,
+			expectedHasAbort:   true,
+			expectedAbortMsg:   "[GNOSWAP-GOVERNANCE-022] not proposer",
 		},
 		{
 			name:             "fail - proposal not found",
 			proposalId:       999,
 			canceler:         testutils.TestAddress("canceler"),
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-003] requested data not found",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-020] proposal not found",
 		},
 		{
 			name:       "fail - proposal already executed",
@@ -1029,9 +1030,21 @@ func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
 			proposer:           testutils.TestAddress("proposer"),
 			proposerThreshold:  1_000_000_000,
 			proposerCurrentGns: 2_000_000_000,
-			expectedError:      "[GNOSWAP-GOVERNANCE-003] requested data not found",
+			expectedError:      "[GNOSWAP-GOVERNANCE-020] proposal not found",
 			expectedHasAbort:   true,
 			description:        "Test with proposalId 999 (nonexistent)",
+		},
+		{
+			name:               "fail - cancel proposal by others when proposer stake below threshold",
+			proposalTime:       now,
+			cancellationTime:   now.Add(-time.Second * time.Duration(testConfig.VotingStartDelay+testConfig.VotingPeriod+testConfig.ExecutionDelay)),
+			canceler:           testutils.TestAddress("other"),
+			proposer:           testutils.TestAddress("proposer"),
+			proposerThreshold:  1_000_000_000,
+			proposerCurrentGns: 2_000_000_000,
+			expectedError:      "[GNOSWAP-GOVERNANCE-022] not proposer",
+			expectedHasAbort:   true,
+			description:        "Test with proposalId 1 (existent)",
 		},
 	}
 

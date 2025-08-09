@@ -100,8 +100,14 @@ func main() {
 
 	println("[INFO] Minted position:", mint0, mint1)
 
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = rouRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	// SWAP 1 -> 0
-	testing.SetRealm(rouRealm)
 	swap0, swap1 := pool.Swap(
 		cross,
 		barPath,
@@ -165,7 +171,7 @@ func main() {
 // [INFO] Minted position: 59817378 0
 // [INFO] Swapped: -59817377 60183363
 // [INFO] Burned: 0 60177342
-// [INFO] Collected: 0 60177342
+// [INFO] Collected: 0 60181856
 // [EXPECTED] Pool tick: 120 expected: >= 120
 //
 // [INFO] Scenario completed

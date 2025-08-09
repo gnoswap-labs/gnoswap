@@ -14,22 +14,20 @@ import (
 // If unwrapResult is true and the position involves WUGNOT, any leftover WUGNOT will be
 // unwrapped to GNOT at the end of the operation.
 // Returns position ID, liquidity, fee0, fee1, amount0, amount1, poolPath
-func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, string, error) {
+func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, string, string, string, string, error) {
 	caller := params.caller
 
 	// before decrease liquidity, collect fee first
 	_, fee0Str, fee1Str, _, _, _ := collectFee(params.positionId, params.unwrapResult, params.caller)
-	fee0 := u256.MustFromDecimal(fee0Str)
-	fee1 := u256.MustFromDecimal(fee1Str)
 
 	position := MustGetPosition(params.positionId)
 	positionLiquidity := position.liquidity
 	if positionLiquidity.IsZero() {
 		return params.positionId,
-			nil,
-			fee0,
-			fee1,
-			nil, nil,
+			"",
+			fee0Str,
+			fee1Str,
+			"", "",
 			position.poolKey,
 			makeErrorWithDetails(
 				errZeroLiquidity,
@@ -40,10 +38,10 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	liquidityToRemove := u256.MustFromDecimal(params.liquidity)
 	if liquidityToRemove.Gt(positionLiquidity) {
 		return params.positionId,
-			liquidityToRemove,
-			fee0,
-			fee1,
-			nil, nil,
+			liquidityToRemove.ToString(),
+			fee0Str,
+			fee1Str,
+			"", "",
 			position.poolKey,
 			makeErrorWithDetails(
 				errInvalidLiquidity,
@@ -58,11 +56,11 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	burnedAmount1 := u256.MustFromDecimal(burn1)
 	if isSlippageExceeded(burnedAmount0, burnedAmount1, params.amount0Min, params.amount1Min) {
 		return params.positionId,
-			liquidityToRemove,
-			fee0,
-			fee1,
-			burnedAmount0,
-			burnedAmount1,
+			liquidityToRemove.ToString(),
+			fee0Str,
+			fee1Str,
+			burn0,
+			burn1,
 			position.poolKey,
 			makeErrorWithDetails(
 				errSlippage,
@@ -108,9 +106,9 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
-	position.liquidity = new(u256.Uint).Sub(positionLiquidity, liquidityToRemove)
-	position.token0Balance = new(u256.Uint).Sub(calculatedToken0Balance, burnedAmount0)
-	position.token1Balance = new(u256.Uint).Sub(calculatedToken1Balance, burnedAmount1)
+	position.liquidity = u256.Zero().Sub(positionLiquidity, liquidityToRemove)
+	position.token0Balance = u256.Zero().Sub(calculatedToken0Balance, burnedAmount0)
+	position.token1Balance = u256.Zero().Sub(calculatedToken1Balance, burnedAmount1)
 	mustUpdatePosition(params.positionId, position)
 
 	collect0, collect1 := pl.Collect(
@@ -143,28 +141,28 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	}
 
 	underflow := false
-	position.tokensOwed0, underflow = new(u256.Uint).SubOverflow(position.tokensOwed0, collectAmount0)
+	position.tokensOwed0, underflow = u256.Zero().SubOverflow(position.tokensOwed0, collectAmount0)
 	if underflow {
 		return params.positionId,
-			liquidityToRemove,
-			fee0,
-			fee1,
-			collectAmount0,
-			collectAmount1,
+			liquidityToRemove.ToString(),
+			fee0Str,
+			fee1Str,
+			collect0,
+			collect1,
 			position.poolKey,
 			makeErrorWithDetails(
 				errUnderflow,
 				"tokensOwed0 underflow",
 			)
 	}
-	position.tokensOwed1, underflow = new(u256.Uint).SubOverflow(position.tokensOwed1, collectAmount1)
+	position.tokensOwed1, underflow = u256.Zero().SubOverflow(position.tokensOwed1, collectAmount1)
 	if underflow {
 		return params.positionId,
-			liquidityToRemove,
-			fee0,
-			fee1,
-			collectAmount0,
-			collectAmount1,
+			liquidityToRemove.ToString(),
+			fee0Str,
+			fee1Str,
+			collect0,
+			collect1,
 			position.poolKey,
 			makeErrorWithDetails(
 				errUnderflow,
@@ -178,7 +176,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	mustUpdatePosition(params.positionId, position)
 
-	return params.positionId, liquidityToRemove, fee0, fee1, collectAmount0, collectAmount1, position.poolKey, nil
+	return params.positionId, liquidityToRemove.ToString(), fee0Str, fee1Str, collect0, collect1, position.poolKey, nil
 }
 
 func updateTokensOwed(
@@ -189,8 +187,8 @@ func updateTokensOwed(
 	tokensOwed *u256.Uint,
 ) *u256.Uint {
 	additionalTokensOwed := calculateTokensOwed(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128, positionLiquidity)
-	add := new(u256.Uint).Add(burnedAmount, additionalTokensOwed)
-	return new(u256.Uint).Add(tokensOwed, add)
+	add := u256.Zero().Add(burnedAmount, additionalTokensOwed)
+	return u256.Zero().Add(tokensOwed, add)
 }
 
 // calculateFees calculates the fees for the current position.
@@ -207,8 +205,8 @@ func calculateFees(position Position, currentFeeGrowth FeeGrowthInside) (*u256.U
 		position.liquidity,
 	)
 
-	tokensOwed0 := new(u256.Uint).Add(new(u256.Uint).Set(position.tokensOwed0), fee0)
-	tokensOwed1 := new(u256.Uint).Add(new(u256.Uint).Set(position.tokensOwed1), fee1)
+	tokensOwed0 := u256.Zero().Add(u256.Zero().Set(position.tokensOwed0), fee0)
+	tokensOwed1 := u256.Zero().Add(u256.Zero().Set(position.tokensOwed1), fee1)
 
 	return tokensOwed0, tokensOwed1
 }
@@ -218,6 +216,7 @@ func calculateTokensOwed(
 	positionFeeGrowthInsideLastX128 *u256.Uint,
 	positionLiquidity *u256.Uint,
 ) *u256.Uint {
-	diff := new(u256.Uint).Sub(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128)
+	diff := u256.Zero().Sub(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128)
+	// TODO: make Q128 a global variable
 	return u256.MulDiv(diff, positionLiquidity, u256.MustFromDecimal(Q128))
 }

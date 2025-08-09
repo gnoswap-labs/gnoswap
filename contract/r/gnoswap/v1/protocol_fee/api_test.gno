@@ -13,7 +13,7 @@ func TestApiGetAccuTransferToGovStaker(t *testing.T) {
 		name        string
 		historyItem []struct {
 			token  string
-			amount uint64
+			amount int64
 		}
 		expectedResultAccu string
 	}{
@@ -21,7 +21,7 @@ func TestApiGetAccuTransferToGovStaker(t *testing.T) {
 			name: "api get accu transfer to gov staker success",
 			historyItem: []struct {
 				token  string
-				amount uint64
+				amount int64
 			}{
 				{token: "gno.land/r/onbloc/bar", amount: 1000},
 				{token: "gno.land/r/onbloc/qux", amount: 2000},
@@ -32,7 +32,7 @@ func TestApiGetAccuTransferToGovStaker(t *testing.T) {
 			name: "api get accu transfer to gov staker success",
 			historyItem: []struct {
 				token  string
-				amount uint64
+				amount int64
 			}{
 				{token: "gno.land/r/onbloc/bar", amount: 1000},
 				{token: "gno.land/r/onbloc/bar", amount: 2000},
@@ -64,7 +64,7 @@ func TestApiGetHistoryTransferToGovStaker(t *testing.T) {
 		name        string
 		historyItem []struct {
 			token  string
-			amount uint64
+			amount int64
 		}
 		expectedResultHistory string
 		expectedResultAccu    string
@@ -73,7 +73,7 @@ func TestApiGetHistoryTransferToGovStaker(t *testing.T) {
 			name: "api get history transfer to gov staker success",
 			historyItem: []struct {
 				token  string
-				amount uint64
+				amount int64
 			}{
 				{token: "gno.land/r/onbloc/bar", amount: 1000},
 				{token: "gno.land/r/onbloc/qux", amount: 2000},
@@ -110,7 +110,7 @@ func TestApiGetAccuTransferToDevOps(t *testing.T) {
 		name        string
 		historyItem []struct {
 			token  string
-			amount uint64
+			amount int64
 		}
 		expectedResultAccu string
 	}{
@@ -118,7 +118,7 @@ func TestApiGetAccuTransferToDevOps(t *testing.T) {
 			name: "api get accu transfer to devOps success",
 			historyItem: []struct {
 				token  string
-				amount uint64
+				amount int64
 			}{
 				{token: "gno.land/r/onbloc/bar", amount: 1000},
 				{token: "gno.land/r/onbloc/qux", amount: 2000},
@@ -154,7 +154,7 @@ func TestApiGetHistoryTransferToDevOps(t *testing.T) {
 		name        string
 		historyItem []struct {
 			token  string
-			amount uint64
+			amount int64
 		}
 		expectedResultHistory string
 		expectedResultAccu    string
@@ -163,7 +163,7 @@ func TestApiGetHistoryTransferToDevOps(t *testing.T) {
 			name: "api get history transfer to devOps success",
 			historyItem: []struct {
 				token  string
-				amount uint64
+				amount int64
 			}{
 				{token: "gno.land/r/onbloc/bar", amount: 1000},
 				{token: "gno.land/r/onbloc/qux", amount: 2000},

@@ -83,8 +83,14 @@ func newRpcPool(poolPath string) RpcPool {
 
 	rpcPool.Ticks = RpcTicks{}
 	pool.ticks.Iterate("", "", func(tickStr string, iTickInfo any) bool {
-		tick, _ := strconv.Atoi(tickStr)
-		tickInfo := iTickInfo.(TickInfo)
+		tick, err := strconv.ParseInt(tickStr, 10, 32)
+		if err != nil {
+			panic(err)
+		}
+		tickInfo, ok := iTickInfo.(TickInfo)
+		if !ok {
+			panic("failed to cast tick info to TickInfo")
+		}
 
 		rpcPool.Ticks[int32(tick)] = RpcTickInfo{
 			LiquidityGross:              tickInfo.liquidityGross.ToString(),
@@ -102,16 +108,25 @@ func newRpcPool(poolPath string) RpcPool {
 
 	rpcPool.TickBitmaps = RpcTickBitmaps{}
 	pool.tickBitmaps.Iterate("", "", func(tickStr string, iTickBitmap any) bool {
-		tick, _ := strconv.Atoi(tickStr)
-		pool.setTickBitmap(int16(tick), iTickBitmap.(*u256.Uint))
-
+		tick, err := strconv.ParseInt(tickStr, 10, 16)
+		if err != nil {
+			panic(err)
+		}
+		bm, ok := iTickBitmap.(*u256.Uint)
+		if !ok {
+			panic("failed to cast tick bitmap to *u256.Uint")
+		}
+		pool.setTickBitmap(int16(tick), bm)
 		return false
 	})
 
 	rpcPositions := []RpcPosition{}
 	pool.positions.Iterate("", "", func(posKey string, iPositionInfo any) bool {
 		owner, tickLower, tickUpper := posKeyDivide(posKey)
-		posInfo := iPositionInfo.(PositionInfo)
+		posInfo, ok := iPositionInfo.(PositionInfo)
+		if !ok {
+			panic("failed to cast position info to PositionInfo")
+		}
 
 		rpcPositions = append(rpcPositions, RpcPosition{
 			Owner:      owner,

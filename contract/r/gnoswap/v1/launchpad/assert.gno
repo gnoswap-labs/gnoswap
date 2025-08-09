@@ -49,7 +49,11 @@ func assertHasProject(caller std.Address) {
 	hasProject := false
 
 	projects.Iterate("", "", func(key string, value interface{}) bool {
-		project := value.(*Project)
+		project, ok := value.(*Project)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast projects's element to *Project: %T", value))
+		}
+
 		hasProject = project.IsOwner(caller)
 
 		// if true, break the loop
