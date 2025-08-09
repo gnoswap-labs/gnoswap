@@ -101,7 +101,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 		ratio = temp.Div(maxUint256, ratio)
 	}
 
-	// Convert from Q128.128 to Q128.96 with rounding up
+	// Convert from Q128.128 to Q128.96 with rounding up.
 	// This divides by 1<<32 rounding up to go from a Q128.128 to a Q128.96
 	upper := u256.Zero().Rsh(ratio, 32)           // ratio >> 32
 	remainder := u256.Zero().Mod(ratio, oneLsh32) // ratio % (1 << 32)
@@ -114,7 +114,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 	return upper
 }
 
-// getMostSignificantBit calculates the most significant bit position more efficiently
+// getMostSignificantBit calculates the most significant bit position more efficiently.
 func getMostSignificantBit(r *u256.Uint) (msb uint64) {
 	temp := r.Clone()
 
