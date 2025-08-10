@@ -3,6 +3,7 @@ package staker
 import (
 	"errors"
 
+	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -46,13 +47,17 @@ func (p *ProtocolFeeRewardState) IsClaimable(currentTimestamp int64) bool {
 //
 // Returns:
 //   - map[string]int64: map of token path to claimable reward amount
+//   - error: nil on success, error if claiming is not allowed
 func (p *ProtocolFeeRewardState) GetClaimableRewardAmounts(
 	accumulatedRewardsX128PerStake map[string]*u256.Uint,
 	currentTimestamp int64,
-) map[string]int64 {
-	rewardAmounts := p.calculateClaimableRewards(accumulatedRewardsX128PerStake, currentTimestamp)
+) (map[string]int64, error) {
+	rewardAmounts, err := p.calculateClaimableRewards(accumulatedRewardsX128PerStake, currentTimestamp)
+	if err != nil {
+		return nil, err
+	}
 
-	return rewardAmounts
+	return rewardAmounts, nil
 }
 
 // calculateClaimableRewards calculates newly earned rewards for all tokens since the last update.
@@ -67,10 +72,10 @@ func (p *ProtocolFeeRewardState) GetClaimableRewardAmounts(
 func (p *ProtocolFeeRewardState) calculateClaimableRewards(
 	accumulatedRewardsX128PerStake map[string]*u256.Uint,
 	currentTimestamp int64,
-) map[string]int64 {
+) (map[string]int64, error) {
 	// Don't calculate rewards for past timestamps
 	if p.accumulatedTimestamp >= currentTimestamp {
-		return p.accumulatedRewards
+		return p.accumulatedRewards, nil
 	}
 
 	rewardAmounts := make(map[string]int64)
@@ -83,24 +88,25 @@ func (p *ProtocolFeeRewardState) calculateClaimableRewards(
 		}
 
 		// Calculate the difference in accumulated rewards per stake since last update
-		rewardDebtDeltaX128 := u256.Zero().Sub(
+		rewardDebtDeltaX128, overflow := u256.Zero().SubOverflow(
 			accumulatedRewardX128PerStake,
 			p.rewardDebtX128[token],
 		)
+		if overflow {
+			return nil, ufmt.Errorf("rewardDebtDeltaX128 overflow")
+		}
 
 		// Multiply by staked amount to get total reward for this staker and token
-		rewardAmountX128 := u256.Zero().Mul(
+		rewardAmount := u256.MulDiv(
 			rewardDebtDeltaX128,
 			u256.NewUintFromInt64(p.stakedAmount),
+			q128,
 		)
-
-		// Scale down by 2^128 to get the actual reward amount
-		rewardAmount := u256.Zero().Rsh(rewardAmountX128, 128)
 
 		rewardAmounts[token] = rewardAmount.Int64()
 	}
 
-	return rewardAmounts
+	return rewardAmounts, nil
 }
 
 // addStake increases the staked amount for this address.
@@ -161,14 +167,18 @@ func (p *ProtocolFeeRewardState) claimRewards(currentTimestamp int64) (map[strin
 func (p *ProtocolFeeRewardState) updateRewardDebtX128(
 	accumulatedProtocolFeeX128PerStake map[string]*u256.Uint,
 	currentTimestamp int64,
-) {
+) error {
 	// Don't update if we're looking at a past timestamp
 	if p.accumulatedTimestamp >= currentTimestamp {
-		return
+		return nil
 	}
 
 	// Calculate and accumulate new rewards for all tokens
-	rewardAmounts := p.calculateClaimableRewards(accumulatedProtocolFeeX128PerStake, currentTimestamp)
+	rewardAmounts, err := p.calculateClaimableRewards(accumulatedProtocolFeeX128PerStake, currentTimestamp)
+	if err != nil {
+		return err
+	}
+
 	p.rewardDebtX128 = cloneAccumulatedProtocolFeeX128PerStake(accumulatedProtocolFeeX128PerStake)
 
 	// Add newly calculated rewards to accumulated amounts
@@ -177,6 +187,8 @@ func (p *ProtocolFeeRewardState) updateRewardDebtX128(
 	}
 
 	p.accumulatedTimestamp = currentTimestamp
+
+	return nil
 }
 
 // addStakeWithUpdateRewardDebtX128 adds stake and updates reward debt in one operation.
@@ -190,9 +202,15 @@ func (p *ProtocolFeeRewardState) addStakeWithUpdateRewardDebtX128(
 	amount int64,
 	accumulatedProtocolFeeX128PerStake map[string]*u256.Uint,
 	currentTimestamp int64,
-) {
-	p.updateRewardDebtX128(accumulatedProtocolFeeX128PerStake, currentTimestamp)
+) error {
+	err := p.updateRewardDebtX128(accumulatedProtocolFeeX128PerStake, currentTimestamp)
+	if err != nil {
+		return err
+	}
+
 	p.addStake(amount)
+
+	return nil
 }
 
 // removeStakeWithUpdateRewardDebtX128 removes stake and updates reward debt in one operation.
@@ -206,9 +224,15 @@ func (p *ProtocolFeeRewardState) removeStakeWithUpdateRewardDebtX128(
 	amount int64,
 	accumulatedProtocolFeeX128PerStake map[string]*u256.Uint,
 	currentTimestamp int64,
-) {
-	p.updateRewardDebtX128(accumulatedProtocolFeeX128PerStake, currentTimestamp)
+) error {
+	err := p.updateRewardDebtX128(accumulatedProtocolFeeX128PerStake, currentTimestamp)
+	if err != nil {
+		return err
+	}
+
 	p.removeStake(amount)
+
+	return nil
 }
 
 // claimRewardsWithUpdateRewardDebtX128 claims rewards and updates reward debt in one operation.
