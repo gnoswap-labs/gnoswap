@@ -107,7 +107,7 @@ func TestEmissionRewardManager_GetClaimableRewardAmount(t *testing.T) {
 			tt.setupManager(manager)
 
 			// When: Get claimable reward amount
-			result := manager.GetClaimableRewardAmount(
+			result, _ := manager.GetClaimableRewardAmount(
 				tt.currentDistributedAmount,
 				tt.address,
 				tt.currentHeight,
@@ -309,7 +309,7 @@ func TestEmissionRewardManager_calculateAccumulatedRewardX128PerStake(t *testing
 			}
 
 			// When: Calculate accumulated reward X128 per stake
-			result := manager.calculateAccumulatedRewardX128PerStake(
+			result, _ := manager.calculateAccumulatedRewardX128PerStake(
 				tt.currentDistributedAmount,
 				tt.currentHeight,
 			)

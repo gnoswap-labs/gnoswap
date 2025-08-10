@@ -75,7 +75,7 @@ func (r *RewardManager) getDepositRewardState(depositId string) (*RewardState, e
 
 	rewardState, ok := rewardStateI.(*RewardState)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast rewardState to *RewardState: %T", rewardStateI))
+		return nil, ufmt.Errorf("failed to cast rewardState to *RewardState: %T", rewardStateI)
 	}
 
 	return rewardState, nil
@@ -116,8 +116,11 @@ func (r *RewardManager) calculateRewardPerDepositX128(rewardPerSecondX128 *u256.
 
 	// timeDuration * rewardPerSecond / totalStaked
 	timeDuration := currentTime - accumulatedTime
-	totalRewardX128 := u256.Zero().Mul(u256.NewUintFromInt64(timeDuration), rewardPerSecondX128)
-	rewardPerDepositX128 := u256.Zero().Div(totalRewardX128, u256.NewUintFromInt64(totalStaked))
+	rewardPerDepositX128 := u256.MulDiv(
+		u256.NewUintFromInt64(timeDuration),
+		rewardPerSecondX128,
+		u256.NewUintFromInt64(totalStaked),
+	)
 
 	return rewardPerDepositX128, nil
 }
@@ -150,22 +153,29 @@ func (r *RewardManager) addRewardState(deposit *Deposit, rewardState *RewardStat
 	return rewardState
 }
 
-func (r *RewardManager) addRewardPerDepositX128(rewardPerDepositX128 *u256.Uint, currentHeight, currentTime int64) {
+func (r *RewardManager) addRewardPerDepositX128(rewardPerDepositX128 *u256.Uint, currentHeight, currentTime int64) error {
 	if rewardPerDepositX128.IsZero() {
-		return
+		return nil
 	}
 
 	if r.accumulatedTime > currentTime || r.distributeStartTime > currentTime {
-		return
+		return nil
 	}
 
 	if currentTime > r.distributeEndTime {
 		currentTime = r.distributeEndTime
 	}
 
-	r.accumulatedRewardPerDepositX128 = u256.Zero().Add(r.accumulatedRewardPerDepositX128, rewardPerDepositX128)
+	accumulatedRewardPerDepositX128, overflow := u256.Zero().AddOverflow(r.accumulatedRewardPerDepositX128, rewardPerDepositX128)
+	if overflow {
+		return ufmt.Errorf("accumulatedRewardPerDepositX128 overflow")
+	}
+
+	r.accumulatedRewardPerDepositX128 = accumulatedRewardPerDepositX128
 	r.accumulatedHeight = currentHeight
 	r.accumulatedTime = currentTime
+
+	return nil
 }
 
 // updateRewardPerDepositX128 updates the reward per deposit state.
@@ -194,7 +204,10 @@ func (r *RewardManager) updateRewardPerDepositX128(totalDepositAmount int64, cur
 		return err
 	}
 
-	r.addRewardPerDepositX128(rewardPerDepositX128, currentHeight, currentTime)
+	err = r.addRewardPerDepositX128(rewardPerDepositX128, currentHeight, currentTime)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

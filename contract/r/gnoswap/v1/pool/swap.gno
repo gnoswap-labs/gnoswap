@@ -432,7 +432,12 @@ func computeSwapStep(
 	// update global fee tracker
 	if newState.liquidity.Gt(u256.Zero()) {
 		update := u256.MulDiv(step.feeAmount, fixedPointQ128, newState.liquidity)
-		newState.setFeeGrowthGlobalX128(u256.Zero().Add(newState.feeGrowthGlobalX128, update))
+		feeGrowthGlobalX128, overflow := u256.Zero().AddOverflow(newState.feeGrowthGlobalX128, update)
+		if overflow {
+			panic(ufmt.Sprintf("feeGrowthGlobalX128 overflow"))
+		}
+		
+		newState.setFeeGrowthGlobalX128(feeGrowthGlobalX128)
 	}
 
 	// handling tick transitions
