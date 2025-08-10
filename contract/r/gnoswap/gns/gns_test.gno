@@ -220,7 +220,7 @@ func TestGrc20Methods(t *testing.T) {
 			},
 			shouldPanic:   true,
 			exceptionKind: "abort",
-			panicMsg:      `ownable: caller is not owner`,
+			panicMsg:      `unauthorized: caller g13ffa5r3mqfxu3s7ejl02scq9536wt6c2t789dm is not admin or governance`,
 		},
 		{
 			name: "Transfer success",
