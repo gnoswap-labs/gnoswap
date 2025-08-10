@@ -2,29 +2,31 @@ package staker
 
 import (
 	"std"
+	"time"
 
 	"gno.land/p/demo/avl"
 )
 
-// Incentives is a collection of external incentives for a given pool.
+// Incentives represents a collection of external incentives for a specific pool.
 //
 // Fields:
-// - byTime: ExternalIncentive primarily indexed by startTime
-// - byHeight: ExternalIncentive primarily indexed by startHeight
-// - byEndHeight: ExternalIncentive primarily indexed by endHeight
-// - byCreator: ExternalIncentive primarily indexed by creator
-// - targetPoolPath: The target pool path for this incentive collection
 //
-//   - unclaimablePeriods:
-//     For each unclaimable period(start, end) for this pool,
-//     it stores (key: start) => (value: end)
-//     if end is 0, it means the unclaimable period is ongoing.
+//   - incentives: AVL tree storing ExternalIncentive objects indexed by incentiveId
+//     The incentiveId serves as the key to efficiently lookup incentive details
+//
+//   - targetPoolPath: String identifier for the pool this incentive collection belongs to
+//     Used to associate incentives with their corresponding liquidity pool
+//
+//   - unclaimablePeriods: Tree storing periods when rewards cannot be claimed
+//     Maps start timestamp (key) to end timestamp (value)
+//     An end timestamp of 0 indicates an ongoing unclaimable period
+//     Used to track intervals when staking rewards are not claimable
 type Incentives struct {
 	incentives *avl.Tree // (incentiveId) => ExternalIncentive
 
 	targetPoolPath string // The target pool path for this incentive collection
 
-	unclaimablePeriods *UintTree // startHeight => endHeight
+	unclaimablePeriods *UintTree // startTimestamp => endTimestamp
 }
 
 // NewIncentives creates a new Incentives instance.
@@ -36,7 +38,8 @@ func NewIncentives(targetPoolPath string) Incentives {
 	}
 
 	// initial unclaimable period starts, as there cannot be any staked positions yet.
-	result.unclaimablePeriods.set(std.ChainHeight(), int64(0))
+	currentTimestamp := time.Now().Unix()
+	result.unclaimablePeriods.set(currentTimestamp, int64(0))
 	return result
 }
 
@@ -88,7 +91,6 @@ func (self *Incentives) GetAllInTimestamps(startTimestamp, endTimestamp int64) m
 
 // Create a new external incentive
 // Panics if the incentive already exists.
-// Sets to byTime, byHeight, byEndHeight, byCreator
 func (self *Incentives) create(
 	creator std.Address,
 	incentive *ExternalIncentive,
@@ -105,33 +107,33 @@ func (self *Incentives) update(
 }
 
 // starts incentive unclaimable period for this pool
-func (self *Incentives) startUnclaimablePeriod(startHeight int64) {
-	self.unclaimablePeriods.set(startHeight, int64(0))
+func (self *Incentives) startUnclaimablePeriod(startTimestamp int64) {
+	self.unclaimablePeriods.set(startTimestamp, int64(0))
 }
 
 // ends incentive unclaimable period for this pool
 // ignores if currently not in unclaimable period
-func (self *Incentives) endUnclaimablePeriod(endHeight int64) {
-	startHeight := int64(0)
-	self.unclaimablePeriods.ReverseIterate(0, endHeight, func(key int64, value any) bool {
+func (self *Incentives) endUnclaimablePeriod(endTimestamp int64) {
+	startTimestamp := int64(0)
+	self.unclaimablePeriods.ReverseIterate(0, endTimestamp, func(key int64, value any) bool {
 		if value.(int64) != 0 {
 			// Already ended, no need to update
-			// keeping startHeight as 0 to indicate this
+			// keeping startTimestamp as 0 to indicate this
 			return true
 		}
-		startHeight = key
+		startTimestamp = key
 		return true
 	})
 
-	if startHeight == 0 {
+	if startTimestamp == 0 {
 		// No ongoing unclaimable period found
 		return
 	}
 
-	if startHeight == endHeight {
-		self.unclaimablePeriods.remove(startHeight)
+	if startTimestamp == endTimestamp {
+		self.unclaimablePeriods.remove(startTimestamp)
 	} else {
-		self.unclaimablePeriods.set(startHeight, endHeight)
+		self.unclaimablePeriods.set(startTimestamp, endTimestamp)
 	}
 }
 
@@ -142,9 +144,11 @@ func (self *Incentives) calculateUnclaimableReward(incentiveId string) int64 {
 		return 0
 	}
 
-	blocks := int64(0)
+	timeDiff := int64(0)
 
+	// Find unclaimable periods that end before or at incentive start
 	self.unclaimablePeriods.ReverseIterate(0, incentive.startTimestamp, func(key int64, value any) bool {
+		startTimestamp := key
 		endTimestamp := value.(int64)
 		if endTimestamp == 0 {
 			endTimestamp = incentive.endTimestamp
@@ -154,25 +158,66 @@ func (self *Incentives) calculateUnclaimableReward(incentiveId string) int64 {
 			return true
 		}
 
-		blocks += endTimestamp - incentive.startTimestamp
+		// Calculate duration of unclaimable period that overlaps with incentive period
+		duration := calculateUnClaimableDuration(
+			startTimestamp,
+			endTimestamp,
+			incentive.startTimestamp,
+			incentive.endTimestamp,
+		)
+
+		timeDiff += duration
 
 		return true
 	})
 
+	// Find unclaimable periods that start within incentive period
 	self.unclaimablePeriods.Iterate(incentive.startTimestamp, incentive.endTimestamp, func(key int64, value any) bool {
 		startTimestamp := key
 		endTimestamp, ok := value.(int64)
 		if !ok {
 			panic("failed to cast value to int64")
 		}
+
 		if endTimestamp == 0 {
 			endTimestamp = incentive.endTimestamp
 		}
 
-		blocks += endTimestamp - startTimestamp
+		// Calculate duration of unclaimable period that overlaps with incentive period
+		duration := calculateUnClaimableDuration(
+			startTimestamp,
+			endTimestamp,
+			incentive.startTimestamp,
+			incentive.endTimestamp,
+		)
+
+		timeDiff += duration
 
 		return false
 	})
 
-	return int64(blocks) * incentive.rewardPerSecond
+	return timeDiff * incentive.rewardPerSecond
+}
+
+// calculateUnClaimableDuration calculates the duration of overlap between an unclaimable period and incentive period
+func calculateUnClaimableDuration(unclaimableStart, unclaimableEnd, incentiveStartTimestamp, incentiveEndTimestamp int64) int64 {
+	// Use later timestamp between unclaimable start and incentive start
+	startTime := unclaimableStart
+	if startTime < incentiveStartTimestamp {
+		startTime = incentiveStartTimestamp
+	}
+
+	// Use earlier timestamp between unclaimable end and incentive end
+	endTime := unclaimableEnd
+	if endTime > incentiveEndTimestamp {
+		endTime = incentiveEndTimestamp
+	}
+
+	// Return 0 if no overlap
+	if endTime < startTime {
+		return 0
+	}
+
+	// Calculate overlap duration
+	return endTime - startTime
 }

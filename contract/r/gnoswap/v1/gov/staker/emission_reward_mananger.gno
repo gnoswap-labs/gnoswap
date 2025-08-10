@@ -47,20 +47,27 @@ func (e *EmissionRewardManager) GetClaimableRewardAmount(
 	currentDistributedAmount int64,
 	address string,
 	currentTimestamp int64,
-) int64 {
+) (int64, error) {
 	rewardStateI, ok := e.rewardStates.Get(address)
 	if !ok {
-		return 0
+		return 0, nil
 	}
 
 	rewardState, ok := rewardStateI.(*EmissionRewardState)
 	if !ok {
-		panic(ufmt.Sprintf(
+		return 0, ufmt.Errorf(
 			"failed to cast rewardStates's element to *EmissionRewardState: %T",
 			rewardStateI,
-		))
+		)
 	}
-	accumulatedRewardX128PerStake := e.calculateAccumulatedRewardX128PerStake(currentDistributedAmount, currentTimestamp)
+
+	accumulatedRewardX128PerStake, err := e.calculateAccumulatedRewardX128PerStake(
+		currentDistributedAmount,
+		currentTimestamp,
+	)
+	if err != nil {
+		return 0, err
+	}
 
 	return rewardState.GetClaimableRewardAmount(accumulatedRewardX128PerStake, currentTimestamp)
 }
@@ -69,15 +76,15 @@ func (e *EmissionRewardManager) GetClaimableRewardAmount(
 func (e *EmissionRewardManager) calculateAccumulatedRewardX128PerStake(
 	currentDistributedAmount int64,
 	currentTimestamp int64,
-) *u256.Uint {
+) (*u256.Uint, error) {
 	// If we're looking at a past timestamp, return current state
 	if e.accumulatedTimestamp > currentTimestamp {
-		return e.accumulatedRewardX128PerStake
+		return e.accumulatedRewardX128PerStake, nil
 	}
 
 	// If no tokens are staked, no rewards to distribute
 	if e.totalStakedAmount == 0 {
-		return e.accumulatedRewardX128PerStake
+		return e.accumulatedRewardX128PerStake, nil
 	}
 
 	// Calculate the newly distributed rewards since last update
@@ -92,12 +99,15 @@ func (e *EmissionRewardManager) calculateAccumulatedRewardX128PerStake(
 	)
 
 	// Add to accumulated reward per stake
-	accumulatedRewardX128PerStake := u256.Zero().Add(
+	accumulatedRewardX128PerStake, overflow := u256.Zero().AddOverflow(
 		e.accumulatedRewardX128PerStake,
 		distributedAmountDeltaX128PerStake,
 	)
+	if overflow {
+		return e.accumulatedRewardX128PerStake, ufmt.Errorf("overflow: accumulatedRewardX128PerStake + distributedAmountDeltaX128PerStake")
+	}
 
-	return accumulatedRewardX128PerStake
+	return accumulatedRewardX128PerStake, nil
 }
 
 // updateAccumulatedRewardX128PerStake updates the internal accumulated reward state.
@@ -106,24 +116,31 @@ func (e *EmissionRewardManager) calculateAccumulatedRewardX128PerStake(
 func (e *EmissionRewardManager) updateAccumulatedRewardX128PerStake(
 	currentDistributedAmount int64,
 	currentTimestamp int64,
-) {
+) error {
 	// Don't update if we're looking at a past timestamp
 	if e.accumulatedTimestamp > currentTimestamp {
-		return
+		return nil
 	}
 
 	// Don't update if no tokens are staked
 	if e.totalStakedAmount == 0 {
-		return
+		return nil
 	}
 
 	// Update accumulated reward state
-	e.accumulatedRewardX128PerStake = e.calculateAccumulatedRewardX128PerStake(
+	accumulatedRewardX128PerStake, err := e.calculateAccumulatedRewardX128PerStake(
 		currentDistributedAmount,
 		currentTimestamp,
 	)
+	if err != nil {
+		return err
+	}
+
+	e.accumulatedRewardX128PerStake = accumulatedRewardX128PerStake
 	e.distributedAmount = currentDistributedAmount
 	e.accumulatedTimestamp = currentTimestamp
+
+	return nil
 }
 
 // addStake adds a stake for an address and updates their reward state.
@@ -137,16 +154,21 @@ func (e *EmissionRewardManager) addStake(address string, amount int64, currentTi
 
 	rewardState, ok := rewardStateI.(*EmissionRewardState)
 	if !ok {
-		panic(ufmt.Sprintf(
+		return ufmt.Errorf(
 			"failed to cast rewardStates's element to *EmissionRewardState: %T",
 			rewardStateI,
-		))
+		)
 	}
-	rewardState.addStakeWithUpdateRewardDebtX128(amount, e.accumulatedRewardX128PerStake, currentTimestamp)
+
+	err := rewardState.addStakeWithUpdateRewardDebtX128(amount, e.accumulatedRewardX128PerStake, currentTimestamp)
+	if err != nil {
+		return err
+	}
 
 	e.rewardStates.Set(address, rewardState)
-
 	e.totalStakedAmount = e.totalStakedAmount + amount
+
+	return nil
 }
 
 // removeStake removes a stake for an address and updates their reward state.
@@ -158,14 +180,22 @@ func (e *EmissionRewardManager) removeStake(address string, amount int64, curren
 		rewardStateI = NewEmissionRewardState(e.accumulatedRewardX128PerStake.Clone())
 	}
 
-	if rewardState, ok := rewardStateI.(*EmissionRewardState); !ok {
-		panic(ufmt.Sprintf("failed to cast rewardStates's element to *EmissionRewardState: %T", rewardStateI))
-	} else {
-		rewardState.removeStakeWithUpdateRewardDebtX128(amount, e.accumulatedRewardX128PerStake, currentTimestamp)
-		e.rewardStates.Set(address, rewardState)
+	rewardState, ok := rewardStateI.(*EmissionRewardState)
+	if !ok {
+		return ufmt.Errorf(
+			"failed to cast rewardStates's element to *EmissionRewardState: %T",
+			rewardStateI,
+		)
+	}
+	
+	err := rewardState.removeStakeWithUpdateRewardDebtX128(amount, e.accumulatedRewardX128PerStake, currentTimestamp)
+	if err != nil {
+		return err
 	}
 
 	e.totalStakedAmount = e.totalStakedAmount - amount
+
+	return nil
 }
 
 // claimRewards processes reward claiming for an address.
@@ -181,17 +211,18 @@ func (e *EmissionRewardManager) claimRewards(address string, currentTimestamp in
 	if !ok {
 		return 0, ufmt.Errorf(
 			"failed to cast rewardStates's element to *EmissionRewardState: %T",
-			rewardStateI)
+			rewardStateI,
+		)
 	}
 
-	claimedRewardAmount, err = rewardState.claimRewardsWithUpdateRewardDebtX128(e.accumulatedRewardX128PerStake, currentTimestamp)
+	claimedRewardAmount, err := rewardState.claimRewardsWithUpdateRewardDebtX128(e.accumulatedRewardX128PerStake, currentTimestamp)
 	if err != nil {
 		return 0, err
 	}
 
 	e.rewardStates.Set(address, rewardState)
 
-	return
+	return claimedRewardAmount, nil
 }
 
 // NewEmissionRewardManager creates a new instance of EmissionRewardManager.

@@ -166,11 +166,19 @@ func SetAmountByProjectWallet(cur realm, addr std.Address, amount int64, add boo
 
 	if add {
 		// Add stake for the project wallet and mint xGNS to launchpad
-		addStakeFromLaunchpad(addr.String(), amount, currentTimestamp)
+		err := addStakeFromLaunchpad(addr.String(), amount, currentTimestamp)
+		if err != nil {
+			panic(err)
+		}
+
 		xgns.Mint(cross, launchpadAddr, amount)
 	} else {
 		// Remove stake for the project wallet and burn xGNS from launchpad
-		removeStakeFromLaunchpad(addr.String(), amount, currentTimestamp)
+		err := removeStakeFromLaunchpad(addr.String(), amount, currentTimestamp)
+		if err != nil {
+			panic(err)
+		}
+		
 		xgns.Burn(cross, launchpadAddr, amount)
 	}
 }

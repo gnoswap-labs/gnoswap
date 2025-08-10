@@ -167,7 +167,7 @@ func TestProtocolFeeRewardState_GetClaimableRewardAmounts(t *testing.T) {
 			tt.setupState(state)
 
 			// When: Get claimable reward amounts
-			result := state.GetClaimableRewardAmounts(tt.accumulatedRewardsX128PerStake, tt.currentTimestamp)
+			result, _ := state.GetClaimableRewardAmounts(tt.accumulatedRewardsX128PerStake, tt.currentTimestamp)
 
 			// Then: Should return expected number of tokens
 			uassert.Equal(t, len(result), tt.expectedTokenCount)
@@ -480,7 +480,7 @@ func TestProtocolFeeRewardState_EdgeCases(t *testing.T) {
 				}
 
 				// Should handle nil reward debt gracefully
-				result := s.calculateClaimableRewards(accumulatedRewards, 100)
+				result, _ := s.calculateClaimableRewards(accumulatedRewards, 100)
 
 				uassert.NotEqual(t, result, nil)
 				uassert.True(t, len(result) > 0)
@@ -514,7 +514,7 @@ func TestProtocolFeeRewardState_EdgeCases(t *testing.T) {
 					"token1": u256.NewUintFromInt64(1000).Lsh(u256.NewUintFromInt64(1000), 128),
 				}
 
-				result := s.calculateClaimableRewards(accumulatedRewards, 100)
+				result, _ := s.calculateClaimableRewards(accumulatedRewards, 100)
 
 				// Should return zero rewards when no stake
 				uassert.Equal(t, result["token1"], int64(0))

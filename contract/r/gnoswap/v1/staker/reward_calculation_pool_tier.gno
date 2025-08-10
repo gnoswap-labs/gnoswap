@@ -82,10 +82,10 @@ func (self *TierRatio) Get(tier uint64) uint64 {
 // - membership: Tracks which tier a pool belongs to (poolPath -> blockNumber -> tier).
 //
 // Methods:
-// - CurrentCount: Returns the current count of pools in a tier at a specific height.
-// - CurrentRatio: Returns the current ratio for a tier at a specific height.
-// - CurrentTier: Returns the tier of a specific pool at a given height.
-// - CurrentReward: Retrieves the reward for a tier at a specific height.
+// - CurrentCount: Returns the current count of pools in a tier at a specific timestamp.
+// - CurrentRatio: Returns the current ratio for a tier at a specific timestamp.
+// - CurrentTier: Returns the tier of a specific pool at a given timestamp.
+// - CurrentReward: Retrieves the reward for a tier at a specific timestamp.
 // - changeTier: Updates the tier of a pool and recalculates ratios.
 type PoolTier struct {
 	membership *avl.Tree // poolPath -> tier(1, 2, 3)
@@ -247,14 +247,14 @@ func (self *PoolTier) cacheReward(currentHeight int64, currentTimestamp int64, p
 
 	for i, hvTimestamp := range halvingTimestamps {
 		emission := halvingEmissions[i]
-		// caching: [lastHeight, hvBlock)
+		// caching: [lastTimestamp, hvTimestamp)
 		self.applyCacheToAllPools(pools, hvTimestamp, emission)
 
 		// halve emissions when halvingBlock is reached
 		self.currentEmission = emission
 	}
 
-	// remaining range [lastHalvingBlock, currentTimestamp)
+	// remaining range [lastTimestamp, currentTimestamp)
 	self.applyCacheToAllPools(pools, currentTimestamp, self.currentEmission)
 
 	// update lastRewardCacheHeight and currentEmission

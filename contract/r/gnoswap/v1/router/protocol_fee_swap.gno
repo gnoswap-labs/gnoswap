@@ -96,6 +96,10 @@ func handleSwapFee(
 		"amount", formatInt64(feeAmountInt64),
 	)
 
-	toUserAfterProtocol := u256.Zero().Sub(amount, feeAmount)
+	toUserAfterProtocol, underflow := u256.Zero().SubOverflow(amount, feeAmount)
+	if underflow {
+		toUserAfterProtocol = u256.Zero()
+	}
+	
 	return toUserAfterProtocol
 }
