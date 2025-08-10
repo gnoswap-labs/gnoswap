@@ -1,8 +1,6 @@
 package staker
 
 import (
-	"time"
-
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -24,21 +22,6 @@ type Reward struct {
 	InternalPenalty int64
 	External        map[string]int64 // Incentive ID -> TokenAmount
 	ExternalPenalty map[string]int64 // Incentive ID -> TokenAmount
-}
-
-// calculate position reward by each warmup
-func calcPositionRewardByWarmups(currentTimestamp int64, positionId uint64) []Reward {
-	currentTime := time.Now().Unix()
-	rewards := calculatePositionReward(CalcPositionRewardParam{
-		CurrentHeight: currentTimestamp,
-		CurrentTime:   currentTime,
-		Deposits:      deposits,
-		Pools:         pools,
-		PoolTier:      poolTier,
-		PositionId:    positionId,
-	})
-
-	return rewards
 }
 
 // calculate total position rewards and penalties

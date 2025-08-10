@@ -55,8 +55,11 @@ func CreateExternalIncentive(
 	// deposit gns amount
 	gns.TransferFrom(cross, caller, stakerAddr, depositGnsAmount)
 
-	incentiveId := nextIncentiveID(caller, std.ChainHeight())
+	currentTime := time.Now().Unix()
+	currentHeight := std.ChainHeight()
+	incentiveId := nextIncentiveID(caller, currentTime)
 	pool := pools.GetOrCreate(targetPoolPath)
+
 	incentive := NewExternalIncentive(
 		incentiveId,
 		targetPoolPath,
@@ -65,9 +68,9 @@ func CreateExternalIncentive(
 		startTimestamp,
 		endTimestamp,
 		caller,
-		std.ChainHeight(),
+		currentHeight,
 		depositGnsAmount,
-		time.Now().Unix(),
+		currentTime,
 	)
 
 	if externalIncentives.Has(incentiveId) {
@@ -93,8 +96,8 @@ func CreateExternalIncentive(
 		"startTimestamp", formatInt(startTimestamp),
 		"endTimestamp", formatInt(endTimestamp),
 		"depositGnsAmount", formatInt(depositGnsAmount),
-		"currentHeight", formatInt(std.ChainHeight()),
-		"currentTime", formatInt(time.Now().Unix()),
+		"currentHeight", formatInt(currentHeight),
+		"currentTime", formatInt(currentTime),
 	)
 }
 

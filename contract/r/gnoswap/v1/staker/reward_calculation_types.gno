@@ -63,8 +63,8 @@ func DecodeInt64(s string) int64 {
 	return num
 }
 
-// UintTree is a wrapper around an AVL tree for storing block heights as strings.
-// Since block heights are defined as int64, we take int64 and convert it to uint64 for the tree.
+// UintTree is a wrapper around an AVL tree for storing block timestamps as strings.
+// Since block timestamps are defined as int64, we take int64 and convert it to uint64 for the tree.
 //
 // Methods:
 // - Get: Retrieves a value associated with a uint64 key.
@@ -74,7 +74,7 @@ func DecodeInt64(s string) int64 {
 // - Iterate: Iterates over keys and values in a range.
 // - ReverseIterate: Iterates in reverse order over keys and values in a range.
 type UintTree struct {
-	tree *avl.Tree // blockNumber -> any
+	tree *avl.Tree // blockTimestamp -> any
 }
 
 // NewUintTree creates a new UintTree instance.
