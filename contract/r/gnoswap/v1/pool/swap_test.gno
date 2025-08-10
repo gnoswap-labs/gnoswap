@@ -248,7 +248,10 @@ func TestSwapAmounts_UpdateMechanics(t *testing.T) {
 			}
 
 			// When: Execute swap amount update
-			updatedState := updateAmounts(step, state, test.isExactInput)
+			updatedState, err := updateAmounts(step, state, test.isExactInput)
+			if err != nil {
+				t.Fatalf("Unexpected error during swap amount update: %v", err)
+			}
 
 			// Then: Verify updated state
 			expectedRemaining := i256.MustFromDecimal(test.expectedRemaining)
