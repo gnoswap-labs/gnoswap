@@ -204,7 +204,7 @@ func createExternalIncentiveGns() {
 	println("[INFO] create external incentive for 90 days")
 	testing.SkipHeights(1)
 
-	incentiveID := fmt.Sprintf("%s:%d:%d", externalCreatorAddr, std.ChainHeight(), 1)
+	incentiveID := fmt.Sprintf("%s:%d:%d", externalCreatorAddr, time.Now().Unix(), 1)
 	println("[INFO] create external incentive with incentiveID: ", incentiveID)
 	sr.CreateExternalIncentive(
 		cross,
@@ -270,7 +270,7 @@ func endExternalGnsIncentive() {
 	testing.SetRealm(externalCreatorRealm)
 	gnsBalanceBeforeEnds := gns.BalanceOf(externalCreatorUser)
 
-	incentiveID := "g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:127:1"
+	incentiveID := "g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:1234567910:1"
 	sr.EndExternalIncentive(
 		cross,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
@@ -347,7 +347,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] transfer GNS to external creator
 // [INFO] approve GNS for external incentive creation
 // [INFO] create external incentive for 90 days
-// [INFO] create external incentive with incentiveID:  g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:127:1
+// [INFO] create external incentive with incentiveID:  g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:1234567910:1
 //
 // [SCENARIO] 6. Start external incentive
 // [INFO] skip blocks until external incentive starts
