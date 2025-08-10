@@ -76,9 +76,19 @@ type SwapComputation struct {
 }
 
 // Swap executes a token swap in the pool.
-// It swaps token0 for token1 (if zeroForOne is true) or token1 for token0.
-// Returns amount0, amount1 representing tokens swapped (negative for tokens out).
-// Panics if pool is locked, amount is zero, or price limit is invalid.
+//
+// Parameters:
+//   - token0Path, token1Path: token contract paths
+//   - fee: pool fee tier
+//   - recipient: address receiving output tokens
+//   - zeroForOne: true for token0→token1, false for token1→token0
+//   - amountSpecified: amount to swap (positive=exact in, negative=exact out)
+//   - sqrtPriceLimitX96: price limit in Q96 format
+//   - payer: address paying input tokens
+//
+// Returns amount0, amount1 as decimal strings (negative for tokens out).
+// Only callable by whitelisted routers.
+// Note: Uses tick-based pricing with Q96 fixed-point math.
 func Swap(
 	cur realm,
 	token0Path string,

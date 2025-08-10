@@ -4,8 +4,8 @@ import (
 	"std"
 	"time"
 
-	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/v1/access"
 )
 
 // CleanStakerDelegationSnapshotByAdmin cleans old delegation history records.
@@ -29,7 +29,7 @@ func CleanStakerDelegationSnapshotByAdmin(cur realm, threshold int64) {
 	halt.AssertIsNotHaltedGovStaker()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdmin(caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	// Calculate cutoff time by subtracting threshold from current time
 	cutoffTimestamp := time.Now().Unix() - threshold
@@ -64,7 +64,7 @@ func SetUnDelegationLockupPeriodByAdmin(cur realm, period int64) {
 	halt.AssertIsNotHaltedGovStaker()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdmin(caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	if period < 0 {
 		panic("period must be greater than 0")

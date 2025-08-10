@@ -15,7 +15,14 @@ import (
 )
 
 // CreateExternalIncentive creates an external incentive program for a pool.
-// Only users can call this function.
+//
+// Parameters:
+//   - targetPoolPath: pool to incentivize
+//   - rewardToken: reward token path
+//   - rewardAmount: total reward amount
+//   - startTimestamp, endTimestamp: incentive period
+//
+// Only callable by users.
 func CreateExternalIncentive(
 	cur realm,
 	targetPoolPath string,

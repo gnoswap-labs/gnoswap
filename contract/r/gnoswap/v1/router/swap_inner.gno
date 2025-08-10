@@ -19,6 +19,7 @@ const (
 )
 
 // swapInner executes the core swap logic by interacting with the pool contract.
+// Returns poolRecv (tokens received by pool) and poolOut (tokens sent by pool).
 func swapInner(
 	amountSpecified *i256.Int,
 	recipient std.Address,

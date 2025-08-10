@@ -10,7 +10,6 @@ type Referral struct {
 }
 
 // NewReferral creates a new Referral instance.
-// Uses the global keeper if available, otherwise creates a new one.
 func NewReferral() *Referral {
 	if gReferralKeeper == nil {
 		gReferralKeeper = NewKeeper()
@@ -20,20 +19,28 @@ func NewReferral() *Referral {
 	}
 }
 
-// Register creates a new referral relationship between addresses.
-// Caller must have valid permissions.
+// Register creates a new referral relationship.
+//
+// Parameters:
+//   - addr: address to register
+//   - refAddr: referral address
 func (r *Referral) Register(addr, refAddr std.Address) error {
 	return r.keeper.register(addr, refAddr)
 }
 
 // Update modifies an existing referral relationship.
-// Caller must have valid permissions.
+//
+// Parameters:
+//   - addr: address to update
+//   - newAddr: new referral address
 func (r *Referral) Update(addr, newAddr std.Address) error {
 	return r.keeper.update(addr, newAddr)
 }
 
 // Remove deletes a referral relationship.
-// Caller must have valid permissions.
+//
+// Parameters:
+//   - addr: address to remove
 func (r *Referral) Remove(addr std.Address) error {
 	return r.keeper.remove(addr)
 }
@@ -44,7 +51,6 @@ func (r *Referral) Has(addr std.Address) bool {
 }
 
 // Get retrieves the referral address for the given address.
-// Returns ErrNotFound if no referral exists.
 func (r *Referral) Get(addr std.Address) (std.Address, error) {
 	return r.keeper.get(addr)
 }

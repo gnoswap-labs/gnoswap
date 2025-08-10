@@ -1,57 +1,56 @@
-# GnoSwap Governance
+# Governance
 
-The GnoSwap governance contract allows $GNS holders to participate in protocol decision-making through staking, delegation, proposal creation, and voting. By staking GNS, users receive xGNS, which represents voting power and enables them to propose and vote on governance changes. Additionally, xGNS holders earn a share of [protocol fees](../protocol_fee/README.md), providing an incentive for active participation. The governance system is designed to be transparent, decentralized, and fully on-chain.
+On-chain governance system for GnoSwap protocol.
 
-## Overview
+## Features
 
-The governance system comprises several key realms:
+- GNS staking for xGNS voting power
+- Proposal creation and voting
+- Delegation system
+- Protocol fee sharing for xGNS holders
 
-- **Staker Realm (`staker.gno`)**: Manages staking, delegation, and reward collection.
-- **Proposal Realm (`proposal.gno`)**: Facilitates the creation and management of governance proposals.
-- **Vote Realm (`vote.gno`)**: Oversees the voting process on active proposals.
+## Functions
 
-## Key Components
+### Staker
+- `Delegate` - Delegate voting power to address
+- `Undelegate` - Remove delegation
+- `Redelegate` - Change delegate
+- `CollectReward` - Collect protocol fees and emissions
+- `CollectUndelegatedGns` - Claim undelegated GNS after lockup
 
-### Staker Realm (`staker.gno`)
+### Governance
+- `ProposeText` - Create text proposal
+- `ProposeCommunityPoolSpend` - Propose treasury spending
+- `ProposeParameterChange` - Propose parameter update
+- `Vote` - Cast vote on proposal
+- `Execute` - Execute passed proposal
+- `Cancel` - Cancel pending proposal
 
-- **Delegation Functions:**
-  - `Delegate(to std.Address, amount uint64)`: Delegate voting power to a specified address.
-  - `Redelegate(from std.Address, to std.Address, amount uint64)`: Reassign delegated voting power to a different delegate.
-  - `Undelegate(from std.Address, amount uint64)`: Retract delegated voting power.
+## Usage
 
-- **Reward Functions:**
-  - `CollectReward()`: Collect accumulated rewards based on delegated tokens.
-  - `CollectUndelegatedGns()`: Collect undelegated GNS tokens after a lock period (7 days).
+```go
+// Delegate voting power
+Delegate(to, amount, referrer)
 
-### Proposal Realm (`proposal.gno`)
+// Create proposal
+proposalId := ProposeText(title, description)
 
-- **Proposal Creation**: Users can submit proposals suggesting protocol changes or new features. Each proposal includes parameters such as the proposal's content, the proposer’s address, and the submission timestamp.
-
-### Vote Realm (`vote.gno`)
-
-- **Voting Process**: Users cast their votes on active proposals during the voting period. The system records and tallies these votes to determine the outcome of each proposal.
-
-## Interaction Flow
-
-1. **Staking & Delegation**: Users stake their $GNS tokens to receive xGNS, representing their voting power. They can delegate this voting power to themselves or other delegates.
-
-2. **Proposal Creation**: With sufficient GNS, users can create proposals suggesting protocol changes or new features.
-
-3. **Voting**: During the voting period, xGNS holders cast their votes on active proposals. The outcome is determined based on the majority of votes and predefined quorum requirements.
-
-4. **Execution**: Approved proposals are executed, implementing the proposed changes within the protocol.
-
-For more detailed information about the rationale behind the governance module, please refer to [GnopSwap Docs](https://docs.gnoswap.io/core-concepts/governance).
+// Vote on proposal
+Vote(proposalId, true)
+```
 
 ## Notes
 
+- 7-day undelegation lockup period
+- Proposals require minimum GNS balance
+- Automatic execution after voting period
+
 ### Configurable Parameters
-The following parameters can be modified:
-- **Voting Start Delay**: 1 day (default) - delay before voting starts after proposal creation
-- **Voting Period**: 7 days (default) - duration for collecting votes
-- **Voting Weight Smoothing Duration**: 1 day (default) - period for averaging voting weight
-- **Quorum**: 50% (default) - percentage of total GNS supply required for approval
-- **Proposal Creation Threshold**: 1,000,000,000 GNS (default) - minimum voting weight to create proposals
-- **Execution Delay**: 1 day (default) - waiting period before execution
-- **Execution Window**: 30 days (default) - time window for execution
-- **Undelegation Lockup Period**: 7 days (default) - lockup period for undelegated tokens
+The following parameters can be modified by admin or governance:
+- **Voting Period**: 7 days (default)
+- **Quorum**: 50% of xGNS supply (default)
+- **Proposal Creation Threshold**: 1,000 GNS (default)
+- **Execution Delay**: 1 day (default)
+- **Execution Window**: 30 days (default)
+- **Undelegation Lockup**: 7 days (default)
+- **Voting Start Delay**: 1 day (default)

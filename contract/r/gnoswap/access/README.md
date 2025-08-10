@@ -43,7 +43,7 @@ Role-based access control for GnoSwap contracts.
 ### Swap Whitelist
 
 - `UpdateSwapWhiteList(cur realm, router std.Address)` - Add router to whitelist (admin/governance only)
-- `RemoveFromSwapWhiteList(cur realm, router std.Address)` - Remove from whitelist (admin only)
+- `RemoveFromSwapWhiteList(cur realm, router std.Address)` - Remove from whitelist (admin/governance only)
 - `IsSwapWhitelisted(addr std.Address) bool` - Check if address is whitelisted
 - `GetWhitelistedSwaps() []std.Address` - Get all whitelisted addresses
 
@@ -56,7 +56,7 @@ if !access.IsAuthorized("admin", caller) {
 }
 
 // Assert permission (panics if unauthorized)
-access.AssertIsAdmin(caller)
+access.AssertIsAdminOrGovernance(caller)
 
 // Get role address
 addr, exists := access.GetAddress("router")

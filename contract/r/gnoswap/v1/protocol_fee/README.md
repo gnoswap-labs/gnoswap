@@ -1,16 +1,14 @@
 # Protocol Fee
 
-Manages fees from platform interactions, distributing to xGNS holders.
+Fee collection and distribution for protocol operations.
 
 ## Fee Types
 
-### Swap Fee
+### Router Fee
 - Default: 0.15% of swap amount
-- Get/Set functions available
 
 ### Pool Creation Fee
 - Default: 100 GNS
-- Get/Set functions available
 
 ### Withdrawal Fee
 - Default: 1% of claimed LP fees
@@ -27,14 +25,39 @@ Manages fees from platform interactions, distributing to xGNS holders.
 3. **Liquidity Withdrawal**: 1% of claimed fees
 4. **Staking Claims**: 1% of rewards
 
-All fees distributed to xGNS holders.
+## Features
+
+- Multiple fee types (swap, creation, withdrawal)
+- Automatic distribution to xGNS holders
+- Configurable fee percentages
+- DevOps funding support
+
+## Functions
+
+- `DistributeProtocolFee` - Distribute accumulated fees
+- `SetDevOpsPct` - Set DevOps percentage
+- `SetGovStakerPct` - Set GovStaker percentage
+- `AddToProtocolFee` - Add fees to distribution queue
+- `ClearTokenListWithAmount` - Clear fee accumulator
+
+## Usage
+
+```go
+// Distribute fees
+tokenAmounts := DistributeProtocolFee()
+
+// Set distribution percentages
+SetDevOpsPct(2000) // 20% to DevOps
+```
 
 ## Notes
 
-- Be aware of applicable fees
-- xGNS holders receive fee share
+- Fees accumulate until distributed
+- Default: 100% to xGNS holders
+- Multiple token types supported
 
 ### Configurable Parameters
-The following parameters can be modified:
-- **DevOps Percentage**: 0% (default) - portion of protocol fees allocated to development operations
-- **GovStaker Percentage**: 100% (default) - portion of protocol fees allocated to xGNS holders
+The following parameters can be modified by admin or governance:
+- **DevOps Percentage**: 0% (default) - portion for development and operations
+- **GovStaker Percentage**: 100% (default) - portion for xGNS holders
+- **Distribution Frequency**: On-demand via DistributeProtocolFee

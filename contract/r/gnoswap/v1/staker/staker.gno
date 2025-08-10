@@ -113,7 +113,7 @@ func NewExternalIncentives() *ExternalIncentives {
 func (self *ExternalIncentives) Has(incentiveId string) bool { return self.tree.Has(incentiveId) }
 
 // Size returns the number of external incentives.
-func (self *ExternalIncentives) Size() int                   { return self.tree.Size() }
+func (self *ExternalIncentives) Size() int { return self.tree.Size() }
 
 // get retrieves an external incentive by ID.
 func (self *ExternalIncentives) get(incentiveId string) *ExternalIncentive {
@@ -253,10 +253,14 @@ func init() {
 	)
 }
 
-// StakeToken stakes LP token into staker contract.
-// Transfers ownership to staker, creates deposit record, initializes warmup.
-// Requirements: Non-zero liquidity, pool has incentives, caller is owner/approved.
-// Returns pool path and token amounts.
+// StakeToken stakes an LP position NFT to earn rewards.
+//
+// Parameters:
+//   - positionId: LP position NFT token ID
+//   - referrer: referral address (optional)
+//
+// Returns poolPath, token0Amount, token1Amount.
+// Note: Position must be in range to earn rewards.
 func StakeToken(cur realm, positionId uint64, referrer string) (string, string, string) {
 	halt.AssertIsNotHaltedStaker()
 
@@ -358,23 +362,6 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 }
 
 // getPositionStakeTokenAmount validates staking requirements and returns token amounts.
-//
-// This function performs the following validations:
-// - Checks if position is already staked
-// - Verifies token ownership
-// - Validates position has liquidity
-// - Ensures pool has active incentives
-// Then returns the token amounts for the position.
-//
-// Parameters:
-//   - positionId: Position NFT ID to stake
-//   - owner: Position NFT owner address
-//   - caller: Transaction caller address
-//
-// Returns:
-//   - string: Amount of token0 in the position
-//   - string: Amount of token1 in the position
-//   - error: Error if validation fails
 func getPositionStakeTokenAmount(positionId uint64, owner, caller std.Address) (string, string, error) {
 	exist := deposits.Has(positionId)
 	if exist {
@@ -399,18 +386,7 @@ func getPositionStakeTokenAmount(positionId uint64, owner, caller std.Address) (
 	return token0Amount, token1Amount, nil
 }
 
-// transferDeposit transfers the ownership of a deposit token (NFT) to a new owner.
-//
-// This function ensures that the caller is not the same as the recipient (`to`).
-// If the caller is not the owner or the recipient, it attempts to transfer the NFT
-// ownership from the current owner to the recipient.
-//
-// Parameters:
-// - positionId (uint64): The unique identifier of the token (NFT) to transfer.
-// - owner (std.Address): The current owner of the token.
-// - caller (std.Address): The address attempting to initiate the transfer.
-// - to (std.Address): The address to which the token will be transferred.
-//
+// transferDeposit transfers deposit ownership to a new address.
 // Returns:
 //   - error: Returns an error if the caller is the same as the recipient (`to`).
 //     Otherwise, it delegates the transfer to `gnft.TransferFrom` and returns any error
@@ -432,8 +408,6 @@ func transferDeposit(positionId uint64, owner, caller, to std.Address) error {
 	return gnft.TransferFrom(cross, owner, to, positionIdFrom(positionId))
 }
 
-////////////////////////////////////////////////////////////
-
 // CollectReward harvests accumulated rewards for a staked position. This includes both
 // internal GNS emission and external incentive rewards.
 //
@@ -449,11 +423,13 @@ func transferDeposit(positionId uint64, owner, caller, to std.Address) error {
 //   - Position must be staked (have a deposit record)
 //
 // Parameters:
-//   - positionId (uint64): The ID of the LP token to collect rewards from
-//   - unwrapResult (bool): Whether to unwrap WUGNOT to GNOT
+// CollectReward claims accumulated rewards without unstaking.
 //
-// Returns:
-//   - poolPath (string): The path of the pool to which the LP token is staked
+// Parameters:
+//   - positionId: LP position NFT token ID
+//   - unwrapResult: if true, unwraps WUGNOT to GNOT
+//
+// Returns poolPath, gnsAmount, externalRewards map, externalPenalties map.
 func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, string, map[string]int64, map[string]int64) {
 	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedStaker()
@@ -634,14 +610,13 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 // - Position must be staked (have deposit record)
 // - Rewards are automatically collected before unStaking
 //
-// Params:
-// - positionId (uint64): ID of the staked LP token
-// - unwrapResult (bool): If true, unwraps any WUGNOT rewards to GNOT
+// UnStakeToken unstakes an LP position and collects all rewards.
 //
-// Returns:
-// - poolPath (string): The pool path associated with the unstaked position
-// - token0Amount (string): Final amount of token0 in the position
-// - token1Amount (string): Final amount of token1 in the position
+// Parameters:
+//   - positionId: LP position NFT token ID
+//   - unwrapResult: if true, unwraps WUGNOT to GNOT
+//
+// Returns poolPath, token0Amount, token1Amount.
 func UnStakeToken(cur realm, positionId uint64, unwrapResult bool) (string, string, string) { // poolPath, token0Amount, token1Amount
 	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedStaker()

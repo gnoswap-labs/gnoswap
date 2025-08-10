@@ -15,9 +15,12 @@ func init() {
 	haltConfig = newNoneConfig()
 }
 
-// SetHaltLevel sets the global halt level, overriding individual operation settings.
-// Only accessible by admin or governance roles. Panics if level is invalid.
-// Emits SetHaltLevel event with level details and caller address.
+// SetHaltLevel sets the global halt level.
+//
+// Parameters:
+//   - level: halt level to apply (None, SafeMode, Emergency, Complete)
+//
+// Only callable by admin or governance.
 func SetHaltLevel(cur realm, level HaltLevel) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
@@ -35,9 +38,13 @@ func SetHaltLevel(cur realm, level HaltLevel) {
 	)
 }
 
-// SetOperationStatus sets halt status for a specific operation type.
-// Only accessible by admin or governance roles. Panics if operation type is invalid.
-// Emits SetOperationStatus event with operation details and caller address.
+// SetOperationStatus sets halt status for a specific operation.
+//
+// Parameters:
+//   - op: operation type
+//   - halted: true to halt, false to resume
+//
+// Only callable by admin or governance.
 func SetOperationStatus(cur realm, op OpType, halted bool) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
@@ -57,7 +64,6 @@ func SetOperationStatus(cur realm, op OpType, halted bool) {
 }
 
 // setHaltLevel applies predefined halt level configuration.
-// Returns error if halt level is invalid.
 func setHaltLevel(level HaltLevel) error {
 	var config HaltConfig
 

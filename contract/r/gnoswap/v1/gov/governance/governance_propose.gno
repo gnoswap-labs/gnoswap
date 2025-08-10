@@ -9,7 +9,13 @@ import (
 	"gno.land/r/gnoswap/v1/gov/staker"
 )
 
-// ProposeText creates a text proposal for discussion.
+// ProposeText creates a text proposal for community discussion.
+//
+// Parameters:
+//   - title: proposal title
+//   - description: proposal content
+//
+// Returns new proposal ID.
 func ProposeText(
 	cur realm,
 	title string,

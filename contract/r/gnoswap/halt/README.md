@@ -4,19 +4,44 @@ Emergency pause mechanism for protocol safety.
 
 ## Features
 
-- Selective halting of protocol functions
+- Selective operation halting
+- Multiple halt levels
 - Admin/governance control
-- Safety mode for beta mainnet
+- Beta mainnet safety mode
 
-## Beta Mainnet
+## Functions
 
-Protocol starts in `MainnetSafeMode` with withdrawals disabled. Governance enables withdrawals after network stability is confirmed.
+- `SetHaltLevel` - Set system-wide halt level
+- `SetOperationStatus` - Control individual operations
+- `IsHalted` - Check if operation is halted
+- `GetHaltStatus` - Get current halt configuration
 
-See [halt package](../../../p/gnoswap/halt) for implementation details.
+## Usage
+
+```go
+// Set halt level
+SetHaltLevel(HaltLevelSafeMode)
+
+// Halt specific operation
+SetOperationStatus(OpTypeSwap, true)
+
+// Check if halted
+if IsHalted(OpTypeWithdraw) {
+    panic("withdrawals halted")
+}
+```
 
 ## Notes
 
+- Beta mainnet starts with withdrawals disabled
+- Governance enables full functionality post-launch
+- Emergency mode halts critical operations
+
 ### Configurable Parameters
-The following parameters can be modified:
-- **Halt Level**: System-wide halt status (Unhalt, MainnetSafeMode, PartialHalt, CompleteHalt)
-- **Operation Status**: Individual operation controls (Swap, Stake, Unstake, Withdraw, etc.)
+The following parameters can be modified by admin or governance:
+- **Halt Level**: None, SafeMode, Emergency, Complete
+- **Operation Controls**:
+  - Swap, Liquidity, Staking operations
+  - Reward collection, Pool creation
+  - Withdrawals, Governance, Emissions
+  - Protocol fees, Incentives, Launchpad

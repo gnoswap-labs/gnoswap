@@ -10,9 +10,18 @@ import (
 	pn "gno.land/r/gnoswap/v1/position"
 )
 
-// MintAndStake mints LP tokens and stakes them in a single transaction.
-// It handles native token wrapping when GNOT is involved and supports referral tracking.
-// Returns the position ID, liquidity amount, actual token amounts used, and pool path.
+// MintAndStake mints a new liquidity position and immediately stakes it.
+//
+// Parameters:
+//   - token0, token1: token contract paths
+//   - fee: pool fee tier (500, 3000, 10000)
+//   - tickLower, tickUpper: price range boundaries
+//   - amount0Desired, amount1Desired: desired token amounts
+//   - amount0Min, amount1Min: minimum acceptable amounts
+//   - deadline: transaction deadline timestamp
+//   - referrer: referral address
+//
+// Returns positionId, liquidity, amount0, amount1, poolPath.
 func MintAndStake(
 	cur realm,
 	token0 string,

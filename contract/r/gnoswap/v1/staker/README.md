@@ -1,25 +1,5 @@
 # Staker
 
-Manages LP token staking and reward distribution with both protocol and user-created incentives.
-
-## Key Features
-
-- **LP Token Staking**: Stake to earn rewards
-- **[Warm-up Periods](https://docs.gnoswap.io/references/warm-up-periods)**: Dynamic reward multiplier based on duration staked in range
-- **Dual Incentives**: Protocol (internal) and user-created (external) rewards
-- **Flexible Operations**: Stake, unstake, collect rewards anytime
-- **Native Token Support**: GNOT and WUGNOT
-
-## Core Functions
-
-1. **Stake**: Deposit LP tokens to earn rewards
-2. **Collect**: Claim rewards proportional to stake and duration
-3. **Unstake**: Withdraw LP tokens and auto-collect rewards
-4. **Create Incentives**: Users add custom rewards for specific pools
-5. **End Incentives**: Terminate and refund unused rewards
-
-# Staker Reward
-
 ## Abstract
 
 The **Staker** module handles the distribution of both **internal** (GNS emission) and **external** (user-provided) rewards to stakers:
@@ -32,7 +12,39 @@ The **Staker** module handles the distribution of both **internal** (GNS emissio
 
 - Every staked position has a designated [warmup schedule](https://docs.gnoswap.io/references/warm-up-periods). As it remains staked, the position progresses through multiple warmup periods. In each warmup period, a certain percentage of the reward is awarded to the position, and the remainder goes either to the community pool (for internal incentives) or is returned to the incentive creator (for external incentives).
 
+## Features
+
+- Stake LP NFT positions to earn rewards
+- Internal GNS emissions and external incentives
+- Time-weighted rewards with warmup periods
+- Multi-tier pool reward system
+
+## Functions
+
+- `StakeToken` - Stake LP position NFT
+- `UnStakeToken` - Unstake and collect rewards
+- `CollectReward` - Collect rewards without unstaking
+- `MintAndStake` - Mint and stake in one transaction
+- `CreateExternalIncentive` - Create reward program
+- `EndExternalIncentive` - End incentive program
+
+## Usage
+
+```go
+// Stake position
+poolPath, amount0, amount1 := StakeToken(positionId, referrer)
+
+// Create external incentive
+CreateExternalIncentive(poolPath, rewardToken, amount, startTime, endTime)
+```
+
 ## Notes
+
+- Warmup period: 30/50/70/100% rewards over 30/60/90 days
+- External incentives require 1000 GNS deposit
+- Positions locked during staking period
+- Unclaimable internal rewards sent to community pool
+- Unclaimable external rewards sent to the incentive provider
 
 ### Configurable Parameters
 The following parameters can be modified:

@@ -27,8 +27,19 @@ func NewExactInSwapOperation(pp ExactInParams) *ExactInSwapOperation {
 	}
 }
 
-// ExactInSwapRoute performs an exact-in swap operation where the user swaps
-// an exact amount of input tokens for a variable amount of output tokens.
+// ExactInSwapRoute swaps an exact amount of input tokens for output tokens.
+//
+// Parameters:
+//   - inputToken, outputToken: token contract paths
+//   - amountIn: exact input amount
+//   - routeArr: swap route "POOL_PATH,TOKEN0,TOKEN1,FEE:NEXT_POOL..."
+//   - quoteArr: percentage allocation for multi-path swaps
+//   - amountOutMin: minimum output amount
+//   - deadline: transaction deadline
+//   - referrer: referral address
+//
+// Returns amountIn, amountOut as decimal strings.
+// Note: Reverts if output < amountOutMin or deadline passed.
 func ExactInSwapRoute(cur realm,
 	inputToken string,
 	outputToken string,

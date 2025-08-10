@@ -67,10 +67,12 @@ func BalanceOf(owner std.Address) int64 { return token.BalanceOf(owner) }
 func Allowance(owner, spender std.Address) int64 { return token.Allowance(owner, spender) }
 
 // MintGns mints new GNS tokens according to the emission schedule.
-// Only callable by emission contract. Calculates amount based on time elapsed
-// since last mint and current halving year. Returns 0 if already minted this
-// timestamp or emission has ended. Panics if emission is halted or caller is
-// not the emission contract.
+//
+// Parameters:
+//   - address: recipient address for minted tokens
+//
+// Returns amount minted.
+// Only callable by emission contract.
 func MintGns(cur realm, address std.Address) int64 {
 	halt.AssertIsNotHaltedEmission()
 
@@ -114,8 +116,13 @@ func MintGns(cur realm, address std.Address) int64 {
 	return amountToMint
 }
 
-// Burn permanently removes GNS tokens from circulation and updates total burn amount.
-// Only callable by contract owner. Panics if caller is not the owner or burn fails.
+// Burn permanently removes GNS tokens from circulation.
+//
+// Parameters:
+//   - from: address to burn tokens from
+//   - amount: amount to burn
+//
+// Only callable by contract owner.
 func Burn(cur realm, from std.Address, amount int64) {
 	owner.AssertOwnedByCurrent()
 	checkErr(privateLedger.Burn(from, amount))
@@ -134,28 +141,38 @@ func Burn(cur realm, from std.Address, amount int64) {
 	)
 }
 
-// Transfer transfers GNS tokens from caller to recipient. Panics if transfer fails.
+// Transfer transfers GNS tokens from caller to recipient.
+//
+// Parameters:
+//   - to: recipient address
+//   - amount: amount to transfer
 func Transfer(cur realm, to std.Address, amount int64) {
 	userTeller := token.CallerTeller()
 	checkErr(userTeller.Transfer(to, amount))
 }
 
-// Approve allows spender to transfer up to amount GNS tokens from caller's account.
-// Panics if approval fails.
+// Approve allows spender to transfer GNS tokens from caller's account.
+//
+// Parameters:
+//   - spender: address authorized to spend
+//   - amount: maximum amount spender can transfer
 func Approve(cur realm, spender std.Address, amount int64) {
 	userTeller := token.CallerTeller()
 	checkErr(userTeller.Approve(spender, amount))
 }
 
-// TransferFrom transfers GNS tokens from owner to recipient on behalf of caller.
-// Requires prior approval from owner. Panics if transfer fails.
+// TransferFrom transfers GNS tokens on behalf of owner.
+//
+// Parameters:
+//   - from: token owner address
+//   - to: recipient address
+//   - amount: amount to transfer
 func TransferFrom(cur realm, from, to std.Address, amount int64) {
 	userTeller := token.CallerTeller()
 	checkErr(userTeller.TransferFrom(from, to, amount))
 }
 
-// Render returns token information for web interface. Returns home page for empty path
-// and balance for "/balance/{address}" path, otherwise returns "404".
+// Render returns token information for web interface.
 func Render(path string) string {
 	parts := strings.Split(path, "/")
 	c := len(parts)
@@ -180,8 +197,6 @@ func checkErr(err error) {
 }
 
 // calculateAmountToMint calculates GNS tokens to mint for given timestamp range.
-// Applies halving schedule and handles year transitions. Updates emission state
-// for each halving year processed and returns total amount to mint.
 func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
 	endTimestamp := GetEmissionEndTimestamp()
 	if toTimestamp > endTimestamp {

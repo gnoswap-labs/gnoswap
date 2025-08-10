@@ -1,5 +1,9 @@
-// Package router provides optimized routing for token swaps across multiple pools.
-// It supports exact input/output swaps, multi-hop routing, native token wrapping/unwrapping,
-// and slippage protection. The router finds the best path through available pools
-// to execute swaps with minimal price impact and maximum output.
+// Package router handles token swaps through GnoSwap liquidity pools.
+//
+// The router provides user-facing swap functions with slippage protection,
+// multi-hop routing, and automatic GNOT wrapping/unwrapping. It supports
+// both exact input and exact output swap modes.
+//
+// All swap functions include deadline checks and minimum output validation
+// to protect users from unfavorable price movements.
 package router

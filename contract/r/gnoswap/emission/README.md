@@ -1,46 +1,42 @@
 # Emission
 
-## Overview
-
-Manages GNS token emission and distribution. The `MintAndDistributeGns()` function can be called by any contract to trigger emission based on elapsed time.
+GNS token emission and distribution system.
 
 ## Features
 
-### Token Emission
+- Timestamp-based emission schedule
+- Automatic distribution to targets
+- Halving every 2 years
+- Leftover token tracking
 
-- **Timestamp-Based**: Distribution follows timestamp intervals, not block times
-- **Triggered by Activity**: Called during user interactions with GnoSwap contracts
-- **Automatic Distribution**: Mints and distributes to predefined targets
+## Functions
 
-### Distribution Targets
+- `MintAndDistributeGns` - Mint and distribute GNS tokens
+- `SetDistributionStartTime` - Set emission start timestamp
+- `GetDistributionRatio` - Get current distribution ratios
+- `SetDistributionRatio` - Update distribution percentages
 
-- Liquidity Staker: 75%
-- DevOps: 20%
-- Community Pool: 5%
-- Governance Staker: 0%
+## Usage
 
-### Configuration
+```go
+// Trigger emission distribution
+amount := MintAndDistributeGns()
 
-- Admin/governance can adjust distribution ratios
-- Percentages in basis points (10,000 = 100%)
-- Total must equal 10,000 basis points
-
-### Undistributed Tokens
-
-- Tracked and carried over to next distribution
-- No tokens are lost due to missed calls
-
-### Halving
-
-Emission rate halves every 2 years. See [gns/halving.gno](../gns/halving.gno) for details.
+// Set distribution start
+SetDistributionStartTime(startTimestamp)
+```
 
 ## Notes
 
+- Called automatically by user interactions
+- Emission rate halves every 2 years
+- Undistributed tokens carried to next distribution
+
 ### Configurable Parameters
-The following parameters can be modified:
-- **Distribution Percentages**: 
+The following parameters can be modified by admin or governance:
+- **Distribution Ratios**:
   - Liquidity Staker: 75% (default)
   - DevOps: 20% (default)
   - Community Pool: 5% (default)
   - Governance Staker: 0% (default)
-- **Distribution Start Time**: When emission distribution begins
+- **Distribution Start Time**: Unix timestamp for emission start

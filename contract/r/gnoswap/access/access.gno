@@ -30,9 +30,11 @@ func GetRoleAddresses() map[string]std.Address {
 	return addresses
 }
 
-// SetRoleAddresses updates all role addresses with the provided mapping.
-// Validates all addresses before applying any updates. Panics if any address
-// is invalid or if caller is not the RBAC contract.
+// SetRoleAddresses updates all role addresses.
+//
+// Parameters:
+//   - newRoleAddresses: map of role names to addresses
+//
 // Only callable by RBAC contract.
 func SetRoleAddresses(cur realm, newRoleAddresses map[string]std.Address) {
 	caller := std.PreviousRealm().Address()
@@ -48,9 +50,13 @@ func SetRoleAddresses(cur realm, newRoleAddresses map[string]std.Address) {
 	roleAddresses = newRoleAddresses
 }
 
-// IsAuthorized returns true if the caller address matches the address
-// assigned to the specified role. Returns false if the role doesn't exist
-// or the caller doesn't match.
+// IsAuthorized checks if caller has the specified role.
+//
+// Parameters:
+//   - role: role name to check
+//   - caller: address to verify
+//
+// Returns true if authorized, false otherwise.
 func IsAuthorized(role string, caller std.Address) bool {
 	roleAddr, ok := roleAddresses[role]
 	if !ok {

@@ -8,10 +8,13 @@ import (
 	"gno.land/r/gnoswap/halt"
 )
 
-// Vote allows a user to vote on a given proposal.
-// The user's voting weight is determined by their accumulated delegated stake at proposal creation time.
-// Each user can only vote once per proposal, and votes cannot be changed after submission.
-// Returns the voting weight used for this vote as formatted string.
+// Vote casts a vote on a proposal.
+//
+// Parameters:
+//   - proposalID: ID of the proposal to vote on
+//   - yes: true for yes vote, false for no vote
+//
+// Returns voting weight used.
 func Vote(cur realm, proposalID int64, yes bool) string {
 	halt.AssertIsNotHaltedGovernance()
 
@@ -55,7 +58,6 @@ func Vote(cur realm, proposalID int64, yes bool) string {
 }
 
 // vote handles core voting logic.
-// Validates voting conditions, records vote, and updates proposal tallies.
 func vote(
 	proposalID int64,
 	voterAddress std.Address,

@@ -14,17 +14,8 @@ import (
 
 var convertedQ128 = u256.MustFromDecimal(Q128)
 
-// getPositionKey generates a unique, encoded key for a liquidity position.
-// This function creates a unique key for identifying a liquidity position in a pool.
-// The key is based on the position's owner address, lower tick, and upper tick values.
-// The generated key is then encoded as a base64 string to ensure compatibility and uniqueness.
-// Returns a base64-encoded string representing the unique position key and any error.
-// Notes:
-//   - The base64 encoding ensures that the position key can be safely used as an identifier
-//     across different systems or data stores.
-//   - The function will panic if:
-//   - The `owner` address is invalid.
-//   - `tickLower` is greater than or equal to `tickUpper`.
+// getPositionKey generates a unique base64-encoded key for a liquidity position.
+// Combines owner address, tickLower, and tickUpper.
 func getPositionKey(
 	owner std.Address,
 	tickLower int32,

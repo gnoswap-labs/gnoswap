@@ -34,7 +34,12 @@ func init() {
 	setFeeAmountTickSpacing(10000, 200) // 1%
 }
 
-// CreatePool creates a new concentrated liquidity pool with the given parameters.
+// CreatePool creates a new concentrated liquidity pool.
+//
+// Parameters:
+//   - token0Path, token1Path: token contract paths
+//   - fee: fee tier (100, 500, 3000, 10000)
+//   - sqrtPriceX96: initial price in Q96 format
 func CreatePool(
 	cur realm,
 	token0Path string,
@@ -100,7 +105,12 @@ func CreatePool(
 	)
 }
 
-// SetFeeProtocol sets the fee protocol for all pools.
+// SetFeeProtocol sets the protocol fee percentage for all pools.
+//
+// Parameters:
+//   - feeProtocol0, feeProtocol1: fee percentages (0-10)
+//
+// Only callable by admin or governance.
 func SetFeeProtocol(cur realm, feeProtocol0, feeProtocol1 uint8) {
 	halt.AssertIsNotHaltedPool()
 

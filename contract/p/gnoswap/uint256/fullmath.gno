@@ -1,6 +1,6 @@
 // REF: https://github.com/Uniswap/v3-core/blob/main/contracts/libraries/FullMath.sol
 
-// Package fullmath implements Uniswap V3's FullMath library.
+// fullmath implements Uniswap V3's FullMath library.
 //
 // This library provides advanced fixed-point math operations that are essential
 // for Uniswap V3's tick math and liquidity calculations. It enables precise

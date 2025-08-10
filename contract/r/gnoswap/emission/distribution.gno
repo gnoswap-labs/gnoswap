@@ -56,8 +56,12 @@ func init() {
 }
 
 // ChangeDistributionPct changes distribution percentages for emission targets.
-// Only callable by admin or governance. All four targets must be provided
-// and percentages must sum to 10000 (100%). Emits ChangeDistributionPct event.
+//
+// Parameters:
+//   - target01-04: emission target constants (LIQUIDITY_STAKER, DEVOPS, etc.)
+//   - pct01-04: basis points (0-10000, must sum to 10000)
+//
+// Only callable by admin or governance.
 func ChangeDistributionPct(
 	cur realm,
 	target01 int, pct01 int64,
@@ -112,7 +116,8 @@ func changeDistributionPcts(
 }
 
 // distributeToTarget distributes tokens according to configured percentages.
-// Returns total amount distributed and any error encountered during transfer.
+//
+// Returns total amount distributed and any error.
 func distributeToTarget(amount int64) (int64, error) {
 	totalSent := int64(0)
 
@@ -148,8 +153,6 @@ func distributeToTarget(amount int64) (int64, error) {
 }
 
 // calculateAmount converts basis points to actual token amount.
-// Panics if amount is negative, bptPct is invalid (< 0 or > 10000),
-// or if multiplication would overflow.
 func calculateAmount(amount, bptPct int64) int64 {
 	if amount < 0 || bptPct < 0 || bptPct > 10000 {
 		panic("invalid amount or bptPct")
@@ -164,8 +167,8 @@ func calculateAmount(amount, bptPct int64) int64 {
 }
 
 // transferToTarget sends tokens to the appropriate target address.
-// Updates both current and accumulated distribution counters.
-// Returns error if target address is not found in access registry.
+//
+// Returns error if target address not found.
 func transferToTarget(target int, amount int64) error {
 	switch target {
 	case LIQUIDITY_STAKER:
@@ -231,7 +234,6 @@ func transferToTarget(target int, amount int64) error {
 }
 
 // GetDistributionBpsPct returns the distribution percentage in basis points for a specific target.
-// Panics if target is invalid or distributionBpsPct tree is nil.
 func GetDistributionBpsPct(target int) int64 {
 	assertValidDistributionTarget(target)
 	if distributionBpsPct == nil {
@@ -312,7 +314,8 @@ func GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64
 }
 
 // ClearDistributedToStaker resets the pending distribution amount for liquidity stakers.
-// Only callable by the staker contract.
+//
+// Only callable by staker contract.
 func ClearDistributedToStaker(cur realm) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
@@ -321,7 +324,8 @@ func ClearDistributedToStaker(cur realm) {
 }
 
 // ClearDistributedToGovStaker resets the pending distribution amount for governance stakers.
-// Only callable by the governance staker contract.
+//
+// Only callable by governance staker contract.
 func ClearDistributedToGovStaker(cur realm) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsGovStaker(caller)

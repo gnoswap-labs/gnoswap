@@ -13,11 +13,14 @@ import (
 	"gno.land/r/gnoswap/v1/gov/xgns"
 )
 
-// DepositGns handles the deposit process for a specific project tier.
-// This function validates the deposit conditions, checks the activation status of the project and tier,
-// and creates a new deposit for the caller. It updates the project, tier, and reward states accordingly.
-// The targetProjectTierId must be in the format "{projectId}:{tierType}".
-// Returns the ID of the newly created deposit.
+// DepositGns deposits GNS tokens to a launchpad project tier.
+//
+// Parameters:
+//   - targetProjectTierID: format "{projectId}:{tierType}"
+//   - depositAmount: amount of GNS to deposit
+//   - referrer: referral address (optional)
+//
+// Returns deposit ID.
 func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, referrer string) string {
 	halt.AssertIsNotHaltedLaunchpad()
 
@@ -79,8 +82,7 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 	return deposit.ID()
 }
 
-// depositGns deposits GNS to a project tier and returns the created deposit,
-// reward state, whether this is the first deposit, distribute amount per second in Q128 format, and any error.
+// depositGns deposits GNS to a project tier.
 func depositGns(
 	projectID string,
 	tierDuration int64,
@@ -153,8 +155,7 @@ func depositGns(
 		nil
 }
 
-// registerReferral registers a referral for a caller and returns the actual referrer address
-// and whether the registration was successful.
+// registerReferral registers a referral for a caller.
 func registerReferral(referrer string, callerAddress std.Address) (string, bool) {
 	success := referral.TryRegister(cross, callerAddress, referrer)
 	actualReferrer := referrer
@@ -165,8 +166,7 @@ func registerReferral(referrer string, callerAddress std.Address) (string, bool)
 	return actualReferrer, success
 }
 
-// stakeGovernance stakes governance token to the project by transferring GNS from caller to launchpad
-// and minting equivalent xGNS for governance staking.
+// stakeGovernance stakes governance token to the project.
 func stakeGovernance(projectID string, depositAmount int64, launchpadAddress std.Address, callerAddress std.Address) error {
 	project, err := getProject(projectID)
 	if err != nil {

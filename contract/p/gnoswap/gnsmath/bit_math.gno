@@ -1,6 +1,3 @@
-// Package gnsmath provides mathematical utilities for GnoSwap's AMM calculations.
-// It includes bit manipulation, square root price calculations, and swap math
-// functions essential for concentrated liquidity operations.
 package gnsmath
 
 import (

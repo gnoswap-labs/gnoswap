@@ -1,5 +1,3 @@
-// Package uint256 provides a 256-bit unsigned integer type, Uint, and associated functions.
-// Ported from https://github.com/holiman/uint256.
 package uint256
 
 import (

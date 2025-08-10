@@ -27,11 +27,15 @@ func initRbac() {
 	updateAccessRoleAddresses(manager.GetRoleAddresses())
 }
 
-// RegisterRole registers roleName in the RBAC system.
-// Only callable by admin. Panics if caller is not admin or roleName is invalid.
+// RegisterRole registers a new role in the RBAC system.
+//
+// Parameters:
+//   - roleName: name of the role to register
+//
+// Only callable by admin or governance.
 func RegisterRole(cur realm, roleName string) {
 	caller := std.PreviousRealm().Address()
-	assertIsAdmin(caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	assertIsValidRoleName(roleName)
 
@@ -48,11 +52,15 @@ func RegisterRole(cur realm, roleName string) {
 	emitRegisterRoleEvent(roleName)
 }
 
-// RemoveRole removes roleName from the RBAC system.
-// Only callable by admin. Panics if caller is not admin or roleName is invalid.
+// RemoveRole removes a role from the RBAC system.
+//
+// Parameters:
+//   - roleName: name of the role to remove
+//
+// Only callable by admin or governance.
 func RemoveRole(cur realm, roleName string) {
 	caller := std.PreviousRealm().Address()
-	assertIsAdmin(caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	assertIsValidRoleName(roleName)
 
@@ -74,11 +82,16 @@ func GetRoleAddress(roleName string) (std.Address, error) {
 	return manager.GetRoleAddress(roleName)
 }
 
-// UpdateRoleAddress updates the address assigned to roleName to addr.
-// Only callable by admin. Panics if caller is not admin or update fails.
+// UpdateRoleAddress updates the address assigned to a role.
+//
+// Parameters:
+//   - roleName: name of the role
+//   - addr: new address for the role
+//
+// Only callable by admin or governance.
 func UpdateRoleAddress(cur realm, roleName string, addr std.Address) {
 	caller := std.PreviousRealm().Address()
-	assertIsAdmin(caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	err := manager.UpdateRoleAddress(roleName, addr)
 	if err != nil {

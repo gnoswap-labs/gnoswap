@@ -8,10 +8,16 @@ import (
 const denominator = uint64(1_000_000)
 
 // SwapMathComputeSwapStep computes the next sqrt price, amount in, amount out, and fee amount
-// for a swap step in the AMM. The feePips parameter is expressed in hundredths of a bip (e.g., 3000 = 0.3%).
-// Returns sqrtRatioNextX96, amountIn, amountOut, and feeAmount.
-// This is the core function for calculating swap parameters in concentrated liquidity pools.
-// Panics if any input is nil, if feePips exceeds 1,000,000, or if the resulting price is out of bounds.
+// for a swap step within a single tick range.
+//
+// Parameters:
+//   - sqrtRatioCurrentX96: current sqrt price in Q96 format
+//   - sqrtRatioTargetX96: target sqrt price (tick boundary)
+//   - liquidity: available liquidity in the range
+//   - amountRemaining: amount left to swap (positive=exact in, negative=exact out)
+//   - feePips: fee in hundredths of a bip (3000 = 0.3%)
+//
+// Returns sqrtRatioNextX96, amountIn, amountOut, feeAmount.
 func SwapMathComputeSwapStep(
 	sqrtRatioCurrentX96 *u256.Uint,
 	sqrtRatioTargetX96 *u256.Uint,

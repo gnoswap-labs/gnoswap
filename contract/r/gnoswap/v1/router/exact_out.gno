@@ -29,8 +29,18 @@ func NewExactOutSwapOperation(pp ExactOutParams) *ExactOutSwapOperation {
 	}
 }
 
-// ExactOutSwapRoute executes a swap where the exact output amount is specified.
-// The input amount varies up to amountInMax and supports multi-hop routing and referral tracking.
+// ExactOutSwapRoute swaps tokens for an exact output amount.
+//
+// Parameters:
+//   - inputToken, outputToken: token contract paths
+//   - amountOut: exact output amount
+//   - routeArr: swap route "POOL_PATH,TOKEN0,TOKEN1,FEE:NEXT_POOL..."
+//   - quoteArr: percentage allocation for multi-path swaps
+//   - amountInMax: maximum input amount
+//   - deadline: transaction deadline
+//   - referrer: referral address
+//
+// Returns amountIn, amountOut as decimal strings.
 func ExactOutSwapRoute(
 	cur realm,
 	inputToken string,

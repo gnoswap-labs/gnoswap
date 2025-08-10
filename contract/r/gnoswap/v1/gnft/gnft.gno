@@ -72,6 +72,11 @@ func MustOwnerOf(tid grc721.TokenID) std.Address {
 }
 
 // SetTokenURI sets the metadata URI for the specified token.
+//
+// Parameters:
+//   - tid: token ID
+//   - tURI: token URI
+//
 // Only callable by position contract.
 func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, error) {
 	halt.AssertIsNotHaltedPosition()
@@ -86,7 +91,15 @@ func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, err
 	return true, nil
 }
 
-// SafeTransferFrom transfers token ownership.
+// SafeTransferFrom transfers token ownership with receiver validation.
+//
+// Parameters:
+//   - from: current owner address
+//   - to: recipient address
+//   - tid: token ID to transfer
+//
+// Returns error if transfer fails.
+// Only callable when not halted.
 func SafeTransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
 	halt.AssertIsNotHaltedPosition()
 
@@ -99,7 +112,11 @@ func SafeTransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error
 }
 
 // TransferFrom transfers a token from one address to another.
-// This function is a direct wrapper around SafeTransferFrom.
+//
+// Parameters:
+//   - from: current owner address
+//   - to: recipient address
+//   - tid: token ID
 func TransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
 	halt.AssertIsNotHaltedPosition()
 
@@ -112,6 +129,13 @@ func TransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
 }
 
 // Approve grants permission to transfer a specific token ID to another address.
+//
+// Parameters:
+//   - approved: address to approve
+//   - tid: token ID to approve for transfer
+//
+// Returns error if approval fails.
+// Only callable when not halted.
 func Approve(cur realm, approved std.Address, tid grc721.TokenID) error {
 	halt.AssertIsNotHaltedPosition()
 	assertIsValidAddress(approved)
@@ -122,6 +146,13 @@ func Approve(cur realm, approved std.Address, tid grc721.TokenID) error {
 }
 
 // SetApprovalForAll enables/disables operator approval for all tokens.
+//
+// Parameters:
+//   - operator: address to set approval for
+//   - approved: true to approve, false to revoke
+//
+// Returns error if operation fails.
+// Only callable when not halted.
 func SetApprovalForAll(cur realm, operator std.Address, approved bool) error {
 	halt.AssertIsNotHaltedPosition()
 	assertIsValidAddress(operator)
@@ -131,18 +162,34 @@ func SetApprovalForAll(cur realm, operator std.Address, approved bool) error {
 }
 
 // GetApproved returns approved address for token ID.
+//
+// Parameters:
+//   - tid: token ID to check
+//
+// Returns approved address and error if token doesn't exist.
 func GetApproved(tid grc721.TokenID) (std.Address, error) {
 	return nft.GetApproved(tid)
 }
 
 // IsApprovedForAll checks if operator can manage all owner's tokens.
+//
+// Parameters:
+//   - owner: token owner address
+//   - operator: operator address to check
+//
+// Returns true if operator is approved for all owner's tokens.
 func IsApprovedForAll(owner, operator std.Address) bool {
 	return nft.IsApprovedForAll(owner, operator)
 }
 
 // Mint creates new NFT and transfers to address.
+//
+// Parameters:
+//   - to: recipient address
+//   - tid: token ID
+//
+// Returns minted token ID.
 // Only callable by position contract.
-// Mints to position contract, sets SVG URI, then transfers to recipient.
 func Mint(cur realm, to std.Address, tid grc721.TokenID) grc721.TokenID {
 	halt.AssertIsNotHaltedPosition()
 	owner.AssertOwnedByPrevious()
@@ -172,7 +219,12 @@ func Exists(tid grc721.TokenID) bool {
 	return true
 }
 
-// Burn removes a specific token ID (only callable by owner).
+// Burn removes a specific token ID.
+//
+// Parameters:
+//   - tid: token ID to burn
+//
+// Only callable by owner.
 func Burn(cur realm, tid grc721.TokenID) {
 	halt.AssertIsNotHaltedPosition()
 	owner.AssertOwnedByPrevious()
@@ -181,7 +233,6 @@ func Burn(cur realm, tid grc721.TokenID) {
 }
 
 // Render returns the HTML representation of the NFT.
-// Returns 404 if path is invalid.
 func Render(path string) string {
 	switch {
 	case path == "":

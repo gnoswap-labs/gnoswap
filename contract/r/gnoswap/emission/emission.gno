@@ -40,9 +40,16 @@ func GetLastExecutedTimestamp() int64 { return lastExecutedTimestamp }
 func setLastExecutedTimestamp(timestamp int64) { lastExecutedTimestamp = timestamp }
 
 // MintAndDistributeGns mints and distributes GNS tokens according to the emission schedule.
-// Can be called by any contract to trigger emission based on elapsed time since last execution.
-// Returns the total amount distributed. Skips distribution if not started or already executed
-// at current timestamp. Emits MintAndDistributeGns event on successful execution.
+//
+// This function is called automatically by protocol contracts during user interactions
+// to trigger periodic GNS emission. It mints new tokens based on elapsed time since
+// last distribution and distributes them to predefined targets (staker, devops, etc.).
+//
+// Returns:
+//   - int64: Total amount of GNS distributed in this call
+//
+// Note: Distribution only occurs if start timestamp is set and reached.
+// Any undistributed tokens from previous calls are carried forward.
 func MintAndDistributeGns(cur realm) int64 {
 	halt.AssertIsNotHaltedEmission()
 
@@ -102,9 +109,11 @@ func MintAndDistributeGns(cur realm) int64 {
 }
 
 // SetDistributionStartTime sets the timestamp when emission distribution starts.
-// Only callable by admin or governance before distribution begins. Timestamp must be
-// in the future and cannot be changed once distribution has started. Panics if timestamp
-// is negative, in the past, or distribution has already started. Emits SetDistributionStartTime event.
+//
+// Parameters:
+//   - startTimestamp: unix timestamp for distribution start
+//
+// Only callable by admin or governance.
 func SetDistributionStartTime(cur realm, startTimestamp int64) {
 	halt.AssertIsNotHaltedEmission()
 	halt.AssertIsNotHaltedWithdraw()

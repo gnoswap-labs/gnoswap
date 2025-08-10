@@ -27,7 +27,21 @@ const (
 )
 
 // Mint creates a new liquidity position NFT.
-// Only user or staker can call this function.
+//
+// Parameters:
+//   - token0, token1: token contract paths
+//   - fee: pool fee tier
+//   - tickLower, tickUpper: price range boundaries
+//   - amount0Desired, amount1Desired: desired token amounts
+//   - amount0Min, amount1Min: minimum acceptable amounts
+//   - deadline: transaction deadline
+//   - mintTo: NFT recipient address
+//   - caller: transaction initiator
+//   - referrer: referral address
+//
+// Returns tokenId, liquidity, amount0, amount1.
+// Only callable by users or staker contract.
+// Note: Slippage protection via amount0Min/amount1Min.
 func Mint(
 	cur realm,
 	token0 string,

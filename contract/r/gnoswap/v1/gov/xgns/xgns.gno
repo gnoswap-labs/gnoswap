@@ -25,7 +25,6 @@ func TotalSupply() int64 {
 }
 
 // VotingSupply returns total supply eligible for voting.
-// Excludes tokens held by launchpad contract.
 func VotingSupply() int64 {
 	total := token.TotalSupply()
 	launchpad, ok := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
@@ -37,12 +36,16 @@ func VotingSupply() int64 {
 }
 
 // BalanceOf returns token balance for address.
+//
+// Parameters:
+//   - owner: address to check balance for
+//
+// Returns balance amount.
 func BalanceOf(owner std.Address) int64 {
 	return token.BalanceOf(owner)
 }
 
 // Render returns a formatted representation of the token state.
-// xGNS is non-transferable - no transfer functions.
 func Render(path string) string {
 	parts := strings.Split(path, "/")
 	c := len(parts)
@@ -59,6 +62,11 @@ func Render(path string) string {
 }
 
 // Mint mints tokens to address.
+//
+// Parameters:
+//   - to: recipient address
+//   - amount: amount to mint
+//
 // Only callable by governance staker contract.
 func Mint(cur realm, to std.Address, amount int64) {
 	halt.AssertIsNotHaltedXGns()
@@ -70,6 +78,11 @@ func Mint(cur realm, to std.Address, amount int64) {
 }
 
 // MintByLaunchPad mints tokens to address.
+//
+// Parameters:
+//   - to: recipient address
+//   - amount: amount to mint
+//
 // Only callable by launchpad contract.
 func MintByLaunchPad(cur realm, to std.Address, amount int64) {
 	halt.AssertIsNotHaltedXGns()
@@ -81,6 +94,11 @@ func MintByLaunchPad(cur realm, to std.Address, amount int64) {
 }
 
 // Burn burns tokens from address.
+//
+// Parameters:
+//   - from: address to burn from
+//   - amount: amount to burn
+//
 // Only callable by governance staker contract.
 func Burn(cur realm, from std.Address, amount int64) {
 	halt.AssertIsNotHaltedXGns()
@@ -92,6 +110,11 @@ func Burn(cur realm, from std.Address, amount int64) {
 }
 
 // BurnByLaunchPad burns tokens from address.
+//
+// Parameters:
+//   - from: address to burn from
+//   - amount: amount to burn
+//
 // Only callable by launchpad contract.
 func BurnByLaunchPad(cur realm, from std.Address, amount int64) {
 	halt.AssertIsNotHaltedXGns()

@@ -60,7 +60,8 @@ var (
 	oneLsh32 = u256.One().Lsh(u256.One(), 32) // 1 << 32
 )
 
-// TickMathGetSqrtRatioAtTick calculates square root price ratio for given tick as 160-bit Q64.96 fixed-point value, matching Uniswap V3 exactly.
+// TickMathGetSqrtRatioAtTick calculates sqrt price ratio for given tick.
+// Returns Q64.96 fixed-point value.
 func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 	assertValidTickRange(tick)
 	absTick := abs(tick)
@@ -103,7 +104,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 	return upper
 }
 
-// getMostSignificantBit calculates most significant bit position efficiently using pre-computed thresholds.
+// getMostSignificantBit returns the position of the most significant bit.
 func getMostSignificantBit(r *u256.Uint) (msb uint64) {
 	temp := r.Clone()
 

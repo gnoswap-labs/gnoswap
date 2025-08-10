@@ -22,8 +22,17 @@ var (
 )
 
 // Mint adds liquidity to a pool position.
-// Only callable by the position contract.
-// Returns amount0, amount1 representing tokens transferred from the position owner.
+//
+// Parameters:
+//   - token0Path, token1Path: token contract paths
+//   - fee: fee tier (100, 500, 3000, 10000)
+//   - recipient: position owner address
+//   - tickLower, tickUpper: price range boundaries
+//   - liquidityAmount: liquidity to add
+//   - positionCaller: original caller address
+//
+// Returns amount0, amount1 as decimal strings.
+// Only callable by position contract.
 func Mint(
 	cur realm,
 	token0Path string,
@@ -65,10 +74,17 @@ func Mint(
 	return amount0.ToString(), amount1.ToString()
 }
 
-// Burn removes liquidity from a position and updates the owed token amounts.
-// The actual token transfer happens in a separate Collect operation.
-// Returns amount0, amount1 representing tokens owed to the position owner.
-// Panics if the position has zero liquidity or doesn't exist.
+// Burn removes liquidity from a position.
+//
+// Parameters:
+//   - token0Path, token1Path: token contract paths
+//   - fee: fee tier
+//   - tickLower, tickUpper: price range boundaries
+//   - liquidityAmount: liquidity to remove
+//   - positionCaller: original caller address
+//
+// Returns amount0, amount1 as decimal strings (tokens owed).
+// Only callable by position contract.
 func Burn(
 	cur realm,
 	token0Path string,
@@ -117,12 +133,17 @@ func Burn(
 	return amount0.ToString(), amount1.ToString()
 }
 
-// Collect transfers owed tokens from a position to the recipient.
-// The collected amount is the minimum of: requested amount, tokens owed, and pool balance.
-// Returns amount0, amount1 representing actual tokens collected.
-// 
-// Note: Uses recipient address for position key lookup as positions are created
-// with the recipient's address during Mint, not the caller's address.
+// Collect transfers owed tokens from a position to recipient.
+//
+// Parameters:
+//   - token0Path, token1Path: token contract paths
+//   - fee: fee tier
+//   - recipient: address to receive tokens
+//   - tickLower, tickUpper: price range boundaries
+//   - amount0Requested, amount1Requested: amounts to collect
+//
+// Returns amount0, amount1 as decimal strings.
+// Only callable by position contract.
 func Collect(
 	cur realm,
 	token0Path string,

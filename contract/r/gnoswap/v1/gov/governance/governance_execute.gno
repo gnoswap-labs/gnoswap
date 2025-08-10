@@ -9,10 +9,13 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 )
 
-// Execute executes an approved proposal with the given ID.
-// This function can be called by anyone once a proposal is in executable state.
-// It processes the proposal based on its type (CommunityPoolSpend or ParameterChange).
-// Returns the executed proposal ID.
+// Execute executes an approved proposal.
+//
+// Parameters:
+//   - proposalID: ID of the proposal to execute
+//
+// Returns executed proposal ID.
+// Callable by anyone once proposal is executable.
 func Execute(cur realm, proposalID int64) int64 {
 	// Check if execution is allowed (system not halted for execution)
 	halt.AssertIsNotHaltedGovernance()
@@ -49,7 +52,6 @@ func Execute(cur realm, proposalID int64) int64 {
 }
 
 // executeProposal handles core logic of proposal execution.
-// Validates proposal state, executes appropriate actions, and updates proposal status.
 func executeProposal(
 	proposalID int64,
 	executedAt int64,

@@ -22,7 +22,6 @@ func getKeeper() ReferralKeeper {
 }
 
 // GetReferral returns the referral address for the given address.
-// Returns empty string if no referral exists.
 func GetReferral(addr string) string {
 	referral, err := gReferralKeeper.get(std.Address(addr))
 	if err != nil {
@@ -46,7 +45,12 @@ func IsEmpty() bool {
 }
 
 // TryRegister attempts to register a new referral.
-// Returns true on success, false on failure. Emits events for both cases.
+//
+// Parameters:
+//   - addr: address to register
+//   - referral: referral address string
+//
+// Returns true on success, false on failure.
 func TryRegister(cur realm, addr std.Address, referral string) bool {
 	refAddr := std.Address(referral)
 	err := gReferralKeeper.register(addr, refAddr)

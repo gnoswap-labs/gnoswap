@@ -17,24 +17,10 @@ import (
 
 const WUGNOT_PATH string = "gno.land/r/demo/wugnot"
 
-// CollectReward collects the rewards from the protocol fee contract based on the holdings of xGNS.
-// This function allows stakers to claim both emission rewards (in GNS) and protocol fee rewards (in various tokens)
-// that have accumulated based on their xGNS holdings.
+// CollectReward collects accumulated rewards based on xGNS holdings.
 //
-// The collection process involves:
-// 1. Checking system halt status
-// 2. Claiming emission and protocol fee rewards
-// 3. Transferring GNS emission rewards to the caller
-// 4. Transferring protocol fee rewards in various tokens to the caller
-// 5. Emitting events for each type of reward collected
-//
-// Parameters:
-//   - cur: realm context for cross-realm calls
-//
-// Panics:
-//   - if system is halted for withdrawals
-//   - if reward claiming fails
-//   - if token transfers fail
+// Collects both emission rewards (GNS) and protocol fee rewards (various tokens).
+// Transfers rewards directly to caller.
 func CollectReward(cur realm) {
 	halt.AssertIsNotHaltedGovStaker()
 	halt.AssertIsNotHaltedWithdraw()
@@ -85,15 +71,12 @@ func CollectReward(cur realm) {
 	}
 }
 
-// CollectRewardFromLaunchPad collects the rewards from the protocol fee contract based on the holdings of xGNS in the launchpad contract.
-// This function is exclusively callable by the launchpad contract to collect rewards on behalf of project wallets
-// that have deposited tokens through the launchpad system.
+// CollectRewardFromLaunchPad collects rewards for launchpad project wallets.
 //
-// Panics:
-//   - if caller is not the launchpad contract
-//   - if system is halted for withdrawals
-//   - if project wallet is not registered in launchpad
-//   - if reward claiming or transfers fail
+// Parameters:
+//   - to: recipient address for rewards
+//
+// Only callable by launchpad contract.
 func CollectRewardFromLaunchPad(cur realm, to std.Address) {
 	halt.AssertIsNotHaltedGovStaker()
 	halt.AssertIsNotHaltedWithdraw()

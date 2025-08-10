@@ -9,15 +9,28 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/v1/access"
 	"gno.land/r/gnoswap/v1/common"
 )
 
 // CreateProject creates a new launchpad project with tiered allocations.
-// It validates inputs, transfers the deposit amount, and sets up tier conditions.
-// Only admin can call this function. Returns the project ID.
+//
+// Parameters:
+//   - name: project name
+//   - tokenPath: reward token contract path
+//   - recipient: project recipient address
+//   - depositAmount: amount of tokens to deposit
+//   - conditionTokens: comma-separated token paths for conditions
+//   - conditionAmounts: comma-separated minimum amounts for conditions
+//   - tier30Ratio: allocation ratio for 30-day tier
+//   - tier90Ratio: allocation ratio for 90-day tier
+//   - tier180Ratio: allocation ratio for 180-day tier
+//   - startTime: unix timestamp for project start
+//
+// Returns project ID.
+// Only callable by admin or governance.
 func CreateProject(
 	cur realm,
 	name string,
@@ -34,7 +47,7 @@ func CreateProject(
 	halt.AssertIsNotHaltedLaunchpad()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdmin(caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	launchpadAddr := std.CurrentRealm().Address()
 	currentHeight := std.ChainHeight()
@@ -189,12 +202,12 @@ func createProject(params *createProjectParams) (*Project, error) {
 }
 
 // TransferLeftFromProjectByAdmin transfers the remaining rewards of a project to a specified recipient.
-// Only admin can call this function. Returns the amount of rewards transferred.
+// Only admin or governance can call this function. Returns the amount of rewards transferred.
 func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient std.Address) int64 {
 	halt.AssertIsNotHaltedLaunchpad()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdmin(caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	currentHeight := std.ChainHeight()
 	currentTime := time.Now().Unix()

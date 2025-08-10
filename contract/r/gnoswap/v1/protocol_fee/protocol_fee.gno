@@ -13,8 +13,16 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 )
 
-// DistributeProtocolFee distributes collected protocol fees to devOps and gov/staker addresses.
-// Only admin or gov/staker can execute this function.
+// DistributeProtocolFee distributes collected protocol fees.
+//
+// Splits fees between devOps and gov/staker based on configured percentages.
+// This function processes all accumulated fees since last distribution.
+//
+// Returns:
+//   - map[string]int64: Token paths to amounts distributed to gov/staker
+//
+// Only callable by admin or gov/staker contract.
+// Note: Default split is 0% devOps, 100% gov/staker.
 func DistributeProtocolFee(cur realm) map[string]int64 {
 	halt.AssertIsNotHaltedProtocolFee()
 
@@ -83,7 +91,12 @@ func DistributeProtocolFee(cur realm) map[string]int64 {
 }
 
 // SetDevOpsPct sets the devOpsPct.
-// Only admin or governance contract can execute this function via proposal.
+//
+// Parameters:
+//   - pct: percentage for devOps (0-10000, where 10000 = 100%)
+//
+// Only callable by admin or governance.
+// Note: GovStaker percentage is automatically adjusted to (10000 - devOpsPct).
 func SetDevOpsPct(cur realm, pct int64) {
 	halt.AssertIsNotHaltedProtocolFee()
 
@@ -114,7 +127,12 @@ func SetDevOpsPct(cur realm, pct int64) {
 }
 
 // SetGovStakerPct sets the stakerPct.
-// Only admin or governance contract can execute this function via proposal.
+//
+// Parameters:
+//   - pct: percentage for gov/staker (0-10000, where 10000 = 100%)
+//
+// Only callable by admin or governance.
+// Note: DevOps percentage is automatically adjusted to (10000 - govStakerPct).
 func SetGovStakerPct(cur realm, pct int64) {
 	halt.AssertIsNotHaltedProtocolFee()
 
@@ -145,7 +163,13 @@ func SetGovStakerPct(cur realm, pct int64) {
 }
 
 // AddToProtocolFee adds the amount to the tokenListWithAmount.
-// Only pool, router or staker can execute this function.
+//
+// Parameters:
+//   - tokenPath: token contract path
+//   - amount: fee amount to add
+//
+// Only callable by pool, router or staker contracts.
+// Note: Accumulated fees are distributed when DistributeProtocolFee is called.
 func AddToProtocolFee(cur realm, tokenPath string, amount int64) {
 	halt.AssertIsNotHaltedProtocolFee()
 
@@ -173,7 +197,10 @@ func AddToProtocolFee(cur realm, tokenPath string, amount int64) {
 }
 
 // ClearTokenListWithAmount clears the tokenListWithAmount.
-// Only gov/staker can execute this function.
+//
+// Resets all accumulated token amounts to zero.
+// Only callable by gov/staker contract.
+// Note: Should be called after successful distribution.
 func ClearTokenListWithAmount(cur realm) {
 	halt.AssertIsNotHaltedProtocolFee()
 
@@ -184,10 +211,12 @@ func ClearTokenListWithAmount(cur realm) {
 }
 
 // ClearAccuTransferToGovStaker clears the accuToGovStaker.
-// Only gov/staker can execute this function.
-// Protocol_fee just sends the accumulated amount to gov/staker
-// which means gov/staker doesn't know how much protocol_fee has been distributed from last time.
-// Therefore, gov/staker calls GetAccuTransferToGovStaker to get the accumulated amount and clear it.
+//
+// Resets accumulated transfer tracking for gov/staker.
+// This allows gov/staker to track distributions between calls.
+//
+// Only callable by gov/staker contract.
+// Note: Should be called after reading accumulated amounts.
 func ClearAccuTransferToGovStaker(cur realm) {
 	halt.AssertIsNotHaltedProtocolFee()
 

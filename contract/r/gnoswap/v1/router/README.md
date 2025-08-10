@@ -1,34 +1,40 @@
 # Router
 
-Executes token swaps and manages swap routes across liquidity pools.
-
-## Features
-
-- **Swap Execution**: ExactIn and ExactOut swaps, single or multi-hop (up to 7 hops)
-- **Swap Simulation**: Preview outcomes with DrySwapRoute
-- **Fee Management**: Adjustable router fees
-- **Token Support**: Native GNOT and wrapped WUGNOT
+Swap routing for GnoSwap pools.
 
 ## Functions
 
-1. **Token Swaps**
-   - Execute through predefined routes
-   - Optimize for slippage and price
+- `ExactInSwapRoute` - Swap exact input for minimum output
+- `ExactOutSwapRoute` - Swap for exact output with maximum input
+- `DrySwapRoute` - Simulate swap without executing
 
-2. **Multi-Hop Routing**
-   - Swap across multiple pools
-   - Find best execution price
+## Route Format
 
-3. **Simulation**
-   - Preview swap outcomes
-   - Assess slippage and fees
+`POOL_PATH,TOKEN0,TOKEN1,FEE:NEXT_POOL...`
 
-4. **Fee Management**
-   - Router fee percentage
-   - Governance adjustable
+## Usage
+
+```go
+// Exact input swap
+amountIn, amountOut := ExactInSwapRoute(
+    "gno.land/r/demo/usdc",
+    "gnot",
+    "1000000",
+    "POOL,USDC,WUGNOT,3000",
+    "100",
+    "900000",
+    deadline,
+    "",
+)
+```
 
 ## Notes
 
+- Multi-hop routing supports up to 7 pools
+- Automatic GNOT wrapping/unwrapping
+- Slippage protection via min/max amounts
+
 ### Configurable Parameters
-The following parameters can be modified:
-- **Swap Fee**: 0.15% (default)
+The following parameters can be modified by admin or governance:
+- **Swap Fee**: 0.15% (default) - protocol swap fee
+- **Max Hops**: 7 (default) - maximum number of pools in route

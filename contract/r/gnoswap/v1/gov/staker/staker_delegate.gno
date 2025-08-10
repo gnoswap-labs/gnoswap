@@ -13,6 +13,13 @@ import (
 )
 
 // Delegate delegates GNS tokens to an address.
+//
+// Parameters:
+//   - to: address to delegate to
+//   - amount: amount of GNS to delegate
+//   - referrer: referral address (optional)
+//
+// Returns delegated amount.
 func Delegate(
 	cur realm,
 	to std.Address,
@@ -65,6 +72,12 @@ func Delegate(
 }
 
 // Undelegate undelegates xGNS from the existing delegate.
+//
+// Parameters:
+//   - from: address to undelegate from
+//   - amount: amount of xGNS to undelegate
+//
+// Returns undelegated amount.
 func Undelegate(
 	cur realm,
 	from std.Address,
@@ -107,6 +120,13 @@ func Undelegate(
 }
 
 // Redelegate redelegates xGNS from existing delegate to another.
+//
+// Parameters:
+//   - delegatee: current delegate address
+//   - newDelegatee: new delegate address
+//   - amount: amount to redelegate
+//
+// Returns redelegated amount.
 func Redelegate(
 	cur realm,
 	delegatee,
