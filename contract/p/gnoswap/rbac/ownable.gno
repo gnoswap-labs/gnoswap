@@ -29,12 +29,12 @@ func newOwnable2StepWithAddress(addr std.Address) *Ownable2Step {
 // The new owner must call AcceptOwnership to complete the transfer.
 // Only the current owner can call this function.
 func (o *Ownable2Step) TransferOwnership(newOwner std.Address) error {
-	if !newOwner.IsValid() {
-		return ErrInvalidAddress
-	}
-
 	if !o.OwnedByOriginCaller() {
 		return ErrUnauthorized
+	}
+
+	if !newOwner.IsValid() {
+		return ErrInvalidAddress
 	}
 
 	o.pendingOwner = newOwner

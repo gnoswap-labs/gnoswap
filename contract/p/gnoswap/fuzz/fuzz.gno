@@ -49,7 +49,7 @@ func initRNG(rng **xs.Xorshift64Star) {
 	}
 }
 
-// Ensure all generators implement the Generator interface.
+// TODO: add more generators
 var (
 	_ Generator = (*IntGenerator)(nil)
 	_ Generator = (*Uint32Generator)(nil)
