@@ -220,7 +220,7 @@ func TestGrc20Methods(t *testing.T) {
 			},
 			shouldPanic:   true,
 			exceptionKind: "abort",
-			panicMsg:      `unauthorized: caller g13ffa5r3mqfxu3s7ejl02scq9536wt6c2t789dm is not admin or governance`,
+			panicMsg:      `address(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) is not previous realm`,
 		},
 		{
 			name: "Transfer success",

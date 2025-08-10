@@ -196,8 +196,7 @@ func MintGns(cur realm, address std.Address) int64 {
 //   - Permanently reduces total supply
 //   - Updates burnAmount tracking
 func Burn(cur realm, from std.Address, amount int64) {
-	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	assertAddressIsPreviousRealm(from)
 
 	checkErr(privateLedger.Burn(from, amount))
 
