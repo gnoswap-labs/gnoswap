@@ -88,12 +88,12 @@ func (p *ProtocolFeeRewardState) calculateClaimableRewards(
 		}
 
 		// Calculate the difference in accumulated rewards per stake since last update
-		rewardDebtDeltaX128, overflow := u256.Zero().SubOverflow(
+		rewardDebtDeltaX128, underflow := u256.Zero().SubOverflow(
 			accumulatedRewardX128PerStake,
 			p.rewardDebtX128[token],
 		)
-		if overflow {
-			return nil, ufmt.Errorf("rewardDebtDeltaX128 overflow")
+		if underflow {
+			return nil, ufmt.Errorf("rewardDebtDeltaX128 underflow")
 		}
 
 		// Multiply by staked amount to get total reward for this staker and token
