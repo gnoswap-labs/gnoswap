@@ -25,6 +25,7 @@ var (
 	fixedPointQ128 = u256.MustFromDecimal(Q128)
 
 	maxInt256 = u256.MustFromDecimal(MAX_INT256)
+	maxInt64 = i256.MustFromDecimal(MAX_INT64)
 
 	swapStartHook func(poolPath string, timestamp int64)
 	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)
@@ -551,7 +552,8 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) (Swa
 		amountCalculated = i256.Zero().Add(state.amountCalculated, amountInWithFee)
 	}
 
-	if state.amountCalculated.Gt(i256.MustFromDecimal(MAX_INT64)) {
+	// If an overflowed value is stored in state, it may cause problems in the next step
+	if amountCalculated.Gt(maxInt64) {
 		return state, errOverFlow
 	}
 
