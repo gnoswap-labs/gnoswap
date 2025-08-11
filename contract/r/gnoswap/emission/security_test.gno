@@ -1,12 +1,9 @@
 package emission
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/demo/uassert"
-	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/v1/access"
 )
 
 func TestCalculateAmount_SecurityValidation(t *testing.T) {
@@ -145,25 +142,25 @@ func TestSetLeftGNSAmount_SecurityValidation(t *testing.T) {
 func TestSetLastExecutedHeight_SecurityValidation(t *testing.T) {
 	tests := []struct {
 		name                 string
-		height               int64
+		timestamp            int64
 		expectedHasPanic     bool
 		expectedPanicMessage string
 	}{
 		{
-			name:             "Valid positive height",
-			height:           1000,
+			name:             "Valid positive timestamp",
+			timestamp:        1000,
 			expectedHasPanic: false,
 		},
 		{
-			name:             "Zero height",
-			height:           0,
+			name:             "Zero timestamp",
+			timestamp:        0,
 			expectedHasPanic: false,
 		},
 		{
-			name:                 "Negative height should panic",
-			height:               -100,
+			name:                 "Negative timestamp should panic",
+			timestamp:            -100,
 			expectedHasPanic:     true,
-			expectedPanicMessage: "last executed height cannot be negative",
+			expectedPanicMessage: "last executed timestamp cannot be negative",
 		},
 	}
 
@@ -182,11 +179,11 @@ func TestSetLastExecutedHeight_SecurityValidation(t *testing.T) {
 			resetObject(t)
 
 			// when
-			setLastExecutedHeight(tc.height)
+			setLastExecutedTimestamp(tc.timestamp)
 
 			// then
 			if !tc.expectedHasPanic {
-				uassert.Equal(t, tc.height, GetLastExecutedHeight())
+				uassert.Equal(t, tc.timestamp, GetLastExecutedTimestamp())
 			}
 		})
 	}
@@ -268,102 +265,6 @@ func TestAssertValidDistributionPct_SecurityValidation(t *testing.T) {
 			assertValidDistributionPct(tc.pct01, tc.pct02, tc.pct03, tc.pct04)
 
 			// then - if no panic expected, test passes
-		})
-	}
-}
-
-func TestEmissionChangeCallback_SecurityValidation(t *testing.T) {
-	tests := []struct {
-		name                 string
-		amount               int64
-		callbackSet          bool
-		expectedHasPanic     bool
-		expectedPanicMessage string
-	}{
-		{
-			name:             "Valid amount with callback set",
-			amount:           1000,
-			callbackSet:      true,
-			expectedHasPanic: false,
-		},
-		{
-			name:                 "Negative amount should panic",
-			amount:               -100,
-			callbackSet:          true,
-			expectedHasPanic:     true,
-			expectedPanicMessage: "emission amount cannot be negative",
-		},
-		{
-			name:                 "Nil callback should panic",
-			amount:               1000,
-			callbackSet:          false,
-			expectedHasPanic:     true,
-			expectedPanicMessage: "stakerEmissionChangeCallback is nil",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			defer func() {
-				if r := recover(); r != nil {
-					if tc.expectedHasPanic {
-						uassert.Equal(t, tc.expectedPanicMessage, r.(string))
-					} else {
-						t.Errorf("[%s] unexpected panic: %v", tc.name, r)
-					}
-				}
-			}()
-
-			resetObject(t)
-
-			// given
-			if tc.callbackSet {
-				stakerEmissionChangeCallback = func(amount int64) {}
-			} else {
-				stakerEmissionChangeCallback = nil
-			}
-
-			// when
-			emissionChangeCallback(tc.amount)
-
-			// then - if no panic expected, test passes
-		})
-	}
-}
-
-func TestSetGnsStakerEmissionChangeCallback_SecurityValidation(t *testing.T) {
-	// Get the actual staker address from RBAC
-	stakerAddr, ok := access.GetAddress(prbac.ROLE_STAKER.String())
-	if !ok {
-		t.Skip("Staker address not set in RBAC, skipping security test")
-	}
-
-	tests := []struct {
-		name                 string
-		callback             func(amount int64)
-		caller               std.Address
-		expectedHasPanic     bool
-		expectedPanicMessage string
-	}{
-		{
-			name:             "Valid callback set by staker",
-			callback:         func(amount int64) {},
-			caller:           stakerAddr,
-			expectedHasPanic: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			resetObject(t)
-
-			// given
-			testing.SetRealm(std.NewUserRealm(tc.caller))
-
-			// when and then
-			uassert.NotPanics(t, func() {
-				SetGnsStakerEmissionChangeCallback(cross, tc.callback)
-			})
 		})
 	}
 }

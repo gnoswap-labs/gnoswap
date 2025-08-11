@@ -72,12 +72,13 @@ func init() {
 //   - Targets must be unique (no duplicates)
 //
 // Example:
-//   ChangeDistributionPct(
-//     1, 7000,  // 70% to liquidity stakers
-//     2, 2000,  // 20% to devops
-//     3, 1000,  // 10% to community pool
-//     4, 0      // 0% to governance stakers
-//   )
+//
+//	ChangeDistributionPct(
+//	  1, 7000,  // 70% to liquidity stakers
+//	  2, 2000,  // 20% to devops
+//	  3, 1000,  // 10% to community pool
+//	  4, 0      // 0% to governance stakers
+//	)
 //
 // Only callable by admin or governance.
 func ChangeDistributionPct(

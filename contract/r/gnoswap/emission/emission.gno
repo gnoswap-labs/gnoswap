@@ -36,7 +36,7 @@ func setLeftGNSAmount(amount int64) {
 	if amount < 0 {
 		panic("left GNS amount cannot be negative")
 	}
-	
+
 	leftGNSAmount = amount
 }
 
@@ -44,7 +44,7 @@ func setLeftGNSAmount(amount int64) {
 func GetLastExecutedTimestamp() int64 { return lastExecutedTimestamp }
 
 // setLastExecutedTimestamp updates the timestamp of the last emission distribution execution.
-func setLastExecutedTimestamp(timestamp int64) { 
+func setLastExecutedTimestamp(timestamp int64) {
 	if timestamp < 0 {
 		panic("last executed timestamp cannot be negative")
 	}
@@ -83,7 +83,7 @@ func MintAndDistributeGns(cur realm) int64 {
 	}
 
 	// Additional check to prevent re-entrancy
-	if lastExecutedHeight >= currentHeight {
+	if lastExecutedTimestamp >= currentTimestamp {
 		// Skip if we've already processed this height in emission
 		return 0
 	}
@@ -98,14 +98,17 @@ func MintAndDistributeGns(cur realm) int64 {
 
 	distributableAmount := mintedEmissionRewardAmount
 	prevLeftAmount := GetLeftGNSAmount()
+	
 	if leftGNSAmount > 0 {
 		// Check for overflow before addition
 		if distributableAmount > math.MaxInt64-prevLeftAmount {
 			panic("distributable amount would overflow")
 		}
+
 		distributableAmount += prevLeftAmount
 		setLeftGNSAmount(0)
 	}
+
 	// Distribute tokens and track any undistributed amount
 	distributedGNSAmount, err := distributeToTarget(distributableAmount)
 	if err != nil {
@@ -116,6 +119,7 @@ func MintAndDistributeGns(cur realm) int64 {
 	if distributedGNSAmount < 0 {
 		panic("distributed amount cannot be negative")
 	}
+
 	if distributedGNSAmount > distributableAmount {
 		panic("distributed amount cannot exceed distributable amount")
 	}
