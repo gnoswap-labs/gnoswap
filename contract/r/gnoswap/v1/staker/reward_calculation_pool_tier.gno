@@ -100,9 +100,9 @@ type PoolTier struct {
 
 	// returns current emission.
 	getEmission func() int64
-
-	// returns a list of halving blocks within the interval [start, end) in ascending order
-	// there MUST NOT be any emission amount change between start and end - those had to be handled by the stakerEmissionChangeCallback.
+	// Returns a list of halving timestamps and their emission amounts within the interval [start, end) in ascending order.
+	// The first return value is a list of timestamps where halving occurs.
+	// The second return value is a list of emission amounts corresponding to each halving timestamp.
 	getHalvingBlocksInRange func(start, end int64) ([]int64, []int64)
 }
 
