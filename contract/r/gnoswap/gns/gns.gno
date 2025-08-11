@@ -124,7 +124,8 @@ func MintGns(cur realm, address std.Address) int64 {
 //
 // Only callable by contract owner.
 func Burn(cur realm, from std.Address, amount int64) {
-	owner.AssertOwnedByCurrent()
+	assertAddressIsPreviousRealm(from)
+
 	checkErr(privateLedger.Burn(from, amount))
 
 	burnAmount += amount
