@@ -1,226 +1,133 @@
 # GnoSwap Contracts
 
-This repository contains smart contracts (realms) for GnoSwap.
+Smart contracts for GnoSwap AMM DEX on Gno.land.
 
-## Index
-
-- [Setting Up and Testing GnoSwap Contracts](#setting-up-and-testing-gnoswap-contracts)
-  - [Prerequisites](#prerequisites)
-  - [Setting Up GnoSwap Contracts](#setting-up-gnoswap-contracts)
-  - [Running Tests](#running-tests)
-- [Realms](#realms)
-  - [Core Realms Deployed on Testnet5](#core-realms-deployed-on-testnet5)
-
-
-## Setting Up and Testing GnoSwap Contracts
-
-There are two ways to set up GnoSwap contracts: using the provided setup script or manually following the steps below.
-
-### Prerequisites
+## Prerequisites
 
 - GNU Make 3.81 or higher
 - Latest version of [gno.land](https://github.com/gnolang/gno)
 - Python 3.12 or higher
 
-### Using the Setup Script
+## Setup
 
-> Note: If you're using the script, you don't need to manually perform the steps listed in the next section.
+```bash
+# Quick setup in home directory
+python3 setup.py
 
-For convenience, we provide a Python script that automates the setup process. This script can clone the repository, copy contracts, and move test files as needed.
+# Setup in custom directory
+python3 setup.py -w /path/to/workdir
 
-- To set up in your home directory without cloning the repository:
+# Clone repository and setup
+python3 setup.py -c
 
-  ```bash
-  python3 setup.py
-  ```
-
-- To set up in a specific directory without cloning:
-
-  ```bash
-  python3 setup.py -w /path/to/workdir
-  ```
-
-- To clone the repository and set up in your home directory:
-
-  ```bash
-  python3 setup.py -c
-  ```
-
-- To clone the repository and set up in a specific directory:
-
-  ```bash
-  python3 setup.py -w /path/to/workdir -c
-  ```
+# Clone to custom directory
+python3 setup.py -w /path/to/workdir -c
+```
 
 Options:
 
-- `-w` or `--workdir`: Specify the working directory (default is your home directory)
-- `-c` or `--clone`: Clone the gnoswap repository before setting up
+- `-w` or `--workdir`: Specify working directory (default: home directory)
+- `-c` or `--clone`: Clone gnoswap repository before setup
 
-The script will perform all necessary steps to set up the GnoSwap contracts in the specified directory.
+If the setup script fails, you can manually copy contracts:
 
-<details>
-<summary><h3>Setting Up GnoSwap Contracts Manually</h3></summary>
+1. Clone repository:
 
-> Important: This manual setup method is not recommended and should only be used as a last resort. If the setup script is not working properly, please create an issue in the repository.
+```bash
+git clone https://github.com/gnoswap-labs/gnoswap.git
+```
 
-This section guides you through the process of setting up GnoSwap contracts. The process involves three main steps: cloning the `gnoswap` repository, copying the contracts to the `gno` directory, and moving test cases to their respective directories.
+2. Copy packages:
 
-1. Clone the repository:
+```bash
+mkdir -p $WORKDIR/gno/examples/gno.land/p/gnoswap
+cp -R contract/p/gnoswap/* $WORKDIR/gno/examples/gno.land/p/gnoswap/
+```
 
-   ```bash
-   cd $WORKDIR
-   git clone https://github.com/gnoswap-labs/gnoswap.git
-   cd gnoswap
-   ```
+3. Copy realms:
 
-2. Understand the directory structure pattern:
+```bash
+mkdir -p $WORKDIR/gno/examples/gno.land/r/gnoswap/v1
+cp -R contract/r/gnoswap/* $WORKDIR/gno/examples/gno.land/r/gnoswap/v1/
+```
 
-   ```tree
-   contract/
-   ├── p/  # Packages directory
-   │   └── gnoswap/
-   │       ├── gnsmath/
-   │       └── ...
-   └── r/  # Realms directory
-       └── gnoswap/
-           ├── common/
-           ├── pool/
-           └── ...
-   ```
+4. Copy test tokens:
 
-3. Create the base directories:
+```bash
+cp -R contract/r/gnoswap/test_token/* $WORKDIR/gno/examples/gno.land/r/
+```
 
-   ```bash
-   # Create directories for packages and realms
-   mkdir -p $WORKDIR/gno/examples/gno.land/p/gnoswap
-   mkdir -p $WORKDIR/gno/examples/gno.land/r/gnoswap/v1
-   ```
+## Directory Structure
 
-4. Copy files following these patterns:
+```
+gnoswap/
+├── contract/                       # Smart contracts
+│   ├── p/                          # Packages (libraries)
+│   │   └── gnoswap/
+│   │       ├── gnsmath/            # AMM math utilities
+│   │       ├── int256/             # 256-bit signed integers
+│   │       ├── uint256/            # 256-bit unsigned integers
+│   │       ├── rbac/               # Role-based access control
+│   │       └── consts/             # Protocol constants
+│   │
+│   └── r/                          # Realms (contracts)
+│       └── gnoswap/
+│           ├── v1/                 # Protocol v1 contracts
+│           │   ├── pool/           # Concentrated liquidity pools
+│           │   ├── position/       # LP position NFTs
+│           │   ├── router/         # Swap routing
+│           │   ├── staker/         # Liquidity mining
+│           │   ├── gov/            # Governance
+│           │   ├── launchpad/      # Token distribution
+│           │   ├── protocol_fee/   # Fee management
+│           │   └── community_pool/ # Treasury
+│           │
+│           ├── access/             # Access control
+│           ├── emission/           # GNS emission
+│           ├── gns/                # GNS token
+│           ├── halt/               # Emergency pause
+│           ├── rbac/               # RBAC realm
+│           ├── referral/           # Referral system
+│           └── test_token/         # Test tokens
+│
+├── tests/                          # Test suites
+│   ├── scenario/                   # Scenario-based tests
+│   ├── integration/                # Integration tests
+│   └── deploy/                     # Deployment scripts
+│
+└── scripts/                        # Utility scripts
+```
 
-   For packages:
+## Testing
 
-   ```bash
-   # Pattern:
-   cp -R contract/p/gnoswap/<package_name> $WORKDIR/gno/examples/gno.land/p/gnoswap/
+### Run All Tests
 
-   # Examples:
-   cp -R contract/p/gnoswap/consts $WORKDIR/gno/examples/gno.land/p/gnoswap/
-   cp -R contract/p/gnoswap/gnsmath $WORKDIR/gno/examples/gno.land/p/gnoswap/
-   ```
+```bash
+make test
+```
 
-   For realm modules:
+### Run Specific Scenario Tests
 
-   ```bash
-   # Pattern:
-   cp -R contract/r/gnoswap/<module_name> $WORKDIR/gno/examples/gno.land/r/gnoswap/v1/
+```bash
+make test-folder FOLDER=tests/scenario/pool
+make test-folder FOLDER=tests/scenario/router
+```
 
-   # Examples:
-   cp -R contract/r/gnoswap/pool $WORKDIR/gno/examples/gno.land/r/gnoswap/v1/
-   cp -R contract/r/gnoswap/router $WORKDIR/gno/examples/gno.land/r/gnoswap/v1/
-   ```
-
-   For test tokens:
-
-   ```bash
-   # Pattern:
-   cp -R contract/r/gnoswap/test_token/<token_name> $WORKDIR/gno/examples/gno.land/r/
-
-   # Example:
-   cp -R contract/r/gnoswap/test_token/usdc $WORKDIR/gno/examples/gno.land/r/
-   ```
-
-5. Verify the setup:
-
-   ```bash
-   cd $WORKDIR/gno/examples
-   gno test -root-dir $WORKDIR/gno -v=false ./gno.land/r/gnoswap/v1/pool
-   ```
-
-> Note: The setup maintains the original directory structure, including test files which are now part of their respective packages.
-
-</details>
-
-### Directory Structure Overview
-
-Key directories and their purposes:
-
-- `p/gnoswap/`: Core packages including math utilities and constants
-- `r/gnoswap/v1/`: Protocol realms (pool, router, position, etc.)
-- `r/gnoswap/test_token/`: Test tokens for development
-
-Once you understand these patterns, you can copy any additional modules using the same structure.
-
-### Running Tests
-
-While it's possible to run tests in the cloned `gno` directory (where the above setup process was completed), it's recommended to run them in the `gnoswap` directory to avoid confusion due to the large number of changed files.
-
-First, navigate to the `gno/examples` directory:
+### Run Integration Tests
 
 ```bash
 cd $WORKDIR/gno/examples
-```
-
-Next, move to the Realm directory you want to test (such as `pool`, `staker`, etc.), then run the tests using the `gno test` command:
-
-```bash
 gno test -root-dir $WORKDIR/gno -v=false ./gno.land/r/gnoswap/v1/pool
 ```
 
-## Realms
+## Security
 
-### Core Realms Deployed on Testnet5
+GnoSwap implements multiple layers of security across all contracts. For security concerns or vulnerability reports, see [SECURITY.md](SECURITY.md).
 
-- pool: [gno.land/r/gnoswap/v1/pool](https://gnoscan.io/realms/details?path=gno.land/r/gnoswap/v1/pool)
-- position: [gno.land/r/gnoswap/v1/position](https://gnoscan.io/realms/details?path=gno.land/r/gnoswap/v1/position)
-- router: [gno.land/r/gnoswap/v1/router](https://gnoscan.io/realms/details?path=gno.land/r/gnoswap/v1/router)
-- staker: [gno.land/r/gnoswap/v1/staker](https://gnoscan.io/realms/details?path=gno.land/r/gnoswap/v1/staker)
+## License
 
-## Development Environment Setup
+Licensed under the GNU Affero General Public License v3.0. See [LICENSE](LICENSE) for details.
 
-### Using Docker (Recommended)
+## Contributing
 
-1. Build the Docker image:
-```bash
-make docker-build
-```
-
-2. Start the container:
-```bash
-make docker-up
-```
-
-3. Access the container shell:
-```bash
-make docker-shell
-```
-
-4. View logs:
-```bash
-make docker-logs
-```
-
-5. Stop the container:
-```bash
-make docker-down
-```
-
-### Manual Setup
-
-If you prefer to set up the environment manually:
-
-1. Install Python 3.11 or later
-2. Install uv package manager:
-```bash
-pip install uv
-```
-
-3. Create a virtual environment and install dependencies:
-```bash
-uv venv
-source .venv/bin/activate  # On Unix/macOS
-# or
-.venv\Scripts\activate  # On Windows
-uv pip install -r requirements.txt
-```
+Contributions are welcome! Please follow existing patterns, include tests, and maintain documentation.

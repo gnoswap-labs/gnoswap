@@ -1,28 +1,131 @@
 # Pool
 
+Concentrated liquidity AMM pools with tick-based pricing.
+
 ## Overview
 
-**Pool** is a core component of GnoSwap, designed as a smart contract that facilitates liquidity provision and trading between two GRC20 tokens. Unlike traditional models where each liquidity pool has a separate contract, **Pool** adopts a **single skeleton design**, meaning all pools exist within a single contract. This approach enhances efficiency, reduces deployment overhead, and aligns with Uniswap V4's singleton architecture.
+Pool contracts implement Uniswap V3-style concentrated liquidity, allowing LPs to provide liquidity within custom price ranges for maximum capital efficiency.
 
-## Key Features
+## Configuration
 
-- **Single Skeleton Architecture**: All liquidity pools are managed within a single contract, optimizing gas efficiency and simplifying interactions.
-- **Concentrated Liquidity**: Liquidity providers (LPs) can specify custom price ranges for their liquidity, maximizing capital efficiency.
-- **Multiple Fee Tiers**: Supports various fee tiers to accommodate different trading strategies and risk appetites.
-- **Dynamic Liquidity Adjustments**: Liquidity adapts to price fluctuations automatically, ensuring seamless trading and efficient market-making.
-- **GRC20 Token Support**: Designed exclusively for GRC20 token pairs, enabling decentralized trading within the GnoSwap ecosystem.
+- **Pool Creation Fee**: 100 GNS (default)
+- **Protocol Fee**: 0-10% of swap fees per token
+- **Withdrawal Fee**: 1% on collected fees
+- **Fee Tiers**: 0.01%, 0.05%, 0.3%, 1%
+- **Tick Spacing**: Auto-set by fee tier
+- **Max Liquidity Per Tick**: 2^128 - 1
 
-## How It Works
+## Core Concepts
 
-1. **Liquidity Provision**: Users deposit two GRC20 tokens into the contract within a specified price range, defining their liquidity position.
-2. **Trading**: Traders swap tokens within the pool, utilizing the available liquidity at the current market price.
-3. **Fee Collection**: Each trade incurs a fee based on the selected fee tier, distributed proportionally to liquidity providers.
-4. **Liquidity Adjustment**: As market prices change, LPs can adjust or remove their liquidity positions as needed.
+### Concentrated Liquidity
+Liquidity providers concentrate capital within custom price ranges instead of 0-∞. This allows LPs to allocate capital where it's most likely to generate fees - near the current price for volatile pairs, or within tight ranges for stable pairs. Capital efficiency can improve by orders of magnitude depending on range selection and pair volatility. For more details, check out [GnoSwap Docs](https://docs.gnoswap.io/core-concepts/amm/concentrated-liquidity).
 
-## Advantages of Single Skeleton Design
+### Tick System
+- Price space divided into discrete ticks (0.01% apart)
+- Each tick represents ~0.01% price change
+- Positions defined by upper/lower tick boundaries
+- Liquidity activated only when price in range
 
-- **Gas Efficiency**: Eliminates the need to deploy multiple contracts for each pool, reducing transaction costs.
-- **Unified Management**: A single contract governs all pools, simplifying governance, upgrades, and security audits.
-- **Optimized User Experience**: Traders and liquidity providers interact with a single contract, streamlining operations and enhancing composability within GnoSwap.
+## Key Functions
 
-For more details, refer to [the smart contract documentation and API reference](https://docs.gnoswap.io/contracts/pool/pool.gno).
+### `CreatePool`
+Deploys new trading pair.
+- Requires 100 GNS creation fee
+- Valid fee tier required
+- Initial price via sqrtPriceX96
+- Unique token pair per fee tier
+
+### `Mint`
+Adds liquidity to position (called by Position contract).
+- Calculates token amounts from liquidity
+- Updates tick bitmap
+- Transfers tokens from owner
+- Returns actual amounts used
+
+### `Burn`
+Removes liquidity without collecting tokens.
+- Two-step: burn then collect
+- Calculates owed amounts
+- Updates position state
+
+### `Collect`
+Claims tokens from burned position + fees.
+- Transfers principal and fees
+- Updates tokensOwed
+- Applies withdrawal fee
+
+### `Swap`
+Core swap execution (called by Router).
+- Iterates through ticks
+- Updates price and liquidity
+- Calculates fees
+- Maintains TWAP oracle
+
+## Technical Details
+
+### Price Math
+
+**Q96 Format**: Prices stored as `sqrtPriceX96 = sqrt(price) * 2^96`
+
+```
+Price 1:1   → sqrtPriceX96 = 79228162514264337593543950336
+Price 1:4   → sqrtPriceX96 = 39614081257132168796771975168  
+Price 100:1 → sqrtPriceX96 = 792281625142643375935439503360
+```
+
+**Tick to Price**: `price = 1.0001^tick`
+```
+tick 0     = price 1
+tick 6932  = price ~2
+tick -6932 = price ~0.5
+```
+
+### Liquidity Math
+
+**Range Liquidity Formula**:
+```
+L = amount / (sqrt(upper) - sqrt(lower))        // current < lower
+L = amount * sqrt(current) / (upper - current)  // lower < current < upper  
+L = amount / (sqrt(current) - sqrt(lower))      // current > upper
+```
+
+**Impermanent Loss**:
+- Narrow range: Higher fees, higher IL
+- Wide range: Lower fees, lower IL
+- Stable pairs: ±0.1% ranges optimal
+- Volatile pairs: ±10%+ ranges recommended
+
+### Fee Mechanics
+
+**Swap Fees**:
+- Charged on input amount
+- Accumulates as feeGrowthGlobal
+- Distributed pro-rata to in-range liquidity
+
+**Fee Calculation**:
+```
+fees = feeGrowthInside * liquidity
+feeGrowthInside = feeGrowthGlobal - feeGrowthOutside
+```
+
+**Protocol fees**:
+- Optional 0-10% of swap fees
+- Configurable per pool
+- Sent to protocol fee contract
+
+## Security
+
+### Reentrancy Protection
+- Pools lock during swaps (`slot0.unlocked`)
+- External calls after state updates
+- Checks-effects-interactions pattern
+
+### Price Manipulation
+- TWAP oracle resists manipulation
+- Large swaps limited by liquidity
+- Slippage protection required
+
+### Rounding
+- Division rounds down (favors protocol)
+- Minimum liquidity enforced
+- Full precision for amounts

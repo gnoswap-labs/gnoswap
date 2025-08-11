@@ -96,8 +96,8 @@ func newSwapCache(
 }
 
 // SwapState tracks the changing values during a swap.
-// This type helps manage the state transiktions that occur as the swap progresses
-// accross different price ranges.
+// This type helps manage the state transitions that occur as the swap progresses
+// across different price ranges.
 type SwapState struct {
 	amountSpecifiedRemaining *i256.Int  // amount remaining to be swapped in/out of the input/output token
 	amountCalculated         *i256.Int  // amount already swapped out/in of the output/input token

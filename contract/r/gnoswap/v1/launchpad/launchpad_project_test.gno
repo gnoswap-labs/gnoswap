@@ -92,7 +92,7 @@ func TestCreateProject(t *testing.T) {
 			startTime:            time.Now().Unix() + 3600, // 1 hour
 			callerAddress:        testutils.TestAddress("non-admin"),
 			expectedHasAbort:     true,
-			expectedAbortMessage: "unauthorized: caller g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj is not admin",
+			expectedAbortMessage: "unauthorized: caller g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj is not admin or governance",
 		},
 		{
 			name:                 "create project failed by start time is in the past",

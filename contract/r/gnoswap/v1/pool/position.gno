@@ -14,46 +14,27 @@ import (
 
 var convertedQ128 = u256.MustFromDecimal(Q128)
 
-// getPositionKey generates a unique, encoded key for a liquidity position.
+// getPositionKey generates a unique base64-encoded key for a liquidity position.
 //
-// This function creates a unique key for identifying a liquidity position in a pool. The key is based
-// on the position's owner address, lower tick, and upper tick values. The generated key is then encoded
-// as a base64 string to ensure compatibility and uniqueness.
+// Creates deterministic identifier for position tracking.
+// Ensures unique positions per owner and price range.
+// Used internally for position state management.
 //
 // Parameters:
-//   - owner: std.Address, the address of the position's owner.
-//   - tickLower: int32, the lower tick boundary for the position.
-//   - tickUpper: int32, the upper tick boundary for the position.
+//   - owner: Address that owns the position
+//   - tickLower: Lower boundary tick of position range
+//   - tickUpper: Upper boundary tick of position range
 //
-// Returns:
-//   - string: A base64-encoded string representing the unique position key.
+// Key Format:
+//   base64(owner_address + tickLower_bytes + tickUpper_bytes)
 //
-// Workflow:
-//  1. Validates that the `owner` address is valid.
-//  2. Ensures `tickLower` is less than `tickUpper` using `assertTickLowerLessThanUpper`.
-//  3. Constructs the position key as a formatted string:
-//     "<owner>__<tickLower>__<tickUpper>"
-//  4. Encodes the generated position key into a base64 string for safety and uniqueness.
-//  5. Returns the encoded position key and error if any.
+// Requirements:
+//   - Valid owner address
+//   - tickLower < tickUpper
+//   - Both ticks within valid range [-887272, 887272]
 //
-// Example:
-//
-// ```gno
-//
-//	owner := std.Address("0x123456789")
-//	positionKey := getPositionKey(owner, 100, 200)
-//	println("Position Key:", positionKey)
-//
-//	// Output: base64-encoded string representing "0x123456789__100__200"
-//
-// ```
-//
-// Notes:
-//   - The base64 encoding ensures that the position key can be safely used as an identifier
-//     across different systems or data stores.
-//   - The function will panic if:
-//   - The `owner` address is invalid.
-//   - `tickLower` is greater than or equal to `tickUpper`.
+// Returns base64-encoded position key or error.
+// Combines owner address, tickLower, and tickUpper.
 func getPositionKey(
 	owner std.Address,
 	tickLower int32,
@@ -75,7 +56,8 @@ func getPositionKey(
 	return encodedPositionKey, nil
 }
 
-// positionUpdate calculates and returns an updated PositionInfo.
+// positionUpdate updates a position's liquidity and calculates fees owed.
+// Returns the updated position information and any error.
 func positionUpdate(
 	position PositionInfo,
 	liquidityDelta *i256.Int,
@@ -145,10 +127,12 @@ func positionUpdate(
 	return position, nil
 }
 
+// calculateToken0Amount calculates the amount of token0 based on price range and liquidity delta.
 func calculateToken0Amount(sqrtPriceLower, sqrtPriceUpper *u256.Uint, liquidityDelta *i256.Int) *i256.Int {
 	return plp.GetAmount0Delta(sqrtPriceLower, sqrtPriceUpper, liquidityDelta)
 }
 
+// calculateToken1Amount calculates the amount of token1 based on price range and liquidity delta.
 func calculateToken1Amount(sqrtPriceLower, sqrtPriceUpper *u256.Uint, liquidityDelta *i256.Int) *i256.Int {
 	return plp.GetAmount1Delta(sqrtPriceLower, sqrtPriceUpper, liquidityDelta)
 }

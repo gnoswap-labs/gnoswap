@@ -20,15 +20,7 @@ var (
 	errFailedToWrapBelowMin  = "amount(%d) < minimum(%d)"
 )
 
-// wrapWithTransfer handles transferring tokens from a caller to a target address,
-// with special handling for GNOT tokens that need to be wrapped into WUGNOT.
-//
-// Parameters:
-// - toAddress: The address receiving the tokens
-// - amount: The amount of tokens to transfer
-//
-// Returns:
-// - error: Any error that occurred during the transfer
+// wrapWithTransfer wraps GNOT into WUGNOT and transfers it to the specified address.
 func wrapWithTransfer(toAddress std.Address, amount int64) error {
 	if amount <= 0 {
 		return nil
@@ -67,27 +59,7 @@ func wrapWithTransfer(toAddress std.Address, amount int64) error {
 	return nil
 }
 
-// unwrapWithTransferFrom handles transferring tokens from a caller to a target address,
-// with special handling for WUGNOT tokens that need to be unwrapped back to GNOT.
-//
-// Parameters:
-// - fromAddress: The address holding the WUGNOT tokens
-// - toAddress: The address to receive the unwrapped GNOT
-// - wugnotAmount: The amount of WUGNOT to transfer and unwrap
-//
-// Returns:
-// - error: Any error that occurred during the transfer and unwrap process
-
-// unwrapWithTransferFrom transfers WUGNOT from a source address, unwraps it to GNOT,
-// and sends the GNOT to a target address
-//
-// Parameters:
-// - fromAddress: The address holding the WUGNOT tokens
-// - toAddress: The address to receive the unwrapped GNOT
-// - wugnotAmount: The amount of WUGNOT to transfer and unwrap
-//
-// Returns:
-// - error: Any error that occurred during the transfer and unwrap process
+// unwrapWithTransferFrom transfers WUGNOT from a source address, unwraps it to GNOT, and sends it to the target.
 func unwrapWithTransferFrom(fromAddress, toAddress std.Address, wugnotAmount int64) error {
 	if wugnotAmount == 0 {
 		return nil
@@ -107,15 +79,7 @@ func unwrapWithTransferFrom(fromAddress, toAddress std.Address, wugnotAmount int
 	return nil
 }
 
-// unwrapWithTransfer handles transferring tokens to a target address,
-// with special handling for WUGNOT tokens that need to be unwrapped back to GNOT.
-//
-// Parameters:
-// - toAddress: The address receiving the tokens
-// - amount: The amount of tokens to transfer
-//
-// Returns:
-// - error: Any error that occurred during the transfer
+// unwrapWithTransfer unwraps WUGNOT to GNOT and sends it to the specified address.
 func unwrapWithTransfer(toAddress std.Address, amount int64) error {
 	if amount <= 0 {
 		return nil

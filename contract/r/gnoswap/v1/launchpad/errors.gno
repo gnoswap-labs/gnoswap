@@ -40,6 +40,7 @@ var (
 	errTransferFailed      = errors.New("[GNOSWAP-LAUNCHPAD-031] transfer failed")
 )
 
+// makeErrorWithDetails creates an error with additional context.
 func makeErrorWithDetails(err error, details string) error {
 	return ufmt.Errorf("%s || %s", err.Error(), details)
 }

@@ -1,273 +1,182 @@
 # Staker
 
+Liquidity mining and reward distribution for LP positions.
+
 ## Overview
 
-The **Staker** contract manages LP token staking and reward distribution in GnoSwap. It incentivizes liquidity provision by enabling users to stake LP tokens and earn rewards through both protocol-native and external incentive programs.
+Staker manages distribution of internal (GNS emission) and external (user-provided) rewards to staked LP positions, with time-weighted rewards and warmup periods.
 
-## Key Features
+## Configuration
 
-- **LP Token Staking**: Users can stake LP tokens to earn rewards.
-- **[Warm-up Periods](https://docs.gnoswap.io/references/warm-up-periods)**: A dynamic multiplier reward mechanism applied to staked positions based on its total duration staked in range.
-- **Reward Collection**: Stakers can claim accumulated rewards from their staked positions.
-- **Unstaking Mechanism**: Users can withdraw their staked LP tokens and collect all pending rewards at any time.
-- **External Incentive Creation**: Users can create additional reward incentives for specific liquidity pools.
-- **External Incentive Termination**: The creator or an admin can end an external incentive and refund remaining rewards.
-- **Support for Native and Wrapped Tokens**: Handles rewards in both `GNOT` and `WUGNOT`.
-- **Protocol and User-Defined Incentives**: Supports both internal (protocol-native) and external (user-created) incentives.
-- **Flexible Reward Distribution**: Implements various reward mechanisms tailored to different incentive types.
-- **Security and Safety Checks**: Ensures proper staking, unstaking, and reward distribution.
+- **Deposit GNS Amount**: 1,000 GNS for external incentives (default)
+- **Minimum Reward Amount**: 1,000 tokens (default)
+- **Unstaking Fee**: 1% (default)
+- **Pool Tiers**: 1, 2, or 3 (assigned per pool)
+- **Warmup Schedule**: 30/50/70/100% over 30/60/90 days
+- **External Token Whitelist**: Approved reward tokens
 
-## Functionality
+## Core Features
 
-1. **Stake LP Tokens**
-   - Users deposit LP tokens into the staking contract.
-   - Staked tokens qualify for reward accumulation based on the incentive model.
+### Internal Rewards (GNS Emission)
+- Allocated to tiered pools (tiers 1, 2, 3)
+- Split across tiers by TierRatio
+- Distributed proportionally to in-range liquidity
+- Unclaimed rewards go to community pool
 
-2. **Collect Rewards**
-   - Users claim earned rewards at any time.
-   - Rewards are distributed proportionally to staked amounts and duration.
+### External Rewards (User Incentives)
+- Created for specific pools
+- Constant reward per block
+- Proportional to staked liquidity
+- Unclaimed rewards returned to creator
 
-3. **Unstake LP Tokens**
-   - Users can withdraw their staked LP tokens at any time.
-   - All pending rewards are collected upon unstaking.
+### Warmup Periods
+Every staked position progresses through warmup periods:
+- 0-30 days: 30% rewards (70% to community/creator)
+- 30-60 days: 50% rewards (50% to community/creator)
+- 60-90 days: 70% rewards (30% to community/creator)
+- 90+ days: 100% rewards
 
-4. **Create External Incentives**
-   - Users can allocate additional rewards to encourage liquidity provision in specific pools.
-   - External incentives can be configured with custom reward parameters.
+## Key Functions
 
-5. **End External Incentives**
-   - Incentive creators or governance admins can terminate an incentive.
-   - Any remaining unclaimed rewards are refunded to the creator.
+### `StakeToken`
+Stakes LP position NFT to earn rewards.
 
-## Importance in GnoSwap Tokenomics
+### `UnStakeToken`
+Unstakes position and collects all rewards.
 
-The **Staker** is a crucial component of GnoSwap’s tokenomics, encouraging long-term liquidity provision and community-driven reward programs. By allowing both protocol-driven and user-created incentives, it enhances overall ecosystem sustainability and growth.
+### `CollectReward`
+Collects accumulated rewards without unstaking.
 
-For more details, visit [GnoSwap Docs](https://docs.gnoswap.io/contracts/staker/staker.gno).
+### `MintAndStake`
+Mints new position and stakes in single transaction.
 
-# Staker Reward
+### `CreateExternalIncentive`
+Creates external reward program for specific pool.
 
-## Abstract
+### `EndExternalIncentive`
+Ends incentive program and returns unused rewards.
 
-The **Staker** module handles the distribution of both **internal** (GNS emission) and **external** (user-provided) rewards to stakers:
+## Reward Calculation Logic
 
-- **[Internal rewards](https://docs.gnoswap.io/references/warm-up-periods)** (GNS emission) are allocated to “tiered” pools (tiers 1, 2, and 3). First, emission is split across the tiers according to the **TierRatio**. Then, within each tier, the emission is shared evenly among member pools and finally distributed proportionally to each staked position’s in-range liquidity.
+### Tier Ratio Distribution
 
-- **[External rewards](https://docs.gnoswap.io/references/warm-up-periods)** (user-provided incentives) can be created for specific pools. Each external incentive emits a constant reward per block. Any user with in-range staked liquidity on that pool can claim a share of the reward, proportional to their staked liquidity.
+Emission split across tiers based on active pools:
 
-- If, during a given block, no staked liquidity is in range, the internal emission is diverted to the community pool, and any external reward for that block is returned to the incentive creator.
+```
+If only tier 1 has pools:    [100%, 0%, 0%]
+If tiers 1 & 3 have pools:   [80%, 0%, 20%]
+If tiers 1 & 2 have pools:   [70%, 30%, 0%]
+If all tiers have pools:     [50%, 30%, 20%]
+```
 
-- Every staked position has a designated [warmup schedule](https://docs.gnoswap.io/references/warm-up-periods). As it remains staked, the position progresses through multiple warmup periods. In each warmup period, a certain percentage of the reward is awarded to the position, and the remainder goes either to the community pool (for internal incentives) or is returned to the incentive creator (for external incentives).
+Mathematical representation:
+```math
+TierRatio(t) = 
+  [1, 0, 0]        if Count(2) = 0 ∧ Count(3) = 0
+  [0.8, 0, 0.2]    if Count(2) = 0
+  [0.7, 0.3, 0]    if Count(3) = 0
+  [0.5, 0.3, 0.2]  otherwise
+```
 
-## Main Reward Calculation Logic
+### Pool Reward Formula
 
-Below is an example function that computes the rewards for a position. It does the following:
+```math
+poolReward(pool) = (emission × TierRatio[tier(pool)]) / Count(tier(pool))
+```
 
-1. Caches any pending per-pool internal incentive rewards up to the current block.  
-2. Retrieves or initializes the pool from `param.Pools`.  
-3. Accumulates internal and external rewards (and the corresponding penalties) for each warmup period.  
-4. Returns a list of rewards, one for each warmup period of the staked position.
+Where emission is calculated as:
+```math
+emission = GNSEmissionPerSecond × (avgMsPerBlock/1000) × StakerEmissionRatio
+```
+
+### Position Reward Calculation
+
+The reward for each position is calculated through:
+
+1. **Cache pool rewards** up to current block
+2. **Retrieve position state** from deposit records
+3. **Calculate internal rewards** if pool is tiered
+4. **Calculate external rewards** for active incentives
+5. **Apply warmup penalties** based on stake duration
+
+Mathematical formula for total reward ratio:
+```math
+TotalRewardRatio(s,e) = Σ[i=0 to m-1] ΔRaw(αᵢ, βᵢ) × rᵢ
+
+where:
+  αᵢ = max(s, Hᵢ₋₁)
+  βᵢ = min(e, Hᵢ)
+  
+ΔRaw(a, b) = CalcRaw(b) - CalcRaw(a)
+
+CalcRaw(h) = 
+  L(h) - U(h)           if tick(h) < ℓ
+  U(h) - L(h)           if tick(h) ≥ u
+  G(h) - (L(h) + U(h))  otherwise
+
+where:
+  L(h) = tickLower.OutsideAccumulation(h)
+  U(h) = tickUpper.OutsideAccumulation(h)
+  G(h) = globalRewardRatioAccumulation(h)
+  ℓ = tickLower.id
+  u = tickUpper.id
+```
+
+Final position reward:
+```math
+finalReward = TotalRewardRatio × poolReward × positionLiquidity
+            = ∫[s to e] (poolReward × positionLiquidity) / TotalStakedLiquidity(h) dh
+```
+
+### Tick Cross Hook
+
+When price crosses an initialized tick with staked positions:
+
+1. **Updates staked liquidity** - Adjusts total staked liquidity
+2. **Updates reward accumulation** - Recalculates `globalRewardRatioAccumulation`
+3. **Manages unclaimable periods** - Starts/ends periods with no in-range liquidity
+4. **Updates tick accumulation** - Adjusts `CurrentOutsideAccumulation`
+
+The `globalRewardRatioAccumulation` tracks the integral:
+```math
+globalRewardRatioAccumulation = ∫ 1/TotalStakedLiquidity(h) dh
+```
+
+This integral is only computed when `TotalStakedLiquidity(h) ≠ 0`, enabling precise reward calculation even as liquidity changes.
+
+### Reward State Tracking
+
+The system maintains:
+- **Global accumulation**: Tracks reward ratio across all positions
+- **Tick accumulation**: Tracks rewards "outside" each tick
+- **Position state**: Individual reward calculation parameters
+
+## Usage
 
 ```go
-func CalcPositionReward(param CalcPositionRewardParam) []Reward {
-	// cache per-pool rewards in the internal incentive(tiers)
-	param.PoolTier.cacheReward(param.CurrentHeight, param.Pools)
+// Stake existing position
+StakeToken(123, "g1referrer...")
 
-	deposit := param.Deposits.Get(param.TokenId)
-	poolPath := deposit.targetPoolPath
+// Create external incentive
+CreateExternalIncentive(
+    "gno.land/r/demo/bar:gno.land/r/demo/baz:3000",
+    "gno.land/r/demo/reward",
+    "1000000000",  // 1000 tokens
+    startTime,
+    endTime,
+)
 
-	pool, ok := param.Pools.Get(poolPath)
-	if !ok {
-		pool = NewPool(poolPath, param.CurrentHeight)
-		param.Pools.Set(poolPath, pool)
-	}
+// Collect rewards without unstaking
+CollectReward(123)
 
-	lastCollectHeight := deposit.lastCollectHeight
-
-	// Initialize arrays to hold reward & penalty data for each warmup
-	internalRewards := make([]uint64, len(deposit.warmups))
-	internalPenalties := make([]uint64, len(deposit.warmups))
-	externalRewards := make([]map[string]uint64, len(deposit.warmups))
-	externalPenalties := make([]map[string]uint64, len(deposit.warmups))
-
-	if param.PoolTier.CurrentTier(poolPath) != 0 {
-		// Internal incentivized pool
-		internalRewards, internalPenalties = pool.RewardStateOf(deposit).CalculateInternalReward(lastCollectHeight, param.CurrentHeight)
-	}
-
-	// Retrieve all active external incentives from lastCollectHeight to CurrentHeight
-	allIncentives := pool.incentives.GetAllInHeights(lastCollectHeight, param.CurrentHeight)
-
-	for i := range externalRewards {
-		externalRewards[i] = make(map[string]uint64)
-		externalPenalties[i] = make(map[string]uint64)
-	}
-
-	for incentiveId, incentive := range allIncentives {
-		// External incentivized pool
-		externalReward, externalPenalty := pool.RewardStateOf(deposit).CalculateExternalReward(
-			int64(lastCollectHeight),
-			int64(param.CurrentHeight),
-			incentive,
-		)
-
-		for i := range externalReward {
-			externalRewards[i][incentiveId] = externalReward[i]
-			externalPenalties[i][incentiveId] = externalPenalty[i]
-		}
-	}
-
-	rewards := make([]Reward, len(internalRewards))
-	for i := range internalRewards {
-		rewards[i] = Reward{
-			Internal:        internalRewards[i],
-			InternalPenalty: internalPenalties[i],
-			External:        externalRewards[i],
-			ExternalPenalty: externalPenalties[i],
-		}
-	}
-
-	return rewards
-}
+// Unstake and collect all rewards
+UnStakeToken(123)
 ```
 
-## TickCrossHook
+## Security
 
-`TickCrossHook` is triggered whenever a swap crosses an initialized tick. If any staked position uses that tick, the hook:
-
-1. Updates the `stakedLiquidity` and `globalRewardRatioAccumulation`.
-2. Sets the historical tick (for record-keeping and later calculations).
-3. Depending on whether the total staked liquidity is now nonzero or zero, it begins or ends any unclaimable period.
-4. Updates the `CurrentOutsideAccumulation` for the tick.
-
-The variable `globalRewardRatioAccumulation` holds the integral of $\(f(h) = 1 \div \text{TotalStakedLiquidity}(h)\)$, but only when $\text{TotalStakedLiquidity}(h)$ is nonzero. Meanwhile, `CurrentOutsideAccumulation` tracks the same integral but over intervals where the pool tick is considered “outside” (i.e., on the opposite side of the current tick). When a tick cross occurs, this “outside” condition may flip, so the hook adjusts `CurrentOutsideAccumulation` by subtracting it from the latest `globalRewardRatioAccumulation`.
-
-## Internal Reward
-
-Internal rewards are distributed across tiers and then among pools. Each pool’s internal reward is determined as:
-
-```math
-\text{poolReward}(\mathrm{pool}) 
-= \frac{\text{emission} \,\times\, \mathrm{TierRatio}\!\bigl(\mathrm{tier}(\mathrm{pool})\bigr)}
-       {\mathrm{Count}\!\bigl(\mathrm{tier}(\mathrm{pool})\bigr)}.
-```
-
-The TierRatio is defined piecewise:
-
-```math
-\mathrm{TierRatio}(t) \;=\;
-\begin{cases}
-[1,\,0,\,0]_{\,t-1}, 
-& \text{if } \mathrm{Count}(2) = 0 \;\land\; \mathrm{Count}(3) = 0, \\[8pt]
-[0.8,\,0,\,0.2]_{\,t-1}, 
-& \text{if } \mathrm{Count}(2) = 0, \\[8pt]
-[0.7,\,0.3,\,0]_{\,t-1}, 
-& \text{if } \mathrm{Count}(3) = 0, \\[8pt]
-[0.5,\,0.3,\,0.2]_{\,t-1}, 
-& \text{otherwise}.
-\end{cases}
-```
-
-The total emission used by the staker contract is:
-
-```math
-\text{emission} 
-= \mathrm{GNSEmissionPerSecond} 
-  \times
-  \Bigl(\frac{\mathrm{avgMsPerBlock}}{1000}\Bigr)
-  \times
-  \mathrm{StakerEmissionRatio}.
-```
-
-> **Note:**  
-> - There is always at least one tier-1 pool.  
-> - `GNSEmissionPerSecond` is a constant apart from any halving events (ignored here).  
-> - When `avgMsPerBlock` or `StakerEmissionRatio` changes, a callback is triggered to cache rewards up to the current block and then update the emission rate. This also happens when a pool has its tier changed.
-
-### How Internal Rewards Are Cached and Distributed
-
-- **PoolTier.cacheReward** recalculates all reward-related data from the last cache height to the current block.  
-  - **Halving blocks:** If there are halving events in this interval, the process “splits” the caching at each halving block, updates the staker emission accordingly, and continues.  
-  - **Unclaimable period:** If the pool had no in-range stakers (currently in unclaimable state), it updates the unclaimable accumulation using the old emission rate, then starts a new period immediately so the future accumulation could be done based on the new emission rate.
-  - The function finally updates the `GlobalRewardRatioAccumulation`, which is used later to compute each position’s rewards.
-
-- After caching is updated to the current block, **CalculateInternalReward** computes the total claimable internal rewards for a position. Consider the following formulation, which handles multiple warmup intervals:
-
-```math
-\begin{aligned}
-\mathrm{TotalRewardRatio}(s,e)
-&=
-  \sum_{i=0}^{m-1}
-    \Bigl[
-      \Delta\mathrm{Raw}\bigl(\alpha_i,\, \beta_i\bigr)
-    \Bigr]
-    \times
-    r_i,
-\\[6pt]
-\alpha_i
-&=
-  \max\!\bigl(s,\, H_{i-1}\bigr),
-\quad
-\beta_i
-=
-  \min\!\bigl(e,\, H_{i}\bigr),
-\\[6pt]
-\Delta\mathrm{Raw}(a, b)
-&=
-  \mathrm{CalcRaw}(b)
-  \;-\;
-  \mathrm{CalcRaw}(a),
-\\[6pt]
-\mathrm{CalcRaw}(h)
-&=
-  \begin{cases}
-    L(h) \;-\; U(h), 
-      & \text{if } \mathrm{tick}(h) < \ell, \\[4pt]
-    U(h) \;-\; L(h),
-      & \text{if } \mathrm{tick}(h) \ge u, \\[4pt]
-    G(h) \;-\; \bigl(L(h) + U(h)\bigr), 
-      & \text{otherwise}.
-  \end{cases}
-\end{aligned}
-```
-
-where
-- Each warmup interval $\(\bigl[H_{i-1},\,H_{i}\bigr]\)$ has a reward ratio $r_i$.
-- $\alpha_i = \max(s,\, H_{i-1})$ and $\beta_i = \min(e,\, H_{i})$ slice the interval to fit $[s,e)$. If $\alpha_i \ge \beta_i$, that segment contributes zero.
-- $\(L(h)\)$ = `tickLower.OutsideAccumulation(h)`
-- $\(U(h)\)$ = `tickUpper.OutsideAccumulation(h)`
-- $\(G(h)\)$ = `globalRewardRatioAccumulation(h)`
-- $\(\ell\)$ = `tickLower.id`, $\(u\)$ = `tickUpper.id`
-
-The final reward for a position is the sum of each applicable `TotalRewardRatio` multiplied by `poolReward` and `positionLiquidity`:
-```math
-\begin{aligned}
-\text{finalReward}
-&=
-  \text{TotalRewardRatio} 
-  \;\times\;
-  \text{poolReward}
-  \;\times\;
-  \text{positionLiquidity}
-\\[6pt]
-&=
-  \Bigl(
-    \int_{s}^{e}
-      \frac{1}{\mathrm{TotalStakedLiquidity}(h)}
-    \, dh
-  \Bigr)
-  \;\times\;
-  \text{poolReward}
-  \;\times\;
-  \text{positionLiquidity}
-\\[6pt]
-&=
-  \int_{s}^{e}
-    \frac{\text{poolReward}\;\times\;\text{positionLiquidity}}{\mathrm{TotalStakedLiquidity}(h)}
-  \, dh.
-\end{aligned}
-```
-
-## External Reward
-
-External rewards emit a constant **reward per block** for their duration. To calculate the external reward for a specific incentive, we reuse the same approach of computing a `TotalRewardRatio` (similar to the internal reward method), but without any tier-based pooling or variable `poolReward`. Instead, we multiply the `TotalRewardRatio` by `ExternalIncentive.rewardPerBlock` and `positionLiquidity` for the relevant blocks.
+- Positions locked during staking
+- External incentives require GNS deposit
+- Warmup periods prevent gaming
+- Unclaimed rewards properly redirected
+- Hook integration ensures accurate tracking

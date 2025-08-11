@@ -22,6 +22,8 @@ var (
 	feeAmountTickSpacing = avl.NewTree() // feeBps(uint32) -> tickSpacing(int32)
 	pools                = avl.NewTree() // poolPath -> *Pool
 
+	// slot0FeeProtocol represents the protocol fee percentage (0-10).
+	// This parameter can be modified through governance.
 	slot0FeeProtocol uint8 = 0
 )
 
@@ -32,11 +34,28 @@ func init() {
 	setFeeAmountTickSpacing(10000, 200) // 1%
 }
 
-// CreatePool creates a new concentrated liquidity pool with the given parameters.
-// It mints and distributes GNS tokens, validates the input parameters, and creates a new pool.
-// If GNOT is used as one of the tokens, it is automatically wrapped to WUGNOT.
-// The function ensures that token0Path is lexicographically smaller than token1Path.
-// ref: https://docs.gnoswap.io/contracts/pool/pool_manager.gno#createpool
+// CreatePool creates a new concentrated liquidity pool.
+//
+// Deploys new AMM pool for token pair with specified fee tier.
+// Charges 100 GNS creation fee to prevent spam.
+// Sets initial price and tick spacing based on fee tier.
+//
+// Parameters:
+//   - token0Path, token1Path: Token contract paths (ordered by address)
+//   - fee: Fee tier (100=0.01%, 500=0.05%, 3000=0.3%, 10000=1%)
+//   - sqrtPriceX96: Initial sqrt price in Q64.96 format
+//
+// Tick spacing by fee tier:
+//   - 0.01%: 1 tick
+//   - 0.05%: 10 ticks
+//   - 0.30%: 60 ticks
+//   - 1.00%: 200 ticks
+//
+// Requirements:
+//   - Tokens must be different
+//   - Fee tier must be supported
+//   - Pool must not already exist
+//   - Caller must have 100 GNS for creation fee
 func CreatePool(
 	cur realm,
 	token0Path string,
@@ -102,10 +121,12 @@ func CreatePool(
 	)
 }
 
-// SetFeeProtocol sets the fee protocol for all pools
-// Only governance contract can execute this function via proposal
-// Also it will be applied to new created pools
-// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#setfeeprotocol
+// SetFeeProtocol sets the protocol fee percentage for all pools.
+//
+// Parameters:
+//   - feeProtocol0, feeProtocol1: fee percentages (0-10)
+//
+// Only callable by admin or governance.
 func SetFeeProtocol(cur realm, feeProtocol0, feeProtocol1 uint8) {
 	halt.AssertIsNotHaltedPool()
 
@@ -119,33 +140,12 @@ func SetFeeProtocol(cur realm, feeProtocol0, feeProtocol1 uint8) {
 }
 
 // setFeeAmountTickSpacing associates a tick spacing value with a fee amount.
-// This is typically called during initialization to set up supported fee tiers.
-//
-// Parameters:
-//   - fee (uint32): The fee tier in basis points (e.g., 3000 for 0.3%)
-//   - tickSpacing (int32): The minimum tick spacing for this fee tier
-//
-// Note: Smaller tick spacing allows for more granular price points but increases
-// computational overhead. Higher fee tiers typically use larger tick spacing.
 func setFeeAmountTickSpacing(fee uint32, tickSpacing int32) {
 	feeStr := formatUint(fee)
 	feeAmountTickSpacing.Set(feeStr, tickSpacing)
 }
 
 // mustGetPool retrieves a pool instance by its path and ensures it exists.
-//
-// This function attempts to fetch the pool by poolPath.
-// If the pool does not exist, it panics with a detailed error message.
-//
-// Parameters:
-//   - poolPath: The unique identifier for the pool.
-//
-// Returns:
-//   - *Pool: A valid Pool instance.
-//
-// Panics:
-//   - If the pool does not exist, an error is thrown with the message
-//     "expected poolPath(<poolPath>) to exist".
 func mustGetPool(poolPath string) (pool *Pool) {
 	iPool, exist := pools.Get(poolPath)
 	if !exist {
@@ -168,22 +168,6 @@ func mustGetPoolBy(token0Path, token1Path string, fee uint32) *Pool {
 }
 
 // setFeeProtocolInternal updates the protocol fee for all pools and emits an event.
-//
-// This function is an internal utility used to set the protocol fee for token0 and token1 in a compact
-// format. The fee values are stored as a single `uint8` byte where:
-//   - Lower 4 bits represent the fee for token0 (feeProtocol0).
-//   - Upper 4 bits represent the fee for token1 (feeProtocol1).
-//
-// It also emits an event to log the changes, including the previous and new fee protocol values.
-//
-// Parameters:
-//   - feeProtocol0: uint8, protocol fee for token0 (must be 0 or between 4 and 10 inclusive).
-//   - feeProtocol1: uint8, protocol fee for token1 (must be 0 or between 4 and 10 inclusive).
-//   - eventName: string, the name of the event to emit (e.g., "SetFeeProtocol").
-//
-// Notes:
-//   - This function is called by higher-level functions like `SetFeeProtocol` or `SetFeeProtocol`.
-//   - It does not validate caller permissions; validation must be performed by the calling function.
 func setFeeProtocolInternal(feeProtocol0, feeProtocol1 uint8, eventName string) error {
 	oldFee := slot0FeeProtocol
 	newFee, err := setFeeProtocol(feeProtocol0, feeProtocol1)

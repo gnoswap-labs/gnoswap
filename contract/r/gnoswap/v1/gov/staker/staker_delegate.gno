@@ -12,33 +12,30 @@ import (
 	"gno.land/r/gnoswap/v1/gov/xgns"
 )
 
-// Delegate delegates GNS tokens to a specified address.
-// This function transfers GNS tokens from the caller to the staker contract,
-// mints corresponding xGNS tokens, and starts earning rewards.
+// Delegate delegates GNS tokens to an address.
 //
-// The delegation process involves:
-// 1. Validating the delegatee address
-// 2. Minting and distributing GNS rewards
-// 3. Creating a delegation record
-// 4. Transferring GNS tokens to the contract
-// 5. Minting xGNS tokens to the delegator
-// 6. Registering referrer if applicable
+// Converts GNS to xGNS and assigns voting power.
+// Primary mechanism for participating in governance.
+// Can delegate to self or any other address.
 //
 // Parameters:
-//   - cur: realm context for cross-realm calls
-//   - to: address to delegate tokens to
-//   - amount: amount of GNS tokens to delegate
-//   - referrer: referrer address for referral rewards
+//   - to: Address to receive voting power (can be self)
+//   - amount: Amount of GNS to stake and delegate
+//   - referrer: Optional referral address for tracking
 //
-// Returns:
-//   - int64: amount of tokens delegated
+// Process:
+//   1. Transfers GNS from caller
+//   2. Mints equivalent xGNS (1:1 ratio)
+//   3. Assigns voting power to target address
+//   4. Creates delegation snapshot for voting
 //
-// Panics:
-//   - if delegatee address is invalid
-//   - if delegation amount is invalid
-//   - if GNS transfer fails
+// Requirements:
+//   - Minimum 1 GNS delegation
+//   - Valid target address
+//   - Sufficient GNS balance
+//   - Approval for GNS transfer
 //
-// Reference: https://docs.gnoswap.io/contracts/governance/staker.gno#delegate
+// Returns delegated amount.
 func Delegate(
 	cur realm,
 	to std.Address,
@@ -91,30 +88,28 @@ func Delegate(
 }
 
 // Undelegate undelegates xGNS from the existing delegate.
-// This function initiates the undelegation process with a lockup period,
-// during which the tokens cannot be withdrawn. After the lockup period,
-// tokens can be collected using CollectUndelegatedGns.
 //
-// The undelegation process involves:
-// 1. Validating the delegatee address
-// 2. Minting and distributing GNS rewards
-// 3. Processing the undelegation with lockup period
-// 4. Creating withdrawal records for tracking
+// Initiates withdrawal of staked GNS with lockup period.
+// Voting power removed immediately, tokens locked for 7 days.
+// Prevents governance attacks through time delay.
 //
 // Parameters:
-//   - cur: realm context for cross-realm calls
-//   - from: address to undelegate tokens from
-//   - amount: amount of xGNS tokens to undelegate
+//   - from: Address currently delegated to
+//   - amount: Amount of xGNS to undelegate
 //
-// Returns:
-//   - int64: amount of tokens undelegated
+// Process:
+//   1. Removes voting power immediately
+//   2. Burns xGNS tokens
+//   3. Creates withdrawal request with timestamp
+//   4. Locks GNS for 7-day cooldown period
 //
-// Panics:
-//   - if delegatee address is invalid
-//   - if undelegation amount is invalid
-//   - if insufficient delegated amount
+// Requirements:
+//   - Must have delegated to target address
+//   - Sufficient delegated amount
+//   - Cannot undelegate during active votes
 //
-// Reference: https://docs.gnoswap.io/contracts/governance/staker.gno#undelegate
+// After 7 days, use Collect() to claim GNS.
+// Returns undelegated amount.
 func Undelegate(
 	cur realm,
 	from std.Address,
@@ -157,30 +152,30 @@ func Undelegate(
 }
 
 // Redelegate redelegates xGNS from existing delegate to another.
-// This function allows changing delegation target without going through
-// the undelegation lockup period. The redelegation is processed immediately.
 //
-// The redelegation process involves:
-// 1. Validating both delegatee addresses
-// 2. Minting and distributing GNS rewards
-// 3. Undelegating from the current delegatee without lockup
-// 4. Immediately delegating to the new delegatee
+// Atomic operation to change delegation target.
+// Maintains voting power continuity without unstaking.
+// Useful for vote delegation services and dao coordination.
 //
 // Parameters:
-//   - cur: realm context for cross-realm calls
-//   - delegatee: current delegatee address to move tokens from
-//   - newDelegatee: new delegatee address to move tokens to
-//   - amount: amount of xGNS tokens to redelegate
+//   - delegatee: Current address delegated to
+//   - newDelegatee: New address to delegate to
+//   - amount: Amount of xGNS to redelegate
 //
-// Returns:
-//   - int64: amount of tokens redelegated
+// Process:
+//   1. Validates current delegation exists
+//   2. Removes voting power from old delegatee
+//   3. Assigns voting power to new delegatee
+//   4. Updates delegation snapshots
 //
-// Panics:
-//   - if either delegatee address is invalid
-//   - if redelegation amount is invalid
-//   - if insufficient delegated amount
+// Requirements:
+//   - Must have active delegation to current delegatee
+//   - Both addresses must be valid
+//   - Amount must not exceed current delegation
+//   - Cannot redelegate to same address
 //
-// Reference: https://docs.gnoswap.io/contracts/governance/staker.gno#redelegate
+// No lockup period - instant redelegation.
+// Returns redelegated amount.
 func Redelegate(
 	cur realm,
 	delegatee,
@@ -242,28 +237,9 @@ func Redelegate(
 	return amount
 }
 
-// CollectUndelegatedGns collects the amount of the undelegated GNS.
-// This function allows users to collect GNS tokens that have completed
-// their undelegation lockup period. It burns xGNS and returns GNS tokens.
-//
-// The collection process involves:
-// 1. Checking system halt status
-// 2. Minting and distributing GNS rewards
-// 3. Collecting available undelegated amounts
-// 4. Burning xGNS tokens
-// 5. Transferring GNS tokens to the user
-//
-// Parameters:
-//   - cur: realm context for cross-realm calls
-//
-// Returns:
-//   - int64: amount of GNS tokens collected
-//
-// Panics:
-//   - if system is halted for withdrawals
-//   - if no undelegated tokens are available for collection
-//
-// Reference: https://docs.gnoswap.io/contracts/governance/staker.gno#collectundelegatedgns
+// CollectUndelegatedGns collects undelegated GNS tokens.
+// Allows users to collect GNS tokens that completed undelegation lockup period.
+// Burns xGNS and returns GNS tokens.
 func CollectUndelegatedGns(cur realm) int64 {
 	halt.AssertIsNotHaltedGovStaker()
 	halt.AssertIsNotHaltedWithdraw()
@@ -303,20 +279,8 @@ func CollectUndelegatedGns(cur realm) int64 {
 	return collectedAmount
 }
 
-// delegate is the internal function that processes delegation operations.
-// This function validates the delegation amount, creates delegation records,
-// and updates reward tracking systems.
-//
-// Parameters:
-//   - from: delegator's address
-//   - to: delegatee's address
-//   - amount: amount to delegate
-//   - currentTime: current timestamp
-//   - currentTimestamp: current timestamp
-//
-// Returns:
-//   - *Delegation: created delegation instance
-//   - error: nil on success, error if delegation fails
+// delegate processes delegation operations.
+// Validates delegation amount, creates delegation records, and updates reward tracking.
 func delegate(
 	from std.Address,
 	to std.Address,
@@ -346,20 +310,8 @@ func delegate(
 	return delegation, nil
 }
 
-// unDelegate is the internal function that processes undelegation operations with lockup.
-// This function validates the undelegation amount, processes withdrawals,
-// and updates reward tracking systems.
-//
-// Parameters:
-//   - delegator: delegator's address
-//   - delegatee: delegatee's address
-//   - amount: amount to undelegate
-//   - currentTime: current timestamp
-//   - currentTimestamp: current timestamp
-//
-// Returns:
-//   - int64: amount undelegated
-//   - error: nil on success, error if undelegation fails
+// unDelegate processes undelegation operations with lockup.
+// Validates undelegation amount, processes withdrawals, and updates reward tracking.
 func unDelegate(
 	delegator,
 	delegatee std.Address,
@@ -416,18 +368,8 @@ func unDelegate(
 	return amount, nil
 }
 
-// unDelegateWithoutLockup is the internal function that processes undelegation without lockup.
-// This function is used for redelegation where tokens are immediately available.
-//
-// Parameters:
-//   - delegator: delegator's address
-//   - delegatee: delegatee's address
-//   - amount: amount to undelegate
-//   - currentTime: current timestamp
-//
-// Returns:
-//   - int64: amount undelegated
-//   - error: nil on success, error if undelegation fails
+// unDelegateWithoutLockup processes undelegation without lockup.
+// Used for redelegation where tokens are immediately available.
 func unDelegateWithoutLockup(
 	delegator,
 	delegatee std.Address,
@@ -468,7 +410,7 @@ func unDelegateWithoutLockup(
 	}
 
 	totalDelegatedAmount -= amount
-	
+
 	if totalDelegatedAmount < 0 {
 		totalDelegatedAmount = 0
 	}
@@ -476,16 +418,8 @@ func unDelegateWithoutLockup(
 	return amount, nil
 }
 
-// collectDelegations is the internal function that processes collection of undelegated tokens.
-// This function iterates through user delegations and collects any available amounts.
-//
-// Parameters:
-//   - user: user's address
-//   - currentTime: current timestamp
-//
-// Returns:
-//   - map[int64]int64: delegationID -> amount collected
-//   - error: nil on success, error if collection fails
+// collectDelegations processes collection of undelegated tokens.
+// Iterates through user delegations and collects available amounts.
 func collectDelegations(user std.Address, currentTime int64) (int64, error) {
 	collectedAmount := int64(0)
 
@@ -518,15 +452,8 @@ func collectDelegations(user std.Address, currentTime int64) (int64, error) {
 	return collectedAmount, nil
 }
 
-// registerReferrer registers or validates a referrer for the delegation.
-// This function handles referral system integration for delegation operations.
-//
-// Parameters:
-//   - caller: address of the user making the delegation
-//   - referrer: referrer identifier
-//
-// Returns:
-//   - string: actual referrer used (may differ from input if validation fails)
+// registerReferrer registers or validates referrer for delegation.
+// Handles referral system integration for delegation operations.
 func registerReferrer(caller std.Address, referrer string) string {
 	success := referral.TryRegister(cross, caller, referrer)
 	actualReferrer := referrer

@@ -27,10 +27,32 @@ func NewExactInSwapOperation(pp ExactInParams) *ExactInSwapOperation {
 	}
 }
 
-// ExactInSwapRoute is a function that performs an exact-in swap operation.
-// exact-in swap means that the user wants to swap an exact amount of input tokens for output tokens.
-func ExactInSwapRoute(
-	cur realm,
+// ExactInSwapRoute swaps an exact amount of input tokens for output tokens.
+//
+// Executes multi-hop swaps through specified route.
+// Supports splitting across multiple paths for price optimization.
+// Applies slippage protection via minimum output amount.
+//
+// Parameters:
+//   - inputToken, outputToken: Token contract paths
+//   - amountIn: Exact input amount to swap
+//   - routeArr: Swap route "TOKEN0:TOKEN1:FEE,TOKEN1:TOKEN2:FEE" (max 7 hops)
+//   - quoteArr: Split percentages "70,30" (must sum to 100)
+//   - amountOutMin: Minimum acceptable output (slippage protection)
+//   - deadline: Unix timestamp for expiration
+//   - referrer: Optional referral address
+//
+// Route format:
+//   - Single: "WETH:USDC:3000"
+//   - Multi-hop: "WETH:GNS:3000,GNS:USDC:500"
+//   - Multi-path: Use multiple routes with quotes
+//
+// Returns:
+//   - amountIn: Actual input consumed
+//   - amountOut: Actual output received
+//
+// Reverts if output < amountOutMin or deadline passed.
+func ExactInSwapRoute(cur realm,
 	inputToken string,
 	outputToken string,
 	amountIn string,
@@ -100,6 +122,7 @@ func ExactInSwapRoute(
 	return inputAmount, outputAmount
 }
 
+// Validate validates the exact-in swap operation parameters.
 func (op *ExactInSwapOperation) Validate() error {
 	amountIn := i256.MustFromDecimal(op.params.AmountIn)
 	if amountIn.IsZero() || amountIn.IsNeg() {
@@ -121,6 +144,7 @@ func (op *ExactInSwapOperation) Validate() error {
 	return nil
 }
 
+// Process executes the exact-in swap operation.
 func (op *ExactInSwapOperation) Process() (*SwapResult, error) {
 	if err := op.handleNativeTokenWrapping(); err != nil {
 		return nil, err
@@ -141,6 +165,7 @@ func (op *ExactInSwapOperation) Process() (*SwapResult, error) {
 	}, nil
 }
 
+// handleNativeTokenWrapping handles the wrapping of native tokens if needed.
 func (op *ExactInSwapOperation) handleNativeTokenWrapping() error {
 	return op.baseSwapOperation.handleNativeTokenWrapping(
 		op.params.InputToken,

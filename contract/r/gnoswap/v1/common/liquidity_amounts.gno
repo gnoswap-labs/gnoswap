@@ -24,8 +24,7 @@ var (
 	zero = u256.Zero()
 )
 
-// toAscendingOrder checks if the first value is greater than
-// the second then swaps two values.
+// toAscendingOrder returns the two values in ascending order.
 func toAscendingOrder(a, b *u256.Uint) (*u256.Uint, *u256.Uint) {
 	if a.Gt(b) {
 		return b, a
@@ -34,24 +33,20 @@ func toAscendingOrder(a, b *u256.Uint) (*u256.Uint, *u256.Uint) {
 	return a, b
 }
 
-// toUint128 ensures a *u256.Uint value fits within the uint128 range.
+// toUint128 ensures the value fits within uint128 range.
 //
-// This function validates that the given `value` is properly initialized (not nil) and checks whether
-// it exceeds the maximum value of uint128. If the value exceeds the uint128 range,
-// it applies a masking operation to truncate the value to fit within the uint128 limit.
+// Validates and constrains a 256-bit unsigned integer to 128-bit range.
+// Used for liquidity calculations where amounts must fit in compact storage.
 //
 // Parameters:
-//   - value: *u256.Uint, the value to be checked and possibly truncated.
+//   - value: 256-bit unsigned integer to constrain
 //
 // Returns:
-//   - *u256.Uint: A value guaranteed to fit within the uint128 range.
+//   - Masked value if exceeds MAX_UINT128 (2^128 - 1)
+//   - Original value if within range
 //
-// Notes:
-//   - The function first checks if the value is not nil to avoid potential runtime errors.
-//   - The mask ensures that only the lower 128 bits of the value are retained.
-//   - If the input value is already within the uint128 range, it is returned unchanged.
-//   - If masking is required, a new instance is returned without modifying the input.
-//   - MAX_UINT128 is a constant representing `2^128 - 1`.
+// Panics if value is nil.
+// Critical for preventing overflow in liquidity math.
 func toUint128(value *u256.Uint) *u256.Uint {
 	if value == nil {
 		panic(newErrorWithDetail(

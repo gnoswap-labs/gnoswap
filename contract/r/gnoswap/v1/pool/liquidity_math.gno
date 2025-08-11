@@ -10,23 +10,7 @@ import (
 // liquidityMathAddDelta calculates the new liquidity by applying the delta liquidity to the current liquidity.
 // If delta liquidity is negative, it subtracts the absolute value of delta liquidity from the current liquidity.
 // If delta liquidity is positive, it adds the absolute value of delta liquidity to the current liquidity.
-//
-// Parameters:
-// - x: The current liquidity as a uint256 value.
-// - y: The delta liquidity as a signed int256 value.
-//
-// Returns:
-// - The new liquidity as a uint256 value.
-//
-// Notes:
-// - If `x` or `y` is nil, the function panics with an appropriate error message.
-// - If `y` is negative, its absolute value is subtracted from `x`.
-//   - The result must be less than `x`. Otherwise, the function panics to prevent underflow.
-//
-// - If `y` is positive, it is added to `x`.
-//   - The result must be greater than or equal to `x`. Otherwise, the function panics to prevent overflow.
-//
-// - The function ensures correctness by validating the results of the arithmetic operations.
+// Returns the new liquidity as a uint256 value.
 func liquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 	if x == nil || y == nil {
 		panic(newErrorWithDetail(

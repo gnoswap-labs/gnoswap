@@ -13,7 +13,12 @@ import (
 )
 
 var (
-	depositGnsAmount    = int64(1_000_000_000) // 1_000 GNS
+	// depositGnsAmount is the amount of GNS required to create an external incentive.
+	// This parameter can be modified through governance.
+	depositGnsAmount = int64(1_000_000_000) // 1_000 GNS
+
+	// minimumRewardAmount is the default minimum reward amount for external incentives.
+	// This parameter can be modified through governance.
 	minimumRewardAmount = int64(1_000_000_000) // Default 1000 (ugnot equivalent for GNS)
 )
 
@@ -22,30 +27,16 @@ var (
 var tokenSpecificMinimumRewards = avl.NewTree()
 
 // GetDepositGnsAmount returns the current deposit amount in GNS.
-//
-// Returns:
-// - int64: The deposit amount in GNS.
 func GetDepositGnsAmount() int64 {
 	return depositGnsAmount
 }
 
 // GetMinimumRewardAmount returns the default minimum reward amount required for external incentives.
-// This value is used if no specific minimum is set for a given token.
-//
-// Returns:
-// - int64: The default minimum reward amount.
 func GetMinimumRewardAmount() int64 {
 	return minimumRewardAmount
 }
 
-// GetTokenMinimumRewardAmount returns the specific minimum reward amount for a given token path.
-// It first checks the token-specific map and falls back to the default if not found.
-//
-// Parameters:
-// - tokenPath (string): The path of the token to check.
-//
-// Returns:
-// - int64: The applicable minimum reward amount for the token.
+// GetMinimumRewardAmountForToken returns the minimum reward amount for a specific token.
 func GetMinimumRewardAmountForToken(tokenPath string) int64 {
 	amountI, found := tokenSpecificMinimumRewards.Get(tokenPath)
 	if found {
@@ -55,16 +46,7 @@ func GetMinimumRewardAmountForToken(tokenPath string) int64 {
 	return GetMinimumRewardAmount()
 }
 
-// GetSpecificTokenMinimumRewardAmount returns the explicitly set minimum reward amount for a token,
-// and a boolean indicating if it was found in the specific map.
-// This is useful for querying the set value without the fallback.
-//
-// Parameters:
-// - tokenPath (string): The path of the token to query.
-//
-// Returns:
-// - int64: The specific minimum reward amount set for the token.
-// - bool: True if a specific minimum was found, false otherwise.
+// GetSpecificTokenMinimumRewardAmount returns the explicitly set minimum reward amount for a token.
 func GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool) {
 	amountI, found := tokenSpecificMinimumRewards.Get(tokenPath)
 	if !found {
@@ -77,9 +59,8 @@ func GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool) {
 	return v, true
 }
 
-// SetDepositGnsAmount modifies the deposit gns amount
-// Only governance contract can execute this function via proposal
-// ref: https://docs.gnoswap.io/contracts/staker/external_deposit_fee.gno
+// SetDepositGnsAmount sets the GNS deposit amount required for creating external incentives.
+// Only admin or governance can call this function.
 func SetDepositGnsAmount(cur realm, amount int64) {
 	halt.AssertIsNotHaltedStaker()
 
@@ -101,8 +82,8 @@ func SetDepositGnsAmount(cur realm, amount int64) {
 	)
 }
 
-// SetMinimumRewardAmount modifies the *default* minimum reward amount.
-// Only governance contract can execute this function via proposal.
+// SetMinimumRewardAmount sets the default minimum reward amount for external incentives.
+// Only admin or governance can call this function.
 func SetMinimumRewardAmount(cur realm, amount int64) {
 	halt.AssertIsNotHaltedStaker()
 
@@ -124,13 +105,8 @@ func SetMinimumRewardAmount(cur realm, amount int64) {
 	)
 }
 
-// SetTokenMinimumRewardAmount modifies the minimum reward amount for a specific token.
-// Only governance contract can execute this function via proposal.
-// It expects the parameter `paramsStr` to be formatted as "tokenPath:amount".
-//
-// Parameters:
-//   - paramsStr (string): A string containing the token path and minimum amount, separated by a colon.
-//     Example: "gno.land/r/demo/wugnot:1500000000"
+// SetTokenMinimumRewardAmount sets the minimum reward amount for a specific token.
+// Only admin or governance can call this function.
 func SetTokenMinimumRewardAmount(cur realm, paramsStr string) {
 	halt.AssertIsNotHaltedStaker()
 
@@ -176,18 +152,22 @@ func SetTokenMinimumRewardAmount(cur realm, paramsStr string) {
 	)
 }
 
+// setDepositGnsAmount internally updates the deposit GNS amount.
 func setDepositGnsAmount(amount int64) {
 	depositGnsAmount = amount
 }
 
+// setMinimumRewardAmount internally updates the minimum reward amount.
 func setMinimumRewardAmount(amount int64) {
 	minimumRewardAmount = amount
 }
 
+// getDepositGnsAmount internally retrieves the deposit GNS amount.
 func getDepositGnsAmount() int64 {
 	return depositGnsAmount
 }
 
+// getMinimumRewardAmount internally retrieves the minimum reward amount.
 func getMinimumRewardAmount() int64 {
 	return minimumRewardAmount
 }

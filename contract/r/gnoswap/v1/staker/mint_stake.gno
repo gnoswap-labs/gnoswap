@@ -10,9 +10,31 @@ import (
 	pn "gno.land/r/gnoswap/v1/position"
 )
 
-// MintAndStake mints LP tokens and stakes them in a single transaction.
-// Returns positionId, liquidity, amount0, amount1, poolPath
-// ref: https://docs.gnoswap.io/contracts/staker/mint_stake.gno#mintandstake
+// MintAndStake mints a new liquidity position and immediately stakes it.
+//
+// Atomic operation combining position creation and staking.
+// Saves gas by avoiding separate mint and stake transactions.
+// Position NFT transferred directly to staker contract.
+//
+// Parameters:
+//   - token0, token1: Token contract paths
+//   - fee: Pool fee tier (500=0.05%, 3000=0.3%, 10000=1%)
+//   - tickLower, tickUpper: Price range boundaries
+//   - amount0Desired, amount1Desired: Target token amounts
+//   - amount0Min, amount1Min: Minimum amounts (slippage protection)
+//   - deadline: Transaction expiration timestamp
+//   - referrer: Optional referral address
+//
+// Native token support:
+//   - Accepts GNOT via std.OriginSend()
+//   - Auto-wraps to WUGNOT for liquidity
+//   - Minimum 1 GNOT required
+//
+// Returns:
+//   - positionId: New NFT token ID
+//   - liquidity: Amount of liquidity minted
+//   - amount0, amount1: Actual tokens deposited
+//   - poolPath: Pool identifier
 func MintAndStake(
 	cur realm,
 	token0 string,

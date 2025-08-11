@@ -1,4 +1,3 @@
-// This package provides a 256-bit signed integer type, Int, and associated functions.
 package int256
 
 import (
@@ -15,6 +14,9 @@ var (
 
 var one = uint256.NewUint(1)
 
+// Int represents a 256-bit signed integer.
+// It uses a sign-magnitude representation with abs storing the absolute value
+// and neg indicating whether the number is negative.
 type Int struct {
 	abs *uint256.Uint
 	neg bool
@@ -30,11 +32,8 @@ func One() *Int {
 	return NewInt(1)
 }
 
-// Sign returns:
-//
-//	-1 if x <  0
-//	 0 if x == 0
-//	+1 if x >  0
+// Sign returns the sign of x.
+// It returns -1 if x < 0, 0 if x == 0, and +1 if x > 0.
 func (z *Int) Sign() int {
 	z.initiateAbs()
 
@@ -59,8 +58,7 @@ func NewInt(x int64) *Int {
 	return New().SetInt64(x)
 }
 
-// FromDecimal returns a new Int from a decimal string.
-// Returns a new Int and an error if the string is not a valid decimal.
+// FromDecimal returns a new Int from a decimal string and an error if the string is not valid.
 func FromDecimal(s string) (*Int, error) {
 	return new(Int).SetString(s)
 }
@@ -75,16 +73,10 @@ func MustFromDecimal(s string) *Int {
 	return z
 }
 
-// SetString sets s to the value of z and returns z and a boolean indicating success.
-//
-// Note: Since we only need to check for sign characters ('+', '-'), we use a bit masking technique
-// instead of [strings.IndexAny]. Although the environment is not exactly the same as gno,
-// this approach was adopted because it showed overwhelmingly better performance compared to
-// other implementations when benchmarked in go (with gcflags set to "-N -l").
-//
-// Reference: "Bit Twiddling Hacks" by Sean Eron Anderson
-// (http://graphics.stanford.edu/~seander/bithacks.html)
-// "Determine if a word has a byte equal to n" technique is applied.
+// SetString sets z to the value of s and returns z and an error.
+// It uses a bit masking technique for efficient sign character detection,
+// based on "Bit Twiddling Hacks" by Sean Eron Anderson.
+// This approach provides significantly better performance than string scanning methods.
 func (z *Int) SetString(s string) (*Int, error) {
 	if len(s) == 0 {
 		return nil, errEmptyString
@@ -154,9 +146,8 @@ func (z *Int) SetString(s string) (*Int, error) {
 	return &Int{abs, neg}, nil
 }
 
-// FromUint256 is a convenience-constructor from uint256.Uint.
-// Returns a new Int and whether overflow occurred.
-// OBS: If u is `nil`, this method returns `nil, false`
+// FromUint256 creates a new Int from a uint256.Uint.
+// It returns nil if the input is nil.
 func FromUint256(x *uint256.Uint) *Int {
 	if x == nil {
 		return nil
@@ -167,8 +158,8 @@ func FromUint256(x *uint256.Uint) *Int {
 	return z
 }
 
-// OBS, differs from original mempooler int256
-// NilToZero sets z to 0 and return it if it's nil, otherwise it returns z
+// NilToZero returns z if it's non-nil, otherwise returns a new Int set to 0.
+// This differs from the original mempooler int256 implementation.
 func (z *Int) NilToZero() *Int {
 	if z == nil {
 		return NewInt(0)
@@ -176,8 +167,10 @@ func (z *Int) NilToZero() *Int {
 	return z
 }
 
-// initiateAbs sets default value for `z` or `z.abs` value if is nil
-// OBS: differs from mempooler int256. It checks not only `z.abs` but also `z`
+// initiateAbs ensures z and z.abs are initialized.
+// If z is nil, it returns a new Int set to 0.
+// If z.abs is nil, it initializes it to a new uint256.Uint.
+// This differs from mempooler int256 by also checking if z itself is nil.
 func (z *Int) initiateAbs() *Int {
 	if z == nil {
 		return NewInt(0)

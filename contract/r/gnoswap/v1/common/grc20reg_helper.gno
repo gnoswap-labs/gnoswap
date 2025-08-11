@@ -12,33 +12,17 @@ import (
 
 var re = regexp.MustCompile(`\[gno\.land/r/[^\]]+\]`)
 
-// GetToken returns a grc20.Token instance
-// if token is not registered, it will panic
-// token instance supports following methods:
-// - GetName
-// - GetSymbol
-// - GetDecimals
-// - TotalSupply
-// - KnownAccounts
-// - BalanceOf
-// - Allowance
-// - RenderHome
+// GetToken returns a grc20.Token instance for the specified path, panicking if not registered.
 func GetToken(path string) *grc20.Token {
 	return grc20reg.MustGet(path)
 }
 
-// GetTokenTeller returns a grc20.Teller instance
-// if token is not registered, it will panic
-// teller instance supports following methods:
-// - Transfer
-// - Approve
-// - TransferFrom
+// GetTokenTeller returns a grc20.Teller instance for the specified path, panicking if not registered.
 func GetTokenTeller(path string) grc20.Teller {
 	return GetToken(path).CallerTeller()
 }
 
-// IsRegistered returns nil if token is registered to grc20reg
-// otherwise, it returns an error
+// IsRegistered checks if a token is registered in grc20reg, returning nil if registered or error if not.
 func IsRegistered(path string) error {
 	getter := grc20reg.Get(path)
 	if getter == nil {
@@ -47,8 +31,7 @@ func IsRegistered(path string) error {
 	return nil
 }
 
-// MustRegistered is a helper function to check if token is registered to grc20reg
-// if token is not registered, it will panic
+// MustRegistered checks if all provided tokens are registered, panicking if any is not registered.
 func MustRegistered(paths ...string) {
 	for _, path := range paths {
 		if err := IsRegistered(path); err != nil {
@@ -60,8 +43,7 @@ func MustRegistered(paths ...string) {
 	}
 }
 
-// extractTokenPathsFromRender extracts the token paths from the rendered grc20reg realm.
-// It returns the list of token paths.
+// extractTokenPathsFromRender extracts token paths from rendered grc20reg output.
 func extractTokenPathsFromRender(render string) []string {
 	matches := re.FindAllString(render, -1)
 
@@ -73,35 +55,32 @@ func extractTokenPathsFromRender(render string) []string {
 	return tokenPaths
 }
 
-// TotalSupply returns the total supply of the token
+// TotalSupply returns the total supply of the specified token.
 func TotalSupply(path string) int64 {
 	return GetToken(path).TotalSupply()
 }
 
-// BalanceOf returns the balance of the token for the given address
+// BalanceOf returns the token balance for the specified address.
 func BalanceOf(path string, addr std.Address) int64 {
 	return GetToken(path).BalanceOf(addr)
 }
 
-// Allowance returns the allowance of the token for the given owner and spender
+// Allowance returns the token allowance from owner to spender.
 func Allowance(path string, owner, spender std.Address) int64 {
 	return GetToken(path).Allowance(owner, spender)
 }
 
-// Transfer transfers tokens to the given address.
-// It is a wrapper of grc20.Teller.Transfer.
+// Transfer transfers tokens to the specified address using grc20.Teller.Transfer.
 func Transfer(cur realm, path string, to std.Address, amount int64) error {
 	return GetTokenTeller(path).Transfer(to, amount)
 }
 
-// TransferFrom transfers tokens from the given address to the given address.
-// It is a wrapper of grc20.Teller.TransferFrom.
+// TransferFrom transfers tokens from one address to another using grc20.Teller.TransferFrom.
 func TransferFrom(cur realm, path string, from, to std.Address, amount int64) error {
 	return GetTokenTeller(path).TransferFrom(from, to, amount)
 }
 
-// Approve approves the given amount of tokens for the given spender.
-// It is a wrapper of grc20.Teller.Approve.
+// Approve approves tokens for the specified spender using grc20.Teller.Approve.
 func Approve(cur realm, path string, spender std.Address, amount int64) error {
 	return GetTokenTeller(path).Approve(spender, amount)
 }

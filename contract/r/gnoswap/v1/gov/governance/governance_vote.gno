@@ -8,25 +8,29 @@ import (
 	"gno.land/r/gnoswap/halt"
 )
 
-// Vote allows a user to vote on a given proposal.
-// The user's voting weight is determined by their accumulated delegated stake at proposal creation time.
-// Each user can only vote once per proposal, and votes cannot be changed after submission.
+// Vote casts a vote on a proposal.
+//
+// Records on-chain vote with weight based on delegated xGNS.
+// Uses 24-hour average voting power to prevent manipulation.
+// Votes are final and cannot be changed.
 //
 // Parameters:
-//   - cur: realm context for cross-realm calls
-//   - proposalID: unique identifier of the proposal to vote on
-//   - yes: true for "yes" vote, false for "no" vote
+//   - proposalID: ID of the proposal to vote on
+//   - yes: true for yes vote, false for no vote
 //
-// Returns:
-//   - string: the voting weight used for this vote as formatted string
+// Vote Weight Calculation:
+//   - Based on delegated xGNS amount
+//   - 24-hour average before proposal creation
+//   - Prevents flash loan attacks
+//   - Includes both self-stake and delegations received
 //
-// Panics:
-//   - if system is halted
-//   - if user has already voted on this proposal
-//   - if voting period has ended or not started
-//   - if user has no voting weight for this proposal
+// Requirements:
+//   - Proposal must be in voting period
+//   - Voter must have xGNS delegated
+//   - Cannot vote twice on same proposal
+//   - Voting period typically 7 days
 //
-// ref: https://docs.gnoswap.io/contracts/governance/vote.gno#vote
+// Returns voting weight used as string.
 func Vote(cur realm, proposalID int64, yes bool) string {
 	halt.AssertIsNotHaltedGovernance()
 
@@ -69,21 +73,7 @@ func Vote(cur realm, proposalID int64, yes bool) string {
 	return formatInt(userVote.VotedWeight())
 }
 
-// vote handles the core voting logic.
-// This internal function validates voting conditions, records the vote, and updates proposal tallies.
-//
-// Parameters:
-//   - proposalID: unique identifier of the proposal
-//   - voterAddress: address of the voter
-//   - votedYes: true for "yes" vote, false for "no" vote
-//   - votedHeight: blockchain height when vote is cast
-//   - votedAt: timestamp when vote is cast
-//
-// Returns:
-//   - *VotingInfo: voting information for the user
-//   - int64: total "yes" vote weight after this vote
-//   - int64: total "no" vote weight after this vote
-//   - error: voting error if any
+// vote handles core voting logic.
 func vote(
 	proposalID int64,
 	voterAddress std.Address,

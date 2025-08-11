@@ -2,6 +2,8 @@ package access
 
 import (
 	"std"
+
+	"gno.land/p/demo/ufmt"
 )
 
 var roleAddresses map[string]std.Address
@@ -10,18 +12,14 @@ func init() {
 	roleAddresses = make(map[string]std.Address)
 }
 
-// GetAddress retrieves the address associated with a given role
-// Returns the address and a boolean indicating if the role exists
-// Used to verify role assignments and permissions
+// GetAddress returns the address for a role and whether it exists.
 func GetAddress(role string) (std.Address, bool) {
 	addr, ok := roleAddresses[role]
 
 	return addr, ok
 }
 
-// GetRoleAddresses retrieves all role addresses
-// Returns a map of role names to their corresponding addresses
-// Used to get a complete view of all role-address mappings
+// GetRoleAddresses returns a copy of all role addresses.
 func GetRoleAddresses() map[string]std.Address {
 	addresses := make(map[string]std.Address)
 
@@ -32,19 +30,33 @@ func GetRoleAddresses() map[string]std.Address {
 	return addresses
 }
 
-// SetRoleAddresses updates the role addresses
-// Takes a map of role names to their corresponding addresses
-// Used to set the role addresses in the access package
+// SetRoleAddresses updates all role addresses.
+//
+// Parameters:
+//   - newRoleAddresses: map of role names to addresses
+//
+// Only callable by RBAC contract.
 func SetRoleAddresses(cur realm, newRoleAddresses map[string]std.Address) {
 	caller := std.PreviousRealm().Address()
 	assertIsRBAC(caller)
 
+	// Validate all addresses before applying updates
+	for role, addr := range newRoleAddresses {
+		if !addr.IsValid() || addr == std.Address("") {
+			panic(ufmt.Errorf("invalid address for role %s: %s", role, addr))
+		}
+	}
+
 	roleAddresses = newRoleAddresses
 }
 
-// IsAuthorized checks if the given caller address has the specified role
-// Returns true if the caller matches the role's authorized address
-// Returns false if the role doesn't exist or addresses don't match
+// IsAuthorized checks if caller has the specified role.
+//
+// Parameters:
+//   - role: role name to check
+//   - caller: address to verify
+//
+// Returns true if authorized, false otherwise.
 func IsAuthorized(role string, caller std.Address) bool {
 	roleAddr, ok := roleAddresses[role]
 	if !ok {

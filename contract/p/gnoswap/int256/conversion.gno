@@ -38,7 +38,7 @@ func (z *Int) SetUint64(x uint64) *Int {
 	return z
 }
 
-// Uint64 returns the lower 64-bits of z
+// Uint64 returns the lower 64 bits of z as a uint64.
 func (z *Int) Uint64() uint64 {
 	return z.abs.Uint64()
 }
@@ -57,7 +57,7 @@ func (z *Int) Int64() int64 {
 	return int64(u) // reinterpret as two's complement int64
 }
 
-// Neg sets z to -x and returns z.)
+// Neg sets z to -x and returns z.
 func (z *Int) Neg(x *Int) *Int {
 	z.abs.Set(x.abs)
 	if z.abs.IsZero() {
@@ -68,9 +68,8 @@ func (z *Int) Neg(x *Int) *Int {
 	return z
 }
 
-// NegOverflow returns z = -x, and true if overflow occurs.
-//
-// The overflow can be happen when negating a minimum or a maximum value.
+// NegOverflow sets z to -x and returns z and whether overflow occurred.
+// Overflow occurs when negating the minimum int256 value (-2^255).
 func (z *Int) NegOverflow(x *Int) (*Int, bool) {
 	z = z.initiateAbs()
 
@@ -98,15 +97,16 @@ func (z *Int) Set(x *Int) *Int {
 	return z
 }
 
-// SetFromUint256 converts a uint256.Uint to Int and sets the value to z.
+// SetUint256 sets z to the value of x and returns z.
 func (z *Int) SetUint256(x *uint256.Uint) *Int {
 	z.abs.Set(x)
 	z.neg = false
 	return z
 }
 
-// OBS, differs from original mempooler int256
-// ToString returns the decimal representation of z.
+// ToString returns the decimal string representation of z.
+// Panics if z is nil.
+// This differs from the original mempooler int256 implementation.
 func (z *Int) ToString() string {
 	if z == nil {
 		panic("int256: nil pointer to ToString()")

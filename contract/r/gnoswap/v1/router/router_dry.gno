@@ -34,7 +34,7 @@ const (
 // SwapProcessor handles the execution of swap operations
 type SwapProcessor struct{}
 
-// ProcessSwapAmount calculates the exact amount to swap based on quote percentage
+// ProcessSwapAmount calculates the exact amount to swap based on quote percentage.
 func (p *SwapProcessor) ProcessSwapAmount(amountSpecified *i256.Int, quote int) (*i256.Int, error) {
 	if quote < MinQuotePercentage || quote > MaxQuotePercentage {
 		return nil, ufmt.Errorf(ErrInvalidQuoteRange, quote, MinQuotePercentage, MaxQuotePercentage)
@@ -48,7 +48,7 @@ func (p *SwapProcessor) ProcessSwapAmount(amountSpecified *i256.Int, quote int) 
 	return i256.Zero().Div(toSwap, PERCENTAGE_DENOMINATOR), nil
 }
 
-// ProcessSingleSwap handles a single-hop swap simulation
+// ProcessSingleSwap handles a single-hop swap simulation.
 func (p *SwapProcessor) ProcessSingleSwap(route string, amountSpecified *i256.Int) (amountIn, amountOut *u256.Uint, err error) {
 	input, output, fee := getDataForSinglePath(route)
 	singleParams := SingleSwapParams{
@@ -62,7 +62,7 @@ func (p *SwapProcessor) ProcessSingleSwap(route string, amountSpecified *i256.In
 	return amountIn, amountOut, nil
 }
 
-// ProcessMultiSwap handles a multi-hop swap simulation
+// ProcessMultiSwap handles a multi-hop swap simulation.
 func (p *SwapProcessor) ProcessMultiSwap(
 	swapType SwapType,
 	route string,
@@ -85,7 +85,7 @@ func (p *SwapProcessor) ProcessMultiSwap(
 	}
 }
 
-// ValidateSwapResults checks if the swap results meet the required constraints
+// ValidateSwapResults checks if the swap results meet the required constraints.
 func (p *SwapProcessor) ValidateSwapResults(
 	swapType SwapType,
 	resultAmountIn, resultAmountOut *u256.Uint,
@@ -120,7 +120,7 @@ func (p *SwapProcessor) ValidateSwapResults(
 	}
 }
 
-// AddSwapResults safely adds swap result amounts, checking for overflow
+// AddSwapResults safely adds swap result amounts, checking for overflow.
 func (p *SwapProcessor) AddSwapResults(
 	resultAmountIn, resultAmountOut, amountIn, amountOut *u256.Uint,
 ) (*u256.Uint, *u256.Uint, error) {
@@ -137,22 +137,8 @@ func (p *SwapProcessor) AddSwapResults(
 	return newAmountIn, newAmountOut, nil
 }
 
-// DrySwapRoute simulates a token swap route without actually executing the swap.
+// DrySwapRoute simulates a token swap route without executing the swap.
 // It calculates the expected outcome based on the current state of liquidity pools.
-//
-// Parameters:
-//   - inputToken: the symbol of the input token
-//   - outputToken: the symbol of the output token
-//   - specifiedAmount: the amount specified by the user (input or output, depending on swapKind)
-//   - swapTypeStr: the type of swap ("exactIn" or "exactOut")
-//   - strRouteArr: comma-separated swap route strings
-//   - quoteArr: comma-separated quote percentages for each route
-//   - tokenAmountLimit: a limit for token amount depending on swapKind
-//
-// Returns:
-//   - amountInStr: the calculated input amount as a string
-//   - amountOutStr: the calculated output amount as a string
-//   - success: true if the simulated swap meets all constraints
 func DrySwapRoute(
 	inputToken, outputToken string,
 	specifiedAmount string,
@@ -167,7 +153,7 @@ func DrySwapRoute(
 	return drySwapRouteWithCrossFn(cross)
 }
 
-// drySwapRoute is a function for applying cross realm
+// drySwapRoute is a function for applying cross realm.
 func drySwapRoute(
 	inputToken, outputToken string,
 	specifiedAmount string,
@@ -249,7 +235,7 @@ func drySwapRoute(
 	return processor.ValidateSwapResults(swapType, resultAmountIn, resultAmountOut, amountSpecified, amountLimit)
 }
 
-// Helper function to get path index based on swap type and number of hops
+// getPathIndex returns the path index based on swap type and number of hops.
 func getPathIndex(swapType SwapType, numHops int) int {
 	switch swapType {
 	case ExactIn:

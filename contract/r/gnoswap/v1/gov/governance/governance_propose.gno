@@ -9,24 +9,28 @@ import (
 	"gno.land/r/gnoswap/v1/gov/staker"
 )
 
-// ProposeText creates a new text proposal with the given data.
-// Text proposals are informational only and cannot be executed.
-// They are used for community discussions and non-binding votes.
+// ProposeText creates a text proposal for community discussion.
+//
+// Signal proposals for non-binding community sentiment.
+// Used for policy discussions, roadmap planning, and community feedback.
+// No on-chain execution, serves as formal governance record.
 //
 // Parameters:
-//   - cur: realm context for cross-realm calls
-//   - title: proposal title (max 255 characters)
-//   - description: detailed proposal description (max 10,000 characters)
+//   - title: Short, descriptive proposal title (max 100 chars recommended)
+//   - description: Full proposal content with rationale and context
 //
-// Returns:
-//   - int64: unique ID of the created proposal
+// Requirements:
+//   - Caller must hold minimum 1,000 GNS tokens
+//   - No other active proposal from same address
+//   - Title and description must be non-empty
 //
-// Panics:
-//   - if proposer doesn't have enough voting weight
-//   - if proposer has an active proposal
-//   - if input validation fails
+// Process:
+//   - 1 day delay before voting starts
+//   - 7 days voting period
+//   - Simple majority decides outcome
+//   - No execution phase (signal only)
 //
-// ref: https://docs.gnoswap.io/contracts/governance/proposal.gno#proposetext
+// Returns new proposal ID.
 func ProposeText(
 	cur realm,
 	title string,
@@ -34,15 +38,12 @@ func ProposeText(
 ) (newProposalId int64) {
 	halt.AssertIsNotHaltedGovernance()
 
-	// Get caller information for proposal creation
 	callerAddress := std.PreviousRealm().Address()
 
-	// Get current blockchain state
 	createdAt := time.Now().Unix()
 	createdHeight := std.ChainHeight()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
-	// Retrieve current governance configuration
 	config, ok := getCurrentConfig()
 	if !ok {
 		panic(errDataNotFound)
@@ -102,28 +103,31 @@ func ProposeText(
 	return proposal.ID()
 }
 
-// ProposeCommunityPoolSpend creates a new community pool spend proposal.
-// This type of proposal allows transferring tokens from the community pool to specified recipients.
-// Upon execution, tokens are transferred from the community pool to the designated address.
+// ProposeCommunityPoolSpend creates a treasury disbursement proposal.
+//
+// Allocates community pool funds for approved purposes.
+// Supports grants, development funding, and protocol incentives.
+// Automatic transfer on execution if approved.
 //
 // Parameters:
-//   - cur: realm context for cross-realm calls
-//   - title: proposal title (max 255 characters)
-//   - description: detailed proposal description (max 10,000 characters)
-//   - to: recipient address for token transfer
-//   - tokenPath: path of the token to transfer
-//   - amount: amount of tokens to transfer
+//   - title: Proposal title describing purpose
+//   - description: Detailed justification and budget breakdown
+//   - to: Recipient address for funds
+//   - tokenPath: Token contract path (e.g., "gno.land/r/gnoswap/gns")
+//   - amount: Amount to transfer (in smallest unit)
 //
-// Returns:
-//   - int64: unique ID of the created proposal
+// Requirements:
+//   - Caller must hold minimum 1,000 GNS tokens
+//   - Sufficient balance in community pool
+//   - Valid recipient address
+//   - Supported token type
 //
-// Panics:
-//   - if proposer doesn't have enough voting weight
-//   - if proposer has an active proposal
-//   - if input validation fails
-//   - if token is not registered
+// Security:
+//   - Enforces timelock after approval
+//   - Single transfer per proposal
+//   - Tracks all disbursements on-chain
 //
-// ref: https://docs.gnoswap.io/contracts/governance/proposal.gno#proposecommunitypoolspend
+// Returns new proposal ID.
 func ProposeCommunityPoolSpend(
 	cur realm,
 	title string,
@@ -135,15 +139,12 @@ func ProposeCommunityPoolSpend(
 	halt.AssertIsNotHaltedGovernance()
 	halt.AssertIsNotHaltedWithdraw()
 
-	// Get caller information for proposal creation
 	callerAddress := std.PreviousRealm().Address()
 
-	// Get current blockchain state
 	createdAt := time.Now().Unix()
 	createdHeight := std.ChainHeight()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
-	// Retrieve current governance configuration
 	config, ok := getCurrentConfig()
 	if !ok {
 		panic(errDataNotFound)
@@ -206,28 +207,35 @@ func ProposeCommunityPoolSpend(
 	return proposal.ID()
 }
 
-// ProposeParameterChange creates a new parameter change proposal.
-// This type of proposal allows modifying governance and system parameters.
-// The execution string format: <pkgPath>*EXE*<function>*EXE*<params>*GOV*<pkgPath>*EXE*<function>*EXE*<params>
-// Multiple parameter changes can be batched using *GOV* separator.
+// ProposeParameterChange creates a protocol parameter update proposal.
+//
+// Modifies system parameters through governance.
+// Supports multiple parameter changes in single proposal.
+// Changes apply atomically on execution.
 //
 // Parameters:
-//   - cur: realm context for cross-realm calls
-//   - title: proposal title (max 255 characters)
-//   - description: detailed proposal description (max 10,000 characters)
-//   - numToExecute: number of parameter changes to execute
-//   - executions: encoded string containing execution instructions
+//   - title: Clear description of changes
+//   - description: Rationale and impact analysis
+//   - numToExecute: Number of parameter changes
+//   - executions: JSON array of changes, each containing:
+//     * target: Contract address to modify
+//     * function: Function name to call
+//     * params: Parameters for the function
 //
-// Returns:
-//   - int64: unique ID of the created proposal
+// Example executions format:
+//   [{
+//     "target": "gno.land/r/gnoswap/v1/gov",
+//     "function": "SetVotingPeriod",
+//     "params": ["604800"]
+//   }]
 //
-// Panics:
-//   - if proposer doesn't have enough voting weight
-//   - if proposer has an active proposal
-//   - if input validation fails
-//   - if execution string format is invalid
+// Requirements:
+//   - Valid JSON format for executions
+//   - Target contracts must exist
+//   - Functions must be governance-callable
+//   - Parameters must match function signatures
 //
-// ref: https://docs.gnoswap.io/contracts/governance/proposal.gno#proposeparameterchange
+// Returns new proposal ID.
 func ProposeParameterChange(
 	cur realm,
 	title string,
@@ -237,15 +245,12 @@ func ProposeParameterChange(
 ) (newProposalId int64) {
 	halt.AssertIsNotHaltedGovernance()
 
-	// Get caller information for proposal creation
 	callerAddress := std.PreviousRealm().Address()
 
-	// Get current blockchain state
 	createdAt := time.Now().Unix()
 	createdHeight := std.ChainHeight()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
-	// Retrieve current governance configuration
 	config, ok := getCurrentConfig()
 	if !ok {
 		panic(errDataNotFound)
@@ -307,23 +312,8 @@ func ProposeParameterChange(
 	return proposal.ID()
 }
 
-// createProposal is the internal function that handles proposal creation logic.
-// This function validates input data, checks proposer eligibility, and creates the proposal object.
-//
-// Parameters:
-//   - proposalType: type of proposal (Text, CommunityPoolSpend, ParameterChange)
-//   - config: current governance configuration
-//   - maxVotingWeight: total voting weight available at creation time
-//   - proposalMetadata: title and description
-//   - proposalData: type-specific proposal data
-//   - proposerAddress: address of the proposer
-//   - proposerGnsBalance: GNS balance of proposer
-//   - createdAt: creation timestamp
-//   - createdHeight: creation block height
-//
-// Returns:
-//   - *Proposal: pointer to the created proposal
-//   - error: creation error if any
+// createProposal handles proposal creation logic.
+// Validates input data, checks proposer eligibility, and creates proposal object.
 func createProposal(
 	proposalType ProposalType,
 	config Config,
@@ -388,16 +378,7 @@ func createProposal(
 }
 
 // getUserVotingInfoSnapshot retrieves voting information snapshot for proposal creation.
-// This function calculates voting weights at a specific time point for fair voting.
-//
-// Parameters:
-//   - current: current timestamp
-//   - smoothingPeriod: period to look back for weight calculation
-//
-// Returns:
-//   - map[string]*VotingInfo: mapping of voter addresses to their voting info
-//   - int64: total maximum voting weight
-//   - bool: success flag
+// Calculates voting weights at specific time point for fair voting.
 func getUserVotingInfoSnapshot(
 	current,
 	smoothingPeriod int64,
@@ -424,15 +405,7 @@ func getUserVotingInfoSnapshot(
 }
 
 // getUserVotingInfotWithDelegationSnapshots retrieves voting info from staker delegation snapshots.
-// This function integrates with the staker contract to get actual delegation amounts.
-//
-// Parameters:
-//   - snapshotTime: time point for snapshot calculation
-//
-// Returns:
-//   - map[string]*VotingInfo: mapping of voter addresses to their voting info
-//   - int64: total maximum voting weight
-//   - bool: success flag
+// Integrates with staker contract to get actual delegation amounts.
 func getUserVotingInfotWithDelegationSnapshots(
 	snapshotTime int64,
 ) (map[string]*VotingInfo, int64, bool) {
@@ -458,15 +431,8 @@ func getUserVotingInfotWithDelegationSnapshots(
 	return userVotes, maxVotingWeight, true
 }
 
-// updateProposalUserVotes stores voting information for a specific proposal.
-// This function links voting eligibility data to the proposal for later use during voting.
-//
-// Parameters:
-//   - proposal: the proposal to associate voting info with
-//   - userVotingInfos: mapping of user addresses to their voting information
-//
-// Returns:
-//   - bool: success flag
+// updateProposalUserVotes stores voting information for specific proposal.
+// Links voting eligibility data to proposal for later use during voting.
 func updateProposalUserVotes(
 	proposal *Proposal,
 	userVotingInfos map[string]*VotingInfo,
@@ -477,15 +443,8 @@ func updateProposalUserVotes(
 	return true
 }
 
-// hasActiveProposal checks if an address already has an active proposal.
-// This enforces the one-proposal-per-address rule to prevent spam.
-//
-// Parameters:
-//   - proposerAddress: address to check for active proposals
-//   - current: current timestamp for activity check
-//
-// Returns:
-//   - bool: true if address has an active proposal
+// hasActiveProposal checks if address already has active proposal.
+// Enforces one-proposal-per-address rule to prevent spam.
 func hasActiveProposal(proposerAddress std.Address, current int64) bool {
 	// Get all proposals for this address
 	proposals := getUserProposals(proposerAddress)

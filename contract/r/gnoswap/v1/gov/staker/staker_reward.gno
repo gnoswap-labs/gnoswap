@@ -17,26 +17,30 @@ import (
 
 const WUGNOT_PATH string = "gno.land/r/demo/wugnot"
 
-// CollectReward collects the rewards from the protocol fee contract based on the holdings of xGNS.
-// This function allows stakers to claim both emission rewards (in GNS) and protocol fee rewards (in various tokens)
-// that have accumulated based on their xGNS holdings.
+// CollectReward collects accumulated rewards based on xGNS holdings.
 //
-// The collection process involves:
-// 1. Checking system halt status
-// 2. Claiming emission and protocol fee rewards
-// 3. Transferring GNS emission rewards to the caller
-// 4. Transferring protocol fee rewards in various tokens to the caller
-// 5. Emitting events for each type of reward collected
+// Claims all pending rewards from governance staking.
+// Distributes protocol fees and emission rewards proportionally.
+// Multi-token rewards system based on xGNS share.
 //
-// Parameters:
-//   - cur: realm context for cross-realm calls
+// Reward Types:
+//   1. Emission rewards: GNS from protocol emission
+//   2. Protocol fees: Various tokens from swap/pool fees
+//   3. Withdrawal fees: 1% of liquidity provider rewards
+//   4. Pool creation fees: 100 GNS per pool
 //
-// Panics:
-//   - if system is halted for withdrawals
-//   - if reward claiming fails
-//   - if token transfers fail
+// Distribution Formula:
+//   userReward = (userXGNS / totalXGNS) * accumulatedRewards
 //
-// Reference: https://docs.gnoswap.io/contracts/governance/staker.gno#collectreward
+// Process:
+//   1. Calculates share based on xGNS balance
+//   2. Claims GNS emission rewards
+//   3. Claims protocol fee rewards (all tokens)
+//   4. Transfers all rewards to caller
+//   5. Resets user's reward tracking
+//
+// No parameters required - automatically determines caller's rewards.
+// Transfers rewards directly to caller.
 func CollectReward(cur realm) {
 	halt.AssertIsNotHaltedGovStaker()
 	halt.AssertIsNotHaltedWithdraw()
@@ -87,28 +91,12 @@ func CollectReward(cur realm) {
 	}
 }
 
-// CollectRewardFromLaunchPad collects the rewards from the protocol fee contract based on the holdings of xGNS in the launchpad contract.
-// This function is exclusively callable by the launchpad contract to collect rewards on behalf of project wallets
-// that have deposited tokens through the launchpad system.
-//
-// The collection process involves:
-// 1. Verifying caller is the launchpad contract
-// 2. Checking system halt status
-// 3. Validating the project wallet is registered in launchpad
-// 4. Claiming emission and protocol fee rewards for the project wallet
-// 5. Transferring rewards directly to the project wallet
+// CollectRewardFromLaunchPad collects rewards for launchpad project wallets.
 //
 // Parameters:
-//   - cur: realm context for cross-realm calls
-//   - to: project wallet address to collect rewards for
+//   - to: recipient address for rewards
 //
-// Panics:
-//   - if caller is not the launchpad contract
-//   - if system is halted for withdrawals
-//   - if project wallet is not registered in launchpad
-//   - if reward claiming or transfers fail
-//
-// Reference: https://docs.gnoswap.io/contracts/governance/staker.gno#collectrewardfromlaunchpad
+// Only callable by launchpad contract.
 func CollectRewardFromLaunchPad(cur realm, to std.Address) {
 	halt.AssertIsNotHaltedGovStaker()
 	halt.AssertIsNotHaltedWithdraw()
@@ -177,13 +165,7 @@ func CollectRewardFromLaunchPad(cur realm, to std.Address) {
 // The function handles both adding and removing stakes:
 // - When adding: mints xGNS to launchpad address and starts reward accumulation
 // - When removing: burns xGNS from launchpad address and stops reward accumulation
-//
-// Parameters:
-//   - cur: realm context for cross-realm calls
-//   - addr: project wallet address
-//   - amount: amount of stake to add or remove
-//   - add: true to add stake, false to remove stake
-//
+// Adjusts stake amount for project wallet address.
 // Panics:
 //   - if caller is not the launchpad contract
 //   - if system is halted for withdrawals
@@ -221,17 +203,8 @@ func SetAmountByProjectWallet(cur realm, addr std.Address, amount int64, add boo
 	}
 }
 
-// claimRewards is the internal function that claims both emission and protocol fee rewards.
-// This function coordinates the claiming process for both reward types.
-//
-// Parameters:
-//   - rewardID: identifier for the reward account (typically user address)
-//   - currentTimestamp: current timestamp
-//
-// Returns:
-//   - int64: emission reward amount claimed
-//   - map[string]int64: protocol fee rewards claimed by token
-//   - error: nil on success, error if claiming fails
+// claimRewards claims both emission and protocol fee rewards.
+// Coordinates claiming process for both reward types.
 func claimRewards(rewardID string, currentTimestamp int64) (int64, map[string]int64, error) {
 	emissionReward, err := claimRewardsEmissionReward(rewardID, currentTimestamp)
 	if err != nil {
@@ -246,17 +219,8 @@ func claimRewards(rewardID string, currentTimestamp int64) (int64, map[string]in
 	return emissionReward, protocolFeeRewards, nil
 }
 
-// claimRewardsFromLaunchpad is the internal function that claims rewards for launchpad project wallets.
-// This function uses a special reward ID format for launchpad integration.
-//
-// Parameters:
-//   - address: project wallet address
-//   - currentTimestamp: current timestamp
-//
-// Returns:
-//   - int64: emission reward amount claimed
-//   - map[string]int64: protocol fee rewards claimed by token
-//   - error: nil on success, error if claiming fails
+// claimRewardsFromLaunchpad claims rewards for launchpad project wallets.
+// Uses special reward ID format for launchpad integration.
 func claimRewardsFromLaunchpad(address string, currentTimestamp int64) (int64, map[string]int64, error) {
 	launchpadRewardID := makeLaunchpadRewardID(address)
 
@@ -264,17 +228,8 @@ func claimRewardsFromLaunchpad(address string, currentTimestamp int64) (int64, m
 }
 
 // transferToken transfers tokens from the staker contract to a recipient address.
-// This function handles both native GNOT (through wUGNOT unwrapping) and GRC20 tokens,
-// with proper validation and balance checking.
-//
-// Parameters:
-//   - tokenPath: path identifier for the token to transfer
-//   - from: source address (typically the staker contract)
-//   - to: destination address
-//   - amount: amount of tokens to transfer
-//
-// Returns:
-//   - error: nil on success, error if transfer fails
+// transferToken handles token transfers for reward distribution.
+// Supports both native GNOT (through wUGNOT unwrapping) and GRC20 tokens.
 func transferToken(
 	tokenPath string,
 	from, to std.Address,

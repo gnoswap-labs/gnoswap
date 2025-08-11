@@ -1,5 +1,3 @@
-// Ported from https://github.com/holiman/uint256
-// This package provides a 256-bit unsigned integer type, Uint256, and associated functions.
 package uint256
 
 import (
@@ -20,17 +18,20 @@ var (
 	three = NewUint(3)
 )
 
-// Uint is represented as an array of 4 uint64, in little-endian order,
-// so that Uint[3] is the most significant, and Uint[0] is the least significant
+// Uint represents a 256-bit unsigned integer.
+// It is stored as an array of 4 uint64 in little-endian order,
+// where arr[0] is the least significant and arr[3] is the most significant.
 type Uint struct {
 	arr [4]uint64
 }
 
-// NewUint returns a new initialized Uint.
+// NewUint returns a new Uint initialized with the given uint64 value.
 func NewUint(val uint64) *Uint {
 	return &Uint{arr: [4]uint64{val, 0, 0, 0}}
 }
 
+// NewUintFromInt64 returns a new Uint initialized with the given int64 value.
+// Panics if val is negative.
 func NewUintFromInt64(val int64) *Uint {
 	if val < 0 {
 		panic("val is negative")
@@ -38,17 +39,17 @@ func NewUintFromInt64(val int64) *Uint {
 	return NewUint(uint64(val))
 }
 
-// Zero returns a new Uint initialized to zero.
+// Zero returns a new Uint with value 0.
 func Zero() *Uint {
 	return NewUint(0)
 }
 
-// One returns a new Uint initialized to one.
+// One returns a new Uint with value 1.
 func One() *Uint {
 	return NewUint(1)
 }
 
-// SetAllOne sets all the bits of z to 1
+// SetAllOne sets z to the maximum 256-bit value (all bits set to 1) and returns z.
 func (z *Uint) SetAllOne() *Uint {
 	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = MaxUint64, MaxUint64, MaxUint64, MaxUint64
 	return z
@@ -60,18 +61,15 @@ func (z *Uint) Set(x *Uint) *Uint {
 	return z
 }
 
-// SetOne sets z to 1
+// SetOne sets z to 1 and returns z.
 func (z *Uint) SetOne() *Uint {
 	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, 0, 0, 1
 	return z
 }
 
-// SetFromDecimal sets z from the given string, interpreted as a decimal number.
-// OBS! This method is _not_ strictly identical to the (*big.Uint).SetString(..., 10) method.
-// Notable differences:
-// - This method does not accept underscore input, e.g. "100_000",
-// - This method does not accept negative zero as valid, e.g "-0",
-//   - (this method does not accept any negative input as valid))
+// SetFromDecimal sets z from a decimal string and returns an error if invalid.
+// Accepts an optional leading "+" sign but rejects underscores and negative values.
+// Returns ErrBig256Range if the number exceeds 256 bits.
 func (z *Uint) SetFromDecimal(s string) (err error) {
 	// Remove max one leading +
 	if len(s) > 0 && s[0] == '+' {
@@ -100,8 +98,8 @@ func (z *Uint) SetFromDecimal(s string) (err error) {
 	return ErrBig256Range
 }
 
-// FromDecimal is a convenience-constructor to create an Uint from a
-// decimal (base 10) string. Numbers larger than 256 bits are not accepted.
+// FromDecimal creates a new Uint from a decimal string.
+// Returns an error if the number exceeds 256 bits or is invalid.
 func FromDecimal(decimal string) (*Uint, error) {
 	var z Uint
 	if err := z.SetFromDecimal(decimal); err != nil {
@@ -110,9 +108,8 @@ func FromDecimal(decimal string) (*Uint, error) {
 	return &z, nil
 }
 
-// MustFromDecimal is a convenience-constructor to create an Uint from a
-// decimal (base 10) string.
-// Returns a new Uint and panics if any error occurred.
+// MustFromDecimal creates a new Uint from a decimal string.
+// Panics if the string is invalid or the number exceeds 256 bits.
 func MustFromDecimal(decimal string) *Uint {
 	var z Uint
 	if err := z.SetFromDecimal(decimal); err != nil {
@@ -130,9 +127,8 @@ var multipliers = [5]*Uint{
 	{[4]uint64{0, 8607968719199866880, 532749306367912313, 1593091911132452277}},   // 10 ^ 76
 }
 
-// fromDecimal is a helper function to only ever be called via SetFromDecimal
-// this function takes a string and chunks it up, calling ParseUint on it up to 5 times
-// these chunks are then multiplied by the proper power of 10, then added together.
+// fromDecimal parses a decimal string by processing it in 19-character chunks.
+// Each chunk is multiplied by the appropriate power of 10 and accumulated.
 func (z *Uint) fromDecimal(bs string) error {
 	// first clear the input
 	z.Clear()
@@ -189,10 +185,9 @@ func (z *Uint) fromDecimal(bs string) error {
 	return nil
 }
 
-// Byte sets z to the value of the byte at position n,
-// with 'z' considered as a big-endian 32-byte integer
-// if 'n' > 32, f is set to 0
-// Example: f = '5', n=31 => 5
+// Byte returns the value of the byte at position n as a Uint.
+// Position n is counted from the right (0 = least significant byte).
+// Returns 0 if n >= 32.
 func (z *Uint) Byte(n *Uint) *Uint {
 	// in z, z.arr[0] is the least significant
 	if number, overflow := n.Uint64WithOverflow(); !overflow {
@@ -208,7 +203,8 @@ func (z *Uint) Byte(n *Uint) *Uint {
 	return z.Clear()
 }
 
-// BitLen returns the number of bits required to represent z
+// BitLen returns the number of bits required to represent z.
+// BitLen(0) returns 0.
 func (z *Uint) BitLen() int {
 	switch {
 	case z.arr[3] != 0:
@@ -222,12 +218,13 @@ func (z *Uint) BitLen() int {
 	}
 }
 
-// ByteLen returns the number of bytes required to represent z
+// ByteLen returns the number of bytes required to represent z.
+// ByteLen(0) returns 0.
 func (z *Uint) ByteLen() int {
 	return (z.BitLen() + 7) / 8
 }
 
-// Clear sets z to 0
+// Clear sets z to 0 and returns z.
 func (z *Uint) Clear() *Uint {
 	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, 0, 0, 0
 	return z
@@ -239,19 +236,14 @@ const (
 	badNibble = 0xff
 )
 
-// SetFromHex sets z from the given string, interpreted as a hexadecimal number.
-// OBS! This method is _not_ strictly identical to the (*big.Int).SetString(..., 16) method.
-// Notable differences:
-// - This method _require_ "0x" or "0X" prefix.
-// - This method does not accept zero-prefixed hex, e.g. "0x0001"
-// - This method does not accept underscore input, e.g. "100_000",
-// - This method does not accept negative zero as valid, e.g "-0x0",
-//   - (this method does not accept any negative input as valid)
+// SetFromHex sets z from a hexadecimal string and returns an error if invalid.
+// Requires "0x" or "0X" prefix and rejects leading zeros after prefix, underscores, and negative values.
+// Returns ErrBig256Range if the number exceeds 256 bits.
 func (z *Uint) SetFromHex(hex string) error {
 	return z.fromHex(hex)
 }
 
-// fromHex is the internal implementation of parsing a hex-string.
+// fromHex parses a hex-string into z.
 func (z *Uint) fromHex(hex string) error {
 	if err := checkNumberS(hex); err != nil {
 		return err
@@ -279,9 +271,8 @@ func (z *Uint) fromHex(hex string) error {
 	return nil
 }
 
-// FromHex is a convenience-constructor to create an Uint from
-// a hexadecimal string. The string is required to be '0x'-prefixed
-// Numbers larger than 256 bits are not accepted.
+// FromHex creates a new Uint from a hexadecimal string.
+// The string must be 0x-prefixed and represent a value within 256 bits.
 func FromHex(hex string) (*Uint, error) {
 	var z Uint
 	if err := z.fromHex(hex); err != nil {
@@ -290,9 +281,8 @@ func FromHex(hex string) (*Uint, error) {
 	return &z, nil
 }
 
-// MustFromHex is a convenience-constructor to create an Uint from
-// a hexadecimal string.
-// Returns a new Uint and panics if any error occurred.
+// MustFromHex creates a new Uint from a hexadecimal string.
+// Panics if the string is invalid or the number exceeds 256 bits.
 func MustFromHex(hex string) *Uint {
 	var z Uint
 	if err := z.fromHex(hex); err != nil {
@@ -301,7 +291,7 @@ func MustFromHex(hex string) *Uint {
 	return &z
 }
 
-// Clone creates a new Uint identical to z
+// Clone returns a new Uint with the same value as z.
 func (z *Uint) Clone() *Uint {
 	var x Uint
 	x.arr[0] = z.arr[0]

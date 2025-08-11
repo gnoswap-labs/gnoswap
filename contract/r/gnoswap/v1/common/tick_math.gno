@@ -7,8 +7,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// Pre-calculated ratio constants for performance optimization
-// These are the same values as before, but pre-computed to avoid runtime decimal parsing
+// Pre-calculated ratio constants for performance optimization.
+// These values are pre-computed to avoid runtime decimal parsing.
 var (
 	// Initial ratio constants - exactly matching Uniswap V3
 	ratio0 = u256.MustFromDecimal("340265354078544963557816517032075149313") // 0xfffcb933bd6fad37aa2d162d1a594001
@@ -60,18 +60,24 @@ var (
 	oneLsh32 = u256.One().Lsh(u256.One(), 32) // 1 << 32
 )
 
-// TickMathGetSqrtRatioAtTick calculates the square root price ratio for a given tick.
+// TickMathGetSqrtRatioAtTick calculates sqrt price ratio for given tick.
 //
-// This function computes the square root ratio (sqrt(price)) at a specific tick,
-// using precomputed ratios. The result is returned as a 160-bit fixed-point value (Q64.96 format).
-//
-// This implementation matches Uniswap V3's getSqrtRatioAtTick exactly.
+// Converts tick index to square root price in Q64.96 fixed-point format.
+// Based on Uniswap V3's mathematical formula: price = 1.0001^tick.
+// Uses bit manipulation for gas-efficient calculation.
 //
 // Parameters:
-//   - tick (int32): The tick index for which the square root ratio is calculated.
+//   - tick: Tick index in range [-887272, 887272]
 //
 // Returns:
-//   - *u256.Uint: The square root price ratio at the given tick, represented as a 160-bit unsigned integer.
+//   - Square root of price ratio as Q64.96 fixed-point
+//   - Result represents sqrt(token1/token0) price
+//
+// Mathematical formula:
+//   sqrtPriceX96 = sqrt(1.0001^tick) * 2^96
+//
+// Panics if tick outside valid range.
+// Critical for all price calculations in concentrated liquidity.
 func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 	assertValidTickRange(tick)
 	absTick := abs(tick)
@@ -101,7 +107,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 		ratio = temp.Div(maxUint256, ratio)
 	}
 
-	// Convert from Q128.128 to Q128.96 with rounding up
+	// Convert from Q128.128 to Q128.96 with rounding up.
 	// This divides by 1<<32 rounding up to go from a Q128.128 to a Q128.96
 	upper := u256.Zero().Rsh(ratio, 32)           // ratio >> 32
 	remainder := u256.Zero().Mod(ratio, oneLsh32) // ratio % (1 << 32)
@@ -114,7 +120,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 	return upper
 }
 
-// getMostSignificantBit calculates the most significant bit position more efficiently
+// getMostSignificantBit returns the position of the most significant bit.
 func getMostSignificantBit(r *u256.Uint) (msb uint64) {
 	temp := r.Clone()
 
@@ -161,15 +167,7 @@ func getMostSignificantBit(r *u256.Uint) (msb uint64) {
 	return
 }
 
-// TickMathGetTickAtSqrtRatio calculates the greatest tick value such that getSqrtRatioAtTick(tick) <= ratio
-//
-// This implementation matches Uniswap V3's getTickAtSqrtRatio exactly.
-//
-// Parameters:
-//   - sqrtPriceX96: The sqrt ratio for which to compute the tick as a Q64.96
-//
-// Returns:
-//   - int32: The greatest tick for which the ratio is less than or equal to the input ratio
+// TickMathGetTickAtSqrtRatio calculates tick value for given sqrt price ratio, returning greatest tick where getSqrtRatioAtTick(tick) <= ratio, matching Uniswap V3 exactly.
 func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	if sqrtPriceX96.Lt(minSqrtRatio) || sqrtPriceX96.Gte(maxSqrtRatio) {
 		panic(newErrorWithDetail(
@@ -238,7 +236,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	return tickLowInt32
 }
 
-// abs returns the absolute value of the given integer.
+// abs returns the absolute value of x.
 func abs(x int32) int32 {
 	if x < 0 {
 		return -x
@@ -247,7 +245,7 @@ func abs(x int32) int32 {
 	return x
 }
 
-// assertValidTickRange validates that the absolute tick value is within the acceptable range.
+// assertValidTickRange panics if tick is outside valid range [-887272, 887272].
 func assertValidTickRange(tick int32) {
 	if tick > maxTick {
 		panic(newErrorWithDetail(

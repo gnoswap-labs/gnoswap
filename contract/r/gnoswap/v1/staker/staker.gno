@@ -36,21 +36,24 @@ var (
 	positionAddr      = getRoleAddress(prbac.ROLE_POSITION)
 )
 
-// list of staked positions
+// Deposits manages all staked positions.
 type Deposits struct {
 	tree *avl.Tree
 }
 
+// NewDeposits creates a new Deposits instance.
 func NewDeposits() *Deposits {
 	return &Deposits{
 		tree: avl.NewTree(), // positionId -> *Deposit
 	}
 }
 
+// Has checks if a position ID exists in deposits.
 func (self *Deposits) Has(positionId uint64) bool {
 	return self.tree.Has(EncodeUint(positionId))
 }
 
+// Iterate traverses deposits within the specified range.
 func (self *Deposits) Iterate(start uint64, end uint64, fn func(positionId uint64, deposit *Deposit) bool) {
 	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(positionId string, depositI any) bool {
 		dpst := retrieveDeposit(depositI)
@@ -58,10 +61,12 @@ func (self *Deposits) Iterate(start uint64, end uint64, fn func(positionId uint6
 	})
 }
 
+// Size returns the number of deposits.
 func (self *Deposits) Size() int {
 	return self.tree.Size()
 }
 
+// get retrieves a deposit by position ID.
 func (self *Deposits) get(positionId uint64) *Deposit {
 	depositI, ok := self.tree.Get(EncodeUint(positionId))
 	if !ok {
@@ -73,6 +78,7 @@ func (self *Deposits) get(positionId uint64) *Deposit {
 	return retrieveDeposit(depositI)
 }
 
+// retrieveDeposit safely casts data to Deposit type.
 func retrieveDeposit(data any) *Deposit {
 	deposit, ok := data.(*Deposit)
 	if !ok {
@@ -81,27 +87,35 @@ func retrieveDeposit(data any) *Deposit {
 	return deposit
 }
 
+// set stores a deposit for a position ID.
 func (self *Deposits) set(positionId uint64, deposit *Deposit) {
 	self.tree.Set(EncodeUint(positionId), deposit)
 }
 
+// remove deletes a deposit by position ID.
 func (self *Deposits) remove(positionId uint64) {
 	self.tree.Remove(EncodeUint(positionId))
 }
 
+// ExternalIncentives manages external incentive programs.
 type ExternalIncentives struct {
 	tree *avl.Tree
 }
 
+// NewExternalIncentives creates a new ExternalIncentives instance.
 func NewExternalIncentives() *ExternalIncentives {
 	return &ExternalIncentives{
 		tree: avl.NewTree(),
 	}
 }
 
+// Has checks if an incentive ID exists.
 func (self *ExternalIncentives) Has(incentiveId string) bool { return self.tree.Has(incentiveId) }
-func (self *ExternalIncentives) Size() int                   { return self.tree.Size() }
 
+// Size returns the number of external incentives.
+func (self *ExternalIncentives) Size() int { return self.tree.Size() }
+
+// get retrieves an external incentive by ID.
 func (self *ExternalIncentives) get(incentiveId string) *ExternalIncentive {
 	incentiveI, ok := self.tree.Get(incentiveId)
 	if !ok {
@@ -118,24 +132,29 @@ func (self *ExternalIncentives) get(incentiveId string) *ExternalIncentive {
 	return incentive
 }
 
+// set stores an external incentive.
 func (self *ExternalIncentives) set(incentiveId string, incentive *ExternalIncentive) {
 	self.tree.Set(incentiveId, incentive)
 }
 
+// remove deletes an external incentive by ID.
 func (self *ExternalIncentives) remove(incentiveId string) {
 	self.tree.Remove(incentiveId)
 }
 
+// Stakers manages deposits by staker address.
 type Stakers struct {
 	tree *avl.Tree // address -> depositId -> *Deposit
 }
 
+// NewStakers creates a new Stakers instance.
 func NewStakers() *Stakers {
 	return &Stakers{
 		tree: avl.NewTree(),
 	}
 }
 
+// IterateAll traverses all deposits for a specific address.
 func (self *Stakers) IterateAll(address std.Address, fn func(depositId uint64, deposit *Deposit) bool) {
 	depositTreeI, ok := self.tree.Get(address.String())
 	if !ok {
@@ -151,6 +170,7 @@ func (self *Stakers) IterateAll(address std.Address, fn func(depositId uint64, d
 	})
 }
 
+// addDeposit adds a deposit for a staker address.
 func (self *Stakers) addDeposit(address std.Address, depositId uint64, deposit *Deposit) {
 	depositTreeI, ok := self.tree.Get(address.String())
 	if !ok {
@@ -163,6 +183,7 @@ func (self *Stakers) addDeposit(address std.Address, depositId uint64, deposit *
 	depositTree.Set(EncodeUint(depositId), deposit)
 }
 
+// removeDeposit removes a deposit for a staker address.
 func (self *Stakers) removeDeposit(address std.Address, depositId uint64) {
 	depositTreeI, ok := self.tree.Get(address.String())
 	if !ok {
@@ -173,6 +194,7 @@ func (self *Stakers) removeDeposit(address std.Address, depositId uint64) {
 	depositTree.Remove(EncodeUint(depositId))
 }
 
+// retrieveDepositTree safely casts data to AVL tree type.
 func retrieveDepositTree(data any) *avl.Tree {
 	depositTree, ok := data.(*avl.Tree)
 	if !ok {
@@ -215,10 +237,9 @@ const (
 	EXTERNAL = false
 )
 
+// init initializes the staker contract with tier 1 pool.
 func init() {
-	// init pool tier
-	// tier 1
-	// ONLY GNOT:GNS 0.3%
+	// Initialize tier 1 with GNOT:GNS 0.3% pool
 
 	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1)
 
@@ -232,29 +253,28 @@ func init() {
 	)
 }
 
-// StakeToken stakes an LP token into the staker contract. It transfer the LP token
-// ownership to the staker contract.
+// StakeToken stakes an LP position NFT to earn rewards.
 //
-// State Transition:
-//  1. Token ownership transfers from user -> staker contract
-//  2. Position operator changes to caller
-//  3. Deposit record is created and stored
-//  4. Internal warm up amount is set to 0
-//
-// Requirements:
-//  1. Token must have non-zero liquidity
-//  2. Pool must have either internal or external incentives
-//  3. Caller must be token owner or approved operator
+// Transfers position NFT to staker and begins reward accumulation.
+// Eligible for internal incentives (GNS emission) and external rewards.
+// Position must have liquidity and be in eligible pool tier.
 //
 // Parameters:
-//   - positionId (uint64): The ID of the LP token to stake
+//   - positionId: LP position NFT token ID to stake
+//   - referrer: Optional referral address for tracking
 //
 // Returns:
-//   - poolPath (string): The path of the pool to which the LP token is staked
-//   - token0Amount (string): The amount of token0 in the LP token
-//   - token1Amount (string): The amount of token1 in the LP token
+//   - poolPath: Pool identifier (token0:token1:fee)
+//   - token0Amount: Current token0 balance in position
+//   - token1Amount: Current token1 balance in position
 //
-// ref: https://docs.gnoswap.io/contracts/staker/staker.gno#staketoken
+// Requirements:
+//   - Caller must own the position NFT
+//   - Position must have active liquidity
+//   - Pool must be in tier 1, 2, or 3
+//   - Position not already staked
+//
+// Note: Out-of-range positions earn no rewards but can be staked.
 func StakeToken(cur realm, positionId uint64, referrer string) (string, string, string) {
 	halt.AssertIsNotHaltedStaker()
 
@@ -328,8 +348,8 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 	// historical tick must be set regardless of the deposit's range
 	pool.historicalTick.set(currentTime, currentTick)
 
-	// this could happen because of how position stores the ticks.
-	// ticks are negated if the token1 < token0
+	// This could happen because of how position stores the ticks.
+	// Ticks are negated if the token1 < token0.
 	upperTick := pool.ticks.Get(tickUpper)
 	lowerTick := pool.ticks.Get(tickLower)
 
@@ -356,23 +376,6 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 }
 
 // getPositionStakeTokenAmount validates staking requirements and returns token amounts.
-//
-// This function performs the following validations:
-// - Checks if position is already staked
-// - Verifies token ownership
-// - Validates position has liquidity
-// - Ensures pool has active incentives
-// Then returns the token amounts for the position.
-//
-// Parameters:
-//   - positionId: Position NFT ID to stake
-//   - owner: Position NFT owner address
-//   - caller: Transaction caller address
-//
-// Returns:
-//   - string: Amount of token0 in the position
-//   - string: Amount of token1 in the position
-//   - error: Error if validation fails
 func getPositionStakeTokenAmount(positionId uint64, owner, caller std.Address) (string, string, error) {
 	exist := deposits.Has(positionId)
 	if exist {
@@ -397,22 +400,30 @@ func getPositionStakeTokenAmount(positionId uint64, owner, caller std.Address) (
 	return token0Amount, token1Amount, nil
 }
 
-// transferDeposit transfers the ownership of a deposit token (NFT) to a new owner.
+// transferDeposit transfers deposit ownership to a new address.
 //
-// This function ensures that the caller is not the same as the recipient (`to`).
-// If the caller is not the owner or the recipient, it attempts to transfer the NFT
-// ownership from the current owner to the recipient.
+// Manages NFT custody during staking operations.
+// Transfers ownership to staker contract for reward eligibility.
+// Handles special cases for mint-and-stake operations.
 //
 // Parameters:
-// - positionId (uint64): The unique identifier of the token (NFT) to transfer.
-// - owner (std.Address): The current owner of the token.
-// - caller (std.Address): The address attempting to initiate the transfer.
-// - to (std.Address): The address to which the token will be transferred.
+//   - positionId: The ID of the position NFT to transfer
+//   - owner: The current owner of the position
+//   - caller: The entity initiating the transfer
+//   - to: The recipient address (usually staker contract)
+//
+// Security Features:
+//   - Prevents self-transfer exploits
+//   - Validates ownership before transfer
+//   - Atomic operation with staking
+//   - No transfer if owner == to (mint & stake case)
 //
 // Returns:
-//   - error: Returns an error if the caller is the same as the recipient (`to`).
-//     Otherwise, it delegates the transfer to `gnft.TransferFrom` and returns any error
-//     that may occur during the transfer.
+//   - nil: If owner and recipient are same (mint-and-stake)
+//   - error: If caller unauthorized or transfer fails
+//
+// NFT remains locked in staker until unstaking.
+// Otherwise delegates the transfer to `gnft.TransferFrom`.
 func transferDeposit(positionId uint64, owner, caller, to std.Address) error {
 	// if owner is the same as to, when mint and stake, it will be the same address
 	if owner == to {
@@ -430,8 +441,6 @@ func transferDeposit(positionId uint64, owner, caller, to std.Address) error {
 	return gnft.TransferFrom(cross, owner, to, positionIdFrom(positionId))
 }
 
-////////////////////////////////////////////////////////////
-
 // CollectReward harvests accumulated rewards for a staked position. This includes both
 // internal GNS emission and external incentive rewards.
 //
@@ -447,13 +456,13 @@ func transferDeposit(positionId uint64, owner, caller, to std.Address) error {
 //   - Position must be staked (have a deposit record)
 //
 // Parameters:
-//   - positionId (uint64): The ID of the LP token to collect rewards from
-//   - unwrapResult (bool): Whether to unwrap WUGNOT to GNOT
+// CollectReward claims accumulated rewards without unstaking.
 //
-// Returns:
-//   - poolPath (string): The path of the pool to which the LP token is staked
+// Parameters:
+//   - positionId: LP position NFT token ID
+//   - unwrapResult: if true, unwraps WUGNOT to GNOT
 //
-// ref: https://docs.gnoswap.io/contracts/staker/staker.gno#collectreward
+// Returns poolPath, gnsAmount, externalRewards map, externalPenalties map.
 func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, string, map[string]int64, map[string]int64) {
 	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedStaker()
@@ -619,31 +628,25 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 // UnStakeToken withdraws an LP token from staking, collecting all pending rewards
 // and returning the token to its original owner.
 //
-// State transitions:
-//  1. All pending rewards are collected (calls CollectReward)
-//  2. Token ownership transfers back to original owner
-//  3. Position operator is cleared
-//  4. All staking state is cleaned up:
-//     - Deposit record removed
-//     - Position GNS balances cleared
-//     - Warm-up amounts cleared
-//     - Position removed from reward tracking
+// Parameters:
+//   - positionId: LP position NFT token ID to unstake
+//   - unwrapResult: Convert WUGNOT to GNOT if true
 //
-// Requirements:
-// - Contract must not be halted
-// - Position must be staked (have deposit record)
-// - Rewards are automatically collected before unStaking
-//
-// Params:
-// - positionId (uint64): ID of the staked LP token
-// - unwrapResult (bool): If true, unwraps any WUGNOT rewards to GNOT
+// Process:
+//  1. Collects all pending rewards (GNS + external)
+//  2. Transfers NFT ownership back to original owner
+//  3. Clears position operator rights
+//  4. Removes from reward tracking systems
+//  5. Cleans up all staking metadata
 //
 // Returns:
-// - poolPath (string): The pool path associated with the unstaked position
-// - token0Amount (string): Final amount of token0 in the position
-// - token1Amount (string): Final amount of token1 in the position
+//   - poolPath: Pool identifier where position was staked
+//   - token0Amount: Current token0 balance in position
+//   - token1Amount: Current token1 balance in position
 //
-// ref: https://docs.gnoswap.io/contracts/staker/staker.gno#unstaketoken
+// Requirements:
+//   - Caller must be the depositor
+//   - Position must be currently staked
 func UnStakeToken(cur realm, positionId uint64, unwrapResult bool) (string, string, string) { // poolPath, token0Amount, token1Amount
 	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedStaker()

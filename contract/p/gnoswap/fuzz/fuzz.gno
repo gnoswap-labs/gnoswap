@@ -1,3 +1,6 @@
+// Package fuzz provides property-based testing utilities for generating random test data.
+// It supports various data types including integers, strings, and 256-bit numbers,
+// with configurable ranges and boundary value testing.
 package fuzz
 
 import (
@@ -19,16 +22,18 @@ const (
 	MAX_UINT128 string = "340282366920938463463374607431768211455"
 )
 
+// Generator is the interface that wraps the basic Generate method.
+// Implementations return randomly generated values of their specific type.
 type Generator interface {
 	Generate() any
 }
 
-// seedCounter is a simple counter to ensure different seeds
-// We use a function-scoped approach to avoid realm modification issues
+// seedCounter ensures different seeds for each generator instance.
+// We use a function-scoped approach to avoid realm modification issues.
 var seedCounter uint64
 
-// getNextSeed returns a new seed value for RNG initialization
-// Uses a combination of counter and current time to ensure uniqueness
+// getNextSeed returns a new seed value for RNG initialization.
+// It uses a counter with a prime multiplier to ensure uniqueness.
 func getNextSeed() uint64 {
 	// Increment counter and combine with time for uniqueness
 	seedCounter++
@@ -36,6 +41,7 @@ func getNextSeed() uint64 {
 	return seedCounter * 2654435761
 }
 
+// initRNG initializes the random number generator if not already initialized.
 func initRNG(rng **xs.Xorshift64Star) {
 	if *rng == nil {
 		// Use entropy-based seed to avoid realm issues
@@ -50,11 +56,14 @@ var (
 	_ Generator = (*NumberStringGenerator)(nil)
 )
 
+// IntGenerator generates random integers within a specified range.
+// The zero value generates full int32 range values.
 type IntGenerator struct {
 	min, max int
 	rng      *xs.Xorshift64Star
 }
 
+// Generate returns a random integer within the generator's range.
 func (g *IntGenerator) Generate() any {
 	initRNG(&g.rng)
 	if g.min == 0 && g.max == 0 {
@@ -64,6 +73,7 @@ func (g *IntGenerator) Generate() any {
 	return int(g.rng.Uint64()%size) + g.min
 }
 
+// IntRange creates an IntGenerator that produces values between min and max inclusive.
 func IntRange(min, max int) Generator {
 	return &IntGenerator{
 		min: min,
@@ -72,7 +82,7 @@ func IntRange(min, max int) Generator {
 	}
 }
 
-// IntRangeWithSeed creates an IntGenerator with a specific seed
+// IntRangeWithSeed creates an IntGenerator with the specified seed for reproducible generation.
 func IntRangeWithSeed(min, max int, seed uint64) Generator {
 	return &IntGenerator{
 		min: min,
@@ -81,11 +91,14 @@ func IntRangeWithSeed(min, max int, seed uint64) Generator {
 	}
 }
 
+// Uint32Generator generates random uint32 values within a specified range.
+// The zero value generates full uint32 range values.
 type Uint32Generator struct {
 	min, max uint32
 	rng      *xs.Xorshift64Star
 }
 
+// Generate returns a random uint32 within the generator's range.
 func (g *Uint32Generator) Generate() any {
 	initRNG(&g.rng)
 	if g.min == 0 && g.max == 0 {
@@ -95,6 +108,7 @@ func (g *Uint32Generator) Generate() any {
 	return uint32(g.rng.Uint64()%size) + g.min
 }
 
+// Uint32Range creates a Uint32Generator that produces values between min and max inclusive.
 func Uint32Range(min, max uint32) Generator {
 	return &Uint32Generator{
 		min: min,
@@ -103,7 +117,7 @@ func Uint32Range(min, max uint32) Generator {
 	}
 }
 
-// Uint32RangeWithSeed creates a Uint32Generator with a specific seed
+// Uint32RangeWithSeed creates a Uint32Generator with the specified seed for reproducible generation.
 func Uint32RangeWithSeed(min, max uint32, seed uint64) Generator {
 	return &Uint32Generator{
 		min: min,
@@ -112,33 +126,39 @@ func Uint32RangeWithSeed(min, max uint32, seed uint64) Generator {
 	}
 }
 
+// Uint32 creates a Uint32Generator that produces values between 0 and 100.
 func Uint32() Generator {
 	return Uint32Range(0, 100)
 }
 
+// BoolGenerator generates random boolean values.
 type BoolGenerator struct {
 	rng *xs.Xorshift64Star
 }
 
+// Generate returns a random boolean value.
 func (g *BoolGenerator) Generate() any {
 	initRNG(&g.rng)
 	return g.rng.Uint64()%2 == 0
 }
 
+// Bool creates a BoolGenerator that produces random boolean values.
 func Bool() Generator {
 	return &BoolGenerator{rng: nil} // Will be initialized on first use
 }
 
-// BoolWithSeed creates a BoolGenerator with a specific seed
+// BoolWithSeed creates a BoolGenerator with the specified seed for reproducible generation.
 func BoolWithSeed(seed uint64) Generator {
 	return &BoolGenerator{rng: xs.New(seed)}
 }
 
+// StringGenerator generates random ASCII strings within a specified length range.
 type StringGenerator struct {
 	minLen, maxLen int
 	rng            *xs.Xorshift64Star
 }
 
+// Generate returns a random ASCII string within the generator's length range.
 func (g *StringGenerator) Generate() interface{} {
 	initRNG(&g.rng)
 	if g.maxLen == 0 {
@@ -153,7 +173,7 @@ func (g *StringGenerator) Generate() interface{} {
 	return string(result)
 }
 
-// StringWithSeed creates a StringGenerator with a specific seed
+// StringWithSeed creates a StringGenerator with the specified seed for reproducible generation.
 func StringWithSeed(minLen, maxLen int, seed uint64) Generator {
 	return &StringGenerator{
 		minLen: minLen,
@@ -162,12 +182,14 @@ func StringWithSeed(minLen, maxLen int, seed uint64) Generator {
 	}
 }
 
+// NumberStringGenerator generates numeric strings in various bases (binary, octal, decimal, hex).
 type NumberStringGenerator struct {
 	min, max  int64
 	baseTypes []int
 	rng       *xs.Xorshift64Star
 }
 
+// Generate returns a numeric string in a random base format (binary, octal, decimal, or hexadecimal).
 func (g *NumberStringGenerator) Generate() any {
 	initRNG(&g.rng)
 
@@ -197,6 +219,7 @@ func (g *NumberStringGenerator) Generate() any {
 	}
 }
 
+// NumberString creates a NumberStringGenerator with default range (0-1000000) and all base formats.
 func NumberString() Generator {
 	return &NumberStringGenerator{
 		min:       0,
@@ -206,6 +229,7 @@ func NumberString() Generator {
 	}
 }
 
+// NumberStringRange creates a NumberStringGenerator with the specified range and base formats.
 func NumberStringRange(min, max int64, bases ...int) Generator {
 	if len(bases) == 0 {
 		bases = []int{2, 8, 10, 16}
@@ -218,19 +242,21 @@ func NumberStringRange(min, max int64, bases ...int) Generator {
 	}
 }
 
-// Config controls fuzzing parameters
+// Config controls fuzzing parameters for property-based testing.
 type Config struct {
 	Iterations int
 	Shrink     bool
 	Seed       uint64 // Optional: if provided, uses this seed for reproducibility
 }
 
+// Result contains the outcome of a fuzzing run.
 type Result struct {
 	Failed       bool
 	FailingInput any
 	Iterations   int
 }
 
+// abs returns the absolute value of x.
 func abs(x int) int {
 	if x < 0 {
 		return -x
@@ -238,6 +264,7 @@ func abs(x int) int {
 	return x
 }
 
+// shrinkInt attempts to find a simpler failing input through iterative shrinking.
 func shrinkInt(property func(int) bool, failingInput int) int {
 	current := failingInput
 	for attempt := 0; attempt < 100; attempt++ {
@@ -251,6 +278,8 @@ func shrinkInt(property func(int) bool, failingInput int) int {
 	return current
 }
 
+// GenerateBoundary returns boundary values for the specified type.
+// Supported types: "int", "uint", "string", "numberString", "slice".
 func GenerateBoundary(vt string) []any {
 	switch vt {
 	case "int":
@@ -288,6 +317,7 @@ func GenerateBoundary(vt string) []any {
 	return nil
 }
 
+// generateLongString creates a string of 'a' characters with the specified length.
 func generateLongString(n int) string {
 	b := make([]byte, n)
 	for i := range b {
@@ -296,6 +326,7 @@ func generateLongString(n int) string {
 	return string(b)
 }
 
+// generateUnicodeString creates a string containing various Unicode characters including Greek, CJK, and emoji.
 func generateUnicodeString() string {
 	runes := []rune{'α', 'β', 'γ', '漢', '字', '🌟'}
 	result := ""
@@ -307,6 +338,7 @@ func generateUnicodeString() string {
 	return result
 }
 
+// generateLargeSlice creates a slice of n random integers between 0 and 99.
 func generateLargeSlice(n int) []int {
 	slice := make([]int, n)
 	for i := 0; i < n; i++ {
@@ -315,13 +347,14 @@ func generateLargeSlice(n int) []int {
 	return slice
 }
 
-// Uint256Generator generates various uint256 values for testing
+// Uint256Generator generates random uint256 values for testing.
 type Uint256Generator struct {
 	allowZero bool
 	maxBits   uint
 	seedMgr   *SeedManager
 }
 
+// NewUint256Generator creates a new Uint256Generator with the specified zero-allowance and bit constraints.
 func NewUint256Generator(allowZero bool, maxBits uint) *Uint256Generator {
 	return &Uint256Generator{
 		allowZero: allowZero,
@@ -330,6 +363,8 @@ func NewUint256Generator(allowZero bool, maxBits uint) *Uint256Generator {
 	}
 }
 
+// Generate returns a random uint256 value according to the generator's constraints.
+// Returns special values (zero, one, MAX_UINT128, MAX_INT128, MAX_UINT64) or random values within maxBits.
 func (g *Uint256Generator) Generate() any {
 	if g.seedMgr == nil {
 		g.seedMgr = NewSeedManager()
@@ -367,7 +402,7 @@ func (g *Uint256Generator) Generate() any {
 	return val
 }
 
-// Int256Generator generates various int256 values for testing
+// Int256Generator generates random int256 values for testing.
 type Int256Generator struct {
 	allowZero     bool
 	allowNegative bool
@@ -375,6 +410,7 @@ type Int256Generator struct {
 	seedMgr       *SeedManager
 }
 
+// NewInt256Generator creates a new Int256Generator with the specified zero, negative, and bit constraints.
 func NewInt256Generator(allowZero bool, allowNegative bool, maxBits uint) *Int256Generator {
 	return &Int256Generator{
 		allowZero:     allowZero,
@@ -384,6 +420,8 @@ func NewInt256Generator(allowZero bool, allowNegative bool, maxBits uint) *Int25
 	}
 }
 
+// Generate returns a random int256 value according to the generator's constraints.
+// Returns special values or random positive/negative values within maxBits range.
 func (g *Int256Generator) Generate() any {
 	if g.seedMgr == nil {
 		g.seedMgr = NewSeedManager()
@@ -423,11 +461,15 @@ func (g *Int256Generator) Generate() any {
 	return val
 }
 
+// FuzzWithConfig runs property-based testing with the specified configuration.
+// Note: config.Seed is ignored as entropy-based seeding is used.
 func FuzzWithConfig(config Config, property func(int) bool) *Result {
 	// Note: config.Seed is ignored as we use entropy-based seeding
 	return FuzzWithConfigAndGen(config, &IntGenerator{rng: nil}, property)
 }
 
+// FuzzWithConfigAndGen runs property-based testing with a custom generator and configuration.
+// Returns a Result containing test outcome, failing input (if any), and iteration count.
 func FuzzWithConfigAndGen(config Config, gen Generator, property func(int) bool) *Result {
 	result := &Result{}
 	iterations := config.Iterations
@@ -455,6 +497,8 @@ func FuzzWithConfigAndGen(config Config, gen Generator, property func(int) bool)
 	return result
 }
 
+// Fuzz runs property-based testing on the given property function.
+// Supports func(int) bool and func(string) bool property types. Returns error on property violation.
 func Fuzz(property interface{}) error {
 	if fn, ok := property.(func(int) bool); ok {
 		return FuzzWithGen(IntRange(0, 1000), fn)
@@ -465,6 +509,7 @@ func Fuzz(property interface{}) error {
 	return errors.New("unsupported property type")
 }
 
+// fuzzString runs property-based testing for string properties with 100 iterations.
 func fuzzString(fn func(string) bool) error {
 	gen := &StringGenerator{rng: nil} // Will be initialized on first use
 	for i := 0; i < 100; i++ {
@@ -475,6 +520,7 @@ func fuzzString(fn func(string) bool) error {
 	return nil
 }
 
+// FuzzWithGen runs property-based testing using a custom generator with 100 iterations.
 func FuzzWithGen(gen Generator, property func(int) bool) error {
 	for i := 0; i < 100; i++ {
 		value := gen.Generate().(int)
@@ -485,6 +531,8 @@ func FuzzWithGen(gen Generator, property func(int) bool) error {
 	return nil
 }
 
+// FuzzN runs property-based testing with multiple parameters.
+// Currently supports func(int, int) bool property type with 100 iterations per test.
 func FuzzN(property interface{}) error {
 	if fn, ok := property.(func(int, int) bool); ok {
 		gen := &IntGenerator{rng: nil} // Will be initialized on first use

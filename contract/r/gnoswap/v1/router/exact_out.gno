@@ -13,11 +13,13 @@ import (
 	"gno.land/r/gnoswap/referral"
 )
 
+// ExactOutSwapOperation handles swaps where the output amount is specified.
 type ExactOutSwapOperation struct {
 	baseSwapOperation
 	params ExactOutParams
 }
 
+// NewExactOutSwapOperation creates a new exact-out swap operation.
 func NewExactOutSwapOperation(pp ExactOutParams) *ExactOutSwapOperation {
 	return &ExactOutSwapOperation{
 		params: pp,
@@ -27,8 +29,31 @@ func NewExactOutSwapOperation(pp ExactOutParams) *ExactOutSwapOperation {
 	}
 }
 
-// ExactOutSwapRoute is a function that performs an exact-out swap operation.
-// exact-out swap means that the user wants to swap an exact amount of output tokens for input tokens.
+// ExactOutSwapRoute swaps tokens for an exact output amount.
+//
+// Executes swap to receive exact output tokens.
+// Calculates required input working backwards through route.
+// Useful for buying specific amounts regardless of price.
+//
+// Parameters:
+//   - inputToken, outputToken: Token contract paths
+//   - amountOut: Exact output amount desired
+//   - routeArr: Swap route "TOKEN0:TOKEN1:FEE,TOKEN1:TOKEN2:FEE" (max 7 hops)
+//   - quoteArr: Split percentages "70,30" (must sum to 100)
+//   - amountInMax: Maximum input to spend (slippage protection)
+//   - deadline: Unix timestamp for expiration
+//   - referrer: Optional referral address
+//
+// Route calculation:
+//   - Works backwards from output to input
+//   - Each hop increases required input
+//   - Multi-path aggregates total input
+//
+// Returns:
+//   - amountIn: Actual input consumed
+//   - amountOut: Exact output received
+//
+// Reverts if input > amountInMax or deadline passed.
 func ExactOutSwapRoute(
 	cur realm,
 	inputToken string,
@@ -104,6 +129,7 @@ func ExactOutSwapRoute(
 	return inputAmount, outputAmount
 }
 
+// Validate ensures the exact-out swap parameters are valid.
 func (op *ExactOutSwapOperation) Validate() error {
 	amountOut := i256.MustFromDecimal(op.params.AmountOut)
 	if amountOut.IsZero() || amountOut.IsNeg() {
@@ -125,6 +151,7 @@ func (op *ExactOutSwapOperation) Validate() error {
 	return nil
 }
 
+// Process executes the exact-out swap operation.
 func (op *ExactOutSwapOperation) Process() (*SwapResult, error) {
 	if err := op.handleNativeTokenWrapping(); err != nil {
 		return nil, err
@@ -145,6 +172,7 @@ func (op *ExactOutSwapOperation) Process() (*SwapResult, error) {
 	}, nil
 }
 
+// handleNativeTokenWrapping manages native token wrapping for exact-out swaps.
 func (op *ExactOutSwapOperation) handleNativeTokenWrapping() error {
 	return op.baseSwapOperation.handleNativeTokenWrapping(
 		op.params.InputToken,

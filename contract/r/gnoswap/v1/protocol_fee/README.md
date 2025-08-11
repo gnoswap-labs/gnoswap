@@ -1,54 +1,57 @@
 # Protocol Fee
 
-The Protocol Fee Contract manages fees collected from various platform interactions, ensuring proper distribution to $xGNS holders. This contract encompasses fees from swaps, pool creations, liquidity withdrawals, and staking reward claims.
+Fee collection and distribution for protocol operations.
 
 ## Overview
 
-The Protocol Fee Contract is integral to GnoSwap's revenue model, collecting fees from key operations and distributing them to $xGNS holders. This mechanism incentivizes staking and supports the platform's sustainability.
+Protocol Fee contract collects fees from various protocol operations and distributes them to xGNS holders and DevOps.
 
-## Key Components
+## Configuration
 
-### Swap Fee (`protocol_fee_swap.gno`)
+- **Router Fee**: 0.15% of swap amount
+- **Pool Creation Fee**: 100 GNS
+- **Withdrawal Fee**: 1% of LP fees claimed
+- **Unstaking Fee**: 1% of staking rewards
+- **Distribution**: 100% to xGNS holders (default)
 
-- **GetSwapFee**: Retrieves the current swap fee rate.
-- **SetSwapFee**: Allows authorized entities to modify the swap fee rate.
+## Fee Sources
 
-The default swap fee is set to **0.15%** of the total swap amount.
+1. **Swaps**: 0.15% fee on all trades
+2. **Pool Creation**: 100 GNS per new pool
+3. **LP Withdrawals**: 1% of collected fees
+4. **Staking Claims**: 1% of rewards
 
-### Pool Creation Fee (`protocol_fee_pool_creation.gno`)
+## Key Functions
 
-- **GetPoolCreationFee**: Returns the current pool creation fee.
-- **SetPoolCreationFee**: Enables authorized entities to adjust the pool creation fee.
+### `DistributeProtocolFee`
+Distributes accumulated fees to recipients.
 
-The standard pool creation fee is **100 GNS**.
+### `SetDevOpsPct`
+Sets DevOps funding percentage.
 
-### Withdrawal Fee (`protocol_fee_withdrawal.gno`)
+### `SetGovStakerPct`
+Sets xGNS holder percentage.
 
-- **GetWithdrawalFee**: Fetches the current withdrawal fee rate.
-- **SetWithdrawalFee**: Permits authorized entities to change the withdrawal fee rate.
-- **HandleWithdrawalFee**: Calculates and processes the fee during liquidity withdrawal.
+### `AddToProtocolFee`
+Adds fees to distribution queue.
 
-The default withdrawal fee is **1%** of the liquidity provider's claimed fees.
+## Usage
 
-### Unstaking Fee (`protocol_fee_unstaking.gno`)
+```go
+// Distribute accumulated fees
+tokenAmounts := DistributeProtocolFee()
 
-- **GetUnstakingFee**: Obtains the current unstaking fee rate.
-- **SetUnstakingFee**: Allows authorized entities to set a new unstaking fee rate.
+// Configure distribution
+SetDevOpsPct(2000)     // 20% to DevOps
+SetGovStakerPct(8000)  // 80% to xGNS holders
 
-The default unstaking fee is **1%** of the staking rewards claimed.
+// View accumulated fees
+GetProtocolFee(tokenPath)
+```
 
-## Interaction Flow
+## Security
 
-1. **Swaps**: Users execute token swaps, incurring a **0.15%** fee on the total swap amount.
-2. **Pool Creation**: users create new liquidity pools, paying a **100 GNS** fee.
-3. **Liquidity Withdrawal**: Liquidity providers withdraw their positions, with **1%** of the claimed fees deducted as a withdrawal fee.
-4. **Staking Reward Claims**: Stakers claim their rewards, incurring a **1%** unstaking fee on the claimed amount.
-
-All collected fees are directed to the Protocol Fee Contract and subsequently distributed to $xGNS holders.
-
-## Important Notes for Participants
-
-- **Fee Awareness**: Users should be aware of the applicable fees for swaps, pool creations, liquidity withdrawals, and staking reward claims.
-- **Staking Incentives**: Holding $xGNS entitles users to a share of the protocol fees, promoting active participation in governance and staking.
-
-For more detailed information, please refer to the [GnoSwap xGNS Documentation](https://docs.gnoswap.io/gnoswap-token/xgns).
+- Admin-only configuration changes
+- Automatic fee accumulation
+- Multi-token support
+- Transparent distribution tracking

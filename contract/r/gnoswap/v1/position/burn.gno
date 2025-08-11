@@ -10,14 +10,13 @@ import (
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
-// decreaseLiquidity reduces the liquidity of a given position and collects the corresponding tokens.
-// If unwrapResult is true and the position involves WUGNOT, any leftover WUGNOT will be
-// unwrapped to GNOT at the end of the operation.
-// Returns position ID, liquidity, fee0, fee1, amount0, amount1, poolPath
+// decreaseLiquidity reduces position liquidity and collects fees.
+// If unwrapResult is true, unwraps WUGNOT to GNOT.
+// Returns positionId, liquidity, fee0, fee1, amount0, amount1, poolPath.
 func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, string, string, string, string, error) {
 	caller := params.caller
 
-	// BEFORE DECREASE LIQUIDITY, COLLECT FEE FIRST
+	// before decrease liquidity, collect fee first
 	_, fee0Str, fee1Str, _, _, _ := collectFee(params.positionId, params.unwrapResult, params.caller)
 
 	position := MustGetPosition(params.positionId)

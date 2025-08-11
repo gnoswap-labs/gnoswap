@@ -11,6 +11,7 @@ import (
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
+// assertIsValidAmount ensures the amount is non-negative.
 func assertIsValidAmount(amount int64) {
 	if amount < 0 {
 		panic(makeErrorWithDetails(
@@ -20,12 +21,7 @@ func assertIsValidAmount(amount int64) {
 	}
 }
 
-// assertIsValidRewardAmountFormat checks if the reward amount string is in the correct format.
-// It expects the parameter `rewardAmountStr` to be formatted as "tokenPath:amount".
-//
-// Parameters:
-//   - rewardAmountStr (string): A string containing the token path and minimum amount, separated by a colon.
-//     Example: "gno.land/r/demo/wugnot:1500000000"
+// assertIsValidRewardAmountFormat ensures the reward amount string is formatted as "tokenPath:amount".
 func assertIsValidRewardAmountFormat(rewardAmountStr string) {
 	parts := strings.SplitN(rewardAmountStr, ":", 2)
 	if len(parts) != 2 {
@@ -36,6 +32,7 @@ func assertIsValidRewardAmountFormat(rewardAmountStr string) {
 	}
 }
 
+// assertIsDepositor ensures the caller is the owner of the deposit.
 func assertIsDepositor(caller std.Address, positionId uint64) {
 	deposit := deposits.get(positionId)
 	if deposit == nil {
@@ -53,6 +50,7 @@ func assertIsDepositor(caller std.Address, positionId uint64) {
 	}
 }
 
+// assertIsNotStaked ensures the position is not already staked.
 func assertIsNotStaked(positionId uint64) {
 	if deposits.Has(positionId) {
 		panic(makeErrorWithDetails(
@@ -62,6 +60,7 @@ func assertIsNotStaked(positionId uint64) {
 	}
 }
 
+// assertIsPositionOwner ensures the caller owns the position NFT.
 func assertIsPositionOwner(positionId uint64, caller std.Address) {
 	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
 	if owner != caller {
@@ -72,6 +71,7 @@ func assertIsPositionOwner(positionId uint64, caller std.Address) {
 	}
 }
 
+// assertIsPoolExists ensures the pool exists.
 func assertIsPoolExists(poolPath string) {
 	if !pl.ExistsPoolPath(poolPath) {
 		panic(makeErrorWithDetails(
@@ -81,6 +81,7 @@ func assertIsPoolExists(poolPath string) {
 	}
 }
 
+// assertIsValidPoolTier ensures the tier is within valid range.
 func assertIsValidPoolTier(tier uint64) {
 	if tier >= AllTierCount {
 		panic(makeErrorWithDetails(
@@ -90,6 +91,7 @@ func assertIsValidPoolTier(tier uint64) {
 	}
 }
 
+// assertIsGreaterThanMinimumRewardAmount ensures the reward amount meets minimum requirements.
 func assertIsGreaterThanMinimumRewardAmount(rewardToken string, rewardAmount int64) {
 	minReward := GetMinimumRewardAmountForToken(rewardToken)
 	if rewardAmount < minReward {
@@ -100,6 +102,7 @@ func assertIsGreaterThanMinimumRewardAmount(rewardToken string, rewardAmount int
 	}
 }
 
+// assertIsAllowedForExternalReward ensures the token is allowed for external rewards.
 func assertIsAllowedForExternalReward(poolPath, tokenPath string) {
 	token0, token1, _ := poolPathDivide(poolPath)
 
@@ -118,13 +121,7 @@ func assertIsAllowedForExternalReward(poolPath, tokenPath string) {
 	))
 }
 
-// assertIsValidFeeRate checks if the fee is a valid percentage value.
-// It expects the parameter `fee` to be a percentage value between 0 and 10000.
-//
-// Parameters:
-//   - fee (int64): A percentage value between 0 and 10000.
-//
-// Returns:
+// assertIsValidFeeRate ensures the fee rate is within valid range (0-10000 basis points).
 func assertIsValidFeeRate(fee int64) {
 	if fee < 0 || fee > 10000 {
 		panic(makeErrorWithDetails(
@@ -134,15 +131,7 @@ func assertIsValidFeeRate(fee int64) {
 	}
 }
 
-// assertIsValidIncentiveStartTime checks whether the current time meets the conditions for generating an
-// external rewards. Since the earliest time this reward can be generated is from
-// midnight of the next day, it uses a timestamp to verify this timing.
-//
-// Parameters:
-//   - startTimestamp (int64): A timestamp in seconds format.
-//
-// Returns:
-//   - nil: If the startTimestamp is valid.
+// assertIsValidIncentiveStartTime ensures the incentive starts at midnight of a future date.
 func assertIsValidIncentiveStartTime(startTimestamp int64) {
 	// must be in seconds format, not milliseconds
 	// REF: https://stackoverflow.com/a/23982005
@@ -174,7 +163,7 @@ func assertIsValidIncentiveStartTime(startTimestamp int64) {
 	}
 }
 
-// endTimestamp cannot be later than 253402300799 (9999-12-31 23:59:59)
+// assertIsValidIncentiveEndTime ensures the end timestamp is within valid epoch range.
 func assertIsValidIncentiveEndTime(endTimestamp int64) {
 	if endTimestamp >= MAX_UNIX_EPOCH_TIME {
 		panic(makeErrorWithDetails(
@@ -184,6 +173,7 @@ func assertIsValidIncentiveEndTime(endTimestamp int64) {
 	}
 }
 
+// assertIsValidIncentiveDuration ensures the duration is 90, 180, or 365 days.
 func assertIsValidIncentiveDuration(externalDuration int64) {
 	switch externalDuration {
 	case TIMESTAMP_90DAYS, TIMESTAMP_180DAYS, TIMESTAMP_365DAYS:
@@ -196,6 +186,7 @@ func assertIsValidIncentiveDuration(externalDuration int64) {
 	))
 }
 
+// isMidnight checks if a time represents midnight (00:00:00).
 func isMidnight(startTime time.Time) bool {
 	hour := startTime.Hour()
 	minute := startTime.Minute()

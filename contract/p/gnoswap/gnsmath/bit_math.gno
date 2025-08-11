@@ -28,13 +28,15 @@ var (
 	}
 )
 
+// bitShift represents a bit pattern and corresponding shift amount for bit manipulation.
 type bitShift struct {
 	bitPattern *u256.Uint
 	shift      uint
 }
 
-// BitMathMostSignificantBit finds the highest set bit (0-based) in x.
-// If x == 0, it panics.
+// BitMathMostSignificantBit returns the 0-based position of the most significant bit in x.
+// This function is essential for AMM calculations involving price ranges and tick boundaries.
+// Panics if x is zero.
 func BitMathMostSignificantBit(x *u256.Uint) uint8 {
 	if x.IsZero() {
 		panic(errMSBZeroInput)
@@ -53,8 +55,9 @@ func BitMathMostSignificantBit(x *u256.Uint) uint8 {
 	return r
 }
 
-// BitMathLeastSignificantBit finds the lowest set bit (0-based) in x.
-// If x == 0, it panics.
+// BitMathLeastSignificantBit returns the 0-based position of the least significant bit in x.
+// This function is used in AMM calculations for efficient bit manipulation and range queries.
+// Panics if x is zero.
 func BitMathLeastSignificantBit(x *u256.Uint) uint8 {
 	if x.IsZero() {
 		panic(errLSBZeroInput)

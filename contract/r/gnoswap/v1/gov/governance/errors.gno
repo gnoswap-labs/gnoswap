@@ -31,6 +31,7 @@ var (
 	errNotProposer                                    = errors.New("[GNOSWAP-GOVERNANCE-022] not proposer")
 )
 
+// makeErrorWithDetails creates an error with additional context.
 func makeErrorWithDetails(err error, detail string) error {
 	return ufmt.Errorf("%s || %s", err.Error(), detail)
 }

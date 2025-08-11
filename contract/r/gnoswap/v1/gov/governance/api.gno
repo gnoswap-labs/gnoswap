@@ -69,7 +69,7 @@ func GetVoteByAddressFromProposalById(addr std.Address, id int64) string {
 	return marshal(votesObj)
 }
 
-// helper function for GetProposals and GetProposalById
+// getProposalById is a helper function for GetProposals and GetProposalById.
 func getProposalById(id int64) *json.Node {
 	proposal := mustGetProposal(id)
 	return createProposalJsonNode(id, proposal)
@@ -85,7 +85,7 @@ func createVoteJsonNode(addr std.Address, id int64, vote *VotingInfo) *json.Node
 		Node()
 }
 
-// getProposalExtraData returns the extra data of a proposal based on its type.
+// getProposalExtraData returns extra data of a proposal based on its type.
 func getProposalExtraData(proposalId int64) string {
 	proposal, exist := getProposal(proposalId)
 	if !exist {
@@ -104,10 +104,7 @@ func getProposalExtraData(proposalId int64) string {
 	return ""
 }
 
-// community pool has three extra data
-// 1. to
-// 2. tokenPath
-// 3. amount
+// getCommunityPoolSpendProposalData returns community pool spending proposal data including recipient address, token path, and amount.
 func getCommunityPoolSpendProposalData(proposalId int64) string {
 	proposal := mustGetProposal(proposalId)
 	spend := proposal.data.CommunityPoolSpend()
@@ -121,7 +118,7 @@ func getCommunityPoolSpendProposalData(proposalId int64) string {
 	return marshal(proposalObj)
 }
 
-// parameter change proposal has three extra data
+// getParameterChangeProposalData returns parameter change proposal data as a joined string of messages.
 func getParameterChangeProposalData(proposalId int64) string {
 	proposal := mustGetProposal(proposalId)
 
@@ -131,7 +128,7 @@ func getParameterChangeProposalData(proposalId int64) string {
 	return msgsStr
 }
 
-// getProposalStatus returns the status of a proposal.
+// getProposalStatus returns status of a proposal.
 func getProposalStatus(id int64) string {
 	proposal, exist := getProposal(id)
 	if !exist {
@@ -168,7 +165,7 @@ func getProposalStatus(id int64) string {
 	return marshal(node.Node())
 }
 
-// getProposalVotes returns the votes of a proposal.
+// getProposalVotes returns votes of a proposal.
 func getProposalVotes(id int64) string {
 	proposal, exist := getProposal(id)
 	if !exist {

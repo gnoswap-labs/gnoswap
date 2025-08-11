@@ -1,44 +1,103 @@
-# GnoSwap Governance
+# Governance
 
-The GnoSwap governance contract allows $GNS holders to participate in protocol decision-making through staking, delegation, proposal creation, and voting. By staking GNS, users receive xGNS, which represents voting power and enables them to propose and vote on governance changes. Additionally, xGNS holders earn a share of [protocol fees](../protocol_fee/README.md), providing an incentive for active participation. The governance system is designed to be transparent, decentralized, and fully on-chain.
+Decentralized protocol governance via GNS staking and voting.
 
 ## Overview
 
-The governance system comprises several key realms:
+Governance system enables GNS holders to stake for xGNS voting power, create proposals, and vote on protocol changes. For more details, check out [docs](https://docs.gnoswap.io/core-concepts/governance).
 
-- **Staker Realm (`staker.gno`)**: Manages staking, delegation, and reward collection.
-- **Proposal Realm (`proposal.gno`)**: Facilitates the creation and management of governance proposals.
-- **Vote Realm (`vote.gno`)**: Oversees the voting process on active proposals.
+## Configuration
 
-## Key Components
+- **Voting Period**: 7 days
+- **Quorum**: 50% of xGNS supply
+- **Proposal Threshold**: 1,000 GNS
+- **Execution Delay**: 1 day timelock
+- **Execution Window**: 30 days
+- **Undelegation Lockup**: 7 days
+- **Vote Weight Smoothing**: 24 hours
 
-### Staker Realm (`staker.gno`)
+## Core Mechanics
 
-- **Delegation Functions:**
-  - `Delegate(to std.Address, amount uint64)`: Delegate voting power to a specified address.
-  - `Redelegate(from std.Address, to std.Address, amount uint64)`: Reassign delegated voting power to a different delegate.
-  - `Undelegate(from std.Address, amount uint64)`: Retract delegated voting power.
+### Staking Flow
+```
+GNS → Stake → xGNS (voting power) → Delegate → Vote
+```
+1. Stake GNS to receive equal xGNS
+2. Delegate voting power (can be self)
+3. Vote on proposals with delegated power
+4. 7-day lockup for undelegation
 
-- **Reward Functions:**
-  - `CollectReward()`: Collect accumulated rewards based on delegated tokens.
-  - `CollectUndelegatedGns()`: Collect undelegated GNS tokens after a lock period (7 days).
+### Proposal Types
+- **Text**: Signal proposals without execution
+- **CommunityPoolSpend**: Treasury disbursements
+- **ParameterChange**: Protocol parameter updates
 
-### Proposal Realm (`proposal.gno`)
+## Proposal Lifecycle
 
-- **Proposal Creation**: Users can submit proposals suggesting protocol changes or new features. Each proposal includes parameters such as the proposal's content, the proposer’s address, and the submission timestamp.
+### Creation
+- Requires 1,000 GNS balance
+- One active proposal per address
+- Valid type and parameters required
 
-### Vote Realm (`vote.gno`)
+### Voting
+- 1 day delay before voting starts
+- 7 days voting period
+- Weight = 24hr average delegation (prevents flash loans)
 
-- **Voting Process**: Users cast their votes on active proposals during the voting period. The system records and tallies these votes to determine the outcome of each proposal.
+### Execution
+- Requires quorum (50%) and majority (>50%)
+- 1 day timelock after voting
+- 30 day execution window
+- Anyone can trigger execution
 
-## Interaction Flow
+## Technical Details
 
-1. **Staking & Delegation**: Users stake their $GNS tokens to receive xGNS, representing their voting power. They can delegate this voting power to themselves or other delegates.
+### Vote Weight Calculation
+```go
+// 24-hour average prevents manipulation
+snapshot1 = getDelegationAt(proposalTime - 24hr)
+snapshot2 = getDelegationAt(proposalTime)
+voteWeight = (snapshot1 + snapshot2) / 2
+```
 
-2. **Proposal Creation**: With sufficient GNS, users can create proposals suggesting protocol changes or new features.
+### Dynamic Quorum
+```go
+activeXGNS = totalXGNS - launchpadXGNS
+requiredVotes = activeXGNS * 0.5
+```
 
-3. **Voting**: During the voting period, xGNS holders cast their votes on active proposals. The outcome is determined based on the majority of votes and predefined quorum requirements.
+### Rewards Distribution
+xGNS holders earn protocol fees:
+```
+userShare = (userXGNS / totalXGNS) * protocolFees
+```
 
-4. **Execution**: Approved proposals are executed, implementing the proposed changes within the protocol.
+## Usage
 
-For more detailed information about the rationale behind the governance module, please refer to [GnopSwap Docs](https://docs.gnoswap.io/core-concepts/governance).
+```go
+// Stake GNS for xGNS
+Delegate(amount, delegateTo)
+
+// Create proposal
+ProposeText(title, description, body)
+ProposeCommunityPoolSpend(recipient, amount)
+ProposeParameterChange(params)
+
+// Vote on proposal
+Vote(proposalId, true)  // YES
+Vote(proposalId, false) // NO
+
+// Execute after timelock
+Execute(proposalId)
+
+// Undelegate (7-day lockup)
+Undelegate()
+```
+
+## Security
+
+- Flash loan protection via vote smoothing
+- Sybil resistance through stake weighting
+- Timelock prevents rushed execution
+- Single proposal limit per address
+- Dynamic quorum excludes inactive xGNS

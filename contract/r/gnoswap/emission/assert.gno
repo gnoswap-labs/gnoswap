@@ -4,7 +4,8 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-// assertValidDistributionTarget panics if the target is invalid.
+// assertValidDistributionTargets panics if any of the four distribution targets is invalid
+// or if there are duplicate targets. All four distribution targets must be unique and valid.
 func assertValidDistributionTargets(target01, target02, target03, target04 int) {
 	validTargets := map[int]bool{
 		LIQUIDITY_STAKER: false,
@@ -33,6 +34,7 @@ func assertValidDistributionTargets(target01, target02, target03, target04 int) 
 	}
 }
 
+// assertValidDistributionTarget panics if the given distribution target is invalid.
 func assertValidDistributionTarget(target int) {
 	validTargets := map[int]bool{
 		LIQUIDITY_STAKER: false,
@@ -49,7 +51,8 @@ func assertValidDistributionTarget(target int) {
 	}
 }
 
-// assertValidDistributionPct ensures the sum of all distribution percentages is 100%
+// assertValidDistributionPct ensures the sum of all distribution percentages equals 10000 (100%).
+// Panics if the sum does not equal exactly 10000 basis points.
 func assertValidDistributionPct(pct01, pct02, pct03, pct04 int64) {
 	sum := pct01 + pct02 + pct03 + pct04
 	if sum != 10000 {

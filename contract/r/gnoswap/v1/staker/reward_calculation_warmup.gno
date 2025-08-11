@@ -14,6 +14,8 @@ type Warmup struct {
 	WarmupRatio    uint64
 }
 
+// warmupTemplate defines the warmup periods for staking rewards.
+// These parameters can be modified through governance via SetWarmUp.
 var warmupTemplate []Warmup = DefaultWarmupTemplate()
 
 func DefaultWarmupTemplate() []Warmup {
