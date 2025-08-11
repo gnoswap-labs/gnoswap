@@ -174,6 +174,27 @@ func (z *Uint) DivMod(x, y, m *Uint) (*Uint, *Uint) {
 	if y.IsZero() {
 		return z.Clear(), m.Clear()
 	}
+
+	switch x.Cmp(y) {
+	case -1:
+		// x < y
+		return z.Clear(), m.Set(x)
+	case 0:
+		// x == y
+		return z.SetOne(), m.Clear()
+	}
+
+	// At this point:
+	// x != 0
+	// y != 0
+	// x > y
+
+	// Shortcut trivial case
+	if x.IsUint64() {
+		x0, y0 := x.Uint64(), y.Uint64()
+		return z.SetUint64(x0 / y0), m.SetUint64(x0 % y0)
+	}
+
 	var quot Uint
 	*m = udivrem(quot.arr[:], x.arr[:], y)
 	*z = quot
