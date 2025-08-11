@@ -3,6 +3,8 @@ package int256
 import (
 	"testing"
 
+	"gno.land/p/demo/ufmt"
+
 	"gno.land/p/gnoswap/uint256"
 )
 
@@ -26,6 +28,78 @@ func TestSetInt64(t *testing.T) {
 		if got != tc.want {
 			t.Errorf("SetInt64(%d) = %s, want %s", tc.x, got, tc.want)
 		}
+	}
+}
+
+func TestSetInt64MinValueOverflow(t *testing.T) {
+	const minInt64 = -9223372036854775808 // -2^63
+	const maxInt64 = 9223372036854775807  // 2^63 - 1
+
+	tests := []struct {
+		name string
+		x    int64
+		want string
+	}{
+		{
+			name: "MinInt64 should not cause overflow",
+			x:    minInt64,
+			want: "-9223372036854775808",
+		},
+		{
+			name: "MaxInt64 works correctly",
+			x:    maxInt64,
+			want: "9223372036854775807",
+		},
+		{
+			name: "MinInt64 + 1",
+			x:    minInt64 + 1,
+			want: "-9223372036854775807",
+		},
+		{
+			name: "Negative one",
+			x:    -1,
+			want: "-1",
+		},
+		{
+			name: "Zero",
+			x:    0,
+			want: "0",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var z Int
+			z.SetInt64(tc.x)
+
+			got := z.ToString()
+			if got != tc.want {
+				t.Errorf("SetInt64(%d) = %s, want %s", tc.x, got, tc.want)
+			}
+
+			// Verify the internal representation is correct
+			if tc.x < 0 {
+				if !z.neg {
+					t.Errorf("SetInt64(%d): expected neg=true, got neg=false", tc.x)
+				}
+				// Check magnitude for MinInt64
+				if tc.x == minInt64 {
+					expectedMag := uint64(1 << 63) // 2^63
+					gotMag := z.abs.Uint64()
+					if gotMag != expectedMag {
+						t.Errorf("SetInt64(%d): magnitude = %d, want %d", tc.x, gotMag, expectedMag)
+					}
+				}
+			} else if tc.x > 0 {
+				if z.neg {
+					t.Errorf("SetInt64(%d): expected neg=false, got neg=true", tc.x)
+				}
+			} else { // tc.x == 0
+				if z.neg {
+					t.Errorf("SetInt64(0): expected neg=false (no -0), got neg=true")
+				}
+			}
+		})
 	}
 }
 
@@ -102,6 +176,140 @@ func TestInt64(t *testing.T) {
 		if got != tc.want {
 			t.Errorf("Int64(%s) = %d, want %d", tc.x, got, tc.want)
 		}
+	}
+}
+
+func TestInt64EdgeCases(t *testing.T) {
+	const minInt64 = -9223372036854775808 // -2^63
+	const maxInt64 = 9223372036854775807  // 2^63 - 1
+
+	tests := []struct {
+		name        string
+		setupInt    func() *Int
+		want        int64
+		description string
+	}{
+		{
+			name: "MinInt64 from SetInt64",
+			setupInt: func() *Int {
+				z := new(Int)
+				return z.SetInt64(minInt64)
+			},
+			want:        minInt64,
+			description: "SetInt64(MinInt64) should round-trip correctly",
+		},
+		{
+			name: "MaxInt64 from SetInt64",
+			setupInt: func() *Int {
+				z := new(Int)
+				return z.SetInt64(maxInt64)
+			},
+			want:        maxInt64,
+			description: "SetInt64(MaxInt64) should round-trip correctly",
+		},
+		{
+			name: "Magnitude 2^63 with negative sign",
+			setupInt: func() *Int {
+				// Create Int with magnitude = 2^63 and neg = true
+				z := new(Int)
+				z.abs = uint256.NewUint(1 << 63)
+				z.neg = true
+				return z
+			},
+			want:        minInt64,
+			description: "Magnitude 2^63 with neg=true should return MinInt64",
+		},
+		{
+			name: "Magnitude 2^63 with positive sign",
+			setupInt: func() *Int {
+				// Create Int with magnitude = 2^63 and neg = false
+				z := new(Int)
+				z.abs = uint256.NewUint(1 << 63)
+				z.neg = false
+				return z
+			},
+			want:        minInt64, // Wraps around due to two's complement
+			description: "Magnitude 2^63 with neg=false wraps to MinInt64",
+		},
+		{
+			name: "Large positive value wrapping",
+			setupInt: func() *Int {
+				// 2^64 - 1 (max uint64)
+				z := new(Int)
+				z.abs = uint256.NewUint(18446744073709551615)
+				z.neg = false
+				return z
+			},
+			want:        -1,
+			description: "Max uint64 wraps to -1 in int64",
+		},
+		{
+			name: "Negative large value",
+			setupInt: func() *Int {
+				// -(2^64 - 1)
+				z := new(Int)
+				z.abs = uint256.NewUint(18446744073709551615)
+				z.neg = true
+				return z
+			},
+			want:        1,
+			description: "-(Max uint64) becomes 1 due to two's complement",
+		},
+		{
+			name: "Zero",
+			setupInt: func() *Int {
+				return Zero()
+			},
+			want:        0,
+			description: "Zero should return 0",
+		},
+		{
+			name: "Negative zero prevention",
+			setupInt: func() *Int {
+				z := new(Int)
+				z.abs = uint256.NewUint(0)
+				z.neg = true // This should be normalized to false
+				return z
+			},
+			want:        0,
+			description: "Negative zero should return 0",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			z := tc.setupInt()
+			got := z.Int64()
+
+			if got != tc.want {
+				t.Errorf("%s: got %d, want %d", tc.description, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestInt64RoundTrip verifies that SetInt64 and Int64 work correctly together
+func TestInt64RoundTrip(t *testing.T) {
+	// Test all interesting int64 values
+	values := []int64{
+		0, 1, -1,
+		127, -128, // int8 boundaries
+		32767, -32768, // int16 boundaries
+		2147483647, -2147483648, // int32 boundaries
+		9223372036854775807, -9223372036854775808, // int64 boundaries (MaxInt64, MinInt64)
+		1234567890, -1234567890,
+	}
+
+	for _, v := range values {
+		t.Run(ufmt.Sprintf("RoundTrip_%d", v), func(t *testing.T) {
+			z := new(Int)
+			z.SetInt64(v)
+
+			got := z.Int64()
+			if got != v {
+				t.Errorf("Round trip failed: SetInt64(%d).Int64() = %d", v, got)
+			}
+		})
 	}
 }
 
