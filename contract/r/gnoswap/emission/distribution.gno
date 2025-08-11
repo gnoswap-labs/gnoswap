@@ -72,12 +72,13 @@ func init() {
 //   - Targets must be unique (no duplicates)
 //
 // Example:
-//   ChangeDistributionPct(
-//     1, 7000,  // 70% to liquidity stakers
-//     2, 2000,  // 20% to devops
-//     3, 1000,  // 10% to community pool
-//     4, 0      // 0% to governance stakers
-//   )
+//
+//	ChangeDistributionPct(
+//	  1, 7000,  // 70% to liquidity stakers
+//	  2, 2000,  // 20% to devops
+//	  3, 1000,  // 10% to community pool
+//	  4, 0      // 0% to governance stakers
+//	)
 //
 // Only callable by admin or governance.
 func ChangeDistributionPct(
@@ -145,7 +146,6 @@ func distributeToTarget(amount int64) (int64, error) {
 		targetInt, distErr := strconv.Atoi(targetStr)
 		if distErr != nil {
 			err = distErr
-
 			return true
 		}
 
@@ -155,6 +155,12 @@ func distributeToTarget(amount int64) (int64, error) {
 		}
 
 		distAmount := calculateAmount(amount, pct)
+
+		// Skip zero amounts to avoid unnecessary transfers
+		if distAmount == 0 {
+			return false
+		}
+
 		totalSent += distAmount
 
 		distErr = transferToTarget(targetInt, distAmount)
@@ -176,9 +182,15 @@ func calculateAmount(amount, bptPct int64) int64 {
 		panic("invalid amount or bptPct")
 	}
 
-	// prevent multiplication overflow
-	if amount > 9223372036854775807/10000 {
-		panic("amount too large")
+	// More precise overflow prevention
+	const maxInt64 = 9223372036854775807
+	if amount > maxInt64/10000 {
+		panic("amount too large, would cause overflow")
+	}
+
+	// Additional safety check for zero division
+	if bptPct == 0 {
+		return 0
 	}
 
 	return amount * bptPct / 10000
@@ -347,7 +359,6 @@ func ClearDistributedToStaker(cur realm) {
 func ClearDistributedToGovStaker(cur realm) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsGovStaker(caller)
-
 	distributedToGovStaker = 0
 }
 

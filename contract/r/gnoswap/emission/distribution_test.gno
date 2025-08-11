@@ -44,7 +44,7 @@ func TestChangeDistributionPct(t *testing.T) {
 		{
 			name:        "panic if sum of percentages is not 100%",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission target || sum of percentages must be 10000, got 10001",
+			panicMsg:    "[GNOSWAP-EMISSION-003] invalid emission percentage || sum of percentages must be 10000, got 10001",
 			callerRealm: adminRealm,
 			targets:     []int{1, 2, 3, 4},
 			pcts:        []int64{1000, 2000, 3000, 4001},
@@ -497,7 +497,7 @@ func TestDistributeToTarget(t *testing.T) {
 		amount := int64(9223372036854775807) // int64 maximum value
 
 		// Maximum value should cause panic
-		uassert.PanicsWithMessage(t, "amount too large", func() {
+		uassert.PanicsWithMessage(t, "amount too large, would cause overflow", func() {
 			distributeToTarget(amount)
 		})
 
@@ -553,7 +553,7 @@ func TestCalculateAmount_Panic(t *testing.T) {
 
 	// attempts to set 40000 basis points = 400%
 	t.Run("Attack via ChangeDistributionPct - Should fail with current validation", func(t *testing.T) {
-		uassert.AbortsWithMessage(t, "[GNOSWAP-EMISSION-002] invalid emission target || sum of percentages must be 10000, got 40000", func() {
+		uassert.AbortsWithMessage(t, "[GNOSWAP-EMISSION-003] invalid emission percentage || sum of percentages must be 10000, got 40000", func() {
 			ChangeDistributionPct(
 				cross,
 				LIQUIDITY_STAKER, 10000, // 100%
@@ -626,7 +626,7 @@ func TestCalculateAmount_Panic(t *testing.T) {
 		uassert.Equal(t, maxSafeAmount, result)
 
 		// over the limit
-		uassert.PanicsWithMessage(t, "amount too large", func() {
+		uassert.PanicsWithMessage(t, "amount too large, would cause overflow", func() {
 			calculateAmount(maxSafeAmount+1, 10000)
 		})
 
