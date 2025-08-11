@@ -9,20 +9,18 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
-	
+
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	"gno.land/r/gnoswap/v1/router"
-	
+
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
-	
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
-	
-	"gno.land/r/gnoswap/gns"
 )
 
 var t *testing.T

@@ -15,8 +15,8 @@ import (
 	"gno.land/r/gnoswap/v1/position"
 	"gno.land/r/gnoswap/v1/router"
 	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
 	"gno.land/r/onbloc/baz"
+	"gno.land/r/onbloc/foo"
 )
 
 var t *testing.T
@@ -118,7 +118,7 @@ func testPriceImpactSmall() {
 	
 	// Get initial price
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
-	initialPrice := pl.GetSqrtPriceX96(poolPath)
+	initialPrice := pool.GetSlot0SqrtPriceX96(poolPath).ToString()
 	ufmt.Printf("[INFO] Initial sqrt price: %s\n", initialPrice)
 	
 	// Execute swap
@@ -128,7 +128,7 @@ func testPriceImpactSmall() {
 	)
 	
 	// Get final price
-	finalPrice := pl.GetSqrtPriceX96(poolPath)
+	finalPrice := pool.GetSlot0SqrtPriceX96(poolPath).ToString()
 	ufmt.Printf("[INFO] Final sqrt price: %s\n", finalPrice)
 	
 	// Calculate price impact (simplified)
@@ -144,7 +144,7 @@ func testPriceImpactMedium() {
 	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
 	
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
-	initialPrice := pl.GetSqrtPriceX96(poolPath)
+	initialPrice := pool.GetSlot0SqrtPriceX96(poolPath).ToString()
 	ufmt.Printf("[INFO] Initial sqrt price: %s\n", initialPrice)
 	
 	_, amountOut := router.ExactInSwapRoute(
@@ -152,7 +152,7 @@ func testPriceImpactMedium() {
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 	
-	finalPrice := pl.GetSqrtPriceX96(poolPath)
+	finalPrice := pool.GetSlot0SqrtPriceX96(poolPath).ToString()
 	ufmt.Printf("[INFO] Final sqrt price: %s\n", finalPrice)
 	
 	ufmt.Printf("[EXPECTED] Medium trade amountOut: %s\n", amountOut)
@@ -167,7 +167,7 @@ func testPriceImpactLarge() {
 	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
 	
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
-	initialPrice := pl.GetSqrtPriceX96(poolPath)
+	initialPrice := pool.GetSlot0SqrtPriceX96(poolPath).ToString()
 	ufmt.Printf("[INFO] Initial sqrt price: %s\n", initialPrice)
 	
 	_, amountOut := router.ExactInSwapRoute(
@@ -175,7 +175,7 @@ func testPriceImpactLarge() {
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 	
-	finalPrice := pl.GetSqrtPriceX96(poolPath)
+	finalPrice := pool.GetSlot0SqrtPriceX96(poolPath).ToString()
 	ufmt.Printf("[INFO] Final sqrt price: %s\n", finalPrice)
 	
 	ufmt.Printf("[EXPECTED] Large trade amountOut: %s\n", amountOut)
