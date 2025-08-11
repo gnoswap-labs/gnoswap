@@ -83,7 +83,7 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 
 	sent := std.OriginSend()
 	ugnotSentByUser := sent.AmountOf("ugnot")
-	amountSpecified := safeConvertToInt64(specifiedAmount.Abs())
+	amountSpecified := specifiedAmount.Int64()
 
 	if ugnotSentByUser != amountSpecified {
 		return ufmt.Errorf("ugnot sent by user(%d) is not equal to amountSpecified(%d)", ugnotSentByUser, amountSpecified)

@@ -131,7 +131,7 @@ func TestSwapInner(t *testing.T) {
 			expectedRecv:     "0",
 			expectedOut:      "0",
 			expectError:      true,
-			expectedErrorMsg: "amount(92267581029952440000000) overflows int64 range (max 9223372036854775807)",
+			expectedErrorMsg: "[GNOSWAP-POOL-005] out of range for numeric value: amount(92267581029952440000000) overflows int64 range (max 9223372036854775807)",
 		},
 	}
 
