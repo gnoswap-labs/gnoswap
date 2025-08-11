@@ -25,29 +25,34 @@ python3 setup.py -w /path/to/workdir -c
 ```
 
 Options:
+
 - `-w` or `--workdir`: Specify working directory (default: home directory)
 - `-c` or `--clone`: Clone gnoswap repository before setup
 
 If the setup script fails, you can manually copy contracts:
 
 1. Clone repository:
+
 ```bash
 git clone https://github.com/gnoswap-labs/gnoswap.git
 ```
 
 2. Copy packages:
+
 ```bash
 mkdir -p $WORKDIR/gno/examples/gno.land/p/gnoswap
 cp -R contract/p/gnoswap/* $WORKDIR/gno/examples/gno.land/p/gnoswap/
 ```
 
 3. Copy realms:
+
 ```bash
 mkdir -p $WORKDIR/gno/examples/gno.land/r/gnoswap/v1
 cp -R contract/r/gnoswap/* $WORKDIR/gno/examples/gno.land/r/gnoswap/v1/
 ```
 
 4. Copy test tokens:
+
 ```bash
 cp -R contract/r/gnoswap/test_token/* $WORKDIR/gno/examples/gno.land/r/
 ```
@@ -90,25 +95,26 @@ gnoswap/
 │   ├── integration/                # Integration tests
 │   └── deploy/                     # Deployment scripts
 │
-├── scripts/                        # Utility scripts
-│
-└── docs/                           # Documentation
+└── scripts/                        # Utility scripts
 ```
 
 ## Testing
 
 ### Run All Tests
+
 ```bash
 make test
 ```
 
 ### Run Specific Scenario Tests
+
 ```bash
 make test-folder FOLDER=tests/scenario/pool
 make test-folder FOLDER=tests/scenario/router
 ```
 
 ### Run Integration Tests
+
 ```bash
 cd $WORKDIR/gno/examples
 gno test -root-dir $WORKDIR/gno -v=false ./gno.land/r/gnoswap/v1/pool
@@ -125,4 +131,3 @@ Licensed under the GNU Affero General Public License v3.0. See [LICENSE](LICENSE
 ## Contributing
 
 Contributions are welcome! Please follow existing patterns, include tests, and maintain documentation.
-
