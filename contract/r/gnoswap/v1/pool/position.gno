@@ -346,7 +346,8 @@ func (p *Pool) updatePosition(positionParams ModifyPositionParams, tick int32) (
 	feeGrowthGlobal1X128 := p.FeeGrowthGlobal1X128().Clone()
 
 	var flippedLower, flippedUpper bool
-	if !(positionParams.liquidityDelta.IsZero()) {
+
+	if !positionParams.liquidityDelta.IsZero() {
 		flippedLower = p.tickUpdate(
 			positionParams.tickLower,
 			tick,
