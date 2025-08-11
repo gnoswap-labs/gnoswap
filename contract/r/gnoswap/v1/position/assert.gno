@@ -69,7 +69,7 @@ func assertIsOwnerForToken(positionId uint64, caller std.Address) {
 	if !isOwner(positionId, caller) {
 		panic(newErrorWithDetail(
 			errNoPermission,
-			ufmt.Sprintf("caller(%s) is not owner or approved operator of positionId(%d)", caller, positionId),
+			ufmt.Sprintf("caller(%s) is not owner of positionId(%d)", caller, positionId),
 		))
 	}
 }

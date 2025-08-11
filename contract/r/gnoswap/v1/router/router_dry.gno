@@ -91,6 +91,10 @@ func (p *SwapProcessor) ValidateSwapResults(
 	resultAmountIn, resultAmountOut *u256.Uint,
 	amountSpecified, amountLimit *i256.Int,
 ) (amountIn, amountOut string, success bool) {
+	if resultAmountIn.IsZero() || resultAmountOut.IsZero() {
+		return "0", "0", false
+	}
+
 	switch swapType {
 	case ExactIn:
 		if i256.FromUint256(resultAmountIn).Gt(amountSpecified) {
