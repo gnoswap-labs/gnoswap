@@ -142,8 +142,8 @@ func executeExactInRouterSwaps() {
 
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
-		fooPath,         // outputToken
-		barPath,         // inputToken
+		fooPath,         // inputToken
+		barPath,         // outputToken
 		"1000000000000", // amountSpecified
 		"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500", // strRouteArr
 		"100", // quoteArr
