@@ -130,15 +130,15 @@ func Mint(
 	id, liquidity, amount0, amount1 := mint(params)
 
 	// refund leftover wrapped tokens
-	if processedInput.tokenPair.token0IsNative && processedInput.tokenPair.wrappedAmount > amount0.Int64() {
-		err = unwrap(processedInput.tokenPair.wrappedAmount-amount0.Int64(), caller)
+	if processedInput.tokenPair.token0IsNative && processedInput.tokenPair.wrappedAmount > safeConvertToInt64(amount0) {
+		err = unwrap(processedInput.tokenPair.wrappedAmount-safeConvertToInt64(amount0), caller)
 		if err != nil {
 			panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
 		}
 	}
 
-	if processedInput.tokenPair.token1IsNative && processedInput.tokenPair.wrappedAmount > amount1.Int64() {
-		err = unwrap(processedInput.tokenPair.wrappedAmount-amount1.Int64(), caller)
+	if processedInput.tokenPair.token1IsNative && processedInput.tokenPair.wrappedAmount > safeConvertToInt64(amount1) {
+		err = unwrap(processedInput.tokenPair.wrappedAmount-safeConvertToInt64(amount1), caller)
 		if err != nil {
 			panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
 		}
@@ -230,10 +230,10 @@ func IncreaseLiquidity(
 		panic(err)
 	}
 
-	if err := unwrapLeftoverWrappedToken(token0, wrappedAmount, amount0.Int64(), caller); err != nil {
+	if err := unwrapLeftoverWrappedToken(token0, wrappedAmount, safeConvertToInt64(amount0), caller); err != nil {
 		panic(err)
 	}
-	if err := unwrapLeftoverWrappedToken(token1, wrappedAmount, amount1.Int64(), caller); err != nil {
+	if err := unwrapLeftoverWrappedToken(token1, wrappedAmount, safeConvertToInt64(amount1), caller); err != nil {
 		panic(err)
 	}
 
@@ -460,7 +460,7 @@ var feeAmountDivisor = u256.NewUint(10000)
 
 func calculateAmountWithWithdrawalFee(amount string, fee uint64) (int64, int64) {
 	if fee == 0 {
-		return u256.MustFromDecimal(amount).Int64(), 0
+		return safeConvertToInt64(u256.MustFromDecimal(amount)), 0
 	}
 
 	amountUint := u256.MustFromDecimal(amount)
@@ -470,7 +470,7 @@ func calculateAmountWithWithdrawalFee(amount string, fee uint64) (int64, int64) 
 	feeAmount = u256.Zero().Div(feeAmount, feeAmountDivisor)
 	amountWithoutFee := u256.Zero().Sub(amountUint, feeAmount)
 
-	return amountWithoutFee.Int64(), feeAmount.Int64()
+	return safeConvertToInt64(amountWithoutFee), safeConvertToInt64(feeAmount)
 }
 
 func SetPositionOperator(

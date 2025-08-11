@@ -64,7 +64,8 @@ func (r *RewardManager) AccumulatedRewardPerDepositX128() *u256.Uint {
 }
 
 func (r *RewardManager) AccumulatedReward() int64 {
-	return u256.Zero().Rsh(r.accumulatedRewardPerDepositX128, 128).Int64()
+	res := u256.Zero().Rsh(r.accumulatedRewardPerDepositX128, 128)
+	return safeConvertToInt64(res)
 }
 
 func (r *RewardManager) getDepositRewardState(depositId string) (*RewardState, error) {
