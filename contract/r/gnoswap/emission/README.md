@@ -9,7 +9,7 @@ The GnoSwap emission system controls the creation and distribution of new GNS to
 ### Emission Schedule
 - **Total Supply Cap**: 1,000,000,000 GNS
 - **Initial Minted Supply**: 100,000,000 GNS
-- **To Be Minted Supply**: 900,000,000 GNS
+- **To Be Minted Supply**: 900,000,000 GNS for 12 years
 - **Halving Period**: Every 2 years (63,072,000 seconds)
 - **Halving Reduction**: 50% decrease in emission rate
 - **Distribution Trigger**: Automatic during user interactions
@@ -24,7 +24,7 @@ When triggered by protocol activity (swaps, liquidity operations, etc), the syst
 ## Features
 
 - Timestamp-based emission schedule
-- Automatic distribution to targets
+- Automatic distribution to targets for 12 years
 - Halving every 2 years
 - Leftover token tracking
 - Configurable distribution ratios
