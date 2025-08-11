@@ -275,11 +275,15 @@ func setDelegationSnapshots(snapshot DelegationSnapshot) {
 //   - address: staker's address
 //   - amount: amount of stake to add
 //   - currentTimestamp: current timestamp
-func addStakeEmissionReward(address string, amount int64, currentTimestamp int64) {
+func addStakeEmissionReward(address string, amount int64, currentTimestamp int64) error {
 	distributedAmount := emission.GetAccuDistributedToGovStaker()
 
-	emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
-	emissionRewardManager.addStake(address, amount, currentTimestamp)
+	err := emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
+	if err != nil {
+		return err
+	}
+
+	return emissionRewardManager.addStake(address, amount, currentTimestamp)
 }
 
 // removeStakeEmissionReward removes stake from emission reward tracking for an address.
@@ -289,11 +293,15 @@ func addStakeEmissionReward(address string, amount int64, currentTimestamp int64
 //   - address: staker's address
 //   - amount: amount of stake to remove
 //   - currentTimestamp: current timestamp
-func removeStakeEmissionReward(address string, amount int64, currentTimestamp int64) {
+func removeStakeEmissionReward(address string, amount int64, currentTimestamp int64) error {
 	distributedAmount := emission.GetAccuDistributedToGovStaker()
 
-	emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
-	emissionRewardManager.removeStake(address, amount, currentTimestamp)
+	err := emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
+	if err != nil {
+		return err
+	}
+
+	return emissionRewardManager.removeStake(address, amount, currentTimestamp)
 }
 
 // claimRewardsEmissionReward claims emission rewards for an address.
@@ -309,7 +317,11 @@ func removeStakeEmissionReward(address string, amount int64, currentTimestamp in
 func claimRewardsEmissionReward(address string, currentTimestamp int64) (int64, error) {
 	distributedAmount := emission.GetAccuDistributedToGovStaker()
 
-	emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
+	err := emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
+	if err != nil {
+		return 0, err
+	}
+
 	return emissionRewardManager.claimRewards(address, currentTimestamp)
 }
 
@@ -320,13 +332,17 @@ func claimRewardsEmissionReward(address string, currentTimestamp int64) (int64, 
 //   - address: staker's address
 //   - amount: amount of stake to add
 //   - currentTimestamp: current timestamp
-func addStakeProtocolFeeReward(address string, amount int64, currentTimestamp int64) {
+func addStakeProtocolFeeReward(address string, amount int64, currentTimestamp int64) error {
 	pf.DistributeProtocolFee(cross)
 
 	distributedAmounts := getDistributedProtocolFees()
 
-	protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
-	protocolFeeRewardManager.addStake(address, amount, currentTimestamp)
+	err := protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
+	if err != nil {
+		return err
+	}
+
+	return protocolFeeRewardManager.addStake(address, amount, currentTimestamp)
 }
 
 // removeStakeProtocolFeeReward removes stake from protocol fee reward tracking for an address.
@@ -336,13 +352,17 @@ func addStakeProtocolFeeReward(address string, amount int64, currentTimestamp in
 //   - address: staker's address
 //   - amount: amount of stake to remove
 //   - currentTimestamp: current timestamp
-func removeStakeProtocolFeeReward(address string, amount int64, currentTimestamp int64) {
+func removeStakeProtocolFeeReward(address string, amount int64, currentTimestamp int64) error {
 	pf.DistributeProtocolFee(cross)
 
 	distributedAmounts := getDistributedProtocolFees()
 
-	protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
-	protocolFeeRewardManager.removeStake(address, amount, currentTimestamp)
+	err := protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
+	if err != nil {
+		return err
+	}
+
+	return protocolFeeRewardManager.removeStake(address, amount, currentTimestamp)
 }
 
 // claimRewardsProtocolFeeReward claims protocol fee rewards for an address.
@@ -360,7 +380,11 @@ func claimRewardsProtocolFeeReward(address string, currentTimestamp int64) (map[
 
 	distributedAmounts := getDistributedProtocolFees()
 
-	protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
+	err := protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
+	if err != nil {
+		return nil, err
+	}
+
 	return protocolFeeRewardManager.claimRewards(address, currentTimestamp)
 }
 
@@ -429,10 +453,17 @@ func removeLaunchpadProjectDeposit(ownerAddress string) bool {
 //   - address: project wallet address
 //   - amount: amount of stake to add
 //   - currentTimestamp: current timestamp
-func addStakeFromLaunchpad(address string, amount int64, currentTimestamp int64) {
+func addStakeFromLaunchpad(address string, amount int64, currentTimestamp int64) error {
 	launchpadRewardID := makeLaunchpadRewardID(address)
-	addStakeEmissionReward(launchpadRewardID, amount, currentTimestamp)
-	addStakeProtocolFeeReward(launchpadRewardID, amount, currentTimestamp)
+	err := addStakeEmissionReward(launchpadRewardID, amount, currentTimestamp)
+	if err != nil {
+		return err
+	}
+
+	err = addStakeProtocolFeeReward(launchpadRewardID, amount, currentTimestamp)
+	if err != nil {
+		return err
+	}
 
 	deposit, exists := getLaunchpadProjectDeposit(launchpadRewardID)
 	if !exists {
@@ -441,6 +472,8 @@ func addStakeFromLaunchpad(address string, amount int64, currentTimestamp int64)
 
 	deposit += amount
 	setLaunchpadProjectDeposit(launchpadRewardID, deposit)
+
+	return nil
 }
 
 // removeStakeFromLaunchpad removes stake for a launchpad project and updates reward tracking.
@@ -450,10 +483,17 @@ func addStakeFromLaunchpad(address string, amount int64, currentTimestamp int64)
 //   - address: project wallet address
 //   - amount: amount of stake to remove
 //   - currentTimestamp: current timestamp
-func removeStakeFromLaunchpad(address string, amount int64, currentTimestamp int64) {
+func removeStakeFromLaunchpad(address string, amount int64, currentTimestamp int64) error {
 	launchpadRewardID := makeLaunchpadRewardID(address)
-	removeStakeEmissionReward(launchpadRewardID, amount, currentTimestamp)
-	removeStakeProtocolFeeReward(launchpadRewardID, amount, currentTimestamp)
+	err := removeStakeEmissionReward(launchpadRewardID, amount, currentTimestamp)
+	if err != nil {
+		return err
+	}
+	
+	err = removeStakeProtocolFeeReward(launchpadRewardID, amount, currentTimestamp)
+	if err != nil {
+		return err
+	}
 
 	deposit, exists := getLaunchpadProjectDeposit(launchpadRewardID)
 	if !exists {
@@ -466,6 +506,8 @@ func removeStakeFromLaunchpad(address string, amount int64, currentTimestamp int
 	}
 
 	setLaunchpadProjectDeposit(launchpadRewardID, deposit)
+
+	return nil
 }
 
 // makeLaunchpadRewardID creates a special reward identifier for launchpad projects.

@@ -151,7 +151,7 @@ func TestEmissionRewardState_GetClaimableRewardAmount(t *testing.T) {
 			tt.setupState(state)
 
 			// When: Get claimable reward amount
-			result := state.GetClaimableRewardAmount(tt.accumulatedRewardX128PerStake, tt.currentHeight)
+			result, _ := state.GetClaimableRewardAmount(tt.accumulatedRewardX128PerStake, tt.currentHeight)
 
 			// Then: Should return expected amount
 			uassert.Equal(t, result, tt.expected)
@@ -209,7 +209,7 @@ func TestEmissionRewardState_calculateClaimableRewards(t *testing.T) {
 			tt.setupState(state)
 
 			// When: Calculate claimable rewards
-			result := state.calculateClaimableRewards(tt.accumulatedRewardX128PerStake, tt.currentHeight)
+			result, _ := state.calculateClaimableRewards(tt.accumulatedRewardX128PerStake, tt.currentHeight)
 
 			// Then: Should return expected amount
 			uassert.Equal(t, result, tt.expected)

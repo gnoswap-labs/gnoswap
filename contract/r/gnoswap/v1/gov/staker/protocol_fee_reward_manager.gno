@@ -57,20 +57,27 @@ func (p *ProtocolFeeRewardManager) GetClaimableRewardAmounts(
 	protocolFeeAmounts map[string]int64,
 	address string,
 	currentTimestamp int64,
-) map[string]int64 {
+) (map[string]int64, error) {
 	rewardStateI, ok := p.rewardStates.Get(address)
 	if !ok {
-		return make(map[string]int64)
+		return make(map[string]int64), nil
 	}
 
 	rewardState, ok := rewardStateI.(*ProtocolFeeRewardState)
 	if !ok {
-		panic(ufmt.Sprintf(
+		return nil, ufmt.Errorf(
 			"failed to cast rewardStates's element to *ProtocolFeeRewardState: %T",
 			rewardStateI,
-		))
+		)
 	}
-	accumulatedRewardX128PerStake, _ := p.calculateAccumulatedRewardX128PerStake(protocolFeeAmounts, currentTimestamp)
+	
+	accumulatedRewardX128PerStake, _, err := p.calculateAccumulatedRewardX128PerStake(
+		protocolFeeAmounts,
+		currentTimestamp,
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	return rewardState.GetClaimableRewardAmounts(accumulatedRewardX128PerStake, currentTimestamp)
 }
@@ -88,10 +95,10 @@ func (p *ProtocolFeeRewardManager) GetClaimableRewardAmounts(
 func (p *ProtocolFeeRewardManager) calculateAccumulatedRewardX128PerStake(
 	protocolFeeAmounts map[string]int64,
 	currentTimestamp int64,
-) (map[string]*u256.Uint, map[string]int64) {
+) (map[string]*u256.Uint, map[string]int64, error) {
 	// If we're looking at a past timestamp, return current state
 	if p.accumulatedTimestamp > currentTimestamp {
-		return p.accumulatedProtocolFeeX128PerStake, p.protocolFeeAmounts
+		return p.accumulatedProtocolFeeX128PerStake, p.protocolFeeAmounts, nil
 	}
 
 	accumulatedProtocolFeesX128PerStake := make(map[string]*u256.Uint)
@@ -133,16 +140,19 @@ func (p *ProtocolFeeRewardManager) calculateAccumulatedRewardX128PerStake(
 		}
 
 		// Add the new fee per stake to the accumulated amount
-		accumulatedProtocolFeeX128PerStake = u256.Zero().Add(
+		accumulatedProtocolFeeX128PerStake, overflow := u256.Zero().AddOverflow(
 			accumulatedProtocolFeeX128PerStake,
 			protocolFeeDeltaX128PerStake,
 		)
+		if overflow {
+			return nil, nil, ufmt.Errorf("accumulatedProtocolFeeX128PerStake overflow")
+		}
 
 		accumulatedProtocolFeesX128PerStake[token] = accumulatedProtocolFeeX128PerStake.Clone()
 		changedProtocolFeeAmounts[token] = protocolFeeAmount
 	}
 
-	return accumulatedProtocolFeesX128PerStake, changedProtocolFeeAmounts
+	return accumulatedProtocolFeesX128PerStake, changedProtocolFeeAmounts, nil
 }
 
 // updateAccumulatedProtocolFeeX128PerStake updates the internal accumulated protocol fee state.
@@ -154,17 +164,25 @@ func (p *ProtocolFeeRewardManager) calculateAccumulatedRewardX128PerStake(
 func (p *ProtocolFeeRewardManager) updateAccumulatedProtocolFeeX128PerStake(
 	protocolFeeAmounts map[string]int64,
 	currentTimestamp int64,
-) {
+) error {
 	// Don't update if we're looking at a past timestamp
 	if p.accumulatedTimestamp > currentTimestamp {
-		return
+		return nil
 	}
 
-	accumulatedProtocolFeeX128PerStake, changedProtocolFeeAmounts := p.calculateAccumulatedRewardX128PerStake(protocolFeeAmounts, currentTimestamp)
+	accumulatedProtocolFeeX128PerStake, changedProtocolFeeAmounts, err := p.calculateAccumulatedRewardX128PerStake(
+		protocolFeeAmounts,
+		currentTimestamp,
+	)
+	if err != nil {
+		return err
+	}
 
 	p.accumulatedProtocolFeeX128PerStake = accumulatedProtocolFeeX128PerStake
 	p.protocolFeeAmounts = changedProtocolFeeAmounts
 	p.accumulatedTimestamp = currentTimestamp
+
+	return nil
 }
 
 // addStake adds a stake for an address and updates their protocol fee reward state.
@@ -174,7 +192,7 @@ func (p *ProtocolFeeRewardManager) updateAccumulatedProtocolFeeX128PerStake(
 //   - address: staker's address
 //   - amount: amount of stake to add
 //   - currentTimestamp: current timestamp
-func (p *ProtocolFeeRewardManager) addStake(address string, amount int64, currentTimestamp int64) {
+func (p *ProtocolFeeRewardManager) addStake(address string, amount int64, currentTimestamp int64) error {
 	rewardStateI, ok := p.rewardStates.Get(address)
 	if !ok {
 		rewardStateI = NewProtocolFeeRewardState(p.accumulatedProtocolFeeX128PerStake)
@@ -182,16 +200,22 @@ func (p *ProtocolFeeRewardManager) addStake(address string, amount int64, curren
 
 	rewardState, ok := rewardStateI.(*ProtocolFeeRewardState)
 	if !ok {
-		panic(ufmt.Sprintf(
+		return ufmt.Errorf(
 			"failed to cast rewardStates's element to *ProtocolFeeRewardState: %T",
 			rewardStateI,
-		))
+		)
 	}
-	rewardState.addStakeWithUpdateRewardDebtX128(amount, p.accumulatedProtocolFeeX128PerStake, currentTimestamp)
+
+	err := rewardState.addStakeWithUpdateRewardDebtX128(amount, p.accumulatedProtocolFeeX128PerStake, currentTimestamp)
+	if err != nil {
+		return err
+	}
 
 	p.rewardStates.Set(address, rewardState)
 
 	p.totalStakedAmount = p.totalStakedAmount + amount
+
+	return nil
 }
 
 // removeStake removes a stake for an address and updates their protocol fee reward state.
@@ -201,7 +225,7 @@ func (p *ProtocolFeeRewardManager) addStake(address string, amount int64, curren
 //   - address: staker's address
 //   - amount: amount of stake to remove
 //   - currentTimestamp: current timestamp
-func (p *ProtocolFeeRewardManager) removeStake(address string, amount int64, currentTimestamp int64) {
+func (p *ProtocolFeeRewardManager) removeStake(address string, amount int64, currentTimestamp int64) error {
 	rewardStateI, ok := p.rewardStates.Get(address)
 	if !ok {
 		rewardStateI = NewProtocolFeeRewardState(p.accumulatedProtocolFeeX128PerStake)
@@ -209,16 +233,22 @@ func (p *ProtocolFeeRewardManager) removeStake(address string, amount int64, cur
 
 	rewardState, ok := rewardStateI.(*ProtocolFeeRewardState)
 	if !ok {
-		panic(ufmt.Sprintf(
+		return ufmt.Errorf(
 			"failed to cast rewardStates's element to *ProtocolFeeRewardState: %T",
 			rewardStateI,
-		))
+		)
 	}
-	rewardState.removeStakeWithUpdateRewardDebtX128(amount, p.accumulatedProtocolFeeX128PerStake, currentTimestamp)
+
+	err := rewardState.removeStakeWithUpdateRewardDebtX128(amount, p.accumulatedProtocolFeeX128PerStake, currentTimestamp)
+	if err != nil {
+		return err
+	}
 
 	p.rewardStates.Set(address, rewardState)
 
 	p.totalStakedAmount = p.totalStakedAmount - amount
+
+	return nil
 }
 
 // claimRewards processes protocol fee reward claiming for an address.
@@ -239,10 +269,10 @@ func (p *ProtocolFeeRewardManager) claimRewards(address string, currentTimestamp
 
 	rewardState, ok := rewardStateI.(*ProtocolFeeRewardState)
 	if !ok {
-		panic(ufmt.Sprintf(
+		return nil, ufmt.Errorf(
 			"failed to cast rewardStates's element to *ProtocolFeeRewardState: %T",
 			rewardStateI,
-		))
+		)
 	}
 
 	claimedRewards, err := rewardState.claimRewardsWithUpdateRewardDebtX128(

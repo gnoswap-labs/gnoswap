@@ -121,7 +121,7 @@ func TestProtocolFeeRewardManager_GetClaimableRewardAmounts(t *testing.T) {
 			tt.setupManager(manager)
 
 			// When: Get claimable reward amounts
-			result := manager.GetClaimableRewardAmounts(
+			result, _ := manager.GetClaimableRewardAmounts(
 				tt.protocolFeeAmounts,
 				tt.address,
 				tt.currentTimestamp,
@@ -341,7 +341,7 @@ func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(t *test
 			}
 
 			// When: Calculate accumulated reward X128 per stake
-			result, _ := manager.calculateAccumulatedRewardX128PerStake(
+			result, _, _ := manager.calculateAccumulatedRewardX128PerStake(
 				tt.protocolFeeAmounts,
 				tt.currentTimestamp,
 			)
@@ -465,10 +465,11 @@ func TestProtocolFeeRewardManager_EdgeCases(t *testing.T) {
 					"token3": 750,
 				}
 
-				m.updateAccumulatedProtocolFeeX128PerStake(protocolFeeAmounts, 100)
+				err := m.updateAccumulatedProtocolFeeX128PerStake(protocolFeeAmounts, 100)
+				uassert.NoError(t, err)
 
 				// Verify claimable amounts
-				claimableAmounts := m.GetClaimableRewardAmounts(protocolFeeAmounts, "user1", 100)
+				claimableAmounts, _ := m.GetClaimableRewardAmounts(protocolFeeAmounts, "user1", 100)
 
 				uassert.Equal(t, len(claimableAmounts), 3)
 				for token, amount := range claimableAmounts {
@@ -486,7 +487,7 @@ func TestProtocolFeeRewardManager_EdgeCases(t *testing.T) {
 					"token1": 0,
 				}
 
-				claimableAmounts := m.GetClaimableRewardAmounts(protocolFeeAmounts, "user1", 100)
+				claimableAmounts, _ := m.GetClaimableRewardAmounts(protocolFeeAmounts, "user1", 100)
 				uassert.Equal(t, claimableAmounts["token1"], int64(0))
 			},
 			description: "Should handle zero protocol fee amounts",
