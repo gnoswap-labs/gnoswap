@@ -220,7 +220,7 @@ func TestGrc20Methods(t *testing.T) {
 			},
 			shouldPanic:   true,
 			exceptionKind: "abort",
-			panicMsg:      `ownable: caller is not owner`,
+			panicMsg:      `address(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) is not previous realm`,
 		},
 		{
 			name: "Transfer success",
