@@ -22,7 +22,7 @@ func (z *Int) SetInt64(x int64) *Int {
 		u = ^u + 1 // |x| = two's complement magnitude
 	}
 	z.abs = z.abs.SetUint64(u)
-	z.neg = neg && u != 0 // -0 방지
+	z.neg = neg && u != 0 // prevent -0
 	return z
 }
 

@@ -94,7 +94,7 @@ func (e *EmissionRewardState) calculateClaimableRewards(
 		q128,
 	)
 
-	return rewardAmount.Int64(), nil
+	return safeConvertToInt64(rewardAmount), nil
 }
 
 // addStake increases the staked amount for this address.
