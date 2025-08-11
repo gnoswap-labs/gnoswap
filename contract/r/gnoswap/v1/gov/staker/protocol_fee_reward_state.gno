@@ -103,7 +103,7 @@ func (p *ProtocolFeeRewardState) calculateClaimableRewards(
 			q128,
 		)
 
-		rewardAmounts[token] = rewardAmount.Int64()
+		rewardAmounts[token] = safeConvertToInt64(rewardAmount)
 	}
 
 	return rewardAmounts, nil

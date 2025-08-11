@@ -214,14 +214,14 @@ func Collect(
 	if amount0.Gt(u256.Zero()) {
 		position.tokensOwed0 = u256.Zero().Sub(position.tokensOwed0, amount0)
 		pool.balances.token0 = u256.Zero().Sub(pool.balances.token0, amount0)
-		if err := common.Approve(cross, pool.token0Path, positionAddr, amount0.Int64()); err != nil {
+		if err := common.Approve(cross, pool.token0Path, positionAddr, safeConvertToInt64(amount0)); err != nil {
 			panic(err)
 		}
 	}
 	if amount1.Gt(u256.Zero()) {
 		position.tokensOwed1 = u256.Zero().Sub(position.tokensOwed1, amount1)
 		pool.balances.token1 = u256.Zero().Sub(pool.balances.token1, amount1)
-		if err := common.Approve(cross, pool.token1Path, positionAddr, amount1.Int64()); err != nil {
+		if err := common.Approve(cross, pool.token1Path, positionAddr, safeConvertToInt64(amount1)); err != nil {
 			panic(err)
 		}
 	}
@@ -312,8 +312,8 @@ func collectProtocol(
 	amount1 := u256Min(amount1Req, pool.ProtocolFeesToken1())
 
 	amount0, amount1 = pool.saveProtocolFees(amount0.Clone(), amount1.Clone())
-	uAmount0 := amount0.Int64()
-	uAmount1 := amount1.Int64()
+	uAmount0 := safeConvertToInt64(amount0)
+	uAmount1 := safeConvertToInt64(amount1)
 
 	checkTransferError(common.Transfer(cross, pool.token0Path, recipient, uAmount0))
 	newBalanceToken0, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount0, true)

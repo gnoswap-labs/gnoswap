@@ -128,15 +128,15 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, 
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
 	if isWrappedToken(pToken0) && params.unwrapResult {
-		unwrapWithTransferFrom(poolAddr, caller, collectAmount0.Int64())
+		unwrapWithTransferFrom(poolAddr, caller, safeConvertToInt64(collectAmount0))
 	} else {
-		common.TransferFrom(cross, pToken0, poolAddr, caller, collectAmount0.Int64())
+		common.TransferFrom(cross, pToken0, poolAddr, caller, safeConvertToInt64(collectAmount0))
 	}
 
 	if isWrappedToken(pToken1) && params.unwrapResult {
-		unwrapWithTransferFrom(poolAddr, caller, collectAmount1.Int64())
+		unwrapWithTransferFrom(poolAddr, caller, safeConvertToInt64(collectAmount1))
 	} else {
-		common.TransferFrom(cross, pToken1, poolAddr, caller, collectAmount1.Int64())
+		common.TransferFrom(cross, pToken1, poolAddr, caller, safeConvertToInt64(collectAmount1))
 	}
 
 	underflow := false

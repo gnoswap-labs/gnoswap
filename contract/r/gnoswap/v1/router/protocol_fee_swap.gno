@@ -76,7 +76,7 @@ func handleSwapFee(
 
 	feeAmount := u256.Zero().Mul(amount, u256.NewUint(swapFee))
 	feeAmount = u256.Zero().Div(feeAmount, u256.NewUint(10000))
-	feeAmountInt64 := feeAmount.Int64()
+	feeAmountInt64 := safeConvertToInt64(feeAmount)
 
 	if outputToken == gnot {
 		outputToken = wugnotPath

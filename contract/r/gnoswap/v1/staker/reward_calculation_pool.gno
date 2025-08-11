@@ -415,7 +415,7 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 
 			rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
 
-			self.rewards[i] += rewardAcc.Int64()
+			self.rewards[i] += safeConvertToInt64(rewardAcc)
 			// done
 			break
 		}
@@ -437,7 +437,7 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 		}
 
 		rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
-		self.rewards[i] += rewardAcc.Int64()
+		self.rewards[i] += safeConvertToInt64(rewardAcc)
 
 		startTime = warmup.NextWarmupTime
 	}

@@ -548,7 +548,7 @@ func TestMulDiv(t *testing.T) {
 			y:           "5",
 			denominator: "0",
 			shouldPanic: true,
-			panicMsg:    "denominator must be greater than 0. got 0",
+			panicMsg:    "denominator must be greater than 0",
 		},
 		{
 			name:        "reverts_if_output_overflows_uint256",
@@ -615,7 +615,7 @@ func TestMulDivRoundingUpSimple(t *testing.T) {
 			y:           "5",
 			denominator: "0",
 			shouldPanic: true,
-			panicMsg:    "denominator must be greater than 0. got 0",
+			panicMsg:    "denominator must be greater than 0",
 		},
 		{
 			name:        "rounds_up_when_remainder",
