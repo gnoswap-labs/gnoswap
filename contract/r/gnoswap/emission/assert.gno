@@ -67,7 +67,7 @@ func assertValidDistributionPct(pct01, pct02, pct03, pct04 int64) {
 		if pct > 10000 {
 			panic(makeErrorWithDetails(
 				errInvalidEmissionPct,
-				ufmt.Sprintf("percentage %d cannot exceed 100%%: %d", i+1, pct),
+				ufmt.Sprintf("percentage %d cannot exceed 100%: %d", i+1, pct),
 			))
 		}
 	}
