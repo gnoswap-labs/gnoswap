@@ -25,13 +25,13 @@ const INT64_MAX int64 = 9223372036854775807
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm   = std.NewUserRealm(adminAddr)
-	
+
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	
+
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = std.NewUserRealm(aliceAddr)
-	
+
 	barPath = "gno.land/r/onbloc/bar"
 	bazPath = "gno.land/r/onbloc/baz"
 )
@@ -40,19 +40,19 @@ func main() {
 	println("[SCENARIO] 1. Initialize Setup")
 	initializeSetup()
 	println()
-	
+
 	println("[SCENARIO] 2. Test Round-Trip in Ultra-Tight Range")
 	testRoundTripUltraTight()
 	println()
-	
+
 	println("[SCENARIO] 3. Test Round-Trip with Various Amounts")
 	testRoundTripVariousAmounts()
 	println()
-	
+
 	println("[SCENARIO] 4. Test Round-Trip at Price Boundaries")
 	testRoundTripPriceBoundaries()
 	println()
-	
+
 	println("[SCENARIO] 5. Test Multiple Round-Trips (Compound Effect)")
 	testMultipleRoundTrips()
 	println()
@@ -61,29 +61,29 @@ func main() {
 func initializeSetup() {
 	testing.SetRealm(adminRealm)
 	pool.SetPoolCreationFee(cross, 0)
-	
+
 	// Setup test accounts with smaller amounts for shared test environment
 	testAmount := int64(10_000_000_000) // 10 billion
 	bar.Transfer(cross, aliceAddr, testAmount)
 	baz.Transfer(cross, aliceAddr, testAmount)
-	
+
 	testing.SetRealm(aliceRealm)
 	bar.Approve(cross, poolAddr, testAmount)
 	baz.Approve(cross, poolAddr, testAmount)
 	bar.Approve(cross, positionAddr, testAmount)
 	baz.Approve(cross, positionAddr, testAmount)
-	
+
 	// Track initial balances
 	initialBarBalance := bar.BalanceOf(aliceAddr)
 	initialBazBalance := baz.BalanceOf(aliceAddr)
-	
+
 	ufmt.Printf("[INFO] Initial Bar balance: %d\n", initialBarBalance)
 	ufmt.Printf("[INFO] Initial Baz balance: %d\n", initialBazBalance)
 }
 
 func testRoundTripUltraTight() {
 	testing.SetRealm(adminRealm)
-	
+
 	// Create pool with tick spacing 1 (most sensitive)
 	pool.CreatePool(
 		cross,
@@ -92,13 +92,13 @@ func testRoundTripUltraTight() {
 		100,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
-	
+
 	testing.SetRealm(aliceRealm)
-	
+
 	// Record balances before mint
 	// barBefore := bar.BalanceOf(aliceAddr)
 	// bazBefore := baz.BalanceOf(aliceAddr)
-	
+
 	// Mint position with ultra-tight range (1 tick)
 	println("[TEST] Mint position with 1-tick range")
 	positionId, liquidity, amount0Used, amount1Used := pn.Mint(
@@ -110,12 +110,12 @@ func testRoundTripUltraTight() {
 		9999999999,
 		aliceAddr, aliceAddr, "",
 	)
-	
+
 	ufmt.Printf("[MINT] Position %d created\n", positionId)
 	ufmt.Printf("[MINT] Liquidity: %s\n", liquidity)
 	ufmt.Printf("[MINT] Amount0 used: %s\n", amount0Used)
 	ufmt.Printf("[MINT] Amount1 used: %s\n", amount1Used)
-	
+
 	// Immediately burn the entire position
 	println("[TEST] Burn entire position")
 	_, burnedLiquidity, _, _, amount0Back, amount1Back, _ := pn.DecreaseLiquidity(
@@ -126,23 +126,23 @@ func testRoundTripUltraTight() {
 		9999999999,
 		false,
 	)
-	
+
 	ufmt.Printf("[BURN] Liquidity burned: %s\n", burnedLiquidity)
 	ufmt.Printf("[BURN] Amount0 returned: %s\n", amount0Back)
 	ufmt.Printf("[BURN] Amount1 returned: %s\n", amount1Back)
-	
+
 	// Collect the tokens
 	// Note: CollectFee is handled internally by DecreaseLiquidity
 	// collected0 := amount0Back
 	// collected1 := amount1Back
-	
+
 	// Verify round-trip invariant
 	// We should get back approximately what we put in (allowing for tiny rounding)
 	amount0UsedU256 := u256.MustFromDecimal(amount0Used)
 	amount0BackU256 := u256.MustFromDecimal(amount0Back)
 	amount1UsedU256 := u256.MustFromDecimal(amount1Used)
 	amount1BackU256 := u256.MustFromDecimal(amount1Back)
-	
+
 	// Calculate differences
 	var diff0, diff1 *u256.Uint
 	if amount0UsedU256.Gt(amount0BackU256) {
@@ -150,27 +150,27 @@ func testRoundTripUltraTight() {
 	} else {
 		diff0 = u256.Zero().Sub(amount0BackU256, amount0UsedU256)
 	}
-	
+
 	if amount1UsedU256.Gt(amount1BackU256) {
 		diff1 = u256.Zero().Sub(amount1UsedU256, amount1BackU256)
 	} else {
 		diff1 = u256.Zero().Sub(amount1BackU256, amount1UsedU256)
 	}
-	
+
 	// Maximum acceptable loss (0.01% or 1 wei, whichever is larger)
 	tolerance0 := u256.Zero().Div(amount0UsedU256, u256.NewUint(10000))
 	if tolerance0.IsZero() {
 		tolerance0 = u256.NewUint(1)
 	}
-	
+
 	tolerance1 := u256.Zero().Div(amount1UsedU256, u256.NewUint(10000))
 	if tolerance1.IsZero() {
 		tolerance1 = u256.NewUint(1)
 	}
-	
+
 	ufmt.Printf("[INVARIANT] Token0 difference: %s (tolerance: %s)\n", diff0.ToString(), tolerance0.ToString())
 	ufmt.Printf("[INVARIANT] Token1 difference: %s (tolerance: %s)\n", diff1.ToString(), tolerance1.ToString())
-	
+
 	if diff0.Gt(tolerance0) || diff1.Gt(tolerance1) {
 		ufmt.Printf("[WARNING] Round-trip invariant violation detected!\n")
 	} else {
@@ -180,7 +180,7 @@ func testRoundTripUltraTight() {
 
 func testRoundTripVariousAmounts() {
 	testing.SetRealm(adminRealm)
-	
+
 	// Create new pool
 	pool.CreatePool(
 		cross,
@@ -189,20 +189,20 @@ func testRoundTripVariousAmounts() {
 		500,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
-	
+
 	testing.SetRealm(aliceRealm)
-	
+
 	// Test with different amount scales
 	amounts := []string{
-		"1000",           // Small
-		"1000000",        // Medium
-		"1000000000",     // Large
-		"1000000000",     // Large
+		"1000",       // Small
+		"1000000",    // Medium
+		"1000000000", // Large
+		"1000000000", // Large
 	}
-	
+
 	for _, amount := range amounts {
 		println(ufmt.Sprintf("[TEST] Round-trip with amount: %s", amount))
-		
+
 		// Mint
 		posId, liq, amt0Used, _ := pn.Mint(
 			cross,
@@ -213,7 +213,7 @@ func testRoundTripVariousAmounts() {
 			9999999999,
 			aliceAddr, aliceAddr, "",
 		)
-		
+
 		// Burn
 		_, _, _, _, amt0Back, _, _ := pn.DecreaseLiquidity(
 			cross,
@@ -223,26 +223,26 @@ func testRoundTripVariousAmounts() {
 			9999999999,
 			false,
 		)
-		
+
 		// Verify invariant
 		used0 := u256.MustFromDecimal(amt0Used)
 		back0 := u256.MustFromDecimal(amt0Back)
-		
+
 		var loss0 *u256.Uint
 		if used0.Gt(back0) {
 			loss0 = u256.Zero().Sub(used0, back0)
 		} else {
 			loss0 = u256.Zero()
 		}
-		
-		ufmt.Printf("[RESULT] Amount: %s, Used: %s, Returned: %s, Loss: %s\n", 
+
+		ufmt.Printf("[RESULT] Amount: %s, Used: %s, Returned: %s, Loss: %s\n",
 			amount, amt0Used, amt0Back, loss0.ToString())
 	}
 }
 
 func testRoundTripPriceBoundaries() {
 	testing.SetRealm(adminRealm)
-	
+
 	// Create pool
 	pool.CreatePool(
 		cross,
@@ -251,9 +251,9 @@ func testRoundTripPriceBoundaries() {
 		3000,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
-	
+
 	testing.SetRealm(aliceRealm)
-	
+
 	// Test at different price points
 	testRanges := []struct {
 		tickLower int32
@@ -265,10 +265,10 @@ func testRoundTripPriceBoundaries() {
 		{-60, 60, "Around current price"},
 		{-1020, 1020, "Wide range"}, // Must be divisible by 60 for fee tier 3000
 	}
-	
+
 	for _, tr := range testRanges {
 		println(ufmt.Sprintf("[TEST] Round-trip at %s", tr.desc))
-		
+
 		// Mint
 		posId, liq, amt0Used, _ := pn.Mint(
 			cross,
@@ -279,7 +279,7 @@ func testRoundTripPriceBoundaries() {
 			9999999999,
 			aliceAddr, aliceAddr, "",
 		)
-		
+
 		// Burn
 		_, _, _, _, amt0Back, _, _ := pn.DecreaseLiquidity(
 			cross,
@@ -289,7 +289,7 @@ func testRoundTripPriceBoundaries() {
 			9999999999,
 			false,
 		)
-		
+
 		ufmt.Printf("[RESULT] Range: [%d,%d], In: (%s,%s), Out: (%s,%s)\n",
 			tr.tickLower, tr.tickUpper, amt0Used, "(token1)", amt0Back, "(token1)")
 	}
@@ -297,7 +297,7 @@ func testRoundTripPriceBoundaries() {
 
 func testMultipleRoundTrips() {
 	testing.SetRealm(adminRealm)
-	
+
 	// Create pool
 	pool.CreatePool(
 		cross,
@@ -306,14 +306,14 @@ func testMultipleRoundTrips() {
 		10000,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
-	
+
 	testing.SetRealm(aliceRealm)
-	
+
 	println("[TEST] Multiple consecutive round-trips (checking compound effects)")
-	
+
 	initialBar := bar.BalanceOf(aliceAddr)
 	initialBaz := baz.BalanceOf(aliceAddr)
-	
+
 	// Perform 5 round-trips
 	for i := 1; i <= 5; i++ {
 		// Mint
@@ -326,7 +326,7 @@ func testMultipleRoundTrips() {
 			9999999999,
 			aliceAddr, aliceAddr, "",
 		)
-		
+
 		// Burn
 		pn.DecreaseLiquidity(
 			cross,
@@ -336,24 +336,24 @@ func testMultipleRoundTrips() {
 			9999999999,
 			false,
 		)
-		
+
 		currentBar := bar.BalanceOf(aliceAddr)
 		currentBaz := baz.BalanceOf(aliceAddr)
-		
-		ufmt.Printf("[ROUND %d] Bar balance: %d, Baz balance: %d\n", 
+
+		ufmt.Printf("[ROUND %d] Bar balance: %d, Baz balance: %d\n",
 			i, currentBar, currentBaz)
 	}
-	
+
 	finalBar := bar.BalanceOf(aliceAddr)
 	finalBaz := baz.BalanceOf(aliceAddr)
-	
+
 	// Check cumulative effect
 	totalLossBar := initialBar - finalBar
 	totalLossBaz := initialBaz - finalBaz
-	
+
 	ufmt.Printf("[FINAL] Total Bar loss after 5 round-trips: %d\n", totalLossBar)
 	ufmt.Printf("[FINAL] Total Baz loss after 5 round-trips: %d\n", totalLossBaz)
-	
+
 	// Loss should be minimal (< 0.1% total)
 	maxAcceptableLoss := int64(5000) // 5 * 1000000 * 0.001
 	if totalLossBar > maxAcceptableLoss || totalLossBaz > maxAcceptableLoss {

@@ -74,7 +74,8 @@ var (
 //   - Result represents sqrt(token1/token0) price
 //
 // Mathematical formula:
-//   sqrtPriceX96 = sqrt(1.0001^tick) * 2^96
+//
+//	sqrtPriceX96 = sqrt(1.0001^tick) * 2^96
 //
 // Panics if tick outside valid range.
 // Critical for all price calculations in concentrated liquidity.

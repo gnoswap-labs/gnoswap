@@ -70,7 +70,7 @@ func (p *ProtocolFeeRewardManager) GetClaimableRewardAmounts(
 			rewardStateI,
 		)
 	}
-	
+
 	accumulatedRewardX128PerStake, _, err := p.calculateAccumulatedRewardX128PerStake(
 		protocolFeeAmounts,
 		currentTimestamp,

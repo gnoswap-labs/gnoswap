@@ -25,16 +25,16 @@ const INT64_MAX int64 = 9223372036854775807
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm   = std.NewUserRealm(adminAddr)
-	
+
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	
+
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = std.NewUserRealm(aliceAddr)
-	
+
 	bobAddr  = testutils.TestAddress("bob")
 	bobRealm = std.NewUserRealm(bobAddr)
-	
+
 	barPath = "gno.land/r/onbloc/bar"
 	bazPath = "gno.land/r/onbloc/baz"
 )
@@ -43,23 +43,23 @@ func main() {
 	println("[SCENARIO] 1. Initialize Setup")
 	initializeSetup()
 	println()
-	
+
 	println("[SCENARIO] 2. Test Rounding Direction on Mint")
 	testRoundingOnMint()
 	println()
-	
+
 	println("[SCENARIO] 3. Test Rounding Direction on Burn")
 	testRoundingOnBurn()
 	println()
-	
+
 	println("[SCENARIO] 4. Test Rounding Consistency Across Operations")
 	testRoundingConsistency()
 	println()
-	
+
 	println("[SCENARIO] 5. Test Rounding in Edge Amount Cases")
 	testRoundingEdgeAmounts()
 	println()
-	
+
 	println("[SCENARIO] 6. Test Protocol Fee Rounding")
 	testProtocolFeeRounding()
 	println()
@@ -68,32 +68,32 @@ func main() {
 func initializeSetup() {
 	testing.SetRealm(adminRealm)
 	pool.SetPoolCreationFee(cross, 0)
-	
+
 	// Setup test accounts with smaller amounts for shared test environment
 	testAmount := int64(5_000_000_000) // 5 billion
 	bar.Transfer(cross, aliceAddr, testAmount)
 	baz.Transfer(cross, aliceAddr, testAmount)
 	bar.Transfer(cross, bobAddr, testAmount)
 	baz.Transfer(cross, bobAddr, testAmount)
-	
+
 	testing.SetRealm(aliceRealm)
 	bar.Approve(cross, poolAddr, testAmount)
 	baz.Approve(cross, poolAddr, testAmount)
 	bar.Approve(cross, positionAddr, testAmount)
 	baz.Approve(cross, positionAddr, testAmount)
-	
+
 	testing.SetRealm(bobRealm)
 	bar.Approve(cross, poolAddr, testAmount)
 	baz.Approve(cross, poolAddr, testAmount)
 	bar.Approve(cross, positionAddr, testAmount)
 	baz.Approve(cross, positionAddr, testAmount)
-	
+
 	println("[INFO] Setup completed with two test accounts")
 }
 
 func testRoundingOnMint() {
 	testing.SetRealm(adminRealm)
-	
+
 	// Create pool
 	pool.CreatePool(
 		cross,
@@ -102,19 +102,19 @@ func testRoundingOnMint() {
 		100,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
-	
+
 	testing.SetRealm(aliceRealm)
-	
+
 	println("[TEST] Rounding direction on mint operations")
-	
+
 	// Test with amounts that will cause rounding
 	// Use odd numbers that don't divide evenly
 	oddAmounts := []string{
-		"999999999",    // Will require rounding
-		"1000000001",   // Off by 1
-		"1234567890",   // Arbitrary odd number (reduced to fit balance)
+		"999999999",  // Will require rounding
+		"1000000001", // Off by 1
+		"1234567890", // Arbitrary odd number (reduced to fit balance)
 	}
-	
+
 	for _, amount := range oddAmounts {
 		_, _, actualAmount0, actualAmount1 := pn.Mint(
 			cross,
@@ -125,14 +125,14 @@ func testRoundingOnMint() {
 			9999999999,
 			aliceAddr, aliceAddr, "",
 		)
-		
+
 		requested := u256.MustFromDecimal(amount)
 		actual0 := u256.MustFromDecimal(actualAmount0)
 		actual1 := u256.MustFromDecimal(actualAmount1)
-		
+
 		ufmt.Printf("[MINT] Requested: %s\n", amount)
 		ufmt.Printf("       Actual0: %s, Actual1: %s\n", actualAmount0, actualAmount1)
-		
+
 		// Verify rounding favors protocol (actual <= requested)
 		if actual0.Gt(requested) || actual1.Gt(requested) {
 			ufmt.Printf("[ERROR] Rounding favors user! Used more than provided\n")
@@ -144,7 +144,7 @@ func testRoundingOnMint() {
 
 func testRoundingOnBurn() {
 	testing.SetRealm(adminRealm)
-	
+
 	// Create pool
 	pool.CreatePool(
 		cross,
@@ -153,11 +153,11 @@ func testRoundingOnBurn() {
 		500,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
-	
+
 	testing.SetRealm(aliceRealm)
-	
+
 	println("[TEST] Rounding direction on burn operations")
-	
+
 	// First mint a position with smaller amount
 	posId, liquidity, _, _ := pn.Mint(
 		cross,
@@ -168,16 +168,16 @@ func testRoundingOnBurn() {
 		9999999999,
 		aliceAddr, aliceAddr, "",
 	)
-	
+
 	ufmt.Printf("[MINT] Position %d created with liquidity: %s\n", posId, liquidity)
-	
+
 	// Burn partial amounts that will cause rounding
 	partialLiquidities := []string{
-		"33333333",  // 1/3 of liquidity (will round) - reduced by 10x
-		"10000001",  // Odd amount - reduced by 10x
-		"7777777",   // Arbitrary amount - reduced by 10x
+		"33333333", // 1/3 of liquidity (will round) - reduced by 10x
+		"10000001", // Odd amount - reduced by 10x
+		"7777777",  // Arbitrary amount - reduced by 10x
 	}
-	
+
 	for _, partialLiq := range partialLiquidities {
 		// Create new position for each test
 		posId, _, _, _ := pn.Mint(
@@ -189,7 +189,7 @@ func testRoundingOnBurn() {
 			9999999999,
 			aliceAddr, aliceAddr, "",
 		)
-		
+
 		// Burn partial liquidity
 		_, _, _, _, returnAmount0, returnAmount1, _ := pn.DecreaseLiquidity(
 			cross,
@@ -199,10 +199,10 @@ func testRoundingOnBurn() {
 			9999999999,
 			false,
 		)
-		
+
 		ufmt.Printf("[BURN] Burned liquidity: %s\n", partialLiq)
 		ufmt.Printf("       Returned: amount0=%s, amount1=%s\n", returnAmount0, returnAmount1)
-		
+
 		// In proper implementation, burning should round down returns
 		// (user gets less, protocol keeps dust)
 		ufmt.Printf("[PASS] Burn rounding handled\n")
@@ -211,7 +211,7 @@ func testRoundingOnBurn() {
 
 func testRoundingConsistency() {
 	testing.SetRealm(adminRealm)
-	
+
 	// Create pool
 	pool.CreatePool(
 		cross,
@@ -220,14 +220,14 @@ func testRoundingConsistency() {
 		3000,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
-	
+
 	testing.SetRealm(aliceRealm)
-	
+
 	println("[TEST] Rounding consistency across multiple operations")
-	
+
 	initialBalance0 := bar.BalanceOf(aliceAddr)
 	initialBalance1 := baz.BalanceOf(aliceAddr)
-	
+
 	// Perform series of mints and burns with odd amounts
 	operations := []struct {
 		action string
@@ -237,9 +237,9 @@ func testRoundingConsistency() {
 		{"mint", "111111111"}, // Reduced by 10x
 		{"mint", "77777777"},  // Reduced by 10x
 	}
-	
+
 	var positions []uint64
-	
+
 	for _, op := range operations {
 		if op.action == "mint" {
 			posId, liq, _, _ := pn.Mint(
@@ -255,11 +255,11 @@ func testRoundingConsistency() {
 			ufmt.Printf("[%s] Position %d: liquidity=%s\n", op.action, posId, liq)
 		}
 	}
-	
+
 	// Now burn all positions
 	for _, posId := range positions {
 		pos, _ := pn.GetPosition(posId)
-		
+
 		_, _, _, _, amt0, amt1, _ := pn.DecreaseLiquidity(
 			cross,
 			posId,
@@ -268,19 +268,19 @@ func testRoundingConsistency() {
 			9999999999,
 			false,
 		)
-		
+
 		ufmt.Printf("[burn] Position %d: returned amount0=%s, amount1=%s\n", posId, amt0, amt1)
 	}
-	
+
 	finalBalance0 := bar.BalanceOf(aliceAddr)
 	finalBalance1 := baz.BalanceOf(aliceAddr)
-	
+
 	// Calculate total loss due to rounding
 	loss0 := initialBalance0 - finalBalance0
 	loss1 := initialBalance1 - finalBalance1
-	
+
 	ufmt.Printf("[FINAL] Total rounding loss: bar=%d, baz=%d\n", loss0, loss1)
-	
+
 	// Loss should be minimal and consistent
 	if loss0 < 0 || loss1 < 0 {
 		ufmt.Printf("[ERROR] Negative loss indicates rounding error!\n")
@@ -291,7 +291,7 @@ func testRoundingConsistency() {
 
 func testRoundingEdgeAmounts() {
 	testing.SetRealm(adminRealm)
-	
+
 	// Create pool
 	pool.CreatePool(
 		cross,
@@ -300,11 +300,11 @@ func testRoundingEdgeAmounts() {
 		10000,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
-	
+
 	testing.SetRealm(aliceRealm)
-	
+
 	println("[TEST] Rounding with edge case amounts")
-	
+
 	// Test with very small and very large amounts
 	edgeAmounts := []struct {
 		amount string
@@ -317,10 +317,10 @@ func testRoundingEdgeAmounts() {
 		{"1001", "Just over 1000"},
 		{"999999999", "Large amount (1e9)"},
 	}
-	
+
 	for _, edge := range edgeAmounts {
 		ufmt.Printf("[TEST] %s: amount=%s\n", edge.desc, edge.amount)
-		
+
 		_, liquidity, actualAmount0, actualAmount1 := pn.Mint(
 			cross,
 			barPath, bazPath, 10000,
@@ -330,11 +330,11 @@ func testRoundingEdgeAmounts() {
 			9999999999,
 			aliceAddr, aliceAddr, "",
 		)
-		
+
 		if liquidity == "0" && edge.amount != "1" {
 			ufmt.Printf("[WARNING] Zero liquidity for amount %s\n", edge.amount)
 		} else {
-			ufmt.Printf("[RESULT] Liquidity: %s, Used: (%s, %s)\n", 
+			ufmt.Printf("[RESULT] Liquidity: %s, Used: (%s, %s)\n",
 				liquidity, actualAmount0, actualAmount1)
 		}
 	}
@@ -343,14 +343,14 @@ func testRoundingEdgeAmounts() {
 func testProtocolFeeRounding() {
 	// Skip actual minting since Alice has limited balance/allowance
 	// This test demonstrates that protocol fee rounding is handled correctly
-	
+
 	println("[TEST] Protocol fee rounding")
-	
+
 	// In a full implementation:
 	// 1. Mint position
 	// 2. Execute swaps to generate fees
 	// 3. Collect fees and verify protocol portion rounds correctly
-	
+
 	ufmt.Printf("[INFO] Protocol fee rounding would ensure fees favor protocol\n")
 	ufmt.Printf("[INFO] Example: 0.3%% fee on 1000 = 3, but 0.3%% on 999 = 2.997 → rounds to 2\n")
 	ufmt.Printf("[PASS] Protocol fee rounding concept demonstrated\n")

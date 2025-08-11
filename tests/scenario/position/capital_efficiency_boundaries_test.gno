@@ -23,13 +23,13 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm   = std.NewUserRealm(adminAddr)
-	
+
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	
+
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = std.NewUserRealm(aliceAddr)
-	
+
 	barPath = "gno.land/r/onbloc/bar"
 	bazPath = "gno.land/r/onbloc/baz"
 )
@@ -37,30 +37,30 @@ var (
 func main() {
 	println("[TEST] Capital Efficiency Boundaries Analysis")
 	println("==================================================")
-	
+
 	// Setup
 	testing.SetRealm(adminRealm)
 	pool.SetPoolCreationFee(cross, 0)
-	
+
 	// Give Alice plenty of tokens
 	largeAmount := int64(1_000_000_000_000_000) // 1e15
 	bar.Transfer(cross, aliceAddr, largeAmount)
 	baz.Transfer(cross, aliceAddr, largeAmount)
-	
+
 	testing.SetRealm(aliceRealm)
 	bar.Approve(cross, poolAddr, largeAmount)
 	baz.Approve(cross, poolAddr, largeAmount)
 	bar.Approve(cross, positionAddr, largeAmount)
 	baz.Approve(cross, positionAddr, largeAmount)
-	
+
 	// Test 1: Symmetric large amounts in narrow range
 	println("\n[TEST 1] Symmetric Large Amounts in Narrow Range")
 	testSymmetricNarrowRange()
-	
+
 	// Test 2: Test different range widths
 	println("\n[TEST 2] Capital Deployment vs Range Width")
 	testRangeWidthEfficiency()
-	
+
 	// Test 3: Find the actual limits
 	println("\n[TEST 3] Finding Actual Deployment Limits")
 	testActualLimits()
@@ -68,7 +68,7 @@ func main() {
 
 func testSymmetricNarrowRange() {
 	testing.SetRealm(adminRealm)
-	
+
 	// Create pool with tight tick spacing
 	pool.CreatePool(
 		cross,
@@ -77,17 +77,17 @@ func testSymmetricNarrowRange() {
 		100, // 0.01% fee
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
-	
+
 	testing.SetRealm(aliceRealm)
-	
+
 	// Test with SYMMETRIC large amounts
 	testAmounts := []string{
-		"1000000",         // 1e6
-		"1000000000",      // 1e9
-		"1000000000000",   // 1e12
+		"1000000",          // 1e6
+		"1000000000",       // 1e9
+		"1000000000000",    // 1e12
 		"1000000000000000", // 1e15
 	}
-	
+
 	for _, amount := range testAmounts {
 		// Use very narrow range: just 2 ticks
 		_, liquidity, amount0Used, amount1Used := pn.Mint(
@@ -99,11 +99,11 @@ func testSymmetricNarrowRange() {
 			9999999999,
 			aliceAddr, aliceAddr, "",
 		)
-		
+
 		requested := u256.MustFromDecimal(amount)
 		used0 := u256.MustFromDecimal(amount0Used)
 		used1 := u256.MustFromDecimal(amount1Used)
-		
+
 		// Calculate efficiency as integer percentage
 		var efficiency0Pct, efficiency1Pct uint64
 		if !requested.IsZero() {
@@ -111,7 +111,7 @@ func testSymmetricNarrowRange() {
 			efficiency0Pct = used0.Uint64() * 100 / requested.Uint64()
 			efficiency1Pct = used1.Uint64() * 100 / requested.Uint64()
 		}
-		
+
 		ufmt.Printf("Amount: %s\n", amount)
 		ufmt.Printf("  Liquidity: %s\n", liquidity)
 		ufmt.Printf("  Token0 - Used: %s (%d%% efficiency)\n", amount0Used, efficiency0Pct)
@@ -122,7 +122,7 @@ func testSymmetricNarrowRange() {
 
 func testRangeWidthEfficiency() {
 	testing.SetRealm(adminRealm)
-	
+
 	// Create new pool
 	pool.CreatePool(
 		cross,
@@ -131,11 +131,11 @@ func testRangeWidthEfficiency() {
 		500,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
-	
+
 	testing.SetRealm(aliceRealm)
-	
+
 	testAmount := "1000000000000" // 1e12
-	
+
 	// Test different range widths
 	ranges := []struct {
 		lower int32
@@ -149,9 +149,9 @@ func testRangeWidthEfficiency() {
 		{-1000, 1000, "2000 ticks (±1000)"},
 		{-5000, 5000, "10000 ticks (±5000)"},
 	}
-	
+
 	ufmt.Printf("Testing amount: %s\n\n", testAmount)
-	
+
 	for _, r := range ranges {
 		_, liquidity, amount0Used, amount1Used := pn.Mint(
 			cross,
@@ -162,15 +162,15 @@ func testRangeWidthEfficiency() {
 			9999999999,
 			aliceAddr, aliceAddr, "",
 		)
-		
+
 		requested := u256.MustFromDecimal(testAmount)
 		used0 := u256.MustFromDecimal(amount0Used)
-		
+
 		var efficiencyPct uint64
 		if !requested.IsZero() {
 			efficiencyPct = used0.Uint64() * 100 / requested.Uint64()
 		}
-		
+
 		ufmt.Printf("Range: %s\n", r.desc)
 		ufmt.Printf("  Liquidity: %s\n", liquidity)
 		ufmt.Printf("  Amount0 used: %s (%d%%)\n", amount0Used, efficiencyPct)
@@ -180,7 +180,7 @@ func testRangeWidthEfficiency() {
 
 func testActualLimits() {
 	testing.SetRealm(adminRealm)
-	
+
 	// Create new pool
 	pool.CreatePool(
 		cross,
@@ -189,31 +189,31 @@ func testActualLimits() {
 		3000,
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
-	
+
 	testing.SetRealm(aliceRealm)
-	
+
 	// Test the absolute maximum we can deploy in ultra-narrow range
 	println("Finding maximum deployable in 60-tick range (fee tier 3000)...")
-	
+
 	// Try increasing amounts until we hit limits
 	testAmounts := []string{
-		"1000000000",        // 1e9
-		"10000000000",       // 1e10
-		"100000000000",      // 1e11
-		"1000000000000",     // 1e12
-		"10000000000000",    // 1e13
-		"100000000000000",   // 1e14
-		"1000000000000000",  // 1e15
+		"1000000000",       // 1e9
+		"10000000000",      // 1e10
+		"100000000000",     // 1e11
+		"1000000000000",    // 1e12
+		"10000000000000",   // 1e13
+		"100000000000000",  // 1e14
+		"1000000000000000", // 1e15
 	}
-	
+
 	for _, amount := range testAmounts {
 		// Check if Alice has enough balance
 		aliceBar := bar.BalanceOf(aliceAddr)
 		aliceBaz := baz.BalanceOf(aliceAddr)
-		
+
 		ufmt.Printf("Testing amount: %s\n", amount)
 		ufmt.Printf("  Alice balance: bar=%d, baz=%d\n", aliceBar, aliceBaz)
-		
+
 		_, liquidity, amount0Used, amount1Used := pn.Mint(
 			cross,
 			barPath, bazPath, 3000,
@@ -223,14 +223,14 @@ func testActualLimits() {
 			9999999999,
 			aliceAddr, aliceAddr, "",
 		)
-		
+
 		ufmt.Printf("  Result: liquidity=%s\n", liquidity)
 		ufmt.Printf("  Used: token0=%s, token1=%s\n\n", amount0Used, amount1Used)
-		
+
 		// Check if we're hitting limits
 		requested := u256.MustFromDecimal(amount)
 		used0 := u256.MustFromDecimal(amount0Used)
-		
+
 		if used0.Lt(requested) {
 			ratio := u256.Zero().Mul(used0, u256.NewUint(100))
 			ratio = u256.Zero().Div(ratio, requested)

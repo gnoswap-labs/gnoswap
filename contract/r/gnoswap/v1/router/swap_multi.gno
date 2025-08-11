@@ -169,7 +169,7 @@ func (p *MultiSwapProcessor) processBackwardRealSwap(sp SwapParams, numPools int
 
 // collectBackwardSwapInfo simulates swaps backward to collect parameters.
 func (p *MultiSwapProcessor) collectBackwardSwapInfo(sp SwapParams, numPools int, swapPath string) []SingleSwapParams {
-	swapInfo := make([]SingleSwapParams, 0, numPools - 1)
+	swapInfo := make([]SingleSwapParams, 0, numPools-1)
 	currentPoolIndex := numPools - 1
 
 	for currentPoolIndex >= 0 {

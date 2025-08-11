@@ -25,7 +25,7 @@ var (
 	fixedPointQ128 = u256.MustFromDecimal(Q128)
 
 	maxInt256 = u256.MustFromDecimal(MAX_INT256)
-	maxInt64 = i256.MustFromDecimal(MAX_INT64)
+	maxInt64  = i256.MustFromDecimal(MAX_INT64)
 
 	swapStartHook func(poolPath string, timestamp int64)
 	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)
@@ -117,7 +117,7 @@ func Swap(
 	payer std.Address, // router
 ) (string, string) {
 	halt.AssertIsNotHaltedPool()
-	
+
 	caller := std.PreviousRealm().Address()
 	access.AssertIsSwapWhitelisted(caller)
 	assertPayerIsPreviousRealmOrOriginCaller(payer)
@@ -290,7 +290,7 @@ func DrySwap(
 // The computation continues until either:
 // - The entire amount is consumed (amountSpecifiedRemaining = 0)
 // - The price limit is reached (sqrtPriceX96 = sqrtPriceLimitX96)
-// 
+//
 // Important: This function is critical for AMM price discovery. It iterates through
 // tick ranges, calculating swap amounts and fees for each liquidity segment.
 // Returns an error if the computation fails at any step.
@@ -460,7 +460,7 @@ func computeSwapStep(
 		if overflow {
 			panic(ufmt.Sprintf("feeGrowthGlobalX128 overflow"))
 		}
-		
+
 		newState.setFeeGrowthGlobalX128(feeGrowthGlobalX128)
 	}
 
@@ -549,6 +549,7 @@ func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *Pool, 
 // For exact input swaps:
 //   - Decrements remaining input amount by (amountIn + feeAmount)
 //   - Decrements calculated amount by amountOut
+//
 // For exact output swaps:
 //   - Increments remaining output amount by amountOut
 //   - Increments calculated amount by (amountIn + feeAmount)

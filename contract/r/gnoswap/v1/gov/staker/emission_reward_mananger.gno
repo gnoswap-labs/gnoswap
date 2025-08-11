@@ -187,7 +187,7 @@ func (e *EmissionRewardManager) removeStake(address string, amount int64, curren
 			rewardStateI,
 		)
 	}
-	
+
 	err := rewardState.removeStakeWithUpdateRewardDebtX128(amount, e.accumulatedRewardX128PerStake, currentTimestamp)
 	if err != nil {
 		return err

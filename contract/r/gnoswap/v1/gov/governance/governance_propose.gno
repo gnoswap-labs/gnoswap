@@ -218,16 +218,17 @@ func ProposeCommunityPoolSpend(
 //   - description: Rationale and impact analysis
 //   - numToExecute: Number of parameter changes
 //   - executions: JSON array of changes, each containing:
-//     * target: Contract address to modify
-//     * function: Function name to call
-//     * params: Parameters for the function
+//   - target: Contract address to modify
+//   - function: Function name to call
+//   - params: Parameters for the function
 //
 // Example executions format:
-//   [{
-//     "target": "gno.land/r/gnoswap/v1/gov",
-//     "function": "SetVotingPeriod",
-//     "params": ["604800"]
-//   }]
+//
+//	[{
+//	  "target": "gno.land/r/gnoswap/v1/gov",
+//	  "function": "SetVotingPeriod",
+//	  "params": ["604800"]
+//	}]
 //
 // Requirements:
 //   - Valid JSON format for executions

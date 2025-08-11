@@ -68,13 +68,13 @@ type SingleSwapParams struct {
 }
 
 // TokenIn returns the input token address.
-func (p SingleSwapParams) TokenIn() string  { return p.tokenIn }
+func (p SingleSwapParams) TokenIn() string { return p.tokenIn }
 
 // TokenOut returns the output token address.
 func (p SingleSwapParams) TokenOut() string { return p.tokenOut }
 
 // Fee returns the pool fee tier.
-func (p SingleSwapParams) Fee() uint32      { return p.fee }
+func (p SingleSwapParams) Fee() uint32 { return p.fee }
 
 // SwapParams contains parameters for executing a multi-hop swap operation.
 type SwapParams struct {
@@ -84,13 +84,13 @@ type SwapParams struct {
 }
 
 // TokenIn returns the input token address.
-func (p SwapParams) TokenIn() string        { return p.tokenIn }
+func (p SwapParams) TokenIn() string { return p.tokenIn }
 
 // TokenOut returns the output token address.
-func (p SwapParams) TokenOut() string       { return p.tokenOut }
+func (p SwapParams) TokenOut() string { return p.tokenOut }
 
 // Fee returns the pool fee tier.
-func (p SwapParams) Fee() uint32            { return p.fee }
+func (p SwapParams) Fee() uint32 { return p.fee }
 
 // Recipient returns the recipient address.
 func (p SwapParams) Recipient() std.Address { return p.recipient }

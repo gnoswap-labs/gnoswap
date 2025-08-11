@@ -98,7 +98,7 @@ func MintAndDistributeGns(cur realm) int64 {
 
 	distributableAmount := mintedEmissionRewardAmount
 	prevLeftAmount := GetLeftGNSAmount()
-	
+
 	if leftGNSAmount > 0 {
 		// Check for overflow before addition
 		if distributableAmount > math.MaxInt64-prevLeftAmount {

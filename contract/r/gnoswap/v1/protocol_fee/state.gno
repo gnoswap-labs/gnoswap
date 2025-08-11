@@ -50,13 +50,16 @@ func NewProtocolFeeState() *ProtocolFeeState {
 var protocolFeeState = NewProtocolFeeState()
 
 // DevOpsPct returns the percentage of protocol fees allocated to DevOps.
-func (pfs *ProtocolFeeState) DevOpsPct() int64           { return pfs.devOpsPct }
+func (pfs *ProtocolFeeState) DevOpsPct() int64 { return pfs.devOpsPct }
+
 // GovStakerPct returns the percentage of protocol fees allocated to Gov/Staker.
-func (pfs *ProtocolFeeState) GovStakerPct() int64        { return 10000 - pfs.devOpsPct }
+func (pfs *ProtocolFeeState) GovStakerPct() int64 { return 10000 - pfs.devOpsPct }
+
 // AccuToGovStaker returns the accumulated amounts distributed to Gov/Staker.
 func (pfs *ProtocolFeeState) AccuToGovStaker() *avl.Tree { return pfs.accuToGovStaker }
+
 // AccuToDevOps returns the accumulated amounts distributed to DevOps.
-func (pfs *ProtocolFeeState) AccuToDevOps() *avl.Tree    { return pfs.accuToDevOps }
+func (pfs *ProtocolFeeState) AccuToDevOps() *avl.Tree { return pfs.accuToDevOps }
 
 // distributeToDevOps distributes tokens to DevOps and updates related state.
 // Amount should be greater than 0 (already checked in DistributeProtocolFee).

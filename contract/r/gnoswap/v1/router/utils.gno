@@ -154,7 +154,7 @@ func formatInt64(v any) string {
 func safeConvertToInt64(value *u256.Uint) int64 {
 	const INT64_MAX = 9223372036854775807
 	const MAX_INT64 = "9223372036854775807"
-	
+
 	res, overflow := value.Uint64WithOverflow()
 	if overflow || res > uint64(INT64_MAX) {
 		panic(ufmt.Sprintf(

@@ -26,7 +26,8 @@ var convertedQ128 = u256.MustFromDecimal(Q128)
 //   - tickUpper: Upper boundary tick of position range
 //
 // Key Format:
-//   base64(owner_address + tickLower_bytes + tickUpper_bytes)
+//
+//	base64(owner_address + tickLower_bytes + tickUpper_bytes)
 //
 // Requirements:
 //   - Valid owner address

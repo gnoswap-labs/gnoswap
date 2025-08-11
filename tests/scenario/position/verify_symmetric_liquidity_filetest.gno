@@ -22,13 +22,13 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm   = std.NewUserRealm(adminAddr)
-	
+
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	
+
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = std.NewUserRealm(aliceAddr)
-	
+
 	barPath = "gno.land/r/onbloc/bar"
 	bazPath = "gno.land/r/onbloc/baz"
 )
@@ -36,11 +36,11 @@ var (
 func main() {
 	println("[TEST] Verifying Symmetric Liquidity Behavior")
 	println()
-	
+
 	// Setup
 	testing.SetRealm(adminRealm)
 	pool.SetPoolCreationFee(cross, 0)
-	
+
 	// Create pool
 	pool.CreatePool(
 		cross,
@@ -49,18 +49,18 @@ func main() {
 		500, // 0.05% fee
 		common.TickMathGetSqrtRatioAtTick(0).ToString(),
 	)
-	
+
 	// Give Alice tokens
 	largeAmount := int64(10_000_000_000_000) // 1e13
 	bar.Transfer(cross, aliceAddr, largeAmount)
 	baz.Transfer(cross, aliceAddr, largeAmount)
-	
+
 	testing.SetRealm(aliceRealm)
 	bar.Approve(cross, poolAddr, largeAmount)
 	baz.Approve(cross, poolAddr, largeAmount)
 	bar.Approve(cross, positionAddr, largeAmount)
 	baz.Approve(cross, positionAddr, largeAmount)
-	
+
 	// Test 1: ASYMMETRIC amounts (reproducing the "issue")
 	println("[CASE 1] Asymmetric Amounts (1e12 vs 1e6)")
 	_, liq1, amt0_1, amt1_1 := pn.Mint(
@@ -78,7 +78,7 @@ func main() {
 	ufmt.Printf("  Liquidity: %s\n", liq1)
 	ufmt.Printf("  Result: Limited by smaller token1 amount\n")
 	println()
-	
+
 	// Test 2: SYMMETRIC amounts (the real test)
 	println("[CASE 2] Symmetric Amounts (1e12 vs 1e12)")
 	_, liq2, amt0_2, amt1_2 := pn.Mint(
@@ -96,7 +96,7 @@ func main() {
 	ufmt.Printf("  Liquidity: %s\n", liq2)
 	ufmt.Printf("  Result: Both tokens fully utilized\n")
 	println()
-	
+
 	// Test 3: Very narrow range with symmetric amounts
 	println("[CASE 3] Ultra-Narrow Range (1 tick) with Symmetric 1e10")
 	_, liq3, amt0_3, amt1_3 := pn.Mint(
@@ -113,19 +113,19 @@ func main() {
 	ufmt.Printf("  Used: token0=%s, token1=%s\n", amt0_3, amt1_3)
 	ufmt.Printf("  Liquidity: %s\n", liq3)
 	println()
-	
+
 	// Test 4: Check actual limits
 	println("[CASE 4] Finding Actual Limits")
 	ranges := []struct {
 		lower, upper int32
-		desc string
+		desc         string
 	}{
 		{-10, 10, "20 ticks"},
 		{-50, 50, "100 ticks"},
 		{-100, 100, "200 ticks"},
 		{-500, 500, "1000 ticks"},
 	}
-	
+
 	for _, r := range ranges {
 		_, liq, amt0, amt1 := pn.Mint(
 			cross,
@@ -137,7 +137,7 @@ func main() {
 			9999999999,
 			aliceAddr, aliceAddr, "",
 		)
-		ufmt.Printf("  Range %s: Used %s/%s, Liquidity %s\n", 
+		ufmt.Printf("  Range %s: Used %s/%s, Liquidity %s\n",
 			r.desc, amt0, amt1, liq)
 	}
 }
