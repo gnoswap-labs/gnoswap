@@ -2,38 +2,44 @@
 
 GnoSwap governance and utility token.
 
-## Token Details
+## Overview
 
-- Symbol: GNS
-- Decimals: 6
-- Max Supply: 1,000,000,000
-- Initial Mint: 100,000,000
+GNS is the native governance token of GnoSwap, featuring a deflationary emission schedule with halvings every 2 years over 12 years total.
+
+## Token Economics
+
+- **Symbol**: GNS
+- **Decimals**: 6
+- **Max Supply**: 1,000,000,000 GNS
+- **Initial Mint**: 100,000,000 GNS
+- **Total Emission**: 900,000,000 GNS over 12 years
 
 ## Emission Schedule
 
-Timestamp-based emission with halving every 2 years over 12 years total:
+| Years | Annual Emission | Rate |
+|-------|----------------|------|
+| 1-2   | 225,000,000    | 100% |
+| 3-4   | 112,500,000    | 50%  |
+| 5-6   | 56,250,000     | 25%  |
+| 7-8   | 28,125,000     | 12.5%|
+| 9-12  | 14,062,500     | 6.25%|
 
-| Years | Emission Rate |
-| --- | --- |
-| 1-2 | 225,000,000 per year |
-| 3-4 | 112,500,000 per year |
-| 5-6 | 56,250,000 per year |
-| 7-8 | 28,125,000 per year |
-| 9-12 | 14,062,500 per year |
+## Core Functions
 
-Total emission: 900,000,000 GNS
+### `Transfer`
+Transfers tokens between addresses.
 
-## Distribution
+### `TransferFrom`
+Transfers with allowance.
 
-See [emission contract](../emission) for distribution details.
+### `Approve`
+Approves spending allowance.
 
-## Functions
+### `MintGns`
+Mints new tokens per emission schedule.
 
-- `Transfer` - Transfer tokens between addresses
-- `TransferFrom` - Transfer with allowance
-- `Approve` - Approve spending allowance
-- `MintGns` - Mint new tokens per emission schedule
-- `Burn` - Burn tokens from supply
+### `Burn`
+Burns tokens from supply.
 
 ## Usage
 
@@ -44,15 +50,11 @@ Transfer(to, amount)
 // Approve and transfer
 Approve(spender, amount)
 TransferFrom(from, to, amount)
+
+// Mint per emission schedule
+MintGns()
 ```
 
-## Notes
+## Distribution
 
-- Initial mint: 100M GNS
-- Total emission: 900M GNS over 12 years
-- Halving schedule: 225M → 112.5M → 56.25M → 28.125M → 14.0625M per year
-
-### Configurable Parameters
-The following parameters can be modified by admin or governance:
-- **Emission Start Time**: Unix timestamp when emission begins
-- **Distribution Targets**: Via emission contract
+See [emission contract](../emission) for distribution details.

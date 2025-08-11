@@ -2,62 +2,56 @@
 
 Fee collection and distribution for protocol operations.
 
-## Fee Types
+## Overview
 
-### Router Fee
-- Default: 0.15% of swap amount
+Protocol Fee contract collects fees from various protocol operations and distributes them to xGNS holders and DevOps.
 
-### Pool Creation Fee
-- Default: 100 GNS
+## Configuration
 
-### Withdrawal Fee
-- Default: 1% of claimed LP fees
-- Processed during liquidity withdrawal
+- **Router Fee**: 0.15% of swap amount
+- **Pool Creation Fee**: 100 GNS
+- **Withdrawal Fee**: 1% of LP fees claimed
+- **Unstaking Fee**: 1% of staking rewards
+- **Distribution**: 100% to xGNS holders (default)
 
-### Unstaking Fee
-- Default: 1% of staking rewards
-- Applied when claiming rewards
+## Fee Sources
 
-## Flow
-
-1. **Swaps**: 0.15% fee on swap amount
-2. **Pool Creation**: 100 GNS fee
-3. **Liquidity Withdrawal**: 1% of claimed fees
+1. **Swaps**: 0.15% fee on all trades
+2. **Pool Creation**: 100 GNS per new pool
+3. **LP Withdrawals**: 1% of collected fees
 4. **Staking Claims**: 1% of rewards
 
-## Features
+## Key Functions
 
-- Multiple fee types (swap, creation, withdrawal)
-- Automatic distribution to xGNS holders
-- Configurable fee percentages
-- DevOps funding support
+### `DistributeProtocolFee`
+Distributes accumulated fees to recipients.
 
-## Functions
+### `SetDevOpsPct`
+Sets DevOps funding percentage.
 
-- `DistributeProtocolFee` - Distribute accumulated fees
-- `SetDevOpsPct` - Set DevOps percentage
-- `SetGovStakerPct` - Set GovStaker percentage
-- `AddToProtocolFee` - Add fees to distribution queue
-- `ClearTokenListWithAmount` - Clear fee accumulator
+### `SetGovStakerPct`
+Sets xGNS holder percentage.
+
+### `AddToProtocolFee`
+Adds fees to distribution queue.
 
 ## Usage
 
 ```go
-// Distribute fees
+// Distribute accumulated fees
 tokenAmounts := DistributeProtocolFee()
 
-// Set distribution percentages
-SetDevOpsPct(2000) // 20% to DevOps
+// Configure distribution
+SetDevOpsPct(2000)     // 20% to DevOps
+SetGovStakerPct(8000)  // 80% to xGNS holders
+
+// View accumulated fees
+GetProtocolFee(tokenPath)
 ```
 
-## Notes
+## Security
 
-- Fees accumulate until distributed
-- Default: 100% to xGNS holders
-- Multiple token types supported
-
-### Configurable Parameters
-The following parameters can be modified by admin or governance:
-- **DevOps Percentage**: 0% (default) - portion for development and operations
-- **GovStaker Percentage**: 100% (default) - portion for xGNS holders
-- **Distribution Frequency**: On-demand via DistributeProtocolFee
+- Admin-only configuration changes
+- Automatic fee accumulation
+- Multi-token support
+- Transparent distribution tracking

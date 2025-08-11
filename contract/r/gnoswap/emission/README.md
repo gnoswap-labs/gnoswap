@@ -2,51 +2,89 @@
 
 GNS token emission and distribution system.
 
-## Concept
+## Overview
 
-The GnoSwap emission system controls the creation and distribution of new GNS tokens according to a predetermined schedule. It implements a deflationary model with periodic halvings, similar to Bitcoin, ensuring a predictable and decreasing supply growth over time.
+The emission system controls creation and distribution of new GNS tokens with a deflationary model featuring periodic halvings, ensuring predictable and decreasing supply growth over 12 years. For more details, check out [docs](https://docs.gnoswap.io/gnoswap-token/emission).
 
-### Emission Schedule
+## Token Economics
+
 - **Total Supply Cap**: 1,000,000,000 GNS
-- **Initial Minted Supply**: 100,000,000 GNS
-- **To Be Minted Supply**: 900,000,000 GNS for 12 years
+- **Initial Minted**: 100,000,000 GNS
+- **To Be Minted**: 900,000,000 GNS over 12 years
 - **Halving Period**: Every 2 years (63,072,000 seconds)
 - **Halving Reduction**: 50% decrease in emission rate
-- **Distribution Trigger**: Automatic during user interactions
+- **Distribution**: Automatic during protocol activity
+
+## Configuration
+
+- **Distribution Ratios** (modifiable by governance):
+  - Liquidity Staker: 75% (default)
+  - DevOps: 20% (default)
+  - Community Pool: 5% (default)
+  - Governance Staker: 0% (default)
+- **Start Time**: Unix timestamp (immutable once set)
+
+## Core Features
+
+### Emission Schedule
+Implements Bitcoin-style halving model:
+- Year 0-2: 100% emission rate
+- Year 2-4: 50% emission rate
+- Year 4-6: 25% emission rate
+- Year 6-8: 12.5% emission rate
+- Year 8-10: 6.25% emission rate
+- Year 10-12: 3.125% emission rate
 
 ### Distribution Mechanism
-When triggered by protocol activity (swaps, liquidity operations, etc), the system:
+When triggered by protocol activity:
 1. Calculates elapsed time since last distribution
-2. Mints appropriate GNS based on current emission rate
-3. Distributes to predefined targets according to percentages
+2. Mints GNS based on current emission rate
+3. Distributes to targets per configured ratios
 4. Carries forward any undistributed amounts
 
-## Features
+## Key Functions
 
-- Timestamp-based emission schedule
-- Automatic distribution to targets for 12 years
-- Halving every 2 years
-- Leftover token tracking
-- Configurable distribution ratios
-- One-time start timestamp setting
+### `MintAndDistributeGns`
+Mints and distributes GNS tokens automatically.
 
-## Functions
+### `SetDistributionStartTime`
+One-time setup of emission start timestamp.
 
-- `MintAndDistributeGns` - Mint and distribute GNS tokens
-- `SetDistributionStartTime` - Set emission start timestamp
-- `GetDistributionRatio` - Get current distribution ratios
-- `SetDistributionRatio` - Update distribution percentages
+### `SetDistributionRatio`
+Updates distribution percentages (governance only).
+
+### `GetDistributionRatio`
+Returns current distribution ratios.
+
+## Technical Details
+
+### Timestamp-Based Emission
+```
+emissionPerSecond = baseEmission / (2^halvingCount)
+amountToMint = emissionPerSecond * timeSinceLastMint
+```
+
+### Halving Calculation
+```
+halvingCount = floor(timeSinceStart / halvingPeriod)
+```
+
+### Distribution Targets
+1. **Liquidity Staker**: Rewards for LP providers
+2. **DevOps**: Development and operations fund
+3. **Community Pool**: Community-governed treasury
+4. **Governance Staker**: GNS staking rewards (currently 0%)
 
 ## Usage
 
 ```go
-// Set emission start (one-time setup by admin/governance)
-SetDistributionStartTime(1704067200) // Jan 1, 2024 00:00:00 UTC
+// Set emission start (one-time by admin)
+SetDistributionStartTime(1704067200) // Jan 1, 2024
 
-// Trigger emission distribution (called automatically)
+// Trigger emission (called automatically)
 amount := MintAndDistributeGns()
 
-// Update distribution percentages
+// Update distribution ratios
 ChangeDistributionPct(
     1, 7000,  // 70% to liquidity stakers
     2, 2000,  // 20% to devops
@@ -57,22 +95,13 @@ ChangeDistributionPct(
 // Query distribution info
 stakerPct := GetDistributionBpsPct(LIQUIDITY_STAKER)
 accumulated := GetAccuDistributedToStaker()
-emissionRate := GetStakerEmissionAmountPerSecond()
+rate := GetStakerEmissionAmountPerSecond()
 ```
 
-## Notes
+## Security
 
-- Called automatically by user interactions (no manual trigger needed)
-- Emission rate halves every 2 years automatically
-- Undistributed tokens carried to next distribution
-- Distribution start is immutable once set and time passes
-- All percentages must sum to exactly 10000 (100%)
-
-### Configurable Parameters
-The following parameters can be modified by admin or governance:
-- **Distribution Ratios**:
-  - Liquidity Staker: 75% (default)
-  - DevOps: 20% (default)
-  - Community Pool: 5% (default)
-  - Governance Staker: 0% (default)
-- **Distribution Start Time**: Unix timestamp for emission start
+- Start time immutable once set and passed
+- Distribution percentages must sum to 10000 (100%)
+- Automatic triggers prevent manipulation
+- Leftover tracking ensures no token loss
+- Halving enforced at protocol level

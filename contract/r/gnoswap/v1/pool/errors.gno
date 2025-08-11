@@ -6,8 +6,7 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-// Error Messages
-// These error messages are intended to inform you when an error occurs while using Contract and what it is.
+// Error definitions for pool operations
 var (
 	errNoPermission              = errors.New("[GNOSWAP-POOL-001] caller has no permission")
 	errUnsupportedFeeTier        = errors.New("[GNOSWAP-POOL-002] unsupported fee tier")

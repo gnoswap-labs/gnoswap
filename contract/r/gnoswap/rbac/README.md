@@ -1,21 +1,33 @@
 # RBAC
 
-Role-based access control management.
+Role-based access control management realm.
 
-## Features
+## Overview
 
-- Dynamic role management
-- Address assignment per role
-- Ownership transfer support
-- Integration with access package
+RBAC realm manages role addresses and permissions for the GnoSwap protocol, integrating with the access package.
 
-## Functions
+## Configuration
 
-- `RegisterRole` - Register new role
-- `RemoveRole` - Remove existing role
-- `UpdateRoleAddress` - Update role address
-- `GetRoleAddress` - Get address for role
-- `TransferOwnership` - Transfer admin role
+- **Admin Control**: Full role management
+- **Dynamic Roles**: Add/remove at runtime
+- **Access Integration**: Syncs with access package
+
+## Key Functions
+
+### `RegisterRole`
+Registers new role in system.
+
+### `RemoveRole`
+Removes existing role.
+
+### `UpdateRoleAddress`
+Updates address for role.
+
+### `GetRoleAddress`
+Returns address for role.
+
+### `TransferOwnership`
+Transfers admin role to new address.
 
 ## Usage
 
@@ -28,16 +40,14 @@ UpdateRoleAddress("staker", newAddress)
 
 // Get role address
 addr, err := GetRoleAddress("router")
+
+// Transfer admin ownership
+TransferOwnership(newAdmin)
 ```
 
-## Notes
+## Security
 
-- Uses p/rbac for role definitions
+- Admin-only role management
 - Synchronized with access package
-- Admin role has full control
-
-### Configurable Parameters
-The following parameters can be modified by admin or governance:
-- **Role Addresses**: Address assignments for each role
-- **Role Registry**: Add/remove roles dynamically
-- **Admin Transfer**: Transfer ownership to new admin
+- Ownership transfer capability
+- Role validation before updates
