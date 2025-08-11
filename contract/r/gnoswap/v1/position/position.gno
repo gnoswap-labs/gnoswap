@@ -136,6 +136,30 @@ func Mint(
 }
 
 // IncreaseLiquidity increases liquidity of an existing position.
+//
+// Adds more liquidity to existing NFT position.
+// Maintains same price range as original position.
+// Calculates optimal token ratio for current price.
+//
+// Parameters:
+//   - positionId: NFT token ID to increase
+//   - amount0DesiredStr: Desired token0 amount
+//   - amount1DesiredStr: Desired token1 amount
+//   - amount0MinStr: Minimum token0 (slippage protection)
+//   - amount1MinStr: Minimum token1 (slippage protection)
+//   - deadline: Transaction expiration timestamp
+//
+// Returns:
+//   - positionId: Same NFT ID
+//   - liquidity: Total liquidity after increase
+//   - amount0: Token0 actually deposited
+//   - amount1: Token1 actually deposited
+//   - poolPath: Pool identifier
+//
+// Requirements:
+//   - Caller must own the position NFT
+//   - Position must have liquidity
+//   - Sufficient token balances and approvals
 func IncreaseLiquidity(
 	cur realm,
 	positionId uint64,
@@ -239,6 +263,27 @@ func unwrapLeftoverWrappedToken(token string, wrapped, amount int64, caller std.
 }
 
 // DecreaseLiquidity decreases liquidity of an existing position.
+//
+// Removes liquidity but keeps NFT ownership.
+// Calculates tokens owed based on current price.
+// Two-step: decrease then collect tokens.
+//
+// Parameters:
+//   - positionId: NFT token ID
+//   - liquidityStr: Amount of liquidity to remove
+//   - amount0MinStr: Min token0 to receive (slippage)
+//   - amount1MinStr: Min token1 to receive (slippage)
+//   - deadline: Transaction expiration
+//   - unwrapResult: Convert WUGNOT to GNOT if true
+//
+// Returns:
+//   - positionId: Same NFT ID
+//   - liquidity: Remaining liquidity
+//   - fee0, fee1: Fees collected
+//   - amount0, amount1: Principal collected
+//   - poolPath: Pool identifier
+//
+// Note: Applies 1% withdrawal fee on collected amounts.
 func DecreaseLiquidity(
 	cur realm,
 	positionId uint64,
@@ -298,6 +343,24 @@ func DecreaseLiquidity(
 }
 
 // CollectFee collects swap fee from the position.
+//
+// Claims accumulated fees without removing liquidity.
+// Useful for active positions earning ongoing fees.
+// Applies protocol withdrawal fee.
+//
+// Parameters:
+//   - positionId: NFT token ID
+//   - unwrapResult: Convert WUGNOT to GNOT if true
+//
+// Returns:
+//   - positionId: Same NFT ID
+//   - fee0, fee1: Fees collected (after 1% protocol fee)
+//   - amount0, amount1: Always "0" (no principal)
+//   - poolPath: Pool identifier
+//
+// Requirements:
+//   - Caller must be owner or approved operator
+//   - Position must have accumulated fees
 func CollectFee(
 	cur realm,
 	positionId uint64,

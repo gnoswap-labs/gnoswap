@@ -109,7 +109,23 @@ func CreateExternalIncentive(
 }
 
 // EndExternalIncentive ends an external incentive and refunds remaining rewards.
-// Can be called by refundee or admin.
+//
+// Finalizes incentive program after end timestamp.
+// Returns unallocated rewards and GNS deposit.
+// Calculates unclaimable rewards for refund.
+//
+// Parameters:
+//   - targetPoolPath: Pool with the incentive
+//   - incentiveId: Unique incentive identifier
+//
+// Process:
+//  1. Validates incentive end time reached
+//  2. Calculates remaining and unclaimable rewards
+//  3. Refunds rewards to original creator
+//  4. Returns 100 GNS deposit
+//  5. Removes incentive from active list
+//
+// Only callable by Refundee or Admin.
 func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 	halt.AssertIsNotHaltedStaker()
 	halt.AssertIsNotHaltedWithdraw()

@@ -11,9 +11,24 @@ import (
 
 // ProposeText creates a text proposal for community discussion.
 //
+// Signal proposals for non-binding community sentiment.
+// Used for policy discussions, roadmap planning, and community feedback.
+// No on-chain execution, serves as formal governance record.
+//
 // Parameters:
-//   - title: proposal title
-//   - description: proposal content
+//   - title: Short, descriptive proposal title (max 100 chars recommended)
+//   - description: Full proposal content with rationale and context
+//
+// Requirements:
+//   - Caller must hold minimum 1,000 GNS tokens
+//   - No other active proposal from same address
+//   - Title and description must be non-empty
+//
+// Process:
+//   - 1 day delay before voting starts
+//   - 7 days voting period
+//   - Simple majority decides outcome
+//   - No execution phase (signal only)
 //
 // Returns new proposal ID.
 func ProposeText(
@@ -88,7 +103,31 @@ func ProposeText(
 	return proposal.ID()
 }
 
-// ProposeCommunityPoolSpend creates a new community pool spend proposal.
+// ProposeCommunityPoolSpend creates a treasury disbursement proposal.
+//
+// Allocates community pool funds for approved purposes.
+// Supports grants, development funding, and protocol incentives.
+// Automatic transfer on execution if approved.
+//
+// Parameters:
+//   - title: Proposal title describing purpose
+//   - description: Detailed justification and budget breakdown
+//   - to: Recipient address for funds
+//   - tokenPath: Token contract path (e.g., "gno.land/r/gnoswap/gns")
+//   - amount: Amount to transfer (in smallest unit)
+//
+// Requirements:
+//   - Caller must hold minimum 1,000 GNS tokens
+//   - Sufficient balance in community pool
+//   - Valid recipient address
+//   - Supported token type
+//
+// Security:
+//   - Enforces timelock after approval
+//   - Single transfer per proposal
+//   - Tracks all disbursements on-chain
+//
+// Returns new proposal ID.
 func ProposeCommunityPoolSpend(
 	cur realm,
 	title string,
@@ -168,7 +207,35 @@ func ProposeCommunityPoolSpend(
 	return proposal.ID()
 }
 
-// ProposeParameterChange creates a new parameter change proposal.
+// ProposeParameterChange creates a protocol parameter update proposal.
+//
+// Modifies system parameters through governance.
+// Supports multiple parameter changes in single proposal.
+// Changes apply atomically on execution.
+//
+// Parameters:
+//   - title: Clear description of changes
+//   - description: Rationale and impact analysis
+//   - numToExecute: Number of parameter changes
+//   - executions: JSON array of changes, each containing:
+//     * target: Contract address to modify
+//     * function: Function name to call
+//     * params: Parameters for the function
+//
+// Example executions format:
+//   [{
+//     "target": "gno.land/r/gnoswap/v1/gov",
+//     "function": "SetVotingPeriod",
+//     "params": ["604800"]
+//   }]
+//
+// Requirements:
+//   - Valid JSON format for executions
+//   - Target contracts must exist
+//   - Functions must be governance-callable
+//   - Parameters must match function signatures
+//
+// Returns new proposal ID.
 func ProposeParameterChange(
 	cur realm,
 	title string,

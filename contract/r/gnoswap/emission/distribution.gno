@@ -57,9 +57,27 @@ func init() {
 
 // ChangeDistributionPct changes distribution percentages for emission targets.
 //
+// This function redistributes how newly minted GNS tokens are allocated across
+// protocol components. Changes take effect immediately for future emissions.
+// Historical distributions are not affected.
+//
 // Parameters:
-//   - target01-04: emission target constants (LIQUIDITY_STAKER, DEVOPS, etc.)
-//   - pct01-04: basis points (0-10000, must sum to 10000)
+//   - target01-04: Target identifiers (1=LIQUIDITY_STAKER, 2=DEVOPS, 3=COMMUNITY_POOL, 4=GOV_STAKER)
+//   - pct01-04: Percentage in basis points (100 = 1%, 10000 = 100%)
+//
+// Requirements:
+//   - All four targets must be specified (use current values if unchanged)
+//   - Percentages must sum to exactly 10000 (100%)
+//   - Each percentage must be 0-10000
+//   - Targets must be unique (no duplicates)
+//
+// Example:
+//   ChangeDistributionPct(
+//     1, 7000,  // 70% to liquidity stakers
+//     2, 2000,  // 20% to devops
+//     3, 1000,  // 10% to community pool
+//     4, 0      // 0% to governance stakers
+//   )
 //
 // Only callable by admin or governance.
 func ChangeDistributionPct(

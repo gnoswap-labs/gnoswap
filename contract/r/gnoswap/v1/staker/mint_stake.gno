@@ -12,16 +12,29 @@ import (
 
 // MintAndStake mints a new liquidity position and immediately stakes it.
 //
-// Parameters:
-//   - token0, token1: token contract paths
-//   - fee: pool fee tier (500, 3000, 10000)
-//   - tickLower, tickUpper: price range boundaries
-//   - amount0Desired, amount1Desired: desired token amounts
-//   - amount0Min, amount1Min: minimum acceptable amounts
-//   - deadline: transaction deadline timestamp
-//   - referrer: referral address
+// Atomic operation combining position creation and staking.
+// Saves gas by avoiding separate mint and stake transactions.
+// Position NFT transferred directly to staker contract.
 //
-// Returns positionId, liquidity, amount0, amount1, poolPath.
+// Parameters:
+//   - token0, token1: Token contract paths
+//   - fee: Pool fee tier (500=0.05%, 3000=0.3%, 10000=1%)
+//   - tickLower, tickUpper: Price range boundaries
+//   - amount0Desired, amount1Desired: Target token amounts
+//   - amount0Min, amount1Min: Minimum amounts (slippage protection)
+//   - deadline: Transaction expiration timestamp
+//   - referrer: Optional referral address
+//
+// Native token support:
+//   - Accepts GNOT via std.OriginSend()
+//   - Auto-wraps to WUGNOT for liquidity
+//   - Minimum 1 GNOT required
+//
+// Returns:
+//   - positionId: New NFT token ID
+//   - liquidity: Amount of liquidity minted
+//   - amount0, amount1: Actual tokens deposited
+//   - poolPath: Pool identifier
 func MintAndStake(
 	cur realm,
 	token0 string,

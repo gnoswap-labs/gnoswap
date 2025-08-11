@@ -110,8 +110,22 @@ func MintAndDistributeGns(cur realm) int64 {
 
 // SetDistributionStartTime sets the timestamp when emission distribution starts.
 //
+// This function controls when GNS emission begins. Once set and reached, the protocol
+// starts minting GNS tokens according to the emission schedule. The timestamp can only
+// be set before distribution starts - it becomes immutable once active.
+//
 // Parameters:
-//   - startTimestamp: unix timestamp for distribution start
+//   - startTimestamp: Unix timestamp when emission should begin
+//
+// Requirements:
+//   - Must be called before distribution starts (one-time setup)
+//   - Timestamp must be in the future
+//   - Cannot be negative
+//
+// Effects:
+//   - Sets global distribution start time
+//   - Initializes GNS emission state if not already started
+//   - Emission begins automatically when timestamp is reached
 //
 // Only callable by admin or governance.
 func SetDistributionStartTime(cur realm, startTimestamp int64) {

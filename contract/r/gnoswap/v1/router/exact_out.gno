@@ -31,16 +31,29 @@ func NewExactOutSwapOperation(pp ExactOutParams) *ExactOutSwapOperation {
 
 // ExactOutSwapRoute swaps tokens for an exact output amount.
 //
-// Parameters:
-//   - inputToken, outputToken: token contract paths
-//   - amountOut: exact output amount
-//   - routeArr: swap route "POOL_PATH,TOKEN0,TOKEN1,FEE:NEXT_POOL..."
-//   - quoteArr: percentage allocation for multi-path swaps
-//   - amountInMax: maximum input amount
-//   - deadline: transaction deadline
-//   - referrer: referral address
+// Executes swap to receive exact output tokens.
+// Calculates required input working backwards through route.
+// Useful for buying specific amounts regardless of price.
 //
-// Returns amountIn, amountOut as decimal strings.
+// Parameters:
+//   - inputToken, outputToken: Token contract paths
+//   - amountOut: Exact output amount desired
+//   - routeArr: Swap route "TOKEN0:TOKEN1:FEE,TOKEN1:TOKEN2:FEE" (max 7 hops)
+//   - quoteArr: Split percentages "70,30" (must sum to 100)
+//   - amountInMax: Maximum input to spend (slippage protection)
+//   - deadline: Unix timestamp for expiration
+//   - referrer: Optional referral address
+//
+// Route calculation:
+//   - Works backwards from output to input
+//   - Each hop increases required input
+//   - Multi-path aggregates total input
+//
+// Returns:
+//   - amountIn: Actual input consumed
+//   - amountOut: Exact output received
+//
+// Reverts if input > amountInMax or deadline passed.
 func ExactOutSwapRoute(
 	cur realm,
 	inputToken string,

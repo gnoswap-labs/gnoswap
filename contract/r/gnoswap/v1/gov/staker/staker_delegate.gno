@@ -14,10 +14,26 @@ import (
 
 // Delegate delegates GNS tokens to an address.
 //
+// Converts GNS to xGNS and assigns voting power.
+// Primary mechanism for participating in governance.
+// Can delegate to self or any other address.
+//
 // Parameters:
-//   - to: address to delegate to
-//   - amount: amount of GNS to delegate
-//   - referrer: referral address (optional)
+//   - to: Address to receive voting power (can be self)
+//   - amount: Amount of GNS to stake and delegate
+//   - referrer: Optional referral address for tracking
+//
+// Process:
+//   1. Transfers GNS from caller
+//   2. Mints equivalent xGNS (1:1 ratio)
+//   3. Assigns voting power to target address
+//   4. Creates delegation snapshot for voting
+//
+// Requirements:
+//   - Minimum 1 GNS delegation
+//   - Valid target address
+//   - Sufficient GNS balance
+//   - Approval for GNS transfer
 //
 // Returns delegated amount.
 func Delegate(
@@ -73,10 +89,26 @@ func Delegate(
 
 // Undelegate undelegates xGNS from the existing delegate.
 //
-// Parameters:
-//   - from: address to undelegate from
-//   - amount: amount of xGNS to undelegate
+// Initiates withdrawal of staked GNS with lockup period.
+// Voting power removed immediately, tokens locked for 7 days.
+// Prevents governance attacks through time delay.
 //
+// Parameters:
+//   - from: Address currently delegated to
+//   - amount: Amount of xGNS to undelegate
+//
+// Process:
+//   1. Removes voting power immediately
+//   2. Burns xGNS tokens
+//   3. Creates withdrawal request with timestamp
+//   4. Locks GNS for 7-day cooldown period
+//
+// Requirements:
+//   - Must have delegated to target address
+//   - Sufficient delegated amount
+//   - Cannot undelegate during active votes
+//
+// After 7 days, use Collect() to claim GNS.
 // Returns undelegated amount.
 func Undelegate(
 	cur realm,
@@ -121,11 +153,28 @@ func Undelegate(
 
 // Redelegate redelegates xGNS from existing delegate to another.
 //
-// Parameters:
-//   - delegatee: current delegate address
-//   - newDelegatee: new delegate address
-//   - amount: amount to redelegate
+// Atomic operation to change delegation target.
+// Maintains voting power continuity without unstaking.
+// Useful for vote delegation services and dao coordination.
 //
+// Parameters:
+//   - delegatee: Current address delegated to
+//   - newDelegatee: New address to delegate to
+//   - amount: Amount of xGNS to redelegate
+//
+// Process:
+//   1. Validates current delegation exists
+//   2. Removes voting power from old delegatee
+//   3. Assigns voting power to new delegatee
+//   4. Updates delegation snapshots
+//
+// Requirements:
+//   - Must have active delegation to current delegatee
+//   - Both addresses must be valid
+//   - Amount must not exceed current delegation
+//   - Cannot redelegate to same address
+//
+// No lockup period - instant redelegation.
 // Returns redelegated amount.
 func Redelegate(
 	cur realm,

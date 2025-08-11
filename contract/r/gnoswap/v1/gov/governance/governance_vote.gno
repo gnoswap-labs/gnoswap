@@ -10,11 +10,27 @@ import (
 
 // Vote casts a vote on a proposal.
 //
+// Records on-chain vote with weight based on delegated xGNS.
+// Uses 24-hour average voting power to prevent manipulation.
+// Votes are final and cannot be changed.
+//
 // Parameters:
 //   - proposalID: ID of the proposal to vote on
 //   - yes: true for yes vote, false for no vote
 //
-// Returns voting weight used.
+// Vote Weight Calculation:
+//   - Based on delegated xGNS amount
+//   - 24-hour average before proposal creation
+//   - Prevents flash loan attacks
+//   - Includes both self-stake and delegations received
+//
+// Requirements:
+//   - Proposal must be in voting period
+//   - Voter must have xGNS delegated
+//   - Cannot vote twice on same proposal
+//   - Voting period typically 7 days
+//
+// Returns voting weight used as string.
 func Vote(cur realm, proposalID int64, yes bool) string {
 	halt.AssertIsNotHaltedGovernance()
 

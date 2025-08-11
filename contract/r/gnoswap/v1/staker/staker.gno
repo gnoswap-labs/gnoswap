@@ -255,12 +255,26 @@ func init() {
 
 // StakeToken stakes an LP position NFT to earn rewards.
 //
-// Parameters:
-//   - positionId: LP position NFT token ID
-//   - referrer: referral address (optional)
+// Transfers position NFT to staker and begins reward accumulation.
+// Eligible for internal incentives (GNS emission) and external rewards.
+// Position must have liquidity and be in eligible pool tier.
 //
-// Returns poolPath, token0Amount, token1Amount.
-// Note: Position must be in range to earn rewards.
+// Parameters:
+//   - positionId: LP position NFT token ID to stake
+//   - referrer: Optional referral address for tracking
+//
+// Returns:
+//   - poolPath: Pool identifier (token0:token1:fee)
+//   - token0Amount: Current token0 balance in position
+//   - token1Amount: Current token1 balance in position
+//
+// Requirements:
+//   - Caller must own the position NFT
+//   - Position must have active liquidity
+//   - Pool must be in tier 1, 2, or 3
+//   - Position not already staked
+//
+// Note: Out-of-range positions earn no rewards but can be staked.
 func StakeToken(cur realm, positionId uint64, referrer string) (string, string, string) {
 	halt.AssertIsNotHaltedStaker()
 
@@ -387,10 +401,29 @@ func getPositionStakeTokenAmount(positionId uint64, owner, caller std.Address) (
 }
 
 // transferDeposit transfers deposit ownership to a new address.
+//
+// Manages NFT custody during staking operations.
+// Transfers ownership to staker contract for reward eligibility.
+// Handles special cases for mint-and-stake operations.
+//
+// Parameters:
+//   - positionId: The ID of the position NFT to transfer
+//   - owner: The current owner of the position
+//   - caller: The entity initiating the transfer
+//   - to: The recipient address (usually staker contract)
+//
+// Security Features:
+//   - Prevents self-transfer exploits
+//   - Validates ownership before transfer
+//   - Atomic operation with staking
+//   - No transfer if owner == to (mint & stake case)
+//
 // Returns:
-//   - error: Returns an error if the caller is the same as the recipient (`to`).
-//     Otherwise, it delegates the transfer to `gnft.TransferFrom` and returns any error
-//     that may occur during the transfer.
+//   - nil: If owner and recipient are same (mint-and-stake)
+//   - error: If caller unauthorized or transfer fails
+//
+// NFT remains locked in staker until unstaking.
+// Otherwise delegates the transfer to `gnft.TransferFrom`.
 func transferDeposit(positionId uint64, owner, caller, to std.Address) error {
 	// if owner is the same as to, when mint and stake, it will be the same address
 	if owner == to {
@@ -595,28 +628,25 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 // UnStakeToken withdraws an LP token from staking, collecting all pending rewards
 // and returning the token to its original owner.
 //
-// State transitions:
-//  1. All pending rewards are collected (calls CollectReward)
-//  2. Token ownership transfers back to original owner
-//  3. Position operator is cleared
-//  4. All staking state is cleaned up:
-//     - Deposit record removed
-//     - Position GNS balances cleared
-//     - Warm-up amounts cleared
-//     - Position removed from reward tracking
+// Parameters:
+//   - positionId: LP position NFT token ID to unstake
+//   - unwrapResult: Convert WUGNOT to GNOT if true
+//
+// Process:
+//  1. Collects all pending rewards (GNS + external)
+//  2. Transfers NFT ownership back to original owner
+//  3. Clears position operator rights
+//  4. Removes from reward tracking systems
+//  5. Cleans up all staking metadata
+//
+// Returns:
+//   - poolPath: Pool identifier where position was staked
+//   - token0Amount: Current token0 balance in position
+//   - token1Amount: Current token1 balance in position
 //
 // Requirements:
-// - Contract must not be halted
-// - Position must be staked (have deposit record)
-// - Rewards are automatically collected before unStaking
-//
-// UnStakeToken unstakes an LP position and collects all rewards.
-//
-// Parameters:
-//   - positionId: LP position NFT token ID
-//   - unwrapResult: if true, unwraps WUGNOT to GNOT
-//
-// Returns poolPath, token0Amount, token1Amount.
+//   - Caller must be the depositor
+//   - Position must be currently staked
 func UnStakeToken(cur realm, positionId uint64, unwrapResult bool) (string, string, string) { // poolPath, token0Amount, token1Amount
 	caller := std.PreviousRealm().Address()
 	halt.AssertIsNotHaltedStaker()

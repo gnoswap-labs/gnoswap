@@ -11,8 +11,25 @@ import (
 
 // Execute executes an approved proposal.
 //
+// Processes and implements governance decisions after successful voting.
+// Enforces timelock delays and execution windows for security.
+// Anyone can trigger execution to ensure decentralization.
+//
 // Parameters:
 //   - proposalID: ID of the proposal to execute
+//
+// Requirements:
+//   - Proposal must have passed (majority yes votes)
+//   - Quorum must be reached (50% of xGNS supply)
+//   - Timelock period must have elapsed (1 day default)
+//   - Must be within execution window (30 days default)
+//   - Proposal not already executed or cancelled
+//
+// Effects:
+//   - Executes proposal actions (parameter changes, treasury transfers)
+//   - Marks proposal as executed
+//   - Emits execution event
+//   - Refunds gas costs from treasury
 //
 // Returns executed proposal ID.
 // Callable by anyone once proposal is executable.
@@ -103,8 +120,28 @@ func executeProposal(
 }
 
 // Cancel cancels a proposal in upcoming status.
-// Only the original proposer can cancel their proposal before voting begins.
-// Provides safety mechanism for proposers to withdraw proposals before voting starts.
+//
+// Allows proposers to withdraw their proposals before voting begins.
+// Prevents accidental or malicious proposals from reaching vote.
+// Safety mechanism for proposal errors or changed circumstances.
+//
+// Parameters:
+//   - proposalID: ID of the proposal to cancel
+//
+// Requirements:
+//   - Must be called by original proposer
+//   - Proposal must be in "upcoming" status
+//   - Voting must not have started yet
+//   - Proposal not already cancelled or executed
+//
+// Effects:
+//   - Sets proposal status to "cancelled"
+//   - Prevents future voting or execution
+//   - Emits cancellation event
+//   - Frees up proposer's proposal slot
+//
+// Returns cancelled proposal ID.
+// Only callable by original proposer before voting begins.
 func Cancel(cur realm, proposalID int64) int64 {
 	halt.AssertIsNotHaltedGovernance()
 

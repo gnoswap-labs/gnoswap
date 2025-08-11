@@ -34,7 +34,19 @@ func toAscendingOrder(a, b *u256.Uint) (*u256.Uint, *u256.Uint) {
 }
 
 // toUint128 ensures the value fits within uint128 range.
-// If the value exceeds uint128, it returns a masked value.
+//
+// Validates and constrains a 256-bit unsigned integer to 128-bit range.
+// Used for liquidity calculations where amounts must fit in compact storage.
+//
+// Parameters:
+//   - value: 256-bit unsigned integer to constrain
+//
+// Returns:
+//   - Masked value if exceeds MAX_UINT128 (2^128 - 1)
+//   - Original value if within range
+//
+// Panics if value is nil.
+// Critical for preventing overflow in liquidity math.
 func toUint128(value *u256.Uint) *u256.Uint {
 	if value == nil {
 		panic(newErrorWithDetail(

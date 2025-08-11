@@ -32,6 +32,11 @@ var (
 )
 
 // SetTickCrossHook sets the hook function called when a tick is crossed during swaps.
+//
+// Allows staker to monitor liquidity changes at price levels.
+// Used for reward calculation when positions enter/exit range.
+//
+// Only callable by staker contract.
 func SetTickCrossHook(cur realm, hook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
@@ -39,6 +44,11 @@ func SetTickCrossHook(cur realm, hook func(poolPath string, tickId int32, zeroFo
 }
 
 // SetSwapStartHook sets the hook function called at the beginning of a swap.
+//
+// Enables pre-swap state tracking for reward distribution.
+// Captures timestamp for time-weighted calculations.
+//
+// Only callable by staker contract.
 func SetSwapStartHook(cur realm, hook func(poolPath string, timestamp int64)) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
@@ -46,6 +56,11 @@ func SetSwapStartHook(cur realm, hook func(poolPath string, timestamp int64)) {
 }
 
 // SetSwapEndHook sets the hook function called at the end of a swap.
+//
+// Finalizes reward calculations after swap completion.
+// Allows error propagation to revert invalid swaps.
+//
+// Only callable by staker contract.
 func SetSwapEndHook(cur realm, hook func(poolPath string) error) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsStaker(caller)

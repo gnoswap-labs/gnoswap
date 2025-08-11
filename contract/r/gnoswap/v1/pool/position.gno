@@ -15,6 +15,25 @@ import (
 var convertedQ128 = u256.MustFromDecimal(Q128)
 
 // getPositionKey generates a unique base64-encoded key for a liquidity position.
+//
+// Creates deterministic identifier for position tracking.
+// Ensures unique positions per owner and price range.
+// Used internally for position state management.
+//
+// Parameters:
+//   - owner: Address that owns the position
+//   - tickLower: Lower boundary tick of position range
+//   - tickUpper: Upper boundary tick of position range
+//
+// Key Format:
+//   base64(owner_address + tickLower_bytes + tickUpper_bytes)
+//
+// Requirements:
+//   - Valid owner address
+//   - tickLower < tickUpper
+//   - Both ticks within valid range [-887272, 887272]
+//
+// Returns base64-encoded position key or error.
 // Combines owner address, tickLower, and tickUpper.
 func getPositionKey(
 	owner std.Address,

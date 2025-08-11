@@ -61,7 +61,23 @@ var (
 )
 
 // TickMathGetSqrtRatioAtTick calculates sqrt price ratio for given tick.
-// Returns Q64.96 fixed-point value.
+//
+// Converts tick index to square root price in Q64.96 fixed-point format.
+// Based on Uniswap V3's mathematical formula: price = 1.0001^tick.
+// Uses bit manipulation for gas-efficient calculation.
+//
+// Parameters:
+//   - tick: Tick index in range [-887272, 887272]
+//
+// Returns:
+//   - Square root of price ratio as Q64.96 fixed-point
+//   - Result represents sqrt(token1/token0) price
+//
+// Mathematical formula:
+//   sqrtPriceX96 = sqrt(1.0001^tick) * 2^96
+//
+// Panics if tick outside valid range.
+// Critical for all price calculations in concentrated liquidity.
 func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 	assertValidTickRange(tick)
 	absTick := abs(tick)

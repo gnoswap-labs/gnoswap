@@ -23,15 +23,27 @@ var (
 
 // Mint adds liquidity to a pool position.
 //
-// Parameters:
-//   - token0Path, token1Path: token contract paths
-//   - fee: fee tier (100, 500, 3000, 10000)
-//   - recipient: position owner address
-//   - tickLower, tickUpper: price range boundaries
-//   - liquidityAmount: liquidity to add
-//   - positionCaller: original caller address
+// Increases liquidity for a position within specified tick range.
+// Calculates required token amounts based on current pool price.
+// Updates tick state and transfers tokens atomically.
 //
-// Returns amount0, amount1 as decimal strings.
+// Parameters:
+//   - token0Path, token1Path: Token contract paths
+//   - fee: Fee tier (100, 500, 3000, 10000 = 0.01%, 0.05%, 0.3%, 1%)
+//   - recipient: Position owner address
+//   - tickLower, tickUpper: Price range boundaries (must be tick-aligned)
+//   - liquidityAmount: Liquidity to add (Q128 format)
+//   - positionCaller: Original caller for token transfers
+//
+// Returns:
+//   - amount0: Token0 amount consumed (decimal string)
+//   - amount1: Token1 amount consumed (decimal string)
+//
+// Requirements:
+//   - Pool must exist for token pair and fee
+//   - Liquidity amount must be positive
+//   - Ticks must be valid and aligned to spacing
+//
 // Only callable by position contract.
 func Mint(
 	cur realm,
@@ -76,14 +88,22 @@ func Mint(
 
 // Burn removes liquidity from a position.
 //
-// Parameters:
-//   - token0Path, token1Path: token contract paths
-//   - fee: fee tier
-//   - tickLower, tickUpper: price range boundaries
-//   - liquidityAmount: liquidity to remove
-//   - positionCaller: original caller address
+// Decreases liquidity and calculates tokens owed to position owner.
+// Updates tick state but doesn't transfer tokens (use Collect).
+// Two-step process prevents reentrancy attacks.
 //
-// Returns amount0, amount1 as decimal strings (tokens owed).
+// Parameters:
+//   - token0Path, token1Path: Token contract paths
+//   - fee: Fee tier matching the pool
+//   - tickLower, tickUpper: Position's price range
+//   - liquidityAmount: Liquidity to remove (uint128)
+//   - positionCaller: Position owner for validation
+//
+// Returns:
+//   - amount0: Token0 owed to position (uint256)
+//   - amount1: Token1 owed to position (uint256)
+//
+// Note: Tokens remain in pool until Collect is called.
 // Only callable by position contract.
 func Burn(
 	cur realm,
@@ -135,14 +155,22 @@ func Burn(
 
 // Collect transfers owed tokens from a position to recipient.
 //
-// Parameters:
-//   - token0Path, token1Path: token contract paths
-//   - fee: fee tier
-//   - recipient: address to receive tokens
-//   - tickLower, tickUpper: price range boundaries
-//   - amount0Requested, amount1Requested: amounts to collect
+// Claims tokens from burned liquidity and accumulated fees.
+// Applies protocol withdrawal fee (1% default) before transfer.
+// Supports partial collection via amount limits.
 //
-// Returns amount0, amount1 as decimal strings.
+// Parameters:
+//   - token0Path, token1Path: Token contract paths
+//   - fee: Fee tier of the pool
+//   - recipient: Address to receive tokens
+//   - tickLower, tickUpper: Position's price range
+//   - amount0Requested, amount1Requested: Max amounts to collect (use MAX_UINT128 for all)
+//
+// Returns:
+//   - amount0: Token0 actually collected (after fees)
+//   - amount1: Token1 actually collected (after fees)
+//
+// Protocol fees: 1% on collected amounts.
 // Only callable by position contract.
 func Collect(
 	cur realm,

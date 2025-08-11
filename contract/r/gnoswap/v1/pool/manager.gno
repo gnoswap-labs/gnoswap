@@ -36,10 +36,26 @@ func init() {
 
 // CreatePool creates a new concentrated liquidity pool.
 //
+// Deploys new AMM pool for token pair with specified fee tier.
+// Charges 100 GNS creation fee to prevent spam.
+// Sets initial price and tick spacing based on fee tier.
+//
 // Parameters:
-//   - token0Path, token1Path: token contract paths
-//   - fee: fee tier (100, 500, 3000, 10000)
-//   - sqrtPriceX96: initial price in Q96 format
+//   - token0Path, token1Path: Token contract paths (ordered by address)
+//   - fee: Fee tier (100=0.01%, 500=0.05%, 3000=0.3%, 10000=1%)
+//   - sqrtPriceX96: Initial sqrt price in Q64.96 format
+//
+// Tick spacing by fee tier:
+//   - 0.01%: 1 tick
+//   - 0.05%: 10 ticks
+//   - 0.30%: 60 ticks
+//   - 1.00%: 200 ticks
+//
+// Requirements:
+//   - Tokens must be different
+//   - Fee tier must be supported
+//   - Pool must not already exist
+//   - Caller must have 100 GNS for creation fee
 func CreatePool(
 	cur realm,
 	token0Path string,
