@@ -25,6 +25,7 @@ var (
 	fixedPointQ128 = u256.MustFromDecimal(Q128)
 
 	maxInt256 = u256.MustFromDecimal(MAX_INT256)
+	maxInt64 = i256.MustFromDecimal(MAX_INT64)
 
 	swapStartHook func(poolPath string, timestamp int64)
 	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)
@@ -418,7 +419,10 @@ func computeSwapStep(
 	)
 
 	newState, step = computeAmounts(state, sqrtRatioTargetX96, pool, step)
-	newState = updateAmounts(step, newState, exactInput)
+	newState, err = updateAmounts(step, newState, exactInput)
+	if err != nil {
+		return state, err
+	}
 
 	// if the protocol fee is on, calculate how much is owed,
 	// decrement fee amount, and increment protocol fee
@@ -529,28 +533,39 @@ func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *Pool, 
 // For exact output swaps:
 //   - Increments remaining output amount by amountOut
 //   - Increments calculated amount by (amountIn + feeAmount)
-func updateAmounts(step StepComputations, state SwapState, exactInput bool) SwapState {
+func updateAmounts(step StepComputations, state SwapState, exactInput bool) (SwapState, error) {
 	amountInWithFeeU256 := u256.Zero().Add(step.amountIn, step.feeAmount)
 	if amountInWithFeeU256.Gt(maxInt256) {
-		panic("amountIn + feeAmount overflows int256")
+		return state, errOverFlow
 	}
 
 	amountInWithFee := i256.FromUint256(amountInWithFeeU256)
 	if step.amountOut.Gt(maxInt256) {
-		panic("amountOut overflows int256")
+		return state, errUnderflow
 	}
+
+	var (
+		amountSpecifiedRemaining *i256.Int
+		amountCalculated         *i256.Int
+	)
 
 	if exactInput {
-		state.amountSpecifiedRemaining = i256.Zero().Sub(state.amountSpecifiedRemaining, amountInWithFee)
-		state.amountCalculated = i256.Zero().Sub(state.amountCalculated, i256.FromUint256(step.amountOut))
-
-		return state
+		amountSpecifiedRemaining = i256.Zero().Sub(state.amountSpecifiedRemaining, amountInWithFee)
+		amountCalculated = i256.Zero().Sub(state.amountCalculated, i256.FromUint256(step.amountOut))
+	} else {
+		amountSpecifiedRemaining = i256.Zero().Add(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
+		amountCalculated = i256.Zero().Add(state.amountCalculated, amountInWithFee)
 	}
 
-	state.amountSpecifiedRemaining = i256.Zero().Add(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
-	state.amountCalculated = i256.Zero().Add(state.amountCalculated, amountInWithFee)
+	// If an overflowed value is stored in state, it may cause problems in the next step
+	if amountCalculated.Gt(maxInt64) {
+		return state, errOverFlow
+	}
 
-	return state
+	state.amountSpecifiedRemaining = amountSpecifiedRemaining
+	state.amountCalculated = amountCalculated
+
+	return state, nil
 }
 
 // tickTransition handles the transition between price ticks during a swap

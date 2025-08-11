@@ -193,7 +193,7 @@ func GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
 func GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) string {
-	rewardAmount := GetIncentiveRewardAmount(incentiveId, poolPath)
+	rewardAmount := GetIncentiveRewardAmount(poolPath, incentiveId)
 
 	return rewardAmount.ToString()
 }
