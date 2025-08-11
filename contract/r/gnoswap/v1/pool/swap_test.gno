@@ -748,7 +748,7 @@ func TestSwap_FeeTierOptimization(t *testing.T) {
 
 		TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
 		TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
-		
+
 		actualAmount0, actualAmount1 := Swap(cross, wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER,
 			adminAddr, true, "40012000",
 			common.TickMathGetSqrtRatioAtTick(-887220).ToString(), routerAddr)
@@ -858,6 +858,131 @@ func setupExtremePriceRangePool(t *testing.T) {
 	testing.SetRealm(std.NewUserRealm(routerAddr))
 	TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
 	TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+}
+
+func TestUpdateAmounts_OverflowProtection(t *testing.T) {
+	t.Run("should_prevent_overflow_when_exact_out_calculation_exceeds_max_int64", func(t *testing.T) {
+		// An exact out swap where the accumulated amount is near MAX_INT64
+		// and the next step would cause overflow
+		step := StepComputations{
+			amountIn:  u256.MustFromDecimal("1000"),
+			amountOut: u256.MustFromDecimal("990"),
+			feeAmount: u256.MustFromDecimal("10"),
+		}
+
+		state := SwapState{
+			amountSpecifiedRemaining: i256.MustFromDecimal("-1000"),
+			amountCalculated:         i256.MustFromDecimal("9223372036854775800"), // Near MAX_INT64
+		}
+
+		_, err := updateAmounts(step, state, false)
+
+		uassert.ErrorIs(t, err, errOverFlow,
+			"Should prevent overflow when amountCalculated would exceed MAX_INT64")
+	})
+
+	t.Run("should_allow_exact_out_calculation_within_safe_bounds", func(t *testing.T) {
+		stepWithSafeValues := StepComputations{
+			amountIn:  u256.MustFromDecimal("1000"),
+			amountOut: u256.MustFromDecimal("990"),
+			feeAmount: u256.MustFromDecimal("10"),
+		}
+
+		state := SwapState{
+			amountSpecifiedRemaining: i256.MustFromDecimal("-10000"),
+			amountCalculated:         i256.MustFromDecimal("1000000"), // Safe value
+		}
+
+		updatedState, err := updateAmounts(stepWithSafeValues, state, false)
+		uassert.NoError(t, err, "Should allow calculation within safe bounds")
+
+		expectedRemaining := i256.MustFromDecimal("-9010")    // -10000 + 990
+		expectedCalculated := i256.MustFromDecimal("1001010") // 1000000 + 1000 + 10
+
+		uassert.True(t, expectedRemaining.Eq(updatedState.amountSpecifiedRemaining),
+			"Should correctly update remaining amount")
+		uassert.True(t, expectedCalculated.Eq(updatedState.amountCalculated),
+			"Should correctly accumulate calculated amount with fees")
+	})
+
+	t.Run("should_prevent_overflow_when_exact_in_calculation_exceeds_bounds", func(t *testing.T) {
+		// An exact in swap where output calculation could overflow
+		step := StepComputations{
+			amountIn:  u256.MustFromDecimal("1000"),
+			amountOut: u256.MustFromDecimal("9223372036854775808"), // > MAX_INT64
+			feeAmount: u256.MustFromDecimal("10"),
+		}
+
+		state := SwapState{
+			amountSpecifiedRemaining: i256.MustFromDecimal("10000"),
+			amountCalculated:         i256.MustFromDecimal("-1000"),
+		}
+
+		_, err := updateAmounts(step, state, true)
+		uassert.ErrorIs(t, err, errUnderflow,
+			"Should prevent underflow when amountOut exceeds MAX_INT256")
+	})
+
+	t.Run("should_correctly_update_amounts_for_exact_in_swap", func(t *testing.T) {
+		step := StepComputations{
+			amountIn:  u256.MustFromDecimal("1000"),
+			amountOut: u256.MustFromDecimal("990"),
+			feeAmount: u256.MustFromDecimal("10"),
+		}
+
+		state := SwapState{
+			amountSpecifiedRemaining: i256.MustFromDecimal("10000"),
+			amountCalculated:         i256.MustFromDecimal("0"),
+		}
+
+		updatedState, err := updateAmounts(step, state, true)
+		uassert.NoError(t, err, "Should allow exact in calculation")
+
+		expectedRemaining := i256.MustFromDecimal("8990")  // 10000 - (1000 + 10)
+		expectedCalculated := i256.MustFromDecimal("-990") // 0 - 990
+
+		uassert.True(t, expectedRemaining.Eq(updatedState.amountSpecifiedRemaining),
+			"Should correctly reduce remaining amount by input + fee")
+		uassert.True(t, expectedCalculated.Eq(updatedState.amountCalculated),
+			"Should correctly subtract output from calculated amount")
+	})
+
+	t.Run("should_handle_edge_case_at_exactly_max_int64", func(t *testing.T) {
+		step := StepComputations{
+			amountIn:  u256.MustFromDecimal("0"),
+			amountOut: u256.MustFromDecimal("100"),
+			feeAmount: u256.MustFromDecimal("0"),
+		}
+
+		state := SwapState{
+			amountSpecifiedRemaining: i256.MustFromDecimal("-1000"),
+			amountCalculated:         maxInt64,
+		}
+
+		// no change to amountCalculated
+		updatedState, err := updateAmounts(step, state, false)
+
+		uassert.NoError(t, err, "Should allow calculation at exactly MAX_INT64")
+		uassert.True(t, updatedState.amountCalculated.Eq(maxInt64),
+			"Should maintain MAX_INT64 value")
+	})
+
+	t.Run("should_prevent_overflow_from_fee_accumulation", func(t *testing.T) {
+		step := StepComputations{
+			amountIn:  u256.MustFromDecimal("1"),
+			amountOut: u256.MustFromDecimal("1"),
+			feeAmount: u256.MustFromDecimal("10"), // Large fee relative to amount
+		}
+
+		state := SwapState{
+			amountSpecifiedRemaining: i256.MustFromDecimal("-100"),
+			amountCalculated:         i256.MustFromDecimal("9223372036854775800"),
+		}
+
+		_, err := updateAmounts(step, state, false)
+		uassert.ErrorIs(t, err, errOverFlow,
+			"Should detect overflow caused by fee accumulation")
+	})
 }
 
 func setupUltraLowFeePool(t *testing.T) *Pool {
