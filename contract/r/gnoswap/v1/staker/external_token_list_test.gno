@@ -46,7 +46,7 @@ func TestAddToken(t *testing.T) {
 				GNOT,
 			},
 			expectedHasAbort: true,
-			expectedAbortMsg: "unauthorized: caller g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj is not admin",
+			expectedAbortMsg: "unauthorized: caller g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj is not admin or governance",
 			expectedHasPanic: false,
 			expectedPanicMsg: "",
 		},
@@ -120,7 +120,7 @@ func TestRemoveToken(t *testing.T) {
 			inputTokenPath:        customTokenPath,
 			expectedAllowedTokens: []string{GNS_PATH, GNOT, customTokenPath},
 			expectedHasAbort:      true,
-			expectedAbortMsg:      "unauthorized: caller g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj is not admin",
+			expectedAbortMsg:      "unauthorized: caller g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj is not admin or governance",
 		},
 		{
 			name:                  "remove token failed by default token",

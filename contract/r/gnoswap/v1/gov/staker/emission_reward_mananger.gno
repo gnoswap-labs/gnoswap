@@ -146,7 +146,7 @@ func (e *EmissionRewardManager) updateAccumulatedRewardX128PerStake(
 // addStake adds a stake for an address and updates their reward state.
 // This method ensures rewards are properly calculated before the stake change.
 // Adds stake for specified address and updates reward calculations.
-func (e *EmissionRewardManager) addStake(address string, amount int64, currentTimestamp int64) {
+func (e *EmissionRewardManager) addStake(address string, amount int64, currentTimestamp int64) error {
 	rewardStateI, ok := e.rewardStates.Get(address)
 	if !ok {
 		rewardStateI = NewEmissionRewardState(e.accumulatedRewardX128PerStake)
@@ -174,7 +174,7 @@ func (e *EmissionRewardManager) addStake(address string, amount int64, currentTi
 // removeStake removes a stake for an address and updates their reward state.
 // This method ensures rewards are properly calculated before the stake change.
 // Removes stake for specified address and updates reward calculations.
-func (e *EmissionRewardManager) removeStake(address string, amount int64, currentTimestamp int64) {
+func (e *EmissionRewardManager) removeStake(address string, amount int64, currentTimestamp int64) error {
 	rewardStateI, ok := e.rewardStates.Get(address)
 	if !ok {
 		rewardStateI = NewEmissionRewardState(e.accumulatedRewardX128PerStake.Clone())
@@ -215,9 +215,9 @@ func (e *EmissionRewardManager) claimRewards(address string, currentTimestamp in
 		)
 	}
 
-	claimedRewardAmount, err := rewardState.claimRewardsWithUpdateRewardDebtX128(e.accumulatedRewardX128PerStake, currentTimestamp)
-	if err != nil {
-		return 0, err
+	claimedRewardAmount, cErr := rewardState.claimRewardsWithUpdateRewardDebtX128(e.accumulatedRewardX128PerStake, currentTimestamp)
+	if cErr != nil {
+		return 0, cErr
 	}
 
 	e.rewardStates.Set(address, rewardState)

@@ -4,8 +4,8 @@ import (
 	"std"
 	"time"
 
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
-	"gno.land/r/gnoswap/v1/access"
 )
 
 // CleanStakerDelegationSnapshotByAdmin cleans old delegation history records.
