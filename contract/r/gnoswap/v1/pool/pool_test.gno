@@ -35,11 +35,11 @@ const (
 	NARROW_RANGE_LOWER = int32(-60) // Narrow range (concentrated liquidity)
 	NARROW_RANGE_UPPER = int32(60)
 
-	WIDE_RANGE_LOWER   = int32(-240) // Wide range (stable liquidity)
-	WIDE_RANGE_UPPER   = int32(240)
+	WIDE_RANGE_LOWER = int32(-240) // Wide range (stable liquidity)
+	WIDE_RANGE_UPPER = int32(240)
 
-	FULL_RANGE_LOWER   = int32(-887220) // Full range
-	FULL_RANGE_UPPER   = int32(887220)
+	FULL_RANGE_LOWER = int32(-887220) // Full range
+	FULL_RANGE_UPPER = int32(887220)
 )
 
 var (

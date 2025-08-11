@@ -421,10 +421,10 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 		}
 
 		rewardAcc, err := self.pool.CalculateRewardForPosition(
-			startTime, 
-			self.pool.CurrentTick(startTime), 
-			warmup.NextWarmupTime, 
-			self.pool.CurrentTick(warmup.NextWarmupTime), 
+			startTime,
+			self.pool.CurrentTick(startTime),
+			warmup.NextWarmupTime,
+			self.pool.CurrentTick(warmup.NextWarmupTime),
 			self.deposit,
 		)
 		if err != nil {

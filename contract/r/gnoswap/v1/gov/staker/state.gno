@@ -489,7 +489,7 @@ func removeStakeFromLaunchpad(address string, amount int64, currentTimestamp int
 	if err != nil {
 		return err
 	}
-	
+
 	err = removeStakeProtocolFeeReward(launchpadRewardID, amount, currentTimestamp)
 	if err != nil {
 		return err

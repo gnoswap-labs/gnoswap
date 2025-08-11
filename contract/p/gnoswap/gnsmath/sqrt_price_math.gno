@@ -11,7 +11,7 @@ const (
 )
 
 var (
-	q96       = u256.Zero().Lsh(u256.One(), 96)                                  // 2^96
+	q96       = u256.Zero().Lsh(u256.One(), 96)                               // 2^96
 	max160    = u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 160), u256.One()) // 2^160 - 1
 	maxInt256 = u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 255), u256.One()) // 2^255 - 1
 

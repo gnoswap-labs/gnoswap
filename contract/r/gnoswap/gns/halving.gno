@@ -11,6 +11,7 @@ type HalvingData struct {
 	accumAmount     []int64
 	amountPerSecond []int64
 }
+
 // getStartTimestamp returns the start timestamp for the specified halving year.
 // Returns 0 if year is invalid.
 func (h *HalvingData) getStartTimestamp(year int64) int64 {

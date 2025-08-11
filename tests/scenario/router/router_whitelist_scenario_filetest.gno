@@ -156,7 +156,7 @@ func testNonWhitelistedRouterFails() {
 
 	// Try to call pool directly from a non-whitelisted address
 	testing.SetRealm(std.NewUserRealm(user2Addr))
-	
+
 	expectedPanicMsg := ufmt.Sprintf("unauthorized: caller %s is not a whitelisted router", user2Addr.String())
 	uassert.AbortsWithMessage(t, expectedPanicMsg, func() {
 		pool.Swap(cross, token0Path, token1Path, FEE_MEDIUM, user2Addr, true, "100", "4295128740", user2Addr)

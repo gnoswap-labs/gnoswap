@@ -422,8 +422,8 @@ func TestGovernanceExecute_Cancel(t *testing.T) {
 				time.Now().Unix()-executableDelay,
 				100,
 			),
-			expectedHasAbort:   true,
-			expectedAbortMsg:   "[GNOSWAP-GOVERNANCE-022] not proposer",
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-022] not proposer",
 		},
 		{
 			name:             "fail - proposal not found",

@@ -24,20 +24,21 @@ const WUGNOT_PATH string = "gno.land/r/demo/wugnot"
 // Multi-token rewards system based on xGNS share.
 //
 // Reward Types:
-//   1. Emission rewards: GNS from protocol emission
-//   2. Protocol fees: Various tokens from swap/pool fees
-//   3. Withdrawal fees: 1% of liquidity provider rewards
-//   4. Pool creation fees: 100 GNS per pool
+//  1. Emission rewards: GNS from protocol emission
+//  2. Protocol fees: Various tokens from swap/pool fees
+//  3. Withdrawal fees: 1% of liquidity provider rewards
+//  4. Pool creation fees: 100 GNS per pool
 //
 // Distribution Formula:
-//   userReward = (userXGNS / totalXGNS) * accumulatedRewards
+//
+//	userReward = (userXGNS / totalXGNS) * accumulatedRewards
 //
 // Process:
-//   1. Calculates share based on xGNS balance
-//   2. Claims GNS emission rewards
-//   3. Claims protocol fee rewards (all tokens)
-//   4. Transfers all rewards to caller
-//   5. Resets user's reward tracking
+//  1. Calculates share based on xGNS balance
+//  2. Claims GNS emission rewards
+//  3. Claims protocol fee rewards (all tokens)
+//  4. Transfers all rewards to caller
+//  5. Resets user's reward tracking
 //
 // No parameters required - automatically determines caller's rewards.
 // Transfers rewards directly to caller.
@@ -198,7 +199,7 @@ func SetAmountByProjectWallet(cur realm, addr std.Address, amount int64, add boo
 		if err != nil {
 			panic(err)
 		}
-		
+
 		xgns.Burn(cross, launchpadAddr, amount)
 	}
 }

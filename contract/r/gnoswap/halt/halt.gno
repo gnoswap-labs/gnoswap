@@ -7,9 +7,7 @@ import (
 	"gno.land/r/gnoswap/access"
 )
 
-var (
-	haltConfig HaltConfig
-)
+var haltConfig HaltConfig
 
 func init() {
 	haltConfig = newNoneConfig()

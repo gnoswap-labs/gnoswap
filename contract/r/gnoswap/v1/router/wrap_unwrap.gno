@@ -9,10 +9,10 @@ import (
 )
 
 const (
-	UGNOT_MIN_DEPOSIT_TO_WRAP int64  = 1000
-	WUGNOT_PATH                      = "gno.land/r/demo/wugnot"
-	GNOT                             = "gnot"
-	GNOT_DENOM                       = "ugnot"
+	UGNOT_MIN_DEPOSIT_TO_WRAP int64 = 1000
+	WUGNOT_PATH                     = "gno.land/r/demo/wugnot"
+	GNOT                            = "gnot"
+	GNOT_DENOM                      = "ugnot"
 )
 
 var (

@@ -24,10 +24,10 @@ import (
 //   - referrer: Optional referral address for tracking
 //
 // Process:
-//   1. Transfers GNS from caller
-//   2. Mints equivalent xGNS (1:1 ratio)
-//   3. Assigns voting power to target address
-//   4. Creates delegation snapshot for voting
+//  1. Transfers GNS from caller
+//  2. Mints equivalent xGNS (1:1 ratio)
+//  3. Assigns voting power to target address
+//  4. Creates delegation snapshot for voting
 //
 // Requirements:
 //   - Minimum 1 GNS delegation
@@ -98,10 +98,10 @@ func Delegate(
 //   - amount: Amount of xGNS to undelegate
 //
 // Process:
-//   1. Removes voting power immediately
-//   2. Burns xGNS tokens
-//   3. Creates withdrawal request with timestamp
-//   4. Locks GNS for 7-day cooldown period
+//  1. Removes voting power immediately
+//  2. Burns xGNS tokens
+//  3. Creates withdrawal request with timestamp
+//  4. Locks GNS for 7-day cooldown period
 //
 // Requirements:
 //   - Must have delegated to target address
@@ -163,10 +163,10 @@ func Undelegate(
 //   - amount: Amount of xGNS to redelegate
 //
 // Process:
-//   1. Validates current delegation exists
-//   2. Removes voting power from old delegatee
-//   3. Assigns voting power to new delegatee
-//   4. Updates delegation snapshots
+//  1. Validates current delegation exists
+//  2. Removes voting power from old delegatee
+//  3. Assigns voting power to new delegatee
+//  4. Updates delegation snapshots
 //
 // Requirements:
 //   - Must have active delegation to current delegatee
