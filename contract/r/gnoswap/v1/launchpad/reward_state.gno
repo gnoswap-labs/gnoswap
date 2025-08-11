@@ -129,7 +129,7 @@ func (r *RewardState) calculateReward(accumRewardPerDepositX128 *u256.Uint) int6
 	reward := u256.Zero().Mul(actualRewardPerDepositX128, u256.NewUintFromInt64(r.DepositAmount()))
 	reward = u256.Zero().Rsh(reward, 128)
 
-	return reward.Int64()
+	return safeConvertToInt64(reward)
 }
 
 // calculateClaimableReward calculates the amount of reward that can be claimed
