@@ -4,15 +4,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-
-	"gno.land/r/gnoswap/gns"
-
-	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
-
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/qux"
 )
 
 type testDrySwapRouteCases struct {
@@ -163,19 +154,19 @@ func TestDrySwapRouteOverflow(t *testing.T) {
 	}
 }
 
-func createBasicPool(t *testing.T) {
-	t.Helper()
-	testing.SetRealm(adminRealm)
+// func createBasicPool(t *testing.T) {
+// 	t.Helper()
+// 	testing.SetRealm(adminRealm)
 
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*2)
+// 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*2)
 
-	pl.CreatePool(cross, barPath, bazPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
-	pl.CreatePool(cross, bazPath, quxPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
+// 	pl.CreatePool(cross, barPath, bazPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
+// 	pl.CreatePool(cross, bazPath, quxPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
 
-	bar.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
-	qux.Approve(cross, poolAddr, maxApprove)
+// 	bar.Approve(cross, poolAddr, maxApprove)
+// 	baz.Approve(cross, poolAddr, maxApprove)
+// 	qux.Approve(cross, poolAddr, maxApprove)
 
-	pn.Mint(cross, barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")
-	pn.Mint(cross, bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")
-}
+// 	pn.Mint(cross, barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")
+// 	pn.Mint(cross, bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")
+// }

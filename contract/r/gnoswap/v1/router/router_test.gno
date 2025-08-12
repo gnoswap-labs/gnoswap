@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -18,11 +17,14 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
+)
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/foo"
-	"gno.land/r/onbloc/qux"
+const (
+	// sqrtPriceX96 at tick 0 (price ratio 1:1)
+	SQRT_PRICE_1_TO_1 = "79228162514264337593543950336"
+	
+	// sqrtPriceX96 at tick 10,000
+	SQRT_PRICE_TICK_10000 = "130621891405341611593710811006"
 )
 
 func TestFinalizeSwap(t *testing.T) {
@@ -163,16 +165,7 @@ func TestFinalizeSwap(t *testing.T) {
 }
 
 func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
-	const wugnotTokenPath = "gno.land/r/demo/wugnot"
-	const gnsTokenPath = "gno.land/r/gnoswap/gns"
-	const maxTimeout int64 = 9999999999
 	const wugnotGnsPoolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500"
-
-	routerContract := routerAddr
-	poolContract := poolAddr
-
-	alice := testutils.TestAddress("alice")
-	positionOwner := admin
 
 	tests := []struct {
 		name             string
@@ -198,8 +191,8 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 	}{
 		{
 			name:             "success - gnot -> gns",
-			tokenPath0:       wugnotTokenPath,
-			tokenPath1:       gnsTokenPath,
+			tokenPath0:       wugnotPath,
+			tokenPath1:       gnsPath,
 			feeTier:          pl.FeeTier500,
 			recipient:        alice,
 			tickLower:        -200,
@@ -208,8 +201,8 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			amount1Requested: "100000000",
 			feeProtocol0:     10,
 			feeProtocol1:     10,
-			inputToken:       wugnotTokenPath,
-			outputToken:      gnsTokenPath,
+			inputToken:       wugnotPath,
+			outputToken:      gnsPath,
 			amountIn:         "100000000",
 			routeArr:         wugnotGnsPoolPath,
 			quoteArr:         "100",
@@ -225,36 +218,28 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			initRouterTest(t)
 
 			// Pool Creation
-			testing.SetRealm(std.NewUserRealm(positionOwner))
+			testing.SetRealm(adminRealm)
 			pl.SetPoolCreationFee(cross, 0)
-			if !pl.ExistsPoolPath(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
-				pl.CreatePool(cross, tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
-			}
+			CreatePool(t, tt.tokenPath0, tt.tokenPath1, tt.feeTier, SQRT_PRICE_1_TO_1, admin)
 
 			if tt.feeProtocol0 != 0 || tt.feeProtocol1 != 0 {
 				pl.SetFeeProtocol(cross, tt.feeProtocol0, tt.feeProtocol1)
 			}
 
-			testing.SetOriginCaller(positionOwner)
-			newCoins := std.Coins{{"ugnot", int64(10000000000)}}
-			testing.IssueCoins(positionOwner, newCoins)
-			testing.SetOriginSend(newCoins)
-			banker := std.NewBanker(std.BankerTypeRealmSend)
-			banker.SendCoins(positionOwner, wugnotAddr, newCoins)
-			wugnot.Deposit(cross)
-			if tt.recipient != positionOwner {
-				wugnot.Transfer(cross, tt.recipient, 10000000000)
+			// Setup tokens for recipient
+			ugnotFaucet(t, wugnotAddr, 10000000000)
+			ugnotDeposit(t, admin, 10000000000)
+			if tt.recipient != admin {
+				wugnotTransfer(t, tt.recipient, 10000000000)
 			}
-			gns.Transfer(cross, tt.recipient, 10000000000)
+			gnsTransfer(t, tt.recipient, 10000000000)
 
-			testing.SetRealm(std.NewUserRealm(tt.recipient))
-			wugnot.Approve(cross, poolContract, maxApprove)
-			gns.Approve(cross, poolContract, maxApprove)
+			TokenApprove(t, wugnotPath, tt.recipient, poolAddr, maxApprove)
+			TokenApprove(t, gnsPath, tt.recipient, poolAddr, maxApprove)
 
-			func(cur realm) {
-				teller := common.GetTokenTeller(wugnotTokenPath)
-				teller.Approve(poolContract, maxApprove)
-			}(cross)
+			testing.SetRealm(std.NewCodeRealm(wugnotPath))
+			teller := common.GetTokenTeller(wugnotPath)
+			teller.Approve(poolAddr, maxApprove)
 
 			// Position Creation
 			pn.Mint(
@@ -268,7 +253,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 				tt.amount1Requested,
 				"0",
 				"0",
-				maxTimeout,
+				max_timeout,
 				tt.recipient,
 				tt.recipient,
 				"",
@@ -276,15 +261,15 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			testing.SkipHeights(1)
 
 			// Swap
-			testing.SetOriginCaller(tt.recipient)
-			wugnot.Transfer(cross, routerContract, 20000000)
-			gns.Transfer(cross, routerContract, 20000000)
-			wugnot.Approve(cross, routerContract, maxApprove)
-			gns.Approve(cross, routerContract, maxApprove)
+			testing.SetRealm(std.NewUserRealm(tt.recipient))
+			wugnot.Transfer(cross, routerAddr, 20000000)
+			gns.Transfer(cross, routerAddr, 20000000)
+			TokenApprove(t, wugnotPath, tt.recipient, routerAddr, maxApprove)
+			TokenApprove(t, gnsPath, tt.recipient, routerAddr, maxApprove)
 			beforeWugnotBalance := wugnot.BalanceOf(tt.recipient)
 
-			testing.SetRealm(std.NewCodeRealm(routerPath))
-			wugnot.Approve(cross, poolContract, maxApprove)
+			testing.SetRealm(routerRealm)
+			wugnot.Approve(cross, poolAddr, maxApprove)
 
 			_, drySwapAmountOut, _ := DrySwapRoute(
 				tt.inputToken,
@@ -311,30 +296,19 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			testing.SkipHeights(1)
 			afterWugnotBalance := wugnot.BalanceOf(tt.recipient)
 
-			func(cur realm) {
-				absDrySwapAmountOut := strings.TrimPrefix(drySwapAmountOut, "-")
-				withoutFee := handleSwapFee(tt.outputToken, u256.MustFromDecimal(absDrySwapAmountOut))
-				absAmountOut := strings.TrimPrefix(amountOut, "-")
-				uassert.Equal(t, withoutFee.ToString(), absAmountOut)
-				uassert.Equal(t, tt.expectedAmount0, amountIn, "amountIn is not equal to expectedAmount0")
-				uassert.Equal(t, tt.expectedAmount1, amountOut, "amountOut is not equal to expectedAmount1")
-				uassert.Equal(t, tt.expectedAmount0, strconv.FormatInt(int64(beforeWugnotBalance-afterWugnotBalance), 10), "amountIn is not equal to expectedAmount0")
-			}(cross)
+			absDrySwapAmountOut := strings.TrimPrefix(drySwapAmountOut, "-")
+			withoutFee := handleSwapFee(tt.outputToken, u256.MustFromDecimal(absDrySwapAmountOut))
+			absAmountOut := strings.TrimPrefix(amountOut, "-")
+			uassert.Equal(t, withoutFee.ToString(), absAmountOut)
+			uassert.Equal(t, tt.expectedAmount0, amountIn, "amountIn is not equal to expectedAmount0")
+			uassert.Equal(t, tt.expectedAmount1, amountOut, "amountOut is not equal to expectedAmount1")
+			uassert.Equal(t, tt.expectedAmount0, strconv.FormatInt(int64(beforeWugnotBalance-afterWugnotBalance), 10), "amountIn is not equal to expectedAmount0")
 		})
 	}
 }
 
 func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
-	const wugnotTokenPath = "gno.land/r/demo/wugnot"
-	const gnsTokenPath = "gno.land/r/gnoswap/gns"
-	const maxTimeout int64 = 9999999999
 	const wugnotGnsPoolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500"
-
-	routerContract := routerAddr
-	poolContract := poolAddr
-
-	alice := testutils.TestAddress("alice")
-	positionOwner := admin
 
 	tests := []struct {
 		name             string
@@ -360,8 +334,8 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 	}{
 		{
 			name:             "success - gnot -> gns",
-			tokenPath0:       wugnotTokenPath,
-			tokenPath1:       gnsTokenPath,
+			tokenPath0:       wugnotPath,
+			tokenPath1:       gnsPath,
 			feeTier:          pl.FeeTier500,
 			recipient:        alice,
 			tickLower:        -200,
@@ -370,8 +344,8 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			amount1Requested: "100000000",
 			feeProtocol0:     10,
 			feeProtocol1:     10,
-			inputToken:       wugnotTokenPath,
-			outputToken:      gnsTokenPath,
+			inputToken:       wugnotPath,
+			outputToken:      gnsPath,
 			amountIn:         "50000000",
 			routeArr:         wugnotGnsPoolPath,
 			quoteArr:         "100",
@@ -387,37 +361,29 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			initRouterTest(t)
 
 			// Pool Creation
-			testing.SetRealm(std.NewUserRealm(positionOwner))
+			testing.SetRealm(adminRealm)
 			pl.SetPoolCreationFee(cross, 0)
-			if !pl.ExistsPoolPath(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
-				pl.CreatePool(cross, tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
-			}
+			CreatePool(t, tt.tokenPath0, tt.tokenPath1, tt.feeTier, SQRT_PRICE_1_TO_1, admin)
 
 			if tt.feeProtocol0 != 0 || tt.feeProtocol1 != 0 {
 				pl.SetFeeProtocol(cross, tt.feeProtocol0, tt.feeProtocol1)
 			}
 
-			testing.SetOriginCaller(positionOwner)
-			newCoins := std.Coins{{"ugnot", int64(20000000000)}}
-			testing.IssueCoins(positionOwner, newCoins)
-			testing.SetOriginSend(newCoins)
-			banker := std.NewBanker(std.BankerTypeRealmSend)
-			banker.SendCoins(positionOwner, wugnotAddr, std.Coins{{"ugnot", int64(10000000000)}})
-			wugnot.Deposit(cross)
-			if tt.recipient != positionOwner {
-				wugnot.Transfer(cross, tt.recipient, 10000000000)
+			// Setup tokens for recipient
+			ugnotFaucet(t, wugnotAddr, 10000000000)
+			ugnotDeposit(t, admin, 10000000000)
+			if tt.recipient != admin {
+				wugnotTransfer(t, tt.recipient, 10000000000)
 			}
-			banker.SendCoins(positionOwner, tt.recipient, std.Coins{{"ugnot", int64(10000000000)}})
-			gns.Transfer(cross, tt.recipient, 10000000000)
+			ugnotFaucet(t, tt.recipient, 10000000000)
+			gnsTransfer(t, tt.recipient, 10000000000)
 
-			testing.SetRealm(std.NewUserRealm(tt.recipient))
-			wugnot.Approve(cross, poolContract, maxApprove)
-			gns.Approve(cross, poolContract, maxApprove)
+			TokenApprove(t, wugnotPath, tt.recipient, poolAddr, maxApprove)
+			TokenApprove(t, gnsPath, tt.recipient, poolAddr, maxApprove)
 
-			func(cur realm) {
-				teller := common.GetTokenTeller(wugnotTokenPath)
-				teller.Approve(poolContract, maxApprove)
-			}(cross)
+			testing.SetRealm(std.NewCodeRealm(wugnotPath))
+			teller := common.GetTokenTeller(wugnotPath)
+			teller.Approve(poolAddr, maxApprove)
 
 			// Position Creation
 			positionId, _, _, _ := pn.Mint(
@@ -431,7 +397,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 				tt.amount1Requested,
 				"0",
 				"0",
-				maxTimeout,
+				max_timeout,
 				tt.recipient,
 				tt.recipient,
 				"",
@@ -439,18 +405,13 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			testing.SkipHeights(1)
 
 			// Add Liquidity
-			testing.SetOriginCaller(tt.recipient)
 			addAmount, err := strconv.ParseInt(tt.amount0Requested, 10, 64)
 			if err != nil {
 				t.Errorf("failed to parse amount0Requested: %v", err)
 			}
-			newCoinsForAdd := std.Coins{{"ugnot", addAmount}}
-			testing.SetOriginSend(newCoinsForAdd)
-			banker = std.NewBanker(std.BankerTypeRealmSend)
-			banker.SendCoins(tt.recipient, positionAddr, newCoinsForAdd)
-			testing.SetRealm(std.NewUserRealm(tt.recipient))
-			wugnot.Approve(cross, poolContract, maxApprove)
-			gns.Approve(cross, poolContract, maxApprove)
+			ugnotTransfer(t, tt.recipient, positionAddr, addAmount)
+			TokenApprove(t, wugnotPath, tt.recipient, poolAddr, maxApprove)
+			TokenApprove(t, gnsPath, tt.recipient, poolAddr, maxApprove)
 			pn.IncreaseLiquidity(
 				cross,
 				positionId,
@@ -458,17 +419,17 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 				tt.amount1Requested,
 				"0",
 				"0",
-				maxTimeout,
+				max_timeout,
 			)
 
 			// Swap
-			testing.SetOriginCaller(tt.recipient)
-			wugnot.Transfer(cross, routerContract, 20000000)
-			gns.Transfer(cross, routerContract, 20000000)
-			wugnot.Approve(cross, routerContract, maxApprove)
-			gns.Approve(cross, routerContract, maxApprove)
-			testing.SetRealm(std.NewCodeRealm(routerPath))
-			wugnot.Approve(cross, poolContract, maxApprove)
+			testing.SetRealm(std.NewUserRealm(tt.recipient))
+			wugnot.Transfer(cross, routerAddr, 20000000)
+			gns.Transfer(cross, routerAddr, 20000000)
+			TokenApprove(t, wugnotPath, tt.recipient, routerAddr, maxApprove)
+			TokenApprove(t, gnsPath, tt.recipient, routerAddr, maxApprove)
+			testing.SetRealm(routerRealm)
+			wugnot.Approve(cross, poolAddr, maxApprove)
 
 			DrySwapRoute(
 				tt.inputToken,
@@ -512,16 +473,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 }
 
 func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
-	const wugnotTokenPath = "gno.land/r/demo/wugnot"
-	const gnsTokenPath = "gno.land/r/gnoswap/gns"
-	const maxTimeout int64 = 9999999999
 	const gnsWugnotPoolPath = "gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:10000"
-
-	routerContract := routerAddr
-	poolContract := poolAddr
-
-	alice := testutils.TestAddress("alice")
-	positionOwner := admin
 
 	tests := []struct {
 		name             string
@@ -547,8 +499,8 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 	}{
 		{
 			name:             "success - gns -> gnot",
-			tokenPath0:       wugnotTokenPath,
-			tokenPath1:       gnsTokenPath,
+			tokenPath0:       wugnotPath,
+			tokenPath1:       gnsPath,
 			feeTier:          pl.FeeTier10000,
 			recipient:        alice,
 			tickLower:        -200,
@@ -557,8 +509,8 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			amount1Requested: "100000000",
 			feeProtocol0:     10,
 			feeProtocol1:     10,
-			inputToken:       gnsTokenPath,
-			outputToken:      wugnotTokenPath,
+			inputToken:       gnsPath,
+			outputToken:      wugnotPath,
 			amountIn:         "10000000",
 			routeArr:         gnsWugnotPoolPath,
 			quoteArr:         "100",
@@ -574,37 +526,29 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			initRouterTest(t)
 
 			// Pool Creation
-			testing.SetRealm(std.NewUserRealm(positionOwner))
+			testing.SetRealm(adminRealm)
 			pl.SetPoolCreationFee(cross, 0)
-			if !pl.ExistsPoolPath(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
-				pl.CreatePool(cross, tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
-			}
+			CreatePool(t, tt.tokenPath0, tt.tokenPath1, tt.feeTier, SQRT_PRICE_1_TO_1, admin)
 
 			if tt.feeProtocol0 != 0 || tt.feeProtocol1 != 0 {
 				pl.SetFeeProtocol(cross, tt.feeProtocol0, tt.feeProtocol1)
 			}
 
-			testing.SetOriginCaller(positionOwner)
-			newCoins := std.Coins{{"ugnot", int64(20000000000)}}
-			testing.IssueCoins(positionOwner, newCoins)
-			testing.SetOriginSend(newCoins)
-			banker := std.NewBanker(std.BankerTypeRealmSend)
-			banker.SendCoins(positionOwner, wugnotAddr, std.Coins{{"ugnot", int64(10000000000)}})
-			wugnot.Deposit(cross)
-			if tt.recipient != positionOwner {
-				wugnot.Transfer(cross, tt.recipient, 10000000000)
+			// Setup tokens for recipient
+			ugnotFaucet(t, wugnotAddr, 10000000000)
+			ugnotDeposit(t, admin, 10000000000)
+			if tt.recipient != admin {
+				wugnotTransfer(t, tt.recipient, 10000000000)
 			}
-			banker.SendCoins(positionOwner, tt.recipient, std.Coins{{"ugnot", int64(10000000000)}})
-			gns.Transfer(cross, tt.recipient, 10000000000)
+			ugnotFaucet(t, tt.recipient, 10000000000)
+			gnsTransfer(t, tt.recipient, 10000000000)
 
-			testing.SetRealm(std.NewUserRealm(tt.recipient))
-			wugnot.Approve(cross, poolContract, maxApprove)
-			gns.Approve(cross, poolContract, maxApprove)
+			TokenApprove(t, wugnotPath, tt.recipient, poolAddr, maxApprove)
+			TokenApprove(t, gnsPath, tt.recipient, poolAddr, maxApprove)
 
-			func(cur realm) {
-				teller := common.GetTokenTeller(wugnotTokenPath)
-				teller.Approve(poolContract, maxApprove)
-			}(cross)
+			testing.SetRealm(std.NewCodeRealm(wugnotPath))
+			teller := common.GetTokenTeller(wugnotPath)
+			teller.Approve(poolAddr, maxApprove)
 
 			// Position Creation
 			pn.Mint(
@@ -618,7 +562,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 				tt.amount1Requested,
 				"0",
 				"0",
-				maxTimeout,
+				max_timeout,
 				tt.recipient,
 				tt.recipient,
 				"",
@@ -626,15 +570,15 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			testing.SkipHeights(1)
 
 			// Swap
-			testing.SetOriginCaller(tt.recipient)
-			wugnot.Transfer(cross, routerContract, 20000000)
-			gns.Transfer(cross, routerContract, 20000000)
-			wugnot.Approve(cross, routerContract, maxApprove)
-			gns.Approve(cross, routerContract, maxApprove)
+			testing.SetRealm(std.NewUserRealm(tt.recipient))
+			wugnot.Transfer(cross, routerAddr, 20000000)
+			gns.Transfer(cross, routerAddr, 20000000)
+			TokenApprove(t, wugnotPath, tt.recipient, routerAddr, maxApprove)
+			TokenApprove(t, gnsPath, tt.recipient, routerAddr, maxApprove)
 			wugnot.BalanceOf(tt.recipient)
 
-			testing.SetRealm(std.NewCodeRealm(routerPath))
-			wugnot.Approve(cross, poolContract, maxApprove)
+			testing.SetRealm(routerRealm)
+			wugnot.Approve(cross, poolAddr, maxApprove)
 
 			_, drySwapAmountOut, _ := DrySwapRoute(
 				tt.inputToken,
@@ -945,22 +889,30 @@ func TestProcessRoute_MultiHops(t *testing.T) {
 	}
 }
 
-func createMultiHopPools(t *testing.T) {
+func createBasicPool(t *testing.T) {
 	t.Helper()
 	testing.SetRealm(adminRealm)
 
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*3)
+	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*2)
 
-	pl.CreatePool(cross, barPath, bazPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
-	pl.CreatePool(cross, bazPath, quxPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
-	pl.CreatePool(cross, quxPath, fooPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
+	CreatePool(t, barPath, bazPath, uint32(500), SQRT_PRICE_TICK_10000, admin) // tick = 10_000
+	CreatePool(t, bazPath, quxPath, uint32(500), SQRT_PRICE_TICK_10000, admin) // tick = 10_000
 
-	bar.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
-	qux.Approve(cross, poolAddr, maxApprove)
-	foo.Approve(cross, poolAddr, maxApprove)
+	TokenApprove(t, barPath, admin, poolAddr, maxApprove)
+	TokenApprove(t, bazPath, admin, poolAddr, maxApprove)
+	TokenApprove(t, quxPath, admin, poolAddr, maxApprove)
 
-	pn.Mint(cross, barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")
-	pn.Mint(cross, bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")
-	pn.Mint(cross, quxPath, fooPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")
+	pn.Mint(cross, barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, admin, admin, "")
+	pn.Mint(cross, bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, admin, admin, "")
+}
+
+func createMultiHopPools(t *testing.T) {
+	t.Helper()
+	createBasicPool(t)
+	
+	testing.SetRealm(adminRealm)
+	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
+	CreatePool(t, quxPath, fooPath, uint32(500), SQRT_PRICE_TICK_10000, admin) // tick = 10_000
+	TokenApprove(t, fooPath, admin, poolAddr, maxApprove)
+	pn.Mint(cross, quxPath, fooPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, admin, admin, "")
 }
