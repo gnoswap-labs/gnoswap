@@ -8,11 +8,11 @@ OBL_PATH := gno.land/r/gnoswap/v1/test_token/obl
 QUX_PATH := gno.land/r/gnoswap/v1/test_token/qux
 FOO_PATH := gno.land/r/gnoswap/v1/test_token/foo
 
-ADDR_TEST_ADMIN :=
-ADDR_USER_1 :=
-ADDR_USER_2 :=
-ADDR_USER_3 :=
-ADDR_USER_4 :=
+ADDR_TEST_ADMIN := g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c
+ADDR_USER_1 := g16a7etgm9z2r653ucl36rj0l2yqcxgrz2jyegzx
+ADDR_USER_2 := g12d65636a6hyudpyc86q3e7p9ypp646ht4g8nxr
+ADDR_USER_3 := g1ffzxha57dh0qgv9ma5v393ur0zexfvp6lsjpae
+ADDR_USER_4 := g1mjqcxzek8yacgcvnqfkj0dck67wdyhqlfp9unr
 
 .PHONY: transfer-base-token
 transfer-base-token: transfer-ugnot transfer-gns transfer-usdc transfer-baz transfer-bar transfer-obl transfer-qux transfer-foo
@@ -119,11 +119,6 @@ mint-gns-gnot:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func Mint -send "20000000ugnot" -args "gno.land/r/gnoswap/gns" -args "gnot" -args 3000 -args "-49980" -args "49980" -args 20000000 -args 20000000 -args 1 -args 1 -args $(TX_EXPIRE) -args $(ADDR_ADMIN) -args $(ADDR_ADMIN) -args "" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo
 
-	# SetTokenURI
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gnft -func SetTokenURIByImageURI -args "1" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
-	@echo
-	
-
 # increase liquidity
 increase-liquidity-position-01:
 	$(info ************ increase position(1) liquidity gnot:gns:3000 ************)
@@ -154,7 +149,7 @@ create-external-incentive:
 stake-token-1:
 	$(info ************ stake token 1  ************)
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gnft -func Approve -args $(ADDR_STAKER) -args 1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func StakeToken -args 1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func StakeToken -args 1 -args "" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo
 
 
