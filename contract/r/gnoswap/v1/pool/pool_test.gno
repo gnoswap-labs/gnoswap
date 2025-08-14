@@ -155,28 +155,40 @@ func TestPriceCumulative_BusinessScenarios(t *testing.T) {
 	scenarios := []struct {
 		name        string
 		description string
-		setupPool   func(t *testing.T) *Pool
+		setupEnv    func() *PoolTestEnv
 		timeElapsed int64
 		context     string
 	}{
 		{
 			name:        "stablecoin_pair_hourly_accumulation",
 			description: "Stablecoin pair's 1-hour price accumulation",
-			setupPool:   setupStablecoinPool,
+			setupEnv: func() *PoolTestEnv {
+				return NewPoolTestEnv(t).
+					AsAdmin().
+					GivenPoolCreated(barPath, bazPath, FeeTier100, EQUAL_PRICE_RATIO)
+			},
 			timeElapsed: ONE_HOUR,
 			context:     "Precise accumulation is important for high-volume stablecoin pairs",
 		},
 		{
 			name:        "volatile_pair_minute_precision",
 			description: "Volatile token's minute-level precise accumulation",
-			setupPool:   setupVolatilePool,
+			setupEnv: func() *PoolTestEnv {
+				return NewPoolTestEnv(t).
+					AsAdmin().
+					GivenPoolCreated(fooPath, barPath, FeeTier3000, VOLATILE_PRICE_RATIO)
+			},
 			timeElapsed: ONE_MINUTE,
 			context:     "Precise accumulation is important even for fast price volatility",
 		},
 		{
 			name:        "daily_accumulation_stability",
 			description: "Daily accumulation stability verification",
-			setupPool:   setupStablecoinPool,
+			setupEnv: func() *PoolTestEnv {
+				return NewPoolTestEnv(t).
+					AsAdmin().
+					GivenPoolCreated(barPath, bazPath, FeeTier100, EQUAL_PRICE_RATIO)
+			},
 			timeElapsed: ONE_DAY,
 			context:     "Avoid overflows and precision loss in long-term accumulation",
 		},
@@ -184,8 +196,12 @@ func TestPriceCumulative_BusinessScenarios(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
-			// Given: Pool with specific business context
-			pool := scenario.setupPool(t)
+			// Given: Pool with specific business context using DSL
+			env := scenario.setupEnv()
+			pool := env.pools[GetPoolPath(barPath, bazPath, FeeTier100)]
+			if pool == nil {
+				pool = env.pools[GetPoolPath(fooPath, barPath, FeeTier3000)]
+			}
 			initialTick := pool.slot0.tick
 
 			// When: Time passes and price cumulative is updated

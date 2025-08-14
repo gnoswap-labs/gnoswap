@@ -353,16 +353,17 @@ func TestSwapComputation_CoreEngine(t *testing.T) {
 }
 
 func TestDrySwap_ValidationAndFailures(t *testing.T) {
-	// Setup test pool
-	testing.SetRealm(adminRealm)
-	SetPoolCreationFee(cross, 0)
-	CreatePool(cross, barTokenPath, bazTokenPath, FeeTier100, EQUAL_PRICE_RATIO)
+	// Given: Pool setup
+	_ = NewPoolTestEnv(t).
+		AsAdmin().
+		GivenPoolCreated(barTokenPath, bazTokenPath, FeeTier100, EQUAL_PRICE_RATIO)
+
 	defer cleanupPool(t, barTokenPath, bazTokenPath, FeeTier100)
 
 	validationTests := []struct {
 		name           string
 		description    string
-		swapParams     SwapScenario
+		swapBuilder    func() SwapParams
 		expectSuccess  bool
 		failureReason  string
 		riskAssessment string
@@ -370,10 +371,13 @@ func TestDrySwap_ValidationAndFailures(t *testing.T) {
 		{
 			name:        "zero_amount_rejection",
 			description: "Reject zero amount swap attempt",
-			swapParams: SwapScenario{
-				zeroForOne:      true,
-				amountSpecified: "0",
-				priceLimit:      "79228162514264337593543950337",
+			swapBuilder: func() SwapParams {
+				return NewSwapBuilder().
+					InPool(barTokenPath, bazTokenPath, FeeTier100).
+					SwapToken0For1().
+					ExactInput("0").
+					WithPriceLimit(MAX_PRICE_IMPACT).
+					Build()
 			},
 			expectSuccess:  false,
 			failureReason:  "Prevent gas waste from meaningless trade",
@@ -382,10 +386,13 @@ func TestDrySwap_ValidationAndFailures(t *testing.T) {
 		{
 			name:        "insufficient_balance_protection",
 			description: "Protect against insufficient balance",
-			swapParams: SwapScenario{
-				zeroForOne:      false,
-				amountSpecified: "2000000000",
-				priceLimit:      "79228162514264337593543950337",
+			swapBuilder: func() SwapParams {
+				return NewSwapBuilder().
+					InPool(barTokenPath, bazTokenPath, FeeTier100).
+					SwapToken1For0().
+					ExactInput("2000000000").
+					WithPriceLimit(MAX_PRICE_IMPACT).
+					Build()
 			},
 			expectSuccess:  false,
 			failureReason:  "Block transactions exceeding user balance",
@@ -395,14 +402,15 @@ func TestDrySwap_ValidationAndFailures(t *testing.T) {
 
 	for _, test := range validationTests {
 		t.Run(test.name, func(t *testing.T) {
-			// When: DrySwap for pre-transaction validation
+			// When: DrySwap for pre-transaction validation using DSL parameters
+			swapParams := test.swapBuilder()
 			amount0, amount1, success := DrySwap(
-				barTokenPath,
-				bazTokenPath,
-				FeeTier100,
-				test.swapParams.zeroForOne,
-				test.swapParams.amountSpecified,
-				test.swapParams.priceLimit,
+				swapParams.token0,
+				swapParams.token1,
+				swapParams.fee,
+				swapParams.zeroForOne,
+				swapParams.amountSpecified.ToString(),
+				swapParams.sqrtPriceLimitX96.ToString(),
 			)
 
 			// Then: Verify expected validation result
