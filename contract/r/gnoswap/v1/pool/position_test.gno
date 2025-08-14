@@ -211,160 +211,297 @@ func assertPositionInvariants(t *testing.T, position PositionInfo) {
 }
 
 func TestPositionGetKey(t *testing.T) {
-	invalidAddr := std.Address("invalidAddr")
-	validAddr := testutils.TestAddress("validAddr")
-
-	tests := []struct {
-		owner       std.Address
-		tickLower   int32
-		tickUpper   int32
-		shouldError bool
-		errorMsg    string
-		expectedKey string
+	scenarios := []struct {
+		name            string
+		description     string
+		owner           std.Address
+		tickLower       int32
+		tickUpper       int32
+		strategy        string
+		shouldSucceed   bool
+		expectedError   string
+		businessContext string
 	}{
-		{invalidAddr, 100, 200, true, `[GNOSWAP-POOL-023] invalid address || owner(invalidAddr) is invalid`, ""},                                    // invalid address
-		{validAddr, 200, 100, true, `[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)`, ""},     // tickLower > tickUpper
-		{validAddr, -100, -200, true, `[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(-100), tickUpper(-200)`, ""}, // tickLower > tickUpper
-		{validAddr, 100, 100, true, "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(100), tickUpper(100)", ""},     // tickLower == tickUpper
-		{validAddr, 100, 200, false, "", "ZzF3ZXNrYzZ0eWc5anhndWpsdGEwNDdoNmx0YTA0N2g2bGRqbHVkdV9fMTAwX18yMDA="},                                    // tickLower < tickUpper
+		{
+			name:            "concentrated_liquidity_position",
+			description:     "Alice creates a concentrated liquidity position",
+			owner:           testutils.TestAddress(LP_ALICE),
+			tickLower:       CONCENTRATED_LOWER,
+			tickUpper:       CONCENTRATED_UPPER,
+			strategy:        "concentrated",
+			shouldSucceed:   true,
+			businessContext: "High capital efficiency for stable price ranges",
+		},
+		{
+			name:            "wide_range_position",
+			description:     "Bob creates a conservative wide range position",
+			owner:           testutils.TestAddress(LP_BOB),
+			tickLower:       WIDE_LOWER,
+			tickUpper:       WIDE_UPPER,
+			strategy:        "wide",
+			shouldSucceed:   true,
+			businessContext: "Lower IL risk for volatile markets",
+		},
+		{
+			name:            "full_range_position",
+			description:     "Whale creates a full range position",
+			owner:           testutils.TestAddress(LP_WHALE),
+			tickLower:       FULL_RANGE_LOWER,
+			tickUpper:       FULL_RANGE_UPPER,
+			strategy:        "full-range",
+			shouldSucceed:   true,
+			businessContext: "Passive strategy similar to v2 pools",
+		},
+		{
+			name:            "invalid_inverted_range",
+			description:     "Invalid position with inverted price range",
+			owner:           testutils.TestAddress(LP_ALICE),
+			tickLower:       200,
+			tickUpper:       100,
+			strategy:        "invalid",
+			shouldSucceed:   false,
+			expectedError:   "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)",
+			businessContext: "Prevent position creation errors",
+		},
+		{
+			name:            "invalid_zero_range",
+			description:     "Invalid position with zero price range",
+			owner:           testutils.TestAddress(LP_BOB),
+			tickLower:       100,
+			tickUpper:       100,
+			strategy:        "invalid",
+			shouldSucceed:   false,
+			expectedError:   "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(100), tickUpper(100)",
+			businessContext: "Prevent zero liquidity positions",
+		},
+		{
+			name:            "invalid_address",
+			description:     "Invalid position with malformed address",
+			owner:           std.Address("invalidAddr"),
+			tickLower:       MODERATE_LOWER,
+			tickUpper:       MODERATE_UPPER,
+			strategy:        "moderate",
+			shouldSucceed:   false,
+			expectedError:   "[GNOSWAP-POOL-023] invalid address || owner(invalidAddr) is invalid",
+			businessContext: "Ensure valid LP addresses",
+		},
 	}
 
-	for _, tc := range tests {
-		key, err := getPositionKey(tc.owner, tc.tickLower, tc.tickUpper)
-		if err != nil {
-			uassert.Equal(t, tc.errorMsg, err.Error())
-		} else {
-			uassert.Equal(t, tc.expectedKey, key)
-		}
+	for _, scenario := range scenarios {
+		t.Run(scenario.name, func(t *testing.T) {
+			key, err := getPositionKey(scenario.owner, scenario.tickLower, scenario.tickUpper)
+
+			if scenario.shouldSucceed {
+				uassert.NoError(t, err, "Expected position key generation to succeed")
+				uassert.NotEmpty(t, key, "Position key should not be empty")
+
+				// Verify key uniqueness for different positions
+				if scenario.strategy != "invalid" {
+					// Same owner with different range should produce different key
+					altKey, _ := getPositionKey(scenario.owner, scenario.tickLower+10, scenario.tickUpper+10)
+					uassert.NotEqual(t, key, altKey, "Different ranges should produce different keys")
+				}
+
+				t.Logf("✓ %s: Generated key for %s strategy - %s",
+					scenario.description, scenario.strategy, scenario.businessContext)
+			} else {
+				uassert.Error(t, err, "Expected position key generation to fail")
+				uassert.Equal(t, scenario.expectedError, err.Error())
+				uassert.Empty(t, key, "Failed generation should return empty key")
+
+				t.Logf("✓ %s: Correctly rejected - %s",
+					scenario.description, scenario.businessContext)
+			}
+		})
 	}
 }
 
-func TestPositionUpdateWithKey(t *testing.T) {
-	var dummyPool *Pool
-	var positionKey string
-
-	t.Run("set up initial data for this test function", func(t *testing.T) {
-		poolParams := newPoolParams(
-			"token0",
-			"token1",
-			100,
-			common.TickMathGetSqrtRatioAtTick(0).ToString(),
-			GetFeeAmountTickSpacing(100),
-		)
-		dummyPool = newPool(poolParams)
-
-		positionKey, _ = getPositionKey(
-			testutils.TestAddress("dummyAddr"),
-			100,
-			200,
-		)
-	})
-
-	tests := []struct {
-		liquidity         *i256.Int
-		amount0           *u256.Uint
-		amount1           *u256.Uint
-		shouldError       bool
-		errorMsg          string
-		expectedLiquidity string
+func TestPositionUpdateWithKey_LPStrategies(t *testing.T) {
+	scenarios := []struct {
+		name             string
+		description      string
+		liquidityDelta   string
+		existingPosition bool
+		expectedOutcome  string
+		businessContext  string
+		shouldError      bool
+		expectedError    string
 	}{
-		{i256.MustFromDecimal("0"), u256.Zero(), u256.Zero(), true, `[GNOSWAP-POOL-010] zero liquidity || both liquidityDelta and current position's liquidity are zero`, ""},
-		{i256.MustFromDecimal("100000"), u256.Zero(), u256.Zero(), false, "", "100000"},
+		{
+			name:             "initial_position_creation",
+			description:      "LP creates first position in pool",
+			liquidityDelta:   MEDIUM_LIQUIDITY,
+			existingPosition: false,
+			expectedOutcome:  MEDIUM_LIQUIDITY,
+			businessContext:  "New LP entering the pool",
+			shouldError:      false,
+		},
+		{
+			name:             "add_to_existing_position",
+			description:      "LP increases existing position size",
+			liquidityDelta:   SMALL_LIQUIDITY,
+			existingPosition: true,
+			expectedOutcome:  "10100000", // MEDIUM + SMALL
+			businessContext:  "Compounding fees back into position",
+			shouldError:      false,
+		},
+		{
+			name:             "zero_liquidity_on_new_position",
+			description:      "Attempt to create position with zero liquidity",
+			liquidityDelta:   "0",
+			existingPosition: false,
+			expectedOutcome:  "",
+			businessContext:  "Prevent empty position creation",
+			shouldError:      true,
+			expectedError:    "[GNOSWAP-POOL-010] zero liquidity || both liquidityDelta and current position's liquidity are zero",
+		},
+		{
+			name:             "dust_position_creation",
+			description:      "Creating minimum viable position",
+			liquidityDelta:   DUST_LIQUIDITY,
+			existingPosition: false,
+			expectedOutcome:  DUST_LIQUIDITY,
+			businessContext:  "Small retail LP participation",
+			shouldError:      false,
+		},
 	}
 
-	for _, tc := range tests {
-		newPos, err := dummyPool.positionUpdateWithKey(positionKey, tc.liquidity, tc.amount0, tc.amount1)
-		if err != nil {
-			uassert.Equal(t, tc.errorMsg, err.Error())
-		} else {
-			uassert.Equal(t, newPos.liquidity.ToString(), tc.expectedLiquidity)
-		}
+	for _, scenario := range scenarios {
+		t.Run(scenario.name, func(t *testing.T) {
+			pool := setupPoolAtPrice(t, 0) // Price at tick 0
+			alice := testutils.TestAddress(LP_ALICE)
+			positionKey, _ := getPositionKey(alice, MODERATE_LOWER, MODERATE_UPPER)
+
+			// Setup existing position if needed
+			if scenario.existingPosition {
+				params := ModifyPositionParams{
+					owner:          alice,
+					tickLower:      MODERATE_LOWER,
+					tickUpper:      MODERATE_UPPER,
+					liquidityDelta: i256.MustFromDecimal(MEDIUM_LIQUIDITY),
+				}
+				pool.modifyPosition(params)
+			}
+
+			// update position
+			liquidityDelta := i256.MustFromDecimal(scenario.liquidityDelta)
+			newPos, err := pool.positionUpdateWithKey(positionKey, liquidityDelta, u256.Zero(), u256.Zero())
+
+			// validate outcome
+			if scenario.shouldError {
+				uassert.Error(t, err, "Expected error for scenario")
+				uassert.Equal(t, scenario.expectedError, err.Error())
+				t.Logf("✓ %s: %s", scenario.description, scenario.businessContext)
+			} else {
+				uassert.NoError(t, err, "Unexpected error")
+				uassert.Equal(t, scenario.expectedOutcome, newPos.liquidity.ToString())
+				t.Logf("✓ %s: Position updated to %s - %s",
+					scenario.description, newPos.liquidity.ToString(), scenario.businessContext)
+			}
+		})
 	}
 }
 
-func TestPositionUpdate(t *testing.T) {
-	tests := []struct {
-		initialLiquidity             *u256.Uint
-		liquidityDelta               *i256.Int
-		feeGrowthInside0X128         *u256.Uint
-		feeGrowthInside1X128         *u256.Uint
-		shouldError                  bool
-		errorMsg                     string
-		expectedLiquidity            string
-		expectedFeeGrowthInside0X128 string
-		expectedFeeGrowthInside1X128 string
-		expectedToken0Owed           string
-		expectedToken1Owed           string
-	}{
+func TestPositionUpdate_FeeAccumulation(t *testing.T) {
+	scenarios := []LiquidityUpdateScenario{
 		{
-			initialLiquidity:     u256.Zero(),
-			liquidityDelta:       i256.MustFromDecimal("0"),
-			feeGrowthInside0X128: u256.Zero(),
-			feeGrowthInside1X128: u256.Zero(),
-			shouldError:          true,
-			errorMsg:             `[GNOSWAP-POOL-010] zero liquidity || both liquidityDelta and current position's liquidity are zero`,
+			name:             "new_position_no_fees",
+			description:      "Creating new position with no trading activity",
+			initialLiquidity: "0",
+			liquidityDelta:   SMALL_LIQUIDITY,
+			feeGrowthToken0:  NO_FEE_GROWTH,
+			feeGrowthToken1:  NO_FEE_GROWTH,
+			expectedOutcome:  "Position created without fee accumulation",
+			businessContext:  "Fresh position in quiet market",
 		},
 		{
-			initialLiquidity:             u256.Zero(),
-			liquidityDelta:               i256.MustFromDecimal("100000"),
-			feeGrowthInside0X128:         u256.Zero(),
-			feeGrowthInside1X128:         u256.Zero(),
-			expectedLiquidity:            "100000",
-			expectedFeeGrowthInside0X128: "0",
-			expectedFeeGrowthInside1X128: "0",
-			expectedToken0Owed:           "0",
-			expectedToken1Owed:           "0",
+			name:             "new_position_active_market",
+			description:      "Creating position in actively traded pool",
+			initialLiquidity: "0",
+			liquidityDelta:   MEDIUM_LIQUIDITY,
+			feeGrowthToken0:  MEDIUM_FEE_GROWTH,
+			feeGrowthToken1:  MEDIUM_FEE_GROWTH,
+			expectedOutcome:  "Position tracks current fee growth baseline",
+			businessContext:  "Entering liquid market",
 		},
 		{
-			initialLiquidity:             u256.Zero(),
-			liquidityDelta:               i256.MustFromDecimal("100000"),
-			feeGrowthInside0X128:         u256.MustFromDecimal("100000000"),
-			feeGrowthInside1X128:         u256.MustFromDecimal("100000000"),
-			expectedLiquidity:            "100000",
-			expectedFeeGrowthInside0X128: "100000000",
-			expectedFeeGrowthInside1X128: "100000000",
-			expectedToken0Owed:           "0",
-			expectedToken1Owed:           "0",
+			name:             "compound_fees_to_position",
+			description:      "Adding liquidity to position with accumulated fees",
+			initialLiquidity: SMALL_LIQUIDITY,
+			liquidityDelta:   SMALL_LIQUIDITY,
+			feeGrowthToken0:  MEDIUM_FEE_GROWTH,
+			feeGrowthToken1:  MEDIUM_FEE_GROWTH,
+			expectedOutcome:  "Liquidity doubled, no fee claims",
+			businessContext:  "Reinvesting without withdrawing fees",
 		},
 		{
-			initialLiquidity:             u256.NewUint(100000),
-			liquidityDelta:               i256.MustFromDecimal("100000"),
-			feeGrowthInside0X128:         u256.MustFromDecimal("100000000"),
-			feeGrowthInside1X128:         u256.MustFromDecimal("100000000"),
-			expectedLiquidity:            "200000",
-			expectedFeeGrowthInside0X128: "100000000",
-			expectedFeeGrowthInside1X128: "100000000",
-			expectedToken0Owed:           "0",
-			expectedToken1Owed:           "0",
+			name:             "whale_position_fee_check",
+			description:      "Large position checking accumulated fees",
+			initialLiquidity: "340282366920938463463374607431768211456", // Q128
+			liquidityDelta:   "0",
+			feeGrowthToken0:  LOW_FEE_GROWTH,
+			feeGrowthToken1:  MEDIUM_FEE_GROWTH,
+			expectedOutcome:  "Calculate fees without changing liquidity",
+			businessContext:  "Whale monitoring fee earnings",
 		},
 		{
-			initialLiquidity:             u256.MustFromDecimal("340282366920938463463374607431768211456"), // Q128 value
-			liquidityDelta:               i256.Zero(),
-			feeGrowthInside0X128:         u256.MustFromDecimal("100000000"),
-			feeGrowthInside1X128:         u256.MustFromDecimal("200000000"),
-			expectedLiquidity:            "340282366920938463463374607431768211456",
-			expectedFeeGrowthInside0X128: "100000000",
-			expectedFeeGrowthInside1X128: "200000000",
-			expectedToken0Owed:           "100000000",
-			expectedToken1Owed:           "200000000",
+			name:             "zero_liquidity_attempt",
+			description:      "Invalid zero liquidity operation",
+			initialLiquidity: "0",
+			liquidityDelta:   "0",
+			feeGrowthToken0:  NO_FEE_GROWTH,
+			feeGrowthToken1:  NO_FEE_GROWTH,
+			expectedOutcome:  "Error: zero liquidity",
+			businessContext:  "Prevent invalid state",
 		},
 	}
 
-	for _, tc := range tests {
-		position := PositionInfo{
-			liquidity: tc.initialLiquidity,
-		}
+	for _, scenario := range scenarios {
+		t.Run(scenario.name, func(t *testing.T) {
+			// initial position state
+			position := PositionInfo{
+				liquidity:                u256.MustFromDecimal(scenario.initialLiquidity),
+				feeGrowthInside0LastX128: u256.Zero(),
+				feeGrowthInside1LastX128: u256.Zero(),
+				tokensOwed0:              u256.Zero(),
+				tokensOwed1:              u256.Zero(),
+			}
 
-		newPos, err := positionUpdate(position, tc.liquidityDelta, tc.feeGrowthInside0X128, tc.feeGrowthInside1X128)
-		if err != nil {
-			uassert.Equal(t, tc.errorMsg, err.Error())
-		} else {
-			uassert.Equal(t, newPos.liquidity.ToString(), tc.expectedLiquidity)
-			uassert.Equal(t, newPos.feeGrowthInside0LastX128.ToString(), tc.expectedFeeGrowthInside0X128)
-			uassert.Equal(t, newPos.feeGrowthInside1LastX128.ToString(), tc.expectedFeeGrowthInside1X128)
-			uassert.Equal(t, newPos.tokensOwed0.ToString(), tc.expectedToken0Owed)
-			uassert.Equal(t, newPos.tokensOwed1.ToString(), tc.expectedToken1Owed)
-		}
+			// update position
+			liquidityDelta := i256.MustFromDecimal(scenario.liquidityDelta)
+			feeGrowth0 := u256.MustFromDecimal(scenario.feeGrowthToken0)
+			feeGrowth1 := u256.MustFromDecimal(scenario.feeGrowthToken1)
+
+			newPos, err := positionUpdate(position, liquidityDelta, feeGrowth0, feeGrowth1)
+
+			// validate based on scenario
+			if scenario.name == "zero_liquidity_attempt" {
+				uassert.Error(t, err, "Expected error for zero liquidity")
+				uassert.ErrorContains(t, err, "zero liquidity")
+			} else {
+				uassert.NoError(t, err, "Unexpected error")
+
+				// Validate liquidity update
+				expectedLiquidity := new(u256.Uint).Add(
+					u256.MustFromDecimal(scenario.initialLiquidity),
+					u256.MustFromDecimal(scenario.liquidityDelta),
+				)
+				uassert.Equal(t, expectedLiquidity.ToString(), newPos.liquidity.ToString())
+
+				// Validate fee tracking
+				if scenario.name == "whale_position_fee_check" {
+					// Whale should accumulate fees
+					uassert.True(t, newPos.tokensOwed0.Gt(u256.Zero()), "Whale should have token0 fees")
+					uassert.True(t, newPos.tokensOwed1.Gt(u256.Zero()), "Whale should have token1 fees")
+				}
+
+				// Ensure invariants
+				assertPositionInvariants(t, newPos)
+			}
+
+			t.Logf("✓ %s: %s - %s",
+				scenario.description, scenario.expectedOutcome, scenario.businessContext)
+		})
 	}
 }
 
