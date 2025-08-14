@@ -12,6 +12,204 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 )
 
+// TODO: Unify the test abstractions into a single file
+
+// Position Strategy Constants - Representing real LP strategies
+const (
+	// Tick ranges for different LP strategies
+	CONCENTRATED_LOWER = int32(-100) // Tight range for concentrated liquidity
+	CONCENTRATED_UPPER = int32(100)
+
+	MODERATE_LOWER = int32(-500) // Moderate range for balanced strategy
+	MODERATE_UPPER = int32(500)
+
+	WIDE_LOWER = int32(-2000) // Wide range for conservative strategy
+	WIDE_UPPER = int32(2000)
+
+	// Liquidity amounts representing different LP sizes
+	DUST_LIQUIDITY  = "100"         // Minimum position size
+	WHALE_LIQUIDITY = "10000000000" // Whale position
+
+	// Fee growth scenarios (in X128 format)
+	NO_FEE_GROWTH     = "0"
+	LOW_FEE_GROWTH    = "1000000"     // Low trading activity
+	MEDIUM_FEE_GROWTH = "100000000"   // Normal trading activity
+	HIGH_FEE_GROWTH   = "10000000000" // High trading activity
+
+	// Common test addresses
+	LP_ALICE = "alice_lp_address"
+	LP_BOB   = "bob_lp_address"
+	LP_WHALE = "whale_lp_address"
+)
+
+// Test scenario structures for better organization
+type PositionScenario struct {
+	name             string
+	description      string
+	owner            std.Address
+	tickLower        int32
+	tickUpper        int32
+	liquidity        string
+	strategy         string // "concentrated", "moderate", "wide", "full-range"
+	expectedBehavior string
+}
+
+type LiquidityUpdateScenario struct {
+	name             string
+	description      string
+	initialLiquidity string
+	liquidityDelta   string
+	feeGrowthToken0  string
+	feeGrowthToken1  string
+	expectedOutcome  string
+	businessContext  string
+}
+
+type FeeCollectionScenario struct {
+	name                string
+	description         string
+	positionLiquidity   string
+	tradingVolume       string // Represents fee generation level
+	timeElapsed         int64
+	expectedFeeLevel    string // "none", "low", "medium", "high"
+	businessImplication string
+}
+
+type PositionModificationScenario struct {
+	name           string
+	description    string
+	action         string // "add", "remove", "compound"
+	priceMovement  string // "none", "up", "down", "volatile"
+	expectedImpact string
+	riskAssessment string
+}
+
+// setupTestPool creates a pool with specified parameters for testing
+func setupTestPool(t *testing.T, token0, token1 string, fee uint32, sqrtPrice string) *Pool {
+	t.Helper()
+
+	tickSpacing := GetFeeAmountTickSpacing(fee)
+	poolParams := newPoolParams(token0, token1, fee, sqrtPrice, tickSpacing)
+	return newPool(poolParams)
+}
+
+// setupPoolAtPrice creates a pool at a specific tick price
+func setupPoolAtPrice(t *testing.T, tick int32) *Pool {
+	t.Helper()
+
+	sqrtPrice := common.TickMathGetSqrtRatioAtTick(tick).ToString()
+	return setupTestPool(t, barPath, fooPath, FeeTier500, sqrtPrice)
+}
+
+// createPositionWithValidation creates a position and validates the output
+func createPositionWithValidation(t *testing.T, pool *Pool, scenario PositionScenario) (positionKey string, amount0, amount1 *u256.Uint) {
+	t.Helper()
+
+	// Get position key
+	positionKey, err := getPositionKey(scenario.owner, scenario.tickLower, scenario.tickUpper)
+	if err != nil {
+		t.Fatalf("Failed to get position key: %v", err)
+	}
+
+	// Create position through modifyPosition
+	liquidityDelta := i256.MustFromDecimal(scenario.liquidity)
+	params := ModifyPositionParams{
+		owner:          scenario.owner,
+		tickLower:      scenario.tickLower,
+		tickUpper:      scenario.tickUpper,
+		liquidityDelta: liquidityDelta,
+	}
+
+	_, amount0, amount1, err = pool.modifyPosition(params)
+	if err != nil {
+		t.Fatalf("Failed to create position: %v", err)
+	}
+
+	// Validate position was created
+	positionValue, exists := pool.positions.Get(positionKey)
+	if !exists {
+		t.Fatalf("Position was not created with key: %s", positionKey)
+	}
+	position := positionValue.(PositionInfo)
+
+	// Validate liquidity
+	if position.liquidity.ToString() != scenario.liquidity {
+		t.Errorf("Position liquidity mismatch: expected %s, got %s",
+			scenario.liquidity, position.liquidity.ToString())
+	}
+
+	return positionKey, amount0, amount1
+}
+
+// updatePositionLiquidity modifies an existing position's liquidity
+func updatePositionLiquidity(t *testing.T, pool *Pool, owner std.Address, tickLower, tickUpper int32, liquidityDelta string) (amount0, amount1 *u256.Uint) {
+	t.Helper()
+
+	delta := i256.MustFromDecimal(liquidityDelta)
+	params := ModifyPositionParams{
+		owner:          owner,
+		tickLower:      tickLower,
+		tickUpper:      tickUpper,
+		liquidityDelta: delta,
+	}
+
+	_, amount0, amount1, err := pool.modifyPosition(params)
+	if err != nil {
+		t.Fatalf("Failed to update position liquidity: %v", err)
+	}
+
+	return amount0, amount1
+}
+
+// simulateFeeGrowth updates the pool's fee growth globals to simulate trading activity
+func simulateFeeGrowth(t *testing.T, pool *Pool, feeGrowth0, feeGrowth1 string) {
+	t.Helper()
+
+	pool.feeGrowthGlobal0X128 = u256.MustFromDecimal(feeGrowth0)
+	pool.feeGrowthGlobal1X128 = u256.MustFromDecimal(feeGrowth1)
+}
+
+// validatePositionFees checks if position has accumulated expected fees
+func validatePositionFees(t *testing.T, position PositionInfo, expectedLevel string) {
+	t.Helper()
+
+	hasToken0Fees := position.tokensOwed0.Gt(u256.Zero())
+	hasToken1Fees := position.tokensOwed1.Gt(u256.Zero())
+
+	switch expectedLevel {
+	case "none":
+		if hasToken0Fees || hasToken1Fees {
+			t.Errorf("Expected no fees but found token0: %s, token1: %s",
+				position.tokensOwed0.ToString(), position.tokensOwed1.ToString())
+		}
+	case "low", "medium", "high":
+		if !hasToken0Fees && !hasToken1Fees {
+			t.Errorf("Expected %s fees but found none", expectedLevel)
+		}
+	}
+}
+
+// assertPositionInvariants validates that position maintains expected invariants
+func assertPositionInvariants(t *testing.T, position PositionInfo) {
+	t.Helper()
+
+	// Liquidity should never be negative (represented as uint)
+	if position.liquidity.Lt(u256.Zero()) {
+		t.Error("Position liquidity is negative")
+	}
+
+	// Fee growth inside should be monotonically increasing
+	if position.feeGrowthInside0LastX128.Lt(u256.Zero()) ||
+		position.feeGrowthInside1LastX128.Lt(u256.Zero()) {
+		t.Error("Fee growth inside values are negative")
+	}
+
+	// Tokens owed should never be negative
+	if position.tokensOwed0.Lt(u256.Zero()) || position.tokensOwed1.Lt(u256.Zero()) {
+		t.Error("Tokens owed values are negative")
+	}
+}
+
 func TestPositionGetKey(t *testing.T) {
 	invalidAddr := std.Address("invalidAddr")
 	validAddr := testutils.TestAddress("validAddr")
