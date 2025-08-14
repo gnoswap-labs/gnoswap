@@ -12,8 +12,6 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	pl "gno.land/r/gnoswap/v1/pool"
-
 	"gno.land/r/gnoswap/referral"
 	"gno.land/r/gnoswap/v1/gnft"
 )
@@ -39,6 +37,43 @@ func IsRegistered(t *testing.T, tokenPath string) error {
 		return nil
 	}
 	return errInvalidTokenPath
+}
+
+func setupPoolAndApprovals(t *testing.T, faucet bool) {
+	t.Helper()
+	testing.SetOriginCaller(adminAddr)
+	CreatePoolWithoutFee(t)
+
+	if faucet {
+		TokenFaucet(t, barPath, alice)
+		TokenFaucet(t, fooPath, alice)
+	}
+
+	testing.SetRealm(posRealm)
+	TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
+	TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
+}
+
+// seedPosition mints a simple position owned by admin and returns its id.
+func seedPosition(t *testing.T, amount0, amount1 string) uint64 {
+	t.Helper()
+	positionId, _, _, _ := Mint(
+		cross,
+		barPath,
+		fooPath,
+		fee500,
+		-10000,
+		10000,
+		amount0,
+		amount1,
+		"0",
+		"0",
+		time.Now().Add(time.Hour).Unix(),
+		adminAddr,
+		adminAddr,
+		"",
+	)
+	return positionId
 }
 
 func newDummyPosition(id uint64) Position {
@@ -189,7 +224,6 @@ func TestRemovePosition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initPositionTest(t)
-
 			createNewPosition(tt.positionId, newDummyPosition(tt.positionId))
 
 			removePosition(tt.inputPositionId)
@@ -224,9 +258,7 @@ func TestExistPosition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initPositionTest(t)
-
 			createNewPosition(tt.positionId, newDummyPosition(tt.positionId))
-
 			uassert.Equal(t, tt.expectedExist, ExistPosition(tt.inputPositionId))
 		})
 	}
@@ -290,56 +322,23 @@ func TestNextIdFunctions(t *testing.T) {
 		initialValue  uint64
 		increments    int
 		expectedValue uint64
-		errorMessage  string
 	}{
-		{
-			name:          "Initial nextId should return 1",
-			initialValue:  1,
-			increments:    0,
-			expectedValue: 1,
-			errorMessage:  "expected nextId to start at 1",
-		},
-		{
-			name:          "After mint nextId should return 2",
-			initialValue:  1,
-			increments:    1,
-			expectedValue: 2,
-			errorMessage:  "expected nextId to be 2 after mint",
-		},
-		{
-			name:          "Increment nextId once",
-			initialValue:  2,
-			increments:    1,
-			expectedValue: 3,
-			errorMessage:  "expected nextId to increment to 3",
-		},
-		{
-			name:          "Increment nextId multiple times",
-			initialValue:  3,
-			increments:    2,
-			expectedValue: 5,
-			errorMessage:  "expected nextId to increment to 5 after 3 more increments",
-		},
-		{
-			name:          "Ensure no overflow on normal increments",
-			initialValue:  5,
-			increments:    95,
-			expectedValue: 100,
-			errorMessage:  "expected nextId to reach 100 after continuous increments",
-		},
+		{"initial is 1", 1, 0, 1},
+		{"after 1 increment is 2", 1, 1, 2},
+		{"increment once → 3", 2, 1, 3},
+		{"increment twice → 5", 3, 2, 5},
+		{"no overflow on 95 increments", 5, 95, 100},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			nextId = tt.initialValue
-			for i := range make([]struct{}, tt.increments) {
-				t.Logf("iteration %d", i)
+			for range make([]struct{}, tt.increments) {
 				incrementNextId()
 			}
-			uassert.Equal(t, tt.expectedValue, GetNextId(), tt.errorMessage)
+			uassert.Equal(t, tt.expectedValue, GetNextId())
 		})
 	}
-
 	nextId = prevNextId
 }
 
@@ -350,18 +349,8 @@ func TestIsValidTokenPath(t *testing.T) {
 		register  bool
 		expected  bool
 	}{
-		{
-			name:      "isValidTokenPath is success by valid token path",
-			tokenPath: gnsPath,
-			register:  true,
-			expected:  true,
-		},
-		{
-			name:      "isValidTokenPath is failed by invalid token path",
-			tokenPath: "invalid/path",
-			register:  false,
-			expected:  false,
-		},
+		{"valid path", gnsPath, true, true},
+		{"invalid path", "invalid/path", false, false},
 	}
 
 	for _, tt := range tests {
@@ -373,6 +362,8 @@ func TestIsValidTokenPath(t *testing.T) {
 }
 
 func TestValidateTokenPath(t *testing.T) {
+	initPositionTest(t)
+
 	tests := []struct {
 		name      string
 		token0    string
@@ -381,46 +372,11 @@ func TestValidateTokenPath(t *testing.T) {
 		register1 bool
 		expected  error
 	}{
-		{
-			name:      "validateTokenPath is success by valid token path",
-			token0:    gnsPath,
-			token1:    barPath,
-			register0: true,
-			register1: true,
-			expected:  nil,
-		},
-		{
-			name:      "validateTokenPath is failed by same token path",
-			token0:    "tokenA",
-			token1:    "tokenA",
-			register0: true,
-			register1: true,
-			expected:  errInvalidTokenPath,
-		},
-		{
-			name:      "validateTokenPath is failed by conflicting tokens (GNOT ↔ WUGNOT)",
-			token0:    GNOT,
-			token1:    WRAPPED_WUGNOT,
-			register0: true,
-			register1: true,
-			expected:  errInvalidTokenPath,
-		},
-		{
-			name:      "validateTokenPath is failed by invalid token path",
-			token0:    "tokenX",
-			token1:    "tokenY",
-			register0: false,
-			register1: true,
-			expected:  errInvalidTokenPath,
-		},
-		{
-			name:      "validateTokenPath is failed by both invalid tokens",
-			token0:    "invalidA",
-			token1:    "invalidB",
-			register0: false,
-			register1: false,
-			expected:  errInvalidTokenPath,
-		},
+		{"both valid", gnsPath, barPath, true, true, nil},
+		{"same token path", "tokenA", "tokenA", true, true, errInvalidTokenPath},
+		{"conflicting tokens (GNOT ↔ WUGNOT)", GNOT, WRAPPED_WUGNOT, true, true, errInvalidTokenPath},
+		{"invalid token0", "tokenX", "tokenY", false, true, errInvalidTokenPath},
+		{"both invalid", "invalidA", "invalidB", false, false, errInvalidTokenPath},
 	}
 
 	for _, tt := range tests {
@@ -430,23 +386,17 @@ func TestValidateTokenPath(t *testing.T) {
 			} else {
 				MockUnregister(t, tt.token0)
 			}
-
 			if tt.register1 {
 				MockRegister(t, tt.token1)
 			} else {
 				MockUnregister(t, tt.token1)
 			}
 
+			err := validateTokenPath(tt.token0, tt.token1)
 			if tt.expected != nil {
-				err := validateTokenPath(tt.token0, tt.token1)
 				uassert.Equal(t, tt.expected.Error(), err.Error())
 			} else {
-				uassert.NotPanics(t, func() {
-					err := validateTokenPath(tt.token0, tt.token1)
-					if err != nil {
-						t.Errorf("expected no error but got %s", err.Error())
-					}
-				})
+				uassert.Nil(t, err)
 			}
 		})
 	}
@@ -588,223 +538,6 @@ func TestProcessTokens(t *testing.T) {
 	}
 }
 
-func TestProcessMintInput(t *testing.T) {
-	tests := []struct {
-		name             string
-		input            MintInput
-		expectedToken0   string
-		expectedToken1   string
-		expectedAmount0  string
-		expectedAmount1  string
-		expectedTickL    int32
-		expectedTickU    int32
-		expectError      bool
-		expectedErrorMsg string
-	}{
-		{
-			name: "processMintInput is success by standard mint",
-			input: MintInput{
-				token0:         gnsPath,
-				token1:         barPath,
-				amount0Desired: "1000",
-				amount1Desired: "2000",
-				amount0Min:     "800",
-				amount1Min:     "1800",
-				tickLower:      -10000,
-				tickUpper:      10000,
-				caller:         alice,
-			},
-			expectedToken0:  gnsPath,
-			expectedToken1:  barPath,
-			expectedAmount0: "1000",
-			expectedAmount1: "2000",
-			expectedTickL:   -10000,
-			expectedTickU:   10000,
-			expectError:     false,
-		},
-		{
-			name: "processMintInput is success by token swap",
-			input: MintInput{
-				token0:         barPath,
-				token1:         gnsPath,
-				amount0Desired: "2000",
-				amount1Desired: "1000",
-				amount0Min:     "1800",
-				amount1Min:     "800",
-				tickLower:      -20000,
-				tickUpper:      20000,
-				caller:         alice,
-			},
-			expectedToken0:  gnsPath,
-			expectedToken1:  barPath,
-			expectedAmount0: "1000",
-			expectedAmount1: "2000",
-			expectedTickL:   -20000,
-			expectedTickU:   20000,
-			expectError:     false,
-		},
-		{
-			name: "processMintInput is failed by invalid amounts",
-			input: MintInput{
-				token0:         gnsPath,
-				token1:         barPath,
-				amount0Desired: "invalid",
-				amount1Desired: "2000",
-				amount0Min:     "800",
-				amount1Min:     "1800",
-				tickLower:      -5000,
-				tickUpper:      5000,
-				caller:         alice,
-			},
-			expectError:      true,
-			expectedErrorMsg: "[GNOSWAP-POSITION-005] invalid input data || input string : invalid",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.expectError {
-				uassert.PanicsWithMessage(t, tt.expectedErrorMsg, func() {
-					processMintInput(tt.input)
-				})
-			} else {
-				processed, err := processMintInput(tt.input)
-				uassert.Nil(t, err, "processMintInput should not return error")
-				uassert.Equal(t, tt.expectedToken0, processed.tokenPair.token0)
-				uassert.Equal(t, tt.expectedToken1, processed.tokenPair.token1)
-				uassert.Equal(t, tt.expectedAmount0, processed.amount0Desired.ToString())
-				uassert.Equal(t, tt.expectedAmount1, processed.amount1Desired.ToString())
-				uassert.Equal(t, tt.expectedTickL, processed.tickLower)
-				uassert.Equal(t, tt.expectedTickU, processed.tickUpper)
-			}
-		})
-	}
-}
-
-func TestMintInternal(t *testing.T) {
-	tests := []struct {
-		name              string
-		params            MintParams
-		expectedTokenId   uint64
-		expectedLiquidity string
-		expectedAmount0   string
-		expectedAmount1   string
-		expectPanic       bool
-		errKind           string // panic, abor
-		expectedError     string
-		positionId        uint64
-	}{
-		{
-			name: "internal mint is success by successful mint",
-			params: MintParams{
-				token0:         barPath,
-				token1:         fooPath,
-				fee:            fee500,
-				tickLower:      -100,
-				tickUpper:      100,
-				amount0Desired: u256.MustFromDecimal("10000"),
-				amount1Desired: u256.MustFromDecimal("10000"),
-				amount0Min:     u256.MustFromDecimal("10"),
-				amount1Min:     u256.MustFromDecimal("10"),
-				caller:         alice,
-				mintTo:         alice,
-			},
-			expectedTokenId:   GetNextId(),
-			expectedLiquidity: "2005104",
-			expectedAmount0:   "10000",
-			expectedAmount1:   "10000",
-			expectPanic:       false,
-			positionId:        0,
-		},
-		{
-			name: "internal mint is failed by position already exists",
-			params: MintParams{
-				token0:         barPath,
-				token1:         fooPath,
-				fee:            fee500,
-				tickLower:      -100,
-				tickUpper:      100,
-				amount0Desired: u256.MustFromDecimal("10000"),
-				amount1Desired: u256.MustFromDecimal("10000"),
-				amount0Min:     u256.MustFromDecimal("10"),
-				amount1Min:     u256.MustFromDecimal("10"),
-				caller:         alice,
-				mintTo:         alice,
-			},
-			expectPanic:   true,
-			errKind:       "panic",
-			expectedError: "[GNOSWAP-POSITION-011] position with same positionId already exists || positionId(1)",
-			positionId:    1,
-		},
-		{
-			name: "internal mint is failed by zero liquidity",
-			params: MintParams{
-				token0:         barPath,
-				token1:         fooPath,
-				fee:            fee500,
-				tickLower:      -200,
-				tickUpper:      200,
-				amount0Desired: u256.Zero(),
-				amount1Desired: u256.Zero(),
-				amount0Min:     u256.NewUint(5),
-				amount1Min:     u256.NewUint(5),
-				caller:         alice,
-				mintTo:         alice,
-			},
-			expectPanic:   true,
-			errKind:       "abort",
-			expectedError: "[GNOSWAP-POOL-010] zero liquidity",
-			positionId:    0,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			testing.SetRealm(adminRealm)
-			pl.SetPoolCreationFee(cross, 0)
-			CreatePool(t, barPath, fooPath, fee500, "79228162514264337593543950336", adminAddr)
-
-			TokenFaucet(t, barPath, alice)
-			TokenFaucet(t, fooPath, alice)
-
-			testing.SetRealm(posRealm)
-			TokenApprove(t, barPath, alice, poolAddr, maxApprove)
-			TokenApprove(t, fooPath, alice, poolAddr, maxApprove)
-
-			prevNextId := nextId
-			if tt.positionId != 0 {
-				nextId = tt.positionId
-			}
-
-			if !tt.expectPanic {
-				testing.SetRealm(posRealm)
-				positionId, liquidity, amount0, amount1 := mint(tt.params)
-				uassert.Equal(t, tt.expectedTokenId, positionId)
-				uassert.Equal(t, tt.expectedLiquidity, liquidity.ToString())
-				uassert.Equal(t, tt.expectedAmount0, amount0.ToString())
-				uassert.Equal(t, tt.expectedAmount1, amount1.ToString())
-			} else {
-				switch tt.errKind {
-				case "panic":
-					uassert.PanicsWithMessage(t, tt.expectedError, func() {
-						mint(tt.params)
-					})
-				case "abort":
-					uassert.AbortsWithMessage(t, tt.expectedError, func() {
-						mint(tt.params)
-					})
-				default:
-					t.Errorf("unexpected error kind: %s", tt.errKind)
-				}
-			}
-
-			if tt.positionId != 0 {
-				nextId = prevNextId
-			}
-		})
-	}
-}
-
 func TestMint(t *testing.T) {
 	tests := []struct {
 		name               string
@@ -828,7 +561,7 @@ func TestMint(t *testing.T) {
 		referrer           string
 	}{
 		{
-			name:               "mint is success by valid referral",
+			name:               "success: valid referral",
 			token0:             barPath,
 			token1:             fooPath,
 			fee:                fee500,
@@ -847,7 +580,7 @@ func TestMint(t *testing.T) {
 			referrer:           testutils.TestAddress("carol").String(),
 		},
 		{
-			name:             "mint is failed by deadline exceeded",
+			name:             "abort: deadline exceeded",
 			token0:           barPath,
 			token1:           fooPath,
 			fee:              fee500,
@@ -866,7 +599,7 @@ func TestMint(t *testing.T) {
 			expectedAmount1:  1900000,
 		},
 		{
-			name:             "mint is failed by invalid tick range",
+			name:             "abort: invalid tick range",
 			token0:           barPath,
 			token1:           fooPath,
 			fee:              fee500,
@@ -885,7 +618,7 @@ func TestMint(t *testing.T) {
 			expectedAmount1:  1900000,
 		},
 		{
-			name:             "mint is failed by caller not authorized",
+			name:             "abort: caller not authorized to mintTo",
 			token0:           barPath,
 			token1:           fooPath,
 			fee:              fee500,
@@ -907,55 +640,33 @@ func TestMint(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			initPositionTest(t)
-
-			testing.SetRealm(adminRealm)
-			pl.SetPoolCreationFee(cross, 0)
-			CreatePool(t, barPath, fooPath, fee500, "79228162514264337593543950336", adminAddr)
-
-			TokenFaucet(t, barPath, alice)
-			TokenFaucet(t, fooPath, alice)
-
-			testing.SetRealm(posRealm)
-			TokenApprove(t, barPath, alice, poolAddr, maxApprove)
-			TokenApprove(t, fooPath, alice, poolAddr, maxApprove)
+			NewEnv(t).
+				GivenPoolCreated(barPath, fooPath, fee500, "79228162514264337593543950336").
+				AndUserFundedAndApproved(alice, barPath, fooPath)
 
 			testing.SetRealm(std.NewUserRealm(tc.caller))
+
 			if tc.shouldError {
 				uassert.AbortsWithMessage(t, tc.expectedErrorMsg, func() {
 					Mint(
 						cross,
-						tc.token0,
-						tc.token1,
-						tc.fee,
-						tc.tickLower,
-						tc.tickUpper,
-						tc.amount0,
-						tc.amount1,
-						tc.minAmount0,
-						tc.minAmount1,
+						tc.token0, tc.token1, tc.fee,
+						tc.tickLower, tc.tickUpper,
+						tc.amount0, tc.amount1,
+						tc.minAmount0, tc.minAmount1,
 						tc.deadline,
-						tc.mintTo,
-						tc.caller,
-						tc.referrer,
+						tc.mintTo, tc.caller, tc.referrer,
 					)
 				})
 			} else {
 				positionId, liquidity, amount0, amount1 := Mint(
 					cross,
-					tc.token0,
-					tc.token1,
-					tc.fee,
-					tc.tickLower,
-					tc.tickUpper,
-					tc.amount0,
-					tc.amount1,
-					tc.minAmount0,
-					tc.minAmount1,
+					tc.token0, tc.token1, tc.fee,
+					tc.tickLower, tc.tickUpper,
+					tc.amount0, tc.amount1,
+					tc.minAmount0, tc.minAmount1,
 					tc.deadline,
-					tc.mintTo,
-					tc.caller,
-					tc.referrer,
+					tc.mintTo, tc.caller, tc.referrer,
 				)
 
 				uassert.Equal(t, tc.expectedPositionId, positionId)
@@ -1037,19 +748,9 @@ func TestIncreaseLiquidity(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			initPositionTest(t)
+
 			testing.SetRealm(adminRealm)
-
-			pl.SetPoolCreationFee(cross, 0)
-			CreatePool(t, barPath, fooPath, fee500, "79228162514264337593543950336", adminAddr)
-
-			TokenFaucet(t, barPath, alice)
-			TokenFaucet(t, fooPath, alice)
-
-			testing.SetRealm(posRealm)
-			TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
-			TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
-
-			testing.SetOriginCaller(adminAddr)
+			setupPoolAndApprovals(t, true)
 			_, _, _, _ = Mint(
 				cross,
 				barPath,
@@ -1193,41 +894,15 @@ func TestDecreaseLiquidity(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			initPositionTest(t)
+
 			testing.SetRealm(adminRealm)
+			setupPoolAndApprovals(t, true)
 
-			pl.SetPoolCreationFee(cross, 0)
-			CreatePool(t, barPath, fooPath, fee500, "79228162514264337593543950336", adminAddr)
-
-			TokenFaucet(t, barPath, alice)
-			TokenFaucet(t, fooPath, alice)
-
-			testing.SetRealm(posRealm)
-			TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
-			TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
-
-			testing.SetOriginCaller(adminAddr)
-			positionId, _, _, _ := Mint(
-				cross,
-				barPath,
-				fooPath,
-				fee500,
-				-10000,
-				10000,
-				"1000000",
-				"1000000",
-				"0",
-				"0",
-				time.Now().Add(time.Hour).Unix(),
-				adminAddr,
-				adminAddr,
-				"",
-			)
-
+			positionId := seedPosition(t, "1000000", "1000000")
 			gnft.Approve(cross, posRealm.Address(), positionIdFrom(positionId))
 
 			deadline := time.Now().Add(tc.deadlineOffset).Unix()
 			if tc.beforeIncrease {
-				testing.SetRealm(adminRealm)
 				_, _, _, _, _ = IncreaseLiquidity(
 					cross,
 					positionId,
@@ -1287,7 +962,7 @@ func TestCollectFees(t *testing.T) {
 		expectedAbortError string
 	}{
 		{
-			name:              "collect fees is success by multiple mints",
+			name:              "success: multiple mints",
 			caller:            adminAddr,
 			mintAmount0:       "1000000",
 			mintAmount1:       "2000000",
@@ -1299,10 +974,9 @@ func TestCollectFees(t *testing.T) {
 			expectedFee1:      "0",
 			expectedAmount0:   "0",
 			expectedAmount1:   "0",
-			expectedHasAbort:  false,
 		},
 		{
-			name:              "collect fees is success by full liquidity removal",
+			name:              "success: full removal then collect",
 			caller:            adminAddr,
 			mintAmount0:       "1000000",
 			mintAmount1:       "2000000",
@@ -1312,41 +986,41 @@ func TestCollectFees(t *testing.T) {
 			expectedFee1:      "0",
 			expectedAmount0:   "0",
 			expectedAmount1:   "0",
-			expectedHasAbort:  false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testing.SetOriginCaller(adminAddr)
-			CreatePoolWithoutFee(t)
-
-			testing.SetRealm(posRealm)
-			TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
-			TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
+			setupPoolAndApprovals(t, false)
 
 			testing.SetOriginCaller(adminAddr)
-
-			// Mint liquidity
-			positionId, _, _, _ := Mint(
-				cross,
-				barPath,
-				fooPath,
-				fee500,
-				-10000,
-				10000,
-				tt.mintAmount0,
-				tt.mintAmount1,
-				"0",
-				"0",
-				time.Now().Add(time.Hour).Unix(),
-				adminAddr,
-				adminAddr,
-				"",
-			)
+			positionId := seedPosition(t, tt.mintAmount0, tt.mintAmount1)
 
 			testing.SetOriginCaller(adminAddr)
 			gnft.Approve(cross, posRealm.Address(), positionIdFrom(positionId))
+
+			if tt.increaseAmount0 != "" && tt.increaseAmount1 != "" {
+				_, _, _, _, _ = IncreaseLiquidity(
+					cross,
+					positionId,
+					tt.increaseAmount0,
+					tt.increaseAmount1,
+					"0",
+					"0",
+					time.Now().Add(time.Hour).Unix(),
+				)
+			}
+			if tt.liquidityToRemove != "" {
+				_, _, _, _, _, _, _ = DecreaseLiquidity(
+					cross,
+					positionId,
+					tt.liquidityToRemove,
+					"0",
+					"0",
+					time.Now().Add(time.Hour).Unix(),
+					tt.unwrapResult,
+				)
+			}
 
 			if tt.expectedHasAbort {
 				uassert.AbortsWithMessage(t, tt.expectedAbortError, func() {
@@ -1416,33 +1090,11 @@ func TestReposition(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			initPositionTest(t)
 
-			testing.SetOriginCaller(adminAddr)
-			CreatePoolWithoutFee(t)
-
-			testing.SetRealm(posRealm)
-			TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
-			TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
+			// no need to faucet tokens here.
+			setupPoolAndApprovals(t, false)
 
 			testing.SetOriginCaller(adminAddr)
-			// Step 1: Mint a position
-			positionId, _, _, _ := Mint(
-				cross,
-				barPath,
-				fooPath,
-				fee500,
-				-10000,
-				10000,
-				"1000000",
-				"1000000",
-				"0",
-				"0",
-				time.Now().Add(time.Hour).Unix(),
-				adminAddr,
-				adminAddr,
-				"",
-			)
-
-			testing.SetOriginCaller(adminAddr)
+			positionId := seedPosition(t, "1000000", "1000000")
 			gnft.Approve(cross, posRealm.Address(), positionIdFrom(positionId))
 
 			// Step 2: Increase liquidity

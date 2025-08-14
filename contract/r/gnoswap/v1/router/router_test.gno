@@ -117,7 +117,7 @@ func TestFinalizeSwap(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initRouterTest(t)
-			createBasicPool(t)
+			createMultiHopPools(t)
 
 			if tt.expectError {
 				defer func() {
