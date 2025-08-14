@@ -17,12 +17,11 @@ import (
 )
 
 func TestSingleSwap(t *testing.T) {
-	user1Realm := std.NewUserRealm(user1Addr)
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 
 	tests := []struct {
 		name        string
-		setupFn     func(t *testing.T)
+		setupFn     func(*TestEnv)
 		params      SingleSwapParams
 		expectedIn  string
 		expectedOut string
@@ -30,42 +29,34 @@ func TestSingleSwap(t *testing.T) {
 	}{
 		{
 			name: "exact input swap BAR -> BAZ",
-			setupFn: func(t *testing.T) {
-				CreatePoolWithoutFee(t)
-				MakeMintPositionWithoutFee(t)
-
-				testing.SetRealm(user1Realm)
-				bar.Approve(cross, routerAddr, maxApprove)
-				baz.Approve(cross, routerAddr, maxApprove)
-				TokenFaucet(t, barPath, user1Addr)
+			setupFn: func(env *TestEnv) {
+				env.GivenPoolCreated(barPath, bazPath, 3000, "79228162514264337593543950336").
+					AndPositionMinted().
+					AndUserFundedAndApproved(user1Addr, routerAddr, barPath, bazPath)
 			},
-			params: SingleSwapParams{
-				tokenIn:         barPath,
-				tokenOut:        bazPath,
-				fee:             3000,
-				amountSpecified: i256.MustFromDecimal("100"),
-			},
+			params: NewSingleSwapParams().
+				TokenIn(barPath).
+				TokenOut(bazPath).
+				Fee(3000).
+				ExactInput("100").
+				Build(),
 			expectedIn:  "100",
 			expectedOut: "98",
 			expectError: false,
 		},
 		{
 			name: "exact output swap BAR -> BAZ",
-			setupFn: func(t *testing.T) {
-				CreatePoolWithoutFee(t)
-				MakeMintPositionWithoutFee(t)
-
-				testing.SetRealm(user1Realm)
-				bar.Approve(cross, routerAddr, maxApprove)
-				baz.Approve(cross, routerAddr, maxApprove)
-				TokenFaucet(t, barPath, user1Addr)
+			setupFn: func(env *TestEnv) {
+				env.GivenPoolCreated(barPath, bazPath, 3000, "79228162514264337593543950336").
+					AndPositionMinted().
+					AndUserFundedAndApproved(user1Addr, routerAddr, barPath, bazPath)
 			},
-			params: SingleSwapParams{
-				tokenIn:         barPath,
-				tokenOut:        bazPath,
-				fee:             3000,
-				amountSpecified: i256.MustFromDecimal("-98"),
-			},
+			params: NewSingleSwapParams().
+				TokenIn(barPath).
+				TokenOut(bazPath).
+				Fee(3000).
+				ExactOutput("98").
+				Build(),
 			expectedIn:  "100",
 			expectedOut: "98",
 			expectError: false,
@@ -74,14 +65,17 @@ func TestSingleSwap(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			env := NewTestEnv(t)
+
 			if tt.setupFn != nil {
-				tt.setupFn(t)
+				tt.setupFn(env)
 			}
 
 			singleSwapFn := func(cur realm) (*u256.Uint, *u256.Uint) {
 				return singleSwap(&tt.params)
 			}
 
+			user1Realm := std.NewUserRealm(user1Addr)
 			testing.SetRealm(user1Realm)
 			common.Approve(cross, tt.params.tokenIn, poolAddr, maxApprove)
 			common.Approve(cross, tt.params.tokenOut, poolAddr, maxApprove)
