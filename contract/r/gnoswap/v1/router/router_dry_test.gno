@@ -8,22 +8,16 @@ import (
 	"gno.land/r/gnoswap/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/qux"
 )
 
-type testDrySwapRouteCases struct {
+type DrySwapTestCase struct {
 	name              string
-	inputToken        string
-	outputToken       string
-	specifiedAmount   string
-	swapTypeStr       string
-	strRouteArr       string
-	quoteArr          string
-	tokenAmountLimit  string
+	setupFn           func(*TestEnv)
+	swapParams        DrySwapParams
 	expectedAmountIn  string
 	expectedAmountOut string
 	expectedSuccess   bool
@@ -31,56 +25,158 @@ type testDrySwapRouteCases struct {
 	expectedPanicMsg  string
 }
 
+type DrySwapParams struct {
+	inputToken       string
+	outputToken      string
+	specifiedAmount  string
+	swapTypeStr      string
+	strRouteArr      string
+	quoteArr         string
+	tokenAmountLimit string
+}
+
+type DrySwapBuilder struct {
+	params DrySwapParams
+}
+
+func NewDrySwapBuilder() *DrySwapBuilder {
+	return &DrySwapBuilder{
+		params: DrySwapParams{
+			quoteArr: "100",
+		},
+	}
+}
+
+func (b *DrySwapBuilder) InputToken(token string) *DrySwapBuilder {
+	b.params.inputToken = token
+	return b
+}
+
+func (b *DrySwapBuilder) OutputToken(token string) *DrySwapBuilder {
+	b.params.outputToken = token
+	return b
+}
+
+func (b *DrySwapBuilder) SpecifiedAmount(amount string) *DrySwapBuilder {
+	b.params.specifiedAmount = amount
+	return b
+}
+
+func (b *DrySwapBuilder) SwapType(swapType string) *DrySwapBuilder {
+	b.params.swapTypeStr = swapType
+	return b
+}
+
+func (b *DrySwapBuilder) Route(route string) *DrySwapBuilder {
+	b.params.strRouteArr = route
+	return b
+}
+
+func (b *DrySwapBuilder) Quote(quote string) *DrySwapBuilder {
+	b.params.quoteArr = quote
+	return b
+}
+
+func (b *DrySwapBuilder) TokenAmountLimit(limit string) *DrySwapBuilder {
+	b.params.tokenAmountLimit = limit
+	return b
+}
+
+func (b *DrySwapBuilder) Build() DrySwapParams {
+	return b.params
+}
+
+func setupBasicPools(env *TestEnv) {
+	testing.SetRealm(adminRealm)
+
+	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*2)
+
+	env.GivenPoolCreated(barPath, bazPath, 500, "130621891405341611593710811006")
+	env.GivenPoolCreated(bazPath, quxPath, 500, "130621891405341611593710811006")
+
+	bar.Approve(cross, poolAddr, maxApprove)
+	baz.Approve(cross, poolAddr, maxApprove)
+	qux.Approve(cross, poolAddr, maxApprove)
+
+	positionParams1 := NewPositionBuilder().
+		Tokens(barPath, bazPath).
+		Fee(500).
+		Range(9000, 11000).
+		Amounts("100000", "100000").
+		MinAmounts("0", "0").
+		Build()
+
+	env.AndLiquidityProvided(adminAddr, positionParams1)
+
+	positionParams2 := NewPositionBuilder().
+		Tokens(bazPath, quxPath).
+		Fee(500).
+		Range(9000, 11000).
+		Amounts("100000", "100000").
+		MinAmounts("0", "0").
+		Build()
+
+	env.AndLiquidityProvided(adminAddr, positionParams2)
+}
+
 func TestDrySwapRoute_Basic(t *testing.T) {
-	tests := []testDrySwapRouteCases{
+	tests := []DrySwapTestCase{
 		{
-			name:              "ExactIn - Single Route",
-			inputToken:        "gno.land/r/onbloc/bar",
-			outputToken:       "gno.land/r/onbloc/baz",
-			specifiedAmount:   "1000",
-			swapTypeStr:       "EXACT_IN",
-			strRouteArr:       "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500",
-			quoteArr:          "100",
-			tokenAmountLimit:  "1",
+			name:    "ExactIn - Single Route",
+			setupFn: setupBasicPools,
+			swapParams: NewDrySwapBuilder().
+				InputToken(barPath).
+				OutputToken(bazPath).
+				SpecifiedAmount("1000").
+				SwapType("EXACT_IN").
+				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500").
+				TokenAmountLimit("1").
+				Build(),
 			expectedAmountIn:  "1000",
 			expectedAmountOut: "2711",
 			expectedSuccess:   true,
 		},
 		{
-			name:              "ExactOut - Single Route",
-			inputToken:        "gno.land/r/onbloc/baz",
-			outputToken:       "gno.land/r/onbloc/bar",
-			specifiedAmount:   "1000",
-			swapTypeStr:       "EXACT_OUT",
-			strRouteArr:       "gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500",
-			quoteArr:          "100",
-			tokenAmountLimit:  "100000",
+			name:    "ExactOut - Single Route",
+			setupFn: setupBasicPools,
+			swapParams: NewDrySwapBuilder().
+				InputToken(bazPath).
+				OutputToken(barPath).
+				SpecifiedAmount("1000").
+				SwapType("EXACT_OUT").
+				Route("gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500").
+				TokenAmountLimit("100000").
+				Build(),
 			expectedAmountIn:  "2724",
 			expectedAmountOut: "1000",
 			expectedSuccess:   true,
 		},
 		{
-			name:              "ExactIn - Multi Route",
-			inputToken:        "gno.land/r/onbloc/bar",
-			outputToken:       "gno.land/r/onbloc/qux",
-			specifiedAmount:   "1000",
-			swapTypeStr:       "EXACT_IN",
-			strRouteArr:       "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500",
-			quoteArr:          "100",
-			tokenAmountLimit:  "1",
+			name:    "ExactIn - Multi Route",
+			setupFn: setupBasicPools,
+			swapParams: NewDrySwapBuilder().
+				InputToken(barPath).
+				OutputToken(quxPath).
+				SpecifiedAmount("1000").
+				SwapType("EXACT_IN").
+				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500").
+				TokenAmountLimit("1").
+				Build(),
 			expectedAmountIn:  "1000",
 			expectedAmountOut: "7337",
 			expectedSuccess:   true,
 		},
 		{
-			name:              "ExactOut - Multi Route",
-			inputToken:        "gno.land/r/onbloc/bar",
-			outputToken:       "gno.land/r/onbloc/qux",
-			specifiedAmount:   "1000",
-			swapTypeStr:       "EXACT_OUT",
-			strRouteArr:       "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500",
-			quoteArr:          "100",
-			tokenAmountLimit:  "10000",
+			name:    "ExactOut - Multi Route",
+			setupFn: setupBasicPools,
+			swapParams: NewDrySwapBuilder().
+				InputToken(barPath).
+				OutputToken(quxPath).
+				SpecifiedAmount("1000").
+				SwapType("EXACT_OUT").
+				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500").
+				TokenAmountLimit("10000").
+				Build(),
 			expectedAmountIn:  "138",
 			expectedAmountOut: "370",
 			expectedSuccess:   true,
@@ -89,18 +185,20 @@ func TestDrySwapRoute_Basic(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			initRouterTest(t)
+			env := NewTestEnv(t)
 
-			createBasicPool(t)
+			if tt.setupFn != nil {
+				tt.setupFn(env)
+			}
 
 			amountIn, amountOut, success := DrySwapRoute(
-				tt.inputToken,
-				tt.outputToken,
-				tt.specifiedAmount,
-				tt.swapTypeStr,
-				tt.strRouteArr,
-				tt.quoteArr,
-				tt.tokenAmountLimit,
+				tt.swapParams.inputToken,
+				tt.swapParams.outputToken,
+				tt.swapParams.specifiedAmount,
+				tt.swapParams.swapTypeStr,
+				tt.swapParams.strRouteArr,
+				tt.swapParams.quoteArr,
+				tt.swapParams.tokenAmountLimit,
 			)
 
 			uassert.Equal(t, tt.expectedAmountIn, amountIn)
@@ -111,30 +209,36 @@ func TestDrySwapRoute_Basic(t *testing.T) {
 }
 
 func TestDrySwapRouteOverflow(t *testing.T) {
-	tests := []testDrySwapRouteCases{
+	maxUint256 := "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+
+	tests := []DrySwapTestCase{
 		{
-			name:              "ExactIn - Overflow in calculateSwapAmount",
-			inputToken:        "gno.land/r/onbloc/bar",
-			outputToken:       "gno.land/r/onbloc/baz",
-			specifiedAmount:   "115792089237316195423570985008687907853269984665640564039457584007913129639935", // max uint256
-			swapTypeStr:       "EXACT_IN",
-			strRouteArr:       "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500",
-			quoteArr:          "100",
-			tokenAmountLimit:  "1",
+			name:    "ExactIn - Overflow in calculateSwapAmount",
+			setupFn: setupBasicPools,
+			swapParams: NewDrySwapBuilder().
+				InputToken(barPath).
+				OutputToken(bazPath).
+				SpecifiedAmount(maxUint256).
+				SwapType("EXACT_IN").
+				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500").
+				TokenAmountLimit("1").
+				Build(),
 			expectedAmountIn:  "0",
 			expectedAmountOut: "0",
 			expectPanic:       true,
 			expectedPanicMsg:  "[GNOSWAP-ROUTER-005] invalid input data || overflow in calculateSwapAmount",
 		},
 		{
-			name:              "ExactOut - Overflow in calculateSwapAmount",
-			inputToken:        "gno.land/r/onbloc/baz",
-			outputToken:       "gno.land/r/onbloc/bar",
-			specifiedAmount:   "115792089237316195423570985008687907853269984665640564039457584007913129639935", // max uint256
-			swapTypeStr:       "EXACT_OUT",
-			strRouteArr:       "gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500",
-			quoteArr:          "100",
-			tokenAmountLimit:  "100000",
+			name:    "ExactOut - Overflow in calculateSwapAmount",
+			setupFn: setupBasicPools,
+			swapParams: NewDrySwapBuilder().
+				InputToken(bazPath).
+				OutputToken(barPath).
+				SpecifiedAmount(maxUint256).
+				SwapType("EXACT_OUT").
+				Route("gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500").
+				TokenAmountLimit("100000").
+				Build(),
 			expectedAmountIn:  "0",
 			expectedAmountOut: "0",
 			expectPanic:       true,
@@ -144,38 +248,23 @@ func TestDrySwapRouteOverflow(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			initRouterTest(t)
+			env := NewTestEnv(t)
 
-			createBasicPool(t)
+			if tt.setupFn != nil {
+				tt.setupFn(env)
+			}
 
 			uassert.AbortsWithMessage(t, tt.expectedPanicMsg, func() {
 				DrySwapRoute(
-					tt.inputToken,
-					tt.outputToken,
-					tt.specifiedAmount,
-					tt.swapTypeStr,
-					tt.strRouteArr,
-					tt.quoteArr,
-					tt.tokenAmountLimit,
+					tt.swapParams.inputToken,
+					tt.swapParams.outputToken,
+					tt.swapParams.specifiedAmount,
+					tt.swapParams.swapTypeStr,
+					tt.swapParams.strRouteArr,
+					tt.swapParams.quoteArr,
+					tt.swapParams.tokenAmountLimit,
 				)
 			})
 		})
 	}
-}
-
-func createBasicPool(t *testing.T) {
-	t.Helper()
-	testing.SetRealm(adminRealm)
-
-	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*2)
-
-	pl.CreatePool(cross, barPath, bazPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
-	pl.CreatePool(cross, bazPath, quxPath, uint32(500), "130621891405341611593710811006") // tick = 10_000
-
-	bar.Approve(cross, poolAddr, maxApprove)
-	baz.Approve(cross, poolAddr, maxApprove)
-	qux.Approve(cross, poolAddr, maxApprove)
-
-	pn.Mint(cross, barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")
-	pn.Mint(cross, bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")
 }

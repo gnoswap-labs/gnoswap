@@ -66,13 +66,12 @@ func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
 }
 
 func TestSwapInner(t *testing.T) {
-	user1Realm := std.NewUserRealm(user1Addr)
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
 	tests := []struct {
 		name              string
-		setupFn           func(t *testing.T)
+		setupFn           func(*TestEnv)
 		amountSpecified   *i256.Int
 		recipient         std.Address
 		sqrtPriceLimitX96 *u256.Uint
@@ -84,14 +83,8 @@ func TestSwapInner(t *testing.T) {
 	}{
 		{
 			name: "normal swap - exact input",
-			setupFn: func(t *testing.T) {
-				CreatePoolWithoutFee(t)
-				MakeMintPositionWithoutFee(t)
-
-				testing.SetRealm(user1Realm)
-				bar.Approve(cross, routerAddr, maxApprove)
-				baz.Approve(cross, routerAddr, maxApprove)
-				TokenFaucet(t, barPath, user1Addr)
+			setupFn: func(env *TestEnv) {
+				defaultSetupFn(env)
 				TokenFaucet(t, bazPath, user1Addr)
 			},
 			amountSpecified:   i256.MustFromDecimal("100"),
@@ -109,14 +102,8 @@ func TestSwapInner(t *testing.T) {
 		},
 		{
 			name: "overflow case - large amount",
-			setupFn: func(t *testing.T) {
-				CreatePoolWithoutFee(t)
-				MakeMintPositionWithoutFee(t)
-
-				testing.SetRealm(user1Realm)
-				bar.Approve(cross, routerAddr, maxApprove)
-				baz.Approve(cross, routerAddr, maxApprove)
-				TokenFaucet(t, barPath, user1Addr)
+			setupFn: func(env *TestEnv) {
+				defaultSetupFn(env)
 				TokenFaucet(t, bazPath, user1Addr)
 			},
 			amountSpecified:   i256.MustFromDecimal("92267581029952440000000"), // Large amount
@@ -137,16 +124,20 @@ func TestSwapInner(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			env := NewTestEnv(t)
+
+			if tt.setupFn != nil {
+				tt.setupFn(env)
+			}
+
+			// Additional setup for swapInner test requirements
+			user1Realm := std.NewUserRealm(user1Addr)
 			testing.SetRealm(user1Realm)
 			bar.Approve(cross, routerAddr, maxApprove)
 			baz.Approve(cross, routerAddr, maxApprove)
 			bar.Approve(cross, poolAddr, maxApprove)
 			baz.Approve(cross, poolAddr, maxApprove)
 			TokenFaucet(t, barPath, routerAddr)
-
-			if tt.setupFn != nil {
-				tt.setupFn(t)
-			}
 
 			swapInnerFn := func(cur realm) (*u256.Uint, *u256.Uint) {
 				return swapInner(

@@ -104,19 +104,11 @@ func TestExactInSwapRouteOperation_Validate(t *testing.T) {
 }
 
 func TestExactInSwapRoute(t *testing.T) {
-	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
-
-	CreatePoolWithoutFee(t)
-	MakeMintPositionWithoutFee(t)
-
-	testing.SkipHeights(100)
-	user1Realm := std.NewUserRealm(user1Addr)
-	testing.SetRealm(user1Realm)
 
 	tests := []struct {
 		name         string
-		setup        func()
+		setupFn      func(*TestEnv)
 		inputToken   string
 		outputToken  string
 		amountIn     string
@@ -127,10 +119,11 @@ func TestExactInSwapRoute(t *testing.T) {
 	}{
 		{
 			name: "BAR -> BAZ",
-			setup: func() {
-				bar.Approve(cross, routerAddr, maxApprove)
-				baz.Approve(cross, routerAddr, maxApprove)
-				TokenFaucet(t, barPath, user1Addr)
+			setupFn: func(env *TestEnv) {
+				routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
+				env.GivenPoolCreated(barPath, bazPath, 3000, "79228162514264337593543950336").
+					AndPositionMinted().
+					AndUserFundedAndApproved(user1Addr, routerAddr, barPath, bazPath)
 			},
 			inputToken:   barPath,
 			outputToken:  bazPath,
@@ -144,14 +137,19 @@ func TestExactInSwapRoute(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			env := NewTestEnv(t)
+
+			if tt.setupFn != nil {
+				tt.setupFn(env)
+			}
+
+			testing.SkipHeights(100)
+
+			// Additional approvals needed for pool operations
+			user1Realm := std.NewUserRealm(user1Addr)
 			testing.SetRealm(user1Realm)
-			bar.Approve(cross, routerAddr, maxApprove)
-			baz.Approve(cross, routerAddr, maxApprove)
 			bar.Approve(cross, poolAddr, maxApprove)
 			baz.Approve(cross, poolAddr, maxApprove)
-			if tt.setup != nil {
-				tt.setup()
-			}
 
 			defer func() {
 				if r := recover(); r != nil {
@@ -179,94 +177,6 @@ func TestExactInSwapRoute(t *testing.T) {
 					t.Errorf("ExactInSwapRoute() returned empty values")
 				}
 			}
-		})
-	}
-}
-
-func TestExactInSwapRouteWithReferral(t *testing.T) {
-	t.Skip("Currently we don't have a way to test emitted events")
-	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
-	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
-
-	CreatePoolWithoutFee(t)
-	MakeMintPositionWithoutFee(t)
-
-	testing.SkipHeights(100)
-	user1Realm := std.NewUserRealm(user1Addr)
-	testing.SetRealm(user1Realm)
-
-	self := std.PreviousRealm().Address().String()
-	validReferral := testutils.TestAddress("validReferral")
-	println("validReferral", validReferral)
-
-	tests := []struct {
-		name         string
-		setup        func()
-		inputToken   string
-		outputToken  string
-		amountIn     string
-		routeArr     string
-		quoteArr     string
-		amountOutMin string
-		referrer     string
-		wantErr      bool
-	}{
-		{
-			name: "self referral",
-			setup: func() {
-				bar.Approve(cross, routerAddr, maxApprove)
-				baz.Approve(cross, routerAddr, maxApprove)
-				TokenFaucet(t, barPath, user1Addr)
-			},
-			inputToken:   barPath,
-			outputToken:  bazPath,
-			amountIn:     "100",
-			routeArr:     singlePoolPath,
-			quoteArr:     "100",
-			amountOutMin: "85",
-			referrer:     self,
-			wantErr:      false,
-		},
-		{
-			name: "change referral",
-			setup: func() {
-				bar.Approve(cross, routerAddr, maxApprove)
-				baz.Approve(cross, routerAddr, maxApprove)
-				TokenFaucet(t, barPath, user1Addr)
-			},
-			inputToken:   barPath,
-			outputToken:  bazPath,
-			amountIn:     "100",
-			routeArr:     singlePoolPath,
-			quoteArr:     "100",
-			amountOutMin: "85",
-			referrer:     validReferral.String(),
-			wantErr:      false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			testing.SetRealm(user1Realm)
-			bar.Approve(cross, routerAddr, maxApprove)
-			baz.Approve(cross, routerAddr, maxApprove)
-			bar.Approve(cross, poolAddr, maxApprove)
-			baz.Approve(cross, poolAddr, maxApprove)
-			if tt.setup != nil {
-				tt.setup()
-			}
-
-			ExactInSwapRoute(
-				cross,
-				tt.inputToken,
-				tt.outputToken,
-				tt.amountIn,
-				tt.routeArr,
-				tt.quoteArr,
-				tt.amountOutMin,
-				time.Now().Add(time.Hour).Unix(),
-				tt.referrer,
-			)
 		})
 	}
 }

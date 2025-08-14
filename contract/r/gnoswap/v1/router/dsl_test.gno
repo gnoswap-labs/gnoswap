@@ -364,3 +364,64 @@ func (b *SingleSwapParamsBuilder) ExactOutput(amount string) *SingleSwapParamsBu
 func (b *SingleSwapParamsBuilder) Build() SingleSwapParams {
 	return b.p
 }
+
+// SwapParamsBuilder for multi-hop swaps
+type SwapParamsBuilder struct {
+	p SwapParams
+}
+
+// NewSwapParams creates a new multi-hop swap builder
+func NewSwapParams() *SwapParamsBuilder {
+	return &SwapParamsBuilder{
+		p: SwapParams{
+			recipient: alice,
+			SingleSwapParams: SingleSwapParams{
+				tokenIn:         barPath,
+				tokenOut:        bazPath,
+				fee:             3000,
+				amountSpecified: i256.Zero(),
+			},
+		},
+	}
+}
+
+// Recipient sets the recipient
+func (b *SwapParamsBuilder) Recipient(addr std.Address) *SwapParamsBuilder {
+	b.p.recipient = addr
+	return b
+}
+
+// TokenIn sets the input token
+func (b *SwapParamsBuilder) TokenIn(token string) *SwapParamsBuilder {
+	b.p.tokenIn = token
+	return b
+}
+
+// TokenOut sets the output token
+func (b *SwapParamsBuilder) TokenOut(token string) *SwapParamsBuilder {
+	b.p.tokenOut = token
+	return b
+}
+
+// Fee sets the pool fee
+func (b *SwapParamsBuilder) Fee(fee uint32) *SwapParamsBuilder {
+	b.p.fee = fee
+	return b
+}
+
+// ExactInput sets exact input amount
+func (b *SwapParamsBuilder) ExactInput(amount string) *SwapParamsBuilder {
+	b.p.amountSpecified = i256.MustFromDecimal(amount)
+	return b
+}
+
+// ExactOutput sets exact output amount
+func (b *SwapParamsBuilder) ExactOutput(amount string) *SwapParamsBuilder {
+	b.p.amountSpecified = i256.MustFromDecimal("-" + amount)
+	return b
+}
+
+// Build returns the constructed parameters
+func (b *SwapParamsBuilder) Build() SwapParams {
+	return b.p
+}

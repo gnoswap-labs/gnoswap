@@ -919,7 +919,7 @@ func (g *FinalizeSwapGenerator) Generate() any {
 func TestFuzzFinalizeSwap(t *testing.T) {
 	t.Skip("Fuzzing would be fail on CI")
 	initRouterTest(t)
-	createBasicPool(t)
+	createMultiHopPools(t)
 
 	gen := newFinalizeSwapGenerator(1, 10000000, 1, 10000000)
 	passCount := 0
