@@ -5,20 +5,22 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
 )
 
-func TestSingleSwap(t *testing.T) {
+func defaultSetupFn(env *TestEnv) {
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
+	env.GivenPoolCreated(barPath, bazPath, 3000, "79228162514264337593543950336").
+		AndPositionMinted().
+		AndUserFundedAndApproved(user1Addr, routerAddr, barPath)
+}
 
+func TestSingleSwap(t *testing.T) {
 	tests := []struct {
 		name        string
 		setupFn     func(*TestEnv)
@@ -30,9 +32,7 @@ func TestSingleSwap(t *testing.T) {
 		{
 			name: "exact input swap BAR -> BAZ",
 			setupFn: func(env *TestEnv) {
-				env.GivenPoolCreated(barPath, bazPath, 3000, "79228162514264337593543950336").
-					AndPositionMinted().
-					AndUserFundedAndApproved(user1Addr, routerAddr, barPath, bazPath)
+				defaultSetupFn(env)
 			},
 			params: NewSingleSwapParams().
 				TokenIn(barPath).
@@ -47,9 +47,7 @@ func TestSingleSwap(t *testing.T) {
 		{
 			name: "exact output swap BAR -> BAZ",
 			setupFn: func(env *TestEnv) {
-				env.GivenPoolCreated(barPath, bazPath, 3000, "79228162514264337593543950336").
-					AndPositionMinted().
-					AndUserFundedAndApproved(user1Addr, routerAddr, barPath, bazPath)
+				defaultSetupFn(env)
 			},
 			params: NewSingleSwapParams().
 				TokenIn(barPath).
@@ -89,14 +87,11 @@ func TestSingleSwap(t *testing.T) {
 }
 
 func TestSingleSwapInputValidation(t *testing.T) {
-	newInt256 := func(val string) *i256.Int {
-		return i256.MustFromDecimal(val)
-	}
-
 	invalidTokenPath := "gno.land/r/invalid/token"
+
 	tests := []struct {
 		name         string
-		setupFn      func(t *testing.T)
+		setupFn      func(*TestEnv)
 		params       SingleSwapParams
 		expectError  bool
 		errType      string
@@ -104,134 +99,116 @@ func TestSingleSwapInputValidation(t *testing.T) {
 	}{
 		{
 			name: "Fail: Same token swap attempt",
-			setupFn: func(t *testing.T) {
-				CreatePoolWithoutFee(t)
-				MakeMintPositionWithoutFee(t)
-				testing.SetRealm(std.NewUserRealm(user1Addr))
-				bar.Approve(cross, routerAddr, maxApprove)
+			setupFn: func(env *TestEnv) {
+				defaultSetupFn(env)
 			},
-			params: SingleSwapParams{
-				tokenIn:         barPath,
-				tokenOut:        barPath,
-				fee:             3000,
-				amountSpecified: newInt256("100"),
-			},
+			params: NewSingleSwapParams().
+				TokenIn(barPath).
+				TokenOut(barPath).
+				Fee(3000).
+				ExactInput("100").
+				Build(),
 			expectError:  true,
 			errType:      "panic",
 			errorMessage: "[GNOSWAP-ROUTER-014] cannot swap same token",
 		},
 		{
 			name: "Fail: Unregistered input token",
-			setupFn: func(t *testing.T) {
-				CreatePoolWithoutFee(t)
-				MakeMintPositionWithoutFee(t)
-				testing.SetRealm(std.NewUserRealm(user1Addr))
+			setupFn: func(env *TestEnv) {
+				env.GivenPoolCreated(barPath, bazPath, 3000, "79228162514264337593543950336").
+					AndPositionMinted()
 			},
-			params: SingleSwapParams{
-				tokenIn:         invalidTokenPath,
-				tokenOut:        bazPath,
-				fee:             3000,
-				amountSpecified: newInt256("100"),
-			},
+			params: NewSingleSwapParams().
+				TokenIn(invalidTokenPath).
+				TokenOut(bazPath).
+				Fee(3000).
+				ExactInput("100").
+				Build(),
 			expectError:  true,
 			errType:      "panic",
 			errorMessage: "[GNOSWAP-COMMON-004] token is not registered || token(gno.land/r/invalid/token)",
 		},
 		{
 			name: "Fail: Unregistered output token",
-			setupFn: func(t *testing.T) {
-				CreatePoolWithoutFee(t)
-				MakeMintPositionWithoutFee(t)
-				testing.SetRealm(std.NewUserRealm(user1Addr))
-				bar.Approve(cross, routerAddr, maxApprove)
+			setupFn: func(env *TestEnv) {
+				defaultSetupFn(env)
 			},
-			params: SingleSwapParams{
-				tokenIn:         barPath,
-				tokenOut:        invalidTokenPath,
-				fee:             3000,
-				amountSpecified: newInt256("100"),
-			},
+			params: NewSingleSwapParams().
+				TokenIn(barPath).
+				TokenOut(invalidTokenPath).
+				Fee(3000).
+				ExactInput("100").
+				Build(),
 			expectError:  true,
 			errType:      "panic",
 			errorMessage: "[GNOSWAP-COMMON-004] token is not registered || token(gno.land/r/invalid/token)",
 		},
 		{
 			name: "Fail: Invalid fee tier 1",
-			setupFn: func(t *testing.T) {
-				CreatePoolWithoutFee(t)
-				MakeMintPositionWithoutFee(t)
-				testing.SetRealm(std.NewUserRealm(user1Addr))
-				bar.Approve(cross, routerAddr, maxApprove)
+			setupFn: func(env *TestEnv) {
+				defaultSetupFn(env)
 			},
-			params: SingleSwapParams{
-				tokenIn:         barPath,
-				tokenOut:        bazPath,
-				fee:             0,
-				amountSpecified: newInt256("100"),
-			},
+			params: NewSingleSwapParams().
+				TokenIn(barPath).
+				TokenOut(bazPath).
+				Fee(0).
+				ExactInput("100").
+				Build(),
 			expectError:  true,
 			errType:      "panic",
 			errorMessage: "[GNOSWAP-ROUTER-006] invalid pool fee tier || unknown fee(0)",
 		},
 		{
 			name: "Fail: Invalid fee tier 2",
-			setupFn: func(t *testing.T) {
-				CreatePoolWithoutFee(t)
-				MakeMintPositionWithoutFee(t)
-				testing.SetRealm(std.NewUserRealm(user1Addr))
-				bar.Approve(cross, routerAddr, maxApprove)
+			setupFn: func(env *TestEnv) {
+				defaultSetupFn(env)
 			},
-			params: SingleSwapParams{
-				tokenIn:         barPath,
-				tokenOut:        bazPath,
-				fee:             1000000,
-				amountSpecified: newInt256("100"),
-			},
+			params: NewSingleSwapParams().
+				TokenIn(barPath).
+				TokenOut(bazPath).
+				Fee(1000000).
+				ExactInput("100").
+				Build(),
 			expectError:  true,
 			errType:      "panic",
 			errorMessage: "[GNOSWAP-ROUTER-006] invalid pool fee tier || unknown fee(1000000)",
 		},
 		{
 			name: "Fail: Zero amount specified",
-			setupFn: func(t *testing.T) {
-				CreatePoolWithoutFee(t)
-				MakeMintPositionWithoutFee(t)
-				testing.SetRealm(std.NewUserRealm(user1Addr))
-				bar.Approve(cross, routerAddr, maxApprove)
+			setupFn: func(env *TestEnv) {
+				defaultSetupFn(env)
 			},
-			params: SingleSwapParams{
-				tokenIn:         barPath,
-				tokenOut:        bazPath,
-				fee:             3000,
-				amountSpecified: newInt256("0"),
-			},
+			params: NewSingleSwapParams().
+				TokenIn(barPath).
+				TokenOut(bazPath).
+				Fee(3000).
+				ExactInput("0").
+				Build(),
 			expectError:  true,
 			errType:      "abort",
 			errorMessage: "[GNOSWAP-POOL-015] invalid swap amount || amountSpecified == 0",
 		},
 		{
 			name: "Success: Valid parameters",
-			setupFn: func(t *testing.T) {
-				CreatePoolWithoutFee(t)
-				MakeMintPositionWithoutFee(t)
-				testing.SetRealm(std.NewUserRealm(user1Addr))
-				bar.Approve(cross, routerAddr, maxApprove)
-				TokenFaucet(t, barPath, user1Addr)
+			setupFn: func(env *TestEnv) {
+				defaultSetupFn(env)
 			},
-			params: SingleSwapParams{
-				tokenIn:         barPath,
-				tokenOut:        bazPath,
-				fee:             3000,
-				amountSpecified: newInt256("100"),
-			},
+			params: NewSingleSwapParams().
+				TokenIn(barPath).
+				TokenOut(bazPath).
+				Fee(3000).
+				ExactInput("100").
+				Build(),
 			expectError: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			env := NewTestEnv(t)
+
 			if tt.setupFn != nil {
-				tt.setupFn(t)
+				tt.setupFn(env)
 			}
 
 			if tt.expectError {
