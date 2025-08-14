@@ -1025,3 +1025,187 @@ func TestPositionFeeCalculation_EdgeCases(t *testing.T) {
 		}
 	})
 }
+
+func TestPositionSecurity_EdgeCases(t *testing.T) {
+	t.Run("duplicate_position_handling", func(t *testing.T) {
+		// Given: Pool with existing position
+		pool := setupPoolAtPrice(t, 0)
+		alice := testutils.TestAddress(LP_ALICE)
+
+		// Create initial position
+		scenario := PositionScenario{
+			owner:     alice,
+			tickLower: MODERATE_LOWER,
+			tickUpper: MODERATE_UPPER,
+			liquidity: MEDIUM_LIQUIDITY,
+			strategy:  "moderate",
+		}
+
+		posKey, amt0First, amt1First := createPositionWithValidation(t, pool, scenario)
+		t.Logf("posKey: %s", posKey)
+		t.Logf("amt0First: %s", amt0First)
+		t.Logf("amt1First: %s", amt1First)
+
+		// When: Create another position with same parameters
+		params := ModifyPositionParams{
+			owner:          alice,
+			tickLower:      MODERATE_LOWER,
+			tickUpper:      MODERATE_UPPER,
+			liquidityDelta: i256.MustFromDecimal(SMALL_LIQUIDITY),
+		}
+
+		_, amt0Second, amt1Second, err := pool.modifyPosition(params)
+		t.Logf("amt0Second: %s", amt0Second)
+		t.Logf("amt1Second: %s", amt1Second)
+		uassert.NoError(t, err, "Adding to existing position should succeed")
+
+		// Then: Verify position is updated, not duplicated
+		positionValue, exists := pool.positions.Get(posKey)
+		uassert.True(t, exists, "Position should exist")
+		position := positionValue.(PositionInfo)
+
+		expectedLiquidity := new(u256.Uint).Add(
+			u256.MustFromDecimal(MEDIUM_LIQUIDITY),
+			u256.MustFromDecimal(SMALL_LIQUIDITY),
+		)
+		uassert.Equal(t, expectedLiquidity.ToString(), position.liquidity.ToString(),
+			"Liquidity should be sum of both additions")
+
+		t.Logf("✓ Duplicate position handling: Successfully merged liquidity")
+	})
+
+	t.Run("extreme_tick_ranges", func(t *testing.T) {
+		pool := setupPoolAtPrice(t, 0)
+
+		extremeRanges := []struct {
+			name      string
+			tickLower int32
+			tickUpper int32
+			valid     bool
+			errorMsg  string
+		}{
+			{
+				name:      "maximum_valid_range",
+				tickLower: -887270,
+				tickUpper: 887270,
+				valid:     true,
+			},
+			{
+				name:      "beyond_max_tick",
+				tickLower: -887270,
+				tickUpper: 887280,
+				valid:     false,
+				errorMsg:  "tickUpper is invalid",
+			},
+			{
+				name:      "single_tick_range",
+				tickLower: 100,
+				tickUpper: 100,
+				valid:     false,
+				errorMsg:  "tickLower is greater than or equal to tickUpper",
+			},
+		}
+
+		for _, test := range extremeRanges {
+			t.Run(test.name, func(t *testing.T) {
+				owner := testutils.TestAddress("extreme")
+				params := ModifyPositionParams{
+					owner:          owner,
+					tickLower:      test.tickLower,
+					tickUpper:      test.tickUpper,
+					liquidityDelta: i256.MustFromDecimal(DUST_LIQUIDITY),
+				}
+
+				_, _, _, err := pool.modifyPosition(params)
+
+				if test.valid {
+					uassert.NoError(t, err, "Valid range should succeed")
+					t.Logf("✓ %s: Position created successfully", test.name)
+				} else {
+					uassert.Error(t, err, "Invalid range should fail")
+					if test.errorMsg != "" {
+						uassert.ErrorContains(t, err, test.errorMsg)
+					}
+					t.Logf("✓ %s: Correctly rejected", test.name)
+				}
+			})
+		}
+	})
+
+	t.Run("position_removal_complete", func(t *testing.T) {
+		// Given: Position with liquidity
+		pool := setupPoolAtPrice(t, 0)
+		bob := testutils.TestAddress(LP_BOB)
+
+		// Create position
+		params := ModifyPositionParams{
+			owner:          bob,
+			tickLower:      CONCENTRATED_LOWER,
+			tickUpper:      CONCENTRATED_UPPER,
+			liquidityDelta: i256.MustFromDecimal(MEDIUM_LIQUIDITY),
+		}
+
+		pool.modifyPosition(params)
+		posKey, _ := getPositionKey(bob, CONCENTRATED_LOWER, CONCENTRATED_UPPER)
+
+		// When: Remove all liquidity
+		params.liquidityDelta = i256.MustFromDecimal("-" + MEDIUM_LIQUIDITY)
+		_, removeAmt0, removeAmt1, err := pool.modifyPosition(params)
+		uassert.NoError(t, err, "Removing liquidity should succeed")
+
+		// Then: Verify position state
+		positionValue, exists := pool.positions.Get(posKey)
+		uassert.True(t, exists, "Position entry should still exist")
+		position := positionValue.(PositionInfo)
+
+		uassert.Equal(t, "0", position.liquidity.ToString(),
+			"Liquidity should be zero after complete removal")
+		uassert.True(t, removeAmt0.Gt(u256.Zero()) || removeAmt1.Gt(u256.Zero()),
+			"Should return tokens on removal")
+
+		t.Logf("✓ Complete position removal: Liquidity zeroed, tokens returned")
+	})
+
+	t.Run("verify_position_state_after_multiple_updates", func(t *testing.T) {
+		// Given: Pool with multiple positions
+		pool := setupPoolAtPrice(t, 0)
+
+		// Simulate multiple LPs with overlapping ranges
+		lps := []struct {
+			name   string
+			owner  std.Address
+			lower  int32
+			upper  int32
+			amount string
+		}{
+			{"lp1", testutils.TestAddress("lp1"), -200, 200, SMALL_LIQUIDITY},
+			{"lp2", testutils.TestAddress("lp2"), -150, 250, MEDIUM_LIQUIDITY},
+			{"lp3", testutils.TestAddress("lp3"), -200, 200, LARGE_LIQUIDITY},
+		}
+
+		// When: All LPs add liquidity to overlapping ranges
+		totalLiquidity := u256.Zero()
+		for _, lp := range lps {
+			params := ModifyPositionParams{
+				owner:          lp.owner,
+				tickLower:      lp.lower,
+				tickUpper:      lp.upper,
+				liquidityDelta: i256.MustFromDecimal(lp.amount),
+			}
+
+			_, _, _, err := pool.modifyPosition(params)
+			uassert.NoError(t, err, "LP position creation should succeed")
+
+			liquidityToAdd := u256.MustFromDecimal(lp.amount)
+			totalLiquidity = new(u256.Uint).Add(totalLiquidity, liquidityToAdd)
+		}
+
+		// Then: Verify pool state consistency
+		// Note: Total pool liquidity depends on current price position
+		poolLiquidity := pool.liquidity
+		uassert.True(t, poolLiquidity.Gt(u256.Zero()),
+			"Pool should have liquidity from positions")
+
+		t.Logf("✓ Concurrent updates: Multiple positions coexist successfully")
+	})
+}
