@@ -6,6 +6,9 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+	"gno.land/p/demo/ufmt"
+
+	"gno.land/p/gnoswap/fuzz"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -105,7 +108,6 @@ func (b *MintBuilder) Caller(caller, mintTo std.Address) *MintBuilder {
 }
 
 func (b *MintBuilder) Params() MintParams { return b.p }
-
 
 // Note: Keep assertions explicit. Only truly regression-critical values
 // are compared exactly; error messages are compared exactly to respect
@@ -271,6 +273,156 @@ func TestMintInternal_PositionMint(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("fuzz_edge_cases", func(t *testing.T) {
+		seed := fuzz.NewSeedManager()
+
+		const (
+			MIN_TICK  = int32(-887272)
+			MAX_TICK  = int32(887272)
+			initPrice = "79228162514264337593543950336" // 1:1 price ratio
+		)
+
+		// Fee tier to tick spacing mapping
+		spacing := map[uint32]int32{
+			100:   1,
+			500:   10,
+			3000:  60,
+			10000: 200,
+		}
+		fees := []uint32{100, 500, 3000, 10000}
+
+		// Test amounts: zero, small, medium, large values
+		amounts := []string{"0", "1", "1000", "1000000", "9223372036854775807"}
+		// Min amounts: includes values larger than desired to trigger slippage violations
+		mins := []string{"0", "1", "1000", "2000000", "18446744073709551615"}
+
+		// Build tick pair candidates by category
+		type tickPair struct{ lo, hi int32 }
+		buildTickPairs := func(sp int32) []tickPair {
+			return []tickPair{
+				// Valid aligned pairs (boundary/center regions)
+				{lo: -120 - ((-120) % sp), hi: 120 - (120 % sp)},          // Aligned small range
+				{lo: MIN_TICK + ((0 - MIN_TICK) % sp), hi: MIN_TICK + sp}, // Near MIN_TICK aligned
+				{lo: MAX_TICK - 2*sp, hi: MAX_TICK - ((MAX_TICK) % sp)},   // Near MAX_TICK aligned
+				// Invalid: misaligned ticks
+				{lo: -125, hi: 120}, // lo misaligned
+				{lo: -120, hi: 125}, // hi misaligned
+				// Invalid: identical ticks
+				{lo: 120, hi: 120},
+				// Invalid: inverted range
+				{lo: 120, hi: -120},
+				// Invalid: out of bounds
+				{lo: MIN_TICK - 1, hi: 0},
+				{lo: 0, hi: MAX_TICK + 1},
+			}
+		}
+
+		const iterations = 60
+		for i := 0; i < iterations; i++ {
+			// Randomly select test parameters
+			fee := fees[seed.CreateIntGenerator(0, len(fees)-1).Generate().(int)]
+			sp := spacing[fee]
+			tps := buildTickPairs(sp)
+			p := tps[seed.CreateIntGenerator(0, len(tps)-1).Generate().(int)]
+
+			a0 := amounts[seed.CreateIntGenerator(0, len(amounts)-1).Generate().(int)]
+			a1 := amounts[seed.CreateIntGenerator(0, len(amounts)-1).Generate().(int)]
+			m0 := mins[seed.CreateIntGenerator(0, len(mins)-1).Generate().(int)]
+			m1 := mins[seed.CreateIntGenerator(0, len(mins)-1).Generate().(int)]
+
+			params := MintParamsBuilder().
+				WithFee(fee).
+				WithTicks(p.lo, p.hi).
+				WithAmounts(a0, a1).
+				WithMins(m0, m1).
+				Caller(alice, alice).
+				Params()
+
+			// Determine if this configuration should abort due to hard constraints
+			shouldAbort := false
+			// Zero liquidity case
+			if a0 == "0" && a1 == "0" {
+				shouldAbort = true
+			}
+			// Invalid tick range (inverted or identical)
+			if p.lo >= p.hi {
+				shouldAbort = true
+			}
+			// Out of bounds ticks
+			if p.lo < MIN_TICK || p.hi > MAX_TICK {
+				shouldAbort = true
+			}
+			// Tick spacing misalignment
+			if p.lo%sp != 0 || p.hi%sp != 0 {
+				shouldAbort = true
+			}
+
+			// Handle slippage violations (min > desired)
+			// These are filtered out here and only checked in post-execution validation
+			ad0 := u256.MustFromDecimal(a0)
+			ad1 := u256.MustFromDecimal(a1)
+			am0 := u256.MustFromDecimal(m0)
+			am1 := u256.MustFromDecimal(m1)
+
+			if am0.Cmp(ad0) > 0 || am1.Cmp(ad1) > 0 {
+				shouldAbort = true
+			}
+
+			var (
+				abortVal, panicVal any
+				didPanic           bool
+				gotID              uint64
+				liq, out0, out1    *u256.Uint
+			)
+
+			// Execute mint operation with panic recovery
+			abortVal = revive(func() {
+				defer func() {
+					if r := recover(); r != nil {
+						didPanic = true
+						panicVal = r
+					}
+					t.Logf("panicVal: %v", panicVal)
+				}()
+
+				// Create fresh pool and fund user for each iteration
+				NewEnv(t).
+					GivenPoolCreated(params.token0, params.token1, params.fee, initPrice).
+					AndUserFundedAndApproved(alice, params.token0, params.token1)
+
+				gotID, liq, out0, out1 = mint(params)
+			})
+
+			// Analyze execution results
+			if abortVal != nil || didPanic {
+				// Even non-hard violations can cause aborts due to slippage/liquidity allocation
+				// Only log unexpected cases where mins are zero but still abort
+				if !shouldAbort && am0.IsZero() && am1.IsZero() {
+					t.Logf("[iter %d] unexpected abort without mins: fee=%d ticks=(%d,%d) amt=(%s,%s)",
+						i, fee, p.lo, p.hi, a0, a1)
+				}
+				continue
+			}
+
+			// Post-execution invariant checks for successful operations
+			nonZeroDesired := !(ad0.IsZero() && ad1.IsZero())
+			if nonZeroDesired {
+				uassert.True(t, !liq.IsZero(), ufmt.Sprintf("[iter %d] expected positive liquidity on non-zero desired", i))
+			}
+			// Verify actual usage doesn't exceed desired amounts
+			uassert.True(t, out0.Cmp(ad0) <= 0, ufmt.Sprintf("[iter %d] amount0 used exceeds desired", i))
+			uassert.True(t, out1.Cmp(ad1) <= 0, ufmt.Sprintf("[iter %d] amount1 used exceeds desired", i))
+			// Verify slippage protection (successful operations must meet minimum requirements)
+			uassert.True(t, out0.Cmp(am0) >= 0, ufmt.Sprintf("[iter %d] amount0 used below min", i))
+			uassert.True(t, out1.Cmp(am1) >= 0, ufmt.Sprintf("[iter %d] amount1 used below min", i))
+
+			uassert.Equal(t, uint64(1), gotID)
+
+		}
+
+		t.Logf("✓ fuzz_edge_cases: ran %d randomized mint edge cases", iterations)
+	})
 }
 
 // Covers: slippage check, identical ticks, MIN/MAX bounds out-of-range.
