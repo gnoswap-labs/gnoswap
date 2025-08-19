@@ -8,6 +8,7 @@ import (
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/p/gnoswap/fuzz"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/demo/wugnot"
@@ -425,6 +426,77 @@ func TestDrySwap_ValidationAndFailures(t *testing.T) {
 			t.Logf("✓ %s: %s (Risk assessment: %s)", test.description, test.failureReason, test.riskAssessment)
 		})
 	}
+
+	t.Run("fuzz_edge_cases", func(t *testing.T) {
+		seedMgr := fuzz.NewSeedManager()
+
+		amounts := []string{
+			"0", "1", "-1", "500", "1000000000",
+		}
+		priceLimits := []string{
+			EQUAL_PRICE_RATIO,
+			common.TickMathGetSqrtRatioAtTick(0).ToString(),       // 중앙값
+			common.TickMathGetSqrtRatioAtTick(887220).ToString(),  // 상한 근처
+			common.TickMathGetSqrtRatioAtTick(-887220).ToString(), // 하한 근처
+		}
+		directions := []bool{true, false}
+
+		const iterations = 30
+		for i := 0; i < iterations; i++ {
+			amt := amounts[seedMgr.CreateIntGenerator(0, len(amounts)-1).Generate().(int)]
+			pl := priceLimits[seedMgr.CreateIntGenerator(0, len(priceLimits)-1).Generate().(int)]
+			dir := directions[seedMgr.CreateIntGenerator(0, 1).Generate().(int)]
+
+			var (
+				abortVal, panicVal any
+				didPanic           bool
+				amount0, amount1   string
+			)
+
+			abortVal = revive(func() {
+				defer func() {
+					if r := recover(); r != nil {
+						didPanic = true
+						panicVal = r
+					}
+				}()
+
+				// create new pool for each test
+				resetObject(t)
+				burnTokens(t)
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
+				TokenFaucet(t, gnsPath, routerAddr)
+				TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+				TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+
+				testing.SetRealm(rouRealm)
+				testing.SetOriginCaller(routerAddr)
+
+				// execute swap
+				amount0, amount1 = Swap(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER,
+					routerAddr, dir, amt, pl, routerAddr)
+			})
+
+			if abortVal != nil {
+				// abort should result in both amounts being zero
+				uassert.Equal(t, "0", amount0, "Aborted swap should have amount0=0")
+				uassert.Equal(t, "0", amount1, "Aborted swap should have amount1=0")
+				continue
+			}
+			if didPanic {
+				// panic should only occur on edge cases, other cases should fail
+				t.Logf("panic on fuzz case (amt=%s, pl=%s, dir=%v): %v", amt, pl, dir, panicVal)
+				continue
+			}
+
+			// successful swap should not result in both amounts being zero
+			uassert.True(t, amount0 != "0" || amount1 != "0",
+				"In a successful swap, some token movement should occur")
+		}
+
+		t.Logf("✓ fuzz_edge_cases: ran %d randomized Swap cases", iterations)
+	})
 }
 
 func TestSwap_ExecutionAndSecurity(t *testing.T) {
@@ -491,6 +563,64 @@ func TestSwap_ExecutionAndSecurity(t *testing.T) {
 			t.Logf("✓ %s: Properly blocked (Risk factor: %s)", test.description, test.riskFactor)
 		})
 	}
+
+	t.Run("fuzz_edge_cases", func(t *testing.T) {
+		seedMgr := fuzz.NewSeedManager()
+
+		amounts := []string{
+			"0", "1", "-1", "500", "1000000000",
+		}
+		priceLimits := []string{
+			EQUAL_PRICE_RATIO,
+			common.TickMathGetSqrtRatioAtTick(0).ToString(),       // middle
+			common.TickMathGetSqrtRatioAtTick(887220).ToString(),  // near upper bound
+			common.TickMathGetSqrtRatioAtTick(-887220).ToString(), // near lower bound
+		}
+		directions := []bool{true, false}
+
+		const iterations = 30
+		for i := 0; i < iterations; i++ {
+			amt := amounts[seedMgr.CreateIntGenerator(0, len(amounts)-1).Generate().(int)]
+			pl := priceLimits[seedMgr.CreateIntGenerator(0, len(priceLimits)-1).Generate().(int)]
+			dir := directions[seedMgr.CreateIntGenerator(0, 1).Generate().(int)]
+
+			// create new pool for each test
+			resetObject(t)
+			burnTokens(t)
+			InitialisePoolTest(t)
+			MintPositionAll(t, adminAddr)
+			TokenFaucet(t, gnsPath, routerAddr)
+			TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+			TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+
+			testing.SetRealm(rouRealm)
+			testing.SetOriginCaller(routerAddr)
+
+			var (
+				amount0, amount1 string
+				didAbort         bool
+			)
+
+			revive(func() {
+				amount0, amount1 = Swap(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER,
+					routerAddr, dir, amt, pl, routerAddr)
+				t.Logf("amount0: %s, amount1: %s", amount0, amount1)
+			})
+
+			if didAbort {
+				// every amount should be zero when aborted
+				uassert.Equal(t, "0", amount0, "Aborted swap should have amount0=0")
+				uassert.Equal(t, "0", amount1, "Aborted swap should have amount1=0")
+			} else {
+				// at least one of the amounts should be non-zero when successful
+				// Note: We don't know what is the exact amount of token0 and token1, so we can't assert the exact amount
+				uassert.True(t, amount0 != "0" || amount1 != "0",
+					"In a successful swap, some token movement should occur")
+			}
+		}
+
+		t.Logf("✓ fuzz_edge_cases: ran %d randomized Swap cases", iterations)
+	})
 }
 
 func TestSwapConsistency_DryVsActual(t *testing.T) {
@@ -1024,4 +1154,38 @@ func setupUltraLowFeePool(t *testing.T) *Pool {
 
 	pool := mustGetPool(GetPoolPath(wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER))
 	return pool
+}
+
+func TestFuzz_UpdateAmounts_EdgeCases(t *testing.T) {
+	seedMgr := fuzz.NewSeedManager()
+
+	calcStarts := []string{
+		"9223372036854775800", // near MAX_INT64
+		"-9223372036854775800",
+		"0", "1000000",
+	}
+	stepOuts := []string{
+		"0", "1", "100",
+		"9223372036854775808", // overflow
+	}
+
+	const iterations = 30
+	for i := 0; i < iterations; i++ {
+		start := calcStarts[seedMgr.CreateIntGenerator(0, len(calcStarts)-1).Generate().(int)]
+		out := stepOuts[seedMgr.CreateIntGenerator(0, len(stepOuts)-1).Generate().(int)]
+
+		t.Logf("case %d: start: %s, out: %s", i, start, out)
+
+		step := StepComputations{
+			amountIn:  u256.MustFromDecimal("100"),
+			amountOut: u256.MustFromDecimal(out),
+			feeAmount: u256.MustFromDecimal("5"),
+		}
+		state := SwapState{
+			amountSpecifiedRemaining: i256.MustFromDecimal("1000"),
+			amountCalculated:         i256.MustFromDecimal(start),
+		}
+
+		_, _ = updateAmounts(step, state, true)
+	}
 }
