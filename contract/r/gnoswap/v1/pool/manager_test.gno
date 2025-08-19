@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
+	"gno.land/p/gnoswap/fuzz"
 )
 
 func TestGetPoolPath(t *testing.T) {
@@ -239,5 +240,165 @@ func TestGetPool(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestFuzzPoolCreation(t *testing.T) {
+	// should generate different seed for each test case
+	seedMgr := fuzz.NewSeedManager()
+
+	type PoolTestCase struct {
+		token0Path string
+		token1Path string
+		fee        uint32
+		sqrtPrice  string
+	}
+
+	generatePoolTestCase := func() PoolTestCase {
+		tokenPaths := []string{
+			"gno.land/r/onbloc/bar",
+			"gno.land/r/onbloc/foo",
+			"gno.land/r/onbloc/baz",
+			"gno.land/r/demo/wugnot",
+			"gno.land/r/gnoswap/gns",
+		}
+
+		validFees := []uint32{100, 500, 3000, 10000}
+		invalidFees := []uint32{0, 50, 1234, 15000}
+
+		allFees := append(validFees, invalidFees...)
+
+		validPrices := []string{
+			"4295128740",                                        // MIN_SQRT_RATIO + 1
+			"79228162514264337593543950336",                     // 1:1 ratio
+			"112045541949572279837463876454",                    // 1:2 ratio
+			"1461446703485210103287273052203988822378723970341", // MAX_SQRT_RATIO - 1
+		}
+		invalidPrices := []string{
+			"0",
+			"1",
+			"4295128738",
+			"1461446703485210103287273052203988822378723970343",
+			"-1",
+		}
+
+		allPrices := append(validPrices, invalidPrices...)
+
+		// Use SeedManager to generate random indices
+		tokenIdx0 := seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)
+		tokenIdx1 := seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)
+		feeIdx := seedMgr.CreateIntGenerator(0, len(allFees)-1).Generate().(int)
+		priceIdx := seedMgr.CreateIntGenerator(0, len(allPrices)-1).Generate().(int)
+
+		return PoolTestCase{
+			token0Path: tokenPaths[tokenIdx0],
+			token1Path: tokenPaths[tokenIdx1],
+			fee:        allFees[feeIdx],
+			sqrtPrice:  allPrices[priceIdx],
+		}
+	}
+
+	validatePoolCreation := func(token0Path, token1Path string, fee uint32, sqrtPrice string) bool {
+		if token0Path == token1Path {
+			return false
+		}
+
+		validFees := map[uint32]bool{100: true, 500: true, 3000: true, 10000: true}
+		if !validFees[fee] {
+			return false
+		}
+
+		invalidPrices := map[string]bool{
+			"0":          true,
+			"1":          true,
+			"4295128738": true, // MIN_SQRT_RATIO - 1
+			"1461446703485210103287273052203988822378723970343": true, // MAX_SQRT_RATIO + 1
+			"-1": true,
+		}
+		if invalidPrices[sqrtPrice] {
+			return false
+		}
+
+		return true
+	}
+
+	const totalIterations = 100
+	successCount := 0
+	failureCount := 0
+
+	for i := 0; i < totalIterations; i++ {
+		tc := generatePoolTestCase()
+		shouldSucceed := validatePoolCreation(tc.token0Path, tc.token1Path, tc.fee, tc.sqrtPrice)
+		if shouldSucceed {
+			t.Logf("Test case %d should succeed: token0=%s, token1=%s, fee=%d, price=%s",
+				i, tc.token0Path, tc.token1Path, tc.fee, tc.sqrtPrice)
+		} else {
+			t.Logf("Test case %d should fail: token0=%s, token1=%s, fee=%d, price=%s",
+				i, tc.token0Path, tc.token1Path, tc.fee, tc.sqrtPrice)
+		}
+
+		var (
+			abortVal, panicVal any
+			didPanic           bool
+		)
+
+		// Use revive to catch cross-realm aborts
+		abortVal = revive(func() {
+			// Use defer+recover to catch same-realm panics
+			defer func() {
+				if r := recover(); r != nil {
+					didPanic = true
+					panicVal = r
+				}
+			}()
+
+			env := NewPoolTestEnv(t).AsAdmin()
+
+			// try to create pool (success/failure both tested)
+			NewPoolBuilder().
+				WithTokens(tc.token0Path, tc.token1Path).
+				WithFee(tc.fee).
+				AtPrice(tc.sqrtPrice).
+				Create(env)
+
+			// if it reaches here, it means panic/abort is not occurred
+			if !shouldSucceed {
+				t.Errorf("Pool creation should have failed but succeeded: %+v", tc)
+				return
+			}
+
+			// check if pool is created correctly
+			assertPoolExists(t, tc.token0Path, tc.token1Path, tc.fee)
+			successCount++
+			InitPoolTest(t)
+		})
+
+		// Check if revive caught an abort
+		if abortVal != nil {
+			if shouldSucceed {
+				t.Errorf("Pool creation should succeed but aborted: %+v, abort: %v", tc, abortVal)
+			} else {
+				failureCount++ // expected failure
+			}
+			continue
+		}
+
+		// Check if recover caught a panic
+		if didPanic {
+			if shouldSucceed {
+				t.Errorf("Pool creation should succeed but panicked: %+v, panic: %v", tc, panicVal)
+			} else {
+				failureCount++ // expected failure
+			}
+		}
+	}
+
+	t.Logf("Fuzz test completed - Successes: %d, Failures: %d, Total: %d",
+		successCount, failureCount, totalIterations)
+
+	// at least one success case is required
+	// TODO: compare number of expected/actual cases
+	if successCount == 0 {
+		t.Errorf("No successful pool creation cases found - check test data generation")
 	}
 }
