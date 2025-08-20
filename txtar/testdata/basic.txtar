@@ -1,0 +1,32 @@
+# Basic test for gno run command
+
+exec gno run main.gno
+stdout 'Hello, World!'
+
+exec gno run calc.gno
+stdout '4'
+
+# Test with error
+! exec gno run error.gno
+stderr 'undefined'
+
+-- main.gno --
+package main
+
+func main() {
+    println("Hello, World!")
+}
+
+-- calc.gno --
+package main
+
+func main() {
+    println(2 + 2)
+}
+
+-- error.gno --
+package main
+
+func main() {
+    println(undefined)
+}

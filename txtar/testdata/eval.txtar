@@ -1,0 +1,43 @@
+# Test gno run with different expressions
+
+exec gno run string_ops.gno
+stdout 'Hello, Gno!'
+
+exec gno run arithmetic.gno
+stdout '52'
+
+exec gno run bool_expr.gno
+stdout 'false'
+stdout 'false'
+
+exec gno run type_conv.gno
+stdout 'A'
+
+-- string_ops.gno --
+package main
+
+func main() {
+    println("Hello, " + "Gno!")
+}
+
+-- arithmetic.gno --
+package main
+
+func main() {
+    println(10 * 5 + 2)
+}
+
+-- bool_expr.gno --
+package main
+
+func main() {
+    println(true && false)
+    println(!true)
+}
+
+-- type_conv.gno --
+package main
+
+func main() {
+    println(string(65))
+}

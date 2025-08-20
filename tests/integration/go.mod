@@ -1,4 +1,4 @@
-module github.com/gnoswap-labs/gnoswap
+module github.com/gnoswap-labs/gnoswap/integration
 
 go 1.24.0
 
