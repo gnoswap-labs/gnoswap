@@ -1,8 +1,6 @@
 package txtar
 
 import (
-	"context"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -15,140 +13,142 @@ import (
 	"github.com/rogpeppe/go-internal/testscript"
 )
 
+// Runner provides functionality to run txtar tests with gno commands
 type Runner struct {
-	gnoBinary string // gnoBinary is the path to the gno executable
-	gnoRoot   string // gnoRoot is the GNOROOT directory (optional; auto-discovered if empty)
-	buildDir  string // buildDir is where to place the built/installed gno binary
-	homeDir   string // homeDir is the GNOHOME directory
+	mu sync.RWMutex
 
+	// gnoBinary is the path to the gno binary
+	gnoBinary string
+
+	// gnoRoot is the GNOROOT directory
+	gnoRoot string
+
+	// buildDir is where to build the gno binary
+	buildDir string
+
+	// homeDir is the GNOHOME directory
+	homeDir string
+
+	// setupFunc is an optional setup function
 	setupFunc func(env *testscript.Env) error
-	envVars   map[string]string
 
-	// flags
+	// envVars are additional environment variables
+	envVars map[string]string
+
+	// updateScripts enables updating expected outputs
 	updateScripts bool
-	testWork      bool
-	verbose       bool
 
-	// build controls
-	buildOnce  sync.Once
-	gnoVersion string
-	cacheBuild bool // cache binary under UserCacheDir for reuse
+	// testWork keeps test work directories
+	testWork bool
+
+	// buildOnce ensures gno binary is built only once
+	buildOnce sync.Once
+
+	// verbose enables verbose output
+	verbose bool
 }
 
-// Option is a functional option for configuring the Runner.
+// Option is a functional option for configuring the Runner
 type Option func(*Runner)
 
+// New creates a new Runner with the given options
 func New(opts ...Option) *Runner {
-	r := &Runner{envVars: make(map[string]string)}
+	r := &Runner{
+		envVars: make(map[string]string),
+	}
+
 	for _, opt := range opts {
 		opt(r)
 	}
+
 	return r
 }
 
+// WithGnoBinary sets the path to a pre-built gno binary
 func WithGnoBinary(path string) Option {
 	return func(r *Runner) {
 		r.gnoBinary = path
 	}
 }
 
+// WithGnoRoot sets the GNOROOT directory
 func WithGnoRoot(path string) Option {
 	return func(r *Runner) {
 		r.gnoRoot = path
 	}
 }
 
+// WithBuildDir sets the directory for building gno binary
 func WithBuildDir(path string) Option {
 	return func(r *Runner) {
 		r.buildDir = path
 	}
 }
 
+// WithHomeDir sets the GNOHOME directory
 func WithHomeDir(path string) Option {
 	return func(r *Runner) {
 		r.homeDir = path
 	}
 }
 
-// WithSetup sets a custom setup function.
+// WithSetup sets a custom setup function
 func WithSetup(setup func(env *testscript.Env) error) Option {
 	return func(r *Runner) {
 		r.setupFunc = setup
 	}
 }
 
-// WithEnv sets an additional environment variable (single key/value).
+// WithEnv sets additional environment variables
 func WithEnv(key, value string) Option {
 	return func(r *Runner) {
 		r.envVars[key] = value
 	}
 }
 
-// WithEnvs sets multiple additional environment variables.
-func WithEnvs(kv map[string]string) Option {
-	return func(r *Runner) {
-		for k, v := range kv {
-			r.envVars[k] = v
-		}
-	}
-}
-
-// WithUpdateScripts enables updating expected outputs.
+// WithUpdateScripts enables updating expected outputs
 func WithUpdateScripts(update bool) Option {
 	return func(r *Runner) {
 		r.updateScripts = update
 	}
 }
 
-// WithTestWork keeps test work directories.
+// WithTestWork keeps test work directories
 func WithTestWork(keep bool) Option {
 	return func(r *Runner) {
 		r.testWork = keep
 	}
 }
 
-// WithVerbose enables verbose output.
+// WithVerbose enables verbose output
 func WithVerbose(verbose bool) Option {
 	return func(r *Runner) {
 		r.verbose = verbose
 	}
 }
 
-// WithGnoVersion pins the gno module version for go install (e.g. "v0.42.0" or "latest").
-func WithGnoVersion(version string) Option {
-	return func(r *Runner) {
-		r.gnoVersion = version
-	}
-}
-
-// WithBuildCache enables or disables build caching under UserCacheDir.
-func WithBuildCache(enable bool) Option {
-	return func(r *Runner) {
-		r.cacheBuild = enable
-	}
-}
-
+// Run executes all txtar tests in the given directory
 func (r *Runner) Run(t *testing.T, testDir string) {
 	t.Helper()
 
-	// ensure test dir exists
-	if fi, err := os.Stat(testDir); err != nil || !fi.IsDir() {
-		t.Skipf("test directory %q does not exist or is not a directory", testDir)
+	// Ensure test directory exists
+	if _, err := os.Stat(testDir); os.IsNotExist(err) {
+		t.Skipf("test directory %q does not exist", testDir)
 		return
 	}
 
-	// setup directories
+	// Setup directories
 	if r.homeDir == "" {
-		r.homeDir = os.TempDir()
+		r.homeDir = t.TempDir()
 	}
-	if r.buildDir == "" && !r.cacheBuild {
-		r.buildDir = os.TempDir()
+	if r.buildDir == "" {
+		r.buildDir = t.TempDir()
 	}
 
-	// Build or verify gno binary.
+	// Build or verify gno binary
 	r.ensureGnoBinary(t)
 
-	// Create testscript params.
+	// Create testscript params
 	p := testscript.Params{
 		Dir:           testDir,
 		UpdateScripts: r.updateScripts,
@@ -156,9 +156,9 @@ func (r *Runner) Run(t *testing.T, testDir string) {
 		Cmds:          make(map[string]func(ts *testscript.TestScript, neg bool, args []string)),
 	}
 
-	// Setup environment for each testscript run.
+	// Setup environment
 	p.Setup = func(env *testscript.Env) error {
-		// Prepend gno bin dir to PATH so that "exec gno ..." or custom "gno" cmd works.
+		// Set PATH to include gno binary
 		binDir := filepath.Dir(r.gnoBinary)
 		path := env.Getenv("PATH")
 		if path == "" {
@@ -168,26 +168,22 @@ func (r *Runner) Run(t *testing.T, testDir string) {
 		}
 		env.Setenv("PATH", path)
 
-		// Set GNOHOME.
+		// Set GNOHOME
 		env.Setenv("GNOHOME", r.homeDir)
 
-		// Set GNOROOT if available (prefer already discovered value).
+		// Set GNOROOT if available
 		if r.gnoRoot != "" {
 			env.Setenv("GNOROOT", r.gnoRoot)
-		} else {
-			// Best effort: discover once more (fast if cached by go tool).
-			ctx := withTestDeadline(t)
-			if gnoRoot, err := r.findGnoRoot(ctx); err == nil && gnoRoot != "" {
-				env.Setenv("GNOROOT", gnoRoot)
-			}
+		} else if gnoRoot := r.findGnoRoot(); gnoRoot != "" {
+			env.Setenv("GNOROOT", gnoRoot)
 		}
 
-		// Additional environment variables.
+		// Set additional environment variables
 		for k, v := range r.envVars {
 			env.Setenv(k, v)
 		}
 
-		// Custom setup hook.
+		// Call custom setup if provided
 		if r.setupFunc != nil {
 			return r.setupFunc(env)
 		}
@@ -195,89 +191,99 @@ func (r *Runner) Run(t *testing.T, testDir string) {
 		return nil
 	}
 
-	// Register "gno" command so scripts can write `gno ...` (not `exec gno ...`).
+	// Register gno command
 	p.Cmds["gno"] = func(ts *testscript.TestScript, neg bool, args []string) {
 		if r.verbose {
-			ts.Logf("$ gno %s", strings.Join(args, " "))
+			ts.Logf("executing: gno %s", strings.Join(args, " "))
 		}
+
 		err := ts.Exec(r.gnoBinary, args...)
-		// neg == true means the command is expected to fail.
-		if (err == nil) == neg {
-			if neg {
-				ts.Fatalf("gno succeeded but failure was expected (args=%q)", args)
-			}
-			ts.Fatalf("gno failed (args=%q): %v", args, err)
+		if err != nil {
+			ts.Logf("gno command error: %v", err)
+		}
+
+		success := err == nil
+		if success == neg {
+			ts.Fatalf("unexpected gno command result")
 		}
 	}
 
-	// Register "checkenv" (avoid clashing with testscript's built-in env handling).
-	p.Cmds["checkenv"] = func(ts *testscript.TestScript, neg bool, args []string) {
+	// Register env command for checking environment variables
+	p.Cmds["env"] = func(ts *testscript.TestScript, neg bool, args []string) {
 		if len(args) == 0 {
-			ts.Fatalf("checkenv: missing variable name")
+			ts.Fatalf("env: missing variable name")
 		}
+
 		varName := args[0]
 		value := ts.Getenv(varName)
 
-		switch len(args) {
-		case 1:
-			// Just check if variable is set.
+		if len(args) == 1 {
+			// Just check if variable is set
 			exists := value != ""
 			if exists == neg {
 				if neg {
-					ts.Fatalf("checkenv: %q is set (%q) but should not", varName, value)
+					ts.Fatalf("env variable %q is set but should not be", varName)
+				} else {
+					ts.Fatalf("env variable %q is not set", varName)
 				}
-				ts.Fatalf("checkenv: %q is not set", varName)
 			}
-		case 2:
-			// Check if variable has specific value.
+		} else if len(args) == 2 {
+			// Check if variable has specific value
 			expected := args[1]
 			matches := value == expected
 			if matches == neg {
 				if neg {
-					ts.Fatalf("checkenv: %q matched %q but should not", varName, value)
+					ts.Fatalf("env variable %q has value %q but should not", varName, value)
+				} else {
+					ts.Fatalf("env variable %q has value %q, expected %q", varName, value, expected)
 				}
-				ts.Fatalf("checkenv: %q=%q, want %q", varName, value, expected)
 			}
-		default:
-			ts.Fatalf("checkenv: too many arguments")
+		} else {
+			ts.Fatalf("env: too many arguments")
 		}
 	}
 
-	// Run tests.
+	// Run tests
 	testscript.Run(t, p)
 }
 
+// RunFiles runs specific txtar files
 func (r *Runner) RunFiles(t *testing.T, files ...string) {
 	t.Helper()
 
 	for _, file := range files {
 		name := filepath.Base(file)
 		t.Run(name, func(t *testing.T) {
-			temp := t.TempDir()
+			// Create a temporary directory with just this file
+			tmpDir := t.TempDir()
 			content, err := os.ReadFile(file)
 			if err != nil {
-				t.Fatalf("failed to read file %q: %v", file, err)
+				t.Fatalf("failed to read file %s: %v", file, err)
 			}
-			tempFile := filepath.Join(temp, name)
-			if err := os.WriteFile(tempFile, content, 0o644); err != nil {
-				t.Fatalf("failed to write file %q: %v", tempFile, err)
+
+			tmpFile := filepath.Join(tmpDir, name)
+			if err := os.WriteFile(tmpFile, content, 0o644); err != nil {
+				t.Fatalf("failed to write temp file: %v", err)
 			}
-			r.Run(t, temp)
+
+			r.Run(t, tmpDir)
 		})
 	}
 }
 
+// ensureGnoBinary ensures that a gno binary is available
 func (r *Runner) ensureGnoBinary(t *testing.T) {
 	t.Helper()
 
 	if r.gnoBinary != "" {
-		// verify binary exists
-		if fi, err := os.Stat(r.gnoBinary); err != nil && fi.Mode().IsRegular() {
+		// Verify the binary exists
+		if _, err := os.Stat(r.gnoBinary); err == nil {
 			return
 		}
-		t.Logf("specified gno binary %q does not exist", r.gnoBinary)
+		t.Logf("specified gno binary %q not found, will build one", r.gnoBinary)
 	}
 
+	// Build gno binary once
 	var buildErr error
 	r.buildOnce.Do(func() {
 		buildErr = r.buildGnoBinary(t)
@@ -287,131 +293,94 @@ func (r *Runner) ensureGnoBinary(t *testing.T) {
 	}
 }
 
-// buildGnoBinary builds or installs the gno binary.
+// buildGnoBinary builds the gno binary
 func (r *Runner) buildGnoBinary(t *testing.T) error {
 	t.Helper()
 
-	ctx := withTestDeadline(t)
-
-	version := r.gnoVersion
-	if version == "" {
-		version = "latest"
-	}
-
-	// decide output binary path
-	binName := "gno"
+	gnoBin := filepath.Join(r.buildDir, "gno")
 	if runtime.GOOS == "windows" {
-		binName += ".exe"
+		gnoBin += ".exe"
 	}
 
-	var outBin string
-	if r.cacheBuild {
-		cacheDir, err := os.UserCacheDir()
-		if err != nil {
-			return err
-		}
-		key := fmt.Sprintf(
-			"gno-%s-%s-%s-%s",
-			version, runtime.GOOS, runtime.GOARCH, strings.TrimSpace(runtime.Version()))
-		outDir := filepath.Join(cacheDir, "gnotxtar", key)
-		if err := os.MkdirAll(outDir, 0o755); err != nil {
-			return err
-		}
-		outBin = filepath.Join(outDir, binName)
-	} else {
-		if r.buildDir == "" {
-			r.buildDir = os.TempDir()
-		}
-		if err := os.MkdirAll(r.buildDir, 0o755); err != nil {
-			return err
-		}
-		outBin = filepath.Join(r.buildDir, binName)
-	}
-
-	// if already exists, reuse it
-	if fi, err := os.Stat(outBin); err == nil && fi.Mode().IsRegular() {
-		r.gnoBinary = outBin
-		return nil
-	}
-
+	t.Logf("building gno binary to %s", gnoBin)
 	start := time.Now()
-	t.Logf("building gno binary to %s (version=%s)", outBin, version)
 
-	// Try to build from local source first (fast dev loop).
-	if root, err := r.findGnoRoot(ctx); err == nil && root != "" {
-		src := filepath.Join(root, "gnovm", "cmd", "gno")
-		if st, err := os.Stat(src); err == nil && st.IsDir() {
-			cmd := exec.CommandContext(ctx, "go", "build", "-o", outBin, ".")
-			cmd.Dir = src
+	// Try to build from local source first
+	if gnoRoot := r.findGnoRoot(); gnoRoot != "" {
+		gnoCmd := filepath.Join(gnoRoot, "gnovm", "cmd", "gno")
+		if _, err := os.Stat(gnoCmd); err == nil {
+			// Build from local source
+			// Use absolute path and set working directory to avoid module issues
+			cmd := exec.Command("go", "build", "-o", gnoBin, ".")
+			cmd.Dir = filepath.Join(gnoRoot, "gnovm", "cmd", "gno")
 			cmd.Env = os.Environ()
-			if output, err := cmd.CombinedOutput(); err == nil {
-				r.gnoBinary = outBin
-				r.gnoRoot = root
-				t.Logf("built gno from local source in %v", time.Since(start))
-				return nil
+
+			if output, err := cmd.CombinedOutput(); err != nil {
+				t.Logf("build from source failed: %s", output)
+				// Don't return error, fall back to go install
 			} else {
-				t.Logf("local build failed; falling back to go install:\n%s", string(output))
+				r.gnoBinary = gnoBin
+				r.gnoRoot = gnoRoot
+				t.Logf("built gno binary from source in %v", time.Since(start))
+				return nil
 			}
 		}
 	}
 
-	// Fall back to installing from module.
-	gobin := filepath.Dir(outBin)
-	if err := os.MkdirAll(gobin, 0o755); err != nil {
-		return err
-	}
-	mod := "github.com/gnolang/gno/gnovm/cmd/gno@" + version
-
-	cmd := exec.CommandContext(ctx, "go", "install", "-modcacherw", mod)
-	cmd.Env = append(os.Environ(), "GOBIN="+gobin)
+	// Fall back to installing from module
+	cmd := exec.Command("go", "install", "-modcacherw", "github.com/gnolang/gno/gnovm/cmd/gno@latest")
+	cmd.Env = append(os.Environ(), "GOBIN="+r.buildDir)
 
 	if output, err := cmd.CombinedOutput(); err != nil {
-		t.Logf("go install output:\n%s", string(output))
-		return fmt.Errorf("go install %s: %w", mod, err)
+		t.Logf("install output: %s", output)
+		return err
 	}
 
-	r.gnoBinary = outBin
-	t.Logf("installed %s in %v", mod, time.Since(start))
+	r.gnoBinary = gnoBin
+	t.Logf("installed gno binary in %v", time.Since(start))
 	return nil
 }
 
-func (r *Runner) findGnoRoot(ctx context.Context) (string, error) {
+// findGnoRoot attempts to find the GNOROOT directory
+func (r *Runner) findGnoRoot() string {
+	// Check environment variable
 	if root := os.Getenv("GNOROOT"); root != "" {
-		return root, nil
+		return root
 	}
-	return goListModuleDir(ctx, "github.com/gnolang/gno")
-}
 
-// goListModuleDir returns the module directory for the given module path
-func goListModuleDir(ctx context.Context, mod string) (string, error) {
-	cmd := exec.CommandContext(ctx, "go", "list", "-m", "-f", "{{.Dir}}", mod)
-	cmd.Env = os.Environ()
-	out, err := cmd.Output()
+	// Check if we're in a gno repository
+	cwd, err := os.Getwd()
 	if err != nil {
-		return "", err
+		return ""
 	}
-	dir := strings.TrimSpace(string(out))
-	if dir == "" {
-		return "", fmt.Errorf("empty module directory for %s", mod)
-	}
-	return dir, nil
-}
 
-// withTestDeadline returns a context honoring testing.T's deadline (with a small buffer).
-func withTestDeadline(t *testing.T) context.Context {
-	ctx := context.Background()
-	if dl, ok := t.Deadline(); ok {
-		// Add a small buffer to avoid hitting the exact deadline during process cleanup.
-		buf := 15 * time.Second
-		if buf > 0 && dl.After(time.Now().Add(buf)) {
-			var cancel context.CancelFunc
-			ctx, cancel = context.WithDeadline(ctx, dl.Add(-buf))
-			t.Cleanup(cancel)
-			return ctx
+	// Walk up the directory tree looking for go.mod with module github.com/gnolang/gno
+	dir := cwd
+	for {
+		modFile := filepath.Join(dir, "go.mod")
+		if content, err := os.ReadFile(modFile); err == nil {
+			if strings.Contains(string(content), "module github.com/gnolang/gno\n") {
+				return dir
+			}
 		}
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithDeadline(ctx, dl)
-		t.Cleanup(cancel)
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
 	}
-	return ctx
+
+	// Try to find parent directory if we're in a subdirectory
+	parent := filepath.Dir(cwd)
+	if parent != cwd && parent != "/" {
+		modFile := filepath.Join(parent, "go.mod")
+		if content, err := os.ReadFile(modFile); err == nil {
+			if strings.Contains(string(content), "module github.com/gnolang/gno\n") {
+				return parent
+			}
+		}
+	}
+
+	return ""
 }
