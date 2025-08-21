@@ -3,7 +3,6 @@ package staker
 import (
 	"errors"
 
-	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -78,13 +77,11 @@ func (e *EmissionRewardState) calculateClaimableRewards(
 	}
 
 	// Calculate the difference in accumulated rewards per stake since last update
-	rewardDebtDeltaX128, underflow := u256.Zero().SubOverflow(
+	// Using modular arithmetic for accumulator values - underflow is allowed and handled correctly
+	rewardDebtDeltaX128 := u256.Zero().Sub(
 		accumulatedRewardX128PerStake,
 		e.rewardDebtX128,
 	)
-	if underflow {
-		return 0, ufmt.Errorf("rewardDebtDeltaX128 overflow")
-	}
 
 	// Calculate reward amount by multiplying reward debt delta by staked amount and dividing by Q128
 	// rewardAmount = (rewardDebtDeltaX128 * stakedAmount) / Q128

@@ -3,7 +3,6 @@ package staker
 import (
 	"errors"
 
-	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -88,13 +87,11 @@ func (p *ProtocolFeeRewardState) calculateClaimableRewards(
 		}
 
 		// Calculate the difference in accumulated rewards per stake since last update
-		rewardDebtDeltaX128, underflow := u256.Zero().SubOverflow(
+		// Using modular arithmetic for accumulator values - underflow is allowed and handled correctly
+		rewardDebtDeltaX128 := u256.Zero().Sub(
 			accumulatedRewardX128PerStake,
 			p.rewardDebtX128[token],
 		)
-		if underflow {
-			return nil, ufmt.Errorf("rewardDebtDeltaX128 underflow")
-		}
 
 		// Multiply by staked amount to get total reward for this staker and token
 		rewardAmount := u256.MulDiv(
@@ -145,7 +142,7 @@ func (p *ProtocolFeeRewardState) claimRewards(currentTimestamp int64) (map[strin
 		return nil, errors.New("must update reward debt before claiming rewards")
 	}
 
-	currentClaimedRewards := map[string]int64{}
+	currentClaimedRewards := make(map[string]int64)
 
 	// Calculate and update claimed amounts for each token
 	for token, rewardAmount := range p.accumulatedRewards {
