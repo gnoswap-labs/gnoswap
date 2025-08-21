@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"gno.land/p/demo/avl"
+	"gno.land/p/demo/ufmt"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -323,7 +324,19 @@ func processBatchedTickCrosses() error {
 	// This replaces multiple individual pool updates with a single cumulative update
 	cumulativeDelta := i256.Zero()
 	for _, tickCross := range batch.crosses {
-		cumulativeDelta = i256.Zero().Add(cumulativeDelta, tickCross.delta)
+		// Check for overflow when accumulating liquidity deltas
+		newDelta, overflow := cumulativeDelta.AddOverflow(cumulativeDelta, tickCross.delta)
+		if overflow {
+			panic(makeErrorWithDetails(
+				errOverflow,
+				ufmt.Sprintf("batch tick cross: cumulative liquidity delta overflow || currentDelta=%s, tickDelta=%s, tickId=%d",
+					cumulativeDelta.ToString(),
+					tickCross.delta.ToString(),
+					tickCross.tickId,
+				),
+			))
+		}
+		cumulativeDelta = newDelta
 	}
 
 	// Phase 2: Determine the effective tick position for pool state update
