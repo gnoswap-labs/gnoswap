@@ -397,16 +397,13 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 		}
 
 		if endTime < warmup.NextWarmupTime {
-			rewardAcc, err := self.pool.CalculateRewardForPosition(
+			rewardAcc := self.pool.CalculateRewardForPosition(
 				startTime,
 				self.pool.CurrentTick(startTime),
 				endTime,
 				self.pool.CurrentTick(endTime),
 				self.deposit,
 			)
-			if err != nil {
-				return err
-			}
 
 			rewardAcc, overflow := u256.Zero().MulOverflow(rewardAcc, self.deposit.liquidity)
 			if overflow {
@@ -414,22 +411,18 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 			}
 
 			rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
-
 			self.rewards[i] += safeConvertToInt64(rewardAcc)
-			// done
+
 			break
 		}
 
-		rewardAcc, err := self.pool.CalculateRewardForPosition(
+		rewardAcc := self.pool.CalculateRewardForPosition(
 			startTime,
 			self.pool.CurrentTick(startTime),
 			warmup.NextWarmupTime,
 			self.pool.CurrentTick(warmup.NextWarmupTime),
 			self.deposit,
 		)
-		if err != nil {
-			return err
-		}
 
 		rewardAcc, overflow := u256.Zero().MulOverflow(rewardAcc, self.deposit.liquidity)
 		if overflow {
@@ -536,14 +529,9 @@ func (self *Pool) CalculateRewardForPosition(
 	endTime int64,
 	endTick int32,
 	deposit *Deposit,
-) (*u256.Uint, error) {
+) *u256.Uint {
 	rewardAcc := self.CalculateRawRewardForPosition(endTime, endTick, deposit)
 	debtAcc := self.CalculateRawRewardForPosition(startTime, startTick, deposit)
 
-	rewardAcc, underflow := u256.Zero().SubOverflow(rewardAcc, debtAcc)
-	if underflow {
-		return nil, ufmt.Errorf("reward accumulation is less than debt accumulation")
-	}
-
-	return rewardAcc, nil
+	return u256.Zero().Sub(rewardAcc, debtAcc)
 }
