@@ -22,6 +22,7 @@ var (
 	errHopsOutOfRange         = errors.New("[GNOSWAP-ROUTER-013] number of hops must be 1~3")
 	errSameTokenSwap          = errors.New("[GNOSWAP-ROUTER-014] cannot swap same token")
 	errProtocolFeeOverflow    = errors.New("[GNOSWAP-ROUTER-015] protocol fee calculation overflow")
+	errOverFlow               = errors.New("[GNOSWAP-ROUTER-016] overflow")
 )
 
 // addDetailToError adds detail to an error message.
