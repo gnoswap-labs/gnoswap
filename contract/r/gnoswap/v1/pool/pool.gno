@@ -230,18 +230,9 @@ func Collect(
 		}
 	}
 	if amount1.Gt(u256.Zero()) {
-		tokenOwed1, overflow := u256.Zero().SubOverflow(position.tokensOwed1, amount1)
-		if overflow {
-			panic(errOverFlow)
-		}
+		position.tokensOwed1 = u256.Zero().Sub(position.tokensOwed1, amount1)
+		pool.balances.token1 = u256.Zero().Sub(pool.balances.token1, amount1)
 
-		token1Balance, overflow := u256.Zero().SubOverflow(pool.balances.token1, amount1)
-		if overflow {
-			panic(errOverFlow)
-		}
-
-		position.tokensOwed1 = tokenOwed1
-		pool.balances.token1 = token1Balance
 		if err := common.Approve(cross, pool.token1Path, positionAddr, safeConvertToInt64(amount1)); err != nil {
 			panic(err)
 		}
