@@ -126,7 +126,6 @@ func (e *EmissionRewardManager) updateAccumulatedRewardX128PerStake(
 		return nil
 	}
 
-	// TODO: If no tokens are staked, we still need to advance the distributedAmount/timestamp
 	// to avoid accumulating a large delta later.
 	if e.totalStakedAmount == 0 {
 		return nil
