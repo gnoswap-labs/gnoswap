@@ -119,8 +119,17 @@ func positionUpdate(
 
 	// add tokensOwed only when it's greater than 0
 	if tokensOwed0.Gt(zero) || tokensOwed1.Gt(zero) {
-		owed0 := u256.Zero().Add(position.tokensOwed0, tokensOwed0)
-		owed1 := u256.Zero().Add(position.tokensOwed1, tokensOwed1)
+		owed0, overflow := u256.Zero().AddOverflow(position.tokensOwed0, tokensOwed0)
+		if overflow {
+			return PositionInfo{}, errOverFlow
+		}
+		owed1, overflow := u256.Zero().AddOverflow(position.tokensOwed1, tokensOwed1)
+		if overflow {
+			return PositionInfo{}, errOverFlow
+		}
+
+		position.tokensOwed0 = owed0
+		position.tokensOwed1 = owed1
 	}
 
 	return position, nil
