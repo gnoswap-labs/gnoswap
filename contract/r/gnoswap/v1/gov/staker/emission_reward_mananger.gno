@@ -99,15 +99,8 @@ func (e *EmissionRewardManager) calculateAccumulatedRewardX128PerStake(
 	)
 
 	// Add to accumulated reward per stake
-	accumulatedRewardX128PerStake, overflow := u256.Zero().AddOverflow(
-		e.accumulatedRewardX128PerStake,
-		distributedAmountDeltaX128PerStake,
-	)
-	if overflow {
-		return e.accumulatedRewardX128PerStake, ufmt.Errorf("overflow: accumulatedRewardX128PerStake + distributedAmountDeltaX128PerStake")
-	}
-
-	return accumulatedRewardX128PerStake, nil
+	accumulatedReward := u256.Zero().Add(e.accumulatedRewardX128PerStake, distributedAmountDeltaX128PerStake)
+	return accumulatedReward, nil
 }
 
 // updateAccumulatedRewardX128PerStake updates the internal accumulated reward state.

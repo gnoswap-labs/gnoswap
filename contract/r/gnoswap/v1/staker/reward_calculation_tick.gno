@@ -356,7 +356,6 @@ func setHooks() {
 
 	// Set swap start/end hooks for batch processing
 	pl.SetSwapStartHook(cross, swapStartHook(pools))
-
 	pl.SetSwapEndHook(cross, swapEndHook(pools))
 }
 

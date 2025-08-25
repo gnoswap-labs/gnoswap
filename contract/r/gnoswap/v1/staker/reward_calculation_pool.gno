@@ -269,13 +269,7 @@ func (self *Pool) calculateGlobalRewardRatioAccumulation(currentTime int64, curr
 		q128,
 		currentStakedLiquidity,
 	)
-
-	acc, overflow := u256.Zero().AddOverflow(oldAcc, acc)
-	if overflow {
-		panic("accumulation overflow")
-	}
-
-	return acc
+	return u256.Zero().Add(oldAcc, acc)
 }
 
 // updateGlobalRewardRatioAccumulation updates the global reward ratio accumulation and returns the new accumulation.
