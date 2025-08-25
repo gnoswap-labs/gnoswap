@@ -498,6 +498,16 @@ func TestStakerDelegate_LockupPeriodAndWithdrawal(t *testing.T) {
 			expectedCollectable: minimumAmount * 5,
 			shouldFail:          false,
 		},
+		{
+			name:                "success - large amount collection without overflow",
+			delegateAmount:      minimumAmount * 1_000_000, // 1 trillion GNS
+			undelegateAmount:    minimumAmount * 500_000,   // 500 billion GNS
+			lockupPeriod:        7 * 24 * 3600,
+			waitTime:            8 * 24 * 3600,
+			expectedCollectable: minimumAmount * 500_000,
+			shouldFail:          false,
+			description:         "Large amounts but still within int64 range",
+		},
 	}
 
 	for _, tt := range tests {
@@ -507,6 +517,18 @@ func TestStakerDelegate_LockupPeriodAndWithdrawal(t *testing.T) {
 			testing.SetHeight(100)
 			user := testutils.TestAddress("alice")
 			validator := testutils.TestAddress("validator")
+
+			// For large amount test, setup sufficient balance
+			//
+			// This value is set to test overflow-related behavior.
+			// In the real world, the amount of delegation is limited, so
+			// cases using this amount of tokens are unlikely to occur.
+			if tt.delegateAmount > 1_000_000_000 {
+				testing.SetRealm(adminRealm)
+				gns.Transfer(cross, user, tt.delegateAmount*2)
+				testing.SetRealm(std.NewUserRealm(user))
+				gns.Approve(cross, govStakerAddr, tt.delegateAmount*2)
+			}
 
 			testing.SetRealm(std.NewUserRealm(user))
 

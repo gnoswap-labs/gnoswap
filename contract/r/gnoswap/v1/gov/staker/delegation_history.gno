@@ -57,7 +57,5 @@ func (dh DelegationHistory) addRecord(delegationRecord *DelegationRecord) Delega
 // Returns:
 //   - DelegationHistory: filtered history containing only records at or after previousTime
 func (dh DelegationHistory) removeRecordsBy(previousTime int64) DelegationHistory {
-	currentRecords := dh.getRecordsBy(previousTime)
-
-	return currentRecords
+	return dh.getRecordsBy(previousTime)
 }

@@ -167,12 +167,8 @@ func (r *RewardManager) addRewardPerDepositX128(rewardPerDepositX128 *u256.Uint,
 		currentTime = r.distributeEndTime
 	}
 
-	accumulatedRewardPerDepositX128, overflow := u256.Zero().AddOverflow(r.accumulatedRewardPerDepositX128, rewardPerDepositX128)
-	if overflow {
-		return ufmt.Errorf("accumulatedRewardPerDepositX128 overflow")
-	}
-
-	r.accumulatedRewardPerDepositX128 = accumulatedRewardPerDepositX128
+	accumulated := u256.Zero().Add(r.accumulatedRewardPerDepositX128, rewardPerDepositX128)
+	r.accumulatedRewardPerDepositX128 = accumulated
 	r.accumulatedHeight = currentHeight
 	r.accumulatedTime = currentTime
 

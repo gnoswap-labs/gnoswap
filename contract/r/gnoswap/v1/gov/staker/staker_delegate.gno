@@ -441,7 +441,10 @@ func collectDelegations(user std.Address, currentTime int64) (int64, error) {
 			return collectedAmount, err
 		}
 
-		collectedAmount += collectableAmount
+		collectedAmount, err = addToCollectedAmount(collectedAmount, collectableAmount)
+		if err != nil {
+			return collectedAmount, err
+		}
 
 		// Remove empty delegations to keep storage clean
 		if delegation.IsEmpty() {

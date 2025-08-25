@@ -323,7 +323,8 @@ func processBatchedTickCrosses() error {
 	// This replaces multiple individual pool updates with a single cumulative update
 	cumulativeDelta := i256.Zero()
 	for _, tickCross := range batch.crosses {
-		cumulativeDelta = i256.Zero().Add(cumulativeDelta, tickCross.delta)
+		newDelta := cumulativeDelta.Add(cumulativeDelta, tickCross.delta)
+		cumulativeDelta = newDelta
 	}
 
 	// Phase 2: Determine the effective tick position for pool state update
@@ -355,7 +356,6 @@ func setHooks() {
 
 	// Set swap start/end hooks for batch processing
 	pl.SetSwapStartHook(cross, swapStartHook(pools))
-
 	pl.SetSwapEndHook(cross, swapEndHook(pools))
 }
 

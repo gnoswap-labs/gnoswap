@@ -238,9 +238,23 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
-	position.liquidity = u256.Zero().Add(u256.Zero().Set(position.liquidity), liquidity)
-	position.token0Balance = u256.Zero().Add(u256.Zero().Set(calculatedToken0Balance), amount0)
-	position.token1Balance = u256.Zero().Add(u256.Zero().Set(calculatedToken1Balance), amount1)
+
+	liquidityAmount, overflow := u256.Zero().AddOverflow(u256.Zero().Set(position.liquidity), liquidity)
+	if overflow {
+		return 0, nil, nil, nil, "", errOverflow
+	}
+	token0Balance, overflow := u256.Zero().AddOverflow(u256.Zero().Set(calculatedToken0Balance), amount0)
+	if overflow {
+		return 0, nil, nil, nil, "", errOverflow
+	}
+	token1Balance, overflow := u256.Zero().AddOverflow(u256.Zero().Set(calculatedToken1Balance), amount1)
+	if overflow {
+		return 0, nil, nil, nil, "", errOverflow
+	}
+
+	position.liquidity = liquidityAmount
+	position.token0Balance = token0Balance
+	position.token1Balance = token1Balance
 	position.burned = false
 
 	updated := setPosition(params.positionId, position)

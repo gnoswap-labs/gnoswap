@@ -11,7 +11,11 @@ import (
 	"gno.land/r/demo/wugnot"
 )
 
-var one = u256.One()
+var (
+	one = u256.One()
+
+	maxInt64 = int64(^uint64(0) >> 1)
+)
 
 // ErrorMessages define all error message templates used throughout the router
 const (
@@ -28,6 +32,17 @@ const (
 	errQuoteExceedsMax      = "quote(%s) at index(%d) must be less than or equal to %d"
 	errQuoteSumExceedsMax   = "quote sum exceeds 100 at index(%d)"
 	errInvalidQuoteSum      = "quote sum(%d) must be 100"
+
+	// balance and overflow validation
+	errOverflowInBalance  = "overflow in balance calculation: beforeBalance(%d) + wrappedAmount(%d)"
+	errTooMuchWugnotSpent = "too much wugnot spent (wrapped: %d, spend: %d)"
+
+	// swap type validation
+	errExactInTooFewReceived = "ExactIn: too few received (min:%s, got:%s)"
+	errExactOutTooMuchSpent  = "ExactOut: too much spent (max:%s, used:%s)"
+
+	// route parsing validation
+	errEmptyRoutes = "routes cannot be empty"
 )
 
 // GnotSwapHandler encapsulates methods for handling GNOT token swaps
@@ -52,11 +67,19 @@ func (h *GnotSwapHandler) UpdateNewBalance() {
 
 // HandleInputSwap manages unwrapping logic for GNOT input tokens.
 func (h *GnotSwapHandler) HandleInputSwap() error {
+	// Check for overflow when adding balances
+	if h.BeforeBalance > 0 && h.WrappedAmount > 0 {
+		if h.BeforeBalance > (1<<63-1)-h.WrappedAmount {
+			return ufmt.Errorf(errOverflowInBalance,
+				h.BeforeBalance, h.WrappedAmount)
+		}
+	}
+
 	totalBefore := h.BeforeBalance + h.WrappedAmount
 	spend := totalBefore - h.NewBalance
 
 	if spend > h.WrappedAmount {
-		return ufmt.Errorf("too much wugnot spent (wrapped: %d, spend: %d)",
+		return ufmt.Errorf(errTooMuchWugnotSpent,
 			h.WrappedAmount, spend)
 	}
 
@@ -64,13 +87,6 @@ func (h *GnotSwapHandler) HandleInputSwap() error {
 
 	caller := std.PreviousRealm().Address()
 	return unwrapWithTransferFrom(caller, caller, toUnwrap)
-}
-
-// HandleOutputSwap manages unwrapping logic for GNOT output tokens.
-func (h *GnotSwapHandler) HandleOutputSwap() error {
-	userRecvWugnot := h.NewBalance - h.BeforeBalance - h.WrappedAmount
-	caller := std.PreviousRealm().Address()
-	return unwrapWithTransfer(caller, userRecvWugnot)
 }
 
 // SwapValidator provides validation methods for swap operations
@@ -94,12 +110,12 @@ func (v *SwapValidator) slippage(swapType SwapType, amountIn, amountOut, limit *
 	switch swapType {
 	case ExactIn:
 		if amountOut.Lt(limit) {
-			return ufmt.Errorf("ExactIn: too few received (min:%s, got:%s)",
+			return ufmt.Errorf(errExactInTooFewReceived,
 				limit.ToString(), amountOut.ToString())
 		}
 	case ExactOut:
 		if amountIn.Gt(limit) {
-			return ufmt.Errorf("ExactOut: too much spent (max:%s, used:%s)",
+			return ufmt.Errorf(errExactOutTooMuchSpent,
 				limit.ToString(), amountIn.ToString())
 		}
 	default:
@@ -147,7 +163,7 @@ func NewRouteParser() *RouteParser {
 func (p *RouteParser) ParseRoutes(routes, quotes string) ([]string, []string, error) {
 	// Check for empty routes
 	if routes == "" || quotes == "" {
-		return nil, nil, ufmt.Errorf("routes cannot be empty")
+		return nil, nil, ufmt.Errorf(errEmptyRoutes)
 	}
 
 	routesArr := splitSingleChar(routes, ',')

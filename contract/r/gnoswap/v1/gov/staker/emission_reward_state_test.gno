@@ -200,6 +200,17 @@ func TestEmissionRewardState_calculateClaimableRewards(t *testing.T) {
 			currentHeight:                 100,
 			expected:                      0,
 		},
+		{
+			name: "debt slightly less than accumulated",
+			setupState: func(s *EmissionRewardState) {
+				s.accumulatedTimestamp = 50
+				s.stakedAmount = 1000
+				s.rewardDebtX128 = u256.NewUintFromInt64(900).Lsh(u256.NewUintFromInt64(900), 128)
+			},
+			accumulatedRewardX128PerStake: u256.NewUintFromInt64(1000).Lsh(u256.NewUintFromInt64(1000), 128),
+			currentHeight:                 100,
+			expected:                      100 * 1000, // (1000 - 900) * 1000
+		},
 	}
 
 	for _, tt := range tests {

@@ -98,7 +98,7 @@ func handleSwapFee(
 
 	toUserAfterProtocol, underflow := u256.Zero().SubOverflow(amount, feeAmount)
 	if underflow {
-		toUserAfterProtocol = u256.Zero()
+		panic(errProtocolFeeOverflow)
 	}
 
 	return toUserAfterProtocol

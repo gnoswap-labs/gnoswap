@@ -140,15 +140,9 @@ func (p *ProtocolFeeRewardManager) calculateAccumulatedRewardX128PerStake(
 		}
 
 		// Add the new fee per stake to the accumulated amount
-		accumulatedProtocolFeeX128PerStake, overflow := u256.Zero().AddOverflow(
-			accumulatedProtocolFeeX128PerStake,
-			protocolFeeDeltaX128PerStake,
-		)
-		if overflow {
-			return nil, nil, ufmt.Errorf("accumulatedProtocolFeeX128PerStake overflow")
-		}
-
+		accumulatedProtocolFeeX128PerStake = u256.Zero().Add(accumulatedProtocolFeeX128PerStake, protocolFeeDeltaX128PerStake)
 		accumulatedProtocolFeesX128PerStake[token] = accumulatedProtocolFeeX128PerStake.Clone()
+
 		changedProtocolFeeAmounts[token] = protocolFeeAmount
 	}
 
