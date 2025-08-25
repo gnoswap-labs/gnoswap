@@ -6,6 +6,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+var errNotClaimable = errors.New("not claimable")
+
 // EmissionRewardState tracks emission reward information for an individual staker.
 // This struct maintains reward debt, accumulated rewards, and claiming history
 // to ensure accurate reward calculations and prevent double-claiming.
@@ -54,12 +56,11 @@ func (e *EmissionRewardState) GetClaimableRewardAmount(
 	if err != nil {
 		return 0, err
 	}
-
 	return e.accumulatedRewardAmount + rewardAmount, nil
 }
 
 // calculateClaimableRewards calculates newly earned rewards since the last update.
-// This method uses the difference between current and stored reward debt to calculate earnings.
+// Uses the difference between current and stored reward debt to calculate earnings.
 //
 // Parameters:
 //   - accumulatedRewardX128PerStake: current system-wide accumulated reward per stake
@@ -67,12 +68,13 @@ func (e *EmissionRewardState) GetClaimableRewardAmount(
 //
 // Returns:
 //   - int64: newly earned reward amount since last update
+//   - error: nil on success, error if calculation fails
 func (e *EmissionRewardState) calculateClaimableRewards(
 	accumulatedRewardX128PerStake *u256.Uint,
 	currentTimestamp int64,
 ) (int64, error) {
-	// Don't calculate rewards for past timestamps
-	if e.accumulatedTimestamp > currentTimestamp {
+	// Don't calculate rewards for past timestamps or when nothing is staked
+	if currentTimestamp < e.accumulatedTimestamp || e.stakedAmount == 0 {
 		return 0, nil
 	}
 
@@ -90,7 +92,6 @@ func (e *EmissionRewardState) calculateClaimableRewards(
 		u256.NewUintFromInt64(e.stakedAmount),
 		q128,
 	)
-
 	return safeConvertToInt64(rewardAmount), nil
 }
 
@@ -100,7 +101,7 @@ func (e *EmissionRewardState) calculateClaimableRewards(
 // Parameters:
 //   - amount: amount of stake to add
 func (e *EmissionRewardState) addStake(amount int64) {
-	e.stakedAmount = e.stakedAmount + amount
+	e.adjustStake(amount)
 }
 
 // removeStake decreases the staked amount for this address.
@@ -109,11 +110,20 @@ func (e *EmissionRewardState) addStake(amount int64) {
 // Parameters:
 //   - amount: amount of stake to remove
 func (e *EmissionRewardState) removeStake(amount int64) {
-	if e.stakedAmount > amount {
-		e.stakedAmount = e.stakedAmount - amount
-	} else {
-		e.stakedAmount = 0
+	e.adjustStake(-amount)
+}
+
+// adjustStake is a small internal helper to centralize bound checks and math.
+func (e *EmissionRewardState) adjustStake(delta int64) {
+	if delta == 0 {
+		return
 	}
+	// clamp at zero on underflow
+	newAmt := e.stakedAmount + delta
+	if newAmt < 0 {
+		newAmt = 0
+	}
+	e.stakedAmount = newAmt
 }
 
 // claimRewards processes reward claiming and updates the claim state.
@@ -127,14 +137,11 @@ func (e *EmissionRewardState) removeStake(amount int64) {
 //   - error: nil on success, error if claiming is not allowed
 func (e *EmissionRewardState) claimRewards(currentTimestamp int64) (int64, error) {
 	if !e.IsClaimable(currentTimestamp) {
-		return 0, errors.New("not claimable")
+		return 0, errNotClaimable
 	}
-
-	// Calculate the amount to claim (accumulated but not yet claimed)
 	claimedRewardAmount := e.accumulatedRewardAmount - e.claimedRewardAmount
 	e.claimedRewardAmount = e.accumulatedRewardAmount
 	e.claimedTimestamp = currentTimestamp
-
 	return claimedRewardAmount, nil
 }
 
@@ -148,16 +155,19 @@ func (e *EmissionRewardState) updateRewardDebtX128(
 	accumulatedRewardX128PerStake *u256.Uint,
 	currentTimestamp int64,
 ) error {
-	// Calculate and accumulate new rewards since last update
 	rewardAmount, err := e.calculateClaimableRewards(accumulatedRewardX128PerStake, currentTimestamp)
 	if err != nil {
 		return err
 	}
 
-	e.accumulatedRewardAmount = e.accumulatedRewardAmount + rewardAmount
-	e.rewardDebtX128 = accumulatedRewardX128PerStake
-	e.accumulatedTimestamp = currentTimestamp
+	// Accumulate newly earned rewards
+	if rewardAmount != 0 {
+		e.accumulatedRewardAmount += rewardAmount
+	}
 
+	// Deep copy to avoid aliasing with external state
+	e.rewardDebtX128 = accumulatedRewardX128PerStake.Clone()
+	e.accumulatedTimestamp = currentTimestamp
 	return nil
 }
 
@@ -173,13 +183,10 @@ func (e *EmissionRewardState) addStakeWithUpdateRewardDebtX128(
 	accumulatedRewardX128PerStake *u256.Uint,
 	currentTimestamp int64,
 ) error {
-	err := e.updateRewardDebtX128(accumulatedRewardX128PerStake, currentTimestamp)
-	if err != nil {
+	if err := e.updateRewardDebtX128(accumulatedRewardX128PerStake, currentTimestamp); err != nil {
 		return err
 	}
-
 	e.addStake(amount)
-
 	return nil
 }
 
@@ -195,13 +202,10 @@ func (e *EmissionRewardState) removeStakeWithUpdateRewardDebtX128(
 	accumulatedRewardX128PerStake *u256.Uint,
 	currentTimestamp int64,
 ) error {
-	err := e.updateRewardDebtX128(accumulatedRewardX128PerStake, currentTimestamp)
-	if err != nil {
+	if err := e.updateRewardDebtX128(accumulatedRewardX128PerStake, currentTimestamp); err != nil {
 		return err
 	}
-
 	e.removeStake(amount)
-
 	return nil
 }
 
@@ -219,11 +223,9 @@ func (e *EmissionRewardState) claimRewardsWithUpdateRewardDebtX128(
 	accumulatedRewardX128PerStake *u256.Uint,
 	currentTimestamp int64,
 ) (int64, error) {
-	err := e.updateRewardDebtX128(accumulatedRewardX128PerStake, currentTimestamp)
-	if err != nil {
+	if err := e.updateRewardDebtX128(accumulatedRewardX128PerStake, currentTimestamp); err != nil {
 		return 0, err
 	}
-
 	return e.claimRewards(currentTimestamp)
 }
 
@@ -237,7 +239,8 @@ func (e *EmissionRewardState) claimRewardsWithUpdateRewardDebtX128(
 //   - *EmissionRewardState: new emission reward state instance
 func NewEmissionRewardState(accumulatedRewardX128PerStake *u256.Uint) *EmissionRewardState {
 	return &EmissionRewardState{
-		rewardDebtX128:          accumulatedRewardX128PerStake,
+		// Deep copy the input to snapshot the current accumulator value.
+		rewardDebtX128:          accumulatedRewardX128PerStake.Clone(),
 		accumulatedRewardAmount: 0,
 		accumulatedTimestamp:    0,
 		claimedRewardAmount:     0,
