@@ -457,7 +457,6 @@ func computeSwapStep(
 	if newState.liquidity.Gt(u256.Zero()) {
 		update := u256.MulDiv(step.feeAmount, fixedPointQ128, newState.liquidity)
 		feeGrowthGlobalX128 := u256.Zero().Add(newState.feeGrowthGlobalX128, update)
-
 		newState.setFeeGrowthGlobalX128(feeGrowthGlobalX128)
 	}
 
@@ -551,31 +550,31 @@ func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *Pool, 
 //   - Increments remaining output amount by amountOut
 //   - Increments calculated amount by (amountIn + feeAmount)
 func updateAmounts(step StepComputations, state SwapState, exactInput bool) (SwapState, error) {
-	amountInWithFeeU256, overflow := u256.Zero().AddOverflow(step.amountIn, step.feeAmount)
-	if overflow {
+	amountInWithFeeU256 := u256.Zero().Add(step.amountIn, step.feeAmount)
+	if amountInWithFeeU256.Gt(maxInt256) {
 		return state, errOverFlow
 	}
 
 	amountInWithFee := i256.FromUint256(amountInWithFeeU256)
-	if amountInWithFee.IsOverflow() {
-		return state, errOverFlow
+	if step.amountOut.Gt(maxInt256) {
+		return state, errUnderflow
 	}
 
 	var (
-		amountSpecifiedRemaining, amountCalculated *i256.Int
-		isOverflow                                 bool
+		amountSpecifiedRemaining *i256.Int
+		amountCalculated         *i256.Int
 	)
 
 	if exactInput {
 		amountSpecifiedRemaining = i256.Zero().Sub(state.amountSpecifiedRemaining, amountInWithFee)
-		amountCalculated, isOverflow = i256.Zero().SubOverflow(state.amountCalculated, i256.FromUint256(step.amountOut))
+		amountCalculated = i256.Zero().Sub(state.amountCalculated, i256.FromUint256(step.amountOut))
 	} else {
 		amountSpecifiedRemaining = i256.Zero().Add(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
-		amountCalculated, isOverflow = i256.Zero().AddOverflow(state.amountCalculated, amountInWithFee)
+		amountCalculated = i256.Zero().Add(state.amountCalculated, amountInWithFee)
 	}
 
 	// If an overflowed value is stored in state, it may cause problems in the next step
-	if isOverflow {
+	if amountCalculated.Gt(maxInt64) {
 		return state, errOverFlow
 	}
 
