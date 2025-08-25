@@ -11,7 +11,11 @@ import (
 	"gno.land/r/demo/wugnot"
 )
 
-var one = u256.One()
+var (
+	one = u256.One()
+
+	maxInt64 = int64(^uint64(0) >> 1)
+)
 
 // ErrorMessages define all error message templates used throughout the router
 const (
@@ -52,6 +56,14 @@ func (h *GnotSwapHandler) UpdateNewBalance() {
 
 // HandleInputSwap manages unwrapping logic for GNOT input tokens.
 func (h *GnotSwapHandler) HandleInputSwap() error {
+	// Check for overflow when adding balances
+	if h.BeforeBalance > 0 && h.WrappedAmount > 0 {
+		if h.BeforeBalance > (1<<63-1)-h.WrappedAmount {
+			return ufmt.Errorf("overflow in balance calculation: beforeBalance(%d) + wrappedAmount(%d)",
+				h.BeforeBalance, h.WrappedAmount)
+		}
+	}
+
 	totalBefore := h.BeforeBalance + h.WrappedAmount
 	spend := totalBefore - h.NewBalance
 
@@ -64,13 +76,6 @@ func (h *GnotSwapHandler) HandleInputSwap() error {
 
 	caller := std.PreviousRealm().Address()
 	return unwrapWithTransferFrom(caller, caller, toUnwrap)
-}
-
-// HandleOutputSwap manages unwrapping logic for GNOT output tokens.
-func (h *GnotSwapHandler) HandleOutputSwap() error {
-	userRecvWugnot := h.NewBalance - h.BeforeBalance - h.WrappedAmount
-	caller := std.PreviousRealm().Address()
-	return unwrapWithTransfer(caller, userRecvWugnot)
 }
 
 // SwapValidator provides validation methods for swap operations
