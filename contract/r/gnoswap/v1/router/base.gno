@@ -147,8 +147,15 @@ func (op *baseSwapOperation) processRoutes(swapType SwapType) (*u256.Uint, *u256
 			return nil, nil, err
 		}
 
-		resultAmountIn = u256.Zero().Add(resultAmountIn, amountIn)
-		resultAmountOut = u256.Zero().Add(resultAmountOut, amountOut)
+		resultAmountIn, overflow = u256.Zero().AddOverflow(resultAmountIn, amountIn)
+		if overflow {
+			return nil, nil, errOverFlow
+		}
+
+		resultAmountOut, overflow = u256.Zero().AddOverflow(resultAmountOut, amountOut)
+		if overflow {
+			return nil, nil, errOverFlow
+		}
 	}
 
 	return resultAmountIn, resultAmountOut, nil
