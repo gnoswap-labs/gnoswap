@@ -392,3 +392,72 @@ func TestEmissionRewardManager_updateAccumulatedRewardX128PerStake(t *testing.T)
 		})
 	}
 }
+
+// removeStake bug reproduction 1:
+// When removeStake is called for a new address (not present in the tree),
+// internally a NewEmissionRewardState(...) is created. If rewardStates.Set(...) is missing,
+// the new state is not persisted in the tree, and this was a bug.
+// With the fixed code, the state should be saved correctly.
+func TestEmissionRewardManager_removeStake_persistsStateForNewAddress(t *testing.T) {
+	manager := NewEmissionRewardManager()
+
+	// Prepare: advance global accumulator once for safety
+	manager.accumulatedRewardX128PerStake = u256.NewUint(0)
+	manager.updateAccumulatedRewardX128PerStake(0, 10)
+
+	// When: calling removeStake on an address that does not exist yet
+	addr := "user-new"
+	uassert.Equal(t, manager.totalStakedAmount, int64(0))
+	uassert.Equal(t, manager.GetTotalStakedAmount(), int64(0))
+
+	err := manager.removeStake(addr, 100, 20)
+	uassert.NoError(t, err)
+
+	// Then: state should be persisted in the tree
+	// (this fails in the buggy version where Set was missing)
+	if ri, ok := manager.rewardStates.Get(addr); !ok {
+		t.Fatalf("expected reward state to be persisted for new address after removeStake, but not found (bug)")
+	} else {
+		// Type and field checks
+		rs, castOK := ri.(*EmissionRewardState)
+		uassert.True(t, castOK)
+		uassert.NotEqual(t, rs, nil)
+		uassert.Equal(t, rs.stakedAmount, int64(0)) // clamped to 0, no negative values
+		// rewardDebtX128 should be a cloned snapshot
+		uassert.NotEqual(t, rs.rewardDebtX128, nil)
+	}
+}
+
+// removeStake bug reproduction 2 (defensive check):
+// After adding stake for an existing address and then removing part of it,
+// the updated staked amount must be persisted in the tree.
+// In the buggy version, this may rely on pointer aliasing instead of Set persistence.
+// This test ensures round-trip read/write correctness.
+func TestEmissionRewardManager_removeStake_updatesPersistedState(t *testing.T) {
+	manager := NewEmissionRewardManager()
+
+	addr := "user1"
+	// Given: add stake → creates and saves state
+	err := manager.addStake(addr, 1000, 50)
+	uassert.NoError(t, err)
+	uassert.Equal(t, manager.GetTotalStakedAmount(), int64(1000))
+
+	// When: remove part of the stake
+	err = manager.removeStake(addr, 300, 100)
+	uassert.NoError(t, err)
+	uassert.Equal(t, manager.GetTotalStakedAmount(), int64(700))
+
+	// Then: re-read from tree should reflect the reduced stake
+	ri, ok := manager.rewardStates.Get(addr)
+	uassert.True(t, ok)
+	rs, castOK := ri.(*EmissionRewardState)
+	uassert.True(t, castOK)
+	uassert.NotEqual(t, rs, nil)
+	uassert.Equal(t, rs.stakedAmount, int64(700))
+
+	// Extra check: subsequent operations should remain consistent
+	claimed, err := manager.claimRewards(addr, 120)
+	uassert.NoError(t, err)
+	// Since no rewards were distributed, claimed amount should be zero
+	uassert.Equal(t, claimed, int64(0))
+}

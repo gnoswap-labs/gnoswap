@@ -193,7 +193,12 @@ func (e *EmissionRewardManager) removeStake(address string, amount int64, curren
 		return err
 	}
 
-	e.totalStakedAmount = e.totalStakedAmount - amount
+	// persist updated state
+	e.rewardStates.Set(address, rewardState)
+	e.totalStakedAmount -= amount
+	if e.totalStakedAmount < 0 {
+		e.totalStakedAmount = 0 // defensive clamp
+	}
 
 	return nil
 }
