@@ -5,6 +5,7 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
+// TODO: define Tier type as uint8 size
 const (
 	AllTierCount = 4 // 0, 1, 2, 3
 	Tier1        = 1
@@ -92,8 +93,9 @@ type PoolTier struct {
 
 	tierRatio TierRatio
 
-	lastRewardCacheTimestamp int64
+	counts [AllTierCount]uint64
 
+	lastRewardCacheTimestamp int64
 	lastRewardCacheHeight int64
 
 	currentEmission int64
@@ -136,33 +138,29 @@ func NewPoolTier(pools *Pools, currentHeight int64, currentTime int64, initialPo
 // CurrentReward returns the current per-pool reward for the given tier.
 func (self *PoolTier) CurrentReward(tier uint64) int64 {
 	currentEmission := self.getEmission()
-	return currentEmission * int64(self.tierRatio.Get(tier)) / int64(self.CurrentCount(tier)) / 100
+	tierRatio := self.tierRatio.Get(tier)
+	count := int64(self.CurrentCount(tier))
+
+	// check for zero count to avoid division by zero
+	if count == 0 {
+		return 0
+	}
+	return currentEmission * int64(tierRatio) / count / 100
 }
 
 // CurrentCount returns the current count of pools in the given tier.
 func (self *PoolTier) CurrentCount(tier uint64) int {
-	count := 0
-	self.membership.Iterate("", "", func(key string, value any) bool {
-		if value.(uint64) == tier {
-			count++
-		}
-		return false
-	})
-	return count
+	if tier >= AllTierCount {
+		return 0
+	}
+	return int(self.counts[tier])
 }
 
 // CurrentAllTierCounts returns the current count of pools in each tier.
 func (self *PoolTier) CurrentAllTierCounts() []uint64 {
-	count := make([]uint64, AllTierCount)
-	self.membership.Iterate("", "", func(key string, value any) bool {
-		if v, ok := value.(uint64); !ok {
-			panic("failed to cast value to uint64")
-		} else {
-			count[v]++
-		}
-		return false
-	})
-	return count
+	out := make([]uint64, AllTierCount)
+	copy(out, self.counts[:])
+	return out // returning snapshot
 }
 
 // CurrentTier returns the tier of the given pool.
@@ -192,19 +190,32 @@ func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *
 	if nextTier == 0 {
 		// removed from the tier
 		self.membership.Remove(poolPath)
+
+		// count decrement
+		if currentTier > 0 {
+			if self.counts[currentTier] == 0 {
+				panic("counts underflow: removing from empty tier")
+			}
+			self.counts[currentTier]--
+		}
 		pool, ok := pools.Get(poolPath)
 		if !ok {
 			panic("changeTier: pool not found")
 		}
-
-		// caching reward to 0
 		pool.cacheReward(currentTime, int64(0))
 	} else {
+		// handle all move/add operations
 		self.membership.Set(poolPath, nextTier)
+		if currentTier > 0 {
+			if self.counts[currentTier] == 0 {
+				panic("counts underflow: removing from empty tier")
+			}
+			self.counts[currentTier]--
+		}
+		self.counts[nextTier]++
 	}
 
-	counts := self.CurrentAllTierCounts()
-	self.tierRatio = TierRatioFromCounts(counts[Tier1], counts[Tier2], counts[Tier3])
+	self.tierRatio = TierRatioFromCounts(self.counts[Tier1], self.counts[Tier2], self.counts[Tier3])
 
 	currentEmission := self.getEmission()
 
@@ -218,7 +229,14 @@ func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *
 		if !ok {
 			panic("failed to cast value to uint64")
 		}
-		poolReward := currentEmission * int64(self.tierRatio.Get(tier)) / 100 / int64(counts[tier])
+
+		tierRatio := int64(self.tierRatio.Get(tier))
+		tierCount := int64(self.counts[tier])
+		if tierCount == 0 {
+			return false // Skip if no pools in tier
+		}
+
+		poolReward := currentEmission * tierRatio / tierCount / 100
 		pool.cacheReward(currentTime, poolReward)
 		return false
 	})
