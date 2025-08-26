@@ -187,8 +187,14 @@ func calculateFees(position Position, currentFeeGrowth FeeGrowthInside) (*u256.U
 		position.liquidity,
 	)
 
-	tokensOwed0 := u256.Zero().Add(u256.Zero().Set(position.tokensOwed0), fee0)
-	tokensOwed1 := u256.Zero().Add(u256.Zero().Set(position.tokensOwed1), fee1)
+	tokensOwed0, overflow0 := u256.Zero().AddOverflow(u256.Zero().Set(position.tokensOwed0), fee0)
+	if overflow0 {
+		panic(newErrorWithDetail(errOverflow, "tokensOwed0 + fee0 overflow"))
+	}
+	tokensOwed1, overflow1 := u256.Zero().AddOverflow(u256.Zero().Set(position.tokensOwed1), fee1)
+	if overflow1 {
+		panic(newErrorWithDetail(errOverflow, "tokensOwed1 + fee1 overflow"))
+	}
 
 	return tokensOwed0, tokensOwed1
 }
