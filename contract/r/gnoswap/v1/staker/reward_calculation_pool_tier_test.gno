@@ -1,33 +1,12 @@
 package staker
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/testutils"
 	pl "gno.land/r/gnoswap/v1/pool"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/qux"
 )
 
 func TestTierRatioFromCounts(t *testing.T) {
-	t.Skip("fix insufficient allowance error")
-	CreateSecondPoolWithoutFee(t)
-	MakeMintPositionWithoutFee(t)
-
-	user1Addr := testutils.TestAddress("user1")
-	user1Realm := std.NewUserRealm(user1Addr)
-
-	testing.SetRealm(user1Realm)
-	func() {
-		testing.SetRealm(user1Realm)
-		bar.Approve(cross, routerAddr, maxApprove)
-		baz.Approve(cross, routerAddr, maxApprove)
-		qux.Approve(cross, routerAddr, maxApprove)
-		TokenFaucet(t, barPath, user1Addr)
-	}()
-
 	tests := []struct {
 		tier1Count uint64
 		tier2Count uint64
