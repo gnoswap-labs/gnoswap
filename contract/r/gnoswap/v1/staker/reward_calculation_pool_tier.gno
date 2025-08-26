@@ -144,16 +144,7 @@ func (self *PoolTier) CurrentReward(tier uint64) int64 {
 		return 0
 	}
 
-	// Calculate reward with overflow check
-	// reward = (currentEmission * tierRatio) / count / 100
-	intermediateResult := currentEmission * tierRatio
-
-	// Check for multiplication overflow
-	if currentEmission != 0 && intermediateResult/currentEmission != tierRatio {
-		panic(ufmt.Sprintf("reward calculation overflow: emission=%d, tierRatio=%d", currentEmission, tierRatio))
-	}
-
-	return intermediateResult / count / 100
+	return currentEmission * tierRatio / count / 100
 }
 
 // CurrentCount returns the current count of pools in the given tier.
@@ -235,20 +226,14 @@ func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *
 		if !ok {
 			panic("failed to cast value to uint64")
 		}
-		// Calculate pool reward with overflow check
+
 		tierRatio := int64(self.tierRatio.Get(tier))
 		tierCount := int64(counts[tier])
-
 		if tierCount == 0 {
 			return false // Skip if no pools in tier
 		}
 
-		intermediateResult := currentEmission * tierRatio
-		if currentEmission != 0 && intermediateResult/currentEmission != tierRatio {
-			panic(ufmt.Sprintf("changeTier reward overflow: emission=%d, tierRatio=%d, pool=%s", currentEmission, tierRatio, key))
-		}
-
-		poolReward := intermediateResult / 100 / tierCount
+		poolReward := currentEmission * tierRatio / 100 / tierCount
 		pool.cacheReward(currentTime, poolReward)
 		return false
 	})
@@ -313,12 +298,7 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentTimestamp, emiss
 			return false // Skip if no pools in tier
 		}
 
-		intermediateResult := emissionInThisInterval * tierRatio
-		if emissionInThisInterval != 0 && intermediateResult/emissionInThisInterval != tierRatio {
-			panic(ufmt.Sprintf("applyCacheToAllPools overflow: emission=%d, tierRatio=%d", emissionInThisInterval, tierRatio))
-		}
-
-		reward := intermediateResult / 100 / tierCount
+		reward := emissionInThisInterval * tierRatio / 100 / tierCount
 		// accumulate the reward for the interval (startBlock to endBlock) in the Pool
 		pool.cacheInternalReward(currentTimestamp, reward)
 		return false
@@ -346,12 +326,5 @@ func (self *PoolTier) CurrentRewardPerPool(poolPath string) int64 {
 		return 0 // No pools in tier
 	}
 
-	// Calculate reward with overflow check
-	intermediateResult := emission * tierRatio
-	if emission != 0 && intermediateResult/emission != tierRatio {
-		panic(ufmt.Sprintf("CurrentRewardPerPool overflow: emission=%d, tierRatio=%d, pool=%s", emission, tierRatio, poolPath))
-	}
-
-	reward := intermediateResult / 100 / tierCount
-	return reward
+	return emission * tierRatio / 100 / tierCount
 }
