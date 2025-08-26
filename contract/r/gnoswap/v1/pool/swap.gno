@@ -480,7 +480,12 @@ func updateFeeProtocol(step StepComputations, feeProtocol uint8, state SwapState
 	}
 
 	step.feeAmount = newFeeAmount
-	state.protocolFee.Add(state.protocolFee, delta)
+
+	newProtocolFee, overflow := u256.Zero().AddOverflow(state.protocolFee, delta)
+	if overflow {
+		return state, step, errOverFlow
+	}
+	state.protocolFee = newProtocolFee
 
 	return state, step, nil
 }
