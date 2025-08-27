@@ -8,7 +8,7 @@ import (
 	"math/bits"
 )
 
-// Add sets z to the sum x+y
+// Add sets z to the sum x+y and returns z.
 func (z *Uint) Add(x, y *Uint) *Uint {
 	var carry uint64
 	z.arr[0], carry = bits.Add64(x.arr[0], y.arr[0], 0)
@@ -18,7 +18,7 @@ func (z *Uint) Add(x, y *Uint) *Uint {
 	return z
 }
 
-// AddOverflow sets z to the sum x+y, and returns z and whether overflow occurred
+// AddOverflow sets z to the sum x+y and returns z and true if overflow occurred.
 func (z *Uint) AddOverflow(x, y *Uint) (*Uint, bool) {
 	var carry uint64
 	z.arr[0], carry = bits.Add64(x.arr[0], y.arr[0], 0)
@@ -28,7 +28,7 @@ func (z *Uint) AddOverflow(x, y *Uint) (*Uint, bool) {
 	return z, carry != 0
 }
 
-// Sub sets z to the difference x-y
+// Sub sets z to the difference x-y and returns z.
 func (z *Uint) Sub(x, y *Uint) *Uint {
 	var carry uint64
 	z.arr[0], carry = bits.Sub64(x.arr[0], y.arr[0], 0)
@@ -38,7 +38,7 @@ func (z *Uint) Sub(x, y *Uint) *Uint {
 	return z
 }
 
-// SubOverflow sets z to the difference x-y and returns z and true if the operation underflowed
+// SubOverflow sets z to the difference x-y and returns z and true if underflow occurred.
 func (z *Uint) SubOverflow(x, y *Uint) (*Uint, bool) {
 	var carry uint64
 	z.arr[0], carry = bits.Sub64(x.arr[0], y.arr[0], 0)
@@ -53,7 +53,7 @@ func (z *Uint) Neg(x *Uint) *Uint {
 	return z.Sub(Zero(), x)
 }
 
-// Mul sets z to the product x*y
+// Mul sets z to the product x*y and returns z.
 func (z *Uint) Mul(x, y *Uint) *Uint {
 	var (
 		res              Uint
@@ -78,15 +78,15 @@ func (z *Uint) Mul(x, y *Uint) *Uint {
 	return z.Set(&res)
 }
 
-// MulOverflow sets z to the product x*y, and returns z and  whether overflow occurred
+// MulOverflow sets z to the product x*y and returns z and true if overflow occurred.
 func (z *Uint) MulOverflow(x, y *Uint) (*Uint, bool) {
 	p := umul(x, y)
 	copy(z.arr[:], p[:4])
 	return z, (p[4] | p[5] | p[6] | p[7]) != 0
 }
 
-// Div sets z to the quotient x/y for returns z.
-// If y == 0, z is set to 0
+// Div sets z to the quotient x/y and returns z.
+// If y == 0, z is set to 0.
 func (z *Uint) Div(x, y *Uint) *Uint {
 	if y.IsZero() || y.Gt(x) {
 		return z.Clear()
@@ -108,7 +108,7 @@ func (z *Uint) Div(x, y *Uint) *Uint {
 }
 
 // Mod sets z to the modulus x%y for y != 0 and returns z.
-// If y == 0, z is set to 0 (OBS: differs from the big.Uint)
+// If y == 0, z is set to 0 (this differs from big.Int behavior).
 func (z *Uint) Mod(x, y *Uint) *Uint {
 	if x.IsZero() || y.IsZero() {
 		return z.Clear()
@@ -138,9 +138,8 @@ func (z *Uint) Mod(x, y *Uint) *Uint {
 	return z
 }
 
-// MulMod calculates the modulo-m multiplication of x and y and
-// returns z.
-// If m == 0, z is set to 0 (OBS: differs from the big.Int)
+// MulMod sets z to (x * y) mod m and returns z.
+// If m == 0, z is set to 0 (this differs from big.Int behavior).
 func (z *Uint) MulMod(x, y, m *Uint) *Uint {
 	if x.IsZero() || y.IsZero() || m.IsZero() {
 		return z.Clear()
@@ -168,20 +167,41 @@ func (z *Uint) MulMod(x, y, m *Uint) *Uint {
 	return z.Set(&rem)
 }
 
-// DivMod sets z to the quotient x div y and m to the modulus x mod y and returns the pair (z, m) for y != 0.
-// If y == 0, both z and m are set to 0 (OBS: differs from the big.Int)
+// DivMod sets z to the quotient x/y and m to the modulus x%y, returning the pair (z, m).
+// If y == 0, both z and m are set to 0 (this differs from big.Int behavior).
 func (z *Uint) DivMod(x, y, m *Uint) (*Uint, *Uint) {
 	if y.IsZero() {
 		return z.Clear(), m.Clear()
 	}
+
+	switch x.Cmp(y) {
+	case -1:
+		// x < y
+		return z.Clear(), m.Set(x)
+	case 0:
+		// x == y
+		return z.SetOne(), m.Clear()
+	}
+
+	// At this point:
+	// x != 0
+	// y != 0
+	// x > y
+
+	// Shortcut trivial case
+	if x.IsUint64() {
+		x0, y0 := x.Uint64(), y.Uint64()
+		return z.SetUint64(x0 / y0), m.SetUint64(x0 % y0)
+	}
+
 	var quot Uint
 	*m = udivrem(quot.arr[:], x.arr[:], y)
 	*z = quot
 	return z, m
 }
 
-// Exp sets z = base**exponent mod 2**256, and returns z.
-// All results are modulo 2^256 (wrapped).
+// Exp sets z to base**exponent mod 2**256 and returns z.
+// The result is wrapped at 2^256 boundary.
 func (z *Uint) Exp(base, exponent *Uint) *Uint {
 	res := Uint{arr: [4]uint64{1, 0, 0, 0}}
 	multiplier := *base
@@ -471,8 +491,8 @@ func udivrem2by1(uh, ul, d, reciprocal uint64) (quot, rem uint64) {
 	return qh, r
 }
 
-// MustDiv is like Div but panics if y == 0.
-// Used in critical paths where division by zero must be caught.
+// MustDiv sets z to the quotient x/y and returns z.
+// It panics if y == 0. Used in critical AMM paths where division by zero represents a programming error.
 func (z *Uint) MustDiv(x, y *Uint) *Uint {
 	if y.IsZero() {
 		panic("division by zero")
@@ -480,8 +500,8 @@ func (z *Uint) MustDiv(x, y *Uint) *Uint {
 	return z.Div(x, y)
 }
 
-// MustMod is like Mod but panics if y == 0.
-// Used in critical paths where modulo by zero must be caught.
+// MustMod sets z to the modulus x%y and returns z.
+// It panics if y == 0. Used in critical AMM paths where modulo by zero represents a programming error.
 func (z *Uint) MustMod(x, y *Uint) *Uint {
 	if y.IsZero() {
 		panic("modulo by zero")
@@ -489,8 +509,8 @@ func (z *Uint) MustMod(x, y *Uint) *Uint {
 	return z.Mod(x, y)
 }
 
-// MustMulMod is like MulMod but panics if m == 0.
-// Used in critical paths where modulo by zero must be caught.
+// MustMulMod sets z to (x * y) mod m and returns z.
+// It panics if m == 0. Used in critical AMM paths where modulo by zero represents a programming error.
 func (z *Uint) MustMulMod(x, y, m *Uint) *Uint {
 	if m.IsZero() {
 		panic("modulo by zero")
@@ -498,8 +518,8 @@ func (z *Uint) MustMulMod(x, y, m *Uint) *Uint {
 	return z.MulMod(x, y, m)
 }
 
-// MustDivMod is like DivMod but panics if y == 0.
-// Used in critical paths where division by zero must be caught.
+// MustDivMod sets z to the quotient x/y and m to the modulus x%y, returning the pair (z, m).
+// It panics if y == 0. Used in critical AMM paths where division by zero represents a programming error.
 func (z *Uint) MustDivMod(x, y, m *Uint) (*Uint, *Uint) {
 	if y.IsZero() {
 		panic("division by zero")
@@ -507,8 +527,8 @@ func (z *Uint) MustDivMod(x, y, m *Uint) (*Uint, *Uint) {
 	return z.DivMod(x, y, m)
 }
 
-// MustMul multiplies two numbers and panics on overflow.
-// Used in critical paths of AMM where overflow must be caught.
+// MustMul sets z to the product x*y and returns z.
+// It panics on overflow. Used in critical AMM calculations where overflow represents a programming error.
 func (z *Uint) MustMul(x, y *Uint) *Uint {
 	result, overflow := z.MulOverflow(x, y)
 	if overflow {

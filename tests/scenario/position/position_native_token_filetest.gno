@@ -11,9 +11,9 @@ import (
 	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/position"
 )
@@ -22,7 +22,7 @@ const (
 	INT64_MAX int64 = 9223372036854775807
 
 	GNOT        string = "gnot"
-	GNS_PATH    string = "gno.land/r/gnoswap/v1/gns"
+	GNS_PATH    string = "gno.land/r/gnoswap/gns"
 	WUGNOT_PATH string = "gno.land/r/demo/wugnot"
 
 	MIN_PRICE string = "4295128740"
@@ -69,7 +69,7 @@ func main() {
 
 func initPool() {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFeeByAdmin(cross, 0)
+	pool.SetPoolCreationFee(cross, 0)
 
 	ufmt.Println("[INFO] Creating GNOT/GNS pool")
 	pool.CreatePool(
@@ -141,7 +141,13 @@ func executeSwap() {
 	wugnot.Approve(cross, positionAddr, INT64_MAX)
 	wugnot.Approve(cross, routerAddr, INT64_MAX)
 
-	testing.SetRealm(routerRealm)
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = routerRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	ufmt.Println("[INFO] Executing swap")
 	amount0, amount1 := pool.Swap(
 		cross,

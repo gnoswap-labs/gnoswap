@@ -5,19 +5,19 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	"gno.land/r/gnoswap/v1/router"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
 )
 
 var (
@@ -32,8 +32,8 @@ var (
 	bazPath = "gno.land/r/onbloc/baz"
 	fooPath = "gno.land/r/onbloc/foo"
 
-	min_tick int32 = -887220
-	max_tick int32 = 887220
+	min_tick    int32 = -887220
+	max_tick    int32 = 887220
 	max_timeout int64 = 9999999999
 	max_approve int64 = 9223372036854775806
 )
@@ -45,10 +45,10 @@ const (
 func main() {
 	println("[SCENARIO] #4 ExactIn Router Test")
 	println("[INFO] Starting scenario: Multi-hop ExactIn swap test (bar → baz → foo)")
-	
+
 	println("[INFO] Setting up pools and positions")
 	testing.SetRealm(adminRealm)
-	
+
 	println("[INFO] Approving pool creation fees")
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee()*2)
 
@@ -75,7 +75,7 @@ func main() {
 	println("[INFO] Checking balances before swap")
 	token0Before := bar.BalanceOf(adminAddr)
 	token2Before := foo.BalanceOf(adminAddr)
-	
+
 	println("[INFO] admin bar balance:", token0Before)
 	println("[INFO] admin foo balance:", token2Before)
 
@@ -101,7 +101,7 @@ func main() {
 
 	println("[EXPECTED] admin bar balance change:", token0After, "expected:", token0Before-5)
 	println("[EXPECTED] admin foo balance change:", token2After, "expected:", token2Before+1)
-	
+
 	println("[INFO] Scenario completed")
 }
 

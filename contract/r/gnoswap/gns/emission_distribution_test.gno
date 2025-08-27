@@ -1,171 +1,116 @@
 package gns
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 )
 
-// TestEmissionDistributionAcrossYears verifies that emission distribution remains
-// even across years when block time changes
+// TestEmissionDistributionAcrossYears verifies that emission distribution is correct
+// for each year based on the halving schedule
 func TestEmissionDistributionAcrossYears(t *testing.T) {
 	resetEmissionState(t)
+	InitGnsTest(t)
 
-	// Set up callback
-	// oldCallback := callbackEmissionChange
-	// callbackEmissionChange = func(amount int64) {}
-	// defer func() { callbackEmissionChange = oldCallback }()
-
-	// Test different scenarios of block time changes
+	// Test emission amounts for each year
 	scenarios := []struct {
-		name            string
-		changeAtYear    int64
-		changeAtPercent int // percentage through the year
-		oldBlockTime    int64
-		newBlockTime    int64
+		name         string
+		year         int64
+		expectedRate int64 // expected emission per second
 	}{
 		{
-			name:            "Early change in year 2",
-			changeAtYear:    2,
-			changeAtPercent: 10,
-			oldBlockTime:    2000,
-			newBlockTime:    1000,
+			name:         "Year 1-4 emission rate",
+			year:         1,
+			expectedRate: int64(225_000_000_000_000) / SECONDS_IN_YEAR, // 225M per year
 		},
 		{
-			name:            "Mid-year change in year 5",
-			changeAtYear:    5,
-			changeAtPercent: 50,
-			oldBlockTime:    2000,
-			newBlockTime:    3000,
+			name:         "Year 5-8 emission rate",
+			year:         5,
+			expectedRate: int64(56_250_000_000_000) / SECONDS_IN_YEAR, // 56.25M per year
 		},
 		{
-			name:            "Late change in year 3",
-			changeAtYear:    3,
-			changeAtPercent: 90,
-			oldBlockTime:    2000,
-			newBlockTime:    1500,
+			name:         "Year 7-8 emission rate (after halving)",
+			year:         7,
+			expectedRate: int64(28_125_000_000_000) / SECONDS_IN_YEAR, // 28.125M per year
+		},
+		{
+			name:         "Year 9-10 emission rate",
+			year:         9,
+			expectedRate: int64(14_062_500_000_000) / SECONDS_IN_YEAR, // 14.0625M per year
+		},
+		{
+			name:         "Year 11-12 emission rate",
+			year:         11,
+			expectedRate: int64(14_062_500_000_000) / SECONDS_IN_YEAR, // 14.0625M per year
 		},
 	}
 
 	for _, sc := range scenarios {
 		t.Run(sc.name, func(t *testing.T) {
-			// Reset state for each scenario
-			resetEmissionState(t)
-			// callbackEmissionChange = func(amount int64) {}
+			// Test emission rate at different points in the year
+			startTs := GetHalvingYearStartTimestamp(sc.year)
+			endTs := GetHalvingYearEndTimestamp(sc.year)
+			midTs := startTs + (endTs-startTs)/2
 
-			// Skip to the target point in the year
-			yearStart := GetHalvingYearStartBlock(sc.changeAtYear)
-			yearEnd := GetHalvingYearEndBlock(sc.changeAtYear)
-			blocksInYear := yearEnd - yearStart + 1
-			targetHeight := yearStart + (blocksInYear * int64(sc.changeAtPercent) / 100)
+			// Check emission rates at different timestamps
+			startRate := GetEmissionAmountPerSecondByTimestamp(startTs)
+			midRate := GetEmissionAmountPerSecondByTimestamp(midTs)
+			endRate := GetEmissionAmountPerSecondByTimestamp(endTs)
 
-			testing.SkipHeights(targetHeight - std.ChainHeight() - 1)
+			// All rates should be equal within the same year
+			uassert.Equal(t, sc.expectedRate, startRate,
+				ufmt.Sprintf("%s: Start emission rate incorrect", sc.name))
+			uassert.Equal(t, sc.expectedRate, midRate,
+				ufmt.Sprintf("%s: Mid emission rate incorrect", sc.name))
+			uassert.Equal(t, sc.expectedRate, endRate,
+				ufmt.Sprintf("%s: End emission rate incorrect", sc.name))
 
-			// Record expected total emissions for each year
-			expectedTotals := make(map[int64]int64)
-			for year := int64(1); year <= HALVING_END_YEAR; year++ {
-				expectedTotals[year] = GetHalvingYearMaxAmount(year)
-			}
-
-			// Change block time
-			testing.SetRealm(adminRealm)
-			setAvgBlockTimeInMs(sc.newBlockTime)
-
-			// Calculate actual total emissions for each year after change
-			for year := sc.changeAtYear; year <= HALVING_END_YEAR; year++ {
-				startBlock := GetHalvingYearStartBlock(year)
-				endBlock := GetHalvingYearEndBlock(year)
-				blocksInYear := endBlock - startBlock + 1
-				amountPerBlock := GetAmountPerBlockPerHalvingYear(year)
-
-				actualTotal := amountPerBlock * blocksInYear
-				expectedTotal := expectedTotals[year]
-
-				// For current year, need to account for already minted amount
-				if year == sc.changeAtYear {
-					mintedAmount := GetHalvingYearMintAmount(year)
-					leftAmount := GetHalvingYearLeftAmount(year)
-
-					// The sum of minted and left should equal max
-					uassert.Equal(t, expectedTotal, mintedAmount+leftAmount,
-						ufmt.Sprintf("%s: Year %d minted+left should equal max", sc.name, year))
-
-					// Calculate expected emission for remaining blocks
-					remainingBlocks := endBlock - std.ChainHeight()
-					expectedRemainingEmission := amountPerBlock * remainingBlocks
-
-					// Should be close to left amount (within 1%)
-					diff := expectedRemainingEmission - leftAmount
-					if diff < 0 {
-						diff = -diff
-					}
-					tolerance := leftAmount / 100
-
-					uassert.True(t, diff <= tolerance,
-						ufmt.Sprintf("%s: Year %d remaining emission incorrect. Left: %d, Expected: %d",
-							sc.name, year, leftAmount, expectedRemainingEmission))
-				} else {
-					// For future years, total emission should match max amount
-					diff := actualTotal - expectedTotal
-					if diff < 0 {
-						diff = -diff
-					}
-
-					// Allow 1% tolerance for rounding
-					tolerance := expectedTotal / 100
-
-					uassert.True(t, diff <= tolerance,
-						ufmt.Sprintf("%s: Year %d total emission incorrect. Expected: %d, Got: %d, Diff: %d",
-							sc.name, year, expectedTotal, actualTotal, diff))
-				}
-			}
+			// Verify total year amount
+			yearAmount := GetHalvingAmountsPerYear(sc.year)
+			expectedYearAmount := sc.expectedRate * SECONDS_IN_YEAR
+			expectedAmountDiff := yearAmount - expectedYearAmount
+			uassert.True(t, expectedAmountDiff < SECONDS_IN_YEAR,
+				ufmt.Sprintf("%s: Total year amount incorrect", sc.name))
 		})
 	}
 }
 
-// TestEmissionRateConsistencyAcrossYears verifies that the emission rate
-// calculations are consistent when block time changes
-func TestEmissionRateConsistencyAcrossYears(t *testing.T) {
+// TestEmissionHalvingSchedule verifies the halving schedule is correct
+func TestEmissionHalvingSchedule(t *testing.T) {
 	resetEmissionState(t)
+	InitGnsTest(t)
 
-	// Skip to year 3
-	targetHeight := GetHalvingYearStartBlock(3) + 1000
-	testing.SkipHeights(targetHeight - std.ChainHeight() - 1)
+	// Verify halving amounts
+	halvingTests := []struct {
+		fromYear      int64
+		toYear        int64
+		expectedHalve bool
+		description   string
+	}{
+		{1, 2, false, "Year 1-2: same period, no halving"},
+		{4, 5, true, "Year 4-5: same period, no halving"},
+		{6, 7, true, "Year 6-7: halving boundary"},
+		{8, 9, true, "Year 8-9: halving boundary"},
+		{10, 11, false, "Year 10-11: halving boundary"},
+		{11, 12, false, "Year 11-12: same period, no halving"},
+	}
 
-	// Change block time from 2000ms to 1000ms
-	testing.SetRealm(adminRealm)
-	setAvgBlockTimeInMs(1000)
+	for _, tt := range halvingTests {
+		t.Run(tt.description, func(t *testing.T) {
+			amount1 := GetHalvingAmountsPerYear(tt.fromYear)
+			amount2 := GetHalvingAmountsPerYear(tt.toYear)
 
-	// For each future year, verify the relationship between
-	// blocks per year and emission per block
-	for year := int64(4); year <= HALVING_END_YEAR; year++ {
-		maxAmount := GetHalvingYearMaxAmount(year)
-		amountPerBlock := GetAmountPerBlockPerHalvingYear(year)
-		startBlock := GetHalvingYearStartBlock(year)
-		endBlock := GetHalvingYearEndBlock(year)
-		blocksInYear := endBlock - startBlock + 1
-
-		// Calculate daily emission rate
-		dailyAmount := maxAmount / DAY_PER_YEAR
-		expectedAmountPerBlock := dailyAmount / blockPerDay
-
-		// The calculated amount per block should match expected
-		uassert.Equal(t, expectedAmountPerBlock, amountPerBlock,
-			ufmt.Sprintf("Year %d: amount per block mismatch", year))
-
-		// Total emission should be close to max amount
-		totalEmission := amountPerBlock * blocksInYear
-		diff := totalEmission - maxAmount
-		if diff < 0 {
-			diff = -diff
-		}
-
-		// Allow small tolerance for integer division
-		tolerance := maxAmount / 100
-		uassert.True(t, diff <= tolerance,
-			ufmt.Sprintf("Year %d: total emission deviates. Max: %d, Total: %d",
-				year, maxAmount, totalEmission))
+			if tt.expectedHalve {
+				// Should be approximately half
+				ratio := float64(amount1) / float64(amount2)
+				uassert.True(t, ratio > 1.9 && ratio < 2.1,
+					ufmt.Sprintf("%s: Expected halving but got ratio %.2f", tt.description, ratio))
+			} else {
+				// Should be equal
+				uassert.Equal(t, amount1, amount2,
+					ufmt.Sprintf("%s: Expected same amount", tt.description))
+			}
+		})
 	}
 }

@@ -1,32 +1,60 @@
-# GNS Token
+# GNS
 
-The `GNS` token is the governance and main utility token of the GnoSwap protocol
+GnoSwap governance and utility token.
 
-## Token Implementation
+## Overview
 
-- Follows the `grc20` token specs ([grc spec](https://github.com/gnolang/gno/tree/master/examples/gno.land/p/demo/grc))
-- Symbol: `GNS`
-- Decimals: 6
-- Max Supply: 1_000_000_000 (1B)
+GNS is the native governance token of GnoSwap, featuring a deflationary emission schedule with halvings every 2 years over 12 years total.
 
-See the details on the GNS tokenomics [here](https://docs.gnoswap.io/gnoswap-token/whats-gns).
+## Token Economics
 
-## Emission Mechanism
+- **Symbol**: GNS
+- **Decimals**: 6
+- **Max Supply**: 1,000,000,000 GNS
+- **Initial Mint**: 100,000,000 GNS
+- **Total Emission**: 900,000,000 GNS over 12 years
 
-- Block-based token emission with predefined schedule.
-- Token emission follows a halving model over 12 years.
-- Each halving period adjusts the amounts of tokens minted per block.
+## Emission Schedule
 
-## Halving Schedule
+| Years | Annual Emission | Rate |
+|-------|----------------|------|
+| 1-2   | 225,000,000    | 100% |
+| 3-4   | 112,500,000    | 50%  |
+| 5-6   | 56,250,000     | 25%  |
+| 7-8   | 28,125,000     | 12.5%|
+| 9-12  | 14,062,500     | 6.25%|
 
-- 12 years emission period devided into halving periods
+## Core Functions
 
-| Years | Description |
-| --- | --- |
-| 1-2 | Full emission rate |
-| 3-4 | 50% of initial emission rate |
-| 5-6 | 25% of initial emission rate |
-| 7-8 | 12.5% of initial emission rate |
-| 9-12 | 6.25% of initial emission rate |
+### `Transfer`
+Transfers tokens between addresses.
 
-For details about the emission and distribution of the GNS tokens, refer to our [emission contract](https://github.com/gnoswap-labs/gnoswap/tree/main/contract/r/gnoswap/emission).
+### `TransferFrom`
+Transfers with allowance.
+
+### `Approve`
+Approves spending allowance.
+
+### `MintGns`
+Mints new tokens per emission schedule.
+
+### `Burn`
+Burns tokens from supply.
+
+## Usage
+
+```go
+// Transfer tokens
+Transfer(to, amount)
+
+// Approve and transfer
+Approve(spender, amount)
+TransferFrom(from, to, amount)
+
+// Mint per emission schedule
+MintGns()
+```
+
+## Distribution
+
+See [emission contract](../emission) for distribution details.

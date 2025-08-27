@@ -10,22 +10,22 @@ import (
 	"strings"
 )
 
-// Uint64 returns the lower 64-bits of z
+// Uint64 returns the lower 64 bits of z as a uint64.
 func (z *Uint) Uint64() uint64 {
 	return z.arr[0]
 }
 
-// Int64 returns the lower 64-bits of z
+// Int64 returns the lower 64 bits of z as an int64.
 func (z *Uint) Int64() int64 {
 	return int64(z.Uint64())
 }
 
-// Uint64WithOverflow returns the lower 64-bits of z and bool whether overflow occurred
+// Uint64WithOverflow returns the lower 64 bits of z and true if overflow occurred.
 func (z *Uint) Uint64WithOverflow() (uint64, bool) {
 	return z.arr[0], (z.arr[1] | z.arr[2] | z.arr[3]) != 0
 }
 
-// SetUint64 sets z to the value x
+// SetUint64 sets z to the value of x and returns z.
 func (z *Uint) SetUint64(x uint64) *Uint {
 	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, 0, 0, x
 	return z
@@ -88,6 +88,8 @@ func (z *Uint) Dec() string {
 	return string(out[pos-len(buf):])
 }
 
+// Scan implements the database/sql Scanner interface.
+// Supports scanning from strings, byte slices, and numeric types. Sets z to 0 if src is nil.
 func (z *Uint) Scan(src any) error {
 	if src == nil {
 		z.Clear()
@@ -133,8 +135,8 @@ func (z *Uint) scanScientificFromString(src string) error {
 	return nil
 }
 
-// ToString returns the decimal string representation of z. It returns an empty string if z is nil.
-// OBS: doesn't exist from holiman's uint256
+// ToString returns the decimal string representation of z.
+// Returns an empty string if z is nil. This method doesn't exist in holiman's uint256.
 func (z *Uint) ToString() string {
 	if z == nil {
 		return ""
@@ -143,20 +145,15 @@ func (z *Uint) ToString() string {
 	return z.Dec()
 }
 
-// MarshalJSON implements json.Marshaler.
-// MarshalJSON marshals using the 'decimal string' representation. This is _not_ compatible
-// with big.Uint: big.Uint marshals into JSON 'native' numeric format.
-//
-// The JSON  native format is, on some platforms, (e.g. javascript), limited to 53-bit large
-// integer space. Thus, U256 uses string-format, which is not compatible with
-// big.int (big.Uint refuses to unmarshal a string representation).
+// MarshalJSON implements json.Marshaler by marshaling z as a decimal string.
+// This differs from big.Int which uses JSON's native numeric format.
+// Uses string format to avoid JavaScript's 53-bit integer precision limitations.
 func (z *Uint) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + z.Dec() + `"`), nil
 }
 
-// UnmarshalJSON implements json.Unmarshaler. UnmarshalJSON accepts either
-// - Quoted string: either hexadecimal OR decimal
-// - Not quoted string: only decimal
+// UnmarshalJSON implements json.Unmarshaler.
+// Accepts quoted strings (hexadecimal or decimal) or unquoted strings (decimal only).
 func (z *Uint) UnmarshalJSON(input []byte) error {
 	if len(input) < 2 || input[0] != '"' || input[len(input)-1] != '"' {
 		// if not quoted, it must be decimal
@@ -165,15 +162,14 @@ func (z *Uint) UnmarshalJSON(input []byte) error {
 	return z.UnmarshalText(input[1 : len(input)-1])
 }
 
-// MarshalText implements encoding.TextMarshaler
-// MarshalText marshals using the decimal representation (compatible with big.Uint)
+// MarshalText implements encoding.TextMarshaler by marshaling z as a decimal string.
+// Compatible with big.Int's text marshaling format.
 func (z *Uint) MarshalText() ([]byte, error) {
 	return []byte(z.Dec()), nil
 }
 
-// UnmarshalText implements encoding.TextUnmarshaler. This method
-// can unmarshal either hexadecimal or decimal.
-// - For hexadecimal, the input _must_ be prefixed with 0x or 0X
+// UnmarshalText implements encoding.TextUnmarshaler.
+// Accepts decimal strings or hexadecimal strings prefixed with 0x or 0X.
 func (z *Uint) UnmarshalText(input []byte) error {
 	if len(input) >= 2 && input[0] == '0' && (input[1] == 'x' || input[1] == 'X') {
 		return z.fromHex(string(input))
@@ -181,9 +177,8 @@ func (z *Uint) UnmarshalText(input []byte) error {
 	return z.fromDecimal(string(input))
 }
 
-// SetBytes interprets buf as the bytes of a big-endian unsigned
-// integer, sets z to that value, and returns z.
-// If buf is larger than 32 bytes, the last 32 bytes is used.
+// SetBytes interprets buf as a big-endian unsigned integer and sets z to that value.
+// If buf is larger than 32 bytes, uses only the last 32 bytes. Returns z.
 func (z *Uint) SetBytes(buf []byte) *Uint {
 	switch l := len(buf); l {
 	case 0:
@@ -256,14 +251,16 @@ func (z *Uint) SetBytes(buf []byte) *Uint {
 	return z
 }
 
-// SetBytes1 is identical to SetBytes(in[:1]), but panics is input is too short
+// SetBytes1 sets z from a 1-byte big-endian slice and returns z.
+// Panics if input is shorter than 1 byte.
 func (z *Uint) SetBytes1(in []byte) *Uint {
 	z.arr[3], z.arr[2], z.arr[1] = 0, 0, 0
 	z.arr[0] = uint64(in[0])
 	return z
 }
 
-// SetBytes2 is identical to SetBytes(in[:2]), but panics is input is too short
+// SetBytes2 sets z from a 2-byte big-endian slice and returns z.
+// Panics if input is shorter than 2 bytes.
 func (z *Uint) SetBytes2(in []byte) *Uint {
 	_ = in[1] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3], z.arr[2], z.arr[1] = 0, 0, 0
@@ -271,7 +268,8 @@ func (z *Uint) SetBytes2(in []byte) *Uint {
 	return z
 }
 
-// SetBytes3 is identical to SetBytes(in[:3]), but panics is input is too short
+// SetBytes3 sets z from a 3-byte big-endian slice and returns z.
+// Panics if input is shorter than 3 bytes.
 func (z *Uint) SetBytes3(in []byte) *Uint {
 	_ = in[2] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3], z.arr[2], z.arr[1] = 0, 0, 0
@@ -279,7 +277,8 @@ func (z *Uint) SetBytes3(in []byte) *Uint {
 	return z
 }
 
-// SetBytes4 is identical to SetBytes(in[:4]), but panics is input is too short
+// SetBytes4 sets z from a 4-byte big-endian slice and returns z.
+// Panics if input is shorter than 4 bytes.
 func (z *Uint) SetBytes4(in []byte) *Uint {
 	_ = in[3] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3], z.arr[2], z.arr[1] = 0, 0, 0
@@ -287,7 +286,8 @@ func (z *Uint) SetBytes4(in []byte) *Uint {
 	return z
 }
 
-// SetBytes5 is identical to SetBytes(in[:5]), but panics is input is too short
+// SetBytes5 sets z from a 5-byte big-endian slice and returns z.
+// Panics if input is shorter than 5 bytes.
 func (z *Uint) SetBytes5(in []byte) *Uint {
 	_ = in[4] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3], z.arr[2], z.arr[1] = 0, 0, 0
@@ -295,7 +295,8 @@ func (z *Uint) SetBytes5(in []byte) *Uint {
 	return z
 }
 
-// SetBytes6 is identical to SetBytes(in[:6]), but panics is input is too short
+// SetBytes6 sets z from a 6-byte big-endian slice and returns z.
+// Panics if input is shorter than 6 bytes.
 func (z *Uint) SetBytes6(in []byte) *Uint {
 	_ = in[5] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3], z.arr[2], z.arr[1] = 0, 0, 0
@@ -303,7 +304,8 @@ func (z *Uint) SetBytes6(in []byte) *Uint {
 	return z
 }
 
-// SetBytes7 is identical to SetBytes(in[:7]), but panics is input is too short
+// SetBytes7 sets z from a 7-byte big-endian slice and returns z.
+// Panics if input is shorter than 7 bytes.
 func (z *Uint) SetBytes7(in []byte) *Uint {
 	_ = in[6] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3], z.arr[2], z.arr[1] = 0, 0, 0
@@ -311,7 +313,8 @@ func (z *Uint) SetBytes7(in []byte) *Uint {
 	return z
 }
 
-// SetBytes8 is identical to SetBytes(in[:8]), but panics is input is too short
+// SetBytes8 sets z from an 8-byte big-endian slice and returns z.
+// Panics if input is shorter than 8 bytes.
 func (z *Uint) SetBytes8(in []byte) *Uint {
 	_ = in[7] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3], z.arr[2], z.arr[1] = 0, 0, 0
@@ -319,7 +322,8 @@ func (z *Uint) SetBytes8(in []byte) *Uint {
 	return z
 }
 
-// SetBytes9 is identical to SetBytes(in[:9]), but panics is input is too short
+// SetBytes9 sets z from a 9-byte big-endian slice and returns z.
+// Panics if input is shorter than 9 bytes.
 func (z *Uint) SetBytes9(in []byte) *Uint {
 	_ = in[8] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3], z.arr[2] = 0, 0
@@ -328,7 +332,8 @@ func (z *Uint) SetBytes9(in []byte) *Uint {
 	return z
 }
 
-// SetBytes10 is identical to SetBytes(in[:10]), but panics is input is too short
+// SetBytes10 sets z from a 10-byte big-endian slice and returns z.
+// Panics if input is shorter than 10 bytes.
 func (z *Uint) SetBytes10(in []byte) *Uint {
 	_ = in[9] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3], z.arr[2] = 0, 0
@@ -337,7 +342,8 @@ func (z *Uint) SetBytes10(in []byte) *Uint {
 	return z
 }
 
-// SetBytes11 is identical to SetBytes(in[:11]), but panics is input is too short
+// SetBytes11 sets z from an 11-byte big-endian slice and returns z.
+// Panics if input is shorter than 11 bytes.
 func (z *Uint) SetBytes11(in []byte) *Uint {
 	_ = in[10] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3], z.arr[2] = 0, 0
@@ -346,7 +352,8 @@ func (z *Uint) SetBytes11(in []byte) *Uint {
 	return z
 }
 
-// SetBytes12 is identical to SetBytes(in[:12]), but panics is input is too short
+// SetBytes12 sets z from a 12-byte big-endian slice and returns z.
+// Panics if input is shorter than 12 bytes.
 func (z *Uint) SetBytes12(in []byte) *Uint {
 	_ = in[11] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3], z.arr[2] = 0, 0
@@ -355,7 +362,8 @@ func (z *Uint) SetBytes12(in []byte) *Uint {
 	return z
 }
 
-// SetBytes13 is identical to SetBytes(in[:13]), but panics is input is too short
+// SetBytes13 sets z from a 13-byte big-endian slice and returns z.
+// Panics if input is shorter than 13 bytes.
 func (z *Uint) SetBytes13(in []byte) *Uint {
 	_ = in[12] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3], z.arr[2] = 0, 0
@@ -364,7 +372,8 @@ func (z *Uint) SetBytes13(in []byte) *Uint {
 	return z
 }
 
-// SetBytes14 is identical to SetBytes(in[:14]), but panics is input is too short
+// SetBytes14 sets z from a 14-byte big-endian slice and returns z.
+// Panics if input is shorter than 14 bytes.
 func (z *Uint) SetBytes14(in []byte) *Uint {
 	_ = in[13] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3], z.arr[2] = 0, 0
@@ -373,7 +382,8 @@ func (z *Uint) SetBytes14(in []byte) *Uint {
 	return z
 }
 
-// SetBytes15 is identical to SetBytes(in[:15]), but panics is input is too short
+// SetBytes15 sets z from a 15-byte big-endian slice and returns z.
+// Panics if input is shorter than 15 bytes.
 func (z *Uint) SetBytes15(in []byte) *Uint {
 	_ = in[14] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3], z.arr[2] = 0, 0
@@ -382,7 +392,8 @@ func (z *Uint) SetBytes15(in []byte) *Uint {
 	return z
 }
 
-// SetBytes16 is identical to SetBytes(in[:16]), but panics is input is too short
+// SetBytes16 sets z from a 16-byte big-endian slice and returns z.
+// Panics if input is shorter than 16 bytes.
 func (z *Uint) SetBytes16(in []byte) *Uint {
 	_ = in[15] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3], z.arr[2] = 0, 0
@@ -391,7 +402,8 @@ func (z *Uint) SetBytes16(in []byte) *Uint {
 	return z
 }
 
-// SetBytes17 is identical to SetBytes(in[:17]), but panics is input is too short
+// SetBytes17 sets z from a 17-byte big-endian slice and returns z.
+// Panics if input is shorter than 17 bytes.
 func (z *Uint) SetBytes17(in []byte) *Uint {
 	_ = in[16] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3] = 0
@@ -401,7 +413,8 @@ func (z *Uint) SetBytes17(in []byte) *Uint {
 	return z
 }
 
-// SetBytes18 is identical to SetBytes(in[:18]), but panics is input is too short
+// SetBytes18 sets z from an 18-byte big-endian slice and returns z.
+// Panics if input is shorter than 18 bytes.
 func (z *Uint) SetBytes18(in []byte) *Uint {
 	_ = in[17] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3] = 0
@@ -411,7 +424,8 @@ func (z *Uint) SetBytes18(in []byte) *Uint {
 	return z
 }
 
-// SetBytes19 is identical to SetBytes(in[:19]), but panics is input is too short
+// SetBytes19 sets z from a 19-byte big-endian slice and returns z.
+// Panics if input is shorter than 19 bytes.
 func (z *Uint) SetBytes19(in []byte) *Uint {
 	_ = in[18] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3] = 0
@@ -421,7 +435,8 @@ func (z *Uint) SetBytes19(in []byte) *Uint {
 	return z
 }
 
-// SetBytes20 is identical to SetBytes(in[:20]), but panics is input is too short
+// SetBytes20 sets z from a 20-byte big-endian slice and returns z.
+// Panics if input is shorter than 20 bytes.
 func (z *Uint) SetBytes20(in []byte) *Uint {
 	_ = in[19] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3] = 0
@@ -431,7 +446,8 @@ func (z *Uint) SetBytes20(in []byte) *Uint {
 	return z
 }
 
-// SetBytes21 is identical to SetBytes(in[:21]), but panics is input is too short
+// SetBytes21 sets z from a 21-byte big-endian slice and returns z.
+// Panics if input is shorter than 21 bytes.
 func (z *Uint) SetBytes21(in []byte) *Uint {
 	_ = in[20] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3] = 0
@@ -441,7 +457,8 @@ func (z *Uint) SetBytes21(in []byte) *Uint {
 	return z
 }
 
-// SetBytes22 is identical to SetBytes(in[:22]), but panics is input is too short
+// SetBytes22 sets z from a 22-byte big-endian slice and returns z.
+// Panics if input is shorter than 22 bytes.
 func (z *Uint) SetBytes22(in []byte) *Uint {
 	_ = in[21] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3] = 0
@@ -451,7 +468,8 @@ func (z *Uint) SetBytes22(in []byte) *Uint {
 	return z
 }
 
-// SetBytes23 is identical to SetBytes(in[:23]), but panics is input is too short
+// SetBytes23 sets z from a 23-byte big-endian slice and returns z.
+// Panics if input is shorter than 23 bytes.
 func (z *Uint) SetBytes23(in []byte) *Uint {
 	_ = in[22] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3] = 0
@@ -461,7 +479,8 @@ func (z *Uint) SetBytes23(in []byte) *Uint {
 	return z
 }
 
-// SetBytes24 is identical to SetBytes(in[:24]), but panics is input is too short
+// SetBytes24 sets z from a 24-byte big-endian slice and returns z.
+// Panics if input is shorter than 24 bytes.
 func (z *Uint) SetBytes24(in []byte) *Uint {
 	_ = in[23] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3] = 0
@@ -471,7 +490,8 @@ func (z *Uint) SetBytes24(in []byte) *Uint {
 	return z
 }
 
-// SetBytes25 is identical to SetBytes(in[:25]), but panics is input is too short
+// SetBytes25 sets z from a 25-byte big-endian slice and returns z.
+// Panics if input is shorter than 25 bytes.
 func (z *Uint) SetBytes25(in []byte) *Uint {
 	_ = in[24] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3] = uint64(in[0])
@@ -481,7 +501,8 @@ func (z *Uint) SetBytes25(in []byte) *Uint {
 	return z
 }
 
-// SetBytes26 is identical to SetBytes(in[:26]), but panics is input is too short
+// SetBytes26 sets z from a 26-byte big-endian slice and returns z.
+// Panics if input is shorter than 26 bytes.
 func (z *Uint) SetBytes26(in []byte) *Uint {
 	_ = in[25] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3] = uint64(binary.BigEndian.Uint16(in[0:2]))
@@ -491,7 +512,8 @@ func (z *Uint) SetBytes26(in []byte) *Uint {
 	return z
 }
 
-// SetBytes27 is identical to SetBytes(in[:27]), but panics is input is too short
+// SetBytes27 sets z from a 27-byte big-endian slice and returns z.
+// Panics if input is shorter than 27 bytes.
 func (z *Uint) SetBytes27(in []byte) *Uint {
 	_ = in[26] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3] = uint64(binary.BigEndian.Uint16(in[1:3])) | uint64(in[0])<<16
@@ -501,7 +523,8 @@ func (z *Uint) SetBytes27(in []byte) *Uint {
 	return z
 }
 
-// SetBytes28 is identical to SetBytes(in[:28]), but panics is input is too short
+// SetBytes28 sets z from a 28-byte big-endian slice and returns z.
+// Panics if input is shorter than 28 bytes.
 func (z *Uint) SetBytes28(in []byte) *Uint {
 	_ = in[27] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3] = uint64(binary.BigEndian.Uint32(in[0:4]))
@@ -511,7 +534,8 @@ func (z *Uint) SetBytes28(in []byte) *Uint {
 	return z
 }
 
-// SetBytes29 is identical to SetBytes(in[:29]), but panics is input is too short
+// SetBytes29 sets z from a 29-byte big-endian slice and returns z.
+// Panics if input is shorter than 29 bytes.
 func (z *Uint) SetBytes29(in []byte) *Uint {
 	_ = in[28] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3] = bigEndianUint40(in[0:5])
@@ -521,7 +545,8 @@ func (z *Uint) SetBytes29(in []byte) *Uint {
 	return z
 }
 
-// SetBytes30 is identical to SetBytes(in[:30]), but panics is input is too short
+// SetBytes30 sets z from a 30-byte big-endian slice and returns z.
+// Panics if input is shorter than 30 bytes.
 func (z *Uint) SetBytes30(in []byte) *Uint {
 	_ = in[29] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3] = bigEndianUint48(in[0:6])
@@ -531,7 +556,8 @@ func (z *Uint) SetBytes30(in []byte) *Uint {
 	return z
 }
 
-// SetBytes31 is identical to SetBytes(in[:31]), but panics is input is too short
+// SetBytes31 sets z from a 31-byte big-endian slice and returns z.
+// Panics if input is shorter than 31 bytes.
 func (z *Uint) SetBytes31(in []byte) *Uint {
 	_ = in[30] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3] = bigEndianUint56(in[0:7])
@@ -541,7 +567,8 @@ func (z *Uint) SetBytes31(in []byte) *Uint {
 	return z
 }
 
-// SetBytes32 sets z to the value of the big-endian 256-bit unsigned integer in.
+// SetBytes32 sets z from a 32-byte big-endian slice and returns z.
+// Panics if input is shorter than 32 bytes.
 func (z *Uint) SetBytes32(in []byte) *Uint {
 	_ = in[31] // bounds check hint to compiler; see golang.org/issue/14808
 	z.arr[3] = binary.BigEndian.Uint64(in[0:8])

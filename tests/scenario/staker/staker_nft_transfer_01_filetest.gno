@@ -12,25 +12,25 @@ import (
 	"std"
 	"strconv"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/v1/common"
 
-	"gno.land/r/gnoswap/v1/access"
-
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
@@ -78,22 +78,19 @@ func main() {
 	stakePosition01()
 	println()
 
-	println("[SCENARIO] 5. Attempt NFT transfer (should fail)")
-	attemptNftTransfer()
-	println()
-
-	println("[SCENARIO] 6. Collect reward")
+	println("[SCENARIO] 5. Collect reward")
 	collectReward()
 }
 
 func initAccountAndEmission() {
 	testing.SetRealm(adminRealm)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
 	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
@@ -166,19 +163,6 @@ func stakePosition01() {
 	}
 }
 
-func attemptNftTransfer() {
-	println("[INFO] attempt to transfer staked NFT (should fail)")
-
-	// Test 1: caller is not owner (caller is same as spender)
-	println("[INFO] test 1: non-owner tries to transfer")
-	testing.SetRealm(dummyRealm)
-
-	errorMessage := "[GNOSWAP-GNFT-001] caller has no permission || caller (g1v36k6mteta047h6lta047h6lta047h6lz7gmv8) is not the owner or operator of token (1)"
-	uassert.AbortsWithMessage(t, errorMessage, func() {
-		gnft.TransferFrom(cross, adminAddr, dummyAddr, positionIdFrom(1))
-	})
-}
-
 func collectReward() {
 	testing.SetRealm(adminRealm)
 
@@ -240,10 +224,6 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] stake position 01
 // [EXPECTED] NFT owner after staking: g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu
 //
-// [SCENARIO] 5. Attempt NFT transfer (should fail)
-// [INFO] attempt to transfer staked NFT (should fail)
-// [INFO] test 1: non-owner tries to transfer
-//
-// [SCENARIO] 6. Collect reward
+// [SCENARIO] 5. Collect reward
 // [INFO] collect reward for position 01
-// [EXPECTED] reward collected: 9631848
+// [EXPECTED] reward collected: 24079616

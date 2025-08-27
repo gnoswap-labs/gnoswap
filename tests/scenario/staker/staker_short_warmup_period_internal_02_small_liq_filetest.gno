@@ -5,22 +5,23 @@ import (
 	"std"
 	"strconv"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/access"
-	en "gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/access"
+	en "gno.land/r/gnoswap/emission"
 
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
@@ -43,7 +44,7 @@ var (
 
 	max_timeout           int64 = 9999999999
 	maxInt64              int64 = 9223372036854775807
-	MUST_EXISTS_IN_TIER_1       = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"
+	MUST_EXISTS_IN_TIER_1       = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"
 )
 
 func main() {
@@ -78,6 +79,7 @@ func main() {
 
 func initAndSetup() {
 	testing.SetRealm(adminRealm)
+	en.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	// override warm-up period for testing
 	sr.SetWarmUp(cross, 30, 150)
@@ -89,10 +91,10 @@ func initAndSetup() {
 	sr.SetUnStakingFee(cross, 0)
 
 	// set pool creation fee to 0
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	// set community pool distribution to 0% (give it to devOps)
-	en.ChangeDistributionPctByAdmin(
+	en.ChangeDistributionPct(
 		cross,
 		1, 7500,
 		2, 2500,
@@ -282,6 +284,6 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 7. Collect rewards and verify distribution
 // [INFO] collecting reward for position 01 (large liquidity)
-// [EXPECTED] position 01 reward: 1605306 GNS
+// [EXPECTED] position 01 reward: 4013265 GNS
 // [INFO] collecting reward for position 02 (small liquidity)
-// [EXPECTED] position 02 reward: 1 GNS
+// [EXPECTED] position 02 reward: 3 GNS

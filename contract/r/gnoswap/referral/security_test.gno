@@ -9,48 +9,48 @@ import (
 
 	prabc "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 )
 
 func TestSecurityTest_UnauthorizedAccess(t *testing.T) {
 	tests := []struct {
-		name              string
-		caller            string
-		operation         string
-		addr              std.Address
-		refAddr           std.Address
-		expectedError     bool
-		expectedHasPanic  bool
+		name                 string
+		caller               string
+		operation            string
+		addr                 std.Address
+		refAddr              std.Address
+		expectedError        bool
+		expectedHasPanic     bool
 		expectedPanicMessage string
 	}{
 		{
-			name:              "unauthorized register",
-			caller:            "unauthorized",
-			operation:         "register",
-			addr:              testutils.TestAddress("sec1"),
-			refAddr:           testutils.TestAddress("sec2"),
-			expectedError:     true,
-			expectedHasPanic:  false,
+			name:                 "unauthorized register",
+			caller:               "unauthorized",
+			operation:            "register",
+			addr:                 testutils.TestAddress("sec1"),
+			refAddr:              testutils.TestAddress("sec2"),
+			expectedError:        true,
+			expectedHasPanic:     false,
 			expectedPanicMessage: "",
 		},
 		{
-			name:              "unauthorized update",
-			caller:            "unauthorized",
-			operation:         "update",
-			addr:              testutils.TestAddress("sec1"),
-			refAddr:           testutils.TestAddress("sec2"),
-			expectedError:     true,
-			expectedHasPanic:  false,
+			name:                 "unauthorized update",
+			caller:               "unauthorized",
+			operation:            "update",
+			addr:                 testutils.TestAddress("sec1"),
+			refAddr:              testutils.TestAddress("sec2"),
+			expectedError:        true,
+			expectedHasPanic:     false,
 			expectedPanicMessage: "",
 		},
 		{
-			name:              "unauthorized remove",
-			caller:            "unauthorized",
-			operation:         "remove",
-			addr:              testutils.TestAddress("sec1"),
-			refAddr:           zeroAddress,
-			expectedError:     true,
-			expectedHasPanic:  false,
+			name:                 "unauthorized remove",
+			caller:               "unauthorized",
+			operation:            "remove",
+			addr:                 testutils.TestAddress("sec1"),
+			refAddr:              zeroAddress,
+			expectedError:        true,
+			expectedHasPanic:     false,
 			expectedPanicMessage: "",
 		},
 	}
@@ -97,50 +97,50 @@ func TestSecurityTest_UnauthorizedAccess(t *testing.T) {
 
 func TestSecurityTest_ValidCallerAccess(t *testing.T) {
 	tests := []struct {
-		name              string
-		caller            string
-		operation         string
-		addr              std.Address
-		refAddr           std.Address
-		newRefAddr        std.Address
-		expectedHasPanic  bool
+		name                 string
+		caller               string
+		operation            string
+		addr                 std.Address
+		refAddr              std.Address
+		newRefAddr           std.Address
+		expectedHasPanic     bool
 		expectedPanicMessage string
-		expectedHas       bool
-		expectedRef       string
+		expectedHas          bool
+		expectedRef          string
 	}{
 		{
-			name:              "authorized register",
-			caller:            "router",
-			operation:         "register",
-			addr:              testutils.TestAddress("validReg1"),
-			refAddr:           testutils.TestAddress("validReg2"),
-			expectedHasPanic:  false,
+			name:                 "authorized register",
+			caller:               "router",
+			operation:            "register",
+			addr:                 testutils.TestAddress("validReg1"),
+			refAddr:              testutils.TestAddress("validReg2"),
+			expectedHasPanic:     false,
 			expectedPanicMessage: "",
-			expectedHas:       true,
-			expectedRef:       testutils.TestAddress("validReg2").String(),
+			expectedHas:          true,
+			expectedRef:          testutils.TestAddress("validReg2").String(),
 		},
 		{
-			name:              "authorized update",
-			caller:            "router",
-			operation:         "update",
-			addr:              testutils.TestAddress("validUp1"),
-			refAddr:           testutils.TestAddress("validUp2"),
-			newRefAddr:        testutils.TestAddress("validUp3"),
-			expectedHasPanic:  false,
+			name:                 "authorized update",
+			caller:               "router",
+			operation:            "update",
+			addr:                 testutils.TestAddress("validUp1"),
+			refAddr:              testutils.TestAddress("validUp2"),
+			newRefAddr:           testutils.TestAddress("validUp3"),
+			expectedHasPanic:     false,
 			expectedPanicMessage: "",
-			expectedHas:       true,
-			expectedRef:       testutils.TestAddress("validUp3").String(),
+			expectedHas:          true,
+			expectedRef:          testutils.TestAddress("validUp3").String(),
 		},
 		{
-			name:              "authorized remove",
-			caller:            "router",
-			operation:         "remove",
-			addr:              testutils.TestAddress("validRem1"),
-			refAddr:           testutils.TestAddress("validRem2"),
-			expectedHasPanic:  false,
+			name:                 "authorized remove",
+			caller:               "router",
+			operation:            "remove",
+			addr:                 testutils.TestAddress("validRem1"),
+			refAddr:              testutils.TestAddress("validRem2"),
+			expectedHasPanic:     false,
 			expectedPanicMessage: "",
-			expectedHas:       false,
-			expectedRef:       "",
+			expectedHas:          false,
+			expectedRef:          "",
 		},
 	}
 
@@ -201,44 +201,44 @@ func TestSecurityTest_ValidCallerAccess(t *testing.T) {
 
 func TestSecurityTest_InputSanitization(t *testing.T) {
 	tests := []struct {
-		name              string
-		caller            string
-		operation         string
-		addr              std.Address
-		refAddr           std.Address
-		expectedHasPanic  bool
+		name                 string
+		caller               string
+		operation            string
+		addr                 std.Address
+		refAddr              std.Address
+		expectedHasPanic     bool
 		expectedPanicMessage string
-		expectedError     error
+		expectedError        error
 	}{
 		{
-			name:              "invalid addresses rejected",
-			caller:            "router",
-			operation:         "register",
-			addr:              std.Address("invalid"),
-			refAddr:           testutils.TestAddress("sec1"),
-			expectedHasPanic:  false,
+			name:                 "invalid addresses rejected",
+			caller:               "router",
+			operation:            "register",
+			addr:                 std.Address("invalid"),
+			refAddr:              testutils.TestAddress("sec1"),
+			expectedHasPanic:     false,
 			expectedPanicMessage: "",
-			expectedError:     ErrInvalidAddress,
+			expectedError:        ErrInvalidAddress,
 		},
 		{
-			name:              "self referral prevented",
-			caller:            "router",
-			operation:         "register",
-			addr:              testutils.TestAddress("sec1"),
-			refAddr:           testutils.TestAddress("sec1"),
-			expectedHasPanic:  false,
+			name:                 "self referral prevented",
+			caller:               "router",
+			operation:            "register",
+			addr:                 testutils.TestAddress("sec1"),
+			refAddr:              testutils.TestAddress("sec1"),
+			expectedHasPanic:     false,
 			expectedPanicMessage: "",
-			expectedError:     ErrSelfReferral,
+			expectedError:        ErrSelfReferral,
 		},
 		{
-			name:              "zero address handling",
-			caller:            "router",
-			operation:         "setReferral",
-			addr:              testutils.TestAddress("sec1"),
-			refAddr:           zeroAddress,
-			expectedHasPanic:  false,
+			name:                 "zero address handling",
+			caller:               "router",
+			operation:            "setReferral",
+			addr:                 testutils.TestAddress("sec1"),
+			refAddr:              zeroAddress,
+			expectedHasPanic:     false,
 			expectedPanicMessage: "",
-			expectedError:     nil,
+			expectedError:        nil,
 		},
 	}
 
@@ -293,40 +293,40 @@ func TestSecurityTest_InputSanitization(t *testing.T) {
 
 func TestSecurityTest_RateLimitingSecurity(t *testing.T) {
 	tests := []struct {
-		name              string
-		caller            string
-		operation         string
-		addr              std.Address
-		refAddr           std.Address
-		updateRefAddr     std.Address
-		expectedHasPanic  bool
+		name                 string
+		caller               string
+		operation            string
+		addr                 std.Address
+		refAddr              std.Address
+		updateRefAddr        std.Address
+		expectedHasPanic     bool
 		expectedPanicMessage string
-		expectedError     error
-		expectedRef       string
+		expectedError        error
+		expectedRef          string
 	}{
 		{
-			name:              "prevents rapid fire operations",
-			caller:            "router",
-			operation:         "register_then_update",
-			addr:              testutils.TestAddress("sec1"),
-			refAddr:           testutils.TestAddress("sec2"),
-			updateRefAddr:     testutils.TestAddress("malicious"),
-			expectedHasPanic:  false,
+			name:                 "prevents rapid fire operations",
+			caller:               "router",
+			operation:            "register_then_update",
+			addr:                 testutils.TestAddress("sec1"),
+			refAddr:              testutils.TestAddress("sec2"),
+			updateRefAddr:        testutils.TestAddress("malicious"),
+			expectedHasPanic:     false,
 			expectedPanicMessage: "",
-			expectedError:     ErrTooManyRequests,
-			expectedRef:       testutils.TestAddress("sec2").String(),
+			expectedError:        ErrTooManyRequests,
+			expectedRef:          testutils.TestAddress("sec2").String(),
 		},
 		{
-			name:              "rate limit applies per address",
-			caller:            "router",
-			operation:         "multiple_registers",
-			addr:              testutils.TestAddress("rateSecAddr1"),
-			refAddr:           testutils.TestAddress("rateSecAddr2"),
-			updateRefAddr:     testutils.TestAddress("rateSecAddr3"),
-			expectedHasPanic:  false,
+			name:                 "rate limit applies per address",
+			caller:               "router",
+			operation:            "multiple_registers",
+			addr:                 testutils.TestAddress("rateSecAddr1"),
+			refAddr:              testutils.TestAddress("rateSecAddr2"),
+			updateRefAddr:        testutils.TestAddress("rateSecAddr3"),
+			expectedHasPanic:     false,
 			expectedPanicMessage: "",
-			expectedError:     ErrTooManyRequests,
-			expectedRef:       "",
+			expectedError:        ErrTooManyRequests,
+			expectedRef:          "",
 		},
 	}
 
@@ -388,39 +388,39 @@ func TestSecurityTest_RateLimitingSecurity(t *testing.T) {
 
 func TestSecurityTest_StateIntegrity(t *testing.T) {
 	tests := []struct {
-		name              string
-		caller            string
-		operation         string
-		addr              std.Address
-		refAddr           std.Address
-		otherAddr         std.Address
-		expectedHasPanic  bool
+		name                 string
+		caller               string
+		operation            string
+		addr                 std.Address
+		refAddr              std.Address
+		otherAddr            std.Address
+		expectedHasPanic     bool
 		expectedPanicMessage string
-		expectedFirstHas  bool
-		expectedSecondHas bool
+		expectedFirstHas     bool
+		expectedSecondHas    bool
 	}{
 		{
-			name:              "consistent state after operations",
-			caller:            "router",
-			operation:         "register_then_remove",
-			addr:              testutils.TestAddress("sec1"),
-			refAddr:           testutils.TestAddress("sec2"),
-			expectedHasPanic:  false,
+			name:                 "consistent state after operations",
+			caller:               "router",
+			operation:            "register_then_remove",
+			addr:                 testutils.TestAddress("sec1"),
+			refAddr:              testutils.TestAddress("sec2"),
+			expectedHasPanic:     false,
 			expectedPanicMessage: "",
-			expectedFirstHas:  true,
-			expectedSecondHas: false,
+			expectedFirstHas:     true,
+			expectedSecondHas:    false,
 		},
 		{
-			name:              "storage isolation",
-			caller:            "router",
-			operation:         "multiple_register_remove_one",
-			addr:              testutils.TestAddress("sec1"),
-			refAddr:           testutils.TestAddress("sec2"),
-			otherAddr:         testutils.TestAddress("malicious"),
-			expectedHasPanic:  false,
+			name:                 "storage isolation",
+			caller:               "router",
+			operation:            "multiple_register_remove_one",
+			addr:                 testutils.TestAddress("sec1"),
+			refAddr:              testutils.TestAddress("sec2"),
+			otherAddr:            testutils.TestAddress("malicious"),
+			expectedHasPanic:     false,
 			expectedPanicMessage: "",
-			expectedFirstHas:  false,
-			expectedSecondHas: false, // After remove, tc.addr should not have a referral
+			expectedFirstHas:     false,
+			expectedSecondHas:    false, // After remove, tc.addr should not have a referral
 		},
 	}
 
@@ -483,32 +483,32 @@ func TestSecurityTest_StateIntegrity(t *testing.T) {
 
 func TestSecurityTest_CallerValidation(t *testing.T) {
 	tests := []struct {
-		name              string
-		callerRole        string
-		expectedHasPanic  bool
+		name                 string
+		callerRole           string
+		expectedHasPanic     bool
 		expectedPanicMessage string
-		expectedError     bool
+		expectedError        bool
 	}{
 		{
-			name:              "valid caller governance",
-			callerRole:        "governance",
-			expectedHasPanic:  false,
+			name:                 "valid caller governance",
+			callerRole:           "governance",
+			expectedHasPanic:     false,
 			expectedPanicMessage: "",
-			expectedError:     false,
+			expectedError:        false,
 		},
 		{
-			name:              "valid caller router",
-			callerRole:        "router",
-			expectedHasPanic:  false,
+			name:                 "valid caller router",
+			callerRole:           "router",
+			expectedHasPanic:     false,
 			expectedPanicMessage: "",
-			expectedError:     false,
+			expectedError:        false,
 		},
 		{
-			name:              "invalid caller rejected",
-			callerRole:        "malicious",
-			expectedHasPanic:  false,
+			name:                 "invalid caller rejected",
+			callerRole:           "malicious",
+			expectedHasPanic:     false,
 			expectedPanicMessage: "",
-			expectedError:     true,
+			expectedError:        true,
 		},
 	}
 
@@ -551,31 +551,31 @@ func TestSecurityTest_CallerValidation(t *testing.T) {
 
 func TestSecurityTest_TryRegister(t *testing.T) {
 	tests := []struct {
-		name              string
-		caller            string
-		addr              std.Address
-		referral          string
-		expectedHasPanic  bool
+		name                 string
+		caller               string
+		addr                 std.Address
+		referral             string
+		expectedHasPanic     bool
 		expectedPanicMessage string
-		expectedSuccess   bool
+		expectedSuccess      bool
 	}{
 		{
-			name:              "successful registration",
-			caller:            "router",
-			addr:              testutils.TestAddress("tryReg1"),
-			referral:          testutils.TestAddress("tryReg2").String(),
-			expectedHasPanic:  false,
+			name:                 "successful registration",
+			caller:               "router",
+			addr:                 testutils.TestAddress("tryReg1"),
+			referral:             testutils.TestAddress("tryReg2").String(),
+			expectedHasPanic:     false,
 			expectedPanicMessage: "",
-			expectedSuccess:   false, // TryRegister fails due to realm context in test
+			expectedSuccess:      false, // TryRegister fails due to realm context in test
 		},
 		{
-			name:              "failed registration - self referral",
-			caller:            "router",
-			addr:              testutils.TestAddress("tryReg1"),
-			referral:          testutils.TestAddress("tryReg1").String(),
-			expectedHasPanic:  false,
+			name:                 "failed registration - self referral",
+			caller:               "router",
+			addr:                 testutils.TestAddress("tryReg1"),
+			referral:             testutils.TestAddress("tryReg1").String(),
+			expectedHasPanic:     false,
 			expectedPanicMessage: "",
-			expectedSuccess:   false,
+			expectedSuccess:      false,
 		},
 	}
 

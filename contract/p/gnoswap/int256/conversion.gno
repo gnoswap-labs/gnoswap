@@ -5,19 +5,24 @@ import (
 )
 
 // SetInt64 sets z to x and returns z.
+//
+// This implementation uses two's complement to handle the edge case of math.MinInt64.
+// When x = math.MinInt64 (-2^63), negating it would cause an overflow since 2^63
+// cannot be represented as a positive int64. By converting to uint64 first and then
+// applying two's complement (^u + 1) when negative, we correctly handle all int64
+// values including the minimum value without overflow.
 func (z *Int) SetInt64(x int64) *Int {
 	z = z.initiateAbs()
-
-	neg := false
-	if x < 0 {
-		neg = true
-		x = -x
-	}
 	if z.abs == nil {
-		panic("int256_SetInt64()__abs is nil")
+		panic("int256_SetInt64(): abs is nil")
 	}
-	z.abs = z.abs.SetUint64(uint64(x))
-	z.neg = neg
+	u := uint64(x)
+	neg := x < 0
+	if neg {
+		u = ^u + 1 // |x| = two's complement magnitude
+	}
+	z.abs = z.abs.SetUint64(u)
+	z.neg = neg && u != 0 // prevent -0
 	return z
 }
 
@@ -26,43 +31,33 @@ func (z *Int) SetUint64(x uint64) *Int {
 	z = z.initiateAbs()
 
 	if z.abs == nil {
-		panic("int256_SetUint64()__abs is nil")
+		panic("int256_SetUint64(): abs is nil")
 	}
 	z.abs = z.abs.SetUint64(x)
 	z.neg = false
 	return z
 }
 
-// Uint64 returns the lower 64-bits of z
+// Uint64 returns the lower 64 bits of z as a uint64.
 func (z *Int) Uint64() uint64 {
 	return z.abs.Uint64()
 }
 
-// Int64 returns the lower 64-bits of z
+// Int64 returns the lower 64 bits of z, interpreted as a signed int64 (two's complement).
+//
+// Since int64 already uses two's complement representation internally,
+// we can simply apply two's complement to the unsigned magnitude when negative and cast
+// to int64. This approach correctly handles all edge cases including when the magnitude
+// equals 2^63 (which represents math.MinInt64 when negative) without special casing.
 func (z *Int) Int64() int64 {
-	u := z.abs.Uint64()
-
-	if u == 1<<63 {
-		return -1 << 63 // always return int64 min value
-	}
-
-	if u < 1<<63 {
-		if z.neg {
-			return -int64(u)
-		}
-		return int64(u)
-	}
-
-	// convert uint64 to int64 safely using two's complement
-	// when the number is greater than 2^63
-	res := -int64(^u + 1)
+	u := z.abs.Uint64() // lower 64 bits of magnitude
 	if z.neg {
-		return -res
+		u = ^u + 1 // apply two's complement for negative sign
 	}
-	return res
+	return int64(u) // reinterpret as two's complement int64
 }
 
-// Neg sets z to -x and returns z.)
+// Neg sets z to -x and returns z.
 func (z *Int) Neg(x *Int) *Int {
 	z.abs.Set(x.abs)
 	if z.abs.IsZero() {
@@ -73,9 +68,8 @@ func (z *Int) Neg(x *Int) *Int {
 	return z
 }
 
-// NegOverflow returns z = -x, and true if overflow occurs.
-//
-// The overflow can be happen when negating a minimum or a maximum value.
+// NegOverflow sets z to -x and returns z and whether overflow occurred.
+// Overflow occurs when negating the minimum int256 value (-2^255).
 func (z *Int) NegOverflow(x *Int) (*Int, bool) {
 	z = z.initiateAbs()
 
@@ -103,15 +97,16 @@ func (z *Int) Set(x *Int) *Int {
 	return z
 }
 
-// SetFromUint256 converts a uint256.Uint to Int and sets the value to z.
+// SetUint256 sets z to the value of x and returns z.
 func (z *Int) SetUint256(x *uint256.Uint) *Int {
 	z.abs.Set(x)
 	z.neg = false
 	return z
 }
 
-// OBS, differs from original mempooler int256
-// ToString returns the decimal representation of z.
+// ToString returns the decimal string representation of z.
+// Panics if z is nil.
+// This differs from the original mempooler int256 implementation.
 func (z *Int) ToString() string {
 	if z == nil {
 		panic("int256: nil pointer to ToString()")

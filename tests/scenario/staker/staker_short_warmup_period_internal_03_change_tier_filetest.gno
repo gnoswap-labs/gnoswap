@@ -4,24 +4,24 @@ package main
 import (
 	"std"
 	"strconv"
-
 	"testing"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/access"
-	en "gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/access"
+	en "gno.land/r/gnoswap/emission"
 
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -45,10 +45,10 @@ var (
 	fee100  uint32 = 100
 	fee3000 uint32 = 3000
 
-	max_timeout           int64 = 9999999999
-	maxInt64              int64 = 9223372036854775807
+	max_timeout int64 = 9999999999
+	maxInt64    int64 = 9223372036854775807
 
-	MUST_EXISTS_IN_TIER_1       = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"
+	MUST_EXISTS_IN_TIER_1 = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"
 )
 
 func main() {
@@ -95,6 +95,7 @@ func main() {
 
 func initAndSetup() {
 	testing.SetRealm(adminRealm)
+	en.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	// override warm-up period for testing
 	sr.SetWarmUp(cross, 30, 150)
@@ -106,10 +107,10 @@ func initAndSetup() {
 	sr.SetUnStakingFee(cross, 0)
 
 	// set pool creation fee to 0
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	// set community pool distribution to 0% (give it to devOps)
-	en.ChangeDistributionPctByAdmin(
+	en.ChangeDistributionPct(
 		cross,
 		1, 7500,
 		2, 2500,
@@ -323,9 +324,9 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 9. Stake position 02 and check tier 2 reward
 // [EXPECTED] position 02 staked
 // [INFO] collecting reward when position 02 is in tier 2
-// [EXPECTED] position 02 tier 2 reward: 963184 GNS
+// [EXPECTED] position 02 tier 2 reward: 2407961 GNS
 //
 // [SCENARIO] 10. Change pool tier to 1 and check reward
 // [EXPECTED] pool tier changed to 1
 // [INFO] checking reward when position 02 is in tier 1
-// [EXPECTED] position 02 tier 1 reward: 1070205 GNS
+// [EXPECTED] position 02 tier 1 reward: 2675512 GNS

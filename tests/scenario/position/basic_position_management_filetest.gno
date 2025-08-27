@@ -11,9 +11,9 @@ import (
 	"gno.land/p/demo/testutils"
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gns"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 
@@ -76,7 +76,7 @@ func setupPool() {
 	if !poolSetup {
 		println("[INFO] Setting up pool for position tests")
 		testing.SetRealm(adminRealm)
-		pl.SetPoolCreationFeeByAdmin(cross, 0)
+		pl.SetPoolCreationFee(cross, 0)
 		gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
 		pl.CreatePool(cross, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 		poolSetup = true

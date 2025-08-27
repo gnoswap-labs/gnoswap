@@ -12,7 +12,7 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/position"
@@ -70,7 +70,7 @@ func main() {
 
 func initPool() {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFeeByAdmin(cross, 0)
+	pool.SetPoolCreationFee(cross, 0)
 
 	testing.SetRealm(adminRealm)
 
@@ -132,7 +132,13 @@ func executeMultipleSwaps() {
 	bar.Approve(cross, poolAddr, INT64_MAX)
 	foo.Approve(cross, poolAddr, INT64_MAX)
 
-	testing.SetRealm(routerRealm)
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = routerRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	ufmt.Println("[INFO] Executing first swap BAR -> FOO")
 	amount0, amount1 := pool.Swap(
 		cross,
@@ -192,7 +198,13 @@ func executeMoreSwaps() {
 	bar.Approve(cross, poolAddr, INT64_MAX)
 	foo.Approve(cross, poolAddr, INT64_MAX)
 
-	testing.SetRealm(routerRealm)
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = routerRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	ufmt.Println("[INFO] Executing additional swap BAR -> FOO")
 	amount0, amount1 := pool.Swap(
 		cross,

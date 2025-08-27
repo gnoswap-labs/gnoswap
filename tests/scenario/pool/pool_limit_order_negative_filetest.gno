@@ -11,11 +11,11 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/pool"
 
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
 )
 
 // Constants for addresses and approvals
@@ -26,12 +26,12 @@ const (
 )
 
 var (
-	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm      = std.NewUserRealm(adminAddr)
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm     = std.NewUserRealm(positionAddr)
-	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
-	rouRealm     = std.NewUserRealm(routerAddr)
+	posRealm        = std.NewUserRealm(positionAddr)
+	routerAddr, _   = access.GetAddress(prbac.ROLE_ROUTER.String())
+	rouRealm        = std.NewUserRealm(routerAddr)
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 
 	poolCreationFee int64 = 100_000_000
@@ -88,7 +88,14 @@ func main() {
 
 	// SWAP 0 -> 1
 	println("[INFO] Swap 0 -> 1")
-	testing.SetRealm(rouRealm)
+
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = rouRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	swap0, swap1 := pool.Swap(
 		cross,
 		barPath,
@@ -140,6 +147,7 @@ func main() {
 	println("[EXPECTED] Collect 1:", collect1, "expected: 0")
 	println()
 
+	thisPool = pool.GetPool(barPath, fooPath, fee500)
 	slotTick := thisPool.Slot0Tick()
 	println("[EXPECTED] slot tick should be < -120")
 	if slotTick >= -120 {

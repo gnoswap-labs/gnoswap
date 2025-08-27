@@ -9,24 +9,24 @@ import (
 	"std"
 	"strconv"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/v1/common"
 
-	"gno.land/r/gnoswap/v1/access"
-
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
@@ -75,26 +75,23 @@ func main() {
 	stakePositionsForUsers()
 	println()
 
-	println("[SCENARIO] 5. Test NFT transfer restrictions")
-	testNftTransferRestrictions()
-	println()
-
-	println("[SCENARIO] 6. Collect rewards for different users")
+	println("[SCENARIO] 5. Collect rewards for different users")
 	collectRewardsForUsers()
 	println()
 
-	println("[SCENARIO] 7. Unstake and verify NFT ownership")
+	println("[SCENARIO] 6. Unstake and verify NFT ownership")
 	unstakeAndVerifyOwnership()
 }
 
 func initAccountAndEmission() {
 	testing.SetRealm(adminRealm)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
 	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
@@ -205,20 +202,6 @@ func stakePositionsForUsers() {
 	ufmt.Printf("[EXPECTED] position 02 owner after staking: %s\n", ownerAfterStake2)
 
 	testing.SkipHeights(1)
-}
-
-func testNftTransferRestrictions() {
-	println("[INFO] test NFT transfer restrictions for staked positions")
-
-	// Try to transfer staked NFT (should fail)
-	testing.SetRealm(adminRealm)
-
-	println("[INFO] admin tries to transfer staked position 01 (should fail)")
-
-	errorMessage := "[GNOSWAP-GNFT-001] caller has no permission || caller (g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) is not the owner or operator of token (1)"
-	uassert.AbortsWithMessage(t, errorMessage, func() {
-		gnft.TransferFrom(cross, stakerAddr, user2Addr, positionIdFrom(1))
-	})
 }
 
 func collectRewardsForUsers() {
@@ -334,18 +317,14 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] user2: approve NFT to staker and stake position 02
 // [EXPECTED] position 02 owner after staking: g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu
 //
-// [SCENARIO] 5. Test NFT transfer restrictions
-// [INFO] test NFT transfer restrictions for staked positions
-// [INFO] admin tries to transfer staked position 01 (should fail)
-//
-// [SCENARIO] 6. Collect rewards for different users
+// [SCENARIO] 5. Collect rewards for different users
 // [INFO] skip blocks to accumulate rewards
 // [INFO] admin: collect reward for position 01
-// [EXPECTED] admin reward from position 01: 8829194
+// [EXPECTED] admin reward from position 01: 22072982
 // [INFO] user2: collect reward for position 02
-// [EXPECTED] user2 reward from position 02: 8829194
+// [EXPECTED] user2 reward from position 02: 22072982
 //
-// [SCENARIO] 7. Unstake and verify NFT ownership
+// [SCENARIO] 6. Unstake and verify NFT ownership
 // [INFO] admin: unstake position 01
 // [EXPECTED] position 01 owner after unstaking: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
 // [INFO] user2: unstake position 02

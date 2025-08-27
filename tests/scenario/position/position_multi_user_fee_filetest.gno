@@ -14,7 +14,7 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/position"
 
@@ -77,7 +77,7 @@ func main() {
 
 func initPoolAndUsers() {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFeeByAdmin(cross, 0)
+	pool.SetPoolCreationFee(cross, 0)
 
 	ufmt.Println("[INFO] Creating pool at tick -23028")
 	pool.CreatePool(
@@ -164,7 +164,13 @@ func executeSwaps() {
 	bar.Approve(cross, routerAddr, INT64_MAX)
 	baz.Approve(cross, routerAddr, INT64_MAX)
 
-	testing.SetRealm(routerRealm)
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = routerRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 
 	ufmt.Println("[INFO] Executing swap BAR -> BAZ")
 	amount0, amount1 := pool.Swap(

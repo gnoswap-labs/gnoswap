@@ -7,8 +7,8 @@ import (
 
 	prabc "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	"gno.land/r/gnoswap/access"
+	_ "gno.land/r/gnoswap/rbac"
 )
 
 // validCallerRoles is a list of roles that are authorized to modify referral data.
@@ -23,8 +23,8 @@ var validCallerRoles = []string{
 }
 
 // isValidCaller checks if the caller address has permission to modify referral data.
-// Only addresses with specific roles (governance, router, position manager, staker, etc.)
-// defined in validCallerRoles are allowed to register, update, or remove referrals.
+// Only addresses with specific roles defined in validCallerRoles are authorized.
+// Returns an error if the caller is not authorized.
 func isValidCaller(caller std.Address) error {
 	roleAddresses := access.GetRoleAddresses()
 

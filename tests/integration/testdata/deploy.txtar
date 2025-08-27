@@ -55,7 +55,7 @@ gnokey maketx addpkg -pkgdir ../../contract/p/gnoswap/gnsmath -pkgpath gno.land/
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/common -pkgpath gno.land/r/gnoswap/v1/common -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy gns
-gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/gns -pkgpath gno.land/r/gnoswap/v1/gns -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/gns -pkgpath gno.land/r/gnoswap/gns -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy gnft
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/gnft -pkgpath gno.land/r/gnoswap/v1/gnft -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
@@ -64,7 +64,7 @@ gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/gnft -pkgpath gno.land/r/g
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/gov/xgns -pkgpath gno.land/r/gnoswap/v1/gov/xgns -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy emission
-gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/emission -pkgpath gno.land/r/gnoswap/v1/emission -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/emission -pkgpath gno.land/r/gnoswap/emission -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy protocol_fee
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/protocol_fee -pkgpath gno.land/r/gnoswap/v1/protocol_fee -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
@@ -94,4 +94,4 @@ gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/gov/governance -pkgpath gn
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/launchpad -pkgpath gno.land/r/gnoswap/v1/launchpad -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy referral
-gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/referral -pkgpath gno.land/r/gnoswap/v1/referral -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/referral -pkgpath gno.land/r/gnoswap/referral -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1

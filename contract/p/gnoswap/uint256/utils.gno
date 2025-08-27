@@ -1,5 +1,7 @@
 package uint256
 
+// checkNumberS validates that input represents a valid hexadecimal number.
+// Requires "0x" or "0X" prefix and disallows leading zeros after the prefix.
 func checkNumberS(input string) error {
 	const fn = "UnmarshalText"
 	l := len(input)

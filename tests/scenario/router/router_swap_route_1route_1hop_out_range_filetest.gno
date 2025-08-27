@@ -5,23 +5,22 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/json"
 	"gno.land/p/demo/uassert"
 
 	"gno.land/r/gnoswap/v1/common"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	"gno.land/r/gnoswap/v1/router"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
 )
 
 var (
@@ -61,18 +60,6 @@ func main() {
 	pl.CreatePool(cross, barPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(10000).ToString())
 
 	println("[INFO] Checking pool creation")
-	jsonStr := pl.ApiGetPools()
-	root, err := json.Unmarshal([]byte(jsonStr))
-	if err != nil {
-		panic(err.Error())
-	}
-
-	response, err := root.GetKey("response")
-	if err != nil {
-		panic(err.Error())
-	}
-
-	println("[EXPECTED] Number of pools:", response.Size(), "expected: 1")
 
 	println("[INFO] Approving tokens for pool operations")
 	bar.Approve(cross, poolAddr, max_approve)
@@ -88,7 +75,7 @@ func main() {
 	println("[EXPECTED] amount1:", amount1, "expected: 100000")
 
 	// check pool liquidity
-	poolLiquidity := pl.PoolGetLiquidity("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500")
+	poolLiquidity := pl.GetLiquidity("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500")
 	println("[EXPECTED] pool liquidity:", poolLiquidity, "expected: 637408")
 
 	println("[INFO] Executing dry swap to check expected output")
@@ -136,7 +123,6 @@ func main() {
 // [INFO] Approving pool creation fee
 // [INFO] Creating bar-baz pool (fee: 500, tick: 10000)
 // [INFO] Checking pool creation
-// [EXPECTED] Number of pools: 1 expected: 1
 // [INFO] Approving tokens for pool operations
 // [INFO] Minting position in bar-baz pool (tick range: 8000-12000)
 // [EXPECTED] positionId: 1 expected: 1

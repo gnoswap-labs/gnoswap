@@ -9,6 +9,7 @@ import (
 	"std"
 	"strconv"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
@@ -17,14 +18,14 @@ import (
 
 	"gno.land/r/demo/wugnot"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 
-	"gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/gns"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
@@ -42,9 +43,9 @@ var (
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	gnsPath    = "gno.land/r/gnoswap/v1/gns"
+	gnsPath = "gno.land/r/gnoswap/gns"
 
-	wugnotPath = "gno.land/r/demo/wugnot"
+	wugnotPath             = "gno.land/r/demo/wugnot"
 	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
 
 	fee3000 uint32 = 3000
@@ -76,6 +77,7 @@ func main() {
 
 func initWithShortWarmUp() {
 	testing.SetRealm(adminRealm)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	println("[INFO] override warm-up periods for testing")
 	sr.SetWarmUp(cross, 30, 150)
@@ -87,10 +89,10 @@ func initWithShortWarmUp() {
 	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	println("[INFO] set community pool distribution to 0%")
-	emission.ChangeDistributionPctByAdmin(
+	emission.ChangeDistributionPct(
 		cross,
 		1, 7500, // staker
 		2, 2500, // devOps
@@ -252,5 +254,5 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] user GNS balance before: 99999999999950
 // [INFO] community pool GNS balance before: 0
 // [INFO] collect reward for position 01
-// [EXPECTED] user reward: 3210615
-// [EXPECTED] community pool reward: 28895546
+// [EXPECTED] user reward: 8026540
+// [EXPECTED] community pool reward: 93642972

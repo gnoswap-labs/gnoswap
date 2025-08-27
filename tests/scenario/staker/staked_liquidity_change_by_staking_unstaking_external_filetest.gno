@@ -14,17 +14,17 @@ import (
 
 	"gno.land/r/gnoswap/v1/common"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -97,7 +97,7 @@ func initAndSetup() {
 	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
@@ -354,11 +354,11 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 6. Collect external rewards for both positions
 // [INFO] clear any accumulated rewards first
 // [INFO] collect external reward for position 01
-// [EXPECTED] position 01 external reward: 3471
-// [WARNING] expected around 500000000, got 3471
+// [EXPECTED] position 01 external reward: 8680
+// [WARNING] expected around 500000000, got 8680
 // [INFO] collect external reward for position 02
-// [EXPECTED] position 02 external reward: 3471
-// [WARNING] expected around 500000000, got 3471
+// [EXPECTED] position 02 external reward: 8680
+// [WARNING] expected around 500000000, got 8680
 //
 // [SCENARIO] 7. Unstake position 02
 // [INFO] unstake position 02
@@ -366,6 +366,6 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 8. Collect external rewards after unstaking
 // [INFO] collect external reward for position 01 after position 02 unstaked
-// [EXPECTED] position 01 external reward after unstaking pos 02: 6944
-// [WARNING] expected around 1000000000, got 6944
+// [EXPECTED] position 01 external reward after unstaking pos 02: 17360
+// [WARNING] expected around 1000000000, got 17360
 // [INFO] position 01 now receives full external rewards since position 02 is unstaked

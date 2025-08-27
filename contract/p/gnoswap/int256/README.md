@@ -1,6 +1,35 @@
-# Fixed size signed 256-bit math library
+# int256
 
-1. This is a library specialized at replacing the big.Int library for math based on signed 256-bit types.
-2. It uses [uint256](https://github.com/gnolang/gno/tree/master/examples/gno.land/p/gnoswap/uint256) as the underlying type.
+256-bit signed integer arithmetic for GnoSwap.
 
-ported from [mempooler/int256](https://github.com/mempooler/int256)
+## Overview
+
+Fixed-size 256-bit signed integer library optimized for AMM calculations with overflow detection.
+
+## Features
+
+- Fixed 256-bit size (predictable gas costs)
+- Two's complement representation
+- Overflow detection on all operations
+- AMM-optimized functions
+- Range: -(2^255) to 2^255-1
+
+## Usage
+
+```go
+import i256 "gno.land/p/gnoswap/int256"
+
+// Create values
+a := i256.NewInt(100)
+b := i256.MustFromDecimal("-1000")
+
+// Arithmetic with overflow detection
+result, overflow := new(i256.Int).AddOverflow(a, b)
+if overflow {
+    // Handle overflow
+}
+```
+
+## Implementation
+
+Built on [uint256](../uint256) for underlying arithmetic.

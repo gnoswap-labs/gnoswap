@@ -4,16 +4,15 @@ package main
 import (
 	"std"
 	"strconv"
-
 	"testing"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
@@ -21,7 +20,7 @@ import (
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
@@ -270,7 +269,7 @@ func after50Blocks() {
 }
 
 func makePosition1OutRange() {
-	poolTick := pl.PoolGetSlot0Tick(poolPath)
+	poolTick := pl.GetSlot0Tick(poolPath)
 	if poolTick != 0 {
 		panic("expected pool tick to be 0")
 	}
@@ -300,7 +299,7 @@ func makePosition1OutRange() {
 		panic("unexpected swap result")
 	}
 
-	poolTick = pl.PoolGetSlot0Tick(poolPath)
+	poolTick = pl.GetSlot0Tick(poolPath)
 	if poolTick != -195 {
 		panic("expected pool tick to be -195")
 	}
@@ -370,12 +369,12 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 8. Check rewards after 50 blocks
 // [INFO] making external incentive active
 // [INFO] checking rewards after 50 blocks
-// [EXPECTED] position 01 reward: 179 BAR
-// [EXPECTED] position 02 reward: 92148 BAR
+// [EXPECTED] position 01 reward: 6360 BAR
+// [EXPECTED] position 02 reward: 3256379 BAR
 //
 // [SCENARIO] 9. Make position 01 out of range via swap
 // [EXPECTED] position 01 made out of range by swap, current tick: -195
 //
 // [SCENARIO] 10. Check rewards after position goes out of range
 // [EXPECTED] position 01 (out of range) reward: 0 BAR
-// [EXPECTED] position 02 (in range) reward: 1619 BAR
+// [EXPECTED] position 02 (in range) reward: 5784 BAR

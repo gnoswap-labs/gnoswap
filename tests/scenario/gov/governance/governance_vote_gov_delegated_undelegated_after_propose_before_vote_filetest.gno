@@ -13,8 +13,8 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
-	gns "gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/access"
+	gns "gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gov/governance"
 	gs "gno.land/r/gnoswap/v1/gov/staker"
 )

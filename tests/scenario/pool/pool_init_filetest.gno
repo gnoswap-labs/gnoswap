@@ -9,11 +9,11 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/pool"
 
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
 )
 
 // Constants for addresses and approvals
@@ -23,12 +23,12 @@ const (
 
 // Variables for test addresses and realms
 var (
-	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm      = std.NewUserRealm(adminAddr)
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm     = std.NewUserRealm(positionAddr)
-	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
-	rouRealm     = std.NewUserRealm(routerAddr)
+	posRealm        = std.NewUserRealm(positionAddr)
+	routerAddr, _   = access.GetAddress(prbac.ROLE_ROUTER.String())
+	rouRealm        = std.NewUserRealm(routerAddr)
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 
 	poolCreationFee int64 = 100_000_000
@@ -84,6 +84,8 @@ func main() {
 		test_liquidityExpectStr,
 		adminAddr,
 	)
+
+	thisPool = pool.GetPool(barPath, fooPath, fee500)
 	currentLiq := thisPool.Liquidity().ToString()
 	println("[INFO] Current liquidity:", currentLiq)
 	println()
@@ -102,6 +104,7 @@ func main() {
 		adminAddr,
 	)
 
+	thisPool = pool.GetPool(barPath, fooPath, fee500)
 	nowLiq := thisPool.Liquidity().ToString()
 	println("[INFO] Current liquidity:", currentLiq)
 	println("[INFO] Now liquidity:", nowLiq)
@@ -123,6 +126,7 @@ func main() {
 		adminAddr,
 	)
 
+	thisPool = pool.GetPool(barPath, fooPath, fee500)
 	nowLiq = thisPool.Liquidity().ToString()
 	println("[INFO] Current liquidity:", currentLiq)
 	println("[INFO] Now liquidity:", nowLiq)
@@ -147,10 +151,18 @@ func main() {
 		test_liquidityExpectStr,
 		adminAddr,
 	)
+
+	thisPool = pool.GetPool(barPath, fooPath, fee500)
 	nowLiq = thisPool.Liquidity().ToString()
 	println("[INFO] Now liquidity:", nowLiq)
 
-	testing.SetRealm(rouRealm)
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = rouRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	println("[INFO] Executing swap to move tick")
 	pool.Swap(
 		cross,
@@ -164,6 +176,7 @@ func main() {
 		adminAddr,
 	)
 
+	thisPool = pool.GetPool(barPath, fooPath, fee500)
 	poolTick := thisPool.Slot0Tick()
 	println("[EXPECTED] Pool tick:", poolTick, "expected: -1")
 	println()
@@ -185,10 +198,18 @@ func main() {
 		test_liquidityExpectStr,
 		adminAddr,
 	)
+
+	thisPool = pool.GetPool(barPath, fooPath, fee500)
 	nowLiq = thisPool.Liquidity().ToString()
 	println("[INFO] Now liquidity:", nowLiq)
 
-	testing.SetRealm(rouRealm)
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = rouRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	println("[INFO] Executing swap to move tick")
 	pool.Swap(
 		cross,
@@ -202,6 +223,7 @@ func main() {
 		adminAddr,
 	)
 
+	thisPool = pool.GetPool(barPath, fooPath, fee500)
 	poolTick = thisPool.Slot0Tick()
 	println("[EXPECTED] Pool tick:", poolTick, "expected: -1")
 	println()

@@ -14,17 +14,17 @@ import (
 
 	"gno.land/r/gnoswap/v1/common"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -100,7 +100,7 @@ func initAndSetup() {
 	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
@@ -382,44 +382,44 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 5. First external reward collection period
 // [INFO] skip 5 blocks for first external reward accumulation
 // [INFO] collect first external reward
-// [EXPECTED] first external reward (5 blocks): 41666
+// [EXPECTED] first external reward (5 blocks): 104165
 // [INFO] first external reward collection completed
 //
 // [SCENARIO] 6. Second external reward collection period
 // [INFO] skip 5 blocks for second external reward accumulation
 // [INFO] collect second external reward
-// [EXPECTED] second external reward (5 blocks): 34722
+// [EXPECTED] second external reward (5 blocks): 86805
 // [INFO] second external reward collection completed
 //
 // [SCENARIO] 7. Third external reward collection with longer interval
 // [INFO] skip 10 blocks for third external reward accumulation (longer period)
 // [INFO] collect third external reward
-// [EXPECTED] third external reward (10 blocks): 69444
+// [EXPECTED] third external reward (10 blocks): 173610
 // [INFO] third external reward collection completed
 //
 // [SCENARIO] 8. Compare external reward accumulation patterns
 // [INFO] analyze external reward accumulation patterns
 // [INFO] test pattern: frequent small external collections
-// [INFO] small external collection 1 (2 blocks): 13888
-// [INFO] small external collection 2 (2 blocks): 13888
-// [INFO] small external collection 3 (2 blocks): 13888
-// [INFO] small external collection 4 (2 blocks): 13888
-// [INFO] small external collection 5 (2 blocks): 13888
-// [EXPECTED] total from frequent external collections (10 blocks): 69440
+// [INFO] small external collection 1 (2 blocks): 34721
+// [INFO] small external collection 2 (2 blocks): 34722
+// [INFO] small external collection 3 (2 blocks): 34722
+// [INFO] small external collection 4 (2 blocks): 34721
+// [INFO] small external collection 5 (2 blocks): 34722
+// [EXPECTED] total from frequent external collections (10 blocks): 173608
 // [INFO] test pattern: single large external collection
-// [EXPECTED] single large external collection (10 blocks): 69444
+// [EXPECTED] single large external collection (10 blocks): 173609
 // [INFO] external reward pattern analysis:
-// [INFO] - Frequent external collections total: 69440
-// [INFO] - Single large external collection: 69444
+// [INFO] - Frequent external collections total: 173608
+// [INFO] - Single large external collection: 173609
 // [INFO] external reward amounts may vary due to incentive timing and block-based calculations
 //
 // [SCENARIO] 9. Final verification with multiple external collections
 // [INFO] final verification with multiple rapid external collections
-// [INFO] initial BAR balance: 99910000283716
+// [INFO] initial BAR balance: 99910000710797
 // [INFO] perform 3 consecutive external collections
-// [EXPECTED] consecutive external collection 1: 104165
+// [EXPECTED] consecutive external collection 1: 260415
 // [EXPECTED] consecutive external collection 2: 0
 // [EXPECTED] consecutive external collection 3: 0
-// [EXPECTED] total BAR gained in this test: 104165
+// [EXPECTED] total BAR gained in this test: 260415
 // [INFO] external reward collection pattern scenario completed successfully
 // [INFO] confirmed: external rewards accumulate over time and are collected when requested

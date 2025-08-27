@@ -3,24 +3,23 @@ package gns
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ownable"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 
-	_ "gno.land/r/gnoswap/v1/rbac" // initialize rbac package
+	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
 )
 
 func resetObject(t *testing.T) {
 	t.Helper()
 
 	resetGnsTokenObject(t)
-
-	height := std.ChainHeight()
-	lastMintedHeight = height
+	resetEmissionState(t)
 }
 
 func resetGnsTokenObject(t *testing.T) {
@@ -38,8 +37,7 @@ func resetGnsTokenObject(t *testing.T) {
 func resetEmissionState(t *testing.T) {
 	t.Helper()
 
-	emissionState = nil
-	avgBlockTimeMs = BLOCK_GENERATION_INTERVAL
-	blockPerYear = SECONDS_IN_YEAR / milliToSec(BLOCK_GENERATION_INTERVAL)
-	blockPerDay = SECONDS_PER_DAY / milliToSec(BLOCK_GENERATION_INTERVAL)
+	blockHeight := std.ChainHeight()
+	startTimestamp := time.Now().Unix()
+	emissionState = NewEmissionState(blockHeight, startTimestamp)
 }

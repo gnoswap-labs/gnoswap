@@ -12,7 +12,7 @@ import (
 	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/launchpad"
 	"gno.land/r/onbloc/obl"
 )
@@ -70,7 +70,7 @@ func createProjectByNonAdmin() {
 	testing.SetRealm(nonAdminRealm)
 	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
 
-	expectedPanicMessage := "unauthorized: caller g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj is not admin"
+	expectedPanicMessage := "unauthorized: caller g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj is not admin or governance"
 	uassert.AbortsWithMessage(t, expectedPanicMessage, func() {
 		launchpad.CreateProject(
 			cross,
@@ -105,4 +105,4 @@ func createProjectByNonAdmin() {
 // [INFO] create project with tier90 ratio: 20
 // [INFO] create project with tier180 ratio: 70
 // [INFO] create project with start time: 1234571490
-// [EXPECTED] Should abort with authorization error: unauthorized: caller g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj is not admin
+// [EXPECTED] Should abort with authorization error: unauthorized: caller g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj is not admin or governance

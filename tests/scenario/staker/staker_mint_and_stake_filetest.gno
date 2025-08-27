@@ -16,15 +16,15 @@ import (
 
 	"gno.land/r/demo/wugnot"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
@@ -47,7 +47,7 @@ var (
 	barPath = "gno.land/r/onbloc/bar"
 	quxPath = "gno.land/r/onbloc/qux"
 
-	gnsPath    = "gno.land/r/gnoswap/v1/gns"
+	gnsPath    = "gno.land/r/gnoswap/gns"
 	wugnotPath = "gno.land/r/demo/wugnot"
 
 	fee3000 uint32 = 3000
@@ -80,7 +80,7 @@ func initAccountAndEmission() {
 	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
@@ -94,7 +94,7 @@ func createPools() {
 	testing.SkipHeights(1)
 
 	println("[INFO] create gnot:gns:3000 pool")
-	pl.CreatePool(cross, "gnot", "gno.land/r/gnoswap/v1/gns", 3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // price ratio 1:1
+	pl.CreatePool(cross, "gnot", "gno.land/r/gnoswap/gns", 3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // price ratio 1:1
 
 	println("[INFO] create bar:qux:3000 pool")
 	pl.CreatePool(cross, barPath, quxPath, 3000, common.TickMathGetSqrtRatioAtTick(10000).ToString()) // tick 10_000 ≈ x2.7
@@ -136,7 +136,7 @@ func mintAndStakeNative() {
 	lpTokenId, liquidity, amount0, amount1, poolPath := sr.MintAndStake(
 		cross,
 		"gnot",
-		"gno.land/r/gnoswap/v1/gns",
+		"gno.land/r/gnoswap/gns",
 		fee3000,
 		int32(-5040),
 		int32(5040),
@@ -243,7 +243,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] native mint and stake - LP token ID: 1
 // [EXPECTED] liquidity: 448942
 // [EXPECTED] amount0: 100000, amount1: 100000
-// [EXPECTED] pool path: gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000
+// [EXPECTED] pool path: gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000
 // [EXPECTED] admin wugnot balance after: 0
 // [EXPECTED] admin ugnot balance after (refund): 5
 //

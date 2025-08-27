@@ -10,11 +10,11 @@ import (
 	plp "gno.land/p/gnoswap/gnsmath"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/pool"
 
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
@@ -98,6 +98,7 @@ func main() {
 		liqToMint,
 		adminAddr,
 	)
+	thisPool = pool.GetPool(barPath, fooPath, fee100)
 	println("[EXPECTED] Pool liquidity after first mint:", thisPool.Liquidity().ToString(), "expected: 10000000000")
 	println()
 
@@ -114,6 +115,7 @@ func main() {
 		liqToMint,
 		adminAddr,
 	)
+	thisPool = pool.GetPool(barPath, fooPath, fee100)
 	println("[EXPECTED] Pool liquidity after second mint:", thisPool.Liquidity().ToString(), "expected: 10000000000")
 	println()
 
@@ -137,7 +139,14 @@ func main() {
 	println()
 
 	println("[SCENARIO] 4. Executing swap to move tick")
-	testing.SetRealm(rouRealm)
+
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = rouRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	pool.Swap(
 		cross,
 		barPath,
@@ -150,6 +159,7 @@ func main() {
 		adminAddr,
 	)
 
+	thisPool = pool.GetPool(barPath, fooPath, fee100)
 	println("[EXPECTED] Pool tick after swap:", thisPool.Slot0Tick(), "expected: -24082")
 	println("[EXPECTED] Pool sqrt price after swap:", thisPool.Slot0SqrtPriceX96().ToString(), "expected:", testSqrtSubOne.ToString())
 	println("[EXPECTED] Pool liquidity after swap:", thisPool.Liquidity().ToString(), "expected: 20000000000")

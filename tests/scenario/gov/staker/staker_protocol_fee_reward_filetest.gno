@@ -11,8 +11,8 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gov/staker"
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
 
@@ -31,9 +31,9 @@ var (
 
 	gnoStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
 
-	aliceAddr   = testutils.TestAddress("alice")
-	bobAddr     = testutils.TestAddress("bob")
-	bobRealm    = std.NewUserRealm(bobAddr)
+	aliceAddr = testutils.TestAddress("alice")
+	bobAddr   = testutils.TestAddress("bob")
+	bobRealm  = std.NewUserRealm(bobAddr)
 
 	barPath = "gno.land/r/onbloc/bar"
 	quxPath = "gno.land/r/onbloc/qux"

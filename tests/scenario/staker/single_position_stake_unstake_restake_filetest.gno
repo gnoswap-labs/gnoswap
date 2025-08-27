@@ -8,23 +8,25 @@ import (
 	"std"
 	"strconv"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/v1/common"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -91,12 +93,13 @@ func main() {
 
 func initAndSetup() {
 	testing.SetRealm(adminRealm)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
 	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
@@ -306,7 +309,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 5. Collect rewards after first stake
 // [INFO] skip blocks to accumulate rewards
 // [INFO] collect reward after first stake
-// [EXPECTED] reward after first stake: 17658388
+// [EXPECTED] reward after first stake: 44145964
 //
 // [SCENARIO] 6. Unstake operation
 // [INFO] unstake position 01
@@ -322,7 +325,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 8. Collect rewards after restake
 // [INFO] skip blocks to accumulate more rewards
 // [INFO] collect reward after restake
-// [EXPECTED] reward after restake: 17658388
+// [EXPECTED] reward after restake: 44145964
 // [INFO] rewards accumulated successfully after restaking
 //
 // [SCENARIO] 9. Final unstake operation

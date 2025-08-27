@@ -16,16 +16,15 @@ loadpkg gno.land/p/gnoswap/uint256
 loadpkg gno.land/p/gnoswap/int256
 loadpkg gno.land/p/gnoswap/rbac
 loadpkg gno.land/p/gnoswap/gnsmath
-loadpkg gno.land/r/gnoswap/v1/access
-loadpkg gno.land/r/gnoswap/v1/rbac
-loadpkg gno.land/r/gnoswap/v1/halt
-loadpkg gno.land/r/gnoswap/v1/bridge
+loadpkg gno.land/r/gnoswap/access
+loadpkg gno.land/r/gnoswap/rbac
+loadpkg gno.land/r/gnoswap/halt
 loadpkg gno.land/r/gnoswap/v1/common
-loadpkg gno.land/r/gnoswap/v1/gns
-loadpkg gno.land/r/gnoswap/v1/emission
+loadpkg gno.land/r/gnoswap/gns
+loadpkg gno.land/r/gnoswap/emission
 
 ## load upgrade packages
-loadpkg gno.land/r/gnoswap/v1/referral
+loadpkg gno.land/r/gnoswap/referral
 loadpkg gno.land/r/gnoswap/v1/gnft
 loadpkg gno.land/r/gnoswap/v1/community_pool
 loadpkg gno.land/r/gnoswap/v1/protocol_fee
@@ -49,7 +48,7 @@ gnokey broadcast $WORK/rbac/multi_update_role_address.tx -quiet=false
 ## deploy v2 contracts
 
 ### deploy referral
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/v1/referral -pkgpath gno.land/r/gnoswap/v2/referral -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/referral -pkgpath gno.land/r/gnoswap/v2/referral -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy gnft
 gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/v1/gnft -pkgpath gno.land/r/gnoswap/v2/gnft -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
@@ -88,20 +87,20 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/v1/launchpad -
 
 ### execute emission transactions
 #### staker v2 balance is zero before distribute
-gnokey query vm/qeval --data "gno.land/r/gnoswap/v1/gns.BalanceOf(\"g14fclvfqynndp0l6kpyxkpgn4sljw9rr96hz46l\")"
+gnokey query vm/qeval --data "gno.land/r/gnoswap/gns.BalanceOf(\"g14fclvfqynndp0l6kpyxkpgn4sljw9rr96hz46l\")"
 stdout '0 int64'
 
 #### emission distribute
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/emission -chainid=tendermint_test -func MintAndDistributeGns -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/emission -chainid=tendermint_test -func MintAndDistributeGns -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast test1
 
 #### staker v2 balance is not zero
-gnokey query vm/qeval --data "gno.land/r/gnoswap/v1/gns.BalanceOf(\"g14fclvfqynndp0l6kpyxkpgn4sljw9rr96hz46l\")"
+gnokey query vm/qeval --data "gno.land/r/gnoswap/gns.BalanceOf(\"g14fclvfqynndp0l6kpyxkpgn4sljw9rr96hz46l\")"
 stdout '[1-9][0-9]* int64'
 
 ### create pool
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gns -func Approve -args g126swhfaq2vyvvjywevhgw7lv9hg8qan93dasu8 -args 9223372036854775807 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/pool -func CreatePool -args "gno.land/r/demo/wugnot" -args "gno.land/r/gnoswap/v1/gns" -args 3000 -args 79228162514264337593543950337 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
-stdout '{"key":"poolPath","value":"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"}'
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g126swhfaq2vyvvjywevhgw7lv9hg8qan93dasu8 -args 9223372036854775807 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/pool -func CreatePool -args "gno.land/r/demo/wugnot" -args "gno.land/r/gnoswap/gns" -args 3000 -args 79228162514264337593543950337 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout '{"key":"poolPath","value":"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"}'
 
 ### pool creation fee getter & setter
 gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/pool -func SetPoolCreationFeeByAdmin -args 0 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
@@ -118,7 +117,7 @@ stdout OK
       "@type": "/vm.m_call",
       "caller": "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
       "send": "",
-      "pkg_path": "gno.land/r/gnoswap/v1/rbac",
+      "pkg_path": "gno.land/r/gnoswap/rbac",
       "func": "UpdateRoleAddress",
       "args": ["community_pool", "g1r79m0scwztcdvk3c6sy4rjrtv3rnnzrs9ddh9w"]
     },
@@ -126,7 +125,7 @@ stdout OK
       "@type": "/vm.m_call",
       "caller": "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
       "send": "",
-      "pkg_path": "gno.land/r/gnoswap/v1/rbac",
+      "pkg_path": "gno.land/r/gnoswap/rbac",
       "func": "UpdateRoleAddress",
       "args": ["governance", "g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5"]
     },
@@ -134,7 +133,7 @@ stdout OK
       "@type": "/vm.m_call",
       "caller": "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
       "send": "",
-      "pkg_path": "gno.land/r/gnoswap/v1/rbac",
+      "pkg_path": "gno.land/r/gnoswap/rbac",
       "func": "UpdateRoleAddress",
       "args": ["gov_staker", "g1gt2xzjcmhp2t08yh0nkmc3q822sr87t5n92rm0"]
     },
@@ -142,7 +141,7 @@ stdout OK
       "@type": "/vm.m_call",
       "caller": "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
       "send": "",
-      "pkg_path": "gno.land/r/gnoswap/v1/rbac",
+      "pkg_path": "gno.land/r/gnoswap/rbac",
       "func": "UpdateRoleAddress",
       "args": ["xgns", "g16gjmzf8725njf48325nl3yx3ve53wdu4ru53vm"]
     },
@@ -150,7 +149,7 @@ stdout OK
       "@type": "/vm.m_call",
       "caller": "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
       "send": "",
-      "pkg_path": "gno.land/r/gnoswap/v1/rbac",
+      "pkg_path": "gno.land/r/gnoswap/rbac",
       "func": "UpdateRoleAddress",
       "args": ["pool", "g126swhfaq2vyvvjywevhgw7lv9hg8qan93dasu8"]
     },
@@ -158,7 +157,7 @@ stdout OK
       "@type": "/vm.m_call",
       "caller": "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
       "send": "",
-      "pkg_path": "gno.land/r/gnoswap/v1/rbac",
+      "pkg_path": "gno.land/r/gnoswap/rbac",
       "func": "UpdateRoleAddress",
       "args": ["position", "g1vsm68lq9cpn7x507s6gh59anmx86kxfhzyszu2"]
     },
@@ -166,7 +165,7 @@ stdout OK
       "@type": "/vm.m_call",
       "caller": "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
       "send": "",
-      "pkg_path": "gno.land/r/gnoswap/v1/rbac",
+      "pkg_path": "gno.land/r/gnoswap/rbac",
       "func": "UpdateRoleAddress",
       "args": ["router", "g1cnz5gm2l09pm2k6rknjjar9a2w53fdhk4yjzy5"]
     },
@@ -174,7 +173,7 @@ stdout OK
       "@type": "/vm.m_call",
       "caller": "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
       "send": "",
-      "pkg_path": "gno.land/r/gnoswap/v1/rbac",
+      "pkg_path": "gno.land/r/gnoswap/rbac",
       "func": "UpdateRoleAddress",
       "args": ["staker", "g14fclvfqynndp0l6kpyxkpgn4sljw9rr96hz46l"]
     },
@@ -182,7 +181,7 @@ stdout OK
       "@type": "/vm.m_call",
       "caller": "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
       "send": "",
-      "pkg_path": "gno.land/r/gnoswap/v1/rbac",
+      "pkg_path": "gno.land/r/gnoswap/rbac",
       "func": "UpdateRoleAddress",
       "args": ["launchpad", "g1qslhn7vn69e09zwmz5hlz0273v3c33u5z8d9j7"]
     },
@@ -190,7 +189,7 @@ stdout OK
       "@type": "/vm.m_call",
       "caller": "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
       "send": "",
-      "pkg_path": "gno.land/r/gnoswap/v1/rbac",
+      "pkg_path": "gno.land/r/gnoswap/rbac",
       "func": "UpdateRoleAddress",
       "args": ["protocol_fee", "g1397dea8xlfv5858xzhsly7k998xm2zlvrm93t2"]
     }

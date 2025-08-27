@@ -7,16 +7,18 @@ package main
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/v1/gov/governance"
 
-	gns "gno.land/r/gnoswap/v1/gns"
+	gns "gno.land/r/gnoswap/gns"
 	gs "gno.land/r/gnoswap/v1/gov/staker"
 )
 
@@ -24,7 +26,7 @@ var t *testing.T
 
 var (
 	to               = testutils.TestAddress("to")
-	tokenPath        = "gno.land/r/gnoswap/v1/gns"
+	tokenPath        = "gno.land/r/gnoswap/gns"
 	adminAddr, _     = access.GetAddress(prbac.ROLE_ADMIN.String())
 	proposalID       = int64(1)
 	currentBlockTime = int64(2)
@@ -69,6 +71,8 @@ func main() {
 func delegateGnsToAdmin() {
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(std.NewUserRealm(adminAddr))
+
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	govStakerAddr := std.Address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
 

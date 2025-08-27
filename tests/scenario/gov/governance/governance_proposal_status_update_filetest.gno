@@ -11,8 +11,8 @@ import (
 	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
-	gns "gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/access"
+	gns "gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gov/governance"
 	gs "gno.land/r/gnoswap/v1/gov/staker"
 )
@@ -39,7 +39,6 @@ func main() {
 	println()
 
 	println("[SCENARIO] 4. Cancel Proposal and Check State")
-	testing.SkipHeights((config.VotingStartDelay + config.VotingPeriod + config.ExecutionDelay) / currentBlockTime)
 	cancelProposalAndCheckState(proposalId)
 	println()
 }
@@ -55,7 +54,7 @@ func delegateGnsToAdmin() {
 
 func proposeCommunityPoolSpend() int64 {
 	testing.SetRealm(std.NewUserRealm(adminAddr))
-	proposalId := governance.ProposeCommunityPoolSpend(cross, "test_title_1", "test_description_1", adminAddr, "gno.land/r/gnoswap/v1/gns", 100)
+	proposalId := governance.ProposeCommunityPoolSpend(cross, "test_title_1", "test_description_1", adminAddr, "gno.land/r/gnoswap/gns", 100)
 	ufmt.Printf("[INFO] created proposal ID: %d\n", proposalId)
 	state := governance.GetExecutionStateByProposalId(proposalId)
 	ufmt.Printf("[EXPECTED] proposal created: %v\n", state)

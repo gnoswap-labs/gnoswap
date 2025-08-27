@@ -8,11 +8,7 @@ import (
 	"math/bits"
 )
 
-// Cmp compares z and x and returns:
-//
-//	-1 if z <  x
-//	 0 if z == x
-//	+1 if z >  x
+// Cmp compares z and x and returns -1 if z < x, 0 if z == x, or +1 if z > x.
 func (z *Uint) Cmp(x *Uint) (r int) {
 	// z < x <=> z - x < 0 i.e. when subtraction overflows.
 	d0, carry := bits.Sub64(z.arr[0], x.arr[0], 0)
@@ -28,18 +24,13 @@ func (z *Uint) Cmp(x *Uint) (r int) {
 	return 1
 }
 
-// IsZero returns true if z == 0
+// IsZero returns true if z equals 0.
 func (z *Uint) IsZero() bool {
 	return (z.arr[0] | z.arr[1] | z.arr[2] | z.arr[3]) == 0
 }
 
-// Sign returns:
-//
-//	-1 if z <  0
-//	 0 if z == 0
-//	+1 if z >  0
-//
-// Where z is interpreted as a two's complement signed number
+// Sign returns the sign of z interpreted as a two's complement signed number.
+// It returns -1 if z < 0, 0 if z == 0, or +1 if z > 0.
 func (z *Uint) Sign() int {
 	if z.IsZero() {
 		return 0
@@ -50,17 +41,17 @@ func (z *Uint) Sign() int {
 	return -1
 }
 
-// LtUint64 returns true if z is smaller than n
+// LtUint64 returns true if z is less than the uint64 value n.
 func (z *Uint) LtUint64(n uint64) bool {
 	return z.arr[0] < n && (z.arr[1]|z.arr[2]|z.arr[3]) == 0
 }
 
-// GtUint64 returns true if z is larger than n
+// GtUint64 returns true if z is greater than the uint64 value n.
 func (z *Uint) GtUint64(n uint64) bool {
 	return z.arr[0] > n || (z.arr[1]|z.arr[2]|z.arr[3]) != 0
 }
 
-// Lt returns true if z < x
+// Lt returns true if z is less than x.
 func (z *Uint) Lt(x *Uint) bool {
 	// z < x <=> z - x < 0 i.e. when subtraction overflows.
 	_, carry := bits.Sub64(z.arr[0], x.arr[0], 0)
@@ -71,33 +62,32 @@ func (z *Uint) Lt(x *Uint) bool {
 	return carry != 0
 }
 
-// Gt returns true if z > x
+// Gt returns true if z is greater than x.
 func (z *Uint) Gt(x *Uint) bool {
 	return x.Lt(z)
 }
 
-// Lte returns true if z <= x
+// Lte returns true if z is less than or equal to x.
 func (z *Uint) Lte(x *Uint) bool {
 	return !x.Lt(z)
 }
 
-// Gte returns true if z >= x
+// Gte returns true if z is greater than or equal to x.
 func (z *Uint) Gte(x *Uint) bool {
 	return !z.Lt(x)
 }
 
-// Eq returns true if z == x
+// Eq returns true if z equals x.
 func (z *Uint) Eq(x *Uint) bool {
 	return (z.arr[0] == x.arr[0]) && (z.arr[1] == x.arr[1]) && (z.arr[2] == x.arr[2]) && (z.arr[3] == x.arr[3])
 }
 
-// Neq returns true if z != x
+// Neq returns true if z does not equal x.
 func (z *Uint) Neq(x *Uint) bool {
 	return !z.Eq(x)
 }
 
-// Sgt interprets z and x as signed integers, and returns
-// true if z > x
+// Sgt returns true if z > x when both are interpreted as two's complement signed integers.
 func (z *Uint) Sgt(x *Uint) bool {
 	zSign := z.Sign()
 	xSign := x.Sign()

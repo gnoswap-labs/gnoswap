@@ -11,9 +11,9 @@ import (
 	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 
@@ -32,7 +32,7 @@ var (
 
 	gnotPath   = "gnot"
 	wugnotPath = "gno.land/r/demo/wugnot"
-	gnsPath    = "gno.land/r/gnoswap/v1/gns"
+	gnsPath    = "gno.land/r/gnoswap/gns"
 )
 
 func main() {
@@ -40,7 +40,7 @@ func main() {
 	initializeSetup()
 	println()
 
-	println("[SCENARIO] 2. Create Pool (gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:100)")
+	println("[SCENARIO] 2. Create Pool (gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:100)")
 	createPool(wugnotPath, gnsPath, 100, 6960)
 	println()
 
@@ -63,7 +63,7 @@ func main() {
 
 func initializeSetup() {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFeeByAdmin(cross, 0)
+	pool.SetPoolCreationFee(cross, 0)
 
 	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 1000000000000000}})
 	testing.SetOriginSend(std.Coins{{"ugnot", 100000000000000}})
@@ -135,8 +135,8 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 // [INFO] WUGNOT Balance of admin: 100000000000000
 // [INFO] ugnot Balance of admin: 1000000000000000ugnot
 //
-// [SCENARIO] 2. Create Pool (gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:100)
-// [EXPECTED] created gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:100 pool at tick 6960
+// [SCENARIO] 2. Create Pool (gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:100)
+// [EXPECTED] created gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:100 pool at tick 6960
 //
 // [SCENARIO] 3. Mint Position (6820 ~ 7020)
 // [INFO] Minting position

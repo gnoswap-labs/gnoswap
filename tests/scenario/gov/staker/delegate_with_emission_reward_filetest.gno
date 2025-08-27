@@ -5,31 +5,32 @@ package main
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
-	en "gno.land/r/gnoswap/v1/emission"
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/access"
+	en "gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gov/staker"
 )
 
 var (
-	admin, _     = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(admin)
+	admin, _   = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm = std.NewUserRealm(admin)
 
 	govStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
 
 	dummyToAddr  = testutils.TestAddress("dummyTo")
 	dummyToRealm = std.NewUserRealm(dummyToAddr)
 
-	dummyAddr    = testutils.TestAddress("dummy")
-	dummyRealm   = std.NewUserRealm(dummyAddr)
+	dummyAddr  = testutils.TestAddress("dummy")
+	dummyRealm = std.NewUserRealm(dummyAddr)
 
-	minAmount    = int64(1_000_000)
+	minAmount = int64(1_000_000)
 )
 
 func main() {
@@ -58,7 +59,8 @@ func main() {
 func changeEmissionDistribution() {
 	// change emission distribution ratio
 	testing.SetRealm(adminRealm)
-	en.ChangeDistributionPctByAdmin(
+	en.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	en.ChangeDistributionPct(
 		cross,
 		int(1), 7000,
 		int(2), 2000,
@@ -122,6 +124,6 @@ func emissionRewardScenario() {
 // [INFO] skipped 10 blocks and distributed emission
 //
 // [SCENARIO] 5. Check and collect emission reward
-// [INFO] claimable reward (dummy): {"height":"133","now":"1234567940","emissionReward":"5945585"}
+// [INFO] claimable reward (dummy): {"height":"133","now":"1234567940","emissionReward":"14863964","protocolFees":[]}
 // [INFO] collected emission reward for dummy
-// [EXPECTED] dummy GNS balance after collect: 5945585
+// [EXPECTED] dummy GNS balance after collect: 14863964

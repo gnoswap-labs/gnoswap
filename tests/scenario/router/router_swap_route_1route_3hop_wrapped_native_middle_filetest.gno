@@ -5,17 +5,17 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	"gno.land/r/gnoswap/v1/router"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 )
 
@@ -29,7 +29,7 @@ var (
 	barPath = "gno.land/r/onbloc/bar"
 	bazPath = "gno.land/r/onbloc/baz"
 	quxPath = "gno.land/r/onbloc/qux"
-	gnsPath = "gno.land/r/gnoswap/v1/gns"
+	gnsPath = "gno.land/r/gnoswap/gns"
 
 	wrappedWugnot = "gno.land/r/demo/wugnot"
 
@@ -141,7 +141,7 @@ func testDrySwapRouteGnsBarExactIn() {
 		barPath,    // outputToken
 		"1000",     // amountSpecified
 		"EXACT_IN", // swapType
-		"gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
+		"gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
 		"100", // quoteArr
 		"1",
 	)
@@ -163,7 +163,7 @@ func testSwapRouteGnsBarExactIn() {
 		gnsPath, // inputToken
 		barPath, // outputToken
 		"1000",  // amountSpecified
-		"gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
+		"gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
 		"100", // quoteArr
 		"0",   // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),

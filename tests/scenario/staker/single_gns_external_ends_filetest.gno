@@ -22,17 +22,17 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
@@ -54,7 +54,7 @@ var (
 	barPath = "gno.land/r/onbloc/bar"
 	quxPath = "gno.land/r/onbloc/qux"
 
-	gnsPath = "gno.land/r/gnoswap/v1/gns"
+	gnsPath = "gno.land/r/gnoswap/gns"
 
 	fee100 uint32 = 100
 
@@ -124,7 +124,7 @@ func createPool() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	println("[INFO] create pool gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100 at tick 0")
 	testing.SkipHeights(1)
@@ -204,7 +204,7 @@ func createExternalIncentiveGns() {
 	println("[INFO] create external incentive for 90 days")
 	testing.SkipHeights(1)
 
-	incentiveID := fmt.Sprintf("%s:%d:%d", externalCreatorAddr, std.ChainHeight(), 1)
+	incentiveID := fmt.Sprintf("%s:%d:%d", externalCreatorAddr, time.Now().Unix(), 1)
 	println("[INFO] create external incentive with incentiveID: ", incentiveID)
 	sr.CreateExternalIncentive(
 		cross,
@@ -221,11 +221,10 @@ func startExternalIncentive() {
 	nowTime := time.Now().Unix()
 	timeLeft := externalStartTime - nowTime
 
-	blockAvgTime := milliToSec(blockTime)
-	blockLeft := timeLeft / blockAvgTime
+	blockLeft := timeLeft / 5
 
 	println("[INFO] skip blocks until external incentive starts")
-	testing.SkipHeights(int64(blockLeft) + std.ChainHeight()) // skip until external bar starts
+	testing.SkipHeights(int64(blockLeft)) // skip until external bar starts
 	ufmt.Printf("[INFO] external incentive started at timestamp: %d\n", externalStartTime)
 }
 
@@ -262,7 +261,7 @@ func endExternalGnsIncentive() {
 	nowTime := time.Now().Unix()
 	timeLeft := externalEndTime - nowTime
 
-	blockLeft := timeLeft
+	blockLeft := timeLeft/5 + 1
 
 	println("[INFO] skip blocks until external incentive ends")
 	testing.SkipHeights(int64(blockLeft)) // skip until external gns ends
@@ -271,7 +270,7 @@ func endExternalGnsIncentive() {
 	testing.SetRealm(externalCreatorRealm)
 	gnsBalanceBeforeEnds := gns.BalanceOf(externalCreatorUser)
 
-	incentiveID := "g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:127:1"
+	incentiveID := "g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:1234567910:1"
 	sr.EndExternalIncentive(
 		cross,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
@@ -328,10 +327,6 @@ func positionIdFrom(positionId any) grc721.TokenID {
 	}
 }
 
-func milliToSec(ms int64) int64 {
-	return ms / int64(1000)
-}
-
 // Output:
 // [SCENARIO] 1. Initialize account and settings
 // [INFO] set unstaking fee to 0
@@ -352,7 +347,7 @@ func milliToSec(ms int64) int64 {
 // [INFO] transfer GNS to external creator
 // [INFO] approve GNS for external incentive creation
 // [INFO] create external incentive for 90 days
-// [INFO] create external incentive with incentiveID:  g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:127:1
+// [INFO] create external incentive with incentiveID:  g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:1234567910:1
 //
 // [SCENARIO] 6. Start external incentive
 // [INFO] skip blocks until external incentive starts
@@ -372,12 +367,12 @@ func milliToSec(ms int64) int64 {
 // [INFO] skip blocks until external incentive ends
 // [INFO] end external incentive and collect remaining GNS
 // [INFO] GNS balance before ending: 0
-// [INFO] GNS balance after ending: 1000296192
+// [INFO] GNS balance after ending: 1000005785
 // [EXPECTED] external creator should receive deposit amount minus penalty
 //
 // [SCENARIO] 11. Collect rewards after external incentive ends
 // [INFO] collect rewards after external incentive ends
-// [INFO] GNS balance before collection: 99990000001387
-// [INFO] GNS balance after collection: 99997247150993
-// [INFO] total reward collected: 7247149606
+// [INFO] GNS balance before collection: 99990000003470
+// [INFO] GNS balance after collection: 99997247440185
+// [INFO] total reward collected: 7247436715
 // [EXPECTED] positions should still receive rewards after external incentive ends

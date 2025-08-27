@@ -8,24 +8,25 @@ import (
 	"std"
 	"strconv"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 
-	"gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -85,15 +86,16 @@ func main() {
 
 func initAndSetupSinglePool() {
 	testing.SetRealm(adminRealm)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
 	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	println("[INFO] set community pool distribution to 0%")
-	emission.ChangeDistributionPctByAdmin(
+	emission.ChangeDistributionPct(
 		cross,
 		1, 7500, // staker
 		2, 2500, // devOps
@@ -418,16 +420,16 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 4. Stake position 01 and test warm-up progression
 // [INFO] stake position 01
 // [INFO] collect reward for 30% warm-up
-// [EXPECTED] user reward (30% warm-up): 1605307
-// [EXPECTED] community pool reward (unclaimable + penalty): 25149827
+// [EXPECTED] user reward (30% warm-up): 4013269
+// [EXPECTED] community pool reward (unclaimable + penalty): 73576607
 // [INFO] progress to 50% warm-up
-// [EXPECTED] user reward (50% warm-up): 2675513
-// [EXPECTED] community pool reward (50% penalty): 2675513
+// [EXPECTED] user reward (50% warm-up): 6688782
+// [EXPECTED] community pool reward (50% penalty): 6688782
 // [INFO] progress to 70% warm-up
-// [EXPECTED] user reward (70% warm-up): 3745718
-// [EXPECTED] community pool reward (30% penalty): 1605308
+// [EXPECTED] user reward (70% warm-up): 9364294
+// [EXPECTED] community pool reward (30% penalty): 4013270
 // [INFO] progress to 100% warm-up
-// [EXPECTED] user reward (100% warm-up): 5351026
+// [EXPECTED] user reward (100% warm-up): 13377564
 // [EXPECTED] community pool reward (no penalty): 0
 //
 // [SCENARIO] 5. Stake positions 02-04
@@ -440,8 +442,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 7. Test single block reward distribution
 // [INFO] test reward distribution for single block
-// [EXPECTED] position 01 reward (100% warm-up, 25% share): 1337756
-// [EXPECTED] position 02 reward (30% warm-up, 25% share): 401326
-// [EXPECTED] position 03 reward (30% warm-up, 25% share): 401326
-// [EXPECTED] position 04 reward (30% warm-up, 25% share): 401326
+// [EXPECTED] position 01 reward (100% warm-up, 25% share): 3344391
+// [EXPECTED] position 02 reward (30% warm-up, 25% share): 1003317
+// [EXPECTED] position 03 reward (30% warm-up, 25% share): 1003317
+// [EXPECTED] position 04 reward (30% warm-up, 25% share): 1003317
 // [INFO] expected reward per position (25% share): 2675513

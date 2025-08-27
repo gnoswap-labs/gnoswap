@@ -21,10 +21,10 @@ TEST_VALUES:=gno/examples/gno.land/p/gnoswap/uint256 \
 	   gno/examples/gno.land/p/gnoswap/int256 \
 	   gno/examples/gno.land/p/gnoswap/gnsmath \
 	   gno/examples/gno.land/r/gnoswap/v1/common \
-	   gno/examples/gno.land/r/gnoswap/v1/gns \
+	   gno/examples/gno.land/r/gnoswap/gns \
 	   gno/examples/gno.land/r/gnoswap/v1/gnft \
 	   gno/examples/gno.land/r/gnoswap/v1/gov/xgns \
-	   gno/examples/gno.land/r/gnoswap/v1/emission \
+	   gno/examples/gno.land/r/gnoswap/emission \
 	   gno/examples/gno.land/r/gnoswap/v1/protocol_fee \
 	   gno/examples/gno.land/r/gnoswap/v1/pool \
 	   gno/examples/gno.land/r/gnoswap/v1/position \

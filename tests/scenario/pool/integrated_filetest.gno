@@ -7,7 +7,7 @@ import (
 	"gno.land/p/demo/uassert"
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/onbloc/bar"
@@ -83,7 +83,7 @@ func setupPools(t *testing.T) {
 	pool.InitPoolTest(t)
 
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFeeByAdmin(cross, 0)
+	pool.SetPoolCreationFee(cross, 0)
 
 	// Create Foo:Bar pool with fee 500
 	println("[INFO] Creating Foo:Bar pool with fee tier 500")
@@ -181,7 +181,14 @@ func testPoolSwapping(t *testing.T) {
 
 	// When: Swap Bar to Foo in Foo:Bar pool
 	println("[INFO] Performing Bar to Foo swap")
-	testing.SetRealm(rouRealm)
+
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = rouRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	swapIn, swapOut := pool.Swap(
 		cross,
 		barPath,
@@ -288,7 +295,13 @@ func testPoolMultiToken(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	bar.Approve(cross, poolAddr, 16000)
 
-	testing.SetRealm(rouRealm)
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = rouRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	swapIn, swapOut := pool.Swap(
 		cross,
 		barPath,
@@ -323,7 +336,6 @@ func testPoolEdgeCases(t *testing.T) {
 	println("[INFO] Attempting swap with amount larger than available liquidity")
 	testing.SetRealm(rouRealm)
 	dryIn, dryOut, _ := pool.DrySwap(
-		cross,
 		fooPath,
 		barPath,
 		FeeTier500,

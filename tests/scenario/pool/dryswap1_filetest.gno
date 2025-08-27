@@ -6,7 +6,7 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/onbloc/bar"
@@ -72,7 +72,7 @@ func testDrySwapZeroForOneTrueNegativeAmount(t *testing.T) {
 
 	// Create pool
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFeeByAdmin(cross, 0)
+	pool.SetPoolCreationFee(cross, 0)
 	pool.CreatePool(
 		cross,
 		barPath,
@@ -110,7 +110,6 @@ func testDrySwapZeroForOneTrueNegativeAmount(t *testing.T) {
 	println("[INFO] Note: Negative amount means exact output amount is specified")
 
 	poolIn, poolOut, _ := pool.DrySwap(
-		cross,
 		fooPath,
 		barPath,
 		FeeTier500,

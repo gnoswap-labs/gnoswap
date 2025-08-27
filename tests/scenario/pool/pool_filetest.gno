@@ -4,18 +4,16 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/json"
-
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/pool"
 
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
 )
 
 // Constants for fee tiers
@@ -30,10 +28,10 @@ const (
 
 // Variables for test addresses and realms
 var (
-	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm      = std.NewUserRealm(adminAddr)
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm     = std.NewUserRealm(positionAddr)
+	posRealm        = std.NewUserRealm(positionAddr)
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 )
 
@@ -71,9 +69,6 @@ func main() {
 
 	println("[SCENARIO] 2. Mint Bar:Baz Liquidity by admin")
 	TestMintBarBazLiquidity()
-
-	println("[SCENARIO] 3. Get Pools")
-	TestApiGetPools()
 
 	println("[INFO] Passed all tests")
 }
@@ -128,24 +123,6 @@ func TestMintBarBazLiquidity() {
 	testing.SkipHeights(1)
 }
 
-// GETTER_API TEST
-func TestApiGetPools() {
-	gpls := pool.ApiGetPools()
-
-	root, err := json.Unmarshal([]byte(gpls))
-	if err != nil {
-		panic(err.Error())
-	}
-
-	response, err := root.GetKey("response")
-	if err != nil {
-		panic(err.Error())
-	}
-
-	println("[EXPECTED] response.Size():", response.Size(), "expected: should be 2")
-	println()
-}
-
 // Output:
 // [INFO] Create Foo:Bar Pool
 // [INFO] Create Bar:Baz Pool
@@ -156,8 +133,5 @@ func TestApiGetPools() {
 // [SCENARIO] 2. Mint Bar:Baz Liquidity by admin
 // [EXPECTED] amount0: 2958015 expected: should be 2958015
 // [EXPECTED] amount1: 8040316 expected: should be 8040316
-//
-// [SCENARIO] 3. Get Pools
-// [EXPECTED] response.Size(): 2 expected: should be 2
 //
 // [INFO] Passed all tests

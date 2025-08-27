@@ -7,7 +7,7 @@ import (
 	"gno.land/p/demo/uassert"
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/onbloc/bar"
@@ -75,7 +75,7 @@ func testDrySwapVsActualSwap(t *testing.T) {
 
 	// Create pool
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFeeByAdmin(cross, 0)
+	pool.SetPoolCreationFee(cross, 0)
 	pool.CreatePool(
 		cross,
 		barPath,
@@ -112,7 +112,6 @@ func testDrySwapVsActualSwap(t *testing.T) {
 	println("[INFO] Amount specified:", amountSpecified)
 
 	dryPoolIn, dryPoolOut, _ := pool.DrySwap(
-		cross,
 		fooPath,
 		barPath,
 		FeeTier500,
@@ -132,8 +131,15 @@ func testDrySwapVsActualSwap(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	bar.Approve(cross, poolAddr, 16000)
 
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = rouRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
+
 	// Execute actual swap
-	testing.SetRealm(rouRealm)
 	actualPoolIn, actualPoolOut := pool.Swap(
 		cross,
 		barPath,

@@ -11,11 +11,11 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/pool"
 
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
 )
 
 // Constants for addresses and approvals
@@ -27,12 +27,12 @@ const (
 
 // Variables for test addresses and realms
 var (
-	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm      = std.NewUserRealm(adminAddr)
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm     = std.NewUserRealm(positionAddr)
-	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
-	rouRealm     = std.NewUserRealm(routerAddr)
+	posRealm        = std.NewUserRealm(positionAddr)
+	routerAddr, _   = access.GetAddress(prbac.ROLE_ROUTER.String())
+	rouRealm        = std.NewUserRealm(routerAddr)
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 
 	poolCreationFee int64 = 100_000_000
@@ -85,7 +85,14 @@ func main() {
 	println()
 
 	println("[SCENARIO] 2. Mint Position (Limit selling 0 for 1 at tick 0 thru 120)")
-	testing.SetRealm(rouRealm)
+
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = rouRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	swap0, swap1 := pool.Swap(
 		cross,
 		barPath,
@@ -138,6 +145,8 @@ func main() {
 	println()
 
 	println("[SCENARIO] 5. Verify Final State (Check slot tick >= 120)")
+
+	thisPool = pool.GetPool(barPath, fooPath, fee100)
 	slotTick := thisPool.Slot0Tick()
 	println("[INFO] slot tick should be >= 120")
 	println("[INFO] Slot tick:", slotTick)

@@ -11,11 +11,11 @@ import (
 	"gno.land/r/onbloc/foo"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/pool"
 
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
 )
 
 var t *testing.T
@@ -64,7 +64,7 @@ var (
 // turn protocol fee on
 func init() {
 	testing.SetRealm(adminRealm)
-	pool.SetFeeProtocolByAdmin(cross, 4, 4)
+	pool.SetFeeProtocol(cross, 4, 4)
 }
 
 func main() {
@@ -100,8 +100,14 @@ func main() {
 
 	println("[INFO] Minted position:", mint0, mint1)
 
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = rouRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	// SWAP 1 -> 0
-	testing.SetRealm(rouRealm)
 	swap0, swap1 := pool.Swap(
 		cross,
 		barPath,
@@ -147,9 +153,10 @@ func main() {
 
 	println("[INFO] Collected:", collect0, collect1)
 
+	thisPool = pool.GetPool(barPath, fooPath, fee100)
 	slotTick := thisPool.Slot0Tick()
 	println("[EXPECTED] Pool tick:", slotTick, "expected: >= 120")
-	uassert.True(t, slotTick >= 120, ufmt.Sprintf("tick(%d) should be >= 120", slotTick)) //temporary fix (cc @jinoosss)
+	uassert.True(t, slotTick >= 120, ufmt.Sprintf("tick(%d) should be >= 120", slotTick)) // temporary fix (cc @jinoosss)
 	println()
 	println("[INFO] Scenario completed")
 }
@@ -164,7 +171,7 @@ func main() {
 // [INFO] Minted position: 59817378 0
 // [INFO] Swapped: -59817377 60183363
 // [INFO] Burned: 0 60177342
-// [INFO] Collected: 0 60177342
+// [INFO] Collected: 0 60181856
 // [EXPECTED] Pool tick: 120 expected: >= 120
 //
 // [INFO] Scenario completed

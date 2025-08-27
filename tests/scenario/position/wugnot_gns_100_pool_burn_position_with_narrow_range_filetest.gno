@@ -11,9 +11,9 @@ import (
 	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 
@@ -32,7 +32,7 @@ var (
 
 	gnotPath   = "gnot"
 	wugnotPath = "gno.land/r/demo/wugnot"
-	gnsPath    = "gno.land/r/gnoswap/v1/gns"
+	gnsPath    = "gno.land/r/gnoswap/gns"
 )
 
 func main() {
@@ -40,7 +40,7 @@ func main() {
 	initializeSetup()
 	println()
 
-	println("[SCENARIO] 2. Create Pool (gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:100)")
+	println("[SCENARIO] 2. Create Pool (gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:100)")
 	createPool(wugnotPath, gnsPath, 100, 0)
 	println()
 
@@ -55,7 +55,7 @@ func main() {
 
 func initializeSetup() {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFeeByAdmin(cross, 0)
+	pool.SetPoolCreationFee(cross, 0)
 
 	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 1000000000000000}})
 	testing.SetOriginSend(std.Coins{{"ugnot", 100000000000000}})
@@ -138,8 +138,8 @@ func removePosition(positionId uint64) {
 	ufmt.Printf("[EXPECTED] decreased liquidity: %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] decreased amount0: %s\n", amount0)
 	ufmt.Printf("[EXPECTED] decreased amount1: %s\n", amount1)
-	ufmt.Printf("[EXPECTED] pool token0 balance: %s\n", pool.PoolGetBalanceToken0(poolPath))
-	ufmt.Printf("[EXPECTED] pool token1 balance: %s\n", pool.PoolGetBalanceToken1(poolPath))
+	ufmt.Printf("[EXPECTED] pool token0 balance: %s\n", pool.GetBalanceToken0(poolPath))
+	ufmt.Printf("[EXPECTED] pool token1 balance: %s\n", pool.GetBalanceToken1(poolPath))
 }
 
 // Output:
@@ -148,8 +148,8 @@ func removePosition(positionId uint64) {
 // [INFO] WUGNOT Balance of admin: 100000000000000
 // [INFO] ugnot Balance of admin: 1000000000000000ugnot
 //
-// [SCENARIO] 2. Create Pool (gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:100)
-// [EXPECTED] created gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:100 pool at tick 0
+// [SCENARIO] 2. Create Pool (gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:100)
+// [EXPECTED] created gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:100 pool at tick 0
 //
 // [SCENARIO] 3. Mint Position (-1 ~ 1)
 // [INFO] Minting position

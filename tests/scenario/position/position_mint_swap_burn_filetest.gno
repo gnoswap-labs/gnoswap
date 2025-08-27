@@ -14,7 +14,7 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/position"
@@ -31,11 +31,12 @@ const (
 )
 
 var (
-	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm    = std.NewUserRealm(adminAddr)
-	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
-	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
-	routerRealm   = std.NewUserRealm(routerAddr)
+	adminAddr, _       = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm         = std.NewUserRealm(adminAddr)
+	poolAddr, _        = access.GetAddress(prbac.ROLE_POOL.String())
+	routerAddr, _      = access.GetAddress(prbac.ROLE_ROUTER.String())
+	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	routerRealm        = std.NewUserRealm(routerAddr)
 
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = std.NewUserRealm(aliceAddr)
@@ -77,7 +78,7 @@ func main() {
 
 func initPool() {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFeeByAdmin(cross, 0)
+	pool.SetPoolCreationFee(cross, 0)
 
 	testing.SetRealm(adminRealm)
 
@@ -148,7 +149,13 @@ func executeSwaps() {
 	bar.Approve(cross, poolAddr, INT64_MAX)
 	foo.Approve(cross, poolAddr, INT64_MAX)
 
-	testing.SetRealm(routerRealm)
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = routerRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	ufmt.Println("[INFO] Executing swap BAR -> FOO")
 	amount0, amount1 := pool.Swap(
 		cross,
@@ -188,6 +195,7 @@ func collectFees() {
 	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Collecting fees")
+
 	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1, false)
 
 	ufmt.Printf("[EXPECTED] Collected fee0 should be %s\n", fee0)

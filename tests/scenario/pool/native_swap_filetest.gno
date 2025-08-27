@@ -9,12 +9,12 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/onbloc/foo"
 
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
 )
 
 // Constants for fee tiers
@@ -130,7 +130,13 @@ func TestSwapBuyNative() {
 	testing.SetRealm(adminRealm)
 	foo.Approve(cross, poolAddr, 10000)
 
-	testing.SetRealm(rouRealm)
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = rouRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	amount0, amount1 := pool.Swap(
 		cross,
 		fooPath,        // token0
@@ -164,7 +170,13 @@ func TestSwapSellNative() {
 	testing.SetRealm(adminRealm)
 	wugnot.Approve(cross, poolAddr, 27123)
 
-	testing.SetRealm(rouRealm)
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = rouRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	amount0, amount1 := pool.Swap( // ugnot 10_000 > foo ??
 		cross,
 		fooPath,        // token0

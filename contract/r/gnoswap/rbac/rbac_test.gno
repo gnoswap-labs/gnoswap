@@ -5,119 +5,200 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
+
 	"gno.land/p/demo/uassert"
 
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
 func TestRegisterRole(t *testing.T) {
-	// Reset manager for test
-	manager = prbac.NewRBACWithAddress(ADMIN)
-	initRbac()
-	manager.RegisterRole("duplicate_role")
-
 	tests := []struct {
 		name        string
+		setup       func()
 		roleName    string
 		shouldError bool
 		errorMsg    string
 	}{
 		{
-			name:        "Register new custom role should succeed",
+			name: "Register new custom role should succeed",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
 			roleName:    "custom_role",
 			shouldError: false,
 		},
 		{
-			name:        "Register system role should error",
+			name: "Register system role should error",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
 			roleName:    prbac.ROLE_ADMIN.String(),
 			shouldError: true,
-			errorMsg:    "role admin already exists",
+			errorMsg:    "already exists",
 		},
 		{
-			name:        "Register existing role should error",
+			name: "Register existing role should error",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+				manager.RegisterRole("duplicate_role")
+			},
 			roleName:    "duplicate_role",
-			shouldError: true, // First registration should succeed
+			shouldError: true,
+			errorMsg:    "already exists",
+		},
+		{
+			name: "Register role with empty string should succeed (manager internal)",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:    "",
+			shouldError: false, // manager.RegisterRole doesn't validate, only the public function does
+		},
+		{
+			name: "Register role with whitespace should succeed",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:    "role with spaces",
+			shouldError: false,
+		},
+		{
+			name: "Register role with special characters should succeed",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:    "role_with-special.chars",
+			shouldError: false,
+		},
+		{
+			name: "Register very long role name should succeed",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:    "very_long_role_name_that_exceeds_normal_length_expectations_but_should_still_work",
+			shouldError: false,
+		},
+		{
+			name: "Register multiple roles should succeed",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+				manager.RegisterRole("role_1")
+				manager.RegisterRole("role_2")
+			},
+			roleName:    "role_3",
+			shouldError: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
 			testing.SetRealm(std.NewUserRealm(ADMIN))
-
 			err := manager.RegisterRole(tt.roleName)
 
 			if tt.shouldError {
 				uassert.Error(t, err)
+				if tt.errorMsg != "" && err != nil {
+					uassert.True(t, contains(err.Error(), tt.errorMsg))
+				}
 			} else {
 				uassert.NoError(t, err)
+				// Verify role was actually registered
+				_, getErr := manager.GetRoleAddress(tt.roleName)
+				uassert.NoError(t, getErr)
 			}
 		})
 	}
-
-	// Test duplicate registration
-	t.Run("Register duplicate role should fail", func(t *testing.T) {
-		duplicateRole := "duplicate_test_role"
-
-		// First registration
-		err := manager.RegisterRole(duplicateRole)
-		if err != nil {
-			t.Fatalf("First registration should succeed: %v", err)
-		}
-
-		// Second registration should fail
-		err = manager.RegisterRole(duplicateRole)
-		if err == nil {
-			t.Error("Duplicate registration should fail")
-		}
-	})
 }
 
 func TestRemoveRole(t *testing.T) {
-	// Reset manager for test
-	manager = prbac.NewRBACWithAddress(ADMIN)
-	initRbac()
-
-	// Register a test role first
-	testRole := "test_removable_role"
-	err := manager.RegisterRole(testRole)
-	if err != nil {
-		t.Fatalf("Failed to register test role: %v", err)
-	}
-
 	tests := []struct {
 		name        string
+		setup       func()
 		roleName    string
 		shouldError bool
 		errorMsg    string
 	}{
 		{
-			name:        "Remove custom role should succeed",
-			roleName:    testRole,
+			name: "Remove custom role should succeed",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+				manager.RegisterRole("removable_role")
+			},
+			roleName:    "removable_role",
 			shouldError: false,
 		},
 		{
-			name:        "Remove system role should error",
+			name: "Remove system role should error",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
 			roleName:    prbac.ROLE_ADMIN.String(),
 			shouldError: true,
 			errorMsg:    "cannot remove system role",
 		},
 		{
-			name:        "Remove non-existent role should fail",
+			name: "Remove non-existent role should error",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
 			roleName:    "non_existent_role",
-			shouldError: true, // manager.RemoveRole will return error, not panic
+			shouldError: true,
+			errorMsg:    "does not exist",
+		},
+		{
+			name: "Remove role with empty string should error",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:    "",
+			shouldError: true,
+			errorMsg:    "does not exist",
+		},
+		{
+			name: "Remove role multiple times should error on second attempt",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+				manager.RegisterRole("remove_twice_role")
+				manager.RemoveRole("remove_twice_role") // First removal
+			},
+			roleName:    "remove_twice_role",
+			shouldError: true,
+			errorMsg:    "does not exist",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
 			testing.SetRealm(std.NewUserRealm(ADMIN))
-
-			// Test manager functionality directly
 			err := manager.RemoveRole(tt.roleName)
+
 			if tt.shouldError {
 				uassert.Error(t, err)
+				if tt.errorMsg != "" && err != nil {
+					uassert.True(t, contains(err.Error(), tt.errorMsg))
+				}
 			} else {
 				uassert.NoError(t, err)
+				// Verify role was actually removed (if not empty string)
+				if tt.roleName != "" {
+					_, getErr := manager.GetRoleAddress(tt.roleName)
+					uassert.Error(t, getErr) // Should error because role doesn't exist
+				}
 			}
 		})
 	}
@@ -236,11 +317,9 @@ func TestUpdateAccessRoleAddresses(t *testing.T) {
 
 	// This function is private, but we can test its effect indirectly
 	// by calling functions that invoke it and checking if access package is updated
-
 	// Test that updateAccessRoleAddresses is called during initialization
 	// We can't directly test the access.SetRoleAddresses call without mocking,
 	// but we can verify the function doesn't panic when called
-
 	// Register a new role and update its address to trigger updateAccessRoleAddresses
 	testRole := "test_access_update"
 	err := manager.RegisterRole(testRole)
@@ -353,7 +432,7 @@ func TestAddressChangeComplete(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set realm to rbac for access package calls
-			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/rbac"))
+			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/rbac"))
 
 			// Setup
 			tt.setup()
@@ -446,7 +525,7 @@ func TestRBACToAccessSync(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set realm to rbac for access package calls
-			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/rbac"))
+			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/rbac"))
 
 			// Reset manager
 			manager = prbac.NewRBACWithAddress(ADMIN)

@@ -5,12 +5,12 @@ import (
 	"strconv"
 	"testing"
 
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 	pl "gno.land/r/gnoswap/v1/pool"
 
@@ -119,6 +119,7 @@ func TestMint() {
 	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
 	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
 
+	pool = pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity = pool.Liquidity()
 	println("[EXPECTED] test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))):", test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))), "expected: should be true")
 
@@ -145,6 +146,7 @@ func TestMint() {
 	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
 	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
 
+	pool = pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity = pool.Liquidity()
 	expected = new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(20))
 	println("[EXPECTED] test_liquidity.Eq(expected):", test_liquidity.Eq(expected), "expected: should be true")
@@ -168,18 +170,22 @@ func TestBurn() {
 	println("[EXPECTED] test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(18))):", test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(18))), "expected: should be true")
 
 	pl.Burn(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(8)).ToString(), adminAddr)
+	pool = pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity = pool.Liquidity()
 	println("[EXPECTED] test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))):", test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))), "expected: should be true")
 
 	pl.Burn(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, "1", adminAddr)
+	pool = pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity = pool.Liquidity()
 	println("[EXPECTED] test_liquidity.ToString():", test_liquidity.ToString(), "expected: should be 9999")
 
 	pl.Burn(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, "999", adminAddr)
+	pool = pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity = pool.Liquidity()
 	println("[EXPECTED] test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(9))):", test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(9))), "expected: should be true")
 
 	pl.Burn(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(9)).ToString(), adminAddr)
+	pool = pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity = pool.Liquidity()
 	println("[EXPECTED] test_liquidity.ToString():", test_liquidity.ToString(), "expected: should be 0")
 	println()
@@ -250,6 +256,13 @@ func TestSwap() {
 		userOldToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(adminAddr)
 		userOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
 
+		// set current realm and origin caller
+		func() {
+			ctx := testing.GetContext()
+			ctx.CurrentRealm = rouRealm
+			ctx.OriginCaller = adminAddr
+			testing.SetContext(ctx)
+		}()
 		amount0, amount1 := pl.Swap(
 			cross,
 			fooPath,    // token0Path
@@ -286,6 +299,13 @@ func TestSwap() {
 		userOldToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(adminAddr)
 		userOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
 
+		// set current realm and origin caller
+		func() {
+			ctx := testing.GetContext()
+			ctx.CurrentRealm = rouRealm
+			ctx.OriginCaller = adminAddr
+			testing.SetContext(ctx)
+		}()
 		amount0, amount1 := pl.Swap(cross, barPath, fooPath, fee500, adminAddr, true, "5000", test_price, adminAddr) // give enough amount to take fees away
 
 		intAmount0, _ := strconv.Atoi(amount0)
@@ -310,6 +330,13 @@ func TestSwap() {
 		userOldToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(adminAddr)
 		userOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
 
+		// set current realm and origin caller
+		func() {
+			ctx := testing.GetContext()
+			ctx.CurrentRealm = rouRealm
+			ctx.OriginCaller = adminAddr
+			testing.SetContext(ctx)
+		}()
 		amount0, amount1 := pl.Swap(cross, barPath, fooPath, fee500, adminAddr, true, "1000", test_price, adminAddr) // give enough amount to take fees away
 
 		intAmount0, _ := strconv.Atoi(amount0)
@@ -335,6 +362,13 @@ func TestSwap() {
 		userOldToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(adminAddr)
 		userOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
 
+		// set current realm and origin caller
+		func() {
+			ctx := testing.GetContext()
+			ctx.CurrentRealm = rouRealm
+			ctx.OriginCaller = adminAddr
+			testing.SetContext(ctx)
+		}()
 		amount0, amount1 := pl.Swap(cross, barPath, fooPath, fee500, adminAddr, false, "16000", MAX_PRICE, adminAddr) // give enough amount to take fees away
 
 		intAmount0, _ := strconv.Atoi(amount0)

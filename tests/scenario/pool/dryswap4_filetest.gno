@@ -6,7 +6,7 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/onbloc/bar"
@@ -29,10 +29,10 @@ const (
 
 // Variables for test addresses and realms
 var (
-	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm      = std.NewUserRealm(adminAddr)
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm     = std.NewUserRealm(positionAddr)
+	posRealm        = std.NewUserRealm(positionAddr)
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 )
 
@@ -72,7 +72,7 @@ func testDrySwapZeroForOneFalse(t *testing.T) {
 
 	// Create pool
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFeeByAdmin(cross, 0)
+	pool.SetPoolCreationFee(cross, 0)
 	pool.CreatePool(
 		cross,
 		barPath,
@@ -110,7 +110,6 @@ func testDrySwapZeroForOneFalse(t *testing.T) {
 	println("[INFO] Direction: foo (Token1) -> bar (Token0)")
 
 	poolIn, poolOut, _ := pool.DrySwap(
-		cross,
 		fooPath,
 		barPath,
 		FeeTier500,
@@ -135,7 +134,6 @@ func testDrySwapZeroForOneFalse(t *testing.T) {
 	println("[INFO] This means exact output amount is specified")
 
 	poolInNeg, poolOutNeg, _ := pool.DrySwap(
-		cross,
 		fooPath,
 		barPath,
 		FeeTier500,

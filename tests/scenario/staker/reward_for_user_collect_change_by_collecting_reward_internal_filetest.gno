@@ -8,23 +8,24 @@ import (
 	"std"
 	"strconv"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/v1/common"
 
-	"gno.land/r/gnoswap/v1/access"
-
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -87,12 +88,13 @@ func main() {
 
 func initAndSetup() {
 	testing.SetRealm(adminRealm)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
 	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
@@ -347,44 +349,44 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 4. First reward collection period
 // [INFO] skip 5 blocks for first reward accumulation
 // [INFO] collect first reward
-// [EXPECTED] first reward (5 blocks): 9631848
+// [EXPECTED] first reward (5 blocks): 24079616
 // [INFO] first reward collection completed
 //
 // [SCENARIO] 5. Second reward collection period
 // [INFO] skip 5 blocks for second reward accumulation
 // [INFO] collect second reward
-// [EXPECTED] second reward (5 blocks): 8026540
+// [EXPECTED] second reward (5 blocks): 20066347
 // [INFO] second reward collection completed
 //
 // [SCENARIO] 6. Third reward collection with longer interval
 // [INFO] skip 10 blocks for third reward accumulation (longer period)
 // [INFO] collect third reward
-// [EXPECTED] third reward (10 blocks): 16053080
+// [EXPECTED] third reward (10 blocks): 40132694
 // [INFO] third reward collection completed
 //
 // [SCENARIO] 7. Compare reward accumulation patterns
 // [INFO] analyze reward accumulation patterns
 // [INFO] test pattern: frequent small collections
-// [INFO] small collection 1 (2 blocks): 3210615
-// [INFO] small collection 2 (2 blocks): 3210615
-// [INFO] small collection 3 (2 blocks): 3210615
-// [INFO] small collection 4 (2 blocks): 3210615
-// [INFO] small collection 5 (2 blocks): 3210615
-// [EXPECTED] total from frequent collections (10 blocks): 16053075
+// [INFO] small collection 1 (2 blocks): 8026538
+// [INFO] small collection 2 (2 blocks): 8026538
+// [INFO] small collection 3 (2 blocks): 8026538
+// [INFO] small collection 4 (2 blocks): 8026538
+// [INFO] small collection 5 (2 blocks): 8026538
+// [EXPECTED] total from frequent collections (10 blocks): 40132690
 // [INFO] test pattern: single large collection
-// [EXPECTED] single large collection (10 blocks): 16053080
+// [EXPECTED] single large collection (10 blocks): 40132694
 // [INFO] reward pattern analysis:
-// [INFO] - Frequent collections total: 16053075
-// [INFO] - Single large collection: 16053080
+// [INFO] - Frequent collections total: 40132690
+// [INFO] - Single large collection: 40132694
 // [INFO] reward amounts may vary due to emission timing and block-based calculations
 //
 // [SCENARIO] 8. Final verification with multiple collections
 // [INFO] final verification with multiple rapid collections
-// [INFO] initial GNS balance: 100000065817623
+// [INFO] initial GNS balance: 100000164544041
 // [INFO] perform 3 consecutive collections
-// [EXPECTED] consecutive collection 1: 24079621
+// [EXPECTED] consecutive collection 1: 60199042
 // [EXPECTED] consecutive collection 2: 0
 // [EXPECTED] consecutive collection 3: 0
-// [EXPECTED] total GNS gained in this test: 24079621
+// [EXPECTED] total GNS gained in this test: 60199042
 // [INFO] reward collection pattern scenario completed successfully
 // [INFO] confirmed: rewards accumulate over time and are collected when requested

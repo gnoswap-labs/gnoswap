@@ -5,14 +5,16 @@ import (
 	"std"
 	"strconv"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/emission"
 
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
@@ -20,7 +22,7 @@ import (
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
@@ -46,7 +48,7 @@ var (
 	maxInt64   int64 = 9223372036854775807
 
 	poolPath              string = "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100"
-	MUST_EXISTS_IN_TIER_1        = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"
+	MUST_EXISTS_IN_TIER_1        = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"
 )
 
 func main() {
@@ -81,6 +83,7 @@ func main() {
 
 func initAndSetup() {
 	testing.SetRealm(adminRealm)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	// override warm-up period for testing
 	sr.SetWarmUp(cross, 30, 150)
@@ -225,7 +228,7 @@ func stakeToken_1_2() {
 }
 
 func makePosition1OutRange() {
-	poolTick := pl.PoolGetSlot0Tick(poolPath)
+	poolTick := pl.GetSlot0Tick(poolPath)
 	if poolTick != 0 {
 		panic("expected pool tick to be 0")
 	}
@@ -321,9 +324,9 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 5. Stake both positions and check initial rewards
 // [EXPECTED] both positions staked and initial rewards cleared
 // [INFO] collecting reward for position 01 while in-range
-// [EXPECTED] position 01 (in-range) reward: 50587 GNS
+// [EXPECTED] position 01 (in-range) reward: 126469 GNS
 // [INFO] collecting reward for position 02 while in-range
-// [EXPECTED] position 02 (in-range) reward: 1554720 GNS
+// [EXPECTED] position 02 (in-range) reward: 3886800 GNS
 //
 // [SCENARIO] 6. Make position 01 out of range via swap
 // [EXPECTED] swap executed: 10000 BAR -> -9884 QUX
@@ -332,4 +335,4 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] checking reward for position 01 (now out-range)
 // [EXPECTED] position 01 (out-range) reward: 0 GNS
 // [INFO] checking reward for position 02 (still in-range)
-// [EXPECTED] position 02 (in-range) reward: 1605307 GNS
+// [EXPECTED] position 02 (in-range) reward: 4013269 GNS

@@ -16,17 +16,17 @@ import (
 
 	"gno.land/r/demo/wugnot"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/gns"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -48,7 +48,7 @@ var (
 	barPath = "gno.land/r/onbloc/bar"
 	bazPath = "gno.land/r/onbloc/baz"
 
-	gnsPath    = "gno.land/r/gnoswap/v1/gns"
+	gnsPath    = "gno.land/r/gnoswap/gns"
 	wugnotPath = "gno.land/r/demo/wugnot"
 
 	fee100 uint32 = 100
@@ -98,7 +98,7 @@ func initAndSetup() {
 	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	println("[INFO] register gns change callback")
 	testing.SetRealm(stakerRealm)
@@ -323,19 +323,19 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] skip blocks to accumulate rewards
 // [INFO] check balances before collecting with unwrap
 // [INFO] ugnot balance before: 99999000000000
-// [INFO] wugnot balance before: 4394
+// [INFO] wugnot balance before: 108288
 // [INFO] collect reward with unwrap=true
-// [EXPECTED] ugnot balance after: 99999000000076
-// [EXPECTED] wugnot balance after: 4394
-// [EXPECTED] ugnot increase (unwrapped): 76
+// [EXPECTED] ugnot balance after: 99999000000191
+// [EXPECTED] wugnot balance after: 108288
+// [EXPECTED] ugnot increase (unwrapped): 191
 // [EXPECTED] wugnot change (should be 0): 0
 //
 // [SCENARIO] 7. Collect external reward without unwrap
 // [INFO] check balances before collecting without unwrap
-// [INFO] ugnot balance before: 99999000000076
-// [INFO] wugnot balance before: 4394
+// [INFO] ugnot balance before: 99999000000191
+// [INFO] wugnot balance before: 108288
 // [INFO] collect reward with unwrap=false
-// [EXPECTED] ugnot balance after: 99999000000076
-// [EXPECTED] wugnot balance after: 4470
+// [EXPECTED] ugnot balance after: 99999000000191
+// [EXPECTED] wugnot balance after: 108480
 // [EXPECTED] ugnot change (should be 0): 0
-// [EXPECTED] wugnot increase (wrapped): 76
+// [EXPECTED] wugnot increase (wrapped): 192

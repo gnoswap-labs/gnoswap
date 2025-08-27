@@ -10,22 +10,22 @@ import (
 	"std"
 	"strconv"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/common"
-
 	"gno.land/r/demo/wugnot"
 
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/v1/common"
 
-	"gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/gns"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
@@ -49,7 +49,7 @@ var (
 	barPath = "gno.land/r/onbloc/bar"
 	fooPath = "gno.land/r/onbloc/foo"
 
-	gnsPath    = "gno.land/r/gnoswap/v1/gns"
+	gnsPath    = "gno.land/r/gnoswap/gns"
 	wugnotPath = "gno.land/r/demo/wugnot"
 
 	fee500 uint32 = 500
@@ -106,6 +106,7 @@ func main() {
 
 func initWithShortWarmUp() {
 	testing.SetRealm(adminRealm)
+	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
 	println("[INFO] override warm-up periods for testing")
 	sr.SetWarmUp(cross, 30, 150)
@@ -117,10 +118,10 @@ func initWithShortWarmUp() {
 	sr.SetUnStakingFee(cross, 0)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFeeByAdmin(cross, 0)
+	pl.SetPoolCreationFee(cross, 0)
 
 	println("[INFO] set community pool distribution to 0%")
-	emission.ChangeDistributionPctByAdmin(
+	emission.ChangeDistributionPct(
 		cross,
 		1, 7500, // staker
 		2, 2500, // devOps
@@ -146,14 +147,14 @@ func createPools() {
 	pl.CreatePool(
 		cross,
 		"gno.land/r/demo/wugnot",
-		"gno.land/r/gnoswap/v1/gns",
+		"gno.land/r/gnoswap/gns",
 		500,
 		common.TickMathGetSqrtRatioAtTick(-10000).ToString(),
 	)
 
 	println("[INFO] set pool tiers")
 	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", 1)
-	sr.SetPoolTier(cross, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500", 2)
+	sr.SetPoolTier(cross, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500", 2)
 
 	testing.SkipHeights(18)
 }
@@ -193,7 +194,7 @@ func mintNativePosition01() {
 	println("[INFO] mint native position 01 (gns:gnot)")
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
-		"gno.land/r/gnoswap/v1/gns",
+		"gno.land/r/gnoswap/gns",
 		"gnot",
 		fee500,
 		int32(9000),
@@ -244,7 +245,7 @@ func mintNativePosition02() {
 	println("[INFO] mint native position 02 (gns:gnot)")
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
-		"gno.land/r/gnoswap/v1/gns",
+		"gno.land/r/gnoswap/gns",
 		"gnot",
 		fee500,
 		int32(9000),
@@ -287,12 +288,12 @@ func createExternalIncentiveNative() {
 	testing.SetOriginSend(std.Coins{{"ugnot", 10_000_000_000}})
 	wugnot.Approve(cross, stakerAddr, maxInt64)
 
-	incentiveID := fmt.Sprintf("%s:%d:%d", adminAddr, std.ChainHeight(), 1)
+	incentiveID := fmt.Sprintf("%s:%d:%d", adminAddr, time.Now().Unix(), 1)
 	println("[INFO] create external incentive with incentiveID: ", incentiveID)
 
 	sr.CreateExternalIncentive(
 		cross,
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500", // targetPoolPath
+		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500", // targetPoolPath
 		"gnot",                      // rewardToken (native)
 		10_000_000_000,              // rewardAmount
 		1234569600,                  // startTimestamp
@@ -415,10 +416,10 @@ func endExternalIncentive() {
 	testing.SkipHeights(9999999)
 
 	println("[INFO] end external incentive")
-	incentiveID := "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d:150:1"
+	incentiveID := "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d:1234568025:1"
 	sr.EndExternalIncentive(
 		cross,
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500",
+		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500",
 		incentiveID,
 	)
 	testing.SkipHeights(1)
@@ -505,7 +506,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] prepare 10_000_000_000 ugnot for external incentive
 // [INFO] add token and approve gns
 // [INFO] create external incentive with native coin
-// [INFO] create external incentive with incentiveID:  g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d:150:1
+// [INFO] create external incentive with incentiveID:  g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d:1234568025:1
 // [INFO] external incentive created - start: 1234569600, end: 1242345600
 // [EXPECTED] admin wugnot balance after external incentive: 0
 //
@@ -524,29 +525,29 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] wugnot balance before collect: 0
 // [INFO] ugnot balance before collect: 10099998010
 // [INFO] collect reward for token 01 (no unwrap)
-// [EXPECTED] wugnot balance after collect: 196243
+// [EXPECTED] wugnot balance after collect: 2218350
 // [EXPECTED] ugnot balance after collect: 10099998010
-// [EXPECTED] wugnot increase: 196243
+// [EXPECTED] wugnot increase: 2218350
 // [EXPECTED] ugnot change: 0
 //
 // [SCENARIO] 9. Unstake token 02
 // [INFO] skip more blocks
-// [INFO] wugnot balance before unstake: 196243
+// [INFO] wugnot balance before unstake: 2218350
 // [INFO] ugnot balance before unstake: 10099998010
 // [INFO] unstake token 02 (no unwrap)
 // [EXPECTED] NFT owner after unstaking: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
-// [EXPECTED] wugnot balance after unstake: 694953
+// [EXPECTED] wugnot balance after unstake: 5516939
 // [EXPECTED] ugnot balance after unstake: 10099998010
-// [EXPECTED] wugnot increase from unstake: 498710
+// [EXPECTED] wugnot increase from unstake: 3298589
 // [EXPECTED] ugnot change from unstake: 0
 //
 // [SCENARIO] 10. End external incentive
 // [INFO] approve wugnot for unwrapping
-// [INFO] wugnot balance before end: 694953
+// [INFO] wugnot balance before end: 5516939
 // [INFO] ugnot balance before end: 10099998010
 // [INFO] skip to end of external incentive
 // [INFO] end external incentive
-// [EXPECTED] wugnot balance after end: 694953
+// [EXPECTED] wugnot balance after end: 5516939
 // [EXPECTED] ugnot balance after end: 10099998010
 // [EXPECTED] wugnot change: 0
 // [EXPECTED] ugnot refund: 0

@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
 
 	prbac "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/v1/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 )
 
 // Test internal setHaltLevel function

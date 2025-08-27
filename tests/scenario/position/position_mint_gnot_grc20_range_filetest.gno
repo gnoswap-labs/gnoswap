@@ -15,9 +15,9 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v1/access"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/position"
 )
@@ -40,7 +40,7 @@ var (
 	aliceRealm = std.NewUserRealm(aliceAddr)
 
 	token0Path = "gno.land/r/demo/wugnot"
-	token1Path = "gno.land/r/gnoswap/v1/gns"
+	token1Path = "gno.land/r/gnoswap/gns"
 	fee        = uint32(3000)
 )
 
@@ -76,7 +76,7 @@ func main() {
 
 func initPool() {
 	testing.SetRealm(adminRealm)
-	pool.SetPoolCreationFeeByAdmin(cross, 0)
+	pool.SetPoolCreationFee(cross, 0)
 
 	testing.SetRealm(adminRealm)
 
@@ -201,7 +201,13 @@ func executeSwap() {
 	wugnot.Approve(cross, poolAddr, INT64_MAX)
 	gns.Approve(cross, poolAddr, INT64_MAX)
 
-	testing.SetRealm(routerRealm)
+	// set current realm and origin caller
+	func() {
+		ctx := testing.GetContext()
+		ctx.CurrentRealm = routerRealm
+		ctx.OriginCaller = adminAddr
+		testing.SetContext(ctx)
+	}()
 	ufmt.Println("[INFO] Executing swap to test ranges")
 	amount0, amount1 := pool.Swap(
 		cross,
