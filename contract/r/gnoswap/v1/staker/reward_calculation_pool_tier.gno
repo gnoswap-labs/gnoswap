@@ -96,7 +96,7 @@ type PoolTier struct {
 	counts [AllTierCount]uint64
 
 	lastRewardCacheTimestamp int64
-	lastRewardCacheHeight int64
+	lastRewardCacheHeight    int64
 
 	currentEmission int64
 
@@ -187,17 +187,17 @@ func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *
 		return
 	}
 
+	// decrement count from current tier if it exists
+	if currentTier > 0 {
+		if self.counts[currentTier] == 0 {
+			panic("counts underflow: removing from empty tier")
+		}
+		self.counts[currentTier]--
+	}
+
 	if nextTier == 0 {
 		// removed from the tier
 		self.membership.Remove(poolPath)
-
-		// count decrement
-		if currentTier > 0 {
-			if self.counts[currentTier] == 0 {
-				panic("counts underflow: removing from empty tier")
-			}
-			self.counts[currentTier]--
-		}
 		pool, ok := pools.Get(poolPath)
 		if !ok {
 			panic("changeTier: pool not found")
@@ -206,17 +206,10 @@ func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *
 	} else {
 		// handle all move/add operations
 		self.membership.Set(poolPath, nextTier)
-		if currentTier > 0 {
-			if self.counts[currentTier] == 0 {
-				panic("counts underflow: removing from empty tier")
-			}
-			self.counts[currentTier]--
-		}
 		self.counts[nextTier]++
 	}
 
 	self.tierRatio = TierRatioFromCounts(self.counts[Tier1], self.counts[Tier2], self.counts[Tier3])
-
 	currentEmission := self.getEmission()
 
 	// Cache updated reward for each tiered pool
