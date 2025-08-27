@@ -1,10 +1,6 @@
 package staker
 
-import (
-	"std"
-
-	"gno.land/p/demo/ufmt"
-)
+import "std"
 
 // Error message constants
 const (
