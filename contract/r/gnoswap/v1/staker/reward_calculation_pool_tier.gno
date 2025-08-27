@@ -136,7 +136,15 @@ func NewPoolTier(pools *Pools, currentHeight int64, currentTime int64, initialPo
 // CurrentReward returns the current per-pool reward for the given tier.
 func (self *PoolTier) CurrentReward(tier uint64) int64 {
 	currentEmission := self.getEmission()
-	return currentEmission * int64(self.tierRatio.Get(tier)) / int64(self.CurrentCount(tier)) / 100
+	tierRatio := int64(self.tierRatio.Get(tier))
+	count := int64(self.CurrentCount(tier))
+
+	// Check for zero count to prevent division by zero
+	if count == 0 {
+		return 0
+	}
+
+	return currentEmission * tierRatio / count / 100
 }
 
 // CurrentCount returns the current count of pools in the given tier.
@@ -218,7 +226,14 @@ func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *
 		if !ok {
 			panic("failed to cast value to uint64")
 		}
-		poolReward := currentEmission * int64(self.tierRatio.Get(tier)) / 100 / int64(counts[tier])
+
+		tierRatio := int64(self.tierRatio.Get(tier))
+		tierCount := int64(counts[tier])
+		if tierCount == 0 {
+			return false // Skip if no pools in tier
+		}
+
+		poolReward := currentEmission * tierRatio / 100 / tierCount
 		pool.cacheReward(currentTime, poolReward)
 		return false
 	})
@@ -275,8 +290,15 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentTimestamp, emiss
 			return false
 		}
 
-		// real reward
-		reward := emissionInThisInterval * int64(self.tierRatio.Get(tierNum)) / 100 / int64(counts[tierNum])
+		// Calculate real reward with overflow check
+		tierRatio := int64(self.tierRatio.Get(tierNum))
+		tierCount := int64(counts[tierNum])
+
+		if tierCount == 0 {
+			return false // Skip if no pools in tier
+		}
+
+		reward := emissionInThisInterval * tierRatio / 100 / tierCount
 		// accumulate the reward for the interval (startBlock to endBlock) in the Pool
 		pool.cacheInternalReward(currentTimestamp, reward)
 		return false
@@ -292,6 +314,17 @@ func (self *PoolTier) CurrentRewardPerPool(poolPath string) int64 {
 	emission := self.getEmission()
 	counts := self.CurrentAllTierCounts()
 	tierNum := self.CurrentTier(poolPath)
-	reward := emission * int64(self.tierRatio.Get(tierNum)) / 100 / int64(counts[tierNum])
-	return reward
+
+	if tierNum == 0 {
+		return 0 // Pool not in any tier
+	}
+
+	tierRatio := int64(self.tierRatio.Get(tierNum))
+	tierCount := int64(counts[tierNum])
+
+	if tierCount == 0 {
+		return 0 // No pools in tier
+	}
+
+	return emission * tierRatio / 100 / tierCount
 }

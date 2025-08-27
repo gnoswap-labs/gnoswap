@@ -220,24 +220,8 @@ func (p *Pool) tickCross(
 ) *i256.Int {
 	thisTick := p.getTick(tick)
 
-	feeGrowthOutside0X128, underflow := u256.Zero().SubOverflow(feeGrowthGlobal0X128, thisTick.feeGrowthOutside0X128)
-	if underflow {
-		panic(newErrorWithDetail(
-			errLiquidityCalculation,
-			ufmt.Sprintf("feeGrowthOutside0X128(%s) underflows feeGrowthGlobal0X128(%s)", thisTick.feeGrowthOutside0X128.ToString(), feeGrowthGlobal0X128.ToString()),
-		))
-	}
-
-	feeGrowthOutside1X128, underflow := u256.Zero().SubOverflow(feeGrowthGlobal1X128, thisTick.feeGrowthOutside1X128)
-	if underflow {
-		panic(newErrorWithDetail(
-			errLiquidityCalculation,
-			ufmt.Sprintf("feeGrowthOutside0X128(%s) underflows feeGrowthGlobal0X128(%s)", thisTick.feeGrowthOutside0X128.ToString(), feeGrowthGlobal0X128.ToString()),
-		))
-	}
-
-	thisTick.feeGrowthOutside0X128 = feeGrowthOutside0X128
-	thisTick.feeGrowthOutside1X128 = feeGrowthOutside1X128
+	thisTick.feeGrowthOutside0X128 = u256.Zero().Sub(feeGrowthGlobal0X128, thisTick.feeGrowthOutside0X128)
+	thisTick.feeGrowthOutside1X128 = u256.Zero().Sub(feeGrowthGlobal1X128, thisTick.feeGrowthOutside1X128)
 
 	p.setTick(tick, thisTick)
 
