@@ -5,7 +5,6 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-// TODO: define Tier type as uint8 size
 const (
 	AllTierCount = 4 // 0, 1, 2, 3
 	Tier1        = 1
