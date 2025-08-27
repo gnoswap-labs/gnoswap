@@ -1,0 +1,38 @@
+loadpkg gno.land/p/demo/avl
+loadpkg gno.land/p/demo/ufmt
+loadpkg gno.land/p/demo/json
+loadpkg gno.land/p/demo/ownable
+loadpkg gno.land/p/demo/grc/grc20
+
+# Load gnoswap packages
+loadpkg gno.land/p/gnoswap/int256
+loadpkg gno.land/p/gnoswap/uint256
+loadpkg gno.land/p/gnoswap/gnsmath
+loadpkg gno.land/p/gnoswap/rbac
+
+# Load onbloc token packages
+loadpkg gno.land/r/onbloc/usdc
+loadpkg gno.land/r/onbloc/bar
+loadpkg gno.land/r/onbloc/baz
+loadpkg gno.land/r/onbloc/foo
+loadpkg gno.land/r/onbloc/obl
+loadpkg gno.land/r/onbloc/qux
+loadpkg gno.land/r/gnoswap/gns
+loadpkg gno.land/r/demo/wugnot
+
+# Load contracts
+loadpkg gno.land/r/gnoswap/v1/pool
+
+adduser user2
+adduser user3
+
+## start a new node
+gnoland start
+
+## deploy is already done by loadpkg, so we just check it works
+gnokey query vm/qeval -data "gno.land/r/onbloc/usdc.TotalSupply()"
+stdout '(100000000000000 int64)'
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g148tjamj80yyrm309z7rk690an22thd2l3z8ank -args 9223372036854775806 -gas-fee 100000000ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+# gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/pool -func CreatePool -args "gno.land/r/demo/wugnot" -args "gno.land/r/gnoswap/gns" -args 3000 -args 79228162514264337593543950337 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+# stdout '{"key":"poolPath","value":"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"}'
