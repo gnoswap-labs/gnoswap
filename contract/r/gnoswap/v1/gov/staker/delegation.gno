@@ -156,15 +156,6 @@ func (d *Delegation) processCollection(amount, currentTime int64) error {
 }
 
 func addToCollectedAmount(collectedAmount, amount int64) (int64, error) {
-	if collectedAmount > 0 && amount > 0 {
-		const maxInt64 = 1<<63 - 1
-		if collectedAmount > maxInt64-amount {
-			return 0, makeErrorWithDetails(
-				errInvalidAmount,
-				ufmt.Sprintf(errOverflowInCollectedAmount, collectedAmount, amount),
-			)
-		}
-	}
 	return collectedAmount + amount, nil
 }
 

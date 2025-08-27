@@ -399,11 +399,7 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 				self.deposit,
 			)
 
-			rewardAcc, overflow := u256.Zero().MulOverflow(rewardAcc, self.deposit.liquidity)
-			if overflow {
-				return ufmt.Errorf("rewardAcc * liquidity overflow")
-			}
-
+			rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.liquidity)
 			rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
 			self.rewards[i] += safeConvertToInt64(rewardAcc)
 
@@ -418,11 +414,7 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 			self.deposit,
 		)
 
-		rewardAcc, overflow := u256.Zero().MulOverflow(rewardAcc, self.deposit.liquidity)
-		if overflow {
-			return ufmt.Errorf("rewardAcc * liquidity overflow")
-		}
-
+		rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.liquidity)
 		rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
 		self.rewards[i] += safeConvertToInt64(rewardAcc)
 
