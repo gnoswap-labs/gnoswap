@@ -8,410 +8,205 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-func TestTickBitmapPosition(t *testing.T) {
-	tests := []struct {
+func newTickBitmapPool(t *testing.T) *Pool {
+	t.Helper()
+	return &Pool{tickBitmaps: avl.NewTree()}
+}
+
+func bitIsSet(t *testing.T, p *Pool, tick, spacing int32) bool {
+	t.Helper()
+	wp, bp := tickBitmapPosition(tick / spacing)
+	mask := u256.Zero().Lsh(u256.One(), uint(bp))
+	return u256.Zero().And(p.getTickBitmap(wp), mask).Cmp(u256.Zero()) != 0
+}
+
+func flipMany(t *testing.T, p *Pool, spacing int32, ticks ...int32) {
+	t.Helper()
+	for _, tk := range ticks {
+		p.tickBitmapFlipTick(tk, spacing)
+	}
+}
+
+func TestTickBitmap_PositionBoundaryAndSign(t *testing.T) {
+	cases := []struct {
 		name        string
 		tick        int32
 		wantWordPos int16
 		wantBitPos  uint8
 	}{
-		{
-			name:        "zero tick",
-			tick:        0,
-			wantWordPos: 0,
-			wantBitPos:  0,
-		},
-		{
-			name:        "positive tick",
-			tick:        300,
-			wantWordPos: 1,
-			wantBitPos:  44,
-		},
-		{
-			name:        "negative tick",
-			tick:        -300,
-			wantWordPos: -2,
-			wantBitPos:  212,
-		},
-		{
-			name:        "negative one",
-			tick:        -1,
-			wantWordPos: -1,
-			wantBitPos:  255,
-		},
-		{
-			name:        "boundary 255",
-			tick:        255,
-			wantWordPos: 0,
-			wantBitPos:  255,
-		},
-		{
-			name:        "boundary 256",
-			tick:        256,
-			wantWordPos: 1,
-			wantBitPos:  0,
-		},
-		{
-			name:        "boundary -256",
-			tick:        -256,
-			wantWordPos: -1,
-			wantBitPos:  0,
-		},
-		{
-			name:        "boundary -257",
-			tick:        -257,
-			wantWordPos: -2,
-			wantBitPos:  255,
-		},
-		{
-			name:        "MIN_TICK",
-			tick:        -887272,
-			wantWordPos: -3466,
-			wantBitPos:  24,
-		},
-		{
-			name:        "MAX_TICK",
-			tick:        887272,
-			wantWordPos: 3465,
-			wantBitPos:  232,
-		},
+		{"zero", 0, 0, 0},
+		{"pos within first word", 300, 1, 44},   // 300 = 256 + 44
+		{"neg within prev word", -300, -2, 212}, // -300 = -2*256 + 212 (two's-complement mapping)
+		{"neg -1", -1, -1, 255},
+		{"boundary 255", 255, 0, 255},
+		{"boundary 256", 256, 1, 0},
+		{"boundary -256", -256, -1, 0},
+		{"boundary -257", -257, -2, 255},
+		{"MIN_TICK", -887272, -3466, 24},
+		{"MAX_TICK", 887272, 3465, 232},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			wp, bp := tickBitmapPosition(tt.tick)
-			uassert.Equal(t, tt.wantWordPos, wp)
-			uassert.Equal(t, tt.wantBitPos, bp)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			wp, bp := tickBitmapPosition(tc.tick)
+			uassert.Equal(t, tc.wantWordPos, wp)
+			uassert.Equal(t, tc.wantBitPos, bp)
 		})
 	}
 }
 
-func TestGetMaskBit(t *testing.T) {
-	tests := []struct {
-		name     string
-		bitPos   uint
-		lte      bool
-		validate func(*u256.Uint) bool
-	}{
-		{
-			name:   "lte bitPos 0",
-			bitPos: 0,
-			lte:    true,
-			validate: func(mask *u256.Uint) bool {
-				return mask.Eq(u256.One())
-			},
-		},
-		{
-			name:   "lte bitPos 7",
-			bitPos: 7,
-			lte:    true,
-			validate: func(mask *u256.Uint) bool {
-				return mask.Eq(u256.NewUint(255))
-			},
-		},
-		{
-			name:   "lte bitPos 255",
-			bitPos: 255,
-			lte:    true,
-			validate: func(mask *u256.Uint) bool {
-				expected := new(u256.Uint).Sub(new(u256.Uint).Lsh(u256.One(), 256), u256.One())
-				return mask.Eq(expected)
-			},
-		},
-		{
-			name:   "gt bitPos 0",
-			bitPos: 0,
-			lte:    false,
-			validate: func(mask *u256.Uint) bool {
-				allBits := new(u256.Uint).Not(u256.Zero())
-				return mask.Eq(allBits)
-			},
-		},
-		{
-			name:   "gt bitPos 254",
-			bitPos: 254,
-			lte:    false,
-			validate: func(mask *u256.Uint) bool {
-				bit254 := new(u256.Uint).Lsh(u256.One(), 254)
-				bit255 := new(u256.Uint).Lsh(u256.One(), 255)
-				expected := new(u256.Uint).Add(bit254, bit255)
-				return mask.Eq(expected)
-			},
-		},
-		{
-			name:   "gt bitPos 255",
-			bitPos: 255,
-			lte:    false,
-			validate: func(mask *u256.Uint) bool {
-				expected := new(u256.Uint).Lsh(u256.One(), 255)
-				return mask.Eq(expected)
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mask := getMaskBit(tt.bitPos, tt.lte)
-			if !tt.validate(mask) {
-				t.Errorf("Mask validation failed for bitPos=%d, lte=%v", tt.bitPos, tt.lte)
-			}
-		})
-	}
+func TestTickBitmap_GetMaskBit_LTE(t *testing.T) {
+	// lte: mask = (1 << (bitPos+1)) - 1 (lower mask including current bit)
+	t.Run("bitPos=0 => 0b1", func(t *testing.T) {
+		mask := getMaskBit(0, true)
+		uassert.True(t, mask.Eq(u256.One()))
+	})
+	t.Run("bitPos=7 => 0xff", func(t *testing.T) {
+		mask := getMaskBit(7, true)
+		uassert.True(t, mask.Eq(u256.NewUint(255)))
+	})
+	t.Run("bitPos=255 => all ones", func(t *testing.T) {
+		mask := getMaskBit(255, true)
+		all := u256.Zero().Not(u256.Zero()) // 2^256-1
+		uassert.True(t, mask.Eq(all))
+	})
 }
 
-func TestTickBitmapFlipTick(t *testing.T) {
-	tests := []struct {
-		name        string
-		tick        int32
-		tickSpacing int32
-		shouldPanic bool
-	}{
-		{
-			name:        "valid positive tick",
-			tick:        100,
-			tickSpacing: 20,
-			shouldPanic: false,
-		},
-		{
-			name:        "valid negative tick",
-			tick:        -300,
-			tickSpacing: 20,
-			shouldPanic: false,
-		},
-		{
-			name:        "invalid tick spacing",
-			tick:        101,
-			tickSpacing: 20,
-			shouldPanic: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pool := &Pool{
-				tickBitmaps: avl.NewTree(),
-			}
-
-			if tt.shouldPanic {
-				defer func() {
-					if r := recover(); r == nil {
-						t.Errorf("expected panic but got none")
-					}
-				}()
-			}
-
-			pool.tickBitmapFlipTick(tt.tick, tt.tickSpacing)
-
-			if !tt.shouldPanic {
-				wordPos, bitPos := tickBitmapPosition(tt.tick / tt.tickSpacing)
-				expected := new(u256.Uint).Lsh(u256.One(), uint(bitPos))
-				if pool.getTickBitmap(wordPos).Cmp(expected) != 0 {
-					t.Errorf("bitmap not set correctly")
-				}
-			}
-		})
-	}
+func TestTickBitmap_GetMaskBit_GT(t *testing.T) {
+	// gt: mask = ~((1<<bitPos)-1) (upper mask including current bit)
+	t.Run("bitPos=0 => all ones", func(t *testing.T) {
+		mask := getMaskBit(0, false)
+		all := u256.Zero().Not(u256.Zero())
+		uassert.True(t, mask.Eq(all))
+	})
+	t.Run("bitPos=254 => (1<<254)|(1<<255)", func(t *testing.T) {
+		mask := getMaskBit(254, false)
+		b254 := u256.Zero().Lsh(u256.One(), 254)
+		b255 := u256.Zero().Lsh(u256.One(), 255)
+		expect := u256.Zero().Add(b254, b255)
+		uassert.True(t, mask.Eq(expect))
+	})
+	t.Run("bitPos=255 => (1<<255)", func(t *testing.T) {
+		mask := getMaskBit(255, false)
+		expect := u256.Zero().Lsh(u256.One(), 255)
+		uassert.True(t, mask.Eq(expect))
+	})
 }
 
-func TestTickBitmapNextInitializedTickWithInOneWord(t *testing.T) {
-	tests := []struct {
-		name        string
-		tick        int32
-		tickSpacing int32
-		lte         bool
-		setupBitmap func(*Pool)
-		wantTick    int32
-		wantInit    bool
-	}{
-		{
-			name:        "search lte with initialized tick",
-			tick:        200,
-			tickSpacing: 20,
-			lte:         true,
-			setupBitmap: func(p *Pool) {
-				p.tickBitmapFlipTick(180, 20)
-			},
-			wantTick: 180,
-			wantInit: true,
-		},
-		{
-			name:        "search gt with initialized tick",
-			tick:        100,
-			tickSpacing: 20,
-			lte:         false,
-			setupBitmap: func(p *Pool) {
-				p.tickBitmapFlipTick(140, 20)
-			},
-			wantTick: 140,
-			wantInit: true,
-		},
-		{
-			name:        "empty bitmap gt search",
-			tick:        100,
-			tickSpacing: 10,
-			lte:         false,
-			setupBitmap: nil,
-			wantTick:    2550,
-			wantInit:    false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pool := &Pool{
-				tickBitmaps: avl.NewTree(),
-			}
-			if tt.setupBitmap != nil {
-				tt.setupBitmap(pool)
-			}
-
-			gotTick, gotInit := pool.tickBitmapNextInitializedTickWithInOneWord(
-				tt.tick,
-				tt.tickSpacing,
-				tt.lte,
-			)
-
-			uassert.Equal(t, tt.wantInit, gotInit)
-			if tt.wantInit {
-				uassert.Equal(t, tt.wantTick, gotTick)
-			}
-		})
-	}
+func TestTickBitmap_FlipTick_SetAndUnset(t *testing.T) {
+	p := newTickBitmapPool(t)
+	// With correct spacing
+	p.tickBitmapFlipTick(100, 20)
+	uassert.True(t, bitIsSet(t, p, 100, 20))
+	// Flipping again should unset
+	p.tickBitmapFlipTick(100, 20)
+	uassert.False(t, bitIsSet(t, p, 100, 20))
 }
 
-func TestTickBitmapCompressRounding(t *testing.T) {
-	tests := []struct {
+func TestTickBitmap_FlipTick_PanicOnBadSpacing(t *testing.T) {
+	p := newTickBitmapPool(t)
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatalf("expected panic on misaligned tick")
+		}
+	}()
+	// 101 % 20 != 0
+	p.tickBitmapFlipTick(101, 20)
+}
+
+func TestTickBitmap_Compress_Rounding_ForNegatives(t *testing.T) {
+	cases := []struct {
 		name         string
 		tick         int32
-		tickSpacing  int32
+		spacing      int32
 		wantCompress int32
 	}{
-		{
-			name:         "positive exact division",
-			tick:         120,
-			tickSpacing:  60,
-			wantCompress: 2,
-		},
-		{
-			name:         "negative exact division",
-			tick:         -120,
-			tickSpacing:  60,
-			wantCompress: -2,
-		},
-		{
-			name:         "negative with remainder",
-			tick:         -121,
-			tickSpacing:  60,
-			wantCompress: -3,
-		},
-		{
-			name:         "tick -1 spacing 1",
-			tick:         -1,
-			tickSpacing:  1,
-			wantCompress: -1,
-		},
-		{
-			name:         "negative near zero",
-			tick:         -59,
-			tickSpacing:  60,
-			wantCompress: -1,
-		},
+		{"pos exact", 120, 60, 2},
+		{"neg exact", -120, 60, -2},
+		{"neg remainder", -121, 60, -3}, // floor(-2.016..) == -3
+		{"tick -1 spacing 1", -1, 1, -1},
+		{"neg near zero", -59, 60, -1},
 	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			compress := tt.tick / tt.tickSpacing
-			if tt.tick < 0 && tt.tick%tt.tickSpacing != 0 {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			compress := tc.tick / tc.spacing
+			if tc.tick < 0 && tc.tick%tc.spacing != 0 {
 				compress--
 			}
-			uassert.Equal(t, tt.wantCompress, compress)
+			uassert.Equal(t, tc.wantCompress, compress)
 		})
 	}
 }
 
-func TestDenseSpacing_SpacingOne(t *testing.T) {
-	p := &Pool{tickBitmaps: avl.NewTree()}
+func TestTickBitmap_NextInitialized_WithinWord_WithInit(t *testing.T) {
+	p := newTickBitmapPool(t)
+	// spacing=20, set multiple bits in same word
+	flipMany(t, p, 20, 60, 100, 140, 180, 220) // 60..220
+	// lte: find nearest initialized bit at or below current tick (MSB in mask)
+	got, ok := p.tickBitmapNextInitializedTickWithInOneWord(200, 20, true)
+	uassert.True(t, ok)
+	uassert.Equal(t, int32(180), got)
+	// gt: find nearest initialized bit above current tick (LSB in mask)
+	got, ok = p.tickBitmapNextInitializedTickWithInOneWord(100, 20, false)
+	uassert.True(t, ok)
+	uassert.Equal(t, int32(140), got)
+}
 
-	for tick := int32(-3); tick <= 3; tick++ {
-		p.tickBitmapFlipTick(tick, 1)
+func TestTickBitmap_NextInitialized_WithinWord_NoInit(t *testing.T) {
+	p := newTickBitmapPool(t)
+	// Word is empty
+	tick, spacing := int32(100), int32(10)
+	got, ok := p.tickBitmapNextInitializedTickWithInOneWord(tick, spacing, false)
+	uassert.False(t, ok)
+	// For gt(false), should return word boundary (next word's first bit position)
+	// Implementation returns: (compress + 1 + (255 - bitPos)) * spacing
+	// We verify ok=false and boundary-type return (used as restart point for higher-level search)
+	_ = got // Value serves as restart pointer for upper-level search logic
+}
+
+func TestTickBitmap_Dense_SpacingOne_ConsecutiveSearch(t *testing.T) {
+	p := newTickBitmapPool(t)
+	// Set all ticks from [-3,3]
+	for tk := int32(-3); tk <= 3; tk++ {
+		p.tickBitmapFlipTick(tk, 1)
 	}
-
-	for tick := int32(-3); tick < 3; tick++ {
-		next, init := p.tickBitmapNextInitializedTickWithInOneWord(tick, 1, false)
-		uassert.True(t, init)
-		uassert.Equal(t, tick+1, next)
+	// gt: next tick is always +1 (within same word or across boundaries)
+	for tk := int32(-3); tk < 3; tk++ {
+		next, ok := p.tickBitmapNextInitializedTickWithInOneWord(tk, 1, false)
+		uassert.True(t, ok)
+		uassert.Equal(t, tk+1, next)
 	}
-
-	for tick := int32(3); tick >= -3; tick-- {
-		next, init := p.tickBitmapNextInitializedTickWithInOneWord(tick, 1, true)
-		uassert.True(t, init)
-		uassert.Equal(t, tick, next)
+	// lte: points to itself
+	for tk := int32(3); tk >= -3; tk-- {
+		next, ok := p.tickBitmapNextInitializedTickWithInOneWord(tk, 1, true)
+		uassert.True(t, ok)
+		uassert.Equal(t, tk, next)
 	}
 }
 
-func TestWordBoundaryTransitions(t *testing.T) {
-	p := &Pool{tickBitmaps: avl.NewTree()}
+func TestTickBitmap_WordBoundary_Transitions(t *testing.T) {
+	p := newTickBitmapPool(t)
+	sp := int32(1)
+	flipMany(t, p, sp, -257, -256, -255, -1, 0, 1, 254, 255, 256)
 
-	boundaryTicks := []int32{
-		-257, -256, -255,
-		-1, 0, 1,
-		254, 255, 256,
-	}
-
-	spacing := int32(1)
-	for _, tick := range boundaryTicks {
-		p.tickBitmapFlipTick(tick, spacing)
-	}
-
-	tests := []struct {
+	cases := []struct {
 		name     string
 		tick     int32
 		lte      bool
 		expected int32
 		hasInit  bool
 	}{
-		{
-			name:     "gt from -257 finds -256",
-			tick:     -257,
-			lte:      false,
-			expected: -256,
-			hasInit:  true,
-		},
-		{
-			name:     "lte from -255",
-			tick:     -255,
-			lte:      true,
-			expected: -255,
-			hasInit:  true,
-		},
-		{
-			name:     "gt from -1 finds 0",
-			tick:     -1,
-			lte:      false,
-			expected: 0,
-			hasInit:  true,
-		},
-		{
-			name:     "gt from 255 finds 256",
-			tick:     255,
-			lte:      false,
-			expected: 256,
-			hasInit:  true,
-		},
-		{
-			name:     "lte from 256",
-			tick:     256,
-			lte:      true,
-			expected: 256,
-			hasInit:  true,
-		},
+		{"gt from -257 finds -256", -257, false, -256, true},
+		{"lte from -255", -255, true, -255, true},
+		{"gt from -1 finds 0", -1, false, 0, true},
+		{"gt from 255 finds 256", 255, false, 256, true},
+		{"lte from 256", 256, true, 256, true},
 	}
 
-	for _, tc := range tests {
+	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			next, init := p.tickBitmapNextInitializedTickWithInOneWord(tc.tick, spacing, tc.lte)
-
-			uassert.Equal(t, tc.hasInit, init)
+			next, ok := p.tickBitmapNextInitializedTickWithInOneWord(tc.tick, sp, tc.lte)
+			uassert.Equal(t, tc.hasInit, ok)
 			if tc.hasInit {
 				uassert.Equal(t, tc.expected, next)
 			}
@@ -419,21 +214,16 @@ func TestWordBoundaryTransitions(t *testing.T) {
 	}
 }
 
-func TestShiftEqualsFloorDivision(t *testing.T) {
-	ticks := []int32{
-		-887272, -257, -256, -255, -1,
-		0, 1, 255, 256, 257, 887272,
-	}
-	for _, tick := range ticks {
-		got := tick >> 8
-
-		want := tick / 256
-		if tick < 0 && tick%256 != 0 {
-			want--
+func TestTickBitmap_Shift_Equals_FloorDivision_By256(t *testing.T) {
+	// Verify shift operation equals floor division by 256 for negative numbers
+	ticks := []int32{-887272, -257, -256, -255, -1, 0, 1, 255, 256, 257, 887272}
+	for _, tk := range ticks {
+		shifted := tk >> 8
+		// floor(tk/256)
+		floor := tk / 256
+		if tk < 0 && tk%256 != 0 {
+			floor--
 		}
-
-		if got != want {
-			t.Errorf("tick=%d: shifted=%d, floorDiv=%d", tick, got, want)
-		}
+		uassert.Equal(t, floor, shifted)
 	}
 }

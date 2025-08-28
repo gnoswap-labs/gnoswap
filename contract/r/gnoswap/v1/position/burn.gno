@@ -139,35 +139,18 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, 
 		common.TransferFrom(cross, pToken1, poolAddr, caller, safeConvertToInt64(collectAmount1))
 	}
 
-	underflow := false
-	position.tokensOwed0, underflow = u256.Zero().SubOverflow(position.tokensOwed0, collectAmount0)
-	if underflow {
-		return params.positionId,
-			liquidityToRemove.ToString(),
-			fee0Str,
-			fee1Str,
-			collect0,
-			collect1,
-			position.poolKey,
-			makeErrorWithDetails(
-				errUnderflow,
-				"tokensOwed0 underflow",
-			)
+	// Check for underflow when subtracting collected amounts from tokens owed
+	newOwed0, underflow0 := u256.Zero().SubOverflow(position.tokensOwed0, collectAmount0)
+	if underflow0 {
+		panic(ufmt.Sprintf("[POSITION] burn.gno | collect() | tokensOwed0(%s) < collectAmount0(%s)", position.tokensOwed0.ToString(), collectAmount0.ToString()))
 	}
-	position.tokensOwed1, underflow = u256.Zero().SubOverflow(position.tokensOwed1, collectAmount1)
-	if underflow {
-		return params.positionId,
-			liquidityToRemove.ToString(),
-			fee0Str,
-			fee1Str,
-			collect0,
-			collect1,
-			position.poolKey,
-			makeErrorWithDetails(
-				errUnderflow,
-				"tokensOwed1 underflow",
-			)
+	position.tokensOwed0 = newOwed0
+
+	newOwed1, underflow1 := u256.Zero().SubOverflow(position.tokensOwed1, collectAmount1)
+	if underflow1 {
+		panic(ufmt.Sprintf("[POSITION] burn.gno | collect() | tokensOwed1(%s) < collectAmount1(%s)", position.tokensOwed1.ToString(), collectAmount1.ToString()))
 	}
+	position.tokensOwed1 = newOwed1
 
 	if position.isClear() {
 		position.burned = true // just update flag (we don't want to burn actual position)
@@ -204,8 +187,14 @@ func calculateFees(position Position, currentFeeGrowth FeeGrowthInside) (*u256.U
 		position.liquidity,
 	)
 
-	tokensOwed0 := u256.Zero().Add(u256.Zero().Set(position.tokensOwed0), fee0)
-	tokensOwed1 := u256.Zero().Add(u256.Zero().Set(position.tokensOwed1), fee1)
+	tokensOwed0, overflow0 := u256.Zero().AddOverflow(u256.Zero().Set(position.tokensOwed0), fee0)
+	if overflow0 {
+		panic(newErrorWithDetail(errOverflow, "tokensOwed0 + fee0 overflow"))
+	}
+	tokensOwed1, overflow1 := u256.Zero().AddOverflow(u256.Zero().Set(position.tokensOwed1), fee1)
+	if overflow1 {
+		panic(newErrorWithDetail(errOverflow, "tokensOwed1 + fee1 overflow"))
+	}
 
 	return tokensOwed0, tokensOwed1
 }

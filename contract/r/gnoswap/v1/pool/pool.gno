@@ -75,11 +75,11 @@ func Mint(
 		panic(err)
 	}
 
-	if amount0.Gt(u256.Zero()) {
+	if amount0.Gt(zero) {
 		pool.safeTransferFrom(positionCaller, poolAddr, pool.token0Path, amount0, true)
 	}
 
-	if amount1.Gt(u256.Zero()) {
+	if amount1.Gt(zero) {
 		pool.safeTransferFrom(positionCaller, poolAddr, pool.token1Path, amount1, false)
 	}
 
@@ -121,22 +121,32 @@ func Burn(
 	access.AssertIsPosition(caller)
 	access.AssertIsValidAddress(positionCaller)
 
-	pool := mustGetPoolBy(token0Path, token1Path, fee)
-
 	liqAmount := u256.MustFromDecimal(liquidityAmount)
 	liqAmountInt256 := safeConvertToInt128(liqAmount)
 	liqDelta := i256.Zero().Neg(liqAmountInt256)
+
 	posParams := newModifyPositionParams(positionCaller, tickLower, tickUpper, liqDelta)
+	pool := mustGetPoolBy(token0Path, token1Path, fee)
 	position, amount0, amount1, err := pool.modifyPosition(posParams)
 	if err != nil {
 		panic(err)
 	}
 
-	if amount0.Gt(u256.Zero()) || amount1.Gt(u256.Zero()) {
+	if amount0.Gt(zero) || amount1.Gt(zero) {
 		amount0 = toUint128(amount0)
 		amount1 = toUint128(amount1)
-		position.tokensOwed0 = u256.Zero().Add(position.tokensOwed0, amount0)
-		position.tokensOwed1 = u256.Zero().Add(position.tokensOwed1, amount1)
+
+		tokensOwed0, overflow := u256.Zero().AddOverflow(position.tokensOwed0, amount0)
+		if overflow {
+			panic(errOverFlow)
+		}
+		position.tokensOwed0 = tokensOwed0
+
+		tokensOwed1, overflow := u256.Zero().AddOverflow(position.tokensOwed1, amount1)
+		if overflow {
+			panic(errOverFlow)
+		}
+		position.tokensOwed1 = tokensOwed1
 	}
 
 	positionKey, err := getPositionKey(positionCaller, tickLower, tickUpper)
@@ -208,12 +218,23 @@ func Collect(
 	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
 	amount0Req := u256.MustFromDecimal(amount0Requested)
 	amount0 = collectToken(amount0Req, position.tokensOwed0, pool.BalanceToken0())
+
 	amount1Req := u256.MustFromDecimal(amount1Requested)
 	amount1 = collectToken(amount1Req, position.tokensOwed1, pool.BalanceToken1())
 
 	if amount0.Gt(u256.Zero()) {
-		position.tokensOwed0 = u256.Zero().Sub(position.tokensOwed0, amount0)
-		pool.balances.token0 = u256.Zero().Sub(pool.balances.token0, amount0)
+		tokenOwed0, overflow := u256.Zero().SubOverflow(position.tokensOwed0, amount0)
+		if overflow {
+			panic(errOverFlow)
+		}
+
+		token0Balance, overflow := u256.Zero().SubOverflow(pool.balances.token0, amount0)
+		if overflow {
+			panic(errOverFlow)
+		}
+
+		position.tokensOwed0 = tokenOwed0
+		pool.balances.token0 = token0Balance
 		if err := common.Approve(cross, pool.token0Path, positionAddr, safeConvertToInt64(amount0)); err != nil {
 			panic(err)
 		}
@@ -221,6 +242,7 @@ func Collect(
 	if amount1.Gt(u256.Zero()) {
 		position.tokensOwed1 = u256.Zero().Sub(position.tokensOwed1, amount1)
 		pool.balances.token1 = u256.Zero().Sub(pool.balances.token1, amount1)
+
 		if err := common.Approve(cross, pool.token1Path, positionAddr, safeConvertToInt64(amount1)); err != nil {
 			panic(err)
 		}
@@ -305,7 +327,7 @@ func collectProtocol(
 	amount0Req := u256.MustFromDecimal(amount0Requested)
 	amount1Req := u256.MustFromDecimal(amount1Requested)
 	if amount0Req.IsZero() && amount1Req.IsZero() {
-		return u256.Zero().ToString(), u256.Zero().ToString()
+		return "0", "0"
 	}
 
 	amount0 := u256Min(amount0Req, pool.ProtocolFeesToken0())
