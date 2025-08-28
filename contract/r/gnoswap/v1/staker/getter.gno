@@ -207,22 +207,22 @@ func GetPoolTier(poolPath string) uint64 {
 }
 
 // GetPoolTierRatio returns the current reward ratio for a pool's tier.
-func GetPoolTierRatio(poolPath string) uint64 {
+func GetPoolTierRatio(poolPath string) int64 {
 	tier := GetPoolTier(poolPath)
-	return poolTier.tierRatio.Get(tier)
+	return poolTier.tierRatio.Get(TierFromUint64(tier))
 }
 
 // GetPoolTierCount returns the number of pools in a tier.
-func GetPoolTierCount(tier uint64) uint64 {
+func GetPoolTierCount(tier uint64) int64 {
 	if tier == 0 {
 		return 0
 	}
-	return uint64(poolTier.CurrentCount(tier))
+	return poolTier.CurrentCount(TierFromUint64(tier))
 }
 
 // GetPoolReward returns the current reward amount for a tier.
 func GetPoolReward(tier uint64) int64 {
-	return poolTier.CurrentReward(tier)
+	return poolTier.CurrentReward(TierFromUint64(tier))
 }
 
 // GetExternalIncentiveByPoolPath returns all external incentives for a pool.

@@ -30,11 +30,11 @@ func (self *canonicalPool) InternalReward(emission uint64, ratio TierRatio, coun
 	case 0:
 		return 0
 	case 1:
-		return int64(emission * ratio.Tier1 / count / 100)
+		return int64(emission) * ratio.Tier1 / int64(count) / 100
 	case 2:
-		return int64(emission * ratio.Tier2 / count / 100)
+		return int64(emission) * ratio.Tier2 / int64(count) / 100
 	case 3:
-		return int64(emission * ratio.Tier3 / count / 100)
+		return int64(emission) * ratio.Tier3 / int64(count) / 100
 	default:
 		panic("invalid tier")
 	}

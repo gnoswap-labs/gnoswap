@@ -6,20 +6,34 @@ import (
 )
 
 const (
-	AllTierCount = 4 // 0, 1, 2, 3
-	Tier1        = 1
-	Tier2        = 2
-	Tier3        = 3
+	AllTierCount = 4 // 0(None), 1, 2, 3
 )
+
+type Tier uint8
+
+const (
+	TierNone Tier = iota
+	Tier1
+	Tier2
+	Tier3
+)
+
+func (t Tier) Uint64() uint64 {
+	return uint64(t)
+}
+
+func TierFromUint64(t uint64) Tier {
+	return Tier(t)
+}
 
 // 100%, 0%, 0% if no tier2 and tier3
 // 80%, 0%, 20% if no tier2
 // 70%, 30%, 0% if no tier3
 // 50%, 30%, 20% if has tier2 and tier3
 type TierRatio struct {
-	Tier1 uint64
-	Tier2 uint64
-	Tier3 uint64
+	Tier1 int64
+	Tier2 int64
+	Tier3 int64
 }
 
 // TierRatioFromCounts calculates the ratio distribution for each tier based on pool counts.
@@ -31,38 +45,21 @@ type TierRatio struct {
 //
 // Returns:
 // - TierRatio: The ratio distribution across tier 1, 2, and 3, scaled up by 100.
-func TierRatioFromCounts(tier1Count, tier2Count, tier3Count uint64) TierRatio {
-	// tier1 always exists
-	if tier2Count == 0 && tier3Count == 0 {
-		return TierRatio{
-			Tier1: 100,
-			Tier2: 0,
-			Tier3: 0,
-		}
-	}
-	if tier2Count == 0 {
-		return TierRatio{
-			Tier1: 80,
-			Tier2: 0,
-			Tier3: 20,
-		}
-	}
-	if tier3Count == 0 {
-		return TierRatio{
-			Tier1: 70,
-			Tier2: 30,
-			Tier3: 0,
-		}
-	}
-	return TierRatio{
-		Tier1: 50,
-		Tier2: 30,
-		Tier3: 20,
+func TierRatioFromCounts(t1, t2, t3 uint64) TierRatio {
+	switch {
+	case t2 == 0 && t3 == 0:
+		return TierRatio{Tier1: 100, Tier2: 0, Tier3: 0}
+	case t2 == 0:
+		return TierRatio{Tier1: 80, Tier2: 0, Tier3: 20}
+	case t3 == 0:
+		return TierRatio{Tier1: 70, Tier2: 30, Tier3: 0}
+	default:
+		return TierRatio{Tier1: 50, Tier2: 30, Tier3: 20}
 	}
 }
 
 // Get returns the ratio(scaled up by 100) for the given tier.
-func (self *TierRatio) Get(tier uint64) uint64 {
+func (self *TierRatio) Get(tier Tier) int64 {
 	switch tier {
 	case Tier1:
 		return self.Tier1
@@ -135,25 +132,20 @@ func NewPoolTier(pools *Pools, currentHeight int64, currentTime int64, initialPo
 }
 
 // CurrentReward returns the current per-pool reward for the given tier.
-func (self *PoolTier) CurrentReward(tier uint64) int64 {
+func (self *PoolTier) CurrentReward(tier Tier) int64 {
 	currentEmission := self.getEmission()
-	tierRatio := int64(self.tierRatio.Get(tier))
-	count := int64(self.CurrentCount(tier))
-
-	// Check for zero count to prevent division by zero
-	if count == 0 {
-		return 0
-	}
-
-	return currentEmission * tierRatio / count / 100
+	tierRatio := self.tierRatio.Get(tier)
+	count := self.CurrentCount(tier)
+	return self.Reward(currentEmission, tierRatio, count)
 }
 
 // CurrentCount returns the current count of pools in the given tier.
-func (self *PoolTier) CurrentCount(tier uint64) int {
-	if tier >= AllTierCount {
+func (self *PoolTier) CurrentCount(tier Tier) int64 {
+	t := tier.Uint64()
+	if t >= AllTierCount {
 		return 0
 	}
-	return int(self.counts[tier])
+	return int64(self.counts[t])
 }
 
 // CurrentAllTierCounts returns the current count of pools in each tier.
@@ -223,13 +215,10 @@ func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *
 			panic("failed to cast value to uint64")
 		}
 
-		tierRatio := int64(self.tierRatio.Get(tier))
+		tierRatio := self.tierRatio.Get(Tier(tier))
 		tierCount := int64(self.counts[tier])
-		if tierCount == 0 {
-			return false // Skip if no pools in tier
-		}
 
-		poolReward := currentEmission * tierRatio / tierCount / 100
+		poolReward := self.Reward(currentEmission, tierRatio, tierCount)
 		pool.cacheReward(currentTime, poolReward)
 		return false
 	})
@@ -287,16 +276,13 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentTimestamp, emiss
 		}
 
 		// Calculate real reward with overflow check
-		tierRatio := int64(self.tierRatio.Get(tierNum))
+		tierRatio := self.tierRatio.Get(Tier(tierNum))
 		tierCount := int64(counts[tierNum])
 
-		if tierCount == 0 {
-			return false // Skip if no pools in tier
-		}
-
-		reward := emissionInThisInterval * tierRatio / 100 / tierCount
 		// accumulate the reward for the interval (startBlock to endBlock) in the Pool
+		reward := self.Reward(emissionInThisInterval, tierRatio, tierCount)
 		pool.cacheInternalReward(currentTimestamp, reward)
+
 		return false
 	})
 }
@@ -307,20 +293,23 @@ func (self *PoolTier) IsInternallyIncentivizedPool(poolPath string) bool {
 }
 
 func (self *PoolTier) CurrentRewardPerPool(poolPath string) int64 {
-	emission := self.getEmission()
-	counts := self.CurrentAllTierCounts()
 	tierNum := self.CurrentTier(poolPath)
-
 	if tierNum == 0 {
 		return 0 // Pool not in any tier
 	}
 
-	tierRatio := int64(self.tierRatio.Get(tierNum))
+	emission := self.getEmission()
+	counts := self.CurrentAllTierCounts()
+
+	tierRatio := self.tierRatio.Get(Tier(tierNum))
 	tierCount := int64(counts[tierNum])
 
-	if tierCount == 0 {
-		return 0 // No pools in tier
-	}
+	return self.Reward(emission, tierRatio, tierCount)
+}
 
-	return emission * tierRatio / 100 / tierCount
+func (self *PoolTier) Reward(emission, ratio, count int64) int64 {
+	if count == 0 {
+		return 0
+	}
+	return (emission * ratio / 100) / count
 }
