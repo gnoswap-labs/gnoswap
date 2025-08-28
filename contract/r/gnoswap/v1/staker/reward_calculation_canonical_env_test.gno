@@ -30,11 +30,11 @@ func (self *canonicalPool) InternalReward(emission uint64, ratio TierRatio, coun
 	case 0:
 		return 0
 	case 1:
-		return int64(emission * ratio.Tier1 / count / 100)
+		return int64(emission) * ratio.Tier1 / int64(count) / 100
 	case 2:
-		return int64(emission * ratio.Tier2 / count / 100)
+		return int64(emission) * ratio.Tier2 / int64(count) / 100
 	case 3:
-		return int64(emission * ratio.Tier3 / count / 100)
+		return int64(emission) * ratio.Tier3 / int64(count) / 100
 	default:
 		panic("invalid tier")
 	}
@@ -511,7 +511,7 @@ func (self *canonicalRewardState) ChangePoolTier(poolPath string, tier uint64) {
 	if !self.global.pools.Has(poolPath) {
 		self.global.pools.set(poolPath, NewPool(poolPath, self.CurrentTime()))
 	}
-	self.global.poolTier.changeTier(std.ChainHeight(), self.CurrentTime(), self.global.pools, poolPath, tier)
+	self.global.poolTier.changeTier(std.ChainHeight(), self.CurrentTime(), self.global.pools, poolPath, TierFromUint64(tier))
 }
 
 func (self *canonicalRewardState) CreatePool(poolPath string, initialTier uint64, initialTick int32) {
@@ -523,7 +523,7 @@ func (self *canonicalRewardState) CreatePool(poolPath string, initialTier uint64
 		tickCrossHook: self.tickCrossHook,
 	}
 	self.global.pools.set(poolPath, NewPool(poolPath, self.CurrentTime()))
-	self.global.poolTier.changeTier(std.ChainHeight(), self.CurrentTime(), self.global.pools, poolPath, initialTier)
+	self.global.poolTier.changeTier(std.ChainHeight(), self.CurrentTime(), self.global.pools, poolPath, TierFromUint64(initialTier))
 }
 
 func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {

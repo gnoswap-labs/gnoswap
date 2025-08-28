@@ -84,7 +84,7 @@ func TestTierRatioGet(t *testing.T) {
 
 	tests := []struct {
 		tier     uint64
-		expected uint64
+		expected int64
 	}{
 		{1, 50},
 		{2, 30},
@@ -92,7 +92,7 @@ func TestTierRatioGet(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		result := ratio.Get(tt.tier)
+		result := ratio.Get(Tier(tt.tier))
 		if result != tt.expected {
 			t.Errorf("Get(%d) = %d; want %d", tt.tier, result, tt.expected)
 		}

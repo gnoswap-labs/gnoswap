@@ -48,7 +48,7 @@ func QueryPoolData(poolPath string) (*PoolData, error) {
 
 	return &PoolData{
 		PoolPath:         poolPath,
-		Tier:             tier,
+		Tier:             tier.Uint64(),
 		ActiveIncentives: ictvIds,
 		StakedLiquidity:  pool.CurrentStakedLiquidity(currentTimestamp),
 	}, nil
