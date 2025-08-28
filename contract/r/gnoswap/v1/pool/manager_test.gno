@@ -252,60 +252,153 @@ func TestFuzzPoolCreation(t *testing.T) {
 		token1Path string
 		fee        uint32
 		sqrtPrice  string
+		category   string // for tracking test case type
 	}
 
-	generatePoolTestCase := func() PoolTestCase {
-		tokenPaths := []string{
-			"gno.land/r/onbloc/bar",
-			"gno.land/r/onbloc/foo",
-			"gno.land/r/onbloc/baz",
-			"gno.land/r/demo/wugnot",
-			"gno.land/r/gnoswap/gns",
+	// Price range definitions for better organization
+	type PriceRange struct {
+		min         string
+		max         string
+		description string
+	}
+
+	priceRanges := []PriceRange{
+		{"4295128740", "10000000000000000000", "extreme low prices"},
+		{"10000000000000000001", "50000000000000000000000000", "low prices"},
+		{"50000000000000000000000001", "100000000000000000000000000000000", "medium prices"},
+		{"100000000000000000000000000000001", "1000000000000000000000000000000000000", "high prices"},
+		{"1000000000000000000000000000000000001", "1461446703485210103287273052203988822378723970341", "extreme high prices"},
+	}
+
+	tokenPaths := []string{
+		"gno.land/r/onbloc/bar",
+		"gno.land/r/onbloc/foo",
+		"gno.land/r/onbloc/baz",
+		"gno.land/r/demo/wugnot",
+		"gno.land/r/gnoswap/gns",
+		"gno.land/r/test/token1",
+		"gno.land/r/test/token2",
+		"gno.land/r/test/token3",
+	}
+
+	// Generate price within a specific range
+	generatePriceInRange := func(rangeIdx int) string {
+		if rangeIdx < 0 || rangeIdx >= len(priceRanges) {
+			rangeIdx = seedMgr.CreateIntGenerator(0, len(priceRanges)-1).Generate().(int)
 		}
 
-		validFees := []uint32{100, 500, 3000, 10000}
-		invalidFees := []uint32{0, 50, 1234, 15000}
-
-		allFees := append(validFees, invalidFees...)
-
-		validPrices := []string{
-			"4295128740",                                        // MIN_SQRT_RATIO + 1
-			"79228162514264337593543950336",                     // 1:1 ratio
-			"112045541949572279837463876454",                    // 1:2 ratio
-			"1461446703485210103287273052203988822378723970341", // MAX_SQRT_RATIO - 1
-		}
-		invalidPrices := []string{
-			"0",
-			"1",
-			"4295128738",
-			"1461446703485210103287273052203988822378723970343",
-			"-1",
-		}
-
-		allPrices := append(validPrices, invalidPrices...)
-
-		// Use SeedManager to generate random indices
-		tokenIdx0 := seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)
-		tokenIdx1 := seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)
-		feeIdx := seedMgr.CreateIntGenerator(0, len(allFees)-1).Generate().(int)
-		priceIdx := seedMgr.CreateIntGenerator(0, len(allPrices)-1).Generate().(int)
-
-		return PoolTestCase{
-			token0Path: tokenPaths[tokenIdx0],
-			token1Path: tokenPaths[tokenIdx1],
-			fee:        allFees[feeIdx],
-			sqrtPrice:  allPrices[priceIdx],
+		switch rangeIdx {
+		case 0:
+			return "5000000000000000000" // example value in range
+		case 1:
+			return "25000000000000000000000000"
+		case 2:
+			return "79228162514264337593543950336" // 1:1 ratio
+		case 3:
+			return "500000000000000000000000000000000000"
+		case 4:
+			return "1200000000000000000000000000000000000000"
+		default:
+			return "79228162514264337593543950336"
 		}
 	}
 
-	validatePoolCreation := func(token0Path, token1Path string, fee uint32, sqrtPrice string) bool {
-		if token0Path == token1Path {
-			return false
+	generatePoolTestCase := func(category string) PoolTestCase {
+		var tc PoolTestCase
+		tc.category = category
+
+		switch category {
+		case "valid_standard":
+			// Standard valid test cases
+			validFees := []uint32{100, 500, 3000, 10000}
+			tc.token0Path = tokenPaths[seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)]
+			tc.token1Path = tokenPaths[seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)]
+			// Ensure different tokens
+			for tc.token0Path == tc.token1Path {
+				tc.token1Path = tokenPaths[seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)]
+			}
+			tc.fee = validFees[seedMgr.CreateIntGenerator(0, len(validFees)-1).Generate().(int)]
+			tc.sqrtPrice = generatePriceInRange(seedMgr.CreateIntGenerator(0, len(priceRanges)-1).Generate().(int))
+
+		case "edge_prices":
+			// Edge case prices
+			edgePrices := []string{
+				"4295128740", // MIN_SQRT_RATIO + 1
+				"1461446703485210103287273052203988822378723970341", // MAX_SQRT_RATIO - 1
+			}
+			validFees := []uint32{100, 500, 3000, 10000}
+			tc.token0Path = tokenPaths[seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)]
+			tc.token1Path = tokenPaths[seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)]
+			for tc.token0Path == tc.token1Path {
+				tc.token1Path = tokenPaths[seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)]
+			}
+			tc.fee = validFees[seedMgr.CreateIntGenerator(0, len(validFees)-1).Generate().(int)]
+			tc.sqrtPrice = edgePrices[seedMgr.CreateIntGenerator(0, len(edgePrices)-1).Generate().(int)]
+
+		case "invalid_fee":
+			// Invalid fee amounts
+			invalidFees := []uint32{0, 50, 1234, 15000, 99999}
+			tc.token0Path = tokenPaths[seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)]
+			tc.token1Path = tokenPaths[seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)]
+			for tc.token0Path == tc.token1Path {
+				tc.token1Path = tokenPaths[seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)]
+			}
+			tc.fee = invalidFees[seedMgr.CreateIntGenerator(0, len(invalidFees)-1).Generate().(int)]
+			tc.sqrtPrice = generatePriceInRange(2) // valid price
+
+		case "invalid_price":
+			// Invalid prices
+			invalidPrices := []string{
+				"0",
+				"1",
+				"4295128738", // MIN_SQRT_RATIO - 1
+				"1461446703485210103287273052203988822378723970343", // MAX_SQRT_RATIO + 1
+				"-1",
+				"-79228162514264337593543950336",
+			}
+			validFees := []uint32{100, 500, 3000, 10000}
+			tc.token0Path = tokenPaths[seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)]
+			tc.token1Path = tokenPaths[seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)]
+			for tc.token0Path == tc.token1Path {
+				tc.token1Path = tokenPaths[seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)]
+			}
+			tc.fee = validFees[seedMgr.CreateIntGenerator(0, len(validFees)-1).Generate().(int)]
+			tc.sqrtPrice = invalidPrices[seedMgr.CreateIntGenerator(0, len(invalidPrices)-1).Generate().(int)]
+
+		case "same_token":
+			// Same token pair (invalid)
+			validFees := []uint32{100, 500, 3000, 10000}
+			tokenIdx := seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)
+			tc.token0Path = tokenPaths[tokenIdx]
+			tc.token1Path = tokenPaths[tokenIdx] // same token
+			tc.fee = validFees[seedMgr.CreateIntGenerator(0, len(validFees)-1).Generate().(int)]
+			tc.sqrtPrice = generatePriceInRange(2)
+
+		default:
+			// Random mix of all possibilities
+			allFees := []uint32{0, 50, 100, 500, 1234, 3000, 10000, 15000}
+			allPrices := []string{
+				"0", "1", "4295128740", "79228162514264337593543950336",
+				"1461446703485210103287273052203988822378723970341",
+				"1461446703485210103287273052203988822378723970343", "-1",
+			}
+			tc.token0Path = tokenPaths[seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)]
+			tc.token1Path = tokenPaths[seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)]
+			tc.fee = allFees[seedMgr.CreateIntGenerator(0, len(allFees)-1).Generate().(int)]
+			tc.sqrtPrice = allPrices[seedMgr.CreateIntGenerator(0, len(allPrices)-1).Generate().(int)]
+		}
+
+		return tc
+	}
+
+	validatePoolCreation := func(tc PoolTestCase) (bool, string) {
+		if tc.token0Path == tc.token1Path {
+			return false, "same tokens"
 		}
 
 		validFees := map[uint32]bool{100: true, 500: true, 3000: true, 10000: true}
-		if !validFees[fee] {
-			return false
+		if !validFees[tc.fee] {
+			return false, "invalid fee tier"
 		}
 
 		invalidPrices := map[string]bool{
@@ -313,29 +406,64 @@ func TestFuzzPoolCreation(t *testing.T) {
 			"1":          true,
 			"4295128738": true, // MIN_SQRT_RATIO - 1
 			"1461446703485210103287273052203988822378723970343": true, // MAX_SQRT_RATIO + 1
-			"-1": true,
+			"-1":                             true,
+			"-79228162514264337593543950336": true,
 		}
-		if invalidPrices[sqrtPrice] {
-			return false
+		if invalidPrices[tc.sqrtPrice] {
+			return false, "invalid sqrt price"
 		}
 
-		return true
+		// Check for negative prices
+		if len(tc.sqrtPrice) > 0 && tc.sqrtPrice[0] == '-' {
+			return false, "negative sqrt price"
+		}
+
+		return true, "valid"
 	}
 
-	const totalIterations = 100
+	// Test categories with weights for balanced coverage
+	categories := []struct {
+		name   string
+		weight int
+	}{
+		{"valid_standard", 30},
+		{"edge_prices", 20},
+		{"invalid_fee", 15},
+		{"invalid_price", 15},
+		{"same_token", 10},
+		{"random", 10},
+	}
+
+	// Build weighted category selection
+	weightedCategories := []string{}
+	for _, cat := range categories {
+		for i := 0; i < cat.weight; i++ {
+			weightedCategories = append(weightedCategories, cat.name)
+		}
+	}
+
+	const totalIterations = 150
 	successCount := 0
 	failureCount := 0
+	categoryStats := make(map[string]int)
+	failureReasons := make(map[string]int)
 
 	for i := 0; i < totalIterations; i++ {
-		tc := generatePoolTestCase()
-		shouldSucceed := validatePoolCreation(tc.token0Path, tc.token1Path, tc.fee, tc.sqrtPrice)
-		if shouldSucceed {
-			t.Logf("Test case %d should succeed: token0=%s, token1=%s, fee=%d, price=%s",
-				i, tc.token0Path, tc.token1Path, tc.fee, tc.sqrtPrice)
-		} else {
-			t.Logf("Test case %d should fail: token0=%s, token1=%s, fee=%d, price=%s",
-				i, tc.token0Path, tc.token1Path, tc.fee, tc.sqrtPrice)
+		// Select category based on weights
+		catIdx := seedMgr.CreateIntGenerator(0, len(weightedCategories)-1).Generate().(int)
+		category := weightedCategories[catIdx]
+		categoryStats[category]++
+
+		tc := generatePoolTestCase(category)
+		shouldSucceed, reason := validatePoolCreation(tc)
+
+		if !shouldSucceed {
+			failureReasons[reason]++
 		}
+
+		t.Logf("Test case %d [%s] should %s: token0=%s, token1=%s, fee=%d, price=%s (reason: %s)",
+			i, tc.category, map[bool]string{true: "succeed", false: "fail"}[shouldSucceed],
+			tc.token0Path, tc.token1Path, tc.fee, tc.sqrtPrice, reason)
 
 		var (
 			abortVal, panicVal any
@@ -393,11 +521,23 @@ func TestFuzzPoolCreation(t *testing.T) {
 		}
 	}
 
-	t.Logf("Fuzz test completed - Successes: %d, Failures: %d, Total: %d",
-		successCount, failureCount, totalIterations)
+	// Print test statistics
+	t.Logf("\n=== Fuzz Test Statistics ===")
+	t.Logf("Total iterations: %d", totalIterations)
+	t.Logf("Successes: %d (%.1f%%)", successCount, float64(successCount)/float64(totalIterations)*100)
+	t.Logf("Failures: %d (%.1f%%)", failureCount, float64(failureCount)/float64(totalIterations)*100)
+
+	t.Logf("\n=== Category Distribution ===")
+	for cat, count := range categoryStats {
+		t.Logf("%s: %d (%.1f%%)", cat, count, float64(count)/float64(totalIterations)*100)
+	}
+
+	t.Logf("\n=== Failure Reasons ===")
+	for reason, count := range failureReasons {
+		t.Logf("%s: %d", reason, count)
+	}
 
 	// at least one success case is required
-	// TODO: compare number of expected/actual cases
 	if successCount == 0 {
 		t.Errorf("No successful pool creation cases found - check test data generation")
 	}
