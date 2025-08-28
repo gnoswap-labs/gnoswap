@@ -164,7 +164,7 @@ func (r *FuzzTestRunner) Run(generateTestCase func(string, *TestContext) any, ex
 }
 
 func (r *FuzzTestRunner) buildWeightedCategories() []string {
-	weighted := []string{}
+	weighted := make([]string, 0, len(r.categories))
 	for _, cat := range r.categories {
 		for i := 0; i < cat.Weight; i++ {
 			weighted = append(weighted, cat.Name)
@@ -649,6 +649,198 @@ func TestFuzzDecreaseLiquidity(t *testing.T) {
 			currentPositionId = seedPosition(t, "10000000", "10000000")
 			position := MustGetPosition(currentPositionId)
 			currentLiquidity = position.liquidity.ToString()
+		}
+	})
+}
+
+type RepositionTestCase struct {
+	positionId       uint64
+	tickLower        int32
+	tickUpper        int32
+	amount0Desired   string
+	amount1Desired   string
+	amount0Min       string
+	amount1Min       string
+	shouldClearFirst bool
+	category         string
+}
+
+func generateRepositionTestCase(category string, ctx *TestContext, existingPositionId uint64) any {
+	var tc RepositionTestCase
+	tc.category = category
+	tc.positionId = existingPositionId
+
+	switch category {
+	case "valid_reposition":
+		// Valid reposition with cleared position
+		tc.shouldClearFirst = true
+		tc.tickLower, tc.tickUpper = ctx.RandomTickRange(-1)
+
+		amountIdx := ctx.RandomInt(1, 3)
+		tc.amount0Desired = ctx.GenerateAmount(amountIdx)
+		tc.amount1Desired = ctx.GenerateAmount(amountIdx)
+		tc.amount0Min = "0"
+		tc.amount1Min = "0"
+
+	case "different_ranges":
+		// Reposition to different tick ranges
+		tc.shouldClearFirst = true
+		rangeTypes := []struct{ lower, upper int32 }{
+			{-10000, -5000},   // Negative range
+			{5000, 10000},     // Positive range
+			{-2000, 2000},     // Balanced range
+			{-887200, 887200}, // Full range
+		}
+		range_ := rangeTypes[ctx.RandomInt(0, len(rangeTypes)-1)]
+		tc.tickLower = range_.lower
+		tc.tickUpper = range_.upper
+
+		tc.amount0Desired = "1000000"
+		tc.amount1Desired = "1000000"
+		tc.amount0Min = "0"
+		tc.amount1Min = "0"
+
+	case "position_not_clear":
+		// Attempt reposition without clearing (should fail)
+		tc.shouldClearFirst = false
+		tc.tickLower = -5000
+		tc.tickUpper = 5000
+		tc.amount0Desired = "1000000"
+		tc.amount1Desired = "1000000"
+		tc.amount0Min = "0"
+		tc.amount1Min = "0"
+
+	case "invalid_tick_order":
+		// Invalid tick order for reposition
+		tc.shouldClearFirst = true
+		tc.tickUpper = int32(ctx.RandomInt(-1000, 1000))
+		tc.tickLower = tc.tickUpper + int32(ctx.RandomInt(1, 1000))
+		tc.amount0Desired = "1000000"
+		tc.amount1Desired = "1000000"
+		tc.amount0Min = "0"
+		tc.amount1Min = "0"
+
+	case "extreme_amounts":
+		// Extreme amounts for reposition
+		tc.shouldClearFirst = true
+		tc.tickLower = -10000
+		tc.tickUpper = 10000
+
+		extremeCases := []struct{ amount0, amount1 string }{
+			{"1", "1"},
+			{"100000000000", "100000000000"},
+			{"1", "100000000000"},
+			{"100000000000", "1"},
+		}
+		extreme := extremeCases[ctx.RandomInt(0, len(extremeCases)-1)]
+		tc.amount0Desired = extreme.amount0
+		tc.amount1Desired = extreme.amount1
+		tc.amount0Min = "0"
+		tc.amount1Min = "0"
+
+	case "non_existent_position":
+		// Non-existent position ID
+		tc.positionId = uint64(ctx.RandomInt(9999, 99999))
+		tc.shouldClearFirst = false
+		tc.tickLower = -1000
+		tc.tickUpper = 1000
+		tc.amount0Desired = "1000000"
+		tc.amount1Desired = "1000000"
+		tc.amount0Min = "0"
+		tc.amount1Min = "0"
+
+	default:
+		// Random case
+		tc.shouldClearFirst = ctx.RandomBool()
+		tc.tickLower = int32(ctx.RandomInt(-50000, 50000))
+		tc.tickUpper = tc.tickLower + int32(ctx.RandomInt(100, 10000))
+
+		amountIdx := ctx.RandomInt(0, len(ctx.amountRanges)-1)
+		tc.amount0Desired = ctx.GenerateAmount(amountIdx)
+		tc.amount1Desired = ctx.GenerateAmount(amountIdx)
+		tc.amount0Min = "0"
+		tc.amount1Min = "0"
+	}
+
+	return tc
+}
+
+func TestFuzzReposition(t *testing.T) {
+	initPositionTest(t)
+	testing.SetRealm(adminRealm)
+	setupPoolAndApprovals(t, true)
+
+	// Create initial position for testing
+	basePositionId := seedPosition(t, "10000000", "10000000")
+
+	categories := []TestCategory{
+		{"valid_reposition", 30},
+		{"different_ranges", 20},
+		{"position_not_clear", 20},
+		{"invalid_tick_order", 10},
+		{"extreme_amounts", 10},
+		{"non_existent_position", 5},
+		{"random", 5},
+	}
+
+	runner := NewFuzzTestRunner(t, "Reposition", categories, 120)
+
+	ctx := NewTestContext()
+	currentPositionId := basePositionId
+
+	runner.Run(func(category string, _ *TestContext) any {
+		return generateRepositionTestCase(category, ctx, currentPositionId)
+	}, func(testCase any) {
+		tc := testCase.(RepositionTestCase)
+		t.Logf("Test case [%s]: posId=%d ticks=(%d,%d) amounts=(%s,%s) clearFirst=%v",
+			tc.category, tc.positionId, tc.tickLower, tc.tickUpper,
+			tc.amount0Desired, tc.amount1Desired, tc.shouldClearFirst)
+
+		// Clear position if needed
+		if tc.shouldClearFirst && tc.positionId == currentPositionId {
+			position := MustGetPosition(tc.positionId)
+			currentLiquidity := position.liquidity.ToString()
+
+			if currentLiquidity != "0" {
+				gnft.Approve(cross, posRealm.Address(), positionIdFrom(tc.positionId))
+
+				// Remove all liquidity
+				_, _, _, _, _, _, _ = DecreaseLiquidity(
+					cross,
+					tc.positionId,
+					currentLiquidity,
+					"0",
+					"0",
+					time.Now().Add(time.Hour).Unix(),
+					false,
+				)
+			}
+		}
+
+		// Approve NFT for reposition
+		if tc.category != "non_existent_position" {
+			gnft.Approve(cross, posRealm.Address(), positionIdFrom(tc.positionId))
+		}
+
+		// Execute reposition
+		posId, liquidity, tickL, tickU, amount0, amount1 := Reposition(
+			cross,
+			tc.positionId,
+			tc.tickLower,
+			tc.tickUpper,
+			tc.amount0Desired,
+			tc.amount1Desired,
+			tc.amount0Min,
+			tc.amount1Min,
+		)
+
+		t.Logf("  → Success: posId=%d, liquidity=%s, ticks=(%d,%d), amounts=(%s,%s)",
+			posId, liquidity, tickL, tickU, amount0, amount1)
+
+		// For next iteration, ensure we have a position with liquidity
+		if tc.shouldClearFirst || tc.category == "valid_reposition" {
+			// The position now has liquidity from the reposition
+			currentPositionId = tc.positionId
 		}
 	})
 }
