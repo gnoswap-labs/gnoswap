@@ -10,8 +10,9 @@ import (
 
 const (
 	UGNOT_MIN_DEPOSIT_TO_WRAP = int64(1000)
-	WUGNOT_PATH               = "gno.land/r/demo/wugnot"
-	GNOT_DENOM                = "ugnot"
+
+	WUGNOT_PATH = "gno.land/r/demo/wugnot"
+	GNOT_DENOM  = "ugnot"
 )
 
 var (
@@ -23,7 +24,7 @@ var (
 // Returns an error if ugnotAmount is zero or less than the minimum deposit threshold.
 func wrap(ugnotAmount int64, to std.Address) error {
 	if ugnotAmount == 0 || ugnotAmount < UGNOT_MIN_DEPOSIT_TO_WRAP {
-		return ufmt.Errorf("amount(%d) < minimum(%d)", ugnotAmount, UGNOT_MIN_DEPOSIT_TO_WRAP)
+		return ufmt.Errorf(errFailedToWrapBelowMin, ugnotAmount, UGNOT_MIN_DEPOSIT_TO_WRAP)
 	}
 
 	wugnotAddr := std.DerivePkgAddr(WRAPPED_WUGNOT)
@@ -76,9 +77,9 @@ func isNative(token string) bool {
 	return token == GNOT
 }
 
-// isWrappedToken checks whether the tokenPath is wrapped token.
-func isWrappedToken(tokenPath string) bool {
-	return tokenPath == WRAPPED_WUGNOT
+// isWrappedToken checks whether the wrapped token.
+func isWrappedToken(token string) bool {
+	return token == WRAPPED_WUGNOT
 }
 
 // safeWrapNativeToken safely wraps the native token ugnot into the wrapped token wugnot for a user.

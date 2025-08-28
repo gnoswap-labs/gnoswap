@@ -426,7 +426,6 @@ func TestFuzzMint(t *testing.T) {
 	})
 }
 
-// IncreaseLiquidity Test Case
 type IncreaseLiquidityTestCase struct {
 	positionId     uint64
 	amount0Desired string
@@ -533,7 +532,6 @@ func TestFuzzIncreaseLiquidity(t *testing.T) {
 	})
 }
 
-// DecreaseLiquidity Test Case
 type DecreaseLiquidityTestCase struct {
 	positionId        uint64
 	liquidityToRemove string
@@ -841,6 +839,178 @@ func TestFuzzReposition(t *testing.T) {
 		if tc.shouldClearFirst || tc.category == "valid_reposition" {
 			// The position now has liquidity from the reposition
 			currentPositionId = tc.positionId
+		}
+	})
+}
+
+type CollectFeeTestCase struct {
+	positionId       uint64
+	unwrapResult     bool
+	setupLiquidity   bool
+	decreasePercent  int  // 0-100, percentage of liquidity to remove before collect
+	simulateActivity bool // whether to simulate trading activity
+	category         string
+}
+
+func generateCollectFeeTestCase(category string, ctx *TestContext, existingPositionId uint64) any {
+	var tc CollectFeeTestCase
+	tc.category = category
+	tc.positionId = existingPositionId
+
+	switch category {
+	case "collect_active_position":
+		// Collect from position with active liquidity
+		tc.setupLiquidity = true
+		tc.decreasePercent = 0
+		tc.unwrapResult = ctx.RandomBool()
+		tc.simulateActivity = true
+
+	case "collect_after_partial_removal":
+		// Collect after removing some liquidity
+		tc.setupLiquidity = true
+		tc.decreasePercent = ctx.RandomInt(10, 90)
+		tc.unwrapResult = ctx.RandomBool()
+		tc.simulateActivity = true
+
+	case "collect_after_full_removal":
+		// Collect after removing all liquidity
+		tc.setupLiquidity = true
+		tc.decreasePercent = 100
+		tc.unwrapResult = ctx.RandomBool()
+		tc.simulateActivity = true
+
+	case "collect_multiple_times":
+		// Test collecting fees multiple times
+		tc.setupLiquidity = true
+		tc.decreasePercent = 0
+		tc.unwrapResult = false
+		tc.simulateActivity = true
+
+	case "collect_no_activity":
+		// Collect from position with no trading activity
+		tc.setupLiquidity = true
+		tc.decreasePercent = ctx.RandomInt(0, 50)
+		tc.unwrapResult = ctx.RandomBool()
+		tc.simulateActivity = false
+
+	case "collect_with_unwrap":
+		// Specifically test unwrap functionality
+		tc.setupLiquidity = true
+		tc.decreasePercent = ctx.RandomInt(0, 100)
+		tc.unwrapResult = true
+		tc.simulateActivity = true
+
+	case "non_existent_position":
+		// Try to collect from non-existent position
+		tc.positionId = uint64(ctx.RandomInt(9999, 99999))
+		tc.setupLiquidity = false
+		tc.decreasePercent = 0
+		tc.unwrapResult = false
+		tc.simulateActivity = false
+
+	default:
+		// Random configuration
+		tc.setupLiquidity = true
+		tc.decreasePercent = ctx.RandomInt(0, 100)
+		tc.unwrapResult = ctx.RandomBool()
+		tc.simulateActivity = ctx.RandomBool()
+	}
+
+	return tc
+}
+
+func TestFuzzCollectFee(t *testing.T) {
+	initPositionTest(t)
+	testing.SetRealm(adminRealm)
+	setupPoolAndApprovals(t, true)
+
+	// Create base position with liquidity
+	basePositionId := seedPosition(t, "10000000", "10000000")
+
+	categories := []TestCategory{
+		{"collect_active_position", 25},
+		{"collect_after_partial_removal", 20},
+		{"collect_after_full_removal", 15},
+		{"collect_multiple_times", 10},
+		{"collect_no_activity", 15},
+		{"collect_with_unwrap", 10},
+		{"non_existent_position", 3},
+		{"random", 2},
+	}
+
+	runner := NewFuzzTestRunner(t, "CollectFee", categories, 20)
+
+	ctx := NewTestContext()
+	currentPositionId := basePositionId
+	collectCount := make(map[uint64]int) // Track how many times we've collected from each position
+
+	runner.Run(func(category string, _ *TestContext) any {
+		return generateCollectFeeTestCase(category, ctx, currentPositionId)
+	}, func(testCase any) {
+		tc := testCase.(CollectFeeTestCase)
+		t.Logf("Test case [%s]: posId=%d unwrap=%v decreasePct=%d simulateActivity=%v",
+			tc.category, tc.positionId, tc.unwrapResult, tc.decreasePercent, tc.simulateActivity)
+
+		// Setup position if needed
+		if tc.setupLiquidity && tc.positionId == currentPositionId {
+			position := MustGetPosition(tc.positionId)
+			currentLiquidity := position.liquidity.ToString()
+
+			// Decrease liquidity if specified
+			if tc.decreasePercent > 0 && currentLiquidity != "0" {
+				liquidity, _ := strconv.ParseInt(currentLiquidity, 10, 64)
+				removeAmount := liquidity * int64(tc.decreasePercent) / 100
+
+				if removeAmount > 0 {
+					gnft.Approve(cross, posRealm.Address(), positionIdFrom(tc.positionId))
+
+					_, _, _, _, _, _, _ = DecreaseLiquidity(
+						cross,
+						tc.positionId,
+						strconv.FormatInt(removeAmount, 10),
+						"0",
+						"0",
+						time.Now().Add(time.Hour).Unix(),
+						false,
+					)
+				}
+			}
+		}
+
+		// Approve NFT for collect
+		if tc.category != "non_existent_position" {
+			gnft.Approve(cross, posRealm.Address(), positionIdFrom(tc.positionId))
+		}
+
+		// Execute CollectFee
+		posId, fee0, fee1, poolPath, amount0, amount1 := CollectFee(
+			cross,
+			tc.positionId,
+			tc.unwrapResult,
+		)
+
+		collectCount[tc.positionId]++
+
+		t.Logf("  → Success: posId=%d, fees=(%s,%s), pool=%s, amounts=(%s,%s)",
+			posId, fee0, fee1, poolPath, amount0, amount1)
+
+		// For multiple collects test, do it again
+		if tc.category == "collect_multiple_times" && collectCount[tc.positionId] < 3 {
+			gnft.Approve(cross, posRealm.Address(), positionIdFrom(tc.positionId))
+
+			posId2, fee0_2, fee1_2, _, _, _ := CollectFee(
+				cross,
+				tc.positionId,
+				tc.unwrapResult,
+			)
+
+			t.Logf("  → Collect #%d: posId=%d, fees=(%s,%s)",
+				collectCount[tc.positionId], posId2, fee0_2, fee1_2)
+		}
+
+		// Recreate position if it was fully cleared
+		if tc.decreasePercent == 100 {
+			currentPositionId = seedPosition(t, "10000000", "10000000")
 		}
 	})
 }
