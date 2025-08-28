@@ -435,9 +435,9 @@ func TestDrySwap_ValidationAndFailures(t *testing.T) {
 		}
 		priceLimits := []string{
 			EQUAL_PRICE_RATIO,
-			common.TickMathGetSqrtRatioAtTick(0).ToString(),       // 중앙값
-			common.TickMathGetSqrtRatioAtTick(887220).ToString(),  // 상한 근처
-			common.TickMathGetSqrtRatioAtTick(-887220).ToString(), // 하한 근처
+			common.TickMathGetSqrtRatioAtTick(0).ToString(),       // middle
+			common.TickMathGetSqrtRatioAtTick(887220).ToString(),  // near upper bound
+			common.TickMathGetSqrtRatioAtTick(-887220).ToString(), // near lower bound
 		}
 		directions := []bool{true, false}
 
@@ -446,10 +446,11 @@ func TestDrySwap_ValidationAndFailures(t *testing.T) {
 			amt := amounts[seedMgr.CreateIntGenerator(0, len(amounts)-1).Generate().(int)]
 			pl := priceLimits[seedMgr.CreateIntGenerator(0, len(priceLimits)-1).Generate().(int)]
 			dir := directions[seedMgr.CreateIntGenerator(0, 1).Generate().(int)]
+			zeroForOne := seedMgr.CreateBoolGenerator().Generate().(bool)
 
 			var (
 				abortVal, panicVal any
-				didPanic           bool
+				didPanic, success           bool
 				amount0, amount1   string
 			)
 
@@ -473,10 +474,12 @@ func TestDrySwap_ValidationAndFailures(t *testing.T) {
 				testing.SetRealm(rouRealm)
 				testing.SetOriginCaller(routerAddr)
 
-				// execute swap
-				amount0, amount1 = Swap(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER,
-					routerAddr, dir, amt, pl, routerAddr)
+				amount0, amount1, success = DrySwap(
+					wugnotPath, gnsPath, STANDARD_FEE_TIER,
+					zeroForOne, amt, pl)
 			})
+
+			t.Logf("amount0: %s, amount1: %s, success: %v", amount0, amount1, success)
 
 			if abortVal != nil {
 				// abort should result in both amounts being zero
