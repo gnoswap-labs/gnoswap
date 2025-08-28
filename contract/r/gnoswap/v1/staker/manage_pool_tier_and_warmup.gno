@@ -13,10 +13,6 @@ import (
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
-const (
-	NOT_EMISSION_TARGET_TIER uint64 = 0
-)
-
 // SetPoolTier assigns a tier level to a pool for internal GNS emission rewards.
 // Only admin or governance can call this function.
 func SetPoolTier(cur realm, poolPath string, tier uint64) {
@@ -119,30 +115,28 @@ func setPoolTier(poolPath string, tier uint64, currentTime int64) {
 	en.MintAndDistributeGns(cross)
 
 	pools.GetOrCreate(poolPath)
-	poolTier.changeTier(std.ChainHeight(), currentTime, pools, poolPath, tier)
+	poolTier.changeTier(std.ChainHeight(), currentTime, pools, poolPath, TierFromUint64(tier))
 }
 
 // changePoolTier internally changes the pool tier and returns old and new tiers.
 func changePoolTier(poolPath string, tier uint64, currentTime int64) (uint64, uint64) {
 	en.MintAndDistributeGns(cross)
+
 	previousTier := poolTier.CurrentTier(poolPath)
+	poolTier.changeTier(std.ChainHeight(), currentTime, pools, poolPath, TierFromUint64(tier))
 
-	poolTier.changeTier(std.ChainHeight(), currentTime, pools, poolPath, tier)
-
-	return previousTier, tier
+	return previousTier.Uint64(), tier
 }
 
 // removePoolTier internally removes the pool from tier system.
 func removePoolTier(poolPath string, currentTime int64) {
 	en.MintAndDistributeGns(cross)
-
-	poolTier.changeTier(std.ChainHeight(), currentTime, pools, poolPath, NOT_EMISSION_TARGET_TIER)
+	poolTier.changeTier(std.ChainHeight(), currentTime, pools, poolPath, TierNone)
 }
 
 // setWarmUp internally sets the warm-up parameters.
 func setWarmUp(pct, timeDuration int64) {
 	en.MintAndDistributeGns(cross)
-
 	modifyWarmup(pctToIndex(pct), timeDuration)
 }
 

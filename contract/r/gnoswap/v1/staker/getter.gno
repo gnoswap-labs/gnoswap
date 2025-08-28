@@ -203,7 +203,7 @@ func GetDepositWarmUp(lpTokenId uint64) []Warmup {
 
 // GetPoolTier returns the tier of a pool.
 func GetPoolTier(poolPath string) uint64 {
-	return poolTier.CurrentTier(poolPath)
+	return poolTier.CurrentTier(poolPath).Uint64()
 }
 
 // GetPoolTierRatio returns the current reward ratio for a pool's tier.

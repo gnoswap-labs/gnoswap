@@ -23,6 +23,9 @@ func (t Tier) Uint64() uint64 {
 }
 
 func TierFromUint64(t uint64) Tier {
+	if t >= AllTierCount {
+		return TierNone
+	}
 	return Tier(t)
 }
 
@@ -127,7 +130,7 @@ func NewPoolTier(pools *Pools, currentHeight int64, currentTime int64, initialPo
 	}
 
 	pools.set(initialPoolPath, NewPool(initialPoolPath, currentTime+1))
-	result.changeTier(currentHeight+1, currentTime+1, pools, initialPoolPath, 1)
+	result.changeTier(currentHeight+1, currentTime+1, pools, initialPoolPath, Tier1)
 	return result
 }
 
@@ -156,21 +159,21 @@ func (self *PoolTier) CurrentAllTierCounts() []uint64 {
 }
 
 // CurrentTier returns the tier of the given pool.
-func (self *PoolTier) CurrentTier(poolPath string) (tier uint64) {
+func (self *PoolTier) CurrentTier(poolPath string) Tier {
 	if tierI, ok := self.membership.Get(poolPath); !ok {
-		return 0
+		return TierNone
 	} else {
-		tier, ok = tierI.(uint64)
+		tier, ok := tierI.(uint64)
 		if !ok {
 			panic("failed to cast tier to uint64")
 		}
-		return
+		return TierFromUint64(tier)
 	}
 }
 
 // changeTier updates the tier of a pool, recalculates ratios, and applies
 // updated per-pool reward to each of the pools.
-func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *Pools, poolPath string, nextTier uint64) {
+func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *Pools, poolPath string, nextTier Tier) {
 	self.cacheReward(currentHeight, currentTime, pools)
 	// same as prev. no need to update
 	currentTier := self.CurrentTier(poolPath)
@@ -180,14 +183,16 @@ func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *
 	}
 
 	// decrement count from current tier if it exists
-	if currentTier > 0 {
-		if self.counts[currentTier] == 0 {
-			panic("counts underflow: removing from empty tier")
+	if currentTier != TierNone {
+		c := currentTier.Uint64()
+		if self.counts[c] == 0 {
+			panic("counts underflow: removeing from empty tier")
 		}
-		self.counts[currentTier]--
+		self.counts[c]--
 	}
 
-	if nextTier == 0 {
+	switch nextTier {
+	case TierNone:
 		// removed from the tier
 		self.membership.Remove(poolPath)
 		pool, ok := pools.Get(poolPath)
@@ -195,13 +200,18 @@ func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *
 			panic("changeTier: pool not found")
 		}
 		pool.cacheReward(currentTime, int64(0))
-	} else {
+	default:
 		// handle all move/add operations
-		self.membership.Set(poolPath, nextTier)
-		self.counts[nextTier]++
+		nt := nextTier.Uint64()
+		self.membership.Set(poolPath, nt)
+		self.counts[nt]++
 	}
 
-	self.tierRatio = TierRatioFromCounts(self.counts[Tier1], self.counts[Tier2], self.counts[Tier3])
+	t1 := self.counts[Tier1.Uint64()]
+	t2 := self.counts[Tier2.Uint64()]
+	t3 := self.counts[Tier3.Uint64()]
+
+	self.tierRatio = TierRatioFromCounts(t1, t2, t3)
 	currentEmission := self.getEmission()
 
 	// Cache updated reward for each tiered pool
@@ -293,16 +303,16 @@ func (self *PoolTier) IsInternallyIncentivizedPool(poolPath string) bool {
 }
 
 func (self *PoolTier) CurrentRewardPerPool(poolPath string) int64 {
-	tierNum := self.CurrentTier(poolPath)
-	if tierNum == 0 {
+	tier := self.CurrentTier(poolPath)
+	if tier == TierNone {
 		return 0 // Pool not in any tier
 	}
 
 	emission := self.getEmission()
 	counts := self.CurrentAllTierCounts()
 
-	tierRatio := self.tierRatio.Get(Tier(tierNum))
-	tierCount := int64(counts[tierNum])
+	tierRatio := self.tierRatio.Get(tier)
+	tierCount := int64(counts[tier.Uint64()])
 
 	return self.Reward(emission, tierRatio, tierCount)
 }
