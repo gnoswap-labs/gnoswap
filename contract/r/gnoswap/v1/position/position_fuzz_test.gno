@@ -11,6 +11,7 @@ import (
 	"gno.land/r/gnoswap/v1/gnft"
 )
 
+// Test data structures
 type TickRange struct {
 	minLower    int32
 	maxLower    int32
@@ -25,48 +26,198 @@ type AmountRange struct {
 	description string
 }
 
-func getFuzzTickRanges() []TickRange {
-	return []TickRange{
-		{-887200, -100000, 100000, 887200, "extreme wide range"},
-		{-10000, -1000, 1000, 10000, "wide range"},
-		{-500, -100, 100, 500, "narrow range"},
-		{-50, -10, 10, 50, "very narrow range"},
-		{-887200, -500000, -100000, -1000, "negative range"},
-		{1000, 100000, 500000, 887200, "positive range"},
+// TestContext holds common test resources
+type TestContext struct {
+	seedMgr       *fuzz.SeedManager
+	tickRanges    []TickRange
+	amountRanges  []AmountRange
+	validFees     []uint32
+	tokenPaths    []string
+	testAddresses []std.Address
+}
+
+// NewTestContext creates a new test context with all common test data
+func NewTestContext() *TestContext {
+	return &TestContext{
+		seedMgr: fuzz.NewSeedManager(),
+		tickRanges: []TickRange{
+			{-887200, -100000, 100000, 887200, "extreme wide range"},
+			{-10000, -1000, 1000, 10000, "wide range"},
+			{-500, -100, 100, 500, "narrow range"},
+			{-50, -10, 10, 50, "very narrow range"},
+			{-887200, -500000, -100000, -1000, "negative range"},
+			{1000, 100000, 500000, 887200, "positive range"},
+		},
+		amountRanges: []AmountRange{
+			{"1", "1000", "dust amounts"},
+			{"1000", "100000", "small amounts"},
+			{"100000", "10000000", "medium amounts"},
+			{"10000000", "1000000000", "large amounts"},
+			{"1000000000", "100000000000", "whale amounts"},
+		},
+		validFees:     []uint32{100, 500, 3000, 10000},
+		tokenPaths:    []string{barPath, fooPath, gnsPath, "gno.land/r/demo/wugnot", "gno.land/r/test/token1", "gno.land/r/test/token2"},
+		testAddresses: []std.Address{alice, adminAddr, testutils.TestAddress("bob"), testutils.TestAddress("charlie")},
 	}
 }
 
-// Common test execution helpers
+// Helper methods for TestContext
+func (tc *TestContext) RandomInt(min, max int) int {
+	return tc.seedMgr.CreateIntGenerator(min, max).Generate().(int)
+}
 
-// executeTestCase executes a test function with error handling and statistics collection
-func executeTestCase(t *testing.T, testFunc func(), stats *testStats) {
+func (tc *TestContext) RandomBool() bool {
+	return tc.seedMgr.CreateBoolGenerator().Generate().(bool)
+}
+
+func (tc *TestContext) GenerateAmount(rangeIdx int) string {
+	if rangeIdx < 0 || rangeIdx >= len(tc.amountRanges) {
+		rangeIdx = tc.RandomInt(0, len(tc.amountRanges)-1)
+	}
+
+	switch rangeIdx {
+	case 0:
+		return strconv.Itoa(tc.RandomInt(1, 1000))
+	case 1:
+		return strconv.Itoa(tc.RandomInt(1000, 100000))
+	case 2:
+		return strconv.Itoa(tc.RandomInt(100000, 10000000))
+	case 3:
+		return strconv.Itoa(tc.RandomInt(10000000, 1000000000))
+	case 4:
+		return strconv.Itoa(tc.RandomInt(1000000000, 2000000000))
+	default:
+		return "1000000"
+	}
+}
+
+func (tc *TestContext) RandomTokenPair() (string, string) {
+	token0 := tc.tokenPaths[tc.RandomInt(0, len(tc.tokenPaths)-1)]
+	token1 := tc.tokenPaths[tc.RandomInt(0, len(tc.tokenPaths)-1)]
+	for token0 == token1 {
+		token1 = tc.tokenPaths[tc.RandomInt(0, len(tc.tokenPaths)-1)]
+	}
+	return token0, token1
+}
+
+func (tc *TestContext) RandomFee() uint32 {
+	return tc.validFees[tc.RandomInt(0, len(tc.validFees)-1)]
+}
+
+func (tc *TestContext) RandomAddress() std.Address {
+	return tc.testAddresses[tc.RandomInt(0, len(tc.testAddresses)-1)]
+}
+
+func (tc *TestContext) RandomTickRange(rangeIdx int) (int32, int32) {
+	if rangeIdx < 0 || rangeIdx >= len(tc.tickRanges) {
+		rangeIdx = tc.RandomInt(0, len(tc.tickRanges)-1)
+	}
+	tickRange := tc.tickRanges[rangeIdx]
+	tickLower := tickRange.minLower + int32(tc.RandomInt(0, int(tickRange.maxLower-tickRange.minLower)))
+	tickUpper := tickRange.minUpper + int32(tc.RandomInt(0, int(tickRange.maxUpper-tickRange.minUpper)))
+	return tickLower, tickUpper
+}
+
+// FuzzTestRunner manages the execution of fuzz tests
+type FuzzTestRunner struct {
+	t               *testing.T
+	testName        string
+	categories      []TestCategory
+	totalIterations int
+	stats           *testStats
+}
+
+type TestCategory struct {
+	Name   string
+	Weight int
+}
+
+// NewFuzzTestRunner creates a new test runner
+func NewFuzzTestRunner(t *testing.T, testName string, categories []TestCategory, iterations int) *FuzzTestRunner {
+	return &FuzzTestRunner{
+		t:               t,
+		testName:        testName,
+		categories:      categories,
+		totalIterations: iterations,
+		stats:           newTestStats(),
+	}
+}
+
+// Run executes the fuzz test
+func (r *FuzzTestRunner) Run(generateTestCase func(string, *TestContext) any, executeTest func(any)) {
+	ctx := NewTestContext()
+	weightedCategories := r.buildWeightedCategories()
+
+	for i := 0; i < r.totalIterations; i++ {
+		// Select category
+		category := weightedCategories[ctx.RandomInt(0, len(weightedCategories)-1)]
+		r.stats.categoryStats[category]++
+
+		// Generate and execute test case
+		testCase := generateTestCase(category, ctx)
+		r.executeTestCase(func() {
+			executeTest(testCase)
+		})
+	}
+
+	r.printStatistics()
+}
+
+func (r *FuzzTestRunner) buildWeightedCategories() []string {
+	weighted := []string{}
+	for _, cat := range r.categories {
+		for i := 0; i < cat.Weight; i++ {
+			weighted = append(weighted, cat.Name)
+		}
+	}
+	return weighted
+}
+
+func (r *FuzzTestRunner) executeTestCase(testFunc func()) {
 	defer func() {
-		if r := recover(); r != nil {
-			stats.actualFailureCount++
+		if recoverVal := recover(); recoverVal != nil {
+			r.stats.actualFailureCount++
 			errMsg := "panic"
-			if str, ok := r.(string); ok {
+			if str, ok := recoverVal.(string); ok {
 				errMsg = str
 			}
-			stats.errorMessages[errMsg]++
-			t.Logf("  → Failed with: %v", r)
+			r.stats.errorMessages[errMsg]++
+			r.t.Logf("  → Failed with: %v", recoverVal)
 		}
 	}()
 
 	abortVal := revive(testFunc)
 	if abortVal != nil {
-		stats.actualFailureCount++
+		r.stats.actualFailureCount++
 		errMsg := "abort"
 		if str, ok := abortVal.(string); ok {
 			errMsg = str
 		}
-		stats.errorMessages[errMsg]++
-		t.Logf("  → Failed with abort: %v", abortVal)
+		r.stats.errorMessages[errMsg]++
+		r.t.Logf("  → Failed with abort: %v", abortVal)
 	} else {
-		stats.actualSuccessCount++
+		r.stats.actualSuccessCount++
 	}
 }
 
-// testStats holds statistics for test execution
+func (r *FuzzTestRunner) printStatistics() {
+	r.t.Logf("\n=== %s Fuzz Test Statistics ===", r.testName)
+	r.t.Logf("Total iterations: %d", r.totalIterations)
+	r.t.Logf("Actual successes: %d (%.1f%%)", r.stats.actualSuccessCount, float64(r.stats.actualSuccessCount)/float64(r.totalIterations)*100)
+	r.t.Logf("Actual failures: %d (%.1f%%)", r.stats.actualFailureCount, float64(r.stats.actualFailureCount)/float64(r.totalIterations)*100)
+
+	r.t.Logf("\n=== Category Distribution ===")
+	for cat, count := range r.stats.categoryStats {
+		r.t.Logf("%s: %d (%.1f%%)", cat, count, float64(count)/float64(r.totalIterations)*100)
+	}
+
+	r.t.Logf("\n=== Error Messages ===")
+	for msg, count := range r.stats.errorMessages {
+		r.t.Logf("%s: %d", msg, count)
+	}
+}
+
+// testStats remains the same
 type testStats struct {
 	actualSuccessCount int
 	actualFailureCount int
@@ -74,7 +225,6 @@ type testStats struct {
 	errorMessages      map[string]int
 }
 
-// newTestStats creates a new testStats instance
 func newTestStats() *testStats {
 	return &testStats{
 		categoryStats: make(map[string]int),
@@ -82,293 +232,158 @@ func newTestStats() *testStats {
 	}
 }
 
-// printTestStatistics prints the test execution statistics
-func printTestStatistics(t *testing.T, testName string, totalIterations int, stats *testStats) {
-	t.Logf("\n=== %s Fuzz Test Statistics ===", testName)
-	t.Logf("Total iterations: %d", totalIterations)
-	t.Logf("Actual successes: %d (%.1f%%)", stats.actualSuccessCount, float64(stats.actualSuccessCount)/float64(totalIterations)*100)
-	t.Logf("Actual failures: %d (%.1f%%)", stats.actualFailureCount, float64(stats.actualFailureCount)/float64(totalIterations)*100)
-
-	t.Logf("\n=== Category Distribution ===")
-	for cat, count := range stats.categoryStats {
-		t.Logf("%s: %d (%.1f%%)", cat, count, float64(count)/float64(totalIterations)*100)
-	}
-
-	t.Logf("\n=== Error Messages ===")
-	for msg, count := range stats.errorMessages {
-		t.Logf("%s: %d", msg, count)
-	}
+// Mint Test Case
+type MintTestCase struct {
+	token0     string
+	token1     string
+	fee        uint32
+	tickLower  int32
+	tickUpper  int32
+	amount0    string
+	amount1    string
+	minAmount0 string
+	minAmount1 string
+	deadline   int64
+	mintTo     std.Address
+	caller     std.Address
+	category   string
 }
 
-// buildWeightedCategories creates a weighted category selection slice
-func buildWeightedCategories(categories []struct {
-	name   string
-	weight int
-}) []string {
-	weightedCategories := []string{}
-	for _, cat := range categories {
-		for i := 0; i < cat.weight; i++ {
-			weightedCategories = append(weightedCategories, cat.name)
+func generateMintTestCase(category string, ctx *TestContext) any {
+	var tc MintTestCase
+	tc.category = category
+
+	switch category {
+	case "valid_standard":
+		tc.token0, tc.token1 = ctx.RandomTokenPair()
+		tc.fee = ctx.RandomFee()
+		tc.tickLower, tc.tickUpper = ctx.RandomTickRange(-1)
+
+		amountIdx := ctx.RandomInt(0, len(ctx.amountRanges)-1)
+		tc.amount0 = ctx.GenerateAmount(amountIdx)
+		tc.amount1 = ctx.GenerateAmount(amountIdx)
+
+		amount0Val, _ := strconv.ParseInt(tc.amount0, 10, 64)
+		amount1Val, _ := strconv.ParseInt(tc.amount1, 10, 64)
+		tc.minAmount0 = strconv.FormatInt(amount0Val*9/10, 10)
+		tc.minAmount1 = strconv.FormatInt(amount1Val*9/10, 10)
+
+		tc.deadline = time.Now().Add(time.Hour).Unix()
+		tc.caller = ctx.RandomAddress()
+		tc.mintTo = tc.caller
+
+	case "edge_ticks":
+		tc.token0, tc.token1 = ctx.tokenPaths[0], ctx.tokenPaths[1]
+		tc.fee = ctx.RandomFee()
+
+		edgeCases := []struct{ lower, upper int32 }{
+			{-887272, -887200},
+			{887200, 887272},
+			{-100, 100},
+			{-887272, 887272},
 		}
-	}
-	return weightedCategories
-}
+		edge := edgeCases[ctx.RandomInt(0, len(edgeCases)-1)]
+		tc.tickLower = edge.lower
+		tc.tickUpper = edge.upper
 
-func getFuzzAmountRanges() []AmountRange {
-	return []AmountRange{
-		{"1", "1000", "dust amounts"},
-		{"1000", "100000", "small amounts"},
-		{"100000", "10000000", "medium amounts"},
-		{"10000000", "1000000000", "large amounts"},
-		{"1000000000", "100000000000", "whale amounts"},
-	}
-}
+		tc.amount0 = "1000000"
+		tc.amount1 = "1000000"
+		tc.minAmount0 = "900000"
+		tc.minAmount1 = "900000"
+		tc.deadline = time.Now().Add(time.Hour).Unix()
+		tc.caller = alice
+		tc.mintTo = alice
 
-func getFuzzValidFees() []uint32 {
-	return []uint32{100, 500, 3000, 10000}
-}
+	case "invalid_tick_order":
+		tc.token0, tc.token1 = ctx.tokenPaths[0], ctx.tokenPaths[1]
+		tc.fee = ctx.RandomFee()
+		tc.tickUpper = int32(ctx.RandomInt(-1000, 1000))
+		tc.tickLower = tc.tickUpper + int32(ctx.RandomInt(1, 1000))
+		tc.amount0 = "1000000"
+		tc.amount1 = "1000000"
+		tc.minAmount0 = "900000"
+		tc.minAmount1 = "900000"
+		tc.deadline = time.Now().Add(time.Hour).Unix()
+		tc.caller = alice
+		tc.mintTo = alice
 
-func getFuzzTokenPaths() []string {
-	return []string{
-		barPath,
-		fooPath,
-		gnsPath,
-		"gno.land/r/demo/wugnot",
-		"gno.land/r/test/token1",
-		"gno.land/r/test/token2",
-	}
-}
+	case "expired_deadline":
+		tc.token0, tc.token1 = ctx.tokenPaths[0], ctx.tokenPaths[1]
+		tc.fee = ctx.RandomFee()
+		tc.tickLower = -1000
+		tc.tickUpper = 1000
+		tc.amount0 = "1000000"
+		tc.amount1 = "1000000"
+		tc.minAmount0 = "900000"
+		tc.minAmount1 = "900000"
+		tc.deadline = time.Now().Add(-time.Hour).Unix()
+		tc.caller = alice
+		tc.mintTo = alice
 
-func getFuzzTestAddresses() []std.Address {
-	return []std.Address{
-		alice,
-		adminAddr,
-		testutils.TestAddress("bob"),
-		testutils.TestAddress("charlie"),
-	}
-}
+	case "unauthorized_mintto":
+		tc.token0, tc.token1 = ctx.tokenPaths[0], ctx.tokenPaths[1]
+		tc.fee = ctx.RandomFee()
+		tc.tickLower = -1000
+		tc.tickUpper = 1000
+		tc.amount0 = "1000000"
+		tc.amount1 = "1000000"
+		tc.minAmount0 = "900000"
+		tc.minAmount1 = "900000"
+		tc.deadline = time.Now().Add(time.Hour).Unix()
+		tc.caller = alice
+		tc.mintTo = adminAddr
 
-// createAmountGenerator returns a function that generates random amounts within specified ranges
-func createAmountGenerator(seedMgr *fuzz.SeedManager) func(int) string {
-	return func(rangeIdx int) string {
-		ranges := getFuzzAmountRanges()
-		if rangeIdx < 0 || rangeIdx >= len(ranges) {
-			rangeIdx = seedMgr.CreateIntGenerator(0, len(ranges)-1).Generate().(int)
+	case "extreme_amounts":
+		tc.token0, tc.token1 = ctx.tokenPaths[0], ctx.tokenPaths[1]
+		tc.fee = ctx.RandomFee()
+		tc.tickLower = -10000
+		tc.tickUpper = 10000
+
+		extremeCases := []struct{ amount0, amount1 string }{
+			{"1", "1"},
+			{"100000000000000", "100000000000000"},
+			{"1", "100000000000"},
+			{"100000000000", "1"},
+		}
+		extreme := extremeCases[ctx.RandomInt(0, len(extremeCases)-1)]
+		tc.amount0 = extreme.amount0
+		tc.amount1 = extreme.amount1
+		tc.minAmount0 = "0"
+		tc.minAmount1 = "0"
+		tc.deadline = time.Now().Add(time.Hour).Unix()
+		tc.caller = alice
+		tc.mintTo = alice
+
+	default:
+		tc.token0, tc.token1 = ctx.RandomTokenPair()
+		tc.fee = ctx.RandomFee()
+		tc.tickLower = int32(ctx.RandomInt(-887272, 887272))
+		tc.tickUpper = int32(ctx.RandomInt(-887272, 887272))
+
+		amountIdx := ctx.RandomInt(0, len(ctx.amountRanges)-1)
+		tc.amount0 = ctx.GenerateAmount(amountIdx)
+		tc.amount1 = ctx.GenerateAmount(amountIdx)
+		tc.minAmount0 = "0"
+		tc.minAmount1 = "0"
+
+		if ctx.RandomBool() {
+			tc.deadline = time.Now().Add(time.Hour).Unix()
+		} else {
+			tc.deadline = time.Now().Add(-time.Hour).Unix()
 		}
 
-		switch rangeIdx {
-		case 0:
-			return strconv.Itoa(seedMgr.CreateIntGenerator(1, 1000).Generate().(int))
-		case 1:
-			return strconv.Itoa(seedMgr.CreateIntGenerator(1000, 100000).Generate().(int))
-		case 2:
-			return strconv.Itoa(seedMgr.CreateIntGenerator(100000, 10000000).Generate().(int))
-		case 3:
-			return strconv.Itoa(seedMgr.CreateIntGenerator(10000000, 1000000000).Generate().(int))
-		case 4:
-			return strconv.Itoa(seedMgr.CreateIntGenerator(1000000000, 2000000000).Generate().(int))
-		default:
-			return "1000000"
-		}
+		tc.caller = ctx.RandomAddress()
+		tc.mintTo = ctx.RandomAddress()
 	}
+
+	return tc
 }
 
 func TestFuzzMint(t *testing.T) {
-	// Initialize seed manager for random data generation
-	seedMgr := fuzz.NewSeedManager()
+	initPositionTest(t)
+	testing.SetRealm(adminRealm)
 
-	type MintTestCase struct {
-		token0     string
-		token1     string
-		fee        uint32
-		tickLower  int32
-		tickUpper  int32
-		amount0    string
-		amount1    string
-		minAmount0 string
-		minAmount1 string
-		deadline   int64
-		mintTo     std.Address
-		caller     std.Address
-		category   string
-	}
-
-	// Use shared fuzzing utilities
-	tickRanges := getFuzzTickRanges()
-	amountRanges := getFuzzAmountRanges()
-	validFees := getFuzzValidFees()
-	tokenPaths := getFuzzTokenPaths()
-	testAddresses := getFuzzTestAddresses()
-	generateAmountInRange := createAmountGenerator(seedMgr)
-
-	// Generate test case based on category
-	generateMintTestCase := func(category string) MintTestCase {
-		var tc MintTestCase
-		tc.category = category
-
-		switch category {
-		case "valid_standard":
-			// Standard valid mint cases
-			tc.token0 = tokenPaths[seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)]
-			tc.token1 = tokenPaths[seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)]
-			// Ensure different tokens
-			for tc.token0 == tc.token1 {
-				tc.token1 = tokenPaths[seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)]
-			}
-			tc.fee = validFees[seedMgr.CreateIntGenerator(0, len(validFees)-1).Generate().(int)]
-
-			// Generate valid tick range
-			tickRange := tickRanges[seedMgr.CreateIntGenerator(0, len(tickRanges)-1).Generate().(int)]
-			tc.tickLower = tickRange.minLower + int32(seedMgr.CreateIntGenerator(0, int(tickRange.maxLower-tickRange.minLower)).Generate().(int))
-			tc.tickUpper = tickRange.minUpper + int32(seedMgr.CreateIntGenerator(0, int(tickRange.maxUpper-tickRange.minUpper)).Generate().(int))
-
-			// Generate amounts
-			amountIdx := seedMgr.CreateIntGenerator(0, len(amountRanges)-1).Generate().(int)
-			tc.amount0 = generateAmountInRange(amountIdx)
-			tc.amount1 = generateAmountInRange(amountIdx)
-
-			// Min amounts are slightly less than desired amounts
-			amount0Val, _ := strconv.ParseInt(tc.amount0, 10, 64)
-			amount1Val, _ := strconv.ParseInt(tc.amount1, 10, 64)
-			tc.minAmount0 = strconv.FormatInt(amount0Val*9/10, 10)
-			tc.minAmount1 = strconv.FormatInt(amount1Val*9/10, 10)
-
-			tc.deadline = time.Now().Add(time.Hour).Unix()
-			tc.caller = testAddresses[seedMgr.CreateIntGenerator(0, len(testAddresses)-1).Generate().(int)]
-			tc.mintTo = tc.caller // Valid case: mintTo same as caller
-
-		case "edge_ticks":
-			// Edge case tick values
-			tc.token0 = tokenPaths[0]
-			tc.token1 = tokenPaths[1]
-			tc.fee = validFees[seedMgr.CreateIntGenerator(0, len(validFees)-1).Generate().(int)]
-
-			edgeCases := []struct{ lower, upper int32 }{
-				{-887272, -887200}, // Near minimum
-				{887200, 887272},   // Near maximum
-				{-100, 100},        // Around zero
-				{-887272, 887272},  // Full range
-			}
-			edge := edgeCases[seedMgr.CreateIntGenerator(0, len(edgeCases)-1).Generate().(int)]
-			tc.tickLower = edge.lower
-			tc.tickUpper = edge.upper
-
-			tc.amount0 = "1000000"
-			tc.amount1 = "1000000"
-			tc.minAmount0 = "900000"
-			tc.minAmount1 = "900000"
-			tc.deadline = time.Now().Add(time.Hour).Unix()
-			tc.caller = alice
-			tc.mintTo = alice
-
-		case "invalid_tick_order":
-			// Invalid tick order (lower > upper)
-			tc.token0 = tokenPaths[0]
-			tc.token1 = tokenPaths[1]
-			tc.fee = validFees[seedMgr.CreateIntGenerator(0, len(validFees)-1).Generate().(int)]
-
-			// Deliberately set tickLower > tickUpper
-			tc.tickUpper = int32(seedMgr.CreateIntGenerator(-1000, 1000).Generate().(int))
-			tc.tickLower = tc.tickUpper + int32(seedMgr.CreateIntGenerator(1, 1000).Generate().(int))
-
-			tc.amount0 = "1000000"
-			tc.amount1 = "1000000"
-			tc.minAmount0 = "900000"
-			tc.minAmount1 = "900000"
-			tc.deadline = time.Now().Add(time.Hour).Unix()
-			tc.caller = alice
-			tc.mintTo = alice
-
-		case "expired_deadline":
-			// Expired deadline
-			tc.token0 = tokenPaths[0]
-			tc.token1 = tokenPaths[1]
-			tc.fee = validFees[seedMgr.CreateIntGenerator(0, len(validFees)-1).Generate().(int)]
-			tc.tickLower = -1000
-			tc.tickUpper = 1000
-			tc.amount0 = "1000000"
-			tc.amount1 = "1000000"
-			tc.minAmount0 = "900000"
-			tc.minAmount1 = "900000"
-			tc.deadline = time.Now().Add(-time.Hour).Unix() // Past deadline
-			tc.caller = alice
-			tc.mintTo = alice
-
-		case "unauthorized_mintto":
-			// Unauthorized mintTo address
-			tc.token0 = tokenPaths[0]
-			tc.token1 = tokenPaths[1]
-			tc.fee = validFees[seedMgr.CreateIntGenerator(0, len(validFees)-1).Generate().(int)]
-			tc.tickLower = -1000
-			tc.tickUpper = 1000
-			tc.amount0 = "1000000"
-			tc.amount1 = "1000000"
-			tc.minAmount0 = "900000"
-			tc.minAmount1 = "900000"
-			tc.deadline = time.Now().Add(time.Hour).Unix()
-			tc.caller = alice
-			tc.mintTo = adminAddr // Different from caller
-
-		case "extreme_amounts":
-			// Extreme amount values
-			tc.token0 = tokenPaths[0]
-			tc.token1 = tokenPaths[1]
-			tc.fee = validFees[seedMgr.CreateIntGenerator(0, len(validFees)-1).Generate().(int)]
-			tc.tickLower = -10000
-			tc.tickUpper = 10000
-
-			extremeCases := []struct{ amount0, amount1 string }{
-				{"1", "1"},                             // Minimum amounts
-				{"100000000000000", "100000000000000"}, // Very large amounts
-				{"1", "100000000000"},                  // Imbalanced amounts
-				{"100000000000", "1"},                  // Reverse imbalanced
-			}
-			extreme := extremeCases[seedMgr.CreateIntGenerator(0, len(extremeCases)-1).Generate().(int)]
-			tc.amount0 = extreme.amount0
-			tc.amount1 = extreme.amount1
-
-			// Set min amounts to 0 for extreme cases
-			tc.minAmount0 = "0"
-			tc.minAmount1 = "0"
-			tc.deadline = time.Now().Add(time.Hour).Unix()
-			tc.caller = alice
-			tc.mintTo = alice
-
-		default:
-			// Random mix
-			tc.token0 = tokenPaths[seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)]
-			tc.token1 = tokenPaths[seedMgr.CreateIntGenerator(0, len(tokenPaths)-1).Generate().(int)]
-			tc.fee = validFees[seedMgr.CreateIntGenerator(0, len(validFees)-1).Generate().(int)]
-
-			// Random tick range (may be invalid)
-			tc.tickLower = int32(seedMgr.CreateIntGenerator(-887272, 887272).Generate().(int))
-			tc.tickUpper = int32(seedMgr.CreateIntGenerator(-887272, 887272).Generate().(int))
-
-			amountIdx := seedMgr.CreateIntGenerator(0, len(amountRanges)-1).Generate().(int)
-			tc.amount0 = generateAmountInRange(amountIdx)
-			tc.amount1 = generateAmountInRange(amountIdx)
-			tc.minAmount0 = "0"
-			tc.minAmount1 = "0"
-
-			// Random deadline (may be expired)
-			if seedMgr.CreateBoolGenerator().Generate().(bool) {
-				tc.deadline = time.Now().Add(time.Hour).Unix()
-			} else {
-				tc.deadline = time.Now().Add(-time.Hour).Unix()
-			}
-
-			tc.caller = testAddresses[seedMgr.CreateIntGenerator(0, len(testAddresses)-1).Generate().(int)]
-			tc.mintTo = testAddresses[seedMgr.CreateIntGenerator(0, len(testAddresses)-1).Generate().(int)]
-		}
-
-		return tc
-	}
-
-	// Test categories with weights
-	categories := []struct {
-		name   string
-		weight int
-	}{
+	categories := []TestCategory{
 		{"valid_standard", 30},
 		{"edge_ticks", 15},
 		{"invalid_tick_order", 15},
@@ -378,288 +393,223 @@ func TestFuzzMint(t *testing.T) {
 		{"random", 10},
 	}
 
-	// Build weighted category selection
-	weightedCategories := buildWeightedCategories(categories)
-
-	// Set up test environment once
-	initPositionTest(t)
-	testing.SetRealm(adminRealm)
-
-	const totalIterations = 20 // Reduced for actual execution
-	stats := newTestStats()
-
-	for i := 0; i < totalIterations; i++ {
-		// Select category
-		catIdx := seedMgr.CreateIntGenerator(0, len(weightedCategories)-1).Generate().(int)
-		category := weightedCategories[catIdx]
-		stats.categoryStats[category]++
-
-		tc := generateMintTestCase(category)
-
-		t.Logf("Test case %d [%s]: tokens=(%s,%s) fee=%d ticks=(%d,%d) amounts=(%s,%s)",
-			i, tc.category, tc.token0, tc.token1, tc.fee, tc.tickLower, tc.tickUpper,
+	runner := NewFuzzTestRunner(t, "Mint", categories, 20)
+	runner.Run(generateMintTestCase, func(testCase any) {
+		tc := testCase.(MintTestCase)
+		t.Logf("Test case [%s]: tokens=(%s,%s) fee=%d ticks=(%d,%d) amounts=(%s,%s)",
+			tc.category, tc.token0, tc.token1, tc.fee, tc.tickLower, tc.tickUpper,
 			tc.amount0, tc.amount1)
 
-		// Execute the actual function call
 		setupPoolAndApprovals(t, true)
+		testing.SetRealm(std.NewUserRealm(tc.caller))
 
-		executeTestCase(t, func() {
-			testing.SetRealm(std.NewUserRealm(tc.caller))
+		positionId, liquidity, amount0, amount1 := Mint(
+			cross,
+			tc.token0,
+			tc.token1,
+			tc.fee,
+			tc.tickLower,
+			tc.tickUpper,
+			tc.amount0,
+			tc.amount1,
+			tc.minAmount0,
+			tc.minAmount1,
+			tc.deadline,
+			tc.mintTo,
+			tc.caller,
+			"",
+		)
+		t.Logf("  → Success: posId=%d, liquidity=%s, amounts=(%s,%s)",
+			positionId, liquidity, amount0, amount1)
 
-			positionId, liquidity, amount0, amount1 := Mint(
-				cross,
-				tc.token0,
-				tc.token1,
-				tc.fee,
-				tc.tickLower,
-				tc.tickUpper,
-				tc.amount0,
-				tc.amount1,
-				tc.minAmount0,
-				tc.minAmount1,
-				tc.deadline,
-				tc.mintTo,
-				tc.caller,
-				"",
-			)
-			t.Logf("  → Success: posId=%d, liquidity=%s, amounts=(%s,%s)",
-				positionId, liquidity, amount0, amount1)
-		}, stats)
-
-		// Reset for next iteration
 		testing.SetRealm(adminRealm)
+	})
+}
+
+// IncreaseLiquidity Test Case
+type IncreaseLiquidityTestCase struct {
+	positionId     uint64
+	amount0Desired string
+	amount1Desired string
+	amount0Min     string
+	amount1Min     string
+	deadline       int64
+	category       string
+}
+
+func generateIncreaseLiquidityTestCase(category string, ctx *TestContext, existingPositionId uint64) any {
+	var tc IncreaseLiquidityTestCase
+	tc.category = category
+
+	switch category {
+	case "valid_standard":
+		tc.positionId = existingPositionId
+		amountIdx := ctx.RandomInt(1, 3)
+		tc.amount0Desired = ctx.GenerateAmount(amountIdx)
+		tc.amount1Desired = ctx.GenerateAmount(amountIdx)
+
+		amount0Val, _ := strconv.ParseInt(tc.amount0Desired, 10, 64)
+		amount1Val, _ := strconv.ParseInt(tc.amount1Desired, 10, 64)
+		tc.amount0Min = strconv.FormatInt(amount0Val*8/10, 10)
+		tc.amount1Min = strconv.FormatInt(amount1Val*8/10, 10)
+		tc.deadline = time.Now().Add(time.Hour).Unix()
+
+	case "expired_deadline":
+		tc.positionId = existingPositionId
+		tc.amount0Desired = "1000000"
+		tc.amount1Desired = "1000000"
+		tc.amount0Min = "900000"
+		tc.amount1Min = "900000"
+		tc.deadline = time.Now().Add(-time.Hour).Unix()
+
+	case "non_existent_position":
+		tc.positionId = uint64(ctx.RandomInt(999, 9999))
+		tc.amount0Desired = "1000000"
+		tc.amount1Desired = "1000000"
+		tc.amount0Min = "900000"
+		tc.amount1Min = "900000"
+		tc.deadline = time.Now().Add(time.Hour).Unix()
+
+	case "invalid_amounts":
+		tc.positionId = existingPositionId
+		invalidAmounts := []string{"invalid", "-1000", "0"}
+		tc.amount0Desired = invalidAmounts[ctx.RandomInt(0, len(invalidAmounts)-1)]
+		tc.amount1Desired = "1000000"
+		tc.amount0Min = "0"
+		tc.amount1Min = "0"
+		tc.deadline = time.Now().Add(time.Hour).Unix()
+
+	default:
+		tc.positionId = existingPositionId
+		amountIdx := ctx.RandomInt(1, 3)
+		tc.amount0Desired = ctx.GenerateAmount(amountIdx)
+		tc.amount1Desired = ctx.GenerateAmount(amountIdx)
+		tc.amount0Min = "0"
+		tc.amount1Min = "0"
+		tc.deadline = time.Now().Add(time.Hour).Unix()
 	}
-	printTestStatistics(t, "Mint", totalIterations, stats)
+
+	return tc
 }
 
 func TestFuzzIncreaseLiquidity(t *testing.T) {
-	// Initialize seed manager
-	seedMgr := fuzz.NewSeedManager()
-
-	// First, set up a pool and create a base position for testing
 	initPositionTest(t)
 	testing.SetRealm(adminRealm)
 	setupPoolAndApprovals(t, true)
 
-	// Create a base position that we'll use for increase liquidity tests
 	basePositionId := seedPosition(t, "1000000", "1000000")
 
-	type IncreaseLiquidityTestCase struct {
-		positionId     uint64
-		amount0Desired string
-		amount1Desired string
-		amount0Min     string
-		amount1Min     string
-		deadline       int64
-		category       string
-	}
-
-	// Use shared utilities
-	generateAmountInRange := createAmountGenerator(seedMgr)
-
-	generateIncreaseLiquidityTestCase := func(category string, existingPositionId uint64) IncreaseLiquidityTestCase {
-		var tc IncreaseLiquidityTestCase
-		tc.category = category
-
-		switch category {
-		case "valid_standard":
-			// Standard valid increase
-			tc.positionId = existingPositionId
-			amountIdx := seedMgr.CreateIntGenerator(1, 3).Generate().(int) // Use smaller amounts for testing
-			tc.amount0Desired = generateAmountInRange(amountIdx)
-			tc.amount1Desired = generateAmountInRange(amountIdx)
-
-			amount0Val, _ := strconv.ParseInt(tc.amount0Desired, 10, 64)
-			amount1Val, _ := strconv.ParseInt(tc.amount1Desired, 10, 64)
-			tc.amount0Min = strconv.FormatInt(amount0Val*8/10, 10)
-			tc.amount1Min = strconv.FormatInt(amount1Val*8/10, 10)
-			tc.deadline = time.Now().Add(time.Hour).Unix()
-
-		case "expired_deadline":
-			// Expired deadline
-			tc.positionId = existingPositionId
-			tc.amount0Desired = "1000000"
-			tc.amount1Desired = "1000000"
-			tc.amount0Min = "900000"
-			tc.amount1Min = "900000"
-			tc.deadline = time.Now().Add(-time.Hour).Unix()
-
-		case "non_existent_position":
-			// Non-existent position ID
-			tc.positionId = uint64(seedMgr.CreateIntGenerator(999, 9999).Generate().(int))
-			tc.amount0Desired = "1000000"
-			tc.amount1Desired = "1000000"
-			tc.amount0Min = "900000"
-			tc.amount1Min = "900000"
-			tc.deadline = time.Now().Add(time.Hour).Unix()
-
-		case "invalid_amounts":
-			// Invalid amount strings
-			tc.positionId = existingPositionId
-			invalidAmounts := []string{"invalid", "-1000", "0"}
-			tc.amount0Desired = invalidAmounts[seedMgr.CreateIntGenerator(0, len(invalidAmounts)-1).Generate().(int)]
-			tc.amount1Desired = "1000000"
-			tc.amount0Min = "0"
-			tc.amount1Min = "0"
-			tc.deadline = time.Now().Add(time.Hour).Unix()
-
-		default:
-			// Random
-			tc.positionId = existingPositionId
-			amountIdx := seedMgr.CreateIntGenerator(1, 3).Generate().(int)
-			tc.amount0Desired = generateAmountInRange(amountIdx)
-			tc.amount1Desired = generateAmountInRange(amountIdx)
-			tc.amount0Min = "0"
-			tc.amount1Min = "0"
-			tc.deadline = time.Now().Add(time.Hour).Unix()
-		}
-
-		return tc
-	}
-
-	// Test categories
-	categories := []struct {
-		name   string
-		weight int
-	}{
+	categories := []TestCategory{
 		{"valid_standard", 40},
 		{"expired_deadline", 20},
 		{"non_existent_position", 20},
 		{"invalid_amounts", 20},
 	}
 
-	// Build weighted categories
-	weightedCategories := buildWeightedCategories(categories)
+	runner := NewFuzzTestRunner(t, "IncreaseLiquidity", categories, 20)
 
-	const totalIterations = 20 // Reduced for actual execution
-	stats := newTestStats()
+	ctx := NewTestContext()
+	runner.Run(func(category string, _ *TestContext) any {
+		return generateIncreaseLiquidityTestCase(category, ctx, basePositionId)
+	}, func(testCase any) {
+		tc := testCase.(IncreaseLiquidityTestCase)
+		t.Logf("Test case [%s]: posId=%d amounts=(%s,%s)",
+			tc.category, tc.positionId, tc.amount0Desired, tc.amount1Desired)
 
-	for i := 0; i < totalIterations; i++ {
-		catIdx := seedMgr.CreateIntGenerator(0, len(weightedCategories)-1).Generate().(int)
-		category := weightedCategories[catIdx]
-		stats.categoryStats[category]++
-
-		tc := generateIncreaseLiquidityTestCase(category, basePositionId)
-
-		t.Logf("Test case %d [%s]: posId=%d amounts=(%s,%s)",
-			i, tc.category, tc.positionId, tc.amount0Desired, tc.amount1Desired)
-
-		// Skip approval for non-existent positions as it will fail before we test IncreaseLiquidity
 		if tc.category != "non_existent_position" {
-			// Approve tokens for the position
 			gnft.Approve(cross, posRealm.Address(), positionIdFrom(tc.positionId))
 		}
 
-		executeTestCase(t, func() {
-			_, liquidity, amount0, amount1, _ := IncreaseLiquidity(
-				cross,
-				tc.positionId,
-				tc.amount0Desired,
-				tc.amount1Desired,
-				tc.amount0Min,
-				tc.amount1Min,
-				tc.deadline,
-			)
-			t.Logf("  → Success: liquidity=%s, amounts=(%s,%s)", liquidity, amount0, amount1)
-		}, stats)
-	}
-	printTestStatistics(t, "IncreaseLiquidity", totalIterations, stats)
+		_, liquidity, amount0, amount1, _ := IncreaseLiquidity(
+			cross,
+			tc.positionId,
+			tc.amount0Desired,
+			tc.amount1Desired,
+			tc.amount0Min,
+			tc.amount1Min,
+			tc.deadline,
+		)
+		t.Logf("  → Success: liquidity=%s, amounts=(%s,%s)", liquidity, amount0, amount1)
+	})
 }
 
-func TestFuzzDecreaseLiquidity(t *testing.T) {
-	// Initialize seed manager
-	seedMgr := fuzz.NewSeedManager()
+// DecreaseLiquidity Test Case
+type DecreaseLiquidityTestCase struct {
+	positionId        uint64
+	liquidityToRemove string
+	amount0Min        string
+	amount1Min        string
+	deadline          int64
+	unwrapResult      bool
+	category          string
+}
 
-	// Set up pool and create positions with liquidity
-	initPositionTest(t)
-	testing.SetRealm(adminRealm)
-	setupPoolAndApprovals(t, true)
+func generateDecreaseLiquidityTestCase(category string, ctx *TestContext, existingPositionId uint64, actualLiquidity string) any {
+	var tc DecreaseLiquidityTestCase
+	tc.category = category
+	tc.positionId = existingPositionId
+	tc.unwrapResult = false
 
-	// Create a position with substantial liquidity for testing
-	basePositionId := seedPosition(t, "10000000", "10000000")
-
-	// Get the actual liquidity of the position
-	position := MustGetPosition(basePositionId)
-	actualLiquidity := position.liquidity.ToString()
-
-	type DecreaseLiquidityTestCase struct {
-		positionId        uint64
-		liquidityToRemove string
-		amount0Min        string
-		amount1Min        string
-		deadline          int64
-		unwrapResult      bool
-		category          string
-	}
-
-	// Generate liquidity percentages based on actual position liquidity
 	generateLiquidityPercentage := func(pct int) string {
 		liquidity, _ := strconv.ParseInt(actualLiquidity, 10, 64)
 		return strconv.FormatInt(liquidity*int64(pct)/100, 10)
 	}
 
-	generateDecreaseLiquidityTestCase := func(category string, existingPositionId uint64) DecreaseLiquidityTestCase {
-		var tc DecreaseLiquidityTestCase
-		tc.category = category
-		tc.positionId = existingPositionId
-		tc.unwrapResult = false // Keep it false for simpler testing
+	switch category {
+	case "valid_partial":
+		percentages := []int{10, 25, 50}
+		pct := percentages[ctx.RandomInt(0, len(percentages)-1)]
+		tc.liquidityToRemove = generateLiquidityPercentage(pct)
+		tc.amount0Min = "0"
+		tc.amount1Min = "0"
+		tc.deadline = time.Now().Add(time.Hour).Unix()
 
-		switch category {
-		case "valid_partial":
-			// Partial liquidity removal (10-50%)
-			percentages := []int{10, 25, 50}
-			pct := percentages[seedMgr.CreateIntGenerator(0, len(percentages)-1).Generate().(int)]
-			tc.liquidityToRemove = generateLiquidityPercentage(pct)
-			tc.amount0Min = "0" // No slippage protection for testing
-			tc.amount1Min = "0"
-			tc.deadline = time.Now().Add(time.Hour).Unix()
+	case "valid_full":
+		tc.liquidityToRemove = actualLiquidity
+		tc.amount0Min = "0"
+		tc.amount1Min = "0"
+		tc.deadline = time.Now().Add(time.Hour).Unix()
 
-		case "valid_full":
-			// Full liquidity removal (100%)
-			tc.liquidityToRemove = actualLiquidity
-			tc.amount0Min = "0"
-			tc.amount1Min = "0"
-			tc.deadline = time.Now().Add(time.Hour).Unix()
+	case "zero_liquidity":
+		tc.liquidityToRemove = "0"
+		tc.amount0Min = "0"
+		tc.amount1Min = "0"
+		tc.deadline = time.Now().Add(time.Hour).Unix()
 
-		case "zero_liquidity":
-			// Zero liquidity (invalid)
-			tc.liquidityToRemove = "0"
-			tc.amount0Min = "0"
-			tc.amount1Min = "0"
-			tc.deadline = time.Now().Add(time.Hour).Unix()
+	case "excess_liquidity":
+		liquidity, _ := strconv.ParseInt(actualLiquidity, 10, 64)
+		tc.liquidityToRemove = strconv.FormatInt(liquidity*2, 10)
+		tc.amount0Min = "0"
+		tc.amount1Min = "0"
+		tc.deadline = time.Now().Add(time.Hour).Unix()
 
-		case "excess_liquidity":
-			// More than available liquidity
-			liquidity, _ := strconv.ParseInt(actualLiquidity, 10, 64)
-			tc.liquidityToRemove = strconv.FormatInt(liquidity*2, 10)
-			tc.amount0Min = "0"
-			tc.amount1Min = "0"
-			tc.deadline = time.Now().Add(time.Hour).Unix()
+	case "expired_deadline":
+		tc.liquidityToRemove = generateLiquidityPercentage(10)
+		tc.amount0Min = "0"
+		tc.amount1Min = "0"
+		tc.deadline = time.Now().Add(-time.Hour).Unix()
 
-		case "expired_deadline":
-			// Expired deadline
-			tc.liquidityToRemove = generateLiquidityPercentage(10)
-			tc.amount0Min = "0"
-			tc.amount1Min = "0"
-			tc.deadline = time.Now().Add(-time.Hour).Unix()
-
-		default:
-			// Random partial removal
-			pct := seedMgr.CreateIntGenerator(1, 90).Generate().(int)
-			tc.liquidityToRemove = generateLiquidityPercentage(pct)
-			tc.amount0Min = "0"
-			tc.amount1Min = "0"
-			tc.deadline = time.Now().Add(time.Hour).Unix()
-		}
-
-		return tc
+	default:
+		pct := ctx.RandomInt(1, 90)
+		tc.liquidityToRemove = generateLiquidityPercentage(pct)
+		tc.amount0Min = "0"
+		tc.amount1Min = "0"
+		tc.deadline = time.Now().Add(time.Hour).Unix()
 	}
 
-	// Test categories
-	categories := []struct {
-		name   string
-		weight int
-	}{
+	return tc
+}
+
+func TestFuzzDecreaseLiquidity(t *testing.T) {
+	initPositionTest(t)
+	testing.SetRealm(adminRealm)
+	setupPoolAndApprovals(t, true)
+
+	basePositionId := seedPosition(t, "10000000", "10000000")
+	position := MustGetPosition(basePositionId)
+	actualLiquidity := position.liquidity.ToString()
+
+	categories := []TestCategory{
 		{"valid_partial", 30},
 		{"valid_full", 10},
 		{"zero_liquidity", 20},
@@ -667,46 +617,38 @@ func TestFuzzDecreaseLiquidity(t *testing.T) {
 		{"expired_deadline", 20},
 	}
 
-	// Build weighted categories
-	weightedCategories := buildWeightedCategories(categories)
+	runner := NewFuzzTestRunner(t, "DecreaseLiquidity", categories, 20)
 
-	const totalIterations = 20 // Reduced for actual execution
-	stats := newTestStats()
+	ctx := NewTestContext()
+	currentPositionId := basePositionId
+	currentLiquidity := actualLiquidity
 
-	for i := 0; i < totalIterations; i++ {
-		catIdx := seedMgr.CreateIntGenerator(0, len(weightedCategories)-1).Generate().(int)
-		category := weightedCategories[catIdx]
-		stats.categoryStats[category]++
+	runner.Run(func(category string, _ *TestContext) any {
+		return generateDecreaseLiquidityTestCase(category, ctx, currentPositionId, currentLiquidity)
+	}, func(testCase any) {
+		tc := testCase.(DecreaseLiquidityTestCase)
+		t.Logf("Test case [%s]: posId=%d liquidity=%s",
+			tc.category, tc.positionId, tc.liquidityToRemove)
 
-		tc := generateDecreaseLiquidityTestCase(category, basePositionId)
-
-		t.Logf("Test case %d [%s]: posId=%d liquidity=%s",
-			i, tc.category, tc.positionId, tc.liquidityToRemove)
-
-		// Approve NFT for the position contract
 		gnft.Approve(cross, posRealm.Address(), positionIdFrom(tc.positionId))
 
-		// Execute the actual function call
-		executeTestCase(t, func() {
-			_, liquidity, fee0, fee1, amount0, amount1, _ := DecreaseLiquidity(
-				cross,
-				tc.positionId,
-				tc.liquidityToRemove,
-				tc.amount0Min,
-				tc.amount1Min,
-				tc.deadline,
-				tc.unwrapResult,
-			)
-			t.Logf("  → Success: liquidity=%s, amounts=(%s,%s), fees=(%s,%s)",
-				liquidity, amount0, amount1, fee0, fee1)
-		}, stats)
+		_, liquidity, fee0, fee1, amount0, amount1, _ := DecreaseLiquidity(
+			cross,
+			tc.positionId,
+			tc.liquidityToRemove,
+			tc.amount0Min,
+			tc.amount1Min,
+			tc.deadline,
+			tc.unwrapResult,
+		)
+		t.Logf("  → Success: liquidity=%s, amounts=(%s,%s), fees=(%s,%s)",
+			liquidity, amount0, amount1, fee0, fee1)
 
-		// For full liquidity removal test, recreate position for next iteration
-		if category == "valid_full" && i < totalIterations-1 {
-			basePositionId = seedPosition(t, "10000000", "10000000")
-			position = MustGetPosition(basePositionId)
-			actualLiquidity = position.liquidity.ToString()
+		// Recreate position if needed for next iteration
+		if tc.category == "valid_full" {
+			currentPositionId = seedPosition(t, "10000000", "10000000")
+			position := MustGetPosition(currentPositionId)
+			currentLiquidity = position.liquidity.ToString()
 		}
-	}
-	printTestStatistics(t, "DecreaseLiquidity", totalIterations, stats)
+	})
 }
