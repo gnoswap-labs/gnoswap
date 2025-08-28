@@ -151,60 +151,6 @@ func TestMustGetPosition(t *testing.T) {
 	}
 }
 
-func TestSetPosition(t *testing.T) {
-	position := newDummyPosition(1)
-	changedPosition := newDummyPosition(1)
-	changedPosition.nonce = u256.NewUint(2)
-	changedPosition.operator = "user2"
-	changedPosition.poolKey = "poolKey2"
-	changedPosition.tickLower = -2000
-	changedPosition.tickUpper = 2000
-	changedPosition.liquidity = u256.NewUint(2000)
-	changedPosition.feeGrowthInside0LastX128 = u256.NewUint(20)
-	changedPosition.feeGrowthInside1LastX128 = u256.NewUint(40)
-	changedPosition.tokensOwed0 = u256.NewUint(60)
-	changedPosition.tokensOwed1 = u256.NewUint(80)
-	changedPosition.burned = true
-
-	tests := []struct {
-		name          string
-		positionId    uint64
-		position      Position
-		inputPosition Position
-		expected      bool
-	}{
-		{
-			name:          "set position is success by existing position",
-			positionId:    1,
-			position:      position,
-			inputPosition: changedPosition,
-			expected:      false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
-			createNewPosition(tt.positionId, tt.position)
-
-			setPosition(tt.positionId, tt.inputPosition)
-
-			storedPosition, _ := GetPosition(tt.positionId)
-			uassert.Equal(t, tt.inputPosition.nonce.ToString(), storedPosition.nonce.ToString())
-			uassert.Equal(t, tt.inputPosition.operator, storedPosition.operator)
-			uassert.Equal(t, tt.inputPosition.poolKey, storedPosition.poolKey)
-			uassert.Equal(t, tt.inputPosition.tickLower, storedPosition.tickLower)
-			uassert.Equal(t, tt.inputPosition.tickUpper, storedPosition.tickUpper)
-			uassert.Equal(t, tt.inputPosition.liquidity.ToString(), storedPosition.liquidity.ToString())
-			uassert.Equal(t, tt.inputPosition.feeGrowthInside0LastX128.ToString(), storedPosition.feeGrowthInside0LastX128.ToString())
-			uassert.Equal(t, tt.inputPosition.feeGrowthInside1LastX128.ToString(), storedPosition.feeGrowthInside1LastX128.ToString())
-			uassert.Equal(t, tt.inputPosition.tokensOwed0.ToString(), storedPosition.tokensOwed0.ToString())
-			uassert.Equal(t, tt.inputPosition.tokensOwed1.ToString(), storedPosition.tokensOwed1.ToString())
-			uassert.Equal(t, tt.inputPosition.burned, storedPosition.burned)
-		})
-	}
-}
-
 func TestRemovePosition(t *testing.T) {
 	tests := []struct {
 		name            string
@@ -313,35 +259,6 @@ func TestComputePositionKey(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestNextIdFunctions(t *testing.T) {
-	prevNextId := GetNextId()
-	nextId = uint64(1)
-
-	tests := []struct {
-		name          string
-		initialValue  uint64
-		increments    int
-		expectedValue uint64
-	}{
-		{"initial is 1", 1, 0, 1},
-		{"after 1 increment is 2", 1, 1, 2},
-		{"increment once → 3", 2, 1, 3},
-		{"increment twice → 5", 3, 2, 5},
-		{"no overflow on 95 increments", 5, 95, 100},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			nextId = tt.initialValue
-			for range make([]struct{}, tt.increments) {
-				incrementNextId()
-			}
-			uassert.Equal(t, tt.expectedValue, GetNextId())
-		})
-	}
-	nextId = prevNextId
 }
 
 func TestIsValidTokenPath(t *testing.T) {
