@@ -1,6 +1,7 @@
 package router
 
 import (
+	"math"
 	"std"
 
 	"gno.land/p/demo/ufmt"
@@ -30,11 +31,8 @@ func swapInner(
 
 	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
 
-	// approve only the required amount
-	approveAmount := safeConvertToInt64(amountSpecified.Abs())
-
 	// approves pool as spender
-	common.Approve(cross, data.tokenIn, poolAddr, approveAmount)
+	common.Approve(cross, data.tokenIn, poolAddr, math.MaxInt64)
 
 	amount0Str, amount1Str := pl.Swap(
 		cross,
@@ -65,10 +63,7 @@ type RealSwapExecutor struct{}
 // execute performs the actual swap execution.
 func (e *RealSwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
 	caller := std.PreviousRealm().Address()
-	recipient := caller
-	if p.withUnwrap {
-		recipient = routerAddr
-	}
+	recipient := routerAddr
 
 	return swapInner(
 		p.amountSpecified,

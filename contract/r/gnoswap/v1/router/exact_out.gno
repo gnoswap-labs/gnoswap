@@ -11,6 +11,7 @@ import (
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/referral"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 // ExactOutSwapOperation handles swaps where the output amount is specified.
@@ -87,20 +88,20 @@ func ExactOutSwapRoute(
 		panic(err)
 	}
 
+	amount, err := strconv.ParseInt(outputAmount, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+
+	amount = amount * -1
+
 	if params.IsUnwrap() {
-		amount, err := strconv.ParseInt(outputAmount, 10, 64)
-		if err != nil {
-			panic(err)
-		}
-
-		if amount < 0 {
-			amount = amount * -1
-		}
-
 		err = unwrapWithTransfer(std.PreviousRealm().Address(), amount)
 		if err != nil {
 			panic(err)
 		}
+	} else {
+		common.Transfer(cross, outputToken, std.PreviousRealm().Address(), amount)
 	}
 
 	// handle referral registration
