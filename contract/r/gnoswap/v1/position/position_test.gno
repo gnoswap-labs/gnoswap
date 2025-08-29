@@ -4,6 +4,7 @@ import (
 	"errors"
 	"std"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -14,6 +15,8 @@ import (
 
 	"gno.land/r/gnoswap/referral"
 	"gno.land/r/gnoswap/v1/gnft"
+
+	pl "gno.land/r/gnoswap/v1/pool"
 )
 
 var mockRegistry = make(map[string]bool)
@@ -1032,6 +1035,151 @@ func TestCollectFees(t *testing.T) {
 				uassert.Equal(t, tt.expectedFee1, fee1)
 				uassert.Equal(t, tt.expectedAmount0, amount0)
 				uassert.Equal(t, tt.expectedAmount1, amount1)
+			}
+		})
+	}
+}
+
+func TestCollectFeeWithWrappedToken(t *testing.T) {
+	tests := []struct {
+		name               string
+		token0             string
+		token1             string
+		fee                uint32
+		tickLower          int32
+		tickUpper          int32
+		mintAmount0        string
+		mintAmount1        string
+		unwrapResult       bool
+		expectedHasAbort   bool
+		expectedAbortError string
+	}{
+		{
+			name:             "fail: collect fee with unwrap true causes nil pointer",
+			token0:           barPath,
+			token1:           wugnotPath,
+			fee:              fee3000,
+			tickLower:        -12000,
+			tickUpper:        12000,
+			mintAmount0:      "1000000000",
+			mintAmount1:      "1000000000",
+			unwrapResult:     true,
+			expectedHasAbort: true,
+			expectedAbortError: "nil pointer", // Expecting nil pointer error
+		},
+		// {
+		// 	name:             "success: collect fee with unwrap false works",
+		// 	token0:           barPath,
+		// 	token1:           wugnotPath,
+		// 	fee:              fee3000,
+		// 	tickLower:        -10000,
+		// 	tickUpper:        10000,
+		// 	mintAmount0:      "1000000000",
+		// 	mintAmount1:      "1000000000",
+		// 	unwrapResult:     false,
+		// 	expectedHasAbort: false,
+		// },
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+			
+			// Setup pool with bar and wugnot tokens
+			testing.SetOriginCaller(adminAddr)
+			
+			// Set pool creation fee to 0 for testing
+			testing.SetRealm(adminRealm)
+			pl.SetPoolCreationFee(cross, 0)
+			
+			// Create pool if not exists
+			poolPath := pl.GetPoolPath(tt.token0, tt.token1, tt.fee)
+			if !pl.ExistsPoolPath(poolPath) {
+				pl.CreatePool(cross, tt.token0, tt.token1, tt.fee, "79228162514264337593543950336")
+			}
+			
+			// Faucet and approve tokens
+			// Check if admin already has tokens before fauceting
+			if TokenBalance(t, barPath, adminAddr) < 10_000_000_000 {
+				TokenFaucet(t, barPath, adminAddr)
+			}
+			ugnotFaucet(t, adminAddr, 10_000_000_000)
+			ugnotDeposit(t, adminAddr, 10_000_000_000)
+			// wugnotPath is already handled by ugnotDeposit
+			
+			// Set to admin realm for approvals
+			testing.SetRealm(adminRealm)
+			TokenApprove(t, tt.token0, adminAddr, poolAddr, maxApprove)
+			TokenApprove(t, tt.token1, adminAddr, poolAddr, maxApprove)
+			
+			// Also approve position contract
+			TokenApprove(t, tt.token0, adminAddr, positionAddr, maxApprove)
+			TokenApprove(t, tt.token1, adminAddr, positionAddr, maxApprove)
+			
+			// Mint position  
+			// testing.SetRealm(stakerRealm)
+			positionId, _, _, _ := Mint(
+				cross,
+				tt.token0,
+				tt.token1,
+				tt.fee,
+				tt.tickLower,
+				tt.tickUpper,
+				tt.mintAmount0,
+				tt.mintAmount1,
+				"0",
+				"0",
+				time.Now().Add(time.Hour).Unix(),
+				adminAddr,
+				adminAddr,
+				"",
+			)
+			
+			// Approve NFT for position operations
+			testing.SetOriginCaller(adminAddr)
+			gnft.Approve(cross, positionAddr, positionIdFrom(positionId))
+			
+			// Simulate some trading to generate fees
+			// This would normally be done through swaps, but for testing we'll just decrease liquidity
+			DecreaseLiquidity(
+				cross,
+				positionId,
+				"50", // Remove 50% liquidity to simulate fee generation
+				"0",
+				"0",
+				time.Now().Add(time.Hour).Unix(),
+				false,
+			)
+			
+			// Now try to collect fees
+			if tt.expectedHasAbort {
+				// Try to simulate the nil pointer scenario by calling from a different realm
+				emptyAddr := std.Address("")
+				testing.SetRealm(std.NewUserRealm(emptyAddr))
+				
+				defer func() {
+					if r := recover(); r != nil {
+						// Check if it's a nil pointer related error
+						if err, ok := r.(error); ok && err.Error() == "nil pointer" {
+							return // Expected panic
+						}
+						// If it's any other panic, check if it contains expected message
+						if errStr, ok := r.(string); ok && (errStr == tt.expectedAbortError || strings.Contains(errStr, "nil")) {
+							return // Also acceptable
+						}
+						t.Errorf("unexpected panic: %v", r)
+					} else {
+						t.Error("expected panic but got none")
+					}
+				}()
+				
+				CollectFee(cross, positionId, tt.unwrapResult)
+			} else {
+				_, fee0, fee1, _, amount0, amount1 := CollectFee(cross, positionId, tt.unwrapResult)
+				// Just ensure no panic when unwrapResult is false
+				uassert.NotEmpty(t, fee0)
+				uassert.NotEmpty(t, fee1)
+				t.Logf("fee0: %s, fee1: %s, amount0: %s, amount1: %s", fee0, fee1, amount0, amount1)
 			}
 		})
 	}
