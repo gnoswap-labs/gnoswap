@@ -443,12 +443,12 @@ func validateFinalReconciliation(initial, final BalanceSnapshot) {
 // [INFO] Swap 2: GNS → 5,000,000 GNOT
 // [INFO] Swap 2 - In: 4590157 Out: -4992500
 // [BALANCE] After Swaps
-//   User - GNOT: 944992500 WUGNOT: 0 GNS: 954850235
+//   User - GNOT: 944992500 WUGNOT: 0 GNS: 954836075
 //   Position - WUGNOT: 0 GNS: 0
 //   Pool - WUGNOT: 55000000 GNS: 45149765
 //   Router - GNOT: 0 WUGNOT: 0 GNS: 0
 //   Router Total WUGNOT Fees: 7500
-//   Router Total GNS Fees: 0
+//   Router Total GNS Fees: 14160
 //   System Total - GNOT: 944992500 WUGNOT: 0
 //
 // [SCENARIO] 5. Add Liquidity with GNOT
@@ -456,12 +456,12 @@ func validateFinalReconciliation(initial, final BalanceSnapshot) {
 // [INFO] GNS added: 20000000
 // [INFO] GNOT added: 16418754
 // [BALANCE] After Add Liquidity
-//   User - GNOT: 924992500 WUGNOT: 0 GNS: 938431481
+//   User - GNOT: 924992500 WUGNOT: 0 GNS: 938417321
 //   Position - WUGNOT: 0 GNS: 0
 //   Pool - WUGNOT: 75000000 GNS: 61568519
 //   Router - GNOT: 0 WUGNOT: 0 GNS: 0
 //   Router Total WUGNOT Fees: 7500
-//   Router Total GNS Fees: 0
+//   Router Total GNS Fees: 14160
 //   System Total - GNOT: 924992500 WUGNOT: 0
 //
 // [SCENARIO] 6. Remove Liquidity to GNOT
@@ -471,24 +471,24 @@ func validateFinalReconciliation(initial, final BalanceSnapshot) {
 // [INFO] GNS fees: 4950
 // [INFO] GNOT fees: 2273
 // [BALANCE] After Remove Liquidity
-//   User - GNOT: 947495949 WUGNOT: 0 GNS: 956903620
+//   User - GNOT: 947495949 WUGNOT: 0 GNS: 956889460
 //   Position - WUGNOT: 0 GNS: 0
 //   Pool - WUGNOT: 52496502 GNS: 43096358
 //   Router - GNOT: 0 WUGNOT: 0 GNS: 0
 //   Router Total WUGNOT Fees: 7549
-//   Router Total GNS Fees: 22
+//   Router Total GNS Fees: 14182
 //   System Total - GNOT: 947495949 WUGNOT: 0
 //
 // [SCENARIO] 7. Collect All Fees as GNOT
 // [INFO] GNS fees collected: 0
 // [INFO] WUGNOT fees collected (unwrapped to GNOT): 0
 // [BALANCE] After Collect Fees
-//   User - GNOT: 947495949 WUGNOT: 0 GNS: 956903620
+//   User - GNOT: 947495949 WUGNOT: 0 GNS: 956889460
 //   Position - WUGNOT: 0 GNS: 0
 //   Pool - WUGNOT: 52496502 GNS: 43096358
 //   Router - GNOT: 0 WUGNOT: 0 GNS: 0
 //   Router Total WUGNOT Fees: 7549
-//   Router Total GNS Fees: 22
+//   Router Total GNS Fees: 14182
 //   System Total - GNOT: 947495949 WUGNOT: 0
 //
 // [SCENARIO] 8. Close Position Receiving GNOT
@@ -498,12 +498,12 @@ func validateFinalReconciliation(initial, final BalanceSnapshot) {
 // [INFO] Final GNS fees: 0
 // [INFO] Final GNOT fees: 0
 // [BALANCE] Final State
-//   User - GNOT: 999992449 WUGNOT: 0 GNS: 999999975
+//   User - GNOT: 999992449 WUGNOT: 0 GNS: 999985815
 //   Position - WUGNOT: 0 GNS: 0
 //   Pool - WUGNOT: 2 GNS: 3
 //   Router - GNOT: 0 WUGNOT: 0 GNS: 0
 //   Router Total WUGNOT Fees: 7549
-//   Router Total GNS Fees: 22
+//   Router Total GNS Fees: 14182
 //   System Total - GNOT: 999992449 WUGNOT: 0
 //
 // [SCENARIO] 9. Final Reconciliation

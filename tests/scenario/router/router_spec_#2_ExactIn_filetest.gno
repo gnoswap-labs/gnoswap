@@ -83,8 +83,8 @@ func main() {
 	println("[INFO] Executing ExactIn swap (3 bar → foo)")
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
-		barPath, // inputToken
-		fooPath, // outputToken
+		fooPath, // inputToken
+		barPath, // outputToken
 		"3",     // amountSpecified
 		"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000", // strRouteArr
 		"100", // quoteArr

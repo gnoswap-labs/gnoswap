@@ -339,7 +339,7 @@ func testMultiHopUsdcToGnot() {
 // [SCENARIO] 2. ExactIn: GNOT → GNS
 // [INFO] Testing ExactIn swap: 1,000,000 GNOT → GNS
 // [INFO] GNOT deducted: 0
-// [INFO] GNS received: 996572
+// [INFO] GNS received: 995078
 // [INFO] Pool fee (0.05%): 500
 // [INFO] Router fee (0.15%): 1492
 // [INFO] AmountIn reported: 1000000
@@ -366,7 +366,7 @@ func testMultiHopUsdcToGnot() {
 // [SCENARIO] 4. Multi-hop: GNOT → GNS → USDC
 // [INFO] Testing Multi-hop: 1,000,000 GNOT → GNS → USDC
 // [INFO] GNOT spent: 0
-// [INFO] USDC received: 993166
+// [INFO] USDC received: 991677
 // [INFO] AmountIn reported: 1000000
 // [INFO] AmountOut reported: -991677
 // [EXPECTED] Only first hop wraps GNOT

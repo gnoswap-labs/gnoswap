@@ -134,15 +134,17 @@ type SwapCallbackData struct {
 	tokenOut string      // token to receive
 	fee      uint32      // fee of the pool used to swap
 	payer    std.Address // address to spend the token
+	hasNext  bool        // whether there is a next swap
 }
 
 // newSwapCallbackData creates a new SwapCallbackData from a SwapParamsI.
-func newSwapCallbackData(params SwapParamsI, payer std.Address) SwapCallbackData {
+func newSwapCallbackData(params SwapParamsI, payer std.Address, hasNext bool) SwapCallbackData {
 	return SwapCallbackData{
 		tokenIn:  params.TokenIn(),
 		tokenOut: params.TokenOut(),
 		fee:      params.Fee(),
 		payer:    payer,
+		hasNext:  hasNext,
 	}
 }
 

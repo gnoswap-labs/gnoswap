@@ -179,7 +179,7 @@ func TestFinalizeSwap(t *testing.T) {
 				uassert.NotEqual(t, amountIn, "")
 				uassert.NotEqual(t, amountOut, "")
 
-				outVal := i256.MustFromDecimal(amountOut)
+				outVal := i256.MustFromDecimal(amountOut.ToString())
 				if !outVal.IsNeg() {
 					t.Error("amountOut is not negative")
 				}
