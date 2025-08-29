@@ -163,7 +163,6 @@ func unwrapWithTransferFrom(fromAddress, toAddress std.Address, wugnotAmount int
 	}
 
 	wugnot.Withdraw(cross, wugnotAmount)
-
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(currentRealmAddr, toAddress, std.Coins{{"ugnot", wugnotAmount}})
 
