@@ -2,7 +2,6 @@ package router
 
 import (
 	"std"
-	"strconv"
 
 	"gno.land/p/demo/ufmt"
 
@@ -85,18 +84,13 @@ func ExactInSwapRoute(cur realm,
 		panic(err)
 	}
 
-	amount, err := strconv.ParseInt(outputAmount, 10, 64)
-	if err != nil {
-		panic(err)
-	}
-
 	if params.IsUnwrap() {
-		err = unwrapWithTransfer(std.PreviousRealm().Address(), amount)
+		err = unwrapWithTransfer(std.PreviousRealm().Address(), outputAmount.Int64())
 		if err != nil {
 			panic(err)
 		}
 	} else {
-		common.Transfer(cross, outputToken, std.PreviousRealm().Address(), amount)
+		common.Transfer(cross, outputToken, std.PreviousRealm().Address(), outputAmount.Int64())
 	}
 
 	// handle referral registration
@@ -108,6 +102,9 @@ func ExactInSwapRoute(cur realm,
 		actualReferrer = referral.GetReferral(caller.String())
 	}
 
+	inputAmountStr := inputAmount.ToString()
+	outputAmountStr := i256.Zero().Neg(outputAmount).ToString()
+
 	std.Emit(
 		"ExactInSwap",
 		"prevAddr", previousRealm.Address().String(),
@@ -117,12 +114,12 @@ func ExactInSwapRoute(cur realm,
 		"exactAmount", amountIn,
 		"route", RouteArr,
 		"quote", quoteArr,
-		"resultInputAmount", inputAmount,
-		"resultOutputAmount", outputAmount,
+		"resultInputAmount", inputAmountStr,
+		"resultOutputAmount", outputAmountStr,
 		"referrer", actualReferrer,
 	)
 
-	return inputAmount, outputAmount
+	return inputAmountStr, outputAmountStr
 }
 
 // Validate validates the exact-in swap operation parameters.

@@ -280,10 +280,10 @@ func extractSwapOperationData(op RouterOperation) (int64, int64, error) {
 }
 
 // commonSwapRoute handles the common logic for both ExactIn and ExactOut swaps.
-func commonSwapRoute(params SwapRouteParams) (string, string, error) {
+func commonSwapRoute(params SwapRouteParams) (*i256.Int, *i256.Int, error) {
 	op, err := createSwapOperation(params)
 	if err != nil {
-		return "", "", err
+		return i256.Zero(), i256.Zero(), err
 	}
 
 	result, err := executeSwapOperation(op)
@@ -292,17 +292,17 @@ func commonSwapRoute(params SwapRouteParams) (string, string, error) {
 			errInvalidInput,
 			ufmt.Sprintf("invalid %s SwapOperation: %s", params.typ.String(), err.Error()),
 		)
-		return "", "", errors.New(msg)
+		return i256.Zero(), i256.Zero(), errors.New(msg)
 	}
 
 	userBeforeWugnotBalance, userWrappedWugnot, err := extractSwapOperationData(op)
 	if err != nil {
-		return "", "", err
+		return i256.Zero(), i256.Zero(), err
 	}
 
 	limitValue, err := u256.FromDecimal(params.limitAmount)
 	if err != nil {
-		return "", "", err
+		return i256.Zero(), i256.Zero(), err
 	}
 
 	inputAmount, outputAmount := finalizeSwap(
