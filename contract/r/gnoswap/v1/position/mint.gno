@@ -51,7 +51,7 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 
 	gnft.Mint(cross, params.mintTo, positionIdFrom(id))
 
-	positionKey := computePositionKey(params.caller, params.tickLower, params.tickUpper)
+	positionKey := computePositionKey(params.tickLower, params.tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(poolKey, positionKey)
 
 	position := Position{
@@ -207,7 +207,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 		},
 	)
 
-	positionKey := computePositionKey(caller, position.tickLower, position.tickUpper)
+	positionKey := computePositionKey(position.tickLower, position.tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.poolKey, positionKey)
 
 	currentSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(position.poolKey)

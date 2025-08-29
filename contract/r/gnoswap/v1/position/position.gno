@@ -519,11 +519,11 @@ func SetPositionOperator(
 
 // computePositionKey generates a unique base64-encoded key for a liquidity position.
 func computePositionKey(
-	owner std.Address,
 	tickLower int32,
 	tickUpper int32,
 ) string {
-	key := ufmt.Sprintf("%s__%d__%d", owner.String(), tickLower, tickUpper)
+	currentRealmPath := std.CurrentRealm().PkgPath()
+	key := ufmt.Sprintf("%s__%d__%d", currentRealmPath, tickLower, tickUpper)
 	encoded := base64.StdEncoding.EncodeToString([]byte(key))
 	return encoded
 }

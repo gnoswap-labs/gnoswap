@@ -72,7 +72,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, 
 			)
 	}
 
-	positionKey := computePositionKey(caller, position.tickLower, position.tickUpper)
+	positionKey := computePositionKey(position.tickLower, position.tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.poolKey, positionKey)
 
 	currentSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(position.poolKey)
