@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
+	"gno.land/r/demo/wugnot"
 )
 
 func TestTransferUGNOT(t *testing.T) {
@@ -264,6 +265,177 @@ func TestIsWrappedToken(t *testing.T) {
 					strconv.FormatBool(tt.expected),
 					strconv.FormatBool(result),
 				)
+			}
+		})
+	}
+}
+
+func TestUnwrapWithTransferFrom(t *testing.T) {
+	tests := []struct {
+		name          string
+		setup         func(t *testing.T) (fromAddr, toAddr std.Address)
+		fromAddress   std.Address
+		toAddress     std.Address
+		wugnotAmount  int64
+		expectError   bool
+		expectedError string
+		verify        func(t *testing.T, fromAddr, toAddr std.Address, initialFromBalance, initialToBalance int64)
+	}{
+		{
+			name: "unwrapWithTransferFrom succeeds with normal amount",
+			setup: func(t *testing.T) (std.Address, std.Address) {
+				fromAddr := alice
+				toAddr := bob
+
+				// Give alice some UGNOT and wrap it to WUGNOT
+				ugnotFaucet(t, fromAddr, 5000)
+				testing.SetRealm(std.NewUserRealm(fromAddr))
+				ugnotDeposit(t, fromAddr, 5000)
+
+				// Approve position contract to spend alice's WUGNOT
+				testing.SetRealm(std.NewUserRealm(fromAddr))
+				wugnot.Approve(cross, positionAddr, 2000)
+
+				return fromAddr, toAddr
+			},
+			wugnotAmount: 2000,
+			expectError:  false,
+			verify: func(t *testing.T, fromAddr, toAddr std.Address, initialFromBalance, initialToBalance int64) {
+				// Check that from address has 2000 less WUGNOT
+				finalFromBalance := TokenBalance(t, wugnotPath, fromAddr)
+				uassert.Equal(t, initialFromBalance-2000, finalFromBalance)
+
+				// Check that to address received 2000 UGNOT
+				finalToBalance := ugnotBalanceOf(t, toAddr)
+				uassert.Equal(t, initialToBalance+2000, finalToBalance)
+			},
+		},
+		{
+			name: "unwrapWithTransferFrom succeeds with large amount",
+			setup: func(t *testing.T) (std.Address, std.Address) {
+				fromAddr := alice
+				toAddr := bob
+
+				// Give alice large amount of UGNOT and wrap it
+				ugnotFaucet(t, fromAddr, 1000000)
+				testing.SetRealm(std.NewUserRealm(fromAddr))
+				ugnotDeposit(t, fromAddr, 1000000)
+
+				// Approve position contract
+				testing.SetRealm(std.NewUserRealm(fromAddr))
+				wugnot.Approve(cross, positionAddr, 999999)
+
+				return fromAddr, toAddr
+			},
+			wugnotAmount: 999999,
+			expectError:  false,
+			verify: func(t *testing.T, fromAddr, toAddr std.Address, initialFromBalance, initialToBalance int64) {
+				finalFromBalance := TokenBalance(t, wugnotPath, fromAddr)
+				uassert.Equal(t, initialFromBalance-999999, finalFromBalance)
+
+				finalToBalance := ugnotBalanceOf(t, toAddr)
+				uassert.Equal(t, initialToBalance+999999, finalToBalance)
+			},
+		},
+		{
+			name: "unwrapWithTransferFrom succeeds with minimum positive amount",
+			setup: func(t *testing.T) (std.Address, std.Address) {
+				fromAddr := alice
+				toAddr := bob
+
+				ugnotFaucet(t, fromAddr, 1000)
+				testing.SetRealm(std.NewUserRealm(fromAddr))
+				ugnotDeposit(t, fromAddr, 1000)
+
+				testing.SetRealm(std.NewUserRealm(fromAddr))
+				wugnot.Approve(cross, positionAddr, 1)
+
+				return fromAddr, toAddr
+			},
+			wugnotAmount: 1,
+			expectError:  false,
+			verify: func(t *testing.T, fromAddr, toAddr std.Address, initialFromBalance, initialToBalance int64) {
+				finalFromBalance := TokenBalance(t, wugnotPath, fromAddr)
+				uassert.Equal(t, initialFromBalance-1, finalFromBalance)
+
+				finalToBalance := ugnotBalanceOf(t, toAddr)
+				uassert.Equal(t, initialToBalance+1, finalToBalance)
+			},
+		},
+		{
+			name: "unwrapWithTransferFrom succeeds when fromAddress is currentRealm",
+			setup: func(t *testing.T) (std.Address, std.Address) {
+				fromAddr := positionAddr // Current realm address
+				toAddr := bob
+
+				// Give position contract some UGNOT and wrap it
+				ugnotFaucet(t, fromAddr, 3000)
+				testing.SetRealm(std.NewUserRealm(fromAddr))
+				ugnotDeposit(t, fromAddr, 3000)
+
+				// No need to approve since from == currentRealm
+
+				return fromAddr, toAddr
+			},
+			wugnotAmount: 1500,
+			expectError:  false,
+			verify: func(t *testing.T, fromAddr, toAddr std.Address, initialFromBalance, initialToBalance int64) {
+				finalFromBalance := TokenBalance(t, wugnotPath, fromAddr)
+				uassert.Equal(t, initialFromBalance-1500, finalFromBalance)
+
+				finalToBalance := ugnotBalanceOf(t, toAddr)
+				uassert.Equal(t, initialToBalance+1500, finalToBalance)
+			},
+		},
+		{
+			name: "unwrapWithTransferFrom succeeds with transfer to same address",
+			setup: func(t *testing.T) (std.Address, std.Address) {
+				fromAddr := alice
+				toAddr := alice // Same as from
+
+				ugnotFaucet(t, fromAddr, 2000)
+				testing.SetRealm(std.NewUserRealm(fromAddr))
+				ugnotDeposit(t, fromAddr, 2000)
+
+				testing.SetRealm(std.NewUserRealm(fromAddr))
+				wugnot.Approve(cross, positionAddr, 1000)
+
+				return fromAddr, toAddr
+			},
+			wugnotAmount: 1000,
+			expectError:  false,
+			verify: func(t *testing.T, fromAddr, toAddr std.Address, initialFromBalance, initialToBalance int64) {
+				// WUGNOT should decrease
+				finalWugnotBalance := TokenBalance(t, wugnotPath, fromAddr)
+				uassert.Equal(t, initialFromBalance-1000, finalWugnotBalance)
+
+				// UGNOT should increase (same address)
+				finalUgnotBalance := ugnotBalanceOf(t, fromAddr)
+				uassert.Equal(t, initialToBalance+1000, finalUgnotBalance)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetObject(t)
+			fromAddr, toAddr := tt.setup(t)
+
+			initialFromWugnotBalance := TokenBalance(t, wugnotPath, fromAddr)
+			initialToUgnotBalance := ugnotBalanceOf(t, toAddr)
+
+			testing.SetRealm(posRealm)
+			err := unwrapWithTransferFrom(fromAddr, toAddr, tt.wugnotAmount)
+			if tt.expectError {
+				uassert.Error(t, err)
+				if tt.expectedError != "" {
+					uassert.ErrorIs(t, err, errors.New(tt.expectedError))
+				}
+			} else {
+				uassert.NoError(t, err)
+				if tt.verify != nil {
+					tt.verify(t, fromAddr, toAddr, initialFromWugnotBalance, initialToUgnotBalance)
+				}
 			}
 		})
 	}

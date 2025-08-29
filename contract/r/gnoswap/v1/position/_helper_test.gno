@@ -76,6 +76,8 @@ var (
 	rouPath  = "gno.land/r/gnoswap/v1/router"
 	rouRealm = std.NewCodeRealm(rouPath)
 
+	stakerRealm = std.NewUserRealm(stakerAddr)
+
 	// addresses used in tests
 	addrUsedInTest = []std.Address{addr01, addr02}
 )
