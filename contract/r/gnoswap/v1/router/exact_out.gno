@@ -93,8 +93,6 @@ func ExactOutSwapRoute(
 		panic(err)
 	}
 
-	amount = amount * -1
-
 	if params.IsUnwrap() {
 		err = unwrapWithTransfer(std.PreviousRealm().Address(), amount)
 		if err != nil {

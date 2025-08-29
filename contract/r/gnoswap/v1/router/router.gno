@@ -272,9 +272,8 @@ func finalizeSwap(
 
 	// calculate final amounts
 	intAmountOut := i256.FromUint256(resultAmountOutWithoutFee)
-	negativeOut := i256.Zero().Neg(intAmountOut)
 
-	return resultAmountIn.ToString(), negativeOut.ToString()
+	return resultAmountIn.ToString(), intAmountOut.ToString()
 }
 
 // validateRoutesAndQuotes is a convenience function that parses and validates routes in one call.
