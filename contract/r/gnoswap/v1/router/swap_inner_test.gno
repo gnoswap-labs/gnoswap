@@ -85,7 +85,7 @@ func TestSwapInner(t *testing.T) {
 			name: "normal swap - exact input",
 			setupFn: func(env *TestEnv) {
 				defaultSetupFn(env)
-				TokenFaucet(t, bazPath, user1Addr)
+				TokenFaucet(t, barPath, alice)
 			},
 			amountSpecified:   i256.MustFromDecimal("100"),
 			recipient:         alice,
@@ -94,7 +94,7 @@ func TestSwapInner(t *testing.T) {
 				tokenIn:  barPath,
 				tokenOut: bazPath,
 				fee:      3000,
-				payer:    routerAddr,
+				payer:    alice,
 			},
 			expectedRecv: "100",
 			expectedOut:  "98",
@@ -104,7 +104,7 @@ func TestSwapInner(t *testing.T) {
 			name: "overflow case - large amount",
 			setupFn: func(env *TestEnv) {
 				defaultSetupFn(env)
-				TokenFaucet(t, bazPath, user1Addr)
+				TokenFaucet(t, barPath, alice)
 			},
 			amountSpecified:   i256.MustFromDecimal("92267581029952440000000"), // Large amount
 			recipient:         alice,
@@ -113,7 +113,7 @@ func TestSwapInner(t *testing.T) {
 				tokenIn:  barPath,
 				tokenOut: bazPath,
 				fee:      3000,
-				payer:    routerAddr,
+				payer:    alice,
 			},
 			expectedRecv:     "0",
 			expectedOut:      "0",
@@ -131,8 +131,8 @@ func TestSwapInner(t *testing.T) {
 			}
 
 			// Additional setup for swapInner test requirements
-			user1Realm := std.NewUserRealm(user1Addr)
-			testing.SetRealm(user1Realm)
+			aliceRealm := std.NewUserRealm(alice)
+			testing.SetRealm(aliceRealm)
 			bar.Approve(cross, routerAddr, maxApprove)
 			baz.Approve(cross, routerAddr, maxApprove)
 			bar.Approve(cross, poolAddr, maxApprove)
@@ -140,6 +140,13 @@ func TestSwapInner(t *testing.T) {
 			TokenFaucet(t, barPath, routerAddr)
 
 			swapInnerFn := func(cur realm) (*u256.Uint, *u256.Uint) {
+				func() {
+					ctx := testing.GetContext()
+					ctx.CurrentRealm = routerRealm
+					ctx.OriginCaller = tt.data.payer
+					testing.SetContext(ctx)
+				}()
+				
 				return swapInner(
 					tt.amountSpecified,
 					tt.recipient,
@@ -153,7 +160,6 @@ func TestSwapInner(t *testing.T) {
 					swapInnerFn(cross)
 				})
 			} else {
-				testing.SetRealm(routerRealm)
 				poolRecv, poolOut := swapInnerFn(cross)
 
 				if !tt.expectError {
