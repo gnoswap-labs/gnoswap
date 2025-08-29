@@ -98,47 +98,47 @@ class TestRunner
     end
   end
 
-  def remove_test_files
-    puts "Removing temporary test files"
+  # def remove_test_files
+  #   puts "Removing temporary test files"
 
-    # Find the parent directory containing gnowork.toml
-    current_path = Pathname.new(File.expand_path(@folder))
-    workspace_root = nil
+  #   # Find the parent directory containing gnowork.toml
+  #   current_path = Pathname.new(File.expand_path(@folder))
+  #   workspace_root = nil
 
-    while current_path.parent != current_path
-      if File.exist?(File.join(current_path, 'gnowork.toml'))
-        workspace_root = current_path
-        break
-      end
-      current_path = current_path.parent
-    end
+  #   while current_path.parent != current_path
+  #     if File.exist?(File.join(current_path, 'gnowork.toml'))
+  #       workspace_root = current_path
+  #       break
+  #     end
+  #     current_path = current_path.parent
+  #   end
 
-    Dir.chdir(workspace_root || '.') do
-      # Calculate relative path from workspace root to the test folder
-      folder_path = Pathname.new(File.expand_path(@folder))
+  #   Dir.chdir(workspace_root || '.') do
+  #     # Calculate relative path from workspace root to the test folder
+  #     folder_path = Pathname.new(File.expand_path(@folder))
       
-      # If folder_path is under workspace_root, calculate relative path
-      # Otherwise, check if @folder starts with 'contract/' and remove it
-      if workspace_root && folder_path.to_s.start_with?(workspace_root.to_s)
-        relative_folder = folder_path.relative_path_from(workspace_root).to_s
-      elsif @folder.start_with?('contract/')
-        # Remove 'contract/' prefix since we're already in contract directory
-        relative_folder = @folder.sub(/^contract\//, '')
-      else
-        relative_folder = @folder
-      end
+  #     # If folder_path is under workspace_root, calculate relative path
+  #     # Otherwise, check if @folder starts with 'contract/' and remove it
+  #     if workspace_root && folder_path.to_s.start_with?(workspace_root.to_s)
+  #       relative_folder = folder_path.relative_path_from(workspace_root).to_s
+  #     elsif @folder.start_with?('contract/')
+  #       # Remove 'contract/' prefix since we're already in contract directory
+  #       relative_folder = @folder.sub(/^contract\//, '')
+  #     else
+  #       relative_folder = @folder
+  #     end
 
-      Dir.glob("#{relative_folder}/*_test.gno").each do |file|
-        next if File.basename(file) == '_helper_test.gno'
-        puts "Removing #{file}"
-        File.delete(file)
-      end
-    end
-  end
+  #     Dir.glob("#{relative_folder}/*_test.gno").each do |file|
+  #       next if File.basename(file) == '_helper_test.gno'
+  #       puts "Removing #{file}"
+  #       File.delete(file)
+  #     end
+  #   end
+  # end
 
   def run_all
     run_unit_tests
-    remove_test_files
+    # remove_test_files
   end
 end
 
