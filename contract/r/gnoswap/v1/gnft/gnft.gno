@@ -6,6 +6,7 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ownable"
 	"gno.land/p/demo/ufmt"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
 )
 
@@ -99,9 +100,12 @@ func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, err
 //   - tid: token ID to transfer
 //
 // Returns error if transfer fails.
-// Only callable when not halted.
+// Only callable by staker contract.
 func SafeTransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
 	halt.AssertIsNotHaltedPosition()
+
+	caller := std.PreviousRealm().Address()
+	access.AssertIsStaker(caller)
 
 	assertFromIsValidAddress(from)
 	assertToIsValidAddress(to)
@@ -117,8 +121,14 @@ func SafeTransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error
 //   - from: current owner address
 //   - to: recipient address
 //   - tid: token ID
+//
+// Returns error if transfer fails.
+// Only callable by staker contract.
 func TransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
 	halt.AssertIsNotHaltedPosition()
+
+	caller := std.PreviousRealm().Address()
+	access.AssertIsStaker(caller)
 
 	assertFromIsValidAddress(from)
 	assertToIsValidAddress(to)
