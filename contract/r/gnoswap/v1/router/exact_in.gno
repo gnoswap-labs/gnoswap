@@ -85,7 +85,7 @@ func ExactInSwapRoute(cur realm,
 	}
 
 	if params.IsUnwrap() {
-		amount, err := strconv.ParseInt(params.exactAmount, 10, 64)
+		amount, err := strconv.ParseInt(outputAmount, 10, 64)
 		if err != nil {
 			panic(err)
 		}
