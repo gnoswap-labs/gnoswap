@@ -47,7 +47,7 @@ class TestRunner
     Dir.chdir(workspace_root || '.') do
       # Calculate relative path from workspace root to the test folder
       folder_path = Pathname.new(File.expand_path(@folder))
-      
+
       # Check if folder_path exists, if not, it might be because we're using relative paths
       if File.exist?(folder_path)
         # folder_path exists as absolute path
@@ -68,6 +68,8 @@ class TestRunner
 
       # Find both regular test files and filetest files
       test_files = Dir.glob("#{relative_folder}/*_test.gno") + Dir.glob("#{relative_folder}/*_filetest.gno")
+
+      test_files.each do |file|
         content = File.read(file)
         
         # Check if this is a filetest (has main function)
