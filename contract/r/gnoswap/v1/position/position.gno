@@ -519,18 +519,18 @@ func SetPositionOperator(
 
 // computePositionKey generates a unique base64-encoded key for a liquidity position.
 func computePositionKey(
-	owner std.Address,
 	tickLower int32,
 	tickUpper int32,
 ) string {
-	key := ufmt.Sprintf("%s__%d__%d", owner.String(), tickLower, tickUpper)
+	currentRealmPath := std.CurrentRealm().PkgPath()
+	key := ufmt.Sprintf("%s__%d__%d", currentRealmPath, tickLower, tickUpper)
 	encoded := base64.StdEncoding.EncodeToString([]byte(key))
 	return encoded
 }
 
 // getCurrentFeeGrowth retrieves current fee growth values for a position.
 func getCurrentFeeGrowth(position Position, owner std.Address) (FeeGrowthInside, error) {
-	positionKey := computePositionKey(owner, position.tickLower, position.tickUpper)
+	positionKey := computePositionKey(position.tickLower, position.tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.poolKey, positionKey)
 
 	feeGrowthInside := FeeGrowthInside{

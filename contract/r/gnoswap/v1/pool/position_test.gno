@@ -106,7 +106,7 @@ func createPositionWithValidation(t *testing.T, pool *Pool, scenario PositionSce
 	t.Helper()
 
 	// Get position key
-	positionKey, err := getPositionKey(scenario.owner, scenario.tickLower, scenario.tickUpper)
+	positionKey, err := getPositionKey(scenario.tickLower, scenario.tickUpper)
 	if err != nil {
 		t.Fatalf("Failed to get position key: %v", err)
 	}
@@ -274,22 +274,11 @@ func TestPositionGetKey(t *testing.T) {
 			expectedError:   "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(100), tickUpper(100)",
 			businessContext: "Prevent zero liquidity positions",
 		},
-		{
-			name:            "invalid_address",
-			description:     "Invalid position with malformed address",
-			owner:           std.Address("invalidAddr"),
-			tickLower:       MODERATE_LOWER,
-			tickUpper:       MODERATE_UPPER,
-			strategy:        "moderate",
-			shouldSucceed:   false,
-			expectedError:   "[GNOSWAP-POOL-023] invalid address || owner(invalidAddr) is invalid",
-			businessContext: "Ensure valid LP addresses",
-		},
 	}
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
-			key, err := getPositionKey(scenario.owner, scenario.tickLower, scenario.tickUpper)
+			key, err := getPositionKey(scenario.tickLower, scenario.tickUpper)
 
 			if scenario.shouldSucceed {
 				uassert.NoError(t, err, "Expected position key generation to succeed")
@@ -298,7 +287,7 @@ func TestPositionGetKey(t *testing.T) {
 				// Verify key uniqueness for different positions
 				if scenario.strategy != "invalid" {
 					// Same owner with different range should produce different key
-					altKey, _ := getPositionKey(scenario.owner, scenario.tickLower+10, scenario.tickUpper+10)
+					altKey, _ := getPositionKey(scenario.tickLower+10, scenario.tickUpper+10)
 					uassert.NotEqual(t, key, altKey, "Different ranges should produce different keys")
 				}
 
@@ -370,7 +359,7 @@ func TestPositionUpdateWithKey_LPStrategies(t *testing.T) {
 		t.Run(scenario.name, func(t *testing.T) {
 			pool := setupPoolAtPrice(t, 0) // Price at tick 0
 			alice := testutils.TestAddress(LP_ALICE)
-			positionKey, _ := getPositionKey(alice, MODERATE_LOWER, MODERATE_UPPER)
+			positionKey, _ := getPositionKey(MODERATE_LOWER, MODERATE_UPPER)
 
 			// Setup existing position if needed
 			if scenario.existingPosition {
@@ -938,7 +927,7 @@ func TestPositionFeeCalculation_EdgeCases(t *testing.T) {
 		// Then: Should handle without overflow
 		uassert.NoError(t, err, "Fee calculation should not overflow")
 
-		posKey, _ := getPositionKey(alice, CONCENTRATED_LOWER, CONCENTRATED_UPPER)
+		posKey, _ := getPositionKey(CONCENTRATED_LOWER, CONCENTRATED_UPPER)
 		positionValue, _ := pool.positions.Get(posKey)
 		position := positionValue.(PositionInfo)
 
@@ -984,8 +973,7 @@ func TestPositionFeeCalculation_EdgeCases(t *testing.T) {
 		// In real scenario, this would be calculated through tick crossing and swaps
 		for _, r := range ranges {
 			if r.inRange {
-				owner := testutils.TestAddress(r.name)
-				posKey, _ := getPositionKey(owner, r.tickLower, r.tickUpper)
+				posKey, _ := getPositionKey(r.tickLower, r.tickUpper)
 				positionValue, _ := pool.positions.Get(posKey)
 				position := positionValue.(PositionInfo)
 
@@ -1009,7 +997,7 @@ func TestPositionFeeCalculation_EdgeCases(t *testing.T) {
 			}
 			pool.modifyPosition(params)
 
-			posKey, _ := getPositionKey(owner, r.tickLower, r.tickUpper)
+			posKey, _ := getPositionKey(r.tickLower, r.tickUpper)
 			positionValue, _ := pool.positions.Get(posKey)
 			position := positionValue.(PositionInfo)
 
@@ -1146,7 +1134,7 @@ func TestPositionSecurity_EdgeCases(t *testing.T) {
 		}
 
 		pool.modifyPosition(params)
-		posKey, _ := getPositionKey(bob, CONCENTRATED_LOWER, CONCENTRATED_UPPER)
+		posKey, _ := getPositionKey(CONCENTRATED_LOWER, CONCENTRATED_UPPER)
 
 		// When: Remove all liquidity
 		params.liquidityDelta = i256.MustFromDecimal("-" + MEDIUM_LIQUIDITY)

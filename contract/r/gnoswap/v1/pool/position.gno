@@ -2,7 +2,6 @@ package pool
 
 import (
 	"encoding/base64"
-	"std"
 
 	"gno.land/p/demo/ufmt"
 	plp "gno.land/p/gnoswap/gnsmath"
@@ -11,6 +10,8 @@ import (
 
 	"gno.land/r/gnoswap/v1/common"
 )
+
+const positionPackagePath = "gno.land/r/gnoswap/v1/position"
 
 var convertedQ128 = u256.MustFromDecimal(Q128)
 
@@ -37,22 +38,14 @@ var convertedQ128 = u256.MustFromDecimal(Q128)
 // Returns base64-encoded position key or error.
 // Combines owner address, tickLower, and tickUpper.
 func getPositionKey(
-	owner std.Address,
 	tickLower int32,
 	tickUpper int32,
 ) (string, error) {
-	if !owner.IsValid() {
-		return "", makeErrorWithDetails(
-			errInvalidAddress,
-			ufmt.Sprintf("owner(%s) is invalid", owner.String()),
-		)
-	}
-
 	if err := validateTicks(tickLower, tickUpper); err != nil {
 		return "", err
 	}
 
-	positionKey := ufmt.Sprintf("%s__%d__%d", owner.String(), tickLower, tickUpper)
+	positionKey := ufmt.Sprintf("%s__%d__%d", positionPackagePath, tickLower, tickUpper)
 	encodedPositionKey := base64.StdEncoding.EncodeToString([]byte(positionKey))
 	return encodedPositionKey, nil
 }
@@ -377,7 +370,7 @@ func (p *Pool) updatePosition(positionParams ModifyPositionParams, tick int32) (
 		feeGrowthGlobal1X128,
 	)
 
-	positionKey, err := getPositionKey(positionParams.owner, positionParams.tickLower, positionParams.tickUpper)
+	positionKey, err := getPositionKey(positionParams.tickLower, positionParams.tickUpper)
 	if err != nil {
 		return PositionInfo{}, err
 	}

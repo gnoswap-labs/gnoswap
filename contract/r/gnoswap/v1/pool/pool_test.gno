@@ -726,7 +726,7 @@ func TestFeeCollection_RevenueDistribution(t *testing.T) {
 			if test.name == "collect_nonexistent_position" {
 				tickLower := int32(-400)
 				tickUpper := int32(400)
-				positionKey, _ := getPositionKey(recipient, tickLower, tickUpper)
+				positionKey, _ := getPositionKey(tickLower, tickUpper)
 				expectedError := ufmt.Sprintf(
 					"[GNOSWAP-POOL-008] requested data not found || positionKey(%s) does not exist",
 					positionKey)
