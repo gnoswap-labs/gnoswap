@@ -277,34 +277,34 @@ func TestComputePositionKey(t *testing.T) {
 			owner:     alice,
 			tickLower: -100,
 			tickUpper: 200,
-			expected:  "ZzF2OWt4amNtOXRhMDQ3aDZsdGEwNDdoNmx0YTA0N2g2bHpkNDBnaF9fLTEwMF9fMjAw", // Base64 of "g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh__-100__200"
+			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3YxL3Bvc2l0aW9uX18tMTAwX18yMDA=", // Base64 of "gno.land/r/gnoswap/v1/position__-100__200"
 		},
 		{
 			name:      "computePositionKey is failed by zero ticks",
 			owner:     alice,
 			tickLower: 0,
 			tickUpper: 0,
-			expected:  "ZzF2OWt4amNtOXRhMDQ3aDZsdGEwNDdoNmx0YTA0N2g2bHpkNDBnaF9fMF9fMA==", // Base64 of "g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh__0__0"
+			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3YxL3Bvc2l0aW9uX18wX18w", // Base64 of "gno.land/r/gnoswap/v1/position__0__0"
 		},
 		{
 			name:      "computePositionKey is failed by negative lower tick",
 			owner:     alice,
 			tickLower: -50,
 			tickUpper: 150,
-			expected:  "ZzF2OWt4amNtOXRhMDQ3aDZsdGEwNDdoNmx0YTA0N2g2bHpkNDBnaF9fLTUwX18xNTA=", // Base64 of "g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh__-50__150"
+			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3YxL3Bvc2l0aW9uX18tNTBfXzE1MA==", // Base64 of "gno.land/r/gnoswap/v1/position__-50__150"
 		},
 		{
 			name:      "computePositionKey is failed by same tick bounds",
 			owner:     alice,
 			tickLower: 300,
 			tickUpper: 300,
-			expected:  "ZzF2OWt4amNtOXRhMDQ3aDZsdGEwNDdoNmx0YTA0N2g2bHpkNDBnaF9fMzAwX18zMDA=", // Base64 of "g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh__300__300"
+			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3YxL3Bvc2l0aW9uX18zMDBfXzMwMA==", // Base64 of "gno.land/r/gnoswap/v1/position__300__300"
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := computePositionKey(tt.owner, tt.tickLower, tt.tickUpper)
+			result := computePositionKey(tt.tickLower, tt.tickUpper)
 
 			if result != tt.expected {
 				t.Errorf("expected %s but got %s", tt.expected, result)

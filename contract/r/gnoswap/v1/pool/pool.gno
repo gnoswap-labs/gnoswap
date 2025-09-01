@@ -149,7 +149,7 @@ func Burn(
 		position.tokensOwed1 = tokensOwed1
 	}
 
-	positionKey, err := getPositionKey(positionCaller, tickLower, tickUpper)
+	positionKey, err := getPositionKey(tickLower, tickUpper)
 	if err != nil {
 		panic(err)
 	}
@@ -206,7 +206,7 @@ func Collect(
 	// and we need to access the same position that was originally created.
 	// GetPrevAddr() would return the position contract address, but the actual
 	// position is stored under the recipient's address key.
-	positionKey, err := getPositionKey(recipient, tickLower, tickUpper)
+	positionKey, err := getPositionKey(tickLower, tickUpper)
 	if err != nil {
 		panic(err)
 	}
