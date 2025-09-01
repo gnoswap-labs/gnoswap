@@ -34,12 +34,10 @@ class GnoModuleManager
   # generate matrix for github actions
   #
   # traverse all directories and find gnomod.toml
-  # extract module path from gnomod.toml
-  # if generate matrix for github actions
+  # with gnowork.toml, we can now run tests directly from each module directory
   # include:
   # - name: name of the module
-  # - folder: folder path of the module
-  # - gno: gno version of the module
+  # - folder: actual folder path of the module (not the symlinked path)
   def generate_matrix
     matrix = { include: [] }
 
@@ -48,17 +46,19 @@ class GnoModuleManager
       if module_path = extract_module_path(mod_file)
         next unless module_path.start_with?("gno.land/")
 
+        # Get the directory containing gnomod.toml
+        module_dir = File.dirname(mod_file)
+        
         # Extract relative path after gno.land/
         relative_path = module_path.sub("gno.land/", "")
-        folder = "gno/examples/gno.land/#{relative_path}"
-
+        
         # Generate name based on path structure
         path_parts = relative_path.split('/')
         name = generate_module_name(path_parts)
 
         matrix[:include] << {
           name: name,
-          folder: folder
+          folder: module_dir
         }
       end
     end
@@ -69,10 +69,12 @@ class GnoModuleManager
         if module_path = extract_module_path(mod_file)
           next unless module_path.start_with?("gno.land/")
 
+          # Get the directory containing gnomod.toml
+          module_dir = File.dirname(mod_file)
+          
           # Extract relative path after gno.land/
           relative_path = module_path.sub("gno.land/", "")
-          folder = "gno/examples/gno.land/#{relative_path}"
-
+          
           # Generate name for scenario modules
           path_parts = relative_path.split('/')
           name = if path_parts.include?('scenario')
@@ -84,7 +86,7 @@ class GnoModuleManager
 
           matrix[:include] << {
             name: name,
-            folder: folder
+            folder: module_dir
           }
         end
       end
