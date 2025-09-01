@@ -1,0 +1,192 @@
+// exact in swap route with native token
+
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
+package main
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/ufmt"
+
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/pool"
+	pn "gno.land/r/gnoswap/v1/position"
+	"gno.land/r/gnoswap/v1/router"
+
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	"gno.land/r/demo/wugnot"
+)
+
+var (
+	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
+	adminRealm   = std.NewUserRealm(adminAddr)
+
+	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
+	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
+
+	wugnotPath = "gno.land/r/demo/wugnot"
+	gnsPath    = "gno.land/r/gnoswap/gns"
+
+	maxInt64 int64 = 9223372036854775807
+)
+
+var t *testing.T
+
+func main() {
+	println("[SCENARIO] 1. Initialize Setup")
+	initializeSetup()
+	println()
+
+	println("[SCENARIO] 2. Create Pool And Mint Position (gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500) with unbalance position balance")
+	createPool(wugnotPath, gnsPath, 500, -6960)
+	mintPosition(wugnotPath, gnsPath, 500, -6960, 240, "100000000", "0")
+	println()
+
+	println("[SCENARIO] 3. ExactInSwapRoute")
+	exactInSwapRouteBy(
+		gnsPath,
+		"gnot",
+		"1000",
+		"gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500",
+		"100",
+		"1",
+	)
+	println()
+}
+
+func initializeSetup() {
+	testing.SetRealm(adminRealm)
+	pool.SetPoolCreationFee(cross, 0)
+
+	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100000000000000}})
+	testing.SetOriginSend(std.Coins{{"ugnot", 100000000000000}})
+	testing.SetRealm(adminRealm)
+	wugnot.Deposit(cross)
+
+	testing.IssueCoins(std.NewCodeRealm(wugnotPath).Address(), std.Coins{{"ugnot", 100000000000000}})
+
+	println("[INFO] GNS Balance of admin:", gns.BalanceOf(adminAddr))
+	println("[INFO] WUGNOT Balance of admin:", wugnot.BalanceOf(adminAddr))
+
+	gns.Approve(cross, poolAddr, maxInt64)
+	wugnot.Approve(cross, poolAddr, maxInt64)
+
+	gns.Approve(cross, routerAddr, maxInt64)
+	wugnot.Approve(cross, routerAddr, maxInt64)
+}
+
+func createPool(token0Path string, token1Path string, fee uint32, startTick int32) {
+	testing.SetRealm(adminRealm)
+	pool.CreatePool(
+		cross,
+		token0Path,
+		token1Path,
+		fee,
+		common.TickMathGetSqrtRatioAtTick(startTick).ToString(),
+	)
+
+	ufmt.Printf("[EXPECTED] created %s:%s:%d pool at tick %d\n", token0Path, token1Path, fee, startTick)
+}
+
+func mintPosition(token0Path string, token1Path string, fee uint32, minTick, maxTick int32, amount0 string, amount1 string) {
+	testing.SetRealm(adminRealm)
+
+	ufmt.Println("[INFO] Minting position")
+
+	positionId, liquidity, amount0, amount1 := pn.Mint(
+		cross,
+		wugnotPath,
+		gnsPath,
+		fee,
+		minTick,
+		maxTick,
+		amount0,
+		amount1,
+		"0",
+		"0",
+		9999999999,
+		adminAddr,
+		adminAddr,
+		"",
+	)
+
+	ufmt.Printf("[EXPECTED] positionId: %d\n", positionId)
+	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
+	ufmt.Printf("[EXPECTED] amount0: %s\n", amount0)
+	ufmt.Printf("[EXPECTED] amount1: %s\n", amount1)
+}
+
+func exactInSwapRouteBy(
+	inputToken string,
+	outputToken string,
+	specifiedAmount string,
+	routeQueryString string,
+	queryRatios string,
+	minAmountOut string,
+) {
+	testing.SetRealm(adminRealm)
+
+	ufmt.Println("[INFO] ExactInSwapRoute")
+	ufmt.Println("[INFO] inputToken:", inputToken)
+	ufmt.Println("[INFO] outputToken:", outputToken)
+	ufmt.Println("[INFO] specifiedAmount:", specifiedAmount)
+	ufmt.Println("[INFO] routeQueryString:", routeQueryString)
+	ufmt.Println("[INFO] queryRatios:", queryRatios)
+	ufmt.Println("[INFO] minAmountOut:", minAmountOut)
+
+	banker := std.NewBanker(std.BankerTypeReadonly)
+	beforeGNOTBalance := banker.GetCoins(adminAddr).AmountOf("ugnot")
+	beforeGNSBalance := gns.BalanceOf(adminAddr)
+
+	inputTokenAmount, outputTokenAmount := router.ExactInSwapRoute(
+		cross,
+		inputToken,
+		outputToken,
+		specifiedAmount,
+		routeQueryString,
+		queryRatios,
+		minAmountOut,
+		int64(9999999999),
+		"",
+	)
+
+	afterGNOTBalance := banker.GetCoins(adminAddr).AmountOf("ugnot")
+	afterGNSBalance := gns.BalanceOf(adminAddr)
+
+	ufmt.Printf("[EXPECTED] inputTokenAmount(GNS): %s\n", inputTokenAmount)
+	ufmt.Printf("[EXPECTED] outputTokenAmount(GNOT): %s\n", outputTokenAmount)
+	ufmt.Printf("[EXPECTED] GNS balance changed: %d\n", afterGNSBalance-beforeGNSBalance)
+	ufmt.Printf("[EXPECTED] GNOT balance changed: %d\n", afterGNOTBalance-beforeGNOTBalance)
+}
+
+// Output:
+// [SCENARIO] 1. Initialize Setup
+// [INFO] GNS Balance of admin: 100000000000000
+// [INFO] WUGNOT Balance of admin: 100000000000000
+//
+// [SCENARIO] 2. Create Pool And Mint Position (gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500) with unbalance position balance
+// [EXPECTED] created gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500 pool at tick -6960
+// [INFO] Minting position
+// [EXPECTED] positionId: 1
+// [EXPECTED] liquidity: 233571021
+// [EXPECTED] amount0: 100000000
+// [EXPECTED] amount1: 0
+//
+// [SCENARIO] 3. ExactInSwapRoute
+// [INFO] ExactInSwapRoute
+// [INFO] inputToken: gno.land/r/gnoswap/gns
+// [INFO] outputToken: gnot
+// [INFO] specifiedAmount: 1000
+// [INFO] routeQueryString: gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500
+// [INFO] queryRatios: 100
+// [INFO] minAmountOut: 1
+// [EXPECTED] inputTokenAmount(GNS): 1000
+// [EXPECTED] outputTokenAmount(GNOT): -2000
+// [EXPECTED] GNS balance changed: -1000
+// [EXPECTED] GNOT balance changed: 2000
