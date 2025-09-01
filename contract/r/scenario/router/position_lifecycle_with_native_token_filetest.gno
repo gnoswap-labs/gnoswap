@@ -322,7 +322,7 @@ func testBurnPositionWithUnwrap() {
 // [INFO] Swap 1 - GNS in: 10000000 WUGNOT out: -9695218
 // [INFO] Accumulated GNS fees: 0
 // [INFO] Accumulated WUGNOT fees: 50001
-// [INFO] Protocol fee balance WUGNOT: 0
+// [INFO] Protocol fee balance WUGNOT: 115880
 // [INFO] Protocol fee balance GNS: 500
 // [EXPECTED] Pool fee (0.5%) accumulated correctly
 // [EXPECTED] Router fee (0.15%) accumulated correctly

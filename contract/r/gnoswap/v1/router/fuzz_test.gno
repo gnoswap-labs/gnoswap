@@ -1038,14 +1038,12 @@ func TestFuzzFinalizeSwap(t *testing.T) {
 			)
 
 			// verify amountIn is positive string
-			inVal, err := strconv.ParseInt(amountIn, 10, 64)
-			if err != nil || inVal <= 0 {
+			if amountIn.Int64() <= 0 {
 				t.Errorf("Invalid amountIn: %s", amountIn)
 			}
 
 			// verify amountOut is negative string
-			outVal, err := strconv.ParseInt(amountOut, 10, 64)
-			if err != nil || outVal >= 0 {
+			if amountOut.Int64() >= 0 {
 				t.Errorf("Invalid amountOut: %s (should be negative)", amountOut)
 			}
 		}()
