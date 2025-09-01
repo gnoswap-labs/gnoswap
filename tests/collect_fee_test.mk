@@ -76,6 +76,12 @@ execute-swaps:
 	@echo "" | gnokey maketx call -pkgpath $(ROUTER_PATH) -func ExactInSwapRoute -args $(GNS_PATH) -args $(WUGNOT_PATH) -args 500000 -args "$(GNS_PATH):$(WUGNOT_PATH):3000" -args "100" -args "0" -args $(TX_EXPIRE) -args "" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo
 
+.PHONY: decrease-liquidity
+decrease-liquidity:
+	$(info ************ Step 5: Decreasing liquidity ************)
+	@echo "" | gnokey maketx call -pkgpath $(POSITION_PATH) -func DecreaseLiquidity -args 1 -args "1000000" -args "1000000" -args "1000000" -args $(TX_EXPIRE) -args true -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo
+
 .PHONY: collect-fees
 collect-fees:
 	$(info ************ Step 5: Collecting fees from position ************)
