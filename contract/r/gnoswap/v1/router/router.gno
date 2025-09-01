@@ -240,7 +240,7 @@ func finalizeSwap(
 	tokenAmountLimit *u256.Uint,
 	userBeforeWugnotBalance, userWrappedWugnot int64,
 	amountSpecified *u256.Uint,
-) (string, string) {
+) (*i256.Int, *i256.Int) {
 	validator := &SwapValidator{}
 
 	// Validate exact out amount if applicable
@@ -272,9 +272,8 @@ func finalizeSwap(
 
 	// calculate final amounts
 	intAmountOut := i256.FromUint256(resultAmountOutWithoutFee)
-	negativeOut := i256.Zero().Neg(intAmountOut)
 
-	return resultAmountIn.ToString(), negativeOut.ToString()
+	return i256.FromUint256(resultAmountIn), intAmountOut
 }
 
 // validateRoutesAndQuotes is a convenience function that parses and validates routes in one call.

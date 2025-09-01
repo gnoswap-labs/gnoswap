@@ -80,10 +80,9 @@ func handleSwapFee(
 
 	if outputToken == gnot {
 		outputToken = wugnotPath
-		common.Transfer(cross, outputToken, protocolFeeAddr, feeAmountInt64)
-	} else {
-		common.TransferFrom(cross, outputToken, poolAddr, protocolFeeAddr, feeAmountInt64)
 	}
+
+	common.Transfer(cross, outputToken, protocolFeeAddr, feeAmountInt64)
 
 	pf.AddToProtocolFee(cross, outputToken, feeAmountInt64)
 
