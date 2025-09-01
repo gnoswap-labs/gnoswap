@@ -147,8 +147,18 @@ func (op *baseSwapOperation) processRoutes(swapType SwapType) (*u256.Uint, *u256
 			return nil, nil, err
 		}
 
-		resultAmountIn = u256.Zero().Add(resultAmountIn, amountIn)
-		resultAmountOut = u256.Zero().Add(resultAmountOut, amountOut)
+		amountIn, overflow := u256.Zero().AddOverflow(resultAmountIn, amountIn)
+		if overflow {
+			return nil, nil, errOverFlow
+		}
+
+		amountOut, overflow = u256.Zero().AddOverflow(resultAmountOut, amountOut)
+		if overflow {
+			return nil, nil, errOverFlow
+		}
+
+		resultAmountIn = amountIn
+		resultAmountOut = amountOut
 	}
 
 	return resultAmountIn, resultAmountOut, nil
@@ -199,16 +209,16 @@ func handleMultiSwap(
 	amountSpecified *i256.Int,
 	withUnwrap bool,
 ) (*u256.Uint, *u256.Uint) {
-	previousRealmAddr := std.PreviousRealm().Address()
+	recipient := routerAddr
 
 	switch swapType {
 	case ExactIn:
 		input, output, fee := getDataForMultiPath(route, 0) // first data
-		sp := newSwapParams(input, output, fee, previousRealmAddr, amountSpecified, withUnwrap)
+		sp := newSwapParams(input, output, fee, recipient, amountSpecified, withUnwrap)
 		return multiSwap(*sp, numHops, route)
 	case ExactOut:
 		input, output, fee := getDataForMultiPath(route, numHops-1) // last data
-		sp := newSwapParams(input, output, fee, previousRealmAddr, amountSpecified, withUnwrap)
+		sp := newSwapParams(input, output, fee, recipient, amountSpecified, withUnwrap)
 		return multiSwapNegative(*sp, numHops, route)
 	default:
 		panic(errInvalidSwapType)
@@ -270,10 +280,10 @@ func extractSwapOperationData(op RouterOperation) (int64, int64, error) {
 }
 
 // commonSwapRoute handles the common logic for both ExactIn and ExactOut swaps.
-func commonSwapRoute(params SwapRouteParams) (string, string, error) {
+func commonSwapRoute(params SwapRouteParams) (*i256.Int, *i256.Int, error) {
 	op, err := createSwapOperation(params)
 	if err != nil {
-		return "", "", err
+		return i256.Zero(), i256.Zero(), err
 	}
 
 	result, err := executeSwapOperation(op)
@@ -282,17 +292,17 @@ func commonSwapRoute(params SwapRouteParams) (string, string, error) {
 			errInvalidInput,
 			ufmt.Sprintf("invalid %s SwapOperation: %s", params.typ.String(), err.Error()),
 		)
-		return "", "", errors.New(msg)
+		return i256.Zero(), i256.Zero(), errors.New(msg)
 	}
 
 	userBeforeWugnotBalance, userWrappedWugnot, err := extractSwapOperationData(op)
 	if err != nil {
-		return "", "", err
+		return i256.Zero(), i256.Zero(), err
 	}
 
 	limitValue, err := u256.FromDecimal(params.limitAmount)
 	if err != nil {
-		return "", "", err
+		return i256.Zero(), i256.Zero(), err
 	}
 
 	inputAmount, outputAmount := finalizeSwap(

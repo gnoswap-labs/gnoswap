@@ -80,10 +80,9 @@ func handleSwapFee(
 
 	if outputToken == gnot {
 		outputToken = wugnotPath
-		common.Transfer(cross, outputToken, protocolFeeAddr, feeAmountInt64)
-	} else {
-		common.TransferFrom(cross, outputToken, poolAddr, protocolFeeAddr, feeAmountInt64)
 	}
+
+	common.Transfer(cross, outputToken, protocolFeeAddr, feeAmountInt64)
 
 	pf.AddToProtocolFee(cross, outputToken, feeAmountInt64)
 
@@ -98,7 +97,7 @@ func handleSwapFee(
 
 	toUserAfterProtocol, underflow := u256.Zero().SubOverflow(amount, feeAmount)
 	if underflow {
-		toUserAfterProtocol = u256.Zero()
+		panic(errProtocolFeeOverflow)
 	}
 
 	return toUserAfterProtocol

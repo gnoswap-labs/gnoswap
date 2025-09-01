@@ -30,12 +30,6 @@ func swapInner(
 
 	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
 
-	// approve only the required amount
-	approveAmount := safeConvertToInt64(amountSpecified.Abs())
-
-	// approves pool as spender
-	common.Approve(cross, data.tokenIn, poolAddr, approveAmount)
-
 	amount0Str, amount1Str := pl.Swap(
 		cross,
 		data.tokenIn,
@@ -56,6 +50,11 @@ func swapInner(
 		panic("overflow in swapInner")
 	}
 
+	// approves pool as spender
+	if data.hasNext {
+		common.Approve(cross, data.tokenOut, poolAddr, poolOut.Int64())
+	}
+
 	return poolRecv, poolOut
 }
 
@@ -65,16 +64,13 @@ type RealSwapExecutor struct{}
 // execute performs the actual swap execution.
 func (e *RealSwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
 	caller := std.PreviousRealm().Address()
-	recipient := caller
-	if p.withUnwrap {
-		recipient = routerAddr
-	}
+	recipient := routerAddr
 
 	return swapInner(
 		p.amountSpecified,
 		recipient, // if single swap => user will receive
 		zero,      // sqrtPriceLimitX96
-		newSwapCallbackData(p, caller),
+		newSwapCallbackData(p, caller, false),
 	)
 }
 
@@ -121,7 +117,7 @@ func (e *DrySwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u25
 	return swapDryInner(
 		p.amountSpecified,
 		zero,
-		newSwapCallbackData(p, previousRealmAddr),
+		newSwapCallbackData(p, previousRealmAddr, false),
 	)
 }
 

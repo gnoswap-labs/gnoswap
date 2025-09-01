@@ -422,6 +422,27 @@ func TestDelegation_collect(t *testing.T) {
 			expectError:       false,
 			expectedCollected: 300,
 		},
+		{
+			name: "Collect large amount without overflow",
+			setupDelegation: func() *Delegation {
+				// Start with large delegation
+				delegation := NewDelegation(
+					4,
+					std.Address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
+					std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
+					1_000_000_000_000, // 1 trillion units
+					100,
+					100,
+				)
+				// Undelegate half
+				delegation.unDelegate(500_000_000_000, 200, 200, 100)
+				return delegation
+			},
+			collectAmount:     500_000_000_000, // Collect large amount
+			currentTime:       400,             // After lockup
+			expectError:       false,
+			expectedCollected: 500_000_000_000,
+		},
 	}
 
 	for _, tt := range tests {
@@ -519,6 +540,34 @@ func TestDelegation_ComplexScenarios(t *testing.T) {
 				uassert.True(t, d.IsEmpty())
 			},
 			description: "Should handle complete delegation lifecycle",
+		},
+		{
+			name: "Multiple collections accumulating collected amount",
+			operations: func(d *Delegation) {
+				// Setup multiple large undelegations
+				d.unDelegate(300_000_000, 100, 100, 100) // 300M
+				d.unDelegate(400_000_000, 150, 150, 100) // 400M
+				d.unDelegate(200_000_000, 200, 200, 100) // 200M
+
+				// After lockup, collect all in sequence
+				currentTime := int64(400)
+
+				// First collection
+				err := d.collect(300_000_000, currentTime)
+				uassert.NoError(t, err)
+				uassert.Equal(t, d.CollectedAmount(), int64(300_000_000))
+
+				// Second collection - tests accumulation
+				err = d.collect(400_000_000, currentTime)
+				uassert.NoError(t, err)
+				uassert.Equal(t, d.CollectedAmount(), int64(700_000_000))
+
+				// Third collection - total 900M
+				err = d.collect(200_000_000, currentTime)
+				uassert.NoError(t, err)
+				uassert.Equal(t, d.CollectedAmount(), int64(900_000_000))
+			},
+			description: "Should handle large accumulated collections without overflow",
 		},
 	}
 
