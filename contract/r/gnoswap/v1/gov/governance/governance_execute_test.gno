@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
 )
 
@@ -821,7 +821,7 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(t *testing.T) {
 		},
 		{
 			name:                 "success - WUGNOT transfer",
-			tokenPath:            "gno.land/r/demo/wugnot",
+			tokenPath:            "gno.land/r/gnoland/wugnot",
 			amount:               1_000_000_000,
 			recipientAddress:     testutils.TestAddress("recipient"),
 			communityPoolBalance: 5_000_000_000,

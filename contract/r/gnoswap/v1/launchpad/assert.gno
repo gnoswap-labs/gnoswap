@@ -3,7 +3,7 @@ package launchpad
 import (
 	"std"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 )
 
 // assertIsDepositOwner asserts that the caller is the owner of the deposit.

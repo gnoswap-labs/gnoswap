@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 	"gno.land/p/gnoswap/fuzz"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -452,7 +452,7 @@ func TestFuzzGetDataForSinglePath(t *testing.T) {
 	helper := newTestHelper(t)
 
 	// format: "token0:token1:fee"
-	validTokens := []string{"gno.land/r/demo/token0", "gno.land/r/demo/token1", "gno.land/r/demo/wugnot"}
+	validTokens := []string{"gno.land/r/demo/token0", "gno.land/r/demo/token1", "gno.land/r/gnoland/wugnot"}
 	validFees := []uint32{100, 500, 3000, 10000}
 
 	// valid paths

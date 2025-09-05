@@ -4,8 +4,8 @@ import (
 	"std"
 	"time"
 
-	"gno.land/p/demo/json"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/onbloc/json"
+	"gno.land/p/nt/ufmt"
 )
 
 // ApiGetRewardTokensByPoolPath returns all reward tokens for a specific pool.

@@ -3,14 +3,14 @@ package position
 import (
 	"std"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 )
 
 const (
 	UGNOT_MIN_DEPOSIT_TO_WRAP = int64(1000)
-	WUGNOT_PATH               = "gno.land/r/demo/wugnot"
+	WUGNOT_PATH               = "gno.land/r/gnoland/wugnot"
 	GNOT_DENOM                = "ugnot"
 )
 

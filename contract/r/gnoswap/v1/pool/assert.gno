@@ -3,7 +3,7 @@ package pool
 import (
 	"std"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 )
 
 // assertIsNotEqualsTokens asserts that the token0Path and token1Path are not equal.

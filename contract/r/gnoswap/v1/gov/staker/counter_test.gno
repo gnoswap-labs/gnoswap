@@ -3,7 +3,7 @@ package staker
 import (
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 )
 
 // TestCounter_NewCounter tests the creation of new Counter instances

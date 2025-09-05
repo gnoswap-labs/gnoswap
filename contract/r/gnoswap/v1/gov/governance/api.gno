@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"gno.land/p/demo/json"
+	"gno.land/p/onbloc/json"
 )
 
 func createProposalJsonNode(id int64, proposal *Proposal) *json.Node {

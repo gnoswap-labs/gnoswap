@@ -3,7 +3,7 @@ package emission
 import (
 	"strconv"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 )
 
 // formatUint converts various unsigned integer types to string representation.

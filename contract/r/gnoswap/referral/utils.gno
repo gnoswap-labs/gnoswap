@@ -3,7 +3,7 @@ package referral
 import (
 	"std"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 
 	prabc "gno.land/p/gnoswap/rbac"
 

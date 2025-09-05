@@ -3,7 +3,7 @@ package pool
 import (
 	"encoding/base64"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 	plp "gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"

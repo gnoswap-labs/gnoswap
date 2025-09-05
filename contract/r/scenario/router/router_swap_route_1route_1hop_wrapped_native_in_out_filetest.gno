@@ -14,7 +14,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/onbloc/qux"
 
 	"gno.land/r/gnoswap/gns"
@@ -32,7 +32,7 @@ var (
 	bazPath = "gno.land/r/onbloc/baz"
 	quxPath = "gno.land/r/onbloc/qux"
 
-	wrappedWugnot = "gno.land/r/demo/wugnot"
+	wrappedWugnot = "gno.land/r/gnoland/wugnot"
 
 	max_timeout int64 = 9999999999
 	max_approve int64 = 9223372036854775806
@@ -111,7 +111,7 @@ func testDrySwapRouteQuxGnotExactIn(t *testing.T) {
 		wrappedWugnot, // outputToken
 		"1000",        // amountSpecified
 		"EXACT_IN",    // swapType
-		"gno.land/r/onbloc/qux:gno.land/r/demo/wugnot:500", // strRouteArr
+		"gno.land/r/onbloc/qux:gno.land/r/gnoland/wugnot:500", // strRouteArr
 		"100", // quoteArr
 		"1",
 	)
@@ -129,7 +129,7 @@ func testDrySwapRouteQuxGnotExactOut(t *testing.T) {
 		wrappedWugnot, // outputToken
 		"1000",        // amountSpecified
 		"EXACT_OUT",   // swapType
-		"gno.land/r/onbloc/qux:gno.land/r/demo/wugnot:500", // strRouteArr
+		"gno.land/r/onbloc/qux:gno.land/r/gnoland/wugnot:500", // strRouteArr
 		"100", // quoteArr
 		"100000",
 	)

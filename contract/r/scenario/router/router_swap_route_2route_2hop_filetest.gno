@@ -31,7 +31,7 @@ var (
 	quxPath = "gno.land/r/onbloc/qux"
 	gnsPath = "gno.land/r/gnoswap/gns"
 
-	wrappedWugnot = "gno.land/r/demo/wugnot"
+	wrappedWugnot = "gno.land/r/gnoland/wugnot"
 
 	max_timeout int64 = 9999999999
 	max_approve int64 = 9223372036854775806

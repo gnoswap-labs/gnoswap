@@ -4,12 +4,12 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/json"
-	"gno.land/p/demo/testutils"
+	"gno.land/p/onbloc/json"
+	"gno.land/p/nt/testutils"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 
 	"gno.land/r/gnoswap/access"
 )
@@ -40,7 +40,7 @@ var (
 
 	ugnotDenom string = "ugnot"
 	ugnotPath  string = "ugnot"
-	wugnotPath string = "gno.land/r/demo/wugnot"
+	wugnotPath string = "gno.land/r/gnoland/wugnot"
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500

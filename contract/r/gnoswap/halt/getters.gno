@@ -1,7 +1,7 @@
 package halt
 
 import (
-	"gno.land/p/demo/json"
+	"gno.land/p/onbloc/json"
 )
 
 // IsHalted returns true if any of the specified operation types are halted.

@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/testutils"
+	"gno.land/p/nt/testutils"
 
 	prbac "gno.land/p/gnoswap/rbac"
 

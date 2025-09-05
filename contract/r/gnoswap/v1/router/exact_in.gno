@@ -3,7 +3,7 @@ package router
 import (
 	"std"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 
 	i256 "gno.land/p/gnoswap/int256"
 

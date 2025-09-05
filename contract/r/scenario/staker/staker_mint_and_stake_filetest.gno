@@ -10,11 +10,11 @@ import (
 	"testing"
 
 	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 
 	"gno.land/r/gnoswap/access"
 
@@ -48,7 +48,7 @@ var (
 	quxPath = "gno.land/r/onbloc/qux"
 
 	gnsPath    = "gno.land/r/gnoswap/gns"
-	wugnotPath = "gno.land/r/demo/wugnot"
+	wugnotPath = "gno.land/r/gnoland/wugnot"
 
 	fee3000 uint32 = 3000
 
@@ -243,7 +243,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] native mint and stake - LP token ID: 1
 // [EXPECTED] liquidity: 448942
 // [EXPECTED] amount0: 100000, amount1: 100000
-// [EXPECTED] pool path: gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000
+// [EXPECTED] pool path: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000
 // [EXPECTED] admin wugnot balance after: 0
 // [EXPECTED] admin ugnot balance after (refund): 5
 //

@@ -4,7 +4,7 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -56,7 +56,7 @@ var (
 	MIN_PRICE string = "4295128740"
 	MAX_PRICE string = "1461446703485210103287273052203988822378723970341"
 
-	WRAPPED_WUGNOT string = "gno.land/r/demo/wugnot"
+	WRAPPED_WUGNOT string = "gno.land/r/gnoland/wugnot"
 )
 
 func main() {
@@ -201,7 +201,7 @@ func TestSwapSellNative() {
 
 // Output:
 // [SCENARIO] 1. Mint LP and Get GNFT
-// [INFO] token0: gno.land/r/demo/wugnot token1: gno.land/r/onbloc/foo
+// [INFO] token0: gno.land/r/gnoland/wugnot token1: gno.land/r/onbloc/foo
 // [EXPECTED] amount0: 295802 expected: should be 295802
 // [EXPECTED] amount1: 804032 expected: should be 804032
 //

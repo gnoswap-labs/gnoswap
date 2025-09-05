@@ -3,7 +3,7 @@ package position
 import (
 	"std"
 
-	"gno.land/p/demo/json"
+	"gno.land/p/onbloc/json"
 	"gno.land/r/gnoswap/v1/gnft"
 )
 

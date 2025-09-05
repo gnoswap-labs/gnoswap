@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"testing"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
@@ -21,7 +21,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 )
 
 var (
@@ -32,7 +32,7 @@ var (
 
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	wugnotPath = "gno.land/r/demo/wugnot"
+	wugnotPath = "gno.land/r/gnoland/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/gns"
 
 	maxInt64 int64 = 9223372036854775807
@@ -44,17 +44,17 @@ func main() {
 	println("[SCENARIO] 1. Initialize Setup")
 	initializeSetup()
 
-	println("[SCENARIO] 2. Create Pool And Mint Position (gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500)")
+	println("[SCENARIO] 2. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500)")
 	createPool(wugnotPath, gnsPath, 500, 0)
 	mintPosition(wugnotPath, gnsPath, 500, -6960, 6960, "100000000", "100000000")
 	println()
 
-	println("[SCENARIO] 3. Create Pool And Mint Position (gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000)")
+	println("[SCENARIO] 3. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000)")
 	createPool(wugnotPath, gnsPath, 3000, 100)
 	mintPosition(wugnotPath, gnsPath, 500, -6960, 6960, "100000000", "100000000")
 	println()
 
-	println("[SCENARIO] 4. Create Pool And Mint Position (gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:10000)")
+	println("[SCENARIO] 4. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:10000)")
 	createPool(wugnotPath, gnsPath, 10000, -100)
 	mintPosition(wugnotPath, gnsPath, 500, -6960, 6960, "100000000", "100000000")
 	println()
@@ -64,7 +64,7 @@ func main() {
 		"gnot",
 		gnsPath,
 		"1001502",
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500",
+		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500",
 		"100",
 		"10000000",
 	)
@@ -173,24 +173,24 @@ func exactOutSwapRouteBy(
 // [SCENARIO] 1. Initialize Setup
 // [INFO] GNS Balance of admin: 100000000000000
 // [INFO] WUGNOT Balance of admin: 100000000000000
-// [SCENARIO] 2. Create Pool And Mint Position (gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500)
-// [EXPECTED] created gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500 pool at tick 0
+// [SCENARIO] 2. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500)
+// [EXPECTED] created gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500 pool at tick 0
 // [INFO] Minting position
 // [EXPECTED] positionId: 1
 // [EXPECTED] liquidity: 340264708
 // [EXPECTED] amount0: 100000000
 // [EXPECTED] amount1: 100000000
 //
-// [SCENARIO] 3. Create Pool And Mint Position (gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000)
-// [EXPECTED] created gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000 pool at tick 100
+// [SCENARIO] 3. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000)
+// [EXPECTED] created gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000 pool at tick 100
 // [INFO] Minting position
 // [EXPECTED] positionId: 2
 // [EXPECTED] liquidity: 340264708
 // [EXPECTED] amount0: 100000000
 // [EXPECTED] amount1: 100000000
 //
-// [SCENARIO] 4. Create Pool And Mint Position (gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:10000)
-// [EXPECTED] created gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:10000 pool at tick -100
+// [SCENARIO] 4. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:10000)
+// [EXPECTED] created gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:10000 pool at tick -100
 // [INFO] Minting position
 // [EXPECTED] positionId: 3
 // [EXPECTED] liquidity: 340264708
@@ -202,7 +202,7 @@ func exactOutSwapRouteBy(
 // [INFO] inputToken: gnot
 // [INFO] outputToken: gno.land/r/gnoswap/gns
 // [INFO] specifiedAmount: 1001502
-// [INFO] routeQueryString: gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500
+// [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500
 // [INFO] queryRatios: 100
 // [INFO] amountInMax: 10000000
 // [EXPECTED] inputTokenAmount: 1002988
