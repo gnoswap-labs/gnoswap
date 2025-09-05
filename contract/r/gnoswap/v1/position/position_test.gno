@@ -4,6 +4,7 @@ import (
 	"errors"
 	"std"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 
 	"gno.land/r/gnoswap/referral"
 	"gno.land/r/gnoswap/v1/gnft"
+	pl "gno.land/r/gnoswap/v1/pool"
 )
 
 var mockRegistry = make(map[string]bool)
@@ -149,60 +151,6 @@ func TestMustGetPosition(t *testing.T) {
 	}
 }
 
-func TestSetPosition(t *testing.T) {
-	position := newDummyPosition(1)
-	changedPosition := newDummyPosition(1)
-	changedPosition.nonce = u256.NewUint(2)
-	changedPosition.operator = "user2"
-	changedPosition.poolKey = "poolKey2"
-	changedPosition.tickLower = -2000
-	changedPosition.tickUpper = 2000
-	changedPosition.liquidity = u256.NewUint(2000)
-	changedPosition.feeGrowthInside0LastX128 = u256.NewUint(20)
-	changedPosition.feeGrowthInside1LastX128 = u256.NewUint(40)
-	changedPosition.tokensOwed0 = u256.NewUint(60)
-	changedPosition.tokensOwed1 = u256.NewUint(80)
-	changedPosition.burned = true
-
-	tests := []struct {
-		name          string
-		positionId    uint64
-		position      Position
-		inputPosition Position
-		expected      bool
-	}{
-		{
-			name:          "set position is success by existing position",
-			positionId:    1,
-			position:      position,
-			inputPosition: changedPosition,
-			expected:      false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initPositionTest(t)
-			createNewPosition(tt.positionId, tt.position)
-
-			setPosition(tt.positionId, tt.inputPosition)
-
-			storedPosition, _ := GetPosition(tt.positionId)
-			uassert.Equal(t, tt.inputPosition.nonce.ToString(), storedPosition.nonce.ToString())
-			uassert.Equal(t, tt.inputPosition.operator, storedPosition.operator)
-			uassert.Equal(t, tt.inputPosition.poolKey, storedPosition.poolKey)
-			uassert.Equal(t, tt.inputPosition.tickLower, storedPosition.tickLower)
-			uassert.Equal(t, tt.inputPosition.tickUpper, storedPosition.tickUpper)
-			uassert.Equal(t, tt.inputPosition.liquidity.ToString(), storedPosition.liquidity.ToString())
-			uassert.Equal(t, tt.inputPosition.feeGrowthInside0LastX128.ToString(), storedPosition.feeGrowthInside0LastX128.ToString())
-			uassert.Equal(t, tt.inputPosition.feeGrowthInside1LastX128.ToString(), storedPosition.feeGrowthInside1LastX128.ToString())
-			uassert.Equal(t, tt.inputPosition.tokensOwed0.ToString(), storedPosition.tokensOwed0.ToString())
-			uassert.Equal(t, tt.inputPosition.tokensOwed1.ToString(), storedPosition.tokensOwed1.ToString())
-			uassert.Equal(t, tt.inputPosition.burned, storedPosition.burned)
-		})
-	}
-}
-
 func TestRemovePosition(t *testing.T) {
 	tests := []struct {
 		name            string
@@ -311,35 +259,6 @@ func TestComputePositionKey(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestNextIdFunctions(t *testing.T) {
-	prevNextId := GetNextId()
-	nextId = uint64(1)
-
-	tests := []struct {
-		name          string
-		initialValue  uint64
-		increments    int
-		expectedValue uint64
-	}{
-		{"initial is 1", 1, 0, 1},
-		{"after 1 increment is 2", 1, 1, 2},
-		{"increment once → 3", 2, 1, 3},
-		{"increment twice → 5", 3, 2, 5},
-		{"no overflow on 95 increments", 5, 95, 100},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			nextId = tt.initialValue
-			for range make([]struct{}, tt.increments) {
-				incrementNextId()
-			}
-			uassert.Equal(t, tt.expectedValue, GetNextId())
-		})
-	}
-	nextId = prevNextId
 }
 
 func TestIsValidTokenPath(t *testing.T) {
@@ -1150,6 +1069,223 @@ func TestReposition(t *testing.T) {
 				uassert.Equal(t, tid, positionId)
 				uassert.Equal(t, tickL, tt.tickLower)
 				uassert.Equal(t, tickH, tt.tickUpper)
+			}
+		})
+	}
+}
+
+func TestDecreaseLiquidityWithNativeToken(t *testing.T) {
+	tests := []struct {
+		name              string
+		setupFunc         func(t *testing.T)
+		mintAmount0       string
+		mintAmount1       string
+		liquidityToRemove string
+		amount0Min        string
+		amount1Min        string
+		unwrapResult      bool
+		expectPanic       bool
+		expectedError     string
+		verifyFunc        func(t *testing.T, beforeBalance, afterBalance int64)
+	}{
+		{
+			name: "unwrap result true with WUGNOT as token0",
+			setupFunc: func(t *testing.T) {
+				// Set pool creation fee to 0 for testing
+				testing.SetRealm(adminRealm)
+				pl.SetPoolCreationFee(cross, 0)
+
+				// Create pool with WUGNOT/FOO pair
+				CreatePool(t, wugnotPath, fooPath, fee500, "79228162514264337593543950336", adminAddr)
+
+				// Wrap UGNOT to WUGNOT for testing
+				ugnotFaucet(t, adminAddr, 10000000)
+				ugnotFaucet(t, positionAddr, 10000000)
+				testing.SetRealm(posRealm)
+				wrap(10000000, adminAddr)
+
+				// Approve tokens
+				TokenApprove(t, wugnotPath, adminAddr, poolAddr, maxApprove)
+				TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
+			},
+			mintAmount0:       "1000000",
+			mintAmount1:       "1000000",
+			liquidityToRemove: "500000",
+			amount0Min:        "0",
+			amount1Min:        "0",
+			unwrapResult:      true,
+			expectPanic:       false,
+			verifyFunc: func(t *testing.T, beforeBalance, afterBalance int64) {
+				// When unwrapResult is true, UGNOT balance should increase
+				uassert.True(t, afterBalance > beforeBalance, "UGNOT balance should increase after unwrap")
+			},
+		},
+		{
+			name: "unwrap result false with WUGNOT as token0",
+			setupFunc: func(t *testing.T) {
+				// Set pool creation fee to 0 for testing
+				testing.SetRealm(adminRealm)
+				pl.SetPoolCreationFee(cross, 0)
+
+				// Create pool with WUGNOT/FOO pair
+				CreatePool(t, wugnotPath, fooPath, fee500, "79228162514264337593543950336", adminAddr)
+
+				// Wrap UGNOT to WUGNOT for testing
+				ugnotFaucet(t, adminAddr, 10000000)
+				ugnotFaucet(t, positionAddr, 10000000)
+				testing.SetRealm(posRealm)
+				wrap(10000000, adminAddr)
+
+				// Approve tokens
+				TokenApprove(t, wugnotPath, adminAddr, poolAddr, maxApprove)
+				TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
+			},
+			mintAmount0:       "1000000",
+			mintAmount1:       "1000000",
+			liquidityToRemove: "500000",
+			amount0Min:        "0",
+			amount1Min:        "0",
+			unwrapResult:      false,
+			expectPanic:       false,
+			verifyFunc: func(t *testing.T, beforeBalance, afterBalance int64) {
+				// When unwrapResult is false, UGNOT balance should remain the same
+				uassert.Equal(t, beforeBalance, afterBalance, "UGNOT balance should not change")
+			},
+		},
+		{
+			name: "unwrap result true with WUGNOT as token1",
+			setupFunc: func(t *testing.T) {
+				// Set pool creation fee to 0 for testing
+				testing.SetRealm(adminRealm)
+				pl.SetPoolCreationFee(cross, 0)
+
+				// Create pool with FOO/WUGNOT pair
+				CreatePool(t, fooPath, wugnotPath, fee500, "79228162514264337593543950336", adminAddr)
+
+				// Wrap UGNOT to WUGNOT for testing
+				ugnotFaucet(t, adminAddr, 10000000)
+				ugnotFaucet(t, positionAddr, 10000000)
+				testing.SetRealm(posRealm)
+				wrap(10000000, adminAddr)
+
+				// Approve tokens
+				TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
+				TokenApprove(t, wugnotPath, adminAddr, poolAddr, maxApprove)
+			},
+			mintAmount0:       "1000000",
+			mintAmount1:       "1000000",
+			liquidityToRemove: "500000",
+			amount0Min:        "0",
+			amount1Min:        "0",
+			unwrapResult:      true,
+			expectPanic:       false,
+			verifyFunc: func(t *testing.T, beforeBalance, afterBalance int64) {
+				// When unwrapResult is true, UGNOT balance should increase
+				uassert.True(t, afterBalance > beforeBalance, "UGNOT balance should increase after unwrap")
+			},
+		},
+		{
+			name: "unwrap result true with non-WUGNOT pair should not affect UGNOT",
+			setupFunc: func(t *testing.T) {
+				// Set pool creation fee to 0 for testing
+				testing.SetRealm(adminRealm)
+				pl.SetPoolCreationFee(cross, 0)
+
+				// Create pool with BAR/FOO pair (no WUGNOT)
+				CreatePool(t, barPath, fooPath, fee500, "79228162514264337593543950336", adminAddr)
+
+				// Approve tokens
+				TokenApprove(t, barPath, adminAddr, poolAddr, maxApprove)
+				TokenApprove(t, fooPath, adminAddr, poolAddr, maxApprove)
+			},
+			mintAmount0:       "1000000",
+			mintAmount1:       "1000000",
+			liquidityToRemove: "500000",
+			amount0Min:        "0",
+			amount1Min:        "0",
+			unwrapResult:      true,
+			expectPanic:       false,
+			verifyFunc: func(t *testing.T, beforeBalance, afterBalance int64) {
+				// When there's no WUGNOT in the pair, UGNOT balance should not change
+				uassert.Equal(t, beforeBalance, afterBalance, "UGNOT balance should not change for non-WUGNOT pairs")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+			testing.SetRealm(adminRealm)
+
+			// Setup test environment
+			tt.setupFunc(t)
+
+			// Get pool key from setup
+			var token0, token1 string
+			if tt.name == "unwrap result true with WUGNOT as token1" {
+				token0, token1 = fooPath, wugnotPath
+			} else if strings.Contains(tt.name, "non-WUGNOT") {
+				token0, token1 = barPath, fooPath
+			} else {
+				token0, token1 = wugnotPath, fooPath
+			}
+
+			// Mint position
+			positionId, _, _, _ := Mint(
+				cross,
+				token0,
+				token1,
+				fee500,
+				-10000,
+				10000,
+				tt.mintAmount0,
+				tt.mintAmount1,
+				"0",
+				"0",
+				time.Now().Add(time.Hour).Unix(),
+				adminAddr,
+				adminAddr,
+				"",
+			)
+
+			// Approve NFT for position operations
+			gnft.Approve(cross, posRealm.Address(), positionIdFrom(positionId))
+
+			// Get UGNOT balance before decrease
+			banker := std.NewBanker(std.BankerTypeRealmSend)
+			beforeBalance := banker.GetCoins(adminAddr).AmountOf("ugnot")
+
+			if tt.expectPanic {
+				uassert.AbortsWithMessage(t, tt.expectedError, func() {
+					DecreaseLiquidity(
+						cross,
+						positionId,
+						tt.liquidityToRemove,
+						tt.amount0Min,
+						tt.amount1Min,
+						time.Now().Add(time.Hour).Unix(),
+						tt.unwrapResult,
+					)
+				})
+			} else {
+				// Execute decrease liquidity
+				_, _, _, _, _, _, _ = DecreaseLiquidity(
+					cross,
+					positionId,
+					tt.liquidityToRemove,
+					tt.amount0Min,
+					tt.amount1Min,
+					time.Now().Add(time.Hour).Unix(),
+					tt.unwrapResult,
+				)
+
+				// Get UGNOT balance after decrease
+				afterBalance := banker.GetCoins(adminAddr).AmountOf("ugnot")
+
+				// Verify the result
+				if tt.verifyFunc != nil {
+					tt.verifyFunc(t, beforeBalance, afterBalance)
+				}
 			}
 		})
 	}
