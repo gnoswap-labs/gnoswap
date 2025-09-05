@@ -5,7 +5,7 @@ import (
 	"std"
 	"time"
 
-	"gno.land/p/demo/grc/grc721"
+	"gno.land/p/demo/tokens/grc721"
 	"gno.land/p/nt/ufmt"
 	prabc "gno.land/p/gnoswap/rbac"
 

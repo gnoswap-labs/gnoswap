@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/grc/grc721"
+	"gno.land/p/demo/tokens/grc721"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoland/wugnot"

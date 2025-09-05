@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"gno.land/p/demo/grc/grc721"
+	"gno.land/p/demo/tokens/grc721"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 

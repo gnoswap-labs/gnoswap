@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gno.land/p/demo/grc/grc721"
+	"gno.land/p/demo/tokens/grc721"
 	"gno.land/p/nt/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"

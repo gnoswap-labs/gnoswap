@@ -4,7 +4,7 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/grc/grc721"
+	"gno.land/p/demo/tokens/grc721"
 	"gno.land/p/nt/uassert"
 
 	u256 "gno.land/p/gnoswap/uint256"
