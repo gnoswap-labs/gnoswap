@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
@@ -43,7 +43,7 @@ var (
 	bobAddr    = testutils.TestAddress("bob")
 	bobRealm   = std.NewUserRealm(bobAddr)
 
-	token0Path = "gno.land/r/demo/wugnot"
+	token0Path = "gno.land/r/gnoland/wugnot"
 	token1Path = "gno.land/r/gnoswap/gns"
 	fee        = uint32(3000)
 )
@@ -252,7 +252,7 @@ func verifyFinalBalances() {
 // [INFO] Collecting fees and rewards
 // [EXPECTED] Collected fee0 should be 29700
 // [EXPECTED] Collected fee1 should be 0
-// [EXPECTED] Collected emission0 should be gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000
+// [EXPECTED] Collected emission0 should be gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000
 // [EXPECTED] Collected emission1 should be 29999
 //
 // [SCENARIO] 7. Verify final balances

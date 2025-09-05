@@ -3,7 +3,7 @@ package protocol_fee
 import (
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 
 	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
 )

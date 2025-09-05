@@ -3,7 +3,7 @@ package position
 import (
 	"std"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/common"
@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	WRAPPED_WUGNOT string = "gno.land/r/demo/wugnot"
+	WRAPPED_WUGNOT string = "gno.land/r/gnoland/wugnot"
 	UGNOT          string = "ugnot"
 	GNOT           string = "gnot"
 )

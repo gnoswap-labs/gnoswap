@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"strings"
 
-	"gno.land/p/demo/avl"
+	"gno.land/p/nt/avl"
 
-	"gno.land/p/demo/json"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/onbloc/json"
+	"gno.land/p/nt/ufmt"
 )
 
 // iterTree iterates over an AVL tree and applies a callback function to each element.

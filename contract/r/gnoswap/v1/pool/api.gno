@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	"gno.land/p/demo/json"
+	"gno.land/p/onbloc/json"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 )
 
 func ApiGetPool(poolPath string) string {

@@ -4,8 +4,8 @@ import (
 	"std"
 	"time"
 
-	"gno.land/p/demo/json"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/onbloc/json"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/v1/protocol_fee"

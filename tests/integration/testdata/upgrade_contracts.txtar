@@ -8,7 +8,7 @@ loadpkg gno.land/p/demo/ownable
 loadpkg gno.land/p/demo/grc/grc20
 loadpkg gno.land/p/demo/grc/grc721
 
-loadpkg gno.land/r/demo/wugnot
+loadpkg gno.land/r/gnoland/wugnot
 loadpkg gno.land/r/demo/grc20reg
 
 ## load immutable packages
@@ -99,8 +99,8 @@ stdout '[1-9][0-9]* int64'
 
 ### create pool
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g126swhfaq2vyvvjywevhgw7lv9hg8qan93dasu8 -args 9223372036854775807 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/pool -func CreatePool -args "gno.land/r/demo/wugnot" -args "gno.land/r/gnoswap/gns" -args 3000 -args 79228162514264337593543950337 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
-stdout '{"key":"poolPath","value":"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"}'
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/pool -func CreatePool -args "gno.land/r/gnoland/wugnot" -args "gno.land/r/gnoswap/gns" -args 3000 -args 79228162514264337593543950337 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout '{"key":"poolPath","value":"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"}'
 
 ### pool creation fee getter & setter
 gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/pool -func SetPoolCreationFeeByAdmin -args 0 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1

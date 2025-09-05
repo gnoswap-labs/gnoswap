@@ -4,7 +4,7 @@ import (
 	"std"
 	"time"
 
-	ufmt "gno.land/p/demo/ufmt"
+	ufmt "gno.land/p/nt/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/access"
 )

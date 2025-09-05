@@ -7,13 +7,13 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -195,10 +195,10 @@ func TestFinalizeSwap(t *testing.T) {
 }
 
 func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
-	const wugnotTokenPath = "gno.land/r/demo/wugnot"
+	const wugnotTokenPath = "gno.land/r/gnoland/wugnot"
 	const gnsTokenPath = "gno.land/r/gnoswap/gns"
 	const maxTimeout int64 = 9999999999
-	const wugnotGnsPoolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500"
+	const wugnotGnsPoolPath = "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500"
 
 	routerContract := routerAddr
 	poolContract := poolAddr
@@ -357,10 +357,10 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 }
 
 func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
-	const wugnotTokenPath = "gno.land/r/demo/wugnot"
+	const wugnotTokenPath = "gno.land/r/gnoland/wugnot"
 	const gnsTokenPath = "gno.land/r/gnoswap/gns"
 	const maxTimeout int64 = 9999999999
-	const wugnotGnsPoolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500"
+	const wugnotGnsPoolPath = "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500"
 
 	routerContract := routerAddr
 	poolContract := poolAddr
@@ -544,10 +544,10 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 }
 
 func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
-	const wugnotTokenPath = "gno.land/r/demo/wugnot"
+	const wugnotTokenPath = "gno.land/r/gnoland/wugnot"
 	const gnsTokenPath = "gno.land/r/gnoswap/gns"
 	const maxTimeout int64 = 9999999999
-	const gnsWugnotPoolPath = "gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:10000"
+	const gnsWugnotPoolPath = "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:10000"
 
 	routerContract := routerAddr
 	poolContract := poolAddr

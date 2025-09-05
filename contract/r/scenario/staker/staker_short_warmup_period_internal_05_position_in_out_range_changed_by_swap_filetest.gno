@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
@@ -48,7 +48,7 @@ var (
 	maxInt64   int64 = 9223372036854775807
 
 	poolPath              string = "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100"
-	MUST_EXISTS_IN_TIER_1        = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"
+	MUST_EXISTS_IN_TIER_1        = "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
 )
 
 func main() {

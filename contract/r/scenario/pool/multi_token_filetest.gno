@@ -9,7 +9,7 @@ import (
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/access"

@@ -3,7 +3,7 @@ package governance
 import (
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 )
 
 // TestProposalVoteStatus_VotingOperations tests voting operations and status

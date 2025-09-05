@@ -3,14 +3,14 @@ package router
 import (
 	"std"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 )
 
 const (
 	UGNOT_MIN_DEPOSIT_TO_WRAP int64 = 1000
-	WUGNOT_PATH                     = "gno.land/r/demo/wugnot"
+	WUGNOT_PATH                     = "gno.land/r/gnoland/wugnot"
 	GNOT                            = "gnot"
 	GNOT_DENOM                      = "ugnot"
 )

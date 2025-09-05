@@ -12,10 +12,10 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/nt/ufmt"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
@@ -50,7 +50,7 @@ var (
 	fooPath = "gno.land/r/onbloc/foo"
 
 	gnsPath    = "gno.land/r/gnoswap/gns"
-	wugnotPath = "gno.land/r/demo/wugnot"
+	wugnotPath = "gno.land/r/gnoland/wugnot"
 
 	fee500 uint32 = 500
 
@@ -146,7 +146,7 @@ func createPools() {
 	println("[INFO] create wugnot:gns:500 pool")
 	pl.CreatePool(
 		cross,
-		"gno.land/r/demo/wugnot",
+		"gno.land/r/gnoland/wugnot",
 		"gno.land/r/gnoswap/gns",
 		500,
 		common.TickMathGetSqrtRatioAtTick(-10000).ToString(),
@@ -154,7 +154,7 @@ func createPools() {
 
 	println("[INFO] set pool tiers")
 	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", 1)
-	sr.SetPoolTier(cross, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500", 2)
+	sr.SetPoolTier(cross, "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500", 2)
 
 	testing.SkipHeights(18)
 }
@@ -293,7 +293,7 @@ func createExternalIncentiveNative() {
 
 	sr.CreateExternalIncentive(
 		cross,
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500", // targetPoolPath
+		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500", // targetPoolPath
 		"gnot",                      // rewardToken (native)
 		10_000_000_000,              // rewardAmount
 		1234569600,                  // startTimestamp
@@ -419,7 +419,7 @@ func endExternalIncentive() {
 	incentiveID := "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d:1234568025:1"
 	sr.EndExternalIncentive(
 		cross,
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500",
+		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500",
 		incentiveID,
 	)
 	testing.SkipHeights(1)

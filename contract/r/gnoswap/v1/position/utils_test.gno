@@ -4,8 +4,8 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/nt/uassert"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/v1/gnft"
@@ -298,7 +298,7 @@ func TestPoolKeyDivide(t *testing.T) {
 	}{
 		{
 			name:          "pool key divide is success by valid poolKey",
-			poolKey:       "gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500",
+			poolKey:       "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500",
 			expectedPath0: gnsPath,
 			expectedPath1: wugnotPath,
 			expectedFee:   fee500,
@@ -372,19 +372,19 @@ func TestSplitOf(t *testing.T) {
 		},
 		{
 			name:          "split of is failed by invalid delimiter",
-			poolKey:       "gno.land/r/gnoswap:v1/gns:gno.land/r/demo/wugnot-500",
-			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid fee(gno.land/r/demo/wugnot-500)",
+			poolKey:       "gno.land/r/gnoswap:v1/gns:gno.land/r/gnoland/wugnot-500",
+			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid fee(gno.land/r/gnoland/wugnot-500)",
 			shouldPanic:   true,
 		},
 		{
 			name:          "split of is failed by non-numeric fee",
-			poolKey:       "gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:fee",
+			poolKey:       "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:fee",
 			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid fee(fee)",
 			shouldPanic:   true,
 		},
 		{
 			name:          "split of is failed by missing fee part",
-			poolKey:       "gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:",
+			poolKey:       "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:",
 			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid fee()",
 			shouldPanic:   true,
 		},
@@ -396,25 +396,25 @@ func TestSplitOf(t *testing.T) {
 		},
 		{
 			name:          "split of is success by valid poolKey",
-			poolKey:       "gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500",
+			poolKey:       "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500",
 			expectedPath0: "gno.land/r/gnoswap/gns",
-			expectedPath1: "gno.land/r/demo/wugnot",
+			expectedPath1: "gno.land/r/gnoland/wugnot",
 			expectedFee:   500,
 			shouldPanic:   false,
 		},
 		{
 			name:          "split of is success by poolKey with large fee",
-			poolKey:       "gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:10000",
+			poolKey:       "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:10000",
 			expectedPath0: "gno.land/r/gnoswap/gns",
-			expectedPath1: "gno.land/r/demo/wugnot",
+			expectedPath1: "gno.land/r/gnoland/wugnot",
 			expectedFee:   10000,
 			shouldPanic:   false,
 		},
 		{
 			name:          "split of is success by poolKey with minimal fee",
-			poolKey:       "gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:1",
+			poolKey:       "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:1",
 			expectedPath0: "gno.land/r/gnoswap/gns",
-			expectedPath1: "gno.land/r/demo/wugnot",
+			expectedPath1: "gno.land/r/gnoland/wugnot",
 			expectedFee:   1,
 			shouldPanic:   false,
 		},

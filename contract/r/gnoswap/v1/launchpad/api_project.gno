@@ -4,7 +4,7 @@ import (
 	"std"
 	"strconv"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 )
 
 // ApiGetProjectAndTierStatisticsByProjectId retrieves project and tier statistics by project ID.

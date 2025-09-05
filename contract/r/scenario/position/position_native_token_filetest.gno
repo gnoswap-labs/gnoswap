@@ -8,9 +8,9 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
@@ -23,7 +23,7 @@ const (
 
 	GNOT        string = "gnot"
 	GNS_PATH    string = "gno.land/r/gnoswap/gns"
-	WUGNOT_PATH string = "gno.land/r/demo/wugnot"
+	WUGNOT_PATH string = "gno.land/r/gnoland/wugnot"
 
 	MIN_PRICE string = "4295128740"
 )

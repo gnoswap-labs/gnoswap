@@ -3,7 +3,7 @@ package router
 import (
 	"time"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 )
 
 // assertIsNotExpired ensures the transaction deadline has not passed.

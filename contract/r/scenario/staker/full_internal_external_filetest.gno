@@ -10,13 +10,13 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 
 	"gno.land/r/gnoswap/access"
 
@@ -62,7 +62,7 @@ var (
 	quxPath = "gno.land/r/onbloc/qux"
 
 	gnsPath    = "gno.land/r/gnoswap/gns"
-	wugnotPath = "gno.land/r/demo/wugnot"
+	wugnotPath = "gno.land/r/gnoland/wugnot"
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500
@@ -189,7 +189,7 @@ func createExternalIncentiveGns() {
 	println("[INFO] create external incentive")
 	sr.CreateExternalIncentive(
 		cross,
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000",
+		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000",
 		"gno.land/r/gnoswap/gns",
 		2_000_000_000,
 		1234569600,
@@ -344,7 +344,7 @@ func performSwaps() {
 		wugnotPath,
 		gnsPath,
 		"500",
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000",
+		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000",
 		"100",
 		"0",
 		maxTimeout,

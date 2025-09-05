@@ -8,7 +8,7 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
@@ -20,7 +20,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 )
 
 var (
@@ -30,7 +30,7 @@ var (
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	wugnotPath = "gno.land/r/demo/wugnot"
+	wugnotPath = "gno.land/r/gnoland/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/gns"
 
 	maxInt64 int64 = 9223372036854775807
@@ -43,7 +43,7 @@ func main() {
 	initializeSetup()
 	println()
 
-	println("[SCENARIO] 2. Create Pool And Mint Position (gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500) with unbalance position balance")
+	println("[SCENARIO] 2. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500) with unbalance position balance")
 	createPool(wugnotPath, gnsPath, 500, -6960)
 	mintPosition(wugnotPath, gnsPath, 500, -6960, 240, "100000000", "0")
 	println()
@@ -53,7 +53,7 @@ func main() {
 		gnsPath,
 		"gnot",
 		"1000",
-		"gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500",
+		"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500",
 		"100",
 		"1",
 	)
@@ -170,8 +170,8 @@ func exactInSwapRouteBy(
 // [INFO] GNS Balance of admin: 100000000000000
 // [INFO] WUGNOT Balance of admin: 100000000000000
 //
-// [SCENARIO] 2. Create Pool And Mint Position (gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500) with unbalance position balance
-// [EXPECTED] created gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500 pool at tick -6960
+// [SCENARIO] 2. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500) with unbalance position balance
+// [EXPECTED] created gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500 pool at tick -6960
 // [INFO] Minting position
 // [EXPECTED] positionId: 1
 // [EXPECTED] liquidity: 233571021
@@ -183,7 +183,7 @@ func exactInSwapRouteBy(
 // [INFO] inputToken: gno.land/r/gnoswap/gns
 // [INFO] outputToken: gnot
 // [INFO] specifiedAmount: 1000
-// [INFO] routeQueryString: gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500
+// [INFO] routeQueryString: gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount(GNS): 1000
