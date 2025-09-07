@@ -111,11 +111,11 @@ func CreateProject(
 		"tier180Ratio", formatInt(params.tier180Ratio),
 		"startTime", formatInt(params.startTime),
 		"projectId", project.ID(),
-		"tier30Amount", formatInt(project.tiers[projectTier30].TotalDepositAmount()),
+		"tier30Amount", formatInt(project.tiers[projectTier30].TotalDistributeAmount()),
 		"tier30EndTime", formatInt(project.tiers[projectTier30].EndTime()),
-		"tier90Amount", formatInt(project.tiers[projectTier90].TotalDepositAmount()),
+		"tier90Amount", formatInt(project.tiers[projectTier90].TotalDistributeAmount()),
 		"tier90EndTime", formatInt(project.tiers[projectTier90].EndTime()),
-		"tier180Amount", formatInt(project.tiers[projectTier180].TotalDepositAmount()),
+		"tier180Amount", formatInt(project.tiers[projectTier180].TotalDistributeAmount()),
 		"tier180EndTime", formatInt(project.tiers[projectTier180].EndTime()),
 	)
 

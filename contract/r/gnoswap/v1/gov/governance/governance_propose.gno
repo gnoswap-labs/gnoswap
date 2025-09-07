@@ -95,7 +95,7 @@ func ProposeText(
 		"description", description,
 		"proposalId", formatInt(proposal.ID()),
 		"quorumAmount", formatInt(proposal.VotingQuorumAmount()),
-		"maxVotingWeight", formatInt(proposal.VotingTotalWeight()),
+		"maxVotingWeight", formatInt(proposal.VotingMaxWeight()),
 		"configVersion", formatInt(proposal.ConfigVersion()),
 		"createdAt", formatInt(proposal.CreatedAt()),
 	)
@@ -199,7 +199,7 @@ func ProposeCommunityPoolSpend(
 		"amount", formatInt(amount),
 		"proposalId", formatInt(proposal.ID()),
 		"quorumAmount", formatInt(proposal.VotingQuorumAmount()),
-		"maxVotingWeight", formatInt(proposal.VotingTotalWeight()),
+		"maxVotingWeight", formatInt(proposal.VotingMaxWeight()),
 		"configVersion", formatInt(proposal.ConfigVersion()),
 		"createdAt", formatInt(proposal.CreatedAt()),
 	)
@@ -305,7 +305,7 @@ func ProposeParameterChange(
 		"executions", executions,
 		"proposalId", formatInt(proposal.ID()),
 		"quorumAmount", formatInt(proposal.VotingQuorumAmount()),
-		"maxVotingWeight", formatInt(proposal.VotingTotalWeight()),
+		"maxVotingWeight", formatInt(proposal.VotingMaxWeight()),
 		"configVersion", formatInt(proposal.ConfigVersion()),
 		"createdAt", formatInt(proposal.CreatedAt()),
 	)
