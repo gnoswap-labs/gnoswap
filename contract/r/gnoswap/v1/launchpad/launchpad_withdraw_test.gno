@@ -9,6 +9,7 @@ import (
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gov/xgns"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -111,6 +112,60 @@ func TestWithdrawDeposit(t *testing.T) {
 			uassert.Equal(t, tt.expectedAmount, amount)
 		})
 	}
+}
+
+func TestCollectDepositGns_TokensRemainLocked(t *testing.T) {
+	userAddr := testutils.TestAddress("user")
+	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+
+	initLaunchpadWithdrawTest(t)
+
+	testing.SetRealm(std.NewUserRealm(adminAddr))
+	gns.Transfer(cross, launchpadAddr, 1000000000)
+
+	// Set caller as user and skip to withdrawal time
+	testing.SetOriginCaller(userAddr)
+	testing.SkipHeights(60*60*24*180/5 + 2)
+
+	userBalanceBefore := gns.BalanceOf(userAddr)
+	launchpadBalanceBefore := gns.BalanceOf(launchpadAddr)
+
+	// withdrawal here.
+	// this should unstake and return GNS
+	amount, err := CollectDepositGns(cross, "1")
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(1000000000), amount)
+
+	// Check final balances
+	userBalanceAfter := gns.BalanceOf(userAddr)
+	launchpadBalanceAfter := gns.BalanceOf(launchpadAddr)
+
+	// With the fix, these tests should be passed.
+	// 1. User's GNS balance should increase by the deposit amount
+	// 2. Launchpad's GNS balance should decrease by the same amount
+
+	t.Run("user_receives_gns_correctly", func(t *testing.T) {
+		expectedUserBalance := userBalanceBefore + amount
+		uassert.Equal(t, expectedUserBalance, userBalanceAfter,
+			"User should receive GNS tokens back")
+	})
+
+	t.Run("launchpad_transfers_gns_correctly", func(t *testing.T) {
+		expectedLaunchpadBalance := launchpadBalanceBefore - amount
+		uassert.Equal(t, expectedLaunchpadBalance, launchpadBalanceAfter,
+			"Launchpad should transfer GNS tokens out")
+	})
+
+	t.Run("tokens_are_properly_returned", func(t *testing.T) {
+		userBalanceChange := userBalanceAfter - userBalanceBefore
+		launchpadBalanceChange := launchpadBalanceAfter - launchpadBalanceBefore
+
+		uassert.Equal(t, amount, userBalanceChange,
+			"User balance should increase by withdrawal amount")
+		uassert.Equal(t, -amount, launchpadBalanceChange,
+			"Launchpad balance should decrease by withdrawal amount")
+	})
 }
 
 func initLaunchpadWithdrawTest(t *testing.T) {

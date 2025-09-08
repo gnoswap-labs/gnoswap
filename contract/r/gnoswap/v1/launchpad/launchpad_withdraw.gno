@@ -8,6 +8,7 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
 	gov_staker "gno.land/r/gnoswap/v1/gov/staker"
 )
@@ -39,6 +40,9 @@ func CollectDepositGns(cur realm, depositID string) (int64, error) {
 	}
 
 	unStakeGovernance(recipient, withdrawalAmount)
+
+	// Transfer the original GNS deposit back to the depositor
+	gns.Transfer(cross, caller, withdrawalAmount)
 
 	std.Emit(
 		"CollectDepositGns",
