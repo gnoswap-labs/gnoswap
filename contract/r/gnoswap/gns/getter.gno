@@ -146,12 +146,18 @@ func GetEmissionEndTimestamp() int64 {
 func GetHalvingYearInfo(timestamp int64) (int64, int64, int64) {
 	state := getEmissionState()
 
-	endTimestamp := state.getEndTimestamp()
-	startTimestamp := state.getStartTimestamp()
+	year := state.getCurrentYear(timestamp)
 
-	year := getEmissionState().getCurrentYear(timestamp)
+	// If outside emission period, return 0 values
+	if year == 0 {
+		return 0, 0, 0
+	}
 
-	return year, startTimestamp + (SECONDS_IN_YEAR * year), endTimestamp
+	// Calculate year-specific start and end timestamps
+	yearStartTimestamp := state.getStartTimestamp() + (SECONDS_IN_YEAR * (year - 1))
+	yearEndTimestamp := yearStartTimestamp + SECONDS_IN_YEAR - 1
+
+	return year, yearStartTimestamp, yearEndTimestamp
 }
 
 // GetHalvingInfo returns comprehensive halving information as JSON string.
