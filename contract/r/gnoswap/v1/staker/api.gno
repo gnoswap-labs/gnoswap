@@ -168,7 +168,7 @@ func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
 		return ""
 	}
 
-	internalIctv := newApiInternalIncentive(targetPoolPath, tier)
+	internalIctv := newApiInternalIncentive(targetPoolPath, tier.Uint64())
 	apiInternalIncentives = append(apiInternalIncentives, internalIctv)
 
 	rsps := make([]JsonResponse, len(apiInternalIncentives))
