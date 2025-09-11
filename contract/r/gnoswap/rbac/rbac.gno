@@ -24,6 +24,7 @@ func initRbac() {
 		manager.UpdateRoleAddress(role.String(), addr)
 	}
 
+	// all default roles have valid addresses
 	updateAccessRoleAddresses(manager.GetRoleAddresses())
 }
 
@@ -33,6 +34,8 @@ func initRbac() {
 //   - roleName: name of the role to register
 //
 // Only callable by admin or governance.
+//
+// Note: The role will not be synchronized to the access package until an address is assigned.
 func RegisterRole(cur realm, roleName string) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
@@ -46,8 +49,6 @@ func RegisterRole(cur realm, roleName string) {
 			ufmt.Sprintf("role name: %s", roleName),
 		))
 	}
-
-	updateAccessRoleAddresses(manager.GetRoleAddresses())
 
 	emitRegisterRoleEvent(roleName)
 }
@@ -72,8 +73,8 @@ func RemoveRole(cur realm, roleName string) {
 		))
 	}
 
-	updateAccessRoleAddresses(manager.GetRoleAddresses())
-
+	// Sync after removal to update access package
+	syncValidRoleAddresses()
 	emitRemoveRoleEvent(roleName)
 }
 
@@ -101,21 +102,27 @@ func UpdateRoleAddress(cur realm, roleName string, addr std.Address) {
 		))
 	}
 
-	updateAccessRoleAddresses(manager.GetRoleAddresses())
-
+	// Sync all roles that have valid addresses
+	syncValidRoleAddresses()
 	emitUpdateRoleAddressEvent(roleName, addr)
 }
 
 // updateAccessRoleAddresses synchronizes role addresses with the access package.
-// Only roles with valid (non-empty) addresses are synchronized.
 func updateAccessRoleAddresses(newRoleAddresses map[string]std.Address) {
-	// Filter out roles with empty addresses
-	filteredAddresses := make(map[string]std.Address)
-	for role, addr := range newRoleAddresses {
+	access.SetRoleAddresses(cross, newRoleAddresses)
+}
+
+// syncValidRoleAddresses synchronizes only roles with valid addresses to the access package.
+// This is used for delayed synchronization to avoid syncing roles with empty addresses.
+func syncValidRoleAddresses() {
+	allRoles := manager.GetRoleAddresses()
+	validRoles := make(map[string]std.Address)
+
+	for role, addr := range allRoles {
 		if addr.IsValid() && addr != std.Address("") {
-			filteredAddresses[role] = addr
+			validRoles[role] = addr
 		}
 	}
 
-	access.SetRoleAddresses(cross, filteredAddresses)
+	access.SetRoleAddresses(cross, validRoles)
 }
