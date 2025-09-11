@@ -9,6 +9,7 @@ import (
 	"gno.land/p/nt/uassert"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/access"
 )
 
 func TestRegisterRole(t *testing.T) {
@@ -575,6 +576,44 @@ func TestRBACToAccessSync(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRegisterAndUpdateRoleFlow(t *testing.T) {
+	originalManager := manager
+	defer func() {
+		manager = originalManager
+	}()
+
+	initRbac()
+	testing.SetRealm(std.NewUserRealm(ADMIN))
+
+	// Step 1: Register a new role (should not panic)
+	RegisterRole(cross, "TEST_ROLE")
+
+	// Verify role is created with empty address
+	addr, err := GetRoleAddress("TEST_ROLE")
+	uassert.NoError(t, err, "Should be able to get the new role")
+	uassert.Equal(t, "", addr.String(), "New role should have empty address")
+
+	// Verify role is NOT in access package yet
+	accessAddresses := access.GetRoleAddresses()
+	_, exists := accessAddresses["TEST_ROLE"]
+	uassert.False(t, exists, "Role with empty address should not be in access package")
+
+	// Step 2: Update the role with a valid address
+	testAddr := testutils.TestAddress("TEST_ROLE")
+	UpdateRoleAddress(cross, "TEST_ROLE", testAddr)
+
+	// Verify role now has the address
+	addr, err = GetRoleAddress("TEST_ROLE")
+	uassert.NoError(t, err, "Should be able to get the role")
+	uassert.Equal(t, testAddr.String(), addr.String(), "Role should have the updated address")
+
+	// Verify role is NOW in access package
+	accessAddresses = access.GetRoleAddresses()
+	accessAddr, exists := accessAddresses["TEST_ROLE"]
+	uassert.True(t, exists, "Role with valid address should be in access package")
+	uassert.Equal(t, testAddr.String(), accessAddr.String(), "Access package should have correct address")
 }
 
 // Helper function to check if a string contains a substring
