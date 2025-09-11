@@ -5,8 +5,8 @@ import (
 
 	"gno.land/r/gnoswap/access"
 
-	"gno.land/p/nt/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/ufmt"
 )
 
 var manager *prbac.RBAC
@@ -107,6 +107,15 @@ func UpdateRoleAddress(cur realm, roleName string, addr std.Address) {
 }
 
 // updateAccessRoleAddresses synchronizes role addresses with the access package.
+// Only roles with valid (non-empty) addresses are synchronized.
 func updateAccessRoleAddresses(newRoleAddresses map[string]std.Address) {
-	access.SetRoleAddresses(cross, newRoleAddresses)
+	// Filter out roles with empty addresses
+	filteredAddresses := make(map[string]std.Address)
+	for role, addr := range newRoleAddresses {
+		if addr.IsValid() && addr != std.Address("") {
+			filteredAddresses[role] = addr
+		}
+	}
+
+	access.SetRoleAddresses(cross, filteredAddresses)
 }
