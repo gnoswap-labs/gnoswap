@@ -100,16 +100,15 @@ func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 	lastCollectTime := deposit.lastCollectTime
 
 	// Initializes reward/penalty arrays for rewards and penalties for each warmup
-	internalRewards := make([]int64, len(deposit.warmups))
-	internalPenalties := make([]int64, len(deposit.warmups))
-	externalRewards := make([]map[string]int64, len(deposit.warmups))
-	externalPenalties := make([]map[string]int64, len(deposit.warmups))
+	warmups := len(deposit.warmups)
+	internalRewards := make([]int64, warmups)
+	internalPenalties := make([]int64, warmups)
+	externalRewards := make([]map[string]int64, warmups)
+	externalPenalties := make([]map[string]int64, warmups)
 
-	if param.PoolTier.CurrentTier(poolPath) != 0 {
-		// Internal incentivized pool.
-		// Calculate reward for each warmup
-		internalRewards, internalPenalties = pool.RewardStateOf(deposit).calculateInternalReward(lastCollectTime, param.CurrentTime)
-	}
+	// Calculate internal rewards regardless of current tier status
+	// This allows collecting rewards earned while the pool was in a tier
+	internalRewards, internalPenalties = pool.RewardStateOf(deposit).calculateInternalReward(lastCollectTime, param.CurrentTime)
 
 	// All active incentives
 	allIncentives := pool.incentives.GetAllInTimestamps(lastCollectTime, param.CurrentTime)

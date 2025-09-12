@@ -202,6 +202,10 @@ func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *
 		if !ok {
 			panic("changeTier: pool not found")
 		}
+		// Update global reward ratio accumulation before stopping rewards
+		// This ensures all rewards up to this point are properly accounted for
+		pool.updateGlobalRewardRatioAccumulation(currentTime, pool.CurrentStakedLiquidity(currentTime))
+		// Now set future rewards to 0
 		pool.cacheReward(currentTime, int64(0))
 	} else {
 		// handle all move/add operations
