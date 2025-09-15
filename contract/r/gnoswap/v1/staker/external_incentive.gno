@@ -4,8 +4,8 @@ import (
 	"std"
 	"time"
 
-	"gno.land/p/nt/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	en "gno.land/r/gnoswap/emission"
@@ -142,6 +142,25 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 
 	caller := std.PreviousRealm().Address()
 	currentTime := time.Now().Unix()
+
+	// Get incentive to check if GNS already refunded
+	incentive, exists := pool.incentives.Get(incentiveId)
+	if !exists {
+		panic(makeErrorWithDetails(
+			errCannotEndIncentive,
+			ufmt.Sprintf("cannot end non existent incentive(%s)", incentiveId),
+		))
+	}
+
+	// Check if GNS has already been refunded
+	if incentive.gnsRefunded {
+		panic(makeErrorWithDetails(
+			errCannotEndIncentive,
+			ufmt.Sprintf("incentive(%s) GNS deposit has already been refunded", incentiveId),
+		))
+	}
+
+	// Process ending
 	incentive, refund, err := endExternalIncentive(pool, incentiveId, caller, currentTime)
 	if err != nil {
 		panic(err)
@@ -164,9 +183,11 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 		panic(err)
 	}
 
-	// also refund deposit gns amount
+	// Transfer GNS deposit back to refundee
 	gns.Transfer(cross, incentive.refundee, incentive.depositGnsAmount)
 
+	// Mark GNS as refunded and update the incentive
+	incentive.setGnsRefunded(true)
 	pool.incentives.update(incentive.refundee, incentive)
 
 	previousRealm := std.PreviousRealm()

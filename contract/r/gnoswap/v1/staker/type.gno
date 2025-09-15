@@ -21,7 +21,8 @@ type ExternalIncentive struct {
 	rewardPerSecond  int64       // reward per second
 	refundee         std.Address // refundee address
 
-	unclaimableRefunded bool // whether unclaimable reward is refunded
+	unclaimableRefunded bool // whether unclaimable reward has been refunded (rewards that positions didn't claim)
+	gnsRefunded         bool // whether GNS deposit has been refunded (deposit required when creating incentive)
 }
 
 func (e ExternalIncentive) IsStarted(currentTimestamp int64) bool {
@@ -153,11 +154,16 @@ func (self *ExternalIncentive) Clone() *ExternalIncentive {
 		rewardPerSecond:     self.rewardPerSecond,
 		refundee:            self.refundee,
 		unclaimableRefunded: self.unclaimableRefunded,
+		gnsRefunded:         self.gnsRefunded,
 	}
 }
 
 func (self *ExternalIncentive) setUnClaimableRefunded(unClaimableRefunded bool) {
 	self.unclaimableRefunded = unClaimableRefunded
+}
+
+func (self *ExternalIncentive) setGnsRefunded(gnsRefunded bool) {
+	self.gnsRefunded = gnsRefunded
 }
 
 // NewExternalIncentive creates a new external incentive
@@ -188,6 +194,7 @@ func NewExternalIncentive(
 		createdHeight:       createdHeight,
 		depositGnsAmount:    depositGnsAmount,
 		unclaimableRefunded: false,
+		gnsRefunded:         false,
 	}
 }
 
