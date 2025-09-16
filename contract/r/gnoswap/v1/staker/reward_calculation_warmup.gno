@@ -3,8 +3,8 @@ package staker
 import (
 	"math"
 
-	"gno.land/p/nt/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 )
 
 type Warmup struct {
@@ -62,6 +62,13 @@ func DefaultWarmupTemplate() []Warmup {
 func modifyWarmup(index int, timeDuration int64) {
 	if index >= len(warmupTemplate) {
 		panic(ufmt.Sprintf("index(%d) is out of range", index))
+	}
+
+	// Ensure the last warmup tier has infinite duration (math.MaxInt64)
+	// This guarantees permanent reward accessibility. If the final tier has a finite
+	// duration, rewards become unobtainable once that time period expires.
+	if index == len(warmupTemplate)-1 && timeDuration != math.MaxInt64 {
+		panic(ufmt.Sprintf("last warmup tier must have duration of math.MaxInt64, got %d", timeDuration))
 	}
 
 	warmupTemplate[index].TimeDuration = timeDuration

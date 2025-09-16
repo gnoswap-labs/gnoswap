@@ -287,3 +287,65 @@ func TestMultipleWarmupPeriods(t *testing.T) {
 		})
 	}
 }
+
+func TestModifyWarmupLastTierValidation(t *testing.T) {
+	tests := []struct {
+		name           string
+		modifyLastTier bool
+		newDuration    int64
+		expectPanic    bool
+		validateAfter  func(t *testing.T)
+	}{
+		{
+			name:           "modify non-last tier should succeed",
+			modifyLastTier: false,
+			newDuration:    86400, // 1 day
+			expectPanic:    false,
+			validateAfter: func(t *testing.T) {
+				uassert.Equal(t, int64(86400), warmupTemplate[0].TimeDuration)
+				uassert.Equal(t, int64(math.MaxInt64), warmupTemplate[3].TimeDuration)
+			},
+		},
+		{
+			name:           "modify last tier to finite duration should panic",
+			modifyLastTier: true,
+			newDuration:    86400 * 60, // 60 days
+			expectPanic:    true,
+			validateAfter: func(t *testing.T) {
+				// Should never reach here due to panic
+			},
+		},
+		{
+			name:           "modify last tier to MaxInt64 should succeed",
+			modifyLastTier: true,
+			newDuration:    math.MaxInt64,
+			expectPanic:    false,
+			validateAfter: func(t *testing.T) {
+				uassert.Equal(t, int64(math.MaxInt64), warmupTemplate[3].TimeDuration)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset warmupTemplate to default before each test
+			warmupTemplate = DefaultWarmupTemplate()
+
+			index := 0
+			if tt.modifyLastTier {
+				index = 3
+			}
+
+			if tt.expectPanic {
+				uassert.PanicsContains(t, "duration of math.MaxInt64", func() {
+					modifyWarmup(index, tt.newDuration)
+				})
+			} else {
+				modifyWarmup(index, tt.newDuration)
+				if tt.validateAfter != nil {
+					tt.validateAfter(t)
+				}
+			}
+		})
+	}
+}
