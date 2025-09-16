@@ -198,9 +198,12 @@ func (self *Pool) CurrentStakedLiquidity(currentTime int64) (liquidity *u256.Uin
 	return
 }
 
-// IsExternallyIncentivizedPool returns true if the pool has any external incentives.
+// IsExternallyIncentivizedPool returns true if the pool has any active external incentives.
 func (self *Pool) IsExternallyIncentivizedPool() bool {
-	return self.incentives.incentives.Size() > 0
+	// Check if there are any active incentives at current time
+	currentTime := time.Now().Unix()
+	activeIncentives := self.incentives.GetAllInTimestamps(currentTime, currentTime+1)
+	return len(activeIncentives) > 0
 }
 
 // Get the latest reward in [0, currentTime] range.
