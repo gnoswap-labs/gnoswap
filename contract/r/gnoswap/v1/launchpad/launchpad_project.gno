@@ -287,7 +287,7 @@ func transferLeftFromProject(projectID string, recipient std.Address, currentTim
 	projectLeftReward := project.RemainingAmount()
 
 	if projectLeftReward > 0 {
-		common.SafeGRC20Transfer(cross, project.tokenPath, recipient, int64(projectLeftReward))
+		common.SafeGRC20Transfer(cross, project.tokenPath, recipient, projectLeftReward)
 	}
 
 	return projectLeftReward, nil
