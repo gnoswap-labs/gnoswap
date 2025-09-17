@@ -28,7 +28,6 @@ func TestStakeToken_WithEndedIncentives(t *testing.T) {
 		rewardAmount:        1000,
 		refundee:            creator,
 		depositGnsAmount:    100,
-		unclaimableRefunded: true,
 	}
 	pool.incentives.create(creator, endedIncentive)
 
