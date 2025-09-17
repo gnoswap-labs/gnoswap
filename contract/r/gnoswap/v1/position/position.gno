@@ -456,13 +456,13 @@ func collectFee(
 	if isWrappedToken(token0) && unwrapResult {
 		unwrapWithTransferFrom(poolAddr, caller, amount0WithoutFee)
 	} else {
-		common.TransferFrom(cross, token0, poolAddr, caller, amount0WithoutFee)
+		common.SafeGRC20TransferFrom(cross, token0, poolAddr, caller, amount0WithoutFee)
 	}
 
 	if isWrappedToken(token1) && unwrapResult {
 		unwrapWithTransferFrom(poolAddr, caller, amount1WithoutFee)
 	} else {
-		common.TransferFrom(cross, token1, poolAddr, caller, amount1WithoutFee)
+		common.SafeGRC20TransferFrom(cross, token1, poolAddr, caller, amount1WithoutFee)
 	}
 
 	protocolFeeAddr, ok := access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
@@ -470,8 +470,8 @@ func collectFee(
 		panic("protocol fee address not found")
 	}
 
-	common.TransferFrom(cross, token0, poolAddr, protocolFeeAddr, fee0)
-	common.TransferFrom(cross, token1, poolAddr, protocolFeeAddr, fee1)
+	common.SafeGRC20TransferFrom(cross, token0, poolAddr, protocolFeeAddr, fee0)
+	common.SafeGRC20TransferFrom(cross, token1, poolAddr, protocolFeeAddr, fee1)
 
 	amount0WithoutFeeStr := formatInt(amount0WithoutFee)
 	amount1WithoutFeeStr := formatInt(amount1WithoutFee)

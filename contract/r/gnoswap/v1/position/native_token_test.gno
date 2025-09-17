@@ -250,7 +250,7 @@ func TestIsWrappedToken(t *testing.T) {
 		},
 		{
 			name:      "isWrappedToken is failed by similar but different tokenPath",
-			tokenPath: "gno.land/r/gnoland/wugnot",
+			tokenPath: "gno.land/r/gnolands/wugnot",
 			expected:  false,
 		},
 	}
