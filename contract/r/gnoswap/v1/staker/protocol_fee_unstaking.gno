@@ -48,7 +48,7 @@ func handleUnStakingFee(
 	}
 
 	// external contract has fee
-	common.Transfer(cross, tokenPath, protocolFeeAddr, feeAmount)
+	common.SafeGRC20Transfer(cross, tokenPath, protocolFeeAddr, feeAmount)
 	pf.AddToProtocolFee(cross, tokenPath, feeAmount)
 
 	return amount - feeAmount, feeAmount, nil

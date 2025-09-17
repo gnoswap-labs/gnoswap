@@ -536,7 +536,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 					panic(tErr)
 				}
 			} else {
-				common.Transfer(cross, rewardToken, deposit.owner, toUser)
+				common.SafeGRC20Transfer(cross, rewardToken, deposit.owner, toUser)
 			}
 		}
 
@@ -714,9 +714,7 @@ func applyUnStake(positionId uint64) error {
 
 	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
 	caller := std.PreviousRealm().Address()
-
-	_, _, err := getPositionStakeTokenAmount(positionId, owner, caller)
-	if err != nil {
+	if err := hasTokenOwnership(owner, caller); err != nil {
 		return err
 	}
 
