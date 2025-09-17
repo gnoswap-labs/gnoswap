@@ -168,6 +168,7 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 	gns.Transfer(cross, incentive.refundee, incentive.depositGnsAmount)
 
 	pool.incentives.update(incentive.refundee, incentive)
+	pool.incentives.archiveIncentive(incentiveId)
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(
@@ -180,7 +181,7 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 		"refundToken", incentive.rewardToken,
 		"refundAmount", formatInt(refund),
 		"refundGnsAmount", formatInt(incentive.depositGnsAmount),
-		"isRequestUnwrap", formatBool(incentive.rewardToken == WUGNOT_PATH),
+		"isRequestUnwrap", formatBool(isUnwrap),
 		"externalIncentiveEndBy", previousRealm.Address().String(),
 	)
 }
@@ -213,10 +214,9 @@ func endExternalIncentive(pool *Pool, incentiveId string, caller std.Address, cu
 		)
 	}
 
-	refund := int64(incentive.rewardLeft)
-
+	refund := incentive.rewardLeft
 	if !incentive.unclaimableRefunded {
-		refund += int64(pool.incentives.calculateUnclaimableReward(incentive.incentiveId))
+		refund += pool.incentives.calculateUnclaimableReward(incentive.incentiveId)
 		incentive.setUnClaimableRefunded(true)
 	}
 
