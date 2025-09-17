@@ -49,7 +49,7 @@ var (
 
 	depositGnsAmount int64 = 100000000000
 
-	TIMESTAMP_365DAYS = int64(31536000)
+	TIMESTAMP_180DAYS = int64(15552000)
 )
 
 func main() {
@@ -65,8 +65,8 @@ func main() {
 	mintBarBaz3000_1_4()
 	println()
 
-	println("[SCENARIO] 4. Create external incentive with QUX for 365 days")
-	createExternalIncentiveQux365()
+	println("[SCENARIO] 4. Create external incentive with QUX for 180 days")
+	createExternalIncentiveQux180()
 	println()
 
 	println("[SCENARIO] 5. Stake positions 1-4")
@@ -77,7 +77,7 @@ func main() {
 	beforeActive()
 	println()
 
-	println("[SCENARIO] 7. Check rewards for 1 block of 365 days external")
+	println("[SCENARIO] 7. Check rewards for 1 block of 180 days external")
 	rewardFor1Block()
 	println()
 }
@@ -89,6 +89,9 @@ func initAndSetup() {
 	sr.SetWarmUp(cross, 50, 300)
 	sr.SetWarmUp(cross, 70, 900)
 	sr.SetWarmUp(cross, 100, maxInt64)
+
+	// set unstaking fee to 0
+	sr.SetUnStakingFee(cross, 0)
 
 	testing.SetRealm(stakerRealm)
 	testing.SkipHeights(1)
@@ -143,7 +146,7 @@ func mintBarBaz3000_1_4() {
 		t1pct.ToString(), t2pct.ToString(), t3pct.ToString(), t4pct.ToString())
 }
 
-func createExternalIncentiveQux365() {
+func createExternalIncentiveQux180() {
 	testing.SetRealm(adminRealm)
 
 	qux.Approve(cross, stakerAddr, maxInt64)
@@ -156,15 +159,18 @@ func createExternalIncentiveQux365() {
 		quxPath,
 		100_000_000_000_000,
 		1234569600,
-		1234569600+TIMESTAMP_365DAYS,
+		1234569600+TIMESTAMP_180DAYS,
 	)
 
-	ufmt.Printf("[EXPECTED] external incentive QUX created for 365 days\n")
+	ufmt.Printf("[EXPECTED] external incentive QUX created for 180 days\n")
 	testing.SkipHeights(1)
 }
 
 func stakeToken_1_4() {
 	testing.SetRealm(adminRealm)
+
+	println("[INFO] skip time to reach incentive start time")
+	testing.SkipHeights(2000) // This moves time forward to ensure incentive is active
 
 	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
 	sr.StakeToken(cross, 1, "")
@@ -209,7 +215,7 @@ func rewardFor1Block() {
 		> position03: 1.9902%
 		> position04: 0.0069%
 
-		- block per reward 634195
+		- block per reward 1286008
 	*/
 
 	println("[INFO] collecting reward for position 01")
@@ -220,10 +226,10 @@ func rewardFor1Block() {
 	newQux := qux.BalanceOf(adminUser)
 	diff := newQux - oldQux
 	ufmt.Printf("[EXPECTED] position 01 reward: %d QUX\n", diff)
-	// reward 59911
-	// penalty 25936
-	// total 85847
-	// 634195 * 13.6317% = 86451.559815
+	// reward 122713
+	// penalty 52592
+	// total 175305
+	// 1286008 * 13.6317% = 175304.752536
 
 	println("[INFO] collecting reward for position 02")
 	testing.SetRealm(adminRealm)
@@ -233,10 +239,10 @@ func rewardFor1Block() {
 	newQux = qux.BalanceOf(adminUser)
 	diff = newQux - oldQux
 	ufmt.Printf("[EXPECTED] position 02 reward: %d QUX\n", diff)
-	// reward 370808
-	// penalty 160523
-	// total 531331
-	// 634195 * 84.3710% = 535076.66345
+	// reward 759511
+	// penalty 325506
+	// total 1085017
+	// 1286008 * 84.3710% = 1085017.80968
 
 	println("[INFO] collecting reward for position 03")
 	testing.SetRealm(adminRealm)
@@ -246,10 +252,10 @@ func rewardFor1Block() {
 	newQux = qux.BalanceOf(adminUser)
 	diff = newQux - oldQux
 	ufmt.Printf("[EXPECTED] position 03 reward: %d QUX\n", diff)
-	// reward 8747
-	// penalty 3787
-	// total 12534
-	// 634195 * 1.9902% = 12621.74889
+	// reward 17915
+	// penalty 7679
+	// total 25594
+	// 1286008 * 1.9902% = 25594.131216
 
 	println("[INFO] collecting reward for position 04")
 	testing.SetRealm(adminRealm)
@@ -259,10 +265,10 @@ func rewardFor1Block() {
 	newQux = qux.BalanceOf(adminUser)
 	diff = newQux - oldQux
 	ufmt.Printf("[EXPECTED] position 04 reward: %d QUX\n", diff)
-	// reward 30
-	// penalty 14
-	// total 44
-	// 634195 * 0.0069% = 43.759455
+	// reward 62
+	// penalty 27
+	// total 89
+	// 1286008 * 0.0069% = 88.734552
 }
 
 func positionIdFrom(positionId any) grc721.TokenID {
@@ -289,21 +295,22 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 3. Mint 4 positions on bar:baz:3000
 // [EXPECTED] positions minted with liquidity ratios - pos1: 13%, pos2: 84%, pos3: 1%, pos4: 0%
 //
-// [SCENARIO] 4. Create external incentive with QUX for 365 days
-// [EXPECTED] external incentive QUX created for 365 days
+// [SCENARIO] 4. Create external incentive with QUX for 180 days
+// [EXPECTED] external incentive QUX created for 180 days
 //
 // [SCENARIO] 5. Stake positions 1-4
+// [INFO] skip time to reach incentive start time
 // [EXPECTED] all 4 positions staked successfully
 //
 // [SCENARIO] 6. Prepare for active period
 //
-// [SCENARIO] 7. Check rewards for 1 block of 365 days external
+// [SCENARIO] 7. Check rewards for 1 block of 180 days external
 // [INFO] skipping 1 block to check rewards
 // [INFO] collecting reward for position 01
-// [EXPECTED] position 01 reward: 2139690 QUX
+// [EXPECTED] position 01 reward: 4382643 QUX
 // [INFO] collecting reward for position 02
-// [EXPECTED] position 02 reward: 13243164 QUX
+// [EXPECTED] position 02 reward: 27125450 QUX
 // [INFO] collecting reward for position 03
-// [EXPECTED] position 03 reward: 312398 QUX
+// [EXPECTED] position 03 reward: 639872 QUX
 // [INFO] collecting reward for position 04
-// [EXPECTED] position 04 reward: 1092 QUX
+// [EXPECTED] position 04 reward: 2238 QUX

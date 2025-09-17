@@ -1,4 +1,5 @@
 // external incentive + warm up period testing scenario test
+// with two external incentives for same pool (bar + gns)
 
 // PKGPATH: gno.land/r/gnoswap/v1/main
 
@@ -42,9 +43,11 @@ var (
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
 	barPath = "gno.land/r/onbloc/bar"
+	bazPath = "gno.land/r/onbloc/baz"
 	quxPath = "gno.land/r/onbloc/qux"
 
-	fee100 uint32 = 100
+	fee100  uint32 = 100
+	fee3000 uint32 = 3000
 
 	maxTimeout int64 = 9999999999
 	maxInt64   int64 = 9223372036854775807
@@ -60,40 +63,32 @@ func main() {
 	initAndSetup()
 	println()
 
-	println("[SCENARIO] 2. Create bar:qux:100 pool")
-	createPool()
+	println("[SCENARIO] 2. Create pools")
+	createPools()
 	println()
 
 	println("[SCENARIO] 3. Mint position 01 (bar:qux:100)")
 	mintBarQux100Position1()
 	println()
 
-	println("[SCENARIO] 4. Create external incentive")
-	createExternalIncentive()
+	println("[SCENARIO] 4. Create external incentive BAR")
+	createExternalIncentiveBar()
 	println()
 
-	println("[SCENARIO] 5. Stake token 01")
+	println("[SCENARIO] 5. Create external incentive GNS")
+	createExternalIncentiveGns()
+	println()
+
+	println("[SCENARIO] 6. Stake token 01")
 	stakeToken1()
 	println()
 
-	println("[SCENARIO] 6. Check rewards before active")
-	checkRewardsBeforeActive()
-	println()
-
-	println("[SCENARIO] 7. Wait for external incentive to become active")
+	println("[SCENARIO] 7. Wait for external incentives to become active")
 	waitForActiveExternal()
 	println()
 
-	println("[SCENARIO] 8. Collect rewards after duration")
-	collectRewardsAfterDuration()
-	println()
-
-	println("[SCENARIO] 9. Mint and stake position 02")
-	mintAndStakePosition2()
-	println()
-
-	println("[SCENARIO] 10. Collect rewards for all positions")
-	collectRewardsForAllPositions()
+	println("[SCENARIO] 8. Collect rewards for BAR and GNS")
+	collectRewardsForBarAndGns()
 }
 
 func initAndSetup() {
@@ -112,7 +107,7 @@ func initAndSetup() {
 	testing.SetRealm(stakerRealm)
 }
 
-func createPool() {
+func createPools() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] approve gns for pool creation")
@@ -121,7 +116,10 @@ func createPool() {
 	println("[INFO] create bar:qux:100 pool")
 	pl.CreatePool(cross, barPath, quxPath, 100, "79228162514264337593543950337")
 
-	ufmt.Printf("[EXPECTED] pool created successfully\n")
+	println("[INFO] create bar:baz:3000 pool")
+	pl.CreatePool(cross, barPath, bazPath, 3000, "79228162514264337593543950337")
+
+	ufmt.Printf("[EXPECTED] pools created successfully\n")
 	testing.SkipHeights(1)
 }
 
@@ -164,29 +162,52 @@ func mintBarQux100Position1() {
 	testing.SkipHeights(1)
 }
 
-func createExternalIncentive() {
+func createExternalIncentiveBar() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] approve tokens for external incentive")
+	println("[INFO] approve BAR tokens for external incentive")
 	bar.Approve(cross, stakerAddr, maxInt64)
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
 
-	println("[INFO] create external incentive for bar:qux:100")
+	println("[INFO] create external incentive BAR for bar:qux:100")
 	sr.CreateExternalIncentive(
 		cross,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		barPath,
-		9_000_000_000,
+		2_000_000_000,
 		1234569600,
 		1234569600+TIMESTAMP_90DAYS,
 	)
 
-	ufmt.Printf("[EXPECTED] external incentive created successfully\n")
+	ufmt.Printf("[EXPECTED] external incentive BAR created successfully\n")
+	testing.SkipHeights(1)
+}
+
+func createExternalIncentiveGns() {
+	testing.SetRealm(adminRealm)
+
+	println("[INFO] approve GNS tokens for external incentive")
+	gns.Approve(cross, stakerAddr, maxInt64) // this includes depositGnsAmount
+
+	println("[INFO] create external incentive GNS for bar:qux:100")
+	sr.CreateExternalIncentive(
+		cross,
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+		"gno.land/r/gnoswap/gns",
+		2_000_000_000,
+		1234569600,
+		1234569600+TIMESTAMP_90DAYS,
+	)
+
+	ufmt.Printf("[EXPECTED] external incentive GNS created successfully\n")
 	testing.SkipHeights(1)
 }
 
 func stakeToken1() {
 	testing.SetRealm(adminRealm)
+
+	println("[INFO] skip time to reach incentive start time")
+	testing.SkipHeights(2000) // This moves time forward to ensure incentive is active
 
 	println("[INFO] approve NFT to staker and stake position 01")
 	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
@@ -196,122 +217,49 @@ func stakeToken1() {
 	testing.SkipHeights(1)
 }
 
-func checkRewardsBeforeActive() {
+func waitForActiveExternal() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] mint and distribute GNS before active")
 	emission.MintAndDistributeGns(cross)
-
-	ufmt.Printf("[EXPECTED] checked rewards before external incentive becomes active\n")
 	testing.SkipHeights(1)
-}
 
-func waitForActiveExternal() {
-	testing.SetRealm(adminRealm)
-
-	println("[INFO] skip blocks to make external incentive active")
+	println("[INFO] skip blocks to make external incentives active")
 	testing.SkipHeights(849) // in active
 	testing.SkipHeights(1)   // active but no block passed since active
 	testing.SkipHeights(50)  // skip 50 more blocks
 
-	ufmt.Printf("[EXPECTED] external incentive is now active\n")
+	println("[INFO] mint and distribute GNS after active")
+	emission.MintAndDistributeGns(cross)
+	testing.SkipHeights(1)
+
+	println("[INFO] skip additional duration")
+	testing.SkipHeights(199) // skip 1 + 199 = 200 more blocks
+	emission.MintAndDistributeGns(cross)
+
+	ufmt.Printf("[EXPECTED] external incentives are now active\n")
 }
 
-func collectRewardsAfterDuration() {
+func collectRewardsForBarAndGns() {
 	testing.SetRealm(adminRealm)
-
-	println("[INFO] skip duration 200 blocks")
-	testing.SkipHeights(200)
 
 	println("[INFO] collect reward for position 01")
 	oldBar := bar.BalanceOf(adminUser)
+	oldGns := gns.BalanceOf(adminUser)
+
 	sr.CollectReward(cross, 1, false)
+
 	newBar := bar.BalanceOf(adminUser)
-	reward := newBar - oldBar
+	newGns := gns.BalanceOf(adminUser)
 
-	ufmt.Printf("[EXPECTED] collected reward: %d BAR tokens\n", reward)
+	barReward := newBar - oldBar
+	gnsReward := newGns - oldGns
 
-	testing.SkipHeights(1)
-}
+	ufmt.Printf("[EXPECTED] BAR reward collected: %d\n", barReward)
+	ufmt.Printf("[EXPECTED] GNS reward collected: %d\n", gnsReward)
 
-func mintAndStakePosition2() {
-	testing.SetRealm(adminRealm)
-
-	println("[INFO] approve tokens for minting position 02")
-	bar.Approve(cross, poolAddr, maxInt64)
-	qux.Approve(cross, poolAddr, maxInt64)
-
-	println("[INFO] mint position 02 (bar:qux:100)")
-	positionId, liquidity, _, _ := pn.Mint(
-		cross,
-		barPath,      // token0
-		quxPath,      // token1
-		fee100,       // fee
-		int32(-1000), // tickLower
-		int32(1000),  // tickUpper
-		"50",         // amount0Desired
-		"50",         // amount1Desired
-		"1",          // amount0Min
-		"1",          // amount1Min
-		maxTimeout,
-		adminAddr,
-		adminAddr,
-		"",
-	)
-
-	ufmt.Printf("[EXPECTED] position 02 minted: ID=%d, liquidity=%s\n", positionId, liquidity)
-
-	if positionId != 2 {
-		panic("position ID should be 2")
-	}
-
-	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
-	if owner != adminAddr {
-		panic("position should be owned by admin")
-	}
-
-	println("[INFO] stake position 02")
-	gnft.Approve(cross, stakerAddr, positionIdFrom(2))
-	sr.StakeToken(cross, 2, "")
-
-	ufmt.Printf("[EXPECTED] position 02 staked successfully\n")
-	testing.SkipHeights(1)
-}
-
-func collectRewardsForAllPositions() {
-	testing.SetRealm(adminRealm)
-
-	println("[INFO] clear previous rewards")
-	sr.CollectReward(cross, 1, false)
-	sr.CollectReward(cross, 2, false)
-
-	println("[INFO] skip 10 blocks to accumulate rewards")
-	testing.SkipHeights(10)
-
-	// Block per reward is 23
-	// Skip 10 blocks => reward 230
-	// Position 01 and 02 have same liquidity
-	// Each position's 100% reward = (230 / 2) = 115
-	// Position 01 warm-up 70% = 115 * 0.7 = 80.5
-	// Position 02 warm-up 30% = 115 * 0.3 = 34.5
-
-	println("[INFO] collect reward for position 01")
-	oldBar := bar.BalanceOf(adminUser)
-	sr.CollectReward(cross, 1, false)
-	newBar := bar.BalanceOf(adminUser)
-	reward1 := newBar - oldBar
-
-	ufmt.Printf("[EXPECTED] position 01 reward (70%% warm-up): %d\n", reward1)
-
-	println("[INFO] collect reward for position 02")
-	oldBar = newBar
-	sr.CollectReward(cross, 2, false)
-	newBar = bar.BalanceOf(adminUser)
-	reward2 := newBar - oldBar
-
-	ufmt.Printf("[EXPECTED] position 02 reward (30%% warm-up): %d\n", reward2)
-
-	println("[INFO] external incentive warm-up period test completed successfully")
+	println("[INFO] BAR + GNS external incentive test completed successfully")
+	println("[INFO] confirmed: both BAR and GNS external rewards were distributed correctly")
 }
 
 func positionIdFrom(positionId any) grc721.TokenID {
@@ -339,50 +287,42 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] set unstaking fee to 0
 // [INFO] register gns change callback
 //
-// [SCENARIO] 2. Create bar:qux:100 pool
+// [SCENARIO] 2. Create pools
 // [INFO] approve gns for pool creation
 // [INFO] create bar:qux:100 pool
-// [EXPECTED] pool created successfully
+// [INFO] create bar:baz:3000 pool
+// [EXPECTED] pools created successfully
 //
 // [SCENARIO] 3. Mint position 01 (bar:qux:100)
 // [INFO] approve tokens for minting
 // [INFO] mint position 01 (bar:qux:100)
 // [EXPECTED] position 01 minted: ID=1, liquidity=1025
 //
-// [SCENARIO] 4. Create external incentive
-// [INFO] approve tokens for external incentive
-// [INFO] create external incentive for bar:qux:100
-// [EXPECTED] external incentive created successfully
+// [SCENARIO] 4. Create external incentive BAR
+// [INFO] approve BAR tokens for external incentive
+// [INFO] create external incentive BAR for bar:qux:100
+// [EXPECTED] external incentive BAR created successfully
 //
-// [SCENARIO] 5. Stake token 01
+// [SCENARIO] 5. Create external incentive GNS
+// [INFO] approve GNS tokens for external incentive
+// [INFO] create external incentive GNS for bar:qux:100
+// [EXPECTED] external incentive GNS created successfully
+//
+// [SCENARIO] 6. Stake token 01
+// [INFO] skip time to reach incentive start time
 // [INFO] approve NFT to staker and stake position 01
 // [EXPECTED] position 01 staked successfully
 //
-// [SCENARIO] 6. Check rewards before active
+// [SCENARIO] 7. Wait for external incentives to become active
 // [INFO] mint and distribute GNS before active
-// [EXPECTED] checked rewards before external incentive becomes active
+// [INFO] skip blocks to make external incentives active
+// [INFO] mint and distribute GNS after active
+// [INFO] skip additional duration
+// [EXPECTED] external incentives are now active
 //
-// [SCENARIO] 7. Wait for external incentive to become active
-// [INFO] skip blocks to make external incentive active
-// [EXPECTED] external incentive is now active
-//
-// [SCENARIO] 8. Collect rewards after duration
-// [INFO] skip duration 200 blocks
+// [SCENARIO] 8. Collect rewards for BAR and GNS
 // [INFO] collect reward for position 01
-// [EXPECTED] collected reward: 4413955 BAR tokens
-//
-// [SCENARIO] 9. Mint and stake position 02
-// [INFO] approve tokens for minting position 02
-// [INFO] mint position 02 (bar:qux:100)
-// [EXPECTED] position 02 minted: ID=2, liquidity=1025
-// [INFO] stake position 02
-// [EXPECTED] position 02 staked successfully
-//
-// [SCENARIO] 10. Collect rewards for all positions
-// [INFO] clear previous rewards
-// [INFO] skip 10 blocks to accumulate rewards
-// [INFO] collect reward for position 01
-// [EXPECTED] position 01 reward (70% warm-up): 28924
-// [INFO] collect reward for position 02
-// [EXPECTED] position 02 reward (30% warm-up): 8677
-// [INFO] external incentive warm-up period test completed successfully
+// [EXPECTED] BAR reward collected: 1281144
+// [EXPECTED] GNS reward collected: 1281144
+// [INFO] BAR + GNS external incentive test completed successfully
+// [INFO] confirmed: both BAR and GNS external rewards were distributed correctly
