@@ -90,7 +90,7 @@ func ExactInSwapRoute(cur realm,
 			panic(err)
 		}
 	} else {
-		common.Transfer(cross, outputToken, std.PreviousRealm().Address(), outputAmount.Int64())
+		common.SafeGRC20Transfer(cross, outputToken, std.PreviousRealm().Address(), outputAmount.Int64())
 	}
 
 	// handle referral registration

@@ -128,7 +128,7 @@ func TestAddLiquidity(t *testing.T) {
 			},
 			expectError:     true,
 			errorType:       "abort",
-			expectedMessage: "[GNOSWAP-POOL-021] token transfer failed || insufficient balance",
+			expectedMessage: "insufficient balance",
 		},
 		{
 			name: "add liquidity is failed by same tick range",

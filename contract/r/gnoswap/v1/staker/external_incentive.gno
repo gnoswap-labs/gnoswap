@@ -4,8 +4,8 @@ import (
 	"std"
 	"time"
 
-	"gno.land/p/nt/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	en "gno.land/r/gnoswap/emission"
@@ -53,10 +53,7 @@ func CreateExternalIncentive(
 			panic(err)
 		}
 	} else {
-		err := common.TransferFrom(cross, rewardToken, caller, stakerAddr, rewardAmount)
-		if err != nil {
-			panic(err)
-		}
+		common.SafeGRC20TransferFrom(cross, rewardToken, caller, stakerAddr, rewardAmount)
 	}
 
 	// deposit gns amount
@@ -155,13 +152,12 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 	// unwrap if wugnot
 	isUnwrap := incentive.rewardToken == WUGNOT_PATH
 	if isUnwrap {
-		err = unwrapWithTransfer(incentive.refundee, refund)
+		transferErr := unwrapWithTransfer(incentive.refundee, refund)
+		if transferErr != nil {
+			panic(transferErr)
+		}
 	} else {
-		err = common.Transfer(cross, incentive.rewardToken, incentive.refundee, refund)
-	}
-
-	if err != nil {
-		panic(err)
+		common.SafeGRC20Transfer(cross, incentive.rewardToken, incentive.refundee, refund)
 	}
 
 	// also refund deposit gns amount
