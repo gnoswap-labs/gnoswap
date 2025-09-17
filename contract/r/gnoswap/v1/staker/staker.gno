@@ -717,9 +717,7 @@ func applyUnStake(positionId uint64) error {
 
 	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
 	caller := std.PreviousRealm().Address()
-
-	_, _, err := getPositionStakeTokenAmount(positionId, owner, caller)
-	if err != nil {
+	if err := hasTokenOwnership(owner, caller); err != nil {
 		return err
 	}
 
