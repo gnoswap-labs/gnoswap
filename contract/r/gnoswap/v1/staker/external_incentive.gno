@@ -152,11 +152,11 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 		))
 	}
 
-	// Check if GNS has already been refunded
-	if incentive.gnsRefunded {
+	// Check if incentive has already been refunded
+	if incentive.refunded {
 		panic(makeErrorWithDetails(
 			errCannotEndIncentive,
-			ufmt.Sprintf("incentive(%s) GNS deposit has already been refunded", incentiveId),
+			ufmt.Sprintf("incentive(%s) has already been refunded", incentiveId),
 		))
 	}
 
@@ -186,8 +186,10 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 	// Transfer GNS deposit back to refundee
 	gns.Transfer(cross, incentive.refundee, incentive.depositGnsAmount)
 
-	// Mark GNS as refunded and update the incentive
-	incentive.setGnsRefunded(true)
+	// Mark incentive as refunded and update
+	// After this update, attempts to re-claim GNS or rewards that were deposited
+	// through the `endExternalIncentive` function will be blocked.
+	incentive.setRefunded(true)
 	pool.incentives.update(incentive.refundee, incentive)
 
 	previousRealm := std.PreviousRealm()
@@ -234,12 +236,9 @@ func endExternalIncentive(pool *Pool, incentiveId string, caller std.Address, cu
 		)
 	}
 
-	refund := int64(incentive.rewardLeft)
-
-	if !incentive.unclaimableRefunded {
-		refund += int64(pool.incentives.calculateUnclaimableReward(incentive.incentiveId))
-		incentive.setUnClaimableRefunded(true)
-	}
+	// Always calculate unclaimed rewards since this function is called only once
+	refund := incentive.rewardLeft
+	refund += pool.incentives.calculateUnclaimableReward(incentive.incentiveId)
 
 	return incentive, refund, nil
 }

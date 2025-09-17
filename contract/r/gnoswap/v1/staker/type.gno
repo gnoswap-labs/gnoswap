@@ -21,8 +21,7 @@ type ExternalIncentive struct {
 	rewardPerSecond  int64       // reward per second
 	refundee         std.Address // refundee address
 
-	unclaimableRefunded bool // whether unclaimable reward has been refunded (rewards that positions didn't claim)
-	gnsRefunded         bool // whether GNS deposit has been refunded (deposit required when creating incentive)
+	refunded bool // whether incentive has been refunded (includes GNS deposit and unclaimed rewards)
 }
 
 func (e ExternalIncentive) IsStarted(currentTimestamp int64) bool {
@@ -142,28 +141,23 @@ func (self *ExternalIncentive) RewardLeft(currentTimestamp int64) int64 {
 
 func (self *ExternalIncentive) Clone() *ExternalIncentive {
 	return &ExternalIncentive{
-		incentiveId:         self.incentiveId,
-		startTimestamp:      self.startTimestamp,
-		endTimestamp:        self.endTimestamp,
-		createdHeight:       self.createdHeight,
-		depositGnsAmount:    self.depositGnsAmount,
-		targetPoolPath:      self.targetPoolPath,
-		rewardToken:         self.rewardToken,
-		rewardAmount:        self.rewardAmount,
-		rewardLeft:          self.rewardLeft,
-		rewardPerSecond:     self.rewardPerSecond,
-		refundee:            self.refundee,
-		unclaimableRefunded: self.unclaimableRefunded,
-		gnsRefunded:         self.gnsRefunded,
+		incentiveId:      self.incentiveId,
+		startTimestamp:   self.startTimestamp,
+		endTimestamp:     self.endTimestamp,
+		createdHeight:    self.createdHeight,
+		depositGnsAmount: self.depositGnsAmount,
+		targetPoolPath:   self.targetPoolPath,
+		rewardToken:      self.rewardToken,
+		rewardAmount:     self.rewardAmount,
+		rewardLeft:       self.rewardLeft,
+		rewardPerSecond:  self.rewardPerSecond,
+		refundee:         self.refundee,
+		refunded:         self.refunded,
 	}
 }
 
-func (self *ExternalIncentive) setUnClaimableRefunded(unClaimableRefunded bool) {
-	self.unclaimableRefunded = unClaimableRefunded
-}
-
-func (self *ExternalIncentive) setGnsRefunded(gnsRefunded bool) {
-	self.gnsRefunded = gnsRefunded
+func (self *ExternalIncentive) setRefunded(refunded bool) {
+	self.refunded = refunded
 }
 
 // NewExternalIncentive creates a new external incentive
@@ -183,18 +177,17 @@ func NewExternalIncentive(
 	rewardPerSecond := rewardAmount / incentiveDuration
 
 	return &ExternalIncentive{
-		incentiveId:         incentiveId,
-		targetPoolPath:      targetPoolPath,
-		rewardToken:         rewardToken,
-		rewardAmount:        rewardAmount,
-		startTimestamp:      startTimestamp,
-		endTimestamp:        endTimestamp,
-		rewardPerSecond:     rewardPerSecond,
-		refundee:            refundee,
-		createdHeight:       createdHeight,
-		depositGnsAmount:    depositGnsAmount,
-		unclaimableRefunded: false,
-		gnsRefunded:         false,
+		incentiveId:      incentiveId,
+		targetPoolPath:   targetPoolPath,
+		rewardToken:      rewardToken,
+		rewardAmount:     rewardAmount,
+		startTimestamp:   startTimestamp,
+		endTimestamp:     endTimestamp,
+		rewardPerSecond:  rewardPerSecond,
+		refundee:         refundee,
+		createdHeight:    createdHeight,
+		depositGnsAmount: depositGnsAmount,
+		refunded:         false,
 	}
 }
 
