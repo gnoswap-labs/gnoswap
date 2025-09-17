@@ -712,6 +712,12 @@ func applyUnStake(positionId uint64) error {
 	deposits.remove(positionId)
 	stakers.removeDeposit(deposit.owner, positionId)
 
+	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
+	caller := std.PreviousRealm().Address()
+	if err := hasTokenOwnership(owner, caller); err != nil {
+		return err
+	}
+
 	return nil
 }
 
