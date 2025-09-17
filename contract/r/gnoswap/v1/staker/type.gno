@@ -30,7 +30,7 @@ func (e ExternalIncentive) IsStarted(currentTimestamp int64) bool {
 
 // isActive checks if the incentive is currently active at the given timestamp
 func (e ExternalIncentive) isActive(currentTimestamp int64) bool {
-	return e.startTimestamp <= currentTimestamp && currentTimestamp < e.endTimestamp
+	return currentTimestamp < e.endTimestamp
 }
 
 // safeMulInt64 performs safe multiplication of int64 values, panicking on overflow
