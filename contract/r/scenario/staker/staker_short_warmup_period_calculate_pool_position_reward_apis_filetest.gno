@@ -260,10 +260,6 @@ func mintAndStakeOnlyInternal() {
 func mintAndStakeOnlyExternal() {
 	testing.SetRealm(adminRealm)
 
-	// Skip time to reach incentive start time
-	println("[INFO] skip time to reach incentive start time")
-	testing.SkipHeights(2000)
-
 	println("[INFO] approve tokens for minting")
 	bar.Approve(cross, poolAddr, maxInt64)
 	baz.Approve(cross, poolAddr, maxInt64)
@@ -407,7 +403,6 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] position 02 minted and staked: ID=2, liquidity=1025
 //
 // [SCENARIO] 8. Mint and stake positions for only external
-// [INFO] skip time to reach incentive start time
 // [INFO] approve tokens for minting
 // [INFO] mint and stake position 03 (bar:baz:100)
 // [EXPECTED] position 03 minted and staked: ID=3, liquidity=1025

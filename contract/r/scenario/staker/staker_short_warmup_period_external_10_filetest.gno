@@ -188,9 +188,6 @@ func createExternalIncentive() {
 func stakeToken1() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] skip time to reach incentive start time")
-	testing.SkipHeights(2000) // This moves time forward to ensure incentive is active
-
 	println("[INFO] approve NFT to staker and stake position 01")
 	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
 	sr.StakeToken(cross, 1, "")
@@ -358,7 +355,6 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] external incentive created successfully
 //
 // [SCENARIO] 5. Stake token 01
-// [INFO] skip time to reach incentive start time
 // [INFO] approve NFT to staker and stake position 01
 // [EXPECTED] position 01 staked successfully
 //
@@ -373,7 +369,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 8. Collect rewards after duration
 // [INFO] skip duration 200 blocks
 // [INFO] collect reward for position 01
-// [EXPECTED] collected reward: 5767644 BAR tokens
+// [EXPECTED] collected reward: 4413955 BAR tokens
 //
 // [SCENARIO] 9. Mint and stake position 02
 // [INFO] approve tokens for minting position 02

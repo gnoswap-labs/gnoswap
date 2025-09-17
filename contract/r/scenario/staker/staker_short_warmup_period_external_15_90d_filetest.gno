@@ -169,9 +169,6 @@ func createExternalIncentiveQux90() {
 func stakeToken_1_4() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] skip time to reach incentive start time")
-	testing.SkipHeights(2000) // This moves time forward to ensure incentive is active
-
 	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
 	sr.StakeToken(cross, 1, "")
 
@@ -310,7 +307,6 @@ func isInErrorRange(target, actual uint64) bool {
 // [EXPECTED] external incentive QUX created for 90 days
 //
 // [SCENARIO] 5. Stake positions 1-4
-// [INFO] skip time to reach incentive start time
 // [EXPECTED] all 4 positions staked successfully
 //
 // [SCENARIO] 6. Prepare for active period

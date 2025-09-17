@@ -207,9 +207,6 @@ func createExternalIncentiveQux() {
 func stakeToken1() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] skip time to reach incentive start time")
-	testing.SkipHeights(2000) // This moves time forward to ensure incentive is active
-
 	println("[INFO] approve NFT to staker and stake position 01")
 	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
 	sr.StakeToken(cross, 1, "")
@@ -322,7 +319,6 @@ func milliToSec(ms int64) int64 {
 // [EXPECTED] external incentive QUX created successfully
 //
 // [SCENARIO] 6. Stake token 01
-// [INFO] skip time to reach incentive start time
 // [INFO] approve NFT to staker and stake position 01
 // [EXPECTED] position 01 staked successfully
 //
@@ -335,7 +331,7 @@ func milliToSec(ms int64) int64 {
 //
 // [SCENARIO] 8. Collect rewards for both tokens
 // [INFO] collect reward for position 01
-// [EXPECTED] BAR reward collected: 1281144
-// [EXPECTED] QUX reward collected: 1281144
+// [EXPECTED] BAR reward collected: 981739
+// [EXPECTED] QUX reward collected: 981739
 // [INFO] two external incentive test completed successfully
 // [INFO] confirmed: both BAR and QUX rewards were distributed

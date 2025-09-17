@@ -206,9 +206,6 @@ func createExternalIncentiveGns() {
 func stakeToken1() {
 	testing.SetRealm(adminRealm)
 
-	println("[INFO] skip time to reach incentive start time")
-	testing.SkipHeights(2000) // This moves time forward to ensure incentive is active
-
 	println("[INFO] approve NFT to staker and stake position 01")
 	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
 	sr.StakeToken(cross, 1, "")
@@ -309,7 +306,6 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] external incentive GNS created successfully
 //
 // [SCENARIO] 6. Stake token 01
-// [INFO] skip time to reach incentive start time
 // [INFO] approve NFT to staker and stake position 01
 // [EXPECTED] position 01 staked successfully
 //
@@ -322,7 +318,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 8. Collect rewards for BAR and GNS
 // [INFO] collect reward for position 01
-// [EXPECTED] BAR reward collected: 1281144
-// [EXPECTED] GNS reward collected: 1281144
+// [EXPECTED] BAR reward collected: 981739
+// [EXPECTED] GNS reward collected: 981739
 // [INFO] BAR + GNS external incentive test completed successfully
 // [INFO] confirmed: both BAR and GNS external rewards were distributed correctly

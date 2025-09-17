@@ -163,13 +163,12 @@ func createExternalIncentiveWithNativeCoin() {
 	testing.SetOriginSend(std.Coins{{"ugnot", 1_000_000_000}})
 
 	println("[INFO] create external incentive with gnot (native coin)")
-	// Use tomorrow midnight from DefaultTimestamp (1234567890 + 1710 = 1234569600)
 	sr.CreateExternalIncentive(
 		cross,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", // targetPoolPath
 		"gnot",                      // rewardToken (native coin)
 		1_000_000_000,               // rewardAmount (100 gnot)
-		1234569600,                  // startTimestamp (tomorrow midnight from DefaultTimestamp)
+		1234569600,                  // startTimestamp
 		1234569600+TIMESTAMP_90DAYS, // endTimestamp
 	)
 
@@ -181,10 +180,6 @@ func createExternalIncentiveWithNativeCoin() {
 
 func stakeToken01() {
 	testing.SetRealm(adminRealm)
-
-	// Skip time to ensure we're past the incentive start time
-	println("[INFO] skip time to reach incentive start time")
-	testing.SkipHeights(2000) // This moves time forward to ensure incentive is active
 
 	println("[INFO] approve NFT to staker")
 	gnft.Approve(cross, stakerAddr, positionIdFrom(1))
@@ -321,7 +316,6 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] start time: 1234569600, end time: 1242345600
 //
 // [SCENARIO] 5. Stake token 01
-// [INFO] skip time to reach incentive start time
 // [INFO] approve NFT to staker
 // [INFO] stake token 01
 //
@@ -329,19 +323,19 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] skip blocks to accumulate rewards
 // [INFO] check balances before collecting with unwrap
 // [INFO] ugnot balance before: 99999000000000
-// [INFO] wugnot balance before: 172991
+// [INFO] wugnot balance before: 108288
 // [INFO] collect reward with unwrap=true
 // [EXPECTED] ugnot balance after: 99999000000191
-// [EXPECTED] wugnot balance after: 172991
+// [EXPECTED] wugnot balance after: 108288
 // [EXPECTED] ugnot increase (unwrapped): 191
 // [EXPECTED] wugnot change (should be 0): 0
 //
 // [SCENARIO] 7. Collect external reward without unwrap
 // [INFO] check balances before collecting without unwrap
 // [INFO] ugnot balance before: 99999000000191
-// [INFO] wugnot balance before: 172991
+// [INFO] wugnot balance before: 108288
 // [INFO] collect reward with unwrap=false
 // [EXPECTED] ugnot balance after: 99999000000191
-// [EXPECTED] wugnot balance after: 173183
+// [EXPECTED] wugnot balance after: 108480
 // [EXPECTED] ugnot change (should be 0): 0
 // [EXPECTED] wugnot increase (wrapped): 192
