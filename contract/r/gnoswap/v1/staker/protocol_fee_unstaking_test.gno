@@ -3,44 +3,80 @@ package staker
 import (
 	"math"
 	"testing"
+
+	"gno.land/p/nt/uassert"
+	"gno.land/r/gnoswap/gns"
 )
 
 func TestHandleUnstakingFee(t *testing.T) {
 	tests := []struct {
-		name        string
-		tokenPath   string
-		amount      int64
-		internal    bool
-		positionId  uint64
-		poolPath    string
-		expectedFee int64
-		expectedNet int64
+		name             string
+		tokenPath        string
+		amount           int64
+		stakerBalance    int64
+		internal         bool
+		positionId       uint64
+		poolPath         string
+		expectedFee      int64
+		expectedNet      int64
+		expectedHasPanic bool
+		expectedPanicMsg string
 	}{
 		{
-			name:        "No fee configured",
-			tokenPath:   gnsPath,
-			amount:      10000,
-			internal:    true,
-			positionId:  1,
-			poolPath:    "pool1",
-			expectedFee: 0,
-			expectedNet: 10000,
+			name:          "No fee configured",
+			tokenPath:     gnsPath,
+			amount:        10000,
+			stakerBalance: 0,
+			internal:      true,
+			positionId:    1,
+			poolPath:      "pool1",
+			expectedFee:   0,
+			expectedNet:   10000,
 		},
 		{
-			name:        "Standard fee",
-			tokenPath:   gnsPath,
-			amount:      10000,
-			internal:    false,
-			positionId:  1,
-			poolPath:    "pool1",
-			expectedFee: 100,
-			expectedNet: 9900,
+			name:          "Standard fee",
+			tokenPath:     gnsPath,
+			amount:        10000,
+			stakerBalance: 100,
+			internal:      false,
+			positionId:    1,
+			poolPath:      "pool1",
+			expectedFee:   100,
+			expectedNet:   9900,
+		},
+		{
+			name:             "Standard fee but staker balance is insufficient",
+			tokenPath:        gnsPath,
+			amount:           10000,
+			stakerBalance:    0,
+			internal:         false,
+			positionId:       1,
+			poolPath:         "pool1",
+			expectedFee:      100,
+			expectedNet:      9900,
+			expectedHasPanic: true,
+			expectedPanicMsg: "insufficient balance",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			unstakingFee = tc.expectedFee // Set the fee globally for the test
+
+			if tc.stakerBalance > 0 {
+				testing.SetRealm(adminRealm)
+				gns.Transfer(cross, stakerAddr, tc.stakerBalance)
+			}
+
+			testing.SetRealm(stakerRealm)
+
+			if tc.expectedHasPanic {
+				uassert.AbortsWithMessage(t, tc.expectedPanicMsg, func() {
+					handleUnStakingFee(tc.tokenPath, tc.amount, tc.internal, tc.positionId, tc.poolPath)
+				})
+
+				return
+			}
 
 			netAmount, _, err := handleUnStakingFee(tc.tokenPath, tc.amount, tc.internal, tc.positionId, tc.poolPath)
 			if err != nil {
