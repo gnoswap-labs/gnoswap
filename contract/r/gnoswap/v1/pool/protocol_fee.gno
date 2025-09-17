@@ -3,8 +3,8 @@ package pool
 import (
 	"std"
 
-	"gno.land/p/nt/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
@@ -71,10 +71,10 @@ func HandleWithdrawalFee(
 	feeAmount0, afterAmount0 := calculateAmountWithFee(u256.MustFromDecimal(amount0), u256.NewUint(fee))
 	feeAmount1, afterAmount1 := calculateAmountWithFee(u256.MustFromDecimal(amount1), u256.NewUint(fee))
 
-	checkTransferError(common.TransferFrom(cross, token0Path, positionCaller, protocolFeeAddr, safeConvertToInt64(feeAmount0)))
 	pf.AddToProtocolFee(cross, token0Path, safeConvertToInt64(feeAmount0))
-	checkTransferError(common.TransferFrom(cross, token1Path, positionCaller, protocolFeeAddr, safeConvertToInt64(feeAmount1)))
+	common.SafeGRC20TransferFrom(cross, token0Path, positionCaller, protocolFeeAddr, safeConvertToInt64(feeAmount0))
 	pf.AddToProtocolFee(cross, token1Path, safeConvertToInt64(feeAmount1))
+	common.SafeGRC20TransferFrom(cross, token1Path, positionCaller, protocolFeeAddr, safeConvertToInt64(feeAmount1))
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(

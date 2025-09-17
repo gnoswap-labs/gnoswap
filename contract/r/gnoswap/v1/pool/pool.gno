@@ -337,14 +337,14 @@ func collectProtocol(
 	uAmount0 := safeConvertToInt64(amount0)
 	uAmount1 := safeConvertToInt64(amount1)
 
-	checkTransferError(common.Transfer(cross, pool.token0Path, recipient, uAmount0))
+	common.SafeGRC20Transfer(cross, pool.token0Path, recipient, uAmount0)
 	newBalanceToken0, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount0, true)
 	if err != nil {
 		panic(err)
 	}
 	pool.balances.token0 = newBalanceToken0
 
-	checkTransferError(common.Transfer(cross, pool.token1Path, recipient, uAmount1))
+	common.SafeGRC20Transfer(cross, pool.token1Path, recipient, uAmount1)
 	newBalanceToken1, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount1, false)
 	if err != nil {
 		panic(err)
