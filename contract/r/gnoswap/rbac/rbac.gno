@@ -24,7 +24,6 @@ func initRbac() {
 		manager.UpdateRoleAddress(role.String(), addr)
 	}
 
-	// all default roles have valid addresses
 	updateAccessRoleAddresses(manager.GetRoleAddresses())
 }
 
@@ -32,11 +31,10 @@ func initRbac() {
 //
 // Parameters:
 //   - roleName: name of the role to register
+//   - roleAddress: address to assign to the role
 //
 // Only callable by admin or governance.
-//
-// Note: The role will not be synchronized to the access package until an address is assigned.
-func RegisterRole(cur realm, roleName string) {
+func RegisterRole(cur realm, roleName string, roleAddress std.Address) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
@@ -50,7 +48,16 @@ func RegisterRole(cur realm, roleName string) {
 		))
 	}
 
-	emitRegisterRoleEvent(roleName)
+	err = manager.UpdateRoleAddress(roleName, roleAddress)
+	if err != nil {
+		panic(makeErrorWithDetails(
+			err,
+			ufmt.Sprintf("role name: %s, address: %s", roleName, roleAddress.String()),
+		))
+	}
+
+	updateAccessRoleAddresses(manager.GetRoleAddresses())
+	emitRegisterRoleEvent(roleName, roleAddress)
 }
 
 // RemoveRole removes a role from the RBAC system.
@@ -73,8 +80,7 @@ func RemoveRole(cur realm, roleName string) {
 		))
 	}
 
-	// Sync after removal to update access package
-	syncValidRoleAddresses()
+	updateAccessRoleAddresses(manager.GetRoleAddresses())
 	emitRemoveRoleEvent(roleName)
 }
 
@@ -102,27 +108,11 @@ func UpdateRoleAddress(cur realm, roleName string, addr std.Address) {
 		))
 	}
 
-	// Sync all roles that have valid addresses
-	syncValidRoleAddresses()
+	updateAccessRoleAddresses(manager.GetRoleAddresses())
 	emitUpdateRoleAddressEvent(roleName, addr)
 }
 
 // updateAccessRoleAddresses synchronizes role addresses with the access package.
 func updateAccessRoleAddresses(newRoleAddresses map[string]std.Address) {
 	access.SetRoleAddresses(cross, newRoleAddresses)
-}
-
-// syncValidRoleAddresses synchronizes only roles with valid addresses to the access package.
-// This is used for delayed synchronization to avoid syncing roles with empty addresses.
-func syncValidRoleAddresses() {
-	allRoles := manager.GetRoleAddresses()
-	validRoles := make(map[string]std.Address)
-
-	for role, addr := range allRoles {
-		if addr.IsValid() && addr != std.Address("") {
-			validRoles[role] = addr
-		}
-	}
-
-	access.SetRoleAddresses(cross, validRoles)
 }
