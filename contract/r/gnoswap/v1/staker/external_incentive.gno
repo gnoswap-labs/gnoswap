@@ -187,6 +187,7 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 	// through the `endExternalIncentive` function will be blocked.
 	incentive.setRefunded(true)
 	pool.incentives.update(incentive.refundee, incentive)
+	pool.incentives.archiveIncentive(incentiveId)
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(
@@ -199,7 +200,7 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 		"refundToken", incentive.rewardToken,
 		"refundAmount", formatInt(refund),
 		"refundGnsAmount", formatInt(incentive.depositGnsAmount),
-		"isRequestUnwrap", formatBool(incentive.rewardToken == WUGNOT_PATH),
+		"isRequestUnwrap", formatBool(isUnwrap),
 		"externalIncentiveEndBy", previousRealm.Address().String(),
 	)
 }
