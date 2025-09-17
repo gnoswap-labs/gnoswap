@@ -4,9 +4,9 @@ import (
 	"encoding/base64"
 	"std"
 
-	"gno.land/p/nt/ufmt"
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
@@ -114,6 +114,9 @@ func Mint(
 
 	poolSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(processedInput.poolPath)
 
+	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp :=
+		pl.GetObservation(processedInput.poolPath, 0)
+
 	std.Emit(
 		"Mint",
 		"prevAddr", previousRealm.Address().String(),
@@ -130,6 +133,10 @@ func Mint(
 		"sqrtPriceX96", poolSqrtPriceX96.ToString(),
 		"token0Balance", pl.GetBalanceToken0(processedInput.poolPath),
 		"token1Balance", pl.GetBalanceToken1(processedInput.poolPath),
+		"tickCumulative", formatInt(tickCumulative),
+		"liquidityCumulative", liquidityCumulative,
+		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
+		"observationTimestamp", formatInt(observationTimestamp),
 	)
 
 	return id, liquidity.ToString(), amount0.ToString(), amount1.ToString()
@@ -227,6 +234,9 @@ func IncreaseLiquidity(
 		panic(err)
 	}
 
+	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp :=
+		pl.GetObservation(poolPath, 0)
+
 	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"IncreaseLiquidity",
@@ -242,6 +252,10 @@ func IncreaseLiquidity(
 		"positionLiquidity", PositionGetPositionLiquidityStr(positionId),
 		"token0Balance", pl.GetBalanceToken0(poolPath),
 		"token1Balance", pl.GetBalanceToken1(poolPath),
+		"tickCumulative", formatInt(tickCumulative),
+		"liquidityCumulative", liquidityCumulative,
+		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
+		"observationTimestamp", formatInt(observationTimestamp),
 	)
 
 	return positionId, liquidity.ToString(), amount0.ToString(), amount1.ToString(), poolPath
@@ -320,6 +334,9 @@ func DecreaseLiquidity(
 		panic(err)
 	}
 
+	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp :=
+		pl.GetObservation(poolPath, 0)
+
 	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"DecreaseLiquidity",
@@ -337,6 +354,10 @@ func DecreaseLiquidity(
 		"positionLiquidity", PositionGetPositionLiquidityStr(positionId),
 		"token0Balance", pl.GetBalanceToken0(poolPath),
 		"token1Balance", pl.GetBalanceToken1(poolPath),
+		"tickCumulative", formatInt(tickCumulative),
+		"liquidityCumulative", liquidityCumulative,
+		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
+		"observationTimestamp", formatInt(observationTimestamp),
 	)
 
 	return positionId, liquidity, fee0, fee1, amount0, amount1, poolPath

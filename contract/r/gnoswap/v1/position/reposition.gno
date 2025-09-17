@@ -3,8 +3,8 @@ package position
 import (
 	"std"
 
-	"gno.land/p/nt/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
@@ -98,6 +98,9 @@ func Reposition(
 	token0Balance := pl.GetBalanceToken0(position.poolKey)
 	token1Balance := pl.GetBalanceToken1(position.poolKey)
 
+	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp :=
+		pl.GetObservation(position.poolKey, 0)
+
 	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"Reposition",
@@ -116,6 +119,10 @@ func Reposition(
 		"positionLiquidity", PositionGetPositionLiquidityStr(positionId),
 		"token0Balance", token0Balance,
 		"token1Balance", token1Balance,
+		"tickCumulative", formatInt(tickCumulative),
+		"liquidityCumulative", liquidityCumulative,
+		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
+		"observationTimestamp", formatInt(observationTimestamp),
 	)
 
 	return positionId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()
