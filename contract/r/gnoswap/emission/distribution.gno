@@ -131,7 +131,8 @@ func changeDistributionPcts(
 	target03 int, pct03 int64,
 	target04 int, pct04 int64,
 ) {
-	// Update distribution percentages
+	// First, cache the percentage of the staker just before it changes Callback if needed
+	// (check if the LIQUIDITY_STAKER was located between target01 and 04)
 	setDistributionBpsPct(target01, pct01)
 	setDistributionBpsPct(target02, pct02)
 	setDistributionBpsPct(target03, pct03)
