@@ -7,6 +7,8 @@ import (
 	"gno.land/p/nt/ufmt"
 )
 
+const maxDurationOneYear = int64(365 * 86400) // 31,536,000 seconds
+
 type Warmup struct {
 	Index          int
 	TimeDuration   int64
@@ -64,11 +66,18 @@ func modifyWarmup(index int, timeDuration int64) {
 		panic(ufmt.Sprintf("index(%d) is out of range", index))
 	}
 
-	// Ensure the last warmup tier has infinite duration (math.MaxInt64)
-	// This guarantees permanent reward accessibility. If the final tier has a finite
-	// duration, rewards become unobtainable once that time period expires.
-	if index == len(warmupTemplate)-1 && timeDuration != math.MaxInt64 {
-		panic(ufmt.Sprintf("last warmup tier must have duration of math.MaxInt64, got %d", timeDuration))
+	// Early return for last tier - must always be math.MaxInt64
+	if index == len(warmupTemplate)-1 {
+		if timeDuration != math.MaxInt64 {
+			panic(ufmt.Sprintf("last warmup tier must have duration of math.MaxInt64, got %d", timeDuration))
+		}
+		// No modification needed as it's already math.MaxInt64
+		return
+	}
+
+	// Limit non-final tier durations to 1 year (365 days)
+	if timeDuration > maxDurationOneYear {
+		panic(ufmt.Sprintf("warmup duration cannot exceed 1 year (365 days), got %d seconds", timeDuration))
 	}
 
 	warmupTemplate[index].TimeDuration = timeDuration
@@ -76,11 +85,8 @@ func modifyWarmup(index int, timeDuration int64) {
 
 func instantiateWarmup(currentTime int64) []Warmup {
 	warmups := make([]Warmup, 0)
-	for _, warmup := range warmupTemplate {
-		nextWarmupTime := currentTime + warmup.TimeDuration
-		if nextWarmupTime < 0 {
-			nextWarmupTime = math.MaxInt64
-		}
+	for i, warmup := range warmupTemplate {
+		nextWarmupTime := safeAddTime(currentTime, warmup.TimeDuration)
 
 		warmups = append(warmups, Warmup{
 			Index:          warmup.Index,
@@ -88,9 +94,27 @@ func instantiateWarmup(currentTime int64) []Warmup {
 			NextWarmupTime: nextWarmupTime,
 			WarmupRatio:    warmup.WarmupRatio,
 		})
-		currentTime += warmup.TimeDuration
+
+		// Only update currentTime if not the last tier
+		if i < len(warmupTemplate)-1 {
+			currentTime = safeAddTime(currentTime, warmup.TimeDuration)
+		}
 	}
 	return warmups
+}
+
+// safeAddTime performs safe addition with overflow protection
+func safeAddTime(currentTime, duration int64) int64 {
+	if duration == math.MaxInt64 {
+		return math.MaxInt64
+	}
+
+	// Check for overflow before addition
+	if currentTime > 0 && duration > math.MaxInt64-currentTime {
+		return math.MaxInt64
+	}
+
+	return currentTime + duration
 }
 
 func (warmup *Warmup) apply(poolReward int64, positionLiquidity, stakedLiquidity *u256.Uint) (int64, int64) {

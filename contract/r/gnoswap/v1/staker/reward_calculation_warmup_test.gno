@@ -292,35 +292,65 @@ func TestModifyWarmupLastTierValidation(t *testing.T) {
 	tests := []struct {
 		name           string
 		modifyLastTier bool
+		tierIndex      int
 		newDuration    int64
 		expectPanic    bool
+		panicMessage   string
 		validateAfter  func(t *testing.T)
 	}{
 		{
-			name:           "modify non-last tier should succeed",
+			name:           "modify non-last tier within 1 year should succeed",
 			modifyLastTier: false,
-			newDuration:    86400, // 1 day
+			tierIndex:      0,
+			newDuration:    86400 * 30, // 30 days
 			expectPanic:    false,
 			validateAfter: func(t *testing.T) {
-				uassert.Equal(t, int64(86400), warmupTemplate[0].TimeDuration)
+				uassert.Equal(t, int64(86400*30), warmupTemplate[0].TimeDuration)
 				uassert.Equal(t, int64(math.MaxInt64), warmupTemplate[3].TimeDuration)
+			},
+		},
+		{
+			name:           "modify non-last tier to exactly 1 year should succeed",
+			modifyLastTier: false,
+			tierIndex:      1,
+			newDuration:    365 * 86400, // exactly 365 days
+			expectPanic:    false,
+			validateAfter: func(t *testing.T) {
+				uassert.Equal(t, int64(365*86400), warmupTemplate[1].TimeDuration)
+			},
+		},
+		{
+			name:           "modify non-last tier exceeding 1 year should panic",
+			modifyLastTier: false,
+			tierIndex:      0,
+			newDuration:    366 * 86400, // 366 days (over 1 year)
+			expectPanic:    true,
+			panicMessage:   "warmup duration cannot exceed 1 year",
+			validateAfter: func(t *testing.T) {
+				// Should never reach here due to panic
+				t.Fatal("should not reach here")
 			},
 		},
 		{
 			name:           "modify last tier to finite duration should panic",
 			modifyLastTier: true,
+			tierIndex:      3,
 			newDuration:    86400 * 60, // 60 days
 			expectPanic:    true,
+			panicMessage:   "duration of math.MaxInt64",
 			validateAfter: func(t *testing.T) {
 				// Should never reach here due to panic
+				t.Fatal("should not reach here")
 			},
 		},
 		{
-			name:           "modify last tier to MaxInt64 should succeed",
+			name:           "modify last tier to MaxInt64 should return early without change",
 			modifyLastTier: true,
+			tierIndex:      3,
 			newDuration:    math.MaxInt64,
 			expectPanic:    false,
 			validateAfter: func(t *testing.T) {
+				// Verify it's still MaxInt64 (no actual modification)
 				uassert.Equal(t, int64(math.MaxInt64), warmupTemplate[3].TimeDuration)
 			},
 		},
@@ -331,17 +361,12 @@ func TestModifyWarmupLastTierValidation(t *testing.T) {
 			// Reset warmupTemplate to default before each test
 			warmupTemplate = DefaultWarmupTemplate()
 
-			index := 0
-			if tt.modifyLastTier {
-				index = 3
-			}
-
 			if tt.expectPanic {
-				uassert.PanicsContains(t, "duration of math.MaxInt64", func() {
-					modifyWarmup(index, tt.newDuration)
+				uassert.PanicsContains(t, tt.panicMessage, func() {
+					modifyWarmup(tt.tierIndex, tt.newDuration)
 				})
 			} else {
-				modifyWarmup(index, tt.newDuration)
+				modifyWarmup(tt.tierIndex, tt.newDuration)
 				if tt.validateAfter != nil {
 					tt.validateAfter(t)
 				}
