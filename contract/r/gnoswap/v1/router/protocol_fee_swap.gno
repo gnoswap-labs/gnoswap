@@ -82,7 +82,7 @@ func handleSwapFee(
 		outputToken = wugnotPath
 	}
 
-	common.Transfer(cross, outputToken, protocolFeeAddr, feeAmountInt64)
+	common.SafeGRC20Transfer(cross, outputToken, protocolFeeAddr, feeAmountInt64)
 
 	pf.AddToProtocolFee(cross, outputToken, feeAmountInt64)
 

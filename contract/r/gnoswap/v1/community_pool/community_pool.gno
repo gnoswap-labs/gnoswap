@@ -32,10 +32,7 @@ func TransferToken(cur realm, tokenPath string, to std.Address, amount int64) {
 
 // transferToken performs actual token transfer.
 func transferToken(tokenPath string, to std.Address, amount int64) error {
-	err := common.Transfer(cross, tokenPath, to, amount)
-	if err != nil {
-		return err
-	}
+	common.SafeGRC20Transfer(cross, tokenPath, to, amount)
 
 	prevRealm := std.PreviousRealm()
 	std.Emit(

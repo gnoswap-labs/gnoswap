@@ -84,3 +84,24 @@ func TransferFrom(cur realm, path string, from, to std.Address, amount int64) er
 func Approve(cur realm, path string, spender std.Address, amount int64) error {
 	return GetTokenTeller(path).Approve(spender, amount)
 }
+
+// SafeGRC20Transfer performs a token transfer and panics if it fails.
+func SafeGRC20Transfer(cur realm, path string, to std.Address, amount int64) {
+	if err := GetTokenTeller(path).Transfer(to, amount); err != nil {
+		panic(err)
+	}
+}
+
+// SafeGRC20TransferFrom performs a token transfer from one address to another and panics if it fails.
+func SafeGRC20TransferFrom(cur realm, path string, from, to std.Address, amount int64) {
+	if err := GetTokenTeller(path).TransferFrom(from, to, amount); err != nil {
+		panic(err)
+	}
+}
+
+// SafeGRC20Approve performs a token approval and panics if it fails.
+func SafeGRC20Approve(cur realm, path string, spender std.Address, amount int64) {
+	if err := GetTokenTeller(path).Approve(spender, amount); err != nil {
+		panic(err)
+	}
+}

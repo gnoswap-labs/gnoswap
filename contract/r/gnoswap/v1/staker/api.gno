@@ -82,7 +82,7 @@ func ApiGetExternalIncentiveById(poolPath, incentiveId string) string {
 		))
 	}
 
-	incentive, exist := pool.incentives.GetByIncentiveId(incentiveId)
+	incentive, exist := pool.incentives.Get(incentiveId)
 	if !exist {
 		panic(makeErrorWithDetails(
 			errDataNotFound,
