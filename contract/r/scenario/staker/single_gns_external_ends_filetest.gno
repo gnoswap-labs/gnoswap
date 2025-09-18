@@ -110,7 +110,7 @@ func main() {
 	endExternalGnsIncentive()
 	println()
 
-	println("[SCENARIO] 11. Collect rewards after external incentive ends")
+	println("[SCENARIO] 11. Verify no rewards after external incentive ends")
 	collectRewardsAfterExternalEnds()
 }
 
@@ -301,11 +301,11 @@ func collectRewardsAfterExternalEnds() {
 	ufmt.Printf("[INFO] GNS balance after collection: %d\n", after)
 	ufmt.Printf("[INFO] total reward collected: %d\n", diff)
 
-	if diff == 0 {
-		panic("reward can not be zero")
+	if diff != 0 {
+		panic("should not receive rewards after external incentive ends and no internal incentive exists")
 	}
 
-	ufmt.Println("[EXPECTED] positions should still receive rewards after external incentive ends")
+	ufmt.Println("[EXPECTED] positions should NOT receive rewards after external incentive ends (no internal incentive)")
 }
 
 func positionIdFrom(positionId any) grc721.TokenID {
@@ -370,9 +370,9 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] GNS balance after ending: 1000005785
 // [EXPECTED] external creator should receive deposit amount minus penalty
 //
-// [SCENARIO] 11. Collect rewards after external incentive ends
+// [SCENARIO] 11. Verify no rewards after external incentive ends
 // [INFO] collect rewards after external incentive ends
 // [INFO] GNS balance before collection: 99990000003470
-// [INFO] GNS balance after collection: 99997247440185
-// [INFO] total reward collected: 7247436715
-// [EXPECTED] positions should still receive rewards after external incentive ends
+// [INFO] GNS balance after collection: 99990000003470
+// [INFO] total reward collected: 0
+// [EXPECTED] positions should NOT receive rewards after external incentive ends (no internal incentive)
