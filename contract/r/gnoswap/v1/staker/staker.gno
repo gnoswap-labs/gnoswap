@@ -533,7 +533,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 			"currentHeight", formatInt(blockHeight),
 		)
 		if toUser > 0 {
-			if unwrapResult {
+			if common.IsGNOTWrappedPath(rewardToken) && unwrapResult {
 				tErr := unwrapWithTransfer(deposit.owner, toUser)
 				if tErr != nil {
 					panic(tErr)
