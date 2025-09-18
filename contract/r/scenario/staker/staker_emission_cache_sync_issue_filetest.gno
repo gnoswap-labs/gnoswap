@@ -286,7 +286,6 @@ func collectWithCorrectRate() {
 	dilutionPercent := dilutionEffect * 100 / theoreticalRewardAt50Pct
 
 	ufmt.Printf("[EXPECTED] Reward collected with correct rate: %d GNS\n", correctReward)
-	ufmt.Printf("[INFO] This reward was calculated using the correct 50%% rate after cache update\n")
 	println()
 	ufmt.Printf("[LOG] Reduction from initial reward: %d%%\n", reductionFromInitial)
 	ufmt.Printf("[LOG] Reduction from stale rate reward: %d%%\n", reductionFromStale)
@@ -343,11 +342,10 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] This staking action triggers cache update to correct 50% rate
 //
 // [SCENARIO] 8. Collect rewards again (should use correct 50% rate)
-// [EXPECTED] Reward collected with correct rate: 364842686 GNS
-// [INFO] This reward was calculated using the correct 50% rate after cache update
+// [EXPECTED] Reward collected with correct rate: 243228412 GNS
 //
-// [LOG] Reduction from initial reward: 8%
-// [LOG] Reduction from stale rate reward: 9%
+// [LOG] Reduction from initial reward: 39%
+// [LOG] Reduction from stale rate reward: 39%
 // [LOG] Theoretical reward at 50% (no dilution): 267551299 GNS
-// [LOG] Actual reward received: 364842686 GNS
-// [LOG] Dilution effect from new staker: -97291387 GNS (-36% dilution)
+// [LOG] Actual reward received: 243228412 GNS
+// [LOG] Dilution effect from new staker: 24322887 GNS (9% dilution)
