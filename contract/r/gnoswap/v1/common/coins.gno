@@ -4,7 +4,45 @@ import (
 	"std"
 )
 
-func UserSendCoins() map[string]int64 {
+func IsGNOTPath(path string) bool {
+	return path == GNOT_PATH || path == WUGNOT_PATH
+}
+
+func IsGNOTNativePath(path string) bool {
+	return path == GNOT_PATH
+}
+
+func IsGNOTWrappedPath(path string) bool {
+	return path == WUGNOT_PATH
+}
+
+func ExistsUserSendCoins() bool {
+	return len(getUserSendCoins()) > 0
+}
+
+func isUserSendGNOTAmount(amount int64) bool {
+	sendCoins := getUserSendCoins()
+
+	gnotAmount, exists := sendCoins[GNOT_DENOM]
+	if !exists {
+		return amount != 0
+	}
+
+	return gnotAmount == amount
+}
+
+func hasNotSupportedCoins() bool {
+	sendCoins := getUserSendCoins()
+	coinsCount := len(sendCoins)
+
+	if _, exists := sendCoins[GNOT_DENOM]; !exists {
+		return coinsCount == 1
+	}
+
+	return coinsCount == 0
+}
+
+func getUserSendCoins() map[string]int64 {
 	coinsMap := make(map[string]int64)
 
 	for _, coin := range std.OriginSend() {
@@ -20,42 +58,4 @@ func UserSendCoins() map[string]int64 {
 	}
 
 	return coinsMap
-}
-
-func HasNotSupportedCoins() bool {
-	userSendCoins := UserSendCoins()
-	coinsCount := len(userSendCoins)
-
-	if _, exists := userSendCoins[GNOT_DENOM]; !exists {
-		return coinsCount == 1
-	}
-
-	return coinsCount == 0
-}
-
-func IsGNOTPath(path string) bool {
-	return path == GNOT_PATH || path == WUGNOT_PATH
-}
-
-func IsGNOTNativePath(path string) bool {
-	return path == GNOT_PATH
-}
-
-func IsGNOTWrappedPath(path string) bool {
-	return path == WUGNOT_PATH
-}
-
-func IsUserSendCoins() bool {
-	return len(UserSendCoins()) > 0
-}
-
-func IsUserSendGNOTAmount(amount int64) bool {
-	userSendCoins := UserSendCoins()
-
-	gnotAmount, exists := userSendCoins[GNOT_DENOM]
-	if !exists {
-		return amount != 0
-	}
-
-	return gnotAmount == amount
 }
