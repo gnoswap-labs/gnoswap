@@ -290,67 +290,54 @@ func TestMultipleWarmupPeriods(t *testing.T) {
 
 func TestModifyWarmupLastTierValidation(t *testing.T) {
 	tests := []struct {
-		name           string
-		modifyLastTier bool
-		tierIndex      int
-		newDuration    int64
-		expectPanic    bool
-		panicMessage   string
-		validateAfter  func(t *testing.T)
+		name          string
+		tierIndex     int
+		newDuration   int64
+		expectPanic   bool
+		panicMessage  string
+		validateAfter func(t *testing.T)
 	}{
+		// Non-last tier tests
 		{
-			name:           "modify non-last tier within 1 year should succeed",
-			modifyLastTier: false,
-			tierIndex:      0,
-			newDuration:    86400 * 30, // 30 days
-			expectPanic:    false,
+			name:        "modify non-last tier within 1 year should succeed",
+			tierIndex:   0,
+			newDuration: 86400 * 30, // 30 days
+			expectPanic: false,
 			validateAfter: func(t *testing.T) {
 				uassert.Equal(t, int64(86400*30), warmupTemplate[0].TimeDuration)
 				uassert.Equal(t, int64(math.MaxInt64), warmupTemplate[3].TimeDuration)
 			},
 		},
 		{
-			name:           "modify non-last tier to exactly 1 year should succeed",
-			modifyLastTier: false,
-			tierIndex:      1,
-			newDuration:    365 * 86400, // exactly 365 days
-			expectPanic:    false,
+			name:        "modify non-last tier to exactly 1 year should succeed",
+			tierIndex:   1,
+			newDuration: 365 * 86400, // exactly 365 days
+			expectPanic: false,
 			validateAfter: func(t *testing.T) {
 				uassert.Equal(t, int64(365*86400), warmupTemplate[1].TimeDuration)
 			},
 		},
 		{
-			name:           "modify non-last tier exceeding 1 year should panic",
-			modifyLastTier: false,
-			tierIndex:      0,
-			newDuration:    366 * 86400, // 366 days (over 1 year)
-			expectPanic:    true,
-			panicMessage:   "warmup duration cannot exceed 1 year",
-			validateAfter: func(t *testing.T) {
-				// Should never reach here due to panic
-				t.Fatal("should not reach here")
-			},
+			name:         "modify non-last tier exceeding 1 year should panic",
+			tierIndex:    0,
+			newDuration:  366 * 86400, // 366 days (over 1 year)
+			expectPanic:  true,
+			panicMessage: "warmup duration cannot exceed 1 year",
+		},
+		// Last tier tests
+		{
+			name:         "modify last tier to finite duration should panic",
+			tierIndex:    3,
+			newDuration:  86400 * 60, // 60 days
+			expectPanic:  true,
+			panicMessage: "duration of math.MaxInt64",
 		},
 		{
-			name:           "modify last tier to finite duration should panic",
-			modifyLastTier: true,
-			tierIndex:      3,
-			newDuration:    86400 * 60, // 60 days
-			expectPanic:    true,
-			panicMessage:   "duration of math.MaxInt64",
+			name:        "modify last tier to MaxInt64 should return early without change",
+			tierIndex:   3,
+			newDuration: math.MaxInt64,
+			expectPanic: false,
 			validateAfter: func(t *testing.T) {
-				// Should never reach here due to panic
-				t.Fatal("should not reach here")
-			},
-		},
-		{
-			name:           "modify last tier to MaxInt64 should return early without change",
-			modifyLastTier: true,
-			tierIndex:      3,
-			newDuration:    math.MaxInt64,
-			expectPanic:    false,
-			validateAfter: func(t *testing.T) {
-				// Verify it's still MaxInt64 (no actual modification)
 				uassert.Equal(t, int64(math.MaxInt64), warmupTemplate[3].TimeDuration)
 			},
 		},
@@ -373,4 +360,98 @@ func TestModifyWarmupLastTierValidation(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestWarmupOverflowProtection(t *testing.T) {
+	t.Run("safeAddTime overflow handling", func(t *testing.T) {
+		tests := []struct {
+			name        string
+			currentTime int64
+			duration    int64
+			expected    int64
+		}{
+			{
+				name:        "normal addition",
+				currentTime: 1000,
+				duration:    2000,
+				expected:    3000,
+			},
+			{
+				name:        "MaxInt64 duration",
+				currentTime: 1000,
+				duration:    math.MaxInt64,
+				expected:    math.MaxInt64,
+			},
+			{
+				name:        "overflow case",
+				currentTime: math.MaxInt64 - 100,
+				duration:    200,
+				expected:    math.MaxInt64,
+			},
+			{
+				name:        "edge case at boundary",
+				currentTime: math.MaxInt64 - 1,
+				duration:    1,
+				expected:    math.MaxInt64,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				result := safeAddTime(tt.currentTime, tt.duration)
+				uassert.Equal(t, tt.expected, result,
+					ufmt.Sprintf("safeAddTime(%d, %d) should return %d, got %d",
+						tt.currentTime, tt.duration, tt.expected, result))
+			})
+		}
+	})
+
+	t.Run("instantiate warmup with overflow protection and last tier validation", func(t *testing.T) {
+		// Reset to default template
+		warmupTemplate = DefaultWarmupTemplate()
+
+		// Verify last tier has MaxInt64 duration
+		lastTier := warmupTemplate[len(warmupTemplate)-1]
+		if math.MaxInt64 != lastTier.TimeDuration {
+			t.Fatalf("Last tier must have MaxInt64 duration")
+		}
+
+		// Test case where currentTime is near MaxInt64
+		nearMaxTime := math.MaxInt64 - int64(86400) // MaxInt64 minus 1 day
+		warmups := instantiateWarmup(nearMaxTime)
+
+		// First few warmups should overflow to MaxInt64
+		for i := 0; i < len(warmups)-1; i++ {
+			if math.MaxInt64 != int64(warmups[i].NextWarmupTime) {
+				t.Fatalf("Warmup %d should overflow to MaxInt64", i)
+			}
+		}
+
+		// Last warmup should always be MaxInt64
+		if math.MaxInt64 != int64(warmups[len(warmups)-1].NextWarmupTime) {
+			t.Fatalf("Last warmup should always be MaxInt64")
+		}
+
+		// Test time progression scenarios
+		currentTime := int64(1000000)
+		normalWarmups := instantiateWarmup(currentTime)
+		lastWarmup := normalWarmups[len(normalWarmups)-1]
+
+		if math.MaxInt64 != lastWarmup.NextWarmupTime {
+			t.Fatalf("Last warmup NextWarmupTime must be MaxInt64")
+		}
+
+		// Simulate time progression - should never exceed last warmup
+		futureTime := currentTime + 86400*365*10 // 10 years later
+		deposit := &Deposit{warmups: normalWarmups}
+		warmupIndex := deposit.FindWarmup(futureTime)
+
+		uassert.Equal(t, len(normalWarmups)-1, warmupIndex,
+			"Should always find the last warmup tier for any future time")
+
+		// Even at MaxInt64-1, should still be in last tier
+		warmupIndex = deposit.FindWarmup(math.MaxInt64 - 1)
+		uassert.Equal(t, len(normalWarmups)-1, warmupIndex,
+			"Should be in last tier even at MaxInt64-1")
+	})
 }
