@@ -40,6 +40,11 @@ func RegisterRole(cur realm, roleName string, roleAddress std.Address) {
 
 	assertIsValidRoleName(roleName)
 
+	// Validate the role address
+	if !roleAddress.IsValid() || roleAddress == std.Address("") {
+		panic(ufmt.Sprintf("invalid address for role %s: %s", roleName, roleAddress))
+	}
+
 	err := manager.RegisterRole(roleName)
 	if err != nil {
 		panic(makeErrorWithDetails(
@@ -48,11 +53,12 @@ func RegisterRole(cur realm, roleName string, roleAddress std.Address) {
 		))
 	}
 
+	// Update the role address immediately after registration
 	err = manager.UpdateRoleAddress(roleName, roleAddress)
 	if err != nil {
 		panic(makeErrorWithDetails(
 			err,
-			ufmt.Sprintf("role name: %s, address: %s", roleName, roleAddress.String()),
+			ufmt.Sprintf("failed to set address for role %s: %s", roleName, roleAddress),
 		))
 	}
 
@@ -109,6 +115,7 @@ func UpdateRoleAddress(cur realm, roleName string, addr std.Address) {
 	}
 
 	updateAccessRoleAddresses(manager.GetRoleAddresses())
+
 	emitUpdateRoleAddressEvent(roleName, addr)
 }
 
