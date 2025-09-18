@@ -534,7 +534,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		)
 		if toUser > 0 {
 			if rewardToken == WUGNOT_PATH && unwrapResult {
-				tErr := unwrapWithTransfer(deposit.owner, toUser)
+				tErr := unwrapWithTransfer(deposit.owner, rewardToken, toUser)
 				if tErr != nil {
 					panic(tErr)
 				}

@@ -85,7 +85,7 @@ func ExactInSwapRoute(cur realm,
 	}
 
 	if params.IsUnwrap() {
-		err = unwrapWithTransfer(std.PreviousRealm().Address(), outputAmount.Int64())
+		err = unwrapWithTransfer(std.PreviousRealm().Address(), outputToken, outputAmount.Int64())
 		if err != nil {
 			panic(err)
 		}

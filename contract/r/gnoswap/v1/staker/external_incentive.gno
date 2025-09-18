@@ -171,7 +171,7 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 	// unwrap if wugnot
 	isUnwrap := incentive.rewardToken == WUGNOT_PATH
 	if isUnwrap {
-		transferErr := unwrapWithTransfer(incentive.refundee, refund)
+		transferErr := unwrapWithTransfer(incentive.refundee, incentive.rewardToken, refund)
 		if transferErr != nil {
 			panic(transferErr)
 		}

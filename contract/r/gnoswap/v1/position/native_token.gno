@@ -6,6 +6,7 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoland/wugnot"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 const (
@@ -152,9 +153,14 @@ func wrapWithTransfer(ugnotAmount int64, toAddress std.Address) error {
 	return nil
 }
 
-func unwrapWithTransferFrom(fromAddress, toAddress std.Address, wugnotAmount int64) error {
+func unwrapWithTransferFrom(fromAddress, toAddress std.Address, tokenPath string, wugnotAmount int64) error {
 	if wugnotAmount == 0 {
 		return nil
+	}
+
+	// Validate token is WUGNOT before unwrapping
+	if !common.IsWUGNOT(tokenPath) {
+		return ufmt.Errorf("cannot unwrap non-WUGNOT token: %s", tokenPath)
 	}
 
 	currentRealmAddr := std.CurrentRealm().Address()

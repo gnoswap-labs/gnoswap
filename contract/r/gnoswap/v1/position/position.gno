@@ -433,13 +433,13 @@ func collectFee(
 	}
 
 	if isWrappedToken(token0) && unwrapResult {
-		unwrapWithTransferFrom(poolAddr, caller, amount0WithoutFee)
+		unwrapWithTransferFrom(poolAddr, caller, token0, amount0WithoutFee)
 	} else {
 		common.SafeGRC20TransferFrom(cross, token0, poolAddr, caller, amount0WithoutFee)
 	}
 
 	if isWrappedToken(token1) && unwrapResult {
-		unwrapWithTransferFrom(poolAddr, caller, amount1WithoutFee)
+		unwrapWithTransferFrom(poolAddr, caller, token1, amount1WithoutFee)
 	} else {
 		common.SafeGRC20TransferFrom(cross, token1, poolAddr, caller, amount1WithoutFee)
 	}
