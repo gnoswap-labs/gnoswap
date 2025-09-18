@@ -42,6 +42,8 @@ func CreateExternalIncentive(
 	assertIsValidIncentiveStartTime(startTimestamp)
 	assertIsValidIncentiveEndTime(endTimestamp)
 	assertIsValidIncentiveDuration(endTimestamp - startTimestamp)
+	// assert that the user has sent the correct amount of native coin
+	assertIsValidUserCoinSend(rewardToken, rewardAmount)
 
 	en.MintAndDistributeGns(cross)
 
@@ -171,7 +173,7 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 	// unwrap if wugnot
 	isUnwrap := incentive.rewardToken == WUGNOT_PATH
 	if isUnwrap {
-		transferErr := unwrapWithTransfer(incentive.refundee, incentive.rewardToken, refund)
+		transferErr := unwrapWithTransfer(incentive.refundee, refund)
 		if transferErr != nil {
 			panic(transferErr)
 		}

@@ -534,7 +534,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		)
 		if toUser > 0 {
 			if common.IsGNOTWrappedPath(rewardToken) && unwrapResult {
-				tErr := unwrapWithTransfer(deposit.owner, rewardToken, toUser)
+				tErr := unwrapWithTransfer(deposit.owner, toUser)
 				if tErr != nil {
 					panic(tErr)
 				}

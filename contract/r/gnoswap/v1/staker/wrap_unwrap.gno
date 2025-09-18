@@ -6,7 +6,6 @@ import (
 	"gno.land/r/gnoland/wugnot"
 
 	"gno.land/p/nt/ufmt"
-	"gno.land/r/gnoswap/v1/common"
 )
 
 // wrapWithTransfer wraps GNOT into WUGNOT and transfers it to the specified address.
@@ -49,17 +48,9 @@ func wrapWithTransfer(toAddress std.Address, amount int64) error {
 }
 
 // unwrapWithTransfer unwraps WUGNOT to GNOT and sends it to the specified address.
-func unwrapWithTransfer(toAddress std.Address, rewardToken string, wugnotAmount int64) error {
+func unwrapWithTransfer(toAddress std.Address, wugnotAmount int64) error {
 	if wugnotAmount == 0 {
 		return nil
-	}
-
-	// Validate token is WUGNOT before unwrapping
-	if !common.IsGNOTWrappedPath(rewardToken) {
-		return makeErrorWithDetails(
-			errInvalidInput,
-			ufmt.Sprintf("cannot unwrap non-WUGNOT token: %s", rewardToken),
-		)
 	}
 
 	wugnot.Withdraw(cross, wugnotAmount)
@@ -72,17 +63,9 @@ func unwrapWithTransfer(toAddress std.Address, rewardToken string, wugnotAmount 
 }
 
 // unwrapWithTransferFrom transfers WUGNOT from a source address, unwraps it to GNOT, and sends it to the target.
-func unwrapWithTransferFrom(fromAddress, toAddress std.Address, tokenPath string, wugnotAmount int64) error {
+func unwrapWithTransferFrom(fromAddress, toAddress std.Address, wugnotAmount int64) error {
 	if wugnotAmount == 0 {
 		return nil
-	}
-
-	// Validate token is WUGNOT before unwrapping
-	if !common.IsGNOTWrappedPath(tokenPath) {
-		return makeErrorWithDetails(
-			errInvalidInput,
-			ufmt.Sprintf("cannot unwrap non-WUGNOT token: %s", tokenPath),
-		)
 	}
 
 	currentRealmAddr := std.CurrentRealm().Address()
