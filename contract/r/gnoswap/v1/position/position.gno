@@ -15,6 +15,7 @@ import (
 	"gno.land/r/gnoswap/referral"
 	"gno.land/r/gnoswap/v1/common"
 	pl "gno.land/r/gnoswap/v1/pool"
+	pf "gno.land/r/gnoswap/v1/protocol_fee"
 )
 
 var (
@@ -449,7 +450,11 @@ func collectFee(
 		panic("protocol fee address not found")
 	}
 
+	// handle withdrawal protocol fee
+	pf.AddToProtocolFee(cross, token0, fee0)
 	common.SafeGRC20TransferFrom(cross, token0, poolAddr, protocolFeeAddr, fee0)
+
+	pf.AddToProtocolFee(cross, token1, fee1)
 	common.SafeGRC20TransferFrom(cross, token1, poolAddr, protocolFeeAddr, fee1)
 
 	amount0WithoutFeeStr := formatInt(amount0WithoutFee)
