@@ -174,7 +174,7 @@ func AddToProtocolFee(cur realm, tokenPath string, amount int64) {
 	halt.AssertIsNotHaltedProtocolFee()
 
 	caller := std.PreviousRealm().Address()
-	assertIsPoolOrRouterOrStaker(caller)
+	assertIsPoolOrPositionOrRouterOrStaker(caller)
 
 	if amount < 0 {
 		panic(makeErrorWithDetail(
