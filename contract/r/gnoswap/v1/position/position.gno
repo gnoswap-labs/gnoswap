@@ -15,6 +15,7 @@ import (
 	"gno.land/r/gnoswap/referral"
 	"gno.land/r/gnoswap/v1/common"
 	pl "gno.land/r/gnoswap/v1/pool"
+	pf "gno.land/r/gnoswap/v1/protocol_fee"
 )
 
 var (
@@ -68,6 +69,8 @@ func Mint(
 		assertEqualsAddress(previousRealm.Address(), caller)
 	}
 
+	// assert that the user has sent the correct amount of native coin
+	assertIsValidUserCoinSendWithTokenPair(token0, token1, amount0Desired, amount1Desired)
 	assertIsNotExpired(deadline)
 
 	referral.TryRegister(cross, caller, referrer)
@@ -184,6 +187,10 @@ func IncreaseLiquidity(
 
 	position := MustGetPosition(positionId)
 	token0, token1, _ := splitOf(position.poolKey)
+
+	// assert that the user has sent the correct amount of native coin
+	assertIsValidUserCoinSendWithTokenPair(token0, token1, amount0DesiredStr, amount1DesiredStr)
+
 	err := validateTokenPath(token0, token1)
 	if err != nil {
 		panic(newErrorWithDetail(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
@@ -449,7 +456,11 @@ func collectFee(
 		panic("protocol fee address not found")
 	}
 
+	// handle withdrawal protocol fee
+	pf.AddToProtocolFee(cross, token0, fee0)
 	common.SafeGRC20TransferFrom(cross, token0, poolAddr, protocolFeeAddr, fee0)
+
+	pf.AddToProtocolFee(cross, token1, fee1)
 	common.SafeGRC20TransferFrom(cross, token1, poolAddr, protocolFeeAddr, fee1)
 
 	amount0WithoutFeeStr := formatInt(amount0WithoutFee)

@@ -4,9 +4,10 @@ import (
 	"std"
 	"time"
 
-	ufmt "gno.land/p/nt/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
+	ufmt "gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 // assertIsNotExpired panics if the deadline is expired.
@@ -108,4 +109,21 @@ func assertSlippageIsNotExceeded(amount0, amount1, amount0Min, amount1Min *u256.
 				amount0.ToString(), amount0Min.ToString(), amount1.ToString(), amount1Min.ToString()),
 		))
 	}
+}
+
+// assertIsValidUserCoinSendWithTokenPair asserts that the user has sent the correct amount of native coin.
+func assertIsValidUserCoinSendWithTokenPair(token0, token1 string, amount0, amount1 string) {
+	if common.IsGNOTNativePath(token0) {
+		common.AssertIsUserSendGNOTAmount(mustParseInt64(amount0))
+
+		return
+	}
+
+	if common.IsGNOTNativePath(token1) {
+		common.AssertIsUserSendGNOTAmount(mustParseInt64(amount1))
+
+		return
+	}
+
+	common.AssertIsNotHandleNativeCoin()
 }
