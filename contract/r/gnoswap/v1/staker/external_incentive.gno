@@ -42,6 +42,8 @@ func CreateExternalIncentive(
 	assertIsValidIncentiveStartTime(startTimestamp)
 	assertIsValidIncentiveEndTime(endTimestamp)
 	assertIsValidIncentiveDuration(endTimestamp - startTimestamp)
+	// assert that the user has sent the correct amount of native coin
+	assertIsValidUserCoinSend(rewardToken, rewardAmount)
 
 	en.MintAndDistributeGns(cross)
 
