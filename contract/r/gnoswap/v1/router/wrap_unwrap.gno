@@ -4,6 +4,7 @@ import (
 	"std"
 
 	"gno.land/r/gnoland/wugnot"
+	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/p/nt/ufmt"
 )
@@ -60,9 +61,22 @@ func wrapWithTransfer(toAddress std.Address, amount int64) error {
 }
 
 // unwrapWithTransferFrom transfers WUGNOT from a source address, unwraps it to GNOT, and sends it to the target.
-func unwrapWithTransferFrom(fromAddress, toAddress std.Address, wugnotAmount int64) error {
+func unwrapWithTransferFrom(fromAddress, toAddress std.Address, tokenPath string, wugnotAmount int64) error {
 	if wugnotAmount == 0 {
 		return nil
+	}
+
+	// In router, "gnot" represents native token that needs unwrapping from WUGNOT
+	if tokenPath == "gnot" {
+		tokenPath = WUGNOT_PATH
+	}
+
+	// Validate token is WUGNOT before unwrapping
+	if !common.IsWUGNOT(tokenPath) {
+		return makeErrorWithDetails(
+			errInvalidInput,
+			ufmt.Sprintf("cannot unwrap non-WUGNOT token: %s", tokenPath),
+		)
 	}
 
 	currentRealmAddr := std.CurrentRealm().Address()
@@ -80,9 +94,22 @@ func unwrapWithTransferFrom(fromAddress, toAddress std.Address, wugnotAmount int
 }
 
 // unwrapWithTransfer unwraps WUGNOT to GNOT and sends it to the specified address.
-func unwrapWithTransfer(toAddress std.Address, amount int64) error {
+func unwrapWithTransfer(toAddress std.Address, tokenPath string, amount int64) error {
 	if amount <= 0 {
 		return nil
+	}
+
+	// In router, "gnot" represents native token that needs unwrapping from WUGNOT
+	if tokenPath == "gnot" {
+		tokenPath = WUGNOT_PATH
+	}
+
+	// Validate token is WUGNOT before unwrapping
+	if !common.IsWUGNOT(tokenPath) {
+		return makeErrorWithDetails(
+			errInvalidInput,
+			ufmt.Sprintf("cannot unwrap non-WUGNOT token: %s", tokenPath),
+		)
 	}
 
 	// unwrap wugnot to gnot

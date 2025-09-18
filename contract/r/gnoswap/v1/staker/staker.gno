@@ -533,8 +533,8 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 			"currentHeight", formatInt(blockHeight),
 		)
 		if toUser > 0 {
-			if unwrapResult {
-				tErr := unwrapWithTransfer(deposit.owner, toUser)
+			if rewardToken == WUGNOT_PATH && unwrapResult {
+				tErr := unwrapWithTransfer(deposit.owner, rewardToken, toUser)
 				if tErr != nil {
 					panic(tErr)
 				}

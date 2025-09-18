@@ -86,7 +86,7 @@ func (h *GnotSwapHandler) HandleInputSwap() error {
 	toUnwrap := h.WrappedAmount - spend
 
 	caller := std.PreviousRealm().Address()
-	return unwrapWithTransferFrom(caller, caller, toUnwrap)
+	return unwrapWithTransferFrom(caller, caller, WUGNOT_PATH, toUnwrap)
 }
 
 // SwapValidator provides validation methods for swap operations
