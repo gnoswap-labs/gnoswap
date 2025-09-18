@@ -7,10 +7,10 @@ import (
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 
-	"gno.land/r/demo/foo20"
+	"gno.land/r/demo/defi/foo20"
 )
 
-var tokenPath = "gno.land/r/demo/foo20"
+var tokenPath = "gno.land/r/demo/defi/foo20"
 
 func TestGetToken(t *testing.T) {
 	t.Run("get regsitered token", func(t *testing.T) {

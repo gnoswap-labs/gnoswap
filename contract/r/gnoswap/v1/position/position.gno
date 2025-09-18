@@ -69,6 +69,8 @@ func Mint(
 		assertEqualsAddress(previousRealm.Address(), caller)
 	}
 
+	// assert that the user has sent the correct amount of native coin
+	assertIsValidUserCoinSendWithTokenPair(token0, token1, amount0Desired, amount1Desired)
 	assertIsNotExpired(deadline)
 
 	referral.TryRegister(cross, caller, referrer)
@@ -185,6 +187,10 @@ func IncreaseLiquidity(
 
 	position := MustGetPosition(positionId)
 	token0, token1, _ := splitOf(position.poolKey)
+
+	// assert that the user has sent the correct amount of native coin
+	assertIsValidUserCoinSendWithTokenPair(token0, token1, amount0DesiredStr, amount1DesiredStr)
+
 	err := validateTokenPath(token0, token1)
 	if err != nil {
 		panic(newErrorWithDetail(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
