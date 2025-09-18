@@ -55,7 +55,7 @@ func (p *Pool) safeTransfer(
 	}
 	amountInt64 := safeConvertToInt64(absAmount)
 
-	checkTransferError(common.Transfer(cross, tokenPath, to, amountInt64))
+	common.SafeGRC20Transfer(cross, tokenPath, to, amountInt64)
 
 	newBalance, err := updatePoolBalance(token0, token1, absAmount, isToken0)
 	if err != nil {
@@ -112,7 +112,7 @@ func (p *Pool) safeTransferFrom(
 	token := common.GetToken(tokenPath)
 	beforeBalance := token.BalanceOf(to)
 
-	checkTransferError(common.TransferFrom(cross, tokenPath, from, to, amountInt64))
+	common.SafeGRC20TransferFrom(cross, tokenPath, from, to, amountInt64)
 
 	afterBalance := token.BalanceOf(to)
 	if (beforeBalance + amountInt64) != afterBalance {

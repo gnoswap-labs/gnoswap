@@ -52,7 +52,7 @@ func swapInner(
 
 	// approves pool as spender
 	if data.hasNext {
-		common.Approve(cross, data.tokenOut, poolAddr, poolOut.Int64())
+		common.SafeGRC20Approve(cross, data.tokenOut, poolAddr, poolOut.Int64())
 	}
 
 	return poolRecv, poolOut
