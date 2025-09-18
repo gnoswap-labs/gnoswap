@@ -300,6 +300,13 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 
 	// check pool path from positionId
 	poolPath := pn.PositionGetPositionPoolKey(positionId)
+
+	// check pool has internal or external incentives
+	err = poolHasIncentives(poolPath)
+	if err != nil {
+		panic(err.Error())
+	}
+
 	pool, ok := pools.Get(poolPath)
 	if !ok {
 		panic(makeErrorWithDetails(
@@ -391,10 +398,6 @@ func getPositionStakeTokenAmount(positionId uint64, owner, caller std.Address) (
 	}
 
 	poolPath := pn.PositionGetPositionPoolKey(positionId)
-	if err := poolHasIncentives(poolPath); err != nil {
-		return "", "", err
-	}
-
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(poolPath, positionId)
 
 	return token0Amount, token1Amount, nil
@@ -536,7 +539,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 					panic(tErr)
 				}
 			} else {
-				common.Transfer(cross, rewardToken, deposit.owner, toUser)
+				common.SafeGRC20Transfer(cross, rewardToken, deposit.owner, toUser)
 			}
 		}
 
@@ -714,9 +717,7 @@ func applyUnStake(positionId uint64) error {
 
 	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
 	caller := std.PreviousRealm().Address()
-
-	_, _, err := getPositionStakeTokenAmount(positionId, owner, caller)
-	if err != nil {
+	if err := hasTokenOwnership(owner, caller); err != nil {
 		return err
 	}
 
