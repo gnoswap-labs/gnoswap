@@ -273,28 +273,7 @@ func emissionCacheUpdateHook() func() {
 				poolTier.currentEmission = newEmission
 
 				// Now apply the new emission rate to each pool individually
-				counts := poolTier.CurrentAllTierCounts()
-				poolTier.membership.Iterate("", "", func(key string, value any) bool {
-					pool, ok := pools.Get(key)
-					if !ok {
-						return false
-					}
-
-					tierNum, ok := value.(uint64)
-					if !ok {
-						panic("failed to cast value to uint64")
-					}
-					tierRatio := int64(poolTier.tierRatio.Get(tierNum))
-					tierCount := int64(counts[tierNum])
-
-					if tierCount == 0 {
-						return false
-					}
-
-					poolReward := newEmission * tierRatio / 100 / tierCount
-					pool.cacheReward(currentTime, poolReward)
-					return false
-				})
+				poolTier.applyCacheToAllPools(pools, currentTime, newEmission)
 			}
 		}(cross)
 	}
