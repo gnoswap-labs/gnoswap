@@ -130,6 +130,7 @@ func mintAlicePosition() {
 	gns.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position for Alice")
+	testing.SetOriginSend(std.Coins{})
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross,
 		token0Path,

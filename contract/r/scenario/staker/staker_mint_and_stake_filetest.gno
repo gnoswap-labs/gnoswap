@@ -115,8 +115,8 @@ func mintAndStakeNative() {
 
 	testing.SkipHeights(2)
 
-	println("[INFO] prepare 100005 ugnot (5 for refund test)")
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100005}})
+	println("[INFO] prepare 100000 ugnot")
+	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100000}})
 
 	ugnotBalance := ugnotBalanceOf(adminAddr)
 	ufmt.Printf("[INFO] admin ugnot balance before: %d\n", ugnotBalance)
@@ -126,13 +126,14 @@ func mintAndStakeNative() {
 
 	println("[INFO] send ugnot to staker and set origin send")
 	banker := std.NewBanker(std.BankerTypeRealmIssue)
-	banker.SendCoins(adminAddr, stakerAddr, std.Coins{{"ugnot", 100005}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 100005}})
+	banker.SendCoins(adminAddr, stakerAddr, std.Coins{{"ugnot", 100000}})
+	testing.SetOriginSend(std.Coins{{"ugnot", 100000}})
 
 	adminOldWugnotBalance := wugnot.BalanceOf(adminUser)
 	ufmt.Printf("[INFO] admin wugnot balance before mint and stake: %d\n", adminOldWugnotBalance)
 
 	println("[INFO] mint and stake native position")
+	testing.SetOriginSend(std.Coins{{"ugnot", 100000}})
 	lpTokenId, liquidity, amount0, amount1, poolPath := sr.MintAndStake(
 		cross,
 		"gnot",
@@ -234,8 +235,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 3. Mint and stake native token position
 // [INFO] approve tokens for native mint and stake
-// [INFO] prepare 100005 ugnot (5 for refund test)
-// [INFO] admin ugnot balance before: 100005
+// [INFO] prepare 100000 ugnot
+// [INFO] admin ugnot balance before: 100000
 // [INFO] position contract ugnot balance before: 0
 // [INFO] send ugnot to staker and set origin send
 // [INFO] admin wugnot balance before mint and stake: 0
@@ -245,7 +246,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] amount0: 100000, amount1: 100000
 // [EXPECTED] pool path: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000
 // [EXPECTED] admin wugnot balance after: 0
-// [EXPECTED] admin ugnot balance after (refund): 5
+// [EXPECTED] admin ugnot balance after (refund): 0
 //
 // [SCENARIO] 4. Mint and stake GRC20 pair position
 // [INFO] approve tokens for GRC20 mint and stake
