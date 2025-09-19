@@ -64,6 +64,7 @@ func ExactInSwapRoute(cur realm,
 ) (string, string) {
 	halt.AssertIsNotHaltedRouter()
 
+	assertIsValidUserCoinSend(inputToken, amountIn)
 	assertIsNotPassedDeadline(deadline)
 
 	emission.MintAndDistributeGns(cross)
