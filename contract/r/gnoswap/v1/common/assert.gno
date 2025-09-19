@@ -5,7 +5,7 @@ func AssertIsUserSendGNOTAmount(amount int64) {
 		panic(errNotSupportedCoins)
 	}
 
-	if !isUserSendGNOTAmount(amount) {
+	if !isUserSendGNOTAmount(amount) && amount > 0 {
 		panic(errInvalidGNOTAmount)
 	}
 }
