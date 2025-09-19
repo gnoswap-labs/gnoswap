@@ -197,13 +197,13 @@ func IncreaseLiquidity(
 	}
 
 	wrappedAmount := int64(0)
-	if isWrappedToken(token0) {
+	if common.IsGNOTNativePath(token0) {
 		amount0DesiredInt := mustParseInt64(amount0DesiredStr)
 		wrappedAmount, err = safeWrapNativeToken(amount0DesiredInt, caller)
 		if err != nil {
 			panic(err)
 		}
-	} else if isWrappedToken(token1) {
+	} else if common.IsGNOTNativePath(token1) {
 		amount1DesiredInt := mustParseInt64(amount1DesiredStr)
 		wrappedAmount, err = safeWrapNativeToken(amount1DesiredInt, caller)
 		if err != nil {

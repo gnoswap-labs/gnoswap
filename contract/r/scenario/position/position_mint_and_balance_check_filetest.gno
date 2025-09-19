@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/ufmt"
-	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
@@ -22,7 +22,7 @@ import (
 
 const (
 	INT64_MAX   int64       = 9223372036854775807
-	WUGNOT_ADDR std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+	WUGNOT_ADDR std.Address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 )
 
 var (

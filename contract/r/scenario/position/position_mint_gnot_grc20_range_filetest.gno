@@ -26,7 +26,7 @@ const (
 	INT64_MAX int64  = 9223372036854775807
 	MIN_PRICE string = "4295128740"
 
-	WUGNOT_ADDR std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+	WUGNOT_ADDR std.Address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 )
 
 var (
