@@ -119,7 +119,7 @@ func initSystem() {
 	bar.Transfer(cross, user1Addr, 1_000_000)
 	baz.Transfer(cross, user1Addr, 1_000_000)
 
-	ufmt.Printf("[EXPECTED] Initial distribution set to 75%% for stakers\n")
+	println("[EXPECTED] Initial distribution set to 75% for stakers")
 	ufmt.Printf("[EXPECTED] Current staker emission per second: %d\n", emission.GetStakerEmissionAmountPerSecond())
 }
 
@@ -205,29 +205,36 @@ func waitWithoutInteraction() {
 	testing.SkipHeights(100)
 
 	ufmt.Printf("[EXPECTED] Waited 100 blocks without user interaction\n")
-	ufmt.Printf("[EXPECTED] Cached emission in staker should still be at old 75%% rate\n")
+	ufmt.Printf("[INFO] With the hook fix, cache should now be automatically updated to 50%% rate\n")
 }
 
 func collectWithStaleRate() {
 	testing.SetRealm(adminRealm)
 
-	// Collect rewards - should use stale cached rate
+	// Collect rewards - should now use correct cached rate after hook update
 	beforeGns := gns.BalanceOf(adminUser)
 	sr.CollectReward(cross, 1, false)
 	afterGns := gns.BalanceOf(adminUser)
 	staleRateReward = afterGns - beforeGns
 
-	// Calculate expected reward if rate was correctly updated to 50%
-	expectedRewardAt50Pct := initialReward * 50 / 75
-	difference := staleRateReward - expectedRewardAt50Pct
-	differencePercent := difference * 100 / expectedRewardAt50Pct
+	// Calculate expected rewards at different rates (same time period as initial)
+	expectedRewardAt75Pct := initialReward  // Should be similar to initial if still at 75%
+	expectedRewardAt50Pct := initialReward * 50 / 75  // Expected if properly at 50%
 
-	ufmt.Printf("[EXPECTED] Reward collected with stale rate: %d GNS\n", staleRateReward)
-	ufmt.Printf("[INFO] This reward was calculated using the old 75%% rate, not the new 50%% rate\n")
-	println()
-	ufmt.Printf("[LOG] Expected reward at 50%% rate: %d GNS\n", expectedRewardAt50Pct)
+	// Determine which rate was actually used
+	isUsingCorrectRate := (staleRateReward < (expectedRewardAt75Pct * 80 / 100))  // Less than 80% of 75% rate suggests 50% rate
+
+	ufmt.Printf("[EXPECTED] Reward collected after rate change: %d GNS\n", staleRateReward)
+	println("[INFO] The hook should have updated the cache to use the new 50% rate")
+	ufmt.Printf("[LOG] Expected at 75%% rate: ~%d GNS\n", expectedRewardAt75Pct)
+	ufmt.Printf("[LOG] Expected at 50%% rate: ~%d GNS\n", expectedRewardAt50Pct)
 	ufmt.Printf("[LOG] Actual reward received: %d GNS\n", staleRateReward)
-	ufmt.Printf("[LOG] Excess reward due to stale cache: %d GNS (%d%% more than expected)\n", difference, differencePercent)
+
+	if isUsingCorrectRate {
+		println("[EXPECTED] Cache correctly updated to 50% rate")
+	} else {
+		println("[RESULT] FAILED: Cache still using stale 75%% rate")
+	}
 }
 
 func newUserStakes() {
@@ -259,7 +266,7 @@ func newUserStakes() {
 	sr.StakeToken(cross, 2, "")
 
 	ufmt.Printf("[EXPECTED] New user staked position %d\n", positionId)
-	ufmt.Printf("[INFO] This staking action triggers cache update to correct 50%% rate\n")
+	println("[INFO] This staking action triggers cache update to correct 50% rate")
 }
 
 func collectWithCorrectRate() {
@@ -268,30 +275,25 @@ func collectWithCorrectRate() {
 	// Skip some blocks
 	testing.SkipHeights(100)
 
-	// Collect rewards - should now use correct rate
+	// Collect rewards - should still use correct rate after new user stakes
 	beforeGns := gns.BalanceOf(adminUser)
 	sr.CollectReward(cross, 1, false)
 	afterGns := gns.BalanceOf(adminUser)
 	correctReward := afterGns - beforeGns
 
-	// Calculate expected relationship between rewards
-	// Note: Due to new user staking, pool share is diluted
-	// So we compare the rate reduction instead of absolute values
-	reductionFromInitial := (initialReward - correctReward) * 100 / initialReward
-	reductionFromStale := (staleRateReward - correctReward) * 100 / staleRateReward
-
-	// Calculate what the reward should be if only rate changed (no dilution)
-	theoreticalRewardAt50Pct := staleRateReward * 50 / 75
-	dilutionEffect := theoreticalRewardAt50Pct - correctReward
-	dilutionPercent := dilutionEffect * 100 / theoreticalRewardAt50Pct
-
-	ufmt.Printf("[EXPECTED] Reward collected with correct rate: %d GNS\n", correctReward)
+	ufmt.Printf("[EXPECTED] Reward collected after new user stakes: %d GNS\n", correctReward)
 	println()
-	ufmt.Printf("[LOG] Reduction from initial reward: %d%%\n", reductionFromInitial)
-	ufmt.Printf("[LOG] Reduction from stale rate reward: %d%%\n", reductionFromStale)
-	ufmt.Printf("[LOG] Theoretical reward at 50%% (no dilution): %d GNS\n", theoreticalRewardAt50Pct)
-	ufmt.Printf("[LOG] Actual reward received: %d GNS\n", correctReward)
-	ufmt.Printf("[LOG] Dilution effect from new staker: %d GNS (%d%% dilution)\n", dilutionEffect, dilutionPercent)
+	ufmt.Printf("[LOG] Initial reward (75%% rate, alone): %d GNS\n", initialReward)
+	ufmt.Printf("[LOG] Previous collection (50%% rate, alone): %d GNS\n", staleRateReward)
+	ufmt.Printf("[LOG] Current reward (50%% rate, shared pool): %d GNS\n", correctReward)
+
+	// Verify the rate is still correctly at 50%
+	isStillAt50Rate := correctReward < staleRateReward
+	if isStillAt50Rate {
+		println("[EXPECTED] Still using correct 50% rate after new user stakes")
+	} else {
+		println("[RESULT] FAILED: Rate calculation error detected")
+	}
 }
 
 func positionIdFrom(positionId any) grc721.TokenID {
@@ -327,25 +329,24 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 5. Wait without any user interaction
 // [EXPECTED] Waited 100 blocks without user interaction
-// [EXPECTED] Cached emission in staker should still be at old 75% rate
+// [INFO] With the hook fix, cache should now be automatically updated to 50% rate
 //
 // [SCENARIO] 6. Collect rewards (should use stale 75% rate)
-// [EXPECTED] Reward collected with stale rate: 401326949 GNS
-// [INFO] This reward was calculated using the old 75% rate, not the new 50% rate
-//
-// [LOG] Expected reward at 50% rate: 267016196 GNS
-// [LOG] Actual reward received: 401326949 GNS
-// [LOG] Excess reward due to stale cache: 134310753 GNS (50% more than expected)
+// [EXPECTED] Reward collected after rate change: 267551249 GNS
+// [INFO] The hook should have updated the cache to use the new 50% rate
+// [LOG] Expected at 75% rate: ~400524295 GNS
+// [LOG] Expected at 50% rate: ~267016196 GNS
+// [LOG] Actual reward received: 267551249 GNS
+// [EXPECTED] Cache correctly updated to 50% rate
 //
 // [SCENARIO] 7. New user stakes (triggers cache update)
 // [EXPECTED] New user staked position 2
 // [INFO] This staking action triggers cache update to correct 50% rate
 //
 // [SCENARIO] 8. Collect rewards again (should use correct 50% rate)
-// [EXPECTED] Reward collected with correct rate: 243228412 GNS
+// [EXPECTED] Reward collected after new user stakes: 243228412 GNS
 //
-// [LOG] Reduction from initial reward: 39%
-// [LOG] Reduction from stale rate reward: 39%
-// [LOG] Theoretical reward at 50% (no dilution): 267551299 GNS
-// [LOG] Actual reward received: 243228412 GNS
-// [LOG] Dilution effect from new staker: 24322887 GNS (9% dilution)
+// [LOG] Initial reward (75% rate, alone): 400524295 GNS
+// [LOG] Previous collection (50% rate, alone): 267551249 GNS
+// [LOG] Current reward (50% rate, shared pool): 243228412 GNS
+// [EXPECTED] Still using correct 50% rate after new user stakes

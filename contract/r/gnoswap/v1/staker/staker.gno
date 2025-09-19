@@ -262,13 +262,39 @@ func emissionCacheUpdateHook() func() {
 	return func() {
 		func(cur realm) {
 			if poolTier != nil {
-				// Update the current emission cache with the latest value
-				poolTier.currentEmission = en.GetStakerEmissionAmountPerSecond()
-
-				// Also cache rewards to apply the new emission rate immediately
 				currentTime := time.Now().Unix()
 				currentHeight := std.ChainHeight()
+
+				// First cache the current rewards before updating emission
 				poolTier.cacheReward(currentHeight, currentTime, pools)
+
+				// Update the current emission cache with the latest value
+				newEmission := en.GetStakerEmissionAmountPerSecond()
+				poolTier.currentEmission = newEmission
+
+				// Now apply the new emission rate to each pool individually
+				counts := poolTier.CurrentAllTierCounts()
+				poolTier.membership.Iterate("", "", func(key string, value any) bool {
+					pool, ok := pools.Get(key)
+					if !ok {
+						return false
+					}
+
+					tierNum, ok := value.(uint64)
+					if !ok {
+						panic("failed to cast value to uint64")
+					}
+					tierRatio := int64(poolTier.tierRatio.Get(tierNum))
+					tierCount := int64(counts[tierNum])
+
+					if tierCount == 0 {
+						return false
+					}
+
+					poolReward := newEmission * tierRatio / 100 / tierCount
+					pool.cacheReward(currentTime, poolReward)
+					return false
+				})
 			}
 		}(cross)
 	}
