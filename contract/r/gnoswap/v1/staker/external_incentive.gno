@@ -238,6 +238,8 @@ func endExternalIncentive(pool *Pool, incentiveId string, caller std.Address, cu
 	// Always calculate unclaimed rewards since this function is called only once
 	refund := incentive.rewardLeft
 	refund += pool.incentives.calculateUnclaimableReward(incentive.incentiveId)
+	// Add dust amount from precision loss to refund
+	refund += incentive.rewardDust
 
 	return incentive, refund, nil
 }
