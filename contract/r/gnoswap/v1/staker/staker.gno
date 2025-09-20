@@ -371,9 +371,11 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 	pn.SetPositionOperator(cross, positionId, caller)
 
 	signedLiquidity := i256.FromUint256(liquidity)
-	isInRange := false
-	poolTier.cacheReward(currentTime, currentTime, pools)
 
+	currentHeight := std.ChainHeight()
+	poolTier.cacheReward(currentHeight, currentTime, pools)
+
+	isInRange := false
 	if pn.PositionIsInRange(positionId) {
 		isInRange = true
 		pool.modifyDeposit(signedLiquidity, currentTime, currentTick)
