@@ -157,6 +157,8 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 // Get the latest global reward ratio accumulation in [0, currentTime] range.
 // Returns the time and the accumulation.
 func (self *Pool) CurrentGlobalRewardRatioAccumulation(currentTime int64) (time int64, acc *u256.Uint) {
+	acc = u256.Zero()
+
 	self.globalRewardRatioAccumulation.ReverseIterate(0, currentTime, func(key int64, value any) bool {
 		time = key
 		v, ok := value.(*u256.Uint)
@@ -187,6 +189,8 @@ func (self *Pool) CurrentTick(currentTime int64) (tick int32) {
 }
 
 func (self *Pool) CurrentStakedLiquidity(currentTime int64) (liquidity *u256.Uint) {
+	liquidity = u256.Zero()
+
 	self.stakedLiquidity.ReverseIterate(0, currentTime, func(key int64, value any) bool {
 		res, ok := value.(*u256.Uint)
 		if !ok {
