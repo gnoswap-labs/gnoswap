@@ -26,7 +26,7 @@ var (
 )
 
 const (
-	MaxBpsValue = uint64(10000)
+	MaxBpsValue = uint64(1000) // 10%
 	ZeroBps     = uint64(0)
 )
 
@@ -164,7 +164,7 @@ func calculateAmountWithFee(amount, fee *u256.Uint) (feeAmount, afterAmount *u25
 	feeAmount = u256.Zero().Mul(amount, fee)
 	feeAmount = u256.Zero().Div(feeAmount, u256.NewUint(MaxBpsValue))
 	afterAmount = u256.Zero().Sub(amount, feeAmount)
-	return
+	return feeAmount, afterAmount
 }
 
 // setPoolCreationFee this function is internal function called by SetPoolCreationFee
@@ -189,7 +189,7 @@ func setWithdrawalFee(fee uint64) error {
 	if fee > MaxBpsValue {
 		return makeErrorWithDetails(
 			errInvalidWithdrawalFeePct,
-			ufmt.Sprintf("fee(%d) must be in range 0 ~ 10000", fee),
+			ufmt.Sprintf("fee(%d) must be in range 0 ~ %d", fee, MaxBpsValue),
 		)
 	}
 
