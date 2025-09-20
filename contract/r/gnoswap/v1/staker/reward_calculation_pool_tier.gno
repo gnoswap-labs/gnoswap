@@ -282,7 +282,10 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentTimestamp, emiss
 
 	// apply cache to all pools
 	self.membership.Iterate("", "", func(key string, value any) bool {
-		tierNum := value.(uint64)
+		tierNum, ok := value.(uint64)
+		if !ok {
+			panic("failed to cast value to uint64")
+		}
 		pool, ok := pools.Get(key)
 		if !ok {
 			return false

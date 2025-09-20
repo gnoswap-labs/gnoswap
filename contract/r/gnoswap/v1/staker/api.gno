@@ -27,7 +27,10 @@ func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 	// HANDLE EXTERNAL
 	if pool.IsExternallyIncentivizedPool() {
 		pool.incentives.incentives.Iterate("", "", func(key string, value any) bool {
-			ictv := value.(*ExternalIncentive)
+			ictv, ok := value.(*ExternalIncentive)
+			if !ok {
+				panic("failed to cast value to *ExternalIncentive")
+			}
 			if ictv.RewardToken() == "" {
 				return false
 			}
@@ -52,9 +55,15 @@ func ApiGetExternalIncentives() string {
 	apiExternalIncentives := []ApiExternalIncentive{}
 
 	pools.tree.Iterate("", "", func(key string, value any) bool {
-		pool := value.(*Pool)
+		pool, ok := value.(*Pool)
+		if !ok {
+			panic("failed to cast value to *Pool")
+		}
 		pool.incentives.incentives.Iterate("", "", func(key string, value any) bool {
-			ictv := value.(*ExternalIncentive)
+			ictv, ok := value.(*ExternalIncentive)
+			if !ok {
+				panic("failed to cast value to *ExternalIncentive")
+			}
 			externalIctv := newApiExternalIncentive(ictv)
 			apiExternalIncentives = append(apiExternalIncentives, externalIctv)
 			return false
@@ -185,7 +194,10 @@ func ApiGetInternalIncentivesByTiers(targetTier uint64) string {
 
 	poolTier.membership.Iterate("", "", func(key string, value any) bool {
 		poolPath := key
-		internalTier := value.(uint64)
+		internalTier, ok := value.(uint64)
+		if !ok {
+			panic("failed to cast value to uint64")
+		}
 		if internalTier != targetTier {
 			return false
 		}
