@@ -1,13 +1,15 @@
 package pool
 
 import (
+	"errors"
 	"strconv"
 	"strings"
+	"time"
 
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/ufmt"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/ufmt"
 )
 
 type Balances struct {
@@ -79,7 +81,7 @@ type Pool struct {
 	tickBitmaps          *avl.Tree  // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(*u256.Uint)
 	positions            *avl.Tree  // maps the key (caller, lower tick, upper tick) to a unique position
 
-	observation *Observation
+	observationState *ObservationState // oracle state with historical observations
 }
 
 func (p *Pool) PoolPath() string                 { return GetPoolPath(p.token0Path, p.token1Path, p.fee) }
@@ -100,7 +102,6 @@ func (p *Pool) FeeGrowthGlobal1X128() *u256.Uint { return p.feeGrowthGlobal1X128
 func (p *Pool) ProtocolFeesToken0() *u256.Uint   { return p.protocolFees.token0 }
 func (p *Pool) ProtocolFeesToken1() *u256.Uint   { return p.protocolFees.token1 }
 func (p *Pool) Liquidity() *u256.Uint            { return p.liquidity }
-func (p *Pool) Observation() *Observation        { return p.observation }
 
 func (p *Pool) Ticks() string {
 	if p.ticks == nil {
@@ -209,64 +210,117 @@ func (p *Pool) Clone() *Pool {
 		ticks:                ticks,
 		tickBitmaps:          tickBitmaps,
 		positions:            positions,
-		observation: &Observation{
-			lastCumulativeUpdateTime: p.observation.lastCumulativeUpdateTime,
-			tickCumulative:           p.observation.tickCumulative,
-			liquidityCumulative:      u256.Zero().Set(p.observation.liquidityCumulative),
-		},
+		observationState:     newObservationState(time.Now().Unix()),
 	}
 }
 
-func (p *Pool) calculateTickCumulative(currentTime int64) (int64, *u256.Uint, int64) {
-	// calculate time delta
-	observation := p.Observation()
-	timeDelta := currentTime - observation.lastCumulativeUpdateTime
-	if timeDelta <= 0 {
-		return observation.tickCumulative, observation.liquidityCumulative, observation.lastCumulativeUpdateTime
+// writeObservation writes a new observation to the oracle
+func (p *Pool) writeObservation(currentTime int64, tick int32, liquidity *u256.Uint) error {
+	if p.observationState == nil {
+		p.observationState = newObservationState(currentTime)
+
+		return nil
 	}
 
-	// update cumulative values (only price is used)
-	// sqrtPriceCumulativeX96 = sqrtPriceCumulativeX96 + sqrtPriceX96 * timeDelta
-	tickDelta := int64(p.slot0.Tick()) * timeDelta
-
-	// liquidityCumulative = liquidityCumulative + liquidity * timeDelta
-	liquidityDelta := u256.Zero().Mul(p.liquidity, u256.NewUintFromInt64(timeDelta))
-
-	tickCumulative := observation.tickCumulative + tickDelta
-	liquidityCumulative := u256.Zero().Add(observation.liquidityCumulative, liquidityDelta)
-	lastCumulativeUpdateTime := currentTime
-
-	return tickCumulative, liquidityCumulative, lastCumulativeUpdateTime
-}
-
-// updatePriceCumulatives updates cumulative price values when pool price changes
-// This should be called whenever the pool's price changes (swap, mint, burn)
-func (p *Pool) updatePriceCumulatives(currentTime int64) {
-	if currentTime < p.observation.lastCumulativeUpdateTime {
-		return
+	err := p.observationState.write(currentTime, tick, liquidity)
+	if err != nil {
+		return err
 	}
 
-	tickCumulative, liquidityCumulative, lastCumulativeUpdateTime := p.calculateTickCumulative(currentTime)
-
-	p.observation.liquidityCumulative = liquidityCumulative
-	p.observation.tickCumulative = tickCumulative
-	p.observation.lastCumulativeUpdateTime = lastCumulativeUpdateTime
+	return nil
 }
 
-type Observation struct {
-	lastCumulativeUpdateTime int64      // last cumulative update time (in seconds)
-	tickCumulative           int64      // cumulative tick
-	liquidityCumulative      *u256.Uint // cumulative liquidity (time-weighted average calculation)
-}
-
-func (t *Observation) LastCumulativeUpdateTime() int64 { return t.lastCumulativeUpdateTime }
-func (t *Observation) TickCumulative() int64           { return t.tickCumulative }
-func (t *Observation) LiquidityCumulative() string     { return t.liquidityCumulative.ToString() }
-
-func newObservation(currentTime int64) *Observation {
-	return &Observation{
-		lastCumulativeUpdateTime: currentTime,
-		tickCumulative:           0,
-		liquidityCumulative:      u256.Zero(),
+// ObservationTickCumulative returns the current tick cumulative for backward compatibility
+func (p *Pool) ObservationTickCumulative() int64 {
+	if p.observationState == nil {
+		return 0
 	}
+
+	return p.observationState.lastObservation().tickCumulative
+}
+
+// ObservationLiquidityCumulative returns the current liquidity cumulative for backward compatibility
+func (p *Pool) ObservationLiquidityCumulative() string {
+	if p.observationState == nil {
+		return "0"
+	}
+
+	return p.observationState.lastObservation().liquidityCumulative.ToString()
+}
+
+// ObservationSecondsPerLiquidityCumulativeX128 returns the current seconds per liquidity cumulative for backward compatibility
+func (p *Pool) ObservationSecondsPerLiquidityCumulativeX128() string {
+	if p.observationState == nil {
+		return "0"
+	}
+
+	return p.observationState.lastObservation().secondsPerLiquidityCumulativeX128.ToString()
+}
+
+// ObservationBlockTimestamp returns the current observation timestamp for backward compatibility
+func (p *Pool) ObservationBlockTimestamp() int64 {
+	if p.observationState == nil {
+		return time.Now().Unix()
+	}
+
+	return p.observationState.lastObservation().blockTimestamp
+}
+
+// GetTWAP calculates the time-weighted average price between two points in time
+// Returns the average tick over the time period
+func (p *Pool) GetTWAP(secondsAgo uint32) (int32, error) {
+	if secondsAgo == 0 {
+		return p.slot0.tick, nil
+	}
+
+	// Check if observation state is initialized
+	if p.observationState == nil {
+		return 0, errors.New("observation state not initialized")
+	}
+
+	// Check if we have enough observations
+	if p.observationState.cardinality == 0 {
+		return 0, errors.New("no observations available")
+	}
+
+	// Get observations for current time and secondsAgo
+	secondsAgos := []uint32{secondsAgo, 0}
+	currentTime := time.Now().Unix()
+
+	tickCumulatives, _, err := p.observationState.observe(currentTime, secondsAgos, 0, p.observationState.cardinality, p.liquidity, p.observationState.cardinality)
+	if err != nil {
+		return 0, err
+	}
+
+	// Ensure we have valid data
+	if len(tickCumulatives) != 2 {
+		return 0, errors.New("insufficient observation data")
+	}
+
+	// Calculate TWAP: (tickCumulative_now - tickCumulative_before) / timeDelta
+	tickDelta := tickCumulatives[1] - tickCumulatives[0]
+	twapTick := int32(tickDelta / int64(secondsAgo))
+
+	return twapTick, nil
+}
+
+// IncreaseObservationCardinalityLimit increases the maximum number of observations
+// that the oracle can store. This does not immediately increase cardinality,
+// but sets it to increase on the next write.
+func (p *Pool) IncreaseObservationCardinalityLimit(observationCardinalityNext uint16) error {
+	if p.observationState == nil {
+		return errors.New("observation state not initialized")
+	}
+
+	if observationCardinalityNext > ObservationCardinality {
+		return errors.New("observation cardinality next exceeds maximum")
+	}
+
+	if observationCardinalityNext <= p.observationState.cardinalityLimit {
+		return errors.New("observation cardinality next must be greater than current")
+	}
+
+	p.observationState.cardinalityLimit = observationCardinalityNext
+
+	return nil
 }

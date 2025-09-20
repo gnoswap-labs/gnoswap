@@ -4,10 +4,10 @@ import (
 	"std"
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
-	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -136,13 +136,13 @@ func addLiquidityWithValidation(t *testing.T, pool *Pool, scenario LiquidityScen
 func verifyPriceCumulativeAccuracy(t *testing.T, pool *Pool, timeElapsed int64, expectedTick int32) {
 	t.Helper()
 
-	beforeCumulative := pool.observation.tickCumulative
-	beforeTime := pool.observation.lastCumulativeUpdateTime
+	beforeCumulative := pool.ObservationTickCumulative()
+	beforeTime := pool.ObservationBlockTimestamp()
 
 	// Update price cumulative
-	pool.updatePriceCumulatives(beforeTime + timeElapsed)
+	pool.writeObservation(beforeTime+timeElapsed, expectedTick, pool.liquidity)
 
-	afterCumulative := pool.observation.tickCumulative
+	afterCumulative := pool.ObservationTickCumulative()
 	actualIncrease := afterCumulative - beforeCumulative
 	expectedIncrease := int64(expectedTick) * timeElapsed
 
@@ -475,20 +475,32 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(t *testing.T) {
 					sqrtPriceX96: u256.MustFromDecimal(EQUAL_PRICE_RATIO),
 					tick:         tt.initialTick,
 				},
-				observation: &Observation{
-					lastCumulativeUpdateTime: 100,
-					tickCumulative:           5000000000,
-					liquidityCumulative:      u256.MustFromDecimal("3000000"),
+				observationState: &ObservationState{
+					index:           0,
+					cardinality:     1,
+					cardinalityLimit: 1,
+					observations: [ObservationCardinality]Observation{
+						{
+							blockTimestamp:                    100,
+							tickCumulative:                    5000000000,
+							liquidityCumulative:               u256.MustFromDecimal("3000000"),
+							secondsPerLiquidityCumulativeX128: u256.Zero(),
+							initialized:                       true,
+						},
+					},
 				},
 				liquidity: u256.MustFromDecimal(tt.liquidity),
 			}
 
-			beforeTickCumulative := pool.observation.tickCumulative
-			beforeLiquidityCumulative := new(u256.Uint).Set(pool.observation.liquidityCumulative)
-			currentTime := pool.observation.lastCumulativeUpdateTime + tt.timeElapsed
+			beforeTickCumulative := pool.ObservationTickCumulative()
+			beforeLiquidityCumulative := new(u256.Uint).Set(u256.MustFromDecimal(pool.ObservationLiquidityCumulative()))
+			currentTime := pool.observationState.lastObservation().blockTimestamp + tt.timeElapsed
 
 			// When: Execute accumulation calculation
-			tickCumulative, liquidityCumulative, lastUpdateTime := pool.calculateTickCumulative(currentTime)
+			pool.writeObservation(currentTime, tt.initialTick, pool.liquidity)
+			tickCumulative := pool.ObservationTickCumulative()
+			liquidityCumulative := new(u256.Uint).Set(u256.MustFromDecimal(pool.ObservationLiquidityCumulative()))
+			lastUpdateTime := pool.ObservationBlockTimestamp()
 
 			// Then: Verify expected behavior
 			expectedTickIncrease := int64(tt.initialTick) * tt.timeElapsed
