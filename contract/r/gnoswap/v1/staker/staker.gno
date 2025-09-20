@@ -371,9 +371,11 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 	pn.SetPositionOperator(cross, positionId, caller)
 
 	signedLiquidity := i256.FromUint256(liquidity)
-	isInRange := false
-	poolTier.cacheReward(currentTime, currentTime, pools)
 
+	currentHeight := std.ChainHeight()
+	poolTier.cacheReward(currentHeight, currentTime, pools)
+
+	isInRange := false
 	if pn.PositionIsInRange(positionId) {
 		isInRange = true
 		pool.modifyDeposit(signedLiquidity, currentTime, currentTick)
@@ -542,7 +544,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		incentive.rewardAmount = safeSubInt64(incentive.rewardAmount, rewardAmount)
 		rewardToken := incentive.rewardToken
 		toUserExternalReward[rewardToken] = safeAddInt64(toUserExternalReward[rewardToken], rewardAmount)
-		toUser, feeAmount, err := handleUnStakingFee(rewardToken, rewardAmount, false, positionId, incentive.targetPoolPath)
+		toUser, feeAmount, err := handleStakingRewardFee(rewardToken, rewardAmount, false, positionId, incentive.targetPoolPath)
 		if err != nil {
 			panic(err.Error())
 		}
@@ -600,7 +602,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 	communityPoolAddr := getRoleAddress(prbac.ROLE_COMMUNITY_POOL)
 
 	// internal reward to user
-	toUser, feeAmount, err := handleUnStakingFee(GNS_PATH, reward.Internal, true, positionId, deposit.targetPoolPath)
+	toUser, feeAmount, err := handleStakingRewardFee(GNS_PATH, reward.Internal, true, positionId, deposit.targetPoolPath)
 	if err != nil {
 		panic(err.Error())
 	}

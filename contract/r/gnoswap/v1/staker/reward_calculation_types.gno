@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"gno.land/p/nt/avl"
+	"gno.land/p/nt/ufmt"
 )
 
 // EncodeUint converts a uint64 number into a zero-padded 20-character string.
@@ -28,9 +29,10 @@ func EncodeUint(num uint64) string {
 }
 
 func EncodeInt64(num int64) string {
-	s := strconv.FormatInt(num, 10)
-	zerosNeeded := 20 - len(s)
-	return strings.Repeat("0", zerosNeeded) + s
+	if num < 0 {
+        panic(ufmt.Sprintf("negative value not supported: %d", num))
+    }
+	return EncodeUint(uint64(num))
 }
 
 // DecodeUint converts a zero-padded string back into a uint64 number.

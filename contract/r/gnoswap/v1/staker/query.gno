@@ -60,11 +60,17 @@ func QueryIncentiveData(incentiveId string) (*IncentiveData, error) {
 	var data IncentiveData
 
 	pools.tree.Iterate("", "", func(key string, value any) bool {
-		pool := value.(*Pool)
+		pool, ok := value.(*Pool)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast value to *Pool: %T", value))
+		}
 
 		pool.incentives.incentives.Iterate("", "", func(key string, value any) bool {
 			if key == incentiveId {
-				ictv := value.(*ExternalIncentive)
+				ictv, ok := value.(*ExternalIncentive)
+				if !ok {
+					panic(ufmt.Sprintf("failed to cast value to *ExternalIncentive: %T", value))
+				}
 				data = IncentiveData{
 					IncentiveID:    incentiveId,
 					StartTimestamp: ictv.startTimestamp,

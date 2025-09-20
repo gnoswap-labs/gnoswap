@@ -104,7 +104,11 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 		emissions := make([]int64, 0)
 		result.emissionUpdates.Iterate(start, end, func(key int64, value any) bool {
 			heights = append(heights, key)
-			emissions = append(emissions, int64(value.(uint64)))
+			v, ok := value.(uint64)
+			if !ok {
+				panic("failed to cast value to uint64")
+			}
+			emissions = append(emissions, int64(v))
 			return false
 		})
 		return heights, emissions
