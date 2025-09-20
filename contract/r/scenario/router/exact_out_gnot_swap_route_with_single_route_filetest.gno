@@ -109,6 +109,7 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Minting position")
+	testing.SetOriginSend(std.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		wugnotPath,
@@ -156,6 +157,7 @@ func exactOutSwapRouteBy(
 	banker := std.NewBanker(std.BankerTypeReadonly)
 	prevBalance := banker.GetCoins(adminAddr).AmountOf("ugnot")
 
+	testing.SetOriginSend(std.Coins{})
 	_, outputTokenAmount := router.ExactOutSwapRoute(
 		cross,
 		inputToken,

@@ -66,7 +66,7 @@ var (
 	stakerAddr, _   = access.GetAddress(prabc.ROLE_STAKER.String())
 	emissionAddr, _ = access.GetAddress(prabc.ROLE_EMISSION.String())
 
-	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+	wugnotAddr std.Address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	alice      = testutils.TestAddress("alice")
 	adminRealm = std.NewUserRealm(adminAddr)

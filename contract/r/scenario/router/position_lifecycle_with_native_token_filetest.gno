@@ -19,8 +19,8 @@ import (
 	pn "gno.land/r/gnoswap/v1/position"
 	"gno.land/r/gnoswap/v1/router"
 
-	"gno.land/p/nt/testutils"
 	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/testutils"
 	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/gnoland/wugnot"
@@ -170,6 +170,7 @@ func testExecuteSwapsForFees() {
 		gns.Approve(cross, poolAddr, 10000000)
 		gns.Approve(cross, routerAddr, max_approve) // For router fee
 
+		testing.SetOriginSend(std.Coins{})
 		amountIn, amountOut := router.ExactInSwapRoute(
 			cross,
 			gnsPath,

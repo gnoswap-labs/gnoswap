@@ -127,3 +127,24 @@ func assertIsValidUserCoinSendWithTokenPair(token0, token1 string, amount0, amou
 
 	common.AssertIsNotHandleNativeCoin()
 }
+
+// assertIsValidUserCoinSendWithWrappedTokenPair asserts that the user has sent the correct amount of native coin.
+func assertIsValidUserCoinSendWithWrappedTokenPair(token0, token1 string, amount0, amount1 string) {
+	isExistsUserSendCoins := common.ExistsUserSendCoins()
+
+	if isExistsUserSendCoins {
+		if common.IsGNOTPath(token0) {
+			common.AssertIsUserSendGNOTAmount(mustParseInt64(amount0))
+
+			return
+		}
+
+		if common.IsGNOTPath(token1) {
+			common.AssertIsUserSendGNOTAmount(mustParseInt64(amount1))
+
+			return
+		}
+	}
+
+	common.AssertIsNotHandleNativeCoin()
+}

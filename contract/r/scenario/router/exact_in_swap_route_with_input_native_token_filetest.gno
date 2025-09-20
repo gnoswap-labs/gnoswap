@@ -100,6 +100,7 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 
 	ufmt.Println("[INFO] Minting position")
 
+	testing.SetOriginSend(std.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		wugnotPath,
@@ -179,22 +180,22 @@ func exactInSwapRouteBy(
 // [INFO] WUGNOT Balance of admin: 100000000000000
 //
 // [SCENARIO] 2. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500) with unbalance position balance
-// [EXPECTED] created gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500 pool at tick -6960
+// [EXPECTED] created gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500 pool at tick 0
 // [INFO] Minting position
 // [EXPECTED] positionId: 1
-// [EXPECTED] liquidity: 233571021
+// [EXPECTED] liquidity: 340264708
 // [EXPECTED] amount0: 100000000
-// [EXPECTED] amount1: 0
+// [EXPECTED] amount1: 100000000
 //
 // [SCENARIO] 3. ExactInSwapRoute
 // [INFO] ExactInSwapRoute
-// [INFO] inputToken: gno.land/r/gnoswap/gns
-// [INFO] outputToken: gnot
+// [INFO] inputToken: gnot
+// [INFO] outputToken: gno.land/r/gnoswap/gns
 // [INFO] specifiedAmount: 1000
-// [INFO] routeQueryString: gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500
+// [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount(GNS): 1000
-// [EXPECTED] outputTokenAmount(GNOT): -2000
-// [EXPECTED] GNS balance changed: -1000
-// [EXPECTED] GNOT balance changed: 2000
+// [EXPECTED] outputTokenAmount(GNOT): -997
+// [EXPECTED] GNS balance changed: 997
+// [EXPECTED] GNOT balance changed: -1000

@@ -1,5 +1,5 @@
 # r/demo/wugnot from gno
-ADDR_WUGNOT := g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6
+ADDR_WUGNOT := g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum
 
 # based on v1
 ADDR_POOL := g148tjamj80yyrm309z7rk690an22thd2l3z8ank

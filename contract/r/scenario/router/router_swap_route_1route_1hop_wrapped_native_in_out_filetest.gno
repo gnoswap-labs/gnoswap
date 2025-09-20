@@ -88,6 +88,7 @@ func testPositionMintQuxGnot(t *testing.T) {
 	wugnot.Approve(cross, poolAddr, max_approve)
 
 	println("[INFO] Minting position in qux-wugnot pool")
+	testing.SetOriginSend(std.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(cross, quxPath, wrappedWugnot, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	println("[INFO] positionId:", positionId)

@@ -46,7 +46,7 @@ var (
 	gnsPath = "gno.land/r/gnoswap/gns"
 
 	wugnotPath             = "gno.land/r/gnoland/wugnot"
-	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+	wugnotAddr std.Address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	fee3000 uint32 = 3000
 

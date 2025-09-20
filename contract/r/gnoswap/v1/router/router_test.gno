@@ -288,6 +288,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 				teller.Approve(poolContract, maxApprove)
 			}(cross)
 
+			testing.SetOriginSend(std.Coins{})
 			// Position Creation
 			pn.Mint(
 				cross,
@@ -329,6 +330,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			)
 
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
+			testing.SetOriginSend(std.Coins{})
 			amountIn, amountOut := ExactInSwapRoute(
 				cross,
 				tt.inputToken,
@@ -452,6 +454,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			}(cross)
 
 			// Position Creation
+			testing.SetOriginSend(std.Coins{})
 			positionId, _, _, _ := pn.Mint(
 				cross,
 				tt.tokenPath0,
@@ -483,6 +486,8 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			wugnot.Approve(cross, poolContract, maxApprove)
 			gns.Approve(cross, poolContract, maxApprove)
+
+			testing.SetOriginSend(std.Coins{})
 			pn.IncreaseLiquidity(
 				cross,
 				positionId,
@@ -513,6 +518,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			)
 
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
+			testing.SetOriginSend(std.Coins{})
 			_, amountOut := ExactInSwapRoute(
 				cross,
 				tt.inputToken,
@@ -639,6 +645,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			}(cross)
 
 			// Position Creation
+			testing.SetOriginSend(std.Coins{})
 			pn.Mint(
 				cross,
 				tt.tokenPath0,
@@ -680,6 +687,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			handleSwapFee(tt.outputToken, u256.MustFromDecimal(drySwapAmountOut))
 
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
+			testing.SetOriginSend(std.Coins{})
 			amountIn, amountOut := ExactInSwapRoute(
 				cross,
 				tt.inputToken,

@@ -8,8 +8,8 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/nt/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
@@ -100,6 +100,8 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
 		banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", nativeCoinAmount}})
 		testing.SetOriginSend(std.Coins{{"ugnot", nativeCoinAmount}})
+	} else {
+		testing.SetOriginSend(std.Coins{})
 	}
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(
