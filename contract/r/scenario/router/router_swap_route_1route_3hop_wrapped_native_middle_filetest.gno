@@ -86,6 +86,7 @@ func testPositionMintGnsGnot() {
 	wugnot.Approve(cross, poolAddr, max_approve)
 
 	println("[INFO] Minting position in gns-wugnot pool")
+	testing.SetOriginSend(std.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(cross, gnsPath, wrappedWugnot, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	println("[INFO] positionId:", positionId)
@@ -118,6 +119,7 @@ func testPositionMintGnotBar() {
 	bar.Approve(cross, poolAddr, max_approve)
 
 	println("[INFO] Minting position in wugnot-bar pool")
+	testing.SetOriginSend(std.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(cross, wrappedWugnot, barPath, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	println("[INFO] positionId:", positionId)
@@ -158,6 +160,7 @@ func testSwapRouteGnsBarExactIn() {
 	bar.Approve(cross, routerAddr, 7325) // 0.15% fee
 
 	println("[INFO] Executing ExactIn swap (1000 gns → wugnot → bar)")
+	testing.SetOriginSend(std.Coins{})
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
 		gnsPath, // inputToken

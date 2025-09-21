@@ -106,6 +106,7 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Minting position")
+	testing.SetOriginSend(std.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		wugnotPath,
