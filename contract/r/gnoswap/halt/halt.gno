@@ -7,10 +7,10 @@ import (
 	"gno.land/r/gnoswap/access"
 )
 
-var haltConfig HaltConfig
+var haltStates HaltStates
 
 func init() {
-	haltConfig = newNoneConfig()
+	haltStates = newHaltStateByConfig(newNoneConfig())
 }
 
 // SetHaltLevel sets the global halt level.
@@ -51,7 +51,10 @@ func SetOperationStatus(cur realm, op OpType, halted bool) {
 		panic(makeErrorWithDetails(errInvalidOpType, op.String()))
 	}
 
-	haltConfig.set(op, halted)
+	err := haltStates.setOperationHaltState(op, halted)
+	if err != nil {
+		panic(err)
+	}
 
 	std.Emit(
 		"SetOperationStatus",
@@ -78,7 +81,5 @@ func setHaltLevel(level HaltLevel) error {
 		return makeErrorWithDetails(errInvalidHaltLevel, level.String())
 	}
 
-	haltConfig = config
-
-	return nil
+	return haltStates.updateOperationHaltStatesByConfig(config)
 }

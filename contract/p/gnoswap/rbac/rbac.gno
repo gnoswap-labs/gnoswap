@@ -39,12 +39,12 @@ func (rb *RBAC) IsAuthorized(roleName string, addr std.Address) bool {
 }
 
 // RegisterRole registers a new role with roleName. Returns ErrRoleAlreadyExists if the role already exists.
-func (rb *RBAC) RegisterRole(roleName string) error {
+func (rb *RBAC) RegisterRole(roleName string, addr std.Address) error {
 	if rb.existsRole(roleName) {
 		return ErrRoleAlreadyExists
 	}
 
-	rb.roles[roleName] = NewRole(roleName)
+	rb.roles[roleName] = NewRole(roleName, addr)
 
 	return nil
 }
@@ -66,29 +66,12 @@ func (rb *RBAC) RemoveRole(roleName string) error {
 	return nil
 }
 
-// GetRoleAddresses returns a map of all role names to their assigned addresses.
-func (rb *RBAC) GetRoleAddresses() map[string]std.Address {
-	addresses := make(map[string]std.Address)
-
-	for role := range rb.roles {
-		addresses[role] = rb.roles[role].Address()
+// UpdateRoleAddressNextVersion creates a new version with the specified address for the role
+func (rb *RBAC) UpdateRoleAddressNextVersion(roleName string, addr std.Address) error {
+	if !rb.ownable.OwnedByOriginCaller() {
+		return ErrUnauthorized
 	}
 
-	return addresses
-}
-
-// GetRoleAddress returns the address assigned to roleName. Returns ErrRoleDoesNotExist if the role doesn't exist.
-func (rb *RBAC) GetRoleAddress(roleName string) (std.Address, error) {
-	role, exists := rb.roles[roleName]
-	if !exists {
-		return "", ErrRoleDoesNotExist
-	}
-
-	return role.Address(), nil
-}
-
-// UpdateRoleAddress assigns addr to roleName. Returns ErrRoleDoesNotExist if the role doesn't exist or ErrInvalidAddress if addr is invalid.
-func (rb *RBAC) UpdateRoleAddress(roleName string, addr std.Address) error {
 	role, exists := rb.roles[roleName]
 	if !exists {
 		return ErrRoleDoesNotExist
@@ -98,7 +81,82 @@ func (rb *RBAC) UpdateRoleAddress(roleName string, addr std.Address) error {
 		return ErrInvalidAddress
 	}
 
-	role.setAddress(addr)
+	return role.nextVersionAddress(addr)
+}
+
+func (rb *RBAC) GetAllRoleAddresses() map[string]std.Address {
+	addresses := make(map[string]std.Address)
+
+	for roleName, role := range rb.roles {
+		addresses[roleName] = role.CurrentAddress()
+	}
+
+	return addresses
+}
+
+// GetRoleAddresses returns a map of all role names to their assigned addresses.
+func (rb *RBAC) GetRoleAddresses(roleName string) []std.Address {
+	role, exists := rb.roles[roleName]
+	if !exists {
+		return []std.Address{}
+	}
+
+	addresses := make([]std.Address, len(role.addresses))
+
+	for i, addr := range role.addresses {
+		addresses[i] = std.Address(addr)
+	}
+
+	return addresses
+}
+
+func (rb *RBAC) GetRoleLatestVersion(roleName string) int {
+	role, exists := rb.roles[roleName]
+	if !exists {
+		return 0
+	}
+
+	return role.latestVersion
+}
+
+// GetRoleAddress returns the address assigned to roleName. Returns ErrRoleDoesNotExist if the role doesn't exist.
+func (rb *RBAC) GetRoleAddress(roleName string) (std.Address, error) {
+	role, exists := rb.roles[roleName]
+	if !exists {
+		return "", ErrRoleDoesNotExist
+	}
+
+	return role.CurrentAddress(), nil
+}
+
+func (rb *RBAC) GetRoleAddressWithVersion(roleName string, version int) (std.Address, error) {
+	role, exists := rb.roles[roleName]
+	if !exists {
+		return "", ErrRoleDoesNotExist
+	}
+
+	if !role.hasVersion(version) {
+		return "", ErrVersionDoesNotExist
+	}
+
+	return role.Address(version), nil
+}
+
+// UpdateRoleAddress assigns addr to roleName. Returns ErrRoleDoesNotExist if the role doesn't exist or ErrInvalidAddress if addr is invalid.
+func (rb *RBAC) UpdateRoleAddress(roleName string, version int, addr std.Address) error {
+	role, exists := rb.roles[roleName]
+	if !exists {
+		return ErrRoleDoesNotExist
+	}
+
+	if !addr.IsValid() {
+		return ErrInvalidAddress
+	}
+
+	err := role.setAddress(version, addr)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -114,7 +172,10 @@ func (rb *RBAC) RemoveRoleAddress(roleName string) error {
 		return ErrRoleDoesNotExist
 	}
 
-	role.setAddress("")
+	err := role.setAddress(role.latestVersion, "")
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

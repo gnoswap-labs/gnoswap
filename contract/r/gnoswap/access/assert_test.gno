@@ -4,7 +4,6 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 
@@ -13,9 +12,11 @@ import (
 
 func TestAssertIsAdminOrGovernance(t *testing.T) {
 	// Save original state
-	originalRoles := make(map[string]std.Address)
+	originalRoles := make(map[string][]std.Address)
 	for k, v := range roleAddresses {
-		originalRoles[k] = v
+		addressCopy := make([]std.Address, len(v))
+		copy(addressCopy, v)
+		originalRoles[k] = addressCopy
 	}
 	defer func() {
 		roleAddresses = originalRoles
@@ -27,34 +28,34 @@ func TestAssertIsAdminOrGovernance(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		setupRoles  map[string]std.Address
+		setupRoles  map[string][]std.Address
 		testAddr    std.Address
 		shouldPanic bool
 		expectedMsg string
 	}{
 		{
 			name: "admin should pass",
-			setupRoles: map[string]std.Address{
-				prbac.ROLE_ADMIN.String():      adminAddr,
-				prbac.ROLE_GOVERNANCE.String(): govAddr,
+			setupRoles: map[string][]std.Address{
+				prbac.ROLE_ADMIN.String():      []std.Address{adminAddr},
+				prbac.ROLE_GOVERNANCE.String(): []std.Address{govAddr},
 			},
 			testAddr:    adminAddr,
 			shouldPanic: false,
 		},
 		{
 			name: "governance should pass",
-			setupRoles: map[string]std.Address{
-				prbac.ROLE_ADMIN.String():      adminAddr,
-				prbac.ROLE_GOVERNANCE.String(): govAddr,
+			setupRoles: map[string][]std.Address{
+				prbac.ROLE_ADMIN.String():      []std.Address{adminAddr},
+				prbac.ROLE_GOVERNANCE.String(): []std.Address{govAddr},
 			},
 			testAddr:    govAddr,
 			shouldPanic: false,
 		},
 		{
 			name: "unauthorized should panic",
-			setupRoles: map[string]std.Address{
-				prbac.ROLE_ADMIN.String():      adminAddr,
-				prbac.ROLE_GOVERNANCE.String(): govAddr,
+			setupRoles: map[string][]std.Address{
+				prbac.ROLE_ADMIN.String():      []std.Address{adminAddr},
+				prbac.ROLE_GOVERNANCE.String(): []std.Address{govAddr},
 			},
 			testAddr:    unauthorizedAddr,
 			shouldPanic: true,
@@ -62,19 +63,28 @@ func TestAssertIsAdminOrGovernance(t *testing.T) {
 		},
 		{
 			name:        "no roles set should panic",
-			setupRoles:  map[string]std.Address{},
+			setupRoles:  map[string][]std.Address{},
 			testAddr:    adminAddr,
 			shouldPanic: true,
 			expectedMsg: "unauthorized: caller " + adminAddr.String() + " is not admin or governance",
+		},
+		{
+			name: "admin in multiple versions should pass",
+			setupRoles: map[string][]std.Address{
+				prbac.ROLE_ADMIN.String():      []std.Address{std.Address("g1old123456789abcdef"), adminAddr},
+				prbac.ROLE_GOVERNANCE.String(): []std.Address{govAddr},
+			},
+			testAddr:    adminAddr,
+			shouldPanic: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			roleAddresses = make(map[string]std.Address)
-			for role, addr := range tt.setupRoles {
-				roleAddresses[role] = addr
+			roleAddresses = make(map[string][]std.Address)
+			for role, addrs := range tt.setupRoles {
+				roleAddresses[role] = addrs
 			}
 
 			// Test
@@ -91,11 +101,85 @@ func TestAssertIsAdminOrGovernance(t *testing.T) {
 	}
 }
 
+func TestAssertIsAdminOrGovernanceWithVersion(t *testing.T) {
+	// Save original state
+	originalRoles := make(map[string][]std.Address)
+	for k, v := range roleAddresses {
+		addressCopy := make([]std.Address, len(v))
+		copy(addressCopy, v)
+		originalRoles[k] = addressCopy
+	}
+	defer func() {
+		roleAddresses = originalRoles
+	}()
+
+	adminAddr1 := std.Address("g1admin111111111111111")
+	adminAddr2 := std.Address("g1admin222222222222222")
+	govAddr1 := std.Address("g1gov11111111111111111")
+	govAddr2 := std.Address("g1gov22222222222222222")
+	unauthorizedAddr := std.Address("g1unauthorized123456789")
+
+	// Setup with multiple versions
+	roleAddresses[prbac.ROLE_ADMIN.String()] = []std.Address{adminAddr1, adminAddr2}
+	roleAddresses[prbac.ROLE_GOVERNANCE.String()] = []std.Address{govAddr1, govAddr2}
+
+	tests := []struct {
+		name        string
+		version     int
+		testAddr    std.Address
+		shouldPanic bool
+		expectedMsg string
+	}{
+		{
+			name:        "admin version 0 should pass",
+			version:     0,
+			testAddr:    adminAddr1,
+			shouldPanic: false,
+		},
+		{
+			name:        "governance version 1 should pass",
+			version:     1,
+			testAddr:    govAddr2,
+			shouldPanic: false,
+		},
+		{
+			name:        "wrong version should panic",
+			version:     0,
+			testAddr:    govAddr2,
+			shouldPanic: true,
+			expectedMsg: "unauthorized: caller " + govAddr2.String() + " is not admin or governance",
+		},
+		{
+			name:        "unauthorized should panic",
+			version:     0,
+			testAddr:    unauthorizedAddr,
+			shouldPanic: true,
+			expectedMsg: "unauthorized: caller " + unauthorizedAddr.String() + " is not admin or governance",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+					AssertIsAdminOrGovernanceWithVersion(tt.version, tt.testAddr)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					AssertIsAdminOrGovernanceWithVersion(tt.version, tt.testAddr)
+				})
+			}
+		})
+	}
+}
+
 func TestAssertFunctions(t *testing.T) {
 	// Save original state
-	originalRoles := make(map[string]std.Address)
+	originalRoles := make(map[string][]std.Address)
 	for k, v := range roleAddresses {
-		originalRoles[k] = v
+		addressCopy := make([]std.Address, len(v))
+		copy(addressCopy, v)
+		originalRoles[k] = addressCopy
 	}
 	defer func() {
 		roleAddresses = originalRoles
@@ -284,9 +368,9 @@ func TestAssertFunctions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Setup role
-			roleAddresses = make(map[string]std.Address)
-			roleAddresses[tt.role] = tt.authorizedAddr
+			// Setup role - now using []std.Address
+			roleAddresses = make(map[string][]std.Address)
+			roleAddresses[tt.role] = []std.Address{tt.authorizedAddr}
 
 			for _, tc := range tt.testCases {
 				if tc.shouldPanic {
@@ -304,11 +388,99 @@ func TestAssertFunctions(t *testing.T) {
 	}
 }
 
+func TestAssertFunctionsWithVersion(t *testing.T) {
+	// Save original state
+	originalRoles := make(map[string][]std.Address)
+	for k, v := range roleAddresses {
+		addressCopy := make([]std.Address, len(v))
+		copy(addressCopy, v)
+		originalRoles[k] = addressCopy
+	}
+	defer func() {
+		roleAddresses = originalRoles
+	}()
+
+	// Test with versioned addresses
+	routerAddr1 := std.Address("g1router111111111111111")
+	routerAddr2 := std.Address("g1router222222222222222")
+	poolAddr1 := std.Address("g1pool1111111111111111")
+	poolAddr2 := std.Address("g1pool2222222222222222")
+	unauthorizedAddr := std.Address("g1unauthorized123456789")
+
+	tests := []struct {
+		name        string
+		assertFunc  func(int, std.Address)
+		role        string
+		setupAddrs  []std.Address
+		version     int
+		testAddr    std.Address
+		shouldPanic bool
+	}{
+		{
+			name:        "AssertIsRouterWithVersion - correct version",
+			assertFunc:  AssertIsRouterWithVersion,
+			role:        prbac.ROLE_ROUTER.String(),
+			setupAddrs:  []std.Address{routerAddr1, routerAddr2},
+			version:     0,
+			testAddr:    routerAddr1,
+			shouldPanic: false,
+		},
+		{
+			name:        "AssertIsRouterWithVersion - wrong version",
+			assertFunc:  AssertIsRouterWithVersion,
+			role:        prbac.ROLE_ROUTER.String(),
+			setupAddrs:  []std.Address{routerAddr1, routerAddr2},
+			version:     0,
+			testAddr:    routerAddr2,
+			shouldPanic: true,
+		},
+		{
+			name:        "AssertIsPoolWithVersion - correct version",
+			assertFunc:  AssertIsPoolWithVersion,
+			role:        prbac.ROLE_POOL.String(),
+			setupAddrs:  []std.Address{poolAddr1, poolAddr2},
+			version:     1,
+			testAddr:    poolAddr2,
+			shouldPanic: false,
+		},
+		{
+			name:        "AssertIsPoolWithVersion - unauthorized",
+			assertFunc:  AssertIsPoolWithVersion,
+			role:        prbac.ROLE_POOL.String(),
+			setupAddrs:  []std.Address{poolAddr1, poolAddr2},
+			version:     0,
+			testAddr:    unauthorizedAddr,
+			shouldPanic: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup role with versions
+			roleAddresses = make(map[string][]std.Address)
+			roleAddresses[tt.role] = tt.setupAddrs
+
+			if tt.shouldPanic {
+				expectedMsg := "unauthorized: caller " + tt.testAddr.String() + " is not " + tt.role
+				uassert.PanicsWithMessage(t, expectedMsg, func() {
+					tt.assertFunc(tt.version, tt.testAddr)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					tt.assertFunc(tt.version, tt.testAddr)
+				})
+			}
+		})
+	}
+}
+
 func TestAssertIsAuthorized(t *testing.T) {
 	// Save original state
-	originalRoles := make(map[string]std.Address)
+	originalRoles := make(map[string][]std.Address)
 	for k, v := range roleAddresses {
-		originalRoles[k] = v
+		addressCopy := make([]std.Address, len(v))
+		copy(addressCopy, v)
+		originalRoles[k] = addressCopy
 	}
 	defer func() {
 		roleAddresses = originalRoles
@@ -320,7 +492,7 @@ func TestAssertIsAuthorized(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		setupRoles  map[string]std.Address
+		setupRoles  map[string][]std.Address
 		testRole    string
 		testAddr    std.Address
 		shouldPanic bool
@@ -328,7 +500,7 @@ func TestAssertIsAuthorized(t *testing.T) {
 	}{
 		{
 			name:        "non-existent role should panic",
-			setupRoles:  map[string]std.Address{},
+			setupRoles:  map[string][]std.Address{},
 			testRole:    testRole,
 			testAddr:    authorizedAddr,
 			shouldPanic: true,
@@ -336,8 +508,8 @@ func TestAssertIsAuthorized(t *testing.T) {
 		},
 		{
 			name: "authorized address should pass",
-			setupRoles: map[string]std.Address{
-				testRole: authorizedAddr,
+			setupRoles: map[string][]std.Address{
+				testRole: []std.Address{authorizedAddr},
 			},
 			testRole:    testRole,
 			testAddr:    authorizedAddr,
@@ -345,8 +517,8 @@ func TestAssertIsAuthorized(t *testing.T) {
 		},
 		{
 			name: "unauthorized address should panic",
-			setupRoles: map[string]std.Address{
-				testRole: authorizedAddr,
+			setupRoles: map[string][]std.Address{
+				testRole: []std.Address{authorizedAddr},
 			},
 			testRole:    testRole,
 			testAddr:    unauthorizedAddr,
@@ -354,9 +526,18 @@ func TestAssertIsAuthorized(t *testing.T) {
 			expectedMsg: "unauthorized: caller " + unauthorizedAddr.String() + " is not " + testRole,
 		},
 		{
+			name: "multiple addresses with one authorized",
+			setupRoles: map[string][]std.Address{
+				testRole: []std.Address{unauthorizedAddr, authorizedAddr},
+			},
+			testRole:    testRole,
+			testAddr:    authorizedAddr,
+			shouldPanic: false,
+		},
+		{
 			name: "wrong role should panic",
-			setupRoles: map[string]std.Address{
-				testRole: authorizedAddr,
+			setupRoles: map[string][]std.Address{
+				"different_role": []std.Address{authorizedAddr},
 			},
 			testRole:    "wrong_role",
 			testAddr:    authorizedAddr,
@@ -368,9 +549,9 @@ func TestAssertIsAuthorized(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			roleAddresses = make(map[string]std.Address)
-			for role, addr := range tt.setupRoles {
-				roleAddresses[role] = addr
+			roleAddresses = make(map[string][]std.Address)
+			for role, addrs := range tt.setupRoles {
+				roleAddresses[role] = addrs
 			}
 
 			// Test
@@ -387,26 +568,78 @@ func TestAssertIsAuthorized(t *testing.T) {
 	}
 }
 
-func TestAssertIsRBAC(t *testing.T) {
-	rbacAddr := std.NewCodeRealm("gno.land/r/gnoswap/rbac").Address()
-	unauthorizedAddr := std.Address("g1unauthorized123456789")
+func TestAssertIsAuthorizedWithVersion(t *testing.T) {
+	// Save original state
+	originalRoles := make(map[string][]std.Address)
+	for k, v := range roleAddresses {
+		addressCopy := make([]std.Address, len(v))
+		copy(addressCopy, v)
+		originalRoles[k] = addressCopy
+	}
+	defer func() {
+		roleAddresses = originalRoles
+	}()
+
+	addr1 := std.Address("g1addr1111111111111111")
+	addr2 := std.Address("g1addr2222222222222222")
+	addr3 := std.Address("g1addr3333333333333333")
+	testRole := "test_role"
+
+	// Setup role with multiple versions
+	roleAddresses[testRole] = []std.Address{addr1, addr2, addr3}
 
 	tests := []struct {
 		name        string
+		testRole    string
+		version     int
 		testAddr    std.Address
 		shouldPanic bool
 		expectedMsg string
 	}{
 		{
-			name:        "rbac address should pass",
-			testAddr:    rbacAddr,
+			name:        "version 0 with correct address",
+			testRole:    testRole,
+			version:     0,
+			testAddr:    addr1,
 			shouldPanic: false,
 		},
 		{
-			name:        "unauthorized address should panic",
-			testAddr:    unauthorizedAddr,
+			name:        "version 1 with correct address",
+			testRole:    testRole,
+			version:     1,
+			testAddr:    addr2,
+			shouldPanic: false,
+		},
+		{
+			name:        "version 2 with correct address",
+			testRole:    testRole,
+			version:     2,
+			testAddr:    addr3,
+			shouldPanic: false,
+		},
+		{
+			name:        "version 0 with wrong address",
+			testRole:    testRole,
+			version:     0,
+			testAddr:    addr2,
 			shouldPanic: true,
-			expectedMsg: "unauthorized: caller " + unauthorizedAddr.String() + " is not rbac",
+			expectedMsg: "unauthorized: caller " + addr2.String() + " is not " + testRole,
+		},
+		{
+			name:        "invalid version",
+			testRole:    testRole,
+			version:     5,
+			testAddr:    addr1,
+			shouldPanic: true,
+			expectedMsg: "role test_role does not exist",
+		},
+		{
+			name:        "non-existent role",
+			testRole:    "non_existent",
+			version:     0,
+			testAddr:    addr1,
+			shouldPanic: true,
+			expectedMsg: "role non_existent does not exist",
 		},
 	}
 
@@ -414,11 +647,255 @@ func TestAssertIsRBAC(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
-					assertIsRBAC(tt.testAddr)
+					AssertIsAuthorizedWithVersion(tt.testRole, tt.version, tt.testAddr)
 				})
 			} else {
 				uassert.NotPanics(t, func() {
-					assertIsRBAC(tt.testAddr)
+					AssertIsAuthorizedWithVersion(tt.testRole, tt.version, tt.testAddr)
+				})
+			}
+		})
+	}
+}
+
+func TestAssertHasAnyRole(t *testing.T) {
+	// Save original state
+	originalRoles := make(map[string][]std.Address)
+	for k, v := range roleAddresses {
+		addressCopy := make([]std.Address, len(v))
+		copy(addressCopy, v)
+		originalRoles[k] = addressCopy
+	}
+	defer func() {
+		roleAddresses = originalRoles
+	}()
+
+	adminAddr := std.Address("g1admin123456789abcdef")
+	routerAddr := std.Address("g1router123456789abcde")
+	poolAddr := std.Address("g1pool1234567890abcdef")
+	unauthorizedAddr := std.Address("g1unauthorized123456789")
+
+	tests := []struct {
+		name        string
+		setupRoles  map[string][]std.Address
+		testAddr    std.Address
+		roleNames   []string
+		shouldPanic bool
+		expectedMsg string
+	}{
+		{
+			name: "has one of the roles",
+			setupRoles: map[string][]std.Address{
+				prbac.ROLE_ADMIN.String():  []std.Address{adminAddr},
+				prbac.ROLE_ROUTER.String(): []std.Address{routerAddr},
+				prbac.ROLE_POOL.String():   []std.Address{poolAddr},
+			},
+			testAddr:    adminAddr,
+			roleNames:   []string{prbac.ROLE_ADMIN.String(), prbac.ROLE_ROUTER.String()},
+			shouldPanic: false,
+		},
+		{
+			name: "has different role in list",
+			setupRoles: map[string][]std.Address{
+				prbac.ROLE_ADMIN.String():  []std.Address{adminAddr},
+				prbac.ROLE_ROUTER.String(): []std.Address{routerAddr},
+				prbac.ROLE_POOL.String():   []std.Address{poolAddr},
+			},
+			testAddr:    routerAddr,
+			roleNames:   []string{prbac.ROLE_ADMIN.String(), prbac.ROLE_ROUTER.String()},
+			shouldPanic: false,
+		},
+		{
+			name: "has none of the roles",
+			setupRoles: map[string][]std.Address{
+				prbac.ROLE_ADMIN.String():  []std.Address{adminAddr},
+				prbac.ROLE_ROUTER.String(): []std.Address{routerAddr},
+				prbac.ROLE_POOL.String():   []std.Address{poolAddr},
+			},
+			testAddr:    unauthorizedAddr,
+			roleNames:   []string{prbac.ROLE_ADMIN.String(), prbac.ROLE_ROUTER.String()},
+			shouldPanic: true,
+			expectedMsg: ufmt.Sprintf("unauthorized: caller %s is not any of the roles %v", unauthorizedAddr.String(), []string{prbac.ROLE_ADMIN.String(), prbac.ROLE_ROUTER.String()}),
+		},
+		{
+			name:        "role does not exist",
+			setupRoles:  map[string][]std.Address{},
+			testAddr:    adminAddr,
+			roleNames:   []string{"non_existent_role"},
+			shouldPanic: true,
+			expectedMsg: "role non_existent_role does not exist",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			roleAddresses = make(map[string][]std.Address)
+			for role, addrs := range tt.setupRoles {
+				roleAddresses[role] = addrs
+			}
+
+			// Test
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+					AssertHasAnyRole(tt.testAddr, tt.roleNames...)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					AssertHasAnyRole(tt.testAddr, tt.roleNames...)
+				})
+			}
+		})
+	}
+}
+
+func TestAssertHasAnyRoleWithVersion(t *testing.T) {
+	// Save original state
+	originalRoles := make(map[string][]std.Address)
+	for k, v := range roleAddresses {
+		addressCopy := make([]std.Address, len(v))
+		copy(addressCopy, v)
+		originalRoles[k] = addressCopy
+	}
+	defer func() {
+		roleAddresses = originalRoles
+	}()
+
+	adminAddr1 := std.Address("g1admin111111111111111")
+	adminAddr2 := std.Address("g1admin222222222222222")
+	routerAddr1 := std.Address("g1router11111111111111")
+	routerAddr2 := std.Address("g1router22222222222222")
+	unauthorizedAddr := std.Address("g1unauthorized123456789")
+
+	// Setup roles with multiple versions
+	roleAddresses[prbac.ROLE_ADMIN.String()] = []std.Address{adminAddr1, adminAddr2}
+	roleAddresses[prbac.ROLE_ROUTER.String()] = []std.Address{routerAddr1, routerAddr2}
+
+	tests := []struct {
+		name        string
+		version     int
+		testAddr    std.Address
+		roleNames   []string
+		shouldPanic bool
+		expectedMsg string
+	}{
+		{
+			name:        "has admin role at version 0",
+			version:     0,
+			testAddr:    adminAddr1,
+			roleNames:   []string{prbac.ROLE_ADMIN.String(), prbac.ROLE_ROUTER.String()},
+			shouldPanic: false,
+		},
+		{
+			name:        "has router role at version 1",
+			version:     1,
+			testAddr:    routerAddr2,
+			roleNames:   []string{prbac.ROLE_ADMIN.String(), prbac.ROLE_ROUTER.String()},
+			shouldPanic: false,
+		},
+		{
+			name:        "wrong version for address",
+			version:     0,
+			testAddr:    adminAddr2,
+			roleNames:   []string{prbac.ROLE_ADMIN.String(), prbac.ROLE_ROUTER.String()},
+			shouldPanic: true,
+			expectedMsg: ufmt.Sprintf("unauthorized: caller %s is not any of the roles %v", adminAddr2.String(), []string{prbac.ROLE_ADMIN.String(), prbac.ROLE_ROUTER.String()}),
+		},
+		{
+			name:        "unauthorized address",
+			version:     0,
+			testAddr:    unauthorizedAddr,
+			roleNames:   []string{prbac.ROLE_ADMIN.String(), prbac.ROLE_ROUTER.String()},
+			shouldPanic: true,
+			expectedMsg: ufmt.Sprintf("unauthorized: caller %s is not any of the roles %v", unauthorizedAddr.String(), []string{prbac.ROLE_ADMIN.String(), prbac.ROLE_ROUTER.String()}),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+					AssertHasAnyRoleWithVersion(tt.version, tt.testAddr, tt.roleNames...)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					AssertHasAnyRoleWithVersion(tt.version, tt.testAddr, tt.roleNames...)
+				})
+			}
+		})
+	}
+}
+
+func TestAssertIsValidAddress(t *testing.T) {
+	tests := []struct {
+		name        string
+		addr        std.Address
+		shouldPanic bool
+		expectedMsg string
+	}{
+		{
+			name:        "valid address",
+			addr:        std.Address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"),
+			shouldPanic: false,
+		},
+		{
+			name:        "empty address",
+			addr:        std.Address(""),
+			shouldPanic: true,
+			expectedMsg: "invalid address: ",
+		},
+		{
+			name:        "invalid address format",
+			addr:        std.Address("invalid"),
+			shouldPanic: true,
+			expectedMsg: "invalid address: invalid",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+					AssertIsValidAddress(tt.addr)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					AssertIsValidAddress(tt.addr)
+				})
+			}
+		})
+	}
+}
+
+func TestAssertIsUser(t *testing.T) {
+	tests := []struct {
+		name        string
+		realm       std.Realm
+		shouldPanic bool
+		expectedMsg string
+	}{
+		{
+			name:        "user realm",
+			realm:       std.NewUserRealm(std.Address("g1user1234567890abcdef")),
+			shouldPanic: false,
+		},
+		{
+			name:        "code realm",
+			realm:       std.NewCodeRealm("gno.land/r/demo/example"),
+			shouldPanic: true,
+			expectedMsg: "caller is not user",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+					AssertIsUser(tt.realm)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					AssertIsUser(tt.realm)
 				})
 			}
 		})
@@ -426,42 +903,63 @@ func TestAssertIsRBAC(t *testing.T) {
 }
 
 func TestAssertIsSwapWhitelisted(t *testing.T) {
-	officialRouter := testutils.TestAddress("official")
-	whitelistedRouter := testutils.TestAddress("whitelisted")
-	nonWhitelistedRouter := testutils.TestAddress("non_whitelisted")
+	// Save original state
+	originalWhitelist := make(map[std.Address]bool)
+	for k, v := range swapWhitelist {
+		originalWhitelist[k] = v
+	}
+	originalRoles := make(map[string][]std.Address)
+	for k, v := range roleAddresses {
+		addressCopy := make([]std.Address, len(v))
+		copy(addressCopy, v)
+		originalRoles[k] = addressCopy
+	}
+	defer func() {
+		swapWhitelist = originalWhitelist
+		roleAddresses = originalRoles
+	}()
+
+	officialRouter := std.Address("g1official12345678abcd")
+	whitelistedAddr := std.Address("g1whitelisted123456789a")
+	notWhitelistedAddr := std.Address("g1notwhitelisted1234567")
+
+	// Setup
+	roleAddresses[prbac.ROLE_ROUTER.String()] = []std.Address{officialRouter}
+	swapWhitelist[whitelistedAddr] = true
 
 	tests := []struct {
 		name        string
-		router      std.Address
+		addr        std.Address
 		shouldPanic bool
+		expectedMsg string
 	}{
 		{
-			name:        "official router passes",
-			router:      officialRouter,
+			name:        "official router",
+			addr:        officialRouter,
 			shouldPanic: false,
 		},
 		{
-			name:        "whitelisted router passes",
-			router:      whitelistedRouter,
+			name:        "whitelisted address",
+			addr:        whitelistedAddr,
 			shouldPanic: false,
 		},
 		{
-			name:        "non-whitelisted router panics",
-			router:      nonWhitelistedRouter,
+			name:        "not whitelisted address",
+			addr:        notWhitelistedAddr,
 			shouldPanic: true,
+			expectedMsg: ufmt.Sprintf("unauthorized: caller %s is not a whitelisted router", notWhitelistedAddr.String()),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			swapWhitelist = make(map[std.Address]bool)
-			roleAddresses[prbac.ROLE_ROUTER.String()] = officialRouter
-			swapWhitelist[whitelistedRouter] = true
-
 			if tt.shouldPanic {
-				expectedPanicMsg := ufmt.Sprintf("unauthorized: caller %s is not a whitelisted router", tt.router.String())
-				uassert.PanicsWithMessage(t, expectedPanicMsg, func() {
-					AssertIsSwapWhitelisted(tt.router)
+				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+					AssertIsSwapWhitelisted(tt.addr)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					AssertIsSwapWhitelisted(tt.addr)
 				})
 			}
 		})

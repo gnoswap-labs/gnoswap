@@ -104,7 +104,7 @@ func TestHalt_GetHaltConfig(t *testing.T) {
 	clonedConfig := GetHaltConfig()
 
 	// Modify internal state
-	haltConfig.set(OpTypePool, true)
+	haltStates.setOperationHaltState(OpTypePool, true)
 
 	// Check that the clone is independent
 	halted, err := clonedConfig.get(OpTypePool)
@@ -530,7 +530,7 @@ func TestHalt_IntegrationScenarios(t *testing.T) {
 
 			// Apply custom overrides
 			for op, halted := range tc.customOperations {
-				err := haltConfig.set(op, halted)
+				err := haltStates.setOperationHaltState(op, halted)
 				uassert.NoError(t, err)
 			}
 
@@ -554,21 +554,20 @@ func TestHalt_EdgeCases(t *testing.T) {
 		cleanup()
 
 		// Get initial config
-		haltConfig = newNoneConfig()
+		haltStates = newHaltStateByConfig(newNoneConfig())
 
 		configByGetter := GetHaltConfig()
 
 		// Modify internal state
-		err := haltConfig.set(OpTypePool, true)
+		err := haltStates.setOperationHaltState(OpTypePool, true)
 		uassert.NoError(t, err)
 
 		// Both should be independent of internal state and each other
-		internalHalted, err := haltConfig.get(OpTypePool)
+		internalHalted, err := haltStates.IsOperationHalted(OpTypePool)
 		uassert.NoError(t, err)
 		uassert.Equal(t, internalHalted, true)
 
-		getterHalted, err := configByGetter.get(OpTypePool)
-		uassert.NoError(t, err)
+		getterHalted := configByGetter.IsHalted(OpTypePool)
 		uassert.Equal(t, getterHalted, false)
 	})
 
@@ -639,5 +638,5 @@ func TestHalt_EdgeCases(t *testing.T) {
 
 // Test helpers
 func cleanup() {
-	haltConfig = newNoneConfig()
+	haltStates = newHaltStateByConfig(newNoneConfig())
 }
