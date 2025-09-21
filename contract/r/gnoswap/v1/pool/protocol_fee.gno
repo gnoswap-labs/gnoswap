@@ -58,7 +58,7 @@ func HandleWithdrawalFee(
 
 	// only position contract can call this function
 	caller := std.PreviousRealm().Address()
-	access.AssertIsPosition(caller)
+	access.AssertIsPositionWithVersion(1, caller)
 
 	common.MustRegistered(token0Path)
 	common.MustRegistered(token1Path)
@@ -103,7 +103,7 @@ func SetPoolCreationFee(cur realm, fee int64) {
 	halt.AssertIsNotHaltedPool()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	prevPoolCreationFee := GetPoolCreationFee()
 	err := setPoolCreationFee(fee)
@@ -132,7 +132,7 @@ func SetWithdrawalFee(cur realm, fee uint64) {
 	halt.AssertIsNotHaltedPool()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	prevWithdrawalFee := GetWithdrawalFee()
 

@@ -105,7 +105,7 @@ func SafeTransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error
 	halt.AssertIsNotHaltedPosition()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsStaker(caller)
+	access.AssertIsStakerWithVersion(1, caller)
 
 	assertFromIsValidAddress(from)
 	assertToIsValidAddress(to)
@@ -128,7 +128,7 @@ func TransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
 	halt.AssertIsNotHaltedPosition()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsStaker(caller)
+	access.AssertIsStakerWithVersion(1, caller)
 
 	assertFromIsValidAddress(from)
 	assertToIsValidAddress(to)

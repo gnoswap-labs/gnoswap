@@ -103,7 +103,7 @@ func CollectRewardFromLaunchPad(cur realm, to std.Address) {
 	halt.AssertIsNotHaltedWithdraw()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsLaunchpad(caller)
+	access.AssertIsLaunchpadWithVersion(1, caller)
 
 	from := std.CurrentRealm().Address()
 	currentTimestamp := time.Now().Unix()
@@ -178,7 +178,7 @@ func SetAmountByProjectWallet(cur realm, addr std.Address, amount int64, add boo
 	caller := std.PreviousRealm().Address()
 	currentTimestamp := time.Now().Unix()
 
-	access.AssertIsLaunchpad(caller)
+	access.AssertIsLaunchpadWithVersion(1, caller)
 
 	launchpadAddr, exists := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	if !exists {

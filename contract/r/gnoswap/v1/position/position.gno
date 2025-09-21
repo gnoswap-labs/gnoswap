@@ -63,7 +63,7 @@ func Mint(
 
 	previousRealm := std.PreviousRealm()
 	if !previousRealm.IsUser() {
-		access.AssertIsStaker(previousRealm.Address())
+		access.AssertIsStakerWithVersion(1, previousRealm.Address())
 	} else {
 		assertEqualsAddress(previousRealm.Address(), mintTo)
 		assertEqualsAddress(previousRealm.Address(), caller)
@@ -525,7 +525,7 @@ func SetPositionOperator(
 	halt.AssertIsNotHaltedPosition()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsStaker(caller)
+	access.AssertIsStakerWithVersion(1, caller)
 
 	position := MustGetPosition(id)
 	position.operator = operator

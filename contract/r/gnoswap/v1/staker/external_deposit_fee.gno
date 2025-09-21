@@ -65,7 +65,7 @@ func SetDepositGnsAmount(cur realm, amount int64) {
 	halt.AssertIsNotHaltedStaker()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsValidAmount(amount)
 
@@ -88,7 +88,7 @@ func SetMinimumRewardAmount(cur realm, amount int64) {
 	halt.AssertIsNotHaltedStaker()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsValidAmount(amount)
 
@@ -111,7 +111,7 @@ func SetTokenMinimumRewardAmount(cur realm, paramsStr string) {
 	halt.AssertIsNotHaltedStaker()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsValidRewardAmountFormat(paramsStr)
 

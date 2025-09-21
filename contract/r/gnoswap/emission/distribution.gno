@@ -353,7 +353,7 @@ func GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64
 // Only callable by staker contract.
 func ClearDistributedToStaker(cur realm) {
 	caller := std.PreviousRealm().Address()
-	access.AssertIsStaker(caller)
+	access.AssertIsStakerWithVersion(1, caller)
 
 	distributedToStaker = 0
 }

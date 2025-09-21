@@ -4,10 +4,10 @@ import (
 	"std"
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
-	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"

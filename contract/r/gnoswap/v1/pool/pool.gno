@@ -59,7 +59,7 @@ func Mint(
 	halt.AssertIsNotHaltedPool()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsPosition(caller)
+	access.AssertIsPositionWithVersion(1, caller)
 	access.AssertIsValidAddress(positionCaller)
 
 	liquidity := u256.MustFromDecimal(liquidityAmount)
@@ -118,7 +118,7 @@ func Burn(
 	halt.AssertIsNotHaltedPool()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsPosition(caller)
+	access.AssertIsPositionWithVersion(1, caller)
 	access.AssertIsValidAddress(positionCaller)
 
 	liqAmount := u256.MustFromDecimal(liquidityAmount)
@@ -197,7 +197,7 @@ func Collect(
 	halt.AssertIsNotHaltedWithdraw()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsPosition(caller)
+	access.AssertIsPositionWithVersion(1, caller)
 	access.AssertIsValidAddress(recipient)
 
 	pool := mustGetPoolBy(token0Path, token1Path, fee)
@@ -276,7 +276,7 @@ func CollectProtocol(
 	halt.AssertIsNotHaltedWithdraw()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	common.MustRegistered(token0Path)
 	common.MustRegistered(token1Path)

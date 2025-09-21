@@ -45,7 +45,7 @@ func Reconfigure(
 	halt.AssertIsNotHaltedGovernance()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	// Mint and distribute GNS tokens as part of the process
 	en.MintAndDistributeGns(cross)

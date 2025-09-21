@@ -225,6 +225,6 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 // Only callable by the staker contract.
 func SetOnDistributionPctChangeCallback(cur realm, callback func()) {
 	caller := std.PreviousRealm().Address()
-	access.AssertIsStaker(caller)
+	access.AssertIsStakerWithVersion(1, caller)
 	onDistributionPctChangeCallback = callback
 }

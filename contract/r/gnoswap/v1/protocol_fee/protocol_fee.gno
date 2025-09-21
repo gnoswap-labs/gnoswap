@@ -101,7 +101,7 @@ func SetDevOpsPct(cur realm, pct int64) {
 	halt.AssertIsNotHaltedProtocolFee()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsValidPercent(pct)
 
@@ -137,7 +137,7 @@ func SetGovStakerPct(cur realm, pct int64) {
 	halt.AssertIsNotHaltedProtocolFee()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsValidPercent(pct)
 
@@ -205,7 +205,7 @@ func ClearTokenListWithAmount(cur realm) {
 	halt.AssertIsNotHaltedProtocolFee()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsGovStaker(caller)
+	access.AssertIsGovStakerWithVersion(1, caller)
 
 	protocolFeeState.clearTokenListWithAmount()
 }
@@ -221,7 +221,7 @@ func ClearAccuTransferToGovStaker(cur realm) {
 	halt.AssertIsNotHaltedProtocolFee()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsGovStaker(caller)
+	access.AssertIsGovStakerWithVersion(1, caller)
 
 	protocolFeeState.accuToGovStaker = avl.NewTree()
 }

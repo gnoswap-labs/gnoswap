@@ -72,7 +72,7 @@ func Mint(cur realm, to std.Address, amount int64) {
 	halt.AssertIsNotHaltedXGns()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsGovStaker(caller)
+	access.AssertIsGovStakerWithVersion(1, caller)
 
 	checkErr(ledger.Mint(to, amount))
 }
@@ -88,7 +88,7 @@ func MintByLaunchPad(cur realm, to std.Address, amount int64) {
 	halt.AssertIsNotHaltedXGns()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsLaunchpad(caller)
+	access.AssertIsLaunchpadWithVersion(1, caller)
 
 	checkErr(ledger.Mint(to, amount))
 }
@@ -104,7 +104,7 @@ func Burn(cur realm, from std.Address, amount int64) {
 	halt.AssertIsNotHaltedXGns()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsGovStaker(caller)
+	access.AssertIsGovStakerWithVersion(1, caller)
 
 	checkErr(ledger.Burn(from, amount))
 }
@@ -120,7 +120,7 @@ func BurnByLaunchPad(cur realm, from std.Address, amount int64) {
 	halt.AssertIsNotHaltedXGns()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsLaunchpad(caller)
+	access.AssertIsLaunchpadWithVersion(1, caller)
 
 	checkErr(ledger.Burn(from, amount))
 }

@@ -47,7 +47,7 @@ func CreateProject(
 	halt.AssertIsNotHaltedLaunchpad()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	launchpadAddr := std.CurrentRealm().Address()
 	currentHeight := std.ChainHeight()
@@ -207,7 +207,7 @@ func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient std.A
 	halt.AssertIsNotHaltedLaunchpad()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	currentHeight := std.ChainHeight()
 	currentTime := time.Now().Unix()

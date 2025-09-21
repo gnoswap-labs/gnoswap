@@ -23,7 +23,7 @@ func SetPoolTier(cur realm, poolPath string, tier uint64) {
 	halt.AssertIsNotHaltedStaker()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsPoolExists(poolPath)
 	assertIsValidPoolTier(tier)
@@ -49,7 +49,7 @@ func ChangePoolTier(cur realm, poolPath string, tier uint64) {
 	halt.AssertIsNotHaltedStaker()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsPoolExists(poolPath)
 	assertIsValidPoolTier(tier)
@@ -76,7 +76,7 @@ func RemovePoolTier(cur realm, poolPath string) {
 	halt.AssertIsNotHaltedStaker()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsPoolExists(poolPath)
 
@@ -100,7 +100,7 @@ func SetWarmUp(cur realm, pct, timeDuration int64) {
 	halt.AssertIsNotHaltedStaker()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	setWarmUp(pct, timeDuration)
 

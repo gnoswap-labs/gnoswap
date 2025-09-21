@@ -34,7 +34,7 @@ func SetSwapFee(cur realm, fee uint64) {
 	halt.AssertIsNotHaltedProtocolFee()
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	prevSwapFee := swapFee
 	if err := setSwapFee(fee); err != nil {
