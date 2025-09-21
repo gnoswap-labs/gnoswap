@@ -43,8 +43,8 @@ const WUGNOT_PATH string = "gno.land/r/gnoland/wugnot"
 // No parameters required - automatically determines caller's rewards.
 // Transfers rewards directly to caller.
 func CollectReward(cur realm) {
-	halt.AssertIsNotHaltedGovStaker()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedGovStakerWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	from := std.CurrentRealm().Address()
@@ -99,8 +99,8 @@ func CollectReward(cur realm) {
 //
 // Only callable by launchpad contract.
 func CollectRewardFromLaunchPad(cur realm, to std.Address) {
-	halt.AssertIsNotHaltedGovStaker()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedGovStakerWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsLaunchpadWithVersion(1, caller)
@@ -172,8 +172,8 @@ func CollectRewardFromLaunchPad(cur realm, to std.Address) {
 //   - if system is halted for withdrawals
 //   - if access control operations fail
 func SetAmountByProjectWallet(cur realm, addr std.Address, amount int64, add bool) {
-	halt.AssertIsNotHaltedGovStaker()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedGovStakerWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	currentTimestamp := time.Now().Unix()

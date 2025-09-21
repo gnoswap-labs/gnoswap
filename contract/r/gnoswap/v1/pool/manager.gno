@@ -63,7 +63,7 @@ func CreatePool(
 	fee uint32,
 	sqrtPriceX96 string,
 ) {
-	halt.AssertIsNotHaltedPool()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
 
 	assertIsNotEqualsTokens(token0Path, token1Path)
 	assertIsSupportedFeeTier(fee)
@@ -128,7 +128,7 @@ func CreatePool(
 //
 // Only callable by admin or governance.
 func SetFeeProtocol(cur realm, feeProtocol0, feeProtocol1 uint8) {
-	halt.AssertIsNotHaltedPool()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)

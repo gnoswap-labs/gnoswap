@@ -24,7 +24,7 @@ import (
 // Only callable by admin or gov/staker contract.
 // Note: Default split is 0% devOps, 100% gov/staker.
 func DistributeProtocolFee(cur realm) map[string]int64 {
-	halt.AssertIsNotHaltedProtocolFee()
+	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	assertIsAdminOrGovStaker(caller)
@@ -98,7 +98,7 @@ func DistributeProtocolFee(cur realm) map[string]int64 {
 // Only callable by admin or governance.
 // Note: GovStaker percentage is automatically adjusted to (10000 - devOpsPct).
 func SetDevOpsPct(cur realm, pct int64) {
-	halt.AssertIsNotHaltedProtocolFee()
+	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
@@ -134,7 +134,7 @@ func SetDevOpsPct(cur realm, pct int64) {
 // Only callable by admin or governance.
 // Note: DevOps percentage is automatically adjusted to (10000 - govStakerPct).
 func SetGovStakerPct(cur realm, pct int64) {
-	halt.AssertIsNotHaltedProtocolFee()
+	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
@@ -171,7 +171,7 @@ func SetGovStakerPct(cur realm, pct int64) {
 // Only callable by pool, router or staker contracts.
 // Note: Accumulated fees are distributed when DistributeProtocolFee is called.
 func AddToProtocolFee(cur realm, tokenPath string, amount int64) {
-	halt.AssertIsNotHaltedProtocolFee()
+	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	assertIsPoolOrPositionOrRouterOrStaker(caller)
@@ -202,7 +202,7 @@ func AddToProtocolFee(cur realm, tokenPath string, amount int64) {
 // Only callable by gov/staker contract.
 // Note: Should be called after successful distribution.
 func ClearTokenListWithAmount(cur realm) {
-	halt.AssertIsNotHaltedProtocolFee()
+	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsGovStakerWithVersion(1, caller)
@@ -218,7 +218,7 @@ func ClearTokenListWithAmount(cur realm) {
 // Only callable by gov/staker contract.
 // Note: Should be called after reading accumulated amounts.
 func ClearAccuTransferToGovStaker(cur realm) {
-	halt.AssertIsNotHaltedProtocolFee()
+	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsGovStakerWithVersion(1, caller)

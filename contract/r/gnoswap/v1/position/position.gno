@@ -59,7 +59,7 @@ func Mint(
 	caller std.Address,
 	referrer string,
 ) (uint64, string, string, string) {
-	halt.AssertIsNotHaltedPosition()
+	halt.AssertIsNotHaltedPositionWithVersion(1)
 
 	previousRealm := std.PreviousRealm()
 	if !previousRealm.IsUser() {
@@ -172,7 +172,7 @@ func IncreaseLiquidity(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, string, string, string) {
-	halt.AssertIsNotHaltedPosition()
+	halt.AssertIsNotHaltedPositionWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	assertIsOwnerForToken(positionId, caller)
@@ -304,8 +304,8 @@ func DecreaseLiquidity(
 	deadline int64,
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) {
-	halt.AssertIsNotHaltedPosition()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedPositionWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	assertIsOwnerForToken(positionId, caller)
@@ -377,8 +377,8 @@ func CollectFee(
 	positionId uint64,
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string) {
-	halt.AssertIsNotHaltedPosition()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedPositionWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	assertIsOwnerOrOperatorForToken(positionId, caller)
@@ -522,7 +522,7 @@ func SetPositionOperator(
 	id uint64,
 	operator std.Address,
 ) {
-	halt.AssertIsNotHaltedPosition()
+	halt.AssertIsNotHaltedPositionWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsStakerWithVersion(1, caller)

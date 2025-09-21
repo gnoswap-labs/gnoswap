@@ -28,7 +28,7 @@ func init() {
 //   - If the caller is not the admin
 func AddToken(cur realm, tokenPath string) {
 	caller := std.PreviousRealm().Address()
-	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	if err := modifyTokenList(tokenPath, addTokenValidator, addTokenExecutor); err != nil {
@@ -56,7 +56,7 @@ func AddToken(cur realm, tokenPath string) {
 //   - If the caller is not the admin
 func RemoveToken(cur realm, tokenPath string) {
 	caller := std.PreviousRealm().Address()
-	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	if err := modifyTokenList(tokenPath, removeTokenValidator, removeTokenExecutor); err != nil {

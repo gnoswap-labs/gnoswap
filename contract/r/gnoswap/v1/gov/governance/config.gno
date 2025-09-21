@@ -42,7 +42,7 @@ func Reconfigure(
 	executionWindow int64,
 ) int64 {
 	// Check if system is halted before proceeding
-	halt.AssertIsNotHaltedGovernance()
+	halt.AssertIsNotHaltedGovernanceWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)

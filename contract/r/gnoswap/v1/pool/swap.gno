@@ -116,7 +116,7 @@ func Swap(
 	sqrtPriceLimitX96 string,
 	payer std.Address, // router
 ) (string, string) {
-	halt.AssertIsNotHaltedPool()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsSwapWhitelisted(caller)

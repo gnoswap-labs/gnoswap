@@ -56,7 +56,7 @@ func Mint(
 	liquidityAmount string,
 	positionCaller std.Address,
 ) (string, string) {
-	halt.AssertIsNotHaltedPool()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsPositionWithVersion(1, caller)
@@ -115,7 +115,7 @@ func Burn(
 	liquidityAmount string, // uint128
 	positionCaller std.Address,
 ) (string, string) { // uint256 x2
-	halt.AssertIsNotHaltedPool()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsPositionWithVersion(1, caller)
@@ -193,8 +193,8 @@ func Collect(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	halt.AssertIsNotHaltedPool()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsPositionWithVersion(1, caller)
@@ -272,8 +272,8 @@ func CollectProtocol(
 	amount0Requested string, // uint128
 	amount1Requested string, // uint128
 ) (string, string) {
-	halt.AssertIsNotHaltedPool()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)

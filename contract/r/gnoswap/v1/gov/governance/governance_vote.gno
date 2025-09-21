@@ -32,7 +32,7 @@ import (
 //
 // Returns voting weight used as string.
 func Vote(cur realm, proposalID int64, yes bool) string {
-	halt.AssertIsNotHaltedGovernance()
+	halt.AssertIsNotHaltedGovernanceWithVersion(1)
 
 	// Get current blockchain state and caller information
 	currentHeight := std.ChainHeight()

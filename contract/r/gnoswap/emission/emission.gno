@@ -178,7 +178,7 @@ func MintAndDistributeGns(cur realm) int64 {
 // Only callable by admin or governance.
 func SetDistributionStartTime(cur realm, startTimestamp int64) {
 	halt.AssertIsNotHaltedEmission()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)

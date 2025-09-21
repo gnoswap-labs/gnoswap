@@ -69,7 +69,7 @@ func Render(path string) string {
 //
 // Only callable by governance staker contract.
 func Mint(cur realm, to std.Address, amount int64) {
-	halt.AssertIsNotHaltedXGns()
+	halt.AssertIsNotHaltedXGnsWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsGovStakerWithVersion(1, caller)
@@ -85,7 +85,7 @@ func Mint(cur realm, to std.Address, amount int64) {
 //
 // Only callable by launchpad contract.
 func MintByLaunchPad(cur realm, to std.Address, amount int64) {
-	halt.AssertIsNotHaltedXGns()
+	halt.AssertIsNotHaltedXGnsWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsLaunchpadWithVersion(1, caller)
@@ -101,7 +101,7 @@ func MintByLaunchPad(cur realm, to std.Address, amount int64) {
 //
 // Only callable by governance staker contract.
 func Burn(cur realm, from std.Address, amount int64) {
-	halt.AssertIsNotHaltedXGns()
+	halt.AssertIsNotHaltedXGnsWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsGovStakerWithVersion(1, caller)
@@ -117,7 +117,7 @@ func Burn(cur realm, from std.Address, amount int64) {
 //
 // Only callable by launchpad contract.
 func BurnByLaunchPad(cur realm, from std.Address, amount int64) {
-	halt.AssertIsNotHaltedXGns()
+	halt.AssertIsNotHaltedXGnsWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsLaunchpadWithVersion(1, caller)

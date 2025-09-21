@@ -53,8 +53,8 @@ func HandleWithdrawalFee(
 	poolPath string,
 	positionCaller std.Address,
 ) (string, string) { // uint256 x2
-	halt.AssertIsNotHaltedPool()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	// only position contract can call this function
 	caller := std.PreviousRealm().Address()
@@ -100,7 +100,7 @@ func GetPoolCreationFee() int64 {
 // SetPoolCreationFee sets the poolCreationFee.
 // Only admin or governance can call this function.
 func SetPoolCreationFee(cur realm, fee int64) {
-	halt.AssertIsNotHaltedPool()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
@@ -129,7 +129,7 @@ func GetWithdrawalFee() uint64 {
 // SetWithdrawalFee sets the withdrawal fee.
 // Only admin or governance can call this function.
 func SetWithdrawalFee(cur realm, fee uint64) {
-	halt.AssertIsNotHaltedPool()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
