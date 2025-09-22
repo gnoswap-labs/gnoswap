@@ -4,11 +4,12 @@ import (
 	"std"
 	"strconv"
 
-	"gno.land/p/nt/ufmt"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoland/wugnot"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 var (
@@ -257,13 +258,11 @@ func finalizeSwap(
 	handler := newGnotSwapHandler(userBeforeWugnotBalance, userWrappedWugnot)
 	handler.UpdateNewBalance()
 
-	var err error
-	if inputToken == gnot {
-		err = handler.HandleInputSwap()
-	}
-
-	if err != nil {
-		panic(addDetailToError(errSlippage, err.Error()))
+	// Handle input GNOT token swap
+	if common.IsGNOTNativePath(inputToken) {
+		if err := handler.HandleInputSwap(); err != nil {
+			panic(err)
+		}
 	}
 
 	if err := validator.slippage(swapType, resultAmountIn, resultAmountOutWithoutFee, tokenAmountLimit); err != nil {
