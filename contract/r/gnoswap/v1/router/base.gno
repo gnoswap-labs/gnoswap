@@ -6,11 +6,12 @@ import (
 	"strconv"
 	"strings"
 
-	"gno.land/p/nt/ufmt"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoland/wugnot"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 const (
@@ -70,35 +71,41 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 	outputToken string,
 	specifiedAmount *i256.Int,
 ) error {
+	isInputNativeToken := common.IsGNOTNativePath(inputToken)
+	isOutputNativeToken := common.IsGNOTNativePath(outputToken)
+
 	// no native token
-	if inputToken != gnot && outputToken != gnot {
+	if !isInputNativeToken && !isOutputNativeToken {
 		return nil
 	}
 
 	// save current user's WGNOT amount
 	op.userBeforeWugnotBalance = wugnot.BalanceOf(std.PreviousRealm().Address())
 
-	if outputToken == gnot {
-		op.withUnwrap = true
-		return nil
-	}
+	// Handle input token independently
+	if isInputNativeToken {
+		sent := std.OriginSend()
+		ugnotSentByUser := sent.AmountOf("ugnot")
+		amountSpecified := specifiedAmount.Int64()
 
-	sent := std.OriginSend()
-	ugnotSentByUser := sent.AmountOf("ugnot")
-	amountSpecified := specifiedAmount.Int64()
-
-	if ugnotSentByUser != amountSpecified {
-		return ufmt.Errorf("ugnot sent by user(%d) is not equal to amountSpecified(%d)", ugnotSentByUser, amountSpecified)
-	}
-
-	// wrap user's WUGNOT
-	if ugnotSentByUser > 0 {
-		if err := wrapWithTransfer(std.PreviousRealm().Address(), ugnotSentByUser); err != nil {
-			return err
+		if ugnotSentByUser != amountSpecified {
+			return ufmt.Errorf("ugnot sent by user(%d) is not equal to amountSpecified(%d)", ugnotSentByUser, amountSpecified)
 		}
+
+		// wrap user's GNOT to WUGNOT
+		if ugnotSentByUser > 0 {
+			if err := wrapWithTransfer(std.PreviousRealm().Address(), ugnotSentByUser); err != nil {
+				return err
+			}
+		}
+
+		op.userWrappedWugnot = ugnotSentByUser
 	}
 
-	op.userWrappedWugnot = ugnotSentByUser
+	// Handle output token independently
+	if isOutputNativeToken {
+		op.withUnwrap = true
+	}
 
 	return nil
 }
