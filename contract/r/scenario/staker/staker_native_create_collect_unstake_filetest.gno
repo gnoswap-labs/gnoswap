@@ -47,7 +47,7 @@ var (
 	poolAddr, _     = access.GetAddress(prabc.ROLE_POOL.String())
 	positionAddr, _ = access.GetAddress(prabc.ROLE_POSITION.String())
 
-	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+	wugnotAddr std.Address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	barPath = "gno.land/r/onbloc/bar"
 	fooPath = "gno.land/r/onbloc/foo"
@@ -195,6 +195,7 @@ func mintNativePosition01() {
 	ufmt.Printf("[INFO] admin wugnot balance before mint: %d\n", adminOldWugnotBalance)
 
 	println("[INFO] mint native position 01 (gns:gnot)")
+	testing.SetOriginSend(std.Coins{{"ugnot", 1000}})
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		"gno.land/r/gnoswap/gns",
@@ -231,21 +232,22 @@ func mintNativePosition02() {
 	wugnot.Approve(cross, positionAddr, maxInt64)
 	testing.SkipHeights(3)
 
-	println("[INFO] prepare another 50000005 ugnot")
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 50000005}})
+	println("[INFO] prepare another 1000 ugnot")
+	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 1000}})
 
 	ugnotBalanceBefore := ugnotBalanceOf(adminAddr)
 	ufmt.Printf("[INFO] admin ugnot balance before second mint: %d\n", ugnotBalanceBefore)
 
 	println("[INFO] send ugnot to position contract for second mint")
 	banker := std.NewBanker(std.BankerTypeRealmIssue)
-	banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", 50000005}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 50000005}})
+	banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", 1000}})
+	testing.SetOriginSend(std.Coins{{"ugnot", 1000}})
 
 	adminOldWugnotBalance := wugnot.BalanceOf(adminUser)
 	ufmt.Printf("[INFO] admin wugnot balance before second mint: %d\n", adminOldWugnotBalance)
 
 	println("[INFO] mint native position 02 (gns:gnot)")
+	testing.SetOriginSend(std.Coins{{"ugnot", 1000}})
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		"gno.land/r/gnoswap/gns",
@@ -495,8 +497,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 4. Mint native position 02
 // [INFO] approve tokens for second native minting
-// [INFO] prepare another 50000005 ugnot
-// [INFO] admin ugnot balance before second mint: 99999010
+// [INFO] prepare another 1000 ugnot
+// [INFO] admin ugnot balance before second mint: 1000
 // [INFO] send ugnot to position contract for second mint
 // [INFO] admin wugnot balance before second mint: 0
 // [INFO] mint native position 02 (gns:gnot)
@@ -526,31 +528,31 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 8. Collect reward for token 01
 // [INFO] skip blocks to accumulate rewards
 // [INFO] wugnot balance before collect: 0
-// [INFO] ugnot balance before collect: 10099998010
+// [INFO] ugnot balance before collect: 10000000000
 // [INFO] collect reward for token 01 (no unwrap)
 // [EXPECTED] wugnot balance after collect: 2218350
-// [EXPECTED] ugnot balance after collect: 10099998010
+// [EXPECTED] ugnot balance after collect: 10000000000
 // [EXPECTED] wugnot increase: 2218350
 // [EXPECTED] ugnot change: 0
 //
 // [SCENARIO] 9. Unstake token 02
 // [INFO] skip more blocks
 // [INFO] wugnot balance before unstake: 2218350
-// [INFO] ugnot balance before unstake: 10099998010
+// [INFO] ugnot balance before unstake: 10000000000
 // [INFO] unstake token 02 (no unwrap)
 // [EXPECTED] NFT owner after unstaking: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
 // [EXPECTED] wugnot balance after unstake: 5516939
-// [EXPECTED] ugnot balance after unstake: 10099998010
+// [EXPECTED] ugnot balance after unstake: 10000000000
 // [EXPECTED] wugnot increase from unstake: 3298589
 // [EXPECTED] ugnot change from unstake: 0
 //
 // [SCENARIO] 10. End external incentive
 // [INFO] approve wugnot for unwrapping
 // [INFO] wugnot balance before end: 5516939
-// [INFO] ugnot balance before end: 10099998010
+// [INFO] ugnot balance before end: 10000000000
 // [INFO] skip to end of external incentive
 // [INFO] end external incentive
 // [EXPECTED] wugnot balance after end: 5516939
-// [EXPECTED] ugnot balance after end: 10099998010
+// [EXPECTED] ugnot balance after end: 10000000000
 // [EXPECTED] wugnot change: 0
 // [EXPECTED] ugnot refund: 0
