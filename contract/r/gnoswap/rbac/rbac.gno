@@ -22,7 +22,13 @@ func initRbac() {
 	for role, addr := range DefaultRoleAddresses {
 		roleName := role.String()
 
-		manager.RegisterRole(roleName, addr)
+		err := manager.RegisterRole(roleName, addr)
+		if err != nil {
+			panic(makeErrorWithDetails(
+				errCannotFindRole,
+				ufmt.Sprintf("role name: %s, address: %s", roleName, addr.String()),
+			))
+		}
 		updateAccessRoleAddresses(roleName)
 	}
 }

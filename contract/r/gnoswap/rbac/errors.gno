@@ -12,6 +12,7 @@ var (
 	errCallerIsNotPendingOwner = errors.New("caller is not pending owner")
 	errInvalidAddress          = errors.New("invalid address")
 	errInvalidRoleName         = errors.New("invalid role name")
+	errCannotFindRole          = errors.New("cannot find registered role")
 )
 
 // makeErrorWithDetails combines an error with additional details.
