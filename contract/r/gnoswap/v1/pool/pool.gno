@@ -15,10 +15,10 @@ import (
 )
 
 var (
-	positionAddr, _    = access.GetAddress(prabc.ROLE_POSITION.String())
-	poolAddr, _        = access.GetAddress(prabc.ROLE_POOL.String())
-	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
-	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
+	positionAddr    = access.MustGetAddress(prabc.ROLE_POSITION.String())
+	poolAddr        = access.MustGetAddress(prabc.ROLE_POOL.String())
+	protocolFeeAddr = access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	routerAddr      = access.MustGetAddress(prabc.ROLE_ROUTER.String())
 )
 
 // Mint adds liquidity to a pool position.

@@ -24,6 +24,15 @@ func GetAddress(role string) (std.Address, bool) {
 	return addresses[len(addresses)-1], true
 }
 
+func MustGetAddress(role string) std.Address {
+	addr, ok := GetAddress(role)
+	if !ok {
+		panic(ufmt.Errorf("role %s does not exist", role))
+	}
+
+	return addr
+}
+
 // GetAddressWithVersion returns the address for a role and whether it exists.
 func GetAddressWithVersion(role string, version int) (std.Address, bool) {
 	addresses, ok := roleAddresses[role]
