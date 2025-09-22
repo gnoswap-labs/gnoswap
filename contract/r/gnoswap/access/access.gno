@@ -19,6 +19,14 @@ func GetAddress(role string) (std.Address, bool) {
 	return addr, ok
 }
 
+func MustGetAddress(role string) std.Address {
+	addr, ok := GetAddress(role)
+	if !ok {
+		panic(ufmt.Errorf("role %s not found", role))
+	}
+	return addr
+}
+
 // GetRoleAddresses returns a copy of all role addresses.
 func GetRoleAddresses() map[string]std.Address {
 	addresses := make(map[string]std.Address)

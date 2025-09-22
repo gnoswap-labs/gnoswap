@@ -20,8 +20,14 @@ func initRbac() {
 	manager = prbac.NewRBACWithAddress(ADMIN)
 
 	for role, addr := range DefaultRoleAddresses {
-		manager.RegisterRole(role.String())
-		manager.UpdateRoleAddress(role.String(), addr)
+		err := manager.RegisterRole(role.String())
+		if err != nil {
+			panic(err)
+		}
+		err = manager.UpdateRoleAddress(role.String(), addr)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	updateAccessRoleAddresses(manager.GetRoleAddresses())

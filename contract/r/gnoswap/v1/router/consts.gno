@@ -9,8 +9,8 @@ import (
 const maxApprove int64 = 9223372036854775807
 
 var (
-	poolAddr, _        = access.GetAddress(prabc.ROLE_POOL.String())
-	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
-	positionAddr, _    = access.GetAddress(prabc.ROLE_POSITION.String())
-	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	poolAddr        = access.MustGetAddress(prabc.ROLE_POOL.String())
+	routerAddr      = access.MustGetAddress(prabc.ROLE_ROUTER.String())
+	positionAddr    = access.MustGetAddress(prabc.ROLE_POSITION.String())
+	protocolFeeAddr = access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 )

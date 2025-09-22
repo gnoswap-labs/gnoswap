@@ -125,7 +125,10 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, 
 	collectAmount0 := u256.MustFromDecimal(collect0)
 	collectAmount1 := u256.MustFromDecimal(collect1)
 
-	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
+	poolAddr, ok := access.GetAddress(prabc.ROLE_POOL.String())
+	if !ok {
+		panic(makeErrorWithDetails(errCannotFindRole, ufmt.Sprintf("role %s not found", prabc.ROLE_POOL.String())))
+	}
 
 	if isWrappedToken(pToken0) && params.unwrapResult {
 		unwrapWithTransferFrom(poolAddr, caller, safeConvertToInt64(collectAmount0))
