@@ -347,7 +347,6 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 	// staked status
 	deposit := &Deposit{
 		owner:           caller,
-		stakeTimestamp:  currentTime,
 		stakeTime:       currentTime,
 		targetPoolPath:  poolPath,
 		tickLower:       tickLower,
