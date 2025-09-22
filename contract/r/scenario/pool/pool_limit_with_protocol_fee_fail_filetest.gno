@@ -91,7 +91,6 @@ func main() {
 		barPath,
 		fooPath,
 		fee500,
-		positionAddr,
 		-120,
 		0,
 		test_liquidityExpectStr,

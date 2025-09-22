@@ -85,7 +85,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000() {
 	testing.SetRealm(adminRealm)
 
 	testing.SetRealm(posRealm)
-	pool.Mint(cross, fooPath, barPath, fee500, positionAddr, -tickUpper, -tickLower, liquidityExpect, adminAddr) // -11000  ~ -9000
+	pool.Mint(cross, fooPath, barPath, fee500, -tickUpper, -tickLower, liquidityExpect, adminAddr) // -11000  ~ -9000
 
 	println("[INFO] dry swap")
 	println("[INFO] zeroForOne true, amountSpecified 16000")

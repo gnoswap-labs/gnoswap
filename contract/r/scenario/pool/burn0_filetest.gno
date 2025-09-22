@@ -80,7 +80,6 @@ func testSuccessfulBurn(t *testing.T) {
 		barTokenPath,
 		bazTokenPath,
 		fee,
-		positionAddr,
 		tickLower,
 		tickUpper,
 		liquidityAmount,
