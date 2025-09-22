@@ -157,6 +157,8 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 // Get the latest global reward ratio accumulation in [0, currentTime] range.
 // Returns the time and the accumulation.
 func (self *Pool) CurrentGlobalRewardRatioAccumulation(currentTime int64) (time int64, acc *u256.Uint) {
+	acc = u256.Zero()
+
 	self.globalRewardRatioAccumulation.ReverseIterate(0, currentTime, func(key int64, value any) bool {
 		time = key
 		v, ok := value.(*u256.Uint)
@@ -187,6 +189,8 @@ func (self *Pool) CurrentTick(currentTime int64) (tick int32) {
 }
 
 func (self *Pool) CurrentStakedLiquidity(currentTime int64) (liquidity *u256.Uint) {
+	liquidity = u256.Zero()
+
 	self.stakedLiquidity.ReverseIterate(0, currentTime, func(key int64, value any) bool {
 		res, ok := value.(*u256.Uint)
 		if !ok {
@@ -198,9 +202,22 @@ func (self *Pool) CurrentStakedLiquidity(currentTime int64) (liquidity *u256.Uin
 	return
 }
 
-// IsExternallyIncentivizedPool returns true if the pool has any external incentives.
+// IsExternallyIncentivizedPool returns true if the pool has any active external incentives.
 func (self *Pool) IsExternallyIncentivizedPool() bool {
-	return self.incentives.incentives.Size() > 0
+	// Check if there are any active incentives at current time
+	currentTime := time.Now().Unix()
+
+	hasActive := false
+	self.incentives.incentives.Iterate("", "", func(key string, value interface{}) bool {
+		incentive, ok := value.(*ExternalIncentive)
+		if ok && incentive.isActive(currentTime) {
+			hasActive = true
+			return false
+		}
+		return true
+	})
+
+	return hasActive
 }
 
 // Get the latest reward in [0, currentTime] range.

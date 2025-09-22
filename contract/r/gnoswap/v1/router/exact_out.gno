@@ -67,6 +67,7 @@ func ExactOutSwapRoute(
 ) (string, string) {
 	halt.AssertIsNotHaltedRouter()
 
+	assertIsValidUserCoinSend(inputToken, amountInMax)
 	assertIsNotPassedDeadline(deadline)
 
 	emission.MintAndDistributeGns(cross)
@@ -93,7 +94,7 @@ func ExactOutSwapRoute(
 			panic(err)
 		}
 	} else {
-		common.Transfer(cross, outputToken, std.PreviousRealm().Address(), outputAmount.Int64())
+		common.SafeGRC20Transfer(cross, outputToken, std.PreviousRealm().Address(), outputAmount.Int64())
 	}
 
 	// handle referral registration

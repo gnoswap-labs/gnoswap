@@ -251,6 +251,32 @@ func init() {
 		en.GetStakerEmissionAmountPerSecond,
 		en.GetStakerEmissionAmountPerSecondInRange,
 	)
+
+	// Register the callback for distribution percentage changes
+	en.SetOnDistributionPctChangeCallback(cross, emissionCacheUpdateHook())
+}
+
+// emissionCacheUpdateHook creates a hook function that updates the emission cache when called.
+// This follows the same pattern as other hooks in the staker contract.
+func emissionCacheUpdateHook() func() {
+	return func() {
+		func(cur realm) {
+			if poolTier != nil {
+				currentTime := time.Now().Unix()
+				currentHeight := std.ChainHeight()
+
+				// First cache the current rewards before updating emission
+				poolTier.cacheReward(currentHeight, currentTime, pools)
+
+				// Update the current emission cache with the latest value
+				newEmission := en.GetStakerEmissionAmountPerSecond()
+				poolTier.currentEmission = newEmission
+
+				// Now apply the new emission rate to each pool individually
+				poolTier.applyCacheToAllPools(pools, currentTime, newEmission)
+			}
+		}(cross)
+	}
 }
 
 // StakeToken stakes an LP position NFT to earn rewards.
@@ -300,6 +326,13 @@ func StakeToken(cur realm, positionId uint64, referrer string) (string, string, 
 
 	// check pool path from positionId
 	poolPath := pn.PositionGetPositionPoolKey(positionId)
+
+	// check pool has internal or external incentives
+	err = poolHasIncentives(poolPath)
+	if err != nil {
+		panic(err.Error())
+	}
+
 	pool, ok := pools.Get(poolPath)
 	if !ok {
 		panic(makeErrorWithDetails(
@@ -391,10 +424,6 @@ func getPositionStakeTokenAmount(positionId uint64, owner, caller std.Address) (
 	}
 
 	poolPath := pn.PositionGetPositionPoolKey(positionId)
-	if err := poolHasIncentives(poolPath); err != nil {
-		return "", "", err
-	}
-
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(poolPath, positionId)
 
 	return token0Amount, token1Amount, nil
@@ -527,13 +556,13 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 			"currentHeight", formatInt(blockHeight),
 		)
 		if toUser > 0 {
-			if unwrapResult {
+			if common.IsGNOTWrappedPath(rewardToken) && unwrapResult {
 				tErr := unwrapWithTransfer(deposit.owner, toUser)
 				if tErr != nil {
 					panic(tErr)
 				}
 			} else {
-				common.Transfer(cross, rewardToken, deposit.owner, toUser)
+				common.SafeGRC20Transfer(cross, rewardToken, deposit.owner, toUser)
 			}
 		}
 
@@ -715,9 +744,7 @@ func applyUnStake(positionId uint64) error {
 
 	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
 	caller := std.PreviousRealm().Address()
-
-	_, _, err := getPositionStakeTokenAmount(positionId, owner, caller)
-	if err != nil {
+	if err := hasTokenOwnership(owner, caller); err != nil {
 		return err
 	}
 

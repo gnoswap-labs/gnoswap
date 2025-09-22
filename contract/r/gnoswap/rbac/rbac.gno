@@ -5,8 +5,8 @@ import (
 
 	"gno.land/r/gnoswap/access"
 
-	"gno.land/p/nt/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/ufmt"
 )
 
 var manager *prbac.RBAC
@@ -31,25 +31,41 @@ func initRbac() {
 //
 // Parameters:
 //   - roleName: name of the role to register
+//   - roleAddress: address to assign to the role
 //
 // Only callable by admin or governance.
-func RegisterRole(cur realm, roleName string) {
+func RegisterRole(cur realm, roleName string, roleAddress std.Address) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	assertIsValidRoleName(roleName)
 
+	// Validate the role address
+	if !roleAddress.IsValid() || roleAddress == std.Address("") {
+		panic(makeErrorWithDetails(errInvalidAddress, ufmt.Sprintf(
+			"cannot register role %s with invalid address %s", roleName, roleAddress,
+		)))
+	}
+
 	err := manager.RegisterRole(roleName)
 	if err != nil {
 		panic(makeErrorWithDetails(
-			err,
+			errInvalidRoleName,
 			ufmt.Sprintf("role name: %s", roleName),
 		))
 	}
 
-	updateAccessRoleAddresses(manager.GetRoleAddresses())
+	// Update the role address immediately after registration
+	err = manager.UpdateRoleAddress(roleName, roleAddress)
+	if err != nil {
+		panic(makeErrorWithDetails(
+			errInvalidAddress,
+			ufmt.Sprintf("failed to set address for role %s: %s", roleName, roleAddress),
+		))
+	}
 
-	emitRegisterRoleEvent(roleName)
+	updateAccessRoleAddresses(manager.GetRoleAddresses())
+	emitRegisterRoleEvent(roleName, roleAddress)
 }
 
 // RemoveRole removes a role from the RBAC system.
@@ -73,7 +89,6 @@ func RemoveRole(cur realm, roleName string) {
 	}
 
 	updateAccessRoleAddresses(manager.GetRoleAddresses())
-
 	emitRemoveRoleEvent(roleName)
 }
 

@@ -4,8 +4,8 @@ import (
 	"std"
 	"time"
 
-	"gno.land/p/nt/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
@@ -276,5 +276,7 @@ func transferToken(
 	}
 
 	// Handle GRC20 token transfer
-	return common.Transfer(cross, tokenPath, to, amount)
+	common.SafeGRC20Transfer(cross, tokenPath, to, amount)
+
+	return nil
 }

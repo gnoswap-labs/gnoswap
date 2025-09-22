@@ -4,8 +4,8 @@ import (
 	"std"
 	"time"
 
-	"gno.land/p/nt/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	en "gno.land/r/gnoswap/emission"
@@ -42,6 +42,8 @@ func CreateExternalIncentive(
 	assertIsValidIncentiveStartTime(startTimestamp)
 	assertIsValidIncentiveEndTime(endTimestamp)
 	assertIsValidIncentiveDuration(endTimestamp - startTimestamp)
+	// assert that the user has sent the correct amount of native coin
+	assertIsValidUserCoinSend(rewardToken, rewardAmount)
 
 	en.MintAndDistributeGns(cross)
 
@@ -53,10 +55,7 @@ func CreateExternalIncentive(
 			panic(err)
 		}
 	} else {
-		err := common.TransferFrom(cross, rewardToken, caller, stakerAddr, rewardAmount)
-		if err != nil {
-			panic(err)
-		}
+		common.SafeGRC20TransferFrom(cross, rewardToken, caller, stakerAddr, rewardAmount)
 	}
 
 	// deposit gns amount
@@ -142,6 +141,25 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 
 	caller := std.PreviousRealm().Address()
 	currentTime := time.Now().Unix()
+
+	// Get incentive to check if GNS already refunded
+	incentive, exists := pool.incentives.Get(incentiveId)
+	if !exists {
+		panic(makeErrorWithDetails(
+			errCannotEndIncentive,
+			ufmt.Sprintf("cannot end non existent incentive(%s)", incentiveId),
+		))
+	}
+
+	// Check if incentive has already been refunded
+	if incentive.refunded {
+		panic(makeErrorWithDetails(
+			errCannotEndIncentive,
+			ufmt.Sprintf("incentive(%s) has already been refunded", incentiveId),
+		))
+	}
+
+	// Process ending
 	incentive, refund, err := endExternalIncentive(pool, incentiveId, caller, currentTime)
 	if err != nil {
 		panic(err)
@@ -155,19 +173,23 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 	// unwrap if wugnot
 	isUnwrap := incentive.rewardToken == WUGNOT_PATH
 	if isUnwrap {
-		err = unwrapWithTransfer(incentive.refundee, refund)
+		transferErr := unwrapWithTransfer(incentive.refundee, refund)
+		if transferErr != nil {
+			panic(transferErr)
+		}
 	} else {
-		err = common.Transfer(cross, incentive.rewardToken, incentive.refundee, refund)
+		common.SafeGRC20Transfer(cross, incentive.rewardToken, incentive.refundee, refund)
 	}
 
-	if err != nil {
-		panic(err)
-	}
-
-	// also refund deposit gns amount
+	// Transfer GNS deposit back to refundee
 	gns.Transfer(cross, incentive.refundee, incentive.depositGnsAmount)
 
+	// Mark incentive as refunded and update
+	// After this update, attempts to re-claim GNS or rewards that were deposited
+	// through the `endExternalIncentive` function will be blocked.
+	incentive.setRefunded(true)
 	pool.incentives.update(incentive.refundee, incentive)
+	pool.incentives.archiveIncentive(incentiveId)
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(
@@ -180,7 +202,7 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 		"refundToken", incentive.rewardToken,
 		"refundAmount", formatInt(refund),
 		"refundGnsAmount", formatInt(incentive.depositGnsAmount),
-		"isRequestUnwrap", formatBool(incentive.rewardToken == WUGNOT_PATH),
+		"isRequestUnwrap", formatBool(isUnwrap),
 		"externalIncentiveEndBy", previousRealm.Address().String(),
 	)
 }
@@ -213,12 +235,9 @@ func endExternalIncentive(pool *Pool, incentiveId string, caller std.Address, cu
 		)
 	}
 
-	refund := int64(incentive.rewardLeft)
-
-	if !incentive.unclaimableRefunded {
-		refund += int64(pool.incentives.calculateUnclaimableReward(incentive.incentiveId))
-		incentive.setUnClaimableRefunded(true)
-	}
+	// Always calculate unclaimed rewards since this function is called only once
+	refund := incentive.rewardLeft
+	refund += pool.incentives.calculateUnclaimableReward(incentive.incentiveId)
 
 	return incentive, refund, nil
 }
