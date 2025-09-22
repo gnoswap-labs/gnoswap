@@ -1,0 +1,2 @@
+[domains."gno.land"]
+rpc = "http://localhost:26657"
