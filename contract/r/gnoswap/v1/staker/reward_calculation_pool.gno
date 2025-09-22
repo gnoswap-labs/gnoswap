@@ -136,8 +136,10 @@ type Pool struct {
 // NewPool creates a new pool with the given poolPath and currentHeight.
 func NewPool(poolPath string, currentTime int64) *Pool {
 	pool := &Pool{
-		poolPath:                      poolPath,
-		stakedLiquidity:               NewUintTree(),
+		poolPath:        poolPath,
+		stakedLiquidity: NewUintTree(),
+		// New pools start with zero liquidity, so they are in unclaimable period
+		// Initialize lastUnclaimableTime to track this period correctly
 		lastUnclaimableTime:           currentTime,
 		unclaimableAcc:                0,
 		rewardCache:                   NewUintTree(),
@@ -496,11 +498,21 @@ func (self *Pool) endUnclaimablePeriod(currentTime int64) {
 }
 
 // processUnclaimableReward processes the unclaimable reward and returns the accumulated reward.
-// It resets unclaimableAcc to 0 and updates lastUnclaimableTime to endTime.
+// It resets unclaimableAcc to 0 and only updates lastUnclaimableTime if the pool is currently unclaimable.
 func (self *Pool) processUnclaimableReward(poolTier *PoolTier, endTime int64) int64 {
 	internalUnClaimable := self.unclaimableAcc
 	self.unclaimableAcc = 0
-	self.lastUnclaimableTime = endTime
+
+	// Only update lastUnclaimableTime if pool is currently in unclaimable state (zero liquidity)
+	// This prevents incorrect tracking when called during claimable periods
+	if self.CurrentStakedLiquidity(endTime).IsZero() {
+		// Pool is unclaimable, update the tracking time
+		self.lastUnclaimableTime = endTime
+	} else {
+		// Pool is claimable, reset tracking to prevent incorrect accumulation
+		self.lastUnclaimableTime = 0
+	}
+
 	return internalUnClaimable
 }
 
