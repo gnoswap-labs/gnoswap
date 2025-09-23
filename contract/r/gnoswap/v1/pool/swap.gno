@@ -25,7 +25,8 @@ var (
 	fixedPointQ128 = u256.MustFromDecimal(Q128)
 
 	maxInt256 = u256.MustFromDecimal(MAX_INT256)
-	maxInt64  = i256.MustFromDecimal(MAX_INT64)
+	maxInt64  = i256.Zero().SetInt64(INT64_MAX)
+	minInt64  = i256.Zero().SetInt64(INT64_MIN)
 
 	swapStartHook func(poolPath string, timestamp int64)
 	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)
@@ -580,8 +581,13 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) (Swa
 	}
 
 	// If an overflowed value is stored in state, it may cause problems in the next step
-	if amountCalculated.Gt(maxInt64) {
+	if amountCalculated.Gt(maxInt64) || amountSpecifiedRemaining.Gt(maxInt64) {
 		return state, errOverFlow
+	}
+
+	// If an underflowed value is stored in state, it may cause problems in the next step
+	if amountCalculated.Lt(minInt64) || amountSpecifiedRemaining.Lt(minInt64) {
+		return state, errUnderflow
 	}
 
 	state.amountSpecifiedRemaining = amountSpecifiedRemaining
