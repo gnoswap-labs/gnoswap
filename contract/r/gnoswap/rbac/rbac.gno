@@ -111,6 +111,14 @@ func UpdateRoleAddress(cur realm, roleName string, addr std.Address) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
+	// Validate that the address is valid
+	if !addr.IsValid() || addr == std.Address("") {
+		panic(makeErrorWithDetails(
+			errInvalidAddress,
+			ufmt.Sprintf("role name: %s, address: %s", roleName, addr.String()),
+		))
+	}
+
 	err := manager.UpdateRoleAddress(roleName, addr)
 	if err != nil {
 		panic(makeErrorWithDetails(
