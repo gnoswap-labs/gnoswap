@@ -327,23 +327,26 @@ func collectProtocol(
 	amount0 := u256Min(amount0Req, pool.ProtocolFeesToken0())
 	amount1 := u256Min(amount1Req, pool.ProtocolFeesToken1())
 
-	amount0, amount1 = pool.saveProtocolFees(amount0.Clone(), amount1.Clone())
-	uAmount0 := safeConvertToInt64(amount0)
-	uAmount1 := safeConvertToInt64(amount1)
+    amount0, amount1 = pool.saveProtocolFees(amount0.Clone(), amount1.Clone())
 
-	common.SafeGRC20Transfer(cross, pool.token0Path, recipient, uAmount0)
-	newBalanceToken0, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount0, true)
-	if err != nil {
-		panic(err)
-	}
-	pool.balances.token0 = newBalanceToken0
+    // Effects: update internal pool balances first
+    newBalanceToken0, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount0, true)
+    if err != nil {
+        panic(err)
+    }
+    pool.balances.token0 = newBalanceToken0
 
-	common.SafeGRC20Transfer(cross, pool.token1Path, recipient, uAmount1)
-	newBalanceToken1, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount1, false)
-	if err != nil {
-		panic(err)
-	}
-	pool.balances.token1 = newBalanceToken1
+    newBalanceToken1, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount1, false)
+    if err != nil {
+        panic(err)
+    }
+    pool.balances.token1 = newBalanceToken1
+
+    // Interactions: then perform external transfers
+    uAmount0 := safeConvertToInt64(amount0)
+    uAmount1 := safeConvertToInt64(amount1)
+    common.SafeGRC20Transfer(cross, pool.token0Path, recipient, uAmount0)
+    common.SafeGRC20Transfer(cross, pool.token1Path, recipient, uAmount1)
 
 	return amount0.ToString(), amount1.ToString()
 }

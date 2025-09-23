@@ -45,28 +45,29 @@ func (p *Pool) safeTransfer(
 		))
 	}
 
-	absAmount := amount.Abs()
+    absAmount := amount.Abs()
 
-	token0 := p.BalanceToken0()
-	token1 := p.BalanceToken1()
+    token0 := p.BalanceToken0()
+    token1 := p.BalanceToken1()
 
-	if err := validatePoolBalance(token0, token1, absAmount, isToken0); err != nil {
-		panic(err)
-	}
-	amountInt64 := safeConvertToInt64(absAmount)
+    if err := validatePoolBalance(token0, token1, absAmount, isToken0); err != nil {
+        panic(err)
+    }
 
-	common.SafeGRC20Transfer(cross, tokenPath, to, amountInt64)
+    // Effects: compute and apply new internal balance first
+    newBalance, err := updatePoolBalance(token0, token1, absAmount, isToken0)
+    if err != nil {
+        panic(err)
+    }
+    if isToken0 {
+        p.balances.token0 = newBalance
+    } else {
+        p.balances.token1 = newBalance
+    }
 
-	newBalance, err := updatePoolBalance(token0, token1, absAmount, isToken0)
-	if err != nil {
-		panic(err)
-	}
-
-	if isToken0 {
-		p.balances.token0 = newBalance
-	} else {
-		p.balances.token1 = newBalance
-	}
+    // Interactions: perform external transfer after state change
+    amountInt64 := safeConvertToInt64(absAmount)
+    common.SafeGRC20Transfer(cross, tokenPath, to, amountInt64)
 }
 
 // safeTransferFrom securely transfers tokens into the pool while ensuring balance consistency.
@@ -107,41 +108,43 @@ func (p *Pool) safeTransferFrom(
 	amount *u256.Uint,
 	isToken0 bool,
 ) {
-	amountInt64 := safeConvertToInt64(amount)
+    amountInt64 := safeConvertToInt64(amount)
 
-	token := common.GetToken(tokenPath)
-	beforeBalance := token.BalanceOf(to)
+    token := common.GetToken(tokenPath)
+    beforeBalance := token.BalanceOf(to)
 
-	common.SafeGRC20TransferFrom(cross, tokenPath, from, to, amountInt64)
+    // Effects: update internal balances before interaction
+    if isToken0 {
+        beforeToken0 := p.balances.token0.Clone()
+        p.balances.token0 = u256.Zero().Add(p.balances.token0, amount)
+        if p.balances.token0.Lt(beforeToken0) {
+            panic(ufmt.Sprintf(
+                "%v. token0(%s) < beforeToken0(%s)",
+                errBalanceUpdateFailed, p.balances.token0.ToString(), beforeToken0.ToString(),
+            ))
+        }
+    } else {
+        beforeToken1 := p.balances.token1.Clone()
+        p.balances.token1 = u256.Zero().Add(p.balances.token1, amount)
+        if p.balances.token1.Lt(beforeToken1) {
+            panic(ufmt.Sprintf(
+                "%v. token1(%s) < beforeToken1(%s)",
+                errBalanceUpdateFailed, p.balances.token1.ToString(), beforeToken1.ToString(),
+            ))
+        }
+    }
 
-	afterBalance := token.BalanceOf(to)
-	if (beforeBalance + amountInt64) != afterBalance {
-		panic(ufmt.Sprintf(
-			"%v. beforeBalance(%d) + amount(%d) != afterBalance(%d)",
-			errTransferFailed, beforeBalance, amountInt64, afterBalance,
-		))
-	}
+    // Interactions: perform external transfer after state change
+    common.SafeGRC20TransferFrom(cross, tokenPath, from, to, amountInt64)
 
-	// update pool balances
-	if isToken0 {
-		beforeToken0 := p.balances.token0.Clone()
-		p.balances.token0 = u256.Zero().Add(p.balances.token0, amount)
-		if p.balances.token0.Lt(beforeToken0) {
-			panic(ufmt.Sprintf(
-				"%v. token0(%s) < beforeToken0(%s)",
-				errBalanceUpdateFailed, p.balances.token0.ToString(), beforeToken0.ToString(),
-			))
-		}
-	} else {
-		beforeToken1 := p.balances.token1.Clone()
-		p.balances.token1 = u256.Zero().Add(p.balances.token1, amount)
-		if p.balances.token1.Lt(beforeToken1) {
-			panic(ufmt.Sprintf(
-				"%v. token1(%s) < beforeToken1(%s)",
-				errBalanceUpdateFailed, p.balances.token1.ToString(), beforeToken1.ToString(),
-			))
-		}
-	}
+    // Post-condition: verify external balance reflects the transfer
+    afterBalance := token.BalanceOf(to)
+    if (beforeBalance + amountInt64) != afterBalance {
+        panic(ufmt.Sprintf(
+            "%v. beforeBalance(%d) + amount(%d) != afterBalance(%d)",
+            errTransferFailed, beforeBalance, amountInt64, afterBalance,
+        ))
+    }
 }
 
 // validatePoolBalance checks if the pool has sufficient balance of either token0 and token1
