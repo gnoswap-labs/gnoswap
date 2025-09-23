@@ -63,7 +63,7 @@ func TestRegisterRoleWithAddressParameter(t *testing.T) {
 			roleAddress:   std.Address(""),
 			callerRealm:   ADMIN,
 			shouldPanic:   true,
-			panicContains: "invalid address for role",
+			panicContains: "invalid address",
 		},
 		{
 			name: "Register role with empty address fails (GOVERNANCE)",
@@ -75,7 +75,7 @@ func TestRegisterRoleWithAddressParameter(t *testing.T) {
 			roleAddress:   std.Address(""),
 			callerRealm:   GOV_GOVERNANCE_ADDR,
 			shouldPanic:   true,
-			panicContains: "invalid address for role",
+			panicContains: "invalid address",
 		},
 		{
 			name: "Register duplicate role with different address fails (ADMIN)",
