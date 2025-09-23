@@ -101,7 +101,7 @@ func QueryDepositData(lpTokenId uint64) (*DepositData, error) {
 		TokenID:        lpTokenId,
 		Owner:          deposit.owner,
 		TargetPoolPath: deposit.targetPoolPath,
-		StakeTimestamp: deposit.stakeTimestamp,
+		StakeTimestamp: deposit.stakeTime,
 		Liquidity:      deposit.liquidity,
 		WarmupCount:    len(deposit.warmups),
 	}, nil
