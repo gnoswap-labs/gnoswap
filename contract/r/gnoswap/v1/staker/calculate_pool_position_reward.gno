@@ -41,8 +41,8 @@ func calcPositionReward(currentHeight, currentTimestamp int64, positionId uint64
 	externalReward := make(map[string]int64)
 	for _, reward := range rewards {
 		if reward.External != nil {
-			for incentive, reward := range reward.External {
-				externalReward[incentive] += reward
+			for incentive, amount := range reward.External {
+				externalReward[incentive] += amount
 			}
 		}
 	}
