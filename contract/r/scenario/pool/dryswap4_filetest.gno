@@ -92,7 +92,6 @@ func testDrySwapZeroForOneFalse(t *testing.T) {
 		fooPath,
 		barPath,
 		FeeTier500,
-		positionAddr,
 		-tickUpper,
 		-tickLower,
 		liquidityExpect,

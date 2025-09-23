@@ -209,8 +209,7 @@ func NewExternalIncentive(
 
 type Deposit struct {
 	owner           std.Address // owner address
-	stakeTimestamp  int64       // staked time
-	stakeTime       int64       // staked time (same as stakeTimestamp)
+	stakeTime       int64       // staked time
 	targetPoolPath  string      // staked position's pool path
 	tickLower       int32       // tick lower
 	tickUpper       int32       // tick upper

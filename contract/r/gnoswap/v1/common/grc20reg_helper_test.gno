@@ -58,7 +58,7 @@ func TestTokenMethod(t *testing.T) {
 	})
 
 	t.Run("Allowance()", func(t *testing.T) {
-		uassert.Equal(t, int64(0), token.Allowance(std.Address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"), std.Address("g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6")))
+		uassert.Equal(t, int64(0), token.Allowance(std.Address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"), std.Address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum")))
 	})
 
 	t.Run("RenderHome()", func(t *testing.T) {
@@ -230,7 +230,7 @@ func TestBalanceOf(t *testing.T) {
 
 func TestAllowance(t *testing.T) {
 	owner := std.Address("g1manfred47kzduec920z88wfr64ylksmdcedlf5")
-	spender := std.Address("g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6")
+	spender := std.Address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum")
 
 	// result from grc2reg and (direct import/call) should be the same
 	uassert.Equal(t, foo20.Allowance(owner, spender), Allowance(tokenPath, owner, spender))

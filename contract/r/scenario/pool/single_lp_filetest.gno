@@ -95,7 +95,6 @@ func TestMint() {
 		fooPath,
 		barPath,
 		fee500,
-		positionAddr,
 		test_tickLower,
 		test_tickUpper,
 		test_liquidityExpectStr,
@@ -108,43 +107,43 @@ func TestMint() {
 	test_liquidity := pool.Liquidity()
 	println("[EXPECTED] test_liquidity.Dec():", test_liquidity.Dec(), "expected: should be 1000")
 
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
 
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
 
 	pool = pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity = pool.Liquidity()
 	println("[EXPECTED] test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))):", test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))), "expected: should be true")
 
 	println("[INFO] tickLower > currentTick == don't add to current liquidity")
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower2, test_tickUpper2, test_liquidityExpectStr, adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower2, test_tickUpper2, test_liquidityExpectStr, adminAddr)
 
 	println("[INFO] tickUpper < current tick == don't add to current liquidity")
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, -test_tickUpper2, -test_tickLower2, test_liquidityExpectStr, adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, -test_tickUpper2, -test_tickLower2, test_liquidityExpectStr, adminAddr)
 
 	println("tickUpper < tickLower == don't add to current liquidity")
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, -test_tickUpper, -test_tickLower, test_liquidityExpectStr, adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, -test_tickUpper, -test_tickLower, test_liquidityExpectStr, adminAddr)
 
 	expected := new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))
 	println("[EXPECTED] test_liquidity.Eq(expected):", test_liquidity.Eq(expected), "expected: should be true")
 
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
 
 	pool = pl.GetPool(barPath, fooPath, fee500)
 	test_liquidity = pool.Liquidity()
@@ -202,11 +201,11 @@ func TestCollect() {
 	test_liquidity := pool.Liquidity()
 	println("[EXPECTED] test_liquidity.ToString():", test_liquidity.ToString(), "expected: should be 0")
 
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
 	pl.Burn(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
 	c11, c12 := pl.Collect(cross, barPath, fooPath, fee500, adminAddr, test_tickLower, test_tickUpper, "50000000", "50000000")
 
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
 	pl.Burn(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
 	c21, c22 := pl.Collect(cross, barPath, fooPath, fee500, adminAddr, test_tickLower, test_tickUpper, "50000000", "50000000")
 
@@ -215,7 +214,7 @@ func TestCollect() {
 	println("[EXPECTED] c12:", c12, "expected: should be 1206")
 	println("[EXPECTED] c22:", c22, "expected: should be 1206")
 
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
 	pl.Burn(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
 	c31, c32 := pl.Collect(cross, barPath, fooPath, fee500, adminAddr, test_tickLower, test_tickUpper, "100", "100")
 	println("[EXPECTED] c31:", c31, "expected: should be 100")
@@ -226,7 +225,7 @@ func TestCollect() {
 	println("[EXPECTED] c42:", c42, "expected: should be 1106") // 1106 = c22 - 100
 
 	println("[INFO] Mint > No Burn => nothing to collect")
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), adminAddr)
 	c51, c52 := pl.Collect(cross, barPath, fooPath, fee500, adminAddr, test_tickLower, test_tickUpper, "50000000", "50000000")
 	println("[EXPECTED] c51:", c51, "expected: should be 0")
 	println("[EXPECTED] c52:", c52, "expected: should be 0")
@@ -245,7 +244,7 @@ func TestSwap() {
 	println("[EXPECTED] test_liquidity.ToString():", test_liquidity.ToString(), "expected: should be 0")
 
 	testing.SetRealm(posRealm)
-	pl.Mint(cross, barPath, fooPath, fee500, positionAddr, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(20000)).ToString(), adminAddr)
+	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(20000)).ToString(), adminAddr)
 
 	testing.SetRealm(rouRealm)
 	test_price := MIN_PRICE
