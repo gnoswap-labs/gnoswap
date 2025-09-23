@@ -271,3 +271,153 @@ func setupTestPool(t *testing.T) {
 	pool := pl.GetPool(barPath, fooPath, FEE_MEDIUM)
 	uassert.Equal(t, pool.Liquidity().ToString(), "1000000")
 }
+
+func TestExactOutAmountValidation(t *testing.T) {
+	validator := &SwapValidator{}
+
+	tests := []struct {
+		name            string
+		resultAmount    uint64
+		specifiedAmount uint64
+		swapCount       int64
+		shouldFail      bool
+		errorContains   string
+	}{
+		{
+			name:            "exact match",
+			resultAmount:    1000,
+			specifiedAmount: 1000,
+			swapCount:       1,
+			shouldFail:      false,
+		},
+		{
+			name:            "1 ugnot less - allowed",
+			resultAmount:    999,
+			specifiedAmount: 1000,
+			swapCount:       1,
+			shouldFail:      false,
+		},
+		{
+			name:            "2 ugnot less - not allowed",
+			resultAmount:    998,
+			specifiedAmount: 1000,
+			swapCount:       1,
+			shouldFail:      true,
+			errorContains:   "received more than requested",
+		},
+		{
+			name:            "1 ugnot more - allowed",
+			resultAmount:    1001,
+			specifiedAmount: 1000,
+			swapCount:       1,
+			shouldFail:      false,
+		},
+		{
+			name:            "2 ugnot more - not allowed",
+			resultAmount:    1002,
+			specifiedAmount: 1000,
+			swapCount:       1,
+			shouldFail:      true,
+			errorContains:   "received more than requested",
+		},
+		{
+			name:            "significantly less",
+			resultAmount:    900,
+			specifiedAmount: 1000,
+			swapCount:       1,
+			shouldFail:      true,
+			errorContains:   "received more than requested",
+		},
+		{
+			name:            "significantly more - security issue",
+			resultAmount:    1100,
+			specifiedAmount: 1000,
+			swapCount:       1,
+			shouldFail:      true,
+			errorContains:   "received more than requested",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resultAmount := u256.NewUint(tt.resultAmount)
+			specifiedAmount := u256.NewUint(tt.specifiedAmount)
+
+			err := validator.exactOutAmount(resultAmount, specifiedAmount, tt.swapCount)
+
+			if tt.shouldFail {
+				uassert.Error(t, err, "expected error for %s", tt.name)
+				if tt.errorContains != "" && err != nil {
+					uassert.ErrorContains(t, err, tt.errorContains,
+						"error message should contain '%s'", tt.errorContains)
+				}
+			} else {
+				uassert.NoError(t, err, "expected no error for %s", tt.name)
+			}
+		})
+	}
+}
+
+// TestExactOutAmountValidationEdgeCases tests edge cases for the validation
+func TestExactOutAmountValidationEdgeCases(t *testing.T) {
+	validator := &SwapValidator{}
+
+	tests := []struct {
+		name            string
+		resultAmount    string
+		specifiedAmount string
+		swapCount       int64
+		shouldFail      bool
+	}{
+		{
+			name:            "zero result, zero specified",
+			resultAmount:    "0",
+			specifiedAmount: "0",
+			swapCount:       1,
+			shouldFail:      false,
+		},
+		{
+			name:            "zero result, non-zero specified",
+			resultAmount:    "0",
+			specifiedAmount: "100",
+			swapCount:       1,
+			shouldFail:      true,
+		},
+		{
+			name:            "large numbers exact match",
+			resultAmount:    "1000000000000000000",
+			specifiedAmount: "1000000000000000000",
+			swapCount:       1,
+			shouldFail:      false,
+		},
+		{
+			name:            "large numbers 1 ugnot diff",
+			resultAmount:    "1000000000000000001",
+			specifiedAmount: "1000000000000000000",
+			swapCount:       1,
+			shouldFail:      false,
+		},
+		{
+			name:            "large numbers 2 ugnot diff",
+			resultAmount:    "1000000000000000002",
+			specifiedAmount: "1000000000000000000",
+			swapCount:       1,
+			shouldFail:      true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resultAmount := u256.MustFromDecimal(tt.resultAmount)
+			specifiedAmount := u256.MustFromDecimal(tt.specifiedAmount)
+
+			err := validator.exactOutAmount(resultAmount, specifiedAmount, tt.swapCount)
+
+			if tt.shouldFail {
+				uassert.Error(t, err, "expected error for %s", tt.name)
+			} else {
+				uassert.NoError(t, err, "expected no error for %s", tt.name)
+			}
+		})
+	}
+}
