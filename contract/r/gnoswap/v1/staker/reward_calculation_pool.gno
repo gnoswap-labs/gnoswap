@@ -259,11 +259,6 @@ func (self *Pool) cacheInternalReward(currentTime int64, currentEmission int64) 
 	self.cacheReward(currentTime, currentEmission)
 
 	currentStakedLiquidity := self.CurrentStakedLiquidity(currentTime)
-	if currentStakedLiquidity.IsZero() {
-		self.endUnclaimablePeriod(currentTime)
-		self.startUnclaimablePeriod(currentTime)
-	}
-
 	self.updateGlobalRewardRatioAccumulation(currentTime, currentStakedLiquidity)
 }
 
