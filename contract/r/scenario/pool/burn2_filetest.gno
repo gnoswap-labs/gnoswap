@@ -76,7 +76,6 @@ func testInvalidTickRangeBurn() {
 		barTokenPath,
 		bazTokenPath,
 		fee,
-		positionAddr,
 		tickLower,
 		tickUpper,
 		liquidityAmount,

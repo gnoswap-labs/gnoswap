@@ -8,9 +8,9 @@ import (
 	"std"
 	"testing"
 
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/ufmt"
-	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
@@ -39,7 +39,7 @@ var (
 	quxPath = "gno.land/r/onbloc/qux"
 
 	wugnotPath             = "gno.land/r/gnoland/wugnot"
-	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+	wugnotAddr std.Address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	govStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
 
