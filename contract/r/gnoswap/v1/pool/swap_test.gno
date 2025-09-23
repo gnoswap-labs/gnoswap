@@ -820,10 +820,10 @@ func setupScatteredLiquidityPool(t *testing.T) {
 
 	testing.SetRealm(posRealm)
 	// 4 dispersed liquidity positions
-	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, adminAddr, -10020, -9000, "10000000", adminAddr)
-	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, adminAddr, -4980, -4020, "20000000", adminAddr)
-	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, adminAddr, 0, 1020, "30000000", adminAddr)
-	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, adminAddr, 8040, 10020, "40000000", adminAddr)
+	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, -10020, -9000, "10000000", adminAddr)
+	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, -4980, -4020, "20000000", adminAddr)
+	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, 0, 1020, "30000000", adminAddr)
+	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, 8040, 10020, "40000000", adminAddr)
 
 	// Prepare tokens
 	testing.SetOriginCaller(adminAddr)
@@ -853,8 +853,8 @@ func setupExtremePriceRangePool(t *testing.T) {
 
 	testing.SetRealm(posRealm)
 	// Extreme range liquidity
-	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, adminAddr, -100020, -99960, "500000", adminAddr)
-	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, adminAddr, 99960, 100020, "500000", adminAddr)
+	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, -100020, -99960, "500000", adminAddr)
+	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, 99960, 100020, "500000", adminAddr)
 
 	// Prepare tokens
 	testing.SetOriginCaller(adminAddr)
@@ -1012,8 +1012,8 @@ func setupUltraLowFeePool(t *testing.T) *Pool {
 
 	// Add liquidity
 	testing.SetRealm(posRealm)
-	Mint(cross, wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER, adminAddr, -100, 100, "10000000", adminAddr)
-	Mint(cross, wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER, adminAddr, -100, 100, "10000000", adminAddr)
+	Mint(cross, wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER, -100, 100, "10000000", adminAddr)
+	Mint(cross, wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER, -100, 100, "10000000", adminAddr)
 
 	// Send tokens to router
 	testing.SetRealm(std.NewUserRealm(adminAddr))

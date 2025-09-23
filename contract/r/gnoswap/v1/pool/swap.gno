@@ -279,8 +279,9 @@ func DrySwap(
 		}
 	}
 
-	// Validate non-zero amounts
-	if result.Amount0.IsZero() || result.Amount1.IsZero() {
+	// Validate that at least one amount is non-zero
+	// Both amounts being zero indicates a failed swap
+	if result.Amount0.IsZero() && result.Amount1.IsZero() {
 		return "0", "0", false
 	}
 
