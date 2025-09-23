@@ -66,6 +66,11 @@ func modifyWarmup(index int, timeDuration int64) {
 		panic(ufmt.Sprintf("index(%d) is out of range", index))
 	}
 
+	// Handle negative duration - set to math.MaxInt64
+	if timeDuration < 0 {
+		panic(ufmt.Sprintf("warmup duration cannot be negative, got %d seconds", timeDuration))
+	}
+
 	// Early return for last tier - must always be math.MaxInt64
 	if index == len(warmupTemplate)-1 {
 		if timeDuration != math.MaxInt64 {
