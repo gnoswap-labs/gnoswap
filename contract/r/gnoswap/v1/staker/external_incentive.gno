@@ -64,7 +64,7 @@ func CreateExternalIncentive(
 	currentTime := time.Now().Unix()
 	currentHeight := std.ChainHeight()
 	incentiveId := nextIncentiveID(caller, currentTime)
-	pool := pools.GetOrCreate(targetPoolPath)
+	pool := pools.EnsurePoolExists(targetPoolPath)
 
 	incentive := NewExternalIncentive(
 		incentiveId,

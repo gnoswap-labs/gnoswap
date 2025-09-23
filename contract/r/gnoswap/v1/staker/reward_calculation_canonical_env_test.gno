@@ -486,7 +486,7 @@ func (self *canonicalRewardState) CreateExternalIncentive(
 	pool.incentive = append(pool.incentive, incentive)
 
 	// update global state
-	self.global.pools.GetOrCreate(targetPoolPath).incentives.create(refundee, incentive)
+	self.global.pools.EnsurePoolExists(targetPoolPath).incentives.create(refundee, incentive)
 
 	return incentive.incentiveId
 }

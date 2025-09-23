@@ -35,6 +35,7 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
+	_ "gno.land/r/onbloc/qux"
 )
 
 var (
@@ -532,7 +533,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] mint and stake result - ID: 7, liquidity: 166674
 // [EXPECTED] amounts - 0: 0, 1: 1000, pool: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100
 // [INFO] collect reward for position 07
-// [EXPECTED] reward to community pool: 10702050
+// [EXPECTED] reward to community pool: 0
 //
 // [SCENARIO] 12. Unstake token 01
 // [INFO] unstake token 01

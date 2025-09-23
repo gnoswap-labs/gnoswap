@@ -48,8 +48,8 @@ func (self *Pools) Get(poolPath string) (*Pool, bool) {
 	return p, true
 }
 
-// GetOrCreate returns the pool for the given poolPath, or creates a new pool if it does not exist
-func (self *Pools) GetOrCreate(poolPath string) *Pool {
+// EnsurePoolExists returns the pool for the given poolPath, or creates a new pool if it does not exist
+func (self *Pools) EnsurePoolExists(poolPath string) *Pool {
 	pool, ok := self.Get(poolPath)
 	if !ok {
 		pool = NewPool(poolPath, time.Now().Unix())

@@ -241,7 +241,7 @@ const (
 func init() {
 	// Initialize tier 1 with GNOT:GNS 0.3% pool
 
-	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1)
+	pools.EnsurePoolExists(MUST_EXISTS_IN_TIER_1)
 
 	poolTier = NewPoolTier(
 		pools,
