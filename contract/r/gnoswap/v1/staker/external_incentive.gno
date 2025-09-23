@@ -48,9 +48,9 @@ func CreateExternalIncentive(
 	en.MintAndDistributeGns(cross)
 
 	// transfer reward token from user to staker
-	wasNativeGnot := false
+	isRequestUnwrap := false
 	if rewardToken == GNOT {
-		wasNativeGnot = true
+		isRequestUnwrap = true
 		rewardToken = WUGNOT_PATH
 		err := wrapWithTransfer(stakerAddr, rewardAmount)
 		if err != nil {
@@ -79,7 +79,7 @@ func CreateExternalIncentive(
 		currentHeight,
 		depositGnsAmount,
 		currentTime,
-		wasNativeGnot,
+		isRequestUnwrap,
 	)
 
 	if externalIncentives.Has(incentiveId) {
@@ -174,7 +174,7 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 	}
 
 	// handle refund based on original token type
-	if incentive.wasNativeGnot {
+	if incentive.isRequestUnwrap {
 		// unwrap to GNOT if originally deposited as native GNOT
 		transferErr := unwrapWithTransfer(incentive.refundee, refund)
 		if transferErr != nil {
@@ -206,7 +206,7 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 		"refundToken", incentive.rewardToken,
 		"refundAmount", formatInt(refund),
 		"refundGnsAmount", formatInt(incentive.depositGnsAmount),
-		"wasNativeGnot", formatBool(incentive.wasNativeGnot),
+		"isRequestUnwrap", formatBool(incentive.isRequestUnwrap),
 		"externalIncentiveEndBy", previousRealm.Address().String(),
 	)
 }

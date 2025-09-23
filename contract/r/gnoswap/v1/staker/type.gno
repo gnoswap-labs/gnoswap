@@ -22,7 +22,7 @@ type ExternalIncentive struct {
 	refundee         std.Address // refundee address
 
 	refunded bool // whether incentive has been refunded (includes GNS deposit and unclaimed rewards)
-	wasNativeGnot bool // whether the original deposit was native GNOT (needs unwrap on refund)
+	isRequestUnwrap bool // whether the original deposit was native GNOT (needs unwrap on refund)
 }
 
 func (e ExternalIncentive) IsStarted(currentTimestamp int64) bool {
@@ -178,7 +178,7 @@ func NewExternalIncentive(
 	createdHeight int64,
 	depositGnsAmount int64,
 	currentTime int64, // current time in unix time(seconds)
-	wasNativeGnot bool, // whether original deposit was native GNOT
+	isRequestUnwrap bool, // whether original deposit was native GNOT
 ) *ExternalIncentive {
 	incentiveDuration := endTimestamp - startTimestamp
 	rewardPerSecond := rewardAmount / incentiveDuration
@@ -195,7 +195,7 @@ func NewExternalIncentive(
 		createdHeight:    createdHeight,
 		depositGnsAmount: depositGnsAmount,
 		refunded:         false,
-		wasNativeGnot:    wasNativeGnot,
+		isRequestUnwrap:    isRequestUnwrap,
 	}
 }
 
