@@ -72,7 +72,6 @@ func testPartialLiquidityBurn() {
 		barTokenPath,
 		bazTokenPath,
 		fee,
-		positionAddr,
 		tickLower,
 		tickUpper,
 		liquidityAmount,

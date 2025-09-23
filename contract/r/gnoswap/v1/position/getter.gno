@@ -14,10 +14,6 @@ func PositionGetPosition(positionId uint64) Position {
 	return position
 }
 
-func PositionGetPositionNonce(positionId uint64) *u256.Uint {
-	return MustGetPosition(positionId).nonce
-}
-
 func PositionGetPositionOperator(positionId uint64) std.Address {
 	return MustGetPosition(positionId).operator
 }
@@ -73,10 +69,6 @@ func PositionGetPositionOwner(positionId uint64) std.Address {
 			errDataNotFound, err.Error()))
 	}
 	return owner
-}
-
-func PositionGetPositionNonceStr(positionId uint64) string {
-	return PositionGetPositionNonce(positionId).ToString()
 }
 
 func PositionGetPositionOperatorStr(positionId uint64) string {

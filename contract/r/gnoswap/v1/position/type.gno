@@ -18,7 +18,6 @@ var zeroAddress std.Address = std.Address("")
 // Position represents a liquidity position in a pool.
 // Each position tracks the amount of liquidity, fee growth, and tokens owed to the position owner.
 type Position struct {
-	nonce     *u256.Uint  // nonce for permits
 	operator  std.Address // address that is approved for spending this token
 	poolKey   string      // poolPath of the pool which this has lp token
 	tickLower int32       // the lower tick of the position, bounds are included
