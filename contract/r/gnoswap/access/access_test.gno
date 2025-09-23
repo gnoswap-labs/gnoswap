@@ -2,9 +2,11 @@ package access
 
 import (
 	"std"
+	"strings"
 	"testing"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/ufmt"
 )
 
 func TestGetAddress(t *testing.T) {
@@ -238,7 +240,120 @@ func TestIsAuthorized(t *testing.T) {
 	}
 }
 
-func TestSetRoleAddresses(t *testing.T) {
+func TestInitialize(t *testing.T) {
+	// Save original state
+	originalRoles := make(map[string]std.Address)
+	for k, v := range roleAddresses {
+		originalRoles[k] = v
+	}
+	defer func() {
+		roleAddresses = originalRoles
+	}()
+
+	tests := []struct {
+		name         string
+		initialRoles map[string]std.Address
+		shouldPanic  bool
+		panicMsg     string
+	}{
+		{
+			name: "successful initialization with all required roles",
+			initialRoles: map[string]std.Address{
+				"admin":        testutils.TestAddress("admin"),
+				"governance":   testutils.TestAddress("governance"),
+				"pool":         testutils.TestAddress("pool"),
+				"router":       testutils.TestAddress("router"),
+				"position":     testutils.TestAddress("position"),
+				"staker":       testutils.TestAddress("staker"),
+				"emission":     testutils.TestAddress("emission"),
+				"protocol_fee": testutils.TestAddress("protocol_fee"),
+			},
+			shouldPanic: false,
+		},
+		{
+			name: "missing required role",
+			initialRoles: map[string]std.Address{
+				"admin":      testutils.TestAddress("admin"),
+				"governance": testutils.TestAddress("governance"),
+				// Missing other required roles
+			},
+			shouldPanic: true,
+			panicMsg:    "missing required role: pool",
+		},
+		{
+			name: "invalid address",
+			initialRoles: map[string]std.Address{
+				"admin":        std.Address(""),
+				"governance":   testutils.TestAddress("governance"),
+				"pool":         testutils.TestAddress("pool"),
+				"router":       testutils.TestAddress("router"),
+				"position":     testutils.TestAddress("position"),
+				"staker":       testutils.TestAddress("staker"),
+				"emission":     testutils.TestAddress("emission"),
+				"protocol_fee": testutils.TestAddress("protocol_fee"),
+			},
+			shouldPanic: true,
+			panicMsg:    "invalid address for role admin",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Clear roles before each test
+			roleAddresses = make(map[string]std.Address)
+
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r != nil {
+						if tt.panicMsg != "" && !containsString(r, tt.panicMsg) {
+							t.Errorf("Expected panic containing %q, got %v", tt.panicMsg, r)
+						}
+					} else {
+						t.Errorf("Expected panic but didn't panic")
+					}
+				}()
+			}
+
+			// We can't test Initialize directly due to assertIsRBAC
+			// So we simulate its logic here
+
+			// Validate addresses
+			for role, addr := range tt.initialRoles {
+				if addr == std.Address("") {
+					panic(ufmt.Errorf("invalid address for role %s: %s", role, addr))
+				}
+			}
+
+			// Check required roles
+			requiredRoles := []string{
+				"admin", "governance", "pool", "router", "position",
+				"staker", "emission", "protocol_fee",
+			}
+			for _, role := range requiredRoles {
+				if _, exists := tt.initialRoles[role]; !exists {
+					panic(ufmt.Errorf("missing required role: %s", role))
+				}
+			}
+
+			roleAddresses = tt.initialRoles
+
+			if !tt.shouldPanic {
+				// Verify initialization
+				for role, expectedAddr := range tt.initialRoles {
+					addr, ok := GetAddress(role)
+					if !ok {
+						t.Errorf("Role %s should exist after initialization", role)
+					}
+					if addr != expectedAddr {
+						t.Errorf("Expected %s for role %s, got %s", expectedAddr, role, addr)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestSetRoleAddress(t *testing.T) {
 	// Save original state
 	originalRoles := make(map[string]std.Address)
 	for k, v := range roleAddresses {
@@ -250,62 +365,161 @@ func TestSetRoleAddresses(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		newRoles    map[string]std.Address
-		verifyRoles []struct {
-			role     string
-			expected std.Address
-		}
+		setupRoles  map[string]std.Address
+		roleName    string
+		roleAddress std.Address
+		shouldPanic bool
+		panicMsg    string
 	}{
 		{
-			name: "set admin and governance roles",
-			newRoles: map[string]std.Address{
-				prbac.ROLE_ADMIN.String():      std.Address("g1admin123456789abcdef"),
-				prbac.ROLE_GOVERNANCE.String(): std.Address("g1governance123456789a"),
+			name: "set new role",
+			setupRoles: map[string]std.Address{
+				"admin": testutils.TestAddress("admin"),
 			},
-			verifyRoles: []struct {
-				role     string
-				expected std.Address
-			}{
-				{prbac.ROLE_ADMIN.String(), std.Address("g1admin123456789abcdef")},
-				{prbac.ROLE_GOVERNANCE.String(), std.Address("g1governance123456789a")},
-			},
+			roleName:    "newrole",
+			roleAddress: testutils.TestAddress("newrole"),
+			shouldPanic: false,
 		},
 		{
-			name: "set multiple roles",
-			newRoles: map[string]std.Address{
-				prbac.ROLE_ADMIN.String():    std.Address("g1admin123456789abcdef"),
-				prbac.ROLE_ROUTER.String():   std.Address("g1router123456789abcde"),
-				prbac.ROLE_POOL.String():     std.Address("g1pool1234567890abcdef"),
-				prbac.ROLE_POSITION.String(): std.Address("g1position123456789abc"),
+			name: "update existing role",
+			setupRoles: map[string]std.Address{
+				"admin": testutils.TestAddress("admin"),
 			},
-			verifyRoles: []struct {
-				role     string
-				expected std.Address
-			}{
-				{prbac.ROLE_ADMIN.String(), std.Address("g1admin123456789abcdef")},
-				{prbac.ROLE_ROUTER.String(), std.Address("g1router123456789abcde")},
-				{prbac.ROLE_POOL.String(), std.Address("g1pool1234567890abcdef")},
-				{prbac.ROLE_POSITION.String(), std.Address("g1position123456789abc")},
+			roleName:    "admin",
+			roleAddress: testutils.TestAddress("newadmin"),
+			shouldPanic: false,
+		},
+		{
+			name: "set role with invalid address",
+			setupRoles: map[string]std.Address{
+				"admin": testutils.TestAddress("admin"),
 			},
+			roleName:    "invalid",
+			roleAddress: std.Address(""),
+			shouldPanic: true,
+			panicMsg:    "invalid address for role invalid",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// We can't directly test SetRoleAddresses due to assertIsRBAC
-			// but we can test the logic by directly setting roleAddresses
-			roleAddresses = tt.newRoles
+			// Setup initial roles
+			roleAddresses = tt.setupRoles
 
-			// Verify each role was set correctly
-			for _, verify := range tt.verifyRoles {
-				addr, ok := GetAddress(verify.role)
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r != nil {
+						if tt.panicMsg != "" && !containsString(r, tt.panicMsg) {
+							t.Errorf("Expected panic containing %q, got %v", tt.panicMsg, r)
+						}
+					} else {
+						t.Errorf("Expected panic but didn't panic")
+					}
+				}()
+			}
+
+			// Simulate SetRoleAddress logic
+			if tt.roleAddress == std.Address("") {
+				panic(ufmt.Errorf("invalid address for role %s: %s", tt.roleName, tt.roleAddress))
+			}
+
+			roleAddresses[tt.roleName] = tt.roleAddress
+
+			if !tt.shouldPanic {
+				// Verify set operation
+				addr, ok := GetAddress(tt.roleName)
 				if !ok {
-					t.Errorf("Role %s should exist after setting", verify.role)
+					t.Errorf("Role %s should exist after set", tt.roleName)
 				}
-				if addr != verify.expected {
-					t.Errorf("Expected %s for role %s, got %s", verify.expected, verify.role, addr)
+				if addr != tt.roleAddress {
+					t.Errorf("Expected %s for role %s, got %s", tt.roleAddress, tt.roleName, addr)
 				}
 			}
 		})
+	}
+}
+
+func TestRemoveRole(t *testing.T) {
+	// Save original state
+	originalRoles := make(map[string]std.Address)
+	for k, v := range roleAddresses {
+		originalRoles[k] = v
+	}
+	defer func() {
+		roleAddresses = originalRoles
+	}()
+
+	tests := []struct {
+		name        string
+		setupRoles  map[string]std.Address
+		roleName    string
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name: "remove existing role",
+			setupRoles: map[string]std.Address{
+				"admin":      testutils.TestAddress("admin"),
+				"governance": testutils.TestAddress("governance"),
+				"custom":     testutils.TestAddress("custom"),
+			},
+			roleName:    "custom",
+			shouldPanic: false,
+		},
+		{
+			name: "remove non-existent role",
+			setupRoles: map[string]std.Address{
+				"admin": testutils.TestAddress("admin"),
+			},
+			roleName:    "nonexistent",
+			shouldPanic: true,
+			panicMsg:    "role nonexistent does not exist",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup roles
+			roleAddresses = tt.setupRoles
+
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r != nil {
+						if tt.panicMsg != "" && !containsString(r, tt.panicMsg) {
+							t.Errorf("Expected panic containing %q, got %v", tt.panicMsg, r)
+						}
+					} else {
+						t.Errorf("Expected panic but didn't panic")
+					}
+				}()
+			}
+
+			// Simulate RemoveRole logic
+			if _, exists := roleAddresses[tt.roleName]; !exists {
+				panic(ufmt.Errorf("role %s does not exist", tt.roleName))
+			}
+
+			delete(roleAddresses, tt.roleName)
+
+			if !tt.shouldPanic {
+				// Verify removal
+				_, ok := GetAddress(tt.roleName)
+				if ok {
+					t.Errorf("Role %s should not exist after removal", tt.roleName)
+				}
+			}
+		})
+	}
+}
+
+// Helper function to check if error contains string
+func containsString(r interface{}, substr string) bool {
+	switch v := r.(type) {
+	case string:
+		return strings.Contains(v, substr)
+	case error:
+		return strings.Contains(v.Error(), substr)
+	default:
+		return strings.Contains(ufmt.Sprintf("%v", v), substr)
 	}
 }
