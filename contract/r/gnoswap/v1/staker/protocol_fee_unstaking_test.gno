@@ -15,8 +15,6 @@ func TestHandleStakingRewardFee(t *testing.T) {
 		amount           int64
 		stakerBalance    int64
 		internal         bool
-		positionId       uint64
-		poolPath         string
 		expectedFee      int64
 		expectedNet      int64
 		expectedHasPanic bool
@@ -28,8 +26,6 @@ func TestHandleStakingRewardFee(t *testing.T) {
 			amount:        10000,
 			stakerBalance: 0,
 			internal:      true,
-			positionId:    1,
-			poolPath:      "pool1",
 			expectedFee:   0,
 			expectedNet:   10000,
 		},
@@ -39,8 +35,6 @@ func TestHandleStakingRewardFee(t *testing.T) {
 			amount:        10000,
 			stakerBalance: 100,
 			internal:      false,
-			positionId:    1,
-			poolPath:      "pool1",
 			expectedFee:   100,
 			expectedNet:   9900,
 		},
@@ -50,8 +44,6 @@ func TestHandleStakingRewardFee(t *testing.T) {
 			amount:           10000,
 			stakerBalance:    0,
 			internal:         false,
-			positionId:       1,
-			poolPath:         "pool1",
 			expectedFee:      100,
 			expectedNet:      9900,
 			expectedHasPanic: true,
@@ -72,13 +64,13 @@ func TestHandleStakingRewardFee(t *testing.T) {
 
 			if tc.expectedHasPanic {
 				uassert.AbortsWithMessage(t, tc.expectedPanicMsg, func() {
-					handleStakingRewardFee(tc.tokenPath, tc.amount, tc.internal, tc.positionId, tc.poolPath)
+					handleUnStakingFee(tc.tokenPath, tc.amount, tc.internal)
 				})
 
 				return
 			}
 
-			netAmount, _, err := handleStakingRewardFee(tc.tokenPath, tc.amount, tc.internal, tc.positionId, tc.poolPath)
+			netAmount, _, err := handleUnStakingFee(tc.tokenPath, tc.amount, tc.internal)
 			if err != nil {
 				t.Errorf("Expected no error, got %v", err)
 			}

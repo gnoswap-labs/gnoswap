@@ -3,9 +3,9 @@ package pool
 import (
 	"strconv"
 
-	"gno.land/p/nt/ufmt"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 )
 
 const (
@@ -14,6 +14,7 @@ const (
 	MAX_INT128  string = "170141183460469231731687303715884105727"
 	MAX_UINT128 string = "340282366920938463463374607431768211455"
 
+	INT64_MIN int64 = -9223372036854775808
 	INT64_MAX int64 = 9223372036854775807
 
 	Q96_RESOLUTION  uint = 96

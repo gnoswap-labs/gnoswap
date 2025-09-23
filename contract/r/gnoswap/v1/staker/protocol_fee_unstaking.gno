@@ -26,8 +26,6 @@ func handleStakingRewardFee(
 	tokenPath string,
 	amount int64,
 	internal bool,
-	positionId uint64,
-	poolPath string,
 ) (int64, int64, error) {
 	if unstakingFee == 0 {
 		return amount, 0, nil

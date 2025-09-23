@@ -364,8 +364,7 @@ func (self *canonicalRewardState) StakeToken(positionId uint64, targetPoolPath s
 
 	deposit := &Deposit{
 		owner:           owner,
-		stakeTimestamp:  currentTimestamp,
-		stakeTime:       currentTimestamp, // Keep for backward compatibility
+		stakeTime:       currentTimestamp,
 		targetPoolPath:  targetPoolPath,
 		tickLower:       tickLower,
 		tickUpper:       tickUpper,
