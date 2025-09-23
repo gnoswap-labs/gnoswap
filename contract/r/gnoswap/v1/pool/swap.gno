@@ -618,7 +618,7 @@ func tickTransition(step StepComputations, zeroForOne bool, state SwapState, poo
 			liquidityNet = i256.Zero().Neg(liquidityNet)
 		}
 
-		newState.liquidity = liquidityMathAddDelta(state.liquidity, liquidityNet)
+		newState.liquidity = common.LiquidityMathAddDelta(state.liquidity, liquidityNet)
 
 		if tickCrossHook != nil {
 			currentTime := time.Now().Unix()

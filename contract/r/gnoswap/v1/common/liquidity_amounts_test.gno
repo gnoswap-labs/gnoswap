@@ -5,6 +5,8 @@ import (
 
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
+
+	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -596,4 +598,59 @@ func TestMulDivOverflowProtection(t *testing.T) {
 			t.Errorf("Result exceeds uint128 range")
 		}
 	})
+}
+
+func TestLiquidityMathAddDelta(t *testing.T) {
+	tests := []struct {
+		name      string
+		fn        func()
+		wantPanic string
+	}{
+		{
+			name: "x is nil",
+			fn: func() {
+				var y *i256.Int
+				y = i256.MustFromDecimal("100")
+				LiquidityMathAddDelta(nil, y)
+			},
+			wantPanic: "liquidity_math: x or y is nil",
+		},
+		{
+			name: "y is nil",
+			fn: func() {
+				var x *u256.Uint
+				x = u256.MustFromDecimal("100")
+				LiquidityMathAddDelta(x, nil)
+			},
+			wantPanic: "liquidity_math: x or y is nil",
+		},
+		{
+			name: "underflow panic with sub delta",
+			fn: func() {
+				x := u256.NewUint(0)
+				y := i256.MustFromDecimal("-100")
+				LiquidityMathAddDelta(x, y)
+			},
+			wantPanic: "liquidity_math: underflow",
+		},
+		{
+			name: "overflow panic with add delta",
+			fn: func() {
+				x := u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935") // 2^256 - 1
+				y := i256.MustFromDecimal("100")
+				LiquidityMathAddDelta(x, y)
+			},
+			wantPanic: "liquidity_math: overflow",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantPanic != "" {
+				uassert.PanicsContains(t, tt.wantPanic, tt.fn)
+			} else {
+				tt.fn()
+			}
+		})
+	}
 }

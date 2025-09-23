@@ -17,7 +17,7 @@ import (
 	"gno.land/r/gnoswap/gns"
 )
 
-var t *testing.T
+var t = &testing.T{}
 
 // Constants for fee tiers
 const (
@@ -115,7 +115,7 @@ func main() {
 
 	println("[SCENARIO] 4. cannot remove more than the entire position")
 	testing.SetRealm(posRealm)
-	expectedPanic := `[GNOSWAP-POOL-009] invalid liquidity calculated || Condition failed: (z must be < x) (x: 0, y: -1001, z:115792089237316195423570985008687907853269984665640564039457584007913129638935)`
+	expectedPanic := `liquidity_math: underflow (x: 0, y: -1001, z:115792089237316195423570985008687907853269984665640564039457584007913129638935)`
 	uassert.AbortsWithMessage(
 		t,
 		expectedPanic,
@@ -154,6 +154,6 @@ func main() {
 // [EXPECTED] amount1: 47 expected: 0
 //
 // [SCENARIO] 4. cannot remove more than the entire position
-// [EXPECTED] panic:  [GNOSWAP-POOL-009] invalid liquidity calculated || Condition failed: (z must be < x) (x: 0, y: -1001, z:115792089237316195423570985008687907853269984665640564039457584007913129638935)
+// [EXPECTED] panic:  liquidity_math: underflow (x: 0, y: -1001, z:115792089237316195423570985008687907853269984665640564039457584007913129638935)
 //
 // [INFO] Scenario completed
