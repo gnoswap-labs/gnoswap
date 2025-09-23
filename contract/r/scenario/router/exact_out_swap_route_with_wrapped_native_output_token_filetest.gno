@@ -61,47 +61,47 @@ func main() {
 	mintPosition(gnsPath, barPath, 3000, -6960, 6960, "100000000", "100000000")
 	println()
 
-	println("[SCENARIO] 5. ExactInSwapRoute BAR -> GNS -> WUGNOT")
-	exactInSwapRouteBy(
+	println("[SCENARIO] 5. ExactOutSwapRoute BAR -> GNS -> WUGNOT")
+	exactOutSwapRouteBy(
 		barPath,
 		wugnotPath,
 		"1000000",
 		"gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000",
 		"100",
-		"1",
+		"100000000000",
 	)
 	println()
 
-	println("[SCENARIO] 6. ExactInSwapRoute BAR -> GNS -> GNOT")
-	exactInSwapRouteBy(
+	println("[SCENARIO] 6. ExactOutSwapRoute BAR -> GNS -> GNOT")
+	exactOutSwapRouteBy(
 		barPath,
 		"gnot",
 		"1000000",
 		"gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000",
 		"100",
-		"1",
+		"100000000000",
 	)
 	println()
 
-	println("[SCENARIO] 7. ExactInSwapRoute BAR -> WUGNOT -> GNS")
-	exactInSwapRouteBy(
+	println("[SCENARIO] 7. ExactOutSwapRoute BAR -> WUGNOT -> GNS")
+	exactOutSwapRouteBy(
 		barPath,
 		gnsPath,
 		"1000000",
 		"gno.land/r/onbloc/bar:gno.land/r/gnoland/wugnot:3000*POOL*gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000",
 		"100",
-		"1",
+		"100000000000",
 	)
 	println()
 
-	println("[SCENARIO] 8. ExactInSwapRoute GNOT -> GNS -> BAR")
-	exactInSwapRouteBy(
+	println("[SCENARIO] 8. ExactOutSwapRoute GNOT -> GNS -> BAR")
+	exactOutSwapRouteBy(
 		"gnot",
 		barPath,
 		"1000000",
 		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:3000",
 		"100",
-		"1",
+		"100000000000",
 	)
 	println()
 }
@@ -171,23 +171,23 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 	ufmt.Printf("[EXPECTED] amount1: %s\n", amount1)
 }
 
-func exactInSwapRouteBy(
+func exactOutSwapRouteBy(
 	inputToken string,
 	outputToken string,
 	specifiedAmount string,
 	routeQueryString string,
 	queryRatios string,
-	minAmountOut string,
+	maxAmountIn string,
 ) {
 	testing.SetRealm(adminRealm)
 
-	ufmt.Println("[INFO] ExactInSwapRoute")
+	ufmt.Println("[INFO] ExactOutSwapRoute")
 	ufmt.Println("[INFO] inputToken:", inputToken)
 	ufmt.Println("[INFO] outputToken:", outputToken)
 	ufmt.Println("[INFO] specifiedAmount:", specifiedAmount)
 	ufmt.Println("[INFO] routeQueryString:", routeQueryString)
 	ufmt.Println("[INFO] queryRatios:", queryRatios)
-	ufmt.Println("[INFO] minAmountOut:", minAmountOut)
+	ufmt.Println("[INFO] maxAmountIn:", maxAmountIn)
 
 	banker := std.NewBanker(std.BankerTypeReadonly)
 	beforeGNOTBalance := banker.GetCoins(adminAddr).AmountOf("ugnot")
@@ -196,9 +196,9 @@ func exactInSwapRouteBy(
 	beforeBARBalance := bar.BalanceOf(adminAddr)
 
 	if common.IsGNOTNativePath(inputToken) {
-		specifiedAmountInt64, _ := strconv.ParseInt(specifiedAmount, 10, 64)
+		maxAmountInInt64, _ := strconv.ParseInt(maxAmountIn, 10, 64)
 
-		sendCoins := std.Coins{{Denom: common.GNOT_DENOM, Amount: specifiedAmountInt64}}
+		sendCoins := std.Coins{{Denom: common.GNOT_DENOM, Amount: maxAmountInInt64}}
 		banker := std.NewBanker(std.BankerTypeRealmSend)
 		banker.SendCoins(adminAddr, routerAddr, sendCoins)
 
@@ -206,14 +206,14 @@ func exactInSwapRouteBy(
 	} else {
 		testing.SetOriginSend(std.Coins{})
 	}
-	inputTokenAmount, outputTokenAmount := router.ExactInSwapRoute(
+	inputTokenAmount, outputTokenAmount := router.ExactOutSwapRoute(
 		cross,
 		inputToken,
 		outputToken,
 		specifiedAmount,
 		routeQueryString,
 		queryRatios,
-		minAmountOut,
+		maxAmountIn,
 		int64(9999999999),
 		"",
 	)
@@ -260,62 +260,62 @@ func exactInSwapRouteBy(
 // [EXPECTED] amount0: 100000000
 // [EXPECTED] amount1: 100000000
 //
-// [SCENARIO] 5. ExactInSwapRoute BAR -> GNS -> WUGNOT
-// [INFO] ExactInSwapRoute
+// [SCENARIO] 5. ExactOutSwapRoute BAR -> GNS -> WUGNOT
+// [INFO] ExactOutSwapRoute
 // [INFO] inputToken: gno.land/r/onbloc/bar
 // [INFO] outputToken: gno.land/r/gnoland/wugnot
 // [INFO] specifiedAmount: 1000000
 // [INFO] routeQueryString: gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000
 // [INFO] queryRatios: 100
-// [INFO] minAmountOut: 1
-// [EXPECTED] inputTokenAmount: 1000000
-// [EXPECTED] outputTokenAmount: -986743
-// [EXPECTED] WUGNOT balance changed: 986743
+// [INFO] maxAmountIn: 100000000000
+// [EXPECTED] inputTokenAmount: 1011985
+// [EXPECTED] outputTokenAmount: -998500
+// [EXPECTED] WUGNOT balance changed: 998500
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] GNS balance changed: 0
-// [EXPECTED] BAR balance changed: -1000000
+// [EXPECTED] BAR balance changed: -1011985
 //
-// [SCENARIO] 6. ExactInSwapRoute BAR -> GNS -> GNOT
-// [INFO] ExactInSwapRoute
+// [SCENARIO] 6. ExactOutSwapRoute BAR -> GNS -> GNOT
+// [INFO] ExactOutSwapRoute
 // [INFO] inputToken: gno.land/r/onbloc/bar
 // [INFO] outputToken: gnot
 // [INFO] specifiedAmount: 1000000
 // [INFO] routeQueryString: gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000
 // [INFO] queryRatios: 100
-// [INFO] minAmountOut: 1
-// [EXPECTED] inputTokenAmount: 1000000
-// [EXPECTED] outputTokenAmount: -975329
+// [INFO] maxAmountIn: 100000000000
+// [EXPECTED] inputTokenAmount: 1024043
+// [EXPECTED] outputTokenAmount: -998500
 // [EXPECTED] WUGNOT balance changed: 0
-// [EXPECTED] GNOT balance changed: 975329
+// [EXPECTED] GNOT balance changed: 998500
 // [EXPECTED] GNS balance changed: 0
-// [EXPECTED] BAR balance changed: -1000000
+// [EXPECTED] BAR balance changed: -1024043
 //
-// [SCENARIO] 7. ExactInSwapRoute BAR -> WUGNOT -> GNS
-// [INFO] ExactInSwapRoute
+// [SCENARIO] 7. ExactOutSwapRoute BAR -> WUGNOT -> GNS
+// [INFO] ExactOutSwapRoute
 // [INFO] inputToken: gno.land/r/onbloc/bar
 // [INFO] outputToken: gno.land/r/gnoswap/gns
 // [INFO] specifiedAmount: 1000000
 // [INFO] routeQueryString: gno.land/r/onbloc/bar:gno.land/r/gnoland/wugnot:3000*POOL*gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000
 // [INFO] queryRatios: 100
-// [INFO] minAmountOut: 1
-// [EXPECTED] inputTokenAmount: 1000000
-// [EXPECTED] outputTokenAmount: -998223
+// [INFO] maxAmountIn: 100000000000
+// [EXPECTED] inputTokenAmount: 1000073
+// [EXPECTED] outputTokenAmount: -998500
 // [EXPECTED] WUGNOT balance changed: 0
 // [EXPECTED] GNOT balance changed: 0
-// [EXPECTED] GNS balance changed: 998223
-// [EXPECTED] BAR balance changed: -1000000
+// [EXPECTED] GNS balance changed: 998500
+// [EXPECTED] BAR balance changed: -1000073
 //
-// [SCENARIO] 8. ExactInSwapRoute GNOT -> GNS -> BAR
-// [INFO] ExactInSwapRoute
+// [SCENARIO] 8. ExactOutSwapRoute GNOT -> GNS -> BAR
+// [INFO] ExactOutSwapRoute
 // [INFO] inputToken: gnot
 // [INFO] outputToken: gno.land/r/onbloc/bar
 // [INFO] specifiedAmount: 1000000
 // [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:3000
 // [INFO] queryRatios: 100
-// [INFO] minAmountOut: 1
-// [EXPECTED] inputTokenAmount: 1000000
-// [EXPECTED] outputTokenAmount: -1004036
+// [INFO] maxAmountIn: 100000000000
+// [EXPECTED] inputTokenAmount: 994038
+// [EXPECTED] outputTokenAmount: -998500
 // [EXPECTED] WUGNOT balance changed: 0
-// [EXPECTED] GNOT balance changed: -1000000
+// [EXPECTED] GNOT balance changed: -994038
 // [EXPECTED] GNS balance changed: 0
-// [EXPECTED] BAR balance changed: 1004036
+// [EXPECTED] BAR balance changed: 998500
