@@ -72,9 +72,6 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, 
 			)
 	}
 
-	positionKey := computePositionKey(position.tickLower, position.tickUpper)
-	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.poolKey, positionKey)
-
 	currentSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(position.poolKey)
 	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.tickLower)
 	upperTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.tickUpper)
@@ -87,27 +84,15 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, 
 	calculatedToken0Balance := u256.MustFromDecimal(calculatedToken0BalanceStr)
 	calculatedToken1Balance := u256.MustFromDecimal(calculatedToken1BalanceStr)
 
-	position.tokensOwed0 = updateTokensOwed(
-		feeGrowthInside0LastX128,
-		position.feeGrowthInside0LastX128,
-		position.liquidity,
-		burnedAmount0,
-		position.tokensOwed0,
-	)
+	// Fee growth tracking was already updated by collectFee
+	// Only add the burned amounts to tokensOwed
+	position.tokensOwed0 = u256.Zero().Add(position.tokensOwed0, burnedAmount0)
+	position.tokensOwed1 = u256.Zero().Add(position.tokensOwed1, burnedAmount1)
 
-	position.tokensOwed1 = updateTokensOwed(
-		feeGrowthInside1LastX128,
-		position.feeGrowthInside1LastX128,
-		position.liquidity,
-		burnedAmount1,
-		position.tokensOwed1,
-	)
-
-	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
-	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
-	position.liquidity = u256.Zero().Sub(positionLiquidity, liquidityToRemove)
 	position.token0Balance = u256.Zero().Sub(calculatedToken0Balance, burnedAmount0)
 	position.token1Balance = u256.Zero().Sub(calculatedToken1Balance, burnedAmount1)
+
+	position.liquidity = u256.Zero().Sub(positionLiquidity, liquidityToRemove)
 	mustUpdatePosition(params.positionId, position)
 
 	collect0, collect1 := pl.Collect(
