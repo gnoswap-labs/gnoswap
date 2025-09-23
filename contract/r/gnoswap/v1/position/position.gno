@@ -189,7 +189,9 @@ func IncreaseLiquidity(
 	token0, token1, _ := splitOf(position.poolKey)
 
 	// assert that the user has sent the correct amount of native coin
-	assertIsValidUserCoinSendWithTokenPair(token0, token1, amount0DesiredStr, amount1DesiredStr)
+	assertIsValidUserCoinSendWithWrappedTokenPair(token0, token1, amount0DesiredStr, amount1DesiredStr)
+
+	receivedCoins := common.ExistsUserSendCoins()
 
 	err := validateTokenPath(token0, token1)
 	if err != nil {
@@ -197,15 +199,17 @@ func IncreaseLiquidity(
 	}
 
 	wrappedAmount := int64(0)
-	if isWrappedToken(token0) {
-		amount0DesiredInt := mustParseInt64(amount0DesiredStr)
-		wrappedAmount, err = safeWrapNativeToken(amount0DesiredInt, caller)
-		if err != nil {
-			panic(err)
+
+	if receivedCoins {
+		inputWrappedAmount := int64(0)
+
+		if common.IsGNOTPath(token0) {
+			inputWrappedAmount = mustParseInt64(amount0DesiredStr)
+		} else if common.IsGNOTPath(token1) {
+			inputWrappedAmount = mustParseInt64(amount1DesiredStr)
 		}
-	} else if isWrappedToken(token1) {
-		amount1DesiredInt := mustParseInt64(amount1DesiredStr)
-		wrappedAmount, err = safeWrapNativeToken(amount1DesiredInt, caller)
+
+		wrappedAmount, err = safeWrapNativeToken(inputWrappedAmount, caller)
 		if err != nil {
 			panic(err)
 		}

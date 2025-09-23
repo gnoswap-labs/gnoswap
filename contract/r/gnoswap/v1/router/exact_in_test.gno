@@ -269,6 +269,8 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 				teller.Approve(poolAddr, maxApprove)
 			}(cross)
 
+			testing.SetOriginSend(std.Coins{})
+
 			// Position Creation
 			pn.Mint(
 				cross,
@@ -299,6 +301,8 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			wugnot.Approve(cross, poolAddr, maxApprove)
 
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
+			testing.SetOriginSend(std.Coins{})
+
 			amountIn, amountOut := ExactInSwapRoute(
 				cross,
 				tt.inputToken,
