@@ -138,9 +138,9 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 	pool := &Pool{
 		poolPath:        poolPath,
 		stakedLiquidity: NewUintTree(),
-		// New pools start with zero liquidity, so they are in unclaimable period
-		// Initialize lastUnclaimableTime to track this period correctly
-		lastUnclaimableTime:           currentTime,
+		// New pools start with zero liquidity, but we don't track unclaimable period
+		// until emission actually starts (when tier is set and first stake happens)
+		lastUnclaimableTime:           0,
 		unclaimableAcc:                0,
 		rewardCache:                   NewUintTree(),
 		incentives:                    NewIncentives(poolPath),
@@ -261,11 +261,6 @@ func (self *Pool) cacheInternalReward(currentTime int64, currentEmission int64) 
 	self.cacheReward(currentTime, currentEmission)
 
 	currentStakedLiquidity := self.CurrentStakedLiquidity(currentTime)
-	if currentStakedLiquidity.IsZero() {
-		self.endUnclaimablePeriod(currentTime)
-		self.startUnclaimablePeriod(currentTime)
-	}
-
 	self.updateGlobalRewardRatioAccumulation(currentTime, currentStakedLiquidity)
 }
 

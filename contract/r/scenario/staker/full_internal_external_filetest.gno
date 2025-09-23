@@ -408,6 +408,10 @@ func oneClickStakingPos07OutRange() {
 	sr.CollectReward(cross, 7, false)
 	newCommunityPool := gns.BalanceOf(communityPoolAddr)
 
+	// Unclaimable rewards are only tracked after liquidity has been added and then removed.
+	// Since this pool never had any in-range liquidity (position 07 is out-of-range),
+	// no unclaimable period is tracked, resulting in 0 rewards to community pool.
+	// This is the correct behavior - pools without any liquidity history should not accumulate unclaimable rewards.
 	rewardToCommunity := newCommunityPool - oldCommunityPool
 	ufmt.Printf("[EXPECTED] reward to community pool: %d\n", rewardToCommunity)
 
@@ -532,7 +536,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] mint and stake result - ID: 7, liquidity: 166674
 // [EXPECTED] amounts - 0: 0, 1: 1000, pool: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100
 // [INFO] collect reward for position 07
-// [EXPECTED] reward to community pool: 10702050
+// [EXPECTED] reward to community pool: 0
 //
 // [SCENARIO] 12. Unstake token 01
 // [INFO] unstake token 01
