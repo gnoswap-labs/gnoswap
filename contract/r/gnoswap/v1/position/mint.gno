@@ -55,7 +55,6 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(poolKey, positionKey)
 
 	position := Position{
-		nonce:                    u256.Zero(),
 		operator:                 zeroAddress,
 		poolKey:                  poolKey,
 		tickLower:                params.tickLower,

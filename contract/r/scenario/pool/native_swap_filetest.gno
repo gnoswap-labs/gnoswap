@@ -107,7 +107,6 @@ func TestMint() {
 		fooPath,
 		WRAPPED_WUGNOT,
 		fee500,
-		positionAddr,
 		test_tickLower,
 		test_tickUpper,
 		"10000000",
