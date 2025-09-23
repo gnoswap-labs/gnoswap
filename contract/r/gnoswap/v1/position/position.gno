@@ -166,7 +166,6 @@ func Mint(
 //
 // Requirements:
 //   - Caller must own the position NFT
-//   - Position must have liquidity
 //   - Sufficient token balances and approvals
 func IncreaseLiquidity(
 	cur realm,
