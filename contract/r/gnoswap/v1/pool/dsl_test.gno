@@ -132,7 +132,6 @@ func (e *PoolTestEnv) AndLiquidityProvided(params LiquidityParams) *PoolTestEnv 
 		params.token0,
 		params.token1,
 		params.fee,
-		e.currentAddress,
 		params.tickLower,
 		params.tickUpper,
 		params.amount,

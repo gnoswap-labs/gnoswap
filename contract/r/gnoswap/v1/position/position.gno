@@ -73,7 +73,11 @@ func Mint(
 	assertIsValidUserCoinSendWithTokenPair(token0, token1, amount0Desired, amount1Desired)
 	assertIsNotExpired(deadline)
 
-	referral.TryRegister(cross, caller, referrer)
+	success := referral.TryRegister(cross, caller, referrer)
+	actualReferrer := referrer
+	if !success {
+		actualReferrer = referral.GetReferral(caller.String())
+	}
 
 	emission.MintAndDistributeGns(cross)
 
@@ -133,6 +137,7 @@ func Mint(
 		"sqrtPriceX96", poolSqrtPriceX96.ToString(),
 		"token0Balance", pl.GetBalanceToken0(processedInput.poolPath),
 		"token1Balance", pl.GetBalanceToken1(processedInput.poolPath),
+		"referrer", actualReferrer,
 	)
 
 	return id, liquidity.ToString(), amount0.ToString(), amount1.ToString()
@@ -161,7 +166,6 @@ func Mint(
 //
 // Requirements:
 //   - Caller must own the position NFT
-//   - Position must have liquidity
 //   - Sufficient token balances and approvals
 func IncreaseLiquidity(
 	cur realm,
