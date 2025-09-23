@@ -68,6 +68,7 @@ func ExactOutSwapRoute(
 	halt.AssertIsNotHaltedRouter()
 
 	assertIsValidUserCoinSend(inputToken, amountInMax)
+	assertIsValidRoutePaths(routeArr, inputToken, outputToken)
 	assertIsNotPassedDeadline(deadline)
 
 	emission.MintAndDistributeGns(cross)

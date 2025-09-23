@@ -54,7 +54,7 @@ func TestExactOutSwapOperation(t *testing.T) {
 	})
 
 	t.Run("exact out swap with invalid route", func(t *testing.T) {
-		uassert.AbortsWithMessage(t, "invalid fee: format", func() {
+		uassert.AbortsContains(t, "invalid fee: format", func() {
 			ExactOutSwapRoute(
 				cross,
 				barPath,
@@ -70,11 +70,11 @@ func TestExactOutSwapOperation(t *testing.T) {
 	})
 
 	t.Run("exact out swap with expired deadline", func(t *testing.T) {
-		uassert.AbortsWithMessage(t, "[GNOSWAP-ROUTER-004] transaction expired || transaction too old, now(1234567890) > deadline(1234564290)", func() {
+		uassert.AbortsContains(t, "[GNOSWAP-ROUTER-004] transaction expired || transaction too old, now(1234567890) > deadline(1234564290)", func() {
 			ExactOutSwapRoute(
 				cross,
-				barPath,
 				fooPath,
+				barPath,
 				"3",
 				"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000",
 				"100",

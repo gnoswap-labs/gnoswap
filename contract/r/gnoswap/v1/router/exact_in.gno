@@ -56,7 +56,7 @@ func ExactInSwapRoute(cur realm,
 	inputToken string,
 	outputToken string,
 	amountIn string,
-	RouteArr string,
+	routeArr string,
 	quoteArr string,
 	amountOutMin string,
 	deadline int64,
@@ -65,6 +65,7 @@ func ExactInSwapRoute(cur realm,
 	halt.AssertIsNotHaltedRouter()
 
 	assertIsValidUserCoinSend(inputToken, amountIn)
+	assertIsValidRoutePaths(routeArr, inputToken, outputToken)
 	assertIsNotPassedDeadline(deadline)
 
 	emission.MintAndDistributeGns(cross)
@@ -72,7 +73,7 @@ func ExactInSwapRoute(cur realm,
 	params := SwapRouteParams{
 		inputToken:  inputToken,
 		outputToken: outputToken,
-		routeArr:    RouteArr,
+		routeArr:    routeArr,
 		quoteArr:    quoteArr,
 		deadline:    deadline,
 		typ:         ExactIn,
@@ -113,7 +114,7 @@ func ExactInSwapRoute(cur realm,
 		"input", inputToken,
 		"output", outputToken,
 		"exactAmount", amountIn,
-		"route", RouteArr,
+		"route", routeArr,
 		"quote", quoteArr,
 		"resultInputAmount", inputAmountStr,
 		"resultOutputAmount", outputAmountStr,
