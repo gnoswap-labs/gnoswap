@@ -83,6 +83,14 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 	assertValidTickRange(tick)
 	absTick := abs(tick)
 
+	// Validate critical constants are initialized
+	if ratio0 == nil || ratio1 == nil {
+		panic(newErrorWithDetail(
+			errInvalidInput,
+			"ratio constants are not initialized",
+		))
+	}
+
 	// Initialize ratio based on LSB - exactly like Uniswap V3
 	var ratio *u256.Uint
 
@@ -98,7 +106,14 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 	for i := 1; i < 20; i++ {
 		if absTick&(1<<uint(i)) != 0 {
 			// Use temporary variables to avoid memory allocation in hot path
-			temp = temp.Mul(ratio, ratioConstants[i-1])
+			r := ratioConstants[i-1]
+			if r == nil {
+				panic(newErrorWithDetail(
+					errInvalidInput,
+					"ratio constants are not initialized",
+				))
+			}
+			temp = temp.Mul(ratio, r)
 			ratio = ratio.Rsh(temp, 128)
 		}
 	}
@@ -170,6 +185,13 @@ func getMostSignificantBit(r *u256.Uint) (msb uint64) {
 
 // TickMathGetTickAtSqrtRatio calculates tick value for given sqrt price ratio, returning greatest tick where getSqrtRatioAtTick(tick) <= ratio, matching Uniswap V3 exactly.
 func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
+	if sqrtPriceX96 == nil {
+		panic(newErrorWithDetail(
+			errInvalidInput,
+			"sqrtPriceX96 cannot be nil",
+		))
+	}
+
 	if sqrtPriceX96.Lt(minSqrtRatio) || sqrtPriceX96.Gte(maxSqrtRatio) {
 		panic(newErrorWithDetail(
 			errOutOfRange,
