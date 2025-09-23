@@ -41,7 +41,6 @@ func addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint
 		token0,
 		token1,
 		fee,
-		positionAddr,
 		params.tickLower,
 		params.tickUpper,
 		liquidity.ToString(),

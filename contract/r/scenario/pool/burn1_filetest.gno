@@ -75,7 +75,6 @@ func testZeroLiquidityBurn() {
 		barTokenPath,
 		bazTokenPath,
 		fee,
-		positionAddr,
 		tickLower,
 		tickUpper,
 		liquidityAmount,

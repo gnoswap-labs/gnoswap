@@ -118,7 +118,6 @@ func testDrySwapFailureCases(t *testing.T) {
 		fooPath,
 		barPath,
 		FeeTier500,
-		positionAddr,
 		-tickUpper,
 		-tickLower,
 		"1000", // Small liquidity amount

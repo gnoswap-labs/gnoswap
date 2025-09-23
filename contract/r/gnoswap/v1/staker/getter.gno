@@ -142,7 +142,7 @@ func GetDepositOwner(lpTokenId uint64) std.Address {
 func GetDepositStakeTimestamp(lpTokenId uint64) int64 {
 	deposit := getDeposit(lpTokenId)
 
-	return deposit.stakeTimestamp
+	return deposit.stakeTime
 }
 
 // GetDepositStakeTime returns the stake time of a deposit.
@@ -251,7 +251,7 @@ func GetPrintExternalInfo() string {
 		externalPosition := ApiExternalDebugPosition{
 			PositionId:      positionId,
 			StakedTime:      deposit.stakeTime,
-			StakedTimestamp: deposit.stakeTimestamp,
+			StakedTimestamp: deposit.stakeTime,
 		}
 
 		externalIncentivesList := []ApiExternalDebugIncentive{}
