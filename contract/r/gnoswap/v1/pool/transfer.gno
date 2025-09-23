@@ -7,7 +7,6 @@ import (
 
 	"gno.land/r/gnoswap/v1/common"
 
-	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -36,28 +35,20 @@ import (
 func (p *Pool) safeTransfer(
 	to std.Address,
 	tokenPath string,
-	amount *i256.Int,
+	amount *u256.Uint,
 	isToken0 bool,
 ) {
-	if amount.Gt(i256.Zero()) {
-		panic(ufmt.Sprintf(
-			"%v. got: %s", errMustBeNegative, amount.ToString(),
-		))
-	}
-
-	absAmount := amount.Abs()
-
 	token0 := p.BalanceToken0()
 	token1 := p.BalanceToken1()
 
-	if err := validatePoolBalance(token0, token1, absAmount, isToken0); err != nil {
+	if err := validatePoolBalance(token0, token1, amount, isToken0); err != nil {
 		panic(err)
 	}
-	amountInt64 := safeConvertToInt64(absAmount)
+	amountInt64 := safeConvertToInt64(amount)
 
 	common.SafeGRC20Transfer(cross, tokenPath, to, amountInt64)
 
-	newBalance, err := updatePoolBalance(token0, token1, absAmount, isToken0)
+	newBalance, err := updatePoolBalance(token0, token1, amount, isToken0)
 	if err != nil {
 		panic(err)
 	}

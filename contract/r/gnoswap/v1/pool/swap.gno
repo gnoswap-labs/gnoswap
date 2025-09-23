@@ -644,11 +644,15 @@ func (p *Pool) swapTransfers(zeroForOne bool, payer, recipient std.Address, amou
 		p.safeTransferFrom(payer, poolAddr, p.token0Path, amount0.Abs(), true)
 
 		// POOL > recipient
-		p.safeTransfer(recipient, p.token1Path, amount1, false)
+		if amount1.Lt(i256.Zero()) {
+			p.safeTransfer(recipient, p.token1Path, amount1.Abs(), false)
+		}
 	} else {
 		// payer > POOL
 		p.safeTransferFrom(payer, poolAddr, p.token1Path, amount1.Abs(), false)
 		// POOL > recipient
-		p.safeTransfer(recipient, p.token0Path, amount0, true)
+		if amount0.Lt(i256.Zero()) {
+			p.safeTransfer(recipient, p.token0Path, amount0.Abs(), true)
+		}
 	}
 }
