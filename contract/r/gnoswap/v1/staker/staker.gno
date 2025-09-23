@@ -543,7 +543,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		incentive.rewardAmount = safeSubInt64(incentive.rewardAmount, rewardAmount)
 		rewardToken := incentive.rewardToken
 		toUserExternalReward[rewardToken] = safeAddInt64(toUserExternalReward[rewardToken], rewardAmount)
-		toUser, feeAmount, err := handleUnStakingFee(rewardToken, rewardAmount, false)
+		toUser, feeAmount, err := handleStakingRewardFee(rewardToken, rewardAmount, false)
 		if err != nil {
 			panic(err.Error())
 		}
@@ -601,7 +601,7 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 	communityPoolAddr := getRoleAddress(prbac.ROLE_COMMUNITY_POOL)
 
 	// internal reward to user
-	toUser, feeAmount, err := handleUnStakingFee(GNS_PATH, reward.Internal, true)
+	toUser, feeAmount, err := handleStakingRewardFee(GNS_PATH, reward.Internal, true)
 	if err != nil {
 		panic(err.Error())
 	}
