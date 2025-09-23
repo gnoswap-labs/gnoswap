@@ -49,6 +49,9 @@ func RegisterRole(cur realm, roleName string, roleAddress std.Address) {
 
 	err := manager.RegisterRole(roleName)
 	if err != nil {
+		if err.Error() == "role already exists" {
+			panic(ufmt.Sprintf("role %s already exists", roleName))
+		}
 		panic(makeErrorWithDetails(
 			errInvalidRoleName,
 			ufmt.Sprintf("role name: %s", roleName),
