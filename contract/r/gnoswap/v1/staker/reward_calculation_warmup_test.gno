@@ -185,31 +185,23 @@ func TestModifyWarmup(t *testing.T) {
 		index         int
 		duration      int64
 		shouldPanic   bool
+		panicMsg      string
 		expectedValue int64
 	}{
-		{"valid index", 0, 1000, false, 1000},
-		{"negative duration", 0, -1000, false, math.MaxInt64},
-		{"out of range index", 10, 1000, true, 0},
+		{"valid index", 0, 1000, false, "", 1000},
+		{"negative duration", 0, -1000, true, "warmup duration cannot be negative", 0},
+		{"out of range index", 10, 1000, true, "index(10) is out of range", 0},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					uassert.NotNil(t, r, "Expected panic but none occurred")
-				}()
-			}
-
-			modifyWarmup(tt.index, tt.duration)
-
-			if !tt.shouldPanic {
-				if tt.duration < 0 {
-					instantiated := instantiateWarmup(0) // Zero time for testing
-					uassert.Equal(t, tt.expectedValue, instantiated[tt.index].NextWarmupTime)
-				} else {
-					uassert.Equal(t, tt.expectedValue, warmupTemplate[tt.index].TimeDuration)
-				}
+				uassert.PanicsContains(t, tt.panicMsg, func() {
+					modifyWarmup(tt.index, tt.duration)
+				})
+			} else {
+				modifyWarmup(tt.index, tt.duration)
+				uassert.Equal(t, tt.expectedValue, warmupTemplate[tt.index].TimeDuration)
 			}
 		})
 	}
