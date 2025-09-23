@@ -99,7 +99,7 @@ func (self *Incentives) create(
 	self.incentives.Set(incentive.incentiveId, incentive)
 }
 
-// starts incentive unclaimable period for this pool
+// update updates an existing incentive with new information
 func (self *Incentives) update(
 	creator std.Address,
 	incentive *ExternalIncentive,
