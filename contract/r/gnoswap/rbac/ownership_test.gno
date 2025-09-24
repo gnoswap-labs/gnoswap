@@ -110,7 +110,7 @@ func TestGetPendingOwner(t *testing.T) {
 
 	// Set pending owner
 	testing.SetRealm(std.NewUserRealm(ADMIN))
-	err := manager.TransferOwnership(DEV_OPS)
+	err := manager.TransferOwnershipBy(DEV_OPS, ADMIN)
 	if err != nil {
 		t.Fatalf("Failed to transfer ownership: %v", err)
 	}
@@ -275,7 +275,7 @@ func TestOwnershipWorkflow(t *testing.T) {
 
 	// Step 1: Transfer ownership
 	testing.SetRealm(std.NewUserRealm(ADMIN))
-	err := manager.TransferOwnership(DEV_OPS)
+	err := manager.TransferOwnershipBy(DEV_OPS, ADMIN)
 	if err != nil {
 		t.Fatalf("Step 1 failed: %v", err)
 	}
@@ -291,7 +291,7 @@ func TestOwnershipWorkflow(t *testing.T) {
 
 	// Step 2: Accept ownership
 	testing.SetRealm(std.NewUserRealm(DEV_OPS))
-	err = manager.AcceptOwnership()
+	err = manager.AcceptOwnershipBy(DEV_OPS)
 	if err != nil {
 		t.Fatalf("Step 2 failed: %v", err)
 	}
