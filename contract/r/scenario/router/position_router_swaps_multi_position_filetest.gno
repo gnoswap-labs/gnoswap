@@ -177,7 +177,6 @@ func executeExactOutRouterSwaps() {
 	ufmt.Printf("[EXPECTED] Dry swap amountOut should be %s\n", dryAmountOut)
 	ufmt.Printf("[EXPECTED] Dry swap success should be %T\n", success)
 
-	// TODO: check overflow errors is right
 	uassert.AbortsWithMessage(t, "[GNOSWAP-POOL-026] overflow", func() {
 		router.ExactOutSwapRoute(
 			cross,
