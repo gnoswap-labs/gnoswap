@@ -2,6 +2,7 @@ package pool
 
 import (
 	"std"
+	"strconv"
 	"testing"
 
 	"gno.land/r/gnoland/wugnot"
@@ -631,4 +632,32 @@ func TestBurnTokens(t *testing.T) {
 
 	uassert.Equal(t, foo.BalanceOf(addr01), int64(0)) // 100_000_000 -> 0
 	uassert.Equal(t, bar.BalanceOf(addr01), int64(0)) // 100_000_000 -> 0
+}
+
+func mockSwapCallback(token0Path string, token1Path string, amount0Delta string, amount1Delta string) error {
+	func(cur realm) {
+		testing.SetRealm(adminRealm)
+
+		amount0Int64, _ := strconv.ParseInt(amount0Delta, 10, 64)
+		amount1Int64, _ := strconv.ParseInt(amount1Delta, 10, 64)
+
+		if amount0Int64 > 0 {
+			if token0Path == wugnotPath {
+				testing.SetOriginSend(std.Coins{{ugnotDenom, amount0Int64}})
+				wugnot.Deposit(cross)
+			}
+
+			common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Int64)
+		}
+		if amount1Int64 > 0 {
+			if token1Path == wugnotPath {
+				testing.SetOriginSend(std.Coins{{ugnotDenom, amount1Int64}})
+				wugnot.Deposit(cross)
+			}
+
+			common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Int64)
+		}
+	}(cross)
+
+	return nil
 }

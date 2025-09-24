@@ -92,7 +92,7 @@ func main() {
 
 	println("[INFO] Test 1: ExactIn swap (bar → baz)")
 	println("[INFO] Approving tokens for swap")
-	bar.Approve(cross, poolAddr, int64(1000))
+	bar.Approve(cross, routerAddr, int64(1000))
 	baz.Approve(cross, routerAddr, max_approve) // ITS FOR 0.15% fee
 
 	amountIn, amountOut := router.ExactInSwapRoute(
@@ -112,7 +112,7 @@ func main() {
 
 	println("[INFO] Test 2: ExactOut swap (bar → baz)")
 	println("[INFO] Approving tokens for swap")
-	bar.Approve(cross, poolAddr, int64(1000))
+	bar.Approve(cross, routerAddr, int64(1000))
 	baz.Approve(cross, routerAddr, max_approve) // ITS FOR 0.15% fee
 
 	amountIn, amountOut = router.ExactOutSwapRoute(
@@ -132,7 +132,7 @@ func main() {
 
 	println("[INFO] Test 3: ExactIn swap (baz → bar)")
 	println("[INFO] Approving tokens for swap")
-	baz.Approve(cross, poolAddr, max_approve)
+	baz.Approve(cross, routerAddr, max_approve)
 	bar.Approve(cross, routerAddr, max_approve) // ITS FOR 0.15% fee
 
 	amountIn, amountOut = router.ExactInSwapRoute(
@@ -152,6 +152,7 @@ func main() {
 
 	println("[INFO] Test 4: ExactOut swap (baz → bar)")
 	println("[INFO] Approving tokens for swap")
+	baz.Approve(cross, routerAddr, max_approve)
 	bar.Approve(cross, routerAddr, max_approve)
 
 	amountIn, amountOut = router.ExactOutSwapRoute(

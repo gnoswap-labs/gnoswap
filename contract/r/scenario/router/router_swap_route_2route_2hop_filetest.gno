@@ -107,7 +107,7 @@ func testSwapRouteBarQuxExactIn() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for swap")
-	bar.Approve(cross, poolAddr, 10000)
+	bar.Approve(cross, routerAddr, 10000)
 	qux.Approve(cross, routerAddr, 10000)
 
 	println("[INFO] Executing ExactIn swap with 2 routes (1000 bar → baz → qux)")
@@ -177,7 +177,7 @@ func testwapRouteQuxBarExactOut() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for swap")
-	qux.Approve(cross, poolAddr, 10000)
+	qux.Approve(cross, routerAddr, 10000)
 	bar.Approve(cross, routerAddr, 10000)
 
 	println("[INFO] Executing ExactOut swap with 2 routes (qux → baz → 1000 bar)")

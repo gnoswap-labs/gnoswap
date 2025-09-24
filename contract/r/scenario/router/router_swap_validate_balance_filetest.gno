@@ -228,9 +228,9 @@ func performSwaps() BalanceSnapshot {
 
 	// Swap 1: GNOT → GNS (ExactIn)
 	println("[INFO] Swap 1: 10,000,000 GNOT → GNS")
-	wugnot.Approve(cross, poolAddr, 10000000)
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(userAddr, routerAddr, std.Coins{{"ugnot", 10000000}})
+	wugnot.Approve(cross, routerAddr, 10000000)
 	gns.Approve(cross, routerAddr, max_approve)
 
 	testing.SetOriginSend(std.Coins{{"ugnot", 10000000}})
@@ -249,7 +249,7 @@ func performSwaps() BalanceSnapshot {
 
 	// Swap 2: GNS → GNOT (ExactOut)
 	println("[INFO] Swap 2: GNS → 5,000,000 GNOT")
-	gns.Approve(cross, poolAddr, max_approve)
+	gns.Approve(cross, routerAddr, max_approve)
 	gns.Approve(cross, routerAddr, max_approve)
 
 	testing.SetOriginSend(std.Coins{})

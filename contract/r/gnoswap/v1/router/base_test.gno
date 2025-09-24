@@ -7,6 +7,7 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
@@ -261,12 +262,17 @@ func TestProcessRoute(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		CreatePoolWithoutFee(t)
 		MakeThirdMintPositionWithoutFee(t)
+		common.SafeGRC20Approve(cross, fooPath, routerAddr, 1000000)
 		route := foobar500
 		toSwap := i256.NewInt(1000)
 		swapType := ExactIn
 
 		func(cur realm) {
 			amountIn, amountOut, err := op.processRoute(route, toSwap, swapType)
+			println("amountIn", amountIn.ToString())
+			println("amountOut", amountOut.ToString())
+			println("err", err)
+
 			uassert.Equal(t, err, nil)
 			uassert.Equal(t, amountIn.ToString(), "1000")
 			uassert.Equal(t, amountOut.ToString(), "979")

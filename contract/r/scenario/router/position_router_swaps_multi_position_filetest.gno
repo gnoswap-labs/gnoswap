@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
-	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/pool"
@@ -131,8 +131,8 @@ func mintPosition(tickLower, tickUpper int32, token0Amount, token1Amount int64) 
 
 func executeExactInRouterSwaps() {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross, routerAddr, INT64_MAX)
+	foo.Approve(cross, routerAddr, INT64_MAX)
 
 	// set current realm and origin caller
 	ufmt.Println("[INFO] Executing first swap FOO -> BAR")
