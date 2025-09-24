@@ -74,7 +74,7 @@ func ExactInSwapRoute(cur realm,
 	params := SwapRouteParams{
 		inputToken:        inputToken,
 		outputToken:       outputToken,
-		routeArr:          RouteArr,
+		routeArr:          routeArr,
 		quoteArr:          quoteArr,
 		deadline:          deadline,
 		typ:               ExactIn,
