@@ -21,7 +21,7 @@ var (
 // ErrorMessages define all error message templates used throughout the router
 const (
 	// slippage validation
-	errExactOutAmountExceeded = "Received more than requested in [EXACT_OUT] requested=%s, actual=%s"
+	errExactOutAmountExceeded = "received more than requested in requested=%s, actual=%s"
 
 	// route validation
 	errInvalidRouteLength = "route length(%d) must be 1~7"
@@ -94,15 +94,20 @@ func (h *GnotSwapHandler) HandleInputSwap() error {
 type SwapValidator struct{}
 
 // exactOutAmount checks if output amount meets specified requirements.
-func (v *SwapValidator) exactOutAmount(resultAmount, specifiedAmount *u256.Uint) error {
+// For exact-out swaps, the output must be exactly the specified amount with tolerance up to swapCount units for rounding.
+func (v *SwapValidator) exactOutAmount(resultAmount, specifiedAmount *u256.Uint, swapCount int64) error {
+	diff := u256.Zero()
+
 	if resultAmount.Gte(specifiedAmount) {
-		return nil
+		diff = u256.Zero().Sub(resultAmount, specifiedAmount)
+	} else {
+		diff = u256.Zero().Sub(specifiedAmount, resultAmount)
 	}
 
-	diff := u256.Zero().Sub(specifiedAmount, resultAmount)
-	if diff.Gt(one) {
+	if diff.Gt(u256.NewUintFromInt64(swapCount)) {
 		return ufmt.Errorf(errExactOutAmountExceeded, specifiedAmount.ToString(), resultAmount.ToString())
 	}
+
 	return nil
 }
 
@@ -241,12 +246,13 @@ func finalizeSwap(
 	tokenAmountLimit *u256.Uint,
 	userBeforeWugnotBalance, userWrappedWugnot int64,
 	amountSpecified *u256.Uint,
+	swapCount int64,
 ) (*i256.Int, *i256.Int) {
 	validator := &SwapValidator{}
 
 	// Validate exact out amount if applicable
 	if swapType == ExactOut {
-		if err := validator.exactOutAmount(resultAmountOut, amountSpecified); err != nil {
+		if err := validator.exactOutAmount(resultAmountOut, amountSpecified, swapCount); err != nil {
 			panic(addDetailToError(errSlippage, err.Error()))
 		}
 	}

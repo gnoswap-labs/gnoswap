@@ -249,6 +249,16 @@ func (p *SwapRouteParams) IsUnwrap() bool {
 	return p.outputToken == gnot
 }
 
+func (p *SwapRouteParams) SwapCount() int64 {
+	swapCount := int64(0)
+
+	for _, route := range strings.Split(p.routeArr, ",") {
+		swapCount += int64(strings.Count(route, POOL_SEPARATOR) + 1)
+	}
+
+	return swapCount
+}
+
 // createSwapOperation creates the appropriate swap operation based on swap type.
 func createSwapOperation(params SwapRouteParams) (RouterOperation, error) {
 	baseParams := BaseSwapParams{
@@ -322,6 +332,7 @@ func commonSwapRoute(params SwapRouteParams) (*i256.Int, *i256.Int, error) {
 		userBeforeWugnotBalance,
 		userWrappedWugnot,
 		result.AmountSpecified.Abs(),
+		params.SwapCount(),
 	)
 
 	return inputAmount, outputAmount, nil
