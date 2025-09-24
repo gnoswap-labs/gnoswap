@@ -50,7 +50,6 @@ func Mint(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	recipient std.Address,
 	tickLower int32,
 	tickUpper int32,
 	liquidityAmount string,

@@ -8,6 +8,7 @@ import (
 
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/v1/common"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
@@ -35,7 +36,16 @@ func Reposition(
 
 	// assert that the user has sent the correct amount of native coin
 	token0, token1, _ := splitOf(position.poolKey)
-	assertIsValidUserCoinSendWithTokenPair(token0, token1, amount0DesiredStr, amount1DesiredStr)
+	assertIsValidUserCoinSendWithWrappedTokenPair(token0, token1, amount0DesiredStr, amount1DesiredStr)
+
+	receivedCoins := common.ExistsUserSendCoins()
+	if receivedCoins {
+		if common.IsGNOTPath(token0) {
+			token0 = common.GNOT_PATH
+		} else if common.IsGNOTPath(token1) {
+			token1 = common.GNOT_PATH
+		}
+	}
 
 	oldTickLower := position.tickLower
 	oldTickUpper := position.tickUpper

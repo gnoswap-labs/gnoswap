@@ -73,7 +73,11 @@ func Mint(
 	assertIsValidUserCoinSendWithTokenPair(token0, token1, amount0Desired, amount1Desired)
 	assertIsNotExpired(deadline)
 
-	referral.TryRegister(cross, caller, referrer)
+	success := referral.TryRegister(cross, caller, referrer)
+	actualReferrer := referrer
+	if !success {
+		actualReferrer = referral.GetReferral(caller.String())
+	}
 
 	emission.MintAndDistributeGns(cross)
 
@@ -133,6 +137,7 @@ func Mint(
 		"sqrtPriceX96", poolSqrtPriceX96.ToString(),
 		"token0Balance", pl.GetBalanceToken0(processedInput.poolPath),
 		"token1Balance", pl.GetBalanceToken1(processedInput.poolPath),
+		"referrer", actualReferrer,
 	)
 
 	return id, liquidity.ToString(), amount0.ToString(), amount1.ToString()
@@ -161,7 +166,6 @@ func Mint(
 //
 // Requirements:
 //   - Caller must own the position NFT
-//   - Position must have liquidity
 //   - Sufficient token balances and approvals
 func IncreaseLiquidity(
 	cur realm,
@@ -189,7 +193,9 @@ func IncreaseLiquidity(
 	token0, token1, _ := splitOf(position.poolKey)
 
 	// assert that the user has sent the correct amount of native coin
-	assertIsValidUserCoinSendWithTokenPair(token0, token1, amount0DesiredStr, amount1DesiredStr)
+	assertIsValidUserCoinSendWithWrappedTokenPair(token0, token1, amount0DesiredStr, amount1DesiredStr)
+
+	receivedCoins := common.ExistsUserSendCoins()
 
 	err := validateTokenPath(token0, token1)
 	if err != nil {
@@ -197,15 +203,17 @@ func IncreaseLiquidity(
 	}
 
 	wrappedAmount := int64(0)
-	if isWrappedToken(token0) {
-		amount0DesiredInt := mustParseInt64(amount0DesiredStr)
-		wrappedAmount, err = safeWrapNativeToken(amount0DesiredInt, caller)
-		if err != nil {
-			panic(err)
+
+	if receivedCoins {
+		inputWrappedAmount := int64(0)
+
+		if common.IsGNOTPath(token0) {
+			inputWrappedAmount = mustParseInt64(amount0DesiredStr)
+		} else if common.IsGNOTPath(token1) {
+			inputWrappedAmount = mustParseInt64(amount1DesiredStr)
 		}
-	} else if isWrappedToken(token1) {
-		amount1DesiredInt := mustParseInt64(amount1DesiredStr)
-		wrappedAmount, err = safeWrapNativeToken(amount1DesiredInt, caller)
+
+		wrappedAmount, err = safeWrapNativeToken(inputWrappedAmount, caller)
 		if err != nil {
 			panic(err)
 		}

@@ -8,8 +8,8 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/nt/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
@@ -89,13 +89,13 @@ func mintPosition() {
 	wugnot.Approve(cross, positionAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Issue initial GNOT")
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 50000005}})
+	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 50000000}})
 	testing.IssueCoins(positionAddr, std.Coins{{"ugnot", 200000000}})
 
 	ufmt.Println("[INFO] Send GNOT to position contract")
 	banker := std.NewBanker(std.BankerTypeRealmIssue)
-	banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", 50000005}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 50000005}})
+	banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", 50000000}})
+	testing.SetOriginSend(std.Coins{{"ugnot", 50000000}})
 
 	ufmt.Println("[INFO] Minting position")
 	positionId, liquidity, amount0, amount1 := position.Mint(

@@ -252,9 +252,9 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 			TargetPoolPath:    deposit.targetPoolPath,
 			RewardTokenPath:   GNS_PATH,
 			RewardTokenAmount: reward.Internal,
-			StakeTimestamp:    deposit.stakeTimestamp,
+			StakeTimestamp:    deposit.stakeTime,
 			StakeTime:         deposit.stakeTime,
-			IncentiveStart:    deposit.stakeTimestamp,
+			IncentiveStart:    deposit.stakeTime,
 		})
 	}
 
@@ -269,7 +269,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 			TargetPoolPath:    incentive.targetPoolPath,
 			RewardTokenPath:   incentive.rewardToken,
 			RewardTokenAmount: externalReward,
-			StakeTimestamp:    deposit.stakeTimestamp,
+			StakeTimestamp:    deposit.stakeTime,
 			StakeTime:         deposit.stakeTime,
 			IncentiveStart:    incentive.startTimestamp,
 		})
