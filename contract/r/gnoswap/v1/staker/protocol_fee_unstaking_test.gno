@@ -1,14 +1,16 @@
 package staker
 
 import (
-	"math"
+	"std"
 	"testing"
 
+	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
+	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/gns"
 )
 
-func TestHandleUnstakingFee(t *testing.T) {
+func TestHandleStakingRewardFee(t *testing.T) {
 	tests := []struct {
 		name             string
 		tokenPath        string
@@ -64,13 +66,13 @@ func TestHandleUnstakingFee(t *testing.T) {
 
 			if tc.expectedHasPanic {
 				uassert.AbortsWithMessage(t, tc.expectedPanicMsg, func() {
-					handleUnStakingFee(tc.tokenPath, tc.amount, tc.internal)
+					handleStakingRewardFee(tc.tokenPath, tc.amount, tc.internal)
 				})
 
 				return
 			}
 
-			netAmount, _, err := handleUnStakingFee(tc.tokenPath, tc.amount, tc.internal)
+			netAmount, _, err := handleStakingRewardFee(tc.tokenPath, tc.amount, tc.internal)
 			if err != nil {
 				t.Errorf("Expected no error, got %v", err)
 			}
@@ -82,33 +84,98 @@ func TestHandleUnstakingFee(t *testing.T) {
 	}
 }
 
-func TestSetUnstakingFee(t *testing.T) {
+func TestSetUnStakingFee(t *testing.T) {
 	tests := []struct {
-		name        string
-		fee         int64
-		shouldPanic bool
+		name           string
+		caller         std.Address
+		fee            int64
+		expectedFee    int64
+		shouldAbort    bool
+		expectedErrMsg string
 	}{
-		{name: "Valid fee", fee: 500, shouldPanic: false},
-		{name: "Excessive fee", fee: 10001, shouldPanic: true},
-		{name: "Negative fee", fee: -1, shouldPanic: true},
-		// int64 overflow fee -> become negative fee
-		{name: "Int64 overflow fee", fee: math.MaxInt64, shouldPanic: true},
+		// Permission tests
+		{
+			name:        "admin can set valid fee",
+			caller:      adminAddr,
+			fee:         500,
+			expectedFee: 500,
+			shouldAbort: false,
+		},
+		{
+			name:        "governance can set valid fee",
+			caller:      govGovernanceAddr,
+			fee:         750,
+			expectedFee: 750,
+			shouldAbort: false,
+		},
+		{
+			name:           "unauthorized user cannot set fee",
+			caller:         testutils.TestAddress("unauthorized"),
+			fee:            500,
+			expectedFee:    0,
+			shouldAbort:    true,
+			expectedErrMsg: ufmt.Sprintf("unauthorized: caller %s is not admin or governance", testutils.TestAddress("unauthorized")),
+		},
+		// Fee validation tests
+		{
+			name:           "admin cannot set negative fee",
+			caller:         adminAddr,
+			fee:            -100,
+			expectedFee:    0,
+			shouldAbort:    true,
+			expectedErrMsg: ufmt.Sprintf("invalid unstaking fee || fee(%d) must be in range 0 ~ %d", -100, maxUnstakingFee),
+		},
+		{
+			name:        "admin cannot set zero fee",
+			caller:      adminAddr,
+			fee:         0,
+			expectedFee: 0,
+			shouldAbort: false,
+		},
+		{
+			name:           "admin cannot set fee above max",
+			caller:         adminAddr,
+			fee:            maxUnstakingFee + 1,
+			expectedFee:    0,
+			shouldAbort:    true,
+			expectedErrMsg: ufmt.Sprintf("fee(%d) must be in range 0 ~ %d", maxUnstakingFee+1, maxUnstakingFee),
+		},
+		{
+			name:        "admin can set max fee",
+			caller:      adminAddr,
+			fee:         maxUnstakingFee,
+			expectedFee: maxUnstakingFee,
+			shouldAbort: false,
+		},
+		{
+			name:        "admin can set minimum valid fee",
+			caller:      adminAddr,
+			fee:         1,
+			expectedFee: 1,
+			shouldAbort: false,
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			defer func() {
-				if r := recover(); r != nil && !tc.shouldPanic {
-					t.Errorf("Unexpected panic for fee %d: %v", tc.fee, r)
-				}
-			}()
+			// Reset unstaking fee before each test
+			unstakingFee = 0
 
-			setUnStakingFee(tc.fee)
+			// Set the caller
+			testing.SetOriginCaller(tc.caller)
+			testing.SetRealm(std.NewUserRealm(tc.caller))
 
-			if !tc.shouldPanic {
-				if unstakingFee != tc.fee {
-					t.Errorf("Expected fee %d, got %d", tc.fee, unstakingFee)
-				}
+			// Execute the function
+			if tc.shouldAbort {
+				uassert.AbortsContains(t, tc.expectedErrMsg, func() {
+					SetUnStakingFee(cross, tc.fee)
+				})
+			} else {
+				SetUnStakingFee(cross, tc.fee)
+
+				// Verify the result
+				actual := GetUnstakingFee()
+				uassert.Equal(t, tc.expectedFee, actual)
 			}
 		})
 	}
