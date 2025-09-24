@@ -8,7 +8,7 @@ import (
 	"gno.land/r/gnoswap/gns"
 )
 
-func TestHandleUnstakingFee(t *testing.T) {
+func TestHandleStakingRewardFee(t *testing.T) {
 	tests := []struct {
 		name             string
 		tokenPath        string
@@ -64,13 +64,13 @@ func TestHandleUnstakingFee(t *testing.T) {
 
 			if tc.expectedHasPanic {
 				uassert.AbortsWithMessage(t, tc.expectedPanicMsg, func() {
-					handleUnStakingFee(tc.tokenPath, tc.amount, tc.internal)
+					handleStakingRewardFee(tc.tokenPath, tc.amount, tc.internal)
 				})
 
 				return
 			}
 
-			netAmount, _, err := handleUnStakingFee(tc.tokenPath, tc.amount, tc.internal)
+			netAmount, _, err := handleStakingRewardFee(tc.tokenPath, tc.amount, tc.internal)
 			if err != nil {
 				t.Errorf("Expected no error, got %v", err)
 			}
