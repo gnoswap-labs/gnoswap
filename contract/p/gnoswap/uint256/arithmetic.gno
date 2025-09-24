@@ -310,8 +310,6 @@ func udivrem(quot, u []uint64, d *Uint) (rem Uint) {
 	}
 	un[0] = u[0] << shift
 
-	// TODO: Skip the highest word of numerator if not significant.
-
 	if dLen == 1 {
 		r := udivremBy1(quot, un, dn[0])
 		rem.SetUint64(r >> shift)
@@ -404,13 +402,13 @@ func udivremKnuth(quot, u, d []uint64) {
 		var qhat, rhat uint64
 		if u2 >= dh { // Division overflows.
 			qhat = ^uint64(0)
-			// TODO: Add "qhat one to big" adjustment (not needed for correctness, but helps avoiding "add back" case).
+			// NOTE: Add "qhat one to big" adjustment (not needed for correctness, but helps avoiding "add back" case).
 		} else {
 			qhat, rhat = udivrem2by1(u2, u1, dh, reciprocal)
 			ph, pl := bits.Mul64(qhat, dl)
 			if ph > rhat || (ph == rhat && pl > u0) {
 				qhat--
-				// TODO: Add "qhat one to big" adjustment (not needed for correctness, but helps avoiding "add back" case).
+				// NOTE: Add "qhat one to big" adjustment (not needed for correctness, but helps avoiding "add back" case).
 			}
 		}
 

@@ -229,7 +229,10 @@ func GetPoolReward(tier uint64) int64 {
 func GetExternalIncentiveByPoolPath(poolPath string) []ExternalIncentive {
 	incentives := []ExternalIncentive{}
 	externalIncentives.tree.Iterate("", "", func(key string, value any) bool {
-		incentive := value.(*ExternalIncentive)
+		incentive, ok := value.(*ExternalIncentive)
+		if !ok {
+			panic("failed to cast value to *ExternalIncentive")
+		}
 		if incentive.targetPoolPath == poolPath {
 			incentives = append(incentives, *incentive)
 		}

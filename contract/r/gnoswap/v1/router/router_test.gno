@@ -45,6 +45,7 @@ func TestFinalizeSwap(t *testing.T) {
 		userBeforeWugnotBalance int64
 		userWrappedWugnot       int64
 		amountSpecified         *u256.Uint
+		swapCount               int64
 		expectError             bool
 		errorMessage            string
 	}{
@@ -59,6 +60,7 @@ func TestFinalizeSwap(t *testing.T) {
 			userBeforeWugnotBalance: 0,
 			userWrappedWugnot:       0,
 			amountSpecified:         newUint256("100"),
+			swapCount:               1,
 			expectError:             false,
 		},
 		{
@@ -72,6 +74,7 @@ func TestFinalizeSwap(t *testing.T) {
 			userBeforeWugnotBalance: 0,
 			userWrappedWugnot:       0,
 			amountSpecified:         newUint256("100"),
+			swapCount:               1,
 			expectError:             false,
 		},
 		{
@@ -85,6 +88,7 @@ func TestFinalizeSwap(t *testing.T) {
 			userBeforeWugnotBalance: 0,
 			userWrappedWugnot:       0,
 			amountSpecified:         newUint256("100"),
+			swapCount:               1,
 			expectError:             true,
 			errorMessage:            "[GNOSWAP-ROUTER-002] slippage check failed || Received more than requested in [EXACT_OUT] requested=100, actual=90",
 		},
@@ -98,6 +102,7 @@ func TestFinalizeSwap(t *testing.T) {
 			tokenAmountLimit:        newUint256("85"),
 			userBeforeWugnotBalance: 1000000,
 			userWrappedWugnot:       20000,
+			swapCount:               1,
 			expectError:             true,
 			errorMessage:            "too much wugnot spent",
 		},
@@ -112,6 +117,7 @@ func TestFinalizeSwap(t *testing.T) {
 			userBeforeWugnotBalance: 0,
 			userWrappedWugnot:       0,
 			amountSpecified:         newUint256("600901352"),
+			swapCount:               1,
 			expectError:             false,
 		},
 		{
@@ -124,6 +130,7 @@ func TestFinalizeSwap(t *testing.T) {
 			tokenAmountLimit:        newUint256("85"),
 			userBeforeWugnotBalance: 1<<63 - 1,
 			userWrappedWugnot:       1,
+			swapCount:               1,
 			expectError:             true,
 			errorMessage:            "overflow in balance calculation",
 		},
@@ -137,6 +144,7 @@ func TestFinalizeSwap(t *testing.T) {
 			tokenAmountLimit:        newUint256("85"),
 			userBeforeWugnotBalance: 1 << 61,
 			userWrappedWugnot:       1 << 61,
+			swapCount:               1,
 			expectError:             true,
 			errorMessage:            "too much wugnot spent",
 		},
@@ -175,6 +183,7 @@ func TestFinalizeSwap(t *testing.T) {
 				tt.userBeforeWugnotBalance,
 				tt.userWrappedWugnot,
 				tt.amountSpecified,
+				tt.swapCount,
 			)
 
 			if !tt.expectError {

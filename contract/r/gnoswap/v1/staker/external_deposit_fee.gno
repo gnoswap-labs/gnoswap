@@ -40,7 +40,11 @@ func GetMinimumRewardAmount() int64 {
 func GetMinimumRewardAmountForToken(tokenPath string) int64 {
 	amountI, found := tokenSpecificMinimumRewards.Get(tokenPath)
 	if found {
-		return amountI.(int64)
+		amount, ok := amountI.(int64)
+		if !ok {
+			panic("failed to cast amount to int64")
+		}
+		return amount
 	}
 	// Fallback to default if not found
 	return GetMinimumRewardAmount()

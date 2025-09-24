@@ -183,7 +183,6 @@ func TestExactInSwapRoute(t *testing.T) {
 
 func TestExactInZeroForOneFalse(t *testing.T) {
 	const maxTimeout int64 = 9999999999
-	const wugnotGnsPoolPath = "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500"
 
 	alice := testutils.TestAddress("alice")
 	positionOwner := adminAddr
@@ -226,7 +225,7 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			inputToken:       gnsPath,
 			outputToken:      "gnot",
 			amountIn:         "100",
-			routeArr:         wugnotGnsPoolPath,
+			routeArr:         BuildSingleHopRoutePath(gnsPath, wugnotPath, pl.FeeTier500),
 			quoteArr:         "100",
 			amountOutMin:     "85",
 			expectedAmount0:  "100",

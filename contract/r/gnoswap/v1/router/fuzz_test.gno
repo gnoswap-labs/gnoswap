@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/uassert"
 	"gno.land/p/gnoswap/fuzz"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/uassert"
 )
 
 // RouteGenerator generates valid route strings for testing
@@ -606,7 +606,7 @@ func TestFuzzSwapValidatorExactOutAmount(t *testing.T) {
 		resultAmount := u256.NewUint(resultVal)
 		specifiedAmount := u256.NewUint(specifiedVal)
 
-		err := validator.exactOutAmount(resultAmount, specifiedAmount)
+		err := validator.exactOutAmount(resultAmount, specifiedAmount, 1)
 		shouldFail := resultAmount.Lt(specifiedAmount)
 
 		helper.assertError(err, shouldFail, "exactOutAmount validation")
@@ -1035,6 +1035,7 @@ func TestFuzzFinalizeSwap(t *testing.T) {
 				int64(params.userBeforeWugnotBalance),
 				int64(params.userWrappedWugnot),
 				params.amountSpecified,
+				1,
 			)
 
 			// verify amountIn is positive string

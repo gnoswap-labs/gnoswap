@@ -223,14 +223,14 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	{
 		diff := u256.Zero().Sub(feeGrowthInside0LastX128, position.feeGrowthInside0LastX128)
-		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.liquidity), u256.MustFromDecimal(Q128))
+		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.liquidity), q128)
 
 		position.tokensOwed0 = u256.Zero().Add(position.tokensOwed0, mulDiv)
 	}
 
 	{
 		diff := u256.Zero().Sub(feeGrowthInside1LastX128, position.feeGrowthInside1LastX128)
-		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.liquidity), u256.MustFromDecimal(Q128))
+		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.liquidity), q128)
 
 		position.tokensOwed1 = u256.Zero().Add(position.tokensOwed1, mulDiv)
 	}

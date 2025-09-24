@@ -30,24 +30,42 @@ func GetRoleAddresses() map[string]std.Address {
 	return addresses
 }
 
-// SetRoleAddresses updates all role addresses.
+// SetRoleAddress sets or updates a role's address.
+// Creates the role if it doesn't exist, updates it if it does.
 //
 // Parameters:
-//   - newRoleAddresses: map of role names to addresses
+//   - roleName: name of the role
+//   - roleAddress: address for the role
 //
 // Only callable by RBAC contract.
-func SetRoleAddresses(cur realm, newRoleAddresses map[string]std.Address) {
+func SetRoleAddress(cur realm, roleName string, roleAddress std.Address) {
 	caller := std.PreviousRealm().Address()
 	assertIsRBAC(caller)
 
-	// Validate all addresses before applying updates
-	for role, addr := range newRoleAddresses {
-		if !addr.IsValid() || addr == std.Address("") {
-			panic(ufmt.Errorf("invalid address for role %s: %s", role, addr))
-		}
+	// Validate address
+	if !roleAddress.IsValid() || roleAddress == std.Address("") {
+		panic(ufmt.Errorf("invalid address for role %s: %s", roleName, roleAddress))
 	}
 
-	roleAddresses = newRoleAddresses
+	roleAddresses[roleName] = roleAddress
+}
+
+// RemoveRole removes a role from the system.
+//
+// Parameters:
+//   - roleName: name of the role to remove
+//
+// Only callable by RBAC contract.
+func RemoveRole(cur realm, roleName string) {
+	caller := std.PreviousRealm().Address()
+	assertIsRBAC(caller)
+
+	// Check if role exists
+	if _, exists := roleAddresses[roleName]; !exists {
+		panic(ufmt.Errorf("role %s does not exist", roleName))
+	}
+
+	delete(roleAddresses, roleName)
 }
 
 // IsAuthorized checks if caller has the specified role.

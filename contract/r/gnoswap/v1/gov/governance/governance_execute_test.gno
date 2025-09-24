@@ -1112,7 +1112,7 @@ func TestGovernanceExecute_ReExecutionPrevention(t *testing.T) {
 		testing.SetRealm(std.NewUserRealm(testutils.TestAddress("executor")))
 
 		// when - first execution
-		errInvalidRangeMsg := "[GNOSWAP-STAKER-008] invalid unstaking fee || fee(-1) must be in range 0 ~ 10000"
+		errInvalidRangeMsg := "[GNOSWAP-STAKER-008] invalid unstaking fee || fee(-1) must be in range 0 ~ 1000"
 		uassert.AbortsWithMessage(t, errInvalidRangeMsg, func() {
 			Execute(cross, 1)
 		})

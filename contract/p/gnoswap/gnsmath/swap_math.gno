@@ -144,8 +144,10 @@ func SwapMathComputeSwapStep(
 	return sqrtRatioNextX96, amountIn, amountOut, feeAmount
 }
 
-// handleExactIn handles the EXACT_IN scenario for swaps, returning the next sqrt price and provisional
-// amount in while accounting for fees by reducing the input amount.
+// handleExactIn handles the EXACT_IN scenario for swaps, returning the next sqrt price and
+// a provisional amount. When the target price is reached, it returns the exact amount needed.
+// When the target is not reached, it returns the amount needed to reach the target (which will
+// be recalculated by the caller since we only moved partially).
 // This internal function processes swaps where the input amount is specified exactly.
 func handleExactIn(
 	zeroForOne bool,
@@ -169,7 +171,8 @@ func handleExactIn(
 		return sqrtRatioCurrentX96, u256.Zero()
 	}
 
-	var amountIn *u256.Uint
+	amountIn := u256.Zero()
+
 	if zeroForOne {
 		amountIn = getAmount0DeltaHelper(
 			sqrtRatioTargetX96,
@@ -198,19 +201,21 @@ func handleExactIn(
 		zeroForOne,
 	)
 
-	// Return the partially moved price and calculate amountIn later
-	// This avoids double calculation and ensures consistency
-	return nextSqrt, amountRemainingLessFee
+	// Return the partially moved price and the amount to reach target (will be recalculated by caller)
+	return nextSqrt, amountIn
 }
 
-// handleExactOut handles the EXACT_OUT scenario for swaps, returning the next sqrt price and provisional
-// amount out while checking if sufficient liquidity exists to fulfill the requested output amount.
+// handleExactOut handles the EXACT_OUT scenario for swaps, returning the next sqrt price and
+// a provisional amount. When the target price is reached, it returns the exact amount produced.
+// When the target is not reached due to insufficient liquidity, it returns the amount that would
+// be produced if we reached the target (which will be recalculated by the caller).
 // This internal function processes swaps where the output amount is specified exactly.
 func handleExactOut(
 	zeroForOne bool,
 	sqrtRatioCurrentX96, sqrtRatioTargetX96, liquidity, amountRemainingAbs *u256.Uint,
 ) (*u256.Uint, *u256.Uint) {
-	var amountOut *u256.Uint
+	amountOut := u256.Zero()
+
 	if zeroForOne {
 		amountOut = getAmount1DeltaHelper(sqrtRatioTargetX96, sqrtRatioCurrentX96, liquidity, false)
 	} else {
@@ -223,6 +228,7 @@ func handleExactOut(
 	}
 
 	// Otherwise, partial move: compute next price from residual output amount
+	// and return the amount to reach target (will be recalculated by caller)
 	nextSqrt := getNextSqrtPriceFromOutput(
 		sqrtRatioCurrentX96,
 		liquidity,
@@ -230,5 +236,5 @@ func handleExactOut(
 		zeroForOne,
 	)
 
-	return nextSqrt, amountRemainingAbs
+	return nextSqrt, amountOut
 }

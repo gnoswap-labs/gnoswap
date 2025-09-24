@@ -50,27 +50,28 @@ func assertIsValidSqrtPriceLimitX96(sqrtPriceLimitX96 string) {
 	}
 }
 
-func assertIsValidSingleSwapRouteArrPath(routeArr string) {
-	if routeArr == "" {
+func assertIsValidSingleSwapRouteArrPath(routePaths, inputToken, outputToken string) {
+	if routePaths == "" {
 		panic(makeErrorWithDetails(
 			errInvalidInput,
-			ufmt.Sprintf("invalid route: %s", routeArr),
+			ufmt.Sprintf("invalid route: %s", routePaths),
 		))
 	}
 
-	routes := strings.Split(routeArr, ",")
+	routes := strings.Split(routePaths, ",")
 	if len(routes) != 1 {
 		panic(makeErrorWithDetails(
 			errInvalidInput,
-			ufmt.Sprintf("invalid routeArr: %s", routeArr),
+			ufmt.Sprintf("invalid routePaths: %s", routePaths),
 		))
 	}
 
-	token0, token1, fee := getDataForSinglePath(routes[0])
-	if token0 == "" || token1 == "" || fee == 0 {
-		panic(makeErrorWithDetails(
-			errInvalidInput,
-			ufmt.Sprintf("invalid routeArr: %s", routeArr),
-		))
+	assertIsValidRoutePaths(routePaths, inputToken, outputToken)
+}
+
+func assertIsValidRoutePaths(routePaths, inputToken, outputToken string) {
+	err := validateRoutePaths(routePaths, inputToken, outputToken)
+	if err != nil {
+		panic(err)
 	}
 }

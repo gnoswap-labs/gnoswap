@@ -133,7 +133,7 @@ func TestRemoveToken(t *testing.T) {
 			expectedPanicMsg:      "",
 		},
 		{
-			// XXX: When removing a non-existent token, it is necessary to confirm that the operation was successful.
+			// NOTE: When removing a non-existent token, it is necessary to confirm that the operation was successful.
 			name:                  "remove token failed by not existing token",
 			caller:                getAdminAddress(t),
 			inputTokenPath:        "not-existing-token",

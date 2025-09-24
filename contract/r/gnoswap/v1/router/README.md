@@ -9,7 +9,7 @@ Router handles swap execution across multiple pools, finding optimal paths and m
 ## Configuration
 
 - **Router Fee**: 0.15% on all swaps
-- **Max Hops**: 7 pools per route
+- **Max Hops**: 3 pools per route
 - **Deadline Buffer**: 5-30 minutes recommended
 
 ## Core Functions
@@ -35,20 +35,57 @@ Simulates swap without execution.
 
 ## Technical Details
 
-### Route Format
-Routes encode swap path as colon-separated string:
+### Route Format vs Pool Format - IMPORTANT DISTINCTION
+
+#### Route Format (Swap Direction)
+Routes in the router follow **swap direction ordering**: `tokenIn:tokenOut:fee`
+- First token = Input token (what you're swapping FROM)
+- Second token = Output token (what you're swapping TO)
+- This represents the actual flow of the swap
+
+Example for swapping BAR to BAZ:
 ```
-POOL_PATH,TOKEN0,TOKEN1,FEE:NEXT_POOL...
+gno.land/r/demo/bar:gno.land/r/demo/baz:3000
+```
+
+#### Pool Format (Alphabetical)
+Pools are identified using **alphabetical ordering**: `token0:token1:fee`
+- token0 < token1 (lexicographically sorted)
+- This is the canonical pool identifier
+
+Example pool identifier (same pool as above):
+```
+gno.land/r/demo/bar:gno.land/r/demo/baz:3000  # if bar < baz alphabetically
+```
+
+#### Key Difference
+- **Router routes**: Follow your swap direction (BAR→BAZ means bar:baz in route)
+- **Pool identifiers**: Always alphabetically sorted (might be bar:baz or baz:bar)
+- The router automatically handles the conversion between these formats
+
+#### Route String Format
+
+Single-hop format:
+```
+tokenIn:tokenOut:fee
+```
+
+Multi-hop format (using *POOL* separator):
+```
+tokenIn:tokenB:fee1*POOL*tokenB:tokenC:fee2*POOL*tokenC:tokenOut:fee3
 ```
 
 Single-hop example:
 ```
-gno.land/r/demo/bar:gno.land/r/demo/baz:3000,BAR,BAZ,3000
+# Swapping BAR to BAZ
+Route: gno.land/r/demo/bar:gno.land/r/demo/baz:3000
+# Router interprets: tokenIn=bar, tokenOut=baz, fee=3000
 ```
 
 Multi-hop example (BAR → BAZ → QUX):
 ```
-POOL1,BAR,BAZ,3000:POOL2,BAZ,QUX,500
+# Each segment follows swap direction, connected by *POOL*
+gno.land/r/demo/bar:gno.land/r/demo/baz:3000*POOL*gno.land/r/demo/baz:gno.land/r/demo/qux:500
 ```
 
 ### Quote Distribution
