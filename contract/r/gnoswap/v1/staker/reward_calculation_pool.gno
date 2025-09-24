@@ -70,7 +70,11 @@ func (self *Pools) Has(poolPath string) bool {
 
 func (self *Pools) IterateAll(fn func(key string, pool *Pool) bool) {
 	self.tree.Iterate("", "", func(key string, value any) bool {
-		return fn(key, value.(*Pool))
+		p, ok := value.(*Pool)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast value to *Pool: %T", value))
+		}
+		return fn(key, p)
 	})
 }
 
@@ -210,7 +214,10 @@ func (self *Pool) IsExternallyIncentivizedPool() bool {
 	hasActive := false
 	self.incentives.incentives.Iterate("", "", func(key string, value interface{}) bool {
 		incentive, ok := value.(*ExternalIncentive)
-		if ok && incentive.isActive(currentTime) {
+		if !ok {
+			panic("failed to cast value to *ExternalIncentive")
+		}
+		if incentive.isActive(currentTime) {
 			hasActive = true
 			return false
 		}
