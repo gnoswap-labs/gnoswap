@@ -34,6 +34,7 @@ Deploys new trading pair.
 - Valid fee tier required
 - Initial price via sqrtPriceX96
 - Unique token pair per fee tier
+- **Note**: No price validation performed (see Security Considerations)
 
 ### `Mint`
 Adds liquidity to position (called by Position contract).
@@ -124,6 +125,36 @@ feeGrowthInside = feeGrowthGlobal - feeGrowthOutside
 - TWAP oracle resists manipulation
 - Large swaps limited by liquidity
 - Slippage protection required
+
+### Pool Creation Griefing
+**Issue**: CreatePool allows arbitrary initial prices without validation, enabling griefing attacks where pools are created at extreme prices (e.g., 1 GNO = 0.000001 USDC).
+
+**Impact**:
+- Pool becomes temporarily unusable
+- No rational LP will provide liquidity at distorted prices
+- Price cannot self-correct without liquidity
+
+**Recovery Mechanism**:
+Griefed pools can be restored through an atomic transaction:
+1. **Add Liquidity**: Provide wide-range liquidity at the distorted price
+2. **Execute Swap**: Trade to move price toward market rate
+3. **Remove Liquidity**: Withdraw the provided liquidity
+
+The executor acts as both LP (losing value to slippage) and arbitrageur (gaining from price correction). These effects largely cancel out, with only gas and protocol fees as net cost.
+
+**Example Recovery Transaction**:
+```
+// Atomic recovery for griefed pool
+1. position.Mint(fullRange, largeAmount)  // Add liquidity
+2. router.Swap(correctPrice)               // Fix price via arbitrage
+3. position.Burn(positionId)               // Remove liquidity
+4. position.Collect(positionId)            // Collect tokens
+```
+
+**Prevention**:
+- 100 GNS creation fee provides deterrent
+- Consider implementing price oracle validation for high-value pairs
+- Monitor pool creation events for suspicious activity
 
 ### Rounding
 - Division rounds down (favors protocol)
