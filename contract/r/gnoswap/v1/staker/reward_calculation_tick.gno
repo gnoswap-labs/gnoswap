@@ -118,7 +118,11 @@ type Tick struct {
 func (self *Tick) CurrentOutsideAccumulation(timestamp int64) *u256.Uint {
 	acc := u256.Zero()
 	self.outsideAccumulation.ReverseIterate(0, timestamp, func(key int64, value any) bool {
-		acc = value.(*u256.Uint)
+		v, ok := value.(*u256.Uint)
+		if !ok {
+			panic("failed to cast value to *u256.Uint")
+		}
+		acc = v
 		return true
 	})
 	if acc == nil {
