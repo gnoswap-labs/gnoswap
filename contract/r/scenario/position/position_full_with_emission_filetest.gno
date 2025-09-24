@@ -169,12 +169,7 @@ func executeSwaps() {
 	gns.Approve(cross, poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
-	func() {
-		ctx := testing.GetContext()
-		ctx.CurrentRealm = routerRealm
-		ctx.OriginCaller = adminAddr
-		testing.SetContext(ctx)
-	}()
+	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 	ufmt.Println("[INFO] Executing swap WUGNOT -> GNS")
 	amount0, amount1 := pool.Swap(
 		cross,
@@ -187,7 +182,7 @@ func executeSwaps() {
 		MIN_PRICE,
 		adminAddr,
 		func(amount0Delta, amount1Delta string) error {
-			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(token0Path, token1Path, amount0Delta, amount1Delta, true)
 		},
 	)
 
@@ -225,7 +220,7 @@ func verifyFinalBalances() {
 	ufmt.Printf("[EXPECTED] Alice final GNS balance should be %d\n", aliceGnsBalance)
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta string, amount1Delta string) error {
+func mockSwapCallback(token0Path string, token1Path string, amount0Delta string, amount1Delta string, zeroForOne bool) error {
 	testing.SetRealm(adminRealm)
 
 	const wugnotPath = "gno.land/r/gnoland/wugnot"
@@ -234,15 +229,14 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta string,
 	amount0Int64, _ := strconv.ParseInt(amount0Delta, 10, 64)
 	amount1Int64, _ := strconv.ParseInt(amount1Delta, 10, 64)
 
-	if amount0Int64 > 0 {
+	if zeroForOne {
 		if token0Path == wugnotPath {
 			testing.SetOriginSend(std.Coins{{ugnotDenom, amount0Int64}})
 			wugnot.Deposit(cross)
 		}
 
 		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Int64)
-	}
-	if amount1Int64 > 0 {
+	} else {
 		if token1Path == wugnotPath {
 			testing.SetOriginSend(std.Coins{{ugnotDenom, amount1Int64}})
 			wugnot.Deposit(cross)
