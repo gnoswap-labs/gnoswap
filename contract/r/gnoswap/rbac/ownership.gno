@@ -43,6 +43,7 @@ func AcceptOwnership(cur realm) {
 func TransferOwnership(cur realm, addr std.Address) {
 	caller := std.PreviousRealm().Address()
 	assertIsOwner(caller)
+	assertIsValidAddress(addr)
 
 	err := manager.TransferOwnershipBy(addr, caller)
 	if err != nil {
