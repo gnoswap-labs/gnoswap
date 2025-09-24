@@ -100,7 +100,9 @@ func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 	externalPenalties := make([]map[string]int64, warmups)
 
 	// Calculate internal rewards regardless of current tier status
-	// This allows collecting rewards earned while the pool was in a tier
+	// The reward cache system will automatically handle periods with 0 rewards
+	// This allows collecting rewards earned while the pool was in a tier,
+	// while preventing new rewards after tier removal
 	internalRewards, internalPenalties = pool.RewardStateOf(deposit).calculateInternalReward(lastCollectTime, param.CurrentTime)
 
 	// All active incentives
