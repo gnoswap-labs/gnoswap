@@ -82,24 +82,26 @@ func handleSwapFee(
 		return amount
 	}
 
+	currentTokenPath := outputToken
+
+	if common.IsGNOTNativePath(outputToken) {
+		currentTokenPath = wugnotPath
+	}
+
 	feeAmount := u256.Zero().Mul(amount, u256.NewUint(swapFee))
 	feeAmount = u256.Zero().Div(feeAmount, u256.NewUint(10000))
 	feeAmountInt64 := safeConvertToInt64(feeAmount)
 
-	if outputToken == gnot {
-		outputToken = wugnotPath
-	}
+	common.SafeGRC20Transfer(cross, currentTokenPath, protocolFeeAddr, feeAmountInt64)
 
-	common.SafeGRC20Transfer(cross, outputToken, protocolFeeAddr, feeAmountInt64)
-
-	pf.AddToProtocolFee(cross, outputToken, feeAmountInt64)
+	pf.AddToProtocolFee(cross, currentTokenPath, feeAmountInt64)
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"SwapRouteFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"tokenPath", outputToken,
+		"tokenPath", currentTokenPath,
 		"amount", formatInt64(feeAmountInt64),
 	)
 

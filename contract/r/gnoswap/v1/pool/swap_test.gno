@@ -776,7 +776,7 @@ func createMockLiquidityPool() *Pool {
 		fee:         STANDARD_FEE_TIER,
 		tickSpacing: 60,
 		slot0: Slot0{
-			sqrtPriceX96: u256.MustFromDecimal("1000000000000000000"),
+			sqrtPriceX96: common.TickMathGetSqrtRatioAtTick(0),
 			tick:         0,
 			feeProtocol:  0,
 			unlocked:     true,
