@@ -269,10 +269,6 @@ func TestProcessRoute(t *testing.T) {
 
 		func(cur realm) {
 			amountIn, amountOut, err := op.processRoute(route, toSwap, swapType)
-			println("amountIn", amountIn.ToString())
-			println("amountOut", amountOut.ToString())
-			println("err", err)
-
 			uassert.Equal(t, err, nil)
 			uassert.Equal(t, amountIn.ToString(), "1000")
 			uassert.Equal(t, amountOut.ToString(), "979")
