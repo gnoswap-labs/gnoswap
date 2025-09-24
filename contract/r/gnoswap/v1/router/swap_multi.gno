@@ -237,7 +237,7 @@ func multiSwap(p SwapParams, numPools int, swapPath string) (*u256.Uint, *u256.U
 	result, output, err := NewMultiSwapProcessor(false, Forward).
 		processForwardSwap(p, numPools, swapPath)
 	if err != nil {
-		return nil, nil, err
+		panic(err)
 	}
 	return result, output
 }
@@ -247,7 +247,7 @@ func multiSwapNegative(p SwapParams, numPools int, swapPath string) (*u256.Uint,
 	result, output, err := NewMultiSwapProcessor(false, Backward).
 		processBackwardSwap(p, numPools, swapPath)
 	if err != nil {
-		return nil, nil, err
+		panic(err)
 	}
 	return result, output
 }
