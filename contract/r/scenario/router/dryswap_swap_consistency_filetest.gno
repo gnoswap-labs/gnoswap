@@ -38,7 +38,7 @@ var (
 	adminRealm    = std.NewUserRealm(adminAddr)
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
-	routerRealm   = std.NewUserRealm(routerAddr)
+	routerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/router")
 
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = std.NewUserRealm(aliceAddr)

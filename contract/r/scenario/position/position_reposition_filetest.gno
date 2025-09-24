@@ -3,13 +3,16 @@ package main
 
 import (
 	"std"
+	"strconv"
 	"testing"
 
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/position"
 
@@ -151,6 +154,9 @@ func executeSwap() {
 		"20000000",
 		MIN_PRICE,
 		adminAddr,
+		func(amount0Delta, amount1Delta string) error {
+			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+		},
 	)
 
 	p = pool.GetPool(barPath, fooPath, fee500)
@@ -234,6 +240,9 @@ func executeSwapInNewRange() {
 		"20000000",
 		MAX_PRICE,
 		adminAddr,
+		func(amount0Delta, amount1Delta string) error {
+			return mockSwapCallback(fooPath, barPath, amount0Delta, amount1Delta)
+		},
 	)
 
 	ufmt.Printf("[EXPECTED] Swap amount0 should be %s\n", amount0)
@@ -251,6 +260,35 @@ func checkFinalPositionState() {
 	_, fee0, fee1, _, _, _ := position.CollectFee(cross, 1, false)
 	ufmt.Printf("[EXPECTED] Final fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Final fee1 should be %s\n", fee1)
+}
+
+func mockSwapCallback(token0Path string, token1Path string, amount0Delta string, amount1Delta string) error {
+	testing.SetRealm(adminRealm)
+
+	const wugnotPath = "gno.land/r/gnoland/wugnot"
+	const ugnotDenom = "ugnot"
+
+	amount0Int64, _ := strconv.ParseInt(amount0Delta, 10, 64)
+	amount1Int64, _ := strconv.ParseInt(amount1Delta, 10, 64)
+
+	if amount0Int64 > 0 {
+		if token0Path == wugnotPath {
+			testing.SetOriginSend(std.Coins{{ugnotDenom, amount0Int64}})
+			wugnot.Deposit(cross)
+		}
+
+		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Int64)
+	}
+	if amount1Int64 > 0 {
+		if token1Path == wugnotPath {
+			testing.SetOriginSend(std.Coins{{ugnotDenom, amount1Int64}})
+			wugnot.Deposit(cross)
+		}
+
+		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Int64)
+	}
+
+	return nil
 }
 
 // Output:
