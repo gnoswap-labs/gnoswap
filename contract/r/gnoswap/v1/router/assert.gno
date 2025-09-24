@@ -37,8 +37,11 @@ func assertIsValidUserCoinSend(tokenPath, amount string) {
 }
 
 func assertIsValidSqrtPriceLimitX96(sqrtPriceLimitX96 string) {
-	if sqrtPriceLimitX96 == "" || sqrtPriceLimitX96 == zeroString {
-		return
+	if sqrtPriceLimitX96 == "" {
+		panic(makeErrorWithDetails(
+			errInvalidInput,
+			ufmt.Sprintf("invalid sqrtPriceLimitX96: %s", sqrtPriceLimitX96),
+		))
 	}
 
 	_, err := u256.FromDecimal(sqrtPriceLimitX96)

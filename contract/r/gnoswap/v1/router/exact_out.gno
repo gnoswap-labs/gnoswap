@@ -111,7 +111,8 @@ func ExactOutSwapRoute(
 //   - amountIn: Actual input consumed
 //   - amountOut: Exact output received
 //
-// Reverts if input > amountInMax, deadline passed, or price limit exceeded.
+// Reverts the transaction if the input amount is greater than `amountInMax`,
+// the deadline has passed, or the price limit is exceeded.
 func ExactOutSingleSwapRoute(
 	cur realm,
 	inputToken string,

@@ -79,9 +79,9 @@ func (p SingleSwapParams) TokenOut() string { return p.tokenOut }
 func (p SingleSwapParams) Fee() uint32 { return p.fee }
 
 // SqrtPriceLimitX96 returns the sqrtPriceLimitX96 for the swap.
-// If sqrtPriceLimitX96 is empty string or zero string, it will return zero.
+// If sqrtPriceLimitX96 is empty string, it will return zero.
 func (p SingleSwapParams) SqrtPriceLimitX96() *u256.Uint {
-	if p.sqrtPriceLimitX96 == "" || p.sqrtPriceLimitX96 == "0" {
+	if p.sqrtPriceLimitX96 == "" {
 		return u256.Zero()
 	}
 
