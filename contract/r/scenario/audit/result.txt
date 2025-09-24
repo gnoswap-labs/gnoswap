@@ -1,0 +1,35 @@
+[SCENARIO] 1. Initialize system with 75% staker allocation
+[EXPECTED] Initial distribution set to 75% for stakers
+[EXPECTED] Current staker emission per second: 0
+
+[SCENARIO] 2. Create pool and mint position
+[EXPECTED] Position minted: ID=1, liquidity=20113073
+
+[SCENARIO] 3. Stake position and collect initial rewards
+[EXPECTED] Initial reward collected (at 75% rate): 4013269 GNS
+[INFO] Waiting additional blocks before governance change...
+
+[SCENARIO] 4. Change distribution to 50% (governance action)
+[EXPECTED] Emission rate before change: 5351027
+[EXPECTED] Emission rate after change: 3567351
+[EXPECTED] Rate reduction: 33%
+
+[SCENARIO] 5. Wait without any user interaction
+[EXPECTED] Waited 100 blocks without user interaction
+[INFO] With the hook fix, cache should now be automatically updated to 50% rate
+
+[SCENARIO] 6. Collect rewards (should use stale 75% rate)
+[EXPECTED] Reward collected after rate change: 2675512 GNS
+[INFO] The hook should have updated the cache to use the new 50% rate
+[LOG] Expected at 75% rate: ~4013269 GNS
+[LOG] Expected at 50% rate: ~2675512 GNS
+[LOG] Actual reward received: 2675512 GNS
+[EXPECTED] Cache correctly updated to 50% rate
+
+[SCENARIO] 7. Collect rewards again (should use correct 50% rate)
+[EXPECTED] Reward collected after new user stakes: 2675512 GNS
+
+[LOG] Initial reward (75% rate, alone): 4013269 GNS
+[LOG] Previous collection (50% rate, alone): 2675512 GNS
+[LOG] Current reward (50% rate, shared pool): 2675512 GNS
+[EXPECTED] Still using correct 50% rate after new user stakes
