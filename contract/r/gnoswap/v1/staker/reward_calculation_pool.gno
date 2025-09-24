@@ -72,7 +72,11 @@ func (self *Pools) Has(poolPath string) bool {
 
 func (self *Pools) IterateAll(fn func(key string, pool *Pool) bool) {
 	self.tree.Iterate("", "", func(key string, value any) bool {
-		return fn(key, value.(*Pool))
+		p, ok := value.(*Pool)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast value to *Pool: %T", value))
+		}
+		return fn(key, p)
 	})
 }
 
@@ -173,7 +177,7 @@ func (self *Pool) CurrentGlobalRewardRatioAccumulation(currentTime int64) (time 
 	if acc == nil {
 		panic("should not happen, globalRewardRatioAccumulation must be set when pool is created")
 	}
-	return
+	return time, acc
 }
 
 // Get the latest tick in [0, currentTime] range.
@@ -187,7 +191,7 @@ func (self *Pool) CurrentTick(currentTime int64) (tick int32) {
 		tick = res
 		return true
 	})
-	return
+	return tick
 }
 
 func (self *Pool) CurrentStakedLiquidity(currentTime int64) (liquidity *u256.Uint) {
@@ -201,7 +205,7 @@ func (self *Pool) CurrentStakedLiquidity(currentTime int64) (liquidity *u256.Uin
 		liquidity = res
 		return true
 	})
-	return
+	return liquidity
 }
 
 // IsExternallyIncentivizedPool returns true if the pool has any active external incentives.
@@ -212,7 +216,10 @@ func (self *Pool) IsExternallyIncentivizedPool() bool {
 	hasActive := false
 	self.incentives.incentives.Iterate("", "", func(key string, value interface{}) bool {
 		incentive, ok := value.(*ExternalIncentive)
-		if ok && incentive.isActive(currentTime) {
+		if !ok {
+			panic("failed to cast value to *ExternalIncentive")
+		}
+		if incentive.isActive(currentTime) {
 			hasActive = true
 			return false
 		}
@@ -233,7 +240,7 @@ func (self *Pool) CurrentReward(currentTime int64) (reward int64) {
 		reward = res
 		return true
 	})
-	return
+	return reward
 }
 
 // cacheReward sets the current reward for the pool
@@ -325,23 +332,27 @@ func (self *Pool) RewardStateOf(deposit *Deposit) *RewardState {
 // It calls rewardPerWarmup for each rewardCache interval, applies warmup, and returns the rewards and penalties.
 func (self *RewardState) calculateInternalReward(startTime, endTime int64) ([]int64, []int64) {
 	currentReward := self.pool.CurrentReward(startTime)
+
 	self.pool.rewardCache.Iterate(startTime, endTime, func(key int64, value any) bool {
-		// we calculate per-position reward
+		reward, ok := value.(int64)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast value to int64: %T", value))
+		}
+
+		// Calculate reward for the period before this cache entry
 		err := self.rewardPerWarmup(startTime, key, currentReward)
 		if err != nil {
 			panic(err)
 		}
 
-		reward, ok := value.(int64)
-		if !ok {
-			panic(ufmt.Sprintf("failed to cast value to int64: %T", value))
-		}
 		startTime = key
 		currentReward = reward
 		return false
 	})
 
 	if startTime < endTime {
+		// For the remaining period, use the last cached reward value
+		// If the pool was de-tiered and the last cached value is 0, this ensures no new rewards
 		err := self.rewardPerWarmup(startTime, endTime, currentReward)
 		if err != nil {
 			panic(err)

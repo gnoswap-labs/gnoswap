@@ -564,7 +564,7 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) (Swa
 
 	amountInWithFee := i256.FromUint256(amountInWithFeeU256)
 	if step.amountOut.Gt(maxInt256) {
-		return state, errUnderflow
+		return state, errOverFlow
 	}
 
 	var (
