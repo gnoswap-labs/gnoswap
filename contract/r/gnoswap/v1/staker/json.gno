@@ -162,7 +162,7 @@ func newApiStake(tokenId uint64, deposit *Deposit) ApiStake {
 	return ApiStake{
 		PositionId:     tokenId,
 		Owner:          deposit.owner,
-		StakeTimestamp: deposit.stakeTimestamp,
+		StakeTimestamp: deposit.stakeTime,
 		StakeTime:      deposit.stakeTime,
 		TargetPoolPath: deposit.targetPoolPath,
 		StakeDuration:  stakeDuration,
