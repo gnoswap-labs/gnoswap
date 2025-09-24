@@ -30,43 +30,6 @@ func GetRoleAddresses() map[string]std.Address {
 	return addresses
 }
 
-// Initialize sets up initial role addresses.
-// Can only be called once during system initialization.
-//
-// Parameters:
-//   - initialRoles: map of role names to addresses
-//
-// Only callable by RBAC contract.
-func Initialize(cur realm, initialRoles map[string]std.Address) {
-	caller := std.PreviousRealm().Address()
-	assertIsRBAC(caller)
-
-	// Skip if already initialized
-	if len(roleAddresses) > 0 {
-		return
-	}
-
-	// Validate all addresses before initialization
-	for role, addr := range initialRoles {
-		if !addr.IsValid() || addr == std.Address("") {
-			panic(ufmt.Errorf("invalid address for role %s: %s", role, addr))
-		}
-	}
-
-	// Verify required system roles are present
-	requiredRoles := []string{
-		"admin", "governance", "pool", "router", "position",
-		"staker", "emission", "protocol_fee",
-	}
-	for _, role := range requiredRoles {
-		if _, exists := initialRoles[role]; !exists {
-			panic(ufmt.Errorf("missing required role: %s", role))
-		}
-	}
-
-	roleAddresses = initialRoles
-}
-
 // SetRoleAddress sets or updates a role's address.
 // Creates the role if it doesn't exist, updates it if it does.
 //

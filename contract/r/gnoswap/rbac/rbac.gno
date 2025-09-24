@@ -25,10 +25,10 @@ func initRbac() {
 		manager.RegisterRole(role.String())
 		manager.UpdateRoleAddress(role.String(), addr)
 		initialRoles[role.String()] = addr
-	}
 
-	// Initialize access control with all roles at once
-	access.Initialize(cross, initialRoles)
+		// Update access package with the role address
+		access.SetRoleAddress(cross, role.String(), addr)
+	}
 }
 
 // RegisterRole registers a new role in the RBAC system.
