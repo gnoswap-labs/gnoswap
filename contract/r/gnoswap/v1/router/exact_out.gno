@@ -126,7 +126,7 @@ func ExactOutSingleSwapRoute(
 	halt.AssertIsNotHaltedRouter()
 
 	assertIsValidUserCoinSend(inputToken, amountInMax)
-	assertIsValidSingleSwapRouteArrPath(routeArr)
+	assertIsValidSingleSwapRouteArrPath(routeArr, inputToken, outputToken)
 	assertIsValidSqrtPriceLimitX96(sqrtPriceLimitX96)
 	assertIsNotPassedDeadline(deadline)
 

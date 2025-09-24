@@ -122,7 +122,7 @@ func ExactInSingleSwapRoute(cur realm,
 	halt.AssertIsNotHaltedRouter()
 
 	assertIsValidUserCoinSend(inputToken, amountIn)
-	assertIsValidSingleSwapRouteArrPath(routeArr)
+	assertIsValidSingleSwapRouteArrPath(routeArr, inputToken, outputToken)
 	assertIsValidSqrtPriceLimitX96(sqrtPriceLimitX96)
 	assertIsNotPassedDeadline(deadline)
 
