@@ -2,8 +2,10 @@ package router
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/v1/common"
 )
@@ -31,5 +33,44 @@ func assertIsValidUserCoinSend(tokenPath, amount string) {
 		common.AssertIsUserSendGNOTAmount(amountInt)
 	} else {
 		common.AssertIsNotHandleNativeCoin()
+	}
+}
+
+func assertIsValidSqrtPriceLimitX96(sqrtPriceLimitX96 string) {
+	if sqrtPriceLimitX96 == "" || sqrtPriceLimitX96 == zeroString {
+		return
+	}
+
+	_, err := u256.FromDecimal(sqrtPriceLimitX96)
+	if err != nil {
+		panic(makeErrorWithDetails(
+			errInvalidInput,
+			ufmt.Sprintf("invalid sqrtPriceLimitX96: %s", sqrtPriceLimitX96),
+		))
+	}
+}
+
+func assertIsValidSingleSwapRouteArrPath(routeArr string) {
+	if routeArr == "" {
+		panic(makeErrorWithDetails(
+			errInvalidInput,
+			ufmt.Sprintf("invalid route: %s", routeArr),
+		))
+	}
+
+	routes := strings.Split(routeArr, ",")
+	if len(routes) != 1 {
+		panic(makeErrorWithDetails(
+			errInvalidInput,
+			ufmt.Sprintf("invalid routeArr: %s", routeArr),
+		))
+	}
+
+	token0, token1, fee := getDataForSinglePath(routes[0])
+	if token0 == "" || token1 == "" || fee == 0 {
+		panic(makeErrorWithDetails(
+			errInvalidInput,
+			ufmt.Sprintf("invalid routeArr: %s", routeArr),
+		))
 	}
 }

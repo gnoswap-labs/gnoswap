@@ -13,4 +13,7 @@ var (
 	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 	positionAddr, _    = access.GetAddress(prabc.ROLE_POSITION.String())
 	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+
+	zeroString          = "0"
+	maxPercentageString = "100"
 )

@@ -83,8 +83,8 @@ func (e *RealSwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u2
 
 	return swapInner(
 		p.amountSpecified,
-		recipient, // if single swap => user will receive
-		zero,      // sqrtPriceLimitX96
+		recipient,             // if single swap => user will receive
+		p.SqrtPriceLimitX96(), // sqrtPriceLimitX96
 		newSwapCallbackData(p, caller, false),
 	)
 }
