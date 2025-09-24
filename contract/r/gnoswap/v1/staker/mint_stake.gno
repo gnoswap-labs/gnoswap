@@ -87,7 +87,7 @@ func MintAndStake(
 		referrer,
 	)
 
-	poolPath := StakeToken(cur, positionId, "")
+	poolPath := StakeToken(cur, positionId, referrer)
 
 	return positionId, liquidity, amount0, amount1, poolPath
 }
