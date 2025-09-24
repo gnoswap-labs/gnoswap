@@ -142,7 +142,7 @@ func GetDepositOwner(lpTokenId uint64) std.Address {
 func GetDepositStakeTimestamp(lpTokenId uint64) int64 {
 	deposit := getDeposit(lpTokenId)
 
-	return deposit.stakeTimestamp
+	return deposit.stakeTime
 }
 
 // GetDepositStakeTime returns the stake time of a deposit.
@@ -229,7 +229,10 @@ func GetPoolReward(tier uint64) int64 {
 func GetExternalIncentiveByPoolPath(poolPath string) []ExternalIncentive {
 	incentives := []ExternalIncentive{}
 	externalIncentives.tree.Iterate("", "", func(key string, value any) bool {
-		incentive := value.(*ExternalIncentive)
+		incentive, ok := value.(*ExternalIncentive)
+		if !ok {
+			panic("failed to cast value to *ExternalIncentive")
+		}
 		if incentive.targetPoolPath == poolPath {
 			incentives = append(incentives, *incentive)
 		}
@@ -251,7 +254,7 @@ func GetPrintExternalInfo() string {
 		externalPosition := ApiExternalDebugPosition{
 			PositionId:      positionId,
 			StakedTime:      deposit.stakeTime,
-			StakedTimestamp: deposit.stakeTimestamp,
+			StakedTimestamp: deposit.stakeTime,
 		}
 
 		externalIncentivesList := []ApiExternalDebugIncentive{}

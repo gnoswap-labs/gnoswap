@@ -3,11 +3,12 @@ package position
 import (
 	"std"
 
-	"gno.land/p/nt/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/v1/common"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
@@ -32,6 +33,20 @@ func Reposition(
 
 	// position should be burned to reposition
 	position := MustGetPosition(positionId)
+
+	// assert that the user has sent the correct amount of native coin
+	token0, token1, _ := splitOf(position.poolKey)
+	assertIsValidUserCoinSendWithWrappedTokenPair(token0, token1, amount0DesiredStr, amount1DesiredStr)
+
+	receivedCoins := common.ExistsUserSendCoins()
+	if receivedCoins {
+		if common.IsGNOTPath(token0) {
+			token0 = common.GNOT_PATH
+		} else if common.IsGNOTPath(token1) {
+			token1 = common.GNOT_PATH
+		}
+	}
+
 	oldTickLower := position.tickLower
 	oldTickUpper := position.tickUpper
 
@@ -48,7 +63,6 @@ func Reposition(
 		))
 	}
 
-	token0, token1, _ := splitOf(position.poolKey)
 	token0, token1, _, _, _, err := processTokens(
 		token0,
 		token1,

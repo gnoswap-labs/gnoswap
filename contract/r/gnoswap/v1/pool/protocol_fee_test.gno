@@ -175,7 +175,6 @@ func TestHandleWithdrawalFee(t *testing.T) {
 					wugnotPath,
 					gnsPath,
 					fee3000,
-					positionAddr,
 					int32(1020),
 					int32(5040),
 					"1000",
@@ -190,7 +189,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
 				return HandleWithdrawalFee(cross, 2, wugnotPath, "1000", gnsPath, "1000", poolPath, alice)
 			},
-			expected:    "990,990",
+			expected:    "900,900",
 			shouldPanic: false,
 		},
 	}
@@ -259,6 +258,18 @@ func TestSetWithdrawalFee(t *testing.T) {
 			expected:    strconv.FormatUint(200, 10),
 			shouldPanic: false,
 		},
+		{
+			name: "exceed max fee, should panic",
+			action: func(t *testing.T) {
+				const newFee = uint64(MaxBpsValue + 1)
+				govRealm := std.NewUserRealm(govAddr)
+				testing.SetRealm(govRealm)
+				SetWithdrawalFee(cross, newFee)
+			},
+			verify:      nil,
+			expected:    "must be in range 0 ~ 1000",
+			shouldPanic: true,
+		},
 	}
 
 	for _, tc := range tests {
@@ -270,7 +281,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 					uassert.Equal(t, gotWithdrawalFee, tc.expected)
 				}
 			} else {
-				uassert.AbortsWithMessage(t, tc.expected, func() {
+				uassert.AbortsContains(t, tc.expected, func() {
 					tc.action(t)
 				})
 			}
@@ -290,8 +301,8 @@ func TestCalculateAmountWithFee(t *testing.T) {
 			name:         "normal case",
 			amount:       u256.NewUint(1000),
 			fee:          u256.NewUint(100), // 1%
-			expectedFee:  u256.NewUint(10),
-			expectedRest: u256.NewUint(990),
+			expectedFee:  u256.NewUint(100),
+			expectedRest: u256.NewUint(900),
 		},
 		{
 			name:         "zero amount",
@@ -310,7 +321,7 @@ func TestCalculateAmountWithFee(t *testing.T) {
 		{
 			name:         "max fee",
 			amount:       u256.NewUint(1000),
-			fee:          u256.NewUint(10000), // 100%
+			fee:          u256.NewUint(MaxBpsValue),
 			expectedFee:  u256.NewUint(1000),
 			expectedRest: u256.NewUint(0),
 		},
@@ -318,8 +329,8 @@ func TestCalculateAmountWithFee(t *testing.T) {
 			name:         "large amount",
 			amount:       u256.MustFromDecimal("1000000000000000000"),
 			fee:          u256.NewUint(100),
-			expectedFee:  u256.MustFromDecimal("10000000000000000"),
-			expectedRest: u256.MustFromDecimal("990000000000000000"),
+			expectedFee:  u256.MustFromDecimal("100000000000000000"),
+			expectedRest: u256.MustFromDecimal("900000000000000000"),
 		},
 	}
 
@@ -531,7 +542,6 @@ func TestProtocolFeesDisabledWhenNotConfigured(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		positionAddr,
 		-887160,
 		887160,
 		"100000000",

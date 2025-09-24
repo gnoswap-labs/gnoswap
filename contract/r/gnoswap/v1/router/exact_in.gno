@@ -36,16 +36,16 @@ func NewExactInSwapOperation(pp ExactInParams) *ExactInSwapOperation {
 // Parameters:
 //   - inputToken, outputToken: Token contract paths
 //   - amountIn: Exact input amount to swap
-//   - routeArr: Swap route "TOKEN0:TOKEN1:FEE,TOKEN1:TOKEN2:FEE" (max 7 hops)
+//   - routeArr: Swap route (max 3 hops per path, multiple paths separated by comma)
 //   - quoteArr: Split percentages "70,30" (must sum to 100)
 //   - amountOutMin: Minimum acceptable output (slippage protection)
 //   - deadline: Unix timestamp for expiration
 //   - referrer: Optional referral address
 //
 // Route format:
-//   - Single: "WETH:USDC:3000"
-//   - Multi-hop: "WETH:GNS:3000,GNS:USDC:500"
-//   - Multi-path: Use multiple routes with quotes
+//   - Single-hop: "TOKEN0:TOKEN1:FEE"
+//   - Multi-hop: "TOKEN0:TOKEN1:FEE*POOL*TOKEN1:TOKEN2:FEE" (use *POOL* separator)
+//   - Multi-path: "route1,route2" (use comma separator between different routes)
 //
 // Returns:
 //   - amountIn: Actual input consumed
@@ -56,7 +56,7 @@ func ExactInSwapRoute(cur realm,
 	inputToken string,
 	outputToken string,
 	amountIn string,
-	RouteArr string,
+	routeArr string,
 	quoteArr string,
 	amountOutMin string,
 	deadline int64,
@@ -64,6 +64,8 @@ func ExactInSwapRoute(cur realm,
 ) (string, string) {
 	halt.AssertIsNotHaltedRouter()
 
+	assertIsValidUserCoinSend(inputToken, amountIn)
+	assertIsValidRoutePaths(routeArr, inputToken, outputToken)
 	assertIsNotPassedDeadline(deadline)
 
 	emission.MintAndDistributeGns(cross)
@@ -71,7 +73,7 @@ func ExactInSwapRoute(cur realm,
 	params := SwapRouteParams{
 		inputToken:  inputToken,
 		outputToken: outputToken,
-		routeArr:    RouteArr,
+		routeArr:    routeArr,
 		quoteArr:    quoteArr,
 		deadline:    deadline,
 		typ:         ExactIn,
@@ -112,7 +114,7 @@ func ExactInSwapRoute(cur realm,
 		"input", inputToken,
 		"output", outputToken,
 		"exactAmount", amountIn,
-		"route", RouteArr,
+		"route", routeArr,
 		"quote", quoteArr,
 		"resultInputAmount", inputAmountStr,
 		"resultOutputAmount", outputAmountStr,

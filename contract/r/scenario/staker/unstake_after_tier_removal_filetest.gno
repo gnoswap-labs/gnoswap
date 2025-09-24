@@ -174,11 +174,9 @@ func attemptUnstake(positionId uint64) {
 	println("Attempting to unstake position from de-tiered pool...")
 
 	// This should now succeed after the fix
-	poolPath, token0Amount, token1Amount := sr.UnStakeToken(cross, positionId, false)
+	poolPath := sr.UnStakeToken(cross, positionId, false)
 
 	println("[INFO] poolPath: ", poolPath)
-	println("[INFO] token0Amount: ", token0Amount)
-	println("[INFO] token1Amount: ", token1Amount)
 
 	println()
 	println("=== BUG FIXED ===")
@@ -245,8 +243,6 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [STEP 6] Attempt to unstake position after tier removal
 // Attempting to unstake position from de-tiered pool...
 // [INFO] poolPath:  gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000
-// [INFO] token0Amount:  1000
-// [INFO] token1Amount:  1000
 //
 // === BUG FIXED ===
 // Users CAN NOW unstake positions from pools that have been removed from the tier system.

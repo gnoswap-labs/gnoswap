@@ -1,12 +1,5 @@
 package staker
 
-import (
-	u256 "gno.land/p/gnoswap/uint256"
-)
-
-// Q96
-var _q96 = u256.MustFromDecimal("79228162514264337593543950336")
-
 func isAbleToCalculateEmissionReward(prev int64, current int64) bool {
 	if prev >= current {
 		return false
@@ -100,16 +93,17 @@ func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 	lastCollectTime := deposit.lastCollectTime
 
 	// Initializes reward/penalty arrays for rewards and penalties for each warmup
-	internalRewards := make([]int64, len(deposit.warmups))
-	internalPenalties := make([]int64, len(deposit.warmups))
-	externalRewards := make([]map[string]int64, len(deposit.warmups))
-	externalPenalties := make([]map[string]int64, len(deposit.warmups))
+	warmups := len(deposit.warmups)
+	internalRewards := make([]int64, warmups)
+	internalPenalties := make([]int64, warmups)
+	externalRewards := make([]map[string]int64, warmups)
+	externalPenalties := make([]map[string]int64, warmups)
 
-	if param.PoolTier.CurrentTier(poolPath) != 0 {
-		// Internal incentivized pool.
-		// Calculate reward for each warmup
-		internalRewards, internalPenalties = pool.RewardStateOf(deposit).calculateInternalReward(lastCollectTime, param.CurrentTime)
-	}
+	// Calculate internal rewards regardless of current tier status
+	// The reward cache system will automatically handle periods with 0 rewards
+	// This allows collecting rewards earned while the pool was in a tier,
+	// while preventing new rewards after tier removal
+	internalRewards, internalPenalties = pool.RewardStateOf(deposit).calculateInternalReward(lastCollectTime, param.CurrentTime)
 
 	// All active incentives
 	allIncentives := pool.incentives.GetAllInTimestamps(lastCollectTime, param.CurrentTime)

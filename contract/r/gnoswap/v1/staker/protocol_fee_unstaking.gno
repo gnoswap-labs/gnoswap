@@ -21,13 +21,11 @@ var unstakingFee = int64(100) // 1%
 // GetUnstakingFee returns the current unstaking fee rate in basis points.
 func GetUnstakingFee() int64 { return unstakingFee }
 
-// handleUnStakingFee calculates and applies the unstaking fee.
-func handleUnStakingFee(
+// handleStakingRewardFee calculates and applies the unstaking fee.
+func handleStakingRewardFee(
 	tokenPath string,
 	amount int64,
 	internal bool,
-	positionId uint64,
-	poolPath string,
 ) (int64, int64, error) {
 	if unstakingFee == 0 {
 		return amount, 0, nil
