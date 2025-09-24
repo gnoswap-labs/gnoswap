@@ -26,20 +26,35 @@ func swapInner(
 	sqrtPriceLimitX96 *u256.Uint,
 	data SwapCallbackData,
 ) (poolRecv, poolOut *u256.Uint) {
+	token0Path, token1Path := data.tokenIn, data.tokenOut
 	zeroForOne := data.tokenIn < data.tokenOut
+
+	if !zeroForOne {
+		token0Path, token1Path = token1Path, token0Path
+	}
 
 	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
 
 	amount0Str, amount1Str := pl.Swap(
 		cross,
-		data.tokenIn,
-		data.tokenOut,
+		token0Path,
+		token1Path,
 		data.fee,
 		recipient,
 		zeroForOne,
 		amountSpecified.ToString(),
 		sqrtPriceLimitX96.ToString(),
 		data.payer,
+		func(amount0Delta, amount1Delta string) error {
+			return swapCallback(
+				cross,
+				token0Path,
+				token1Path,
+				amount0Delta,
+				amount1Delta,
+				data.payer,
+			)
+		},
 	)
 
 	amount0 := i256.MustFromDecimal(amount0Str)

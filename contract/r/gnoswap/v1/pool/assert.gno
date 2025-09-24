@@ -6,6 +6,15 @@ import (
 	"gno.land/p/nt/ufmt"
 )
 
+func assertIsNotAllowedEOA(previousRealm std.Realm) {
+	if previousRealm.PkgPath() == "" {
+		panic(newErrorWithDetail(
+			errNotAccessEOA,
+			ufmt.Sprintf("previousRealm(%s) is EOA", previousRealm.Address()),
+		))
+	}
+}
+
 // assertIsNotEqualsTokens asserts that the token0Path and token1Path are not equal.
 func assertIsNotEqualsTokens(token0Path, token1Path string) {
 	if token0Path == token1Path {
@@ -60,6 +69,15 @@ func assertPayerIsPreviousRealmOrOriginCaller(payer std.Address) {
 		panic(newErrorWithDetail(
 			errInvalidPayer,
 			ufmt.Sprintf("expected payer(%s) to be the previous realm or the caller", payer),
+		))
+	}
+}
+
+func assertIsValidTokenOrder(token0Path, token1Path string) {
+	if token0Path >= token1Path {
+		panic(newErrorWithDetail(
+			errInvalidInput,
+			ufmt.Sprintf("expected token0Path(%s) < token1Path(%s)", token0Path, token1Path),
 		))
 	}
 }
