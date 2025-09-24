@@ -194,17 +194,21 @@ func exactInSwapRouteBy(
 	beforeWUGNOTBalance := wugnot.BalanceOf(adminAddr)
 	beforeGNSBalance := gns.BalanceOf(adminAddr)
 	beforeBARBalance := bar.BalanceOf(adminAddr)
+	specifiedAmountInt64, _ := strconv.ParseInt(specifiedAmount, 10, 64)
 
 	if common.IsGNOTNativePath(inputToken) {
-		specifiedAmountInt64, _ := strconv.ParseInt(specifiedAmount, 10, 64)
 
 		sendCoins := std.Coins{{Denom: common.GNOT_DENOM, Amount: specifiedAmountInt64}}
 		banker := std.NewBanker(std.BankerTypeRealmSend)
 		banker.SendCoins(adminAddr, routerAddr, sendCoins)
 
 		testing.SetOriginSend(sendCoins)
+
+		common.SafeGRC20Approve(cross, common.WUGNOT_PATH, routerAddr, specifiedAmountInt64)
 	} else {
 		testing.SetOriginSend(std.Coins{})
+
+		common.SafeGRC20Approve(cross, inputToken, routerAddr, specifiedAmountInt64)
 	}
 	inputTokenAmount, outputTokenAmount := router.ExactInSwapRoute(
 		cross,
