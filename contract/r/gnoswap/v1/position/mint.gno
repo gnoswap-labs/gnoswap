@@ -222,17 +222,31 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	calculatedToken1Balance := u256.MustFromDecimal(calculatedToken1BalanceStr)
 
 	{
-		diff := u256.Zero().Sub(feeGrowthInside0LastX128, position.feeGrowthInside0LastX128)
+		diff, underflow := u256.Zero().SubOverflow(feeGrowthInside0LastX128, position.feeGrowthInside0LastX128)
+		if underflow {
+			return 0, nil, nil, nil, "", makeErrorWithDetails(errUnderflow, "feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128 underflow")
+		}
 		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.liquidity), u256.MustFromDecimal(Q128))
 
-		position.tokensOwed0 = u256.Zero().Add(position.tokensOwed0, mulDiv)
+		tokensOwed0, overflow := u256.Zero().AddOverflow(position.tokensOwed0, mulDiv)
+		if overflow {
+			return 0, nil, nil, nil, "", makeErrorWithDetails(errOverflow, "position.tokensOwed0 + mulDiv overflow")
+		}
+		position.tokensOwed0 = tokensOwed0
 	}
 
 	{
-		diff := u256.Zero().Sub(feeGrowthInside1LastX128, position.feeGrowthInside1LastX128)
+		diff, underflow := u256.Zero().SubOverflow(feeGrowthInside1LastX128, position.feeGrowthInside1LastX128)
+		if underflow {
+			return 0, nil, nil, nil, "", makeErrorWithDetails(errUnderflow, "feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128 underflow")
+		}
 		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.liquidity), u256.MustFromDecimal(Q128))
 
-		position.tokensOwed1 = u256.Zero().Add(position.tokensOwed1, mulDiv)
+		tokensOwed1, overflow := u256.Zero().AddOverflow(position.tokensOwed1, mulDiv)
+		if overflow {
+			return 0, nil, nil, nil, "", makeErrorWithDetails(errOverflow, "position.tokensOwed1 + mulDiv overflow")
+		}
+		position.tokensOwed1 = tokensOwed1
 	}
 
 	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128

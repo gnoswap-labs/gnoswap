@@ -204,7 +204,10 @@ func calculateTokensOwed(
 	positionFeeGrowthInsideLastX128 *u256.Uint,
 	positionLiquidity *u256.Uint,
 ) *u256.Uint {
-	diff := u256.Zero().Sub(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128)
+	diff, underflow := u256.Zero().SubOverflow(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128)
+	if underflow {
+		panic(newErrorWithDetail(errUnderflow, "feeGrowthInsideLastX128 - positionFeeGrowthInsideLastX128 underflow"))
+	}
 	// TODO: make Q128 a global variable
 	return u256.MulDiv(diff, positionLiquidity, u256.MustFromDecimal(Q128))
 }

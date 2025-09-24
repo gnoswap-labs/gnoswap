@@ -570,14 +570,27 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) (Swa
 	var (
 		amountSpecifiedRemaining *i256.Int
 		amountCalculated         *i256.Int
+		overflow                 bool
 	)
 
 	if exactInput {
-		amountSpecifiedRemaining = i256.Zero().Sub(state.amountSpecifiedRemaining, amountInWithFee)
-		amountCalculated = i256.Zero().Sub(state.amountCalculated, i256.FromUint256(step.amountOut))
+		amountSpecifiedRemaining, overflow = i256.Zero().SubOverflow(state.amountSpecifiedRemaining, amountInWithFee)
+		if overflow {
+			return state, errUnderflow
+		}
+		amountCalculated, overflow = i256.Zero().SubOverflow(state.amountCalculated, i256.FromUint256(step.amountOut))
+		if overflow {
+			return state, errUnderflow
+		}
 	} else {
-		amountSpecifiedRemaining = i256.Zero().Add(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
-		amountCalculated = i256.Zero().Add(state.amountCalculated, amountInWithFee)
+		amountSpecifiedRemaining, overflow = i256.Zero().AddOverflow(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
+		if overflow {
+			return state, errOverFlow
+		}
+		amountCalculated, overflow = i256.Zero().AddOverflow(state.amountCalculated, amountInWithFee)
+		if overflow {
+			return state, errOverFlow
+		}
 	}
 
 	// If an overflowed value is stored in state, it may cause problems in the next step
