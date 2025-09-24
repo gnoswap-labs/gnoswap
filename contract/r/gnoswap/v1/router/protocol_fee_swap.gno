@@ -16,6 +16,7 @@ import (
 
 const (
 	defaultSwapFeeBPS = uint64(15) // 0.15%
+	maxSwapFeeBPS     = uint64(1000) // 10%
 )
 
 // swapFee is the fee charged on each swap transaction.
@@ -35,6 +36,13 @@ func SetSwapFee(cur realm, fee uint64) {
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
+
+	if fee > maxSwapFeeBPS {
+		panic(ufmt.Errorf(
+			"%s: fee must be in range 0 to %d. got %d",
+			errInvalidSwapFee.Error(), maxSwapFeeBPS, fee,
+		))
+	}
 
 	prevSwapFee := swapFee
 	if err := setSwapFee(fee); err != nil {
