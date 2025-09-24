@@ -172,7 +172,7 @@ func (self *PoolTier) CurrentTier(poolPath string) (tier uint64) {
 		if !ok {
 			panic("failed to cast tier to uint64")
 		}
-		return
+		return tier
 	}
 }
 
@@ -202,7 +202,12 @@ func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *
 		if !ok {
 			panic("changeTier: pool not found")
 		}
-		pool.cacheReward(currentTime, int64(0))
+		// Update global reward ratio accumulation before stopping rewards
+		// This ensures all rewards up to this point are properly accounted for
+		pool.updateGlobalRewardRatioAccumulation(currentTime, pool.CurrentStakedLiquidity(currentTime))
+		// Now set future rewards to 0 by caching 0 explicitly
+		// This is critical to prevent new rewards from accumulating after tier removal
+		pool.rewardCache.set(currentTime, int64(0))
 	} else {
 		// handle all move/add operations
 		self.membership.Set(poolPath, nextTier)
@@ -286,6 +291,10 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentTimestamp, emiss
 		if !ok {
 			panic("failed to cast value to uint64")
 		}
+		// Skip pools with tier 0 (removed from tier system)
+		if tierNum == 0 {
+			return false
+    }
 		pool, ok := pools.Get(key)
 		if !ok {
 			return false
