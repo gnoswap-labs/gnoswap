@@ -3,16 +3,18 @@ package access
 import (
 	"std"
 
-	"gno.land/p/nt/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/ufmt"
 )
 
 // AssertIsAdminOrGovernance panics if the caller is not admin or governance.
 // Used for functions that require elevated privileges.
 func AssertIsAdminOrGovernance(caller std.Address) {
-	if !IsAuthorized(prbac.ROLE_ADMIN.String(), caller) && !IsAuthorized(prbac.ROLE_GOVERNANCE.String(), caller) {
-		panic(ufmt.Errorf("unauthorized: caller %s is not admin or governance", caller))
+	if IsAuthorized(prbac.ROLE_ADMIN.String(), caller) || IsAuthorized(prbac.ROLE_GOVERNANCE.String(), caller) {
+		return
 	}
+
+	panic(ufmt.Errorf("unauthorized: caller %s is not admin or governance", caller))
 }
 
 // AssertIsAdmin panics if the caller is not admin.
@@ -81,15 +83,88 @@ func AssertIsGovXGNS(caller std.Address) {
 	AssertIsAuthorized(prbac.ROLE_XGNS.String(), caller)
 }
 
+// AssertIsAdminOrGovernance panics if the caller is not admin or governance.
+// Used for functions that require elevated privileges.
+func AssertIsAdminOrGovernanceWithVersion(version int, caller std.Address) {
+	if !IsAuthorized(prbac.ROLE_ADMIN.String(), caller) && !IsAuthorizedWithVersion(prbac.ROLE_GOVERNANCE.String(), version, caller) {
+		panic(ufmt.Errorf("unauthorized: caller %s is not admin or governance", caller))
+	}
+}
+
+// AssertIsGovernanceWithVersion panics if the caller is not governance.
+// Used for governance-only functions.
+func AssertIsGovernanceWithVersion(version int, caller std.Address) {
+	AssertIsAuthorizedWithVersion(prbac.ROLE_GOVERNANCE.String(), version, caller)
+}
+
+// AssertIsGovStakerWithVersion panics if the caller is not governance staker.
+// Used for governance staking functions.
+func AssertIsGovStakerWithVersion(version int, caller std.Address) {
+	AssertIsAuthorizedWithVersion(prbac.ROLE_GOV_STAKER.String(), version, caller)
+}
+
+// AssertIsRouterWithVersion panics if the caller is not router.
+// Used for router-only functions.
+func AssertIsRouterWithVersion(version int, caller std.Address) {
+	AssertIsAuthorizedWithVersion(prbac.ROLE_ROUTER.String(), version, caller)
+}
+
+// AssertIsPoolWithVersion panics if the caller is not pool.
+// Used for pool-only functions.
+func AssertIsPoolWithVersion(version int, caller std.Address) {
+	AssertIsAuthorizedWithVersion(prbac.ROLE_POOL.String(), version, caller)
+}
+
+// AssertIsPositionWithVersion panics if the caller is not position.
+// Used for position-only functions.
+func AssertIsPositionWithVersion(version int, caller std.Address) {
+	AssertIsAuthorizedWithVersion(prbac.ROLE_POSITION.String(), version, caller)
+}
+
+// AssertIsStakerWithVersion panics if the caller is not staker.
+// Used for staker-only functions.
+func AssertIsStakerWithVersion(version int, caller std.Address) {
+	AssertIsAuthorizedWithVersion(prbac.ROLE_STAKER.String(), version, caller)
+}
+
+// AssertIsLaunchpadWithVersion panics if the caller is not launchpad.
+// Used for launchpad-only functions.
+func AssertIsLaunchpadWithVersion(version int, caller std.Address) {
+	AssertIsAuthorizedWithVersion(prbac.ROLE_LAUNCHPAD.String(), version, caller)
+}
+
+// AssertIsProtocolFeeWithVersion panics if the caller is not protocol fee.
+// Used for protocol fee management functions.
+func AssertIsProtocolFeeWithVersion(version int, caller std.Address) {
+	AssertIsAuthorizedWithVersion(prbac.ROLE_PROTOCOL_FEE.String(), version, caller)
+}
+
+// AssertIsGovXGNSWithVersion panics if the caller is not xGNS governance.
+// Used for xGNS governance functions.
+func AssertIsGovXGNSWithVersion(version int, caller std.Address) {
+	AssertIsAuthorizedWithVersion(prbac.ROLE_XGNS.String(), version, caller)
+}
+
 // AssertIsAuthorized panics if the caller does not have the specified role.
 // Also panics if the role does not exist.
 func AssertIsAuthorized(roleName string, caller std.Address) {
-	roleAddr, ok := GetAddress(roleName)
-	if !ok {
-		panic(ufmt.Errorf("role %s does not exist", roleName))
-	}
+	if !IsAuthorized(roleName, caller) {
+		if _, ok := GetAddress(roleName); !ok {
+			panic(ufmt.Errorf("role %s does not exist", roleName))
+		}
 
-	if caller != roleAddr {
+		panic(ufmt.Errorf("unauthorized: caller %s is not %s", caller, roleName))
+	}
+}
+
+// AssertIsAuthorizedWithVersion panics if the caller does not have the specified role.
+// Also panics if the role does not exist.
+func AssertIsAuthorizedWithVersion(roleName string, version int, caller std.Address) {
+	if !IsAuthorizedWithVersion(roleName, version, caller) {
+		if _, ok := GetAddressWithVersion(roleName, version); !ok {
+			panic(ufmt.Errorf("role %s does not exist", roleName))
+		}
+
 		panic(ufmt.Errorf("unauthorized: caller %s is not %s", caller, roleName))
 	}
 }
@@ -98,12 +173,27 @@ func AssertIsAuthorized(roleName string, caller std.Address) {
 // Also panics if any of the roles do not exist.
 func AssertHasAnyRole(caller std.Address, roleNames ...string) {
 	for _, roleName := range roleNames {
-		roleAddr, ok := GetAddress(roleName)
-		if !ok {
+		if _, ok := GetAddress(roleName); !ok {
 			panic(ufmt.Errorf("role %s does not exist", roleName))
 		}
 
-		if caller == roleAddr {
+		if IsAuthorized(roleName, caller) {
+			return
+		}
+	}
+
+	panic(ufmt.Errorf("unauthorized: caller %s is not any of the roles %v", caller, roleNames))
+}
+
+// AssertHasAnyRoleWithVersion panics if the caller does not have any of the specified roles.
+// Also panics if any of the roles do not exist.
+func AssertHasAnyRoleWithVersion(version int, caller std.Address, roleNames ...string) {
+	for _, roleName := range roleNames {
+		if _, ok := GetAddressWithVersion(roleName, version); !ok {
+			panic(ufmt.Errorf("role %s does not exist", roleName))
+		}
+
+		if IsAuthorizedWithVersion(roleName, version, caller) {
 			return
 		}
 	}

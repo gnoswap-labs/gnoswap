@@ -25,7 +25,7 @@ var (
 
 	// onDistributionPctChangeCallback is called when distribution percentages change
 	// This allows external contracts (like staker) to update their caches
-	onDistributionPctChangeCallback func()
+	onDistributionPctChangeCallback func(emissionAmountPerSecond int64)
 )
 
 // GetLeftGNSAmount returns the amount of undistributed GNS tokens from previous distributions.
@@ -223,8 +223,13 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 // This allows external contracts (like staker) to update their internal caches when governance changes emission rates.
 //
 // Only callable by the staker contract.
-func SetOnDistributionPctChangeCallback(cur realm, callback func()) {
+func SetOnDistributionPctChangeCallback(cur realm, callback func(int64)) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
+
+	if onDistributionPctChangeCallback != nil {
+		onDistributionPctChangeCallback(0)
+	}
+
 	onDistributionPctChangeCallback = callback
 }

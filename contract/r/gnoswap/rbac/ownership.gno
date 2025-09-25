@@ -25,7 +25,10 @@ func GetPendingOwner() std.Address {
 // AcceptOwnership completes the ownership transfer process.
 // Only callable by pending owner.
 func AcceptOwnership(cur realm) {
-	err := manager.AcceptOwnership()
+	caller := std.PreviousRealm().Address()
+	assertIsPendingOwner(caller)
+
+	err := manager.AcceptOwnershipBy(caller)
 	if err != nil {
 		panic(err)
 	}
@@ -38,7 +41,11 @@ func AcceptOwnership(cur realm) {
 //
 // Only callable by current owner.
 func TransferOwnership(cur realm, addr std.Address) {
-	err := manager.TransferOwnership(addr)
+	caller := std.PreviousRealm().Address()
+	assertIsOwner(caller)
+	assertIsValidAddress(addr)
+
+	err := manager.TransferOwnershipBy(addr, caller)
 	if err != nil {
 		panic(err)
 	}

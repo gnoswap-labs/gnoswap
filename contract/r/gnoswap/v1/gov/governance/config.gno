@@ -42,10 +42,10 @@ func Reconfigure(
 	executionWindow int64,
 ) int64 {
 	// Check if system is halted before proceeding
-	halt.AssertIsNotHaltedGovernance()
+	halt.AssertIsNotHaltedGovernanceWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	// Mint and distribute GNS tokens as part of the process
 	en.MintAndDistributeGns(cross)

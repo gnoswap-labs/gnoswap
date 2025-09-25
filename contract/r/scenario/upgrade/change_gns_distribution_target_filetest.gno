@@ -107,10 +107,10 @@ func mintAndDistribute() {
 func changeDistributionTarget() {
 	testing.SetOriginCaller(adminAddr)
 
-	rbac.UpdateRoleAddress(cross, prbac.ROLE_STAKER.String(), newStakerAddr)
-	rbac.UpdateRoleAddress(cross, prbac.ROLE_GOV_STAKER.String(), newGovStakerAddr)
-	rbac.UpdateRoleAddress(cross, prbac.ROLE_DEVOPS.String(), newDevOpsAddr)
-	rbac.UpdateRoleAddress(cross, prbac.ROLE_COMMUNITY_POOL.String(), newCommunityPoolAddr)
+	rbac.UpdateRoleAddressNextVersion(cross, prbac.ROLE_STAKER.String(), newStakerAddr)
+	rbac.UpdateRoleAddressNextVersion(cross, prbac.ROLE_GOV_STAKER.String(), newGovStakerAddr)
+	rbac.UpdateRoleAddressNextVersion(cross, prbac.ROLE_DEVOPS.String(), newDevOpsAddr)
+	rbac.UpdateRoleAddressNextVersion(cross, prbac.ROLE_COMMUNITY_POOL.String(), newCommunityPoolAddr)
 
 	ufmt.Printf("[EXPECTED] staker address should be changed %s to %s\n", stakerAddr, newStakerAddr)
 	ufmt.Printf("[EXPECTED] gov staker address should be changed %s to %s\n", govStakerAddr, newGovStakerAddr)

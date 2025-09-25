@@ -8,6 +8,7 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	en "gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/rbac"
 	cp "gno.land/r/gnoswap/v1/community_pool"
 
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -22,6 +23,7 @@ import (
 const (
 	GNS_PATH            = "gno.land/r/gnoswap/gns"
 	HALT_PATH           = "gno.land/r/gnoswap/halt"
+	RBAC_PATH           = "gno.land/r/gnoswap/rbac"
 	ACCESS_PATH         = "gno.land/r/gnoswap/access"
 	EMISSION_PATH       = "gno.land/r/gnoswap/emission"
 	COMMON_PATH         = "gno.land/r/gnoswap/v1/common"
@@ -497,13 +499,86 @@ func createParameterHandlers() *ParameterRegistry {
 		{
 			pkgPath:    HALT_PATH,
 			function:   "SetOperationStatus",
+			paramCount: 3,
+			handlerFunc: func(params []string) error {
+				// Enable or disable specific operation types
+				opType := halt.OpType(params[0])
+				version := parseInt(params[1])
+				allowed := parseBool(params[2])
+
+				halt.SetOperationStatus(cross, opType, version, allowed)
+
+				return nil
+			},
+		},
+		{
+			pkgPath:    HALT_PATH,
+			function:   "SetOperationStatusNextVersion",
 			paramCount: 2,
 			handlerFunc: func(params []string) error {
 				// Enable or disable specific operation types
 				opType := halt.OpType(params[0])
 				allowed := parseBool(params[1])
 
-				halt.SetOperationStatus(cross, opType, allowed)
+				halt.SetOperationStatusNextVersion(cross, opType, allowed)
+
+				return nil
+			},
+		},
+
+		// RBAC configuration
+		{
+			pkgPath:    RBAC_PATH,
+			function:   "RegisterRole",
+			paramCount: 2,
+			handlerFunc: func(params []string) error {
+				roleName := params[0]
+				roleAddress := std.Address(params[1])
+
+				// Register a new role
+				rbac.RegisterRole(cross, roleName, roleAddress)
+
+				return nil
+			},
+		},
+		{
+			pkgPath:    RBAC_PATH,
+			function:   "UpdateRoleAddress",
+			paramCount: 3,
+			handlerFunc: func(params []string) error {
+				roleName := params[0]
+				version := parseInt(params[1])
+				roleAddress := std.Address(params[2])
+
+				// Update role address
+				rbac.UpdateRoleAddress(cross, roleName, version, roleAddress)
+
+				return nil
+			},
+		},
+		{
+			pkgPath:    RBAC_PATH,
+			function:   "UpdateRoleAddressNextVersion",
+			paramCount: 2,
+			handlerFunc: func(params []string) error {
+				roleName := params[0]
+				roleAddress := std.Address(params[1])
+
+				// Update role address next version
+				rbac.UpdateRoleAddressNextVersion(cross, roleName, roleAddress)
+
+				return nil
+			},
+		},
+		{
+			pkgPath:    RBAC_PATH,
+			function:   "RemoveRole",
+			paramCount: 1,
+			handlerFunc: func(params []string) error {
+				roleName := params[0]
+
+				// Remove role
+				rbac.RemoveRole(cross, roleName)
 
 				return nil
 			},

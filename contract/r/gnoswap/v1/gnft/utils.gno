@@ -6,15 +6,15 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
 	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/rbac"
 )
 
 func getPositionAddress() std.Address {
-	addr, exists := access.GetAddress(prabc.ROLE_POSITION.String())
+	addr, exists := access.GetAddressWithVersion(prabc.ROLE_POSITION.String(), 1)
 	if !exists {
 		return rbac.DefaultRoleAddresses[prabc.ROLE_POSITION]
 	}

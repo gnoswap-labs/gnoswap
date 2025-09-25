@@ -29,7 +29,7 @@ func TestInitiateTransferOwnership(t *testing.T) {
 
 	o := newOwnable2StepWithAddress(alice)
 
-	err := o.TransferOwnership(bob)
+	err := o.TransferOwnershipBy(bob, alice)
 	urequire.NoError(t, err)
 
 	owner := o.Owner()
@@ -44,7 +44,7 @@ func TestTransferOwnership(t *testing.T) {
 
 	o := newOwnable2StepWithAddress(alice)
 
-	err := o.TransferOwnership(bob)
+	err := o.TransferOwnershipBy(bob, alice)
 	urequire.NoError(t, err)
 
 	owner := o.Owner()
@@ -55,7 +55,7 @@ func TestTransferOwnership(t *testing.T) {
 
 	testing.SetOriginCaller(bob)
 
-	err = o.AcceptOwnership()
+	err = o.AcceptOwnershipBy(bob)
 	urequire.NoError(t, err)
 
 	owner = o.Owner()
@@ -71,7 +71,7 @@ func TestOwnedByOriginCaller(t *testing.T) {
 	o := newOwnable2StepWithAddress(alice)
 	unauthorizedCaller := bob
 	testing.SetOriginCaller(unauthorizedCaller)
-	uassert.False(t, o.OwnedByOriginCaller())
+	uassert.False(t, o.IsOwner(unauthorizedCaller))
 }
 
 func TestOwnedByOriginCallerUnauthorized(t *testing.T) {
@@ -84,11 +84,11 @@ func TestOwnedByOriginCallerUnauthorized(t *testing.T) {
 		o = newOwnable2StepWithAddress(alice)
 	}()
 
-	uassert.True(t, o.OwnedByOriginCaller())
+	uassert.True(t, o.IsOwner(alice))
 
 	unauthorizedCaller := bob
 	testing.SetRealm(std.NewUserRealm(unauthorizedCaller))
-	uassert.False(t, o.OwnedByOriginCaller())
+	uassert.False(t, o.IsOwner(unauthorizedCaller))
 }
 
 func TestDropOwnership(t *testing.T) {
@@ -96,7 +96,7 @@ func TestDropOwnership(t *testing.T) {
 
 	o := New()
 
-	err := o.DropOwnership()
+	err := o.DropOwnershipBy(alice)
 	urequire.NoError(t, err, "DropOwnership failed")
 
 	owner := o.Owner()
@@ -108,11 +108,11 @@ func TestDropOwnershipVulnerability(t *testing.T) {
 	o := New()
 
 	// alice initiates ownership transfer to bob
-	err := o.TransferOwnership(bob)
+	err := o.TransferOwnershipBy(bob, alice)
 	urequire.NoError(t, err)
 
 	// alice drops ownership while ownership transfer is pending
-	err = o.DropOwnership()
+	err = o.DropOwnershipBy(alice)
 	urequire.NoError(t, err)
 
 	owner := o.Owner()
@@ -122,7 +122,7 @@ func TestDropOwnershipVulnerability(t *testing.T) {
 
 	// verify bob can no longer claim ownership
 	testing.SetOriginCaller(bob)
-	err = o.AcceptOwnership()
+	err = o.AcceptOwnershipBy(bob)
 	uassert.ErrorContains(t, err, ErrNoPendingOwner.Error())
 }
 
@@ -135,8 +135,8 @@ func TestErrUnauthorized(t *testing.T) {
 
 	testing.SetOriginCaller(bob)
 
-	uassert.ErrorContains(t, o.TransferOwnership(alice), ErrUnauthorized.Error())
-	uassert.ErrorContains(t, o.DropOwnership(), ErrUnauthorized.Error())
+	uassert.ErrorContains(t, o.TransferOwnershipBy(alice, bob), ErrUnauthorized.Error())
+	uassert.ErrorContains(t, o.DropOwnershipBy(bob), ErrUnauthorized.Error())
 }
 
 func TestErrInvalidAddress(t *testing.T) {
@@ -144,10 +144,10 @@ func TestErrInvalidAddress(t *testing.T) {
 
 	o := New()
 
-	err := o.TransferOwnership("")
+	err := o.TransferOwnershipBy("", alice)
 	uassert.ErrorContains(t, err, ErrInvalidAddress.Error())
 
-	err = o.TransferOwnership("10000000001000000000100000000010000000001000000000")
+	err = o.TransferOwnershipBy("10000000001000000000100000000010000000001000000000", alice)
 	uassert.ErrorContains(t, err, ErrInvalidAddress.Error())
 }
 
@@ -156,7 +156,7 @@ func TestErrNoPendingOwner(t *testing.T) {
 
 	o := New()
 
-	err := o.AcceptOwnership()
+	err := o.AcceptOwnershipBy(alice)
 	uassert.ErrorContains(t, err, ErrNoPendingOwner.Error())
 }
 
@@ -165,11 +165,11 @@ func TestErrPendingUnauthorized(t *testing.T) {
 
 	o := New()
 
-	err := o.TransferOwnership(bob)
+	err := o.TransferOwnershipBy(bob, alice)
 	urequire.NoError(t, err)
 
 	testing.SetOriginCaller(alice)
 
-	err = o.AcceptOwnership()
+	err = o.AcceptOwnershipBy(alice)
 	uassert.ErrorContains(t, err, ErrPendingUnauthorized.Error())
 }

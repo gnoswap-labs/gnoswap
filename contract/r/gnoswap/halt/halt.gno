@@ -7,10 +7,10 @@ import (
 	"gno.land/r/gnoswap/access"
 )
 
-var haltConfig HaltConfig
+var haltStates HaltStateManager
 
 func init() {
-	haltConfig = newNoneConfig()
+	haltStates = newHaltStateManagerByConfig(newNoneConfig())
 }
 
 // SetHaltLevel sets the global halt level.
@@ -40,10 +40,11 @@ func SetHaltLevel(cur realm, level HaltLevel) {
 //
 // Parameters:
 //   - op: operation type
+//   - version: version of the operation
 //   - halted: true to halt, false to resume
 //
 // Only callable by admin or governance.
-func SetOperationStatus(cur realm, op OpType, halted bool) {
+func SetOperationStatus(cur realm, op OpType, version int, halted bool) {
 	caller := std.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
@@ -51,13 +52,52 @@ func SetOperationStatus(cur realm, op OpType, halted bool) {
 		panic(makeErrorWithDetails(errInvalidOpType, op.String()))
 	}
 
-	haltConfig.set(op, halted)
+	err := haltStates.setOperationHaltState(op, version, halted)
+	if err != nil {
+		panic(err)
+	}
+
+	std.Emit(
+		"SetOperationStatus",
+		"operation", string(op),
+		"halted", strconv.FormatBool(halted),
+		"version", strconv.Itoa(version),
+		"caller", caller.String(),
+	)
+}
+
+// SetOperationStatusNextVersion sets halt status for a specific operation new version.
+// updated version is incremented by 1
+//
+// Parameters:
+//   - op: operation type
+//   - halted: true to halt, false to resume
+//
+// Only callable by admin or governance.
+func SetOperationStatusNextVersion(cur realm, op OpType, halted bool) {
+	caller := std.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernance(caller)
+
+	if !op.IsValid() {
+		panic(makeErrorWithDetails(errInvalidOpType, op.String()))
+	}
+
+	err := haltStates.setOperationHaltStateNextVersion(op, halted)
+	if err != nil {
+		panic(err)
+	}
+
+	version, err := haltStates.GetOperationVersion(op)
+	if err != nil {
+		panic(err)
+	}
 
 	std.Emit(
 		"SetOperationStatus",
 		"operation", string(op),
 		"halted", strconv.FormatBool(halted),
 		"caller", caller.String(),
+		"version", strconv.Itoa(version),
 	)
 }
 
@@ -78,7 +118,5 @@ func setHaltLevel(level HaltLevel) error {
 		return makeErrorWithDetails(errInvalidHaltLevel, level.String())
 	}
 
-	haltConfig = config
-
-	return nil
+	return haltStates.updateOperationHaltStatesByConfig(config)
 }

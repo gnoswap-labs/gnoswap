@@ -15,4 +15,6 @@ var (
 	ErrRoleAlreadyExists        = errors.New("role already exists")
 	ErrCannotRegisterSystemRole = errors.New("cannot register system role")
 	ErrCannotRemoveSystemRole   = errors.New("cannot remove system role")
+	ErrVersionDoesNotExist      = errors.New("version does not exist")
+	ErrCannotUpdateVersion      = errors.New("cannot update version")
 )

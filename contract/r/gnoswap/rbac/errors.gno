@@ -7,11 +7,12 @@ import (
 )
 
 var (
-	errCallerIsNotOwner        = errors.New("caller is not owner")
-	errCallerIsNotAdmin        = errors.New("caller is not admin")
-	errCallerIsNotPendingOwner = errors.New("caller is not pending owner")
-	errInvalidAddress          = errors.New("invalid address")
-	errInvalidRoleName         = errors.New("invalid role name")
+	errCallerIsNotOwner             = errors.New("caller is not owner")
+	errCallerIsNotAdmin             = errors.New("caller is not admin")
+	errCallerIsNotAdminOrGovernance = errors.New("caller is not admin or governance")
+	errCallerIsNotPendingOwner      = errors.New("caller is not pending owner")
+	errInvalidAddress               = errors.New("invalid address")
+	errInvalidRoleName              = errors.New("invalid role name")
 )
 
 // makeErrorWithDetails combines an error with additional details.

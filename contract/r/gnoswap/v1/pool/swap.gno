@@ -41,7 +41,7 @@ var (
 // Only callable by staker contract.
 func SetTickCrossHook(cur realm, hook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	caller := std.PreviousRealm().Address()
-	access.AssertIsStaker(caller)
+	access.AssertIsStakerWithVersion(1, caller)
 	tickCrossHook = hook
 }
 
@@ -53,7 +53,7 @@ func SetTickCrossHook(cur realm, hook func(poolPath string, tickId int32, zeroFo
 // Only callable by staker contract.
 func SetSwapStartHook(cur realm, hook func(poolPath string, timestamp int64)) {
 	caller := std.PreviousRealm().Address()
-	access.AssertIsStaker(caller)
+	access.AssertIsStakerWithVersion(1, caller)
 	swapStartHook = hook
 }
 
@@ -65,7 +65,7 @@ func SetSwapStartHook(cur realm, hook func(poolPath string, timestamp int64)) {
 // Only callable by staker contract.
 func SetSwapEndHook(cur realm, hook func(poolPath string) error) {
 	caller := std.PreviousRealm().Address()
-	access.AssertIsStaker(caller)
+	access.AssertIsStakerWithVersion(1, caller)
 	swapEndHook = hook
 }
 
@@ -124,7 +124,7 @@ func Swap(
 	payer std.Address,
 	swapCallback func(cur realm, amount0Delta, amount1Delta string) error,
 ) (string, string) {
-	halt.AssertIsNotHaltedPool()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
 
 	previousRealm := std.PreviousRealm()
 	assertIsNotAllowedEOA(previousRealm)
@@ -191,11 +191,17 @@ func Swap(
 		panic(err)
 	}
 
-	applySwapResult(pool, result)
+	// Update oracle BEFORE applying swap result (using pre-swap state)
+	if result.NewTick != pool.slot0.tick {
+		currentTime := time.Now().Unix()
 
-	// update TWAP state
-	currentTime := time.Now().Unix()
-	pool.updatePriceCumulatives(currentTime)
+		err := pool.writeObservation(currentTime, pool.slot0.tick, pool.liquidity)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	applySwapResult(pool, result)
 
 	// transfer swap result to recipient then receive input tokens from swap callback
 	if zeroForOne {
@@ -239,9 +245,10 @@ func Swap(
 		"balanceToken0", pool.BalanceToken0().ToString(),
 		"balanceToken1", pool.BalanceToken1().ToString(),
 		"ticks", pool.Ticks(),
-		"tickCumulative", formatInt(pool.Observation().TickCumulative()),
-		"liquidityCumulative", pool.Observation().LiquidityCumulative(),
-		"lastCumulativeUpdateTime", formatInt(pool.Observation().LastCumulativeUpdateTime()),
+		"tickCumulative", formatInt(pool.ObservationTickCumulative()),
+		"liquidityCumulative", pool.ObservationLiquidityCumulative(),
+		"secondsPerLiquidityCumulativeX128", pool.ObservationSecondsPerLiquidityCumulativeX128(),
+		"observationTimestamp", formatInt(pool.ObservationBlockTimestamp()),
 	)
 
 	return result.Amount0.ToString(), result.Amount1.ToString()

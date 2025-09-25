@@ -62,6 +62,21 @@ func (h HaltLevel) IsValid() bool {
 // OpType represents operation types that can be controlled independently.
 type OpType string
 
+var opTypes = map[OpType]bool{
+	OpTypePool:          true,
+	OpTypePosition:      true,
+	OpTypeProtocolFee:   true,
+	OpTypeRouter:        true,
+	OpTypeStaker:        true,
+	OpTypeLaunchpad:     true,
+	OpTypeGovernance:    true,
+	OpTypeGovStaker:     true,
+	OpTypeXGns:          true,
+	OpTypeCommunityPool: true,
+	OpTypeEmission:      true,
+	OpTypeWithdraw:      true,
+}
+
 // String returns the string representation of the operation type.
 func (o OpType) String() string {
 	return string(o)
@@ -69,21 +84,17 @@ func (o OpType) String() string {
 
 // IsValid returns true if the operation type is valid.
 func (o OpType) IsValid() bool {
-	switch o {
-	case OpTypePool,
-		OpTypePosition,
-		OpTypeProtocolFee,
-		OpTypeRouter,
-		OpTypeStaker,
-		OpTypeLaunchpad,
-		OpTypeGovernance,
-		OpTypeGovStaker,
-		OpTypeXGns,
-		OpTypeCommunityPool,
-		OpTypeEmission,
-		OpTypeWithdraw:
-		return true
-	default:
-		return false
+	_, ok := opTypes[o]
+
+	return ok
+}
+
+func OpTypes() []OpType {
+	allOpTypes := make([]OpType, 0, len(opTypes))
+
+	for op, _ := range opTypes {
+		allOpTypes = append(allOpTypes, op)
 	}
+
+	return allOpTypes
 }
