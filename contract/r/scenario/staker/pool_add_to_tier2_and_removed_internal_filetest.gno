@@ -211,13 +211,7 @@ func collectRewardAfterTierRemoval() {
 	afterGns := gns.BalanceOf(adminUser)
 	rewardAfterRemoval := afterGns - beforeGns
 
-	ufmt.Printf("[EXPECTED] reward after tier removal: %d (should be 0)\n", rewardAfterRemoval)
-
-	if rewardAfterRemoval != 0 {
-		panic("should not receive reward after tier removal")
-	}
-
-	println("[INFO] confirmed: no rewards after tier removal")
+	ufmt.Printf("[EXPECTED] reward after tier removal: %d\n", rewardAfterRemoval)
 }
 
 func verifyPoolRemovalEffects() {
@@ -318,8 +312,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 7. Collect reward after tier removal
 // [INFO] skip blocks to test rewards after tier removal
 // [INFO] collect reward after tier removal
-// [EXPECTED] reward after tier removal: 0 (should be 0)
-// [INFO] confirmed: no rewards after tier removal
+// [EXPECTED] reward after tier removal: 0
 //
 // [SCENARIO] 8. Verify pool removal effects
 // [INFO] verify pool removal effects

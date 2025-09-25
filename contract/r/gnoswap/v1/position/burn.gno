@@ -208,6 +208,5 @@ func calculateTokensOwed(
 	positionLiquidity *u256.Uint,
 ) *u256.Uint {
 	diff := u256.Zero().Sub(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128)
-	// TODO: make Q128 a global variable
-	return u256.MulDiv(diff, positionLiquidity, u256.MustFromDecimal(Q128))
+	return u256.MulDiv(diff, positionLiquidity, q128)
 }

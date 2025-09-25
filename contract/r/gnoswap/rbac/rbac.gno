@@ -19,6 +19,8 @@ func init() {
 func initRbac() {
 	manager = prbac.NewRBACWithAddress(ADMIN)
 
+	// Prepare initial roles for one-time initialization
+	initialRoles := make(map[string]std.Address)
 	for role, addr := range DefaultRoleAddresses {
 		err := manager.RegisterRole(role.String())
 		if err != nil {
@@ -28,9 +30,11 @@ func initRbac() {
 		if err != nil {
 			panic(err)
 		}
-	}
+		initialRoles[role.String()] = addr
 
-	updateAccessRoleAddresses(manager.GetRoleAddresses())
+		// Update access package with the role address
+		access.SetRoleAddress(cross, role.String(), addr)
+	}
 }
 
 // RegisterRole registers a new role in the RBAC system.
@@ -73,7 +77,8 @@ func RegisterRole(cur realm, roleName string, roleAddress std.Address) {
 		))
 	}
 
-	updateAccessRoleAddresses(manager.GetRoleAddresses())
+	// Set the role in access control
+	access.SetRoleAddress(cross, roleName, roleAddress)
 	emitRegisterRoleEvent(roleName, roleAddress)
 }
 
@@ -97,7 +102,8 @@ func RemoveRole(cur realm, roleName string) {
 		))
 	}
 
-	updateAccessRoleAddresses(manager.GetRoleAddresses())
+	// Remove the role from access control
+	access.RemoveRole(cross, roleName)
 	emitRemoveRoleEvent(roleName)
 }
 
@@ -125,12 +131,7 @@ func UpdateRoleAddress(cur realm, roleName string, addr std.Address) {
 		))
 	}
 
-	updateAccessRoleAddresses(manager.GetRoleAddresses())
-
+	// Set the role address in access control
+	access.SetRoleAddress(cross, roleName, addr)
 	emitUpdateRoleAddressEvent(roleName, addr)
-}
-
-// updateAccessRoleAddresses synchronizes role addresses with the access package.
-func updateAccessRoleAddresses(newRoleAddresses map[string]std.Address) {
-	access.SetRoleAddresses(cross, newRoleAddresses)
 }
