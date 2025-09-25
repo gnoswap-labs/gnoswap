@@ -58,3 +58,14 @@ func assertIsValidAddress(addr std.Address) {
 		))
 	}
 }
+
+func assertIsAdminOrGovernance(addr std.Address) {
+	if manager.IsAuthorized(prbac.ROLE_ADMIN.String(), addr) || manager.IsAuthorized(prbac.ROLE_GOVERNANCE.String(), addr) {
+		return
+	}
+
+	panic(makeErrorWithDetails(
+		errCallerIsNotAdminOrGovernance,
+		ufmt.Sprintf("caller: %s", addr.String()),
+	))
+}

@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"std"
+	"strings"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -49,7 +50,7 @@ func TestAssertIsOwner(t *testing.T) {
 					}
 					if tt.expectedMsg != "" {
 						panicStr := ufmt.Sprintf("%v", r)
-						if !contains(panicStr, tt.expectedMsg) {
+						if !strings.Contains(panicStr, tt.expectedMsg) {
 							t.Errorf("Expected panic message to contain '%s', got '%s'", tt.expectedMsg, panicStr)
 						}
 					}
@@ -177,7 +178,7 @@ func TestAssertIsAdminWithRoleUpdate(t *testing.T) {
 	initRbac()
 
 	// Change admin role to a different address
-	err := manager.UpdateRoleAddress(prbac.ROLE_ADMIN.String(), DEV_OPS)
+	err := manager.UpdateRoleAddress(prbac.ROLE_ADMIN.String(), 1, DEV_OPS)
 	if err != nil {
 		t.Fatalf("Failed to update admin role address: %v", err)
 	}
