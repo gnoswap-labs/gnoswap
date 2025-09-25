@@ -105,7 +105,7 @@ func TestAssertIsPendingOwner(t *testing.T) {
 			manager = prbac.NewRBACWithAddress(ADMIN)
 
 			// Set up pending owner
-			err := manager.TransferOwnership(DEV_OPS)
+			err := manager.TransferOwnershipBy(DEV_OPS, ADMIN)
 			if err != nil {
 				t.Fatalf("Failed to set up pending owner: %v", err)
 			}
@@ -242,7 +242,7 @@ func TestAssertFunctionsIntegration(t *testing.T) {
 		initRbac()
 
 		testing.SetRealm(std.NewUserRealm(ADMIN))
-		err := manager.TransferOwnership(DEV_OPS)
+		err := manager.TransferOwnershipBy(DEV_OPS, ADMIN)
 		if err != nil {
 			t.Fatalf("Failed to transfer ownership: %v", err)
 		}

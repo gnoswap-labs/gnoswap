@@ -165,7 +165,7 @@ func initLaunchpadDepositTest(t *testing.T) {
 			tier30Ratio:   30,
 			tier90Ratio:   30,
 			tier180Ratio:  40,
-			recipient:     testutils.TestAddress("project"), // TODO: change to real address
+			recipient:     testutils.TestAddress("project"),
 			startTime:     currentTime + 10,
 			currentTime:   currentTime,
 			currentHeight: currentHeight,
