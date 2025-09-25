@@ -173,11 +173,17 @@ func Swap(
 		panic(err)
 	}
 
-	applySwapResult(pool, result)
+	// Update oracle BEFORE applying swap result (using pre-swap state)
+	if result.NewTick != pool.slot0.tick {
+		currentTime := time.Now().Unix()
 
-	// update TWAP state
-	currentTime := time.Now().Unix()
-	pool.updatePriceCumulatives(currentTime)
+		err := pool.writeObservation(currentTime, pool.slot0.tick, pool.liquidity)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	applySwapResult(pool, result)
 
 	// actual swap
 	pool.swapTransfers(zeroForOne, payer, recipient, result.Amount0, result.Amount1)
@@ -215,9 +221,10 @@ func Swap(
 		"balanceToken0", pool.BalanceToken0().ToString(),
 		"balanceToken1", pool.BalanceToken1().ToString(),
 		"ticks", pool.Ticks(),
-		"tickCumulative", formatInt(pool.Observation().TickCumulative()),
-		"liquidityCumulative", pool.Observation().LiquidityCumulative(),
-		"lastCumulativeUpdateTime", formatInt(pool.Observation().LastCumulativeUpdateTime()),
+		"tickCumulative", formatInt(pool.ObservationTickCumulative()),
+		"liquidityCumulative", pool.ObservationLiquidityCumulative(),
+		"secondsPerLiquidityCumulativeX128", pool.ObservationSecondsPerLiquidityCumulativeX128(),
+		"observationTimestamp", formatInt(pool.ObservationBlockTimestamp()),
 	)
 
 	return result.Amount0.ToString(), result.Amount1.ToString()
