@@ -56,6 +56,17 @@ func init() {
 //   - Fee tier must be supported
 //   - Pool must not already exist
 //   - Caller must have 100 GNS for creation fee
+//
+// IMPORTANT - Price Initialization Security:
+//   The sqrtPriceX96 parameter allows arbitrary initial price setting without validation.
+//   Extreme prices can make pools temporarily unusable (griefing attack).
+//
+// Recovery from Price Griefing:
+//   If a pool is created with an incorrect price, it can be restored via atomic transaction:
+//   1. Add wide-range liquidity at the distorted price
+//   2. Execute swap to move price toward market rate
+//   3. Remove the liquidity
+//   The executor's LP losses offset arbitrage gains (minus fees).
 func CreatePool(
 	cur realm,
 	token0Path string,
