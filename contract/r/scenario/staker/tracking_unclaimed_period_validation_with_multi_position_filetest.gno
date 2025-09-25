@@ -200,8 +200,14 @@ func testUnclaimablePeriodRewardDistribution() {
 	println("[INFO] accumulate rewards for 10 blocks")
 	testing.SkipHeights(10)
 
-	println("[INFO] unstake to enter unclaimable period")
+	println("[INFO] unstake first position (pool still has liquidity from second position)")
 	sr.UnStakeToken(cross, positionId, false)
+
+	println("[INFO] wait 5 blocks with pool still having liquidity")
+	testing.SkipHeights(5)
+
+	println("[INFO] unstake second position to enter true unclaimable period")
+	sr.UnStakeToken(cross, positionId2, false)
 	actualUnclaimableStart := time.Now().Unix()
 	ufmt.Printf("[EXPECTED] unclaimable period start: %d\n", actualUnclaimableStart)
 
@@ -209,7 +215,7 @@ func testUnclaimablePeriodRewardDistribution() {
 	testing.SkipHeights(5)
 	midTime := time.Now().Unix()
 
-	println("[INFO] re-stake and collect reward mid-period")
+	println("[INFO] re-stake first position and collect reward mid-period")
 	gnft.Approve(cross, stakerAddr, grc721.TokenID(strconv.Itoa(int(positionId))))
 	sr.StakeToken(cross, positionId, "")
 
@@ -218,7 +224,7 @@ func testUnclaimablePeriodRewardDistribution() {
 	communityBalanceAfter1 := gns.BalanceOf(communityPoolAddr)
 	unclaimableRound1 := communityBalanceAfter1 - communityBalanceBefore1
 
-	println("[INFO] unstake again to continue unclaimable")
+	println("[INFO] unstake first position again to continue unclaimable")
 	sr.UnStakeToken(cross, positionId, false)
 
 	println("[INFO] wait 5 more blocks")
@@ -252,8 +258,9 @@ func testUnclaimablePeriodRewardDistribution() {
 		}
 	}
 
-	println("[INFO] unstake position for cleanup")
+	println("[INFO] unstake positions for cleanup")
 	sr.UnStakeToken(cross, positionId, false)
+	// positionId2 is already unstaked
 	testing.SkipHeights(5)
 }
 
@@ -378,11 +385,13 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] approve tokens for pool
 // [INFO] mint and stake position
 // [INFO] accumulate rewards for 10 blocks
-// [INFO] unstake to enter unclaimable period
-// [EXPECTED] unclaimable period start: 1234568015
+// [INFO] unstake first position (pool still has liquidity from second position)
+// [INFO] wait 5 blocks with pool still having liquidity
+// [INFO] unstake second position to enter true unclaimable period
+// [EXPECTED] unclaimable period start: 1234568040
 // [INFO] wait 5 blocks during unclaimable
-// [INFO] re-stake and collect reward mid-period
-// [INFO] unstake again to continue unclaimable
+// [INFO] re-stake first position and collect reward mid-period
+// [INFO] unstake first position again to continue unclaimable
 // [INFO] wait 5 more blocks
 // [INFO] re-stake and collect again
 // [EXPECTED] total unclaimable period: 50 seconds
@@ -390,7 +399,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] second collection period: 25 seconds, amount: 44591875
 // [EXPECTED] reward distribution ratio: 50% : 50%
 // [EXPECTED] rewards distributed proportionally - BUG FIXED
-// [INFO] unstake position for cleanup
+// [INFO] unstake positions for cleanup
 //
 // [SCENARIO] 4. Claimable period collection behavior (bar:foo:500)
 // [INFO] create pool bar:foo:500
@@ -399,7 +408,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] mint and stake position
 // [INFO] wait 10 blocks while pool is claimable
 // [INFO] collect reward while pool is claimable
-// [EXPECTED] collection time: 1234568155
+// [EXPECTED] collection time: 1234568180
 // [EXPECTED] unclaimable sent during claimable: 78035777
 // [INFO] unstake to enter unclaimable period
 // [INFO] wait 10 blocks during unclaimable
