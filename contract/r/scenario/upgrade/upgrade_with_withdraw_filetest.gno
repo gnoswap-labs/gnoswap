@@ -287,8 +287,8 @@ func mintPositionAndStake() {
 
 func swap() {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross, routerAddr, INT64_MAX)
+	foo.Approve(cross, routerAddr, INT64_MAX)
 
 	testing.SetOriginSend(std.Coins{})
 	amountIn, amountOut := router.ExactInSwapRoute(
