@@ -212,7 +212,14 @@ func (self *Incentives) calculateUnclaimableReward(incentiveId string) int64 {
 		return false
 	})
 
-	return timeDiff * incentive.rewardPerSecond
+	// Calculate theoretical unclaimable amount based on duration and reward amount
+	// This represents the rewards that could not be distributed due to no staking activity
+	duration := incentive.endTimestamp - incentive.startTimestamp
+	if duration == 0 {
+		return 0
+	}
+	theoreticalPerSecond := incentive.rewardAmount / duration
+	return timeDiff * theoreticalPerSecond
 }
 
 // calculateUnClaimableDuration calculates the duration of overlap between an unclaimable period and incentive period

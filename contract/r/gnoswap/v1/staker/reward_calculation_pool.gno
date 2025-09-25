@@ -391,7 +391,14 @@ func (self *RewardState) calculateExternalReward(startTime, endTime int64, incen
 		return nil, nil // Already ended
 	}
 
-	err := self.rewardPerWarmup(startTime, endTime, incentive.rewardPerSecond)
+	// Calculate reward per second from incentive data
+	duration := incentive.endTimestamp - incentive.startTimestamp
+	if duration == 0 {
+		return nil, nil
+	}
+	rewardPerSecond := incentive.rewardAmount / duration
+
+	err := self.rewardPerWarmup(startTime, endTime, rewardPerSecond)
 	if err != nil {
 		panic(err)
 	}
@@ -548,4 +555,78 @@ func (self *Pool) CalculateRewardForPosition(
 	debtAcc := self.CalculateRawRewardForPosition(startTime, startTick, deposit)
 
 	return u256.Zero().Sub(rewardAcc, debtAcc)
+}
+
+// CalculateActualDistributedReward calculates the actual reward distributed for an incentive
+// using the global accumulation difference between start and end times
+// This provides more accurate distribution tracking than rewardPerSecond * duration
+func (self *Pool) CalculateActualDistributedReward(
+	incentive *ExternalIncentive,
+	startTime int64,
+	endTime int64,
+) int64 {
+	// Ensure times are within incentive period
+	if startTime < incentive.startTimestamp {
+		startTime = incentive.startTimestamp
+	}
+	if endTime > incentive.endTimestamp {
+		endTime = incentive.endTimestamp
+	}
+
+	// If the time range is invalid, return 0
+	if startTime >= endTime {
+		return 0
+	}
+
+	// Get the staked liquidity at start and end times
+	startLiquidity := self.CurrentStakedLiquidity(startTime)
+	endLiquidity := self.CurrentStakedLiquidity(endTime)
+
+	// Calculate reward per second from incentive data
+	duration := incentive.endTimestamp - incentive.startTimestamp
+	if duration == 0 {
+		return 0
+	}
+	rewardPerSecond := incentive.rewardAmount / duration
+
+	// If there's no liquidity during the entire period, use the simple calculation
+	if startLiquidity.IsZero() && endLiquidity.IsZero() {
+		// No actual distribution occurred, but time passed
+		return (endTime - startTime) * rewardPerSecond
+	}
+
+	// Calculate global accumulation at start and end times
+	startAcc := self.calculateGlobalRewardRatioAccumulation(startTime, startLiquidity)
+	endAcc := self.calculateGlobalRewardRatioAccumulation(endTime, endLiquidity)
+
+	// Calculate the accumulation difference
+	accDiff := u256.Zero().Sub(endAcc, startAcc)
+
+	// Convert accumulation difference to actual reward amount
+	// The accumulation is in Q128 format: (timeDiff * Q128 / liquidity)
+	// To get actual reward: accDiff * liquidity / Q128
+	// But since we're tracking per-second rewards, we need to multiply by rewardPerSecond
+
+	// For more accurate calculation, use the average liquidity
+	avgLiquidity := u256.Zero().Add(startLiquidity, endLiquidity)
+	avgLiquidity = avgLiquidity.Div(avgLiquidity, u256.NewUint(2))
+
+	if avgLiquidity.IsZero() {
+		return (endTime - startTime) * rewardPerSecond
+	}
+
+	// Calculate the actual distributed amount
+	// actualReward = (accDiff * avgLiquidity * rewardPerSecond) / Q128
+	actualReward := u256.MulDiv(
+		accDiff,
+		u256.MulDiv(avgLiquidity, u256.NewUint(uint64(rewardPerSecond)), u256.One()),
+		q128,
+	)
+
+	// Ensure we don't exceed the total reward amount
+	if actualReward.Cmp(u256.NewUint(uint64(incentive.rewardAmount))) > 0 {
+		return incentive.rewardAmount
+	}
+
+	return actualReward.Int64()
 }

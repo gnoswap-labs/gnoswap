@@ -49,7 +49,12 @@ func (self *canonicalPool) ExternalReward(currentTimestamp int64) map[string]int
 			continue
 		}
 
-		reward[incentive.rewardToken] += incentive.rewardPerSecond
+		// Calculate reward per second from incentive data
+		duration := incentive.endTimestamp - incentive.startTimestamp
+		if duration > 0 {
+			rewardPerSec := incentive.rewardAmount / duration
+			reward[incentive.rewardToken] += rewardPerSec
+		}
 	}
 
 	return reward
@@ -439,8 +444,6 @@ func newExternalIncentiveBy(
 	currentHeight int64,
 ) *ExternalIncentive {
 	caller := std.OriginCaller()
-	rewardPerSecond := rewardAmount / (endTimestamp - startTimestamp)
-
 	incentiveId := nextIncentiveID(caller, startTimestamp)
 
 	return &ExternalIncentive{
@@ -450,7 +453,6 @@ func newExternalIncentiveBy(
 		rewardAmount:     rewardAmount,
 		startTimestamp:   startTimestamp,
 		endTimestamp:     endTimestamp,
-		rewardPerSecond:  rewardPerSecond,
 		refundee:         refundee,
 		createdHeight:    currentHeight,
 		depositGnsAmount: 0,

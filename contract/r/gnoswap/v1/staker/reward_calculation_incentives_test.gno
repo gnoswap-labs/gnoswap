@@ -24,7 +24,6 @@ func TestIncentives_ArchiveIncentive(t *testing.T) {
 		rewardAmount:     1000,
 		refundee:         creator,
 		depositGnsAmount: 100,
-		rewardPerSecond:  1,
 	}
 
 	incentives.create(creator, incentive)
@@ -76,7 +75,6 @@ func TestIncentives_GetAllInTimestamps_ExcludesArchived(t *testing.T) {
 		rewardAmount:     1000,
 		refundee:         creator,
 		depositGnsAmount: 100,
-		rewardPerSecond:  1,
 	}
 
 	// Create ended incentive (to be archived)
@@ -89,7 +87,6 @@ func TestIncentives_GetAllInTimestamps_ExcludesArchived(t *testing.T) {
 		rewardAmount:     1000,
 		refundee:         creator,
 		depositGnsAmount: 100,
-		rewardPerSecond:  1,
 	}
 
 	// Add both incentives to active collection
@@ -157,8 +154,7 @@ func TestIncentives_ArchiveEdgeCasesAndMultiple(t *testing.T) {
 			rewardAmount:     1000,
 			refundee:         creator,
 			depositGnsAmount: 100,
-			rewardPerSecond:  1,
-		}
+			}
 		incentives.create(creator, incentive)
 	}
 

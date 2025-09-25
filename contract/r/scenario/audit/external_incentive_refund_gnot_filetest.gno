@@ -209,18 +209,32 @@ func endIncentiveAndVerifyGNOTRefund() {
 	gnotRefunded := newUgnotBal - oldUgnotBal
 	wugnotChange := newWugnotBal - oldWugnotBal
 
-	ufmt.Printf("[EXPECTED] GNOT refunded: %d\n", gnotRefunded)
-	ufmt.Printf("[EXPECTED] WUGNOT change (should be 0): %d\n", wugnotChange)
+	// Calculate expected dust
+	rewardAmount := int64(1_000_000_000)
+	duration := TIMESTAMP_90DAYS
+	rewardPerSecond := rewardAmount / duration
+	expectedDust := rewardAmount - (rewardPerSecond * duration)
 
-	if gnotRefunded <= 0 {
-		panic("[FAIL] Expected GNOT refund but got none")
+	ufmt.Printf("[VERIFY] Expected dust amount: %d\n", expectedDust)
+	ufmt.Printf("[VERIFY] Total reward amount: %d\n", rewardAmount)
+	ufmt.Printf("[VERIFY] Theoretical distribution: %d\n", rewardPerSecond * duration)
+	ufmt.Printf("[RESULT] GNOT refunded: %d\n", gnotRefunded)
+	ufmt.Printf("[RESULT] WUGNOT change (should be 0): %d\n", wugnotChange)
+
+	// Verify dust is included and GNOT is properly refunded
+	if gnotRefunded >= uint64(expectedDust) && wugnotChange == 0 {
+		ufmt.Printf("[PASS] GNOT incentive correctly refunded as GNOT - dust (%d) included in refund (%d)\n", expectedDust, gnotRefunded)
+		// Check if full amount was refunded (should be if no staking happened)
+		if gnotRefunded == uint64(rewardAmount) {
+			println("[PASS] Full GNOT amount refunded (no distribution occurred)")
+		}
+	} else {
+		ufmt.Printf("[FAIL] GNOT incentive refund incorrect - expected at least %d but got %d\n", expectedDust, gnotRefunded)
+		if wugnotChange != 0 {
+			ufmt.Printf("[FAIL] WUGNOT should not change but changed by %d\n", wugnotChange)
+		}
+		panic("Test failed")
 	}
-
-	if wugnotChange != 0 {
-		panic("[FAIL] WUGNOT balance should not change when refunding GNOT incentive")
-	}
-
-	println("[PASS] GNOT incentive correctly refunded as GNOT")
 }
 
 func ugnotBalanceOf(addr std.Address) uint64 {
@@ -260,8 +274,12 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 // [INFO] GNOT balance before ending: 99999000000000
 // [INFO] WUGNOT balance before ending: 0
 // [INFO] ending incentive with ID: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d:1234567900:1
-// [INFO] GNOT balance after ending: 99999995328000
+// [INFO] GNOT balance after ending: 100000000000000
 // [INFO] WUGNOT balance after ending: 0
-// [EXPECTED] GNOT refunded: 995328000
-// [EXPECTED] WUGNOT change (should be 0): 0
-// [PASS] GNOT incentive correctly refunded as GNOT
+// [VERIFY] Expected dust amount: 4672000
+// [VERIFY] Total reward amount: 1000000000
+// [VERIFY] Theoretical distribution: 995328000
+// [RESULT] GNOT refunded: 1000000000
+// [RESULT] WUGNOT change (should be 0): 0
+// [PASS] GNOT incentive correctly refunded as GNOT - dust (4672000) included in refund (1000000000)
+// [PASS] Full GNOT amount refunded (no distribution occurred)

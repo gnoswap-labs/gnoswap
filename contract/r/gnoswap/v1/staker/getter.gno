@@ -30,7 +30,7 @@ func getPoolByPoolPath(poolPath string) *Pool {
 func GetPoolIncentiveIdList(poolPath string) []string {
 	pool := getPoolByPoolPath(poolPath)
 
-	ids := []string{}
+	ids := make([]string, 0)
 	pool.incentives.incentives.Iterate("", "", func(key string, value any) bool {
 		ids = append(ids, key)
 		return true
@@ -57,65 +57,42 @@ func getIncentive(poolPath string, incentiveId string) *ExternalIncentive {
 
 // GetIncentiveStartTimestamp returns the start timestamp of an incentive.
 func GetIncentiveStartTimestamp(poolPath string, incentiveId string) int64 {
-	incentive := getIncentive(poolPath, incentiveId)
-
-	return incentive.startTimestamp
-}
+return getIncentive(poolPath, incentiveId).startTimestamp }
 
 // GetIncentiveEndTimestamp returns the end timestamp of an incentive.
 func GetIncentiveEndTimestamp(poolPath string, incentiveId string) int64 {
-	incentive := getIncentive(poolPath, incentiveId)
-
-	return incentive.endTimestamp
+	return getIncentive(poolPath, incentiveId).endTimestamp
 }
 
 // GetTargetPoolPathByIncentiveId returns the target pool path of an incentive.
 func GetTargetPoolPathByIncentiveId(poolPath string, incentiveId string) string {
-	incentive := getIncentive(poolPath, incentiveId)
-
-	return incentive.targetPoolPath
+	return getIncentive(poolPath, incentiveId).targetPoolPath
 }
 
 // GetCreatedHeightOfIncentive returns the creation height of an incentive.
 func GetCreatedHeightOfIncentive(poolPath string, incentiveId string) int64 {
-	incentive := getIncentive(poolPath, incentiveId)
-
-	return incentive.createdHeight
+	return getIncentive(poolPath, incentiveId).createdHeight
 }
 
 // GetIncentiveRewardToken returns the reward token of an incentive.
 func GetIncentiveRewardToken(poolPath string, incentiveId string) string {
-	incentive := getIncentive(poolPath, incentiveId)
-
-	return incentive.rewardToken
+	return getIncentive(poolPath, incentiveId).rewardToken
 }
 
 // GetIncentiveRewardAmount returns the reward amount of an incentive.
 func GetIncentiveRewardAmount(poolPath string, incentiveId string) *u256.Uint {
-	incentive := getIncentive(poolPath, incentiveId)
-
-	return u256.NewUintFromInt64(incentive.rewardAmount)
+	amount := getIncentive(poolPath, incentiveId).rewardAmount
+	return u256.NewUintFromInt64(amount)
 }
 
 // GetIncentiveRewardAmountAsString returns the reward amount of an incentive as string.
 func GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) string {
-	rewardAmount := GetIncentiveRewardAmount(poolPath, incentiveId)
-
-	return rewardAmount.ToString()
-}
-
-// GetIncentiveRewardPerSecond returns the reward per second of an incentive.
-func GetIncentiveRewardPerSecond(poolPath string, incentiveId string) int64 {
-	incentive := getIncentive(poolPath, incentiveId)
-
-	return incentive.rewardPerSecond
+	return GetIncentiveRewardAmount(poolPath, incentiveId).ToString()
 }
 
 // GetIncentiveRefundee returns the refundee address of an incentive.
 func GetIncentiveRefundee(poolPath string, incentiveId string) std.Address {
-	incentive := getIncentive(poolPath, incentiveId)
-
-	return incentive.refundee
+	return getIncentive(poolPath, incentiveId).refundee
 }
 
 // getDeposit retrieves a deposit by LP token ID.
@@ -133,72 +110,47 @@ func getDeposit(lpTokenId uint64) *Deposit {
 
 // GetDepositOwner returns the owner of a deposit.
 func GetDepositOwner(lpTokenId uint64) std.Address {
-	deposit := getDeposit(lpTokenId)
-
-	return deposit.owner
+	return getDeposit(lpTokenId).owner
 }
 
 // GetDepositStakeTimestamp returns the stake timestamp of a deposit.
 func GetDepositStakeTimestamp(lpTokenId uint64) int64 {
-	deposit := getDeposit(lpTokenId)
-
-	return deposit.stakeTime
-}
-
-// GetDepositStakeTime returns the stake time of a deposit.
-func GetDepositStakeTime(lpTokenId uint64) int64 {
-	deposit := getDeposit(lpTokenId)
-
-	return deposit.stakeTime
+	return getDeposit(lpTokenId).stakeTime
 }
 
 // GetDepositTargetPoolPath returns the target pool path of a deposit.
 func GetDepositTargetPoolPath(lpTokenId uint64) string {
-	deposit := getDeposit(lpTokenId)
-
-	return deposit.targetPoolPath
+	return getDeposit(lpTokenId).targetPoolPath
 }
 
 // GetDepositTickLower returns the lower tick of a deposit.
 func GetDepositTickLower(lpTokenId uint64) int32 {
-	deposit := getDeposit(lpTokenId)
-
-	return deposit.tickLower
+	return getDeposit(lpTokenId).tickLower
 }
 
 // GetDepositTickUpper returns the upper tick of a deposit.
 func GetDepositTickUpper(lpTokenId uint64) int32 {
-	deposit := getDeposit(lpTokenId)
-
-	return deposit.tickUpper
+	return getDeposit(lpTokenId).tickUpper
 }
 
 // GetDepositLiquidity returns the liquidity of a deposit.
 func GetDepositLiquidity(lpTokenId uint64) *u256.Uint {
-	deposit := getDeposit(lpTokenId)
-
-	return deposit.liquidity.Clone()
+	return getDeposit(lpTokenId).liquidity.Clone()
 }
 
 // GetDepositLiquidityAsString returns the liquidity of a deposit as string.
 func GetDepositLiquidityAsString(lpTokenId uint64) string {
-	liquidity := GetDepositLiquidity(lpTokenId)
-
-	return liquidity.ToString()
+	return GetDepositLiquidity(lpTokenId).ToString()
 }
 
 // GetDepositLastCollectTimestamp returns the last collect timestamp of a deposit.
 func GetDepositLastCollectTimestamp(lpTokenId uint64) int64 {
-	deposit := getDeposit(lpTokenId)
-
-	return deposit.lastCollectTime
+	return getDeposit(lpTokenId).lastCollectTime
 }
 
 // GetDepositWarmUp returns the warm-up records of a deposit.
 func GetDepositWarmUp(lpTokenId uint64) []Warmup {
-	deposit := getDeposit(lpTokenId)
-
-	return deposit.warmups
+	return getDeposit(lpTokenId).warmups
 }
 
 // GetPoolTier returns the tier of a pool.
@@ -264,18 +216,31 @@ func GetPrintExternalInfo() string {
 				panic("failed to cast value to *ExternalIncentive")
 			}
 			if incentive.targetPoolPath == deposit.targetPoolPath {
+				// Get pool to calculate actual rewards
+				pool, exists := pools.Get(incentive.targetPoolPath)
+				if !exists {
+					return false
+				}
+
+				currentTime := time.Now().Unix()
+				actualDistributed := pool.CalculateActualDistributedReward(
+					incentive,
+					incentive.startTimestamp,
+					currentTime,
+				)
+				rewardLeft := incentive.rewardAmount - actualDistributed
+
 				externalIncentive := ApiExternalDebugIncentive{
 					PoolPath:          incentive.targetPoolPath,
 					IncentiveId:       key,
 					RewardToken:       incentive.rewardToken,
 					RewardAmount:      strconv.FormatInt(incentive.rewardAmount, 10),
-					RewardLeft:        strconv.FormatInt(incentive.rewardLeft, 10),
+					RewardLeft:        strconv.FormatInt(rewardLeft, 10),
 					StartTimestamp:    incentive.startTimestamp,
 					EndTimestamp:      incentive.endTimestamp,
-					RewardPerSecond:   strconv.FormatInt(incentive.rewardPerSecond, 10),
 					Refundee:          incentive.refundee,
 					TokenAmountFull:   incentive.depositGnsAmount,
-					TokenAmountToGive: incentive.RewardSpent(time.Now().Unix()),
+					TokenAmountToGive: actualDistributed,
 				}
 
 				externalIncentivesList = append(externalIncentivesList, externalIncentive)
@@ -321,7 +286,6 @@ func makeExternalPositionsNode(positions []ApiExternalDebugPosition) []*json.Nod
 				"rewardLeft":               json.StringNode("rewardLeft", incentive.RewardLeft),
 				"startTimestamp":           json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
 				"endTimestamp":             json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
-				"rewardPerSecond":          json.StringNode("rewardPerSecond", incentive.RewardPerSecond),
 				"stakedOrExternalDuration": json.NumberNode("stakedOrExternalDuration", float64(stakedOrExternalDuration)),
 				"tokenAmountFull":          json.NumberNode("tokenAmountFull", float64(incentive.TokenAmountFull)),
 				"tokenAmountToGive":        json.NumberNode("tokenAmountToGive", float64(incentive.TokenAmountToGive)),
@@ -366,8 +330,6 @@ type ApiExternalDebugIncentive struct {
 	RewardLeft         string      `json:"rewardLeft"`
 	StartTimestamp     int64       `json:"startTimestamp"`
 	EndTimestamp       int64       `json:"endTimestamp"`
-	RewardPerSecondX96 string      `json:"rewardPerSecondX96"`
-	RewardPerSecond    string      `json:"rewardPerSecond"`
 	Refundee           std.Address `json:"refundee"`
 	StartHeight        int64       `json:"startHeight"`
 	EndHeight          int64       `json:"endHeight"`

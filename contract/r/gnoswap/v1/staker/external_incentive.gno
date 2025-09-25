@@ -239,8 +239,15 @@ func endExternalIncentive(pool *Pool, incentiveId string, caller std.Address, cu
 		)
 	}
 
-	// Always calculate unclaimed rewards since this function is called only once
-	refund := incentive.rewardLeft
+	// Calculate the actual distributed amount using accumulation-based method
+	actualDistributed := pool.CalculateActualDistributedReward(
+		incentive,
+		incentive.startTimestamp,
+		currentTime, // Use current time, not necessarily end time
+	)
+
+	// Calculate total refund including dust and unclaimable rewards
+	refund := incentive.rewardAmount - actualDistributed
 	refund += pool.incentives.calculateUnclaimableReward(incentive.incentiveId)
 
 	return incentive, refund, nil
