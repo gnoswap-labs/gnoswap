@@ -41,7 +41,7 @@ var (
 // Only callable by staker contract.
 func SetTickCrossHook(cur realm, hook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	caller := std.PreviousRealm().Address()
-	access.AssertIsStaker(caller)
+	access.AssertIsStakerWithVersion(1, caller)
 	tickCrossHook = hook
 }
 
@@ -53,7 +53,7 @@ func SetTickCrossHook(cur realm, hook func(poolPath string, tickId int32, zeroFo
 // Only callable by staker contract.
 func SetSwapStartHook(cur realm, hook func(poolPath string, timestamp int64)) {
 	caller := std.PreviousRealm().Address()
-	access.AssertIsStaker(caller)
+	access.AssertIsStakerWithVersion(1, caller)
 	swapStartHook = hook
 }
 
@@ -65,7 +65,7 @@ func SetSwapStartHook(cur realm, hook func(poolPath string, timestamp int64)) {
 // Only callable by staker contract.
 func SetSwapEndHook(cur realm, hook func(poolPath string) error) {
 	caller := std.PreviousRealm().Address()
-	access.AssertIsStaker(caller)
+	access.AssertIsStakerWithVersion(1, caller)
 	swapEndHook = hook
 }
 
@@ -117,7 +117,7 @@ func Swap(
 	sqrtPriceLimitX96 string,
 	payer std.Address, // router
 ) (string, string) {
-	halt.AssertIsNotHaltedPool()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsSwapWhitelisted(caller)

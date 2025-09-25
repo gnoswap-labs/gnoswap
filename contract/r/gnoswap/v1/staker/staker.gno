@@ -27,13 +27,13 @@ import (
 const ZERO_ADDRESS = std.Address("")
 
 var (
-	stakerAddr        = getRoleAddress(prbac.ROLE_STAKER)
-	devOpsAddr        = getRoleAddress(prbac.ROLE_DEVOPS)
-	communityPoolAddr = getRoleAddress(prbac.ROLE_COMMUNITY_POOL)
-	govStakerAddr     = getRoleAddress(prbac.ROLE_GOV_STAKER)
-	protocolFeeAddr   = getRoleAddress(prbac.ROLE_PROTOCOL_FEE)
 	adminAddr         = getRoleAddress(prbac.ROLE_ADMIN)
-	positionAddr      = getRoleAddress(prbac.ROLE_POSITION)
+	devOpsAddr        = getRoleAddress(prbac.ROLE_DEVOPS)
+	communityPoolAddr = getRoleAddressWithVersion(prbac.ROLE_COMMUNITY_POOL, 1)
+	stakerAddr        = getRoleAddressWithVersion(prbac.ROLE_STAKER, 1)
+	govStakerAddr     = getRoleAddressWithVersion(prbac.ROLE_GOV_STAKER, 1)
+	protocolFeeAddr   = getRoleAddressWithVersion(prbac.ROLE_PROTOCOL_FEE, 1)
+	positionAddr      = getRoleAddressWithVersion(prbac.ROLE_POSITION, 1)
 )
 
 // Deposits manages all staked positions.
@@ -253,30 +253,29 @@ func init() {
 	)
 
 	// Register the callback for distribution percentage changes
-	en.SetOnDistributionPctChangeCallback(cross, emissionCacheUpdateHook())
+	en.SetOnDistributionPctChangeCallback(cross, func(emissionAmountPerSecond int64) {
+		emissionCacheUpdateHook(emissionAmountPerSecond)
+	})
 }
 
 // emissionCacheUpdateHook creates a hook function that updates the emission cache when called.
 // This follows the same pattern as other hooks in the staker contract.
-func emissionCacheUpdateHook() func() {
-	return func() {
-		func(cur realm) {
-			if poolTier != nil {
-				currentTime := time.Now().Unix()
-				currentHeight := std.ChainHeight()
+func emissionCacheUpdateHook(emissionAmountPerSecond int64) {
+	func(cur realm) {
+		if poolTier != nil {
+			currentTime := time.Now().Unix()
+			currentHeight := std.ChainHeight()
 
-				// First cache the current rewards before updating emission
-				poolTier.cacheReward(currentHeight, currentTime, pools)
+			// First cache the current rewards before updating emission
+			poolTier.cacheReward(currentHeight, currentTime, pools)
 
-				// Update the current emission cache with the latest value
-				newEmission := en.GetStakerEmissionAmountPerSecond()
-				poolTier.currentEmission = newEmission
+			// Update the current emission cache with the latest value
+			poolTier.currentEmission = emissionAmountPerSecond
 
-				// Now apply the new emission rate to each pool individually
-				poolTier.applyCacheToAllPools(pools, currentTime, newEmission)
-			}
-		}(cross)
-	}
+			// Now apply the new emission rate to each pool individually
+			poolTier.applyCacheToAllPools(pools, currentTime, emissionAmountPerSecond)
+		}
+	}(cross)
 }
 
 // StakeToken stakes an LP position NFT to earn rewards.
@@ -300,7 +299,7 @@ func emissionCacheUpdateHook() func() {
 //
 // Note: Out-of-range positions earn no rewards but can be staked.
 func StakeToken(cur realm, positionId uint64, referrer string) string {
-	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
 
 	assertIsNotStaked(positionId)
 
@@ -479,8 +478,8 @@ func transferDeposit(positionId uint64, owner, caller, to std.Address) error {
 // Returns poolPath, gnsAmount, externalRewards map, externalPenalties map.
 func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, string, map[string]int64, map[string]int64) {
 	caller := std.PreviousRealm().Address()
-	halt.AssertIsNotHaltedStaker()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	assertIsDepositor(caller, positionId)
 
@@ -662,8 +661,8 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 //   - Position must be currently staked
 func UnStakeToken(cur realm, positionId uint64, unwrapResult bool) string { // poolPath
 	caller := std.PreviousRealm().Address()
-	halt.AssertIsNotHaltedStaker()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 	assertIsDepositor(caller, positionId)
 
 	deposit := deposits.get(positionId)

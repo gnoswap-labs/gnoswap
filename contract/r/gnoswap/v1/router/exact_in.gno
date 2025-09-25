@@ -62,7 +62,7 @@ func ExactInSwapRoute(cur realm,
 	deadline int64,
 	referrer string,
 ) (string, string) {
-	halt.AssertIsNotHaltedRouter()
+	halt.AssertIsNotHaltedRouterWithVersion(1)
 
 	assertIsValidUserCoinSend(inputToken, amountIn)
 	assertIsValidRoutePaths(routeArr, inputToken, outputToken)

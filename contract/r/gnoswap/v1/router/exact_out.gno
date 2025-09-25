@@ -65,7 +65,7 @@ func ExactOutSwapRoute(
 	deadline int64,
 	referrer string,
 ) (string, string) {
-	halt.AssertIsNotHaltedRouter()
+	halt.AssertIsNotHaltedRouterWithVersion(1)
 
 	assertIsValidUserCoinSend(inputToken, amountInMax)
 	assertIsValidRoutePaths(routeArr, inputToken, outputToken)
