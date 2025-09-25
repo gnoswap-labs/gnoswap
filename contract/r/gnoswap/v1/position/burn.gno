@@ -184,8 +184,15 @@ func updateTokensOwed(
 	tokensOwed *u256.Uint,
 ) *u256.Uint {
 	additionalTokensOwed := calculateTokensOwed(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128, positionLiquidity)
-	add := u256.Zero().Add(burnedAmount, additionalTokensOwed)
-	return u256.Zero().Add(tokensOwed, add)
+	add, overflow := u256.Zero().AddOverflow(burnedAmount, additionalTokensOwed)
+	if overflow {
+		panic(newErrorWithDetail(errOverflow, "burnedAmount + additionalTokensOwed overflow"))
+	}
+	owed, overflow := u256.Zero().AddOverflow(tokensOwed, add)
+	if overflow {
+		panic(newErrorWithDetail(errOverflow, "tokensOwed + add overflow"))
+	}
+	return owed
 }
 
 // calculateFees calculates the fees for the current position.
