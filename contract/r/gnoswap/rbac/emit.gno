@@ -2,15 +2,15 @@ package rbac
 
 import "std"
 
-// emitRegisterRoleEvent emits a RegisterRole event with roleName information.
-func emitRegisterRoleEvent(roleName string) {
+// emitRegisterRoleEvent emits a RegisterRole event with roleName and address information.
+func emitRegisterRoleEvent(roleName string, roleAddress std.Address) {
 	prevRealm := std.PreviousRealm()
 	std.Emit(
 		"RegisterRole",
 		"prevAddr", prevRealm.Address().String(),
 		"prevRealm", prevRealm.PkgPath(),
 		"roleName", roleName,
-		"roleAddress", "",
+		"roleAddress", roleAddress.String(),
 	)
 }
 

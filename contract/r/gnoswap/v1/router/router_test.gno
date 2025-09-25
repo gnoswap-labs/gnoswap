@@ -44,6 +44,7 @@ func TestFinalizeSwap(t *testing.T) {
 		userBeforeWugnotBalance int64
 		userWrappedWugnot       int64
 		amountSpecified         *u256.Uint
+		swapCount               int64
 		expectError             bool
 		errorMessage            string
 	}{
@@ -58,6 +59,7 @@ func TestFinalizeSwap(t *testing.T) {
 			userBeforeWugnotBalance: 0,
 			userWrappedWugnot:       0,
 			amountSpecified:         newUint256("100"),
+			swapCount:               1,
 			expectError:             false,
 		},
 		{
@@ -71,6 +73,7 @@ func TestFinalizeSwap(t *testing.T) {
 			userBeforeWugnotBalance: 0,
 			userWrappedWugnot:       0,
 			amountSpecified:         newUint256("100"),
+			swapCount:               1,
 			expectError:             false,
 		},
 		{
@@ -84,6 +87,7 @@ func TestFinalizeSwap(t *testing.T) {
 			userBeforeWugnotBalance: 0,
 			userWrappedWugnot:       0,
 			amountSpecified:         newUint256("100"),
+			swapCount:               1,
 			expectError:             true,
 			errorMessage:            "[GNOSWAP-ROUTER-002] slippage check failed || Received more than requested in [EXACT_OUT] requested=100, actual=90",
 		},
@@ -97,6 +101,7 @@ func TestFinalizeSwap(t *testing.T) {
 			tokenAmountLimit:        newUint256("85"),
 			userBeforeWugnotBalance: 1000000,
 			userWrappedWugnot:       20000,
+			swapCount:               1,
 			expectError:             true,
 			errorMessage:            "too much wugnot spent",
 		},
@@ -111,6 +116,7 @@ func TestFinalizeSwap(t *testing.T) {
 			userBeforeWugnotBalance: 0,
 			userWrappedWugnot:       0,
 			amountSpecified:         newUint256("600901352"),
+			swapCount:               1,
 			expectError:             false,
 		},
 		{
@@ -123,6 +129,7 @@ func TestFinalizeSwap(t *testing.T) {
 			tokenAmountLimit:        newUint256("85"),
 			userBeforeWugnotBalance: 1<<63 - 1,
 			userWrappedWugnot:       1,
+			swapCount:               1,
 			expectError:             true,
 			errorMessage:            "overflow in balance calculation",
 		},
@@ -136,6 +143,7 @@ func TestFinalizeSwap(t *testing.T) {
 			tokenAmountLimit:        newUint256("85"),
 			userBeforeWugnotBalance: 1 << 61,
 			userWrappedWugnot:       1 << 61,
+			swapCount:               1,
 			expectError:             true,
 			errorMessage:            "too much wugnot spent",
 		},
@@ -174,6 +182,7 @@ func TestFinalizeSwap(t *testing.T) {
 				tt.userBeforeWugnotBalance,
 				tt.userWrappedWugnot,
 				tt.amountSpecified,
+				tt.swapCount,
 			)
 
 			if !tt.expectError {
@@ -288,6 +297,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 				teller.Approve(poolContract, maxApprove)
 			}(cross)
 
+			testing.SetOriginSend(std.Coins{})
 			// Position Creation
 			pn.Mint(
 				cross,
@@ -329,6 +339,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			)
 
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
+			testing.SetOriginSend(std.Coins{})
 			amountIn, amountOut := ExactInSwapRoute(
 				cross,
 				tt.inputToken,
@@ -452,6 +463,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			}(cross)
 
 			// Position Creation
+			testing.SetOriginSend(std.Coins{})
 			positionId, _, _, _ := pn.Mint(
 				cross,
 				tt.tokenPath0,
@@ -483,6 +495,8 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
 			wugnot.Approve(cross, poolContract, maxApprove)
 			gns.Approve(cross, poolContract, maxApprove)
+
+			testing.SetOriginSend(std.Coins{})
 			pn.IncreaseLiquidity(
 				cross,
 				positionId,
@@ -513,6 +527,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			)
 
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
+			testing.SetOriginSend(std.Coins{})
 			_, amountOut := ExactInSwapRoute(
 				cross,
 				tt.inputToken,
@@ -639,6 +654,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			}(cross)
 
 			// Position Creation
+			testing.SetOriginSend(std.Coins{})
 			pn.Mint(
 				cross,
 				tt.tokenPath0,
@@ -680,6 +696,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			handleSwapFee(tt.outputToken, u256.MustFromDecimal(drySwapAmountOut))
 
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
+			testing.SetOriginSend(std.Coins{})
 			amountIn, amountOut := ExactInSwapRoute(
 				cross,
 				tt.inputToken,

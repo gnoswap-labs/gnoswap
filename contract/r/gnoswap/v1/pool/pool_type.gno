@@ -76,7 +76,7 @@ type Pool struct {
 	maxLiquidityPerTick  *u256.Uint // the maximum amount of liquidity that can be added per tick
 	feeGrowthGlobal0X128 *u256.Uint // uint256
 	feeGrowthGlobal1X128 *u256.Uint // uint256
-	liquidity            *u256.Uint // total amount of liquidity in the pool
+	liquidity            *u256.Uint // total amount of active liquidity in the pool (within current tick range)
 	ticks                *avl.Tree  // tick(int32) -> TickInfo
 	tickBitmaps          *avl.Tree  // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(*u256.Uint)
 	positions            *avl.Tree  // maps the key (caller, lower tick, upper tick) to a unique position

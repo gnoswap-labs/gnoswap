@@ -4,9 +4,9 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/nt/uassert"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/uassert"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
@@ -118,7 +118,7 @@ func TestSwapInner(t *testing.T) {
 			expectedRecv:     "0",
 			expectedOut:      "0",
 			expectError:      true,
-			expectedErrorMsg: "[GNOSWAP-POOL-005] out of range for numeric value: amount(92267581029952440000000) overflows int64 range (max 9223372036854775807)",
+			expectedErrorMsg: "[GNOSWAP-POOL-026] overflow",
 		},
 	}
 
@@ -146,7 +146,7 @@ func TestSwapInner(t *testing.T) {
 					ctx.OriginCaller = tt.data.payer
 					testing.SetContext(ctx)
 				}()
-				
+
 				return swapInner(
 					tt.amountSpecified,
 					tt.recipient,

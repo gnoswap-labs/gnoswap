@@ -3,17 +3,18 @@ package protocol_fee
 import (
 	"std"
 
-	"gno.land/p/nt/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 )
 
-// assertIsPoolOrRouterOrStaker panics if the caller is not the pool, router, or staker contract.
-func assertIsPoolOrRouterOrStaker(caller std.Address) {
+// assertIsPoolOrPositionOrRouterOrStaker panics if the caller is not the pool, router, or staker contract.
+func assertIsPoolOrPositionOrRouterOrStaker(caller std.Address) {
 	access.AssertHasAnyRole(
 		caller,
 		prbac.ROLE_POOL.String(),
+		prbac.ROLE_POSITION.String(),
 		prbac.ROLE_ROUTER.String(),
 		prbac.ROLE_STAKER.String(),
 	)

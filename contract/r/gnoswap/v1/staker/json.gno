@@ -156,13 +156,14 @@ type ApiStake struct {
 func newApiStake(tokenId uint64, deposit *Deposit) ApiStake {
 	stakeDuration := uint64(0)
 	if std.ChainHeight() > deposit.stakeTime {
-		stakeDuration = uint64(std.ChainHeight() - deposit.stakeTime) // TODO: should use time difference
+		now := time.Now().Unix()
+		stakeDuration = uint64(now - deposit.stakeTime)
 	}
 
 	return ApiStake{
 		PositionId:     tokenId,
 		Owner:          deposit.owner,
-		StakeTimestamp: deposit.stakeTimestamp,
+		StakeTimestamp: deposit.stakeTime,
 		StakeTime:      deposit.stakeTime,
 		TargetPoolPath: deposit.targetPoolPath,
 		StakeDuration:  stakeDuration,

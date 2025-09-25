@@ -49,3 +49,12 @@ func assertIsValidRoleName(roleName string) {
 		))
 	}
 }
+
+func assertIsValidAddress(addr std.Address) {
+	if addr == "" || !addr.IsValid() {
+		panic(makeErrorWithDetails(
+			errInvalidAddress,
+			ufmt.Sprintf("address: %s", addr.String()),
+		))
+	}
+}

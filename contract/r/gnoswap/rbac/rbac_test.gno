@@ -5,115 +5,155 @@ import (
 	"testing"
 
 	"gno.land/p/nt/testutils"
-
 	"gno.land/p/nt/uassert"
 
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
-func TestRegisterRole(t *testing.T) {
+func TestRegisterRoleWithAddressParameter(t *testing.T) {
 	tests := []struct {
-		name        string
-		setup       func()
-		roleName    string
-		shouldError bool
-		errorMsg    string
+		name          string
+		setup         func()
+		roleName      string
+		roleAddress   std.Address
+		callerRealm   std.Address // Test with different callers (ADMIN or GOVERNANCE)
+		shouldPanic   bool
+		panicContains string
 	}{
 		{
-			name: "Register new custom role should succeed",
+			name: "Register role with valid address succeeds (ADMIN)",
 			setup: func() {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
 			},
-			roleName:    "custom_role",
-			shouldError: false,
+			roleName:    "custom_role_with_addr",
+			roleAddress: testutils.TestAddress("custom_role_address"),
+			callerRealm: ADMIN,
+			shouldPanic: false,
 		},
 		{
-			name: "Register system role should error",
+			name: "Register role with valid address succeeds (GOVERNANCE)",
 			setup: func() {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
 			},
-			roleName:    prbac.ROLE_ADMIN.String(),
-			shouldError: true,
-			errorMsg:    "already exists",
+			roleName:    "custom_role_governance",
+			roleAddress: testutils.TestAddress("custom_gov_address"),
+			callerRealm: GOV_GOVERNANCE_ADDR,
+			shouldPanic: false,
 		},
 		{
-			name: "Register existing role should error",
+			name: "Register role with different valid address succeeds (ADMIN)",
 			setup: func() {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
+			},
+			roleName:    "another_custom_role",
+			roleAddress: testutils.TestAddress("another_address"),
+			callerRealm: ADMIN,
+			shouldPanic: false,
+		},
+		{
+			name: "Register role with empty address fails (ADMIN)",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:      "invalid_role_empty",
+			roleAddress:   std.Address(""),
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "invalid address",
+		},
+		{
+			name: "Register role with empty address fails (GOVERNANCE)",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:      "invalid_role_empty_gov",
+			roleAddress:   std.Address(""),
+			callerRealm:   GOV_GOVERNANCE_ADDR,
+			shouldPanic:   true,
+			panicContains: "invalid address",
+		},
+		{
+			name: "Register duplicate role with different address fails (ADMIN)",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+				// Pre-register a role
 				manager.RegisterRole("duplicate_role")
+				manager.UpdateRoleAddress("duplicate_role", testutils.TestAddress("original"))
 			},
-			roleName:    "duplicate_role",
-			shouldError: true,
-			errorMsg:    "already exists",
+			roleName:      "duplicate_role",
+			roleAddress:   testutils.TestAddress("new_address"),
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "already exists",
 		},
 		{
-			name: "Register role with empty string should succeed (manager internal)",
+			name: "Register system role with new address fails (GOVERNANCE)",
 			setup: func() {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
 			},
-			roleName:    "",
-			shouldError: false, // manager.RegisterRole doesn't validate, only the public function does
+			roleName:      prbac.ROLE_ADMIN.String(),
+			roleAddress:   testutils.TestAddress("new_admin"),
+			callerRealm:   GOV_GOVERNANCE_ADDR,
+			shouldPanic:   true,
+			panicContains: "already exists",
 		},
 		{
-			name: "Register role with whitespace should succeed",
+			name: "Register role with unauthorized caller fails",
 			setup: func() {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
 			},
-			roleName:    "role with spaces",
-			shouldError: false,
+			roleName:      "unauthorized_role",
+			roleAddress:   testutils.TestAddress("some_address"),
+			callerRealm:   testutils.TestAddress("random_user"),
+			shouldPanic:   true,
+			panicContains: "unauthorized",
 		},
 		{
-			name: "Register role with special characters should succeed",
+			name: "Register role with devops caller fails (not admin or governance)",
 			setup: func() {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
 			},
-			roleName:    "role_with-special.chars",
-			shouldError: false,
-		},
-		{
-			name: "Register very long role name should succeed",
-			setup: func() {
-				manager = prbac.NewRBACWithAddress(ADMIN)
-				initRbac()
-			},
-			roleName:    "very_long_role_name_that_exceeds_normal_length_expectations_but_should_still_work",
-			shouldError: false,
-		},
-		{
-			name: "Register multiple roles should succeed",
-			setup: func() {
-				manager = prbac.NewRBACWithAddress(ADMIN)
-				initRbac()
-				manager.RegisterRole("role_1")
-				manager.RegisterRole("role_2")
-			},
-			roleName:    "role_3",
-			shouldError: false,
+			roleName:      "devops_role_attempt",
+			roleAddress:   testutils.TestAddress("devops_address"),
+			callerRealm:   DEV_OPS,
+			shouldPanic:   true,
+			panicContains: "unauthorized",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup()
-			testing.SetRealm(std.NewUserRealm(ADMIN))
-			err := manager.RegisterRole(tt.roleName)
 
-			if tt.shouldError {
-				uassert.Error(t, err)
-				if tt.errorMsg != "" && err != nil {
-					uassert.True(t, contains(err.Error(), tt.errorMsg))
-				}
+			// Set realm to the specified caller for authorization testing
+			testing.SetRealm(std.NewUserRealm(tt.callerRealm))
+
+			if tt.shouldPanic {
+				uassert.AbortsContains(t, tt.panicContains, func() {
+					RegisterRole(cross, tt.roleName, tt.roleAddress)
+				})
 			} else {
-				uassert.NoError(t, err)
-				// Verify role was actually registered
-				_, getErr := manager.GetRoleAddress(tt.roleName)
-				uassert.NoError(t, getErr)
+				RegisterRole(cross, tt.roleName, tt.roleAddress)
+
+				// Verify the role was registered with correct address
+				addr, err := manager.GetRoleAddress(tt.roleName)
+				uassert.NoError(t, err, "Failed to get role address")
+				uassert.Equal(t, addr, tt.roleAddress, "Role address mismatch")
+
+				// Verify role is synchronized with access package
+				allRoles := manager.GetRoleAddresses()
+				registeredAddr, exists := allRoles[tt.roleName]
+				uassert.True(t, exists, "Role should exist in manager")
+				uassert.Equal(t, registeredAddr, tt.roleAddress, "Address mismatch in role map")
 			}
 		})
 	}
