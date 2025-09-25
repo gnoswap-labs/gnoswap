@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (
@@ -5,6 +7,7 @@ import (
 	"strconv"
 	"testing"
 
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
@@ -246,7 +249,6 @@ func TestSwap() {
 	testing.SetRealm(posRealm)
 	pl.Mint(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(20000)).ToString(), adminAddr)
 
-	testing.SetRealm(rouRealm)
 	test_price := MIN_PRICE
 	{
 		poolOldToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(poolAddr)
@@ -256,22 +258,21 @@ func TestSwap() {
 		userOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
 
 		// set current realm and origin caller
-		func() {
-			ctx := testing.GetContext()
-			ctx.CurrentRealm = rouRealm
-			ctx.OriginCaller = adminAddr
-			testing.SetContext(ctx)
-		}()
+
+		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 		amount0, amount1 := pl.Swap(
 			cross,
-			fooPath,    // token0Path
 			barPath,    // token1Path
+			fooPath,    // token0Path
 			fee500,     // fee
 			adminAddr,  // recipient
 			true,       // zeroForOne
 			"10000",    // _amountSpecified
 			test_price, // _sqrtPriceLimitX96
 			adminAddr,  // payer
+			func(cur realm, amount0Delta, amount1Delta string) error {
+				return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+			},
 		)
 
 		println("[EXPECTED] amount0:", amount0, "expected: should not be 0")
@@ -299,13 +300,11 @@ func TestSwap() {
 		userOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
 
 		// set current realm and origin caller
-		func() {
-			ctx := testing.GetContext()
-			ctx.CurrentRealm = rouRealm
-			ctx.OriginCaller = adminAddr
-			testing.SetContext(ctx)
-		}()
-		amount0, amount1 := pl.Swap(cross, barPath, fooPath, fee500, adminAddr, true, "5000", test_price, adminAddr) // give enough amount to take fees away
+		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+
+		amount0, amount1 := pl.Swap(cross, barPath, fooPath, fee500, adminAddr, true, "5000", test_price, adminAddr, func(cur realm, amount0Delta, amount1Delta string) error {
+			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+		}) // give enough amount to take fees away
 
 		intAmount0, _ := strconv.Atoi(amount0)
 		intAmount1, _ := strconv.Atoi(amount1)
@@ -330,13 +329,21 @@ func TestSwap() {
 		userOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
 
 		// set current realm and origin caller
-		func() {
-			ctx := testing.GetContext()
-			ctx.CurrentRealm = rouRealm
-			ctx.OriginCaller = adminAddr
-			testing.SetContext(ctx)
-		}()
-		amount0, amount1 := pl.Swap(cross, barPath, fooPath, fee500, adminAddr, true, "1000", test_price, adminAddr) // give enough amount to take fees away
+		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+		amount0, amount1 := pl.Swap(
+			cross,
+			barPath,
+			fooPath,
+			fee500,
+			adminAddr,
+			true,
+			"1000",
+			test_price,
+			adminAddr,
+			func(cur realm, amount0Delta, amount1Delta string) error {
+				return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+			},
+		) // give enough amount to take fees away
 
 		intAmount0, _ := strconv.Atoi(amount0)
 		intAmount1, _ := strconv.Atoi(amount1)
@@ -362,13 +369,10 @@ func TestSwap() {
 		userOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
 
 		// set current realm and origin caller
-		func() {
-			ctx := testing.GetContext()
-			ctx.CurrentRealm = rouRealm
-			ctx.OriginCaller = adminAddr
-			testing.SetContext(ctx)
-		}()
-		amount0, amount1 := pl.Swap(cross, barPath, fooPath, fee500, adminAddr, false, "16000", MAX_PRICE, adminAddr) // give enough amount to take fees away
+		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+		amount0, amount1 := pl.Swap(cross, barPath, fooPath, fee500, adminAddr, false, "16000", MAX_PRICE, adminAddr, func(cur realm, amount0Delta, amount1Delta string) error {
+			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, false)
+		}) // give enough amount to take fees away
 
 		intAmount0, _ := strconv.Atoi(amount0)
 		intAmount1, _ := strconv.Atoi(amount1)
@@ -387,6 +391,34 @@ func TestSwap() {
 
 	println("[INFO] Finished swap")
 	println()
+}
+
+func mockSwapCallback(token0Path string, token1Path string, amount0Delta string, amount1Delta string, zeroForOne bool) error {
+	testing.SetRealm(adminRealm)
+
+	const wugnotPath = "gno.land/r/gnoland/wugnot"
+	const ugnotDenom = "ugnot"
+
+	amount0Int64, _ := strconv.ParseInt(amount0Delta, 10, 64)
+	amount1Int64, _ := strconv.ParseInt(amount1Delta, 10, 64)
+
+	if zeroForOne {
+		if token0Path == wugnotPath {
+			testing.SetOriginSend(std.Coins{{ugnotDenom, amount0Int64}})
+			wugnot.Deposit(cross)
+		}
+
+		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Int64)
+	} else {
+		if token1Path == wugnotPath {
+			testing.SetOriginSend(std.Coins{{ugnotDenom, amount1Int64}})
+			wugnot.Deposit(cross)
+		}
+
+		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Int64)
+	}
+
+	return nil
 }
 
 // Output:

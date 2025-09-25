@@ -15,10 +15,10 @@ import (
 )
 
 var (
-	positionAddr, _    = access.GetAddress(prabc.ROLE_POSITION.String())
-	poolAddr, _        = access.GetAddress(prabc.ROLE_POOL.String())
-	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
-	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
+	positionAddr    = access.MustGetAddressWithVersion(prabc.ROLE_POSITION.String(), 1)
+	poolAddr        = access.MustGetAddressWithVersion(prabc.ROLE_POOL.String(), 1)
+	protocolFeeAddr = access.MustGetAddressWithVersion(prabc.ROLE_PROTOCOL_FEE.String(), 1)
+	routerAddr      = access.MustGetAddressWithVersion(prabc.ROLE_ROUTER.String(), 1)
 )
 
 // Mint adds liquidity to a pool position.
@@ -55,10 +55,10 @@ func Mint(
 	liquidityAmount string,
 	positionCaller std.Address,
 ) (string, string) {
-	halt.AssertIsNotHaltedPool()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsPosition(caller)
+	access.AssertIsPositionWithVersion(1, caller)
 	access.AssertIsValidAddress(positionCaller)
 
 	liquidity := u256.MustFromDecimal(liquidityAmount)
@@ -114,10 +114,10 @@ func Burn(
 	liquidityAmount string, // uint128
 	positionCaller std.Address,
 ) (string, string) { // uint256 x2
-	halt.AssertIsNotHaltedPool()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsPosition(caller)
+	access.AssertIsPositionWithVersion(1, caller)
 	access.AssertIsValidAddress(positionCaller)
 
 	liqAmount := u256.MustFromDecimal(liquidityAmount)
@@ -192,11 +192,11 @@ func Collect(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	halt.AssertIsNotHaltedPool()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsPosition(caller)
+	access.AssertIsPositionWithVersion(1, caller)
 	access.AssertIsValidAddress(recipient)
 
 	pool := mustGetPoolBy(token0Path, token1Path, fee)
@@ -271,11 +271,11 @@ func CollectProtocol(
 	amount0Requested string, // uint128
 	amount1Requested string, // uint128
 ) (string, string) {
-	halt.AssertIsNotHaltedPool()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	common.MustRegistered(token0Path)
 	common.MustRegistered(token1Path)

@@ -1,6 +1,7 @@
 package router
 
 import (
+	"math"
 	"std"
 	"strconv"
 	"strings"
@@ -183,6 +184,7 @@ func TestFinalizeSwap(t *testing.T) {
 				tt.userWrappedWugnot,
 				tt.amountSpecified,
 				tt.swapCount,
+				false,
 			)
 
 			if !tt.expectError {
@@ -878,6 +880,8 @@ func TestHandleMultiSwap(t *testing.T) {
 
 			testing.SetRealm(adminRealm)
 
+			common.SafeGRC20Approve(cross, tt.inputToken, routerAddr, math.MaxInt64)
+
 			amountSpecified := i256.MustFromDecimal(tt.amountSpecified)
 
 			handleMultiSwapFn := func(cur realm) (*u256.Uint, *u256.Uint) {
@@ -974,6 +978,8 @@ func TestProcessRoute_MultiHops(t *testing.T) {
 
 			toSwapAmount := i256.MustFromDecimal(tt.toSwap)
 			testing.SetRealm(adminRealm)
+
+			common.SafeGRC20Approve(cross, barPath, routerAddr, math.MaxInt64)
 
 			processRouteFn := func(cur realm) (*u256.Uint, *u256.Uint, error) {
 				return op.processRoute(tt.route, toSwapAmount, tt.swapType)
