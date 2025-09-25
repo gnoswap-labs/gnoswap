@@ -31,7 +31,7 @@ func CreateExternalIncentive(
 	startTimestamp int64,
 	endTimestamp int64,
 ) {
-	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsUser(std.PreviousRealm())
@@ -129,8 +129,8 @@ func CreateExternalIncentive(
 //
 // Only callable by Refundee or Admin.
 func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
-	halt.AssertIsNotHaltedStaker()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	assertIsPoolExists(targetPoolPath)
 
