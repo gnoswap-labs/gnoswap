@@ -51,8 +51,8 @@ func TestUpdateSwapWhiteList(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
 			swapWhitelist = make(map[std.Address]bool)
-			roleAddresses[prbac.ROLE_ADMIN.String()] = testutils.TestAddress("admin")
-			roleAddresses[prbac.ROLE_GOVERNANCE.String()] = testutils.TestAddress("governance")
+			roleAddresses[prbac.ROLE_ADMIN.String()] = map[int]std.Address{1: testutils.TestAddress("admin")}
+			roleAddresses[prbac.ROLE_GOVERNANCE.String()] = map[int]std.Address{1: testutils.TestAddress("governance")}
 
 			// std.TestSetPrevRealm(std.NewUserRealm(tt.caller))
 			testing.SetOriginCaller(tt.caller)
@@ -102,8 +102,8 @@ func TestRemoveFromSwapWhiteList(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
 			swapWhitelist = make(map[std.Address]bool)
-			roleAddresses[prbac.ROLE_ADMIN.String()] = testutils.TestAddress("admin")
-			roleAddresses[prbac.ROLE_GOVERNANCE.String()] = testutils.TestAddress("governance")
+			roleAddresses[prbac.ROLE_ADMIN.String()] = map[int]std.Address{1: testutils.TestAddress("admin")}
+			roleAddresses[prbac.ROLE_GOVERNANCE.String()] = map[int]std.Address{1: testutils.TestAddress("governance")}
 
 			// Pre-add router
 			swapWhitelist[tt.router] = true
@@ -155,7 +155,7 @@ func TestIsSwapWhitelisted(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
 			swapWhitelist = make(map[std.Address]bool)
-			roleAddresses[prbac.ROLE_ROUTER.String()] = officialRouter
+			roleAddresses[prbac.ROLE_ROUTER.String()] = map[int]std.Address{1: officialRouter}
 			swapWhitelist[whitelistedRouter] = true
 
 			result := IsSwapWhitelisted(tt.router)
@@ -199,7 +199,7 @@ func TestGetWhitelistedSwaps(t *testing.T) {
 			// Setup
 			swapWhitelist = make(map[std.Address]bool)
 			if tt.officialRouter.IsValid() {
-				roleAddresses[prbac.ROLE_ROUTER.String()] = tt.officialRouter
+				roleAddresses[prbac.ROLE_ROUTER.String()] = map[int]std.Address{1: tt.officialRouter}
 			} else {
 				delete(roleAddresses, prbac.ROLE_ROUTER.String())
 			}

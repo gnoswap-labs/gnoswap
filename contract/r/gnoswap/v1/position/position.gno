@@ -59,11 +59,11 @@ func Mint(
 	caller std.Address,
 	referrer string,
 ) (uint64, string, string, string) {
-	halt.AssertIsNotHaltedPosition()
+	halt.AssertIsNotHaltedPositionWithVersion(1)
 
 	previousRealm := std.PreviousRealm()
 	if !previousRealm.IsUser() {
-		access.AssertIsStaker(previousRealm.Address())
+		access.AssertIsStakerWithVersion(1, previousRealm.Address())
 	} else {
 		assertEqualsAddress(previousRealm.Address(), mintTo)
 		assertEqualsAddress(previousRealm.Address(), caller)
@@ -176,7 +176,7 @@ func IncreaseLiquidity(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, string, string, string) {
-	halt.AssertIsNotHaltedPosition()
+	halt.AssertIsNotHaltedPositionWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	assertIsOwnerForToken(positionId, caller)
@@ -308,8 +308,8 @@ func DecreaseLiquidity(
 	deadline int64,
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) {
-	halt.AssertIsNotHaltedPosition()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedPositionWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	assertIsOwnerForToken(positionId, caller)
@@ -381,8 +381,8 @@ func CollectFee(
 	positionId uint64,
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string) {
-	halt.AssertIsNotHaltedPosition()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedPositionWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	assertIsOwnerOrOperatorForToken(positionId, caller)
@@ -442,7 +442,7 @@ func collectFee(
 	amount0WithoutFee, fee0 := calculateAmountWithWithdrawalFee(amount0, withdrawalFeeBps)
 	amount1WithoutFee, fee1 := calculateAmountWithWithdrawalFee(amount1, withdrawalFeeBps)
 
-	poolAddr, ok := access.GetAddress(prabc.ROLE_POOL.String())
+	poolAddr, ok := access.GetAddressWithVersion(prabc.ROLE_POOL.String(), 1)
 	if !ok {
 		panic("pool address not found")
 	}
@@ -459,7 +459,7 @@ func collectFee(
 		common.SafeGRC20TransferFrom(cross, token1, poolAddr, caller, amount1WithoutFee)
 	}
 
-	protocolFeeAddr, ok := access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	protocolFeeAddr, ok := access.GetAddressWithVersion(prabc.ROLE_PROTOCOL_FEE.String(), 1)
 	if !ok {
 		panic("protocol fee address not found")
 	}
@@ -526,10 +526,10 @@ func SetPositionOperator(
 	id uint64,
 	operator std.Address,
 ) {
-	halt.AssertIsNotHaltedPosition()
+	halt.AssertIsNotHaltedPositionWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsStaker(caller)
+	access.AssertIsStakerWithVersion(1, caller)
 
 	position := MustGetPosition(id)
 	position.operator = operator

@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/rbac"
@@ -131,6 +131,16 @@ func formatBool(v bool) string {
 // getRoleAddress retrieves the address for a system role.
 func getRoleAddress(role prbac.SystemRole) std.Address {
 	addr, exists := access.GetAddress(role.String())
+	if !exists {
+		return rbac.DefaultRoleAddresses[role]
+	}
+
+	return addr
+}
+
+// getRoleAddressWithVersion retrieves the address for a system role.
+func getRoleAddressWithVersion(role prbac.SystemRole, version int) std.Address {
+	addr, exists := access.GetAddressWithVersion(role.String(), version)
 	if !exists {
 		return rbac.DefaultRoleAddresses[role]
 	}
