@@ -184,6 +184,7 @@ func TestFinalizeSwap(t *testing.T) {
 				tt.userWrappedWugnot,
 				tt.amountSpecified,
 				tt.swapCount,
+				false,
 			)
 
 			if !tt.expectError {
