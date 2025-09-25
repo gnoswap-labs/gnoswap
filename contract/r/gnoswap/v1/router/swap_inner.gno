@@ -45,9 +45,8 @@ func swapInner(
 		amountSpecified.ToString(),
 		sqrtPriceLimitX96.ToString(),
 		data.payer,
-		func(amount0Delta, amount1Delta string) error {
+		func(cur realm, amount0Delta, amount1Delta string) error {
 			return swapCallback(
-				cross,
 				token0Path,
 				token1Path,
 				amount0Delta,

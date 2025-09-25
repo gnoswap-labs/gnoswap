@@ -145,7 +145,12 @@ func (p *Pool) safeTransferFrom(
 }
 
 // safeSwapCallback validates the balance of the token path with the swap callback.
-func (p *Pool) safeSwapCallback(tokenPath string, amount *i256.Int, zeroForOne bool, swapCallback func(amount0Delta, amount1Delta string) error) {
+func (p *Pool) safeSwapCallback(
+	tokenPath string,
+	amount *i256.Int,
+	zeroForOne bool,
+	swapCallback func(cur realm, amount0Delta, amount1Delta string) error,
+) {
 	if swapCallback == nil {
 		panic(makeErrorWithDetails(
 			errInvalidInput,
@@ -174,7 +179,7 @@ func (p *Pool) safeSwapCallback(tokenPath string, amount *i256.Int, zeroForOne b
 	}
 
 	// execute swap callback
-	err := swapCallback(amount0Str, amount1Str)
+	err := swapCallback(cross, amount0Str, amount1Str)
 	if err != nil {
 		panic(err)
 	}

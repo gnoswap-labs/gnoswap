@@ -122,7 +122,7 @@ func Swap(
 	amountSpecified string,
 	sqrtPriceLimitX96 string,
 	payer std.Address,
-	swapCallback func(amount0Delta, amount1Delta string) error,
+	swapCallback func(cur realm, amount0Delta, amount1Delta string) error,
 ) (string, string) {
 	halt.AssertIsNotHaltedPool()
 

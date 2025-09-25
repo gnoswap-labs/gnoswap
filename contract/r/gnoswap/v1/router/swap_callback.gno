@@ -18,7 +18,6 @@ import (
 // 2. Just-in-time token transfers
 // 3. Complex multi-hop swaps without intermediate transfers
 func swapCallback(
-	cur realm,
 	token0Path, token1Path string,
 	amount0Delta, amount1Delta string,
 	payer std.Address,
