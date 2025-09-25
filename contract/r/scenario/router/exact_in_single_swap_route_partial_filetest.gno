@@ -161,7 +161,7 @@ func exactInSingleSwapRouteBy(
 		specifiedAmount,
 		routeQueryString,
 		minAmountOut,
-		"0",
+		common.TickMathGetSqrtRatioAtTick(-10).ToString(),
 		int64(9999999999),
 		"",
 	)
@@ -176,27 +176,27 @@ func exactInSingleSwapRouteBy(
 }
 
 // Output:
-//[SCENARIO] 1. Initialize Setup
-//[INFO] GNS Balance of admin: 100000000000000
-//[INFO] WUGNOT Balance of admin: 100000000000000
+// [SCENARIO] 1. Initialize Setup
+// [INFO] GNS Balance of admin: 100000000000000
+// [INFO] WUGNOT Balance of admin: 100000000000000
 //
-//[SCENARIO] 2. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500) with unbalance position balance
-//[EXPECTED] created gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500 pool at tick 0
-//[INFO] Minting position
-//[EXPECTED] positionId: 1
-//[EXPECTED] liquidity: 340264708
-//[EXPECTED] amount0: 100000000
-//[EXPECTED] amount1: 100000000
+// [SCENARIO] 2. Create Pool And Mint Position (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500) with unbalance position balance
+// [EXPECTED] created gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500 pool at tick 0
+// [INFO] Minting position
+// [EXPECTED] positionId: 1
+// [EXPECTED] liquidity: 340264708
+// [EXPECTED] amount0: 100000000
+// [EXPECTED] amount1: 100000000
 //
-//[SCENARIO] 3. ExactInSwapRoute
-//[INFO] ExactInSwapRoute
-//[INFO] inputToken: gnot
-//[INFO] outputToken: gno.land/r/gnoswap/gns
-//[INFO] specifiedAmount: 10000000
-//[INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500
-//[INFO] queryRatios: 100
-//[INFO] minAmountOut: 1
-//[EXPECTED] inputTokenAmount(GNS): 10000000
-//[EXPECTED] outputTokenAmount(GNOT): -9695218
-//[EXPECTED] GNS balance changed: 9695218
-//[EXPECTED] GNOT balance changed: -10000000
+// [SCENARIO] 3. ExactInSwapRoute
+// [INFO] ExactInSwapRoute
+// [INFO] inputToken: gnot
+// [INFO] outputToken: gno.land/r/gnoswap/gns
+// [INFO] specifiedAmount: 10000000
+// [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500
+// [INFO] queryRatios: 100
+// [INFO] minAmountOut: 1
+// [EXPECTED] inputTokenAmount(GNS): 170253
+// [EXPECTED] outputTokenAmount(GNOT): -169826
+// [EXPECTED] GNS balance changed: 169826
+// [EXPECTED] GNOT balance changed: -170253
