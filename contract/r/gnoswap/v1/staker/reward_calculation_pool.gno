@@ -504,21 +504,36 @@ func (self *Pool) endUnclaimablePeriod(currentTime int64) {
 }
 
 // processUnclaimableReward processes the unclaimable reward and returns the accumulated reward.
-// It resets unclaimableAcc to 0 and only updates lastUnclaimableTime if the pool is currently unclaimable.
+// It resets unclaimableAcc to 0 and properly manages lastUnclaimableTime based on pool state.
 func (self *Pool) processUnclaimableReward(poolTier *PoolTier, endTime int64) int64 {
+	// Check current pool liquidity state
+	isCurrentlyUnclaimable := self.CurrentStakedLiquidity(endTime).IsZero()
+
+	if self.lastUnclaimableTime > 0 {
+		// We have an ongoing unclaimable period tracking
+		if isCurrentlyUnclaimable {
+			// Still unclaimable - accumulate rewards up to endTime
+			unclaimableDuration := endTime - self.lastUnclaimableTime
+			if unclaimableDuration > 0 {
+				self.unclaimableAcc += unclaimableDuration * self.CurrentReward(self.lastUnclaimableTime)
+			}
+			// Update tracking time for continuing unclaimable period
+			self.lastUnclaimableTime = endTime
+		} else {
+			// Was unclaimable but now has liquidity - properly end the period
+			self.endUnclaimablePeriod(endTime)
+		}
+	} else if isCurrentlyUnclaimable {
+		// No previous tracking but currently unclaimable - this shouldn't normally happen
+		// as startUnclaimablePeriod should have been called when liquidity reached 0
+		// Start tracking from now
+		self.lastUnclaimableTime = endTime
+	}
+	// else: Not unclaimable and no previous tracking - normal claimable state
+
+	// Return and reset accumulated unclaimable rewards
 	internalUnClaimable := self.unclaimableAcc
 	self.unclaimableAcc = 0
-
-	// Only update lastUnclaimableTime if pool is currently in unclaimable state (zero liquidity)
-	// This prevents incorrect tracking when called during claimable periods
-	if self.CurrentStakedLiquidity(endTime).IsZero() {
-		// Pool is unclaimable, update the tracking time
-		self.lastUnclaimableTime = endTime
-	} else {
-		// Pool is claimable, reset tracking to prevent incorrect accumulation
-		self.lastUnclaimableTime = 0
-	}
-
 	return internalUnClaimable
 }
 
