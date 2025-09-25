@@ -65,11 +65,6 @@ func swapInner(
 		panic("overflow in swapInner")
 	}
 
-	// approves pool as spender
-	if data.hasNext {
-		common.SafeGRC20Approve(cross, data.tokenOut, poolAddr, poolOut.Int64())
-	}
-
 	return poolRecv, poolOut
 }
 
@@ -85,7 +80,7 @@ func (e *RealSwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u2
 		p.amountSpecified,
 		recipient,             // if single swap => user will receive
 		p.SqrtPriceLimitX96(), // sqrtPriceLimitX96
-		newSwapCallbackData(p, caller, false),
+		newSwapCallbackData(p, caller),
 	)
 }
 
@@ -132,7 +127,7 @@ func (e *DrySwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u25
 	return swapDryInner(
 		p.amountSpecified,
 		zero,
-		newSwapCallbackData(p, previousRealmAddr, false),
+		newSwapCallbackData(p, previousRealmAddr),
 	)
 }
 

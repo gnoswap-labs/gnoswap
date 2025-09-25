@@ -85,7 +85,7 @@ func (p *MultiSwapProcessor) processForwardSwap(sp SwapParams, numPools int, swa
 		currentPoolIndex++
 
 		// Execute the swap operation
-		callbackData := newSwapCallbackData(sp, payer, currentPoolIndex != numPools)
+		callbackData := newSwapCallbackData(sp, payer)
 		amountIn, amountOut := p.executor.Run(sp, callbackData, sp.recipient)
 
 		// Record the first hop's input amount
@@ -126,7 +126,7 @@ func (p *MultiSwapProcessor) processBackwardDrySwap(sp SwapParams, numPools int,
 	payer := routerAddr
 
 	for {
-		callbackData := newSwapCallbackData(sp, payer, false)
+		callbackData := newSwapCallbackData(sp, payer)
 		amountIn, amountOut := p.executor.Run(sp, callbackData, sp.recipient)
 
 		if currentPoolIndex == 0 {
@@ -204,7 +204,6 @@ func (p *MultiSwapProcessor) executeCollectedSwaps(swapInfo []SingleSwapParams, 
 		callbackData := newSwapCallbackData(
 			swapInfo[currentPoolIndex],
 			payer,
-			currentPoolIndex != 0,
 		)
 
 		amountIn, amountOut := swapInner(
