@@ -548,7 +548,7 @@ func TestProtocolFeesDisabledWhenNotConfigured(t *testing.T) {
 		adminAddr,
 	)
 
-	swapCallback := func(amount0Delta string, amount1Delta string) error {
+	swapCallback := func(cur realm, amount0Delta string, amount1Delta string) error {
 		testing.SetRealm(adminRealm)
 
 		amount0Int64, _ := strconv.ParseInt(amount0Delta, 10, 64)

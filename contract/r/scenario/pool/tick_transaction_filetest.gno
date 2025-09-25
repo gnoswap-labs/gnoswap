@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (
@@ -152,7 +154,7 @@ func main() {
 		"3",
 		MIN_PRICE,
 		adminAddr,
-		func(amount0Delta, amount1Delta string) error {
+		func(cur realm, amount0Delta, amount1Delta string) error {
 			return mockSwapCallback(fooPath, barPath, amount0Delta, amount1Delta)
 		},
 	)

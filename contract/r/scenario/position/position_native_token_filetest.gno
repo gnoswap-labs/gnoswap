@@ -1,6 +1,6 @@
 // position handle native token
 
-// PKGPATH: gno.land/r/gnoswap/v1/main
+// PKGPATH: gno.land/r/demo/main
 
 package main
 
@@ -155,7 +155,7 @@ func executeSwap() {
 		"1234567",
 		MIN_PRICE,
 		adminAddr,
-		func(amount0Delta, amount1Delta string) error {
+		func(cur realm, amount0Delta, amount1Delta string) error {
 			return mockSwapCallback(WUGNOT_PATH, GNS_PATH, amount0Delta, amount1Delta, true)
 		},
 	)

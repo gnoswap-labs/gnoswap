@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (
@@ -140,7 +142,7 @@ func TestSwapBuyNative() {
 		"10000",
 		MIN_PRICE,
 		adminAddr,
-		func(amount0Delta, amount1Delta string) error {
+		func(cur realm, amount0Delta, amount1Delta string) error {
 			return mockSwapCallback(WRAPPED_WUGNOT, fooPath, amount0Delta, amount1Delta, true)
 		},
 	)
@@ -176,7 +178,7 @@ func TestSwapSellNative() {
 		"10000",
 		MAX_PRICE,
 		adminAddr,
-		func(amount0Delta, amount1Delta string) error {
+		func(cur realm, amount0Delta, amount1Delta string) error {
 			return mockSwapCallback(WRAPPED_WUGNOT, fooPath, amount0Delta, amount1Delta, false)
 		},
 	)

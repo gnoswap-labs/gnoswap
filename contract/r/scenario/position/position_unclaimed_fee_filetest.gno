@@ -1,4 +1,7 @@
 // position unclaimed fee
+
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (
@@ -205,7 +208,7 @@ func executeFirstSwap() {
 		"1234567",
 		MIN_PRICE,
 		adminAddr,
-		func(amount0Delta, amount1Delta string) error {
+		func(cur realm, amount0Delta, amount1Delta string) error {
 			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
 		},
 	)
@@ -239,7 +242,7 @@ func executeSecondSwap() {
 		"20000000",
 		MIN_PRICE,
 		adminAddr,
-		func(amount0Delta, amount1Delta string) error {
+		func(cur realm, amount0Delta, amount1Delta string) error {
 			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
 		},
 	)
@@ -273,7 +276,7 @@ func executeThirdSwap() {
 		"20000000",
 		MAX_PRICE,
 		adminAddr,
-		func(amount0Delta, amount1Delta string) error {
+		func(cur realm, amount0Delta, amount1Delta string) error {
 			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, false)
 		},
 	)

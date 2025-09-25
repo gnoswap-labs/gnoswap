@@ -1,6 +1,6 @@
 // position mint GNOT/GRC20 range
 
-// PKGPATH: gno.land/r/gnoswap/v1/main
+// PKGPATH: gno.land/r/demo/main
 
 package main
 
@@ -216,7 +216,7 @@ func executeSwap() {
 		"10000000",
 		MIN_PRICE,
 		adminAddr,
-		func(amount0Delta, amount1Delta string) error {
+		func(cur realm, amount0Delta, amount1Delta string) error {
 			return mockSwapCallback(token0Path, token1Path, amount0Delta, amount1Delta, true)
 		},
 	)

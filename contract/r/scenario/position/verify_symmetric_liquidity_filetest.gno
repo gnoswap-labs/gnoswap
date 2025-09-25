@@ -1,14 +1,16 @@
 // verify symmetric liquidity test - checking if capital efficiency issue is real
 
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (
 	"std"
 	"testing"
 
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/ufmt"
-	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"

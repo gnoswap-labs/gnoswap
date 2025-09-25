@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (
@@ -268,7 +270,7 @@ func TestSwap() {
 			"10000",    // _amountSpecified
 			test_price, // _sqrtPriceLimitX96
 			adminAddr,  // payer
-			func(amount0Delta, amount1Delta string) error {
+			func(cur realm, amount0Delta, amount1Delta string) error {
 				return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
 			},
 		)
@@ -300,7 +302,7 @@ func TestSwap() {
 		// set current realm and origin caller
 		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 
-		amount0, amount1 := pl.Swap(cross, barPath, fooPath, fee500, adminAddr, true, "5000", test_price, adminAddr, func(amount0Delta, amount1Delta string) error {
+		amount0, amount1 := pl.Swap(cross, barPath, fooPath, fee500, adminAddr, true, "5000", test_price, adminAddr, func(cur realm, amount0Delta, amount1Delta string) error {
 			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
 		}) // give enough amount to take fees away
 
@@ -338,7 +340,7 @@ func TestSwap() {
 			"1000",
 			test_price,
 			adminAddr,
-			func(amount0Delta, amount1Delta string) error {
+			func(cur realm, amount0Delta, amount1Delta string) error {
 				return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
 			},
 		) // give enough amount to take fees away
@@ -368,7 +370,7 @@ func TestSwap() {
 
 		// set current realm and origin caller
 		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
-		amount0, amount1 := pl.Swap(cross, barPath, fooPath, fee500, adminAddr, false, "16000", MAX_PRICE, adminAddr, func(amount0Delta, amount1Delta string) error {
+		amount0, amount1 := pl.Swap(cross, barPath, fooPath, fee500, adminAddr, false, "16000", MAX_PRICE, adminAddr, func(cur realm, amount0Delta, amount1Delta string) error {
 			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, false)
 		}) // give enough amount to take fees away
 

@@ -1,6 +1,6 @@
 // position mint and balance check
 
-// PKGPATH: gno.land/r/gnoswap/v1/main
+// PKGPATH: gno.land/r/demo/main
 
 package main
 
