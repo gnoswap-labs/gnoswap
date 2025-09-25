@@ -270,7 +270,7 @@ amountIn, amountOut := ExactInSingleSwapRoute(
     "",
 )
 // If price limit is reached, only partial amount is swapped
-// Remaining input tokens stay with user (no refund needed for ERC20 tokens)
+// Remaining input tokens stay with user (no refund needed for GRC20 tokens)
 ```
 
 ### Native GNOT Swaps with Refunds
@@ -347,7 +347,7 @@ The `ExactInSingleSwapRoute` and `ExactOutSingleSwapRoute` functions support par
 
 - Swap may consume less than the specified input amount
 - Price impact is limited by the price limit parameter
-- Remaining tokens are handled automatically (refunded for native GNOT, stay with user for ERC20)
+- Remaining tokens are handled automatically (refunded for native GNOT, stay with user for GRC20)
 - This is useful for large trades to prevent excessive slippage
 
 ## Security
