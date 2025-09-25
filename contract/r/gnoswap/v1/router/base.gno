@@ -263,6 +263,10 @@ func (p *SwapRouteParams) SwapCount() int64 {
 	return swapCount
 }
 
+func (p *SwapRouteParams) IsSetSqrtPriceLimitX96() bool {
+	return p.sqrtPriceLimitX96 != "" && p.sqrtPriceLimitX96 != zeroString
+}
+
 // createSwapOperation creates the appropriate swap operation based on swap type.
 func createSwapOperation(params SwapRouteParams) (RouterOperation, error) {
 	baseParams := BaseSwapParams{
@@ -339,6 +343,7 @@ func commonSwapRoute(params SwapRouteParams) (*i256.Int, *i256.Int, error) {
 		userWrappedWugnot,
 		result.AmountSpecified.Abs(),
 		params.SwapCount(),
+		params.IsSetSqrtPriceLimitX96(),
 	)
 
 	return inputAmount, outputAmount, nil

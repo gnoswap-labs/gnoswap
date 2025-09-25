@@ -247,11 +247,13 @@ func finalizeSwap(
 	userBeforeWugnotBalance, userWrappedWugnot int64,
 	amountSpecified *u256.Uint,
 	swapCount int64,
+	isSetSqrtPriceLimitX96 bool,
 ) (*i256.Int, *i256.Int) {
 	validator := &SwapValidator{}
 
 	// Validate exact out amount if applicable
-	if swapType == ExactOut {
+	// If sqrtPriceLimitX96 is set, slippage check is not needed
+	if swapType == ExactOut && !isSetSqrtPriceLimitX96 {
 		if err := validator.exactOutAmount(resultAmountOut, amountSpecified, swapCount); err != nil {
 			panic(addDetailToError(errSlippage, err.Error()))
 		}
