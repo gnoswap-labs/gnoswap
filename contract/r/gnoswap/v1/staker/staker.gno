@@ -494,9 +494,6 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 	// get all internal and external rewards
 	reward := calcPositionReward(blockHeight, currentTime, positionId)
 
-	// update lastCollectTime to current time
-	deposit.lastCollectTime = currentTime
-
 	// transfer external rewards to user
 	externalReward := reward.External
 	toUserExternalReward := make(map[string]int64)
@@ -635,6 +632,10 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		"rewardUnClaimableAmount", formatInt(unClaimableInternal),
 		"currentTime", formatInt(currentTime),
 	)
+
+	// Update lastCollectTime AFTER all rewards have been successfully transferred
+	deposit.lastCollectTime = currentTime
+	deposits.set(positionId, deposit)
 
 	return rewardToUser, rewardPenalty, toUserExternalReward, toUserExternalPenalty
 }
