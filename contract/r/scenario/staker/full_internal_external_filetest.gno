@@ -409,10 +409,6 @@ func oneClickStakingPos07OutRange() {
 	sr.CollectReward(cross, 7, false)
 	newCommunityPool := gns.BalanceOf(communityPoolAddr)
 
-	// Unclaimable rewards are only tracked after liquidity has been added and then removed.
-	// Since this pool never had any in-range liquidity (position 07 is out-of-range),
-	// no unclaimable period is tracked, resulting in 0 rewards to community pool.
-	// This is the correct behavior - pools without any liquidity history should not accumulate unclaimable rewards.
 	rewardToCommunity := newCommunityPool - oldCommunityPool
 	ufmt.Printf("[EXPECTED] reward to community pool: %d\n", rewardToCommunity)
 
