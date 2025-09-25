@@ -140,7 +140,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, 
 	collectAmount0 := u256.MustFromDecimal(collect0)
 	collectAmount1 := u256.MustFromDecimal(collect1)
 
-	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
+	poolAddr := access.MustGetAddressWithVersion(prabc.ROLE_POOL.String(), 1)
 
 	if isWrappedToken(pToken0) && params.unwrapResult {
 		unwrapWithTransferFrom(poolAddr, caller, safeConvertToInt64(collectAmount0))
@@ -223,6 +223,5 @@ func calculateTokensOwed(
 	if underflow {
 		panic(newErrorWithDetail(errUnderflow, "feeGrowthInsideLastX128 - positionFeeGrowthInsideLastX128 underflow"))
 	}
-	// TODO: make Q128 a global variable
-	return u256.MulDiv(diff, positionLiquidity, u256.MustFromDecimal(Q128))
+	return u256.MulDiv(diff, positionLiquidity, q128)
 }

@@ -6,9 +6,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-const (
-	Q128 string = "340282366920938463463374607431768211456" // 2 ** 128
-)
+// 2 ** 128
+var q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")
 
 // Previously, we used a different zero address ("g1000000..."),
 // but we changed the value because using the address

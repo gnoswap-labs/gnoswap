@@ -83,14 +83,14 @@ func TestRegisterRoleWithAddressParameter(t *testing.T) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
 				// Pre-register a role
-				manager.RegisterRole("duplicate_role")
-				manager.UpdateRoleAddress("duplicate_role", testutils.TestAddress("original"))
+				manager.RegisterRole("duplicate_role", testutils.TestAddress("original"))
+				manager.UpdateRoleAddress("duplicate_role", 1, testutils.TestAddress("original"))
 			},
 			roleName:      "duplicate_role",
 			roleAddress:   testutils.TestAddress("new_address"),
 			callerRealm:   ADMIN,
 			shouldPanic:   true,
-			panicContains: "already exists",
+			panicContains: "role duplicate_role already exists",
 		},
 		{
 			name: "Register system role with new address fails (GOVERNANCE)",
@@ -102,7 +102,7 @@ func TestRegisterRoleWithAddressParameter(t *testing.T) {
 			roleAddress:   testutils.TestAddress("new_admin"),
 			callerRealm:   GOV_GOVERNANCE_ADDR,
 			shouldPanic:   true,
-			panicContains: "already exists",
+			panicContains: "role admin already exists",
 		},
 		{
 			name: "Register role with unauthorized caller fails",
@@ -114,7 +114,7 @@ func TestRegisterRoleWithAddressParameter(t *testing.T) {
 			roleAddress:   testutils.TestAddress("some_address"),
 			callerRealm:   testutils.TestAddress("random_user"),
 			shouldPanic:   true,
-			panicContains: "unauthorized",
+			panicContains: "caller is not admin or governance",
 		},
 		{
 			name: "Register role with devops caller fails (not admin or governance)",
@@ -126,7 +126,7 @@ func TestRegisterRoleWithAddressParameter(t *testing.T) {
 			roleAddress:   testutils.TestAddress("devops_address"),
 			callerRealm:   DEV_OPS,
 			shouldPanic:   true,
-			panicContains: "unauthorized",
+			panicContains: "caller is not admin or governance",
 		},
 	}
 
@@ -150,9 +150,8 @@ func TestRegisterRoleWithAddressParameter(t *testing.T) {
 				uassert.Equal(t, addr, tt.roleAddress, "Role address mismatch")
 
 				// Verify role is synchronized with access package
-				allRoles := manager.GetRoleAddresses()
-				registeredAddr, exists := allRoles[tt.roleName]
-				uassert.True(t, exists, "Role should exist in manager")
+				allRoles := manager.GetRoleAddresses(tt.roleName)
+				registeredAddr := allRoles[manager.GetRoleLatestVersion(tt.roleName)]
 				uassert.Equal(t, registeredAddr, tt.roleAddress, "Address mismatch in role map")
 			}
 		})
@@ -172,7 +171,7 @@ func TestRemoveRole(t *testing.T) {
 			setup: func() {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
-				manager.RegisterRole("removable_role")
+				manager.RegisterRole("removable_role", testutils.TestAddress("removable_address"))
 			},
 			roleName:    "removable_role",
 			shouldError: false,
@@ -212,7 +211,7 @@ func TestRemoveRole(t *testing.T) {
 			setup: func() {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
-				manager.RegisterRole("remove_twice_role")
+				manager.RegisterRole("remove_twice_role", testutils.TestAddress("remove_twice_address"))
 				manager.RemoveRole("remove_twice_role") // First removal
 			},
 			roleName:    "remove_twice_role",
@@ -293,7 +292,7 @@ func TestUpdateRoleAddress(t *testing.T) {
 
 	// Register a test role
 	testRole := "test_update_role"
-	err := manager.RegisterRole(testRole)
+	err := manager.RegisterRole(testRole, testutils.TestAddress("test_update_address"))
 	if err != nil {
 		t.Fatalf("Failed to register test role: %v", err)
 	}
@@ -327,7 +326,7 @@ func TestUpdateRoleAddress(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test manager functionality directly
-			err := manager.UpdateRoleAddress(tt.roleName, tt.addr)
+			err := manager.UpdateRoleAddress(tt.roleName, 1, tt.addr)
 
 			if tt.shouldErr {
 				if err == nil {
@@ -362,12 +361,12 @@ func TestUpdateAccessRoleAddresses(t *testing.T) {
 	// but we can verify the function doesn't panic when called
 	// Register a new role and update its address to trigger updateAccessRoleAddresses
 	testRole := "test_access_update"
-	err := manager.RegisterRole(testRole)
+	err := manager.RegisterRole(testRole, testutils.TestAddress("test_access"))
 	if err != nil {
 		t.Fatalf("Failed to register test role: %v", err)
 	}
 
-	err = manager.UpdateRoleAddress(testRole, DEV_OPS)
+	err = manager.UpdateRoleAddress(testRole, 1, DEV_OPS)
 	if err != nil {
 		t.Fatalf("Failed to update role address: %v", err)
 	}
@@ -412,8 +411,8 @@ func TestAddressChangeComplete(t *testing.T) {
 			setup: func() {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
-				manager.RegisterRole("custom_role")
-				manager.UpdateRoleAddress("custom_role", testutils.TestAddress("custom"))
+				manager.RegisterRole("custom_role", testutils.TestAddress("custom_address"))
+				manager.UpdateRoleAddress("custom_role", 1, testutils.TestAddress("custom"))
 			},
 			roleName:      "custom_role",
 			oldAddress:    testutils.TestAddress("custom"),
@@ -452,7 +451,7 @@ func TestAddressChangeComplete(t *testing.T) {
 
 				// Change pool too
 				newPoolAddr := testutils.TestAddress("new_pool")
-				err = manager.UpdateRoleAddress(prbac.ROLE_POOL.String(), newPoolAddr)
+				err = manager.UpdateRoleAddress(prbac.ROLE_POOL.String(), 1, newPoolAddr)
 				if err != nil {
 					t.Errorf("Failed to update pool address: %v", err)
 				}
@@ -487,7 +486,7 @@ func TestAddressChangeComplete(t *testing.T) {
 			}
 
 			// Update address
-			err = manager.UpdateRoleAddress(tt.roleName, tt.newAddress)
+			err = manager.UpdateRoleAddress(tt.roleName, 1, tt.newAddress)
 			if tt.expectSuccess && err != nil {
 				t.Fatalf("UpdateRoleAddress failed: %v", err)
 			} else if !tt.expectSuccess && err == nil {
@@ -575,12 +574,12 @@ func TestRBACToAccessSync(t *testing.T) {
 			for _, op := range tt.operations {
 				switch op.action {
 				case "register":
-					err := manager.RegisterRole(op.roleName)
+					err := manager.RegisterRole(op.roleName, op.address)
 					if err != nil {
 						t.Errorf("Failed to register role %s: %v", op.roleName, err)
 					}
 				case "update":
-					err := manager.UpdateRoleAddress(op.roleName, op.address)
+					err := manager.UpdateRoleAddress(op.roleName, 1, op.address)
 					if err != nil {
 						t.Errorf("Failed to update role %s: %v", op.roleName, err)
 					}
@@ -593,13 +592,13 @@ func TestRBACToAccessSync(t *testing.T) {
 			}
 
 			// Verify final state in RBAC
-			allRoles := manager.GetRoleAddresses()
+			allRoles := manager.GetRoleAddresses(tt.operations[len(tt.operations)-1].roleName)
 			for roleName, expectedAddr := range tt.verifyRoles {
-				actualAddr, exists := allRoles[roleName]
-				if !exists {
-					t.Errorf("Role %s should exist in RBAC", roleName)
+				if len(allRoles) == 0 {
 					continue
 				}
+
+				actualAddr := allRoles[manager.GetRoleLatestVersion(roleName)]
 				if actualAddr != expectedAddr {
 					t.Errorf("Role %s address mismatch: got %s, want %s", roleName, actualAddr, expectedAddr)
 				}
@@ -608,8 +607,9 @@ func TestRBACToAccessSync(t *testing.T) {
 			// Verify removed roles don't exist
 			for _, op := range tt.operations {
 				if op.action == "remove" {
-					if _, exists := allRoles[op.roleName]; exists {
+					if len(allRoles) != 0 {
 						t.Errorf("Role %s should not exist after removal", op.roleName)
+						continue
 					}
 				}
 			}

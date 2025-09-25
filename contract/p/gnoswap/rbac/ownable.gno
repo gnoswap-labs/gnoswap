@@ -28,12 +28,12 @@ func newOwnable2StepWithAddress(addr std.Address) *Ownable2Step {
 // TransferOwnership initiates ownership transfer by setting newOwner as pending owner.
 // The new owner must call AcceptOwnership to complete the transfer.
 // Only the current owner can call this function.
-func (o *Ownable2Step) TransferOwnership(newOwner std.Address) error {
-	if !o.OwnedByOriginCaller() {
+func (o *Ownable2Step) TransferOwnershipBy(newOwner, caller std.Address) error {
+	if !o.IsOwner(caller) {
 		return ErrUnauthorized
 	}
 
-	if !newOwner.IsValid() {
+	if newOwner.String() == "" || !newOwner.IsValid() {
 		return ErrInvalidAddress
 	}
 
@@ -50,12 +50,12 @@ func (o *Ownable2Step) TransferOwnership(newOwner std.Address) error {
 
 // AcceptOwnership completes the ownership transfer.
 // Must be called by the pending owner. Panics if no pending owner exists or caller is not the pending owner.
-func (o *Ownable2Step) AcceptOwnership() error {
-	if o.pendingOwner.String() == "" {
+func (o *Ownable2Step) AcceptOwnershipBy(caller std.Address) error {
+	if o.pendingOwner == "" {
 		return ErrNoPendingOwner
 	}
 
-	if std.OriginCaller() != o.pendingOwner {
+	if !o.IsPendingOwner(caller) {
 		return ErrPendingUnauthorized
 	}
 
@@ -76,8 +76,8 @@ func (o *Ownable2Step) AcceptOwnership() error {
 // When used at the top level, it disables all owner-only functions.
 // When embedded, it acts like a burn function, removing ownership from the struct.
 // Only the current owner can call this function.
-func (o *Ownable2Step) DropOwnership() error {
-	if !o.OwnedByOriginCaller() {
+func (o *Ownable2Step) DropOwnershipBy(caller std.Address) error {
+	if !o.IsOwner(caller) {
 		return ErrUnauthorized
 	}
 
@@ -104,7 +104,12 @@ func (o *Ownable2Step) PendingOwner() std.Address {
 	return o.pendingOwner
 }
 
-// OwnedByOriginCaller returns true if the origin caller is the current owner.
-func (o *Ownable2Step) OwnedByOriginCaller() bool {
-	return std.OriginCaller() == o.owner
+// IsOwner returns true if the origin caller is the current owner.
+func (o *Ownable2Step) IsOwner(caller std.Address) bool {
+	return o.owner == caller
+}
+
+// IsPendingOwner returns true if the origin caller is the pending owner.
+func (o *Ownable2Step) IsPendingOwner(caller std.Address) bool {
+	return o.pendingOwner == caller
 }

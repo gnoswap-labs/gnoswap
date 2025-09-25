@@ -31,7 +31,7 @@ func CreateExternalIncentive(
 	startTimestamp int64,
 	endTimestamp int64,
 ) {
-	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsUser(std.PreviousRealm())
@@ -48,7 +48,9 @@ func CreateExternalIncentive(
 	en.MintAndDistributeGns(cross)
 
 	// transfer reward token from user to staker
+	isRequestUnwrap := false
 	if rewardToken == GNOT {
+		isRequestUnwrap = true
 		rewardToken = WUGNOT_PATH
 		err := wrapWithTransfer(stakerAddr, rewardAmount)
 		if err != nil {
@@ -77,6 +79,7 @@ func CreateExternalIncentive(
 		currentHeight,
 		depositGnsAmount,
 		currentTime,
+		isRequestUnwrap,
 	)
 
 	if externalIncentives.Has(incentiveId) {
@@ -126,8 +129,8 @@ func CreateExternalIncentive(
 //
 // Only callable by Refundee or Admin.
 func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
-	halt.AssertIsNotHaltedStaker()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	assertIsPoolExists(targetPoolPath)
 
@@ -170,14 +173,15 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 		refund = poolLeftExternalRewardAmount
 	}
 
-	// unwrap if wugnot
-	isUnwrap := incentive.rewardToken == WUGNOT_PATH
-	if isUnwrap {
+	// handle refund based on original token type
+	if incentive.isRequestUnwrap {
+		// unwrap to GNOT if originally deposited as native GNOT
 		transferErr := unwrapWithTransfer(incentive.refundee, refund)
 		if transferErr != nil {
 			panic(transferErr)
 		}
 	} else {
+		// keep as WUGNOT or other token if originally deposited as wrapped token
 		common.SafeGRC20Transfer(cross, incentive.rewardToken, incentive.refundee, refund)
 	}
 
@@ -202,7 +206,7 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 		"refundToken", incentive.rewardToken,
 		"refundAmount", formatInt(refund),
 		"refundGnsAmount", formatInt(incentive.depositGnsAmount),
-		"isRequestUnwrap", formatBool(isUnwrap),
+		"isRequestUnwrap", formatBool(incentive.isRequestUnwrap),
 		"externalIncentiveEndBy", previousRealm.Address().String(),
 	)
 }

@@ -226,7 +226,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 		if underflow {
 			return 0, nil, nil, nil, "", makeErrorWithDetails(errUnderflow, "feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128 underflow")
 		}
-		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.liquidity), u256.MustFromDecimal(Q128))
+		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.liquidity), q128)
 
 		tokensOwed0, overflow := u256.Zero().AddOverflow(position.tokensOwed0, mulDiv)
 		if overflow {
@@ -240,7 +240,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 		if underflow {
 			return 0, nil, nil, nil, "", makeErrorWithDetails(errUnderflow, "feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128 underflow")
 		}
-		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.liquidity), u256.MustFromDecimal(Q128))
+		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.liquidity), q128)
 
 		tokensOwed1, overflow := u256.Zero().AddOverflow(position.tokensOwed1, mulDiv)
 		if overflow {

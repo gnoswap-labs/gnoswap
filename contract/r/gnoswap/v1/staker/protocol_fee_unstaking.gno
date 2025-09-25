@@ -21,8 +21,8 @@ var unstakingFee = int64(100) // 1%
 // GetUnstakingFee returns the current unstaking fee rate in basis points.
 func GetUnstakingFee() int64 { return unstakingFee }
 
-// handleUnStakingFee calculates and applies the unstaking fee.
-func handleUnStakingFee(
+// handleStakingRewardFee calculates and applies the unstaking fee.
+func handleStakingRewardFee(
 	tokenPath string,
 	amount int64,
 	internal bool,
@@ -55,10 +55,10 @@ func handleUnStakingFee(
 // SetUnStakingFee sets the unstaking fee rate in basis points.
 // Only admin or governance can call this function.
 func SetUnStakingFee(cur realm, fee int64) {
-	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsValidFeeRate(fee)
 
