@@ -12,11 +12,7 @@ import (
 	"gno.land/r/gnoswap/v1/gnft"
 )
 
-// GetOrigPkgAddr returns the original package address.
-// In position contract, original package address is the position address.
-func GetOrigPkgAddr() std.Address {
-	return std.CurrentRealm().Address()
-}
+const INT64_MAX = 9223372036854775807
 
 // positionIdFrom converts positionId to grc721.TokenID type
 // NOTE: input parameter positionId can be string, int, uint64, or grc721.TokenID
@@ -57,13 +53,10 @@ func exists(positionId uint64) bool {
 // output: bool
 func isOwner(positionId uint64, addr std.Address) bool {
 	owner, err := gnft.OwnerOf(positionIdFrom(positionId))
-	if err == nil {
-		if owner == addr {
-			return true
-		}
+	if err != nil {
+		return false
 	}
-
-	return false
+	return owner == addr
 }
 
 // isOperator checks whether the caller is the approved operator of the positionId
@@ -81,11 +74,12 @@ func isOperator(positionId uint64, addr std.Address) bool {
 // output: bool
 func isStaked(positionId grc721.TokenID) bool {
 	exist := gnft.Exists(positionId)
-	if exist {
-		owner, err := gnft.OwnerOf(positionId)
-		if err == nil && owner == stakerAddr {
-			return true
-		}
+	if !exist {
+		return false
+	}
+	owner, err := gnft.OwnerOf(positionId)
+	if err == nil && owner == stakerAddr {
+		return true
 	}
 	return false
 }
@@ -169,15 +163,6 @@ func mustParseInt64(v string) int64 {
 	return amountInt
 }
 
-func isTokenOwner(positionId uint64, caller std.Address) bool {
-	owner, err := gnft.OwnerOf(positionIdFrom(positionId))
-	if err != nil {
-		return false
-	}
-
-	return owner == caller
-}
-
 func isSlippageExceeded(amount0, amount1, amount0Min, amount1Min *u256.Uint) bool {
 	return !(amount0.Gte(amount0Min) && amount1.Gte(amount1Min))
 }
@@ -210,15 +195,11 @@ func subUint256(x, y *u256.Uint) *u256.Uint {
 //   - If the `value` exceeds the range of int64, the function will panic with an error indicating
 //     the overflow and the original value.
 func safeConvertToInt64(value *u256.Uint) int64 {
-	const INT64_MAX = 9223372036854775807
-	const MAX_INT64 = "9223372036854775807"
-
 	res, overflow := value.Uint64WithOverflow()
 	if overflow || res > uint64(INT64_MAX) {
 		panic(ufmt.Sprintf(
-			"amount(%s) overflows int64 range (max %s)",
+			"amount(%s) overflows int64 range (max: 9223372036854775807)",
 			value.ToString(),
-			MAX_INT64,
 		))
 	}
 	return int64(res)
