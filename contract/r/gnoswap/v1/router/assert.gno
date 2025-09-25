@@ -68,6 +68,13 @@ func assertIsValidSingleSwapRouteArrPath(routePaths, inputToken, outputToken str
 		))
 	}
 
+	if strings.Count(routePaths, POOL_SEPARATOR) > 0 {
+		panic(makeErrorWithDetails(
+			errInvalidInput,
+			ufmt.Sprintf("invalid routePaths: %s", routePaths),
+		))
+	}
+
 	assertIsValidRoutePaths(routePaths, inputToken, outputToken)
 }
 
