@@ -498,38 +498,48 @@ func (self *Pool) endUnclaimablePeriod(currentTime int64) {
 		// This should not happen, but guarding just in case
 		return
 	}
+
+	self.updateUnclaimableAccumulateRewards(currentTime)
+	self.lastUnclaimableTime = 0
+}
+
+// updateUnclaimableAccumulateRewards ends the unclaimable period.
+// Accumulates to unclaimableAcc and resets lastUnclaimableTime to 0.
+func (self *Pool) updateUnclaimableAccumulateRewards(currentTime int64) {
+	if self.lastUnclaimableTime >= currentTime {
+		return
+	}
+
 	unclaimableDuration := currentTime - self.lastUnclaimableTime
 	self.unclaimableAcc += unclaimableDuration * self.CurrentReward(self.lastUnclaimableTime)
-	self.lastUnclaimableTime = 0
 }
 
 // processUnclaimableReward processes the unclaimable reward and returns the accumulated reward.
 // It resets unclaimableAcc to 0 and properly manages lastUnclaimableTime based on pool state.
 func (self *Pool) processUnclaimableReward(poolTier *PoolTier, endTime int64) int64 {
 	// Check current pool liquidity state
-	isCurrentlyUnclaimable := self.CurrentStakedLiquidity(endTime).IsZero()
+	isZeroStakedLiquidity := self.CurrentStakedLiquidity(endTime).IsZero()
 
 	if self.lastUnclaimableTime > 0 {
 		// We have an ongoing unclaimable period tracking
-		if isCurrentlyUnclaimable {
+		self.updateUnclaimableAccumulateRewards(endTime)
+
+		if isZeroStakedLiquidity {
 			// Still unclaimable - accumulate rewards up to endTime
-			unclaimableDuration := endTime - self.lastUnclaimableTime
-			if unclaimableDuration > 0 {
-				self.unclaimableAcc += unclaimableDuration * self.CurrentReward(self.lastUnclaimableTime)
-			}
 			// Update tracking time for continuing unclaimable period
 			self.lastUnclaimableTime = endTime
 		} else {
 			// Was unclaimable but now has liquidity - properly end the period
-			self.endUnclaimablePeriod(endTime)
+			self.lastUnclaimableTime = 0
 		}
-	} else if isCurrentlyUnclaimable {
-		// No previous tracking but currently unclaimable - this shouldn't normally happen
-		// as startUnclaimablePeriod should have been called when liquidity reached 0
-		// Start tracking from now
-		self.lastUnclaimableTime = endTime
+	} else {
+		if isZeroStakedLiquidity {
+			// No previous tracking but currently unclaimable - this shouldn't normally happen
+			// as startUnclaimablePeriod should have been called when liquidity reached 0
+			// Start tracking from now
+			self.lastUnclaimableTime = endTime
+		}
 	}
-	// else: Not unclaimable and no previous tracking - normal claimable state
 
 	// Return and reset accumulated unclaimable rewards
 	internalUnClaimable := self.unclaimableAcc
