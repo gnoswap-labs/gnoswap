@@ -287,7 +287,14 @@ func (p *Pool) GetTWAP(secondsAgo uint32) (int32, error) {
 	secondsAgos := []uint32{secondsAgo, 0}
 	currentTime := time.Now().Unix()
 
-	tickCumulatives, _, err := p.observationState.observe(currentTime, secondsAgos, 0, p.observationState.cardinality, p.liquidity, p.observationState.cardinality)
+	tickCumulatives, _, err := p.observationState.observe(
+		currentTime,
+		secondsAgos,
+		p.slot0.tick,
+		p.observationState.index,
+		p.liquidity,
+		p.observationState.cardinality,
+	)
 	if err != nil {
 		return 0, err
 	}
