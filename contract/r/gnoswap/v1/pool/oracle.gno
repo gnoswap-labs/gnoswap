@@ -322,12 +322,13 @@ func (os *ObservationState) observe(
 	liquidity *u256.Uint,
 	cardinality uint16,
 ) ([]int64, []*u256.Uint, error) {
-	if len(secondsAgos) == 0 {
+	historyCount := len(secondsAgos)
+	if historyCount == 0 {
 		return nil, nil, errors.New("secondsAgos must not be empty")
 	}
 
-	tickCumulatives := make([]int64, len(secondsAgos))
-	secondsPerLiquidityCumulativeX128s := make([]*u256.Uint, len(secondsAgos))
+	tickCumulatives := make([]int64, historyCount)
+	secondsPerLiquidityCumulativeX128s := make([]*u256.Uint, historyCount)
 
 	for i, secondsAgo := range secondsAgos {
 		tickCumulative, secondsPerLiquidity, err := os.observeSingle(
