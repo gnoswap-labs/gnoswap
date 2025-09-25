@@ -1036,6 +1036,7 @@ func TestFuzzFinalizeSwap(t *testing.T) {
 				int64(params.userWrappedWugnot),
 				params.amountSpecified,
 				1,
+				false,
 			)
 
 			// verify amountIn is positive string

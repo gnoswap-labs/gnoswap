@@ -75,6 +75,8 @@ func main() {
 	TestDrySwapRouteQuxBarExactOut()
 	TestSwapRouteQuxBarExactOut()
 
+	testing.SetRealm(adminRealm)
+
 	println("[INFO] Scenario completed")
 }
 
@@ -102,8 +104,7 @@ func testSwapRouteBarQuxExactIn() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for swap")
-	bar.Approve(cross, poolAddr, 10000)
-	qux.Approve(cross, routerAddr, 10000)
+	bar.Approve(cross, routerAddr, 10000)
 
 	println("[INFO] Executing swap route (bar → baz → qux)")
 	amountIn, amountOut := router.ExactInSwapRoute(
@@ -146,6 +147,9 @@ func testSwapRouteBarQuxExactOut() {
 	println("[SCENARIO] Given: Swap route bar to qux exact out preparation")
 	testing.SetRealm(adminRealm)
 
+	println("[INFO] Approving tokens for swap")
+	bar.Approve(cross, routerAddr, 99999)
+
 	println("[INFO] Executing swap route exact out (bar → baz → qux)")
 	amountIn, amountOut := router.ExactOutSwapRoute(
 		cross,
@@ -186,6 +190,9 @@ func TestDrySwapRouteQuxBarExactIn() {
 func TestSwapRouteQuxBarExactIn() {
 	println("[SCENARIO] Given: Swap route qux to bar exact in preparation")
 	testing.SetRealm(adminRealm)
+
+	println("[INFO] Approving tokens for swap")
+	qux.Approve(cross, routerAddr, 10000)
 
 	println("[INFO] Executing swap route (qux → baz → bar)")
 	amountIn, amountOut := router.ExactInSwapRoute(
@@ -229,8 +236,7 @@ func TestSwapRouteQuxBarExactOut() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for swap")
-	qux.Approve(cross, poolAddr, 10000)
-	bar.Approve(cross, routerAddr, 10000)
+	qux.Approve(cross, routerAddr, 99999)
 
 	println("[INFO] Executing swap route exact out (qux → baz → bar)")
 	amountIn, amountOut := router.ExactOutSwapRoute(
@@ -276,6 +282,7 @@ func TestSwapRouteQuxBarExactOut() {
 // [EXPECTED] dryResult: 140 expected: 140
 //
 // [SCENARIO] Given: Swap route bar to qux exact out preparation
+// [INFO] Approving tokens for swap
 // [INFO] Executing swap route exact out (bar → baz → qux)
 // [EXPECTED] amountIn: 141 expected: 141
 // [EXPECTED] amountOut: -1001 expected: -1001
@@ -285,6 +292,7 @@ func TestSwapRouteQuxBarExactOut() {
 // [EXPECTED] dryResult: 135 expected: 135
 //
 // [SCENARIO] Given: Swap route qux to bar exact in preparation
+// [INFO] Approving tokens for swap
 // [INFO] Executing swap route (qux → baz → bar)
 // [EXPECTED] amountIn: 1000 expected: 1000
 // [EXPECTED] amountOut: -135 expected: -135

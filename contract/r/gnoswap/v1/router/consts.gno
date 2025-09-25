@@ -6,7 +6,12 @@ import (
 	"gno.land/r/gnoswap/access"
 )
 
-const maxApprove int64 = 9223372036854775807
+const (
+	maxApprove = int64(9223372036854775807)
+
+	zeroString          = "0"
+	maxPercentageString = "100"
+)
 
 var (
 	poolAddr        = access.MustGetAddressWithVersion(prabc.ROLE_POOL.String(), 1)
