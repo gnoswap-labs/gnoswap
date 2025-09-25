@@ -122,12 +122,14 @@ func assertIsAllowedForExternalReward(poolPath, tokenPath string) {
 	))
 }
 
-// assertIsValidFeeRate ensures the fee rate is within valid range (0-10000 basis points).
+const maxUnstakingFee = int64(1000) // 10%
+
+// assertIsValidFeeRate ensures the fee rate is within valid range (0-1000 basis points).
 func assertIsValidFeeRate(fee int64) {
-	if fee < 0 || fee > 10000 {
+	if fee < 0 || fee > maxUnstakingFee {
 		panic(makeErrorWithDetails(
 			errInvalidUnstakingFee,
-			ufmt.Sprintf("fee(%d) must be in range 0 ~ 10000", fee),
+			ufmt.Sprintf("fee(%d) must be in range 0 ~ %d", fee, maxUnstakingFee),
 		))
 	}
 }

@@ -104,8 +104,8 @@ func (rb *RBAC) UpdateRoleAddress(roleName string, addr std.Address) error {
 }
 
 // RemoveRoleAddress removes the address assignment from roleName. Only the owner can call this function. Returns ErrUnauthorized if caller is not owner or ErrRoleDoesNotExist if role doesn't exist.
-func (rb *RBAC) RemoveRoleAddress(roleName string) error {
-	if !rb.ownable.OwnedByOriginCaller() {
+func (rb *RBAC) RemoveRoleAddressBy(roleName string, addr std.Address) error {
+	if !rb.ownable.IsOwner(addr) {
 		return ErrUnauthorized
 	}
 
@@ -122,21 +122,18 @@ func (rb *RBAC) RemoveRoleAddress(roleName string) error {
 // Owner returns the current owner address.
 func (rb *RBAC) Owner() std.Address { return rb.ownable.Owner() }
 
-// OwnedByOriginCaller returns true if the origin caller is the current owner.
-func (rb *RBAC) OwnedByOriginCaller() bool { return rb.ownable.OwnedByOriginCaller() }
-
 // PendingOwner returns the pending owner address during ownership transfer.
 func (rb *RBAC) PendingOwner() std.Address { return rb.ownable.PendingOwner() }
 
 // AcceptOwnership completes the ownership transfer process. Must be called by the pending owner.
-func (rb *RBAC) AcceptOwnership() error { return rb.ownable.AcceptOwnership() }
+func (rb *RBAC) AcceptOwnershipBy(addr std.Address) error { return rb.ownable.AcceptOwnershipBy(addr) }
 
 // DropOwnership removes the owner, effectively disabling owner-only actions. Only the current owner can call this function.
-func (rb *RBAC) DropOwnership() error { return rb.ownable.DropOwnership() }
+func (rb *RBAC) DropOwnershipBy(addr std.Address) error { return rb.ownable.DropOwnershipBy(addr) }
 
 // TransferOwnership initiates the two-step ownership transfer process to newOwner. Only the current owner can call this function.
-func (rb *RBAC) TransferOwnership(newOwner std.Address) error {
-	return rb.ownable.TransferOwnership(newOwner)
+func (rb *RBAC) TransferOwnershipBy(newOwner, caller std.Address) error {
+	return rb.ownable.TransferOwnershipBy(newOwner, caller)
 }
 
 // existsRole checks if name exists in the RBAC system.

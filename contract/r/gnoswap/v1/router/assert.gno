@@ -33,3 +33,10 @@ func assertIsValidUserCoinSend(tokenPath, amount string) {
 		common.AssertIsNotHandleNativeCoin()
 	}
 }
+
+func assertIsValidRoutePaths(routePaths, inputToken, outputToken string) {
+	err := validateRoutePaths(routePaths, inputToken, outputToken)
+	if err != nil {
+		panic(err)
+	}
+}
