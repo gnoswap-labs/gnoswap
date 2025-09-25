@@ -10,7 +10,13 @@ import (
 )
 
 func PositionGetPosition(positionId uint64) Position {
-	position, _ := GetPosition(positionId)
+	position, ok := GetPosition(positionId)
+	if !ok {
+		panic(newErrorWithDetail(
+			errPositionDoesNotExist,
+			ufmt.Sprintf("positionId(%d) does not exist", positionId),
+		))
+	}
 	return position
 }
 

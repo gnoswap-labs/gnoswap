@@ -24,7 +24,10 @@ func ApiGetPool(poolPath string) string {
 }
 
 func posKeyDivide(posKey string) (string, int32, int32) {
-	kDec, _ := b64.StdEncoding.DecodeString(posKey)
+	kDec, err := b64.StdEncoding.DecodeString(posKey)
+	if err != nil {
+		panic(errInvalidPositionKey)
+	}
 	posKey = string(kDec)
 
 	res := strings.Split(posKey, "__")
@@ -35,10 +38,16 @@ func posKeyDivide(posKey string) (string, int32, int32) {
 		))
 	}
 
-	owner, _tickLower, _tickUpper := res[0], res[1], res[2]
+	owner, tl, tu := res[0], res[1], res[2]
 
-	tickLower, _ := strconv.Atoi(_tickLower)
-	tickUpper, _ := strconv.Atoi(_tickUpper)
+	tickLower, err := strconv.Atoi(tl)
+	if err != nil {
+		panic(errTickLowerInvalid)
+	}
+	tickUpper, err := strconv.Atoi(tu)
+	if err != nil {
+		panic(errTickUpperInvalid)
+	}
 
 	return owner, int32(tickLower), int32(tickUpper)
 }
