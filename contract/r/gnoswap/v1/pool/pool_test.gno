@@ -927,11 +927,13 @@ func simulateSwapActivity(t *testing.T, pool *Pool) {
 	}
 
 	// Create fees through swap execution
-	testing.SetRealm(rouRealm)
+	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 	approveTokenForRouter(t, pool.token0Path)
 
 	Swap(cross, pool.token0Path, pool.token1Path, pool.fee,
-		adminAddr, true, "1000000", "3945129629379410362911094631", adminAddr)
+		adminAddr, true, "1000000", "3945129629379410362911094631", adminAddr, func(cur realm, amount0Delta string, amount1Delta string) error {
+			return mockSwapCallback(pool.token0Path, pool.token1Path, amount0Delta, amount1Delta)
+		})
 
 	testing.SkipHeights(1)
 }
