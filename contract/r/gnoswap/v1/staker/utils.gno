@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/rbac"
@@ -81,6 +81,20 @@ func min(x, y uint64) uint64 {
 		return x
 	}
 	return y
+}
+
+func minInt64(x, y int64) int64 {
+	if x < y {
+		return x
+	}
+	return y
+}
+
+func absInt64(n int64) int64 {
+	if n < 0 {
+		return -n
+	}
+	return n
 }
 
 // contains checks if a string exists in a slice.
