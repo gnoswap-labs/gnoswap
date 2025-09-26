@@ -384,6 +384,8 @@ func oneClickStakingPos07OutRange() {
 	bar.Approve(cross, poolAddr, maxInt64)
 	foo.Approve(cross, poolAddr, maxInt64)
 
+	ufmt.Printf("[EXPECTED] current pool tick: %d\n", pl.GetSlot0Tick("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100"))
+
 	lpTokenId, liquidity, amount0, amount1, poolPath := sr.MintAndStake(
 		cross,
 		barPath,
@@ -405,12 +407,12 @@ func oneClickStakingPos07OutRange() {
 	testing.SkipHeights(1)
 
 	println("[INFO] collect reward for position 07")
-	oldCommunityPool := gns.BalanceOf(communityPoolAddr)
+	oldAdminGnsBalance := gns.BalanceOf(adminAddr)
 	sr.CollectReward(cross, 7, false)
-	newCommunityPool := gns.BalanceOf(communityPoolAddr)
+	newAdminGnsBalance := gns.BalanceOf(adminAddr)
 
-	rewardToCommunity := newCommunityPool - oldCommunityPool
-	ufmt.Printf("[EXPECTED] reward to community pool: %d\n", rewardToCommunity)
+	rewardToAdmin := newAdminGnsBalance - oldAdminGnsBalance
+	ufmt.Printf("[EXPECTED] reward to admin: %d\n", rewardToAdmin)
 
 	testing.SkipHeights(1)
 }
@@ -530,10 +532,11 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 11. One-click staking position 07 (out-range)
 // [INFO] mint and stake position 07 (one-click)
+// [EXPECTED] current pool tick: 600000
 // [EXPECTED] mint and stake result - ID: 7, liquidity: 166674
 // [EXPECTED] amounts - 0: 0, 1: 1000, pool: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100
 // [INFO] collect reward for position 07
-// [EXPECTED] reward to community pool: 0
+// [EXPECTED] reward to admin: 0
 //
 // [SCENARIO] 12. Unstake token 01
 // [INFO] unstake token 01
