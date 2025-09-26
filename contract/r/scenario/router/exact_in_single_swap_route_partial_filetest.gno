@@ -169,6 +169,7 @@ func exactInSingleSwapRouteBy(
 	afterGNOTBalance := banker.GetCoins(adminAddr).AmountOf("ugnot")
 	afterGNSBalance := gns.BalanceOf(adminAddr)
 
+	ufmt.Printf("[EXPECTED] pool current tick: %d\n", pool.GetSlot0Tick(routeQueryString))
 	ufmt.Printf("[EXPECTED] inputTokenAmount(GNS): %s\n", inputTokenAmount)
 	ufmt.Printf("[EXPECTED] outputTokenAmount(GNOT): %s\n", outputTokenAmount)
 	ufmt.Printf("[EXPECTED] GNS balance changed: %d\n", afterGNSBalance-beforeGNSBalance)
@@ -196,6 +197,7 @@ func exactInSingleSwapRouteBy(
 // [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
+// [EXPECTED] pool current tick: -10
 // [EXPECTED] inputTokenAmount(GNS): 170253
 // [EXPECTED] outputTokenAmount(GNOT): -169826
 // [EXPECTED] GNS balance changed: 169826
