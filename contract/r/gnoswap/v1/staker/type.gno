@@ -19,6 +19,7 @@ type ExternalIncentive struct {
 	rewardAmount     int64       // total reward amount
 	rewardLeft       int64       // remaining reward amount
 	rewardPerSecond  int64       // reward per second
+	rewardDust       int64       // dust amount from precision loss (rewardAmount % duration)
 	refundee         std.Address // refundee address
 
 	refunded bool // whether incentive has been refunded (includes GNS deposit and unclaimed rewards)
@@ -97,6 +98,10 @@ func (e ExternalIncentive) RewardAmount() int64 {
 	return e.rewardAmount
 }
 
+func (e ExternalIncentive) RewardDust() int64 {
+	return e.rewardDust
+}
+
 func (self *ExternalIncentive) RewardSpent(currentTimestamp int64) int64 {
 	// Still check timestamps for state validation
 	if currentTimestamp < self.startTimestamp {
@@ -124,7 +129,8 @@ func (self *ExternalIncentive) RewardSpent(currentTimestamp int64) int64 {
 func (self *ExternalIncentive) RewardLeft(currentTimestamp int64) int64 {
 	// Still check timestamps for state validation
 	if currentTimestamp <= self.startTimestamp {
-		return int64(self.rewardAmount)
+		// Subtract dust since it won't be distributed
+		return self.rewardLeft
 	}
 
 	if currentTimestamp > self.endTimestamp {
@@ -133,7 +139,8 @@ func (self *ExternalIncentive) RewardLeft(currentTimestamp int64) int64 {
 
 	// But use time for calculation
 	if currentTimestamp <= self.startTimestamp {
-		return int64(self.rewardAmount)
+		// Subtract dust since it won't be distributed
+		return self.rewardLeft
 	}
 
 	if currentTimestamp > self.endTimestamp {
@@ -157,6 +164,7 @@ func (self *ExternalIncentive) Clone() *ExternalIncentive {
 		rewardAmount:     self.rewardAmount,
 		rewardLeft:       self.rewardLeft,
 		rewardPerSecond:  self.rewardPerSecond,
+		rewardDust:       self.rewardDust,
 		refundee:         self.refundee,
 		refunded:         self.refunded,
 	}
@@ -182,6 +190,8 @@ func NewExternalIncentive(
 ) *ExternalIncentive {
 	incentiveDuration := endTimestamp - startTimestamp
 	rewardPerSecond := rewardAmount / incentiveDuration
+	// Calculate dust from integer division precision loss
+	rewardDust := rewardAmount - (rewardPerSecond * incentiveDuration)
 
 	return &ExternalIncentive{
 		incentiveId:      incentiveId,
@@ -191,6 +201,7 @@ func NewExternalIncentive(
 		startTimestamp:   startTimestamp,
 		endTimestamp:     endTimestamp,
 		rewardPerSecond:  rewardPerSecond,
+		rewardDust:       rewardDust,
 		refundee:         refundee,
 		createdHeight:    createdHeight,
 		depositGnsAmount: depositGnsAmount,
