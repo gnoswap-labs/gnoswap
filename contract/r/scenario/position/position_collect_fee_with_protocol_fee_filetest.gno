@@ -1,17 +1,19 @@
 // position collect fee with protocol fee
 
-// PKGPATH: gno.land/r/gnoswap/v1/main
+// PKGPATH: gno.land/r/demo/main
 
 package main
 
 import (
 	"std"
+	"strconv"
 	"testing"
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/ufmt"
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/pool"
@@ -137,12 +139,7 @@ func executeMultipleSwaps() {
 	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
-	func() {
-		ctx := testing.GetContext()
-		ctx.CurrentRealm = routerRealm
-		ctx.OriginCaller = adminAddr
-		testing.SetContext(ctx)
-	}()
+	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 	ufmt.Println("[INFO] Executing first swap BAR -> FOO")
 	amount0, amount1 := pool.Swap(
 		cross,
@@ -154,6 +151,9 @@ func executeMultipleSwaps() {
 		"10000000",
 		MIN_PRICE,
 		adminAddr,
+		func(cur realm, amount0Delta, amount1Delta string) error {
+			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+		},
 	)
 
 	ufmt.Printf("[EXPECTED] Swap1 amount0 should be %s\n", amount0)
@@ -162,14 +162,17 @@ func executeMultipleSwaps() {
 	ufmt.Println("[INFO] Executing second swap FOO -> BAR")
 	amount0, amount1 = pool.Swap(
 		cross,
-		fooPath,
 		barPath,
+		fooPath,
 		fee,
 		adminAddr,
 		false,
 		"10000000",
 		MAX_PRICE,
 		adminAddr,
+		func(cur realm, amount0Delta, amount1Delta string) error {
+			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, false)
+		},
 	)
 
 	ufmt.Printf("[EXPECTED] Swap2 amount0 should be %s\n", amount0)
@@ -203,12 +206,7 @@ func executeMoreSwaps() {
 	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
-	func() {
-		ctx := testing.GetContext()
-		ctx.CurrentRealm = routerRealm
-		ctx.OriginCaller = adminAddr
-		testing.SetContext(ctx)
-	}()
+	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 	ufmt.Println("[INFO] Executing additional swap BAR -> FOO")
 	amount0, amount1 := pool.Swap(
 		cross,
@@ -220,6 +218,9 @@ func executeMoreSwaps() {
 		"5000000",
 		MIN_PRICE,
 		adminAddr,
+		func(cur realm, amount0Delta, amount1Delta string) error {
+			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+		},
 	)
 
 	ufmt.Printf("[EXPECTED] Swap3 amount0 should be %s\n", amount0)
@@ -241,6 +242,34 @@ func verifyProtocolFee() {
 	fooBalance := foo.BalanceOf(protocolFeeAddr)
 	ufmt.Printf("[EXPECTED] Bar balance of protocol fee should be %d\n", barBalance)
 	ufmt.Printf("[EXPECTED] Foo balance of protocol fee should be %d\n", fooBalance)
+}
+
+func mockSwapCallback(token0Path string, token1Path string, amount0Delta string, amount1Delta string, zeroForOne bool) error {
+	testing.SetRealm(adminRealm)
+
+	const wugnotPath = "gno.land/r/gnoland/wugnot"
+	const ugnotDenom = "ugnot"
+
+	amount0Int64, _ := strconv.ParseInt(amount0Delta, 10, 64)
+	amount1Int64, _ := strconv.ParseInt(amount1Delta, 10, 64)
+
+	if zeroForOne {
+		if token0Path == wugnotPath {
+			testing.SetOriginSend(std.Coins{{ugnotDenom, amount0Int64}})
+			wugnot.Deposit(cross)
+		}
+
+		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Int64)
+	} else {
+		if token1Path == wugnotPath {
+			testing.SetOriginSend(std.Coins{{ugnotDenom, amount1Int64}})
+			wugnot.Deposit(cross)
+		}
+
+		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Int64)
+	}
+
+	return nil
 }
 
 // Output:
