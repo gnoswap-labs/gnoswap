@@ -8,6 +8,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/pool"
 )
 
 // assertIsNotExpired ensures the transaction deadline has not passed.
@@ -82,5 +83,21 @@ func assertIsValidRoutePaths(routePaths, inputToken, outputToken string) {
 	err := validateRoutePaths(routePaths, inputToken, outputToken)
 	if err != nil {
 		panic(err)
+	}
+}
+
+func assertIsExistsPools(routePathArr string) {
+	poolPaths, err := parsePoolPathsByRoutePathArr(routePathArr)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, poolPath := range poolPaths {
+		if !pool.ExistsPoolPath(poolPath) {
+			panic(makeErrorWithDetails(
+				errInvalidInput,
+				ufmt.Sprintf("pool does not exist: %s", poolPath),
+			))
+		}
 	}
 }

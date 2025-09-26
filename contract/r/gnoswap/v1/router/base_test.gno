@@ -2,6 +2,7 @@ package router
 
 import (
 	"errors"
+	"math"
 	"std"
 	"testing"
 
@@ -288,6 +289,7 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 	}
 
 	testing.SetRealm(adminRealm)
+	common.SafeGRC20Approve(cross, fooPath, routerAddr, math.MaxInt64)
 	CreatePoolWithoutFee(t)
 	MakeThirdMintPositionWithoutFee(t)
 
@@ -298,15 +300,17 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 	}
 
 	func(cur realm) {
-		_, amountOut, err := op.processRoutes(ExactIn)
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
+		uassert.PanicsContains(t, "failed swap", func() {
+			_, amountOut, err := op.processRoutes(ExactIn)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 
-		// check output amount is not zero
-		if amountOut.Cmp(u256.Zero()) == 0 {
-			t.Error("expected non-zero amountOut")
-		}
+			// check output amount is not zero
+			if amountOut.Cmp(u256.Zero()) == 0 {
+				t.Error("expected non-zero amountOut")
+			}
+		})
 	}(cross)
 
 	// check actual swapped amounts for each route

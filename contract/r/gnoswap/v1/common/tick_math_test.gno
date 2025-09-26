@@ -343,6 +343,12 @@ func TestTickMathGetTickAtSqrtRatio(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("nil sqrt ratio", func(t *testing.T) {
+		uassert.PanicsContains(t, "sqrtPriceX96 cannot be nil", func() {
+			TickMathGetTickAtSqrtRatio(nil)
+		})
+	})
 }
 
 func TestTickMathGetTickAtSqrtRatio_EdgeCase(t *testing.T) {
