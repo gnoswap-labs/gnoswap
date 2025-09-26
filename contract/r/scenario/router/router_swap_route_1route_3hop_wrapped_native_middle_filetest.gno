@@ -156,8 +156,7 @@ func testSwapRouteGnsBarExactIn() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for swap")
-	gns.Approve(cross, poolAddr, 1000)   // swap input amount
-	bar.Approve(cross, routerAddr, 7325) // 0.15% fee
+	gns.Approve(cross, routerAddr, 1000) // swap input amount
 
 	println("[INFO] Executing ExactIn swap (1000 gns → wugnot → bar)")
 	testing.SetOriginSend(std.Coins{})

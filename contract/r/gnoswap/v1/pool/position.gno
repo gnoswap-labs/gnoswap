@@ -2,11 +2,12 @@ package pool
 
 import (
 	"encoding/base64"
+	"time"
 
-	"gno.land/p/nt/ufmt"
 	plp "gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
 )
@@ -269,8 +270,16 @@ func (p *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.
 		amount0 = calculateToken0Amount(sqrtRatioLower, sqrtRatioUpper, liqDelta)
 
 	case tick < params.tickUpper:
-		// case 2
+		// case 2: Current price is within the position range
 		liquidityBefore := p.liquidity
+		currentTime := time.Now().Unix()
+		
+		// Update oracle BEFORE liquidity changes
+		err := p.writeObservation(currentTime, tick, liquidityBefore)
+		if err != nil {
+			return PositionInfo{}, zero, zero, err
+		}
+
 		// token0 used from current price to upper tick
 		amount0 = calculateToken0Amount(sqrtPriceX96, sqrtRatioUpper, liqDelta)
 		// token1 used from lower tick to current price

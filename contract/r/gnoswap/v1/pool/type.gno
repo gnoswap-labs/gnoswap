@@ -286,6 +286,6 @@ func newPool(poolInfo *poolCreateConfig) *Pool {
 		ticks:                avl.NewTree(),
 		tickBitmaps:          avl.NewTree(),
 		positions:            avl.NewTree(),
-		observation:          newObservation(time.Now().Unix()),
+		observationState:     newObservationState(time.Now().Unix()),
 	}
 }

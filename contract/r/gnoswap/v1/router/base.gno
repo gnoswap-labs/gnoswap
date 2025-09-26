@@ -48,15 +48,17 @@ func executeSwapOperation(op RouterOperation) (*SwapResult, error) {
 }
 
 type BaseSwapParams struct {
-	InputToken  string
-	OutputToken string
-	RouteArr    string
-	QuoteArr    string
-	Deadline    int64
+	InputToken        string
+	OutputToken       string
+	RouteArr          string
+	QuoteArr          string
+	SqrtPriceLimitX96 string
+	Deadline          int64
 }
 
 // common swap operation
 type baseSwapOperation struct {
+	sqrtPriceLimitX96       string
 	withUnwrap              bool
 	userBeforeWugnotBalance int64
 	userWrappedWugnot       int64
@@ -182,7 +184,7 @@ func (op *baseSwapOperation) processRoute(
 
 	switch numHops {
 	case SINGLE_HOP_ROUTE:
-		amountIn, amountOut = handleSingleSwap(route, toSwap, op.withUnwrap)
+		amountIn, amountOut = handleSingleSwap(route, toSwap, op.withUnwrap, op.sqrtPriceLimitX96)
 	default:
 		amountIn, amountOut = handleMultiSwap(swapType, route, numHops, toSwap, op.withUnwrap)
 	}
@@ -195,14 +197,15 @@ func (op *baseSwapOperation) processRoute(
 }
 
 // handleSingleSwap executes a single-hop swap with the specified amount.
-func handleSingleSwap(route string, amountSpecified *i256.Int, withUnwrap bool) (*u256.Uint, *u256.Uint) {
+func handleSingleSwap(route string, amountSpecified *i256.Int, withUnwrap bool, sqrtPriceLimitX96 string) (*u256.Uint, *u256.Uint) {
 	input, output, fee := getDataForSinglePath(route)
 	singleParams := SingleSwapParams{
-		tokenIn:         input,
-		tokenOut:        output,
-		fee:             fee,
-		amountSpecified: amountSpecified,
-		withUnwrap:      withUnwrap,
+		tokenIn:           input,
+		tokenOut:          output,
+		fee:               fee,
+		amountSpecified:   amountSpecified,
+		withUnwrap:        withUnwrap,
+		sqrtPriceLimitX96: sqrtPriceLimitX96,
 	}
 
 	return singleSwap(&singleParams)
@@ -234,14 +237,15 @@ func handleMultiSwap(
 
 // SwapRouteParams contains all parameters needed for swap route execution
 type SwapRouteParams struct {
-	inputToken  string
-	outputToken string
-	routeArr    string
-	quoteArr    string
-	deadline    int64
-	typ         SwapType
-	exactAmount string // amountIn for ExactIn, amountOut for ExactOut
-	limitAmount string // amountOutMin for ExactIn, amountInMax for ExactOut
+	inputToken        string
+	outputToken       string
+	routeArr          string
+	quoteArr          string
+	deadline          int64
+	typ               SwapType
+	exactAmount       string // amountIn for ExactIn, amountOut for ExactOut
+	limitAmount       string // amountOutMin for ExactIn, amountInMax for ExactOut
+	sqrtPriceLimitX96 string // if sqrtPriceLimitX96 is zero string, it will be set to MIN_PRICE or MAX_PRICE
 }
 
 // IsUnwrap checks if the swap output is native token.
@@ -259,13 +263,19 @@ func (p *SwapRouteParams) SwapCount() int64 {
 	return swapCount
 }
 
+func (p *SwapRouteParams) IsSetSqrtPriceLimitX96() bool {
+	return p.sqrtPriceLimitX96 != "" && p.sqrtPriceLimitX96 != zeroString
+}
+
 // createSwapOperation creates the appropriate swap operation based on swap type.
 func createSwapOperation(params SwapRouteParams) (RouterOperation, error) {
 	baseParams := BaseSwapParams{
-		InputToken:  params.inputToken,
-		OutputToken: params.outputToken,
-		RouteArr:    params.routeArr,
-		QuoteArr:    params.quoteArr,
+		InputToken:        params.inputToken,
+		OutputToken:       params.outputToken,
+		RouteArr:          params.routeArr,
+		QuoteArr:          params.quoteArr,
+		SqrtPriceLimitX96: params.sqrtPriceLimitX96,
+		Deadline:          params.deadline,
 	}
 
 	switch params.typ {
@@ -333,6 +343,7 @@ func commonSwapRoute(params SwapRouteParams) (*i256.Int, *i256.Int, error) {
 		userWrappedWugnot,
 		result.AmountSpecified.Abs(),
 		params.SwapCount(),
+		params.IsSetSqrtPriceLimitX96(),
 	)
 
 	return inputAmount, outputAmount, nil

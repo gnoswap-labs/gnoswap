@@ -36,7 +36,7 @@ func ProposeText(
 	title string,
 	description string,
 ) (newProposalId int64) {
-	halt.AssertIsNotHaltedGovernance()
+	halt.AssertIsNotHaltedGovernanceWithVersion(1)
 
 	callerAddress := std.PreviousRealm().Address()
 
@@ -136,8 +136,8 @@ func ProposeCommunityPoolSpend(
 	tokenPath string,
 	amount int64,
 ) (newProposalId int64) {
-	halt.AssertIsNotHaltedGovernance()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedGovernanceWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	callerAddress := std.PreviousRealm().Address()
 
@@ -244,7 +244,7 @@ func ProposeParameterChange(
 	numToExecute int64,
 	executions string,
 ) (newProposalId int64) {
-	halt.AssertIsNotHaltedGovernance()
+	halt.AssertIsNotHaltedGovernanceWithVersion(1)
 
 	callerAddress := std.PreviousRealm().Address()
 
