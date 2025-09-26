@@ -402,7 +402,7 @@ func TestBurn_LiquidityWithdrawalScenarios(t *testing.T) {
 			beforeLiquidity := new(u256.Uint).Set(pool.liquidity)
 
 			// When: Withdraw specified amount of liquidity
-			amount0, amount1 := Burn(cross, pool.token0Path, pool.token1Path, pool.fee,
+			amount0, amount1, _, _ := Burn(cross, pool.token0Path, pool.token1Path, pool.fee,
 				WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, scenario.burnAmount, adminAddr)
 
 			// Then: Verify result matches business context
@@ -475,8 +475,8 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(t *testing.T) {
 					tick:         tt.initialTick,
 				},
 				observationState: &ObservationState{
-					index:           0,
-					cardinality:     1,
+					index:            0,
+					cardinality:      1,
 					cardinalityLimit: 1,
 					observations: [ObservationCardinality]Observation{
 						{

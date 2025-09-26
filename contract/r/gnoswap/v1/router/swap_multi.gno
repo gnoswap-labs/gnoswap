@@ -95,9 +95,6 @@ func (p *MultiSwapProcessor) processForwardSwap(sp SwapParams, numPools int, swa
 
 		// Check if we've processed all hops
 		if currentPoolIndex >= numPools {
-			if p.isSimulate {
-				return firstAmountIn, amountOut, nil
-			}
 			return firstAmountIn, amountOut, nil
 		}
 
