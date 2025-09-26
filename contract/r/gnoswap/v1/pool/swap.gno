@@ -25,7 +25,8 @@ var (
 	fixedPointQ128 = u256.MustFromDecimal(Q128)
 
 	maxInt256 = u256.MustFromDecimal(MAX_INT256)
-	maxInt64  = i256.MustFromDecimal(MAX_INT64)
+	maxInt64  = i256.Zero().SetInt64(INT64_MAX)
+	minInt64  = i256.Zero().SetInt64(INT64_MIN)
 
 	swapStartHook func(poolPath string, timestamp int64)
 	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)
@@ -40,7 +41,7 @@ var (
 // Only callable by staker contract.
 func SetTickCrossHook(cur realm, hook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	caller := std.PreviousRealm().Address()
-	access.AssertIsStaker(caller)
+	access.AssertIsStakerWithVersion(1, caller)
 	tickCrossHook = hook
 }
 
@@ -52,7 +53,7 @@ func SetTickCrossHook(cur realm, hook func(poolPath string, tickId int32, zeroFo
 // Only callable by staker contract.
 func SetSwapStartHook(cur realm, hook func(poolPath string, timestamp int64)) {
 	caller := std.PreviousRealm().Address()
-	access.AssertIsStaker(caller)
+	access.AssertIsStakerWithVersion(1, caller)
 	swapStartHook = hook
 }
 
@@ -64,7 +65,7 @@ func SetSwapStartHook(cur realm, hook func(poolPath string, timestamp int64)) {
 // Only callable by staker contract.
 func SetSwapEndHook(cur realm, hook func(poolPath string) error) {
 	caller := std.PreviousRealm().Address()
-	access.AssertIsStaker(caller)
+	access.AssertIsStakerWithVersion(1, caller)
 	swapEndHook = hook
 }
 
@@ -91,20 +92,26 @@ type SwapComputation struct {
 	Cache             SwapCache
 }
 
-// Swap executes a token swap in the pool.
+// SwapWithCallback executes a swap with callback pattern for optimistic transfers.
+// This allows flash swaps where tokens are sent before payment is received.
+//
+// The flow is:
+// 1. Pool sends output tokens to recipient
+// 2. Pool calls callback on msg.sender
+// 3. Callback must ensure pool receives input tokens
+// 4. Pool validates its balance increased correctly
 //
 // Parameters:
-//   - token0Path, token1Path: token contract paths
-//   - fee: pool fee tier
-//   - recipient: address receiving output tokens
-//   - zeroForOne: true for token0→token1, false for token1→token0
-//   - amountSpecified: amount to swap (positive=exact in, negative=exact out)
-//   - sqrtPriceLimitX96: price limit in Q96 format
-//   - payer: address paying input tokens
+//   - tokenIn: Input token path
+//   - tokenOut: Output token path
+//   - fee: Pool fee tier
+//   - recipient: Address to receive output tokens
+//   - zeroForOne: Direction of swap (true = token0 to token1)
+//   - amountSpecified: Exact input (positive) or exact output (negative)
+//   - sqrtPriceLimitX96: Price limit for the swap
+//   - data: Arbitrary data passed to callback
 //
-// Returns amount0, amount1 as decimal strings (negative for tokens out).
-// Only callable by whitelisted routers.
-// Note: Uses tick-based pricing with Q96 fixed-point math.
+// Returns amount0 and amount1 deltas as strings.
 func Swap(
 	cur realm,
 	token0Path string,
@@ -114,13 +121,14 @@ func Swap(
 	zeroForOne bool,
 	amountSpecified string,
 	sqrtPriceLimitX96 string,
-	payer std.Address, // router
+	payer std.Address,
+	swapCallback func(cur realm, amount0Delta, amount1Delta string) error,
 ) (string, string) {
-	halt.AssertIsNotHaltedPool()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
-	access.AssertIsSwapWhitelisted(caller)
-	assertPayerIsPreviousRealmOrOriginCaller(payer)
+	previousRealm := std.PreviousRealm()
+	assertIsNotAllowedEOA(previousRealm)
+	assertIsValidTokenOrder(token0Path, token1Path)
 
 	if amountSpecified == "0" {
 		panic(newErrorWithDetail(
@@ -149,6 +157,17 @@ func Swap(
 		swapStartHook(pool.PoolPath(), currentTime)
 	}
 
+	defer func() {
+		pool.slot0.unlocked = true
+
+		if swapEndHook != nil {
+			err := swapEndHook(pool.PoolPath())
+			if err != nil {
+				panic(err)
+			}
+		}
+	}()
+
 	sqrtPriceLimit := u256.MustFromDecimal(sqrtPriceLimitX96)
 	validatePriceLimits(slot0Start, zeroForOne, sqrtPriceLimit)
 
@@ -172,25 +191,37 @@ func Swap(
 		panic(err)
 	}
 
-	applySwapResult(pool, result)
+	// Update oracle BEFORE applying swap result (using pre-swap state)
+	if result.NewTick != pool.slot0.tick {
+		currentTime := time.Now().Unix()
 
-	// update TWAP state
-	currentTime := time.Now().Unix()
-	pool.updatePriceCumulatives(currentTime)
-
-	// actual swap
-	pool.swapTransfers(zeroForOne, payer, recipient, result.Amount0, result.Amount1)
-
-	pool.slot0.unlocked = true
-	// Call swap end hook if set
-	if swapEndHook != nil {
-		err := swapEndHook(pool.PoolPath())
+		err := pool.writeObservation(currentTime, pool.slot0.tick, pool.liquidity)
 		if err != nil {
 			panic(err)
 		}
 	}
 
-	previousRealm := std.PreviousRealm()
+	applySwapResult(pool, result)
+
+	// transfer swap result to recipient then receive input tokens from swap callback
+	if zeroForOne {
+		// receive token0 from swap callback
+		// send token1 to recipient (output)
+		if result.Amount1.IsNeg() {
+			pool.safeSwapCallback(token0Path, result.Amount0, zeroForOne, swapCallback)
+
+			pool.safeTransfer(recipient, token1Path, result.Amount1, false)
+		}
+	} else {
+		// receive token1 from swap callback
+		// send token0 to recipient (output)
+		if result.Amount0.IsNeg() {
+			pool.safeSwapCallback(token1Path, result.Amount1, zeroForOne, swapCallback)
+
+			pool.safeTransfer(recipient, token0Path, result.Amount0, true)
+		}
+	}
+
 	std.Emit(
 		"Swap",
 		"prevAddr", previousRealm.Address().String(),
@@ -214,9 +245,10 @@ func Swap(
 		"balanceToken0", pool.BalanceToken0().ToString(),
 		"balanceToken1", pool.BalanceToken1().ToString(),
 		"ticks", pool.Ticks(),
-		"tickCumulative", formatInt(pool.Observation().TickCumulative()),
-		"liquidityCumulative", pool.Observation().LiquidityCumulative(),
-		"lastCumulativeUpdateTime", formatInt(pool.Observation().LastCumulativeUpdateTime()),
+		"tickCumulative", formatInt(pool.ObservationTickCumulative()),
+		"liquidityCumulative", pool.ObservationLiquidityCumulative(),
+		"secondsPerLiquidityCumulativeX128", pool.ObservationSecondsPerLiquidityCumulativeX128(),
+		"observationTimestamp", formatInt(pool.ObservationBlockTimestamp()),
 	)
 
 	return result.Amount0.ToString(), result.Amount1.ToString()
@@ -278,8 +310,9 @@ func DrySwap(
 		}
 	}
 
-	// Validate non-zero amounts
-	if result.Amount0.IsZero() || result.Amount1.IsZero() {
+	// Validate that at least one amount is non-zero
+	// Both amounts being zero indicates a failed swap
+	if result.Amount0.IsZero() && result.Amount1.IsZero() {
 		return "0", "0", false
 	}
 
@@ -562,7 +595,7 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) (Swa
 
 	amountInWithFee := i256.FromUint256(amountInWithFeeU256)
 	if step.amountOut.Gt(maxInt256) {
-		return state, errUnderflow
+		return state, errOverFlow
 	}
 
 	var (
@@ -579,8 +612,13 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) (Swa
 	}
 
 	// If an overflowed value is stored in state, it may cause problems in the next step
-	if amountCalculated.Gt(maxInt64) {
+	if amountCalculated.Gt(maxInt64) || amountSpecifiedRemaining.Gt(maxInt64) {
 		return state, errOverFlow
+	}
+
+	// If an underflowed value is stored in state, it may cause problems in the next step
+	if amountCalculated.Lt(minInt64) || amountSpecifiedRemaining.Lt(minInt64) {
+		return state, errUnderflow
 	}
 
 	state.amountSpecifiedRemaining = amountSpecifiedRemaining
@@ -626,22 +664,4 @@ func tickTransition(step StepComputations, zeroForOne bool, state SwapState, poo
 	newState.tick = step.tickNext - decrement
 
 	return newState
-}
-
-// swapTransfers handles token transfers for a swap transaction.
-// For zeroForOne swaps: transfers token0 from payer to pool and token1 from pool to recipient.
-// For oneForZero swaps: transfers token1 from payer to pool and token0 from pool to recipient.
-func (p *Pool) swapTransfers(zeroForOne bool, payer, recipient std.Address, amount0, amount1 *i256.Int) {
-	if zeroForOne {
-		// payer > POOL
-		p.safeTransferFrom(payer, poolAddr, p.token0Path, amount0.Abs(), true)
-
-		// POOL > recipient
-		p.safeTransfer(recipient, p.token1Path, amount1, false)
-	} else {
-		// payer > POOL
-		p.safeTransferFrom(payer, poolAddr, p.token1Path, amount1.Abs(), false)
-		// POOL > recipient
-		p.safeTransfer(recipient, p.token0Path, amount0, true)
-	}
 }

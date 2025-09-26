@@ -91,7 +91,7 @@ func main() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for swap")
-	bar.Approve(cross, poolAddr, max_approve)
+	bar.Approve(cross, routerAddr, max_approve)
 	baz.Approve(cross, routerAddr, max_approve) // ITS FOR 0.15% fee
 
 	println("[INFO] Executing ExactIn swap (140000 bar → baz)")

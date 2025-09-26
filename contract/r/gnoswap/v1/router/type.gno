@@ -65,6 +65,8 @@ type SingleSwapParams struct {
 	//  - Positive: exact input amount (tokenIn)
 	//  - Negative: exact output amount (tokenOut)
 	amountSpecified *i256.Int
+
+	sqrtPriceLimitX96 string // sqrtPriceLimitX96 for the swap, empty string or zero string means no limit
 }
 
 // TokenIn returns the input token address.
@@ -75,6 +77,16 @@ func (p SingleSwapParams) TokenOut() string { return p.tokenOut }
 
 // Fee returns the pool fee tier.
 func (p SingleSwapParams) Fee() uint32 { return p.fee }
+
+// SqrtPriceLimitX96 returns the sqrtPriceLimitX96 for the swap.
+// If sqrtPriceLimitX96 is empty string, it will return zero.
+func (p SingleSwapParams) SqrtPriceLimitX96() *u256.Uint {
+	if p.sqrtPriceLimitX96 == "" {
+		return u256.Zero()
+	}
+
+	return u256.MustFromDecimal(p.sqrtPriceLimitX96)
+}
 
 // SwapParams contains parameters for executing a multi-hop swap operation.
 type SwapParams struct {
@@ -134,17 +146,15 @@ type SwapCallbackData struct {
 	tokenOut string      // token to receive
 	fee      uint32      // fee of the pool used to swap
 	payer    std.Address // address to spend the token
-	hasNext  bool        // whether there is a next swap
 }
 
 // newSwapCallbackData creates a new SwapCallbackData from a SwapParamsI.
-func newSwapCallbackData(params SwapParamsI, payer std.Address, hasNext bool) SwapCallbackData {
+func newSwapCallbackData(params SwapParamsI, payer std.Address) SwapCallbackData {
 	return SwapCallbackData{
 		tokenIn:  params.TokenIn(),
 		tokenOut: params.TokenOut(),
 		fee:      params.Fee(),
 		payer:    payer,
-		hasNext:  hasNext,
 	}
 }
 

@@ -70,7 +70,11 @@ func (self *Pools) Has(poolPath string) bool {
 
 func (self *Pools) IterateAll(fn func(key string, pool *Pool) bool) {
 	self.tree.Iterate("", "", func(key string, value any) bool {
-		return fn(key, value.(*Pool))
+		p, ok := value.(*Pool)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast value to *Pool: %T", value))
+		}
+		return fn(key, p)
 	})
 }
 
@@ -136,9 +140,11 @@ type Pool struct {
 // NewPool creates a new pool with the given poolPath and currentHeight.
 func NewPool(poolPath string, currentTime int64) *Pool {
 	pool := &Pool{
-		poolPath:                      poolPath,
-		stakedLiquidity:               NewUintTree(),
-		lastUnclaimableTime:           currentTime,
+		poolPath:        poolPath,
+		stakedLiquidity: NewUintTree(),
+		// New pools start with zero liquidity, but we don't track unclaimable period
+		// until emission actually starts (when tier is set and first stake happens)
+		lastUnclaimableTime:           0,
 		unclaimableAcc:                0,
 		rewardCache:                   NewUintTree(),
 		incentives:                    NewIncentives(poolPath),
@@ -171,7 +177,7 @@ func (self *Pool) CurrentGlobalRewardRatioAccumulation(currentTime int64) (time 
 	if acc == nil {
 		panic("should not happen, globalRewardRatioAccumulation must be set when pool is created")
 	}
-	return
+	return time, acc
 }
 
 // Get the latest tick in [0, currentTime] range.
@@ -185,7 +191,7 @@ func (self *Pool) CurrentTick(currentTime int64) (tick int32) {
 		tick = res
 		return true
 	})
-	return
+	return tick
 }
 
 func (self *Pool) CurrentStakedLiquidity(currentTime int64) (liquidity *u256.Uint) {
@@ -199,7 +205,7 @@ func (self *Pool) CurrentStakedLiquidity(currentTime int64) (liquidity *u256.Uin
 		liquidity = res
 		return true
 	})
-	return
+	return liquidity
 }
 
 // IsExternallyIncentivizedPool returns true if the pool has any active external incentives.
@@ -210,7 +216,10 @@ func (self *Pool) IsExternallyIncentivizedPool() bool {
 	hasActive := false
 	self.incentives.incentives.Iterate("", "", func(key string, value interface{}) bool {
 		incentive, ok := value.(*ExternalIncentive)
-		if ok && incentive.isActive(currentTime) {
+		if !ok {
+			panic("failed to cast value to *ExternalIncentive")
+		}
+		if incentive.isActive(currentTime) {
 			hasActive = true
 			return false
 		}
@@ -231,7 +240,7 @@ func (self *Pool) CurrentReward(currentTime int64) (reward int64) {
 		reward = res
 		return true
 	})
-	return
+	return reward
 }
 
 // cacheReward sets the current reward for the pool
@@ -259,11 +268,6 @@ func (self *Pool) cacheInternalReward(currentTime int64, currentEmission int64) 
 	self.cacheReward(currentTime, currentEmission)
 
 	currentStakedLiquidity := self.CurrentStakedLiquidity(currentTime)
-	if currentStakedLiquidity.IsZero() {
-		self.endUnclaimablePeriod(currentTime)
-		self.startUnclaimablePeriod(currentTime)
-	}
-
 	self.updateGlobalRewardRatioAccumulation(currentTime, currentStakedLiquidity)
 }
 
@@ -328,23 +332,27 @@ func (self *Pool) RewardStateOf(deposit *Deposit) *RewardState {
 // It calls rewardPerWarmup for each rewardCache interval, applies warmup, and returns the rewards and penalties.
 func (self *RewardState) calculateInternalReward(startTime, endTime int64) ([]int64, []int64) {
 	currentReward := self.pool.CurrentReward(startTime)
+
 	self.pool.rewardCache.Iterate(startTime, endTime, func(key int64, value any) bool {
-		// we calculate per-position reward
+		reward, ok := value.(int64)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast value to int64: %T", value))
+		}
+
+		// Calculate reward for the period before this cache entry
 		err := self.rewardPerWarmup(startTime, key, currentReward)
 		if err != nil {
 			panic(err)
 		}
 
-		reward, ok := value.(int64)
-		if !ok {
-			panic(ufmt.Sprintf("failed to cast value to int64: %T", value))
-		}
 		startTime = key
 		currentReward = reward
 		return false
 	})
 
 	if startTime < endTime {
+		// For the remaining period, use the last cached reward value
+		// If the pool was de-tiered and the last cached value is 0, this ensures no new rewards
 		err := self.rewardPerWarmup(startTime, endTime, currentReward)
 		if err != nil {
 			panic(err)
@@ -490,17 +498,52 @@ func (self *Pool) endUnclaimablePeriod(currentTime int64) {
 		// This should not happen, but guarding just in case
 		return
 	}
-	unclaimableDuration := currentTime - self.lastUnclaimableTime
-	self.unclaimableAcc += unclaimableDuration * self.CurrentReward(self.lastUnclaimableTime)
+
+	self.updateUnclaimableAccumulateRewards(currentTime)
 	self.lastUnclaimableTime = 0
 }
 
+// updateUnclaimableAccumulateRewards ends the unclaimable period.
+// Accumulates to unclaimableAcc and resets lastUnclaimableTime to 0.
+func (self *Pool) updateUnclaimableAccumulateRewards(currentTime int64) {
+	if self.lastUnclaimableTime >= currentTime {
+		return
+	}
+
+	unclaimableDuration := currentTime - self.lastUnclaimableTime
+	self.unclaimableAcc += unclaimableDuration * self.CurrentReward(self.lastUnclaimableTime)
+}
+
 // processUnclaimableReward processes the unclaimable reward and returns the accumulated reward.
-// It resets unclaimableAcc to 0 and updates lastUnclaimableTime to endTime.
+// It resets unclaimableAcc to 0 and properly manages lastUnclaimableTime based on pool state.
 func (self *Pool) processUnclaimableReward(poolTier *PoolTier, endTime int64) int64 {
+	// Check current pool liquidity state
+	isZeroStakedLiquidity := self.CurrentStakedLiquidity(endTime).IsZero()
+
+	if self.lastUnclaimableTime > 0 {
+		// We have an ongoing unclaimable period tracking
+		self.updateUnclaimableAccumulateRewards(endTime)
+
+		if isZeroStakedLiquidity {
+			// Still unclaimable - accumulate rewards up to endTime
+			// Update tracking time for continuing unclaimable period
+			self.lastUnclaimableTime = endTime
+		} else {
+			// Was unclaimable but now has liquidity - properly end the period
+			self.lastUnclaimableTime = 0
+		}
+	} else {
+		if isZeroStakedLiquidity {
+			// No previous tracking but currently unclaimable - this shouldn't normally happen
+			// as startUnclaimablePeriod should have been called when liquidity reached 0
+			// Start tracking from now
+			self.lastUnclaimableTime = endTime
+		}
+	}
+
+	// Return and reset accumulated unclaimable rewards
 	internalUnClaimable := self.unclaimableAcc
 	self.unclaimableAcc = 0
-	self.lastUnclaimableTime = endTime
 	return internalUnClaimable
 }
 

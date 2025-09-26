@@ -1,6 +1,7 @@
 package router
 
 import (
+	"math"
 	"std"
 	"strconv"
 	"strings"
@@ -44,6 +45,7 @@ func TestFinalizeSwap(t *testing.T) {
 		userBeforeWugnotBalance int64
 		userWrappedWugnot       int64
 		amountSpecified         *u256.Uint
+		swapCount               int64
 		expectError             bool
 		errorMessage            string
 	}{
@@ -58,6 +60,7 @@ func TestFinalizeSwap(t *testing.T) {
 			userBeforeWugnotBalance: 0,
 			userWrappedWugnot:       0,
 			amountSpecified:         newUint256("100"),
+			swapCount:               1,
 			expectError:             false,
 		},
 		{
@@ -71,6 +74,7 @@ func TestFinalizeSwap(t *testing.T) {
 			userBeforeWugnotBalance: 0,
 			userWrappedWugnot:       0,
 			amountSpecified:         newUint256("100"),
+			swapCount:               1,
 			expectError:             false,
 		},
 		{
@@ -84,6 +88,7 @@ func TestFinalizeSwap(t *testing.T) {
 			userBeforeWugnotBalance: 0,
 			userWrappedWugnot:       0,
 			amountSpecified:         newUint256("100"),
+			swapCount:               1,
 			expectError:             true,
 			errorMessage:            "[GNOSWAP-ROUTER-002] slippage check failed || Received more than requested in [EXACT_OUT] requested=100, actual=90",
 		},
@@ -97,6 +102,7 @@ func TestFinalizeSwap(t *testing.T) {
 			tokenAmountLimit:        newUint256("85"),
 			userBeforeWugnotBalance: 1000000,
 			userWrappedWugnot:       20000,
+			swapCount:               1,
 			expectError:             true,
 			errorMessage:            "too much wugnot spent",
 		},
@@ -111,6 +117,7 @@ func TestFinalizeSwap(t *testing.T) {
 			userBeforeWugnotBalance: 0,
 			userWrappedWugnot:       0,
 			amountSpecified:         newUint256("600901352"),
+			swapCount:               1,
 			expectError:             false,
 		},
 		{
@@ -123,6 +130,7 @@ func TestFinalizeSwap(t *testing.T) {
 			tokenAmountLimit:        newUint256("85"),
 			userBeforeWugnotBalance: 1<<63 - 1,
 			userWrappedWugnot:       1,
+			swapCount:               1,
 			expectError:             true,
 			errorMessage:            "overflow in balance calculation",
 		},
@@ -136,6 +144,7 @@ func TestFinalizeSwap(t *testing.T) {
 			tokenAmountLimit:        newUint256("85"),
 			userBeforeWugnotBalance: 1 << 61,
 			userWrappedWugnot:       1 << 61,
+			swapCount:               1,
 			expectError:             true,
 			errorMessage:            "too much wugnot spent",
 		},
@@ -174,6 +183,8 @@ func TestFinalizeSwap(t *testing.T) {
 				tt.userBeforeWugnotBalance,
 				tt.userWrappedWugnot,
 				tt.amountSpecified,
+				tt.swapCount,
+				false,
 			)
 
 			if !tt.expectError {
@@ -869,6 +880,8 @@ func TestHandleMultiSwap(t *testing.T) {
 
 			testing.SetRealm(adminRealm)
 
+			common.SafeGRC20Approve(cross, tt.inputToken, routerAddr, math.MaxInt64)
+
 			amountSpecified := i256.MustFromDecimal(tt.amountSpecified)
 
 			handleMultiSwapFn := func(cur realm) (*u256.Uint, *u256.Uint) {
@@ -965,6 +978,8 @@ func TestProcessRoute_MultiHops(t *testing.T) {
 
 			toSwapAmount := i256.MustFromDecimal(tt.toSwap)
 			testing.SetRealm(adminRealm)
+
+			common.SafeGRC20Approve(cross, barPath, routerAddr, math.MaxInt64)
 
 			processRouteFn := func(cur realm) (*u256.Uint, *u256.Uint, error) {
 				return op.processRoute(tt.route, toSwapAmount, tt.swapType)
