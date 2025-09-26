@@ -59,6 +59,18 @@ func swapInner(
 	amount0 := i256.MustFromDecimal(amount0Str)
 	amount1 := i256.MustFromDecimal(amount1Str)
 
+	if amount0.IsZero() || amount1.IsZero() {
+		panic(makeErrorWithDetails(
+			errFailedSwap,
+			ufmt.Sprintf(
+				"%s pool swap result is zero(amount0: %s, amount1: %s)",
+				pl.GetPoolPath(token0Path, token1Path, data.fee),
+				amount0Str,
+				amount1Str,
+			),
+		))
+	}
+
 	poolOut, poolRecv = i256MinMax(amount0, amount1)
 	if poolRecv.IsOverflow() || poolOut.IsOverflow() {
 		panic("overflow in swapInner")
