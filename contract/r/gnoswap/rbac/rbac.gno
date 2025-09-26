@@ -19,15 +19,25 @@ func init() {
 func initRbac() {
 	manager = prbac.NewRBACWithAddress(ADMIN)
 
+	// Prepare initial roles for one-time initialization
 	for role, addr := range DefaultRoleAddresses {
-		manager.RegisterRole(role.String())
-		manager.UpdateRoleAddress(role.String(), addr)
-	}
+		err := manager.RegisterRole(role.String(), addr)
+		if err != nil {
+			panic(makeErrorWithDetails(
+				err,
+				ufmt.Sprintf("role name: %s, address: %s", role.String(), addr.String()),
+			))
+		}
 
-	updateAccessRoleAddresses(manager.GetRoleAddresses())
+		registeredVersion := manager.GetRoleLatestVersion(role.String())
+
+		// Update access package with the role address
+		access.SetRoleAddress(cross, role.String(), registeredVersion, addr)
+	}
 }
 
 // RegisterRole registers a new role in the RBAC system.
+// registered role version is 1 by initialization
 //
 // Parameters:
 //   - roleName: name of the role to register
@@ -36,8 +46,7 @@ func initRbac() {
 // Only callable by admin or governance.
 func RegisterRole(cur realm, roleName string, roleAddress std.Address) {
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
-
+	assertIsAdminOrGovernance(caller)
 	assertIsValidRoleName(roleName)
 
 	// Validate the role address
@@ -47,7 +56,7 @@ func RegisterRole(cur realm, roleName string, roleAddress std.Address) {
 		)))
 	}
 
-	err := manager.RegisterRole(roleName)
+	err := manager.RegisterRole(roleName, roleAddress)
 	if err != nil {
 		if err.Error() == "role already exists" {
 			panic(ufmt.Sprintf("role %s already exists", roleName))
@@ -58,8 +67,10 @@ func RegisterRole(cur realm, roleName string, roleAddress std.Address) {
 		))
 	}
 
+	registeredVersion := manager.GetRoleLatestVersion(roleName)
+
 	// Update the role address immediately after registration
-	err = manager.UpdateRoleAddress(roleName, roleAddress)
+	err = manager.UpdateRoleAddress(roleName, registeredVersion, roleAddress)
 	if err != nil {
 		panic(makeErrorWithDetails(
 			errInvalidAddress,
@@ -67,8 +78,62 @@ func RegisterRole(cur realm, roleName string, roleAddress std.Address) {
 		))
 	}
 
-	updateAccessRoleAddresses(manager.GetRoleAddresses())
-	emitRegisterRoleEvent(roleName, roleAddress)
+	// Set the role in access control
+	access.SetRoleAddress(cross, roleName, registeredVersion, roleAddress)
+	emitRegisterRoleEvent(roleName, registeredVersion, roleAddress)
+}
+
+// UpdateRoleAddress updates the address assigned to a role.
+//
+// Parameters:
+//   - roleName: name of the role
+//   - addr: new address for the role
+//
+// Only callable by admin or governance.
+func UpdateRoleAddress(cur realm, roleName string, version int, addr std.Address) {
+	caller := std.PreviousRealm().Address()
+	assertIsAdminOrGovernance(caller)
+	assertIsValidRoleName(roleName)
+
+	err := manager.UpdateRoleAddress(roleName, version, addr)
+	if err != nil {
+		panic(makeErrorWithDetails(
+			err,
+			ufmt.Sprintf("role name: %s, address: %s", roleName, addr.String()),
+		))
+	}
+
+	// Set the role address in access control
+	access.SetRoleAddress(cross, roleName, version, addr)
+	emitUpdateRoleAddressEvent(roleName, version, addr)
+}
+
+// UpdateRoleAddressNextVersion updates the address assigned to a role new version.
+// updated version is incremented by 1
+//
+// Parameters:
+//   - roleName: name of the role
+//   - addr: new address for the role
+//
+// Only callable by admin or governance.
+func UpdateRoleAddressNextVersion(cur realm, roleName string, addr std.Address) {
+	caller := std.PreviousRealm().Address()
+	assertIsAdminOrGovernance(caller)
+	assertIsValidRoleName(roleName)
+
+	err := manager.UpdateRoleAddressNextVersion(roleName, addr)
+	if err != nil {
+		panic(makeErrorWithDetails(
+			err,
+			ufmt.Sprintf("role name: %s, address: %s", roleName, addr.String()),
+		))
+	}
+
+	newVersion := manager.GetRoleLatestVersion(roleName)
+
+	// Set the role address in access control
+	access.SetRoleAddress(cross, roleName, newVersion, addr)
+	emitUpdateRoleAddressEvent(roleName, newVersion, addr)
 }
 
 // RemoveRole removes a role from the RBAC system.
@@ -79,8 +144,7 @@ func RegisterRole(cur realm, roleName string, roleAddress std.Address) {
 // Only callable by admin or governance.
 func RemoveRole(cur realm, roleName string) {
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
-
+	assertIsAdminOrGovernance(caller)
 	assertIsValidRoleName(roleName)
 
 	err := manager.RemoveRole(roleName)
@@ -91,7 +155,8 @@ func RemoveRole(cur realm, roleName string) {
 		))
 	}
 
-	updateAccessRoleAddresses(manager.GetRoleAddresses())
+	// Remove the role from access control
+	access.RemoveRole(cross, roleName)
 	emitRemoveRoleEvent(roleName)
 }
 
@@ -100,39 +165,7 @@ func GetRoleAddress(roleName string) (std.Address, error) {
 	return manager.GetRoleAddress(roleName)
 }
 
-// UpdateRoleAddress updates the address assigned to a role.
-//
-// Parameters:
-//   - roleName: name of the role
-//   - addr: new address for the role
-//
-// Only callable by admin or governance.
-func UpdateRoleAddress(cur realm, roleName string, addr std.Address) {
-	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
-
-	// Validate that the address is valid
-	if !addr.IsValid() || addr == std.Address("") {
-		panic(makeErrorWithDetails(
-			errInvalidAddress,
-			ufmt.Sprintf("role name: %s, address: %s", roleName, addr.String()),
-		))
-	}
-
-	err := manager.UpdateRoleAddress(roleName, addr)
-	if err != nil {
-		panic(makeErrorWithDetails(
-			err,
-			ufmt.Sprintf("role name: %s, address: %s", roleName, addr.String()),
-		))
-	}
-
-	updateAccessRoleAddresses(manager.GetRoleAddresses())
-
-	emitUpdateRoleAddressEvent(roleName, addr)
-}
-
-// updateAccessRoleAddresses synchronizes role addresses with the access package.
-func updateAccessRoleAddresses(newRoleAddresses map[string]std.Address) {
-	access.SetRoleAddresses(cross, newRoleAddresses)
+// GetRoleAddressWithVersion returns the address assigned to roleName.
+func GetRoleAddressWithVersion(roleName string, version int) (std.Address, error) {
+	return manager.GetRoleAddressWithVersion(roleName, version)
 }
