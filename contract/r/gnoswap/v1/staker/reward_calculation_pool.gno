@@ -140,9 +140,11 @@ type Pool struct {
 // NewPool creates a new pool with the given poolPath and currentHeight.
 func NewPool(poolPath string, currentTime int64) *Pool {
 	pool := &Pool{
-		poolPath:                      poolPath,
-		stakedLiquidity:               NewUintTree(),
-		lastUnclaimableTime:           currentTime,
+		poolPath:        poolPath,
+		stakedLiquidity: NewUintTree(),
+		// New pools start with zero liquidity, but we don't track unclaimable period
+		// until emission actually starts (when tier is set and first stake happens)
+		lastUnclaimableTime:           0,
 		unclaimableAcc:                0,
 		rewardCache:                   NewUintTree(),
 		incentives:                    NewIncentives(poolPath),
@@ -266,11 +268,6 @@ func (self *Pool) cacheInternalReward(currentTime int64, currentEmission int64) 
 	self.cacheReward(currentTime, currentEmission)
 
 	currentStakedLiquidity := self.CurrentStakedLiquidity(currentTime)
-	if currentStakedLiquidity.IsZero() {
-		self.endUnclaimablePeriod(currentTime)
-		self.startUnclaimablePeriod(currentTime)
-	}
-
 	self.updateGlobalRewardRatioAccumulation(currentTime, currentStakedLiquidity)
 }
 
@@ -501,17 +498,52 @@ func (self *Pool) endUnclaimablePeriod(currentTime int64) {
 		// This should not happen, but guarding just in case
 		return
 	}
-	unclaimableDuration := currentTime - self.lastUnclaimableTime
-	self.unclaimableAcc += unclaimableDuration * self.CurrentReward(self.lastUnclaimableTime)
+
+	self.updateUnclaimableAccumulateRewards(currentTime)
 	self.lastUnclaimableTime = 0
 }
 
+// updateUnclaimableAccumulateRewards ends the unclaimable period.
+// Accumulates to unclaimableAcc and resets lastUnclaimableTime to 0.
+func (self *Pool) updateUnclaimableAccumulateRewards(currentTime int64) {
+	if self.lastUnclaimableTime >= currentTime {
+		return
+	}
+
+	unclaimableDuration := currentTime - self.lastUnclaimableTime
+	self.unclaimableAcc += unclaimableDuration * self.CurrentReward(self.lastUnclaimableTime)
+}
+
 // processUnclaimableReward processes the unclaimable reward and returns the accumulated reward.
-// It resets unclaimableAcc to 0 and updates lastUnclaimableTime to endTime.
+// It resets unclaimableAcc to 0 and properly manages lastUnclaimableTime based on pool state.
 func (self *Pool) processUnclaimableReward(poolTier *PoolTier, endTime int64) int64 {
+	// Check current pool liquidity state
+	isZeroStakedLiquidity := self.CurrentStakedLiquidity(endTime).IsZero()
+
+	if self.lastUnclaimableTime > 0 {
+		// We have an ongoing unclaimable period tracking
+		self.updateUnclaimableAccumulateRewards(endTime)
+
+		if isZeroStakedLiquidity {
+			// Still unclaimable - accumulate rewards up to endTime
+			// Update tracking time for continuing unclaimable period
+			self.lastUnclaimableTime = endTime
+		} else {
+			// Was unclaimable but now has liquidity - properly end the period
+			self.lastUnclaimableTime = 0
+		}
+	} else {
+		if isZeroStakedLiquidity {
+			// No previous tracking but currently unclaimable - this shouldn't normally happen
+			// as startUnclaimablePeriod should have been called when liquidity reached 0
+			// Start tracking from now
+			self.lastUnclaimableTime = endTime
+		}
+	}
+
+	// Return and reset accumulated unclaimable rewards
 	internalUnClaimable := self.unclaimableAcc
 	self.unclaimableAcc = 0
-	self.lastUnclaimableTime = endTime
 	return internalUnClaimable
 }
 
