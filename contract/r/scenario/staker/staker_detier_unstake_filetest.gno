@@ -1,5 +1,6 @@
 // Test unstaking positions after pool has been de-tiered (tier removed)
 // This ensures users can recover their staked LP positions even after pools lose incentives
+// V2: Collect rewards right before tier removal to avoid edge case
 
 // PKGPATH: gno.land/r/gnoswap/v1/main
 package main
@@ -72,19 +73,23 @@ func main() {
 	verifyRewards()
 	println()
 
-	println("[SCENARIO] 7. Remove pool tier (de-tier the pool)")
+	println("[SCENARIO] 7. Collect all rewards before tier removal")
+	collectBeforeRemoval()
+	println()
+
+	println("[SCENARIO] 8. Remove pool tier (de-tier the pool)")
 	removePoolTier()
 	println()
 
-	println("[SCENARIO] 8. Verify pool has no incentives")
+	println("[SCENARIO] 9. Verify pool has no incentives")
 	verifyNoIncentives()
 	println()
 
-	println("[SCENARIO] 9. Unstake position from de-tiered pool")
+	println("[SCENARIO] 10. Unstake position from de-tiered pool")
 	unstakeFromDetiredPool()
 	println()
 
-	println("[SCENARIO] 10. Verify position ownership after unstake")
+	println("[SCENARIO] 11. Verify position ownership after unstake")
 	verifyOwnership()
 }
 
@@ -109,8 +114,8 @@ func initAndSetup() {
 		cross,
 		1, 7500, // staker
 		2, 2500, // devOps
-		3, 0,    // community pool
-		4, 0,    // xGNS
+		3, 0, // community pool
+		4, 0, // xGNS
 	)
 
 	testing.SetRealm(stakerRealm)
@@ -208,7 +213,20 @@ func verifyRewards() {
 	}
 
 	ufmt.Printf("[EXPECTED] rewards accumulated normally: %d GNS\n", diff)
-	testing.SkipHeights(1)
+	// No skip heights here - collect right before tier removal
+}
+
+func collectBeforeRemoval() {
+	testing.SetRealm(adminRealm)
+
+	// Collect all pending rewards right before tier removal
+	beforeGns := gns.BalanceOf(adminUser)
+	sr.CollectReward(cross, 1, false) // Collect any remaining rewards
+	afterGns := gns.BalanceOf(adminUser)
+	diff := afterGns - beforeGns
+
+	ufmt.Printf("[INFO] collected remaining rewards before tier removal: %d GNS\n", diff)
+	// No skip heights - immediately remove tier
 }
 
 func removePoolTier() {
@@ -232,8 +250,8 @@ func verifyNoIncentives() {
 	afterGns := gns.BalanceOf(adminUser)
 	diff := afterGns - beforeGns
 
-	// Should be minimal or no rewards since pool is de-tiered
-	ufmt.Printf("[INFO] rewards after de-tiering: %d GNS (should be minimal)\n", diff)
+	// Should be 0 since we collected right before tier removal and pool is de-tiered
+	ufmt.Printf("[INFO] rewards after de-tiering: %d GNS (should be 0)\n", diff)
 
 	// Verify pool has no tier
 	// Pool should no longer be in the tier system after removal
@@ -261,7 +279,7 @@ func verifyOwnership() {
 	}
 
 	ufmt.Printf("[EXPECTED] NFT ownership returned to admin: %s\n", owner)
-	
+
 	// Verify position can still be interacted with normally
 	testing.SetRealm(adminRealm)
 	position, found := pn.GetPosition(1)
@@ -293,16 +311,19 @@ func positionIdFrom(positionId uint64) grc721.TokenID {
 // [SCENARIO] 6. Verify rewards accumulate normally
 // [EXPECTED] rewards accumulated normally: 374839417 GNS
 //
-// [SCENARIO] 7. Remove pool tier (de-tier the pool)
+// [SCENARIO] 7. Collect all rewards before tier removal
+// [INFO] collected remaining rewards before tier removal: 0 GNS
+//
+// [SCENARIO] 8. Remove pool tier (de-tier the pool)
 // [EXPECTED] pool tier removed - pool is now de-tiered
 //
-// [SCENARIO] 8. Verify pool has no incentives
-// [INFO] rewards after de-tiering: 0 GNS (should be minimal)
+// [SCENARIO] 9. Verify pool has no incentives
+// [INFO] rewards after de-tiering: 0 GNS (should be 0)
 // [EXPECTED] pool has been removed from tier system and has no external incentives
 //
-// [SCENARIO] 9. Unstake position from de-tiered pool
+// [SCENARIO] 10. Unstake position from de-tiered pool
 // [EXPECTED] successfully unstaked position from de-tiered pool
 //
-// [SCENARIO] 10. Verify position ownership after unstake
+// [SCENARIO] 11. Verify position ownership after unstake
 // [EXPECTED] NFT ownership returned to admin: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
 // [EXPECTED] position still accessible - liquidity: 1025

@@ -120,7 +120,8 @@ func ChangeDistributionPct(
 
 	// Call the callback if registered
 	if onDistributionPctChangeCallback != nil {
-		onDistributionPctChangeCallback()
+		emissionAmountPerSecond := GetStakerEmissionAmountPerSecond()
+		onDistributionPctChangeCallback(emissionAmountPerSecond)
 	}
 }
 

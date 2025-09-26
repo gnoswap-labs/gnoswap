@@ -35,7 +35,7 @@ import (
 // Callable by anyone once proposal is executable.
 func Execute(cur realm, proposalID int64) int64 {
 	// Check if execution is allowed (system not halted for execution)
-	halt.AssertIsNotHaltedGovernance()
+	halt.AssertIsNotHaltedGovernanceWithVersion(1)
 
 	// Get caller information and current blockchain state
 	caller := std.PreviousRealm().Address()
@@ -143,7 +143,7 @@ func executeProposal(
 // Returns cancelled proposal ID.
 // Only callable by original proposer before voting begins.
 func Cancel(cur realm, proposalID int64) int64 {
-	halt.AssertIsNotHaltedGovernance()
+	halt.AssertIsNotHaltedGovernanceWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	assertCallerIsProposer(proposalID, caller)

@@ -139,14 +139,9 @@ func TestSwapInner(t *testing.T) {
 			baz.Approve(cross, poolAddr, maxApprove)
 			TokenFaucet(t, barPath, routerAddr)
 
-			swapInnerFn := func(cur realm) (*u256.Uint, *u256.Uint) {
-				func() {
-					ctx := testing.GetContext()
-					ctx.CurrentRealm = routerRealm
-					ctx.OriginCaller = tt.data.payer
-					testing.SetContext(ctx)
-				}()
+			testing.SetRealm(routerRealm)
 
+			swapInnerFn := func(cur realm) (*u256.Uint, *u256.Uint) {
 				return swapInner(
 					tt.amountSpecified,
 					tt.recipient,

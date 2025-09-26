@@ -189,7 +189,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
 				return HandleWithdrawalFee(cross, 2, wugnotPath, "1000", gnsPath, "1000", poolPath, alice)
 			},
-			expected:    "990,990",
+			expected:    "900,900",
 			shouldPanic: false,
 		},
 	}
@@ -258,6 +258,18 @@ func TestSetWithdrawalFee(t *testing.T) {
 			expected:    strconv.FormatUint(200, 10),
 			shouldPanic: false,
 		},
+		{
+			name: "exceed max fee, should panic",
+			action: func(t *testing.T) {
+				const newFee = uint64(MaxBpsValue + 1)
+				govRealm := std.NewUserRealm(govAddr)
+				testing.SetRealm(govRealm)
+				SetWithdrawalFee(cross, newFee)
+			},
+			verify:      nil,
+			expected:    "must be in range 0 ~ 1000",
+			shouldPanic: true,
+		},
 	}
 
 	for _, tc := range tests {
@@ -269,7 +281,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 					uassert.Equal(t, gotWithdrawalFee, tc.expected)
 				}
 			} else {
-				uassert.AbortsWithMessage(t, tc.expected, func() {
+				uassert.AbortsContains(t, tc.expected, func() {
 					tc.action(t)
 				})
 			}
@@ -289,8 +301,8 @@ func TestCalculateAmountWithFee(t *testing.T) {
 			name:         "normal case",
 			amount:       u256.NewUint(1000),
 			fee:          u256.NewUint(100), // 1%
-			expectedFee:  u256.NewUint(10),
-			expectedRest: u256.NewUint(990),
+			expectedFee:  u256.NewUint(100),
+			expectedRest: u256.NewUint(900),
 		},
 		{
 			name:         "zero amount",
@@ -309,7 +321,7 @@ func TestCalculateAmountWithFee(t *testing.T) {
 		{
 			name:         "max fee",
 			amount:       u256.NewUint(1000),
-			fee:          u256.NewUint(10000), // 100%
+			fee:          u256.NewUint(MaxBpsValue),
 			expectedFee:  u256.NewUint(1000),
 			expectedRest: u256.NewUint(0),
 		},
@@ -317,8 +329,8 @@ func TestCalculateAmountWithFee(t *testing.T) {
 			name:         "large amount",
 			amount:       u256.MustFromDecimal("1000000000000000000"),
 			fee:          u256.NewUint(100),
-			expectedFee:  u256.MustFromDecimal("10000000000000000"),
-			expectedRest: u256.MustFromDecimal("990000000000000000"),
+			expectedFee:  u256.MustFromDecimal("100000000000000000"),
+			expectedRest: u256.MustFromDecimal("900000000000000000"),
 		},
 	}
 
@@ -536,6 +548,22 @@ func TestProtocolFeesDisabledWhenNotConfigured(t *testing.T) {
 		adminAddr,
 	)
 
+	swapCallback := func(cur realm, amount0Delta string, amount1Delta string) error {
+		testing.SetRealm(adminRealm)
+
+		amount0Int64, _ := strconv.ParseInt(amount0Delta, 10, 64)
+		amount1Int64, _ := strconv.ParseInt(amount1Delta, 10, 64)
+
+		if amount0Int64 > 0 {
+			common.SafeGRC20Transfer(cross, barPath, poolAddr, amount0Int64)
+		}
+		if amount1Int64 > 0 {
+			common.SafeGRC20Transfer(cross, fooPath, poolAddr, amount1Int64)
+		}
+
+		return nil
+	}
+
 	// Perform swap from token0 to token1 (bar -> foo)
 	testing.SetRealm(rouRealm)
 	Swap(
@@ -548,6 +576,7 @@ func TestProtocolFeesDisabledWhenNotConfigured(t *testing.T) {
 		"10000",
 		MIN_PRICE,
 		adminAddr,
+		swapCallback,
 	)
 
 	// Perform swap from token1 to token0 (foo -> bar)
@@ -561,6 +590,7 @@ func TestProtocolFeesDisabledWhenNotConfigured(t *testing.T) {
 		"10000",
 		MAX_PRICE,
 		adminAddr,
+		swapCallback,
 	)
 
 	// Verify that no protocol fees were collected since protocol fees are not enabled
