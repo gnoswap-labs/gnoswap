@@ -130,7 +130,7 @@ func (self *ExternalIncentive) RewardLeft(currentTimestamp int64) int64 {
 	// Still check timestamps for state validation
 	if currentTimestamp <= self.startTimestamp {
 		// Subtract dust since it won't be distributed
-		return int64(self.rewardAmount - self.rewardDust)
+		return self.rewardLeft
 	}
 
 	if currentTimestamp > self.endTimestamp {
@@ -140,7 +140,7 @@ func (self *ExternalIncentive) RewardLeft(currentTimestamp int64) int64 {
 	// But use time for calculation
 	if currentTimestamp <= self.startTimestamp {
 		// Subtract dust since it won't be distributed
-		return int64(self.rewardAmount - self.rewardDust)
+		return self.rewardLeft
 	}
 
 	if currentTimestamp > self.endTimestamp {
