@@ -118,7 +118,11 @@ func SetWarmUp(cur realm, pct, timeDuration int64) {
 func setPoolTier(poolPath string, tier uint64, currentTime int64) {
 	en.MintAndDistributeGns(cross)
 
-	pools.EnsurePoolExists(poolPath)
+	pool := pools.GetPoolOrNil(poolPath)
+	if pool == nil {
+		pool = NewPool(poolPath, time.Now().Unix())
+		pools.set(poolPath, pool)
+	}
 	poolTier.changeTier(std.ChainHeight(), currentTime, pools, poolPath, tier)
 }
 
