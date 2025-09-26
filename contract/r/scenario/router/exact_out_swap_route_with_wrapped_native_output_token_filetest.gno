@@ -203,8 +203,13 @@ func exactOutSwapRouteBy(
 		banker.SendCoins(adminAddr, routerAddr, sendCoins)
 
 		testing.SetOriginSend(sendCoins)
+
+		common.SafeGRC20Approve(cross, common.WUGNOT_PATH, routerAddr, maxAmountInInt64)
 	} else {
 		testing.SetOriginSend(std.Coins{})
+		maxAmountInInt64, _ := strconv.ParseInt(maxAmountIn, 10, 64)
+
+		common.SafeGRC20Approve(cross, inputToken, routerAddr, maxAmountInInt64)
 	}
 	inputTokenAmount, outputTokenAmount := router.ExactOutSwapRoute(
 		cross,

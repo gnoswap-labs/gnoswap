@@ -1,12 +1,16 @@
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (
 	"std"
+	"strconv"
 	"testing"
 
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
@@ -103,12 +107,7 @@ func main() {
 	println("[SCENARIO] 2. Swapping 0 -> 1")
 
 	// set current realm and origin caller
-	func() {
-		ctx := testing.GetContext()
-		ctx.CurrentRealm = rouRealm
-		ctx.OriginCaller = adminAddr
-		testing.SetContext(ctx)
-	}()
+	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 	swap0, swap1 := pool.Swap(
 		cross,
 		barPath,
@@ -119,6 +118,9 @@ func main() {
 		"60283363",
 		MIN_PRICE,
 		adminAddr,
+		func(cur realm, amount0Delta, amount1Delta string) error {
+			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+		},
 	)
 	println("[EXPECTED] swap0:", swap0, "expected: 59707210")
 	println("[EXPECTED] swap1:", swap1, "expected: -59317415")
@@ -163,6 +165,35 @@ func main() {
 	uassert.True(t, slotTick < -120, ufmt.Sprintf("tick(%d) should be < -120", slotTick))
 	println()
 	println("[INFO] Scenario completed")
+}
+
+func mockSwapCallback(token0Path string, token1Path string, amount0Delta string, amount1Delta string) error {
+	testing.SetRealm(adminRealm)
+
+	const wugnotPath = "gno.land/r/gnoland/wugnot"
+	const ugnotDenom = "ugnot"
+
+	amount0Int64, _ := strconv.ParseInt(amount0Delta, 10, 64)
+	amount1Int64, _ := strconv.ParseInt(amount1Delta, 10, 64)
+
+	if amount0Int64 > 0 {
+		if token0Path == wugnotPath {
+			testing.SetOriginSend(std.Coins{{ugnotDenom, amount0Int64}})
+			wugnot.Deposit(cross)
+		}
+
+		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Int64)
+	}
+	if amount1Int64 > 0 {
+		if token1Path == wugnotPath {
+			testing.SetOriginSend(std.Coins{{ugnotDenom, amount1Int64}})
+			wugnot.Deposit(cross)
+		}
+
+		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Int64)
+	}
+
+	return nil
 }
 
 // Output:
