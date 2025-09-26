@@ -147,6 +147,17 @@ func createExternalIncentiveWithWUGNOT() {
 	ufmt.Printf("[INFO] GNOT balance before creating incentive: %d\n", oldUgnotBal)
 	ufmt.Printf("[INFO] WUGNOT balance before creating incentive: %d\n", oldWugnotBal)
 
+	// Calculate expected dust
+	rewardAmount := int64(1_000_000_000)
+	duration := TIMESTAMP_90DAYS
+	rewardPerSecond := rewardAmount / duration
+	expectedDust := rewardAmount - (rewardPerSecond * duration)
+
+	ufmt.Printf("[INFO] reward amount: %d\n", rewardAmount)
+	ufmt.Printf("[INFO] duration: %d seconds\n", duration)
+	ufmt.Printf("[INFO] calculated rewardPerSecond: %d\n", rewardPerSecond)
+	ufmt.Printf("[INFO] calculated dust amount: %d\n", expectedDust)
+
 	println("[INFO] create external incentive with WUGNOT (wrapped token)")
 
 	currentTime := time.Now().Unix()
@@ -156,9 +167,9 @@ func createExternalIncentiveWithWUGNOT() {
 		cross,
 		"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:100",
 		wugnotPath, // Use WUGNOT directly, not "gnot"
-		1_000_000_000,
+		rewardAmount,
 		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
+		1234569600+duration,
 	)
 
 	createdIncentiveID = ufmt.Sprintf("%s:%d:1", adminAddr.String(), currentTime)
@@ -203,18 +214,32 @@ func endIncentiveAndVerifyWUGNOTRefund() {
 	gnotChange := newUgnotBal - oldUgnotBal
 	wugnotRefunded := newWugnotBal - oldWugnotBal
 
-	ufmt.Printf("[EXPECTED] GNOT change (should be 0): %d\n", gnotChange)
-	ufmt.Printf("[EXPECTED] WUGNOT refunded: %d\n", wugnotRefunded)
+	// Calculate expected dust
+	rewardAmount := int64(1_000_000_000)
+	duration := TIMESTAMP_90DAYS
+	rewardPerSecond := rewardAmount / duration
+	expectedDust := rewardAmount - (rewardPerSecond * duration)
 
-	if gnotChange != 0 {
-		panic("[FAIL] GNOT balance should not change when refunding WUGNOT incentive")
+	ufmt.Printf("[VERIFY] Expected dust amount: %d\n", expectedDust)
+	ufmt.Printf("[VERIFY] Total reward amount: %d\n", rewardAmount)
+	ufmt.Printf("[VERIFY] Theoretical distribution: %d\n", rewardPerSecond * duration)
+	ufmt.Printf("[RESULT] GNOT change (should be 0): %d\n", gnotChange)
+	ufmt.Printf("[RESULT] WUGNOT refunded: %d\n", wugnotRefunded)
+
+	// Verify dust is included and WUGNOT is properly refunded
+	if wugnotRefunded >= expectedDust && gnotChange == 0 {
+		ufmt.Printf("[PASS] WUGNOT incentive correctly refunded as WUGNOT - dust (%d) included in refund (%d)\n", expectedDust, wugnotRefunded)
+		// Check if full amount was refunded (should be if no staking happened)
+		if wugnotRefunded == rewardAmount {
+			println("[PASS] Full WUGNOT amount refunded (no distribution occurred)")
+		}
+	} else {
+		ufmt.Printf("[FAIL] WUGNOT incentive refund incorrect - expected at least %d but got %d\n", expectedDust, wugnotRefunded)
+		if gnotChange != 0 {
+			ufmt.Printf("[FAIL] GNOT should not change but changed by %d\n", gnotChange)
+		}
+		panic("Test failed")
 	}
-
-	if wugnotRefunded <= 0 {
-		panic("[FAIL] Expected WUGNOT refund but got none")
-	}
-
-	println("[PASS] WUGNOT incentive correctly refunded as WUGNOT")
 }
 
 func ugnotBalanceOf(addr std.Address) uint64 {
@@ -242,6 +267,10 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 // [INFO] approve WUGNOT and GNS for external incentive
 // [INFO] GNOT balance before creating incentive: 10000000000
 // [INFO] WUGNOT balance before creating incentive: 4000000000
+// [INFO] reward amount: 1000000000
+// [INFO] duration: 7776000 seconds
+// [INFO] calculated rewardPerSecond: 128
+// [INFO] calculated dust amount: 4672000
 // [INFO] create external incentive with WUGNOT (wrapped token)
 // [INFO] current time: 1234567900
 // [INFO] external incentive created successfully with ID: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d:1234567900:1
@@ -256,7 +285,11 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 // [INFO] WUGNOT balance before ending: 3000000000
 // [INFO] ending incentive with ID: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d:1234567900:1
 // [INFO] GNOT balance after ending: 10000000000
-// [INFO] WUGNOT balance after ending: 3995328000
-// [EXPECTED] GNOT change (should be 0): 0
-// [EXPECTED] WUGNOT refunded: 995328000
-// [PASS] WUGNOT incentive correctly refunded as WUGNOT
+// [INFO] WUGNOT balance after ending: 4000000000
+// [VERIFY] Expected dust amount: 4672000
+// [VERIFY] Total reward amount: 1000000000
+// [VERIFY] Theoretical distribution: 995328000
+// [RESULT] GNOT change (should be 0): 0
+// [RESULT] WUGNOT refunded: 1000000000
+// [PASS] WUGNOT incentive correctly refunded as WUGNOT - dust (4672000) included in refund (1000000000)
+// [PASS] Full WUGNOT amount refunded (no distribution occurred)

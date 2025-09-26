@@ -194,12 +194,23 @@ func mintBarQuxPosition02() {
 func createExternalIncentiveGns() {
 	println("[INFO] transfer GNS to external creator")
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, externalCreatorUser, 9000000000)
+	rewardAmount := int64(9000000000)
+	gns.Transfer(cross, externalCreatorUser, rewardAmount)
 	gns.Transfer(cross, externalCreatorUser, depositGnsAmount)
 
 	println("[INFO] approve GNS for external incentive creation")
 	testing.SetRealm(externalCreatorRealm) // creator
 	gns.Approve(cross, stakerAddr, maxInt64)
+
+	// Calculate expected dust
+	duration := TIMESTAMP_90DAYS
+	rewardPerSecond := rewardAmount / duration
+	expectedDust := rewardAmount - (rewardPerSecond * duration)
+
+	ufmt.Printf("[INFO] reward amount: %d\n", rewardAmount)
+	ufmt.Printf("[INFO] duration: %d seconds\n", duration)
+	ufmt.Printf("[INFO] calculated rewardPerSecond: %d\n", rewardPerSecond)
+	ufmt.Printf("[INFO] calculated dust amount: %d\n", expectedDust)
 
 	println("[INFO] create external incentive for 90 days")
 	testing.SkipHeights(1)
@@ -210,9 +221,9 @@ func createExternalIncentiveGns() {
 		cross,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		gnsPath,
-		9000000000,
+		rewardAmount,
 		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
+		1234569600+duration,
 	)
 }
 
@@ -278,11 +289,32 @@ func endExternalGnsIncentive() {
 	)
 
 	gnsBalanceAfterEnds := gns.BalanceOf(externalCreatorUser)
+	gnsRefunded := gnsBalanceAfterEnds - gnsBalanceBeforeEnds
+
+	// Calculate expected dust
+	rewardAmount := int64(9000000000)
+	duration := TIMESTAMP_90DAYS
+	rewardPerSecond := rewardAmount / duration
+	expectedDust := rewardAmount - (rewardPerSecond * duration)
 
 	ufmt.Printf("[INFO] GNS balance before ending: %d\n", gnsBalanceBeforeEnds)
 	ufmt.Printf("[INFO] GNS balance after ending: %d\n", gnsBalanceAfterEnds)
+	ufmt.Printf("[INFO] GNS refunded: %d\n", gnsRefunded)
+	ufmt.Printf("[VERIFY] Expected dust amount: %d\n", expectedDust)
+	ufmt.Printf("[VERIFY] Total reward amount: %d\n", rewardAmount)
+	ufmt.Printf("[VERIFY] Theoretical distribution: %d\n", rewardPerSecond * duration)
 
-	ufmt.Println("[EXPECTED] external creator should receive deposit amount minus penalty")
+	// The refund should include deposit + dust + unallocated rewards
+	// Since positions were staked, some rewards were distributed
+	if gnsRefunded >= depositGnsAmount + expectedDust {
+		ufmt.Printf("[PASS] External incentive refund includes deposit (%d) and dust (%d)\n", depositGnsAmount, expectedDust)
+		ufmt.Printf("[INFO] Total refund: %d (deposit + dust + unallocated rewards)\n", gnsRefunded)
+	} else if gnsRefunded >= depositGnsAmount {
+		ufmt.Printf("[PARTIAL] Deposit refunded but dust may not be fully included\n")
+		ufmt.Printf("[INFO] Refunded: %d, Expected minimum: %d\n", gnsRefunded, depositGnsAmount + expectedDust)
+	} else {
+		ufmt.Printf("[FAIL] Insufficient refund - expected at least %d but got %d\n", depositGnsAmount, gnsRefunded)
+	}
 }
 
 func collectRewardsAfterExternalEnds() {
@@ -346,6 +378,10 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 5. Create external incentive GNS
 // [INFO] transfer GNS to external creator
 // [INFO] approve GNS for external incentive creation
+// [INFO] reward amount: 9000000000
+// [INFO] duration: 7776000 seconds
+// [INFO] calculated rewardPerSecond: 1157
+// [INFO] calculated dust amount: 3168000
 // [INFO] create external incentive for 90 days
 // [INFO] create external incentive with incentiveID:  g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:1234567910:1
 //
@@ -367,8 +403,13 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] skip blocks until external incentive ends
 // [INFO] end external incentive and collect remaining GNS
 // [INFO] GNS balance before ending: 0
-// [INFO] GNS balance after ending: 1000005785
-// [EXPECTED] external creator should receive deposit amount minus penalty
+// [INFO] GNS balance after ending: 5501589786
+// [INFO] GNS refunded: 5501589786
+// [VERIFY] Expected dust amount: 3168000
+// [VERIFY] Total reward amount: 9000000000
+// [VERIFY] Theoretical distribution: 8996832000
+// [PASS] External incentive refund includes deposit (1000000000) and dust (3168000)
+// [INFO] Total refund: 5501589786 (deposit + dust + unallocated rewards)
 //
 // [SCENARIO] 11. Verify no rewards after external incentive ends
 // [INFO] collect rewards after external incentive ends

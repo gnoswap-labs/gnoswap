@@ -166,7 +166,8 @@ func mintBarQuxPosition() {
 func createExternalIncentiveGns() {
 	println("[INFO] transfer GNS to external creator")
 	testing.SetRealm(adminRealm)
-	gns.Transfer(cross, externalCreatorUser, 9000000000)
+	rewardAmount := int64(9000000000)
+	gns.Transfer(cross, externalCreatorUser, rewardAmount)
 	gns.Transfer(cross, externalCreatorUser, depositGnsAmount)
 
 	println("[INFO] approve GNS for external incentive creation")
@@ -175,6 +176,16 @@ func createExternalIncentiveGns() {
 
 	println("[INFO] create external incentive for 90 days")
 	testing.SkipHeights(1)
+
+	// Calculate expected dust
+	duration := TIMESTAMP_90DAYS
+	rewardPerSecond := rewardAmount / duration
+	expectedDust := rewardAmount - (rewardPerSecond * duration)
+
+	ufmt.Printf("[INFO] reward amount: %d\n", rewardAmount)
+	ufmt.Printf("[INFO] duration: %d seconds\n", duration)
+	ufmt.Printf("[INFO] calculated rewardPerSecond: %d\n", rewardPerSecond)
+	ufmt.Printf("[INFO] calculated dust amount: %d\n", expectedDust)
 
 	// Generate the incentive ID the same way the system does
 	// time.Now().Unix() returns 1234567910 in the test environment
@@ -185,9 +196,9 @@ func createExternalIncentiveGns() {
 		cross,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
 		gnsPath,
-		9000000000,
+		rewardAmount,
 		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
+		1234569600+duration,
 	)
 }
 
@@ -238,11 +249,28 @@ func endExternalGnsIncentive() {
 	stakerGnsAfterFirstEnd := gns.BalanceOf(stakerAddr)
 	creatorGnsAfterFirstEnd := gns.BalanceOf(externalCreatorUser)
 
+	// Calculate dust
+	rewardAmount := int64(9000000000)
+	duration := TIMESTAMP_90DAYS
+	rewardPerSecond := rewardAmount / duration
+	expectedDust := rewardAmount - (rewardPerSecond * duration)
+
 	ufmt.Printf("[INFO] FIRST END - Staker GNS balance before: %d\n", stakerGnsBeforeFirstEnd)
 	ufmt.Printf("[INFO] FIRST END - Staker GNS balance after: %d\n", stakerGnsAfterFirstEnd)
 	ufmt.Printf("[INFO] FIRST END - Creator GNS balance before: %d\n", creatorGnsBeforeFirstEnd)
 	ufmt.Printf("[INFO] FIRST END - Creator GNS balance after: %d\n", creatorGnsAfterFirstEnd)
 	ufmt.Printf("[INFO] FIRST END - Creator received: %d GNS\n", creatorGnsAfterFirstEnd-creatorGnsBeforeFirstEnd)
+	ufmt.Printf("[INFO] FIRST END - Expected dust: %d\n", expectedDust)
+
+	// Verify dust is included in refund
+	creatorReceived := creatorGnsAfterFirstEnd - creatorGnsBeforeFirstEnd
+	if creatorReceived >= depositGnsAmount + expectedDust {
+		ufmt.Printf("[PASS] Dust included in refund - received %d (includes deposit %d + dust %d + unallocated)\n",
+			creatorReceived, depositGnsAmount, expectedDust)
+	} else {
+		ufmt.Printf("[INFO] Creator received %d GNS (deposit: %d, dust: %d)\n",
+			creatorReceived, depositGnsAmount, expectedDust)
+	}
 }
 
 func demonstrateVulnerability() {
@@ -308,6 +336,10 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] transfer GNS to external creator
 // [INFO] approve GNS for external incentive creation
 // [INFO] create external incentive for 90 days
+// [INFO] reward amount: 9000000000
+// [INFO] duration: 7776000 seconds
+// [INFO] calculated rewardPerSecond: 1157
+// [INFO] calculated dust amount: 3168000
 // [INFO] create external incentive with incentiveID:  g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup:1234567905:1
 //
 // [SCENARIO] 5. Start external incentive
@@ -321,10 +353,12 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] skip blocks until external incentive ends
 // [INFO] end external incentive FIRST TIME and collect remaining GNS
 // [INFO] FIRST END - Staker GNS balance before: 20000000000
-// [INFO] FIRST END - Staker GNS balance after: 18999994215
+// [INFO] FIRST END - Staker GNS balance after: 14498407322
 // [INFO] FIRST END - Creator GNS balance before: 0
-// [INFO] FIRST END - Creator GNS balance after: 1000005785
-// [INFO] FIRST END - Creator received: 1000005785 GNS
+// [INFO] FIRST END - Creator GNS balance after: 5501592678
+// [INFO] FIRST END - Creator received: 5501592678 GNS
+// [INFO] FIRST END - Expected dust: 3168000
+// [PASS] Dust included in refund - received 5501592678 (includes deposit 1000000000 + dust 3168000 + unallocated)
 //
 // [SCENARIO] 8. FIX VERIFICATION: Verify EndExternalIncentive cannot be called multiple times
 // [FIX VERIFICATION] Attempting to call EndExternalIncentive multiple times
@@ -332,7 +366,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 9. Final verification
 // [RESULT] Final balances after fix:
-//   - Staker GNS balance: 18999994215
-//   - Creator GNS balance: 1000005785
+//   - Staker GNS balance: 14498407322
+//   - Creator GNS balance: 5501592678
 // [VERIFIED] Staker was NOT drained - only one GNS deposit was refunded
 // [VERIFIED] The vulnerability has been successfully fixed

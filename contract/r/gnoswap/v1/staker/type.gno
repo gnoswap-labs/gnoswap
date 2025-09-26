@@ -17,11 +17,9 @@ type ExternalIncentive struct {
 	targetPoolPath   string      // external reward target pool path
 	rewardToken      string      // external reward token path
 	rewardAmount     int64       // total reward amount
-	rewardLeft       int64       // remaining reward amount
-	rewardPerSecond  int64       // reward per second
 	refundee         std.Address // refundee address
 
-	refunded bool // whether incentive has been refunded (includes GNS deposit and unclaimed rewards)
+	refunded        bool // whether incentive has been refunded (includes GNS deposit and unclaimed rewards)
 	isRequestUnwrap bool // whether the original deposit was native GNOT (needs unwrap on refund)
 }
 
@@ -81,68 +79,53 @@ func safeSubInt64(a, b int64) int64 {
 	return a - b
 }
 
-func (e ExternalIncentive) StartTimestamp() int64 {
-	return e.startTimestamp
-}
+func (e ExternalIncentive) StartTimestamp() int64 { return e.startTimestamp }
+func (e ExternalIncentive) EndTimestamp() int64   { return e.endTimestamp }
+func (e ExternalIncentive) RewardToken() string   { return e.rewardToken }
+func (e ExternalIncentive) RewardAmount() int64   { return e.rewardAmount }
 
-func (e ExternalIncentive) EndTimestamp() int64 {
-	return e.endTimestamp
-}
+func (self *ExternalIncentive) setRefunded(refunded bool) { self.refunded = refunded }
 
-func (e ExternalIncentive) RewardToken() string {
-	return e.rewardToken
-}
-
-func (e ExternalIncentive) RewardAmount() int64 {
-	return e.rewardAmount
-}
-
-func (self *ExternalIncentive) RewardSpent(currentTimestamp int64) int64 {
-	// Still check timestamps for state validation
+// RewardSpent calculates the actual reward spent using pool's accumulation data
+// This method now returns a more accurate value by considering actual distribution
+func (self *ExternalIncentive) RewardSpent(pool *Pool, currentTimestamp int64) int64 {
 	if currentTimestamp < self.startTimestamp {
 		return 0
 	}
 
 	if currentTimestamp > self.endTimestamp {
-		return int64(self.rewardAmount)
+		return self.rewardAmount
 	}
 
-	// But use time for calculation
-	if currentTimestamp < self.startTimestamp {
-		return 0
-	}
+	// Calculate actual distributed amount using accumulation difference
+	actualDistributed := pool.CalculateActualDistributedReward(
+		self,
+		self.startTimestamp,
+		currentTimestamp,
+	)
 
-	if currentTimestamp > self.endTimestamp {
-		return int64(self.rewardAmount)
-	}
-
-	timeDuration := currentTimestamp - self.startTimestamp
-	rewardSpent := safeMulInt64(timeDuration, self.rewardPerSecond)
-	return rewardSpent
+	return actualDistributed
 }
 
-func (self *ExternalIncentive) RewardLeft(currentTimestamp int64) int64 {
-	// Still check timestamps for state validation
+// RewardLeft calculates the remaining reward using actual distribution data
+func (self *ExternalIncentive) RewardLeft(pool *Pool, currentTimestamp int64) int64 {
 	if currentTimestamp <= self.startTimestamp {
-		return int64(self.rewardAmount)
+		return self.rewardAmount
 	}
 
 	if currentTimestamp > self.endTimestamp {
 		return 0
 	}
 
-	// But use time for calculation
-	if currentTimestamp <= self.startTimestamp {
-		return int64(self.rewardAmount)
-	}
+	// Calculate actual distributed amount
+	actualDistributed := pool.CalculateActualDistributedReward(
+		self,
+		self.startTimestamp,
+		currentTimestamp,
+	)
 
-	if currentTimestamp > self.endTimestamp {
-		return 0
-	}
-
-	timeDuration := self.endTimestamp - currentTimestamp
-	rewardLeft := safeMulInt64(timeDuration, self.rewardPerSecond)
-	return rewardLeft
+	// Return the difference between total and distributed
+	return self.rewardAmount - actualDistributed
 }
 
 func (self *ExternalIncentive) Clone() *ExternalIncentive {
@@ -155,15 +138,10 @@ func (self *ExternalIncentive) Clone() *ExternalIncentive {
 		targetPoolPath:   self.targetPoolPath,
 		rewardToken:      self.rewardToken,
 		rewardAmount:     self.rewardAmount,
-		rewardLeft:       self.rewardLeft,
-		rewardPerSecond:  self.rewardPerSecond,
 		refundee:         self.refundee,
 		refunded:         self.refunded,
+		isRequestUnwrap:  self.isRequestUnwrap,
 	}
-}
-
-func (self *ExternalIncentive) setRefunded(refunded bool) {
-	self.refunded = refunded
 }
 
 // NewExternalIncentive creates a new external incentive
@@ -180,9 +158,6 @@ func NewExternalIncentive(
 	currentTime int64, // current time in unix time(seconds)
 	isRequestUnwrap bool, // whether original deposit was native GNOT
 ) *ExternalIncentive {
-	incentiveDuration := endTimestamp - startTimestamp
-	rewardPerSecond := rewardAmount / incentiveDuration
-
 	return &ExternalIncentive{
 		incentiveId:      incentiveId,
 		targetPoolPath:   targetPoolPath,
@@ -190,12 +165,11 @@ func NewExternalIncentive(
 		rewardAmount:     rewardAmount,
 		startTimestamp:   startTimestamp,
 		endTimestamp:     endTimestamp,
-		rewardPerSecond:  rewardPerSecond,
 		refundee:         refundee,
 		createdHeight:    createdHeight,
 		depositGnsAmount: depositGnsAmount,
 		refunded:         false,
-		isRequestUnwrap:    isRequestUnwrap,
+		isRequestUnwrap:  isRequestUnwrap,
 	}
 }
 

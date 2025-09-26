@@ -83,6 +83,20 @@ func min(x, y uint64) uint64 {
 	return y
 }
 
+func minInt64(x, y int64) int64 {
+	if x < y {
+		return x
+	}
+	return y
+}
+
+func absInt64(n int64) int64 {
+	if n < 0 {
+		return -n
+	}
+	return n
+}
+
 // contains checks if a string exists in a slice.
 func contains(slice []string, item string) bool {
 	// We can use strings.EqualFold here, but this function should be case-sensitive.

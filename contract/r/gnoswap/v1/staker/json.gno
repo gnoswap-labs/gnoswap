@@ -41,7 +41,6 @@ type ApiExternalIncentive struct {
 	StartTimestamp   int64  `json:"startTimestamp"`
 	EndTimestamp     int64  `json:"endTimestamp"`
 	Active           bool   `json:"active"`
-	RewardPerSecond  int64  `json:"rewardPerSecond"`
 	Refundee         string `json:"refundee"`
 	CreatedHeight    int64  `json:"createdHeight"`
 	DepositGnsAmount int64  `json:"depositGnsAmount"`
@@ -54,16 +53,26 @@ func newApiExternalIncentive(ictv *ExternalIncentive) ApiExternalIncentive {
 	if now >= ictv.startTimestamp && now <= ictv.endTimestamp {
 		isActive = true
 	}
+
+	// Get pool to calculate actual rewards
+	var rewardLeft int64
+	pool, exists := pools.Get(ictv.targetPoolPath)
+	if !exists {
+		// If pool doesn't exist, use fallback calculation
+		rewardLeft = ictv.rewardAmount
+	} else {
+		rewardLeft = ictv.RewardLeft(pool, now)
+	}
+
 	return ApiExternalIncentive{
 		IncentiveId:      ictv.incentiveId,
 		PoolPath:         ictv.targetPoolPath,
 		RewardToken:      ictv.rewardToken,
 		RewardAmount:     ictv.rewardAmount,
-		RewardLeft:       ictv.RewardLeft(now),
+		RewardLeft:       rewardLeft,
 		StartTimestamp:   ictv.startTimestamp,
 		EndTimestamp:     ictv.endTimestamp,
 		Active:           isActive,
-		RewardPerSecond:  ictv.rewardPerSecond,
 		Refundee:         ictv.refundee.String(),
 		CreatedHeight:    ictv.createdHeight,
 		DepositGnsAmount: ictv.depositGnsAmount,
@@ -86,7 +95,6 @@ func (r ApiExternalIncentive) JSON() *json.Node {
 		"startTimestamp":   json.NumberNode("startTimestamp", float64(r.StartTimestamp)),
 		"endTimestamp":     json.NumberNode("endTimestamp", float64(r.EndTimestamp)),
 		"active":           json.BoolNode("active", active),
-		"rewardPerSecond":  json.StringNode("rewardPerSecond", strconv.FormatInt(r.RewardPerSecond, 10)),
 		"refundee":         json.StringNode("refundee", r.Refundee),
 		"createdHeight":    json.NumberNode("createdHeight", float64(r.CreatedHeight)),
 		"depositGnsAmount": json.NumberNode("depositGnsAmount", float64(r.DepositGnsAmount)),
