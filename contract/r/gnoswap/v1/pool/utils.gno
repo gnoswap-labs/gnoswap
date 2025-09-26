@@ -131,16 +131,6 @@ func u256Min(num1, num2 *u256.Uint) *u256.Uint {
 	return num2
 }
 
-// checkTransferError checks transfer error.
-func checkTransferError(err error) {
-	if err != nil {
-		panic(newErrorWithDetail(
-			errTransferFailed,
-			err.Error(),
-		))
-	}
-}
-
 // checkOverFlowInt128 checks if the value overflows the int128 range.
 func checkOverFlowInt128(value *i256.Int) {
 	if value.Gt(i256.MustFromDecimal(MAX_INT128)) {

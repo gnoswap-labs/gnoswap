@@ -3,6 +3,8 @@ package position
 import (
 	"std"
 
+	"gno.land/p/nt/ufmt"
+
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/gnft"
@@ -10,7 +12,13 @@ import (
 )
 
 func PositionGetPosition(positionId uint64) Position {
-	position, _ := GetPosition(positionId)
+	position, ok := GetPosition(positionId)
+	if !ok {
+		panic(newErrorWithDetail(
+			errPositionDoesNotExist,
+			ufmt.Sprintf("positionId(%d) does not exist", positionId),
+		))
+	}
 	return position
 }
 

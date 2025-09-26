@@ -12,6 +12,12 @@ var (
 	nextId    = uint64(1)
 )
 
+// GetNextId is the next position ID to be minted
+func GetNextId() uint64 { return nextId }
+
+// incrementNextId increments the next position ID to be minted
+func incrementNextId() { nextId++ }
+
 // GetPosition returns a position for a given position ID.
 // Returns false if position doesn't exist
 func GetPosition(id uint64) (Position, bool) {
@@ -45,11 +51,6 @@ func MustGetPosition(id uint64) Position {
 func ExistPosition(id uint64) bool {
 	_, exist := GetPosition(id)
 	return exist
-}
-
-// GetNextId is the next position ID to be minted
-func GetNextId() uint64 {
-	return nextId
 }
 
 // createNewPosition creates a new position with the given position data.
@@ -87,9 +88,4 @@ func mustUpdatePosition(id uint64, pos Position) {
 func removePosition(id uint64) {
 	posIdStr := strconv.FormatUint(id, 10)
 	positions.Remove(posIdStr)
-}
-
-// incrementNextId increments the next position ID to be minted
-func incrementNextId() {
-	nextId++
 }

@@ -27,6 +27,7 @@ var (
 	errUnderflow             = errors.New("[GNOSWAP-POSITION-018] underflow")
 	errOverflow              = errors.New("[GNOSWAP-POSITION-019] overflow")
 	errInvalidLiquidity      = errors.New("[GNOSWAP-POSITION-019] invalid liquidity")
+	errCannotFindRole        = errors.New("[GNOSWAP-POSITION-020] cannot find role")
 )
 
 // newErrorWithDetail appends additional context or details to an existing error message.
