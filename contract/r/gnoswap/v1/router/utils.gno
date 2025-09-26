@@ -8,6 +8,7 @@ import (
 
 	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/pool"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -64,6 +65,16 @@ func getDataForSinglePathWithError(poolPath string) (string, string, uint32, err
 		return "", "", 0, makeErrorWithDetails(
 			errInvalidPoolPath,
 			ufmt.Sprintf("invalid fee: %s", poolPathSplit[2]),
+		)
+	}
+
+	poolPathSplit[0] = strings.TrimSpace(poolPathSplit[0])
+	poolPathSplit[1] = strings.TrimSpace(poolPathSplit[1])
+
+	if poolPathSplit[0] == "" || poolPathSplit[1] == "" {
+		return "", "", 0, makeErrorWithDetails(
+			errInvalidPoolPath,
+			ufmt.Sprintf("token addresses cannot be empty: %s", poolPath),
 		)
 	}
 
@@ -292,6 +303,50 @@ func safeConvertToInt64(value *u256.Uint) int64 {
 		))
 	}
 	return int64(res)
+}
+
+// parsePoolPathsByRoutePathArr parses route path array string and returns a slice of pool paths.
+// This function converts route paths (which maintain swap direction) into canonical pool paths
+// (which use alphabetical token ordering).
+//
+// The function processes comma-separated route paths and extracts individual pool information
+// from each route, ensuring tokens are ordered alphabetically for consistent pool identification.
+//
+// Parameters:
+//   - routePathArr: comma-separated route paths string containing single or multi-hop routes
+//     Format examples:
+//   - Single route: "tokenA:tokenB:500"
+//   - Multiple routes: "tokenA:tokenB:500,tokenC:tokenD:3000"
+//   - Multi-hop routes: "tokenA:tokenB:500*POOL*tokenB:tokenC:3000"
+//
+// Returns:
+// - []string: slice of canonical pool paths with alphabetically ordered tokens
+// - error: parsing error if any route path is invalid
+//
+// Example:
+//
+//	input: "gno.land/r/demo/wugnot:gno.land/r/demo/usdc:500,gno.land/r/demo/usdc:gno.land/r/demo/gns:3000"
+//	output: ["gno.land/r/demo/usdc:gno.land/r/demo/wugnot:500", "gno.land/r/demo/gns:gno.land/r/demo/usdc:3000"]
+func parsePoolPathsByRoutePathArr(routePathArr string) ([]string, error) {
+	poolPaths := make([]string, 0)
+
+	for _, routePaths := range strings.Split(routePathArr, ",") {
+		for _, routePath := range strings.Split(routePaths, POOL_SEPARATOR) {
+			token0Path, token1Path, fee, err := getDataForSinglePathWithError(routePath)
+			if err != nil {
+				return []string{}, err
+			}
+
+			if token0Path > token1Path {
+				token0Path, token1Path = token1Path, token0Path
+			}
+
+			poolPath := pool.GetPoolPath(token0Path, token1Path, fee)
+			poolPaths = append(poolPaths, poolPath)
+		}
+	}
+
+	return poolPaths, nil
 }
 
 // BuildSingleHopPath creates a single-hop route path string.
