@@ -351,16 +351,14 @@ func StakeToken(cur realm, positionId uint64, referrer string) string {
 	tickLower, tickUpper := getTickOf(positionId)
 
 	// staked status
-	deposit := &Deposit{
-		owner:           caller,
-		stakeTime:       currentTime,
-		targetPoolPath:  poolPath,
-		tickLower:       tickLower,
-		tickUpper:       tickUpper,
-		liquidity:       liquidity,
-		lastCollectTime: currentTime,
-		warmups:         instantiateWarmup(currentTime),
-	}
+	deposit := NewDeposit(
+		caller,
+		poolPath,
+		liquidity,
+		currentTime,
+		tickLower,
+		tickUpper,
+	)
 
 	currentTick := pl.GetSlot0Tick(poolPath)
 
@@ -490,6 +488,9 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 	currentTime := time.Now().Unix()
 	blockHeight := std.ChainHeight()
 	previousRealm := std.PreviousRealm()
+
+	communityPoolAddr := getRoleAddress(prbac.ROLE_COMMUNITY_POOL)
+
 	// get all internal and external rewards
 	reward := calcPositionReward(blockHeight, currentTime, positionId)
 
@@ -556,6 +557,17 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		incentive.rewardLeft = safeAddInt64(incentive.rewardLeft, externalPenalty)
 		toUserExternalPenalty[rewardToken] = safeAddInt64(toUserExternalPenalty[rewardToken], externalPenalty)
 
+		if externalPenalty > 0 {
+			common.SafeGRC20Transfer(cross, rewardToken, communityPoolAddr, externalPenalty)
+    }
+
+		// Update the last collect time ONLY for this specific incentive
+		// This happens only if the reward was successfully transferred.
+		err = deposit.updateExternalRewardLastCollectTime(incentiveId, currentTime)
+		if err != nil {
+			panic(err)
+		}
+
 		// update
 		externalIncentives.set(incentiveId, incentive)
 
@@ -577,8 +589,6 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 			"currentHeight", formatInt(blockHeight),
 		)
 	}
-
-	communityPoolAddr := getRoleAddress(prbac.ROLE_COMMUNITY_POOL)
 
 	// internal reward to user
 	toUser, feeAmount, err := handleStakingRewardFee(GNS_PATH, reward.Internal, true)
@@ -632,8 +642,12 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		"currentTime", formatInt(currentTime),
 	)
 
-	// Update lastCollectTime AFTER all rewards have been successfully transferred
-	deposit.lastCollectTime = currentTime
+	// Update lastCollectTime for internal rewards (GNS emissions)
+	err = deposit.updateInternalRewardLastCollectTime(currentTime)
+	if err != nil {
+		panic(err)
+	}
+
 	deposits.set(positionId, deposit)
 
 	return rewardToUser, rewardPenalty, toUserExternalReward, toUserExternalPenalty
