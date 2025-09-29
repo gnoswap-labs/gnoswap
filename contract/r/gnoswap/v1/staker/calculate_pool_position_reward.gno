@@ -1,12 +1,5 @@
 package staker
 
-func isAbleToCalculateEmissionReward(prev int64, current int64) bool {
-	if prev >= current {
-		return false
-	}
-	return true
-}
-
 // Reward is a struct for storing reward for a position.
 // Internal reward is the GNS reward, external reward is the reward for other incentives.
 // Penalties are the amount that is deducted from the reward due to the position's warmup.
@@ -115,13 +108,28 @@ func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 	// We'll filter them individually based on their specific lastCollectTime
 	allIncentives := pool.incentives.GetAllInTimestamps(0, param.CurrentTime*2)
 
+	// Process each external incentive with lazy initialization:
+	// When a new incentive is created, we don't iterate through all deposits for performance.
+	//
+	// Instead, we determine the appropriate lastCollectTime here:
+	// - If a deposit already has a lastCollectTime for an incentive, use it
+	// - If not (first time collecting), use max(deposit.stakeTime, incentive.startTimestamp)
+	//
+	// This avoids O(n) iteration on every incentive creation while ensuring correct reward calculation.
 	for incentiveId, incentive := range allIncentives {
-		// Use per-incentive lastCollectTime if available, otherwise use the general lastCollectTime
-		incentiveLastCollectTime := lastCollectTime
+		var incentiveLastCollectTime int64
+
 		if deposit.externalLastCollectTimes != nil {
 			if specificTime, exists := deposit.externalLastCollectTimes[incentiveId]; exists {
+				// Use the stored per-incentive time
 				incentiveLastCollectTime = specificTime
+			} else {
+				// First time collecting this incentive
+				incentiveLastCollectTime = getInitialCollectTime(deposit, incentive)
 			}
+		} else {
+			// No external tracking map yet
+			incentiveLastCollectTime = getInitialCollectTime(deposit, incentive)
 		}
 
 		// Skip if incentive hasn't started yet or if we've already collected up to current time
@@ -169,4 +177,20 @@ func processUnClaimableReward(poolPath string, endTimestamp int64) int64 {
 		return 0
 	}
 	return pool.processUnclaimableReward(poolTier, endTimestamp)
+}
+
+// getInitialCollectTime determines the initial collection time for an incentive
+// by taking the maximum of the deposit's stake time and the incentive's start time.
+// This ensures rewards are only calculated from when both conditions are met:
+// - The position must be staked (deposit.stakeTime)
+// - The incentive must be active (incentive.startTimestamp)
+//
+// This function is used for lazy initialization when a position collects
+// from an incentive for the first time, avoiding the need to iterate through
+// all deposits when a new incentive is created.
+func getInitialCollectTime(deposit *Deposit, incentive *ExternalIncentive) int64 {
+	if deposit.stakeTime > incentive.startTimestamp {
+		return deposit.stakeTime
+	}
+	return incentive.startTimestamp
 }

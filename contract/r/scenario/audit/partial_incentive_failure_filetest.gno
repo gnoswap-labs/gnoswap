@@ -118,7 +118,7 @@ func createMultipleIncentives() {
 	println("[INFO] Approve tokens for MULTIPLE external incentives")
 	// Create multiple incentives with same token but different time periods
 	// This simulates multiple reward programs that could have different funding status
-	bar.Approve(cross, stakerAddr, depositAmount * 3)
+	bar.Approve(cross, stakerAddr, depositAmount*3)
 	baz.Approve(cross, stakerAddr, depositAmount)
 
 	// Each external incentive requires 1000 GNS as deposit
@@ -236,7 +236,7 @@ func drainBarIncentive() {
 	// Create multiple temporary positions to drain bar incentive
 	println("[INFO] Creating temporary positions to drain bar incentive...")
 
-	for i := 1; i <= 20; i++ {  // Create MORE positions to drain more effectively
+	for i := 1; i <= 20; i++ { // Create MORE positions to drain more effectively
 		// Mint large position
 		tempPosId, _, _, _ := pn.Mint(
 			cross,
@@ -292,7 +292,7 @@ func drainBarIncentive() {
 	ufmt.Printf("[SUCCESS] Total bar drained: %d (should be close to %d)\n", totalBarDrained, depositAmount*3)
 
 	// Verify bar incentive is nearly empty - we have 3 bar incentives, so check against total
-	if totalBarDrained < depositAmount * 3 * 90 / 100 {
+	if totalBarDrained < depositAmount*3*90/100 {
 		println("[WARNING] May not have sufficiently drained bar incentive")
 	}
 }
@@ -327,7 +327,6 @@ func demonstratePartialFailure(positionId uint64) {
 	if bazReward > 0 {
 		println("[INFO] baz incentive provided rewards")
 	}
-
 }
 
 func verifyPermanentLoss(positionId uint64) {
@@ -388,3 +387,146 @@ func positionIdFrom(positionId uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.Itoa(int(positionId)))
 }
 
+// Output:
+// [SCENARIO] Test partial incentive failure handling
+//
+// [STEP 1] Initialize and setup pool
+// [INFO] Set unstaking fee to 0
+// [INFO] Set pool creation fee to 0
+// [INFO] Create bar:baz:100 pool
+//
+// [STEP 2] Create MULTIPLE external incentives (bar with different periods, baz)
+// [INFO] Approve tokens for MULTIPLE external incentives
+// [INFO] Create external incentive #1: bar token (period 1)
+// [INFO] Create external incentive #2: bar token (period 2)
+// [INFO] Create external incentive #3: bar token (period 3)
+// [INFO] Create external incentive #4: baz token
+// [SUCCESS] Created 4 external incentives (3 bar, 1 baz)
+//
+// [STEP 3] Mint and stake position
+// [INFO] Approve tokens for minting position
+// [INFO] Mint position with significant liquidity
+// [SUCCESS] Minted position ID=1 with liquidity=200510416
+// [INFO] Stake the position
+// [SUCCESS] Position staked
+//
+// [STEP 4] Accumulate rewards over time
+// [INFO] Skip 10,000 blocks to accumulate significant rewards
+// [SUCCESS] Rewards accumulated for all incentives
+//
+// [STEP 5] Drain bar incentives to simulate fund shortage
+// [INFO] Creating temporary positions to drain bar incentive...
+// [INFO] Temporary position 2 created and staked
+// [INFO] Temporary position 3 created and staked
+// [INFO] Temporary position 4 created and staked
+// [INFO] Temporary position 5 created and staked
+// [INFO] Temporary position 6 created and staked
+// [INFO] ... creating positions 6-19 ...
+// [INFO] Temporary position 21 created and staked
+// [INFO] Skip blocks and collect multiple rounds to drain incentives
+// [INFO] Collection round 1
+// [INFO] Round 1: Collected 5709458 bar from position 2
+// [INFO] Round 1: Collected 5709458 bar from position 3
+// [INFO] Round 1: Collected 5709458 bar from position 21
+// [INFO] Collection round 2
+// [INFO] Round 2: Collected 8679627 bar from position 2
+// [INFO] Round 2: Collected 8679627 bar from position 3
+// [INFO] Round 2: Collected 8679627 bar from position 21
+// [INFO] Collection round 3
+// [INFO] Round 3: Collected 9373998 bar from position 2
+// [INFO] Round 3: Collected 9373998 bar from position 3
+// [INFO] Round 3: Collected 9373998 bar from position 21
+// [SUCCESS] Total bar drained: 475261660 (should be close to 30000000000)
+// [WARNING] May not have sufficiently drained bar incentive
+//
+// [STEP 6] Collect rewards - partial success expected
+// [INFO] Skip 5,000 more blocks to accumulate new rewards
+// [ACTION] Collect rewards from main position (ID=1)
+// [RESULT] bar reward collected: 19348260
+// [RESULT] baz reward collected: 19312691
+// [INFO] baz incentive provided rewards
+//
+// [STEP 7] Verify reward collection behavior after time passes
+// [INFO] Skip 10,000 blocks
+// [ACTION] Collect rewards after time has passed
+// [RESULT] bar reward: 9663
+// [RESULT] baz reward: 3221
+// [ACTION] Immediate re-collection
+// [RESULT] Immediate bar reward: 0
+// [RESULT] Immediate baz reward: 0
+// [INFO] Skip 5000 blocks
+// [ACTION] Final collection after additional time
+// [RESULT] bar collected: 4830
+// [RESULT] baz collected: 1610
+// --- FAIL: ./partial_incentive_failure_filetest.gno (4.77s)
+// unexpected output:
+// [SCENARIO] Test partial incentive failure handling
+//
+// [STEP 1] Initialize and setup pool
+// [INFO] Set unstaking fee to 0
+// [INFO] Set pool creation fee to 0
+// [INFO] Create bar:baz:100 pool
+//
+// [STEP 2] Create MULTIPLE external incentives (bar with different periods, baz)
+// [INFO] Approve tokens for MULTIPLE external incentives
+// [INFO] Create external incentive #1: bar token (period 1)
+// [INFO] Create external incentive #2: bar token (period 2)
+// [INFO] Create external incentive #3: bar token (period 3)
+// [INFO] Create external incentive #4: baz token
+// [SUCCESS] Created 4 external incentives (3 bar, 1 baz)
+//
+// [STEP 3] Mint and stake position
+// [INFO] Approve tokens for minting position
+// [INFO] Mint position with significant liquidity
+// [SUCCESS] Minted position ID=1 with liquidity=200510416
+// [INFO] Stake the position
+// [SUCCESS] Position staked
+//
+// [STEP 4] Accumulate rewards over time
+// [INFO] Skip 10,000 blocks to accumulate significant rewards
+// [SUCCESS] Rewards accumulated for all incentives
+//
+// [STEP 5] Drain bar incentives to simulate fund shortage
+// [INFO] Creating temporary positions to drain bar incentive...
+// [INFO] Temporary position 2 created and staked
+// [INFO] Temporary position 3 created and staked
+// [INFO] Temporary position 4 created and staked
+// [INFO] Temporary position 5 created and staked
+// [INFO] Temporary position 6 created and staked
+// [INFO] ... creating positions 6-19 ...
+// [INFO] Temporary position 21 created and staked
+// [INFO] Skip blocks and collect multiple rounds to drain incentives
+// [INFO] Collection round 1
+// [INFO] Round 1: Collected 5709458 bar from position 2
+// [INFO] Round 1: Collected 5709458 bar from position 3
+// [INFO] Round 1: Collected 5709458 bar from position 21
+// [INFO] Collection round 2
+// [INFO] Round 2: Collected 8679627 bar from position 2
+// [INFO] Round 2: Collected 8679627 bar from position 3
+// [INFO] Round 2: Collected 8679627 bar from position 21
+// [INFO] Collection round 3
+// [INFO] Round 3: Collected 9373998 bar from position 2
+// [INFO] Round 3: Collected 9373998 bar from position 3
+// [INFO] Round 3: Collected 9373998 bar from position 21
+// [SUCCESS] Total bar drained: 475261660 (should be close to 30000000000)
+// [WARNING] May not have sufficiently drained bar incentive
+//
+// [STEP 6] Collect rewards - partial success expected
+// [INFO] Skip 5,000 more blocks to accumulate new rewards
+// [ACTION] Collect rewards from main position (ID=1)
+// [RESULT] bar reward collected: 19348260
+// [RESULT] baz reward collected: 19312691
+// [INFO] baz incentive provided rewards
+//
+// [STEP 7] Verify reward collection behavior after time passes
+// [INFO] Skip 10,000 blocks
+// [ACTION] Collect rewards after time has passed
+// [RESULT] bar reward: 9663
+// [RESULT] baz reward: 3221
+// [ACTION] Immediate re-collection
+// [RESULT] Immediate bar reward: 0
+// [RESULT] Immediate baz reward: 0
+// [INFO] Skip 5000 blocks
+// [ACTION] Final collection after additional time
+// [RESULT] bar collected: 4830
+// [RESULT] baz collected: 1610

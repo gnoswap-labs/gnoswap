@@ -360,20 +360,8 @@ func StakeToken(cur realm, positionId uint64, referrer string) string {
 		liquidity:       liquidity,
 		lastCollectTime: currentTime,
 		warmups:         instantiateWarmup(currentTime),
-		externalLastCollectTimes: make(map[string]int64),
-	}
-
-	// Initialize per-incentive lastCollectTime for all active external incentives
-	p := pools.GetOrCreate(poolPath)
-	// Get all incentives that could be active now or in the future
-	allIncentives := p.incentives.GetAllInTimestamps(0, currentTime*2)
-	for incentiveId, incentive := range allIncentives {
-		// Set initial collect time to max of current time or incentive start time
-		initialCollectTime := currentTime
-		if incentive.startTimestamp > currentTime {
-			initialCollectTime = incentive.startTimestamp
-		}
-		deposit.externalLastCollectTimes[incentiveId] = initialCollectTime
+		// External incentive times are initialized lazily during reward calculation
+		externalLastCollectTimes: nil,
 	}
 
 	currentTick := pl.GetSlot0Tick(poolPath)
@@ -571,7 +559,12 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		toUserExternalPenalty[rewardToken] = safeAddInt64(toUserExternalPenalty[rewardToken], externalPenalty)
 
 		// Update the last collect time ONLY for this specific incentive
-		// This happens only if the reward was successfully transferred
+		// This happens only if the reward was successfully transferred.
+		//
+		// By updating per-incentive timestamps independently, we ensure that:
+		//  1. Successfully collected incentives won't be collected again for the same period
+		//  2. Failed incentives (insufficient funds) can be retried later
+		//  3. Each incentive tracks its own collection history
 		if deposit.externalLastCollectTimes == nil {
 			deposit.externalLastCollectTimes = make(map[string]int64)
 		}
@@ -653,7 +646,9 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		"currentTime", formatInt(currentTime),
 	)
 
-	// Update lastCollectTime AFTER all rewards have been successfully transferred
+	// Update lastCollectTime for internal rewards (GNS emissions)
+	// This is separate from external incentive tracking and always updates
+	// when CollectReward is called, regardless of external incentive success/failure
 	deposit.lastCollectTime = currentTime
 	deposits.set(positionId, deposit)
 

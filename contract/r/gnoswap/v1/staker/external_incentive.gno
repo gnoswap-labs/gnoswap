@@ -93,24 +93,6 @@ func CreateExternalIncentive(
 
 	pool.incentives.create(caller, incentive)
 
-	// Initialize per-incentive lastCollectTime for all existing staked positions in this pool
-	// This ensures that positions staked before the incentive creation can collect rewards
-	deposits.Iterate(0, ^uint64(0), func(positionId uint64, deposit *Deposit) bool {
-		if deposit.targetPoolPath == targetPoolPath {
-			if deposit.externalLastCollectTimes == nil {
-				deposit.externalLastCollectTimes = make(map[string]int64)
-			}
-			// Set initial collect time to max of current time or incentive start time
-			initialCollectTime := currentTime
-			if incentive.startTimestamp > currentTime {
-				initialCollectTime = incentive.startTimestamp
-			}
-			deposit.externalLastCollectTimes[incentiveId] = initialCollectTime
-			deposits.set(positionId, deposit)
-		}
-		return true // continue iteration
-	})
-
 	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"CreateExternalIncentive",
