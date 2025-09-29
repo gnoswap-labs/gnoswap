@@ -400,23 +400,8 @@ func endExternalIncentiveAndVerifyNoDust() {
 	}
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
-	if positionId == nil {
-		panic("positionId is nil")
-	}
-
-	switch positionId.(type) {
-	case string:
-		return grc721.TokenID(positionId.(string))
-	case int:
-		return grc721.TokenID(strconv.Itoa(positionId.(int)))
-	case uint64:
-		return grc721.TokenID(strconv.Itoa(int(positionId.(uint64))))
-	case grc721.TokenID:
-		return positionId.(grc721.TokenID)
-	default:
-		panic("unsupported positionId type")
-	}
+func positionIdFrom(positionId int) grc721.TokenID {
+	return grc721.TokenID(strconv.Itoa(positionId))
 }
 
 // Output:

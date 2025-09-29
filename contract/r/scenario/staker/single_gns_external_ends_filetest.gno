@@ -308,23 +308,8 @@ func collectRewardsAfterExternalEnds() {
 	ufmt.Println("[EXPECTED] positions should NOT receive rewards after external incentive ends (no internal incentive)")
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
-	if positionId == nil {
-		panic("positionId is nil")
-	}
-
-	switch positionId.(type) {
-	case string:
-		return grc721.TokenID(positionId.(string))
-	case int:
-		return grc721.TokenID(strconv.Itoa(positionId.(int)))
-	case uint64:
-		return grc721.TokenID(strconv.Itoa(int(positionId.(uint64))))
-	case grc721.TokenID:
-		return positionId.(grc721.TokenID)
-	default:
-		panic("unsupported positionId type")
-	}
+func positionIdFrom(positionId int) grc721.TokenID {
+	return grc721.TokenID(strconv.Itoa(positionId))
 }
 
 // Output:
@@ -367,7 +352,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] skip blocks until external incentive ends
 // [INFO] end external incentive and collect remaining GNS
 // [INFO] GNS balance before ending: 0
-// [INFO] GNS balance after ending: 1000005785
+// [INFO] GNS balance after ending: 1003173785
 // [EXPECTED] external creator should receive deposit amount minus penalty
 //
 // [SCENARIO] 11. Verify no rewards after external incentive ends

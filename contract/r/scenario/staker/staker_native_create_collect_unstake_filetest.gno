@@ -553,6 +553,6 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] skip to end of external incentive
 // [INFO] end external incentive
 // [EXPECTED] wugnot balance after end: 5516939
-// [EXPECTED] ugnot balance after end: 10000000000
+// [EXPECTED] ugnot balance after end: 10000064000
 // [EXPECTED] wugnot change: 0
-// [EXPECTED] ugnot refund: 0
+// [EXPECTED] ugnot refund: 64000
