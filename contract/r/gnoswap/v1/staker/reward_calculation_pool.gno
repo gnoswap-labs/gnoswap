@@ -367,9 +367,10 @@ func (self *RewardState) calculateInternalReward(startTime, endTime int64) ([]in
 // calculateExternalReward calculates the external reward for the deposit.
 // It calls rewardPerWarmup for startTime to endTime(clamped to the incentive period), applies warmup and returns the rewards and penalties.
 func (self *RewardState) calculateExternalReward(startTime, endTime int64, incentive *ExternalIncentive) ([]int64, []int64) {
-	if startTime < self.deposit.lastCollectTime {
+	lastCollectTime := self.deposit.ExternalRewardLastCollectTime(incentive.incentiveId)
+	if startTime < lastCollectTime {
 		// This must not happen, but adding some guards just in case.
-		startTime = self.deposit.lastCollectTime
+		startTime = lastCollectTime
 	}
 
 	if endTime < incentive.startTimestamp {

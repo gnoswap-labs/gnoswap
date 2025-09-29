@@ -351,16 +351,14 @@ func StakeToken(cur realm, positionId uint64, referrer string) string {
 	tickLower, tickUpper := getTickOf(positionId)
 
 	// staked status
-	deposit := &Deposit{
-		owner:           caller,
-		stakeTime:       currentTime,
-		targetPoolPath:  poolPath,
-		tickLower:       tickLower,
-		tickUpper:       tickUpper,
-		liquidity:       liquidity,
-		lastCollectTime: currentTime,
-		warmups:         instantiateWarmup(currentTime),
-	}
+	deposit := NewDeposit(
+		caller,
+		poolPath,
+		liquidity,
+		currentTime,
+		tickLower,
+		tickUpper,
+	)
 
 	currentTick := pl.GetSlot0Tick(poolPath)
 
@@ -561,6 +559,13 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 
 		if externalPenalty > 0 {
 			common.SafeGRC20Transfer(cross, rewardToken, communityPoolAddr, externalPenalty)
+    }
+
+		// Update the last collect time ONLY for this specific incentive
+		// This happens only if the reward was successfully transferred.
+		err = deposit.updateExternalRewardLastCollectTime(incentiveId, currentTime)
+		if err != nil {
+			panic(err)
 		}
 
 		// update
@@ -637,8 +642,12 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		"currentTime", formatInt(currentTime),
 	)
 
-	// Update lastCollectTime AFTER all rewards have been successfully transferred
-	deposit.lastCollectTime = currentTime
+	// Update lastCollectTime for internal rewards (GNS emissions)
+	err = deposit.updateInternalRewardLastCollectTime(currentTime)
+	if err != nil {
+		panic(err)
+	}
+
 	deposits.set(positionId, deposit)
 
 	return rewardToUser, rewardPenalty, toUserExternalReward, toUserExternalPenalty
