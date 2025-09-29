@@ -206,6 +206,10 @@ type Deposit struct {
 	tickLower       int32       // tick lower
 	tickUpper       int32       // tick upper
 	liquidity       *u256.Uint  // liquidity
-	lastCollectTime int64       // last collect time
+	lastCollectTime int64       // last collect time for internal rewards
 	warmups         []Warmup    // warmup information
+
+	// Per-incentive tracking for external rewards
+	// Maps incentiveId to last collection timestamp for that specific incentive
+	externalLastCollectTimes map[string]int64  // incentiveId -> lastCollectTime
 }

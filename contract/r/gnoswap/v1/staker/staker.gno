@@ -360,6 +360,20 @@ func StakeToken(cur realm, positionId uint64, referrer string) string {
 		liquidity:       liquidity,
 		lastCollectTime: currentTime,
 		warmups:         instantiateWarmup(currentTime),
+		externalLastCollectTimes: make(map[string]int64),
+	}
+
+	// Initialize per-incentive lastCollectTime for all active external incentives
+	p := pools.GetOrCreate(poolPath)
+	// Get all incentives that could be active now or in the future
+	allIncentives := p.incentives.GetAllInTimestamps(0, currentTime*2)
+	for incentiveId, incentive := range allIncentives {
+		// Set initial collect time to max of current time or incentive start time
+		initialCollectTime := currentTime
+		if incentive.startTimestamp > currentTime {
+			initialCollectTime = incentive.startTimestamp
+		}
+		deposit.externalLastCollectTimes[incentiveId] = initialCollectTime
 	}
 
 	currentTick := pl.GetSlot0Tick(poolPath)
@@ -555,6 +569,13 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		incentive.rewardAmount = safeSubInt64(incentive.rewardAmount, externalPenalty)
 		incentive.rewardLeft = safeAddInt64(incentive.rewardLeft, externalPenalty)
 		toUserExternalPenalty[rewardToken] = safeAddInt64(toUserExternalPenalty[rewardToken], externalPenalty)
+
+		// Update the last collect time ONLY for this specific incentive
+		// This happens only if the reward was successfully transferred
+		if deposit.externalLastCollectTimes == nil {
+			deposit.externalLastCollectTimes = make(map[string]int64)
+		}
+		deposit.externalLastCollectTimes[incentiveId] = currentTime
 
 		// update
 		externalIncentives.set(incentiveId, incentive)
