@@ -54,6 +54,11 @@ func (self *Incentives) Get(incentiveId string) (*ExternalIncentive, bool) {
 	return retrieveIncentive(self.archivedIncentives, incentiveId)
 }
 
+func (self *Incentives) IsArchived(incentiveId string) bool {
+	_, exists := self.archivedIncentives.Get(incentiveId)
+	return exists
+}
+
 func retrieveIncentive(tree *avl.Tree, id string) (*ExternalIncentive, bool) {
 	value, ok := tree.Get(id)
 	if !ok {
@@ -117,7 +122,7 @@ func (self *Incentives) startUnclaimablePeriod(startTimestamp int64) {
 func (self *Incentives) endUnclaimablePeriod(endTimestamp int64) {
 	startTimestamp := int64(0)
 	self.unclaimablePeriods.ReverseIterate(0, endTimestamp, func(key int64, value any) bool {
-		v, ok := value.(int64) 
+		v, ok := value.(int64)
 		if !ok {
 			panic("failed to cast value to int64")
 		}

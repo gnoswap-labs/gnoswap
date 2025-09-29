@@ -364,9 +364,10 @@ func (self *RewardState) calculateInternalReward(startTime, endTime int64) ([]in
 	return self.rewards, self.penalties
 }
 
-// calculateExternalReward calculates the external reward for the deposit.
-// It calls rewardPerWarmup for startTime to endTime(clamped to the incentive period), applies warmup and returns the rewards and penalties.
-func (self *RewardState) calculateExternalReward(startTime, endTime int64, incentive *ExternalIncentive) ([]int64, []int64) {
+// updateExternalReward updates the external reward for the deposit.
+// It updates the last collect time for the external reward for the given incentive ID.
+// It returns an error if the current time is less than the last collect time for the external reward for the given incentive ID.
+func (self *RewardState) updateExternalReward(startTime, endTime int64, incentive *ExternalIncentive) error {
 	lastCollectTime := self.deposit.ExternalRewardLastCollectTime(incentive.incentiveId)
 	if startTime < lastCollectTime {
 		// This must not happen, but adding some guards just in case.
@@ -374,7 +375,7 @@ func (self *RewardState) calculateExternalReward(startTime, endTime int64, incen
 	}
 
 	if endTime < incentive.startTimestamp {
-		return nil, nil // Not started yet
+		return nil // Not started yet
 	}
 
 	if startTime < incentive.startTimestamp {
@@ -386,14 +387,41 @@ func (self *RewardState) calculateExternalReward(startTime, endTime int64, incen
 	}
 
 	if startTime > incentive.endTimestamp {
-		return nil, nil // Already ended
+		return nil // Already ended
 	}
 
-	err := self.rewardPerWarmup(startTime, endTime, incentive.rewardPerSecond)
+	return self.rewardPerWarmup(startTime, endTime, incentive.rewardPerSecond)
+}
+
+// calculateTotalExternalReward calculates the total external reward for the deposit.
+// It calls updateExternalReward for the incentive period, applies warmup and returns the rewards and penalties.
+// used for total reward calculation for a ended incentive
+func (self *RewardState) calculateTotalExternalReward(startTime, endTime int64, incentive *ExternalIncentive) int64 {
+	err := self.updateExternalReward(startTime, endTime, incentive)
 	if err != nil {
 		panic(err)
 	}
 
+	currentReward := u256.Zero()
+
+	for i := range self.rewards {
+		currentReward = currentReward.Add(currentReward, u256.NewUintFromInt64(self.rewards[i]))
+	}
+
+	collectedReward := self.deposit.CollectedExternalReward(incentive.incentiveId)
+
+	return safeConvertToInt64(currentReward) + collectedReward
+}
+
+// calculateExternalReward calculates the external reward for the deposit.
+// It calls rewardPerWarmup for startTime to endTime(clamped to the incentive period), applies warmup and returns the rewards and penalties.
+func (self *RewardState) calculateExternalReward(startTime, endTime int64, incentive *ExternalIncentive) ([]int64, []int64) {
+	err := self.updateExternalReward(startTime, endTime, incentive)
+	if err != nil {
+		panic(err)
+	}
+
+	// apply warmup to collect rewards
 	self.applyWarmup()
 
 	return self.rewards, self.penalties
@@ -402,9 +430,13 @@ func (self *RewardState) calculateExternalReward(startTime, endTime int64, incen
 // applyWarmup applies the warmup to the rewards and calculate penalties.
 func (self *RewardState) applyWarmup() {
 	for i, warmup := range self.deposit.warmups {
-		refactorReward := self.rewards[i]
-		self.rewards[i] = safeMulInt64(refactorReward, int64(warmup.WarmupRatio)) / 100
-		self.penalties[i] = safeSubInt64(refactorReward, self.rewards[i])
+		warmupReward := self.rewards[i]
+
+		// calculate warmup reward applying warmup ratio
+		self.rewards[i] = safeMulInt64(warmupReward, int64(warmup.WarmupRatio)) / 100
+
+		// warmup penalty is the difference between the warmup reward and the warmup reward applying warmup ratio
+		self.penalties[i] = safeSubInt64(warmupReward, self.rewards[i])
 	}
 }
 
