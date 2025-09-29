@@ -113,7 +113,7 @@ func Burn(
 	tickUpper int32,
 	liquidityAmount string, // uint128
 	positionCaller std.Address,
-) (string, string) { // uint256 x2
+) (string, string, string, string) { // uint256 x2
 	halt.AssertIsNotHaltedPoolWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
@@ -159,7 +159,7 @@ func Burn(
 	pool.mustGetPosition(positionKey)
 
 	// actual token transfer happens in Collect()
-	return amount0.ToString(), amount1.ToString()
+	return amount0.ToString(), amount1.ToString(), position.tokensOwed0.ToString(), position.tokensOwed1.ToString()
 }
 
 // Collect transfers owed tokens from a position to recipient.
