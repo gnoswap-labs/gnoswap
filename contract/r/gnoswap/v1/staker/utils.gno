@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"math"
 	"std"
 	"strconv"
 	"strings"
@@ -175,4 +176,51 @@ func safeConvertToInt64(value *u256.Uint) int64 {
 		))
 	}
 	return int64(res)
+}
+
+// safeMulInt64 performs safe multiplication of int64 values, panicking on overflow or underflow
+func safeMulInt64(a, b int64) int64 {
+	if a == 0 || b == 0 {
+		return 0
+	}
+	if a > 0 && b > 0 {
+		if a > math.MaxInt64/b {
+			panic("int64 multiplication overflow")
+		}
+	} else if a < 0 && b < 0 {
+		if a < math.MaxInt64/b {
+			panic("int64 multiplication overflow")
+		}
+	} else if a > 0 && b < 0 {
+		if b < math.MinInt64/a {
+			panic("int64 multiplication underflow")
+		}
+	} else { // a < 0 && b > 0
+		if a < math.MinInt64/b {
+			panic("int64 multiplication underflow")
+		}
+	}
+	return a * b
+}
+
+// safeAddInt64 performs safe addition of int64 values, panicking on overflow or underflow
+func safeAddInt64(a, b int64) int64 {
+	if a > 0 && b > math.MaxInt64-a {
+		panic("int64 addition overflow")
+	}
+	if a < 0 && b < math.MinInt64-a {
+		panic("int64 addition underflow")
+	}
+	return a + b
+}
+
+// safeSubInt64 performs safe subtraction of int64 values, panicking on overflow or underflow
+func safeSubInt64(a, b int64) int64 {
+	if b > 0 && a < math.MinInt64+b {
+		panic("int64 subtraction underflow")
+	}
+	if b < 0 && a > math.MaxInt64+b {
+		panic("int64 subtraction overflow")
+	}
+	return a - b
 }

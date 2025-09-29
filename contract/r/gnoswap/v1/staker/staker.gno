@@ -61,6 +61,17 @@ func (self *Deposits) Iterate(start uint64, end uint64, fn func(positionId uint6
 	})
 }
 
+func (self *Deposits) IterateByPoolPath(start, end uint64, poolPath string, fn func(positionId uint64, deposit *Deposit) bool) {
+	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(positionId string, depositI any) bool {
+		deposit := retrieveDeposit(depositI)
+		if deposit.targetPoolPath != poolPath {
+			return false
+		}
+
+		return fn(DecodeUint(positionId), deposit)
+	})
+}
+
 // Size returns the number of deposits.
 func (self *Deposits) Size() int {
 	return self.tree.Size()
@@ -554,12 +565,14 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		// process external penalty
 		externalPenalty := reward.ExternalPenalty[incentiveId]
 		incentive.rewardAmount = safeSubInt64(incentive.rewardAmount, externalPenalty)
-		incentive.rewardLeft = safeAddInt64(incentive.rewardLeft, externalPenalty)
 		toUserExternalPenalty[rewardToken] = safeAddInt64(toUserExternalPenalty[rewardToken], externalPenalty)
+
+		totalDistributedRewardAmount := safeAddInt64(rewardAmount, externalPenalty)
+		deposit.addCollectedExternalReward(incentiveId, totalDistributedRewardAmount)
 
 		if externalPenalty > 0 {
 			common.SafeGRC20Transfer(cross, rewardToken, communityPoolAddr, externalPenalty)
-    }
+		}
 
 		// Update the last collect time ONLY for this specific incentive
 		// This happens only if the reward was successfully transferred.
@@ -614,6 +627,9 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		// internal penalty to community pool
 		totalEmissionSent = safeAddInt64(totalEmissionSent, reward.InternalPenalty)
 		gns.Transfer(cross, communityPoolAddr, reward.InternalPenalty)
+
+		deposit.addCollectedInternalReward(reward.InternalPenalty)
+		deposit.addCollectedInternalReward(reward.Internal)
 	}
 
 	unClaimableInternal := processUnClaimableReward(deposit.targetPoolPath, currentTime)

@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"math"
 	"std"
 	"time"
 
@@ -192,6 +193,7 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 	// After this update, attempts to re-claim GNS or rewards that were deposited
 	// through the `endExternalIncentive` function will be blocked.
 	incentive.setRefunded(true)
+	incentive.addDistributedRewardAmount(refund)
 	pool.incentives.update(incentive.refundee, incentive)
 	pool.incentives.archiveIncentive(incentiveId)
 
@@ -239,9 +241,24 @@ func endExternalIncentive(pool *Pool, incentiveId string, caller std.Address, cu
 		)
 	}
 
-	// Always calculate unclaimed rewards since this function is called only once
-	refund := incentive.rewardLeft
-	refund += pool.incentives.calculateUnclaimableReward(incentive.incentiveId)
+	totalReward := int64(0)
+
+	// calculate total external reward for the incentive
+	deposits.IterateByPoolPath(0, math.MaxUint64, incentive.targetPoolPath, func(positionId uint64, deposit *Deposit) bool {
+		lastCollectTime := deposit.ExternalRewardLastCollectTime(incentiveId)
+
+		if lastCollectTime > incentive.endTimestamp {
+			return false
+		}
+
+		totalReward += pool.RewardStateOf(deposit).calculateTotalExternalReward(lastCollectTime, currentTime, incentive)
+
+		return false
+	})
+
+	// calculate refund amount is the difference between the incentive reward amount and the total external reward
+	refund := safeSubInt64(incentive.TotalRewardAmount(), totalReward)
+	refund = safeSubInt64(refund, incentive.DistributedRewardAmount())
 
 	return incentive, refund, nil
 }
