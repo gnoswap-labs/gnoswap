@@ -488,6 +488,9 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 	currentTime := time.Now().Unix()
 	blockHeight := std.ChainHeight()
 	previousRealm := std.PreviousRealm()
+
+	communityPoolAddr := getRoleAddress(prbac.ROLE_COMMUNITY_POOL)
+
 	// get all internal and external rewards
 	reward := calcPositionReward(blockHeight, currentTime, positionId)
 
@@ -554,6 +557,10 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		incentive.rewardLeft = safeAddInt64(incentive.rewardLeft, externalPenalty)
 		toUserExternalPenalty[rewardToken] = safeAddInt64(toUserExternalPenalty[rewardToken], externalPenalty)
 
+		if externalPenalty > 0 {
+			common.SafeGRC20Transfer(cross, rewardToken, communityPoolAddr, externalPenalty)
+    }
+
 		// Update the last collect time ONLY for this specific incentive
 		// This happens only if the reward was successfully transferred.
 		err = deposit.updateExternalRewardLastCollectTime(incentiveId, currentTime)
@@ -582,8 +589,6 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 			"currentHeight", formatInt(blockHeight),
 		)
 	}
-
-	communityPoolAddr := getRoleAddress(prbac.ROLE_COMMUNITY_POOL)
 
 	// internal reward to user
 	toUser, feeAmount, err := handleStakingRewardFee(GNS_PATH, reward.Internal, true)
