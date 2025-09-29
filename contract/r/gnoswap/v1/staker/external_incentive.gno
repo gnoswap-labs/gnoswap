@@ -195,7 +195,15 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 	incentive.setRefunded(true)
 	incentive.addDistributedRewardAmount(refund)
 	pool.incentives.update(incentive.refundee, incentive)
-	pool.incentives.archiveIncentive(incentiveId)
+
+	// archive incentive if it is finished (all rewards distributed)
+	// this is to prevent re-claiming GNS or rewards after the incentive is finished
+	if incentive.IsFinished() {
+		err = archiveEndedExternalIncentive(incentive)
+		if err != nil {
+			panic(err)
+		}
+	}
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(
@@ -261,4 +269,18 @@ func endExternalIncentive(pool *Pool, incentiveId string, caller std.Address, cu
 	refund = safeSubInt64(refund, incentive.DistributedRewardAmount())
 
 	return incentive, refund, nil
+}
+
+func archiveEndedExternalIncentive(incentive *ExternalIncentive) error {
+	pool, exists := pools.Get(incentive.targetPoolPath)
+	if !exists {
+		return makeErrorWithDetails(
+			errDataNotFound,
+			ufmt.Sprintf("targetPoolPath(%s) not found", incentive.targetPoolPath),
+		)
+	}
+
+	pool.incentives.archiveIncentive(incentive.incentiveId)
+
+	return nil
 }

@@ -63,8 +63,10 @@ func (self *ExternalIncentive) RewardSpent(currentTimestamp int64) int64 {
 	return rewardSpent
 }
 
-func (self *ExternalIncentive) addUnStakedRewardAmount(unStakingDepositRewardAmount int64) {
-	self.distributedRewardAmount += unStakingDepositRewardAmount
+// addDistributedRewardAmount adds the given amount to the distributed reward amount.
+// This function is used to add the distributed reward amount when the incentive is un-staked and refunded.
+func (self *ExternalIncentive) addDistributedRewardAmount(amount int64) {
+	self.distributedRewardAmount += amount
 }
 
 func (self *ExternalIncentive) Clone() *ExternalIncentive {

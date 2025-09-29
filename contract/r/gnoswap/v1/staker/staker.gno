@@ -748,6 +748,23 @@ func applyUnStake(positionId uint64) error {
 	upperTick.modifyDepositUpper(currentTime, signedLiquidity)
 	lowerTick.modifyDepositLower(currentTime, signedLiquidity)
 
+	for incentiveID, collectedExternalReward := range deposit.collectedExternalRewards {
+		incentive, ok := pool.incentives.Get(incentiveID)
+		if !ok {
+			panic(ufmt.Sprintf("incentive(%s) not found", incentiveID))
+		}
+
+		incentive.addDistributedRewardAmount(collectedExternalReward)
+
+		// archive incentive if it is finished (all rewards distributed)
+		// this is to prevent re-claiming GNS or rewards after the incentive is finished
+		if incentive.IsFinished() {
+			if err := archiveEndedExternalIncentive(incentive); err != nil {
+				panic(err)
+			}
+		}
+	}
+
 	deposits.remove(positionId)
 	stakers.removeDeposit(deposit.owner, positionId)
 
