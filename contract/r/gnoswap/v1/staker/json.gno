@@ -37,7 +37,6 @@ type ApiExternalIncentive struct {
 	PoolPath         string `json:"poolPath"`
 	RewardToken      string `json:"rewardToken"`
 	RewardAmount     int64  `json:"rewardAmount"`
-	RewardLeft       int64  `json:"rewardLeft"`
 	StartTimestamp   int64  `json:"startTimestamp"`
 	EndTimestamp     int64  `json:"endTimestamp"`
 	Active           bool   `json:"active"`
@@ -59,7 +58,6 @@ func newApiExternalIncentive(ictv *ExternalIncentive) ApiExternalIncentive {
 		PoolPath:         ictv.targetPoolPath,
 		RewardToken:      ictv.rewardToken,
 		RewardAmount:     ictv.rewardAmount,
-		RewardLeft:       ictv.RewardLeft(now),
 		StartTimestamp:   ictv.startTimestamp,
 		EndTimestamp:     ictv.endTimestamp,
 		Active:           isActive,
@@ -82,7 +80,6 @@ func (r ApiExternalIncentive) JSON() *json.Node {
 		"poolPath":         json.StringNode("poolPath", r.PoolPath),
 		"rewardToken":      json.StringNode("rewardToken", r.RewardToken),
 		"rewardAmount":     json.StringNode("rewardAmount", strconv.FormatInt(r.RewardAmount, 10)),
-		"rewardLeft":       json.StringNode("rewardLeft", strconv.FormatInt(r.RewardLeft, 10)),
 		"startTimestamp":   json.NumberNode("startTimestamp", float64(r.StartTimestamp)),
 		"endTimestamp":     json.NumberNode("endTimestamp", float64(r.EndTimestamp)),
 		"active":           json.BoolNode("active", active),

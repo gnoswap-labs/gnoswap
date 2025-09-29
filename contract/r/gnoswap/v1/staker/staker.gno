@@ -553,7 +553,6 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 		// process external penalty
 		externalPenalty := reward.ExternalPenalty[incentiveId]
 		incentive.rewardAmount = safeSubInt64(incentive.rewardAmount, externalPenalty)
-		incentive.rewardLeft = safeAddInt64(incentive.rewardLeft, externalPenalty)
 		toUserExternalPenalty[rewardToken] = safeAddInt64(toUserExternalPenalty[rewardToken], externalPenalty)
 
 		// update

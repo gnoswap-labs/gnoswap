@@ -269,7 +269,6 @@ func GetPrintExternalInfo() string {
 					IncentiveId:       key,
 					RewardToken:       incentive.rewardToken,
 					RewardAmount:      strconv.FormatInt(incentive.rewardAmount, 10),
-					RewardLeft:        strconv.FormatInt(incentive.rewardLeft, 10),
 					StartTimestamp:    incentive.startTimestamp,
 					EndTimestamp:      incentive.endTimestamp,
 					RewardPerSecond:   strconv.FormatInt(incentive.rewardPerSecond, 10),
@@ -318,7 +317,6 @@ func makeExternalPositionsNode(positions []ApiExternalDebugPosition) []*json.Nod
 				"poolPath":                 json.StringNode("poolPath", incentive.PoolPath),
 				"rewardToken":              json.StringNode("rewardToken", incentive.RewardToken),
 				"rewardAmount":             json.StringNode("rewardAmount", incentive.RewardAmount),
-				"rewardLeft":               json.StringNode("rewardLeft", incentive.RewardLeft),
 				"startTimestamp":           json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
 				"endTimestamp":             json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
 				"rewardPerSecond":          json.StringNode("rewardPerSecond", incentive.RewardPerSecond),
@@ -363,7 +361,6 @@ type ApiExternalDebugIncentive struct {
 	IncentiveId        string      `json:"incentiveId"`
 	RewardToken        string      `json:"rewardToken"`
 	RewardAmount       string      `json:"rewardAmount"`
-	RewardLeft         string      `json:"rewardLeft"`
 	StartTimestamp     int64       `json:"startTimestamp"`
 	EndTimestamp       int64       `json:"endTimestamp"`
 	RewardPerSecondX96 string      `json:"rewardPerSecondX96"`

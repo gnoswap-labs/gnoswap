@@ -16,7 +16,6 @@ type ExternalIncentive struct {
 	targetPoolPath   string      // external reward target pool path
 	rewardToken      string      // external reward token path
 	rewardAmount     int64       // total reward amount
-	rewardLeft       int64       // remaining reward amount
 	rewardPerSecond  int64       // reward per second
 	rewardDust       int64       // dust amount from precision loss (rewardAmount % duration)
 	refundee         std.Address // refundee address
@@ -94,21 +93,6 @@ func (self *ExternalIncentive) RewardSpent(currentTimestamp int64) int64 {
 	return rewardSpent
 }
 
-func (self *ExternalIncentive) RewardLeft(currentTimestamp int64) int64 {
-	// Still check timestamps for state validation
-	if currentTimestamp <= self.startTimestamp {
-		// Subtract dust since it won't be distributed
-		return self.rewardLeft
-	}
-
-	if currentTimestamp > self.endTimestamp {
-		return 0
-	}
-
-	timeDuration := self.endTimestamp - currentTimestamp
-	rewardLeft := safeMulInt64(timeDuration, self.rewardPerSecond)
-	return rewardLeft
-}
 
 func (self *ExternalIncentive) Clone() *ExternalIncentive {
 	return &ExternalIncentive{
@@ -120,7 +104,6 @@ func (self *ExternalIncentive) Clone() *ExternalIncentive {
 		targetPoolPath:   self.targetPoolPath,
 		rewardToken:      self.rewardToken,
 		rewardAmount:     self.rewardAmount,
-		rewardLeft:       self.rewardLeft,
 		rewardPerSecond:  self.rewardPerSecond,
 		rewardDust:       self.rewardDust,
 		refundee:         self.refundee,
