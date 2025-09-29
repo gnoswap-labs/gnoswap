@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"gno.land/p/onbloc/json"
 	"gno.land/p/nt/ufmt"
+	"gno.land/p/onbloc/json"
 
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -187,11 +187,18 @@ func GetDepositLiquidityAsString(lpTokenId uint64) string {
 	return liquidity.ToString()
 }
 
-// GetDepositLastCollectTimestamp returns the last collect timestamp of a deposit.
-func GetDepositLastCollectTimestamp(lpTokenId uint64) int64 {
+// GetDepositInternalRewardLastCollectTimestamp returns the last collect timestamp of a deposit.
+func GetDepositInternalRewardLastCollectTimestamp(lpTokenId uint64) int64 {
 	deposit := getDeposit(lpTokenId)
 
-	return deposit.lastCollectTime
+	return deposit.InternalRewardLastCollectTime()
+}
+
+// GetDepositExternalRewardLastCollectTimestamp returns the last collect timestamp of a deposit.
+func GetDepositExternalRewardLastCollectTimestamp(lpTokenId uint64, incentiveId string) int64 {
+	deposit := getDeposit(lpTokenId)
+
+	return deposit.ExternalRewardLastCollectTime(incentiveId)
 }
 
 // GetDepositWarmUp returns the warm-up records of a deposit.
