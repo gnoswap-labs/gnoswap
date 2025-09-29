@@ -21,7 +21,7 @@ type ExternalIncentive struct {
 	rewardPerSecond  int64       // reward per second
 	refundee         std.Address // refundee address
 
-	refunded bool // whether incentive has been refunded (includes GNS deposit and unclaimed rewards)
+	refunded        bool // whether incentive has been refunded (includes GNS deposit and unclaimed rewards)
 	isRequestUnwrap bool // whether the original deposit was native GNOT (needs unwrap on refund)
 }
 
@@ -195,21 +195,88 @@ func NewExternalIncentive(
 		createdHeight:    createdHeight,
 		depositGnsAmount: depositGnsAmount,
 		refunded:         false,
-		isRequestUnwrap:    isRequestUnwrap,
+		isRequestUnwrap:  isRequestUnwrap,
 	}
 }
 
 type Deposit struct {
-	owner           std.Address // owner address
-	stakeTime       int64       // staked time
-	targetPoolPath  string      // staked position's pool path
-	tickLower       int32       // tick lower
-	tickUpper       int32       // tick upper
-	liquidity       *u256.Uint  // liquidity
-	lastCollectTime int64       // last collect time for internal rewards
-	warmups         []Warmup    // warmup information
+	warmups                        []Warmup         // warmup information
+	liquidity                      *u256.Uint       // liquidity
+	targetPoolPath                 string           // staked position's pool path
+	owner                          std.Address      // owner address
+	stakeTime                      int64            // staked time
+	internalRewardLastCollectTime  int64            // last collect time for internal reward
+	externalRewardLastCollectTimes map[string]int64 // last collect time for external rewards by incentive id
+	tickLower                      int32            // tick lower
+	tickUpper                      int32            // tick upper
+}
 
-	// Per-incentive tracking for external rewards
-	// Maps incentiveId to last collection timestamp for that specific incentive
-	externalLastCollectTimes map[string]int64  // incentiveId -> lastCollectTime
+// InternalRewardLastCollectTime returns the last collect time for the internal reward.
+// If the last collect time is 0, it returns the staked time.
+func (self *Deposit) InternalRewardLastCollectTime() int64 {
+	if self.internalRewardLastCollectTime == 0 {
+		return self.stakeTime
+	}
+
+	return self.internalRewardLastCollectTime
+}
+
+// ExternalRewardLastCollectTime returns the last collect time for the external reward for the given incentive ID.
+// If the last collect time is 0, it returns the staked time.
+func (self *Deposit) ExternalRewardLastCollectTime(incentiveID string) int64 {
+	lastCollectTime, exists := self.externalRewardLastCollectTimes[incentiveID]
+	if !exists || lastCollectTime == 0 {
+		return self.stakeTime
+	}
+
+	return lastCollectTime
+}
+
+// updateInternalRewardLastCollectTime updates the last collect time for the internal reward.
+// It returns an error if the current time is less than the last collect time for the internal reward.
+func (self *Deposit) updateInternalRewardLastCollectTime(currentTime int64) error {
+	if self.internalRewardLastCollectTime > currentTime {
+		return makeErrorWithDetails(errNotAvailableUpdateCollectTime, "currentTime must be greater than internal reward last collect time")
+	}
+
+	self.internalRewardLastCollectTime = currentTime
+
+	return nil
+}
+
+// updateExternalRewardLastCollectTime lazily updates the last collect time for the external reward for the given incentive ID.
+// It returns an error if the current time is less than the last collect time for the external reward for the given incentive ID.
+func (self *Deposit) updateExternalRewardLastCollectTime(incentiveID string, currentTime int64) error {
+	if self.externalRewardLastCollectTimes == nil {
+		self.externalRewardLastCollectTimes = make(map[string]int64)
+	}
+
+	externalLastCollectTime, exists := self.externalRewardLastCollectTimes[incentiveID]
+	if exists && externalLastCollectTime > currentTime {
+		return makeErrorWithDetails(errNotAvailableUpdateCollectTime, "currentTime must be greater than external reward last collect time")
+	}
+
+	self.externalRewardLastCollectTimes[incentiveID] = currentTime
+
+	return nil
+}
+
+func NewDeposit(
+	owner std.Address,
+	targetPoolPath string,
+	liquidity *u256.Uint,
+	currentTime int64,
+	tickLower, tickUpper int32,
+) *Deposit {
+	return &Deposit{
+		owner:                          owner,
+		targetPoolPath:                 targetPoolPath,
+		liquidity:                      liquidity,
+		warmups:                        instantiateWarmup(currentTime),
+		stakeTime:                      currentTime,
+		tickLower:                      tickLower,
+		tickUpper:                      tickUpper,
+		internalRewardLastCollectTime:  currentTime,
+		externalRewardLastCollectTimes: make(map[string]int64),
+	}
 }

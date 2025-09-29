@@ -351,18 +351,14 @@ func StakeToken(cur realm, positionId uint64, referrer string) string {
 	tickLower, tickUpper := getTickOf(positionId)
 
 	// staked status
-	deposit := &Deposit{
-		owner:           caller,
-		stakeTime:       currentTime,
-		targetPoolPath:  poolPath,
-		tickLower:       tickLower,
-		tickUpper:       tickUpper,
-		liquidity:       liquidity,
-		lastCollectTime: currentTime,
-		warmups:         instantiateWarmup(currentTime),
-		// External incentive times are initialized lazily during reward calculation
-		externalLastCollectTimes: nil,
-	}
+	deposit := NewDeposit(
+		caller,
+		poolPath,
+		liquidity,
+		currentTime,
+		tickLower,
+		tickUpper,
+	)
 
 	currentTick := pl.GetSlot0Tick(poolPath)
 
@@ -560,15 +556,10 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 
 		// Update the last collect time ONLY for this specific incentive
 		// This happens only if the reward was successfully transferred.
-		//
-		// By updating per-incentive timestamps independently, we ensure that:
-		//  1. Successfully collected incentives won't be collected again for the same period
-		//  2. Failed incentives (insufficient funds) can be retried later
-		//  3. Each incentive tracks its own collection history
-		if deposit.externalLastCollectTimes == nil {
-			deposit.externalLastCollectTimes = make(map[string]int64)
+		err = deposit.updateExternalRewardLastCollectTime(incentiveId, currentTime)
+		if err != nil {
+			panic(err)
 		}
-		deposit.externalLastCollectTimes[incentiveId] = currentTime
 
 		// update
 		externalIncentives.set(incentiveId, incentive)
@@ -647,9 +638,11 @@ func CollectReward(cur realm, positionId uint64, unwrapResult bool) (string, str
 	)
 
 	// Update lastCollectTime for internal rewards (GNS emissions)
-	// This is separate from external incentive tracking and always updates
-	// when CollectReward is called, regardless of external incentive success/failure
-	deposit.lastCollectTime = currentTime
+	err = deposit.updateInternalRewardLastCollectTime(currentTime)
+	if err != nil {
+		panic(err)
+	}
+
 	deposits.set(positionId, deposit)
 
 	return rewardToUser, rewardPenalty, toUserExternalReward, toUserExternalPenalty

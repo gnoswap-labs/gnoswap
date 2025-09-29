@@ -83,7 +83,7 @@ func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 		param.Pools.set(poolPath, pool)
 	}
 
-	lastCollectTime := deposit.lastCollectTime
+	lastCollectTime := deposit.InternalRewardLastCollectTime()
 
 	// Initializes reward/penalty arrays for rewards and penalties for each warmup
 	warmups := len(deposit.warmups)
@@ -117,30 +117,7 @@ func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 	//
 	// This avoids O(n) iteration on every incentive creation while ensuring correct reward calculation.
 	for incentiveId, incentive := range allIncentives {
-		var incentiveLastCollectTime int64
-
-		if deposit.externalLastCollectTimes != nil {
-			if specificTime, exists := deposit.externalLastCollectTimes[incentiveId]; exists {
-				// Use the stored per-incentive time
-				incentiveLastCollectTime = specificTime
-			} else {
-				// First time collecting this incentive
-				incentiveLastCollectTime = getInitialCollectTime(deposit, incentive)
-			}
-		} else {
-			// No external tracking map yet
-			incentiveLastCollectTime = getInitialCollectTime(deposit, incentive)
-		}
-
-		// Skip if incentive hasn't started yet or if we've already collected up to current time
-		if incentiveLastCollectTime >= param.CurrentTime {
-			continue
-		}
-
-		// Only process incentives that were active during the collection period
-		if incentive.endTimestamp <= incentiveLastCollectTime {
-			continue
-		}
+		externalLastCollectTime := deposit.ExternalRewardLastCollectTime(incentiveId)
 
 		// Check if incentive is active during this specific collection period
 		if !incentive.IsStarted(param.CurrentTime) || incentive.startTimestamp >= param.CurrentTime {
@@ -149,7 +126,7 @@ func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 
 		// External incentivized pool.
 		// Calculate reward for each warmup using per-incentive lastCollectTime
-		externalReward, externalPenalty := pool.RewardStateOf(deposit).calculateExternalReward(incentiveLastCollectTime, param.CurrentTime, incentive)
+		externalReward, externalPenalty := pool.RewardStateOf(deposit).calculateExternalReward(externalLastCollectTime, param.CurrentTime, incentive)
 
 		for i := range externalReward {
 			externalRewards[i][incentiveId] = externalReward[i]
