@@ -1,8 +1,8 @@
 package gnft
 
 import (
+	"chain/runtime"
 	"math/rand"
-	"std"
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
@@ -13,7 +13,7 @@ import (
 	"gno.land/r/gnoswap/rbac"
 )
 
-func getPositionAddress() std.Address {
+func getPositionAddress() address {
 	addr, exists := access.GetAddressWithVersion(prabc.ROLE_POSITION.String(), 1)
 	if !exists {
 		return rbac.DefaultRoleAddresses[prabc.ROLE_POSITION]
@@ -43,12 +43,12 @@ func checkErr(err error) {
 }
 
 // checkTransferErr wraps transfer errors with more specific context.
-func checkTransferErr(err error, from, to std.Address, tid grc721.TokenID) {
+func checkTransferErr(err error, from, to address, tid grc721.TokenID) {
 	if err == nil {
 		return
 	}
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 
 	// Check if token exists
 	owner, ownerErr := nft.OwnerOf(tid)
@@ -87,13 +87,13 @@ func checkTransferErr(err error, from, to std.Address, tid grc721.TokenID) {
 }
 
 // checkApproveErr wraps approve errors with more specific context.
-func checkApproveErr(err error, approved std.Address, tid grc721.TokenID) {
+func checkApproveErr(err error, approved address, tid grc721.TokenID) {
 	if err == nil {
 		return
 	}
 
 	errMsg := err.Error()
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 
 	// Check if token exists
 	owner, ownerErr := nft.OwnerOf(tid)

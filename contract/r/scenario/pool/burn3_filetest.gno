@@ -3,7 +3,6 @@
 package main
 
 import (
-	"std"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -26,7 +25,7 @@ const (
 var (
 	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm        = std.NewUserRealm(positionAddr)
+	posRealm        = testing.NewUserRealm(positionAddr)
 )
 
 func main() {

@@ -1,7 +1,8 @@
 package xgns
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 	"strings"
 
 	"gno.land/p/demo/tokens/grc20"
@@ -15,7 +16,7 @@ import (
 )
 
 var (
-	admin         = ownable.NewWithAddress(std.DerivePkgAddr(prbac.ROLE_GOV_STAKER.String()))
+	admin         = ownable.NewWithAddress(chain.PackageAddress(prbac.ROLE_GOV_STAKER.String()))
 	token, ledger = grc20.NewToken("XGNS", "xGNS", 6)
 )
 
@@ -41,7 +42,7 @@ func VotingSupply() int64 {
 //   - owner: address to check balance for
 //
 // Returns balance amount.
-func BalanceOf(owner std.Address) int64 {
+func BalanceOf(owner address) int64 {
 	return token.BalanceOf(owner)
 }
 
@@ -54,7 +55,7 @@ func Render(path string) string {
 	case path == "":
 		return token.RenderHome()
 	case c == 2 && parts[0] == "balance":
-		balance := token.BalanceOf(std.Address(parts[1]))
+		balance := token.BalanceOf(address(parts[1]))
 		return ufmt.Sprintf("%d\n", balance)
 	default:
 		return "404\n"
@@ -68,10 +69,10 @@ func Render(path string) string {
 //   - amount: amount to mint
 //
 // Only callable by governance staker contract.
-func Mint(cur realm, to std.Address, amount int64) {
+func Mint(cur realm, to address, amount int64) {
 	halt.AssertIsNotHaltedXGnsWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsGovStakerWithVersion(1, caller)
 
 	checkErr(ledger.Mint(to, amount))
@@ -84,10 +85,10 @@ func Mint(cur realm, to std.Address, amount int64) {
 //   - amount: amount to mint
 //
 // Only callable by launchpad contract.
-func MintByLaunchPad(cur realm, to std.Address, amount int64) {
+func MintByLaunchPad(cur realm, to address, amount int64) {
 	halt.AssertIsNotHaltedXGnsWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsLaunchpadWithVersion(1, caller)
 
 	checkErr(ledger.Mint(to, amount))
@@ -100,10 +101,10 @@ func MintByLaunchPad(cur realm, to std.Address, amount int64) {
 //   - amount: amount to burn
 //
 // Only callable by governance staker contract.
-func Burn(cur realm, from std.Address, amount int64) {
+func Burn(cur realm, from address, amount int64) {
 	halt.AssertIsNotHaltedXGnsWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsGovStakerWithVersion(1, caller)
 
 	checkErr(ledger.Burn(from, amount))
@@ -116,10 +117,10 @@ func Burn(cur realm, from std.Address, amount int64) {
 //   - amount: amount to burn
 //
 // Only callable by launchpad contract.
-func BurnByLaunchPad(cur realm, from std.Address, amount int64) {
+func BurnByLaunchPad(cur realm, from address, amount int64) {
 	halt.AssertIsNotHaltedXGnsWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsLaunchpadWithVersion(1, caller)
 
 	checkErr(ledger.Burn(from, amount))

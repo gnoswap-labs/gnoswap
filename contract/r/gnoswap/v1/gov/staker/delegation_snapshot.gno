@@ -1,7 +1,5 @@
 package staker
 
-import "std"
-
 // DelegationSnapshot represents a point-in-time view of delegation states.
 // It maps delegatee addresses to their corresponding delegation snapshot items,
 // providing efficient lookup and manipulation of delegation states at specific timestamps.
@@ -83,14 +81,14 @@ type DelegationSnapshotItem struct {
 	// delegationAmount is the total amount delegated to this delegatee
 	delegationAmount int64
 	// delegatorAddress is the address of the delegatee receiving delegations
-	delegatorAddress std.Address
+	delegatorAddress address
 }
 
 // DelegatorAddress returns the address of the delegatee.
 //
 // Returns:
 //   - std.Address: delegatee's address
-func (d *DelegationSnapshotItem) DelegatorAddress() std.Address {
+func (d *DelegationSnapshotItem) DelegatorAddress() address {
 	return d.delegatorAddress
 }
 
@@ -151,7 +149,7 @@ func (d *DelegationSnapshotItem) subRecord(delegationRecord *DelegationRecord) {
 //
 // Returns:
 //   - *DelegationSnapshotItem: new snapshot item with zero delegation amount
-func NewDelegationSnapshotItem(delegatorAddress std.Address) *DelegationSnapshotItem {
+func NewDelegationSnapshotItem(delegatorAddress address) *DelegationSnapshotItem {
 	return &DelegationSnapshotItem{
 		delegatorAddress: delegatorAddress,
 		delegationAmount: 0,

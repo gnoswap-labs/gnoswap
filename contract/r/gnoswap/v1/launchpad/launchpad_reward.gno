@@ -1,7 +1,8 @@
 package launchpad
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 	"time"
 
 	"gno.land/r/gnoswap/access"
@@ -19,21 +20,21 @@ func CollectRewardByDepositId(cur realm, depositID string) int64 {
 	halt.AssertIsNotHaltedLaunchpadWithVersion(1)
 	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
-	previousRealm := std.PreviousRealm()
+	previousRealm := runtime.PreviousRealm()
 	access.AssertIsUser(previousRealm)
 
 	caller := previousRealm.Address()
 	assertIsDepositOwner(depositID, caller)
 
 	deposit := mustGetDeposit(depositID)
-	currentHeight := std.ChainHeight()
+	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
 	rewardAmount, err := collectDepositReward(deposit, currentHeight, currentTime)
 	if err != nil {
 		panic(err)
 	}
 
-	std.Emit(
+	chain.Emit(
 		"CollectRewardByDepositId",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),

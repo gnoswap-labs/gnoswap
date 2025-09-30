@@ -1,7 +1,7 @@
 package protocol_fee
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 
 	"gno.land/p/nt/testutils"
@@ -17,9 +17,9 @@ import (
 var (
 	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
 	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
-	adminRealm    = std.NewUserRealm(adminAddr)
+	adminRealm    = testing.NewUserRealm(adminAddr)
 	adminUser     = adminAddr
-	dummyRealm    = std.NewCodeRealm("gno.land/r/dummy")
+	dummyRealm    = testing.NewCodeRealm("gno.land/r/dummy")
 	aliceAddr     = testutils.TestAddress("alice")
 
 	// contract paths
@@ -29,8 +29,8 @@ var (
 	stakerPath    = "gno.land/r/gnoswap/v1/staker"
 	govStakerPath = "gno.land/r/gnoswap/v1/gov/staker"
 
-	stakerRealm    = std.NewCodeRealm(stakerPath)
-	govStakerRealm = std.NewCodeRealm(govStakerPath)
+	stakerRealm    = testing.NewCodeRealm(stakerPath)
+	govStakerRealm = testing.NewCodeRealm(govStakerPath)
 )
 
 func TestDistributeProtocolFee(t *testing.T) {
@@ -101,7 +101,7 @@ func TestAddToProtocolFee(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			testing.SetRealm(std.NewCodeRealm(poolPath))
+			testing.SetRealm(testing.NewCodeRealm(poolPath))
 			AddToProtocolFee(cross, test.tokenPath, test.amount)
 			uassert.Equal(t, protocolFeeState.tokenListWithAmount[test.tokenPath], test.want)
 		})
@@ -111,7 +111,7 @@ func TestAddToProtocolFee(t *testing.T) {
 func TestClearTokenListWithAmount(t *testing.T) {
 	tests := []struct {
 		name        string
-		prevRealm   std.Realm
+		prevRealm   runtime.Realm
 		want        map[string]int64
 		shouldPanic bool
 		panicMsg    string
@@ -155,22 +155,22 @@ func TestClearTokenListWithAmount(t *testing.T) {
 func TestAssertIsPoolOrPositionOrRouterOrStaker(t *testing.T) {
 	tests := []struct {
 		name        string
-		prevRealm   std.Realm
+		prevRealm   runtime.Realm
 		shouldPanic bool
 		panicMsg    string
 	}{
 		// Allowed realms
 		{
 			name:      "caller is pool contract",
-			prevRealm: std.NewCodeRealm(poolPath),
+			prevRealm: testing.NewCodeRealm(poolPath),
 		},
 		{
 			name:      "caller is position contract",
-			prevRealm: std.NewCodeRealm(positionPath),
+			prevRealm: testing.NewCodeRealm(positionPath),
 		},
 		{
 			name:      "caller is router contract",
-			prevRealm: std.NewCodeRealm(routerPath),
+			prevRealm: testing.NewCodeRealm(routerPath),
 		},
 		{
 			name:      "caller is staker contract",
@@ -179,7 +179,7 @@ func TestAssertIsPoolOrPositionOrRouterOrStaker(t *testing.T) {
 		// Restricted realms
 		{
 			name:        "caller is unknown contract",
-			prevRealm:   std.NewCodeRealm("gno.land/r/unknown/contract"),
+			prevRealm:   testing.NewCodeRealm("gno.land/r/unknown/contract"),
 			shouldPanic: true,
 			panicMsg:    "unauthorized: caller",
 		},
@@ -264,12 +264,12 @@ func TestDistributeWithDifferentDevOpsPct(t *testing.T) {
 				bar.Transfer(cross, adminAddr, balance)
 			}
 			if balance := bar.BalanceOf(devOpsAddr); balance > 0 {
-				testing.SetRealm(std.NewUserRealm(devOpsAddr))
+				testing.SetRealm(testing.NewUserRealm(devOpsAddr))
 				bar.Transfer(cross, adminAddr, balance)
 				testing.SetRealm(adminRealm)
 			}
 			if balance := bar.BalanceOf(govStakerAddr); balance > 0 {
-				testing.SetRealm(std.NewUserRealm(govStakerAddr))
+				testing.SetRealm(testing.NewUserRealm(govStakerAddr))
 				bar.Transfer(cross, adminAddr, balance)
 				testing.SetRealm(adminRealm)
 			}
@@ -333,12 +333,12 @@ func TestBalanceAmountMismatch_Fix(t *testing.T) {
 					bar.Transfer(cross, adminAddr, balance)
 				}
 				if balance := bar.BalanceOf(devOpsAddr); balance > 0 {
-					testing.SetRealm(std.NewUserRealm(devOpsAddr))
+					testing.SetRealm(testing.NewUserRealm(devOpsAddr))
 					bar.Transfer(cross, adminAddr, balance)
 					testing.SetRealm(adminRealm)
 				}
 				if balance := bar.BalanceOf(govStakerAddr); balance > 0 {
-					testing.SetRealm(std.NewUserRealm(govStakerAddr))
+					testing.SetRealm(testing.NewUserRealm(govStakerAddr))
 					bar.Transfer(cross, adminAddr, balance)
 					testing.SetRealm(adminRealm)
 				}
@@ -367,12 +367,12 @@ func TestBalanceAmountMismatch_Fix(t *testing.T) {
 					bar.Transfer(cross, adminAddr, balance)
 				}
 				if balance := bar.BalanceOf(devOpsAddr); balance > 0 {
-					testing.SetRealm(std.NewUserRealm(devOpsAddr))
+					testing.SetRealm(testing.NewUserRealm(devOpsAddr))
 					bar.Transfer(cross, adminAddr, balance)
 					testing.SetRealm(adminRealm)
 				}
 				if balance := bar.BalanceOf(govStakerAddr); balance > 0 {
-					testing.SetRealm(std.NewUserRealm(govStakerAddr))
+					testing.SetRealm(testing.NewUserRealm(govStakerAddr))
 					bar.Transfer(cross, adminAddr, balance)
 					testing.SetRealm(adminRealm)
 				}
@@ -404,12 +404,12 @@ func TestBalanceAmountMismatch_Fix(t *testing.T) {
 					bar.Transfer(cross, adminAddr, balance)
 				}
 				if balance := bar.BalanceOf(devOpsAddr); balance > 0 {
-					testing.SetRealm(std.NewUserRealm(devOpsAddr))
+					testing.SetRealm(testing.NewUserRealm(devOpsAddr))
 					bar.Transfer(cross, adminAddr, balance)
 					testing.SetRealm(adminRealm)
 				}
 				if balance := bar.BalanceOf(govStakerAddr); balance > 0 {
-					testing.SetRealm(std.NewUserRealm(govStakerAddr))
+					testing.SetRealm(testing.NewUserRealm(govStakerAddr))
 					bar.Transfer(cross, adminAddr, balance)
 					testing.SetRealm(adminRealm)
 				}
@@ -439,12 +439,12 @@ func TestBalanceAmountMismatch_Fix(t *testing.T) {
 					bar.Transfer(cross, adminAddr, balance)
 				}
 				if balance := bar.BalanceOf(devOpsAddr); balance > 0 {
-					testing.SetRealm(std.NewUserRealm(devOpsAddr))
+					testing.SetRealm(testing.NewUserRealm(devOpsAddr))
 					bar.Transfer(cross, adminAddr, balance)
 					testing.SetRealm(adminRealm)
 				}
 				if balance := bar.BalanceOf(govStakerAddr); balance > 0 {
-					testing.SetRealm(std.NewUserRealm(govStakerAddr))
+					testing.SetRealm(testing.NewUserRealm(govStakerAddr))
 					bar.Transfer(cross, adminAddr, balance)
 					testing.SetRealm(adminRealm)
 				}
@@ -478,12 +478,12 @@ func TestBalanceAmountMismatch_Fix(t *testing.T) {
 					bar.Transfer(cross, adminAddr, balance)
 				}
 				if balance := bar.BalanceOf(devOpsAddr); balance > 0 {
-					testing.SetRealm(std.NewUserRealm(devOpsAddr))
+					testing.SetRealm(testing.NewUserRealm(devOpsAddr))
 					bar.Transfer(cross, adminAddr, balance)
 					testing.SetRealm(adminRealm)
 				}
 				if balance := bar.BalanceOf(govStakerAddr); balance > 0 {
-					testing.SetRealm(std.NewUserRealm(govStakerAddr))
+					testing.SetRealm(testing.NewUserRealm(govStakerAddr))
 					bar.Transfer(cross, adminAddr, balance)
 					testing.SetRealm(adminRealm)
 				}
@@ -512,12 +512,12 @@ func TestBalanceAmountMismatch_Fix(t *testing.T) {
 					bar.Transfer(cross, adminAddr, balance)
 				}
 				if balance := bar.BalanceOf(devOpsAddr); balance > 0 {
-					testing.SetRealm(std.NewUserRealm(devOpsAddr))
+					testing.SetRealm(testing.NewUserRealm(devOpsAddr))
 					bar.Transfer(cross, adminAddr, balance)
 					testing.SetRealm(adminRealm)
 				}
 				if balance := bar.BalanceOf(govStakerAddr); balance > 0 {
-					testing.SetRealm(std.NewUserRealm(govStakerAddr))
+					testing.SetRealm(testing.NewUserRealm(govStakerAddr))
 					bar.Transfer(cross, adminAddr, balance)
 					testing.SetRealm(adminRealm)
 				}

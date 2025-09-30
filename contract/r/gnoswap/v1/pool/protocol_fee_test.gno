@@ -1,7 +1,6 @@
 package pool
 
 import (
-	"std"
 	"strconv"
 	"strings"
 	"testing"
@@ -29,7 +28,7 @@ func TestSetPoolCreationFee(t *testing.T) {
 			name: "Panic call by non-governance",
 			action: func() {
 				const newFee = 2_000_000_000
-				testing.SetRealm(std.NewUserRealm(alice))
+				testing.SetRealm(testing.NewUserRealm(alice))
 				SetPoolCreationFee(cross, newFee)
 			},
 			verify:      nil,
@@ -40,7 +39,7 @@ func TestSetPoolCreationFee(t *testing.T) {
 			name: "Success call by governance",
 			action: func() {
 				const newFee = 2_000_000_000
-				govRealm := std.NewUserRealm(govAddr)
+				govRealm := testing.NewUserRealm(govAddr)
 				testing.SetRealm(govRealm)
 				SetPoolCreationFee(cross, newFee)
 			},
@@ -81,7 +80,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			name: "Panic call by non-admin (user)",
 			action: func() {
 				const newFee = 2_000_000_000
-				testing.SetRealm(std.NewUserRealm(alice))
+				testing.SetRealm(testing.NewUserRealm(alice))
 				SetPoolCreationFee(cross, newFee)
 			},
 			verify:      nil,
@@ -154,7 +153,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 		{
 			name: "Panic if pkgPath is not registered",
 			action: func(t *testing.T) {
-				testing.SetRealm(std.NewUserRealm(positionAddr))
+				testing.SetRealm(testing.NewUserRealm(positionAddr))
 				HandleWithdrawalFee(cross, 0, "pkgPath", "1000", "pkgPath", "1000", "poolPath", adminAddr)
 			},
 			verify:      nil,
@@ -165,7 +164,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 			name: "Success call by position contract",
 			action: func(t *testing.T) {
 				InitialisePoolTest(t)
-				testing.SetRealm(std.NewUserRealm(alice))
+				testing.SetRealm(testing.NewUserRealm(alice))
 				TokenApprove(t, wugnotPath, alice, poolAddr, 1000)
 				TokenApprove(t, gnsPath, alice, poolAddr, 1000)
 
@@ -182,10 +181,10 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				)
 			},
 			verify: func(t *testing.T) (string, string) {
-				testing.SetRealm(std.NewUserRealm(alice))
+				testing.SetRealm(testing.NewUserRealm(alice))
 				TokenApprove(t, wugnotPath, alice, poolAddr, 10000000000)
 				TokenApprove(t, gnsPath, alice, poolAddr, 1000000000)
-				testing.SetRealm(std.NewUserRealm(positionAddr))
+				testing.SetRealm(testing.NewUserRealm(positionAddr))
 				poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
 				return HandleWithdrawalFee(cross, 2, wugnotPath, "1000", gnsPath, "1000", poolPath, alice)
 			},
@@ -225,7 +224,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 			name: "Panic call to set withdrawal fee setFee by non-admin (user)",
 			action: func(t *testing.T) {
 				const newFee = uint64(200)
-				userRealm := std.NewUserRealm(alice)
+				userRealm := testing.NewUserRealm(alice)
 				testing.SetRealm(userRealm)
 				SetWithdrawalFee(cross, newFee)
 			},
@@ -237,7 +236,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 			name: "Success call to set withdrawal fee by admin",
 			action: func(t *testing.T) {
 				const newFee = uint64(200)
-				adminRealm := std.NewUserRealm(adminAddr)
+				adminRealm := testing.NewUserRealm(adminAddr)
 				testing.SetRealm(adminRealm)
 				SetWithdrawalFee(cross, newFee)
 			},
@@ -248,7 +247,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 			name: "Success call to set withdrawal fee by governance",
 			action: func(t *testing.T) {
 				const newFee = uint64(200)
-				govRealm := std.NewUserRealm(govAddr)
+				govRealm := testing.NewUserRealm(govAddr)
 				testing.SetRealm(govRealm)
 				SetWithdrawalFee(cross, newFee)
 			},
@@ -262,7 +261,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 			name: "exceed max fee, should panic",
 			action: func(t *testing.T) {
 				const newFee = uint64(MaxBpsValue + 1)
-				govRealm := std.NewUserRealm(govAddr)
+				govRealm := testing.NewUserRealm(govAddr)
 				testing.SetRealm(govRealm)
 				SetWithdrawalFee(cross, newFee)
 			},

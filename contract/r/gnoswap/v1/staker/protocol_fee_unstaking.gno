@@ -1,7 +1,8 @@
 package staker
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 
 	"gno.land/p/nt/ufmt"
 
@@ -57,7 +58,7 @@ func handleStakingRewardFee(
 func SetUnStakingFee(cur realm, fee int64) {
 	halt.AssertIsNotHaltedStakerWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsValidFeeRate(fee)
@@ -66,8 +67,8 @@ func SetUnStakingFee(cur realm, fee int64) {
 
 	setUnStakingFee(fee)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"SetUnStakingFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),

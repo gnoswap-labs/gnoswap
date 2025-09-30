@@ -6,7 +6,8 @@
 package main
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"testing"
 	"time"
 
@@ -29,11 +30,11 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -92,8 +93,8 @@ func createPool() {
 	testing.SetRealm(adminRealm)
 
 	// Wrap some GNOT first to create WUGNOT pool
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 10_000_000_000}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 5_000_000_000}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 10_000_000_000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 5_000_000_000}})
 	wugnot.Deposit(cross)
 
 	wugnot.Approve(cross, poolAddr, maxInt64)
@@ -217,9 +218,9 @@ func endIncentiveAndVerifyWUGNOTRefund() {
 	println("[PASS] WUGNOT incentive correctly refunded as WUGNOT")
 }
 
-func ugnotBalanceOf(addr std.Address) uint64 {
-	banker := std.NewBanker(std.BankerTypeReadonly)
-	coins := banker.GetCoins(addr)
+func ugnotBalanceOf(addr address) uint64 {
+	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
+	coins := banker_.GetCoins(addr)
 	return uint64(coins.AmountOf("ugnot"))
 }
 

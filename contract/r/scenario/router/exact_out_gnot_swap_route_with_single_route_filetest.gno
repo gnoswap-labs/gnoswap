@@ -5,7 +5,8 @@
 package main
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"strconv"
 	"testing"
 
@@ -26,7 +27,7 @@ import (
 
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -75,16 +76,16 @@ func initializeSetup() {
 	testing.SetRealm(adminRealm)
 	pool.SetPoolCreationFee(cross, 0)
 
-	testing.IssueCoins(std.DerivePkgAddr("gno.land/r/gnoland/wugnot"), std.Coins{{"ugnot", 100000000000000}})
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100000000000000}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 100000000000000}})
+	testing.IssueCoins(chain.PackageAddress("gno.land/r/gnoland/wugnot"), chain.Coins{{"ugnot", 100000000000000}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000000000000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
 	testing.SetRealm(adminRealm)
 	wugnot.Deposit(cross)
 
-	banker := std.NewBanker(std.BankerTypeRealmIssue)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
 
 	println("[INFO] GNS Balance of admin:", gns.BalanceOf(adminAddr))
-	println("[INFO] WUGNOT Balance of admin:", banker.GetCoins(adminAddr).AmountOf("ugnot"))
+	println("[INFO] WUGNOT Balance of admin:", banker_.GetCoins(adminAddr).AmountOf("ugnot"))
 
 	gns.Approve(cross, poolAddr, maxInt64)
 	wugnot.Approve(cross, poolAddr, maxInt64)
@@ -109,7 +110,7 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Minting position")
-	testing.SetOriginSend(std.Coins{})
+	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		wugnotPath,
@@ -154,10 +155,10 @@ func exactOutSwapRouteBy(
 	amountUint64, _ := strconv.ParseUint(amountInMax, 10, 64)
 	gns.Approve(cross, routerAddr, int64(amountUint64))
 
-	banker := std.NewBanker(std.BankerTypeReadonly)
-	prevBalance := banker.GetCoins(adminAddr).AmountOf("ugnot")
+	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
+	prevBalance := banker_.GetCoins(adminAddr).AmountOf("ugnot")
 
-	testing.SetOriginSend(std.Coins{})
+	testing.SetOriginSend(chain.Coins{})
 	_, outputTokenAmount := router.ExactOutSwapRoute(
 		cross,
 		inputToken,
@@ -170,7 +171,7 @@ func exactOutSwapRouteBy(
 		"",
 	)
 
-	afterBalance := banker.GetCoins(adminAddr).AmountOf("ugnot")
+	afterBalance := banker_.GetCoins(adminAddr).AmountOf("ugnot")
 
 	ufmt.Printf("[EXPECTED] gnot balance of admin: %d\n", afterBalance-prevBalance)
 	ufmt.Printf("[EXPECTED] outputTokenAmount: %s\n", outputTokenAmount)

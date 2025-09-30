@@ -1,7 +1,8 @@
 package router
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
@@ -15,7 +16,7 @@ import (
 )
 
 const (
-	defaultSwapFeeBPS = uint64(15) // 0.15%
+	defaultSwapFeeBPS = uint64(15)   // 0.15%
 	maxSwapFeeBPS     = uint64(1000) // 10%
 )
 
@@ -34,7 +35,7 @@ func SetSwapFee(cur realm, fee uint64) {
 	halt.AssertIsNotHaltedRouterWithVersion(1)
 	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	if fee > maxSwapFeeBPS {
@@ -49,8 +50,8 @@ func SetSwapFee(cur realm, fee uint64) {
 		panic(err)
 	}
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"SetSwapFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -96,8 +97,8 @@ func handleSwapFee(
 
 	pf.AddToProtocolFee(cross, currentTokenPath, feeAmountInt64)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"SwapRouteFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),

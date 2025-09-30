@@ -1,12 +1,8 @@
 package rbac
 
-import (
-	"std"
-)
-
 const maxVersionSize = int(9223372036854775807)
 
-var zeroAddress = std.Address("")
+var zeroAddress = address("")
 
 // Role represents a role with a name and an assigned address.
 type Role struct {
@@ -17,7 +13,7 @@ type Role struct {
 }
 
 // NewRole creates a new Role instance with roleName.
-func NewRole(roleName string, addr std.Address) *Role {
+func NewRole(roleName string, addr address) *Role {
 	return &Role{
 		name:          roleName,
 		addresses:     map[int]string{1: addr.String()},
@@ -29,22 +25,22 @@ func NewRole(roleName string, addr std.Address) *Role {
 func (r *Role) Name() string { return r.name }
 
 // Address returns the address assigned to this role. Returns empty address if no address is assigned.
-func (r *Role) Address(version int) std.Address {
+func (r *Role) Address(version int) address {
 	addr, exists := r.getAddress(version)
 	if !exists {
 		return zeroAddress
 	}
 
-	return std.Address(addr)
+	return address(addr)
 }
 
-func (r *Role) CurrentAddress() std.Address {
+func (r *Role) CurrentAddress() address {
 	addr, exists := r.getAddress(r.latestVersion)
 	if !exists {
 		return zeroAddress
 	}
 
-	return std.Address(addr)
+	return address(addr)
 }
 
 // IsEmpty returns true if no address is assigned to this role.
@@ -53,7 +49,7 @@ func (r *Role) IsEmpty() bool {
 }
 
 // IsAuthorized returns true if addr matches the role's assigned address.
-func (r *Role) IsAuthorized(addr std.Address) bool {
+func (r *Role) IsAuthorized(addr address) bool {
 	return r.CurrentAddress().String() == addr.String()
 }
 
@@ -67,7 +63,7 @@ func (r *Role) getAddress(version int) (string, bool) {
 }
 
 // setAddress assigns addr to this role.
-func (r *Role) setAddress(version int, addr std.Address) error {
+func (r *Role) setAddress(version int, addr address) error {
 	_, exists := r.getAddress(version)
 	if !exists {
 		return ErrVersionDoesNotExist
@@ -78,7 +74,7 @@ func (r *Role) setAddress(version int, addr std.Address) error {
 	return nil
 }
 
-func (r *Role) nextVersionAddress(addr std.Address) error {
+func (r *Role) nextVersionAddress(addr address) error {
 	latestVersion := r.latestVersion + 1
 	if latestVersion >= maxVersionSize || latestVersion < 1 {
 		return ErrCannotUpdateVersion

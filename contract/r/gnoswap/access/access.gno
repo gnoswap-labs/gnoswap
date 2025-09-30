@@ -1,18 +1,18 @@
 package access
 
 import (
-	"std"
+	"chain/runtime"
 
 	"gno.land/p/nt/ufmt"
 )
 
 var (
-	roleAddresses     map[string]map[int]std.Address
+	roleAddresses     map[string]map[int]address
 	roleLatestVersion map[string]int
 )
 
 func init() {
-	roleAddresses = make(map[string]map[int]std.Address)
+	roleAddresses = make(map[string]map[int]address)
 	roleLatestVersion = make(map[string]int)
 }
 
@@ -25,18 +25,18 @@ func init() {
 //   - roleAddress: address for the role
 //
 // Only callable by RBAC contract.
-func SetRoleAddress(cur realm, roleName string, version int, roleAddress std.Address) {
-	caller := std.PreviousRealm().Address()
+func SetRoleAddress(cur realm, roleName string, version int, roleAddress address) {
+	caller := runtime.PreviousRealm().Address()
 	assertIsRBAC(caller)
 
 	// Validate address
-	if !roleAddress.IsValid() || roleAddress == std.Address("") {
+	if !roleAddress.IsValid() || roleAddress == address("") {
 		panic(ufmt.Errorf("invalid address for role %s: %s", roleName, roleAddress))
 	}
 
 	_, ok := roleAddresses[roleName]
 	if !ok {
-		roleAddresses[roleName] = make(map[int]std.Address)
+		roleAddresses[roleName] = make(map[int]address)
 	}
 
 	roleAddresses[roleName][version] = roleAddress
@@ -54,7 +54,7 @@ func SetRoleAddress(cur realm, roleName string, version int, roleAddress std.Add
 //
 // Only callable by RBAC contract.
 func RemoveRole(cur realm, roleName string) {
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	assertIsRBAC(caller)
 
 	if _, ok := roleAddresses[roleName]; !ok {
@@ -72,7 +72,7 @@ func RemoveRole(cur realm, roleName string) {
 //   - caller: address to verify
 //
 // Returns true if authorized, false otherwise.
-func IsAuthorized(role string, caller std.Address) bool {
+func IsAuthorized(role string, caller address) bool {
 	addr, ok := GetAddress(role)
 	if !ok {
 		return false
@@ -89,7 +89,7 @@ func IsAuthorized(role string, caller std.Address) bool {
 //   - caller: address to verify
 //
 // Returns true if authorized, false otherwise.
-func IsAuthorizedWithVersion(role string, version int, caller std.Address) bool {
+func IsAuthorizedWithVersion(role string, version int, caller address) bool {
 	addr, ok := GetAddressWithVersion(role, version)
 	if !ok {
 		return false
@@ -99,7 +99,7 @@ func IsAuthorizedWithVersion(role string, version int, caller std.Address) bool 
 }
 
 // GetAddress returns the address for a role and whether it exists.
-func GetAddress(role string) (std.Address, bool) {
+func GetAddress(role string) (address, bool) {
 	addresses, ok := roleAddresses[role]
 	if !ok {
 		return "", false
@@ -124,7 +124,7 @@ func GetAddress(role string) (std.Address, bool) {
 }
 
 // GetAddressWithVersion returns the address for a role and whether it exists.
-func GetAddressWithVersion(role string, version int) (std.Address, bool) {
+func GetAddressWithVersion(role string, version int) (address, bool) {
 	addresses, ok := roleAddresses[role]
 	if !ok {
 		return "", false
@@ -139,8 +139,8 @@ func GetAddressWithVersion(role string, version int) (std.Address, bool) {
 }
 
 // GetRoleAddresses returns a copy of all role addresses.
-func GetRoleAddresses() map[string]map[int]std.Address {
-	addresses := make(map[string]map[int]std.Address)
+func GetRoleAddresses() map[string]map[int]address {
+	addresses := make(map[string]map[int]address)
 
 	for role, data := range roleAddresses {
 		addresses[role] = data
@@ -149,7 +149,7 @@ func GetRoleAddresses() map[string]map[int]std.Address {
 	return addresses
 }
 
-func MustGetAddress(role string) std.Address {
+func MustGetAddress(role string) address {
 	addr, ok := GetAddress(role)
 	if !ok {
 		panic(ufmt.Errorf("role %s not found", role))
@@ -158,7 +158,7 @@ func MustGetAddress(role string) std.Address {
 	return addr
 }
 
-func MustGetAddressWithVersion(role string, version int) std.Address {
+func MustGetAddressWithVersion(role string, version int) address {
 	addr, ok := GetAddressWithVersion(role, version)
 	if !ok {
 		panic(ufmt.Errorf("role %s version %d not found", role, version))

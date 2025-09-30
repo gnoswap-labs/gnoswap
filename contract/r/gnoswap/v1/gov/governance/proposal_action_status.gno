@@ -1,19 +1,17 @@
 package governance
 
-import "std"
-
 // ProposalActionStatus tracks the execution and cancellation status of a proposal.
 // This structure manages the action-related state including who performed actions and when.
 type ProposalActionStatus struct {
-	canceled       bool        // Whether the proposal has been canceled
-	canceledAt     int64       // Timestamp when proposal was canceled
-	canceledHeight int64       // Block height when proposal was canceled
-	canceledBy     std.Address // Who canceled the proposal
+	canceled       bool    // Whether the proposal has been canceled
+	canceledAt     int64   // Timestamp when proposal was canceled
+	canceledHeight int64   // Block height when proposal was canceled
+	canceledBy     address // Who canceled the proposal
 
-	executed       bool        // Whether the proposal has been executed
-	executedAt     int64       // Timestamp when proposal was executed
-	executedHeight int64       // Block height when proposal was executed
-	executedBy     std.Address // Who executed the proposal
+	executed       bool    // Whether the proposal has been executed
+	executedAt     int64   // Timestamp when proposal was executed
+	executedHeight int64   // Block height when proposal was executed
+	executedBy     address // Who executed the proposal
 
 	executable bool // Whether this proposal type supports execution
 }
@@ -31,7 +29,7 @@ func (p *ProposalActionStatus) IsCanceled() bool {
 //
 // Returns:
 //   - std.Address: address of the canceller
-func (p *ProposalActionStatus) CanceledBy() std.Address {
+func (p *ProposalActionStatus) CanceledBy() address {
 	return p.canceledBy
 }
 
@@ -48,7 +46,7 @@ func (p *ProposalActionStatus) IsExecuted() bool {
 //
 // Returns:
 //   - std.Address: address of the executor
-func (p *ProposalActionStatus) ExecutedBy() std.Address {
+func (p *ProposalActionStatus) ExecutedBy() address {
 	return p.executedBy
 }
 
@@ -71,7 +69,7 @@ func (p *ProposalActionStatus) IsExecutable() bool {
 //
 // Returns:
 //   - error: cancellation error if proposal cannot be canceled
-func (p *ProposalActionStatus) cancel(canceledAt int64, canceledHeight int64, canceledBy std.Address) error {
+func (p *ProposalActionStatus) cancel(canceledAt int64, canceledHeight int64, canceledBy address) error {
 	// Only executable proposals can be canceled (text proposals cannot)
 	if !p.executable {
 		return errProposalNotExecutable
@@ -96,7 +94,7 @@ func (p *ProposalActionStatus) cancel(canceledAt int64, canceledHeight int64, ca
 //
 // Returns:
 //   - error: execution error if proposal cannot be executed
-func (p *ProposalActionStatus) execute(executedAt int64, executedHeight int64, executedBy std.Address) error {
+func (p *ProposalActionStatus) execute(executedAt int64, executedHeight int64, executedBy address) error {
 	// Only executable proposals can be executed (text proposals cannot)
 	if !p.executable {
 		return errProposalNotExecutable
