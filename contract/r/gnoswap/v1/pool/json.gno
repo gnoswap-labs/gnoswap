@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"gno.land/p/demo/json"
+	"gno.land/p/onbloc/json"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )

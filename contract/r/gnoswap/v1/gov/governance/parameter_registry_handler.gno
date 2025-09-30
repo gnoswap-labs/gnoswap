@@ -1,6 +1,6 @@
 package governance
 
-import "gno.land/p/demo/ufmt"
+import "gno.land/p/nt/ufmt"
 
 // ParameterRegistryHandler is an interface for handlers that need to manage state
 // during parameter changes. This is an optional interface that handlers can implement

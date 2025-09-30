@@ -4,9 +4,9 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
+	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/access"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -133,7 +133,7 @@ func TestRemoveToken(t *testing.T) {
 			expectedPanicMsg:      "",
 		},
 		{
-			// XXX: When removing a non-existent token, it is necessary to confirm that the operation was successful.
+			// NOTE: When removing a non-existent token, it is necessary to confirm that the operation was successful.
 			name:                  "remove token failed by not existing token",
 			caller:                getAdminAddress(t),
 			inputTokenPath:        "not-existing-token",

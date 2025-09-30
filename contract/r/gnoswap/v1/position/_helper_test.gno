@@ -4,16 +4,16 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
 	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -28,7 +28,7 @@ import (
 const (
 	ugnotDenom string = "ugnot"
 	ugnotPath  string = "ugnot"
-	wugnotPath string = "gno.land/r/demo/wugnot"
+	wugnotPath string = "gno.land/r/gnoland/wugnot"
 	gnsPath    string = "gno.land/r/gnoswap/gns"
 	barPath    string = "gno.land/r/onbloc/bar"
 	bazPath    string = "gno.land/r/onbloc/baz"
@@ -68,7 +68,7 @@ var (
 	routerAddr      = rbac.DefaultRoleAddresses[prabc.ROLE_ROUTER]
 	devOpsAddr      = rbac.DefaultRoleAddresses[prabc.ROLE_DEVOPS]
 
-	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+	wugnotAddr std.Address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	posPath  = "gno.land/r/gnoswap/v1/position"
 	posRealm = std.NewCodeRealm(posPath)

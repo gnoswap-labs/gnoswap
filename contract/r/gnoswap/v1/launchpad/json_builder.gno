@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"gno.land/p/demo/json"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/onbloc/json"
+	"gno.land/p/nt/ufmt"
 )
 
 // projectStatsBuilder adds ProjectStats fields to JSON

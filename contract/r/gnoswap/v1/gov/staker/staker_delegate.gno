@@ -42,7 +42,7 @@ func Delegate(
 	amount int64,
 	referrer string,
 ) int64 {
-	halt.AssertIsNotHaltedGovStaker()
+	halt.AssertIsNotHaltedGovStakerWithVersion(1)
 
 	prevRealm := std.PreviousRealm()
 	access.AssertIsUser(prevRealm)
@@ -115,7 +115,7 @@ func Undelegate(
 	from std.Address,
 	amount int64,
 ) int64 {
-	halt.AssertIsNotHaltedGovStaker()
+	halt.AssertIsNotHaltedGovStakerWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsValidAddress(from)
@@ -182,7 +182,7 @@ func Redelegate(
 	newDelegatee std.Address,
 	amount int64,
 ) int64 {
-	halt.AssertIsNotHaltedGovStaker()
+	halt.AssertIsNotHaltedGovStakerWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsValidAddress(delegatee)
@@ -241,8 +241,8 @@ func Redelegate(
 // Allows users to collect GNS tokens that completed undelegation lockup period.
 // Burns xGNS and returns GNS tokens.
 func CollectUndelegatedGns(cur realm) int64 {
-	halt.AssertIsNotHaltedGovStaker()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedGovStakerWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	prevRealm := std.PreviousRealm()
 	caller := prevRealm.Address()

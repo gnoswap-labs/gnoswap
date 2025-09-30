@@ -3,7 +3,7 @@ package gns
 import (
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 )
 
 // TestHalvingEmissionScenarios tests various scenarios for halving emission behavior

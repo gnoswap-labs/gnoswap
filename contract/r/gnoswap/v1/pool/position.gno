@@ -2,15 +2,17 @@ package pool
 
 import (
 	"encoding/base64"
-	"std"
+	"time"
 
-	"gno.land/p/demo/ufmt"
 	plp "gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
 )
+
+const positionPackagePath = "gno.land/r/gnoswap/v1/position"
 
 var convertedQ128 = u256.MustFromDecimal(Q128)
 
@@ -21,38 +23,28 @@ var convertedQ128 = u256.MustFromDecimal(Q128)
 // Used internally for position state management.
 //
 // Parameters:
-//   - owner: Address that owns the position
 //   - tickLower: Lower boundary tick of position range
 //   - tickUpper: Upper boundary tick of position range
 //
 // Key Format:
 //
-//	base64(owner_address + tickLower_bytes + tickUpper_bytes)
+//	base64(position_package_path + tickLower_bytes + tickUpper_bytes)
 //
 // Requirements:
-//   - Valid owner address
 //   - tickLower < tickUpper
 //   - Both ticks within valid range [-887272, 887272]
 //
 // Returns base64-encoded position key or error.
-// Combines owner address, tickLower, and tickUpper.
+// Combines position package path, tickLower, and tickUpper.
 func getPositionKey(
-	owner std.Address,
 	tickLower int32,
 	tickUpper int32,
 ) (string, error) {
-	if !owner.IsValid() {
-		return "", makeErrorWithDetails(
-			errInvalidAddress,
-			ufmt.Sprintf("owner(%s) is invalid", owner.String()),
-		)
-	}
-
 	if err := validateTicks(tickLower, tickUpper); err != nil {
 		return "", err
 	}
 
-	positionKey := ufmt.Sprintf("%s__%d__%d", owner.String(), tickLower, tickUpper)
+	positionKey := ufmt.Sprintf("%s__%d__%d", positionPackagePath, tickLower, tickUpper)
 	encodedPositionKey := base64.StdEncoding.EncodeToString([]byte(positionKey))
 	return encodedPositionKey, nil
 }
@@ -275,8 +267,16 @@ func (p *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.
 		amount0 = calculateToken0Amount(sqrtRatioLower, sqrtRatioUpper, liqDelta)
 
 	case tick < params.tickUpper:
-		// case 2
+		// case 2: Current price is within the position range
 		liquidityBefore := p.liquidity
+		currentTime := time.Now().Unix()
+		
+		// Update oracle BEFORE liquidity changes
+		err := p.writeObservation(currentTime, tick, liquidityBefore)
+		if err != nil {
+			return PositionInfo{}, zero, zero, err
+		}
+
 		// token0 used from current price to upper tick
 		amount0 = calculateToken0Amount(sqrtPriceX96, sqrtRatioUpper, liqDelta)
 		// token1 used from lower tick to current price
@@ -377,7 +377,7 @@ func (p *Pool) updatePosition(positionParams ModifyPositionParams, tick int32) (
 		feeGrowthGlobal1X128,
 	)
 
-	positionKey, err := getPositionKey(positionParams.owner, positionParams.tickLower, positionParams.tickUpper)
+	positionKey, err := getPositionKey(positionParams.tickLower, positionParams.tickUpper)
 	if err != nil {
 		return PositionInfo{}, err
 	}

@@ -1,8 +1,8 @@
 package protocol_fee
 
 import (
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
 )
@@ -66,9 +66,9 @@ func (pfs *ProtocolFeeState) AccuToDevOps() *avl.Tree { return pfs.accuToDevOps 
 func (pfs *ProtocolFeeState) distributeToDevOps(token string, amount int64) error {
 	pfs.addAccuToDevOps(token, amount)
 	pfs.updateDistributedToDevOpsHistory(token, amount)
-	if err := common.Transfer(cross, token, devOpsAddr, amount); err != nil {
-		return ufmt.Errorf("transfer failed: token(%s), amount(%d)", token, amount)
-	}
+
+	common.SafeGRC20Transfer(cross, token, devOpsAddr, amount)
+
 	return nil
 }
 
@@ -77,9 +77,9 @@ func (pfs *ProtocolFeeState) distributeToDevOps(token string, amount int64) erro
 func (pfs *ProtocolFeeState) distributeToGovStaker(token string, amount int64) error {
 	pfs.addAccuToGovStaker(token, amount)
 	pfs.updateDistributedToGovStakerHistory(token, amount)
-	if err := common.Transfer(cross, token, govStakerAddr, amount); err != nil {
-		return ufmt.Errorf("transfer failed: token(%s), amount(%d)", token, amount)
-	}
+
+	common.SafeGRC20Transfer(cross, token, govStakerAddr, amount)
+
 	return nil
 }
 

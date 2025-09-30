@@ -3,7 +3,7 @@ package router
 import (
 	"errors"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 )
 
 var (
@@ -23,6 +23,9 @@ var (
 	errSameTokenSwap          = errors.New("[GNOSWAP-ROUTER-014] cannot swap same token")
 	errProtocolFeeOverflow    = errors.New("[GNOSWAP-ROUTER-015] protocol fee calculation overflow")
 	errOverFlow               = errors.New("[GNOSWAP-ROUTER-016] overflow")
+	errInvalidRoutePath       = errors.New("[GNOSWAP-ROUTER-017] invalid route path")
+	errInvalidRouteFirstToken = errors.New("[GNOSWAP-ROUTER-018] invalid route first token")
+	errInvalidRouteLastToken  = errors.New("[GNOSWAP-ROUTER-019] invalid route last token")
 )
 
 // addDetailToError adds detail to an error message.

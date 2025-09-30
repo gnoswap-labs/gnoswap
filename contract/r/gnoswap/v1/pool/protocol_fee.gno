@@ -3,8 +3,8 @@ package pool
 import (
 	"std"
 
-	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
@@ -26,7 +26,7 @@ var (
 )
 
 const (
-	MaxBpsValue = uint64(10000)
+	MaxBpsValue = uint64(1000) // 10%
 	ZeroBps     = uint64(0)
 )
 
@@ -53,12 +53,12 @@ func HandleWithdrawalFee(
 	poolPath string,
 	positionCaller std.Address,
 ) (string, string) { // uint256 x2
-	halt.AssertIsNotHaltedPool()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	// only position contract can call this function
 	caller := std.PreviousRealm().Address()
-	access.AssertIsPosition(caller)
+	access.AssertIsPositionWithVersion(1, caller)
 
 	common.MustRegistered(token0Path)
 	common.MustRegistered(token1Path)
@@ -71,10 +71,10 @@ func HandleWithdrawalFee(
 	feeAmount0, afterAmount0 := calculateAmountWithFee(u256.MustFromDecimal(amount0), u256.NewUint(fee))
 	feeAmount1, afterAmount1 := calculateAmountWithFee(u256.MustFromDecimal(amount1), u256.NewUint(fee))
 
-	checkTransferError(common.TransferFrom(cross, token0Path, positionCaller, protocolFeeAddr, safeConvertToInt64(feeAmount0)))
 	pf.AddToProtocolFee(cross, token0Path, safeConvertToInt64(feeAmount0))
-	checkTransferError(common.TransferFrom(cross, token1Path, positionCaller, protocolFeeAddr, safeConvertToInt64(feeAmount1)))
+	common.SafeGRC20TransferFrom(cross, token0Path, positionCaller, protocolFeeAddr, safeConvertToInt64(feeAmount0))
 	pf.AddToProtocolFee(cross, token1Path, safeConvertToInt64(feeAmount1))
+	common.SafeGRC20TransferFrom(cross, token1Path, positionCaller, protocolFeeAddr, safeConvertToInt64(feeAmount1))
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(
@@ -100,10 +100,10 @@ func GetPoolCreationFee() int64 {
 // SetPoolCreationFee sets the poolCreationFee.
 // Only admin or governance can call this function.
 func SetPoolCreationFee(cur realm, fee int64) {
-	halt.AssertIsNotHaltedPool()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	prevPoolCreationFee := GetPoolCreationFee()
 	err := setPoolCreationFee(fee)
@@ -129,10 +129,10 @@ func GetWithdrawalFee() uint64 {
 // SetWithdrawalFee sets the withdrawal fee.
 // Only admin or governance can call this function.
 func SetWithdrawalFee(cur realm, fee uint64) {
-	halt.AssertIsNotHaltedPool()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	prevWithdrawalFee := GetWithdrawalFee()
 
@@ -164,7 +164,7 @@ func calculateAmountWithFee(amount, fee *u256.Uint) (feeAmount, afterAmount *u25
 	feeAmount = u256.Zero().Mul(amount, fee)
 	feeAmount = u256.Zero().Div(feeAmount, u256.NewUint(MaxBpsValue))
 	afterAmount = u256.Zero().Sub(amount, feeAmount)
-	return
+	return feeAmount, afterAmount
 }
 
 // setPoolCreationFee this function is internal function called by SetPoolCreationFee
@@ -189,7 +189,7 @@ func setWithdrawalFee(fee uint64) error {
 	if fee > MaxBpsValue {
 		return makeErrorWithDetails(
 			errInvalidWithdrawalFeePct,
-			ufmt.Sprintf("fee(%d) must be in range 0 ~ 10000", fee),
+			ufmt.Sprintf("fee(%d) must be in range 0 ~ %d", fee, MaxBpsValue),
 		)
 	}
 

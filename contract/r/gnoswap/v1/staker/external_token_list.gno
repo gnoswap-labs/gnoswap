@@ -3,7 +3,7 @@ package staker
 import (
 	"std"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
 )
@@ -28,8 +28,8 @@ func init() {
 //   - If the caller is not the admin
 func AddToken(cur realm, tokenPath string) {
 	caller := std.PreviousRealm().Address()
-	halt.AssertIsNotHaltedStaker()
-	access.AssertIsAdminOrGovernance(caller)
+	halt.AssertIsNotHaltedStakerWithVersion(1)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	if err := modifyTokenList(tokenPath, addTokenValidator, addTokenExecutor); err != nil {
 		panic(err.Error())
@@ -56,8 +56,8 @@ func AddToken(cur realm, tokenPath string) {
 //   - If the caller is not the admin
 func RemoveToken(cur realm, tokenPath string) {
 	caller := std.PreviousRealm().Address()
-	halt.AssertIsNotHaltedStaker()
-	access.AssertIsAdminOrGovernance(caller)
+	halt.AssertIsNotHaltedStakerWithVersion(1)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	if err := modifyTokenList(tokenPath, removeTokenValidator, removeTokenExecutor); err != nil {
 		panic(err.Error())

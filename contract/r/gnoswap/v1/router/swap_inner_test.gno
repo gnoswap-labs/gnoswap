@@ -4,9 +4,9 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/uassert"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
@@ -85,7 +85,7 @@ func TestSwapInner(t *testing.T) {
 			name: "normal swap - exact input",
 			setupFn: func(env *TestEnv) {
 				defaultSetupFn(env)
-				TokenFaucet(t, bazPath, user1Addr)
+				TokenFaucet(t, barPath, alice)
 			},
 			amountSpecified:   i256.MustFromDecimal("100"),
 			recipient:         alice,
@@ -94,7 +94,7 @@ func TestSwapInner(t *testing.T) {
 				tokenIn:  barPath,
 				tokenOut: bazPath,
 				fee:      3000,
-				payer:    routerAddr,
+				payer:    alice,
 			},
 			expectedRecv: "100",
 			expectedOut:  "98",
@@ -104,7 +104,7 @@ func TestSwapInner(t *testing.T) {
 			name: "overflow case - large amount",
 			setupFn: func(env *TestEnv) {
 				defaultSetupFn(env)
-				TokenFaucet(t, bazPath, user1Addr)
+				TokenFaucet(t, barPath, alice)
 			},
 			amountSpecified:   i256.MustFromDecimal("92267581029952440000000"), // Large amount
 			recipient:         alice,
@@ -113,12 +113,12 @@ func TestSwapInner(t *testing.T) {
 				tokenIn:  barPath,
 				tokenOut: bazPath,
 				fee:      3000,
-				payer:    routerAddr,
+				payer:    alice,
 			},
 			expectedRecv:     "0",
 			expectedOut:      "0",
 			expectError:      true,
-			expectedErrorMsg: "amount(92267581029952440000000) overflows int64 range (max 9223372036854775807)",
+			expectedErrorMsg: "[GNOSWAP-POOL-026] overflow",
 		},
 	}
 
@@ -131,13 +131,15 @@ func TestSwapInner(t *testing.T) {
 			}
 
 			// Additional setup for swapInner test requirements
-			user1Realm := std.NewUserRealm(user1Addr)
-			testing.SetRealm(user1Realm)
+			aliceRealm := std.NewUserRealm(alice)
+			testing.SetRealm(aliceRealm)
 			bar.Approve(cross, routerAddr, maxApprove)
 			baz.Approve(cross, routerAddr, maxApprove)
 			bar.Approve(cross, poolAddr, maxApprove)
 			baz.Approve(cross, poolAddr, maxApprove)
 			TokenFaucet(t, barPath, routerAddr)
+
+			testing.SetRealm(routerRealm)
 
 			swapInnerFn := func(cur realm) (*u256.Uint, *u256.Uint) {
 				return swapInner(
@@ -153,7 +155,6 @@ func TestSwapInner(t *testing.T) {
 					swapInnerFn(cross)
 				})
 			} else {
-				testing.SetRealm(routerRealm)
 				poolRecv, poolOut := swapInnerFn(cross)
 
 				if !tt.expectError {

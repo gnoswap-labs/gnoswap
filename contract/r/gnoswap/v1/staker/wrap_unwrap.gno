@@ -3,9 +3,9 @@ package staker
 import (
 	"std"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 )
 
 // wrapWithTransfer wraps GNOT into WUGNOT and transfers it to the specified address.

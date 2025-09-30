@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
@@ -165,7 +165,7 @@ func initLaunchpadDepositTest(t *testing.T) {
 			tier30Ratio:   30,
 			tier90Ratio:   30,
 			tier180Ratio:  40,
-			recipient:     testutils.TestAddress("project"), // TODO: change to real address
+			recipient:     testutils.TestAddress("project"),
 			startTime:     currentTime + 10,
 			currentTime:   currentTime,
 			currentHeight: currentHeight,

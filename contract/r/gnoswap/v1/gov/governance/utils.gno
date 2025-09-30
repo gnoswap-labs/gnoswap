@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"strings"
 
-	"gno.land/p/demo/avl"
+	"gno.land/p/nt/avl"
 
-	"gno.land/p/demo/json"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
+	"gno.land/p/onbloc/json"
 )
 
 // iterTree iterates over an AVL tree and applies a callback function to each element.
@@ -64,8 +64,33 @@ func formatInt(v any) string {
 	}
 }
 
-// parseInt64 parses a string to int64.
+// parseInt parses a string to int with proper validation and overflow checking.
+func parseInt(s string) int {
+	if len(strings.TrimSpace(s)) == 0 {
+		panic(ufmt.Sprint("invalid int value: empty or whitespace string"))
+	}
+
+	num, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		panic(ufmt.Sprintf("invalid int value: %s", s))
+	}
+
+	const maxInt = int(^uint(0) >> 1)
+	const minInt = -maxInt - 1
+
+	if num > int64(maxInt) || num < int64(minInt) {
+		panic(ufmt.Sprintf("int overflow: value %d exceeds int range [%d, %d]", num, minInt, maxInt))
+	}
+
+	return int(num)
+}
+
+// parseInt64 parses a string to int64 with proper validation.
 func parseInt64(s string) int64 {
+	if len(strings.TrimSpace(s)) == 0 {
+		panic(ufmt.Sprint("invalid int64 value: empty or whitespace string"))
+	}
+
 	num, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
 		panic(ufmt.Sprintf("invalid int64 value: %s", s))
@@ -74,8 +99,12 @@ func parseInt64(s string) int64 {
 	return num
 }
 
-// parseUint64 parses a string to uint64.
+// parseUint64 parses a string to uint64 with proper validation.
 func parseUint64(s string) uint64 {
+	if len(strings.TrimSpace(s)) == 0 {
+		panic(ufmt.Sprint("invalid uint64 value: empty or whitespace string"))
+	}
+
 	num, err := strconv.ParseUint(s, 10, 64)
 	if err != nil {
 		panic(ufmt.Sprintf("invalid uint64 value: %s", s))
@@ -98,8 +127,12 @@ const (
 	kindUint64
 )
 
-// parseNumber parses a string to a number (int, int64, or uint64).
+// parseNumber parses a string to a number (int, int64, or uint64) with proper validation.
 func parseNumber(s string, kind numberKind) any {
+	if len(strings.TrimSpace(s)) == 0 {
+		panic(ufmt.Sprint("invalid number value: empty or whitespace string"))
+	}
+
 	switch kind {
 	case kindInt:
 		num, err := strconv.ParseInt(s, 10, 64)
@@ -126,6 +159,10 @@ func parseNumber(s string, kind numberKind) any {
 
 // parseBool parses a string to a boolean.
 func parseBool(s string) bool {
+	if len(strings.TrimSpace(s)) == 0 {
+		panic(ufmt.Sprint("invalid bool value: empty or whitespace string"))
+	}
+
 	switch s {
 	case "true":
 		return true

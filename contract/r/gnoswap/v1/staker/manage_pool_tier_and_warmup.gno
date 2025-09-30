@@ -4,7 +4,7 @@ import (
 	"std"
 	"time"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
@@ -20,10 +20,10 @@ const (
 // SetPoolTier assigns a tier level to a pool for internal GNS emission rewards.
 // Only admin or governance can call this function.
 func SetPoolTier(cur realm, poolPath string, tier uint64) {
-	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsPoolExists(poolPath)
 	assertIsValidPoolTier(tier)
@@ -46,10 +46,10 @@ func SetPoolTier(cur realm, poolPath string, tier uint64) {
 // ChangePoolTier modifies the tier level of an existing pool.
 // Only admin or governance can call this function.
 func ChangePoolTier(cur realm, poolPath string, tier uint64) {
-	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsPoolExists(poolPath)
 	assertIsValidPoolTier(tier)
@@ -73,10 +73,10 @@ func ChangePoolTier(cur realm, poolPath string, tier uint64) {
 // RemovePoolTier removes a pool from internal GNS emission rewards.
 // Only admin or governance can call this function.
 func RemovePoolTier(cur realm, poolPath string) {
-	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsPoolExists(poolPath)
 
@@ -97,10 +97,10 @@ func RemovePoolTier(cur realm, poolPath string) {
 // SetWarmUp configures the warm-up percentage and duration for rewards.
 // Only admin or governance can call this function.
 func SetWarmUp(cur realm, pct, timeDuration int64) {
-	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	setWarmUp(pct, timeDuration)
 

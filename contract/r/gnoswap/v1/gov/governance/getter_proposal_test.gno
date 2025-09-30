@@ -4,8 +4,8 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/uassert"
 )
 
 // TestGetterProposal_All tests all getter functions related to Proposal using table-driven tests.

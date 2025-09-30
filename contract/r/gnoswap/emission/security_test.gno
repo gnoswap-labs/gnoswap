@@ -3,7 +3,7 @@ package emission
 import (
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 )
 
 func TestCalculateAmount_SecurityValidation(t *testing.T) {

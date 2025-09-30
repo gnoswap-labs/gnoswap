@@ -19,7 +19,7 @@
 package uint256
 
 import (
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 )
 
 // MulDiv calculates (a * b) / denominator with full 512-bit intermediate precision.

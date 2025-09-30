@@ -1,0 +1,286 @@
+// position handle native token
+
+// PKGPATH: gno.land/r/demo/main
+
+package main
+
+import (
+	"std"
+	"strconv"
+	"testing"
+
+	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/ufmt"
+	"gno.land/r/gnoland/wugnot"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/pool"
+	"gno.land/r/gnoswap/v1/position"
+)
+
+const (
+	INT64_MAX int64 = 9223372036854775807
+
+	GNOT        string = "gnot"
+	GNS_PATH    string = "gno.land/r/gnoswap/gns"
+	WUGNOT_PATH string = "gno.land/r/gnoland/wugnot"
+
+	MIN_PRICE string = "4295128740"
+)
+
+var (
+	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm      = std.NewUserRealm(adminAddr)
+	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
+	routerAddr, _   = access.GetAddress(prbac.ROLE_ROUTER.String())
+	routerRealm     = std.NewUserRealm(routerAddr)
+	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
+)
+
+func main() {
+	ufmt.Println("[SCENARIO] 1. Initialize pool with GNOT/GNS pair")
+	initPool()
+	println()
+
+	ufmt.Println("[SCENARIO] 2. Mint position with native token")
+	mintPosition()
+	println()
+
+	ufmt.Println("[SCENARIO] 3. Check unclaimed fees before swap")
+	checkUnclaimedFeesBeforeSwap()
+	println()
+
+	ufmt.Println("[SCENARIO] 4. Execute swap with native token")
+	executeSwap()
+	println()
+
+	ufmt.Println("[SCENARIO] 5. Check unclaimed fees after swap")
+	checkUnclaimedFeesAfterSwap()
+	println()
+
+	ufmt.Println("[SCENARIO] 6. Decrease liquidity without unwrapping")
+	decreaseLiquidityNoUnwrap()
+	println()
+
+	ufmt.Println("[SCENARIO] 7. Decrease liquidity with unwrapping")
+	decreaseLiquidityWithUnwrap()
+	println()
+}
+
+func initPool() {
+	testing.SetRealm(adminRealm)
+	pool.SetPoolCreationFee(cross, 0)
+
+	ufmt.Println("[INFO] Creating GNOT/GNS pool")
+	pool.CreatePool(
+		cross,
+		GNOT,
+		GNS_PATH,
+		500,
+		common.TickMathGetSqrtRatioAtTick(1).ToString(),
+	)
+}
+
+func mintPosition() {
+	testing.SetRealm(adminRealm)
+
+	gns.Approve(cross, poolAddr, INT64_MAX)
+	wugnot.Approve(cross, poolAddr, INT64_MAX)
+	wugnot.Approve(cross, positionAddr, INT64_MAX)
+
+	ufmt.Println("[INFO] Issue initial GNOT")
+	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 50000000}})
+	testing.IssueCoins(positionAddr, std.Coins{{"ugnot", 200000000}})
+
+	ufmt.Println("[INFO] Send GNOT to position contract")
+	banker := std.NewBanker(std.BankerTypeRealmIssue)
+	banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", 50000000}})
+	testing.SetOriginSend(std.Coins{{"ugnot", 50000000}})
+
+	ufmt.Println("[INFO] Minting position")
+	positionId, liquidity, amount0, amount1 := position.Mint(
+		cross,
+		GNOT,
+		GNS_PATH,
+		500,
+		-8000,
+		8000,
+		"50000000",
+		"50000000",
+		"0",
+		"0",
+		9999999999,
+		adminAddr,
+		adminAddr,
+		"",
+	)
+	testing.SetOriginSend(std.Coins{{"ugnot", 0}})
+
+	ufmt.Printf("[EXPECTED] Position ID should be %d\n", positionId)
+	ufmt.Printf("[EXPECTED] Amount0 should be %s\n", amount0)
+	ufmt.Printf("[EXPECTED] Amount1 should be %s\n", amount1)
+	ufmt.Printf("[EXPECTED] Liquidity should be %s\n", liquidity)
+}
+
+func checkUnclaimedFeesBeforeSwap() {
+	testing.SetRealm(adminRealm)
+	amount0, amount1 := position.UnclaimedFee(1)
+
+	ufmt.Printf("[EXPECTED] Unclaimed fee0 should be %s\n", amount0)
+	ufmt.Printf("[EXPECTED] Unclaimed fee1 should be %s\n", amount1)
+}
+
+func executeSwap() {
+	testing.SetRealm(adminRealm)
+
+	ufmt.Println("[INFO] Wrapping GNOT for swap")
+	testing.SetOriginSend(std.Coins{{"ugnot", 1234567}})
+	wugnot.Deposit(cross)
+
+	wugnot.Approve(cross, poolAddr, INT64_MAX)
+	wugnot.Approve(cross, positionAddr, INT64_MAX)
+	wugnot.Approve(cross, routerAddr, INT64_MAX)
+
+	// set current realm and origin caller
+	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	ufmt.Println("[INFO] Executing swap")
+	amount0, amount1 := pool.Swap(
+		cross,
+		WUGNOT_PATH,
+		GNS_PATH,
+		500,
+		adminAddr,
+		true,
+		"1234567",
+		MIN_PRICE,
+		adminAddr,
+		func(cur realm, amount0Delta, amount1Delta string) error {
+			return mockSwapCallback(WUGNOT_PATH, GNS_PATH, amount0Delta, amount1Delta, true)
+		},
+	)
+
+	ufmt.Printf("[EXPECTED] Swap amount0 should be %s\n", amount0)
+	ufmt.Printf("[EXPECTED] Swap amount1 should be %s\n", amount1)
+}
+
+func checkUnclaimedFeesAfterSwap() {
+	testing.SetRealm(adminRealm)
+	amount0, amount1 := position.UnclaimedFee(1)
+
+	ufmt.Printf("[EXPECTED] Unclaimed fee0 should be %s\n", amount0)
+	ufmt.Printf("[EXPECTED] Unclaimed fee1 should be %s\n", amount1)
+}
+
+func decreaseLiquidityNoUnwrap() {
+	testing.SetRealm(adminRealm)
+
+	ufmt.Println("[INFO] Decreasing liquidity without unwrapping")
+	_, liquidity, _, _, amount0, amount1, _ := position.DecreaseLiquidity(
+		cross,
+		1,
+		"15164540",
+		"0",
+		"0",
+		9999999999,
+		false,
+	)
+
+	ufmt.Printf("[EXPECTED] Removed liquidity should be %s\n", liquidity)
+	ufmt.Printf("[EXPECTED] Amount0 removed should be %s\n", amount0)
+	ufmt.Printf("[EXPECTED] Amount1 removed should be %s\n", amount1)
+	ufmt.Printf("[EXPECTED] WUGNOT balance should increase\n")
+	ufmt.Printf("[EXPECTED] GNOT balance should remain same\n")
+}
+
+func decreaseLiquidityWithUnwrap() {
+	testing.SetRealm(adminRealm)
+
+	ufmt.Println("[INFO] Decreasing liquidity with unwrapping")
+	_, liquidity, _, _, amount0, amount1, _ := position.DecreaseLiquidity(
+		cross,
+		1,
+		"15164540",
+		"0",
+		"0",
+		9999999999,
+		true,
+	)
+
+	ufmt.Printf("[EXPECTED] Removed liquidity should be %s\n", liquidity)
+	ufmt.Printf("[EXPECTED] Amount0 removed should be %s\n", amount0)
+	ufmt.Printf("[EXPECTED] Amount1 removed should be %s\n", amount1)
+	ufmt.Printf("[EXPECTED] WUGNOT balance should decrease\n")
+	ufmt.Printf("[EXPECTED] GNOT balance should increase\n")
+}
+
+func mockSwapCallback(token0Path string, token1Path string, amount0Delta string, amount1Delta string, zeroForOne bool) error {
+	testing.SetRealm(adminRealm)
+
+	const wugnotPath = "gno.land/r/gnoland/wugnot"
+	const ugnotDenom = "ugnot"
+
+	amount0Int64, _ := strconv.ParseInt(amount0Delta, 10, 64)
+	amount1Int64, _ := strconv.ParseInt(amount1Delta, 10, 64)
+
+	if zeroForOne {
+		if token0Path == wugnotPath {
+			testing.SetOriginSend(std.Coins{{ugnotDenom, amount0Int64}})
+			wugnot.Deposit(cross)
+		}
+
+		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Int64)
+	} else {
+		if token1Path == wugnotPath {
+			testing.SetOriginSend(std.Coins{{ugnotDenom, amount1Int64}})
+			wugnot.Deposit(cross)
+		}
+
+		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Int64)
+	}
+
+	return nil
+}
+
+// Output:
+// [SCENARIO] 1. Initialize pool with GNOT/GNS pair
+// [INFO] Creating GNOT/GNS pool
+//
+// [SCENARIO] 2. Mint position with native token
+// [INFO] Issue initial GNOT
+// [INFO] Send GNOT to position contract
+// [INFO] Minting position
+// [EXPECTED] Position ID should be 1
+// [EXPECTED] Amount0 should be 49984837
+// [EXPECTED] Amount1 should be 50000000
+// [EXPECTED] Liquidity should be 151645407
+//
+// [SCENARIO] 3. Check unclaimed fees before swap
+// [EXPECTED] Unclaimed fee0 should be %!s((unhandled))
+// [EXPECTED] Unclaimed fee1 should be %!s((unhandled))
+//
+// [SCENARIO] 4. Execute swap with native token
+// [INFO] Wrapping GNOT for swap
+// [INFO] Executing swap
+// [EXPECTED] Swap amount0 should be 1234567
+// [EXPECTED] Swap amount1 should be -1224110
+//
+// [SCENARIO] 5. Check unclaimed fees after swap
+// [EXPECTED] Unclaimed fee0 should be %!s((unhandled))
+// [EXPECTED] Unclaimed fee1 should be %!s((unhandled))
+//
+// [SCENARIO] 6. Decrease liquidity without unwrapping
+// [INFO] Decreasing liquidity without unwrapping
+// [EXPECTED] Removed liquidity should be 15164540
+// [EXPECTED] Amount0 removed should be 5121878
+// [EXPECTED] Amount1 removed should be 4877588
+// [EXPECTED] WUGNOT balance should increase
+// [EXPECTED] GNOT balance should remain same
+//
+// [SCENARIO] 7. Decrease liquidity with unwrapping
+// [INFO] Decreasing liquidity with unwrapping
+// [EXPECTED] Removed liquidity should be 15164540
+// [EXPECTED] Amount0 removed should be 5121878
+// [EXPECTED] Amount1 removed should be 4877588
+// [EXPECTED] WUGNOT balance should decrease
+// [EXPECTED] GNOT balance should increase

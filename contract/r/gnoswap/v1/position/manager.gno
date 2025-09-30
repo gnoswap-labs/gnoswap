@@ -3,8 +3,8 @@ package position
 import (
 	"strconv"
 
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/ufmt"
 )
 
 var (
@@ -66,7 +66,7 @@ func createNewPosition(id uint64, pos Position) uint64 {
 }
 
 // setPosition sets a position for a given position ID.
-// Returns true if position is newly created, false if position already exists and just updated.
+// Returns false if position is newly created, true if position already existed and was updated.
 func setPosition(id uint64, position Position) bool {
 	posIdStr := strconv.FormatUint(id, 10)
 	return positions.Set(posIdStr, position)

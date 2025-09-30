@@ -4,8 +4,8 @@ import (
 	"std"
 	"time"
 
-	"gno.land/p/demo/json"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/onbloc/json"
+	"gno.land/p/nt/ufmt"
 )
 
 // ApiGetRewardTokensByPoolPath returns all reward tokens for a specific pool.
@@ -27,7 +27,10 @@ func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 	// HANDLE EXTERNAL
 	if pool.IsExternallyIncentivizedPool() {
 		pool.incentives.incentives.Iterate("", "", func(key string, value any) bool {
-			ictv := value.(*ExternalIncentive)
+			ictv, ok := value.(*ExternalIncentive)
+			if !ok {
+				panic("failed to cast value to *ExternalIncentive")
+			}
 			if ictv.RewardToken() == "" {
 				return false
 			}
@@ -52,9 +55,15 @@ func ApiGetExternalIncentives() string {
 	apiExternalIncentives := []ApiExternalIncentive{}
 
 	pools.tree.Iterate("", "", func(key string, value any) bool {
-		pool := value.(*Pool)
+		pool, ok := value.(*Pool)
+		if !ok {
+			panic("failed to cast value to *Pool")
+		}
 		pool.incentives.incentives.Iterate("", "", func(key string, value any) bool {
-			ictv := value.(*ExternalIncentive)
+			ictv, ok := value.(*ExternalIncentive)
+			if !ok {
+				panic("failed to cast value to *ExternalIncentive")
+			}
 			externalIctv := newApiExternalIncentive(ictv)
 			apiExternalIncentives = append(apiExternalIncentives, externalIctv)
 			return false
@@ -82,7 +91,7 @@ func ApiGetExternalIncentiveById(poolPath, incentiveId string) string {
 		))
 	}
 
-	incentive, exist := pool.incentives.GetByIncentiveId(incentiveId)
+	incentive, exist := pool.incentives.Get(incentiveId)
 	if !exist {
 		panic(makeErrorWithDetails(
 			errDataNotFound,
@@ -185,7 +194,10 @@ func ApiGetInternalIncentivesByTiers(targetTier uint64) string {
 
 	poolTier.membership.Iterate("", "", func(key string, value any) bool {
 		poolPath := key
-		internalTier := value.(uint64)
+		internalTier, ok := value.(uint64)
+		if !ok {
+			panic("failed to cast value to uint64")
+		}
 		if internalTier != targetTier {
 			return false
 		}
@@ -252,9 +264,9 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 			TargetPoolPath:    deposit.targetPoolPath,
 			RewardTokenPath:   GNS_PATH,
 			RewardTokenAmount: reward.Internal,
-			StakeTimestamp:    deposit.stakeTimestamp,
+			StakeTimestamp:    deposit.stakeTime,
 			StakeTime:         deposit.stakeTime,
-			IncentiveStart:    deposit.stakeTimestamp,
+			IncentiveStart:    deposit.stakeTime,
 		})
 	}
 
@@ -269,7 +281,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 			TargetPoolPath:    incentive.targetPoolPath,
 			RewardTokenPath:   incentive.rewardToken,
 			RewardTokenAmount: externalReward,
-			StakeTimestamp:    deposit.stakeTimestamp,
+			StakeTimestamp:    deposit.stakeTime,
 			StakeTime:         deposit.stakeTime,
 			IncentiveStart:    incentive.startTimestamp,
 		})

@@ -1,16 +1,23 @@
 package rbac
 
-import "std"
+import (
+	"std"
 
-// emitRegisterRoleEvent emits a RegisterRole event with roleName information.
-func emitRegisterRoleEvent(roleName string) {
+	"gno.land/p/nt/ufmt"
+)
+
+// emitRegisterRoleEvent emits a RegisterRole event with roleName and address information.
+func emitRegisterRoleEvent(roleName string, version int, roleAddress std.Address) {
+	versionStr := ufmt.Sprintf("%d", version)
+
 	prevRealm := std.PreviousRealm()
 	std.Emit(
 		"RegisterRole",
 		"prevAddr", prevRealm.Address().String(),
 		"prevRealm", prevRealm.PkgPath(),
 		"roleName", roleName,
-		"roleAddress", "",
+		"roleVersion", versionStr,
+		"roleAddress", roleAddress.String(),
 	)
 }
 
@@ -27,13 +34,16 @@ func emitRemoveRoleEvent(roleName string) {
 }
 
 // emitUpdateRoleAddressEvent emits an UpdateRoleAddress event with roleName and address information.
-func emitUpdateRoleAddressEvent(roleName string, address std.Address) {
+func emitUpdateRoleAddressEvent(roleName string, version int, address std.Address) {
+	versionStr := ufmt.Sprintf("%d", version)
+
 	prevRealm := std.PreviousRealm()
 	std.Emit(
 		"UpdateRoleAddress",
 		"prevAddr", prevRealm.Address().String(),
 		"prevRealm", prevRealm.PkgPath(),
 		"roleName", roleName,
+		"roleVersion", versionStr,
 		"roleAddress", address.String(),
 	)
 }

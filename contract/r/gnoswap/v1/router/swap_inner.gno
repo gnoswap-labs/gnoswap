@@ -3,7 +3,7 @@ package router
 import (
 	"std"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
 
@@ -26,26 +26,34 @@ func swapInner(
 	sqrtPriceLimitX96 *u256.Uint,
 	data SwapCallbackData,
 ) (poolRecv, poolOut *u256.Uint) {
+	token0Path, token1Path := data.tokenIn, data.tokenOut
 	zeroForOne := data.tokenIn < data.tokenOut
+
+	if !zeroForOne {
+		token0Path, token1Path = token1Path, token0Path
+	}
 
 	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
 
-	// approve only the required amount
-	approveAmount := safeConvertToInt64(amountSpecified.Abs())
-
-	// approves pool as spender
-	common.Approve(cross, data.tokenIn, poolAddr, approveAmount)
-
 	amount0Str, amount1Str := pl.Swap(
 		cross,
-		data.tokenIn,
-		data.tokenOut,
+		token0Path,
+		token1Path,
 		data.fee,
 		recipient,
 		zeroForOne,
 		amountSpecified.ToString(),
 		sqrtPriceLimitX96.ToString(),
 		data.payer,
+		func(cur realm, amount0Delta, amount1Delta string) error {
+			return swapCallback(
+				token0Path,
+				token1Path,
+				amount0Delta,
+				amount1Delta,
+				data.payer,
+			)
+		},
 	)
 
 	amount0 := i256.MustFromDecimal(amount0Str)
@@ -65,15 +73,12 @@ type RealSwapExecutor struct{}
 // execute performs the actual swap execution.
 func (e *RealSwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
 	caller := std.PreviousRealm().Address()
-	recipient := caller
-	if p.withUnwrap {
-		recipient = routerAddr
-	}
+	recipient := routerAddr
 
 	return swapInner(
 		p.amountSpecified,
-		recipient, // if single swap => user will receive
-		zero,      // sqrtPriceLimitX96
+		recipient,             // if single swap => user will receive
+		p.SqrtPriceLimitX96(), // sqrtPriceLimitX96
 		newSwapCallbackData(p, caller),
 	)
 }

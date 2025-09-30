@@ -3,7 +3,7 @@ package staker
 import (
 	"std"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 )
 
 // Counter for generating unique incentive IDs

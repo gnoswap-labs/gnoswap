@@ -9,8 +9,8 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/referral"
 	"gno.land/r/gnoswap/v1/gnft"
@@ -78,7 +78,6 @@ func seedPosition(t *testing.T, amount0, amount1 string) uint64 {
 
 func newDummyPosition(id uint64) Position {
 	return Position{
-		nonce:                    u256.NewUint(id),
 		operator:                 "user1",
 		poolKey:                  "poolKey1",
 		tickLower:                -500,
@@ -133,7 +132,6 @@ func TestMustGetPosition(t *testing.T) {
 				})
 			} else {
 				result := MustGetPosition(tt.inputPositionId)
-				uassert.Equal(t, tt.expectedPosition.nonce.ToString(), result.nonce.ToString())
 				uassert.Equal(t, tt.expectedPosition.operator, result.operator)
 				uassert.Equal(t, tt.expectedPosition.poolKey, result.poolKey)
 				uassert.Equal(t, tt.expectedPosition.tickLower, result.tickLower)
@@ -152,7 +150,6 @@ func TestMustGetPosition(t *testing.T) {
 func TestSetPosition(t *testing.T) {
 	position := newDummyPosition(1)
 	changedPosition := newDummyPosition(1)
-	changedPosition.nonce = u256.NewUint(2)
 	changedPosition.operator = "user2"
 	changedPosition.poolKey = "poolKey2"
 	changedPosition.tickLower = -2000
@@ -188,7 +185,6 @@ func TestSetPosition(t *testing.T) {
 			setPosition(tt.positionId, tt.inputPosition)
 
 			storedPosition, _ := GetPosition(tt.positionId)
-			uassert.Equal(t, tt.inputPosition.nonce.ToString(), storedPosition.nonce.ToString())
 			uassert.Equal(t, tt.inputPosition.operator, storedPosition.operator)
 			uassert.Equal(t, tt.inputPosition.poolKey, storedPosition.poolKey)
 			uassert.Equal(t, tt.inputPosition.tickLower, storedPosition.tickLower)
@@ -277,34 +273,34 @@ func TestComputePositionKey(t *testing.T) {
 			owner:     alice,
 			tickLower: -100,
 			tickUpper: 200,
-			expected:  "ZzF2OWt4amNtOXRhMDQ3aDZsdGEwNDdoNmx0YTA0N2g2bHpkNDBnaF9fLTEwMF9fMjAw", // Base64 of "g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh__-100__200"
+			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3YxL3Bvc2l0aW9uX18tMTAwX18yMDA=", // Base64 of "gno.land/r/gnoswap/v1/position__-100__200"
 		},
 		{
 			name:      "computePositionKey is failed by zero ticks",
 			owner:     alice,
 			tickLower: 0,
 			tickUpper: 0,
-			expected:  "ZzF2OWt4amNtOXRhMDQ3aDZsdGEwNDdoNmx0YTA0N2g2bHpkNDBnaF9fMF9fMA==", // Base64 of "g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh__0__0"
+			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3YxL3Bvc2l0aW9uX18wX18w", // Base64 of "gno.land/r/gnoswap/v1/position__0__0"
 		},
 		{
 			name:      "computePositionKey is failed by negative lower tick",
 			owner:     alice,
 			tickLower: -50,
 			tickUpper: 150,
-			expected:  "ZzF2OWt4amNtOXRhMDQ3aDZsdGEwNDdoNmx0YTA0N2g2bHpkNDBnaF9fLTUwX18xNTA=", // Base64 of "g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh__-50__150"
+			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3YxL3Bvc2l0aW9uX18tNTBfXzE1MA==", // Base64 of "gno.land/r/gnoswap/v1/position__-50__150"
 		},
 		{
 			name:      "computePositionKey is failed by same tick bounds",
 			owner:     alice,
 			tickLower: 300,
 			tickUpper: 300,
-			expected:  "ZzF2OWt4amNtOXRhMDQ3aDZsdGEwNDdoNmx0YTA0N2g2bHpkNDBnaF9fMzAwX18zMDA=", // Base64 of "g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh__300__300"
+			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3YxL3Bvc2l0aW9uX18zMDBfXzMwMA==", // Base64 of "gno.land/r/gnoswap/v1/position__300__300"
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := computePositionKey(tt.owner, tt.tickLower, tt.tickUpper)
+			result := computePositionKey(tt.tickLower, tt.tickUpper)
 
 			if result != tt.expected {
 				t.Errorf("expected %s but got %s", tt.expected, result)

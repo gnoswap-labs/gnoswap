@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
-	govStakerAddr, _   = access.GetAddress(prabc.ROLE_GOV_STAKER.String())
-	devOpsAddr, _      = access.GetAddress(prabc.ROLE_DEVOPS.String())
+	protocolFeeAddr = access.MustGetAddressWithVersion(prabc.ROLE_PROTOCOL_FEE.String(), 1)
+	govStakerAddr   = access.MustGetAddressWithVersion(prabc.ROLE_GOV_STAKER.String(), 1)
+	devOpsAddr      = access.MustGetAddressWithVersion(prabc.ROLE_DEVOPS.String(), 1)
 )
