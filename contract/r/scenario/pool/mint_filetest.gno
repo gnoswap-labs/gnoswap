@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (

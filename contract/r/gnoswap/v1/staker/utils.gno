@@ -1,14 +1,15 @@
 package staker
 
 import (
+	"math"
 	"std"
 	"strconv"
 	"strings"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/rbac"
@@ -138,6 +139,16 @@ func getRoleAddress(role prbac.SystemRole) std.Address {
 	return addr
 }
 
+// getRoleAddressWithVersion retrieves the address for a system role.
+func getRoleAddressWithVersion(role prbac.SystemRole, version int) std.Address {
+	addr, exists := access.GetAddressWithVersion(role.String(), version)
+	if !exists {
+		return rbac.DefaultRoleAddresses[role]
+	}
+
+	return addr
+}
+
 // safeConvertToInt64 safely converts a *u256.Uint value to an int64, ensuring no overflow.
 //
 // This function attempts to convert the given *u256.Uint value to an int64. If the value exceeds
@@ -165,4 +176,51 @@ func safeConvertToInt64(value *u256.Uint) int64 {
 		))
 	}
 	return int64(res)
+}
+
+// safeMulInt64 performs safe multiplication of int64 values, panicking on overflow or underflow
+func safeMulInt64(a, b int64) int64 {
+	if a == 0 || b == 0 {
+		return 0
+	}
+	if a > 0 && b > 0 {
+		if a > math.MaxInt64/b {
+			panic("int64 multiplication overflow")
+		}
+	} else if a < 0 && b < 0 {
+		if a < math.MaxInt64/b {
+			panic("int64 multiplication overflow")
+		}
+	} else if a > 0 && b < 0 {
+		if b < math.MinInt64/a {
+			panic("int64 multiplication underflow")
+		}
+	} else { // a < 0 && b > 0
+		if a < math.MinInt64/b {
+			panic("int64 multiplication underflow")
+		}
+	}
+	return a * b
+}
+
+// safeAddInt64 performs safe addition of int64 values, panicking on overflow or underflow
+func safeAddInt64(a, b int64) int64 {
+	if a > 0 && b > math.MaxInt64-a {
+		panic("int64 addition overflow")
+	}
+	if a < 0 && b < math.MinInt64-a {
+		panic("int64 addition underflow")
+	}
+	return a + b
+}
+
+// safeSubInt64 performs safe subtraction of int64 values, panicking on overflow or underflow
+func safeSubInt64(a, b int64) int64 {
+	if b > 0 && a < math.MinInt64+b {
+		panic("int64 subtraction underflow")
+	}
+	if b < 0 && a > math.MaxInt64+b {
+		panic("int64 subtraction overflow")
+	}
+	return a - b
 }

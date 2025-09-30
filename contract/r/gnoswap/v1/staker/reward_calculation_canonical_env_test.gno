@@ -104,7 +104,11 @@ func NewCanonicalRewardState(t *testing.T, pools *Pools, deposits *Deposits, tic
 		emissions := make([]int64, 0)
 		result.emissionUpdates.Iterate(start, end, func(key int64, value any) bool {
 			heights = append(heights, key)
-			emissions = append(emissions, int64(value.(uint64)))
+			v, ok := value.(uint64)
+			if !ok {
+				panic("failed to cast value to uint64")
+			}
+			emissions = append(emissions, int64(v))
 			return false
 		})
 		return heights, emissions
@@ -273,7 +277,7 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) (
 		self.global.pools.set(poolPath, pool)
 	}
 
-	lastCollectTimestamp := deposit.lastCollectTime
+	lastCollectTimestamp := deposit.InternalRewardLastCollectTime()
 
 	internalRewards, internalPenalties := pool.RewardStateOf(deposit).calculateInternalReward(lastCollectTimestamp, currentTimestamp)
 
@@ -313,7 +317,7 @@ func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) Reward {
 	rewards, penalties, externalRewards, externalPenalties := self.EmulateCalcPositionReward(depositId)
 
 	deposit := self.global.deposits.get(depositId)
-	deposit.lastCollectTime = self.CurrentTime()
+	deposit.updateInternalRewardLastCollectTime(self.CurrentTime())
 
 	internal := int64(0)
 	for _, reward := range rewards {
@@ -359,14 +363,15 @@ func (self *canonicalRewardState) StakeToken(positionId uint64, targetPoolPath s
 	}
 
 	deposit := &Deposit{
-		owner:           owner,
-		stakeTime:       currentTimestamp,
-		targetPoolPath:  targetPoolPath,
-		tickLower:       tickLower,
-		tickUpper:       tickUpper,
-		liquidity:       liquidity,
-		lastCollectTime: currentTimestamp,
-		warmups:         instantiateWarmup(currentTimestamp),
+		owner:                          owner,
+		stakeTime:                      currentTimestamp,
+		targetPoolPath:                 targetPoolPath,
+		tickLower:                      tickLower,
+		tickUpper:                      tickUpper,
+		liquidity:                      liquidity,
+		internalRewardLastCollectTime:  currentTimestamp,
+		externalRewardLastCollectTimes: make(map[string]int64),
+		warmups:                        instantiateWarmup(currentTimestamp),
 	}
 	canonicalPool, ok := self.Pool[deposit.targetPoolPath]
 	if !ok {

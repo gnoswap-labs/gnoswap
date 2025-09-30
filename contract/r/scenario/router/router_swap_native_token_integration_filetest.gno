@@ -139,8 +139,8 @@ func testExactInGnotToGns() {
 	prevGnsBalance := gns.BalanceOf(userAddr)
 
 	// Approve router fee payment
-	gns.Approve(cross, poolAddr, max_approve)
-	wugnot.Approve(cross, poolAddr, max_approve)
+	gns.Approve(cross, routerAddr, max_approve)
+	wugnot.Approve(cross, routerAddr, max_approve)
 
 	// Execute ExactIn swap with GNOT
 	testing.SetOriginSend(std.Coins{{"ugnot", 1000000}})
@@ -194,7 +194,7 @@ func testExactOutGnsToGnot() {
 	prevGnsBalance := gns.BalanceOf(userAddr)
 
 	// Approve GNS for swap
-	gns.Approve(cross, poolAddr, max_approve)
+	gns.Approve(cross, routerAddr, max_approve)
 	gns.Approve(cross, routerAddr, max_approve)
 
 	// Execute ExactOut swap requesting GNOT
@@ -244,8 +244,8 @@ func testMultiHopGnotToUsdc() {
 	prevUsdcBalance := usdc.BalanceOf(userAddr)
 
 	// Approve for router fees
-	gns.Approve(cross, poolAddr, max_approve)
-	usdc.Approve(cross, poolAddr, max_approve)
+	gns.Approve(cross, routerAddr, max_approve)
+	usdc.Approve(cross, routerAddr, max_approve)
 
 	// Execute multi-hop swap
 	testing.SetOriginSend(std.Coins{{"ugnot", 1000000}})
@@ -283,9 +283,7 @@ func testMultiHopUsdcToGnot() {
 	prevGnotBalance := banker.GetCoins(userAddr).AmountOf("ugnot")
 
 	// Approve tokens
-	usdc.Approve(cross, poolAddr, max_approve)
 	usdc.Approve(cross, routerAddr, max_approve)
-	gns.Approve(cross, poolAddr, max_approve)
 	gns.Approve(cross, routerAddr, max_approve)
 
 	// Execute multi-hop ExactOut swap

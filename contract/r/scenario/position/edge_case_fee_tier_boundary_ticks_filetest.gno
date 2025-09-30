@@ -1,14 +1,16 @@
 // edge case fee tier boundary tick positions
 
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (
 	"std"
 	"testing"
 
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/ufmt"
-	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"

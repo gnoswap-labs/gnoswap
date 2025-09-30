@@ -127,6 +127,12 @@ func ChangeDistributionPct(
 		"target04", targetToStr(target04),
 		"pct04", formatInt(pct04),
 	)
+
+	// Call the callback if registered
+	if onDistributionPctChangeCallback != nil {
+		emissionAmountPerSecond := GetStakerEmissionAmountPerSecond()
+		onDistributionPctChangeCallback(emissionAmountPerSecond)
+	}
 }
 
 // changeDistributionPcts updates the distribution percentages in the AVL tree.

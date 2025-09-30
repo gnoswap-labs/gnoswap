@@ -43,8 +43,8 @@ const WUGNOT_PATH string = "gno.land/r/gnoland/wugnot"
 // No parameters required - automatically determines caller's rewards.
 // Transfers rewards directly to caller.
 func CollectReward(cur realm) {
-	halt.AssertIsNotHaltedGovStaker()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedGovStakerWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	from := std.CurrentRealm().Address()
@@ -99,11 +99,11 @@ func CollectReward(cur realm) {
 //
 // Only callable by launchpad contract.
 func CollectRewardFromLaunchPad(cur realm, to std.Address) {
-	halt.AssertIsNotHaltedGovStaker()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedGovStakerWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsLaunchpad(caller)
+	access.AssertIsLaunchpadWithVersion(1, caller)
 
 	from := std.CurrentRealm().Address()
 	currentTimestamp := time.Now().Unix()
@@ -172,15 +172,15 @@ func CollectRewardFromLaunchPad(cur realm, to std.Address) {
 //   - if system is halted for withdrawals
 //   - if access control operations fail
 func SetAmountByProjectWallet(cur realm, addr std.Address, amount int64, add bool) {
-	halt.AssertIsNotHaltedGovStaker()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedGovStakerWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	currentTimestamp := time.Now().Unix()
 
-	access.AssertIsLaunchpad(caller)
+	access.AssertIsLaunchpadWithVersion(1, caller)
 
-	launchpadAddr, exists := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	launchpadAddr, exists := access.GetAddressWithVersion(prbac.ROLE_LAUNCHPAD.String(), 1)
 	if !exists {
 		panic(ufmt.Sprintf("launchpad address not found"))
 	}

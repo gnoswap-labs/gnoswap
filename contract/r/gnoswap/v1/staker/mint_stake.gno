@@ -49,7 +49,7 @@ func MintAndStake(
 	deadline int64,
 	referrer string,
 ) (uint64, string, string, string, string) {
-	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
 
 	// if one click native
 	if token0 == GNOT || token1 == GNOT {
@@ -87,7 +87,7 @@ func MintAndStake(
 		referrer,
 	)
 
-	poolPath, _, _ := StakeToken(cur, positionId, "")
+	poolPath := StakeToken(cur, positionId, referrer)
 
 	return positionId, liquidity, amount0, amount1, poolPath
 }

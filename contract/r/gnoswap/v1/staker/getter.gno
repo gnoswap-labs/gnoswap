@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"gno.land/p/onbloc/json"
 	"gno.land/p/nt/ufmt"
+	"gno.land/p/onbloc/json"
 
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -187,11 +187,18 @@ func GetDepositLiquidityAsString(lpTokenId uint64) string {
 	return liquidity.ToString()
 }
 
-// GetDepositLastCollectTimestamp returns the last collect timestamp of a deposit.
-func GetDepositLastCollectTimestamp(lpTokenId uint64) int64 {
+// GetDepositInternalRewardLastCollectTimestamp returns the last collect timestamp of a deposit.
+func GetDepositInternalRewardLastCollectTimestamp(lpTokenId uint64) int64 {
 	deposit := getDeposit(lpTokenId)
 
-	return deposit.lastCollectTime
+	return deposit.InternalRewardLastCollectTime()
+}
+
+// GetDepositExternalRewardLastCollectTimestamp returns the last collect timestamp of a deposit.
+func GetDepositExternalRewardLastCollectTimestamp(lpTokenId uint64, incentiveId string) int64 {
+	deposit := getDeposit(lpTokenId)
+
+	return deposit.ExternalRewardLastCollectTime(incentiveId)
 }
 
 // GetDepositWarmUp returns the warm-up records of a deposit.
@@ -229,7 +236,10 @@ func GetPoolReward(tier uint64) int64 {
 func GetExternalIncentiveByPoolPath(poolPath string) []ExternalIncentive {
 	incentives := []ExternalIncentive{}
 	externalIncentives.tree.Iterate("", "", func(key string, value any) bool {
-		incentive := value.(*ExternalIncentive)
+		incentive, ok := value.(*ExternalIncentive)
+		if !ok {
+			panic("failed to cast value to *ExternalIncentive")
+		}
 		if incentive.targetPoolPath == poolPath {
 			incentives = append(incentives, *incentive)
 		}
@@ -266,7 +276,6 @@ func GetPrintExternalInfo() string {
 					IncentiveId:       key,
 					RewardToken:       incentive.rewardToken,
 					RewardAmount:      strconv.FormatInt(incentive.rewardAmount, 10),
-					RewardLeft:        strconv.FormatInt(incentive.rewardLeft, 10),
 					StartTimestamp:    incentive.startTimestamp,
 					EndTimestamp:      incentive.endTimestamp,
 					RewardPerSecond:   strconv.FormatInt(incentive.rewardPerSecond, 10),
@@ -302,6 +311,25 @@ func GetPrintExternalInfo() string {
 	return string(b)
 }
 
+func IsArchivedExternalIncentive(incentiveId string) bool {
+	incentiveI, exist := externalIncentives.tree.Get(incentiveId)
+	if !exist {
+		return true
+	}
+
+	incentive, ok := incentiveI.(*ExternalIncentive)
+	if !ok {
+		panic("failed to cast incentive to *ExternalIncentive")
+	}
+
+	pool, exists := pools.Get(incentive.targetPoolPath)
+	if !exists {
+		return true
+	}
+
+	return pool.incentives.IsArchived(incentiveId)
+}
+
 // makeExternalPositionsNode creates JSON nodes for external position data.
 func makeExternalPositionsNode(positions []ApiExternalDebugPosition) []*json.Node {
 	externalPositions := make([]*json.Node, 0)
@@ -315,7 +343,6 @@ func makeExternalPositionsNode(positions []ApiExternalDebugPosition) []*json.Nod
 				"poolPath":                 json.StringNode("poolPath", incentive.PoolPath),
 				"rewardToken":              json.StringNode("rewardToken", incentive.RewardToken),
 				"rewardAmount":             json.StringNode("rewardAmount", incentive.RewardAmount),
-				"rewardLeft":               json.StringNode("rewardLeft", incentive.RewardLeft),
 				"startTimestamp":           json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
 				"endTimestamp":             json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
 				"rewardPerSecond":          json.StringNode("rewardPerSecond", incentive.RewardPerSecond),
@@ -360,7 +387,6 @@ type ApiExternalDebugIncentive struct {
 	IncentiveId        string      `json:"incentiveId"`
 	RewardToken        string      `json:"rewardToken"`
 	RewardAmount       string      `json:"rewardAmount"`
-	RewardLeft         string      `json:"rewardLeft"`
 	StartTimestamp     int64       `json:"startTimestamp"`
 	EndTimestamp       int64       `json:"endTimestamp"`
 	RewardPerSecondX96 string      `json:"rewardPerSecondX96"`
