@@ -96,9 +96,9 @@ func ChangeDistributionPct(
 	assertValidDistributionTargets(target01, target02, target03, target04)
 	assertValidDistributionPct(pct01, pct02, pct03, pct04)
 
-	// First cache rewards with current (old) rates before changing
 	if onDistributionPctChangeCallback != nil {
-		onDistributionPctChangeCallback()
+		emissionAmountPerSecond := GetStakerEmissionAmountPerSecond()
+		onDistributionPctChangeCallback(emissionAmountPerSecond)
 	}
 
 	changeDistributionPcts(
@@ -107,11 +107,6 @@ func ChangeDistributionPct(
 		target03, pct03,
 		target04, pct04,
 	)
-
-	// Call callback again to update the cached emission rate with new percentages
-	if onDistributionPctChangeCallback != nil {
-		onDistributionPctChangeCallback()
-	}
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(
@@ -128,7 +123,6 @@ func ChangeDistributionPct(
 		"pct04", formatInt(pct04),
 	)
 
-	// Call the callback if registered
 	if onDistributionPctChangeCallback != nil {
 		emissionAmountPerSecond := GetStakerEmissionAmountPerSecond()
 		onDistributionPctChangeCallback(emissionAmountPerSecond)

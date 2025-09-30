@@ -271,29 +271,22 @@ func init() {
 
 // emissionCacheUpdateHook creates a hook function that updates the emission cache when called.
 // This follows the same pattern as other hooks in the staker contract.
-// Note: This is called twice
-//   -once before and once after distribution percentage changes.
-func emissionCacheUpdateHook() func() {
-	return func() {
-		func(cur realm) {
-			if poolTier != nil {
-				currentTime := time.Now().Unix()
-				currentHeight := std.ChainHeight()
+func emissionCacheUpdateHook(emissionAmountPerSecond int64) {
+	func(cur realm) {
+		if poolTier != nil {
+			currentTime := time.Now().Unix()
+			currentHeight := std.ChainHeight()
 
-				// Always cache rewards up to this point
-				poolTier.cacheReward(currentHeight, currentTime, pools)
+			// First cache the current rewards before updating emission
+			poolTier.cacheReward(currentHeight, currentTime, pools)
 
-				// Update the cached emission rate
-				// On first call (before change) -> gets old rate
-				// On second call (after change) -> gets the new rate
-				newEmission := en.GetStakerEmissionAmountPerSecond()
-				poolTier.currentEmission = newEmission
+			// Update the current emission cache with the latest value
+			poolTier.currentEmission = emissionAmountPerSecond
 
-				// Now apply the new emission rate to each pool individually
-				poolTier.applyCacheToAllPools(pools, currentTime, newEmission)
-			}
-		}(cross)
-	}
+			// Now apply the new emission rate to each pool individually
+			poolTier.applyCacheToAllPools(pools, currentTime, emissionAmountPerSecond)
+		}
+	}(cross)
 }
 
 // StakeToken stakes an LP position NFT to earn rewards.
