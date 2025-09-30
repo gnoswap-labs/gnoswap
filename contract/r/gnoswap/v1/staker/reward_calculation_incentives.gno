@@ -1,7 +1,6 @@
 package staker
 
 import (
-	"std"
 	"time"
 
 	"gno.land/p/nt/avl"
@@ -98,7 +97,7 @@ func (self *Incentives) GetAllInTimestamps(startTimestamp, endTimestamp int64) m
 // Create a new external incentive
 // Panics if the incentive already exists.
 func (self *Incentives) create(
-	creator std.Address,
+	creator address,
 	incentive *ExternalIncentive,
 ) {
 	self.incentives.Set(incentive.incentiveId, incentive)
@@ -106,7 +105,7 @@ func (self *Incentives) create(
 
 // update updates an existing incentive with new information
 func (self *Incentives) update(
-	creator std.Address,
+	creator address,
 	incentive *ExternalIncentive,
 ) {
 	self.incentives.Set(incentive.incentiveId, incentive)

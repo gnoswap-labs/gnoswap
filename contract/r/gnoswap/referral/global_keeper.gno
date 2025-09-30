@@ -1,6 +1,6 @@
 package referral
 
-import "std"
+import "chain"
 
 var gReferralKeeper ReferralKeeper
 
@@ -23,7 +23,7 @@ func getKeeper() ReferralKeeper {
 
 // GetReferral returns the referral address for the given address.
 func GetReferral(addr string) string {
-	referral, err := gReferralKeeper.get(std.Address(addr))
+	referral, err := gReferralKeeper.get(address(addr))
 	if err != nil {
 		return ""
 	}
@@ -32,7 +32,7 @@ func GetReferral(addr string) string {
 
 // HasReferral returns true if the given address has a referral.
 func HasReferral(addr string) bool {
-	referral, err := gReferralKeeper.get(std.Address(addr))
+	referral, err := gReferralKeeper.get(address(addr))
 	if err != nil {
 		return false
 	}
@@ -51,11 +51,11 @@ func IsEmpty() bool {
 //   - referral: referral address string
 //
 // Returns true on success, false on failure.
-func TryRegister(cur realm, addr std.Address, referral string) bool {
-	refAddr := std.Address(referral)
+func TryRegister(cur realm, addr address, referral string) bool {
+	refAddr := address(referral)
 	err := gReferralKeeper.register(addr, refAddr)
 	if err != nil {
-		std.Emit(
+		chain.Emit(
 			EventRegisterFailed,
 			"address", addr.String(),
 			"error", err.Error(),
@@ -63,7 +63,7 @@ func TryRegister(cur realm, addr std.Address, referral string) bool {
 		return false
 	}
 
-	std.Emit(
+	chain.Emit(
 		EventRegisterSuccess,
 		"address", addr.String(),
 		"referral", referral,

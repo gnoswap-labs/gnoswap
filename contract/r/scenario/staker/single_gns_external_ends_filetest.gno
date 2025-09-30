@@ -13,7 +13,6 @@ package main
 
 import (
 	"fmt"
-	"std"
 	"strconv"
 	"testing"
 	"time"
@@ -41,12 +40,12 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	// g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup
 	externalCreatorAddr  = testutils.TestAddress("externalCreator")
 	externalCreatorUser  = externalCreatorAddr
-	externalCreatorRealm = std.NewUserRealm(externalCreatorAddr)
+	externalCreatorRealm = testing.NewUserRealm(externalCreatorAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())

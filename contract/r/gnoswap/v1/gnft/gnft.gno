@@ -1,7 +1,8 @@
 package gnft
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 
 	"gno.land/p/demo/tokens/grc721"
 	"gno.land/p/nt/ownable"
@@ -41,7 +42,7 @@ func TokenURI(tid grc721.TokenID) (string, error) {
 }
 
 // BalanceOf returns the number of NFTs owned by the specified address.
-func BalanceOf(owner std.Address) (int64, error) {
+func BalanceOf(owner address) (int64, error) {
 	assertIsValidAddress(owner)
 
 	balance, err := nft.BalanceOf(owner)
@@ -52,7 +53,7 @@ func BalanceOf(owner std.Address) (int64, error) {
 }
 
 // OwnerOf returns the owner address for the specified token ID.
-func OwnerOf(tid grc721.TokenID) (std.Address, error) {
+func OwnerOf(tid grc721.TokenID) (address, error) {
 	ownerAddr, err := nft.OwnerOf(tid)
 	if err != nil {
 		return "", err
@@ -63,7 +64,7 @@ func OwnerOf(tid grc721.TokenID) (std.Address, error) {
 
 // MustOwnerOf returns the owner address for the specified token ID.
 // It panics if the token ID is invalid.
-func MustOwnerOf(tid grc721.TokenID) std.Address {
+func MustOwnerOf(tid grc721.TokenID) address {
 	ownerAddr, err := OwnerOf(tid)
 	if err != nil {
 		panic(err.Error())
@@ -101,10 +102,10 @@ func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, err
 //
 // Returns error if transfer fails.
 // Only callable by staker contract.
-func SafeTransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
+func SafeTransferFrom(cur realm, from, to address, tid grc721.TokenID) error {
 	halt.AssertIsNotHaltedPositionWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsStakerWithVersion(1, caller)
 
 	assertFromIsValidAddress(from)
@@ -124,10 +125,10 @@ func SafeTransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error
 //
 // Returns error if transfer fails.
 // Only callable by staker contract.
-func TransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
+func TransferFrom(cur realm, from, to address, tid grc721.TokenID) error {
 	halt.AssertIsNotHaltedPositionWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsStakerWithVersion(1, caller)
 
 	assertFromIsValidAddress(from)
@@ -146,7 +147,7 @@ func TransferFrom(cur realm, from, to std.Address, tid grc721.TokenID) error {
 //
 // Returns error if approval fails.
 // Only callable when not halted.
-func Approve(cur realm, approved std.Address, tid grc721.TokenID) error {
+func Approve(cur realm, approved address, tid grc721.TokenID) error {
 	halt.AssertIsNotHaltedPositionWithVersion(1)
 	assertIsValidAddress(approved)
 
@@ -163,7 +164,7 @@ func Approve(cur realm, approved std.Address, tid grc721.TokenID) error {
 //
 // Returns error if operation fails.
 // Only callable when not halted.
-func SetApprovalForAll(cur realm, operator std.Address, approved bool) error {
+func SetApprovalForAll(cur realm, operator address, approved bool) error {
 	halt.AssertIsNotHaltedPositionWithVersion(1)
 	assertIsValidAddress(operator)
 
@@ -177,7 +178,7 @@ func SetApprovalForAll(cur realm, operator std.Address, approved bool) error {
 //   - tid: token ID to check
 //
 // Returns approved address and error if token doesn't exist.
-func GetApproved(tid grc721.TokenID) (std.Address, error) {
+func GetApproved(tid grc721.TokenID) (address, error) {
 	return nft.GetApproved(tid)
 }
 
@@ -188,7 +189,7 @@ func GetApproved(tid grc721.TokenID) (std.Address, error) {
 //   - operator: operator address to check
 //
 // Returns true if operator is approved for all owner's tokens.
-func IsApprovedForAll(owner, operator std.Address) bool {
+func IsApprovedForAll(owner, operator address) bool {
 	return nft.IsApprovedForAll(owner, operator)
 }
 
@@ -200,7 +201,7 @@ func IsApprovedForAll(owner, operator std.Address) bool {
 //
 // Returns minted token ID.
 // Only callable by position contract.
-func Mint(cur realm, to std.Address, tid grc721.TokenID) grc721.TokenID {
+func Mint(cur realm, to address, tid grc721.TokenID) grc721.TokenID {
 	halt.AssertIsNotHaltedPositionWithVersion(1)
 	owner.AssertOwnedByPrevious()
 
@@ -259,8 +260,8 @@ func setTokenURI(tid grc721.TokenID, tURI grc721.TokenURI) error {
 		return makeErrorWithDetails(err, ufmt.Sprintf("token id (%s)", tid))
 	}
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"SetTokenURI",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),

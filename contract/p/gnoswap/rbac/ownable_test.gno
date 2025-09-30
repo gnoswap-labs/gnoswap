@@ -1,7 +1,6 @@
 package rbac
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/nt/testutils"
@@ -76,18 +75,18 @@ func TestOwnedByOriginCaller(t *testing.T) {
 
 func TestOwnedByOriginCallerUnauthorized(t *testing.T) {
 	testing.SetOriginCaller(alice)
-	testing.SetRealm(std.NewUserRealm(alice))
+	testing.SetRealm(testing.NewUserRealm(alice))
 
 	var o *Ownable2Step
 	func() {
-		testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/test/test"))
 		o = newOwnable2StepWithAddress(alice)
 	}()
 
 	uassert.True(t, o.IsOwner(alice))
 
 	unauthorizedCaller := bob
-	testing.SetRealm(std.NewUserRealm(unauthorizedCaller))
+	testing.SetRealm(testing.NewUserRealm(unauthorizedCaller))
 	uassert.False(t, o.IsOwner(unauthorizedCaller))
 }
 

@@ -2,7 +2,6 @@ package staker
 
 import (
 	"math"
-	"std"
 	"strconv"
 	"strings"
 
@@ -16,7 +15,7 @@ import (
 )
 
 // GetOrigPkgAddr returns the original package address.
-func GetOrigPkgAddr() std.Address {
+func GetOrigPkgAddr() address {
 	return stakerAddr
 }
 
@@ -130,7 +129,7 @@ func formatBool(v bool) string {
 }
 
 // getRoleAddress retrieves the address for a system role.
-func getRoleAddress(role prbac.SystemRole) std.Address {
+func getRoleAddress(role prbac.SystemRole) address {
 	addr, exists := access.GetAddress(role.String())
 	if !exists {
 		return rbac.DefaultRoleAddresses[role]
@@ -140,7 +139,7 @@ func getRoleAddress(role prbac.SystemRole) std.Address {
 }
 
 // getRoleAddressWithVersion retrieves the address for a system role.
-func getRoleAddressWithVersion(role prbac.SystemRole, version int) std.Address {
+func getRoleAddressWithVersion(role prbac.SystemRole, version int) address {
 	addr, exists := access.GetAddressWithVersion(role.String(), version)
 	if !exists {
 		return rbac.DefaultRoleAddresses[role]

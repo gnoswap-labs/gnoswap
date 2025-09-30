@@ -1,7 +1,6 @@
 package router
 
 import (
-	"std"
 	"testing"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -73,7 +72,7 @@ func TestSwapInner(t *testing.T) {
 		name              string
 		setupFn           func(*TestEnv)
 		amountSpecified   *i256.Int
-		recipient         std.Address
+		recipient         address
 		sqrtPriceLimitX96 *u256.Uint
 		data              SwapCallbackData
 		expectedRecv      string
@@ -131,7 +130,7 @@ func TestSwapInner(t *testing.T) {
 			}
 
 			// Additional setup for swapInner test requirements
-			aliceRealm := std.NewUserRealm(alice)
+			aliceRealm := testing.NewUserRealm(alice)
 			testing.SetRealm(aliceRealm)
 			bar.Approve(cross, routerAddr, maxApprove)
 			baz.Approve(cross, routerAddr, maxApprove)

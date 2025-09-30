@@ -1,7 +1,6 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
@@ -24,7 +23,7 @@ import (
 
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -137,11 +136,11 @@ func createPool(t *testing.T,
 	token1 string,
 	fee uint32,
 	sqrtPriceX96 string,
-	caller std.Address,
+	caller address,
 ) {
 	t.Helper()
 
-	testing.SetRealm(std.NewUserRealm(caller))
+	testing.SetRealm(testing.NewUserRealm(caller))
 	poolPath := pl.GetPoolPath(token0, token1, fee)
 	if !pl.ExistsPoolPath(poolPath) {
 		pl.CreatePool(cross, token0, token1, fee, sqrtPriceX96)
@@ -177,15 +176,15 @@ func makeForthMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 	)
 }
 
-func barApprove(t *testing.T, owner, spender std.Address, amount int64) {
+func barApprove(t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
-	testing.SetRealm(std.NewUserRealm(owner))
+	testing.SetRealm(testing.NewUserRealm(owner))
 	bar.Approve(cross, spender, amount)
 }
 
-func bazApprove(t *testing.T, owner, spender std.Address, amount int64) {
+func bazApprove(t *testing.T, owner, spender address, amount int64) {
 	t.Helper()
-	testing.SetRealm(std.NewUserRealm(owner))
+	testing.SetRealm(testing.NewUserRealm(owner))
 	baz.Approve(cross, spender, amount)
 }
 

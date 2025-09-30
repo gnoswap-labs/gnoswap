@@ -1,7 +1,7 @@
 package pool
 
 import (
-	"std"
+	"chain/runtime"
 	"strconv"
 	"time"
 
@@ -262,7 +262,7 @@ type statNode struct {
 
 func newStatNode() statNode {
 	return statNode{
-		height:    std.ChainHeight(),
+		height:    runtime.ChainHeight(),
 		timestamp: time.Now().Unix(),
 	}
 }

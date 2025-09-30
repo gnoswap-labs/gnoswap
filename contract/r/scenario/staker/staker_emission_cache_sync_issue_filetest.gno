@@ -7,7 +7,6 @@
 package main
 
 import (
-	"std"
 	"strconv"
 	"testing"
 	"time"
@@ -35,13 +34,13 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
 	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
 
 	user1Addr  = testutils.TestAddress("user1")
-	user1Realm = std.NewUserRealm(user1Addr)
+	user1Realm = testing.NewUserRealm(user1Addr)
 
 	wugnotPath = "gno.land/r/gnoland/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/gns"

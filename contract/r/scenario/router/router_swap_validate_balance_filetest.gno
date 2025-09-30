@@ -6,7 +6,8 @@
 package main
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"strconv"
 	"testing"
 	"time"
@@ -27,14 +28,14 @@ import (
 
 var (
 	adminAddr, _       = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm         = std.NewUserRealm(adminAddr)
+	adminRealm         = testing.NewUserRealm(adminAddr)
 	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 	poolAddr, _        = access.GetAddress(prabc.ROLE_POOL.String())
 	positionAddr, _    = access.GetAddress(prabc.ROLE_POSITION.String())
 	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 
 	userAddr  = testutils.TestAddress("user")
-	userRealm = std.NewUserRealm(userAddr)
+	userRealm = testing.NewUserRealm(userAddr)
 
 	wugnotPath = "gno.land/r/gnoland/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/gns"
@@ -121,17 +122,17 @@ func main() {
 }
 
 func getBalanceSnapshot() BalanceSnapshot {
-	banker := std.NewBanker(std.BankerTypeReadonly)
+	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
 
 	snapshot := BalanceSnapshot{
-		userGnot:          banker.GetCoins(userAddr).AmountOf("ugnot"),
+		userGnot:          banker_.GetCoins(userAddr).AmountOf("ugnot"),
 		userWugnot:        wugnot.BalanceOf(userAddr),
 		userGns:           gns.BalanceOf(userAddr),
 		positionWugnot:    wugnot.BalanceOf(positionAddr),
 		positionGns:       gns.BalanceOf(positionAddr),
 		poolWugnot:        wugnot.BalanceOf(poolAddr),
 		poolGns:           gns.BalanceOf(poolAddr),
-		routerGnot:        banker.GetCoins(routerAddr).AmountOf("ugnot"),
+		routerGnot:        banker_.GetCoins(routerAddr).AmountOf("ugnot"),
 		routerWugnot:      wugnot.BalanceOf(routerAddr),
 		routerGns:         gns.BalanceOf(routerAddr),
 		protocolFeeWugnot: wugnot.BalanceOf(protocolFeeAddr),
@@ -163,7 +164,7 @@ func setupInitialEnvironment() BalanceSnapshot {
 	pl.SetPoolCreationFee(cross, 0)
 
 	// Issue initial GNOT to user
-	testing.IssueCoins(userAddr, std.Coins{{"ugnot", initialGnot}})
+	testing.IssueCoins(userAddr, chain.Coins{{"ugnot", initialGnot}})
 
 	// Admin provides GNS to user
 	gns.Transfer(cross, userAddr, initialGnot)
@@ -195,9 +196,9 @@ func mintPositionWithGnot() BalanceSnapshot {
 	wugnot.Approve(cross, poolAddr, 50000000)
 
 	// Mint position with GNOT
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(userAddr, positionAddr, std.Coins{{"ugnot", 50000000}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 50000000}})
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_.SendCoins(userAddr, positionAddr, chain.Coins{{"ugnot", 50000000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 50000000}})
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		"gnot",
@@ -228,12 +229,12 @@ func performSwaps() BalanceSnapshot {
 
 	// Swap 1: GNOT → GNS (ExactIn)
 	println("[INFO] Swap 1: 10,000,000 GNOT → GNS")
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(userAddr, routerAddr, std.Coins{{"ugnot", 10000000}})
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_.SendCoins(userAddr, routerAddr, chain.Coins{{"ugnot", 10000000}})
 	wugnot.Approve(cross, routerAddr, 10000000)
 	gns.Approve(cross, routerAddr, max_approve)
 
-	testing.SetOriginSend(std.Coins{{"ugnot", 10000000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 10000000}})
 	amountIn1, amountOut1 := router.ExactInSwapRoute(
 		cross,
 		gnotPath,
@@ -252,7 +253,7 @@ func performSwaps() BalanceSnapshot {
 	gns.Approve(cross, routerAddr, max_approve)
 	gns.Approve(cross, routerAddr, max_approve)
 
-	testing.SetOriginSend(std.Coins{})
+	testing.SetOriginSend(chain.Coins{})
 	amountIn2, amountOut2 := router.ExactOutSwapRoute(
 		cross,
 		gnsPath,
@@ -275,10 +276,10 @@ func addLiquidityWithGnot() BalanceSnapshot {
 	// Add liquidity with GNOT
 	gns.Approve(cross, poolAddr, 20000000)
 	wugnot.Approve(cross, poolAddr, 20000000)
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(userAddr, positionAddr, std.Coins{{"ugnot", 20000000}})
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_.SendCoins(userAddr, positionAddr, chain.Coins{{"ugnot", 20000000}})
 
-	testing.SetOriginSend(std.Coins{{"ugnot", 20000000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 20000000}})
 	_, liquidity, amount0, amount1, _ := pn.IncreaseLiquidity(
 		cross,
 		1,
@@ -306,7 +307,7 @@ func removeLiquidityToGnot() BalanceSnapshot {
 	liquidityInt, _ := strconv.ParseInt(currentLiquidity, 10, 64)
 	removeLiquidity := liquidityInt * 30 / 100
 
-	testing.SetOriginSend(std.Coins{})
+	testing.SetOriginSend(chain.Coins{})
 	_, _, fee0, fee1, amount0, amount1, _ := pn.DecreaseLiquidity(
 		cross,
 		1,

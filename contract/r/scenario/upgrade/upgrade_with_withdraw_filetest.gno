@@ -2,7 +2,8 @@
 package main
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 	"testing"
 	"time"
 
@@ -38,10 +39,10 @@ const (
 
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	aliceAddr  = testutils.TestAddress("alice")
-	aliceRealm = std.NewUserRealm(aliceAddr)
+	aliceRealm = testing.NewUserRealm(aliceAddr)
 
 	// current distribution targets
 	stakerAddr, _        = access.GetAddress(prbac.ROLE_STAKER.String())
@@ -67,18 +68,18 @@ var (
 	launchpadV2PackagePath     = "gno.land/r/gnoswap/v2/launchpad"
 
 	// v2 contract addresses
-	commonV2Addr        = std.DerivePkgAddr(commonV2PackagePath)
-	communityPoolV2Addr = std.DerivePkgAddr(communityPoolV2PackagePath)
-	gnftV2Addr          = std.DerivePkgAddr(gnftV2PackagePath)
-	govGovernanceV2Addr = std.DerivePkgAddr(govGovernanceV2PackagePath)
-	govStakerV2Addr     = std.DerivePkgAddr(govStakerV2PackagePath)
-	govXgnsV2Addr       = std.DerivePkgAddr(govXgnsV2PackagePath)
-	poolV2Addr          = std.DerivePkgAddr(poolV2PackagePath)
-	positionV2Addr      = std.DerivePkgAddr(positionV2PackagePath)
-	protocolFeeV2Addr   = std.DerivePkgAddr(protocolFeeV2PackagePath)
-	routerV2Addr        = std.DerivePkgAddr(routerV2PackagePath)
-	stakerV2Addr        = std.DerivePkgAddr(stakerV2PackagePath)
-	launchpadV2Addr     = std.DerivePkgAddr(launchpadV2PackagePath)
+	commonV2Addr        = chain.PackageAddress(commonV2PackagePath)
+	communityPoolV2Addr = chain.PackageAddress(communityPoolV2PackagePath)
+	gnftV2Addr          = chain.PackageAddress(gnftV2PackagePath)
+	govGovernanceV2Addr = chain.PackageAddress(govGovernanceV2PackagePath)
+	govStakerV2Addr     = chain.PackageAddress(govStakerV2PackagePath)
+	govXgnsV2Addr       = chain.PackageAddress(govXgnsV2PackagePath)
+	poolV2Addr          = chain.PackageAddress(poolV2PackagePath)
+	positionV2Addr      = chain.PackageAddress(positionV2PackagePath)
+	protocolFeeV2Addr   = chain.PackageAddress(protocolFeeV2PackagePath)
+	routerV2Addr        = chain.PackageAddress(routerV2PackagePath)
+	stakerV2Addr        = chain.PackageAddress(stakerV2PackagePath)
+	launchpadV2Addr     = chain.PackageAddress(launchpadV2PackagePath)
 
 	devOpsV2Addr = testutils.TestAddress("devops2")
 
@@ -127,7 +128,7 @@ func main() {
 
 	println("[SCENARIO] 6.1. Skip 100 heights to check time based reward")
 	testing.SkipHeights(100)
-	println("[INFO] current block height", std.ChainHeight())
+	println("[INFO] current block height", runtime.ChainHeight())
 	println()
 
 	println("[SCENARIO] 7. Mint to distribution target (after upgrade)")
@@ -182,10 +183,10 @@ func mintAndDistribute() {
 	// clear previous distribution
 	emission.MintAndDistributeGns(cross)
 
-	println("[INFO] current block height", std.ChainHeight())
+	println("[INFO] current block height", runtime.ChainHeight())
 	testing.SkipHeights(1)
 
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/emission"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/emission"))
 
 	previousStakerBalance := gns.BalanceOf(stakerAddr)
 	previousGovStakerBalance := gns.BalanceOf(govStakerAddr)
@@ -290,7 +291,7 @@ func swap() {
 	bar.Approve(cross, routerAddr, INT64_MAX)
 	foo.Approve(cross, routerAddr, INT64_MAX)
 
-	testing.SetOriginSend(std.Coins{})
+	testing.SetOriginSend(chain.Coins{})
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
 		barPath,
@@ -388,7 +389,7 @@ func updateRoleAddresses() {
 	updatedDevOpsAddr, _ := access.GetAddress(prbac.ROLE_DEVOPS.String())
 	updatedLaunchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 
-	testing.SetRealm(std.NewUserRealm(stakerV2Addr))
+	testing.SetRealm(testing.NewUserRealm(stakerV2Addr))
 	emission.SetOnDistributionPctChangeCallback(cross, func(emissionAmountPerSecond int64) {
 		ufmt.Printf("[INFO] emission amount per second should be %d\n", emissionAmountPerSecond)
 	})

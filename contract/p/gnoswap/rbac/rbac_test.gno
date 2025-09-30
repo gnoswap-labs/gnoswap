@@ -1,7 +1,6 @@
 package rbac
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/nt/testutils"
@@ -18,14 +17,14 @@ var (
 	editorAddr = testutils.TestAddress(editorRole)
 )
 
-func adminChecker(caller std.Address) error {
+func adminChecker(caller address) error {
 	if caller != adminAddr {
 		return ufmt.Errorf("caller is not admin")
 	}
 	return nil
 }
 
-func editorChecker(caller std.Address) error {
+func editorChecker(caller address) error {
 	if caller != editorAddr {
 		return ufmt.Errorf("caller is not editor")
 	}

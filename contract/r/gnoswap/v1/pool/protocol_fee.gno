@@ -1,7 +1,8 @@
 package pool
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
@@ -51,13 +52,13 @@ func HandleWithdrawalFee(
 	token1Path string,
 	amount1 string, // uint256
 	poolPath string,
-	positionCaller std.Address,
+	positionCaller address,
 ) (string, string) { // uint256 x2
 	halt.AssertIsNotHaltedPoolWithVersion(1)
 	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	// only position contract can call this function
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsPositionWithVersion(1, caller)
 
 	common.MustRegistered(token0Path)
@@ -76,8 +77,8 @@ func HandleWithdrawalFee(
 	pf.AddToProtocolFee(cross, token1Path, safeConvertToInt64(feeAmount1))
 	common.SafeGRC20TransferFrom(cross, token1Path, positionCaller, protocolFeeAddr, safeConvertToInt64(feeAmount1))
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"WithdrawalFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -102,7 +103,7 @@ func GetPoolCreationFee() int64 {
 func SetPoolCreationFee(cur realm, fee int64) {
 	halt.AssertIsNotHaltedPoolWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	prevPoolCreationFee := GetPoolCreationFee()
@@ -111,8 +112,8 @@ func SetPoolCreationFee(cur realm, fee int64) {
 		panic(err)
 	}
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"SetPoolCreationFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -131,7 +132,7 @@ func GetWithdrawalFee() uint64 {
 func SetWithdrawalFee(cur realm, fee uint64) {
 	halt.AssertIsNotHaltedPoolWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	prevWithdrawalFee := GetWithdrawalFee()
@@ -141,8 +142,8 @@ func SetWithdrawalFee(cur realm, fee uint64) {
 		panic(err)
 	}
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"SetWithdrawalFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),

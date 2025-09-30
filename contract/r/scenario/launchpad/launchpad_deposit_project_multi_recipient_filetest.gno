@@ -5,13 +5,12 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/ufmt"
-	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
@@ -25,22 +24,22 @@ import (
 
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	launchpadAddr, _   = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	stakerAddr, _      = access.GetAddress(prbac.ROLE_STAKER.String())
-	stakerRealm        = std.NewUserRealm(stakerAddr)
+	stakerRealm        = testing.NewUserRealm(stakerAddr)
 	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 	govStakerAddr, _   = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
 
 	aliceAddr  = testutils.TestAddress("alice")
-	aliceRealm = std.NewUserRealm(aliceAddr)
+	aliceRealm = testing.NewUserRealm(aliceAddr)
 
 	bobAddr  = testutils.TestAddress("bob")
-	bobRealm = std.NewUserRealm(bobAddr)
+	bobRealm = testing.NewUserRealm(bobAddr)
 
 	projectAddr  = testutils.TestAddress("project-owner")
-	projectRealm = std.NewUserRealm(projectAddr)
+	projectRealm = testing.NewUserRealm(projectAddr)
 )
 
 func main() {
@@ -176,7 +175,7 @@ func setupProtocolFee(barAmount, quxAmount int64) {
 }
 
 // Deposit GNS to OBL project tier 30
-func depositGnsTo(toAddress std.Address, projectId, projectTierId string, depositAmount int64) {
+func depositGnsTo(toAddress address, projectId, projectTierId string, depositAmount int64) {
 	testing.SetOriginCaller(adminAddr)
 
 	println("[INFO] Depositing GNS to OBL project tier 30")
@@ -187,7 +186,7 @@ func depositGnsTo(toAddress std.Address, projectId, projectTierId string, deposi
 
 	// delegate gns to gov staker
 	println("[INFO] Depositor delegating GNS to gov staker")
-	testing.SetRealm(std.NewUserRealm(toAddress))
+	testing.SetRealm(testing.NewUserRealm(toAddress))
 	gns.Approve(cross, govStakerAddr, depositAmount)
 	staker.Delegate(cross, toAddress, int64(depositAmount), "") // bob has xgns 1_000_000
 

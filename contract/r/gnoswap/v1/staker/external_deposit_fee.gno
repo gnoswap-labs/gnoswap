@@ -1,7 +1,8 @@
 package staker
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 	"strconv"
 	"strings"
 
@@ -68,7 +69,7 @@ func GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool) {
 func SetDepositGnsAmount(cur realm, amount int64) {
 	halt.AssertIsNotHaltedStakerWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsValidAmount(amount)
@@ -76,8 +77,8 @@ func SetDepositGnsAmount(cur realm, amount int64) {
 	prevDepositGnsAmount := getDepositGnsAmount()
 	setDepositGnsAmount(amount)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"SetDepositGnsAmount",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -91,7 +92,7 @@ func SetDepositGnsAmount(cur realm, amount int64) {
 func SetMinimumRewardAmount(cur realm, amount int64) {
 	halt.AssertIsNotHaltedStakerWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsValidAmount(amount)
@@ -99,8 +100,8 @@ func SetMinimumRewardAmount(cur realm, amount int64) {
 	prevMinimumRewardAmount := getMinimumRewardAmount()
 	setMinimumRewardAmount(amount)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"SetMinimumRewardAmount",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -114,7 +115,7 @@ func SetMinimumRewardAmount(cur realm, amount int64) {
 func SetTokenMinimumRewardAmount(cur realm, paramsStr string) {
 	halt.AssertIsNotHaltedStakerWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsValidRewardAmountFormat(paramsStr)
@@ -143,8 +144,8 @@ func SetTokenMinimumRewardAmount(cur realm, paramsStr string) {
 		tokenSpecificMinimumRewards.Set(tokenPath, amount64)
 	}
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"SetTokenMinimumRewardAmount",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),

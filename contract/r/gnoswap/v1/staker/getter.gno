@@ -1,7 +1,7 @@
 package staker
 
 import (
-	"std"
+	"chain/runtime"
 	"strconv"
 	"time"
 
@@ -112,7 +112,7 @@ func GetIncentiveRewardPerSecond(poolPath string, incentiveId string) int64 {
 }
 
 // GetIncentiveRefundee returns the refundee address of an incentive.
-func GetIncentiveRefundee(poolPath string, incentiveId string) std.Address {
+func GetIncentiveRefundee(poolPath string, incentiveId string) address {
 	incentive := getIncentive(poolPath, incentiveId)
 
 	return incentive.refundee
@@ -132,7 +132,7 @@ func getDeposit(lpTokenId uint64) *Deposit {
 }
 
 // GetDepositOwner returns the owner of a deposit.
-func GetDepositOwner(lpTokenId uint64) std.Address {
+func GetDepositOwner(lpTokenId uint64) address {
 	deposit := getDeposit(lpTokenId)
 
 	return deposit.owner
@@ -252,7 +252,7 @@ func GetExternalIncentiveByPoolPath(poolPath string) []ExternalIncentive {
 // GetPrintExternalInfo returns a JSON representation of external incentive debug information.
 func GetPrintExternalInfo() string {
 	externalDebug := ApiExternalDebugInfo{
-		Height: std.ChainHeight(),
+		Height: runtime.ChainHeight(),
 		Time:   time.Now().Unix(),
 	}
 
@@ -337,7 +337,7 @@ func makeExternalPositionsNode(positions []ApiExternalDebugPosition) []*json.Nod
 	for _, externalPosition := range positions {
 		incentives := make([]*json.Node, 0)
 		for _, incentive := range externalPosition.Incentive {
-			stakedOrExternalDuration := std.ChainHeight() - max(incentive.StartHeight, externalPosition.StakedTime)
+			stakedOrExternalDuration := runtime.ChainHeight() - max(incentive.StartHeight, externalPosition.StakedTime)
 
 			incentives = append(incentives, json.ObjectNode("", map[string]*json.Node{
 				"poolPath":                 json.StringNode("poolPath", incentive.PoolPath),
@@ -383,17 +383,17 @@ type ApiExternalDebugPosition struct {
 }
 
 type ApiExternalDebugIncentive struct {
-	PoolPath           string      `json:"poolPath"`
-	IncentiveId        string      `json:"incentiveId"`
-	RewardToken        string      `json:"rewardToken"`
-	RewardAmount       string      `json:"rewardAmount"`
-	StartTimestamp     int64       `json:"startTimestamp"`
-	EndTimestamp       int64       `json:"endTimestamp"`
-	RewardPerSecondX96 string      `json:"rewardPerSecondX96"`
-	RewardPerSecond    string      `json:"rewardPerSecond"`
-	Refundee           std.Address `json:"refundee"`
-	StartHeight        int64       `json:"startHeight"`
-	EndHeight          int64       `json:"endHeight"`
+	PoolPath           string  `json:"poolPath"`
+	IncentiveId        string  `json:"incentiveId"`
+	RewardToken        string  `json:"rewardToken"`
+	RewardAmount       string  `json:"rewardAmount"`
+	StartTimestamp     int64   `json:"startTimestamp"`
+	EndTimestamp       int64   `json:"endTimestamp"`
+	RewardPerSecondX96 string  `json:"rewardPerSecondX96"`
+	RewardPerSecond    string  `json:"rewardPerSecond"`
+	Refundee           address `json:"refundee"`
+	StartHeight        int64   `json:"startHeight"`
+	EndHeight          int64   `json:"endHeight"`
 	// FROM positionExternal -> externalRewards
 	TokenAmountX96    *u256.Uint `json:"tokenAmountX96"`
 	TokenAmount       int64      `json:"tokenAmount"`
@@ -424,7 +424,7 @@ type currentInfo struct {
 // getCurrentInfo returns current GNS balance information for system addresses.
 func getCurrentInfo() currentInfo {
 	return currentInfo{
-		height:           std.ChainHeight(),
+		height:           runtime.ChainHeight(),
 		time:             time.Now().Unix(),
 		gnsStaker:        gns.BalanceOf(stakerAddr),
 		gnsDevOps:        gns.BalanceOf(devOpsAddr),

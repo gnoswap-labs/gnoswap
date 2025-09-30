@@ -1,7 +1,7 @@
 package main
 
 import (
-	"std"
+	"chain"
 	"testing"
 
 	"gno.land/r/gnoswap/v1/common"
@@ -22,7 +22,7 @@ import (
 
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -75,8 +75,8 @@ func testPositionMintQuxGnot(t *testing.T) {
 
 	println("[INFO] Issuing native tokens to admin")
 	// send
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 1000009}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 1000009}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 1000009}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 1000009}})
 
 	println("[INFO] Depositing native tokens to get wrapped tokens")
 	// Deposit(wrap)
@@ -88,7 +88,7 @@ func testPositionMintQuxGnot(t *testing.T) {
 	wugnot.Approve(cross, poolAddr, max_approve)
 
 	println("[INFO] Minting position in qux-wugnot pool")
-	testing.SetOriginSend(std.Coins{})
+	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(cross, quxPath, wrappedWugnot, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	println("[INFO] positionId:", positionId)

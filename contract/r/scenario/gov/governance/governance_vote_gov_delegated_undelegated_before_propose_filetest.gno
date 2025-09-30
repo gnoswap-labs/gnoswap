@@ -5,12 +5,12 @@
 package main
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/ufmt"
-	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
 	gns "gno.land/r/gnoswap/gns"
@@ -37,7 +37,7 @@ func main() {
 
 	println("[SCENARIO] 3. Skip vote weight smoothing duration for create proposal")
 	testing.SkipHeights(int64(config.VotingWeightSmoothingDuration) / currentBlockTime)
-	println("[INFO] current height:", std.ChainHeight())
+	println("[INFO] current height:", runtime.ChainHeight())
 	println()
 
 	println("[SCENARIO] 4. Propose Text")
@@ -46,7 +46,7 @@ func main() {
 
 	println("[SCENARIO] 5. Skip voting start delay for ready to vote")
 	testing.SkipHeights(int64(config.VotingStartDelay) / currentBlockTime)
-	println("[INFO] current height:", std.ChainHeight())
+	println("[INFO] current height:", runtime.ChainHeight())
 	println()
 
 	println("[SCENARIO] 6. Vote for the proposal with dummy")
@@ -57,9 +57,9 @@ func main() {
 func delegateGnsToAdminAndDummy() {
 	delegatedAmount := int64(1_000_000_000)
 	// admin
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	govStakerAddr := std.Address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
+	govStakerAddr := address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
 	gns.Approve(cross, govStakerAddr, delegatedAmount)
 	gs.Delegate(cross, adminAddr, int64(delegatedAmount), "")
 	ufmt.Printf("[INFO] gns delegated to admin %s (amount: %d)\n", adminAddr.String(), delegatedAmount)
@@ -70,20 +70,20 @@ func delegateGnsToAdminAndDummy() {
 }
 
 func undelegateFromDummy() {
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	gs.Undelegate(cross, adminAddr, int64(1_000_000))
 	ufmt.Printf("[INFO] undelegated from dummy %s (amount: %d)\n", dummyAddr.String(), int64(1_000_000))
 }
 
 func proposeText() int64 {
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	proposalId := governance.ProposeText(cross, "test_title", "test_description")
 	ufmt.Printf("[INFO] created proposal ID: %d\n", proposalId)
 	return proposalId
 }
 
 func voteProposalWithDummy(proposalId int64) {
-	testing.SetRealm(std.NewUserRealm(dummyAddr))
+	testing.SetRealm(testing.NewUserRealm(dummyAddr))
 	governance.Vote(cross, proposalId, true)
 	state := governance.GetExecutionStateByProposalId(proposalId)
 	ufmt.Printf("[EXPECTED] after voting - %s\n", state)
