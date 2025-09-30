@@ -749,9 +749,17 @@ func applyUnStake(positionId uint64) error {
 	lowerTick.modifyDepositLower(currentTime, signedLiquidity)
 
 	for incentiveID, collectedExternalReward := range deposit.collectedExternalRewards {
+		// if incentive is archived, no need to add distributed and archive
+		if pool.incentives.IsArchived(incentiveID) {
+			continue
+		}
+
 		incentive, ok := pool.incentives.Get(incentiveID)
 		if !ok {
-			panic(ufmt.Sprintf("incentive(%s) not found", incentiveID))
+			return makeErrorWithDetails(
+				errDataNotFound,
+				ufmt.Sprintf("incentive(%s) not found", incentiveID),
+			)
 		}
 
 		incentive.addDistributedRewardAmount(collectedExternalReward)
