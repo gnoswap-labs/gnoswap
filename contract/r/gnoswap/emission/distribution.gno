@@ -97,7 +97,8 @@ func ChangeDistributionPct(
 	assertValidDistributionPct(pct01, pct02, pct03, pct04)
 
 	if onDistributionPctChangeCallback != nil {
-		emissionAmountPerSecond := GetStakerEmissionAmountPerSecond()
+		currentTimestamp := time.Now().Unix()
+		emissionAmountPerSecond := GetStakerEmissionAmountPerSecondBy(currentTimestamp, pct01)
 		onDistributionPctChangeCallback(emissionAmountPerSecond)
 	}
 
@@ -122,11 +123,6 @@ func ChangeDistributionPct(
 		"target04", targetToStr(target04),
 		"pct04", formatInt(pct04),
 	)
-
-	if onDistributionPctChangeCallback != nil {
-		emissionAmountPerSecond := GetStakerEmissionAmountPerSecond()
-		onDistributionPctChangeCallback(emissionAmountPerSecond)
-	}
 }
 
 // changeDistributionPcts updates the distribution percentages in the AVL tree.
@@ -336,10 +332,14 @@ func GetAccuDistributedToGovStaker() int64 {
 	return accuDistributedToGovStaker
 }
 
+func GetStakerEmissionAmountPerSecondBy(timestamp, distributionPct int64) int64 {
+	return calculateAmount(gns.GetEmissionAmountPerSecondByTimestamp(timestamp), distributionPct)
+}
+
 // GetStakerEmissionAmountPerSecond returns the current per-second emission amount allocated to liquidity stakers.
 func GetStakerEmissionAmountPerSecond() int64 {
 	currentTimestamp := time.Now().Unix()
-	return calculateAmount(gns.GetEmissionAmountPerSecondByTimestamp(currentTimestamp), GetDistributionBpsPct(LIQUIDITY_STAKER))
+	return GetStakerEmissionAmountPerSecondBy(currentTimestamp, GetDistributionBpsPct(LIQUIDITY_STAKER))
 }
 
 // GetStakerEmissionAmountPerSecondInRange returns emission amounts allocated to liquidity stakers for a time range.
