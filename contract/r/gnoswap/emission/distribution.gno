@@ -98,7 +98,7 @@ func ChangeDistributionPct(
 
 	if onDistributionPctChangeCallback != nil {
 		currentTimestamp := time.Now().Unix()
-		emissionAmountPerSecond := GetStakerEmissionAmountPerSecondBy(currentTimestamp, pct01)
+		emissionAmountPerSecond := GetEmissionAmountPerSecondBy(currentTimestamp, pct01)
 		onDistributionPctChangeCallback(emissionAmountPerSecond)
 	}
 
