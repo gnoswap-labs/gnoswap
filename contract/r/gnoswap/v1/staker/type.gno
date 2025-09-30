@@ -1,25 +1,21 @@
 package staker
 
-import (
-	"std"
-
-	u256 "gno.land/p/gnoswap/uint256"
-)
+import u256 "gno.land/p/gnoswap/uint256"
 
 // ExternalIncentive is a struct for storing external incentive information.
 type ExternalIncentive struct {
-	incentiveId             string      // incentive id
-	startTimestamp          int64       // start time for external reward
-	endTimestamp            int64       // end time for external reward
-	createdHeight           int64       // block height when the incentive was created
-	depositGnsAmount        int64       // deposited gns amount
-	targetPoolPath          string      // external reward target pool path
-	rewardToken             string      // external reward token path
-	totalRewardAmount       int64       // total reward amount
-	rewardAmount            int64       // to be distributed reward amount
-	rewardPerSecond         int64       // reward per second
-	distributedRewardAmount int64       // distributed reward amount, when un-staked and refunded
-	refundee                std.Address // refundee address
+	incentiveId             string  // incentive id
+	startTimestamp          int64   // start time for external reward
+	endTimestamp            int64   // end time for external reward
+	createdHeight           int64   // block height when the incentive was created
+	depositGnsAmount        int64   // deposited gns amount
+	targetPoolPath          string  // external reward target pool path
+	rewardToken             string  // external reward token path
+	totalRewardAmount       int64   // total reward amount
+	rewardAmount            int64   // to be distributed reward amount
+	rewardPerSecond         int64   // reward per second
+	distributedRewardAmount int64   // distributed reward amount, when un-staked and refunded
+	refundee                address // refundee address
 
 	refunded        bool // whether incentive has been refunded (includes GNS deposit and unclaimed rewards)
 	isRequestUnwrap bool // whether the original deposit was native GNOT (needs unwrap on refund)
@@ -66,7 +62,7 @@ func (self *ExternalIncentive) RewardSpent(currentTimestamp int64) int64 {
 // addDistributedRewardAmount adds the given amount to the distributed reward amount.
 // This function is used to add the distributed reward amount when the incentive is un-staked and refunded.
 func (self *ExternalIncentive) addDistributedRewardAmount(amount int64) {
-	self.distributedRewardAmount += amount
+	self.distributedRewardAmount = safeAddInt64(self.distributedRewardAmount, amount)
 }
 
 func (self *ExternalIncentive) Clone() *ExternalIncentive {
@@ -95,7 +91,7 @@ func NewExternalIncentive(
 	rewardAmount int64,
 	startTimestamp int64, // timestamp is in unix time(seconds)
 	endTimestamp int64,
-	refundee std.Address,
+	refundee address,
 	createdHeight int64,
 	depositGnsAmount int64,
 	currentTime int64, // current time in unix time(seconds)
@@ -126,7 +122,7 @@ type Deposit struct {
 	warmups                        []Warmup         // warmup information
 	liquidity                      *u256.Uint       // liquidity
 	targetPoolPath                 string           // staked position's pool path
-	owner                          std.Address      // owner address
+	owner                          address          // owner address
 	stakeTime                      int64            // staked time
 	internalRewardLastCollectTime  int64            // last collect time for internal reward
 	collectedInternalReward        int64            // collected internal reward
@@ -176,7 +172,7 @@ func (self *Deposit) CollectedExternalReward(incentiveID string) int64 {
 }
 
 func (self *Deposit) addCollectedInternalReward(reward int64) {
-	self.collectedInternalReward += reward
+	self.collectedInternalReward = safeAddInt64(self.collectedInternalReward, reward)
 }
 
 func (self *Deposit) addCollectedExternalReward(incentiveID string, reward int64) {
@@ -188,7 +184,7 @@ func (self *Deposit) addCollectedExternalReward(incentiveID string, reward int64
 		self.collectedExternalRewards[incentiveID] = 0
 	}
 
-	self.collectedExternalRewards[incentiveID] += reward
+	self.collectedExternalRewards[incentiveID] = safeAddInt64(self.collectedExternalRewards[incentiveID], reward)
 }
 
 // updateInternalRewardLastCollectTime updates the last collect time for the internal reward.
@@ -221,7 +217,7 @@ func (self *Deposit) updateExternalRewardLastCollectTime(incentiveID string, cur
 }
 
 func NewDeposit(
-	owner std.Address,
+	owner address,
 	targetPoolPath string,
 	liquidity *u256.Uint,
 	currentTime int64,

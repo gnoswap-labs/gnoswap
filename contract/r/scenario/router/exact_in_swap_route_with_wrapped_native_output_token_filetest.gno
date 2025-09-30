@@ -5,7 +5,8 @@
 package main
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"strconv"
 	"testing"
 
@@ -27,7 +28,7 @@ import (
 
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
@@ -110,12 +111,12 @@ func initializeSetup() {
 	testing.SetRealm(adminRealm)
 	pool.SetPoolCreationFee(cross, 0)
 
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100000000000000}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 100000000000000}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000000000000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
 	testing.SetRealm(adminRealm)
 	wugnot.Deposit(cross)
 
-	testing.IssueCoins(std.NewCodeRealm(wugnotPath).Address(), std.Coins{{"ugnot", 100000000000000}})
+	testing.IssueCoins(testing.NewCodeRealm(wugnotPath).Address(), chain.Coins{{"ugnot", 100000000000000}})
 
 	println("[INFO] GNS Balance of admin:", gns.BalanceOf(adminAddr))
 	println("[INFO] WUGNOT Balance of admin:", wugnot.BalanceOf(adminAddr))
@@ -147,7 +148,7 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 	common.Approve(cross, token0Path, poolAddr, maxInt64)
 	common.Approve(cross, token1Path, poolAddr, maxInt64)
 
-	testing.SetOriginSend(std.Coins{})
+	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		token0Path,
@@ -189,8 +190,8 @@ func exactInSwapRouteBy(
 	ufmt.Println("[INFO] queryRatios:", queryRatios)
 	ufmt.Println("[INFO] minAmountOut:", minAmountOut)
 
-	banker := std.NewBanker(std.BankerTypeReadonly)
-	beforeGNOTBalance := banker.GetCoins(adminAddr).AmountOf("ugnot")
+	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
+	beforeGNOTBalance := banker_.GetCoins(adminAddr).AmountOf("ugnot")
 	beforeWUGNOTBalance := wugnot.BalanceOf(adminAddr)
 	beforeGNSBalance := gns.BalanceOf(adminAddr)
 	beforeBARBalance := bar.BalanceOf(adminAddr)
@@ -198,15 +199,15 @@ func exactInSwapRouteBy(
 
 	if common.IsGNOTNativePath(inputToken) {
 
-		sendCoins := std.Coins{{Denom: common.GNOT_DENOM, Amount: specifiedAmountInt64}}
-		banker := std.NewBanker(std.BankerTypeRealmSend)
-		banker.SendCoins(adminAddr, routerAddr, sendCoins)
+		sendCoins := chain.Coins{{Denom: common.GNOT_DENOM, Amount: specifiedAmountInt64}}
+		banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+		banker_.SendCoins(adminAddr, routerAddr, sendCoins)
 
 		testing.SetOriginSend(sendCoins)
 
 		common.SafeGRC20Approve(cross, common.WUGNOT_PATH, routerAddr, specifiedAmountInt64)
 	} else {
-		testing.SetOriginSend(std.Coins{})
+		testing.SetOriginSend(chain.Coins{})
 
 		common.SafeGRC20Approve(cross, inputToken, routerAddr, specifiedAmountInt64)
 	}
@@ -222,7 +223,7 @@ func exactInSwapRouteBy(
 		"",
 	)
 
-	afterGNOTBalance := banker.GetCoins(adminAddr).AmountOf("ugnot")
+	afterGNOTBalance := banker_.GetCoins(adminAddr).AmountOf("ugnot")
 	afterWUGNOTBalance := wugnot.BalanceOf(adminAddr)
 	afterGNSBalance := gns.BalanceOf(adminAddr)
 	afterBARBalance := bar.BalanceOf(adminAddr)

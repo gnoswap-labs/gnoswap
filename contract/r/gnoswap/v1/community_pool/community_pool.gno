@@ -1,7 +1,8 @@
 package community_pool
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 	"strconv"
 
 	"gno.land/r/gnoswap/access"
@@ -17,11 +18,11 @@ import (
 //   - amount: transfer amount
 //
 // Only callable by admin or governance.
-func TransferToken(cur realm, tokenPath string, to std.Address, amount int64) {
+func TransferToken(cur realm, tokenPath string, to address, amount int64) {
 	halt.AssertIsNotHaltedCommunityPoolWithVersion(1)
 	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	err := transferToken(tokenPath, to, amount)
@@ -31,11 +32,11 @@ func TransferToken(cur realm, tokenPath string, to std.Address, amount int64) {
 }
 
 // transferToken performs actual token transfer.
-func transferToken(tokenPath string, to std.Address, amount int64) error {
+func transferToken(tokenPath string, to address, amount int64) error {
 	common.SafeGRC20Transfer(cross, tokenPath, to, amount)
 
-	prevRealm := std.PreviousRealm()
-	std.Emit(
+	prevRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"TransferToken",
 		"prevAddr", prevRealm.Address().String(),
 		"prevRealm", prevRealm.PkgPath(),

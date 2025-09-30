@@ -2,7 +2,6 @@ package position
 
 import (
 	"errors"
-	"std"
 	"strconv"
 	"testing"
 	"time"
@@ -263,7 +262,7 @@ func TestExistPosition(t *testing.T) {
 func TestComputePositionKey(t *testing.T) {
 	tests := []struct {
 		name      string
-		owner     std.Address
+		owner     address
 		tickLower int32
 		tickUpper int32
 		expected  string
@@ -405,7 +404,7 @@ func TestProcessTokens(t *testing.T) {
 		token1         string
 		amount0Desired string
 		amount1Desired string
-		caller         std.Address
+		caller         address
 		expected0      string
 		expected1      string
 		isNative0      bool
@@ -502,13 +501,13 @@ func TestProcessTokens(t *testing.T) {
 			if tt.token0 == GNOT {
 				amount, _ := strconv.ParseInt(tt.amount0Desired, 10, 64)
 				ugnotFaucet(t, positionAddr, amount)
-				testing.SetRealm(std.NewUserRealm(positionAddr))
+				testing.SetRealm(testing.NewUserRealm(positionAddr))
 				transferUGNOT(positionAddr, positionAddr, amount)
 			}
 			if tt.token1 == GNOT {
 				amount, _ := strconv.ParseInt(tt.amount1Desired, 10, 64)
 				ugnotFaucet(t, positionAddr, amount)
-				testing.SetRealm(std.NewUserRealm(positionAddr))
+				testing.SetRealm(testing.NewUserRealm(positionAddr))
 				transferUGNOT(positionAddr, positionAddr, amount)
 			}
 
@@ -547,8 +546,8 @@ func TestMint(t *testing.T) {
 		minAmount0         string
 		minAmount1         string
 		deadline           int64
-		mintTo             std.Address
-		caller             std.Address
+		mintTo             address
+		caller             address
 		shouldError        bool
 		expectedErrorMsg   string
 		expectedPositionId uint64
@@ -640,7 +639,7 @@ func TestMint(t *testing.T) {
 				GivenPoolCreated(barPath, fooPath, fee500, "79228162514264337593543950336").
 				AndUserFundedAndApproved(alice, barPath, fooPath)
 
-			testing.SetRealm(std.NewUserRealm(tc.caller))
+			testing.SetRealm(testing.NewUserRealm(tc.caller))
 
 			if tc.shouldError {
 				uassert.AbortsWithMessage(t, tc.expectedErrorMsg, func() {
@@ -943,7 +942,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 func TestCollectFees(t *testing.T) {
 	tests := []struct {
 		name               string
-		caller             std.Address
+		caller             address
 		mintAmount0        string
 		mintAmount1        string
 		increaseAmount0    string

@@ -2,13 +2,13 @@
 package main
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 	"time"
 
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/ufmt"
-	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
@@ -33,13 +33,13 @@ func main() {
 
 	println("[SCENARIO] 2. Mint GNS when skipped 31536000 blocks (skip 2 years)")
 	testing.SkipHeights(31536000)
-	println("[INFO] current block height", std.ChainHeight())
+	println("[INFO] current block height", runtime.ChainHeight())
 	mintGNS()
 	println()
 
 	println("[SCENARIO] 3. Mint GNS when skipped 12614400 blocks (40% of 3 year)")
 	testing.SkipHeights(12614400)
-	println("[INFO] current block height", std.ChainHeight())
+	println("[INFO] current block height", runtime.ChainHeight())
 	mintGNS()
 	println()
 
@@ -51,7 +51,7 @@ func main() {
 func initEmission() {}
 
 func mintGNS() {
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/emission"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/emission"))
 
 	mintedAmount := gns.MintGns(cross, user01Addr)
 

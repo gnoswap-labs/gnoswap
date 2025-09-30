@@ -1,7 +1,6 @@
 package rbac
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/nt/testutils"
@@ -15,8 +14,8 @@ func TestRegisterRoleWithAddressParameter(t *testing.T) {
 		name          string
 		setup         func()
 		roleName      string
-		roleAddress   std.Address
-		callerRealm   std.Address // Test with different callers (ADMIN or GOVERNANCE)
+		roleAddress   address
+		callerRealm   address // Test with different callers (ADMIN or GOVERNANCE)
 		shouldPanic   bool
 		panicContains string
 	}{
@@ -60,7 +59,7 @@ func TestRegisterRoleWithAddressParameter(t *testing.T) {
 				initRbac()
 			},
 			roleName:      "invalid_role_empty",
-			roleAddress:   std.Address(""),
+			roleAddress:   address(""),
 			callerRealm:   ADMIN,
 			shouldPanic:   true,
 			panicContains: "invalid address",
@@ -72,7 +71,7 @@ func TestRegisterRoleWithAddressParameter(t *testing.T) {
 				initRbac()
 			},
 			roleName:      "invalid_role_empty_gov",
-			roleAddress:   std.Address(""),
+			roleAddress:   address(""),
 			callerRealm:   GOV_GOVERNANCE_ADDR,
 			shouldPanic:   true,
 			panicContains: "invalid address",
@@ -135,7 +134,7 @@ func TestRegisterRoleWithAddressParameter(t *testing.T) {
 			tt.setup()
 
 			// Set realm to the specified caller for authorization testing
-			testing.SetRealm(std.NewUserRealm(tt.callerRealm))
+			testing.SetRealm(testing.NewUserRealm(tt.callerRealm))
 
 			if tt.shouldPanic {
 				uassert.AbortsContains(t, tt.panicContains, func() {
@@ -223,7 +222,7 @@ func TestRemoveRole(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup()
-			testing.SetRealm(std.NewUserRealm(ADMIN))
+			testing.SetRealm(testing.NewUserRealm(ADMIN))
 			err := manager.RemoveRole(tt.roleName)
 
 			if tt.shouldError {
@@ -300,7 +299,7 @@ func TestUpdateRoleAddress(t *testing.T) {
 	tests := []struct {
 		name      string
 		roleName  string
-		addr      std.Address
+		addr      address
 		shouldErr bool
 	}{
 		{
@@ -380,10 +379,10 @@ func TestAddressChangeComplete(t *testing.T) {
 		name          string
 		setup         func()
 		roleName      string
-		oldAddress    std.Address
-		newAddress    std.Address
+		oldAddress    address
+		newAddress    address
 		expectSuccess bool
-		verifyFunc    func(t *testing.T, roleName string, expectedAddr std.Address)
+		verifyFunc    func(t *testing.T, roleName string, expectedAddr address)
 	}{
 		{
 			name: "Change admin role address",
@@ -395,7 +394,7 @@ func TestAddressChangeComplete(t *testing.T) {
 			oldAddress:    ADMIN,
 			newAddress:    testutils.TestAddress("new_admin"),
 			expectSuccess: true,
-			verifyFunc: func(t *testing.T, roleName string, expectedAddr std.Address) {
+			verifyFunc: func(t *testing.T, roleName string, expectedAddr address) {
 				// Verify in RBAC
 				addr, err := manager.GetRoleAddress(roleName)
 				if err != nil {
@@ -418,7 +417,7 @@ func TestAddressChangeComplete(t *testing.T) {
 			oldAddress:    testutils.TestAddress("custom"),
 			newAddress:    testutils.TestAddress("new_custom"),
 			expectSuccess: true,
-			verifyFunc: func(t *testing.T, roleName string, expectedAddr std.Address) {
+			verifyFunc: func(t *testing.T, roleName string, expectedAddr address) {
 				// Verify in RBAC
 				addr, err := manager.GetRoleAddress(roleName)
 				if err != nil {
@@ -439,7 +438,7 @@ func TestAddressChangeComplete(t *testing.T) {
 			oldAddress:    ROUTER_ADDR,
 			newAddress:    testutils.TestAddress("new_router"),
 			expectSuccess: true,
-			verifyFunc: func(t *testing.T, roleName string, expectedAddr std.Address) {
+			verifyFunc: func(t *testing.T, roleName string, expectedAddr address) {
 				// First change router
 				addr, err := manager.GetRoleAddress(roleName)
 				if err != nil {
@@ -471,7 +470,7 @@ func TestAddressChangeComplete(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set realm to rbac for access package calls
-			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/rbac"))
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac"))
 
 			// Setup
 			tt.setup()
@@ -507,21 +506,21 @@ func TestRBACToAccessSync(t *testing.T) {
 		operations []struct {
 			action   string // "register", "update", "remove"
 			roleName string
-			address  std.Address
+			address  address
 		}
-		verifyRoles map[string]std.Address // Expected final state
+		verifyRoles map[string]address // Expected final state
 	}{
 		{
 			name: "Register new role updates access package",
 			operations: []struct {
 				action   string
 				roleName string
-				address  std.Address
+				address  address
 			}{
 				{action: "register", roleName: "test_role_1"},
 				{action: "update", roleName: "test_role_1", address: testutils.TestAddress("test_role_1")},
 			},
-			verifyRoles: map[string]std.Address{
+			verifyRoles: map[string]address{
 				"test_role_1": testutils.TestAddress("test_role_1"),
 			},
 		},
@@ -530,13 +529,13 @@ func TestRBACToAccessSync(t *testing.T) {
 			operations: []struct {
 				action   string
 				roleName string
-				address  std.Address
+				address  address
 			}{
 				{action: "register", roleName: "temp_role"},
 				{action: "update", roleName: "temp_role", address: testutils.TestAddress("temp_role")},
 				{action: "remove", roleName: "temp_role"},
 			},
-			verifyRoles: map[string]std.Address{
+			verifyRoles: map[string]address{
 				// temp_role should not exist
 			},
 		},
@@ -545,7 +544,7 @@ func TestRBACToAccessSync(t *testing.T) {
 			operations: []struct {
 				action   string
 				roleName string
-				address  std.Address
+				address  address
 			}{
 				{action: "register", roleName: "role_a"},
 				{action: "register", roleName: "role_b"},
@@ -554,7 +553,7 @@ func TestRBACToAccessSync(t *testing.T) {
 				{action: "update", roleName: "role_a", address: testutils.TestAddress("role_a_new")}, // Update again
 				{action: "remove", roleName: "role_b"},
 			},
-			verifyRoles: map[string]std.Address{
+			verifyRoles: map[string]address{
 				"role_a": testutils.TestAddress("role_a_new"),
 				// role_b should not exist
 			},
@@ -564,7 +563,7 @@ func TestRBACToAccessSync(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set realm to rbac for access package calls
-			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/rbac"))
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac"))
 
 			// Reset manager
 			manager = prbac.NewRBACWithAddress(ADMIN)

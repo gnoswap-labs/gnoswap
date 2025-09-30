@@ -1,8 +1,8 @@
 package pool
 
 import (
+	"chain/runtime"
 	"math"
-	"std"
 	"testing"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -20,15 +20,15 @@ type PoolTestEnv struct {
 	t              *testing.T
 	pools          map[string]*Pool
 	positions      map[string]DSLPositionInfo
-	currentRealm   std.Realm
-	currentAddress std.Address
-	adminAddr      std.Address
-	poolAddr       std.Address
+	currentRealm   runtime.Realm
+	currentAddress address
+	adminAddr      address
+	poolAddr       address
 }
 
 // DSLPositionInfo stores position metadata for DSL testing
 type DSLPositionInfo struct {
-	owner     std.Address
+	owner     address
 	tickLower int32
 	tickUpper int32
 	liquidity *u256.Uint
@@ -39,7 +39,7 @@ func NewPoolTestEnv(t *testing.T) *PoolTestEnv {
 	t.Helper()
 
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
-	poolAddr := std.Address("g15h3ywez2g2xqqsksm9mfkau0xz2puma2qvwmqd") // pool contract address
+	poolAddr := address("g15h3ywez2g2xqqsksm9mfkau0xz2puma2qvwmqd") // pool contract address
 
 	// Initialize basic pool setup
 	ugnotFaucet(t, adminAddr, 100_000_000_000_000)
@@ -49,7 +49,7 @@ func NewPoolTestEnv(t *testing.T) *PoolTestEnv {
 		t:              t,
 		pools:          make(map[string]*Pool),
 		positions:      make(map[string]DSLPositionInfo),
-		currentRealm:   std.NewUserRealm(adminAddr),
+		currentRealm:   testing.NewUserRealm(adminAddr),
 		currentAddress: adminAddr,
 		adminAddr:      adminAddr,
 		poolAddr:       poolAddr,
@@ -57,10 +57,10 @@ func NewPoolTestEnv(t *testing.T) *PoolTestEnv {
 }
 
 // AsUser sets the current user context
-func (e *PoolTestEnv) AsUser(user std.Address) *PoolTestEnv {
+func (e *PoolTestEnv) AsUser(user address) *PoolTestEnv {
 	e.t.Helper()
 	e.currentAddress = user
-	e.currentRealm = std.NewUserRealm(user)
+	e.currentRealm = testing.NewUserRealm(user)
 	testing.SetOriginCaller(user)
 	testing.SetRealm(e.currentRealm)
 	return e
@@ -95,7 +95,7 @@ func (e *PoolTestEnv) GivenPoolCreated(token0, token1 string, fee uint32, sqrtPr
 }
 
 // AndUserFunded provides tokens to a user
-func (e *PoolTestEnv) AndUserFunded(user std.Address, tokens ...string) *PoolTestEnv {
+func (e *PoolTestEnv) AndUserFunded(user address, tokens ...string) *PoolTestEnv {
 	e.t.Helper()
 
 	e.AsAdmin()
@@ -107,7 +107,7 @@ func (e *PoolTestEnv) AndUserFunded(user std.Address, tokens ...string) *PoolTes
 }
 
 // AndTokensApproved approves tokens for pool operations
-func (e *PoolTestEnv) AndTokensApproved(user std.Address, tokens ...string) *PoolTestEnv {
+func (e *PoolTestEnv) AndTokensApproved(user address, tokens ...string) *PoolTestEnv {
 	e.t.Helper()
 
 	// TokenApprove already sets the realm internally, so we don't need to set it here

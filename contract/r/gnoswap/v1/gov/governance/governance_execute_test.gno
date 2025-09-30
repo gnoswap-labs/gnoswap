@@ -1,7 +1,8 @@
 package governance
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"strings"
 	"testing"
 	"time"
@@ -18,7 +19,7 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 		name string
 		// given
 		proposalId    int64
-		executor      std.Address
+		executor      address
 		setupProposal *Proposal
 		// then
 		expectedProposalId int64
@@ -173,7 +174,7 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 				setupExecuteTestProposal(t, tt.setupProposal)
 			}
 
-			testing.SetRealm(std.NewUserRealm(tt.executor))
+			testing.SetRealm(testing.NewUserRealm(tt.executor))
 
 			// when
 			if tt.expectedHasAbort {
@@ -201,7 +202,7 @@ func TestGovernanceExecute_ExecuteProposalPrivate(t *testing.T) {
 		proposalId     int64
 		executedAt     int64
 		executedHeight int64
-		executedBy     std.Address
+		executedBy     address
 		setupProposal  *Proposal
 		// then
 		expectedHasError     bool
@@ -365,7 +366,7 @@ func TestGovernanceExecute_Cancel(t *testing.T) {
 		name string
 		// given
 		proposalId    int64
-		canceler      std.Address
+		canceler      address
 		setupProposal *Proposal
 		// then
 		expectedProposalId int64
@@ -497,7 +498,7 @@ func TestGovernanceExecute_Cancel(t *testing.T) {
 				setupExecuteTestProposal(t, tt.setupProposal)
 			}
 
-			testing.SetRealm(std.NewUserRealm(tt.canceler))
+			testing.SetRealm(testing.NewUserRealm(tt.canceler))
 
 			// when
 			if tt.expectedHasAbort {
@@ -685,7 +686,7 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 				setupExecuteTestProposal(t, tt.setupProposal())
 			}
 
-			testing.SetRealm(std.NewUserRealm(testutils.TestAddress("executor")))
+			testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("executor")))
 
 			// when & then
 			if tt.shouldFail {
@@ -767,7 +768,7 @@ func TestGovernanceExecute_ExecutionTiming(t *testing.T) {
 			proposal.status.vote(true, 6_000_000_000)
 			setupExecuteTestProposal(t, proposal)
 
-			testing.SetRealm(std.NewUserRealm(testutils.TestAddress("executor")))
+			testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("executor")))
 
 			// when & then
 			if tt.expectedHasAbort {
@@ -788,7 +789,7 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(t *testing.T) {
 		name                 string
 		tokenPath            string
 		amount               int64
-		recipientAddress     std.Address
+		recipientAddress     address
 		communityPoolBalance int64
 		expectedError        string
 		expectedHasAbort     bool
@@ -865,7 +866,7 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(t *testing.T) {
 
 			// Mock community pool balance setup would go here
 
-			testing.SetRealm(std.NewUserRealm(testutils.TestAddress("executor")))
+			testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("executor")))
 
 			// when & then
 			if tt.expectedHasAbort {
@@ -965,7 +966,7 @@ func TestGovernanceExecute_ParameterChangeExecution(t *testing.T) {
 			proposal.status.vote(true, 6_000_000_000)
 			setupExecuteTestProposal(t, proposal)
 
-			testing.SetRealm(std.NewUserRealm(testutils.TestAddress("executor")))
+			testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("executor")))
 
 			// when & then
 			if tt.expectedHasAbort {
@@ -992,8 +993,8 @@ func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
 		name               string
 		proposalTime       time.Time
 		cancellationTime   time.Time
-		canceler           std.Address
-		proposer           std.Address
+		canceler           address
+		proposer           address
 		proposerThreshold  int64
 		proposerCurrentGns int64
 		expectedError      string
@@ -1071,7 +1072,7 @@ func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
 				setupExecuteTestProposal(t, proposal)
 			}
 
-			testing.SetRealm(std.NewUserRealm(tt.canceler))
+			testing.SetRealm(testing.NewUserRealm(tt.canceler))
 
 			// when & then
 			if tt.expectedHasAbort {
@@ -1109,7 +1110,7 @@ func TestGovernanceExecute_ReExecutionPrevention(t *testing.T) {
 		proposal.status.vote(true, 6_000_000_000)
 		setupExecuteTestProposal(t, proposal)
 
-		testing.SetRealm(std.NewUserRealm(testutils.TestAddress("executor")))
+		testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("executor")))
 
 		// when - first execution
 		errInvalidRangeMsg := "[GNOSWAP-STAKER-008] invalid unstaking fee || fee(-1) must be in range 0 ~ 1000"
@@ -1137,12 +1138,12 @@ func setupGovernanceExecuteTestCommunityPoolBalance(t *testing.T) {
 	gns.Transfer(cross, communityPoolAddr, amount)
 
 	gnotAmount := amount * 10
-	newCoins := std.Coins{{"ugnot", gnotAmount}}
+	newCoins := chain.Coins{{"ugnot", gnotAmount}}
 	testing.IssueCoins(adminRealm.Address(), newCoins)
 	testing.SetOriginSend(newCoins)
 
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(adminRealm.Address(), wugnotAddr, newCoins)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_.SendCoins(adminRealm.Address(), wugnotAddr, newCoins)
 	wugnot.Deposit(cross)
 
 	wugnot.Transfer(cross, communityPoolAddr, gnotAmount)

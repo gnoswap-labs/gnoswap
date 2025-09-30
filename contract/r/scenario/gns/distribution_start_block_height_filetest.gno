@@ -1,7 +1,8 @@
 package main
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 	"testing"
 	"time"
 
@@ -22,7 +23,7 @@ const (
 )
 
 var (
-	emissionAddr = std.DerivePkgAddr("gno.land/r/gnoswap/emission")
+	emissionAddr = chain.PackageAddress("gno.land/r/gnoswap/emission")
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 	userAddr     = testutils.TestAddress("user")
 
@@ -32,7 +33,7 @@ var (
 func main() {
 	println("[SCENARIO] Test Distribution Start Block Height with Halving Year Adjustment")
 
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	// Run each scenario
 	testScenario1InitialConfiguration()
@@ -95,11 +96,11 @@ func testScenario4EmissionAfterStartHeight() {
 
 	// Skip blocks to reach start height
 	testing.SkipHeights(10000)
-	currentHeight := std.ChainHeight()
+	currentHeight := runtime.ChainHeight()
 	ufmt.Printf("[INFO] Current chain height after skipping: %d\n", currentHeight)
 
 	// Try to mint
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/emission"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/emission"))
 	distributedAmount := emission.MintAndDistributeGns(cross)
 	ufmt.Printf("[INFO] Distributed amount: %d\n", distributedAmount)
 	ufmt.Printf("[EXPECTED] Should be > 0 (distribution started)\n")

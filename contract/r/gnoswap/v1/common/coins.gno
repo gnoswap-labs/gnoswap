@@ -1,8 +1,6 @@
 package common
 
-import (
-	"std"
-)
+import "chain/banker"
 
 // IsGNOTPath checks if the given path is either native gnot or wrapped ugnot path
 func IsGNOTPath(path string) bool {
@@ -55,7 +53,7 @@ func hasNotSupportedCoins() bool {
 func getUserSendCoins() map[string]int64 {
 	coinsMap := make(map[string]int64)
 
-	for _, coin := range std.OriginSend() {
+	for _, coin := range banker.OriginSend() {
 		if coin.Amount <= 0 {
 			continue
 		}

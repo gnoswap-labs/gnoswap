@@ -1,7 +1,7 @@
 package staker
 
 import (
-	"std"
+	"chain/runtime"
 	"strconv"
 	"time"
 
@@ -141,18 +141,18 @@ func (r LpTokenReward) JSON() *json.Node {
 
 // Stake represents a single stake
 type ApiStake struct {
-	PositionId     uint64      `json:"positionId"`     // The ID of the staked LP token
-	Owner          std.Address `json:"owner"`          // The address of the owner of the staked LP token
-	NumberOfStakes uint64      `json:"numberOfStakes"` // The number of times this LP token has been staked
-	StakeTimestamp int64       `json:"stakeTimestamp"` // The timestamp when the LP token was staked
-	StakeTime      int64       `json:"stakeTime"`      // The time when the LP token was staked
-	TargetPoolPath string      `json:"targetPoolPath"` // The path of the target pool for the stake
-	StakeDuration  uint64      `json:"stakeDuration"`  // The duration of the stake
+	PositionId     uint64  `json:"positionId"`     // The ID of the staked LP token
+	Owner          address `json:"owner"`          // The address of the owner of the staked LP token
+	NumberOfStakes uint64  `json:"numberOfStakes"` // The number of times this LP token has been staked
+	StakeTimestamp int64   `json:"stakeTimestamp"` // The timestamp when the LP token was staked
+	StakeTime      int64   `json:"stakeTime"`      // The time when the LP token was staked
+	TargetPoolPath string  `json:"targetPoolPath"` // The path of the target pool for the stake
+	StakeDuration  uint64  `json:"stakeDuration"`  // The duration of the stake
 }
 
 func newApiStake(tokenId uint64, deposit *Deposit) ApiStake {
 	stakeDuration := uint64(0)
-	if std.ChainHeight() > deposit.stakeTime {
+	if runtime.ChainHeight() > deposit.stakeTime {
 		now := time.Now().Unix()
 		stakeDuration = uint64(now - deposit.stakeTime)
 	}
@@ -185,7 +185,7 @@ type statNode struct {
 
 func newStatNode() statNode {
 	return statNode{
-		height:    std.ChainHeight(),
+		height:    runtime.ChainHeight(),
 		timestamp: time.Now().Unix(),
 	}
 }

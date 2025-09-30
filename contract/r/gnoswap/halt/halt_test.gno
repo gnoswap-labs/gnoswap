@@ -1,7 +1,6 @@
 package halt
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -333,7 +332,7 @@ func TestHalt_SetHaltLevel_WithAuthorization(t *testing.T) {
 
 	tests := []struct {
 		name                 string
-		callerAddress        std.Address
+		callerAddress        address
 		inputLevel           HaltLevel
 		expectedLevel        HaltLevel
 		expectedHasAbort     bool
@@ -357,7 +356,7 @@ func TestHalt_SetHaltLevel_WithAuthorization(t *testing.T) {
 		},
 		{
 			name:                 "Fail with unauthorized realm",
-			callerAddress:        std.Address("g1unauthorized"),
+			callerAddress:        address("g1unauthorized"),
 			inputLevel:           HaltLevelComplete,
 			expectedLevel:        HaltLevelNone, // Should remain unchanged
 			expectedHasAbort:     true,
@@ -377,7 +376,7 @@ func TestHalt_SetHaltLevel_WithAuthorization(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cleanup()
 
-			testing.SetRealm(std.NewUserRealm(tc.callerAddress))
+			testing.SetRealm(testing.NewUserRealm(tc.callerAddress))
 
 			// when/then
 			if tc.expectedHasAbort {
@@ -418,7 +417,7 @@ func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
 
 	tests := []struct {
 		name                 string
-		callerAddress        std.Address
+		callerAddress        address
 		operationType        OpType
 		halted               bool
 		expectedHasAbort     bool
@@ -442,7 +441,7 @@ func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
 		},
 		{
 			name:                 "Fail with unauthorized realm",
-			callerAddress:        std.Address("g1unauthorized"),
+			callerAddress:        address("g1unauthorized"),
 			operationType:        OpTypePool,
 			halted:               true,
 			expectedHasAbort:     true,
@@ -462,7 +461,7 @@ func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cleanup()
 
-			testing.SetRealm(std.NewUserRealm(tc.callerAddress))
+			testing.SetRealm(testing.NewUserRealm(tc.callerAddress))
 
 			// when/then
 			if tc.expectedHasAbort {

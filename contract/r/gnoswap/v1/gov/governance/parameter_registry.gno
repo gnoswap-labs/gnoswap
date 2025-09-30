@@ -1,8 +1,6 @@
 package governance
 
 import (
-	"std"
-
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 
@@ -187,7 +185,7 @@ func createParameterHandlers() *ParameterRegistry {
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
 				// Update swap whitelist
-				access.UpdateSwapWhiteList(cross, std.Address(params[0]))
+				access.UpdateSwapWhiteList(cross, address(params[0]))
 
 				return nil
 			},
@@ -198,7 +196,7 @@ func createParameterHandlers() *ParameterRegistry {
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
 				// Remove from swap whitelist
-				access.RemoveFromSwapWhiteList(cross, std.Address(params[0]))
+				access.RemoveFromSwapWhiteList(cross, address(params[0]))
 
 				return nil
 			},
@@ -212,8 +210,8 @@ func createParameterHandlers() *ParameterRegistry {
 				// Transfer tokens from community pool to specified address
 				cp.TransferToken(
 					cross,
-					params[0],              // pkgPath
-					std.Address(params[1]), // to
+					params[0],          // pkgPath
+					address(params[1]), // to
 					parseNumber(params[2], kindInt64).(int64), // amount
 				)
 
@@ -306,7 +304,7 @@ func createParameterHandlers() *ParameterRegistry {
 					params[0],                      // token0Path
 					params[1],                      // token1Path
 					uint32(parseUint64(params[2])), // fee
-					std.Address(params[3]),         // recipient
+					address(params[3]),             // recipient
 					params[4],                      // amount0Requested
 					params[5],                      // amount1Requested
 				)
@@ -533,7 +531,7 @@ func createParameterHandlers() *ParameterRegistry {
 			paramCount: 2,
 			handlerFunc: func(params []string) error {
 				roleName := params[0]
-				roleAddress := std.Address(params[1])
+				roleAddress := address(params[1])
 
 				// Register a new role
 				rbac.RegisterRole(cross, roleName, roleAddress)
@@ -548,7 +546,7 @@ func createParameterHandlers() *ParameterRegistry {
 			handlerFunc: func(params []string) error {
 				roleName := params[0]
 				version := parseInt(params[1])
-				roleAddress := std.Address(params[2])
+				roleAddress := address(params[2])
 
 				// Update role address
 				rbac.UpdateRoleAddress(cross, roleName, version, roleAddress)
@@ -562,7 +560,7 @@ func createParameterHandlers() *ParameterRegistry {
 			paramCount: 2,
 			handlerFunc: func(params []string) error {
 				roleName := params[0]
-				roleAddress := std.Address(params[1])
+				roleAddress := address(params[1])
 
 				// Update role address next version
 				rbac.UpdateRoleAddressNextVersion(cross, roleName, roleAddress)

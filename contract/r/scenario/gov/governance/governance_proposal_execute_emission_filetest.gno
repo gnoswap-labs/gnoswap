@@ -3,7 +3,7 @@
 package main
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 
 	"gno.land/p/nt/ufmt"
@@ -32,7 +32,7 @@ func main() {
 
 	println("[SCENARIO] 2. Skip voting smoothing duration for create proposal")
 	testing.SkipHeights(int64(config.VotingWeightSmoothingDuration) / currentBlockTime)
-	println("[INFO] current height:", std.ChainHeight())
+	println("[INFO] current height:", runtime.ChainHeight())
 	println()
 
 	println("[SCENARIO] 3. Propose Change Emission Distribution Percentages")
@@ -41,7 +41,7 @@ func main() {
 
 	println("[SCENARIO] 4. Skip voting start delay for ready to vote")
 	testing.SkipHeights(int64(config.VotingStartDelay) / currentBlockTime)
-	println("[INFO] current height:", std.ChainHeight())
+	println("[INFO] current height:", runtime.ChainHeight())
 	println()
 
 	println("[SCENARIO] 5. Vote for the proposal")
@@ -50,7 +50,7 @@ func main() {
 
 	println("[SCENARIO] 6. Skip voting period for ready to execute")
 	testing.SkipHeights(int64(config.VotingPeriod) / currentBlockTime)
-	println("[INFO] current height:", std.ChainHeight())
+	println("[INFO] current height:", runtime.ChainHeight())
 	println()
 
 	println("[SCENARIO] 7. Execute the change emission distribution pct proposal")
@@ -60,9 +60,9 @@ func main() {
 
 func delegateGnsToAdmin() {
 	delegatedAmount := int64(1_000_000_000)
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	govStakerAddr := std.Address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
+	govStakerAddr := address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
 	gns.Approve(cross, govStakerAddr, delegatedAmount)
 	govStaker.Delegate(cross, adminAddr, int64(delegatedAmount), "")
 
@@ -70,7 +70,7 @@ func delegateGnsToAdmin() {
 }
 
 func proposeChangeEmissionDistributionPct() int64 {
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	proposalID := governance.ProposeParameterChange(cross, "emission", "change", 1, "gno.land/r/gnoswap/emission*EXE*ChangeDistributionPct*EXE*1,7000,2,1500,3,1000,4,500")
 
 	ufmt.Printf("[INFO] Change Emission Distribution Percentages Proposal ID: %d\n", proposalID)
@@ -78,7 +78,7 @@ func proposeChangeEmissionDistributionPct() int64 {
 }
 
 func vote(proposalID int64, yea bool) {
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	prevYeaNum := governance.GetYeaByProposalId(proposalID)
 	prevNayNum := governance.GetNayByProposalId(proposalID)
@@ -92,7 +92,7 @@ func vote(proposalID int64, yea bool) {
 }
 
 func executeChangeEmissionDistributionPct(proposalID int64) {
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	prevEmissionDistributionPct1 := emission.GetDistributionBpsPct(1)
 	prevEmissionDistributionPct2 := emission.GetDistributionBpsPct(2)
