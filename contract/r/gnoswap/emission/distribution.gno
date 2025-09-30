@@ -332,7 +332,7 @@ func GetAccuDistributedToGovStaker() int64 {
 	return accuDistributedToGovStaker
 }
 
-func GetStakerEmissionAmountPerSecondBy(timestamp, distributionPct int64) int64 {
+func GetEmissionAmountPerSecondBy(timestamp, distributionPct int64) int64 {
 	return calculateAmount(gns.GetEmissionAmountPerSecondByTimestamp(timestamp), distributionPct)
 }
 
