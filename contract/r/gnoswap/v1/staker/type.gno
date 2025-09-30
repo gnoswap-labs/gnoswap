@@ -66,7 +66,7 @@ func (self *ExternalIncentive) RewardSpent(currentTimestamp int64) int64 {
 // addDistributedRewardAmount adds the given amount to the distributed reward amount.
 // This function is used to add the distributed reward amount when the incentive is un-staked and refunded.
 func (self *ExternalIncentive) addDistributedRewardAmount(amount int64) {
-	self.distributedRewardAmount += amount
+	self.distributedRewardAmount = safeAddInt64(self.distributedRewardAmount, amount)
 }
 
 func (self *ExternalIncentive) Clone() *ExternalIncentive {
@@ -176,7 +176,7 @@ func (self *Deposit) CollectedExternalReward(incentiveID string) int64 {
 }
 
 func (self *Deposit) addCollectedInternalReward(reward int64) {
-	self.collectedInternalReward += reward
+	self.collectedInternalReward = safeAddInt64(self.collectedInternalReward, reward)
 }
 
 func (self *Deposit) addCollectedExternalReward(incentiveID string, reward int64) {
@@ -188,7 +188,7 @@ func (self *Deposit) addCollectedExternalReward(incentiveID string, reward int64
 		self.collectedExternalRewards[incentiveID] = 0
 	}
 
-	self.collectedExternalRewards[incentiveID] += reward
+	self.collectedExternalRewards[incentiveID] = safeAddInt64(self.collectedExternalRewards[incentiveID], reward)
 }
 
 // updateInternalRewardLastCollectTime updates the last collect time for the internal reward.

@@ -410,7 +410,7 @@ func (self *RewardState) calculateTotalExternalReward(startTime, endTime int64, 
 
 	collectedReward := self.deposit.CollectedExternalReward(incentive.incentiveId)
 
-	return safeConvertToInt64(currentReward) + collectedReward
+	return safeAddInt64(safeConvertToInt64(currentReward), collectedReward)
 }
 
 // calculateExternalReward calculates the external reward for the deposit.
@@ -459,7 +459,7 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 
 			rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.liquidity)
 			rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
-			self.rewards[i] += safeConvertToInt64(rewardAcc)
+			self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
 
 			break
 		}
@@ -474,7 +474,7 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 
 		rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.liquidity)
 		rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
-		self.rewards[i] += safeConvertToInt64(rewardAcc)
+		self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
 
 		startTime = warmup.NextWarmupTime
 	}
@@ -544,7 +544,8 @@ func (self *Pool) updateUnclaimableAccumulateRewards(currentTime int64) {
 	}
 
 	unclaimableDuration := currentTime - self.lastUnclaimableTime
-	self.unclaimableAcc += unclaimableDuration * self.CurrentReward(self.lastUnclaimableTime)
+	currentUnclaimableReward := safeMulInt64(unclaimableDuration, self.CurrentReward(self.lastUnclaimableTime))
+	self.unclaimableAcc = safeAddInt64(self.unclaimableAcc, currentUnclaimableReward)
 }
 
 // processUnclaimableReward processes the unclaimable reward and returns the accumulated reward.
