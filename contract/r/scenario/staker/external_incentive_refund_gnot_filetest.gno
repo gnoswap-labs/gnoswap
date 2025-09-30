@@ -260,8 +260,8 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 // [INFO] GNOT balance before ending: 99999000000000
 // [INFO] WUGNOT balance before ending: 0
 // [INFO] ending incentive with ID: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d:1234567900:1
-// [INFO] GNOT balance after ending: 99999995328000
+// [INFO] GNOT balance after ending: 100000000000000
 // [INFO] WUGNOT balance after ending: 0
-// [EXPECTED] GNOT refunded: 995328000
+// [EXPECTED] GNOT refunded: 1000000000
 // [EXPECTED] WUGNOT change (should be 0): 0
 // [PASS] GNOT incentive correctly refunded as GNOT
