@@ -24,24 +24,6 @@ func assertPanic(t *testing.T, expectedMsg string, fn func()) {
 	fn()
 }
 
-func TestGetOrigPkgAddr(t *testing.T) {
-	tests := []struct {
-		name     string
-		expected std.Address
-	}{
-		{
-			name:     "getOrigPkgAddr is success",
-			expected: positionAddr,
-		},
-	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			got := GetOrigPkgAddr()
-			uassert.Equal(t, got, tc.expected)
-		})
-	}
-}
-
 func TestAssertValidNumberString(t *testing.T) {
 	tests := []struct {
 		name                 string

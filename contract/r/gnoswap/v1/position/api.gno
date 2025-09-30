@@ -24,7 +24,7 @@ func ApiGetPosition(id uint64) string {
 }
 
 func ApiGetPositionUnclaimedFeeByLpPositionId(lpPositionId uint64) string {
-	unclaimedFee0, unclaimedFee1 := unclaimedFee(lpPositionId)
+	unclaimedFee0, unclaimedFee1 := UnclaimedFee(lpPositionId)
 	fee := RpcUnclaimedFee{
 		LpPositionId: lpPositionId,
 		Fee0:         unclaimedFee0.ToString(),
@@ -57,7 +57,7 @@ func rpcMakePosition(positionId uint64) RpcPosition {
 	unclaimedFee1 := u256.Zero()
 	burned := IsBurned(positionId)
 	if !burned {
-		unclaimedFee0, unclaimedFee1 = unclaimedFee(positionId)
+		unclaimedFee0, unclaimedFee1 = UnclaimedFee(positionId)
 	}
 
 	owner, err := gnft.OwnerOf(positionIdFrom(positionId))
@@ -88,12 +88,7 @@ func rpcMakePosition(positionId uint64) RpcPosition {
 }
 
 func UnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint) {
-	return unclaimedFee(positionId)
-}
-
-func unclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint) {
 	// ref: https://blog.uniswap.org/uniswap-v3-math-primer-2#calculating-uncollected-fees
-
 	position := MustGetPosition(positionId)
 
 	liquidity := position.liquidity
