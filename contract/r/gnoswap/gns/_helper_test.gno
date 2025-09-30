@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/grc/grc20"
-	"gno.land/p/demo/ownable"
+	"gno.land/p/demo/tokens/grc20"
+	"gno.land/p/nt/ownable"
 
 	prabc "gno.land/p/gnoswap/rbac"
 

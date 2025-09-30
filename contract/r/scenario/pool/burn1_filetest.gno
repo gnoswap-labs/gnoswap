@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (
@@ -75,7 +77,6 @@ func testZeroLiquidityBurn() {
 		barTokenPath,
 		bazTokenPath,
 		fee,
-		positionAddr,
 		tickLower,
 		tickUpper,
 		liquidityAmount,

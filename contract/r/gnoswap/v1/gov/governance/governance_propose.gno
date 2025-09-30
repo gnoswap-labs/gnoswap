@@ -36,7 +36,7 @@ func ProposeText(
 	title string,
 	description string,
 ) (newProposalId int64) {
-	halt.AssertIsNotHaltedGovernance()
+	halt.AssertIsNotHaltedGovernanceWithVersion(1)
 
 	callerAddress := std.PreviousRealm().Address()
 
@@ -95,7 +95,7 @@ func ProposeText(
 		"description", description,
 		"proposalId", formatInt(proposal.ID()),
 		"quorumAmount", formatInt(proposal.VotingQuorumAmount()),
-		"maxVotingWeight", formatInt(proposal.VotingTotalWeight()),
+		"maxVotingWeight", formatInt(proposal.VotingMaxWeight()),
 		"configVersion", formatInt(proposal.ConfigVersion()),
 		"createdAt", formatInt(proposal.CreatedAt()),
 	)
@@ -136,8 +136,8 @@ func ProposeCommunityPoolSpend(
 	tokenPath string,
 	amount int64,
 ) (newProposalId int64) {
-	halt.AssertIsNotHaltedGovernance()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedGovernanceWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	callerAddress := std.PreviousRealm().Address()
 
@@ -199,7 +199,7 @@ func ProposeCommunityPoolSpend(
 		"amount", formatInt(amount),
 		"proposalId", formatInt(proposal.ID()),
 		"quorumAmount", formatInt(proposal.VotingQuorumAmount()),
-		"maxVotingWeight", formatInt(proposal.VotingTotalWeight()),
+		"maxVotingWeight", formatInt(proposal.VotingMaxWeight()),
 		"configVersion", formatInt(proposal.ConfigVersion()),
 		"createdAt", formatInt(proposal.CreatedAt()),
 	)
@@ -244,7 +244,7 @@ func ProposeParameterChange(
 	numToExecute int64,
 	executions string,
 ) (newProposalId int64) {
-	halt.AssertIsNotHaltedGovernance()
+	halt.AssertIsNotHaltedGovernanceWithVersion(1)
 
 	callerAddress := std.PreviousRealm().Address()
 
@@ -305,7 +305,7 @@ func ProposeParameterChange(
 		"executions", executions,
 		"proposalId", formatInt(proposal.ID()),
 		"quorumAmount", formatInt(proposal.VotingQuorumAmount()),
-		"maxVotingWeight", formatInt(proposal.VotingTotalWeight()),
+		"maxVotingWeight", formatInt(proposal.VotingMaxWeight()),
 		"configVersion", formatInt(proposal.ConfigVersion()),
 		"createdAt", formatInt(proposal.CreatedAt()),
 	)

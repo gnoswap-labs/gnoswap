@@ -9,8 +9,8 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/referral"
 	"gno.land/r/gnoswap/v1/gnft"
@@ -78,7 +78,6 @@ func seedPosition(t *testing.T, amount0, amount1 string) uint64 {
 
 func newDummyPosition(id uint64) Position {
 	return Position{
-		nonce:                    u256.NewUint(id),
 		operator:                 "user1",
 		poolKey:                  "poolKey1",
 		tickLower:                -500,
@@ -133,7 +132,6 @@ func TestMustGetPosition(t *testing.T) {
 				})
 			} else {
 				result := MustGetPosition(tt.inputPositionId)
-				uassert.Equal(t, tt.expectedPosition.nonce.ToString(), result.nonce.ToString())
 				uassert.Equal(t, tt.expectedPosition.operator, result.operator)
 				uassert.Equal(t, tt.expectedPosition.poolKey, result.poolKey)
 				uassert.Equal(t, tt.expectedPosition.tickLower, result.tickLower)
@@ -152,7 +150,6 @@ func TestMustGetPosition(t *testing.T) {
 func TestSetPosition(t *testing.T) {
 	position := newDummyPosition(1)
 	changedPosition := newDummyPosition(1)
-	changedPosition.nonce = u256.NewUint(2)
 	changedPosition.operator = "user2"
 	changedPosition.poolKey = "poolKey2"
 	changedPosition.tickLower = -2000
@@ -188,7 +185,6 @@ func TestSetPosition(t *testing.T) {
 			setPosition(tt.positionId, tt.inputPosition)
 
 			storedPosition, _ := GetPosition(tt.positionId)
-			uassert.Equal(t, tt.inputPosition.nonce.ToString(), storedPosition.nonce.ToString())
 			uassert.Equal(t, tt.inputPosition.operator, storedPosition.operator)
 			uassert.Equal(t, tt.inputPosition.poolKey, storedPosition.poolKey)
 			uassert.Equal(t, tt.inputPosition.tickLower, storedPosition.tickLower)

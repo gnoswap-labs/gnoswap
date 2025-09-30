@@ -7,9 +7,10 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/gnoswap/v1/common"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 )
 
 var errDummy = errors.New("dummy error")
@@ -104,7 +105,7 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 		},
 		{
 			name:            "Pass: WUGNOT input token",
-			inputToken:      "gno.land/r/demo/wugnot",
+			inputToken:      "gno.land/r/gnoland/wugnot",
 			outputToken:     "token2",
 			specifiedAmount: i256.NewInt(100),
 			sentAmount:      0,
@@ -113,7 +114,7 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 		{
 			name:            "Pass: WUGNOT output token",
 			inputToken:      "token1",
-			outputToken:     "gno.land/r/demo/wugnot",
+			outputToken:     "gno.land/r/gnoland/wugnot",
 			specifiedAmount: i256.NewInt(100),
 			sentAmount:      0,
 			expectError:     false,
@@ -261,6 +262,7 @@ func TestProcessRoute(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		CreatePoolWithoutFee(t)
 		MakeThirdMintPositionWithoutFee(t)
+		common.SafeGRC20Approve(cross, fooPath, routerAddr, 1000000)
 		route := foobar500
 		toSwap := i256.NewInt(1000)
 		swapType := ExactIn

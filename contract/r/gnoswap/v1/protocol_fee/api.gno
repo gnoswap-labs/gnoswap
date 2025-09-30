@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"time"
 
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/json"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/avl"
+	"gno.land/p/onbloc/json"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
 )

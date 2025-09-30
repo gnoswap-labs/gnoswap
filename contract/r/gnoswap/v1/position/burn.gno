@@ -1,9 +1,9 @@
 package position
 
 import (
-	"gno.land/p/demo/ufmt"
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
@@ -125,18 +125,18 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, 
 	collectAmount0 := u256.MustFromDecimal(collect0)
 	collectAmount1 := u256.MustFromDecimal(collect1)
 
-	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
+	poolAddr := access.MustGetAddressWithVersion(prabc.ROLE_POOL.String(), 1)
 
 	if isWrappedToken(pToken0) && params.unwrapResult {
 		unwrapWithTransferFrom(poolAddr, caller, safeConvertToInt64(collectAmount0))
 	} else {
-		common.TransferFrom(cross, pToken0, poolAddr, caller, safeConvertToInt64(collectAmount0))
+		common.SafeGRC20TransferFrom(cross, pToken0, poolAddr, caller, safeConvertToInt64(collectAmount0))
 	}
 
 	if isWrappedToken(pToken1) && params.unwrapResult {
 		unwrapWithTransferFrom(poolAddr, caller, safeConvertToInt64(collectAmount1))
 	} else {
-		common.TransferFrom(cross, pToken1, poolAddr, caller, safeConvertToInt64(collectAmount1))
+		common.SafeGRC20TransferFrom(cross, pToken1, poolAddr, caller, safeConvertToInt64(collectAmount1))
 	}
 
 	// Check for underflow when subtracting collected amounts from tokens owed
@@ -205,6 +205,5 @@ func calculateTokensOwed(
 	positionLiquidity *u256.Uint,
 ) *u256.Uint {
 	diff := u256.Zero().Sub(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128)
-	// TODO: make Q128 a global variable
-	return u256.MulDiv(diff, positionLiquidity, u256.MustFromDecimal(Q128))
+	return u256.MulDiv(diff, positionLiquidity, q128)
 }

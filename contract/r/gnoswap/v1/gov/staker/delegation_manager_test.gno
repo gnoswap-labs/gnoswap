@@ -4,7 +4,7 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 )
 
 // TestDelegationManager_AddAndRemoveDelegation tests adding and removing delegations

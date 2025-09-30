@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -56,7 +56,7 @@ func TestQueryDepositData(t *testing.T) {
 	deposit := &Deposit{
 		owner:          testAddr,
 		targetPoolPath: poolPath,
-		stakeTimestamp: time.Now().Unix(),
+		stakeTime:      time.Now().Unix(),
 		liquidity:      u256.NewUint(1000),
 		warmups:        make([]Warmup, 2),
 	}
@@ -72,7 +72,7 @@ func TestQueryDepositData(t *testing.T) {
 	uassert.Equal(t, data.TokenID, lpTokenId)
 	uassert.Equal(t, data.Owner, testAddr)
 	uassert.Equal(t, data.TargetPoolPath, poolPath)
-	uassert.Equal(t, data.StakeTimestamp, deposit.stakeTimestamp)
+	uassert.Equal(t, data.StakeTimestamp, deposit.stakeTime)
 	uassert.Equal(t, data.WarmupCount, 2)
 
 	// reset

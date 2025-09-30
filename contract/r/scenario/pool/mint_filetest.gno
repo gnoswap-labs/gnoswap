@@ -1,10 +1,12 @@
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
@@ -80,7 +82,6 @@ func main() {
 		barPath,
 		fooPath,
 		fee500,
-		positionAddr,
 		1000,
 		2000,
 		test_liquidityExpectStr,
@@ -102,7 +103,6 @@ func main() {
 		barPath,
 		fooPath,
 		fee500,
-		positionAddr,
 		-2000,
 		-1000,
 		test_liquidityExpectStr,

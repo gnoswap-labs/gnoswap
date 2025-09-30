@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/json"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/onbloc/json"
+	"gno.land/p/nt/uassert"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 )
 
 var (

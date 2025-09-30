@@ -15,10 +15,10 @@ import (
 )
 
 var (
-	positionAddr, _    = access.GetAddress(prabc.ROLE_POSITION.String())
-	poolAddr, _        = access.GetAddress(prabc.ROLE_POOL.String())
-	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
-	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
+	positionAddr    = access.MustGetAddressWithVersion(prabc.ROLE_POSITION.String(), 1)
+	poolAddr        = access.MustGetAddressWithVersion(prabc.ROLE_POOL.String(), 1)
+	protocolFeeAddr = access.MustGetAddressWithVersion(prabc.ROLE_PROTOCOL_FEE.String(), 1)
+	routerAddr      = access.MustGetAddressWithVersion(prabc.ROLE_ROUTER.String(), 1)
 )
 
 // Mint adds liquidity to a pool position.
@@ -50,16 +50,15 @@ func Mint(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	recipient std.Address,
 	tickLower int32,
 	tickUpper int32,
 	liquidityAmount string,
 	positionCaller std.Address,
 ) (string, string) {
-	halt.AssertIsNotHaltedPool()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsPosition(caller)
+	access.AssertIsPositionWithVersion(1, caller)
 	access.AssertIsValidAddress(positionCaller)
 
 	liquidity := u256.MustFromDecimal(liquidityAmount)
@@ -115,10 +114,10 @@ func Burn(
 	liquidityAmount string, // uint128
 	positionCaller std.Address,
 ) (string, string) { // uint256 x2
-	halt.AssertIsNotHaltedPool()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsPosition(caller)
+	access.AssertIsPositionWithVersion(1, caller)
 	access.AssertIsValidAddress(positionCaller)
 
 	liqAmount := u256.MustFromDecimal(liquidityAmount)
@@ -193,11 +192,11 @@ func Collect(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	halt.AssertIsNotHaltedPool()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsPosition(caller)
+	access.AssertIsPositionWithVersion(1, caller)
 	access.AssertIsValidAddress(recipient)
 
 	pool := mustGetPoolBy(token0Path, token1Path, fee)
@@ -235,17 +234,12 @@ func Collect(
 
 		position.tokensOwed0 = tokenOwed0
 		pool.balances.token0 = token0Balance
-		if err := common.Approve(cross, pool.token0Path, positionAddr, safeConvertToInt64(amount0)); err != nil {
-			panic(err)
-		}
+		common.SafeGRC20Approve(cross, pool.token0Path, positionAddr, safeConvertToInt64(amount0))
 	}
 	if amount1.Gt(u256.Zero()) {
 		position.tokensOwed1 = u256.Zero().Sub(position.tokensOwed1, amount1)
 		pool.balances.token1 = u256.Zero().Sub(pool.balances.token1, amount1)
-
-		if err := common.Approve(cross, pool.token1Path, positionAddr, safeConvertToInt64(amount1)); err != nil {
-			panic(err)
-		}
+		common.SafeGRC20Approve(cross, pool.token1Path, positionAddr, safeConvertToInt64(amount1))
 	}
 
 	pool.setPosition(positionKey, position)
@@ -277,11 +271,11 @@ func CollectProtocol(
 	amount0Requested string, // uint128
 	amount1Requested string, // uint128
 ) (string, string) {
-	halt.AssertIsNotHaltedPool()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedPoolWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	common.MustRegistered(token0Path)
 	common.MustRegistered(token1Path)
@@ -337,14 +331,14 @@ func collectProtocol(
 	uAmount0 := safeConvertToInt64(amount0)
 	uAmount1 := safeConvertToInt64(amount1)
 
-	checkTransferError(common.Transfer(cross, pool.token0Path, recipient, uAmount0))
+	common.SafeGRC20Transfer(cross, pool.token0Path, recipient, uAmount0)
 	newBalanceToken0, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount0, true)
 	if err != nil {
 		panic(err)
 	}
 	pool.balances.token0 = newBalanceToken0
 
-	checkTransferError(common.Transfer(cross, pool.token1Path, recipient, uAmount1))
+	common.SafeGRC20Transfer(cross, pool.token1Path, recipient, uAmount1)
 	newBalanceToken1, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount1, false)
 	if err != nil {
 		panic(err)

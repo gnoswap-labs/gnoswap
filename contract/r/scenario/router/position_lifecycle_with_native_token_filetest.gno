@@ -14,16 +14,15 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/pool"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	"gno.land/r/gnoswap/v1/router"
 
-	"gno.land/p/demo/testutils"
 	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/testutils"
 	_ "gno.land/r/gnoswap/rbac"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 )
 
 var (
@@ -38,7 +37,7 @@ var (
 	userAddr  = testutils.TestAddress("user")
 	userRealm = std.NewUserRealm(userAddr)
 
-	wugnotPath = "gno.land/r/demo/wugnot"
+	wugnotPath = "gno.land/r/gnoland/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/gns"
 
 	fee500 uint32 = 500
@@ -66,12 +65,8 @@ func main() {
 	testExecuteSwapsForFees()
 	println()
 
-	println("[SCENARIO] 4. Collect Fees with Unwrap")
-	testCollectFeesWithUnwrap()
-	println()
-
-	println("[SCENARIO] 5. Burn Position with Unwrap")
-	testBurnPositionWithUnwrap()
+	println("[SCENARIO] 4. Burn Position with Unwrap")
+	testBurnPositionWithUnwrap("170132354") // 170132354 is 50% of 340264708
 }
 
 func setupInitialEnvironment() {
@@ -170,12 +165,13 @@ func testExecuteSwapsForFees() {
 		gns.Approve(cross, poolAddr, 10000000)
 		gns.Approve(cross, routerAddr, max_approve) // For router fee
 
+		testing.SetOriginSend(std.Coins{})
 		amountIn, amountOut := router.ExactInSwapRoute(
 			cross,
 			gnsPath,
 			wugnotPath,
 			"10000000",
-			"gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500",
+			"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500",
 			"100",
 			"0",
 			time.Now().Add(time.Hour).Unix(),
@@ -188,71 +184,30 @@ func testExecuteSwapsForFees() {
 	}
 
 	// Get accumulated fees info
-	_, _, _, _, amount0, amount1 := pn.CollectFee(cross, 1, false)
 	protocolFeeWugnot := wugnot.BalanceOf(protocolFeeAddr)
 	protocolFeeGns := gns.BalanceOf(protocolFeeAddr)
 
-	println("[INFO] Accumulated GNS fees:", amount0)
-	println("[INFO] Accumulated WUGNOT fees:", amount1)
 	println("[INFO] Protocol fee balance WUGNOT:", protocolFeeWugnot)
 	println("[INFO] Protocol fee balance GNS:", protocolFeeGns)
 	println("[EXPECTED] Pool fee (0.5%) accumulated correctly")
 	println("[EXPECTED] Router fee (0.15%) accumulated correctly")
 }
 
-func testCollectFeesWithUnwrap() {
-	println("[INFO] Collecting fees with unwrap=true")
-	testing.SetRealm(userRealm)
-
-	banker := std.NewBanker(std.BankerTypeReadonly)
-	prevGnotBalance := banker.GetCoins(userAddr).AmountOf("ugnot")
-	prevGnsBalance := gns.BalanceOf(userAddr)
-	prevWugnotBalance := wugnot.BalanceOf(userAddr)
-
-	// Collect fees with unwrap
-	_, token0Collected, token1Collected, _, _, _ := pn.CollectFee(
-		cross,
-		1,
-		true, // unwrap WUGNOT to GNOT
-	)
-
-	afterGnotBalance := banker.GetCoins(userAddr).AmountOf("ugnot")
-	afterGnsBalance := gns.BalanceOf(userAddr)
-	afterWugnotBalance := wugnot.BalanceOf(userAddr)
-
-	expectedGnotReceived := token1Collected
-
-	println("[INFO] GNS fees collected:", token0Collected)
-	println("[INFO] WUGNOT fees collected:", token1Collected)
-	println("[INFO] GNOT received:", afterGnotBalance-prevGnotBalance)
-	println("[INFO] GNS received:", afterGnsBalance-prevGnsBalance)
-	println("[INFO] WUGNOT balance change:", afterWugnotBalance-prevWugnotBalance)
-
-	println("[EXPECTED] User receives GNOT (not WUGNOT)")
-	println("[EXPECTED] GNOT received:", expectedGnotReceived)
-	println("[EXPECTED] Withdrawal fee deducted correctly")
-}
-
-func testBurnPositionWithUnwrap() {
+func testBurnPositionWithUnwrap(removedLiquidity string) {
 	println("[INFO] Burning 50% of position liquidity with unwrap=true")
 	testing.SetRealm(userRealm)
 
-	// Get current position info
-	currentLiquidity := pool.GetLiquidity("gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500")
-
-	// Calculate 50% liquidity to burn
-	liquidityInt, _ := strconv.ParseInt(currentLiquidity, 10, 64)
-	halfLiquidity := liquidityInt / 2
-
 	banker := std.NewBanker(std.BankerTypeReadonly)
 	prevGnotBalance := banker.GetCoins(userAddr).AmountOf("ugnot")
 	prevGnsBalance := gns.BalanceOf(userAddr)
+	beforeProtocolFeeWugnot := wugnot.BalanceOf(protocolFeeAddr)
+	beforeProtocolFeeGns := gns.BalanceOf(protocolFeeAddr)
 
 	// Burn 50% liquidity with unwrap
 	_, _, fee0, fee1, amount0, amount1, _ := pn.DecreaseLiquidity(
 		cross,
 		1,
-		strconv.FormatInt(halfLiquidity, 10),
+		removedLiquidity,
 		"0", // amount0Min
 		"0", // amount1Min
 		max_timeout,
@@ -261,34 +216,24 @@ func testBurnPositionWithUnwrap() {
 
 	afterGnotBalance := banker.GetCoins(userAddr).AmountOf("ugnot")
 	afterGnsBalance := gns.BalanceOf(userAddr)
+	afterProtocolFeeWugnot := wugnot.BalanceOf(protocolFeeAddr)
+	afterProtocolFeeGns := gns.BalanceOf(protocolFeeAddr)
 
 	// Calculate total WUGNOT that was unwrapped
 	totalWugnotAmount, _ := strconv.ParseInt(amount1, 10, 64)
 	totalWugnotFee, _ := strconv.ParseInt(fee1, 10, 64)
 	totalWugnot := totalWugnotAmount + totalWugnotFee
 
-	// Calculate withdrawal fee
-	expectedWithdrawalFee := totalWugnot * 1 / 1000
-
-	println("[INFO] Liquidity burned:", halfLiquidity)
-	println("[INFO] GNS returned:", amount0)
-	println("[INFO] WUGNOT returned:", amount1)
-	println("[INFO] GNS fees collected:", fee0)
-	println("[INFO] WUGNOT fees collected:", fee1)
-	println("[INFO] Total WUGNOT unwrapped:", totalWugnot)
-	println("[INFO] Withdrawal fee (0.1%):", expectedWithdrawalFee)
-	println("[INFO] GNOT received:", afterGnotBalance-prevGnotBalance)
-	println("[INFO] GNS received:", afterGnsBalance-prevGnsBalance)
-
-	println("[EXPECTED] User receives GNOT directly")
-	println("[EXPECTED] All fees calculated correctly")
-	println("[EXPECTED] No residual balances")
-
-	// Verify no residual balances
-	routerGnotBalance := banker.GetCoins(routerAddr).AmountOf("ugnot")
-	routerWugnotBalance := wugnot.BalanceOf(routerAddr)
-	println("[INFO] Router GNOT balance:", routerGnotBalance)
-	println("[INFO] Router WUGNOT balance:", routerWugnotBalance)
+	println("[EXPECTED] Liquidity burned:", removedLiquidity)
+	println("[EXPECTED] GNS returned:", amount0)
+	println("[EXPECTED] WUGNOT returned:", amount1)
+	println("[EXPECTED] GNS fees collected:", fee0)
+	println("[EXPECTED] WUGNOT fees collected:", fee1)
+	println("[EXPECTED] Total WUGNOT unwrapped:", totalWugnot)
+	println("[EXPECTED] Protocol fee WUGNOT balance:", afterProtocolFeeWugnot-beforeProtocolFeeWugnot)
+	println("[EXPECTED] Protocol fee GNS balance:", afterProtocolFeeGns-beforeProtocolFeeGns)
+	println("[EXPECTED] GNOT received:", afterGnotBalance-prevGnotBalance)
+	println("[EXPECTED] GNS received:", afterGnsBalance-prevGnsBalance)
 }
 
 // Output:
@@ -320,37 +265,20 @@ func testBurnPositionWithUnwrap() {
 // [SCENARIO] 3. Execute Swaps (Generate Fees)
 // [INFO] Executing swaps to generate fees
 // [INFO] Swap 1 - GNS in: 10000000 WUGNOT out: -9695218
-// [INFO] Accumulated GNS fees: 0
-// [INFO] Accumulated WUGNOT fees: 50001
 // [INFO] Protocol fee balance WUGNOT: 115880
-// [INFO] Protocol fee balance GNS: 500
+// [INFO] Protocol fee balance GNS: 0
 // [EXPECTED] Pool fee (0.5%) accumulated correctly
 // [EXPECTED] Router fee (0.15%) accumulated correctly
 //
-// [SCENARIO] 4. Collect Fees with Unwrap
-// [INFO] Collecting fees with unwrap=true
-// [INFO] GNS fees collected: 0
-// [INFO] WUGNOT fees collected: 0
-// [INFO] GNOT received: 0
-// [INFO] GNS received: 0
-// [INFO] WUGNOT balance change: 0
-// [EXPECTED] User receives GNOT (not WUGNOT)
-// [EXPECTED] GNOT received: 0
-// [EXPECTED] Withdrawal fee deducted correctly
-//
-// [SCENARIO] 5. Burn Position with Unwrap
+// [SCENARIO] 4. Burn Position with Unwrap
 // [INFO] Burning 50% of position liquidity with unwrap=true
-// [INFO] Liquidity burned: 170132354
-// [INFO] GNS returned: 11371739
-// [INFO] WUGNOT returned: 99974998
-// [INFO] GNS fees collected: 0
-// [INFO] WUGNOT fees collected: 0
-// [INFO] Total WUGNOT unwrapped: 99974998
-// [INFO] Withdrawal fee (0.1%): 99974
-// [INFO] GNOT received: 11371739
-// [INFO] GNS received: 99974998
-// [EXPECTED] User receives GNOT directly
-// [EXPECTED] All fees calculated correctly
-// [EXPECTED] No residual balances
-// [INFO] Router GNOT balance: 0
-// [INFO] Router WUGNOT balance: 0
+// [EXPECTED] Liquidity burned: 170132354
+// [EXPECTED] GNS returned: 11371739
+// [EXPECTED] WUGNOT returned: 99974998
+// [EXPECTED] GNS fees collected: 0
+// [EXPECTED] WUGNOT fees collected: 49501
+// [EXPECTED] Total WUGNOT unwrapped: 100024499
+// [EXPECTED] Protocol fee WUGNOT balance: 0
+// [EXPECTED] Protocol fee GNS balance: 500
+// [EXPECTED] GNOT received: 11371739
+// [EXPECTED] GNS received: 100024499

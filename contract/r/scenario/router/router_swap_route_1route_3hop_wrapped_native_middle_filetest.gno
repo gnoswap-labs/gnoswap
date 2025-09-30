@@ -14,7 +14,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 )
@@ -31,7 +31,7 @@ var (
 	quxPath = "gno.land/r/onbloc/qux"
 	gnsPath = "gno.land/r/gnoswap/gns"
 
-	wrappedWugnot = "gno.land/r/demo/wugnot"
+	wrappedWugnot = "gno.land/r/gnoland/wugnot"
 
 	max_timeout int64 = 9999999999
 	max_approve int64 = 9223372036854775806
@@ -86,6 +86,7 @@ func testPositionMintGnsGnot() {
 	wugnot.Approve(cross, poolAddr, max_approve)
 
 	println("[INFO] Minting position in gns-wugnot pool")
+	testing.SetOriginSend(std.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(cross, gnsPath, wrappedWugnot, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	println("[INFO] positionId:", positionId)
@@ -118,6 +119,7 @@ func testPositionMintGnotBar() {
 	bar.Approve(cross, poolAddr, max_approve)
 
 	println("[INFO] Minting position in wugnot-bar pool")
+	testing.SetOriginSend(std.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(cross, wrappedWugnot, barPath, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	println("[INFO] positionId:", positionId)
@@ -141,7 +143,7 @@ func testDrySwapRouteGnsBarExactIn() {
 		barPath,    // outputToken
 		"1000",     // amountSpecified
 		"EXACT_IN", // swapType
-		"gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
+		"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:100*POOL*gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
 		"100", // quoteArr
 		"1",
 	)
@@ -154,16 +156,16 @@ func testSwapRouteGnsBarExactIn() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for swap")
-	gns.Approve(cross, poolAddr, 1000)   // swap input amount
-	bar.Approve(cross, routerAddr, 7325) // 0.15% fee
+	gns.Approve(cross, routerAddr, 1000) // swap input amount
 
 	println("[INFO] Executing ExactIn swap (1000 gns → wugnot → bar)")
+	testing.SetOriginSend(std.Coins{})
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
 		gnsPath, // inputToken
 		barPath, // outputToken
 		"1000",  // amountSpecified
-		"gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
+		"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:100*POOL*gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
 		"100", // quoteArr
 		"0",   // tokenAmountLimit
 		time.Now().Add(time.Hour).Unix(),

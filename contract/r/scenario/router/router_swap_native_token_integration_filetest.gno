@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
@@ -24,7 +24,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/onbloc/usdc"
 )
 
@@ -40,7 +40,7 @@ var (
 	userAddr  = testutils.TestAddress("user")
 	userRealm = std.NewUserRealm(userAddr)
 
-	wugnotPath = "gno.land/r/demo/wugnot"
+	wugnotPath = "gno.land/r/gnoland/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/gns"
 	usdcPath   = "gno.land/r/onbloc/usdc"
 
@@ -102,11 +102,13 @@ func setupPoolsAndLiquidity() {
 	// WUGNOT/GNS pool
 	wugnot.Approve(cross, poolAddr, 100000000)
 	gns.Approve(cross, poolAddr, 100000000)
+	testing.SetOriginSend(std.Coins{})
 	pn.Mint(cross, gnsPath, wugnotPath, fee500, int32(-6960), int32(6960), "100000000", "100000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	// GNS/USDC pool
 	gns.Approve(cross, poolAddr, 100000000)
 	usdc.Approve(cross, poolAddr, 100000000)
+	testing.SetOriginSend(std.Coins{})
 	pn.Mint(cross, gnsPath, usdcPath, fee500, int32(-6960), int32(6960), "100000000", "100000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	// Transfer tokens to user
@@ -137,8 +139,8 @@ func testExactInGnotToGns() {
 	prevGnsBalance := gns.BalanceOf(userAddr)
 
 	// Approve router fee payment
-	gns.Approve(cross, poolAddr, max_approve)
-	wugnot.Approve(cross, poolAddr, max_approve)
+	gns.Approve(cross, routerAddr, max_approve)
+	wugnot.Approve(cross, routerAddr, max_approve)
 
 	// Execute ExactIn swap with GNOT
 	testing.SetOriginSend(std.Coins{{"ugnot", 1000000}})
@@ -147,7 +149,7 @@ func testExactInGnotToGns() {
 		gnotPath,  // input token (GNOT)
 		gnsPath,   // output token
 		"1000000", // exact amount in
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500", // route
+		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500", // route
 		"100", // quote
 		"0",   // min amount out
 		time.Now().Add(time.Hour).Unix(),
@@ -192,16 +194,17 @@ func testExactOutGnsToGnot() {
 	prevGnsBalance := gns.BalanceOf(userAddr)
 
 	// Approve GNS for swap
-	gns.Approve(cross, poolAddr, max_approve)
+	gns.Approve(cross, routerAddr, max_approve)
 	gns.Approve(cross, routerAddr, max_approve)
 
 	// Execute ExactOut swap requesting GNOT
+	testing.SetOriginSend(std.Coins{})
 	amountIn, amountOut := router.ExactOutSwapRoute(
 		cross,
 		gnsPath,   // input token
 		gnotPath,  // output token (GNOT)
 		"1000000", // exact amount out (GNOT)
-		"gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500", // route
+		"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500", // route
 		"100",      // quote
 		"10000000", // max amount in
 		time.Now().Add(time.Hour).Unix(),
@@ -241,8 +244,8 @@ func testMultiHopGnotToUsdc() {
 	prevUsdcBalance := usdc.BalanceOf(userAddr)
 
 	// Approve for router fees
-	gns.Approve(cross, poolAddr, max_approve)
-	usdc.Approve(cross, poolAddr, max_approve)
+	gns.Approve(cross, routerAddr, max_approve)
+	usdc.Approve(cross, routerAddr, max_approve)
 
 	// Execute multi-hop swap
 	testing.SetOriginSend(std.Coins{{"ugnot", 1000000}})
@@ -251,7 +254,7 @@ func testMultiHopGnotToUsdc() {
 		gnotPath,  // input token (GNOT)
 		usdcPath,  // output token
 		"1000000", // exact amount in
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/onbloc/usdc:500", // route
+		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/onbloc/usdc:500", // route
 		"100", // quote
 		"0",   // min amount out
 		time.Now().Add(time.Hour).Unix(),
@@ -280,18 +283,17 @@ func testMultiHopUsdcToGnot() {
 	prevGnotBalance := banker.GetCoins(userAddr).AmountOf("ugnot")
 
 	// Approve tokens
-	usdc.Approve(cross, poolAddr, max_approve)
 	usdc.Approve(cross, routerAddr, max_approve)
-	gns.Approve(cross, poolAddr, max_approve)
 	gns.Approve(cross, routerAddr, max_approve)
 
 	// Execute multi-hop ExactOut swap
+	testing.SetOriginSend(std.Coins{})
 	amountIn, amountOut := router.ExactOutSwapRoute(
 		cross,
 		usdcPath,  // input token
 		gnotPath,  // output token (GNOT)
 		"1000000", // exact amount out (GNOT)
-		"gno.land/r/onbloc/usdc:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500", // route
+		"gno.land/r/onbloc/usdc:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500", // route
 		"100",      // quote
 		"10000000", // max amount in
 		time.Now().Add(time.Hour).Unix(),

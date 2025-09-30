@@ -3,29 +3,35 @@ package protocol_fee
 import (
 	"std"
 
-	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 )
 
-// assertIsPoolOrRouterOrStaker panics if the caller is not the pool, router, or staker contract.
-func assertIsPoolOrRouterOrStaker(caller std.Address) {
-	access.AssertHasAnyRole(
-		caller,
-		prbac.ROLE_POOL.String(),
-		prbac.ROLE_ROUTER.String(),
-		prbac.ROLE_STAKER.String(),
-	)
+// assertIsPoolOrPositionOrRouterOrStaker panics if the caller is not the pool, router, or staker contract.
+func assertIsPoolOrPositionOrRouterOrStaker(caller std.Address) {
+	if access.IsAuthorizedWithVersion(prbac.ROLE_POOL.String(), 1, caller) ||
+		access.IsAuthorizedWithVersion(prbac.ROLE_POSITION.String(), 1, caller) ||
+		access.IsAuthorizedWithVersion(prbac.ROLE_ROUTER.String(), 1, caller) ||
+		access.IsAuthorizedWithVersion(prbac.ROLE_STAKER.String(), 1, caller) {
+		return
+	}
+
+	panic(ufmt.Errorf("unauthorized: caller %s is not pool or position or router or staker", caller))
 }
 
 // assertIsAdminOrGovStaker panics if the caller is not admin or gov/staker.
 func assertIsAdminOrGovStaker(caller std.Address) {
-	access.AssertHasAnyRole(
-		caller,
-		prbac.ROLE_ADMIN.String(),
-		prbac.ROLE_GOV_STAKER.String(),
-	)
+	if access.IsAuthorized(prbac.ROLE_ADMIN.String(), caller) {
+		return
+	}
+
+	if access.IsAuthorizedWithVersion(prbac.ROLE_GOV_STAKER.String(), 1, caller) {
+		return
+	}
+
+	panic(ufmt.Errorf("unauthorized: caller %s is not admin or gov/staker", caller))
 }
 
 // assertIsValidPercent panics if the percentage is invalid (not between 0-10000).

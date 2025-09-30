@@ -3,8 +3,8 @@ package pool
 import (
 	"strings"
 
-	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 )
 
 // GetPool retrieves a pool instance based on the provided token paths and fee tier.
@@ -177,7 +177,24 @@ func ExistsPoolPath(poolPath string) bool {
 	return pools.Has(poolPath)
 }
 
-func GetTickCumulative(poolPath string, secondsAgo int64) int64 {
+func GetObservation(poolPath string, secondsAgo int64) (
+	tickCumulative int64,
+	liquidityCumulative, 
+	secondsPerLiquidityCumulativeX128 string,
+	blockTimestamp int64,
+) {
 	pool := mustGetPool(poolPath)
-	return pool.Observation().TickCumulative()
+
+	if pool.observationState == nil {
+		return 0, "0", "0", 0
+	}
+
+	lastObservation := pool.observationState.lastObservation()
+
+	tickCumulative = lastObservation.TickCumulative()
+	liquidityCumulative = lastObservation.LiquidityCumulative()
+	secondsPerLiquidityCumulativeX128 = lastObservation.SecondsPerLiquidityCumulativeX128()
+	blockTimestamp = lastObservation.BlockTimestamp()
+
+	return
 }

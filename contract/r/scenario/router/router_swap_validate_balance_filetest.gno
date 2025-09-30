@@ -18,11 +18,11 @@ import (
 	pn "gno.land/r/gnoswap/v1/position"
 	"gno.land/r/gnoswap/v1/router"
 
-	"gno.land/p/demo/testutils"
 	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/testutils"
 	_ "gno.land/r/gnoswap/rbac"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 )
 
 var (
@@ -36,7 +36,7 @@ var (
 	userAddr  = testutils.TestAddress("user")
 	userRealm = std.NewUserRealm(userAddr)
 
-	wugnotPath = "gno.land/r/demo/wugnot"
+	wugnotPath = "gno.land/r/gnoland/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/gns"
 	gnotPath   = "gnot"
 
@@ -228,18 +228,18 @@ func performSwaps() BalanceSnapshot {
 
 	// Swap 1: GNOT → GNS (ExactIn)
 	println("[INFO] Swap 1: 10,000,000 GNOT → GNS")
-	wugnot.Approve(cross, poolAddr, 10000000)
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(userAddr, routerAddr, std.Coins{{"ugnot", 10000000}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 10000000}})
+	wugnot.Approve(cross, routerAddr, 10000000)
 	gns.Approve(cross, routerAddr, max_approve)
 
+	testing.SetOriginSend(std.Coins{{"ugnot", 10000000}})
 	amountIn1, amountOut1 := router.ExactInSwapRoute(
 		cross,
 		gnotPath,
 		gnsPath,
 		"10000000",
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500",
+		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500",
 		"100",
 		"0",
 		time.Now().Add(time.Hour).Unix(),
@@ -249,15 +249,16 @@ func performSwaps() BalanceSnapshot {
 
 	// Swap 2: GNS → GNOT (ExactOut)
 	println("[INFO] Swap 2: GNS → 5,000,000 GNOT")
-	gns.Approve(cross, poolAddr, max_approve)
+	gns.Approve(cross, routerAddr, max_approve)
 	gns.Approve(cross, routerAddr, max_approve)
 
+	testing.SetOriginSend(std.Coins{})
 	amountIn2, amountOut2 := router.ExactOutSwapRoute(
 		cross,
 		gnsPath,
 		gnotPath,
 		"5000000",
-		"gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500",
+		"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500",
 		"100",
 		"10000000",
 		time.Now().Add(time.Hour).Unix(),
@@ -276,8 +277,8 @@ func addLiquidityWithGnot() BalanceSnapshot {
 	wugnot.Approve(cross, poolAddr, 20000000)
 	banker := std.NewBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(userAddr, positionAddr, std.Coins{{"ugnot", 20000000}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 20000000}})
 
+	testing.SetOriginSend(std.Coins{{"ugnot", 20000000}})
 	_, liquidity, amount0, amount1, _ := pn.IncreaseLiquidity(
 		cross,
 		1,
@@ -299,12 +300,13 @@ func removeLiquidityToGnot() BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
 	// Get current position liquidity
-	currentLiquidity := pl.GetLiquidity("gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500")
+	currentLiquidity := pl.GetLiquidity("gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500")
 
 	// Remove 30% liquidity
 	liquidityInt, _ := strconv.ParseInt(currentLiquidity, 10, 64)
 	removeLiquidity := liquidityInt * 30 / 100
 
+	testing.SetOriginSend(std.Coins{})
 	_, _, fee0, fee1, amount0, amount1, _ := pn.DecreaseLiquidity(
 		cross,
 		1,
@@ -344,7 +346,7 @@ func closePositionToGnot() BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
 	// Get current position liquidity
-	currentLiquidity := pl.GetLiquidity("gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500")
+	currentLiquidity := pl.GetLiquidity("gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500")
 
 	// Remove 30% liquidity
 	liquidityInt, _ := strconv.ParseInt(currentLiquidity, 10, 64)
@@ -360,7 +362,7 @@ func closePositionToGnot() BalanceSnapshot {
 		true, // unwrap to GNOT
 	)
 
-	remainingLiquidity := pl.GetLiquidity("gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500")
+	remainingLiquidity := pl.GetLiquidity("gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500")
 
 	println("[INFO] Final liquidity removed:", remainingLiquidity)
 	println("[INFO] Final GNS returned:", amount0)

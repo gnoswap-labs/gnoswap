@@ -10,13 +10,13 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 
 	"gno.land/r/gnoswap/access"
 
@@ -35,6 +35,7 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
+	_ "gno.land/r/onbloc/qux"
 )
 
 var (
@@ -52,7 +53,7 @@ var (
 	devOpsAddr, _        = access.GetAddress(prabc.ROLE_DEVOPS.String())
 	communityPoolAddr, _ = access.GetAddress(prabc.ROLE_COMMUNITY_POOL.String())
 
-	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+	wugnotAddr std.Address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	externalCreator = testutils.TestAddress("externalCreator")
 
@@ -62,7 +63,7 @@ var (
 	quxPath = "gno.land/r/onbloc/qux"
 
 	gnsPath    = "gno.land/r/gnoswap/gns"
-	wugnotPath = "gno.land/r/demo/wugnot"
+	wugnotPath = "gno.land/r/gnoland/wugnot"
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500
@@ -189,7 +190,7 @@ func createExternalIncentiveGns() {
 	println("[INFO] create external incentive")
 	sr.CreateExternalIncentive(
 		cross,
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000",
+		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000",
 		"gno.land/r/gnoswap/gns",
 		2_000_000_000,
 		1234569600,
@@ -344,7 +345,7 @@ func performSwaps() {
 		wugnotPath,
 		gnsPath,
 		"500",
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000",
+		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000",
 		"100",
 		"0",
 		maxTimeout,

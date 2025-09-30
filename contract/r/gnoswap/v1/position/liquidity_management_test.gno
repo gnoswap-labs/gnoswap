@@ -3,7 +3,7 @@ package position
 import (
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -128,7 +128,7 @@ func TestAddLiquidity(t *testing.T) {
 			},
 			expectError:     true,
 			errorType:       "abort",
-			expectedMessage: "[GNOSWAP-POOL-021] token transfer failed || insufficient balance",
+			expectedMessage: "insufficient balance",
 		},
 		{
 			name: "add liquidity is failed by same tick range",

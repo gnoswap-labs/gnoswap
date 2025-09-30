@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
+	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/pool"
@@ -36,7 +36,7 @@ var (
 	adminRealm    = std.NewUserRealm(adminAddr)
 	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
-	routerRealm   = std.NewUserRealm(routerAddr)
+	routerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/router")
 
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = std.NewUserRealm(aliceAddr)
@@ -131,8 +131,8 @@ func mintPosition(tickLower, tickUpper int32, token0Amount, token1Amount int64) 
 
 func executeExactInRouterSwaps() {
 	testing.SetRealm(aliceRealm)
-	bar.Approve(cross, poolAddr, INT64_MAX)
-	foo.Approve(cross, poolAddr, INT64_MAX)
+	bar.Approve(cross, routerAddr, INT64_MAX)
+	foo.Approve(cross, routerAddr, INT64_MAX)
 
 	// set current realm and origin caller
 	ufmt.Println("[INFO] Executing first swap FOO -> BAR")
@@ -177,7 +177,6 @@ func executeExactOutRouterSwaps() {
 	ufmt.Printf("[EXPECTED] Dry swap amountOut should be %s\n", dryAmountOut)
 	ufmt.Printf("[EXPECTED] Dry swap success should be %T\n", success)
 
-	// TODO: check overflow errors is right
 	uassert.AbortsWithMessage(t, "[GNOSWAP-POOL-026] overflow", func() {
 		router.ExactOutSwapRoute(
 			cross,

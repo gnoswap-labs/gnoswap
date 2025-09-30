@@ -1,8 +1,8 @@
 package protocol_fee
 
 import (
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/ufmt"
 )
 
 // GetDevOpsPct returns the percentage allocated to devOps.

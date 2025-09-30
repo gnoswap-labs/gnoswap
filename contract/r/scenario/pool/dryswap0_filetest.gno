@@ -1,11 +1,13 @@
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
@@ -93,7 +95,6 @@ func testDrySwapZeroForOneTruePositiveAmount(t *testing.T) {
 		fooPath,
 		barPath,
 		FeeTier500,
-		positionAddr,
 		-tickUpper,
 		-tickLower,
 		liquidityExpect,

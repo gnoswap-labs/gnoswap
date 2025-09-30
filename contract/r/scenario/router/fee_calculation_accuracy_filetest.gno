@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
@@ -28,9 +28,10 @@ const (
 )
 
 var (
-	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
-	poolAddr, _  = access.GetAddress(prbac.ROLE_POOL.String())
+	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm    = std.NewUserRealm(adminAddr)
+	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
+	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
 
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = std.NewUserRealm(aliceAddr)
@@ -110,6 +111,8 @@ func testFeeCalculation100() {
 	amount := "1000000000" // 1 billion units
 	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100"
 
+	bar.Approve(cross, routerAddr, 1000000000)
+
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross, barPath, fooPath, amount, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
@@ -130,6 +133,8 @@ func testFeeCalculation500() {
 	amount := "1000000000"
 	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
 
+	bar.Approve(cross, routerAddr, 1000000000)
+
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross, barPath, fooPath, amount, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
@@ -149,6 +154,8 @@ func testFeeCalculation3000() {
 	amount := "1000000000"
 	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
+	bar.Approve(cross, routerAddr, 1000000000)
+
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross, barPath, fooPath, amount, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
@@ -167,6 +174,8 @@ func testFeeCalculation10000() {
 	ufmt.Println("[INFO] Testing 1.00% fee tier")
 	amount := "1000000000"
 	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:10000"
+
+	bar.Approve(cross, routerAddr, 1000000000)
 
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross, barPath, fooPath, amount, route, "100", "1",
@@ -190,6 +199,7 @@ func testFeeAccumulation() {
 
 	// Execute multiple swaps
 	for i := 0; i < 3; i++ {
+		bar.Approve(cross, routerAddr, 100000000)
 		amountIn, amountOut := router.ExactInSwapRoute(
 			cross, barPath, fooPath, amount, route, "100", "1",
 			time.Now().Add(time.Hour).Unix(), "",
@@ -208,6 +218,8 @@ func testSmallAmountFeePrecision() {
 	// Test with amount that might cause rounding issues
 	smallAmount := "1337" // Prime number for edge case
 	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+
+	bar.Approve(cross, routerAddr, 1337)
 
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross, barPath, fooPath, smallAmount, route, "100", "1",
@@ -228,6 +240,8 @@ func testExactOutFeeCalculation() {
 
 	desiredOutput := "1000000000"
 	route := "gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500"
+
+	foo.Approve(cross, routerAddr, 1000000000)
 
 	// For exact out, fee is calculated on the input amount
 	amountIn, amountOut := router.ExactOutSwapRoute(

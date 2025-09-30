@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/v1/common"
 
@@ -64,6 +64,8 @@ func main() {
 	println("[INFO] Approving tokens for pool operations")
 	bar.Approve(cross, poolAddr, max_approve)
 	baz.Approve(cross, poolAddr, max_approve)
+	bar.Approve(cross, routerAddr, max_approve)
+	baz.Approve(cross, routerAddr, max_approve)
 
 	// Mint
 	println("[INFO] Minting position in bar-baz pool (tick range: 8000-12000)")

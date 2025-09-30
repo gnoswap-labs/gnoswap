@@ -1,20 +1,21 @@
 // position mint GNOT/GRC20 range
 
-// PKGPATH: gno.land/r/gnoswap/v1/main
+// PKGPATH: gno.land/r/demo/main
 
 package main
 
 import (
 	"std"
+	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
@@ -26,7 +27,7 @@ const (
 	INT64_MAX int64  = 9223372036854775807
 	MIN_PRICE string = "4295128740"
 
-	WUGNOT_ADDR std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+	WUGNOT_ADDR std.Address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 )
 
 var (
@@ -39,7 +40,7 @@ var (
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = std.NewUserRealm(aliceAddr)
 
-	token0Path = "gno.land/r/demo/wugnot"
+	token0Path = "gno.land/r/gnoland/wugnot"
 	token1Path = "gno.land/r/gnoswap/gns"
 	fee        = uint32(3000)
 )
@@ -124,6 +125,7 @@ func mintInRangePosition() {
 	gns.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting in-range position")
+	testing.SetOriginSend(std.Coins{})
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross,
 		token0Path,
@@ -202,12 +204,7 @@ func executeSwap() {
 	gns.Approve(cross, poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
-	func() {
-		ctx := testing.GetContext()
-		ctx.CurrentRealm = routerRealm
-		ctx.OriginCaller = adminAddr
-		testing.SetContext(ctx)
-	}()
+	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 	ufmt.Println("[INFO] Executing swap to test ranges")
 	amount0, amount1 := pool.Swap(
 		cross,
@@ -219,6 +216,9 @@ func executeSwap() {
 		"10000000",
 		MIN_PRICE,
 		adminAddr,
+		func(cur realm, amount0Delta, amount1Delta string) error {
+			return mockSwapCallback(token0Path, token1Path, amount0Delta, amount1Delta, true)
+		},
 	)
 
 	ufmt.Printf("[EXPECTED] Swap amount0 should be %s\n", amount0)
@@ -238,6 +238,34 @@ func verifyFinalPositions() {
 	ufmt.Printf("[EXPECTED] Position 2 should remain out of range\n")
 	ufmt.Printf("[EXPECTED] Position 2 should have no fee0: %s\n", pos2fee0.ToString())
 	ufmt.Printf("[EXPECTED] Position 2 should have no fee1: %s\n", pos2fee1.ToString())
+}
+
+func mockSwapCallback(token0Path string, token1Path string, amount0Delta string, amount1Delta string, zeroForOne bool) error {
+	testing.SetRealm(adminRealm)
+
+	const wugnotPath = "gno.land/r/gnoland/wugnot"
+	const ugnotDenom = "ugnot"
+
+	amount0Int64, _ := strconv.ParseInt(amount0Delta, 10, 64)
+	amount1Int64, _ := strconv.ParseInt(amount1Delta, 10, 64)
+
+	if zeroForOne {
+		if token0Path == wugnotPath {
+			testing.SetOriginSend(std.Coins{{ugnotDenom, amount0Int64}})
+			wugnot.Deposit(cross)
+		}
+
+		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Int64)
+	} else {
+		if token1Path == wugnotPath {
+			testing.SetOriginSend(std.Coins{{ugnotDenom, amount1Int64}})
+			wugnot.Deposit(cross)
+		}
+
+		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Int64)
+	}
+
+	return nil
 }
 
 // Output:

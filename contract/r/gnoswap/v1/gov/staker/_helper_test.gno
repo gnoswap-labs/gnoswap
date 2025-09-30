@@ -4,12 +4,12 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/json"
-	"gno.land/p/demo/testutils"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/onbloc/json"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 
 	"gno.land/r/gnoswap/access"
 )
@@ -17,7 +17,7 @@ import (
 // contract Paths
 const (
 	GNS_PATH    string      = "gno.land/r/gnoswap/gns"
-	WUGNOT_ADDR std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+	WUGNOT_ADDR std.Address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 )
 
 var (
@@ -29,7 +29,7 @@ var (
 	launchpadAddr, _     = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	devOpsAddr, _        = access.GetAddress(prbac.ROLE_DEVOPS.String())
 
-	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+	wugnotAddr std.Address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	fooPath  string = "gno.land/r/onbloc/foo"
 	barPath  string = "gno.land/r/onbloc/bar"
@@ -40,7 +40,7 @@ var (
 
 	ugnotDenom string = "ugnot"
 	ugnotPath  string = "ugnot"
-	wugnotPath string = "gno.land/r/demo/wugnot"
+	wugnotPath string = "gno.land/r/gnoland/wugnot"
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500

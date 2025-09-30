@@ -1,7 +1,7 @@
 package halt
 
 import (
-	"gno.land/p/demo/json"
+	"gno.land/p/onbloc/json"
 )
 
 // IsHalted returns true if any of the specified operation types are halted.
@@ -12,7 +12,7 @@ func IsHalted(opTypes ...OpType) (bool, error) {
 			return true, makeErrorWithDetails(errInvalidOpType, op.String())
 		}
 
-		halted, err := haltConfig.get(op)
+		halted, err := haltStates.IsOperationHalted(op)
 		if err != nil {
 			return true, err
 		}
@@ -27,7 +27,7 @@ func IsHalted(opTypes ...OpType) (bool, error) {
 
 // GetHaltConfig returns a copy of the current halt configuration.
 func GetHaltConfig() HaltConfig {
-	return haltConfig.Clone()
+	return haltStates.ToConfig()
 }
 
 // GetHaltConfigJson returns the halt configuration as a JSON string.
@@ -108,7 +108,26 @@ func IsHaltedWithdraw() bool {
 // isHaltedOperation returns halt status for the specified operation type.
 // Panics if operation type is invalid.
 func isHaltedOperation(op OpType) bool {
-	halted, err := haltConfig.get(op)
+	if !op.IsValid() {
+		panic(makeErrorWithDetails(errInvalidOpType, op.String()))
+	}
+
+	halted, err := haltStates.IsOperationHalted(op)
+	if err != nil {
+		panic(err)
+	}
+
+	return halted
+}
+
+// isHaltedOperationWithVersion returns halt status for the specified operation type and version.
+// Panics if operation type is invalid.
+func isHaltedOperationWithVersion(op OpType, version int) bool {
+	if !op.IsValid() {
+		panic(makeErrorWithDetails(errInvalidOpType, op.String()))
+	}
+
+	halted, err := haltStates.IsOperationHaltedWithVersion(op, version)
 	if err != nil {
 		panic(err)
 	}

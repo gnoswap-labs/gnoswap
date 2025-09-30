@@ -4,7 +4,7 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 )
 
 // TestDelegationSnapshot_AddRecord tests adding records to delegation snapshot

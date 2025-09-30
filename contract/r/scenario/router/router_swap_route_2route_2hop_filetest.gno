@@ -31,7 +31,7 @@ var (
 	quxPath = "gno.land/r/onbloc/qux"
 	gnsPath = "gno.land/r/gnoswap/gns"
 
-	wrappedWugnot = "gno.land/r/demo/wugnot"
+	wrappedWugnot = "gno.land/r/gnoland/wugnot"
 
 	max_timeout int64 = 9999999999
 	max_approve int64 = 9223372036854775806
@@ -107,7 +107,7 @@ func testSwapRouteBarQuxExactIn() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for swap")
-	bar.Approve(cross, poolAddr, 10000)
+	bar.Approve(cross, routerAddr, 10000)
 	qux.Approve(cross, routerAddr, 10000)
 
 	println("[INFO] Executing ExactIn swap with 2 routes (1000 bar → baz → qux)")
@@ -177,7 +177,7 @@ func testwapRouteQuxBarExactOut() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for swap")
-	qux.Approve(cross, poolAddr, 10000)
+	qux.Approve(cross, routerAddr, 10000)
 	bar.Approve(cross, routerAddr, 10000)
 
 	println("[INFO] Executing ExactOut swap with 2 routes (qux → baz → 1000 bar)")

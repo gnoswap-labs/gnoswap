@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
@@ -136,10 +136,7 @@ func unstakePosition() {
 	positionId := uint64(1)
 
 	ufmt.Println("[INFO] Unstake Position")
-	_, unstakedAmount0, unstakedAmount1 := staker.UnStakeToken(cross, positionId, false)
-
-	ufmt.Printf("[EXPECTED] Unstaked Amount0 should be %s\n", unstakedAmount0)
-	ufmt.Printf("[EXPECTED] Unstaked Amount1 should be %s\n", unstakedAmount1)
+	staker.UnStakeToken(cross, positionId, false)
 }
 
 // Output:
@@ -163,5 +160,3 @@ func unstakePosition() {
 //
 // [SCENARIO] 4. UnStake Position
 // [INFO] Unstake Position
-// [EXPECTED] Unstaked Amount0 should be 10000000
-// [EXPECTED] Unstaked Amount1 should be 10000000

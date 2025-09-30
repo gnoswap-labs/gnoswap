@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/testutils"
+	"gno.land/p/nt/testutils"
 
 	"gno.land/r/gnoswap/access"
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -114,7 +114,7 @@ func testExactInputSinglePool() {
 	testing.SetRealm(user1Realm)
 
 	println("[INFO] Approving bar and baz tokens")
-	bar.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross, routerAddr, maxApprove)
 	baz.Approve(cross, routerAddr, maxApprove)
 
 	println("[INFO] Checking balances before swap")

@@ -4,9 +4,9 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/onbloc/bar"
@@ -105,7 +105,6 @@ func (b *MintBuilder) Caller(caller, mintTo std.Address) *MintBuilder {
 }
 
 func (b *MintBuilder) Params() MintParams { return b.p }
-
 
 // Note: Keep assertions explicit. Only truly regression-critical values
 // are compared exactly; error messages are compared exactly to respect
@@ -249,7 +248,7 @@ func TestMintInternal_PositionMint(t *testing.T) {
 				Caller(alice, alice).
 				Params(),
 			expectPanic: true,
-			expectedMsg: "[GNOSWAP-POOL-021] token transfer failed || insufficient balance",
+			expectedMsg: "insufficient balance",
 		},
 	}
 
@@ -393,7 +392,7 @@ func TestMintInternal_FeeTierEdgeCases(t *testing.T) {
 				WithMins("0", "0").
 				Params(),
 			expectPanic: true,
-			expectedMsg: "[GNOSWAP-POOL-021] token transfer failed || insufficient balance",
+			expectedMsg: "insufficient balance",
 		},
 		// 0.05% pool (tick spacing 10)
 		{

@@ -12,10 +12,10 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/nt/ufmt"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
@@ -30,6 +30,9 @@ import (
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
+
+	_ "gno.land/r/onbloc/bar"
+	_ "gno.land/r/onbloc/foo"
 )
 
 var (
@@ -44,13 +47,13 @@ var (
 	poolAddr, _     = access.GetAddress(prabc.ROLE_POOL.String())
 	positionAddr, _ = access.GetAddress(prabc.ROLE_POSITION.String())
 
-	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+	wugnotAddr std.Address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	barPath = "gno.land/r/onbloc/bar"
 	fooPath = "gno.land/r/onbloc/foo"
 
 	gnsPath    = "gno.land/r/gnoswap/gns"
-	wugnotPath = "gno.land/r/demo/wugnot"
+	wugnotPath = "gno.land/r/gnoland/wugnot"
 
 	fee500 uint32 = 500
 
@@ -146,7 +149,7 @@ func createPools() {
 	println("[INFO] create wugnot:gns:500 pool")
 	pl.CreatePool(
 		cross,
-		"gno.land/r/demo/wugnot",
+		"gno.land/r/gnoland/wugnot",
 		"gno.land/r/gnoswap/gns",
 		500,
 		common.TickMathGetSqrtRatioAtTick(-10000).ToString(),
@@ -154,7 +157,7 @@ func createPools() {
 
 	println("[INFO] set pool tiers")
 	sr.SetPoolTier(cross, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", 1)
-	sr.SetPoolTier(cross, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500", 2)
+	sr.SetPoolTier(cross, "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500", 2)
 
 	testing.SkipHeights(18)
 }
@@ -192,6 +195,7 @@ func mintNativePosition01() {
 	ufmt.Printf("[INFO] admin wugnot balance before mint: %d\n", adminOldWugnotBalance)
 
 	println("[INFO] mint native position 01 (gns:gnot)")
+	testing.SetOriginSend(std.Coins{{"ugnot", 1000}})
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		"gno.land/r/gnoswap/gns",
@@ -228,21 +232,22 @@ func mintNativePosition02() {
 	wugnot.Approve(cross, positionAddr, maxInt64)
 	testing.SkipHeights(3)
 
-	println("[INFO] prepare another 50000005 ugnot")
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 50000005}})
+	println("[INFO] prepare another 1000 ugnot")
+	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 1000}})
 
 	ugnotBalanceBefore := ugnotBalanceOf(adminAddr)
 	ufmt.Printf("[INFO] admin ugnot balance before second mint: %d\n", ugnotBalanceBefore)
 
 	println("[INFO] send ugnot to position contract for second mint")
 	banker := std.NewBanker(std.BankerTypeRealmIssue)
-	banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", 50000005}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 50000005}})
+	banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", 1000}})
+	testing.SetOriginSend(std.Coins{{"ugnot", 1000}})
 
 	adminOldWugnotBalance := wugnot.BalanceOf(adminUser)
 	ufmt.Printf("[INFO] admin wugnot balance before second mint: %d\n", adminOldWugnotBalance)
 
 	println("[INFO] mint native position 02 (gns:gnot)")
+	testing.SetOriginSend(std.Coins{{"ugnot", 1000}})
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		"gno.land/r/gnoswap/gns",
@@ -293,7 +298,7 @@ func createExternalIncentiveNative() {
 
 	sr.CreateExternalIncentive(
 		cross,
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500", // targetPoolPath
+		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500", // targetPoolPath
 		"gnot",                      // rewardToken (native)
 		10_000_000_000,              // rewardAmount
 		1234569600,                  // startTimestamp
@@ -419,7 +424,7 @@ func endExternalIncentive() {
 	incentiveID := "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d:1234568025:1"
 	sr.EndExternalIncentive(
 		cross,
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500",
+		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500",
 		incentiveID,
 	)
 	testing.SkipHeights(1)
@@ -492,8 +497,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 4. Mint native position 02
 // [INFO] approve tokens for second native minting
-// [INFO] prepare another 50000005 ugnot
-// [INFO] admin ugnot balance before second mint: 99999010
+// [INFO] prepare another 1000 ugnot
+// [INFO] admin ugnot balance before second mint: 1000
 // [INFO] send ugnot to position contract for second mint
 // [INFO] admin wugnot balance before second mint: 0
 // [INFO] mint native position 02 (gns:gnot)
@@ -523,31 +528,31 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 8. Collect reward for token 01
 // [INFO] skip blocks to accumulate rewards
 // [INFO] wugnot balance before collect: 0
-// [INFO] ugnot balance before collect: 10099998010
+// [INFO] ugnot balance before collect: 10000000000
 // [INFO] collect reward for token 01 (no unwrap)
 // [EXPECTED] wugnot balance after collect: 2218350
-// [EXPECTED] ugnot balance after collect: 10099998010
+// [EXPECTED] ugnot balance after collect: 10000000000
 // [EXPECTED] wugnot increase: 2218350
 // [EXPECTED] ugnot change: 0
 //
 // [SCENARIO] 9. Unstake token 02
 // [INFO] skip more blocks
 // [INFO] wugnot balance before unstake: 2218350
-// [INFO] ugnot balance before unstake: 10099998010
+// [INFO] ugnot balance before unstake: 10000000000
 // [INFO] unstake token 02 (no unwrap)
 // [EXPECTED] NFT owner after unstaking: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
 // [EXPECTED] wugnot balance after unstake: 5516939
-// [EXPECTED] ugnot balance after unstake: 10099998010
+// [EXPECTED] ugnot balance after unstake: 10000000000
 // [EXPECTED] wugnot increase from unstake: 3298589
 // [EXPECTED] ugnot change from unstake: 0
 //
 // [SCENARIO] 10. End external incentive
 // [INFO] approve wugnot for unwrapping
 // [INFO] wugnot balance before end: 5516939
-// [INFO] ugnot balance before end: 10099998010
+// [INFO] ugnot balance before end: 10000000000
 // [INFO] skip to end of external incentive
 // [INFO] end external incentive
 // [EXPECTED] wugnot balance after end: 5516939
-// [EXPECTED] ugnot balance after end: 10099998010
+// [EXPECTED] ugnot balance after end: 10000064002
 // [EXPECTED] wugnot change: 0
-// [EXPECTED] ugnot refund: 0
+// [EXPECTED] ugnot refund: 64002

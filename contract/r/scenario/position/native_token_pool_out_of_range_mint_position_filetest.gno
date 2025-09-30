@@ -1,6 +1,6 @@
 // native token pool out of range mint position
 
-// PKGPATH: gno.land/r/gnoswap/v1/main
+// PKGPATH: gno.land/r/demo/main
 
 package main
 
@@ -8,8 +8,8 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
@@ -17,7 +17,7 @@ import (
 	"gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 )
 
 const INT64_MAX int64 = 9223372036854775807
@@ -31,7 +31,7 @@ var (
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
 
 	gnotPath   = "gnot"
-	wugnotPath = "gno.land/r/demo/wugnot"
+	wugnotPath = "gno.land/r/gnoland/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/gns"
 )
 
@@ -40,7 +40,7 @@ func main() {
 	initializeSetup()
 	println()
 
-	println("[SCENARIO] 2. Create Pool (gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000)")
+	println("[SCENARIO] 2. Create Pool (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000)")
 	createPool(wugnotPath, gnsPath, 3000, 0)
 	println()
 
@@ -100,6 +100,8 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 		banker := std.NewBanker(std.BankerTypeRealmIssue)
 		banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", nativeCoinAmount}})
 		testing.SetOriginSend(std.Coins{{"ugnot", nativeCoinAmount}})
+	} else {
+		testing.SetOriginSend(std.Coins{})
 	}
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(
@@ -131,8 +133,8 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 // [INFO] WUGNOT Balance of admin: 100000000000000
 // [INFO] ugnot Balance of admin: 1000000000000000ugnot
 //
-// [SCENARIO] 2. Create Pool (gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000)
-// [EXPECTED] created gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000 pool at tick 0
+// [SCENARIO] 2. Create Pool (gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000)
+// [EXPECTED] created gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000 pool at tick 0
 //
 // [SCENARIO] 3. Mint InRange Position (-6960 ~ 6960)
 // [INFO] Minting position

@@ -1,3 +1,5 @@
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (
@@ -86,7 +88,6 @@ func TestMintFooBarLiquidity() {
 		barPath,
 		fooPath,
 		fee500,
-		positionAddr,
 		-11000,
 		-9000,
 		liquidityExpect,
@@ -111,7 +112,6 @@ func TestMintBarBazLiquidity() {
 		barPath,
 		bazPath,
 		fee500,
-		positionAddr,
 		tickLower,
 		tickUpper,
 		liquidityExpect,

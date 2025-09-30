@@ -7,7 +7,7 @@ import (
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/common"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -16,6 +16,7 @@ import (
 
 const (
 	defaultSwapFeeBPS = uint64(15) // 0.15%
+	maxSwapFeeBPS     = uint64(1000) // 10%
 )
 
 // swapFee is the fee charged on each swap transaction.
@@ -30,11 +31,18 @@ func GetSwapFee() uint64 {
 // SetSwapFee sets the swap fee rate in basis points.
 // Only admin or governance can call this function.
 func SetSwapFee(cur realm, fee uint64) {
-	halt.AssertIsNotHaltedRouter()
-	halt.AssertIsNotHaltedProtocolFee()
+	halt.AssertIsNotHaltedRouterWithVersion(1)
+	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+
+	if fee > maxSwapFeeBPS {
+		panic(ufmt.Errorf(
+			"%s: fee must be in range 0 to %d. got %d",
+			errInvalidSwapFee.Error(), maxSwapFeeBPS, fee,
+		))
+	}
 
 	prevSwapFee := swapFee
 	if err := setSwapFee(fee); err != nil {
@@ -74,24 +82,26 @@ func handleSwapFee(
 		return amount
 	}
 
+	currentTokenPath := outputToken
+
+	if common.IsGNOTNativePath(outputToken) {
+		currentTokenPath = wugnotPath
+	}
+
 	feeAmount := u256.Zero().Mul(amount, u256.NewUint(swapFee))
 	feeAmount = u256.Zero().Div(feeAmount, u256.NewUint(10000))
 	feeAmountInt64 := safeConvertToInt64(feeAmount)
 
-	if outputToken == gnot {
-		outputToken = wugnotPath
-	}
+	common.SafeGRC20Transfer(cross, currentTokenPath, protocolFeeAddr, feeAmountInt64)
 
-	common.Transfer(cross, outputToken, protocolFeeAddr, feeAmountInt64)
-
-	pf.AddToProtocolFee(cross, outputToken, feeAmountInt64)
+	pf.AddToProtocolFee(cross, currentTokenPath, feeAmountInt64)
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(
 		"SwapRouteFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"tokenPath", outputToken,
+		"tokenPath", currentTokenPath,
 		"amount", formatInt64(feeAmountInt64),
 	)
 

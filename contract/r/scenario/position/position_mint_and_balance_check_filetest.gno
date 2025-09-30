@@ -1,6 +1,6 @@
 // position mint and balance check
 
-// PKGPATH: gno.land/r/gnoswap/v1/main
+// PKGPATH: gno.land/r/demo/main
 
 package main
 
@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/demo/wugnot"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/ufmt"
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
@@ -22,7 +22,7 @@ import (
 
 const (
 	INT64_MAX   int64       = 9223372036854775807
-	WUGNOT_ADDR std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+	WUGNOT_ADDR std.Address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 )
 
 var (
@@ -37,7 +37,7 @@ var (
 	bobAddr    = testutils.TestAddress("bob")
 	bobRealm   = std.NewUserRealm(bobAddr)
 
-	token0Path = "gno.land/r/demo/wugnot"
+	token0Path = "gno.land/r/gnoland/wugnot"
 	token1Path = "gno.land/r/gnoswap/gns"
 	fee        = uint32(3000)
 )
@@ -116,6 +116,7 @@ func mintAlicePosition() {
 	gns.Approve(cross, poolAddr, INT64_MAX)
 
 	ufmt.Println("[INFO] Minting position for Alice")
+	testing.SetOriginSend(std.Coins{})
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross,
 		token0Path,
@@ -201,7 +202,7 @@ func comparePositionBalances() {
 // [INFO] Initial GNS balance of Bob: 1000000000000
 // [INFO] Initial WUGNOT balance of Alice: 1000000000000
 // [INFO] Initial WUGNOT balance of Bob: 1000000000000
-// [INFO] Creating gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000 pool (tick: 1)
+// [INFO] Creating gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000 pool (tick: 1)
 //
 // [SCENARIO] 2. Mint first position with Alice
 // [INFO] Minting position for Alice

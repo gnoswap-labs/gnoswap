@@ -1,11 +1,13 @@
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/access"
 
@@ -76,7 +78,6 @@ func testInvalidTickRangeBurn() {
 		barTokenPath,
 		bazTokenPath,
 		fee,
-		positionAddr,
 		tickLower,
 		tickUpper,
 		liquidityAmount,

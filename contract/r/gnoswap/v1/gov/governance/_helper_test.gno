@@ -3,7 +3,7 @@ package governance
 import (
 	"std"
 
-	"gno.land/p/demo/json"
+	"gno.land/p/onbloc/json"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
@@ -25,7 +25,7 @@ var (
 
 	max_timeout int64 = 9999999999
 
-	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+	wugnotAddr std.Address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 )
 
 // Realms to mock frames

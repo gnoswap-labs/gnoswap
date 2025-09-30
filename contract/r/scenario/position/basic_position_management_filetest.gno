@@ -1,5 +1,7 @@
 // basic position management
 
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (
@@ -7,9 +9,9 @@ import (
 	"strconv"
 	"testing"
 
-	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/tokens/grc721"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/testutils"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"

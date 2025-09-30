@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
@@ -44,10 +44,10 @@ func CreateProject(
 	tier180Ratio int64,
 	startTime int64,
 ) string {
-	halt.AssertIsNotHaltedLaunchpad()
+	halt.AssertIsNotHaltedLaunchpadWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	launchpadAddr := std.CurrentRealm().Address()
 	currentHeight := std.ChainHeight()
@@ -111,11 +111,11 @@ func CreateProject(
 		"tier180Ratio", formatInt(params.tier180Ratio),
 		"startTime", formatInt(params.startTime),
 		"projectId", project.ID(),
-		"tier30Amount", formatInt(project.tiers[projectTier30].TotalDepositAmount()),
+		"tier30Amount", formatInt(project.tiers[projectTier30].TotalDistributeAmount()),
 		"tier30EndTime", formatInt(project.tiers[projectTier30].EndTime()),
-		"tier90Amount", formatInt(project.tiers[projectTier90].TotalDepositAmount()),
+		"tier90Amount", formatInt(project.tiers[projectTier90].TotalDistributeAmount()),
 		"tier90EndTime", formatInt(project.tiers[projectTier90].EndTime()),
-		"tier180Amount", formatInt(project.tiers[projectTier180].TotalDepositAmount()),
+		"tier180Amount", formatInt(project.tiers[projectTier180].TotalDistributeAmount()),
 		"tier180EndTime", formatInt(project.tiers[projectTier180].EndTime()),
 	)
 
@@ -204,10 +204,10 @@ func createProject(params *createProjectParams) (*Project, error) {
 // TransferLeftFromProjectByAdmin transfers the remaining rewards of a project to a specified recipient.
 // Only admin or governance can call this function. Returns the amount of rewards transferred.
 func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient std.Address) int64 {
-	halt.AssertIsNotHaltedLaunchpad()
+	halt.AssertIsNotHaltedLaunchpadWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	currentHeight := std.ChainHeight()
 	currentTime := time.Now().Unix()
@@ -287,9 +287,7 @@ func transferLeftFromProject(projectID string, recipient std.Address, currentTim
 	projectLeftReward := project.RemainingAmount()
 
 	if projectLeftReward > 0 {
-		if err := common.Transfer(cross, project.tokenPath, recipient, int64(projectLeftReward)); err != nil {
-			return 0, makeErrorWithDetails(errTransferFailed, ufmt.Sprintf("token(%s), amount(%d)", project.tokenPath, projectLeftReward))
-		}
+		common.SafeGRC20Transfer(cross, project.tokenPath, recipient, projectLeftReward)
 	}
 
 	return projectLeftReward, nil

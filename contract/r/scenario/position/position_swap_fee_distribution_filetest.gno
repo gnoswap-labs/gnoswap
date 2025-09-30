@@ -1,13 +1,19 @@
 // position swap fee distribution
+
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (
 	"std"
+	"strconv"
 	"testing"
 
-	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/ufmt"
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/position"
 	"gno.land/r/onbloc/bar"
@@ -149,12 +155,7 @@ func executeSwap() {
 	bar.Approve(cross, poolAddr, 1234567)
 
 	// set current realm and origin caller
-	func() {
-		ctx := testing.GetContext()
-		ctx.CurrentRealm = routerRealm
-		ctx.OriginCaller = adminAddr
-		testing.SetContext(ctx)
-	}()
+	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 	ufmt.Println("[INFO] Executing swap")
 	amount0, amount1 := pool.Swap(
 		cross,
@@ -166,6 +167,9 @@ func executeSwap() {
 		"1234567",
 		MIN_PRICE,
 		adminAddr,
+		func(cur realm, amount0Delta, amount1Delta string) error {
+			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
+		},
 	)
 
 	ufmt.Printf("[EXPECTED] Swap amount0 should be %s\n", amount0)
@@ -186,6 +190,34 @@ func checkFeesAfterSwap() {
 	_, fee0, fee1, _, _, _ = position.CollectFee(cross, 2, false)
 	ufmt.Printf("[EXPECTED] Fee0 should be %s\n", fee0)
 	ufmt.Printf("[EXPECTED] Fee1 should be %s\n", fee1)
+}
+
+func mockSwapCallback(token0Path string, token1Path string, amount0Delta string, amount1Delta string, zeroForOne bool) error {
+	testing.SetRealm(adminRealm)
+
+	const wugnotPath = "gno.land/r/gnoland/wugnot"
+	const ugnotDenom = "ugnot"
+
+	amount0Int64, _ := strconv.ParseInt(amount0Delta, 10, 64)
+	amount1Int64, _ := strconv.ParseInt(amount1Delta, 10, 64)
+
+	if zeroForOne {
+		if token0Path == wugnotPath {
+			testing.SetOriginSend(std.Coins{{ugnotDenom, amount0Int64}})
+			wugnot.Deposit(cross)
+		}
+
+		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Int64)
+	} else {
+		if token1Path == wugnotPath {
+			testing.SetOriginSend(std.Coins{{ugnotDenom, amount1Int64}})
+			wugnot.Deposit(cross)
+		}
+
+		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Int64)
+	}
+
+	return nil
 }
 
 // Output:

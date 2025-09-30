@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/v1/common"
 
@@ -94,7 +94,7 @@ func main() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for swap")
-	bar.Approve(cross, poolAddr, max_approve)
+	bar.Approve(cross, routerAddr, max_approve)
 	baz.Approve(cross, routerAddr, max_approve) // ITS FOR 0.15% fee
 
 	println("[INFO] Attempting ExactOut swap (bar → 120000 baz)")

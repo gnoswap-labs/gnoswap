@@ -3,7 +3,7 @@ package rbac
 import (
 	"std"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
 )
@@ -48,4 +48,24 @@ func assertIsValidRoleName(roleName string) {
 			ufmt.Sprintf("role name: %s", roleName),
 		))
 	}
+}
+
+func assertIsValidAddress(addr std.Address) {
+	if addr == "" || !addr.IsValid() {
+		panic(makeErrorWithDetails(
+			errInvalidAddress,
+			ufmt.Sprintf("address: %s", addr.String()),
+		))
+	}
+}
+
+func assertIsAdminOrGovernance(addr std.Address) {
+	if manager.IsAuthorized(prbac.ROLE_ADMIN.String(), addr) || manager.IsAuthorized(prbac.ROLE_GOVERNANCE.String(), addr) {
+		return
+	}
+
+	panic(makeErrorWithDetails(
+		errCallerIsNotAdminOrGovernance,
+		ufmt.Sprintf("caller: %s", addr.String()),
+	))
 }
