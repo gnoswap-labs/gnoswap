@@ -1,7 +1,6 @@
 package staker
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/nt/testutils"
@@ -87,7 +86,7 @@ func TestHandleStakingRewardFee(t *testing.T) {
 func TestSetUnStakingFee(t *testing.T) {
 	tests := []struct {
 		name           string
-		caller         std.Address
+		caller         address
 		fee            int64
 		expectedFee    int64
 		shouldAbort    bool
@@ -163,7 +162,7 @@ func TestSetUnStakingFee(t *testing.T) {
 
 			// Set the caller
 			testing.SetOriginCaller(tc.caller)
-			testing.SetRealm(std.NewUserRealm(tc.caller))
+			testing.SetRealm(testing.NewUserRealm(tc.caller))
 
 			// Execute the function
 			if tc.shouldAbort {

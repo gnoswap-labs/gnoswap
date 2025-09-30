@@ -5,7 +5,7 @@
 package main
 
 import (
-	"std"
+	"chain"
 	"strconv"
 	"testing"
 	"time"
@@ -34,15 +34,15 @@ const (
 
 var (
 	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm    = std.NewUserRealm(adminAddr)
+	adminRealm    = testing.NewUserRealm(adminAddr)
 	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
-	routerRealm   = std.NewUserRealm(routerAddr)
+	routerRealm   = testing.NewUserRealm(routerAddr)
 
 	user1Addr  = testutils.TestAddress("user1")
-	user1Realm = std.NewUserRealm(user1Addr)
+	user1Realm = testing.NewUserRealm(user1Addr)
 	user2Addr  = testutils.TestAddress("user2")
-	user2Realm = std.NewUserRealm(user2Addr)
+	user2Realm = testing.NewUserRealm(user2Addr)
 
 	barPath = "gno.land/r/onbloc/bar"
 	bazPath = "gno.land/r/onbloc/baz"
@@ -168,7 +168,7 @@ func executeSwaps() {
 	baz.Approve(cross, routerAddr, INT64_MAX)
 
 	// set current realm and origin caller
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 
 	ufmt.Println("[INFO] Executing swap BAR -> BAZ")
 	amount0, amount1 := pool.Swap(
@@ -256,14 +256,14 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta string,
 
 	if zeroForOne {
 		if token0Path == wugnotPath {
-			testing.SetOriginSend(std.Coins{{ugnotDenom, amount0Int64}})
+			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Int64}})
 			wugnot.Deposit(cross)
 		}
 
 		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Int64)
 	} else {
 		if token1Path == wugnotPath {
-			testing.SetOriginSend(std.Coins{{ugnotDenom, amount1Int64}})
+			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Int64}})
 			wugnot.Deposit(cross)
 		}
 

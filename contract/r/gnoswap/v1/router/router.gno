@@ -1,7 +1,7 @@
 package router
 
 import (
-	"std"
+	"chain/runtime"
 	"strconv"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -63,7 +63,7 @@ func newGnotSwapHandler(beforeBalance, wrappedAmount int64) *GnotSwapHandler {
 
 // UpdateNewBalance updates the current balance after swap operations.
 func (h *GnotSwapHandler) UpdateNewBalance() {
-	h.NewBalance = wugnot.BalanceOf(std.PreviousRealm().Address())
+	h.NewBalance = wugnot.BalanceOf(runtime.PreviousRealm().Address())
 }
 
 // HandleInputSwap manages unwrapping logic for GNOT input tokens.
@@ -86,7 +86,7 @@ func (h *GnotSwapHandler) HandleInputSwap() error {
 
 	toUnwrap := h.WrappedAmount - spend
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	return unwrapWithTransferFrom(caller, caller, toUnwrap)
 }
 

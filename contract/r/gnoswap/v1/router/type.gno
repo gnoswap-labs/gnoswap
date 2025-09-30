@@ -1,8 +1,6 @@
 package router
 
 import (
-	"std"
-
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -91,8 +89,8 @@ func (p SingleSwapParams) SqrtPriceLimitX96() *u256.Uint {
 // SwapParams contains parameters for executing a multi-hop swap operation.
 type SwapParams struct {
 	SingleSwapParams
-	recipient  std.Address // address to receive the token
-	withUnwrap bool        // whether to unwrap the token
+	recipient  address // address to receive the token
+	withUnwrap bool    // whether to unwrap the token
 }
 
 // TokenIn returns the input token address.
@@ -105,10 +103,10 @@ func (p SwapParams) TokenOut() string { return p.tokenOut }
 func (p SwapParams) Fee() uint32 { return p.fee }
 
 // Recipient returns the recipient address.
-func (p SwapParams) Recipient() std.Address { return p.recipient }
+func (p SwapParams) Recipient() address { return p.recipient }
 
 // newSwapParams creates a new SwapParams instance with the provided parameters.
-func newSwapParams(tokenIn, tokenOut string, fee uint32, recipient std.Address, amountSpecified *i256.Int, withUnwrap bool) *SwapParams {
+func newSwapParams(tokenIn, tokenOut string, fee uint32, recipient address, amountSpecified *i256.Int, withUnwrap bool) *SwapParams {
 	return &SwapParams{
 		SingleSwapParams: SingleSwapParams{
 			tokenIn:         tokenIn,
@@ -142,14 +140,14 @@ type SwapParamsI interface {
 // This type is used to pass necessary information during the swap callback process,
 // ensuring proper token transfers and pool data updates.
 type SwapCallbackData struct {
-	tokenIn  string      // token to spend
-	tokenOut string      // token to receive
-	fee      uint32      // fee of the pool used to swap
-	payer    std.Address // address to spend the token
+	tokenIn  string  // token to spend
+	tokenOut string  // token to receive
+	fee      uint32  // fee of the pool used to swap
+	payer    address // address to spend the token
 }
 
 // newSwapCallbackData creates a new SwapCallbackData from a SwapParamsI.
-func newSwapCallbackData(params SwapParamsI, payer std.Address) SwapCallbackData {
+func newSwapCallbackData(params SwapParamsI, payer address) SwapCallbackData {
 	return SwapCallbackData{
 		tokenIn:  params.TokenIn(),
 		tokenOut: params.TokenOut(),

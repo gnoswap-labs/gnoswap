@@ -1,7 +1,7 @@
 package gns
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 	"time"
 )
@@ -15,5 +15,5 @@ func InitGnsTest(t *testing.T) {
 	setLastMintedTimestamp(time.Now().Unix())
 	burnAmount = 0
 
-	emissionState = NewEmissionState(std.ChainHeight(), time.Now().Unix())
+	emissionState = NewEmissionState(runtime.ChainHeight(), time.Now().Unix())
 }

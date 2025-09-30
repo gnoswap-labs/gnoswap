@@ -15,7 +15,6 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
@@ -41,11 +40,11 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	externalCreatorAddr  = testutils.TestAddress("externalCreator")
 	externalCreatorUser  = externalCreatorAddr
-	externalCreatorRealm = std.NewUserRealm(externalCreatorAddr)
+	externalCreatorRealm = testing.NewUserRealm(externalCreatorAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
@@ -334,4 +333,6 @@ func positionIdFrom(tokenId uint64) grc721.TokenID {
 // [INFO] gns balance after ending: 1000000000
 // [RESULT] bar tokens refunded: 70440
 // [RESULT] gns tokens refunded: 1000000000
+// [SUCCESS] Dust refund mechanism verified - dust amount (64007) properly included in total refund (70440)!
+//
 // [SUCCESS] Test completed - rewardDust mechanism works correctly!

@@ -1,7 +1,6 @@
 package governance
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -95,7 +94,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 				halt.SetHaltLevel(cross, halt.HaltLevelNone)
 			}
 
-			testing.SetRealm(std.NewUserRealm(std.Address("notgov")))
+			testing.SetRealm(testing.NewUserRealm(address("notgov")))
 
 			if tc.isAdmin {
 				testing.SetRealm(adminRealm)

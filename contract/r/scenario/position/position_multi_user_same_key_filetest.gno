@@ -6,7 +6,6 @@ package main
 
 import (
 	"encoding/base64"
-	"std"
 	"testing"
 	"time"
 
@@ -33,15 +32,15 @@ const (
 
 var (
 	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm    = std.NewUserRealm(adminAddr)
+	adminRealm    = testing.NewUserRealm(adminAddr)
 	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
-	routerRealm   = std.NewUserRealm(routerAddr)
+	routerRealm   = testing.NewUserRealm(routerAddr)
 
 	user1Addr  = testutils.TestAddress("user1")
-	user1Realm = std.NewUserRealm(user1Addr)
+	user1Realm = testing.NewUserRealm(user1Addr)
 	user2Addr  = testutils.TestAddress("user2")
-	user2Realm = std.NewUserRealm(user2Addr)
+	user2Realm = testing.NewUserRealm(user2Addr)
 
 	barPath  = "gno.land/r/onbloc/bar"
 	bazPath  = "gno.land/r/onbloc/baz"

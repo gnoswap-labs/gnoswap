@@ -1,8 +1,9 @@
 package staker
 
 import (
+	"chain"
+	"chain/runtime"
 	"math"
-	"std"
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -34,8 +35,8 @@ func CreateExternalIncentive(
 ) {
 	halt.AssertIsNotHaltedStakerWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
-	access.AssertIsUser(std.PreviousRealm())
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsUser(runtime.PreviousRealm())
 
 	assertIsPoolExists(targetPoolPath)
 	assertIsGreaterThanMinimumRewardAmount(rewardToken, rewardAmount)
@@ -65,7 +66,7 @@ func CreateExternalIncentive(
 	gns.TransferFrom(cross, caller, stakerAddr, depositGnsAmount)
 
 	currentTime := time.Now().Unix()
-	currentHeight := std.ChainHeight()
+	currentHeight := runtime.ChainHeight()
 	incentiveId := nextIncentiveID(caller, currentTime)
 	pool := pools.GetOrCreate(targetPoolPath)
 
@@ -94,8 +95,8 @@ func CreateExternalIncentive(
 
 	pool.incentives.create(caller, incentive)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"CreateExternalIncentive",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -143,7 +144,7 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 		))
 	}
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	currentTime := time.Now().Unix()
 
 	// Get incentive to check if GNS already refunded
@@ -205,8 +206,8 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 		}
 	}
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"EndExternalIncentive",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -222,7 +223,7 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 }
 
 // endExternalIncentive processes the end of an external incentive program.
-func endExternalIncentive(pool *Pool, incentiveId string, caller std.Address, currentTime int64) (*ExternalIncentive, int64, error) {
+func endExternalIncentive(pool *Pool, incentiveId string, caller address, currentTime int64) (*ExternalIncentive, int64, error) {
 	incentive, exists := pool.incentives.Get(incentiveId)
 	if !exists {
 		return nil, 0, makeErrorWithDetails(
@@ -259,7 +260,13 @@ func endExternalIncentive(pool *Pool, incentiveId string, caller std.Address, cu
 			return false
 		}
 
-		totalReward += pool.RewardStateOf(deposit).calculateTotalExternalReward(lastCollectTime, currentTime, incentive)
+		rewardState := pool.RewardStateOf(deposit)
+		if rewardState == nil {
+			return false
+		}
+
+		calculatedTotalReward := rewardState.calculateTotalExternalReward(lastCollectTime, currentTime, incentive)
+		totalReward = safeAddInt64(totalReward, calculatedTotalReward)
 
 		return false
 	})

@@ -1,13 +1,13 @@
 package gns
 
 import (
-	"std"
+	"chain/runtime"
 
 	"gno.land/p/nt/ufmt"
 )
 
-func assertAddressIsPreviousRealm(addr std.Address) {
-	previousRealm := std.PreviousRealm()
+func assertAddressIsPreviousRealm(addr address) {
+	previousRealm := runtime.PreviousRealm()
 	if addr != previousRealm.Address() {
 		panic(ufmt.Errorf("address(%s) is not previous realm", addr.String()))
 	}

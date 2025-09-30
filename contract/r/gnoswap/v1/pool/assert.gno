@@ -1,12 +1,12 @@
 package pool
 
 import (
-	"std"
+	"chain/runtime"
 
 	"gno.land/p/nt/ufmt"
 )
 
-func assertIsNotAllowedEOA(previousRealm std.Realm) {
+func assertIsNotAllowedEOA(previousRealm runtime.Realm) {
 	if previousRealm.PkgPath() == "" {
 		panic(newErrorWithDetail(
 			errNotAccessEOA,
@@ -64,8 +64,8 @@ func assertAmountSpecifiedIsNotZero(amountSpecified string) {
 	}
 }
 
-func assertPayerIsPreviousRealmOrOriginCaller(payer std.Address) {
-	if payer != std.PreviousRealm().Address() && payer != std.OriginCaller() {
+func assertPayerIsPreviousRealmOrOriginCaller(payer address) {
+	if payer != runtime.PreviousRealm().Address() && payer != runtime.OriginCaller() {
 		panic(newErrorWithDetail(
 			errInvalidPayer,
 			ufmt.Sprintf("expected payer(%s) to be the previous realm or the caller", payer),

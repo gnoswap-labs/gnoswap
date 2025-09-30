@@ -1,8 +1,6 @@
 package protocol_fee
 
 import (
-	"std"
-
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/ufmt"
 
@@ -10,7 +8,7 @@ import (
 )
 
 // assertIsPoolOrPositionOrRouterOrStaker panics if the caller is not the pool, router, or staker contract.
-func assertIsPoolOrPositionOrRouterOrStaker(caller std.Address) {
+func assertIsPoolOrPositionOrRouterOrStaker(caller address) {
 	if access.IsAuthorizedWithVersion(prbac.ROLE_POOL.String(), 1, caller) ||
 		access.IsAuthorizedWithVersion(prbac.ROLE_POSITION.String(), 1, caller) ||
 		access.IsAuthorizedWithVersion(prbac.ROLE_ROUTER.String(), 1, caller) ||
@@ -22,7 +20,7 @@ func assertIsPoolOrPositionOrRouterOrStaker(caller std.Address) {
 }
 
 // assertIsAdminOrGovStaker panics if the caller is not admin or gov/staker.
-func assertIsAdminOrGovStaker(caller std.Address) {
+func assertIsAdminOrGovStaker(caller address) {
 	if access.IsAuthorized(prbac.ROLE_ADMIN.String(), caller) {
 		return
 	}

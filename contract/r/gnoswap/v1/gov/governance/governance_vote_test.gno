@@ -1,7 +1,6 @@
 package governance
 
 import (
-	"std"
 	"testing"
 	"time"
 
@@ -27,7 +26,7 @@ func TestGovernanceVote_Vote(t *testing.T) {
 		// given
 		proposalID       int64
 		yes              bool
-		voter            std.Address
+		voter            address
 		setupProposal    *Proposal
 		setupVotingInfos map[string]*VotingInfo
 		// then
@@ -190,7 +189,7 @@ func TestGovernanceVote_Vote(t *testing.T) {
 				setupVoteTestUserVotesWithDelegation(t, tt.proposalID, tt.setupVotingInfos, 10_000_000_000)
 			}
 
-			testing.SetRealm(std.NewUserRealm(tt.voter))
+			testing.SetRealm(testing.NewUserRealm(tt.voter))
 
 			// when
 			if tt.expectedHasAbort {
@@ -221,7 +220,7 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 		name string
 		// given
 		proposalID      int64
-		voterAddress    std.Address
+		voterAddress    address
 		votedYes        bool
 		votedHeight     int64
 		votedAt         int64
@@ -394,7 +393,7 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 		name          string
 		proposalID    int64
 		yes           bool
-		voter         std.Address
+		voter         address
 		setupProposal func() *Proposal
 		setupHalt     bool
 		expectedError string
@@ -511,7 +510,7 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 				setupTestVotingInfo(t, tt.proposalID, tt.voter.String(), NewVotingInfo(5_000_000_000, tt.voter))
 			}
 
-			testing.SetRealm(std.NewUserRealm(tt.voter))
+			testing.SetRealm(testing.NewUserRealm(tt.voter))
 
 			// when & then
 			uassert.AbortsWithMessage(t, tt.expectedError, func() {
@@ -583,7 +582,7 @@ func TestGovernanceVote_VotePeriod(t *testing.T) {
 			voter := testutils.TestAddress("voter")
 			setupTestVotingInfo(t, 1, voter.String(), NewVotingInfo(5_000_000_000, voter))
 
-			testing.SetRealm(std.NewUserRealm(voter))
+			testing.SetRealm(testing.NewUserRealm(voter))
 
 			// when & then
 			if tt.shouldPass {
@@ -667,7 +666,7 @@ func TestGovernanceVote_VoteWeightCalculation(t *testing.T) {
 
 			setupTestVotingInfo(t, 1, voter.String(), NewVotingInfo(totalWeight, voter))
 
-			testing.SetRealm(std.NewUserRealm(voter))
+			testing.SetRealm(testing.NewUserRealm(voter))
 
 			// when & then
 			if tt.shouldFail {

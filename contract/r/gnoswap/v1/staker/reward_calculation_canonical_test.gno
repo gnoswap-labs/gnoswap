@@ -3,7 +3,7 @@ package staker
 // Evaluate against the canonical implementation
 
 import (
-	"std"
+	"chain/runtime"
 	"strings"
 	"testing"
 
@@ -30,7 +30,7 @@ func TestCanonicalSimple(t *testing.T) {
 	err := canonical.StakeToken(
 		0,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
 		100,
 		200,
 		u256.NewUint(1000000000000000000),
@@ -59,7 +59,7 @@ func TestCanonicalLargeStakedLiquidity(t *testing.T) {
 	canonical.StakeToken(
 		0,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
 		100,
 		200,
 		q128,
@@ -91,7 +91,7 @@ func TestCanonicalLargeStakedLiquidity_2(t *testing.T) {
 	canonical.StakeToken(
 		0,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
 		100,
 		200,
 		u256.NewUint(u2_30),
@@ -100,7 +100,7 @@ func TestCanonicalLargeStakedLiquidity_2(t *testing.T) {
 	canonical.StakeToken(
 		1,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
 		100,
 		200,
 		u256.NewUint(u2_33),
@@ -128,7 +128,7 @@ func TestCanonicalTickCross_0(t *testing.T) {
 	err := canonical.StakeToken(
 		0,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
 		100,
 		200,
 		u256.NewUint(1000000000000000000),
@@ -205,7 +205,7 @@ func TestCanonicalTickCross_1(t *testing.T) {
 	err := canonical.StakeToken(
 		0,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
 		100,
 		200,
 		u256.NewUint(1000000000000000000),
@@ -255,7 +255,7 @@ func TestCanonicalTickCross_2(t *testing.T) {
 	err := canonical.StakeToken(
 		0,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
 		100,
 		200,
 		u256.NewUint(1000000000000000000),
@@ -267,7 +267,7 @@ func TestCanonicalTickCross_2(t *testing.T) {
 	err = canonical.StakeToken(
 		1,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
 		100,
 		200,
 		u256.NewUint(1000000000000000000),
@@ -315,7 +315,7 @@ func TestCanonicalTickCross_3(t *testing.T) {
 	err := canonical.StakeToken(
 		0,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
 		100,
 		200,
 		u256.NewUint(1000000000000000000),
@@ -327,7 +327,7 @@ func TestCanonicalTickCross_3(t *testing.T) {
 	err = canonical.StakeToken(
 		1,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
 		100,
 		200,
 		u256.NewUint(3000000000000000000),
@@ -375,7 +375,7 @@ func TestCanonicalTickCross_4(t *testing.T) {
 	err := canonical.StakeToken(
 		0,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
 		100,
 		300,
 		u256.NewUint(1000000000000000000),
@@ -387,7 +387,7 @@ func TestCanonicalTickCross_4(t *testing.T) {
 	err = canonical.StakeToken(
 		1,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
 		200,
 		400,
 		u256.NewUint(1000000000000000000),
@@ -444,7 +444,7 @@ func TestCanonicalTickCross_5(t *testing.T) {
 	err := canonical.StakeToken(
 		0,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
 		100,
 		300,
 		u256.NewUint(1000000000000000000),
@@ -513,7 +513,7 @@ func TestCanonicalTickCross_6(t *testing.T) {
 	err := canonical.StakeToken(
 		0,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
 		100,
 		300,
 		u256.NewUint(1000000000000000000),
@@ -575,14 +575,14 @@ func TestCanonicalExternalReward_1(t *testing.T) {
 		100000000,
 		currentTime+getTimeByBlock(1),
 		currentTime+getTimeByBlock(5),
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
-		std.ChainHeight(),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		runtime.ChainHeight(),
 	)
 
 	err := canonical.StakeToken(
 		0,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgg"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgg"),
 		100,
 		300,
 		u256.NewUint(1000000000000000000),
@@ -619,8 +619,8 @@ func TestCanonicalExternalReward_2(t *testing.T) {
 		100000000,
 		currentTime+getTimeByBlock(1),
 		currentTime+getTimeByBlock(5),
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
-		std.ChainHeight(),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		runtime.ChainHeight(),
 	)
 
 	canonical.NextBlock()
@@ -631,7 +631,7 @@ func TestCanonicalExternalReward_2(t *testing.T) {
 	err := canonical.StakeToken(
 		0,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgg"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgg"),
 		100,
 		300,
 		u256.NewUint(1000000000000000000),
@@ -663,14 +663,14 @@ func TestCanonicalExternalReward_3(t *testing.T) {
 		100000000,
 		currentTime+getTimeByBlock(1),
 		currentTime+getTimeByBlock(5),
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
-		std.ChainHeight(),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		runtime.ChainHeight(),
 	)
 
 	err := canonical.StakeToken(
 		0,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgg"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgg"),
 		100,
 		300,
 		u256.NewUint(1000000000000000000),
@@ -719,7 +719,7 @@ func TestCanonicalMultiplePool_1(t *testing.T) {
 	err := canonical.StakeToken(
 		0,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
 		100,
 		300,
 		u256.NewUint(1000000000000000000),
@@ -731,7 +731,7 @@ func TestCanonicalMultiplePool_1(t *testing.T) {
 	err = canonical.StakeToken(
 		1,
 		gnousdc2,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
 		200,
 		400,
 		u256.NewUint(2000000000000000000),
@@ -782,7 +782,7 @@ func TestCanonicalMultiplePool_2(t *testing.T) {
 	err := canonical.StakeToken(
 		0,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
 		100,
 		300,
 		u256.NewUint(1000000000000000000),
@@ -794,7 +794,7 @@ func TestCanonicalMultiplePool_2(t *testing.T) {
 	err = canonical.StakeToken(
 		1,
 		gnousdc2,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
 		200,
 		400,
 		u256.NewUint(2000000000000000000),
@@ -806,7 +806,7 @@ func TestCanonicalMultiplePool_2(t *testing.T) {
 	err = canonical.StakeToken(
 		2,
 		gnousdc3,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgz"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgz"),
 		300,
 		500,
 		u256.NewUint(3000000000000000000),
@@ -858,7 +858,7 @@ func TestCanonicalLargeSecondsPassed(t *testing.T) {
 	err := canonical.StakeToken(
 		0,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
 		100,
 		200,
 		u256.NewUint(1000000000000000000),
@@ -896,7 +896,7 @@ func TestCanonicalWarmup_1(t *testing.T) {
 	err := canonical.StakeToken(
 		0,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
 		100,
 		200,
 		u256.NewUint(1000000000000000000),
@@ -975,7 +975,7 @@ func TestCanonicalWarmup_2(t *testing.T) {
 	err := canonical.StakeToken(
 		0,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
 		100,
 		200,
 		u256.NewUint(1000000000000000000),
@@ -1053,7 +1053,7 @@ func TestCanonicalTickCross_7(t *testing.T) {
 	err := canonical.StakeToken(
 		0,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
 		100,
 		300,
 		u256.NewUint(1000000000000000000),
@@ -1096,7 +1096,7 @@ func TestCanonicalTickCross_8(t *testing.T) {
 	err := canonical.StakeToken(
 		0,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
 		100,
 		300,
 		u256.NewUint(1000000000000000000),
@@ -1108,7 +1108,7 @@ func TestCanonicalTickCross_8(t *testing.T) {
 	err = canonical.StakeToken(
 		1,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
 		200,
 		400,
 		u256.NewUint(2000000000000000000),
@@ -1120,7 +1120,7 @@ func TestCanonicalTickCross_8(t *testing.T) {
 	err = canonical.StakeToken(
 		2,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgz"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgz"),
 		300,
 		500,
 		u256.NewUint(3000000000000000000),
@@ -1152,7 +1152,7 @@ func TestCanonicalTickCross_9(t *testing.T) {
 	err := canonical.StakeToken(
 		0,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
 		100,
 		300,
 		u256.NewUint(1000000000000000000),
@@ -1164,7 +1164,7 @@ func TestCanonicalTickCross_9(t *testing.T) {
 	err = canonical.StakeToken(
 		1,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
 		200,
 		400,
 		u256.NewUint(2000000000000000000),
@@ -1176,7 +1176,7 @@ func TestCanonicalTickCross_9(t *testing.T) {
 	err = canonical.StakeToken(
 		2,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgz"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgz"),
 		300,
 		500,
 		u256.NewUint(3000000000000000000),
@@ -1211,7 +1211,7 @@ func TestCanonicalTickCross_10(t *testing.T) {
 	err := canonical.StakeToken(
 		0,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
 		-300,
 		-100,
 		u256.NewUint(1000000000000000000),
@@ -1223,7 +1223,7 @@ func TestCanonicalTickCross_10(t *testing.T) {
 	err = canonical.StakeToken(
 		1,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"),
 		-400,
 		-200,
 		u256.NewUint(2000000000000000000),
@@ -1235,7 +1235,7 @@ func TestCanonicalTickCross_10(t *testing.T) {
 	err = canonical.StakeToken(
 		2,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgz"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgz"),
 		-500,
 		-300,
 		u256.NewUint(3000000000000000000),
@@ -1268,7 +1268,7 @@ func TestCanonicalEmissionChange_0(t *testing.T) {
 	err := canonical.StakeToken(
 		0,
 		gnousdc,
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
+		address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"),
 		100,
 		300,
 		u256.NewUint(1000000000000000000),
@@ -1334,7 +1334,7 @@ func (event *TestEventChangeTier) String() string {
 type TestEventStakeToken struct {
 	positionId uint64
 	poolPath   string
-	address    std.Address
+	address    address
 	liquidity  *u256.Uint
 	tickLower  int32
 	tickUpper  int32
@@ -1403,7 +1403,7 @@ type SimulationEvent interface {
 
 type tokenStake struct {
 	positionId uint64
-	address    std.Address
+	address    address
 	liquidity  *u256.Uint
 	tickLower  int32
 	tickUpper  int32
@@ -1458,9 +1458,9 @@ func TestCanonicalSimulation_0(t *testing.T) {
 		1,
 		200,
 		[]tokenStake{
-			{0, std.Address("gno1token0"), u256.NewUint(1000000000000000000), 100, 300},
-			{1, std.Address("gno1token1"), u256.NewUint(2000000000000000000), 200, 400},
-			{2, std.Address("gno1token2"), u256.NewUint(3000000000000000000), 300, 500},
+			{0, address("gno1token0"), u256.NewUint(1000000000000000000), 100, 300},
+			{1, address("gno1token1"), u256.NewUint(2000000000000000000), 200, 400},
+			{2, address("gno1token2"), u256.NewUint(3000000000000000000), 300, 500},
 		},
 		[]int32{50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750},
 	)
@@ -1470,9 +1470,9 @@ func TestCanonicalSimulation_0(t *testing.T) {
 		0,
 		200,
 		[]tokenStake{
-			{3, std.Address("gno1token3"), u256.NewUint(4000000000000000000), 50, 100},
-			{4, std.Address("gno1token4"), u256.NewUint(5000000000000000000), 100, 200},
-			{5, std.Address("gno1token5"), u256.NewUint(6000000000000000000), 300, 500},
+			{3, address("gno1token3"), u256.NewUint(4000000000000000000), 50, 100},
+			{4, address("gno1token4"), u256.NewUint(5000000000000000000), 100, 200},
+			{5, address("gno1token5"), u256.NewUint(6000000000000000000), 300, 500},
 		},
 		[]int32{50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750},
 	)
@@ -1482,9 +1482,9 @@ func TestCanonicalSimulation_0(t *testing.T) {
 		0,
 		200,
 		[]tokenStake{
-			{6, std.Address("gno1token6"), u256.NewUint(7000000000000000000), 400, 600},
-			{7, std.Address("gno1token7"), u256.NewUint(8000000000000000000), 600, 800},
-			{8, std.Address("gno1token8"), u256.NewUint(9000000000000000000), 700, 900},
+			{6, address("gno1token6"), u256.NewUint(7000000000000000000), 400, 600},
+			{7, address("gno1token7"), u256.NewUint(8000000000000000000), 600, 800},
+			{8, address("gno1token8"), u256.NewUint(9000000000000000000), 700, 900},
 		},
 		[]int32{50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750},
 	)
@@ -1494,9 +1494,9 @@ func TestCanonicalSimulation_0(t *testing.T) {
 		0,
 		200,
 		[]tokenStake{
-			{9, std.Address("gno1token9"), u256.NewUint(1000000000000000000), 50, 100},
-			{10, std.Address("gno1token10"), u256.NewUint(2000000000000000000), 100, 200},
-			{11, std.Address("gno1token11"), u256.NewUint(3000000000000000000), 200, 300},
+			{9, address("gno1token9"), u256.NewUint(1000000000000000000), 50, 100},
+			{10, address("gno1token10"), u256.NewUint(2000000000000000000), 100, 200},
+			{11, address("gno1token11"), u256.NewUint(3000000000000000000), 200, 300},
 		},
 		[]int32{50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750},
 	)
