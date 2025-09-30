@@ -105,6 +105,11 @@ func main() {
 
 	println("[SCENARIO] 10. End external incentive")
 	endExternalIncentive()
+	println()
+
+	println("[SCENARIO] 11. Unstake token 01 after external incentive")
+	unstakeToken01()
+	println()
 }
 
 func initWithShortWarmUp() {
@@ -441,6 +446,37 @@ func endExternalIncentive() {
 	ufmt.Printf("[EXPECTED] ugnot refund: %d\n", ugnotIncrease)
 }
 
+func unstakeToken01() {
+	testing.SetRealm(adminRealm)
+
+	println("[INFO] skip more blocks")
+	testing.SkipHeights(335)
+
+	wugnotBalanceBefore := wugnot.BalanceOf(adminUser)
+	ugnotBalanceBefore := ugnotBalanceOf(adminAddr)
+
+	ufmt.Printf("[INFO] wugnot balance before unstake: %d\n", wugnotBalanceBefore)
+	ufmt.Printf("[INFO] ugnot balance before unstake: %d\n", ugnotBalanceBefore)
+
+	println("[INFO] unstake token 01 (no unwrap)")
+	sr.UnStakeToken(cross, 1, false)
+	testing.SkipHeights(1)
+
+	owner := gnft.MustOwnerOf(positionIdFrom(1))
+	ufmt.Printf("[EXPECTED] NFT owner after unstaking: %s\n", owner)
+
+	wugnotBalanceAfter := wugnot.BalanceOf(adminUser)
+	ugnotBalanceAfter := ugnotBalanceOf(adminAddr)
+
+	wugnotIncrease := wugnotBalanceAfter - wugnotBalanceBefore
+	ugnotChange := ugnotBalanceAfter - ugnotBalanceBefore
+
+	ufmt.Printf("[EXPECTED] wugnot balance after unstake: %d\n", wugnotBalanceAfter)
+	ufmt.Printf("[EXPECTED] ugnot balance after unstake: %d\n", ugnotBalanceAfter)
+	ufmt.Printf("[EXPECTED] wugnot increase from unstake: %d\n", wugnotIncrease)
+	ufmt.Printf("[EXPECTED] ugnot change from unstake: %d\n", ugnotChange)
+}
+
 func ugnotBalanceOf(addr std.Address) uint64 {
 	banker := std.NewBanker(std.BankerTypeReadonly)
 	coins := banker.GetCoins(addr)
@@ -556,3 +592,14 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] ugnot balance after end: 10000064002
 // [EXPECTED] wugnot change: 0
 // [EXPECTED] ugnot refund: 64002
+//
+// [SCENARIO] 11. Unstake token 01 after external incentive
+// [INFO] skip more blocks
+// [INFO] wugnot balance before unstake: 5516939
+// [INFO] ugnot balance before unstake: 10000064002
+// [INFO] unstake token 01 (no unwrap)
+// [EXPECTED] NFT owner after unstaking: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+// [EXPECTED] wugnot balance after unstake: 9999935998
+// [EXPECTED] ugnot balance after unstake: 10000064002
+// [EXPECTED] wugnot increase from unstake: 9994419059
+// [EXPECTED] ugnot change from unstake: 0
