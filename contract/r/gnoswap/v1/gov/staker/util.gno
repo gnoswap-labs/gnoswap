@@ -4,9 +4,9 @@ import (
 	b64 "encoding/base64"
 	"strconv"
 
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/json"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/avl"
+	"gno.land/p/onbloc/json"
+	"gno.land/p/nt/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 

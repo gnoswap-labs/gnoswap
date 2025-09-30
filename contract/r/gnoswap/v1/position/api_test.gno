@@ -3,8 +3,8 @@ package position
 import (
 	"testing"
 
-	"gno.land/p/demo/json"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/onbloc/json"
+	"gno.land/p/nt/uassert"
 )
 
 func setupPositions(t *testing.T) {

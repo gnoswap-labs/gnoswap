@@ -39,14 +39,42 @@ func (rb *RBAC) IsAuthorized(roleName string, addr std.Address) bool {
 }
 
 // RegisterRole registers a new role with roleName. Returns ErrRoleAlreadyExists if the role already exists.
-func (rb *RBAC) RegisterRole(roleName string) error {
+func (rb *RBAC) RegisterRole(roleName string, addr std.Address) error {
 	if rb.existsRole(roleName) {
 		return ErrRoleAlreadyExists
 	}
 
-	rb.roles[roleName] = NewRole(roleName)
+	rb.roles[roleName] = NewRole(roleName, addr)
 
 	return nil
+}
+
+// UpdateRoleAddress assigns addr to roleName. Returns ErrRoleDoesNotExist if the role doesn't exist or ErrInvalidAddress if addr is invalid.
+func (rb *RBAC) UpdateRoleAddress(roleName string, version int, addr std.Address) error {
+	role, exists := rb.roles[roleName]
+	if !exists {
+		return ErrRoleDoesNotExist
+	}
+
+	if addr.String() == "" || !addr.IsValid() {
+		return ErrInvalidAddress
+	}
+
+	return role.setAddress(version, addr)
+}
+
+// UpdateRoleAddressNextVersion creates a new version with the specified address for the role
+func (rb *RBAC) UpdateRoleAddressNextVersion(roleName string, addr std.Address) error {
+	role, exists := rb.roles[roleName]
+	if !exists {
+		return ErrRoleDoesNotExist
+	}
+
+	if addr.String() == "" || !addr.IsValid() {
+		return ErrInvalidAddress
+	}
+
+	return role.nextVersionAddress(addr)
 }
 
 // RemoveRole removes roleName from the RBAC system. Returns ErrRoleDoesNotExist if the role doesn't exist or ErrCannotRemoveSystemRole for system roles.
@@ -66,15 +94,39 @@ func (rb *RBAC) RemoveRole(roleName string) error {
 	return nil
 }
 
-// GetRoleAddresses returns a map of all role names to their assigned addresses.
-func (rb *RBAC) GetRoleAddresses() map[string]std.Address {
+func (rb *RBAC) GetAllRoleAddresses() map[string]std.Address {
 	addresses := make(map[string]std.Address)
 
-	for role := range rb.roles {
-		addresses[role] = rb.roles[role].Address()
+	for roleName, role := range rb.roles {
+		addresses[roleName] = role.CurrentAddress()
 	}
 
 	return addresses
+}
+
+// GetRoleAddresses returns a map of all role names to their assigned addresses.
+func (rb *RBAC) GetRoleAddresses(roleName string) map[int]std.Address {
+	role, exists := rb.roles[roleName]
+	if !exists {
+		return map[int]std.Address{}
+	}
+
+	addresses := make(map[int]std.Address)
+
+	for version, addr := range role.addresses {
+		addresses[version] = std.Address(addr)
+	}
+
+	return addresses
+}
+
+func (rb *RBAC) GetRoleLatestVersion(roleName string) int {
+	role, exists := rb.roles[roleName]
+	if !exists {
+		return 0
+	}
+
+	return role.latestVersion
 }
 
 // GetRoleAddress returns the address assigned to roleName. Returns ErrRoleDoesNotExist if the role doesn't exist.
@@ -84,59 +136,38 @@ func (rb *RBAC) GetRoleAddress(roleName string) (std.Address, error) {
 		return "", ErrRoleDoesNotExist
 	}
 
-	return role.Address(), nil
+	return role.CurrentAddress(), nil
 }
 
-// UpdateRoleAddress assigns addr to roleName. Returns ErrRoleDoesNotExist if the role doesn't exist or ErrInvalidAddress if addr is invalid.
-func (rb *RBAC) UpdateRoleAddress(roleName string, addr std.Address) error {
+func (rb *RBAC) GetRoleAddressWithVersion(roleName string, version int) (std.Address, error) {
 	role, exists := rb.roles[roleName]
 	if !exists {
-		return ErrRoleDoesNotExist
+		return "", ErrRoleDoesNotExist
 	}
 
-	if !addr.IsValid() {
-		return ErrInvalidAddress
-	}
-
-	role.setAddress(addr)
-
-	return nil
-}
-
-// RemoveRoleAddress removes the address assignment from roleName. Only the owner can call this function. Returns ErrUnauthorized if caller is not owner or ErrRoleDoesNotExist if role doesn't exist.
-func (rb *RBAC) RemoveRoleAddress(roleName string) error {
-	if !rb.ownable.OwnedByOriginCaller() {
-		return ErrUnauthorized
-	}
-
-	role, exists := rb.roles[roleName]
+	addr, exists := role.getAddress(version)
 	if !exists {
-		return ErrRoleDoesNotExist
+		return "", ErrVersionDoesNotExist
 	}
 
-	role.setAddress("")
-
-	return nil
+	return std.Address(addr), nil
 }
 
 // Owner returns the current owner address.
 func (rb *RBAC) Owner() std.Address { return rb.ownable.Owner() }
 
-// OwnedByOriginCaller returns true if the origin caller is the current owner.
-func (rb *RBAC) OwnedByOriginCaller() bool { return rb.ownable.OwnedByOriginCaller() }
-
 // PendingOwner returns the pending owner address during ownership transfer.
 func (rb *RBAC) PendingOwner() std.Address { return rb.ownable.PendingOwner() }
 
 // AcceptOwnership completes the ownership transfer process. Must be called by the pending owner.
-func (rb *RBAC) AcceptOwnership() error { return rb.ownable.AcceptOwnership() }
+func (rb *RBAC) AcceptOwnershipBy(addr std.Address) error { return rb.ownable.AcceptOwnershipBy(addr) }
 
 // DropOwnership removes the owner, effectively disabling owner-only actions. Only the current owner can call this function.
-func (rb *RBAC) DropOwnership() error { return rb.ownable.DropOwnership() }
+func (rb *RBAC) DropOwnershipBy(addr std.Address) error { return rb.ownable.DropOwnershipBy(addr) }
 
 // TransferOwnership initiates the two-step ownership transfer process to newOwner. Only the current owner can call this function.
-func (rb *RBAC) TransferOwnership(newOwner std.Address) error {
-	return rb.ownable.TransferOwnership(newOwner)
+func (rb *RBAC) TransferOwnershipBy(newOwner, caller std.Address) error {
+	return rb.ownable.TransferOwnershipBy(newOwner, caller)
 }
 
 // existsRole checks if name exists in the RBAC system.

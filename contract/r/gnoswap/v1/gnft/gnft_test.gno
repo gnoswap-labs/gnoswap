@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 
 	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
 )
@@ -19,6 +19,9 @@ const (
 var (
 	positionPath  = "gno.land/r/gnoswap/v1/position"
 	positionRealm = std.NewCodeRealm(positionPath)
+
+	stakerPath  = "gno.land/r/gnoswap/v1/staker"
+	stakerRealm = std.NewCodeRealm(stakerPath)
 
 	addr01      = testutils.TestAddress("addr01")
 	addr01Realm = std.NewUserRealm(addr01)
@@ -305,7 +308,7 @@ func TestTransferFrom(t *testing.T) {
 	}{
 		{
 			name:              "transfer non-existent token id",
-			callerRealm:       std.NewUserRealm(addr01),
+			callerRealm:       stakerRealm,
 			fromAddr:          addr01,
 			toAddr:            addr02,
 			tokenIdToTransfer: 99,
@@ -314,34 +317,38 @@ func TestTransferFrom(t *testing.T) {
 		},
 		{
 			name:              "transfer token owned by other user without approval",
-			callerRealm:       std.NewUserRealm(addr02),
+			callerRealm:       stakerRealm,
 			fromAddr:          addr01,
 			toAddr:            addr02,
 			tokenIdToTransfer: 1,
 			shouldPanic:       true,
-			panicMsg:          "caller is not token owner or approved || caller g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5 is not owner g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st or approved for token 1",
+			panicMsg:          "caller is not token owner or approved || caller g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu is not owner g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st or approved for token 1",
 		},
 		{
 			name: "transfer token owned by other user with approval",
 			setup: func(cur realm) {
 				testing.SetRealm(addr01Realm)
-				Approve(cross, addr02, tid(1))
+				Approve(cross, stakerRealm.Address(), tid(1))
 			},
-			callerRealm:       std.NewUserRealm(addr02),
+			callerRealm:       stakerRealm,
 			fromAddr:          addr01,
 			toAddr:            addr02,
 			tokenIdToTransfer: 1,
 		},
 		{
-			name:              "transfer token owned by caller",
-			callerRealm:       std.NewUserRealm(addr02),
+			name: "transfer token owned by caller",
+			setup: func(cur realm) {
+				testing.SetRealm(addr02Realm)
+				Approve(cross, stakerRealm.Address(), tid(1))
+			},
+			callerRealm:       stakerRealm,
 			fromAddr:          addr02,
 			toAddr:            addr01,
 			tokenIdToTransfer: 1,
 		},
 		{
 			name:              "transfer from is invalid address",
-			callerRealm:       std.NewUserRealm(addr01),
+			callerRealm:       stakerRealm,
 			fromAddr:          std.Address(""),
 			toAddr:            addr02,
 			tokenIdToTransfer: 1,
@@ -350,12 +357,21 @@ func TestTransferFrom(t *testing.T) {
 		},
 		{
 			name:              "transfer to is invalid address",
-			callerRealm:       std.NewUserRealm(addr01),
+			callerRealm:       stakerRealm,
 			fromAddr:          addr01,
 			toAddr:            std.Address("this_is_invalid_address"),
 			tokenIdToTransfer: 1,
 			shouldPanic:       true,
 			panicMsg:          "[GNOSWAP-GNFT-004] invalid addresss || to address (this_is_invalid_address)",
+		},
+		{
+			name:              "not-staker contract transfer",
+			callerRealm:       addr01Realm,
+			fromAddr:          addr01,
+			toAddr:            addr02,
+			tokenIdToTransfer: 1,
+			shouldPanic:       true,
+			panicMsg:          "unauthorized: caller g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st is not staker",
 		},
 	}
 
@@ -365,6 +381,7 @@ func TestTransferFrom(t *testing.T) {
 				tt.setup(cross)
 			}
 
+			testing.SetRealm(tt.callerRealm)
 			if tt.shouldPanic {
 				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
 					TransferFrom(cross, tt.fromAddr, tt.toAddr, tid(tt.tokenIdToTransfer))
@@ -600,16 +617,24 @@ func TestSafeTransferFrom(t *testing.T) {
 		panicMsg    string
 	}{
 		{
-			name:        "owner transfers own token",
-			callerRealm: addr01Realm,
+			name: "owner transfers own token",
+			setup: func(cur realm) {
+				testing.SetRealm(addr01Realm)
+				Approve(cross, stakerRealm.Address(), tid(1))
+			},
+			callerRealm: stakerRealm,
 			from:        addr01,
 			to:          addr02,
 			tokenId:     1,
 			shouldPanic: false,
 		},
 		{
-			name:        "non-owner transfers without approval",
-			callerRealm: addr02Realm,
+			name: "non-owner transfers without approval",
+			setup: func(cur realm) {
+				testing.SetRealm(addr02Realm)
+				Approve(cross, stakerRealm.Address(), tid(1))
+			},
+			callerRealm: stakerRealm,
 			from:        addr01,
 			to:          addr02,
 			tokenId:     1,
@@ -618,7 +643,7 @@ func TestSafeTransferFrom(t *testing.T) {
 		},
 		{
 			name:        "transfer non-existent token",
-			callerRealm: addr01Realm,
+			callerRealm: stakerRealm,
 			from:        addr01,
 			to:          addr02,
 			tokenId:     999,
@@ -627,12 +652,21 @@ func TestSafeTransferFrom(t *testing.T) {
 		},
 		{
 			name:        "transfer to zero address",
-			callerRealm: addr01Realm,
+			callerRealm: stakerRealm,
 			from:        addr01,
 			to:          std.Address(""),
 			tokenId:     1,
 			shouldPanic: true,
 			panicMsg:    "[GNOSWAP-GNFT-004] invalid addresss || to address ()",
+		},
+		{
+			name:        "not-staker contract transfer",
+			callerRealm: addr01Realm,
+			from:        addr01,
+			to:          addr02,
+			tokenId:     1,
+			shouldPanic: true,
+			panicMsg:    "unauthorized: caller g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st is not staker",
 		},
 	}
 

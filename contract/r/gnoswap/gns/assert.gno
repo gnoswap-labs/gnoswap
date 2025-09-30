@@ -3,7 +3,7 @@ package gns
 import (
 	"std"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 )
 
 func assertAddressIsPreviousRealm(addr std.Address) {

@@ -2,10 +2,11 @@ package rbac
 
 import (
 	"std"
+	"strings"
 	"testing"
 
-	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/uassert"
+	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
 )
@@ -49,7 +50,7 @@ func TestAssertIsOwner(t *testing.T) {
 					}
 					if tt.expectedMsg != "" {
 						panicStr := ufmt.Sprintf("%v", r)
-						if !contains(panicStr, tt.expectedMsg) {
+						if !strings.Contains(panicStr, tt.expectedMsg) {
 							t.Errorf("Expected panic message to contain '%s', got '%s'", tt.expectedMsg, panicStr)
 						}
 					}
@@ -105,7 +106,7 @@ func TestAssertIsPendingOwner(t *testing.T) {
 			manager = prbac.NewRBACWithAddress(ADMIN)
 
 			// Set up pending owner
-			err := manager.TransferOwnership(DEV_OPS)
+			err := manager.TransferOwnershipBy(DEV_OPS, ADMIN)
 			if err != nil {
 				t.Fatalf("Failed to set up pending owner: %v", err)
 			}
@@ -177,7 +178,7 @@ func TestAssertIsAdminWithRoleUpdate(t *testing.T) {
 	initRbac()
 
 	// Change admin role to a different address
-	err := manager.UpdateRoleAddress(prbac.ROLE_ADMIN.String(), DEV_OPS)
+	err := manager.UpdateRoleAddress(prbac.ROLE_ADMIN.String(), 1, DEV_OPS)
 	if err != nil {
 		t.Fatalf("Failed to update admin role address: %v", err)
 	}
@@ -242,7 +243,7 @@ func TestAssertFunctionsIntegration(t *testing.T) {
 		initRbac()
 
 		testing.SetRealm(std.NewUserRealm(ADMIN))
-		err := manager.TransferOwnership(DEV_OPS)
+		err := manager.TransferOwnershipBy(DEV_OPS, ADMIN)
 		if err != nil {
 			t.Fatalf("Failed to transfer ownership: %v", err)
 		}

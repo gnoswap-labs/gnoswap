@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gno.land/p/demo/avl"
+	"gno.land/p/nt/avl"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -118,7 +118,11 @@ type Tick struct {
 func (self *Tick) CurrentOutsideAccumulation(timestamp int64) *u256.Uint {
 	acc := u256.Zero()
 	self.outsideAccumulation.ReverseIterate(0, timestamp, func(key int64, value any) bool {
-		acc = value.(*u256.Uint)
+		v, ok := value.(*u256.Uint)
+		if !ok {
+			panic("failed to cast value to *u256.Uint")
+		}
+		acc = v
 		return true
 	})
 	if acc == nil {

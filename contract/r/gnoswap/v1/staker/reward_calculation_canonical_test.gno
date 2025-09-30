@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	ufmt "gno.land/p/demo/ufmt"
+	ufmt "gno.land/p/nt/ufmt"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -1439,7 +1439,7 @@ func events(
 			tick:     moveTicks[i],
 		})
 	}
-	if poolPath == "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000" {
+	if poolPath == "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000" {
 		return result
 	}
 	for i := 0; i < 4; i++ {
@@ -1454,7 +1454,7 @@ func events(
 func TestCanonicalSimulation_0(t *testing.T) {
 	t.Skip("PASS: need to run manually")
 	wugnotgns := events(
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000",
+		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000",
 		1,
 		200,
 		[]tokenStake{

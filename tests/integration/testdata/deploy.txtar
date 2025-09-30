@@ -6,7 +6,7 @@ loadpkg gno.land/p/demo/grc/grc20
 loadpkg gno.land/p/demo/grc/grc721
 
 loadpkg gno.land/r/demo/users
-loadpkg gno.land/r/demo/wugnot
+loadpkg gno.land/r/gnoland/wugnot
 loadpkg gno.land/r/demo/grc20reg
 
 

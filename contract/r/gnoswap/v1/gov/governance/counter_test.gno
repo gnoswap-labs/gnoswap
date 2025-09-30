@@ -3,7 +3,7 @@ package governance
 import (
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 )
 
 // Test for NewCounter, next, and Get methods.

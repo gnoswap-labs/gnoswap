@@ -4,9 +4,9 @@ import (
 	"std"
 	"strings"
 
-	"gno.land/p/demo/grc/grc20"
-	"gno.land/p/demo/ownable"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/demo/tokens/grc20"
+	"gno.land/p/nt/ownable"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
@@ -27,7 +27,7 @@ func TotalSupply() int64 {
 // VotingSupply returns total supply eligible for voting.
 func VotingSupply() int64 {
 	total := token.TotalSupply()
-	launchpad, ok := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	launchpad, ok := access.GetAddressWithVersion(prbac.ROLE_LAUNCHPAD.String(), 1)
 	if !ok {
 		panic(ufmt.Sprintf("launchpad address not found"))
 	}
@@ -69,10 +69,10 @@ func Render(path string) string {
 //
 // Only callable by governance staker contract.
 func Mint(cur realm, to std.Address, amount int64) {
-	halt.AssertIsNotHaltedXGns()
+	halt.AssertIsNotHaltedXGnsWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsGovStaker(caller)
+	access.AssertIsGovStakerWithVersion(1, caller)
 
 	checkErr(ledger.Mint(to, amount))
 }
@@ -85,10 +85,10 @@ func Mint(cur realm, to std.Address, amount int64) {
 //
 // Only callable by launchpad contract.
 func MintByLaunchPad(cur realm, to std.Address, amount int64) {
-	halt.AssertIsNotHaltedXGns()
+	halt.AssertIsNotHaltedXGnsWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsLaunchpad(caller)
+	access.AssertIsLaunchpadWithVersion(1, caller)
 
 	checkErr(ledger.Mint(to, amount))
 }
@@ -101,10 +101,10 @@ func MintByLaunchPad(cur realm, to std.Address, amount int64) {
 //
 // Only callable by governance staker contract.
 func Burn(cur realm, from std.Address, amount int64) {
-	halt.AssertIsNotHaltedXGns()
+	halt.AssertIsNotHaltedXGnsWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsGovStaker(caller)
+	access.AssertIsGovStakerWithVersion(1, caller)
 
 	checkErr(ledger.Burn(from, amount))
 }
@@ -117,10 +117,10 @@ func Burn(cur realm, from std.Address, amount int64) {
 //
 // Only callable by launchpad contract.
 func BurnByLaunchPad(cur realm, from std.Address, amount int64) {
-	halt.AssertIsNotHaltedXGns()
+	halt.AssertIsNotHaltedXGnsWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
-	access.AssertIsLaunchpad(caller)
+	access.AssertIsLaunchpadWithVersion(1, caller)
 
 	checkErr(ledger.Burn(from, amount))
 }

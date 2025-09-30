@@ -3,7 +3,7 @@ package router
 import (
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/gns"
 

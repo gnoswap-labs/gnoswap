@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
@@ -183,7 +183,6 @@ func TestExactInSwapRoute(t *testing.T) {
 
 func TestExactInZeroForOneFalse(t *testing.T) {
 	const maxTimeout int64 = 9999999999
-	const wugnotGnsPoolPath = "gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500"
 
 	alice := testutils.TestAddress("alice")
 	positionOwner := adminAddr
@@ -226,7 +225,7 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			inputToken:       gnsPath,
 			outputToken:      "gnot",
 			amountIn:         "100",
-			routeArr:         wugnotGnsPoolPath,
+			routeArr:         BuildSingleHopRoutePath(gnsPath, wugnotPath, pl.FeeTier500),
 			quoteArr:         "100",
 			amountOutMin:     "85",
 			expectedAmount0:  "100",
@@ -269,6 +268,8 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 				teller.Approve(poolAddr, maxApprove)
 			}(cross)
 
+			testing.SetOriginSend(std.Coins{})
+
 			// Position Creation
 			pn.Mint(
 				cross,
@@ -299,6 +300,8 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			wugnot.Approve(cross, poolAddr, maxApprove)
 
 			testing.SetRealm(std.NewUserRealm(tt.recipient))
+			testing.SetOriginSend(std.Coins{})
+
 			amountIn, amountOut := ExactInSwapRoute(
 				cross,
 				tt.inputToken,
@@ -358,14 +361,14 @@ func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
 
 	uassert.AbortsWithMessage(
 		t,
-		`[GNOSWAP-POOL-008] requested data not found || expected poolPath(gno.land/r/demo/wugnot:gno.land/r/onbloc/qux:3000) to exist`,
+		`[GNOSWAP-POOL-008] requested data not found || expected poolPath(gno.land/r/gnoland/wugnot:gno.land/r/onbloc/qux:3000) to exist`,
 		func() {
 			ExactOutSwapRoute(
 				cross,
 				gnot,    // inputToken
 				quxPath, // outputToken
 				"3",     // amountSpecified
-				"gno.land/r/demo/wugnot:gno.land/r/onbloc/qux:3000", // strRouteArr
+				"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/qux:3000", // strRouteArr
 				"100",   // quoteArr
 				"12345", // tokenAmountLimit
 				time.Now().Add(time.Hour).Unix(),

@@ -1,53 +1,111 @@
 package staker
 
-import "testing"
+import (
+	"testing"
+
+	"gno.land/p/nt/ufmt"
+)
 
 func TestEncodeUint(t *testing.T) {
 	tests := []struct {
+		name     string
 		input    uint64
 		expected string
 	}{
-		{0, "00000000000000000000"},                    // minimum
-		{12345, "00000000000000012345"},                // normal value
-		{18446744073709551615, "18446744073709551615"}, // maximum (uint64 max)
+		{"minimum value", 0, "00000000000000000000"},
+		{"normal value", 12345, "00000000000000012345"},
+		{"maximum value", 18446744073709551615, "18446744073709551615"},
 	}
 
 	for _, tt := range tests {
-		result := EncodeUint(tt.input)
-		if result != tt.expected {
-			t.Errorf("EncodeUint(%d) = %s; want %s", tt.input, result, tt.expected)
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			result := EncodeUint(tt.input)
+			if result != tt.expected {
+				t.Errorf("EncodeUint(%d) = %s; want %s", tt.input, result, tt.expected)
+			}
+		})
 	}
 }
 
-func TestDecodeUint(t *testing.T) {
-	tests := []struct {
-		input       string
-		expected    uint64
-		shouldPanic bool
-	}{
-		{"00000000000000000000", 0, false},
-		{"00000000000000012345", 12345, false},
-		{"18446744073709551615", 18446744073709551615, false},
-		{"invalid", 0, true},
-		{"18446744073709551616", 0, true},
-	}
-
-	for _, tt := range tests {
-		if tt.shouldPanic {
-			defer func() {
-				if r := recover(); r == nil {
-					t.Errorf("DecodeUint(%s) did not panic as expected", tt.input)
-				}
-			}()
-			_ = DecodeUint(tt.input)
-		} else {
-			result := DecodeUint(tt.input)
-			if result != tt.expected {
-				t.Errorf("DecodeUint(%s) = %d; want %d", tt.input, result, tt.expected)
-			}
+func TestEncodeInt64(t *testing.T) {
+	t.Run("positive values", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			input    int64
+			expected string
+		}{
+			{"zero", 0, "00000000000000000000"},
+			{"normal value", 12345, "00000000000000012345"},
+			{"large value", 9223372036854775807, "09223372036854775807"}, // int64 max
 		}
-	}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				result := EncodeInt64(tt.input)
+				if result != tt.expected {
+					t.Errorf("EncodeInt64(%d) = %s; want %s", tt.input, result, tt.expected)
+				}
+			})
+		}
+	})
+
+	t.Run("negative values should panic", func(t *testing.T) {
+		negativeValues := []int64{-1, -123, -9223372036854775808} // int64 min
+
+		for _, val := range negativeValues {
+			t.Run(ufmt.Sprintf("value_%d", val), func(t *testing.T) {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("EncodeInt64(%d) should have panicked", val)
+					}
+				}()
+				EncodeInt64(val)
+			})
+		}
+	})
+}
+
+func TestDecodeUint(t *testing.T) {
+	t.Run("valid inputs", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			input    string
+			expected uint64
+		}{
+			{"minimum", "00000000000000000000", 0},
+			{"normal", "00000000000000012345", 12345},
+			{"maximum", "18446744073709551615", 18446744073709551615},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				result := DecodeUint(tt.input)
+				if result != tt.expected {
+					t.Errorf("DecodeUint(%s) = %d; want %d", tt.input, result, tt.expected)
+				}
+			})
+		}
+	})
+
+	t.Run("invalid inputs should panic", func(t *testing.T) {
+		invalidInputs := []string{
+			"invalid",
+			"18446744073709551616", // overflow
+			"",                     // empty
+			"abc123",              // mixed
+		}
+
+		for _, input := range invalidInputs {
+			t.Run(ufmt.Sprintf("input_%s", input), func(t *testing.T) {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("DecodeUint(%s) should have panicked", input)
+					}
+				}()
+				DecodeUint(input)
+			})
+		}
+	})
 }
 
 func TestUintTree(t *testing.T) {

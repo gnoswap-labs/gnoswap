@@ -3,7 +3,7 @@ package pool
 import (
 	"errors"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 )
 
 // Error definitions for pool operations
@@ -36,6 +36,8 @@ var (
 	errOverFlow                  = errors.New("[GNOSWAP-POOL-026] overflow")
 	errBalanceUpdateFailed       = errors.New("[GNOSWAP-POOL-027] balance update failed")
 	errInvalidPayer              = errors.New("[GNOSWAP-POOL-028] invalid payer")
+	errNotAccessEOA              = errors.New("[GNOSWAP-POOL-029] not access EOA")
+	errInsufficientPayment       = errors.New("[GNOSWAP-POOL-030] insufficient payment")
 )
 
 // newErrorWithDetail adds detail to an error message.

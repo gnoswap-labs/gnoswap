@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
@@ -117,6 +117,12 @@ func ChangeDistributionPct(
 		"target04", targetToStr(target04),
 		"pct04", formatInt(pct04),
 	)
+
+	// Call the callback if registered
+	if onDistributionPctChangeCallback != nil {
+		emissionAmountPerSecond := GetStakerEmissionAmountPerSecond()
+		onDistributionPctChangeCallback(emissionAmountPerSecond)
+	}
 }
 
 // changeDistributionPcts updates the distribution percentages in the AVL tree.

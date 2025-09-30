@@ -1,7 +1,7 @@
 package common
 
 import (
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -178,8 +178,6 @@ func computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1 *u256.Uint
 //   - The `Clone` method is used to prevent modification of the original values during computation.
 //   - The function ensures that liquidity calculations handle edge cases when the current price
 //     is outside the specified range by returning liquidity based on the dominant token.
-//
-// TODO: consider to reduce the number of clones (after confirmed this logic is correct)
 func GetLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0, amount1 *u256.Uint) (liquidity *u256.Uint) {
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96.Clone(), sqrtRatioBX96.Clone())
 

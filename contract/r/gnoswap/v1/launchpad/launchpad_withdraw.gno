@@ -4,7 +4,7 @@ import (
 	"std"
 	"time"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
@@ -19,8 +19,8 @@ import (
 //
 // Returns amount collected and any error.
 func CollectDepositGns(cur realm, depositID string) (int64, error) {
-	halt.AssertIsNotHaltedLaunchpad()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedLaunchpadWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	previousRealm := std.PreviousRealm()
 	access.AssertIsUser(previousRealm)

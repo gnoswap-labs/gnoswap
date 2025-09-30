@@ -1,11 +1,12 @@
 package staker
 
 import (
+	"math"
 	"std"
 	"time"
 
-	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	en "gno.land/r/gnoswap/emission"
@@ -31,7 +32,7 @@ func CreateExternalIncentive(
 	startTimestamp int64,
 	endTimestamp int64,
 ) {
-	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
 
 	caller := std.PreviousRealm().Address()
 	access.AssertIsUser(std.PreviousRealm())
@@ -42,21 +43,22 @@ func CreateExternalIncentive(
 	assertIsValidIncentiveStartTime(startTimestamp)
 	assertIsValidIncentiveEndTime(endTimestamp)
 	assertIsValidIncentiveDuration(endTimestamp - startTimestamp)
+	// assert that the user has sent the correct amount of native coin
+	assertIsValidUserCoinSend(rewardToken, rewardAmount)
 
 	en.MintAndDistributeGns(cross)
 
 	// transfer reward token from user to staker
+	isRequestUnwrap := false
 	if rewardToken == GNOT {
+		isRequestUnwrap = true
 		rewardToken = WUGNOT_PATH
 		err := wrapWithTransfer(stakerAddr, rewardAmount)
 		if err != nil {
 			panic(err)
 		}
 	} else {
-		err := common.TransferFrom(cross, rewardToken, caller, stakerAddr, rewardAmount)
-		if err != nil {
-			panic(err)
-		}
+		common.SafeGRC20TransferFrom(cross, rewardToken, caller, stakerAddr, rewardAmount)
 	}
 
 	// deposit gns amount
@@ -78,6 +80,7 @@ func CreateExternalIncentive(
 		currentHeight,
 		depositGnsAmount,
 		currentTime,
+		isRequestUnwrap,
 	)
 
 	if externalIncentives.Has(incentiveId) {
@@ -127,8 +130,8 @@ func CreateExternalIncentive(
 //
 // Only callable by Refundee or Admin.
 func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
-	halt.AssertIsNotHaltedStaker()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	assertIsPoolExists(targetPoolPath)
 
@@ -142,6 +145,25 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 
 	caller := std.PreviousRealm().Address()
 	currentTime := time.Now().Unix()
+
+	// Get incentive to check if GNS already refunded
+	incentive, exists := pool.incentives.Get(incentiveId)
+	if !exists {
+		panic(makeErrorWithDetails(
+			errCannotEndIncentive,
+			ufmt.Sprintf("cannot end non existent incentive(%s)", incentiveId),
+		))
+	}
+
+	// Check if incentive has already been refunded
+	if incentive.refunded {
+		panic(makeErrorWithDetails(
+			errCannotEndIncentive,
+			ufmt.Sprintf("incentive(%s) has already been refunded", incentiveId),
+		))
+	}
+
+	// Process ending
 	incentive, refund, err := endExternalIncentive(pool, incentiveId, caller, currentTime)
 	if err != nil {
 		panic(err)
@@ -152,22 +174,36 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 		refund = poolLeftExternalRewardAmount
 	}
 
-	// unwrap if wugnot
-	isUnwrap := incentive.rewardToken == WUGNOT_PATH
-	if isUnwrap {
-		err = unwrapWithTransfer(incentive.refundee, refund)
+	// handle refund based on original token type
+	if incentive.isRequestUnwrap {
+		// unwrap to GNOT if originally deposited as native GNOT
+		transferErr := unwrapWithTransfer(incentive.refundee, refund)
+		if transferErr != nil {
+			panic(transferErr)
+		}
 	} else {
-		err = common.Transfer(cross, incentive.rewardToken, incentive.refundee, refund)
+		// keep as WUGNOT or other token if originally deposited as wrapped token
+		common.SafeGRC20Transfer(cross, incentive.rewardToken, incentive.refundee, refund)
 	}
 
-	if err != nil {
-		panic(err)
-	}
-
-	// also refund deposit gns amount
+	// Transfer GNS deposit back to refundee
 	gns.Transfer(cross, incentive.refundee, incentive.depositGnsAmount)
 
+	// Mark incentive as refunded and update
+	// After this update, attempts to re-claim GNS or rewards that were deposited
+	// through the `endExternalIncentive` function will be blocked.
+	incentive.setRefunded(true)
+	incentive.addDistributedRewardAmount(refund)
 	pool.incentives.update(incentive.refundee, incentive)
+
+	// archive incentive if it is finished (all rewards distributed)
+	// this is to prevent re-claiming GNS or rewards after the incentive is finished
+	if incentive.IsFinished() {
+		err = archiveEndedExternalIncentive(incentive)
+		if err != nil {
+			panic(err)
+		}
+	}
 
 	previousRealm := std.PreviousRealm()
 	std.Emit(
@@ -180,7 +216,7 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 		"refundToken", incentive.rewardToken,
 		"refundAmount", formatInt(refund),
 		"refundGnsAmount", formatInt(incentive.depositGnsAmount),
-		"isRequestUnwrap", formatBool(incentive.rewardToken == WUGNOT_PATH),
+		"isRequestUnwrap", formatBool(incentive.isRequestUnwrap),
 		"externalIncentiveEndBy", previousRealm.Address().String(),
 	)
 }
@@ -213,12 +249,38 @@ func endExternalIncentive(pool *Pool, incentiveId string, caller std.Address, cu
 		)
 	}
 
-	refund := int64(incentive.rewardLeft)
+	totalReward := int64(0)
 
-	if !incentive.unclaimableRefunded {
-		refund += int64(pool.incentives.calculateUnclaimableReward(incentive.incentiveId))
-		incentive.setUnClaimableRefunded(true)
-	}
+	// calculate total external reward for the incentive
+	deposits.IterateByPoolPath(0, math.MaxUint64, incentive.targetPoolPath, func(positionId uint64, deposit *Deposit) bool {
+		lastCollectTime := deposit.ExternalRewardLastCollectTime(incentiveId)
+
+		if lastCollectTime > incentive.endTimestamp {
+			return false
+		}
+
+		totalReward += pool.RewardStateOf(deposit).calculateTotalExternalReward(lastCollectTime, currentTime, incentive)
+
+		return false
+	})
+
+	// calculate refund amount is the difference between the incentive reward amount and the total external reward
+	refund := safeSubInt64(incentive.TotalRewardAmount(), totalReward)
+	refund = safeSubInt64(refund, incentive.DistributedRewardAmount())
 
 	return incentive, refund, nil
+}
+
+func archiveEndedExternalIncentive(incentive *ExternalIncentive) error {
+	pool, exists := pools.Get(incentive.targetPoolPath)
+	if !exists {
+		return makeErrorWithDetails(
+			errDataNotFound,
+			ufmt.Sprintf("targetPoolPath(%s) not found", incentive.targetPoolPath),
+		)
+	}
+
+	pool.incentives.archiveIncentive(incentive.incentiveId)
+
+	return nil
 }

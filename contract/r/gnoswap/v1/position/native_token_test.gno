@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 )
 
 func TestTransferUGNOT(t *testing.T) {
@@ -250,7 +250,7 @@ func TestIsWrappedToken(t *testing.T) {
 		},
 		{
 			name:      "isWrappedToken is failed by similar but different tokenPath",
-			tokenPath: "gno.land/r/demo/Wugnot",
+			tokenPath: "gno.land/r/gnolands/wugnot",
 			expected:  false,
 		},
 	}

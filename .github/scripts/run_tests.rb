@@ -24,50 +24,28 @@ class TestRunner
 
   def run_unit_tests
     puts "Running unit tests for #{@folder}"
+
+    # With gnowork.toml, we can run tests directly from each directory
+    # No need to search for workspace root anymore
+    test_dir = File.expand_path(@folder)
     
-    # Find both regular test files and filetest files
-    test_files = Dir.glob("./#{@folder}/*_test.gno") + Dir.glob("./#{@folder}/*_filetest.gno")
-    
-    test_files.each do |file|
-      content = File.read(file)
+    unless File.directory?(test_dir)
+      puts "Error: Directory #{test_dir} does not exist"
+      exit 1
+    end
+
+    # Change to the test directory
+    Dir.chdir(test_dir) do
+      puts "Running tests in: #{Dir.pwd}"
       
-      # Check if this is a filetest (has main function)
-      # For debug, use this:
-      # ruby -e "puts Dir.glob('./tests/scenario/**/*_filetest.gno')"
-      if content.include?("func main()")
-        puts "Running filetest: #{file}"
-        run_command("gno test #{file} -root-dir #{@root_dir}")
-        next
-      end
-
-      # collect test functions from the file
-      # we need to run each test function separately
-      # because the gno test environment does not separate its test environment
-      # which can cause the invalid test result
-      test_names = content.scan(/func (Test\w+)/).flatten
-      if test_names.empty?
-        puts "No test functions found in #{file}"
-        next
-      end
-      test_names.each do |test_name|
-        puts "Running #{test_name} in #{file}"
-        run_command("gno test #{file} -root-dir #{@root_dir} -run ^#{test_name}$")
-      end
+      # Run gno test -v . to execute all tests in the current directory
+      run_command("gno test -v . -root-dir #{@root_dir}")
     end
   end
 
-  def remove_test_files
-    puts "Removing temporary test files"
-    Dir.glob("./#{@folder}/*_test.gno").each do |file|
-      next if File.basename(file) == '_helper_test.gno'
-      puts "Removing #{file}"
-      File.delete(file)
-    end
-  end
 
   def run_all
     run_unit_tests
-    remove_test_files
   end
 end
 

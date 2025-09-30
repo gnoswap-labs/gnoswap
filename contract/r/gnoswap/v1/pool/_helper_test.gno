@@ -2,9 +2,10 @@ package pool
 
 import (
 	"std"
+	"strconv"
 	"testing"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -13,15 +14,15 @@ import (
 	"gno.land/r/onbloc/qux"
 	"gno.land/r/onbloc/usdc"
 
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/testutils"
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/testutils"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 
 	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
 )
@@ -29,7 +30,7 @@ import (
 const (
 	ugnotDenom string = "ugnot"
 	ugnotPath  string = "ugnot"
-	wugnotPath string = "gno.land/r/demo/wugnot"
+	wugnotPath string = "gno.land/r/gnoland/wugnot"
 	gnsPath    string = "gno.land/r/gnoswap/gns"
 	barPath    string = "gno.land/r/onbloc/bar"
 	bazPath    string = "gno.land/r/onbloc/baz"
@@ -66,7 +67,7 @@ var (
 	stakerAddr, _   = access.GetAddress(prabc.ROLE_STAKER.String())
 	emissionAddr, _ = access.GetAddress(prabc.ROLE_EMISSION.String())
 
-	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+	wugnotAddr std.Address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	alice      = testutils.TestAddress("alice")
 	adminRealm = std.NewUserRealm(adminAddr)
@@ -242,7 +243,6 @@ func MintPosition(t *testing.T,
 		token0,
 		token1,
 		fee,
-		mintTo,
 		tickLower,
 		tickUpper,
 		amount0Desired,
@@ -632,4 +632,32 @@ func TestBurnTokens(t *testing.T) {
 
 	uassert.Equal(t, foo.BalanceOf(addr01), int64(0)) // 100_000_000 -> 0
 	uassert.Equal(t, bar.BalanceOf(addr01), int64(0)) // 100_000_000 -> 0
+}
+
+func mockSwapCallback(token0Path string, token1Path string, amount0Delta string, amount1Delta string) error {
+	func(cur realm) {
+		testing.SetRealm(adminRealm)
+
+		amount0Int64, _ := strconv.ParseInt(amount0Delta, 10, 64)
+		amount1Int64, _ := strconv.ParseInt(amount1Delta, 10, 64)
+
+		if amount0Int64 > 0 {
+			if token0Path == wugnotPath {
+				testing.SetOriginSend(std.Coins{{ugnotDenom, amount0Int64}})
+				wugnot.Deposit(cross)
+			}
+
+			common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Int64)
+		}
+		if amount1Int64 > 0 {
+			if token1Path == wugnotPath {
+				testing.SetOriginSend(std.Coins{{ugnotDenom, amount1Int64}})
+				wugnot.Deposit(cross)
+			}
+
+			common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Int64)
+		}
+	}(cross)
+
+	return nil
 }

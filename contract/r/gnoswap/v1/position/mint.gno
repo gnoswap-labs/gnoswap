@@ -3,7 +3,7 @@ package position
 import (
 	"std"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/common"
@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	WRAPPED_WUGNOT string = "gno.land/r/demo/wugnot"
+	WRAPPED_WUGNOT string = "gno.land/r/gnoland/wugnot"
 	UGNOT          string = "ugnot"
 	GNOT           string = "gnot"
 )
@@ -51,11 +51,10 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 
 	gnft.Mint(cross, params.mintTo, positionIdFrom(id))
 
-	positionKey := computePositionKey(params.caller, params.tickLower, params.tickUpper)
+	positionKey := computePositionKey(params.tickLower, params.tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(poolKey, positionKey)
 
 	position := Position{
-		nonce:                    u256.Zero(),
 		operator:                 zeroAddress,
 		poolKey:                  poolKey,
 		tickLower:                params.tickLower,
@@ -207,7 +206,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 		},
 	)
 
-	positionKey := computePositionKey(caller, position.tickLower, position.tickUpper)
+	positionKey := computePositionKey(position.tickLower, position.tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.poolKey, positionKey)
 
 	currentSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(position.poolKey)
@@ -224,14 +223,14 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	{
 		diff := u256.Zero().Sub(feeGrowthInside0LastX128, position.feeGrowthInside0LastX128)
-		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.liquidity), u256.MustFromDecimal(Q128))
+		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.liquidity), q128)
 
 		position.tokensOwed0 = u256.Zero().Add(position.tokensOwed0, mulDiv)
 	}
 
 	{
 		diff := u256.Zero().Sub(feeGrowthInside1LastX128, position.feeGrowthInside1LastX128)
-		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.liquidity), u256.MustFromDecimal(Q128))
+		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.liquidity), q128)
 
 		position.tokensOwed1 = u256.Zero().Add(position.tokensOwed1, mulDiv)
 	}

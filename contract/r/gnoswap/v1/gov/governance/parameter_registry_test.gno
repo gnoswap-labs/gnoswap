@@ -3,8 +3,8 @@ package governance
 import (
 	"testing"
 
-	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/uassert"
+	"gno.land/p/nt/ufmt"
 )
 
 // TestParameterRegistry_RegisterAndHandler tests registration and handler retrieval

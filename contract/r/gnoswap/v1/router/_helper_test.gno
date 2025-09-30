@@ -4,8 +4,8 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/r/demo/wugnot"
+	"gno.land/p/nt/testutils"
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
@@ -85,7 +85,7 @@ var (
 	posPath  = "gno.land/r/gnoswap/v1/position"
 	posRealm = std.NewCodeRealm(posPath)
 
-	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+	wugnotAddr std.Address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	// addresses used in tests
 	addrUsedInTest = []std.Address{addr01, addr02}

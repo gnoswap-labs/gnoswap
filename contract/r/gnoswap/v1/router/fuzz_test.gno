@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/uassert"
 	"gno.land/p/gnoswap/fuzz"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/uassert"
 )
 
 // RouteGenerator generates valid route strings for testing
@@ -452,7 +452,7 @@ func TestFuzzGetDataForSinglePath(t *testing.T) {
 	helper := newTestHelper(t)
 
 	// format: "token0:token1:fee"
-	validTokens := []string{"gno.land/r/demo/token0", "gno.land/r/demo/token1", "gno.land/r/demo/wugnot"}
+	validTokens := []string{"gno.land/r/demo/token0", "gno.land/r/demo/token1", "gno.land/r/gnoland/wugnot"}
 	validFees := []uint32{100, 500, 3000, 10000}
 
 	// valid paths
@@ -606,7 +606,7 @@ func TestFuzzSwapValidatorExactOutAmount(t *testing.T) {
 		resultAmount := u256.NewUint(resultVal)
 		specifiedAmount := u256.NewUint(specifiedVal)
 
-		err := validator.exactOutAmount(resultAmount, specifiedAmount)
+		err := validator.exactOutAmount(resultAmount, specifiedAmount, 1)
 		shouldFail := resultAmount.Lt(specifiedAmount)
 
 		helper.assertError(err, shouldFail, "exactOutAmount validation")
@@ -1035,17 +1035,17 @@ func TestFuzzFinalizeSwap(t *testing.T) {
 				int64(params.userBeforeWugnotBalance),
 				int64(params.userWrappedWugnot),
 				params.amountSpecified,
+				1,
+				false,
 			)
 
 			// verify amountIn is positive string
-			inVal, err := strconv.ParseInt(amountIn, 10, 64)
-			if err != nil || inVal <= 0 {
+			if amountIn.Int64() <= 0 {
 				t.Errorf("Invalid amountIn: %s", amountIn)
 			}
 
 			// verify amountOut is negative string
-			outVal, err := strconv.ParseInt(amountOut, 10, 64)
-			if err != nil || outVal >= 0 {
+			if amountOut.Int64() >= 0 {
 				t.Errorf("Invalid amountOut: %s (should be negative)", amountOut)
 			}
 		}()

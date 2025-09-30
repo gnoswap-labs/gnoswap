@@ -1,16 +1,18 @@
 package pool
 
 import (
+	"math"
 	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
 	i256 "gno.land/p/gnoswap/int256"
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/uassert"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 // PoolTestEnv provides a clean, stateful environment for pool tests
@@ -132,7 +134,6 @@ func (e *PoolTestEnv) AndLiquidityProvided(params LiquidityParams) *PoolTestEnv 
 		params.token0,
 		params.token1,
 		params.fee,
-		e.currentAddress,
 		params.tickLower,
 		params.tickUpper,
 		params.amount,
@@ -163,6 +164,17 @@ func (e *PoolTestEnv) WhenSwapExecuted(params SwapParams) (*u256.Uint, *u256.Uin
 		e.t.Fatalf("Pool not found for %s/%s/%d", params.token0, params.token1, params.fee)
 	}
 
+	swapCallback := func(cur realm, amount0Delta string, amount1Delta string) error {
+		testing.SetRealm(adminRealm)
+		if params.zeroForOne {
+			common.SafeGRC20Transfer(cross, params.token0, e.currentAddress, math.MaxInt64)
+		} else {
+			common.SafeGRC20Transfer(cross, params.token1, e.currentAddress, math.MaxInt64)
+		}
+
+		return nil
+	}
+
 	// Execute swap
 	testing.SetRealm(rouRealm)
 	amount0Str, amount1Str := Swap(
@@ -175,6 +187,7 @@ func (e *PoolTestEnv) WhenSwapExecuted(params SwapParams) (*u256.Uint, *u256.Uin
 		params.amountSpecified.ToString(),
 		params.sqrtPriceLimitX96.ToString(),
 		e.currentAddress,
+		swapCallback,
 	)
 
 	return u256.MustFromDecimal(amount0Str), u256.MustFromDecimal(amount1Str)
