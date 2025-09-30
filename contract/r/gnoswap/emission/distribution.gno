@@ -339,7 +339,7 @@ func GetEmissionAmountPerSecondBy(timestamp, distributionPct int64) int64 {
 // GetStakerEmissionAmountPerSecond returns the current per-second emission amount allocated to liquidity stakers.
 func GetStakerEmissionAmountPerSecond() int64 {
 	currentTimestamp := time.Now().Unix()
-	return GetStakerEmissionAmountPerSecondBy(currentTimestamp, GetDistributionBpsPct(LIQUIDITY_STAKER))
+	return GetEmissionAmountPerSecondBy(currentTimestamp, GetDistributionBpsPct(LIQUIDITY_STAKER))
 }
 
 // GetStakerEmissionAmountPerSecondInRange returns emission amounts allocated to liquidity stakers for a time range.
