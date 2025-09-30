@@ -259,7 +259,13 @@ func endExternalIncentive(pool *Pool, incentiveId string, caller std.Address, cu
 			return false
 		}
 
-		totalReward += pool.RewardStateOf(deposit).calculateTotalExternalReward(lastCollectTime, currentTime, incentive)
+		rewardState := pool.RewardStateOf(deposit)
+		if rewardState == nil {
+			return false
+		}
+
+		calculatedTotalReward := rewardState.calculateTotalExternalReward(lastCollectTime, currentTime, incentive)
+		totalReward = safeAddInt64(totalReward, calculatedTotalReward)
 
 		return false
 	})

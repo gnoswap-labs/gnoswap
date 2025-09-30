@@ -217,7 +217,7 @@ func (self *Incentives) calculateUnclaimableReward(incentiveId string) int64 {
 		return false
 	})
 
-	return timeDiff * incentive.rewardPerSecond
+	return safeMulInt64(timeDiff, incentive.rewardPerSecond)
 }
 
 // calculateUnClaimableDuration calculates the duration of overlap between an unclaimable period and incentive period

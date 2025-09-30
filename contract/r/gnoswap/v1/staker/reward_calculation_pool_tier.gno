@@ -145,7 +145,9 @@ func (self *PoolTier) CurrentReward(tier uint64) int64 {
 		return 0
 	}
 
-	return currentEmission * tierRatio / count / 100
+	tierEmission := safeMulInt64(currentEmission, tierRatio)
+
+	return tierEmission / count / 100
 }
 
 // CurrentCount returns the current count of pools in the given tier.
@@ -294,7 +296,7 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentTimestamp, emiss
 		// Skip pools with tier 0 (removed from tier system)
 		if tierNum == 0 {
 			return false
-    }
+		}
 		pool, ok := pools.Get(key)
 		if !ok {
 			return false
