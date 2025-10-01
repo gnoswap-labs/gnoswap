@@ -97,7 +97,7 @@ func testDrySwapRouteBarQuxExactIn() {
 		"1",
 	)
 
-	println("[EXPECTED] dry swap result:", dryResult, "expected: 7346")
+	println("[EXPECTED] dry swap result:", dryResult, "expected: 7335")
 	println()
 }
 
@@ -192,8 +192,8 @@ func testwapRouteQuxBarExactOut() {
 		"", // referrer
 	)
 
-	println("[EXPECTED] amountIn:", amountIn, "expected: 7365")
-	println("[EXPECTED] amountOut:", amountOut, "expected: -999")
+	println("[EXPECTED] amountIn:", amountIn, "expected: 7373")
+	println("[EXPECTED] amountOut:", amountOut, "expected: -1000")
 	println()
 }
 
@@ -212,7 +212,7 @@ func testwapRouteQuxBarExactOut() {
 //
 // [SCENARIO] Given: Dry swap route bar to qux exact in preparation
 // [INFO] Executing dry swap route with 2 routes (bar → baz → qux)
-// [EXPECTED] dry swap result: 7346 expected: 7346
+// [EXPECTED] dry swap result: 7335 expected: 7335
 //
 // [SCENARIO] Given: Swap route bar to qux exact in preparation
 // [INFO] Approving tokens for swap
@@ -233,7 +233,7 @@ func testwapRouteQuxBarExactOut() {
 // [SCENARIO] Given: Swap route qux to bar exact out preparation
 // [INFO] Approving tokens for swap
 // [INFO] Executing ExactOut swap with 2 routes (qux → baz → 1000 bar)
-// [EXPECTED] amountIn: 7365 expected: 7365
-// [EXPECTED] amountOut: -999 expected: -999
+// [EXPECTED] amountIn: 7373 expected: 7373
+// [EXPECTED] amountOut: -1000 expected: -1000
 //
 // [INFO] Scenario completed

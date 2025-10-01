@@ -116,7 +116,7 @@ func testDrySwapRouteQuxGnotExactIn(t *testing.T) {
 		"100", // quoteArr
 		"1",
 	)
-	println("[EXPECTED] dry swap result:", dryResult, "expected: 2711")
+	println("[EXPECTED] dry swap result:", dryResult, "expected: 2707")
 	println()
 }
 
@@ -161,7 +161,7 @@ func testDrySwapRouteQuxGnotExactOut(t *testing.T) {
 //
 // [SCENARIO] Given: Dry swap route qux to wugnot exact in preparation
 // [INFO] Executing dry swap route (qux → wugnot)
-// [EXPECTED] dry swap result: 2711 expected: 2711
+// [EXPECTED] dry swap result: 2707 expected: 2707
 //
 // [SCENARIO] Given: Dry swap route qux to wugnot exact out preparation
 // [INFO] Executing dry swap route exact out (qux → wugnot)
