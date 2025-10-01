@@ -190,7 +190,8 @@ func drySwapRoute(
 
 	// adjust amount sign for exact out swaps
 	if swapType == ExactOut {
-		amountSpecified = i256.Zero().Neg(amountSpecified)
+		amountSpecifiedWithRouterFee := calculateExactOutWithRouterFee(amountSpecified.Abs())
+		amountSpecified = i256.Zero().Neg(i256.FromUint256(amountSpecifiedWithRouterFee))
 	}
 
 	// initialize accumulators for swap results
@@ -230,6 +231,14 @@ func drySwapRoute(
 		if err != nil {
 			panic(addDetailToError(errInvalidInput, err.Error()))
 		}
+	}
+
+	// simulate deduct router fee
+	feeAmountInt64 := calculateRouterFee(resultAmountOut)
+
+	resultAmountOut, overflow := u256.Zero().SubOverflow(resultAmountOut, u256.NewUintFromInt64(feeAmountInt64))
+	if overflow {
+		panic(errUnderFlowDeductRouterFee)
 	}
 
 	return processor.ValidateSwapResults(swapType, resultAmountIn, resultAmountOut, amountSpecified, amountLimit)

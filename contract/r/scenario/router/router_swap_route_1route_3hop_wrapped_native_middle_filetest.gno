@@ -147,7 +147,7 @@ func testDrySwapRouteGnsBarExactIn() {
 		"100", // quoteArr
 		"1",
 	)
-	println("[EXPECTED] dry swap result:", dryResult, "expected: 7327")
+	println("[EXPECTED] dry swap result:", dryResult, "expected: 7317")
 	println()
 }
 
@@ -218,7 +218,7 @@ func testSwapRouteGnsBarExactIn() {
 //
 // [SCENARIO] Given: Dry swap route gns to bar exact in preparation
 // [INFO] Executing dry swap route (gns → wugnot → bar)
-// [EXPECTED] dry swap result: 7327 expected: 7327
+// [EXPECTED] dry swap result: 7317 expected: 7317
 //
 // [SCENARIO] Given: Swap route gns to bar exact in preparation
 // [INFO] Approving tokens for swap

@@ -249,6 +249,21 @@ type SwapRouteParams struct {
 	sqrtPriceLimitX96 string // if sqrtPriceLimitX96 is zero string, it will be set to MIN_PRICE or MAX_PRICE
 }
 
+func (p *SwapRouteParams) ExactAmount() string {
+	return p.exactAmount
+}
+
+// when exact out, calculate amount to fetch from pool including router fee
+func (p *SwapRouteParams) ExpectedExactAmount() string {
+	if p.typ == ExactIn {
+		return p.exactAmount
+	}
+
+	userAmount := u256.MustFromDecimal(p.exactAmount)
+
+	return calculateExactOutWithRouterFee(userAmount).ToString()
+}
+
 // IsUnwrap checks if the swap output is native token.
 func (p *SwapRouteParams) IsUnwrap() bool {
 	return p.outputToken == gnot
@@ -281,10 +296,10 @@ func createSwapOperation(params SwapRouteParams) (RouterOperation, error) {
 
 	switch params.typ {
 	case ExactIn:
-		pp := NewExactInParams(baseParams, params.exactAmount, params.limitAmount)
+		pp := NewExactInParams(baseParams, params.ExactAmount(), params.limitAmount)
 		return NewExactInSwapOperation(pp), nil
 	case ExactOut:
-		pp := NewExactOutParams(baseParams, params.exactAmount, params.limitAmount)
+		pp := NewExactOutParams(baseParams, params.ExpectedExactAmount(), params.limitAmount)
 		return NewExactOutSwapOperation(pp), nil
 	default:
 		msg := addDetailToError(errInvalidSwapType, "unknown swap type")
@@ -342,7 +357,7 @@ func commonSwapRoute(params SwapRouteParams) (*i256.Int, *i256.Int, error) {
 		limitValue,
 		userBeforeWugnotBalance,
 		userWrappedWugnot,
-		result.AmountSpecified.Abs(),
+		u256.MustFromDecimal(params.ExactAmount()),
 		params.SwapCount(),
 		params.IsSetSqrtPriceLimitX96(),
 	)
