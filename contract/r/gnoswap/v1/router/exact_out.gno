@@ -72,6 +72,7 @@ func ExactOutSwapRoute(
 	assertIsValidUserCoinSend(inputToken, amountInMax)
 	assertIsValidRoutePaths(routeArr, inputToken, outputToken)
 	assertIsNotPassedDeadline(deadline)
+	assertIsExistsPools(routeArr)
 
 	emission.MintAndDistributeGns(cross)
 
@@ -131,6 +132,7 @@ func ExactOutSingleSwapRoute(
 	assertIsValidSingleSwapRouteArrPath(routeArr, inputToken, outputToken)
 	assertIsValidSqrtPriceLimitX96(sqrtPriceLimitX96)
 	assertIsNotPassedDeadline(deadline)
+	assertIsExistsPools(routeArr)
 
 	emission.MintAndDistributeGns(cross)
 

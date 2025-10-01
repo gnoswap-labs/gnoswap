@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
@@ -52,6 +53,8 @@ var (
 	maxInt64   int64 = 9223372036854775807
 
 	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
+
+	t *testing.T
 )
 
 func main() {
@@ -239,17 +242,19 @@ func performSwapToMovePrice() {
 		println("[WARNING] swap might not have moved price far enough")
 		// Try another swap to move further
 		println("[INFO] perform additional swap")
-		rt.ExactInSwapRoute(
-			cross,
-			barPath,
-			bazPath,
-			swapAmount,
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
-			"100",
-			"0",
-			maxTimeout,
-			"",
-		)
+		uassert.AbortsContains(t, "failed swap", func() {
+			rt.ExactInSwapRoute(
+				cross,
+				barPath,
+				bazPath,
+				swapAmount,
+				"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
+				"100",
+				"0",
+				maxTimeout,
+				"",
+			)
+		})
 
 		finalTick := pl.GetSlot0Tick(poolPath)
 		ufmt.Printf("[EXPECTED] final tick after additional swap: %d\n", finalTick)
@@ -290,18 +295,22 @@ func performReverseSwap() {
 	// Swap baz for bar to move tick back down
 	reverseSwapAmount := "50000"
 
+	var amountOut string = "0"
+
 	println("[INFO] swap baz for bar to move tick down")
-	_, amountOut := rt.ExactInSwapRoute(
-		cross,
-		bazPath,
-		barPath,
-		reverseSwapAmount,
-		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:100",
-		"100",
-		"0",
-		maxTimeout,
-		"",
-	)
+	uassert.AbortsContains(t, "failed swap", func() {
+		_, amountOut = rt.ExactInSwapRoute(
+			cross,
+			bazPath,
+			barPath,
+			reverseSwapAmount,
+			"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:100",
+			"100",
+			"0",
+			maxTimeout,
+			"",
+		)
+	})
 
 	ufmt.Printf("[INFO] swapped %s baz for %s bar\n", reverseSwapAmount, amountOut)
 
