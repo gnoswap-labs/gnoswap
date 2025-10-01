@@ -99,7 +99,7 @@ func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 	internalRewards, internalPenalties = pool.RewardStateOf(deposit).calculateInternalReward(lastCollectTime, param.CurrentTime)
 
 	// Get all incentives including archived ones with unclaimed rewards
-	allIncentives := pool.incentives.GetAllInTimestampsIncludingArchived(lastCollectTime, param.CurrentTime)
+	allIncentives := pool.incentives.GetIncentivesForRewardCalculation(lastCollectTime, param.CurrentTime)
 
 	// Initialize maps for external rewards
 	for i := range externalRewards {

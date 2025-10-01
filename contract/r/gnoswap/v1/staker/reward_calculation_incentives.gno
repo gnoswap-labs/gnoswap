@@ -70,33 +70,9 @@ func retrieveIncentive(tree *avl.Tree, id string) (*ExternalIncentive, bool) {
 	return v, true
 }
 
-// Get all incentives that is active in given [startTimestamp, endTimestamp)
-func (self *Incentives) GetAllInTimestamps(startTimestamp, endTimestamp int64) map[string]*ExternalIncentive {
-	incentives := make(map[string]*ExternalIncentive)
-
-	// Only iterate active incentives (not archived)
-	self.incentives.Iterate("", "", func(key string, value any) bool {
-		incentive, ok := value.(*ExternalIncentive)
-		if !ok {
-			return false
-		}
-
-		// incentive is not active
-		if incentive.startTimestamp > endTimestamp || incentive.endTimestamp < startTimestamp {
-			return false
-		}
-
-		incentives[incentive.incentiveId] = incentive
-
-		return false
-	})
-
-	return incentives
-}
-
-// GetAllInTimestampsIncludingArchived returns all incentives (both active and archived)
+// GetIncentivesForRewardCalculation returns all incentives (both active and archived)
 // that have rewards claimable in the given [startTimestamp, endTimestamp) period
-func (self *Incentives) GetAllInTimestampsIncludingArchived(startTimestamp, endTimestamp int64) map[string]*ExternalIncentive {
+func (self *Incentives) GetIncentivesForRewardCalculation(startTimestamp, endTimestamp int64) map[string]*ExternalIncentive {
 	incentives := make(map[string]*ExternalIncentive)
 
 	// Helper function to collect incentives that overlap with the query period
