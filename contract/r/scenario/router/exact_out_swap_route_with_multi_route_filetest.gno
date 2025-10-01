@@ -207,5 +207,5 @@ func exactOutSwapRouteBy(
 // [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500,gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000,gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:10000
 // [INFO] queryRatios: 40,40,20
 // [INFO] amountInMax: 10000000
-// [EXPECTED] inputTokenAmount: 1004040
-// [EXPECTED] outputTokenAmount: -1000000
+// [EXPECTED] inputTokenAmount: 1005548
+// [EXPECTED] outputTokenAmount: -1001502

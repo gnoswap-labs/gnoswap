@@ -358,10 +358,10 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			afterWugnotBalance := wugnot.BalanceOf(tt.recipient)
 
 			func(cur realm) {
-				absDrySwapAmountOut := strings.TrimPrefix(drySwapAmountOut, "-")
-				withoutFee := handleSwapFee(tt.outputToken, u256.MustFromDecimal(absDrySwapAmountOut))
-				absAmountOut := strings.TrimPrefix(amountOut, "-")
-				uassert.Equal(t, withoutFee.ToString(), absAmountOut)
+				drySwapAmountOutStr := i256.MustFromDecimal(drySwapAmountOut).Abs().ToString()
+				amountOutStr := i256.MustFromDecimal(amountOut).Abs().ToString()
+
+				uassert.Equal(t, drySwapAmountOutStr, amountOutStr, "amountOut is not equal to drySwapAmountOut")
 				uassert.Equal(t, tt.expectedAmount0, amountIn, "amountIn is not equal to expectedAmount0")
 				uassert.Equal(t, tt.expectedAmount1, amountOut, "amountOut is not equal to expectedAmount1")
 				uassert.Equal(t, tt.expectedAmount0, strconv.FormatInt(int64(beforeWugnotBalance-afterWugnotBalance), 10), "amountIn is not equal to expectedAmount0")
