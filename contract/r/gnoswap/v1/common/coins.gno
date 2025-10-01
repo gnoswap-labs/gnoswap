@@ -29,7 +29,7 @@ func isUserSendGNOTAmount(amount int64) bool {
 
 	gnotAmount, exists := sendCoins[GNOT_DENOM]
 	if !exists {
-		return amount != 0
+		return false
 	}
 
 	return gnotAmount == amount
