@@ -444,70 +444,70 @@ func validateFinalReconciliation(initial, final BalanceSnapshot) {
 // [INFO] Swap 1: 10,000,000 GNOT → GNS
 // [INFO] Swap 1 - In: 10000000 Out: -9426232
 // [INFO] Swap 2: GNS → 5,000,000 GNOT
-// [INFO] Swap 2 - In: 4590157 Out: -4992500
+// [INFO] Swap 2 - In: 4597249 Out: -5000000
 // [BALANCE] After Swaps
-//   User - GNOT: 944992500 WUGNOT: 0 GNS: 954836075
+//   User - GNOT: 945000000 WUGNOT: 0 GNS: 954828983
 //   Position - WUGNOT: 0 GNS: 0
-//   Pool - WUGNOT: 55000000 GNS: 45149765
+//   Pool - WUGNOT: 54992489 GNS: 45156857
 //   Router - GNOT: 0 WUGNOT: 0 GNS: 0
-//   Router Total WUGNOT Fees: 7500
+//   Router Total WUGNOT Fees: 7511
 //   Router Total GNS Fees: 14160
-//   System Total - GNOT: 944992500 WUGNOT: 0
+//   System Total - GNOT: 945000000 WUGNOT: 0
 //
 // [SCENARIO] 5. Add Liquidity with GNOT
-// [INFO] Added liquidity: 61871935
+// [INFO] Added liquidity: 61880386
 // [INFO] GNS added: 20000000
-// [INFO] GNOT added: 16418754
+// [INFO] GNOT added: 16423575
 // [BALANCE] After Add Liquidity
-//   User - GNOT: 924992500 WUGNOT: 0 GNS: 938417321
+//   User - GNOT: 925000000 WUGNOT: 0 GNS: 938405408
 //   Position - WUGNOT: 0 GNS: 0
-//   Pool - WUGNOT: 75000000 GNS: 61568519
+//   Pool - WUGNOT: 74992489 GNS: 61580432
 //   Router - GNOT: 0 WUGNOT: 0 GNS: 0
-//   Router Total WUGNOT Fees: 7500
+//   Router Total WUGNOT Fees: 7511
 //   Router Total GNS Fees: 14160
-//   System Total - GNOT: 924992500 WUGNOT: 0
+//   System Total - GNOT: 925000000 WUGNOT: 0
 //
 // [SCENARIO] 6. Remove Liquidity to GNOT
-// [INFO] Removed liquidity: 69601286
-// [INFO] GNS returned: 22498499
-// [INFO] GNOT returned: 18469866
+// [INFO] Removed liquidity: 69603822
+// [INFO] GNS returned: 22496246
+// [INFO] GNOT returned: 18473439
 // [INFO] GNS fees: 4950
-// [INFO] GNOT fees: 2273
+// [INFO] GNOT fees: 2276
 // [BALANCE] After Remove Liquidity
-//   User - GNOT: 947495949 WUGNOT: 0 GNS: 956889460
+//   User - GNOT: 947501196 WUGNOT: 0 GNS: 956881123
 //   Position - WUGNOT: 0 GNS: 0
-//   Pool - WUGNOT: 52496502 GNS: 43096358
+//   Pool - WUGNOT: 52491244 GNS: 43104695
 //   Router - GNOT: 0 WUGNOT: 0 GNS: 0
-//   Router Total WUGNOT Fees: 7549
+//   Router Total WUGNOT Fees: 7560
 //   Router Total GNS Fees: 14182
-//   System Total - GNOT: 947495949 WUGNOT: 0
+//   System Total - GNOT: 947501196 WUGNOT: 0
 //
 // [SCENARIO] 7. Collect All Fees as GNOT
 // [INFO] GNS fees collected: 0
 // [INFO] WUGNOT fees collected (unwrapped to GNOT): 0
 // [BALANCE] After Collect Fees
-//   User - GNOT: 947495949 WUGNOT: 0 GNS: 956889460
+//   User - GNOT: 947501196 WUGNOT: 0 GNS: 956881123
 //   Position - WUGNOT: 0 GNS: 0
-//   Pool - WUGNOT: 52496502 GNS: 43096358
+//   Pool - WUGNOT: 52491244 GNS: 43104695
 //   Router - GNOT: 0 WUGNOT: 0 GNS: 0
-//   Router Total WUGNOT Fees: 7549
+//   Router Total WUGNOT Fees: 7560
 //   Router Total GNS Fees: 14182
-//   System Total - GNOT: 947495949 WUGNOT: 0
+//   System Total - GNOT: 947501196 WUGNOT: 0
 //
 // [SCENARIO] 8. Close Position Receiving GNOT
 // [INFO] Final liquidity removed: 0
-// [INFO] Final GNS returned: 52496500
-// [INFO] Final GNOT returned: 43096355
+// [INFO] Final GNS returned: 52491242
+// [INFO] Final GNOT returned: 43104691
 // [INFO] Final GNS fees: 0
 // [INFO] Final GNOT fees: 0
 // [BALANCE] Final State
-//   User - GNOT: 999992449 WUGNOT: 0 GNS: 999985815
+//   User - GNOT: 999992438 WUGNOT: 0 GNS: 999985814
 //   Position - WUGNOT: 0 GNS: 0
-//   Pool - WUGNOT: 2 GNS: 3
+//   Pool - WUGNOT: 2 GNS: 4
 //   Router - GNOT: 0 WUGNOT: 0 GNS: 0
-//   Router Total WUGNOT Fees: 7549
+//   Router Total WUGNOT Fees: 7560
 //   Router Total GNS Fees: 14182
-//   System Total - GNOT: 999992449 WUGNOT: 0
+//   System Total - GNOT: 999992438 WUGNOT: 0
 //
 // [SCENARIO] 9. Final Reconciliation
 // [VALIDATION] User final GNOT balance accounts for:
