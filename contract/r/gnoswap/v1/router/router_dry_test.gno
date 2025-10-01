@@ -133,7 +133,7 @@ func TestDrySwapRoute_Basic(t *testing.T) {
 				TokenAmountLimit("1").
 				Build(),
 			expectedAmountIn:  "1000",
-			expectedAmountOut: "2711",
+			expectedAmountOut: "2707",
 			expectedSuccess:   true,
 		},
 		{
@@ -147,7 +147,7 @@ func TestDrySwapRoute_Basic(t *testing.T) {
 				Route("gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500").
 				TokenAmountLimit("100000").
 				Build(),
-			expectedAmountIn:  "2724",
+			expectedAmountIn:  "2727",
 			expectedAmountOut: "1000",
 			expectedSuccess:   true,
 		},
@@ -163,7 +163,7 @@ func TestDrySwapRoute_Basic(t *testing.T) {
 				TokenAmountLimit("1").
 				Build(),
 			expectedAmountIn:  "1000",
-			expectedAmountOut: "7337",
+			expectedAmountOut: "7326",
 			expectedSuccess:   true,
 		},
 		{
@@ -242,7 +242,7 @@ func TestDrySwapRouteOverflow(t *testing.T) {
 			expectedAmountIn:  "0",
 			expectedAmountOut: "0",
 			expectPanic:       true,
-			expectedPanicMsg:  "[GNOSWAP-ROUTER-005] invalid input data || overflow in calculateSwapAmount",
+			expectedPanicMsg:  "overflow: denominator(9985) must be greater than hi(9999)",
 		},
 	}
 

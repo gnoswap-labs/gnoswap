@@ -96,7 +96,9 @@ func main() {
 	bar.Approve(cross, routerAddr, max_approve)
 	baz.Approve(cross, routerAddr, max_approve) // ITS FOR 0.15% fee
 
-	println("[INFO] Attempting ExactOut swap (bar → 120000 baz)")
+	expectedAmountSpecified := "119820"
+
+	println("[INFO] Attempting ExactOut swap (bar →", expectedAmountSpecified, "baz) with fee is almost 120000")
 	println("[INFO] Expected to fail due to insufficient liquidity")
 
 	println("[EXPECTED] Swap should fail with error: [GNOSWAP-ROUTER-002] slippage check failed || ExactOut: too much spent (max:0, used:168406)")
@@ -107,12 +109,12 @@ func main() {
 		func() {
 			router.ExactOutSwapRoute(
 				cross,
-				barPath,  // inputToken
-				bazPath,  // outputToken
-				"120000", // amountSpecified
-				poolPath, // strRouteArr
-				"100",    // quoteArr
-				"0",      // tokenAmountLimit
+				barPath,                 // inputToken
+				bazPath,                 // outputToken
+				expectedAmountSpecified, // amountSpecified
+				poolPath,                // strRouteArr
+				"100",                   // quoteArr
+				"0",                     // tokenAmountLimit
 				time.Now().Add(time.Hour).Unix(),
 				"", // referrer
 			)
@@ -207,7 +209,7 @@ func bazApprove(t *testing.T, owner, spender address, amount int64) {
 // [INFO] Setting up additional pools and positions
 // [INFO] Setting swap permissions
 // [INFO] Approving tokens for swap
-// [INFO] Attempting ExactOut swap (bar → 120000 baz)
+// [INFO] Attempting ExactOut swap (bar → 119820 baz) with fee is almost 120000
 // [INFO] Expected to fail due to insufficient liquidity
 // [EXPECTED] Swap should fail with error: [GNOSWAP-ROUTER-002] slippage check failed || ExactOut: too much spent (max:0, used:168406)
 // [INFO] Scenario completed

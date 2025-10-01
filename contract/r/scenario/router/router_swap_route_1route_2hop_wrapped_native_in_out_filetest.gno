@@ -168,7 +168,7 @@ func testDrySwapRouteBarGnotExactIn(t *testing.T) {
 		"100", // quoteArr
 		"1",
 	)
-	println("[EXPECTED] dry swap result:", dryResult, "expected: 19740")
+	println("[EXPECTED] dry swap result:", dryResult, "expected: 19711")
 	println()
 }
 
@@ -186,7 +186,7 @@ func testDrySwapRouteBarGnotExactOut(t *testing.T) {
 		"100", // quoteArr
 		"2000000",
 	)
-	println("[EXPECTED] dry swap result:", dryResult, "expected: 1014")
+	println("[EXPECTED] dry swap result:", dryResult, "expected: 1015")
 	println()
 }
 
@@ -273,11 +273,11 @@ func testDrySwapRouteGnotBarExactOut(t *testing.T) {
 //
 // [SCENARIO] Given: Dry swap route bar to wugnot exact in preparation
 // [INFO] Executing dry swap route (bar → baz → qux → wugnot)
-// [EXPECTED] dry swap result: 19740 expected: 19740
+// [EXPECTED] dry swap result: 19711 expected: 19711
 //
 // [SCENARIO] Given: Dry swap route bar to wugnot exact out preparation
 // [INFO] Executing dry swap route exact out (bar → baz → qux → wugnot)
-// [EXPECTED] dry swap result: 1014 expected: 1014
+// [EXPECTED] dry swap result: 1015 expected: 1015
 //
 // [SCENARIO] Given: Dry swap route wugnot to bar exact in preparation
 // [INFO] Executing dry swap route (wugnot → qux → baz → bar)

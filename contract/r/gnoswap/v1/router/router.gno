@@ -251,16 +251,16 @@ func finalizeSwap(
 ) (*i256.Int, *i256.Int) {
 	validator := &SwapValidator{}
 
+	// Handle swap fee
+	resultAmountOutWithoutFee := handleSwapFee(outputToken, resultAmountOut)
+
 	// Validate exact out amount if applicable
 	// If sqrtPriceLimitX96 is set, slippage check is not needed
 	if swapType == ExactOut && !isSetSqrtPriceLimitX96 {
-		if err := validator.exactOutAmount(resultAmountOut, amountSpecified, swapCount); err != nil {
+		if err := validator.exactOutAmount(resultAmountOutWithoutFee, amountSpecified, swapCount); err != nil {
 			panic(addDetailToError(errSlippage, err.Error()))
 		}
 	}
-
-	// Handle swap fee
-	resultAmountOutWithoutFee := handleSwapFee(outputToken, resultAmountOut)
 
 	// Handle GNOT token swaps
 	handler := newGnotSwapHandler(userBeforeWugnotBalance, userWrappedWugnot)

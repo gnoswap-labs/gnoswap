@@ -332,11 +332,11 @@ func exactOutSwapRouteBy(
 // [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500
 // [INFO] queryRatios: 100
 // [INFO] maxAmountIn: 100000
-// [EXPECTED] inputTokenAmount: 10014 (gnot)
-// [EXPECTED] outputTokenAmount: -9986 (gno.land/r/gnoland/wugnot)
+// [EXPECTED] inputTokenAmount: 10029 (gnot)
+// [EXPECTED] outputTokenAmount: -10001 (gno.land/r/gnoland/wugnot)
 // [EXPECTED] GNS balance changed: 0
-// [EXPECTED] GNOT balance changed: -10014
-// [EXPECTED] WUGNOT balance changed: 9986
+// [EXPECTED] GNOT balance changed: -10029
+// [EXPECTED] WUGNOT balance changed: 10001
 //
 // [SCENARIO] 5. ExactInSwapRoute (WUGNOT -> GNS -> GNOT)
 // [INFO] ExactInSwapRoute
@@ -360,11 +360,11 @@ func exactOutSwapRouteBy(
 // [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500
 // [INFO] queryRatios: 100
 // [INFO] maxAmountIn: 100000
-// [EXPECTED] inputTokenAmount: 10014 (gno.land/r/gnoland/wugnot)
-// [EXPECTED] outputTokenAmount: -9986 (gnot)
+// [EXPECTED] inputTokenAmount: 10029 (gno.land/r/gnoland/wugnot)
+// [EXPECTED] outputTokenAmount: -10001 (gnot)
 // [EXPECTED] GNS balance changed: 0
-// [EXPECTED] GNOT balance changed: 9986
-// [EXPECTED] WUGNOT balance changed: -10014
+// [EXPECTED] GNOT balance changed: 10001
+// [EXPECTED] WUGNOT balance changed: -10029
 //
 // [SCENARIO] 7. ExactInSwapRoute (GNOT -> GNS -> GNOT)
 // [INFO] ExactInSwapRoute
@@ -388,8 +388,8 @@ func exactOutSwapRouteBy(
 // [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500
 // [INFO] queryRatios: 100
 // [INFO] maxAmountIn: 100000
-// [EXPECTED] inputTokenAmount: 10014 (gnot)
-// [EXPECTED] outputTokenAmount: -9986 (gnot)
+// [EXPECTED] inputTokenAmount: 10029 (gnot)
+// [EXPECTED] outputTokenAmount: -10001 (gnot)
 // [EXPECTED] GNS balance changed: 0
 // [EXPECTED] GNOT balance changed: -28
 // [EXPECTED] WUGNOT balance changed: 0
