@@ -1,7 +1,6 @@
 package position
 
 import (
-	"std"
 	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -64,7 +63,7 @@ func assertExistsPosition(positionId uint64) {
 }
 
 // assertIsOwnerForToken panics if caller is not the owner of the position.
-func assertIsOwnerForToken(positionId uint64, caller std.Address) {
+func assertIsOwnerForToken(positionId uint64, caller address) {
 	assertExistsPosition(positionId)
 
 	if !isOwner(positionId, caller) {
@@ -76,7 +75,7 @@ func assertIsOwnerForToken(positionId uint64, caller std.Address) {
 }
 
 // assertIsOwnerOrOperatorForToken panics if caller is not the owner or operator of the position.
-func assertIsOwnerOrOperatorForToken(positionId uint64, caller std.Address) {
+func assertIsOwnerOrOperatorForToken(positionId uint64, caller address) {
 	assertExistsPosition(positionId)
 
 	if !isOwnerOrOperator(positionId, caller) {
@@ -88,7 +87,7 @@ func assertIsOwnerOrOperatorForToken(positionId uint64, caller std.Address) {
 }
 
 // assertEqualsAddress panics if addresses are invalid or not equal.
-func assertEqualsAddress(prevAddr, otherAddr std.Address) {
+func assertEqualsAddress(prevAddr, otherAddr address) {
 	access.AssertIsValidAddress(prevAddr)
 	access.AssertIsValidAddress(otherAddr)
 

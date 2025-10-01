@@ -5,7 +5,8 @@
 package main
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -24,7 +25,7 @@ const INT64_MAX int64 = 9223372036854775807
 
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	poolAddr, _ = access.GetAddress(prbac.ROLE_POOL.String())
 
@@ -61,16 +62,16 @@ func initializeSetup() {
 	testing.SetRealm(adminRealm)
 	pool.SetPoolCreationFee(cross, 0)
 
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 1000000000000000}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 100000000000000}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 1000000000000000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
 	testing.SetRealm(adminRealm)
 	wugnot.Deposit(cross)
 
-	banker := std.NewBanker(std.BankerTypeRealmIssue)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
 
 	println("[INFO] GNS Balance of admin:", gns.BalanceOf(adminAddr))
 	println("[INFO] WUGNOT Balance of admin:", wugnot.BalanceOf(adminAddr))
-	println("[INFO] ugnot Balance of admin:", banker.GetCoins(adminAddr))
+	println("[INFO] ugnot Balance of admin:", banker_.GetCoins(adminAddr))
 
 	gns.Approve(cross, poolAddr, INT64_MAX)
 	wugnot.Approve(cross, poolAddr, INT64_MAX)
@@ -97,11 +98,11 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 	ufmt.Println("[INFO] Minting position")
 
 	if nativeCoinAmount > 0 {
-		banker := std.NewBanker(std.BankerTypeRealmIssue)
-		banker.SendCoins(adminAddr, positionAddr, std.Coins{{"ugnot", nativeCoinAmount}})
-		testing.SetOriginSend(std.Coins{{"ugnot", nativeCoinAmount}})
+		banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
+		banker_.SendCoins(adminAddr, positionAddr, chain.Coins{{"ugnot", nativeCoinAmount}})
+		testing.SetOriginSend(chain.Coins{{"ugnot", nativeCoinAmount}})
 	} else {
-		testing.SetOriginSend(std.Coins{})
+		testing.SetOriginSend(chain.Coins{})
 	}
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(

@@ -1,7 +1,7 @@
 package referral
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 
 	"gno.land/p/nt/testutils"
@@ -26,7 +26,7 @@ func setupKeeperUnit() *keeper {
 }
 
 func mockValidCallerKeeper() func() {
-	origCaller := std.OriginCaller()
+	origCaller := runtime.OriginCaller()
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 	testing.SetOriginCaller(routerAddr)
 	return func() {
@@ -35,8 +35,8 @@ func mockValidCallerKeeper() func() {
 }
 
 func mockInvalidCallerKeeper() func() {
-	origCaller := std.OriginCaller()
-	testing.SetOriginCaller(std.Address("unauthorized"))
+	origCaller := runtime.OriginCaller()
+	testing.SetOriginCaller(address("unauthorized"))
 	return func() {
 		testing.SetOriginCaller(origCaller)
 	}
@@ -140,8 +140,8 @@ func TestKeeperValidateAddresses(t *testing.T) {
 	})
 
 	t.Run("validates through different caller contexts", func(t *testing.T) {
-		origCaller := std.OriginCaller()
-		testing.SetOriginCaller(std.Address(""))
+		origCaller := runtime.OriginCaller()
+		testing.SetOriginCaller(address(""))
 		defer func() {
 			testing.SetOriginCaller(origCaller)
 		}()
@@ -274,8 +274,8 @@ func TestKeeperBulkOperations(t *testing.T) {
 		k := setupKeeperUnit()
 
 		// Register multiple users
-		addresses := []std.Address{keeperAddr1, keeperAddr2, keeperAddr3, keeperAddr4}
-		referrers := []std.Address{keeperAddr2, keeperAddr3, keeperAddr4, keeperAddr5}
+		addresses := []address{keeperAddr1, keeperAddr2, keeperAddr3, keeperAddr4}
+		referrers := []address{keeperAddr2, keeperAddr3, keeperAddr4, keeperAddr5}
 
 		for i := 0; i < len(addresses); i++ {
 			err := k.register(addresses[i], referrers[i])

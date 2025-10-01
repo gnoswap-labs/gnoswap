@@ -3,7 +3,7 @@
 package main
 
 import (
-	"std"
+	"chain"
 	"strconv"
 	"testing"
 
@@ -33,11 +33,11 @@ const (
 // Variables for test addresses and realms
 var (
 	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm      = std.NewUserRealm(adminAddr)
+	adminRealm      = testing.NewUserRealm(adminAddr)
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm        = std.NewUserRealm(positionAddr)
+	posRealm        = testing.NewUserRealm(positionAddr)
 	routerAddr, _   = access.GetAddress(prbac.ROLE_ROUTER.String())
-	rouRealm        = std.NewUserRealm(routerAddr)
+	rouRealm        = testing.NewUserRealm(routerAddr)
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 )
 
@@ -89,11 +89,11 @@ func TestMint() {
 	println("[INFO] token0:", token0, "token1:", token1)
 
 	// prepare ugnot
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 1_000_000}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 1_000_000}})
 	// testBanker := std.NewBanker(std.BankerTypeRealmIssue)
 
 	// simulate transfer
-	testing.SetOriginSend(std.Coins{{"ugnot", 1_000_000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 1_000_000}})
 
 	// Deposit(wrap)
 	testing.SetRealm(adminRealm)
@@ -131,7 +131,7 @@ func TestSwapBuyNative() {
 	foo.Approve(cross, poolAddr, 10000)
 
 	// set current realm and origin caller
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 	amount0, amount1 := pool.Swap(
 		cross,
 		WRAPPED_WUGNOT, // token0
@@ -167,7 +167,7 @@ func TestSwapSellNative() {
 	wugnot.Approve(cross, poolAddr, 27123)
 
 	// set current realm and origin caller
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 	amount0, amount1 := pool.Swap( // ugnot 10_000 > foo ??
 		cross,
 		WRAPPED_WUGNOT, // token0
@@ -204,14 +204,14 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta string,
 
 	if zeroForOne {
 		if token0Path == wugnotPath {
-			testing.SetOriginSend(std.Coins{{ugnotDenom, amount0Int64}})
+			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Int64}})
 			wugnot.Deposit(cross)
 		}
 
 		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Int64)
 	} else {
 		if token1Path == wugnotPath {
-			testing.SetOriginSend(std.Coins{{ugnotDenom, amount1Int64}})
+			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Int64}})
 			wugnot.Deposit(cross)
 		}
 

@@ -1,7 +1,6 @@
 package position
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
@@ -27,7 +26,7 @@ func assertPanic(t *testing.T, expectedMsg string, fn func()) {
 func TestGetOrigPkgAddr(t *testing.T) {
 	tests := []struct {
 		name     string
-		expected std.Address
+		expected address
 	}{
 		{
 			name:     "getOrigPkgAddr is success",
@@ -211,7 +210,7 @@ func TestIsOwner(t *testing.T) {
 	tests := []struct {
 		name       string
 		positionId uint64
-		addr       std.Address
+		addr       address
 		expected   bool
 	}{
 		{
@@ -245,7 +244,7 @@ func TestIsOperator(t *testing.T) {
 	tests := []struct {
 		name       string
 		positionId uint64
-		addr       std.Address
+		addr       address
 		expected   bool
 	}{
 		{

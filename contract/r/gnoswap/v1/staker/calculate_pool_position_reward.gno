@@ -23,19 +23,19 @@ func calcPositionReward(currentHeight, currentTimestamp int64, positionId uint64
 
 	internal := int64(0)
 	for _, reward := range rewards {
-		internal += reward.Internal
+		internal = safeAddInt64(internal, reward.Internal)
 	}
 
 	internalPenalty := int64(0)
 	for _, reward := range rewards {
-		internalPenalty += reward.InternalPenalty
+		internalPenalty = safeAddInt64(internalPenalty, reward.InternalPenalty)
 	}
 
 	externalReward := make(map[string]int64)
 	for _, reward := range rewards {
 		if reward.External != nil {
 			for incentive, reward := range reward.External {
-				externalReward[incentive] += reward
+				externalReward[incentive] = safeAddInt64(externalReward[incentive], reward)
 			}
 		}
 	}
@@ -44,7 +44,7 @@ func calcPositionReward(currentHeight, currentTimestamp int64, positionId uint64
 	for _, reward := range rewards {
 		if reward.ExternalPenalty != nil {
 			for incentive, penalty := range reward.ExternalPenalty {
-				externalPenalty[incentive] += penalty
+				externalPenalty[incentive] = safeAddInt64(externalPenalty[incentive], penalty)
 			}
 		}
 	}

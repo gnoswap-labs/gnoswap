@@ -1,8 +1,9 @@
 package router
 
 import (
+	"chain/banker"
+	"chain/runtime"
 	"errors"
-	"std"
 	"strconv"
 	"strings"
 
@@ -82,11 +83,11 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 	}
 
 	// save current user's WGNOT amount
-	op.userBeforeWugnotBalance = wugnot.BalanceOf(std.PreviousRealm().Address())
+	op.userBeforeWugnotBalance = wugnot.BalanceOf(runtime.PreviousRealm().Address())
 
 	// Handle input token independently
 	if isInputNativeToken {
-		sent := std.OriginSend()
+		sent := banker.OriginSend()
 		ugnotSentByUser := sent.AmountOf("ugnot")
 		amountSpecified := specifiedAmount.Int64()
 
@@ -96,7 +97,7 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 
 		// wrap user's GNOT to WUGNOT
 		if ugnotSentByUser > 0 {
-			if err := wrapWithTransfer(std.PreviousRealm().Address(), ugnotSentByUser); err != nil {
+			if err := wrapWithTransfer(runtime.PreviousRealm().Address(), ugnotSentByUser); err != nil {
 				return err
 			}
 		}

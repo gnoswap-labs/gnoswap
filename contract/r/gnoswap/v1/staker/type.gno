@@ -1,32 +1,24 @@
 package staker
 
-import (
-	"math"
-	"std"
-
-	u256 "gno.land/p/gnoswap/uint256"
-)
+import u256 "gno.land/p/gnoswap/uint256"
 
 // ExternalIncentive is a struct for storing external incentive information.
 type ExternalIncentive struct {
-	incentiveId      string      // incentive id
-	startTimestamp   int64       // start time for external reward
-	endTimestamp     int64       // end time for external reward
-	createdHeight    int64       // block height when the incentive was created
-	depositGnsAmount int64       // deposited gns amount
-	targetPoolPath   string      // external reward target pool path
-	rewardToken      string      // external reward token path
-	rewardAmount     int64       // total reward amount
-	rewardLeft       int64       // remaining reward amount
-	rewardPerSecond  int64       // reward per second
-	refundee         std.Address // refundee address
+	incentiveId             string  // incentive id
+	startTimestamp          int64   // start time for external reward
+	endTimestamp            int64   // end time for external reward
+	createdHeight           int64   // block height when the incentive was created
+	depositGnsAmount        int64   // deposited gns amount
+	targetPoolPath          string  // external reward target pool path
+	rewardToken             string  // external reward token path
+	totalRewardAmount       int64   // total reward amount
+	rewardAmount            int64   // to be distributed reward amount
+	rewardPerSecond         int64   // reward per second
+	distributedRewardAmount int64   // distributed reward amount, when un-staked and refunded
+	refundee                address // refundee address
 
 	refunded        bool // whether incentive has been refunded (includes GNS deposit and unclaimed rewards)
 	isRequestUnwrap bool // whether the original deposit was native GNOT (needs unwrap on refund)
-}
-
-func (e ExternalIncentive) IsStarted(currentTimestamp int64) bool {
-	return currentTimestamp >= e.startTimestamp
 }
 
 // isActive checks if the incentive is currently active at the given timestamp
@@ -34,86 +26,32 @@ func (e ExternalIncentive) isActive(currentTimestamp int64) bool {
 	return currentTimestamp < e.endTimestamp
 }
 
-// safeMulInt64 performs safe multiplication of int64 values, panicking on overflow or underflow
-func safeMulInt64(a, b int64) int64 {
-	if a == 0 || b == 0 {
-		return 0
-	}
-	if a > 0 && b > 0 {
-		if a > math.MaxInt64/b {
-			panic("int64 multiplication overflow")
-		}
-	} else if a < 0 && b < 0 {
-		if a < math.MaxInt64/b {
-			panic("int64 multiplication overflow")
-		}
-	} else if a > 0 && b < 0 {
-		if b < math.MinInt64/a {
-			panic("int64 multiplication underflow")
-		}
-	} else { // a < 0 && b > 0
-		if a < math.MinInt64/b {
-			panic("int64 multiplication underflow")
-		}
-	}
-	return a * b
+func (e ExternalIncentive) IsStarted(currentTimestamp int64) bool {
+	return currentTimestamp >= e.startTimestamp
 }
 
-// safeAddInt64 performs safe addition of int64 values, panicking on overflow or underflow
-func safeAddInt64(a, b int64) int64 {
-	if a > 0 && b > math.MaxInt64-a {
-		panic("int64 addition overflow")
-	}
-	if a < 0 && b < math.MinInt64-a {
-		panic("int64 addition underflow")
-	}
-	return a + b
+func (e ExternalIncentive) IsFinished() bool {
+	return e.refunded && e.distributedRewardAmount >= e.totalRewardAmount
 }
 
-// safeSubInt64 performs safe subtraction of int64 values, panicking on overflow or underflow
-func safeSubInt64(a, b int64) int64 {
-	if b > 0 && a < math.MinInt64+b {
-		panic("int64 subtraction underflow")
-	}
-	if b < 0 && a > math.MaxInt64+b {
-		panic("int64 subtraction overflow")
-	}
-	return a - b
+func (self *ExternalIncentive) setRefunded(refunded bool) {
+	self.refunded = refunded
 }
 
-func (e ExternalIncentive) StartTimestamp() int64 {
-	return e.startTimestamp
-}
-
-func (e ExternalIncentive) EndTimestamp() int64 {
-	return e.endTimestamp
-}
-
-func (e ExternalIncentive) RewardToken() string {
-	return e.rewardToken
-}
-
-func (e ExternalIncentive) RewardAmount() int64 {
-	return e.rewardAmount
-}
+func (e ExternalIncentive) StartTimestamp() int64          { return e.startTimestamp }
+func (e ExternalIncentive) EndTimestamp() int64            { return e.endTimestamp }
+func (e ExternalIncentive) RewardToken() string            { return e.rewardToken }
+func (e ExternalIncentive) RewardAmount() int64            { return e.rewardAmount }
+func (e ExternalIncentive) TotalRewardAmount() int64       { return e.totalRewardAmount }
+func (e ExternalIncentive) DistributedRewardAmount() int64 { return e.distributedRewardAmount }
 
 func (self *ExternalIncentive) RewardSpent(currentTimestamp int64) int64 {
-	// Still check timestamps for state validation
 	if currentTimestamp < self.startTimestamp {
 		return 0
 	}
 
 	if currentTimestamp > self.endTimestamp {
-		return int64(self.rewardAmount)
-	}
-
-	// But use time for calculation
-	if currentTimestamp < self.startTimestamp {
-		return 0
-	}
-
-	if currentTimestamp > self.endTimestamp {
-		return int64(self.rewardAmount)
+		return self.rewardAmount
 	}
 
 	timeDuration := currentTimestamp - self.startTimestamp
@@ -121,49 +59,28 @@ func (self *ExternalIncentive) RewardSpent(currentTimestamp int64) int64 {
 	return rewardSpent
 }
 
-func (self *ExternalIncentive) RewardLeft(currentTimestamp int64) int64 {
-	// Still check timestamps for state validation
-	if currentTimestamp <= self.startTimestamp {
-		return int64(self.rewardAmount)
-	}
-
-	if currentTimestamp > self.endTimestamp {
-		return 0
-	}
-
-	// But use time for calculation
-	if currentTimestamp <= self.startTimestamp {
-		return int64(self.rewardAmount)
-	}
-
-	if currentTimestamp > self.endTimestamp {
-		return 0
-	}
-
-	timeDuration := self.endTimestamp - currentTimestamp
-	rewardLeft := safeMulInt64(timeDuration, self.rewardPerSecond)
-	return rewardLeft
+// addDistributedRewardAmount adds the given amount to the distributed reward amount.
+// This function is used to add the distributed reward amount when the incentive is un-staked and refunded.
+func (self *ExternalIncentive) addDistributedRewardAmount(amount int64) {
+	self.distributedRewardAmount = safeAddInt64(self.distributedRewardAmount, amount)
 }
 
 func (self *ExternalIncentive) Clone() *ExternalIncentive {
 	return &ExternalIncentive{
-		incentiveId:      self.incentiveId,
-		startTimestamp:   self.startTimestamp,
-		endTimestamp:     self.endTimestamp,
-		createdHeight:    self.createdHeight,
-		depositGnsAmount: self.depositGnsAmount,
-		targetPoolPath:   self.targetPoolPath,
-		rewardToken:      self.rewardToken,
-		rewardAmount:     self.rewardAmount,
-		rewardLeft:       self.rewardLeft,
-		rewardPerSecond:  self.rewardPerSecond,
-		refundee:         self.refundee,
-		refunded:         self.refunded,
+		incentiveId:             self.incentiveId,
+		startTimestamp:          self.startTimestamp,
+		endTimestamp:            self.endTimestamp,
+		createdHeight:           self.createdHeight,
+		depositGnsAmount:        self.depositGnsAmount,
+		targetPoolPath:          self.targetPoolPath,
+		rewardToken:             self.rewardToken,
+		totalRewardAmount:       self.totalRewardAmount,
+		rewardAmount:            self.rewardAmount,
+		rewardPerSecond:         self.rewardPerSecond,
+		refundee:                self.refundee,
+		refunded:                self.refunded,
+		distributedRewardAmount: self.distributedRewardAmount,
 	}
-}
-
-func (self *ExternalIncentive) setRefunded(refunded bool) {
-	self.refunded = refunded
 }
 
 // NewExternalIncentive creates a new external incentive
@@ -174,7 +91,7 @@ func NewExternalIncentive(
 	rewardAmount int64,
 	startTimestamp int64, // timestamp is in unix time(seconds)
 	endTimestamp int64,
-	refundee std.Address,
+	refundee address,
 	createdHeight int64,
 	depositGnsAmount int64,
 	currentTime int64, // current time in unix time(seconds)
@@ -184,18 +101,20 @@ func NewExternalIncentive(
 	rewardPerSecond := rewardAmount / incentiveDuration
 
 	return &ExternalIncentive{
-		incentiveId:      incentiveId,
-		targetPoolPath:   targetPoolPath,
-		rewardToken:      rewardToken,
-		rewardAmount:     rewardAmount,
-		startTimestamp:   startTimestamp,
-		endTimestamp:     endTimestamp,
-		rewardPerSecond:  rewardPerSecond,
-		refundee:         refundee,
-		createdHeight:    createdHeight,
-		depositGnsAmount: depositGnsAmount,
-		refunded:         false,
-		isRequestUnwrap:  isRequestUnwrap,
+		incentiveId:             incentiveId,
+		targetPoolPath:          targetPoolPath,
+		rewardToken:             rewardToken,
+		totalRewardAmount:       rewardAmount,
+		rewardAmount:            rewardAmount,
+		startTimestamp:          startTimestamp,
+		endTimestamp:            endTimestamp,
+		rewardPerSecond:         rewardPerSecond,
+		distributedRewardAmount: 0,
+		refundee:                refundee,
+		createdHeight:           createdHeight,
+		depositGnsAmount:        depositGnsAmount,
+		refunded:                false,
+		isRequestUnwrap:         isRequestUnwrap,
 	}
 }
 
@@ -203,9 +122,11 @@ type Deposit struct {
 	warmups                        []Warmup         // warmup information
 	liquidity                      *u256.Uint       // liquidity
 	targetPoolPath                 string           // staked position's pool path
-	owner                          std.Address      // owner address
+	owner                          address          // owner address
 	stakeTime                      int64            // staked time
 	internalRewardLastCollectTime  int64            // last collect time for internal reward
+	collectedInternalReward        int64            // collected internal reward
+	collectedExternalRewards       map[string]int64 // collected external reward by incentive id
 	externalRewardLastCollectTimes map[string]int64 // last collect time for external rewards by incentive id
 	tickLower                      int32            // tick lower
 	tickUpper                      int32            // tick upper
@@ -230,6 +151,40 @@ func (self *Deposit) ExternalRewardLastCollectTime(incentiveID string) int64 {
 	}
 
 	return lastCollectTime
+}
+
+func (self *Deposit) CollectedInternalReward() int64 {
+	return self.collectedInternalReward
+}
+
+func (self *Deposit) CollectedExternalReward(incentiveID string) int64 {
+	if self.collectedExternalRewards == nil {
+		self.collectedExternalRewards = make(map[string]int64)
+	}
+
+	collectedExternalReward, exists := self.collectedExternalRewards[incentiveID]
+
+	if !exists {
+		return 0
+	}
+
+	return collectedExternalReward
+}
+
+func (self *Deposit) addCollectedInternalReward(reward int64) {
+	self.collectedInternalReward = safeAddInt64(self.collectedInternalReward, reward)
+}
+
+func (self *Deposit) addCollectedExternalReward(incentiveID string, reward int64) {
+	if self.collectedExternalRewards == nil {
+		self.collectedExternalRewards = make(map[string]int64)
+	}
+
+	if _, exists := self.collectedExternalRewards[incentiveID]; !exists {
+		self.collectedExternalRewards[incentiveID] = 0
+	}
+
+	self.collectedExternalRewards[incentiveID] = safeAddInt64(self.collectedExternalRewards[incentiveID], reward)
 }
 
 // updateInternalRewardLastCollectTime updates the last collect time for the internal reward.
@@ -262,7 +217,7 @@ func (self *Deposit) updateExternalRewardLastCollectTime(incentiveID string, cur
 }
 
 func NewDeposit(
-	owner std.Address,
+	owner address,
 	targetPoolPath string,
 	liquidity *u256.Uint,
 	currentTime int64,
@@ -278,5 +233,7 @@ func NewDeposit(
 		tickUpper:                      tickUpper,
 		internalRewardLastCollectTime:  currentTime,
 		externalRewardLastCollectTimes: make(map[string]int64),
+		collectedInternalReward:        0,
+		collectedExternalRewards:       make(map[string]int64),
 	}
 }

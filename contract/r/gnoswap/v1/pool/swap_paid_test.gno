@@ -1,7 +1,7 @@
 package pool
 
 import (
-	"std"
+	"chain"
 	"strconv"
 	"testing"
 
@@ -263,7 +263,7 @@ func TestSwapCallback_Pay(t *testing.T) {
 				beforeToken0PoolBalance := common.BalanceOf(tt.swapInfo.token0Path, poolAddr)
 				beforeToken1PoolBalance := common.BalanceOf(tt.swapInfo.token1Path, poolAddr)
 
-				testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 				resultAmount0, resultAmount1 := Swap(
 					cross,
 					tt.swapInfo.token0Path,
@@ -334,7 +334,7 @@ func swapPaidSwapCallback(
 
 	if amount0Int64 > 0 {
 		if token0Path == wugnotPath {
-			testing.SetOriginSend(std.Coins{{ugnotDenom, amount0Int64}})
+			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Int64}})
 			wugnot.Deposit(cross)
 		}
 
@@ -342,7 +342,7 @@ func swapPaidSwapCallback(
 	}
 	if amount1Int64 > 0 {
 		if token1Path == wugnotPath {
-			testing.SetOriginSend(std.Coins{{ugnotDenom, amount1Int64}})
+			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Int64}})
 			wugnot.Deposit(cross)
 		}
 
@@ -358,7 +358,7 @@ func initSwapPaid(t *testing.T) {
 }
 
 func initSwapPaidCreatePool(t *testing.T, token0Path, token1Path string, feeTier uint32) {
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	SetPoolCreationFee(cross, 0)
 
@@ -377,13 +377,13 @@ func initSwapPaidSetFeeMintPosition(
 ) {
 	const maxTimeout int64 = 9999999999
 
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	testing.SetOriginSend(std.Coins{})
+	testing.SetOriginSend(chain.Coins{})
 
 	if amount0Requested > 0 {
 		if common.IsGNOTNativePath(token0Path) {
-			testing.SetOriginSend(std.Coins{{common.GNOT_DENOM, amount0Requested}})
+			testing.SetOriginSend(chain.Coins{{common.GNOT_DENOM, amount0Requested}})
 		} else {
 			common.SafeGRC20Approve(cross, token0Path, poolAddr, amount0Requested)
 		}
@@ -391,7 +391,7 @@ func initSwapPaidSetFeeMintPosition(
 
 	if amount1Requested > 0 {
 		if common.IsGNOTNativePath(token1Path) {
-			testing.SetOriginSend(std.Coins{{common.GNOT_DENOM, amount1Requested}})
+			testing.SetOriginSend(chain.Coins{{common.GNOT_DENOM, amount1Requested}})
 		} else {
 			common.SafeGRC20Approve(cross, token1Path, poolAddr, amount1Requested)
 		}
@@ -409,7 +409,7 @@ func initSwapPaidSetFeeMintPosition(
 		uint256.NewUintFromInt64(amount1Requested),
 	)
 
-	testing.SetRealm(std.NewUserRealm(positionAddr))
+	testing.SetRealm(testing.NewUserRealm(positionAddr))
 	Mint(
 		cross,
 		token0Path,
@@ -442,8 +442,8 @@ type swapPaidSwapParams struct {
 	token0Path               string
 	token1Path               string
 	specifiedAmount          string
-	recipient                std.Address
-	payer                    std.Address
+	recipient                address
+	payer                    address
 	zeroForOne               bool
 	sqrtPriceLimitX96        string
 	isUseCallbackAmount      bool

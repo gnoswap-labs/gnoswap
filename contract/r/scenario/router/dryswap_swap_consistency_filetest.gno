@@ -2,7 +2,6 @@
 package main
 
 import (
-	"std"
 	"strconv"
 	"testing"
 	"time"
@@ -35,13 +34,13 @@ const (
 
 var (
 	adminAddr, _  = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm    = std.NewUserRealm(adminAddr)
+	adminRealm    = testing.NewUserRealm(adminAddr)
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
-	routerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/router")
+	routerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/v1/router")
 
 	aliceAddr  = testutils.TestAddress("alice")
-	aliceRealm = std.NewUserRealm(aliceAddr)
+	aliceRealm = testing.NewUserRealm(aliceAddr)
 
 	barPath = "gno.land/r/onbloc/bar"
 	fooPath = "gno.land/r/onbloc/foo"

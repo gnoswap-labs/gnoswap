@@ -1,8 +1,9 @@
 package router
 
 import (
+	"chain"
+	"chain/banker"
 	"math"
-	"std"
 	"strconv"
 	"strings"
 	"testing"
@@ -222,7 +223,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 		tokenPath0       string
 		tokenPath1       string
 		feeTier          uint32
-		recipient        std.Address
+		recipient        address
 		tickLower        int32
 		tickUpper        int32
 		amount0Requested string
@@ -268,7 +269,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			initRouterTest(t)
 
 			// Pool Creation
-			testing.SetRealm(std.NewUserRealm(positionOwner))
+			testing.SetRealm(testing.NewUserRealm(positionOwner))
 			pl.SetPoolCreationFee(cross, 0)
 			if !pl.ExistsPoolPath(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
 				pl.CreatePool(cross, tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
@@ -279,18 +280,18 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			}
 
 			testing.SetOriginCaller(positionOwner)
-			newCoins := std.Coins{{"ugnot", int64(10000000000)}}
+			newCoins := chain.Coins{{"ugnot", int64(10000000000)}}
 			testing.IssueCoins(positionOwner, newCoins)
 			testing.SetOriginSend(newCoins)
-			banker := std.NewBanker(std.BankerTypeRealmSend)
-			banker.SendCoins(positionOwner, wugnotAddr, newCoins)
+			banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+			banker_.SendCoins(positionOwner, wugnotAddr, newCoins)
 			wugnot.Deposit(cross)
 			if tt.recipient != positionOwner {
 				wugnot.Transfer(cross, tt.recipient, 10000000000)
 			}
 			gns.Transfer(cross, tt.recipient, 10000000000)
 
-			testing.SetRealm(std.NewUserRealm(tt.recipient))
+			testing.SetRealm(testing.NewUserRealm(tt.recipient))
 			wugnot.Approve(cross, poolContract, maxApprove)
 			gns.Approve(cross, poolContract, maxApprove)
 
@@ -299,7 +300,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 				teller.Approve(poolContract, maxApprove)
 			}(cross)
 
-			testing.SetOriginSend(std.Coins{})
+			testing.SetOriginSend(chain.Coins{})
 			// Position Creation
 			pn.Mint(
 				cross,
@@ -327,7 +328,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			gns.Approve(cross, routerContract, maxApprove)
 			beforeWugnotBalance := wugnot.BalanceOf(tt.recipient)
 
-			testing.SetRealm(std.NewCodeRealm(routerPath))
+			testing.SetRealm(testing.NewCodeRealm(routerPath))
 			wugnot.Approve(cross, poolContract, maxApprove)
 
 			_, drySwapAmountOut, _ := DrySwapRoute(
@@ -340,8 +341,8 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 				tt.amountOutMin,
 			)
 
-			testing.SetRealm(std.NewUserRealm(tt.recipient))
-			testing.SetOriginSend(std.Coins{})
+			testing.SetRealm(testing.NewUserRealm(tt.recipient))
+			testing.SetOriginSend(chain.Coins{})
 			amountIn, amountOut := ExactInSwapRoute(
 				cross,
 				tt.inputToken,
@@ -386,7 +387,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 		tokenPath0       string
 		tokenPath1       string
 		feeTier          uint32
-		recipient        std.Address
+		recipient        address
 		tickLower        int32
 		tickUpper        int32
 		amount0Requested string
@@ -432,7 +433,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			initRouterTest(t)
 
 			// Pool Creation
-			testing.SetRealm(std.NewUserRealm(positionOwner))
+			testing.SetRealm(testing.NewUserRealm(positionOwner))
 			pl.SetPoolCreationFee(cross, 0)
 			if !pl.ExistsPoolPath(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
 				pl.CreatePool(cross, tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
@@ -443,19 +444,19 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			}
 
 			testing.SetOriginCaller(positionOwner)
-			newCoins := std.Coins{{"ugnot", int64(20000000000)}}
+			newCoins := chain.Coins{{"ugnot", int64(20000000000)}}
 			testing.IssueCoins(positionOwner, newCoins)
 			testing.SetOriginSend(newCoins)
-			banker := std.NewBanker(std.BankerTypeRealmSend)
-			banker.SendCoins(positionOwner, wugnotAddr, std.Coins{{"ugnot", int64(10000000000)}})
+			banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+			banker_.SendCoins(positionOwner, wugnotAddr, chain.Coins{{"ugnot", int64(10000000000)}})
 			wugnot.Deposit(cross)
 			if tt.recipient != positionOwner {
 				wugnot.Transfer(cross, tt.recipient, 10000000000)
 			}
-			banker.SendCoins(positionOwner, tt.recipient, std.Coins{{"ugnot", int64(10000000000)}})
+			banker_.SendCoins(positionOwner, tt.recipient, chain.Coins{{"ugnot", int64(10000000000)}})
 			gns.Transfer(cross, tt.recipient, 10000000000)
 
-			testing.SetRealm(std.NewUserRealm(tt.recipient))
+			testing.SetRealm(testing.NewUserRealm(tt.recipient))
 			wugnot.Approve(cross, poolContract, maxApprove)
 			gns.Approve(cross, poolContract, maxApprove)
 
@@ -465,7 +466,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			}(cross)
 
 			// Position Creation
-			testing.SetOriginSend(std.Coins{})
+			testing.SetOriginSend(chain.Coins{})
 			positionId, _, _, _ := pn.Mint(
 				cross,
 				tt.tokenPath0,
@@ -490,15 +491,15 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			if err != nil {
 				t.Errorf("failed to parse amount0Requested: %v", err)
 			}
-			newCoinsForAdd := std.Coins{{"ugnot", addAmount}}
+			newCoinsForAdd := chain.Coins{{"ugnot", addAmount}}
 			testing.SetOriginSend(newCoinsForAdd)
-			banker = std.NewBanker(std.BankerTypeRealmSend)
-			banker.SendCoins(tt.recipient, positionAddr, newCoinsForAdd)
-			testing.SetRealm(std.NewUserRealm(tt.recipient))
+			banker_ = banker.NewBanker(banker.BankerTypeRealmSend)
+			banker_.SendCoins(tt.recipient, positionAddr, newCoinsForAdd)
+			testing.SetRealm(testing.NewUserRealm(tt.recipient))
 			wugnot.Approve(cross, poolContract, maxApprove)
 			gns.Approve(cross, poolContract, maxApprove)
 
-			testing.SetOriginSend(std.Coins{})
+			testing.SetOriginSend(chain.Coins{})
 			pn.IncreaseLiquidity(
 				cross,
 				positionId,
@@ -515,7 +516,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			gns.Transfer(cross, routerContract, 20000000)
 			wugnot.Approve(cross, routerContract, maxApprove)
 			gns.Approve(cross, routerContract, maxApprove)
-			testing.SetRealm(std.NewCodeRealm(routerPath))
+			testing.SetRealm(testing.NewCodeRealm(routerPath))
 			wugnot.Approve(cross, poolContract, maxApprove)
 
 			DrySwapRoute(
@@ -528,8 +529,8 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 				tt.amountOutMin,
 			)
 
-			testing.SetRealm(std.NewUserRealm(tt.recipient))
-			testing.SetOriginSend(std.Coins{})
+			testing.SetRealm(testing.NewUserRealm(tt.recipient))
+			testing.SetOriginSend(chain.Coins{})
 			_, amountOut := ExactInSwapRoute(
 				cross,
 				tt.inputToken,
@@ -577,7 +578,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 		tokenPath0       string
 		tokenPath1       string
 		feeTier          uint32
-		recipient        std.Address
+		recipient        address
 		tickLower        int32
 		tickUpper        int32
 		amount0Requested string
@@ -623,7 +624,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			initRouterTest(t)
 
 			// Pool Creation
-			testing.SetRealm(std.NewUserRealm(positionOwner))
+			testing.SetRealm(testing.NewUserRealm(positionOwner))
 			pl.SetPoolCreationFee(cross, 0)
 			if !pl.ExistsPoolPath(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
 				pl.CreatePool(cross, tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
@@ -634,19 +635,19 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			}
 
 			testing.SetOriginCaller(positionOwner)
-			newCoins := std.Coins{{"ugnot", int64(20000000000)}}
+			newCoins := chain.Coins{{"ugnot", int64(20000000000)}}
 			testing.IssueCoins(positionOwner, newCoins)
 			testing.SetOriginSend(newCoins)
-			banker := std.NewBanker(std.BankerTypeRealmSend)
-			banker.SendCoins(positionOwner, wugnotAddr, std.Coins{{"ugnot", int64(10000000000)}})
+			banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+			banker_.SendCoins(positionOwner, wugnotAddr, chain.Coins{{"ugnot", int64(10000000000)}})
 			wugnot.Deposit(cross)
 			if tt.recipient != positionOwner {
 				wugnot.Transfer(cross, tt.recipient, 10000000000)
 			}
-			banker.SendCoins(positionOwner, tt.recipient, std.Coins{{"ugnot", int64(10000000000)}})
+			banker_.SendCoins(positionOwner, tt.recipient, chain.Coins{{"ugnot", int64(10000000000)}})
 			gns.Transfer(cross, tt.recipient, 10000000000)
 
-			testing.SetRealm(std.NewUserRealm(tt.recipient))
+			testing.SetRealm(testing.NewUserRealm(tt.recipient))
 			wugnot.Approve(cross, poolContract, maxApprove)
 			gns.Approve(cross, poolContract, maxApprove)
 
@@ -656,7 +657,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			}(cross)
 
 			// Position Creation
-			testing.SetOriginSend(std.Coins{})
+			testing.SetOriginSend(chain.Coins{})
 			pn.Mint(
 				cross,
 				tt.tokenPath0,
@@ -683,7 +684,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			gns.Approve(cross, routerContract, maxApprove)
 			wugnot.BalanceOf(tt.recipient)
 
-			testing.SetRealm(std.NewCodeRealm(routerPath))
+			testing.SetRealm(testing.NewCodeRealm(routerPath))
 			wugnot.Approve(cross, poolContract, maxApprove)
 
 			_, drySwapAmountOut, _ := DrySwapRoute(
@@ -697,8 +698,8 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			)
 			handleSwapFee(tt.outputToken, u256.MustFromDecimal(drySwapAmountOut))
 
-			testing.SetRealm(std.NewUserRealm(tt.recipient))
-			testing.SetOriginSend(std.Coins{})
+			testing.SetRealm(testing.NewUserRealm(tt.recipient))
+			testing.SetOriginSend(chain.Coins{})
 			amountIn, amountOut := ExactInSwapRoute(
 				cross,
 				tt.inputToken,

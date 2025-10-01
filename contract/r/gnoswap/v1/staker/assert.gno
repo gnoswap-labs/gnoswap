@@ -1,7 +1,6 @@
 package staker
 
 import (
-	"std"
 	"strconv"
 	"strings"
 	"time"
@@ -34,7 +33,7 @@ func assertIsValidRewardAmountFormat(rewardAmountStr string) {
 }
 
 // assertIsDepositor ensures the caller is the owner of the deposit.
-func assertIsDepositor(caller std.Address, positionId uint64) {
+func assertIsDepositor(caller address, positionId uint64) {
 	deposit := deposits.get(positionId)
 	if deposit == nil {
 		panic(makeErrorWithDetails(
@@ -62,7 +61,7 @@ func assertIsNotStaked(positionId uint64) {
 }
 
 // assertIsPositionOwner ensures the caller owns the position NFT.
-func assertIsPositionOwner(positionId uint64, caller std.Address) {
+func assertIsPositionOwner(positionId uint64, caller address) {
 	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
 	if owner != caller {
 		panic(makeErrorWithDetails(

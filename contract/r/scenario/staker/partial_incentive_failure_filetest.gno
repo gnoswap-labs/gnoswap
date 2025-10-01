@@ -6,7 +6,7 @@
 package main
 
 import (
-	"std"
+	"chain/runtime"
 	"strconv"
 	"testing"
 
@@ -34,11 +34,11 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -179,7 +179,7 @@ func createMultipleIncentives() {
 	ufmt.Printf("[SUCCESS] Created 4 external incentives (3 bar, 1 baz)\n")
 
 	// Make external incentives start
-	leftHeight := 978 - std.ChainHeight()
+	leftHeight := 978 - runtime.ChainHeight()
 	if leftHeight > 0 {
 		testing.SkipHeights(leftHeight + 5)
 	}
