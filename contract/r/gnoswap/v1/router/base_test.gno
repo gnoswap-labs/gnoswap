@@ -1,9 +1,10 @@
 package router
 
 import (
+	"chain"
+	"chain/runtime"
 	"errors"
 	"math"
-	"std"
 	"testing"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -171,10 +172,10 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 
 			testUser := testutils.TestAddress("test_user")
 			testing.SetOriginCaller(testUser)
-			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 
-			testCoins := std.Coins{{"ugnot", tt.sentAmount}}
-			testing.IssueCoins(std.OriginCaller(), testCoins)
+			testCoins := chain.Coins{{"ugnot", tt.sentAmount}}
+			testing.IssueCoins(runtime.OriginCaller(), testCoins)
 			if tt.sentAmount > 0 {
 				testing.IssueCoins(routerAddr, testCoins)
 			}

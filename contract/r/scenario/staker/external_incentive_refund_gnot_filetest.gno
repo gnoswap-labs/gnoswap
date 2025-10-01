@@ -6,7 +6,8 @@
 package main
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"testing"
 	"time"
 
@@ -30,11 +31,11 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -140,14 +141,14 @@ func createExternalIncentiveWithGNOT() {
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
 
 	println("[INFO] prepare native GNOT for incentive")
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(adminAddr, stakerAddr, std.Coins{{"ugnot", 1_000_000_000}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100_000_000_000_000}})
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_.SendCoins(adminAddr, stakerAddr, chain.Coins{{"ugnot", 1_000_000_000}})
 
 	oldUgnotBal := ugnotBalanceOf(adminAddr)
 	ufmt.Printf("[INFO] GNOT balance before creating incentive: %d\n", oldUgnotBal)
 
-	testing.SetOriginSend(std.Coins{{"ugnot", 1_000_000_000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 1_000_000_000}})
 
 	println("[INFO] create external incentive with GNOT (native coin)")
 	defer func() {
@@ -223,9 +224,9 @@ func endIncentiveAndVerifyGNOTRefund() {
 	println("[PASS] GNOT incentive correctly refunded as GNOT")
 }
 
-func ugnotBalanceOf(addr std.Address) uint64 {
-	banker := std.NewBanker(std.BankerTypeReadonly)
-	coins := banker.GetCoins(addr)
+func ugnotBalanceOf(addr address) uint64 {
+	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
+	coins := banker_.GetCoins(addr)
 	return uint64(coins.AmountOf("ugnot"))
 }
 
@@ -260,8 +261,8 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 // [INFO] GNOT balance before ending: 99999000000000
 // [INFO] WUGNOT balance before ending: 0
 // [INFO] ending incentive with ID: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d:1234567900:1
-// [INFO] GNOT balance after ending: 99999995328000
+// [INFO] GNOT balance after ending: 100000000000000
 // [INFO] WUGNOT balance after ending: 0
-// [EXPECTED] GNOT refunded: 995328000
+// [EXPECTED] GNOT refunded: 1000000000
 // [EXPECTED] WUGNOT change (should be 0): 0
 // [PASS] GNOT incentive correctly refunded as GNOT

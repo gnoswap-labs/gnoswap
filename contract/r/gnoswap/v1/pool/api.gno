@@ -1,8 +1,8 @@
 package pool
 
 import (
+	"chain/runtime"
 	b64 "encoding/base64"
-	"std"
 	"strconv"
 	"strings"
 	"time"
@@ -33,7 +33,7 @@ func ApiGetPool(poolPath string) string {
 // Returns JSON string with TWAP data or error
 func ApiGetTWAP(poolPath string, secondsAgo uint32) string {
 	currentTime := time.Now().Unix()
-	currentHeight := std.ChainHeight()
+	currentHeight := runtime.ChainHeight()
 
 	poolI, exist := pools.Get(poolPath)
 	if !exist {

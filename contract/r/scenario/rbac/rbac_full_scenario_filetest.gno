@@ -5,7 +5,6 @@
 package main
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/nt/testutils"
@@ -60,7 +59,7 @@ func setupTestManager() {
 	manager = prbac.NewRBACWithAddress(adminAddr)
 
 	// Register system roles
-	systemRoles := map[prbac.SystemRole]std.Address{
+	systemRoles := map[prbac.SystemRole]address{
 		prbac.ROLE_ADMIN:  testutils.TestAddress("admin"),
 		prbac.ROLE_DEVOPS: testutils.TestAddress("devops"),
 		prbac.ROLE_POOL:   testutils.TestAddress("pool"),
@@ -172,7 +171,7 @@ func testMultipleRoleAuthorization() {
 
 	// Step 1: Create multiple custom roles with different addresses
 	println("Step 1: Creating multiple roles")
-	roleAddresses := map[string]std.Address{
+	roleAddresses := map[string]address{
 		"frontend_service": customAddr1,
 		"backend_service":  customAddr2,
 		"database_service": customAddr3,

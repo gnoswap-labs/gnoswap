@@ -1,7 +1,8 @@
 package pool
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
@@ -58,15 +59,17 @@ func init() {
 //   - Caller must have 100 GNS for creation fee
 //
 // IMPORTANT - Price Initialization Security:
-//   The sqrtPriceX96 parameter allows arbitrary initial price setting without validation.
-//   Extreme prices can make pools temporarily unusable (griefing attack).
+//
+//	The sqrtPriceX96 parameter allows arbitrary initial price setting without validation.
+//	Extreme prices can make pools temporarily unusable (griefing attack).
 //
 // Recovery from Price Griefing:
-//   If a pool is created with an incorrect price, it can be restored via atomic transaction:
-//   1. Add wide-range liquidity at the distorted price
-//   2. Execute swap to move price toward market rate
-//   3. Remove the liquidity
-//   The executor's LP losses offset arbitrage gains (minus fees).
+//
+//	If a pool is created with an incorrect price, it can be restored via atomic transaction:
+//	1. Add wide-range liquidity at the distorted price
+//	2. Execute swap to move price toward market rate
+//	3. Remove the liquidity
+//	The executor's LP losses offset arbitrage gains (minus fees).
 func CreatePool(
 	cur realm,
 	token0Path string,
@@ -103,11 +106,11 @@ func CreatePool(
 	pools.Set(poolInfo.poolPath(), pool)
 
 	if poolCreationFee > 0 {
-		gns.TransferFrom(cross, std.PreviousRealm().Address(), protocolFeeAddr, poolCreationFee)
+		gns.TransferFrom(cross, runtime.PreviousRealm().Address(), protocolFeeAddr, poolCreationFee)
 		pf.AddToProtocolFee(cross, GNS_PATH, poolCreationFee)
 
-		previousRealm := std.PreviousRealm()
-		std.Emit(
+		previousRealm := runtime.PreviousRealm()
+		chain.Emit(
 			"PoolCreationFee",
 			"prevAddr", previousRealm.Address().String(),
 			"prevRealm", previousRealm.PkgPath(),
@@ -117,8 +120,8 @@ func CreatePool(
 		)
 	}
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"CreatePool",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -141,7 +144,7 @@ func CreatePool(
 func SetFeeProtocol(cur realm, feeProtocol0, feeProtocol1 uint8) {
 	halt.AssertIsNotHaltedPoolWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	err := setFeeProtocolInternal(feeProtocol0, feeProtocol1, "SetFeeProtocol")
@@ -189,8 +192,8 @@ func setFeeProtocolInternal(feeProtocol0, feeProtocol1 uint8, eventName string) 
 	feeProtocol0Old := oldFee % 16
 	feeProtocol1Old := oldFee >> 4
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		eventName,
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),

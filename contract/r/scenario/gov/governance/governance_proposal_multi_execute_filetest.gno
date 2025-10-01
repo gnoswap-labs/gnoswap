@@ -5,12 +5,12 @@
 package main
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 	"time"
 
-	"gno.land/p/nt/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
@@ -33,7 +33,7 @@ func main() {
 
 	println("[SCENARIO] 2. Skip vote weight smoothing duration for create proposal")
 	testing.SkipHeights(int64(config.VotingWeightSmoothingDuration) / currentBlockTime)
-	println("[INFO] current height:", std.ChainHeight())
+	println("[INFO] current height:", runtime.ChainHeight())
 	println()
 
 	println("[SCENARIO] 3. Propose Multi Execute (SetPoolCreationFee + CommunityPoolSpend)")
@@ -42,7 +42,7 @@ func main() {
 
 	println("[SCENARIO] 4. Skip voting start delay for ready to vote")
 	testing.SkipHeights(int64(config.VotingStartDelay) / currentBlockTime)
-	println("[INFO] current height:", std.ChainHeight())
+	println("[INFO] current height:", runtime.ChainHeight())
 	println()
 
 	println("[SCENARIO] 5. Vote for the proposal")
@@ -52,7 +52,7 @@ func main() {
 	println("[SCENARIO] 6. Skip voting period and execution delay for ready to execute")
 	testing.SkipHeights(int64(config.VotingPeriod) / currentBlockTime)
 	testing.SkipHeights(int64(config.ExecutionDelay) / currentBlockTime)
-	println("[INFO] current height:", std.ChainHeight())
+	println("[INFO] current height:", runtime.ChainHeight())
 	println()
 
 	println("[SCENARIO] 7. Execute Multi Proposal")
@@ -63,10 +63,10 @@ func main() {
 // [SCENARIO] 1. Delegate gns to admin
 func delegateGnsToAdmin() {
 	delegatedAmount := int64(1_000_000_000)
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
-	govStakerAddr := std.Address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
+	govStakerAddr := address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
 	gns.Approve(cross, govStakerAddr, delegatedAmount)
 	gs.Delegate(cross, adminAddr, int64(delegatedAmount), "")
 
@@ -75,7 +75,7 @@ func delegateGnsToAdmin() {
 
 // [SCENARIO] 2. Propose Multi Execute
 func proposeMultiExecute() int64 {
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	proposalID := governance.ProposeParameterChange(
 		cross,
 		"test_title",
@@ -89,7 +89,7 @@ func proposeMultiExecute() int64 {
 
 // [SCENARIO] 3. Vote for the proposal
 func voteProposal(proposalID int64) {
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	prevYea := governance.GetYeaByProposalId(proposalID)
 	prevNay := governance.GetNayByProposalId(proposalID)
 
@@ -104,7 +104,7 @@ func voteProposal(proposalID int64) {
 
 // [SCENARIO] 4. Execute Multi Proposal
 func executeMultiProposal(proposalID int64) {
-	communityPoolAddr := std.Address("g100fnnlz5eh87p5hvwt8pf279lxaelm8k8md049")
+	communityPoolAddr := address("g100fnnlz5eh87p5hvwt8pf279lxaelm8k8md049")
 
 	prevBlockTime := currentBlockTime
 	prevCommunityPool := gns.BalanceOf(communityPoolAddr)

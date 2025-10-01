@@ -1,14 +1,10 @@
 package rbac
 
-import (
-	"std"
-
-	prbac "gno.land/p/gnoswap/rbac"
-)
+import prbac "gno.land/p/gnoswap/rbac"
 
 // DefaultRoleAddresses maps system roles to their default addresses.
 // Used during RBAC initialization to set up the protocol role structure.
-var DefaultRoleAddresses = map[prbac.SystemRole]std.Address{
+var DefaultRoleAddresses = map[prbac.SystemRole]address{
 	prbac.ROLE_ADMIN:          ADMIN,
 	prbac.ROLE_DEVOPS:         DEV_OPS,
 	prbac.ROLE_COMMUNITY_POOL: COMMUNITY_POOL_ADDR,

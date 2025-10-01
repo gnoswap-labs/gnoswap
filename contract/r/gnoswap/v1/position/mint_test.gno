@@ -1,7 +1,6 @@
 package position
 
 import (
-	"std"
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -38,7 +37,7 @@ func (e *Env) GivenPoolCreated(token0, token1 string, fee uint32, sqrtPriceX96 s
 }
 
 // AndUserFundedAndApproved mints test tokens to an account and approves pool spending.
-func (e *Env) AndUserFundedAndApproved(addr std.Address, tokens ...string) *Env {
+func (e *Env) AndUserFundedAndApproved(addr address, tokens ...string) *Env {
 	e.t.Helper()
 	testing.SetRealm(posRealm)
 	for _, tk := range tokens {
@@ -99,7 +98,7 @@ func (b *MintBuilder) WithMins(m0, m1 string) *MintBuilder {
 	return b
 }
 
-func (b *MintBuilder) Caller(caller, mintTo std.Address) *MintBuilder {
+func (b *MintBuilder) Caller(caller, mintTo address) *MintBuilder {
 	b.p.caller, b.p.mintTo = caller, mintTo
 	return b
 }

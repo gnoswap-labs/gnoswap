@@ -1,7 +1,7 @@
 package rbac
 
 import (
-	"std"
+	"chain/runtime"
 
 	"gno.land/r/gnoswap/access"
 
@@ -44,8 +44,8 @@ func initRbac() {
 //   - roleAddress: address to assign to the role
 //
 // Only callable by admin or governance.
-func RegisterRole(cur realm, roleName string, roleAddress std.Address) {
-	caller := std.PreviousRealm().Address()
+func RegisterRole(cur realm, roleName string, roleAddress address) {
+	caller := runtime.PreviousRealm().Address()
 	assertIsAdminOrGovernance(caller)
 	assertIsValidRoleName(roleName)
 	assertIsValidAddress(roleAddress)
@@ -84,8 +84,8 @@ func RegisterRole(cur realm, roleName string, roleAddress std.Address) {
 //   - addr: new address for the role
 //
 // Only callable by admin or governance.
-func UpdateRoleAddress(cur realm, roleName string, version int, addr std.Address) {
-	caller := std.PreviousRealm().Address()
+func UpdateRoleAddress(cur realm, roleName string, version int, addr address) {
+	caller := runtime.PreviousRealm().Address()
 	assertIsAdminOrGovernance(caller)
 	assertIsValidRoleName(roleName)
 	assertIsValidAddress(addr)
@@ -111,8 +111,8 @@ func UpdateRoleAddress(cur realm, roleName string, version int, addr std.Address
 //   - addr: new address for the role
 //
 // Only callable by admin or governance.
-func UpdateRoleAddressNextVersion(cur realm, roleName string, addr std.Address) {
-	caller := std.PreviousRealm().Address()
+func UpdateRoleAddressNextVersion(cur realm, roleName string, addr address) {
+	caller := runtime.PreviousRealm().Address()
 	assertIsAdminOrGovernance(caller)
 	assertIsValidRoleName(roleName)
 	assertIsValidAddress(addr)
@@ -139,7 +139,7 @@ func UpdateRoleAddressNextVersion(cur realm, roleName string, addr std.Address) 
 //
 // Only callable by admin or governance.
 func RemoveRole(cur realm, roleName string) {
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	assertIsAdminOrGovernance(caller)
 	assertIsValidRoleName(roleName)
 
@@ -157,11 +157,11 @@ func RemoveRole(cur realm, roleName string) {
 }
 
 // GetRoleAddress returns the address assigned to roleName.
-func GetRoleAddress(roleName string) (std.Address, error) {
+func GetRoleAddress(roleName string) (address, error) {
 	return manager.GetRoleAddress(roleName)
 }
 
 // GetRoleAddressWithVersion returns the address assigned to roleName.
-func GetRoleAddressWithVersion(roleName string, version int) (std.Address, error) {
+func GetRoleAddressWithVersion(roleName string, version int) (address, error) {
 	return manager.GetRoleAddressWithVersion(roleName, version)
 }

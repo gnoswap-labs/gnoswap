@@ -1,11 +1,10 @@
 package position
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/nt/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/uassert"
 )
 
 var poolKey = "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
@@ -14,7 +13,7 @@ func setupPositionGetter(t *testing.T) {
 	t.Helper()
 
 	CreatePoolWithoutFee(t)
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	position := Position{
 		operator:                 positionAddr,
 		poolKey:                  poolKey,

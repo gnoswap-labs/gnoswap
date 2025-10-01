@@ -1,11 +1,11 @@
 package staker
 
 import (
-	"std"
+	"chain/runtime"
 	"time"
 
-	"gno.land/p/onbloc/json"
 	"gno.land/p/nt/ufmt"
+	"gno.land/p/onbloc/json"
 )
 
 // ApiGetRewardTokensByPoolPath returns all reward tokens for a specific pool.
@@ -253,7 +253,7 @@ type ResponseApiGetRewardByLpTokenId struct {
 func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 	deposit := deposits.get(targetLpTokenId)
 
-	reward := calcPositionReward(std.ChainHeight(), time.Now().Unix(), targetLpTokenId)
+	reward := calcPositionReward(runtime.ChainHeight(), time.Now().Unix(), targetLpTokenId)
 
 	rewards := []ApiReward{}
 

@@ -1,7 +1,6 @@
 package staker
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/nt/testutils"
@@ -12,7 +11,7 @@ import (
 func TestStakerDelegationSnapshot_CleanStakerDelegationSnapshotByAdmin(t *testing.T) {
 	tests := []struct {
 		name          string
-		caller        std.Address
+		caller        address
 		threshold     int64
 		expectPanic   bool
 		expectedError string
@@ -42,7 +41,7 @@ func TestStakerDelegationSnapshot_CleanStakerDelegationSnapshotByAdmin(t *testin
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Setup test environment
-			testing.SetRealm(std.NewUserRealm(tt.caller))
+			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			// When & Then: Execute and verify
 			if tt.expectPanic {
@@ -69,7 +68,7 @@ func TestStakerDelegationSnapshot_EdgeCases(t *testing.T) {
 			description: "Admin should be able to perform multiple operations in sequence",
 			testFunction: func(t *testing.T) {
 				// Given: Admin context
-				testing.SetRealm(std.NewUserRealm(admin))
+				testing.SetRealm(testing.NewUserRealm(admin))
 
 				// When: Perform multiple operations
 				CleanStakerDelegationSnapshotByAdmin(cross, 100)
@@ -86,7 +85,7 @@ func TestStakerDelegationSnapshot_EdgeCases(t *testing.T) {
 			description: "System should handle large threshold values without issues",
 			testFunction: func(t *testing.T) {
 				// Given: Admin context
-				testing.SetRealm(std.NewUserRealm(admin))
+				testing.SetRealm(testing.NewUserRealm(admin))
 
 				// When: Use large threshold value
 				largeThreshold := int64(9223372036854775807) // max int64
@@ -100,7 +99,7 @@ func TestStakerDelegationSnapshot_EdgeCases(t *testing.T) {
 			description: "System should handle large block height values without issues",
 			testFunction: func(t *testing.T) {
 				// Given: Admin context
-				testing.SetRealm(std.NewUserRealm(admin))
+				testing.SetRealm(testing.NewUserRealm(admin))
 
 				// When: Use large height value
 				largeHeight := int64(9223372036854775807) // max int64

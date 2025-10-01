@@ -1,7 +1,7 @@
 package main
 
 import (
-	"std"
+	"chain"
 	"testing"
 	"time"
 
@@ -21,7 +21,7 @@ import (
 
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
@@ -73,8 +73,8 @@ func testPositionMintGnsGnot() {
 
 	println("[INFO] Issuing native tokens to admin")
 	// send
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100000}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 100000}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000}})
 
 	println("[INFO] Depositing native tokens to get wrapped tokens")
 	// Deposit(wrap)
@@ -86,7 +86,7 @@ func testPositionMintGnsGnot() {
 	wugnot.Approve(cross, poolAddr, max_approve)
 
 	println("[INFO] Minting position in gns-wugnot pool")
-	testing.SetOriginSend(std.Coins{})
+	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(cross, gnsPath, wrappedWugnot, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	println("[INFO] positionId:", positionId)
@@ -106,8 +106,8 @@ func testPositionMintGnotBar() {
 
 	println("[INFO] Issuing native tokens to admin")
 	// send
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100000}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 100000}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000}})
 
 	println("[INFO] Depositing native tokens to get wrapped tokens")
 	// Deposit(wrap)
@@ -119,7 +119,7 @@ func testPositionMintGnotBar() {
 	bar.Approve(cross, poolAddr, max_approve)
 
 	println("[INFO] Minting position in wugnot-bar pool")
-	testing.SetOriginSend(std.Coins{})
+	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(cross, wrappedWugnot, barPath, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	println("[INFO] positionId:", positionId)
@@ -159,7 +159,7 @@ func testSwapRouteGnsBarExactIn() {
 	gns.Approve(cross, routerAddr, 1000) // swap input amount
 
 	println("[INFO] Executing ExactIn swap (1000 gns → wugnot → bar)")
-	testing.SetOriginSend(std.Coins{})
+	testing.SetOriginSend(chain.Coins{})
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
 		gnsPath, // inputToken

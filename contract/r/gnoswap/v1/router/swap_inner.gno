@@ -1,7 +1,7 @@
 package router
 
 import (
-	"std"
+	"chain/runtime"
 
 	"gno.land/p/nt/ufmt"
 
@@ -22,7 +22,7 @@ const (
 // Returns poolRecv (tokens received by pool) and poolOut (tokens sent by pool).
 func swapInner(
 	amountSpecified *i256.Int,
-	recipient std.Address,
+	recipient address,
 	sqrtPriceLimitX96 *u256.Uint,
 	data SwapCallbackData,
 ) (poolRecv, poolOut *u256.Uint) {
@@ -84,7 +84,7 @@ type RealSwapExecutor struct{}
 
 // execute performs the actual swap execution.
 func (e *RealSwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	recipient := routerAddr
 
 	return swapInner(
@@ -133,7 +133,7 @@ type DrySwapExecutor struct{}
 
 // execute performs the dry swap execution.
 func (e *DrySwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
-	previousRealmAddr := std.PreviousRealm().Address()
+	previousRealmAddr := runtime.PreviousRealm().Address()
 
 	return swapDryInner(
 		p.amountSpecified,

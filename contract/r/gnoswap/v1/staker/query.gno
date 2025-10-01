@@ -1,11 +1,10 @@
 package staker
 
 import (
-	"std"
 	"time"
 
-	"gno.land/p/nt/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 )
 
 type PoolData struct {
@@ -21,13 +20,13 @@ type IncentiveData struct {
 	EndTimestamp   int64
 	RewardToken    string
 	RewardAmount   *u256.Uint
-	Refundee       std.Address
+	Refundee       address
 	PoolPath       string
 }
 
 type DepositData struct {
 	TokenID        uint64
-	Owner          std.Address
+	Owner          address
 	TargetPoolPath string
 	StakeTimestamp int64
 	Liquidity      *u256.Uint

@@ -1,7 +1,8 @@
 package pool
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"testing"
 
 	"gno.land/p/nt/avl"
@@ -854,7 +855,7 @@ func setupScatteredLiquidityPool(t *testing.T) {
 	TokenFaucet(t, gnsPath, routerAddr)
 
 	testing.SetOriginCaller(routerAddr)
-	testing.SetRealm(std.NewUserRealm(routerAddr))
+	testing.SetRealm(testing.NewUserRealm(routerAddr))
 	TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
 	TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
 }
@@ -885,7 +886,7 @@ func setupExtremePriceRangePool(t *testing.T) {
 	TokenFaucet(t, gnsPath, routerAddr)
 
 	testing.SetOriginCaller(routerAddr)
-	testing.SetRealm(std.NewUserRealm(routerAddr))
+	testing.SetRealm(testing.NewUserRealm(routerAddr))
 	TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
 	TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
 }
@@ -1018,18 +1019,18 @@ func TestUpdateAmounts_OverflowProtection(t *testing.T) {
 func setupUltraLowFeePool(t *testing.T) *Pool {
 	t.Helper()
 
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	wugnot.Approve(cross, poolAddr, maxApprove)
 	gns.Approve(cross, poolAddr, maxApprove)
 	CreatePool(cross, wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER, EQUAL_PRICE_RATIO)
 
 	// Prepare tokens
 	testing.SetOriginCaller(adminAddr)
-	newCoins := std.Coins{{"ugnot", int64(10000000000)}}
+	newCoins := chain.Coins{{"ugnot", int64(10000000000)}}
 	testing.IssueCoins(adminAddr, newCoins)
 	testing.SetOriginSend(newCoins)
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(adminAddr, wugnotAddr, newCoins)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_.SendCoins(adminAddr, wugnotAddr, newCoins)
 	wugnot.Deposit(cross)
 
 	// Add liquidity
@@ -1038,7 +1039,7 @@ func setupUltraLowFeePool(t *testing.T) *Pool {
 	Mint(cross, wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER, -100, 100, "10000000", adminAddr)
 
 	// Send tokens to router
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	gns.Transfer(cross, poolAddr, 20000000)
 	wugnot.Transfer(cross, routerAddr, 20000000)
 	gns.Transfer(cross, routerAddr, 20000000)

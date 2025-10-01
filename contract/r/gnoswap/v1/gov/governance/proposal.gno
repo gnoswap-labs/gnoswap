@@ -1,9 +1,5 @@
 package governance
 
-import (
-	"std"
-)
-
 // ProposalType defines the different types of proposals supported by the governance system.
 // Each type has different execution behavior and validation requirements.
 type ProposalType string
@@ -45,7 +41,7 @@ func (p ProposalType) IsExecutable() bool {
 // This is the core structure that tracks proposal lifecycle from creation to execution.
 type Proposal struct {
 	id            int64             // Unique identifier for the proposal
-	proposer      std.Address       // The address of the proposer
+	proposer      address           // The address of the proposer
 	configVersion int64             // The version of the governance config used
 	status        *ProposalStatus   // Current status and voting information
 	metadata      *ProposalMetadata // Title and description
@@ -158,12 +154,12 @@ func (p *Proposal) ConfigVersion() int64 {
 }
 
 // IsProposer checks if the given address is the proposer of this proposal.
-func (p *Proposal) IsProposer(addr std.Address) bool {
+func (p *Proposal) IsProposer(addr address) bool {
 	return p.proposer == addr
 }
 
 // Proposer returns the address of the proposal creator.
-func (p *Proposal) Proposer() std.Address {
+func (p *Proposal) Proposer() address {
 	return p.proposer
 }
 
@@ -221,7 +217,7 @@ func (p *Proposal) updateVoteStatus(maxVotingWeight, quorum int64) error {
 
 // execute marks the proposal as executed and records execution details.
 // This method validates execution conditions before proceeding.
-func (p *Proposal) execute(executedAt int64, executedHeight int64, executedBy std.Address) error {
+func (p *Proposal) execute(executedAt int64, executedHeight int64, executedBy address) error {
 	// Verify proposal is in executable state
 	if !p.IsExecutable(executedAt) {
 		return errProposalNotExecutable
@@ -233,7 +229,7 @@ func (p *Proposal) execute(executedAt int64, executedHeight int64, executedBy st
 
 // cancel marks the proposal as canceled and records cancellation details.
 // This method validates cancellation conditions before proceeding.
-func (p *Proposal) cancel(canceledAt int64, canceledHeight int64, canceledBy std.Address) error {
+func (p *Proposal) cancel(canceledAt int64, canceledHeight int64, canceledBy address) error {
 	if p.status.IsCanceled(canceledAt) {
 		return errAlreadyCanceledProposal
 	}
@@ -262,7 +258,7 @@ func NewProposal(
 	status *ProposalStatus,
 	metadata *ProposalMetadata,
 	data *ProposalData,
-	proposerAddress std.Address,
+	proposerAddress address,
 	configVersion int64,
 	createdAt int64,
 	createdHeight int64,

@@ -1,7 +1,8 @@
 package governance
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 
 	"gno.land/r/gnoswap/access"
 	en "gno.land/r/gnoswap/emission"
@@ -44,7 +45,7 @@ func Reconfigure(
 	// Check if system is halted before proceeding
 	halt.AssertIsNotHaltedGovernanceWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	// Mint and distribute GNS tokens as part of the process
@@ -65,8 +66,8 @@ func Reconfigure(
 	)
 
 	// Emit configuration change event with all parameters
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"Reconfigure",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),

@@ -1,7 +1,7 @@
 package emission
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 
 	"gno.land/p/nt/avl"
@@ -21,7 +21,7 @@ func TestChangeDistributionPct(t *testing.T) {
 		shouldPanic bool
 		panicMsg    string
 		setup       func()
-		callerRealm std.Realm
+		callerRealm runtime.Realm
 		targets     []int
 		pcts        []int64
 		verify      func()
@@ -70,7 +70,7 @@ func TestChangeDistributionPct(t *testing.T) {
 				tt.setup()
 			}
 
-			if tt.callerRealm != (std.Realm{}) {
+			if tt.callerRealm != (runtime.Realm{}) {
 				testing.SetRealm(tt.callerRealm)
 			}
 
@@ -241,7 +241,7 @@ func TestClearDistributedToStaker(t *testing.T) {
 	tests := []struct {
 		name        string
 		expected    uint64
-		callerRealm std.Realm
+		callerRealm runtime.Realm
 		shouldPanic bool
 		panicMsg    string
 	}{
@@ -259,7 +259,7 @@ func TestClearDistributedToStaker(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.callerRealm != (std.Realm{}) {
+			if tt.callerRealm != (runtime.Realm{}) {
 				testing.SetRealm(tt.callerRealm)
 			}
 
@@ -283,7 +283,7 @@ func TestClearClearDistributedToGovStaker(t *testing.T) {
 	tests := []struct {
 		name        string
 		expected    uint64
-		callerRealm std.Realm
+		callerRealm runtime.Realm
 		shouldPanic bool
 		panicMsg    string
 	}{
@@ -301,7 +301,7 @@ func TestClearClearDistributedToGovStaker(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.callerRealm != (std.Realm{}) {
+			if tt.callerRealm != (runtime.Realm{}) {
 				testing.SetRealm(tt.callerRealm)
 			}
 
@@ -645,7 +645,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 	t.Run("ChangeDistributionPctByAdmin", func(t *testing.T) {
 		tests := []struct {
 			name        string
-			callerRealm std.Realm
+			callerRealm runtime.Realm
 			targets     [4]int
 			percentages [4]int64
 			expectedErr string
@@ -730,7 +730,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 	t.Run("ChangeDistributionPct", func(t *testing.T) {
 		tests := []struct {
 			name        string
-			callerRealm std.Realm
+			callerRealm runtime.Realm
 			targets     [4]int
 			percentages [4]int64
 			expectedErr string
@@ -808,7 +808,7 @@ func TestDuplicateTargetsFix(t *testing.T) {
 		tests := []struct {
 			name        string
 			setupFunc   func()
-			callerRealm std.Realm
+			callerRealm runtime.Realm
 			isAdmin     bool
 			targets     [4]int
 			percentages [4]int64

@@ -1,7 +1,8 @@
 package staker
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 
 	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/access"
@@ -27,7 +28,7 @@ func init() {
 // Panics:
 //   - If the caller is not the admin
 func AddToken(cur realm, tokenPath string) {
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	halt.AssertIsNotHaltedStakerWithVersion(1)
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
@@ -35,8 +36,8 @@ func AddToken(cur realm, tokenPath string) {
 		panic(err.Error())
 	}
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"AddToken",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -55,7 +56,7 @@ func AddToken(cur realm, tokenPath string) {
 // Panics:
 //   - If the caller is not the admin
 func RemoveToken(cur realm, tokenPath string) {
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	halt.AssertIsNotHaltedStakerWithVersion(1)
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
@@ -63,8 +64,8 @@ func RemoveToken(cur realm, tokenPath string) {
 		panic(err.Error())
 	}
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"RemoveToken",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),

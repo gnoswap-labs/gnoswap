@@ -8,7 +8,6 @@
 package main
 
 import (
-	"std"
 	"strconv"
 	"testing"
 	"time"
@@ -39,17 +38,17 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	user1Addr  = testutils.TestAddress("user1")
-	user1Realm = std.NewUserRealm(user1Addr)
+	user1Realm = testing.NewUserRealm(user1Addr)
 
 	user2Addr  = testutils.TestAddress("user2")
-	user2Realm = std.NewUserRealm(user2Addr)
+	user2Realm = testing.NewUserRealm(user2Addr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 

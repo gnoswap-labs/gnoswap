@@ -1,10 +1,8 @@
 package position
 
 import (
-	"std"
-
-	"gno.land/p/nt/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
@@ -148,7 +146,7 @@ func processTokens(
 	token1 string,
 	amount0Desired string,
 	amount1Desired string,
-	caller std.Address,
+	caller address,
 ) (string, string, bool, bool, int64, error) {
 	err := validateTokenPath(token0, token1)
 	if err != nil {

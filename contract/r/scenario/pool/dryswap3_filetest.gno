@@ -3,7 +3,6 @@
 package main
 
 import (
-	"std"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -32,12 +31,12 @@ const (
 // Variables for test addresses and realms
 var (
 	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm      = std.NewUserRealm(adminAddr)
+	adminRealm      = testing.NewUserRealm(adminAddr)
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm        = std.NewUserRealm(positionAddr)
+	posRealm        = testing.NewUserRealm(positionAddr)
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 	routerAddr, _   = access.GetAddress(prbac.ROLE_ROUTER.String())
-	routerRealm     = std.NewUserRealm(routerAddr)
+	routerRealm     = testing.NewUserRealm(routerAddr)
 )
 
 // Token paths

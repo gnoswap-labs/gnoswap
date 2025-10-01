@@ -3,7 +3,6 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
@@ -20,15 +19,15 @@ import (
 
 var (
 	admin, _   = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm = std.NewUserRealm(admin)
+	adminRealm = testing.NewUserRealm(admin)
 
 	govStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
 
 	dummyToAddr  = testutils.TestAddress("dummyTo")
-	dummyToRealm = std.NewUserRealm(dummyToAddr)
+	dummyToRealm = testing.NewUserRealm(dummyToAddr)
 
 	dummyAddr  = testutils.TestAddress("dummy")
-	dummyRealm = std.NewUserRealm(dummyAddr)
+	dummyRealm = testing.NewUserRealm(dummyAddr)
 
 	minAmount = int64(1_000_000)
 )

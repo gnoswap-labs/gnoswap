@@ -1,7 +1,6 @@
 package common
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -54,11 +53,11 @@ func TestTokenMethod(t *testing.T) {
 	})
 
 	t.Run("BalanceOf()", func(t *testing.T) {
-		uassert.Equal(t, int64(10000000000), token.BalanceOf(std.Address("g1manfred47kzduec920z88wfr64ylksmdcedlf5")))
+		uassert.Equal(t, int64(10000000000), token.BalanceOf(address("g1manfred47kzduec920z88wfr64ylksmdcedlf5")))
 	})
 
 	t.Run("Allowance()", func(t *testing.T) {
-		uassert.Equal(t, int64(0), token.Allowance(std.Address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"), std.Address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum")))
+		uassert.Equal(t, int64(0), token.Allowance(address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"), address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum")))
 	})
 
 	t.Run("RenderHome()", func(t *testing.T) {
@@ -222,15 +221,15 @@ func TestTotalSupply(t *testing.T) {
 }
 
 func TestBalanceOf(t *testing.T) {
-	defaultHolder := std.Address("g1manfred47kzduec920z88wfr64ylksmdcedlf5")
+	defaultHolder := address("g1manfred47kzduec920z88wfr64ylksmdcedlf5")
 
 	// result from grc2reg and (direct import/call) should be the same
 	uassert.Equal(t, foo20.BalanceOf(defaultHolder), BalanceOf(tokenPath, defaultHolder))
 }
 
 func TestAllowance(t *testing.T) {
-	owner := std.Address("g1manfred47kzduec920z88wfr64ylksmdcedlf5")
-	spender := std.Address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum")
+	owner := address("g1manfred47kzduec920z88wfr64ylksmdcedlf5")
+	spender := address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum")
 
 	// result from grc2reg and (direct import/call) should be the same
 	uassert.Equal(t, foo20.Allowance(owner, spender), Allowance(tokenPath, owner, spender))

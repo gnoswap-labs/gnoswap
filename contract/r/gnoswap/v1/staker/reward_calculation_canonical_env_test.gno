@@ -4,9 +4,9 @@ package staker
 // Used for testing and reference.
 
 import (
+	"chain/runtime"
 	"errors"
 	"math"
-	"std"
 	"testing"
 	"time"
 
@@ -263,7 +263,7 @@ func (self *canonicalRewardState) CanonicalRewardOfHeight(depositId uint64, heig
 
 func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) ([]int64, []int64, []map[string]int64, []map[string]int64) {
 	currentTimestamp := self.CurrentTime()
-	currentHeight := std.ChainHeight()
+	currentHeight := runtime.ChainHeight()
 	// cache per-tier and per-pool rewards
 	self.global.poolTier.cacheReward(currentHeight, currentTimestamp, self.global.pools)
 
@@ -277,7 +277,7 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) (
 		self.global.pools.set(poolPath, pool)
 	}
 
-	lastCollectTimestamp := deposit.lastCollectTime
+	lastCollectTimestamp := deposit.InternalRewardLastCollectTime()
 
 	internalRewards, internalPenalties := pool.RewardStateOf(deposit).calculateInternalReward(lastCollectTimestamp, currentTimestamp)
 
@@ -317,7 +317,7 @@ func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) Reward {
 	rewards, penalties, externalRewards, externalPenalties := self.EmulateCalcPositionReward(depositId)
 
 	deposit := self.global.deposits.get(depositId)
-	deposit.lastCollectTime = self.CurrentTime()
+	deposit.updateInternalRewardLastCollectTime(self.CurrentTime())
 
 	internal := int64(0)
 	for _, reward := range rewards {
@@ -354,8 +354,8 @@ func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) Reward {
 }
 
 // Emulation of staker.gno public entrypoints
-func (self *canonicalRewardState) StakeToken(positionId uint64, targetPoolPath string, owner std.Address, tickLower int32, tickUpper int32, liquidity *u256.Uint) error {
-	currentHeight := std.ChainHeight()
+func (self *canonicalRewardState) StakeToken(positionId uint64, targetPoolPath string, owner address, tickLower int32, tickUpper int32, liquidity *u256.Uint) error {
+	currentHeight := runtime.ChainHeight()
 	currentTimestamp := self.CurrentTime()
 	pool, ok := self.global.pools.Get(targetPoolPath)
 	if !ok {
@@ -363,14 +363,15 @@ func (self *canonicalRewardState) StakeToken(positionId uint64, targetPoolPath s
 	}
 
 	deposit := &Deposit{
-		owner:           owner,
-		stakeTime:       currentTimestamp,
-		targetPoolPath:  targetPoolPath,
-		tickLower:       tickLower,
-		tickUpper:       tickUpper,
-		liquidity:       liquidity,
-		lastCollectTime: currentTimestamp,
-		warmups:         instantiateWarmup(currentTimestamp),
+		owner:                          owner,
+		stakeTime:                      currentTimestamp,
+		targetPoolPath:                 targetPoolPath,
+		tickLower:                      tickLower,
+		tickUpper:                      tickUpper,
+		liquidity:                      liquidity,
+		internalRewardLastCollectTime:  currentTimestamp,
+		externalRewardLastCollectTimes: make(map[string]int64),
+		warmups:                        instantiateWarmup(currentTimestamp),
 	}
 	canonicalPool, ok := self.Pool[deposit.targetPoolPath]
 	if !ok {
@@ -435,10 +436,10 @@ func newExternalIncentiveBy(
 	rewardAmount int64,
 	startTimestamp int64,
 	endTimestamp int64,
-	refundee std.Address,
+	refundee address,
 	currentHeight int64,
 ) *ExternalIncentive {
-	caller := std.OriginCaller()
+	caller := runtime.OriginCaller()
 	rewardPerSecond := rewardAmount / (endTimestamp - startTimestamp)
 
 	incentiveId := nextIncentiveID(caller, startTimestamp)
@@ -463,7 +464,7 @@ func (self *canonicalRewardState) CreateExternalIncentive(
 	rewardAmount int64,
 	startTimestamp int64,
 	endTimestamp int64,
-	refundee std.Address,
+	refundee address,
 	currentHeight int64,
 ) string {
 	incentive := newExternalIncentiveBy(
@@ -514,7 +515,7 @@ func (self *canonicalRewardState) ChangePoolTier(poolPath string, tier uint64) {
 	if !self.global.pools.Has(poolPath) {
 		self.global.pools.set(poolPath, NewPool(poolPath, self.CurrentTime()))
 	}
-	self.global.poolTier.changeTier(std.ChainHeight(), self.CurrentTime(), self.global.pools, poolPath, tier)
+	self.global.poolTier.changeTier(runtime.ChainHeight(), self.CurrentTime(), self.global.pools, poolPath, tier)
 }
 
 func (self *canonicalRewardState) CreatePool(poolPath string, initialTier uint64, initialTick int32) {
@@ -526,7 +527,7 @@ func (self *canonicalRewardState) CreatePool(poolPath string, initialTier uint64
 		tickCrossHook: self.tickCrossHook,
 	}
 	self.global.pools.set(poolPath, NewPool(poolPath, self.CurrentTime()))
-	self.global.poolTier.changeTier(std.ChainHeight(), self.CurrentTime(), self.global.pools, poolPath, initialTier)
+	self.global.poolTier.changeTier(runtime.ChainHeight(), self.CurrentTime(), self.global.pools, poolPath, initialTier)
 }
 
 func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {
