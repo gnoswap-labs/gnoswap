@@ -288,7 +288,7 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) (
 		externalPenalties[i] = make(map[string]int64)
 	}
 
-	allIncentives := pool.incentives.GetAllInTimestamps(lastCollectTimestamp, currentTimestamp)
+	allIncentives := pool.incentives.GetIncentivesForRewardCalculation(lastCollectTimestamp, currentTimestamp)
 
 	for _, incentive := range allIncentives {
 		externalReward, externalPenalty := pool.RewardStateOf(deposit).calculateExternalReward(lastCollectTimestamp, currentTimestamp, incentive)

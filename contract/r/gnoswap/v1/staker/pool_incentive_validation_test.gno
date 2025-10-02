@@ -46,7 +46,7 @@ func TestStakeToken_WithEndedIncentives(t *testing.T) {
 	}
 
 	// Verify that there are actually no active incentives
-	activeIncentives := pool.incentives.GetAllInTimestamps(currentTime, currentTime+3600)
+	activeIncentives := pool.incentives.GetIncentivesForRewardCalculation(currentTime, currentTime+3600)
 	if len(activeIncentives) != 0 {
 		t.Fatalf("expected 0 active incentives, got %d", len(activeIncentives))
 	}

@@ -98,15 +98,14 @@ func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 	// while preventing new rewards after tier removal
 	internalRewards, internalPenalties = pool.RewardStateOf(deposit).calculateInternalReward(lastCollectTime, param.CurrentTime)
 
+	// Get all incentives including archived ones with unclaimed rewards
+	allIncentives := pool.incentives.GetIncentivesForRewardCalculation(lastCollectTime, param.CurrentTime)
+
 	// Initialize maps for external rewards
 	for i := range externalRewards {
 		externalRewards[i] = make(map[string]int64)
 		externalPenalties[i] = make(map[string]int64)
 	}
-
-	// Get all incentives using a wide time range to ensure we get all possible incentives
-	// We'll filter them individually based on their specific lastCollectTime
-	allIncentives := pool.incentives.GetAllInTimestamps(0, param.CurrentTime*2)
 
 	// Process each external incentive with lazy initialization:
 	// When a new incentive is created, we don't iterate through all deposits for performance.
