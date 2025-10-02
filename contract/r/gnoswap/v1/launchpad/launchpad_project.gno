@@ -85,16 +85,13 @@ func CreateProject(
 		)
 	}
 
-	err = common.SafeGRC20TransferFrom(
+	common.SafeGRC20TransferFrom(
 		cross,
 		tokenPath,
 		caller,
 		launchpadAddr,
 		depositAmount,
 	)
-	if err != nil {
-		panic(err)
-	}
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
