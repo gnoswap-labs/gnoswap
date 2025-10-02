@@ -199,7 +199,8 @@ func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *
 		if !ok {
 			panic("changeTier: pool not found")
 		}
-		pool.cacheReward(currentTime, int64(0))
+		// prevent new rewards from accumulating after tier removal
+		pool.cacheReward(currentTime, 0)
 	default:
 		// handle all move/add operations
 		nt := nextTier.Uint64()
