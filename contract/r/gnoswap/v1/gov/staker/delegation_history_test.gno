@@ -1,10 +1,9 @@
 package staker
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 )
 
 // TestDelegationHistory_GetRecordsBy tests filtering records by snapshot time
@@ -75,8 +74,8 @@ func TestDelegationHistory_AddRecord(t *testing.T) {
 			initialRecords: DelegationHistory{},
 			newRecord: &DelegationRecord{
 				delegationType: DelegateType,
-				delegateFrom:   std.Address("g1from"),
-				delegateTo:     std.Address("g1to"),
+				delegateFrom:   address("g1from"),
+				delegateTo:     address("g1to"),
 				createdAt:      100,
 			},
 			expectedCount: 1,
@@ -88,8 +87,8 @@ func TestDelegationHistory_AddRecord(t *testing.T) {
 			},
 			newRecord: &DelegationRecord{
 				delegationType: UnDelegateType,
-				delegateFrom:   std.Address("g1from"),
-				delegateTo:     std.Address("g1to"),
+				delegateFrom:   address("g1from"),
+				delegateTo:     address("g1to"),
 				createdAt:      200,
 			},
 			expectedCount: 2,

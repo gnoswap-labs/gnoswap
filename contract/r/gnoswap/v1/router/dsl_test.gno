@@ -1,13 +1,12 @@
 package router
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/uassert"
+	"gno.land/p/nt/ufmt"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
@@ -22,10 +21,10 @@ import (
 // TestEnv provides a clean, stateful environment for router tests
 type TestEnv struct {
 	t          *testing.T
-	routerAddr std.Address
+	routerAddr address
 	pools      map[string]bool // track created pools
 	positions  map[uint64]bool // track created positions
-	users      map[std.Address]bool
+	users      map[address]bool
 }
 
 // NewTestEnv initializes the base test environment
@@ -40,7 +39,7 @@ func NewTestEnv(t *testing.T) *TestEnv {
 		routerAddr: routerAddr,
 		pools:      make(map[string]bool),
 		positions:  make(map[uint64]bool),
-		users:      make(map[std.Address]bool),
+		users:      make(map[address]bool),
 	}
 }
 
@@ -63,9 +62,9 @@ func (e *TestEnv) GivenPoolCreated(token0, token1 string, fee uint32, sqrtPriceX
 }
 
 // AndUserFundedAndApproved provides tokens and sets up approvals for a user
-func (e *TestEnv) AndUserFundedAndApproved(user std.Address, routerAddr std.Address, tokens ...string) *TestEnv {
+func (e *TestEnv) AndUserFundedAndApproved(user address, routerAddr address, tokens ...string) *TestEnv {
 	e.t.Helper()
-	userRealm := std.NewUserRealm(user)
+	userRealm := testing.NewUserRealm(user)
 	testing.SetRealm(userRealm)
 
 	for _, token := range tokens {
@@ -92,10 +91,10 @@ func (e *TestEnv) AndPositionMinted() *TestEnv {
 }
 
 // AndLiquidityProvided adds liquidity to a pool
-func (e *TestEnv) AndLiquidityProvided(provider std.Address, params PositionParams) *TestEnv {
+func (e *TestEnv) AndLiquidityProvided(provider address, params PositionParams) *TestEnv {
 	e.t.Helper()
 
-	providerRealm := std.NewUserRealm(provider)
+	providerRealm := testing.NewUserRealm(provider)
 	testing.SetRealm(providerRealm)
 
 	// Create position with provided parameters
@@ -386,7 +385,7 @@ func NewSwapParams() *SwapParamsBuilder {
 }
 
 // Recipient sets the recipient
-func (b *SwapParamsBuilder) Recipient(addr std.Address) *SwapParamsBuilder {
+func (b *SwapParamsBuilder) Recipient(addr address) *SwapParamsBuilder {
 	b.p.recipient = addr
 	return b
 }

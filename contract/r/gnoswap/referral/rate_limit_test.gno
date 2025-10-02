@@ -1,12 +1,12 @@
 package referral
 
 import (
-	"std"
+	"chain/runtime"
 	"strings"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
@@ -16,9 +16,9 @@ import (
 func TestRateLimit_BasicFunctionality(t *testing.T) {
 	tests := []struct {
 		name          string
-		userAddr      std.Address
-		referrerAddr  std.Address
-		secondAddr    std.Address
+		userAddr      address
+		referrerAddr  address
+		secondAddr    address
 		operation     string
 		expectedError error
 	}{
@@ -95,9 +95,9 @@ func TestRateLimit_BasicFunctionality(t *testing.T) {
 func TestRateLimit_OperationTypes(t *testing.T) {
 	tests := []struct {
 		name          string
-		userAddr      std.Address
-		referrerAddr  std.Address
-		secondAddr    std.Address
+		userAddr      address
+		referrerAddr  address
+		secondAddr    address
 		operation     string
 		expectedError error
 	}{
@@ -159,8 +159,8 @@ func TestRateLimit_OperationTypes(t *testing.T) {
 func TestRateLimit_ExceptionCases(t *testing.T) {
 	tests := []struct {
 		name          string
-		userAddr      std.Address
-		referrerAddr  std.Address
+		userAddr      address
+		referrerAddr  address
 		operation     string
 		expectedError error
 		expectedHas   bool
@@ -226,8 +226,8 @@ func TestRateLimit_ExceptionCases(t *testing.T) {
 func TestRateLimit_BoundaryConditions(t *testing.T) {
 	tests := []struct {
 		name          string
-		userAddr      std.Address
-		referrerAddr  std.Address
+		userAddr      address
+		referrerAddr  address
 		operation     string
 		expectedError error
 	}{
@@ -287,8 +287,8 @@ func TestRateLimit_ErrorPropagation(t *testing.T) {
 	tests := []struct {
 		name          string
 		caller        string
-		userAddr      std.Address
-		referrerAddr  std.Address
+		userAddr      address
+		referrerAddr  address
 		operation     string
 		expectedError error
 	}{
@@ -347,10 +347,10 @@ func TestRateLimit_ErrorPropagation(t *testing.T) {
 func TestRateLimit_AddressIsolation(t *testing.T) {
 	tests := []struct {
 		name          string
-		addr1         std.Address
-		addr2         std.Address
-		ref1          std.Address
-		ref2          std.Address
+		addr1         address
+		addr2         address
+		ref1          address
+		ref2          address
 		expectedError error
 	}{
 		{
@@ -407,7 +407,7 @@ func setupRateLimitKeeper() *keeper {
 }
 
 func setupValidCaller() func() {
-	origCaller := std.OriginCaller()
+	origCaller := runtime.OriginCaller()
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 	testing.SetOriginCaller(routerAddr)
 	return func() {
@@ -416,13 +416,13 @@ func setupValidCaller() func() {
 }
 
 func setupRateLimitCaller(caller string) func() {
-	origCaller := std.OriginCaller()
+	origCaller := runtime.OriginCaller()
 	switch caller {
 	case "router":
 		routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 		testing.SetOriginCaller(routerAddr)
 	case "unauthorized":
-		testing.SetOriginCaller(std.Address("unauthorized"))
+		testing.SetOriginCaller(address("unauthorized"))
 	}
 	return func() {
 		testing.SetOriginCaller(origCaller)

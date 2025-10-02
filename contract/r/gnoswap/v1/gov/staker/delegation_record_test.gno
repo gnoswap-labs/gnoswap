@@ -1,10 +1,9 @@
 package staker
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 )
 
 // TestNewDelegationRecord tests the creation of new delegation records
@@ -13,8 +12,8 @@ func TestNewDelegationRecord(t *testing.T) {
 		name                     string
 		delegationType           DelegationType
 		delegationAmount         int64
-		delegateFrom             std.Address
-		delegateTo               std.Address
+		delegateFrom             address
+		delegateTo               address
 		createdAt                int64
 		expectedDelegateAmount   int64
 		expectedUnDelegateAmount int64
@@ -23,8 +22,8 @@ func TestNewDelegationRecord(t *testing.T) {
 			name:                     "Create delegate record",
 			delegationType:           DelegateType,
 			delegationAmount:         100,
-			delegateFrom:             std.Address("g1from"),
-			delegateTo:               std.Address("g1to"),
+			delegateFrom:             address("g1from"),
+			delegateTo:               address("g1to"),
 			createdAt:                1000,
 			expectedDelegateAmount:   100,
 			expectedUnDelegateAmount: 0,
@@ -33,8 +32,8 @@ func TestNewDelegationRecord(t *testing.T) {
 			name:                     "Create undelegate record",
 			delegationType:           UnDelegateType,
 			delegationAmount:         50,
-			delegateFrom:             std.Address("g1from"),
-			delegateTo:               std.Address("g1to"),
+			delegateFrom:             address("g1from"),
+			delegateTo:               address("g1to"),
 			createdAt:                2000,
 			expectedDelegateAmount:   0,
 			expectedUnDelegateAmount: 50,
@@ -75,8 +74,8 @@ func TestNewDelegationDelegateRecordBy(t *testing.T) {
 			delegation: &Delegation{
 				id:             1,
 				delegateAmount: 100,
-				delegateFrom:   std.Address("g1from"),
-				delegateTo:     std.Address("g1to"),
+				delegateFrom:   address("g1from"),
+				delegateTo:     address("g1to"),
 				createdAt:      1000,
 			},
 		},
@@ -111,8 +110,8 @@ func TestNewDelegationWithdrawRecordBy(t *testing.T) {
 			delegation: &Delegation{
 				id:             1,
 				delegateAmount: 100,
-				delegateFrom:   std.Address("g1from"),
-				delegateTo:     std.Address("g1to"),
+				delegateFrom:   address("g1from"),
+				delegateTo:     address("g1to"),
 				createdAt:      1000,
 			},
 			withdrawAmount: 50,

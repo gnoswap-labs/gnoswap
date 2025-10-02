@@ -1,15 +1,16 @@
 // basic position management
 
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (
-	"std"
 	"strconv"
 	"testing"
 
-	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/tokens/grc721"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/testutils"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
@@ -29,15 +30,15 @@ const (
 
 // Variables for test addresses and realms
 var (
-	adminAddr, _             = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm               = std.NewUserRealm(adminAddr)
-	poolAddr     std.Address = "g148tjamj80yyrm309z7rk690an22thd2l3z8ank"
-	positionAddr std.Address = "g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5"
+	adminAddr, _         = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm           = testing.NewUserRealm(adminAddr)
+	poolAddr     address = "g148tjamj80yyrm309z7rk690an22thd2l3z8ank"
+	positionAddr address = "g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5"
 
 	aliceAddr  = testutils.TestAddress("alice")
-	aliceRealm = std.NewUserRealm(aliceAddr)
+	aliceRealm = testing.NewUserRealm(aliceAddr)
 	bobAddr    = testutils.TestAddress("bob")
-	bobRealm   = std.NewUserRealm(bobAddr)
+	bobRealm   = testing.NewUserRealm(bobAddr)
 )
 
 var (
@@ -83,7 +84,7 @@ func setupPool() {
 	}
 }
 
-func tokenFaucet(tokenPath string, to std.Address) {
+func tokenFaucet(tokenPath string, to address) {
 	testing.SetRealm(adminRealm)
 	defaultAmount := int64(5_000_000_000)
 

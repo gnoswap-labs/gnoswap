@@ -5,14 +5,15 @@
 package main
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/ufmt"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
 	en "gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
@@ -26,20 +27,20 @@ var t *testing.T
 
 var (
 	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm    = std.NewUserRealm(adminAddr)
+	adminRealm    = testing.NewUserRealm(adminAddr)
 	dummyAddr     = testutils.TestAddress("dummy")
-	dummyRealm    = std.NewUserRealm(dummyAddr)
+	dummyRealm    = testing.NewUserRealm(dummyAddr)
 	dummy2Addr    = testutils.TestAddress("dummy2")
-	dummy2Realm   = std.NewUserRealm(dummy2Addr)
+	dummy2Realm   = testing.NewUserRealm(dummy2Addr)
 	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
-	stakerRealm   = std.NewUserRealm(stakerAddr)
+	stakerRealm   = testing.NewUserRealm(stakerAddr)
 	minAmount     = int64(1_000_000)
 
 	barPath = "gno.land/r/onbloc/bar"
 	quxPath = "gno.land/r/onbloc/qux"
 
-	wugnotPath             = "gno.land/r/demo/wugnot"
-	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+	wugnotPath         = "gno.land/r/gnoland/wugnot"
+	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	govStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
 
@@ -112,11 +113,11 @@ func depositProtocolFee() {
 	bar.Transfer(cross, protocolFeeAddr, 1000)
 	qux.Transfer(cross, protocolFeeAddr, 2500)
 
-	coins := std.Coins{{"ugnot", 10000}}
+	coins := chain.Coins{{"ugnot", 10000}}
 	testing.IssueCoins(adminAddr, coins)
-	banker := std.NewBanker(std.BankerTypeRealmSend)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 
-	banker.SendCoins(adminAddr, wugnotAddr, coins)
+	banker_.SendCoins(adminAddr, wugnotAddr, coins)
 
 	testing.SetOriginSend(coins)
 	wugnot.Deposit(cross)
@@ -194,9 +195,9 @@ func unDelegateAndCollectRewardByAdmin() {
 	ufmt.Printf("[INFO] admin undelegated %d GNS from dummy2: bar(%d), qux(%d), gnot(%d)\n", minAmount, afterBarBalance-prevBarBalance, afterQuxBalance-prevQuxBalance, afterGnotBalance-prevGnotBalance)
 }
 
-func getUgnotBalance(addr std.Address) int64 {
-	banker := std.NewBanker(std.BankerTypeRealmIssue)
-	coins := banker.GetCoins(addr)
+func getUgnotBalance(addr address) int64 {
+	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
+	coins := banker_.GetCoins(addr)
 	if len(coins) == 0 {
 		return 0
 	}

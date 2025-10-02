@@ -2,13 +2,12 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/pool"
@@ -28,12 +27,13 @@ const (
 )
 
 var (
-	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
-	poolAddr, _  = access.GetAddress(prbac.ROLE_POOL.String())
+	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm    = testing.NewUserRealm(adminAddr)
+	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
+	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
 
 	aliceAddr  = testutils.TestAddress("alice")
-	aliceRealm = std.NewUserRealm(aliceAddr)
+	aliceRealm = testing.NewUserRealm(aliceAddr)
 
 	barPath = "gno.land/r/onbloc/bar"
 	fooPath = "gno.land/r/onbloc/foo"
@@ -111,6 +111,14 @@ func initPools() {
 
 	// Add liquidity for multi-hop
 	position.Mint(cross, fooPath, bazPath, fee500, -5000, 5000, "30000000000", "30000000000", "0", "0", time.Now().Unix()+3600, aliceAddr, aliceAddr, "")
+
+	testing.SetRealm(aliceRealm)
+	bar.Approve(cross, routerAddr, INT64_MAX)
+	foo.Approve(cross, routerAddr, INT64_MAX)
+
+	testing.SetRealm(adminRealm)
+	bar.Approve(cross, routerAddr, INT64_MAX)
+	foo.Approve(cross, routerAddr, INT64_MAX)
 }
 
 func testPriceImpactSmall() {
@@ -126,6 +134,8 @@ func testPriceImpactSmall() {
 	ufmt.Printf("[INFO] Initial sqrt price: %s\n", initialPrice)
 
 	// Execute swap
+	bar.Approve(cross, routerAddr, INT64_MAX)
+	foo.Approve(cross, routerAddr, INT64_MAX)
 	_, amountOut := router.ExactInSwapRoute(
 		cross, barPath, fooPath, amount, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",

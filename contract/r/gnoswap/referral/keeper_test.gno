@@ -1,24 +1,24 @@
 package referral
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 )
 
 func TestKeeper_Register(t *testing.T) {
 	var (
-		routerRealm = std.NewCodeRealm("gno.land/r/gnoswap/v1/router")
-		userRealm   = std.NewCodeRealm("gno.land/r/demo/users")
+		routerRealm = testing.NewCodeRealm("gno.land/r/gnoswap/v1/router")
+		userRealm   = testing.NewCodeRealm("gno.land/r/demo/users")
 	)
 
 	tests := []struct {
 		name                 string
-		callerRealm          std.Realm
-		addr                 std.Address
-		refAddr              std.Address
+		callerRealm          runtime.Realm
+		addr                 address
+		refAddr              address
 		expectedSuccess      bool
 		expectedPanicMessage string
 	}{
@@ -75,9 +75,9 @@ func TestKeeper_Register(t *testing.T) {
 func TestKeeper_Has(t *testing.T) {
 	tests := []struct {
 		name          string
-		addr          std.Address
+		addr          address
 		setupReferral bool
-		refAddr       std.Address
+		refAddr       address
 		expectedHas   bool
 	}{
 		{
@@ -107,7 +107,7 @@ func TestKeeper_Has(t *testing.T) {
 			cleanupKeeper()
 
 			// given
-			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 
 			if tc.setupReferral {
 				TryRegister(cross, tc.addr, tc.refAddr.String())
@@ -125,9 +125,9 @@ func TestKeeper_Has(t *testing.T) {
 func TestKeeper_Get(t *testing.T) {
 	tests := []struct {
 		name          string
-		addr          std.Address
+		addr          address
 		setupReferral bool
-		refAddr       std.Address
+		refAddr       address
 		expectedAddr  string
 		expectedError bool
 	}{
@@ -161,7 +161,7 @@ func TestKeeper_Get(t *testing.T) {
 			cleanupKeeper()
 
 			// given
-			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 
 			if tc.setupReferral {
 				TryRegister(cross, tc.addr, tc.refAddr.String())
@@ -180,24 +180,24 @@ func TestKeeper_IsEmpty(t *testing.T) {
 	tests := []struct {
 		name           string
 		setupReferrals []struct {
-			addr    std.Address
-			refAddr std.Address
+			addr    address
+			refAddr address
 		}
 		expectedIsEmpty bool
 	}{
 		{
 			name: "True when no referrals exist",
 			setupReferrals: []struct {
-				addr    std.Address
-				refAddr std.Address
+				addr    address
+				refAddr address
 			}{},
 			expectedIsEmpty: true,
 		},
 		{
 			name: "False when referrals exist",
 			setupReferrals: []struct {
-				addr    std.Address
-				refAddr std.Address
+				addr    address
+				refAddr address
 			}{
 				{testutils.TestAddress("user1"), testutils.TestAddress("referrer1")},
 			},
@@ -206,8 +206,8 @@ func TestKeeper_IsEmpty(t *testing.T) {
 		{
 			name: "False when multiple referrals exist",
 			setupReferrals: []struct {
-				addr    std.Address
-				refAddr std.Address
+				addr    address
+				refAddr address
 			}{
 				{testutils.TestAddress("user1"), testutils.TestAddress("referrer1")},
 				{testutils.TestAddress("user2"), testutils.TestAddress("referrer2")},
@@ -221,7 +221,7 @@ func TestKeeper_IsEmpty(t *testing.T) {
 			cleanupKeeper()
 
 			// given
-			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 
 			for _, ref := range tc.setupReferrals {
 				TryRegister(cross, ref.addr, ref.refAddr.String())

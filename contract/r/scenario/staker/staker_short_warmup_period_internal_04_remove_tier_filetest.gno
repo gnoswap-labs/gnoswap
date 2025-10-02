@@ -2,13 +2,12 @@
 package main
 
 import (
-	"std"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	en "gno.land/r/gnoswap/emission"
@@ -31,10 +30,10 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
-	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -47,7 +46,7 @@ var (
 
 	maxTimeout            int64 = 9999999999
 	maxInt64              int64 = 9223372036854775807
-	MUST_EXISTS_IN_TIER_1       = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"
+	MUST_EXISTS_IN_TIER_1       = "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
 )
 
 func main() {

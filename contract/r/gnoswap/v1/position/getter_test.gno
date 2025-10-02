@@ -1,11 +1,10 @@
 package position
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/uassert"
 )
 
 var poolKey = "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
@@ -14,9 +13,8 @@ func setupPositionGetter(t *testing.T) {
 	t.Helper()
 
 	CreatePoolWithoutFee(t)
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	position := Position{
-		nonce:                    u256.Zero(),
 		operator:                 positionAddr,
 		poolKey:                  poolKey,
 		tickLower:                -10000,
@@ -116,13 +114,6 @@ func TestPositionGetter(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "get position is success by nonce",
-			testFunc: func() any {
-				return PositionGetPositionNonce(positionId).ToString()
-			},
-			expected: "0",
-		},
-		{
 			name: "get position is success by operator",
 			testFunc: func() any {
 				return PositionGetPositionOperator(positionId)
@@ -199,13 +190,7 @@ func TestPositionGetter(t *testing.T) {
 			},
 			expected: true,
 		},
-		{
-			name: "get position is success by nonceStr",
-			testFunc: func() any {
-				return PositionGetPositionNonceStr(positionId)
-			},
-			expected: "0",
-		},
+
 		{
 			name: "get position is success by operatorStr",
 			testFunc: func() any {

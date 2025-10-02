@@ -1,10 +1,8 @@
 package gnft
 
 import (
-	"std"
-
-	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/nt/ufmt"
 )
 
 // assertIsValidTokenURI panics if the token already has a URI set.
@@ -16,21 +14,21 @@ func assertIsValidTokenURI(tid grc721.TokenID) {
 }
 
 // assertIsValidAddress panics if the address is invalid.
-func assertIsValidAddress(addr std.Address) {
+func assertIsValidAddress(addr address) {
 	if !addr.IsValid() {
 		panic(makeErrorWithDetails(errInvalidAddress, ufmt.Sprintf("address (%s)", addr.String())))
 	}
 }
 
 // assertFromIsValidAddress panics if the from address is invalid.
-func assertFromIsValidAddress(from std.Address) {
+func assertFromIsValidAddress(from address) {
 	if !from.IsValid() {
 		panic(makeErrorWithDetails(errInvalidAddress, ufmt.Sprintf("from address (%s)", from.String())))
 	}
 }
 
 // assertToIsValidAddress panics if the to address is invalid.
-func assertToIsValidAddress(to std.Address) {
+func assertToIsValidAddress(to address) {
 	if !to.IsValid() {
 		panic(makeErrorWithDetails(errInvalidAddress, ufmt.Sprintf("to address (%s)", to.String())))
 	}

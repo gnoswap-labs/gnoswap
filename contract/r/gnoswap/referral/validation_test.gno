@@ -1,12 +1,12 @@
 package referral
 
 import (
-	"std"
+	"chain/runtime"
 	"strings"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
@@ -17,9 +17,9 @@ func TestValidation_SelfReferralPrevention(t *testing.T) {
 	tests := []struct {
 		name              string
 		setupInitial      bool
-		addr              std.Address
-		initialRefAddr    std.Address
-		targetRefAddr     std.Address
+		addr              address
+		initialRefAddr    address
+		targetRefAddr     address
 		operation         string // "register" or "update"
 		expectedError     bool
 		expectedErrorType error
@@ -122,15 +122,15 @@ func TestValidation_SelfReferralPrevention(t *testing.T) {
 func TestValidation_AddressValidation(t *testing.T) {
 	tests := []struct {
 		name          string
-		addr          std.Address
-		refAddr       std.Address
+		addr          address
+		refAddr       address
 		operation     string
 		expectedError bool
 		expectedType  error
 	}{
 		{
 			name:          "rejects invalid user address on register",
-			addr:          std.Address(""),
+			addr:          address(""),
 			refAddr:       testutils.TestAddress("valid"),
 			operation:     "register",
 			expectedError: true,
@@ -139,7 +139,7 @@ func TestValidation_AddressValidation(t *testing.T) {
 		{
 			name:          "rejects invalid referral address on register",
 			addr:          testutils.TestAddress("valid"),
-			refAddr:       std.Address("invalid"),
+			refAddr:       address("invalid"),
 			operation:     "register",
 			expectedError: true,
 			expectedType:  ErrInvalidAddress,
@@ -154,7 +154,7 @@ func TestValidation_AddressValidation(t *testing.T) {
 		},
 		{
 			name:          "rejects invalid user address on update",
-			addr:          std.Address(""),
+			addr:          address(""),
 			refAddr:       testutils.TestAddress("valid"),
 			operation:     "update",
 			expectedError: true,
@@ -163,7 +163,7 @@ func TestValidation_AddressValidation(t *testing.T) {
 		{
 			name:          "rejects invalid referral address on update",
 			addr:          testutils.TestAddress("valid"),
-			refAddr:       std.Address("invalid"),
+			refAddr:       address("invalid"),
 			operation:     "update",
 			expectedError: true,
 			expectedType:  ErrInvalidAddress,
@@ -203,8 +203,8 @@ func TestValidation_CallerAuthorization(t *testing.T) {
 	tests := []struct {
 		name          string
 		caller        string
-		addr          std.Address
-		refAddr       std.Address
+		addr          address
+		refAddr       address
 		operation     string
 		expectedError bool
 		expectedType  error
@@ -321,8 +321,8 @@ func TestValidation_CallerAuthorization(t *testing.T) {
 func TestValidation_EdgeCases(t *testing.T) {
 	tests := []struct {
 		name          string
-		addr          std.Address
-		refAddr       std.Address
+		addr          address
+		refAddr       address
 		operation     string
 		setupRef      bool
 		expectedError bool
@@ -404,8 +404,8 @@ func TestValidation_ConsistencyChecks(t *testing.T) {
 	tests := []struct {
 		name       string
 		operations []struct {
-			addr    std.Address
-			refAddr std.Address
+			addr    address
+			refAddr address
 			op      string
 		}
 		expectedFinalStates map[string]bool
@@ -413,8 +413,8 @@ func TestValidation_ConsistencyChecks(t *testing.T) {
 		{
 			name: "multiple users same referrer",
 			operations: []struct {
-				addr    std.Address
-				refAddr std.Address
+				addr    address
+				refAddr address
 				op      string
 			}{
 				{testutils.TestAddress("user1"), testutils.TestAddress("ref1"), "register"},
@@ -430,8 +430,8 @@ func TestValidation_ConsistencyChecks(t *testing.T) {
 		{
 			name: "chained referrals",
 			operations: []struct {
-				addr    std.Address
-				refAddr std.Address
+				addr    address
+				refAddr address
 				op      string
 			}{
 				{testutils.TestAddress("user1"), testutils.TestAddress("user2"), "register"},
@@ -467,7 +467,7 @@ func TestValidation_ConsistencyChecks(t *testing.T) {
 
 			// then
 			for addrStr, expectedHas := range tc.expectedFinalStates {
-				addr := std.Address(addrStr)
+				addr := address(addrStr)
 				has := k.has(addr)
 				uassert.Equal(t, expectedHas, has)
 			}
@@ -482,7 +482,7 @@ func setupValidationKeeper() *keeper {
 }
 
 func setupValidationCaller() func() {
-	origCaller := std.OriginCaller()
+	origCaller := runtime.OriginCaller()
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 	testing.SetOriginCaller(routerAddr)
 	return func() {
@@ -491,13 +491,13 @@ func setupValidationCaller() func() {
 }
 
 func setupSpecificCaller(caller string) func() {
-	origCaller := std.OriginCaller()
+	origCaller := runtime.OriginCaller()
 	switch caller {
 	case "router":
 		routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 		testing.SetOriginCaller(routerAddr)
 	case "unauthorized":
-		testing.SetOriginCaller(std.Address("unauthorized"))
+		testing.SetOriginCaller(address("unauthorized"))
 	}
 	return func() {
 		testing.SetOriginCaller(origCaller)

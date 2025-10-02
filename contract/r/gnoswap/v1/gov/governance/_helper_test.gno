@@ -1,9 +1,10 @@
 package governance
 
 import (
-	"std"
+	"chain/banker"
+	"testing"
 
-	"gno.land/p/demo/json"
+	"gno.land/p/onbloc/json"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
@@ -25,24 +26,24 @@ var (
 
 	max_timeout int64 = 9999999999
 
-	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 )
 
 // Realms to mock frames
 var (
-	adminRealm = std.NewUserRealm(admin)
+	adminRealm = testing.NewUserRealm(admin)
 
 	posPath  = "gno.land/r/gnoswap/v1/position"
-	posRealm = std.NewCodeRealm(posPath)
+	posRealm = testing.NewCodeRealm(posPath)
 
 	routerPath = "gno.land/r/gnoswap/v1/router"
-	rouRealm   = std.NewCodeRealm(routerPath)
+	rouRealm   = testing.NewCodeRealm(routerPath)
 
 	stakerPath = "gno.land/r/gnoswap/v1/staker"
-	stkRealm   = std.NewCodeRealm(stakerPath)
+	stkRealm   = testing.NewCodeRealm(stakerPath)
 
 	govPath  = "gno.land/r/gnoswap/v1/gov/governance"
-	govRealm = std.NewCodeRealm(govPath)
+	govRealm = testing.NewCodeRealm(govPath)
 
 	govStakerAddr, _     = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
 	communityPoolAddr, _ = access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
@@ -50,8 +51,8 @@ var (
 )
 
 /* HELPER */
-func ugnotBalanceOf(addr std.Address) uint64 {
-	testBanker := std.NewBanker(std.BankerTypeRealmIssue)
+func ugnotBalanceOf(addr address) uint64 {
+	testBanker := banker.NewBanker(banker.BankerTypeRealmIssue)
 
 	coins := testBanker.GetCoins(addr)
 	if len(coins) == 0 {

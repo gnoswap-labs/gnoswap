@@ -1,12 +1,12 @@
 package governance
 
 import (
-	"std"
+	"chain/runtime"
 	"strconv"
 	"strings"
 	"time"
 
-	"gno.land/p/demo/json"
+	"gno.land/p/onbloc/json"
 )
 
 func createProposalJsonNode(id int64, proposal *Proposal) *json.Node {
@@ -54,7 +54,7 @@ func GetVoteStatusFromProposalById(id int64) string {
 }
 
 // GetVoteByAddressFromProposalById returns the vote of an address from a certain proposal.
-func GetVoteByAddressFromProposalById(addr std.Address, id int64) string {
+func GetVoteByAddressFromProposalById(addr address, id int64) string {
 	vote, exists := getProposalUserVotingInfo(id, addr)
 	if !exists {
 		return ""
@@ -75,7 +75,7 @@ func getProposalById(id int64) *json.Node {
 	return createProposalJsonNode(id, proposal)
 }
 
-func createVoteJsonNode(addr std.Address, id int64, vote *VotingInfo) *json.Node {
+func createVoteJsonNode(addr address, id int64, vote *VotingInfo) *json.Node {
 	return json.Builder().
 		WriteString("proposalId", formatInt(id)).
 		WriteString("voteYes", formatBool(vote.votedYes)).
@@ -185,7 +185,7 @@ func getProposalVotes(id int64) string {
 }
 
 func metaNode() *json.Node {
-	height := std.ChainHeight()
+	height := runtime.ChainHeight()
 	now := time.Now().Unix()
 
 	return json.Builder().

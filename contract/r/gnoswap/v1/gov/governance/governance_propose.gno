@@ -1,7 +1,8 @@
 package governance
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 	"time"
 
 	"gno.land/r/gnoswap/gns"
@@ -36,12 +37,12 @@ func ProposeText(
 	title string,
 	description string,
 ) (newProposalId int64) {
-	halt.AssertIsNotHaltedGovernance()
+	halt.AssertIsNotHaltedGovernanceWithVersion(1)
 
-	callerAddress := std.PreviousRealm().Address()
+	callerAddress := runtime.PreviousRealm().Address()
 
 	createdAt := time.Now().Unix()
-	createdHeight := std.ChainHeight()
+	createdHeight := runtime.ChainHeight()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
 	config, ok := getCurrentConfig()
@@ -86,8 +87,8 @@ func ProposeText(
 	}
 
 	// Emit proposal creation event for indexing and tracking
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"ProposeText",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -95,7 +96,7 @@ func ProposeText(
 		"description", description,
 		"proposalId", formatInt(proposal.ID()),
 		"quorumAmount", formatInt(proposal.VotingQuorumAmount()),
-		"maxVotingWeight", formatInt(proposal.VotingTotalWeight()),
+		"maxVotingWeight", formatInt(proposal.VotingMaxWeight()),
 		"configVersion", formatInt(proposal.ConfigVersion()),
 		"createdAt", formatInt(proposal.CreatedAt()),
 	)
@@ -132,17 +133,17 @@ func ProposeCommunityPoolSpend(
 	cur realm,
 	title string,
 	description string,
-	to std.Address,
+	to address,
 	tokenPath string,
 	amount int64,
 ) (newProposalId int64) {
-	halt.AssertIsNotHaltedGovernance()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedGovernanceWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
-	callerAddress := std.PreviousRealm().Address()
+	callerAddress := runtime.PreviousRealm().Address()
 
 	createdAt := time.Now().Unix()
-	createdHeight := std.ChainHeight()
+	createdHeight := runtime.ChainHeight()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
 	config, ok := getCurrentConfig()
@@ -187,8 +188,8 @@ func ProposeCommunityPoolSpend(
 	}
 
 	// Emit proposal creation event for indexing and tracking
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"ProposeCommunityPoolSpend",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -199,7 +200,7 @@ func ProposeCommunityPoolSpend(
 		"amount", formatInt(amount),
 		"proposalId", formatInt(proposal.ID()),
 		"quorumAmount", formatInt(proposal.VotingQuorumAmount()),
-		"maxVotingWeight", formatInt(proposal.VotingTotalWeight()),
+		"maxVotingWeight", formatInt(proposal.VotingMaxWeight()),
 		"configVersion", formatInt(proposal.ConfigVersion()),
 		"createdAt", formatInt(proposal.CreatedAt()),
 	)
@@ -244,12 +245,12 @@ func ProposeParameterChange(
 	numToExecute int64,
 	executions string,
 ) (newProposalId int64) {
-	halt.AssertIsNotHaltedGovernance()
+	halt.AssertIsNotHaltedGovernanceWithVersion(1)
 
-	callerAddress := std.PreviousRealm().Address()
+	callerAddress := runtime.PreviousRealm().Address()
 
 	createdAt := time.Now().Unix()
-	createdHeight := std.ChainHeight()
+	createdHeight := runtime.ChainHeight()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
 	config, ok := getCurrentConfig()
@@ -294,8 +295,8 @@ func ProposeParameterChange(
 	}
 
 	// Emit proposal creation event for indexing and tracking
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"ProposeParameterChange",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -305,7 +306,7 @@ func ProposeParameterChange(
 		"executions", executions,
 		"proposalId", formatInt(proposal.ID()),
 		"quorumAmount", formatInt(proposal.VotingQuorumAmount()),
-		"maxVotingWeight", formatInt(proposal.VotingTotalWeight()),
+		"maxVotingWeight", formatInt(proposal.VotingMaxWeight()),
 		"configVersion", formatInt(proposal.ConfigVersion()),
 		"createdAt", formatInt(proposal.CreatedAt()),
 	)
@@ -321,7 +322,7 @@ func createProposal(
 	maxVotingWeight int64,
 	proposalMetadata *ProposalMetadata,
 	proposalData *ProposalData,
-	proposerAddress std.Address,
+	proposerAddress address,
 	proposerGnsBalance int64,
 	createdAt int64,
 	createdHeight int64,
@@ -446,7 +447,7 @@ func updateProposalUserVotes(
 
 // hasActiveProposal checks if address already has active proposal.
 // Enforces one-proposal-per-address rule to prevent spam.
-func hasActiveProposal(proposerAddress std.Address, current int64) bool {
+func hasActiveProposal(proposerAddress address, current int64) bool {
 	// Get all proposals for this address
 	proposals := getUserProposals(proposerAddress)
 

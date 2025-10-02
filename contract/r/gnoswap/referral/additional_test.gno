@@ -1,12 +1,12 @@
 package referral
 
 import (
-	"std"
+	"chain/runtime"
 	"strings"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
@@ -485,7 +485,7 @@ func setupAdditionalKeeper() *keeper {
 }
 
 func setupAdditionalCaller() func() {
-	origCaller := std.OriginCaller()
+	origCaller := runtime.OriginCaller()
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 	testing.SetOriginCaller(routerAddr)
 	return func() {
@@ -494,8 +494,8 @@ func setupAdditionalCaller() func() {
 }
 
 func setupInvalidCaller() func() {
-	origCaller := std.OriginCaller()
-	testing.SetOriginCaller(std.Address("unauthorized"))
+	origCaller := runtime.OriginCaller()
+	testing.SetOriginCaller(address("unauthorized"))
 	return func() {
 		testing.SetOriginCaller(origCaller)
 	}

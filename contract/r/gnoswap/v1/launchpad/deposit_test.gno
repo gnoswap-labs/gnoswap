@@ -1,11 +1,10 @@
 package launchpad
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 )
 
 func TestDeposit_ID(t *testing.T) {
@@ -104,7 +103,7 @@ func TestDeposit_IsOwner(t *testing.T) {
 	tests := []struct {
 		name     string
 		deposit  *Deposit
-		address  std.Address
+		address  address
 		expected bool
 	}{
 		{
@@ -225,7 +224,7 @@ func TestNewDeposit(t *testing.T) {
 		depositID          string
 		projectID          string
 		tier               int64
-		depositor          std.Address
+		depositor          address
 		depositAmount      int64
 		createdBlockTime   int64
 		createdBlockHeight int64

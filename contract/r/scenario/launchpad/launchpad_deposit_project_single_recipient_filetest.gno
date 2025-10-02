@@ -5,13 +5,12 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
@@ -25,20 +24,20 @@ import (
 
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	launchpadAddr, _   = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	stakerAddr, _      = access.GetAddress(prbac.ROLE_STAKER.String())
-	stakerRealm        = std.NewUserRealm(stakerAddr)
+	stakerRealm        = testing.NewUserRealm(stakerAddr)
 	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 	govStakerAddr, _   = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
-	govStakerRealm     = std.NewUserRealm(govStakerAddr)
+	govStakerRealm     = testing.NewUserRealm(govStakerAddr)
 
 	bobAddr  = testutils.TestAddress("bob")
-	bobRealm = std.NewUserRealm(bobAddr)
+	bobRealm = testing.NewUserRealm(bobAddr)
 
 	projectAddr  = testutils.TestAddress("project-owner")
-	projectRealm = std.NewUserRealm(projectAddr)
+	projectRealm = testing.NewUserRealm(projectAddr)
 )
 
 func main() {

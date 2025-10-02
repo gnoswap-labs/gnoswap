@@ -3,7 +3,7 @@ package pool
 import (
 	"testing"
 
-	"gno.land/p/demo/avl"
+	"gno.land/p/nt/avl"
 )
 
 func InitPoolTest(t *testing.T) {

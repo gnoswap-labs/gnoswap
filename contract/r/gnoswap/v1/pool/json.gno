@@ -1,11 +1,11 @@
 package pool
 
 import (
-	"std"
+	"chain/runtime"
 	"strconv"
 	"time"
 
-	"gno.land/p/demo/json"
+	"gno.land/p/onbloc/json"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -262,7 +262,7 @@ type statNode struct {
 
 func newStatNode() statNode {
 	return statNode{
-		height:    std.ChainHeight(),
+		height:    runtime.ChainHeight(),
 		timestamp: time.Now().Unix(),
 	}
 }

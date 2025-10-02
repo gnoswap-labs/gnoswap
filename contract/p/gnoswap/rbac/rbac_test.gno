@@ -1,12 +1,11 @@
 package rbac
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
+	"gno.land/p/nt/ufmt"
 )
 
 var (
@@ -18,14 +17,14 @@ var (
 	editorAddr = testutils.TestAddress(editorRole)
 )
 
-func adminChecker(caller std.Address) error {
+func adminChecker(caller address) error {
 	if caller != adminAddr {
 		return ufmt.Errorf("caller is not admin")
 	}
 	return nil
 }
 
-func editorChecker(caller std.Address) error {
+func editorChecker(caller address) error {
 	if caller != editorAddr {
 		return ufmt.Errorf("caller is not editor")
 	}
@@ -35,10 +34,10 @@ func editorChecker(caller std.Address) error {
 func TestRegisterRole(t *testing.T) {
 	manager := New()
 
-	err := manager.RegisterRole(adminRole)
+	err := manager.RegisterRole(adminRole, adminAddr)
 	uassert.NoError(t, err)
 
-	err = manager.RegisterRole(adminRole)
+	err = manager.RegisterRole(adminRole, adminAddr)
 	uassert.Error(t, err)
 }
 
@@ -47,7 +46,7 @@ func TestRemoveRole(t *testing.T) {
 
 	t.Run("success remove non-system role", func(t *testing.T) {
 		// First register role and permission
-		err := manager.RegisterRole(editorRole)
+		err := manager.RegisterRole(editorRole, editorAddr)
 		uassert.NoError(t, err)
 
 		// Remove role
@@ -62,7 +61,7 @@ func TestRemoveRole(t *testing.T) {
 
 	t.Run("fail to remove system role", func(t *testing.T) {
 		// Register system role
-		err := manager.RegisterRole(adminRole)
+		err := manager.RegisterRole(adminRole, adminAddr)
 		uassert.NoError(t, err)
 
 		// Try to remove system role

@@ -1,15 +1,16 @@
 package gns
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 	"strings"
 	"time"
 
-	"gno.land/p/demo/grc/grc20"
-	"gno.land/p/demo/ownable"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/demo/tokens/grc20"
+	"gno.land/p/nt/ownable"
+	"gno.land/p/nt/ufmt"
 
-	"gno.land/r/demo/grc20reg"
+	"gno.land/r/demo/defi/grc20reg"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
 )
@@ -41,7 +42,7 @@ func init() {
 	// leftEmissionAmount will decrease as tokens are minted.
 	setLeftEmissionAmount(MAX_EMISSION_AMOUNT)
 	setMintedEmissionAmount(0)
-	setLastMintedTimestamp(std.ChainHeight())
+	setLastMintedTimestamp(runtime.ChainHeight())
 	burnAmount = 0
 }
 
@@ -61,10 +62,10 @@ func TotalSupply() int64 { return token.TotalSupply() }
 func KnownAccounts() int { return token.KnownAccounts() }
 
 // BalanceOf returns the GNS balance of a specific address.
-func BalanceOf(owner std.Address) int64 { return token.BalanceOf(owner) }
+func BalanceOf(owner address) int64 { return token.BalanceOf(owner) }
 
 // Allowance returns the amount of GNS that a spender is allowed to transfer from an owner.
-func Allowance(owner, spender std.Address) int64 { return token.Allowance(owner, spender) }
+func Allowance(owner, spender address) int64 { return token.Allowance(owner, spender) }
 
 // MintGns mints new GNS tokens according to the emission schedule.
 //
@@ -73,10 +74,10 @@ func Allowance(owner, spender std.Address) int64 { return token.Allowance(owner,
 //
 // Returns amount minted.
 // Only callable by emission contract.
-func MintGns(cur realm, address std.Address) int64 {
+func MintGns(cur realm, address address) int64 {
 	halt.AssertIsNotHaltedEmission()
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsEmission(caller)
 
 	lastGNSMintedTimestamp := LastMintedTimestamp()
@@ -102,8 +103,8 @@ func MintGns(cur realm, address std.Address) int64 {
 		panic(err.Error())
 	}
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"MintGNS",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -123,19 +124,19 @@ func MintGns(cur realm, address std.Address) int64 {
 //   - amount: amount to burn
 //
 // Only callable by contract owner.
-func Burn(cur realm, from std.Address, amount int64) {
+func Burn(cur realm, from address, amount int64) {
 	assertAddressIsPreviousRealm(from)
 
 	checkErr(privateLedger.Burn(from, amount))
 
 	burnAmount += amount
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"Burn",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"burnedBlockHeight", formatInt(std.ChainHeight()),
+		"burnedBlockHeight", formatInt(runtime.ChainHeight()),
 		"burnFrom", from.String(),
 		"burnedGNSAmount", formatInt(amount),
 		"accumBurnedGNSAmount", formatInt(BurnAmount()),
@@ -147,7 +148,7 @@ func Burn(cur realm, from std.Address, amount int64) {
 // Parameters:
 //   - to: recipient address
 //   - amount: amount to transfer
-func Transfer(cur realm, to std.Address, amount int64) {
+func Transfer(cur realm, to address, amount int64) {
 	userTeller := token.CallerTeller()
 	checkErr(userTeller.Transfer(to, amount))
 }
@@ -157,7 +158,7 @@ func Transfer(cur realm, to std.Address, amount int64) {
 // Parameters:
 //   - spender: address authorized to spend
 //   - amount: maximum amount spender can transfer
-func Approve(cur realm, spender std.Address, amount int64) {
+func Approve(cur realm, spender address, amount int64) {
 	userTeller := token.CallerTeller()
 	checkErr(userTeller.Approve(spender, amount))
 }
@@ -168,7 +169,7 @@ func Approve(cur realm, spender std.Address, amount int64) {
 //   - from: token owner address
 //   - to: recipient address
 //   - amount: amount to transfer
-func TransferFrom(cur realm, from, to std.Address, amount int64) {
+func TransferFrom(cur realm, from, to address, amount int64) {
 	userTeller := token.CallerTeller()
 	checkErr(userTeller.TransferFrom(from, to, amount))
 }
@@ -182,7 +183,7 @@ func Render(path string) string {
 	case path == "":
 		return token.RenderHome()
 	case c == 2 && parts[0] == "balance":
-		owner := std.Address(parts[1])
+		owner := address(parts[1])
 		balance := token.BalanceOf(owner)
 		return ufmt.Sprintf("%d\n", balance)
 	default:
@@ -249,7 +250,7 @@ func calculateAmountToMint(fromTimestamp, toTimestamp int64) int64 {
 		getEmissionState().addHalvingYearAccumulatedAmount(year, yearAmountToMint)
 		getEmissionState().subHalvingYearLeftAmount(year, yearAmountToMint)
 
-		std.Emit(
+		chain.Emit(
 			"CalculateAmountToMint",
 			"fromTimestamp", formatInt(fromTimestamp),
 			"toTimestamp", formatInt(currentToTimestamp),

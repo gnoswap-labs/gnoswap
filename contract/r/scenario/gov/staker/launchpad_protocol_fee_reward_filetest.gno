@@ -3,12 +3,11 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
@@ -24,16 +23,16 @@ import (
 
 var (
 	admin, _   = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm = std.NewUserRealm(admin)
+	adminRealm = testing.NewUserRealm(admin)
 
 	stakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
-	stakerRealm   = std.NewUserRealm(stakerAddr)
+	stakerRealm   = testing.NewUserRealm(stakerAddr)
 
 	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 	launchpadAddr, _   = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 
 	projectAddr  = testutils.TestAddress("projectAddr")
-	projectRealm = std.NewUserRealm(projectAddr)
+	projectRealm = testing.NewUserRealm(projectAddr)
 
 	barPath = "gno.land/r/onbloc/bar"
 	quxPath = "gno.land/r/onbloc/qux"

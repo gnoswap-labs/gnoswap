@@ -3,8 +3,8 @@ package staker
 import (
 	"testing"
 
-	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/nt/uassert"
 )
 
 func TestPoolPathAlign(t *testing.T) {

@@ -1,11 +1,11 @@
 package community_pool
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
@@ -16,14 +16,14 @@ import (
 
 var (
 	adminAddr  = rbac.DefaultRoleAddresses[prabc.ROLE_ADMIN]
-	adminRealm = std.NewUserRealm(adminAddr)
+	adminRealm = testing.NewUserRealm(adminAddr)
 
 	communityPoolAddr = rbac.DefaultRoleAddresses[prabc.ROLE_COMMUNITY_POOL]
 
 	gnsPath  = "gno.land/r/gnoswap/gns"
-	govRealm = std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/governance")
+	govRealm = testing.NewCodeRealm("gno.land/r/gnoswap/v1/gov/governance")
 
-	dummyCaller   = std.NewUserRealm(testutils.TestAddress("dummyCaller"))
+	dummyCaller   = testing.NewUserRealm(testutils.TestAddress("dummyCaller"))
 	dummyReceiver = testutils.TestAddress("dummyReceiver")
 )
 
@@ -37,9 +37,9 @@ func TestTransferToken(t *testing.T) {
 	tests := []struct {
 		name        string
 		setup       func()
-		caller      std.Realm
+		caller      runtime.Realm
 		tokenPath   string
-		to          std.Address
+		to          address
 		amount      int64
 		shouldPanic bool
 		panicMsg    string
@@ -112,7 +112,7 @@ func TestTransferToken(t *testing.T) {
 				tt.setup()
 			}
 
-			if tt.caller != (std.Realm{}) {
+			if tt.caller != (runtime.Realm{}) {
 				testing.SetRealm(tt.caller)
 			}
 

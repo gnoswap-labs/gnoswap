@@ -1,13 +1,12 @@
 package launchpad
 
 import (
-	"std"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
@@ -21,7 +20,7 @@ import (
 func TestDepositGns(t *testing.T) {
 	tests := []struct {
 		name                 string
-		setupFunc            func() (string, std.Address)
+		setupFunc            func() (string, address)
 		targetProjectTierID  string
 		depositAmount        int64
 		referrer             string
@@ -32,7 +31,7 @@ func TestDepositGns(t *testing.T) {
 	}{
 		{
 			name: "successful deposit with valid project and tier",
-			setupFunc: func() (string, std.Address) {
+			setupFunc: func() (string, address) {
 				userAddr := testutils.TestAddress("user1")
 				projectAddr := testutils.TestAddress("project1")
 				adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
@@ -51,7 +50,7 @@ func TestDepositGns(t *testing.T) {
 				testing.SetContext(ctx)
 
 				// Create project as admin
-				testing.SetRealm(std.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				startTime := time.Now().Unix() + 3600 // 1 hour from now
 
 				// Approve token for project creation
@@ -76,11 +75,11 @@ func TestDepositGns(t *testing.T) {
 				testing.SkipHeights(3600)
 
 				// Setup user with GNS tokens
-				testing.SetRealm(std.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				gns.Transfer(cross, userAddr, 2000000) // Enough for deposit
 
 				// User approves launchpad to spend GNS
-				testing.SetRealm(std.NewUserRealm(userAddr))
+				testing.SetRealm(testing.NewUserRealm(userAddr))
 				gns.Approve(cross, launchpadAddr, 2000000)
 
 				return projectID + ":30", userAddr
@@ -104,7 +103,7 @@ func TestDepositGns(t *testing.T) {
 		},
 		{
 			name: "successful deposit with referrer",
-			setupFunc: func() (string, std.Address) {
+			setupFunc: func() (string, address) {
 				userAddr := testutils.TestAddress("user2")
 				projectAddr := testutils.TestAddress("project2")
 
@@ -124,7 +123,7 @@ func TestDepositGns(t *testing.T) {
 				testing.SetContext(ctx)
 
 				// Create project as admin
-				testing.SetRealm(std.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				startTime := time.Now().Unix() + 3600 // 1 hour from now
 
 				// Approve token for project creation
@@ -149,11 +148,11 @@ func TestDepositGns(t *testing.T) {
 				testing.SkipHeights(3600)
 
 				// Setup user with GNS tokens
-				testing.SetRealm(std.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				gns.Transfer(cross, userAddr, 3000000) // Enough for deposit
 
 				// User approves launchpad to spend GNS
-				testing.SetRealm(std.NewUserRealm(userAddr))
+				testing.SetRealm(testing.NewUserRealm(userAddr))
 				gns.Approve(cross, launchpadAddr, 3000000)
 
 				return projectID + ":90", userAddr
@@ -173,7 +172,7 @@ func TestDepositGns(t *testing.T) {
 		},
 		{
 			name: "deposit with 180 day tier",
-			setupFunc: func() (string, std.Address) {
+			setupFunc: func() (string, address) {
 				userAddr := testutils.TestAddress("user3")
 				projectAddr := testutils.TestAddress("project3")
 				adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
@@ -192,7 +191,7 @@ func TestDepositGns(t *testing.T) {
 				testing.SetContext(ctx)
 
 				// Create project as admin
-				testing.SetRealm(std.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				startTime := time.Now().Unix() + 3600 // 1 hour from now
 
 				// Approve token for project creation
@@ -217,11 +216,11 @@ func TestDepositGns(t *testing.T) {
 				testing.SkipHeights(3600)
 
 				// Setup user with GNS tokens
-				testing.SetRealm(std.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				gns.Transfer(cross, userAddr, 4000000) // Enough for deposit
 
 				// User approves launchpad to spend GNS
-				testing.SetRealm(std.NewUserRealm(userAddr))
+				testing.SetRealm(testing.NewUserRealm(userAddr))
 				gns.Approve(cross, launchpadAddr, 4000000)
 
 				return projectID + ":180", userAddr
@@ -241,10 +240,10 @@ func TestDepositGns(t *testing.T) {
 		},
 		{
 			name: "fail with zero amount",
-			setupFunc: func() (string, std.Address) {
+			setupFunc: func() (string, address) {
 				// Unhalt the system
 				adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
-				testing.SetRealm(std.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				halt.SetHaltLevel(cross, halt.HaltLevelNone)
 
 				userAddr := testutils.TestAddress("user5")
@@ -260,7 +259,7 @@ func TestDepositGns(t *testing.T) {
 		},
 		{
 			name: "fail with negative amount",
-			setupFunc: func() (string, std.Address) {
+			setupFunc: func() (string, address) {
 				userAddr := testutils.TestAddress("user6")
 
 				// No need to set up project since validation fails early
@@ -274,7 +273,7 @@ func TestDepositGns(t *testing.T) {
 		},
 		{
 			name: "fail with invalid project tier ID format",
-			setupFunc: func() (string, std.Address) {
+			setupFunc: func() (string, address) {
 				userAddr := testutils.TestAddress("user7")
 
 				return "invalid_format", userAddr
@@ -287,7 +286,7 @@ func TestDepositGns(t *testing.T) {
 		},
 		{
 			name: "fail with non-existent project",
-			setupFunc: func() (string, std.Address) {
+			setupFunc: func() (string, address) {
 				userAddr := testutils.TestAddress("user8")
 
 				// Reset state
@@ -303,7 +302,7 @@ func TestDepositGns(t *testing.T) {
 		},
 		{
 			name: "fail with invalid tier duration",
-			setupFunc: func() (string, std.Address) {
+			setupFunc: func() (string, address) {
 				userAddr := testutils.TestAddress("user9")
 				projectAddr := testutils.TestAddress("project9")
 				adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
@@ -322,7 +321,7 @@ func TestDepositGns(t *testing.T) {
 				testing.SetContext(ctx)
 
 				// Create project as admin
-				testing.SetRealm(std.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				startTime := time.Now().Unix() + 3600 // 1 hour from now
 
 				// Approve token for project creation
@@ -347,11 +346,11 @@ func TestDepositGns(t *testing.T) {
 				testing.SkipHeights(3600)
 
 				// Setup user with GNS tokens
-				testing.SetRealm(std.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				gns.Transfer(cross, userAddr, 2000000)
 
 				// User approves launchpad to spend GNS
-				testing.SetRealm(std.NewUserRealm(userAddr))
+				testing.SetRealm(testing.NewUserRealm(userAddr))
 				gns.Approve(cross, launchpadAddr, 2000000)
 
 				return projectID + ":60", userAddr // Invalid tier
@@ -364,7 +363,7 @@ func TestDepositGns(t *testing.T) {
 		},
 		{
 			name: "fail when project is inactive",
-			setupFunc: func() (string, std.Address) {
+			setupFunc: func() (string, address) {
 				userAddr := testutils.TestAddress("user10")
 				projectAddr := testutils.TestAddress("project10")
 				adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
@@ -383,7 +382,7 @@ func TestDepositGns(t *testing.T) {
 				testing.SetContext(ctx)
 
 				// Create project as admin
-				testing.SetRealm(std.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				futureTime := time.Now().Unix() + 86400 // 1 day in future
 
 				// Approve token for project creation
@@ -407,11 +406,11 @@ func TestDepositGns(t *testing.T) {
 				// DON'T skip blocks - keep project inactive
 
 				// Setup user with GNS tokens
-				testing.SetRealm(std.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				gns.Transfer(cross, userAddr, 2000000)
 
 				// User approves launchpad to spend GNS
-				testing.SetRealm(std.NewUserRealm(userAddr))
+				testing.SetRealm(testing.NewUserRealm(userAddr))
 				gns.Approve(cross, launchpadAddr, 2000000)
 
 				return projectID + ":30", userAddr
@@ -424,7 +423,7 @@ func TestDepositGns(t *testing.T) {
 		},
 		{
 			name: "fail when called from contract",
-			setupFunc: func() (string, std.Address) {
+			setupFunc: func() (string, address) {
 				contractAddr := testutils.TestAddress("contract")
 				projectAddr := testutils.TestAddress("project12")
 				adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
@@ -443,7 +442,7 @@ func TestDepositGns(t *testing.T) {
 				testing.SetContext(ctx)
 
 				// Create project as admin
-				testing.SetRealm(std.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				startTime := time.Now().Unix() + 3600 // 1 hour from now
 
 				// Approve token for project creation
@@ -468,11 +467,11 @@ func TestDepositGns(t *testing.T) {
 				testing.SkipHeights(3600)
 
 				// Setup contract with GNS tokens
-				testing.SetRealm(std.NewUserRealm(adminAddr))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
 				gns.Transfer(cross, contractAddr, 2000000) // Enough for deposit
 
 				// Contract approves launchpad to spend GNS
-				testing.SetRealm(std.NewCodeRealm("gno.land/r/test/contract"))
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/test/contract"))
 				gns.Approve(cross, launchpadAddr, 2000000)
 
 				return projectID + ":30", contractAddr
@@ -501,7 +500,7 @@ func TestDepositGns(t *testing.T) {
 				// Restore halt state if needed
 				if origHalted {
 					adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
-					testing.SetRealm(std.NewUserRealm(adminAddr))
+					testing.SetRealm(testing.NewUserRealm(adminAddr))
 					halt.SetHaltLevel(cross, halt.HaltLevelComplete)
 				}
 			}()
@@ -513,9 +512,9 @@ func TestDepositGns(t *testing.T) {
 
 			// For contract test case, check if it's a contract call
 			if tt.name == "fail when called from contract" {
-				testing.SetRealm(std.NewCodeRealm("gno.land/r/test/contract"))
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/test/contract"))
 			} else {
-				testing.SetRealm(std.NewUserRealm(userAddr))
+				testing.SetRealm(testing.NewUserRealm(userAddr))
 			}
 			if tt.expectedPanic {
 				uassert.AbortsWithMessage(t, tt.expectedPanicMessage, func() {

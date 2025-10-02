@@ -1,10 +1,9 @@
 package staker
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 )
 
 // Test lockup period management
@@ -72,22 +71,22 @@ func TestDelegationIDManagement(t *testing.T) {
 func TestDelegationManagement(t *testing.T) {
 	tests := []struct {
 		name           string
-		delegateFrom   std.Address
-		delegateTo     std.Address
+		delegateFrom   address
+		delegateTo     address
 		delegateAmount int64
 		expectSuccess  bool
 	}{
 		{
 			name:           "Add valid delegation",
-			delegateFrom:   std.Address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
-			delegateTo:     std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
+			delegateFrom:   address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
+			delegateTo:     address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 			delegateAmount: 1000,
 			expectSuccess:  true,
 		},
 		{
 			name:           "Add another delegation",
-			delegateFrom:   std.Address("g1w8m4s75k9l6n8vc6fmpcprgey4ck233kfhx5tz"),
-			delegateTo:     std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
+			delegateFrom:   address("g1w8m4s75k9l6n8vc6fmpcprgey4ck233kfhx5tz"),
+			delegateTo:     address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 			delegateAmount: 500,
 			expectSuccess:  true,
 		},
@@ -130,13 +129,13 @@ func TestDelegationManagement(t *testing.T) {
 func TestGetUserDelegations(t *testing.T) {
 	tests := []struct {
 		name          string
-		setupState    func() (std.Address, []int64)
+		setupState    func() (address, []int64)
 		expectedCount int
 	}{
 		{
 			name: "Get delegations for user with multiple delegations",
-			setupState: func() (std.Address, []int64) {
-				user := std.Address("g1testuser1234567890abcdefghijklmnopqr")
+			setupState: func() (address, []int64) {
+				user := address("g1testuser1234567890abcdefghijklmnopqr")
 				delegationIDs := make([]int64, 0)
 
 				// Add multiple delegations for the user
@@ -145,7 +144,7 @@ func TestGetUserDelegations(t *testing.T) {
 					delegation := NewDelegation(
 						delegationID,
 						user,
-						std.Address("g1validator1234567890abcdefghijklmnop"),
+						address("g1validator1234567890abcdefghijklmnop"),
 						int64(1000*(i+1)),
 						100,
 						100,
@@ -159,8 +158,8 @@ func TestGetUserDelegations(t *testing.T) {
 		},
 		{
 			name: "Get delegations for user with no delegations",
-			setupState: func() (std.Address, []int64) {
-				user := std.Address("g1newuser1234567890abcdefghijklmnopqr")
+			setupState: func() (address, []int64) {
+				user := address("g1newuser1234567890abcdefghijklmnopqr")
 				return user, []int64{}
 			},
 			expectedCount: 0,
@@ -199,8 +198,8 @@ func TestRemoveDelegation(t *testing.T) {
 				delegationID := nextDelegationID()
 				delegation := NewDelegation(
 					delegationID,
-					std.Address("g1user1234567890abcdefghijklmnopqrst"),
-					std.Address("g1validator1234567890abcdefghijklmno"),
+					address("g1user1234567890abcdefghijklmnopqrst"),
+					address("g1validator1234567890abcdefghijklmno"),
 					1000,
 					100,
 					100,
@@ -257,8 +256,8 @@ func TestDelegationHistoryManagement(t *testing.T) {
 
 			// Create delegation record
 			record := &DelegationRecord{
-				delegateFrom:   std.Address("g1user1234567890abcdefghijklmnopqrst"),
-				delegateTo:     std.Address("g1validator1234567890abcdefghijklmno"),
+				delegateFrom:   address("g1user1234567890abcdefghijklmnopqrst"),
+				delegateTo:     address("g1validator1234567890abcdefghijklmno"),
 				delegateAmount: 1000,
 				delegationType: DelegateType,
 				createdAt:      100,
@@ -290,7 +289,7 @@ func TestDelegationSnapshotsManagement(t *testing.T) {
 			newSnapshot := make(DelegationSnapshot)
 			newSnapshot["user1"] = &DelegationSnapshotItem{
 				delegationAmount: 1000,
-				delegatorAddress: std.Address("user1"),
+				delegatorAddress: address("user1"),
 			}
 
 			// When: Set delegation snapshots
@@ -302,7 +301,7 @@ func TestDelegationSnapshotsManagement(t *testing.T) {
 
 			if item, exists := retrievedSnapshot["user1"]; exists {
 				uassert.Equal(t, item.delegationAmount, int64(1000))
-				uassert.Equal(t, item.delegatorAddress, std.Address("user1"))
+				uassert.Equal(t, item.delegatorAddress, address("user1"))
 			} else {
 				t.Errorf("Expected snapshot item for user1 not found")
 			}

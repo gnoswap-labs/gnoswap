@@ -1,11 +1,11 @@
 package rbac
 
 import (
-	"std"
+	"strings"
 	"testing"
 
-	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/uassert"
+	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
 )
@@ -16,7 +16,7 @@ func TestAssertIsOwner(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		addr        std.Address
+		addr        address
 		shouldPanic bool
 		expectedMsg string
 	}{
@@ -49,7 +49,7 @@ func TestAssertIsOwner(t *testing.T) {
 					}
 					if tt.expectedMsg != "" {
 						panicStr := ufmt.Sprintf("%v", r)
-						if !contains(panicStr, tt.expectedMsg) {
+						if !strings.Contains(panicStr, tt.expectedMsg) {
 							t.Errorf("Expected panic message to contain '%s', got '%s'", tt.expectedMsg, panicStr)
 						}
 					}
@@ -68,7 +68,7 @@ func TestAssertIsOwner(t *testing.T) {
 func TestAssertIsPendingOwner(t *testing.T) {
 	tests := []struct {
 		name        string
-		addr        std.Address
+		addr        address
 		shouldPanic bool
 		expectedMsg string
 	}{
@@ -99,18 +99,18 @@ func TestAssertIsPendingOwner(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testing.SetRealm(std.NewUserRealm(ADMIN))
+			testing.SetRealm(testing.NewUserRealm(ADMIN))
 
 			// Reset manager for test
 			manager = prbac.NewRBACWithAddress(ADMIN)
 
 			// Set up pending owner
-			err := manager.TransferOwnership(DEV_OPS)
+			err := manager.TransferOwnershipBy(DEV_OPS, ADMIN)
 			if err != nil {
 				t.Fatalf("Failed to set up pending owner: %v", err)
 			}
 
-			testing.SetRealm(std.NewUserRealm(tt.addr))
+			testing.SetRealm(testing.NewUserRealm(tt.addr))
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
@@ -124,16 +124,16 @@ func TestAssertIsPendingOwner(t *testing.T) {
 }
 
 func TestAssertIsAdmin(t *testing.T) {
-	testing.SetRealm(std.NewUserRealm(ADMIN))
+	testing.SetRealm(testing.NewUserRealm(ADMIN))
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
 
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/rbac"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac"))
 	initRbac()
 
 	tests := []struct {
 		name        string
-		addr        std.Address
+		addr        address
 		shouldPanic bool
 		expectedMsg string
 	}{
@@ -158,7 +158,7 @@ func TestAssertIsAdmin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testing.SetRealm(std.NewUserRealm(tt.addr))
+			testing.SetRealm(testing.NewUserRealm(tt.addr))
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
@@ -177,14 +177,14 @@ func TestAssertIsAdminWithRoleUpdate(t *testing.T) {
 	initRbac()
 
 	// Change admin role to a different address
-	err := manager.UpdateRoleAddress(prbac.ROLE_ADMIN.String(), DEV_OPS)
+	err := manager.UpdateRoleAddress(prbac.ROLE_ADMIN.String(), 1, DEV_OPS)
 	if err != nil {
 		t.Fatalf("Failed to update admin role address: %v", err)
 	}
 
 	tests := []struct {
 		name        string
-		addr        std.Address
+		addr        address
 		shouldPanic bool
 		expectedMsg string
 	}{
@@ -203,7 +203,7 @@ func TestAssertIsAdminWithRoleUpdate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testing.SetRealm(std.NewUserRealm(tt.addr))
+			testing.SetRealm(testing.NewUserRealm(tt.addr))
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
@@ -219,7 +219,7 @@ func TestAssertIsAdminWithRoleUpdate(t *testing.T) {
 func TestAssertFunctionsIntegration(t *testing.T) {
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/rbac"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac"))
 	initRbac()
 
 	// Test complete ownership transfer workflow with assertions
@@ -238,11 +238,11 @@ func TestAssertFunctionsIntegration(t *testing.T) {
 	t.Run("Pending owner assertions after transfer", func(t *testing.T) {
 		// Transfer ownership
 		manager = prbac.NewRBACWithAddress(ADMIN)
-		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/rbac"))
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac"))
 		initRbac()
 
-		testing.SetRealm(std.NewUserRealm(ADMIN))
-		err := manager.TransferOwnership(DEV_OPS)
+		testing.SetRealm(testing.NewUserRealm(ADMIN))
+		err := manager.TransferOwnershipBy(DEV_OPS, ADMIN)
 		if err != nil {
 			t.Fatalf("Failed to transfer ownership: %v", err)
 		}
@@ -259,7 +259,7 @@ func TestAssertFunctionsIntegration(t *testing.T) {
 	t.Run("Admin assertions", func(t *testing.T) {
 		// Reset for clean admin test
 		manager = prbac.NewRBACWithAddress(ADMIN)
-		testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/rbac"))
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac"))
 		initRbac()
 
 		// ADMIN should pass admin assertion

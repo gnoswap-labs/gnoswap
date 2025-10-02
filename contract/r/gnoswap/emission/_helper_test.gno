@@ -1,11 +1,10 @@
 package emission
 
 import (
-	"std"
 	"strconv"
 	"testing"
 
-	"gno.land/p/demo/avl"
+	"gno.land/p/nt/avl"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
@@ -20,10 +19,10 @@ var (
 	devOpsAddr, _        = access.GetAddress(prbac.ROLE_DEVOPS.String())
 	communityPoolAddr, _ = access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
 
-	adminRealm     = std.NewUserRealm(adminAddr)
-	stakerRealm    = std.NewUserRealm(stakerAddr)
-	govRealm       = std.NewUserRealm(govAddr)
-	govStakerRealm = std.NewUserRealm(govStakerAddr)
+	adminRealm     = testing.NewUserRealm(adminAddr)
+	stakerRealm    = testing.NewUserRealm(stakerAddr)
+	govRealm       = testing.NewUserRealm(govAddr)
+	govStakerRealm = testing.NewUserRealm(govStakerAddr)
 )
 
 func resetObject(t *testing.T) {

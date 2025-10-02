@@ -1,11 +1,12 @@
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/access"
 
@@ -24,7 +25,7 @@ const (
 var (
 	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm        = std.NewUserRealm(positionAddr)
+	posRealm        = testing.NewUserRealm(positionAddr)
 )
 
 func main() {

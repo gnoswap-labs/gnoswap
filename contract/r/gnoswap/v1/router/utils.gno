@@ -6,7 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
+	"gno.land/r/gnoswap/v1/common"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -36,21 +37,37 @@ func assertIsNotPassedDeadline(deadline int64) {
 }
 
 // getDataForSinglePath extracts token addresses and fee from a single pool path.
+//
+// IMPORTANT: This function returns tokens in the order they appear in the route string,
+// which represents the swap direction (tokenIn:tokenOut:fee), NOT the canonical pool ordering.
 func getDataForSinglePath(poolPath string) (token0, token1 string, fee uint32) {
+	token0, token1, fee, err := getDataForSinglePathWithError(poolPath)
+	if err != nil {
+		panic(err)
+	}
+
+	return token0, token1, fee
+}
+
+// getDataForSinglePathWithError extracts token addresses and fee from a single pool path with error handling.
+func getDataForSinglePathWithError(poolPath string) (string, string, uint32, error) {
 	poolPathSplit := strings.Split(poolPath, ":")
 	if len(poolPathSplit) != 3 {
-		panic(addDetailToError(
+		return "", "", 0, makeErrorWithDetails(
 			errInvalidPoolPath,
 			ufmt.Sprintf("len(poolPathSplit) != 3, poolPath: %s", poolPath),
-		))
+		)
 	}
 
 	f, err := strconv.Atoi(poolPathSplit[2])
 	if err != nil {
-		panic(ufmt.Sprintf("invalid fee: %s", poolPathSplit[2]))
+		return "", "", 0, makeErrorWithDetails(
+			errInvalidPoolPath,
+			ufmt.Sprintf("invalid fee: %s", poolPathSplit[2]),
+		)
 	}
 
-	return poolPathSplit[0], poolPathSplit[1], uint32(f)
+	return poolPathSplit[0], poolPathSplit[1], uint32(f), nil
 }
 
 // getDataForMultiPath extracts token addresses and fee from a multi-hop path at specified index.
@@ -75,6 +92,117 @@ func i256MinMax(x, y *i256.Int) (min, max *u256.Uint) {
 		return x.Abs(), y.Abs()
 	}
 	return y.Abs(), x.Abs()
+}
+
+// validateRoutePaths validates multiple route paths to ensure they all start with inputToken and end with outputToken.
+// This function processes comma-separated route paths and validates each path individually.
+//
+// Validates:
+// - Each route path starts with the specified inputToken
+// - Each route path ends with the specified outputToken
+// - Route path format consistency (prevents swap-direction vs alphabetical pool ordering confusion)
+//
+// Parameters:
+// - routePathArrString: comma-separated route paths (e.g., "gno.land/r/demo/wugnot:gno.land/r/demo/usdc:500,gno.land/r/demo/wugnot:gno.land/r/demo/gns:3000*POOL*gno.land/r/demo/gns:gno.land/r/demo/usdc:500")
+// - inputToken: expected first token in all route paths
+// - outputToken: expected last token in all route paths
+//
+// Examples:
+// - Single route: "tokenA:tokenB:500" with inputToken="tokenA", outputToken="tokenB"
+// - Multi-route: "tokenA:tokenB:500,tokenA:tokenC:3000*POOL*tokenC:tokenB:500" with inputToken="tokenA", outputToken="tokenB"
+//
+// Returns error if any route path validation fails.
+func validateRoutePaths(routePathArrString, inputToken, outputToken string) error {
+	routePaths := strings.Split(routePathArrString, ",")
+
+	for _, routePath := range routePaths {
+		if err := validateRoutePath(routePath, inputToken, outputToken); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// validateRoutePath validates a single route path to ensure it starts with inputToken and ends with outputToken.
+// This function handles both single-hop and multi-hop route paths.
+//
+// Validates:
+// - Route path starts with the specified inputToken
+// - Route path ends with the specified outputToken
+// - Proper token ordering in swap direction (not alphabetical pool ordering)
+//
+// Route Path Formats:
+// - single-hop: "tokenA:tokenB:fee" (direct swap between two tokens)
+// - multi-hop: "tokenA:tokenB:fee1*POOL*tokenB:tokenC:fee2" (swap through intermediate tokens)
+//
+// Parameters:
+// - routePath: single route path string (e.g., "gno.land/r/demo/wugnot:gno.land/r/demo/usdc:500")
+// - inputToken: expected first token in the route path
+// - outputToken: expected last token in the route path
+//
+// Examples:
+// - single-hop: "tokenA:tokenB:500" with inputToken="tokenA", outputToken="tokenB"
+// - multi-hop: "tokenA:tokenB:3000*POOL*tokenB:tokenC:500" with inputToken="tokenA", outputToken="tokenC"
+//
+// Returns error with specific details if validation fails.
+func validateRoutePath(routePath, inputToken, outputToken string) error {
+	inputWrappedPath := inputToken
+	outputWrappedPath := outputToken
+
+	if common.IsGNOTNativePath(inputToken) {
+		inputWrappedPath = common.WUGNOT_PATH
+	}
+
+	if common.IsGNOTNativePath(outputToken) {
+		outputWrappedPath = common.WUGNOT_PATH
+	}
+
+	// Extract first and last tokens from the routePath
+	var (
+		firstToken, lastToken string
+		err                   error
+	)
+
+	// multi-hop routePath
+	if strings.Contains(routePath, POOL_SEPARATOR) {
+		pools := strings.Split(routePath, POOL_SEPARATOR)
+
+		// Get first token from first pool
+		firstPool := pools[0]
+		firstToken, _, _, err = getDataForSinglePathWithError(firstPool)
+		if err != nil {
+			return err
+		}
+
+		// Get last token from last pool
+		lastPool := pools[len(pools)-1]
+		_, lastToken, _, err = getDataForSinglePathWithError(lastPool)
+		if err != nil {
+			return err
+		}
+	} else {
+		// single-hop routePath
+		firstToken, lastToken, _, err = getDataForSinglePathWithError(routePath)
+		if err != nil {
+			return err
+		}
+	}
+
+	if firstToken == "" || lastToken == "" {
+		return makeErrorWithDetails(errInvalidRoutePath, ufmt.Sprintf("firstToken: %s, lastToken: %s", firstToken, lastToken))
+	}
+
+	// Validate consistency
+	if firstToken != inputWrappedPath {
+		return makeErrorWithDetails(errInvalidRouteFirstToken, ufmt.Sprintf("firstToken: %s, inputToken: %s", firstToken, inputWrappedPath))
+	}
+
+	if lastToken != outputWrappedPath {
+		return makeErrorWithDetails(errInvalidRouteLastToken, ufmt.Sprintf("lastToken: %s, outputToken: %s", lastToken, outputWrappedPath))
+	}
+
+	return nil
 }
 
 // checkDeadline verifies that the transaction deadline has not passed.
@@ -164,4 +292,53 @@ func safeConvertToInt64(value *u256.Uint) int64 {
 		))
 	}
 	return int64(res)
+}
+
+// BuildSingleHopPath creates a single-hop route path string.
+// Format: "tokenA:tokenB:fee"
+//
+// Parameters:
+// - tokenA: input token address
+// - tokenB: output token address
+// - fee: pool fee (e.g., 500, 3000, 10000)
+//
+// Returns:
+// - string: formatted single-hop route path
+//
+// Example:
+//   - BuildSingleHopPath("gno.land/r/demo/wugnot", "gno.land/r/demo/usdc", 500)
+//     returns "gno.land/r/demo/wugnot:gno.land/r/demo/usdc:500"
+func BuildSingleHopRoutePath(tokenA, tokenB string, fee uint32) string {
+	if tokenA == "" || tokenB == "" {
+		panic("token addresses cannot be empty")
+	}
+	if tokenA == tokenB {
+		panic("tokenA and tokenB cannot be the same")
+	}
+
+	return ufmt.Sprintf("%s:%s:%s", tokenA, tokenB, formatUint(fee))
+}
+
+// BuildMultiHopPath creates a multi-hop route path string by connecting multiple single hops.
+// Format: "tokenA:tokenB:fee1*POOL*tokenB:tokenC:fee2*POOL*tokenC:tokenD:fee3"
+//
+// Parameters:
+// - hops: slice of single-hop path strings
+//
+// Returns:
+// - string: formatted multi-hop route path
+//
+// Example:
+//   - hops := []string{"tokenA:tokenB:500", "tokenB:tokenC:3000"}
+//     returns "tokenA:tokenB:500*POOL*tokenB:tokenC:3000"
+func BuildMultiHopRoutePath(hops ...string) string {
+	if len(hops) < 1 {
+		panic("multi-hop path requires at least 2 hops")
+	}
+
+	if len(hops) > 3 {
+		panic("multi-hop path supports maximum 3 hops")
+	}
+
+	return strings.Join(hops, POOL_SEPARATOR)
 }

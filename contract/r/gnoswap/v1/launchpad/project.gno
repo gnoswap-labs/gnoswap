@@ -2,9 +2,8 @@ package launchpad
 
 import (
 	"errors"
-	"std"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 )
 
 // Project represents a launchpad project.
@@ -27,7 +26,7 @@ type Project struct {
 	name          string
 	tokenPath     string
 	depositAmount int64
-	recipient     std.Address                  // string
+	recipient     address                      // string
 	conditions    map[string]*ProjectCondition // tokenPath -> Condition
 	tiers         map[int64]*ProjectTier
 	tiersRatios   map[int64]int64
@@ -51,7 +50,7 @@ func (p *Project) DepositAmount() int64 {
 	return p.depositAmount
 }
 
-func (p *Project) Recipient() std.Address {
+func (p *Project) Recipient() address {
 	return p.recipient
 }
 
@@ -83,7 +82,7 @@ func (p *Project) IsEnded(currentTime int64) bool {
 	return p.standardTier().isEnded(currentTime)
 }
 
-func (p *Project) IsOwner(caller std.Address) bool {
+func (p *Project) IsOwner(caller address) bool {
 	return p.recipient == caller
 }
 
@@ -97,7 +96,7 @@ func (p *Project) RemainingAmount() int64 {
 	return remainingAmount
 }
 
-func (p *Project) CheckConditions(caller std.Address, balanceOfFunc func(tokenPath string, caller std.Address) int64) error {
+func (p *Project) CheckConditions(caller address, balanceOfFunc func(tokenPath string, caller address) int64) error {
 	conditions := p.getConditions()
 	if conditions == nil {
 		return makeErrorWithDetails(errInvalidData, "conditions is nil")
@@ -224,7 +223,7 @@ func NewProject(
 	name string,
 	tokenPath string,
 	depositAmount int64,
-	recipient std.Address,
+	recipient address,
 	createdHeight int64,
 	createdAt int64,
 ) *Project {

@@ -3,8 +3,8 @@ package governance
 import (
 	"testing"
 
-	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/uassert"
+	"gno.land/p/nt/ufmt"
 )
 
 // TestRegistryHandler_Execute tests the execution functionality of registry handler

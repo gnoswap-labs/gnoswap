@@ -1,7 +1,7 @@
 package emission
 
 import (
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 )
 
 // assertValidDistributionTargets panics if any of the four distribution targets is invalid

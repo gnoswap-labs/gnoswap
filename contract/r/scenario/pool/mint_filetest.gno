@@ -1,10 +1,11 @@
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
@@ -32,9 +33,9 @@ const (
 // Variables for test addresses and realms
 var (
 	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm      = std.NewUserRealm(adminAddr)
+	adminRealm      = testing.NewUserRealm(adminAddr)
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm        = std.NewUserRealm(positionAddr)
+	posRealm        = testing.NewUserRealm(positionAddr)
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 )
 
@@ -80,7 +81,6 @@ func main() {
 		barPath,
 		fooPath,
 		fee500,
-		positionAddr,
 		1000,
 		2000,
 		test_liquidityExpectStr,
@@ -102,7 +102,6 @@ func main() {
 		barPath,
 		fooPath,
 		fee500,
-		positionAddr,
 		-2000,
 		-1000,
 		test_liquidityExpectStr,

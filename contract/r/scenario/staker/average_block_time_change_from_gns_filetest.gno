@@ -5,17 +5,18 @@
 package main
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
@@ -35,25 +36,25 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
-	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	gnsPath    = "gno.land/r/gnoswap/gns"
-	wugnotPath = "gno.land/r/demo/wugnot"
+	wugnotPath = "gno.land/r/gnoland/wugnot"
 
 	fee3000 uint32 = 3000
 
 	maxTimeout int64 = 9999999999
 	maxInt64   int64 = 9223372036854775807
 
-	poolPath = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"
+	poolPath = "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
 )
 
 func main() {
@@ -86,12 +87,12 @@ func initAccountAndEmission() {
 	testing.SetRealm(adminRealm)
 	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100_000_000_000_000}})
 
 	testing.SetRealm(adminRealm)
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 50_000_000_000_000}})
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_.SendCoins(adminAddr, wugnotAddr, chain.Coins{{"ugnot", 50_000_000_000_000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 50_000_000_000_000}})
 
 	println("[INFO] wrap gnot to wugnot")
 	wugnot.Deposit(cross)
@@ -111,7 +112,7 @@ func createPool() {
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFee(cross, 0)
 
-	println("[INFO] create pool gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000 at tick 0")
+	println("[INFO] create pool gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000 at tick 0")
 	pl.CreatePool(
 		cross,
 		wugnotPath,
@@ -206,7 +207,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 2. Create pool
 // [INFO] set unstaking fee to 0
 // [INFO] set pool creation fee to 0
-// [INFO] create pool gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000 at tick 0
+// [INFO] create pool gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000 at tick 0
 //
 // [SCENARIO] 3. Mint wugnot gns position 01
 // [INFO] mint in-range position (tick range: -60 ~ 60, requested amount: 50, 50)

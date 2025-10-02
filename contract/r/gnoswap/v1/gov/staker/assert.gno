@@ -1,6 +1,6 @@
 package staker
 
-import "gno.land/p/demo/ufmt"
+import "gno.land/p/nt/ufmt"
 
 // assertIsValidDelegateAmount validates that the delegation amount meets system requirements.
 // This function checks minimum amount and multiple requirements.

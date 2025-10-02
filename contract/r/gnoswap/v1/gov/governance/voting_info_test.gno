@@ -1,10 +1,9 @@
 package governance
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 )
 
 // TestVotingInfo_NewVotingInfo tests the creation of new VotingInfo instances
@@ -12,16 +11,16 @@ func TestVotingInfo_NewVotingInfo(t *testing.T) {
 	tests := []struct {
 		name               string
 		availableWeight    int64
-		voterAddress       std.Address
+		voterAddress       address
 		expectedVotingInfo *VotingInfo
 	}{
 		{
 			name:            "Create new voting info with positive weight",
 			availableWeight: 100,
-			voterAddress:    std.Address("g1voter"),
+			voterAddress:    address("g1voter"),
 			expectedVotingInfo: &VotingInfo{
 				availableVoteWeight: 100,
-				voterAddress:        std.Address("g1voter"),
+				voterAddress:        address("g1voter"),
 				votedWeight:         0,
 				votedHeight:         0,
 				votedAt:             0,
@@ -32,10 +31,10 @@ func TestVotingInfo_NewVotingInfo(t *testing.T) {
 		{
 			name:            "Create new voting info with zero weight",
 			availableWeight: 0,
-			voterAddress:    std.Address("g1voter2"),
+			voterAddress:    address("g1voter2"),
 			expectedVotingInfo: &VotingInfo{
 				availableVoteWeight: 0,
-				voterAddress:        std.Address("g1voter2"),
+				voterAddress:        address("g1voter2"),
 				votedWeight:         0,
 				votedHeight:         0,
 				votedAt:             0,
@@ -79,7 +78,7 @@ func TestVotingInfo_VoteExecution(t *testing.T) {
 			name: "Vote yes successfully",
 			votingInfo: &VotingInfo{
 				availableVoteWeight: 100,
-				voterAddress:        std.Address("g1voter"),
+				voterAddress:        address("g1voter"),
 			},
 			voteYes:         true,
 			weight:          50,
@@ -93,7 +92,7 @@ func TestVotingInfo_VoteExecution(t *testing.T) {
 			name: "Vote no successfully",
 			votingInfo: &VotingInfo{
 				availableVoteWeight: 100,
-				voterAddress:        std.Address("g1voter"),
+				voterAddress:        address("g1voter"),
 			},
 			voteYes:         false,
 			weight:          50,
@@ -107,7 +106,7 @@ func TestVotingInfo_VoteExecution(t *testing.T) {
 			name: "Cannot vote twice",
 			votingInfo: &VotingInfo{
 				availableVoteWeight: 100,
-				voterAddress:        std.Address("g1voter"),
+				voterAddress:        address("g1voter"),
 				voted:               true,
 			},
 			voteYes:         true,

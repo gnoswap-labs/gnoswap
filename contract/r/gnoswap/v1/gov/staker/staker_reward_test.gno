@@ -1,13 +1,14 @@
 package staker
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"testing"
 
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
-	"gno.land/r/demo/wugnot"
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
 )
 
@@ -15,7 +16,7 @@ import (
 func TestStakerReward_CollectReward(t *testing.T) {
 	tests := []struct {
 		name             string
-		caller           std.Address
+		caller           address
 		expectPanic      bool
 		expectedError    string
 		setupRewards     func()
@@ -103,7 +104,7 @@ func TestStakerReward_CollectReward(t *testing.T) {
 			defer tt.cleanupMocks()
 
 			// Setup realm context for testing
-			testing.SetRealm(std.NewUserRealm(tt.caller))
+			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			// When & Then: Execute and verify
 			if tt.expectPanic {
@@ -121,8 +122,8 @@ func TestStakerReward_CollectReward(t *testing.T) {
 func TestStakerReward_CollectRewardFromLaunchPad(t *testing.T) {
 	tests := []struct {
 		name           string
-		caller         std.Address
-		to             std.Address
+		caller         address
+		to             address
 		expectPanic    bool
 		expectedError  string
 		setupLaunchpad func()
@@ -177,7 +178,7 @@ func TestStakerReward_CollectRewardFromLaunchPad(t *testing.T) {
 			defer tt.cleanupMocks()
 
 			// Setup realm context for testing
-			testing.SetRealm(std.NewUserRealm(tt.caller))
+			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			// When & Then: Execute and verify
 			if tt.expectPanic {
@@ -196,8 +197,8 @@ func TestStakerReward_CollectRewardFromLaunchPad(t *testing.T) {
 func TestStakerReward_SetAmountByProjectWallet(t *testing.T) {
 	tests := []struct {
 		name          string
-		caller        std.Address
-		addr          std.Address
+		caller        address
+		addr          address
 		amount        int64
 		add           bool
 		expectPanic   bool
@@ -272,7 +273,7 @@ func TestStakerReward_SetAmountByProjectWallet(t *testing.T) {
 			defer tt.cleanupMocks()
 
 			// Setup realm context for testing
-			testing.SetRealm(std.NewUserRealm(tt.caller))
+			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			// When & Then: Execute and verify
 			if tt.expectPanic {
@@ -292,8 +293,8 @@ func TestStakerReward_transferToken(t *testing.T) {
 	tests := []struct {
 		name         string
 		tokenPath    string
-		from         std.Address
-		to           std.Address
+		from         address
+		to           address
 		amount       int64
 		expectError  bool
 		expectedMsg  string
@@ -314,7 +315,7 @@ func TestStakerReward_transferToken(t *testing.T) {
 			name:         "Invalid to address should error",
 			tokenPath:    GNS_PATH,
 			from:         govStakerAddr,
-			to:           std.Address(""),
+			to:           address(""),
 			amount:       100,
 			expectError:  true,
 			expectedMsg:  "[GNOSWAP-GOV_STAKER-008] invalid address",
@@ -361,7 +362,7 @@ func TestStakerReward_transferToken(t *testing.T) {
 			tt.setupBalance()
 
 			// When: Transfer token
-			testing.SetRealm(std.NewUserRealm(tt.from))
+			testing.SetRealm(testing.NewUserRealm(tt.from))
 			err := transferToken(tt.tokenPath, tt.from, tt.to, tt.amount)
 
 			// Then: Check result
@@ -379,7 +380,7 @@ func TestStakerReward_transferToken(t *testing.T) {
 func TestStakerReward_LaunchpadExclusionAndRewards(t *testing.T) {
 	tests := []struct {
 		name                 string
-		caller               std.Address
+		caller               address
 		regularXgns          int64
 		launchpadXgns        int64
 		expectVotingWeight   int64
@@ -447,7 +448,7 @@ func TestStakerReward_LaunchpadExclusionAndRewards(t *testing.T) {
 				setupStakerRewardTestLaunchpadRewards(t, tt.caller, tt.launchpadXgns)
 			}
 
-			testing.SetRealm(std.NewUserRealm(tt.caller))
+			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			// When: Collect rewards
 			if tt.expectRewardEligible {
@@ -471,8 +472,8 @@ func TestStakerReward_TokenTransferScenarios(t *testing.T) {
 	tests := []struct {
 		name          string
 		tokenPath     string
-		from          std.Address
-		to            std.Address
+		from          address
+		to            address
 		amount        int64
 		fromBalance   int64
 		expectedError string
@@ -511,7 +512,7 @@ func TestStakerReward_TokenTransferScenarios(t *testing.T) {
 			name:          "fail - invalid to address",
 			tokenPath:     GNS_PATH,
 			from:          admin,
-			to:            std.Address(""),
+			to:            address(""),
 			amount:        100_000_000,
 			fromBalance:   500_000_000,
 			expectedError: "[GNOSWAP-GOV_STAKER-008] invalid address",
@@ -720,24 +721,24 @@ func setupStakerRewardStakerTokenBalance(t *testing.T) {
 
 	// Transfer WUGNOT to gov staker
 	gnotAmount := amount * 10
-	newCoins := std.Coins{{"ugnot", gnotAmount}}
+	newCoins := chain.Coins{{"ugnot", gnotAmount}}
 	testing.IssueCoins(adminRealm.Address(), newCoins)
 	testing.SetOriginSend(newCoins)
 
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(adminRealm.Address(), WUGNOT_ADDR, newCoins)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_.SendCoins(adminRealm.Address(), WUGNOT_ADDR, newCoins)
 	wugnot.Deposit(cross)
 
 	wugnot.Transfer(cross, govStakerAddr, amount)
 }
 
-func setupStakerRewardTestEmissionRewards(t *testing.T, addr std.Address, amount int64, emissionReward int64, currentHeight int64) {
+func setupStakerRewardTestEmissionRewards(t *testing.T, addr address, amount int64, emissionReward int64, currentHeight int64) {
 	// Setup emission rewards for testing
 	emissionRewardManager.updateAccumulatedRewardX128PerStake(emissionReward, currentHeight)
 	emissionRewardManager.addStake(addr.String(), amount, currentHeight)
 }
 
-func setupStakerRewardTestProtocolFeeRewards(t *testing.T, addr std.Address, amount int64, protocolFeeReward map[string]int64, currentHeight int64) {
+func setupStakerRewardTestProtocolFeeRewards(t *testing.T, addr address, amount int64, protocolFeeReward map[string]int64, currentHeight int64) {
 	// Setup protocol fee rewards for testing
 	protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(protocolFeeReward, currentHeight)
 	protocolFeeRewardManager.addStake(addr.String(), amount, currentHeight)
@@ -753,23 +754,23 @@ func setupStakerRewardTestAccumulateProtocolFeeRewards(t *testing.T, distributed
 	protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentHeight)
 }
 
-func setupStakerRewardTestLaunchpadDeposit(t *testing.T, addr std.Address, amount int64) {
+func setupStakerRewardTestLaunchpadDeposit(t *testing.T, addr address, amount int64) {
 	// Setup launchpad project deposit
 	launchpadRewardID := makeLaunchpadRewardID(addr.String())
 	launchpadProjectDeposits.Set(launchpadRewardID, amount)
 }
 
-func setupStakerRewardTestLaunchpadRewards(t *testing.T, addr std.Address, amount int64) {
+func setupStakerRewardTestLaunchpadRewards(t *testing.T, addr address, amount int64) {
 	// Setup launchpad rewards
 	addStakeFromLaunchpad(addr.String(), amount, 100)
 }
 
-func setupStakerRewardTestLaunchpadStake(t *testing.T, addr std.Address, amount int64) {
+func setupStakerRewardTestLaunchpadStake(t *testing.T, addr address, amount int64) {
 	// Setup launchpad stake for removal test
 	addStakeFromLaunchpad(addr.String(), amount, 100)
 }
 
-func setupStakerRewardTestGNSBalance(t *testing.T, user std.Address, amount int64) {
+func setupStakerRewardTestGNSBalance(t *testing.T, user address, amount int64) {
 	testing.SetRealm(adminRealm)
 
 	gns.Transfer(cross, user, amount)

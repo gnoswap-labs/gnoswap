@@ -1,7 +1,6 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
@@ -21,7 +20,7 @@ import (
 
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
@@ -31,7 +30,7 @@ var (
 	quxPath = "gno.land/r/onbloc/qux"
 	gnsPath = "gno.land/r/gnoswap/gns"
 
-	wrappedWugnot = "gno.land/r/demo/wugnot"
+	wrappedWugnot = "gno.land/r/gnoland/wugnot"
 
 	max_timeout int64 = 9999999999
 	max_approve int64 = 9223372036854775806
@@ -98,7 +97,7 @@ func testDrySwapRouteBarQuxExactIn() {
 		"1",
 	)
 
-	println("[EXPECTED] dry swap result:", dryResult, "expected: 7346")
+	println("[EXPECTED] dry swap result:", dryResult, "expected: 7335")
 	println()
 }
 
@@ -107,7 +106,7 @@ func testSwapRouteBarQuxExactIn() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for swap")
-	bar.Approve(cross, poolAddr, 10000)
+	bar.Approve(cross, routerAddr, 10000)
 	qux.Approve(cross, routerAddr, 10000)
 
 	println("[INFO] Executing ExactIn swap with 2 routes (1000 bar → baz → qux)")
@@ -177,7 +176,7 @@ func testwapRouteQuxBarExactOut() {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] Approving tokens for swap")
-	qux.Approve(cross, poolAddr, 10000)
+	qux.Approve(cross, routerAddr, 10000)
 	bar.Approve(cross, routerAddr, 10000)
 
 	println("[INFO] Executing ExactOut swap with 2 routes (qux → baz → 1000 bar)")
@@ -193,8 +192,8 @@ func testwapRouteQuxBarExactOut() {
 		"", // referrer
 	)
 
-	println("[EXPECTED] amountIn:", amountIn, "expected: 7365")
-	println("[EXPECTED] amountOut:", amountOut, "expected: -999")
+	println("[EXPECTED] amountIn:", amountIn, "expected: 7373")
+	println("[EXPECTED] amountOut:", amountOut, "expected: -1000")
 	println()
 }
 
@@ -213,7 +212,7 @@ func testwapRouteQuxBarExactOut() {
 //
 // [SCENARIO] Given: Dry swap route bar to qux exact in preparation
 // [INFO] Executing dry swap route with 2 routes (bar → baz → qux)
-// [EXPECTED] dry swap result: 7346 expected: 7346
+// [EXPECTED] dry swap result: 7335 expected: 7335
 //
 // [SCENARIO] Given: Swap route bar to qux exact in preparation
 // [INFO] Approving tokens for swap
@@ -234,7 +233,7 @@ func testwapRouteQuxBarExactOut() {
 // [SCENARIO] Given: Swap route qux to bar exact out preparation
 // [INFO] Approving tokens for swap
 // [INFO] Executing ExactOut swap with 2 routes (qux → baz → 1000 bar)
-// [EXPECTED] amountIn: 7365 expected: 7365
-// [EXPECTED] amountOut: -999 expected: -999
+// [EXPECTED] amountIn: 7373 expected: 7373
+// [EXPECTED] amountOut: -1000 expected: -1000
 //
 // [INFO] Scenario completed

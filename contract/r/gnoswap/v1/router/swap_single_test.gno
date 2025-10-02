@@ -1,11 +1,10 @@
 package router
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/uassert"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
@@ -73,7 +72,7 @@ func TestSingleSwap(t *testing.T) {
 				return singleSwap(&tt.params)
 			}
 
-			user1Realm := std.NewUserRealm(user1Addr)
+			user1Realm := testing.NewUserRealm(user1Addr)
 			testing.SetRealm(user1Realm)
 			common.Approve(cross, tt.params.tokenIn, poolAddr, maxApprove)
 			common.Approve(cross, tt.params.tokenOut, poolAddr, maxApprove)

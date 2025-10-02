@@ -1,12 +1,12 @@
 package launchpad
 
 import (
-	"std"
+	"chain/runtime"
 	"strings"
 	"time"
 
-	"gno.land/p/demo/json"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
+	"gno.land/p/onbloc/json"
 )
 
 // projectStatsBuilder adds ProjectStats fields to JSON
@@ -83,7 +83,7 @@ func depositBuilder(b *json.NodeBuilder, deposit *Deposit) *json.NodeBuilder {
 
 // MetaBuilder adds metadata fields to JSON
 func metaBuilder() *json.NodeBuilder {
-	height := std.ChainHeight()
+	height := runtime.ChainHeight()
 	now := time.Now().Unix()
 
 	return json.Builder().

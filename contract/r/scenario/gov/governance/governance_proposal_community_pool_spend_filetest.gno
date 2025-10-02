@@ -5,12 +5,12 @@
 package main
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
@@ -40,7 +40,7 @@ func main() {
 
 	println("[SCENARIO] 2. Skip vote weight smoothing duration for create proposal")
 	testing.SkipHeights(int64(config.VotingWeightSmoothingDuration) / currentBlockTime)
-	println("[INFO] current height:", std.ChainHeight())
+	println("[INFO] current height:", runtime.ChainHeight())
 	println()
 
 	println("[SCENARIO] 3. Propose Community Pool Spend")
@@ -49,7 +49,7 @@ func main() {
 
 	println("[SCENARIO] 4. Skip voting start delay for ready to vote")
 	testing.SkipHeights(int64(config.VotingStartDelay) / currentBlockTime)
-	println("[INFO] current height:", std.ChainHeight())
+	println("[INFO] current height:", runtime.ChainHeight())
 	println()
 
 	// Vote for the proposal
@@ -60,7 +60,7 @@ func main() {
 	println("[SCENARIO] 5. Skip voting period and execution delay for ready to execute")
 	testing.SkipHeights(int64(config.VotingPeriod) / currentBlockTime)
 	testing.SkipHeights(int64(config.ExecutionDelay) / currentBlockTime)
-	println("[INFO] current height:", std.ChainHeight())
+	println("[INFO] current height:", runtime.ChainHeight())
 	println()
 
 	println("[SCENARIO] 6. Execute Proposal")
@@ -70,11 +70,11 @@ func main() {
 
 func delegateGnsToAdmin() {
 	delegatedAmount := int64(1_000_000_000)
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
-	govStakerAddr := std.Address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
+	govStakerAddr := address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
 
 	gns.Approve(cross, govStakerAddr, delegatedAmount)
 	gs.Delegate(cross, adminAddr, int64(delegatedAmount), "")
@@ -83,14 +83,14 @@ func delegateGnsToAdmin() {
 }
 
 func proposeCommunityPoolSpend() {
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	proposalID := governance.ProposeCommunityPoolSpend(cross, "test_title", "test_description", to, tokenPath, 100)
 	println("[INFO] created proposal ID:", proposalID)
 }
 
 func vote(proposalID int64, yea bool) {
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	prevYeaNum := governance.GetYeaByProposalId(proposalID)
 	prevNayNum := governance.GetNayByProposalId(proposalID)
@@ -104,7 +104,7 @@ func vote(proposalID int64, yea bool) {
 }
 
 func execute(proposalID int64) {
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	// get receiver's balance before executing
 	prevReceiverBalance := gns.BalanceOf(to)

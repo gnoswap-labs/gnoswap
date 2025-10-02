@@ -1,11 +1,11 @@
 package referral
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
@@ -13,15 +13,15 @@ import (
 
 var (
 	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
-	routerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/router")
-	userRealm     = std.NewCodeRealm("gno.land/r/demo/users")
+	routerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/v1/router")
+	userRealm     = testing.NewCodeRealm("gno.land/r/demo/users")
 )
 
 func TestGlobalKeeper_TryRegister(t *testing.T) {
 	tests := []struct {
 		name                 string
-		callerRealm          std.Realm
-		addr                 std.Address
+		callerRealm          runtime.Realm
+		addr                 address
 		referral             string
 		expectedResult       bool
 		expectedHasPanic     bool
@@ -136,10 +136,10 @@ func TestGlobalKeeper_GetReferral(t *testing.T) {
 			cleanup()
 
 			// given
-			testing.SetRealm(std.NewUserRealm(routerAddr))
+			testing.SetRealm(testing.NewUserRealm(routerAddr))
 
 			if tc.setupReferral != "" {
-				setupExistingReferral(std.Address(tc.addr), std.Address(tc.setupReferral))
+				setupExistingReferral(address(tc.addr), address(tc.setupReferral))
 			}
 
 			// when
@@ -183,10 +183,10 @@ func TestGlobalKeeper_HasReferral(t *testing.T) {
 			cleanup()
 
 			// given
-			testing.SetRealm(std.NewUserRealm(routerAddr))
+			testing.SetRealm(testing.NewUserRealm(routerAddr))
 
 			if tc.setupReferral != "" {
-				setupExistingReferral(std.Address(tc.addr), std.Address(tc.setupReferral))
+				setupExistingReferral(address(tc.addr), address(tc.setupReferral))
 			}
 
 			// when
@@ -231,10 +231,10 @@ func TestGlobalKeeper_IsEmpty(t *testing.T) {
 			cleanup()
 
 			// given
-			testing.SetRealm(std.NewUserRealm(routerAddr))
+			testing.SetRealm(testing.NewUserRealm(routerAddr))
 
 			for addr, referral := range tc.setupReferrals {
-				setupExistingReferral(std.Address(addr), std.Address(referral))
+				setupExistingReferral(address(addr), address(referral))
 			}
 
 			// when
@@ -280,6 +280,6 @@ func cleanup() {
 	gReferralKeeper = NewKeeper()
 }
 
-func setupExistingReferral(addr, referralAddr std.Address) {
+func setupExistingReferral(addr, referralAddr address) {
 	TryRegister(cross, addr, referralAddr.String())
 }

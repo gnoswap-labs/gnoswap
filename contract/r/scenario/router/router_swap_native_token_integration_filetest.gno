@@ -6,13 +6,14 @@
 package main
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
@@ -24,13 +25,13 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/onbloc/usdc"
 )
 
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	poolAddr, _        = access.GetAddress(prabc.ROLE_POOL.String())
 	positionAddr, _    = access.GetAddress(prabc.ROLE_POSITION.String())
@@ -38,9 +39,9 @@ var (
 	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 
 	userAddr  = testutils.TestAddress("user")
-	userRealm = std.NewUserRealm(userAddr)
+	userRealm = testing.NewUserRealm(userAddr)
 
-	wugnotPath = "gno.land/r/demo/wugnot"
+	wugnotPath = "gno.land/r/gnoland/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/gns"
 	usdcPath   = "gno.land/r/onbloc/usdc"
 
@@ -87,8 +88,8 @@ func setupPoolsAndLiquidity() {
 	pl.SetPoolCreationFee(cross, 0)
 
 	// Issue tokens to admin for pool creation
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 1000000000}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 1000000000}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 1000000000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 1000000000}})
 	wugnot.Deposit(cross)
 
 	// Create pools
@@ -102,22 +103,24 @@ func setupPoolsAndLiquidity() {
 	// WUGNOT/GNS pool
 	wugnot.Approve(cross, poolAddr, 100000000)
 	gns.Approve(cross, poolAddr, 100000000)
+	testing.SetOriginSend(chain.Coins{})
 	pn.Mint(cross, gnsPath, wugnotPath, fee500, int32(-6960), int32(6960), "100000000", "100000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	// GNS/USDC pool
 	gns.Approve(cross, poolAddr, 100000000)
 	usdc.Approve(cross, poolAddr, 100000000)
+	testing.SetOriginSend(chain.Coins{})
 	pn.Mint(cross, gnsPath, usdcPath, fee500, int32(-6960), int32(6960), "100000000", "100000000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	// Transfer tokens to user
-	testing.IssueCoins(userAddr, std.Coins{{"ugnot", 10000000}})
+	testing.IssueCoins(userAddr, chain.Coins{{"ugnot", 10000000}})
 	gns.Transfer(cross, userAddr, 10000000)
 	usdc.Transfer(cross, userAddr, 10000000)
 
 	// Verify user balances
 	testing.SetRealm(userRealm)
-	banker := std.NewBanker(std.BankerTypeReadonly)
-	userGnotBalance := banker.GetCoins(userAddr).AmountOf("ugnot")
+	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
+	userGnotBalance := banker_.GetCoins(userAddr).AmountOf("ugnot")
 	userGnsBalance := gns.BalanceOf(userAddr)
 	userUsdcBalance := usdc.BalanceOf(userAddr)
 
@@ -131,30 +134,30 @@ func testExactInGnotToGns() {
 	println("[INFO] Testing ExactIn swap: 1,000,000 GNOT → GNS")
 	testing.SetRealm(userRealm)
 
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(userAddr, routerAddr, std.Coins{{"ugnot", 1000000}})
-	prevGnotBalance := banker.GetCoins(userAddr).AmountOf("ugnot")
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_.SendCoins(userAddr, routerAddr, chain.Coins{{"ugnot", 1000000}})
+	prevGnotBalance := banker_.GetCoins(userAddr).AmountOf("ugnot")
 	prevGnsBalance := gns.BalanceOf(userAddr)
 
 	// Approve router fee payment
-	gns.Approve(cross, poolAddr, max_approve)
-	wugnot.Approve(cross, poolAddr, max_approve)
+	gns.Approve(cross, routerAddr, max_approve)
+	wugnot.Approve(cross, routerAddr, max_approve)
 
 	// Execute ExactIn swap with GNOT
-	testing.SetOriginSend(std.Coins{{"ugnot", 1000000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 1000000}})
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
 		gnotPath,  // input token (GNOT)
 		gnsPath,   // output token
 		"1000000", // exact amount in
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500", // route
+		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500", // route
 		"100", // quote
 		"0",   // min amount out
 		time.Now().Add(time.Hour).Unix(),
 		"", // referrer
 	)
 
-	afterGnotBalance := banker.GetCoins(userAddr).AmountOf("ugnot")
+	afterGnotBalance := banker_.GetCoins(userAddr).AmountOf("ugnot")
 	afterGnsBalance := gns.BalanceOf(userAddr)
 
 	// Calculate fees
@@ -176,7 +179,7 @@ func testExactInGnotToGns() {
 	println("[EXPECTED] Router fee charged correctly")
 
 	// Verify no intermediate balances
-	routerGnotBalance := banker.GetCoins(routerAddr).AmountOf("ugnot")
+	routerGnotBalance := banker_.GetCoins(routerAddr).AmountOf("ugnot")
 	routerWugnotBalance := wugnot.BalanceOf(routerAddr)
 	routerGnsBalance := gns.BalanceOf(routerAddr)
 
@@ -187,28 +190,29 @@ func testExactOutGnsToGnot() {
 	println("[INFO] Testing ExactOut swap: GNS → 1,000,000 GNOT")
 	testing.SetRealm(userRealm)
 
-	banker := std.NewBanker(std.BankerTypeReadonly)
-	prevGnotBalance := banker.GetCoins(userAddr).AmountOf("ugnot")
+	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
+	prevGnotBalance := banker_.GetCoins(userAddr).AmountOf("ugnot")
 	prevGnsBalance := gns.BalanceOf(userAddr)
 
 	// Approve GNS for swap
-	gns.Approve(cross, poolAddr, max_approve)
+	gns.Approve(cross, routerAddr, max_approve)
 	gns.Approve(cross, routerAddr, max_approve)
 
 	// Execute ExactOut swap requesting GNOT
+	testing.SetOriginSend(chain.Coins{})
 	amountIn, amountOut := router.ExactOutSwapRoute(
 		cross,
 		gnsPath,   // input token
 		gnotPath,  // output token (GNOT)
 		"1000000", // exact amount out (GNOT)
-		"gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500", // route
+		"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500", // route
 		"100",      // quote
 		"10000000", // max amount in
 		time.Now().Add(time.Hour).Unix(),
 		"", // referrer
 	)
 
-	afterGnotBalance := banker.GetCoins(userAddr).AmountOf("ugnot")
+	afterGnotBalance := banker_.GetCoins(userAddr).AmountOf("ugnot")
 	afterGnsBalance := gns.BalanceOf(userAddr)
 
 	// Calculate fees
@@ -235,30 +239,30 @@ func testMultiHopGnotToUsdc() {
 	println("[INFO] Testing Multi-hop: 1,000,000 GNOT → GNS → USDC")
 	testing.SetRealm(userRealm)
 
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(userAddr, routerAddr, std.Coins{{"ugnot", 1000000}})
-	prevGnotBalance := banker.GetCoins(userAddr).AmountOf("ugnot")
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_.SendCoins(userAddr, routerAddr, chain.Coins{{"ugnot", 1000000}})
+	prevGnotBalance := banker_.GetCoins(userAddr).AmountOf("ugnot")
 	prevUsdcBalance := usdc.BalanceOf(userAddr)
 
 	// Approve for router fees
-	gns.Approve(cross, poolAddr, max_approve)
-	usdc.Approve(cross, poolAddr, max_approve)
+	gns.Approve(cross, routerAddr, max_approve)
+	usdc.Approve(cross, routerAddr, max_approve)
 
 	// Execute multi-hop swap
-	testing.SetOriginSend(std.Coins{{"ugnot", 1000000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 1000000}})
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross,
 		gnotPath,  // input token (GNOT)
 		usdcPath,  // output token
 		"1000000", // exact amount in
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/onbloc/usdc:500", // route
+		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/onbloc/usdc:500", // route
 		"100", // quote
 		"0",   // min amount out
 		time.Now().Add(time.Hour).Unix(),
 		"", // referrer
 	)
 
-	afterGnotBalance := banker.GetCoins(userAddr).AmountOf("ugnot")
+	afterGnotBalance := banker_.GetCoins(userAddr).AmountOf("ugnot")
 	afterUsdcBalance := usdc.BalanceOf(userAddr)
 
 	println("[INFO] GNOT spent:", prevGnotBalance-afterGnotBalance)
@@ -275,30 +279,29 @@ func testMultiHopUsdcToGnot() {
 	println("[INFO] Testing Multi-hop: USDC → GNS → 1,000,000 GNOT")
 	testing.SetRealm(userRealm)
 
-	banker := std.NewBanker(std.BankerTypeReadonly)
+	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
 	prevUsdcBalance := usdc.BalanceOf(userAddr)
-	prevGnotBalance := banker.GetCoins(userAddr).AmountOf("ugnot")
+	prevGnotBalance := banker_.GetCoins(userAddr).AmountOf("ugnot")
 
 	// Approve tokens
-	usdc.Approve(cross, poolAddr, max_approve)
 	usdc.Approve(cross, routerAddr, max_approve)
-	gns.Approve(cross, poolAddr, max_approve)
 	gns.Approve(cross, routerAddr, max_approve)
 
 	// Execute multi-hop ExactOut swap
+	testing.SetOriginSend(chain.Coins{})
 	amountIn, amountOut := router.ExactOutSwapRoute(
 		cross,
 		usdcPath,  // input token
 		gnotPath,  // output token (GNOT)
 		"1000000", // exact amount out (GNOT)
-		"gno.land/r/onbloc/usdc:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500", // route
+		"gno.land/r/onbloc/usdc:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500", // route
 		"100",      // quote
 		"10000000", // max amount in
 		time.Now().Add(time.Hour).Unix(),
 		"", // referrer
 	)
 	afterUsdcBalance := usdc.BalanceOf(userAddr)
-	afterGnotBalance := banker.GetCoins(userAddr).AmountOf("ugnot")
+	afterGnotBalance := banker_.GetCoins(userAddr).AmountOf("ugnot")
 
 	println("[INFO] USDC spent:", prevUsdcBalance-afterUsdcBalance)
 	println("[INFO] GNOT received:", afterGnotBalance-prevGnotBalance)
@@ -310,7 +313,7 @@ func testMultiHopUsdcToGnot() {
 	println("[EXPECTED] Correct fee distribution across hops")
 
 	// Verify no intermediate fund locking
-	routerGnotBalance := banker.GetCoins(routerAddr).AmountOf("ugnot")
+	routerGnotBalance := banker_.GetCoins(routerAddr).AmountOf("ugnot")
 	routerWugnotBalance := wugnot.BalanceOf(routerAddr)
 	routerGnsBalance := gns.BalanceOf(routerAddr)
 	routerUsdcBalance := usdc.BalanceOf(routerAddr)
@@ -352,33 +355,33 @@ func testMultiHopUsdcToGnot() {
 //
 // [SCENARIO] 3. ExactOut: GNS → GNOT
 // [INFO] Testing ExactOut swap: GNS → 1,000,000 GNOT
-// [INFO] GNS spent: 997574
-// [INFO] GNOT received: 998500
-// [INFO] Pool fee (0.05%): 498
+// [INFO] GNS spent: 999077
+// [INFO] GNOT received: 1000000
+// [INFO] Pool fee (0.05%): 499
 // [INFO] Router fee (0.15%): 1500
-// [INFO] AmountIn reported: 997574
-// [INFO] AmountOut reported: -998500
+// [INFO] AmountIn reported: 999077
+// [INFO] AmountOut reported: -1000000
 // [EXPECTED] User receives 1,000,000 GNOT
 // [EXPECTED] Router fee charged on output side
 // [EXPECTED] Unwrap happens internally
-// [INFO] Router total fees accumulated: 1500
+// [INFO] Router total fees accumulated: 1502
 //
 // [SCENARIO] 4. Multi-hop: GNOT → GNS → USDC
 // [INFO] Testing Multi-hop: 1,000,000 GNOT → GNS → USDC
 // [INFO] GNOT spent: 0
-// [INFO] USDC received: 991677
+// [INFO] USDC received: 991686
 // [INFO] AmountIn reported: 1000000
-// [INFO] AmountOut reported: -991677
+// [INFO] AmountOut reported: -991686
 // [EXPECTED] Only first hop wraps GNOT
 // [EXPECTED] Correct fee accumulation across hops
 // [EXPECTED] Router fee applied on final output
 //
 // [SCENARIO] 5. Multi-hop: USDC → GNS → GNOT
 // [INFO] Testing Multi-hop: USDC → GNS → 1,000,000 GNOT
-// [INFO] USDC spent: 995169
-// [INFO] GNOT received: 998500
-// [INFO] AmountIn reported: 995169
-// [INFO] AmountOut reported: -998500
+// [INFO] USDC spent: 996682
+// [INFO] GNOT received: 1000000
+// [INFO] AmountIn reported: 996682
+// [INFO] AmountOut reported: -1000000
 // [EXPECTED] Only last hop unwraps to GNOT
 // [EXPECTED] User receives exactly 1,000,000 GNOT
 // [EXPECTED] Correct fee distribution across hops

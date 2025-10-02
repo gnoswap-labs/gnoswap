@@ -1,13 +1,12 @@
 package emission
 
 import (
-	"std"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
+	"gno.land/p/nt/ufmt"
 )
 
 var alice = testutils.TestAddress("alice")
@@ -19,7 +18,7 @@ func TestSetDistributionStartTime(t *testing.T) {
 		name        string
 		setup       func()
 		timestamp   int64
-		caller      std.Address
+		caller      address
 		shouldPanic bool
 		panicMsg    string
 	}{
@@ -78,7 +77,7 @@ func TestSetDistributionStartTime(t *testing.T) {
 				tt.setup()
 			}
 
-			testing.SetRealm(std.NewUserRealm(tt.caller))
+			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			if tt.shouldPanic {
 				uassert.AbortsWithMessage(t, tt.panicMsg, func() {

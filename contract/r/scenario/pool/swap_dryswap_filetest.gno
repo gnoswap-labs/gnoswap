@@ -1,7 +1,8 @@
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/r/onbloc/bar"
@@ -28,9 +29,9 @@ const (
 // Variables for test addresses and realms
 var (
 	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm      = std.NewUserRealm(adminAddr)
+	adminRealm      = testing.NewUserRealm(adminAddr)
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm        = std.NewUserRealm(positionAddr)
+	posRealm        = testing.NewUserRealm(positionAddr)
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 )
 
@@ -85,7 +86,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000() {
 	testing.SetRealm(adminRealm)
 
 	testing.SetRealm(posRealm)
-	pool.Mint(cross, fooPath, barPath, fee500, positionAddr, -tickUpper, -tickLower, liquidityExpect, adminAddr) // -11000  ~ -9000
+	pool.Mint(cross, fooPath, barPath, fee500, -tickUpper, -tickLower, liquidityExpect, adminAddr) // -11000  ~ -9000
 
 	println("[INFO] dry swap")
 	println("[INFO] zeroForOne true, amountSpecified 16000")

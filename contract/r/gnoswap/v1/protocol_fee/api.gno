@@ -1,13 +1,13 @@
 package protocol_fee
 
 import (
-	"std"
+	"chain/runtime"
 	"strconv"
 	"time"
 
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/json"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/ufmt"
+	"gno.land/p/onbloc/json"
 
 	"gno.land/r/gnoswap/v1/common"
 )
@@ -54,7 +54,7 @@ func ApiGetHistoryTransferToDevOps() string {
 // buildByAvlTree builds a JSON node from AVL tree data.
 func buildByAvlTree(tree *avl.Tree) *json.Node {
 	data := json.Builder().
-		WriteString("height", formatInt(std.ChainHeight())).
+		WriteString("height", formatInt(runtime.ChainHeight())).
 		WriteString("now", formatInt(time.Now().Unix()))
 
 	tree.Iterate("", "", func(key string, value any) bool {
@@ -108,7 +108,7 @@ func ApiGetActualBalance() string {
 	// check for any tokens that have balance will requires
 	// iterating through known tokens or having a registry.
 	data := json.Builder().
-		WriteString("height", formatInt(std.ChainHeight())).
+		WriteString("height", formatInt(runtime.ChainHeight())).
 		WriteString("now", formatInt(time.Now().Unix()))
 
 	for token, balance := range tokenMap {
@@ -126,7 +126,7 @@ func ApiGetRecordedBalance() string {
 	}
 
 	data := json.Builder().
-		WriteString("height", formatInt(std.ChainHeight())).
+		WriteString("height", formatInt(runtime.ChainHeight())).
 		WriteString("now", formatInt(time.Now().Unix()))
 
 	for token, amount := range tokenList {
@@ -150,7 +150,7 @@ func ApiGetUnrecordedBalance() string {
 	}
 
 	data := json.Builder().
-		WriteString("height", formatInt(std.ChainHeight())).
+		WriteString("height", formatInt(runtime.ChainHeight())).
 		WriteString("now", formatInt(time.Now().Unix()))
 
 	for token, unrecordedBalance := range unrecordedMap {

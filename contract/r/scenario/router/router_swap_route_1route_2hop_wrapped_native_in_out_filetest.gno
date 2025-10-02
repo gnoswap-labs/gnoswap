@@ -1,7 +1,7 @@
 package main
 
 import (
-	"std"
+	"chain"
 	"testing"
 
 	"gno.land/r/gnoswap/access"
@@ -14,7 +14,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -23,7 +23,7 @@ import (
 
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
@@ -32,7 +32,7 @@ var (
 	bazPath = "gno.land/r/onbloc/baz"
 	quxPath = "gno.land/r/onbloc/qux"
 
-	wrappedWugnot = "gno.land/r/demo/wugnot"
+	wrappedWugnot = "gno.land/r/gnoland/wugnot"
 
 	max_timeout int64 = 9999999999
 	max_approve int64 = 9223372036854775806
@@ -127,8 +127,8 @@ func testPositionMintQuxGnot(t *testing.T) {
 
 	println("[INFO] Issuing native tokens to admin")
 	// send
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 1000009}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 1000009}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 1000009}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 1000009}})
 
 	println("[INFO] Depositing native tokens to get wrapped tokens")
 	// Deposit(wrap)
@@ -140,6 +140,7 @@ func testPositionMintQuxGnot(t *testing.T) {
 	wugnot.Approve(cross, poolAddr, max_approve)
 
 	println("[INFO] Minting position in qux-wugnot pool")
+	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(cross, quxPath, wrappedWugnot, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr, "")
 
 	println("[INFO] positionId:", positionId)
@@ -163,11 +164,11 @@ func testDrySwapRouteBarGnotExactIn(t *testing.T) {
 		wrappedWugnot, // outputToken
 		"1000",        // amountSpecified
 		"EXACT_IN",    // swapType
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/demo/wugnot:500", // strRouteArr
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/gnoland/wugnot:500", // strRouteArr
 		"100", // quoteArr
 		"1",
 	)
-	println("[EXPECTED] dry swap result:", dryResult, "expected: 19740")
+	println("[EXPECTED] dry swap result:", dryResult, "expected: 19711")
 	println()
 }
 
@@ -181,11 +182,11 @@ func testDrySwapRouteBarGnotExactOut(t *testing.T) {
 		wrappedWugnot, // outputToken
 		"20000",       // amountSpecified
 		"EXACT_OUT",   // swapType
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/demo/wugnot:500", // strRouteArr
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/gnoland/wugnot:500", // strRouteArr
 		"100", // quoteArr
 		"2000000",
 	)
-	println("[EXPECTED] dry swap result:", dryResult, "expected: 1014")
+	println("[EXPECTED] dry swap result:", dryResult, "expected: 1015")
 	println()
 }
 
@@ -199,7 +200,7 @@ func testDrySwapRouteGnotBarExactIn(t *testing.T) {
 		barPath,       // outputToken
 		"5000",        // amountSpecified
 		"EXACT_IN",    // swapType
-		"gno.land/r/demo/wugnot:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+		"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
 		"100", // quoteArr
 		"1",
 	)
@@ -217,7 +218,7 @@ func testDrySwapRouteGnotBarExactOut(t *testing.T) {
 		barPath,       // outputToken
 		"100",         // amountSpecified
 		"EXACT_OUT",   // swapType
-		"gno.land/r/demo/wugnot:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+		"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
 		"100", // quoteArr
 		"100000",
 	)
@@ -272,11 +273,11 @@ func testDrySwapRouteGnotBarExactOut(t *testing.T) {
 //
 // [SCENARIO] Given: Dry swap route bar to wugnot exact in preparation
 // [INFO] Executing dry swap route (bar → baz → qux → wugnot)
-// [EXPECTED] dry swap result: 19740 expected: 19740
+// [EXPECTED] dry swap result: 19711 expected: 19711
 //
 // [SCENARIO] Given: Dry swap route bar to wugnot exact out preparation
 // [INFO] Executing dry swap route exact out (bar → baz → qux → wugnot)
-// [EXPECTED] dry swap result: 1014 expected: 1014
+// [EXPECTED] dry swap result: 1015 expected: 1015
 //
 // [SCENARIO] Given: Dry swap route wugnot to bar exact in preparation
 // [INFO] Executing dry swap route (wugnot → qux → baz → bar)

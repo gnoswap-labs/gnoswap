@@ -1,12 +1,13 @@
 package protocol_fee
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 	"strconv"
 	"strings"
 
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
@@ -24,9 +25,9 @@ import (
 // Only callable by admin or gov/staker contract.
 // Note: Default split is 0% devOps, 100% gov/staker.
 func DistributeProtocolFee(cur realm) map[string]int64 {
-	halt.AssertIsNotHaltedProtocolFee()
+	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	assertIsAdminOrGovStaker(caller)
 
 	sentToDevOpsForEvent := make([]string, 0)
@@ -78,8 +79,8 @@ func DistributeProtocolFee(cur realm) map[string]int64 {
 
 	protocolFeeState.clearTokenListWithAmount()
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"TransferProtocolFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -98,10 +99,10 @@ func DistributeProtocolFee(cur realm) map[string]int64 {
 // Only callable by admin or governance.
 // Note: GovStaker percentage is automatically adjusted to (10000 - devOpsPct).
 func SetDevOpsPct(cur realm, pct int64) {
-	halt.AssertIsNotHaltedProtocolFee()
+	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsValidPercent(pct)
 
@@ -114,8 +115,8 @@ func SetDevOpsPct(cur realm, pct int64) {
 	}
 	newGovStakerPct := protocolFeeState.GovStakerPct()
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"SetDevOpsPct",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -134,10 +135,10 @@ func SetDevOpsPct(cur realm, pct int64) {
 // Only callable by admin or governance.
 // Note: DevOps percentage is automatically adjusted to (10000 - govStakerPct).
 func SetGovStakerPct(cur realm, pct int64) {
-	halt.AssertIsNotHaltedProtocolFee()
+	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsValidPercent(pct)
 
@@ -150,8 +151,8 @@ func SetGovStakerPct(cur realm, pct int64) {
 	}
 	newDevOpsPct := protocolFeeState.DevOpsPct()
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"SetGovStakerPct",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -171,10 +172,10 @@ func SetGovStakerPct(cur realm, pct int64) {
 // Only callable by pool, router or staker contracts.
 // Note: Accumulated fees are distributed when DistributeProtocolFee is called.
 func AddToProtocolFee(cur realm, tokenPath string, amount int64) {
-	halt.AssertIsNotHaltedProtocolFee()
+	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
-	assertIsPoolOrRouterOrStaker(caller)
+	caller := runtime.PreviousRealm().Address()
+	assertIsPoolOrPositionOrRouterOrStaker(caller)
 
 	if amount < 0 {
 		panic(makeErrorWithDetail(
@@ -202,10 +203,10 @@ func AddToProtocolFee(cur realm, tokenPath string, amount int64) {
 // Only callable by gov/staker contract.
 // Note: Should be called after successful distribution.
 func ClearTokenListWithAmount(cur realm) {
-	halt.AssertIsNotHaltedProtocolFee()
+	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
-	access.AssertIsGovStaker(caller)
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsGovStakerWithVersion(1, caller)
 
 	protocolFeeState.clearTokenListWithAmount()
 }
@@ -218,10 +219,10 @@ func ClearTokenListWithAmount(cur realm) {
 // Only callable by gov/staker contract.
 // Note: Should be called after reading accumulated amounts.
 func ClearAccuTransferToGovStaker(cur realm) {
-	halt.AssertIsNotHaltedProtocolFee()
+	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
-	access.AssertIsGovStaker(caller)
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsGovStakerWithVersion(1, caller)
 
 	protocolFeeState.accuToGovStaker = avl.NewTree()
 }

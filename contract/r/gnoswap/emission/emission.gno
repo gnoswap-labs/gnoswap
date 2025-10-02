@@ -1,8 +1,9 @@
 package emission
 
 import (
+	"chain"
+	"chain/runtime"
 	"math"
-	"std"
 	"time"
 
 	"gno.land/r/gnoswap/access"
@@ -17,11 +18,15 @@ var (
 	lastExecutedTimestamp int64
 
 	// emissionAddr is the address of the emission realm
-	emissionAddr = std.CurrentRealm().Address()
+	emissionAddr = runtime.CurrentRealm().Address()
 
 	// distributionStartTimestamp is the timestamp from which emission distribution starts
 	// Default is 0, meaning distribution is not started until explicitly set
 	distributionStartTimestamp int64
+
+	// onDistributionPctChangeCallback is called when distribution percentages change
+	// This allows external contracts (like staker) to update their caches
+	onDistributionPctChangeCallback func(emissionAmountPerSecond int64)
 )
 
 // GetLeftGNSAmount returns the amount of undistributed GNS tokens from previous distributions.
@@ -66,7 +71,7 @@ func setLastExecutedTimestamp(timestamp int64) {
 func MintAndDistributeGns(cur realm) int64 {
 	halt.AssertIsNotHaltedEmission()
 
-	currentHeight := std.ChainHeight()
+	currentHeight := runtime.ChainHeight()
 	currentTimestamp := time.Now().Unix()
 
 	// Check if distribution start timestamp is set and if current timestamp has reached it
@@ -134,8 +139,8 @@ func MintAndDistributeGns(cur realm) int64 {
 
 	setLastExecutedTimestamp(currentTimestamp)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"MintAndDistributeGns",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -176,7 +181,7 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 	halt.AssertIsNotHaltedEmission()
 	halt.AssertIsNotHaltedWithdraw()
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	// Prevent negative timestamps.
@@ -205,12 +210,27 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 
 	distributionStartTimestamp = startTimestamp
 
-	std.Emit(
+	chain.Emit(
 		"SetDistributionStartTime",
 		"caller", caller.String(),
 		"prevStartTimestamp", formatInt(prevStartTimestamp),
 		"newStartTimestamp", formatInt(startTimestamp),
-		"height", formatInt(std.ChainHeight()),
+		"height", formatInt(runtime.ChainHeight()),
 		"timestamp", formatInt(time.Now().Unix()),
 	)
+}
+
+// SetOnDistributionPctChangeCallback sets a callback function to be called when distribution percentages change.
+// This allows external contracts (like staker) to update their internal caches when governance changes emission rates.
+//
+// Only callable by the staker contract.
+func SetOnDistributionPctChangeCallback(cur realm, callback func(int64)) {
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsStaker(caller)
+
+	if onDistributionPctChangeCallback != nil {
+		onDistributionPctChangeCallback(0)
+	}
+
+	onDistributionPctChangeCallback = callback
 }

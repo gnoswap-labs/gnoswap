@@ -1,9 +1,5 @@
 package staker
 
-import (
-	"std"
-)
-
 // DelegationRecord represents a single delegation event in the system.
 // This struct tracks delegation or undelegation actions with their associated metadata
 // and is used for historical tracking and snapshot calculations.
@@ -11,9 +7,9 @@ type DelegationRecord struct {
 	// delegationType indicates whether this is a delegation or undelegation action
 	delegationType DelegationType
 	// delegateFrom is the address of the user who initiated the delegation
-	delegateFrom std.Address
+	delegateFrom address
 	// delegateTo is the address of the user who received the delegation
-	delegateTo std.Address
+	delegateTo address
 	// delegateAmount is the amount delegated (set only for delegation actions)
 	delegateAmount int64
 	// unDelegateAmount is the amount undelegated (set only for undelegation actions)
@@ -52,7 +48,7 @@ func (d *DelegationRecord) UnDelegateAmount() int64 {
 //
 // Returns:
 //   - std.Address: delegator's address
-func (d *DelegationRecord) DelegateFrom() std.Address {
+func (d *DelegationRecord) DelegateFrom() address {
 	return d.delegateFrom
 }
 
@@ -60,7 +56,7 @@ func (d *DelegationRecord) DelegateFrom() std.Address {
 //
 // Returns:
 //   - std.Address: delegatee's address
-func (d *DelegationRecord) DelegateTo() std.Address {
+func (d *DelegationRecord) DelegateTo() address {
 	return d.delegateTo
 }
 
@@ -87,8 +83,8 @@ func (d *DelegationRecord) CreatedAt() int64 {
 func NewDelegationRecord(
 	delegationType DelegationType,
 	delegationAmount int64,
-	delegateFrom std.Address,
-	delegateTo std.Address,
+	delegateFrom address,
+	delegateTo address,
 	createdAt int64,
 ) *DelegationRecord {
 	delegateAmount := int64(0)

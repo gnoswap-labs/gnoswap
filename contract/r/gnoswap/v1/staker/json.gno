@@ -1,11 +1,11 @@
 package staker
 
 import (
-	"std"
+	"chain/runtime"
 	"strconv"
 	"time"
 
-	"gno.land/p/demo/json"
+	"gno.land/p/onbloc/json"
 )
 
 // JsonResponse is an interface that all JSON response types must implement.
@@ -33,19 +33,18 @@ func (r RewardToken) JSON() *json.Node {
 }
 
 type ApiExternalIncentive struct {
-	IncentiveId         string `json:"incentiveId"`
-	PoolPath            string `json:"poolPath"`
-	RewardToken         string `json:"rewardToken"`
-	RewardAmount        int64  `json:"rewardAmount"`
-	RewardLeft          int64  `json:"rewardLeft"`
-	StartTimestamp      int64  `json:"startTimestamp"`
-	EndTimestamp        int64  `json:"endTimestamp"`
-	Active              bool   `json:"active"`
-	RewardPerSecond     int64  `json:"rewardPerSecond"`
-	Refundee            string `json:"refundee"`
-	CreatedHeight       int64  `json:"createdHeight"`
-	DepositGnsAmount    int64  `json:"depositGnsAmount"`
-	UnClaimableRefunded bool   `json:"unclaimableRefunded"`
+	IncentiveId      string `json:"incentiveId"`
+	PoolPath         string `json:"poolPath"`
+	RewardToken      string `json:"rewardToken"`
+	RewardAmount     int64  `json:"rewardAmount"`
+	StartTimestamp   int64  `json:"startTimestamp"`
+	EndTimestamp     int64  `json:"endTimestamp"`
+	Active           bool   `json:"active"`
+	RewardPerSecond  int64  `json:"rewardPerSecond"`
+	Refundee         string `json:"refundee"`
+	CreatedHeight    int64  `json:"createdHeight"`
+	DepositGnsAmount int64  `json:"depositGnsAmount"`
+	Refunded         bool   `json:"refunded"`
 }
 
 func newApiExternalIncentive(ictv *ExternalIncentive) ApiExternalIncentive {
@@ -55,19 +54,18 @@ func newApiExternalIncentive(ictv *ExternalIncentive) ApiExternalIncentive {
 		isActive = true
 	}
 	return ApiExternalIncentive{
-		IncentiveId:         ictv.incentiveId,
-		PoolPath:            ictv.targetPoolPath,
-		RewardToken:         ictv.rewardToken,
-		RewardAmount:        ictv.rewardAmount,
-		RewardLeft:          ictv.RewardLeft(now),
-		StartTimestamp:      ictv.startTimestamp,
-		EndTimestamp:        ictv.endTimestamp,
-		Active:              isActive,
-		RewardPerSecond:     ictv.rewardPerSecond,
-		Refundee:            ictv.refundee.String(),
-		CreatedHeight:       ictv.createdHeight,
-		DepositGnsAmount:    ictv.depositGnsAmount,
-		UnClaimableRefunded: ictv.unclaimableRefunded,
+		IncentiveId:      ictv.incentiveId,
+		PoolPath:         ictv.targetPoolPath,
+		RewardToken:      ictv.rewardToken,
+		RewardAmount:     ictv.rewardAmount,
+		StartTimestamp:   ictv.startTimestamp,
+		EndTimestamp:     ictv.endTimestamp,
+		Active:           isActive,
+		RewardPerSecond:  ictv.rewardPerSecond,
+		Refundee:         ictv.refundee.String(),
+		CreatedHeight:    ictv.createdHeight,
+		DepositGnsAmount: ictv.depositGnsAmount,
+		Refunded:         ictv.refunded,
 	}
 }
 
@@ -78,19 +76,18 @@ func (r ApiExternalIncentive) JSON() *json.Node {
 	}
 
 	return json.ObjectNode("", map[string]*json.Node{
-		"incentiveId":         json.StringNode("incentiveId", r.IncentiveId),
-		"poolPath":            json.StringNode("poolPath", r.PoolPath),
-		"rewardToken":         json.StringNode("rewardToken", r.RewardToken),
-		"rewardAmount":        json.StringNode("rewardAmount", strconv.FormatInt(r.RewardAmount, 10)),
-		"rewardLeft":          json.StringNode("rewardLeft", strconv.FormatInt(r.RewardLeft, 10)),
-		"startTimestamp":      json.NumberNode("startTimestamp", float64(r.StartTimestamp)),
-		"endTimestamp":        json.NumberNode("endTimestamp", float64(r.EndTimestamp)),
-		"active":              json.BoolNode("active", active),
-		"rewardPerSecond":     json.StringNode("rewardPerSecond", strconv.FormatInt(r.RewardPerSecond, 10)),
-		"refundee":            json.StringNode("refundee", r.Refundee),
-		"createdHeight":       json.NumberNode("createdHeight", float64(r.CreatedHeight)),
-		"depositGnsAmount":    json.NumberNode("depositGnsAmount", float64(r.DepositGnsAmount)),
-		"unclaimableRefunded": json.BoolNode("unclaimableRefunded", r.UnClaimableRefunded),
+		"incentiveId":      json.StringNode("incentiveId", r.IncentiveId),
+		"poolPath":         json.StringNode("poolPath", r.PoolPath),
+		"rewardToken":      json.StringNode("rewardToken", r.RewardToken),
+		"rewardAmount":     json.StringNode("rewardAmount", strconv.FormatInt(r.RewardAmount, 10)),
+		"startTimestamp":   json.NumberNode("startTimestamp", float64(r.StartTimestamp)),
+		"endTimestamp":     json.NumberNode("endTimestamp", float64(r.EndTimestamp)),
+		"active":           json.BoolNode("active", active),
+		"rewardPerSecond":  json.StringNode("rewardPerSecond", strconv.FormatInt(r.RewardPerSecond, 10)),
+		"refundee":         json.StringNode("refundee", r.Refundee),
+		"createdHeight":    json.NumberNode("createdHeight", float64(r.CreatedHeight)),
+		"depositGnsAmount": json.NumberNode("depositGnsAmount", float64(r.DepositGnsAmount)),
+		"refunded":         json.BoolNode("refunded", r.Refunded),
 	})
 }
 
@@ -144,25 +141,26 @@ func (r LpTokenReward) JSON() *json.Node {
 
 // Stake represents a single stake
 type ApiStake struct {
-	PositionId     uint64      `json:"positionId"`     // The ID of the staked LP token
-	Owner          std.Address `json:"owner"`          // The address of the owner of the staked LP token
-	NumberOfStakes uint64      `json:"numberOfStakes"` // The number of times this LP token has been staked
-	StakeTimestamp int64       `json:"stakeTimestamp"` // The timestamp when the LP token was staked
-	StakeTime      int64       `json:"stakeTime"`      // The time when the LP token was staked
-	TargetPoolPath string      `json:"targetPoolPath"` // The path of the target pool for the stake
-	StakeDuration  uint64      `json:"stakeDuration"`  // The duration of the stake
+	PositionId     uint64  `json:"positionId"`     // The ID of the staked LP token
+	Owner          address `json:"owner"`          // The address of the owner of the staked LP token
+	NumberOfStakes uint64  `json:"numberOfStakes"` // The number of times this LP token has been staked
+	StakeTimestamp int64   `json:"stakeTimestamp"` // The timestamp when the LP token was staked
+	StakeTime      int64   `json:"stakeTime"`      // The time when the LP token was staked
+	TargetPoolPath string  `json:"targetPoolPath"` // The path of the target pool for the stake
+	StakeDuration  uint64  `json:"stakeDuration"`  // The duration of the stake
 }
 
 func newApiStake(tokenId uint64, deposit *Deposit) ApiStake {
 	stakeDuration := uint64(0)
-	if std.ChainHeight() > deposit.stakeTime {
-		stakeDuration = uint64(std.ChainHeight() - deposit.stakeTime) // TODO: should use time difference
+	if runtime.ChainHeight() > deposit.stakeTime {
+		now := time.Now().Unix()
+		stakeDuration = uint64(now - deposit.stakeTime)
 	}
 
 	return ApiStake{
 		PositionId:     tokenId,
 		Owner:          deposit.owner,
-		StakeTimestamp: deposit.stakeTimestamp,
+		StakeTimestamp: deposit.stakeTime,
 		StakeTime:      deposit.stakeTime,
 		TargetPoolPath: deposit.targetPoolPath,
 		StakeDuration:  stakeDuration,
@@ -187,7 +185,7 @@ type statNode struct {
 
 func newStatNode() statNode {
 	return statNode{
-		height:    std.ChainHeight(),
+		height:    runtime.ChainHeight(),
 		timestamp: time.Now().Unix(),
 	}
 }

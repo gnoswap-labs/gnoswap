@@ -1,12 +1,11 @@
 package position
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/onbloc/bar"
@@ -38,7 +37,7 @@ func (e *Env) GivenPoolCreated(token0, token1 string, fee uint32, sqrtPriceX96 s
 }
 
 // AndUserFundedAndApproved mints test tokens to an account and approves pool spending.
-func (e *Env) AndUserFundedAndApproved(addr std.Address, tokens ...string) *Env {
+func (e *Env) AndUserFundedAndApproved(addr address, tokens ...string) *Env {
 	e.t.Helper()
 	testing.SetRealm(posRealm)
 	for _, tk := range tokens {
@@ -99,13 +98,12 @@ func (b *MintBuilder) WithMins(m0, m1 string) *MintBuilder {
 	return b
 }
 
-func (b *MintBuilder) Caller(caller, mintTo std.Address) *MintBuilder {
+func (b *MintBuilder) Caller(caller, mintTo address) *MintBuilder {
 	b.p.caller, b.p.mintTo = caller, mintTo
 	return b
 }
 
 func (b *MintBuilder) Params() MintParams { return b.p }
-
 
 // Note: Keep assertions explicit. Only truly regression-critical values
 // are compared exactly; error messages are compared exactly to respect
@@ -249,7 +247,7 @@ func TestMintInternal_PositionMint(t *testing.T) {
 				Caller(alice, alice).
 				Params(),
 			expectPanic: true,
-			expectedMsg: "[GNOSWAP-POOL-021] token transfer failed || insufficient balance",
+			expectedMsg: "insufficient balance",
 		},
 	}
 
@@ -393,7 +391,7 @@ func TestMintInternal_FeeTierEdgeCases(t *testing.T) {
 				WithMins("0", "0").
 				Params(),
 			expectPanic: true,
-			expectedMsg: "[GNOSWAP-POOL-021] token transfer failed || insufficient balance",
+			expectedMsg: "insufficient balance",
 		},
 		// 0.05% pool (tick spacing 10)
 		{

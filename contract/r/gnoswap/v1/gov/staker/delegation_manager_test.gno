@@ -1,17 +1,16 @@
 package staker
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 )
 
 // TestDelegationManager_AddAndRemoveDelegation tests adding and removing delegations
 func TestDelegationManager_AddAndRemoveDelegation(t *testing.T) {
 	tests := []struct {
 		name            string
-		delegator       std.Address
+		delegator       address
 		delegationID    int64
 		delegationCount int
 		operation       string // "add" or "remove"
@@ -20,7 +19,7 @@ func TestDelegationManager_AddAndRemoveDelegation(t *testing.T) {
 	}{
 		{
 			name:            "Add new delegation",
-			delegator:       std.Address("g1delegator"),
+			delegator:       address("g1delegator"),
 			delegationID:    1,
 			delegationCount: 0,
 			operation:       "add",
@@ -29,7 +28,7 @@ func TestDelegationManager_AddAndRemoveDelegation(t *testing.T) {
 		},
 		{
 			name:            "Add multiple delegations",
-			delegator:       std.Address("g1delegator"),
+			delegator:       address("g1delegator"),
 			delegationID:    2,
 			delegationCount: 1,
 			operation:       "add",
@@ -38,7 +37,7 @@ func TestDelegationManager_AddAndRemoveDelegation(t *testing.T) {
 		},
 		{
 			name:            "Remove existing delegation",
-			delegator:       std.Address("g1delegator"),
+			delegator:       address("g1delegator"),
 			delegationID:    1,
 			delegationCount: 2,
 			operation:       "remove",
@@ -47,7 +46,7 @@ func TestDelegationManager_AddAndRemoveDelegation(t *testing.T) {
 		},
 		{
 			name:            "Remove non-existent delegation",
-			delegator:       std.Address("g1other"),
+			delegator:       address("g1other"),
 			delegationID:    999,
 			delegationCount: 0,
 			operation:       "remove",
@@ -62,13 +61,13 @@ func TestDelegationManager_AddAndRemoveDelegation(t *testing.T) {
 			dm := NewDelegationManager()
 
 			for i := 0; i < tc.delegationCount; i++ {
-				dm.addDelegation(tc.delegator, std.Address("g1delegatee"), int64(i+1))
+				dm.addDelegation(tc.delegator, address("g1delegatee"), int64(i+1))
 			}
 
 			if tc.operation == "add" {
-				dm.addDelegation(tc.delegator, std.Address("g1delegatee"), tc.delegationID)
+				dm.addDelegation(tc.delegator, address("g1delegatee"), tc.delegationID)
 			} else {
-				dm.removeDelegation(tc.delegator, std.Address("g1delegatee"), tc.delegationID)
+				dm.removeDelegation(tc.delegator, address("g1delegatee"), tc.delegationID)
 			}
 
 			// when & then
@@ -91,25 +90,25 @@ func TestDelegationManager_AddAndRemoveDelegation(t *testing.T) {
 func TestDelegationManager_GetUserDelegationIDs(t *testing.T) {
 	tests := []struct {
 		name          string
-		delegator     std.Address
+		delegator     address
 		delegationIDs []int64
 		expectedCount int
 	}{
 		{
 			name:          "Get multiple delegation IDs",
-			delegator:     std.Address("g1user1"),
+			delegator:     address("g1user1"),
 			delegationIDs: []int64{1, 2, 3},
 			expectedCount: 3,
 		},
 		{
 			name:          "Get empty delegation IDs",
-			delegator:     std.Address("g1user2"),
+			delegator:     address("g1user2"),
 			delegationIDs: []int64{},
 			expectedCount: 0,
 		},
 		{
 			name:          "Get single delegation ID",
-			delegator:     std.Address("g1user3"),
+			delegator:     address("g1user3"),
 			delegationIDs: []int64{10},
 			expectedCount: 1,
 		},
@@ -120,7 +119,7 @@ func TestDelegationManager_GetUserDelegationIDs(t *testing.T) {
 			// given
 			dm := NewDelegationManager()
 			for _, delegationID := range tc.delegationIDs {
-				dm.addDelegation(tc.delegator, std.Address("g1delegatee"), delegationID)
+				dm.addDelegation(tc.delegator, address("g1delegatee"), delegationID)
 			}
 
 			// when
@@ -153,6 +152,6 @@ func TestNewDelegationManager(t *testing.T) {
 	uassert.Equal(t, len(dm.userDelegations), 0)
 
 	// Test initial empty state
-	delegations := dm.GetUserDelegationIDs(std.Address("g1any"))
+	delegations := dm.GetUserDelegationIDs(address("g1any"))
 	uassert.Equal(t, len(delegations), 0)
 }

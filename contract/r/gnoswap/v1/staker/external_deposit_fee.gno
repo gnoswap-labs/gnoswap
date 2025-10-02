@@ -1,12 +1,13 @@
 package staker
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 	"strconv"
 	"strings"
 
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
@@ -40,7 +41,11 @@ func GetMinimumRewardAmount() int64 {
 func GetMinimumRewardAmountForToken(tokenPath string) int64 {
 	amountI, found := tokenSpecificMinimumRewards.Get(tokenPath)
 	if found {
-		return amountI.(int64)
+		amount, ok := amountI.(int64)
+		if !ok {
+			panic("failed to cast amount to int64")
+		}
+		return amount
 	}
 	// Fallback to default if not found
 	return GetMinimumRewardAmount()
@@ -62,18 +67,18 @@ func GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool) {
 // SetDepositGnsAmount sets the GNS deposit amount required for creating external incentives.
 // Only admin or governance can call this function.
 func SetDepositGnsAmount(cur realm, amount int64) {
-	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsValidAmount(amount)
 
 	prevDepositGnsAmount := getDepositGnsAmount()
 	setDepositGnsAmount(amount)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"SetDepositGnsAmount",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -85,18 +90,18 @@ func SetDepositGnsAmount(cur realm, amount int64) {
 // SetMinimumRewardAmount sets the default minimum reward amount for external incentives.
 // Only admin or governance can call this function.
 func SetMinimumRewardAmount(cur realm, amount int64) {
-	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsValidAmount(amount)
 
 	prevMinimumRewardAmount := getMinimumRewardAmount()
 	setMinimumRewardAmount(amount)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"SetMinimumRewardAmount",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -108,10 +113,10 @@ func SetMinimumRewardAmount(cur realm, amount int64) {
 // SetTokenMinimumRewardAmount sets the minimum reward amount for a specific token.
 // Only admin or governance can call this function.
 func SetTokenMinimumRewardAmount(cur realm, paramsStr string) {
-	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsValidRewardAmountFormat(paramsStr)
 
@@ -139,8 +144,8 @@ func SetTokenMinimumRewardAmount(cur realm, paramsStr string) {
 		tokenSpecificMinimumRewards.Set(tokenPath, amount64)
 	}
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"SetTokenMinimumRewardAmount",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),

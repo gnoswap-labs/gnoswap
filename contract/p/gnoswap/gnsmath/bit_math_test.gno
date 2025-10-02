@@ -3,7 +3,7 @@ package gnsmath
 import (
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 

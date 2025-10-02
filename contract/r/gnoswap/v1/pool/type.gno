@@ -1,10 +1,9 @@
 package pool
 
 import (
-	"std"
 	"time"
 
-	"gno.land/p/demo/avl"
+	"gno.land/p/nt/avl"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -35,7 +34,7 @@ type PositionInfo struct {
 // the liquidity positions.
 type ModifyPositionParams struct {
 	// owner is the address that owns the position
-	owner std.Address
+	owner address
 
 	// tickLower and atickUpper define the price range
 	// The actual price range is calculated as 1.0001^tick
@@ -66,7 +65,7 @@ type ModifyPositionParams struct {
 // Returns:
 //   - ModifyPositionParams: a new instance of ModifyPositionParams
 func newModifyPositionParams(
-	owner std.Address,
+	owner address,
 	tickLower int32,
 	tickUpper int32,
 	liquidityDelta *i256.Int,
@@ -286,6 +285,6 @@ func newPool(poolInfo *poolCreateConfig) *Pool {
 		ticks:                avl.NewTree(),
 		tickBitmaps:          avl.NewTree(),
 		positions:            avl.NewTree(),
-		observation:          newObservation(time.Now().Unix()),
+		observationState:     newObservationState(time.Now().Unix()),
 	}
 }

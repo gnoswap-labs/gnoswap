@@ -1,8 +1,6 @@
 package position
 
 import (
-	"std"
-
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/gnft"
@@ -14,11 +12,7 @@ func PositionGetPosition(positionId uint64) Position {
 	return position
 }
 
-func PositionGetPositionNonce(positionId uint64) *u256.Uint {
-	return MustGetPosition(positionId).nonce
-}
-
-func PositionGetPositionOperator(positionId uint64) std.Address {
+func PositionGetPositionOperator(positionId uint64) address {
 	return MustGetPosition(positionId).operator
 }
 
@@ -66,17 +60,13 @@ func PositionIsInRange(positionId uint64) bool {
 	return position.tickLower <= poolCurrentTick && poolCurrentTick < position.tickUpper
 }
 
-func PositionGetPositionOwner(positionId uint64) std.Address {
+func PositionGetPositionOwner(positionId uint64) address {
 	owner, err := gnft.OwnerOf(positionIdFrom(positionId))
 	if err != nil {
 		panic(newErrorWithDetail(
 			errDataNotFound, err.Error()))
 	}
 	return owner
-}
-
-func PositionGetPositionNonceStr(positionId uint64) string {
-	return PositionGetPositionNonce(positionId).ToString()
 }
 
 func PositionGetPositionOperatorStr(positionId uint64) string {

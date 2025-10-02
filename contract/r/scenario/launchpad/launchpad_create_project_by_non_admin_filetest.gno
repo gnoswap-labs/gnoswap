@@ -3,14 +3,13 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/launchpad"
@@ -21,7 +20,7 @@ var t *testing.T
 
 var (
 	nonAdminAddr  = testutils.TestAddress("non-admin")
-	nonAdminRealm = std.NewUserRealm(nonAdminAddr)
+	nonAdminRealm = testing.NewUserRealm(nonAdminAddr)
 
 	launchpadAddr, _ = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 )

@@ -9,14 +9,13 @@
 package main
 
 import (
-	"std"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
@@ -39,16 +38,16 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
 	dummyAddr  = testutils.TestAddress("dummy")
-	dummyRealm = std.NewUserRealm(dummyAddr)
+	dummyRealm = testing.NewUserRealm(dummyAddr)
 
 	barPath = "gno.land/r/onbloc/bar"
 	quxPath = "gno.land/r/onbloc/qux"

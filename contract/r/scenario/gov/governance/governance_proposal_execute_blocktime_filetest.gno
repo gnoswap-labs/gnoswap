@@ -3,10 +3,10 @@
 package main
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
@@ -32,7 +32,7 @@ func main() {
 
 	println("[SCENARIO] 2. Skip voting smoothing duration for create proposal")
 	testing.SkipHeights(int64(config.VotingWeightSmoothingDuration) / currentBlockTime)
-	println("[INFO] current height:", std.ChainHeight())
+	println("[INFO] current height:", runtime.ChainHeight())
 	println()
 
 	println("[SCENARIO] 3. Propose Change Average Block Time")
@@ -41,7 +41,7 @@ func main() {
 
 	println("[SCENARIO] 4. Skip voting start delay for ready to vote")
 	testing.SkipHeights(int64(config.VotingStartDelay) / currentBlockTime)
-	println("[INFO] current height:", std.ChainHeight())
+	println("[INFO] current height:", runtime.ChainHeight())
 	println()
 
 	println("[SCENARIO] 5. Vote for the proposal")
@@ -50,7 +50,7 @@ func main() {
 
 	println("[SCENARIO] 6. Skip voting period for ready to execute")
 	testing.SkipHeights(int64(config.VotingPeriod) / currentBlockTime)
-	println("[INFO] current height:", std.ChainHeight())
+	println("[INFO] current height:", runtime.ChainHeight())
 	println()
 
 	println("[SCENARIO] 7. Execute the change average block time proposal")
@@ -61,9 +61,9 @@ func main() {
 
 func delegateGnsToAdmin() {
 	delegatedAmount := int64(1_000_000_000)
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	govStakerAddr := std.Address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
+	govStakerAddr := address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
 
 	gns.Approve(cross, govStakerAddr, delegatedAmount)
 	govStaker.Delegate(cross, adminAddr, int64(delegatedAmount), "")
@@ -72,7 +72,7 @@ func delegateGnsToAdmin() {
 }
 
 func proposeChangeAvgBlockTime() int64 {
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	proposalID := governance.ProposeParameterChange(cross, "poolcreationfee", "set", 1, "gno.land/r/gnoswap/v1/pool*EXE*SetPoolCreationFee*EXE*0")
 
 	ufmt.Printf("[INFO] Change Pool Creation Fee Proposal ID: %d\n", proposalID)
@@ -80,7 +80,7 @@ func proposeChangeAvgBlockTime() int64 {
 }
 
 func vote(proposalID int64, yea bool) {
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	prevYeaNum := governance.GetYeaByProposalId(proposalID)
 	prevNayNum := governance.GetNayByProposalId(proposalID)
@@ -94,7 +94,7 @@ func vote(proposalID int64, yea bool) {
 }
 
 func executeSetPoolCreationFee(proposalID int64) {
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	prevPoolCreationFee := pool.GetPoolCreationFee()
 

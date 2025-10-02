@@ -1,9 +1,10 @@
 package staker
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
@@ -21,13 +22,11 @@ var unstakingFee = int64(100) // 1%
 // GetUnstakingFee returns the current unstaking fee rate in basis points.
 func GetUnstakingFee() int64 { return unstakingFee }
 
-// handleUnStakingFee calculates and applies the unstaking fee.
-func handleUnStakingFee(
+// handleStakingRewardFee calculates and applies the unstaking fee.
+func handleStakingRewardFee(
 	tokenPath string,
 	amount int64,
 	internal bool,
-	positionId uint64,
-	poolPath string,
 ) (int64, int64, error) {
 	if unstakingFee == 0 {
 		return amount, 0, nil
@@ -48,7 +47,7 @@ func handleUnStakingFee(
 	}
 
 	// external contract has fee
-	common.Transfer(cross, tokenPath, protocolFeeAddr, feeAmount)
+	common.SafeGRC20Transfer(cross, tokenPath, protocolFeeAddr, feeAmount)
 	pf.AddToProtocolFee(cross, tokenPath, feeAmount)
 
 	return amount - feeAmount, feeAmount, nil
@@ -57,10 +56,10 @@ func handleUnStakingFee(
 // SetUnStakingFee sets the unstaking fee rate in basis points.
 // Only admin or governance can call this function.
 func SetUnStakingFee(cur realm, fee int64) {
-	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsValidFeeRate(fee)
 
@@ -68,8 +67,8 @@ func SetUnStakingFee(cur realm, fee int64) {
 
 	setUnStakingFee(fee)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"SetUnStakingFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),

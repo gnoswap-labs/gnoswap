@@ -1,11 +1,10 @@
 package governance
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 )
 
 // TestProposalMetadata_Validation tests metadata validation
@@ -105,7 +104,7 @@ func TestProposalData_Validation(t *testing.T) {
 			name:         "Failure - Invalid CommunityPoolSpend proposal",
 			proposalType: CommunityPoolSpend,
 			spendInfo: CommunityPoolSpendInfo{
-				to:        std.Address(""),
+				to:        address(""),
 				tokenPath: "",
 				amount:    0,
 			},

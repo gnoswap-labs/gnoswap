@@ -1,12 +1,13 @@
 package emission
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 	"strconv"
 	"time"
 
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
@@ -90,11 +91,17 @@ func ChangeDistributionPct(
 ) {
 	halt.AssertIsNotHaltedEmission()
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	assertValidDistributionTargets(target01, target02, target03, target04)
 	assertValidDistributionPct(pct01, pct02, pct03, pct04)
+
+	if onDistributionPctChangeCallback != nil {
+		currentTimestamp := time.Now().Unix()
+		emissionAmountPerSecond := GetEmissionAmountPerSecondBy(currentTimestamp, pct01)
+		onDistributionPctChangeCallback(emissionAmountPerSecond)
+	}
 
 	changeDistributionPcts(
 		target01, pct01,
@@ -103,8 +110,8 @@ func ChangeDistributionPct(
 		target04, pct04,
 	)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"ChangeDistributionPct",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -326,10 +333,14 @@ func GetAccuDistributedToGovStaker() int64 {
 	return accuDistributedToGovStaker
 }
 
+func GetEmissionAmountPerSecondBy(timestamp, distributionPct int64) int64 {
+	return calculateAmount(gns.GetEmissionAmountPerSecondByTimestamp(timestamp), distributionPct)
+}
+
 // GetStakerEmissionAmountPerSecond returns the current per-second emission amount allocated to liquidity stakers.
 func GetStakerEmissionAmountPerSecond() int64 {
 	currentTimestamp := time.Now().Unix()
-	return calculateAmount(gns.GetEmissionAmountPerSecondByTimestamp(currentTimestamp), GetDistributionBpsPct(LIQUIDITY_STAKER))
+	return GetEmissionAmountPerSecondBy(currentTimestamp, GetDistributionBpsPct(LIQUIDITY_STAKER))
 }
 
 // GetStakerEmissionAmountPerSecondInRange returns emission amounts allocated to liquidity stakers for a time range.
@@ -347,7 +358,7 @@ func GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64
 //
 // Only callable by staker contract.
 func ClearDistributedToStaker(cur realm) {
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
 
 	distributedToStaker = 0
@@ -357,7 +368,7 @@ func ClearDistributedToStaker(cur realm) {
 //
 // Only callable by governance staker contract.
 func ClearDistributedToGovStaker(cur realm) {
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsGovStaker(caller)
 	distributedToGovStaker = 0
 }

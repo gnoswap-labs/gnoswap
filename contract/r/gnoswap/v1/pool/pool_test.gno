@@ -1,13 +1,12 @@
 package pool
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -110,7 +109,6 @@ func addLiquidityWithValidation(t *testing.T, pool *Pool, scenario LiquidityScen
 		pool.token0Path,
 		pool.token1Path,
 		pool.fee,
-		positionAddr,
 		scenario.tickLower,
 		scenario.tickUpper,
 		scenario.amount,
@@ -136,13 +134,13 @@ func addLiquidityWithValidation(t *testing.T, pool *Pool, scenario LiquidityScen
 func verifyPriceCumulativeAccuracy(t *testing.T, pool *Pool, timeElapsed int64, expectedTick int32) {
 	t.Helper()
 
-	beforeCumulative := pool.observation.tickCumulative
-	beforeTime := pool.observation.lastCumulativeUpdateTime
+	beforeCumulative := pool.ObservationTickCumulative()
+	beforeTime := pool.ObservationBlockTimestamp()
 
 	// Update price cumulative
-	pool.updatePriceCumulatives(beforeTime + timeElapsed)
+	pool.writeObservation(beforeTime+timeElapsed, expectedTick, pool.liquidity)
 
-	afterCumulative := pool.observation.tickCumulative
+	afterCumulative := pool.ObservationTickCumulative()
 	actualIncrease := afterCumulative - beforeCumulative
 	expectedIncrease := int64(expectedTick) * timeElapsed
 
@@ -279,7 +277,7 @@ func TestMint_SecurityAndValidation(t *testing.T) {
 				expectedAbortMsg := "[GNOSWAP-POOL-010] zero liquidity"
 				uassert.AbortsWithMessage(t, expectedAbortMsg, func() {
 					Mint(cross, pool.token0Path, pool.token1Path, pool.fee,
-						positionAddr, NARROW_RANGE_LOWER, NARROW_RANGE_UPPER, "0", adminAddr)
+						NARROW_RANGE_LOWER, NARROW_RANGE_UPPER, "0", adminAddr)
 				})
 			},
 			expectedResult: "Transaction aborted",
@@ -304,7 +302,7 @@ func TestMint_SecurityAndValidation(t *testing.T) {
 					expectedAbortMsg,
 					func() {
 						Mint(cross, pool.token0Path, pool.token1Path, pool.fee,
-							positionAddr, tickLower, tickUpper, SMALL_LIQUIDITY, adminAddr)
+							tickLower, tickUpper, SMALL_LIQUIDITY, adminAddr)
 					})
 			},
 			expectedResult: "Transaction aborted",
@@ -328,7 +326,7 @@ func TestMint_SecurityAndValidation(t *testing.T) {
 				uassert.AbortsWithMessage(t, expectedAbortMsg,
 					func() {
 						Mint(cross, pool.token0Path, pool.token1Path, pool.fee,
-							positionAddr, NARROW_RANGE_LOWER, NARROW_RANGE_UPPER,
+							NARROW_RANGE_LOWER, NARROW_RANGE_UPPER,
 							overflowAmount, adminAddr)
 					})
 			},
@@ -397,7 +395,7 @@ func TestBurn_LiquidityWithdrawalScenarios(t *testing.T) {
 			// Add initial liquidity
 			testing.SetRealm(posRealm)
 			Mint(cross, pool.token0Path, pool.token1Path, pool.fee,
-				positionAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER,
+				WIDE_RANGE_LOWER, WIDE_RANGE_UPPER,
 				scenario.initialLiquidity, adminAddr)
 
 			beforeLiquidity := new(u256.Uint).Set(pool.liquidity)
@@ -475,20 +473,32 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(t *testing.T) {
 					sqrtPriceX96: u256.MustFromDecimal(EQUAL_PRICE_RATIO),
 					tick:         tt.initialTick,
 				},
-				observation: &Observation{
-					lastCumulativeUpdateTime: 100,
-					tickCumulative:           5000000000,
-					liquidityCumulative:      u256.MustFromDecimal("3000000"),
+				observationState: &ObservationState{
+					index:            0,
+					cardinality:      1,
+					cardinalityLimit: 1,
+					observations: [ObservationCardinality]Observation{
+						{
+							blockTimestamp:                    100,
+							tickCumulative:                    5000000000,
+							liquidityCumulative:               u256.MustFromDecimal("3000000"),
+							secondsPerLiquidityCumulativeX128: u256.Zero(),
+							initialized:                       true,
+						},
+					},
 				},
 				liquidity: u256.MustFromDecimal(tt.liquidity),
 			}
 
-			beforeTickCumulative := pool.observation.tickCumulative
-			beforeLiquidityCumulative := new(u256.Uint).Set(pool.observation.liquidityCumulative)
-			currentTime := pool.observation.lastCumulativeUpdateTime + tt.timeElapsed
+			beforeTickCumulative := pool.ObservationTickCumulative()
+			beforeLiquidityCumulative := new(u256.Uint).Set(u256.MustFromDecimal(pool.ObservationLiquidityCumulative()))
+			currentTime := pool.observationState.lastObservation().blockTimestamp + tt.timeElapsed
 
 			// When: Execute accumulation calculation
-			tickCumulative, liquidityCumulative, lastUpdateTime := pool.calculateTickCumulative(currentTime)
+			pool.writeObservation(currentTime, tt.initialTick, pool.liquidity)
+			tickCumulative := pool.ObservationTickCumulative()
+			liquidityCumulative := new(u256.Uint).Set(u256.MustFromDecimal(pool.ObservationLiquidityCumulative()))
+			lastUpdateTime := pool.ObservationBlockTimestamp()
 
 			// Then: Verify expected behavior
 			expectedTickIncrease := int64(tt.initialTick) * tt.timeElapsed
@@ -533,11 +543,11 @@ func TestAccessControl_AuthorizationValidation(t *testing.T) {
 				pool := setupStablecoinPool(t)
 				approveTokensForPool(t, pool)
 
-				testing.SetRealm(std.NewUserRealm(unauthorizedAddr))
+				testing.SetRealm(testing.NewUserRealm(unauthorizedAddr))
 				expectedMsg := ufmt.Sprintf("unauthorized: caller %s is not position", unauthorizedAddr.String())
 				uassert.AbortsWithMessage(t, expectedMsg, func() {
 					Mint(cross, pool.token0Path, pool.token1Path, pool.fee,
-						positionAddr, NARROW_RANGE_LOWER, NARROW_RANGE_UPPER, MEDIUM_LIQUIDITY, unauthorizedAddr)
+						NARROW_RANGE_LOWER, NARROW_RANGE_UPPER, MEDIUM_LIQUIDITY, unauthorizedAddr)
 				})
 
 				cleanupPool(t, pool.token0Path, pool.token1Path, pool.fee)
@@ -551,7 +561,7 @@ func TestAccessControl_AuthorizationValidation(t *testing.T) {
 			action: func(t *testing.T) {
 				pool := setupStablecoinPool(t)
 
-				testing.SetRealm(std.NewUserRealm(unauthorizedAddr))
+				testing.SetRealm(testing.NewUserRealm(unauthorizedAddr))
 				expectedMsg := ufmt.Sprintf("unauthorized: caller %s is not admin or governance", unauthorizedAddr.String())
 				uassert.AbortsWithMessage(t, expectedMsg, func() {
 					CollectProtocol(cross, pool.token0Path, pool.token1Path, pool.fee,
@@ -676,7 +686,7 @@ func TestFeeCollection_RevenueDistribution(t *testing.T) {
 	feeTests := []struct {
 		name             string
 		description      string
-		setupScenario    func(t *testing.T) (*Pool, std.Address)
+		setupScenario    func(t *testing.T) (*Pool, address)
 		collectionAmount map[string]string // token0, token1
 		expectedBehavior string
 		revenueImpact    string
@@ -684,7 +694,7 @@ func TestFeeCollection_RevenueDistribution(t *testing.T) {
 		{
 			name:        "collect_full_available_fees",
 			description: "Collect full available fees",
-			setupScenario: func(t *testing.T) (*Pool, std.Address) {
+			setupScenario: func(t *testing.T) (*Pool, address) {
 				return setupPoolWithTradingActivity(t)
 			},
 			collectionAmount: map[string]string{"token0": "100", "token1": "100"},
@@ -694,7 +704,7 @@ func TestFeeCollection_RevenueDistribution(t *testing.T) {
 		{
 			name:        "collect_zero_amount",
 			description: "Request to collect 0 fees",
-			setupScenario: func(t *testing.T) (*Pool, std.Address) {
+			setupScenario: func(t *testing.T) (*Pool, address) {
 				return setupPoolWithTradingActivity(t)
 			},
 			collectionAmount: map[string]string{"token0": "0", "token1": "0"},
@@ -704,7 +714,7 @@ func TestFeeCollection_RevenueDistribution(t *testing.T) {
 		{
 			name:        "collect_nonexistent_position",
 			description: "Collect fees from nonexistent position",
-			setupScenario: func(t *testing.T) (*Pool, std.Address) {
+			setupScenario: func(t *testing.T) (*Pool, address) {
 				pool := setupStablecoinPool(t)
 				recipient := testutils.TestAddress("nonexistent")
 				return pool, recipient
@@ -726,7 +736,7 @@ func TestFeeCollection_RevenueDistribution(t *testing.T) {
 			if test.name == "collect_nonexistent_position" {
 				tickLower := int32(-400)
 				tickUpper := int32(400)
-				positionKey, _ := getPositionKey(recipient, tickLower, tickUpper)
+				positionKey, _ := getPositionKey(tickLower, tickUpper)
 				expectedError := ufmt.Sprintf(
 					"[GNOSWAP-POOL-008] requested data not found || positionKey(%s) does not exist",
 					positionKey)
@@ -847,7 +857,7 @@ func TestProtocolFeeManagement_GovernanceControls(t *testing.T) {
 	}
 }
 
-func setupPoolWithTradingActivity(t *testing.T) (*Pool, std.Address) {
+func setupPoolWithTradingActivity(t *testing.T) (*Pool, address) {
 	t.Helper()
 
 	// Create stablecoin pool
@@ -856,10 +866,10 @@ func setupPoolWithTradingActivity(t *testing.T) (*Pool, std.Address) {
 	// Add liquidity
 	approveTokensForPool(t, pool)
 	testing.SetRealm(posRealm)
-	recipient := adminAddr // Position owner must be adminAddr
+	recipient := adminAddr
 
 	Mint(cross, pool.token0Path, pool.token1Path, pool.fee,
-		recipient, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, LARGE_LIQUIDITY, adminAddr)
+		WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, LARGE_LIQUIDITY, recipient)
 
 	// Execute swap for trading activity simulation
 	simulateSwapActivity(t, pool)
@@ -882,7 +892,7 @@ func setupPoolWithProtocolFees(t *testing.T) *Pool {
 	testing.SetRealm(posRealm)
 
 	Mint(cross, pool.token0Path, pool.token1Path, pool.fee,
-		positionAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, LARGE_LIQUIDITY, adminAddr)
+		WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, LARGE_LIQUIDITY, adminAddr)
 
 	// Create protocol fees through trading activity
 	simulateSwapActivity(t, pool)
@@ -916,11 +926,13 @@ func simulateSwapActivity(t *testing.T, pool *Pool) {
 	}
 
 	// Create fees through swap execution
-	testing.SetRealm(rouRealm)
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 	approveTokenForRouter(t, pool.token0Path)
 
 	Swap(cross, pool.token0Path, pool.token1Path, pool.fee,
-		adminAddr, true, "1000000", "3945129629379410362911094631", adminAddr)
+		adminAddr, true, "1000000", "3945129629379410362911094631", adminAddr, func(cur realm, amount0Delta string, amount1Delta string) error {
+			return mockSwapCallback(pool.token0Path, pool.token1Path, amount0Delta, amount1Delta)
+		})
 
 	testing.SkipHeights(1)
 }
@@ -980,7 +992,7 @@ func approveTokensForPool(t *testing.T, pool *Pool) {
 	}
 }
 
-func getTokenBalance(t *testing.T, tokenPath string, addr std.Address) int64 {
+func getTokenBalance(t *testing.T, tokenPath string, addr address) int64 {
 	t.Helper()
 
 	switch tokenPath {

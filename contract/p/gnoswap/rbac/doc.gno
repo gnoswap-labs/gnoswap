@@ -57,7 +57,7 @@
 //	"std"
 //
 //	"gno.land/p/gnoswap/rbac"
-//	"gno.land/p/demo/ufmt"
+//	"gno.land/p/nt/ufmt"
 //
 // )
 //

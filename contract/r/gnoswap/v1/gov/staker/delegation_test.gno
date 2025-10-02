@@ -1,10 +1,9 @@
 package staker
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 )
 
 // Test DelegationType
@@ -52,24 +51,24 @@ func TestNewDelegation(t *testing.T) {
 	tests := []struct {
 		name           string
 		id             int64
-		delegateFrom   std.Address
-		delegateTo     std.Address
+		delegateFrom   address
+		delegateTo     address
 		delegateAmount int64
 		createdAt      int64
 	}{
 		{
 			name:           "Create new delegation",
 			id:             1,
-			delegateFrom:   std.Address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
-			delegateTo:     std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
+			delegateFrom:   address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
+			delegateTo:     address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 			delegateAmount: 1000,
 			createdAt:      100,
 		},
 		{
 			name:           "Create delegation with zero amount",
 			id:             2,
-			delegateFrom:   std.Address("g1w8m4s75k9l6n8vc6fmpcprgey4ck233kfhx5tz"),
-			delegateTo:     std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
+			delegateFrom:   address("g1w8m4s75k9l6n8vc6fmpcprgey4ck233kfhx5tz"),
+			delegateTo:     address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 			delegateAmount: 0,
 			createdAt:      200,
 		},
@@ -124,8 +123,8 @@ func TestDelegationGetters(t *testing.T) {
 			setupDelegation: func() *Delegation {
 				return NewDelegation(
 					1,
-					std.Address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
-					std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
+					address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
+					address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 					1000,
 					100,
 					100,
@@ -145,8 +144,8 @@ func TestDelegationGetters(t *testing.T) {
 			setupDelegation: func() *Delegation {
 				delegation := NewDelegation(
 					2,
-					std.Address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
-					std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
+					address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
+					address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 					1000,
 					100,
 					100,
@@ -168,8 +167,8 @@ func TestDelegationGetters(t *testing.T) {
 			setupDelegation: func() *Delegation {
 				delegation := NewDelegation(
 					3,
-					std.Address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
-					std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
+					address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
+					address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 					1000,
 					100,
 					100,
@@ -191,8 +190,8 @@ func TestDelegationGetters(t *testing.T) {
 			setupDelegation: func() *Delegation {
 				delegation := NewDelegation(
 					4,
-					std.Address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
-					std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
+					address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
+					address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 					500,
 					100,
 					100,
@@ -274,8 +273,8 @@ func TestDelegation_unDelegate(t *testing.T) {
 			// Given: Fresh delegation
 			delegation := NewDelegation(
 				1,
-				std.Address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
-				std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
+				address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
+				address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 				tt.initialAmount,
 				100,
 				100,
@@ -332,8 +331,8 @@ func TestDelegation_unDelegateWithoutLockup(t *testing.T) {
 			// Given: Fresh delegation
 			delegation := NewDelegation(
 				1,
-				std.Address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
-				std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
+				address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
+				address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 				tt.initialAmount,
 				100,
 				100,
@@ -370,8 +369,8 @@ func TestDelegation_collect(t *testing.T) {
 			setupDelegation: func() *Delegation {
 				delegation := NewDelegation(
 					1,
-					std.Address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
-					std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
+					address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
+					address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 					1000,
 					100,
 					100,
@@ -390,8 +389,8 @@ func TestDelegation_collect(t *testing.T) {
 			setupDelegation: func() *Delegation {
 				delegation := NewDelegation(
 					2,
-					std.Address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
-					std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
+					address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
+					address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 					1000,
 					100,
 					100,
@@ -408,8 +407,8 @@ func TestDelegation_collect(t *testing.T) {
 			setupDelegation: func() *Delegation {
 				delegation := NewDelegation(
 					3,
-					std.Address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
-					std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
+					address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
+					address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 					1000,
 					100,
 					100,
@@ -428,8 +427,8 @@ func TestDelegation_collect(t *testing.T) {
 				// Start with large delegation
 				delegation := NewDelegation(
 					4,
-					std.Address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
-					std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
+					address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
+					address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 					1_000_000_000_000, // 1 trillion units
 					100,
 					100,
@@ -576,8 +575,8 @@ func TestDelegation_ComplexScenarios(t *testing.T) {
 			// Given: Fresh delegation with sufficient amount
 			delegation := NewDelegation(
 				1,
-				std.Address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
-				std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
+				address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
+				address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 				1000,
 				50,
 				50,
@@ -604,8 +603,8 @@ func TestDelegation_EdgeCases(t *testing.T) {
 			testFunc: func() {
 				delegation := NewDelegation(
 					1,
-					std.Address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
-					std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
+					address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
+					address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 					1000,
 					100,
 					100,
@@ -621,8 +620,8 @@ func TestDelegation_EdgeCases(t *testing.T) {
 			testFunc: func() {
 				delegation := NewDelegation(
 					1,
-					std.Address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
-					std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
+					address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
+					address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 					1000,
 					100,
 					100,
@@ -644,8 +643,8 @@ func TestDelegation_EdgeCases(t *testing.T) {
 			testFunc: func() {
 				delegation := NewDelegation(
 					1,
-					std.Address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
-					std.Address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
+					address("g1u7y667z64x2h7vc6fmpcprgey4ck233jaww9zq"),
+					address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 					1000,
 					100,
 					100,

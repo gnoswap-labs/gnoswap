@@ -1,13 +1,13 @@
 package launchpad
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/gov/xgns"
 
@@ -21,7 +21,7 @@ func TestCollectDepositGns(t *testing.T) {
 	tests := []struct {
 		name                 string
 		depositID            string
-		callerAddress        std.Address
+		callerAddress        address
 		expectedHasAbort     bool
 		expectedAbortMessage string
 		expectedAmount       int64
@@ -99,7 +99,7 @@ func TestWithdrawDeposit(t *testing.T) {
 			deposit, _ := getDeposit(tt.depositID)
 
 			currentTime := time.Now().Unix()
-			_, amount, err := withdrawDeposit(deposit, std.ChainHeight(), currentTime)
+			_, amount, err := withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
 
 			if tt.expectedHasError {
 				uassert.Equal(t, tt.expectedErrorMessage, err.Error())
@@ -124,7 +124,7 @@ func initLaunchpadWithdrawTest(t *testing.T) {
 
 	// Setup test project
 	currentTime := time.Now().Unix()
-	currentHeight := std.ChainHeight()
+	currentHeight := runtime.ChainHeight()
 
 	// Setup test project
 	project, _ := createProject(
@@ -135,7 +135,7 @@ func initLaunchpadWithdrawTest(t *testing.T) {
 			tier30Ratio:   30,
 			tier90Ratio:   30,
 			tier180Ratio:  40,
-			recipient:     testutils.TestAddress("project"), // TODO: change to real address
+			recipient:     testutils.TestAddress("project"),
 			startTime:     currentTime + 10,
 			currentTime:   currentTime,
 			currentHeight: currentHeight,
@@ -152,7 +152,7 @@ func initLaunchpadWithdrawTest(t *testing.T) {
 	depositGns(project.ID(), 30, depositAmount, depositor)
 
 	govStakerAddr, _ := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
-	govStakerRealm := std.NewUserRealm(govStakerAddr)
+	govStakerRealm := testing.NewUserRealm(govStakerAddr)
 	testing.SetRealm(govStakerRealm)
 
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())

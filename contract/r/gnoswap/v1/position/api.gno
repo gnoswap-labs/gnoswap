@@ -1,7 +1,7 @@
 package position
 
 import (
-	"std"
+	"chain/runtime"
 	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -19,7 +19,7 @@ func ApiGetPosition(id uint64) string {
 	}
 
 	rpcPosition := rpcMakePosition(id)
-	baseStat := NewResponseQueryBase(std.ChainHeight(), time.Now().Unix())
+	baseStat := NewResponseQueryBase(runtime.ChainHeight(), time.Now().Unix())
 	return makeJsonResponse(&baseStat, &PositionsResponse{Positions: []RpcPosition{rpcPosition}})
 }
 
@@ -31,7 +31,7 @@ func ApiGetPositionUnclaimedFeeByLpPositionId(lpPositionId uint64) string {
 		Fee1:         unclaimedFee1.ToString(),
 	}
 
-	baseStat := NewResponseQueryBase(std.ChainHeight(), time.Now().Unix())
+	baseStat := NewResponseQueryBase(runtime.ChainHeight(), time.Now().Unix())
 	return makeJsonResponse(&baseStat, &UnclaimedFeesResponse{
 		Fees: []RpcUnclaimedFee{fee},
 	})
@@ -137,11 +137,11 @@ func unclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint) {
 
 	diffGrowthInside0X128 := subUint256(feeGrowthInside0X128, feeGrowthInside0LastX128)
 	unclaimedFee0X128 := u256.Zero().Mul(liquidity, diffGrowthInside0X128)
-	unclaimedFee0 := u256.Zero().Div(unclaimedFee0X128, u256.MustFromDecimal(Q128))
+	unclaimedFee0 := u256.Zero().Div(unclaimedFee0X128, q128)
 
 	diffGrowthInside1X128 := subUint256(feeGrowthInside1X128, feeGrowthInside1LastX128)
 	unclaimedFee1X128 := u256.Zero().Mul(liquidity, diffGrowthInside1X128)
-	unclaimedFee1 := u256.Zero().Div(unclaimedFee1X128, u256.MustFromDecimal(Q128))
+	unclaimedFee1 := u256.Zero().Div(unclaimedFee1X128, q128)
 
 	return unclaimedFee0, unclaimedFee1
 }

@@ -1,16 +1,15 @@
 // position minting
 
-// PKGPATH: gno.land/r/gnoswap/v1/main
+// PKGPATH: gno.land/r/demo/main
 
 package main
 
 import (
-	"std"
 	"strconv"
 	"testing"
 
-	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/nt/testutils"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
@@ -32,14 +31,14 @@ const (
 // Variables for test addresses and realms
 var (
 	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm      = std.NewUserRealm(adminAddr)
+	adminRealm      = testing.NewUserRealm(adminAddr)
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
 
 	aliceAddr  = testutils.TestAddress("alice")
-	aliceRealm = std.NewUserRealm(aliceAddr)
+	aliceRealm = testing.NewUserRealm(aliceAddr)
 	bobAddr    = testutils.TestAddress("bob")
-	bobRealm   = std.NewUserRealm(bobAddr)
+	bobRealm   = testing.NewUserRealm(bobAddr)
 )
 
 var (
@@ -89,7 +88,7 @@ func setupPool() {
 	}
 }
 
-func tokenFaucet(tokenPath string, to std.Address) {
+func tokenFaucet(tokenPath string, to address) {
 	testing.SetRealm(adminRealm)
 	defaultAmount := int64(5_000_000_000)
 

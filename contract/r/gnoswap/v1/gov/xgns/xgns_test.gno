@@ -1,10 +1,9 @@
 package xgns
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 	"gno.land/r/gnoswap/access"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -27,7 +26,7 @@ func TestTotalSupply(t *testing.T) {
 
 func TestMintFail(t *testing.T) {
 	amount := int64(100)
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	uassert.AbortsWithMessage(t, "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not gov_staker", func() {
 		Mint(cross, govStakerAddress, amount)
 	})
@@ -40,7 +39,7 @@ func TestBurn(t *testing.T) {
 	mintAmount := int64(1000)
 	burnAmount := int64(200)
 
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/launchpad"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/launchpad"))
 
 	MintByLaunchPad(cross, launchpadAddress, mintAmount)
 	BurnByLaunchPad(cross, launchpadAddress, burnAmount)
@@ -58,10 +57,10 @@ func TestVotingSupply(t *testing.T) {
 	initialSupply := int64(1000)
 	launchpadBalance := int64(200)
 
-	testing.SetRealm(std.NewUserRealm(govStakerAddress))
+	testing.SetRealm(testing.NewUserRealm(govStakerAddress))
 	Mint(cross, govStakerAddress, initialSupply-launchpadBalance)
 
-	testing.SetRealm(std.NewUserRealm(launchpadAddress))
+	testing.SetRealm(testing.NewUserRealm(launchpadAddress))
 	MintByLaunchPad(cross, launchpadAddress, launchpadBalance)
 
 	expectedVotingSupply := initialSupply - launchpadBalance
@@ -79,7 +78,7 @@ func TestVotingSupply(t *testing.T) {
 
 func TestBurnFail(t *testing.T) {
 	amount := int64(100)
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	uassert.AbortsWithMessage(t, "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not gov_staker", func() {
 		Burn(cross, govStakerAddress, amount)
 	})
@@ -89,7 +88,7 @@ func TestBurnFail(t *testing.T) {
 }
 
 // getContractAddress retrieves the address which registered the role
-func getContractAddress(roleName string) std.Address {
+func getContractAddress(roleName string) address {
 	addr, exists := access.GetAddress(roleName)
 	if !exists {
 		return rbac.DefaultRoleAddresses[prbac.SystemRole(roleName)]

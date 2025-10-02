@@ -1,12 +1,11 @@
 package pool
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/testutils"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/testutils"
 )
 
 func TestValidatePoolBalance(t *testing.T) {
@@ -175,8 +174,8 @@ func TestTransferFromAndVerify(t *testing.T) {
 	tests := []struct {
 		name         string
 		pool         *Pool
-		from         std.Address
-		to           std.Address
+		from         address
+		to           address
 		tokenPath    string
 		amount       *i256.Int
 		isToken0     bool

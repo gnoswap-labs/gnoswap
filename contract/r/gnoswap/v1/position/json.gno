@@ -1,9 +1,7 @@
 package position
 
 import (
-	"std"
-
-	"gno.land/p/demo/json"
+	"gno.land/p/onbloc/json"
 	"gno.land/r/gnoswap/v1/gnft"
 )
 
@@ -80,7 +78,7 @@ type RpcPosition struct {
 	FeeUnclaimed1           string `json:"fee1Unclaimed"`
 }
 
-func (p RpcPosition) JSON(owner std.Address) *json.Node {
+func (p RpcPosition) JSON(owner address) *json.Node {
 	return json.ObjectNode("", map[string]*json.Node{
 		"lpPositionId":             json.NumberNode("lpPositionId", float64(p.LpPositionId)),
 		"burned":                   json.BoolNode("burned", p.Burned),

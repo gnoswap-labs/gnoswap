@@ -70,7 +70,7 @@ func TestCacheReward(t *testing.T) {
 	}
 }
 
-var test_gnousdc = pl.GetPoolPath("gno.land/r/demo/wugnot", "gno.land/r/gnoswap/gns", 3000)
+var test_gnousdc = pl.GetPoolPath("gno.land/r/gnoland/wugnot", "gno.land/r/gnoswap/gns", 3000)
 
 func SetupPoolTier(t *testing.T) *PoolTier {
 	poolTier := NewPoolTier(NewPools(), 1, int64(1000), test_gnousdc, func() int64 { return 1000 }, func(start, end int64) ([]int64, []int64) { return nil, nil })
@@ -149,7 +149,7 @@ func TestCurrentAllTierCounts(t *testing.T) {
 	currentTime := int64(100000)
 	testPool1 := pl.GetPoolPath("gno.land/r/onbloc/bar", "gno.land/r/onbloc/baz", 3000)
 	testPool2 := pl.GetPoolPath("gno.land/r/onbloc/foo", "gno.land/r/onbloc/qux", 3000)
-	testPool3 := pl.GetPoolPath("gno.land/r/demo/wugnot", "gno.land/r/onbloc/bar", 3000)
+	testPool3 := pl.GetPoolPath("gno.land/r/gnoland/wugnot", "gno.land/r/onbloc/bar", 3000)
 
 	poolTier := NewPoolTier(pools, currentHeight, currentTime, testPool1,
 		func() int64 { return 1000000 },

@@ -1,10 +1,9 @@
 package pool
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 )
 
 func TestGetPoolPath(t *testing.T) {
@@ -60,7 +59,7 @@ func TestCreatePool(t *testing.T) {
 		},
 		{
 			name:       "success - wugnot <> gns pool",
-			token0Path: "gno.land/r/demo/wugnot",
+			token0Path: "gno.land/r/gnoland/wugnot",
 			token1Path: "gno.land/r/gnoswap/gns",
 			fee:        3000,
 			sqrtPrice:  "79228162514264337593543950337",
@@ -113,7 +112,7 @@ func TestCreatePool(t *testing.T) {
 		},
 	}
 
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	SetPoolCreationFee(cross, 0)
 
 	for _, tt := range tests {

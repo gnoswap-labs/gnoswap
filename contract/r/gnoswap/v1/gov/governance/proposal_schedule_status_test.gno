@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 )
 
 // TestProposalScheduleStatus_TimeChecks tests all time-related checks

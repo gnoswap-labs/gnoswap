@@ -1,11 +1,12 @@
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
@@ -31,9 +32,9 @@ const (
 // Variables for test addresses and realms
 var (
 	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm      = std.NewUserRealm(adminAddr)
+	adminRealm      = testing.NewUserRealm(adminAddr)
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm        = std.NewUserRealm(positionAddr)
+	posRealm        = testing.NewUserRealm(positionAddr)
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 )
 
@@ -93,7 +94,6 @@ func testDrySwapZeroForOneTruePositiveAmount(t *testing.T) {
 		fooPath,
 		barPath,
 		FeeTier500,
-		positionAddr,
 		-tickUpper,
 		-tickLower,
 		liquidityExpect,

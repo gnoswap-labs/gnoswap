@@ -1,12 +1,12 @@
 package gns
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/halt"
 )
@@ -18,22 +18,22 @@ const (
 )
 
 var (
-	emissionRealm = std.NewCodeRealm("gno.land/r/gnoswap/emission")
-	adminRealm    = std.NewUserRealm(adminAddr)
+	emissionRealm = testing.NewCodeRealm("gno.land/r/gnoswap/emission")
+	adminRealm    = testing.NewUserRealm(adminAddr)
 )
 
 var (
 	alice = testutils.TestAddress("alice")
 	bob   = testutils.TestAddress("bob")
 
-	userRealm = std.NewUserRealm(testutils.TestAddress("user"))
+	userRealm = testing.NewUserRealm(testutils.TestAddress("user"))
 )
 
 func TestKnownAccounts(t *testing.T) {
 	testing.SetOriginCaller(alice)
-	testing.SetRealm(std.NewUserRealm(alice))
+	testing.SetRealm(testing.NewUserRealm(alice))
 	func() {
-		testing.SetRealm(std.NewCodeRealm("gno.land/r/test/test"))
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/test/test"))
 		uassert.Equal(t, 1, KnownAccounts())
 	}()
 }
@@ -234,7 +234,7 @@ func TestGrc20Methods(t *testing.T) {
 			name: "Transfer without enough balance should panic",
 			fn: func() {
 				testing.SetOriginCaller(alice)
-				testing.SetRealm(std.NewUserRealm(alice))
+				testing.SetRealm(testing.NewUserRealm(alice))
 				Transfer(cross, bob, int64(1))
 			},
 			shouldPanic:   true,
@@ -261,7 +261,7 @@ func TestGrc20Methods(t *testing.T) {
 
 				// alice transfer admin's balance to bob
 				testing.SetOriginCaller(alice)
-				testing.SetRealm(std.NewUserRealm(alice))
+				testing.SetRealm(testing.NewUserRealm(alice))
 				TransferFrom(cross, adminAddr, bob, int64(1))
 			},
 		},
@@ -272,7 +272,7 @@ func TestGrc20Methods(t *testing.T) {
 				Approve(cross, alice, int64(1))
 
 				testing.SetOriginCaller(alice)
-				testing.SetRealm(std.NewUserRealm(alice))
+				testing.SetRealm(testing.NewUserRealm(alice))
 				TransferFrom(cross, adminAddr, bob, int64(2))
 			},
 			shouldPanic:   true,
@@ -401,7 +401,7 @@ func TestMintGns(t *testing.T) {
 	tests := []struct {
 		name                 string
 		halted               bool
-		inputRealm           std.Realm
+		inputRealm           runtime.Realm
 		inputSkipHeight      int64
 		expectedMintedAmount int64
 		expectedHasAbort     bool
@@ -428,7 +428,7 @@ func TestMintGns(t *testing.T) {
 		{
 			name:                 "mint gns is failed by caller is not emission realm",
 			halted:               false,
-			inputRealm:           std.NewUserRealm(testutils.TestAddress("user")),
+			inputRealm:           testing.NewUserRealm(testutils.TestAddress("user")),
 			inputSkipHeight:      1,
 			expectedMintedAmount: 0,
 			expectedHasAbort:     true,

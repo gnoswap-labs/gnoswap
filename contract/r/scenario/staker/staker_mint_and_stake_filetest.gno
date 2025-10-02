@@ -5,16 +5,17 @@
 package main
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"strconv"
 	"testing"
 
-	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 
 	"gno.land/r/gnoswap/access"
 
@@ -33,22 +34,22 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	poolAddr, _     = access.GetAddress(prabc.ROLE_POOL.String())
 	positionAddr, _ = access.GetAddress(prabc.ROLE_POSITION.String())
 
-	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	barPath = "gno.land/r/onbloc/bar"
 	quxPath = "gno.land/r/onbloc/qux"
 
 	gnsPath    = "gno.land/r/gnoswap/gns"
-	wugnotPath = "gno.land/r/demo/wugnot"
+	wugnotPath = "gno.land/r/gnoland/wugnot"
 
 	fee3000 uint32 = 3000
 
@@ -115,8 +116,8 @@ func mintAndStakeNative() {
 
 	testing.SkipHeights(2)
 
-	println("[INFO] prepare 100005 ugnot (5 for refund test)")
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100005}})
+	println("[INFO] prepare 100000 ugnot")
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000}})
 
 	ugnotBalance := ugnotBalanceOf(adminAddr)
 	ufmt.Printf("[INFO] admin ugnot balance before: %d\n", ugnotBalance)
@@ -125,14 +126,15 @@ func mintAndStakeNative() {
 	ufmt.Printf("[INFO] position contract ugnot balance before: %d\n", positionUgnotBalance)
 
 	println("[INFO] send ugnot to staker and set origin send")
-	banker := std.NewBanker(std.BankerTypeRealmIssue)
-	banker.SendCoins(adminAddr, stakerAddr, std.Coins{{"ugnot", 100005}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 100005}})
+	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
+	banker_.SendCoins(adminAddr, stakerAddr, chain.Coins{{"ugnot", 100000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000}})
 
 	adminOldWugnotBalance := wugnot.BalanceOf(adminUser)
 	ufmt.Printf("[INFO] admin wugnot balance before mint and stake: %d\n", adminOldWugnotBalance)
 
 	println("[INFO] mint and stake native position")
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000}})
 	lpTokenId, liquidity, amount0, amount1, poolPath := sr.MintAndStake(
 		cross,
 		"gnot",
@@ -195,9 +197,9 @@ func mintAndStakeGRC20Pair() {
 	testing.SkipHeights(1)
 }
 
-func ugnotBalanceOf(addr std.Address) uint64 {
-	banker := std.NewBanker(std.BankerTypeReadonly)
-	coins := banker.GetCoins(addr)
+func ugnotBalanceOf(addr address) uint64 {
+	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
+	coins := banker_.GetCoins(addr)
 	return uint64(coins.AmountOf("ugnot"))
 }
 
@@ -234,8 +236,8 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 3. Mint and stake native token position
 // [INFO] approve tokens for native mint and stake
-// [INFO] prepare 100005 ugnot (5 for refund test)
-// [INFO] admin ugnot balance before: 100005
+// [INFO] prepare 100000 ugnot
+// [INFO] admin ugnot balance before: 100000
 // [INFO] position contract ugnot balance before: 0
 // [INFO] send ugnot to staker and set origin send
 // [INFO] admin wugnot balance before mint and stake: 0
@@ -243,9 +245,9 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] native mint and stake - LP token ID: 1
 // [EXPECTED] liquidity: 448942
 // [EXPECTED] amount0: 100000, amount1: 100000
-// [EXPECTED] pool path: gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000
+// [EXPECTED] pool path: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000
 // [EXPECTED] admin wugnot balance after: 0
-// [EXPECTED] admin ugnot balance after (refund): 5
+// [EXPECTED] admin ugnot balance after (refund): 0
 //
 // [SCENARIO] 4. Mint and stake GRC20 pair position
 // [INFO] approve tokens for GRC20 mint and stake

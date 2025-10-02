@@ -1,12 +1,12 @@
 package gns
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/grc/grc20"
-	"gno.land/p/demo/ownable"
+	"gno.land/p/demo/tokens/grc20"
+	"gno.land/p/nt/ownable"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
@@ -37,7 +37,7 @@ func resetGnsTokenObject(t *testing.T) {
 func resetEmissionState(t *testing.T) {
 	t.Helper()
 
-	blockHeight := std.ChainHeight()
+	blockHeight := runtime.ChainHeight()
 	startTimestamp := time.Now().Unix()
 	emissionState = NewEmissionState(blockHeight, startTimestamp)
 }

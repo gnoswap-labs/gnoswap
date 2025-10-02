@@ -1,10 +1,9 @@
 package gns
 
 import (
-	"std"
 	"strconv"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
@@ -43,7 +42,7 @@ func validEmissionAmount(amount int64) error {
 }
 
 // getAdminAddress returns the admin address from access control or default role address.
-func getAdminAddress() std.Address {
+func getAdminAddress() address {
 	addr, exists := access.GetAddress(prabc.ROLE_ADMIN.String())
 	if !exists {
 		return rbac.DefaultRoleAddresses[prabc.ROLE_ADMIN]

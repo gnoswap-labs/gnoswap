@@ -3,7 +3,7 @@ package position
 import (
 	"testing"
 
-	"gno.land/p/demo/avl"
+	"gno.land/p/nt/avl"
 
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/pool"

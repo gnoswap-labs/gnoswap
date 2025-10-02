@@ -1,14 +1,13 @@
 package qux
 
 import (
-	"std"
 	"strings"
 
-	"gno.land/p/demo/grc/grc20"
-	"gno.land/p/demo/ownable"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/demo/tokens/grc20"
+	"gno.land/p/nt/ownable"
+	"gno.land/p/nt/ufmt"
 
-	"gno.land/r/demo/grc20reg"
+	"gno.land/r/demo/defi/grc20reg"
 )
 
 var (
@@ -26,32 +25,32 @@ func TotalSupply() int64 {
 	return userTeller.TotalSupply()
 }
 
-func BalanceOf(owner std.Address) int64 {
+func BalanceOf(owner address) int64 {
 	userTeller := token.CallerTeller()
 	return userTeller.BalanceOf(owner)
 }
 
-func Allowance(owner, spender std.Address) int64 {
+func Allowance(owner, spender address) int64 {
 	userTeller := token.CallerTeller()
 	return userTeller.Allowance(owner, spender)
 }
 
-func Transfer(cur realm, to std.Address, amount int64) {
+func Transfer(cur realm, to address, amount int64) {
 	userTeller := token.CallerTeller()
 	checkErr(userTeller.Transfer(to, amount))
 }
 
-func Approve(cur realm, spender std.Address, amount int64) {
+func Approve(cur realm, spender address, amount int64) {
 	userTeller := token.CallerTeller()
 	checkErr(userTeller.Approve(spender, amount))
 }
 
-func TransferFrom(cur realm, from, to std.Address, amount int64) {
+func TransferFrom(cur realm, from, to address, amount int64) {
 	userTeller := token.CallerTeller()
 	checkErr(userTeller.TransferFrom(from, to, amount))
 }
 
-func Burn(cur realm, from std.Address, amount int64) {
+func Burn(cur realm, from address, amount int64) {
 	owner.AssertOwnedByPrevious()
 	checkErr(privateLedger.Burn(from, amount))
 }
@@ -64,7 +63,7 @@ func Render(path string) string {
 	case path == "":
 		return token.RenderHome()
 	case c == 2 && parts[0] == "balance":
-		owner := std.Address(parts[1])
+		owner := address(parts[1])
 		userTeller := token.CallerTeller()
 		balance := userTeller.BalanceOf(owner)
 		return ufmt.Sprintf("%d\n", balance)

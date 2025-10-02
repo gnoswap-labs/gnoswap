@@ -1,13 +1,14 @@
 package router
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/common"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -15,7 +16,8 @@ import (
 )
 
 const (
-	defaultSwapFeeBPS = uint64(15) // 0.15%
+	defaultSwapFeeBPS = uint64(15)   // 0.15%
+	maxSwapFeeBPS     = uint64(1000) // 10%
 )
 
 // swapFee is the fee charged on each swap transaction.
@@ -30,19 +32,26 @@ func GetSwapFee() uint64 {
 // SetSwapFee sets the swap fee rate in basis points.
 // Only admin or governance can call this function.
 func SetSwapFee(cur realm, fee uint64) {
-	halt.AssertIsNotHaltedRouter()
-	halt.AssertIsNotHaltedProtocolFee()
+	halt.AssertIsNotHaltedRouterWithVersion(1)
+	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+
+	if fee > maxSwapFeeBPS {
+		panic(ufmt.Errorf(
+			"%s: fee must be in range 0 to %d. got %d",
+			errInvalidSwapFee.Error(), maxSwapFeeBPS, fee,
+		))
+	}
 
 	prevSwapFee := swapFee
 	if err := setSwapFee(fee); err != nil {
 		panic(err)
 	}
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"SetSwapFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -74,31 +83,65 @@ func handleSwapFee(
 		return amount
 	}
 
-	feeAmount := u256.Zero().Mul(amount, u256.NewUint(swapFee))
-	feeAmount = u256.Zero().Div(feeAmount, u256.NewUint(10000))
-	feeAmountInt64 := safeConvertToInt64(feeAmount)
+	currentTokenPath := outputToken
 
-	if outputToken == gnot {
-		outputToken = wugnotPath
+	if common.IsGNOTNativePath(outputToken) {
+		currentTokenPath = wugnotPath
 	}
 
-	common.Transfer(cross, outputToken, protocolFeeAddr, feeAmountInt64)
+	feeAmountInt64 := calculateRouterFee(amount)
 
-	pf.AddToProtocolFee(cross, outputToken, feeAmountInt64)
+	common.SafeGRC20Transfer(cross, currentTokenPath, protocolFeeAddr, feeAmountInt64)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	pf.AddToProtocolFee(cross, currentTokenPath, feeAmountInt64)
+
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"SwapRouteFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"tokenPath", outputToken,
+		"tokenPath", currentTokenPath,
 		"amount", formatInt64(feeAmountInt64),
 	)
 
-	toUserAfterProtocol, underflow := u256.Zero().SubOverflow(amount, feeAmount)
+	toUserAfterProtocol, underflow := u256.Zero().SubOverflow(
+		amount,
+		u256.NewUintFromInt64(feeAmountInt64),
+	)
 	if underflow {
 		panic(errProtocolFeeOverflow)
 	}
 
 	return toUserAfterProtocol
+}
+
+func calculateRouterFee(amount *u256.Uint) int64 {
+	if swapFee <= 0 {
+		return 0
+	}
+
+	feeAmount := u256.MulDiv(amount, u256.NewUint(swapFee), u256.NewUint(10000))
+	feeAmountInt64 := safeConvertToInt64(feeAmount)
+
+	return feeAmountInt64
+}
+
+// calculate amount to fetch from pool including router fee
+// poolAmount = userAmount / (1 - feeRate)
+// = userAmount * 10000 / (10000 - swapFeeBPS)
+func calculateExactOutWithRouterFee(amount *u256.Uint) *u256.Uint {
+	userAmount := amount.Clone()
+
+	if swapFee > 0 {
+		// Use MulDiv to prevent overflow and maintain precision
+		poolAmount := u256.MulDiv(
+			userAmount,
+			u256.NewUint(10000),
+			u256.NewUint(10000-swapFee),
+		)
+
+		return poolAmount
+	}
+
+	return userAmount
 }

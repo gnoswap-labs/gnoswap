@@ -1,9 +1,9 @@
 package pool
 
 import (
-	"std"
+	"chain/runtime"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
 
@@ -34,7 +34,7 @@ import (
 //
 // Panics if any validation fails or if the transfer fails
 func (p *Pool) safeTransfer(
-	to std.Address,
+	to address,
 	tokenPath string,
 	amount *i256.Int,
 	isToken0 bool,
@@ -55,7 +55,7 @@ func (p *Pool) safeTransfer(
 	}
 	amountInt64 := safeConvertToInt64(absAmount)
 
-	checkTransferError(common.Transfer(cross, tokenPath, to, amountInt64))
+	common.SafeGRC20Transfer(cross, tokenPath, to, amountInt64)
 
 	newBalance, err := updatePoolBalance(token0, token1, absAmount, isToken0)
 	if err != nil {
@@ -102,7 +102,7 @@ func (p *Pool) safeTransfer(
 //
 // )
 func (p *Pool) safeTransferFrom(
-	from, to std.Address,
+	from, to address,
 	tokenPath string,
 	amount *u256.Uint,
 	isToken0 bool,
@@ -112,7 +112,7 @@ func (p *Pool) safeTransferFrom(
 	token := common.GetToken(tokenPath)
 	beforeBalance := token.BalanceOf(to)
 
-	checkTransferError(common.TransferFrom(cross, tokenPath, from, to, amountInt64))
+	common.SafeGRC20TransferFrom(cross, tokenPath, from, to, amountInt64)
 
 	afterBalance := token.BalanceOf(to)
 	if (beforeBalance + amountInt64) != afterBalance {
@@ -141,6 +141,73 @@ func (p *Pool) safeTransferFrom(
 				errBalanceUpdateFailed, p.balances.token1.ToString(), beforeToken1.ToString(),
 			))
 		}
+	}
+}
+
+// safeSwapCallback validates the balance of the token path with the swap callback.
+func (p *Pool) safeSwapCallback(
+	tokenPath string,
+	amount *i256.Int,
+	zeroForOne bool,
+	swapCallback func(cur realm, amount0Delta, amount1Delta string) error,
+) {
+	if swapCallback == nil {
+		panic(makeErrorWithDetails(
+			errInvalidInput,
+			"swapCallback is nil",
+		))
+	}
+
+	currentAddress := runtime.CurrentRealm().Address()
+
+	amountAbs := amount.Abs()
+	balanceBefore := common.BalanceOf(tokenPath, currentAddress)
+
+	// Make callback to the calling contract
+	// The contract should transfer tokens to pool within this callback
+
+	amount0Str := zero.ToString()
+	amount1Str := amountAbs.ToString()
+	beforeTokenBalance := u256.Zero()
+
+	if zeroForOne {
+		amount0Str = amountAbs.ToString()
+		beforeTokenBalance = p.BalanceToken0().Clone()
+	} else {
+		amount1Str = amountAbs.ToString()
+		beforeTokenBalance = p.BalanceToken1().Clone()
+	}
+
+	// execute swap callback
+	err := swapCallback(cross, amount0Str, amount1Str)
+	if err != nil {
+		panic(err)
+	}
+
+	balanceAfter := common.BalanceOf(tokenPath, currentAddress)
+	balanceIncrease := balanceAfter - balanceBefore
+
+	// check insufficient payment by swap callback
+	if balanceIncrease < amountAbs.Int64() {
+		panic(makeErrorWithDetails(
+			errInsufficientPayment,
+			ufmt.Sprintf("insufficient payment: expected %d, received %d", amountAbs.Int64(), balanceIncrease),
+		))
+	}
+
+	// check overflow update pool balance
+	resultTokenBalance, overflow := u256.Zero().AddOverflow(beforeTokenBalance, amountAbs)
+	if overflow {
+		panic(makeErrorWithDetails(
+			errBalanceUpdateFailed,
+			ufmt.Sprintf("overflow: %s + %s", beforeTokenBalance.ToString(), amountAbs.ToString()),
+		))
+	}
+
+	if zeroForOne {
+		p.balances.token0 = resultTokenBalance
+	} else {
+		p.balances.token1 = resultTokenBalance
 	}
 }
 

@@ -1,13 +1,13 @@
 package router
 
 import (
-	"std"
+	"chain/runtime"
 	"strconv"
 	"strings"
 
-	"gno.land/p/demo/ufmt"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
 )
@@ -69,7 +69,7 @@ func (p *SwapProcessor) ProcessMultiSwap(
 	numHops int,
 	amountSpecified *i256.Int,
 ) (*u256.Uint, *u256.Uint, error) {
-	recipient := std.PreviousRealm().Address()
+	recipient := runtime.PreviousRealm().Address()
 	pathIndex := getPathIndex(swapType, numHops)
 
 	input, output, fee := getDataForMultiPath(route, pathIndex)
@@ -190,7 +190,8 @@ func drySwapRoute(
 
 	// adjust amount sign for exact out swaps
 	if swapType == ExactOut {
-		amountSpecified = i256.Zero().Neg(amountSpecified)
+		amountSpecifiedWithRouterFee := calculateExactOutWithRouterFee(amountSpecified.Abs())
+		amountSpecified = i256.Zero().Neg(i256.FromUint256(amountSpecifiedWithRouterFee))
 	}
 
 	// initialize accumulators for swap results
@@ -230,6 +231,14 @@ func drySwapRoute(
 		if err != nil {
 			panic(addDetailToError(errInvalidInput, err.Error()))
 		}
+	}
+
+	// simulate deduct router fee
+	feeAmountInt64 := calculateRouterFee(resultAmountOut)
+
+	resultAmountOut, overflow := u256.Zero().SubOverflow(resultAmountOut, u256.NewUintFromInt64(feeAmountInt64))
+	if overflow {
+		panic(errUnderFlowDeductRouterFee)
 	}
 
 	return processor.ValidateSwapResults(swapType, resultAmountIn, resultAmountOut, amountSpecified, amountLimit)

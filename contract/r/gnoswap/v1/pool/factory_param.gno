@@ -3,7 +3,7 @@ package pool
 import (
 	"strings"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -23,7 +23,7 @@ const (
 
 const (
 	GNOT           string = "gnot"
-	WRAPPED_WUGNOT string = "gno.land/r/demo/wugnot"
+	WRAPPED_WUGNOT string = "gno.land/r/gnoland/wugnot"
 )
 
 const (

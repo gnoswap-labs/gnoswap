@@ -1,11 +1,11 @@
 package referral
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
@@ -53,8 +53,8 @@ func TestReferral_Register(t *testing.T) {
 	tests := []struct {
 		name          string
 		caller        string
-		addr          std.Address
-		refAddr       std.Address
+		addr          address
+		refAddr       address
 		expectedError bool
 		expectedHas   bool
 		expectedRef   string
@@ -131,9 +131,9 @@ func TestReferral_Update(t *testing.T) {
 		name            string
 		caller          string
 		initialRegister bool
-		addr            std.Address
-		initialRefAddr  std.Address
-		updateRefAddr   std.Address
+		addr            address
+		initialRefAddr  address
+		updateRefAddr   address
 		expectedError   bool
 		expectedRef     string
 	}{
@@ -215,8 +215,8 @@ func TestReferral_Get(t *testing.T) {
 		name             string
 		caller           string
 		setupReferral    bool
-		addr             std.Address
-		refAddr          std.Address
+		addr             address
+		refAddr          address
 		expectedError    bool
 		expectedRef      string
 		multipleCallTest bool
@@ -299,8 +299,8 @@ func TestReferral_Has(t *testing.T) {
 		name          string
 		caller        string
 		setupReferral bool
-		addr          std.Address
-		refAddr       std.Address
+		addr          address
+		refAddr       address
 		expectedHas   bool
 	}{
 		{
@@ -359,8 +359,8 @@ func TestReferral_Remove(t *testing.T) {
 		name          string
 		caller        string
 		setupReferral bool
-		addr          std.Address
-		refAddr       std.Address
+		addr          address
+		refAddr       address
 		expectedError bool
 		expectedHas   bool
 	}{
@@ -433,13 +433,13 @@ func setupUnitKeeper() *keeper {
 }
 
 func setupCaller(caller string) func() {
-	origCaller := std.OriginCaller()
+	origCaller := runtime.OriginCaller()
 	switch caller {
 	case "router":
 		routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 		testing.SetOriginCaller(routerAddr)
 	case "unauthorized":
-		testing.SetOriginCaller(std.Address("unauthorized"))
+		testing.SetOriginCaller(address("unauthorized"))
 	}
 	return func() {
 		testing.SetOriginCaller(origCaller)

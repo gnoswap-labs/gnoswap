@@ -2,13 +2,13 @@
 package main
 
 import (
-	"std"
+	"chain/runtime"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
@@ -30,10 +30,10 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
-	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -49,7 +49,7 @@ var (
 
 	depositGnsAmount      int64 = 100000000000
 	TIMESTAMP_90DAYS            = int64(7776000)
-	MUST_EXISTS_IN_TIER_1       = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"
+	MUST_EXISTS_IN_TIER_1       = "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
 )
 
 func main() {
@@ -201,9 +201,9 @@ func stakeToken_1() {
 }
 
 func afterActive() {
-	testing.SkipHeights(978 - std.ChainHeight() - 1) // in active
-	testing.SkipHeights(1)                           // active // but no block passed since active
-	testing.SkipHeights(50)                          // skip 50 more block
+	testing.SkipHeights(978 - runtime.ChainHeight() - 1) // in active
+	testing.SkipHeights(1)                               // active // but no block passed since active
+	testing.SkipHeights(50)                              // skip 50 more block
 
 	testing.SkipHeights(1)
 

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/onbloc/bar"
 )
 
 func TestHandleSwapFee(t *testing.T) {
@@ -47,11 +48,18 @@ func TestHandleSwapFee(t *testing.T) {
 				swapFee = originalSwapFee
 			}()
 
-			result := handleSwapFee(barPath, tt.amount)
+			testing.SetRealm(testing.NewUserRealm(adminAddr))
+			bar.Transfer(cross, routerAddr, tt.amount.Int64())
 
-			if !result.Eq(tt.expectedAmount) {
-				t.Errorf("handleSwapFee() = %v, want %v", result, tt.expectedAmount)
-			}
+			testing.SetRealm(routerRealm)
+
+			func(cur realm) {
+				result := handleSwapFee(barPath, tt.amount)
+
+				if !result.Eq(tt.expectedAmount) {
+					t.Errorf("handleSwapFee() = %v, want %v", result, tt.expectedAmount)
+				}
+			}(cross)
 		})
 	}
 }

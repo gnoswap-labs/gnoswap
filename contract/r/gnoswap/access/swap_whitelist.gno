@@ -1,24 +1,24 @@
 package access
 
 import (
-	"std"
+	"chain/runtime"
 
-	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/ufmt"
 )
 
 // Router whitelist storage
-var swapWhitelist map[std.Address]bool
+var swapWhitelist map[address]bool
 
 func init() {
-	swapWhitelist = make(map[std.Address]bool)
+	swapWhitelist = make(map[address]bool)
 }
 
 // UpdateSwapWhiteList adds a router address to the swap whitelist.
 // Panics if router address is invalid.
 // Only admin or governance can call this function.
-func UpdateSwapWhiteList(cur realm, router std.Address) {
-	caller := std.PreviousRealm().Address()
+func UpdateSwapWhiteList(cur realm, router address) {
+	caller := runtime.PreviousRealm().Address()
 	AssertIsAdminOrGovernance(caller)
 
 	if !router.IsValid() {
@@ -32,8 +32,8 @@ func UpdateSwapWhiteList(cur realm, router std.Address) {
 // RemoveFromSwapWhiteList removes a router address from the swap whitelist.
 // Does nothing if the router is not in the whitelist.
 // Only admin or governance can call this function.
-func RemoveFromSwapWhiteList(cur realm, router std.Address) {
-	caller := std.PreviousRealm().Address()
+func RemoveFromSwapWhiteList(cur realm, router address) {
+	caller := runtime.PreviousRealm().Address()
 	AssertIsAdminOrGovernance(caller)
 
 	delete(swapWhitelist, router)
@@ -41,7 +41,7 @@ func RemoveFromSwapWhiteList(cur realm, router std.Address) {
 
 // IsSwapWhitelisted returns true if the address is either the official router
 // or is in the swap whitelist. Returns false otherwise.
-func IsSwapWhitelisted(addr std.Address) bool {
+func IsSwapWhitelisted(addr address) bool {
 	// Check if it's the official router first
 	//
 	// Note: While it's a common pattern to store the router's address
@@ -59,8 +59,8 @@ func IsSwapWhitelisted(addr std.Address) bool {
 
 // GetWhitelistedSwaps returns all whitelisted router addresses including
 // the official router address if it exists.
-func GetWhitelistedSwaps() []std.Address {
-	routers := make([]std.Address, 0, len(swapWhitelist)+1)
+func GetWhitelistedSwaps() []address {
+	routers := make([]address, 0, len(swapWhitelist)+1)
 
 	// Include official router
 	officialRouter, ok := GetAddress(prbac.ROLE_ROUTER.String())

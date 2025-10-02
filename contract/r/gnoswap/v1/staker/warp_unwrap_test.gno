@@ -1,13 +1,14 @@
 package staker
 
 import (
+	"chain"
+	"chain/banker"
 	"errors"
-	"std"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
-	"gno.land/r/demo/wugnot"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/v1/common"
 )
 
@@ -15,8 +16,8 @@ func TestWrap(t *testing.T) {
 	user1Addr := testutils.TestAddress("user1")
 	tests := []struct {
 		name                  string
-		callerAddr            std.Address
-		toAddr                std.Address
+		callerAddr            address
+		toAddr                address
 		tokenPath             string
 		amount                int64
 		expectedBalanceChange int64
@@ -68,27 +69,27 @@ func TestWrap(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			isNative := tc.tokenPath == "gnot"
-			testing.SetRealm(std.NewUserRealm(tc.callerAddr))
+			testing.SetRealm(testing.NewUserRealm(tc.callerAddr))
 
 			if isNative {
 				ugnotFaucet(t, tc.callerAddr, 1_000)
 
-				testing.SetOriginSend(std.Coins{{ugnotPath, tc.amount}})
-				banker := std.NewBanker(std.BankerTypeRealmSend)
-				banker.SendCoins(tc.callerAddr, tc.toAddr, std.Coins{{ugnotPath, tc.amount}})
+				testing.SetOriginSend(chain.Coins{{ugnotPath, tc.amount}})
+				banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+				banker_.SendCoins(tc.callerAddr, tc.toAddr, chain.Coins{{ugnotPath, tc.amount}})
 			} else {
 				ugnotFaucet(t, tc.callerAddr, 1_000)
 				ugnotDeposit(t, tc.callerAddr, 1_000)
 			}
 
-			testing.SetRealm(std.NewUserRealm(tc.callerAddr))
+			testing.SetRealm(testing.NewUserRealm(tc.callerAddr))
 			wugnot.Approve(cross, tc.toAddr, tc.amount)
 
 			beforeBalance := TokenBalance(t, wugnotPath, tc.toAddr)
 
 			var err error
 			func(cur realm) {
-				testing.SetRealm(std.NewUserRealm(tc.toAddr))
+				testing.SetRealm(testing.NewUserRealm(tc.toAddr))
 				if isNative {
 					err = wrapWithTransfer(tc.toAddr, tc.amount)
 				} else {
@@ -153,20 +154,20 @@ func TestUnwrap(t *testing.T) {
 
 			beforeBalance := TokenBalance(t, wugnotPath, user2Addr)
 			if tc.unwrap {
-				banker := std.NewBanker(std.BankerTypeRealmSend)
-				beforeBalance = banker.GetCoins(user2Addr).AmountOf("ugnot")
+				banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+				beforeBalance = banker_.GetCoins(user2Addr).AmountOf("ugnot")
 			}
 
 			var err error
 			func(cur realm) {
-				testing.SetRealm(std.NewUserRealm(stakerAddr))
+				testing.SetRealm(testing.NewUserRealm(stakerAddr))
 				err = unwrapWithTransfer(user2Addr, tc.amount)
 			}(cross)
 
 			afterBalance := TokenBalance(t, wugnotPath, user2Addr)
 			if tc.unwrap {
-				banker := std.NewBanker(std.BankerTypeRealmSend)
-				afterBalance = banker.GetCoins(user2Addr).AmountOf("ugnot")
+				banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+				afterBalance = banker_.GetCoins(user2Addr).AmountOf("ugnot")
 			}
 
 			if tc.expectedHasPanic {

@@ -1,10 +1,10 @@
 package gns
 
 import (
-	"std"
+	"chain/runtime"
 	"time"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 )
 
 var emissionState *EmissionState
@@ -159,7 +159,7 @@ func NewEmissionState(startHeight int64, startTimestamp int64) *EmissionState {
 // Creates a new instance with current height and timestamp if one doesn't exist.
 func getEmissionState() *EmissionState {
 	if emissionState == nil {
-		emissionState = NewEmissionState(std.ChainHeight(), time.Now().Unix())
+		emissionState = NewEmissionState(runtime.ChainHeight(), time.Now().Unix())
 	}
 
 	return emissionState

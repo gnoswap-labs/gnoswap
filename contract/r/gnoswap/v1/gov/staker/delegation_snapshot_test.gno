@@ -1,10 +1,9 @@
 package staker
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 )
 
 // TestDelegationSnapshot_AddRecord tests adding records to delegation snapshot
@@ -23,7 +22,7 @@ func TestDelegationSnapshot_AddRecord(t *testing.T) {
 				delegationType:   DelegateType,
 				delegateAmount:   100,
 				unDelegateAmount: 0,
-				delegateTo:       std.Address("g1to"),
+				delegateTo:       address("g1to"),
 			},
 			expectedAmount: 100,
 			shouldExist:    true,
@@ -32,7 +31,7 @@ func TestDelegationSnapshot_AddRecord(t *testing.T) {
 			name: "Add undelegate record to existing snapshot",
 			initialSnapshot: DelegationSnapshot{
 				"g1to": &DelegationSnapshotItem{
-					delegatorAddress: std.Address("g1to"),
+					delegatorAddress: address("g1to"),
 					delegationAmount: 100,
 				},
 			},
@@ -40,7 +39,7 @@ func TestDelegationSnapshot_AddRecord(t *testing.T) {
 				delegationType:   UnDelegateType,
 				delegateAmount:   0,
 				unDelegateAmount: 50,
-				delegateTo:       std.Address("g1to"),
+				delegateTo:       address("g1to"),
 			},
 			expectedAmount: 50,
 			shouldExist:    true,
@@ -49,7 +48,7 @@ func TestDelegationSnapshot_AddRecord(t *testing.T) {
 			name: "Add record that results in zero amount",
 			initialSnapshot: DelegationSnapshot{
 				"g1to": &DelegationSnapshotItem{
-					delegatorAddress: std.Address("g1to"),
+					delegatorAddress: address("g1to"),
 					delegationAmount: 100,
 				},
 			},
@@ -57,7 +56,7 @@ func TestDelegationSnapshot_AddRecord(t *testing.T) {
 				delegationType:   UnDelegateType,
 				delegateAmount:   0,
 				unDelegateAmount: 100,
-				delegateTo:       std.Address("g1to"),
+				delegateTo:       address("g1to"),
 			},
 			expectedAmount: 0,
 			shouldExist:    false,
@@ -96,7 +95,7 @@ func TestDelegationSnapshot_SubRecord(t *testing.T) {
 			name: "Subtract delegate record",
 			initialSnapshot: DelegationSnapshot{
 				"g1to": &DelegationSnapshotItem{
-					delegatorAddress: std.Address("g1to"),
+					delegatorAddress: address("g1to"),
 					delegationAmount: 100,
 				},
 			},
@@ -104,7 +103,7 @@ func TestDelegationSnapshot_SubRecord(t *testing.T) {
 				delegationType:   DelegateType,
 				delegateAmount:   50,
 				unDelegateAmount: 0,
-				delegateTo:       std.Address("g1to"),
+				delegateTo:       address("g1to"),
 			},
 			expectedAmount: 50,
 		},
@@ -112,7 +111,7 @@ func TestDelegationSnapshot_SubRecord(t *testing.T) {
 			name: "Subtract undelegate record",
 			initialSnapshot: DelegationSnapshot{
 				"g1to": &DelegationSnapshotItem{
-					delegatorAddress: std.Address("g1to"),
+					delegatorAddress: address("g1to"),
 					delegationAmount: 50,
 				},
 			},
@@ -120,7 +119,7 @@ func TestDelegationSnapshot_SubRecord(t *testing.T) {
 				delegationType:   UnDelegateType,
 				delegateAmount:   0,
 				unDelegateAmount: 30,
-				delegateTo:       std.Address("g1to"),
+				delegateTo:       address("g1to"),
 			},
 			expectedAmount: 80,
 		},
@@ -156,11 +155,11 @@ func TestDelegationSnapshot_Clone(t *testing.T) {
 			name: "Clone snapshot with data",
 			snapshot: DelegationSnapshot{
 				"g1to1": &DelegationSnapshotItem{
-					delegatorAddress: std.Address("g1to1"),
+					delegatorAddress: address("g1to1"),
 					delegationAmount: 100,
 				},
 				"g1to2": &DelegationSnapshotItem{
-					delegatorAddress: std.Address("g1to2"),
+					delegatorAddress: address("g1to2"),
 					delegationAmount: 200,
 				},
 			},
@@ -188,19 +187,19 @@ func TestDelegationSnapshot_Clone(t *testing.T) {
 func TestDelegationSnapshotItem_Methods(t *testing.T) {
 	tests := []struct {
 		name             string
-		delegatorAddress std.Address
+		delegatorAddress address
 		delegationAmount int64
 		expectedEmpty    bool
 	}{
 		{
 			name:             "Non-empty snapshot item",
-			delegatorAddress: std.Address("g1delegator"),
+			delegatorAddress: address("g1delegator"),
 			delegationAmount: 100,
 			expectedEmpty:    false,
 		},
 		{
 			name:             "Empty snapshot item",
-			delegatorAddress: std.Address("g1delegator"),
+			delegatorAddress: address("g1delegator"),
 			delegationAmount: 0,
 			expectedEmpty:    true,
 		},

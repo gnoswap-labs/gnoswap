@@ -1,13 +1,13 @@
 package gnft
 
 import (
-	"std"
+	"chain/runtime"
 	"strings"
 	"testing"
 
-	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 
 	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
 )
@@ -18,16 +18,16 @@ const (
 
 var (
 	positionPath  = "gno.land/r/gnoswap/v1/position"
-	positionRealm = std.NewCodeRealm(positionPath)
+	positionRealm = testing.NewCodeRealm(positionPath)
 
 	stakerPath  = "gno.land/r/gnoswap/v1/staker"
-	stakerRealm = std.NewCodeRealm(stakerPath)
+	stakerRealm = testing.NewCodeRealm(stakerPath)
 
 	addr01      = testutils.TestAddress("addr01")
-	addr01Realm = std.NewUserRealm(addr01)
+	addr01Realm = testing.NewUserRealm(addr01)
 
 	addr02      = testutils.TestAddress("addr02")
-	addr02Realm = std.NewUserRealm(addr02)
+	addr02Realm = testing.NewUserRealm(addr02)
 )
 
 func TestMetadata(t *testing.T) {
@@ -54,7 +54,7 @@ func TestBalanceOf(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		addr     std.Address
+		addr     address
 		expected int64
 	}{
 		{"BalanceOf(addr01)", addr01, 1},
@@ -116,7 +116,7 @@ func TestOwnerOf(t *testing.T) {
 		tokenId     uint64
 		shouldPanic bool
 		panicMsg    string
-		expected    std.Address
+		expected    address
 	}{
 		// {"OwnerOf(1)", 1, false, "", addr01},
 		{"OwnerOf(500)", 500, false, errInvalidTokenId, addr01},
@@ -172,7 +172,7 @@ func TestIsApprovedForAll(t *testing.T) {
 func TestSetTokenURI(t *testing.T) {
 	tests := []struct {
 		name             string
-		callerRealm      std.Realm
+		callerRealm      runtime.Realm
 		tokenId          uint64
 		expectedHasAbort bool
 		expectedErrMsg   string
@@ -229,7 +229,7 @@ func TestGetApproved(t *testing.T) {
 		name         string
 		setup        func(cur realm)
 		tokenId      uint64
-		expectedAddr std.Address
+		expectedAddr address
 		shouldError  bool
 		errorMsg     string
 	}{
@@ -298,13 +298,13 @@ func TestTransferFrom(t *testing.T) {
 	tests := []struct {
 		name              string
 		setup             func(cur realm)
-		callerRealm       std.Realm
-		fromAddr          std.Address
-		toAddr            std.Address
+		callerRealm       runtime.Realm
+		fromAddr          address
+		toAddr            address
 		tokenIdToTransfer uint64
 		shouldPanic       bool
 		panicMsg          string
-		expected          std.Address
+		expected          address
 	}{
 		{
 			name:              "transfer non-existent token id",
@@ -349,7 +349,7 @@ func TestTransferFrom(t *testing.T) {
 		{
 			name:              "transfer from is invalid address",
 			callerRealm:       stakerRealm,
-			fromAddr:          std.Address(""),
+			fromAddr:          address(""),
 			toAddr:            addr02,
 			tokenIdToTransfer: 1,
 			shouldPanic:       true,
@@ -359,7 +359,7 @@ func TestTransferFrom(t *testing.T) {
 			name:              "transfer to is invalid address",
 			callerRealm:       stakerRealm,
 			fromAddr:          addr01,
-			toAddr:            std.Address("this_is_invalid_address"),
+			toAddr:            address("this_is_invalid_address"),
 			tokenIdToTransfer: 1,
 			shouldPanic:       true,
 			panicMsg:          "[GNOSWAP-GNFT-004] invalid addresss || to address (this_is_invalid_address)",
@@ -397,9 +397,9 @@ func TestTransferFrom(t *testing.T) {
 func TestMint(t *testing.T) {
 	tests := []struct {
 		name            string
-		callerRealm     std.Realm
+		callerRealm     runtime.Realm
 		tokenIdToMint   uint64
-		addressToMint   std.Address
+		addressToMint   address
 		shouldPanic     bool
 		panicMsg        string
 		expected        string
@@ -465,7 +465,7 @@ func TestMint(t *testing.T) {
 func TestBurn(t *testing.T) {
 	tests := []struct {
 		name            string
-		callerRealm     std.Realm
+		callerRealm     runtime.Realm
 		tokenIdToBurn   uint64
 		expectedBalance int64
 		shouldPanic     bool
@@ -479,7 +479,7 @@ func TestBurn(t *testing.T) {
 		},
 		{
 			name:            "burn without permission",
-			callerRealm:     std.NewUserRealm(addr01),
+			callerRealm:     testing.NewUserRealm(addr01),
 			tokenIdToBurn:   1,
 			expectedBalance: 1,
 			shouldPanic:     true,
@@ -571,7 +571,7 @@ func TestMustOwnerOf(t *testing.T) {
 		tokenId     uint64
 		shouldPanic bool
 		panicMsg    string
-		expected    std.Address
+		expected    address
 	}{
 		{
 			name:        "valid token",
@@ -609,9 +609,9 @@ func TestSafeTransferFrom(t *testing.T) {
 	tests := []struct {
 		name        string
 		setup       func(cur realm)
-		callerRealm std.Realm
-		from        std.Address
-		to          std.Address
+		callerRealm runtime.Realm
+		from        address
+		to          address
 		tokenId     uint64
 		shouldPanic bool
 		panicMsg    string
@@ -654,7 +654,7 @@ func TestSafeTransferFrom(t *testing.T) {
 			name:        "transfer to zero address",
 			callerRealm: stakerRealm,
 			from:        addr01,
-			to:          std.Address(""),
+			to:          address(""),
 			tokenId:     1,
 			shouldPanic: true,
 			panicMsg:    "[GNOSWAP-GNFT-004] invalid addresss || to address ()",
@@ -769,8 +769,8 @@ func TestApprove(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		callerRealm std.Realm
-		approved    std.Address
+		callerRealm runtime.Realm
+		approved    address
 		tokenId     uint64
 		shouldPanic bool
 		panicMsg    string

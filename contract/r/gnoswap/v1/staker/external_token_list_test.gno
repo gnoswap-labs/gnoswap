@@ -1,12 +1,11 @@
 package staker
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
+	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/access"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -15,7 +14,7 @@ import (
 func TestAddToken(t *testing.T) {
 	tests := []struct {
 		name                  string
-		caller                std.Address
+		caller                address
 		inputTokenPath        string
 		expectedAllowedTokens []string
 		expectedHasAbort      bool
@@ -96,7 +95,7 @@ func TestRemoveToken(t *testing.T) {
 
 	tests := []struct {
 		name                  string
-		caller                std.Address
+		caller                address
 		inputTokenPath        string
 		expectedAllowedTokens []string
 		expectedHasAbort      bool
@@ -133,7 +132,7 @@ func TestRemoveToken(t *testing.T) {
 			expectedPanicMsg:      "",
 		},
 		{
-			// XXX: When removing a non-existent token, it is necessary to confirm that the operation was successful.
+			// NOTE: When removing a non-existent token, it is necessary to confirm that the operation was successful.
 			name:                  "remove token failed by not existing token",
 			caller:                getAdminAddress(t),
 			inputTokenPath:        "not-existing-token",
@@ -182,7 +181,7 @@ func TestRemoveToken(t *testing.T) {
 func TestModifyTokenList(t *testing.T) {
 	tests := []struct {
 		name                  string
-		caller                std.Address
+		caller                address
 		inputTokenPath        string
 		inputValidator        TokenValidator
 		inputExecutor         TokenExecutor
@@ -258,16 +257,16 @@ func setupExternalTokenListGovernancePermission(t *testing.T) {
 	setupExternalDepositFeePermission(t, addr, "governance")
 }
 
-func setupExternalTokenListPermission(t *testing.T, caller std.Address, permissionName string) {
+func setupExternalTokenListPermission(t *testing.T, caller address, permissionName string) {
 	t.Helper()
 
 	testing.SetOriginCaller(caller)
-	testing.SetRealm(std.NewUserRealm(caller))
+	testing.SetRealm(testing.NewUserRealm(caller))
 }
 
-func setupExternalDepositFeePermission(t *testing.T, caller std.Address, permissionName string) {
+func setupExternalDepositFeePermission(t *testing.T, caller address, permissionName string) {
 	t.Helper()
 
 	testing.SetOriginCaller(caller)
-	testing.SetRealm(std.NewUserRealm(caller))
+	testing.SetRealm(testing.NewUserRealm(caller))
 }

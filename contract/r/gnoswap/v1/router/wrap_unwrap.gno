@@ -1,16 +1,18 @@
 package router
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
+	"chain/runtime"
 
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoland/wugnot"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 )
 
 const (
 	UGNOT_MIN_DEPOSIT_TO_WRAP int64 = 1000
-	WUGNOT_PATH                     = "gno.land/r/demo/wugnot"
+	WUGNOT_PATH                     = "gno.land/r/gnoland/wugnot"
 	GNOT                            = "gnot"
 	GNOT_DENOM                      = "ugnot"
 )
@@ -21,7 +23,7 @@ var (
 )
 
 // wrapWithTransfer wraps GNOT into WUGNOT and transfers it to the specified address.
-func wrapWithTransfer(toAddress std.Address, amount int64) error {
+func wrapWithTransfer(toAddress address, amount int64) error {
 	if amount <= 0 {
 		return nil
 	}
@@ -34,9 +36,9 @@ func wrapWithTransfer(toAddress std.Address, amount int64) error {
 	}
 
 	// transfer ugnot from fromAddress to current realm
-	currentRealmAddr := std.CurrentRealm().Address()
+	currentRealmAddr := runtime.CurrentRealm().Address()
 
-	sentCoins := std.OriginSend()
+	sentCoins := banker.OriginSend()
 	ugnotSent := sentCoins.AmountOf(GNOT_DENOM)
 	if ugnotSent != amount {
 		return makeErrorWithDetails(
@@ -46,9 +48,9 @@ func wrapWithTransfer(toAddress std.Address, amount int64) error {
 	}
 
 	// wrap gnot to wugnot
-	wugnotAddr := std.DerivePkgAddr(WUGNOT_PATH)
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(currentRealmAddr, wugnotAddr, sentCoins)
+	wugnotAddr := chain.PackageAddress(WUGNOT_PATH)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_.SendCoins(currentRealmAddr, wugnotAddr, sentCoins)
 	wugnot.Deposit(cross)
 
 	// if to address is not current realm, transfer wugnot to to address
@@ -60,27 +62,27 @@ func wrapWithTransfer(toAddress std.Address, amount int64) error {
 }
 
 // unwrapWithTransferFrom transfers WUGNOT from a source address, unwraps it to GNOT, and sends it to the target.
-func unwrapWithTransferFrom(fromAddress, toAddress std.Address, wugnotAmount int64) error {
+func unwrapWithTransferFrom(fromAddress, toAddress address, wugnotAmount int64) error {
 	if wugnotAmount == 0 {
 		return nil
 	}
 
-	currentRealmAddr := std.CurrentRealm().Address()
+	currentRealmAddr := runtime.CurrentRealm().Address()
 	if fromAddress != currentRealmAddr {
 		wugnot.TransferFrom(cross, fromAddress, currentRealmAddr, wugnotAmount)
 	}
 
 	wugnot.Withdraw(cross, wugnotAmount)
 
-	sendCoins := std.Coins{{Denom: GNOT_DENOM, Amount: wugnotAmount}}
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(currentRealmAddr, toAddress, sendCoins)
+	sendCoins := chain.Coins{{Denom: GNOT_DENOM, Amount: wugnotAmount}}
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_.SendCoins(currentRealmAddr, toAddress, sendCoins)
 
 	return nil
 }
 
 // unwrapWithTransfer unwraps WUGNOT to GNOT and sends it to the specified address.
-func unwrapWithTransfer(toAddress std.Address, amount int64) error {
+func unwrapWithTransfer(toAddress address, amount int64) error {
 	if amount <= 0 {
 		return nil
 	}
@@ -89,10 +91,10 @@ func unwrapWithTransfer(toAddress std.Address, amount int64) error {
 	wugnot.Withdraw(cross, amount)
 
 	// send gnot to user
-	sendCoins := std.Coins{{Denom: GNOT_DENOM, Amount: amount}}
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	currentRealmAddr := std.CurrentRealm().Address()
-	banker.SendCoins(currentRealmAddr, toAddress, sendCoins)
+	sendCoins := chain.Coins{{Denom: GNOT_DENOM, Amount: amount}}
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	currentRealmAddr := runtime.CurrentRealm().Address()
+	banker_.SendCoins(currentRealmAddr, toAddress, sendCoins)
 
 	return nil
 }

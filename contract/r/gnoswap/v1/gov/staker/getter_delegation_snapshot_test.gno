@@ -1,10 +1,9 @@
 package staker
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/uassert"
 )
 
 // Test GetDelegationSnapshots
@@ -32,7 +31,7 @@ func TestGetDelegationSnapshots(t *testing.T) {
 				delegationSnapshots = make(DelegationSnapshot)
 				delegationSnapshots["user1"] = &DelegationSnapshotItem{
 					delegationAmount: 1000,
-					delegatorAddress: std.Address("user1"),
+					delegatorAddress: address("user1"),
 				}
 
 				// Setup delegation history
@@ -40,8 +39,8 @@ func TestGetDelegationSnapshots(t *testing.T) {
 
 				// Add a delegation record after snapshot time
 				record := &DelegationRecord{
-					delegateFrom:   std.Address("user1"),
-					delegateTo:     std.Address("validator1"),
+					delegateFrom:   address("user1"),
+					delegateTo:     address("validator1"),
 					delegateAmount: 500,
 					delegationType: DelegateType,
 					createdAt:      150, // After snapshot time
@@ -58,7 +57,7 @@ func TestGetDelegationSnapshots(t *testing.T) {
 				delegationSnapshots = make(DelegationSnapshot)
 				delegationSnapshots["user1"] = &DelegationSnapshotItem{
 					delegationAmount: 1500,
-					delegatorAddress: std.Address("user1"),
+					delegatorAddress: address("user1"),
 				}
 
 				// Setup delegation history with records before snapshot time
@@ -66,8 +65,8 @@ func TestGetDelegationSnapshots(t *testing.T) {
 
 				// Add a delegation record before snapshot time (should be subtracted)
 				record := &DelegationRecord{
-					delegateFrom:   std.Address("user1"),
-					delegateTo:     std.Address("validator1"),
+					delegateFrom:   address("user1"),
+					delegateTo:     address("validator1"),
 					delegateAmount: 500,
 					delegationType: DelegateType,
 					createdAt:      50, // Before snapshot time
@@ -84,11 +83,11 @@ func TestGetDelegationSnapshots(t *testing.T) {
 				delegationSnapshots = make(DelegationSnapshot)
 				delegationSnapshots["user1"] = &DelegationSnapshotItem{
 					delegationAmount: 2000,
-					delegatorAddress: std.Address("user1"),
+					delegatorAddress: address("user1"),
 				}
 				delegationSnapshots["user2"] = &DelegationSnapshotItem{
 					delegationAmount: 1000,
-					delegatorAddress: std.Address("user2"),
+					delegatorAddress: address("user2"),
 				}
 
 				// Setup delegation history with multiple records
@@ -96,24 +95,24 @@ func TestGetDelegationSnapshots(t *testing.T) {
 
 				// Records before snapshot time (should be subtracted)
 				record1 := &DelegationRecord{
-					delegateFrom:   std.Address("user1"),
-					delegateTo:     std.Address("validator1"),
+					delegateFrom:   address("user1"),
+					delegateTo:     address("validator1"),
 					delegateAmount: 300,
 					delegationType: DelegateType,
 					createdAt:      30,
 				}
 
 				record2 := &DelegationRecord{
-					delegateFrom:   std.Address("user1"),
-					delegateTo:     std.Address("validator1"),
+					delegateFrom:   address("user1"),
+					delegateTo:     address("validator1"),
 					delegateAmount: 200,
 					delegationType: DelegateType,
 					createdAt:      70,
 				}
 
 				record3 := &DelegationRecord{
-					delegateFrom:   std.Address("user2"),
-					delegateTo:     std.Address("validator2"),
+					delegateFrom:   address("user2"),
+					delegateTo:     address("validator2"),
 					delegateAmount: 100,
 					delegationType: DelegateType,
 					createdAt:      80,
@@ -121,8 +120,8 @@ func TestGetDelegationSnapshots(t *testing.T) {
 
 				// Record after snapshot time (should not be subtracted)
 				record4 := &DelegationRecord{
-					delegateFrom:   std.Address("user1"),
-					delegateTo:     std.Address("validator1"),
+					delegateFrom:   address("user1"),
+					delegateTo:     address("validator1"),
 					delegateAmount: 400,
 					delegationType: DelegateType,
 					createdAt:      150,
@@ -143,15 +142,15 @@ func TestGetDelegationSnapshots(t *testing.T) {
 				delegationSnapshots = make(DelegationSnapshot)
 				delegationSnapshots["user1"] = &DelegationSnapshotItem{
 					delegationAmount: 1000,
-					delegatorAddress: std.Address("user1"),
+					delegatorAddress: address("user1"),
 				}
 
 				// Setup delegation history with undelegate record
 				delegationHistory = make(DelegationHistory, 0)
 
 				record := &DelegationRecord{
-					delegateFrom:   std.Address("user1"),
-					delegateTo:     std.Address("validator1"),
+					delegateFrom:   address("user1"),
+					delegateTo:     address("validator1"),
 					delegateAmount: 300,
 					delegationType: UnDelegateType, // Undelegate
 					createdAt:      50,
@@ -203,14 +202,14 @@ func TestGetDelegationSnapshots_SpecificScenarios(t *testing.T) {
 				// Current snapshot shows 1000 delegated
 				delegationSnapshots["user1"] = &DelegationSnapshotItem{
 					delegationAmount: 1000,
-					delegatorAddress: std.Address("user1"),
+					delegatorAddress: address("user1"),
 				}
 
 				// But there was a delegate of 200 at time 50
 				// So at time 100, it should be 1000
 				record := &DelegationRecord{
-					delegateFrom:   std.Address("user1"),
-					delegateTo:     std.Address("validator1"),
+					delegateFrom:   address("user1"),
+					delegateTo:     address("validator1"),
 					delegateAmount: 200,
 					delegationType: DelegateType,
 					createdAt:      50,
@@ -231,14 +230,14 @@ func TestGetDelegationSnapshots_SpecificScenarios(t *testing.T) {
 				// Current snapshot shows 1000 delegated
 				delegationSnapshots["user1"] = &DelegationSnapshotItem{
 					delegationAmount: 1000,
-					delegatorAddress: std.Address("user1"),
+					delegatorAddress: address("user1"),
 				}
 
 				// But there was a delegate of 200 at time 50
 				// So at time 100, it should be 1000
 				record := &DelegationRecord{
-					delegateFrom:   std.Address("user1"),
-					delegateTo:     std.Address("user1"),
+					delegateFrom:   address("user1"),
+					delegateTo:     address("user1"),
 					delegateAmount: 200,
 					delegationType: DelegateType,
 					createdAt:      150,
@@ -259,14 +258,14 @@ func TestGetDelegationSnapshots_SpecificScenarios(t *testing.T) {
 				// Current snapshot shows 500 delegated
 				delegationSnapshots["user1"] = &DelegationSnapshotItem{
 					delegationAmount: 500,
-					delegatorAddress: std.Address("user1"),
+					delegatorAddress: address("user1"),
 				}
 
 				// But there was an undelegate of 100 at time 50
 				// So at time 100, it should be 500 + 100 = 600 (we add back the undelegate)
 				record := &DelegationRecord{
-					delegateFrom:   std.Address("user1"),
-					delegateTo:     std.Address("validator1"),
+					delegateFrom:   address("user1"),
+					delegateTo:     address("validator1"),
 					delegateAmount: 100,
 					delegationType: UnDelegateType,
 					createdAt:      50,
@@ -322,8 +321,8 @@ func TestGetDelegationSnapshots_EdgeCases(t *testing.T) {
 				delegationSnapshots = make(DelegationSnapshot)
 
 				record := &DelegationRecord{
-					delegateFrom:   std.Address("user1"),
-					delegateTo:     std.Address("validator1"),
+					delegateFrom:   address("user1"),
+					delegateTo:     address("validator1"),
 					delegateAmount: 100,
 					delegationType: DelegateType,
 					createdAt:      50,
@@ -340,8 +339,8 @@ func TestGetDelegationSnapshots_EdgeCases(t *testing.T) {
 				delegationSnapshots = make(DelegationSnapshot)
 
 				record := &DelegationRecord{
-					delegateFrom:   std.Address("user1"),
-					delegateTo:     std.Address("validator1"),
+					delegateFrom:   address("user1"),
+					delegateTo:     address("validator1"),
 					delegateAmount: 100,
 					delegationType: DelegateType,
 					createdAt:      1000,

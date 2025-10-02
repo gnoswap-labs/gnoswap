@@ -1,10 +1,8 @@
 package staker
 
 import (
-	"std"
-
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/emission"
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
@@ -204,7 +202,7 @@ func removeDelegation(delegationID int64) bool {
 //
 // Returns:
 //   - []*Delegation: list of user's delegations
-func getUserDelegations(user std.Address) (delegations []*Delegation) {
+func getUserDelegations(user address) (delegations []*Delegation) {
 	for _, delegationID := range delegationManager.GetUserDelegationIDs(user) {
 		delegations = append(delegations, getDelegation(delegationID))
 	}
@@ -220,7 +218,7 @@ func getUserDelegations(user std.Address) (delegations []*Delegation) {
 //
 // Returns:
 //   - []*Delegation: list of user's delegations to the delegatee
-func getUserDelegationsWithDelegatee(user std.Address, delegatee std.Address) (delegations []*Delegation) {
+func getUserDelegationsWithDelegatee(user address, delegatee address) (delegations []*Delegation) {
 	for _, delegationID := range delegationManager.GetUserDelegationIDs(user) {
 		delegations = append(delegations, getDelegation(delegationID))
 	}

@@ -1,14 +1,15 @@
 // edge case fee tier boundary tick positions
 
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/ufmt"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
@@ -32,13 +33,13 @@ const INT64_MAX int64 = 9223372036854775807
 
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
 
 	aliceAddr  = testutils.TestAddress("alice")
-	aliceRealm = std.NewUserRealm(aliceAddr)
+	aliceRealm = testing.NewUserRealm(aliceAddr)
 
 	barPath = "gno.land/r/onbloc/bar"
 	bazPath = "gno.land/r/onbloc/baz"

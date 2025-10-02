@@ -1,7 +1,5 @@
 package staker
 
-import "std"
-
 // Error message constants
 const (
 	errCollectAmountExceedsCollectable = "amount to collect is greater than collectable amount"
@@ -26,8 +24,8 @@ type Delegation struct {
 	delegateAmount   int64
 	unDelegateAmount int64
 	collectedAmount  int64
-	delegateFrom     std.Address
-	delegateTo       std.Address
+	delegateFrom     address
+	delegateTo       address
 	createdHeight    int64
 	createdAt        int64
 	withdraws        []*DelegationWithdraw
@@ -36,7 +34,7 @@ type Delegation struct {
 // NewDelegation creates a new delegation
 func NewDelegation(
 	id int64,
-	delegateFrom, delegateTo std.Address,
+	delegateFrom, delegateTo address,
 	delegateAmount, createdHeight, createdAt int64,
 ) *Delegation {
 	return &Delegation{
@@ -53,10 +51,10 @@ func NewDelegation(
 }
 
 // Basic getters
-func (d *Delegation) ID() int64                 { return d.id }
-func (d *Delegation) DelegateFrom() std.Address { return d.delegateFrom }
-func (d *Delegation) DelegateTo() std.Address   { return d.delegateTo }
-func (d *Delegation) CreatedAt() int64          { return d.createdAt }
+func (d *Delegation) ID() int64             { return d.id }
+func (d *Delegation) DelegateFrom() address { return d.delegateFrom }
+func (d *Delegation) DelegateTo() address   { return d.delegateTo }
+func (d *Delegation) CreatedAt() int64      { return d.createdAt }
 
 // Amount getters
 func (d *Delegation) TotalDelegatedAmount() int64 { return d.delegateAmount }

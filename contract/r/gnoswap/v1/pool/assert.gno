@@ -1,10 +1,19 @@
 package pool
 
 import (
-	"std"
+	"chain/runtime"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 )
+
+func assertIsNotAllowedEOA(previousRealm runtime.Realm) {
+	if previousRealm.PkgPath() == "" {
+		panic(newErrorWithDetail(
+			errNotAccessEOA,
+			ufmt.Sprintf("previousRealm(%s) is EOA", previousRealm.Address()),
+		))
+	}
+}
 
 // assertIsNotEqualsTokens asserts that the token0Path and token1Path are not equal.
 func assertIsNotEqualsTokens(token0Path, token1Path string) {
@@ -55,11 +64,20 @@ func assertAmountSpecifiedIsNotZero(amountSpecified string) {
 	}
 }
 
-func assertPayerIsPreviousRealmOrOriginCaller(payer std.Address) {
-	if payer != std.PreviousRealm().Address() && payer != std.OriginCaller() {
+func assertPayerIsPreviousRealmOrOriginCaller(payer address) {
+	if payer != runtime.PreviousRealm().Address() && payer != runtime.OriginCaller() {
 		panic(newErrorWithDetail(
 			errInvalidPayer,
 			ufmt.Sprintf("expected payer(%s) to be the previous realm or the caller", payer),
+		))
+	}
+}
+
+func assertIsValidTokenOrder(token0Path, token1Path string) {
+	if token0Path >= token1Path {
+		panic(newErrorWithDetail(
+			errInvalidInput,
+			ufmt.Sprintf("expected token0Path(%s) < token1Path(%s)", token0Path, token1Path),
 		))
 	}
 }

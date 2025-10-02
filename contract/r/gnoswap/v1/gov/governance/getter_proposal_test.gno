@@ -1,11 +1,10 @@
 package governance
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/uassert"
 )
 
 // TestGetterProposal_All tests all getter functions related to Proposal using table-driven tests.
@@ -24,7 +23,7 @@ func TestGetterProposal_All(t *testing.T) {
 			proposalId: 1,
 			proposal: &Proposal{
 				id:            1,
-				proposer:      std.Address("g1proposer"),
+				proposer:      address("g1proposer"),
 				configVersion: 42,
 				status: &ProposalStatus{
 					voteStatus: &ProposalVoteStatus{
@@ -44,7 +43,7 @@ func TestGetterProposal_All(t *testing.T) {
 			proposalId: 1,
 			proposal: &Proposal{
 				id:            1,
-				proposer:      std.Address("g1proposer"),
+				proposer:      address("g1proposer"),
 				configVersion: 42,
 				status: &ProposalStatus{
 					voteStatus: &ProposalVoteStatus{

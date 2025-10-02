@@ -4,11 +4,10 @@
 package main
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
@@ -21,6 +20,8 @@ var (
 	apiServiceAddr      = testutils.TestAddress("api_service")
 	databaseServiceAddr = testutils.TestAddress("database_service")
 	frontendServiceAddr = testutils.TestAddress("frontend_service")
+	authServiceAddr     = testutils.TestAddress("auth_service")
+	loggingServiceAddr  = testutils.TestAddress("logging_service")
 
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 
@@ -56,31 +57,22 @@ func initializeRBACForMicroservices() {
 	// Step 1: Register essential microservice roles
 	println("[INFO] registering microservice roles")
 
-	serviceRoles := []string{
-		"api_gateway",
-		"database_service",
-		"frontend_service",
-		"auth_service",
-		"logging_service",
-	}
-
-	for _, role := range serviceRoles {
-		err := testManager.RegisterRole(role)
-		uassert.NoError(t, err)
-		println("[INFO] registered role:", role)
+	serviceRoles := map[string]address{
+		"api_gateway":      apiServiceAddr,
+		"database_service": databaseServiceAddr,
+		"frontend_service": frontendServiceAddr,
+		"auth_service":     authServiceAddr,
+		"logging_service":  loggingServiceAddr,
 	}
 
 	// Step 2: Assign addresses to critical services
 	println("[INFO] assigning addresses to services")
 
-	err := testManager.UpdateRoleAddress("api_gateway", apiServiceAddr)
-	uassert.NoError(t, err)
-
-	err = testManager.UpdateRoleAddress("database_service", databaseServiceAddr)
-	uassert.NoError(t, err)
-
-	err = testManager.UpdateRoleAddress("frontend_service", frontendServiceAddr)
-	uassert.NoError(t, err)
+	for role, addr := range serviceRoles {
+		err := testManager.RegisterRole(role, addr)
+		uassert.NoError(t, err)
+		println("[INFO] registered role:", role)
+	}
 
 	println("[EXPECTED] microservices RBAC initialization completed")
 }
@@ -130,7 +122,7 @@ func testDynamicRoleUpdates() {
 	newFrontendAddr := testutils.TestAddress("new_frontend_service")
 
 	// Update to new address
-	err = testManager.UpdateRoleAddress("frontend_service", newFrontendAddr)
+	err = testManager.UpdateRoleAddress("frontend_service", 1, newFrontendAddr)
 	uassert.NoError(t, err)
 
 	// Verify old address is no longer authorized
@@ -177,7 +169,7 @@ func testServiceDecommissioning() {
 	// Step 2: Verify other services are unaffected
 	println("[INFO] verifying other services remain operational")
 
-	remainingServices := map[string]std.Address{
+	remainingServices := map[string]address{
 		"api_gateway":      apiServiceAddr,
 		"database_service": databaseServiceAddr,
 		"frontend_service": frontendServiceAddr,
@@ -195,12 +187,12 @@ func testServiceDecommissioning() {
 // Output:
 // [SCENARIO] 1. Initialize RBAC for microservices
 // [INFO] registering microservice roles
+// [INFO] assigning addresses to services
 // [INFO] registered role: api_gateway
 // [INFO] registered role: database_service
 // [INFO] registered role: frontend_service
 // [INFO] registered role: auth_service
 // [INFO] registered role: logging_service
-// [INFO] assigning addresses to services
 // [EXPECTED] microservices RBAC initialization completed
 //
 // [SCENARIO] 2. Service Role Authorization Check
@@ -220,7 +212,7 @@ func testServiceDecommissioning() {
 //
 // [SCENARIO] 4. Service Decommissioning
 // [INFO] decommissioning unused service
-// [INFO] logging service address before removal:
+// [INFO] logging service address before removal: g1d3hkwemfden47um9wfmxjcm9ta047h6ly32d8n
 // [INFO] service role successfully removed
 // [INFO] authorization denied for removed service: true
 // [INFO] verifying other services remain operational

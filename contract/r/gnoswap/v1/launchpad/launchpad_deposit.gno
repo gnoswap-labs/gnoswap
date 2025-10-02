@@ -1,7 +1,8 @@
 package launchpad
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 	"time"
 
 	"gno.land/r/gnoswap/access"
@@ -22,9 +23,9 @@ import (
 //
 // Returns deposit ID.
 func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, referrer string) string {
-	halt.AssertIsNotHaltedLaunchpad()
+	halt.AssertIsNotHaltedLaunchpadWithVersion(1)
 
-	previousRealm := std.PreviousRealm()
+	previousRealm := runtime.PreviousRealm()
 	access.AssertIsUser(previousRealm)
 
 	assertIsValidAmount(depositAmount)
@@ -44,11 +45,11 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 
 	actualReferrer, success := registerReferral(referrer, caller)
 	if !success {
-		actualReferrer = referral.GetReferral(std.PreviousRealm().Address().String())
+		actualReferrer = referral.GetReferral(runtime.PreviousRealm().Address().String())
 	}
 
 	if isFirstDeposit {
-		std.Emit(
+		chain.Emit(
 			"FirstDepositForProjectTier",
 			"prevAddr", previousRealm.Address().String(),
 			"prevRealm", previousRealm.PkgPath(),
@@ -60,7 +61,7 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 		)
 	}
 
-	std.Emit(
+	chain.Emit(
 		"DepositGns",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -71,7 +72,7 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 		"referrer", actualReferrer,
 	)
 
-	launchpadAddress := std.CurrentRealm().Address()
+	launchpadAddress := runtime.CurrentRealm().Address()
 
 	// stake governance token to the project
 	err = stakeGovernance(projectID, depositAmount, launchpadAddress, caller)
@@ -87,14 +88,14 @@ func depositGns(
 	projectID string,
 	tierDuration int64,
 	depositAmount int64,
-	callerAddress std.Address,
+	callerAddress address,
 ) (*Deposit, *RewardState, bool, string, error) {
 	project, err := getProject(projectID)
 	if err != nil {
 		return nil, nil, false, "", err
 	}
 
-	balanceOfFn := func(tokenPath string, caller std.Address) int64 {
+	balanceOfFn := func(tokenPath string, caller address) int64 {
 		if tokenPath == GOV_XGNS_PATH {
 			return xgns.BalanceOf(caller)
 		}
@@ -113,7 +114,7 @@ func depositGns(
 	}
 
 	currentTime := time.Now().Unix()
-	currentHeight := std.ChainHeight()
+	currentHeight := runtime.ChainHeight()
 
 	if !projectTier.isActivated(currentTime) {
 		return nil, nil, false, "", makeErrorWithDetails(errInactiveProject, projectID)
@@ -156,7 +157,7 @@ func depositGns(
 }
 
 // registerReferral registers a referral for a caller.
-func registerReferral(referrer string, callerAddress std.Address) (string, bool) {
+func registerReferral(referrer string, callerAddress address) (string, bool) {
 	success := referral.TryRegister(cross, callerAddress, referrer)
 	actualReferrer := referrer
 	if !success {
@@ -167,7 +168,7 @@ func registerReferral(referrer string, callerAddress std.Address) (string, bool)
 }
 
 // stakeGovernance stakes governance token to the project.
-func stakeGovernance(projectID string, depositAmount int64, launchpadAddress std.Address, callerAddress std.Address) error {
+func stakeGovernance(projectID string, depositAmount int64, launchpadAddress address, callerAddress address) error {
 	project, err := getProject(projectID)
 	if err != nil {
 		return err

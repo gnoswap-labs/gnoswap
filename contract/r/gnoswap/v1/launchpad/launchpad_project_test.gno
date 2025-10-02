@@ -1,14 +1,14 @@
 package launchpad
 
 import (
-	"std"
+	"chain/runtime"
 	"strings"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/onbloc/obl"
@@ -27,7 +27,7 @@ func TestCreateProject(t *testing.T) {
 		name                 string
 		projectName          string
 		tokenPath            string
-		recipient            std.Address
+		recipient            address
 		depositAmount        int64
 		conditionTokens      string
 		conditionAmounts     string
@@ -35,7 +35,7 @@ func TestCreateProject(t *testing.T) {
 		tier90Ratio          int64
 		tier180Ratio         int64
 		startTime            int64
-		callerAddress        std.Address
+		callerAddress        address
 		averageBlockTimeMs   int64
 		expectedProjectID    string
 		expectedStartHeight  int64
@@ -56,7 +56,7 @@ func TestCreateProject(t *testing.T) {
 			startTime:            time.Now().Unix() + 3600, // 1 hour
 			callerAddress:        adminAddr,
 			expectedProjectID:    "gno.land/r/onbloc/obl:123",
-			expectedStartHeight:  std.ChainHeight() + 3600/2, // 1 hour / 2
+			expectedStartHeight:  runtime.ChainHeight() + 3600/2, // 1 hour / 2
 			expectedHasAbort:     false,
 			expectedAbortMessage: "",
 		},
@@ -74,7 +74,7 @@ func TestCreateProject(t *testing.T) {
 			startTime:            time.Now().Unix() + 3600, // 1 hour
 			callerAddress:        adminAddr,
 			expectedProjectID:    "gno.land/r/onbloc/obl:123",
-			expectedStartHeight:  std.ChainHeight() + 3600,
+			expectedStartHeight:  runtime.ChainHeight() + 3600,
 			expectedHasAbort:     false,
 			expectedAbortMessage: "",
 		},
@@ -192,7 +192,7 @@ func TestCreateProjectPrivate(t *testing.T) {
 				tier90Ratio:      int64(20),
 				tier180Ratio:     int64(70),
 				currentTime:      int64(time.Now().Unix()),
-				currentHeight:    std.ChainHeight(),
+				currentHeight:    runtime.ChainHeight(),
 				startTime:        int64(time.Now().Unix() + 3600), // 1 hour
 			},
 			expectedProjectID:    "gno.land/r/onbloc/obl:123",
@@ -212,7 +212,7 @@ func TestCreateProjectPrivate(t *testing.T) {
 				tier90Ratio:      int64(40),
 				tier180Ratio:     int64(30),
 				currentTime:      int64(time.Now().Unix()),
-				currentHeight:    std.ChainHeight(),
+				currentHeight:    runtime.ChainHeight(),
 				startTime:        int64(time.Now().Unix() + 3600),
 			},
 			expectedProjectID:    "gno.land/r/onbloc/obl:123",
@@ -232,7 +232,7 @@ func TestCreateProjectPrivate(t *testing.T) {
 				tier90Ratio:      int64(20),
 				tier180Ratio:     int64(60),
 				currentTime:      int64(time.Now().Unix()),
-				currentHeight:    std.ChainHeight(),
+				currentHeight:    runtime.ChainHeight(),
 				startTime:        int64(time.Now().Unix() + 3600),
 			},
 			expectedHasError:     true,
@@ -251,7 +251,7 @@ func TestCreateProjectPrivate(t *testing.T) {
 				tier90Ratio:      int64(20),
 				tier180Ratio:     int64(70),
 				currentTime:      int64(time.Now().Unix()),
-				currentHeight:    std.ChainHeight(),
+				currentHeight:    runtime.ChainHeight(),
 				startTime:        int64(time.Now().Unix() + 3600),
 			},
 			expectedHasError:     true,
@@ -262,7 +262,7 @@ func TestCreateProjectPrivate(t *testing.T) {
 			params: &createProjectParams{
 				name:             "TTT",
 				tokenPath:        oblPath,
-				recipient:        std.Address("abcdef"),
+				recipient:        address("abcdef"),
 				depositAmount:    1_000_000_000,
 				conditionTokens:  "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
 				conditionAmounts: "1000*PAD*2000",
@@ -270,7 +270,7 @@ func TestCreateProjectPrivate(t *testing.T) {
 				tier90Ratio:      int64(20),
 				tier180Ratio:     int64(70),
 				currentTime:      int64(time.Now().Unix()),
-				currentHeight:    std.ChainHeight(),
+				currentHeight:    runtime.ChainHeight(),
 				startTime:        int64(time.Now().Unix() + 3600),
 			},
 			expectedHasError:     true,
@@ -289,7 +289,7 @@ func TestCreateProjectPrivate(t *testing.T) {
 				tier90Ratio:           int64(20),
 				tier180Ratio:          int64(70),
 				currentTime:           int64(time.Now().Unix()),
-				currentHeight:         std.ChainHeight(),
+				currentHeight:         runtime.ChainHeight(),
 				startTime:             int64(time.Now().Unix() + 3600 - 1), // 1 hour - 1 second
 				minimumStartDelayTime: 3600,
 			},
@@ -309,7 +309,7 @@ func TestCreateProjectPrivate(t *testing.T) {
 				tier90Ratio:           int64(20),
 				tier180Ratio:          int64(70),
 				currentTime:           int64(time.Now().Unix()),
-				currentHeight:         std.ChainHeight(),
+				currentHeight:         runtime.ChainHeight(),
 				startTime:             int64(time.Now().Unix() + 3600 - 1), // 1 hour - 1 second
 				minimumStartDelayTime: 3600,
 			},
@@ -365,7 +365,7 @@ func TestCreateProjectPrivate_Multiple(t *testing.T) {
 				tier90Ratio:      int64(20),
 				tier180Ratio:     int64(70),
 				currentTime:      int64(time.Now().Unix()),
-				currentHeight:    std.ChainHeight(),
+				currentHeight:    runtime.ChainHeight(),
 				startTime:        int64(time.Now().Unix() + 3600), // 1 hour
 			},
 			expectedProjectID:    "gno.land/r/onbloc/obl:123",
@@ -388,7 +388,7 @@ func TestCreateProjectPrivate_Multiple(t *testing.T) {
 				tier90Ratio:      int64(20),
 				tier180Ratio:     int64(70),
 				currentTime:      int64(time.Now().Unix()),
-				currentHeight:    std.ChainHeight(),
+				currentHeight:    runtime.ChainHeight(),
 				startTime:        int64(time.Now().Unix() + 3600), // 1 hour
 			},
 			expectedHasError:     true,
@@ -500,7 +500,7 @@ func TestCreateProjectParams_ValidateTokenPath(t *testing.T) {
 func TestCreateProjectParams_ValidateRecipient(t *testing.T) {
 	tests := []struct {
 		name          string
-		recipient     std.Address
+		recipient     address
 		expectedError error
 	}{
 		{
@@ -510,7 +510,7 @@ func TestCreateProjectParams_ValidateRecipient(t *testing.T) {
 		},
 		{
 			name:          "recipient is invalid",
-			recipient:     std.Address("invalid"),
+			recipient:     address("invalid"),
 			expectedError: errInvalidAddress,
 		},
 	}

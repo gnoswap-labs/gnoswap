@@ -1,9 +1,11 @@
 package staker
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
+	"chain/runtime"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/halt"
 
@@ -49,12 +51,12 @@ func MintAndStake(
 	deadline int64,
 	referrer string,
 ) (uint64, string, string, string, string) {
-	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
 
 	// if one click native
 	if token0 == GNOT || token1 == GNOT {
 		// check sent ugnot
-		sent := std.OriginSend()
+		sent := banker.OriginSend()
 		ugnotSent := sent.AmountOf("ugnot")
 
 		// not enough ugnot sent
@@ -66,8 +68,8 @@ func MintAndStake(
 		}
 
 		// send it over to position to wrap
-		banker := std.NewBanker(std.BankerTypeRealmSend)
-		banker.SendCoins(stakerAddr, positionAddr, std.Coins{{Denom: "ugnot", Amount: ugnotSent}})
+		banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+		banker_.SendCoins(stakerAddr, positionAddr, chain.Coins{{Denom: "ugnot", Amount: ugnotSent}})
 	}
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(
@@ -83,11 +85,11 @@ func MintAndStake(
 		amount1Min,
 		deadline,
 		stakerAddr,
-		std.PreviousRealm().Address(),
+		runtime.PreviousRealm().Address(),
 		referrer,
 	)
 
-	poolPath, _, _ := StakeToken(cur, positionId, "")
+	poolPath := StakeToken(cur, positionId, referrer)
 
 	return positionId, liquidity, amount0, amount1, poolPath
 }

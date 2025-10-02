@@ -1,11 +1,11 @@
 package referral
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
@@ -15,7 +15,7 @@ import (
 func TestUtility_GlobalTryRegister(t *testing.T) {
 	tests := []struct {
 		name           string
-		userAddr       std.Address
+		userAddr       address
 		referrerAddr   string
 		expectedResult bool
 		shouldSetup    bool
@@ -64,7 +64,7 @@ func TestUtility_GlobalTryRegister(t *testing.T) {
 
 			if tc.shouldSetup {
 				routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
-				testing.SetRealm(std.NewUserRealm(routerAddr))
+				testing.SetRealm(testing.NewUserRealm(routerAddr))
 			}
 
 			// when
@@ -79,8 +79,8 @@ func TestUtility_GlobalTryRegister(t *testing.T) {
 func TestUtility_GlobalKeeperFunctions(t *testing.T) {
 	tests := []struct {
 		name      string
-		userAddr  std.Address
-		refAddr   std.Address
+		userAddr  address
+		refAddr   address
 		operation string
 	}{
 		{
@@ -156,8 +156,8 @@ func TestUtility_GlobalKeeperFunctions(t *testing.T) {
 func TestUtility_FunctionConsistency(t *testing.T) {
 	tests := []struct {
 		name      string
-		testAddr1 std.Address
-		testAddr2 std.Address
+		testAddr1 address
+		testAddr2 address
 		operation string
 	}{
 		{
@@ -213,8 +213,8 @@ func TestUtility_FunctionConsistency(t *testing.T) {
 func TestUtility_ErrorHandlingInGlobalFunctions(t *testing.T) {
 	tests := []struct {
 		name           string
-		userAddr       std.Address
-		referrerAddr   std.Address
+		userAddr       address
+		referrerAddr   address
 		setupReferral  bool
 		operation      string
 		expectedResult interface{}
@@ -287,9 +287,9 @@ func TestUtility_ErrorHandlingInGlobalFunctions(t *testing.T) {
 func TestUtility_StateManipulation(t *testing.T) {
 	tests := []struct {
 		name      string
-		userAddr  std.Address
-		refAddr1  std.Address
-		refAddr2  std.Address
+		userAddr  address
+		refAddr1  address
+		refAddr2  address
 		operation string
 	}{
 		{
@@ -427,7 +427,7 @@ func TestUtility_GlobalStateConsistency(t *testing.T) {
 				uassert.Equal(t, tc.expectedBase, IsEmpty())
 			case "partial_removal":
 				// Add users
-				var users []std.Address
+				var users []address
 				for i := 0; i < tc.numUsers; i++ {
 					userAddr := testutils.TestAddress("user" + string(rune(i+'0')))
 					refAddr := testutils.TestAddress("ref" + string(rune(i+'0')))
@@ -456,13 +456,13 @@ func setupUtilityKeeper() *keeper {
 }
 
 func setupUtilityCaller() func() {
-	origCaller := std.OriginCaller()
+	origCaller := runtime.OriginCaller()
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
-	routerRealm := std.NewUserRealm(routerAddr)
+	routerRealm := testing.NewUserRealm(routerAddr)
 	testing.SetOriginCaller(routerAddr)
 	testing.SetRealm(routerRealm)
 	return func() {
 		testing.SetOriginCaller(origCaller)
-		testing.SetRealm(std.NewUserRealm(origCaller))
+		testing.SetRealm(testing.NewUserRealm(origCaller))
 	}
 }
