@@ -113,14 +113,14 @@ func TestHasUnsupportedNativeCoins(t *testing.T) {
 		{
 			name:           "single_gnot_zero_amount",
 			sendCoins:      map[string]int64{GNOT_DENOM: 0},
-			expectedResult: true,
-			description:    "Single GNOT with zero amount - should return true (unsupported)",
+			expectedResult: false,
+			description:    "Single GNOT with zero amount - should return false (filtered out)",
 		},
 		{
 			name:           "single_gnot_negative_amount",
 			sendCoins:      map[string]int64{GNOT_DENOM: -10},
-			expectedResult: true,
-			description:    "Single GNOT with negative amount - should return true (unsupported)",
+			expectedResult: false,
+			description:    "Single GNOT with negative amount - should return false (filtered out)",
 		},
 		{
 			name:           "single_non_gnot_coin",
@@ -187,7 +187,7 @@ func TestEdgeCases(t *testing.T) {
 				name:           "min_int64_amount",
 				sendCoins:      map[string]int64{GNOT_DENOM: negativeAmount},
 				expectedAmount: negativeAmount,
-				expectedResult: true,
+				expectedResult: false,
 			},
 			{
 				name:           "max_int64_expected_different",
@@ -206,7 +206,7 @@ func TestEdgeCases(t *testing.T) {
 
 				testing.SetOriginSend(coins)
 
-				result := hasUnsupportedNativeCoins()
+				result := isUserSendGNOTAmount(tt.expectedAmount)
 
 				uassert.Equal(t, result, tt.expectedResult, tt.name)
 			})
@@ -237,7 +237,7 @@ func TestEdgeCases(t *testing.T) {
 			{
 				name:           "gnot_with_min_amount",
 				sendCoins:      map[string]int64{GNOT_DENOM: -9223372036854775808},
-				expectedResult: true,
+				expectedResult: false,
 			},
 		}
 
@@ -252,7 +252,7 @@ func TestEdgeCases(t *testing.T) {
 
 				result := hasUnsupportedNativeCoins()
 
-				uassert.Equal(t, result, tt.expectedResult, tt.name)
+				uassert.Equal(t, tt.expectedResult, result, tt.name)
 			})
 		}
 	})
