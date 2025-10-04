@@ -23,7 +23,12 @@ func ExistsUserSendCoins() bool {
 }
 
 // isUserSendGNOTAmount validates if the user sent the expected gnot amount
-// Returns true if no gnot was sent and amount is non-zero, or if sent amount matches expected amount
+// Returns true in the following cases:
+//   - GNOT was sent and amount matches expected
+//
+// Returns false in the following cases:
+//   - GNOT was sent and amount does not match expected
+//   - No GNOT was sent (regardless of expected amount)
 func isUserSendGNOTAmount(amount int64) bool {
 	sendCoins := getUserSendCoins()
 
@@ -35,17 +40,32 @@ func isUserSendGNOTAmount(amount int64) bool {
 	return gnotAmount == amount
 }
 
-// hasNotSupportedCoins checks if the user sent unsupported coins
-// Returns true if non-gnot coins were sent or if no coins were sent at all
-func hasNotSupportedCoins() bool {
+// hasUnsupportedNativeCoins checks if the user sent unsupported native coins
+// Gnoswap only supports GNOT native coin, so this function detects:
+// Returns true (has unsupported coins) in the following cases:
+//   - Multiple coin types were sent (more than 1 coin type)
+//   - Single non-GNOT coin was sent
+//   - Single GNOT coin was sent but amount is zero or negative
+//
+// Returns false (no unsupported coins) in the following cases:
+//   - No coins were sent at all
+//   - Single GNOT coin was sent with positive amount
+func hasUnsupportedNativeCoins() bool {
 	sendCoins := getUserSendCoins()
-	coinsCount := len(sendCoins)
-
-	if _, exists := sendCoins[GNOT_DENOM]; !exists {
-		return coinsCount == 1
+	if len(sendCoins) == 0 {
+		return false
 	}
 
-	return coinsCount == 0
+	if len(sendCoins) != 1 {
+		return true
+	}
+
+	amount, ok := sendCoins[GNOT_DENOM]
+	if !ok || amount <= 0 {
+		return true
+	}
+
+	return false
 }
 
 // getUserSendCoins retrieves and aggregates all coins sent by the user in the current transaction
