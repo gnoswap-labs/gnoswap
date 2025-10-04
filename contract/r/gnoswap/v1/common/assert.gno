@@ -1,7 +1,7 @@
 package common
 
 func AssertIsUserSendGNOTAmount(amount int64) {
-	if hasNotSupportedCoins() {
+	if hasUnsupportedNativeCoins() {
 		panic(errNotSupportedCoins)
 	}
 
