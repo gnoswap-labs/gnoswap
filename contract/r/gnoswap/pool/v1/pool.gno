@@ -1,0 +1,82 @@
+package pool
+
+import (
+	"gno.land/r/gnoswap/v1/common"
+
+	u256 "gno.land/p/gnoswap/uint256"
+
+	prabc "gno.land/p/gnoswap/rbac"
+
+	"gno.land/r/gnoswap/access"
+)
+
+var (
+	positionAddr    = access.MustGetAddressWithVersion(prabc.ROLE_POSITION.String(), 1)
+	poolAddr        = access.MustGetAddressWithVersion(prabc.ROLE_POOL.String(), 1)
+	protocolFeeAddr = access.MustGetAddressWithVersion(prabc.ROLE_PROTOCOL_FEE.String(), 1)
+	routerAddr      = access.MustGetAddressWithVersion(prabc.ROLE_ROUTER.String(), 1)
+)
+
+// collectToken calculates the actual amount of tokens that can be collected.
+// It returns the minimum of: requested amount, tokens owed, and pool balance.
+// This ensures collection never exceeds available funds.
+func (pv1 *PoolV1) collectToken(
+	amountReq, tokensOwed, poolBalance *u256.Uint,
+) (amount *u256.Uint) {
+	// find smallest of three amounts
+	amount = pv1.u256Min(amountReq, tokensOwed)
+	amount = pv1.u256Min(amount, poolBalance)
+	return amount.Clone()
+}
+
+// collectProtocol performs the actual protocol fee collection.
+// It ensures requested amounts don't exceed available protocol fees.
+// Returns amount0, amount1 as strings representing collected fees.
+func (pv1 *PoolV1) collectProtocol(
+	token0Path string,
+	token1Path string,
+	fee uint32,
+	recipient address,
+	amount0Requested string,
+	amount1Requested string,
+) (string, string) {
+	pool := pv1.mustGetPoolBy(token0Path, token1Path, fee)
+
+	amount0Req := u256.MustFromDecimal(amount0Requested)
+	amount1Req := u256.MustFromDecimal(amount1Requested)
+	if amount0Req.IsZero() && amount1Req.IsZero() {
+		return "0", "0"
+	}
+
+	amount0 := pv1.u256Min(amount0Req, pool.ProtocolFeesToken0())
+	amount1 := pv1.u256Min(amount1Req, pool.ProtocolFeesToken1())
+
+	amount0, amount1 = pool.saveProtocolFees(amount0.Clone(), amount1.Clone())
+	uAmount0 := pv1.safeConvertToInt64(amount0)
+	uAmount1 := pv1.safeConvertToInt64(amount1)
+
+	common.SafeGRC20Transfer(cross, pool.token0Path, recipient, uAmount0)
+	newBalanceToken0, err := pv1.updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount0, true)
+	if err != nil {
+		panic(err)
+	}
+	pool.balances.token0 = newBalanceToken0
+
+	common.SafeGRC20Transfer(cross, pool.token1Path, recipient, uAmount1)
+	newBalanceToken1, err := pv1.updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount1, false)
+	if err != nil {
+		panic(err)
+	}
+	pool.balances.token1 = newBalanceToken1
+
+	return amount0.ToString(), amount1.ToString()
+}
+
+// saveProtocolFees updates the protocol fee balances after collection.
+// Returns amount0, amount1 representing the fees deducted from protocol reserves.
+func (p *Pool) saveProtocolFees(amount0, amount1 *u256.Uint) (*u256.Uint, *u256.Uint) {
+	p.protocolFees.token0 = u256.Zero().Sub(p.ProtocolFeesToken0(), amount0)
+	p.protocolFees.token1 = u256.Zero().Sub(p.ProtocolFeesToken1(), amount1)
+
+	return amount0, amount1
+}

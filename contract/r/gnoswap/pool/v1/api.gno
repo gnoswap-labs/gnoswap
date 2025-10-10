@@ -1,0 +1,102 @@
+package pool
+
+import (
+	"chain/runtime"
+	b64 "encoding/base64"
+	"strconv"
+	"strings"
+	"time"
+
+	"gno.land/p/nt/ufmt"
+	"gno.land/p/onbloc/json"
+)
+
+func ApiGetPool(poolPath string) string {
+	if !pools.Has(poolPath) {
+		return ""
+	}
+
+	node := json.ObjectNode("", map[string]*json.Node{
+		"stat":     newStatNode().JSON(),
+		"response": newRpcPool(poolPath).JSON(),
+	})
+
+	return marshal(node)
+}
+
+// ApiGetTWAP returns the time-weighted average price for a pool over a specified period
+//
+// Parameters:
+//   - poolPath: The path of the pool (e.g., "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+//   - secondsAgo: Number of seconds ago to calculate TWAP from
+//
+// Returns JSON string with TWAP data or error
+func ApiGetTWAP(poolPath string, secondsAgo uint32) string {
+	currentTime := time.Now().Unix()
+	currentHeight := runtime.ChainHeight()
+
+	poolI, exist := pools.Get(poolPath)
+	if !exist {
+		return json.ObjectNode("", map[string]*json.Node{
+			"stat": json.ObjectNode("", map[string]*json.Node{
+				"height":    json.StringNode("height", strconv.Itoa(int(currentHeight))),
+				"timestamp": json.StringNode("timestamp", strconv.FormatInt(currentTime, 10)),
+			}),
+			"error": json.StringNode("error", "pool not found"),
+		}).String()
+	}
+
+	pool := poolI.(*Pool)
+
+	twapTick, err := pool.GetTWAP(secondsAgo)
+	if err != nil {
+		return json.ObjectNode("", map[string]*json.Node{
+			"stat": json.ObjectNode("", map[string]*json.Node{
+				"height":    json.StringNode("height", strconv.Itoa(int(currentHeight))),
+				"timestamp": json.StringNode("timestamp", strconv.FormatInt(currentTime, 10)),
+			}),
+			"error": json.StringNode("error", err.Error()),
+		}).String()
+	}
+
+	return json.ObjectNode("", map[string]*json.Node{
+		"stat": json.ObjectNode("", map[string]*json.Node{
+			"height":    json.StringNode("height", strconv.Itoa(int(currentHeight))),
+			"timestamp": json.StringNode("timestamp", strconv.FormatInt(currentTime, 10)),
+		}),
+		"response": json.ObjectNode("", map[string]*json.Node{
+			"poolPath":   json.StringNode("poolPath", poolPath),
+			"twapTick":   json.StringNode("twapTick", strconv.FormatInt(int64(twapTick), 10)),
+			"secondsAgo": json.StringNode("secondsAgo", strconv.FormatUint(uint64(secondsAgo), 10)),
+		}),
+	}).String()
+}
+
+func posKeyDivide(posKey string) (string, int32, int32) {
+	kDec, _ := b64.StdEncoding.DecodeString(posKey)
+	posKey = string(kDec)
+
+	res := strings.Split(posKey, "__")
+	if len(res) != 3 {
+		panic(newErrorWithDetail(
+			errInvalidPositionKey,
+			ufmt.Sprintf("invalid posKey(%s)", posKey),
+		))
+	}
+
+	owner, _tickLower, _tickUpper := res[0], res[1], res[2]
+
+	tickLower, _ := strconv.Atoi(_tickLower)
+	tickUpper, _ := strconv.Atoi(_tickUpper)
+
+	return owner, int32(tickLower), int32(tickUpper)
+}
+
+func marshal(node *json.Node) string {
+	b, err := json.Marshal(node)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return string(b)
+}
