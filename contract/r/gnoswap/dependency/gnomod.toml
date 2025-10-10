@@ -1,0 +1,2 @@
+module = "gno.land/r/gnoswap/dependency"
+gno = "0.9"
