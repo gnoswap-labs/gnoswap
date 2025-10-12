@@ -174,34 +174,38 @@ r/gnoswap/pool/                  # 풀 도메인 관리
 ├── store.gno                    # 도메인 스토리지 접근
 └── v1/                          # 풀 구현체 v1
 
-r/gnoswap/emission/              # 배출 관리
-├── emission.gno                 # GNS 배출 로직
-├── distribution.gno             # 배포 관리
-└── utils.gno                    # 배출 유틸리티
+r/gnoswap/position/              # 포지션 도메인 관리
+├── proxy.gno                    # 공개 API 라우팅
+├── upgrade.gno                  # 구현체 관리
+├── types.gno                    # IPosition 인터페이스 정의
+├── state.gno                    # 전역 상태 관리
+├── store.gno                    # 도메인 스토리지 접근
+└── v1/                          # 포지션 구현체 v1
 
-r/gnoswap/gns/                   # GNS 토큰 관리
-├── gns.gno                      # GNS 토큰 컨트랙트
-├── gns_emission.gno             # 배출 로직
-└── halving.gno                  # 반감 메커니즘
+r/gnoswap/router/                # 라우터 도메인 관리
+├── proxy.gno                    # 공개 API 라우팅
+├── upgrade.gno                  # 구현체 관리
+├── types.gno                    # IRouter 인터페이스 정의
+├── state.gno                    # 전역 상태 관리
+├── store.gno                    # 도메인 스토리지 접근
+└── v1/                          # 라우터 구현체 v1
 
-r/gnoswap/referral/              # 추천 시스템
-├── referral.gno                 # 추천 로직
-├── keeper.gno                   # 추천 키퍼
-└── global_keeper.gno            # 전역 추천 관리
+r/gnoswap/staker/                # 스테이커 도메인 관리
+├── proxy.gno                    # 공개 API 라우팅
+├── upgrade.gno                  # 구현체 관리
+├── types.gno                    # IStaker 인터페이스 정의
+├── state.gno                    # 전역 상태 관리
+├── store.gno                    # 도메인 스토리지 접근
+└── v1/                          # 스테이커 구현체 v1
+
+...
 
 # 버전별 컨트랙트 (업그레이드 가능한 비즈니스 로직)
-r/gnoswap/v1/                    # 버전 1 구현체들
-├── pool/                        # 풀 v1 구현체
-├── position/                    # 포지션 v1 구현체
-├── router/                      # 라우터 v1 구현체
-├── staker/                      # 스테이커 v1 구현체
-├── gov/                         # 거버넌스 v1 구현체들
-│   ├── governance/              # 거버넌스 v1
-│   ├── staker/                  # Gov 스테이커 v1
-│   └── xgns/                    # xGNS v1
-├── launchpad/                   # 런치패드 v1
-├── protocol_fee/                # 프로토콜 수수료 v1
-└── ...
+r/gnoswap/pool/v1/               # 풀 v1 구현체
+r/gnoswap/position/v1/           # 포지션 v1 구현체
+r/gnoswap/router/v1/             # 라우터 v1 구현체
+r/gnoswap/staker/v1/             # 스테이커 v1 구현체
+...
 ```
 
 ---
@@ -228,9 +232,10 @@ r/gnoswap/v1/                    # 버전 1 구현체들
 이 컨트랙트들은 업그레이드 프로세스를 관리하고 버전 간 조정을 담당합니다:
 
 - **`r/gnoswap/pool`**: 프록시 패턴을 사용한 풀 도메인 관리
-- **`r/gnoswap/emission`**: GNS 배출 및 배포 관리
-- **`r/gnoswap/gns`**: GNS 토큰 관리 및 반감 메커니즘
-- **`r/gnoswap/referral`**: 추천 시스템 관리
+- **`r/gnoswap/position`**: 프록시 패턴을 사용한 포지션 도메인 관리
+- **`r/gnoswap/router`**: 프록시 패턴을 사용한 라우터 도메인 관리
+- **`r/gnoswap/staker`**: 프록시 패턴을 사용한 스테이커 도메인 관리
+- 기타 도메인 컨트랙트들...
 
 **특징:**
 
@@ -242,14 +247,11 @@ r/gnoswap/v1/                    # 버전 1 구현체들
 
 이 컨트랙트들은 실제 비즈니스 로직을 구현하며 업그레이드가 가능합니다:
 
-- **`r/gnoswap/v1/pool`**: 풀 구현체 v1
-- **`r/gnoswap/v1/position`**: 포지션 관리 v1
-- **`r/gnoswap/v1/router`**: 스왑 라우팅 v1
-- **`r/gnoswap/v1/staker`**: 스테이킹 및 보상 v1
-- **`r/gnoswap/v1/gov`**: 거버넌스 시스템 v1
-- **`r/gnoswap/v1/launchpad`**: 토큰 런치 플랫폼 v1
-- **`r/gnoswap/v1/protocol_fee`**: 수수료 수집 v1
-- **`r/gnoswap/v1/community_pool`**: 커뮤니티 트레저리 v1
+- **`r/gnoswap/pool/v1`**: 풀 구현체 v1
+- **`r/gnoswap/position/v1`**: 포지션 관리 v1
+- **`r/gnoswap/router/v1`**: 스왑 라우팅 v1
+- **`r/gnoswap/staker/v1`**: 스테이킹 및 보상 v1
+- 기타 버전별 컨트랙트들...
 
 **특징:**
 

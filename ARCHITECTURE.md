@@ -174,34 +174,38 @@ r/gnoswap/pool/                  # Pool Domain Management
 ├── store.gno                    # Domain storage access
 └── v1/                          # Pool implementation v1
 
-r/gnoswap/emission/              # Emission Management
-├── emission.gno                 # GNS emission logic
-├── distribution.gno             # Distribution management
-└── utils.gno                    # Emission utilities
+r/gnoswap/position/              # Position Domain Management
+├── proxy.gno                    # Public API routing
+├── upgrade.gno                  # Implementation management
+├── types.gno                    # IPosition interface definition
+├── state.gno                    # Global state management
+├── store.gno                    # Domain storage access
+└── v1/                          # Position implementation v1
 
-r/gnoswap/gns/                   # GNS Token Management
-├── gns.gno                      # GNS token contract
-├── gns_emission.gno             # Emission logic
-└── halving.gno                  # Halving mechanism
+r/gnoswap/router/                # Router Domain Management
+├── proxy.gno                    # Public API routing
+├── upgrade.gno                  # Implementation management
+├── types.gno                    # IRouter interface definition
+├── state.gno                    # Global state management
+├── store.gno                    # Domain storage access
+└── v1/                          # Router implementation v1
 
-r/gnoswap/referral/              # Referral System
-├── referral.gno                 # Referral logic
-├── keeper.gno                   # Referral keeper
-└── global_keeper.gno            # Global referral management
+r/gnoswap/staker/                # Staker Domain Management
+├── proxy.gno                    # Public API routing
+├── upgrade.gno                  # Implementation management
+├── types.gno                    # IStaker interface definition
+├── state.gno                    # Global state management
+├── store.gno                    # Domain storage access
+└── v1/                          # Staker implementation v1
+
+...
 
 # VERSIONED CONTRACTS (Upgradeable business logic)
-r/gnoswap/v1/                    # Version 1 implementations
-├── pool/                        # Pool v1 implementation
-├── position/                    # Position v1 implementation
-├── router/                      # Router v1 implementation
-├── staker/                      # Staker v1 implementation
-├── gov/                         # Governance v1 implementations
-│   ├── governance/              # Governance v1
-│   ├── staker/                  # Gov staker v1
-│   └── xgns/                    # xGNS v1
-├── launchpad/                   # Launchpad v1
-├── protocol_fee/                # Protocol fee v1
-└── ...
+r/gnoswap/pool/v1/               # Pool v1 implementation
+r/gnoswap/position/v1/           # Position v1 implementation
+r/gnoswap/router/v1/             # Router v1 implementation
+r/gnoswap/staker/v1/             # Staker v1 implementation
+...
 ```
 
 ---
@@ -228,9 +232,11 @@ These contracts form the core infrastructure and are never upgraded after deploy
 These contracts manage the upgrade process and coordinate between versions:
 
 - **`r/gnoswap/pool`**: Pool domain management with proxy pattern
-- **`r/gnoswap/emission`**: GNS emission and distribution management
-- **`r/gnoswap/gns`**: GNS token management and halving mechanism
-- **`r/gnoswap/referral`**: Referral system management
+- **`r/gnoswap/position`**: Position domain management with proxy pattern
+- **`r/gnoswap/router`**: Router domain management with proxy pattern
+-
+- **`r/gnoswap/staker`**: Staker domain management with proxy pattern
+- Other domain contracts...
 
 **Characteristics:**
 
@@ -242,14 +248,11 @@ These contracts manage the upgrade process and coordinate between versions:
 
 These contracts implement the actual business logic and can be upgraded:
 
-- **`r/gnoswap/v1/pool`**: Pool implementation v1
-- **`r/gnoswap/v1/position`**: Position management v1
-- **`r/gnoswap/v1/router`**: Swap routing v1
-- **`r/gnoswap/v1/staker`**: Staking and rewards v1
-- **`r/gnoswap/v1/gov`**: Governance system v1
-- **`r/gnoswap/v1/launchpad`**: Token launch platform v1
-- **`r/gnoswap/v1/protocol_fee`**: Fee collection v1
-- **`r/gnoswap/v1/community_pool`**: Community treasury v1
+- **`r/gnoswap/pool/v1`**: Pool implementation v1
+- **`r/gnoswap/position/v1`**: Position management v1
+- **`r/gnoswap/router/v1`**: Swap routing v1
+- **`r/gnoswap/staker/v1`**: Staking and rewards v1
+- Other versioned contracts...
 
 **Characteristics:**
 
