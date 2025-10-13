@@ -12,9 +12,9 @@ import (
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/gov/xgns"
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gov/xgns"
 )
 
 const WUGNOT_PATH string = "gno.land/r/gnoland/wugnot"

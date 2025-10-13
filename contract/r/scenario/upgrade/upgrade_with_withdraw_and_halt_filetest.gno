@@ -12,8 +12,8 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/halt"
-	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/launchpad"
 	sr "gno.land/r/gnoswap/v1/staker"
 
@@ -596,10 +596,10 @@ func collectLaunchpadDeposit() {
 // [EXPECTED] Deposited to project pool: gno.land/r/onbloc/bar:124:30, Deposit ID: 1
 //
 // [SCENARIO] 6. Upgrade role addresses
-// [EXPECTED] community_pool should be changed g100fnnlz5eh87p5hvwt8pf279lxaelm8k8md049 to g1r79m0scwztcdvk3c6sy4rjrtv3rnnzrs9ddh9w
+// [EXPECTED] community_pool should be changed g13lpjmjhl2du7whed3wxe4n5508txxja6ezxeg7 to g1r79m0scwztcdvk3c6sy4rjrtv3rnnzrs9ddh9w
 // [EXPECTED] gov_governance should be changed g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd to g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5
 // [EXPECTED] gov_staker should be changed g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa to g1gt2xzjcmhp2t08yh0nkmc3q822sr87t5n92rm0
-// [EXPECTED] gov_xgns should be changed g1wwh55uwzlz2zzr2qcvvxf83qhcvmx2t8779l9r to g16gjmzf8725njf48325nl3yx3ve53wdu4ru53vm
+// [EXPECTED] gov_xgns should be changed g1vfgdch449480u52q9g824rpx62hm5ahazkh0vp to g16gjmzf8725njf48325nl3yx3ve53wdu4ru53vm
 // [EXPECTED] pool should be changed g148tjamj80yyrm309z7rk690an22thd2l3z8ank to g126swhfaq2vyvvjywevhgw7lv9hg8qan93dasu8
 // [EXPECTED] position should be changed g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5 to g1vsm68lq9cpn7x507s6gh59anmx86kxfhzyszu2
 // [EXPECTED] protocol_fee should be changed g1f7wpek7q67tkns27sw495u5yuu3a5wwjxw5l6l to g1397dea8xlfv5858xzhsly7k998xm2zlvrm93t2

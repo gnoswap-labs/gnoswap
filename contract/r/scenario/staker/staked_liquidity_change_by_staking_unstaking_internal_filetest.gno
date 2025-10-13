@@ -20,8 +20,8 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/gnft"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"

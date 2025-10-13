@@ -18,7 +18,7 @@ import (
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 
-	"gno.land/r/gnoswap/v1/gnft"
+	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 )

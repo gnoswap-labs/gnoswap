@@ -9,8 +9,8 @@ import (
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
+	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gnft"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 

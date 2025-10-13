@@ -5,9 +5,9 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
+	cp "gno.land/r/gnoswap/community_pool"
 	en "gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/rbac"
-	cp "gno.land/r/gnoswap/v1/community_pool"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pf "gno.land/r/gnoswap/v1/protocol_fee"
@@ -29,7 +29,7 @@ const (
 	ROUTER_PATH         = "gno.land/r/gnoswap/v1/router"
 	STAKER_PATH         = "gno.land/r/gnoswap/v1/staker"
 	PROTOCOL_FEE_PATH   = "gno.land/r/gnoswap/v1/protocol_fee"
-	COMMUNITY_POOL_PATH = "gno.land/r/gnoswap/v1/community_pool"
+	COMMUNITY_POOL_PATH = "gno.land/r/gnoswap/community_pool"
 	GOV_GOVERNANCE_PATH = "gno.land/r/gnoswap/v1/gov/governance"
 )
 

@@ -22,15 +22,15 @@ TEST_VALUES:=gno/examples/gno.land/p/gnoswap/uint256 \
 	   gno/examples/gno.land/p/gnoswap/gnsmath \
 	   gno/examples/gno.land/r/gnoswap/v1/common \
 	   gno/examples/gno.land/r/gnoswap/gns \
-	   gno/examples/gno.land/r/gnoswap/v1/gnft \
-	   gno/examples/gno.land/r/gnoswap/v1/gov/xgns \
+	   gno/examples/gno.land/r/gnoswap/gnft \
+	   gno/examples/gno.land/r/gnoswap/gov/xgns \
 	   gno/examples/gno.land/r/gnoswap/emission \
 	   gno/examples/gno.land/r/gnoswap/v1/protocol_fee \
 	   gno/examples/gno.land/r/gnoswap/v1/pool \
 	   gno/examples/gno.land/r/gnoswap/v1/position \
 	   gno/examples/gno.land/r/gnoswap/v1/router \
 	   gno/examples/gno.land/r/gnoswap/v1/staker \
-	   gno/examples/gno.land/r/gnoswap/v1/community_pool \
+	   gno/examples/gno.land/r/gnoswap/community_pool \
 	   gno/examples/gno.land/r/gnoswap/v1/gov/staker \
 	   gno/examples/gno.land/r/gnoswap/v1/gov/governance \
 	   gno/examples/gno.land/r/gnoswap/v1/launchpad

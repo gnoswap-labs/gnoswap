@@ -14,7 +14,7 @@ import (
 	"gno.land/p/demo/tokens/grc721"
 	"gno.land/p/nt/ufmt"
 
-	"gno.land/r/gnoswap/v1/gnft"
+	"gno.land/r/gnoswap/gnft"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"

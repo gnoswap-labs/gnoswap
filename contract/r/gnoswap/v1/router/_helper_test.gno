@@ -7,9 +7,9 @@ import (
 
 	"gno.land/p/nt/testutils"
 	"gno.land/r/gnoland/wugnot"
+	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gnft"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"

@@ -9,7 +9,7 @@ import (
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/gov/xgns"
+	"gno.land/r/gnoswap/gov/xgns"
 
 	prbac "gno.land/p/gnoswap/rbac"
 )
