@@ -19,7 +19,7 @@ loadpkg gno.land/p/gnoswap/gnsmath
 loadpkg gno.land/r/gnoswap/access
 loadpkg gno.land/r/gnoswap/rbac
 loadpkg gno.land/r/gnoswap/halt
-loadpkg gno.land/r/gnoswap/v1/common
+loadpkg gno.land/r/gnoswap/common
 loadpkg gno.land/r/gnoswap/gns
 loadpkg gno.land/r/gnoswap/emission
 

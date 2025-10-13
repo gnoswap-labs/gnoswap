@@ -52,7 +52,7 @@ gnokey maketx addpkg -pkgdir ../../contract/p/gnoswap/gnsmath -pkgpath gno.land/
 ## deploy realm
 
 ### deploy common
-gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/common -pkgpath gno.land/r/gnoswap/v1/common -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/common -pkgpath gno.land/r/gnoswap/common -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy gns
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/gns -pkgpath gno.land/r/gnoswap/gns -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1

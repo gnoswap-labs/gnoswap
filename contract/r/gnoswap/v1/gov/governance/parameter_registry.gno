@@ -24,7 +24,7 @@ const (
 	RBAC_PATH           = "gno.land/r/gnoswap/rbac"
 	ACCESS_PATH         = "gno.land/r/gnoswap/access"
 	EMISSION_PATH       = "gno.land/r/gnoswap/emission"
-	COMMON_PATH         = "gno.land/r/gnoswap/v1/common"
+	COMMON_PATH         = "gno.land/r/gnoswap/common"
 	POOL_PATH           = "gno.land/r/gnoswap/v1/pool"
 	ROUTER_PATH         = "gno.land/r/gnoswap/v1/router"
 	STAKER_PATH         = "gno.land/r/gnoswap/v1/staker"

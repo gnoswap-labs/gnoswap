@@ -10,10 +10,10 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
 	en "gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
-	"gno.land/r/gnoswap/v1/common"
 )
 
 // CreateExternalIncentive creates an external incentive program for a pool.

@@ -5,7 +5,7 @@ import (
 
 	"gno.land/p/nt/ufmt"
 
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/common"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )

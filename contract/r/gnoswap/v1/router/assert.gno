@@ -7,8 +7,7 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/pool"
+	"gno.land/r/gnoswap/common"
 )
 
 // assertIsNotExpired ensures the transaction deadline has not passed.

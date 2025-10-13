@@ -8,8 +8,8 @@ import (
 
 	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
-	"gno.land/r/gnoswap/v1/common"
 
 	plp "gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"

@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"gno.land/p/nt/ufmt"
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gnft"
-	"gno.land/r/gnoswap/v1/common"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
