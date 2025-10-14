@@ -53,19 +53,14 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
-
-      - name: Config gnovm
-        run: |
-          sed -i 's/ctx.Timestamp += (count \* 5)/ctx.Timestamp += (count \* 2)/g' ./gno/gnovm/tests/stdlibs/std/std.go
+          go-version: "1.22"
 
       - name: Install gno
         run: |
           cd gno
           make install.gno
 
-
-      - name: 'Run tests for ${{ matrix.name }}'
+      - name: "Run tests for ${{ matrix.name }}"
         run: |
           chmod +x .github/scripts/run_tests.rb
           ruby .github/scripts/run_tests.rb \

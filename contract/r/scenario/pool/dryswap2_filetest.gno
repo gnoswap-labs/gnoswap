@@ -3,7 +3,7 @@
 package main
 
 import (
-	"std"
+	"chain"
 	"strconv"
 	"testing"
 
@@ -35,11 +35,11 @@ const (
 // Variables for test addresses and realms
 var (
 	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm      = std.NewUserRealm(adminAddr)
+	adminRealm      = testing.NewUserRealm(adminAddr)
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm        = std.NewUserRealm(positionAddr)
+	posRealm        = testing.NewUserRealm(positionAddr)
 	routerAddr, _   = access.GetAddress(prbac.ROLE_ROUTER.String())
-	rouRealm        = std.NewCodeRealm("gno.land/r/gnoswap/v1/router")
+	rouRealm        = testing.NewCodeRealm("gno.land/r/gnoswap/v1/router")
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 )
 
@@ -135,7 +135,7 @@ func testDrySwapVsActualSwap(t *testing.T) {
 	bar.Approve(cross, poolAddr, 16000)
 
 	// set current realm and origin caller
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 
 	// Execute actual swap
 	actualPoolIn, actualPoolOut := pool.Swap(
@@ -181,7 +181,7 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta string,
 
 	if amount0Int64 > 0 {
 		if token0Path == wugnotPath {
-			testing.SetOriginSend(std.Coins{{ugnotDenom, amount0Int64}})
+			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Int64}})
 			wugnot.Deposit(cross)
 		}
 
@@ -189,7 +189,7 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta string,
 	}
 	if amount1Int64 > 0 {
 		if token1Path == wugnotPath {
-			testing.SetOriginSend(std.Coins{{ugnotDenom, amount1Int64}})
+			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Int64}})
 			wugnot.Deposit(cross)
 		}
 

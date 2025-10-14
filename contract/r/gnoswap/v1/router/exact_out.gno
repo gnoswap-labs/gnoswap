@@ -1,7 +1,8 @@
 package router
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 
 	"gno.land/p/nt/ufmt"
 
@@ -175,16 +176,16 @@ func exactOutSwapRoute(
 	}
 
 	if params.IsUnwrap() {
-		err = unwrapWithTransfer(std.PreviousRealm().Address(), outputAmount.Int64())
+		err = unwrapWithTransfer(runtime.PreviousRealm().Address(), outputAmount.Int64())
 		if err != nil {
 			panic(err)
 		}
 	} else {
-		common.SafeGRC20Transfer(cross, params.outputToken, std.PreviousRealm().Address(), outputAmount.Int64())
+		common.SafeGRC20Transfer(cross, params.outputToken, runtime.PreviousRealm().Address(), outputAmount.Int64())
 	}
 
 	// handle referral registration
-	previousRealm := std.PreviousRealm()
+	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()
 	success := referral.TryRegister(cross, caller, referrer)
 	actualReferrer := referrer
@@ -195,7 +196,7 @@ func exactOutSwapRoute(
 	inputAmountStr := inputAmount.ToString()
 	outputAmountStr := i256.Zero().Neg(outputAmount).ToString()
 
-	std.Emit(
+	chain.Emit(
 		"ExactOutSwap",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),

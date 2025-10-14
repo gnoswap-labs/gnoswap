@@ -5,7 +5,7 @@
 package main
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 
 	"gno.land/p/nt/ufmt"
@@ -32,7 +32,7 @@ func main() {
 
 	println("[SCENARIO] 2. Skip vote weight smoothing duration for create proposal")
 	testing.SkipHeights(int64(config.VotingWeightSmoothingDuration) / currentBlockTime)
-	println("[INFO] current height:", std.ChainHeight())
+	println("[INFO] current height:", runtime.ChainHeight())
 	println()
 
 	println("[SCENARIO] 3. Propose community pool spend")
@@ -46,29 +46,29 @@ func main() {
 
 func delegateGnsToAdmin() {
 	delegatedAmount := int64(1_000_000_000)
-	testing.SetRealm(std.NewUserRealm(adminAddr))
-	govStakerAddr := std.Address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	govStakerAddr := address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
 	gns.Approve(cross, govStakerAddr, delegatedAmount)
 	gs.Delegate(cross, adminAddr, int64(delegatedAmount), "")
 	ufmt.Printf("[INFO] gns delegated to %s (amount: %d)\n", adminAddr.String(), delegatedAmount)
 }
 
 func proposeCommunityPoolSpend() int64 {
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	proposalId := governance.ProposeCommunityPoolSpend(cross, "test_title", "test_description", adminAddr, "gno.land/r/gnoswap/gns", 100)
 	ufmt.Printf("[INFO] created proposal ID: %d\n", proposalId)
 	return proposalId
 }
 
 func voteProposal(proposalId int64) {
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	governance.Vote(cross, proposalId, true)
 	state := governance.GetExecutionStateByProposalId(proposalId)
 	ufmt.Printf("[EXPECTED] after voting - %s\n", state)
 }
 
 func cancelProposal(proposalId int64) {
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	governance.Cancel(cross, proposalId)
 	ufmt.Printf("[EXPECTED] proposal canceled and archived\n")
 }

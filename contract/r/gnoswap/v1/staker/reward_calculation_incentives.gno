@@ -1,7 +1,6 @@
 package staker
 
 import (
-	"std"
 	"time"
 
 	"gno.land/p/nt/avl"
@@ -54,6 +53,11 @@ func (self *Incentives) Get(incentiveId string) (*ExternalIncentive, bool) {
 	return retrieveIncentive(self.archivedIncentives, incentiveId)
 }
 
+func (self *Incentives) IsArchived(incentiveId string) bool {
+	_, exists := self.archivedIncentives.Get(incentiveId)
+	return exists
+}
+
 func retrieveIncentive(tree *avl.Tree, id string) (*ExternalIncentive, bool) {
 	value, ok := tree.Get(id)
 	if !ok {
@@ -93,7 +97,7 @@ func (self *Incentives) GetAllInTimestamps(startTimestamp, endTimestamp int64) m
 // Create a new external incentive
 // Panics if the incentive already exists.
 func (self *Incentives) create(
-	creator std.Address,
+	creator address,
 	incentive *ExternalIncentive,
 ) {
 	self.incentives.Set(incentive.incentiveId, incentive)
@@ -101,7 +105,7 @@ func (self *Incentives) create(
 
 // update updates an existing incentive with new information
 func (self *Incentives) update(
-	creator std.Address,
+	creator address,
 	incentive *ExternalIncentive,
 ) {
 	self.incentives.Set(incentive.incentiveId, incentive)
@@ -117,7 +121,7 @@ func (self *Incentives) startUnclaimablePeriod(startTimestamp int64) {
 func (self *Incentives) endUnclaimablePeriod(endTimestamp int64) {
 	startTimestamp := int64(0)
 	self.unclaimablePeriods.ReverseIterate(0, endTimestamp, func(key int64, value any) bool {
-		v, ok := value.(int64) 
+		v, ok := value.(int64)
 		if !ok {
 			panic("failed to cast value to int64")
 		}
@@ -212,7 +216,7 @@ func (self *Incentives) calculateUnclaimableReward(incentiveId string) int64 {
 		return false
 	})
 
-	return timeDiff * incentive.rewardPerSecond
+	return safeMulInt64(timeDiff, incentive.rewardPerSecond)
 }
 
 // calculateUnClaimableDuration calculates the duration of overlap between an unclaimable period and incentive period

@@ -1,7 +1,7 @@
 package position
 
 import (
-	"std"
+	"chain/runtime"
 	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -19,7 +19,7 @@ func ApiGetPosition(id uint64) string {
 	}
 
 	rpcPosition := rpcMakePosition(id)
-	baseStat := NewResponseQueryBase(std.ChainHeight(), time.Now().Unix())
+	baseStat := NewResponseQueryBase(runtime.ChainHeight(), time.Now().Unix())
 	return makeJsonResponse(&baseStat, &PositionsResponse{Positions: []RpcPosition{rpcPosition}})
 }
 
@@ -31,7 +31,7 @@ func ApiGetPositionUnclaimedFeeByLpPositionId(lpPositionId uint64) string {
 		Fee1:         unclaimedFee1.ToString(),
 	}
 
-	baseStat := NewResponseQueryBase(std.ChainHeight(), time.Now().Unix())
+	baseStat := NewResponseQueryBase(runtime.ChainHeight(), time.Now().Unix())
 	return makeJsonResponse(&baseStat, &UnclaimedFeesResponse{
 		Fees: []RpcUnclaimedFee{fee},
 	})

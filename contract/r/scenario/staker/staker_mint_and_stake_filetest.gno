@@ -5,7 +5,8 @@
 package main
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"strconv"
 	"testing"
 
@@ -33,16 +34,16 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	poolAddr, _     = access.GetAddress(prabc.ROLE_POOL.String())
 	positionAddr, _ = access.GetAddress(prabc.ROLE_POSITION.String())
 
-	wugnotAddr std.Address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
+	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	barPath = "gno.land/r/onbloc/bar"
 	quxPath = "gno.land/r/onbloc/qux"
@@ -116,7 +117,7 @@ func mintAndStakeNative() {
 	testing.SkipHeights(2)
 
 	println("[INFO] prepare 100000 ugnot")
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100000}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000}})
 
 	ugnotBalance := ugnotBalanceOf(adminAddr)
 	ufmt.Printf("[INFO] admin ugnot balance before: %d\n", ugnotBalance)
@@ -125,15 +126,15 @@ func mintAndStakeNative() {
 	ufmt.Printf("[INFO] position contract ugnot balance before: %d\n", positionUgnotBalance)
 
 	println("[INFO] send ugnot to staker and set origin send")
-	banker := std.NewBanker(std.BankerTypeRealmIssue)
-	banker.SendCoins(adminAddr, stakerAddr, std.Coins{{"ugnot", 100000}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 100000}})
+	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
+	banker_.SendCoins(adminAddr, stakerAddr, chain.Coins{{"ugnot", 100000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000}})
 
 	adminOldWugnotBalance := wugnot.BalanceOf(adminUser)
 	ufmt.Printf("[INFO] admin wugnot balance before mint and stake: %d\n", adminOldWugnotBalance)
 
 	println("[INFO] mint and stake native position")
-	testing.SetOriginSend(std.Coins{{"ugnot", 100000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000}})
 	lpTokenId, liquidity, amount0, amount1, poolPath := sr.MintAndStake(
 		cross,
 		"gnot",
@@ -196,9 +197,9 @@ func mintAndStakeGRC20Pair() {
 	testing.SkipHeights(1)
 }
 
-func ugnotBalanceOf(addr std.Address) uint64 {
-	banker := std.NewBanker(std.BankerTypeReadonly)
-	coins := banker.GetCoins(addr)
+func ugnotBalanceOf(addr address) uint64 {
+	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
+	coins := banker_.GetCoins(addr)
 	return uint64(coins.AmountOf("ugnot"))
 }
 

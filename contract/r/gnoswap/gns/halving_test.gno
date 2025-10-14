@@ -1,20 +1,20 @@
 package gns
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 	"time"
 
-	"gno.land/p/onbloc/json"
 	"gno.land/p/nt/uassert"
+	"gno.land/p/onbloc/json"
 
 	"gno.land/p/nt/ufmt"
 )
 
 var (
-	govRealm = std.NewCodeRealm("gno.land/r/gnoswap/v1/gov/governance")
+	govRealm = testing.NewCodeRealm("gno.land/r/gnoswap/v1/gov/governance")
 
-	startHeight int64 = std.ChainHeight()
+	startHeight int64 = runtime.ChainHeight()
 
 	blockTime      int64 = 2000
 	startTimestamp int64 = time.Now().Unix() + 2 // blockTime in seconds

@@ -1,7 +1,6 @@
 package position
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
@@ -193,7 +192,7 @@ func TestIsOwner(t *testing.T) {
 	tests := []struct {
 		name       string
 		positionId uint64
-		addr       std.Address
+		addr       address
 		expected   bool
 	}{
 		{
@@ -227,7 +226,7 @@ func TestIsOperator(t *testing.T) {
 	tests := []struct {
 		name       string
 		positionId uint64
-		addr       std.Address
+		addr       address
 		expected   bool
 	}{
 		{

@@ -1,7 +1,6 @@
 package governance
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -11,7 +10,7 @@ import (
 func TestProposalManager_AddAndRemoveProposal(t *testing.T) {
 	tests := []struct {
 		name           string
-		user           std.Address
+		user           address
 		proposalID     int64
 		proposalCount  int
 		operation      string // "add" or "remove"
@@ -20,7 +19,7 @@ func TestProposalManager_AddAndRemoveProposal(t *testing.T) {
 	}{
 		{
 			name:           "Success - Add new proposal",
-			user:           std.Address("g1user1"),
+			user:           address("g1user1"),
 			proposalID:     2,
 			proposalCount:  1,
 			operation:      "add",
@@ -29,7 +28,7 @@ func TestProposalManager_AddAndRemoveProposal(t *testing.T) {
 		},
 		{
 			name:           "Success - Add multiple proposals",
-			user:           std.Address("g1user1"),
+			user:           address("g1user1"),
 			proposalID:     3,
 			proposalCount:  2,
 			operation:      "add",
@@ -38,7 +37,7 @@ func TestProposalManager_AddAndRemoveProposal(t *testing.T) {
 		},
 		{
 			name:           "Success - Remove existing proposal",
-			user:           std.Address("g1user1"),
+			user:           address("g1user1"),
 			proposalID:     1,
 			proposalCount:  1,
 			operation:      "remove",
@@ -47,7 +46,7 @@ func TestProposalManager_AddAndRemoveProposal(t *testing.T) {
 		},
 		{
 			name:           "Success - Remove non-existent proposal",
-			user:           std.Address("g1user2"),
+			user:           address("g1user2"),
 			proposalID:     999,
 			proposalCount:  0,
 			operation:      "remove",
@@ -82,19 +81,19 @@ func TestProposalManager_AddAndRemoveProposal(t *testing.T) {
 func TestProposalManager_GetUserProposals(t *testing.T) {
 	tests := []struct {
 		name          string
-		user          std.Address
+		user          address
 		proposals     []int64
 		expectedCount int
 	}{
 		{
 			name:          "Success - Get multiple proposals",
-			user:          std.Address("g1user1"),
+			user:          address("g1user1"),
 			proposals:     []int64{1, 2, 3},
 			expectedCount: 3,
 		},
 		{
 			name:          "Success - Get empty proposals",
-			user:          std.Address("g1user2"),
+			user:          address("g1user2"),
 			proposals:     []int64{},
 			expectedCount: 0,
 		},

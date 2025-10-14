@@ -5,7 +5,6 @@
 package main
 
 import (
-	"std"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -26,16 +25,16 @@ const INT64_MAX int64 = 9223372036854775807
 
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
 
 	aliceAddr  = testutils.TestAddress("alice")
-	aliceRealm = std.NewUserRealm(aliceAddr)
+	aliceRealm = testing.NewUserRealm(aliceAddr)
 
 	bobAddr  = testutils.TestAddress("bob")
-	bobRealm = std.NewUserRealm(bobAddr)
+	bobRealm = testing.NewUserRealm(bobAddr)
 
 	barPath = "gno.land/r/onbloc/bar"
 	bazPath = "gno.land/r/onbloc/baz"

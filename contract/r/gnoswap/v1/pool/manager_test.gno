@@ -1,7 +1,6 @@
 package pool
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -113,7 +112,7 @@ func TestCreatePool(t *testing.T) {
 		},
 	}
 
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	SetPoolCreationFee(cross, 0)
 
 	for _, tt := range tests {

@@ -1,7 +1,6 @@
 package governance
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/nt/avl"
@@ -24,7 +23,7 @@ func TestGetterProposal_All(t *testing.T) {
 			proposalId: 1,
 			proposal: &Proposal{
 				id:            1,
-				proposer:      std.Address("g1proposer"),
+				proposer:      address("g1proposer"),
 				configVersion: 42,
 				status: &ProposalStatus{
 					voteStatus: &ProposalVoteStatus{
@@ -44,7 +43,7 @@ func TestGetterProposal_All(t *testing.T) {
 			proposalId: 1,
 			proposal: &Proposal{
 				id:            1,
-				proposer:      std.Address("g1proposer"),
+				proposer:      address("g1proposer"),
 				configVersion: 42,
 				status: &ProposalStatus{
 					voteStatus: &ProposalVoteStatus{

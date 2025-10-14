@@ -1,7 +1,9 @@
 package staker
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
+	"math"
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -33,8 +35,8 @@ func CreateExternalIncentive(
 ) {
 	halt.AssertIsNotHaltedStakerWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
-	access.AssertIsUser(std.PreviousRealm())
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsUser(runtime.PreviousRealm())
 
 	assertIsPoolExists(targetPoolPath)
 	assertIsGreaterThanMinimumRewardAmount(rewardToken, rewardAmount)
@@ -64,7 +66,7 @@ func CreateExternalIncentive(
 	gns.TransferFrom(cross, caller, stakerAddr, depositGnsAmount)
 
 	currentTime := time.Now().Unix()
-	currentHeight := std.ChainHeight()
+	currentHeight := runtime.ChainHeight()
 	incentiveId := nextIncentiveID(caller, currentTime)
 	pool := pools.GetOrCreate(targetPoolPath)
 
@@ -93,8 +95,8 @@ func CreateExternalIncentive(
 
 	pool.incentives.create(caller, incentive)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"CreateExternalIncentive",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -142,7 +144,7 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 		))
 	}
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	currentTime := time.Now().Unix()
 
 	// Get incentive to check if GNS already refunded
@@ -192,11 +194,20 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 	// After this update, attempts to re-claim GNS or rewards that were deposited
 	// through the `endExternalIncentive` function will be blocked.
 	incentive.setRefunded(true)
+	incentive.addDistributedRewardAmount(refund)
 	pool.incentives.update(incentive.refundee, incentive)
-	pool.incentives.archiveIncentive(incentiveId)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	// archive incentive if it is finished (all rewards distributed)
+	// this is to prevent re-claiming GNS or rewards after the incentive is finished
+	if incentive.IsFinished() {
+		err = archiveEndedExternalIncentive(incentive)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"EndExternalIncentive",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -212,7 +223,7 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 }
 
 // endExternalIncentive processes the end of an external incentive program.
-func endExternalIncentive(pool *Pool, incentiveId string, caller std.Address, currentTime int64) (*ExternalIncentive, int64, error) {
+func endExternalIncentive(pool *Pool, incentiveId string, caller address, currentTime int64) (*ExternalIncentive, int64, error) {
 	incentive, exists := pool.incentives.Get(incentiveId)
 	if !exists {
 		return nil, 0, makeErrorWithDetails(
@@ -239,9 +250,44 @@ func endExternalIncentive(pool *Pool, incentiveId string, caller std.Address, cu
 		)
 	}
 
-	// Always calculate unclaimed rewards since this function is called only once
-	refund := incentive.rewardLeft
-	refund += pool.incentives.calculateUnclaimableReward(incentive.incentiveId)
+	totalReward := int64(0)
+
+	// calculate total external reward for the incentive
+	deposits.IterateByPoolPath(0, math.MaxUint64, incentive.targetPoolPath, func(positionId uint64, deposit *Deposit) bool {
+		lastCollectTime := deposit.ExternalRewardLastCollectTime(incentiveId)
+
+		if lastCollectTime > incentive.endTimestamp {
+			return false
+		}
+
+		rewardState := pool.RewardStateOf(deposit)
+		if rewardState == nil {
+			return false
+		}
+
+		calculatedTotalReward := rewardState.calculateTotalExternalReward(lastCollectTime, currentTime, incentive)
+		totalReward = safeAddInt64(totalReward, calculatedTotalReward)
+
+		return false
+	})
+
+	// calculate refund amount is the difference between the incentive reward amount and the total external reward
+	refund := safeSubInt64(incentive.TotalRewardAmount(), totalReward)
+	refund = safeSubInt64(refund, incentive.DistributedRewardAmount())
 
 	return incentive, refund, nil
+}
+
+func archiveEndedExternalIncentive(incentive *ExternalIncentive) error {
+	pool, exists := pools.Get(incentive.targetPoolPath)
+	if !exists {
+		return makeErrorWithDetails(
+			errDataNotFound,
+			ufmt.Sprintf("targetPoolPath(%s) not found", incentive.targetPoolPath),
+		)
+	}
+
+	pool.incentives.archiveIncentive(incentive.incentiveId)
+
+	return nil
 }

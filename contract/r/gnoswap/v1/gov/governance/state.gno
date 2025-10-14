@@ -1,10 +1,6 @@
 package governance
 
-import (
-	"std"
-
-	"gno.land/p/nt/avl"
-)
+import "gno.land/p/nt/avl"
 
 // Global state variables for governance system
 var (
@@ -179,7 +175,7 @@ func addProposal(proposal *Proposal) bool {
 //
 // Returns:
 //   - []*Proposal: slice of proposals created by the user
-func getUserProposals(user std.Address) (proposals []*Proposal) {
+func getUserProposals(user address) (proposals []*Proposal) {
 	// Get proposal IDs for this user
 	proposalIDs := proposalManager.GetUserProposals(user)
 
@@ -222,7 +218,7 @@ func getProposalUserVotingInfos(proposalID int64) (userVotingInfos map[string]*V
 // Returns:
 //   - *VotingInfo: voting information for the user
 //   - bool: true if voting information exists for the user
-func getProposalUserVotingInfo(proposalID int64, userAddress std.Address) (*VotingInfo, bool) {
+func getProposalUserVotingInfo(proposalID int64, userAddress address) (*VotingInfo, bool) {
 	// First get all voting info for the proposal
 	userVotingInfos, exists := getProposalUserVotingInfos(proposalID)
 	if !exists {

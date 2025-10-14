@@ -1,12 +1,5 @@
 package staker
 
-func isAbleToCalculateEmissionReward(prev int64, current int64) bool {
-	if prev >= current {
-		return false
-	}
-	return true
-}
-
 // Reward is a struct for storing reward for a position.
 // Internal reward is the GNS reward, external reward is the reward for other incentives.
 // Penalties are the amount that is deducted from the reward due to the position's warmup.
@@ -30,19 +23,19 @@ func calcPositionReward(currentHeight, currentTimestamp int64, positionId uint64
 
 	internal := int64(0)
 	for _, reward := range rewards {
-		internal += reward.Internal
+		internal = safeAddInt64(internal, reward.Internal)
 	}
 
 	internalPenalty := int64(0)
 	for _, reward := range rewards {
-		internalPenalty += reward.InternalPenalty
+		internalPenalty = safeAddInt64(internalPenalty, reward.InternalPenalty)
 	}
 
 	externalReward := make(map[string]int64)
 	for _, reward := range rewards {
 		if reward.External != nil {
 			for incentive, reward := range reward.External {
-				externalReward[incentive] += reward
+				externalReward[incentive] = safeAddInt64(externalReward[incentive], reward)
 			}
 		}
 	}
@@ -51,7 +44,7 @@ func calcPositionReward(currentHeight, currentTimestamp int64, positionId uint64
 	for _, reward := range rewards {
 		if reward.ExternalPenalty != nil {
 			for incentive, penalty := range reward.ExternalPenalty {
-				externalPenalty[incentive] += penalty
+				externalPenalty[incentive] = safeAddInt64(externalPenalty[incentive], penalty)
 			}
 		}
 	}
@@ -90,7 +83,7 @@ func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 		param.Pools.set(poolPath, pool)
 	}
 
-	lastCollectTime := deposit.lastCollectTime
+	lastCollectTime := deposit.InternalRewardLastCollectTime()
 
 	// Initializes reward/penalty arrays for rewards and penalties for each warmup
 	warmups := len(deposit.warmups)
@@ -105,18 +98,35 @@ func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 	// while preventing new rewards after tier removal
 	internalRewards, internalPenalties = pool.RewardStateOf(deposit).calculateInternalReward(lastCollectTime, param.CurrentTime)
 
-	// All active incentives
-	allIncentives := pool.incentives.GetAllInTimestamps(lastCollectTime, param.CurrentTime)
-
+	// Initialize maps for external rewards
 	for i := range externalRewards {
 		externalRewards[i] = make(map[string]int64)
 		externalPenalties[i] = make(map[string]int64)
 	}
 
+	// Get all incentives using a wide time range to ensure we get all possible incentives
+	// We'll filter them individually based on their specific lastCollectTime
+	allIncentives := pool.incentives.GetAllInTimestamps(0, param.CurrentTime*2)
+
+	// Process each external incentive with lazy initialization:
+	// When a new incentive is created, we don't iterate through all deposits for performance.
+	//
+	// Instead, we determine the appropriate lastCollectTime here:
+	// - If a deposit already has a lastCollectTime for an incentive, use it
+	// - If not (first time collecting), use max(deposit.stakeTime, incentive.startTimestamp)
+	//
+	// This avoids O(n) iteration on every incentive creation while ensuring correct reward calculation.
 	for incentiveId, incentive := range allIncentives {
+		externalLastCollectTime := deposit.ExternalRewardLastCollectTime(incentiveId)
+
+		// Check if incentive is active during this specific collection period
+		if !incentive.IsStarted(param.CurrentTime) || incentive.startTimestamp >= param.CurrentTime {
+			continue
+		}
+
 		// External incentivized pool.
-		// Calculate reward for each warmup
-		externalReward, externalPenalty := pool.RewardStateOf(deposit).calculateExternalReward(lastCollectTime, param.CurrentTime, incentive)
+		// Calculate reward for each warmup using per-incentive lastCollectTime
+		externalReward, externalPenalty := pool.RewardStateOf(deposit).calculateExternalReward(externalLastCollectTime, param.CurrentTime, incentive)
 
 		for i := range externalReward {
 			externalRewards[i][incentiveId] = externalReward[i]
@@ -144,4 +154,20 @@ func processUnClaimableReward(poolPath string, endTimestamp int64) int64 {
 		return 0
 	}
 	return pool.processUnclaimableReward(poolTier, endTimestamp)
+}
+
+// getInitialCollectTime determines the initial collection time for an incentive
+// by taking the maximum of the deposit's stake time and the incentive's start time.
+// This ensures rewards are only calculated from when both conditions are met:
+// - The position must be staked (deposit.stakeTime)
+// - The incentive must be active (incentive.startTimestamp)
+//
+// This function is used for lazy initialization when a position collects
+// from an incentive for the first time, avoiding the need to iterate through
+// all deposits when a new incentive is created.
+func getInitialCollectTime(deposit *Deposit, incentive *ExternalIncentive) int64 {
+	if deposit.stakeTime > incentive.startTimestamp {
+		return deposit.stakeTime
+	}
+	return incentive.startTimestamp
 }

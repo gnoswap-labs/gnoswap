@@ -1,13 +1,13 @@
 package launchpad
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 	"time"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/uassert"
-	u256 "gno.land/p/gnoswap/uint256"
 )
 
 func TestRewardManager_IsInitialized(t *testing.T) {
@@ -189,7 +189,7 @@ func TestRewardManager_AddRewardStateByDeposit(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			currentHeight := std.ChainHeight()
+			currentHeight := runtime.ChainHeight()
 
 			// Use current time as base and simulate timing
 			manager := NewRewardManager(

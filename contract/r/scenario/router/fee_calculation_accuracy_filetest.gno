@@ -1,7 +1,6 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
@@ -29,12 +28,12 @@ const (
 
 var (
 	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm    = std.NewUserRealm(adminAddr)
+	adminRealm    = testing.NewUserRealm(adminAddr)
 	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
 
 	aliceAddr  = testutils.TestAddress("alice")
-	aliceRealm = std.NewUserRealm(aliceAddr)
+	aliceRealm = testing.NewUserRealm(aliceAddr)
 
 	barPath = "gno.land/r/onbloc/bar"
 	fooPath = "gno.land/r/onbloc/foo"
@@ -295,6 +294,6 @@ func testExactOutFeeCalculation() {
 //
 // [SCENARIO] 4. Fee Calculation in Exact Out Swaps
 // [INFO] Testing fee calculation in exact out swaps
-// [EXPECTED] Input required: 994240332
-// [EXPECTED] Output received: -998500000
+// [EXPECTED] Input required: 995739810
+// [EXPECTED] Output received: -1000000000
 // [EXPECTED] Input should be ~1,000,500,250 (accounting for 0.05% fee)
