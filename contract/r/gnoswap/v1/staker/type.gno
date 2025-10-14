@@ -46,6 +46,7 @@ func (e ExternalIncentive) TotalRewardAmount() int64       { return e.totalRewar
 func (e ExternalIncentive) DistributedRewardAmount() int64 { return e.distributedRewardAmount }
 
 func (self *ExternalIncentive) RewardSpent(currentTimestamp int64) int64 {
+	// Check timestamps for state validation
 	if currentTimestamp < self.startTimestamp {
 		return 0
 	}
