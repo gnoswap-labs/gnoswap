@@ -123,7 +123,7 @@ func (op *baseSwapOperation) validateRouteQuote(quote string, i int) (*i256.Int,
 	// calculate amount to swap for this route
 	toSwap, overflow := i256.Zero().MulOverflow(op.amountSpecified, i256.NewInt(int64(qt)))
 	if overflow {
-		panic(errOverflow)
+		panic(errOverFlow)
 	}
 	toSwap = i256.Zero().Div(toSwap, PERCENTAGE_DENOMINATOR)
 

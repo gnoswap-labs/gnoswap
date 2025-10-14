@@ -543,7 +543,7 @@ func calculateAmountWithWithdrawalFee(amount string, fee uint64) (int64, int64) 
 	amountUint := u256.MustFromDecimal(amount)
 	feeUint := u256.NewUint(fee)
 
-	feeAmount := u256.Zero().MulOverflow(amountUint, feeUint)
+	feeAmount, overflow := u256.Zero().MulOverflow(amountUint, feeUint)
 	if overflow {
 		panic(errOverflow)
 	}

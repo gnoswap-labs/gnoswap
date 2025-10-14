@@ -113,7 +113,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 					"ratio constants are not initialized",
 				))
 			}
-			temp, overflow = temp.MulOverflow(ratio, r)
+			temp, overflow := temp.MulOverflow(ratio, r)
 			if overflow {
 				panic(errOverFlow)
 			}
@@ -228,7 +228,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 
 	// Optimized iterative calculation using loop - maintains exact same logic
 	for i := 0; i < 14; i++ {
-		tempR, overflow = tempR.MulOverflow(r, r)
+		tempR, overflow := tempR.MulOverflow(r, r)
 		if overflow {
 			panic(errOverFlow)
 		}
