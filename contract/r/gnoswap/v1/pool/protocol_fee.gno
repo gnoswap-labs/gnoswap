@@ -162,7 +162,10 @@ func SetWithdrawalFee(cur realm, fee uint64) {
 // - the fee amount
 // - the amount after the fee applied
 func calculateAmountWithFee(amount, fee *u256.Uint) (feeAmount, afterAmount *u256.Uint) {
-	feeAmount = u256.Zero().Mul(amount, fee)
+	feeAmount, overflow := u256.Zero().MulOverflow(amount, fee)
+	if overflow {
+		panic(errOverflow)
+	}
 	feeAmount = u256.Zero().Div(feeAmount, u256.NewUint(MaxBpsValue))
 	afterAmount = u256.Zero().Sub(amount, feeAmount)
 	return feeAmount, afterAmount

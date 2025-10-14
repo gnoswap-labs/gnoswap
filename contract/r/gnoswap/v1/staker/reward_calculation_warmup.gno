@@ -129,13 +129,24 @@ func (warmup *Warmup) apply(poolReward int64, positionLiquidity, stakedLiquidity
 
 	divisor := u256.NewUint(100)
 	poolRewardUint := u256.NewUintFromInt64(poolReward)
-	perPositionReward := u256.Zero().Mul(poolRewardUint, positionLiquidity)
+	perPositionReward := u256.Zero().MulOverflow(poolRewardUint, positionLiquidity)
+	if overflow {
+		panic(errOverflow)
+	}
 	perPositionReward = u256.Zero().Div(perPositionReward, stakedLiquidity)
-	rewardRatio := u256.NewUint(warmup.WarmupRatio)
+
 	penaltyRatio := u256.NewUint(100 - warmup.WarmupRatio)
-	totalReward := u256.Zero().Mul(perPositionReward, rewardRatio)
+	rewardRatio := u256.NewUint(warmup.WarmupRatio)
+	totalReward := u256.Zero().MulOverflow(perPositionReward, rewardRatio)
+	if overflow {
+		panic(errOverflow)
+	}
 	totalReward = u256.Zero().Div(totalReward, divisor)
-	totalPenalty := u256.Zero().Mul(perPositionReward, penaltyRatio)
+
+	totalPenalty := u256.Zero().MulOverflow(perPositionReward, penaltyRatio)
+	if overflow {
+		panic(errOverflow)
+	}
 	totalPenalty = u256.Zero().Div(totalPenalty, divisor)
 	return safeConvertToInt64(totalReward), safeConvertToInt64(totalPenalty)
 }

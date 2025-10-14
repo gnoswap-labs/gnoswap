@@ -131,11 +131,17 @@ func UnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint) {
 	feeGrowthInside1X128 = subUint256(feeGrowthInside1X128, tickUpperFeeGrowthAbove1)
 
 	diffGrowthInside0X128 := subUint256(feeGrowthInside0X128, feeGrowthInside0LastX128)
-	unclaimedFee0X128 := u256.Zero().Mul(liquidity, diffGrowthInside0X128)
+	unclaimedFee0X128 := u256.Zero().MulOverflow(liquidity, diffGrowthInside0X128)
+	if overflow {
+		panic(errOverflow)
+	}
 	unclaimedFee0 := u256.Zero().Div(unclaimedFee0X128, q128)
 
 	diffGrowthInside1X128 := subUint256(feeGrowthInside1X128, feeGrowthInside1LastX128)
-	unclaimedFee1X128 := u256.Zero().Mul(liquidity, diffGrowthInside1X128)
+	unclaimedFee1X128, overflow := u256.Zero().MulOverflow(liquidity, diffGrowthInside1X128)
+	if overflow {
+		panic(errOverflow)
+	}
 	unclaimedFee1 := u256.Zero().Div(unclaimedFee1X128, q128)
 
 	return unclaimedFee0, unclaimedFee1
