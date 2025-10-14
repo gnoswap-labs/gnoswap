@@ -1,6 +1,7 @@
 package position
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
 
@@ -25,7 +26,7 @@ func addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint
 	sqrtRatioAX96 := common.TickMathGetSqrtRatioAtTick(params.tickLower)
 	sqrtRatioBX96 := common.TickMathGetSqrtRatioAtTick(params.tickUpper)
 
-	liquidity := common.GetLiquidityForAmounts(
+	liquidity := gnsmath.GetLiquidityForAmounts(
 		sqrtPriceX96,
 		sqrtRatioAX96,
 		sqrtRatioBX96,

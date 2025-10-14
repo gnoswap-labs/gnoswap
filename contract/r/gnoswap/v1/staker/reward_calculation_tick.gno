@@ -6,10 +6,10 @@ import (
 
 	"gno.land/p/nt/avl"
 
+	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/v1/common"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
@@ -135,7 +135,7 @@ func (self *Tick) CurrentOutsideAccumulation(timestamp int64) *u256.Uint {
 // modifyDepositLower updates the tick's liquidity info by treating the deposit as a lower tick
 func (self *Tick) modifyDepositLower(currentTime int64, liquidity *i256.Int) {
 	// update staker side tick info
-	self.stakedLiquidityGross = common.LiquidityMathAddDelta(self.stakedLiquidityGross, liquidity)
+	self.stakedLiquidityGross = gnsmath.AddLiquidityDelta(self.stakedLiquidityGross, liquidity)
 	if self.stakedLiquidityGross.Lt(zeroUint256) {
 		panic("stakedLiquidityGross is negative")
 	}
@@ -144,7 +144,7 @@ func (self *Tick) modifyDepositLower(currentTime int64, liquidity *i256.Int) {
 
 // modifyDepositUpper updates the tick's liquidity info by treating the deposit as an upper tick
 func (self *Tick) modifyDepositUpper(currentTime int64, liquidity *i256.Int) {
-	self.stakedLiquidityGross = common.LiquidityMathAddDelta(self.stakedLiquidityGross, liquidity)
+	self.stakedLiquidityGross = gnsmath.AddLiquidityDelta(self.stakedLiquidityGross, liquidity)
 	if self.stakedLiquidityGross.Lt(zeroUint256) {
 		panic("stakedLiquidityGross is negative")
 	}

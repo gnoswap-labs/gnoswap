@@ -4,7 +4,9 @@ import (
 	"chain/runtime"
 	"time"
 
+	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
+
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -44,7 +46,7 @@ func rpcMakePosition(positionId uint64) RpcPosition {
 	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.tickLower)
 	upperTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.tickUpper)
 
-	calculatedToken0Balance, calculatedToken1Balance := common.GetAmountsForLiquidity(
+	calculatedToken0Balance, calculatedToken1Balance := gnsmath.GetAmountsForLiquidity(
 		currentSqrtPriceX96,
 		lowerTickSqrtPriceX96,
 		upperTickSqrtPriceX96,

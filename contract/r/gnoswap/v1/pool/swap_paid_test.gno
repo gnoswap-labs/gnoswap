@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"testing"
 
+	"gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/uassert"
@@ -401,7 +402,7 @@ func initSwapPaidSetFeeMintPosition(
 	sqrtRatioAX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
 	sqrtRatioBX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
 
-	liquidity := common.GetLiquidityForAmounts(
+	liquidity := gnsmath.GetLiquidityForAmounts(
 		sqrtPriceX96,
 		sqrtRatioAX96,
 		sqrtRatioBX96,

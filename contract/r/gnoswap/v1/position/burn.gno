@@ -1,6 +1,7 @@
 package position
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
@@ -78,7 +79,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, 
 	currentSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(position.poolKey)
 	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.tickLower)
 	upperTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.tickUpper)
-	calculatedToken0BalanceStr, calculatedToken1BalanceStr := common.GetAmountsForLiquidity(
+	calculatedToken0BalanceStr, calculatedToken1BalanceStr := gnsmath.GetAmountsForLiquidity(
 		currentSqrtPriceX96,
 		lowerTickSqrtPriceX96,
 		upperTickSqrtPriceX96,

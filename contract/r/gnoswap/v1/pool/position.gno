@@ -84,7 +84,7 @@ func positionUpdate(
 	if liquidityDelta.IsZero() {
 		liquidityNext = position.liquidity
 	} else {
-		liquidityNext = common.LiquidityMathAddDelta(position.liquidity, liquidityDelta)
+		liquidityNext = plp.AddLiquidityDelta(position.liquidity, liquidityDelta)
 	}
 
 	// validate negative feeGrowth before calculation
@@ -276,7 +276,7 @@ func (p *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.
 		// case 2: Current price is within the position range
 		liquidityBefore := p.liquidity
 		currentTime := time.Now().Unix()
-		
+
 		// Update oracle BEFORE liquidity changes
 		err := p.writeObservation(currentTime, tick, liquidityBefore)
 		if err != nil {
@@ -288,7 +288,7 @@ func (p *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.
 		// token1 used from lower tick to current price
 		amount1 = calculateToken1Amount(sqrtRatioLower, sqrtPriceX96, liqDelta)
 		// update pool's active liquidity since price is in range
-		p.liquidity = common.LiquidityMathAddDelta(liquidityBefore, liqDelta)
+		p.liquidity = plp.AddLiquidityDelta(liquidityBefore, liqDelta)
 
 	default:
 		// case 3

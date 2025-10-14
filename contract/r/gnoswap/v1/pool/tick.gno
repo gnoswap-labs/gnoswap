@@ -5,10 +5,9 @@ import (
 
 	"gno.land/p/nt/ufmt"
 
+	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-
-	"gno.land/r/gnoswap/v1/common"
 )
 
 const (
@@ -180,7 +179,7 @@ func (p *Pool) tickUpdate(
 	tickInfo := p.getTick(tick)
 
 	liquidityGrossBefore := tickInfo.liquidityGross.Clone()
-	liquidityGrossAfter := common.LiquidityMathAddDelta(liquidityGrossBefore, liquidityDelta)
+	liquidityGrossAfter := gnsmath.AddLiquidityDelta(liquidityGrossBefore, liquidityDelta)
 
 	if !(liquidityGrossAfter.Lte(maxLiquidity)) {
 		panic(newErrorWithDetail(
