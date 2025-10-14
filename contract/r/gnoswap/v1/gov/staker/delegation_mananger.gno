@@ -1,9 +1,5 @@
 package staker
 
-import (
-	"std"
-)
-
 // DelegationManager manages the mapping between users and their delegation IDs.
 // It provides efficient lookup and management of user delegations organized by delegator and delegatee addresses.
 type DelegationManager struct {
@@ -21,7 +17,7 @@ type DelegationManager struct {
 //
 // Returns:
 //   - []int64: list of delegation IDs for the specified pair
-func (dm *DelegationManager) GetUserDelegationIDsWithDelegatee(delegator std.Address, delegatee std.Address) []int64 {
+func (dm *DelegationManager) GetUserDelegationIDsWithDelegatee(delegator address, delegatee address) []int64 {
 	delegatorAddress := delegator.String()
 	delegateeAddress := delegatee.String()
 
@@ -36,7 +32,7 @@ func (dm *DelegationManager) GetUserDelegationIDsWithDelegatee(delegator std.Add
 //
 // Returns:
 //   - []int64: list of all delegation IDs for the delegator
-func (dm *DelegationManager) GetUserDelegationIDs(delegator std.Address) []int64 {
+func (dm *DelegationManager) GetUserDelegationIDs(delegator address) []int64 {
 	delegatorAddress := delegator.String()
 	delegationIDs := make([]int64, 0)
 
@@ -61,7 +57,7 @@ func (dm *DelegationManager) GetUserDelegationIDs(delegator std.Address) []int64
 //   - delegator: address of the user who made the delegation
 //   - delegatee: address of the user who received the delegation
 //   - delegationID: unique identifier for the delegation
-func (dm *DelegationManager) addDelegation(delegator, delegatee std.Address, delegationID int64) {
+func (dm *DelegationManager) addDelegation(delegator, delegatee address, delegationID int64) {
 	delegatorAddress := delegator.String()
 	delegateeAddress := delegatee.String()
 
@@ -97,7 +93,7 @@ func (dm *DelegationManager) addDelegation(delegator, delegatee std.Address, del
 //   - delegator: address of the user who made the delegation
 //   - delegatee: address of the user who received the delegation
 //   - delegationID: unique identifier for the delegation to remove
-func (dm *DelegationManager) removeDelegation(delegator, delegatee std.Address, delegationID int64) {
+func (dm *DelegationManager) removeDelegation(delegator, delegatee address, delegationID int64) {
 	delegatorAddress := delegator.String()
 	delegateeAddress := delegatee.String()
 

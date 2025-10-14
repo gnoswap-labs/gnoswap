@@ -1,7 +1,8 @@
 package router
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
@@ -15,7 +16,7 @@ import (
 )
 
 const (
-	defaultSwapFeeBPS = uint64(15) // 0.15%
+	defaultSwapFeeBPS = uint64(15)   // 0.15%
 	maxSwapFeeBPS     = uint64(1000) // 10%
 )
 
@@ -34,7 +35,7 @@ func SetSwapFee(cur realm, fee uint64) {
 	halt.AssertIsNotHaltedRouterWithVersion(1)
 	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	if fee > maxSwapFeeBPS {
@@ -49,8 +50,8 @@ func SetSwapFee(cur realm, fee uint64) {
 		panic(err)
 	}
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"SetSwapFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -88,16 +89,14 @@ func handleSwapFee(
 		currentTokenPath = wugnotPath
 	}
 
-	feeAmount := u256.Zero().Mul(amount, u256.NewUint(swapFee))
-	feeAmount = u256.Zero().Div(feeAmount, u256.NewUint(10000))
-	feeAmountInt64 := safeConvertToInt64(feeAmount)
+	feeAmountInt64 := calculateRouterFee(amount)
 
 	common.SafeGRC20Transfer(cross, currentTokenPath, protocolFeeAddr, feeAmountInt64)
 
 	pf.AddToProtocolFee(cross, currentTokenPath, feeAmountInt64)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"SwapRouteFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -105,10 +104,44 @@ func handleSwapFee(
 		"amount", formatInt64(feeAmountInt64),
 	)
 
-	toUserAfterProtocol, underflow := u256.Zero().SubOverflow(amount, feeAmount)
+	toUserAfterProtocol, underflow := u256.Zero().SubOverflow(
+		amount,
+		u256.NewUintFromInt64(feeAmountInt64),
+	)
 	if underflow {
 		panic(errProtocolFeeOverflow)
 	}
 
 	return toUserAfterProtocol
+}
+
+func calculateRouterFee(amount *u256.Uint) int64 {
+	if swapFee <= 0 {
+		return 0
+	}
+
+	feeAmount := u256.MulDiv(amount, u256.NewUint(swapFee), u256.NewUint(10000))
+	feeAmountInt64 := safeConvertToInt64(feeAmount)
+
+	return feeAmountInt64
+}
+
+// calculate amount to fetch from pool including router fee
+// poolAmount = userAmount / (1 - feeRate)
+// = userAmount * 10000 / (10000 - swapFeeBPS)
+func calculateExactOutWithRouterFee(amount *u256.Uint) *u256.Uint {
+	userAmount := amount.Clone()
+
+	if swapFee > 0 {
+		// Use MulDiv to prevent overflow and maintain precision
+		poolAmount := u256.MulDiv(
+			userAmount,
+			u256.NewUint(10000),
+			u256.NewUint(10000-swapFee),
+		)
+
+		return poolAmount
+	}
+
+	return userAmount
 }

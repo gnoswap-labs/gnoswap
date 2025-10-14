@@ -2,7 +2,7 @@
 package main
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 	"time"
 
@@ -21,7 +21,7 @@ var t *testing.T
 
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	// current distribution targets
 	stakerAddr, _        = access.GetAddress(prbac.ROLE_STAKER.String())
@@ -43,7 +43,7 @@ func main() {
 
 	ufmt.Println("[SCENARIO] 2. Mint to distribution target (before upgrade)")
 	testing.SkipHeights(1)
-	ufmt.Println("[INFO] current block height", std.ChainHeight())
+	ufmt.Println("[INFO] current block height", runtime.ChainHeight())
 	mintAndDistribute()
 	println()
 
@@ -53,7 +53,7 @@ func main() {
 
 	println("[SCENARIO] 4. Mint to distribution target (after upgrade)")
 	testing.SkipHeights(1)
-	println("[INFO] current block height", std.ChainHeight())
+	println("[INFO] current block height", runtime.ChainHeight())
 	mintAndDistribute()
 	println()
 }
@@ -67,7 +67,7 @@ func initEmission() {
 func mintAndDistribute() {
 	testing.SetRealm(adminRealm)
 
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/emission"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/emission"))
 
 	previousStakerBalance := gns.BalanceOf(stakerAddr)
 	previousGovStakerBalance := gns.BalanceOf(govStakerAddr)

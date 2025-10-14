@@ -1,7 +1,7 @@
 package rbac
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -15,7 +15,7 @@ func TestIsOwner(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		addr     std.Address
+		addr     address
 		expected bool
 	}{
 		{
@@ -58,7 +58,7 @@ func TestIsPendingOwner(t *testing.T) {
 	// Test basic functionality with no pending owner
 	tests := []struct {
 		name     string
-		addr     std.Address
+		addr     address
 		expected bool
 	}{
 		{
@@ -109,7 +109,7 @@ func TestGetPendingOwner(t *testing.T) {
 	}
 
 	// Set pending owner
-	testing.SetRealm(std.NewUserRealm(ADMIN))
+	testing.SetRealm(testing.NewUserRealm(ADMIN))
 	err := manager.TransferOwnershipBy(DEV_OPS, ADMIN)
 	if err != nil {
 		t.Fatalf("Failed to transfer ownership: %v", err)
@@ -124,9 +124,9 @@ func TestGetPendingOwner(t *testing.T) {
 func TestTransferOwnership(t *testing.T) {
 	tests := []struct {
 		name                   string
-		ownerAddr              std.Address
-		transferAddr           std.Address
-		transferRealm          std.Realm
+		ownerAddr              address
+		transferAddr           address
+		transferRealm          runtime.Realm
 		expectedHasAborted     bool
 		expectedAbortedMessage string
 	}{
@@ -134,7 +134,7 @@ func TestTransferOwnership(t *testing.T) {
 			name:                   "transfer ownership success",
 			ownerAddr:              ADMIN,
 			transferAddr:           testutils.TestAddress("user1"),
-			transferRealm:          std.NewUserRealm(ADMIN),
+			transferRealm:          testing.NewUserRealm(ADMIN),
 			expectedHasAborted:     false,
 			expectedAbortedMessage: "",
 		},
@@ -142,7 +142,7 @@ func TestTransferOwnership(t *testing.T) {
 			name:                   "transfer ownership failed to empty address",
 			ownerAddr:              ADMIN,
 			transferAddr:           "",
-			transferRealm:          std.NewUserRealm(ADMIN),
+			transferRealm:          testing.NewUserRealm(ADMIN),
 			expectedHasAborted:     true,
 			expectedAbortedMessage: "invalid address",
 		},
@@ -150,7 +150,7 @@ func TestTransferOwnership(t *testing.T) {
 			name:                   "transfer ownership failed to previous realm is not owner",
 			ownerAddr:              ADMIN,
 			transferAddr:           testutils.TestAddress("user1"),
-			transferRealm:          std.NewUserRealm(testutils.TestAddress("different_realm")),
+			transferRealm:          testing.NewUserRealm(testutils.TestAddress("different_realm")),
 			expectedHasAborted:     true,
 			expectedAbortedMessage: "caller is not owner",
 		},
@@ -158,7 +158,7 @@ func TestTransferOwnership(t *testing.T) {
 			name:                   "transfer ownership failed to caller is not owner",
 			ownerAddr:              testutils.TestAddress("user1"),
 			transferAddr:           testutils.TestAddress("user2"),
-			transferRealm:          std.NewUserRealm(testutils.TestAddress("user1")),
+			transferRealm:          testing.NewUserRealm(testutils.TestAddress("user1")),
 			expectedHasAborted:     true,
 			expectedAbortedMessage: "caller is not owner",
 		},
@@ -191,11 +191,11 @@ func TestTransferOwnership(t *testing.T) {
 func TestAcceptOwnership(t *testing.T) {
 	tests := []struct {
 		name                   string
-		ownerAddr              std.Address
-		transferAddr           std.Address
-		acceptExecuteRealm     std.Realm
-		acceptAddr             std.Address
-		expectedOwner          std.Address
+		ownerAddr              address
+		transferAddr           address
+		acceptExecuteRealm     runtime.Realm
+		acceptAddr             address
+		expectedOwner          address
 		expectedHasAborted     bool
 		expectedAbortedMessage string
 	}{
@@ -204,7 +204,7 @@ func TestAcceptOwnership(t *testing.T) {
 			ownerAddr:              ADMIN,
 			transferAddr:           DEV_OPS,
 			acceptAddr:             DEV_OPS,
-			acceptExecuteRealm:     std.NewUserRealm(DEV_OPS),
+			acceptExecuteRealm:     testing.NewUserRealm(DEV_OPS),
 			expectedOwner:          DEV_OPS,
 			expectedHasAborted:     false,
 			expectedAbortedMessage: "",
@@ -214,7 +214,7 @@ func TestAcceptOwnership(t *testing.T) {
 			ownerAddr:              ADMIN,
 			transferAddr:           DEV_OPS,
 			acceptAddr:             testutils.TestAddress("not-owner"),
-			acceptExecuteRealm:     std.NewUserRealm(testutils.TestAddress("not-owner")),
+			acceptExecuteRealm:     testing.NewUserRealm(testutils.TestAddress("not-owner")),
 			expectedOwner:          ADMIN,
 			expectedHasAborted:     true,
 			expectedAbortedMessage: "caller is not pending owner",
@@ -224,7 +224,7 @@ func TestAcceptOwnership(t *testing.T) {
 			ownerAddr:              ADMIN,
 			transferAddr:           DEV_OPS,
 			acceptAddr:             DEV_OPS,
-			acceptExecuteRealm:     std.NewUserRealm(testutils.TestAddress("not-owner")),
+			acceptExecuteRealm:     testing.NewUserRealm(testutils.TestAddress("not-owner")),
 			expectedOwner:          ADMIN,
 			expectedHasAborted:     true,
 			expectedAbortedMessage: "caller is not pending owner",
@@ -274,7 +274,7 @@ func TestOwnershipWorkflow(t *testing.T) {
 	}
 
 	// Step 1: Transfer ownership
-	testing.SetRealm(std.NewUserRealm(ADMIN))
+	testing.SetRealm(testing.NewUserRealm(ADMIN))
 	err := manager.TransferOwnershipBy(DEV_OPS, ADMIN)
 	if err != nil {
 		t.Fatalf("Step 1 failed: %v", err)
@@ -290,7 +290,7 @@ func TestOwnershipWorkflow(t *testing.T) {
 	}
 
 	// Step 2: Accept ownership
-	testing.SetRealm(std.NewUserRealm(DEV_OPS))
+	testing.SetRealm(testing.NewUserRealm(DEV_OPS))
 	err = manager.AcceptOwnershipBy(DEV_OPS)
 	if err != nil {
 		t.Fatalf("Step 2 failed: %v", err)

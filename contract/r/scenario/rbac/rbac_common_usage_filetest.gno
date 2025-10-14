@@ -4,7 +4,6 @@
 package main
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/nt/testutils"
@@ -58,7 +57,7 @@ func initializeRBACForMicroservices() {
 	// Step 1: Register essential microservice roles
 	println("[INFO] registering microservice roles")
 
-	serviceRoles := map[string]std.Address{
+	serviceRoles := map[string]address{
 		"api_gateway":      apiServiceAddr,
 		"database_service": databaseServiceAddr,
 		"frontend_service": frontendServiceAddr,
@@ -170,7 +169,7 @@ func testServiceDecommissioning() {
 	// Step 2: Verify other services are unaffected
 	println("[INFO] verifying other services remain operational")
 
-	remainingServices := map[string]std.Address{
+	remainingServices := map[string]address{
 		"api_gateway":      apiServiceAddr,
 		"database_service": databaseServiceAddr,
 		"frontend_service": frontendServiceAddr,

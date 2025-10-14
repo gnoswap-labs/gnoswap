@@ -1,7 +1,8 @@
 package governance
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 	"time"
 
 	en "gno.land/r/gnoswap/emission"
@@ -38,8 +39,8 @@ func Execute(cur realm, proposalID int64) int64 {
 	halt.AssertIsNotHaltedGovernanceWithVersion(1)
 
 	// Get caller information and current blockchain state
-	caller := std.PreviousRealm().Address()
-	currentHeight := std.ChainHeight()
+	caller := runtime.PreviousRealm().Address()
+	currentHeight := runtime.ChainHeight()
 	currentAt := time.Now().Unix()
 
 	// Mint and distribute GNS tokens as part of the execution process
@@ -57,8 +58,8 @@ func Execute(cur realm, proposalID int64) int64 {
 	}
 
 	// Emit execution event for tracking and auditing
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"Execute",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -73,7 +74,7 @@ func executeProposal(
 	proposalID int64,
 	executedAt int64,
 	executedHeight int64,
-	executedBy std.Address,
+	executedBy address,
 ) (*Proposal, error) {
 	// Retrieve the proposal from storage
 	proposal, ok := getProposal(proposalID)
@@ -145,11 +146,11 @@ func executeProposal(
 func Cancel(cur realm, proposalID int64) int64 {
 	halt.AssertIsNotHaltedGovernanceWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	assertCallerIsProposer(proposalID, caller)
 
 	// Get current blockchain state and caller information
-	currentHeight := std.ChainHeight()
+	currentHeight := runtime.ChainHeight()
 	currentAt := time.Now().Unix()
 
 	// Mint and distribute GNS tokens as part of the process
@@ -162,8 +163,8 @@ func Cancel(cur realm, proposalID int64) int64 {
 	}
 
 	// Emit cancellation event for tracking
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"Cancel",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -175,7 +176,7 @@ func Cancel(cur realm, proposalID int64) int64 {
 
 // cancel handles core logic of proposal cancellation.
 // Validates proposal state and updates status to canceled.
-func cancel(proposalID, canceledAt, canceledHeight int64, canceledBy std.Address) (proposal *Proposal, err error) {
+func cancel(proposalID, canceledAt, canceledHeight int64, canceledBy address) (proposal *Proposal, err error) {
 	// Retrieve the proposal from storage
 	proposal, ok := getProposal(proposalID)
 	if !ok {
@@ -198,7 +199,7 @@ func executeCommunityPoolSpend(
 	parameterRegistry *ParameterRegistry,
 	executedAt int64,
 	executedHeight int64,
-	executedBy std.Address,
+	executedBy address,
 ) error {
 	// Verify token registration for community pool spending
 	if proposal.IsCommunityPoolSpendType() {
@@ -231,7 +232,7 @@ func executeParameterChange(
 	parameterRegistry *ParameterRegistry,
 	executedAt int64,
 	executedHeight int64,
-	executedBy std.Address,
+	executedBy address,
 ) error {
 	// Execute all parameter changes defined in the proposal
 	parameterChangesInfos := proposal.data.execution.ParameterChangesInfos()

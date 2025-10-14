@@ -1,7 +1,6 @@
 package staker
 
 import (
-	"std"
 	"testing"
 	"time"
 
@@ -51,7 +50,7 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 	TokenFaucet(t, gnsPath, addr01)
 
 	// Approve tokens
-	testing.SetRealm(std.NewUserRealm(addr01))
+	testing.SetRealm(testing.NewUserRealm(addr01))
 	TokenApprove(t, barPath, addr01, poolAddr, maxApprove)
 	TokenApprove(t, bazPath, addr01, poolAddr, maxApprove)
 
@@ -73,7 +72,7 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 	)
 
 	// Stake position
-	testing.SetRealm(std.NewUserRealm(addr01))
+	testing.SetRealm(testing.NewUserRealm(addr01))
 	gnft.Approve(cross, stakerAddr, positionIdFrom(positionId))
 	StakeToken(cross, positionId, "")
 
@@ -105,7 +104,7 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 
 	// Test 1: Normal collection with sufficient rewards
 	t.Run("normal collection works", func(t *testing.T) {
-		testing.SetRealm(std.NewUserRealm(addr01))
+		testing.SetRealm(testing.NewUserRealm(addr01))
 
 		beforeGns := gns.BalanceOf(addr01)
 		beforeBar := bar.BalanceOf(addr01)
@@ -128,7 +127,7 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 	// Test 2: Create incentive with insufficient reward amount
 	t.Run("very small amount of external reward", func(t *testing.T) {
 		// Create another position for testing
-		testing.SetRealm(std.NewUserRealm(addr02))
+		testing.SetRealm(testing.NewUserRealm(addr02))
 		TokenFaucet(t, barPath, addr02)
 		TokenFaucet(t, bazPath, addr02)
 		TokenApprove(t, barPath, addr02, poolAddr, maxApprove)

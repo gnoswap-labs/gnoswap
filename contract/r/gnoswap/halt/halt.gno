@@ -1,7 +1,8 @@
 package halt
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 	"strconv"
 
 	"gno.land/r/gnoswap/access"
@@ -20,7 +21,7 @@ func init() {
 //
 // Only callable by admin or governance.
 func SetHaltLevel(cur realm, level HaltLevel) {
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	err := setHaltLevel(level)
@@ -28,7 +29,7 @@ func SetHaltLevel(cur realm, level HaltLevel) {
 		panic(err)
 	}
 
-	std.Emit(
+	chain.Emit(
 		"SetHaltLevel",
 		"level", level.String(),
 		"description", level.Description(),
@@ -45,7 +46,7 @@ func SetHaltLevel(cur realm, level HaltLevel) {
 //
 // Only callable by admin or governance.
 func SetOperationStatus(cur realm, op OpType, version int, halted bool) {
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	if !op.IsValid() {
@@ -57,7 +58,7 @@ func SetOperationStatus(cur realm, op OpType, version int, halted bool) {
 		panic(err)
 	}
 
-	std.Emit(
+	chain.Emit(
 		"SetOperationStatus",
 		"operation", string(op),
 		"halted", strconv.FormatBool(halted),
@@ -75,7 +76,7 @@ func SetOperationStatus(cur realm, op OpType, version int, halted bool) {
 //
 // Only callable by admin or governance.
 func SetOperationStatusNextVersion(cur realm, op OpType, halted bool) {
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	if !op.IsValid() {
@@ -92,7 +93,7 @@ func SetOperationStatusNextVersion(cur realm, op OpType, halted bool) {
 		panic(err)
 	}
 
-	std.Emit(
+	chain.Emit(
 		"SetOperationStatus",
 		"operation", string(op),
 		"halted", strconv.FormatBool(halted),

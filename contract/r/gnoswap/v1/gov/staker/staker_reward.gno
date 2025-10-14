@@ -1,7 +1,9 @@
 package staker
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
+	"chain/runtime"
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -46,8 +48,8 @@ func CollectReward(cur realm) {
 	halt.AssertIsNotHaltedGovStakerWithVersion(1)
 	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
-	from := std.CurrentRealm().Address()
+	caller := runtime.PreviousRealm().Address()
+	from := runtime.CurrentRealm().Address()
 	currentTimestamp := time.Now().Unix()
 
 	emissionReward, protocolFeeRewards, err := claimRewards(caller.String(), currentTimestamp)
@@ -59,8 +61,8 @@ func CollectReward(cur realm) {
 	if emissionReward > 0 {
 		gns.Transfer(cross, caller, emissionReward)
 
-		previousRealm := std.PreviousRealm()
-		std.Emit(
+		previousRealm := runtime.PreviousRealm()
+		chain.Emit(
 			"CollectEmissionReward",
 			"prevAddr", previousRealm.Address().String(),
 			"prevRealm", previousRealm.PkgPath(),
@@ -78,8 +80,8 @@ func CollectReward(cur realm) {
 				panic(err)
 			}
 
-			previousRealm := std.PreviousRealm()
-			std.Emit(
+			previousRealm := runtime.PreviousRealm()
+			chain.Emit(
 				"CollectProtocolFeeReward",
 				"prevAddr", previousRealm.Address().String(),
 				"prevRealm", previousRealm.PkgPath(),
@@ -98,14 +100,14 @@ func CollectReward(cur realm) {
 //   - to: recipient address for rewards
 //
 // Only callable by launchpad contract.
-func CollectRewardFromLaunchPad(cur realm, to std.Address) {
+func CollectRewardFromLaunchPad(cur realm, to address) {
 	halt.AssertIsNotHaltedGovStakerWithVersion(1)
 	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsLaunchpadWithVersion(1, caller)
 
-	from := std.CurrentRealm().Address()
+	from := runtime.CurrentRealm().Address()
 	currentTimestamp := time.Now().Unix()
 
 	launchpadRewardID := makeLaunchpadRewardID(to.String())
@@ -126,8 +128,8 @@ func CollectRewardFromLaunchPad(cur realm, to std.Address) {
 	if emissionReward > 0 {
 		gns.Transfer(cross, to, emissionReward)
 
-		previousRealm := std.PreviousRealm()
-		std.Emit(
+		previousRealm := runtime.PreviousRealm()
+		chain.Emit(
 			"CollectEmissionFromLaunchPad",
 			"prevAddr", previousRealm.Address().String(),
 			"prevRealm", previousRealm.PkgPath(),
@@ -145,8 +147,8 @@ func CollectRewardFromLaunchPad(cur realm, to std.Address) {
 				panic(err)
 			}
 
-			previousRealm := std.PreviousRealm()
-			std.Emit(
+			previousRealm := runtime.PreviousRealm()
+			chain.Emit(
 				"CollectProtocolFeeFromLaunchPad",
 				"prevAddr", previousRealm.Address().String(),
 				"prevRealm", previousRealm.PkgPath(),
@@ -171,11 +173,11 @@ func CollectRewardFromLaunchPad(cur realm, to std.Address) {
 //   - if caller is not the launchpad contract
 //   - if system is halted for withdrawals
 //   - if access control operations fail
-func SetAmountByProjectWallet(cur realm, addr std.Address, amount int64, add bool) {
+func SetAmountByProjectWallet(cur realm, addr address, amount int64, add bool) {
 	halt.AssertIsNotHaltedGovStakerWithVersion(1)
 	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	currentTimestamp := time.Now().Unix()
 
 	access.AssertIsLaunchpadWithVersion(1, caller)
@@ -233,7 +235,7 @@ func claimRewardsFromLaunchpad(address string, currentTimestamp int64) (int64, m
 // Supports both native GNOT (through wUGNOT unwrapping) and GRC20 tokens.
 func transferToken(
 	tokenPath string,
-	from, to std.Address,
+	from, to address,
 	amount int64,
 ) error {
 	common.MustRegistered(tokenPath)
@@ -268,9 +270,9 @@ func transferToken(
 	if isGnoNativeCoin {
 		wugnot.Withdraw(cross, amount)
 
-		sendCoin := std.Coin{Denom: "ugnot", Amount: amount}
-		banker := std.NewBanker(std.BankerTypeRealmSend)
-		banker.SendCoins(from, to, std.Coins{sendCoin})
+		sendCoin := chain.Coin{Denom: "ugnot", Amount: amount}
+		banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+		banker_.SendCoins(from, to, chain.Coins{sendCoin})
 
 		return nil
 	}

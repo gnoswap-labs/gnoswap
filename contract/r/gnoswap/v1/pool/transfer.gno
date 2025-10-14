@@ -1,7 +1,7 @@
 package pool
 
 import (
-	"std"
+	"chain/runtime"
 
 	"gno.land/p/nt/ufmt"
 
@@ -33,7 +33,7 @@ import (
 //
 // Panics if any validation fails or if the transfer fails
 func (p *Pool) safeTransfer(
-	to std.Address,
+	to address,
 	tokenPath string,
 	amount *u256.Uint,
 	isToken0 bool,
@@ -93,7 +93,7 @@ func (p *Pool) safeTransfer(
 //
 // )
 func (p *Pool) safeTransferFrom(
-	from, to std.Address,
+	from, to address,
 	tokenPath string,
 	amount *u256.Uint,
 	isToken0 bool,
@@ -149,7 +149,7 @@ func (p *Pool) safeSwapCallback(
 		))
 	}
 
-	currentAddress := std.CurrentRealm().Address()
+	currentAddress := runtime.CurrentRealm().Address()
 
 	balanceBefore := common.BalanceOf(tokenPath, currentAddress)
 

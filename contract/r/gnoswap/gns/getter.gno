@@ -1,7 +1,7 @@
 package gns
 
 import (
-	"std"
+	"chain/runtime"
 	"strconv"
 	"time"
 
@@ -158,7 +158,7 @@ func GetHalvingYearInfo(timestamp int64) (int64, int64, int64) {
 // Includes current height, timestamp, and details for all halving years (1-12). Panics on JSON marshal error.
 func GetHalvingInfo() string {
 	currentTime := time.Now().Unix()
-	currentHeight := std.ChainHeight()
+	currentHeight := runtime.ChainHeight()
 
 	halvings := make([]*json.Node, 0)
 

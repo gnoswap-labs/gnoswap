@@ -1,7 +1,6 @@
 package referral
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/nt/testutils"
@@ -17,8 +16,8 @@ func TestSecurityTest_UnauthorizedAccess(t *testing.T) {
 		name                 string
 		caller               string
 		operation            string
-		addr                 std.Address
-		refAddr              std.Address
+		addr                 address
+		refAddr              address
 		expectedError        bool
 		expectedHasPanic     bool
 		expectedPanicMessage string
@@ -100,9 +99,9 @@ func TestSecurityTest_ValidCallerAccess(t *testing.T) {
 		name                 string
 		caller               string
 		operation            string
-		addr                 std.Address
-		refAddr              std.Address
-		newRefAddr           std.Address
+		addr                 address
+		refAddr              address
+		newRefAddr           address
 		expectedHasPanic     bool
 		expectedPanicMessage string
 		expectedHas          bool
@@ -204,8 +203,8 @@ func TestSecurityTest_InputSanitization(t *testing.T) {
 		name                 string
 		caller               string
 		operation            string
-		addr                 std.Address
-		refAddr              std.Address
+		addr                 address
+		refAddr              address
 		expectedHasPanic     bool
 		expectedPanicMessage string
 		expectedError        error
@@ -214,7 +213,7 @@ func TestSecurityTest_InputSanitization(t *testing.T) {
 			name:                 "invalid addresses rejected",
 			caller:               "router",
 			operation:            "register",
-			addr:                 std.Address("invalid"),
+			addr:                 address("invalid"),
 			refAddr:              testutils.TestAddress("sec1"),
 			expectedHasPanic:     false,
 			expectedPanicMessage: "",
@@ -296,9 +295,9 @@ func TestSecurityTest_RateLimitingSecurity(t *testing.T) {
 		name                 string
 		caller               string
 		operation            string
-		addr                 std.Address
-		refAddr              std.Address
-		updateRefAddr        std.Address
+		addr                 address
+		refAddr              address
+		updateRefAddr        address
 		expectedHasPanic     bool
 		expectedPanicMessage string
 		expectedError        error
@@ -391,9 +390,9 @@ func TestSecurityTest_StateIntegrity(t *testing.T) {
 		name                 string
 		caller               string
 		operation            string
-		addr                 std.Address
-		refAddr              std.Address
-		otherAddr            std.Address
+		addr                 address
+		refAddr              address
+		otherAddr            address
 		expectedHasPanic     bool
 		expectedPanicMessage string
 		expectedFirstHas     bool
@@ -553,7 +552,7 @@ func TestSecurityTest_TryRegister(t *testing.T) {
 	tests := []struct {
 		name                 string
 		caller               string
-		addr                 std.Address
+		addr                 address
 		referral             string
 		expectedHasPanic     bool
 		expectedPanicMessage string

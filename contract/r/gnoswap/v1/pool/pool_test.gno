@@ -1,7 +1,6 @@
 package pool
 
 import (
-	"std"
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -544,7 +543,7 @@ func TestAccessControl_AuthorizationValidation(t *testing.T) {
 				pool := setupStablecoinPool(t)
 				approveTokensForPool(t, pool)
 
-				testing.SetRealm(std.NewUserRealm(unauthorizedAddr))
+				testing.SetRealm(testing.NewUserRealm(unauthorizedAddr))
 				expectedMsg := ufmt.Sprintf("unauthorized: caller %s is not position", unauthorizedAddr.String())
 				uassert.AbortsWithMessage(t, expectedMsg, func() {
 					Mint(cross, pool.token0Path, pool.token1Path, pool.fee,
@@ -562,7 +561,7 @@ func TestAccessControl_AuthorizationValidation(t *testing.T) {
 			action: func(t *testing.T) {
 				pool := setupStablecoinPool(t)
 
-				testing.SetRealm(std.NewUserRealm(unauthorizedAddr))
+				testing.SetRealm(testing.NewUserRealm(unauthorizedAddr))
 				expectedMsg := ufmt.Sprintf("unauthorized: caller %s is not admin or governance", unauthorizedAddr.String())
 				uassert.AbortsWithMessage(t, expectedMsg, func() {
 					CollectProtocol(cross, pool.token0Path, pool.token1Path, pool.fee,
@@ -687,7 +686,7 @@ func TestFeeCollection_RevenueDistribution(t *testing.T) {
 	feeTests := []struct {
 		name             string
 		description      string
-		setupScenario    func(t *testing.T) (*Pool, std.Address)
+		setupScenario    func(t *testing.T) (*Pool, address)
 		collectionAmount map[string]string // token0, token1
 		expectedBehavior string
 		revenueImpact    string
@@ -695,7 +694,7 @@ func TestFeeCollection_RevenueDistribution(t *testing.T) {
 		{
 			name:        "collect_full_available_fees",
 			description: "Collect full available fees",
-			setupScenario: func(t *testing.T) (*Pool, std.Address) {
+			setupScenario: func(t *testing.T) (*Pool, address) {
 				return setupPoolWithTradingActivity(t)
 			},
 			collectionAmount: map[string]string{"token0": "100", "token1": "100"},
@@ -705,7 +704,7 @@ func TestFeeCollection_RevenueDistribution(t *testing.T) {
 		{
 			name:        "collect_zero_amount",
 			description: "Request to collect 0 fees",
-			setupScenario: func(t *testing.T) (*Pool, std.Address) {
+			setupScenario: func(t *testing.T) (*Pool, address) {
 				return setupPoolWithTradingActivity(t)
 			},
 			collectionAmount: map[string]string{"token0": "0", "token1": "0"},
@@ -715,7 +714,7 @@ func TestFeeCollection_RevenueDistribution(t *testing.T) {
 		{
 			name:        "collect_nonexistent_position",
 			description: "Collect fees from nonexistent position",
-			setupScenario: func(t *testing.T) (*Pool, std.Address) {
+			setupScenario: func(t *testing.T) (*Pool, address) {
 				pool := setupStablecoinPool(t)
 				recipient := testutils.TestAddress("nonexistent")
 				return pool, recipient
@@ -858,7 +857,7 @@ func TestProtocolFeeManagement_GovernanceControls(t *testing.T) {
 	}
 }
 
-func setupPoolWithTradingActivity(t *testing.T) (*Pool, std.Address) {
+func setupPoolWithTradingActivity(t *testing.T) (*Pool, address) {
 	t.Helper()
 
 	// Create stablecoin pool
@@ -927,7 +926,7 @@ func simulateSwapActivity(t *testing.T, pool *Pool) {
 	}
 
 	// Create fees through swap execution
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 	approveTokenForRouter(t, pool.token0Path)
 
 	Swap(cross, pool.token0Path, pool.token1Path, pool.fee,
@@ -993,7 +992,7 @@ func approveTokensForPool(t *testing.T, pool *Pool) {
 	}
 }
 
-func getTokenBalance(t *testing.T, tokenPath string, addr std.Address) int64 {
+func getTokenBalance(t *testing.T, tokenPath string, addr address) int64 {
 	t.Helper()
 
 	switch tokenPath {

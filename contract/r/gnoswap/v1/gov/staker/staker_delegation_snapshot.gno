@@ -1,7 +1,8 @@
 package staker
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 	"time"
 
 	"gno.land/r/gnoswap/access"
@@ -28,7 +29,7 @@ import (
 func CleanStakerDelegationSnapshotByAdmin(cur realm, threshold int64) {
 	halt.AssertIsNotHaltedGovStakerWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	// Calculate cutoff time by subtracting threshold from current time
@@ -63,7 +64,7 @@ func CleanStakerDelegationSnapshotByAdmin(cur realm, threshold int64) {
 func SetUnDelegationLockupPeriodByAdmin(cur realm, period int64) {
 	halt.AssertIsNotHaltedGovStakerWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	if period < 0 {
@@ -72,8 +73,8 @@ func SetUnDelegationLockupPeriodByAdmin(cur realm, period int64) {
 
 	setUnDelegationLockupPeriod(period)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"SetUnDelegationLockupPeriod",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),

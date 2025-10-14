@@ -1,7 +1,5 @@
 package governance
 
-import "std"
-
 // ProposalManager manages the association between users and their created proposals.
 // This structure provides efficient lookup of proposals by user address and maintains
 // the relationship for governance operations and queries.
@@ -11,7 +9,7 @@ type ProposalManager struct {
 
 // GetUserProposals retrieves all proposal IDs created by a specific user.
 // Returns an empty slice if the user has no proposals.
-func (pm *ProposalManager) GetUserProposals(user std.Address) []int64 {
+func (pm *ProposalManager) GetUserProposals(user address) []int64 {
 	// Check if user has any proposals
 	_, ok := pm.userProposals[user.String()]
 	if !ok {
@@ -30,7 +28,7 @@ func (pm *ProposalManager) GetUserProposals(user std.Address) []int64 {
 
 // HasProposal checks if a specific user has created a specific proposal.
 // Returns true if the user created the specified proposal.
-func (pm *ProposalManager) HasProposal(user std.Address, proposalID int64) bool {
+func (pm *ProposalManager) HasProposal(user address, proposalID int64) bool {
 	// First check if user has any proposals
 	proposals, ok := pm.userProposals[user.String()]
 	if !ok {
@@ -52,7 +50,7 @@ func (pm *ProposalManager) HasProposal(user std.Address, proposalID int64) bool 
 // Parameters:
 //   - user: address of the proposal creator
 //   - proposalID: ID of the created proposal
-func (pm *ProposalManager) addProposal(user std.Address, proposalID int64) {
+func (pm *ProposalManager) addProposal(user address, proposalID int64) {
 	// Initialize user's proposal map if it doesn't exist
 	if _, ok := pm.userProposals[user.String()]; !ok {
 		pm.userProposals[user.String()] = make(map[int64]bool)
@@ -68,7 +66,7 @@ func (pm *ProposalManager) addProposal(user std.Address, proposalID int64) {
 // Parameters:
 //   - user: address of the proposal creator
 //   - proposalID: ID of the proposal to remove
-func (pm *ProposalManager) removeProposal(user std.Address, proposalID int64) {
+func (pm *ProposalManager) removeProposal(user address, proposalID int64) {
 	// Exit early if user doesn't have the proposal
 	if !pm.HasProposal(user, proposalID) {
 		return

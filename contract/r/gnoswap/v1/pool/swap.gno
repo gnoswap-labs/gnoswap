@@ -1,7 +1,8 @@
 package pool
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 	"strconv"
 	"time"
 
@@ -40,7 +41,7 @@ var (
 //
 // Only callable by staker contract.
 func SetTickCrossHook(cur realm, hook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsStakerWithVersion(1, caller)
 	tickCrossHook = hook
 }
@@ -52,7 +53,7 @@ func SetTickCrossHook(cur realm, hook func(poolPath string, tickId int32, zeroFo
 //
 // Only callable by staker contract.
 func SetSwapStartHook(cur realm, hook func(poolPath string, timestamp int64)) {
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsStakerWithVersion(1, caller)
 	swapStartHook = hook
 }
@@ -64,7 +65,7 @@ func SetSwapStartHook(cur realm, hook func(poolPath string, timestamp int64)) {
 //
 // Only callable by staker contract.
 func SetSwapEndHook(cur realm, hook func(poolPath string) error) {
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsStakerWithVersion(1, caller)
 	swapEndHook = hook
 }
@@ -117,16 +118,16 @@ func Swap(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	recipient std.Address,
+	recipient address,
 	zeroForOne bool,
 	amountSpecified string,
 	sqrtPriceLimitX96 string,
-	payer std.Address,
+	payer address,
 	swapCallback func(cur realm, amount0Delta, amount1Delta string) error,
 ) (string, string) {
 	halt.AssertIsNotHaltedPoolWithVersion(1)
 
-	previousRealm := std.PreviousRealm()
+	previousRealm := runtime.PreviousRealm()
 	assertIsNotAllowedEOA(previousRealm)
 	assertIsValidTokenOrder(token0Path, token1Path)
 
@@ -222,7 +223,7 @@ func Swap(
 		}
 	}
 
-	std.Emit(
+	chain.Emit(
 		"Swap",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),

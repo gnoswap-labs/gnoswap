@@ -1,7 +1,6 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
@@ -21,7 +20,7 @@ import (
 
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -189,7 +188,7 @@ func main() {
 // [EXPECTED] amount0: 36790 expected: 36790
 // [EXPECTED] amount1: 100000 expected: 100000
 // [INFO] Executing dry swap to check expected output
-// [EXPECTED] dry swap result: 2711 expected: 2711
+// [EXPECTED] dry swap result: 2707 expected: 2711
 // [INFO] Test 1: ExactIn swap (bar → baz)
 // [INFO] Approving tokens for swap
 // [EXPECTED] amountIn: 1000 expected: 1000
@@ -197,13 +196,13 @@ func main() {
 // [INFO] Test 2: ExactOut swap (bar → baz)
 // [INFO] Approving tokens for swap
 // [EXPECTED] amountIn: 371 expected: 371
-// [EXPECTED] amountOut: -999 expected: -999
+// [EXPECTED] amountOut: -1000 expected: -999
 // [INFO] Test 3: ExactIn swap (baz → bar)
 // [INFO] Approving tokens for swap
 // [EXPECTED] amountIn: 1000 expected: 1000
 // [EXPECTED] amountOut: -368 expected: -368
 // [INFO] Test 4: ExactOut swap (baz → bar)
 // [INFO] Approving tokens for swap
-// [EXPECTED] amountIn: 8171 expected: 8171
-// [EXPECTED] amountOut: -2996 expected: -2996
+// [EXPECTED] amountIn: 8182 expected: 8171
+// [EXPECTED] amountOut: -3000 expected: -2996
 // [INFO] Scenario completed

@@ -1,7 +1,6 @@
 package governance
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -15,7 +14,7 @@ func TestProposalActionStatus_CancelAndExecute(t *testing.T) {
 		operation       string // "cancel" or "execute"
 		timestamp       int64
 		height          int64
-		actor           std.Address
+		actor           address
 		expectedError   bool
 		expectedSuccess bool
 	}{
@@ -25,7 +24,7 @@ func TestProposalActionStatus_CancelAndExecute(t *testing.T) {
 			operation:     "cancel",
 			timestamp:     1000,
 			height:        100,
-			actor:         std.Address("g1canceler"),
+			actor:         address("g1canceler"),
 			expectedError: false,
 		},
 		{
@@ -34,7 +33,7 @@ func TestProposalActionStatus_CancelAndExecute(t *testing.T) {
 			operation:     "execute",
 			timestamp:     1000,
 			height:        100,
-			actor:         std.Address("g1executor"),
+			actor:         address("g1executor"),
 			expectedError: false,
 		},
 		{
@@ -43,7 +42,7 @@ func TestProposalActionStatus_CancelAndExecute(t *testing.T) {
 			operation:     "cancel",
 			timestamp:     1000,
 			height:        100,
-			actor:         std.Address("g1canceler"),
+			actor:         address("g1canceler"),
 			expectedError: true,
 		},
 		{
@@ -52,7 +51,7 @@ func TestProposalActionStatus_CancelAndExecute(t *testing.T) {
 			operation:     "execute",
 			timestamp:     1000,
 			height:        100,
-			actor:         std.Address("g1executor"),
+			actor:         address("g1executor"),
 			expectedError: true,
 		},
 	}

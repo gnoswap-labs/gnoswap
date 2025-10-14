@@ -1,7 +1,7 @@
 package gns
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 	"time"
 
@@ -37,7 +37,7 @@ func resetGnsTokenObject(t *testing.T) {
 func resetEmissionState(t *testing.T) {
 	t.Helper()
 
-	blockHeight := std.ChainHeight()
+	blockHeight := runtime.ChainHeight()
 	startTimestamp := time.Now().Unix()
 	emissionState = NewEmissionState(blockHeight, startTimestamp)
 }

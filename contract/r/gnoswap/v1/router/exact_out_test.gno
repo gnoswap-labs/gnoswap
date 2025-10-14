@@ -1,7 +1,6 @@
 package router
 
 import (
-	"std"
 	"strings"
 	"testing"
 	"time"
@@ -91,11 +90,11 @@ func TestExactOutSwapBoundary(t *testing.T) {
 	testing.SetRealm(routerRealm)
 	setupTestPool(t)
 
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	TokenFaucet2(t, fooPath, routerAddr)
 	TokenFaucet2(t, barPath, routerAddr)
 
-	testing.SetRealm(std.NewUserRealm(routerAddr))
+	testing.SetRealm(testing.NewUserRealm(routerAddr))
 	foo.Approve(cross, poolAddr, maxApprove)
 	bar.Approve(cross, poolAddr, maxApprove)
 

@@ -5,7 +5,8 @@
 package main
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"strconv"
 	"testing"
 
@@ -27,7 +28,7 @@ import (
 
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
@@ -110,12 +111,12 @@ func initializeSetup() {
 	testing.SetRealm(adminRealm)
 	pool.SetPoolCreationFee(cross, 0)
 
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100000000000000}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 100000000000000}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000000000000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
 	testing.SetRealm(adminRealm)
 	wugnot.Deposit(cross)
 
-	testing.IssueCoins(std.NewCodeRealm(wugnotPath).Address(), std.Coins{{"ugnot", 100000000000000}})
+	testing.IssueCoins(testing.NewCodeRealm(wugnotPath).Address(), chain.Coins{{"ugnot", 100000000000000}})
 
 	println("[INFO] GNS Balance of admin:", gns.BalanceOf(adminAddr))
 	println("[INFO] WUGNOT Balance of admin:", wugnot.BalanceOf(adminAddr))
@@ -147,7 +148,7 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 	common.Approve(cross, token0Path, poolAddr, maxInt64)
 	common.Approve(cross, token1Path, poolAddr, maxInt64)
 
-	testing.SetOriginSend(std.Coins{})
+	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		token0Path,
@@ -189,8 +190,8 @@ func exactOutSwapRouteBy(
 	ufmt.Println("[INFO] queryRatios:", queryRatios)
 	ufmt.Println("[INFO] maxAmountIn:", maxAmountIn)
 
-	banker := std.NewBanker(std.BankerTypeReadonly)
-	beforeGNOTBalance := banker.GetCoins(adminAddr).AmountOf("ugnot")
+	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
+	beforeGNOTBalance := banker_.GetCoins(adminAddr).AmountOf("ugnot")
 	beforeWUGNOTBalance := wugnot.BalanceOf(adminAddr)
 	beforeGNSBalance := gns.BalanceOf(adminAddr)
 	beforeBARBalance := bar.BalanceOf(adminAddr)
@@ -198,15 +199,15 @@ func exactOutSwapRouteBy(
 	if common.IsGNOTNativePath(inputToken) {
 		maxAmountInInt64, _ := strconv.ParseInt(maxAmountIn, 10, 64)
 
-		sendCoins := std.Coins{{Denom: common.GNOT_DENOM, Amount: maxAmountInInt64}}
-		banker := std.NewBanker(std.BankerTypeRealmSend)
-		banker.SendCoins(adminAddr, routerAddr, sendCoins)
+		sendCoins := chain.Coins{{Denom: common.GNOT_DENOM, Amount: maxAmountInInt64}}
+		banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+		banker_.SendCoins(adminAddr, routerAddr, sendCoins)
 
 		testing.SetOriginSend(sendCoins)
 
 		common.SafeGRC20Approve(cross, common.WUGNOT_PATH, routerAddr, maxAmountInInt64)
 	} else {
-		testing.SetOriginSend(std.Coins{})
+		testing.SetOriginSend(chain.Coins{})
 		maxAmountInInt64, _ := strconv.ParseInt(maxAmountIn, 10, 64)
 
 		common.SafeGRC20Approve(cross, inputToken, routerAddr, maxAmountInInt64)
@@ -223,7 +224,7 @@ func exactOutSwapRouteBy(
 		"",
 	)
 
-	afterGNOTBalance := banker.GetCoins(adminAddr).AmountOf("ugnot")
+	afterGNOTBalance := banker_.GetCoins(adminAddr).AmountOf("ugnot")
 	afterWUGNOTBalance := wugnot.BalanceOf(adminAddr)
 	afterGNSBalance := gns.BalanceOf(adminAddr)
 	afterBARBalance := bar.BalanceOf(adminAddr)
@@ -273,12 +274,12 @@ func exactOutSwapRouteBy(
 // [INFO] routeQueryString: gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000
 // [INFO] queryRatios: 100
 // [INFO] maxAmountIn: 100000000000
-// [EXPECTED] inputTokenAmount: 1011985
-// [EXPECTED] outputTokenAmount: -998500
-// [EXPECTED] WUGNOT balance changed: 998500
+// [EXPECTED] inputTokenAmount: 1013515
+// [EXPECTED] outputTokenAmount: -1000000
+// [EXPECTED] WUGNOT balance changed: 1000000
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] GNS balance changed: 0
-// [EXPECTED] BAR balance changed: -1011985
+// [EXPECTED] BAR balance changed: -1013515
 //
 // [SCENARIO] 6. ExactOutSwapRoute BAR -> GNS -> GNOT
 // [INFO] ExactOutSwapRoute
@@ -288,12 +289,12 @@ func exactOutSwapRouteBy(
 // [INFO] routeQueryString: gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000
 // [INFO] queryRatios: 100
 // [INFO] maxAmountIn: 100000000000
-// [EXPECTED] inputTokenAmount: 1024043
-// [EXPECTED] outputTokenAmount: -998500
+// [EXPECTED] inputTokenAmount: 1025608
+// [EXPECTED] outputTokenAmount: -1000000
 // [EXPECTED] WUGNOT balance changed: 0
-// [EXPECTED] GNOT balance changed: 998500
+// [EXPECTED] GNOT balance changed: 1000000
 // [EXPECTED] GNS balance changed: 0
-// [EXPECTED] BAR balance changed: -1024043
+// [EXPECTED] BAR balance changed: -1025608
 //
 // [SCENARIO] 7. ExactOutSwapRoute BAR -> WUGNOT -> GNS
 // [INFO] ExactOutSwapRoute
@@ -303,12 +304,12 @@ func exactOutSwapRouteBy(
 // [INFO] routeQueryString: gno.land/r/onbloc/bar:gno.land/r/gnoland/wugnot:3000*POOL*gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000
 // [INFO] queryRatios: 100
 // [INFO] maxAmountIn: 100000000000
-// [EXPECTED] inputTokenAmount: 1000073
-// [EXPECTED] outputTokenAmount: -998500
+// [EXPECTED] inputTokenAmount: 1001565
+// [EXPECTED] outputTokenAmount: -1000000
 // [EXPECTED] WUGNOT balance changed: 0
 // [EXPECTED] GNOT balance changed: 0
-// [EXPECTED] GNS balance changed: 998500
-// [EXPECTED] BAR balance changed: -1000073
+// [EXPECTED] GNS balance changed: 1000000
+// [EXPECTED] BAR balance changed: -1001565
 //
 // [SCENARIO] 8. ExactOutSwapRoute GNOT -> GNS -> BAR
 // [INFO] ExactOutSwapRoute
@@ -318,9 +319,9 @@ func exactOutSwapRouteBy(
 // [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:3000
 // [INFO] queryRatios: 100
 // [INFO] maxAmountIn: 100000000000
-// [EXPECTED] inputTokenAmount: 994038
-// [EXPECTED] outputTokenAmount: -998500
+// [EXPECTED] inputTokenAmount: 995511
+// [EXPECTED] outputTokenAmount: -1000000
 // [EXPECTED] WUGNOT balance changed: 0
-// [EXPECTED] GNOT balance changed: -994038
+// [EXPECTED] GNOT balance changed: -995511
 // [EXPECTED] GNS balance changed: 0
-// [EXPECTED] BAR balance changed: 998500
+// [EXPECTED] BAR balance changed: 1000000

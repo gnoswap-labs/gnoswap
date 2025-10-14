@@ -1,7 +1,8 @@
 package position
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
@@ -26,7 +27,7 @@ func Reposition(
 	halt.AssertIsNotHaltedPositionWithVersion(1)
 	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	assertIsOwnerForToken(positionId, caller)
 
 	emission.MintAndDistributeGns(cross)
@@ -115,8 +116,8 @@ func Reposition(
 	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp :=
 		pl.GetObservation(position.poolKey, 0)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"Reposition",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
