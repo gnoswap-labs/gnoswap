@@ -1,6 +1,7 @@
 package position
 
 import (
+	"gno.land/p/nt/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/gnft"

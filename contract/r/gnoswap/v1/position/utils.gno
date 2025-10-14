@@ -12,6 +12,8 @@ import (
 	"gno.land/r/gnoswap/v1/gnft"
 )
 
+const INT64_MAX = 9223372036854775807
+
 // GetOrigPkgAddr returns the original package address.
 // In position contract, original package address is the position address.
 func GetOrigPkgAddr() address {
