@@ -301,17 +301,13 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 	}
 
 	func(cur realm) {
-		uassert.PanicsContains(t, "failed swap", func() {
-			_, amountOut, err := op.processRoutes(ExactIn)
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-
-			// check output amount is not zero
-			if amountOut.Cmp(u256.Zero()) == 0 {
-				t.Error("expected non-zero amountOut")
-			}
-		})
+		_, amountOut, err := op.processRoutes(ExactIn)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if amountOut.Cmp(u256.Zero()) == 0 {
+			t.Error("expected non-zero amountOut")
+		}
 	}(cross)
 
 	// check actual swapped amounts for each route
