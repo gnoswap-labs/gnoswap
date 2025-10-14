@@ -54,7 +54,7 @@ var (
 )
 
 func main() {
-	println("=== Test: Initial Tier Assignment Unclaimable Period Tracking ===")
+	println("Initial Tier Assignment Unclaimable Period Tracking")
 	println()
 
 	println("[SCENARIO] 1. Initialize system")
@@ -96,6 +96,16 @@ func testInitialTierInternalRewards() {
 	tierAssignmentTime := time.Now().Unix()
 	sr.SetPoolTier(cross, poolPath1, 1)
 	testing.SkipHeights(1)
+
+	// Verify tier assignment
+	tier := sr.GetPoolTier(poolPath1)
+	rewardPerSecond := sr.GetPoolReward(tier)
+	ufmt.Printf("[VERIFY] tier assigned: %d, reward per second: %d\n", tier, rewardPerSecond)
+
+	// Verify pool has zero liquidity after tier assignment
+	poolData, _ := sr.QueryPoolData(poolPath1)
+	ufmt.Printf("[VERIFY] pool staked liquidity after tier assignment: %s (should be 0)\n", poolData.StakedLiquidity.ToString())
+
 	ufmt.Printf("[EXPECTED] tier assigned at: %d, pool has zero liquidity\n", tierAssignmentTime)
 
 	println("[INFO] wait 10 blocks while pool has zero liquidity (unclaimable period)")
@@ -135,8 +145,16 @@ func testInitialTierInternalRewards() {
 	sr.StakeToken(cross, positionId, "")
 	testing.SkipHeights(2)
 
+	// Verify pool now has positive liquidity
+	poolDataAfterStake, _ := sr.QueryPoolData(poolPath1)
+	ufmt.Printf("[VERIFY] pool staked liquidity after stake: %s (should be > 0)\n", poolDataAfterStake.StakedLiquidity.ToString())
+
 	actualUnclaimablePeriod := stakeTime - tierAssignmentTime
 	ufmt.Printf("[EXPECTED] actual unclaimable period from tier assignment to first stake: %d seconds\n", actualUnclaimablePeriod)
+
+	// Calculate expected unclaimable rewards
+	expectedUnclaimableRewards := actualUnclaimablePeriod * rewardPerSecond
+	ufmt.Printf("[EXPECTED] expected unclaimable rewards: %d (duration: %d × reward rate: %d)\n", expectedUnclaimableRewards, actualUnclaimablePeriod, rewardPerSecond)
 
 	println("[INFO] collect reward immediately after first stake")
 	communityBalanceBefore := gns.BalanceOf(communityPoolAddr)
@@ -145,17 +163,16 @@ func testInitialTierInternalRewards() {
 	unclaimableRewardsSent := communityBalanceAfter - communityBalanceBefore
 
 	ufmt.Printf("[RESULT] unclaimable rewards sent to community pool: %d\n", unclaimableRewardsSent)
+	ufmt.Printf("[RESULT] difference from expected: %d\n", unclaimableRewardsSent-expectedUnclaimableRewards)
 
 	// The bug: if lastUnclaimableTime was not set properly during tier assignment,
 	// this value will be 0 or incorrect
 	if unclaimableRewardsSent == 0 {
-		println("[BUG DETECTED] No unclaimable rewards were sent!")
-		println("[BUG REASON] lastUnclaimableTime was not initialized during tier assignment")
-		println("[BUG IMPACT] Rewards from tier assignment to first stake are lost")
+		// lastUnclaimableTime was not initialized during tier assignment, this is problematic
+		// Rewards from tier assignment to first stake are lost
+		println("[ERROR] No unclaimable rewards were sent")
 	} else {
 		println("[PASS] Unclaimable rewards were properly tracked and sent")
-		// We can calculate expected reward based on emission rate
-		// Expected: (duration in seconds) * (emission per second for this tier)
 	}
 
 	println("[INFO] unstake position for cleanup")
@@ -188,16 +205,24 @@ func testInitialTierExternalRewards() {
 	incentiveDuration := int64(90 * 86400) // 90 days
 	incentiveEndTime := nextDayMidnight + incentiveDuration
 
+	incentiveRewardAmount := int64(1_000_000_000)
 	sr.CreateExternalIncentive(
 		cross,
 		poolPath2,
 		fooPath,
-		1_000_000_000, // rewardAmount
+		incentiveRewardAmount, // rewardAmount
 		incentiveStartTime,
 		incentiveEndTime,
 	)
 	testing.SkipHeights(1)
-	ufmt.Printf("[EXPECTED] external incentive created, pool has zero liquidity\n")
+
+	// Calculate reward per second for this external incentive
+	externalRewardPerSecond := incentiveRewardAmount / incentiveDuration
+	ufmt.Printf("[VERIFY] external incentive created, reward per second: %d\n", externalRewardPerSecond)
+
+	// Verify pool has zero liquidity
+	poolData2, _ := sr.QueryPoolData(poolPath2)
+	ufmt.Printf("[VERIFY] pool staked liquidity: %s (should be 0)\n", poolData2.StakedLiquidity.ToString())
 
 	println("[INFO] wait until incentive starts and some time passes (unclaimable period)")
 	// Calculate blocks to wait until incentive starts + some extra time
@@ -241,9 +266,15 @@ func testInitialTierExternalRewards() {
 	sr.StakeToken(cross, positionId, "")
 	testing.SkipHeights(2)
 
+	// Verify pool now has positive liquidity
+	poolData2AfterStake, _ := sr.QueryPoolData(poolPath2)
+	ufmt.Printf("[VERIFY] pool staked liquidity after stake: %s (should be > 0)\n", poolData2AfterStake.StakedLiquidity.ToString())
+
 	actualUnclaimablePeriod := stakeTime - incentiveStartTime
 	if actualUnclaimablePeriod > 0 {
 		ufmt.Printf("[EXPECTED] unclaimable period from incentive start to first stake: %d seconds\n", actualUnclaimablePeriod)
+		expectedExternalUnclaimable := actualUnclaimablePeriod * externalRewardPerSecond
+		ufmt.Printf("[EXPECTED] expected unclaimable rewards: %d (duration: %d × reward rate: %d)\n", expectedExternalUnclaimable, actualUnclaimablePeriod, externalRewardPerSecond)
 	}
 
 	println("[INFO] wait and unstake to end the incentive period")
@@ -256,7 +287,7 @@ func testInitialTierExternalRewards() {
 }
 
 // Output:
-// === Test: Initial Tier Assignment Unclaimable Period Tracking ===
+// Initial Tier Assignment Unclaimable Period Tracking
 //
 // [SCENARIO] 1. Initialize system
 // [INFO] set distribution start time
@@ -266,14 +297,19 @@ func testInitialTierExternalRewards() {
 // [SCENARIO] 2. Test Internal Rewards (GNS emission)
 // [INFO] create pool bar:baz:100
 // [INFO] set pool tier to 1 (rewards start here)
+// [VERIFY] tier assigned: 1, reward per second: 2675513
+// [VERIFY] pool staked liquidity after tier assignment: 0 (should be 0)
 // [EXPECTED] tier assigned at: 1234567905, pool has zero liquidity
 // [INFO] wait 10 blocks while pool has zero liquidity (unclaimable period)
 // [EXPECTED] unclaimable period duration: 55 seconds
 // [INFO] prepare to stake first position
 // [INFO] mint and stake first position (liquidity becomes positive)
+// [VERIFY] pool staked liquidity after stake: 200510 (should be > 0)
 // [EXPECTED] actual unclaimable period from tier assignment to first stake: 60 seconds
+// [EXPECTED] expected unclaimable rewards: 160530780 (duration: 60 × reward rate: 2675513)
 // [INFO] collect reward immediately after first stake
 // [RESULT] unclaimable rewards sent to community pool: 182826722
+// [RESULT] difference from expected: 22295942
 // [PASS] Unclaimable rewards were properly tracked and sent
 // [INFO] unstake position for cleanup
 //
@@ -281,12 +317,15 @@ func testInitialTierExternalRewards() {
 // [INFO] create pool foo:qux:100
 // [INFO] approve tokens for external incentive
 // [INFO] create external incentive (starts next day midnight)
-// [EXPECTED] external incentive created, pool has zero liquidity
+// [VERIFY] external incentive created, reward per second: 128
+// [VERIFY] pool staked liquidity: 0 (should be 0)
 // [INFO] wait until incentive starts and some time passes (unclaimable period)
 // [EXPECTED] unclaimable period duration: 50 seconds
 // [INFO] prepare to stake first position
 // [INFO] mint and stake first position (liquidity becomes positive)
+// [VERIFY] pool staked liquidity after stake: 201011 (should be > 0)
 // [EXPECTED] unclaimable period from incentive start to first stake: 55 seconds
+// [EXPECTED] expected unclaimable rewards: 7040 (duration: 55 × reward rate: 128)
 // [INFO] wait and unstake to end the incentive period
 // [RESULT] External incentive unclaimable period should be tracked
 // [NOTE] External uses different tracking mechanism (unclaimablePeriods tree)
