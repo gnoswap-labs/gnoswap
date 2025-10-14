@@ -27,7 +27,6 @@ var (
 	errInvalidRouteFirstToken   = errors.New("[GNOSWAP-ROUTER-018] invalid route first token")
 	errInvalidRouteLastToken    = errors.New("[GNOSWAP-ROUTER-019] invalid route last token")
 	errUnderFlowDeductRouterFee = errors.New("[GNOSWAP-ROUTER-020] underflow in deduct router fee")
-	errFailedSwap               = errors.New("[GNOSWAP-ROUTER-021] failed swap")
 )
 
 // addDetailToError adds detail to an error message.
