@@ -1,7 +1,8 @@
 package router
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"testing"
 	"time"
 
@@ -146,7 +147,7 @@ func TestExactInSwapRoute(t *testing.T) {
 			testing.SkipHeights(100)
 
 			// Additional approvals needed for pool operations
-			user1Realm := std.NewUserRealm(user1Addr)
+			user1Realm := testing.NewUserRealm(user1Addr)
 			testing.SetRealm(user1Realm)
 			bar.Approve(cross, poolAddr, maxApprove)
 			baz.Approve(cross, poolAddr, maxApprove)
@@ -192,7 +193,7 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 		tokenPath0       string
 		tokenPath1       string
 		feeTier          uint32
-		recipient        std.Address
+		recipient        address
 		tickLower        int32
 		tickUpper        int32
 		amount0Requested string
@@ -237,7 +238,7 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Pool Creation
-			testing.SetRealm(std.NewUserRealm(positionOwner))
+			testing.SetRealm(testing.NewUserRealm(positionOwner))
 			pl.SetPoolCreationFee(cross, 0)
 			if !pl.ExistsPoolPath(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
 				pl.CreatePool(cross, tt.tokenPath0, tt.tokenPath1, tt.feeTier, "79228162514264337593543950336")
@@ -248,18 +249,18 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			}
 
 			testing.SetOriginCaller(positionOwner)
-			newCoins := std.Coins{{"ugnot", int64(10000000000)}}
+			newCoins := chain.Coins{{"ugnot", int64(10000000000)}}
 			testing.IssueCoins(positionOwner, newCoins)
 			testing.SetOriginSend(newCoins)
-			banker := std.NewBanker(std.BankerTypeRealmSend)
-			banker.SendCoins(positionOwner, wugnotAddr, newCoins)
+			banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+			banker_.SendCoins(positionOwner, wugnotAddr, newCoins)
 			wugnot.Deposit(cross)
 			if tt.recipient != positionOwner {
 				wugnot.Transfer(cross, tt.recipient, 10000000000)
 			}
 			gns.Transfer(cross, tt.recipient, 10000000000)
 
-			testing.SetRealm(std.NewUserRealm(tt.recipient))
+			testing.SetRealm(testing.NewUserRealm(tt.recipient))
 			wugnot.Approve(cross, poolAddr, maxApprove)
 			gns.Approve(cross, poolAddr, maxApprove)
 
@@ -268,7 +269,7 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 				teller.Approve(poolAddr, maxApprove)
 			}(cross)
 
-			testing.SetOriginSend(std.Coins{})
+			testing.SetOriginSend(chain.Coins{})
 
 			// Position Creation
 			pn.Mint(
@@ -296,11 +297,11 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			wugnot.Approve(cross, routerAddr, maxApprove)
 			gns.Approve(cross, routerAddr, maxApprove)
 
-			testing.SetRealm(std.NewCodeRealm(routerPath))
+			testing.SetRealm(testing.NewCodeRealm(routerPath))
 			wugnot.Approve(cross, poolAddr, maxApprove)
 
-			testing.SetRealm(std.NewUserRealm(tt.recipient))
-			testing.SetOriginSend(std.Coins{})
+			testing.SetRealm(testing.NewUserRealm(tt.recipient))
+			testing.SetOriginSend(chain.Coins{})
 
 			amountIn, amountOut := ExactInSwapRoute(
 				cross,
@@ -353,15 +354,15 @@ func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
 	qux.Approve(cross, routerAddr, 1000000)
 
 	testing.SetOriginCaller(adminAddr)
-	newCoins := std.Coins{{"ugnot", 12345}}
+	newCoins := chain.Coins{{"ugnot", 12345}}
 	testing.IssueCoins(adminAddr, newCoins)
 	testing.SetOriginSend(newCoins)
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(adminAddr, routerAddr, newCoins)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_.SendCoins(adminAddr, routerAddr, newCoins)
 
 	uassert.AbortsWithMessage(
 		t,
-		`[GNOSWAP-POOL-008] requested data not found || expected poolPath(gno.land/r/gnoland/wugnot:gno.land/r/onbloc/qux:3000) to exist`,
+		`[GNOSWAP-ROUTER-005] invalid input data || pool does not exist: gno.land/r/gnoland/wugnot:gno.land/r/onbloc/qux:3000`,
 		func() {
 			ExactOutSwapRoute(
 				cross,

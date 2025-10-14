@@ -1,7 +1,8 @@
 package referral
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 	"time"
 
 	"gno.land/p/nt/avl"
@@ -31,21 +32,21 @@ func NewKeeper() ReferralKeeper {
 
 // register creates a new referral relationship between addresses.
 // Caller must have valid permissions.
-func (k *keeper) register(addr, refAddr std.Address) error {
+func (k *keeper) register(addr, refAddr address) error {
 	return k.setReferral(addr, refAddr, EventTypeRegister)
 }
 
 // update modifies an existing referral address.
 // Caller must have valid permissions.
-func (k *keeper) update(addr, newRefAddr std.Address) error {
+func (k *keeper) update(addr, newRefAddr address) error {
 	return k.setReferral(addr, newRefAddr, EventTypeUpdate)
 }
 
 // setReferral handles common logic for registering and updating referrals.
 // Setting refAddr to zero address removes the referral.
 // Rate limiting applies to prevent abuse.
-func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error {
-	if err := isValidCaller(std.PreviousRealm().Address()); err != nil {
+func (k *keeper) setReferral(addr, refAddr address, eventType string) error {
+	if err := isValidCaller(runtime.PreviousRealm().Address()); err != nil {
 		return err
 	}
 
@@ -73,7 +74,7 @@ func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error 
 	k.store.Set(addrStr, refAddrStr)
 	k.lastOps[addrStr] = time.Now().Unix()
 
-	std.Emit(
+	chain.Emit(
 		eventType,
 		"myAddress", addrStr,
 		"refAddress", refAddrStr,
@@ -83,7 +84,7 @@ func (k *keeper) setReferral(addr, refAddr std.Address, eventType string) error 
 }
 
 // validateAddresses validates that addresses are properly formatted and not self-referencing.
-func (k *keeper) validateAddresses(addr, refAddr std.Address) error {
+func (k *keeper) validateAddresses(addr, refAddr address) error {
 	if !addr.IsValid() || (refAddr != zeroAddress && !refAddr.IsValid()) {
 		return ErrInvalidAddress
 	}
@@ -95,8 +96,8 @@ func (k *keeper) validateAddresses(addr, refAddr std.Address) error {
 
 // remove deletes a referral relationship.
 // Caller must have valid permissions and rate limiting applies.
-func (k *keeper) remove(target std.Address) error {
-	if err := isValidCaller(std.PreviousRealm().Address()); err != nil {
+func (k *keeper) remove(target address) error {
+	if err := isValidCaller(runtime.PreviousRealm().Address()); err != nil {
 		return err
 	}
 
@@ -115,7 +116,7 @@ func (k *keeper) remove(target std.Address) error {
 		return ErrNotFound
 	}
 
-	std.Emit(
+	chain.Emit(
 		EventTypeRemove,
 		"removedAddress", tgt,
 	)
@@ -124,14 +125,14 @@ func (k *keeper) remove(target std.Address) error {
 }
 
 // has returns true if a referral exists for the given address.
-func (k *keeper) has(addr std.Address) bool {
+func (k *keeper) has(addr address) bool {
 	_, exists := k.store.Get(addr.String())
 	return exists
 }
 
 // get retrieves the referral address for a given address.
 // Returns ErrNotFound if no referral exists.
-func (k *keeper) get(addr std.Address) (std.Address, error) {
+func (k *keeper) get(addr address) (address, error) {
 	if !addr.IsValid() {
 		return zeroAddress, ErrInvalidAddress
 	}
@@ -146,7 +147,7 @@ func (k *keeper) get(addr std.Address) (std.Address, error) {
 		return zeroAddress, ErrInvalidAddress
 	}
 
-	return std.Address(refAddr), nil
+	return address(refAddr), nil
 }
 
 // isEmpty returns true if no referrals exist in the store.

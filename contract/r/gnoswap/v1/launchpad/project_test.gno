@@ -1,7 +1,6 @@
 package launchpad
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/nt/testutils"
@@ -15,7 +14,7 @@ func TestProject_Getters(t *testing.T) {
 		projectName   string
 		tokenPath     string
 		depositAmount int64
-		recipient     std.Address
+		recipient     address
 		createdTime   int64
 		createdHeight int64
 		getterFunc    string
@@ -218,8 +217,8 @@ func TestProject_Status(t *testing.T) {
 func TestProject_IsOwner(t *testing.T) {
 	tests := []struct {
 		name           string
-		recipient      std.Address
-		caller         std.Address
+		recipient      address
+		caller         address
 		expectedResult bool
 	}{
 		{
@@ -809,14 +808,14 @@ func TestNewProject(t *testing.T) {
 		projectName           string
 		tokenPath             string
 		depositAmount         int64
-		recipient             std.Address
+		recipient             address
 		createdAt             int64
 		createdHeight         int64
 		expectedID            string
 		expectedName          string
 		expectedTokenPath     string
 		expectedDepositAmount int64
-		expectedRecipient     std.Address
+		expectedRecipient     address
 	}{
 		{
 			name:                  "create new project with valid parameters",

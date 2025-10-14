@@ -1,8 +1,9 @@
 package position
 
 import (
+	"chain"
+	"chain/runtime"
 	"encoding/base64"
-	"std"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -55,13 +56,13 @@ func Mint(
 	amount0Min string,
 	amount1Min string,
 	deadline int64,
-	mintTo std.Address,
-	caller std.Address,
+	mintTo address,
+	caller address,
 	referrer string,
 ) (uint64, string, string, string) {
 	halt.AssertIsNotHaltedPositionWithVersion(1)
 
-	previousRealm := std.PreviousRealm()
+	previousRealm := runtime.PreviousRealm()
 	if !previousRealm.IsUser() {
 		access.AssertIsStakerWithVersion(1, previousRealm.Address())
 	} else {
@@ -124,7 +125,7 @@ func Mint(
 	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp :=
 		pl.GetObservation(processedInput.poolPath, 0)
 
-	std.Emit(
+	chain.Emit(
 		"Mint",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -185,7 +186,7 @@ func IncreaseLiquidity(
 ) (uint64, string, string, string, string) {
 	halt.AssertIsNotHaltedPositionWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	assertIsOwnerForToken(positionId, caller)
 
 	assertValidNumberString(amount0DesiredStr)
@@ -252,8 +253,8 @@ func IncreaseLiquidity(
 	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp :=
 		pl.GetObservation(poolPath, 0)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"IncreaseLiquidity",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -277,7 +278,7 @@ func IncreaseLiquidity(
 }
 
 // unwrapLeftoverWrappedToken unwraps leftover wrapped tokens to native tokens.
-func unwrapLeftoverWrappedToken(token string, wrapped, amount int64, caller std.Address) error {
+func unwrapLeftoverWrappedToken(token string, wrapped, amount int64, caller address) error {
 	unwrappable := isWrappedToken(token) && wrapped > amount
 	if !unwrappable {
 		return nil
@@ -325,7 +326,7 @@ func DecreaseLiquidity(
 	halt.AssertIsNotHaltedPositionWithVersion(1)
 	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	assertIsOwnerForToken(positionId, caller)
 	assertIsNotExpired(deadline)
 	assertValidLiquidityAmount(liquidityStr)
@@ -352,8 +353,8 @@ func DecreaseLiquidity(
 	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp :=
 		pl.GetObservation(poolPath, 0)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"DecreaseLiquidity",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -405,7 +406,7 @@ func CollectFee(
 	halt.AssertIsNotHaltedPositionWithVersion(1)
 	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	assertIsOwnerOrOperatorForToken(positionId, caller)
 
 	return collectFee(positionId, unwrapResult, caller)
@@ -415,7 +416,7 @@ func CollectFee(
 func collectFee(
 	positionId uint64,
 	unwrapResult bool,
-	caller std.Address,
+	caller address,
 ) (uint64, string, string, string, string, string) {
 	emission.MintAndDistributeGns(cross)
 
@@ -504,8 +505,8 @@ func collectFee(
 	amount0WithoutFeeStr := formatInt(amount0WithoutFee)
 	amount1WithoutFeeStr := formatInt(amount1WithoutFee)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"CollectSwapFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -516,7 +517,7 @@ func collectFee(
 		"unwrapResult", formatBool(unwrapResult),
 	)
 
-	std.Emit(
+	chain.Emit(
 		"WithdrawalFee",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -554,11 +555,11 @@ func calculateAmountWithWithdrawalFee(amount string, fee uint64) (int64, int64) 
 func SetPositionOperator(
 	cur realm,
 	id uint64,
-	operator std.Address,
+	operator address,
 ) {
 	halt.AssertIsNotHaltedPositionWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsStakerWithVersion(1, caller)
 
 	position := MustGetPosition(id)
@@ -571,14 +572,14 @@ func computePositionKey(
 	tickLower int32,
 	tickUpper int32,
 ) string {
-	currentRealmPath := std.CurrentRealm().PkgPath()
+	currentRealmPath := runtime.CurrentRealm().PkgPath()
 	key := ufmt.Sprintf("%s__%d__%d", currentRealmPath, tickLower, tickUpper)
 	encoded := base64.StdEncoding.EncodeToString([]byte(key))
 	return encoded
 }
 
 // getCurrentFeeGrowth retrieves current fee growth values for a position.
-func getCurrentFeeGrowth(position Position, owner std.Address) (FeeGrowthInside, error) {
+func getCurrentFeeGrowth(position Position, owner address) (FeeGrowthInside, error) {
 	positionKey := computePositionKey(position.tickLower, position.tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.poolKey, positionKey)
 

@@ -8,6 +8,8 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v1/common"
 )
 
 var (
@@ -46,12 +48,11 @@ func (self *Pools) Get(poolPath string) (*Pool, bool) {
 	return p, true
 }
 
-// GetOrCreate returns the pool for the given poolPath, or creates a new pool if it does not exist
-func (self *Pools) GetOrCreate(poolPath string) *Pool {
+// GetPoolOrNil returns the pool for the given poolPath, or returns nil if it does not exist
+func (self *Pools) GetPoolOrNil(poolPath string) *Pool {
 	pool, ok := self.Get(poolPath)
 	if !ok {
-		pool = NewPool(poolPath, time.Now().Unix())
-		self.set(poolPath, pool)
+		return nil
 	}
 	return pool
 }
@@ -362,16 +363,18 @@ func (self *RewardState) calculateInternalReward(startTime, endTime int64) ([]in
 	return self.rewards, self.penalties
 }
 
-// calculateExternalReward calculates the external reward for the deposit.
-// It calls rewardPerWarmup for startTime to endTime(clamped to the incentive period), applies warmup and returns the rewards and penalties.
-func (self *RewardState) calculateExternalReward(startTime, endTime int64, incentive *ExternalIncentive) ([]int64, []int64) {
-	if startTime < self.deposit.lastCollectTime {
+// updateExternalReward updates the external reward for the deposit.
+// It updates the last collect time for the external reward for the given incentive ID.
+// It returns an error if the current time is less than the last collect time for the external reward for the given incentive ID.
+func (self *RewardState) updateExternalReward(startTime, endTime int64, incentive *ExternalIncentive) error {
+	lastCollectTime := self.deposit.ExternalRewardLastCollectTime(incentive.incentiveId)
+	if startTime < lastCollectTime {
 		// This must not happen, but adding some guards just in case.
-		startTime = self.deposit.lastCollectTime
+		startTime = lastCollectTime
 	}
 
 	if endTime < incentive.startTimestamp {
-		return nil, nil // Not started yet
+		return nil // Not started yet
 	}
 
 	if startTime < incentive.startTimestamp {
@@ -383,14 +386,41 @@ func (self *RewardState) calculateExternalReward(startTime, endTime int64, incen
 	}
 
 	if startTime > incentive.endTimestamp {
-		return nil, nil // Already ended
+		return nil // Already ended
 	}
 
-	err := self.rewardPerWarmup(startTime, endTime, incentive.rewardPerSecond)
+	return self.rewardPerWarmup(startTime, endTime, incentive.rewardPerSecond)
+}
+
+// calculateTotalExternalReward calculates the total external reward for the deposit.
+// It calls updateExternalReward for the incentive period, applies warmup and returns the rewards and penalties.
+// used for total reward calculation for a ended incentive
+func (self *RewardState) calculateTotalExternalReward(startTime, endTime int64, incentive *ExternalIncentive) int64 {
+	err := self.updateExternalReward(startTime, endTime, incentive)
 	if err != nil {
 		panic(err)
 	}
 
+	currentReward := u256.Zero()
+
+	for i := range self.rewards {
+		currentReward = currentReward.Add(currentReward, u256.NewUintFromInt64(self.rewards[i]))
+	}
+
+	collectedReward := self.deposit.CollectedExternalReward(incentive.incentiveId)
+
+	return safeAddInt64(safeConvertToInt64(currentReward), collectedReward)
+}
+
+// calculateExternalReward calculates the external reward for the deposit.
+// It calls rewardPerWarmup for startTime to endTime(clamped to the incentive period), applies warmup and returns the rewards and penalties.
+func (self *RewardState) calculateExternalReward(startTime, endTime int64, incentive *ExternalIncentive) ([]int64, []int64) {
+	err := self.updateExternalReward(startTime, endTime, incentive)
+	if err != nil {
+		panic(err)
+	}
+
+	// apply warmup to collect rewards
 	self.applyWarmup()
 
 	return self.rewards, self.penalties
@@ -399,14 +429,23 @@ func (self *RewardState) calculateExternalReward(startTime, endTime int64, incen
 // applyWarmup applies the warmup to the rewards and calculate penalties.
 func (self *RewardState) applyWarmup() {
 	for i, warmup := range self.deposit.warmups {
-		refactorReward := self.rewards[i]
-		self.rewards[i] = safeMulInt64(refactorReward, int64(warmup.WarmupRatio)) / 100
-		self.penalties[i] = safeSubInt64(refactorReward, self.rewards[i])
+		warmupReward := self.rewards[i]
+
+		// calculate warmup reward applying warmup ratio
+		self.rewards[i] = safeMulInt64(warmupReward, int64(warmup.WarmupRatio)) / 100
+
+		// warmup penalty is the difference between the warmup reward and the warmup reward applying warmup ratio
+		self.penalties[i] = safeSubInt64(warmupReward, self.rewards[i])
 	}
 }
 
 // rewardPerWarmup calculates the reward for each warmup, adds to the RewardState's rewards array.
 func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSecond int64) error {
+	// Return early if startTime equals endTime to avoid unnecessary computation
+	if startTime == endTime {
+		return nil
+	}
+
 	for i, warmup := range self.deposit.warmups {
 		if startTime >= warmup.NextWarmupTime {
 			// passed the warmup
@@ -424,7 +463,7 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 
 			rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.liquidity)
 			rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
-			self.rewards[i] += safeConvertToInt64(rewardAcc)
+			self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
 
 			break
 		}
@@ -439,7 +478,7 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 
 		rewardAcc = u256.Zero().Mul(rewardAcc, self.deposit.liquidity)
 		rewardAcc = u256.MulDiv(rewardAcc, u256.NewUintFromInt64(rewardPerSecond), q128)
-		self.rewards[i] += safeConvertToInt64(rewardAcc)
+		self.rewards[i] = safeAddInt64(self.rewards[i], safeConvertToInt64(rewardAcc))
 
 		startTime = warmup.NextWarmupTime
 	}
@@ -452,7 +491,7 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 func (self *Pool) modifyDeposit(delta *i256.Int, currentTime int64, nextTick int32) *u256.Uint {
 	// update staker side pool info
 	lastStakedLiquidity := self.CurrentStakedLiquidity(currentTime)
-	deltaApplied := liquidityMathAddDelta(lastStakedLiquidity, delta)
+	deltaApplied := common.LiquidityMathAddDelta(lastStakedLiquidity, delta)
 	result := self.updateGlobalRewardRatioAccumulation(currentTime, lastStakedLiquidity)
 
 	// historical tick does NOT actually reflect the tick at the timestamp, but it provides correct ordering for the staked positions
@@ -509,7 +548,8 @@ func (self *Pool) updateUnclaimableAccumulateRewards(currentTime int64) {
 	}
 
 	unclaimableDuration := currentTime - self.lastUnclaimableTime
-	self.unclaimableAcc += unclaimableDuration * self.CurrentReward(self.lastUnclaimableTime)
+	currentUnclaimableReward := safeMulInt64(unclaimableDuration, self.CurrentReward(self.lastUnclaimableTime))
+	self.unclaimableAcc = safeAddInt64(self.unclaimableAcc, currentUnclaimableReward)
 }
 
 // processUnclaimableReward processes the unclaimable reward and returns the accumulated reward.

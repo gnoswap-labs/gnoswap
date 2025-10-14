@@ -1,7 +1,6 @@
 package staker
 
 import (
-	"std"
 	"testing"
 	"time"
 
@@ -24,7 +23,7 @@ func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
 
 	// Define allowed tokens and test scenarios
 	allowedTokens := []string{GNS_PATH, WUGNOT_PATH, "token0_path", "token1_path"}
-	accounts := []std.Address{account1, account2}
+	accounts := []address{account1, account2}
 	amounts := []int64{1000, 2000, 1500, 2500, 3000, 3500}
 
 	// Test various combinations

@@ -5,7 +5,7 @@
 package main
 
 import (
-	"std"
+	"chain"
 	"strconv"
 	"testing"
 
@@ -24,10 +24,10 @@ const MIN_PRICE string = "4295128740"
 
 var (
 	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm    = std.NewUserRealm(adminAddr)
+	adminRealm    = testing.NewUserRealm(adminAddr)
 	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
-	routerRealm   = std.NewUserRealm(routerAddr)
+	routerRealm   = testing.NewUserRealm(routerAddr)
 
 	barPath        = "gno.land/r/onbloc/bar"
 	fooPath        = "gno.land/r/onbloc/foo"
@@ -159,7 +159,7 @@ func executeSwap() {
 	bar.Approve(cross, poolAddr, 20000000)
 
 	// set current realm and origin caller
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 	ufmt.Println("[INFO] Executing swap to generate fees")
 	amount0, amount1 := pool.Swap(
 		cross,
@@ -231,14 +231,14 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta string,
 
 	if zeroForOne {
 		if token0Path == wugnotPath {
-			testing.SetOriginSend(std.Coins{{ugnotDenom, amount0Int64}})
+			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Int64}})
 			wugnot.Deposit(cross)
 		}
 
 		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Int64)
 	} else {
 		if token1Path == wugnotPath {
-			testing.SetOriginSend(std.Coins{{ugnotDenom, amount1Int64}})
+			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Int64}})
 			wugnot.Deposit(cross)
 		}
 

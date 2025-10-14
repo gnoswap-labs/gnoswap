@@ -1,8 +1,10 @@
 package router
 
 import (
+	"chain"
+	"chain/runtime"
 	"errors"
-	"std"
+	"math"
 	"testing"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -170,10 +172,10 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 
 			testUser := testutils.TestAddress("test_user")
 			testing.SetOriginCaller(testUser)
-			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 
-			testCoins := std.Coins{{"ugnot", tt.sentAmount}}
-			testing.IssueCoins(std.OriginCaller(), testCoins)
+			testCoins := chain.Coins{{"ugnot", tt.sentAmount}}
+			testing.IssueCoins(runtime.OriginCaller(), testCoins)
 			if tt.sentAmount > 0 {
 				testing.IssueCoins(routerAddr, testCoins)
 			}
@@ -288,6 +290,7 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 	}
 
 	testing.SetRealm(adminRealm)
+	common.SafeGRC20Approve(cross, fooPath, routerAddr, math.MaxInt64)
 	CreatePoolWithoutFee(t)
 	MakeThirdMintPositionWithoutFee(t)
 
@@ -302,8 +305,6 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
-
-		// check output amount is not zero
 		if amountOut.Cmp(u256.Zero()) == 0 {
 			t.Error("expected non-zero amountOut")
 		}

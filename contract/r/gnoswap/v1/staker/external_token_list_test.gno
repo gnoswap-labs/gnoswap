@@ -1,7 +1,6 @@
 package staker
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/nt/testutils"
@@ -15,7 +14,7 @@ import (
 func TestAddToken(t *testing.T) {
 	tests := []struct {
 		name                  string
-		caller                std.Address
+		caller                address
 		inputTokenPath        string
 		expectedAllowedTokens []string
 		expectedHasAbort      bool
@@ -96,7 +95,7 @@ func TestRemoveToken(t *testing.T) {
 
 	tests := []struct {
 		name                  string
-		caller                std.Address
+		caller                address
 		inputTokenPath        string
 		expectedAllowedTokens []string
 		expectedHasAbort      bool
@@ -182,7 +181,7 @@ func TestRemoveToken(t *testing.T) {
 func TestModifyTokenList(t *testing.T) {
 	tests := []struct {
 		name                  string
-		caller                std.Address
+		caller                address
 		inputTokenPath        string
 		inputValidator        TokenValidator
 		inputExecutor         TokenExecutor
@@ -258,16 +257,16 @@ func setupExternalTokenListGovernancePermission(t *testing.T) {
 	setupExternalDepositFeePermission(t, addr, "governance")
 }
 
-func setupExternalTokenListPermission(t *testing.T, caller std.Address, permissionName string) {
+func setupExternalTokenListPermission(t *testing.T, caller address, permissionName string) {
 	t.Helper()
 
 	testing.SetOriginCaller(caller)
-	testing.SetRealm(std.NewUserRealm(caller))
+	testing.SetRealm(testing.NewUserRealm(caller))
 }
 
-func setupExternalDepositFeePermission(t *testing.T, caller std.Address, permissionName string) {
+func setupExternalDepositFeePermission(t *testing.T, caller address, permissionName string) {
 	t.Helper()
 
 	testing.SetOriginCaller(caller)
-	testing.SetRealm(std.NewUserRealm(caller))
+	testing.SetRealm(testing.NewUserRealm(caller))
 }

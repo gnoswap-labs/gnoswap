@@ -5,7 +5,8 @@
 package main
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"strconv"
 	"testing"
 	"time"
@@ -41,11 +42,11 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	poolAddr, _          = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _        = access.GetAddress(prabc.ROLE_ROUTER.String())
@@ -53,7 +54,7 @@ var (
 	devOpsAddr, _        = access.GetAddress(prabc.ROLE_DEVOPS.String())
 	communityPoolAddr, _ = access.GetAddress(prabc.ROLE_COMMUNITY_POOL.String())
 
-	wugnotAddr std.Address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
+	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	externalCreator = testutils.TestAddress("externalCreator")
 
@@ -151,10 +152,10 @@ func initAccount() {
 	)
 
 	println("[INFO] issue coins and prepare wugnot")
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100_000_000_000_000}})
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(adminAddr, wugnotAddr, std.Coins{{"ugnot", 50_000_000_000_000}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 50_000_000_000_000}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100_000_000_000_000}})
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_.SendCoins(adminAddr, wugnotAddr, chain.Coins{{"ugnot", 50_000_000_000_000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 50_000_000_000_000}})
 	wugnot.Deposit(cross)
 	testing.SetOriginSend(nil)
 
@@ -384,6 +385,8 @@ func oneClickStakingPos07OutRange() {
 	bar.Approve(cross, poolAddr, maxInt64)
 	foo.Approve(cross, poolAddr, maxInt64)
 
+	ufmt.Printf("[EXPECTED] current pool tick: %d\n", pl.GetSlot0Tick("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100"))
+
 	lpTokenId, liquidity, amount0, amount1, poolPath := sr.MintAndStake(
 		cross,
 		barPath,
@@ -405,12 +408,12 @@ func oneClickStakingPos07OutRange() {
 	testing.SkipHeights(1)
 
 	println("[INFO] collect reward for position 07")
-	oldCommunityPool := gns.BalanceOf(communityPoolAddr)
+	oldAdminGnsBalance := gns.BalanceOf(adminAddr)
 	sr.CollectReward(cross, 7, false)
-	newCommunityPool := gns.BalanceOf(communityPoolAddr)
+	newAdminGnsBalance := gns.BalanceOf(adminAddr)
 
-	rewardToCommunity := newCommunityPool - oldCommunityPool
-	ufmt.Printf("[EXPECTED] reward to community pool: %d\n", rewardToCommunity)
+	rewardToAdmin := newAdminGnsBalance - oldAdminGnsBalance
+	ufmt.Printf("[EXPECTED] reward to admin: %d\n", rewardToAdmin)
 
 	testing.SkipHeights(1)
 }
@@ -441,7 +444,7 @@ func createPoolExternalOnly() {
 	baz.Transfer(cross, externalCreator, 2_000_000_000)
 	gns.Transfer(cross, externalCreator, depositGnsAmount)
 
-	testing.SetRealm(std.NewUserRealm(externalCreator))
+	testing.SetRealm(testing.NewUserRealm(externalCreator))
 	baz.Approve(cross, stakerAddr, 2_000_000_000)
 	gns.Approve(cross, stakerAddr, depositGnsAmount)
 
@@ -530,10 +533,11 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 11. One-click staking position 07 (out-range)
 // [INFO] mint and stake position 07 (one-click)
+// [EXPECTED] current pool tick: 600000
 // [EXPECTED] mint and stake result - ID: 7, liquidity: 166674
 // [EXPECTED] amounts - 0: 0, 1: 1000, pool: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100
 // [INFO] collect reward for position 07
-// [EXPECTED] reward to community pool: 10702050
+// [EXPECTED] reward to admin: 0
 //
 // [SCENARIO] 12. Unstake token 01
 // [INFO] unstake token 01

@@ -1,7 +1,8 @@
 package pool
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/v1/common"
@@ -53,11 +54,11 @@ func Mint(
 	tickLower int32,
 	tickUpper int32,
 	liquidityAmount string,
-	positionCaller std.Address,
+	positionCaller address,
 ) (string, string) {
 	halt.AssertIsNotHaltedPoolWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsPositionWithVersion(1, caller)
 	access.AssertIsValidAddress(positionCaller)
 
@@ -112,11 +113,11 @@ func Burn(
 	tickLower int32,
 	tickUpper int32,
 	liquidityAmount string, // uint128
-	positionCaller std.Address,
-) (string, string) { // uint256 x2
+	positionCaller address,
+) (string, string) {
 	halt.AssertIsNotHaltedPoolWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsPositionWithVersion(1, caller)
 	access.AssertIsValidAddress(positionCaller)
 
@@ -186,7 +187,7 @@ func Collect(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	recipient std.Address,
+	recipient address,
 	tickLower int32,
 	tickUpper int32,
 	amount0Requested string,
@@ -195,7 +196,7 @@ func Collect(
 	halt.AssertIsNotHaltedPoolWithVersion(1)
 	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsPositionWithVersion(1, caller)
 	access.AssertIsValidAddress(recipient)
 
@@ -277,14 +278,14 @@ func CollectProtocol(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	recipient std.Address,
+	recipient address,
 	amount0Requested string, // uint128
 	amount1Requested string, // uint128
 ) (string, string) {
 	halt.AssertIsNotHaltedPoolWithVersion(1)
 	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	common.MustRegistered(token0Path)
@@ -299,8 +300,8 @@ func CollectProtocol(
 		amount1Requested,
 	)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"CollectProtocol",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -322,7 +323,7 @@ func collectProtocol(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	recipient std.Address,
+	recipient address,
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {

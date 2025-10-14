@@ -1,7 +1,8 @@
 package position
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
@@ -26,7 +27,7 @@ func Reposition(
 	halt.AssertIsNotHaltedPositionWithVersion(1)
 	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	assertIsOwnerForToken(positionId, caller)
 
 	emission.MintAndDistributeGns(cross)
@@ -50,7 +51,7 @@ func Reposition(
 	oldTickLower := position.tickLower
 	oldTickUpper := position.tickUpper
 
-	if !(position.isClear()) {
+	if !position.isClear() {
 		panic(newErrorWithDetail(
 			errNotClear,
 			ufmt.Sprintf(
@@ -115,19 +116,19 @@ func Reposition(
 	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp :=
 		pl.GetObservation(position.poolKey, 0)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"Reposition",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"lpPositionId", formatUint(positionId),
-		"tickLower", formatInt(int64(tickLower)),
-		"tickUpper", formatInt(int64(tickUpper)),
+		"tickLower", formatInt(tickLower),
+		"tickUpper", formatInt(tickUpper),
 		"liquidity", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
-		"prevTickLower", formatInt(int64(oldTickLower)),
-		"prevTickUpper", formatInt(int64(oldTickUpper)),
+		"prevTickLower", formatInt(oldTickLower),
+		"prevTickUpper", formatInt(oldTickUpper),
 		"poolPath", position.poolKey,
 		"sqrtPriceX96", poolSqrtPriceX96.ToString(),
 		"positionLiquidity", PositionGetPositionLiquidityStr(positionId),

@@ -5,7 +5,6 @@
 package main
 
 import (
-	"std"
 	"strconv"
 	"testing"
 	"time"
@@ -31,10 +30,10 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
-	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -47,12 +46,12 @@ var (
 	maxInt64   int64 = 9223372036854775807
 
 	// external incentive parameters
-	depositGnsAmount     int64 = 1_000_000_000  // 1_000 GNS deposit
-	externalRewardAmount int64 = 10_000_000_000 // 10_000 reward tokens
+	depositGnsAmount     int64 = 1_000_000_000     // 1_000 GNS deposit
+	externalRewardAmount int64 = 10_000_000_000    // 10_000 reward tokens
 	TIMESTAMP_90DAYS     int64 = 90 * 24 * 60 * 60 // Must be 90, 180, or 365 days
-	
+
 	// Store the actual incentive start time for later use
-	incentiveStartTime   int64
+	incentiveStartTime int64
 )
 
 func main() {
@@ -155,8 +154,8 @@ func createExternalIncentive() {
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000", // targetPoolPath
 		barPath,              // rewardToken
 		externalRewardAmount, // rewardAmount
-		incentiveStartTime,  // startTimestamp
-		endTime,             // endTimestamp
+		incentiveStartTime,   // startTimestamp
+		endTime,              // endTimestamp
 	)
 
 	ufmt.Printf("[EXPECTED] external incentive created - start: %d, end: %d\n", incentiveStartTime, endTime)
@@ -249,17 +248,17 @@ func verifyNoIncentives() {
 
 	beforeBar := bar.BalanceOf(adminUser)
 	beforeGns := gns.BalanceOf(adminUser)
-	
+
 	sr.CollectReward(cross, 1, false)
-	
+
 	afterBar := bar.BalanceOf(adminUser)
 	afterGns := gns.BalanceOf(adminUser)
-	
+
 	barDiff := afterBar - beforeBar
 	gnsDiff := afterGns - beforeGns
 
 	ufmt.Printf("[INFO] rewards after incentive end - BAR: %d, GNS: %d (should be minimal)\n", barDiff, gnsDiff)
-	
+
 	// Verify pool has no tier and no active external incentives
 	// Pool has no tier and external incentive has ended
 	ufmt.Printf("[EXPECTED] pool has no tier and external incentive ended\n")
@@ -271,13 +270,13 @@ func unstakeAfterIncentiveEnd() {
 	// This is the critical test - unstaking should succeed even though:
 	// 1. Pool has no tier (no internal incentives)
 	// 2. External incentive has ended (no external incentives)
-	
+
 	sr.UnStakeToken(cross, 1, false)
 	ufmt.Printf("[EXPECTED] successfully unstaked position 1 after incentive ended\n")
-	
+
 	sr.UnStakeToken(cross, 2, false)
 	ufmt.Printf("[EXPECTED] successfully unstaked position 2 after incentive ended\n")
-	
+
 	testing.SkipHeights(1)
 }
 
@@ -300,7 +299,7 @@ func verifyPositionsRecovered() {
 	}
 
 	ufmt.Printf("[EXPECTED] NFT ownership returned to admin for both positions\n")
-	
+
 	// Verify positions can still be interacted with normally
 	testing.SetRealm(adminRealm)
 	position1, found1 := pn.GetPosition(1)
@@ -311,7 +310,7 @@ func verifyPositionsRecovered() {
 	if !found2 {
 		panic("position 2 should still exist")
 	}
-	
+
 	ufmt.Printf("[EXPECTED] position 1 still accessible - liquidity: %s\n", position1.Liquidity().ToString())
 	ufmt.Printf("[EXPECTED] position 2 still accessible - liquidity: %s\n", position2.Liquidity().ToString())
 }

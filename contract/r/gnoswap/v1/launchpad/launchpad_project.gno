@@ -1,8 +1,9 @@
 package launchpad
 
 import (
+	"chain"
+	"chain/runtime"
 	"errors"
-	"std"
 	"strconv"
 	"strings"
 	"time"
@@ -35,7 +36,7 @@ func CreateProject(
 	cur realm,
 	name string,
 	tokenPath string,
-	recipient std.Address,
+	recipient address,
 	depositAmount int64,
 	conditionTokens string,
 	conditionAmounts string,
@@ -46,11 +47,11 @@ func CreateProject(
 ) string {
 	halt.AssertIsNotHaltedLaunchpadWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
-	launchpadAddr := std.CurrentRealm().Address()
-	currentHeight := std.ChainHeight()
+	launchpadAddr := runtime.CurrentRealm().Address()
+	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
 
 	params := &createProjectParams{
@@ -84,19 +85,16 @@ func CreateProject(
 		)
 	}
 
-	err = common.TransferFrom(
+	common.SafeGRC20TransferFrom(
 		cross,
 		tokenPath,
 		caller,
 		launchpadAddr,
 		depositAmount,
 	)
-	if err != nil {
-		panic(err)
-	}
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"CreateProject",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -203,13 +201,13 @@ func createProject(params *createProjectParams) (*Project, error) {
 
 // TransferLeftFromProjectByAdmin transfers the remaining rewards of a project to a specified recipient.
 // Only admin or governance can call this function. Returns the amount of rewards transferred.
-func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient std.Address) int64 {
+func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient address) int64 {
 	halt.AssertIsNotHaltedLaunchpadWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
-	currentHeight := std.ChainHeight()
+	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
 
 	projectLeftReward, err := transferLeftFromProject(projectID, recipient, currentTime)
@@ -222,8 +220,8 @@ func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient std.A
 		panic(err)
 	}
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"TransferLeftFromProjectByAdmin",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -248,7 +246,7 @@ func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient std.A
 // This function is called by an admin to transfer any unclaimed rewards from a project to a recipient address.
 // It validates the project ID, checks the recipient conditions, calculates the remaining rewards, and performs the transfer.
 // Returns the amount of rewards transferred to the recipient and any error.
-func transferLeftFromProject(projectID string, recipient std.Address, currentTime int64) (int64, error) {
+func transferLeftFromProject(projectID string, recipient address, currentTime int64) (int64, error) {
 	project, err := getProject(projectID)
 	if err != nil {
 		return 0, err
@@ -294,7 +292,7 @@ func transferLeftFromProject(projectID string, recipient std.Address, currentTim
 }
 
 // validateTransferLeft validates the transfer of remaining tokens
-func validateRefundProject(project *Project, recipient std.Address, currentTime int64) error {
+func validateRefundProject(project *Project, recipient address, currentTime int64) error {
 	if !recipient.IsValid() {
 		return errors.New(ufmt.Sprintf("invalid recipient address(%s)", recipient.String()))
 	}
@@ -305,7 +303,7 @@ func validateRefundProject(project *Project, recipient std.Address, currentTime 
 type createProjectParams struct {
 	name                  string
 	tokenPath             string
-	recipient             std.Address
+	recipient             address
 	depositAmount         int64
 	conditionTokens       string
 	conditionAmounts      string

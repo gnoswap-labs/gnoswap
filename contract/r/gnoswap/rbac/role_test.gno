@@ -1,7 +1,6 @@
 package rbac
 
 import (
-	"std"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -25,7 +24,7 @@ func TestDefaultRoleAddresses(t *testing.T) {
 		prbac.ROLE_PROTOCOL_FEE,
 	}
 
-	expectedAddresses := map[prbac.SystemRole]std.Address{
+	expectedAddresses := map[prbac.SystemRole]address{
 		prbac.ROLE_ADMIN:          ADMIN,
 		prbac.ROLE_DEVOPS:         DEV_OPS,
 		prbac.ROLE_COMMUNITY_POOL: COMMUNITY_POOL_ADDR,
@@ -80,7 +79,7 @@ func TestDefaultRoleAddressesMapping(t *testing.T) {
 	// Test specific role-address mappings
 	tests := []struct {
 		role         prbac.SystemRole
-		expectedAddr std.Address
+		expectedAddr address
 		description  string
 	}{
 		{
@@ -222,7 +221,7 @@ func TestSystemRoleValidation(t *testing.T) {
 
 func TestRoleAddressUniqueness(t *testing.T) {
 	// Test that all role addresses are unique (no two roles share the same address)
-	addressToRole := make(map[std.Address]prbac.SystemRole)
+	addressToRole := make(map[address]prbac.SystemRole)
 
 	for role, addr := range DefaultRoleAddresses {
 		if existingRole, exists := addressToRole[addr]; exists {

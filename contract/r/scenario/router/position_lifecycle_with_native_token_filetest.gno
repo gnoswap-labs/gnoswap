@@ -6,7 +6,8 @@
 package main
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"strconv"
 	"testing"
 	"time"
@@ -27,7 +28,7 @@ import (
 
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	poolAddr, _        = access.GetAddress(prabc.ROLE_POOL.String())
 	positionAddr, _    = access.GetAddress(prabc.ROLE_POSITION.String())
@@ -35,7 +36,7 @@ var (
 	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 
 	userAddr  = testutils.TestAddress("user")
-	userRealm = std.NewUserRealm(userAddr)
+	userRealm = testing.NewUserRealm(userAddr)
 
 	wugnotPath = "gno.land/r/gnoland/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/gns"
@@ -77,7 +78,7 @@ func setupInitialEnvironment() {
 	pl.SetPoolCreationFee(cross, 0)
 
 	// Issue tokens to user
-	testing.IssueCoins(userAddr, std.Coins{{"ugnot", 1000000000}})
+	testing.IssueCoins(userAddr, chain.Coins{{"ugnot", 1000000000}})
 
 	// Mint GNS to user
 	testing.SetRealm(adminRealm)
@@ -90,8 +91,8 @@ func setupInitialEnvironment() {
 
 	// Verify initial balances
 	testing.SetRealm(userRealm)
-	banker := std.NewBanker(std.BankerTypeReadonly)
-	userGnotBalance := banker.GetCoins(userAddr).AmountOf("ugnot")
+	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
+	userGnotBalance := banker_.GetCoins(userAddr).AmountOf("ugnot")
 	userGnsBalance := gns.BalanceOf(userAddr)
 
 	println("[INFO] User initial GNOT balance:", userGnotBalance)
@@ -106,9 +107,9 @@ func testMintPositionWithGnot() {
 	testing.SetRealm(userRealm)
 
 	// Record gas cost baseline
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(userAddr, positionAddr, std.Coins{{"ugnot", 100000000}})
-	prevGnotBalance := banker.GetCoins(userAddr).AmountOf("ugnot")
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_.SendCoins(userAddr, positionAddr, chain.Coins{{"ugnot", 100000000}})
+	prevGnotBalance := banker_.GetCoins(userAddr).AmountOf("ugnot")
 	prevGnsBalance := gns.BalanceOf(userAddr)
 
 	// Approve GNS for position
@@ -116,7 +117,7 @@ func testMintPositionWithGnot() {
 	wugnot.Approve(cross, poolAddr, 100000000)
 
 	// Mint position with GNOT (auto-wrap should occur)
-	testing.SetOriginSend(std.Coins{{"ugnot", 100000000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000}})
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		"gnot",
@@ -135,7 +136,7 @@ func testMintPositionWithGnot() {
 	)
 
 	// Check balances after mint
-	afterGnotBalance := banker.GetCoins(userAddr).AmountOf("ugnot")
+	afterGnotBalance := banker_.GetCoins(userAddr).AmountOf("ugnot")
 	afterGnsBalance := gns.BalanceOf(userAddr)
 	afterWugnotBalance := wugnot.BalanceOf(userAddr)
 
@@ -165,7 +166,7 @@ func testExecuteSwapsForFees() {
 		gns.Approve(cross, poolAddr, 10000000)
 		gns.Approve(cross, routerAddr, max_approve) // For router fee
 
-		testing.SetOriginSend(std.Coins{})
+		testing.SetOriginSend(chain.Coins{})
 		amountIn, amountOut := router.ExactInSwapRoute(
 			cross,
 			gnsPath,
@@ -197,8 +198,8 @@ func testBurnPositionWithUnwrap(removedLiquidity string) {
 	println("[INFO] Burning 50% of position liquidity with unwrap=true")
 	testing.SetRealm(userRealm)
 
-	banker := std.NewBanker(std.BankerTypeReadonly)
-	prevGnotBalance := banker.GetCoins(userAddr).AmountOf("ugnot")
+	banker_ := banker.NewBanker(banker.BankerTypeReadonly)
+	prevGnotBalance := banker_.GetCoins(userAddr).AmountOf("ugnot")
 	prevGnsBalance := gns.BalanceOf(userAddr)
 	beforeProtocolFeeWugnot := wugnot.BalanceOf(protocolFeeAddr)
 	beforeProtocolFeeGns := gns.BalanceOf(protocolFeeAddr)
@@ -214,7 +215,7 @@ func testBurnPositionWithUnwrap(removedLiquidity string) {
 		true, // unwrap to GNOT
 	)
 
-	afterGnotBalance := banker.GetCoins(userAddr).AmountOf("ugnot")
+	afterGnotBalance := banker_.GetCoins(userAddr).AmountOf("ugnot")
 	afterGnsBalance := gns.BalanceOf(userAddr)
 	afterProtocolFeeWugnot := wugnot.BalanceOf(protocolFeeAddr)
 	afterProtocolFeeGns := gns.BalanceOf(protocolFeeAddr)

@@ -1,8 +1,6 @@
 package referral
 
 import (
-	"std"
-
 	"gno.land/p/nt/ufmt"
 
 	prabc "gno.land/p/gnoswap/rbac"
@@ -25,7 +23,7 @@ var validCallerRoles = []string{
 // isValidCaller checks if the caller address has permission to modify referral data.
 // Only addresses with specific roles defined in validCallerRoles are authorized.
 // Returns an error if the caller is not authorized.
-func isValidCaller(caller std.Address) error {
+func isValidCaller(caller address) error {
 	for _, role := range validCallerRoles {
 		if access.IsAuthorized(role, caller) {
 			return nil

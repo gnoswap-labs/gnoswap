@@ -1,19 +1,15 @@
 package governance
 
-import (
-	"std"
-)
-
 // VotingInfo tracks voting-related information for a specific user on a specific proposal.
 // This structure maintains the user's voting eligibility, voting history, and voting power.
 type VotingInfo struct {
-	voterAddress        std.Address // Address of the voter
-	availableVoteWeight int64       // Total voting weight available to this user for this proposal
-	votedWeight         int64       // Actual weight used when voting (0 if not voted)
-	votedHeight         int64       // Block height when vote was cast
-	votedAt             int64       // Timestamp when vote was cast
-	votedYes            bool        // True if voted "yes", false if voted "no"
-	voted               bool        // True if user has already voted
+	voterAddress        address // Address of the voter
+	availableVoteWeight int64   // Total voting weight available to this user for this proposal
+	votedWeight         int64   // Actual weight used when voting (0 if not voted)
+	votedHeight         int64   // Block height when vote was cast
+	votedAt             int64   // Timestamp when vote was cast
+	votedYes            bool    // True if voted "yes", false if voted "no"
+	voted               bool    // True if user has already voted
 }
 
 // VotingType returns a human-readable string representation of the vote choice.
@@ -140,7 +136,7 @@ func (v *VotingInfo) vote(votedYes bool, weight int64, votedHeight int64, votedA
 //
 // Returns:
 //   - *VotingInfo: newly created voting information structure
-func NewVotingInfo(availableVoteWeight int64, voterAddress std.Address) *VotingInfo {
+func NewVotingInfo(availableVoteWeight int64, voterAddress address) *VotingInfo {
 	return &VotingInfo{
 		availableVoteWeight: availableVoteWeight,
 		voterAddress:        voterAddress,

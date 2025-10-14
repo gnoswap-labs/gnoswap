@@ -1,7 +1,6 @@
 package router
 
 import (
-	"std"
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -49,7 +48,7 @@ func TestHandleSwapFee(t *testing.T) {
 				swapFee = originalSwapFee
 			}()
 
-			testing.SetRealm(std.NewUserRealm(adminAddr))
+			testing.SetRealm(testing.NewUserRealm(adminAddr))
 			bar.Transfer(cross, routerAddr, tt.amount.Int64())
 
 			testing.SetRealm(routerRealm)

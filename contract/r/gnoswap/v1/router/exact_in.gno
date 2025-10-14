@@ -1,7 +1,8 @@
 package router
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 
 	"gno.land/p/nt/ufmt"
 
@@ -68,6 +69,7 @@ func ExactInSwapRoute(cur realm,
 	assertIsValidUserCoinSend(inputToken, amountIn)
 	assertIsValidRoutePaths(routeArr, inputToken, outputToken)
 	assertIsNotPassedDeadline(deadline)
+	assertIsExistsPools(routeArr)
 
 	emission.MintAndDistributeGns(cross)
 
@@ -126,6 +128,7 @@ func ExactInSingleSwapRoute(cur realm,
 	assertIsValidSingleSwapRouteArrPath(routeArr, inputToken, outputToken)
 	assertIsValidSqrtPriceLimitX96(sqrtPriceLimitX96)
 	assertIsNotPassedDeadline(deadline)
+	assertIsExistsPools(routeArr)
 
 	emission.MintAndDistributeGns(cross)
 
@@ -171,16 +174,16 @@ func exactInSwapRoute(
 	}
 
 	if params.IsUnwrap() {
-		err = unwrapWithTransfer(std.PreviousRealm().Address(), outputAmount.Int64())
+		err = unwrapWithTransfer(runtime.PreviousRealm().Address(), outputAmount.Int64())
 		if err != nil {
 			panic(err)
 		}
 	} else {
-		common.SafeGRC20Transfer(cross, params.outputToken, std.PreviousRealm().Address(), outputAmount.Int64())
+		common.SafeGRC20Transfer(cross, params.outputToken, runtime.PreviousRealm().Address(), outputAmount.Int64())
 	}
 
 	// handle referral registration
-	previousRealm := std.PreviousRealm()
+	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()
 	success := referral.TryRegister(cross, caller, referrer)
 	actualReferrer := referrer
@@ -191,7 +194,7 @@ func exactInSwapRoute(
 	inputAmountStr := inputAmount.ToString()
 	outputAmountStr := i256.Zero().Neg(outputAmount).ToString()
 
-	std.Emit(
+	chain.Emit(
 		"ExactInSwap",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),

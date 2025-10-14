@@ -1,8 +1,6 @@
 package router
 
 import (
-	"std"
-
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -20,7 +18,7 @@ import (
 func swapCallback(
 	token0Path, token1Path string,
 	amount0Delta, amount1Delta string,
-	payer std.Address,
+	payer address,
 ) error {
 	var tokenToPay string
 
@@ -50,7 +48,7 @@ func swapCallback(
 }
 
 // transferToPool transfers tokens from router to pool
-func transferToPool(token string, amount *u256.Uint, payer std.Address) {
+func transferToPool(token string, amount *u256.Uint, payer address) {
 	isTransferByRouter := payer == routerAddr
 
 	balance := common.BalanceOf(token, payer)

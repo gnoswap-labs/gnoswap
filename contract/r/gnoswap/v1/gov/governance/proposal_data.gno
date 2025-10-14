@@ -1,7 +1,6 @@
 package governance
 
 import (
-	"std"
 	"strings"
 
 	"gno.land/p/nt/ufmt"
@@ -307,7 +306,7 @@ func NewProposalTextData() *ProposalData {
 //   - *ProposalData: proposal data configured for community pool spending
 func NewProposalCommunityPoolSpendData(
 	tokenPath string,
-	to std.Address,
+	to address,
 	amount int64,
 	communityPoolPackagePath string,
 ) *ProposalData {
@@ -350,9 +349,9 @@ func NewProposalExecutionData(numToExecute int64, executions string) *ProposalDa
 
 // CommunityPoolSpendInfo contains information for community pool spending proposals.
 type CommunityPoolSpendInfo struct {
-	to        std.Address // Recipient address for token transfer
-	tokenPath string      // Path of the token to transfer
-	amount    int64       // Amount of tokens to transfer
+	to        address // Recipient address for token transfer
+	tokenPath string  // Path of the token to transfer
+	amount    int64   // Amount of tokens to transfer
 }
 
 // ExecutionInfo contains information for parameter change execution.

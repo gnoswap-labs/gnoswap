@@ -5,7 +5,7 @@
 package main
 
 import (
-	"std"
+	"chain/runtime"
 	"strconv"
 	"testing"
 
@@ -34,11 +34,11 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
@@ -56,6 +56,8 @@ var (
 	TIMESTAMP_90DAYS int64 = 90 * 24 * 60 * 60
 
 	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
+
+	t *testing.T
 )
 
 func main() {
@@ -141,7 +143,7 @@ func createExternalIncentive() {
 	ufmt.Printf("[INFO] external incentive created - reward per block: ~1000000000\n")
 
 	// Make external incentives start
-	leftHeight := 978 - std.ChainHeight()
+	leftHeight := 978 - runtime.ChainHeight()
 	if leftHeight > 0 {
 		testing.SkipHeights(leftHeight + 5) // skip 5 blocks more
 	}
@@ -269,6 +271,7 @@ func performSwapToMovePrice() {
 		println("[WARNING] swap might not have moved price far enough")
 		// Try another swap to move further
 		println("[INFO] perform additional swap")
+
 		rt.ExactInSwapRoute(
 			cross,
 			barPath,
@@ -321,7 +324,10 @@ func performReverseSwap() {
 	reverseSwapAmount := "50000"
 
 	println("[INFO] swap baz for bar to move tick down")
-	_, amountOut := rt.ExactInSwapRoute(
+
+	var amountOut string = "0"
+
+	_, amountOut = rt.ExactInSwapRoute(
 		cross,
 		bazPath,
 		barPath,

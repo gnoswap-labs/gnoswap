@@ -1,7 +1,7 @@
 package launchpad
 
 import (
-	"std"
+	"chain/runtime"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
@@ -14,7 +14,7 @@ func CollectProtocolFee(cur realm) {
 	halt.AssertIsNotHaltedLaunchpadWithVersion(1)
 	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
-	previousRealm := std.PreviousRealm()
+	previousRealm := runtime.PreviousRealm()
 	access.AssertIsUser(previousRealm)
 
 	caller := previousRealm.Address()

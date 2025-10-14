@@ -5,7 +5,7 @@
 package main
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 	"time"
 
@@ -28,14 +28,14 @@ import (
 
 var (
 	adminAddr, _  = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm    = std.NewUserRealm(adminAddr)
+	adminRealm    = testing.NewUserRealm(adminAddr)
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
-	routerRealm   = std.NewUserRealm(routerAddr)
+	routerRealm   = testing.NewUserRealm(routerAddr)
 
 	aliceAddr  = testutils.TestAddress("alice")
-	aliceRealm = std.NewUserRealm(aliceAddr)
+	aliceRealm = testing.NewUserRealm(aliceAddr)
 
 	token0Path = "gno.land/r/onbloc/bar"
 	token1Path = "gno.land/r/onbloc/foo"
@@ -55,7 +55,7 @@ func main() {
 
 	println("[SCENARIO] 3. Skip blocks and check position")
 	testing.SkipHeights(10)
-	println("[INFO] Current block height:", std.ChainHeight())
+	println("[INFO] Current block height:", runtime.ChainHeight())
 	println()
 
 	println("[SCENARIO] 4. UnStake Position")
