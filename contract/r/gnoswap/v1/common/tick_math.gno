@@ -244,7 +244,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	}
 
 	// Calculate tick from log_sqrt10001
-	logSqrt10001 := i256.Zero().MulOverflow(log2, log2Multiplier)
+	logSqrt10001, overflow := i256.Zero().MulOverflow(log2, log2Multiplier)
 	if overflow {
 		panic(errOverFlow)
 	}
