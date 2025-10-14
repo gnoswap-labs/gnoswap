@@ -49,7 +49,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, 
 	}
 
 	pToken0, pToken1, pFee := splitOf(position.poolKey)
-	burn0, burn1, tokensOwed0, tokensOwed1 := pl.Burn(cross, pToken0, pToken1, pFee, position.tickLower, position.tickUpper, liquidityToRemove.ToString(), caller)
+	burn0, burn1 := pl.Burn(cross, pToken0, pToken1, pFee, position.tickLower, position.tickUpper, liquidityToRemove.ToString(), caller)
 
 	burnedAmount0 := u256.MustFromDecimal(burn0)
 	burnedAmount1 := u256.MustFromDecimal(burn1)
@@ -88,8 +88,8 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, 
 	calculatedToken1Balance := u256.MustFromDecimal(calculatedToken1BalanceStr)
 
 	// Add only burned amounts to tokensOwed since fees were already collected and processed in collectFee
-	position.tokensOwed0 = u256.MustFromDecimal(tokensOwed0)
-	position.tokensOwed1 = u256.MustFromDecimal(tokensOwed1)
+	position.tokensOwed0 = u256.Zero().Add(position.tokensOwed0, burnedAmount0)
+	position.tokensOwed1 = u256.Zero().Add(position.tokensOwed1, burnedAmount1)
 
 	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
