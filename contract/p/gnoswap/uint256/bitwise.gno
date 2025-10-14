@@ -72,14 +72,23 @@ func (z *Uint) Lsh(x *Uint, n uint) *Uint {
 		}
 		z.lsh192(x)
 		n -= 192
+		if n >= 64 {
+			panic("Lsh: shift amount overflow")
+		}
 		goto sh192
 	case n > 128:
 		z.lsh128(x)
 		n -= 128
+		if n >= 64 {
+			panic("Lsh: shift amount overflow")
+		}
 		goto sh128
 	case n > 64:
 		z.lsh64(x)
 		n -= 64
+		if n >= 64 {
+			panic("Lsh: shift amount overflow")
+		}
 		goto sh64
 	default:
 		z.Set(x)
@@ -130,14 +139,23 @@ func (z *Uint) Rsh(x *Uint, n uint) *Uint {
 		}
 		z.rsh192(x)
 		n -= 192
+		if n >= 64 {
+			panic("Rsh: shift amount overflow")
+		}
 		goto sh192
 	case n > 128:
 		z.rsh128(x)
 		n -= 128
+		if n >= 64 {
+			panic("Rsh: shift amount overflow")
+		}
 		goto sh128
 	case n > 64:
 		z.rsh64(x)
 		n -= 64
+		if n >= 64 {
+			panic("Rsh: shift amount overflow")
+		}
 		goto sh64
 	default:
 		z.Set(x)
@@ -192,14 +210,23 @@ func (z *Uint) SRsh(x *Uint, n uint) *Uint {
 		}
 		z.srsh192(x)
 		n -= 192
+		if n >= 64 {
+			panic("SRsh: shift amount overflow")
+		}
 		goto sh192
 	case n > 128:
 		z.srsh128(x)
 		n -= 128
+		if n >= 64 {
+			panic("SRsh: shift amount overflow")
+		}
 		goto sh128
 	case n > 64:
 		z.srsh64(x)
 		n -= 64
+		if n >= 64 {
+			panic("SRsh: shift amount overflow")
+		}
 		goto sh64
 	default:
 		z.Set(x)
