@@ -355,33 +355,33 @@ func testMultiHopUsdcToGnot() {
 //
 // [SCENARIO] 3. ExactOut: GNS → GNOT
 // [INFO] Testing ExactOut swap: GNS → 1,000,000 GNOT
-// [INFO] GNS spent: 997574
-// [INFO] GNOT received: 998500
-// [INFO] Pool fee (0.05%): 498
+// [INFO] GNS spent: 999077
+// [INFO] GNOT received: 1000000
+// [INFO] Pool fee (0.05%): 499
 // [INFO] Router fee (0.15%): 1500
-// [INFO] AmountIn reported: 997574
-// [INFO] AmountOut reported: -998500
+// [INFO] AmountIn reported: 999077
+// [INFO] AmountOut reported: -1000000
 // [EXPECTED] User receives 1,000,000 GNOT
 // [EXPECTED] Router fee charged on output side
 // [EXPECTED] Unwrap happens internally
-// [INFO] Router total fees accumulated: 1500
+// [INFO] Router total fees accumulated: 1502
 //
 // [SCENARIO] 4. Multi-hop: GNOT → GNS → USDC
 // [INFO] Testing Multi-hop: 1,000,000 GNOT → GNS → USDC
 // [INFO] GNOT spent: 0
-// [INFO] USDC received: 991677
+// [INFO] USDC received: 991686
 // [INFO] AmountIn reported: 1000000
-// [INFO] AmountOut reported: -991677
+// [INFO] AmountOut reported: -991686
 // [EXPECTED] Only first hop wraps GNOT
 // [EXPECTED] Correct fee accumulation across hops
 // [EXPECTED] Router fee applied on final output
 //
 // [SCENARIO] 5. Multi-hop: USDC → GNS → GNOT
 // [INFO] Testing Multi-hop: USDC → GNS → 1,000,000 GNOT
-// [INFO] USDC spent: 995169
-// [INFO] GNOT received: 998500
-// [INFO] AmountIn reported: 995169
-// [INFO] AmountOut reported: -998500
+// [INFO] USDC spent: 996682
+// [INFO] GNOT received: 1000000
+// [INFO] AmountIn reported: 996682
+// [INFO] AmountOut reported: -1000000
 // [EXPECTED] Only last hop unwraps to GNOT
 // [EXPECTED] User receives exactly 1,000,000 GNOT
 // [EXPECTED] Correct fee distribution across hops

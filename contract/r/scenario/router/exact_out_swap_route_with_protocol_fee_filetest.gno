@@ -162,11 +162,11 @@ func swapRouteWithBalanceCheck() {
 // [INFO] protocol fee bar balance: 0
 // [INFO] protocol fee foo balance: 0
 // [INFO] Executing ExactOut swap
-// [EXPECTED] amountIn: 1013142
-// [EXPECTED] amountOut: -998500
-// [EXPECTED] admin bar balance change: 998500
-// [EXPECTED] admin foo balance change: -1013142
-// [EXPECTED] pool bar balance change: -1000000
-// [EXPECTED] pool foo balance change: 1013142
-// [EXPECTED] protocol fee bar balance change: 1500
+// [EXPECTED] amountIn: 1014679
+// [EXPECTED] amountOut: -1000000
+// [EXPECTED] admin bar balance change: 1000000
+// [EXPECTED] admin foo balance change: -1014679
+// [EXPECTED] pool bar balance change: -1001502
+// [EXPECTED] pool foo balance change: 1014679
+// [EXPECTED] protocol fee bar balance change: 1502
 // [EXPECTED] protocol fee foo balance change: 0

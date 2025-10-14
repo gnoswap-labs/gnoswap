@@ -294,6 +294,6 @@ func testExactOutFeeCalculation() {
 //
 // [SCENARIO] 4. Fee Calculation in Exact Out Swaps
 // [INFO] Testing fee calculation in exact out swaps
-// [EXPECTED] Input required: 994240332
-// [EXPECTED] Output received: -998500000
+// [EXPECTED] Input required: 995739810
+// [EXPECTED] Output received: -1000000000
 // [EXPECTED] Input should be ~1,000,500,250 (accounting for 0.05% fee)
