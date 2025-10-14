@@ -443,6 +443,11 @@ func (self *RewardState) applyWarmup() {
 
 // rewardPerWarmup calculates the reward for each warmup, adds to the RewardState's rewards array.
 func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSecond int64) error {
+	// Return early if startTime equals endTime to avoid unnecessary computation
+	if startTime == endTime {
+		return nil
+	}
+
 	for i, warmup := range self.deposit.warmups {
 		if startTime >= warmup.NextWarmupTime {
 			// passed the warmup

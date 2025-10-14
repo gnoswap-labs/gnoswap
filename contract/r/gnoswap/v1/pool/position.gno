@@ -251,6 +251,9 @@ func (p *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.
 	}
 
 	liqDelta := params.liquidityDelta
+	if liqDelta.IsZero() {
+		return position, zero, zero, nil
+	}
 
 	amount0, amount1 := i256.Zero(), i256.Zero()
 
