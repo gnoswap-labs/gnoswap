@@ -124,7 +124,7 @@ func setPoolTier(poolPath string, tier uint64, currentTime int64) {
 		pool = NewPool(poolPath, time.Now().Unix())
 		pools.set(poolPath, pool)
 	}
-	poolTier.changeTier(std.ChainHeight(), currentTime, pools, poolPath, tier)
+	poolTier.changeTier(runtime.ChainHeight(), currentTime, pools, poolPath, tier)
 }
 
 // changePoolTier internally changes the pool tier and returns old and new tiers.
