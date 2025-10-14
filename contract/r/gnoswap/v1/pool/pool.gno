@@ -114,7 +114,7 @@ func Burn(
 	tickUpper int32,
 	liquidityAmount string, // uint128
 	positionCaller address,
-) (string, string) { // uint256 x2
+) (string, string, string, string) {
 	halt.AssertIsNotHaltedPoolWithVersion(1)
 
 	caller := runtime.PreviousRealm().Address()

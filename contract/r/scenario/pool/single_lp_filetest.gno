@@ -159,8 +159,8 @@ func TestMint() {
 func TestBurn() {
 	testing.SetRealm(posRealm)
 
-	b11, b12 := pl.Burn(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
-	b21, b22 := pl.Burn(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	b11, b12, _, _ := pl.Burn(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
+	b21, b22, _, _ := pl.Burn(cross, barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr, adminAddr)
 	println("[INFO] Burned amounts should be same")
 	println("[EXPECTED] b11:", b11, "expected: should be 29")
 	println("[EXPECTED] b21:", b21, "expected: should be 29")

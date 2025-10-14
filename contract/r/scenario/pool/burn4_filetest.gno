@@ -87,7 +87,7 @@ func testPartialLiquidityBurn() {
 	burnAmount := "5000000000" // 50% of total liquidity
 	println("[INFO] Burning partial liquidity amount:", burnAmount, "(50% of total)")
 
-	amount0, amount1 := pool.Burn(
+	amount0, amount1, _, _ := pool.Burn(
 		cross,
 		barTokenPath,
 		bazTokenPath,
