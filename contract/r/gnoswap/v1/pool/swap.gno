@@ -209,17 +209,17 @@ func Swap(
 		// receive token0 from swap callback
 		// send token1 to recipient (output)
 		if result.Amount1.IsNeg() {
-			pool.safeSwapCallback(token0Path, result.Amount0, zeroForOne, swapCallback)
+			pool.safeSwapCallback(token0Path, result.Amount0.Abs(), zeroForOne, swapCallback)
 
-			pool.safeTransfer(recipient, token1Path, result.Amount1, false)
+			pool.safeTransfer(recipient, token1Path, result.Amount1.Abs(), false)
 		}
 	} else {
 		// receive token1 from swap callback
 		// send token0 to recipient (output)
 		if result.Amount0.IsNeg() {
-			pool.safeSwapCallback(token1Path, result.Amount1, zeroForOne, swapCallback)
+			pool.safeSwapCallback(token1Path, result.Amount1.Abs(), zeroForOne, swapCallback)
 
-			pool.safeTransfer(recipient, token0Path, result.Amount0, true)
+			pool.safeTransfer(recipient, token0Path, result.Amount0.Abs(), true)
 		}
 	}
 
@@ -650,7 +650,7 @@ func tickTransition(step StepComputations, zeroForOne bool, state SwapState, poo
 			liquidityNet = i256.Zero().Neg(liquidityNet)
 		}
 
-		newState.liquidity = liquidityMathAddDelta(state.liquidity, liquidityNet)
+		newState.liquidity = common.LiquidityMathAddDelta(state.liquidity, liquidityNet)
 
 		if tickCrossHook != nil {
 			currentTime := time.Now().Unix()

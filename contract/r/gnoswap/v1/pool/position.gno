@@ -84,7 +84,7 @@ func positionUpdate(
 	if liquidityDelta.IsZero() {
 		liquidityNext = position.liquidity
 	} else {
-		liquidityNext = liquidityMathAddDelta(position.liquidity, liquidityDelta)
+		liquidityNext = common.LiquidityMathAddDelta(position.liquidity, liquidityDelta)
 	}
 
 	// validate negative feeGrowth before calculation
@@ -285,7 +285,7 @@ func (p *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.
 		// token1 used from lower tick to current price
 		amount1 = calculateToken1Amount(sqrtRatioLower, sqrtPriceX96, liqDelta)
 		// update pool's active liquidity since price is in range
-		p.liquidity = liquidityMathAddDelta(liquidityBefore, liqDelta)
+		p.liquidity = common.LiquidityMathAddDelta(liquidityBefore, liqDelta)
 
 	default:
 		// case 3
