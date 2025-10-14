@@ -143,7 +143,7 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 	pool := &Pool{
 		poolPath:        poolPath,
 		stakedLiquidity: NewUintTree(),
-		lastUnclaimableTime is initialized to 0, which means "tracking not started yet".
+		// lastUnclaimableTime is initialized to 0, which means "tracking not started yet".
 		// When the pool receives a tier assignment (or external incentive), `cacheReward` will be called,
 		// which will automatically call `startUnclaimablePeriod` if the pool has zero liquidity.
 		// This ensures proper unclaimable period tracking from the moment rewards start emitting.
