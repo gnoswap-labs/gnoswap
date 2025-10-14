@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
@@ -273,19 +272,17 @@ func performSwapToMovePrice() {
 		// Try another swap to move further
 		println("[INFO] perform additional swap")
 
-		uassert.AbortsContains(t, "failed swap", func() {
-			rt.ExactInSwapRoute(
-				cross,
-				barPath,
-				bazPath,
-				swapAmount,
-				"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
-				"100",
-				"0",
-				maxTimeout,
-				"",
-			)
-		})
+		rt.ExactInSwapRoute(
+			cross,
+			barPath,
+			bazPath,
+			swapAmount,
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
+			"100",
+			"0",
+			maxTimeout,
+			"",
+		)
 
 		finalTick := pl.GetSlot0Tick(poolPath)
 		ufmt.Printf("[EXPECTED] final tick after additional swap: %d\n", finalTick)
@@ -330,19 +327,17 @@ func performReverseSwap() {
 
 	var amountOut string = "0"
 
-	uassert.AbortsContains(t, "failed swap", func() {
-		_, amountOut = rt.ExactInSwapRoute(
-			cross,
-			bazPath,
-			barPath,
-			reverseSwapAmount,
-			"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:100",
-			"100",
-			"0",
-			maxTimeout,
-			"",
-		)
-	})
+	_, amountOut = rt.ExactInSwapRoute(
+		cross,
+		bazPath,
+		barPath,
+		reverseSwapAmount,
+		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:100",
+		"100",
+		"0",
+		maxTimeout,
+		"",
+	)
 
 	ufmt.Printf("[INFO] swapped %s baz for %s bar\n", reverseSwapAmount, amountOut)
 
