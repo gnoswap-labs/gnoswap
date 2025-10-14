@@ -128,7 +128,7 @@ func main() {
 
 	println("[SCENARIO] 3. Burning position")
 	testing.SetRealm(posRealm)
-	burn0, burn1, _, _ := pool.Burn(
+	burn0, burn1 := pool.Burn(
 		cross,
 		barPath,
 		fooPath,

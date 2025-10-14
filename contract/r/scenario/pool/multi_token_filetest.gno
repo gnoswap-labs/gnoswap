@@ -317,7 +317,7 @@ func TestBurnFooBarLiquidity() {
 	poolOldLiquidity := pool.GetPool(fooPath, barPath, fee500).
 		Liquidity()
 
-	b0, b1, _, _ := pool.Burn(
+	b0, b1 := pool.Burn(
 		cross,
 		fooPath,
 		barPath,
@@ -343,7 +343,7 @@ func TestBurnBarBazLiquidity() {
 
 	poolOldLiquidity := pool.GetPool(barPath, bazPath, fee500).Liquidity()
 
-	b0, b1, _, _ := pool.Burn(
+	b0, b1 := pool.Burn(
 		cross,
 		barPath,
 		bazPath,

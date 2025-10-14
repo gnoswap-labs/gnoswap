@@ -244,7 +244,7 @@ func testPoolFeeCollection(t *testing.T) {
 	// When: Burn 0 liquidity to collect fees
 	println("[INFO] Burning 0 liquidity to collect accumulated fees")
 	testing.SetRealm(posRealm)
-	burnAmount0, burnAmount1, _, _ := pool.Burn(
+	burnAmount0, burnAmount1 := pool.Burn(
 		cross,
 		fooPath,
 		barPath,

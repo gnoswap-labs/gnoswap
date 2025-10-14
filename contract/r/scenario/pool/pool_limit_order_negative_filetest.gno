@@ -115,7 +115,7 @@ func main() {
 
 	println("[INFO] Burn Position (Burn liquidity from tick 0 to 120)")
 	testing.SetRealm(posRealm)
-	burn0, burn1, _, _ := pool.Burn(
+	burn0, burn1 := pool.Burn(
 		cross,
 		barPath,
 		fooPath,

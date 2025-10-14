@@ -95,7 +95,7 @@ func testSuccessfulBurn(t *testing.T) {
 	burnAmount := "10000000000"
 	println("[INFO] Burning liquidity amount:", burnAmount)
 
-	amount0, amount1, _, _ := pool.Burn(
+	amount0, amount1 := pool.Burn(
 		cross,
 		barTokenPath,
 		bazTokenPath,

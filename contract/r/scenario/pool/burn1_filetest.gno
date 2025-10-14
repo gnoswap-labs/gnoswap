@@ -88,7 +88,7 @@ func testZeroLiquidityBurn() {
 	burnAmount := "0"
 	println("[INFO] Burning liquidity amount:", burnAmount)
 
-	amount0, amount1, _, _ := pool.Burn(
+	amount0, amount1 := pool.Burn(
 		cross,
 		barTokenPath,
 		bazTokenPath,

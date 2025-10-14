@@ -125,7 +125,7 @@ func main() {
 
 	// BURN
 	testing.SetRealm(posRealm)
-	burn0, burn1, _, _ := pool.Burn(
+	burn0, burn1 := pool.Burn(
 		cross,
 		barPath,
 		fooPath,
