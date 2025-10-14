@@ -52,6 +52,8 @@ var (
 	maxInt64   int64 = 9223372036854775807
 
 	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
+
+	t *testing.T
 )
 
 func main() {
@@ -290,8 +292,10 @@ func performReverseSwap() {
 	// Swap baz for bar to move tick back down
 	reverseSwapAmount := "50000"
 
+	var amountOut string = "0"
+
 	println("[INFO] swap baz for bar to move tick down")
-	_, amountOut := rt.ExactInSwapRoute(
+	_, amountOut = rt.ExactInSwapRoute(
 		cross,
 		bazPath,
 		barPath,

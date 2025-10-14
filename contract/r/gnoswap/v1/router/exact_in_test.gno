@@ -362,7 +362,7 @@ func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
 
 	uassert.AbortsWithMessage(
 		t,
-		`[GNOSWAP-POOL-008] requested data not found || expected poolPath(gno.land/r/gnoland/wugnot:gno.land/r/onbloc/qux:3000) to exist`,
+		`[GNOSWAP-ROUTER-005] invalid input data || pool does not exist: gno.land/r/gnoland/wugnot:gno.land/r/onbloc/qux:3000`,
 		func() {
 			ExactOutSwapRoute(
 				cross,
