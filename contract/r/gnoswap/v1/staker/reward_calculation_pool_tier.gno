@@ -197,19 +197,6 @@ func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *
 		self.counts[currentTier]--
 	}
 
-	// Handle pool getting tier for the first time
-	if currentTier == 0 && nextTier > 0 {
-		pool, ok := pools.Get(poolPath)
-		if !ok {
-			panic("changeTier: pool not found")
-		}
-		if pool.CurrentStakedLiquidity(currentTime).IsZero() {
-			// Pool is getting tier for first time with zero liquidity
-			// Start tracking unclaimable period from now
-			pool.startUnclaimablePeriod(currentTime)
-		}
-	}
-
 	if nextTier == 0 {
 		// removed from the tier
 		self.membership.Remove(poolPath)

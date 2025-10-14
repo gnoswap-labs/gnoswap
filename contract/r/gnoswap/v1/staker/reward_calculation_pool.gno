@@ -143,8 +143,10 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 	pool := &Pool{
 		poolPath:        poolPath,
 		stakedLiquidity: NewUintTree(),
-		// New pools start with zero liquidity, but we don't track unclaimable period
-		// until emission actually starts (when tier is set and first stake happens)
+		lastUnclaimableTime is initialized to 0, which means "tracking not started yet".
+		// When the pool receives a tier assignment (or external incentive), `cacheReward` will be called,
+		// which will automatically call `startUnclaimablePeriod` if the pool has zero liquidity.
+		// This ensures proper unclaimable period tracking from the moment rewards start emitting.
 		lastUnclaimableTime:           0,
 		unclaimableAcc:                0,
 		rewardCache:                   NewUintTree(),
@@ -155,6 +157,8 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 	}
 
 	pool.globalRewardRatioAccumulation.set(currentTime, u256.Zero())
+
+	// Initialize rewardCache to 0 to ensure `cacheReward` will trigger on first tier assignment
 	pool.rewardCache.set(currentTime, int64(0))
 	pool.stakedLiquidity.set(currentTime, u256.Zero())
 
@@ -245,7 +249,12 @@ func (self *Pool) CurrentReward(currentTime int64) (reward int64) {
 }
 
 // cacheReward sets the current reward for the pool
-// If the pool is in unclaimable period, it will end the unclaimable period,  updates the reward, and start the unclaimable period again.
+// If the pool is in unclaimable period, it will end the unclaimable period, updates the reward, and start the unclaimable period again.
+//
+// Important behavior for initial tier assignment:
+// - When a pool first receives a tier, oldTierReward=0 and currentTierReward>0
+// - If the pool has zero liquidity at this point, startUnclaimablePeriod() is called
+// - This ensures unclaimable period tracking begins from the moment rewards start emitting
 func (self *Pool) cacheReward(currentTime int64, currentTierReward int64) {
 	oldTierReward := self.CurrentReward(currentTime)
 	if oldTierReward == currentTierReward {
@@ -254,12 +263,16 @@ func (self *Pool) cacheReward(currentTime int64, currentTierReward int64) {
 
 	isInUnclaimable := self.CurrentStakedLiquidity(currentTime).IsZero()
 	if isInUnclaimable {
+		// End any existing unclaimable period
+		// Note: If lastUnclaimableTime is 0 (not yet tracking), this is a no-op
 		self.endUnclaimablePeriod(currentTime)
 	}
 
 	self.rewardCache.set(currentTime, currentTierReward)
 
 	if isInUnclaimable {
+		// Start/restart unclaimable period tracking
+		// This handles initial tier assignment when lastUnclaimableTime is 0
 		self.startUnclaimablePeriod(currentTime)
 	}
 }
@@ -534,7 +547,9 @@ func (self *Pool) startUnclaimablePeriod(currentTime int64) {
 // Accumulates to unclaimableAcc and resets lastUnclaimableTime to 0.
 func (self *Pool) endUnclaimablePeriod(currentTime int64) {
 	if self.lastUnclaimableTime == 0 {
-		// This should not happen, but guarding just in case
+		// lastUnclaimableTime = 0 means tracking hasn't started yet
+		// This is normal during initial pool creation or when called from cacheReward
+		// during tier assignment with zero liquidity
 		return
 	}
 
