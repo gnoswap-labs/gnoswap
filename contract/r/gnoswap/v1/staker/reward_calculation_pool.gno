@@ -8,6 +8,8 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v1/common"
 )
 
 var (
@@ -48,12 +50,11 @@ func (self *Pools) Get(poolPath string) (*Pool, bool) {
 	return p, true
 }
 
-// GetOrCreate returns the pool for the given poolPath, or creates a new pool if it does not exist
-func (self *Pools) GetOrCreate(poolPath string) *Pool {
+// GetPoolOrNil returns the pool for the given poolPath, or returns nil if it does not exist
+func (self *Pools) GetPoolOrNil(poolPath string) *Pool {
 	pool, ok := self.Get(poolPath)
 	if !ok {
-		pool = NewPool(poolPath, time.Now().Unix())
-		self.set(poolPath, pool)
+		return nil
 	}
 	return pool
 }
@@ -442,6 +443,11 @@ func (self *RewardState) applyWarmup() {
 
 // rewardPerWarmup calculates the reward for each warmup, adds to the RewardState's rewards array.
 func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSecond int64) error {
+	// Return early if startTime equals endTime to avoid unnecessary computation
+	if startTime == endTime {
+		return nil
+	}
+
 	for i, warmup := range self.deposit.warmups {
 		if startTime >= warmup.NextWarmupTime {
 			// passed the warmup
@@ -487,7 +493,7 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 func (self *Pool) modifyDeposit(delta *i256.Int, currentTime int64, nextTick int32) *u256.Uint {
 	// update staker side pool info
 	lastStakedLiquidity := self.CurrentStakedLiquidity(currentTime)
-	deltaApplied := liquidityMathAddDelta(lastStakedLiquidity, delta)
+	deltaApplied := common.LiquidityMathAddDelta(lastStakedLiquidity, delta)
 	result := self.updateGlobalRewardRatioAccumulation(currentTime, lastStakedLiquidity)
 
 	// historical tick does NOT actually reflect the tick at the timestamp, but it provides correct ordering for the staked positions

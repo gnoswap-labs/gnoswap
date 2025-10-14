@@ -56,6 +56,8 @@ var (
 	TIMESTAMP_90DAYS int64 = 90 * 24 * 60 * 60
 
 	poolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"
+
+	t *testing.T
 )
 
 func main() {
@@ -269,6 +271,7 @@ func performSwapToMovePrice() {
 		println("[WARNING] swap might not have moved price far enough")
 		// Try another swap to move further
 		println("[INFO] perform additional swap")
+
 		rt.ExactInSwapRoute(
 			cross,
 			barPath,
@@ -321,7 +324,10 @@ func performReverseSwap() {
 	reverseSwapAmount := "50000"
 
 	println("[INFO] swap baz for bar to move tick down")
-	_, amountOut := rt.ExactInSwapRoute(
+
+	var amountOut string = "0"
+
+	_, amountOut = rt.ExactInSwapRoute(
 		cross,
 		bazPath,
 		barPath,

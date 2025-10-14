@@ -1,6 +1,7 @@
 package router
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 
@@ -286,7 +287,7 @@ func TestValidateRoutePath(t *testing.T) {
 			inputToken:  "tokenA",
 			outputToken: "tokenB",
 			wantError:   true,
-			errorMsg:    "invalid route path",
+			errorMsg:    "invalid pool path",
 		},
 		{
 			name:        "empty last token",
@@ -294,7 +295,7 @@ func TestValidateRoutePath(t *testing.T) {
 			inputToken:  "tokenA",
 			outputToken: "tokenB",
 			wantError:   true,
-			errorMsg:    "invalid route path",
+			errorMsg:    "invalid pool path",
 		},
 		{
 			name:        "same input and output token",
@@ -315,6 +316,9 @@ func TestValidateRoutePath(t *testing.T) {
 					uassert.True(t, strings.Contains(err.Error(), tt.errorMsg), "error message should contain: "+tt.errorMsg)
 				}
 			} else {
+				if err != nil {
+					t.Errorf("expected no error but got: %s", err.Error())
+				}
 				uassert.Nil(t, err)
 			}
 		})
@@ -440,6 +444,150 @@ func TestValidateRoutePaths(t *testing.T) {
 				}
 			} else {
 				uassert.Nil(t, err)
+			}
+		})
+	}
+}
+
+func TestParsePoolPathsByRoutePathArr(t *testing.T) {
+	tests := []struct {
+		name          string
+		routePathArr  string
+		expected      []string
+		wantError     bool
+		errorContains string
+	}{
+		{
+			name:         "single route single hop",
+			routePathArr: "gno.land/r/demo/wugnot:gno.land/r/demo/usdc:500",
+			expected:     []string{"gno.land/r/demo/usdc:gno.land/r/demo/wugnot:500"}, // alphabetically ordered
+			wantError:    false,
+		},
+		{
+			name:         "single route multi hop",
+			routePathArr: "gno.land/r/demo/wugnot:gno.land/r/demo/gns:3000*POOL*gno.land/r/demo/gns:gno.land/r/demo/usdc:500",
+			expected: []string{
+				"gno.land/r/demo/gns:gno.land/r/demo/wugnot:3000", // alphabetically ordered
+				"gno.land/r/demo/gns:gno.land/r/demo/usdc:500",    // alphabetically ordered
+			},
+			wantError: false,
+		},
+		{
+			name:         "multiple routes single hop each",
+			routePathArr: "gno.land/r/demo/wugnot:gno.land/r/demo/usdc:500,gno.land/r/demo/wugnot:gno.land/r/demo/gns:3000",
+			expected: []string{
+				"gno.land/r/demo/usdc:gno.land/r/demo/wugnot:500", // alphabetically ordered
+				"gno.land/r/demo/gns:gno.land/r/demo/wugnot:3000", // alphabetically ordered
+			},
+			wantError: false,
+		},
+		{
+			name:         "multiple routes with multi hop",
+			routePathArr: "gno.land/r/demo/wugnot:gno.land/r/demo/usdc:500,gno.land/r/demo/wugnot:gno.land/r/demo/gns:3000*POOL*gno.land/r/demo/gns:gno.land/r/demo/usdc:500",
+			expected: []string{
+				"gno.land/r/demo/usdc:gno.land/r/demo/wugnot:500", // first route
+				"gno.land/r/demo/gns:gno.land/r/demo/wugnot:3000", // second route first hop
+				"gno.land/r/demo/gns:gno.land/r/demo/usdc:500",    // second route second hop
+			},
+			wantError: false,
+		},
+		{
+			name:         "three hop route",
+			routePathArr: "tokenA:tokenB:500*POOL*tokenB:tokenC:3000*POOL*tokenC:tokenD:10000",
+			expected: []string{
+				"tokenA:tokenB:500",   // already alphabetically ordered
+				"tokenB:tokenC:3000",  // already alphabetically ordered
+				"tokenC:tokenD:10000", // already alphabetically ordered
+			},
+			wantError: false,
+		},
+		{
+			name:         "tokens need reordering",
+			routePathArr: "tokenZ:tokenA:500,tokenY:tokenB:3000",
+			expected: []string{
+				"tokenA:tokenZ:500",  // reordered alphabetically
+				"tokenB:tokenY:3000", // reordered alphabetically
+			},
+			wantError: false,
+		},
+		{
+			name:         "complex mixed routes",
+			routePathArr: "tokenA:tokenB:500,tokenC:tokenD:3000*POOL*tokenD:tokenE:10000,tokenF:tokenG:100*POOL*tokenG:tokenH:200*POOL*tokenH:tokenI:300",
+			expected: []string{
+				"tokenA:tokenB:500",   // single hop
+				"tokenC:tokenD:3000",  // first hop of second route
+				"tokenD:tokenE:10000", // second hop of second route
+				"tokenF:tokenG:100",   // first hop of third route
+				"tokenG:tokenH:200",   // second hop of third route
+				"tokenH:tokenI:300",   // third hop of third route
+			},
+			wantError: false,
+		},
+		{
+			name:          "invalid route path format - missing fee",
+			routePathArr:  "tokenA:tokenB",
+			expected:      nil,
+			wantError:     true,
+			errorContains: "invalid pool path",
+		},
+		{
+			name:          "invalid route path format - empty token",
+			routePathArr:  ":tokenB:500",
+			expected:      nil,
+			wantError:     true,
+			errorContains: "invalid pool path",
+		},
+		{
+			name:          "invalid route path format - non-numeric fee",
+			routePathArr:  "tokenA:tokenB:invalid",
+			expected:      nil,
+			wantError:     true,
+			errorContains: "invalid fee",
+		},
+		{
+			name:          "empty route path array",
+			routePathArr:  "",
+			expected:      nil,
+			wantError:     true,
+			errorContains: "invalid pool path",
+		},
+		{
+			name:         "same token addresses (edge case)",
+			routePathArr: "tokenA:tokenA:500",
+			expected:     []string{"tokenA:tokenA:500"}, // same token, no reordering needed
+			wantError:    false,
+		},
+		{
+			name:         "real gnoswap token paths",
+			routePathArr: "gno.land/r/demo/wugnot:gno.land/r/onbloc/usdc:500,gno.land/r/demo/wugnot:gno.land/r/onbloc/gns:3000*POOL*gno.land/r/onbloc/gns:gno.land/r/onbloc/usdc:500",
+			expected: []string{
+				"gno.land/r/demo/wugnot:gno.land/r/onbloc/usdc:500", // first route (already ordered)
+				"gno.land/r/demo/wugnot:gno.land/r/onbloc/gns:3000", // second route first hop (already ordered)
+				"gno.land/r/onbloc/gns:gno.land/r/onbloc/usdc:500",  // second route second hop (already ordered)
+			},
+			wantError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := parsePoolPathsByRoutePathArr(tt.routePathArr)
+
+			if tt.wantError {
+				uassert.True(t, err != nil, "expected error but got none")
+				if tt.errorContains != "" {
+					uassert.True(t, strings.Contains(err.Error(), tt.errorContains),
+						"error message should contain: "+tt.errorContains+", but got: "+err.Error())
+				}
+				return
+			}
+
+			uassert.Nil(t, err)
+			uassert.Equal(t, len(result), len(tt.expected))
+
+			for i, expected := range tt.expected {
+				uassert.Equal(t, result[i], expected,
+					"at index %d: expected %s, got %s", strconv.FormatInt(int64(i), 10), expected, result[i])
 			}
 		})
 	}
