@@ -190,6 +190,9 @@ func (p *Pool) positionUpdateWithKey(
 	feeGrowthInside1X128 = feeGrowthInside1X128.NilToZero()
 
 	// if position does not exist, create a new position
+	//
+	// Note: The positionUpdate function is designed to handle both new positions and existing positions,
+	// so there's no need to check for existence in GetPosition.
 	positionToUpdate, _ := p.GetPosition(positionKey)
 	positionAfterUpdate, err := positionUpdate(positionToUpdate, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
 	if err != nil {

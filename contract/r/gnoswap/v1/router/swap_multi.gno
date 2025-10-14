@@ -230,15 +230,21 @@ func (p *MultiSwapProcessor) executeCollectedSwaps(swapInfo []SingleSwapParams, 
 
 // multiSwap performs a multi-hop swap in forward direction.
 func multiSwap(p SwapParams, numPools int, swapPath string) (*u256.Uint, *u256.Uint) {
-	result, output, _ := NewMultiSwapProcessor(false, Forward).
+	result, output, err := NewMultiSwapProcessor(false, Forward).
 		processForwardSwap(p, numPools, swapPath)
+	if err != nil {
+		panic(err)
+	}
 	return result, output
 }
 
 // multiSwapNegative performs a multi-hop swap in backward direction.
 func multiSwapNegative(p SwapParams, numPools int, swapPath string) (*u256.Uint, *u256.Uint) {
-	result, output, _ := NewMultiSwapProcessor(false, Backward).
+	result, output, err := NewMultiSwapProcessor(false, Backward).
 		processBackwardSwap(p, numPools, swapPath)
+	if err != nil {
+		panic(err)
+	}
 	return result, output
 }
 
