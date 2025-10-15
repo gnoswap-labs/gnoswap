@@ -21,6 +21,7 @@ const (
 // contract paths
 const (
 	GOV_XGNS_PATH string = "gno.land/r/gnoswap/v1/gov/xgns"
+	GNS_PATH      string = "gno.land/r/gnoswap/gns"
 )
 
 var projectTierDurations = []int64{
