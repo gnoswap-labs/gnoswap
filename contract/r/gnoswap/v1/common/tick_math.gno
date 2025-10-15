@@ -83,6 +83,14 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 	assertValidTickRange(tick)
 	absTick := abs(tick)
 
+	// Validate critical constants are initialized
+	if ratio0 == nil || ratio1 == nil {
+		panic(newErrorWithDetail(
+			errInvalidInput,
+			"ratio constants are not initialized",
+		))
+	}
+
 	// Initialize ratio based on LSB - exactly like Uniswap V3
 	var ratio *u256.Uint
 
@@ -98,7 +106,17 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 	for i := 1; i < 20; i++ {
 		if absTick&(1<<uint(i)) != 0 {
 			// Use temporary variables to avoid memory allocation in hot path
-			temp = temp.Mul(ratio, ratioConstants[i-1])
+			r := ratioConstants[i-1]
+			if r == nil {
+				panic(newErrorWithDetail(
+					errInvalidInput,
+					"ratio constants are not initialized",
+				))
+			}
+			temp, overflow := temp.MulOverflow(ratio, r)
+			if overflow {
+				panic(errOverFlow)
+			}
 			ratio = ratio.Rsh(temp, 128)
 		}
 	}
@@ -170,6 +188,13 @@ func getMostSignificantBit(r *u256.Uint) (msb uint64) {
 
 // TickMathGetTickAtSqrtRatio calculates tick value for given sqrt price ratio, returning greatest tick where getSqrtRatioAtTick(tick) <= ratio, matching Uniswap V3 exactly.
 func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
+	if sqrtPriceX96 == nil {
+		panic(newErrorWithDetail(
+			errInvalidInput,
+			"sqrtPriceX96 cannot be nil",
+		))
+	}
+
 	if sqrtPriceX96.Lt(minSqrtRatio) || sqrtPriceX96.Gte(maxSqrtRatio) {
 		panic(newErrorWithDetail(
 			errOutOfRange,
@@ -203,7 +228,10 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 
 	// Optimized iterative calculation using loop - maintains exact same logic
 	for i := 0; i < 14; i++ {
-		tempR = tempR.Mul(r, r)
+		tempR, overflow := tempR.MulOverflow(r, r)
+		if overflow {
+			panic(errOverFlow)
+		}
 		r = u256.Zero().Rsh(tempR, 127)
 
 		tempF = tempF.Rsh(r, 128)
@@ -216,7 +244,10 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	}
 
 	// Calculate tick from log_sqrt10001
-	logSqrt10001 := i256.Zero().Mul(log2, log2Multiplier)
+	logSqrt10001, overflow := i256.Zero().MulOverflow(log2, log2Multiplier)
+	if overflow {
+		panic(errOverFlow)
+	}
 
 	// Calculate tick bounds
 	tickLow := i256.Zero().Sub(logSqrt10001, tickLowOffset)

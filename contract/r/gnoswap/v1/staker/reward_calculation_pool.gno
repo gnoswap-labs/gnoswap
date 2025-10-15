@@ -8,13 +8,13 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v1/common"
 )
 
 var (
 	// Q128 is 2^128
 	q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")
-	// Q192 is 2^192
-	q192 = u256.MustFromDecimal("6277101735386680763835789423207666416102355444464034512896")
 
 	// pools is the global pool storage
 	pools *Pools
@@ -48,12 +48,11 @@ func (self *Pools) Get(poolPath string) (*Pool, bool) {
 	return p, true
 }
 
-// GetOrCreate returns the pool for the given poolPath, or creates a new pool if it does not exist
-func (self *Pools) GetOrCreate(poolPath string) *Pool {
+// GetPoolOrNil returns the pool for the given poolPath, or returns nil if it does not exist
+func (self *Pools) GetPoolOrNil(poolPath string) *Pool {
 	pool, ok := self.Get(poolPath)
 	if !ok {
-		pool = NewPool(poolPath, time.Now().Unix())
-		self.set(poolPath, pool)
+		return nil
 	}
 	return pool
 }
@@ -142,8 +141,10 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 	pool := &Pool{
 		poolPath:        poolPath,
 		stakedLiquidity: NewUintTree(),
-		// New pools start with zero liquidity, but we don't track unclaimable period
-		// until emission actually starts (when tier is set and first stake happens)
+		// lastUnclaimableTime is initialized to 0, which means "tracking not started yet".
+		// When the pool receives a tier assignment (or external incentive), `cacheReward` will be called,
+		// which will automatically call `startUnclaimablePeriod` if the pool has zero liquidity.
+		// This ensures proper unclaimable period tracking from the moment rewards start emitting.
 		lastUnclaimableTime:           0,
 		unclaimableAcc:                0,
 		rewardCache:                   NewUintTree(),
@@ -154,6 +155,8 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 	}
 
 	pool.globalRewardRatioAccumulation.set(currentTime, u256.Zero())
+
+	// Initialize rewardCache to 0 to ensure `cacheReward` will trigger on first tier assignment
 	pool.rewardCache.set(currentTime, int64(0))
 	pool.stakedLiquidity.set(currentTime, u256.Zero())
 
@@ -244,7 +247,12 @@ func (self *Pool) CurrentReward(currentTime int64) (reward int64) {
 }
 
 // cacheReward sets the current reward for the pool
-// If the pool is in unclaimable period, it will end the unclaimable period,  updates the reward, and start the unclaimable period again.
+// If the pool is in unclaimable period, it will end the unclaimable period, updates the reward, and start the unclaimable period again.
+//
+// Important behavior for initial tier assignment:
+// - When a pool first receives a tier, oldTierReward=0 and currentTierReward>0
+// - If the pool has zero liquidity at this point, startUnclaimablePeriod() is called
+// - This ensures unclaimable period tracking begins from the moment rewards start emitting
 func (self *Pool) cacheReward(currentTime int64, currentTierReward int64) {
 	oldTierReward := self.CurrentReward(currentTime)
 	if oldTierReward == currentTierReward {
@@ -253,12 +261,16 @@ func (self *Pool) cacheReward(currentTime int64, currentTierReward int64) {
 
 	isInUnclaimable := self.CurrentStakedLiquidity(currentTime).IsZero()
 	if isInUnclaimable {
+		// End any existing unclaimable period
+		// Note: If lastUnclaimableTime is 0 (not yet tracking), this is a no-op
 		self.endUnclaimablePeriod(currentTime)
 	}
 
 	self.rewardCache.set(currentTime, currentTierReward)
 
 	if isInUnclaimable {
+		// Start/restart unclaimable period tracking
+		// This handles initial tier assignment when lastUnclaimableTime is 0
 		self.startUnclaimablePeriod(currentTime)
 	}
 }
@@ -442,6 +454,11 @@ func (self *RewardState) applyWarmup() {
 
 // rewardPerWarmup calculates the reward for each warmup, adds to the RewardState's rewards array.
 func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSecond int64) error {
+	// Return early if startTime equals endTime to avoid unnecessary computation
+	if startTime == endTime {
+		return nil
+	}
+
 	for i, warmup := range self.deposit.warmups {
 		if startTime >= warmup.NextWarmupTime {
 			// passed the warmup
@@ -487,7 +504,7 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 func (self *Pool) modifyDeposit(delta *i256.Int, currentTime int64, nextTick int32) *u256.Uint {
 	// update staker side pool info
 	lastStakedLiquidity := self.CurrentStakedLiquidity(currentTime)
-	deltaApplied := liquidityMathAddDelta(lastStakedLiquidity, delta)
+	deltaApplied := common.LiquidityMathAddDelta(lastStakedLiquidity, delta)
 	result := self.updateGlobalRewardRatioAccumulation(currentTime, lastStakedLiquidity)
 
 	// historical tick does NOT actually reflect the tick at the timestamp, but it provides correct ordering for the staked positions
@@ -528,7 +545,9 @@ func (self *Pool) startUnclaimablePeriod(currentTime int64) {
 // Accumulates to unclaimableAcc and resets lastUnclaimableTime to 0.
 func (self *Pool) endUnclaimablePeriod(currentTime int64) {
 	if self.lastUnclaimableTime == 0 {
-		// This should not happen, but guarding just in case
+		// lastUnclaimableTime = 0 means tracking hasn't started yet
+		// This is normal during initial pool creation or when called from cacheReward
+		// during tier assignment with zero liquidity
 		return
 	}
 

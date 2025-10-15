@@ -252,8 +252,11 @@ const (
 // init initializes the staker contract with tier 1 pool.
 func init() {
 	// Initialize tier 1 with GNOT:GNS 0.3% pool
-
-	pools.GetOrCreate(MUST_EXISTS_IN_TIER_1)
+	pl := pools.GetPoolOrNil(MUST_EXISTS_IN_TIER_1)
+	if pl == nil {
+		pl = NewPool(MUST_EXISTS_IN_TIER_1, time.Now().Unix())
+		pools.set(MUST_EXISTS_IN_TIER_1, pl)
+	}
 
 	poolTier = NewPoolTier(
 		pools,

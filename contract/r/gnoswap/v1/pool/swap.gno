@@ -209,17 +209,17 @@ func Swap(
 		// receive token0 from swap callback
 		// send token1 to recipient (output)
 		if result.Amount1.IsNeg() {
-			pool.safeSwapCallback(token0Path, result.Amount0, zeroForOne, swapCallback)
+			pool.safeSwapCallback(token0Path, result.Amount0.Abs(), zeroForOne, swapCallback)
 
-			pool.safeTransfer(recipient, token1Path, result.Amount1, false)
+			pool.safeTransfer(recipient, token1Path, result.Amount1.Abs(), false)
 		}
 	} else {
 		// receive token1 from swap callback
 		// send token0 to recipient (output)
 		if result.Amount0.IsNeg() {
-			pool.safeSwapCallback(token1Path, result.Amount1, zeroForOne, swapCallback)
+			pool.safeSwapCallback(token1Path, result.Amount1.Abs(), zeroForOne, swapCallback)
 
-			pool.safeTransfer(recipient, token0Path, result.Amount0, true)
+			pool.safeTransfer(recipient, token0Path, result.Amount0.Abs(), true)
 		}
 	}
 
@@ -602,14 +602,27 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) (Swa
 	var (
 		amountSpecifiedRemaining *i256.Int
 		amountCalculated         *i256.Int
+		overflow                 bool
 	)
 
 	if exactInput {
-		amountSpecifiedRemaining = i256.Zero().Sub(state.amountSpecifiedRemaining, amountInWithFee)
-		amountCalculated = i256.Zero().Sub(state.amountCalculated, i256.FromUint256(step.amountOut))
+		amountSpecifiedRemaining, overflow = i256.Zero().SubOverflow(state.amountSpecifiedRemaining, amountInWithFee)
+		if overflow {
+			return state, errUnderflow
+		}
+		amountCalculated, overflow = i256.Zero().SubOverflow(state.amountCalculated, i256.FromUint256(step.amountOut))
+		if overflow {
+			return state, errUnderflow
+		}
 	} else {
-		amountSpecifiedRemaining = i256.Zero().Add(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
-		amountCalculated = i256.Zero().Add(state.amountCalculated, amountInWithFee)
+		amountSpecifiedRemaining, overflow = i256.Zero().AddOverflow(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
+		if overflow {
+			return state, errOverFlow
+		}
+		amountCalculated, overflow = i256.Zero().AddOverflow(state.amountCalculated, amountInWithFee)
+		if overflow {
+			return state, errOverFlow
+		}
 	}
 
 	// If an overflowed value is stored in state, it may cause problems in the next step
@@ -650,7 +663,7 @@ func tickTransition(step StepComputations, zeroForOne bool, state SwapState, poo
 			liquidityNet = i256.Zero().Neg(liquidityNet)
 		}
 
-		newState.liquidity = liquidityMathAddDelta(state.liquidity, liquidityNet)
+		newState.liquidity = common.LiquidityMathAddDelta(state.liquidity, liquidityNet)
 
 		if tickCrossHook != nil {
 			currentTime := time.Now().Unix()

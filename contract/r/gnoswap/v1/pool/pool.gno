@@ -114,7 +114,7 @@ func Burn(
 	tickUpper int32,
 	liquidityAmount string, // uint128
 	positionCaller address,
-) (string, string) { // uint256 x2
+) (string, string) {
 	halt.AssertIsNotHaltedPoolWithVersion(1)
 
 	caller := runtime.PreviousRealm().Address()
@@ -238,8 +238,18 @@ func Collect(
 		common.SafeGRC20Approve(cross, pool.token0Path, positionAddr, safeConvertToInt64(amount0))
 	}
 	if amount1.Gt(u256.Zero()) {
-		position.tokensOwed1 = u256.Zero().Sub(position.tokensOwed1, amount1)
-		pool.balances.token1 = u256.Zero().Sub(pool.balances.token1, amount1)
+		tokenOwed1, overflow := u256.Zero().SubOverflow(position.tokensOwed1, amount1)
+		if overflow {
+			panic(errOverFlow)
+		}
+
+		token1Balance, overflow := u256.Zero().SubOverflow(pool.balances.token1, amount1)
+		if overflow {
+			panic(errOverFlow)
+		}
+
+		position.tokensOwed1 = tokenOwed1
+		pool.balances.token1 = token1Balance
 		common.SafeGRC20Approve(cross, pool.token1Path, positionAddr, safeConvertToInt64(amount1))
 	}
 
@@ -352,8 +362,17 @@ func collectProtocol(
 // saveProtocolFees updates the protocol fee balances after collection.
 // Returns amount0, amount1 representing the fees deducted from protocol reserves.
 func (p *Pool) saveProtocolFees(amount0, amount1 *u256.Uint) (*u256.Uint, *u256.Uint) {
-	p.protocolFees.token0 = u256.Zero().Sub(p.ProtocolFeesToken0(), amount0)
-	p.protocolFees.token1 = u256.Zero().Sub(p.ProtocolFeesToken1(), amount1)
+	token0Fees, underflow := u256.Zero().SubOverflow(p.ProtocolFeesToken0(), amount0)
+	if underflow {
+		panic(errOverFlow)
+	}
+	p.protocolFees.token0 = token0Fees
+
+	token1Fees, underflow := u256.Zero().SubOverflow(p.ProtocolFeesToken1(), amount1)
+	if underflow {
+		panic(errOverFlow)
+	}
+	p.protocolFees.token1 = token1Fees
 
 	return amount0, amount1
 }

@@ -45,10 +45,16 @@ func GetClaimableRewardByRewardID(rewardID string) string {
 	}(cross)
 
 	emissionDistributedAmount := emission.GetAccuDistributedToGovStaker()
-	emissionReward, _ := emissionRewardManager.GetClaimableRewardAmount(emissionDistributedAmount, rewardID, time.Now().Unix())
+	emissionReward, err := emissionRewardManager.GetClaimableRewardAmount(emissionDistributedAmount, rewardID, time.Now().Unix())
+	if err != nil {
+		panic(err)
+	}
 
 	protocolFeeDistributedAmounts := getDistributedProtocolFees()
-	protocolFeeRewards, _ := protocolFeeRewardManager.GetClaimableRewardAmounts(protocolFeeDistributedAmounts, rewardID, time.Now().Unix())
+	protocolFeeRewards, err := protocolFeeRewardManager.GetClaimableRewardAmounts(protocolFeeDistributedAmounts, rewardID, time.Now().Unix())
+	if err != nil {
+		panic(err)
+	}
 
 	if emissionReward == 0 && len(protocolFeeRewards) == 0 {
 		return ""
