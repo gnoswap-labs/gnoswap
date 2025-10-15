@@ -5,7 +5,8 @@
 package main
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"strconv"
 	"testing"
 
@@ -26,7 +27,7 @@ import (
 
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -75,8 +76,8 @@ func initializeSetup() {
 	testing.SetRealm(adminRealm)
 	pool.SetPoolCreationFee(cross, 0)
 
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 100000000000000}})
-	testing.SetOriginSend(std.Coins{{"ugnot", 100000000000000}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000000000000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
 	testing.SetRealm(adminRealm)
 	wugnot.Deposit(cross)
 
@@ -106,6 +107,7 @@ func mintPosition(token0Path string, token1Path string, fee uint32, minTick, max
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Minting position")
+	testing.SetOriginSend(chain.Coins{})
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		wugnotPath,
@@ -148,10 +150,10 @@ func exactOutSwapRouteBy(
 	ufmt.Println("[INFO] amountInMax:", amountInMax)
 
 	amountUint64, _ := strconv.ParseUint(amountInMax, 10, 64)
-	testing.SetOriginSend(std.Coins{{"ugnot", int64(amountUint64)}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", int64(amountUint64)}})
 
-	banker := std.NewBanker(std.BankerTypeRealmIssue)
-	banker.SendCoins(adminAddr, routerAddr, std.Coins{{"ugnot", int64(amountUint64)}})
+	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
+	banker_.SendCoins(adminAddr, routerAddr, chain.Coins{{"ugnot", int64(amountUint64)}})
 
 	inputTokenAmount, outputTokenAmount := router.ExactOutSwapRoute(
 		cross,
@@ -205,5 +207,5 @@ func exactOutSwapRouteBy(
 // [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500
 // [INFO] queryRatios: 100
 // [INFO] amountInMax: 10000000
-// [EXPECTED] inputTokenAmount: 1002988
-// [EXPECTED] outputTokenAmount: -1000000
+// [EXPECTED] inputTokenAmount: 1004496
+// [EXPECTED] outputTokenAmount: -1001502

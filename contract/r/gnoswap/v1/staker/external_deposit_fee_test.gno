@@ -1,7 +1,6 @@
 package staker
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/nt/testutils"
@@ -13,21 +12,21 @@ import (
 )
 
 // Helper functions
-func getAdminAddress(t *testing.T) std.Address {
+func getAdminAddress(t *testing.T) address {
 	t.Helper()
 	return adminAddr
 }
 
-func getGovernanceAddress(t *testing.T) std.Address {
+func getGovernanceAddress(t *testing.T) address {
 	t.Helper()
 	addr, _ := access.GetAddress(prbac.ROLE_GOVERNANCE.String())
 	return addr
 }
 
-func setupPermission(t *testing.T, caller std.Address) {
+func setupPermission(t *testing.T, caller address) {
 	t.Helper()
 	testing.SetOriginCaller(caller)
-	testing.SetRealm(std.NewUserRealm(caller))
+	testing.SetRealm(testing.NewUserRealm(caller))
 }
 
 // Common test error messages
@@ -109,7 +108,7 @@ func TestSetMinimumRewardAmount(t *testing.T) {
 // Common test structure for permission-based functions
 type permissionTest struct {
 	name           string
-	caller         std.Address
+	caller         address
 	inputAmount    int64
 	expectedAmount int64
 	shouldAbort    bool

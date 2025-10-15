@@ -1,7 +1,7 @@
 package launchpad
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 	"time"
 
@@ -25,7 +25,7 @@ func TestDepositGnsPrivate(t *testing.T) {
 		projectID            string
 		tierDuration         int64
 		depositAmount        int64
-		callerAddress        std.Address
+		callerAddress        address
 		expectedHasError     bool
 		expectedErrorMessage string
 	}{
@@ -73,8 +73,8 @@ func TestStakeGovernance(t *testing.T) {
 		name                 string
 		projectID            string
 		depositAmount        int64
-		callerAddress        std.Address
-		userAddress          std.Address
+		callerAddress        address
+		userAddress          address
 		expectedError        bool
 		expectedHasAbort     bool
 		expectedAbortMessage string
@@ -154,7 +154,7 @@ func initLaunchpadDepositTest(t *testing.T) {
 	projectTierRewardManagers = avl.NewTree()
 
 	currentTime := time.Now().Unix()
-	currentHeight := std.ChainHeight()
+	currentHeight := runtime.ChainHeight()
 
 	// Setup test project
 	project, _ := createProject(
@@ -165,7 +165,7 @@ func initLaunchpadDepositTest(t *testing.T) {
 			tier30Ratio:   30,
 			tier90Ratio:   30,
 			tier180Ratio:  40,
-			recipient:     testutils.TestAddress("project"), // TODO: change to real address
+			recipient:     testutils.TestAddress("project"),
 			startTime:     currentTime + 10,
 			currentTime:   currentTime,
 			currentHeight: currentHeight,

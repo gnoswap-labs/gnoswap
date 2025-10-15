@@ -1,7 +1,8 @@
 package staker
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 	"time"
 
 	"gno.land/r/gnoswap/access"
@@ -26,10 +27,10 @@ import (
 //
 // Note: This operation is irreversible and will permanently remove historical data
 func CleanStakerDelegationSnapshotByAdmin(cur realm, threshold int64) {
-	halt.AssertIsNotHaltedGovStaker()
+	halt.AssertIsNotHaltedGovStakerWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	// Calculate cutoff time by subtracting threshold from current time
 	cutoffTimestamp := time.Now().Unix() - threshold
@@ -61,10 +62,10 @@ func CleanStakerDelegationSnapshotByAdmin(cur realm, threshold int64) {
 //
 // Note: This change affects all future undelegation operations
 func SetUnDelegationLockupPeriodByAdmin(cur realm, period int64) {
-	halt.AssertIsNotHaltedGovStaker()
+	halt.AssertIsNotHaltedGovStakerWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	if period < 0 {
 		panic("period must be greater than 0")
@@ -72,8 +73,8 @@ func SetUnDelegationLockupPeriodByAdmin(cur realm, period int64) {
 
 	setUnDelegationLockupPeriod(period)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"SetUnDelegationLockupPeriod",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),

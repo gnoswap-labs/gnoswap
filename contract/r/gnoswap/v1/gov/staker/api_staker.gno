@@ -1,11 +1,11 @@
 package staker
 
 import (
-	"std"
+	"chain/runtime"
 	"time"
 
-	"gno.land/p/onbloc/json"
 	"gno.land/p/nt/ufmt"
+	"gno.land/p/onbloc/json"
 
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/v1/protocol_fee"
@@ -28,12 +28,12 @@ func GetLockedAmount() int64 {
 }
 
 // GetClaimableRewardByAddress returns claimable reward for address.
-func GetClaimableRewardByAddress(addr std.Address) string {
+func GetClaimableRewardByAddress(addr address) string {
 	return GetClaimableRewardByRewardID(addr.String())
 }
 
 // GetClaimableRewardByLaunchpad returns claimable reward for launchpad.
-func GetClaimableRewardByLaunchpad(addr std.Address) string {
+func GetClaimableRewardByLaunchpad(addr address) string {
 	return GetClaimableRewardByRewardID(makeLaunchpadRewardID(addr.String()))
 }
 
@@ -45,17 +45,23 @@ func GetClaimableRewardByRewardID(rewardID string) string {
 	}(cross)
 
 	emissionDistributedAmount := emission.GetAccuDistributedToGovStaker()
-	emissionReward, _ := emissionRewardManager.GetClaimableRewardAmount(emissionDistributedAmount, rewardID, time.Now().Unix())
+	emissionReward, err := emissionRewardManager.GetClaimableRewardAmount(emissionDistributedAmount, rewardID, time.Now().Unix())
+	if err != nil {
+		panic(err)
+	}
 
 	protocolFeeDistributedAmounts := getDistributedProtocolFees()
-	protocolFeeRewards, _ := protocolFeeRewardManager.GetClaimableRewardAmounts(protocolFeeDistributedAmounts, rewardID, time.Now().Unix())
+	protocolFeeRewards, err := protocolFeeRewardManager.GetClaimableRewardAmounts(protocolFeeDistributedAmounts, rewardID, time.Now().Unix())
+	if err != nil {
+		panic(err)
+	}
 
 	if emissionReward == 0 && len(protocolFeeRewards) == 0 {
 		return ""
 	}
 
 	data := json.Builder().
-		WriteString("height", formatInt(std.ChainHeight())).
+		WriteString("height", formatInt(runtime.ChainHeight())).
 		WriteString("now", formatInt(time.Now().Unix())).
 		WriteString("emissionReward", formatInt(emissionReward)).
 		Node()

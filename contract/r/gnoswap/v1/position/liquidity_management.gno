@@ -1,24 +1,22 @@
 package position
 
 import (
-	"std"
-
-	"gno.land/p/nt/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
 type AddLiquidityParams struct {
-	poolKey        string      // poolPath of the pool which has the position
-	tickLower      int32       // lower end of the tick range for the position
-	tickUpper      int32       // upper end of the tick range for the position
-	amount0Desired *u256.Uint  // desired amount of token0 to be minted
-	amount1Desired *u256.Uint  // desired amount of token1 to be minted
-	amount0Min     *u256.Uint  // minimum amount of token0 to be minted
-	amount1Min     *u256.Uint  // minimum amount of token1 to be minted
-	caller         std.Address // address to call the function
+	poolKey        string     // poolPath of the pool which has the position
+	tickLower      int32      // lower end of the tick range for the position
+	tickUpper      int32      // upper end of the tick range for the position
+	amount0Desired *u256.Uint // desired amount of token0 to be minted
+	amount1Desired *u256.Uint // desired amount of token1 to be minted
+	amount0Min     *u256.Uint // minimum amount of token0 to be minted
+	amount1Min     *u256.Uint // minimum amount of token1 to be minted
+	caller         address    // address to call the function
 }
 
 // addLiquidity calculates liquidity amounts and mints position tokens to a pool.
@@ -41,7 +39,6 @@ func addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint
 		token0,
 		token1,
 		fee,
-		positionAddr,
 		params.tickLower,
 		params.tickUpper,
 		liquidity.ToString(),

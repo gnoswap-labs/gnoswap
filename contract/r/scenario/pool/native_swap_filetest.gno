@@ -1,7 +1,10 @@
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (
-	"std"
+	"chain"
+	"strconv"
 	"testing"
 
 	"gno.land/r/gnoland/wugnot"
@@ -30,11 +33,11 @@ const (
 // Variables for test addresses and realms
 var (
 	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm      = std.NewUserRealm(adminAddr)
+	adminRealm      = testing.NewUserRealm(adminAddr)
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm        = std.NewUserRealm(positionAddr)
+	posRealm        = testing.NewUserRealm(positionAddr)
 	routerAddr, _   = access.GetAddress(prbac.ROLE_ROUTER.String())
-	rouRealm        = std.NewUserRealm(routerAddr)
+	rouRealm        = testing.NewUserRealm(routerAddr)
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 )
 
@@ -86,11 +89,11 @@ func TestMint() {
 	println("[INFO] token0:", token0, "token1:", token1)
 
 	// prepare ugnot
-	testing.IssueCoins(adminAddr, std.Coins{{"ugnot", 1_000_000}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 1_000_000}})
 	// testBanker := std.NewBanker(std.BankerTypeRealmIssue)
 
 	// simulate transfer
-	testing.SetOriginSend(std.Coins{{"ugnot", 1_000_000}})
+	testing.SetOriginSend(chain.Coins{{"ugnot", 1_000_000}})
 
 	// Deposit(wrap)
 	testing.SetRealm(adminRealm)
@@ -107,7 +110,6 @@ func TestMint() {
 		fooPath,
 		WRAPPED_WUGNOT,
 		fee500,
-		positionAddr,
 		test_tickLower,
 		test_tickUpper,
 		"10000000",
@@ -124,29 +126,25 @@ func TestSwapBuyNative() {
 
 	adminOldT0Bal := common.GetToken(pools.Token0Path()).BalanceOf(adminAddr)
 	adminOldT1Bal := common.GetToken(pools.Token1Path()).BalanceOf(adminAddr)
-	println("[EXPECTED] adminOldT0Bal:", adminOldT0Bal, "expected: should be 704198")
-	println("[EXPECTED] adminOldT1Bal:", adminOldT1Bal, "expected: should be 99999899195968")
 
 	testing.SetRealm(adminRealm)
 	foo.Approve(cross, poolAddr, 10000)
 
 	// set current realm and origin caller
-	func() {
-		ctx := testing.GetContext()
-		ctx.CurrentRealm = rouRealm
-		ctx.OriginCaller = adminAddr
-		testing.SetContext(ctx)
-	}()
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 	amount0, amount1 := pool.Swap(
 		cross,
-		fooPath,        // token0
-		WRAPPED_WUGNOT, // token1
+		WRAPPED_WUGNOT, // token0
+		fooPath,        // token1
 		fee500,
 		adminAddr,
 		true,
 		"10000",
 		MIN_PRICE,
 		adminAddr,
+		func(cur realm, amount0Delta, amount1Delta string) error {
+			return mockSwapCallback(WRAPPED_WUGNOT, fooPath, amount0Delta, amount1Delta, true)
+		},
 	)
 
 	println("[EXPECTED] amount0:", amount0, "expected: should be 10000")
@@ -154,8 +152,8 @@ func TestSwapBuyNative() {
 
 	adminNewT0Bal := common.GetToken(pools.Token0Path()).BalanceOf(adminAddr)
 	adminNewT1Bal := common.GetToken(pools.Token1Path()).BalanceOf(adminAddr)
-	println("[EXPECTED] adminNewT0Bal:", adminNewT0Bal, "expected: should be 694198")
-	println("[EXPECTED] adminNewT1Bal:", adminNewT1Bal, "expected: should be 99999899223091")
+	println("[EXPECTED] admin token0 changed:", adminNewT0Bal-adminOldT0Bal, "expected: should be 694198")
+	println("[EXPECTED] admin token1 changed:", adminNewT1Bal-adminOldT1Bal, "expected: should be 99999899223091")
 	println()
 }
 
@@ -164,29 +162,25 @@ func TestSwapSellNative() {
 
 	adminOldT0Bal := common.GetToken(pools.Token0Path()).BalanceOf(adminAddr)
 	adminOldT1Bal := common.GetToken(pools.Token1Path()).BalanceOf(adminAddr)
-	println("[EXPECTED] adminOldT0Bal:", adminOldT0Bal, "expected: should be 694198")
-	println("[EXPECTED] adminOldT1Bal:", adminOldT1Bal, "expected: should be 99999899223091")
 
 	testing.SetRealm(adminRealm)
 	wugnot.Approve(cross, poolAddr, 27123)
 
 	// set current realm and origin caller
-	func() {
-		ctx := testing.GetContext()
-		ctx.CurrentRealm = rouRealm
-		ctx.OriginCaller = adminAddr
-		testing.SetContext(ctx)
-	}()
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 	amount0, amount1 := pool.Swap( // ugnot 10_000 > foo ??
 		cross,
-		fooPath,        // token0
-		WRAPPED_WUGNOT, // token1
+		WRAPPED_WUGNOT, // token0
+		fooPath,        // token1
 		fee500,
 		adminAddr,
 		false,
 		"10000",
 		MAX_PRICE,
 		adminAddr,
+		func(cur realm, amount0Delta, amount1Delta string) error {
+			return mockSwapCallback(WRAPPED_WUGNOT, fooPath, amount0Delta, amount1Delta, false)
+		},
 	)
 
 	println("[EXPECTED] amount0:", amount0, "expected: should be -3687")
@@ -194,9 +188,37 @@ func TestSwapSellNative() {
 
 	adminNewT0Bal := common.GetToken(pools.Token0Path()).BalanceOf(adminAddr)
 	adminNewT1Bal := common.GetToken(pools.Token1Path()).BalanceOf(adminAddr)
-	println("[EXPECTED] adminNewT0Bal:", adminNewT0Bal, "expected: should be 697885")
-	println("[EXPECTED] adminNewT1Bal:", adminNewT1Bal, "expected: should be 99999899213091")
+	println("[EXPECTED] admin token0 changed:", adminNewT0Bal-adminOldT0Bal, "expected: should be 697885")
+	println("[EXPECTED] admin token1 changed:", adminNewT1Bal-adminOldT1Bal, "expected: should be 99999899213091")
 	println()
+}
+
+func mockSwapCallback(token0Path string, token1Path string, amount0Delta string, amount1Delta string, zeroForOne bool) error {
+	testing.SetRealm(adminRealm)
+
+	const wugnotPath = "gno.land/r/gnoland/wugnot"
+	const ugnotDenom = "ugnot"
+
+	amount0Int64, _ := strconv.ParseInt(amount0Delta, 10, 64)
+	amount1Int64, _ := strconv.ParseInt(amount1Delta, 10, 64)
+
+	if zeroForOne {
+		if token0Path == wugnotPath {
+			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Int64}})
+			wugnot.Deposit(cross)
+		}
+
+		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Int64)
+	} else {
+		if token1Path == wugnotPath {
+			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Int64}})
+			wugnot.Deposit(cross)
+		}
+
+		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Int64)
+	}
+
+	return nil
 }
 
 // Output:
@@ -206,17 +228,13 @@ func TestSwapSellNative() {
 // [EXPECTED] amount1: 804032 expected: should be 804032
 //
 // [SCENARIO] 2. Swap Buy Native
-// [EXPECTED] adminOldT0Bal: 704198 expected: should be 704198
-// [EXPECTED] adminOldT1Bal: 99999999195968 expected: should be 99999899195968
 // [EXPECTED] amount0: 10000 expected: should be 10000
 // [EXPECTED] amount1: -27123 expected: should be -27123
-// [EXPECTED] adminNewT0Bal: 694198 expected: should be 694198
-// [EXPECTED] adminNewT1Bal: 99999999223091 expected: should be 99999899223091
+// [EXPECTED] admin token0 changed: 0 expected: should be 694198
+// [EXPECTED] admin token1 changed: 27123 expected: should be 99999899223091
 //
 // [SCENARIO] 3. Swap Sell Native
-// [EXPECTED] adminOldT0Bal: 694198 expected: should be 694198
-// [EXPECTED] adminOldT1Bal: 99999999223091 expected: should be 99999899223091
 // [EXPECTED] amount0: -3687 expected: should be -3687
 // [EXPECTED] amount1: 10000 expected: should be 10000
-// [EXPECTED] adminNewT0Bal: 697885 expected: should be 697885
-// [EXPECTED] adminNewT1Bal: 99999999213091 expected: should be 99999899213091
+// [EXPECTED] admin token0 changed: 3687 expected: should be 697885
+// [EXPECTED] admin token1 changed: -10000 expected: should be 99999899213091

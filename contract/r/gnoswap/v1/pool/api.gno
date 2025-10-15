@@ -1,13 +1,14 @@
 package pool
 
 import (
+	"chain/runtime"
 	b64 "encoding/base64"
 	"strconv"
 	"strings"
-
-	"gno.land/p/onbloc/json"
+	"time"
 
 	"gno.land/p/nt/ufmt"
+	"gno.land/p/onbloc/json"
 )
 
 func ApiGetPool(poolPath string) string {
@@ -23,8 +24,59 @@ func ApiGetPool(poolPath string) string {
 	return marshal(node)
 }
 
+// ApiGetTWAP returns the time-weighted average price for a pool over a specified period
+//
+// Parameters:
+//   - poolPath: The path of the pool (e.g., "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+//   - secondsAgo: Number of seconds ago to calculate TWAP from
+//
+// Returns JSON string with TWAP data or error
+func ApiGetTWAP(poolPath string, secondsAgo uint32) string {
+	currentTime := time.Now().Unix()
+	currentHeight := runtime.ChainHeight()
+
+	poolI, exist := pools.Get(poolPath)
+	if !exist {
+		return json.ObjectNode("", map[string]*json.Node{
+			"stat": json.ObjectNode("", map[string]*json.Node{
+				"height":    json.StringNode("height", strconv.Itoa(int(currentHeight))),
+				"timestamp": json.StringNode("timestamp", strconv.FormatInt(currentTime, 10)),
+			}),
+			"error": json.StringNode("error", "pool not found"),
+		}).String()
+	}
+
+	pool := poolI.(*Pool)
+
+	twapTick, err := pool.GetTWAP(secondsAgo)
+	if err != nil {
+		return json.ObjectNode("", map[string]*json.Node{
+			"stat": json.ObjectNode("", map[string]*json.Node{
+				"height":    json.StringNode("height", strconv.Itoa(int(currentHeight))),
+				"timestamp": json.StringNode("timestamp", strconv.FormatInt(currentTime, 10)),
+			}),
+			"error": json.StringNode("error", err.Error()),
+		}).String()
+	}
+
+	return json.ObjectNode("", map[string]*json.Node{
+		"stat": json.ObjectNode("", map[string]*json.Node{
+			"height":    json.StringNode("height", strconv.Itoa(int(currentHeight))),
+			"timestamp": json.StringNode("timestamp", strconv.FormatInt(currentTime, 10)),
+		}),
+		"response": json.ObjectNode("", map[string]*json.Node{
+			"poolPath":   json.StringNode("poolPath", poolPath),
+			"twapTick":   json.StringNode("twapTick", strconv.FormatInt(int64(twapTick), 10)),
+			"secondsAgo": json.StringNode("secondsAgo", strconv.FormatUint(uint64(secondsAgo), 10)),
+		}),
+	}).String()
+}
+
 func posKeyDivide(posKey string) (string, int32, int32) {
-	kDec, _ := b64.StdEncoding.DecodeString(posKey)
+	kDec, err := b64.StdEncoding.DecodeString(posKey)
+	if err != nil {
+		panic(errInvalidPositionKey)
+	}
 	posKey = string(kDec)
 
 	res := strings.Split(posKey, "__")
@@ -35,10 +87,16 @@ func posKeyDivide(posKey string) (string, int32, int32) {
 		))
 	}
 
-	owner, _tickLower, _tickUpper := res[0], res[1], res[2]
+	owner, tl, tu := res[0], res[1], res[2]
 
-	tickLower, _ := strconv.Atoi(_tickLower)
-	tickUpper, _ := strconv.Atoi(_tickUpper)
+	tickLower, err := strconv.Atoi(tl)
+	if err != nil {
+		panic(errTickLowerInvalid)
+	}
+	tickUpper, err := strconv.Atoi(tu)
+	if err != nil {
+		panic(errTickUpperInvalid)
+	}
 
 	return owner, int32(tickLower), int32(tickUpper)
 }

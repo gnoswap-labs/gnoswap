@@ -1,21 +1,23 @@
 package position
 
 import (
-	"std"
+	"chain/runtime"
 	"strconv"
 	"strings"
 
 	"gno.land/p/demo/tokens/grc721"
-	"gno.land/p/nt/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/v1/gnft"
 )
 
+const INT64_MAX = 9223372036854775807
+
 // GetOrigPkgAddr returns the original package address.
 // In position contract, original package address is the position address.
-func GetOrigPkgAddr() std.Address {
-	return std.CurrentRealm().Address()
+func GetOrigPkgAddr() address {
+	return runtime.CurrentRealm().Address()
 }
 
 // positionIdFrom converts positionId to grc721.TokenID type
@@ -55,22 +57,19 @@ func exists(positionId uint64) bool {
 // If the caller is the owner of the positionId, return true, otherwise return false
 // input: positionId uint64, addr std.Address
 // output: bool
-func isOwner(positionId uint64, addr std.Address) bool {
+func isOwner(positionId uint64, addr address) bool {
 	owner, err := gnft.OwnerOf(positionIdFrom(positionId))
-	if err == nil {
-		if owner == addr {
-			return true
-		}
+	if err != nil {
+		return false
 	}
-
-	return false
+	return owner == addr
 }
 
 // isOperator checks whether the caller is the approved operator of the positionId
 // If the caller is the approved operator of the positionId, return true, otherwise return false
 // input: positionId uint64, addr std.Address
 // output: bool
-func isOperator(positionId uint64, addr std.Address) bool {
+func isOperator(positionId uint64, addr address) bool {
 	return PositionGetPositionOperator(positionId) == addr
 }
 
@@ -81,11 +80,12 @@ func isOperator(positionId uint64, addr std.Address) bool {
 // output: bool
 func isStaked(positionId grc721.TokenID) bool {
 	exist := gnft.Exists(positionId)
-	if exist {
-		owner, err := gnft.OwnerOf(positionId)
-		if err == nil && owner == stakerAddr {
-			return true
-		}
+	if !exist {
+		return false
+	}
+	owner, err := gnft.OwnerOf(positionId)
+	if err == nil && owner == stakerAddr {
+		return true
 	}
 	return false
 }
@@ -94,7 +94,7 @@ func isStaked(positionId grc721.TokenID) bool {
 // If the caller is the owner or approved operator of the positionId, return true, otherwise return false
 // input: addr std.Address, positionId uint64
 // output: bool
-func isOwnerOrOperator(positionId uint64, addr std.Address) bool {
+func isOwnerOrOperator(positionId uint64, addr address) bool {
 	if !addr.IsValid() || !exists(positionId) {
 		return false
 	}
@@ -169,7 +169,7 @@ func mustParseInt64(v string) int64 {
 	return amountInt
 }
 
-func isTokenOwner(positionId uint64, caller std.Address) bool {
+func isTokenOwner(positionId uint64, caller address) bool {
 	owner, err := gnft.OwnerOf(positionIdFrom(positionId))
 	if err != nil {
 		return false
@@ -210,15 +210,11 @@ func subUint256(x, y *u256.Uint) *u256.Uint {
 //   - If the `value` exceeds the range of int64, the function will panic with an error indicating
 //     the overflow and the original value.
 func safeConvertToInt64(value *u256.Uint) int64 {
-	const INT64_MAX = 9223372036854775807
-	const MAX_INT64 = "9223372036854775807"
-
 	res, overflow := value.Uint64WithOverflow()
 	if overflow || res > uint64(INT64_MAX) {
 		panic(ufmt.Sprintf(
-			"amount(%s) overflows int64 range (max %s)",
+			"amount(%s) overflows int64 range (max: 9223372036854775807)",
 			value.ToString(),
-			MAX_INT64,
 		))
 	}
 	return int64(res)

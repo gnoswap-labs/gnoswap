@@ -1,13 +1,12 @@
 package governance
 
 import (
-	"std"
-
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	en "gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/rbac"
 	cp "gno.land/r/gnoswap/v1/community_pool"
 
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -22,6 +21,7 @@ import (
 const (
 	GNS_PATH            = "gno.land/r/gnoswap/gns"
 	HALT_PATH           = "gno.land/r/gnoswap/halt"
+	RBAC_PATH           = "gno.land/r/gnoswap/rbac"
 	ACCESS_PATH         = "gno.land/r/gnoswap/access"
 	EMISSION_PATH       = "gno.land/r/gnoswap/emission"
 	COMMON_PATH         = "gno.land/r/gnoswap/v1/common"
@@ -185,7 +185,7 @@ func createParameterHandlers() *ParameterRegistry {
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
 				// Update swap whitelist
-				access.UpdateSwapWhiteList(cross, std.Address(params[0]))
+				access.UpdateSwapWhiteList(cross, address(params[0]))
 
 				return nil
 			},
@@ -196,7 +196,7 @@ func createParameterHandlers() *ParameterRegistry {
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
 				// Remove from swap whitelist
-				access.RemoveFromSwapWhiteList(cross, std.Address(params[0]))
+				access.RemoveFromSwapWhiteList(cross, address(params[0]))
 
 				return nil
 			},
@@ -210,8 +210,8 @@ func createParameterHandlers() *ParameterRegistry {
 				// Transfer tokens from community pool to specified address
 				cp.TransferToken(
 					cross,
-					params[0],              // pkgPath
-					std.Address(params[1]), // to
+					params[0],          // pkgPath
+					address(params[1]), // to
 					parseNumber(params[2], kindInt64).(int64), // amount
 				)
 
@@ -304,7 +304,7 @@ func createParameterHandlers() *ParameterRegistry {
 					params[0],                      // token0Path
 					params[1],                      // token1Path
 					uint32(parseUint64(params[2])), // fee
-					std.Address(params[3]),         // recipient
+					address(params[3]),             // recipient
 					params[4],                      // amount0Requested
 					params[5],                      // amount1Requested
 				)
@@ -497,13 +497,86 @@ func createParameterHandlers() *ParameterRegistry {
 		{
 			pkgPath:    HALT_PATH,
 			function:   "SetOperationStatus",
+			paramCount: 3,
+			handlerFunc: func(params []string) error {
+				// Enable or disable specific operation types
+				opType := halt.OpType(params[0])
+				version := parseInt(params[1])
+				allowed := parseBool(params[2])
+
+				halt.SetOperationStatus(cross, opType, version, allowed)
+
+				return nil
+			},
+		},
+		{
+			pkgPath:    HALT_PATH,
+			function:   "SetOperationStatusNextVersion",
 			paramCount: 2,
 			handlerFunc: func(params []string) error {
 				// Enable or disable specific operation types
 				opType := halt.OpType(params[0])
 				allowed := parseBool(params[1])
 
-				halt.SetOperationStatus(cross, opType, allowed)
+				halt.SetOperationStatusNextVersion(cross, opType, allowed)
+
+				return nil
+			},
+		},
+
+		// RBAC configuration
+		{
+			pkgPath:    RBAC_PATH,
+			function:   "RegisterRole",
+			paramCount: 2,
+			handlerFunc: func(params []string) error {
+				roleName := params[0]
+				roleAddress := address(params[1])
+
+				// Register a new role
+				rbac.RegisterRole(cross, roleName, roleAddress)
+
+				return nil
+			},
+		},
+		{
+			pkgPath:    RBAC_PATH,
+			function:   "UpdateRoleAddress",
+			paramCount: 3,
+			handlerFunc: func(params []string) error {
+				roleName := params[0]
+				version := parseInt(params[1])
+				roleAddress := address(params[2])
+
+				// Update role address
+				rbac.UpdateRoleAddress(cross, roleName, version, roleAddress)
+
+				return nil
+			},
+		},
+		{
+			pkgPath:    RBAC_PATH,
+			function:   "UpdateRoleAddressNextVersion",
+			paramCount: 2,
+			handlerFunc: func(params []string) error {
+				roleName := params[0]
+				roleAddress := address(params[1])
+
+				// Update role address next version
+				rbac.UpdateRoleAddressNextVersion(cross, roleName, roleAddress)
+
+				return nil
+			},
+		},
+		{
+			pkgPath:    RBAC_PATH,
+			function:   "RemoveRole",
+			paramCount: 1,
+			handlerFunc: func(params []string) error {
+				roleName := params[0]
+
+				// Remove role
+				rbac.RemoveRole(cross, roleName)
 
 				return nil
 			},

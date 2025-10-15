@@ -1,7 +1,6 @@
 package governance
 
 import (
-	"std"
 	"testing"
 	"time"
 
@@ -65,10 +64,10 @@ func TestProposalStatus_StatusType(t *testing.T) {
 			// given
 			status := NewProposalStatus(config, tc.maxVotingWeight, tc.executable, baseTime.Unix())
 			if tc.isExecuted {
-				_ = status.execute(tc.currentTime.Unix(), 100, std.Address("g1executor"))
+				_ = status.execute(tc.currentTime.Unix(), 100, address("g1executor"))
 			}
 			if tc.isCanceled {
-				_ = status.cancel(tc.currentTime.Unix(), 100, std.Address("g1canceler"))
+				_ = status.cancel(tc.currentTime.Unix(), 100, address("g1canceler"))
 			}
 
 			// when

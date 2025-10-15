@@ -1,11 +1,12 @@
 package staker
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"testing"
 
-	"gno.land/p/onbloc/json"
 	"gno.land/p/nt/testutils"
+	"gno.land/p/onbloc/json"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
@@ -16,8 +17,8 @@ import (
 
 // contract Paths
 const (
-	GNS_PATH    string      = "gno.land/r/gnoswap/gns"
-	WUGNOT_ADDR std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+	GNS_PATH    string  = "gno.land/r/gnoswap/gns"
+	WUGNOT_ADDR address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 )
 
 var (
@@ -29,7 +30,7 @@ var (
 	launchpadAddr, _     = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	devOpsAddr, _        = access.GetAddress(prbac.ROLE_DEVOPS.String())
 
-	wugnotAddr std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
+	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	fooPath  string = "gno.land/r/onbloc/foo"
 	barPath  string = "gno.land/r/onbloc/bar"
@@ -53,36 +54,36 @@ var (
 
 // Realms to mock frames
 var (
-	adminRealm  = std.NewUserRealm(admin)
-	userRealm   = std.NewUserRealm(testutils.TestAddress("alice"))
-	user2Realm  = std.NewUserRealm(testutils.TestAddress("bob"))
-	user3Realm  = std.NewUserRealm(testutils.TestAddress("charlie"))
+	adminRealm  = testing.NewUserRealm(admin)
+	userRealm   = testing.NewUserRealm(testutils.TestAddress("alice"))
+	user2Realm  = testing.NewUserRealm(testutils.TestAddress("bob"))
+	user3Realm  = testing.NewUserRealm(testutils.TestAddress("charlie"))
 	invalidAddr = testutils.TestAddress("invalid")
 
-	posRealm    = std.NewCodeRealm("gno.land/r/gnoswap/v1/position")
-	rouRealm    = std.NewCodeRealm("gno.land/r/gnoswap/v1/router")
-	stakerRealm = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	posRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/v1/position")
+	rouRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/v1/router")
+	stakerRealm = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 )
 
-func makeFakeAddress(name string) std.Address {
+func makeFakeAddress(name string) address {
 	return testutils.TestAddress(name)
 }
 
-func ugnotTransfer(t *testing.T, from, to std.Address, amount uint64) {
+func ugnotTransfer(t *testing.T, from, to address, amount uint64) {
 	t.Helper()
 
-	testing.SetRealm(std.NewUserRealm(from))
-	testing.SetOriginSend(std.Coins{{ugnotDenom, int64(amount)}})
-	banker := std.NewBanker(std.BankerTypeRealmSend)
+	testing.SetRealm(testing.NewUserRealm(from))
+	testing.SetOriginSend(chain.Coins{{ugnotDenom, int64(amount)}})
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 
-	banker.SendCoins(from, to, std.Coins{{ugnotDenom, int64(amount)}})
+	banker_.SendCoins(from, to, chain.Coins{{ugnotDenom, int64(amount)}})
 }
 
-func ugnotBalanceOf(t *testing.T, addr std.Address) uint64 {
+func ugnotBalanceOf(t *testing.T, addr address) uint64 {
 	t.Helper()
 
-	banker := std.NewBanker(std.BankerTypeRealmIssue)
-	coins := banker.GetCoins(addr)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
+	coins := banker_.GetCoins(addr)
 	if len(coins) == 0 {
 		return 0
 	}
@@ -90,34 +91,34 @@ func ugnotBalanceOf(t *testing.T, addr std.Address) uint64 {
 	return uint64(coins.AmountOf(ugnotDenom))
 }
 
-func ugnotMint(t *testing.T, addr std.Address, denom string, amount int64) {
+func ugnotMint(t *testing.T, addr address, denom string, amount int64) {
 	t.Helper()
-	testing.IssueCoins(addr, std.Coins{{ugnotDenom, int64(amount)}})
+	testing.IssueCoins(addr, chain.Coins{{ugnotDenom, int64(amount)}})
 }
 
-func ugnotBurn(t *testing.T, addr std.Address, denom string, amount int64) {
+func ugnotBurn(t *testing.T, addr address, denom string, amount int64) {
 	t.Helper()
-	banker := std.NewBanker(std.BankerTypeRealmIssue)
-	banker.RemoveCoin(addr, ugnotDenom, amount)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
+	banker_.RemoveCoin(addr, ugnotDenom, amount)
 }
 
-func ugnotFaucet(t *testing.T, to std.Address, amount uint64) {
+func ugnotFaucet(t *testing.T, to address, amount uint64) {
 	t.Helper()
 	// faucet address is admin
 	testing.SetOriginCaller(admin)
 
 	if ugnotBalanceOf(t, admin) < amount {
 		ugnotMint(t, admin, ugnotPath, int64(amount))
-		testing.SetOriginSend(std.Coins{{ugnotPath, int64(amount)}})
+		testing.SetOriginSend(chain.Coins{{ugnotPath, int64(amount)}})
 	}
 	ugnotTransfer(t, admin, to, amount)
 }
 
-func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
+func ugnotDeposit(t *testing.T, addr address, amount uint64) {
 	t.Helper()
-	testing.SetRealm(std.NewUserRealm(addr))
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(addr, WUGNOT_ADDR, std.Coins{{ugnotDenom, int64(amount)}})
+	testing.SetRealm(testing.NewUserRealm(addr))
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_.SendCoins(addr, WUGNOT_ADDR, chain.Coins{{ugnotDenom, int64(amount)}})
 	wugnot.Deposit(cross)
 }
 

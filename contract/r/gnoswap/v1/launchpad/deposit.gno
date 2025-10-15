@@ -1,9 +1,5 @@
 package launchpad
 
-import (
-	"std"
-)
-
 // Deposit represents a deposit made by a user in a launchpad project.
 //
 // This struct contains the necessary data and methods to manage and distribute
@@ -20,7 +16,7 @@ import (
 // - createdTime (int64): The time when the deposit was created.
 // - endTime (int64): The time when the deposit ends.
 type Deposit struct {
-	depositor std.Address
+	depositor address
 
 	id              string
 	projectID       string
@@ -49,7 +45,7 @@ func (d *Deposit) Tier() int64 {
 	return d.tier
 }
 
-func (d *Deposit) Depositor() std.Address {
+func (d *Deposit) Depositor() address {
 	return d.depositor
 }
 
@@ -69,7 +65,7 @@ func (d *Deposit) WithdrawnTime() int64 {
 	return d.withdrawnTime
 }
 
-func (d *Deposit) IsOwner(address std.Address) bool {
+func (d *Deposit) IsOwner(address address) bool {
 	return d.depositor.String() == address.String()
 }
 
@@ -100,7 +96,7 @@ func NewDeposit(
 	depositID string,
 	projectID string,
 	tier int64,
-	depositor std.Address,
+	depositor address,
 	depositAmount int64,
 	createdHeight int64,
 	createdTime int64,

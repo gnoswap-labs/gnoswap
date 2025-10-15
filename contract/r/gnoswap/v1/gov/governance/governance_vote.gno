@@ -1,7 +1,8 @@
 package governance
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 	"time"
 
 	en "gno.land/r/gnoswap/emission"
@@ -32,17 +33,17 @@ import (
 //
 // Returns voting weight used as string.
 func Vote(cur realm, proposalID int64, yes bool) string {
-	halt.AssertIsNotHaltedGovernance()
+	halt.AssertIsNotHaltedGovernanceWithVersion(1)
 
 	// Get current blockchain state and caller information
-	currentHeight := std.ChainHeight()
+	currentHeight := runtime.ChainHeight()
 	currentAt := time.Now()
 
 	// Mint and distribute GNS tokens as part of the voting process
 	en.MintAndDistributeGns(cross)
 
 	// Extract voter address from realm context
-	voter := std.PreviousRealm().Address()
+	voter := runtime.PreviousRealm().Address()
 
 	// Process the vote and get updated vote tallies
 	userVote, totalYesVoteWeight, totalNoVoteWeight, err := vote(
@@ -57,8 +58,8 @@ func Vote(cur realm, proposalID int64, yes bool) string {
 	}
 
 	// Emit voting event for tracking and transparency
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"Vote",
 		"prevAddr", previousRealm.Address().String(),
 		"prevPkgPath", previousRealm.PkgPath(),
@@ -76,7 +77,7 @@ func Vote(cur realm, proposalID int64, yes bool) string {
 // vote handles core voting logic.
 func vote(
 	proposalID int64,
-	voterAddress std.Address,
+	voterAddress address,
 	votedYes bool,
 	votedHeight,
 	votedAt int64,

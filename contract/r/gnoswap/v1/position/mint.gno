@@ -1,10 +1,8 @@
 package position
 
 import (
-	"std"
-
-	"gno.land/p/nt/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
@@ -55,7 +53,6 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(poolKey, positionKey)
 
 	position := Position{
-		nonce:                    u256.Zero(),
 		operator:                 zeroAddress,
 		poolKey:                  poolKey,
 		tickLower:                params.tickLower,
@@ -149,7 +146,7 @@ func processTokens(
 	token1 string,
 	amount0Desired string,
 	amount1Desired string,
-	caller std.Address,
+	caller address,
 ) (string, string, bool, bool, int64, error) {
 	err := validateTokenPath(token0, token1)
 	if err != nil {
@@ -224,14 +221,14 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	{
 		diff := u256.Zero().Sub(feeGrowthInside0LastX128, position.feeGrowthInside0LastX128)
-		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.liquidity), u256.MustFromDecimal(Q128))
+		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.liquidity), q128)
 
 		position.tokensOwed0 = u256.Zero().Add(position.tokensOwed0, mulDiv)
 	}
 
 	{
 		diff := u256.Zero().Sub(feeGrowthInside1LastX128, position.feeGrowthInside1LastX128)
-		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.liquidity), u256.MustFromDecimal(Q128))
+		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.liquidity), q128)
 
 		position.tokensOwed1 = u256.Zero().Add(position.tokensOwed1, mulDiv)
 	}

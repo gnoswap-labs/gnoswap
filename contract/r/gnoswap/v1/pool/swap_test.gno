@@ -1,7 +1,8 @@
 package pool
 
 import (
-	"std"
+	"chain"
+	"chain/banker"
 	"testing"
 
 	"gno.land/p/nt/avl"
@@ -482,10 +483,15 @@ func TestSwap_ExecutionAndSecurity(t *testing.T) {
 			TokenApprove(t, pool.token0Path, routerAddr, poolAddr, maxApprove)
 			TokenApprove(t, pool.token1Path, routerAddr, poolAddr, maxApprove)
 
+			testing.SetRealm(rouRealm)
+
 			uassert.AbortsWithMessage(t, test.expectedError, func() {
 				Swap(cross, pool.token0Path, pool.token1Path, pool.fee,
 					alice, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
-					test.swapParams.priceLimit, routerAddr)
+					test.swapParams.priceLimit, routerAddr,
+					func(cur realm, amount0Delta string, amount1Delta string) error {
+						return mockSwapCallback(pool.token0Path, pool.token1Path, amount0Delta, amount1Delta)
+					})
 			})
 
 			t.Logf("✓ %s: Properly blocked (Risk factor: %s)", test.description, test.riskFactor)
@@ -551,14 +557,19 @@ func TestSwapConsistency_DryVsActual(t *testing.T) {
 				test.swapParams.priceLimit)
 
 			// Execute actual swap
-			testing.SetOriginCaller(routerAddr)
+			testing.SetRealm(rouRealm)
 
 			TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
 			TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
 
+			testing.SetRealm(rouRealm)
+
 			actualAmount0, actualAmount1 := Swap(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER,
 				routerAddr, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
-				test.swapParams.priceLimit, routerAddr)
+				test.swapParams.priceLimit, routerAddr,
+				func(cur realm, amount0Delta string, amount1Delta string) error {
+					return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
+				})
 
 			// Then: Verify consistency between prediction and actual result
 			if !drySuccess {
@@ -652,14 +663,17 @@ func TestSwap_TradingPatterns(t *testing.T) {
 			pattern.setupLiquidity(t)
 
 			// When: Execute swap with specified pattern
-			testing.SetOriginCaller(routerAddr)
-
 			TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
 			TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
 
+			testing.SetRealm(rouRealm)
+
 			actualAmount0, actualAmount1 := Swap(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER,
 				alice, pattern.swapParams.zeroForOne, pattern.swapParams.amountSpecified,
-				pattern.swapParams.priceLimit, routerAddr)
+				pattern.swapParams.priceLimit, routerAddr,
+				func(cur realm, amount0Delta string, amount1Delta string) error {
+					return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
+				})
 
 			// Then: Verify expected trading result
 			uassert.Equal(t, pattern.expectedAmounts[0], actualAmount0,
@@ -722,15 +736,19 @@ func TestSwap_ExtremeMarketConditions(t *testing.T) {
 			test.setupCondition(t)
 
 			// When: Execute swap in extreme conditions
-			testing.SetOriginCaller(routerAddr)
 			testing.SetRealm(rouRealm)
 
 			TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
 			TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
 
+			testing.SetRealm(rouRealm)
+
 			actualAmount0, actualAmount1 := Swap(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER,
 				alice, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
-				test.swapParams.priceLimit, routerAddr)
+				test.swapParams.priceLimit, routerAddr,
+				func(cur realm, amount0Delta string, amount1Delta string) error {
+					return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
+				})
 
 			// Then: Verify stable handling in extreme conditions
 			uassert.Equal(t, test.expectedResult[0], actualAmount0,
@@ -757,9 +775,14 @@ func TestSwap_FeeTierOptimization(t *testing.T) {
 		TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
 		TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
 
+		testing.SetRealm(rouRealm)
+
 		actualAmount0, actualAmount1 := Swap(cross, wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER,
 			adminAddr, true, "40012000",
-			common.TickMathGetSqrtRatioAtTick(-887220).ToString(), routerAddr)
+			common.TickMathGetSqrtRatioAtTick(-887220).ToString(), routerAddr,
+			func(cur realm, amount0Delta string, amount1Delta string) error {
+				return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
+			})
 
 		// Then: Verify fee efficiency
 		uassert.Equal(t, "100257", actualAmount0, "Token0 calculation in ultra-low fee environment")
@@ -776,7 +799,7 @@ func createMockLiquidityPool() *Pool {
 		fee:         STANDARD_FEE_TIER,
 		tickSpacing: 60,
 		slot0: Slot0{
-			sqrtPriceX96: u256.MustFromDecimal("1000000000000000000"),
+			sqrtPriceX96: common.TickMathGetSqrtRatioAtTick(0),
 			tick:         0,
 			feeProtocol:  0,
 			unlocked:     true,
@@ -820,10 +843,10 @@ func setupScatteredLiquidityPool(t *testing.T) {
 
 	testing.SetRealm(posRealm)
 	// 4 dispersed liquidity positions
-	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, adminAddr, -10020, -9000, "10000000", adminAddr)
-	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, adminAddr, -4980, -4020, "20000000", adminAddr)
-	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, adminAddr, 0, 1020, "30000000", adminAddr)
-	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, adminAddr, 8040, 10020, "40000000", adminAddr)
+	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, -10020, -9000, "10000000", adminAddr)
+	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, -4980, -4020, "20000000", adminAddr)
+	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, 0, 1020, "30000000", adminAddr)
+	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, 8040, 10020, "40000000", adminAddr)
 
 	// Prepare tokens
 	testing.SetOriginCaller(adminAddr)
@@ -832,7 +855,7 @@ func setupScatteredLiquidityPool(t *testing.T) {
 	TokenFaucet(t, gnsPath, routerAddr)
 
 	testing.SetOriginCaller(routerAddr)
-	testing.SetRealm(std.NewUserRealm(routerAddr))
+	testing.SetRealm(testing.NewUserRealm(routerAddr))
 	TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
 	TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
 }
@@ -853,8 +876,8 @@ func setupExtremePriceRangePool(t *testing.T) {
 
 	testing.SetRealm(posRealm)
 	// Extreme range liquidity
-	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, adminAddr, -100020, -99960, "500000", adminAddr)
-	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, adminAddr, 99960, 100020, "500000", adminAddr)
+	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, -100020, -99960, "500000", adminAddr)
+	Mint(cross, wugnotPath, gnsPath, STANDARD_FEE_TIER, 99960, 100020, "500000", adminAddr)
 
 	// Prepare tokens
 	testing.SetOriginCaller(adminAddr)
@@ -863,7 +886,7 @@ func setupExtremePriceRangePool(t *testing.T) {
 	TokenFaucet(t, gnsPath, routerAddr)
 
 	testing.SetOriginCaller(routerAddr)
-	testing.SetRealm(std.NewUserRealm(routerAddr))
+	testing.SetRealm(testing.NewUserRealm(routerAddr))
 	TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
 	TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
 }
@@ -996,27 +1019,27 @@ func TestUpdateAmounts_OverflowProtection(t *testing.T) {
 func setupUltraLowFeePool(t *testing.T) *Pool {
 	t.Helper()
 
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	wugnot.Approve(cross, poolAddr, maxApprove)
 	gns.Approve(cross, poolAddr, maxApprove)
 	CreatePool(cross, wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER, EQUAL_PRICE_RATIO)
 
 	// Prepare tokens
 	testing.SetOriginCaller(adminAddr)
-	newCoins := std.Coins{{"ugnot", int64(10000000000)}}
+	newCoins := chain.Coins{{"ugnot", int64(10000000000)}}
 	testing.IssueCoins(adminAddr, newCoins)
 	testing.SetOriginSend(newCoins)
-	banker := std.NewBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(adminAddr, wugnotAddr, newCoins)
+	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
+	banker_.SendCoins(adminAddr, wugnotAddr, newCoins)
 	wugnot.Deposit(cross)
 
 	// Add liquidity
 	testing.SetRealm(posRealm)
-	Mint(cross, wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER, adminAddr, -100, 100, "10000000", adminAddr)
-	Mint(cross, wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER, adminAddr, -100, 100, "10000000", adminAddr)
+	Mint(cross, wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER, -100, 100, "10000000", adminAddr)
+	Mint(cross, wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER, -100, 100, "10000000", adminAddr)
 
 	// Send tokens to router
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	gns.Transfer(cross, poolAddr, 20000000)
 	wugnot.Transfer(cross, routerAddr, 20000000)
 	gns.Transfer(cross, routerAddr, 20000000)

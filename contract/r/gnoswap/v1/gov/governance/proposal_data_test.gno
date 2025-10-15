@@ -1,7 +1,6 @@
 package governance
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/nt/testutils"
@@ -105,7 +104,7 @@ func TestProposalData_Validation(t *testing.T) {
 			name:         "Failure - Invalid CommunityPoolSpend proposal",
 			proposalType: CommunityPoolSpend,
 			spendInfo: CommunityPoolSpendInfo{
-				to:        std.Address(""),
+				to:        address(""),
 				tokenPath: "",
 				amount:    0,
 			},

@@ -1,7 +1,6 @@
 package emission
 
 import (
-	"std"
 	"testing"
 	"time"
 
@@ -19,7 +18,7 @@ func TestSetDistributionStartTime(t *testing.T) {
 		name        string
 		setup       func()
 		timestamp   int64
-		caller      std.Address
+		caller      address
 		shouldPanic bool
 		panicMsg    string
 	}{
@@ -78,7 +77,7 @@ func TestSetDistributionStartTime(t *testing.T) {
 				tt.setup()
 			}
 
-			testing.SetRealm(std.NewUserRealm(tt.caller))
+			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			if tt.shouldPanic {
 				uassert.AbortsWithMessage(t, tt.panicMsg, func() {

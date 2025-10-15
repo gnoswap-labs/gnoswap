@@ -1,12 +1,12 @@
 package staker
 
 import (
-	"std"
 	"strconv"
 	"strings"
 	"time"
 
 	"gno.land/p/nt/ufmt"
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gnft"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
@@ -33,7 +33,7 @@ func assertIsValidRewardAmountFormat(rewardAmountStr string) {
 }
 
 // assertIsDepositor ensures the caller is the owner of the deposit.
-func assertIsDepositor(caller std.Address, positionId uint64) {
+func assertIsDepositor(caller address, positionId uint64) {
 	deposit := deposits.get(positionId)
 	if deposit == nil {
 		panic(makeErrorWithDetails(
@@ -61,7 +61,7 @@ func assertIsNotStaked(positionId uint64) {
 }
 
 // assertIsPositionOwner ensures the caller owns the position NFT.
-func assertIsPositionOwner(positionId uint64, caller std.Address) {
+func assertIsPositionOwner(positionId uint64, caller address) {
 	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
 	if owner != caller {
 		panic(makeErrorWithDetails(
@@ -121,12 +121,14 @@ func assertIsAllowedForExternalReward(poolPath, tokenPath string) {
 	))
 }
 
-// assertIsValidFeeRate ensures the fee rate is within valid range (0-10000 basis points).
+const maxUnstakingFee = int64(1000) // 10%
+
+// assertIsValidFeeRate ensures the fee rate is within valid range (0-1000 basis points).
 func assertIsValidFeeRate(fee int64) {
-	if fee < 0 || fee > 10000 {
+	if fee < 0 || fee > maxUnstakingFee {
 		panic(makeErrorWithDetails(
 			errInvalidUnstakingFee,
-			ufmt.Sprintf("fee(%d) must be in range 0 ~ 10000", fee),
+			ufmt.Sprintf("fee(%d) must be in range 0 ~ %d", fee, maxUnstakingFee),
 		))
 	}
 }
@@ -193,4 +195,12 @@ func isMidnight(startTime time.Time) bool {
 	second := startTime.Second()
 
 	return hour == 0 && minute == 0 && second == 0
+}
+
+func assertIsValidUserCoinSend(tokenPath string, amount int64) {
+	if common.IsGNOTNativePath(tokenPath) {
+		common.AssertIsUserSendGNOTAmount(amount)
+	} else {
+		common.AssertIsNotHandleNativeCoin()
+	}
 }

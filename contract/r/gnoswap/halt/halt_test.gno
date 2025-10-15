@@ -1,7 +1,6 @@
 package halt
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -104,7 +103,7 @@ func TestHalt_GetHaltConfig(t *testing.T) {
 	clonedConfig := GetHaltConfig()
 
 	// Modify internal state
-	haltConfig.set(OpTypePool, true)
+	haltStates.setOperationHaltState(OpTypePool, 1, true)
 
 	// Check that the clone is independent
 	halted, err := clonedConfig.get(OpTypePool)
@@ -333,7 +332,7 @@ func TestHalt_SetHaltLevel_WithAuthorization(t *testing.T) {
 
 	tests := []struct {
 		name                 string
-		callerAddress        std.Address
+		callerAddress        address
 		inputLevel           HaltLevel
 		expectedLevel        HaltLevel
 		expectedHasAbort     bool
@@ -357,7 +356,7 @@ func TestHalt_SetHaltLevel_WithAuthorization(t *testing.T) {
 		},
 		{
 			name:                 "Fail with unauthorized realm",
-			callerAddress:        std.Address("g1unauthorized"),
+			callerAddress:        address("g1unauthorized"),
 			inputLevel:           HaltLevelComplete,
 			expectedLevel:        HaltLevelNone, // Should remain unchanged
 			expectedHasAbort:     true,
@@ -377,7 +376,7 @@ func TestHalt_SetHaltLevel_WithAuthorization(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cleanup()
 
-			testing.SetRealm(std.NewUserRealm(tc.callerAddress))
+			testing.SetRealm(testing.NewUserRealm(tc.callerAddress))
 
 			// when/then
 			if tc.expectedHasAbort {
@@ -418,7 +417,7 @@ func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
 
 	tests := []struct {
 		name                 string
-		callerAddress        std.Address
+		callerAddress        address
 		operationType        OpType
 		halted               bool
 		expectedHasAbort     bool
@@ -442,7 +441,7 @@ func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
 		},
 		{
 			name:                 "Fail with unauthorized realm",
-			callerAddress:        std.Address("g1unauthorized"),
+			callerAddress:        address("g1unauthorized"),
 			operationType:        OpTypePool,
 			halted:               true,
 			expectedHasAbort:     true,
@@ -462,15 +461,15 @@ func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cleanup()
 
-			testing.SetRealm(std.NewUserRealm(tc.callerAddress))
+			testing.SetRealm(testing.NewUserRealm(tc.callerAddress))
 
 			// when/then
 			if tc.expectedHasAbort {
 				uassert.AbortsWithMessage(t, tc.expectedAbortMessage, func() {
-					SetOperationStatus(cross, tc.operationType, tc.halted)
+					SetOperationStatus(cross, tc.operationType, 1, tc.halted)
 				})
 			} else {
-				SetOperationStatus(cross, tc.operationType, tc.halted)
+				SetOperationStatus(cross, tc.operationType, 1, tc.halted)
 
 				// Verify the operation status was set correctly
 				config := GetHaltConfig()
@@ -530,7 +529,7 @@ func TestHalt_IntegrationScenarios(t *testing.T) {
 
 			// Apply custom overrides
 			for op, halted := range tc.customOperations {
-				err := haltConfig.set(op, halted)
+				err := haltStates.setOperationHaltState(op, 1, halted)
 				uassert.NoError(t, err)
 			}
 
@@ -553,22 +552,18 @@ func TestHalt_EdgeCases(t *testing.T) {
 	t.Run("GetHaltConfig independence", func(t *testing.T) {
 		cleanup()
 
-		// Get initial config
-		haltConfig = newNoneConfig()
-
 		configByGetter := GetHaltConfig()
 
 		// Modify internal state
-		err := haltConfig.set(OpTypePool, true)
+		err := haltStates.setOperationHaltState(OpTypePool, 1, true)
 		uassert.NoError(t, err)
 
 		// Both should be independent of internal state and each other
-		internalHalted, err := haltConfig.get(OpTypePool)
+		internalHalted, err := haltStates.IsOperationHalted(OpTypePool)
 		uassert.NoError(t, err)
 		uassert.Equal(t, internalHalted, true)
 
-		getterHalted, err := configByGetter.get(OpTypePool)
-		uassert.NoError(t, err)
+		getterHalted := configByGetter.IsHalted(OpTypePool)
 		uassert.Equal(t, getterHalted, false)
 	})
 
@@ -637,7 +632,243 @@ func TestHalt_EdgeCases(t *testing.T) {
 	})
 }
 
+// Test newHaltStateManagerByConfig function with table-driven approach
+func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
+	tests := []struct {
+		name                   string
+		configFunc             func() HaltConfig
+		description            string
+		expectedManagerNotNil  bool
+		expectedOperationCount int
+		expectedInitialVersion int
+		shouldCheckAllOpsMatch bool
+		customValidations      map[OpType]bool // For specific operation checks
+		shouldDefaultToHalted  bool            // For empty/partial configs
+	}{
+		{
+			name:                   "Initialize with None config",
+			configFunc:             newNoneConfig,
+			description:            "Should initialize with all operations not halted",
+			expectedManagerNotNil:  true,
+			expectedOperationCount: len(OpTypes()),
+			expectedInitialVersion: 1,
+			shouldCheckAllOpsMatch: true,
+			shouldDefaultToHalted:  false,
+		},
+		{
+			name:                   "Initialize with Safe mode config",
+			configFunc:             newSafeModeConfig,
+			description:            "Should initialize with safe mode halt states",
+			expectedManagerNotNil:  true,
+			expectedOperationCount: len(OpTypes()),
+			expectedInitialVersion: 1,
+			shouldCheckAllOpsMatch: true,
+			shouldDefaultToHalted:  false,
+		},
+		{
+			name:                   "Initialize with Emergency config",
+			configFunc:             newEmergencyConfig,
+			description:            "Should initialize with emergency halt states",
+			expectedManagerNotNil:  true,
+			expectedOperationCount: len(OpTypes()),
+			expectedInitialVersion: 1,
+			shouldCheckAllOpsMatch: true,
+			shouldDefaultToHalted:  false,
+		},
+		{
+			name:                   "Initialize with Complete config",
+			configFunc:             newCompleteConfig,
+			description:            "Should initialize with all operations halted",
+			expectedManagerNotNil:  true,
+			expectedOperationCount: len(OpTypes()),
+			expectedInitialVersion: 1,
+			shouldCheckAllOpsMatch: true,
+			shouldDefaultToHalted:  false,
+		},
+		{
+			name: "Initialize with empty config",
+			configFunc: func() HaltConfig {
+				return make(HaltConfig)
+			},
+			description:            "Should initialize with all operations halted by default",
+			expectedManagerNotNil:  true,
+			expectedOperationCount: len(OpTypes()),
+			expectedInitialVersion: 1,
+			shouldCheckAllOpsMatch: false,
+			shouldDefaultToHalted:  true,
+		},
+		{
+			name: "Initialize with partial config",
+			configFunc: func() HaltConfig {
+				return HaltConfig{
+					OpTypePool:       false,
+					OpTypeGovernance: false,
+					// Other operations not specified, should default to halted
+				}
+			},
+			description:            "Should initialize specified operations correctly, others default to halted",
+			expectedManagerNotNil:  true,
+			expectedOperationCount: len(OpTypes()),
+			expectedInitialVersion: 1,
+			shouldCheckAllOpsMatch: false,
+			customValidations: map[OpType]bool{
+				OpTypePool:       false, // Explicitly set to not halted
+				OpTypeGovernance: false, // Explicitly set to not halted
+				OpTypeRouter:     true,  // Should default to halted
+				OpTypeStaker:     true,  // Should default to halted
+			},
+			shouldDefaultToHalted: false,
+		},
+		{
+			name: "Initialize with mixed config",
+			configFunc: func() HaltConfig {
+				return HaltConfig{
+					OpTypePool:          true,  // Halted
+					OpTypePosition:      false, // Not halted
+					OpTypeProtocolFee:   true,  // Halted
+					OpTypeRouter:        false, // Not halted
+					OpTypeStaker:        true,  // Halted
+					OpTypeLaunchpad:     false, // Not halted
+					OpTypeGovernance:    true,  // Halted
+					OpTypeGovStaker:     false, // Not halted
+					OpTypeXGns:          true,  // Halted
+					OpTypeCommunityPool: false, // Not halted
+					OpTypeEmission:      true,  // Halted
+					OpTypeWithdraw:      false, // Not halted
+				}
+			},
+			description:            "Should initialize with mixed halt states correctly",
+			expectedManagerNotNil:  true,
+			expectedOperationCount: len(OpTypes()),
+			expectedInitialVersion: 1,
+			shouldCheckAllOpsMatch: true,
+			shouldDefaultToHalted:  false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			config := tc.configFunc()
+
+			// when
+			manager := newHaltStateManagerByConfig(config)
+
+			// then
+			// Basic validations
+			if tc.expectedManagerNotNil {
+				uassert.True(t, manager != nil)
+			}
+
+			uassert.Equal(t, len(manager), tc.expectedOperationCount)
+
+			// Verify all operation types are present with correct states
+			for _, opType := range OpTypes() {
+				state, exists := manager[opType]
+				uassert.True(t, exists)
+				uassert.True(t, state != nil)
+
+				// Verify initial version
+				version := state.LatestVersion()
+				uassert.Equal(t, version, tc.expectedInitialVersion)
+
+				// Verify halt state
+				isHalted, err := state.IsHalted(tc.expectedInitialVersion)
+				uassert.NoError(t, err)
+
+				if tc.shouldCheckAllOpsMatch {
+					// Check against the provided config
+					expectedHalted := config.IsHalted(opType)
+					uassert.Equal(t, isHalted, expectedHalted)
+				} else if tc.customValidations != nil {
+					// Check specific operations if defined
+					if expectedHalted, exists := tc.customValidations[opType]; exists {
+						uassert.Equal(t, isHalted, expectedHalted)
+					}
+				} else if tc.shouldDefaultToHalted {
+					// All operations should default to halted
+					uassert.Equal(t, isHalted, true)
+				}
+			}
+		})
+	}
+}
+
+// Test HaltState independence using table-driven approach
+func TestHalt_NewHaltStateManagerByConfig_Independence(t *testing.T) {
+	tests := []struct {
+		name               string
+		configFunc         func() HaltConfig
+		modifyOp           OpType
+		modifyValue        bool
+		checkOp            OpType
+		expectedCheckValue bool
+		description        string
+	}{
+		{
+			name:               "None config - modify pool, check router independence",
+			configFunc:         newNoneConfig,
+			modifyOp:           OpTypePool,
+			modifyValue:        true,
+			checkOp:            OpTypeRouter,
+			expectedCheckValue: false,
+			description:        "Modifying pool state should not affect router state",
+		},
+		{
+			name:               "Safe mode config - modify governance, check pool independence",
+			configFunc:         newSafeModeConfig,
+			modifyOp:           OpTypeGovernance,
+			modifyValue:        true,
+			checkOp:            OpTypePool,
+			expectedCheckValue: false,
+			description:        "Modifying governance state should not affect pool state",
+		},
+		{
+			name:               "Emergency config - modify pool, check governance independence",
+			configFunc:         newEmergencyConfig,
+			modifyOp:           OpTypePool,
+			modifyValue:        false,
+			checkOp:            OpTypeGovernance,
+			expectedCheckValue: false,
+			description:        "Modifying pool state should not affect governance state",
+		},
+		{
+			name:               "Complete config - modify withdraw, check emission independence",
+			configFunc:         newCompleteConfig,
+			modifyOp:           OpTypeWithdraw,
+			modifyValue:        false,
+			checkOp:            OpTypeEmission,
+			expectedCheckValue: true,
+			description:        "Modifying withdraw state should not affect emission state",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			config := tc.configFunc()
+			manager := newHaltStateManagerByConfig(config)
+
+			// when - modify one operation state
+			modifyState := manager[tc.modifyOp]
+			err := modifyState.setState(1, tc.modifyValue)
+			uassert.NoError(t, err)
+
+			// then - verify other operation state is unaffected
+			checkState := manager[tc.checkOp]
+			isHalted, err := checkState.IsHalted(1)
+			uassert.NoError(t, err)
+			uassert.Equal(t, isHalted, tc.expectedCheckValue)
+
+			// Additional verification - modified state should have the new value
+			modifiedIsHalted, err := modifyState.IsHalted(1)
+			uassert.NoError(t, err)
+			uassert.Equal(t, modifiedIsHalted, tc.modifyValue)
+		})
+	}
+}
+
 // Test helpers
 func cleanup() {
-	haltConfig = newNoneConfig()
+	haltStates = newHaltStateManagerByConfig(newNoneConfig())
 }

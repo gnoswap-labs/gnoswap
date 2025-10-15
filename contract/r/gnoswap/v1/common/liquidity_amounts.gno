@@ -2,6 +2,8 @@ package common
 
 import (
 	"gno.land/p/nt/ufmt"
+
+	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -178,8 +180,6 @@ func computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1 *u256.Uint
 //   - The `Clone` method is used to prevent modification of the original values during computation.
 //   - The function ensures that liquidity calculations handle edge cases when the current price
 //     is outside the specified range by returning liquidity based on the dominant token.
-//
-// TODO: consider to reduce the number of clones (after confirmed this logic is correct)
 func GetLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0, amount1 *u256.Uint) (liquidity *u256.Uint) {
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96.Clone(), sqrtRatioBX96.Clone())
 
@@ -329,4 +329,35 @@ func GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidit
 	}
 
 	return amount0.ToString(), amount1.ToString()
+}
+
+// LiquidityMathAddDelta calculates the new liquidity by applying the delta liquidity to the current liquidity.
+// If delta liquidity is negative, it subtracts the absolute value of delta liquidity from the current liquidity.
+// If delta liquidity is positive, it adds the absolute value of delta liquidity to the current liquidity.
+// Returns the new liquidity as a uint256 value.
+func LiquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
+	if x == nil || y == nil {
+		panic("liquidity_math: x or y is nil")
+	}
+
+	yAbs := y.Abs()
+
+	// Subtract or add based on the sign of y
+	if y.Lt(i256.Zero()) {
+		z := u256.Zero().Sub(x, yAbs)
+		if z.Gte(x) {
+			panic(ufmt.Sprintf(
+				"liquidity_math: underflow (x: %s, y: %s, z:%s)",
+				x.ToString(), y.ToString(), z.ToString()))
+		}
+		return z
+	}
+
+	z := u256.Zero().Add(x, yAbs)
+	if z.Lt(x) {
+		panic(ufmt.Sprintf(
+			"liquidity_math: overflow (x: %s, y: %s, z:%s)",
+			x.ToString(), y.ToString(), z.ToString()))
+	}
+	return z
 }

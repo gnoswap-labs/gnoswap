@@ -2,7 +2,6 @@ package common
 
 import (
 	"regexp"
-	"std"
 	"strings"
 
 	"gno.land/p/demo/tokens/grc20"
@@ -61,26 +60,47 @@ func TotalSupply(path string) int64 {
 }
 
 // BalanceOf returns the token balance for the specified address.
-func BalanceOf(path string, addr std.Address) int64 {
+func BalanceOf(path string, addr address) int64 {
 	return GetToken(path).BalanceOf(addr)
 }
 
 // Allowance returns the token allowance from owner to spender.
-func Allowance(path string, owner, spender std.Address) int64 {
+func Allowance(path string, owner, spender address) int64 {
 	return GetToken(path).Allowance(owner, spender)
 }
 
 // Transfer transfers tokens to the specified address using grc20.Teller.Transfer.
-func Transfer(cur realm, path string, to std.Address, amount int64) error {
+func Transfer(cur realm, path string, to address, amount int64) error {
 	return GetTokenTeller(path).Transfer(to, amount)
 }
 
 // TransferFrom transfers tokens from one address to another using grc20.Teller.TransferFrom.
-func TransferFrom(cur realm, path string, from, to std.Address, amount int64) error {
+func TransferFrom(cur realm, path string, from, to address, amount int64) error {
 	return GetTokenTeller(path).TransferFrom(from, to, amount)
 }
 
 // Approve approves tokens for the specified spender using grc20.Teller.Approve.
-func Approve(cur realm, path string, spender std.Address, amount int64) error {
+func Approve(cur realm, path string, spender address, amount int64) error {
 	return GetTokenTeller(path).Approve(spender, amount)
+}
+
+// SafeGRC20Transfer performs a token transfer and panics if it fails.
+func SafeGRC20Transfer(cur realm, path string, to address, amount int64) {
+	if err := GetTokenTeller(path).Transfer(to, amount); err != nil {
+		panic(err)
+	}
+}
+
+// SafeGRC20TransferFrom performs a token transfer from one address to another and panics if it fails.
+func SafeGRC20TransferFrom(cur realm, path string, from, to address, amount int64) {
+	if err := GetTokenTeller(path).TransferFrom(from, to, amount); err != nil {
+		panic(err)
+	}
+}
+
+// SafeGRC20Approve performs a token approval and panics if it fails.
+func SafeGRC20Approve(cur realm, path string, spender address, amount int64) {
+	if err := GetTokenTeller(path).Approve(spender, amount); err != nil {
+		panic(err)
+	}
 }

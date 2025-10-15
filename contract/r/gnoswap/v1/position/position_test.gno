@@ -2,7 +2,6 @@ package position
 
 import (
 	"errors"
-	"std"
 	"strconv"
 	"testing"
 	"time"
@@ -78,7 +77,6 @@ func seedPosition(t *testing.T, amount0, amount1 string) uint64 {
 
 func newDummyPosition(id uint64) Position {
 	return Position{
-		nonce:                    u256.NewUint(id),
 		operator:                 "user1",
 		poolKey:                  "poolKey1",
 		tickLower:                -500,
@@ -133,7 +131,6 @@ func TestMustGetPosition(t *testing.T) {
 				})
 			} else {
 				result := MustGetPosition(tt.inputPositionId)
-				uassert.Equal(t, tt.expectedPosition.nonce.ToString(), result.nonce.ToString())
 				uassert.Equal(t, tt.expectedPosition.operator, result.operator)
 				uassert.Equal(t, tt.expectedPosition.poolKey, result.poolKey)
 				uassert.Equal(t, tt.expectedPosition.tickLower, result.tickLower)
@@ -152,7 +149,6 @@ func TestMustGetPosition(t *testing.T) {
 func TestSetPosition(t *testing.T) {
 	position := newDummyPosition(1)
 	changedPosition := newDummyPosition(1)
-	changedPosition.nonce = u256.NewUint(2)
 	changedPosition.operator = "user2"
 	changedPosition.poolKey = "poolKey2"
 	changedPosition.tickLower = -2000
@@ -188,7 +184,6 @@ func TestSetPosition(t *testing.T) {
 			setPosition(tt.positionId, tt.inputPosition)
 
 			storedPosition, _ := GetPosition(tt.positionId)
-			uassert.Equal(t, tt.inputPosition.nonce.ToString(), storedPosition.nonce.ToString())
 			uassert.Equal(t, tt.inputPosition.operator, storedPosition.operator)
 			uassert.Equal(t, tt.inputPosition.poolKey, storedPosition.poolKey)
 			uassert.Equal(t, tt.inputPosition.tickLower, storedPosition.tickLower)
@@ -267,7 +262,7 @@ func TestExistPosition(t *testing.T) {
 func TestComputePositionKey(t *testing.T) {
 	tests := []struct {
 		name      string
-		owner     std.Address
+		owner     address
 		tickLower int32
 		tickUpper int32
 		expected  string
@@ -409,7 +404,7 @@ func TestProcessTokens(t *testing.T) {
 		token1         string
 		amount0Desired string
 		amount1Desired string
-		caller         std.Address
+		caller         address
 		expected0      string
 		expected1      string
 		isNative0      bool
@@ -506,13 +501,13 @@ func TestProcessTokens(t *testing.T) {
 			if tt.token0 == GNOT {
 				amount, _ := strconv.ParseInt(tt.amount0Desired, 10, 64)
 				ugnotFaucet(t, positionAddr, amount)
-				testing.SetRealm(std.NewUserRealm(positionAddr))
+				testing.SetRealm(testing.NewUserRealm(positionAddr))
 				transferUGNOT(positionAddr, positionAddr, amount)
 			}
 			if tt.token1 == GNOT {
 				amount, _ := strconv.ParseInt(tt.amount1Desired, 10, 64)
 				ugnotFaucet(t, positionAddr, amount)
-				testing.SetRealm(std.NewUserRealm(positionAddr))
+				testing.SetRealm(testing.NewUserRealm(positionAddr))
 				transferUGNOT(positionAddr, positionAddr, amount)
 			}
 
@@ -551,8 +546,8 @@ func TestMint(t *testing.T) {
 		minAmount0         string
 		minAmount1         string
 		deadline           int64
-		mintTo             std.Address
-		caller             std.Address
+		mintTo             address
+		caller             address
 		shouldError        bool
 		expectedErrorMsg   string
 		expectedPositionId uint64
@@ -644,7 +639,7 @@ func TestMint(t *testing.T) {
 				GivenPoolCreated(barPath, fooPath, fee500, "79228162514264337593543950336").
 				AndUserFundedAndApproved(alice, barPath, fooPath)
 
-			testing.SetRealm(std.NewUserRealm(tc.caller))
+			testing.SetRealm(testing.NewUserRealm(tc.caller))
 
 			if tc.shouldError {
 				uassert.AbortsWithMessage(t, tc.expectedErrorMsg, func() {
@@ -947,7 +942,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 func TestCollectFees(t *testing.T) {
 	tests := []struct {
 		name               string
-		caller             std.Address
+		caller             address
 		mintAmount0        string
 		mintAmount1        string
 		increaseAmount0    string

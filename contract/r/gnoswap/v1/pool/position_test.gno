@@ -1,18 +1,15 @@
 package pool
 
 import (
-	"std"
 	"testing"
 
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/uassert"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/v1/common"
 )
-
-// TODO: Unify the test abstractions into a single file
 
 // Position Strategy Constants - Representing real LP strategies
 const (
@@ -46,7 +43,7 @@ const (
 type PositionScenario struct {
 	name             string
 	description      string
-	owner            std.Address
+	owner            address
 	tickLower        int32
 	tickUpper        int32
 	liquidity        string
@@ -142,7 +139,7 @@ func createPositionWithValidation(t *testing.T, pool *Pool, scenario PositionSce
 }
 
 // updatePositionLiquidity modifies an existing position's liquidity
-func updatePositionLiquidity(t *testing.T, pool *Pool, owner std.Address, tickLower, tickUpper int32, liquidityDelta string) (amount0, amount1 *u256.Uint) {
+func updatePositionLiquidity(t *testing.T, pool *Pool, owner address, tickLower, tickUpper int32, liquidityDelta string) (amount0, amount1 *u256.Uint) {
 	t.Helper()
 
 	delta := i256.MustFromDecimal(liquidityDelta)
@@ -214,7 +211,7 @@ func TestPositionGetKey(t *testing.T) {
 	scenarios := []struct {
 		name            string
 		description     string
-		owner           std.Address
+		owner           address
 		tickLower       int32
 		tickUpper       int32
 		strategy        string
@@ -1161,7 +1158,7 @@ func TestPositionSecurity_EdgeCases(t *testing.T) {
 		// Simulate multiple LPs with overlapping ranges
 		lps := []struct {
 			name   string
-			owner  std.Address
+			owner  address
 			lower  int32
 			upper  int32
 			amount string

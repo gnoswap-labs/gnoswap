@@ -1,7 +1,8 @@
 package staker
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 	"time"
 
 	"gno.land/p/nt/ufmt"
@@ -20,10 +21,10 @@ const (
 // SetPoolTier assigns a tier level to a pool for internal GNS emission rewards.
 // Only admin or governance can call this function.
 func SetPoolTier(cur realm, poolPath string, tier uint64) {
-	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsPoolExists(poolPath)
 	assertIsValidPoolTier(tier)
@@ -31,25 +32,25 @@ func SetPoolTier(cur realm, poolPath string, tier uint64) {
 	currentTime := time.Now().Unix()
 	setPoolTier(poolPath, tier, currentTime)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"SetPoolTier",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", poolPath,
 		"tier", formatUint(tier),
 		"currentTime", formatInt(currentTime),
-		"currentHeight", formatInt(std.ChainHeight()),
+		"currentHeight", formatInt(runtime.ChainHeight()),
 	)
 }
 
 // ChangePoolTier modifies the tier level of an existing pool.
 // Only admin or governance can call this function.
 func ChangePoolTier(cur realm, poolPath string, tier uint64) {
-	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsPoolExists(poolPath)
 	assertIsValidPoolTier(tier)
@@ -57,8 +58,8 @@ func ChangePoolTier(cur realm, poolPath string, tier uint64) {
 	currentTime := time.Now().Unix()
 	previousTier, newTier := changePoolTier(poolPath, tier, currentTime)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"ChangePoolTier",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -66,46 +67,46 @@ func ChangePoolTier(cur realm, poolPath string, tier uint64) {
 		"prevTier", formatUint(previousTier),
 		"newTier", formatUint(newTier),
 		"currentTime", formatInt(currentTime),
-		"currentHeight", formatInt(std.ChainHeight()),
+		"currentHeight", formatInt(runtime.ChainHeight()),
 	)
 }
 
 // RemovePoolTier removes a pool from internal GNS emission rewards.
 // Only admin or governance can call this function.
 func RemovePoolTier(cur realm, poolPath string) {
-	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	assertIsPoolExists(poolPath)
 
 	currentTime := time.Now().Unix()
 	removePoolTier(poolPath, currentTime)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"RemovePoolTier",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", poolPath,
 		"currentTime", formatInt(currentTime),
-		"currentHeight", formatInt(std.ChainHeight()),
+		"currentHeight", formatInt(runtime.ChainHeight()),
 	)
 }
 
 // SetWarmUp configures the warm-up percentage and duration for rewards.
 // Only admin or governance can call this function.
 func SetWarmUp(cur realm, pct, timeDuration int64) {
-	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedStakerWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
 	setWarmUp(pct, timeDuration)
 
-	previousRealm := std.PreviousRealm()
-	std.Emit(
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"SetWarmUp",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -118,8 +119,12 @@ func SetWarmUp(cur realm, pct, timeDuration int64) {
 func setPoolTier(poolPath string, tier uint64, currentTime int64) {
 	en.MintAndDistributeGns(cross)
 
-	pools.GetOrCreate(poolPath)
-	poolTier.changeTier(std.ChainHeight(), currentTime, pools, poolPath, tier)
+	pool := pools.GetPoolOrNil(poolPath)
+	if pool == nil {
+		pool = NewPool(poolPath, time.Now().Unix())
+		pools.set(poolPath, pool)
+	}
+	poolTier.changeTier(runtime.ChainHeight(), currentTime, pools, poolPath, tier)
 }
 
 // changePoolTier internally changes the pool tier and returns old and new tiers.
@@ -127,7 +132,7 @@ func changePoolTier(poolPath string, tier uint64, currentTime int64) (uint64, ui
 	en.MintAndDistributeGns(cross)
 	previousTier := poolTier.CurrentTier(poolPath)
 
-	poolTier.changeTier(std.ChainHeight(), currentTime, pools, poolPath, tier)
+	poolTier.changeTier(runtime.ChainHeight(), currentTime, pools, poolPath, tier)
 
 	return previousTier, tier
 }
@@ -136,7 +141,7 @@ func changePoolTier(poolPath string, tier uint64, currentTime int64) (uint64, ui
 func removePoolTier(poolPath string, currentTime int64) {
 	en.MintAndDistributeGns(cross)
 
-	poolTier.changeTier(std.ChainHeight(), currentTime, pools, poolPath, NOT_EMISSION_TARGET_TIER)
+	poolTier.changeTier(runtime.ChainHeight(), currentTime, pools, poolPath, NOT_EMISSION_TARGET_TIER)
 }
 
 // setWarmUp internally sets the warm-up parameters.

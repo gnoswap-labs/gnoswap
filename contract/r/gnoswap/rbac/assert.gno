@@ -1,15 +1,13 @@
 package rbac
 
 import (
-	"std"
-
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
 // assertIsOwner panics if addr is not the current owner.
-func assertIsOwner(addr std.Address) {
+func assertIsOwner(addr address) {
 	if manager.Owner() != addr {
 		panic(makeErrorWithDetails(
 			errCallerIsNotOwner,
@@ -19,7 +17,7 @@ func assertIsOwner(addr std.Address) {
 }
 
 // assertIsPendingOwner panics if addr is not the pending owner.
-func assertIsPendingOwner(addr std.Address) {
+func assertIsPendingOwner(addr address) {
 	if manager.PendingOwner() != addr {
 		panic(makeErrorWithDetails(
 			errCallerIsNotPendingOwner,
@@ -29,7 +27,7 @@ func assertIsPendingOwner(addr std.Address) {
 }
 
 // assertIsAdmin panics if addr is not authorized for admin role.
-func assertIsAdmin(addr std.Address) {
+func assertIsAdmin(addr address) {
 	if !manager.IsAuthorized(prbac.ROLE_ADMIN.String(), addr) {
 		panic(
 			makeErrorWithDetails(
@@ -48,4 +46,24 @@ func assertIsValidRoleName(roleName string) {
 			ufmt.Sprintf("role name: %s", roleName),
 		))
 	}
+}
+
+func assertIsValidAddress(addr address) {
+	if addr == "" || !addr.IsValid() {
+		panic(makeErrorWithDetails(
+			errInvalidAddress,
+			ufmt.Sprintf("address: %s", addr.String()),
+		))
+	}
+}
+
+func assertIsAdminOrGovernance(addr address) {
+	if manager.IsAuthorized(prbac.ROLE_ADMIN.String(), addr) || manager.IsAuthorized(prbac.ROLE_GOVERNANCE.String(), addr) {
+		return
+	}
+
+	panic(makeErrorWithDetails(
+		errCallerIsNotAdminOrGovernance,
+		ufmt.Sprintf("caller: %s", addr.String()),
+	))
 }

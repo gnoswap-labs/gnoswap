@@ -2,7 +2,7 @@
 package main
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 	"time"
 
@@ -21,7 +21,7 @@ var t *testing.T
 
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	// current distribution targets
 	stakerAddr, _        = access.GetAddress(prbac.ROLE_STAKER.String())
@@ -43,7 +43,7 @@ func main() {
 
 	ufmt.Println("[SCENARIO] 2. Mint to distribution target (before upgrade)")
 	testing.SkipHeights(1)
-	ufmt.Println("[INFO] current block height", std.ChainHeight())
+	ufmt.Println("[INFO] current block height", runtime.ChainHeight())
 	mintAndDistribute()
 	println()
 
@@ -53,7 +53,7 @@ func main() {
 
 	println("[SCENARIO] 4. Mint to distribution target (after upgrade)")
 	testing.SkipHeights(1)
-	println("[INFO] current block height", std.ChainHeight())
+	println("[INFO] current block height", runtime.ChainHeight())
 	mintAndDistribute()
 	println()
 }
@@ -67,7 +67,7 @@ func initEmission() {
 func mintAndDistribute() {
 	testing.SetRealm(adminRealm)
 
-	testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/emission"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/emission"))
 
 	previousStakerBalance := gns.BalanceOf(stakerAddr)
 	previousGovStakerBalance := gns.BalanceOf(govStakerAddr)
@@ -107,10 +107,10 @@ func mintAndDistribute() {
 func changeDistributionTarget() {
 	testing.SetOriginCaller(adminAddr)
 
-	rbac.UpdateRoleAddress(cross, prbac.ROLE_STAKER.String(), newStakerAddr)
-	rbac.UpdateRoleAddress(cross, prbac.ROLE_GOV_STAKER.String(), newGovStakerAddr)
-	rbac.UpdateRoleAddress(cross, prbac.ROLE_DEVOPS.String(), newDevOpsAddr)
-	rbac.UpdateRoleAddress(cross, prbac.ROLE_COMMUNITY_POOL.String(), newCommunityPoolAddr)
+	rbac.UpdateRoleAddressNextVersion(cross, prbac.ROLE_STAKER.String(), newStakerAddr)
+	rbac.UpdateRoleAddressNextVersion(cross, prbac.ROLE_GOV_STAKER.String(), newGovStakerAddr)
+	rbac.UpdateRoleAddressNextVersion(cross, prbac.ROLE_DEVOPS.String(), newDevOpsAddr)
+	rbac.UpdateRoleAddressNextVersion(cross, prbac.ROLE_COMMUNITY_POOL.String(), newCommunityPoolAddr)
 
 	ufmt.Printf("[EXPECTED] staker address should be changed %s to %s\n", stakerAddr, newStakerAddr)
 	ufmt.Printf("[EXPECTED] gov staker address should be changed %s to %s\n", govStakerAddr, newGovStakerAddr)
