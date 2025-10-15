@@ -1131,7 +1131,6 @@ func TestReposition(t *testing.T) {
 					)
 				})
 			} else {
-				// positionId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()
 				tid, _, tickL, tickH, _, _ := Reposition(
 					cross,
 					positionId,
