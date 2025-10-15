@@ -67,7 +67,7 @@ func TestTransferToken(t *testing.T) {
 			to:          dummyReceiver,
 			amount:      1000,
 			shouldPanic: true,
-			panicMsg:    "unauthorized: caller g100fnnlz5eh87p5hvwt8pf279lxaelm8k8md049 is not admin or governance",
+			panicMsg:    "unauthorized: caller g13lpjmjhl2du7whed3wxe4n5508txxja6ezxeg7 is not admin or governance",
 		},
 		{
 			name: "success if enough balance",

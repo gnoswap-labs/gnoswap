@@ -28,9 +28,9 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	// "gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gnft"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"

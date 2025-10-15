@@ -5,7 +5,7 @@ import (
 
 	"gno.land/p/nt/avl"
 
-	"gno.land/r/gnoswap/v1/gnft"
+	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/v1/pool"
 )
 

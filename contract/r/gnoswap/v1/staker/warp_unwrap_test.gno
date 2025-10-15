@@ -9,7 +9,7 @@ import (
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 	"gno.land/r/gnoland/wugnot"
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/common"
 )
 
 func TestWrap(t *testing.T) {

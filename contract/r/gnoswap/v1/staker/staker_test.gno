@@ -9,8 +9,8 @@ import (
 	"gno.land/r/gnoswap/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
 
+	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/onbloc/bar"
 
 	prabc "gno.land/p/gnoswap/rbac"
