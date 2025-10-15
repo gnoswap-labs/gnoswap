@@ -1,14 +1,15 @@
 package router
 
 import (
-	"std"
+	"chain/runtime"
 	"strconv"
 
-	"gno.land/p/nt/ufmt"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoland/wugnot"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 var (
@@ -20,7 +21,7 @@ var (
 // ErrorMessages define all error message templates used throughout the router
 const (
 	// slippage validation
-	errExactOutAmountExceeded = "Received more than requested in [EXACT_OUT] requested=%s, actual=%s"
+	errExactOutAmountExceeded = "received more than requested in requested=%s, actual=%s"
 
 	// route validation
 	errInvalidRouteLength = "route length(%d) must be 1~7"
@@ -62,7 +63,7 @@ func newGnotSwapHandler(beforeBalance, wrappedAmount int64) *GnotSwapHandler {
 
 // UpdateNewBalance updates the current balance after swap operations.
 func (h *GnotSwapHandler) UpdateNewBalance() {
-	h.NewBalance = wugnot.BalanceOf(std.PreviousRealm().Address())
+	h.NewBalance = wugnot.BalanceOf(runtime.PreviousRealm().Address())
 }
 
 // HandleInputSwap manages unwrapping logic for GNOT input tokens.
@@ -85,7 +86,7 @@ func (h *GnotSwapHandler) HandleInputSwap() error {
 
 	toUnwrap := h.WrappedAmount - spend
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	return unwrapWithTransferFrom(caller, caller, toUnwrap)
 }
 
@@ -93,15 +94,20 @@ func (h *GnotSwapHandler) HandleInputSwap() error {
 type SwapValidator struct{}
 
 // exactOutAmount checks if output amount meets specified requirements.
-func (v *SwapValidator) exactOutAmount(resultAmount, specifiedAmount *u256.Uint) error {
+// For exact-out swaps, the output must be exactly the specified amount with tolerance up to swapCount units for rounding.
+func (v *SwapValidator) exactOutAmount(resultAmount, specifiedAmount *u256.Uint, swapCount int64) error {
+	diff := u256.Zero()
+
 	if resultAmount.Gte(specifiedAmount) {
-		return nil
+		diff = u256.Zero().Sub(resultAmount, specifiedAmount)
+	} else {
+		diff = u256.Zero().Sub(specifiedAmount, resultAmount)
 	}
 
-	diff := u256.Zero().Sub(specifiedAmount, resultAmount)
-	if diff.Gt(one) {
+	if diff.Gt(u256.NewUintFromInt64(swapCount)) {
 		return ufmt.Errorf(errExactOutAmountExceeded, specifiedAmount.ToString(), resultAmount.ToString())
 	}
+
 	return nil
 }
 
@@ -240,30 +246,31 @@ func finalizeSwap(
 	tokenAmountLimit *u256.Uint,
 	userBeforeWugnotBalance, userWrappedWugnot int64,
 	amountSpecified *u256.Uint,
+	swapCount int64,
+	isSetSqrtPriceLimitX96 bool,
 ) (*i256.Int, *i256.Int) {
 	validator := &SwapValidator{}
 
+	// Handle swap fee
+	resultAmountOutWithoutFee := handleSwapFee(outputToken, resultAmountOut)
+
 	// Validate exact out amount if applicable
-	if swapType == ExactOut {
-		if err := validator.exactOutAmount(resultAmountOut, amountSpecified); err != nil {
+	// If sqrtPriceLimitX96 is set, slippage check is not needed
+	if swapType == ExactOut && !isSetSqrtPriceLimitX96 {
+		if err := validator.exactOutAmount(resultAmountOutWithoutFee, amountSpecified, swapCount); err != nil {
 			panic(addDetailToError(errSlippage, err.Error()))
 		}
 	}
-
-	// Handle swap fee
-	resultAmountOutWithoutFee := handleSwapFee(outputToken, resultAmountOut)
 
 	// Handle GNOT token swaps
 	handler := newGnotSwapHandler(userBeforeWugnotBalance, userWrappedWugnot)
 	handler.UpdateNewBalance()
 
-	var err error
-	if inputToken == gnot {
-		err = handler.HandleInputSwap()
-	}
-
-	if err != nil {
-		panic(addDetailToError(errSlippage, err.Error()))
+	// Handle input GNOT token swap
+	if common.IsGNOTNativePath(inputToken) {
+		if err := handler.HandleInputSwap(); err != nil {
+			panic(err)
+		}
 	}
 
 	if err := validator.slippage(swapType, resultAmountIn, resultAmountOutWithoutFee, tokenAmountLimit); err != nil {

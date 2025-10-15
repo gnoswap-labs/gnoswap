@@ -1,23 +1,31 @@
 package rbac
 
-import "std"
+import (
+	"chain"
+	"chain/runtime"
 
-// emitRegisterRoleEvent emits a RegisterRole event with roleName information.
-func emitRegisterRoleEvent(roleName string) {
-	prevRealm := std.PreviousRealm()
-	std.Emit(
+	"gno.land/p/nt/ufmt"
+)
+
+// emitRegisterRoleEvent emits a RegisterRole event with roleName and address information.
+func emitRegisterRoleEvent(roleName string, version int, roleAddress address) {
+	versionStr := ufmt.Sprintf("%d", version)
+
+	prevRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"RegisterRole",
 		"prevAddr", prevRealm.Address().String(),
 		"prevRealm", prevRealm.PkgPath(),
 		"roleName", roleName,
-		"roleAddress", "",
+		"roleVersion", versionStr,
+		"roleAddress", roleAddress.String(),
 	)
 }
 
 // emitRemoveRoleEvent emits a RemoveRole event with roleName information.
 func emitRemoveRoleEvent(roleName string) {
-	prevRealm := std.PreviousRealm()
-	std.Emit(
+	prevRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"RemoveRole",
 		"prevAddr", prevRealm.Address().String(),
 		"prevRealm", prevRealm.PkgPath(),
@@ -27,13 +35,16 @@ func emitRemoveRoleEvent(roleName string) {
 }
 
 // emitUpdateRoleAddressEvent emits an UpdateRoleAddress event with roleName and address information.
-func emitUpdateRoleAddressEvent(roleName string, address std.Address) {
-	prevRealm := std.PreviousRealm()
-	std.Emit(
+func emitUpdateRoleAddressEvent(roleName string, version int, address address) {
+	versionStr := ufmt.Sprintf("%d", version)
+
+	prevRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"UpdateRoleAddress",
 		"prevAddr", prevRealm.Address().String(),
 		"prevRealm", prevRealm.PkgPath(),
 		"roleName", roleName,
+		"roleVersion", versionStr,
 		"roleAddress", address.String(),
 	)
 }

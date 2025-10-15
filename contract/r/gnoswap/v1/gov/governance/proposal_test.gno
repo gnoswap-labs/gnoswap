@@ -1,7 +1,7 @@
 package governance
 
 import (
-	"std"
+	"chain/runtime"
 	"testing"
 	"time"
 
@@ -90,7 +90,7 @@ func TestProposal_Validation(t *testing.T) {
 			data: &ProposalData{
 				proposalType: CommunityPoolSpend,
 				communityPoolSpend: CommunityPoolSpendInfo{
-					to:        std.Address(""),
+					to:        address(""),
 					tokenPath: "",
 					amount:    0,
 				},
@@ -169,18 +169,18 @@ func TestProposal_StatusOperations(t *testing.T) {
 				NewProposalStatus(config, 1000, tc.proposalType.IsExecutable(), baseTime.Unix()),
 				&ProposalMetadata{title: "Test", description: "Test"},
 				&ProposalData{proposalType: tc.proposalType},
-				std.Address("g1proposer"),
+				address("g1proposer"),
 				1,
 				baseTime.Unix(),
-				std.ChainHeight(),
+				runtime.ChainHeight(),
 			)
 
 			if tc.isExecuted {
-				err := proposal.execute(tc.currentTime.Unix(), 100, std.Address("g1executor"))
+				err := proposal.execute(tc.currentTime.Unix(), 100, address("g1executor"))
 				uassert.NoError(t, err)
 			}
 			if tc.isCanceled {
-				err := proposal.cancel(tc.currentTime.Unix(), 100, std.Address("g1canceler"))
+				err := proposal.cancel(tc.currentTime.Unix(), 100, address("g1canceler"))
 				uassert.NoError(t, err)
 			}
 
@@ -197,21 +197,21 @@ func TestNewProposal(t *testing.T) {
 		proposalType ProposalType
 		title        string
 		description  string
-		proposer     std.Address
+		proposer     address
 	}{
 		{
 			name:         "Create Text proposal",
 			proposalType: Text,
 			title:        "Test Title",
 			description:  "Test Description",
-			proposer:     std.Address("g1proposer"),
+			proposer:     address("g1proposer"),
 		},
 		{
 			name:         "Create CommunityPoolSpend proposal",
 			proposalType: CommunityPoolSpend,
 			title:        "Spend Proposal",
 			description:  "Community Pool Spend",
-			proposer:     std.Address("g1proposer"),
+			proposer:     address("g1proposer"),
 		},
 	}
 
@@ -236,7 +236,7 @@ func TestNewProposal(t *testing.T) {
 				tc.proposer,
 				1,
 				baseTime,
-				std.ChainHeight(),
+				runtime.ChainHeight(),
 			)
 
 			// then

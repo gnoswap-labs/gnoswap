@@ -1,7 +1,6 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
@@ -25,7 +24,7 @@ import (
 
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -64,6 +63,8 @@ func main() {
 	println("[INFO] Approving tokens for pool operations")
 	bar.Approve(cross, poolAddr, max_approve)
 	baz.Approve(cross, poolAddr, max_approve)
+	bar.Approve(cross, routerAddr, max_approve)
+	baz.Approve(cross, routerAddr, max_approve)
 
 	// Mint
 	println("[INFO] Minting position in bar-baz pool (tick range: 8000-12000)")

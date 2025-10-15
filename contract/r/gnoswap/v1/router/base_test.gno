@@ -1,12 +1,15 @@
 package router
 
 import (
+	"chain"
+	"chain/runtime"
 	"errors"
-	"std"
+	"math"
 	"testing"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
@@ -169,10 +172,10 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 
 			testUser := testutils.TestAddress("test_user")
 			testing.SetOriginCaller(testUser)
-			testing.SetRealm(std.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 
-			testCoins := std.Coins{{"ugnot", tt.sentAmount}}
-			testing.IssueCoins(std.OriginCaller(), testCoins)
+			testCoins := chain.Coins{{"ugnot", tt.sentAmount}}
+			testing.IssueCoins(runtime.OriginCaller(), testCoins)
 			if tt.sentAmount > 0 {
 				testing.IssueCoins(routerAddr, testCoins)
 			}
@@ -261,6 +264,7 @@ func TestProcessRoute(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		CreatePoolWithoutFee(t)
 		MakeThirdMintPositionWithoutFee(t)
+		common.SafeGRC20Approve(cross, fooPath, routerAddr, 1000000)
 		route := foobar500
 		toSwap := i256.NewInt(1000)
 		swapType := ExactIn
@@ -286,6 +290,7 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 	}
 
 	testing.SetRealm(adminRealm)
+	common.SafeGRC20Approve(cross, fooPath, routerAddr, math.MaxInt64)
 	CreatePoolWithoutFee(t)
 	MakeThirdMintPositionWithoutFee(t)
 
@@ -300,8 +305,6 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
-
-		// check output amount is not zero
 		if amountOut.Cmp(u256.Zero()) == 0 {
 			t.Error("expected non-zero amountOut")
 		}

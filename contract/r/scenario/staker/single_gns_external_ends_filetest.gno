@@ -13,7 +13,6 @@ package main
 
 import (
 	"fmt"
-	"std"
 	"strconv"
 	"testing"
 	"time"
@@ -41,12 +40,12 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	// g1v4u8getjdeskcsmjv4shgmmjta047h6lua7mup
 	externalCreatorAddr  = testutils.TestAddress("externalCreator")
 	externalCreatorUser  = externalCreatorAddr
-	externalCreatorRealm = std.NewUserRealm(externalCreatorAddr)
+	externalCreatorRealm = testing.NewUserRealm(externalCreatorAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
@@ -110,7 +109,7 @@ func main() {
 	endExternalGnsIncentive()
 	println()
 
-	println("[SCENARIO] 11. Collect rewards after external incentive ends")
+	println("[SCENARIO] 11. Verify no rewards after external incentive ends")
 	collectRewardsAfterExternalEnds()
 }
 
@@ -302,29 +301,14 @@ func collectRewardsAfterExternalEnds() {
 	ufmt.Printf("[INFO] total reward collected: %d\n", diff)
 
 	if diff == 0 {
-		panic("reward can not be zero")
+		panic("should not receive rewards after external incentive ends and no internal incentive exists")
 	}
 
-	ufmt.Println("[EXPECTED] positions should still receive rewards after external incentive ends")
+	ufmt.Println("[EXPECTED] positions should receive rewards after external incentive ends (no internal incentive)")
 }
 
-func positionIdFrom(positionId any) grc721.TokenID {
-	if positionId == nil {
-		panic("positionId is nil")
-	}
-
-	switch positionId.(type) {
-	case string:
-		return grc721.TokenID(positionId.(string))
-	case int:
-		return grc721.TokenID(strconv.Itoa(positionId.(int)))
-	case uint64:
-		return grc721.TokenID(strconv.Itoa(int(positionId.(uint64))))
-	case grc721.TokenID:
-		return positionId.(grc721.TokenID)
-	default:
-		panic("unsupported positionId type")
-	}
+func positionIdFrom(positionId int) grc721.TokenID {
+	return grc721.TokenID(strconv.Itoa(positionId))
 }
 
 // Output:
@@ -367,12 +351,12 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] skip blocks until external incentive ends
 // [INFO] end external incentive and collect remaining GNS
 // [INFO] GNS balance before ending: 0
-// [INFO] GNS balance after ending: 1000005785
+// [INFO] GNS balance after ending: 1003173790
 // [EXPECTED] external creator should receive deposit amount minus penalty
 //
-// [SCENARIO] 11. Collect rewards after external incentive ends
+// [SCENARIO] 11. Verify no rewards after external incentive ends
 // [INFO] collect rewards after external incentive ends
 // [INFO] GNS balance before collection: 99990000003470
 // [INFO] GNS balance after collection: 99997247440185
 // [INFO] total reward collected: 7247436715
-// [EXPECTED] positions should still receive rewards after external incentive ends
+// [EXPECTED] positions should receive rewards after external incentive ends (no internal incentive)

@@ -3,13 +3,12 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
-	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/launchpad"
@@ -20,7 +19,7 @@ var t *testing.T
 
 var (
 	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	launchpadAddr, _ = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 )
@@ -45,7 +44,7 @@ func createProjectByInvalidRecipient() {
 
 	projectName := "OBL Launchpad Project"
 	rewardTokenPath := "gno.land/r/onbloc/obl"
-	recipientAddr := std.Address("invalidAddress")
+	recipientAddr := address("invalidAddress")
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := "gno.land/r/gnoswap/v1/gov/xgns"
 	conditionsAmount := "1000000"

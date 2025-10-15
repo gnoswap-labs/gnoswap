@@ -2,7 +2,6 @@ package position
 
 import (
 	"errors"
-	"std"
 	"strconv"
 	"testing"
 
@@ -12,19 +11,19 @@ import (
 func TestTransferUGNOT(t *testing.T) {
 	tests := []struct {
 		name        string
-		action      func(t *testing.T, from, to std.Address)
-		verify      func(t *testing.T, to std.Address) int64
-		from        std.Address
-		to          std.Address
+		action      func(t *testing.T, from, to address)
+		verify      func(t *testing.T, to address) int64
+		from        address
+		to          address
 		expected    string
 		shouldPanic bool
 	}{
 		{
 			name: "transferUGNOT is success by zero amount",
-			action: func(t *testing.T, from, to std.Address) {
+			action: func(t *testing.T, from, to address) {
 				transferUGNOT(from, to, 0)
 			},
-			verify: func(t *testing.T, to std.Address) int64 {
+			verify: func(t *testing.T, to address) int64 {
 				return ugnotBalanceOf(t, to)
 			},
 			from:        alice,
@@ -34,12 +33,12 @@ func TestTransferUGNOT(t *testing.T) {
 		},
 		{
 			name: "transferUGNOT is success by valid transfer",
-			action: func(t *testing.T, from, to std.Address) {
+			action: func(t *testing.T, from, to address) {
 				ugnotFaucet(t, from, 100)
-				testing.SetRealm(std.NewUserRealm(from))
+				testing.SetRealm(testing.NewUserRealm(from))
 				transferUGNOT(from, to, 100)
 			},
-			verify: func(t *testing.T, to std.Address) int64 {
+			verify: func(t *testing.T, to address) int64 {
 				return ugnotBalanceOf(t, to)
 			},
 			from:        positionAddr,
@@ -68,17 +67,17 @@ func TestTransferUGNOT(t *testing.T) {
 func TestWrapInPosition(t *testing.T) {
 	tests := []struct {
 		name           string
-		action         func(t *testing.T, from, to std.Address) error
-		verify         func(t *testing.T, to std.Address) int64
-		from           std.Address
-		to             std.Address
+		action         func(t *testing.T, from, to address) error
+		verify         func(t *testing.T, to address) int64
+		from           address
+		to             address
 		expected       string
 		shouldPanic    bool
 		expectedErrMsg string
 	}{
 		{
 			name: "wrap is failed by amount less than minimum",
-			action: func(t *testing.T, from, to std.Address) error {
+			action: func(t *testing.T, from, to address) error {
 				return wrap(999, to)
 			},
 			verify:         nil,
@@ -89,7 +88,7 @@ func TestWrapInPosition(t *testing.T) {
 		},
 		{
 			name: "wrap is failed by zero amount",
-			action: func(t *testing.T, from, to std.Address) error {
+			action: func(t *testing.T, from, to address) error {
 				return wrap(0, to)
 			},
 			verify:         nil,
@@ -100,12 +99,12 @@ func TestWrapInPosition(t *testing.T) {
 		},
 		{
 			name: "wrap is success by valid amount",
-			action: func(t *testing.T, from, to std.Address) error {
+			action: func(t *testing.T, from, to address) error {
 				ugnotFaucet(t, from, 1000)
-				testing.SetRealm(std.NewUserRealm(from))
+				testing.SetRealm(testing.NewUserRealm(from))
 				return wrap(1000, to)
 			},
-			verify: func(t *testing.T, to std.Address) int64 {
+			verify: func(t *testing.T, to address) int64 {
 				return TokenBalance(t, wugnotPath, to)
 			},
 			from:        positionAddr,
@@ -132,16 +131,16 @@ func TestWrapInPosition(t *testing.T) {
 func TestUnWrap(t *testing.T) {
 	tests := []struct {
 		name        string
-		action      func(t *testing.T, from, to std.Address) error
-		verify      func(t *testing.T, to std.Address) int64
-		from        std.Address
-		to          std.Address
+		action      func(t *testing.T, from, to address) error
+		verify      func(t *testing.T, to address) int64
+		from        address
+		to          address
 		expected    string
 		shouldPanic bool
 	}{
 		{
 			name: "unwrap is failed by zero amount",
-			action: func(t *testing.T, from, to std.Address) error {
+			action: func(t *testing.T, from, to address) error {
 				return unwrap(0, to)
 			},
 			verify:      nil,
@@ -152,17 +151,17 @@ func TestUnWrap(t *testing.T) {
 		},
 		{
 			name: "unwrap is success by valid amount",
-			action: func(t *testing.T, from, to std.Address) error {
+			action: func(t *testing.T, from, to address) error {
 				ugnotFaucet(t, from, 1000)
 
-				testing.SetRealm(std.NewUserRealm(from))
+				testing.SetRealm(testing.NewUserRealm(from))
 				err := wrap(1000, to)
 				uassert.Nil(t, err, "wrap should not return error")
 
 				TokenApprove(t, wugnotPath, to, from, 1000)
 				return unwrap(1000, to)
 			},
-			verify: func(t *testing.T, to std.Address) int64 {
+			verify: func(t *testing.T, to address) int64 {
 				return ugnotBalanceOf(t, to)
 			},
 			from:        positionAddr,
@@ -250,7 +249,7 @@ func TestIsWrappedToken(t *testing.T) {
 		},
 		{
 			name:      "isWrappedToken is failed by similar but different tokenPath",
-			tokenPath: "gno.land/r/gnoland/wugnot",
+			tokenPath: "gno.land/r/gnolands/wugnot",
 			expected:  false,
 		},
 	}
@@ -273,7 +272,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 	tests := []struct {
 		name          string
 		amountDesired string
-		userAddress   std.Address
+		userAddress   address
 		sentAmount    int64
 		expectError   bool
 		expectedWrap  int64
@@ -353,7 +352,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			if amount > 0 {
 				ugnotFaucet(t, positionAddr, amount)
 			}
-			testing.SetRealm(std.NewUserRealm(positionAddr))
+			testing.SetRealm(testing.NewUserRealm(positionAddr))
 
 			transferUGNOT(positionAddr, positionAddr, amount)
 

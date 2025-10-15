@@ -1,7 +1,6 @@
 package governance
 
 import (
-	"std"
 	"strings"
 	"testing"
 	"time"
@@ -20,7 +19,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 		// given
 		title               string
 		description         string
-		callerAddress       std.Address
+		callerAddress       address
 		setupConfig         *Config
 		setupGnsBalance     int64
 		setupActiveProposal bool
@@ -181,7 +180,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 				setupTestActiveProposal(t, tt.callerAddress)
 			}
 
-			testing.SetRealm(std.NewUserRealm(tt.callerAddress))
+			testing.SetRealm(testing.NewUserRealm(tt.callerAddress))
 
 			// when
 			if tt.expectedHasAbort {
@@ -212,10 +211,10 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 		// given
 		title               string
 		description         string
-		to                  std.Address
+		to                  address
 		tokenPath           string
 		amount              int64
-		callerAddress       std.Address
+		callerAddress       address
 		setupConfig         *Config
 		setupGnsBalance     int64
 		setupActiveProposal bool
@@ -256,7 +255,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			name:          "fail - invalid recipient address",
 			title:         "Community Pool Spend",
 			description:   "Spend from community pool for development",
-			to:            std.Address("invalid"),
+			to:            address("invalid"),
 			tokenPath:     "gno.land/r/demo/gns",
 			amount:        5_000_000_000,
 			callerAddress: testutils.TestAddress("proposer"),
@@ -344,7 +343,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 				setupTestActiveProposal(t, tt.callerAddress)
 			}
 
-			testing.SetRealm(std.NewUserRealm(tt.callerAddress))
+			testing.SetRealm(testing.NewUserRealm(tt.callerAddress))
 
 			// when
 			if tt.expectedHasAbort {
@@ -377,7 +376,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 		description         string
 		numToExecute        int64
 		executions          string
-		callerAddress       std.Address
+		callerAddress       address
 		setupConfig         *Config
 		setupGnsBalance     int64
 		setupActiveProposal bool
@@ -477,7 +476,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 				setupTestActiveProposal(t, tt.callerAddress)
 			}
 
-			testing.SetRealm(std.NewUserRealm(tt.callerAddress))
+			testing.SetRealm(testing.NewUserRealm(tt.callerAddress))
 
 			// when
 			if tt.expectedHasAbort {
@@ -582,7 +581,7 @@ func TestGovernancePropose_ProposeTextInputValidation(t *testing.T) {
 				caller.String(): NewVotingInfo(5_000_000_000, caller),
 			}, 5_000_000_000)
 
-			testing.SetRealm(std.NewUserRealm(caller))
+			testing.SetRealm(testing.NewUserRealm(caller))
 
 			// when & then
 			if tt.shouldFail {
@@ -788,7 +787,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 				addProposal(tt.setupActiveProposal())
 			}
 
-			testing.SetRealm(std.NewUserRealm(caller))
+			testing.SetRealm(testing.NewUserRealm(caller))
 
 			// when & then
 			if tt.shouldFail {
@@ -807,7 +806,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 	tests := []struct {
 		name          string
-		to            std.Address
+		to            address
 		tokenPath     string
 		amount        int64
 		expectedError string
@@ -822,7 +821,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 		},
 		{
 			name:          "fail - empty recipient address",
-			to:            std.Address(""),
+			to:            address(""),
 			tokenPath:     "gno.land/r/demo/gns",
 			amount:        1_000_000_000,
 			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || to is invalid address",
@@ -830,7 +829,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 		},
 		{
 			name:          "fail - invalid recipient address format",
-			to:            std.Address("invalid_address_format"),
+			to:            address("invalid_address_format"),
 			tokenPath:     "gno.land/r/demo/gns",
 			amount:        1_000_000_000,
 			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || to is invalid address",
@@ -881,7 +880,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 				caller.String(): NewVotingInfo(5_000_000_000, caller),
 			}, 5_000_000_000)
 
-			testing.SetRealm(std.NewUserRealm(caller))
+			testing.SetRealm(testing.NewUserRealm(caller))
 
 			// when & then
 			if tt.shouldFail {
@@ -1008,7 +1007,7 @@ func TestGovernancePropose_ParameterChangeValidation(t *testing.T) {
 				caller.String(): NewVotingInfo(5_000_000_000, caller),
 			}, 5_000_000_000)
 
-			testing.SetRealm(std.NewUserRealm(caller))
+			testing.SetRealm(testing.NewUserRealm(caller))
 
 			// when & then
 			if tt.shouldFail {
@@ -1055,15 +1054,15 @@ func TestGovernancePropose_ProposalIDGeneration(t *testing.T) {
 		}, 10_000_000_000)
 
 		// when - create first proposal
-		testing.SetRealm(std.NewUserRealm(caller1))
+		testing.SetRealm(testing.NewUserRealm(caller1))
 		proposalId1 := ProposeText(cross, "Proposal 1", "Description 1")
 
 		// when - create second proposal from same user
-		testing.SetRealm(std.NewUserRealm(caller2))
+		testing.SetRealm(testing.NewUserRealm(caller2))
 		proposalId2 := ProposeText(cross, "Proposal 2", "Description 2")
 
 		// when - create third proposal from different user
-		testing.SetRealm(std.NewUserRealm(caller3))
+		testing.SetRealm(testing.NewUserRealm(caller3))
 		proposalId3 := ProposeText(cross, "Proposal 3", "Description 3")
 
 		// then
@@ -1097,7 +1096,7 @@ func setupTestConfig(t *testing.T, config *Config) {
 	setConfig(nextVersion, *config)
 }
 
-func setupTestGnsBalance(t *testing.T, address std.Address, balance int64) {
+func setupTestGnsBalance(t *testing.T, address address, balance int64) {
 	// Mock GNS balance setup
 	// In actual implementation, this would set up the GNS token balance
 	testing.SetRealm(adminRealm)
@@ -1115,7 +1114,7 @@ func setupTestUserVotesWithDelegation(t *testing.T, userVotes map[string]*Voting
 	}
 }
 
-func setupTestActiveProposal(t *testing.T, proposerAddress std.Address) {
+func setupTestActiveProposal(t *testing.T, proposerAddress address) {
 	// Create an active proposal for the proposer
 	config, ok := getCurrentConfig()
 	if !ok {

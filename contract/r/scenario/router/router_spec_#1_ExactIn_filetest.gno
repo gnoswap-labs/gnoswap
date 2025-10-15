@@ -1,7 +1,6 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
@@ -25,7 +24,7 @@ var (
 	user1Addr = testutils.TestAddress("user1")
 
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -110,11 +109,11 @@ func testExactInputSinglePool() {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
 
 	println("[INFO] Setting swap permission with user1 account")
-	user1Realm := std.NewUserRealm(user1Addr)
+	user1Realm := testing.NewUserRealm(user1Addr)
 	testing.SetRealm(user1Realm)
 
 	println("[INFO] Approving bar and baz tokens")
-	bar.Approve(cross, poolAddr, maxApprove)
+	bar.Approve(cross, routerAddr, maxApprove)
 	baz.Approve(cross, routerAddr, maxApprove)
 
 	println("[INFO] Checking balances before swap")

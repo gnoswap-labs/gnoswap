@@ -2,11 +2,12 @@ package pool
 
 import (
 	"encoding/base64"
+	"time"
 
-	"gno.land/p/nt/ufmt"
 	plp "gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
 )
@@ -83,7 +84,7 @@ func positionUpdate(
 	if liquidityDelta.IsZero() {
 		liquidityNext = position.liquidity
 	} else {
-		liquidityNext = liquidityMathAddDelta(position.liquidity, liquidityDelta)
+		liquidityNext = common.LiquidityMathAddDelta(position.liquidity, liquidityDelta)
 	}
 
 	// validate negative feeGrowth before calculation
@@ -189,6 +190,9 @@ func (p *Pool) positionUpdateWithKey(
 	feeGrowthInside1X128 = feeGrowthInside1X128.NilToZero()
 
 	// if position does not exist, create a new position
+	//
+	// Note: The positionUpdate function is designed to handle both new positions and existing positions,
+	// so there's no need to check for existence in GetPosition.
 	positionToUpdate, _ := p.GetPosition(positionKey)
 	positionAfterUpdate, err := positionUpdate(positionToUpdate, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
 	if err != nil {
@@ -247,6 +251,9 @@ func (p *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.
 	}
 
 	liqDelta := params.liquidityDelta
+	if liqDelta.IsZero() {
+		return position, zero, zero, nil
+	}
 
 	amount0, amount1 := i256.Zero(), i256.Zero()
 
@@ -266,14 +273,22 @@ func (p *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.
 		amount0 = calculateToken0Amount(sqrtRatioLower, sqrtRatioUpper, liqDelta)
 
 	case tick < params.tickUpper:
-		// case 2
+		// case 2: Current price is within the position range
 		liquidityBefore := p.liquidity
+		currentTime := time.Now().Unix()
+		
+		// Update oracle BEFORE liquidity changes
+		err := p.writeObservation(currentTime, tick, liquidityBefore)
+		if err != nil {
+			return PositionInfo{}, zero, zero, err
+		}
+
 		// token0 used from current price to upper tick
 		amount0 = calculateToken0Amount(sqrtPriceX96, sqrtRatioUpper, liqDelta)
 		// token1 used from lower tick to current price
 		amount1 = calculateToken1Amount(sqrtRatioLower, sqrtPriceX96, liqDelta)
 		// update pool's active liquidity since price is in range
-		p.liquidity = liquidityMathAddDelta(liquidityBefore, liqDelta)
+		p.liquidity = common.LiquidityMathAddDelta(liquidityBefore, liqDelta)
 
 	default:
 		// case 3

@@ -1,7 +1,8 @@
 package launchpad
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 	"time"
 
 	"gno.land/p/nt/ufmt"
@@ -19,10 +20,10 @@ import (
 //
 // Returns amount collected and any error.
 func CollectDepositGns(cur realm, depositID string) (int64, error) {
-	halt.AssertIsNotHaltedLaunchpad()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedLaunchpadWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
-	previousRealm := std.PreviousRealm()
+	previousRealm := runtime.PreviousRealm()
 	access.AssertIsUser(previousRealm)
 
 	caller := previousRealm.Address()
@@ -33,14 +34,14 @@ func CollectDepositGns(cur realm, depositID string) (int64, error) {
 	deposit := mustGetDeposit(depositID)
 
 	currentTime := time.Now().Unix()
-	recipient, withdrawalAmount, err := withdrawDeposit(deposit, std.ChainHeight(), currentTime)
+	recipient, withdrawalAmount, err := withdrawDeposit(deposit, runtime.ChainHeight(), currentTime)
 	if err != nil {
 		panic(err.Error())
 	}
 
 	unStakeGovernance(recipient, withdrawalAmount)
 
-	std.Emit(
+	chain.Emit(
 		"CollectDepositGns",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
@@ -52,7 +53,7 @@ func CollectDepositGns(cur realm, depositID string) (int64, error) {
 }
 
 // withdrawDeposit withdraws a deposit and updates the reward manager.
-func withdrawDeposit(deposit *Deposit, currentHeight, currentTime int64) (std.Address, int64, error) {
+func withdrawDeposit(deposit *Deposit, currentHeight, currentTime int64) (address, int64, error) {
 	// Input validation
 	if deposit == nil {
 		return "", 0, makeErrorWithDetails(errNotExistDeposit, "deposit is nil")
@@ -111,6 +112,6 @@ func withdrawDeposit(deposit *Deposit, currentHeight, currentTime int64) (std.Ad
 }
 
 // unStakeGovernance removes the staked amount from governance system
-func unStakeGovernance(recipient std.Address, withdrawalAmount int64) {
+func unStakeGovernance(recipient address, withdrawalAmount int64) {
 	gov_staker.SetAmountByProjectWallet(cross, recipient, withdrawalAmount, false)
 }

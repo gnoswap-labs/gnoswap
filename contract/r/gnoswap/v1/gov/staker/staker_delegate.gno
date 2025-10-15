@@ -1,7 +1,8 @@
 package staker
 
 import (
-	"std"
+	"chain"
+	"chain/runtime"
 	"time"
 
 	"gno.land/r/gnoswap/access"
@@ -38,13 +39,13 @@ import (
 // Returns delegated amount.
 func Delegate(
 	cur realm,
-	to std.Address,
+	to address,
 	amount int64,
 	referrer string,
 ) int64 {
-	halt.AssertIsNotHaltedGovStaker()
+	halt.AssertIsNotHaltedGovStakerWithVersion(1)
 
-	prevRealm := std.PreviousRealm()
+	prevRealm := runtime.PreviousRealm()
 	access.AssertIsUser(prevRealm)
 	access.AssertIsValidAddress(to)
 
@@ -52,8 +53,8 @@ func Delegate(
 
 	caller := prevRealm.Address()
 	from := caller
-	currentRealm := std.CurrentRealm()
-	currentHeight := std.ChainHeight()
+	currentRealm := runtime.CurrentRealm()
+	currentHeight := runtime.ChainHeight()
 	currentTimestamp := time.Now().Unix()
 
 	emission.MintAndDistributeGns(cross)
@@ -74,7 +75,7 @@ func Delegate(
 
 	registeredReferrer := registerReferrer(caller, referrer)
 
-	std.Emit(
+	chain.Emit(
 		"Delegate",
 		"prevAddr", prevRealm.Address().String(),
 		"prevRealm", prevRealm.PkgPath(),
@@ -112,17 +113,17 @@ func Delegate(
 // Returns undelegated amount.
 func Undelegate(
 	cur realm,
-	from std.Address,
+	from address,
 	amount int64,
 ) int64 {
-	halt.AssertIsNotHaltedGovStaker()
+	halt.AssertIsNotHaltedGovStakerWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsValidAddress(from)
 
 	assertIsValidDelegateAmount(amount)
 
-	currentHeight := std.ChainHeight()
+	currentHeight := runtime.ChainHeight()
 	currentTimestamp := time.Now().Unix()
 
 	emission.MintAndDistributeGns(cross)
@@ -138,8 +139,8 @@ func Undelegate(
 		panic(err)
 	}
 
-	prevRealm := std.PreviousRealm()
-	std.Emit(
+	prevRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"Undelegate",
 		"prevAddr", prevRealm.Address().String(),
 		"prevRealm", prevRealm.PkgPath(),
@@ -179,18 +180,18 @@ func Undelegate(
 func Redelegate(
 	cur realm,
 	delegatee,
-	newDelegatee std.Address,
+	newDelegatee address,
 	amount int64,
 ) int64 {
-	halt.AssertIsNotHaltedGovStaker()
+	halt.AssertIsNotHaltedGovStakerWithVersion(1)
 
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	access.AssertIsValidAddress(delegatee)
 	access.AssertIsValidAddress(newDelegatee)
 
 	assertIsValidDelegateAmount(amount)
 
-	currentHeight := std.ChainHeight()
+	currentHeight := runtime.ChainHeight()
 	currentTimestamp := time.Now().Unix()
 	delegator := caller
 
@@ -215,22 +216,14 @@ func Redelegate(
 		currentTimestamp,
 	)
 
-	prevRealm := std.PreviousRealm()
-	std.Emit(
-		"Undelegate",
-		"prevAddr", prevRealm.Address().String(),
-		"prevRealm", prevRealm.PkgPath(),
-		"from", delegation.DelegateFrom().String(),
-		"to", delegation.DelegateTo().String(),
-		"amount", formatInt(delegation.DelegatedAmount()),
-	)
-
-	std.Emit(
+	prevRealm := runtime.PreviousRealm()
+	chain.Emit(
 		"Redelegate",
 		"prevAddr", prevRealm.Address().String(),
 		"prevRealm", prevRealm.PkgPath(),
-		"from", delegation.DelegateFrom().String(),
-		"to", delegation.DelegateTo().String(),
+		"from", delegator.String(),
+		"previousDelegatee", delegatee.String(),
+		"newDelegatee", newDelegatee.String(),
 		"amount", formatInt(delegation.DelegatedAmount()),
 	)
 
@@ -241,10 +234,10 @@ func Redelegate(
 // Allows users to collect GNS tokens that completed undelegation lockup period.
 // Burns xGNS and returns GNS tokens.
 func CollectUndelegatedGns(cur realm) int64 {
-	halt.AssertIsNotHaltedGovStaker()
-	halt.AssertIsNotHaltedWithdraw()
+	halt.AssertIsNotHaltedGovStakerWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
-	prevRealm := std.PreviousRealm()
+	prevRealm := runtime.PreviousRealm()
 	caller := prevRealm.Address()
 	currentTime := time.Now().Unix()
 
@@ -267,7 +260,7 @@ func CollectUndelegatedGns(cur realm) int64 {
 		totalLockedAmount = 0
 	}
 
-	std.Emit(
+	chain.Emit(
 		"CollectUndelegatedGns",
 		"prevAddr", prevRealm.Address().String(),
 		"prevRealm", prevRealm.PkgPath(),
@@ -282,8 +275,8 @@ func CollectUndelegatedGns(cur realm) int64 {
 // delegate processes delegation operations.
 // Validates delegation amount, creates delegation records, and updates reward tracking.
 func delegate(
-	from std.Address,
-	to std.Address,
+	from address,
+	to address,
 	amount,
 	currentHeight,
 	currentTimestamp int64,
@@ -314,7 +307,7 @@ func delegate(
 // Validates undelegation amount, processes withdrawals, and updates reward tracking.
 func unDelegate(
 	delegator,
-	delegatee std.Address,
+	delegatee address,
 	amount,
 	currentHeight,
 	currentTimestamp int64,
@@ -372,7 +365,7 @@ func unDelegate(
 // Used for redelegation where tokens are immediately available.
 func unDelegateWithoutLockup(
 	delegator,
-	delegatee std.Address,
+	delegatee address,
 	amount,
 	currentHeight,
 	currentTime int64,
@@ -420,7 +413,7 @@ func unDelegateWithoutLockup(
 
 // collectDelegations processes collection of undelegated tokens.
 // Iterates through user delegations and collects available amounts.
-func collectDelegations(user std.Address, currentTime int64) (int64, error) {
+func collectDelegations(user address, currentTime int64) (int64, error) {
 	collectedAmount := int64(0)
 
 	delegations := getUserDelegations(user)
@@ -457,7 +450,7 @@ func collectDelegations(user std.Address, currentTime int64) (int64, error) {
 
 // registerReferrer registers or validates referrer for delegation.
 // Handles referral system integration for delegation operations.
-func registerReferrer(caller std.Address, referrer string) string {
+func registerReferrer(caller address, referrer string) string {
 	success := referral.TryRegister(cross, caller, referrer)
 	actualReferrer := referrer
 

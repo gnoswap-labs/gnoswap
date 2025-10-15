@@ -1,14 +1,10 @@
 package launchpad
 
-import (
-	"std"
-
-	"gno.land/p/nt/ufmt"
-)
+import "gno.land/p/nt/ufmt"
 
 // assertIsDepositOwner asserts that the caller is the owner of the deposit.
 // Panics if the caller is not the owner of the deposit.
-func assertIsDepositOwner(depositID string, caller std.Address) {
+func assertIsDepositOwner(depositID string, caller address) {
 	deposit, err := getDeposit(depositID)
 	if err != nil {
 		panic(err.Error())
@@ -38,7 +34,7 @@ func assertIsValidAmount(amount int64) {
 
 // assertHasProject asserts that the caller is the owner of at least one project.
 // Panics if the caller is not the owner of any project.
-func assertHasProject(caller std.Address) {
+func assertHasProject(caller address) {
 	hasProject := false
 
 	projects.Iterate("", "", func(key string, value interface{}) bool {

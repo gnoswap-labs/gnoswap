@@ -1,9 +1,5 @@
 package governance
 
-import (
-	"std"
-)
-
 // ProposalStatusType represents the current status of a proposal in its lifecycle.
 // These statuses determine what actions are available for a proposal.
 type ProposalStatusType int
@@ -229,7 +225,7 @@ func (p *ProposalStatus) DiffVoteWeight() int64 {
 //
 // Returns:
 //   - error: cancellation error if operation fails
-func (p *ProposalStatus) cancel(canceledAt int64, canceledHeight int64, canceledBy std.Address) error {
+func (p *ProposalStatus) cancel(canceledAt int64, canceledHeight int64, canceledBy address) error {
 	return p.actionStatus.cancel(canceledAt, canceledHeight, canceledBy)
 }
 
@@ -243,7 +239,7 @@ func (p *ProposalStatus) cancel(canceledAt int64, canceledHeight int64, canceled
 //
 // Returns:
 //   - error: execution error if operation fails
-func (p *ProposalStatus) execute(executedAt int64, executedHeight int64, executedBy std.Address) error {
+func (p *ProposalStatus) execute(executedAt int64, executedHeight int64, executedBy address) error {
 	return p.actionStatus.execute(executedAt, executedHeight, executedBy)
 }
 

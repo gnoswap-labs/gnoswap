@@ -1,12 +1,16 @@
+// PKGPATH: gno.land/r/demo/main
+
 package main
 
 import (
-	"std"
+	"chain"
+	"strconv"
 	"testing"
 
-	"gno.land/p/nt/uassert"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/uassert"
 
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/v1/common"
 
@@ -31,11 +35,11 @@ const (
 // Variables for test addresses and realms
 var (
 	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm      = std.NewUserRealm(adminAddr)
+	adminRealm      = testing.NewUserRealm(adminAddr)
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	posRealm        = std.NewUserRealm(positionAddr)
+	posRealm        = testing.NewUserRealm(positionAddr)
 	routerAddr, _   = access.GetAddress(prbac.ROLE_ROUTER.String())
-	rouRealm        = std.NewUserRealm(routerAddr)
+	rouRealm        = testing.NewCodeRealm("gno.land/r/gnoswap/v1/router")
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 )
 
@@ -95,7 +99,6 @@ func testDrySwapVsActualSwap(t *testing.T) {
 		fooPath,
 		barPath,
 		FeeTier500,
-		positionAddr,
 		-tickUpper,
 		-tickLower,
 		liquidityExpect,
@@ -132,12 +135,7 @@ func testDrySwapVsActualSwap(t *testing.T) {
 	bar.Approve(cross, poolAddr, 16000)
 
 	// set current realm and origin caller
-	func() {
-		ctx := testing.GetContext()
-		ctx.CurrentRealm = rouRealm
-		ctx.OriginCaller = adminAddr
-		testing.SetContext(ctx)
-	}()
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
 
 	// Execute actual swap
 	actualPoolIn, actualPoolOut := pool.Swap(
@@ -150,6 +148,9 @@ func testDrySwapVsActualSwap(t *testing.T) {
 		amountSpecified,
 		MIN_PRICE,
 		adminAddr,
+		func(cur realm, amount0Delta, amount1Delta string) error {
+			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
+		},
 	)
 
 	println("[INFO] Actual swap completed")
@@ -167,6 +168,35 @@ func testDrySwapVsActualSwap(t *testing.T) {
 
 	println("[SCENARIO] 3. DrySwap vs Actual Swap Comparison Test - PASSED")
 	println("[INFO] DrySwap accurately predicted the actual swap amounts")
+}
+
+func mockSwapCallback(token0Path string, token1Path string, amount0Delta string, amount1Delta string) error {
+	testing.SetRealm(adminRealm)
+
+	const wugnotPath = "gno.land/r/gnoland/wugnot"
+	const ugnotDenom = "ugnot"
+
+	amount0Int64, _ := strconv.ParseInt(amount0Delta, 10, 64)
+	amount1Int64, _ := strconv.ParseInt(amount1Delta, 10, 64)
+
+	if amount0Int64 > 0 {
+		if token0Path == wugnotPath {
+			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Int64}})
+			wugnot.Deposit(cross)
+		}
+
+		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Int64)
+	}
+	if amount1Int64 > 0 {
+		if token1Path == wugnotPath {
+			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Int64}})
+			wugnot.Deposit(cross)
+		}
+
+		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Int64)
+	}
+
+	return nil
 }
 
 // Output:

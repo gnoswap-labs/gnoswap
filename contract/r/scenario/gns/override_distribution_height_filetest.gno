@@ -1,7 +1,6 @@
 package main
 
 import (
-	"std"
 	"testing"
 	"time"
 
@@ -19,7 +18,7 @@ var adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
 func main() {
 	println("[SCENARIO] Test Override Distribution Start Height with Halving Year Recalculation")
 
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	testing.SetOriginCaller(adminAddr)
 
 	// Scenario 1: Initial state before any distribution

@@ -5,7 +5,6 @@
 package main
 
 import (
-	"std"
 	"strconv"
 	"testing"
 	"time"
@@ -34,11 +33,11 @@ import (
 var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminUser    = adminAddr
-	adminRealm   = std.NewUserRealm(adminAddr)
+	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = std.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -211,13 +210,7 @@ func collectRewardAfterTierRemoval() {
 	afterGns := gns.BalanceOf(adminUser)
 	rewardAfterRemoval := afterGns - beforeGns
 
-	ufmt.Printf("[EXPECTED] reward after tier removal: %d (should be 0)\n", rewardAfterRemoval)
-
-	if rewardAfterRemoval != 0 {
-		panic("should not receive reward after tier removal")
-	}
-
-	println("[INFO] confirmed: no rewards after tier removal")
+	ufmt.Printf("[EXPECTED] reward after tier removal: %d\n", rewardAfterRemoval)
 }
 
 func verifyPoolRemovalEffects() {
@@ -318,8 +311,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 7. Collect reward after tier removal
 // [INFO] skip blocks to test rewards after tier removal
 // [INFO] collect reward after tier removal
-// [EXPECTED] reward after tier removal: 0 (should be 0)
-// [INFO] confirmed: no rewards after tier removal
+// [EXPECTED] reward after tier removal: 0
 //
 // [SCENARIO] 8. Verify pool removal effects
 // [INFO] verify pool removal effects

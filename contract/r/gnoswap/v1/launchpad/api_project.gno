@@ -1,7 +1,7 @@
 package launchpad
 
 import (
-	"std"
+	"chain/runtime"
 	"strconv"
 
 	"gno.land/p/nt/ufmt"
@@ -82,11 +82,11 @@ func ApiGetProjectActiveOf(projectId string) string {
 	if err != nil {
 		return ""
 	}
-	projectActiveResult := project.IsActive(std.ChainHeight())
+	projectActiveResult := project.IsActive(runtime.ChainHeight())
 	builder := (metaBuilder().
 		WriteString("projectId", project.id).
 		WriteString("isActive", strconv.FormatBool(projectActiveResult)).
-		WriteString("currentHeight", strconv.FormatInt(std.ChainHeight(), 10))).
+		WriteString("currentHeight", strconv.FormatInt(runtime.ChainHeight(), 10))).
 		WriteString("startTime", strconv.FormatInt(project.standardTier().startTime, 10))
 	return marshal(builder.Node())
 }

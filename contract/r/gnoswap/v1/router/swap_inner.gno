@@ -1,7 +1,7 @@
 package router
 
 import (
-	"std"
+	"chain/runtime"
 
 	"gno.land/p/nt/ufmt"
 
@@ -22,24 +22,38 @@ const (
 // Returns poolRecv (tokens received by pool) and poolOut (tokens sent by pool).
 func swapInner(
 	amountSpecified *i256.Int,
-	recipient std.Address,
+	recipient address,
 	sqrtPriceLimitX96 *u256.Uint,
 	data SwapCallbackData,
 ) (poolRecv, poolOut *u256.Uint) {
+	token0Path, token1Path := data.tokenIn, data.tokenOut
 	zeroForOne := data.tokenIn < data.tokenOut
+
+	if !zeroForOne {
+		token0Path, token1Path = token1Path, token0Path
+	}
 
 	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
 
 	amount0Str, amount1Str := pl.Swap(
 		cross,
-		data.tokenIn,
-		data.tokenOut,
+		token0Path,
+		token1Path,
 		data.fee,
 		recipient,
 		zeroForOne,
 		amountSpecified.ToString(),
 		sqrtPriceLimitX96.ToString(),
 		data.payer,
+		func(cur realm, amount0Delta, amount1Delta string) error {
+			return swapCallback(
+				token0Path,
+				token1Path,
+				amount0Delta,
+				amount1Delta,
+				data.payer,
+			)
+		},
 	)
 
 	amount0 := i256.MustFromDecimal(amount0Str)
@@ -50,11 +64,6 @@ func swapInner(
 		panic("overflow in swapInner")
 	}
 
-	// approves pool as spender
-	if data.hasNext {
-		common.Approve(cross, data.tokenOut, poolAddr, poolOut.Int64())
-	}
-
 	return poolRecv, poolOut
 }
 
@@ -63,14 +72,14 @@ type RealSwapExecutor struct{}
 
 // execute performs the actual swap execution.
 func (e *RealSwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
-	caller := std.PreviousRealm().Address()
+	caller := runtime.PreviousRealm().Address()
 	recipient := routerAddr
 
 	return swapInner(
 		p.amountSpecified,
-		recipient, // if single swap => user will receive
-		zero,      // sqrtPriceLimitX96
-		newSwapCallbackData(p, caller, false),
+		recipient,             // if single swap => user will receive
+		p.SqrtPriceLimitX96(), // sqrtPriceLimitX96
+		newSwapCallbackData(p, caller),
 	)
 }
 
@@ -112,12 +121,12 @@ type DrySwapExecutor struct{}
 
 // execute performs the dry swap execution.
 func (e *DrySwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
-	previousRealmAddr := std.PreviousRealm().Address()
+	previousRealmAddr := runtime.PreviousRealm().Address()
 
 	return swapDryInner(
 		p.amountSpecified,
 		zero,
-		newSwapCallbackData(p, previousRealmAddr, false),
+		newSwapCallbackData(p, previousRealmAddr),
 	)
 }
 

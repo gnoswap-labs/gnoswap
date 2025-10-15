@@ -145,7 +145,9 @@ func (self *PoolTier) CurrentReward(tier uint64) int64 {
 		return 0
 	}
 
-	return currentEmission * tierRatio / count / 100
+	tierEmission := safeMulInt64(currentEmission, tierRatio)
+
+	return tierEmission / count / 100
 }
 
 // CurrentCount returns the current count of pools in the given tier.
@@ -172,7 +174,7 @@ func (self *PoolTier) CurrentTier(poolPath string) (tier uint64) {
 		if !ok {
 			panic("failed to cast tier to uint64")
 		}
-		return
+		return tier
 	}
 }
 
@@ -202,7 +204,8 @@ func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *
 		if !ok {
 			panic("changeTier: pool not found")
 		}
-		pool.cacheReward(currentTime, int64(0))
+		// prevent new rewards from accumulating after tier removal
+		pool.cacheReward(currentTime, 0)
 	} else {
 		// handle all move/add operations
 		self.membership.Set(poolPath, nextTier)
@@ -237,8 +240,10 @@ func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *
 	self.currentEmission = currentEmission
 }
 
-// cacheReward MUST be called before calculating any position reward
-// cacheReward updates the reward cache for each pools, accounting for any halving event in between the last cached height and the current height.
+// cacheReward MUST be called before calculating any position reward.
+// cacheReward updates the reward cache for each pool, accounting for any halving events
+// that occurred between the last cached timestamp and the current timestamp.
+// Note: Block height is used only for event tracking purposes.
 func (self *PoolTier) cacheReward(currentHeight int64, currentTimestamp int64, pools *Pools) {
 	lastTimestamp := self.lastRewardCacheTimestamp
 
@@ -280,7 +285,14 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentTimestamp, emiss
 
 	// apply cache to all pools
 	self.membership.Iterate("", "", func(key string, value any) bool {
-		tierNum := value.(uint64)
+		tierNum, ok := value.(uint64)
+		if !ok {
+			panic("failed to cast value to uint64")
+		}
+		// Skip pools with tier 0 (removed from tier system)
+		if tierNum == 0 {
+			return false
+		}
 		pool, ok := pools.Get(key)
 		if !ok {
 			return false

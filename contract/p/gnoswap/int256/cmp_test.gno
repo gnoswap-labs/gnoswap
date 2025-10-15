@@ -142,7 +142,7 @@ func TestIsNeg(t *testing.T) {
 		want bool
 	}{
 		{"0", false},
-		{"-0", true}, // TODO: should this be false?
+		{"-0", true},
 		{"1", false},
 		{"-1", true},
 		{"10", false},

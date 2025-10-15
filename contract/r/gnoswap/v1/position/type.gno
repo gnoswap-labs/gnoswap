@@ -1,29 +1,23 @@
 package position
 
-import (
-	"std"
+import u256 "gno.land/p/gnoswap/uint256"
 
-	u256 "gno.land/p/gnoswap/uint256"
-)
-
-const (
-	Q128 string = "340282366920938463463374607431768211456" // 2 ** 128
-)
+// 2 ** 128
+var q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")
 
 // Previously, we used a different zero address ("g1000000..."),
 // but we changed the value because using the address
 // below appears to have become the de facto standard practice.
-var zeroAddress std.Address = std.Address("")
+var zeroAddress address = address("")
 
 // Position represents a liquidity position in a pool.
 // Each position tracks the amount of liquidity, fee growth, and tokens owed to the position owner.
 type Position struct {
-	nonce     *u256.Uint  // nonce for permits
-	operator  std.Address // address that is approved for spending this token
-	poolKey   string      // poolPath of the pool which this has lp token
-	tickLower int32       // the lower tick of the position, bounds are included
-	tickUpper int32       // the upper tick of the position
-	liquidity *u256.Uint  // liquidity of the position
+	operator  address    // address that is approved for spending this token
+	poolKey   string     // poolPath of the pool which this has lp token
+	tickLower int32      // the lower tick of the position, bounds are included
+	tickUpper int32      // the upper tick of the position
+	liquidity *u256.Uint // liquidity of the position
 
 	// fee growth of the aggregate position as of the last action on the individual position
 	feeGrowthInside0LastX128 *u256.Uint
@@ -54,18 +48,18 @@ func (p Position) isClear() bool {
 }
 
 type MintParams struct {
-	token0         string      // token0 path for a specific pool
-	token1         string      // token1 path for a specific pool
-	fee            uint32      // fee for a specific pool
-	tickLower      int32       // lower end of the tick range for the position
-	tickUpper      int32       // upper end of the tick range for the position
-	amount0Desired *u256.Uint  // desired amount of token0 to be minted
-	amount1Desired *u256.Uint  // desired amount of token1 to be minted
-	amount0Min     *u256.Uint  // minimum amount of token0 to be minted
-	amount1Min     *u256.Uint  // minimum amount of token1 to be minted
-	deadline       int64       // time by which the transaction must be included to effect the change
-	mintTo         std.Address // address to mint lpToken
-	caller         std.Address // address to call the function
+	token0         string     // token0 path for a specific pool
+	token1         string     // token1 path for a specific pool
+	fee            uint32     // fee for a specific pool
+	tickLower      int32      // lower end of the tick range for the position
+	tickUpper      int32      // upper end of the tick range for the position
+	amount0Desired *u256.Uint // desired amount of token0 to be minted
+	amount1Desired *u256.Uint // desired amount of token1 to be minted
+	amount0Min     *u256.Uint // minimum amount of token0 to be minted
+	amount1Min     *u256.Uint // minimum amount of token1 to be minted
+	deadline       int64      // time by which the transaction must be included to effect the change
+	mintTo         address    // address to mint lpToken
+	caller         address    // address to call the function
 }
 
 // newMintParams creates `MintParams` from processed input data.
@@ -87,23 +81,23 @@ func newMintParams(input ProcessedMintInput, mintInput MintInput) MintParams {
 }
 
 type IncreaseLiquidityParams struct {
-	positionId     uint64      // positionId of the position to increase liquidity
-	amount0Desired *u256.Uint  // desired amount of token0 to be minted
-	amount1Desired *u256.Uint  // desired amount of token1 to be minted
-	amount0Min     *u256.Uint  // minimum amount of token0 to be minted
-	amount1Min     *u256.Uint  // minimum amount of token1 to be minted
-	deadline       int64       // time by which the transaction must be included to effect the change
-	caller         std.Address // address to call the function
+	positionId     uint64     // positionId of the position to increase liquidity
+	amount0Desired *u256.Uint // desired amount of token0 to be minted
+	amount1Desired *u256.Uint // desired amount of token1 to be minted
+	amount0Min     *u256.Uint // minimum amount of token0 to be minted
+	amount1Min     *u256.Uint // minimum amount of token1 to be minted
+	deadline       int64      // time by which the transaction must be included to effect the change
+	caller         address    // address to call the function
 }
 
 type DecreaseLiquidityParams struct {
-	positionId   uint64      // positionId of the position to decrease liquidity
-	liquidity    string      // amount of liquidity to decrease
-	amount0Min   *u256.Uint  // minimum amount of token0 to be minted
-	amount1Min   *u256.Uint  // minimum amount of token1 to be minted
-	deadline     int64       // time by which the transaction must be included to effect the change
-	unwrapResult bool        // whether to unwrap the token if it's wrapped native token
-	caller       std.Address // address to call the function
+	positionId   uint64     // positionId of the position to decrease liquidity
+	liquidity    string     // amount of liquidity to decrease
+	amount0Min   *u256.Uint // minimum amount of token0 to be minted
+	amount1Min   *u256.Uint // minimum amount of token1 to be minted
+	deadline     int64      // time by which the transaction must be included to effect the change
+	unwrapResult bool       // whether to unwrap the token if it's wrapped native token
+	caller       address    // address to call the function
 }
 
 type MintInput struct {
@@ -117,8 +111,8 @@ type MintInput struct {
 	amount0Min     string
 	amount1Min     string
 	deadline       int64
-	mintTo         std.Address
-	caller         std.Address
+	mintTo         address
+	caller         address
 }
 
 type TokenPair struct {
