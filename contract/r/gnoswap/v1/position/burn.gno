@@ -75,6 +75,13 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, 
 
 	positionKey := computePositionKey(position.tickLower, position.tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.poolKey, positionKey)
+	// Add only burned amounts to tokensOwed since fees were already collected and processed in collectFee
+	position.tokensOwed0 = u256.Zero().Add(position.tokensOwed0, burnedAmount0)
+	position.tokensOwed1 = u256.Zero().Add(position.tokensOwed1, burnedAmount1)
+
+	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
+	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
+	position.liquidity = u256.Zero().Sub(positionLiquidity, liquidityToRemove)
 
 	currentSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(position.poolKey)
 	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.tickLower)
@@ -85,18 +92,9 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, 
 		upperTickSqrtPriceX96,
 		position.liquidity,
 	)
-	calculatedToken0Balance := u256.MustFromDecimal(calculatedToken0BalanceStr)
-	calculatedToken1Balance := u256.MustFromDecimal(calculatedToken1BalanceStr)
 
-	// Add only burned amounts to tokensOwed since fees were already collected and processed in collectFee
-	position.tokensOwed0 = u256.Zero().Add(position.tokensOwed0, burnedAmount0)
-	position.tokensOwed1 = u256.Zero().Add(position.tokensOwed1, burnedAmount1)
-
-	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
-	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
-	position.liquidity = u256.Zero().Sub(positionLiquidity, liquidityToRemove)
-	position.token0Balance = u256.Zero().Sub(calculatedToken0Balance, burnedAmount0)
-	position.token1Balance = u256.Zero().Sub(calculatedToken1Balance, burnedAmount1)
+	position.token0Balance = u256.MustFromDecimal(calculatedToken0BalanceStr)
+	position.token1Balance = u256.MustFromDecimal(calculatedToken1BalanceStr)
 	mustUpdatePosition(params.positionId, position)
 
 	collect0, collect1 := pl.Collect(
