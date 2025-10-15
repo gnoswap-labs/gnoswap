@@ -121,7 +121,7 @@ func TestCollectDepositGns_TokensRemainLocked(t *testing.T) {
 
 	initLaunchpadWithdrawTest(t)
 
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	gns.Transfer(cross, launchpadAddr, 1000000000)
 
 	// Set caller as user and skip to withdrawal time
@@ -146,7 +146,7 @@ func TestCollectDepositGns_TokensRemainLocked(t *testing.T) {
 	// 2. Launchpad's GNS balance should decrease by the same amount
 
 	t.Run("user_receives_gns_correctly", func(t *testing.T) {
-		expectedUserBalance := userBalanceBefore + amount
+		expectedUserBalance := int64(userBalanceBefore + amount)
 		uassert.Equal(t, expectedUserBalance, userBalanceAfter,
 			"User should receive GNS tokens back")
 	})
@@ -183,7 +183,7 @@ func TestCollectDepositGns_FullBalanceRestoration(t *testing.T) {
 
 	// Setup test project
 	currentTime := time.Now().Unix()
-	currentHeight := std.ChainHeight()
+	currentHeight := runtime.ChainHeight()
 
 	project, _ := createProject(
 		&createProjectParams{
@@ -205,7 +205,7 @@ func TestCollectDepositGns_FullBalanceRestoration(t *testing.T) {
 
 	// Give user initial GNS balance
 	initialUserBalance := int64(5000000000) // 5000 GNS
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	gns.Transfer(cross, userAddr, initialUserBalance)
 
 	// Record initial balance
@@ -214,7 +214,7 @@ func TestCollectDepositGns_FullBalanceRestoration(t *testing.T) {
 
 	// User approves launchpad to spend GNS
 	depositAmount := int64(1000000000) // 1000 GNS
-	testing.SetRealm(std.NewUserRealm(userAddr))
+	testing.SetRealm(testing.NewUserRealm(userAddr))
 	gns.Approve(cross, launchpadAddr, depositAmount)
 
 	// User deposits GNS
@@ -229,12 +229,12 @@ func TestCollectDepositGns_FullBalanceRestoration(t *testing.T) {
 
 	// Setup governance staking (simulating what happens in real scenario)
 	govStakerAddr, _ := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
-	govStakerRealm := std.NewUserRealm(govStakerAddr)
+	govStakerRealm := testing.NewUserRealm(govStakerAddr)
 	testing.SetRealm(govStakerRealm)
 	xgns.Mint(cross, launchpadAddr, depositAmount)
 
 	// Give launchpad GNS for withdrawal
-	testing.SetRealm(std.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	gns.Transfer(cross, launchpadAddr, depositAmount)
 
 	// Skip to end of tier period

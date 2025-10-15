@@ -42,6 +42,9 @@ func CollectDepositGns(cur realm, depositID string) (int64, error) {
 
 	unStakeGovernance(recipient, withdrawalAmount)
 
+	// Transfer the original GNS deposit back to the depositor
+	gns.Transfer(cross, caller, withdrawalAmount)
+
 	chain.Emit(
 		"CollectDepositGns",
 		"prevAddr", previousRealm.Address().String(),
