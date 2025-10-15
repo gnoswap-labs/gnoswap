@@ -10,8 +10,8 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/v1/common"
-	// "gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
+
 	gov_staker "gno.land/r/gnoswap/v1/gov/staker"
 )
 
