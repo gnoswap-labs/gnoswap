@@ -352,11 +352,13 @@ func TestComparisonOperations(t *testing.T) {
 
 func TestBitOperations(t *testing.T) {
 	tests := []struct {
-		name      string
-		operation string
-		x         string
-		n         uint
-		expected  string
+		name          string
+		operation     string
+		x             string
+		n             uint
+		expected      string
+		expectedPanic bool
+		panicMsg      string
 	}{
 		// Left shift tests
 		{
@@ -395,11 +397,12 @@ func TestBitOperations(t *testing.T) {
 			expected:  "57896044618658097711785492504343953926634992332820282019728792003956564819968",
 		},
 		{
-			name:      "lsh_one_by_256",
-			operation: "lsh",
-			x:         "1",
-			n:         256,
-			expected:  "0", // Shifts out of range
+			name:          "lsh_one_by_256",
+			operation:     "lsh",
+			x:             "1",
+			n:             256,
+			expectedPanic: true,
+			panicMsg:      "Lsh: overflow",
 		},
 
 		// Right shift tests
@@ -452,15 +455,32 @@ func TestBitOperations(t *testing.T) {
 			x := MustFromDecimal(tt.x)
 			var result *Uint
 
-			switch tt.operation {
-			case "lsh":
-				result = new(Uint).Lsh(x, tt.n)
-			case "rsh":
-				result = new(Uint).Rsh(x, tt.n)
+			// switch tt.operation {
+			// case "lsh":
+			// 	result = new(Uint).Lsh(x, tt.n)
+			// case "rsh":
+			// 	result = new(Uint).Rsh(x, tt.n)
+			// }
+			if tt.expectedPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					bitwiseOperations(t, tt.operation, x, tt.n)
+				})
+			} else {
+				result = bitwiseOperations(t, tt.operation, x, tt.n)
+				uassert.Equal(t, tt.expected, result.ToString())
 			}
-
-			uassert.Equal(t, tt.expected, result.ToString())
 		})
+	}
+}
+
+func bitwiseOperations(t *testing.T, op string, x *Uint, n uint) *Uint {
+	switch op {
+	case "lsh":
+		return new(Uint).Lsh(x, n)
+	case "rsh":
+		return new(Uint).Rsh(x, n)
+	default:
+		panic("invalid operation")
 	}
 }
 

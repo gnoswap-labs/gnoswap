@@ -38,6 +38,7 @@ var (
 	errTierHasParticipants = errors.New("[GNOSWAP-LAUNCHPAD-029] tier has participants")
 	errNotYetEndedProject  = errors.New("[GNOSWAP-LAUNCHPAD-030] project lock period is not over yet")
 	errTransferFailed      = errors.New("[GNOSWAP-LAUNCHPAD-031] transfer failed")
+	errOverflow            = errors.New("[GNOSWAP-LAUNCHPAD-032] overflow")
 )
 
 // makeErrorWithDetails creates an error with additional context.
