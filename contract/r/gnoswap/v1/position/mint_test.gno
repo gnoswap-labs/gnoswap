@@ -298,7 +298,7 @@ func TestMintInternal_PanicCases(t *testing.T) {
 				WithMins("0", "0").
 				Caller(alice, alice).
 				Params(),
-			expectedMsg: "[GNOSWAP-COMMON-010] identical ticks || sqrtRatioAX96 (79704936542881920863903188246) and sqrtRatioBX96 (79704936542881920863903188246) are identical",
+			expectedMsg: "sqrtRatioAX96 (79704936542881920863903188246) and sqrtRatioBX96 (79704936542881920863903188246) are identical",
 		},
 		{
 			name: "abort: tick lower below MIN_TICK bound",

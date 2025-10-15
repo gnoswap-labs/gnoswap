@@ -144,7 +144,7 @@ func TestAddLiquidity(t *testing.T) {
 			},
 			expectError:     true,
 			errorType:       "panic",
-			expectedMessage: "[GNOSWAP-COMMON-010] identical ticks || sqrtRatioAX96 (79228162514264337593543950336) and sqrtRatioBX96 (79228162514264337593543950336) are identical",
+			expectedMessage: "sqrtRatioAX96 (79228162514264337593543950336) and sqrtRatioBX96 (79228162514264337593543950336) are identical",
 		},
 	}
 

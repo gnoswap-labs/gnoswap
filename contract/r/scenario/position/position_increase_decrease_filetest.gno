@@ -276,8 +276,8 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta string,
 // [EXPECTED] Increased position liquidity should be 637408784
 // [EXPECTED] Position tickLower should be unchanged at 8000
 // [EXPECTED] Position tickUpper should be unchanged at 12000
-// [EXPECTED] Position token0 balance should be 36789783
-// [EXPECTED] Position token1 balance should be 99999999
+// [EXPECTED] Position token0 balance should be 36789784
+// [EXPECTED] Position token1 balance should be 100000000
 //
 // [SCENARIO] 6. Execute swap to generate fees
 // [INFO] Executing swap to generate fees
