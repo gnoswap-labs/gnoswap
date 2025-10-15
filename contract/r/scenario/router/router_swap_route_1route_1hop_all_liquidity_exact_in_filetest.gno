@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/gnoswap/access"
 	pl "gno.land/r/gnoswap/v1/pool"

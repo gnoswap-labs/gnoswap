@@ -5,9 +5,11 @@ import (
 	"strings"
 	"time"
 
-	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
-	"gno.land/r/gnoswap/v1/common"
+
+	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/v1/pool"
 )
 

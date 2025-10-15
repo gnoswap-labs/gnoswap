@@ -8,7 +8,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"

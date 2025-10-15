@@ -91,7 +91,7 @@ func createOBLProject() {
 	projectName := "OBL Launchpad Project"
 	rewardTokenPath := "gno.land/r/onbloc/obl"
 	rewardAmount := int64(1_000_000_000)
-	conditionPath := "gno.land/r/gnoswap/v1/gov/xgns"
+	conditionPath := "gno.land/r/gnoswap/gov/xgns"
 	conditionsAmount := "1000000"
 	tier30Ratio := int64(10)
 	tier90Ratio := int64(20)
@@ -268,7 +268,7 @@ func unmarshal(data string) map[string]interface{} {
 		"now":                    "1234567890",
 		"depositAmount":          "1000000000",
 		"recipient":              "g1wpex76n9vd6yzerywf047h6lqlp5qp",
-		"conditionPath":          "gno.land/r/gnoswap/v1/gov/xgns",
+		"conditionPath":          "gno.land/r/gnoswap/gov/xgns",
 		"conditionsAmount":       "1000000",
 		"tier30Ratio":            "10",
 		"tier90Ratio":            "20",

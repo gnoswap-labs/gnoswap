@@ -7,7 +7,7 @@ import (
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/gov/xgns"
+	"gno.land/r/gnoswap/gov/xgns"
 )
 
 // Test Delegate function

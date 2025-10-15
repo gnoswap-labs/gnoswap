@@ -28,13 +28,13 @@ var (
 	// PROTOCOL_FEE_ADDR is the derived address for the protocol fee package.
 	PROTOCOL_FEE_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/v1/protocol_fee")
 	// COMMUNITY_POOL_ADDR is the derived address for the community pool package.
-	COMMUNITY_POOL_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/v1/community_pool")
+	COMMUNITY_POOL_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/community_pool")
 	// GOV_GOVERNANCE_ADDR is the derived address for the governance package.
 	GOV_GOVERNANCE_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/v1/gov/governance")
 	// GOV_STAKER_ADDR is the derived address for the governance staker package.
 	GOV_STAKER_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/v1/gov/staker")
 	// GOV_XGNS_ADDR is the derived address for the xGNS governance package.
-	GOV_XGNS_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/v1/gov/xgns")
+	GOV_XGNS_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/gov/xgns")
 	// LAUNCHPAD_ADDR is the derived address for the launchpad package.
 	LAUNCHPAD_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/v1/launchpad")
 )

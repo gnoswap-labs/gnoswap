@@ -5,9 +5,9 @@ import (
 	"chain/runtime"
 	"time"
 
+	"gno.land/r/gnoswap/common"
 	en "gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
-	"gno.land/r/gnoswap/v1/common"
 )
 
 // Execute executes an approved proposal.

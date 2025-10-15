@@ -9,7 +9,7 @@ import (
 	"gno.land/p/nt/ufmt"
 	"gno.land/p/onbloc/json"
 
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/common"
 )
 
 // ApiGetAccuTransferToGovStaker returns accumulated transfers to gov/staker as JSON.

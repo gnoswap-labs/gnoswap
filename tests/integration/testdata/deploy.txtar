@@ -52,16 +52,16 @@ gnokey maketx addpkg -pkgdir ../../contract/p/gnoswap/gnsmath -pkgpath gno.land/
 ## deploy realm
 
 ### deploy common
-gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/common -pkgpath gno.land/r/gnoswap/v1/common -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/common -pkgpath gno.land/r/gnoswap/common -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy gns
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/gns -pkgpath gno.land/r/gnoswap/gns -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy gnft
-gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/gnft -pkgpath gno.land/r/gnoswap/v1/gnft -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/gnft -pkgpath gno.land/r/gnoswap/gnft -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy gov/xgns
-gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/gov/xgns -pkgpath gno.land/r/gnoswap/v1/gov/xgns -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/gov/xgns -pkgpath gno.land/r/gnoswap/gov/xgns -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy emission
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/emission -pkgpath gno.land/r/gnoswap/emission -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
@@ -82,7 +82,7 @@ gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/router -pkgpath gno.land/r
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/staker -pkgpath gno.land/r/gnoswap/v1/staker -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy community_pool
-gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/community_pool -pkgpath gno.land/r/gnoswap/v1/community_pool -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/community_pool -pkgpath gno.land/r/gnoswap/community_pool -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy gov/staker
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/gov/staker -pkgpath gno.land/r/gnoswap/v1/gov/staker -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1

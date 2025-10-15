@@ -13,12 +13,12 @@ import (
 	"gno.land/p/nt/testutils"
 
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/common"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 
-	"gno.land/r/gnoswap/v1/gnft"
+	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 )

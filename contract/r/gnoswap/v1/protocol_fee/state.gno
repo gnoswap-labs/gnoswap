@@ -4,7 +4,7 @@ import (
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/common"
 )
 
 // ProtocolFeeState holds all the state variables for protocol fee management
