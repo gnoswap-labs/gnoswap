@@ -3,6 +3,10 @@
 // These operations are crucial for manipulating individual bits within a 256-bit unsigned integer.
 package uint256
 
+import (
+	"math/bits"
+)
+
 // Or sets z to the bitwise OR of x and y and returns z.
 func (z *Uint) Or(x, y *Uint) *Uint {
 	z.arr[0] = x.arr[0] | y.arr[0]
@@ -48,6 +52,44 @@ func (z *Uint) Xor(x, y *Uint) *Uint {
 // Lsh sets z to x left-shifted by n bits and returns z.
 // Panics if the shift would cause non-zero bits to overflow.
 func (z *Uint) Lsh(x *Uint, n uint) *Uint {
+	if n == 0 || x.IsZero() {
+		if n >= 256 {
+			return z.Clear()
+		}
+		if n == 0 {
+			return z.Set(x)
+		}
+		// x == 0 or n > 0
+		return z.Clear()
+	}
+
+	// overflow check
+	if n >= 256 {
+		panic("Lsh: overflow")
+	}
+
+	// headroom check
+	top := -1
+	for i := 3; i >= 0; i-- {
+		if x.arr[i] != 0 {
+			top = i
+			break
+		}
+	}
+
+	usedBits := bits.Len64(x.arr[top])  // 1..64
+	msbIndex := top*64 + (usedBits - 1) // 0..255
+	headroom := 255 - msbIndex          // 0..255
+	if n > uint(headroom) {
+		panic("Lsh: overflow")
+	}
+
+	// Perform the shift
+	return z.lsh(x, n)
+}
+
+// lsh performs left shift without overflow checking
+func (z *Uint) lsh(x *Uint, n uint) *Uint {
 	// n % 64 == 0
 	if n&0x3f == 0 {
 		switch n {
@@ -60,9 +102,6 @@ func (z *Uint) Lsh(x *Uint, n uint) *Uint {
 		case 192:
 			return z.lsh192(x)
 		default:
-			if !x.IsZero() {
-				panic("Lsh: overflow")
-			}
 			return z.Clear()
 		}
 	}
@@ -70,12 +109,6 @@ func (z *Uint) Lsh(x *Uint, n uint) *Uint {
 	// Big swaps first
 	switch {
 	case n > 192:
-		if n > 256 {
-			if !x.IsZero() {
-				panic("Lsh: overflow")
-			}
-			return z.Clear()
-		}
 		z.lsh192(x)
 		n -= 192
 		goto sh192
