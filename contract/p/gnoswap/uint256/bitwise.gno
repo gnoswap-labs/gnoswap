@@ -52,15 +52,12 @@ func (z *Uint) Xor(x, y *Uint) *Uint {
 // Lsh sets z to x left-shifted by n bits and returns z.
 // Panics if the shift would cause non-zero bits to overflow.
 func (z *Uint) Lsh(x *Uint, n uint) *Uint {
-	if n == 0 || x.IsZero() {
-		if n >= 256 {
-			return z.Clear()
-		}
-		if n == 0 {
-			return z.Set(x)
-		}
-		// x == 0 or n > 0
+	if x.IsZero() {
 		return z.Clear()
+	}
+
+	if n == 0 {
+		return z.Set(x)
 	}
 
 	// overflow check
