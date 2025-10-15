@@ -281,6 +281,9 @@ func TestLsh(t *testing.T) {
 		// The maximum safe left shift for 31337 is 241 bits (256 - 15 = 241).
 		{"31337", 255, "0", true},
 		{"31337", 256, "0", true},
+
+		// no overflow, carry propagation check
+		{"18446744073709551615", 1, "36893488147419103230", false},
 	}
 
 	for _, tc := range tests {
