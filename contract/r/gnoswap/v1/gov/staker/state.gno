@@ -5,7 +5,7 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/emission"
-	pf "gno.land/r/gnoswap/v1/protocol_fee"
+	pf "gno.land/r/gnoswap/protocol_fee"
 )
 
 // Global state variables for staker contract

@@ -12,7 +12,7 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 
-	pf "gno.land/r/gnoswap/v1/protocol_fee"
+	pf "gno.land/r/gnoswap/protocol_fee"
 )
 
 const (

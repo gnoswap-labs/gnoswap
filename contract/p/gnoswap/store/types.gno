@@ -11,6 +11,7 @@ const (
 // KVStore interface for domain-specific storage
 // Each domain creates its own instance of KVStore
 type KVStore interface {
+	// GetDomainAddress returns the domain address
 	GetDomainAddress() address
 
 	// GetAllKeys returns all keys in this store

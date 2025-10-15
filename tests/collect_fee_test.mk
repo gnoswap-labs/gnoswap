@@ -6,7 +6,7 @@ WUGNOT_PATH := gno.land/r/demo/wugnot
 ROUTER_PATH := gno.land/r/gnoswap/v1/router
 POSITION_PATH := gno.land/r/gnoswap/v1/position
 POOL_PATH := gno.land/r/gnoswap/v1/pool
-PROTOCOL_FEE_PATH := gno.land/r/gnoswap/v1/protocol_fee
+PROTOCOL_FEE_PATH := gno.land/r/gnoswap/protocol_fee
 
 ADDR_TEST_ADMIN := g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c
 ADDR_TEST_USER1 := g16a7etgm9z2r653ucl36rj0l2yqcxgrz2jyegzx
