@@ -46,7 +46,7 @@ func (z *Uint) Xor(x, y *Uint) *Uint {
 }
 
 // Lsh sets z to x left-shifted by n bits and returns z.
-// If n >= 256, z is set to 0.
+// Panics if the shift would cause non-zero bits to overflow.
 func (z *Uint) Lsh(x *Uint, n uint) *Uint {
 	// n % 64 == 0
 	if n&0x3f == 0 {
@@ -60,6 +60,9 @@ func (z *Uint) Lsh(x *Uint, n uint) *Uint {
 		case 192:
 			return z.lsh192(x)
 		default:
+			if !x.IsZero() {
+				panic("Lsh: overflow")
+			}
 			return z.Clear()
 		}
 	}
@@ -68,27 +71,21 @@ func (z *Uint) Lsh(x *Uint, n uint) *Uint {
 	switch {
 	case n > 192:
 		if n > 256 {
+			if !x.IsZero() {
+				panic("Lsh: overflow")
+			}
 			return z.Clear()
 		}
 		z.lsh192(x)
 		n -= 192
-		if n >= 64 {
-			panic("Lsh: shift amount overflow")
-		}
 		goto sh192
 	case n > 128:
 		z.lsh128(x)
 		n -= 128
-		if n >= 64 {
-			panic("Lsh: shift amount overflow")
-		}
 		goto sh128
 	case n > 64:
 		z.lsh64(x)
 		n -= 64
-		if n >= 64 {
-			panic("Lsh: shift amount overflow")
-		}
 		goto sh64
 	default:
 		z.Set(x)
@@ -139,23 +136,14 @@ func (z *Uint) Rsh(x *Uint, n uint) *Uint {
 		}
 		z.rsh192(x)
 		n -= 192
-		if n >= 64 {
-			panic("Rsh: shift amount overflow")
-		}
 		goto sh192
 	case n > 128:
 		z.rsh128(x)
 		n -= 128
-		if n >= 64 {
-			panic("Rsh: shift amount overflow")
-		}
 		goto sh128
 	case n > 64:
 		z.rsh64(x)
 		n -= 64
-		if n >= 64 {
-			panic("Rsh: shift amount overflow")
-		}
 		goto sh64
 	default:
 		z.Set(x)
@@ -210,23 +198,14 @@ func (z *Uint) SRsh(x *Uint, n uint) *Uint {
 		}
 		z.srsh192(x)
 		n -= 192
-		if n >= 64 {
-			panic("SRsh: shift amount overflow")
-		}
 		goto sh192
 	case n > 128:
 		z.srsh128(x)
 		n -= 128
-		if n >= 64 {
-			panic("SRsh: shift amount overflow")
-		}
 		goto sh128
 	case n > 64:
 		z.srsh64(x)
 		n -= 64
-		if n >= 64 {
-			panic("SRsh: shift amount overflow")
-		}
 		goto sh64
 	default:
 		z.Set(x)
