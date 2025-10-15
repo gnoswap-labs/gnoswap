@@ -16,8 +16,7 @@ import (
 )
 
 func TestCollectDepositGns(t *testing.T) {
-	t.Skip("skip: This test affects the tests below, so all tests must be run individually")
-	userAddr := testutils.TestAddress("user")
+	userAddr := testutils.TestAddress("user1")
 	otherAddr := testutils.TestAddress("other")
 
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
@@ -56,8 +55,8 @@ func TestCollectDepositGns(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			initLaunchpadWithdrawTest(t)
-			
+			initLaunchpadWithdrawTest(t, userAddr)
+
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
 			gns.Transfer(cross, launchpadAddr, 1000000000)
 
@@ -83,6 +82,7 @@ func TestCollectDepositGns(t *testing.T) {
 
 func TestWithdrawDeposit(t *testing.T) {
 	const currentDepositID = "1"
+	userAddr := testutils.TestAddress("user2")
 
 	tests := []struct {
 		name                 string
@@ -103,7 +103,7 @@ func TestWithdrawDeposit(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			initLaunchpadWithdrawTest(t)
+			initLaunchpadWithdrawTest(t, userAddr)
 			testing.SkipHeights(tt.skipHeight)
 			deposit, _ := getDeposit(tt.depositID)
 
@@ -123,11 +123,11 @@ func TestWithdrawDeposit(t *testing.T) {
 }
 
 func TestCollectDepositGns_TokensRemainLocked(t *testing.T) {
-	userAddr := testutils.TestAddress("user")
+	userAddr := testutils.TestAddress("user3")
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 
-	initLaunchpadWithdrawTest(t)
+	initLaunchpadWithdrawTest(t, userAddr)
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	gns.Transfer(cross, launchpadAddr, 1000000000)
@@ -179,7 +179,7 @@ func TestCollectDepositGns_TokensRemainLocked(t *testing.T) {
 // This test verifies complete balance restoration after deposit and withdrawal
 func TestCollectDepositGns_FullBalanceRestoration(t *testing.T) {
 	// init test environment
-	userAddr := testutils.TestAddress("user")
+	userAddr := testutils.TestAddress("user4")
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 
@@ -285,7 +285,7 @@ func TestCollectDepositGns_FullBalanceRestoration(t *testing.T) {
 	})
 }
 
-func initLaunchpadWithdrawTest(t *testing.T) {
+func initLaunchpadWithdrawTest(t *testing.T, depositor address) {
 	testing.SetHeight(123)
 
 	// Initialize test environment
@@ -319,7 +319,6 @@ func initLaunchpadWithdrawTest(t *testing.T) {
 
 	depositAmount := int64(1000000000)
 
-	depositor := testutils.TestAddress("user")
 	testing.SetOriginCaller(depositor)
 	depositGns(project.ID(), 30, depositAmount, depositor)
 
