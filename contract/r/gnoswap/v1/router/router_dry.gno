@@ -40,8 +40,8 @@ func (p *SwapProcessor) ProcessSwapAmount(amountSpecified *i256.Int, quote int) 
 		return nil, ufmt.Errorf(ErrInvalidQuoteRange, quote, MinQuotePercentage, MaxQuotePercentage)
 	}
 
-	toSwap := i256.Zero().Mul(amountSpecified, i256.NewInt(int64(quote)))
-	if toSwap.IsOverflow() {
+	toSwap, overflow := i256.Zero().MulOverflow(amountSpecified, i256.NewInt(int64(quote)))
+	if overflow {
 		return nil, ufmt.Errorf(ErrOverflowCalculateSwapAmount)
 	}
 

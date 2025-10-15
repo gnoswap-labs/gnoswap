@@ -113,7 +113,10 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 					"ratio constants are not initialized",
 				))
 			}
-			temp = temp.Mul(ratio, r)
+			temp, overflow := temp.MulOverflow(ratio, r)
+			if overflow {
+				panic(errOverFlow)
+			}
 			ratio = ratio.Rsh(temp, 128)
 		}
 	}
@@ -225,7 +228,10 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 
 	// Optimized iterative calculation using loop - maintains exact same logic
 	for i := 0; i < 14; i++ {
-		tempR = tempR.Mul(r, r)
+		tempR, overflow := tempR.MulOverflow(r, r)
+		if overflow {
+			panic(errOverFlow)
+		}
 		r = u256.Zero().Rsh(tempR, 127)
 
 		tempF = tempF.Rsh(r, 128)
@@ -238,7 +244,10 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	}
 
 	// Calculate tick from log_sqrt10001
-	logSqrt10001 := i256.Zero().Mul(log2, log2Multiplier)
+	logSqrt10001, overflow := i256.Zero().MulOverflow(log2, log2Multiplier)
+	if overflow {
+		panic(errOverFlow)
+	}
 
 	// Calculate tick bounds
 	tickLow := i256.Zero().Sub(logSqrt10001, tickLowOffset)

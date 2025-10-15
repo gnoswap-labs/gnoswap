@@ -3,6 +3,8 @@ package int256
 import (
 	"testing"
 
+	"gno.land/p/nt/uassert"
+
 	"gno.land/p/gnoswap/uint256"
 )
 
@@ -164,21 +166,22 @@ func TestLsh(t *testing.T) {
 		x    string
 		n    uint
 		want string
+		expectPanic bool
 	}{
-		{"1", 0, "1"},
-		{"1", 1, "2"},
-		{"1", 2, "4"},
-		{"2", 0, "2"},
-		{"2", 1, "4"},
-		{"2", 2, "8"},
-		{"-2", 0, "-2"},
-		{"-4", 0, "-4"},
-		{"-8", 0, "-8"},
-		{"-1", 255, "-57896044618658097711785492504343953926634992332820282019728792003956564819968"},
-		{"-1", 256, "0"},
-		{"-2", 255, "0"},
-		{"-4", 254, "0"},
-		{"-8", 253, "0"},
+		{"1", 0, "1", false},
+		{"1", 1, "2", false},
+		{"1", 2, "4", false},
+		{"2", 0, "2", false},
+		{"2", 1, "4", false},
+		{"2", 2, "8", false},
+		{"-2", 0, "-2", false},
+		{"-4", 0, "-4", false},
+		{"-8", 0, "-8", false},
+		{"-1", 255, "-57896044618658097711785492504343953926634992332820282019728792003956564819968", false},
+		{"-1", 256, "0", true},
+		{"-2", 255, "0", true},
+		{"-4", 254, "0", true},
+		{"-8", 253, "0", true},
 	}
 
 	for _, tc := range tests {
@@ -189,10 +192,13 @@ func TestLsh(t *testing.T) {
 		}
 
 		got := New()
-		got.Lsh(x, tc.n)
-
-		if got.ToString() != tc.want {
-			t.Errorf("Lsh(%s, %d) = %v, want %v", tc.x, tc.n, got.ToString(), tc.want)
+		if tc.expectPanic {
+			uassert.PanicsWithMessage(t, "Lsh: overflow", func() {
+				got.Lsh(x, tc.n)
+			})
+		} else {
+			got.Lsh(x, tc.n)
+			uassert.Equal(t, tc.want, got.ToString())
 		}
 	}
 }

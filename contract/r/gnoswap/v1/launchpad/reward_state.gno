@@ -108,7 +108,10 @@ func (r *RewardState) calculateReward(accumRewardPerDepositX128 *u256.Uint) int6
 		return 0
 	}
 
-	reward := u256.Zero().Mul(actualRewardPerDepositX128, u256.NewUintFromInt64(r.DepositAmount()))
+	reward, overflow := u256.Zero().MulOverflow(actualRewardPerDepositX128, u256.NewUintFromInt64(r.DepositAmount()))
+	if overflow {
+		panic(errOverflow)
+	}
 	reward = u256.Zero().Rsh(reward, 128)
 
 	return safeConvertToInt64(reward)

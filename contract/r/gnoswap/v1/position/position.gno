@@ -456,8 +456,17 @@ func collectFee(
 
 	// sometimes there will be a few less uBase amount than expected due to rounding down in core, but we just subtract the full amount expected
 	// instead of the actual amount so we can burn the token
-	position.tokensOwed0 = u256.Zero().Sub(tokensOwed0, u256.MustFromDecimal(amount0))
-	position.tokensOwed1 = u256.Zero().Sub(tokensOwed1, u256.MustFromDecimal(amount1))
+	tokensOwed0Updated, underflow := u256.Zero().SubOverflow(tokensOwed0, u256.MustFromDecimal(amount0))
+	if underflow {
+		panic(newErrorWithDetail(errUnderflow, "tokensOwed0 - amount0 underflow"))
+	}
+	position.tokensOwed0 = tokensOwed0Updated
+
+	tokensOwed1Updated, underflow := u256.Zero().SubOverflow(tokensOwed1, u256.MustFromDecimal(amount1))
+	if underflow {
+		panic(newErrorWithDetail(errUnderflow, "tokensOwed1 - amount1 underflow"))
+	}
+	position.tokensOwed1 = tokensOwed1Updated
 	mustUpdatePosition(positionId, position)
 
 	withdrawalFeeBps := pl.GetWithdrawalFee()
@@ -534,7 +543,10 @@ func calculateAmountWithWithdrawalFee(amount string, fee uint64) (int64, int64) 
 	amountUint := u256.MustFromDecimal(amount)
 	feeUint := u256.NewUint(fee)
 
-	feeAmount := u256.Zero().Mul(amountUint, feeUint)
+	feeAmount, overflow := u256.Zero().MulOverflow(amountUint, feeUint)
+	if overflow {
+		panic(errOverflow)
+	}
 	feeAmount = u256.Zero().Div(feeAmount, feeAmountDivisor)
 	amountWithoutFee := u256.Zero().Sub(amountUint, feeAmount)
 

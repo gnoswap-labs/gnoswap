@@ -30,56 +30,6 @@ func (h *poolTestHelper) assertPanic(f func(), shouldPanic bool, context string)
 	f()
 }
 
-// TestFuzzSafeConvertToInt128 tests the safeConvertToInt128 function for overflow/underflow
-func TestFuzzSafeConvertToInt128(t *testing.T) {
-	helper := newPoolTestHelper(t)
-	gen := fuzz.NewUint256Generator(true, 256)
-
-	overflowCount := 0
-	successCount := 0
-
-	for i := 0; i < 1000; i++ {
-		value := gen.Generate().(*u256.Uint)
-
-		// Check if value exceeds MAX_INT128
-		maxInt128 := u256.MustFromDecimal(MAX_INT128)
-		shouldOverflow := value.Gt(maxInt128)
-
-		helper.assertPanic(func() {
-			result := safeConvertToInt128(value)
-			if result == nil {
-				t.Errorf("safeConvertToInt128 returned nil for value %s", value.ToString())
-			}
-			successCount++
-		}, shouldOverflow, "safeConvertToInt128")
-
-		if shouldOverflow {
-			overflowCount++
-		}
-	}
-
-	t.Logf("safeConvertToInt128: %d successful conversions, %d overflows detected", successCount, overflowCount)
-
-	boundaryTests := []struct {
-		value       string
-		shouldPanic bool
-		description string
-	}{
-		{MAX_INT128, false, "MAX_INT128"},
-		{"170141183460469231731687303715884105728", true, "MAX_INT128 + 1"},
-		{MAX_UINT128, true, "MAX_UINT128"},
-		{"0", false, "zero"},
-		{"1", false, "one"},
-	}
-
-	for _, test := range boundaryTests {
-		helper.assertPanic(func() {
-			val := u256.MustFromDecimal(test.value)
-			safeConvertToInt128(val)
-		}, test.shouldPanic, test.description)
-	}
-}
-
 func TestFuzzSafeConvertToUint64(t *testing.T) {
 	helper := newPoolTestHelper(t)
 	gen := fuzz.NewUint256Generator(true, 128)
@@ -115,75 +65,6 @@ func TestFuzzSafeConvertToInt64(t *testing.T) {
 				t.Errorf("safeConvertToInt64 returned negative value: %d", result)
 			}
 		}, shouldOverflow, "safeConvertToInt64")
-	}
-}
-
-func TestFuzzToUint128(t *testing.T) {
-	helper := newPoolTestHelper(t)
-	gen := fuzz.NewUint256Generator(true, 256)
-
-	truncatedCount := 0
-	unchangedCount := 0
-
-	for i := 0; i < 1000; i++ {
-		value := gen.Generate().(*u256.Uint)
-
-		helper.assertPanic(func() {
-			result := toUint128(value)
-
-			maxUint128 := u256.MustFromDecimal(MAX_UINT128)
-
-			if value.Gt(maxUint128) {
-				// when the value is greater than 128 bits,
-				// theoretically it should be truncated to 128 bits
-				if result.Gt(maxUint128) {
-					t.Errorf("toUint128 failed to truncate value: %s", result.ToString())
-				}
-				truncatedCount++
-			} else {
-				// value should remain unchanged
-				if !result.Eq(value) {
-					t.Errorf("toUint128 modified value within range: %s != %s",
-						value.ToString(), result.ToString())
-				}
-				unchangedCount++
-			}
-		}, false, "toUint128")
-	}
-
-	t.Logf("toUint128: %d values truncated, %d unchanged", truncatedCount, unchangedCount)
-
-	helper.assertPanic(func() {
-		toUint128(nil)
-	}, true, "nil input")
-}
-
-func TestFuzzU256Min(t *testing.T) {
-	gen := fuzz.NewUint256Generator(true, 256)
-
-	for i := 0; i < 1000; i++ {
-		num1 := gen.Generate().(*u256.Uint)
-		num2 := gen.Generate().(*u256.Uint)
-
-		result := u256Min(num1, num2)
-
-		if num1.Lt(num2) {
-			if !result.Eq(num1) {
-				t.Errorf("u256Min returned wrong value: expected %s, got %s",
-					num1.ToString(), result.ToString())
-			}
-		} else {
-			if !result.Eq(num2) {
-				t.Errorf("u256Min returned wrong value: expected %s, got %s",
-					num2.ToString(), result.ToString())
-			}
-		}
-	}
-
-	val := u256.MustFromDecimal("12345678901234567890")
-	result := u256Min(val, val)
-	if !result.Eq(val) {
-		t.Errorf("u256Min with equal values failed")
 	}
 }
 

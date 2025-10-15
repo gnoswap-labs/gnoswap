@@ -218,20 +218,12 @@ func Redelegate(
 
 	prevRealm := runtime.PreviousRealm()
 	chain.Emit(
-		"Undelegate",
-		"prevAddr", prevRealm.Address().String(),
-		"prevRealm", prevRealm.PkgPath(),
-		"from", delegation.DelegateFrom().String(),
-		"to", delegation.DelegateTo().String(),
-		"amount", formatInt(delegation.DelegatedAmount()),
-	)
-
-	chain.Emit(
 		"Redelegate",
 		"prevAddr", prevRealm.Address().String(),
 		"prevRealm", prevRealm.PkgPath(),
-		"from", delegation.DelegateFrom().String(),
-		"to", delegation.DelegateTo().String(),
+		"from", delegator.String(),
+		"previousDelegatee", delegatee.String(),
+		"newDelegatee", newDelegatee.String(),
 		"amount", formatInt(delegation.DelegatedAmount()),
 	)
 
