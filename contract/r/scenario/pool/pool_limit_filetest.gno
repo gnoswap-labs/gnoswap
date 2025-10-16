@@ -9,17 +9,20 @@ import (
 
 	"gno.land/p/nt/ufmt"
 
-	"gno.land/r/gnoland/wugnot"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
-
 	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/protocol_fee"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/v1/pool"
 
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/foo"
 )
 
 // Constants for addresses and approvals

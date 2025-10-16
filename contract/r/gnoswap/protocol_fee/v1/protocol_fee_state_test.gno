@@ -1,10 +1,45 @@
-package protocol_fee
+package v1
 
 import (
 	"testing"
 
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/uassert"
+
+	"gno.land/r/gnoswap/protocol_fee"
+	_ "gno.land/r/gnoswap/rbac" // Initialize contract roles
 )
+
+// Test helper functions
+
+// newProtocolFeeStateInternal creates a new protocolFeeState instance for testing
+// This returns the concrete type instead of the interface
+func newProtocolFeeStateInternal(t *testing.T) *protocolFeeState {
+	t.Helper()
+	return &protocolFeeState{
+		devOpsPct:                     0,
+		accuToGovStaker:               avl.NewTree(),
+		accuToDevOps:                  avl.NewTree(),
+		distributedToGovStakerHistory: avl.NewTree(),
+		distributedToDevOpsHistory:    avl.NewTree(),
+		tokenListWithAmount:           make(map[string]int64),
+	}
+}
+
+type mockProtocolFeeStore struct {
+	state *protocolFeeState
+}
+
+func (m *mockProtocolFeeStore) GetProtocolFeeState() protocol_fee.ProtocolFeeState { return m.state }
+func (m *mockProtocolFeeStore) SetProtocolFeeState(state protocol_fee.ProtocolFeeState) error {
+	if pfs, ok := state.(*protocolFeeState); ok {
+		m.state = pfs
+		return nil
+	}
+	panic("invalid protocol fee state type")
+}
+
+/* Main tests */
 
 func TestProtocolFeeStateAddAccuToGovStaker(t *testing.T) {
 	tests := []struct {
@@ -41,7 +76,7 @@ func TestProtocolFeeStateAddAccuToGovStaker(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			pfs := NewProtocolFeeState()
+			pfs := newProtocolFeeStateInternal(t)
 
 			// Initially should be 0
 			uassert.Equal(t, pfs.GetAccuTransferToGovStakerByTokenPath(test.tokenPath), int64(0))
@@ -92,7 +127,7 @@ func TestProtocolFeeStateAddAccuToDevOps(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			pfs := NewProtocolFeeState()
+			pfs := newProtocolFeeStateInternal(t)
 
 			// Initially should be 0
 			uassert.Equal(t, pfs.GetAccuTransferToDevOpsByTokenPath(test.tokenPath), int64(0))
@@ -150,7 +185,7 @@ func TestProtocolFeeStateSetDevOpsPct(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			pfs := NewProtocolFeeState()
+			pfs := newProtocolFeeStateInternal(t)
 
 			// Initially should be 0
 			uassert.Equal(t, pfs.devOpsPct, int64(0))
@@ -196,7 +231,7 @@ func TestProtocolFeeStateClearTokenListWithAmount(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			pfs := NewProtocolFeeState()
+			pfs := newProtocolFeeStateInternal(t)
 
 			// Setup initial data
 			for token, amount := range test.initialData {
@@ -250,7 +285,7 @@ func TestProtocolFeeStateUpdateDistributedToGovStakerHistory(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			pfs := NewProtocolFeeState()
+			pfs := newProtocolFeeStateInternal(t)
 
 			// Update history sequentially
 			for _, amount := range test.amounts {
@@ -300,7 +335,7 @@ func TestProtocolFeeStateUpdateDistributedToDevOpsHistory(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			pfs := NewProtocolFeeState()
+			pfs := newProtocolFeeStateInternal(t)
 
 			// Update history sequentially
 			for _, amount := range test.amounts {
