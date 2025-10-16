@@ -141,7 +141,9 @@ func (vm *versionManager) ChangeImplementation(packagePath string) error {
 	}
 
 	// Activate the new implementation by calling its initializer
+	vm.currentPackagePath = packagePath
 	vm.currentImplementation = initializer(vm.initializeDomainStoreFn(vm.domainKVStore))
+
 	packageAddress := chain.PackageAddress(vm.currentPackagePath)
 
 	// Update storage permissions for all registered implementations
