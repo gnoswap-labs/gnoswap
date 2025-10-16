@@ -1,97 +1,93 @@
 package protocol_fee
 
 func DistributeProtocolFee(cur realm) map[string]int64 {
-	return getImpl().DistributeProtocolFee()
+	return getImplementation().DistributeProtocolFee()
 }
 
 func SetDevOpsPct(cur realm, pct int64) {
-	getImpl().SetDevOpsPct(pct)
+	getImplementation().SetDevOpsPct(pct)
 }
 
 func SetGovStakerPct(cur realm, pct int64) {
-	getImpl().SetGovStakerPct(pct)
+	getImplementation().SetGovStakerPct(pct)
 }
 
 func AddToProtocolFee(cur realm, tokenPath string, amount int64) {
-	getImpl().AddToProtocolFee(tokenPath, amount)
+	getImplementation().AddToProtocolFee(tokenPath, amount)
 }
 
 func ClearTokenListWithAmount(cur realm) {
-	getImpl().ClearTokenListWithAmount()
+	getImplementation().ClearTokenListWithAmount()
 }
 
 func ClearAccuTransferToGovStaker(cur realm) {
-	getImpl().ClearAccuTransferToGovStaker()
+	getImplementation().ClearAccuTransferToGovStaker()
 }
 
 func GetDevOpsPct() int64 {
-	return getImpl().GetDevOpsPct()
+	return getImplementation().GetDevOpsPct()
 }
 
 func GetGovStakerPct() int64 {
-	return getImpl().GetGovStakerPct()
+	return getImplementation().GetGovStakerPct()
 }
 
 func GetTokenListWithAmount() map[string]int64 {
-	return getImpl().GetTokenListWithAmount()
+	return getImplementation().GetTokenListWithAmount()
 }
 
 func GetAmountOfToken(tokenPath string) int64 {
-	return getImpl().GetAmountOfToken(tokenPath)
+	return getImplementation().GetAmountOfToken(tokenPath)
 }
 
 func GetAccuTransfersToGovStaker() map[string]int64 {
-	return getImpl().GetAccuTransfersToGovStaker()
+	return getImplementation().GetAccuTransfersToGovStaker()
 }
 
 func GetAccuTransfersToDevOps() map[string]int64 {
-	return getImpl().GetAccuTransfersToDevOps()
+	return getImplementation().GetAccuTransfersToDevOps()
 }
 
 func GetAccuTransferToGovStakerByTokenPath(tokenPath string) int64 {
-	return getImpl().GetAccuTransferToGovStakerByTokenPath(tokenPath)
+	return getImplementation().GetAccuTransferToGovStakerByTokenPath(tokenPath)
 }
 
 func GetAccuTransferToDevOpsByTokenPath(tokenPath string) int64 {
-	return getImpl().GetAccuTransferToDevOpsByTokenPath(tokenPath)
+	return getImplementation().GetAccuTransferToDevOpsByTokenPath(tokenPath)
 }
 
 func GetHistoryOfDistributedToGovStakerByTokenPath(tokenPath string) int64 {
-	return getImpl().GetHistoryOfDistributedToGovStakerByTokenPath(tokenPath)
+	return getImplementation().GetHistoryOfDistributedToGovStakerByTokenPath(tokenPath)
 }
 
 func GetHistoryOfDistributedToDevOpsByTokenPath(tokenPath string) int64 {
-	return getImpl().GetHistoryOfDistributedToDevOpsByTokenPath(tokenPath)
+	return getImplementation().GetHistoryOfDistributedToDevOpsByTokenPath(tokenPath)
 }
 
 func ApiGetAccuTransferToGovStaker() string {
-	return getImpl().ApiGetAccuTransferToGovStaker()
+	return getImplementation().ApiGetAccuTransferToGovStaker()
 }
 
 func ApiGetAccuTransferToDevOps() string {
-	return getImpl().ApiGetAccuTransferToDevOps()
+	return getImplementation().ApiGetAccuTransferToDevOps()
 }
 
 func ApiGetHistoryTransferToGovStaker() string {
-	return getImpl().ApiGetHistoryTransferToGovStaker()
+	return getImplementation().ApiGetHistoryTransferToGovStaker()
 }
 
 func ApiGetHistoryTransferToDevOps() string {
-	return getImpl().ApiGetHistoryTransferToDevOps()
+	return getImplementation().ApiGetHistoryTransferToDevOps()
 }
 
 func ApiGetActualBalance() string {
-	return getImpl().ApiGetActualBalance()
+	return getImplementation().ApiGetActualBalance()
 }
 
 func ApiGetRecordedBalance() string {
-	return getImpl().ApiGetRecordedBalance()
+	return getImplementation().ApiGetRecordedBalance()
 }
 
 func ApiGetUnrecordedBalance() string {
-	return getImpl().ApiGetUnrecordedBalance()
-}
-
-func getImpl() IProtocolFee {
-	return protocolFeeImpl
+	return getImplementation().ApiGetUnrecordedBalance()
 }

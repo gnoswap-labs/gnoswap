@@ -41,7 +41,7 @@ func (s *protocolFeeStore) SetProtocolFeeState(protocolFeeState ProtocolFeeState
 
 // NewprotocolFeeStore creates a new protocol fee store instance with the provided KV store.
 // This function is used by the upgrade system to create storage instances for each implementation.
-func NewprotocolFeeStore(kvStore store.KVStore) IProtocolFeeStore {
+func NewProtocolFeeStore(kvStore store.KVStore) IProtocolFeeStore {
 	return &protocolFeeStore{
 		kvStore: kvStore,
 	}
