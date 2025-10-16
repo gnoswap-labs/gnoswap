@@ -1,0 +1,2 @@
+module = "gno.land/r/gnoswap/scenario/protocol_fee"
+gno = "0.9"

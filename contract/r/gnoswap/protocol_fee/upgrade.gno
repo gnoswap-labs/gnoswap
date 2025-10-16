@@ -20,9 +20,11 @@ var domainPath = runtime.CurrentRealm().PkgPath()
 // The initializer function creates a new instance of the implementation
 // using the provided protocolFeeStore interface.
 //
+// The stateInitializer function creates the initial state for this version.
+//
 // Security: Only contracts within the domain path can register initializers.
 // Each package path can only register once to prevent duplicate registrations.
-func RegisterInitializer(cur realm, initializer func(protocolFeeStore IProtocolFeeStore) IProtocolFee) {
+func RegisterInitializer(cur realm, initializer func(protocolFeeStore IProtocolFeeStore) IProtocolFee, stateInitializer func() ProtocolFeeState) {
 	// Ensure the caller is within the domain path (e.g., protocol_fee/v1, protocol_fee/v2)
 	if !isContainDomainPath() {
 		panic("RegisterInitializer can only be called in the domain path")
@@ -49,10 +51,20 @@ func RegisterInitializer(cur realm, initializer func(protocolFeeStore IProtocolF
 		}
 	} else {
 		// If no implementation is active yet, make this the active implementation
-		protocolFeeImpl = initializers[previousPath](NewprotocolFeeStore(kvStore))
+		protocolFeeStore := NewprotocolFeeStore(kvStore)
+
+		// Initialize state if it doesn't exist
+		_, err := kvStore.Get(StoreKeyProtocolFeeState.String())
+		if err != nil {
+			// State doesn't exist, initialize it
+			initialState := stateInitializer()
+			protocolFeeStore.SetProtocolFeeState(initialState)
+		}
+
+		protocolFeeImpl = initializers[previousPath](protocolFeeStore)
 
 		// Grant write permissions to the active implementation
-		err := kvStore.AddAuthorizedCaller(previousRealm.Address(), store.Write)
+		err = kvStore.AddAuthorizedCaller(previousRealm.Address(), store.Write)
 		if err != nil {
 			panic(err)
 		}

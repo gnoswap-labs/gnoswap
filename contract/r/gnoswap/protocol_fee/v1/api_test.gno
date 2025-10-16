@@ -18,7 +18,7 @@ func createTestProtocolFeeV1(t *testing.T) *protocolFeeV1 {
 
 	return &protocolFeeV1{
 		store: &mockProtocolFeeStore{
-			state: newProtocolFeeStateInternal(),
+			state: newProtocolFeeStateInternal(t),
 		},
 	}
 }
