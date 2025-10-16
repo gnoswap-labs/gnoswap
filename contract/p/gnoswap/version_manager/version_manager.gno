@@ -182,7 +182,7 @@ func (vm *versionManager) GetDomainPath() string {
 // Keys are package paths, values are initializer functions.
 // Useful for inspecting which versions are available.
 func (vm *versionManager) GetInitializers() *rotree.ReadOnlyTree {
-	return rotree.Wrap(vm.initializers, nil)
+	return rotree.Wrap(vm.initializers, makeInitializerSafe)
 }
 
 // GetCurrentPackagePath returns the package path of the currently active implementation.
@@ -254,4 +254,11 @@ func NewVersionManager(
 		currentPackagePath:      "",
 		currentImplementation:   nil,
 	}
+}
+
+func makeInitializerSafe(data any) any {
+	cpy := new(func(store any) any)
+	*cpy = *(data.(*func(store any) any))
+
+	return cpy
 }
