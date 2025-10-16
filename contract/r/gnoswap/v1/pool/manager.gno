@@ -12,7 +12,7 @@ import (
 	"gno.land/r/gnoswap/halt"
 
 	en "gno.land/r/gnoswap/emission"
-	pf "gno.land/r/gnoswap/v1/protocol_fee"
+	pf "gno.land/r/gnoswap/protocol_fee"
 
 	"gno.land/r/gnoswap/gns"
 )

@@ -9,6 +9,11 @@ import (
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	"gno.land/r/gnoswap/protocol_fee"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/ufmt"
 
@@ -16,7 +21,6 @@ import (
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/v1/gov/staker"
 	"gno.land/r/gnoswap/v1/launchpad"
-	"gno.land/r/gnoswap/v1/protocol_fee"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
@@ -31,6 +35,7 @@ var (
 	stakerRealm        = testing.NewUserRealm(stakerAddr)
 	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 	govStakerAddr, _   = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+	govStakerRealm     = testing.NewUserRealm(govStakerAddr)
 
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
@@ -170,6 +175,8 @@ func setupProtocolFee(barAmount, quxAmount int64) {
 	println("[INFO] Validating protocol fee balances")
 	println("[EXPECTED] Bar balance:", bar.BalanceOf(protocolFeeAddr))
 	println("[EXPECTED] Qux balance:", qux.BalanceOf(protocolFeeAddr))
+
+	testing.SetRealm(govStakerRealm)
 	println("[EXPECTED] Bar amount in protocol fee:", protocol_fee.GetAmountOfToken("gno.land/r/onbloc/bar"))
 	println("[EXPECTED] Qux amount in protocol fee:", protocol_fee.GetAmountOfToken("gno.land/r/onbloc/qux"))
 }

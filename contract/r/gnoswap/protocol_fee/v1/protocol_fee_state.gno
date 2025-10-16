@@ -1,14 +1,15 @@
-package protocol_fee
+package v1
 
 import (
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/protocol_fee"
 )
 
-// ProtocolFeeState holds all the state variables for protocol fee management
-type ProtocolFeeState struct {
+// protocolFeeState holds all the state variables for protocol fee management
+type protocolFeeState struct {
 	// By default, devOps will get 0% of the protocol fee (which means gov/staker will get 100% of the protocol fee)
 	// This percentage can be modified through governance.
 	devOpsPct int64 // 0%
@@ -24,46 +25,21 @@ type ProtocolFeeState struct {
 	tokenListWithAmount map[string]int64 // tokenPath -> amount
 }
 
-// distributedToGovStakerHistory returns the history of distributed to gov/staker.
-func distributedToGovStakerHistory() *avl.Tree {
-	return protocolFeeState.distributedToGovStakerHistory
-}
-
-// distributedToDevOpsHistory returns the history of distributed to devOps.
-func distributedToDevOpsHistory() *avl.Tree {
-	return protocolFeeState.distributedToDevOpsHistory
-}
-
-// NewProtocolFeeState creates a new instance of ProtocolFeeState with initialized values
-func NewProtocolFeeState() *ProtocolFeeState {
-	return &ProtocolFeeState{
-		devOpsPct:                     0, // 0%
-		accuToGovStaker:               avl.NewTree(),
-		accuToDevOps:                  avl.NewTree(),
-		distributedToGovStakerHistory: avl.NewTree(),
-		distributedToDevOpsHistory:    avl.NewTree(),
-		tokenListWithAmount:           make(map[string]int64),
-	}
-}
-
-// Global instance of the protocol fee state
-var protocolFeeState = NewProtocolFeeState()
-
 // DevOpsPct returns the percentage of protocol fees allocated to DevOps.
-func (pfs *ProtocolFeeState) DevOpsPct() int64 { return pfs.devOpsPct }
+func (pfs *protocolFeeState) DevOpsPct() int64 { return pfs.devOpsPct }
 
 // GovStakerPct returns the percentage of protocol fees allocated to Gov/Staker.
-func (pfs *ProtocolFeeState) GovStakerPct() int64 { return 10000 - pfs.devOpsPct }
+func (pfs *protocolFeeState) GovStakerPct() int64 { return 10000 - pfs.devOpsPct }
 
 // AccuToGovStaker returns the accumulated amounts distributed to Gov/Staker.
-func (pfs *ProtocolFeeState) AccuToGovStaker() *avl.Tree { return pfs.accuToGovStaker }
+func (pfs *protocolFeeState) AccuToGovStaker() *avl.Tree { return pfs.accuToGovStaker }
 
 // AccuToDevOps returns the accumulated amounts distributed to DevOps.
-func (pfs *ProtocolFeeState) AccuToDevOps() *avl.Tree { return pfs.accuToDevOps }
+func (pfs *protocolFeeState) AccuToDevOps() *avl.Tree { return pfs.accuToDevOps }
 
 // distributeToDevOps distributes tokens to DevOps and updates related state.
 // Amount should be greater than 0 (already checked in DistributeProtocolFee).
-func (pfs *ProtocolFeeState) distributeToDevOps(token string, amount int64) error {
+func (pfs *protocolFeeState) distributeToDevOps(token string, amount int64) error {
 	pfs.addAccuToDevOps(token, amount)
 	pfs.updateDistributedToDevOpsHistory(token, amount)
 
@@ -74,7 +50,7 @@ func (pfs *ProtocolFeeState) distributeToDevOps(token string, amount int64) erro
 
 // distributeToGovStaker distributes tokens to Gov/Staker and updates related state.
 // Amount should be greater than 0 (already checked in DistributeProtocolFee).
-func (pfs *ProtocolFeeState) distributeToGovStaker(token string, amount int64) error {
+func (pfs *protocolFeeState) distributeToGovStaker(token string, amount int64) error {
 	pfs.addAccuToGovStaker(token, amount)
 	pfs.updateDistributedToGovStakerHistory(token, amount)
 
@@ -84,7 +60,7 @@ func (pfs *ProtocolFeeState) distributeToGovStaker(token string, amount int64) e
 }
 
 // setDevOpsPct sets the devOpsPct.
-func (pfs *ProtocolFeeState) setDevOpsPct(pct int64) (int64, error) {
+func (pfs *protocolFeeState) setDevOpsPct(pct int64) (int64, error) {
 	if pct < 0 {
 		return 0, makeErrorWithDetail(
 			errInvalidPct,
@@ -104,7 +80,7 @@ func (pfs *ProtocolFeeState) setDevOpsPct(pct int64) (int64, error) {
 }
 
 // setGovStakerPct sets the govStakerPct by calculating devOpsPct.
-func (pfs *ProtocolFeeState) setGovStakerPct(pct int64) (int64, error) {
+func (pfs *protocolFeeState) setGovStakerPct(pct int64) (int64, error) {
 	if pct < 0 {
 		return 0, makeErrorWithDetail(
 			errInvalidPct,
@@ -120,7 +96,7 @@ func (pfs *ProtocolFeeState) setGovStakerPct(pct int64) (int64, error) {
 }
 
 // addAccuToGovStaker adds the amount to the accuToGovStaker by token path.
-func (pfs *ProtocolFeeState) addAccuToGovStaker(tokenPath string, amount int64) {
+func (pfs *protocolFeeState) addAccuToGovStaker(tokenPath string, amount int64) {
 	before := pfs.GetAccuTransferToGovStakerByTokenPath(tokenPath)
 
 	// Check for overflow
@@ -136,7 +112,7 @@ func (pfs *ProtocolFeeState) addAccuToGovStaker(tokenPath string, amount int64) 
 }
 
 // addAccuToDevOps adds the amount to the accuToDevOps by token path.
-func (pfs *ProtocolFeeState) addAccuToDevOps(tokenPath string, amount int64) {
+func (pfs *protocolFeeState) addAccuToDevOps(tokenPath string, amount int64) {
 	before := pfs.GetAccuTransferToDevOpsByTokenPath(tokenPath)
 
 	// Check for overflow
@@ -152,12 +128,12 @@ func (pfs *ProtocolFeeState) addAccuToDevOps(tokenPath string, amount int64) {
 }
 
 // GetAccuTransferToGovStakerByTokenPath gets the accumulated amount to gov/staker by token path.
-func (pfs *ProtocolFeeState) GetAccuTransferToGovStakerByTokenPath(tokenPath string) int64 {
+func (pfs *protocolFeeState) GetAccuTransferToGovStakerByTokenPath(tokenPath string) int64 {
 	return retrieveAmount(pfs.accuToGovStaker, tokenPath)
 }
 
 // GetAccuTransferToDevOpsByTokenPath gets the accumulated amount to devOps by token path.
-func (pfs *ProtocolFeeState) GetAccuTransferToDevOpsByTokenPath(tokenPath string) int64 {
+func (pfs *protocolFeeState) GetAccuTransferToDevOpsByTokenPath(tokenPath string) int64 {
 	return retrieveAmount(pfs.accuToDevOps, tokenPath)
 }
 
@@ -174,7 +150,7 @@ func retrieveAmount(tree *avl.Tree, key string) int64 {
 }
 
 // updateDistributedToGovStakerHistory updates the distributedToGovStakerHistory.
-func (pfs *ProtocolFeeState) updateDistributedToGovStakerHistory(tokenPath string, amount int64) {
+func (pfs *protocolFeeState) updateDistributedToGovStakerHistory(tokenPath string, amount int64) {
 	prevAmount := retrievePrevAmount(pfs.distributedToGovStakerHistory, tokenPath)
 	afterAmount := prevAmount + amount
 
@@ -182,7 +158,7 @@ func (pfs *ProtocolFeeState) updateDistributedToGovStakerHistory(tokenPath strin
 }
 
 // updateDistributedToDevOpsHistory updates the distributedToDevOpsHistory.
-func (pfs *ProtocolFeeState) updateDistributedToDevOpsHistory(tokenPath string, amount int64) {
+func (pfs *protocolFeeState) updateDistributedToDevOpsHistory(tokenPath string, amount int64) {
 	prevAmount := retrievePrevAmount(pfs.distributedToDevOpsHistory, tokenPath)
 	afterAmount := prevAmount + amount
 
@@ -203,6 +179,18 @@ func retrievePrevAmount(tree *avl.Tree, key string) (amount int64) {
 }
 
 // clearTokenListWithAmount clears the tokenListWithAmount.
-func (pfs *ProtocolFeeState) clearTokenListWithAmount() {
+func (pfs *protocolFeeState) clearTokenListWithAmount() {
 	pfs.tokenListWithAmount = make(map[string]int64)
+}
+
+// NewProtocolFeeState creates a new instance of protocolFeeState with initialized values
+func NewProtocolFeeState() protocol_fee.ProtocolFeeState {
+	return &protocolFeeState{
+		devOpsPct:                     0, // 0%
+		accuToGovStaker:               avl.NewTree(),
+		accuToDevOps:                  avl.NewTree(),
+		distributedToGovStakerHistory: avl.NewTree(),
+		distributedToDevOpsHistory:    avl.NewTree(),
+		tokenListWithAmount:           make(map[string]int64),
+	}
 }

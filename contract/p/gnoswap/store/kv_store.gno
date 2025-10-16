@@ -1,6 +1,10 @@
 package store
 
-import "chain/runtime"
+import (
+	"chain/runtime"
+
+	"gno.land/p/nt/ufmt"
+)
 
 // kvStore represents a domain-specific key-value storage
 // Each domain (pool, position, etc.) creates its own kvStore instance
@@ -40,7 +44,7 @@ func (k *kvStore) GetAllKeys() ([]string, error) {
 
 // Has checks if a key exists in the store
 func (k *kvStore) Has(key string) bool {
-	_, exists := k.data[key]
+	_, exists := k.data[k.makeKey(key)]
 
 	return exists
 }
@@ -54,7 +58,7 @@ func (k *kvStore) Get(key string) (any, error) {
 		return nil, ErrReadPermissionDenied
 	}
 
-	value, exists := k.data[key]
+	value, exists := k.data[k.makeKey(key)]
 	if !exists {
 		return nil, ErrKeyNotFound
 	}
@@ -71,7 +75,7 @@ func (k *kvStore) Set(key string, value any) error {
 		return ErrWritePermissionDenied
 	}
 
-	k.data[key] = value
+	k.data[k.makeKey(key)] = value
 
 	return nil
 }
@@ -89,7 +93,7 @@ func (k *kvStore) Delete(key string) error {
 		return ErrKeyNotFound
 	}
 
-	delete(k.data, key)
+	delete(k.data, k.makeKey(key))
 
 	return nil
 }
@@ -178,4 +182,8 @@ func (k *kvStore) isUpdatableAuthorizedCaller() bool {
 	currentRealm := runtime.CurrentRealm()
 
 	return currentRealm.Address() == k.domainAddress
+}
+
+func (k *kvStore) makeKey(key string) string {
+	return ufmt.Sprintf("%s:%s", k.domainAddress, key)
 }

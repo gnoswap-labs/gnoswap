@@ -12,7 +12,7 @@ import (
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
 
-	pf "gno.land/r/gnoswap/v1/protocol_fee"
+	pf "gno.land/r/gnoswap/protocol_fee"
 )
 
 // CreatePool creates a new concentrated liquidity pool.

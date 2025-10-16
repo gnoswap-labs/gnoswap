@@ -8,18 +8,21 @@ import (
 	"gno.land/p/demo/tokens/grc721"
 	"gno.land/p/nt/ufmt"
 
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/access"
 
-	"gno.land/r/gnoswap/gnft"
-	"gno.land/r/gnoswap/gns"
+	_ "gno.land/r/gnoswap/protocol_fee"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	rr "gno.land/r/gnoswap/v1/router"
 	sr "gno.land/r/gnoswap/v1/staker"
 
-	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/rbac"
+	"gno.land/r/gnoswap/gnft"
+	"gno.land/r/gnoswap/gns"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"

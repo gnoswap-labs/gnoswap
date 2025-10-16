@@ -1,4 +1,4 @@
-package protocol_fee
+package v1
 
 import (
 	"gno.land/p/nt/avl"
@@ -6,23 +6,23 @@ import (
 )
 
 // GetDevOpsPct returns the percentage allocated to devOps.
-func GetDevOpsPct() int64 {
-	return protocolFeeState.DevOpsPct()
+func (pf *protocolFeeV1) GetDevOpsPct() int64 {
+	return pf.getProtocolFeeState().DevOpsPct()
 }
 
 // GetGovStakerPct returns the percentage allocated to gov/staker.
-func GetGovStakerPct() int64 {
-	return protocolFeeState.GovStakerPct()
+func (pf *protocolFeeV1) GetGovStakerPct() int64 {
+	return pf.getProtocolFeeState().GovStakerPct()
 }
 
 // GetTokenListWithAmount returns the token path and amount.
-func GetTokenListWithAmount() map[string]int64 {
-	return protocolFeeState.tokenListWithAmount
+func (pf *protocolFeeV1) GetTokenListWithAmount() map[string]int64 {
+	return pf.getProtocolFeeState().tokenListWithAmount
 }
 
 // GetAmountOfToken returns the amount of token.
-func GetAmountOfToken(tokenPath string) int64 {
-	amount, exists := protocolFeeState.tokenListWithAmount[tokenPath]
+func (pf *protocolFeeV1) GetAmountOfToken(tokenPath string) int64 {
+	amount, exists := pf.getProtocolFeeState().tokenListWithAmount[tokenPath]
 	if !exists {
 		return 0
 	}
@@ -30,10 +30,10 @@ func GetAmountOfToken(tokenPath string) int64 {
 }
 
 // GetAccuTransfersToGovStaker returns all accumulated transfers to gov/staker.
-func GetAccuTransfersToGovStaker() map[string]int64 {
+func (pf *protocolFeeV1) GetAccuTransfersToGovStaker() map[string]int64 {
 	accuTransfers := make(map[string]int64)
 
-	protocolFeeState.accuToGovStaker.Iterate("", "", func(key string, value any) bool {
+	pf.getProtocolFeeState().accuToGovStaker.Iterate("", "", func(key string, value any) bool {
 		amount, ok := value.(int64)
 		if !ok {
 			return false
@@ -47,10 +47,10 @@ func GetAccuTransfersToGovStaker() map[string]int64 {
 }
 
 // GetAccuTransfersToDevOps returns all accumulated transfers to devOps.
-func GetAccuTransfersToDevOps() map[string]int64 {
+func (pf *protocolFeeV1) GetAccuTransfersToDevOps() map[string]int64 {
 	accuTransfers := make(map[string]int64)
 
-	protocolFeeState.accuToDevOps.Iterate("", "", func(key string, value any) bool {
+	pf.getProtocolFeeState().accuToDevOps.Iterate("", "", func(key string, value any) bool {
 		amount, ok := value.(int64)
 		if !ok {
 			return false
@@ -64,24 +64,24 @@ func GetAccuTransfersToDevOps() map[string]int64 {
 }
 
 // GetAccuTransferToGovStakerByTokenPath returns the accumulated transfer to gov/staker by token path.
-func GetAccuTransferToGovStakerByTokenPath(path string) int64 {
-	return protocolFeeState.GetAccuTransferToGovStakerByTokenPath(path)
+func (pf *protocolFeeV1) GetAccuTransferToGovStakerByTokenPath(path string) int64 {
+	return pf.getProtocolFeeState().GetAccuTransferToGovStakerByTokenPath(path)
 }
 
 // GetAccuTransferToDevOpsByTokenPath returns the accumulated transfer to devOps by token path.
-func GetAccuTransferToDevOpsByTokenPath(path string) int64 {
-	return protocolFeeState.GetAccuTransferToDevOpsByTokenPath(path)
+func (pf *protocolFeeV1) GetAccuTransferToDevOpsByTokenPath(path string) int64 {
+	return pf.getProtocolFeeState().GetAccuTransferToDevOpsByTokenPath(path)
 }
 
 // GetHistoryOfDistributedToGovStakerByTokenPath returns the history of distributed to gov/staker by token path.
-func GetHistoryOfDistributedToGovStakerByTokenPath(path string) int64 {
-	history := protocolFeeState.distributedToGovStakerHistory
+func (pf *protocolFeeV1) GetHistoryOfDistributedToGovStakerByTokenPath(path string) int64 {
+	history := pf.getProtocolFeeState().distributedToGovStakerHistory
 	return retrieveHistory(history, path)
 }
 
 // GetHistoryOfDistributedToDevOpsByTokenPath returns the history of distributed to devOps by token path.
-func GetHistoryOfDistributedToDevOpsByTokenPath(path string) int64 {
-	history := protocolFeeState.distributedToDevOpsHistory
+func (pf *protocolFeeV1) GetHistoryOfDistributedToDevOpsByTokenPath(path string) int64 {
+	history := pf.getProtocolFeeState().distributedToDevOpsHistory
 	return retrieveHistory(history, path)
 }
 

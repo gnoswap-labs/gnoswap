@@ -1,4 +1,4 @@
-package protocol_fee
+package v1
 
 import (
 	"errors"
