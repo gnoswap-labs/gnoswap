@@ -2,22 +2,60 @@ package protocol_fee
 
 import (
 	"chain/runtime"
+	"errors"
 
 	"gno.land/p/gnoswap/store"
+	"gno.land/p/gnoswap/version_manager"
 )
 
 var (
+	currentAddress = runtime.CurrentRealm().Address()
+	domainPath     = runtime.CurrentRealm().PkgPath()
+
 	kvStore store.KVStore
 
-	protocolFeeImpl IProtocolFee
-
-	initializers map[string]func(protocolFeeStore IProtocolFeeStore) IProtocolFee
+	versionManager version_manager.VersionManager
+	implementation IProtocolFee
 )
 
 func init() {
 	// Create a new KV store instance for this domain
-	kvStore = store.NewKVStore(runtime.CurrentRealm().Address())
+	kvStore = store.NewKVStore(currentAddress)
 
 	// Initialize the initializers map to store implementation registration functions
-	initializers = make(map[string]func(protocolFeeStore IProtocolFeeStore) IProtocolFee)
+	versionManager = version_manager.NewVersionManager(
+		domainPath,
+		kvStore,
+		initializeDomainStore,
+	)
+
+	implementation = nil
+}
+
+func initializeDomainStore(kvStore store.KVStore) any {
+	return NewProtocolFeeStore(kvStore)
+}
+
+func getImplementation() IProtocolFee {
+	if implementation == nil {
+		panic("implementation is not initialized")
+	}
+
+	return implementation
+}
+
+func updateImplementation() error {
+	result := versionManager.GetCurrentImplementation()
+	if result == nil {
+		return errors.New("implementation is not initialized")
+	}
+
+	impl, ok := result.(IProtocolFee)
+	if !ok {
+		return errors.New("impl is not an IProtocolFee")
+	}
+
+	implementation = impl
+
+	return nil
 }
