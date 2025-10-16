@@ -25,7 +25,7 @@ import (
 // Only callable by admin or gov/staker contract.
 // Note: Default split is 0% devOps, 100% gov/staker.
 func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
-	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
+	halt.AssertIsNotHaltedProtocolFee()
 
 	caller := runtime.PreviousRealm().Address()
 	assertIsAdminOrGovStaker(caller)
@@ -99,7 +99,7 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 // Only callable by admin or governance.
 // Note: GovStaker percentage is automatically adjusted to (10000 - devOpsPct).
 func (pf *protocolFeeV1) SetDevOpsPct(pct int64) {
-	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
+	halt.AssertIsNotHaltedProtocolFee()
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
@@ -135,7 +135,7 @@ func (pf *protocolFeeV1) SetDevOpsPct(pct int64) {
 // Only callable by admin or governance.
 // Note: DevOps percentage is automatically adjusted to (10000 - govStakerPct).
 func (pf *protocolFeeV1) SetGovStakerPct(pct int64) {
-	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
+	halt.AssertIsNotHaltedProtocolFee()
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
@@ -172,7 +172,7 @@ func (pf *protocolFeeV1) SetGovStakerPct(pct int64) {
 // Only callable by pool, router or staker contracts.
 // Note: Accumulated fees are distributed when DistributeProtocolFee is called.
 func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) {
-	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
+	halt.AssertIsNotHaltedProtocolFee()
 
 	caller := runtime.PreviousRealm().Address()
 	assertIsPoolOrPositionOrRouterOrStaker(caller)
@@ -203,7 +203,7 @@ func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) {
 // Only callable by gov/staker contract.
 // Note: Should be called after successful distribution.
 func (pf *protocolFeeV1) ClearTokenListWithAmount() {
-	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
+	halt.AssertIsNotHaltedProtocolFee()
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsGovStakerWithVersion(1, caller)
@@ -219,7 +219,7 @@ func (pf *protocolFeeV1) ClearTokenListWithAmount() {
 // Only callable by gov/staker contract.
 // Note: Should be called after reading accumulated amounts.
 func (pf *protocolFeeV1) ClearAccuTransferToGovStaker() {
-	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
+	halt.AssertIsNotHaltedProtocolFee()
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsGovStakerWithVersion(1, caller)

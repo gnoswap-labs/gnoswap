@@ -9,10 +9,10 @@ import (
 
 // assertIsPoolOrPositionOrRouterOrStaker panics if the caller is not the pool, router, or staker contract.
 func assertIsPoolOrPositionOrRouterOrStaker(caller address) {
-	if access.IsAuthorizedWithVersion(prbac.ROLE_POOL.String(), 1, caller) ||
-		access.IsAuthorizedWithVersion(prbac.ROLE_POSITION.String(), 1, caller) ||
-		access.IsAuthorizedWithVersion(prbac.ROLE_ROUTER.String(), 1, caller) ||
-		access.IsAuthorizedWithVersion(prbac.ROLE_STAKER.String(), 1, caller) {
+	if access.IsAuthorized(prbac.ROLE_POOL.String(), caller) ||
+		access.IsAuthorized(prbac.ROLE_POSITION.String(), caller) ||
+		access.IsAuthorized(prbac.ROLE_ROUTER.String(), caller) ||
+		access.IsAuthorized(prbac.ROLE_STAKER.String(), caller) {
 		return
 	}
 
@@ -25,7 +25,7 @@ func assertIsAdminOrGovStaker(caller address) {
 		return
 	}
 
-	if access.IsAuthorizedWithVersion(prbac.ROLE_GOV_STAKER.String(), 1, caller) {
+	if access.IsAuthorized(prbac.ROLE_GOV_STAKER.String(), caller) {
 		return
 	}
 
