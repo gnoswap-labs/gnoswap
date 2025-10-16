@@ -2,8 +2,6 @@ name: run-test
 
 on:
   pull_request:
-    branches:
-      - main
 
 jobs:
   generate-matrix:
