@@ -19,6 +19,7 @@ import (
 
 	"gno.land/p/gnoswap/store"
 	"gno.land/p/nt/avl"
+	"gno.land/p/nt/avl/rotree"
 	"gno.land/p/nt/ufmt"
 )
 
@@ -180,8 +181,8 @@ func (vm *versionManager) GetDomainPath() string {
 // GetInitializers returns the AVL tree containing all registered initializer functions.
 // Keys are package paths, values are initializer functions.
 // Useful for inspecting which versions are available.
-func (vm *versionManager) GetInitializers() *avl.Tree {
-	return vm.initializers
+func (vm *versionManager) GetInitializers() *rotree.ReadOnlyTree {
+	return rotree.Wrap(vm.initializers, nil)
 }
 
 // GetCurrentPackagePath returns the package path of the currently active implementation.
