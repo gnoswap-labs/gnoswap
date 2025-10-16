@@ -9,15 +9,21 @@ import (
 	"chain/banker"
 	"testing"
 
-	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/ufmt"
+
+	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/protocol_fee"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/gns"
+
 	"gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoland/wugnot"
 )
 
