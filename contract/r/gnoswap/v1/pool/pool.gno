@@ -4,8 +4,8 @@ import (
 	"chain"
 	"chain/runtime"
 
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
-	"gno.land/r/gnoswap/v1/common"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"

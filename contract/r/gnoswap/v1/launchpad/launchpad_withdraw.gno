@@ -8,9 +8,9 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
-	"gno.land/r/gnoswap/v1/common"
 
 	gov_staker "gno.land/r/gnoswap/v1/gov/staker"
 )

@@ -8,10 +8,10 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/referral"
-	"gno.land/r/gnoswap/v1/common"
 )
 
 type ExactInSwapOperation struct {

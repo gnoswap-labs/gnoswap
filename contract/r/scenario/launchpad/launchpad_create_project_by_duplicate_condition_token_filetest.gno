@@ -47,7 +47,7 @@ func createProjectByDuplicateConditionToken() {
 	rewardTokenPath := "gno.land/r/onbloc/obl"
 	recipientAddr := testutils.TestAddress("project-owner")
 	rewardAmount := int64(1_000_000_000)
-	conditionPath := "gno.land/r/gnoswap/v1/gov/xgns*PAD*gno.land/r/gnoswap/v1/gov/xgns"
+	conditionPath := "gno.land/r/gnoswap/gov/xgns*PAD*gno.land/r/gnoswap/gov/xgns"
 	conditionsAmount := "1000000*PAD*0"
 	tier30Ratio := int64(10)
 	tier90Ratio := int64(20)
@@ -69,7 +69,7 @@ func createProjectByDuplicateConditionToken() {
 	testing.SetRealm(adminRealm)
 	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
 
-	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-007] invalid input data || tokenPath(gno.land/r/gnoswap/v1/gov/xgns) is duplicated"
+	expectedPanicMessage := "[GNOSWAP-LAUNCHPAD-007] invalid input data || tokenPath(gno.land/r/gnoswap/gov/xgns) is duplicated"
 
 	uassert.AbortsWithMessage(t, expectedPanicMessage, func() {
 		launchpad.CreateProject(
@@ -99,10 +99,10 @@ func createProjectByDuplicateConditionToken() {
 // [INFO] create project with reward token path: gno.land/r/onbloc/obl
 // [INFO] create project with recipient: g1wpex76n9vd6z6mmhdejhyh6lta047h6lwfg09t
 // [INFO] create project with reward amount: 1000000000
-// [INFO] create project with conditions token: gno.land/r/gnoswap/v1/gov/xgns*PAD*gno.land/r/gnoswap/v1/gov/xgns
+// [INFO] create project with conditions token: gno.land/r/gnoswap/gov/xgns*PAD*gno.land/r/gnoswap/gov/xgns
 // [INFO] create project with conditions amount: 1000000*PAD*0
 // [INFO] create project with tier30 ratio: 10
 // [INFO] create project with tier90 ratio: 20
 // [INFO] create project with tier180 ratio: 70
 // [INFO] create project with start time: 1234571490
-// [EXPECTED] Should abort with input data error: [GNOSWAP-LAUNCHPAD-007] invalid input data || tokenPath(gno.land/r/gnoswap/v1/gov/xgns) is duplicated
+// [EXPECTED] Should abort with input data error: [GNOSWAP-LAUNCHPAD-007] invalid input data || tokenPath(gno.land/r/gnoswap/gov/xgns) is duplicated

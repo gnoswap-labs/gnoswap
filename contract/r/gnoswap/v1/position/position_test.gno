@@ -11,8 +11,13 @@ import (
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 
+	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/referral"
-	"gno.land/r/gnoswap/v1/gnft"
+
+	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/protocol_fee"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
 )
 
 var mockRegistry = make(map[string]bool)

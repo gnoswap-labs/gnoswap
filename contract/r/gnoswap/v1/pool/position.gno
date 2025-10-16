@@ -9,7 +9,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
 
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/common"
 )
 
 const positionPackagePath = "gno.land/r/gnoswap/v1/position"
@@ -276,7 +276,7 @@ func (p *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.
 		// case 2: Current price is within the position range
 		liquidityBefore := p.liquidity
 		currentTime := time.Now().Unix()
-		
+
 		// Update oracle BEFORE liquidity changes
 		err := p.writeObservation(currentTime, tick, liquidityBefore)
 		if err != nil {

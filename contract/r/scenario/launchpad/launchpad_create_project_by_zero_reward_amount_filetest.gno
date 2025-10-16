@@ -47,7 +47,7 @@ func createProjectByZeroRewardAmount() {
 	rewardTokenPath := "gno.land/r/onbloc/obl"
 	recipientAddr := testutils.TestAddress("project-owner")
 	rewardAmount := int64(0)
-	conditionPath := "gno.land/r/gnoswap/v1/gov/xgns"
+	conditionPath := "gno.land/r/gnoswap/gov/xgns"
 	conditionsAmount := "1000000"
 	tier30Ratio := int64(10)
 	tier90Ratio := int64(20)
@@ -98,7 +98,7 @@ func createProjectByZeroRewardAmount() {
 // [INFO] create project with reward token path: gno.land/r/onbloc/obl
 // [INFO] create project with recipient: g1wpex76n9vd6z6mmhdejhyh6lta047h6lwfg09t
 // [INFO] create project with reward amount: 0
-// [INFO] create project with conditions token: gno.land/r/gnoswap/v1/gov/xgns
+// [INFO] create project with conditions token: gno.land/r/gnoswap/gov/xgns
 // [INFO] create project with conditions amount: 1000000
 // [INFO] create project with tier30 ratio: 10
 // [INFO] create project with tier90 ratio: 20

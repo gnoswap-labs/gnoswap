@@ -9,14 +9,18 @@ import (
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/protocol_fee"
 	"gno.land/r/gnoswap/v1/gov/staker"
 	"gno.land/r/gnoswap/v1/launchpad"
-	"gno.land/r/gnoswap/v1/protocol_fee"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
@@ -91,7 +95,7 @@ func createOBLProject() {
 	projectName := "OBL Launchpad Project"
 	rewardTokenPath := "gno.land/r/onbloc/obl"
 	rewardAmount := int64(1_000_000_000)
-	conditionPath := "gno.land/r/gnoswap/v1/gov/xgns"
+	conditionPath := "gno.land/r/gnoswap/gov/xgns"
 	conditionsAmount := "1000000"
 	tier30Ratio := int64(10)
 	tier90Ratio := int64(20)
@@ -163,10 +167,12 @@ func setupProtocolFee(barAmount, quxAmount int64) {
 	println("[INFO] Validating protocol fee balances")
 	println("[EXPECTED] Bar balance:", bar.BalanceOf(protocolFeeAddr))
 	println("[EXPECTED] Qux balance:", qux.BalanceOf(protocolFeeAddr))
+
+	testing.SetRealm(govStakerRealm)
+
 	println("[EXPECTED] Bar amount in protocol fee:", protocol_fee.GetAmountOfToken("gno.land/r/onbloc/bar"))
 	println("[EXPECTED] Qux amount in protocol fee:", protocol_fee.GetAmountOfToken("gno.land/r/onbloc/qux"))
 
-	testing.SetRealm(govStakerRealm)
 	protocol_fee.DistributeProtocolFee(cross)
 	println("[EXPECTED] Accumulated transfer to gov staker - Bar:", protocol_fee.GetAccuTransferToGovStakerByTokenPath("gno.land/r/onbloc/bar"))
 	println("[EXPECTED] Accumulated transfer to gov staker - Qux:", protocol_fee.GetAccuTransferToGovStakerByTokenPath("gno.land/r/onbloc/qux"))
@@ -268,7 +274,7 @@ func unmarshal(data string) map[string]interface{} {
 		"now":                    "1234567890",
 		"depositAmount":          "1000000000",
 		"recipient":              "g1wpex76n9vd6yzerywf047h6lqlp5qp",
-		"conditionPath":          "gno.land/r/gnoswap/v1/gov/xgns",
+		"conditionPath":          "gno.land/r/gnoswap/gov/xgns",
 		"conditionsAmount":       "1000000",
 		"tier30Ratio":            "10",
 		"tier90Ratio":            "20",

@@ -7,7 +7,7 @@ import (
 	"gno.land/p/nt/uassert"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/r/gnoswap/v1/gnft"
+	"gno.land/r/gnoswap/gnft"
 )
 
 func assertPanic(t *testing.T, expectedMsg string, fn func()) {

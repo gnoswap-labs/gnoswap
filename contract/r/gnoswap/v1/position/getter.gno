@@ -4,7 +4,7 @@ import (
 	"gno.land/p/nt/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/v1/gnft"
+	"gno.land/r/gnoswap/gnft"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 

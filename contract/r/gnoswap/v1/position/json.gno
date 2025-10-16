@@ -2,7 +2,7 @@ package position
 
 import (
 	"gno.land/p/onbloc/json"
-	"gno.land/r/gnoswap/v1/gnft"
+	"gno.land/r/gnoswap/gnft"
 )
 
 type JsonResponse interface {

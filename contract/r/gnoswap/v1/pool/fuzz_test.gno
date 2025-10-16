@@ -3,7 +3,7 @@ package pool
 import (
 	"testing"
 
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/common"
 
 	fuzz "gno.land/p/gnoswap/fuzz"
 	i256 "gno.land/p/gnoswap/int256"

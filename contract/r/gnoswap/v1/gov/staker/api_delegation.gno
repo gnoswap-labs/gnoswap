@@ -1,7 +1,7 @@
 package staker
 
 import (
-	"gno.land/r/gnoswap/v1/gov/xgns"
+	"gno.land/r/gnoswap/gov/xgns"
 )
 
 // GetTotalxGnsSupply returns the total amount of xGNS supply.

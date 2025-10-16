@@ -11,11 +11,17 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/protocol_fee"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/gnoswap/access"
-	gns "gno.land/r/gnoswap/gns"
+
 	"gno.land/r/gnoswap/v1/gov/governance"
 	gs "gno.land/r/gnoswap/v1/gov/staker"
+
+	gns "gno.land/r/gnoswap/gns"
 )
 
 var (

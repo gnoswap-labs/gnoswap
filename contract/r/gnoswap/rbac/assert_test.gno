@@ -87,7 +87,7 @@ func TestAssertIsPendingOwner(t *testing.T) {
 			name:        "Random address should panic",
 			addr:        COMMUNITY_POOL_ADDR,
 			shouldPanic: true,
-			expectedMsg: "caller is not pending owner || caller: g100fnnlz5eh87p5hvwt8pf279lxaelm8k8md049",
+			expectedMsg: "caller is not pending owner || caller: g13lpjmjhl2du7whed3wxe4n5508txxja6ezxeg7",
 		},
 		{
 			name:        "Empty address should panic",

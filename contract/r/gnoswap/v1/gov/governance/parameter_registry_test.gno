@@ -149,7 +149,7 @@ func TestCreateParameterHandlers(t *testing.T) {
 		function string
 	}{
 		{"gno.land/r/gnoswap/halt", "SetHaltLevel"},
-		{"gno.land/r/gnoswap/v1/community_pool", "TransferToken"},
+		{"gno.land/r/gnoswap/community_pool", "TransferToken"},
 		{"gno.land/r/gnoswap/emission", "ChangeDistributionPct"},
 	}
 

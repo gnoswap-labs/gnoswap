@@ -7,6 +7,11 @@ import (
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/gns"
+
+	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/protocol_fee"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
 )
 
 func TestHandleStakingRewardFee(t *testing.T) {
