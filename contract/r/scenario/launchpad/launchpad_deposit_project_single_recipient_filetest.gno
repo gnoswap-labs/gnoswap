@@ -11,7 +11,6 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
-	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/p/nt/testutils"
@@ -168,10 +167,12 @@ func setupProtocolFee(barAmount, quxAmount int64) {
 	println("[INFO] Validating protocol fee balances")
 	println("[EXPECTED] Bar balance:", bar.BalanceOf(protocolFeeAddr))
 	println("[EXPECTED] Qux balance:", qux.BalanceOf(protocolFeeAddr))
+
+	testing.SetRealm(govStakerRealm)
+
 	println("[EXPECTED] Bar amount in protocol fee:", protocol_fee.GetAmountOfToken("gno.land/r/onbloc/bar"))
 	println("[EXPECTED] Qux amount in protocol fee:", protocol_fee.GetAmountOfToken("gno.land/r/onbloc/qux"))
 
-	testing.SetRealm(govStakerRealm)
 	protocol_fee.DistributeProtocolFee(cross)
 	println("[EXPECTED] Accumulated transfer to gov staker - Bar:", protocol_fee.GetAccuTransferToGovStakerByTokenPath("gno.land/r/onbloc/bar"))
 	println("[EXPECTED] Accumulated transfer to gov staker - Qux:", protocol_fee.GetAccuTransferToGovStakerByTokenPath("gno.land/r/onbloc/qux"))
