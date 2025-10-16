@@ -151,7 +151,7 @@ func (vm *versionManager) ChangeImplementation(packagePath string) error {
 	}
 
 	// Reconfigure permissions: write access for new active version, read-only for others
-	for caller, _ := range storeAuthorizedCallers {
+	for caller := range storeAuthorizedCallers {
 		updatedPermission := store.ReadOnly
 
 		// Grant write access only to the new active implementation
