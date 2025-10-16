@@ -35,6 +35,9 @@ var (
 	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 	launchpadAddr, _   = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 
+	govStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+	govStakerRealm  = testing.NewUserRealm(govStakerAddr)
+
 	projectAddr  = testutils.TestAddress("projectAddr")
 	projectRealm = testing.NewUserRealm(projectAddr)
 
@@ -107,10 +110,11 @@ func skipBlocksAndDistribute() {
 }
 
 func protocolFeeRewardProjectRecipient() {
+	testing.SetRealm(govStakerRealm)
 	gcr := staker.GetClaimableRewardByLaunchpad(projectAddr)
 	ufmt.Printf("[INFO] claimable reward (project recipient): %s\n", gcr)
-	testing.SetRealm(projectRealm)
 
+	testing.SetRealm(projectRealm)
 	prevBarBalance := bar.BalanceOf(projectAddr)
 	prevQuxBalance := qux.BalanceOf(projectAddr)
 
