@@ -19,7 +19,7 @@ func registerRouterV1() {
 			panic(err)
 		}
 
-		return NewRouterV1(routerStore)
+		return NewRouterV1(cross, routerStore)
 	})
 }
 

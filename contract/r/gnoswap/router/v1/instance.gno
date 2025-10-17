@@ -11,16 +11,13 @@ type routerV1 struct {
 // singleton instance for internal use
 var routerInstance *routerV1
 
-func NewRouterV1(routerStore router.IRouterStore) router.IRouter {
+func NewRouterV1(cur realm, routerStore router.IRouterStore) router.IRouter {
 	instance := &routerV1{
 		store: routerStore,
 	}
 
-	// FIXME: Temporarily commented out due to "cannot modify external-realm or non-realm object" error.
-	// After confirmation, it would be good to either remove the comment or delete this line entirely.
-	//
 	// Set singleton for internal access
-	// routerInstance = instance
+	routerInstance = instance
 
 	return instance
 }
