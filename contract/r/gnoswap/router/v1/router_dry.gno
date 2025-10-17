@@ -140,30 +140,29 @@ func (p *SwapProcessor) AddSwapResults(
 // DrySwapRoute simulates a token swap route without executing the swap.
 // It calculates the expected outcome based on the current state of liquidity pools.
 func (r *routerV1) DrySwapRoute(
-	inputToken, outputToken string,
-	amountIn string,
-	routeArr, quoteArr string,
-	amountOutMin string,
-	deadline int64,
-	referrer string,
-) (string, string) {
+	inputToken string,
+	outputToken string,
+	specifiedAmount string,
+	strRouteArr, quoteArr string,
+	tokenAmountLimit string,
+) (string, string, bool) {
 	// For dry swap, we simulate with ExactIn type
 	swapTypeStr := "EXACT_IN"
 
 	// Call the internal dry swap function
 	amountInResult, amountOutResult, success := drySwapRoute(
 		inputToken, outputToken,
-		amountIn, swapTypeStr,
-		routeArr, quoteArr,
-		amountOutMin,
+		specifiedAmount, swapTypeStr,
+		strRouteArr, quoteArr,
+		tokenAmountLimit,
 	)
 
 	if !success {
 		// Return zero values if simulation fails
-		return "0", "0"
+		return "0", "0", false
 	}
 
-	return amountInResult, amountOutResult
+	return amountInResult, amountOutResult, success
 }
 
 // drySwapRoute is a function for applying cross realm.

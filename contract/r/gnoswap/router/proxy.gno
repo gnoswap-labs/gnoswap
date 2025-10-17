@@ -8,8 +8,14 @@ func ExactOutSwapRoute(cur realm, inputToken string, outputToken string, amountO
 	return getImplementation().ExactOutSwapRoute(inputToken, outputToken, amountOut, routeArr, amountInMax, sqrtPriceLimitX96, deadline, referrer)
 }
 
-func DrySwapRoute(inputToken string, outputToken string, amountIn string, routeArr string, quoteArr string, amountOutMin string, deadline int64, referrer string) (string, string) {
-	return getImplementation().DrySwapRoute(inputToken, outputToken, amountIn, routeArr, quoteArr, amountOutMin, deadline, referrer)
+func DrySwapRoute(
+	inputToken string,
+	outputToken string,
+	specifiedAmount string,
+	strRouteArr, quoteArr string,
+	tokenAmountLimit string,
+) (string, string, bool) {
+	return getImplementation().DrySwapRoute(inputToken, outputToken, specifiedAmount, strRouteArr, quoteArr, tokenAmountLimit)
 }
 
 func GetSwapFee() uint64 {

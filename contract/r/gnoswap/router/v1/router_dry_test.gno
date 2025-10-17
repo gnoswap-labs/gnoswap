@@ -1,14 +1,18 @@
-package router
+package v1
 
 import (
 	"testing"
 
 	"gno.land/p/nt/uassert"
 
-	"gno.land/r/gnoswap/gns"
+	_ "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 
+	"gno.land/r/gnoswap/router"
+
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/qux"
@@ -191,11 +195,10 @@ func TestDrySwapRoute_Basic(t *testing.T) {
 				tt.setupFn(env)
 			}
 
-			amountIn, amountOut, success := DrySwapRoute(
+			amountIn, amountOut, success := router.DrySwapRoute(
 				tt.swapParams.inputToken,
 				tt.swapParams.outputToken,
 				tt.swapParams.specifiedAmount,
-				tt.swapParams.swapTypeStr,
 				tt.swapParams.strRouteArr,
 				tt.swapParams.quoteArr,
 				tt.swapParams.tokenAmountLimit,
@@ -255,11 +258,10 @@ func TestDrySwapRouteOverflow(t *testing.T) {
 			}
 
 			uassert.AbortsWithMessage(t, tt.expectedPanicMsg, func() {
-				DrySwapRoute(
+				router.DrySwapRoute(
 					tt.swapParams.inputToken,
 					tt.swapParams.outputToken,
 					tt.swapParams.specifiedAmount,
-					tt.swapParams.swapTypeStr,
 					tt.swapParams.strRouteArr,
 					tt.swapParams.quoteArr,
 					tt.swapParams.tokenAmountLimit,
