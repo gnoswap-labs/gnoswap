@@ -1,6 +1,7 @@
-package launchpad
+package v1
 
 import (
+	"chain/runtime"
 	"testing"
 
 	"gno.land/p/nt/avl"
@@ -43,7 +44,7 @@ func TestCollectDepositReward(t *testing.T) {
 					depositAmount: 1000,
 				}
 
-				projects = avl.NewTree()
+				setTestProjects(avl.NewTree())
 
 				return deposit, nil
 			},
@@ -63,6 +64,7 @@ func TestCollectDepositReward(t *testing.T) {
 				}
 
 				// Create project with tier but without reward manager
+				projects := getTestProjects()
 				project := &Project{
 					id:    "project_1",
 					tiers: make(map[int64]*ProjectTier),
@@ -73,8 +75,9 @@ func TestCollectDepositReward(t *testing.T) {
 				}
 				project.tiers[30] = projectTier
 				projects.Set("project_1", project)
+				setTestProjects(projects)
 
-				projectTierRewardManagers = avl.NewTree()
+				setTestProjectTierRewardManagers(avl.NewTree())
 
 				return deposit, nil
 			},
@@ -95,6 +98,7 @@ func TestCollectDepositReward(t *testing.T) {
 				}
 
 				// Create project with tier
+				projects := getTestProjects()
 				project := &Project{
 					id:    "project_1",
 					tiers: make(map[int64]*ProjectTier),
@@ -106,8 +110,10 @@ func TestCollectDepositReward(t *testing.T) {
 				}
 				project.tiers[30] = projectTier
 				projects.Set("project_1", project)
+				setTestProjects(projects)
 
 				// Create reward manager with minimal rewards
+				rewardManagers := getTestProjectTierRewardManagers()
 				rewardManager := &RewardManager{
 					rewards:                         avl.NewTree(),
 					accumulatedRewardPerDepositX128: u256.Zero(),
@@ -129,7 +135,8 @@ func TestCollectDepositReward(t *testing.T) {
 				}
 				rewardManager.rewards.Set("deposit_1", rewardState)
 
-				projectTierRewardManagers.Set("project_1:30", rewardManager)
+				rewardManagers.Set("project_1:30", rewardManager)
+				setTestProjectTierRewardManagers(rewardManagers)
 
 				return deposit, map[string]interface{}{
 					"project":       project,
@@ -155,6 +162,7 @@ func TestCollectDepositReward(t *testing.T) {
 				}
 
 				// Create project with tier
+				projects := getTestProjects()
 				project := &Project{
 					id:    "project_1",
 					tiers: make(map[int64]*ProjectTier),
@@ -166,12 +174,14 @@ func TestCollectDepositReward(t *testing.T) {
 				}
 				project.tiers[30] = projectTier
 				projects.Set("project_1", project)
+				setTestProjects(projects)
 
 				// Create reward manager with rewards
 				rewardPerSecond := u256.NewUintFromInt64(100)
 				accumulatedReward := u256.NewUintFromInt64(1000)
 				accumulatedReward = u256.Zero().Lsh(accumulatedReward, 128) // Convert to Q128
 
+				rewardManagers := getTestProjectTierRewardManagers()
 				rewardManager := &RewardManager{
 					rewards:                         avl.NewTree(),
 					accumulatedRewardPerDepositX128: accumulatedReward,
@@ -194,7 +204,8 @@ func TestCollectDepositReward(t *testing.T) {
 				}
 				rewardManager.rewards.Set("deposit_2", rewardState)
 
-				projectTierRewardManagers.Set("project_1:30", rewardManager)
+				rewardManagers.Set("project_1:30", rewardManager)
+				setTestProjectTierRewardManagers(rewardManagers)
 
 				return deposit, map[string]interface{}{
 					"project":        project,
@@ -219,6 +230,7 @@ func TestCollectDepositReward(t *testing.T) {
 				}
 
 				// Create project with tier
+				projects := getTestProjects()
 				project := &Project{
 					id:    "project_1",
 					tiers: make(map[int64]*ProjectTier),
@@ -230,8 +242,10 @@ func TestCollectDepositReward(t *testing.T) {
 				}
 				project.tiers[30] = projectTier
 				projects.Set("project_1", project)
+				setTestProjects(projects)
 
 				// Create reward manager with invalid state
+				rewardManagers := getTestProjectTierRewardManagers()
 				rewardManager := &RewardManager{
 					rewards:                         avl.NewTree(),
 					accumulatedRewardPerDepositX128: u256.Zero(),
@@ -241,7 +255,8 @@ func TestCollectDepositReward(t *testing.T) {
 					distributeEndTime:               200,
 				}
 
-				projectTierRewardManagers.Set("project_1:30", rewardManager)
+				rewardManagers.Set("project_1:30", rewardManager)
+				setTestProjectTierRewardManagers(rewardManagers)
 
 				return deposit, nil
 			},
@@ -254,12 +269,13 @@ func TestCollectDepositReward(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// capture original state
-			origProjects := projects
-			origProjectTierRewardManagers := projectTierRewardManagers
+			// Reset test store
+			resetTestStore()
+			lp := getTestImplementation()
+			testing.SetHeight(123)
 
-			projects = avl.NewTree()
-			projectTierRewardManagers = avl.NewTree()
+			setTestProjects(avl.NewTree())
+			setTestProjectTierRewardManagers(avl.NewTree())
 
 			var deposit *Deposit
 			if tt.setupFunc != nil {
@@ -268,7 +284,7 @@ func TestCollectDepositReward(t *testing.T) {
 				deposit = tt.deposit
 			}
 
-			amount, err := collectDepositReward(deposit, 100, tt.currentTime)
+			amount, err := lp.collectDepositReward(deposit, runtime.ChainHeight(), tt.currentTime)
 
 			if tt.expectedError != "" {
 				uassert.Error(t, err)
@@ -277,10 +293,6 @@ func TestCollectDepositReward(t *testing.T) {
 				uassert.NoError(t, err)
 				uassert.Equal(t, tt.expectedAmount, amount)
 			}
-
-			// restore original state
-			projects = origProjects
-			projectTierRewardManagers = origProjectTierRewardManagers
 		})
 	}
 }
@@ -333,11 +345,16 @@ func TestCollectDepositReward_TimeBoundaries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Reset state
-			projects = avl.NewTree()
-			projectTierRewardManagers = avl.NewTree()
+			// Reset test store
+			resetTestStore()
+			lp := getTestImplementation()
+			testing.SetHeight(123)
+
+			setTestProjects(avl.NewTree())
+			setTestProjectTierRewardManagers(avl.NewTree())
 
 			// Setup project
+			projects := getTestProjects()
 			project := &Project{
 				id:        "boundary_test",
 				tokenPath: "gno.land/r/onbloc/obl",
@@ -349,6 +366,7 @@ func TestCollectDepositReward_TimeBoundaries(t *testing.T) {
 				},
 			}
 			projects.Set(project.ID(), project)
+			setTestProjects(projects)
 
 			// Setup reward manager
 			rewardManager := NewRewardManager(
@@ -381,10 +399,12 @@ func TestCollectDepositReward_TimeBoundaries(t *testing.T) {
 				rewardManager.updateRewardPerDepositX128(1000000, 150, tt.currentTime)
 			}
 
-			projectTierRewardManagers.Set("boundary_test:30", rewardManager)
+			rewardManagers := getTestProjectTierRewardManagers()
+			rewardManagers.Set("boundary_test:30", rewardManager)
+			setTestProjectTierRewardManagers(rewardManagers)
 
 			// Collect reward
-			amount, err := collectDepositReward(deposit, 150, tt.currentTime)
+			amount, err := lp.collectDepositReward(deposit, 150, tt.currentTime)
 			if tt.expectedError != "" {
 				uassert.Error(t, err)
 				uassert.Equal(t, tt.expectedError, err.Error())

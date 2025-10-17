@@ -1,4 +1,4 @@
-package launchpad
+package v1
 
 import (
 	"chain/runtime"
@@ -11,6 +11,7 @@ import (
 	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/launchpad"
 	"gno.land/r/onbloc/obl"
 
 	_ "gno.land/r/onbloc/bar"
@@ -137,7 +138,7 @@ func TestCreateProject(t *testing.T) {
 			obl.Approve(cross, launchpadAddr, int64(tt.depositAmount))
 
 			createProjectFn := func() {
-				CreateProject(
+				launchpad.CreateProject(
 					cross,
 					tt.projectName,
 					tt.tokenPath,
@@ -159,7 +160,8 @@ func TestCreateProject(t *testing.T) {
 
 			createProjectFn()
 
-			project, err := getProject(tt.expectedProjectID)
+			lp := getTestImplementation()
+			project, err := lp.getProject(tt.expectedProjectID)
 			uassert.NoError(t, err)
 
 			uassert.Equal(t, project.ID(), tt.expectedProjectID)
@@ -321,11 +323,12 @@ func TestCreateProjectPrivate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initLaunchpadProjectTest(t)
+			lp := getTestImplementation()
 			testing.SetOriginCaller(projectAddr)
 
 			obl.Approve(cross, launchpadAddr, int64(tt.params.depositAmount))
 
-			projectId, err := createProject(tt.params)
+			projectId, err := lp.createProject(tt.params)
 
 			if tt.expectedHasError {
 				uassert.Equal(t, err.Error(), tt.expectedErrorMessage)
@@ -399,13 +402,14 @@ func TestCreateProjectPrivate_Multiple(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initLaunchpadProjectTest(t)
+			lp := getTestImplementation()
 			for _, projectID := range tt.setupProjectIds {
 				setupLaunchpadProjectTestEmptyProject(t, projectID)
 			}
 
 			obl.Approve(cross, launchpadAddr, int64(tt.params.depositAmount))
 
-			projectId, err := createProject(tt.params)
+			projectId, err := lp.createProject(tt.params)
 
 			if tt.expectedHasError {
 				uassert.Equal(t, err.Error(), tt.expectedErrorMessage)
@@ -722,8 +726,9 @@ func TestCreateProjectParams_ValidateConditions(t *testing.T) {
 // define test methods for launchpad project
 func initLaunchpadProjectTest(t *testing.T) {
 	testing.SetHeight(123)
-	projects = new(avl.Tree)
-	projectTierRewardManagers = new(avl.Tree)
+	resetTestStore()
+	setTestProjects(new(avl.Tree))
+	setTestProjectTierRewardManagers(new(avl.Tree))
 }
 
 func initLaunchpadProjectTestAvgBlockTime(t *testing.T, avgBlockTimeMs int64) {
@@ -735,6 +740,8 @@ func initLaunchpadProjectTestAvgBlockTime(t *testing.T, avgBlockTimeMs int64) {
 }
 
 func setupLaunchpadProjectTestEmptyProject(t *testing.T, projectID string) {
+	projects := getTestProjects()
 	project := &Project{id: projectID}
 	projects.Set(projectID, project)
+	setTestProjects(projects)
 }
