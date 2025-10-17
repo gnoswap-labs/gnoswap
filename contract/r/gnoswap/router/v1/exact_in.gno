@@ -54,7 +54,7 @@ func NewExactInSwapOperation(pp ExactInParams) *ExactInSwapOperation {
 //   - amountOut: Actual output received
 //
 // Reverts if output < amountOutMin or deadline passed.
-func (r *routerV1) ExactInSwapRoute(cur realm,
+func (r *routerV1) ExactInSwapRoute(
 	inputToken string,
 	outputToken string,
 	amountIn string,
