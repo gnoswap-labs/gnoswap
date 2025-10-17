@@ -19,80 +19,28 @@ type RewardState struct {
 	claimedAmount           int64 // amount of reward claimed so far
 }
 
-func (r *RewardState) PriceDebtX128() *u256.Uint {
-	return r.priceDebtX128
-}
+func (r *RewardState) PriceDebtX128() *u256.Uint      { return r.priceDebtX128 }
+func (r *RewardState) DepositAmount() int64           { return r.depositAmount }
+func (r *RewardState) AccumulatedRewardAmount() int64 { return r.accumulatedRewardAmount }
+func (r *RewardState) ClaimedAmount() int64           { return r.claimedAmount }
+func (r *RewardState) DistributeStartTime() int64     { return r.distributeStartTime }
+func (r *RewardState) DistributeEndTime() int64       { return r.distributeEndTime }
+func (r *RewardState) AccumulatedHeight() int64       { return r.accumulatedHeight }
+func (r *RewardState) AccumulatedTime() int64         { return r.accumulatedTime }
+func (r *RewardState) ClaimableTime() int64           { return r.claimableTime }
 
-func (r *RewardState) setPriceDebtX128(v *u256.Uint) {
-	r.priceDebtX128 = v
-}
-
-func (r *RewardState) DepositAmount() int64 {
-	return r.depositAmount
-}
-
-func (r *RewardState) setDepositAmount(v int64) {
-	r.depositAmount = v
-}
-
-func (r *RewardState) AccumulatedRewardAmount() int64 {
-	return r.accumulatedRewardAmount
-}
-
-func (r *RewardState) setAccumulatedRewardAmount(v int64) {
-	r.accumulatedRewardAmount = v
-}
-
-func (r *RewardState) ClaimedAmount() int64 {
-	return r.claimedAmount
-}
-
-func (r *RewardState) setClaimedAmount(v int64) {
-	r.claimedAmount = v
-}
-
-func (r *RewardState) DistributeStartTime() int64 {
-	return r.distributeStartTime
-}
-
-func (r *RewardState) setDistributeStartTime(v int64) {
-	r.distributeStartTime = v
-}
-
-func (r *RewardState) DistributeEndTime() int64 {
-	return r.distributeEndTime
-}
-
-func (r *RewardState) setDistributeEndTime(v int64) {
-	r.distributeEndTime = v
-}
-
-func (r *RewardState) AccumulatedHeight() int64 {
-	return r.accumulatedHeight
-}
-
-func (r *RewardState) setAccumulatedHeight(v int64) {
-	r.accumulatedHeight = v
-}
-
-func (r *RewardState) AccumulatedTime() int64 {
-	return r.accumulatedTime
-}
-
-func (r *RewardState) setAccumulatedTime(v int64) {
-	r.accumulatedTime = v
-}
+func (r *RewardState) setPriceDebtX128(v *u256.Uint)      { r.priceDebtX128 = v }
+func (r *RewardState) setDepositAmount(v int64)           { r.depositAmount = v }
+func (r *RewardState) setAccumulatedRewardAmount(v int64) { r.accumulatedRewardAmount = v }
+func (r *RewardState) setClaimedAmount(v int64)           { r.claimedAmount = v }
+func (r *RewardState) setDistributeStartTime(v int64)     { r.distributeStartTime = v }
+func (r *RewardState) setDistributeEndTime(v int64)       { r.distributeEndTime = v }
+func (r *RewardState) setAccumulatedHeight(v int64)       { r.accumulatedHeight = v }
+func (r *RewardState) setAccumulatedTime(v int64)         { r.accumulatedTime = v }
+func (r *RewardState) setClaimableTime(v int64)           { r.claimableTime = v }
 
 func (r *RewardState) IsClaimable(currentTime int64) bool {
 	return currentTime >= r.claimableTime
-}
-
-func (r *RewardState) ClaimableTime() int64 {
-	return r.claimableTime
-}
-
-func (r *RewardState) setClaimableTime(v int64) {
-	r.claimableTime = v
 }
 
 // calculateReward calculates the total reward amount based on

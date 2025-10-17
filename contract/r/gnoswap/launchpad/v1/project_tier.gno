@@ -36,65 +36,32 @@ type ProjectTier struct {
 	totalCollectedAmount  int64 // total collected amount by user (reward)
 }
 
-func (t *ProjectTier) ID() string {
-	return t.id
-}
-
-func (t *ProjectTier) TotalDistributeAmount() int64 {
-	return t.totalDistributeAmount
-}
-
-func (t *ProjectTier) TotalCollectedAmount() int64 {
-	return t.totalCollectedAmount
-}
-
-func (t *ProjectTier) TotalDepositAmount() int64 {
-	return t.totalDepositAmount
-}
-
-func (t *ProjectTier) TotalWithdrawAmount() int64 {
-	return t.totalWithdrawAmount
-}
-
-func (t *ProjectTier) TotalDepositCount() int64 {
-	return t.totalDepositCount
-}
-
-func (t *ProjectTier) TotalWithdrawCount() int64 {
-	return t.totalWithdrawCount
-}
-
-func (t *ProjectTier) CurrentDepositCount() int64 {
-	return t.totalDepositCount - t.totalWithdrawCount
-}
-
-func (t *ProjectTier) CurrentDepositAmount() int64 {
-	return t.totalDepositAmount - t.totalWithdrawAmount
-}
-
+func (t *ProjectTier) ID() string                   { return t.id }
+func (t *ProjectTier) TotalDistributeAmount() int64 { return t.totalDistributeAmount }
+func (t *ProjectTier) TotalCollectedAmount() int64  { return t.totalCollectedAmount }
+func (t *ProjectTier) TotalDepositAmount() int64    { return t.totalDepositAmount }
+func (t *ProjectTier) TotalWithdrawAmount() int64   { return t.totalWithdrawAmount }
+func (t *ProjectTier) TotalDepositCount() int64     { return t.totalDepositCount }
+func (t *ProjectTier) TotalWithdrawCount() int64    { return t.totalWithdrawCount }
 func (t *ProjectTier) DistributeAmountPerSecondX128() *u256.Uint {
 	return t.distributeAmountPerSecondX128
+}
+func (t *ProjectTier) StartTime() int64 { return t.startTime }
+func (t *ProjectTier) EndTime() int64   { return t.endTime }
+
+func (t *ProjectTier) CurrentDepositCount() int64 { return t.totalDepositCount - t.totalWithdrawCount }
+func (t *ProjectTier) CurrentDepositAmount() int64 {
+	return t.totalDepositAmount - t.totalWithdrawAmount
 }
 
 func (t *ProjectTier) isActivated(currentTime int64) bool {
 	return t.startTime <= currentTime && currentTime < t.endTime
 }
+func (t *ProjectTier) isEnded(currentTime int64) bool { return t.endTime < currentTime }
+func (t *ProjectTier) isFirstDeposit() bool           { return t.totalDepositCount == 0 }
 
-func (t *ProjectTier) isEnded(currentTime int64) bool {
-	return t.endTime < currentTime
-}
-
-func (t *ProjectTier) isFirstDeposit() bool {
-	return t.totalDepositCount == 0
-}
-
-func (t *ProjectTier) StartTime() int64 {
-	return t.startTime
-}
-
-func (t *ProjectTier) EndTime() int64 {
-	return t.endTime
-}
+func (t *ProjectTier) setStartTime(time int64) { t.startTime = time }
+func (t *ProjectTier) setEndTime(time int64)   { t.endTime = time }
 
 func (t *ProjectTier) deposit(deposit *Deposit) {
 	t.totalDepositAmount += deposit.DepositAmount()
@@ -104,14 +71,6 @@ func (t *ProjectTier) deposit(deposit *Deposit) {
 func (t *ProjectTier) withdraw(deposit *Deposit) {
 	t.totalWithdrawAmount += deposit.DepositAmount()
 	t.totalWithdrawCount++
-}
-
-func (t *ProjectTier) setStartTime(time int64) {
-	t.startTime = time
-}
-
-func (t *ProjectTier) setEndTime(time int64) {
-	t.endTime = time
 }
 
 func (t *ProjectTier) calculateLeftReward() int64 {

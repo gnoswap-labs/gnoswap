@@ -46,19 +46,9 @@ func (r *RewardManager) IsInitialized() bool {
 func (r *RewardManager) DistributeAmountPerSecondX128() *u256.Uint {
 	return r.distributeAmountPerSecondX128
 }
-
-func (r *RewardManager) AccumulatedHeight() int64 {
-	return r.accumulatedHeight
-}
-
-func (r *RewardManager) AccumulatedTime() int64 {
-	return r.accumulatedTime
-}
-
-func (r *RewardManager) DistributeEndTime() int64 {
-	return r.distributeEndTime
-}
-
+func (r *RewardManager) AccumulatedHeight() int64 { return r.accumulatedHeight }
+func (r *RewardManager) AccumulatedTime() int64   { return r.accumulatedTime }
+func (r *RewardManager) DistributeEndTime() int64 { return r.distributeEndTime }
 func (r *RewardManager) AccumulatedRewardPerDepositX128() *u256.Uint {
 	return r.accumulatedRewardPerDepositX128
 }

@@ -20,13 +20,8 @@ type ProjectCondition struct {
 	minimumAmount int64
 }
 
-func (p *ProjectCondition) TokenPath() string {
-	return p.tokenPath
-}
-
-func (p *ProjectCondition) MinimumAmount() int64 {
-	return p.minimumAmount
-}
+func (p *ProjectCondition) TokenPath() string    { return p.tokenPath }
+func (p *ProjectCondition) MinimumAmount() int64 { return p.minimumAmount }
 
 func (p *ProjectCondition) IsAvailable() bool {
 	return p.tokenPath != "" && p.minimumAmount > 0
