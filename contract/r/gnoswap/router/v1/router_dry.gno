@@ -140,7 +140,6 @@ func (p *SwapProcessor) AddSwapResults(
 // DrySwapRoute simulates a token swap route without executing the swap.
 // It calculates the expected outcome based on the current state of liquidity pools.
 func (r *routerV1) DrySwapRoute(
-	cur realm,
 	inputToken, outputToken string,
 	amountIn string,
 	routeArr, quoteArr string,

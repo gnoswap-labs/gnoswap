@@ -12,7 +12,8 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 
-	pf "gno.land/r/gnoswap/v1/protocol_fee"
+	pf "gno.land/r/gnoswap/protocol_fee"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
 )
 
 const (
@@ -26,7 +27,7 @@ func (r *routerV1) GetSwapFee() uint64 {
 
 // SetSwapFee sets the swap fee rate in basis points.
 // Only admin or governance can call this function.
-func (r *routerV1) SetSwapFee(cur realm, fee uint64) {
+func (r *routerV1) SetSwapFee(fee uint64) {
 	halt.AssertIsNotHaltedRouterWithVersion(1)
 	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
 
@@ -153,7 +154,7 @@ func GetSwapFee() uint64 {
 
 // SetSwapFee sets the swap fee rate in basis points (global helper).
 func SetSwapFee(cur realm, fee uint64) {
-	getRouterInstance().SetSwapFee(cur, fee)
+	getRouterInstance().SetSwapFee(fee)
 }
 
 // handleSwapFee is a global helper that delegates to the router instance.

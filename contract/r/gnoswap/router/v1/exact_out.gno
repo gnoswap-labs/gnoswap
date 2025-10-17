@@ -57,7 +57,6 @@ func NewExactOutSwapOperation(pp ExactOutParams) *ExactOutSwapOperation {
 //
 // Reverts if input > amountInMax or deadline passed.
 func (r *routerV1) ExactOutSwapRoute(
-	cur realm,
 	inputToken string,
 	outputToken string,
 	amountOut string,
