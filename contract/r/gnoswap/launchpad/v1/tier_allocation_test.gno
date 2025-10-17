@@ -1,4 +1,4 @@
-package launchpad
+package v1
 
 import (
 	"testing"
@@ -72,16 +72,18 @@ func TestTierAllocationNoLeftover(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			deposits = avl.NewTree()
-			depositCounter = NewCounter()
-			projects = avl.NewTree()
-			projectTierRewardManagers = avl.NewTree()
+			lp := getTestImplementation()
+			state := lp.getLaunchpadState()
+			state.deposits = avl.NewTree()
+			state.depositCounter = NewCounter()
+			state.projects = avl.NewTree()
+			state.projectTierRewardManagers = avl.NewTree()
 
 			currentTime := time.Now().Unix()
 			currentHeight := int64(100)
 			testing.SetHeight(currentHeight)
 
-			project, _ := createProject(
+			project, _ := lp.createProject(
 				&createProjectParams{
 					name:          "Test Project",
 					tokenPath:     "gno.land/r/onbloc/obl",
@@ -95,7 +97,7 @@ func TestTierAllocationNoLeftover(t *testing.T) {
 					currentHeight: currentHeight,
 				},
 			)
-			projects.Set(project.ID(), project)
+			state.projects.Set(project.ID(), project)
 
 			// get all tiers and calculate total allocated
 			tier30, _ := project.getTier(30)
@@ -129,10 +131,12 @@ func TestTierAllocationNoLeftover(t *testing.T) {
 
 // TestTierAllocationRemainder specifically tests the remainder handling logic
 func TestTierAllocationRemainder(t *testing.T) {
-	deposits = avl.NewTree()
-	depositCounter = NewCounter()
-	projects = avl.NewTree()
-	projectTierRewardManagers = avl.NewTree()
+	lp := getTestImplementation()
+	state := lp.getLaunchpadState()
+	state.deposits = avl.NewTree()
+	state.depositCounter = NewCounter()
+	state.projects = avl.NewTree()
+	state.projectTierRewardManagers = avl.NewTree()
 
 	currentTime := time.Now().Unix()
 	currentHeight := int64(100)
@@ -142,7 +146,7 @@ func TestTierAllocationRemainder(t *testing.T) {
 	// 1000 / 3 = 333.33... which truncates to 333
 	depositAmount := int64(1000)
 
-	project, _ := createProject(
+	project, _ := lp.createProject(
 		&createProjectParams{
 			name:          "Remainder Test",
 			tokenPath:     "gno.land/r/onbloc/obl",
@@ -156,7 +160,7 @@ func TestTierAllocationRemainder(t *testing.T) {
 			currentHeight: currentHeight,
 		},
 	)
-	projects.Set(project.ID(), project)
+	state.projects.Set(project.ID(), project)
 
 	tier30, _ := project.getTier(30)
 	tier90, _ := project.getTier(90)

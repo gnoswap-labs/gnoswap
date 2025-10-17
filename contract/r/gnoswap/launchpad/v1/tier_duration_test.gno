@@ -1,4 +1,4 @@
-package launchpad
+package v1
 
 import (
 	"testing"
@@ -78,10 +78,12 @@ func TestTierDurationConsistency(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			deposits = avl.NewTree()
-			depositCounter = NewCounter()
-			projects = avl.NewTree()
-			projectTierRewardManagers = avl.NewTree()
+			lp := getTestImplementation()
+			state := lp.getLaunchpadState()
+			state.deposits = avl.NewTree()
+			state.depositCounter = NewCounter()
+			state.projects = avl.NewTree()
+			state.projectTierRewardManagers = avl.NewTree()
 
 			ctx := testing.GetContext()
 			ctx.Height = 100
@@ -105,7 +107,7 @@ func TestTierDurationConsistency(t *testing.T) {
 				tier180Ratio = 100
 			}
 
-			project, _ := createProject(
+			project, _ := lp.createProject(
 				&createProjectParams{
 					name:          "Test Project " + tt.name,
 					tokenPath:     "gno.land/r/onbloc/obl",
@@ -119,7 +121,7 @@ func TestTierDurationConsistency(t *testing.T) {
 					currentHeight: currentHeight,
 				},
 			)
-			projects.Set(project.ID(), project)
+			state.projects.Set(project.ID(), project)
 			tier, _ := project.getTier(tt.tierType)
 
 			initialStartTime := tier.StartTime()
@@ -146,7 +148,7 @@ func TestTierDurationConsistency(t *testing.T) {
 				user := testutils.TestAddress("user" + formatInt(int64(i)))
 				testing.SetOriginCaller(user)
 
-				_, _, isFirstDeposit, _, _ := depositGns(project.ID(), tt.tierType, 1000000, user)
+				_, _, isFirstDeposit, _, _ := lp.depositGns(project.ID(), tt.tierType, 1000000, user)
 
 				if i == 0 {
 					uassert.True(t, isFirstDeposit, "First deposit should be marked as such")
