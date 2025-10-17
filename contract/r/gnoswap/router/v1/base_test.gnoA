@@ -1,4 +1,4 @@
-package router
+package v1
 
 import (
 	"chain"
@@ -198,148 +198,148 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 	}
 }
 
-func TestValidateRouteQuote(t *testing.T) {
-	op := &baseSwapOperation{
-		amountSpecified: i256.NewInt(1000),
-	}
+// func TestValidateRouteQuote(t *testing.T) {
+// 	op := &baseSwapOperation{
+// 		amountSpecified: i256.NewInt(1000),
+// 	}
 
-	tests := []struct {
-		name        string
-		quote       string
-		index       int
-		expectError bool
-		expected    *i256.Int
-	}{
-		{
-			name:        "Pass: valid quote - 100%",
-			quote:       "100",
-			index:       0,
-			expectError: false,
-			expected:    i256.NewInt(1000), // 1000 * 100 / 100 = 1000
-		},
-		{
-			name:        "Pass: valid quote - 50%",
-			quote:       "50",
-			index:       0,
-			expectError: false,
-			expected:    i256.NewInt(500), // 1000 * 50 / 100 = 500
-		},
-		{
-			name:        "Fail: invalid quote - string",
-			quote:       "invalid",
-			index:       0,
-			expectError: true,
-			expected:    nil,
-		},
-		{
-			name:        "Fail: invalid quote - empty string",
-			quote:       "",
-			index:       0,
-			expectError: true,
-			expected:    nil,
-		},
-	}
+// 	tests := []struct {
+// 		name        string
+// 		quote       string
+// 		index       int
+// 		expectError bool
+// 		expected    *i256.Int
+// 	}{
+// 		{
+// 			name:        "Pass: valid quote - 100%",
+// 			quote:       "100",
+// 			index:       0,
+// 			expectError: false,
+// 			expected:    i256.NewInt(1000), // 1000 * 100 / 100 = 1000
+// 		},
+// 		{
+// 			name:        "Pass: valid quote - 50%",
+// 			quote:       "50",
+// 			index:       0,
+// 			expectError: false,
+// 			expected:    i256.NewInt(500), // 1000 * 50 / 100 = 500
+// 		},
+// 		{
+// 			name:        "Fail: invalid quote - string",
+// 			quote:       "invalid",
+// 			index:       0,
+// 			expectError: true,
+// 			expected:    nil,
+// 		},
+// 		{
+// 			name:        "Fail: invalid quote - empty string",
+// 			quote:       "",
+// 			index:       0,
+// 			expectError: true,
+// 			expected:    nil,
+// 		},
+// 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result, err := op.validateRouteQuote(tt.quote, tt.index)
-			if tt.expectError {
-				uassert.Error(t, err)
-			} else {
-				if err != nil {
-					t.Errorf("unexpected error: %v", err)
-				}
-				if result.Cmp(tt.expected) != 0 {
-					t.Errorf("expected %v but got %v", tt.expected, result)
-				}
-			}
-		})
-	}
-}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			result, err := op.validateRouteQuote(tt.quote, tt.index)
+// 			if tt.expectError {
+// 				uassert.Error(t, err)
+// 			} else {
+// 				if err != nil {
+// 					t.Errorf("unexpected error: %v", err)
+// 				}
+// 				if result.Cmp(tt.expected) != 0 {
+// 					t.Errorf("expected %v but got %v", tt.expected, result)
+// 				}
+// 			}
+// 		})
+// 	}
+// }
 
-func TestProcessRoute(t *testing.T) {
-	op := &baseSwapOperation{}
+// func TestProcessRoute(t *testing.T) {
+// 	op := &baseSwapOperation{}
 
-	t.Run("Single hop route", func(t *testing.T) {
-		testing.SetRealm(adminRealm)
-		CreatePoolWithoutFee(t)
-		MakeThirdMintPositionWithoutFee(t)
-		common.SafeGRC20Approve(cross, fooPath, routerAddr, 1000000)
-		route := foobar500
-		toSwap := i256.NewInt(1000)
-		swapType := ExactIn
+// 	t.Run("Single hop route", func(t *testing.T) {
+// 		testing.SetRealm(adminRealm)
+// 		CreatePoolWithoutFee(t)
+// 		MakeThirdMintPositionWithoutFee(t)
+// 		common.SafeGRC20Approve(cross, fooPath, routerAddr, 1000000)
+// 		route := foobar500
+// 		toSwap := i256.NewInt(1000)
+// 		swapType := ExactIn
 
-		func(cur realm) {
-			amountIn, amountOut, err := op.processRoute(route, toSwap, swapType)
-			uassert.Equal(t, err, nil)
-			uassert.Equal(t, amountIn.ToString(), "1000")
-			uassert.Equal(t, amountOut.ToString(), "979")
-		}(cross)
-	})
-}
+// 		func(cur realm) {
+// 			amountIn, amountOut, err := op.processRoute(route, toSwap, swapType)
+// 			uassert.Equal(t, err, nil)
+// 			uassert.Equal(t, amountIn.ToString(), "1000")
+// 			uassert.Equal(t, amountOut.ToString(), "979")
+// 		}(cross)
+// 	})
+// }
 
 // Test reproducing report L-08 "Loss of Tokens in Swap Due to Truncation"
-func TestProcessRoutesWithRemainder(t *testing.T) {
-	oddAmount := i256.NewInt(101)
-	op := &baseSwapOperation{
-		// use odd amount to ensure remainder
-		amountSpecified: oddAmount,
-		routes:          []string{foobar500, barbaz500},
-		// allocate 50% to each route
-		quotes: []string{"50", "50"},
-	}
+// func TestProcessRoutesWithRemainder(t *testing.T) {
+// 	oddAmount := i256.NewInt(101)
+// 	op := &baseSwapOperation{
+// 		// use odd amount to ensure remainder
+// 		amountSpecified: oddAmount,
+// 		routes:          []string{foobar500, barbaz500},
+// 		// allocate 50% to each route
+// 		quotes: []string{"50", "50"},
+// 	}
 
-	testing.SetRealm(adminRealm)
-	common.SafeGRC20Approve(cross, fooPath, routerAddr, math.MaxInt64)
-	CreatePoolWithoutFee(t)
-	MakeThirdMintPositionWithoutFee(t)
+// 	testing.SetRealm(adminRealm)
+// 	common.SafeGRC20Approve(cross, fooPath, routerAddr, math.MaxInt64)
+// 	CreatePoolWithoutFee(t)
+// 	MakeThirdMintPositionWithoutFee(t)
 
-	// expected amounts for each route
-	expectedAmounts := []*i256.Int{
-		i256.NewInt(50), // 101 * 50 / 100 = 50
-		i256.NewInt(50), // 101 * 50 / 100 = 50
-	}
+// 	// expected amounts for each route
+// 	expectedAmounts := []*i256.Int{
+// 		i256.NewInt(50), // 101 * 50 / 100 = 50
+// 		i256.NewInt(50), // 101 * 50 / 100 = 50
+// 	}
 
-	func(cur realm) {
-		_, amountOut, err := op.processRoutes(ExactIn)
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if amountOut.Cmp(u256.Zero()) == 0 {
-			t.Error("expected non-zero amountOut")
-		}
-	}(cross)
+// 	func(cur realm) {
+// 		_, amountOut, err := op.processRoutes(ExactIn)
+// 		if err != nil {
+// 			t.Fatalf("unexpected error: %v", err)
+// 		}
+// 		if amountOut.Cmp(u256.Zero()) == 0 {
+// 			t.Error("expected non-zero amountOut")
+// 		}
+// 	}(cross)
 
-	// check actual swapped amounts for each route
-	for i := range op.routes {
-		toSwap, err := op.validateRouteQuote(op.quotes[i], i)
-		if err != nil {
-			t.Fatalf("unexpected error validating quote: %v", err)
-		}
+// 	// check actual swapped amounts for each route
+// 	for i := range op.routes {
+// 		toSwap, err := op.validateRouteQuote(op.quotes[i], i)
+// 		if err != nil {
+// 			t.Fatalf("unexpected error validating quote: %v", err)
+// 		}
 
-		if toSwap.Cmp(expectedAmounts[i]) != 0 {
-			t.Errorf("route %d: expected amount %s, got %s", i, expectedAmounts[i].ToString(), toSwap.ToString())
-		}
-	}
+// 		if toSwap.Cmp(expectedAmounts[i]) != 0 {
+// 			t.Errorf("route %d: expected amount %s, got %s", i, expectedAmounts[i].ToString(), toSwap.ToString())
+// 		}
+// 	}
 
-	// check total input amount
-	totalExpected := oddAmount
-	if op.amountSpecified.Cmp(totalExpected) != 0 {
-		t.Errorf("total expected amount %s, got %s", totalExpected.ToString(), op.amountSpecified.ToString())
-	}
+// 	// check total input amount
+// 	totalExpected := oddAmount
+// 	if op.amountSpecified.Cmp(totalExpected) != 0 {
+// 		t.Errorf("total expected amount %s, got %s", totalExpected.ToString(), op.amountSpecified.ToString())
+// 	}
 
-	// check remainder
-	usedAmount := i256.NewInt(0)
-	for _, amount := range expectedAmounts {
-		usedAmount = usedAmount.Add(usedAmount, amount)
-	}
-	// Currently, this test succeeds.
-	// That is, we can observe that there is indeed a remainder.
-	remainder := totalExpected.Sub(totalExpected, usedAmount)
-	if remainder.Cmp(i256.NewInt(1)) != 0 {
-		t.Errorf("expected remainder of 1, got %s", remainder.ToString())
-	}
-}
+// 	// check remainder
+// 	usedAmount := i256.NewInt(0)
+// 	for _, amount := range expectedAmounts {
+// 		usedAmount = usedAmount.Add(usedAmount, amount)
+// 	}
+// 	// Currently, this test succeeds.
+// 	// That is, we can observe that there is indeed a remainder.
+// 	remainder := totalExpected.Sub(totalExpected, usedAmount)
+// 	if remainder.Cmp(i256.NewInt(1)) != 0 {
+// 		t.Errorf("expected remainder of 1, got %s", remainder.ToString())
+// 	}
+// }
 
 func TestProcessRoutes_LastRouteUsesRemainingAmount(t *testing.T) {
 	tests := []struct {

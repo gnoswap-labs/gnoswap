@@ -1,4 +1,4 @@
-package router
+package v1
 
 import (
 	"chain"
@@ -6,22 +6,25 @@ import (
 	"testing"
 
 	"gno.land/p/nt/testutils"
-	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gnft"
-	"gno.land/r/gnoswap/gns"
+
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
+
+	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	"gno.land/r/gnoswap/access"
+
+	"gno.land/r/gnoland/wugnot"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
-
-	prabc "gno.land/p/gnoswap/rbac"
-
-	"gno.land/r/gnoswap/access"
 )
 
 const (

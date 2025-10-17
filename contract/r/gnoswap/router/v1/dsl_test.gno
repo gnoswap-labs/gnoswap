@@ -1,4 +1,4 @@
-package router
+package v1
 
 import (
 	"testing"
