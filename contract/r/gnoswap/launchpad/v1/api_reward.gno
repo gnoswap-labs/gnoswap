@@ -3,8 +3,9 @@ package v1
 import gs "gno.land/r/gnoswap/v1/gov/staker"
 
 // ApiGetProjectRecipientRewardByProjectId retrieves the claimable reward for a project recipient by project ID.
-func ApiGetProjectRecipientRewardByProjectId(projectId string) string {
-	project, exist := projects.Get(projectId)
+func (lp *launchpadV1) ApiGetProjectRecipientRewardByProjectId(projectId string) string {
+	state := lp.getLaunchpadState()
+	project, exist := state.projects.Get(projectId)
 	if !exist {
 		return "0"
 	}
@@ -13,7 +14,7 @@ func ApiGetProjectRecipientRewardByProjectId(projectId string) string {
 }
 
 // ApiGetProjectRecipientRewardByAddress retrieves the claimable reward for a recipient by address.
-func ApiGetProjectRecipientRewardByAddress(address address) string {
+func (lp *launchpadV1) ApiGetProjectRecipientRewardByAddress(address address) string {
 	if !address.IsValid() {
 		return "0"
 	}

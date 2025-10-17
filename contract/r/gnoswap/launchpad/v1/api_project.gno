@@ -8,8 +8,8 @@ import (
 )
 
 // ApiGetProjectAndTierStatisticsByProjectId retrieves project and tier statistics by project ID.
-func ApiGetProjectAndTierStatisticsByProjectId(projectId string) string {
-	project, err := getProject(projectId)
+func (lp *launchpadV1) ApiGetProjectAndTierStatisticsByProjectId(projectId string) string {
+	project, err := lp.getProject(projectId)
 	if err != nil {
 		return ""
 	}
@@ -27,8 +27,8 @@ func ApiGetProjectAndTierStatisticsByProjectId(projectId string) string {
 }
 
 // ApiGetProjectStatisticsByProjectId retrieves project statistics by project ID.
-func ApiGetProjectStatisticsByProjectId(projectId string) string {
-	project, err := getProject(projectId)
+func (lp *launchpadV1) ApiGetProjectStatisticsByProjectId(projectId string) string {
+	project, err := lp.getProject(projectId)
 	if err != nil {
 		return ""
 	}
@@ -40,8 +40,8 @@ func ApiGetProjectStatisticsByProjectId(projectId string) string {
 }
 
 // ApiGetTierStatisticsByProjectId retrieves tier statistics by project ID.
-func ApiGetTierStatisticsByProjectId(projectId string) string {
-	project, err := getProject(projectId)
+func (lp *launchpadV1) ApiGetTierStatisticsByProjectId(projectId string) string {
+	project, err := lp.getProject(projectId)
 	if err != nil {
 		return ""
 	}
@@ -58,9 +58,9 @@ func ApiGetTierStatisticsByProjectId(projectId string) string {
 }
 
 // ApiGetProjectStatisticsByProjectTierId retrieves project statistics by project tier ID.
-func ApiGetProjectStatisticsByProjectTierId(tierId string) string {
+func (lp *launchpadV1) ApiGetProjectStatisticsByProjectTierId(tierId string) string {
 	projectId, duration := parseProjectTierID(tierId)
-	project, err := getProject(projectId)
+	project, err := lp.getProject(projectId)
 	if err != nil {
 		return ""
 	}
@@ -77,8 +77,8 @@ func ApiGetProjectStatisticsByProjectTierId(tierId string) string {
 }
 
 // ApiGetProjectActiveOf retrieves project active status by project ID.
-func ApiGetProjectActiveOf(projectId string) string {
-	project, err := getProject(projectId)
+func (lp *launchpadV1) ApiGetProjectActiveOf(projectId string) string {
+	project, err := lp.getProject(projectId)
 	if err != nil {
 		return ""
 	}

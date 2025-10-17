@@ -1,0 +1,24 @@
+package v1
+
+import (
+	"chain/runtime"
+
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/halt"
+	gov_staker "gno.land/r/gnoswap/v1/gov/staker"
+)
+
+// CollectProtocolFee collects protocol fee from gov/staker for project recipient wallets.
+// Only users can call this function.
+func (lp *launchpadV1) CollectProtocolFee() {
+	halt.AssertIsNotHaltedLaunchpadWithVersion(1)
+	halt.AssertIsNotHaltedWithdrawWithVersion(1)
+
+	previousRealm := runtime.PreviousRealm()
+	access.AssertIsUser(previousRealm)
+
+	caller := previousRealm.Address()
+	lp.assertHasProject(caller)
+
+	gov_staker.CollectRewardFromLaunchPad(cross, caller)
+}
