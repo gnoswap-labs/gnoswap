@@ -35,6 +35,7 @@ var (
 	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	launchpadAddr, _   = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	launchpadRealm = testing.NewCodeRealm("gno.land/r/gnoswap/launchpad")
 	stakerAddr, _      = access.GetAddress(prbac.ROLE_STAKER.String())
 	stakerRealm        = testing.NewUserRealm(stakerAddr)
 	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
@@ -129,6 +130,7 @@ func createOBLProject() {
 	println("[EXPECTED] Project created with ID:", projectId)
 
 	// [INFO] Validate project info
+	testing.SetRealm(launchpadRealm)
 	projectStats := unmarshal(launchpad.ApiGetProjectStatisticsByProjectId(projectId))
 	println("[EXPECTED] Project name:", projectStats["name"])
 	println("[EXPECTED] Project token path:", projectStats["tokenPath"])
@@ -210,6 +212,7 @@ func depositGnsTo(projectId, projectTierId string, depositAmount int64) {
 	println("[EXPECTED] Deposit created with ID:", depositId)
 
 	// validate deposit
+	testing.SetRealm(launchpadRealm)
 	depositStats := unmarshal(launchpad.ApiGetDepositByDepositId(depositId))
 	println("[EXPECTED] Deposit amount:", depositStats["amount"])
 	println("[EXPECTED] Deposit tier:", depositStats["tier"])
