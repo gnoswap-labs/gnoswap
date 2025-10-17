@@ -28,6 +28,10 @@ func CreateProject(
 	)
 }
 
+func CollectProtocolFee(cur realm) {
+	getImplementation().CollectProtocolFee()
+}
+
 // TransferLeftFromProjectByAdmin transfers the remaining rewards of a project to a specified recipient.
 func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient address) int64 {
 	return getImplementation().TransferLeftFromProjectByAdmin(projectID, recipient)

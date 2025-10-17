@@ -22,6 +22,7 @@ type ILaunchpadProject interface {
 		startTime int64,
 	) string
 	TransferLeftFromProjectByAdmin(projectID string, recipient address) int64
+	CollectProtocolFee()
 }
 
 type ILaunchpadDeposit interface {
