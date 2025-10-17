@@ -18,7 +18,7 @@ import (
 	"gno.land/r/gnoswap/access"
 
 	"gno.land/r/gnoswap/v1/gov/staker"
-	lp "gno.land/r/gnoswap/v1/launchpad"
+	lp "gno.land/r/gnoswap/launchpad"
 
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"

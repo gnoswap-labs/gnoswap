@@ -39,7 +39,7 @@ func TestBurn(t *testing.T) {
 	mintAmount := int64(1000)
 	burnAmount := int64(200)
 
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/launchpad"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
 	MintByLaunchPad(cross, launchpadAddress, mintAmount)
 	BurnByLaunchPad(cross, launchpadAddress, burnAmount)
