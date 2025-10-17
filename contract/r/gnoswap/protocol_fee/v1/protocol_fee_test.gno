@@ -24,7 +24,7 @@ var (
 	// contract paths
 	poolPath      = "gno.land/r/gnoswap/v1/pool"
 	positionPath  = "gno.land/r/gnoswap/v1/position"
-	routerPath    = "gno.land/r/gnoswap/v1/router"
+	routerPath    = "gno.land/r/gnoswap/router"
 	stakerPath    = "gno.land/r/gnoswap/v1/staker"
 	govStakerPath = "gno.land/r/gnoswap/v1/gov/staker"
 

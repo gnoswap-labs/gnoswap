@@ -16,8 +16,11 @@ func NewRouterV1(routerStore router.IRouterStore) router.IRouter {
 		store: routerStore,
 	}
 
+	// FIXME: Temporarily commented out due to "cannot modify external-realm or non-realm object" error.
+	// After confirmation, it would be good to either remove the comment or delete this line entirely.
+	//
 	// Set singleton for internal access
-	routerInstance = instance
+	// routerInstance = instance
 
 	return instance
 }
