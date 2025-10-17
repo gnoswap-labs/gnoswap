@@ -1,18 +1,22 @@
-package launchpad
+package v1
 
 import (
 	"chain/runtime"
 	"testing"
 	"time"
 
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
 
+	_ "gno.land/r/gnoswap/launchpad"
+	_ "gno.land/r/gnoswap/protocol_fee"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+
 	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	_ "gno.land/r/onbloc/obl"
 )
@@ -51,9 +55,10 @@ func TestDepositGnsPrivate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initLaunchpadDepositTest(t)
+			lp := getTestImplementation()
 			testing.SetOriginCaller(tt.callerAddress)
 
-			_, _, _, _, err := depositGns(tt.projectID, tt.tierDuration, tt.depositAmount, tt.callerAddress)
+			_, _, _, _, err := lp.depositGns(tt.projectID, tt.tierDuration, tt.depositAmount, tt.callerAddress)
 
 			if tt.expectedHasError {
 				uassert.Equal(t, tt.expectedErrorMessage, err.Error())
@@ -66,8 +71,8 @@ func TestDepositGnsPrivate(t *testing.T) {
 }
 
 func TestStakeGovernance(t *testing.T) {
-	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
-	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	launchpadAddr := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
 
 	tests := []struct {
 		name                 string
@@ -115,6 +120,7 @@ func TestStakeGovernance(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initLaunchpadDepositTest(t)
+			lp := getTestImplementation()
 
 			testing.SetOriginCaller(tt.userAddress)
 			gns.Approve(cross, tt.callerAddress, tt.depositAmount)
@@ -124,7 +130,7 @@ func TestStakeGovernance(t *testing.T) {
 			var err error
 
 			stakeGovernanceFn := func() {
-				err = stakeGovernance(tt.projectID, tt.depositAmount, tt.callerAddress, tt.userAddress)
+				err = lp.stakeGovernance(tt.projectID, tt.depositAmount, tt.callerAddress, tt.userAddress)
 			}
 
 			if tt.expectedHasAbort {
@@ -147,17 +153,17 @@ func TestStakeGovernance(t *testing.T) {
 func initLaunchpadDepositTest(t *testing.T) {
 	testing.SetHeight(123)
 
+	// Reset test store completely
+	resetTestStore()
+
 	// Initialize test environment
-	deposits = avl.NewTree()
-	depositCounter = NewCounter()
-	projects = avl.NewTree()
-	projectTierRewardManagers = avl.NewTree()
+	lp := getTestImplementation()
 
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
 
 	// Setup test project
-	project, _ := createProject(
+	project, _ := lp.createProject(
 		&createProjectParams{
 			name:          "Test Project",
 			tokenPath:     "gno.land/r/onbloc/obl",
@@ -171,7 +177,9 @@ func initLaunchpadDepositTest(t *testing.T) {
 			currentHeight: currentHeight,
 		},
 	)
-	projects.Set(project.ID(), project)
+
+	state := lp.getLaunchpadState()
+	state.projects.Set(project.ID(), project)
 
 	testing.SkipHeights(10)
 }
