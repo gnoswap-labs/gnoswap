@@ -1,8 +1,6 @@
 package pool
 
 import (
-	"time"
-
 	"gno.land/p/nt/avl"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -285,6 +283,6 @@ func newPool(poolInfo *poolCreateConfig) *Pool {
 		ticks:                avl.NewTree(),
 		tickBitmaps:          avl.NewTree(),
 		positions:            avl.NewTree(),
-		observationState:     newObservationState(time.Now().Unix()),
+		// observationState:     newObservationState(time.Now().Unix()),
 	}
 }
