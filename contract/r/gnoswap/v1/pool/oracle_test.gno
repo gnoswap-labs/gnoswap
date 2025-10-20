@@ -22,9 +22,9 @@ func TestObservationState_Write(t *testing.T) {
 		expectError            bool
 	}{
 		{
-			name:        "initial state",
-			initialTime: currentTime,
-			writes:      []writeOperation{},
+			name:                   "initial state",
+			initialTime:            currentTime,
+			writes:                 []writeOperation{},
 			expectedIndex:          0,
 			expectedCardinality:    1,
 			expectedTickCumulative: 0,
@@ -197,7 +197,7 @@ func TestPool_IncreaseObservationCardinalityLimit(t *testing.T) {
 			name:                    "maximum cardinality",
 			initialCardinality:      1,
 			initialCardinalityLimit: 100,
-			newCardinalityLimit:     ObservationCardinality,
+			newCardinalityLimit:     maxObservationCardinality,
 			expectError:             false,
 		},
 		{

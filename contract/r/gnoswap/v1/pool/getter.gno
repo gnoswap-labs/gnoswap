@@ -179,7 +179,7 @@ func ExistsPoolPath(poolPath string) bool {
 
 func GetObservation(poolPath string, secondsAgo int64) (
 	tickCumulative int64,
-	liquidityCumulative, 
+	liquidityCumulative,
 	secondsPerLiquidityCumulativeX128 string,
 	blockTimestamp int64,
 ) {
@@ -190,6 +190,9 @@ func GetObservation(poolPath string, secondsAgo int64) (
 	}
 
 	lastObservation := pool.observationState.lastObservation()
+	if lastObservation == nil {
+		return 0, "0", "0", 0
+	}
 
 	tickCumulative = lastObservation.TickCumulative()
 	liquidityCumulative = lastObservation.LiquidityCumulative()

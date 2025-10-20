@@ -477,8 +477,8 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(t *testing.T) {
 					index:            0,
 					cardinality:      1,
 					cardinalityLimit: 1,
-					observations: [ObservationCardinality]Observation{
-						{
+					observations: map[uint16]*Observation{
+						0: {
 							blockTimestamp:                    100,
 							tickCumulative:                    5000000000,
 							liquidityCumulative:               u256.MustFromDecimal("3000000"),
