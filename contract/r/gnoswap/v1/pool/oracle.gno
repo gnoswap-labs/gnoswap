@@ -7,7 +7,7 @@ import (
 )
 
 // ObservationCardinality defines the maximum number of observations to store
-const ObservationCardinality = 65535
+const ObservationCardinality = 1
 
 // ObservationState manages the oracle's historical data
 type ObservationState struct {
