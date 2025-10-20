@@ -14,9 +14,9 @@ ADDR_GNS := g13ffa5r3mqfxu3s7ejl02scq9536wt6c2t789dm
 ADDR_GNFT := g1wxv2rdfn53qc84nt3nn646f9yh3nly8lm7j89t
 
 # username address
-ADDR_GNOSWAP :=
-ADDR_ADMIN :=
-ADDR_TEST :=
+ADDR_GNOSWAP := g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c
+ADDR_ADMIN := g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+ADDR_TEST := g1mjqcxzek8yacgcvnqfkj0dck67wdyhqlfp9unr
 
 # INCENTIVE_START
 TOMORROW_MIDNIGHT := $(shell (gdate -ud 'tomorrow 00:00:00' +%s))
