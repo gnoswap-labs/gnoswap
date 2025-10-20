@@ -33,10 +33,7 @@ func (os *ObservationState) transform(currentTime int64, tick int32, liquidity *
 	tickCumulative := lastObservation.tickCumulative + int64(tick)*timeDelta
 
 	// calculate liquidity cumulative
-	liquidityDelta, overflow := u256.Zero().MulOverflow(liquidity, u256.NewUintFromInt64(timeDelta))
-	if overflow {
-		panic(errOverFlow)
-	}
+	liquidityDelta := u256.Zero().Mul(liquidity, u256.NewUintFromInt64(timeDelta))
 	liquidityCumulative := u256.Zero().Add(lastObservation.liquidityCumulative, liquidityDelta)
 
 	// calculate seconds per liquidity
