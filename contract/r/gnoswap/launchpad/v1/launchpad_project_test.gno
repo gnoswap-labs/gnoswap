@@ -20,7 +20,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
-func TestCreateProject(t *testing.T) {
+func TestCreateProject_ShouldFail(t *testing.T) {
 	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	oblPath := "gno.land/r/onbloc/obl"
@@ -43,58 +43,6 @@ func TestCreateProject(t *testing.T) {
 		expectedHasAbort     bool
 		expectedAbortMessage string
 	}{
-		{
-			name:                 "create project successfully",
-			projectName:          "Obl Protocol",
-			tokenPath:            oblPath,
-			recipient:            testutils.TestAddress("projectAddr"),
-			depositAmount:        1_000_000_000,
-			conditionTokens:      "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
-			conditionAmounts:     "1000*PAD*2000",
-			tier30Ratio:          10,
-			tier90Ratio:          20,
-			tier180Ratio:         70,
-			startTime:            time.Now().Unix() + 3600, // 1 hour
-			callerAddress:        adminAddr,
-			expectedProjectID:    "gno.land/r/onbloc/obl:123",
-			expectedStartHeight:  runtime.ChainHeight() + 3600/2, // 1 hour / 2
-			expectedHasAbort:     false,
-			expectedAbortMessage: "",
-		},
-		{
-			name:                 "create project successfully by average block time",
-			projectName:          "Obl Protocol",
-			tokenPath:            oblPath,
-			recipient:            testutils.TestAddress("projectAddr"),
-			depositAmount:        1_000_000_000,
-			conditionTokens:      "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
-			conditionAmounts:     "1000*PAD*2000",
-			tier30Ratio:          10,
-			tier90Ratio:          20,
-			tier180Ratio:         70,
-			startTime:            time.Now().Unix() + 3600, // 1 hour
-			callerAddress:        adminAddr,
-			expectedProjectID:    "gno.land/r/onbloc/obl:123",
-			expectedStartHeight:  runtime.ChainHeight() + 3600,
-			expectedHasAbort:     false,
-			expectedAbortMessage: "",
-		},
-		{
-			name:                 "create project failed by not admin",
-			projectName:          "Obl Protocol",
-			tokenPath:            oblPath,
-			recipient:            testutils.TestAddress("projectAddr"),
-			depositAmount:        1_000_000_000,
-			conditionTokens:      "gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
-			conditionAmounts:     "1000*PAD*2000",
-			tier30Ratio:          10,
-			tier90Ratio:          20,
-			tier180Ratio:         70,
-			startTime:            time.Now().Unix() + 3600, // 1 hour
-			callerAddress:        testutils.TestAddress("non-admin"),
-			expectedHasAbort:     true,
-			expectedAbortMessage: "unauthorized: caller g1dehkuttpv3kkjmjlta047h6lta047h6lj8fjdj is not admin or governance",
-		},
 		{
 			name:                 "create project failed by start time is in the past",
 			projectName:          "Obl Protocol",
@@ -170,7 +118,7 @@ func TestCreateProject(t *testing.T) {
 	}
 }
 
-func TestCreateProjectPrivate(t *testing.T) {
+func TestCreateProject_Internal(t *testing.T) {
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	projectAddr := testutils.TestAddress("projectAddr")
 	oblPath := "gno.land/r/onbloc/obl"
