@@ -14,23 +14,6 @@ import (
 	"gno.land/r/gnoswap/referral"
 )
 
-// ExactOutSwapOperation handles swaps where the output amount is specified.
-type ExactOutSwapOperation struct {
-	baseSwapOperation
-	params ExactOutParams
-}
-
-// NewExactOutSwapOperation creates a new exact-out swap operation.
-func NewExactOutSwapOperation(pp ExactOutParams) *ExactOutSwapOperation {
-	return &ExactOutSwapOperation{
-		params: pp,
-		baseSwapOperation: baseSwapOperation{
-			userWrappedWugnot: INITIAL_WUGNOT_BALANCE,
-			sqrtPriceLimitX96: pp.SqrtPriceLimitX96,
-		},
-	}
-}
-
 // ExactOutSwapRoute swaps tokens for an exact output amount.
 //
 // Executes swap to receive exact output tokens.
@@ -87,9 +70,8 @@ func (r *routerV1) ExactOutSwapRoute(
 		sqrtPriceLimitX96: zeroString, // multi-hop swap is not allowed to set sqrtPriceLimitX96
 	}
 
-	return exactOutSwapRoute(params, referrer)
+	return r.exactOutSwapRoute(params, referrer)
 }
-
 
 // exactOutSwapRoute executes the swap operation and handles token transfers and referral registration.
 //
@@ -108,11 +90,11 @@ func (r *routerV1) ExactOutSwapRoute(
 //   - outputAmount: Actual output amount received as string (negative value)
 //
 // Panics if swap execution fails or token transfer fails.
-func exactOutSwapRoute(
+func (r *routerV1) exactOutSwapRoute(
 	params SwapRouteParams,
 	referrer string,
 ) (string, string) {
-	inputAmount, outputAmount, err := commonSwapRoute(params)
+	inputAmount, outputAmount, err := r.commonSwapRoute(params)
 	if err != nil {
 		panic(err)
 	}
@@ -155,6 +137,25 @@ func exactOutSwapRoute(
 	return inputAmountStr, outputAmountStr
 }
 
+// ExactOutSwapOperation handles swaps where the output amount is specified.
+type ExactOutSwapOperation struct {
+	router *routerV1
+	baseSwapOperation
+	params ExactOutParams
+}
+
+// NewExactOutSwapOperation creates a new exact-out swap operation.
+func NewExactOutSwapOperation(r *routerV1, pp ExactOutParams) *ExactOutSwapOperation {
+	return &ExactOutSwapOperation{
+		router: r,
+		params: pp,
+		baseSwapOperation: baseSwapOperation{
+			userWrappedWugnot: INITIAL_WUGNOT_BALANCE,
+			sqrtPriceLimitX96: pp.SqrtPriceLimitX96,
+		},
+	}
+}
+
 // Validate ensures the exact-out swap parameters are valid.
 func (op *ExactOutSwapOperation) Validate() error {
 	amountOut := i256.MustFromDecimal(op.params.AmountOut)
@@ -183,7 +184,7 @@ func (op *ExactOutSwapOperation) Process() (*SwapResult, error) {
 		return nil, err
 	}
 
-	resultAmountIn, resultAmountOut, err := op.processRoutes(ExactOut)
+	resultAmountIn, resultAmountOut, err := op.processRoutes(op.router, ExactOut)
 	if err != nil {
 		return nil, err
 	}

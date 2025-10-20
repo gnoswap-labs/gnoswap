@@ -14,21 +14,6 @@ import (
 	"gno.land/r/gnoswap/referral"
 )
 
-type ExactInSwapOperation struct {
-	baseSwapOperation
-	params ExactInParams
-}
-
-func NewExactInSwapOperation(pp ExactInParams) *ExactInSwapOperation {
-	return &ExactInSwapOperation{
-		params: pp,
-		baseSwapOperation: baseSwapOperation{
-			userWrappedWugnot: INITIAL_WUGNOT_BALANCE,
-			sqrtPriceLimitX96: pp.SqrtPriceLimitX96,
-		},
-	}
-}
-
 // ExactInSwapRoute swaps an exact amount of input tokens for output tokens.
 //
 // Executes multi-hop swaps through specified route.
@@ -85,9 +70,8 @@ func (r *routerV1) ExactInSwapRoute(
 		sqrtPriceLimitX96: zeroString, // multi-hop swap is not allowed to set sqrtPriceLimitX96
 	}
 
-	return exactInSwapRoute(params, referrer)
+	return r.exactInSwapRoute(params, referrer)
 }
-
 
 // exactInSwapRoute executes the swap operation and handles token transfers and referral registration.
 //
@@ -106,11 +90,11 @@ func (r *routerV1) ExactInSwapRoute(
 //   - outputAmount: Actual output amount received as string (negative value)
 //
 // Panics if swap execution fails or token transfer fails.
-func exactInSwapRoute(
+func (r *routerV1) exactInSwapRoute(
 	params SwapRouteParams,
 	referrer string,
 ) (string, string) {
-	inputAmount, outputAmount, err := commonSwapRoute(params)
+	inputAmount, outputAmount, err := r.commonSwapRoute(params)
 	if err != nil {
 		panic(err)
 	}
@@ -153,6 +137,23 @@ func exactInSwapRoute(
 	return inputAmountStr, outputAmountStr
 }
 
+type ExactInSwapOperation struct {
+	baseSwapOperation
+	params ExactInParams
+	router *routerV1
+}
+
+func NewExactInSwapOperation(r *routerV1, pp ExactInParams) *ExactInSwapOperation {
+	return &ExactInSwapOperation{
+		router: r,
+		params: pp,
+		baseSwapOperation: baseSwapOperation{
+			userWrappedWugnot: INITIAL_WUGNOT_BALANCE,
+			sqrtPriceLimitX96: pp.SqrtPriceLimitX96,
+		},
+	}
+}
+
 // Validate validates the exact-in swap operation parameters.
 func (op *ExactInSwapOperation) Validate() error {
 	amountIn := i256.MustFromDecimal(op.params.AmountIn)
@@ -181,7 +182,7 @@ func (op *ExactInSwapOperation) Process() (*SwapResult, error) {
 		return nil, err
 	}
 
-	resultAmountIn, resultAmountOut, err := op.processRoutes(ExactIn)
+	resultAmountIn, resultAmountOut, err := op.processRoutes(op.router, ExactIn)
 	if err != nil {
 		return nil, err
 	}

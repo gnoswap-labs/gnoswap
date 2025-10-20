@@ -85,7 +85,7 @@ func (r *routerV1) handleSwapFee(
 		currentTokenPath = wugnotPath
 	}
 
-	feeAmountInt64 := r.calculateRouterFee(amount)
+	feeAmountInt64 := calculateRouterFee(amount, swapFee)
 
 	common.SafeGRC20Transfer(cross, currentTokenPath, protocolFeeAddr, feeAmountInt64)
 
@@ -111,8 +111,7 @@ func (r *routerV1) handleSwapFee(
 	return toUserAfterProtocol
 }
 
-func (r *routerV1) calculateRouterFee(amount *u256.Uint) int64 {
-	swapFee := r.store.GetSwapFee()
+func calculateRouterFee(amount *u256.Uint, swapFee uint64) int64 {
 	if swapFee <= 0 {
 		return 0
 	}
@@ -126,10 +125,9 @@ func (r *routerV1) calculateRouterFee(amount *u256.Uint) int64 {
 // calculate amount to fetch from pool including router fee
 // poolAmount = userAmount / (1 - feeRate)
 // = userAmount * 10000 / (10000 - swapFeeBPS)
-func (r *routerV1) calculateExactOutWithRouterFee(amount *u256.Uint) *u256.Uint {
+func calculateExactOutWithRouterFee(amount *u256.Uint, swapFee uint64) *u256.Uint {
 	userAmount := amount.Clone()
 
-	swapFee := r.store.GetSwapFee()
 	if swapFee > 0 {
 		// Use MulDiv to prevent overflow and maintain precision
 		poolAmount := u256.MulDiv(
@@ -142,32 +140,4 @@ func (r *routerV1) calculateExactOutWithRouterFee(amount *u256.Uint) *u256.Uint 
 	}
 
 	return userAmount
-}
-
-// Global helper functions for backward compatibility
-// These functions use the singleton router instance to access the store
-
-// GetSwapFee returns the current swap fee rate in basis points (global helper).
-func GetSwapFee() uint64 {
-	return getRouterInstance().GetSwapFee()
-}
-
-// SetSwapFee sets the swap fee rate in basis points (global helper).
-func SetSwapFee(cur realm, fee uint64) {
-	getRouterInstance().SetSwapFee(fee)
-}
-
-// handleSwapFee is a global helper that delegates to the router instance.
-func handleSwapFee(outputToken string, amount *u256.Uint) *u256.Uint {
-	return getRouterInstance().handleSwapFee(outputToken, amount)
-}
-
-// calculateRouterFee is a global helper that delegates to the router instance.
-func calculateRouterFee(amount *u256.Uint) int64 {
-	return getRouterInstance().calculateRouterFee(amount)
-}
-
-// calculateExactOutWithRouterFee is a global helper that delegates to the router instance.
-func calculateExactOutWithRouterFee(amount *u256.Uint) *u256.Uint {
-	return getRouterInstance().calculateExactOutWithRouterFee(amount)
 }

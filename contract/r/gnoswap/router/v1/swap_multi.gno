@@ -31,25 +31,30 @@ type MultiSwapExecutor interface {
 }
 
 // DryMultiSwapExecutor implements MultiSwapExecutor for dry run simulations.
-type DryMultiSwapExecutor struct{}
+type DryMultiSwapExecutor struct {
+	router *routerV1
+}
 
 // Run performs a dry swap operation without changing state.
 func (e *DryMultiSwapExecutor) Run(p SwapParams, data SwapCallbackData, _ address) (*u256.Uint, *u256.Uint) {
-	return swapDryInner(p.amountSpecified, zero, data)
+	return e.router.swapDryInner(p.amountSpecified, zero, data)
 }
 
 // RealMultiSwapExecutor implements MultiSwapExecutor for actual swap operations.
-type RealMultiSwapExecutor struct{}
+type RealMultiSwapExecutor struct {
+	router *routerV1
+}
 
 // Run performs a real swap operation with state changes.
 func (e *RealMultiSwapExecutor) Run(p SwapParams, data SwapCallbackData, recipient address) (*u256.Uint, *u256.Uint) {
-	return swapInner(p.amountSpecified, recipient, zero, data)
+	return e.router.swapInner(p.amountSpecified, recipient, zero, data)
 }
 
 // MultiSwapProcessor handles the execution flow for multi-hop swaps.
 type MultiSwapProcessor struct {
 	executor   MultiSwapExecutor
 	direction  SwapDirection
+	router     *routerV1
 	isSimulate bool
 }
 
@@ -59,17 +64,18 @@ var (
 )
 
 // NewMultiSwapProcessor creates a new MultiSwapProcessor with the specified configuration.
-func NewMultiSwapProcessor(isSimulate bool, direction SwapDirection) *MultiSwapProcessor {
+func NewMultiSwapProcessor(r *routerV1, isSimulate bool, direction SwapDirection) *MultiSwapProcessor {
 	var executor MultiSwapExecutor
 	if isSimulate {
-		executor = &DryMultiSwapExecutor{}
+		executor = &DryMultiSwapExecutor{router: r}
 	} else {
-		executor = &RealMultiSwapExecutor{}
+		executor = &RealMultiSwapExecutor{router: r}
 	}
 
 	return &MultiSwapProcessor{
 		executor:   executor,
 		direction:  direction,
+		router:     r,
 		isSimulate: isSimulate,
 	}
 }
@@ -170,7 +176,7 @@ func (p *MultiSwapProcessor) collectBackwardSwapInfo(sp SwapParams, numPools int
 		}
 
 		// dry simulation to calculate input amount
-		amountIn, _ := singleDrySwap(&thisSwap)
+		amountIn, _ := p.router.singleDrySwap(&thisSwap)
 		swapInfo = append(swapInfo, thisSwap)
 
 		if currentPoolIndex == 0 {
@@ -203,7 +209,7 @@ func (p *MultiSwapProcessor) executeCollectedSwaps(swapInfo []SingleSwapParams, 
 			payer,
 		)
 
-		amountIn, amountOut := swapInner(
+		amountIn, amountOut := p.router.swapInner(
 			swapInfo[currentPoolIndex].amountSpecified,
 			recipient,
 			zero,
@@ -229,8 +235,8 @@ func (p *MultiSwapProcessor) executeCollectedSwaps(swapInfo []SingleSwapParams, 
 }
 
 // multiSwap performs a multi-hop swap in forward direction.
-func multiSwap(p SwapParams, numPools int, swapPath string) (*u256.Uint, *u256.Uint) {
-	result, output, err := NewMultiSwapProcessor(false, Forward).
+func (r *routerV1) multiSwap(p SwapParams, numPools int, swapPath string) (*u256.Uint, *u256.Uint) {
+	result, output, err := NewMultiSwapProcessor(r, false, Forward).
 		processForwardSwap(p, numPools, swapPath)
 	if err != nil {
 		panic(err)
@@ -239,8 +245,8 @@ func multiSwap(p SwapParams, numPools int, swapPath string) (*u256.Uint, *u256.U
 }
 
 // multiSwapNegative performs a multi-hop swap in backward direction.
-func multiSwapNegative(p SwapParams, numPools int, swapPath string) (*u256.Uint, *u256.Uint) {
-	result, output, err := NewMultiSwapProcessor(false, Backward).
+func (r *routerV1) multiSwapNegative(p SwapParams, numPools int, swapPath string) (*u256.Uint, *u256.Uint) {
+	result, output, err := NewMultiSwapProcessor(r, false, Backward).
 		processBackwardSwap(p, numPools, swapPath)
 	if err != nil {
 		panic(err)
@@ -249,13 +255,13 @@ func multiSwapNegative(p SwapParams, numPools int, swapPath string) (*u256.Uint,
 }
 
 // multiDrySwap simulates a multi-hop swap in forward direction.
-func multiDrySwap(p SwapParams, numPool int, swapPath string) (*u256.Uint, *u256.Uint, error) {
-	return NewMultiSwapProcessor(true, Forward).
+func (r *routerV1) multiDrySwap(p SwapParams, numPool int, swapPath string) (*u256.Uint, *u256.Uint, error) {
+	return NewMultiSwapProcessor(r, true, Forward).
 		processForwardSwap(p, numPool, swapPath)
 }
 
 // multiDrySwapNegative simulates a multi-hop swap in backward direction.
-func multiDrySwapNegative(p SwapParams, numPool int, swapPath string) (*u256.Uint, *u256.Uint, error) {
-	return NewMultiSwapProcessor(true, Backward).
+func (r *routerV1) multiDrySwapNegative(p SwapParams, numPool int, swapPath string) (*u256.Uint, *u256.Uint, error) {
+	return NewMultiSwapProcessor(r, true, Backward).
 		processBackwardSwap(p, numPool, swapPath)
 }

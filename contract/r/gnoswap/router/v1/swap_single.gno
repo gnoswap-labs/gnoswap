@@ -14,7 +14,7 @@ type SwapExecutor interface {
 }
 
 // executeSwap is the common logic for both real and dry swaps.
-func executeSwap(executor SwapExecutor, p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
+func (r *routerV1) executeSwap(executor SwapExecutor, p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
 	if p.tokenIn == p.tokenOut {
 		panic(errSameTokenSwap)
 	}
@@ -32,12 +32,12 @@ var (
 // singleSwap executes a swap within a single pool using the provided parameters.
 // It processes a token swap within two assets using a specific fee tier and
 // automatically sets the recipient to the caller's address.
-func singleSwap(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
-	return executeSwap(&RealSwapExecutor{}, p)
+func (r *routerV1) singleSwap(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
+	return r.executeSwap(&RealSwapExecutor{router: r}, p)
 }
 
 // singleDrySwap simulates a single-token swap operation without executing it.
 // It performs a dry run simulation and does not alter the state.
-func singleDrySwap(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
-	return executeSwap(&DrySwapExecutor{}, p)
+func (r *routerV1) singleDrySwap(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
+	return r.executeSwap(&DrySwapExecutor{router: r}, p)
 }

@@ -32,7 +32,9 @@ const (
 )
 
 // SwapProcessor handles the execution of swap operations
-type SwapProcessor struct{}
+type SwapProcessor struct {
+	router *routerV1
+}
 
 // ProcessSwapAmount calculates the exact amount to swap based on quote percentage.
 func (p *SwapProcessor) ProcessSwapAmount(amountSpecified *i256.Int, quote int) (*i256.Int, error) {
@@ -58,7 +60,7 @@ func (p *SwapProcessor) ProcessSingleSwap(route string, amountSpecified *i256.In
 		amountSpecified: amountSpecified,
 	}
 
-	amountIn, amountOut = singleDrySwap(&singleParams)
+	amountIn, amountOut = p.router.singleDrySwap(&singleParams)
 	return amountIn, amountOut, nil
 }
 
@@ -77,9 +79,9 @@ func (p *SwapProcessor) ProcessMultiSwap(
 
 	switch swapType {
 	case ExactIn:
-		return multiDrySwap(*swapParams, numHops, route)
+		return p.router.multiDrySwap(*swapParams, numHops, route)
 	case ExactOut:
-		return multiDrySwapNegative(*swapParams, numHops, route)
+		return p.router.multiDrySwapNegative(*swapParams, numHops, route)
 	default:
 		return nil, nil, ufmt.Errorf(ErrUnknownSwapType, swapType)
 	}
@@ -141,33 +143,16 @@ func (p *SwapProcessor) AddSwapResults(
 // It calculates the expected outcome based on the current state of liquidity pools.
 func (r *routerV1) DrySwapRoute(
 	inputToken, outputToken string,
-	amountIn string,
-	routeArr, quoteArr string,
-	amountOutMin string,
-	deadline int64,
-	referrer string,
-) (string, string) {
-	// For dry swap, we simulate with ExactIn type
-	swapTypeStr := "EXACT_IN"
-
-	// Call the internal dry swap function
-	amountInResult, amountOutResult, success := drySwapRoute(
-		inputToken, outputToken,
-		amountIn, swapTypeStr,
-		routeArr, quoteArr,
-		amountOutMin,
-	)
-
-	if !success {
-		// Return zero values if simulation fails
-		return "0", "0"
-	}
-
-	return amountInResult, amountOutResult
+	specifiedAmount string,
+	swapTypeStr string,
+	strRouteArr, quoteArr string,
+	tokenAmountLimit string,
+) (string, string, bool) {
+	return r.drySwapRoute(inputToken, outputToken, specifiedAmount, swapTypeStr, strRouteArr, quoteArr, tokenAmountLimit)
 }
 
 // drySwapRoute is a function for applying cross realm.
-func drySwapRoute(
+func (r *routerV1) drySwapRoute(
 	inputToken, outputToken string,
 	specifiedAmount string,
 	swapTypeStr string,
@@ -177,7 +162,7 @@ func drySwapRoute(
 	common.MustRegistered(inputToken, outputToken)
 	// initialize components
 	validator := &SwapValidator{}
-	processor := &SwapProcessor{}
+	processor := &SwapProcessor{router: r}
 	parser := &RouteParser{}
 
 	// validate and parse inputs
@@ -201,9 +186,11 @@ func drySwapRoute(
 		panic(addDetailToError(errInvalidRoutesAndQuotes, err.Error()))
 	}
 
+	swapFee := r.store.GetSwapFee()
+
 	// adjust amount sign for exact out swaps
 	if swapType == ExactOut {
-		amountSpecifiedWithRouterFee := calculateExactOutWithRouterFee(amountSpecified.Abs())
+		amountSpecifiedWithRouterFee := calculateExactOutWithRouterFee(amountSpecified.Abs(), swapFee)
 		amountSpecified = i256.Zero().Neg(i256.FromUint256(amountSpecifiedWithRouterFee))
 	}
 
@@ -247,7 +234,7 @@ func drySwapRoute(
 	}
 
 	// simulate deduct router fee
-	feeAmountInt64 := calculateRouterFee(resultAmountOut)
+	feeAmountInt64 := calculateRouterFee(resultAmountOut, swapFee)
 
 	resultAmountOut, overflow := u256.Zero().SubOverflow(resultAmountOut, u256.NewUintFromInt64(feeAmountInt64))
 	if overflow {

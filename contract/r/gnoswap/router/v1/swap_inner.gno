@@ -6,6 +6,7 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/router"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -20,7 +21,7 @@ const (
 
 // swapInner executes the core swap logic by interacting with the pool contract.
 // Returns poolRecv (tokens received by pool) and poolOut (tokens sent by pool).
-func swapInner(
+func (r *routerV1) swapInner(
 	amountSpecified *i256.Int,
 	recipient address,
 	sqrtPriceLimitX96 *u256.Uint,
@@ -46,13 +47,7 @@ func swapInner(
 		sqrtPriceLimitX96.ToString(),
 		data.payer,
 		func(cur realm, amount0Delta, amount1Delta string) error {
-			return swapCallback(
-				token0Path,
-				token1Path,
-				amount0Delta,
-				amount1Delta,
-				data.payer,
-			)
+			return router.SwapCallback(token0Path, token1Path, amount0Delta, amount1Delta, data.payer)
 		},
 	)
 
@@ -67,24 +62,8 @@ func swapInner(
 	return poolRecv, poolOut
 }
 
-// RealSwapExecutor implements SwapExecutor for actual swaps.
-type RealSwapExecutor struct{}
-
-// execute performs the actual swap execution.
-func (e *RealSwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
-	caller := runtime.PreviousRealm().Address()
-	recipient := routerAddr
-
-	return swapInner(
-		p.amountSpecified,
-		recipient,             // if single swap => user will receive
-		p.SqrtPriceLimitX96(), // sqrtPriceLimitX96
-		newSwapCallbackData(p, caller),
-	)
-}
-
 // swapDryInner performs a dry-run of a swap operation without executing it.
-func swapDryInner(
+func (r *routerV1) swapDryInner(
 	amountSpecified *i256.Int,
 	sqrtPriceLimitX96 *u256.Uint,
 	data SwapCallbackData,
@@ -116,14 +95,34 @@ func swapDryInner(
 	return poolRecv, poolOut
 }
 
+// RealSwapExecutor implements SwapExecutor for actual swaps.
+type RealSwapExecutor struct {
+	router *routerV1
+}
+
+// execute performs the actual swap execution.
+func (e *RealSwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
+	caller := runtime.PreviousRealm().Address()
+	recipient := routerAddr
+
+	return e.router.swapInner(
+		p.amountSpecified,
+		recipient,             // if single swap => user will receive
+		p.SqrtPriceLimitX96(), // sqrtPriceLimitX96
+		newSwapCallbackData(p, caller),
+	)
+}
+
 // DrySwapExecutor implements SwapExecutor for dry swaps.
-type DrySwapExecutor struct{}
+type DrySwapExecutor struct {
+	router *routerV1
+}
 
 // execute performs the dry swap execution.
 func (e *DrySwapExecutor) execute(p *SingleSwapParams) (amountIn, amountOut *u256.Uint) {
 	previousRealmAddr := runtime.PreviousRealm().Address()
 
-	return swapDryInner(
+	return e.router.swapDryInner(
 		p.amountSpecified,
 		zero,
 		newSwapCallbackData(p, previousRealmAddr),

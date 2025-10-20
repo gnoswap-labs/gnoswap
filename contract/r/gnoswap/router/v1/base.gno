@@ -131,7 +131,7 @@ func (op *baseSwapOperation) validateRouteQuote(quote string, i int) (*i256.Int,
 }
 
 // processRoutes processes all swap routes and returns total amounts.
-func (op *baseSwapOperation) processRoutes(swapType SwapType) (*u256.Uint, *u256.Uint, error) {
+func (op *baseSwapOperation) processRoutes(r *routerV1, swapType SwapType) (*u256.Uint, *u256.Uint, error) {
 	zero := u256.Zero()
 	resultAmountIn, resultAmountOut := zero, zero
 	remainRequestAmount := op.amountSpecified
@@ -155,7 +155,7 @@ func (op *baseSwapOperation) processRoutes(swapType SwapType) (*u256.Uint, *u256
 			toSwapAmount = remainRequestAmount
 		}
 
-		amountIn, amountOut, err := op.processRoute(route, toSwapAmount, swapType)
+		amountIn, amountOut, err := op.processRoute(r, route, toSwapAmount, swapType)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -179,6 +179,7 @@ func (op *baseSwapOperation) processRoutes(swapType SwapType) (*u256.Uint, *u256
 
 // processRoute processes a single route with specified swap amount.
 func (op *baseSwapOperation) processRoute(
+	r *routerV1,
 	route string,
 	toSwap *i256.Int,
 	swapType SwapType,
@@ -188,9 +189,9 @@ func (op *baseSwapOperation) processRoute(
 
 	switch numHops {
 	case SINGLE_HOP_ROUTE:
-		amountIn, amountOut = handleSingleSwap(route, toSwap, op.withUnwrap, op.sqrtPriceLimitX96)
+		amountIn, amountOut = r.handleSingleSwap(route, toSwap, op.withUnwrap, op.sqrtPriceLimitX96)
 	default:
-		amountIn, amountOut = handleMultiSwap(swapType, route, numHops, toSwap, op.withUnwrap)
+		amountIn, amountOut = r.handleMultiSwap(swapType, route, numHops, toSwap, op.withUnwrap)
 	}
 
 	if amountIn == nil || amountOut == nil {
@@ -201,7 +202,7 @@ func (op *baseSwapOperation) processRoute(
 }
 
 // handleSingleSwap executes a single-hop swap with the specified amount.
-func handleSingleSwap(route string, amountSpecified *i256.Int, withUnwrap bool, sqrtPriceLimitX96 string) (*u256.Uint, *u256.Uint) {
+func (r *routerV1) handleSingleSwap(route string, amountSpecified *i256.Int, withUnwrap bool, sqrtPriceLimitX96 string) (*u256.Uint, *u256.Uint) {
 	input, output, fee := getDataForSinglePath(route)
 	singleParams := SingleSwapParams{
 		tokenIn:           input,
@@ -212,11 +213,11 @@ func handleSingleSwap(route string, amountSpecified *i256.Int, withUnwrap bool, 
 		sqrtPriceLimitX96: sqrtPriceLimitX96,
 	}
 
-	return singleSwap(&singleParams)
+	return r.singleSwap(&singleParams)
 }
 
 // handleMultiSwap processes multi-hop swaps across multiple pools.
-func handleMultiSwap(
+func (r *routerV1) handleMultiSwap(
 	swapType SwapType,
 	route string,
 	numHops int,
@@ -229,11 +230,11 @@ func handleMultiSwap(
 	case ExactIn:
 		input, output, fee := getDataForMultiPath(route, 0) // first data
 		sp := newSwapParams(input, output, fee, recipient, amountSpecified, withUnwrap)
-		return multiSwap(*sp, numHops, route)
+		return r.multiSwap(*sp, numHops, route)
 	case ExactOut:
 		input, output, fee := getDataForMultiPath(route, numHops-1) // last data
 		sp := newSwapParams(input, output, fee, recipient, amountSpecified, withUnwrap)
-		return multiSwapNegative(*sp, numHops, route)
+		return r.multiSwapNegative(*sp, numHops, route)
 	default:
 		panic(errInvalidSwapType)
 	}
@@ -257,14 +258,14 @@ func (p *SwapRouteParams) ExactAmount() string {
 }
 
 // when exact out, calculate amount to fetch from pool including router fee
-func (p *SwapRouteParams) ExpectedExactAmount() string {
+func (p *SwapRouteParams) ExpectedExactAmountByFee(feeBps uint64) string {
 	if p.typ == ExactIn {
 		return p.exactAmount
 	}
 
 	userAmount := u256.MustFromDecimal(p.exactAmount)
 
-	return calculateExactOutWithRouterFee(userAmount).ToString()
+	return calculateExactOutWithRouterFee(userAmount, feeBps).ToString()
 }
 
 // IsUnwrap checks if the swap output is native token.
@@ -287,7 +288,7 @@ func (p *SwapRouteParams) IsSetSqrtPriceLimitX96() bool {
 }
 
 // createSwapOperation creates the appropriate swap operation based on swap type.
-func createSwapOperation(params SwapRouteParams) (RouterOperation, error) {
+func createSwapOperation(r *routerV1, params SwapRouteParams) (RouterOperation, error) {
 	baseParams := BaseSwapParams{
 		InputToken:        params.inputToken,
 		OutputToken:       params.outputToken,
@@ -300,10 +301,11 @@ func createSwapOperation(params SwapRouteParams) (RouterOperation, error) {
 	switch params.typ {
 	case ExactIn:
 		pp := NewExactInParams(baseParams, params.ExactAmount(), params.limitAmount)
-		return NewExactInSwapOperation(pp), nil
+		return NewExactInSwapOperation(r, pp), nil
 	case ExactOut:
-		pp := NewExactOutParams(baseParams, params.ExpectedExactAmount(), params.limitAmount)
-		return NewExactOutSwapOperation(pp), nil
+		routerFee := r.store.GetSwapFee()
+		pp := NewExactOutParams(baseParams, params.ExpectedExactAmountByFee(routerFee), params.limitAmount)
+		return NewExactOutSwapOperation(r, pp), nil
 	default:
 		msg := addDetailToError(errInvalidSwapType, "unknown swap type")
 		return nil, errors.New(msg)
@@ -326,8 +328,8 @@ func extractSwapOperationData(op RouterOperation) (int64, int64, error) {
 }
 
 // commonSwapRoute handles the common logic for both ExactIn and ExactOut swaps.
-func commonSwapRoute(params SwapRouteParams) (*i256.Int, *i256.Int, error) {
-	op, err := createSwapOperation(params)
+func (r *routerV1) commonSwapRoute(params SwapRouteParams) (*i256.Int, *i256.Int, error) {
+	op, err := createSwapOperation(r, params)
 	if err != nil {
 		return i256.Zero(), i256.Zero(), err
 	}
@@ -351,7 +353,7 @@ func commonSwapRoute(params SwapRouteParams) (*i256.Int, *i256.Int, error) {
 		return i256.Zero(), i256.Zero(), err
 	}
 
-	inputAmount, outputAmount := finalizeSwap(
+	inputAmount, outputAmount := r.finalizeSwap(
 		params.inputToken,
 		params.outputToken,
 		result.AmountIn,

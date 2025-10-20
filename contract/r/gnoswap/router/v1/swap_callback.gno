@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"chain/runtime"
+
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -15,11 +17,14 @@ import (
 // 1. Flash swaps (receive tokens before paying)
 // 2. Just-in-time token transfers
 // 3. Complex multi-hop swaps without intermediate transfers
-func swapCallback(
+func (r *routerV1) SwapCallback(
 	token0Path, token1Path string,
 	amount0Delta, amount1Delta string,
 	payer address,
 ) error {
+	println("")
+	println("[XXX] Current Realm:", runtime.CurrentRealm().PkgPath())
+	println("")
 	var tokenToPay string
 
 	amountToPay := i256.Zero()
@@ -42,13 +47,13 @@ func swapCallback(
 
 	// Transfer tokens from router to pool
 	// The router should already have the tokens from the user
-	transferToPool(tokenToPay, amountToPay.Abs(), payer)
+	r.transferToPool(tokenToPay, amountToPay.Abs(), payer)
 
 	return nil
 }
 
 // transferToPool transfers tokens from router to pool
-func transferToPool(token string, amount *u256.Uint, payer address) {
+func (r *routerV1) transferToPool(token string, amount *u256.Uint, payer address) {
 	isTransferByRouter := payer == routerAddr
 
 	balance := common.BalanceOf(token, payer)
