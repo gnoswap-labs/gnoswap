@@ -359,6 +359,31 @@ func collectProtocol(
 	return amount0.ToString(), amount1.ToString()
 }
 
+func IncreaseObservationCardinalityLimit(
+	cur realm,
+	token0Path string,
+	token1Path string,
+	fee uint32,
+	cardinalityNext uint16,
+) {
+	halt.AssertIsNotHaltedPoolWithVersion(1)
+
+	pool := mustGetPoolBy(token0Path, token1Path, fee)
+	err := pool.IncreaseObservationCardinalityLimit(cardinalityNext)
+	if err != nil {
+		panic(err)
+	}
+
+	previousRealm := runtime.PreviousRealm()
+	chain.Emit(
+		"IncreaseObservationCardinalityLimit",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"poolPath", pool.PoolPath(),
+		"cardinalityNext", formatUint(cardinalityNext),
+	)
+}
+
 // saveProtocolFees updates the protocol fee balances after collection.
 // Returns amount0, amount1 representing the fees deducted from protocol reserves.
 func (p *Pool) saveProtocolFees(amount0, amount1 *u256.Uint) (*u256.Uint, *u256.Uint) {
