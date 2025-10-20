@@ -189,8 +189,8 @@ func GetObservation(poolPath string, secondsAgo int64) (
 		return 0, "0", "0", 0
 	}
 
-	lastObservation := pool.observationState.lastObservation()
-	if lastObservation == nil {
+	lastObservation, err := pool.observationState.lastObservation()
+	if err != nil {
 		return 0, "0", "0", 0
 	}
 

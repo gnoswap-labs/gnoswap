@@ -492,7 +492,10 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(t *testing.T) {
 
 			beforeTickCumulative := pool.ObservationTickCumulative()
 			beforeLiquidityCumulative := new(u256.Uint).Set(u256.MustFromDecimal(pool.ObservationLiquidityCumulative()))
-			currentTime := pool.observationState.lastObservation().blockTimestamp + tt.timeElapsed
+			lastObs, err := pool.observationState.lastObservation()
+
+			uassert.NoError(t, err, "Last observation should succeed")
+			currentTime := lastObs.blockTimestamp + tt.timeElapsed
 
 			// When: Execute accumulation calculation
 			pool.writeObservation(currentTime, tt.initialTick, pool.liquidity)

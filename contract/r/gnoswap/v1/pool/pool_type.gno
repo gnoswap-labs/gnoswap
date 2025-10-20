@@ -234,11 +234,12 @@ func (p *Pool) ObservationTickCumulative() int64 {
 		return 0
 	}
 
-	if p.observationState.lastObservation() == nil {
+	lastObservation, err := p.observationState.lastObservation()
+	if err != nil {
 		return 0
 	}
 
-	return p.observationState.lastObservation().tickCumulative
+	return lastObservation.tickCumulative
 }
 
 // ObservationLiquidityCumulative returns the current liquidity cumulative for backward compatibility
@@ -247,11 +248,12 @@ func (p *Pool) ObservationLiquidityCumulative() string {
 		return "0"
 	}
 
-	if p.observationState.lastObservation() == nil {
+	lastObservation, err := p.observationState.lastObservation()
+	if err != nil {
 		return "0"
 	}
 
-	return p.observationState.lastObservation().liquidityCumulative.ToString()
+	return lastObservation.liquidityCumulative.ToString()
 }
 
 // ObservationSecondsPerLiquidityCumulativeX128 returns the current seconds per liquidity cumulative for backward compatibility
@@ -260,11 +262,12 @@ func (p *Pool) ObservationSecondsPerLiquidityCumulativeX128() string {
 		return "0"
 	}
 
-	if p.observationState.lastObservation() == nil {
+	lastObservation, err := p.observationState.lastObservation()
+	if err != nil {
 		return "0"
 	}
 
-	return p.observationState.lastObservation().secondsPerLiquidityCumulativeX128.ToString()
+	return lastObservation.secondsPerLiquidityCumulativeX128.ToString()
 }
 
 // ObservationBlockTimestamp returns the current observation timestamp for backward compatibility
@@ -273,8 +276,8 @@ func (p *Pool) ObservationBlockTimestamp() int64 {
 		return time.Now().Unix()
 	}
 
-	lastObservation := p.observationState.lastObservation()
-	if lastObservation == nil {
+	lastObservation, err := p.observationState.lastObservation()
+	if err != nil {
 		return time.Now().Unix()
 	}
 

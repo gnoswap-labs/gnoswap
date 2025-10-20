@@ -18,14 +18,14 @@ type ObservationState struct {
 }
 
 func (os *ObservationState) transform(currentTime int64, tick int32, liquidity *u256.Uint) (*Observation, error) {
-	lastObservation := os.lastObservation()
-	if lastObservation == nil {
-		return nil, errNotInitializedObservation
+	lastObservation, err := os.lastObservation()
+	if err != nil {
+		return nil, err
 	}
 
 	timeDelta := currentTime - lastObservation.blockTimestamp
 	if timeDelta < 0 {
-		return lastObservation, errors.New("time delta must be greater than 0")
+		return nil, errors.New("time delta must be greater than 0")
 	}
 
 	if timeDelta == 0 {
@@ -75,20 +75,31 @@ func (os *ObservationState) grow(currentCardinality, nextCardinality uint16) (ui
 		return currentCardinality, nil
 	}
 
-	for i := currentCardinality; i < nextCardinality; i++ {
+	if nextCardinality > maxObservationCardinality {
+		return currentCardinality, errors.New("nextCardinality exceeds maximum")
+	}
+
+	// Ensure all slots from 0 to nextCardinality are initialized
+	// This prevents gaps in the circular buffer
+	for i := uint16(0); i < nextCardinality; i++ {
 		if _, ok := os.observations[i]; !ok {
+			// Create new observation slot
 			os.observations[i] = &Observation{
 				blockTimestamp:                    1,
 				tickCumulative:                    0,
 				liquidityCumulative:               u256.Zero(),
 				secondsPerLiquidityCumulativeX128: u256.Zero(),
-				initialized:                       true,
+				initialized:                       false, // Mark as not yet used
 			}
-
-			continue
 		}
+	}
 
-		os.observations[i].blockTimestamp = 1
+	// Mark slots from currentCardinality to nextCardinality as initialized
+	for i := currentCardinality; i < nextCardinality; i++ {
+		if obs := os.observations[i]; obs != nil {
+			obs.blockTimestamp = 1
+			obs.initialized = true
+		}
 	}
 
 	return nextCardinality, nil
@@ -99,22 +110,32 @@ func (os *ObservationState) write(
 	tick int32,
 	liquidity *u256.Uint,
 ) error {
-	lastObservation := os.lastObservation()
-	if lastObservation == nil {
-		return errNotInitializedObservation
+	lastObservation, err := os.lastObservation()
+	if err != nil {
+		return err
 	}
 
 	if lastObservation.blockTimestamp == currentTime {
 		return nil
 	}
 
-	nextCardinality := os.cardinality
-
+	// Check if we need to grow the cardinality
 	if os.cardinalityLimit > os.cardinality && os.index == os.cardinality-1 {
-		nextCardinality = os.cardinalityLimit
+		// Grow the observation array to the new cardinality limit
+		newCardinality, err := os.grow(os.cardinality, os.cardinalityLimit)
+		if err != nil {
+			return err
+		}
+
+		os.cardinality = newCardinality
 	}
 
-	nextIndex := (os.index + 1) % nextCardinality
+	nextIndex := (os.index + 1) % os.cardinality
+
+	// Ensure the slot exists before writing
+	if _, ok := os.observations[nextIndex]; !ok {
+		os.observations[nextIndex] = &Observation{}
+	}
 
 	observation, err := os.transform(currentTime, tick, liquidity)
 	if err != nil {
@@ -122,20 +143,18 @@ func (os *ObservationState) write(
 	}
 
 	os.observations[nextIndex] = observation
-
 	os.index = nextIndex
-	os.cardinality = nextCardinality
 
 	return nil
 }
 
-func (os *ObservationState) lastObservation() *Observation {
+func (os *ObservationState) lastObservation() (*Observation, error) {
 	observation, ok := os.observations[os.index]
-	if !ok {
-		return nil
+	if !ok || observation == nil || !observation.initialized {
+		return nil, errNotInitializedObservation
 	}
 
-	return observation
+	return observation, nil
 }
 
 func (os *ObservationState) Index() uint16 {
@@ -146,8 +165,25 @@ func (os *ObservationState) Cardinality() uint16 {
 	return os.cardinality
 }
 
-func (os *ObservationState) Observations() map[uint16]*Observation {
-	return os.observations
+// ObservationAt returns the observation at a specific index
+// Returns error if the observation doesn't exist or is not initialized
+func (os *ObservationState) ObservationAt(index uint16) (*Observation, error) {
+	obs, ok := os.observations[index]
+	if !ok || obs == nil {
+		return nil, errNotInitializedObservation
+	}
+
+	// Check if the observation is properly initialized
+	if !obs.initialized {
+		return nil, errNotInitializedObservation
+	}
+
+	return obs, nil
+}
+
+// ObservationsCount returns the current cardinality
+func (os *ObservationState) ObservationsCount() uint16 {
+	return os.cardinality
 }
 
 type Observation struct {
@@ -189,7 +225,7 @@ func newObservationState(currentTime int64) *ObservationState {
 		observations:     make(map[uint16]*Observation),
 	}
 
-	// initialize first observation
+	// Initialize the first observation slot
 	state.observations[0] = &Observation{
 		blockTimestamp:                    currentTime,
 		tickCumulative:                    0,
@@ -212,9 +248,9 @@ func (os *ObservationState) observeSingle(
 ) (int64, *u256.Uint, error) {
 	if secondsAgo == 0 {
 		// if secondsAgo is 0, return current values
-		last, ok := os.observations[index]
-		if !ok {
-			return 0, nil, errNotInitializedObservation
+		last, err := os.ObservationAt(index)
+		if err != nil {
+			return 0, nil, err
 		}
 
 		if last.blockTimestamp != currentTime {
@@ -295,9 +331,9 @@ func (os *ObservationState) getSurroundingObservations(
 	liquidity *u256.Uint,
 	cardinality uint16,
 ) (*Observation, *Observation, error) {
-	beforeOrAt, ok := os.observations[index]
-	if !ok {
-		beforeOrAt = &Observation{}
+	beforeOrAt, err := os.ObservationAt(index)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	// if target is at or after the latest observation, may need to extrapolate
@@ -315,34 +351,31 @@ func (os *ObservationState) getSurroundingObservations(
 		return beforeOrAt, afterOrAt, nil
 	}
 
-	// binary search for the observation before target
-	beforeOrAt = os.observations[0]
-	if beforeOrAt == nil {
-		return nil, nil, errNotInitializedObservation
+	// Search for the observations before and after target
+	// Start with the first observation
+	beforeOrAt, err = os.ObservationAt(0)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	afterOrAt := os.observations[index]
-	if afterOrAt == nil {
-		afterOrAt = &Observation{}
-	}
+	// Initialize afterOrAt with the latest observation
+	afterOrAt := beforeOrAt // Default to same observation
 
 	// Handle single cardinality case
 	if cardinality == 1 {
-		// Only one observation exists
-		if !beforeOrAt.initialized {
-			return nil, nil, errNotInitializedObservation
-		}
-
 		return beforeOrAt, beforeOrAt, nil
 	}
 
-	i := uint16(1)
-
-	for i < cardinality && os.observations[i] != nil && os.observations[i].initialized {
-		obs := os.observations[i]
-		if obs == nil {
-			obs = &Observation{}
+	// Binary search through initialized observations
+	var lastInitialized *Observation
+	for i := uint16(1); i < cardinality; i++ {
+		obs, err := os.ObservationAt(i)
+		if err != nil {
+			// No more initialized observations
+			break
 		}
+
+		lastInitialized = obs
 
 		if obs.blockTimestamp <= target {
 			beforeOrAt = obs
@@ -350,8 +383,11 @@ func (os *ObservationState) getSurroundingObservations(
 			afterOrAt = obs
 			break
 		}
+	}
 
-		i++
+	// If we haven't found an afterOrAt yet, use the last initialized observation
+	if afterOrAt == beforeOrAt && lastInitialized != nil {
+		afterOrAt = lastInitialized
 	}
 
 	return beforeOrAt, afterOrAt, nil

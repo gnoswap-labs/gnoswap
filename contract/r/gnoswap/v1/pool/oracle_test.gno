@@ -95,10 +95,13 @@ func TestObservationState_Write(t *testing.T) {
 				return
 			}
 
+			lastObs, err := os.lastObservation()
+			uassert.NoError(t, err, "Last observation should succeed")
+
 			uassert.NoError(t, err, "Unexpected error")
 			uassert.Equal(t, tt.expectedIndex, os.index, "Index mismatch")
 			uassert.Equal(t, tt.expectedCardinality, os.cardinality, "Cardinality mismatch")
-			uassert.Equal(t, tt.expectedTickCumulative, os.lastObservation().tickCumulative, "Tick cumulative mismatch")
+			uassert.Equal(t, tt.expectedTickCumulative, lastObs.tickCumulative, "Tick cumulative mismatch")
 		})
 	}
 }
@@ -280,7 +283,8 @@ func TestObservationState_LiquidityAccumulation(t *testing.T) {
 				uassert.NoError(t, err, "Write should succeed")
 			}
 
-			lastObs := os.lastObservation()
+			lastObs, err := os.lastObservation()
+			uassert.NoError(t, err, "Last observation should succeed")
 			uassert.Equal(t, tt.expectedLiquidityCumulative, lastObs.liquidityCumulative.ToString(), "Liquidity cumulative mismatch")
 		})
 	}
