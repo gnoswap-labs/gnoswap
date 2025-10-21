@@ -44,10 +44,10 @@ func (lp *launchpadV1) CreateProject(
 	tier180Ratio int64,
 	startTime int64,
 ) string {
-	halt.AssertIsNotHaltedLaunchpadWithVersion(1)
+	halt.AssertIsNotHaltedLaunchpad()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	launchpadAddr := runtime.CurrentRealm().Address()
 	currentHeight := runtime.ChainHeight()
@@ -203,11 +203,11 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*Project, err
 
 // TransferLeftFromProjectByAdmin transfers the remaining rewards of a project to a specified recipient.
 // Only admin or governance can call this function. Returns the amount of rewards transferred.
-func (lp *launchpadV1) TransferLeftFromProjectByAdmin(projectID string, recipient address) int64 {
-	halt.AssertIsNotHaltedLaunchpadWithVersion(1)
+func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient address) int64 {
+	halt.AssertIsNotHaltedLaunchpad()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
