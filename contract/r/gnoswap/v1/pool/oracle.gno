@@ -322,7 +322,9 @@ func (os *ObservationState) observeSingle(
 	return tickCumulative, secondsPerLiquidity, nil
 }
 
-// getSurroundingObservations finds the observations before and after the target timestamp
+// getSurroundingObservations finds the observations immediately before and after the target timestamp.
+// It uses binary search over the logical time-ordered view of the circular buffer.
+// Logical order starts at (index+1) % cardinality (oldest) and ends at index (latest).
 func (os *ObservationState) getSurroundingObservations(
 	target int64,
 	currentTime int64,
@@ -331,63 +333,96 @@ func (os *ObservationState) getSurroundingObservations(
 	liquidity *u256.Uint,
 	cardinality uint16,
 ) (*Observation, *Observation, error) {
-	beforeOrAt, err := os.ObservationAt(index)
+	// Get the latest observation
+	latest, err := os.ObservationAt(index)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// if target is at or after the latest observation, may need to extrapolate
-	if target >= beforeOrAt.blockTimestamp {
-		if beforeOrAt.blockTimestamp == currentTime {
-			return beforeOrAt, beforeOrAt, nil
+	// If target is at or after the latest observation, extrapolate to current time
+	if target >= latest.blockTimestamp {
+		// If latest is already at current time, return it as both before and after
+		if latest.blockTimestamp == currentTime {
+			return latest, latest, nil
 		}
 
-		// create virtual observation for current time
+		// Create a virtual observation for current time
 		afterOrAt, err := os.transform(currentTime, tick, liquidity)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		return beforeOrAt, afterOrAt, nil
+		return latest, afterOrAt, nil
 	}
 
-	// Search for the observations before and after target
-	// Start with the first observation
-	beforeOrAt, err = os.ObservationAt(0)
+	// Handle single cardinality case
+	if cardinality == 1 {
+		return latest, latest, nil
+	}
+
+	// Binary search over the logical time-ordered circular buffer
+	// start points to the oldest observation: (index + 1) % cardinality
+	start := (index + 1) % cardinality
+
+	// Helper function to access observations in logical order
+	at := func(k uint16) (*Observation, error) {
+		physicalIdx := (start + k) % cardinality
+		return os.ObservationAt(physicalIdx)
+	}
+
+	// Binary search range: [0, cardinality-1] in logical ordering
+	lo, hi := uint16(0), cardinality-1
+
+	for lo < hi {
+		mid := lo + (hi-lo)/2
+		obs, err := at(mid)
+		if err != nil {
+			// Uninitialized observation: assume initialized observations are at the beginning
+			if mid == 0 {
+				break
+			}
+			hi = mid - 1
+			continue
+		}
+
+		if obs.blockTimestamp <= target {
+			// Target is at or after mid, search in upper half
+			lo = mid + 1
+		} else {
+			// Target is before mid, search in lower half
+			hi = mid
+		}
+	}
+
+	var beforeIdx uint16
+
+	// Calculate before index
+	if lo == 0 {
+		beforeIdx = 0
+	} else {
+		beforeIdx = lo - 1
+	}
+
+	// Get the observation before or at target
+	beforeOrAt, err := at(beforeIdx)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// Initialize afterOrAt with the latest observation
-	afterOrAt := beforeOrAt // Default to same observation
+	// Get the observation after target
+	afterIndex := lo % cardinality
 
-	// Handle single cardinality case
-	if cardinality == 1 {
-		return beforeOrAt, beforeOrAt, nil
+	afterOrAt, err := at(afterIndex)
+	if err != nil {
+		// If after observation is not initialized, use the latest observation
+		afterOrAt = latest
 	}
 
-	// Binary search through initialized observations
-	var lastInitialized *Observation
-	for i := uint16(1); i < cardinality; i++ {
-		obs, err := os.ObservationAt(i)
-		if err != nil {
-			// No more initialized observations
-			break
-		}
-
-		lastInitialized = obs
-
-		if obs.blockTimestamp <= target {
-			beforeOrAt = obs
-		} else {
-			afterOrAt = obs
-			break
-		}
-	}
-
-	// If we haven't found an afterOrAt yet, use the last initialized observation
-	if afterOrAt == beforeOrAt && lastInitialized != nil {
-		afterOrAt = lastInitialized
+	// Boundary correction: ensure beforeOrAt is actually before or at target
+	if beforeOrAt.blockTimestamp > target {
+		// This shouldn't happen in normal cases, but handle it defensively
+		// If the first observation is after target, use it for both
+		afterOrAt = beforeOrAt
 	}
 
 	return beforeOrAt, afterOrAt, nil
