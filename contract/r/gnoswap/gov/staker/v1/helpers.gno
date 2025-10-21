@@ -5,7 +5,7 @@ import (
 	"chain/banker"
 	"time"
 
-	"gno.land/p/gno/avl"
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoland/wugnot"

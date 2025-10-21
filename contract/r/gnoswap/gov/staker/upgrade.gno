@@ -2,65 +2,50 @@ package staker
 
 import (
 	"errors"
-	"std"
+	"chain/runtime"
 
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/gns"
 )
 
 // RegisterInitializer registers an implementation
 // This function is called by each implementation version during init
-func RegisterInitializer(packagePath string, initializer func() IGovStaker) {
-	// Register with version manager
-	registered := vm.RegisterInitializer(packagePath, func() interface{} {
-		return initializer()
-	})
-
-	// If this is the first registration, set it as active implementation
-	if registered && instance == nil {
-		impl, ok := vm.GetCurrentImplementation().(IGovStaker)
-		if ok {
-			setImplementation(impl)
+func RegisterInitializer(cur realm, initializer func(govStakerStore IGovStakerStore) IGovStaker) {
+	initializerFunc := func(domainStore any) any {
+		currentGovStakerStore, ok := domainStore.(IGovStakerStore)
+		if !ok {
+			panic("domainStore is not an IGovStakerStore")
 		}
+
+		return initializer(currentGovStakerStore)
+	}
+
+	err := versionManager.RegisterInitializer(initializerFunc)
+	if err != nil {
+		panic(err)
+	}
+
+	err = updateImplementation()
+	if err != nil {
+		panic(err)
 	}
 }
 
 // UpgradeImpl upgrades the implementation to a new version
 // Only admin can call this function
-func UpgradeImpl(packagePath string) error {
+func UpgradeImpl(packagePath string) {
 	// Check admin permission
-	caller := std.PrevRealm().Addr()
-	if err := common.AddrAssertForAdmin(caller); err != nil {
-		return err
-	}
+	caller := runtime.PreviousRealm().Address()
+	access.AssertIsAdmin(caller)
 
-	// Validate package path
-	if packagePath == "" {
-		return errors.New("package path cannot be empty")
-	}
-
-	// Upgrade through version manager
-	err := vm.Upgrade(packagePath)
+	err := versionManager.ChangeImplementation(packagePath)
 	if err != nil {
-		return err
+		panic(err)
 	}
 
-	// Update active implementation
-	impl, ok := vm.GetCurrentImplementation().(IGovStaker)
-	if !ok {
-		return errors.New("failed to cast implementation to IGovStaker")
+	err = updateImplementation()
+	if err != nil {
+		panic(err)
 	}
-
-	setImplementation(impl)
-	return nil
-}
-
-// GetImplementationPath returns the current implementation package path
-func GetImplementationPath() string {
-	return vm.GetCurrentPackagePath()
-}
-
-// GetRegisteredImplementations returns all registered implementation paths
-func GetRegisteredImplementations() []string {
-	return vm.GetRegisteredPackages()
 }

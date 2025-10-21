@@ -1,7 +1,7 @@
 package staker
 
 import (
-	"gno.land/p/gno/ufmt"
+	"gno.land/p/nt/ufmt"
 	"gno.land/p/gnoswap/store"
 )
 

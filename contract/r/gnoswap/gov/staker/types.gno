@@ -3,7 +3,7 @@ package staker
 import (
 	"time"
 
-	"gno.land/p/gno/avl"
+	"gno.land/p/nt/avl"
 	"gno.land/p/gnoswap/uint256"
 )
 

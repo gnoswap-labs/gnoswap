@@ -1,11 +1,11 @@
 package v1
 
 import (
-	"gno.land/p/gno/avl"
-	"gno.land/p/gno/ufmt"
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/ufmt"
 
-	"gno.land/r/gnoswap/v1/emission"
-	pf "gno.land/r/gnoswap/v1/protocol_fee"
+	"gno.land/r/gnoswap/emission"
+	pf "gno.land/r/gnoswap/protocol_fee"
 	"gno.land/r/gnoswap/gov/staker"
 )
 

@@ -1,12 +1,8 @@
 package staker
 
-import (
-	"std"
-)
-
 // Delegation operations
 
-func Delegate(to std.Address, amount int64, referrer string) int64 {
+func Delegate(to address, amount int64, referrer string) int64 {
 	impl := getImplementation()
 	if impl == nil {
 		panic("gov/staker: implementation not initialized")
@@ -14,7 +10,7 @@ func Delegate(to std.Address, amount int64, referrer string) int64 {
 	return impl.Delegate(to.String(), amount, referrer)
 }
 
-func Undelegate(from std.Address, amount int64) int64 {
+func Undelegate(from address, amount int64) int64 {
 	impl := getImplementation()
 	if impl == nil {
 		panic("gov/staker: implementation not initialized")
@@ -22,7 +18,7 @@ func Undelegate(from std.Address, amount int64) int64 {
 	return impl.Undelegate(from.String(), amount)
 }
 
-func Redelegate(delegatee, newDelegatee std.Address, amount int64) int64 {
+func Redelegate(delegatee, newDelegatee address, amount int64) int64 {
 	impl := getImplementation()
 	if impl == nil {
 		panic("gov/staker: implementation not initialized")
@@ -48,7 +44,7 @@ func CollectReward() {
 	impl.CollectReward()
 }
 
-func CollectRewardFromLaunchPad(to std.Address) {
+func CollectRewardFromLaunchPad(to address) {
 	impl := getImplementation()
 	if impl == nil {
 		panic("gov/staker: implementation not initialized")
@@ -56,7 +52,7 @@ func CollectRewardFromLaunchPad(to std.Address) {
 	impl.CollectRewardFromLaunchPad(to.String())
 }
 
-func SetAmountByProjectWallet(addr std.Address, amount int64, add bool) {
+func SetAmountByProjectWallet(addr address, amount int64, add bool) {
 	impl := getImplementation()
 	if impl == nil {
 		panic("gov/staker: implementation not initialized")
@@ -114,7 +110,7 @@ func GetDelegationSnapshots(snapshotTime int64) (DelegationSnapshot, bool) {
 	return impl.GetDelegationSnapshots(snapshotTime)
 }
 
-func GetClaimableRewardByAddress(addr std.Address) string {
+func GetClaimableRewardByAddress(addr address) string {
 	impl := getImplementation()
 	if impl == nil {
 		panic("gov/staker: implementation not initialized")
@@ -122,7 +118,7 @@ func GetClaimableRewardByAddress(addr std.Address) string {
 	return impl.GetClaimableRewardByAddress(addr.String())
 }
 
-func GetClaimableRewardByLaunchpad(addr std.Address) string {
+func GetClaimableRewardByLaunchpad(addr address) string {
 	impl := getImplementation()
 	if impl == nil {
 		panic("gov/staker: implementation not initialized")
