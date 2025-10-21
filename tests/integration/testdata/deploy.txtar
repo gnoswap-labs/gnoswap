@@ -76,7 +76,7 @@ gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/pool -pkgpath gno.land/r/g
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/position -pkgpath gno.land/r/gnoswap/v1/position -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy router
-gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/router -pkgpath gno.land/r/gnoswap/v1/router -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/router -pkgpath gno.land/r/gnoswap/router -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy staker
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/staker -pkgpath gno.land/r/gnoswap/v1/staker -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1

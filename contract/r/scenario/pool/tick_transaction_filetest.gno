@@ -148,7 +148,7 @@ func main() {
 	println("[SCENARIO] 4. Executing swap to move tick")
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	pool.Swap(
 		cross,
 		barPath,

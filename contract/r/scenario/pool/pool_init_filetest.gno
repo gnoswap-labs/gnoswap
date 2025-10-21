@@ -160,7 +160,7 @@ func main() {
 	println("[INFO] Now liquidity:", nowLiq)
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	println("[INFO] Executing swap to move tick")
 	pool.Swap(
 		cross,
@@ -204,7 +204,7 @@ func main() {
 	println("[INFO] Now liquidity:", nowLiq)
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	println("[INFO] Executing swap to move tick")
 	pool.Swap(
 		cross,

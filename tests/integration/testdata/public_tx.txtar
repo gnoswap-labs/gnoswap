@@ -82,7 +82,7 @@ gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/pool -pkgpath gno.land/r/g
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/position -pkgpath gno.land/r/gnoswap/v1/position -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy router
-gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/router -pkgpath gno.land/r/gnoswap/v1/router -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/router -pkgpath gno.land/r/gnoswap/router -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy staker
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/staker -pkgpath gno.land/r/gnoswap/v1/staker -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
@@ -220,24 +220,24 @@ stderr 'invalid liquidity'
 
 # swap exact in 
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g148tjamj80yyrm309z7rk690an22thd2l3z8ank -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
-gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1lm2l7tf49h3mykesct7rhfml30yx8dw5xrval7 -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/router -func ExactInSwapRoute -args "gno.land/r/gnoswap/gns" -args "gno.land/r/gnoland/wugnot" -args 50000 -args "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000" -args "100" -args "0" -args 9999999999 -args "" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactInSwapRoute -args "gno.land/r/gnoswap/gns" -args "gno.land/r/gnoland/wugnot" -args 50000 -args "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000" -args "100" -args "0" -args 9999999999 -args "" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 
 # swap exact out
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g148tjamj80yyrm309z7rk690an22thd2l3z8ank -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
-gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1lm2l7tf49h3mykesct7rhfml30yx8dw5xrval7 -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/router -func ExactOutSwapRoute -args "gno.land/r/gnoswap/gns" -args "gno.land/r/gnoland/wugnot" -args 50000 -args "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000" -args "100" -args "60000" -args 9999999999 -args "" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactOutSwapRoute -args "gno.land/r/gnoswap/gns" -args "gno.land/r/gnoland/wugnot" -args 50000 -args "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000" -args "100" -args "60000" -args 9999999999 -args "" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 
 
 # swap with wrong parameters should panic
 ## not registered token
-! gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/router -func ExactInSwapRoute -args "gno.land/r/gnoswap/v1/nope" -args "gno.land/r/gnoland/wugnot" -args 50000 -args "gno.land/r/gnoswap/v1/nope:gno.land/r/gnoland/wugnot:3000" -args "100" -args "0" -args 9999999999 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactInSwapRoute -args "gno.land/r/gnoswap/v1/nope" -args "gno.land/r/gnoland/wugnot" -args 50000 -args "gno.land/r/gnoswap/v1/nope:gno.land/r/gnoland/wugnot:3000" -args "100" -args "0" -args 9999999999 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stderr 'token is not registered'
 ## route not found
-! gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/router -func ExactOutSwapRoute -args "gno.land/r/gnoswap/gns" -args "gno.land/r/gnoland/wugnot" -args 50000 -args "" -args "100" -args "60000" -args 9999999999 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactOutSwapRoute -args "gno.land/r/gnoswap/gns" -args "gno.land/r/gnoland/wugnot" -args 50000 -args "" -args "100" -args "60000" -args 9999999999 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stderr 'invalid pool path'
 ## quote sum not 100
-! gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/router -func ExactOutSwapRoute -args "gno.land/r/gnoswap/gns" -args "gno.land/r/gnoland/wugnot" -args 50000 -args "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000" -args "95" -args "60000" -args 9999999999 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactOutSwapRoute -args "gno.land/r/gnoswap/gns" -args "gno.land/r/gnoland/wugnot" -args 50000 -args "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000" -args "95" -args "60000" -args 9999999999 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stderr 'quote sum'
 
 
@@ -247,13 +247,13 @@ stdout '("300" string)'
 
 
 # swap fee getter & setter
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/router -func GetSwapFee -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func GetSwapFee -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stdout 15
 
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/router -func SetSwapFeeByAdmin -args 0 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func SetSwapFeeByAdmin -args 0 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stdout OK
 
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/router -func GetSwapFee -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func GetSwapFee -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stdout 0
 
 # stake position

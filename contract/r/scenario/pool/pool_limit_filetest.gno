@@ -93,7 +93,7 @@ func main() {
 	println("[SCENARIO] 2. Mint Position (Limit selling 0 for 1 at tick 0 thru 120)")
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	swap0, swap1 := pool.Swap(
 		cross,
 		barPath,

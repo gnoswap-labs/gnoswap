@@ -108,7 +108,7 @@ func main() {
 	println("[INFO] Minted position:", mint0, mint1)
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	// SWAP 1 -> 0
 	swap0, swap1 := pool.Swap(
 		cross,
