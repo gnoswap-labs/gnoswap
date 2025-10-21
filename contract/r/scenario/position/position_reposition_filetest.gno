@@ -145,7 +145,7 @@ func executeSwap() {
 	println("[DEBUG] Tick before swap:", p.Slot0Tick())
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing swap to change price")
 	amount0, amount1 := pool.Swap(
 		cross,
@@ -226,7 +226,7 @@ func executeSwapInNewRange() {
 	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing swap in new range")
 	amount0, amount1 := pool.Swap(
 		cross,

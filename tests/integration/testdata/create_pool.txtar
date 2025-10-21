@@ -29,7 +29,7 @@ loadpkg gno.land/r/gnoswap/v1/community_pool
 loadpkg gno.land/r/gnoswap/v1/protocol_fee
 loadpkg gno.land/r/gnoswap/v1/pool
 loadpkg gno.land/r/gnoswap/v1/position
-loadpkg gno.land/r/gnoswap/v1/router
+loadpkg gno.land/r/gnoswap/router
 loadpkg gno.land/r/gnoswap/v1/staker
 loadpkg gno.land/r/gnoswap/v1/gov/xgns
 loadpkg gno.land/r/gnoswap/v1/gov/staker

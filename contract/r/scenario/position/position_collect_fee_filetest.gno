@@ -143,7 +143,7 @@ func executeMultipleSwaps() {
 	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing first swap BAR -> FOO")
 	amount0, amount1 := pool.Swap(
 		cross,
@@ -210,7 +210,7 @@ func executeMoreSwaps() {
 	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing additional swap BAR -> FOO")
 	amount0, amount1 := pool.Swap(
 		cross,

@@ -169,7 +169,7 @@ func TestSwapFooBarFooToBar() {
 	bar.Approve(cross, poolAddr, 16000)
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	poolIn, poolOut := pool.Swap(
 		cross,
 		barPath,
@@ -213,7 +213,7 @@ func TestSwapBarBazBarToBaz() {
 	bar.Approve(cross, poolAddr, 16000)
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	poolIn, poolOut := pool.Swap(
 		cross,
 		barPath,

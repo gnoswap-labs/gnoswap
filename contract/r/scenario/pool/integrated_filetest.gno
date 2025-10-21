@@ -185,7 +185,7 @@ func testPoolSwapping(t *testing.T) {
 	println("[INFO] Performing Bar to Foo swap")
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	swapIn, swapOut := pool.Swap(
 		cross,
 		barPath,
@@ -299,7 +299,7 @@ func testPoolMultiToken(t *testing.T) {
 	bar.Approve(cross, poolAddr, 16000)
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	swapIn, swapOut := pool.Swap(
 		cross,
 		barPath,

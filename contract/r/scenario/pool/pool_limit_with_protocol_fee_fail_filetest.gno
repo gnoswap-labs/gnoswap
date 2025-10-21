@@ -111,7 +111,7 @@ func main() {
 	println("[SCENARIO] 2. Swapping 0 -> 1")
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	swap0, swap1 := pool.Swap(
 		cross,
 		barPath,

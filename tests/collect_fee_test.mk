@@ -3,7 +3,7 @@ include _info.mk
 # Paths for contracts
 GNS_PATH := gno.land/r/gnoswap/gns
 WUGNOT_PATH := gno.land/r/demo/wugnot
-ROUTER_PATH := gno.land/r/gnoswap/v1/router
+ROUTER_PATH := gno.land/r/gnoswap/router
 POSITION_PATH := gno.land/r/gnoswap/v1/position
 POOL_PATH := gno.land/r/gnoswap/v1/pool
 PROTOCOL_FEE_PATH := gno.land/r/gnoswap/protocol_fee

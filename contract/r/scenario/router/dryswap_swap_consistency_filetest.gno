@@ -11,9 +11,9 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/router"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
-	"gno.land/r/gnoswap/v1/router"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -37,7 +37,7 @@ var (
 	adminRealm    = testing.NewUserRealm(adminAddr)
 	poolAddr, _   = access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
-	routerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/v1/router")
+	routerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/router")
 
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)

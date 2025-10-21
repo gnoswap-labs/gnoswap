@@ -4,7 +4,7 @@ ADDR_WUGNOT := g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum
 # based on v1
 ADDR_POOL := g148tjamj80yyrm309z7rk690an22thd2l3z8ank
 ADDR_POSITION := g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5
-ADDR_ROUTER := g1lm2l7tf49h3mykesct7rhfml30yx8dw5xrval7
+ADDR_ROUTER := g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp
 ADDR_STAKER := g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu
 ADDR_PROTOCOL_FEE := g1r340tuven27z8wq50u8d20eqrsj470082682tp
 ADDR_GOV_STAKER := g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa

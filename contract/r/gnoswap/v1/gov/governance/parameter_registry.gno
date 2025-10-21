@@ -10,8 +10,8 @@ import (
 	"gno.land/r/gnoswap/rbac"
 
 	pf "gno.land/r/gnoswap/protocol_fee"
+	rr "gno.land/r/gnoswap/router"
 	pl "gno.land/r/gnoswap/v1/pool"
-	rr "gno.land/r/gnoswap/v1/router"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	"gno.land/r/gnoswap/halt"
@@ -26,7 +26,7 @@ const (
 	EMISSION_PATH       = "gno.land/r/gnoswap/emission"
 	COMMON_PATH         = "gno.land/r/gnoswap/common"
 	POOL_PATH           = "gno.land/r/gnoswap/v1/pool"
-	ROUTER_PATH         = "gno.land/r/gnoswap/v1/router"
+	ROUTER_PATH         = "gno.land/r/gnoswap/router"
 	STAKER_PATH         = "gno.land/r/gnoswap/v1/staker"
 	PROTOCOL_FEE_PATH   = "gno.land/r/gnoswap/protocol_fee"
 	COMMUNITY_POOL_PATH = "gno.land/r/gnoswap/community_pool"
