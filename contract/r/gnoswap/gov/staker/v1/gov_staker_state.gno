@@ -1,7 +1,7 @@
 package v1
 
 import (
-	"gno.land/p/gno/avl"
+	"gno.land/p/nt/avl"
 	"gno.land/r/gnoswap/gov/staker"
 )
 
