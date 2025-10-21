@@ -430,75 +430,75 @@ func TestMakeLaunchpadRewardID(t *testing.T) {
 }
 
 // Test launchpad stake operations
-// func TestLaunchpadStakeOperations(t *testing.T) {
-// 	tests := []struct {
-// 		name          string
-// 		address       string
-// 		amount        int64
-// 		currentHeight int64
-// 	}{
-// 		{
-// 			name:          "Add stake from launchpad",
-// 			address:       "g1projectowner1234567890abcdefghijklm",
-// 			amount:        2000,
-// 			currentHeight: 100,
-// 		},
-// 	}
+func TestLaunchpadStakeOperations(t *testing.T) {
+	tests := []struct {
+		name          string
+		address       string
+		amount        int64
+		currentHeight int64
+	}{
+		{
+			name:          "Add stake from launchpad",
+			address:       "g1projectowner1234567890abcdefghijklm",
+			amount:        2000,
+			currentHeight: 100,
+		},
+	}
 
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			// When: Add stake from launchpad
-// 			addStakeFromLaunchpad(tt.address, tt.amount, tt.currentHeight)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// When: Add stake from launchpad
+			addStakeFromLaunchpad(tt.address, tt.amount, tt.currentHeight)
 
-// 			// Then: Should create deposit record
-// 			launchpadRewardID := makeLaunchpadRewardID(tt.address)
-// 			deposit, exists := getLaunchpadProjectDeposit(launchpadRewardID)
-// 			uassert.True(t, exists)
-// 			uassert.Equal(t, deposit, tt.amount)
+			// Then: Should create deposit record
+			launchpadRewardID := makeLaunchpadRewardID(tt.address)
+			deposit, exists := getLaunchpadProjectDeposit(launchpadRewardID)
+			uassert.True(t, exists)
+			uassert.Equal(t, deposit, tt.amount)
 
-// 			// When: Remove stake from launchpad
-// 			removeStakeFromLaunchpad(tt.address, tt.amount, tt.currentHeight)
+			// When: Remove stake from launchpad
+			removeStakeFromLaunchpad(tt.address, tt.amount, tt.currentHeight)
 
-// 			// Then:
-// 			launchpadDepositAmount, _ := getLaunchpadProjectDeposit(launchpadRewardID)
-// 			uassert.Equal(t, launchpadDepositAmount, int64(0))
-// 		})
-// 	}
-// }
+			// Then:
+			launchpadDepositAmount, _ := getLaunchpadProjectDeposit(launchpadRewardID)
+			uassert.Equal(t, launchpadDepositAmount, int64(0))
+		})
+	}
+}
 
-// // Test partial launchpad stake removal
-// func TestPartialLaunchpadStakeRemoval(t *testing.T) {
-// 	tests := []struct {
-// 		name              string
-// 		address           string
-// 		initialAmount     int64
-// 		removeAmount      int64
-// 		expectedRemaining int64
-// 		currentHeight     int64
-// 	}{
-// 		{
-// 			name:              "Partial removal leaves remaining deposit",
-// 			address:           "g1projectowner5555555555abcdefghijklm",
-// 			initialAmount:     3000,
-// 			removeAmount:      1000,
-// 			expectedRemaining: 2000,
-// 			currentHeight:     100,
-// 		},
-// 	}
+// Test partial launchpad stake removal
+func TestPartialLaunchpadStakeRemoval(t *testing.T) {
+	tests := []struct {
+		name              string
+		address           string
+		initialAmount     int64
+		removeAmount      int64
+		expectedRemaining int64
+		currentHeight     int64
+	}{
+		{
+			name:              "Partial removal leaves remaining deposit",
+			address:           "g1projectowner5555555555abcdefghijklm",
+			initialAmount:     3000,
+			removeAmount:      1000,
+			expectedRemaining: 2000,
+			currentHeight:     100,
+		},
+	}
 
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			// Given: Initial stake
-// 			addStakeFromLaunchpad(tt.address, tt.initialAmount, tt.currentHeight)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given: Initial stake
+			addStakeFromLaunchpad(tt.address, tt.initialAmount, tt.currentHeight)
 
-// 			// When: Remove partial stake
-// 			removeStakeFromLaunchpad(tt.address, tt.removeAmount, tt.currentHeight)
+			// When: Remove partial stake
+			removeStakeFromLaunchpad(tt.address, tt.removeAmount, tt.currentHeight)
 
-// 			// Then: Should have remaining deposit
-// 			launchpadRewardID := makeLaunchpadRewardID(tt.address)
-// 			deposit, exists := getLaunchpadProjectDeposit(launchpadRewardID)
-// 			uassert.True(t, exists)
-// 			uassert.Equal(t, deposit, tt.expectedRemaining)
-// 		})
-// 	}
-// }
+			// Then: Should have remaining deposit
+			launchpadRewardID := makeLaunchpadRewardID(tt.address)
+			deposit, exists := getLaunchpadProjectDeposit(launchpadRewardID)
+			uassert.True(t, exists)
+			uassert.Equal(t, deposit, tt.expectedRemaining)
+		})
+	}
+}

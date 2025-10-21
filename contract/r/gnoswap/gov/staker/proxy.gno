@@ -2,104 +2,56 @@ package staker
 
 // Delegation operations
 
-func Delegate(to address, amount int64, referrer string) int64 {
-	impl := getImplementation()
-	if impl == nil {
-		panic("gov/staker: implementation not initialized")
-	}
-	return impl.Delegate(to, amount, referrer)
+func Delegate(cur realm, to address, amount int64, referrer string) int64 {
+	return getImplementation().Delegate(to, amount, referrer)
 }
 
-func Undelegate(from address, amount int64) int64 {
-	impl := getImplementation()
-	if impl == nil {
-		panic("gov/staker: implementation not initialized")
-	}
-	return impl.Undelegate(from, amount)
+func Undelegate(cur realm, from address, amount int64) int64 {
+	return getImplementation().Undelegate(from, amount)
 }
 
-func Redelegate(delegatee, newDelegatee address, amount int64) int64 {
-	impl := getImplementation()
-	if impl == nil {
-		panic("gov/staker: implementation not initialized")
-	}
-	return impl.Redelegate(delegatee, newDelegatee, amount)
+func Redelegate(cur realm, delegatee, newDelegatee address, amount int64) int64 {
+	return getImplementation().Redelegate(delegatee, newDelegatee, amount)
 }
 
-func CollectUndelegatedGns() int64 {
-	impl := getImplementation()
-	if impl == nil {
-		panic("gov/staker: implementation not initialized")
-	}
-	return impl.CollectUndelegatedGns()
+func CollectUndelegatedGns(cur realm) int64 {
+	return getImplementation().CollectUndelegatedGns()
 }
 
 // Reward operations
 
-func CollectReward() {
-	impl := getImplementation()
-	if impl == nil {
-		panic("gov/staker: implementation not initialized")
-	}
-	impl.CollectReward()
+func CollectReward(cur realm) {
+	getImplementation().CollectReward()
 }
 
-func CollectRewardFromLaunchPad(to address) {
-	impl := getImplementation()
-	if impl == nil {
-		panic("gov/staker: implementation not initialized")
-	}
-	impl.CollectRewardFromLaunchPad(to)
+func CollectRewardFromLaunchPad(cur realm, to address) {
+	getImplementation().CollectRewardFromLaunchPad(to)
 }
 
-func SetAmountByProjectWallet(addr address, amount int64, add bool) {
-	impl := getImplementation()
-	if impl == nil {
-		panic("gov/staker: implementation not initialized")
-	}
-	impl.SetAmountByProjectWallet(addr, amount, add)
+func SetAmountByProjectWallet(cur realm, addr address, amount int64, add bool) {
+	getImplementation().SetAmountByProjectWallet(addr, amount, add)
 }
 
 // Getter functions
 
 func GetTotalxGnsSupply() int64 {
-	impl := getImplementation()
-	if impl == nil {
-		panic("gov/staker: implementation not initialized")
-	}
-	return impl.GetTotalxGnsSupply()
+	return getImplementation().GetTotalxGnsSupply()
 }
 
 func GetTotalVoteWeight() int64 {
-	impl := getImplementation()
-	if impl == nil {
-		panic("gov/staker: implementation not initialized")
-	}
-	return impl.GetTotalVoteWeight()
+	return getImplementation().GetTotalVoteWeight()
 }
 
 func GetTotalDelegated() int64 {
-	impl := getImplementation()
-	if impl == nil {
-		panic("gov/staker: implementation not initialized")
-	}
-	return impl.GetTotalDelegated()
+	return getImplementation().GetTotalDelegated()
 }
 
 func GetTotalLockedAmount() int64 {
-	impl := getImplementation()
-	if impl == nil {
-		panic("gov/staker: implementation not initialized")
-	}
-	return impl.GetTotalLockedAmount()
+	return getImplementation().GetTotalLockedAmount()
 }
 
 func GetLockedAmount() int64 {
-	impl := getImplementation()
-	if impl == nil {
-		panic("gov/staker: implementation not initialized")
-	}
-	return impl.GetLockedAmount()
+	return getImplementation().GetLockedAmount()
 }
 
 // func GetDelegationSnapshots(snapshotTime int64) (DelegationSnapshot, bool) {
@@ -111,43 +63,23 @@ func GetLockedAmount() int64 {
 // }
 
 func GetClaimableRewardByAddress(addr address) string {
-	impl := getImplementation()
-	if impl == nil {
-		panic("gov/staker: implementation not initialized")
-	}
-	return impl.GetClaimableRewardByAddress(addr)
+	return getImplementation().GetClaimableRewardByAddress(addr)
 }
 
 func GetClaimableRewardByLaunchpad(addr address) string {
-	impl := getImplementation()
-	if impl == nil {
-		panic("gov/staker: implementation not initialized")
-	}
-	return impl.GetClaimableRewardByLaunchpad(addr)
+	return getImplementation().GetClaimableRewardByLaunchpad(addr)
 }
 
 func GetClaimableRewardByRewardID(rewardID string) string {
-	impl := getImplementation()
-	if impl == nil {
-		panic("gov/staker: implementation not initialized")
-	}
-	return impl.GetClaimableRewardByRewardID(rewardID)
+	return getImplementation().GetClaimableRewardByRewardID(rewardID)
 }
 
 // Admin functions
 
-func CleanStakerDelegationSnapshotByAdmin(threshold int64) {
-	impl := getImplementation()
-	if impl == nil {
-		panic("gov/staker: implementation not initialized")
-	}
-	impl.CleanStakerDelegationSnapshotByAdmin(threshold)
+func CleanStakerDelegationSnapshotByAdmin(cur realm, threshold int64) {
+	getImplementation().CleanStakerDelegationSnapshotByAdmin(threshold)
 }
 
-func SetUnDelegationLockupPeriodByAdmin(period int64) {
-	impl := getImplementation()
-	if impl == nil {
-		panic("gov/staker: implementation not initialized")
-	}
-	impl.SetUnDelegationLockupPeriodByAdmin(period)
+func SetUnDelegationLockupPeriodByAdmin(cur realm, period int64) {
+	getImplementation().SetUnDelegationLockupPeriodByAdmin(period)
 }
