@@ -27,7 +27,8 @@ import (
 )
 
 var (
-	adminAddr, _     = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminAddr        = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	govStakerAddr    = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
 	dummyAddr        = testutils.TestAddress("dummy")
 	user01           = testutils.TestAddress("user01")
 	currentBlockTime = int64(2)
@@ -79,7 +80,6 @@ func delegateGnsToDummy() {
 	delegatedAmount := int64(2_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	govStakerAddr := address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
 	gns.Approve(cross, govStakerAddr, delegatedAmount)
 	gs.Delegate(cross, dummyAddr, int64(delegatedAmount), "")
 	ufmt.Printf("[INFO] gns delegated to dummy %s (amount: %d)\n", dummyAddr.String(), delegatedAmount)
