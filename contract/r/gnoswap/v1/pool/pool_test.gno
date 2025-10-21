@@ -929,7 +929,7 @@ func simulateSwapActivity(t *testing.T, pool *Pool) {
 	}
 
 	// Create fees through swap execution
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	approveTokenForRouter(t, pool.token0Path)
 
 	Swap(cross, pool.token0Path, pool.token1Path, pool.fee,

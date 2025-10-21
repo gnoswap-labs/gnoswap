@@ -10,7 +10,7 @@ import (
 
 func TestKeeper_Register(t *testing.T) {
 	var (
-		routerRealm = testing.NewCodeRealm("gno.land/r/gnoswap/v1/router")
+		routerRealm = testing.NewCodeRealm("gno.land/r/gnoswap/router")
 		userRealm   = testing.NewCodeRealm("gno.land/r/demo/users")
 	)
 
@@ -107,7 +107,7 @@ func TestKeeper_Has(t *testing.T) {
 			cleanupKeeper()
 
 			// given
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 
 			if tc.setupReferral {
 				TryRegister(cross, tc.addr, tc.refAddr.String())
@@ -161,7 +161,7 @@ func TestKeeper_Get(t *testing.T) {
 			cleanupKeeper()
 
 			// given
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 
 			if tc.setupReferral {
 				TryRegister(cross, tc.addr, tc.refAddr.String())
@@ -221,7 +221,7 @@ func TestKeeper_IsEmpty(t *testing.T) {
 			cleanupKeeper()
 
 			// given
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 
 			for _, ref := range tc.setupReferrals {
 				TryRegister(cross, ref.addr, ref.refAddr.String())
