@@ -173,11 +173,6 @@ func (os *ObservationState) ObservationAt(index uint16) (*Observation, error) {
 	return obs, nil
 }
 
-// ObservationsCount returns the current cardinality
-func (os *ObservationState) ObservationsCount() uint16 {
-	return os.cardinality
-}
-
 type Observation struct {
 	blockTimestamp                    int64      // timestamp of the observation
 	tickCumulative                    int64      // cumulative tick up to this timestamp
