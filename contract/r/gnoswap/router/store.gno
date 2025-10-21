@@ -15,10 +15,6 @@ const (
 	StoreKeySwapFee StoreKey = "swapFee" // Swap fee in basis points
 )
 
-const (
-	defaultSwapFeeBPS = uint64(15) // 0.15%
-)
-
 type routerStore struct {
 	kvStore store.KVStore
 }
