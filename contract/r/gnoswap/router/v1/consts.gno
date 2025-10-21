@@ -1,9 +1,7 @@
 package v1
 
 import (
-	prabc "gno.land/p/gnoswap/rbac"
-
-	"gno.land/r/gnoswap/access"
+	"chain"
 )
 
 const (
@@ -14,8 +12,8 @@ const (
 )
 
 var (
-	poolAddr        = access.MustGetAddressWithVersion(prabc.ROLE_POOL.String(), 1)
-	routerAddr      = access.MustGetAddressWithVersion(prabc.ROLE_ROUTER.String(), 1)
-	positionAddr    = access.MustGetAddressWithVersion(prabc.ROLE_POSITION.String(), 1)
-	protocolFeeAddr = access.MustGetAddressWithVersion(prabc.ROLE_PROTOCOL_FEE.String(), 1)
+	poolAddr        = chain.PackageAddress("gno.land/r/gnoswap/v1/pool")
+	routerAddr      = chain.PackageAddress("gno.land/r/gnoswap/router")
+	positionAddr    = chain.PackageAddress("gno.land/r/gnoswap/v1/position")
+	protocolFeeAddr = chain.PackageAddress("gno.land/r/gnoswap/protocol_fee")
 )

@@ -73,6 +73,65 @@ func (r *routerV1) ExactInSwapRoute(
 	return r.exactInSwapRoute(params, referrer)
 }
 
+// ExactInSingleSwapRoute swaps an exact amount of input tokens for output tokens through a single route.
+//
+// Executes single-hop swaps through a single specified route.
+// Allows price limit control via sqrtPriceLimitX96 parameter.
+// Applies slippage protection via minimum output amount.
+//
+// Parameters:
+//   - inputToken, outputToken: Token contract paths
+//   - amountIn: Exact input amount to swap
+//   - routeArr: Single swap route (just 1 hop)
+//   - amountOutMin: Minimum acceptable output (slippage protection)
+//   - sqrtPriceLimitX96: Price limit for swap execution (0 for no limit)
+//   - deadline: Unix timestamp for expiration
+//   - referrer: Optional referral address
+//
+// Route format:
+//   - Single-hop: "INPUT_TOKEN:OUTPUT_TOKEN:FEE"
+//
+// Returns:
+//   - amountIn: Actual input consumed
+//   - amountOut: Actual output received
+//
+// Reverts the transaction if the output amount is less than amountOutMin,
+// the deadline has passed, or the price limit is exceeded.
+func (r *routerV1) ExactInSingleSwapRoute(
+	inputToken string,
+	outputToken string,
+	amountIn string,
+	routeArr string,
+	amountOutMin string,
+	sqrtPriceLimitX96 string,
+	deadline int64,
+	referrer string,
+) (string, string) {
+	halt.AssertIsNotHaltedRouter()
+
+	assertIsValidUserCoinSend(inputToken, amountIn)
+	assertIsValidSingleSwapRouteArrPath(routeArr, inputToken, outputToken)
+	assertIsValidSqrtPriceLimitX96(sqrtPriceLimitX96)
+	assertIsNotPassedDeadline(deadline)
+	assertIsExistsPools(routeArr)
+
+	emission.MintAndDistributeGns(cross)
+
+	params := SwapRouteParams{
+		inputToken:        inputToken,
+		outputToken:       outputToken,
+		routeArr:          routeArr,
+		quoteArr:          maxPercentageString, // "100"
+		deadline:          deadline,
+		typ:               ExactIn,
+		exactAmount:       amountIn,
+		limitAmount:       amountOutMin,
+		sqrtPriceLimitX96: sqrtPriceLimitX96, // single swap is allowed to set sqrtPriceLimitX96
+	}
+
+	return r.exactInSwapRoute(params, referrer)
+}
+
 // exactInSwapRoute executes the swap operation and handles token transfers and referral registration.
 //
 // Performs the actual swap operation using commonSwapRoute and handles:

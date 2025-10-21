@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"chain/runtime"
-
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -22,9 +20,6 @@ func (r *routerV1) SwapCallback(
 	amount0Delta, amount1Delta string,
 	payer address,
 ) error {
-	println("")
-	println("[XXX] Current Realm:", runtime.CurrentRealm().PkgPath())
-	println("")
 	var tokenToPay string
 
 	amountToPay := i256.Zero()
