@@ -1,2 +1,2 @@
-module = "gno.land/r/gnoswap/v1/router"
+module = "gno.land/r/gnoswap/router"
 gno = "0.9"

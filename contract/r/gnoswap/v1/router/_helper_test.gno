@@ -80,7 +80,7 @@ var (
 
 	adminRealm = testing.NewUserRealm(admin)
 
-	routerPath  = "gno.land/r/gnoswap/v1/router"
+	routerPath  = "gno.land/r/gnoswap/router"
 	routerRealm = testing.NewUserRealm(routerAddr)
 
 	posPath  = "gno.land/r/gnoswap/v1/position"

@@ -172,7 +172,7 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 
 			testUser := testutils.TestAddress("test_user")
 			testing.SetOriginCaller(testUser)
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 
 			testCoins := chain.Coins{{"ugnot", tt.sentAmount}}
 			testing.IssueCoins(runtime.OriginCaller(), testCoins)

@@ -263,7 +263,7 @@ func TestSwapCallback_Pay(t *testing.T) {
 				beforeToken0PoolBalance := common.BalanceOf(tt.swapInfo.token0Path, poolAddr)
 				beforeToken1PoolBalance := common.BalanceOf(tt.swapInfo.token1Path, poolAddr)
 
-				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 				resultAmount0, resultAmount1 := Swap(
 					cross,
 					tt.swapInfo.token0Path,

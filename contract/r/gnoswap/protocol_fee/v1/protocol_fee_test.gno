@@ -24,7 +24,7 @@ var (
 	// contract paths
 	poolPath      = "gno.land/r/gnoswap/v1/pool"
 	positionPath  = "gno.land/r/gnoswap/v1/position"
-	routerPath    = "gno.land/r/gnoswap/v1/router"
+	routerPath    = "gno.land/r/gnoswap/router"
 	stakerPath    = "gno.land/r/gnoswap/v1/staker"
 	govStakerPath = "gno.land/r/gnoswap/v1/gov/staker"
 
@@ -76,7 +76,7 @@ func TestAddToProtocolFee(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm(poolPath))
-			func (cur realm) {
+			func(cur realm) {
 				pf.AddToProtocolFee(test.tokenPath, test.amount)
 			}(cross)
 			uassert.Equal(t, pf.getProtocolFeeState().tokenListWithAmount[test.tokenPath], test.want)
@@ -101,7 +101,7 @@ func TestClearTokenListWithAmount(t *testing.T) {
 		{
 			name:      "clear protocol fee",
 			prevRealm: govStakerRealm,
-			want: make(map[string]int64, 0),
+			want:      make(map[string]int64, 0),
 		},
 	}
 
