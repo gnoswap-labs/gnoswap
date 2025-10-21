@@ -27,7 +27,7 @@ import (
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/rbac"
-	gov_staker "gno.land/r/gnoswap/v1/gov/staker"
+	gov_staker "gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/gnoswap/v1/position"
 	"gno.land/r/gnoswap/router"

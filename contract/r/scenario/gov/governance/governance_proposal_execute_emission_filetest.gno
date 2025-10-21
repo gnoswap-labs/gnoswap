@@ -19,7 +19,7 @@ import (
 	"gno.land/r/gnoswap/gns"
 
 	"gno.land/r/gnoswap/v1/gov/governance"
-	govStaker "gno.land/r/gnoswap/v1/gov/staker"
+	govStaker "gno.land/r/gnoswap/gov/staker"
 )
 
 var (

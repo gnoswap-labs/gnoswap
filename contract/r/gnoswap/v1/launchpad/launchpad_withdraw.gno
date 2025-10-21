@@ -12,7 +12,7 @@ import (
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
 
-	gov_staker "gno.land/r/gnoswap/v1/gov/staker"
+	gov_staker "gno.land/r/gnoswap/gov/staker"
 )
 
 // CollectDepositGns collects rewards from a deposit.

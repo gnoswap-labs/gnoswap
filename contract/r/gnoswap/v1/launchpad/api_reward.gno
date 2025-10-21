@@ -1,6 +1,6 @@
 package launchpad
 
-import gs "gno.land/r/gnoswap/v1/gov/staker"
+import gs "gno.land/r/gnoswap/gov/staker"
 
 // ApiGetProjectRecipientRewardByProjectId retrieves the claimable reward for a project recipient by project ID.
 func ApiGetProjectRecipientRewardByProjectId(projectId string) string {

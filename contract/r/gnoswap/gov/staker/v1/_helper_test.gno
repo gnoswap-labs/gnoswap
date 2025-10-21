@@ -22,13 +22,13 @@ const (
 )
 
 var (
-	admin, _             = access.GetAddress(prbac.ROLE_ADMIN.String())
-	stakerAddr, _        = access.GetAddress(prbac.ROLE_STAKER.String())
-	communityPoolAddr, _ = access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
-	govStakerAddr, _     = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
-	protocolFeeAddr, _   = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
-	launchpadAddr, _     = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
-	devOpsAddr, _        = access.GetAddress(prbac.ROLE_DEVOPS.String())
+	admin             = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	stakerAddr        = access.MustGetAddress(prbac.ROLE_STAKER.String())
+	communityPoolAddr = access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+	govStakerAddr     = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
+	protocolFeeAddr   = access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	launchpadAddr     = access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
+	devOpsAddr        = access.MustGetAddress(prbac.ROLE_DEVOPS.String())
 
 	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 

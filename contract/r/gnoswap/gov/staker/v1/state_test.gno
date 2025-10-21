@@ -6,7 +6,11 @@ import (
 	_ "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
-	_ "gno.land/r/gnoswap/gov/staker"
+	_ "gno.land/r/gnoswap/protocol_fee"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+
+	_ "gno.land/r/gnoswap/router"
+	_ "gno.land/r/gnoswap/router/v1"
 
 	"gno.land/p/nt/uassert"
 )
@@ -448,7 +452,10 @@ func TestLaunchpadStakeOperations(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// When: Add stake from launchpad
-			addStakeFromLaunchpad(tt.address, tt.amount, tt.currentHeight)
+			testing.SetRealm(adminRealm)
+			func (cur realm) {
+				addStakeFromLaunchpad(tt.address, tt.amount, tt.currentHeight)
+			}(cross)
 
 			// Then: Should create deposit record
 			launchpadRewardID := makeLaunchpadRewardID(tt.address)

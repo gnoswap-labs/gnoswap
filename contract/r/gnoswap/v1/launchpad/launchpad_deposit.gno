@@ -11,7 +11,7 @@ import (
 	"gno.land/r/gnoswap/gov/xgns"
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/referral"
-	gov_staker "gno.land/r/gnoswap/v1/gov/staker"
+	gov_staker "gno.land/r/gnoswap/gov/staker"
 )
 
 // DepositGns deposits GNS tokens to a launchpad project tier.

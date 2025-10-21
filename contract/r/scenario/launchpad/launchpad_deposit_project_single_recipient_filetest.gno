@@ -19,7 +19,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/protocol_fee"
-	"gno.land/r/gnoswap/v1/gov/staker"
+	"gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/v1/launchpad"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/obl"
