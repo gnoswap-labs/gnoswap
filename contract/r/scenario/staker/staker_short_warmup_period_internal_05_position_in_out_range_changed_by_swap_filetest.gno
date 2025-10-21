@@ -25,6 +25,7 @@ import (
 
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
+	_ "gno.land/r/gnoswap/router/v1"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
