@@ -15,20 +15,20 @@ package v1
 // Returns:
 //   - DelegationSnapshot: delegation state at the specified time
 //   - bool: true if snapshot was successfully calculated, false otherwise
-// func (gs *govStakerV1) GetDelegationSnapshots(snapshotTime int64) (DelegationSnapshot, bool) {
-// 	// Get current delegation snapshots and create a working copy
-// 	delegationSnapshots := getDelegationSnapshots()
-// 	currentDelegationSnapshot := delegationSnapshots.clone()
+func (gs *govStakerV1) GetDelegationSnapshots(snapshotTime int64) (DelegationSnapshot, bool) {
+	// Get current delegation snapshots and create a working copy
+	delegationSnapshots := gs.getDelegationSnapshots()
+	currentDelegationSnapshot := delegationSnapshots.clone()
 
-// 	// Get delegation history and filter for records after snapshot time
-// 	delegationHistory := getDelegationHistory()
-// 	historyRecords := delegationHistory.getRecordsBy(snapshotTime)
+	// Get delegation history and filter for records after snapshot time
+	delegationHistory := gs.getDelegationHistory()
+	historyRecords := delegationHistory.getRecordsBy(snapshotTime)
 
-// 	// Apply records in reverse order to reconstruct historical state
-// 	// This effectively "undoes" all delegation changes that happened after snapshotTime
-// 	for i := len(historyRecords) - 1; i >= 0; i-- {
-// 		currentDelegationSnapshot = currentDelegationSnapshot.subRecord(historyRecords[i])
-// 	}
+	// Apply records in reverse order to reconstruct historical state
+	// This effectively "undoes" all delegation changes that happened after snapshotTime
+	for i := len(historyRecords) - 1; i >= 0; i-- {
+		currentDelegationSnapshot = currentDelegationSnapshot.subRecord(historyRecords[i])
+	}
 
-// 	return currentDelegationSnapshot, true
-// }
+	return currentDelegationSnapshot, true
+}
