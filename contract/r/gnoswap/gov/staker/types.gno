@@ -1,0 +1,139 @@
+package staker
+
+import (
+	"time"
+
+	"gno.land/p/gno/avl"
+	"gno.land/p/gnoswap/uint256"
+)
+
+// Main interface that combines all sub-interfaces
+type IGovStaker interface {
+	IGovStakerDelegation
+	IGovStakerReward
+	IGovStakerGetter
+	IGovStakerAdmin
+}
+
+// Delegation operations interface
+type IGovStakerDelegation interface {
+	// Main delegation operations
+	Delegate(to string, amount int64, referrer string) int64
+	Undelegate(from string, amount int64) int64
+	Redelegate(delegatee, newDelegatee string, amount int64) int64
+	CollectUndelegatedGns() int64
+}
+
+// Reward management interface
+type IGovStakerReward interface {
+	// Reward collection
+	CollectReward()
+	CollectRewardFromLaunchPad(to string)
+	SetAmountByProjectWallet(addr string, amount int64, add bool)
+}
+
+// Getter interface for read operations
+type IGovStakerGetter interface {
+	// Delegation getters
+	GetTotalxGnsSupply() int64
+	GetTotalVoteWeight() int64
+	GetTotalDelegated() int64
+	GetTotalLockedAmount() int64
+	GetLockedAmount() int64
+	GetDelegationSnapshots(snapshotTime int64) (DelegationSnapshot, bool)
+
+	// Reward getters
+	GetClaimableRewardByAddress(addr string) string
+	GetClaimableRewardByLaunchpad(addr string) string
+	GetClaimableRewardByRewardID(rewardID string) string
+}
+
+// Admin interface for administrative functions
+type IGovStakerAdmin interface {
+	CleanStakerDelegationSnapshotByAdmin(threshold int64)
+	SetUnDelegationLockupPeriodByAdmin(period int64)
+}
+
+// Storage interface
+type IGovStakerStore interface {
+	GetGovStakerState() GovStakerState
+	SetGovStakerState(state GovStakerState) error
+}
+
+// State interface for gov/staker state management
+type GovStakerState interface {
+	// Lockup configuration
+	UnDelegationLockupPeriod() int64
+
+	// Delegation management - using interface{} to avoid circular dependencies
+	DelegationCounter() interface{}
+	Delegations() *avl.Tree
+	DelegationManager() interface{}
+	DelegationHistory() *avl.Tree
+	DelegationSnapshots() *avl.Tree
+
+	// Reward managers - using interface{} to avoid circular dependencies
+	EmissionRewardManager() interface{}
+	ProtocolFeeRewardManager() interface{}
+
+	// Launchpad integration
+	LaunchpadProjectDeposits() *avl.Tree
+
+	// Aggregate metrics
+	TotalDelegatedAmount() int64
+	TotalLockedAmount() int64
+}
+
+// Type definitions for delegation system
+type DelegationType string
+
+const (
+	DelegationTypeDelegate   DelegationType = "Delegate"
+	DelegationTypeUndelegate DelegationType = "Undelegate"
+	DelegationTypeRedelegate DelegationType = "Redelegate"
+)
+
+// Delegation represents a delegation record
+type Delegation struct {
+	ID           string
+	Delegator    string
+	Delegatee    string
+	Amount       int64
+	CreatedTime  time.Time
+	ModifiedTime time.Time
+	IsClaimed    bool
+}
+
+// DelegationWithdraw represents a withdrawal record
+type DelegationWithdraw struct {
+	DelegationID string
+	Amount       int64
+	UnlockedTime time.Time
+}
+
+// DelegationRecord represents a historical delegation record
+type DelegationRecord struct {
+	ID              string
+	EventType       DelegationType
+	Delegator       string
+	FromDelegatee   string
+	ToDelegatee     string
+	Amount          int64
+	BlockHeight     int64
+	BlockTime       time.Time
+	PrevDelegations []*Delegation
+	NextDelegations []*Delegation
+}
+
+// DelegationHistory represents a collection of delegation records
+type DelegationHistory []*DelegationRecord
+
+// DelegationSnapshot represents delegations at a specific time
+type DelegationSnapshot map[string]*DelegationSnapshotItem
+
+// DelegationSnapshotItem represents a snapshot item
+type DelegationSnapshotItem struct {
+	Delegatee    string
+	DelegateGns  int64
+	DelegateXgns int64
+}
