@@ -89,16 +89,8 @@ func (os *ObservationState) grow(currentCardinality, nextCardinality uint16) (ui
 				tickCumulative:                    0,
 				liquidityCumulative:               u256.Zero(),
 				secondsPerLiquidityCumulativeX128: u256.Zero(),
-				initialized:                       false, // Mark as not yet used
+				initialized:                       true, // Mark as not yet used
 			}
-		}
-	}
-
-	// Mark slots from currentCardinality to nextCardinality as initialized
-	for i := currentCardinality; i < nextCardinality; i++ {
-		if obs := os.observations[i]; obs != nil {
-			obs.blockTimestamp = 1
-			obs.initialized = true
 		}
 	}
 
