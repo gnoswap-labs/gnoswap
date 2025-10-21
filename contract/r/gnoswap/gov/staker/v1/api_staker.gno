@@ -15,6 +15,8 @@ import (
 func (gs *govStakerV1) GetLockedAmount() int64 {
 	lockedAmount := int64(0)
 
+	state := gs.getState()
+	delegations := state.Delegations()
 	delegations.Iterate("", "", func(key string, value any) bool {
 		delegation, ok := value.(*Delegation)
 		if !ok {
@@ -34,7 +36,7 @@ func (gs *govStakerV1) GetClaimableRewardByAddress(addr address) string {
 
 // GetClaimableRewardByLaunchpad returns claimable reward for launchpad.
 func (gs *govStakerV1) GetClaimableRewardByLaunchpad(addr address) string {
-	return gs.GetClaimableRewardByRewardID(makeLaunchpadRewardID(addr.String()))
+	return gs.GetClaimableRewardByRewardID(gs.makeLaunchpadRewardID(addr.String()))
 }
 
 // GetClaimableRewardByRewardID returns claimable reward by ID.
@@ -44,13 +46,17 @@ func (gs *govStakerV1) GetClaimableRewardByRewardID(rewardID string) string {
 		protocol_fee.DistributeProtocolFee(cross)
 	}(cross)
 
+	state := gs.getState()
+	emissionRewardManager := state.EmissionRewardManager().(*EmissionRewardManager)
+	protocolFeeRewardManager := state.ProtocolFeeRewardManager().(*ProtocolFeeRewardManager)
+
 	emissionDistributedAmount := emission.GetAccuDistributedToGovStaker()
 	emissionReward, err := emissionRewardManager.GetClaimableRewardAmount(emissionDistributedAmount, rewardID, time.Now().Unix())
 	if err != nil {
 		panic(err)
 	}
 
-	protocolFeeDistributedAmounts := getDistributedProtocolFees()
+	protocolFeeDistributedAmounts := gs.getDistributedProtocolFees()
 	protocolFeeRewards, err := protocolFeeRewardManager.GetClaimableRewardAmounts(protocolFeeDistributedAmounts, rewardID, time.Now().Unix())
 	if err != nil {
 		panic(err)

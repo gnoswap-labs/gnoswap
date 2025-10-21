@@ -252,10 +252,12 @@ func (gs *govStakerV1) CollectUndelegatedGns() int64 {
 	xgns.Burn(cross, caller, collectedAmount)
 	gns.Transfer(cross, caller, collectedAmount)
 
-	totalLockedAmount -= collectedAmount
-	if totalLockedAmount < 0 {
-		totalLockedAmount = 0
+	state := gs.getState()
+	state.SetTotalLockedAmount(state.TotalLockedAmount() - collectedAmount)
+	if state.TotalLockedAmount() < 0 {
+		state.SetTotalLockedAmount(0)
 	}
+	gs.setState(state)
 
 	chain.Emit(
 		"CollectUndelegatedGns",
@@ -278,7 +280,7 @@ func (gs *govStakerV1) delegate(
 	currentHeight,
 	currentTimestamp int64,
 ) (*Delegation, error) {
-	delegationID := nextDelegationID()
+	delegationID := gs.nextDelegationID()
 	delegation := NewDelegation(
 		delegationID,
 		from,
@@ -289,13 +291,15 @@ func (gs *govStakerV1) delegate(
 	)
 	delegationRecord := NewDelegationDelegateRecordBy(delegation)
 
-	addDelegation(delegationID, delegation)
-	addDelegationRecord(delegationRecord)
-	addStakeEmissionReward(from.String(), amount, currentTimestamp)
-	addStakeProtocolFeeReward(from.String(), amount, time.Now().Unix())
+	gs.addDelegation(delegationID, delegation)
+	gs.addDelegationRecord(delegationRecord)
+	gs.addStakeEmissionReward(from.String(), amount, currentTimestamp)
+	gs.addStakeProtocolFeeReward(from.String(), amount, time.Now().Unix())
 
-	totalDelegatedAmount += amount
-	totalLockedAmount += amount
+	state := gs.getState()
+	state.SetTotalDelegatedAmount(state.TotalDelegatedAmount() + amount)
+	state.SetTotalLockedAmount(state.TotalLockedAmount() + amount)
+	gs.setState(state)
 
 	return delegation, nil
 }
@@ -309,7 +313,7 @@ func (gs *govStakerV1) unDelegate(
 	currentHeight,
 	currentTimestamp int64,
 ) (int64, error) {
-	delegations := getUserDelegationsWithDelegatee(delegator, delegatee)
+	delegations := gs.getUserDelegationsWithDelegatee(delegator, delegatee)
 	if len(delegations) == 0 {
 		return 0, nil
 	}
@@ -319,7 +323,7 @@ func (gs *govStakerV1) unDelegate(
 	// Process undelegation across multiple delegation records if necessary
 	for _, delegation := range delegations {
 		if delegation.IsEmpty() {
-			removeDelegation(delegation.ID())
+			gs.removeDelegation(delegation.ID())
 			continue
 		}
 
@@ -329,19 +333,20 @@ func (gs *govStakerV1) unDelegate(
 			currentUnDelegationAmount = delegation.DelegatedAmount()
 		}
 
+		state := gs.getState()
 		delegation.unDelegate(
 			currentUnDelegationAmount,
 			currentHeight,
 			currentTimestamp,
-			unDelegationLockupPeriod,
+			state.UnDelegationLockupPeriod(),
 		)
 
 		delegationRecord := NewDelegationWithdrawRecordBy(delegation, currentUnDelegationAmount, currentTimestamp)
 
-		setDelegation(delegation.ID(), delegation)
-		addDelegationRecord(delegationRecord)
-		removeStakeEmissionReward(delegator.String(), currentUnDelegationAmount, currentTimestamp)
-		removeStakeProtocolFeeReward(delegator.String(), currentUnDelegationAmount, currentTimestamp)
+		gs.setDelegation(delegation.ID(), delegation)
+		gs.addDelegationRecord(delegationRecord)
+		gs.removeStakeEmissionReward(delegator.String(), currentUnDelegationAmount, currentTimestamp)
+		gs.removeStakeProtocolFeeReward(delegator.String(), currentUnDelegationAmount, currentTimestamp)
 
 		unDelegationAmount -= currentUnDelegationAmount
 		if unDelegationAmount <= 0 {
@@ -349,11 +354,12 @@ func (gs *govStakerV1) unDelegate(
 		}
 	}
 
-	totalDelegatedAmount -= amount
-
-	if totalDelegatedAmount < 0 {
-		totalDelegatedAmount = 0
+	state := gs.getState()
+	state.SetTotalDelegatedAmount(state.TotalDelegatedAmount() - amount)
+	if state.TotalDelegatedAmount() < 0 {
+		state.SetTotalDelegatedAmount(0)
 	}
+	gs.setState(state)
 
 	return amount, nil
 }
@@ -367,7 +373,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 	currentHeight,
 	currentTime int64,
 ) (int64, error) {
-	delegations := getUserDelegationsWithDelegatee(delegator, delegatee)
+	delegations := gs.getUserDelegationsWithDelegatee(delegator, delegatee)
 	if len(delegations) == 0 {
 		return 0, nil
 	}
@@ -377,7 +383,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 	// Process undelegation across multiple delegation records if necessary
 	for _, delegation := range delegations {
 		if delegation.IsEmpty() {
-			removeDelegation(delegation.ID())
+			gs.removeDelegation(delegation.ID())
 			continue
 		}
 
@@ -399,11 +405,12 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 		}
 	}
 
-	totalDelegatedAmount -= amount
-
-	if totalDelegatedAmount < 0 {
-		totalDelegatedAmount = 0
+	state := gs.getState()
+	state.SetTotalDelegatedAmount(state.TotalDelegatedAmount() - amount)
+	if state.TotalDelegatedAmount() < 0 {
+		state.SetTotalDelegatedAmount(0)
 	}
+	gs.setState(state)
 
 	return amount, nil
 }
@@ -413,7 +420,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int64, error) {
 	collectedAmount := int64(0)
 
-	delegations := getUserDelegations(user)
+	delegations := gs.getUserDelegations(user)
 	if len(delegations) == 0 {
 		return collectedAmount, nil
 	}
@@ -438,7 +445,7 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 
 		// Remove empty delegations to keep storage clean
 		if delegation.IsEmpty() {
-			removeDelegation(delegation.ID())
+			gs.removeDelegation(delegation.ID())
 		}
 	}
 

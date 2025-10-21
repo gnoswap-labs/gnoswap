@@ -36,11 +36,11 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(threshold int64) {
 	cutoffTimestamp := time.Now().Unix() - threshold
 
 	// Filter records after cutoff time
-	delegationHistory := getDelegationHistory()
+	delegationHistory := gs.getDelegationHistory()
 	recentDelegationHistory := delegationHistory.getRecordsBy(cutoffTimestamp)
 
 	// Update delegation history with filtered records
-	setDelegationHistory(recentDelegationHistory)
+	gs.setDelegationHistory(recentDelegationHistory)
 }
 
 // SetUnDelegationLockupPeriodByAdmin sets the undelegation lockup period.
@@ -71,7 +71,7 @@ func (gs *govStakerV1) SetUnDelegationLockupPeriodByAdmin(period int64) {
 		panic("period must be greater than 0")
 	}
 
-	setUnDelegationLockupPeriod(period)
+	gs.setUnDelegationLockupPeriod(period)
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(

@@ -63,6 +63,7 @@ type IGovStakerStore interface {
 type GovStakerState interface {
 	// Lockup configuration
 	UnDelegationLockupPeriod() int64
+	SetUnDelegationLockupPeriod(period int64)
 
 	// Delegation management - using interface{} to avoid circular dependencies
 	DelegationCounter() interface{}
@@ -78,9 +79,17 @@ type GovStakerState interface {
 	// Launchpad integration
 	LaunchpadProjectDeposits() *avl.Tree
 
+	// Reward balances
+	EmissionRewardBalance() int64
+	SetEmissionRewardBalance(balance int64)
+	ProtocolFeeBalances() map[string]int64
+	SetProtocolFeeBalances(balances map[string]int64)
+
 	// Aggregate metrics
 	TotalDelegatedAmount() int64
 	TotalLockedAmount() int64
+	SetTotalDelegatedAmount(amount int64)
+	SetTotalLockedAmount(amount int64)
 }
 
 // Type definitions for delegation system

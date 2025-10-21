@@ -110,8 +110,8 @@ func (gs *govStakerV1) CollectRewardFromLaunchPad(to address) {
 	from := runtime.CurrentRealm().Address()
 	currentTimestamp := time.Now().Unix()
 
-	launchpadRewardID := makeLaunchpadRewardID(to.String())
-	_, exists := getLaunchpadProjectDeposit(launchpadRewardID)
+	launchpadRewardID := gs.makeLaunchpadRewardID(to.String())
+	_, exists := gs.getLaunchpadProjectDeposit(launchpadRewardID)
 	if !exists {
 		panic(makeErrorWithDetails(
 			errNoDelegatedAmount,
@@ -189,7 +189,7 @@ func (gs *govStakerV1) SetAmountByProjectWallet(addr address, amount int64, add 
 
 	if add {
 		// Add stake for the project wallet and mint xGNS to launchpad
-		err := addStakeFromLaunchpad(addr.String(), amount, currentTimestamp)
+		err := gs.addStakeFromLaunchpad(addr.String(), amount, currentTimestamp)
 		if err != nil {
 			panic(err)
 		}
@@ -197,7 +197,7 @@ func (gs *govStakerV1) SetAmountByProjectWallet(addr address, amount int64, add 
 		xgns.Mint(cross, launchpadAddr, amount)
 	} else {
 		// Remove stake for the project wallet and burn xGNS from launchpad
-		err := removeStakeFromLaunchpad(addr.String(), amount, currentTimestamp)
+		err := gs.removeStakeFromLaunchpad(addr.String(), amount, currentTimestamp)
 		if err != nil {
 			panic(err)
 		}
@@ -209,12 +209,12 @@ func (gs *govStakerV1) SetAmountByProjectWallet(addr address, amount int64, add 
 // claimRewards claims both emission and protocol fee rewards.
 // Coordinates claiming process for both reward types.
 func (gs *govStakerV1) claimRewards(rewardID string, currentTimestamp int64) (int64, map[string]int64, error) {
-	emissionReward, err := claimRewardsEmissionReward(rewardID, currentTimestamp)
+	emissionReward, err := gs.claimRewardsEmissionReward(rewardID, currentTimestamp)
 	if err != nil {
 		return 0, nil, err
 	}
 
-	protocolFeeRewards, err := claimRewardsProtocolFeeReward(rewardID, currentTimestamp)
+	protocolFeeRewards, err := gs.claimRewardsProtocolFeeReward(rewardID, currentTimestamp)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -225,7 +225,7 @@ func (gs *govStakerV1) claimRewards(rewardID string, currentTimestamp int64) (in
 // claimRewardsFromLaunchpad claims rewards for launchpad project wallets.
 // Uses special reward ID format for launchpad integration.
 func (gs *govStakerV1) claimRewardsFromLaunchpad(address string, currentTimestamp int64) (int64, map[string]int64, error) {
-	launchpadRewardID := makeLaunchpadRewardID(address)
+	launchpadRewardID := gs.makeLaunchpadRewardID(address)
 
 	return gs.claimRewards(launchpadRewardID, currentTimestamp)
 }

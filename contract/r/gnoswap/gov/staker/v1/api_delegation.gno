@@ -16,10 +16,10 @@ func (gs *govStakerV1) GetTotalVoteWeight() int64 {
 
 // GetTotalDelegated returns the total amount of xGNS delegated.
 func (gs *govStakerV1) GetTotalDelegated() int64 {
-	return totalDelegatedAmount
+	return gs.getState().TotalDelegatedAmount()
 }
 
 // GetTotalLockedAmount returns the total amount of locked GNS.
 func (gs *govStakerV1) GetTotalLockedAmount() int64 {
-	return totalLockedAmount
+	return gs.getState().TotalLockedAmount()
 }
