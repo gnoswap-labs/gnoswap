@@ -264,7 +264,7 @@ func TestSwap() {
 
 		// set current realm and origin caller
 
-		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 		amount0, amount1 := pl.Swap(
 			cross,
 			barPath,    // token1Path
@@ -305,7 +305,7 @@ func TestSwap() {
 		userOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
 
 		// set current realm and origin caller
-		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 
 		amount0, amount1 := pl.Swap(cross, barPath, fooPath, fee500, adminAddr, true, "5000", test_price, adminAddr, func(cur realm, amount0Delta, amount1Delta string) error {
 			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
@@ -334,7 +334,7 @@ func TestSwap() {
 		userOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
 
 		// set current realm and origin caller
-		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 		amount0, amount1 := pl.Swap(
 			cross,
 			barPath,
@@ -374,7 +374,7 @@ func TestSwap() {
 		userOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
 
 		// set current realm and origin caller
-		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 		amount0, amount1 := pl.Swap(cross, barPath, fooPath, fee500, adminAddr, false, "16000", MAX_PRICE, adminAddr, func(cur realm, amount0Delta, amount1Delta string) error {
 			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, false)
 		}) // give enough amount to take fees away

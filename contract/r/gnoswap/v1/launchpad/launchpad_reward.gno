@@ -17,7 +17,7 @@ import (
 // Returns amount of reward collected.
 // Only callable by deposit owner.
 func CollectRewardByDepositId(cur realm, depositID string) int64 {
-	halt.AssertIsNotHaltedLaunchpadWithVersion(1)
+	halt.AssertIsNotHaltedLaunchpad()
 	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	previousRealm := runtime.PreviousRealm()

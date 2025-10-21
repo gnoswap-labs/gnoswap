@@ -39,7 +39,7 @@ var (
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
 	posRealm        = testing.NewUserRealm(positionAddr)
 	routerAddr, _   = access.GetAddress(prbac.ROLE_ROUTER.String())
-	rouRealm        = testing.NewCodeRealm("gno.land/r/gnoswap/v1/router")
+	rouRealm        = testing.NewCodeRealm("gno.land/r/gnoswap/router")
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 )
 
@@ -135,7 +135,7 @@ func testDrySwapVsActualSwap(t *testing.T) {
 	bar.Approve(cross, poolAddr, 16000)
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 
 	// Execute actual swap
 	actualPoolIn, actualPoolOut := pool.Swap(

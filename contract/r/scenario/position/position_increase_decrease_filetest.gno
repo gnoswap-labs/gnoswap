@@ -167,7 +167,7 @@ func executeSwap() {
 	bar.Approve(cross, poolAddr, 20000000)
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing swap to generate fees")
 	amount0, amount1 := pool.Swap(
 		cross,

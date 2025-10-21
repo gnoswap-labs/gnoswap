@@ -45,10 +45,10 @@ func CreateProject(
 	tier180Ratio int64,
 	startTime int64,
 ) string {
-	halt.AssertIsNotHaltedLaunchpadWithVersion(1)
+	halt.AssertIsNotHaltedLaunchpad()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	launchpadAddr := runtime.CurrentRealm().Address()
 	currentHeight := runtime.ChainHeight()
@@ -202,10 +202,10 @@ func createProject(params *createProjectParams) (*Project, error) {
 // TransferLeftFromProjectByAdmin transfers the remaining rewards of a project to a specified recipient.
 // Only admin or governance can call this function. Returns the amount of rewards transferred.
 func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient address) int64 {
-	halt.AssertIsNotHaltedLaunchpadWithVersion(1)
+	halt.AssertIsNotHaltedLaunchpad()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()

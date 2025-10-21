@@ -22,7 +22,7 @@ import (
 //
 // Returns amount collected and any error.
 func CollectDepositGns(cur realm, depositID string) (int64, error) {
-	halt.AssertIsNotHaltedLaunchpadWithVersion(1)
+	halt.AssertIsNotHaltedLaunchpad()
 	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	previousRealm := runtime.PreviousRealm()

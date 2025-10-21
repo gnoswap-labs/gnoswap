@@ -74,7 +74,7 @@ var (
 	posPath  = "gno.land/r/gnoswap/v1/position"
 	posRealm = testing.NewCodeRealm(posPath)
 
-	rouPath  = "gno.land/r/gnoswap/v1/router"
+	rouPath  = "gno.land/r/gnoswap/router"
 	rouRealm = testing.NewCodeRealm(rouPath)
 
 	// addresses used in tests

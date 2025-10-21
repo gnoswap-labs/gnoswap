@@ -60,7 +60,7 @@ var (
 	emissionAddr      = getRoleAddress(prbac.ROLE_EMISSION)
 
 	posRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/v1/position")
-	rouRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/v1/router")
+	rouRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/router")
 	stakerRealm = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 
 	// addresses used in tests

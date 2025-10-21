@@ -23,7 +23,7 @@ import (
 //
 // Returns deposit ID.
 func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, referrer string) string {
-	halt.AssertIsNotHaltedLaunchpadWithVersion(1)
+	halt.AssertIsNotHaltedLaunchpad()
 
 	previousRealm := runtime.PreviousRealm()
 	access.AssertIsUser(previousRealm)

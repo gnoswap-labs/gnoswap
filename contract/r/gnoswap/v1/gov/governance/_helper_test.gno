@@ -36,7 +36,7 @@ var (
 	posPath  = "gno.land/r/gnoswap/v1/position"
 	posRealm = testing.NewCodeRealm(posPath)
 
-	routerPath = "gno.land/r/gnoswap/v1/router"
+	routerPath = "gno.land/r/gnoswap/router"
 	rouRealm   = testing.NewCodeRealm(routerPath)
 
 	stakerPath = "gno.land/r/gnoswap/v1/staker"
