@@ -218,8 +218,6 @@ func (p *Pool) Clone() *Pool {
 func (p *Pool) writeObservation(currentTime int64, tick int32, liquidity *u256.Uint) error {
 	if p.observationState == nil {
 		p.observationState = newObservationState(currentTime)
-
-		return nil
 	}
 
 	err := p.observationState.write(currentTime, tick, liquidity)
@@ -236,7 +234,12 @@ func (p *Pool) ObservationTickCumulative() int64 {
 		return 0
 	}
 
-	return p.observationState.lastObservation().tickCumulative
+	lastObservation, err := p.observationState.lastObservation()
+	if err != nil {
+		return 0
+	}
+
+	return lastObservation.tickCumulative
 }
 
 // ObservationLiquidityCumulative returns the current liquidity cumulative for backward compatibility
@@ -245,7 +248,12 @@ func (p *Pool) ObservationLiquidityCumulative() string {
 		return "0"
 	}
 
-	return p.observationState.lastObservation().liquidityCumulative.ToString()
+	lastObservation, err := p.observationState.lastObservation()
+	if err != nil {
+		return "0"
+	}
+
+	return lastObservation.liquidityCumulative.ToString()
 }
 
 // ObservationSecondsPerLiquidityCumulativeX128 returns the current seconds per liquidity cumulative for backward compatibility
@@ -254,7 +262,12 @@ func (p *Pool) ObservationSecondsPerLiquidityCumulativeX128() string {
 		return "0"
 	}
 
-	return p.observationState.lastObservation().secondsPerLiquidityCumulativeX128.ToString()
+	lastObservation, err := p.observationState.lastObservation()
+	if err != nil {
+		return "0"
+	}
+
+	return lastObservation.secondsPerLiquidityCumulativeX128.ToString()
 }
 
 // ObservationBlockTimestamp returns the current observation timestamp for backward compatibility
@@ -263,7 +276,12 @@ func (p *Pool) ObservationBlockTimestamp() int64 {
 		return time.Now().Unix()
 	}
 
-	return p.observationState.lastObservation().blockTimestamp
+	lastObservation, err := p.observationState.lastObservation()
+	if err != nil {
+		return time.Now().Unix()
+	}
+
+	return lastObservation.blockTimestamp
 }
 
 // GetTWAP calculates the time-weighted average price between two points in time
@@ -319,7 +337,7 @@ func (p *Pool) IncreaseObservationCardinalityLimit(observationCardinalityNext ui
 		return errors.New("observation state not initialized")
 	}
 
-	if observationCardinalityNext > ObservationCardinality {
+	if observationCardinalityNext > maxObservationCardinality {
 		return errors.New("observation cardinality next exceeds maximum")
 	}
 

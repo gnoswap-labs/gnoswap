@@ -155,6 +155,8 @@ func formatUint(v any) string {
 	switch v := v.(type) {
 	case uint8:
 		return strconv.FormatUint(uint64(v), 10)
+	case uint16:
+		return strconv.FormatUint(uint64(v), 10)
 	case uint32:
 		return strconv.FormatUint(uint64(v), 10)
 	case uint64:

@@ -37,6 +37,7 @@ var (
 	errInvalidPayer              = errors.New("[GNOSWAP-POOL-028] invalid payer")
 	errNotAccessEOA              = errors.New("[GNOSWAP-POOL-029] not access EOA")
 	errInsufficientPayment       = errors.New("[GNOSWAP-POOL-030] insufficient payment")
+	errNotInitializedObservation = errors.New("[GNOSWAP-POOL-031] not initialized observation")
 )
 
 // newErrorWithDetail adds detail to an error message.
