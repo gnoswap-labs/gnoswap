@@ -19,6 +19,7 @@ import (
 // 3. Updates the delegation history with filtered records
 //
 // Parameters:
+//   - cur: realm context for cross-realm calls
 //   - threshold: time threshold in seconds (records older than this will be removed)
 //
 // Panics:
@@ -26,7 +27,6 @@ import (
 //
 // Note: This operation is irreversible and will permanently remove historical data
 func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(threshold int64) {
-	state := gs.getGovStakerState()
 	halt.AssertIsNotHaltedGovStakerWithVersion(1)
 
 	caller := runtime.PreviousRealm().Address()
@@ -36,11 +36,11 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(threshold int64) {
 	cutoffTimestamp := time.Now().Unix() - threshold
 
 	// Filter records after cutoff time
-	delegationHistory := gs.getDelegationHistory()
-	recentDelegationHistory := gs.getRecordsByTimestamp(delegationHistory, cutoffTimestamp)
+	delegationHistory := getDelegationHistory()
+	recentDelegationHistory := delegationHistory.getRecordsBy(cutoffTimestamp)
 
 	// Update delegation history with filtered records
-	gs.setDelegationHistory(recentDelegationHistory)
+	setDelegationHistory(recentDelegationHistory)
 }
 
 // SetUnDelegationLockupPeriodByAdmin sets the undelegation lockup period.
@@ -53,6 +53,7 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(threshold int64) {
 // - Maintain system stability during volatile periods
 //
 // Parameters:
+//   - cur: realm context for cross-realm calls
 //   - period: lockup period in seconds (must be non-negative)
 //
 // Panics:
@@ -61,7 +62,6 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(threshold int64) {
 //
 // Note: This change affects all future undelegation operations
 func (gs *govStakerV1) SetUnDelegationLockupPeriodByAdmin(period int64) {
-	state := gs.getGovStakerState()
 	halt.AssertIsNotHaltedGovStakerWithVersion(1)
 
 	caller := runtime.PreviousRealm().Address()
@@ -71,7 +71,7 @@ func (gs *govStakerV1) SetUnDelegationLockupPeriodByAdmin(period int64) {
 		panic("period must be greater than 0")
 	}
 
-	gs.setUnDelegationLockupPeriod(period)
+	setUnDelegationLockupPeriod(period)
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(

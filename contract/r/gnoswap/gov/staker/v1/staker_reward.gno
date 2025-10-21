@@ -45,7 +45,6 @@ const WUGNOT_PATH string = "gno.land/r/gnoland/wugnot"
 // No parameters required - automatically determines caller's rewards.
 // Transfers rewards directly to caller.
 func (gs *govStakerV1) CollectReward() {
-	state := gs.getGovStakerState()
 	halt.AssertIsNotHaltedGovStakerWithVersion(1)
 	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
@@ -53,14 +52,14 @@ func (gs *govStakerV1) CollectReward() {
 	from := runtime.CurrentRealm().Address()
 	currentTimestamp := time.Now().Unix()
 
-	emissionReward, protocolFeeRewards, err := gs.claimRewards(caller, currentTimestamp)
+	emissionReward, protocolFeeRewards, err := gs.claimRewards(caller.String(), currentTimestamp)
 	if err != nil {
 		panic(err)
 	}
 
 	// Transfer emission rewards (GNS tokens) if any
 	if emissionReward > 0 {
-		gs.transferGns(caller, emissionReward)
+		gns.Transfer(cross, caller, emissionReward)
 
 		previousRealm := runtime.PreviousRealm()
 		chain.Emit(
@@ -76,7 +75,7 @@ func (gs *govStakerV1) CollectReward() {
 	// Transfer protocol fee rewards for each token type
 	for tokenPath, amount := range protocolFeeRewards {
 		if amount > 0 {
-			err := gs.transferToken(tokenPath, from, caller, amount)
+			err := transferToken(tokenPath, from, caller, amount)
 			if err != nil {
 				panic(err)
 			}
@@ -102,7 +101,6 @@ func (gs *govStakerV1) CollectReward() {
 //
 // Only callable by launchpad contract.
 func (gs *govStakerV1) CollectRewardFromLaunchPad(to address) {
-	state := gs.getGovStakerState()
 	halt.AssertIsNotHaltedGovStakerWithVersion(1)
 	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
@@ -112,23 +110,23 @@ func (gs *govStakerV1) CollectRewardFromLaunchPad(to address) {
 	from := runtime.CurrentRealm().Address()
 	currentTimestamp := time.Now().Unix()
 
-	launchpadRewardID := gs.makeLaunchpadRewardID(to)
-	_, exists := gs.getLaunchpadProjectDeposit(launchpadRewardID)
+	launchpadRewardID := makeLaunchpadRewardID(to.String())
+	_, exists := getLaunchpadProjectDeposit(launchpadRewardID)
 	if !exists {
 		panic(makeErrorWithDetails(
 			errNoDelegatedAmount,
-			ufmt.Sprintf("%s is not project wallet from launchpad", to),
+			ufmt.Sprintf("%s is not project wallet from launchpad", to.String()),
 		))
 	}
 
-	emissionReward, protocolFeeRewards, err := gs.claimRewardsFromLaunchpad(to, currentTimestamp)
+	emissionReward, protocolFeeRewards, err := gs.claimRewardsFromLaunchpad(to.String(), currentTimestamp)
 	if err != nil {
 		panic(err)
 	}
 
 	// Transfer emission rewards (GNS tokens) to project wallet if any
 	if emissionReward > 0 {
-		gs.transferGns(to, emissionReward)
+		gns.Transfer(cross, to, emissionReward)
 
 		previousRealm := runtime.PreviousRealm()
 		chain.Emit(
@@ -144,7 +142,7 @@ func (gs *govStakerV1) CollectRewardFromLaunchPad(to address) {
 	// Transfer protocol fee rewards to project wallet for each token type
 	for tokenPath, amount := range protocolFeeRewards {
 		if amount > 0 {
-			err := gs.transferToken(tokenPath, from, to, amount)
+			err := transferToken(tokenPath, from, to, amount)
 			if err != nil {
 				panic(err)
 			}
@@ -176,7 +174,6 @@ func (gs *govStakerV1) CollectRewardFromLaunchPad(to address) {
 //   - if system is halted for withdrawals
 //   - if access control operations fail
 func (gs *govStakerV1) SetAmountByProjectWallet(addr address, amount int64, add bool) {
-	state := gs.getGovStakerState()
 	halt.AssertIsNotHaltedGovStakerWithVersion(1)
 	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
@@ -192,32 +189,32 @@ func (gs *govStakerV1) SetAmountByProjectWallet(addr address, amount int64, add 
 
 	if add {
 		// Add stake for the project wallet and mint xGNS to launchpad
-		err := gs.addStakeFromLaunchpad(addr, amount, currentTimestamp)
+		err := addStakeFromLaunchpad(addr.String(), amount, currentTimestamp)
 		if err != nil {
 			panic(err)
 		}
 
-		gs.mintXgns(launchpadAddr, amount)
+		xgns.Mint(cross, launchpadAddr, amount)
 	} else {
 		// Remove stake for the project wallet and burn xGNS from launchpad
-		err := gs.removeStakeFromLaunchpad(addr, amount, currentTimestamp)
+		err := removeStakeFromLaunchpad(addr.String(), amount, currentTimestamp)
 		if err != nil {
 			panic(err)
 		}
 
-		gs.burnXgns(launchpadAddr, amount)
+		xgns.Burn(cross, launchpadAddr, amount)
 	}
 }
 
 // claimRewards claims both emission and protocol fee rewards.
 // Coordinates claiming process for both reward types.
 func (gs *govStakerV1) claimRewards(rewardID string, currentTimestamp int64) (int64, map[string]int64, error) {
-	emissionReward, err := gs.claimRewardsEmissionReward(rewardID, currentTimestamp)
+	emissionReward, err := claimRewardsEmissionReward(rewardID, currentTimestamp)
 	if err != nil {
 		return 0, nil, err
 	}
 
-	protocolFeeRewards, err := gs.claimRewardsProtocolFeeReward(rewardID, currentTimestamp)
+	protocolFeeRewards, err := claimRewardsProtocolFeeReward(rewardID, currentTimestamp)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -228,7 +225,7 @@ func (gs *govStakerV1) claimRewards(rewardID string, currentTimestamp int64) (in
 // claimRewardsFromLaunchpad claims rewards for launchpad project wallets.
 // Uses special reward ID format for launchpad integration.
 func (gs *govStakerV1) claimRewardsFromLaunchpad(address string, currentTimestamp int64) (int64, map[string]int64, error) {
-	launchpadRewardID := gs.makeLaunchpadRewardID(address)
+	launchpadRewardID := makeLaunchpadRewardID(address)
 
 	return gs.claimRewards(launchpadRewardID, currentTimestamp)
 }
@@ -236,7 +233,7 @@ func (gs *govStakerV1) claimRewardsFromLaunchpad(address string, currentTimestam
 // transferToken transfers tokens from the staker contract to a recipient address.
 // transferToken handles token transfers for reward distribution.
 // Supports both native GNOT (through wUGNOT unwrapping) and GRC20 tokens.
-func (gs *govStakerV1) transferToken(
+func transferToken(
 	tokenPath string,
 	from, to address,
 	amount int64,
@@ -271,7 +268,7 @@ func (gs *govStakerV1) transferToken(
 	// Handle native GNOT transfer through wUGNOT unwrapping
 	isGnoNativeCoin := tokenPath == WUGNOT_PATH
 	if isGnoNativeCoin {
-		gs.withdrawWugnot(amount)
+		wugnot.Withdraw(cross, amount)
 
 		sendCoin := chain.Coin{Denom: "ugnot", Amount: amount}
 		banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
@@ -281,7 +278,7 @@ func (gs *govStakerV1) transferToken(
 	}
 
 	// Handle GRC20 token transfer
-	gs.safeTransferGRC20(tokenPath, to, amount)
+	common.SafeGRC20Transfer(cross, tokenPath, to, amount)
 
 	return nil
 }

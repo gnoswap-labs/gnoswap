@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"gno.land/p/nt/avl"
-	"gno.land/p/gnoswap/uint256"
 )
 
 // Main interface that combines all sub-interfaces
@@ -18,9 +17,9 @@ type IGovStaker interface {
 // Delegation operations interface
 type IGovStakerDelegation interface {
 	// Main delegation operations
-	Delegate(to string, amount int64, referrer string) int64
-	Undelegate(from string, amount int64) int64
-	Redelegate(delegatee, newDelegatee string, amount int64) int64
+	Delegate(to address, amount int64, referrer string) int64
+	Undelegate(from address, amount int64) int64
+	Redelegate(delegatee, newDelegatee address, amount int64) int64
 	CollectUndelegatedGns() int64
 }
 
@@ -28,8 +27,8 @@ type IGovStakerDelegation interface {
 type IGovStakerReward interface {
 	// Reward collection
 	CollectReward()
-	CollectRewardFromLaunchPad(to string)
-	SetAmountByProjectWallet(addr string, amount int64, add bool)
+	CollectRewardFromLaunchPad(to address)
+	SetAmountByProjectWallet(addr address, amount int64, add bool)
 }
 
 // Getter interface for read operations
@@ -40,11 +39,11 @@ type IGovStakerGetter interface {
 	GetTotalDelegated() int64
 	GetTotalLockedAmount() int64
 	GetLockedAmount() int64
-	GetDelegationSnapshots(snapshotTime int64) (DelegationSnapshot, bool)
+	// GetDelegationSnapshots(snapshotTime int64) (DelegationSnapshot, bool)
 
 	// Reward getters
-	GetClaimableRewardByAddress(addr string) string
-	GetClaimableRewardByLaunchpad(addr string) string
+	GetClaimableRewardByAddress(addr address) string
+	GetClaimableRewardByLaunchpad(addr address) string
 	GetClaimableRewardByRewardID(rewardID string) string
 }
 
@@ -137,3 +136,4 @@ type DelegationSnapshotItem struct {
 	DelegateGns  int64
 	DelegateXgns int64
 }
+

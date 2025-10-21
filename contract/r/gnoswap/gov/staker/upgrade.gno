@@ -1,12 +1,9 @@
 package staker
 
 import (
-	"errors"
 	"chain/runtime"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/gns"
 )
 
 // RegisterInitializer registers an implementation

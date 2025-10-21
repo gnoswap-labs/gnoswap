@@ -6,22 +6,76 @@ import (
 
 	"gno.land/r/gnoswap/emission"
 	pf "gno.land/r/gnoswap/protocol_fee"
-	"gno.land/r/gnoswap/gov/staker"
 )
 
-// Type alias for clarity
-type address = string
+// Global state variables for staker contract
+var (
+	// unDelegationLockupPeriod defines the time period (in seconds) that undelegated tokens must wait before collection
+	unDelegationLockupPeriod int64
 
-// State helper methods for govStakerV1
+	// delegationCounter provides unique delegation IDs for new delegations
+	delegationCounter *Counter
+	// delegations stores all delegation records indexed by delegation ID
+	delegations *avl.Tree
+	// delegationManager tracks user delegation relationships and provides efficient lookup
+	delegationManager *DelegationManager
+
+	// delegationHistory maintains chronological record of all delegation events for snapshot calculations
+	delegationHistory DelegationHistory
+	// delegationSnapshots stores current delegation state for each delegatee
+	delegationSnapshots DelegationSnapshot
+
+	// emissionRewardManager handles distribution and tracking of GNS emission rewards to stakers
+	emissionRewardManager *EmissionRewardManager
+	// protocolFeeRewardManager handles distribution and tracking of multi-token protocol fee rewards
+	protocolFeeRewardManager *ProtocolFeeRewardManager
+
+	// launchpadProjectDeposits tracks xGNS deposits for launchpad project wallets
+	launchpadProjectDeposits *avl.Tree // project owner address -> deposit amount
+
+	// emissionRewardBalance tracks the current balance of emission rewards (unused)
+	emissionRewardBalance int64
+	// protocolFeeBalances tracks current balances of protocol fees by token (unused)
+	protocolFeeBalances map[string]int64
+
+	// totalDelegated tracks the total amount of xGNS delegated
+	totalDelegatedAmount int64
+	// totalLockedAmount tracks the total amount of locked GNS
+	totalLockedAmount int64
+)
+
+// init initializes the global state variables with default values and empty structures
+func init() {
+	// Default lockup period is 7 days
+	unDelegationLockupPeriod = 60 * 60 * 24 * 7 // 7 days
+
+	// Initialize totalDelegated and totalLockedAmount
+	totalDelegatedAmount = 0
+	totalLockedAmount = 0
+
+	// Initialize delegation tracking structures
+	delegationCounter = NewCounter()
+	delegations = avl.NewTree()
+	delegationManager = NewDelegationManager()
+
+	// Initialize delegation history and snapshot tracking
+	delegationHistory = make(DelegationHistory, 0)
+	delegationSnapshots = make(DelegationSnapshot)
+
+	// Initialize reward management systems
+	emissionRewardManager = NewEmissionRewardManager()
+	protocolFeeRewardManager = NewProtocolFeeRewardManager()
+
+	// Initialize launchpad integration
+	launchpadProjectDeposits = avl.NewTree()
+}
 
 // getUnDelegationLockupPeriod returns the current undelegation lockup period in seconds.
 //
 // Returns:
 //   - int64: lockup period in seconds
-// XXX
-func (gs *govStakerV1) getUnDelegationLockupPeriod() int64 {
-	state := gs.getGovStakerState()
-	return state.unDelegationLockupPeriod
+func getUnDelegationLockupPeriod() int64 {
+	return unDelegationLockupPeriod
 }
 
 // setUnDelegationLockupPeriod updates the undelegation lockup period.
@@ -29,38 +83,32 @@ func (gs *govStakerV1) getUnDelegationLockupPeriod() int64 {
 //
 // Parameters:
 //   - period: new lockup period in seconds
-func (gs *govStakerV1) setUnDelegationLockupPeriod(period int64) {
-	state := gs.getGovStakerState()
-	state.unDelegationLockupPeriod = period
+func setUnDelegationLockupPeriod(period int64) {
+	unDelegationLockupPeriod = period
 }
 
 // getCurrentDelegationID returns the current delegation counter value.
 //
 // Returns:
 //   - int64: current delegation ID counter
-func (gs *govStakerV1) getCurrentDelegationID() int64 {
-	state := gs.getGovStakerState()
-	counter := state.delegationCounter.(*Counter)
-	return counter.Get()
+func getCurrentDelegationID() int64 {
+	return delegationCounter.Get()
 }
 
 // nextDelegationID generates and returns the next unique delegation ID.
 //
 // Returns:
 //   - int64: next available delegation ID
-func (gs *govStakerV1) nextDelegationID() int64 {
-	state := gs.getGovStakerState()
-	counter := state.delegationCounter.(*Counter)
-	return counter.next()
+func nextDelegationID() int64 {
+	return delegationCounter.next()
 }
 
 // getDelegations returns the delegation storage tree.
 //
 // Returns:
 //   - *avl.Tree: delegation storage tree
-func (gs *govStakerV1) getDelegations() *avl.Tree {
-	state := gs.getGovStakerState()
-	return state.delegations
+func getDelegations() *avl.Tree {
+	return delegations
 }
 
 // getDelegation retrieves a delegation by its ID.
@@ -69,17 +117,16 @@ func (gs *govStakerV1) getDelegations() *avl.Tree {
 //   - delegationID: unique identifier of the delegation
 //
 // Returns:
-//   - *staker.Delegation: delegation instance or nil if not found
-func (gs *govStakerV1) getDelegation(delegationID int64) *staker.Delegation {
-	state := gs.getGovStakerState()
+//   - *Delegation: delegation instance or nil if not found
+func getDelegation(delegationID int64) *Delegation {
 	id := formatInt(delegationID)
-	delegation, ok := state.delegations.Get(id)
+	delegation, ok := delegations.Get(id)
 	if !ok {
 		return nil
 	}
 
-	if delegation, ok := delegation.(*staker.Delegation); !ok {
-		panic(ufmt.Sprintf("failed to cast delegations's element to *staker.Delegation: %T", delegation))
+	if delegation, ok := delegation.(*Delegation); !ok {
+		panic(ufmt.Sprintf("failed to cast delegations's element to *Delegation: %T", delegation))
 	} else {
 		return delegation
 	}
@@ -93,11 +140,10 @@ func (gs *govStakerV1) getDelegation(delegationID int64) *staker.Delegation {
 //
 // Returns:
 //   - bool: true if successfully stored
-func (gs *govStakerV1) setDelegation(delegationID int64, delegation *staker.Delegation) bool {
-	state := gs.getGovStakerState()
+func setDelegation(delegationID int64, delegation *Delegation) bool {
 	id := formatInt(delegationID)
 
-	state.delegations.Set(id, delegation)
+	delegations.Set(id, delegation)
 
 	return true
 }
@@ -110,13 +156,12 @@ func (gs *govStakerV1) setDelegation(delegationID int64, delegation *staker.Dele
 //
 // Returns:
 //   - bool: true if successfully added
-func (gs *govStakerV1) addDelegation(delegationID int64, delegation *staker.Delegation) bool {
-	state := gs.getGovStakerState()
-	if ok := gs.setDelegation(delegationID, delegation); !ok {
+func addDelegation(delegationID int64, delegation *Delegation) bool {
+	if ok := setDelegation(delegationID, delegation); !ok {
 		return false
 	}
 
-	state.delegationManager.addDelegation(
+	delegationManager.addDelegation(
 		delegation.DelegateFrom(),
 		delegation.DelegateTo(),
 		delegationID,
@@ -132,17 +177,16 @@ func (gs *govStakerV1) addDelegation(delegationID int64, delegation *staker.Dele
 //
 // Returns:
 //   - bool: true if successfully removed
-func (gs *govStakerV1) removeDelegation(delegationID int64) bool {
-	state := gs.getGovStakerState()
-	delegation := gs.getDelegation(delegationID)
+func removeDelegation(delegationID int64) bool {
+	delegation := getDelegation(delegationID)
 	if delegation == nil {
 		return false
 	}
 
 	id := formatInt(delegation.ID())
-	_, ok := state.delegations.Remove(id)
+	_, ok := delegations.Remove(id)
 
-	state.delegationManager.removeDelegation(
+	delegationManager.removeDelegation(
 		delegation.DelegateFrom(),
 		delegation.DelegateTo(),
 		delegationID,
@@ -157,11 +201,10 @@ func (gs *govStakerV1) removeDelegation(delegationID int64) bool {
 //   - user: user's address
 //
 // Returns:
-//   - []*staker.Delegation: list of user's delegations
-func (gs *govStakerV1) getUserDelegations(user address) (delegations []*staker.Delegation) {
-	state := gs.getGovStakerState()
-	for _, delegationID := range state.delegationManager.GetUserDelegationIDs(user) {
-		delegations = append(delegations, gs.getDelegation(delegationID))
+//   - []*Delegation: list of user's delegations
+func getUserDelegations(user address) (delegations []*Delegation) {
+	for _, delegationID := range delegationManager.GetUserDelegationIDs(user) {
+		delegations = append(delegations, getDelegation(delegationID))
 	}
 	return
 }
@@ -174,11 +217,10 @@ func (gs *govStakerV1) getUserDelegations(user address) (delegations []*staker.D
 //   - delegatee: delegatee's address (currently unused)
 //
 // Returns:
-//   - []*staker.Delegation: list of user's delegations to the delegatee
-func (gs *govStakerV1) getUserDelegationsWithDelegatee(user address, delegatee address) (delegations []*staker.Delegation) {
-	state := gs.getGovStakerState()
-	for _, delegationID := range state.delegationManager.GetUserDelegationIDs(user) {
-		delegations = append(delegations, gs.getDelegation(delegationID))
+//   - []*Delegation: list of user's delegations to the delegatee
+func getUserDelegationsWithDelegatee(user address, delegatee address) (delegations []*Delegation) {
+	for _, delegationID := range delegationManager.GetUserDelegationIDs(user) {
+		delegations = append(delegations, getDelegation(delegationID))
 	}
 	return
 }
@@ -186,48 +228,42 @@ func (gs *govStakerV1) getUserDelegationsWithDelegatee(user address, delegatee a
 // getDelegationHistory returns the current delegation history.
 //
 // Returns:
-//   - *avl.Tree: chronological list of delegation records
-func (gs *govStakerV1) getDelegationHistory() *avl.Tree {
-	state := gs.getGovStakerState()
-	return state.delegationHistory
+//   - DelegationHistory: chronological list of delegation records
+func getDelegationHistory() DelegationHistory {
+	return delegationHistory
 }
 
 // addDelegationRecord adds a new delegation record to history and updates snapshots.
 //
 // Parameters:
 //   - delegationRecord: delegation record to add
-func (gs *govStakerV1) addDelegationRecord(delegationRecord *staker.DelegationRecord) {
-	state := gs.getGovStakerState()
-	// TODO: Implement proper history and snapshot update logic
-	// state.delegationHistory = state.delegationHistory.addRecord(delegationRecord)
-	// state.delegationSnapshots = state.delegationSnapshots.addRecord(delegationRecord)
+func addDelegationRecord(delegationRecord *DelegationRecord) {
+	delegationHistory = delegationHistory.addRecord(delegationRecord)
+	delegationSnapshots = delegationSnapshots.addRecord(delegationRecord)
 }
 
 // setDelegationHistory replaces the current delegation history.
 //
 // Parameters:
 //   - history: new delegation history to set
-func (gs *govStakerV1) setDelegationHistory(history *avl.Tree) {
-	state := gs.getGovStakerState()
-	state.delegationHistory = history
+func setDelegationHistory(history DelegationHistory) {
+	delegationHistory = history
 }
 
 // getDelegationSnapshots returns the current delegation snapshots.
 //
 // Returns:
-//   - *avl.Tree: current delegation state for all delegatees
-func (gs *govStakerV1) getDelegationSnapshots() *avl.Tree {
-	state := gs.getGovStakerState()
-	return state.delegationSnapshots
+//   - DelegationSnapshot: current delegation state for all delegatees
+func getDelegationSnapshots() DelegationSnapshot {
+	return delegationSnapshots
 }
 
 // setDelegationSnapshots replaces the current delegation snapshots.
 //
 // Parameters:
 //   - snapshot: new delegation snapshot to set
-func (gs *govStakerV1) setDelegationSnapshots(snapshot *avl.Tree) {
-	state := gs.getGovStakerState()
-	state.delegationSnapshots = snapshot
+func setDelegationSnapshots(snapshot DelegationSnapshot) {
+	delegationSnapshots = snapshot
 }
 
 // addStakeEmissionReward adds stake to emission reward tracking for an address.
@@ -237,16 +273,15 @@ func (gs *govStakerV1) setDelegationSnapshots(snapshot *avl.Tree) {
 //   - address: staker's address
 //   - amount: amount of stake to add
 //   - currentTimestamp: current timestamp
-func (gs *govStakerV1) addStakeEmissionReward(address string, amount int64, currentTimestamp int64) error {
-	state := gs.getGovStakerState()
+func addStakeEmissionReward(address string, amount int64, currentTimestamp int64) error {
 	distributedAmount := emission.GetAccuDistributedToGovStaker()
 
-	err := state.emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
+	err := emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
 	if err != nil {
 		return err
 	}
 
-	return state.emissionRewardManager.addStake(address, amount, currentTimestamp)
+	return emissionRewardManager.addStake(address, amount, currentTimestamp)
 }
 
 // removeStakeEmissionReward removes stake from emission reward tracking for an address.
@@ -256,16 +291,15 @@ func (gs *govStakerV1) addStakeEmissionReward(address string, amount int64, curr
 //   - address: staker's address
 //   - amount: amount of stake to remove
 //   - currentTimestamp: current timestamp
-func (gs *govStakerV1) removeStakeEmissionReward(address string, amount int64, currentTimestamp int64) error {
-	state := gs.getGovStakerState()
+func removeStakeEmissionReward(address string, amount int64, currentTimestamp int64) error {
 	distributedAmount := emission.GetAccuDistributedToGovStaker()
 
-	err := state.emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
+	err := emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
 	if err != nil {
 		return err
 	}
 
-	return state.emissionRewardManager.removeStake(address, amount, currentTimestamp)
+	return emissionRewardManager.removeStake(address, amount, currentTimestamp)
 }
 
 // claimRewardsEmissionReward claims emission rewards for an address.
@@ -278,16 +312,15 @@ func (gs *govStakerV1) removeStakeEmissionReward(address string, amount int64, c
 // Returns:
 //   - int64: amount of emission rewards claimed
 //   - error: nil on success, error if claiming fails
-func (gs *govStakerV1) claimRewardsEmissionReward(address string, currentTimestamp int64) (int64, error) {
-	state := gs.getGovStakerState()
+func claimRewardsEmissionReward(address string, currentTimestamp int64) (int64, error) {
 	distributedAmount := emission.GetAccuDistributedToGovStaker()
 
-	err := state.emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
+	err := emissionRewardManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
 	if err != nil {
 		return 0, err
 	}
 
-	return state.emissionRewardManager.claimRewards(address, currentTimestamp)
+	return emissionRewardManager.claimRewards(address, currentTimestamp)
 }
 
 // addStakeProtocolFeeReward adds stake to protocol fee reward tracking for an address.
@@ -297,18 +330,17 @@ func (gs *govStakerV1) claimRewardsEmissionReward(address string, currentTimesta
 //   - address: staker's address
 //   - amount: amount of stake to add
 //   - currentTimestamp: current timestamp
-func (gs *govStakerV1) addStakeProtocolFeeReward(address string, amount int64, currentTimestamp int64) error {
-	state := gs.getGovStakerState()
-	pf.DistributeProtocolFee()
+func addStakeProtocolFeeReward(address string, amount int64, currentTimestamp int64) error {
+	pf.DistributeProtocolFee(cross)
 
-	distributedAmounts := gs.getDistributedProtocolFees()
+	distributedAmounts := getDistributedProtocolFees()
 
-	err := state.protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
+	err := protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
 	if err != nil {
 		return err
 	}
 
-	return state.protocolFeeRewardManager.addStake(address, amount, currentTimestamp)
+	return protocolFeeRewardManager.addStake(address, amount, currentTimestamp)
 }
 
 // removeStakeProtocolFeeReward removes stake from protocol fee reward tracking for an address.
@@ -318,18 +350,17 @@ func (gs *govStakerV1) addStakeProtocolFeeReward(address string, amount int64, c
 //   - address: staker's address
 //   - amount: amount of stake to remove
 //   - currentTimestamp: current timestamp
-func (gs *govStakerV1) removeStakeProtocolFeeReward(address string, amount int64, currentTimestamp int64) error {
-	state := gs.getGovStakerState()
-	pf.DistributeProtocolFee()
+func removeStakeProtocolFeeReward(address string, amount int64, currentTimestamp int64) error {
+	pf.DistributeProtocolFee(cross)
 
-	distributedAmounts := gs.getDistributedProtocolFees()
+	distributedAmounts := getDistributedProtocolFees()
 
-	err := state.protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
+	err := protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
 	if err != nil {
 		return err
 	}
 
-	return state.protocolFeeRewardManager.removeStake(address, amount, currentTimestamp)
+	return protocolFeeRewardManager.removeStake(address, amount, currentTimestamp)
 }
 
 // claimRewardsProtocolFeeReward claims protocol fee rewards for an address.
@@ -342,18 +373,17 @@ func (gs *govStakerV1) removeStakeProtocolFeeReward(address string, amount int64
 // Returns:
 //   - map[string]int64: protocol fee rewards claimed by token
 //   - error: nil on success, error if claiming fails
-func (gs *govStakerV1) claimRewardsProtocolFeeReward(address string, currentTimestamp int64) (map[string]int64, error) {
-	state := gs.getGovStakerState()
-	pf.DistributeProtocolFee()
+func claimRewardsProtocolFeeReward(address string, currentTimestamp int64) (map[string]int64, error) {
+	pf.DistributeProtocolFee(cross)
 
-	distributedAmounts := gs.getDistributedProtocolFees()
+	distributedAmounts := getDistributedProtocolFees()
 
-	err := state.protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
+	err := protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
 	if err != nil {
 		return nil, err
 	}
 
-	return state.protocolFeeRewardManager.claimRewards(address, currentTimestamp)
+	return protocolFeeRewardManager.claimRewards(address, currentTimestamp)
 }
 
 // getDistributedProtocolFees retrieves the current distributed protocol fee amounts for all tokens.
@@ -361,7 +391,7 @@ func (gs *govStakerV1) claimRewardsProtocolFeeReward(address string, currentTime
 //
 // Returns:
 //   - map[string]int64: distributed amounts by token path
-func (gs *govStakerV1) getDistributedProtocolFees() map[string]int64 {
+func getDistributedProtocolFees() map[string]int64 {
 	return pf.GetAccuTransfersToGovStaker()
 }
 
@@ -373,9 +403,8 @@ func (gs *govStakerV1) getDistributedProtocolFees() map[string]int64 {
 // Returns:
 //   - int64: deposit amount
 //   - bool: true if project exists, false otherwise
-func (gs *govStakerV1) getLaunchpadProjectDeposit(ownerAddress string) (int64, bool) {
-	state := gs.getGovStakerState()
-	deposit, ok := state.launchpadProjectDeposits.Get(ownerAddress)
+func getLaunchpadProjectDeposit(ownerAddress string) (int64, bool) {
+	deposit, ok := launchpadProjectDeposits.Get(ownerAddress)
 	if !ok {
 		return 0, false
 	}
@@ -396,9 +425,8 @@ func (gs *govStakerV1) getLaunchpadProjectDeposit(ownerAddress string) (int64, b
 //
 // Returns:
 //   - bool: true if successfully set
-func (gs *govStakerV1) setLaunchpadProjectDeposit(ownerAddress string, deposit int64) bool {
-	state := gs.getGovStakerState()
-	state.launchpadProjectDeposits.Set(ownerAddress, deposit)
+func setLaunchpadProjectDeposit(ownerAddress string, deposit int64) bool {
+	launchpadProjectDeposits.Set(ownerAddress, deposit)
 
 	return true
 }
@@ -410,9 +438,8 @@ func (gs *govStakerV1) setLaunchpadProjectDeposit(ownerAddress string, deposit i
 //
 // Returns:
 //   - bool: true if successfully removed
-func (gs *govStakerV1) removeLaunchpadProjectDeposit(ownerAddress string) bool {
-	state := gs.getGovStakerState()
-	_, ok := state.launchpadProjectDeposits.Remove(ownerAddress)
+func removeLaunchpadProjectDeposit(ownerAddress string) bool {
+	_, ok := launchpadProjectDeposits.Remove(ownerAddress)
 
 	return ok
 }
@@ -424,25 +451,25 @@ func (gs *govStakerV1) removeLaunchpadProjectDeposit(ownerAddress string) bool {
 //   - address: project wallet address
 //   - amount: amount of stake to add
 //   - currentTimestamp: current timestamp
-func (gs *govStakerV1) addStakeFromLaunchpad(address string, amount int64, currentTimestamp int64) error {
-	launchpadRewardID := gs.makeLaunchpadRewardID(address)
-	err := gs.addStakeEmissionReward(launchpadRewardID, amount, currentTimestamp)
+func addStakeFromLaunchpad(address string, amount int64, currentTimestamp int64) error {
+	launchpadRewardID := makeLaunchpadRewardID(address)
+	err := addStakeEmissionReward(launchpadRewardID, amount, currentTimestamp)
 	if err != nil {
 		return err
 	}
 
-	err = gs.addStakeProtocolFeeReward(launchpadRewardID, amount, currentTimestamp)
+	err = addStakeProtocolFeeReward(launchpadRewardID, amount, currentTimestamp)
 	if err != nil {
 		return err
 	}
 
-	deposit, exists := gs.getLaunchpadProjectDeposit(launchpadRewardID)
+	deposit, exists := getLaunchpadProjectDeposit(launchpadRewardID)
 	if !exists {
 		deposit = 0
 	}
 
 	deposit += amount
-	gs.setLaunchpadProjectDeposit(launchpadRewardID, deposit)
+	setLaunchpadProjectDeposit(launchpadRewardID, deposit)
 
 	return nil
 }
@@ -454,19 +481,19 @@ func (gs *govStakerV1) addStakeFromLaunchpad(address string, amount int64, curre
 //   - address: project wallet address
 //   - amount: amount of stake to remove
 //   - currentTimestamp: current timestamp
-func (gs *govStakerV1) removeStakeFromLaunchpad(address string, amount int64, currentTimestamp int64) error {
-	launchpadRewardID := gs.makeLaunchpadRewardID(address)
-	err := gs.removeStakeEmissionReward(launchpadRewardID, amount, currentTimestamp)
+func removeStakeFromLaunchpad(address string, amount int64, currentTimestamp int64) error {
+	launchpadRewardID := makeLaunchpadRewardID(address)
+	err := removeStakeEmissionReward(launchpadRewardID, amount, currentTimestamp)
 	if err != nil {
 		return err
 	}
 
-	err = gs.removeStakeProtocolFeeReward(launchpadRewardID, amount, currentTimestamp)
+	err = removeStakeProtocolFeeReward(launchpadRewardID, amount, currentTimestamp)
 	if err != nil {
 		return err
 	}
 
-	deposit, exists := gs.getLaunchpadProjectDeposit(launchpadRewardID)
+	deposit, exists := getLaunchpadProjectDeposit(launchpadRewardID)
 	if !exists {
 		deposit = 0
 	}
@@ -476,7 +503,7 @@ func (gs *govStakerV1) removeStakeFromLaunchpad(address string, amount int64, cu
 		deposit = 0
 	}
 
-	gs.setLaunchpadProjectDeposit(launchpadRewardID, deposit)
+	setLaunchpadProjectDeposit(launchpadRewardID, deposit)
 
 	return nil
 }
@@ -489,6 +516,6 @@ func (gs *govStakerV1) removeStakeFromLaunchpad(address string, amount int64, cu
 //
 // Returns:
 //   - string: formatted launchpad reward ID
-func (gs *govStakerV1) makeLaunchpadRewardID(address string) string {
+func makeLaunchpadRewardID(address string) string {
 	return ufmt.Sprintf("launchpad:%s", address)
 }

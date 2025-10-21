@@ -42,14 +42,13 @@ func (gs *govStakerV1) Delegate(
 	amount int64,
 	referrer string,
 ) int64 {
-	state := gs.getGovStakerState()
 	halt.AssertIsNotHaltedGovStakerWithVersion(1)
 
 	prevRealm := runtime.PreviousRealm()
 	access.AssertIsUser(prevRealm)
 	access.AssertIsValidAddress(to)
 
-	gs.assertIsValidDelegateAmount(amount)
+	assertIsValidDelegateAmount(amount)
 
 	caller := prevRealm.Address()
 	from := caller
@@ -57,7 +56,7 @@ func (gs *govStakerV1) Delegate(
 	currentHeight := runtime.ChainHeight()
 	currentTimestamp := time.Now().Unix()
 
-	gs.mintAndDistributeGns()
+	emission.MintAndDistributeGns(cross)
 
 	delegation, err := gs.delegate(
 		from,
@@ -70,10 +69,10 @@ func (gs *govStakerV1) Delegate(
 		panic(err)
 	}
 
-	gs.transferFromGns(from, currentRealm.Address(), amount)
-	gs.mintXgns(from, amount)
+	gns.TransferFrom(cross, from, currentRealm.Address(), amount)
+	xgns.Mint(cross, from, amount)
 
-	registeredReferrer := gs.registerReferrer(caller, referrer)
+	registeredReferrer := registerReferrer(caller, referrer)
 
 	chain.Emit(
 		"Delegate",
@@ -115,18 +114,17 @@ func (gs *govStakerV1) Undelegate(
 	from address,
 	amount int64,
 ) int64 {
-	state := gs.getGovStakerState()
 	halt.AssertIsNotHaltedGovStakerWithVersion(1)
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsValidAddress(from)
 
-	gs.assertIsValidDelegateAmount(amount)
+	assertIsValidDelegateAmount(amount)
 
 	currentHeight := runtime.ChainHeight()
 	currentTimestamp := time.Now().Unix()
 
-	gs.mintAndDistributeGns()
+	emission.MintAndDistributeGns(cross)
 
 	unDelegationAmount, err := gs.unDelegate(
 		caller,
@@ -182,20 +180,19 @@ func (gs *govStakerV1) Redelegate(
 	newDelegatee address,
 	amount int64,
 ) int64 {
-	state := gs.getGovStakerState()
 	halt.AssertIsNotHaltedGovStakerWithVersion(1)
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsValidAddress(delegatee)
 	access.AssertIsValidAddress(newDelegatee)
 
-	gs.assertIsValidDelegateAmount(amount)
+	assertIsValidDelegateAmount(amount)
 
 	currentHeight := runtime.ChainHeight()
 	currentTimestamp := time.Now().Unix()
 	delegator := caller
 
-	gs.mintAndDistributeGns()
+	emission.MintAndDistributeGns(cross)
 
 	unDelegationAmount, err := gs.unDelegateWithoutLockup(
 		delegator,
@@ -234,7 +231,6 @@ func (gs *govStakerV1) Redelegate(
 // Allows users to collect GNS tokens that completed undelegation lockup period.
 // Burns xGNS and returns GNS tokens.
 func (gs *govStakerV1) CollectUndelegatedGns() int64 {
-	state := gs.getGovStakerState()
 	halt.AssertIsNotHaltedGovStakerWithVersion(1)
 	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
@@ -242,7 +238,7 @@ func (gs *govStakerV1) CollectUndelegatedGns() int64 {
 	caller := prevRealm.Address()
 	currentTime := time.Now().Unix()
 
-	gs.mintAndDistributeGns()
+	emission.MintAndDistributeGns(cross)
 
 	collectedAmount, err := gs.collectDelegations(caller, currentTime)
 	if err != nil {
@@ -253,12 +249,12 @@ func (gs *govStakerV1) CollectUndelegatedGns() int64 {
 		return 0
 	}
 
-	gs.burnXgns(caller, collectedAmount)
-	gs.transferGns(caller, collectedAmount)
+	xgns.Burn(cross, caller, collectedAmount)
+	gns.Transfer(cross, caller, collectedAmount)
 
-	state.totalLockedAmount -= collectedAmount
-	if state.totalLockedAmount < 0 {
-		state.totalLockedAmount = 0
+	totalLockedAmount -= collectedAmount
+	if totalLockedAmount < 0 {
+		totalLockedAmount = 0
 	}
 
 	chain.Emit(
@@ -282,8 +278,7 @@ func (gs *govStakerV1) delegate(
 	currentHeight,
 	currentTimestamp int64,
 ) (*Delegation, error) {
-	state := gs.getGovStakerState()
-	delegationID := gs.nextDelegationID()
+	delegationID := nextDelegationID()
 	delegation := NewDelegation(
 		delegationID,
 		from,
@@ -294,13 +289,13 @@ func (gs *govStakerV1) delegate(
 	)
 	delegationRecord := NewDelegationDelegateRecordBy(delegation)
 
-	gs.addDelegation(delegationID, delegation)
-	gs.addDelegationRecord(delegationRecord)
-	gs.addStakeEmissionReward(from, amount, currentTimestamp)
-	gs.addStakeProtocolFeeReward(from, amount, time.Now().Unix())
+	addDelegation(delegationID, delegation)
+	addDelegationRecord(delegationRecord)
+	addStakeEmissionReward(from.String(), amount, currentTimestamp)
+	addStakeProtocolFeeReward(from.String(), amount, time.Now().Unix())
 
-	state.totalDelegatedAmount += amount
-	state.totalLockedAmount += amount
+	totalDelegatedAmount += amount
+	totalLockedAmount += amount
 
 	return delegation, nil
 }
@@ -314,8 +309,7 @@ func (gs *govStakerV1) unDelegate(
 	currentHeight,
 	currentTimestamp int64,
 ) (int64, error) {
-	state := gs.getGovStakerState()
-	delegations := gs.getUserDelegationsWithDelegatee(delegator, delegatee)
+	delegations := getUserDelegationsWithDelegatee(delegator, delegatee)
 	if len(delegations) == 0 {
 		return 0, nil
 	}
@@ -325,7 +319,7 @@ func (gs *govStakerV1) unDelegate(
 	// Process undelegation across multiple delegation records if necessary
 	for _, delegation := range delegations {
 		if delegation.IsEmpty() {
-			gs.removeDelegation(delegation.ID())
+			removeDelegation(delegation.ID())
 			continue
 		}
 
@@ -339,15 +333,15 @@ func (gs *govStakerV1) unDelegate(
 			currentUnDelegationAmount,
 			currentHeight,
 			currentTimestamp,
-			state.unDelegationLockupPeriod,
+			unDelegationLockupPeriod,
 		)
 
 		delegationRecord := NewDelegationWithdrawRecordBy(delegation, currentUnDelegationAmount, currentTimestamp)
 
-		gs.setDelegation(delegation.ID(), delegation)
-		gs.addDelegationRecord(delegationRecord)
-		gs.removeStakeEmissionReward(delegator, currentUnDelegationAmount, currentTimestamp)
-		gs.removeStakeProtocolFeeReward(delegator, currentUnDelegationAmount, currentTimestamp)
+		setDelegation(delegation.ID(), delegation)
+		addDelegationRecord(delegationRecord)
+		removeStakeEmissionReward(delegator.String(), currentUnDelegationAmount, currentTimestamp)
+		removeStakeProtocolFeeReward(delegator.String(), currentUnDelegationAmount, currentTimestamp)
 
 		unDelegationAmount -= currentUnDelegationAmount
 		if unDelegationAmount <= 0 {
@@ -355,10 +349,10 @@ func (gs *govStakerV1) unDelegate(
 		}
 	}
 
-	state.totalDelegatedAmount -= amount
+	totalDelegatedAmount -= amount
 
-	if state.totalDelegatedAmount < 0 {
-		state.totalDelegatedAmount = 0
+	if totalDelegatedAmount < 0 {
+		totalDelegatedAmount = 0
 	}
 
 	return amount, nil
@@ -373,8 +367,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 	currentHeight,
 	currentTime int64,
 ) (int64, error) {
-	state := gs.getGovStakerState()
-	delegations := gs.getUserDelegationsWithDelegatee(delegator, delegatee)
+	delegations := getUserDelegationsWithDelegatee(delegator, delegatee)
 	if len(delegations) == 0 {
 		return 0, nil
 	}
@@ -384,7 +377,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 	// Process undelegation across multiple delegation records if necessary
 	for _, delegation := range delegations {
 		if delegation.IsEmpty() {
-			gs.removeDelegation(delegation.ID())
+			removeDelegation(delegation.ID())
 			continue
 		}
 
@@ -406,10 +399,10 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 		}
 	}
 
-	state.totalDelegatedAmount -= amount
+	totalDelegatedAmount -= amount
 
-	if state.totalDelegatedAmount < 0 {
-		state.totalDelegatedAmount = 0
+	if totalDelegatedAmount < 0 {
+		totalDelegatedAmount = 0
 	}
 
 	return amount, nil
@@ -420,7 +413,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int64, error) {
 	collectedAmount := int64(0)
 
-	delegations := gs.getUserDelegations(user)
+	delegations := getUserDelegations(user)
 	if len(delegations) == 0 {
 		return collectedAmount, nil
 	}
@@ -454,8 +447,8 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 
 // registerReferrer registers or validates referrer for delegation.
 // Handles referral system integration for delegation operations.
-func (gs *govStakerV1) registerReferrer(caller address, referrer string) string {
-	success := gs.tryRegisterReferral(caller, referrer)
+func registerReferrer(caller address, referrer string) string {
+	success := referral.TryRegister(cross, caller, referrer)
 	actualReferrer := referrer
 
 	if !success {

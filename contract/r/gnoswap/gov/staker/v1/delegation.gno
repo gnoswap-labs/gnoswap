@@ -1,20 +1,22 @@
 package v1
 
-import (
-	"gno.land/r/gnoswap/gov/staker"
-)
-
 // Error message constants
 const (
 	errCollectAmountExceedsCollectable = "amount to collect is greater than collectable amount"
 	errOverflowInCollectedAmount       = "overflow in delegation collected amount: current(%d) + collect(%d)"
 )
 
-// Define local constants matching the parent package
+// DelegationType represents the type of delegation operation
+type DelegationType string
+
 const (
-	DelegateType   = "DELEGATE"
-	UnDelegateType = "UNDELEGATE"
+	DelegateType   DelegationType = "DELEGATE"
+	UnDelegateType DelegationType = "UNDELEGATE"
 )
+
+func (d DelegationType) String() string     { return string(d) }
+func (d DelegationType) IsDelegate() bool   { return d == DelegateType }
+func (d DelegationType) IsUnDelegate() bool { return d == UnDelegateType }
 
 // Delegation represents a delegation between two addresses
 type Delegation struct {

@@ -7,7 +7,7 @@ func Delegate(to address, amount int64, referrer string) int64 {
 	if impl == nil {
 		panic("gov/staker: implementation not initialized")
 	}
-	return impl.Delegate(to.String(), amount, referrer)
+	return impl.Delegate(to, amount, referrer)
 }
 
 func Undelegate(from address, amount int64) int64 {
@@ -15,7 +15,7 @@ func Undelegate(from address, amount int64) int64 {
 	if impl == nil {
 		panic("gov/staker: implementation not initialized")
 	}
-	return impl.Undelegate(from.String(), amount)
+	return impl.Undelegate(from, amount)
 }
 
 func Redelegate(delegatee, newDelegatee address, amount int64) int64 {
@@ -23,7 +23,7 @@ func Redelegate(delegatee, newDelegatee address, amount int64) int64 {
 	if impl == nil {
 		panic("gov/staker: implementation not initialized")
 	}
-	return impl.Redelegate(delegatee.String(), newDelegatee.String(), amount)
+	return impl.Redelegate(delegatee, newDelegatee, amount)
 }
 
 func CollectUndelegatedGns() int64 {
@@ -49,7 +49,7 @@ func CollectRewardFromLaunchPad(to address) {
 	if impl == nil {
 		panic("gov/staker: implementation not initialized")
 	}
-	impl.CollectRewardFromLaunchPad(to.String())
+	impl.CollectRewardFromLaunchPad(to)
 }
 
 func SetAmountByProjectWallet(addr address, amount int64, add bool) {
@@ -57,7 +57,7 @@ func SetAmountByProjectWallet(addr address, amount int64, add bool) {
 	if impl == nil {
 		panic("gov/staker: implementation not initialized")
 	}
-	impl.SetAmountByProjectWallet(addr.String(), amount, add)
+	impl.SetAmountByProjectWallet(addr, amount, add)
 }
 
 // Getter functions
@@ -102,20 +102,20 @@ func GetLockedAmount() int64 {
 	return impl.GetLockedAmount()
 }
 
-func GetDelegationSnapshots(snapshotTime int64) (DelegationSnapshot, bool) {
-	impl := getImplementation()
-	if impl == nil {
-		panic("gov/staker: implementation not initialized")
-	}
-	return impl.GetDelegationSnapshots(snapshotTime)
-}
+// func GetDelegationSnapshots(snapshotTime int64) (DelegationSnapshot, bool) {
+// 	impl := getImplementation()
+// 	if impl == nil {
+// 		panic("gov/staker: implementation not initialized")
+// 	}
+// 	return impl.GetDelegationSnapshots(snapshotTime)
+// }
 
 func GetClaimableRewardByAddress(addr address) string {
 	impl := getImplementation()
 	if impl == nil {
 		panic("gov/staker: implementation not initialized")
 	}
-	return impl.GetClaimableRewardByAddress(addr.String())
+	return impl.GetClaimableRewardByAddress(addr)
 }
 
 func GetClaimableRewardByLaunchpad(addr address) string {
@@ -123,7 +123,7 @@ func GetClaimableRewardByLaunchpad(addr address) string {
 	if impl == nil {
 		panic("gov/staker: implementation not initialized")
 	}
-	return impl.GetClaimableRewardByLaunchpad(addr.String())
+	return impl.GetClaimableRewardByLaunchpad(addr)
 }
 
 func GetClaimableRewardByRewardID(rewardID string) string {

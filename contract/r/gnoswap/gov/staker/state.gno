@@ -4,7 +4,7 @@ import (
 	"chain/runtime"
 	"errors"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac" // initialize readable contract role(s)
 
 	"gno.land/p/gnoswap/store"

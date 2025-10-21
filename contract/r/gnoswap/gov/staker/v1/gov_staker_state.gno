@@ -5,96 +5,97 @@ import (
 	"gno.land/r/gnoswap/gov/staker"
 )
 
-// GovStakerState implements staker.GovStakerState interface
-type GovStakerState struct {
-	unDelegationLockupPeriod   int64
-	delegationCounter          *Counter
-	delegations                *avl.Tree
-	delegationManager          *DelegationManager
-	delegationHistory          *avl.Tree
-	delegationSnapshots        *avl.Tree
-	emissionRewardManager      *EmissionRewardManager
-	protocolFeeRewardManager   *ProtocolFeeRewardManager
-	launchpadProjectDeposits   *avl.Tree
-	totalDelegatedAmount       int64
-	totalLockedAmount          int64
+// govStakerStateV1 implements the GovStakerState interface
+type govStakerStateV1 struct {
+	// Lockup configuration
+	unDelegationLockupPeriod int64
+
+	// Delegation management
+	delegationCounter    interface{} // *counter.Counter
+	delegations          *avl.Tree
+	delegationManager    interface{} // *DelegationManager
+	delegationHistory    *avl.Tree
+	delegationSnapshots  *avl.Tree
+
+	// Reward managers
+	emissionRewardManager    interface{} // *EmissionRewardManager
+	protocolFeeRewardManager interface{} // *ProtocolFeeRewardManager
+
+	// Launchpad integration
+	launchpadProjectDeposits *avl.Tree
+
+	// Aggregate metrics
+	totalDelegatedAmount int64
+	totalLockedAmount    int64
 }
 
-// UnDelegationLockupPeriod returns the lockup period
-func (s *GovStakerState) UnDelegationLockupPeriod() int64 {
+// Ensure govStakerStateV1 implements GovStakerState interface
+var _ staker.GovStakerState = (*govStakerStateV1)(nil)
+
+// UnDelegationLockupPeriod returns the lockup period for undelegation
+func (s *govStakerStateV1) UnDelegationLockupPeriod() int64 {
 	return s.unDelegationLockupPeriod
 }
 
 // DelegationCounter returns the delegation counter
-func (s *GovStakerState) DelegationCounter() interface{} {
+func (s *govStakerStateV1) DelegationCounter() interface{} {
 	return s.delegationCounter
 }
 
 // Delegations returns the delegations tree
-func (s *GovStakerState) Delegations() *avl.Tree {
+func (s *govStakerStateV1) Delegations() *avl.Tree {
 	return s.delegations
 }
 
 // DelegationManager returns the delegation manager
-func (s *GovStakerState) DelegationManager() interface{} {
+func (s *govStakerStateV1) DelegationManager() interface{} {
 	return s.delegationManager
 }
 
-// DelegationHistory returns the delegation history
-func (s *GovStakerState) DelegationHistory() *avl.Tree {
+// DelegationHistory returns the delegation history tree
+func (s *govStakerStateV1) DelegationHistory() *avl.Tree {
 	return s.delegationHistory
 }
 
-// DelegationSnapshots returns the delegation snapshots
-func (s *GovStakerState) DelegationSnapshots() *avl.Tree {
+// DelegationSnapshots returns the delegation snapshots tree
+func (s *govStakerStateV1) DelegationSnapshots() *avl.Tree {
 	return s.delegationSnapshots
 }
 
 // EmissionRewardManager returns the emission reward manager
-func (s *GovStakerState) EmissionRewardManager() interface{} {
+func (s *govStakerStateV1) EmissionRewardManager() interface{} {
 	return s.emissionRewardManager
 }
 
 // ProtocolFeeRewardManager returns the protocol fee reward manager
-func (s *GovStakerState) ProtocolFeeRewardManager() interface{} {
+func (s *govStakerStateV1) ProtocolFeeRewardManager() interface{} {
 	return s.protocolFeeRewardManager
 }
 
-// LaunchpadProjectDeposits returns the launchpad project deposits
-func (s *GovStakerState) LaunchpadProjectDeposits() *avl.Tree {
+// LaunchpadProjectDeposits returns the launchpad project deposits tree
+func (s *govStakerStateV1) LaunchpadProjectDeposits() *avl.Tree {
 	return s.launchpadProjectDeposits
 }
 
 // TotalDelegatedAmount returns the total delegated amount
-func (s *GovStakerState) TotalDelegatedAmount() int64 {
+func (s *govStakerStateV1) TotalDelegatedAmount() int64 {
 	return s.totalDelegatedAmount
 }
 
 // TotalLockedAmount returns the total locked amount
-func (s *GovStakerState) TotalLockedAmount() int64 {
+func (s *govStakerStateV1) TotalLockedAmount() int64 {
 	return s.totalLockedAmount
 }
 
-// Global state instance (temporary until full migration)
-var globalState *GovStakerState
-
-func init() {
-	globalState = &GovStakerState{
-		unDelegationLockupPeriod:   60 * 60 * 24 * 7, // 7 days
-		delegationCounter:          NewCounter(),
-		delegations:                avl.NewTree(),
-		delegationManager:          NewDelegationManager(),
-		delegationHistory:          avl.NewTree(),
-		delegationSnapshots:        avl.NewTree(),
-		emissionRewardManager:      NewEmissionRewardManager(),
-		protocolFeeRewardManager:   NewProtocolFeeRewardManager(),
-		launchpadProjectDeposits:   avl.NewTree(),
-		totalDelegatedAmount:       0,
-		totalLockedAmount:          0,
+// NewGovStakerStateV1 creates a new govStakerStateV1 instance
+func NewGovStakerStateV1() staker.GovStakerState {
+	return &govStakerStateV1{
+		unDelegationLockupPeriod: 60 * 60 * 24 * 7, // 7 days
+		delegations:              avl.NewTree(),
+		delegationHistory:        avl.NewTree(),
+		delegationSnapshots:      avl.NewTree(),
+		launchpadProjectDeposits: avl.NewTree(),
+		totalDelegatedAmount:     0,
+		totalLockedAmount:        0,
 	}
-}
-
-// getGlobalState returns the global state instance
-func getGlobalState() *GovStakerState {
-	return globalState
 }
