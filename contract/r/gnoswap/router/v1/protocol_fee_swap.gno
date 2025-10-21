@@ -28,11 +28,11 @@ func (r *routerV1) GetSwapFee() uint64 {
 // SetSwapFee sets the swap fee rate in basis points.
 // Only admin or governance can call this function.
 func (r *routerV1) SetSwapFee(fee uint64) {
-	halt.AssertIsNotHaltedRouterWithVersion(1)
-	halt.AssertIsNotHaltedProtocolFeeWithVersion(1)
+	halt.AssertIsNotHaltedRouter()
+	halt.AssertIsNotHaltedProtocolFee()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	if fee > maxSwapFeeBPS {
 		panic(ufmt.Errorf(

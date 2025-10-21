@@ -49,7 +49,7 @@ func (r *routerV1) ExactInSwapRoute(
 	deadline int64,
 	referrer string,
 ) (string, string) {
-	halt.AssertIsNotHaltedRouterWithVersion(1)
+	halt.AssertIsNotHaltedRouter()
 
 	assertIsValidUserCoinSend(inputToken, amountIn)
 	assertIsValidRoutePaths(routeArr, inputToken, outputToken)
