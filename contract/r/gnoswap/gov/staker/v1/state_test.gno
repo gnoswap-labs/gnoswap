@@ -41,11 +41,14 @@ func TestUnDelegationLockupPeriod(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Given: Create test instance
+			gs := createTestGovStaker()
+
 			// When: Set lockup period
-			setUnDelegationLockupPeriod(tt.setPeriod)
+			gs.setUnDelegationLockupPeriod(tt.setPeriod)
 
 			// Then: Should return expected period
-			result := getUnDelegationLockupPeriod()
+			result := gs.getUnDelegationLockupPeriod()
 			uassert.Equal(t, result, tt.expectedPeriod)
 		})
 	}
@@ -63,15 +66,18 @@ func TestDelegationIDManagement(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Given: Create test instance
+			gs := createTestGovStaker()
+
 			// Given: Initial state
-			initialID := getCurrentDelegationID()
+			initialID := gs.getCurrentDelegationID()
 
 			// When: Get next delegation ID
-			nextID := nextDelegationID()
+			nextID := gs.nextDelegationID()
 
 			// Then: Should increment correctly
 			uassert.Equal(t, nextID, initialID+1)
-			uassert.Equal(t, getCurrentDelegationID(), nextID)
+			uassert.Equal(t, gs.getCurrentDelegationID(), nextID)
 		})
 	}
 }
@@ -103,8 +109,11 @@ func TestDelegationManagement(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Given: Create test instance
+			gs := createTestGovStaker()
+
 			// Given: Create new delegation
-			delegationID := nextDelegationID()
+			delegationID := gs.nextDelegationID()
 			delegation := NewDelegation(
 				delegationID,
 				tt.delegateFrom,
@@ -115,14 +124,14 @@ func TestDelegationManagement(t *testing.T) {
 			)
 
 			// When: Add delegation
-			result := addDelegation(delegationID, delegation)
+			result := gs.addDelegation(delegationID, delegation)
 
 			// Then: Should succeed
 			if tt.expectSuccess {
 				uassert.True(t, result)
 
 				// Verify delegation was stored
-				storedDelegation := getDelegation(delegationID)
+				storedDelegation := gs.getDelegation(delegationID)
 				uassert.NotEqual(t, storedDelegation, nil)
 				uassert.Equal(t, storedDelegation.DelegateFrom(), tt.delegateFrom)
 				uassert.Equal(t, storedDelegation.DelegateTo(), tt.delegateTo)
@@ -138,18 +147,18 @@ func TestDelegationManagement(t *testing.T) {
 func TestGetUserDelegations(t *testing.T) {
 	tests := []struct {
 		name          string
-		setupState    func() (address, []int64)
+		setupState    func(gs *govStakerV1) (address, []int64)
 		expectedCount int
 	}{
 		{
 			name: "Get delegations for user with multiple delegations",
-			setupState: func() (address, []int64) {
+			setupState: func(gs *govStakerV1) (address, []int64) {
 				user := address("g1testuser1234567890abcdefghijklmnopqr")
 				delegationIDs := make([]int64, 0)
 
 				// Add multiple delegations for the user
 				for i := 0; i < 3; i++ {
-					delegationID := nextDelegationID()
+					delegationID := gs.nextDelegationID()
 					delegation := NewDelegation(
 						delegationID,
 						user,
@@ -158,7 +167,7 @@ func TestGetUserDelegations(t *testing.T) {
 						100,
 						100,
 					)
-					addDelegation(delegationID, delegation)
+					gs.addDelegation(delegationID, delegation)
 					delegationIDs = append(delegationIDs, delegationID)
 				}
 				return user, delegationIDs
@@ -167,7 +176,7 @@ func TestGetUserDelegations(t *testing.T) {
 		},
 		{
 			name: "Get delegations for user with no delegations",
-			setupState: func() (address, []int64) {
+			setupState: func(gs *govStakerV1) (address, []int64) {
 				user := address("g1newuser1234567890abcdefghijklmnopqr")
 				return user, []int64{}
 			},
@@ -177,11 +186,14 @@ func TestGetUserDelegations(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Given: Create test instance
+			gs := createTestGovStaker()
+
 			// Given: Setup state
-			user, _ := tt.setupState()
+			user, _ := tt.setupState(gs)
 
 			// When: Get user delegations
-			userDelegations := getUserDelegations(user)
+			userDelegations := gs.getUserDelegations(user)
 
 			// Then: Should return expected count
 			uassert.Equal(t, len(userDelegations), tt.expectedCount)
@@ -198,13 +210,13 @@ func TestGetUserDelegations(t *testing.T) {
 func TestRemoveDelegation(t *testing.T) {
 	tests := []struct {
 		name          string
-		setupState    func() int64
+		setupState    func(gs *govStakerV1) int64
 		expectSuccess bool
 	}{
 		{
 			name: "Remove existing delegation",
-			setupState: func() int64 {
-				delegationID := nextDelegationID()
+			setupState: func(gs *govStakerV1) int64 {
+				delegationID := gs.nextDelegationID()
 				delegation := NewDelegation(
 					delegationID,
 					address("g1user1234567890abcdefghijklmnopqrst"),
@@ -213,14 +225,14 @@ func TestRemoveDelegation(t *testing.T) {
 					100,
 					100,
 				)
-				addDelegation(delegationID, delegation)
+				gs.addDelegation(delegationID, delegation)
 				return delegationID
 			},
 			expectSuccess: true,
 		},
 		{
 			name: "Remove non-existent delegation",
-			setupState: func() int64 {
+			setupState: func(gs *govStakerV1) int64 {
 				return 99999 // Non-existent ID
 			},
 			expectSuccess: false,
@@ -229,18 +241,21 @@ func TestRemoveDelegation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Given: Create test instance
+			gs := createTestGovStaker()
+
 			// Given: Setup state
-			delegationID := tt.setupState()
+			delegationID := tt.setupState(gs)
 
 			// When: Remove delegation
-			result := removeDelegation(delegationID)
+			result := gs.removeDelegation(delegationID)
 
 			// Then: Should return expected result
 			uassert.Equal(t, result, tt.expectSuccess)
 
 			if tt.expectSuccess {
 				// Verify delegation was removed
-				delegation := getDelegation(delegationID)
+				delegation := gs.getDelegation(delegationID)
 				uassert.Equal(t, delegation, nil)
 			}
 		})
@@ -259,8 +274,11 @@ func TestDelegationHistoryManagement(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Given: Create test instance
+			gs := createTestGovStaker()
+
 			// Given: Initial history state
-			initialHistory := getDelegationHistory()
+			initialHistory := gs.getDelegationHistory()
 			initialLength := len(initialHistory)
 
 			// Create delegation record
@@ -273,10 +291,10 @@ func TestDelegationHistoryManagement(t *testing.T) {
 			}
 
 			// When: Add delegation record
-			addDelegationRecord(record)
+			gs.addDelegationRecord(record)
 
 			// Then: Should increase history length
-			updatedHistory := getDelegationHistory()
+			updatedHistory := gs.getDelegationHistory()
 			uassert.Equal(t, len(updatedHistory), initialLength+1)
 		})
 	}
@@ -294,6 +312,9 @@ func TestDelegationSnapshotsManagement(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Given: Create test instance
+			gs := createTestGovStaker()
+
 			// Given: Create new snapshot
 			newSnapshot := make(DelegationSnapshot)
 			newSnapshot["user1"] = &DelegationSnapshotItem{
@@ -302,10 +323,10 @@ func TestDelegationSnapshotsManagement(t *testing.T) {
 			}
 
 			// When: Set delegation snapshots
-			setDelegationSnapshots(newSnapshot)
+			gs.setDelegationSnapshots(newSnapshot)
 
 			// Then: Should retrieve the same snapshot
-			retrievedSnapshot := getDelegationSnapshots()
+			retrievedSnapshot := gs.getDelegationSnapshots()
 			uassert.Equal(t, len(retrievedSnapshot), len(newSnapshot))
 
 			if item, exists := retrievedSnapshot["user1"]; exists {
@@ -342,15 +363,18 @@ func TestLaunchpadProjectDeposits(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Given: Create test instance
+			gs := createTestGovStaker()
+
 			// When: Set launchpad project deposit
-			result := setLaunchpadProjectDeposit(tt.ownerAddress, tt.depositAmount)
+			result := gs.setLaunchpadProjectDeposit(tt.ownerAddress, tt.depositAmount)
 
 			// Then: Should succeed
 			uassert.Equal(t, result, tt.expectSuccess)
 
 			if tt.expectSuccess {
 				// Verify deposit was stored
-				storedDeposit, exists := getLaunchpadProjectDeposit(tt.ownerAddress)
+				storedDeposit, exists := gs.getLaunchpadProjectDeposit(tt.ownerAddress)
 				uassert.True(t, exists)
 				uassert.Equal(t, storedDeposit, tt.depositAmount)
 			}
@@ -362,21 +386,21 @@ func TestLaunchpadProjectDeposits(t *testing.T) {
 func TestRemoveLaunchpadProjectDeposit(t *testing.T) {
 	tests := []struct {
 		name          string
-		setupState    func() string
+		setupState    func(gs *govStakerV1) string
 		expectSuccess bool
 	}{
 		{
 			name: "Remove existing deposit",
-			setupState: func() string {
+			setupState: func(gs *govStakerV1) string {
 				ownerAddress := "g1projectowner9876543210abcdefghijklm"
-				setLaunchpadProjectDeposit(ownerAddress, 3000)
+				gs.setLaunchpadProjectDeposit(ownerAddress, 3000)
 				return ownerAddress
 			},
 			expectSuccess: true,
 		},
 		{
 			name: "Remove non-existent deposit",
-			setupState: func() string {
+			setupState: func(gs *govStakerV1) string {
 				return "g1nonexistentowner1234567890abcdefgh"
 			},
 			expectSuccess: false,
@@ -385,18 +409,21 @@ func TestRemoveLaunchpadProjectDeposit(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Given: Create test instance
+			gs := createTestGovStaker()
+
 			// Given: Setup state
-			ownerAddress := tt.setupState()
+			ownerAddress := tt.setupState(gs)
 
 			// When: Remove launchpad project deposit
-			result := removeLaunchpadProjectDeposit(ownerAddress)
+			result := gs.removeLaunchpadProjectDeposit(ownerAddress)
 
 			// Then: Should return expected result
 			uassert.Equal(t, result, tt.expectSuccess)
 
 			if tt.expectSuccess {
 				// Verify deposit was removed
-				_, exists := getLaunchpadProjectDeposit(ownerAddress)
+				_, exists := gs.getLaunchpadProjectDeposit(ownerAddress)
 				uassert.False(t, exists)
 			}
 		})
@@ -424,8 +451,11 @@ func TestMakeLaunchpadRewardID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Given: Create test instance
+			gs := createTestGovStaker()
+
 			// When: Create launchpad reward ID
-			result := makeLaunchpadRewardID(tt.address)
+			result := gs.makeLaunchpadRewardID(tt.address)
 
 			// Then: Should return expected format
 			uassert.Equal(t, result, tt.expected)
@@ -451,23 +481,26 @@ func TestLaunchpadStakeOperations(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Given: Create test instance
+			gs := createTestGovStaker()
+
 			// When: Add stake from launchpad
 			testing.SetRealm(adminRealm)
-			func (cur realm) {
-				addStakeFromLaunchpad(tt.address, tt.amount, tt.currentHeight)
+			func(cur realm) {
+				gs.addStakeFromLaunchpad(tt.address, tt.amount, tt.currentHeight)
 			}(cross)
 
 			// Then: Should create deposit record
-			launchpadRewardID := makeLaunchpadRewardID(tt.address)
-			deposit, exists := getLaunchpadProjectDeposit(launchpadRewardID)
+			launchpadRewardID := gs.makeLaunchpadRewardID(tt.address)
+			deposit, exists := gs.getLaunchpadProjectDeposit(launchpadRewardID)
 			uassert.True(t, exists)
 			uassert.Equal(t, deposit, tt.amount)
 
 			// When: Remove stake from launchpad
-			removeStakeFromLaunchpad(tt.address, tt.amount, tt.currentHeight)
+			gs.removeStakeFromLaunchpad(tt.address, tt.amount, tt.currentHeight)
 
 			// Then:
-			launchpadDepositAmount, _ := getLaunchpadProjectDeposit(launchpadRewardID)
+			launchpadDepositAmount, _ := gs.getLaunchpadProjectDeposit(launchpadRewardID)
 			uassert.Equal(t, launchpadDepositAmount, int64(0))
 		})
 	}
@@ -495,15 +528,18 @@ func TestPartialLaunchpadStakeRemoval(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Given: Create test instance
+			gs := createTestGovStaker()
+
 			// Given: Initial stake
-			addStakeFromLaunchpad(tt.address, tt.initialAmount, tt.currentHeight)
+			gs.addStakeFromLaunchpad(tt.address, tt.initialAmount, tt.currentHeight)
 
 			// When: Remove partial stake
-			removeStakeFromLaunchpad(tt.address, tt.removeAmount, tt.currentHeight)
+			gs.removeStakeFromLaunchpad(tt.address, tt.removeAmount, tt.currentHeight)
 
 			// Then: Should have remaining deposit
-			launchpadRewardID := makeLaunchpadRewardID(tt.address)
-			deposit, exists := getLaunchpadProjectDeposit(launchpadRewardID)
+			launchpadRewardID := gs.makeLaunchpadRewardID(tt.address)
+			deposit, exists := gs.getLaunchpadProjectDeposit(launchpadRewardID)
 			uassert.True(t, exists)
 			uassert.Equal(t, deposit, tt.expectedRemaining)
 		})

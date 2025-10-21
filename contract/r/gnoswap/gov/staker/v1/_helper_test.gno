@@ -13,6 +13,7 @@ import (
 	"gno.land/r/gnoland/wugnot"
 
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gov/staker"
 )
 
 // contract Paths
@@ -124,4 +125,29 @@ func ugnotDeposit(t *testing.T, addr address, amount uint64) {
 
 func unmarshal(data string) *json.Node {
 	return json.Must(json.Unmarshal([]byte(data)))
+}
+
+// mockGovStakerStore is a mock implementation of IGovStakerStore for testing
+type mockGovStakerStore struct {
+	state staker.GovStakerState
+}
+
+func newMockGovStakerStore() staker.IGovStakerStore {
+	return &mockGovStakerStore{}
+}
+
+func (m *mockGovStakerStore) GetGovStakerState() staker.GovStakerState {
+	return m.state
+}
+
+func (m *mockGovStakerStore) SetGovStakerState(state staker.GovStakerState) error {
+	m.state = state
+	return nil
+}
+
+// createTestGovStaker creates a govStakerV1 instance for testing
+func createTestGovStaker() *govStakerV1 {
+	store := newMockGovStakerStore()
+	gs := NewGovStakerV1(store).(*govStakerV1)
+	return gs
 }
