@@ -203,7 +203,7 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*Project, err
 
 // TransferLeftFromProjectByAdmin transfers the remaining rewards of a project to a specified recipient.
 // Only admin or governance can call this function. Returns the amount of rewards transferred.
-func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient address) int64 {
+func (lp *launchpadV1) TransferLeftFromProjectByAdmin(projectID string, recipient address) int64 {
 	halt.AssertIsNotHaltedLaunchpad()
 
 	caller := runtime.PreviousRealm().Address()

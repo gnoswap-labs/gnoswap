@@ -21,9 +21,9 @@ import (
 //   - depositID: ID of the deposit to collect from
 //
 // Returns amount collected and any error.
-func CollectDepositGns(cur realm, depositID string) (int64, error) {
+func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
 	halt.AssertIsNotHaltedLaunchpad()
-	halt.AssertIsNotHaltedWithdrawWithVersion(1)
+	halt.AssertIsNotHaltedWithdraw()
 
 	previousRealm := runtime.PreviousRealm()
 	access.AssertIsUser(previousRealm)

@@ -16,9 +16,9 @@ import (
 //
 // Returns amount of reward collected.
 // Only callable by deposit owner.
-func CollectRewardByDepositId(cur realm, depositID string) int64 {
+func (lp *launchpadV1) CollectRewardByDepositId(depositID string) int64 {
 	halt.AssertIsNotHaltedLaunchpad()
-	halt.AssertIsNotHaltedWithdrawWithVersion(1)
+	halt.AssertIsNotHaltedWithdraw()
 
 	previousRealm := runtime.PreviousRealm()
 	access.AssertIsUser(previousRealm)

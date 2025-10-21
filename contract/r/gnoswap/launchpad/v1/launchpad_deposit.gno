@@ -22,7 +22,7 @@ import (
 //   - referrer: referral address (optional)
 //
 // Returns deposit ID.
-func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, referrer string) string {
+func (lp *launchpadV1) DepositGns(targetProjectTierID string, depositAmount int64, referrer string) string {
 	halt.AssertIsNotHaltedLaunchpad()
 
 	previousRealm := runtime.PreviousRealm()
