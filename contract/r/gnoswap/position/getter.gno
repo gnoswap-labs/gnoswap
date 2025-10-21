@@ -6,10 +6,6 @@ func GetPosition(positionId uint64) (Position, bool) {
 	return getImplementation().GetPosition(positionId)
 }
 
-func MustGetPosition(positionId uint64) Position {
-	return getImplementation().MustGetPosition(positionId)
-}
-
 func IsBurned(positionId uint64) bool {
 	return getImplementation().IsBurned(positionId)
 }
@@ -30,7 +26,7 @@ func GetPositionLiquidity(positionId uint64) *u256.Uint {
 	return getImplementation().GetPositionLiquidity(positionId)
 }
 
-func GetPositionOperator(positionId uint64) string {
+func GetPositionOperator(positionId uint64) address {
 	return getImplementation().GetPositionOperator(positionId)
 }
 
@@ -56,6 +52,10 @@ func GetPositionTokensOwed1(positionId uint64) *u256.Uint {
 
 func GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint) {
 	return getImplementation().GetUnclaimedFee(positionId)
+}
+
+func GetPositionOwner(positionId uint64) address {
+	return getImplementation().GetPositionOwner(positionId)
 }
 
 func ApiGetPosition(positionId uint64) string {

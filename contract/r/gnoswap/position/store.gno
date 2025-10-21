@@ -102,6 +102,18 @@ func (s *positionStore) SetPosition(positionId uint64, position Position) error 
 	return nil
 }
 
+func (s *positionStore) RemovePosition(positionId uint64) error {
+	if !s.HasPositionsStoreKey() {
+		return errors.New("positions store key not found")
+	}
+
+	positions := s.GetPositions()
+
+	positions.Remove(uint64ToString(positionId))
+
+	return nil
+}
+
 // NewPositionStore creates a new protocol fee store instance with the provided KV store.
 // This function is used by the upgrade system to create storage instances for each implementation.
 func NewPositionStore(kvStore store.KVStore) IPositionStore {

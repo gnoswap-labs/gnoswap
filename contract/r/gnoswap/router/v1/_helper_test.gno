@@ -5,15 +5,18 @@ import (
 	"chain/banker"
 	"testing"
 
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/testutils"
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
+	pn "gno.land/r/gnoswap/position"
+	position_v1 "gno.land/r/gnoswap/position/v1"
 	"gno.land/r/gnoswap/router"
 	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
@@ -460,8 +463,26 @@ func initRouterTest(t *testing.T) {
 	t.Helper()
 
 	pl.InitPoolTest(t)
-	pn.InitPositionTest(t)
 	gnft.InitGNFTTest(t)
+	registerPositionTest(t)
+}
+
+func registerPositionTest(t *testing.T) {
+	t.Helper()
+
+	positionTestPath := "gno.land/r/gnoswap/position/test"
+	testing.SetRealm(testing.NewCodeRealm(positionTestPath))
+	func() {
+		pn.RegisterInitializer(cross, func(positionStore pn.IPositionStore) pn.IPosition {
+			positionStore.SetPositions(avl.NewTree())
+			positionStore.SetPositionNextID(1)
+
+			return position_v1.NewPositionV1(positionStore)
+		})
+	}()
+
+	testing.SetRealm(adminRealm)
+	pn.UpgradeImpl(cross, positionTestPath)
 }
 
 type routerStore struct {

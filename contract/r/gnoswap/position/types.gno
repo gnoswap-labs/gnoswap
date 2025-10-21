@@ -69,19 +69,19 @@ type IPositionManager interface {
 
 type IPositionGetter interface {
 	GetPosition(positionId uint64) (Position, bool)
-	MustGetPosition(positionId uint64) Position
 	IsBurned(positionId uint64) bool
 	IsInRange(positionId uint64) bool
-	GetPositionFeeGrowthInside0LastX128(positionId uint64) *u256.Uint
-	GetPositionFeeGrowthInside1LastX128(positionId uint64) *u256.Uint
-	GetPositionLiquidity(positionId uint64) *u256.Uint
-	GetPositionOperator(positionId uint64) string
+	GetPositionOperator(positionId uint64) address
 	GetPositionPoolKey(positionId uint64) string
 	GetPositionTickLower(positionId uint64) int32
 	GetPositionTickUpper(positionId uint64) int32
+	GetPositionLiquidity(positionId uint64) *u256.Uint
+	GetPositionFeeGrowthInside0LastX128(positionId uint64) *u256.Uint
+	GetPositionFeeGrowthInside1LastX128(positionId uint64) *u256.Uint
 	GetPositionTokensOwed0(positionId uint64) *u256.Uint
 	GetPositionTokensOwed1(positionId uint64) *u256.Uint
 	GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint)
+	GetPositionOwner(positionId uint64) address
 }
 
 type IPositionApi interface {
@@ -101,4 +101,5 @@ type IPositionStore interface {
 	HasPosition(positionId uint64) bool
 	GetPosition(positionId uint64) (Position, bool)
 	SetPosition(positionId uint64, position Position) error
+	RemovePosition(positionId uint64) error
 }

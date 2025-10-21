@@ -122,6 +122,33 @@ func (p *Position) SetOperator(operator address) {
 }
 
 // isClear reports whether the position is empty
-func (p *Position) isClear() bool {
+func (p *Position) IsClear() bool {
 	return p.liquidity.IsZero() && p.tokensOwed0.IsZero() && p.tokensOwed1.IsZero()
+}
+
+func NewPosition(
+	poolKey string,
+	tickLower int32,
+	tickUpper int32,
+	liquidity *u256.Uint,
+	feeGrowthInside0LastX128, feeGrowthInside1LastX128 *u256.Uint,
+	tokensOwed0, tokensOwed1 *u256.Uint,
+	token0Balance, token1Balance *u256.Uint,
+	burned bool,
+	operator address,
+) *Position {
+	return &Position{
+		poolKey:                  poolKey,
+		tickLower:                tickLower,
+		tickUpper:                tickUpper,
+		liquidity:                liquidity,
+		feeGrowthInside0LastX128: feeGrowthInside0LastX128,
+		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
+		tokensOwed0:              tokensOwed0,
+		tokensOwed1:              tokensOwed1,
+		token0Balance:            token0Balance,
+		token1Balance:            token1Balance,
+		burned:                   burned,
+		operator:                 operator,
+	}
 }
