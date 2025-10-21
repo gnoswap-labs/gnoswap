@@ -100,46 +100,6 @@ func setTestProjectTierRewardManagers(tree *avl.Tree) {
 	state.projectTierRewardManagers = tree
 }
 
-// getTestDeposits returns the deposits tree
-func getTestDeposits() *avl.Tree {
-	if testStore == nil {
-		return avl.NewTree()
-	}
-	lp := getTestImplementation()
-	state := lp.getLaunchpadState()
-	return state.Deposits()
-}
-
-// setTestDeposits sets the deposits tree
-func setTestDeposits(tree *avl.Tree) {
-	if testStore == nil {
-		initTestStore()
-	}
-	lp := getTestImplementation()
-	state := lp.getLaunchpadState()
-	state.deposits = tree
-}
-
-// getTestDepositCounter returns the depositCounter
-func getTestDepositCounter() launchpad.Counter {
-	if testStore == nil {
-		return NewCounter()
-	}
-	lp := getTestImplementation()
-	state := lp.getLaunchpadState()
-	return state.DepositCounter()
-}
-
-// setTestDepositCounter sets the depositCounter
-func setTestDepositCounter(counter *Counter) {
-	if testStore == nil {
-		initTestStore()
-	}
-	lp := getTestImplementation()
-	state := lp.getLaunchpadState()
-	state.depositCounter = counter
-}
-
 // getDeposit is a test helper to get a deposit by ID
 func getDeposit(depositID string) (*Deposit, error) {
 	if testStore == nil {
