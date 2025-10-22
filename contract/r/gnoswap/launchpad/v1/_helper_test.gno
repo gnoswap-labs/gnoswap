@@ -49,6 +49,10 @@ type testLaunchpadStore struct {
 	state launchpad.LaunchpadState
 }
 
+func (s *testLaunchpadStore) HasProjectsKey() bool {
+	return s.state != nil && s.state.Projects() != nil
+}
+
 func (s *testLaunchpadStore) GetProjects() *avl.Tree {
 	if s.state == nil {
 		return avl.NewTree()
@@ -60,6 +64,10 @@ func (s *testLaunchpadStore) SetProjects(projects *avl.Tree) error {
 	// For test purposes, we don't actually update the state
 	// as the state is managed internally
 	return nil
+}
+
+func (s *testLaunchpadStore) HasProjectTierRewardManagersKey() bool {
+	return s.state != nil && s.state.ProjectTierRewardManagers() != nil
 }
 
 func (s *testLaunchpadStore) GetProjectTierRewardManagers() *avl.Tree {
@@ -74,6 +82,10 @@ func (s *testLaunchpadStore) SetProjectTierRewardManagers(managers *avl.Tree) er
 	return nil
 }
 
+func (s *testLaunchpadStore) HasDepositCounterKey() bool {
+	return s.state != nil && s.state.DepositCounter() != nil
+}
+
 func (s *testLaunchpadStore) GetDepositCounter() launchpad.Counter {
 	if s.state == nil {
 		return nil
@@ -84,6 +96,10 @@ func (s *testLaunchpadStore) GetDepositCounter() launchpad.Counter {
 func (s *testLaunchpadStore) SetDepositCounter(counter launchpad.Counter) error {
 	// For test purposes, we don't actually update the state
 	return nil
+}
+
+func (s *testLaunchpadStore) HasDepositsKey() bool {
+	return s.state != nil && s.state.Deposits() != nil
 }
 
 func (s *testLaunchpadStore) GetDeposits() *avl.Tree {

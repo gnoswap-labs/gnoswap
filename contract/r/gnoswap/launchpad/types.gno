@@ -42,15 +42,19 @@ type ILaunchpadApi interface {
 }
 
 type ILaunchpadStore interface {
+	HasProjectsKey() bool
 	GetProjects() *avl.Tree
 	SetProjects(projects *avl.Tree) error
-	
+
+	HasProjectTierRewardManagersKey() bool
 	GetProjectTierRewardManagers() *avl.Tree
 	SetProjectTierRewardManagers(managers *avl.Tree) error
-	
+
+	HasDepositCounterKey() bool
 	GetDepositCounter() Counter
 	SetDepositCounter(counter Counter) error
-	
+
+	HasDepositsKey() bool
 	GetDeposits() *avl.Tree
 	SetDeposits(deposits *avl.Tree) error
 }

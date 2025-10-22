@@ -19,23 +19,31 @@ func registerLaunchpadV1() {
 func initStoreData(launchpadStore launchpad.ILaunchpadStore) {
 	launchpadState := NewLaunchpadState()
 
-	err := launchpadStore.SetProjects(launchpadState.Projects())
-	if err != nil {
-		panic(err)
+	if !launchpadStore.HasProjectsKey() {
+		err := launchpadStore.SetProjects(launchpadState.Projects())
+		if err != nil {
+			panic(err)
+		}
 	}
 
-	err = launchpadStore.SetProjectTierRewardManagers(launchpadState.ProjectTierRewardManagers())
-	if err != nil {
-		panic(err)
+	if !launchpadStore.HasProjectTierRewardManagersKey() {
+		err := launchpadStore.SetProjectTierRewardManagers(launchpadState.ProjectTierRewardManagers())
+		if err != nil {
+			panic(err)
+		}
 	}
 
-	err = launchpadStore.SetDepositCounter(launchpadState.DepositCounter())
-	if err != nil {
-		panic(err)
+	if !launchpadStore.HasDepositCounterKey() {
+		err := launchpadStore.SetDepositCounter(launchpadState.DepositCounter())
+		if err != nil {
+			panic(err)
+		}
 	}
 
-	err = launchpadStore.SetDeposits(launchpadState.Deposits())
-	if err != nil {
-		panic(err)
+	if !launchpadStore.HasDepositsKey() {
+		err := launchpadStore.SetDeposits(launchpadState.Deposits())
+		if err != nil {
+			panic(err)
+		}
 	}
 }

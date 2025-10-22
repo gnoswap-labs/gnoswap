@@ -23,6 +23,12 @@ type launchpadStore struct {
 	kvStore store.KVStore
 }
 
+// HasProjectsKey checks if the projects key exists in the store.
+func (s *launchpadStore) HasProjectsKey() bool {
+	_, err := s.kvStore.Get(StoreKeyProjects.String())
+	return err == nil
+}
+
 // GetProjects retrieves the projects tree.
 func (s *launchpadStore) GetProjects() *avl.Tree {
 	result, err := s.kvStore.Get(StoreKeyProjects.String())
@@ -41,6 +47,12 @@ func (s *launchpadStore) GetProjects() *avl.Tree {
 // SetProjects stores the projects tree.
 func (s *launchpadStore) SetProjects(projects *avl.Tree) error {
 	return s.kvStore.Set(StoreKeyProjects.String(), projects)
+}
+
+// HasProjectTierRewardManagersKey checks if the project tier reward managers key exists in the store.
+func (s *launchpadStore) HasProjectTierRewardManagersKey() bool {
+	_, err := s.kvStore.Get(StoreKeyProjectTierRewardManagers.String())
+	return err == nil
 }
 
 // GetProjectTierRewardManagers retrieves the project tier reward managers tree.
@@ -63,6 +75,12 @@ func (s *launchpadStore) SetProjectTierRewardManagers(managers *avl.Tree) error 
 	return s.kvStore.Set(StoreKeyProjectTierRewardManagers.String(), managers)
 }
 
+// HasDepositCounterKey checks if the deposit counter key exists in the store.
+func (s *launchpadStore) HasDepositCounterKey() bool {
+	_, err := s.kvStore.Get(StoreKeyDepositCounter.String())
+	return err == nil
+}
+
 // GetDepositCounter retrieves the deposit counter.
 func (s *launchpadStore) GetDepositCounter() Counter {
 	result, err := s.kvStore.Get(StoreKeyDepositCounter.String())
@@ -81,6 +99,12 @@ func (s *launchpadStore) GetDepositCounter() Counter {
 // SetDepositCounter stores the deposit counter.
 func (s *launchpadStore) SetDepositCounter(counter Counter) error {
 	return s.kvStore.Set(StoreKeyDepositCounter.String(), counter)
+}
+
+// HasDepositsKey checks if the deposits key exists in the store.
+func (s *launchpadStore) HasDepositsKey() bool {
+	_, err := s.kvStore.Get(StoreKeyDeposits.String())
+	return err == nil
 }
 
 // GetDeposits retrieves the deposits tree.
