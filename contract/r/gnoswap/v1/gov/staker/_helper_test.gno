@@ -60,7 +60,7 @@ var (
 	user3Realm  = testing.NewUserRealm(testutils.TestAddress("charlie"))
 	invalidAddr = testutils.TestAddress("invalid")
 
-	posRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/v1/position")
+	posRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/position")
 	rouRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/router")
 	stakerRealm = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 )

@@ -15,10 +15,12 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
+	pn "gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
 
 	"gno.land/r/gnoland/wugnot"
+
+	_ "gno.land/r/gnoswap/position/v1"
 )
 
 const INT64_MAX int64 = 9223372036854775807

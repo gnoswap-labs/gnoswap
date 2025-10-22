@@ -15,14 +15,14 @@ import (
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
 
+	pn "gno.land/r/gnoswap/position"
 	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
-	_ "gno.land/r/gnoswap/protocol_fee"
+	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/onbloc/bar"
@@ -121,10 +121,10 @@ func mintBarBaz3000_1_4() {
 	pn.Mint(cross, barPath, bazPath, fee3000, int32(-1020), int32(1020), "7", "7", "0", "0", max_timeout, anoAdmin, anoAdmin, "")
 	testing.SkipHeights(1)
 
-	t1Liq := pn.PositionGetPositionLiquidity(1).Clone()
-	t2Liq := pn.PositionGetPositionLiquidity(2).Clone()
-	t3Liq := pn.PositionGetPositionLiquidity(3).Clone()
-	t4Liq := pn.PositionGetPositionLiquidity(4).Clone()
+	t1Liq := pn.GetPositionLiquidity(1).Clone()
+	t2Liq := pn.GetPositionLiquidity(2).Clone()
+	t3Liq := pn.GetPositionLiquidity(3).Clone()
+	t4Liq := pn.GetPositionLiquidity(4).Clone()
 
 	all := u256.Zero()
 	all.Add(all, t1Liq)

@@ -4,7 +4,7 @@ include _info.mk
 GNS_PATH := gno.land/r/gnoswap/gns
 WUGNOT_PATH := gno.land/r/demo/wugnot
 ROUTER_PATH := gno.land/r/gnoswap/router
-POSITION_PATH := gno.land/r/gnoswap/v1/position
+POSITION_PATH := gno.land/r/gnoswap/position
 POOL_PATH := gno.land/r/gnoswap/v1/pool
 PROTOCOL_FEE_PATH := gno.land/r/gnoswap/protocol_fee
 

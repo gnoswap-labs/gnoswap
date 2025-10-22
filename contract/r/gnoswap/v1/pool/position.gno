@@ -12,7 +12,7 @@ import (
 	"gno.land/r/gnoswap/common"
 )
 
-const positionPackagePath = "gno.land/r/gnoswap/v1/position"
+const positionPackagePath = "gno.land/r/gnoswap/position"
 
 var convertedQ128 = u256.MustFromDecimal(Q128)
 

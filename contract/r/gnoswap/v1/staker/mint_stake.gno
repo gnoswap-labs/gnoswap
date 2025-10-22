@@ -9,7 +9,7 @@ import (
 
 	"gno.land/r/gnoswap/halt"
 
-	pn "gno.land/r/gnoswap/v1/position"
+	pn "gno.land/r/gnoswap/position"
 )
 
 // MintAndStake mints a new liquidity position and immediately stakes it.

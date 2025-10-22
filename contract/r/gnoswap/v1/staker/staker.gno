@@ -16,8 +16,8 @@ import (
 	"gno.land/r/gnoswap/gns"
 
 	en "gno.land/r/gnoswap/emission"
+	pn "gno.land/r/gnoswap/position"
 	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -346,7 +346,7 @@ func StakeToken(cur realm, positionId uint64, referrer string) string {
 	}
 
 	// check pool path from positionId
-	poolPath := pn.PositionGetPositionPoolKey(positionId)
+	poolPath := pn.GetPositionPoolKey(positionId)
 
 	// check pool has internal or external incentives
 	err := poolHasIncentives(poolPath)
@@ -394,7 +394,7 @@ func StakeToken(cur realm, positionId uint64, referrer string) string {
 	poolTier.cacheReward(currentHeight, currentTime, pools)
 
 	isInRange := false
-	if pn.PositionIsInRange(positionId) {
+	if pn.IsInRange(positionId) {
 		isInRange = true
 		pool.modifyDeposit(signedLiquidity, currentTime, currentTick)
 	}
@@ -743,7 +743,7 @@ func applyUnStake(positionId uint64) error {
 	currentTime := time.Now().Unix()
 	currentTick := pl.GetSlot0Tick(deposit.targetPoolPath)
 	signedLiquidity := i256.Zero().Neg(i256.FromUint256(deposit.liquidity))
-	if pn.PositionIsInRange(positionId) {
+	if pn.IsInRange(positionId) {
 		pool.modifyDeposit(signedLiquidity, currentTime, currentTick)
 	}
 
@@ -835,13 +835,13 @@ func tokenHasLiquidity(positionId uint64) error {
 }
 
 func getLiquidity(positionId uint64) *u256.Uint {
-	liq := pn.PositionGetPositionLiquidityStr(positionId)
-	return u256.MustFromDecimal(liq)
+	liq := pn.GetPositionLiquidity(positionId)
+	return u256.Zero().Set(liq)
 }
 
 func getTickOf(positionId uint64) (int32, int32) {
-	tickLower := pn.PositionGetPositionTickLower(positionId)
-	tickUpper := pn.PositionGetPositionTickUpper(positionId)
+	tickLower := pn.GetPositionTickLower(positionId)
+	tickUpper := pn.GetPositionTickUpper(positionId)
 	if tickUpper < tickLower {
 		panic(ufmt.Sprintf("tickUpper(%d) is less than tickLower(%d)", tickUpper, tickLower))
 	}

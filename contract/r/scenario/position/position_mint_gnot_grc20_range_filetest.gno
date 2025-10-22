@@ -20,8 +20,10 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/v1/pool"
-	"gno.land/r/gnoswap/v1/position"
+
+	_ "gno.land/r/gnoswap/position/v1"
 )
 
 const (
@@ -229,8 +231,8 @@ func executeSwap() {
 func verifyFinalPositions() {
 	testing.SetRealm(adminRealm)
 
-	pos1fee0, pos1fee1 := position.UnclaimedFee(1)
-	pos2fee0, pos2fee1 := position.UnclaimedFee(2)
+	pos1fee0, pos1fee1 := position.GetUnclaimedFee(1)
+	pos2fee0, pos2fee1 := position.GetUnclaimedFee(2)
 
 	ufmt.Println("[INFO] Checking final position states")
 	ufmt.Printf("[EXPECTED] Position 1 should still be in range\n")
