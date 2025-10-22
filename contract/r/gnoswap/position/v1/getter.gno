@@ -4,7 +4,6 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt"
 
-	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/position"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
@@ -83,7 +82,7 @@ func (p *positionV1) GetPositionTokensOwed1(positionId uint64) *u256.Uint {
 }
 
 func (p *positionV1) GetPositionOwner(positionId uint64) address {
-	owner, err := gnft.OwnerOf(positionIdFrom(positionId))
+	owner, err := p.nftAccessor.OwnerOf(positionIdFrom(positionId))
 	if err != nil {
 		panic(newErrorWithDetail(
 			errDataNotFound, err.Error()))

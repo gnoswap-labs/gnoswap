@@ -1,6 +1,8 @@
 package v1
 
-import u256 "gno.land/p/gnoswap/uint256"
+import (
+	u256 "gno.land/p/gnoswap/uint256"
+)
 
 // 2 ** 128
 var q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")

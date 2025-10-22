@@ -8,8 +8,6 @@ import (
 	"gno.land/p/demo/tokens/grc721"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
-
-	"gno.land/r/gnoswap/gnft"
 )
 
 const INT64_MAX = 9223372036854775807
@@ -50,7 +48,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // input: positionId uint64
 // output: bool
 func (p *positionV1) exists(positionId uint64) bool {
-	return gnft.Exists(positionIdFrom(positionId))
+	return p.nftAccessor.Exists(positionIdFrom(positionId))
 }
 
 // isOwner checks whether the caller is the owner of the positionId
@@ -58,7 +56,7 @@ func (p *positionV1) exists(positionId uint64) bool {
 // input: positionId uint64, addr std.Address
 // output: bool
 func (p *positionV1) isOwner(positionId uint64, addr address) bool {
-	owner, err := gnft.OwnerOf(positionIdFrom(positionId))
+	owner, err := p.nftAccessor.OwnerOf(positionIdFrom(positionId))
 	if err != nil {
 		return false
 	}
@@ -78,12 +76,12 @@ func (p *positionV1) isOperator(positionId uint64, addr address) bool {
 // If positionId is staked, return true, otherwise return false
 // input: positionId grc721.TokenID
 // output: bool
-func isStaked(positionId grc721.TokenID) bool {
-	exist := gnft.Exists(positionId)
+func (p *positionV1) isStaked(positionId grc721.TokenID) bool {
+	exist := p.nftAccessor.Exists(positionId)
 	if !exist {
 		return false
 	}
-	owner, err := gnft.OwnerOf(positionId)
+	owner, err := p.nftAccessor.OwnerOf(positionId)
 	if err == nil && owner == stakerAddr {
 		return true
 	}
@@ -99,7 +97,7 @@ func (p *positionV1) isOwnerOrOperator(positionId uint64, addr address) bool {
 		return false
 	}
 
-	if isStaked(positionIdFrom(positionId)) {
+	if p.isStaked(positionIdFrom(positionId)) {
 		return p.isOperator(positionId, addr)
 	}
 
@@ -167,15 +165,6 @@ func mustParseInt64(v string) int64 {
 	}
 
 	return amountInt
-}
-
-func isTokenOwner(positionId uint64, caller address) bool {
-	owner, err := gnft.OwnerOf(positionIdFrom(positionId))
-	if err != nil {
-		return false
-	}
-
-	return owner == caller
 }
 
 func isSlippageExceeded(amount0, amount1, amount0Min, amount1Min *u256.Uint) bool {

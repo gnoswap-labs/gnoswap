@@ -1,8 +1,8 @@
 package v1
 
 import (
+	"gno.land/p/demo/tokens/grc721"
 	"gno.land/p/onbloc/json"
-	"gno.land/r/gnoswap/gnft"
 )
 
 type JsonResponse interface {
@@ -27,12 +27,13 @@ func makeJsonResponse(stat *ResponseQueryBase, response JsonResponse) string {
 // Type for Positions response
 type PositionsResponse struct {
 	Positions []RpcPosition
+	OwnerOf   func(tid grc721.TokenID) (address, error)
 }
 
 func (pr *PositionsResponse) JSON() *json.Node {
 	rsps := json.ArrayNode("", []*json.Node{})
 	for _, position := range pr.Positions {
-		owner, err := gnft.OwnerOf(positionIdFrom(position.LpPositionId))
+		owner, err := pr.OwnerOf(positionIdFrom(position.LpPositionId))
 		if err != nil {
 			owner = zeroAddress
 		}

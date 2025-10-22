@@ -16,7 +16,7 @@ func registerPositionV1() {
 			panic(err)
 		}
 
-		return NewPositionV1(positionStore)
+		return NewPositionV1(positionStore, newGNFTAccessor())
 	})
 }
 

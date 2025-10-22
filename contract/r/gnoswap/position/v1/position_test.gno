@@ -11,7 +11,8 @@ import (
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 
-	"gno.land/r/gnoswap/gnft"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/referral"
 
 	_ "gno.land/r/gnoswap/rbac"
@@ -61,8 +62,7 @@ func setupPoolAndApprovals(t *testing.T, faucet bool) {
 // seedPosition mints a simple position owned by admin and returns its id.
 func seedPosition(t *testing.T, amount0, amount1 string) uint64 {
 	t.Helper()
-	positionId, _, _, _ := Mint(
-		cross,
+	positionId, _, _, _ := mockInstance.Mint(
 		barPath,
 		fooPath,
 		fee500,
@@ -80,28 +80,32 @@ func seedPosition(t *testing.T, amount0, amount1 string) uint64 {
 	return positionId
 }
 
-func newDummyPosition(id uint64) Position {
-	return Position{
-		operator:                 "user1",
-		poolKey:                  "poolKey1",
-		tickLower:                -500,
-		tickUpper:                500,
-		liquidity:                u256.NewUint(1000),
-		feeGrowthInside0LastX128: u256.NewUint(10),
-		feeGrowthInside1LastX128: u256.NewUint(20),
-		tokensOwed0:              u256.NewUint(30),
-		tokensOwed1:              u256.NewUint(40),
-		burned:                   false,
-	}
+func newDummyPosition(id uint64) position.Position {
+	pos := position.NewPosition(
+		"poolKey1",
+		-500,
+		500,
+		u256.NewUint(1000),
+		u256.NewUint(10),
+		u256.NewUint(20),
+		u256.NewUint(30),
+		u256.NewUint(40),
+		u256.NewUint(1000),
+		u256.NewUint(1000),
+		false,
+		"user1",
+	)
+
+	return *pos
 }
 
 func TestMustGetPosition(t *testing.T) {
 	tests := []struct {
 		name                 string
 		positionId           uint64
-		inputPosition        Position
+		inputPosition        position.Position
 		inputPositionId      uint64
-		expectedPosition     Position
+		expectedPosition     position.Position
 		expectedHasPanic     bool
 		expectedPanicMessage string
 	}{
@@ -119,7 +123,7 @@ func TestMustGetPosition(t *testing.T) {
 			positionId:           1,
 			inputPosition:        newDummyPosition(1),
 			inputPositionId:      999,
-			expectedPosition:     Position{},
+			expectedPosition:     position.Position{},
 			expectedHasPanic:     true,
 			expectedPanicMessage: "[GNOSWAP-POSITION-013] position does not exist || position with position ID(999) doesn't exist",
 		},
@@ -128,54 +132,54 @@ func TestMustGetPosition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initPositionTest(t)
-			createNewPosition(tt.positionId, tt.inputPosition)
+			mockInstance.createNewPosition(tt.positionId, tt.inputPosition)
 
 			if tt.expectedHasPanic {
 				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
-					MustGetPosition(tt.inputPositionId)
+					mockInstance.mustGetPosition(tt.inputPositionId)
 				})
 			} else {
-				result := MustGetPosition(tt.inputPositionId)
-				uassert.Equal(t, tt.expectedPosition.operator, result.operator)
-				uassert.Equal(t, tt.expectedPosition.poolKey, result.poolKey)
-				uassert.Equal(t, tt.expectedPosition.tickLower, result.tickLower)
-				uassert.Equal(t, tt.expectedPosition.tickUpper, result.tickUpper)
-				uassert.Equal(t, tt.expectedPosition.liquidity.ToString(), result.liquidity.ToString())
-				uassert.Equal(t, tt.expectedPosition.feeGrowthInside0LastX128.ToString(), result.feeGrowthInside0LastX128.ToString())
-				uassert.Equal(t, tt.expectedPosition.feeGrowthInside1LastX128.ToString(), result.feeGrowthInside1LastX128.ToString())
-				uassert.Equal(t, tt.expectedPosition.tokensOwed0.ToString(), result.tokensOwed0.ToString())
-				uassert.Equal(t, tt.expectedPosition.tokensOwed1.ToString(), result.tokensOwed1.ToString())
-				uassert.Equal(t, tt.expectedPosition.burned, result.burned)
+				result := mockInstance.mustGetPosition(tt.inputPositionId)
+				uassert.Equal(t, tt.expectedPosition.Operator(), result.Operator())
+				uassert.Equal(t, tt.expectedPosition.PoolKey(), result.PoolKey())
+				uassert.Equal(t, tt.expectedPosition.TickLower(), result.TickLower())
+				uassert.Equal(t, tt.expectedPosition.TickUpper(), result.TickUpper())
+				uassert.Equal(t, tt.expectedPosition.Liquidity().ToString(), result.Liquidity().ToString())
+				uassert.Equal(t, tt.expectedPosition.FeeGrowthInside0LastX128().ToString(), result.FeeGrowthInside0LastX128().ToString())
+				uassert.Equal(t, tt.expectedPosition.FeeGrowthInside1LastX128().ToString(), result.FeeGrowthInside1LastX128().ToString())
+				uassert.Equal(t, tt.expectedPosition.TokensOwed0().ToString(), result.TokensOwed0().ToString())
+				uassert.Equal(t, tt.expectedPosition.TokensOwed1().ToString(), result.TokensOwed1().ToString())
+				uassert.Equal(t, tt.expectedPosition.Burned(), result.Burned())
 			}
 		})
 	}
 }
 
 func TestSetPosition(t *testing.T) {
-	position := newDummyPosition(1)
+	pos := newDummyPosition(1)
 	changedPosition := newDummyPosition(1)
-	changedPosition.operator = "user2"
-	changedPosition.poolKey = "poolKey2"
-	changedPosition.tickLower = -2000
-	changedPosition.tickUpper = 2000
-	changedPosition.liquidity = u256.NewUint(2000)
-	changedPosition.feeGrowthInside0LastX128 = u256.NewUint(20)
-	changedPosition.feeGrowthInside1LastX128 = u256.NewUint(40)
-	changedPosition.tokensOwed0 = u256.NewUint(60)
-	changedPosition.tokensOwed1 = u256.NewUint(80)
-	changedPosition.burned = true
+	changedPosition.SetOperator("user2")
+	changedPosition.SetPoolKey("poolKey2")
+	changedPosition.SetTickLower(-2000)
+	changedPosition.SetTickUpper(2000)
+	changedPosition.SetLiquidity(u256.NewUint(2000))
+	changedPosition.SetFeeGrowthInside0LastX128(u256.NewUint(20))
+	changedPosition.SetFeeGrowthInside1LastX128(u256.NewUint(40))
+	changedPosition.SetTokensOwed0(u256.NewUint(60))
+	changedPosition.SetTokensOwed1(u256.NewUint(80))
+	changedPosition.SetBurned(true)
 
 	tests := []struct {
 		name          string
 		positionId    uint64
-		position      Position
-		inputPosition Position
+		position      position.Position
+		inputPosition position.Position
 		expected      bool
 	}{
 		{
 			name:          "set position is success by existing position",
 			positionId:    1,
-			position:      position,
+			position:      pos,
 			inputPosition: changedPosition,
 			expected:      false,
 		},
@@ -184,21 +188,20 @@ func TestSetPosition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initPositionTest(t)
-			createNewPosition(tt.positionId, tt.position)
+			mockInstance.createNewPosition(tt.positionId, tt.position)
+			mockInstance.setPosition(tt.positionId, tt.inputPosition)
 
-			setPosition(tt.positionId, tt.inputPosition)
-
-			storedPosition, _ := GetPosition(tt.positionId)
-			uassert.Equal(t, tt.inputPosition.operator, storedPosition.operator)
-			uassert.Equal(t, tt.inputPosition.poolKey, storedPosition.poolKey)
-			uassert.Equal(t, tt.inputPosition.tickLower, storedPosition.tickLower)
-			uassert.Equal(t, tt.inputPosition.tickUpper, storedPosition.tickUpper)
-			uassert.Equal(t, tt.inputPosition.liquidity.ToString(), storedPosition.liquidity.ToString())
-			uassert.Equal(t, tt.inputPosition.feeGrowthInside0LastX128.ToString(), storedPosition.feeGrowthInside0LastX128.ToString())
-			uassert.Equal(t, tt.inputPosition.feeGrowthInside1LastX128.ToString(), storedPosition.feeGrowthInside1LastX128.ToString())
-			uassert.Equal(t, tt.inputPosition.tokensOwed0.ToString(), storedPosition.tokensOwed0.ToString())
-			uassert.Equal(t, tt.inputPosition.tokensOwed1.ToString(), storedPosition.tokensOwed1.ToString())
-			uassert.Equal(t, tt.inputPosition.burned, storedPosition.burned)
+			storedPosition := mockInstance.mustGetPosition(tt.positionId)
+			uassert.Equal(t, tt.inputPosition.Operator(), storedPosition.Operator())
+			uassert.Equal(t, tt.inputPosition.PoolKey(), storedPosition.PoolKey())
+			uassert.Equal(t, tt.inputPosition.TickLower(), storedPosition.TickLower())
+			uassert.Equal(t, tt.inputPosition.TickUpper(), storedPosition.TickUpper())
+			uassert.Equal(t, tt.inputPosition.Liquidity().ToString(), storedPosition.Liquidity().ToString())
+			uassert.Equal(t, tt.inputPosition.FeeGrowthInside0LastX128().ToString(), storedPosition.FeeGrowthInside0LastX128().ToString())
+			uassert.Equal(t, tt.inputPosition.FeeGrowthInside1LastX128().ToString(), storedPosition.FeeGrowthInside1LastX128().ToString())
+			uassert.Equal(t, tt.inputPosition.TokensOwed0().ToString(), storedPosition.TokensOwed0().ToString())
+			uassert.Equal(t, tt.inputPosition.TokensOwed1().ToString(), storedPosition.TokensOwed1().ToString())
+			uassert.Equal(t, tt.inputPosition.Burned(), storedPosition.Burned())
 		})
 	}
 }
@@ -224,11 +227,11 @@ func TestRemovePosition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initPositionTest(t)
-			createNewPosition(tt.positionId, newDummyPosition(tt.positionId))
+			mockInstance.createNewPosition(tt.positionId, newDummyPosition(tt.positionId))
 
-			removePosition(tt.inputPositionId)
+			mockInstance.removePosition(tt.inputPositionId)
 
-			_, found := GetPosition(tt.inputPositionId)
+			_, found := mockInstance.GetPosition(tt.inputPositionId)
 			uassert.False(t, found)
 		})
 	}
@@ -258,8 +261,8 @@ func TestExistPosition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initPositionTest(t)
-			createNewPosition(tt.positionId, newDummyPosition(tt.positionId))
-			uassert.Equal(t, tt.expectedExist, ExistPosition(tt.inputPositionId))
+			mockInstance.createNewPosition(tt.positionId, newDummyPosition(tt.positionId))
+			uassert.Equal(t, tt.expectedExist, mockInstance.ExistPosition(tt.inputPositionId))
 		})
 	}
 }
@@ -277,33 +280,34 @@ func TestComputePositionKey(t *testing.T) {
 			owner:     alice,
 			tickLower: -100,
 			tickUpper: 200,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3YxL3Bvc2l0aW9uX18tMTAwX18yMDA=", // Base64 of "gno.land/r/gnoswap/v1/position__-100__200"
+			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tMTAwX18yMDA=", // Base64 of "gno.land/r/gnoswap/position__-100__200"
 		},
 		{
 			name:      "computePositionKey is failed by zero ticks",
 			owner:     alice,
 			tickLower: 0,
 			tickUpper: 0,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3YxL3Bvc2l0aW9uX18wX18w", // Base64 of "gno.land/r/gnoswap/v1/position__0__0"
+			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18wX18w", // Base64 of "gno.land/r/gnoswap/position__0__0"
 		},
 		{
 			name:      "computePositionKey is failed by negative lower tick",
 			owner:     alice,
 			tickLower: -50,
 			tickUpper: 150,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3YxL3Bvc2l0aW9uX18tNTBfXzE1MA==", // Base64 of "gno.land/r/gnoswap/v1/position__-50__150"
+			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tNTBfXzE1MA==", // Base64 of "gno.land/r/gnoswap/position__-50__150"
 		},
 		{
 			name:      "computePositionKey is failed by same tick bounds",
 			owner:     alice,
 			tickLower: 300,
 			tickUpper: 300,
-			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3YxL3Bvc2l0aW9uX18zMDBfXzMwMA==", // Base64 of "gno.land/r/gnoswap/v1/position__300__300"
+			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18zMDBfXzMwMA==", // Base64 of "gno.land/r/gnoswap/position__300__300"
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			testing.SetRealm(posRealm)
 			result := computePositionKey(tt.tickLower, tt.tickUpper)
 
 			if result != tt.expected {
@@ -314,9 +318,6 @@ func TestComputePositionKey(t *testing.T) {
 }
 
 func TestNextIdFunctions(t *testing.T) {
-	prevNextId := GetNextId()
-	nextId = uint64(1)
-
 	tests := []struct {
 		name          string
 		initialValue  uint64
@@ -325,21 +326,22 @@ func TestNextIdFunctions(t *testing.T) {
 	}{
 		{"initial is 1", 1, 0, 1},
 		{"after 1 increment is 2", 1, 1, 2},
-		{"increment once → 3", 2, 1, 3},
-		{"increment twice → 5", 3, 2, 5},
-		{"no overflow on 95 increments", 5, 95, 100},
+		{"increment once → 3", 1, 2, 3},
+		{"increment twice → 5", 1, 4, 5},
+		{"no overflow on 95 increments", 1, 99, 100},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			nextId = tt.initialValue
+			initPositionTest(t)
+
 			for range make([]struct{}, tt.increments) {
-				incrementNextId()
+				mockInstance.incrementNextId()
 			}
-			uassert.Equal(t, tt.expectedValue, GetNextId())
+
+			uassert.Equal(t, tt.expectedValue, mockInstance.getNextId())
 		})
 	}
-	nextId = prevNextId
 }
 
 func TestIsValidTokenPath(t *testing.T) {
@@ -362,8 +364,6 @@ func TestIsValidTokenPath(t *testing.T) {
 }
 
 func TestValidateTokenPath(t *testing.T) {
-	initPositionTest(t)
-
 	tests := []struct {
 		name      string
 		token0    string
@@ -381,6 +381,8 @@ func TestValidateTokenPath(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+
 			if tt.register0 {
 				MockRegister(t, tt.token0)
 			} else {
@@ -491,6 +493,8 @@ func TestProcessTokens(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+
 			MockRegister(t, tt.token0)
 			MockRegister(t, tt.token1)
 
@@ -507,16 +511,16 @@ func TestProcessTokens(t *testing.T) {
 				amount, _ := strconv.ParseInt(tt.amount0Desired, 10, 64)
 				ugnotFaucet(t, positionAddr, amount)
 				testing.SetRealm(testing.NewUserRealm(positionAddr))
-				transferUGNOT(positionAddr, positionAddr, amount)
+				mockInstance.transferUGNOT(positionAddr, positionAddr, amount)
 			}
 			if tt.token1 == GNOT {
 				amount, _ := strconv.ParseInt(tt.amount1Desired, 10, 64)
 				ugnotFaucet(t, positionAddr, amount)
 				testing.SetRealm(testing.NewUserRealm(positionAddr))
-				transferUGNOT(positionAddr, positionAddr, amount)
+				mockInstance.transferUGNOT(positionAddr, positionAddr, amount)
 			}
 
-			token0, token1, native0, native1, wrapped, err := processTokens(
+			token0, token1, native0, native1, wrapped, err := mockInstance.processTokens(
 				tt.token0,
 				tt.token1,
 				tt.amount0Desired,
@@ -640,16 +644,17 @@ func TestMint(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			NewEnv(t).
-				GivenPoolCreated(barPath, fooPath, fee500, "79228162514264337593543950336").
-				AndUserFundedAndApproved(alice, barPath, fooPath)
+			initPositionTest(t)
+
+			createPoolWithoutFee(tc.token0, tc.token1, tc.fee, 0)
 
 			testing.SetRealm(testing.NewUserRealm(tc.caller))
+			amount0Int, _ := strconv.ParseInt(tc.amount0, 10, 64)
+			amount1Int, _ := strconv.ParseInt(tc.amount1, 10, 64)
 
 			if tc.shouldError {
 				uassert.AbortsWithMessage(t, tc.expectedErrorMsg, func() {
-					Mint(
-						cross,
+					mockInstanceMint(
 						tc.token0, tc.token1, tc.fee,
 						tc.tickLower, tc.tickUpper,
 						tc.amount0, tc.amount1,
@@ -659,8 +664,13 @@ func TestMint(t *testing.T) {
 					)
 				})
 			} else {
-				positionId, liquidity, amount0, amount1 := Mint(
-					cross,
+				testing.SetRealm(adminRealm)
+				common.SafeGRC20Transfer(cross, tc.token0, tc.caller, amount0Int)
+				common.SafeGRC20Transfer(cross, tc.token1, tc.caller, amount1Int)
+
+				testing.SetRealm(testing.NewUserRealm(tc.caller))
+
+				positionId, liquidity, amount0, amount1 := mockInstanceMint(
 					tc.token0, tc.token1, tc.fee,
 					tc.tickLower, tc.tickUpper,
 					tc.amount0, tc.amount1,
@@ -749,10 +759,10 @@ func TestIncreaseLiquidity(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			initPositionTest(t)
 
+			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
 			testing.SetRealm(adminRealm)
-			setupPoolAndApprovals(t, true)
-			_, _, _, _ = Mint(
-				cross,
+			_, _, _, _ = mockInstanceMint(
 				barPath,
 				fooPath,
 				fee500,
@@ -772,25 +782,25 @@ func TestIncreaseLiquidity(t *testing.T) {
 				uassert.AbortsWithMessage(t,
 					tc.expectedErrorMsg,
 					func() {
-						IncreaseLiquidity(
-							cross,
+						mockInstanceIncreaseLiquidity(
 							tc.positionId,
 							tc.amount0Desired,
 							tc.amount1Desired,
 							tc.amount0Min,
 							tc.amount1Min,
 							tc.deadline,
+							adminAddr,
 						)
 					})
 			} else {
-				positionId, _, amount0, amount1, _ := IncreaseLiquidity(
-					cross,
+				positionId, _, amount0, amount1, _ := mockInstanceIncreaseLiquidity(
 					tc.positionId,
 					tc.amount0Desired,
 					tc.amount1Desired,
 					tc.amount0Min,
 					tc.amount1Min,
 					tc.deadline,
+					adminAddr,
 				)
 				uassert.Equal(t, tc.positionId, positionId)
 				uassert.Equal(t, tc.expectedAmount0, amount0)
@@ -895,30 +905,26 @@ func TestDecreaseLiquidity(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			initPositionTest(t)
 
-			testing.SetRealm(adminRealm)
-			setupPoolAndApprovals(t, true)
+			createPoolWithoutFee(barPath, fooPath, fee500, 0)
 
-			positionId := seedPosition(t, "1000000", "1000000")
-			gnft.Approve(cross, posRealm.Address(), positionIdFrom(positionId))
+			testing.SetRealm(adminRealm)
+			mockInstanceMint(
+				barPath,
+				fooPath,
+				fee500,
+				-10000,
+				10000,
+				"1000000",
+				"1000000",
+				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
 
 			deadline := time.Now().Add(tc.deadlineOffset).Unix()
-			if tc.beforeIncrease {
-				_, _, _, _, _ = IncreaseLiquidity(
-					cross,
-					positionId,
-					tc.increaseAmount0,
-					tc.increaseAmount1,
-					"0",
-					"0",
-					deadline,
-				)
-			}
 
+			testing.SetRealm(testing.NewUserRealm(adminAddr))
 			if tc.expectedHasAbort {
 				uassert.AbortsWithMessage(t, tc.expectedErrorMsg, func() {
-					DecreaseLiquidity(
-						cross,
-						positionId,
+					mockInstanceDecreaseLiquidity(
+						1,
 						tc.liquidityToRemove,
 						tc.amount0Min,
 						tc.amount1Min,
@@ -927,9 +933,8 @@ func TestDecreaseLiquidity(t *testing.T) {
 					)
 				})
 			} else {
-				_, liquidity, fee0, fee1, _, _, _ := DecreaseLiquidity(
-					cross,
-					positionId,
+				_, liquidity, fee0, fee1, _, _, _ := mockInstanceDecreaseLiquidity(
+					1,
 					tc.liquidityToRemove,
 					tc.amount0Min,
 					tc.amount1Min,
@@ -991,29 +996,42 @@ func TestCollectFees(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setupPoolAndApprovals(t, false)
+			initPositionTest(t)
+
+			createPoolWithoutFee(barPath, fooPath, fee500, 0)
 
 			testing.SetOriginCaller(adminAddr)
-			positionId := seedPosition(t, tt.mintAmount0, tt.mintAmount1)
+			mockInstanceMint(
+				barPath,
+				fooPath,
+				fee500,
+				-10000,
+				10000,
+				"1000000",
+				"1000000",
+				"0", "0",
+				time.Now().Add(time.Hour).Unix(),
+				adminAddr,
+				adminAddr,
+				"",
+			)
 
 			testing.SetOriginCaller(adminAddr)
-			gnft.Approve(cross, posRealm.Address(), positionIdFrom(positionId))
 
 			if tt.increaseAmount0 != "" && tt.increaseAmount1 != "" {
-				_, _, _, _, _ = IncreaseLiquidity(
-					cross,
-					positionId,
+				_, _, _, _, _ = mockInstanceIncreaseLiquidity(
+					1,
 					tt.increaseAmount0,
 					tt.increaseAmount1,
 					"0",
 					"0",
 					time.Now().Add(time.Hour).Unix(),
+					adminAddr,
 				)
 			}
 			if tt.liquidityToRemove != "" {
-				_, _, _, _, _, _, _ = DecreaseLiquidity(
-					cross,
-					positionId,
+				_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(
+					1,
 					tt.liquidityToRemove,
 					"0",
 					"0",
@@ -1024,10 +1042,10 @@ func TestCollectFees(t *testing.T) {
 
 			if tt.expectedHasAbort {
 				uassert.AbortsWithMessage(t, tt.expectedAbortError, func() {
-					CollectFee(cross, positionId, tt.unwrapResult)
+					mockInstanceCollectFee(1, tt.unwrapResult, adminAddr)
 				})
 			} else {
-				_, fee0, fee1, _, amount0, amount1 := CollectFee(cross, positionId, tt.unwrapResult)
+				_, fee0, fee1, _, amount0, amount1 := mockInstanceCollectFee(1, tt.unwrapResult, adminAddr)
 				uassert.Equal(t, tt.expectedFee0, fee0)
 				uassert.Equal(t, tt.expectedFee1, fee1)
 				uassert.Equal(t, tt.expectedAmount0, amount0)
@@ -1091,29 +1109,35 @@ func TestReposition(t *testing.T) {
 			initPositionTest(t)
 
 			// no need to faucet tokens here.
-			setupPoolAndApprovals(t, false)
+			createPoolWithoutFee(barPath, fooPath, fee500, 0)
 
 			testing.SetOriginCaller(adminAddr)
-			positionId := seedPosition(t, "1000000", "1000000")
-			gnft.Approve(cross, posRealm.Address(), positionIdFrom(positionId))
+			mockInstanceMint(
+				barPath,
+				fooPath,
+				fee500,
+				-10000,
+				10000,
+				"1000000",
+				"1000000",
+				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
 
 			// Step 2: Increase liquidity
 			if tt.increaseAmount0 != "" && tt.increaseAmount1 != "" {
-				_, _, _, _, _ = IncreaseLiquidity(
-					cross,
-					positionId,
+				_, _, _, _, _ = mockInstanceIncreaseLiquidity(
+					1,
 					tt.increaseAmount0,
 					tt.increaseAmount1,
 					"0",
 					"0",
 					time.Now().Add(time.Hour).Unix(),
+					adminAddr,
 				)
 			}
 
 			// Step 3: Decrease liquidity to clear the position
-			_, _, _, _, _, _, _ = DecreaseLiquidity(
-				cross,
-				positionId,
+			_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(
+				1,
 				tt.liquidityToRemove,
 				"0",
 				"0",
@@ -1124,30 +1148,29 @@ func TestReposition(t *testing.T) {
 			// Step 4: Attempt Reposition
 			if tt.expectedHasAbort {
 				uassert.AbortsWithMessage(t, tt.expectedAbortMessage, func() {
-					Reposition(
-						cross,
-						positionId,
+					mockInstanceReposition(
+						1,
 						tt.tickLower,
 						tt.tickUpper,
 						tt.mintAmount0,
 						tt.mintAmount1,
 						"0",
 						"0",
+						adminAddr,
 					)
 				})
 			} else {
 				// positionId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()
-				tid, _, tickL, tickH, _, _ := Reposition(
-					cross,
-					positionId,
+				_, _, tickL, tickH, _, _ := mockInstanceReposition(
+					1,
 					tt.tickLower,
 					tt.tickUpper,
 					tt.mintAmount0,
 					tt.mintAmount1,
 					"0",
 					"0",
+					adminAddr,
 				)
-				uassert.Equal(t, tid, positionId)
 				uassert.Equal(t, tickL, tt.tickLower)
 				uassert.Equal(t, tickH, tt.tickUpper)
 			}

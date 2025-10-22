@@ -6,7 +6,6 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/gnft"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
@@ -20,7 +19,10 @@ func (p *positionV1) ApiGetPosition(id uint64) string {
 
 	rpcPosition := p.rpcMakePosition(id)
 	baseStat := NewResponseQueryBase(runtime.ChainHeight(), time.Now().Unix())
-	return makeJsonResponse(&baseStat, &PositionsResponse{Positions: []RpcPosition{rpcPosition}})
+	return makeJsonResponse(&baseStat, &PositionsResponse{
+		Positions: []RpcPosition{rpcPosition},
+		OwnerOf:   p.nftAccessor.OwnerOf,
+	})
 }
 
 func (p *positionV1) ApiGetPositionUnclaimedFeeByPositionID(positionID uint64) string {
@@ -120,7 +122,7 @@ func (p *positionV1) rpcMakePosition(positionId uint64) RpcPosition {
 		unclaimedFee0, unclaimedFee1 = p.GetUnclaimedFee(positionId)
 	}
 
-	owner, err := gnft.OwnerOf(positionIdFrom(positionId))
+	owner, err := p.nftAccessor.OwnerOf(positionIdFrom(positionId))
 	if err != nil {
 		owner = zeroAddress
 	}

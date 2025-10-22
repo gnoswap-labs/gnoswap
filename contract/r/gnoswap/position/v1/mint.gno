@@ -5,7 +5,6 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/position"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
@@ -49,7 +48,7 @@ func (p *positionV1) mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u
 		))
 	}
 
-	gnft.Mint(cross, params.mintTo, positionIdFrom(id))
+	p.nftAccessor.Mint(params.mintTo, positionIdFrom(id))
 
 	positionKey := computePositionKey(params.tickLower, params.tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(poolKey, positionKey)
