@@ -41,10 +41,8 @@ func (gs *govStakerV1) GetClaimableRewardByLaunchpad(addr address) string {
 
 // GetClaimableRewardByRewardID returns claimable reward by ID.
 func (gs *govStakerV1) GetClaimableRewardByRewardID(rewardID string) string {
-	func(cur realm) {
-		emission.MintAndDistributeGns(cross)
-		protocol_fee.DistributeProtocolFee(cross)
-	}(cross)
+	emission.MintAndDistributeGns(cross)
+	protocol_fee.DistributeProtocolFee(cross)
 
 	state := gs.getState()
 	emissionRewardManager := state.EmissionRewardManager().(*EmissionRewardManager)
