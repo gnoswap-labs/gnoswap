@@ -305,182 +305,184 @@ func TestDepositGns(t *testing.T) {
 			expectedPanic:        true,
 			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-016] invalid data || (non_existent_project:30)",
 		},
-		// {
-		// 	name: "fail with invalid tier duration",
-		// 	setupFunc: func(lp *launchpadV1) (string, address) {
-		// 		userAddr := testutils.TestAddress("user9")
-		// 		projectAddr := testutils.TestAddress("project9")
+		{
+			name: "fail with invalid tier duration",
+			setupFunc: func(lp *launchpadV1) (string, address) {
+				userAddr := testutils.TestAddress("user9")
+				projectAddr := testutils.TestAddress("project9")
 
-		// 		// Reset state
-		// 		resetTestStore()
+				// Reset state
+				resetTestStore()
 
-		// 		// Set initial block height
-		// 		ctx := testing.GetContext()
-		// 		ctx.Height = 123
-		// 		ctx.Time = time.Unix(1234567890, 0)
-		// 		testing.SetContext(ctx)
+				// Set initial block height
+				ctx := testing.GetContext()
+				ctx.Height = 123
+				ctx.Time = time.Unix(1234567890, 0)
+				testing.SetContext(ctx)
 
-		// 		// Create project as admin
-		// 		testing.SetRealm(adminRealm)
-		// 		startTime := time.Now().Unix() + 3600 // 1 hour from now
+				// Create project as admin
+				testing.SetRealm(adminRealm)
+				startTime := time.Now().Unix() + 3600 // 1 hour from now
 
-		// 		// Approve token for project creation
-		// 		obl.Approve(cross, launchpadAddr, 10000)
+				// Approve token for project creation
+				obl.Approve(cross, launchpadAddr, 10000)
 
-		// 		// Create project using public CreateProject function
-		// 		var projectID string
-		// 		func(cur realm) {
-		// 			testing.SetRealm(adminRealm)
-		// 			projectID = lp.CreateProject(
-		// 				"Test Project 9",
-		// 				"gno.land/r/onbloc/obl",
-		// 				projectAddr,
-		// 				10000,
-		// 				"", // no conditions
-		// 				"",
-		// 				30,
-		// 				30,
-		// 				40,
-		// 				startTime,
-		// 			)
-		// 		}(cross)
+				// Create project using public CreateProject function
+				var projectID string
+				func(cur realm) {
+					testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 
-		// 		// Skip blocks to activate the project
-		// 		testing.SkipHeights(3600)
+					projectID = lp.CreateProject(
+						"Test Project 9",
+						"gno.land/r/onbloc/obl",
+						projectAddr,
+						10000,
+						"", // no conditions
+						"",
+						30,
+						30,
+						40,
+						startTime,
+					)
+				}(cross)
 
-		// 		// Setup user with GNS tokens
-		// 		testing.SetRealm(adminRealm)
-		// 		gns.Transfer(cross, userAddr, 2000000)
+				// Skip blocks to activate the project
+				testing.SkipHeights(3600)
 
-		// 		// User approves launchpad to spend GNS
-		// 		testing.SetRealm(testing.NewUserRealm(userAddr))
-		// 		gns.Approve(cross, launchpadAddr, 2000000)
+				// Setup user with GNS tokens
+				testing.SetRealm(adminRealm)
+				gns.Transfer(cross, userAddr, 2000000)
 
-		// 		return projectID + ":60", userAddr // Invalid tier
-		// 	},
-		// 	targetProjectTierID:  "",
-		// 	depositAmount:        1000000,
-		// 	referrer:             "",
-		// 	expectedPanic:        true,
-		// 	expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-009] invalid pool || pool type(60) is not available",
-		// },
-		// {
-		// 	name: "fail when project is inactive",
-		// 	setupFunc: func(lp *launchpadV1) (string, address) {
-		// 		userAddr := testutils.TestAddress("user10")
-		// 		projectAddr := testutils.TestAddress("project10")
+				// User approves launchpad to spend GNS
+				testing.SetRealm(testing.NewUserRealm(userAddr))
+				gns.Approve(cross, launchpadAddr, 2000000)
 
-		// 		// Reset state
-		// 		resetTestStore()
+				return projectID + ":60", userAddr // Invalid tier
+			},
+			targetProjectTierID:  "",
+			depositAmount:        1000000,
+			referrer:             "",
+			expectedPanic:        true,
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-009] invalid pool || pool type(60) is not available",
+		},
+		{
+			name: "fail when project is inactive",
+			setupFunc: func(lp *launchpadV1) (string, address) {
+				userAddr := testutils.TestAddress("user10")
+				projectAddr := testutils.TestAddress("project10")
 
-		// 		// Set initial block height
-		// 		ctx := testing.GetContext()
-		// 		ctx.Height = 123
-		// 		ctx.Time = time.Unix(1234567890, 0)
-		// 		testing.SetContext(ctx)
+				// Reset state
+				resetTestStore()
 
-		// 		// Create project as admin
-		// 		testing.SetRealm(adminRealm)
-		// 		futureTime := time.Now().Unix() + 86400 // 1 day in future
+				// Set initial block height
+				ctx := testing.GetContext()
+				ctx.Height = 123
+				ctx.Time = time.Unix(1234567890, 0)
+				testing.SetContext(ctx)
 
-		// 		// Approve token for project creation
-		// 		obl.Approve(cross, launchpadAddr, 10000)
+				// Create project as admin
+				testing.SetRealm(adminRealm)
+				futureTime := time.Now().Unix() + 86400 // 1 day in future
 
-		// 		// Create project using public CreateProject function with future start time
-		// 		var projectID string
-		// 		func(cur realm) {
-		// 			testing.SetRealm(adminRealm)
-		// 			projectID = lp.CreateProject(
-		// 				"Future Project",
-		// 				"gno.land/r/onbloc/obl",
-		// 				projectAddr,
-		// 				10000,
-		// 				"", // no conditions
-		// 				"",
-		// 				30,
-		// 				30,
-		// 				40,
-		// 				futureTime, // Project starts in the future
-		// 			)
-		// 		}(cross)
+				// Approve token for project creation
+				obl.Approve(cross, launchpadAddr, 10000)
 
-		// 		// DON'T skip blocks - keep project inactive
+				// Create project using public CreateProject function with future start time
+				var projectID string
+				func(cur realm) {
+					testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+					projectID = lp.CreateProject(
+						"Future Project",
+						"gno.land/r/onbloc/obl",
+						projectAddr,
+						10000,
+						"", // no conditions
+						"",
+						30,
+						30,
+						40,
+						futureTime, // Project starts in the future
+					)
+				}(cross)
 
-		// 		// Setup user with GNS tokens
-		// 		testing.SetRealm(adminRealm)
-		// 		gns.Transfer(cross, userAddr, 2000000)
+				// DON'T skip blocks - keep project inactive
 
-		// 		// User approves launchpad to spend GNS
-		// 		testing.SetRealm(testing.NewUserRealm(userAddr))
-		// 		gns.Approve(cross, launchpadAddr, 2000000)
+				// Setup user with GNS tokens
+				testing.SetRealm(adminRealm)
+				gns.Transfer(cross, userAddr, 2000000)
 
-		// 		return projectID + ":30", userAddr
-		// 	},
-		// 	targetProjectTierID:  "",
-		// 	depositAmount:        1000000,
-		// 	referrer:             "",
-		// 	expectedPanic:        true,
-		// 	expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-005] project is inactive || gno.land/r/onbloc/obl:123",
-		// },
-		// {
-		// 	name: "fail when called from contract",
-		// 	setupFunc: func(lp *launchpadV1) (string, address) {
-		// 		contractAddr := testutils.TestAddress("contract")
-		// 		projectAddr := testutils.TestAddress("project12")
+				// User approves launchpad to spend GNS
+				testing.SetRealm(testing.NewUserRealm(userAddr))
+				gns.Approve(cross, launchpadAddr, 2000000)
 
-		// 		// Reset state
-		// 		resetTestStore()
+				return projectID + ":30", userAddr
+			},
+			targetProjectTierID:  "",
+			depositAmount:        1000000,
+			referrer:             "",
+			expectedPanic:        true,
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-005] project is inactive || gno.land/r/onbloc/obl:123",
+		},
+		{
+			name: "fail when called from contract",
+			setupFunc: func(lp *launchpadV1) (string, address) {
+				contractAddr := testutils.TestAddress("contract")
+				projectAddr := testutils.TestAddress("project12")
 
-		// 		// Set initial block height
-		// 		ctx := testing.GetContext()
-		// 		ctx.Height = 123
-		// 		ctx.Time = time.Unix(1234567890, 0)
-		// 		testing.SetContext(ctx)
+				// Reset state
+				resetTestStore()
 
-		// 		// Create project as admin
-		// 		testing.SetRealm(adminRealm)
-		// 		startTime := time.Now().Unix() + 3600 // 1 hour from now
+				// Set initial block height
+				ctx := testing.GetContext()
+				ctx.Height = 123
+				ctx.Time = time.Unix(1234567890, 0)
+				testing.SetContext(ctx)
 
-		// 		// Approve token for project creation
-		// 		obl.Approve(cross, launchpadAddr, 10000)
+				// Create project as admin
+				testing.SetRealm(adminRealm)
+				startTime := time.Now().Unix() + 3600 // 1 hour from now
 
-		// 		// Create project using public CreateProject function
-		// 		var projectID string
-		// 		func(cur realm) {
-		// 			testing.SetRealm(adminRealm)
-		// 			projectID = lp.CreateProject(
-		// 				"Test Project 12",
-		// 				"gno.land/r/onbloc/obl",
-		// 				projectAddr,
-		// 				10000,
-		// 				"", // no conditions
-		// 				"",
-		// 				30,
-		// 				30,
-		// 				40,
-		// 				startTime,
-		// 			)
-		// 		}(cross)
+				// Approve token for project creation
+				obl.Approve(cross, launchpadAddr, 10000)
 
-		// 		// Skip blocks to activate the project
-		// 		testing.SkipHeights(3600)
+				// Create project using public CreateProject function
+				var projectID string
+				func(cur realm) {
+					testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 
-		// 		// Setup contract with GNS tokens
-		// 		testing.SetRealm(adminRealm)
-		// 		gns.Transfer(cross, contractAddr, 2000000) // Enough for deposit
+					projectID = lp.CreateProject(
+						"Test Project 12",
+						"gno.land/r/onbloc/obl",
+						projectAddr,
+						10000,
+						"", // no conditions
+						"",
+						30,
+						30,
+						40,
+						startTime,
+					)
+				}(cross)
 
-		// 		// Contract approves launchpad to spend GNS
-		// 		testing.SetRealm(testing.NewCodeRealm("gno.land/r/test/contract"))
-		// 		gns.Approve(cross, launchpadAddr, 2000000)
+				// Skip blocks to activate the project
+				testing.SkipHeights(3600)
 
-		// 		return projectID + ":30", contractAddr
-		// 	},
-		// 	targetProjectTierID:  "",
-		// 	depositAmount:        1000000,
-		// 	referrer:             "",
-		// 	expectedPanic:        true,
-		// 	expectedPanicMessage: "caller is not user",
-		// },
+				// Setup contract with GNS tokens
+				testing.SetRealm(adminRealm)
+				gns.Transfer(cross, contractAddr, 2000000) // Enough for deposit
+
+				// Contract approves launchpad to spend GNS
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/test/contract"))
+				gns.Approve(cross, launchpadAddr, 2000000)
+
+				return projectID + ":30", contractAddr
+			},
+			targetProjectTierID:  "",
+			depositAmount:        1000000,
+			referrer:             "",
+			expectedPanic:        true,
+			expectedPanicMessage: "caller is not user",
+		},
 	}
 
 	for _, tt := range tests {
@@ -510,7 +512,6 @@ func TestDepositGns(t *testing.T) {
 					}(cross)
 				})
 			} else {
-
 				func(cur realm) {
 					testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 					depositID := lp.DepositGns(tt.targetProjectTierID, tt.depositAmount, tt.referrer)

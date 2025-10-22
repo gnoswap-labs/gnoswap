@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"chain"
 	"chain/runtime"
 	"testing"
 	"time"
@@ -129,172 +130,192 @@ func TestWithdrawDeposit(t *testing.T) {
 	}
 }
 
-// func TestCollectDepositGns_TokensRemainLocked(t *testing.T) {
-// 	userAddr := testutils.TestAddress("user3")
-// 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
-// 	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+func TestCollectDepositGns_TokensRemainLocked(t *testing.T) {
+	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
+	launchpadAddr := chain.PackageAddress(launchpadPackagePath)
 
-// 	initLaunchpadWithdrawTest(t, userAddr)
-// 	lp := getTestImplementation()
+	userAddr := testutils.TestAddress("user3")
+	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 
-// 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-// 	gns.Transfer(cross, launchpadAddr, 1000000000)
+	initLaunchpadWithdrawTest(t, userAddr)
+	lp := getTestImplementation()
 
-// 	// Set caller as user and skip to withdrawal time
-// 	testing.SetRealm(testing.NewUserRealm(userAddr))
-// 	testing.SkipHeights(60*60*24*180/5 + 2)
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	gns.Transfer(cross, launchpadAddr, 1000000000)
 
-// 	userBalanceBefore := gns.BalanceOf(userAddr)
-// 	launchpadBalanceBefore := gns.BalanceOf(launchpadAddr)
+	// Set caller as user and skip to withdrawal time
+	testing.SetRealm(testing.NewUserRealm(userAddr))
+	testing.SkipHeights(60*60*24*180/5 + 2)
 
-// 	// withdrawal here.
-// 	// this should unstake and return GNS
-// 	var amount int64
-// 	var err error
+	userBalanceBefore := gns.BalanceOf(userAddr)
+	launchpadBalanceBefore := gns.BalanceOf(launchpadAddr)
 
-// 	testing.SetOriginCaller(userAddr)
-// 	amount, err = lp.CollectDepositGns("1")
-// 	uassert.NoError(t, err)
-// 	uassert.Equal(t, int64(1000000000), amount)
+	// withdrawal here.
+	// this should unstake and return GNS
+	var amount int64
+	var err error
 
-// 	// Check final balances
-// 	userBalanceAfter := gns.BalanceOf(userAddr)
-// 	launchpadBalanceAfter := gns.BalanceOf(launchpadAddr)
+	testing.SetOriginCaller(userAddr)
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+		amount, err = lp.CollectDepositGns("1")
+		uassert.NoError(t, err)
+		uassert.Equal(t, int64(1000000000), amount)
+	}(cross)
 
-// 	// With the fix, these tests should be passed.
-// 	// 1. User's GNS balance should increase by the deposit amount
-// 	// 2. Launchpad's GNS balance should decrease by the same amount
+	// Check final balances
+	userBalanceAfter := gns.BalanceOf(userAddr)
+	launchpadBalanceAfter := gns.BalanceOf(launchpadAddr)
 
-// 	t.Run("user_receives_gns_correctly", func(t *testing.T) {
-// 		expectedUserBalance := int64(userBalanceBefore + amount)
-// 		uassert.Equal(t, expectedUserBalance, userBalanceAfter,
-// 			"User should receive GNS tokens back")
-// 	})
+	// With the fix, these tests should be passed.
+	// 1. User's GNS balance should increase by the deposit amount
+	// 2. Launchpad's GNS balance should decrease by the same amount
 
-// 	t.Run("launchpad_transfers_gns_correctly", func(t *testing.T) {
-// 		expectedLaunchpadBalance := launchpadBalanceBefore - amount
-// 		uassert.Equal(t, expectedLaunchpadBalance, launchpadBalanceAfter,
-// 			"Launchpad should transfer GNS tokens out")
-// 	})
+	t.Run("user_receives_gns_correctly", func(t *testing.T) {
+		expectedUserBalance := int64(userBalanceBefore + amount)
+		uassert.Equal(t, expectedUserBalance, userBalanceAfter,
+			"User should receive GNS tokens back")
+	})
 
-// 	t.Run("tokens_are_properly_returned", func(t *testing.T) {
-// 		userBalanceChange := userBalanceAfter - userBalanceBefore
-// 		launchpadBalanceChange := launchpadBalanceAfter - launchpadBalanceBefore
+	t.Run("launchpad_transfers_gns_correctly", func(t *testing.T) {
+		expectedLaunchpadBalance := launchpadBalanceBefore - amount
+		uassert.Equal(t, expectedLaunchpadBalance, launchpadBalanceAfter,
+			"Launchpad should transfer GNS tokens out")
+	})
 
-// 		uassert.Equal(t, amount, userBalanceChange,
-// 			"User balance should increase by withdrawal amount")
-// 		uassert.Equal(t, -amount, launchpadBalanceChange,
-// 			"Launchpad balance should decrease by withdrawal amount")
-// 	})
-// }
+	t.Run("tokens_are_properly_returned", func(t *testing.T) {
+		userBalanceChange := userBalanceAfter - userBalanceBefore
+		launchpadBalanceChange := launchpadBalanceAfter - launchpadBalanceBefore
+
+		uassert.Equal(t, amount, userBalanceChange,
+			"User balance should increase by withdrawal amount")
+		uassert.Equal(t, -amount, launchpadBalanceChange,
+			"Launchpad balance should decrease by withdrawal amount")
+	})
+}
 
 // This test verifies complete balance restoration after deposit and withdrawal
-// func TestCollectDepositGns_FullBalanceRestoration(t *testing.T) {
-// 	// init test environment
-// 	userAddr := testutils.TestAddress("user4")
-// 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
-// 	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
+func TestCollectDepositGns_FullBalanceRestoration(t *testing.T) {
+	// init test environment
+	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
+	launchpadAddr := chain.PackageAddress(launchpadPackagePath)
 
-// 	testing.SetHeight(123)
-// 	resetTestStore()
-// 	lp := getTestImplementation()
+	userAddr := testutils.TestAddress("user4")
+	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 
-// 	// Setup test project
-// 	currentTime := time.Now().Unix()
-// 	currentHeight := runtime.ChainHeight()
+	testing.SetHeight(123)
+	resetTestStore()
+	lp := getTestImplementation()
 
-// 	project, _ := lp.createProject(
-// 		&createProjectParams{
-// 			name:          "Test Project",
-// 			tokenPath:     "gno.land/r/onbloc/obl",
-// 			depositAmount: 1000000,
-// 			tier30Ratio:   30,
-// 			tier90Ratio:   30,
-// 			tier180Ratio:  40,
-// 			recipient:     testutils.TestAddress("project"),
-// 			startTime:     currentTime + 10,
-// 			currentTime:   currentTime,
-// 			currentHeight: currentHeight,
-// 		},
-// 	)
-// 	state := lp.getLaunchpadState()
-// 	state.projects.Set(project.ID(), project)
+	// Setup test project
+	currentTime := time.Now().Unix()
+	currentHeight := runtime.ChainHeight()
 
-// 	testing.SkipHeights(10)
+	project, _ := lp.createProject(
+		&createProjectParams{
+			name:          "Test Project",
+			tokenPath:     "gno.land/r/onbloc/obl",
+			depositAmount: 1000000,
+			tier30Ratio:   30,
+			tier90Ratio:   30,
+			tier180Ratio:  40,
+			recipient:     testutils.TestAddress("project"),
+			startTime:     currentTime + 10,
+			currentTime:   currentTime,
+			currentHeight: currentHeight,
+		},
+	)
 
-// 	// Give user initial GNS balance
-// 	initialUserBalance := int64(5000000000) // 5000 GNS
-// 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-// 	gns.Transfer(cross, userAddr, initialUserBalance)
+	projects := lp.store.GetProjects()
+	projects.Set(project.ID(), project)
+	lp.store.SetProjects(projects)
 
-// 	// Record initial balance
-// 	userBalanceBeforeDeposit := gns.BalanceOf(userAddr)
-// 	uassert.Equal(t, initialUserBalance, userBalanceBeforeDeposit, "Initial balance should match transferred amount")
+	testing.SkipHeights(10)
 
-// 	// User deposits GNS
-// 	depositAmount := int64(1000000000) // 1000 GNS
-// 	testing.SetOriginCaller(userAddr)
-// 	depositID, _, _, _, err := lp.depositGns(project.ID(), 30, depositAmount, userAddr)
-// 	uassert.NoError(t, err)
+	// Give user initial GNS balance
+	initialUserBalance := int64(5000000000) // 5000 GNS
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	gns.Transfer(cross, userAddr, initialUserBalance)
 
-// 	// Check balance after deposit
-// 	userBalanceAfterDeposit := gns.BalanceOf(userAddr)
-// 	expectedBalanceAfterDeposit := initialUserBalance - depositAmount
-// 	uassert.Equal(t, expectedBalanceAfterDeposit, userBalanceAfterDeposit,
-// 		"User balance should decrease by deposit amount")
+	// Record initial balance
+	userBalanceBeforeDeposit := gns.BalanceOf(userAddr)
+	uassert.Equal(t, initialUserBalance, userBalanceBeforeDeposit, "Initial balance should match transferred amount")
 
-// 	// Setup governance staking (simulating what happens in real scenario)
-// 	govStakerAddr, _ := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
-// 	govStakerRealm := testing.NewUserRealm(govStakerAddr)
-// 	testing.SetRealm(govStakerRealm)
-// 	xgns.Mint(cross, launchpadAddr, depositAmount)
+	// User deposits GNS
+	depositAmount := int64(1000000000) // 1000 GNS
+	testing.SetOriginCaller(userAddr)
 
-// 	// Give launchpad GNS for withdrawal
-// 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-// 	gns.Transfer(cross, launchpadAddr, depositAmount)
+	// Need to approve GNS before deposit
+	testing.SetRealm(testing.NewUserRealm(userAddr))
+	gns.Approve(cross, launchpadAddr, depositAmount)
 
-// 	// Skip to end of tier period
-// 	projectTier, _ := project.getTier(30)
-// 	testing.SetHeight(projectTier.EndTime() + 1)
-// 	testing.SkipHeights(60*60*24*180/5 + 2)
+	// Use public DepositGns function to properly handle token transfer
+	var depositID string
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+		depositID = lp.DepositGns(project.ID()+":30", depositAmount, "")
+	}(cross)
 
-// 	// Perform withdrawal
-// 	testing.SetRealm(testing.NewUserRealm(userAddr))
-// 	var withdrawnAmount int64
-// 	func(cur realm) {
-// 		withdrawnAmount, err = lp.CollectDepositGns(depositID)
-// 	}(cross)
-// 	uassert.NoError(t, err)
-// 	uassert.Equal(t, depositAmount, withdrawnAmount, "Withdrawn amount should match deposit")
+	// Check balance after deposit
+	userBalanceAfterDeposit := gns.BalanceOf(userAddr)
+	expectedBalanceAfterDeposit := initialUserBalance - depositAmount
+	uassert.Equal(t, expectedBalanceAfterDeposit, userBalanceAfterDeposit,
+		"User balance should decrease by deposit amount")
 
-// 	// Verify complete balance restoration
-// 	userBalanceFinal := gns.BalanceOf(userAddr)
+	// Setup governance staking (simulating what happens in real scenario)
+	govStakerAddr, _ := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+	govStakerRealm := testing.NewUserRealm(govStakerAddr)
+	testing.SetRealm(govStakerRealm)
+	xgns.Mint(cross, launchpadAddr, depositAmount)
 
-// 	t.Run("exact_balance_restoration", func(t *testing.T) {
-// 		// User should have exactly the initial balance after withdrawal
-// 		uassert.Equal(t, initialUserBalance, userBalanceFinal,
-// 			"User balance should be fully restored to initial amount")
-// 	})
+	// Give launchpad GNS for withdrawal
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	gns.Transfer(cross, launchpadAddr, depositAmount)
 
-// 	t.Run("deposit_withdrawal_symmetry", func(t *testing.T) {
-// 		// The amount lost during deposit should equal amount gained during withdrawal
-// 		depositLoss := userBalanceBeforeDeposit - userBalanceAfterDeposit
-// 		withdrawalGain := userBalanceFinal - userBalanceAfterDeposit
+	// Skip to end of tier period
+	projectTier, _ := project.getTier(30)
+	testing.SetHeight(projectTier.EndTime() + 1)
+	testing.SkipHeights(60*60*24*180/5 + 2)
 
-// 		uassert.Equal(t, depositLoss, withdrawalGain,
-// 			"Deposit loss should equal withdrawal gain")
-// 		uassert.Equal(t, depositAmount, depositLoss,
-// 			"Deposit loss should equal deposit amount")
-// 		uassert.Equal(t, withdrawnAmount, withdrawalGain,
-// 			"Withdrawal gain should equal withdrawn amount")
-// 	})
+	// Perform withdrawal
+	testing.SetRealm(testing.NewUserRealm(userAddr))
+	var withdrawnAmount int64
+	var err error
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+		withdrawnAmount, err = lp.CollectDepositGns(depositID)
+	}(cross)
+	uassert.NoError(t, err)
+	uassert.Equal(t, depositAmount, withdrawnAmount, "Withdrawn amount should match deposit")
 
-// 	t.Run("verify_no_tokens_lost", func(t *testing.T) {
-// 		netChange := userBalanceFinal - userBalanceBeforeDeposit
-// 		uassert.Equal(t, int64(0), netChange,
-// 			"Net change in user balance should be zero (no tokens lost)")
-// 	})
-// }
+	// Verify complete balance restoration
+	userBalanceFinal := gns.BalanceOf(userAddr)
+
+	t.Run("exact_balance_restoration", func(t *testing.T) {
+		// User should have exactly the initial balance after withdrawal
+		uassert.Equal(t, initialUserBalance, userBalanceFinal,
+			"User balance should be fully restored to initial amount")
+	})
+
+	t.Run("deposit_withdrawal_symmetry", func(t *testing.T) {
+		// The amount lost during deposit should equal amount gained during withdrawal
+		depositLoss := userBalanceBeforeDeposit - userBalanceAfterDeposit
+		withdrawalGain := userBalanceFinal - userBalanceAfterDeposit
+
+		uassert.Equal(t, depositLoss, withdrawalGain,
+			"Deposit loss should equal withdrawal gain")
+		uassert.Equal(t, depositAmount, depositLoss,
+			"Deposit loss should equal deposit amount")
+		uassert.Equal(t, withdrawnAmount, withdrawalGain,
+			"Withdrawal gain should equal withdrawn amount")
+	})
+
+	t.Run("verify_no_tokens_lost", func(t *testing.T) {
+		netChange := userBalanceFinal - userBalanceBeforeDeposit
+		uassert.Equal(t, int64(0), netChange,
+			"Net change in user balance should be zero (no tokens lost)")
+	})
+}
 
 func initLaunchpadWithdrawTest(t *testing.T, depositor address) {
 	testing.SetHeight(123)
