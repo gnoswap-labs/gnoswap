@@ -26,9 +26,13 @@ var (
 	admin             = access.MustGetAddress(prbac.ROLE_ADMIN.String())
 	stakerAddr        = access.MustGetAddress(prbac.ROLE_STAKER.String())
 	communityPoolAddr = access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+
 	govStakerAddr     = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
+	govStakerRealm    = testing.NewUserRealm(govStakerAddr)
+
 	protocolFeeAddr   = access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 	launchpadAddr     = access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
+
 	devOpsAddr        = access.MustGetAddress(prbac.ROLE_DEVOPS.String())
 
 	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"

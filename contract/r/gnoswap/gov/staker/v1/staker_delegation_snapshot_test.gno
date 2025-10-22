@@ -47,11 +47,15 @@ func TestStakerDelegationSnapshot_CleanStakerDelegationSnapshotByAdmin(t *testin
 			// When & Then: Execute and verify
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-					gs.CleanStakerDelegationSnapshotByAdmin(tt.threshold)
+					func(cur realm) {
+						gs.CleanStakerDelegationSnapshotByAdmin(tt.threshold)
+					}(cross)
 				})
 			} else {
+				func(cur realm) {
 				// Should not panic for admin
-				gs.CleanStakerDelegationSnapshotByAdmin(tt.threshold)
+					gs.CleanStakerDelegationSnapshotByAdmin(tt.threshold)
+				}(cross)
 			}
 		})
 	}
@@ -72,14 +76,12 @@ func TestStakerDelegationSnapshot_EdgeCases(t *testing.T) {
 				// Given: Admin context
 				testing.SetRealm(testing.NewUserRealm(admin))
 
-				// When: Perform multiple operations
-				gs.CleanStakerDelegationSnapshotByAdmin(100)
-				gs.SetUnDelegationLockupPeriodByAdmin(1000)
-				gs.CleanStakerDelegationSnapshotByAdmin(200)
-				gs.SetUnDelegationLockupPeriodByAdmin(2000)
-
-				// Then: Should not panic
-				// Operations completed successfully
+				func(cur realm) {
+					gs.CleanStakerDelegationSnapshotByAdmin(100)
+					gs.SetUnDelegationLockupPeriodByAdmin(1000)
+					gs.CleanStakerDelegationSnapshotByAdmin(200)
+					gs.SetUnDelegationLockupPeriodByAdmin(2000)
+				}(cross)
 			},
 		},
 		{
@@ -93,7 +95,9 @@ func TestStakerDelegationSnapshot_EdgeCases(t *testing.T) {
 				largeThreshold := int64(9223372036854775807) // max int64
 
 				// Then: Should not panic
-				gs.CleanStakerDelegationSnapshotByAdmin(largeThreshold)
+				func(cur realm) {
+					gs.CleanStakerDelegationSnapshotByAdmin(largeThreshold)
+				}(cross)
 			},
 		},
 		{
@@ -107,7 +111,9 @@ func TestStakerDelegationSnapshot_EdgeCases(t *testing.T) {
 				largeHeight := int64(9223372036854775807) // max int64
 
 				// Then: Should not panic
-				gs.SetUnDelegationLockupPeriodByAdmin(largeHeight)
+				func(cur realm) {
+					gs.SetUnDelegationLockupPeriodByAdmin(largeHeight)
+				}(cross)
 			},
 		},
 	}

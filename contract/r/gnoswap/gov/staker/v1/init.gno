@@ -4,22 +4,6 @@ import (
 	"gno.land/r/gnoswap/gov/staker"
 )
 
-// func init() {
-// 	staker.RegisterInitializer(cross, InitializeV1)
-// }
-
-// func InitializeV1(store staker.IGovStakerStore) staker.IGovStaker {
-// 	// Initialize state if not exists
-// 	state := store.GetGovStakerState()
-// 	if state == nil {
-// 		// Create and set initial state
-// 		initialState := NewGovStakerStateV1()
-// 		store.SetGovStakerState(initialState)
-// 	}
-	
-// 	return NewGovStakerV1(store)
-// }
-
 func init() {
 	registerGovStakerV1()
 }

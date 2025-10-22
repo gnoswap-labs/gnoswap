@@ -2,8 +2,6 @@ package staker
 
 import (
 	"time"
-
-	"gno.land/p/nt/avl"
 )
 
 // Main interface that combines all sub-interfaces
@@ -66,30 +64,15 @@ type GovStakerState interface {
 	UnDelegationLockupPeriod() int64
 	SetUnDelegationLockupPeriod(period int64)
 
-	// Delegation management - using interface{} to avoid circular dependencies
-	DelegationCounter() interface{}
-	Delegations() *avl.Tree
-	DelegationManager() interface{}
-	DelegationHistory() *avl.Tree
-	DelegationSnapshots() *avl.Tree
-
-	// Reward managers - using interface{} to avoid circular dependencies
-	EmissionRewardManager() interface{}
-	ProtocolFeeRewardManager() interface{}
-
-	// Launchpad integration
-	LaunchpadProjectDeposits() *avl.Tree
-
 	// Reward balances
 	EmissionRewardBalance() int64
 	SetEmissionRewardBalance(balance int64)
-	ProtocolFeeBalances() map[string]int64
-	SetProtocolFeeBalances(balances map[string]int64)
 
 	// Aggregate metrics
 	TotalDelegatedAmount() int64
-	TotalLockedAmount() int64
 	SetTotalDelegatedAmount(amount int64)
+
+	TotalLockedAmount() int64
 	SetTotalLockedAmount(amount int64)
 }
 
