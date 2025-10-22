@@ -1,21 +1,11 @@
 package v1
 
 import (
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/emission"
 	pf "gno.land/r/gnoswap/protocol_fee"
 )
-
-// getUnDelegationLockupPeriod returns the current undelegation lockup period in seconds.
-//
-// Returns:
-//   - int64: lockup period in seconds
-func (g *govStakerV1) getUnDelegationLockupPeriod() int64 {
-	state := g.getState()
-	return state.UnDelegationLockupPeriod()
-}
 
 // setUnDelegationLockupPeriod updates the undelegation lockup period.
 // This affects all future undelegation operations.
@@ -28,16 +18,6 @@ func (g *govStakerV1) setUnDelegationLockupPeriod(period int64) {
 	g.setState(state)
 }
 
-// getCurrentDelegationID returns the current delegation counter value.
-//
-// Returns:
-//   - int64: current delegation ID counter
-func (g *govStakerV1) getCurrentDelegationID() int64 {
-	state := g.getState()
-	counter := state.DelegationCounter().(*Counter)
-	return counter.Get()
-}
-
 // nextDelegationID generates and returns the next unique delegation ID.
 //
 // Returns:
@@ -48,15 +28,6 @@ func (g *govStakerV1) nextDelegationID() int64 {
 	nextID := counter.next()
 	g.setState(state)
 	return nextID
-}
-
-// getDelegations returns the delegation storage tree.
-//
-// Returns:
-//   - *avl.Tree: delegation storage tree
-func (g *govStakerV1) getDelegations() *avl.Tree {
-	state := g.getState()
-	return state.Delegations()
 }
 
 // getDelegation retrieves a delegation by its ID.
@@ -445,23 +416,6 @@ func (g *govStakerV1) setLaunchpadProjectDeposit(ownerAddress string, deposit in
 	g.setState(state)
 
 	return true
-}
-
-// removeLaunchpadProjectDeposit removes a launchpad project deposit record.
-//
-// Parameters:
-//   - ownerAddress: project owner's address identifier
-//
-// Returns:
-//   - bool: true if successfully removed
-func (g *govStakerV1) removeLaunchpadProjectDeposit(ownerAddress string) bool {
-	state := g.getState()
-	launchpadProjectDeposits := state.LaunchpadProjectDeposits()
-
-	_, ok := launchpadProjectDeposits.Remove(ownerAddress)
-	g.setState(state)
-
-	return ok
 }
 
 // addStakeFromLaunchpad adds stake for a launchpad project and updates reward tracking.

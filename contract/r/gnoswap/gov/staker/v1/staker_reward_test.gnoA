@@ -103,16 +103,18 @@ func TestStakerReward_CollectReward(t *testing.T) {
 			tt.setupRewards()
 			defer tt.cleanupMocks()
 
+			gs := createTestGovStaker()
+
 			// Setup realm context for testing
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			// When & Then: Execute and verify
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-					CollectReward(cross)
+					gs.CollectReward()
 				})
 			} else {
-				uassert.NotPanics(t, func() { CollectReward(cross) })
+				uassert.NotPanics(t, func() { gs.CollectReward() })
 			}
 		})
 	}
@@ -177,17 +179,19 @@ func TestStakerReward_CollectRewardFromLaunchPad(t *testing.T) {
 			tt.setupLaunchpad()
 			defer tt.cleanupMocks()
 
+			gs := createTestGovStaker()
+
 			// Setup realm context for testing
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			// When & Then: Execute and verify
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-					CollectRewardFromLaunchPad(cross, tt.to)
+					gs.CollectRewardFromLaunchPad(tt.to)
 				})
 			} else {
 				// Should not panic and collect rewards successfully
-				CollectRewardFromLaunchPad(cross, tt.to)
+				gs.CollectRewardFromLaunchPad(tt.to)
 			}
 		})
 	}
@@ -271,6 +275,7 @@ func TestStakerReward_SetAmountByProjectWallet(t *testing.T) {
 			// Given: Setup test environment
 			tt.setupMocks()
 			defer tt.cleanupMocks()
+			gs := createTestGovStaker()
 
 			// Setup realm context for testing
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
@@ -278,11 +283,11 @@ func TestStakerReward_SetAmountByProjectWallet(t *testing.T) {
 			// When & Then: Execute and verify
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-					SetAmountByProjectWallet(cross, tt.addr, tt.amount, tt.add)
+					gs.SetAmountByProjectWallet(tt.addr, tt.amount, tt.add)
 				})
 			} else {
 				// Should not panic
-				SetAmountByProjectWallet(cross, tt.addr, tt.amount, tt.add)
+				gs.SetAmountByProjectWallet(tt.addr, tt.amount, tt.add)
 			}
 		})
 	}

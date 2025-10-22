@@ -55,6 +55,7 @@ type IGovStakerAdmin interface {
 
 // Storage interface
 type IGovStakerStore interface {
+	HasGovStakerStateKey() bool
 	GetGovStakerState() GovStakerState
 	SetGovStakerState(state GovStakerState) error
 }

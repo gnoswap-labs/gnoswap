@@ -15,73 +15,6 @@ import (
 	"gno.land/p/nt/uassert"
 )
 
-// Test lockup period management
-func TestUnDelegationLockupPeriod(t *testing.T) {
-	tests := []struct {
-		name           string
-		setPeriod      int64
-		expectedPeriod int64
-	}{
-		{
-			name:           "Set standard lockup period",
-			setPeriod:      60 * 60 * 24 * 7, // 7 days
-			expectedPeriod: 60 * 60 * 24 * 7,
-		},
-		{
-			name:           "Set custom lockup period",
-			setPeriod:      60 * 60 * 24 * 14, // 14 days
-			expectedPeriod: 60 * 60 * 24 * 14,
-		},
-		{
-			name:           "Set zero lockup period",
-			setPeriod:      0,
-			expectedPeriod: 0,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Given: Create test instance
-			gs := createTestGovStaker()
-
-			// When: Set lockup period
-			gs.setUnDelegationLockupPeriod(tt.setPeriod)
-
-			// Then: Should return expected period
-			result := gs.getUnDelegationLockupPeriod()
-			uassert.Equal(t, result, tt.expectedPeriod)
-		})
-	}
-}
-
-// Test delegation ID management
-func TestDelegationIDManagement(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "Get and increment delegation IDs",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Given: Create test instance
-			gs := createTestGovStaker()
-
-			// Given: Initial state
-			initialID := gs.getCurrentDelegationID()
-
-			// When: Get next delegation ID
-			nextID := gs.nextDelegationID()
-
-			// Then: Should increment correctly
-			uassert.Equal(t, nextID, initialID+1)
-			uassert.Equal(t, gs.getCurrentDelegationID(), nextID)
-		})
-	}
-}
-
 // Test delegation management
 func TestDelegationManagement(t *testing.T) {
 	tests := []struct {
@@ -377,54 +310,6 @@ func TestLaunchpadProjectDeposits(t *testing.T) {
 				storedDeposit, exists := gs.getLaunchpadProjectDeposit(tt.ownerAddress)
 				uassert.True(t, exists)
 				uassert.Equal(t, storedDeposit, tt.depositAmount)
-			}
-		})
-	}
-}
-
-// Test launchpad deposit removal
-func TestRemoveLaunchpadProjectDeposit(t *testing.T) {
-	tests := []struct {
-		name          string
-		setupState    func(gs *govStakerV1) string
-		expectSuccess bool
-	}{
-		{
-			name: "Remove existing deposit",
-			setupState: func(gs *govStakerV1) string {
-				ownerAddress := "g1projectowner9876543210abcdefghijklm"
-				gs.setLaunchpadProjectDeposit(ownerAddress, 3000)
-				return ownerAddress
-			},
-			expectSuccess: true,
-		},
-		{
-			name: "Remove non-existent deposit",
-			setupState: func(gs *govStakerV1) string {
-				return "g1nonexistentowner1234567890abcdefgh"
-			},
-			expectSuccess: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Given: Create test instance
-			gs := createTestGovStaker()
-
-			// Given: Setup state
-			ownerAddress := tt.setupState(gs)
-
-			// When: Remove launchpad project deposit
-			result := gs.removeLaunchpadProjectDeposit(ownerAddress)
-
-			// Then: Should return expected result
-			uassert.Equal(t, result, tt.expectSuccess)
-
-			if tt.expectSuccess {
-				// Verify deposit was removed
-				_, exists := gs.getLaunchpadProjectDeposit(ownerAddress)
-				uassert.False(t, exists)
 			}
 		})
 	}

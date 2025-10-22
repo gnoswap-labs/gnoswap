@@ -40,17 +40,18 @@ func TestStakerDelegationSnapshot_CleanStakerDelegationSnapshotByAdmin(t *testin
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			gs := createTestGovStaker()
 			// Given: Setup test environment
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			// When & Then: Execute and verify
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-					CleanStakerDelegationSnapshotByAdmin(cross, tt.threshold)
+					gs.CleanStakerDelegationSnapshotByAdmin(tt.threshold)
 				})
 			} else {
 				// Should not panic for admin
-				CleanStakerDelegationSnapshotByAdmin(cross, tt.threshold)
+				gs.CleanStakerDelegationSnapshotByAdmin(tt.threshold)
 			}
 		})
 	}
@@ -58,6 +59,7 @@ func TestStakerDelegationSnapshot_CleanStakerDelegationSnapshotByAdmin(t *testin
 
 // Test edge cases and integration scenarios
 func TestStakerDelegationSnapshot_EdgeCases(t *testing.T) {
+	gs := createTestGovStaker()
 	tests := []struct {
 		name         string
 		description  string
@@ -71,10 +73,10 @@ func TestStakerDelegationSnapshot_EdgeCases(t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(admin))
 
 				// When: Perform multiple operations
-				CleanStakerDelegationSnapshotByAdmin(cross, 100)
-				SetUnDelegationLockupPeriodByAdmin(cross, 1000)
-				CleanStakerDelegationSnapshotByAdmin(cross, 200)
-				SetUnDelegationLockupPeriodByAdmin(cross, 2000)
+				gs.CleanStakerDelegationSnapshotByAdmin(100)
+				gs.SetUnDelegationLockupPeriodByAdmin(1000)
+				gs.CleanStakerDelegationSnapshotByAdmin(200)
+				gs.SetUnDelegationLockupPeriodByAdmin(2000)
 
 				// Then: Should not panic
 				// Operations completed successfully
@@ -91,7 +93,7 @@ func TestStakerDelegationSnapshot_EdgeCases(t *testing.T) {
 				largeThreshold := int64(9223372036854775807) // max int64
 
 				// Then: Should not panic
-				CleanStakerDelegationSnapshotByAdmin(cross, largeThreshold)
+				gs.CleanStakerDelegationSnapshotByAdmin(largeThreshold)
 			},
 		},
 		{
@@ -105,7 +107,7 @@ func TestStakerDelegationSnapshot_EdgeCases(t *testing.T) {
 				largeHeight := int64(9223372036854775807) // max int64
 
 				// Then: Should not panic
-				SetUnDelegationLockupPeriodByAdmin(cross, largeHeight)
+				gs.SetUnDelegationLockupPeriodByAdmin(largeHeight)
 			},
 		},
 	}

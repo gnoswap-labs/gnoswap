@@ -19,6 +19,10 @@ type govStakerStore struct {
 	kvStore store.KVStore
 }
 
+func (s *govStakerStore) HasGovStakerStateKey() bool {
+	return s.kvStore.Has(StoreKeyGovStakerState.String())
+}
+
 // GetGovStakerState retrieves the gov staker state.
 func (s *govStakerStore) GetGovStakerState() GovStakerState {
 	result, err := s.kvStore.Get(StoreKeyGovStakerState.String())
