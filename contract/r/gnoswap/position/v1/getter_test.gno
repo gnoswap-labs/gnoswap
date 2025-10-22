@@ -3,7 +3,6 @@ package v1
 import (
 	"testing"
 
-	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/uassert"
 )
 
@@ -11,28 +10,14 @@ var poolKey = "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
 
 func setupPositionGetter(t *testing.T) {
 	t.Helper()
+	initPositionTest(t)
 
-	CreatePoolWithoutFee(t)
-	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	position := Position{
-		operator:                 positionAddr,
-		poolKey:                  poolKey,
-		tickLower:                -10000,
-		tickUpper:                10000,
-		liquidity:                u256.NewUint(1000000),
-		feeGrowthInside0LastX128: u256.Zero(),
-		feeGrowthInside1LastX128: u256.Zero(),
-		tokensOwed0:              u256.Zero(),
-		tokensOwed1:              u256.Zero(),
-		burned:                   false,
-	}
-	positionId := GetNextId()
-	createNewPosition(positionId, position)
+	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+	mockInstanceMint(barPath, fooPath, fee500, -10000, 10000, "1000000", "1000000", "0", "0", 9999999999, adminAddr, adminAddr, "")
 }
 
 func TestPositionGetter(t *testing.T) {
-	initPositionTest(t)
-
 	positionId := uint64(1)
 	setupPositionGetter(t)
 
@@ -44,194 +29,123 @@ func TestPositionGetter(t *testing.T) {
 		{
 			name: "get position is success by poolKey",
 			testFunc: func() any {
-				position := PositionGetPosition(positionId)
-				return position.poolKey
+				position := mockInstance.mustGetPosition(positionId)
+				return position.PoolKey()
 			},
 			expected: poolKey,
 		},
 		{
 			name: "get position is success by tickLower",
 			testFunc: func() any {
-				position := PositionGetPosition(positionId)
-				return position.tickLower
+				position := mockInstance.mustGetPosition(positionId)
+				return position.TickLower()
 			},
 			expected: int32(-10000),
 		},
 		{
 			name: "get position is success by tickUpper",
 			testFunc: func() any {
-				position := PositionGetPosition(positionId)
-				return position.tickUpper
+				position := mockInstance.mustGetPosition(positionId)
+				return position.TickUpper()
 			},
 			expected: int32(10000),
 		},
 		{
 			name: "get position is success by liquidity",
 			testFunc: func() any {
-				position := PositionGetPosition(positionId)
-				return position.liquidity.ToString()
+				position := mockInstance.mustGetPosition(positionId)
+				return position.Liquidity().ToString()
 			},
-			expected: "1000000",
+			expected: "2541592",
 		},
 		{
 			name: "get position is success by feeGrowthInside0LastX128",
 			testFunc: func() any {
-				position := PositionGetPosition(positionId)
-				return position.feeGrowthInside0LastX128.ToString()
+				position := mockInstance.mustGetPosition(positionId)
+				return position.FeeGrowthInside0LastX128().ToString()
 			},
 			expected: "0",
 		},
 		{
 			name: "get position is success by feeGrowthInside1LastX128",
 			testFunc: func() any {
-				position := PositionGetPosition(positionId)
-				return position.feeGrowthInside1LastX128.ToString()
+				position := mockInstance.mustGetPosition(positionId)
+				return position.FeeGrowthInside1LastX128().ToString()
 			},
 			expected: "0",
 		},
 		{
 			name: "get position is success by tokensOwed0",
 			testFunc: func() any {
-				position := PositionGetPosition(positionId)
-				return position.tokensOwed0.ToString()
+				position := mockInstance.mustGetPosition(positionId)
+				return position.TokensOwed0().ToString()
 			},
 			expected: "0",
 		},
 		{
 			name: "get position is success by tokensOwed1",
 			testFunc: func() any {
-				position := PositionGetPosition(positionId)
-				return position.tokensOwed1.ToString()
+				position := mockInstance.mustGetPosition(positionId)
+				return position.TokensOwed1().ToString()
 			},
 			expected: "0",
 		},
 		{
 			name: "get position is success by burned",
 			testFunc: func() any {
-				position := PositionGetPosition(positionId)
-				return position.burned
+				position := mockInstance.mustGetPosition(positionId)
+				return position.Burned()
 			},
 			expected: false,
 		},
 		{
-			name: "get position is success by operator",
-			testFunc: func() any {
-				return PositionGetPositionOperator(positionId)
-			},
-			expected: positionAddr,
-		},
-		{
-			name: "get position is success by poolKey",
-			testFunc: func() any {
-				return PositionGetPositionPoolKey(positionId)
-			},
-			expected: poolKey,
-		},
-		{
-			name: "get position is success by tickLower",
-			testFunc: func() any {
-				return PositionGetPositionTickLower(positionId)
-			},
-			expected: int32(-10000),
-		},
-		{
-			name: "get position is success by tickUpper",
-			testFunc: func() any {
-				return PositionGetPositionTickUpper(positionId)
-			},
-			expected: int32(10000),
-		},
-		{
 			name: "get position is success by liquidity",
 			testFunc: func() any {
-				return PositionGetPositionLiquidity(positionId).ToString()
+				return mockInstance.mustGetPosition(positionId).Liquidity().ToString()
 			},
-			expected: "1000000",
+			expected: "2541592",
 		},
 		{
 			name: "get position is success by feeGrowthInside0LastX128",
 			testFunc: func() any {
-				return PositionGetPositionFeeGrowthInside0LastX128(positionId).ToString()
+				return mockInstance.mustGetPosition(positionId).FeeGrowthInside0LastX128().ToString()
 			},
 			expected: "0",
 		},
 		{
 			name: "get position is success by feeGrowthInside1LastX128",
 			testFunc: func() any {
-				return PositionGetPositionFeeGrowthInside1LastX128(positionId).ToString()
+				return mockInstance.mustGetPosition(positionId).FeeGrowthInside1LastX128().ToString()
 			},
 			expected: "0",
 		},
 		{
 			name: "get position is success by tokensOwed0",
 			testFunc: func() any {
-				return PositionGetPositionTokensOwed0(positionId).ToString()
+				return mockInstance.mustGetPosition(positionId).TokensOwed0().ToString()
 			},
 			expected: "0",
 		},
 		{
 			name: "get position is success by tokensOwed1",
 			testFunc: func() any {
-				return PositionGetPositionTokensOwed1(positionId).ToString()
+				return mockInstance.mustGetPosition(positionId).TokensOwed1().ToString()
 			},
 			expected: "0",
 		},
 		{
 			name: "get position is success by isBurned",
 			testFunc: func() any {
-				return PositionGetPositionIsBurned(positionId)
+				return mockInstance.IsBurned(positionId)
 			},
 			expected: false,
 		},
 		{
 			name: "get position is success by isInRange",
 			testFunc: func() any {
-				return PositionIsInRange(positionId)
+				return mockInstance.IsInRange(positionId)
 			},
 			expected: true,
-		},
-
-		{
-			name: "get position is success by operatorStr",
-			testFunc: func() any {
-				return PositionGetPositionOperatorStr(positionId)
-			},
-			expected: string(positionAddr),
-		},
-		{
-			name: "get position is success by liquidityStr",
-			testFunc: func() any {
-				return PositionGetPositionLiquidityStr(positionId)
-			},
-			expected: "1000000",
-		},
-		{
-			name: "get position is success by feeGrowthInside0LastX128Str",
-			testFunc: func() any {
-				return PositionGetPositionFeeGrowthInside0LastX128Str(positionId)
-			},
-			expected: "0",
-		},
-		{
-			name: "get position is success by feeGrowthInside1LastX128Str",
-			testFunc: func() any {
-				return PositionGetPositionFeeGrowthInside1LastX128Str(positionId)
-			},
-			expected: "0",
-		},
-		{
-			name: "get position is success by tokensOwed0Str",
-			testFunc: func() any {
-				return PositionGetPositionTokensOwed0Str(positionId)
-			},
-			expected: "0",
-		},
-		{
-			name: "get position is success by tokensOwed1Str",
-			testFunc: func() any {
-				return PositionGetPositionTokensOwed1Str(positionId)
-			},
-			expected: "0",
 		},
 	}
 

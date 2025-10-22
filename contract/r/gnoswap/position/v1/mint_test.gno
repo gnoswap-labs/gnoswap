@@ -1,12 +1,14 @@
 package v1
 
 import (
+	"strconv"
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 
+	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -253,19 +255,35 @@ func TestMintInternal_PositionMint(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			NewEnv(t).
-				GivenPoolCreated(tt.params.token0, tt.params.token1, tt.params.fee,
-					"79228162514264337593543950336").
-				AndUserFundedAndApproved(alice, tt.params.token0, tt.params.token1)
+			initPositionTest(t)
 
+			createPoolWithoutFee(tt.params.token0, tt.params.token1, tt.params.fee, 0)
+
+			amount0Int, _ := strconv.ParseInt(tt.params.amount0Desired.ToString(), 10, 64)
+			amount1Int, _ := strconv.ParseInt(tt.params.amount1Desired.ToString(), 10, 64)
+
+			testing.SetRealm(testing.NewUserRealm(tt.params.caller))
+			bar.Approve(cross, poolAddr, amount0Int)
+			baz.Approve(cross, poolAddr, amount1Int)
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, tt.expectedMsg, func() {
-					mint(tt.params)
+					func(cur realm) {
+						testing.SetRealm(posRealm)
+						mockInstance.mint(tt.params)
+					}(cross)
 				})
 			} else {
-				id, liquidity, amount0, amount1 := mint(tt.params)
-				assertMintOK(t, tt.expectedId, tt.expectedLiquidity, tt.expectedAmount0, tt.expectedAmount1,
-					id, liquidity, amount0, amount1)
+				testing.SetRealm(adminRealm)
+				bar.Transfer(cross, tt.params.caller, amount0Int)
+				baz.Transfer(cross, tt.params.caller, amount1Int)
+
+				testing.SetRealm(testing.NewUserRealm(tt.params.caller))
+				func(cur realm) {
+					testing.SetRealm(posRealm)
+					id, liquidity, amount0, amount1 := mockInstance.mint(tt.params)
+					assertMintOK(t, tt.expectedId, tt.expectedLiquidity, tt.expectedAmount0, tt.expectedAmount1,
+						id, liquidity, amount0, amount1)
+				}(cross)
 			}
 		})
 	}
@@ -315,13 +333,22 @@ func TestMintInternal_PanicCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			NewEnv(t).
-				GivenPoolCreated(tt.params.token0, tt.params.token1, tt.params.fee,
-					"79228162514264337593543950336").
-				AndUserFundedAndApproved(alice, tt.params.token0, tt.params.token1)
+			initPositionTest(t)
 
-			uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
-				mint(tt.params)
+			createPoolWithoutFee(tt.params.token0, tt.params.token1, tt.params.fee, 0)
+
+			amount0Int, _ := strconv.ParseInt(tt.params.amount0Desired.ToString(), 10, 64)
+			amount1Int, _ := strconv.ParseInt(tt.params.amount1Desired.ToString(), 10, 64)
+
+			testing.SetRealm(testing.NewUserRealm(tt.params.caller))
+			bar.Approve(cross, poolAddr, amount0Int)
+			baz.Approve(cross, poolAddr, amount1Int)
+
+			uassert.AbortsWithMessage(t, tt.expectedMsg, func() {
+				func(cur realm) {
+					testing.SetRealm(posRealm)
+					mockInstance.mint(tt.params)
+				}(cross)
 			})
 		})
 	}
@@ -493,19 +520,36 @@ func TestMintInternal_FeeTierEdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			NewEnv(t).
-				GivenPoolCreated(tt.params.token0, tt.params.token1, tt.params.fee,
-					"79228162514264337593543950336").
-				AndUserFundedAndApproved(alice, tt.params.token0, tt.params.token1)
+			initPositionTest(t)
+
+			createPoolWithoutFee(tt.params.token0, tt.params.token1, tt.params.fee, 0)
+
+			amount0Int, _ := strconv.ParseInt(tt.params.amount0Desired.ToString(), 10, 64)
+			amount1Int, _ := strconv.ParseInt(tt.params.amount1Desired.ToString(), 10, 64)
+
+			testing.SetRealm(testing.NewUserRealm(tt.params.caller))
+			bar.Approve(cross, poolAddr, amount0Int)
+			baz.Approve(cross, poolAddr, amount1Int)
 
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, tt.expectedMsg, func() {
-					mint(tt.params)
+					func(cur realm) {
+						testing.SetRealm(posRealm)
+						mockInstance.mint(tt.params)
+					}(cross)
 				})
 			} else {
-				id, liquidity, amount0, amount1 := mint(tt.params)
-				assertMintOK(t, tt.expectedId, tt.expectedLiquidity, tt.expectedAmount0, tt.expectedAmount1,
-					id, liquidity, amount0, amount1)
+				testing.SetRealm(adminRealm)
+				bar.Transfer(cross, tt.params.caller, amount0Int)
+				baz.Transfer(cross, tt.params.caller, amount1Int)
+
+				testing.SetRealm(testing.NewUserRealm(tt.params.caller))
+				func(cur realm) {
+					testing.SetRealm(posRealm)
+					id, liquidity, amount0, amount1 := mockInstance.mint(tt.params)
+					assertMintOK(t, tt.expectedId, tt.expectedLiquidity, tt.expectedAmount0, tt.expectedAmount1,
+						id, liquidity, amount0, amount1)
+				}(cross)
 			}
 		})
 	}
@@ -677,19 +721,36 @@ func TestMintInternal_TickBoundaries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			NewEnv(t).
-				GivenPoolCreated(tt.params.token0, tt.params.token1, tt.params.fee,
-					"79228162514264337593543950336").
-				AndUserFundedAndApproved(alice, tt.params.token0, tt.params.token1)
+			initPositionTest(t)
+
+			createPoolWithoutFee(tt.params.token0, tt.params.token1, tt.params.fee, 0)
+
+			amount0Int, _ := strconv.ParseInt(tt.params.amount0Desired.ToString(), 10, 64)
+			amount1Int, _ := strconv.ParseInt(tt.params.amount1Desired.ToString(), 10, 64)
+
+			testing.SetRealm(testing.NewUserRealm(tt.params.caller))
+			common.SafeGRC20Approve(cross, tt.params.token0, poolAddr, amount0Int)
+			common.SafeGRC20Approve(cross, tt.params.token1, poolAddr, amount1Int)
 
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, tt.expectedMsg, func() {
-					mint(tt.params)
+					func(cur realm) {
+						testing.SetRealm(posRealm)
+						mockInstance.mint(tt.params)
+					}(cross)
 				})
 			} else {
-				id, liquidity, amount0, amount1 := mint(tt.params)
-				assertMintOK(t, tt.expectedId, tt.expectedLiquidity, tt.expectedAmount0, tt.expectedAmount1,
-					id, liquidity, amount0, amount1)
+				testing.SetRealm(adminRealm)
+				bar.Transfer(cross, tt.params.caller, amount0Int)
+				baz.Transfer(cross, tt.params.caller, amount1Int)
+
+				testing.SetRealm(testing.NewUserRealm(tt.params.caller))
+				func(cur realm) {
+					testing.SetRealm(posRealm)
+					id, liquidity, amount0, amount1 := mockInstance.mint(tt.params)
+					assertMintOK(t, tt.expectedId, tt.expectedLiquidity, tt.expectedAmount0, tt.expectedAmount1,
+						id, liquidity, amount0, amount1)
+				}(cross)
 			}
 		})
 	}

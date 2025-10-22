@@ -21,7 +21,7 @@ func TestTransferUGNOT(t *testing.T) {
 		{
 			name: "transferUGNOT is success by zero amount",
 			action: func(t *testing.T, from, to address) {
-				transferUGNOT(from, to, 0)
+				mockInstance.transferUGNOT(from, to, 0)
 			},
 			verify: func(t *testing.T, to address) int64 {
 				return ugnotBalanceOf(t, to)
@@ -36,7 +36,7 @@ func TestTransferUGNOT(t *testing.T) {
 			action: func(t *testing.T, from, to address) {
 				ugnotFaucet(t, from, 100)
 				testing.SetRealm(testing.NewUserRealm(from))
-				transferUGNOT(from, to, 100)
+				mockInstance.transferUGNOT(from, to, 100)
 			},
 			verify: func(t *testing.T, to address) int64 {
 				return ugnotBalanceOf(t, to)
@@ -78,7 +78,7 @@ func TestWrapInPosition(t *testing.T) {
 		{
 			name: "wrap is failed by amount less than minimum",
 			action: func(t *testing.T, from, to address) error {
-				return wrap(999, to)
+				return mockInstance.wrap(999, to)
 			},
 			verify:         nil,
 			from:           alice,
@@ -89,7 +89,7 @@ func TestWrapInPosition(t *testing.T) {
 		{
 			name: "wrap is failed by zero amount",
 			action: func(t *testing.T, from, to address) error {
-				return wrap(0, to)
+				return mockInstance.wrap(0, to)
 			},
 			verify:         nil,
 			from:           alice,
@@ -102,7 +102,7 @@ func TestWrapInPosition(t *testing.T) {
 			action: func(t *testing.T, from, to address) error {
 				ugnotFaucet(t, from, 1000)
 				testing.SetRealm(testing.NewUserRealm(from))
-				return wrap(1000, to)
+				return mockInstance.wrap(1000, to)
 			},
 			verify: func(t *testing.T, to address) int64 {
 				return TokenBalance(t, wugnotPath, to)
@@ -141,7 +141,7 @@ func TestUnWrap(t *testing.T) {
 		{
 			name: "unwrap is failed by zero amount",
 			action: func(t *testing.T, from, to address) error {
-				return unwrap(0, to)
+				return mockInstance.unwrap(0, to)
 			},
 			verify:      nil,
 			from:        alice,
@@ -155,11 +155,11 @@ func TestUnWrap(t *testing.T) {
 				ugnotFaucet(t, from, 1000)
 
 				testing.SetRealm(testing.NewUserRealm(from))
-				err := wrap(1000, to)
+				err := mockInstance.wrap(1000, to)
 				uassert.Nil(t, err, "wrap should not return error")
 
 				TokenApprove(t, wugnotPath, to, from, 1000)
-				return unwrap(1000, to)
+				return mockInstance.unwrap(1000, to)
 			},
 			verify: func(t *testing.T, to address) int64 {
 				return ugnotBalanceOf(t, to)
@@ -354,10 +354,10 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			}
 			testing.SetRealm(testing.NewUserRealm(positionAddr))
 
-			transferUGNOT(positionAddr, positionAddr, amount)
+			mockInstance.transferUGNOT(positionAddr, positionAddr, amount)
 
 			// Verify wrapped amount
-			wrappedAmount, err := safeWrapNativeToken(amount, tt.userAddress)
+			wrappedAmount, err := mockInstance.safeWrapNativeToken(amount, tt.userAddress)
 			if tt.expectError {
 				uassert.ErrorIs(t, err, errors.New(tt.expectedError))
 			} else {

@@ -7,7 +7,6 @@ import (
 	"gno.land/p/nt/uassert"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/r/gnoswap/gnft"
 )
 
 func assertPanic(t *testing.T, expectedMsg string, fn func()) {
@@ -97,6 +96,8 @@ func TestAssertValidNumberString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+
 			if tt.expectedHasPanic {
 				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
 					assertValidNumberString(tt.input)
@@ -155,6 +156,8 @@ func TestPositionIdFrom(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			initPositionTest(t)
+
 			defer func() {
 				r := recover()
 				if r == nil {
@@ -210,10 +213,12 @@ func TestIsOwner(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			testing.SetRealm(posRealm)
-			gnft.Mint(cross, adminAddr, positionIdFrom(tc.positionId))
+			initPositionTest(t)
 
-			got := isOwner(tc.positionId, tc.addr)
+			testing.SetRealm(posRealm)
+			mockInstance.nftAccessor.Mint(adminAddr, positionIdFrom(tc.positionId))
+
+			got := mockInstance.isOwner(tc.positionId, tc.addr)
 
 			uassert.Equal(t, tc.expected, got)
 		})
@@ -242,20 +247,15 @@ func TestIsOperator(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			initPositionTest(t)
+
 			// given
 			position := newDummyPosition(tc.positionId)
-			position.operator = alice
-			createNewPosition(tc.positionId, position)
-
-			// given - nft owner is position realm then set as approved alice
-			testing.SetRealm(posRealm)
-			gnft.Mint(cross, stakerAddr, positionIdFrom(tc.positionId))
-
-			testing.SetOriginCaller(stakerAddr)
-			gnft.Approve(cross, alice, positionIdFrom(tc.positionId))
+			position.SetOperator(alice)
+			mockInstance.createNewPosition(tc.positionId, position)
 
 			// when
-			got := isOperator(tc.positionId, tc.addr)
+			got := mockInstance.isOperator(tc.positionId, tc.addr)
 
 			// then
 			uassert.Equal(t, tc.expected, got)
@@ -296,6 +296,8 @@ func TestPoolKeyDivide(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			initPositionTest(t)
+
 			defer func() {
 				r := recover()
 				if r == nil {

@@ -9,7 +9,7 @@ import (
 
 func setupPositions(t *testing.T) {
 	t.Helper()
-	MakeMintPositionWithoutFee(t)
+	initPositionTest(t)
 }
 
 func TestApiGetPositionsFee(t *testing.T) {
@@ -22,7 +22,7 @@ func TestApiGetPositionsFee(t *testing.T) {
 		{
 			name: "Unclaimed Fee By LP Position ID",
 			apiCall: func() string {
-				return mockPositionV1(t).ApiGetPositionUnclaimedFeeByPositionID(1)
+				return mockInstance.ApiGetPositionUnclaimedFeeByPositionID(1)
 			},
 			expectedSize: 1,
 			validator: func(helper *ApiTestHelper, feeData *json.Node) {
@@ -34,6 +34,10 @@ func TestApiGetPositionsFee(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			setupPositions(t)
+
+			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+			testing.SetRealm(adminRealm)
+			mockInstanceMint(barPath, fooPath, fee500, -10000, 10000, "1000000", "1000000", "0", "0", 9999999999, adminAddr, adminAddr, "")
 
 			runApiTest(t, tt.apiCall, tt.expectedSize, tt.validator)
 		})
@@ -207,7 +211,7 @@ func (h *ApiTestHelper) AssertBoolField(node *json.Node, fieldName string, expec
 }
 
 var mockPosition = map[string]string{
-	"lpPositionId":             "1",
+	"positionID":               "1",
 	"burned":                   "false",
 	"owner":                    `"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"`,
 	"operator":                 `""`,
@@ -239,9 +243,9 @@ func (h *ApiTestHelper) AssertFeeFields(feeNode *json.Node) {
 	h.t.Helper()
 
 	expectedFields := map[string]string{
-		"lpPositionId": "1",
-		"fee0":         `"0"`,
-		"fee1":         `"0"`,
+		"positionID": "1",
+		"fee0":       `"0"`,
+		"fee1":       `"0"`,
 	}
 
 	for fieldName, expectedValue := range expectedFields {
@@ -271,8 +275,8 @@ func CreateExpectedPositionMap() map[string]string {
 // CreateExpectedFeeMap creates a map of expected fee data.
 func CreateExpectedFeeMap() map[string]string {
 	return map[string]string{
-		"lpPositionId": "1",
-		"fee0":         "0",
-		"fee1":         "0",
+		"positionID": "1",
+		"fee0":       "0",
+		"fee1":       "0",
 	}
 }

@@ -160,15 +160,15 @@ func TestAddLiquidity(t *testing.T) {
 			if tt.expectError {
 				if tt.errorType == "panic" {
 					uassert.PanicsWithMessage(t, tt.expectedMessage, func() {
-						addLiquidity(tt.params)
+						mockInstance.addLiquidity(tt.params)
 					})
 				} else {
 					uassert.AbortsWithMessage(t, tt.expectedMessage, func() {
-						addLiquidity(tt.params)
+						mockInstance.addLiquidity(tt.params)
 					})
 				}
 			} else {
-				_, amount0, amount1 := addLiquidity(tt.params)
+				_, amount0, amount1 := mockInstance.addLiquidity(tt.params)
 				uassert.Equal(t, tt.expectedAmount0, amount0.ToString())
 				uassert.Equal(t, tt.expectedAmount1, amount1.ToString())
 			}

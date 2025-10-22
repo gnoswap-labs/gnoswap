@@ -17,7 +17,7 @@ const (
 )
 
 var (
-	positionPath  = "gno.land/r/gnoswap/v1/position"
+	positionPath  = "gno.land/r/gnoswap/position"
 	positionRealm = testing.NewCodeRealm(positionPath)
 
 	stakerPath  = "gno.land/r/gnoswap/v1/staker"
