@@ -7,8 +7,8 @@ import (
 
 	"gno.land/p/nt/uassert"
 
+	pn "gno.land/r/gnoswap/position"
 	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
 
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"

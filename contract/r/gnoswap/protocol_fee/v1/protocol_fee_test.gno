@@ -23,7 +23,7 @@ var (
 
 	// contract paths
 	poolPath      = "gno.land/r/gnoswap/v1/pool"
-	positionPath  = "gno.land/r/gnoswap/v1/position"
+	positionPath  = "gno.land/r/gnoswap/position"
 	routerPath    = "gno.land/r/gnoswap/router"
 	stakerPath    = "gno.land/r/gnoswap/v1/staker"
 	govStakerPath = "gno.land/r/gnoswap/gov/staker"

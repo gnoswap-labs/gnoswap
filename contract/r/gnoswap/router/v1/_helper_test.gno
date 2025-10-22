@@ -8,12 +8,12 @@ import (
 	"gno.land/p/nt/testutils"
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/router"
+	pn "gno.land/r/gnoswap/position"
+	position_v1 "gno.land/r/gnoswap/position/v1"
 	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
@@ -84,13 +84,15 @@ var (
 	routerPath  = "gno.land/r/gnoswap/router"
 	routerRealm = testing.NewCodeRealm(routerPath)
 
-	posPath  = "gno.land/r/gnoswap/v1/position"
+	posPath  = "gno.land/r/gnoswap/position"
 	posRealm = testing.NewCodeRealm(posPath)
 
 	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	// addresses used in tests
 	addrUsedInTest = []address{addr01, addr02}
+
+	registeredTestStore = false
 )
 
 func TokenFaucet(t *testing.T, tokenPath string, to address) {
@@ -460,34 +462,30 @@ func initRouterTest(t *testing.T) {
 	t.Helper()
 
 	pl.InitPoolTest(t)
-	pn.InitPositionTest(t)
-	gnft.InitGNFTTest(t)
+	registerPositionTest(t)
+
+	registeredTestStore = true
 }
 
-type routerStore struct {
-	data map[string]any
-}
+// registerPositionTest registers the position mock implementation
+func registerPositionTest(t *testing.T) {
+	t.Helper()
 
-func (r *routerStore) HasSwapFeeKey() bool {
-	return r.data[router.StoreKeySwapFee.String()] != nil
-}
+	positionMockPath := "gno.land/r/gnoswap/position/mock"
 
-func (r *routerStore) GetSwapFee() uint64 {
-	return r.data[router.StoreKeySwapFee.String()].(uint64)
-}
+	if registeredTestStore {
+		testing.SetRealm(adminRealm)
+		pn.UpgradeImpl(cross, positionMockPath)
+		return
+	}
 
-func (r *routerStore) SetSwapFee(fee uint64) error {
-	r.data[router.StoreKeySwapFee.String()] = fee
-	return nil
-}
+	testing.SetRealm(testing.NewCodeRealm(positionMockPath))
+	func() {
+		pn.RegisterInitializer(cross, func(_ pn.IPositionStore) pn.IPosition {
+			return position_v1.NewPositionV1(newMockPositionStore(), newMockNFTAccessor())
+		})
+	}()
 
-func newMockRouterStore() router.IRouterStore {
-	data := make(map[string]any)
-	data[router.StoreKeySwapFee.String()] = uint64(15) // 0.15%
-
-	return &routerStore{data: data}
-}
-
-func mockRouter() *routerV1 {
-	return &routerV1{store: newMockRouterStore()}
+	testing.SetRealm(adminRealm)
+	pn.UpgradeImpl(cross, positionMockPath)
 }

@@ -73,7 +73,7 @@ var (
 	alice      = testutils.TestAddress("alice")
 	adminRealm = testing.NewUserRealm(adminAddr)
 
-	posPath  = "gno.land/r/gnoswap/v1/position"
+	posPath  = "gno.land/r/gnoswap/position"
 	posRealm = testing.NewCodeRealm(posPath)
 
 	routerPath = "gno.land/r/gnoswap/router"

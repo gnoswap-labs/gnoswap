@@ -20,7 +20,7 @@ var (
 	// POOL_ADDR is the derived address for the pool package.
 	POOL_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/v1/pool")
 	// POSITION_ADDR is the derived address for the position package.
-	POSITION_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/v1/position")
+	POSITION_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/position")
 	// ROUTER_ADDR is the derived address for the router package.
 	ROUTER_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/router")
 	// STAKER_ADDR is the derived address for the staker package.

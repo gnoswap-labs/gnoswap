@@ -15,8 +15,10 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
+	pn "gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
+
+	_ "gno.land/r/gnoswap/position/v1"
 
 	"gno.land/r/gnoland/wugnot"
 )
