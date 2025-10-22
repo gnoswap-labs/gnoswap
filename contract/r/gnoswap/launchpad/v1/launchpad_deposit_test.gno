@@ -178,8 +178,9 @@ func initLaunchpadDepositTest(t *testing.T) {
 		},
 	)
 
-	state := lp.getLaunchpadState()
-	state.projects.Set(project.ID(), project)
+	projects := lp.store.GetProjects()
+	projects.Set(project.ID(), project)
+	lp.store.SetProjects(projects)
 
 	testing.SkipHeights(10)
 }

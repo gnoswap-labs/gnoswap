@@ -2,8 +2,8 @@ package v1
 
 // ApiGetDepositByDepositId retrieves deposit information by deposit ID.
 func (lp *launchpadV1) ApiGetDepositByDepositId(depositId string) string {
-	state := lp.getLaunchpadState()
-	deposit, exist := state.deposits.Get(depositId)
+	deposits := lp.store.GetDeposits()
+	deposit, exist := deposits.Get(depositId)
 	if !exist {
 		return ""
 	}

@@ -113,8 +113,13 @@ func (lp *launchpadV1) withdrawDeposit(deposit *Deposit, currentHeight, currentT
 	withdrawalAmount := deposit.withdraw(currentHeight, currentTime)
 
 	// Store updated deposit in state
-	state := lp.getLaunchpadState()
-	state.deposits.Set(deposit.ID(), deposit)
+	deposits := lp.store.GetDeposits()
+	deposits.Set(deposit.ID(), deposit)
+
+	// Save the modified state back
+	if err := lp.store.SetDeposits(deposits); err != nil {
+		return "", 0, err
+	}
 
 	return project.Recipient(), withdrawalAmount, nil
 }

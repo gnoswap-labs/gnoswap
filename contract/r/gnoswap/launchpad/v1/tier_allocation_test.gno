@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 )
@@ -72,18 +71,14 @@ func TestTierAllocationNoLeftover(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			resetTestStore()
 			lp := getTestImplementation()
-			state := lp.getLaunchpadState()
-			state.deposits = avl.NewTree()
-			state.depositCounter = NewCounter()
-			state.projects = avl.NewTree()
-			state.projectTierRewardManagers = avl.NewTree()
 
 			currentTime := time.Now().Unix()
 			currentHeight := int64(100)
 			testing.SetHeight(currentHeight)
 
-			project, _ := lp.createProject(
+			project, err := lp.createProject(
 				&createProjectParams{
 					name:          "Test Project",
 					tokenPath:     "gno.land/r/onbloc/obl",
@@ -97,7 +92,12 @@ func TestTierAllocationNoLeftover(t *testing.T) {
 					currentHeight: currentHeight,
 				},
 			)
-			state.projects.Set(project.ID(), project)
+			uassert.NoError(t, err)
+			uassert.NotNil(t, project, "project should not be nil")
+			
+			projects := lp.store.GetProjects()
+			projects.Set(project.ID(), project)
+			lp.store.SetProjects(projects)
 
 			// get all tiers and calculate total allocated
 			tier30, _ := project.getTier(30)
@@ -131,12 +131,8 @@ func TestTierAllocationNoLeftover(t *testing.T) {
 
 // TestTierAllocationRemainder specifically tests the remainder handling logic
 func TestTierAllocationRemainder(t *testing.T) {
+	resetTestStore()
 	lp := getTestImplementation()
-	state := lp.getLaunchpadState()
-	state.deposits = avl.NewTree()
-	state.depositCounter = NewCounter()
-	state.projects = avl.NewTree()
-	state.projectTierRewardManagers = avl.NewTree()
 
 	currentTime := time.Now().Unix()
 	currentHeight := int64(100)
@@ -146,7 +142,7 @@ func TestTierAllocationRemainder(t *testing.T) {
 	// 1000 / 3 = 333.33... which truncates to 333
 	depositAmount := int64(1000)
 
-	project, _ := lp.createProject(
+	project, err := lp.createProject(
 		&createProjectParams{
 			name:          "Remainder Test",
 			tokenPath:     "gno.land/r/onbloc/obl",
@@ -160,7 +156,12 @@ func TestTierAllocationRemainder(t *testing.T) {
 			currentHeight: currentHeight,
 		},
 	)
-	state.projects.Set(project.ID(), project)
+	uassert.NoError(t, err)
+	uassert.NotNil(t, project, "project should not be nil")
+	
+	projects := lp.store.GetProjects()
+	projects.Set(project.ID(), project)
+	lp.store.SetProjects(projects)
 
 	tier30, _ := project.getTier(30)
 	tier90, _ := project.getTier(90)

@@ -37,8 +37,8 @@ func assertIsValidAmount(amount int64) {
 func (lp *launchpadV1) assertHasProject(caller address) {
 	hasProject := false
 
-	state := lp.getLaunchpadState()
-	state.projects.Iterate("", "", func(key string, value interface{}) bool {
+	projects := lp.store.GetProjects()
+	projects.Iterate("", "", func(key string, value interface{}) bool {
 		project, ok := value.(*Project)
 		if !ok {
 			panic(ufmt.Sprintf("failed to cast projects's element to *Project: %T", value))

@@ -42,8 +42,17 @@ type ILaunchpadApi interface {
 }
 
 type ILaunchpadStore interface {
-	GetLaunchpadState() LaunchpadState
-	SetLaunchpadState(state LaunchpadState) error
+	GetProjects() *avl.Tree
+	SetProjects(projects *avl.Tree) error
+	
+	GetProjectTierRewardManagers() *avl.Tree
+	SetProjectTierRewardManagers(managers *avl.Tree) error
+	
+	GetDepositCounter() Counter
+	SetDepositCounter(counter Counter) error
+	
+	GetDeposits() *avl.Tree
+	SetDeposits(deposits *avl.Tree) error
 }
 
 type LaunchpadState interface {

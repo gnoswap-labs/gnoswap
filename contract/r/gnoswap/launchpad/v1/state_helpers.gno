@@ -7,8 +7,8 @@ import (
 // Helper functions that access state through launchpadState
 
 func (lp *launchpadV1) getProject(projectID string) (*Project, error) {
-	state := lp.getLaunchpadState()
-	project, ok := state.projects.Get(projectID)
+	projects := lp.store.GetProjects()
+	project, ok := projects.Get(projectID)
 	if !ok {
 		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("project(%s) not found", projectID))
 	}
@@ -36,8 +36,8 @@ func (lp *launchpadV1) getProjectTier(projectID string, tierDuration int64) (*Pr
 }
 
 func (lp *launchpadV1) getProjectTierRewardManager(projectTierID string) (*RewardManager, error) {
-	state := lp.getLaunchpadState()
-	rewardManager, ok := state.projectTierRewardManagers.Get(projectTierID)
+	managers := lp.store.GetProjectTierRewardManagers()
+	rewardManager, ok := managers.Get(projectTierID)
 	if !ok {
 		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("reward manager(%s) not found", projectTierID))
 	}
@@ -60,8 +60,8 @@ func (lp *launchpadV1) mustGetDeposit(depositID string) *Deposit {
 }
 
 func (lp *launchpadV1) getDeposit(depositID string) (*Deposit, error) {
-	state := lp.getLaunchpadState()
-	depositI, ok := state.deposits.Get(depositID)
+	deposits := lp.store.GetDeposits()
+	depositI, ok := deposits.Get(depositID)
 	if !ok {
 		return nil, makeErrorWithDetails(errNotExistDeposit, ufmt.Sprintf("(%s)", depositID))
 	}
@@ -76,13 +76,13 @@ func (lp *launchpadV1) getDeposit(depositID string) (*Deposit, error) {
 
 // getCurrentDepositID returns the current deposit ID (last assigned).
 func (lp *launchpadV1) getCurrentDepositID() string {
-	state := lp.getLaunchpadState()
-	return formatInt(state.depositCounter.Get())
+	counter := lp.store.GetDepositCounter()
+	return formatInt(counter.Get())
 }
 
 // nextDepositID increments and returns the next unique deposit ID.
 // This is used when creating new deposits.
 func (lp *launchpadV1) nextDepositID() string {
-	state := lp.getLaunchpadState()
-	return formatInt(state.depositCounter.Next())
+	counter := lp.store.GetDepositCounter()
+	return formatInt(counter.Next())
 }

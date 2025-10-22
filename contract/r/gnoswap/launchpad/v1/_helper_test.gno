@@ -49,12 +49,52 @@ type testLaunchpadStore struct {
 	state launchpad.LaunchpadState
 }
 
-func (s *testLaunchpadStore) GetLaunchpadState() launchpad.LaunchpadState {
-	return s.state
+func (s *testLaunchpadStore) GetProjects() *avl.Tree {
+	if s.state == nil {
+		return avl.NewTree()
+	}
+	return s.state.Projects()
 }
 
-func (s *testLaunchpadStore) SetLaunchpadState(state launchpad.LaunchpadState) error {
-	s.state = state
+func (s *testLaunchpadStore) SetProjects(projects *avl.Tree) error {
+	// For test purposes, we don't actually update the state
+	// as the state is managed internally
+	return nil
+}
+
+func (s *testLaunchpadStore) GetProjectTierRewardManagers() *avl.Tree {
+	if s.state == nil {
+		return avl.NewTree()
+	}
+	return s.state.ProjectTierRewardManagers()
+}
+
+func (s *testLaunchpadStore) SetProjectTierRewardManagers(managers *avl.Tree) error {
+	// For test purposes, we don't actually update the state
+	return nil
+}
+
+func (s *testLaunchpadStore) GetDepositCounter() launchpad.Counter {
+	if s.state == nil {
+		return nil
+	}
+	return s.state.DepositCounter()
+}
+
+func (s *testLaunchpadStore) SetDepositCounter(counter launchpad.Counter) error {
+	// For test purposes, we don't actually update the state
+	return nil
+}
+
+func (s *testLaunchpadStore) GetDeposits() *avl.Tree {
+	if s.state == nil {
+		return avl.NewTree()
+	}
+	return s.state.Deposits()
+}
+
+func (s *testLaunchpadStore) SetDeposits(deposits *avl.Tree) error {
+	// For test purposes, we don't actually update the state
 	return nil
 }
 
@@ -65,9 +105,7 @@ func getTestProjects() *avl.Tree {
 	if testStore == nil {
 		return avl.NewTree()
 	}
-	lp := getTestImplementation()
-	state := lp.getLaunchpadState()
-	return state.Projects()
+	return testStore.GetProjects()
 }
 
 // setTestProjects sets the projects tree
@@ -75,9 +113,12 @@ func setTestProjects(tree *avl.Tree) {
 	if testStore == nil {
 		initTestStore()
 	}
-	lp := getTestImplementation()
-	state := lp.getLaunchpadState()
-	state.projects = tree
+	// Direct assignment for test purposes
+	if store, ok := testStore.(*testLaunchpadStore); ok {
+		if state, ok := store.state.(*launchpadState); ok {
+			state.projects = tree
+		}
+	}
 }
 
 // getTestProjectTierRewardManagers returns the projectTierRewardManagers tree
@@ -85,9 +126,7 @@ func getTestProjectTierRewardManagers() *avl.Tree {
 	if testStore == nil {
 		return avl.NewTree()
 	}
-	lp := getTestImplementation()
-	state := lp.getLaunchpadState()
-	return state.ProjectTierRewardManagers()
+	return testStore.GetProjectTierRewardManagers()
 }
 
 // setTestProjectTierRewardManagers sets the projectTierRewardManagers tree
@@ -95,9 +134,12 @@ func setTestProjectTierRewardManagers(tree *avl.Tree) {
 	if testStore == nil {
 		initTestStore()
 	}
-	lp := getTestImplementation()
-	state := lp.getLaunchpadState()
-	state.projectTierRewardManagers = tree
+	// Direct assignment for test purposes
+	if store, ok := testStore.(*testLaunchpadStore); ok {
+		if state, ok := store.state.(*launchpadState); ok {
+			state.projectTierRewardManagers = tree
+		}
+	}
 }
 
 // getDeposit is a test helper to get a deposit by ID

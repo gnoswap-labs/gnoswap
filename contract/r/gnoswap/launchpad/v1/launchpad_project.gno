@@ -138,11 +138,12 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*Project, err
 		params.currentTime,
 	)
 
-	// Get state
-	state := lp.getLaunchpadState()
+	// Get state components
+	projects := lp.store.GetProjects()
+	projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
 
 	// check duplicate project
-	if state.projects.Has(project.ID()) {
+	if projects.Has(project.ID()) {
 		return nil, makeErrorWithDetails(
 			errDuplicateProject,
 			ufmt.Sprintf("project(%s) already exists", project.ID()),
@@ -187,7 +188,7 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*Project, err
 		)
 		project.addProjectTier(duration, projectTier)
 
-		state.projectTierRewardManagers.Set(projectTier.ID(), NewRewardManager(
+		projectTierRewardManagers.Set(projectTier.ID(), NewRewardManager(
 			projectTier.TotalDistributeAmount(),
 			projectTier.StartTime(),
 			projectTier.EndTime(),
@@ -196,7 +197,15 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*Project, err
 		))
 	}
 
-	state.projects.Set(project.ID(), project)
+	projects.Set(project.ID(), project)
+
+	// Save the modified state back
+	if err := lp.store.SetProjects(projects); err != nil {
+		return nil, err
+	}
+	if err := lp.store.SetProjectTierRewardManagers(projectTierRewardManagers); err != nil {
+		return nil, err
+	}
 
 	return project, nil
 }

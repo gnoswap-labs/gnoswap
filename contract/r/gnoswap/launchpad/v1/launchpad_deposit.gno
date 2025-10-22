@@ -133,8 +133,8 @@ func (lp *launchpadV1) depositGns(
 	)
 
 	// Get state and store deposit
-	state := lp.getLaunchpadState()
-	state.deposits.Set(depositID, deposit)
+	deposits := lp.store.GetDeposits()
+	deposits.Set(depositID, deposit)
 
 	projectTier.deposit(deposit)
 
@@ -149,6 +149,11 @@ func (lp *launchpadV1) depositGns(
 
 	err = rewardManager.updateRewardPerDepositX128(projectTier.CurrentDepositAmount(), currentHeight, currentTime)
 	if err != nil {
+		return nil, nil, false, "", err
+	}
+
+	// Save the modified state back
+	if err := lp.store.SetDeposits(deposits); err != nil {
 		return nil, nil, false, "", err
 	}
 

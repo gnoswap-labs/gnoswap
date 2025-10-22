@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 )
@@ -78,12 +77,8 @@ func TestTierDurationConsistency(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			resetTestStore()
 			lp := getTestImplementation()
-			state := lp.getLaunchpadState()
-			state.deposits = avl.NewTree()
-			state.depositCounter = NewCounter()
-			state.projects = avl.NewTree()
-			state.projectTierRewardManagers = avl.NewTree()
 
 			ctx := testing.GetContext()
 			ctx.Height = 100
@@ -107,7 +102,7 @@ func TestTierDurationConsistency(t *testing.T) {
 				tier180Ratio = 100
 			}
 
-			project, _ := lp.createProject(
+			project, err := lp.createProject(
 				&createProjectParams{
 					name:          "Test Project " + tt.name,
 					tokenPath:     "gno.land/r/onbloc/obl",
@@ -121,7 +116,12 @@ func TestTierDurationConsistency(t *testing.T) {
 					currentHeight: currentHeight,
 				},
 			)
-			state.projects.Set(project.ID(), project)
+			uassert.NoError(t, err)
+			uassert.NotNil(t, project, "project should not be nil")
+
+			projects := lp.store.GetProjects()
+			projects.Set(project.ID(), project)
+			lp.store.SetProjects(projects)
 			tier, _ := project.getTier(tt.tierType)
 
 			initialStartTime := tier.StartTime()
