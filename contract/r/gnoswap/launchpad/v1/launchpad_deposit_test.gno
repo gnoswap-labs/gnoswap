@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"chain"
 	"chain/runtime"
 	"testing"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/halt"
+	"gno.land/r/onbloc/obl"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
@@ -19,15 +21,15 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
-
 	// "gno.land/r/onbloc/obl"
 )
 
 func TestDepositGns(t *testing.T) {
+	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
+
+	launchpadAddr := chain.PackageAddress(launchpadPackagePath)
 	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm := testing.NewUserRealm(adminAddr)
-
-	// launchpadAddr := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
 
 	tests := []struct {
 		name                 string
@@ -38,211 +40,210 @@ func TestDepositGns(t *testing.T) {
 		expectedPanic        bool
 		expectedPanicMessage string
 		expectedDepositID    bool
-		validateFunc         func(t *testing.T, depositID string)
+		validateFunc         func(t *testing.T, lp *launchpadV1, depositID string)
 	}{
-		// {
-		// 	name: "successful deposit with valid project and tier",
-		// 	setupFunc: func(lp *launchpadV1) (string, address) {
-		// 		userAddr := testutils.TestAddress("user1")
-		// 		projectAddr := testutils.TestAddress("project1")
+		{
+			name: "successful deposit with valid project and tier",
+			setupFunc: func(lp *launchpadV1) (string, address) {
+				userAddr := testutils.TestAddress("user1")
+				projectAddr := testutils.TestAddress("project1")
 
-		// 		// Reset state
-		// 		resetTestStore()
+				// Reset state
+				resetTestStore()
 
-		// 		// Set initial block height
-		// 		ctx := testing.GetContext()
-		// 		ctx.Height = 123
-		// 		ctx.Time = time.Unix(1234567890, 0)
-		// 		testing.SetContext(ctx)
+				// Set initial block height
+				ctx := testing.GetContext()
+				ctx.Height = 123
+				ctx.Time = time.Unix(1234567890, 0)
+				testing.SetContext(ctx)
 
-		// 		// Create project as admin
-		// 		testing.SetOriginCaller(launchpadAddr)
-		// 		testing.SetRealm(adminRealm)
-		// 		startTime := time.Now().Unix() + 3600 // 1 hour from now
+				// Create project as admin
+				testing.SetOriginCaller(launchpadAddr)
+				testing.SetRealm(adminRealm)
+				startTime := time.Now().Unix() + 3600 // 1 hour from now
 
-		// 		// Create project using public CreateProject function
-		// 		var projectID string
-		// 		func(cur realm) {
-		// 			// Approve token for project creation
-		// 			obl.Approve(cross, launchpadAddr, 10000)
-		// 			projectID = lp.CreateProject(
-		// 				"Test Project",
-		// 				"gno.land/r/onbloc/obl",
-		// 				projectAddr,
-		// 				10000,
-		// 				"", // no conditions
-		// 				"",
-		// 				30,
-		// 				30,
-		// 				40,
-		// 				startTime,
-		// 			)
-		// 		}(cross)
+				obl.Approve(cross, launchpadAddr, 10000)
 
-		// 		// Skip blocks to activate the project
-		// 		testing.SkipHeights(3600)
+				// Create project using public CreateProject function
+				var projectID string
+				func(cur realm) {
+					testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 
-		// 		// Setup user with GNS tokens
-		// 		testing.SetRealm(adminRealm)
-		// 		gns.Transfer(cross, userAddr, 2000000) // Enough for deposit
+					// Approve token for project creation
+					projectID = lp.CreateProject(
+						"Test Project",
+						"gno.land/r/onbloc/obl",
+						projectAddr,
+						10000,
+						"", // no conditions
+						"",
+						30,
+						30,
+						40,
+						startTime,
+					)
+				}(cross)
 
-		// 		// User approves launchpad to spend GNS
-		// 		testing.SetRealm(testing.NewUserRealm(userAddr))
-		// 		gns.Approve(cross, launchpadAddr, 2000000)
+				// Skip blocks to activate the project
+				testing.SkipHeights(3600)
 
-		// 		return projectID + ":30", userAddr
-		// 	},
-		// 	targetProjectTierID: "",
-		// 	depositAmount:       1000000, // Minimum deposit amount
-		// 	referrer:            "",
-		// 	expectedPanic:       false,
-		// 	expectedDepositID:   true,
-		// 	validateFunc: func(t *testing.T, depositID string) {
-		// 		// Verify deposit was created
-		// 		deposit, err := getDeposit(depositID)
-		// 		uassert.NoError(t, err)
-		// 		uassert.Equal(t, int64(1000000), deposit.DepositAmount())
-		// 		uassert.Equal(t, int64(30), deposit.Tier())
+				// Setup user with GNS tokens
+				testing.SetRealm(adminRealm)
+				gns.Transfer(cross, userAddr, 2000000) // Enough for deposit
 
-		// 		// Verify deposit exists in deposits tree
-		// 		lp := getTestImplementation()
-		// 		deposits := lp.store.GetDeposits()
-		// 		_, exists := deposits.Get(depositID)
-		// 		uassert.True(t, exists)
-		// 	},
-		// },
-		// {
-		// 	name: "successful deposit with referrer",
-		// 	setupFunc: func(lp *launchpadV1) (string, address) {
-		// 		userAddr := testutils.TestAddress("user2")
-		// 		projectAddr := testutils.TestAddress("project2")
+				// User approves launchpad to spend GNS
+				testing.SetRealm(testing.NewUserRealm(userAddr))
+				gns.Approve(cross, launchpadAddr, 2000000)
 
-		// 		// Reset state
-		// 		resetTestStore()
+				return projectID + ":30", userAddr
+			},
+			targetProjectTierID: "",
+			depositAmount:       1000000, // Minimum deposit amount
+			referrer:            "",
+			expectedPanic:       false,
+			expectedDepositID:   true,
+			validateFunc: func(t *testing.T, lp *launchpadV1, depositID string) {
+				// Verify deposit was created
+				deposit, err := lp.getDeposit(depositID)
+				uassert.NoError(t, err)
+				uassert.Equal(t, int64(1000000), deposit.DepositAmount())
+				uassert.Equal(t, int64(30), deposit.Tier())
 
-		// 		// Set initial block height
-		// 		ctx := testing.GetContext()
-		// 		ctx.Height = 123
-		// 		ctx.Time = time.Unix(1234567890, 0)
-		// 		testing.SetContext(ctx)
+				// Verify deposit exists in deposits tree
+				deposits := lp.store.GetDeposits()
+				_, exists := deposits.Get(depositID)
+				uassert.True(t, exists)
+			},
+		},
+		{
+			name: "successful deposit with referrer",
+			setupFunc: func(lp *launchpadV1) (string, address) {
+				userAddr := testutils.TestAddress("user2")
+				projectAddr := testutils.TestAddress("project2")
 
-		// 		// Create project as admin
-		// 		testing.SetRealm(adminRealm)
-		// 		startTime := time.Now().Unix() + 3600 // 1 hour from now
+				// Set initial block height
+				ctx := testing.GetContext()
+				ctx.Height = 123
+				ctx.Time = time.Unix(1234567890, 0)
+				testing.SetContext(ctx)
 
-		// 		// Approve token for project creation
-		// 		obl.Approve(cross, launchpadAddr, 10000)
+				// Create project as admin
+				testing.SetRealm(adminRealm)
+				startTime := time.Now().Unix() + 3600 // 1 hour from now
 
-		// 		// Create project using public CreateProject function
-		// 		var projectID string
-		// 		func(cur realm) {
-		// 			testing.SetRealm(adminRealm)
-		// 			projectID = lp.CreateProject(
-		// 				"Test Project 2",
-		// 				"gno.land/r/onbloc/obl",
-		// 				projectAddr,
-		// 				10000,
-		// 				"", // no conditions
-		// 				"",
-		// 				30,
-		// 				30,
-		// 				40,
-		// 				startTime,
-		// 			)
-		// 		}(cross)
+				// Approve token for project creation
+				testing.SetRealm(adminRealm)
+				obl.Approve(cross, launchpadAddr, 10000)
 
-		// 		// Skip blocks to activate the project
-		// 		testing.SkipHeights(3600)
+				// Create project using public CreateProject function
+				var projectID string
 
-		// 		// Setup user with GNS tokens
-		// 		testing.SetRealm(adminRealm)
-		// 		gns.Transfer(cross, userAddr, 3000000) // Enough for deposit
+				func(cur realm) {
+					testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+					projectID = lp.CreateProject(
+						"Test Project 2",
+						"gno.land/r/onbloc/obl",
+						projectAddr,
+						10000,
+						"", // no conditions
+						"",
+						30,
+						30,
+						40,
+						startTime,
+					)
+				}(cross)
 
-		// 		// User approves launchpad to spend GNS
-		// 		testing.SetRealm(testing.NewUserRealm(userAddr))
-		// 		gns.Approve(cross, launchpadAddr, 3000000)
+				// Skip blocks to activate the project
+				testing.SkipHeights(3600)
 
-		// 		return projectID + ":90", userAddr
-		// 	},
-		// 	targetProjectTierID: "",
-		// 	depositAmount:       2000000,
-		// 	referrer:            "g1referrer",
-		// 	expectedPanic:       false,
-		// 	expectedDepositID:   true,
-		// 	validateFunc: func(t *testing.T, depositID string) {
-		// 		// Verify deposit was created
-		// 		deposit, err := getDeposit(depositID)
-		// 		uassert.NoError(t, err)
-		// 		uassert.Equal(t, int64(2000000), deposit.DepositAmount())
-		// 		uassert.Equal(t, int64(90), deposit.Tier())
-		// 	},
-		// },
-		// {
-		// 	name: "deposit with 180 day tier",
-		// 	setupFunc: func(lp *launchpadV1) (string, address) {
-		// 		userAddr := testutils.TestAddress("user3")
-		// 		projectAddr := testutils.TestAddress("project3")
+				// Setup user with GNS tokens
+				testing.SetRealm(adminRealm)
+				gns.Transfer(cross, userAddr, 3000000) // Enough for deposit
 
-		// 		// Reset state
-		// 		resetTestStore()
+				// User approves launchpad to spend GNS
+				testing.SetRealm(testing.NewUserRealm(userAddr))
+				gns.Approve(cross, launchpadAddr, 3000000)
 
-		// 		// Set initial block height
-		// 		ctx := testing.GetContext()
-		// 		ctx.Height = 123
-		// 		ctx.Time = time.Unix(1234567890, 0)
-		// 		testing.SetContext(ctx)
+				return projectID + ":90", userAddr
+			},
+			targetProjectTierID: "",
+			depositAmount:       2000000,
+			referrer:            "g1referrer",
+			expectedPanic:       false,
+			expectedDepositID:   true,
+			validateFunc: func(t *testing.T, lp *launchpadV1, depositID string) {
+				// Verify deposit was created
+				deposit, err := getDeposit(depositID)
+				uassert.NoError(t, err)
+				uassert.Equal(t, int64(2000000), deposit.DepositAmount())
+				uassert.Equal(t, int64(90), deposit.Tier())
+			},
+		},
+		{
+			name: "deposit with 180 day tier",
+			setupFunc: func(lp *launchpadV1) (string, address) {
+				userAddr := testutils.TestAddress("user3")
+				projectAddr := testutils.TestAddress("project3")
 
-		// 		// Create project as admin
-		// 		testing.SetRealm(adminRealm)
-		// 		startTime := time.Now().Unix() + 3600 // 1 hour from now
+				// Set initial block height
+				ctx := testing.GetContext()
+				ctx.Height = 123
+				ctx.Time = time.Unix(1234567890, 0)
+				testing.SetContext(ctx)
 
-		// 		// Approve token for project creation
-		// 		obl.Approve(cross, launchpadAddr, 10000)
+				// Create project as admin
+				testing.SetRealm(adminRealm)
+				startTime := time.Now().Unix() + 3600 // 1 hour from now
 
-		// 		// Create project using public CreateProject function
-		// 		var projectID string
-		// 		func(cur realm) {
-		// 			testing.SetRealm(adminRealm)
-		// 			projectID = lp.CreateProject(
-		// 				"Test Project 3",
-		// 				"gno.land/r/onbloc/obl",
-		// 				projectAddr,
-		// 				10000,
-		// 				"", // no conditions
-		// 				"",
-		// 				30,
-		// 				30,
-		// 				40,
-		// 				startTime,
-		// 			)
-		// 		}(cross)
+				// Approve token for project creation
+				obl.Approve(cross, launchpadAddr, 10000)
 
-		// 		// Skip blocks to activate the project
-		// 		testing.SkipHeights(3600)
+				// Create project using public CreateProject function
+				var projectID string
 
-		// 		// Setup user with GNS tokens
-		// 		testing.SetRealm(adminRealm)
-		// 		gns.Transfer(cross, userAddr, 4000000) // Enough for deposit
+				func(cur realm) {
+					testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+					projectID = lp.CreateProject(
+						"Test Project 3",
+						"gno.land/r/onbloc/obl",
+						projectAddr,
+						10000,
+						"", // no conditions
+						"",
+						30,
+						30,
+						40,
+						startTime,
+					)
+				}(cross)
 
-		// 		// User approves launchpad to spend GNS
-		// 		testing.SetRealm(testing.NewUserRealm(userAddr))
-		// 		gns.Approve(cross, launchpadAddr, 4000000)
+				// Skip blocks to activate the project
+				testing.SkipHeights(3600)
 
-		// 		return projectID + ":180", userAddr
-		// 	},
-		// 	targetProjectTierID: "",
-		// 	depositAmount:       3000000,
-		// 	referrer:            "",
-		// 	expectedPanic:       false,
-		// 	expectedDepositID:   true,
-		// 	validateFunc: func(t *testing.T, depositID string) {
-		// 		// Verify deposit was created
-		// 		deposit, err := getDeposit(depositID)
-		// 		uassert.NoError(t, err)
-		// 		uassert.Equal(t, int64(3000000), deposit.DepositAmount())
-		// 		uassert.Equal(t, int64(180), deposit.Tier())
-		// 	},
-		// },
+				// Setup user with GNS tokens
+				testing.SetRealm(adminRealm)
+				gns.Transfer(cross, userAddr, 4000000) // Enough for deposit
+
+				// User approves launchpad to spend GNS
+				testing.SetRealm(testing.NewUserRealm(userAddr))
+				gns.Approve(cross, launchpadAddr, 4000000)
+
+				return projectID + ":180", userAddr
+			},
+			targetProjectTierID: "",
+			depositAmount:       3000000,
+			referrer:            "",
+			expectedPanic:       false,
+			expectedDepositID:   true,
+			validateFunc: func(t *testing.T, lp *launchpadV1, depositID string) {
+				// Verify deposit was created
+				deposit, err := getDeposit(depositID)
+				uassert.NoError(t, err)
+				uassert.Equal(t, int64(3000000), deposit.DepositAmount())
+				uassert.Equal(t, int64(180), deposit.Tier())
+			},
+		},
 		{
 			name: "fail with zero amount",
 			setupFunc: func(lp *launchpadV1) (string, address) {
@@ -485,9 +486,7 @@ func TestDepositGns(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Reset test store for each test
-			defer func() {
-				resetTestStore()
-			}()
+			initTestStore()
 
 			testing.SetRealm(adminRealm)
 			lp := getTestImplementation()
@@ -502,21 +501,25 @@ func TestDepositGns(t *testing.T) {
 			} else {
 				testing.SetRealm(testing.NewUserRealm(userAddr))
 			}
+
 			if tt.expectedPanic {
 				uassert.AbortsWithMessage(t, tt.expectedPanicMessage, func() {
 					func(cur realm) {
+						testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 						lp.DepositGns(tt.targetProjectTierID, tt.depositAmount, tt.referrer)
 					}(cross)
 				})
 			} else {
+
 				func(cur realm) {
+					testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
 					depositID := lp.DepositGns(tt.targetProjectTierID, tt.depositAmount, tt.referrer)
 
 					if tt.expectedDepositID {
 						uassert.NotEmpty(t, depositID)
 
 						if tt.validateFunc != nil {
-							tt.validateFunc(t, depositID)
+							tt.validateFunc(t, lp, depositID)
 						}
 					}
 				}(cross)
