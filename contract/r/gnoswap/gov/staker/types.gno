@@ -39,7 +39,7 @@ type IGovStakerGetter interface {
 	GetTotalDelegated() int64
 	GetTotalLockedAmount() int64
 	GetLockedAmount() int64
-	// GetDelegationSnapshots(snapshotTime int64) (DelegationSnapshot, bool)
+	GetDelegationSnapshots(snapshotTime int64) (DelegationSnapshot, bool)
 
 	// Reward getters
 	GetClaimableRewardByAddress(addr address) string
@@ -142,8 +142,14 @@ type DelegationSnapshot map[string]*DelegationSnapshotItem
 
 // DelegationSnapshotItem represents a snapshot item
 type DelegationSnapshotItem struct {
-	Delegatee    string
-	DelegateGns  int64
-	DelegateXgns int64
+	Delegatee        string
+	DelegatorAddress address
+	DelegateGns      int64
+	DelegateXgns     int64
+}
+
+// DelegationAmount returns the delegation amount in GNS
+func (d *DelegationSnapshotItem) DelegationAmount() int64 {
+	return d.DelegateGns
 }
 

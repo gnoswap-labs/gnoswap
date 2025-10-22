@@ -314,7 +314,7 @@ func TestGetDelegationSnapshots_SpecificScenarios(t *testing.T) {
 
 			// Check specific user delegation amount
 			if item, exists := snapshot[tt.userAddress]; exists {
-				uassert.Equal(t, item.delegationAmount, tt.expectedUserDelegation)
+				uassert.Equal(t, item.DelegateGns, tt.expectedUserDelegation)
 			}
 		})
 	}

@@ -54,13 +54,13 @@ func GetLockedAmount() int64 {
 	return getImplementation().GetLockedAmount()
 }
 
-// func GetDelegationSnapshots(snapshotTime int64) (DelegationSnapshot, bool) {
-// 	impl := getImplementation()
-// 	if impl == nil {
-// 		panic("gov/staker: implementation not initialized")
-// 	}
-// 	return impl.GetDelegationSnapshots(snapshotTime)
-// }
+func GetDelegationSnapshots(snapshotTime int64) (DelegationSnapshot, bool) {
+	impl := getImplementation()
+	if impl == nil {
+		panic("gov/staker: implementation not initialized")
+	}
+	return impl.GetDelegationSnapshots(snapshotTime)
+}
 
 func GetClaimableRewardByAddress(addr address) string {
 	return getImplementation().GetClaimableRewardByAddress(addr)

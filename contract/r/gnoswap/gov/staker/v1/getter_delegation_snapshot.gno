@@ -1,5 +1,9 @@
 package v1
 
+import (
+	"gno.land/r/gnoswap/gov/staker"
+)
+
 // GetDelegationSnapshots retrieves the delegation snapshot at a specific point in time.
 // This function reconstructs historical delegation states by taking the current snapshot
 // and reversing the effects of delegation records that occurred after the specified time.
@@ -15,7 +19,7 @@ package v1
 // Returns:
 //   - DelegationSnapshot: delegation state at the specified time
 //   - bool: true if snapshot was successfully calculated, false otherwise
-func (gs *govStakerV1) GetDelegationSnapshots(snapshotTime int64) (DelegationSnapshot, bool) {
+func (gs *govStakerV1) GetDelegationSnapshots(snapshotTime int64) (staker.DelegationSnapshot, bool) {
 	// Get current delegation snapshots and create a working copy
 	delegationSnapshots := gs.getDelegationSnapshots()
 	currentDelegationSnapshot := delegationSnapshots.clone()
@@ -30,5 +34,15 @@ func (gs *govStakerV1) GetDelegationSnapshots(snapshotTime int64) (DelegationSna
 		currentDelegationSnapshot = currentDelegationSnapshot.subRecord(historyRecords[i])
 	}
 
-	return currentDelegationSnapshot, true
+	// Convert internal DelegationSnapshot to staker.DelegationSnapshot
+	result := make(staker.DelegationSnapshot)
+	for delegatee, item := range currentDelegationSnapshot {
+		result[delegatee] = &staker.DelegationSnapshotItem{
+			Delegatee:        delegatee,
+			DelegatorAddress: item.DelegatorAddress(),
+			DelegateGns:      item.DelegationAmount(),
+		}
+	}
+
+	return result, true
 }

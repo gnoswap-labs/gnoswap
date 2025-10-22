@@ -422,7 +422,7 @@ func getUserVotingInfotWithDelegationSnapshots(
 
 	// Process each delegation snapshot
 	for _, snapshot := range delegationSnapshots {
-		delegatorAddress := snapshot.DelegatorAddress()
+		delegatorAddress := snapshot.DelegatorAddress
 		delegationAmount := snapshot.DelegationAmount()
 
 		// Create voting info for each delegator

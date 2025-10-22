@@ -136,6 +136,10 @@ func newMockGovStakerStore() staker.IGovStakerStore {
 	return &mockGovStakerStore{}
 }
 
+func (m *mockGovStakerStore) HasGovStakerStateKey() bool {
+	return m.state != nil
+}
+
 func (m *mockGovStakerStore) GetGovStakerState() staker.GovStakerState {
 	return m.state
 }
