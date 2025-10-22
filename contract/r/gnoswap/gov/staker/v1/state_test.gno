@@ -372,6 +372,7 @@ func TestLaunchpadStakeOperations(t *testing.T) {
 			// When: Add stake from launchpad
 			testing.SetRealm(adminRealm)
 			func(cur realm) {
+				testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 				gs.addStakeFromLaunchpad(tt.address, tt.amount, tt.currentHeight)
 			}(cross)
 
@@ -416,17 +417,20 @@ func TestPartialLaunchpadStakeRemoval(t *testing.T) {
 			// Given: Create test instance
 			gs := createTestGovStaker()
 
-			// Given: Initial stake
-			gs.addStakeFromLaunchpad(tt.address, tt.initialAmount, tt.currentHeight)
+			func(cur realm) {
+				testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+				// Given: Initial stake
+				gs.addStakeFromLaunchpad(tt.address, tt.initialAmount, tt.currentHeight)
 
-			// When: Remove partial stake
-			gs.removeStakeFromLaunchpad(tt.address, tt.removeAmount, tt.currentHeight)
+				// When: Remove partial stake
+				gs.removeStakeFromLaunchpad(tt.address, tt.removeAmount, tt.currentHeight)
 
-			// Then: Should have remaining deposit
-			launchpadRewardID := gs.makeLaunchpadRewardID(tt.address)
-			deposit, exists := gs.getLaunchpadProjectDeposit(launchpadRewardID)
-			uassert.True(t, exists)
-			uassert.Equal(t, deposit, tt.expectedRemaining)
+				// Then: Should have remaining deposit
+				launchpadRewardID := gs.makeLaunchpadRewardID(tt.address)
+				deposit, exists := gs.getLaunchpadProjectDeposit(launchpadRewardID)
+				uassert.True(t, exists)
+				uassert.Equal(t, deposit, tt.expectedRemaining)
+			}(cross)
 		})
 	}
 }

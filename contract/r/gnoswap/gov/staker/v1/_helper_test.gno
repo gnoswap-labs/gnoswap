@@ -20,6 +20,7 @@ import (
 const (
 	GNS_PATH    string  = "gno.land/r/gnoswap/gns"
 	WUGNOT_ADDR address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
+	GOV_STAKER_PKG_PATH = "gno.land/r/gnoswap/gov/staker"
 )
 
 var (
