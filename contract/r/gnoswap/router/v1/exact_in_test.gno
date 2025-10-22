@@ -18,8 +18,8 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 
+	pn "gno.land/r/gnoswap/position"
 	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
@@ -247,6 +247,8 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Pool Creation
+			initRouterTest(t)
+
 			testing.SetRealm(testing.NewUserRealm(positionOwner))
 			pl.SetPoolCreationFee(cross, 0)
 			if !pl.ExistsPoolPath(pl.GetPoolPath(tt.tokenPath0, tt.tokenPath1, tt.feeTier)) {
