@@ -132,7 +132,7 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	collectAmount0 := u256.MustFromDecimal(collect0)
 	collectAmount1 := u256.MustFromDecimal(collect1)
 
-	poolAddr := access.MustGetAddressWithVersion(prabc.ROLE_POOL.String(), 1)
+	poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
 
 	if isWrappedToken(pToken0) && params.unwrapResult {
 		p.unwrapWithTransferFrom(poolAddr, caller, safeConvertToInt64(collectAmount0))

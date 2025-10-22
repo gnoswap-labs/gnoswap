@@ -23,8 +23,8 @@ func (p *positionV1) Reposition(
 	amount0MinStr string,
 	amount1MinStr string,
 ) (uint64, string, int32, int32, string, string) {
-	halt.AssertIsNotHaltedPositionWithVersion(1)
-	halt.AssertIsNotHaltedWithdrawWithVersion(1)
+	halt.AssertIsNotHaltedPosition()
+	halt.AssertIsNotHaltedWithdraw()
 
 	caller := runtime.PreviousRealm().Address()
 	assertIsOwnerForToken(p, positionId, caller)
