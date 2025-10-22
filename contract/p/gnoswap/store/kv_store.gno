@@ -52,9 +52,9 @@ func (k *kvStore) Has(key string) bool {
 // Get retrieves a value by key
 // Checks read permission before returning the value
 func (k *kvStore) Get(key string) (any, error) {
-	caller := runtime.CurrentRealm().Address()
+	currentRealm := runtime.CurrentRealm()
 
-	if !k.IsReadAuthorized(caller) {
+	if currentRealm.IsCode() && !k.IsReadAuthorized(currentRealm.Address()) {
 		return nil, ErrReadPermissionDenied
 	}
 
