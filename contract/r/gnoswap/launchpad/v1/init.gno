@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"gno.land/p/nt/avl"
 	"gno.land/r/gnoswap/launchpad"
 )
 
@@ -17,31 +18,29 @@ func registerLaunchpadV1() {
 }
 
 func initStoreData(launchpadStore launchpad.ILaunchpadStore) {
-	launchpadState := NewLaunchpadState()
-
 	if !launchpadStore.HasProjectsKey() {
-		err := launchpadStore.SetProjects(launchpadState.Projects())
+		err := launchpadStore.SetProjects(avl.NewTree())
 		if err != nil {
 			panic(err)
 		}
 	}
 
 	if !launchpadStore.HasProjectTierRewardManagersKey() {
-		err := launchpadStore.SetProjectTierRewardManagers(launchpadState.ProjectTierRewardManagers())
+		err := launchpadStore.SetProjectTierRewardManagers(avl.NewTree())
 		if err != nil {
 			panic(err)
 		}
 	}
 
 	if !launchpadStore.HasDepositCounterKey() {
-		err := launchpadStore.SetDepositCounter(launchpadState.DepositCounter())
+		err := launchpadStore.SetDepositCounter(NewCounter())
 		if err != nil {
 			panic(err)
 		}
 	}
 
 	if !launchpadStore.HasDepositsKey() {
-		err := launchpadStore.SetDeposits(launchpadState.Deposits())
+		err := launchpadStore.SetDeposits(avl.NewTree())
 		if err != nil {
 			panic(err)
 		}

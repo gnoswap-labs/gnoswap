@@ -20,14 +20,14 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
-	"gno.land/r/onbloc/obl"
+	// "gno.land/r/onbloc/obl"
 )
 
 func TestDepositGns(t *testing.T) {
 	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm := testing.NewUserRealm(adminAddr)
 
-	launchpadAddr := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
+	// launchpadAddr := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
 
 	tests := []struct {
 		name                 string
