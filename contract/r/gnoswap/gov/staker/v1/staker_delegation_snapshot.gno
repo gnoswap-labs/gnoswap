@@ -27,7 +27,7 @@ import (
 //
 // Note: This operation is irreversible and will permanently remove historical data
 func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(threshold int64) {
-	halt.AssertIsNotHaltedGovStakerWithVersion(1)
+	halt.AssertIsNotHaltedGovStaker()
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
@@ -62,7 +62,7 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(threshold int64) {
 //
 // Note: This change affects all future undelegation operations
 func (gs *govStakerV1) SetUnDelegationLockupPeriodByAdmin(period int64) {
-	halt.AssertIsNotHaltedGovStakerWithVersion(1)
+	halt.AssertIsNotHaltedGovStaker()
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
