@@ -19,15 +19,15 @@ import (
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
 
+	pn "gno.land/r/gnoswap/position"
 	rt "gno.land/r/gnoswap/router"
 	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
-	_ "gno.land/r/gnoswap/protocol_fee"
+	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/router/v1"
 

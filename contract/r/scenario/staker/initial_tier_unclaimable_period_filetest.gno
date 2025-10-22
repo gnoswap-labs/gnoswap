@@ -17,11 +17,13 @@ import (
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
 
+	pn "gno.land/r/gnoswap/position"
 	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/onbloc/bar"
