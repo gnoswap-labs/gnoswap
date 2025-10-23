@@ -1,4 +1,4 @@
-package governance
+package v1
 
 // ProposalActionStatus tracks the execution and cancellation status of a proposal.
 // This structure manages the action-related state including who performed actions and when.

@@ -1,4 +1,4 @@
-package governance
+package v1
 
 // ProposalStatusType represents the current status of a proposal in its lifecycle.
 // These statuses determine what actions are available for a proposal.

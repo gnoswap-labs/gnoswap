@@ -1,0 +1,51 @@
+package governance
+
+// // GetProposal retrieves a proposal by ID
+// func GetProposal(proposalId uint64) (*Proposal, error) {
+// 	return getImplementation().GetProposal(proposalId)
+// }
+
+// // GetProposals retrieves all proposals
+// func GetProposals() []*Proposal {
+// 	return getImplementation().GetProposals()
+// }
+
+// // GetProposalsByAddress retrieves all proposals created by an address
+// func GetProposalsByAddress(address address) []*Proposal {
+// 	return getImplementation().GetProposalsByAddress(address)
+// }
+
+// // GetProposalType retrieves the type of a proposal
+// func GetProposalType(proposalId uint64) (ProposalType, error) {
+// 	return getImplementation().GetProposalType(proposalId)
+// }
+
+// // GetProposalStatus retrieves the status of a proposal
+// func GetProposalStatus(proposalId uint64) (ProposalStatusType, error) {
+// 	return getImplementation().GetProposalStatus(proposalId)
+// }
+
+// // GetConfig retrieves a specific configuration version
+// func GetConfig(version uint64) (*Config, error) {
+// 	return getImplementation().GetConfig(version)
+// }
+
+// ApiGetProposals returns all proposals in JSON format
+func ApiGetProposals() string {
+	return getImplementation().ApiGetProposals()
+}
+
+// ApiGetProposalById returns a proposal by ID in JSON format
+func ApiGetProposalById(proposalId uint64) string {
+	return getImplementation().ApiGetProposalById(proposalId)
+}
+
+// ApiGetProposalVotes returns votes for a proposal in JSON format
+func ApiGetProposalVotes(proposalId uint64) string {
+	return getImplementation().ApiGetProposalVotes(proposalId)
+}
+
+// ApiGetConfig returns the current configuration in JSON format
+func ApiGetConfig() string {
+	return getImplementation().ApiGetConfig()
+}

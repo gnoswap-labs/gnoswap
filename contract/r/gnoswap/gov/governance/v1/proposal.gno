@@ -1,4 +1,4 @@
-package governance
+package v1
 
 // ProposalType defines the different types of proposals supported by the governance system.
 // Each type has different execution behavior and validation requirements.

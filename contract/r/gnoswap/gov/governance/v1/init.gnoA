@@ -1,0 +1,21 @@
+package v1
+
+import (
+	"gno.land/r/gnoswap/gov/governance"
+)
+
+func init() {
+	registerGovernanceV1()
+}
+
+func registerGovernanceV1() {
+	governance.RegisterInitializer(cross, func(governanceStore governance.IGovernanceStore) governance.IGovernance {
+		return NewGovernanceV1(governanceStore)
+	})
+}
+
+func initStoreData(governanceStore governance.IGovernanceStore) error {
+	// TODO
+
+	return nil
+}

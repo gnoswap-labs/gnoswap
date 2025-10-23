@@ -1,4 +1,4 @@
-package governance
+package v1
 
 // ProposalVoteStatus tracks the voting tallies and requirements for a proposal.
 // This structure manages vote counting, quorum calculation, and voting outcome determination.

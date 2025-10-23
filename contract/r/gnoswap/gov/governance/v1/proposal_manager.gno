@@ -1,4 +1,4 @@
-package governance
+package v1
 
 // ProposalManager manages the association between users and their created proposals.
 // This structure provides efficient lookup of proposals by user address and maintains

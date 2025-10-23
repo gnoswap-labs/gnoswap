@@ -1,4 +1,4 @@
-package governance
+package v1
 
 // VotingInfo tracks voting-related information for a specific user on a specific proposal.
 // This structure maintains the user's voting eligibility, voting history, and voting power.
