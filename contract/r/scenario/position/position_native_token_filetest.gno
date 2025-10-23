@@ -15,14 +15,14 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
-	_ "gno.land/r/gnoswap/protocol_fee"
+	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 
+	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/v1/pool"
-	"gno.land/r/gnoswap/v1/position"
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
@@ -134,7 +134,7 @@ func mintPosition() {
 
 func checkUnclaimedFeesBeforeSwap() {
 	testing.SetRealm(adminRealm)
-	amount0, amount1 := position.UnclaimedFee(1)
+	amount0, amount1 := position.GetUnclaimedFee(1)
 
 	ufmt.Printf("[EXPECTED] Unclaimed fee0 should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Unclaimed fee1 should be %s\n", amount1)
@@ -175,7 +175,7 @@ func executeSwap() {
 
 func checkUnclaimedFeesAfterSwap() {
 	testing.SetRealm(adminRealm)
-	amount0, amount1 := position.UnclaimedFee(1)
+	amount0, amount1 := position.GetUnclaimedFee(1)
 
 	ufmt.Printf("[EXPECTED] Unclaimed fee0 should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Unclaimed fee1 should be %s\n", amount1)

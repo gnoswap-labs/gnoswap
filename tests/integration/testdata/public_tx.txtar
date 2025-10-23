@@ -79,7 +79,7 @@ gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/referral -pkgpath gno.land
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/pool -pkgpath gno.land/r/gnoswap/v1/pool -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy position
-gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/position -pkgpath gno.land/r/gnoswap/v1/position -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/position -pkgpath gno.land/r/gnoswap/position -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy router
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/router -pkgpath gno.land/r/gnoswap/router -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
@@ -158,62 +158,62 @@ stdout 0
 
 
 # mint new position
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func ApiGetPositions -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func ApiGetPositions -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g148tjamj80yyrm309z7rk690an22thd2l3z8ank -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g148tjamj80yyrm309z7rk690an22thd2l3z8ank -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
-gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5 -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func Mint -send "20000000ugnot" -args "gno.land/r/gnoswap/gns" -args "gnot" -args 3000 -args "-49980" -args "49980" -args 20000000 -args 20000000 -args 1 -args 1 -args 9999999999 -args g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -args g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -args "" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -send "20000000ugnot" -args "gno.land/r/gnoswap/gns" -args "gnot" -args 3000 -args "-49980" -args "49980" -args 20000000 -args 20000000 -args 1 -args 1 -args 9999999999 -args g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -args g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -args "" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stdout '(1 uint64)'
 
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func PositionGetPositionLiquidityStr -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func PositionGetPositionLiquidityStr -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stdout '("21790703" string)'
 
 
 # position mint with wrong parameters should panic
 ## invalid mintTo
-! gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func Mint -send "20000000ugnot" -args "gno.land/r/gnoswap/gns" -args "gnot" -args 3000 -args "-49980" -args "49980" -args 20000000 -args 20000000 -args 1 -args 1 -args 9999999999 -args g1 -args g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -args "" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -send "20000000ugnot" -args "gno.land/r/gnoswap/gns" -args "gnot" -args 3000 -args "-49980" -args "49980" -args 20000000 -args 20000000 -args 1 -args 1 -args 9999999999 -args g1 -args g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -args "" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stderr 'invalid address'
 ## invalid caller
-! gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func Mint -send "20000000ugnot" -args "gno.land/r/gnoswap/gns" -args "gnot" -args 3000 -args "-49980" -args "49980" -args 20000000 -args 20000000 -args 1 -args 1 -args 9999999999 -args g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -args g1 -args "" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -send "20000000ugnot" -args "gno.land/r/gnoswap/gns" -args "gnot" -args 3000 -args "-49980" -args "49980" -args 20000000 -args 20000000 -args 1 -args 1 -args 9999999999 -args g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -args g1 -args "" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stderr 'invalid address'
 ## invalid deadline
-! gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func Mint -send "20000000ugnot" -args "gno.land/r/gnoswap/gns" -args "gnot" -args 3000 -args "-49980" -args "49980" -args 20000000 -args 20000000 -args 1 -args 1 -args 1234 -args g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -args g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -args "" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -send "20000000ugnot" -args "gno.land/r/gnoswap/gns" -args "gnot" -args 3000 -args "-49980" -args "49980" -args 20000000 -args 20000000 -args 1 -args 1 -args 1234 -args g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -args g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -args "" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stderr 'transaction expired'
 
 
 
 # increase liquditiy
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func IncreaseLiquidity -send "20000000ugnot" -args 1 -args 20000000 -args 20000000 -args 1 -args 1 -args 9999999999 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func IncreaseLiquidity -send "20000000ugnot" -args 1 -args 20000000 -args 20000000 -args 1 -args 1 -args 9999999999 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stdout OK
 
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func PositionGetPositionLiquidityStr -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func PositionGetPositionLiquidityStr -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stdout '("43581406" string')
 
 
 # increase liquditiy with wrong parameters should panic
 ## non exists position
-! gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func IncreaseLiquidity -send "20000000ugnot" -args 2 -args 20000000 -args 20000000 -args 1 -args 1 -args 9999999999 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func IncreaseLiquidity -send "20000000ugnot" -args 2 -args 20000000 -args 20000000 -args 1 -args 1 -args 9999999999 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stderr 'position does not exist'
 ## invalid number string 
-! gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func IncreaseLiquidity -send "20000000ugnot" -args 1 -args abc -args 20000000 -args 1 -args 1 -args 9999999999 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func IncreaseLiquidity -send "20000000ugnot" -args 1 -args abc -args 20000000 -args 1 -args 1 -args 9999999999 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stderr 'invalid input data'
 ## sent coint amount does not match
-! gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func IncreaseLiquidity -send "1ugnot" -args 1 -args 20000000 -args 20000000 -args 1 -args 1 -args 9999999999 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func IncreaseLiquidity -send "1ugnot" -args 1 -args 20000000 -args 20000000 -args 1 -args 1 -args 9999999999 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stderr 'Insufficient UGNOT provided'
 
 
 
 # decrease liquditiy
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func DecreaseLiquidity -args 1 -args 81406 -args 0 -args 0 -args 9999999999 -args "false" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func DecreaseLiquidity -args 1 -args 81406 -args 0 -args 0 -args 9999999999 -args "false" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stdout OK
 
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func PositionGetPositionLiquidityStr -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func PositionGetPositionLiquidityStr -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stdout '("43500000" string')
 
 
 # decrease liquditiy with wrong parameters should panic
 ## too much liquiditiy
-! gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func DecreaseLiquidity -args 1 -args 43500001 -args 0 -args 0 -args 9999999999 -args "false" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func DecreaseLiquidity -args 1 -args 43500001 -args 0 -args 0 -args 9999999999 -args "false" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stderr 'invalid liquidity'
 
 
@@ -242,7 +242,7 @@ stderr 'quote sum'
 
 
 # collect swap fee
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/position -func CollectFee -args 1 -args false -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func CollectFee -args 1 -args false -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stdout '("300" string)'
 
 

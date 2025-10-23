@@ -14,10 +14,12 @@ import (
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/v1/pool"
-	"gno.land/r/gnoswap/v1/position"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
+
+	_ "gno.land/r/gnoswap/position/v1"
 )
 
 const (
@@ -185,7 +187,7 @@ func mintUpperRangePosition() {
 
 func checkUnclaimedFeesBeforeSwap() {
 	testing.SetRealm(adminRealm)
-	amount0, amount1 := position.UnclaimedFee(1)
+	amount0, amount1 := position.GetUnclaimedFee(1)
 
 	ufmt.Printf("[EXPECTED] Unclaimed fee0 should be %s\n", amount0.ToString())
 	ufmt.Printf("[EXPECTED] Unclaimed fee1 should be %s\n", amount1.ToString())
@@ -219,7 +221,7 @@ func executeFirstSwap() {
 
 func checkUnclaimedFeesAfterFirstSwap() {
 	testing.SetRealm(adminRealm)
-	amount0, amount1 := position.UnclaimedFee(1)
+	amount0, amount1 := position.GetUnclaimedFee(1)
 
 	ufmt.Printf("[EXPECTED] Unclaimed fee0 should be %s\n", amount0.ToString())
 	ufmt.Printf("[EXPECTED] Unclaimed fee1 should be %s\n", amount1.ToString())
@@ -253,7 +255,7 @@ func executeSecondSwap() {
 
 func checkUnclaimedFeesAfterSecondSwap() {
 	testing.SetRealm(adminRealm)
-	amount0, amount1 := position.UnclaimedFee(1)
+	amount0, amount1 := position.GetUnclaimedFee(1)
 
 	ufmt.Printf("[EXPECTED] Unclaimed fee0 should be %s\n", amount0.ToString())
 	ufmt.Printf("[EXPECTED] Unclaimed fee1 should be %s\n", amount1.ToString())
@@ -287,7 +289,7 @@ func executeThirdSwap() {
 
 func checkFinalUnclaimedFees() {
 	testing.SetRealm(adminRealm)
-	amount0, amount1 := position.UnclaimedFee(1)
+	amount0, amount1 := position.GetUnclaimedFee(1)
 
 	ufmt.Printf("[EXPECTED] Final unclaimed fee0 should be %s\n", amount0.ToString())
 	ufmt.Printf("[EXPECTED] Final unclaimed fee1 should be %s\n", amount1.ToString())

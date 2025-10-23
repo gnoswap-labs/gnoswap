@@ -13,8 +13,8 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/common"
+	pn "gno.land/r/gnoswap/position"
 	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
@@ -59,7 +59,7 @@ var (
 	routerAddr        = getRoleAddress(prbac.ROLE_ROUTER)
 	emissionAddr      = getRoleAddress(prbac.ROLE_EMISSION)
 
-	posRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/v1/position")
+	posRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/position")
 	rouRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/router")
 	stakerRealm = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
 

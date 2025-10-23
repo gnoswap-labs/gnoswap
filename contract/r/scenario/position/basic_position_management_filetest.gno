@@ -20,8 +20,10 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 
+	pn "gno.land/r/gnoswap/position"
 	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
+
+	_ "gno.land/r/gnoswap/position/v1"
 
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
@@ -39,7 +41,7 @@ var (
 	adminAddr, _         = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm           = testing.NewUserRealm(adminAddr)
 	poolAddr     address = "g148tjamj80yyrm309z7rk690an22thd2l3z8ank"
-	positionAddr address = "g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5"
+	positionAddr address = "g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye"
 
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
@@ -177,11 +179,12 @@ func testPositionCreationAndRetrieval() {
 	)
 
 	println("[INFO] Retrieving position details")
-	poolKey := pn.PositionGetPositionPoolKey(positionId)
-	tickLower := pn.PositionGetPositionTickLower(positionId)
-	tickUpper := pn.PositionGetPositionTickUpper(positionId)
-	positionLiquidity := pn.PositionGetPositionLiquidity(positionId)
-	operator := pn.PositionGetPositionOperator(positionId)
+	testing.SetRealm(bobRealm)
+	poolKey := pn.GetPositionPoolKey(positionId)
+	tickLower := pn.GetPositionTickLower(positionId)
+	tickUpper := pn.GetPositionTickUpper(positionId)
+	positionLiquidity := pn.GetPositionLiquidity(positionId)
+	operator := pn.GetPositionOperator(positionId)
 
 	// then
 	println("[EXPECTED] Position created successfully with ID:", positionId)
@@ -190,8 +193,8 @@ func testPositionCreationAndRetrieval() {
 	println("[EXPECTED] Position tick upper:", tickUpper)
 	println("[EXPECTED] Position liquidity:", positionLiquidity.ToString())
 	println("[EXPECTED] Position operator: zero address", operator)
-	println("[EXPECTED] Position is not burned:", !pn.PositionGetPositionIsBurned(positionId))
-	println("[EXPECTED] Position is in range:", pn.PositionIsInRange(positionId))
+	println("[EXPECTED] Position is not burned:", !pn.IsBurned(positionId))
+	println("[EXPECTED] Position is in range:", pn.IsInRange(positionId))
 }
 
 func testPositionModification() {
@@ -230,9 +233,9 @@ func testPositionModification() {
 	)
 
 	println("[INFO] Retrieving modified position details")
-	modifiedLiquidity := pn.PositionGetPositionLiquidity(positionId)
-	tokensOwed0 := pn.PositionGetPositionTokensOwed0(positionId)
-	tokensOwed1 := pn.PositionGetPositionTokensOwed1(positionId)
+	modifiedLiquidity := pn.GetPositionLiquidity(positionId)
+	tokensOwed0 := pn.GetPositionTokensOwed0(positionId)
+	tokensOwed1 := pn.GetPositionTokensOwed1(positionId)
 
 	// then
 	println("[EXPECTED] Position modified successfully")
@@ -270,7 +273,7 @@ func testPositionDeletion() {
 	)
 
 	println("[INFO] Verifying position exists before deletion")
-	existsBefore := pn.PositionGetPositionIsBurned(positionId)
+	existsBefore := pn.IsBurned(positionId)
 
 	// need to add gnft approve
 	// by doing this, we can manage position
@@ -289,7 +292,7 @@ func testPositionDeletion() {
 	)
 
 	println("[INFO] Verifying position is burned after deletion")
-	existsAfter := pn.PositionGetPositionIsBurned(positionId)
+	existsAfter := pn.IsBurned(positionId)
 
 	// then
 	println("[EXPECTED] Position existed before deletion:", !existsBefore)

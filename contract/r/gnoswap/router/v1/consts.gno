@@ -14,6 +14,6 @@ const (
 var (
 	poolAddr        = chain.PackageAddress("gno.land/r/gnoswap/v1/pool")
 	routerAddr      = chain.PackageAddress("gno.land/r/gnoswap/router")
-	positionAddr    = chain.PackageAddress("gno.land/r/gnoswap/v1/position")
+	positionAddr    = chain.PackageAddress("gno.land/r/gnoswap/position")
 	protocolFeeAddr = chain.PackageAddress("gno.land/r/gnoswap/protocol_fee")
 )
