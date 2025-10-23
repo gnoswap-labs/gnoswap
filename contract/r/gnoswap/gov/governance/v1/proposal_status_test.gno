@@ -5,12 +5,14 @@ import (
 	"time"
 
 	"gno.land/p/nt/uassert"
+
+	"gno.land/r/gnoswap/gov/governance"
 )
 
 // TestProposalStatus_StatusType tests status type determination
 func TestProposalStatus_StatusType(t *testing.T) {
 	baseTime := time.Unix(1000, 0)
-	config := Config{
+	config := governance.Config{
 		VotingStartDelay: 100,
 		VotingPeriod:     200,
 		ExecutionDelay:   100,
@@ -122,7 +124,7 @@ func TestProposalStatus_VotingOperations(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			config := Config{
+			config := governance.Config{
 				VotingStartDelay: 100,
 				VotingPeriod:     200,
 				ExecutionDelay:   100,

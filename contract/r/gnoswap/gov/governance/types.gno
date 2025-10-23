@@ -55,9 +55,25 @@ type IGovernanceManager interface {
 }
 
 type IGovernanceApi interface {
+	GetProposerByProposalId(id int64) string
+	GetProposalTypeByProposalId(id int64) string
+
+	GetYeaByProposalId(id int64) int64
+	GetNayByProposalId(id int64) int64
+
+
 	GetProposalById(id int64) string
 	GetVoteStatusFromProposalById(id int64) string
 	GetVoteByAddressFromProposalById(addr address, id int64) string
+
+	GetConfigVersionByProposalId(id int64) int64
+	GetQuorumAmountByProposalId(id int64) int64
+	GetTitleByProposalId(id int64) string
+	GetDescriptionByProposalId(id int64) string
+
+	GetExecutionStateByProposalId(id int64) string
+	GetLatestConfig() Config
+	GetConfig(configVersion int64) Config
 }
 
 type IGovernanceStore interface {

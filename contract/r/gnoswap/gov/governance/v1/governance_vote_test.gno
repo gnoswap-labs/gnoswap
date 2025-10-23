@@ -6,9 +6,11 @@ import (
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
+
+	"gno.land/r/gnoswap/gov/governance"
 )
 
-var testConfig = Config{
+var testConfig = governance.Config{
 	VotingStartDelay:              86400,
 	VotingPeriod:                  604800,
 	VotingWeightSmoothingDuration: 86400,

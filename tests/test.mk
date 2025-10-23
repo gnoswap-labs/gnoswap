@@ -239,42 +239,42 @@ collect-undelegated:
 # propose text proposal
 propose-text:
 	$(info ************ propose text ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gov/governance -func ProposeText -args "title_for_text" -args "desc_for_text" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeText -args "title_for_text" -args "desc_for_text" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo
 
 
 # cancel proposal
 cancel-text:
 	$(info ************ cancel text ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gov/governance -func Cancel -args 1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func Cancel -args 1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo
 
 
 # propose community_pool send proposal
 propose-community:
 	$(info ************ propose community pool spend ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gov/governance -func ProposeCommunityPoolSpend -args "title_for_spend" -args "desc_for_spend" -args $(ADDR_GNOSWAP) -args "gno.land/r/gnoswap/gns" -args 1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeCommunityPoolSpend -args "title_for_spend" -args "desc_for_spend" -args $(ADDR_GNOSWAP) -args "gno.land/r/gnoswap/gns" -args 1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo
 
 
 # vote proposal
 vote-community:
 	$(info ************ vote community pool spend ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gov/governance -func Vote -args 2 -args true -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func Vote -args 2 -args true -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo
 
 
 # execute proposal
 execute-community:
 	$(info ************ execute community pool spend ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gov/governance -func Execute -args 2 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func Execute -args 2 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo
 
 
 # propose parameter change proposal
 propose-param:
 	$(info ************ propose param change ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gov/governance -func ProposeParameterChange -args "title param change" -args "desc param change" -args "1" -args "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d,905" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeParameterChange -args "title param change" -args "desc param change" -args "1" -args "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d,905" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo
 
 

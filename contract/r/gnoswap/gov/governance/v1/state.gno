@@ -1,6 +1,10 @@
 package v1
 
-import "gno.land/p/nt/avl"
+import (
+	"gno.land/p/nt/avl"
+
+	"gno.land/r/gnoswap/gov/governance"
+)
 
 type governanceState struct {
 	configCounter   *Counter // Counter for generating config version numbers
@@ -26,24 +30,19 @@ func NewGovernanceState() *governanceState {
 	}
 
 	gs.initConfig()
+	gs.getUserVotingInfoSnapshotFn = func(snapshotTime int64) (map[string]*VotingInfo, int64, bool) {
+		return getUserVotingInfotWithDelegationSnapshots(snapshotTime)
+	}
 
 	return gs
 }
-
-// init initializes the governance system state when the contract is deployed.
-// This function sets up all necessary data structures and default configurations.
-// func init() {
-// 	initConfig()
-// 	initProposal()
-// 	initStakerDelegationSnapshots()
-// }
 
 // initConfig initializes the governance configuration system.
 // Sets up the configuration counter and creates the default initial configuration.
 func (gs *governanceState) initConfig() {
 	// Create the initial governance configuration with default parameters
 	nextConfigVersion := gs.nextConfigVersion()
-	config := Config{
+	config := governance.Config{
 		VotingStartDelay:              86400,         // 1 day - delay before voting starts
 		VotingPeriod:                  604800,        // 7 days - duration for collecting votes
 		VotingWeightSmoothingDuration: 86400,         // 1 day - period for averaging voting weight
@@ -55,14 +54,6 @@ func (gs *governanceState) initConfig() {
 
 	gs.setConfig(nextConfigVersion, config)
 }
-
-// initStakerDelegationSnapshots initializes the voting snapshot function.
-// Sets up the default function to retrieve voting weights from staker contract.
-// func initStakerDelegationSnapshots() {
-// 	getUserVotingInfoSnapshotFn = func(snapshotTime int64) (map[string]*VotingInfo, int64, bool) {
-// 		return getUserVotingInfotWithDelegationSnapshots(snapshotTime)
-// 	}
-// }
 
 func (gs *governanceState) CurrentConfigVersion() int64 {
 	return gs.getCurrentConfigVersion()
@@ -110,11 +101,11 @@ func (gs *governanceState) nextProposalID() int64 {
 // Returns:
 //   - Config: governance configuration for the specified version
 //   - bool: true if configuration exists, false otherwise
-func (gs *governanceState) getConfig(version int64) (cfg Config, ok bool) {
+func (gs *governanceState) getConfig(version int64) (cfg governance.Config, ok bool) {
 	if val, exists := gs.configs.Get(formatInt(version)); !exists {
 		return
 	} else {
-		cfg, ok = val.(Config)
+		cfg, ok = val.(governance.Config)
 	}
 
 	return
@@ -125,7 +116,7 @@ func (gs *governanceState) getConfig(version int64) (cfg Config, ok bool) {
 // Parameters:
 //   - version: configuration version number
 //   - config: governance configuration to store
-func (gs *governanceState) setConfig(version int64, config Config) {
+func (gs *governanceState) setConfig(version int64, config governance.Config) {
 	gs.configs.Set(formatInt(version), config)
 }
 
@@ -134,7 +125,7 @@ func (gs *governanceState) setConfig(version int64, config Config) {
 // Returns:
 //   - Config: current governance configuration
 //   - bool: true if configuration exists, false otherwise
-func (gs *governanceState) getCurrentConfig() (Config, bool) {
+func (gs *governanceState) getCurrentConfig() (governance.Config, bool) {
 	return gs.getConfig(gs.getCurrentConfigVersion())
 }
 

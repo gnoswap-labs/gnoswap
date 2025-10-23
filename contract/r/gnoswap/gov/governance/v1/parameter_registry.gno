@@ -30,7 +30,7 @@ const (
 	STAKER_PATH         = "gno.land/r/gnoswap/v1/staker"
 	PROTOCOL_FEE_PATH   = "gno.land/r/gnoswap/protocol_fee"
 	COMMUNITY_POOL_PATH = "gno.land/r/gnoswap/community_pool"
-	GOV_GOVERNANCE_PATH = "gno.land/r/gnoswap/v1/gov/governance"
+	GOV_GOVERNANCE_PATH = "gno.land/r/gnoswap/gov/governance"
 )
 
 // ParameterHandler interface defines the contract for parameter execution handlers.

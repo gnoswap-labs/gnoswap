@@ -18,7 +18,9 @@ import (
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
 
-	"gno.land/r/gnoswap/v1/gov/governance"
+	"gno.land/r/gnoswap/gov/governance"
+	_ "gno.land/r/gnoswap/gov/governance/v1"
+
 	govStaker "gno.land/r/gnoswap/v1/gov/staker"
 )
 

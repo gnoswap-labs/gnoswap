@@ -20,7 +20,10 @@ import (
 	"gno.land/r/gnoswap/access"
 
 	gs "gno.land/r/gnoswap/v1/gov/staker"
-	"gno.land/r/gnoswap/v1/gov/governance"
+
+	"gno.land/r/gnoswap/gov/governance"
+	_ "gno.land/r/gnoswap/gov/governance/v1"
+
 	"gno.land/r/gnoswap/gov/xgns"
 
 	gns "gno.land/r/gnoswap/gns"

@@ -5,12 +5,13 @@ import (
 	"testing"
 	"time"
 
-	// "gno.land/p/nt/avl"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/gns"
 	_ "gno.land/r/gnoswap/halt"
+
+	"gno.land/r/gnoswap/gov/governance"
 )
 
 func TestGovernancePropose_ProposeText(t *testing.T) {
@@ -20,7 +21,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 		title               string
 		description         string
 		callerAddress       address
-		setupConfig         *Config
+		setupConfig         *governance.Config
 		setupGnsBalance     int64
 		setupActiveProposal bool
 		setupUserVotes      map[string]*VotingInfo
@@ -35,7 +36,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			title:         "Test Text Proposal",
 			description:   "This is a test text proposal for governance",
 			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &Config{
+			setupConfig: &governance.Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -58,7 +59,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			title:         "Test Text Proposal",
 			description:   "This is a test text proposal for governance",
 			callerAddress: testutils.TestAddress("poor_proposer"),
-			setupConfig: &Config{
+			setupConfig: &governance.Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -81,7 +82,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			title:         "",
 			description:   "This is a test text proposal for governance",
 			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &Config{
+			setupConfig: &governance.Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -104,7 +105,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			title:         "Test Text Proposal",
 			description:   "",
 			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &Config{
+			setupConfig: &governance.Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -127,7 +128,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			title:         "Test Text Proposal",
 			description:   "This is a test text proposal for governance",
 			callerAddress: testutils.TestAddress("active_proposer"),
-			setupConfig: &Config{
+			setupConfig: &governance.Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -150,7 +151,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			title:         "Test Text Proposal",
 			description:   "This is a test text proposal for governance",
 			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &Config{
+			setupConfig: &governance.Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -224,7 +225,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 		tokenPath           string
 		amount              int64
 		callerAddress       address
-		setupConfig         *Config
+		setupConfig         *governance.Config
 		setupGnsBalance     int64
 		setupActiveProposal bool
 		setupUserVotes      map[string]*VotingInfo
@@ -242,7 +243,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			tokenPath:     "gno.land/r/demo/gns",
 			amount:        5_000_000_000,
 			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &Config{
+			setupConfig: &governance.Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -268,7 +269,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			tokenPath:     "gno.land/r/demo/gns",
 			amount:        5_000_000_000,
 			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &Config{
+			setupConfig: &governance.Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -294,7 +295,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			tokenPath:     "gno.land/r/demo/gns",
 			amount:        0,
 			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &Config{
+			setupConfig: &governance.Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -320,7 +321,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			tokenPath:     "",
 			amount:        5_000_000_000,
 			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &Config{
+			setupConfig: &governance.Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -394,7 +395,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 		numToExecute        int64
 		executions          string
 		callerAddress       address
-		setupConfig         *Config
+		setupConfig         *governance.Config
 		setupGnsBalance     int64
 		setupActiveProposal bool
 		setupUserVotes      map[string]*VotingInfo
@@ -411,7 +412,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			numToExecute:  2,
 			executions:    "gno.land/r/demo/token*EXE*setParam*EXE*100*GOV*gno.land/r/demo/pool*EXE*setFee*EXE*500",
 			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &Config{
+			setupConfig: &governance.Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -436,7 +437,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			numToExecute:  0,
 			executions:    "",
 			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &Config{
+			setupConfig: &governance.Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -461,7 +462,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			numToExecute:  1,
 			executions:    "invalid_format",
 			callerAddress: testutils.TestAddress("proposer"),
-			setupConfig: &Config{
+			setupConfig: &governance.Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -593,7 +594,7 @@ func TestGovernancePropose_ProposeTextInputValidation(t *testing.T) {
 			gov := newMockGovernance()
 			state := gov.GetGovernanceState()
 
-			setupTestConfig(t, state, &Config{
+			setupTestConfig(t, state, &governance.Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -805,7 +806,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 			gov := newMockGovernance()
 			state := gov.GetGovernanceState()
 
-			setupTestConfig(t, state, &Config{
+			setupTestConfig(t, state, &governance.Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -910,7 +911,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 			gov := newMockGovernance()
 			state := gov.GetGovernanceState()
 
-			setupTestConfig(t, state, &Config{
+			setupTestConfig(t, state, &governance.Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -1046,7 +1047,7 @@ func TestGovernancePropose_ParameterChangeValidation(t *testing.T) {
 			gov := newMockGovernance()
 			state := gov.GetGovernanceState()
 
-			setupTestConfig(t, state, &Config{
+			setupTestConfig(t, state, &governance.Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -1095,7 +1096,7 @@ func TestGovernancePropose_ProposalIDGeneration(t *testing.T) {
 		gov := newMockGovernance()
 		state := gov.GetGovernanceState()
 
-		setupTestConfig(t, state, &Config{
+		setupTestConfig(t, state, &governance.Config{
 			VotingStartDelay:              86400,
 			VotingPeriod:                  604800,
 			VotingWeightSmoothingDuration: 86400,
@@ -1150,7 +1151,7 @@ func TestGovernancePropose_ProposalIDGeneration(t *testing.T) {
 	})
 }
 
-func setupTestConfig(t *testing.T, state *governanceState, config *Config) {
+func setupTestConfig(t *testing.T, state *governanceState, config *governance.Config) {
 	if config == nil {
 		return
 	}

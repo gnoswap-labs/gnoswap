@@ -7,7 +7,9 @@ import (
 
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
+
 	"gno.land/r/gnoswap/v1/gov/staker"
+	"gno.land/r/gnoswap/gov/governance"
 )
 
 // ProposeText creates a text proposal for community discussion.
@@ -321,7 +323,7 @@ func (gv *governanceV1) ProposeParameterChange(
 // Validates input data, checks proposer eligibility, and creates proposal object.
 func (gv *governanceV1) createProposal(
 	proposalType ProposalType,
-	config Config,
+	config governance.Config,
 	maxVotingWeight int64,
 	proposalMetadata *ProposalMetadata,
 	proposalData *ProposalData,
@@ -403,7 +405,7 @@ func (gv *governanceV1) getUserVotingInfoSnapshot(
 	if state.getUserVotingInfoSnapshotFn != nil {
 		votingInfos, maxVotingWeight, ok = state.getUserVotingInfoSnapshotFn(snapshotTime)
 	} else {
-		votingInfos, maxVotingWeight, ok = gv.getUserVotingInfotWithDelegationSnapshots(snapshotTime)
+		votingInfos, maxVotingWeight, ok = getUserVotingInfotWithDelegationSnapshots(snapshotTime)
 	}
 
 	if !ok || maxVotingWeight <= 0 {
@@ -415,7 +417,7 @@ func (gv *governanceV1) getUserVotingInfoSnapshot(
 
 // getUserVotingInfotWithDelegationSnapshots retrieves voting info from staker delegation snapshots.
 // Integrates with staker contract to get actual delegation amounts.
-func (gv *governanceV1) getUserVotingInfotWithDelegationSnapshots(
+func getUserVotingInfotWithDelegationSnapshots(
 	snapshotTime int64,
 ) (map[string]*VotingInfo, int64, bool) {
 	// Get delegation snapshots from staker contract

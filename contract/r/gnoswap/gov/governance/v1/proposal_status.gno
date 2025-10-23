@@ -1,5 +1,9 @@
 package v1
 
+import (
+	"gno.land/r/gnoswap/gov/governance"
+)
+
 // ProposalStatusType represents the current status of a proposal in its lifecycle.
 // These statuses determine what actions are available for a proposal.
 type ProposalStatusType int
@@ -285,7 +289,7 @@ func (p *ProposalStatus) updateVoteStatus(maxVotingWeight, quorum int64) error {
 // Returns:
 //   - *ProposalStatus: new proposal status instance
 func NewProposalStatus(
-	config Config,
+	config governance.Config,
 	maxVotingWeight int64,
 	executable bool,
 	createdAt int64,

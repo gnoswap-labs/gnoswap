@@ -1,6 +1,10 @@
 package v1
 
-import "time"
+import (
+	"time"
+
+	"gno.land/r/gnoswap/gov/governance"
+)
 
 func mustGetProposal(state *governanceState, proposalId int64) *Proposal {
 	proposal, ok := state.getProposal(proposalId)
@@ -61,7 +65,7 @@ func (gv *governanceV1) GetExecutionStateByProposalId(proposalId int64) string {
 	return proposal.Status(currentAt)
 }
 
-func (gv *governanceV1) GetLatestConfig() Config {
+func (gv *governanceV1) GetLatestConfig() governance.Config {
 	state := gv.GetGovernanceState()
 	config, ok := state.getCurrentConfig()
 	if !ok {
@@ -71,7 +75,7 @@ func (gv *governanceV1) GetLatestConfig() Config {
 	return config
 }
 
-func (gv *governanceV1) GetConfig(configVersion int64) Config {
+func (gv *governanceV1) GetConfig(configVersion int64) governance.Config {
 	state := gv.GetGovernanceState()
 	config, ok := state.getConfig(configVersion)
 	if !ok {

@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"gno.land/p/nt/uassert"
+
+	"gno.land/r/gnoswap/gov/governance"
 )
 
 // TestProposal_TypeOperations tests proposal type operations
@@ -123,7 +125,7 @@ func TestProposal_Validation(t *testing.T) {
 // TestProposal_StatusOperations tests proposal status operations
 func TestProposal_StatusOperations(t *testing.T) {
 	baseTime := time.Unix(1000, 0)
-	config := Config{
+	config := governance.Config{
 		VotingStartDelay: 100,
 		VotingPeriod:     200,
 		ExecutionDelay:   100,
@@ -219,7 +221,7 @@ func TestNewProposal(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
 			baseTime := time.Now().Unix()
-			config := Config{
+			config := governance.Config{
 				VotingStartDelay: 100,
 				VotingPeriod:     200,
 				ExecutionDelay:   100,
