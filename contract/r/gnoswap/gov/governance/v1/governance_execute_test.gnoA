@@ -169,7 +169,7 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.getGovernanceState()
+			state := gov.GetGovernanceState()
 
 			setupGovernanceExecuteTestCommunityPoolBalance(t)
 			if tt.setupProposal != nil {
@@ -342,7 +342,7 @@ func TestGovernanceExecute_ExecuteProposalPrivate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.getGovernanceState()
+			state := gov.GetGovernanceState()
 
 			setupGovernanceExecuteTestCommunityPoolBalance(t)
 			if tt.setupProposal != nil {
@@ -506,7 +506,7 @@ func TestGovernanceExecute_Cancel(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.getGovernanceState()
+			state := gov.GetGovernanceState()
 
 			setupGovernanceExecuteTestCommunityPoolBalance(t)
 			if tt.setupProposal != nil {
@@ -703,7 +703,7 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.getGovernanceState()
+			state := gov.GetGovernanceState()
 
 			setupGovernanceExecuteTestCommunityPoolBalance(t)
 			if tt.setupProposal != nil {
@@ -784,7 +784,7 @@ func TestGovernanceExecute_ExecutionTiming(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.getGovernanceState()
+			state := gov.GetGovernanceState()
 
 			setupGovernanceExecuteTestCommunityPoolBalance(t)
 			proposal := NewProposal(
@@ -880,7 +880,7 @@ func TestGovernanceExecute_ExecutionTiming(t *testing.T) {
 // 		t.Run(tt.name, func(t *testing.T) {
 // 			// given
 // 			gov := newMockGovernance()
-// 			state := gov.getGovernanceState()
+// 			state := gov.GetGovernanceState()
 
 // 			setupGovernanceExecuteTestCommunityPoolBalance(t)
 // 			proposal := NewProposal(
@@ -996,7 +996,7 @@ func TestGovernanceExecute_ExecutionTiming(t *testing.T) {
 // 		t.Run(tt.name, func(t *testing.T) {
 // 			// given
 // 			gov := newMockGovernance()
-// 			state := gov.getGovernanceState()
+// 			state := gov.GetGovernanceState()
 
 // 			setupGovernanceExecuteTestCommunityPoolBalance(t)
 // 			proposal := NewProposal(
@@ -1106,7 +1106,7 @@ func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.getGovernanceState()
+			state := gov.GetGovernanceState()
 
 			setupGovernanceExecuteTestCommunityPoolBalance(t)
 
@@ -1158,7 +1158,7 @@ func TestGovernanceExecute_ReExecutionPrevention(t *testing.T) {
 	t.Run("prevent double execution", func(t *testing.T) {
 		// given
 		gov := newMockGovernance()
-		state := gov.getGovernanceState()
+		state := gov.GetGovernanceState()
 
 		setupGovernanceExecuteTestCommunityPoolBalance(t)
 		proposal := NewProposal(

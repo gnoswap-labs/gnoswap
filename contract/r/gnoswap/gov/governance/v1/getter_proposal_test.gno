@@ -79,7 +79,7 @@ func TestGetterProposal_All(t *testing.T) {
 			// proposals = avl.NewTree()              // reset proposals state
 			// proposalManager = NewProposalManager() // reset proposalManager state
 			gv := newMockGovernance()
-			state := gv.getGovernanceState()
+			state := gv.GetGovernanceState()
 
 			if tc.proposal != nil {
 				state.addProposal(tc.proposal)

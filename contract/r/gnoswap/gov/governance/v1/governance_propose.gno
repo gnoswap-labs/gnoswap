@@ -44,7 +44,7 @@ func (gv *governanceV1) ProposeText(
 	createdHeight := runtime.ChainHeight()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
-	state := gv.getGovernanceState()
+	state := gv.GetGovernanceState()
 
 	config, ok := state.getCurrentConfig()
 	if !ok {
@@ -146,7 +146,7 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 	createdHeight := runtime.ChainHeight()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
-	state := gv.getGovernanceState()
+	state := gv.GetGovernanceState()
 
 	config, ok := state.getCurrentConfig()
 	if !ok {
@@ -254,7 +254,7 @@ func (gv *governanceV1) ProposeParameterChange(
 	createdHeight := runtime.ChainHeight()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
-	state := gv.getGovernanceState()
+	state := gv.GetGovernanceState()
 
 	config, ok := state.getCurrentConfig()
 	if !ok {
@@ -347,7 +347,7 @@ func (gv *governanceV1) createProposal(
 		return nil, errNotEnoughBalance
 	}
 
-	state := gv.getGovernanceState()
+	state := gv.GetGovernanceState()
 
 	// Generate unique proposal ID
 	proposalID := state.nextProposalID()
@@ -390,7 +390,7 @@ func (gv *governanceV1) getUserVotingInfoSnapshot(
 	current,
 	smoothingPeriod int64,
 ) (map[string]*VotingInfo, int64, error) {
-	state := gv.getGovernanceState()
+	state := gv.GetGovernanceState()
 
 	// Calculate snapshot time by going back by smoothing period
 	snapshotTime := current - smoothingPeriod

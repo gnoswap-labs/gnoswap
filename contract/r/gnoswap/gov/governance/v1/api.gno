@@ -11,7 +11,7 @@ import (
 
 // GetProposalById returns a single proposal with necessary information.
 func (gv *governanceV1) GetProposalById(id int64) string {
-	state := gv.getGovernanceState()
+	state := gv.GetGovernanceState()
 	_, exists := state.getProposal(id)
 	if !exists {
 		return ""
@@ -29,7 +29,7 @@ func (gv *governanceV1) GetProposalById(id int64) string {
 
 // GetVoteStatusFromProposalById returns the vote status(max, yes, no) of a proposal.
 func (gv *governanceV1) GetVoteStatusFromProposalById(id int64) string {
-	state := gv.getGovernanceState()
+	state := gv.GetGovernanceState()
 	_, exists := state.getProposal(id)
 	if !exists {
 		return ""
@@ -44,7 +44,7 @@ func (gv *governanceV1) GetVoteStatusFromProposalById(id int64) string {
 
 // GetVoteByAddressFromProposalById returns the vote of an address from a certain proposal.
 func (gv *governanceV1) GetVoteByAddressFromProposalById(addr address, id int64) string {
-	state := gv.getGovernanceState()
+	state := gv.GetGovernanceState()
 	vote, exists := state.getProposalUserVotingInfo(id, addr)
 	if !exists {
 		return ""

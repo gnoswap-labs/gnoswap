@@ -172,7 +172,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.getGovernanceState()
+			state := gov.GetGovernanceState()
 
 			setupTestConfig(t, state, tt.setupConfig)
 			setupTestGnsBalance(t, tt.callerAddress, tt.setupGnsBalance)
@@ -344,7 +344,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.getGovernanceState()
+			state := gov.GetGovernanceState()
 
 			setupTestConfig(t, state, tt.setupConfig)
 			setupTestGnsBalance(t, tt.callerAddress, tt.setupGnsBalance)
@@ -485,7 +485,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.getGovernanceState()
+			state := gov.GetGovernanceState()
 
 			setupTestConfig(t, state, tt.setupConfig)
 			setupTestGnsBalance(t, tt.callerAddress, tt.setupGnsBalance)
@@ -591,7 +591,7 @@ func TestGovernancePropose_ProposeTextInputValidation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.getGovernanceState()
+			state := gov.GetGovernanceState()
 
 			setupTestConfig(t, state, &Config{
 				VotingStartDelay:              86400,
@@ -803,7 +803,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.getGovernanceState()
+			state := gov.GetGovernanceState()
 
 			setupTestConfig(t, state, &Config{
 				VotingStartDelay:              86400,
@@ -908,7 +908,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.getGovernanceState()
+			state := gov.GetGovernanceState()
 
 			setupTestConfig(t, state, &Config{
 				VotingStartDelay:              86400,
@@ -1044,7 +1044,7 @@ func TestGovernancePropose_ParameterChangeValidation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.getGovernanceState()
+			state := gov.GetGovernanceState()
 
 			setupTestConfig(t, state, &Config{
 				VotingStartDelay:              86400,
@@ -1093,7 +1093,7 @@ func TestGovernancePropose_ProposalIDGeneration(t *testing.T) {
 	t.Run("sequential ID generation", func(t *testing.T) {
 		// given
 		gov := newMockGovernance()
-		state := gov.getGovernanceState()
+		state := gov.GetGovernanceState()
 
 		setupTestConfig(t, state, &Config{
 			VotingStartDelay:              86400,

@@ -27,19 +27,6 @@ func (m *mockGovernanceStore) SetGovernanceState(governanceState governance.Gove
 	return nil
 }
 
-func (m *mockGovernanceStore) HasProposalsStoreKey() bool {
-	return m.proposals != nil
-}
-
-func (m *mockGovernanceStore) GetProposals() *avl.Tree {
-	return m.proposals
-}
-
-func (m *mockGovernanceStore) SetProposals(proposals *avl.Tree) error {
-	m.proposals = proposals
-	return nil
-}
-
 func (m *mockGovernanceStore) HasProposalNextIDStoreKey() bool {
 	return true
 }

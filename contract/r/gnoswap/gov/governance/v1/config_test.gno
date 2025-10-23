@@ -88,7 +88,7 @@ import (
 // 		t.Run(tc.name, func(t *testing.T) {
 // 			// given: set realm and halt state
 // 			gs := newMockGovernance()
-// 			state := gs.getGovernanceState()
+// 			state := gs.GetGovernanceState()
 
 // 			testing.SetRealm(adminRealm)
 // 			if tc.halted {

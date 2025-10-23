@@ -178,7 +178,7 @@ func TestGovernanceVote_Vote(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.getGovernanceState()
+			state := gov.GetGovernanceState()
 
 			if tt.setupProposal != nil {
 				setupTestProposal(t, state, tt.setupProposal)
@@ -354,7 +354,7 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.getGovernanceState()
+			state := gov.GetGovernanceState()
 
 			if tt.setupProposal != nil {
 				setupTestProposal(t, state, tt.setupProposal)
@@ -505,7 +505,7 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.getGovernanceState()
+			state := gov.GetGovernanceState()
 
 			if tt.setupHalt {
 				// Mock halt state setup
@@ -575,7 +575,7 @@ func TestGovernanceVote_VotePeriod(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.getGovernanceState()
+			state := gov.GetGovernanceState()
 
 			proposal := NewProposal(
 				1,
@@ -659,7 +659,7 @@ func TestGovernanceVote_VoteWeightCalculation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.getGovernanceState()
+			state := gov.GetGovernanceState()
 
 			proposal := NewProposal(
 				1,
@@ -740,7 +740,7 @@ func TestGovernanceVote_QuorumCalculation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
-			state := newMockGovernance().getGovernanceState()
+			state := newMockGovernance().GetGovernanceState()
 
 			eligibleWeight := tt.totalVotingWeight - tt.launchpadWeight
 

@@ -1,9 +1,5 @@
 package governance
 
-import (
-	"gno.land/p/nt/avl"
-)
-
 type IGovernance interface {
 	IGovernanceManager
 	IGovernanceApi
@@ -68,11 +64,6 @@ type IGovernanceStore interface {
 	HasGovernanceStateStoreKey() bool
 	GetGovernanceState() GovernanceState
 	SetGovernanceState(governanceState GovernanceState) error
-
-	// Proposal storage
-	HasProposalsStoreKey() bool
-	GetProposals() *avl.Tree
-	SetProposals(proposals *avl.Tree) error
 
 	HasProposalNextIDStoreKey() bool
 	GetProposalNextID() uint64

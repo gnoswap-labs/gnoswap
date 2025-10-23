@@ -82,7 +82,7 @@ func (gv *governanceV1) vote(
 	votedHeight,
 	votedAt int64,
 ) (*VotingInfo, int64, int64, error) {
-	state := gv.getGovernanceState()
+	state := gv.GetGovernanceState()
 
 	// Retrieve the proposal from storage
 	proposal, ok := state.getProposal(proposalID)

@@ -32,7 +32,7 @@ type Config struct {
 // Reconfigure updates governance configuration.
 // Only admin or governance contract can call this function.
 // Updates all governance parameters and emits a "Reconfigure" event.
-func (g *governanceV1) Reconfigure(
+func (gv *governanceV1) Reconfigure(
 	votingStartDelay int64,
 	votingPeriod int64,
 	votingWeightSmoothingDuration int64,
@@ -51,10 +51,10 @@ func (g *governanceV1) Reconfigure(
 	en.MintAndDistributeGns(cross)
 
 	// Store previous version for event emission
-	previousVersion := g.getGovernanceState().getCurrentConfigVersion()
+	previousVersion := gv.GetGovernanceState().getCurrentConfigVersion()
 
 	// Apply the new configuration
-	nextVersion, newCfg := g.reconfigure(
+	nextVersion, newCfg := gv.reconfigure(
 		votingStartDelay,
 		votingPeriod,
 		votingWeightSmoothingDuration,
@@ -86,7 +86,7 @@ func (g *governanceV1) Reconfigure(
 
 // reconfigure updates the Governor's configuration.
 // Creates new configuration and stores it with incremented version number.
-func (g *governanceV1) reconfigure(
+func (gv *governanceV1) reconfigure(
 	votingStartDelay int64,
 	votingPeriod int64,
 	votingWeightSmoothingDuration int64,
@@ -106,7 +106,7 @@ func (g *governanceV1) reconfigure(
 		ExecutionWindow:               executionWindow,
 	}
 
-	state := g.getGovernanceState()
+	state := gv.GetGovernanceState()
 
 	// Generate next version number
 	nextVersion := state.nextConfigVersion()
