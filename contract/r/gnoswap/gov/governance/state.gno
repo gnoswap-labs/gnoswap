@@ -1,6 +1,7 @@
 package governance
 
 import (
+	"chain"
 	"chain/runtime"
 	"errors"
 
@@ -34,6 +35,13 @@ func init() {
 func initRegisterReadableContract() {
 	govStakerAddress := access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
 	kvStore.AddAuthorizedCaller(govStakerAddress, store.ReadOnly)
+
+	adminAddress := access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	kvStore.AddAuthorizedCaller(adminAddress, store.ReadOnly)
+
+	// Allow test package to read governance state
+	testPackageAddress := chain.PackageAddress("gno.land/r/gnoswap/v1/main")
+	kvStore.AddAuthorizedCaller(testPackageAddress, store.ReadOnly)
 }
 
 func initializeDomainStore(kvStore store.KVStore) any {

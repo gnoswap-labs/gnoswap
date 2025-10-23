@@ -30,7 +30,7 @@ func init() {
 func AddToken(cur realm, tokenPath string) {
 	caller := runtime.PreviousRealm().Address()
 	halt.AssertIsNotHaltedStakerWithVersion(1)
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	if err := modifyTokenList(tokenPath, addTokenValidator, addTokenExecutor); err != nil {
 		panic(err.Error())
@@ -58,7 +58,7 @@ func AddToken(cur realm, tokenPath string) {
 func RemoveToken(cur realm, tokenPath string) {
 	caller := runtime.PreviousRealm().Address()
 	halt.AssertIsNotHaltedStakerWithVersion(1)
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	if err := modifyTokenList(tokenPath, removeTokenValidator, removeTokenExecutor); err != nil {
 		panic(err.Error())

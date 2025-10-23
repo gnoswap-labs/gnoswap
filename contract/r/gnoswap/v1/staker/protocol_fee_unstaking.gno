@@ -59,7 +59,7 @@ func SetUnStakingFee(cur realm, fee int64) {
 	halt.AssertIsNotHaltedStakerWithVersion(1)
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	assertIsValidFeeRate(fee)
 

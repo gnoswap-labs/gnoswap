@@ -286,7 +286,7 @@ func CollectProtocol(
 	halt.AssertIsNotHaltedWithdrawWithVersion(1)
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	common.MustRegistered(token0Path)
 	common.MustRegistered(token1Path)

@@ -104,7 +104,7 @@ func SetPoolCreationFee(cur realm, fee int64) {
 	halt.AssertIsNotHaltedPoolWithVersion(1)
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	prevPoolCreationFee := GetPoolCreationFee()
 	err := setPoolCreationFee(fee)
@@ -133,7 +133,7 @@ func SetWithdrawalFee(cur realm, fee uint64) {
 	halt.AssertIsNotHaltedPoolWithVersion(1)
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	prevWithdrawalFee := GetWithdrawalFee()
 

@@ -346,7 +346,9 @@ func (gv *governanceV1) createParameterHandlers() *ParameterRegistry {
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
 				// Set fee required to create new pools
-				pl.SetPoolCreationFee(cross, parseInt64(params[0])) // fee
+				func (cur realm) {
+					pl.SetPoolCreationFee(cross, parseInt64(params[0])) // fee
+				}(cross)
 				return nil
 			},
 		},

@@ -145,7 +145,7 @@ func SetFeeProtocol(cur realm, feeProtocol0, feeProtocol1 uint8) {
 	halt.AssertIsNotHaltedPoolWithVersion(1)
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	err := setFeeProtocolInternal(feeProtocol0, feeProtocol1, "SetFeeProtocol")
 	if err != nil {
