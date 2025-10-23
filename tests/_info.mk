@@ -9,7 +9,7 @@ ADDR_STAKER := g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu
 ADDR_PROTOCOL_FEE := g1r340tuven27z8wq50u8d20eqrsj470082682tp
 ADDR_GOV_STAKER := g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa
 ADR_GOV_GOV := g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd
-ADDR_LAUNCHPAD := g122mau2lp2rc0scs8d27pkkuys4w54mdy2tuer3
+ADDR_LAUNCHPAD := g1x6r75sxlkp9zfqufew0vcuq9sfclsq8uaqkru9
 ADDR_GNS := g13ffa5r3mqfxu3s7ejl02scq9536wt6c2t789dm
 ADDR_GNFT := g1mclfz2dn4lnez0lcjwgz67hh72rdafjmufvfmw
 
