@@ -15,47 +15,48 @@ type IGovernanceManager interface {
 	ProposeText(
 		title string,
 		description string,
-	) (uint64, error)
+	) int64
 
 	ProposeCommunityPoolSpend(
 		title string,
 		description string,
+		to address,
 		tokenPath string,
-		toAddress address,
-		amount uint64,
-	) (uint64, error)
+		amount int64,
+	) int64
 
 	ProposeParameterChange(
 		title string,
 		description string,
-		changes string,
-	) (uint64, error)
+		numToExecute int64,
+		executions string,
+	) int64
 
 	// Voting
 	Vote(
-		proposalId uint64,
-		voteType uint8,
-	) error
+		proposalId int64,
+		yes bool,
+	) string
 
 	// Execution
 	Execute(
-		proposalId uint64,
-	) error
+		proposalId int64,
+	) int64
 
 	Cancel(
-		proposalId uint64,
-	) error
+		proposalId int64,
+	) int64
 
 	// Configuration
 	Reconfigure(
-		votingStartDelay uint64,
-		votingPeriod uint64,
-		votingWeightSmoothingDuration uint64,
-		quorum uint64,
-		proposalCreationThreshold uint64,
-		executionDelay uint64,
-		executionWindow uint64,
-	) error
+		votingStartDelay int64,
+		votingPeriod int64,
+		votingWeightSmoothingDuration int64,
+		quorum int64,
+		proposalCreationThreshold int64,
+		executionDelay int64,
+		executionWindow int64,
+	) int64
 }
 
 type IGovernanceGetter interface {

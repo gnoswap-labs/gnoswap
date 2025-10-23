@@ -1,4 +1,4 @@
-package governance
+package v1
 
 import (
 	"chain"
@@ -34,9 +34,9 @@ import (
 //
 // Returns executed proposal ID.
 // Callable by anyone once proposal is executable.
-func Execute(cur realm, proposalID int64) int64 {
+func (gv *governanceV1) Execute(proposalID int64) int64 {
 	// Check if execution is allowed (system not halted for execution)
-	halt.AssertIsNotHaltedGovernanceWithVersion(1)
+	halt.AssertIsNotHaltedGovernance()
 
 	// Get caller information and current blockchain state
 	caller := runtime.PreviousRealm().Address()
@@ -47,7 +47,7 @@ func Execute(cur realm, proposalID int64) int64 {
 	en.MintAndDistributeGns(cross)
 
 	// Attempt to execute the proposal with current context
-	proposal, err := executeProposal(
+	proposal, err := gv.executeProposal(
 		proposalID,
 		currentAt,
 		currentHeight,
@@ -70,14 +70,16 @@ func Execute(cur realm, proposalID int64) int64 {
 }
 
 // executeProposal handles core logic of proposal execution.
-func executeProposal(
+func (gv *governanceV1) executeProposal(
 	proposalID int64,
 	executedAt int64,
 	executedHeight int64,
 	executedBy address,
 ) (*Proposal, error) {
+	state := gv.getGovernanceState()
+
 	// Retrieve the proposal from storage
-	proposal, ok := getProposal(proposalID)
+	proposal, ok := state.getProposal(proposalID)
 	if !ok {
 		return nil, errDataNotFound
 	}
@@ -99,7 +101,7 @@ func executeProposal(
 	}
 
 	// Create parameter registry for handling execution actions
-	parameterRegistry := createParameterHandlers()
+	parameterRegistry := gv.createParameterHandlers()
 
 	// Execute proposal based on its type
 	switch proposal.Type() {
@@ -143,11 +145,12 @@ func executeProposal(
 //
 // Returns cancelled proposal ID.
 // Only callable by original proposer before voting begins.
-func Cancel(cur realm, proposalID int64) int64 {
-	halt.AssertIsNotHaltedGovernanceWithVersion(1)
+func (gv *governanceV1) Cancel(proposalID int64) int64 {
+	halt.AssertIsNotHaltedGovernance()
 
 	caller := runtime.PreviousRealm().Address()
-	assertCallerIsProposer(proposalID, caller)
+	state := gv.getGovernanceState()
+	assertCallerIsProposer(state, proposalID, caller)
 
 	// Get current blockchain state and caller information
 	currentHeight := runtime.ChainHeight()
@@ -157,7 +160,7 @@ func Cancel(cur realm, proposalID int64) int64 {
 	en.MintAndDistributeGns(cross)
 
 	// Attempt to cancel the proposal
-	proposal, err := cancel(proposalID, currentAt, currentHeight, caller)
+	proposal, err := gv.cancel(proposalID, currentAt, currentHeight, caller)
 	if err != nil {
 		panic(err)
 	}
@@ -176,9 +179,14 @@ func Cancel(cur realm, proposalID int64) int64 {
 
 // cancel handles core logic of proposal cancellation.
 // Validates proposal state and updates status to canceled.
-func cancel(proposalID, canceledAt, canceledHeight int64, canceledBy address) (proposal *Proposal, err error) {
+func (gv *governanceV1) cancel(
+	proposalID, canceledAt, canceledHeight int64,
+	canceledBy address,
+) (proposal *Proposal, err error) {
+	state := gv.getGovernanceState()
+
 	// Retrieve the proposal from storage
-	proposal, ok := getProposal(proposalID)
+	proposal, ok := state.getProposal(proposalID)
 	if !ok {
 		return nil, errDataNotFound
 	}

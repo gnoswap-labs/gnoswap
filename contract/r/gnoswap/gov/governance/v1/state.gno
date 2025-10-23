@@ -56,15 +56,6 @@ func (gs *governanceState) initConfig() {
 	gs.setConfig(nextConfigVersion, config)
 }
 
-// initProposal initializes the proposal management system.
-// Sets up counters, storage trees, and management structures for proposals.
-func initProposal() {
-	proposalCounter = NewCounter()
-	proposals = avl.NewTree()
-	proposalManager = NewProposalManager()
-	proposalUserVotingInfos = avl.NewTree()
-}
-
 // initStakerDelegationSnapshots initializes the voting snapshot function.
 // Sets up the default function to retrieve voting weights from staker contract.
 // func initStakerDelegationSnapshots() {
@@ -247,4 +238,32 @@ func (gs *governanceState) getProposalUserVotingInfo(proposalID int64, userAddre
 	}
 
 	return val, true
+}
+
+// hasActiveProposal checks if address already has active proposal.
+// Enforces one-proposal-per-address rule to prevent spam.
+func (gs *governanceState) hasActiveProposal(proposerAddress address, current int64) bool {
+	// Get all proposals for this address
+	proposals := gs.getUserProposals(proposerAddress)
+
+	// Check if any proposal is still active
+	for _, proposal := range proposals {
+		if proposal.IsActive(current) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// updateProposalUserVotes stores voting information for specific proposal.
+// Links voting eligibility data to proposal for later use during voting.
+func (gs *governanceState) updateProposalUserVotes(
+	proposal *Proposal,
+	userVotingInfos map[string]*VotingInfo,
+) bool {
+	// Store the voting information mapping for this proposal
+	gs.proposalUserVotingInfos.Set(formatInt(proposal.ID()), userVotingInfos)
+
+	return true
 }

@@ -1,4 +1,4 @@
-package governance
+package v1
 
 import (
 	"chain"
@@ -32,8 +32,8 @@ import (
 //   - Voting period typically 7 days
 //
 // Returns voting weight used as string.
-func Vote(cur realm, proposalID int64, yes bool) string {
-	halt.AssertIsNotHaltedGovernanceWithVersion(1)
+func (gv *governanceV1) Vote(proposalID int64, yes bool) string {
+	halt.AssertIsNotHaltedGovernance()
 
 	// Get current blockchain state and caller information
 	currentHeight := runtime.ChainHeight()
@@ -46,7 +46,7 @@ func Vote(cur realm, proposalID int64, yes bool) string {
 	voter := runtime.PreviousRealm().Address()
 
 	// Process the vote and get updated vote tallies
-	userVote, totalYesVoteWeight, totalNoVoteWeight, err := vote(
+	userVote, totalYesVoteWeight, totalNoVoteWeight, err := gv.vote(
 		proposalID,
 		voter,
 		yes,
@@ -75,15 +75,17 @@ func Vote(cur realm, proposalID int64, yes bool) string {
 }
 
 // vote handles core voting logic.
-func vote(
+func (gv *governanceV1) vote(
 	proposalID int64,
 	voterAddress address,
 	votedYes bool,
 	votedHeight,
 	votedAt int64,
 ) (*VotingInfo, int64, int64, error) {
+	state := gv.getGovernanceState()
+
 	// Retrieve the proposal from storage
-	proposal, ok := getProposal(proposalID)
+	proposal, ok := state.getProposal(proposalID)
 	if !ok {
 		return nil, 0, 0, makeErrorWithDetails(errDataNotFound, "not found proposal")
 	}
@@ -94,7 +96,7 @@ func vote(
 	}
 
 	// Get user's voting information for this proposal
-	userVote, ok := getProposalUserVotingInfo(proposalID, voterAddress)
+	userVote, ok := state.getProposalUserVotingInfo(proposalID, voterAddress)
 	if !ok {
 		return nil, 0, 0, makeErrorWithDetails(errDataNotFound, "not found user's voting info")
 	}

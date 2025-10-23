@@ -1,4 +1,4 @@
-package governance
+package v1
 
 import (
 	"gno.land/p/nt/avl"
@@ -173,7 +173,7 @@ func makeHandlerKey(pkgPath, function string) string {
 //
 // Returns:
 //   - *ParameterRegistry: fully configured registry with all supported handlers
-func createParameterHandlers() *ParameterRegistry {
+func (gv *governanceV1) createParameterHandlers() *ParameterRegistry {
 	registry := NewParameterRegistry()
 
 	// Define all handler configurations for different system components
@@ -277,8 +277,7 @@ func createParameterHandlers() *ParameterRegistry {
 				executionWindow := parseInt64(params[6])
 
 				// Reconfigure governance parameters through governance process
-				Reconfigure(
-					cross,
+				gv.Reconfigure(
 					votingStartDelay,
 					votingPeriod,
 					votingWeightSmoothingDuration,

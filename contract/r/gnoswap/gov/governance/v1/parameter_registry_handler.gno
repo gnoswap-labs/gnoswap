@@ -1,4 +1,4 @@
-package governance
+package v1
 
 import "gno.land/p/nt/ufmt"
 

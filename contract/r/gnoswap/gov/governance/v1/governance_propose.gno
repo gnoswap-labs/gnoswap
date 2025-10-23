@@ -1,4 +1,4 @@
-package governance
+package v1
 
 import (
 	"chain"
@@ -32,12 +32,11 @@ import (
 //   - No execution phase (signal only)
 //
 // Returns new proposal ID.
-func ProposeText(
-	cur realm,
+func (gv *governanceV1) ProposeText(
 	title string,
 	description string,
 ) (newProposalId int64) {
-	halt.AssertIsNotHaltedGovernanceWithVersion(1)
+	halt.AssertIsNotHaltedGovernance()
 
 	callerAddress := runtime.PreviousRealm().Address()
 
@@ -45,18 +44,20 @@ func ProposeText(
 	createdHeight := runtime.ChainHeight()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
-	config, ok := getCurrentConfig()
+	state := gv.getGovernanceState()
+
+	config, ok := state.getCurrentConfig()
 	if !ok {
 		panic(errDataNotFound)
 	}
 
 	// Check if caller already has an active proposal (one proposal per address)
-	if hasActiveProposal(callerAddress, createdAt) {
+	if state.hasActiveProposal(callerAddress, createdAt) {
 		panic(errAlreadyActiveProposal)
 	}
 
 	// Get snapshot of voting weights for proposal creation
-	userVotes, maxVotingWeight, err := getUserVotingInfoSnapshot(
+	userVotes, maxVotingWeight, err := gv.getUserVotingInfoSnapshot(
 		createdAt,
 		config.VotingWeightSmoothingDuration,
 	)
@@ -65,7 +66,7 @@ func ProposeText(
 	}
 
 	// Create the text proposal with metadata
-	proposal, err := createProposal(
+	proposal, err := gv.createProposal(
 		Text,
 		config,
 		maxVotingWeight,
@@ -81,7 +82,7 @@ func ProposeText(
 	}
 
 	// Store voting information for the proposal
-	success := updateProposalUserVotes(proposal, userVotes)
+	success := state.updateProposalUserVotes(proposal, userVotes)
 	if !success {
 		panic(errDataNotFound)
 	}
@@ -129,16 +130,15 @@ func ProposeText(
 //   - Tracks all disbursements on-chain
 //
 // Returns new proposal ID.
-func ProposeCommunityPoolSpend(
-	cur realm,
+func (gv *governanceV1) ProposeCommunityPoolSpend(
 	title string,
 	description string,
 	to address,
 	tokenPath string,
 	amount int64,
 ) (newProposalId int64) {
-	halt.AssertIsNotHaltedGovernanceWithVersion(1)
-	halt.AssertIsNotHaltedWithdrawWithVersion(1)
+	halt.AssertIsNotHaltedGovernance()
+	halt.AssertIsNotHaltedWithdraw()
 
 	callerAddress := runtime.PreviousRealm().Address()
 
@@ -146,18 +146,20 @@ func ProposeCommunityPoolSpend(
 	createdHeight := runtime.ChainHeight()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
-	config, ok := getCurrentConfig()
+	state := gv.getGovernanceState()
+
+	config, ok := state.getCurrentConfig()
 	if !ok {
 		panic(errDataNotFound)
 	}
 
 	// Check if caller already has an active proposal (one proposal per address)
-	if hasActiveProposal(callerAddress, createdAt) {
+	if state.hasActiveProposal(callerAddress, createdAt) {
 		panic(errAlreadyActiveProposal)
 	}
 
 	// Get snapshot of voting weights for proposal creation
-	userVotes, maxVotingWeight, err := getUserVotingInfoSnapshot(
+	userVotes, maxVotingWeight, err := gv.getUserVotingInfoSnapshot(
 		createdAt,
 		config.VotingWeightSmoothingDuration,
 	)
@@ -166,7 +168,7 @@ func ProposeCommunityPoolSpend(
 	}
 
 	// Create the community pool spend proposal with execution data
-	proposal, err := createProposal(
+	proposal, err := gv.createProposal(
 		CommunityPoolSpend,
 		config,
 		maxVotingWeight,
@@ -182,7 +184,7 @@ func ProposeCommunityPoolSpend(
 	}
 
 	// Store voting information for the proposal
-	success := updateProposalUserVotes(proposal, userVotes)
+	success := state.updateProposalUserVotes(proposal, userVotes)
 	if !success {
 		panic(errDataNotFound)
 	}
@@ -238,14 +240,13 @@ func ProposeCommunityPoolSpend(
 //   - Parameters must match function signatures
 //
 // Returns new proposal ID.
-func ProposeParameterChange(
-	cur realm,
+func (gv *governanceV1) ProposeParameterChange(
 	title string,
 	description string,
 	numToExecute int64,
 	executions string,
 ) (newProposalId int64) {
-	halt.AssertIsNotHaltedGovernanceWithVersion(1)
+	halt.AssertIsNotHaltedGovernance()
 
 	callerAddress := runtime.PreviousRealm().Address()
 
@@ -253,18 +254,20 @@ func ProposeParameterChange(
 	createdHeight := runtime.ChainHeight()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
-	config, ok := getCurrentConfig()
+	state := gv.getGovernanceState()
+
+	config, ok := state.getCurrentConfig()
 	if !ok {
 		panic(errDataNotFound)
 	}
 
 	// Check if caller already has an active proposal (one proposal per address)
-	if hasActiveProposal(callerAddress, createdAt) {
+	if state.hasActiveProposal(callerAddress, createdAt) {
 		panic(errAlreadyActiveProposal)
 	}
 
 	// Get snapshot of voting weights for proposal creation
-	userVotes, maxVotingWeight, err := getUserVotingInfoSnapshot(
+	userVotes, maxVotingWeight, err := gv.getUserVotingInfoSnapshot(
 		createdAt,
 		config.VotingWeightSmoothingDuration,
 	)
@@ -273,7 +276,7 @@ func ProposeParameterChange(
 	}
 
 	// Create the parameter change proposal with execution data
-	proposal, err := createProposal(
+	proposal, err := gv.createProposal(
 		ParameterChange,
 		config,
 		maxVotingWeight,
@@ -289,7 +292,7 @@ func ProposeParameterChange(
 	}
 
 	// Store voting information for the proposal
-	success := updateProposalUserVotes(proposal, userVotes)
+	success := state.updateProposalUserVotes(proposal, userVotes)
 	if !success {
 		panic(errDataNotFound)
 	}
@@ -316,7 +319,7 @@ func ProposeParameterChange(
 
 // createProposal handles proposal creation logic.
 // Validates input data, checks proposer eligibility, and creates proposal object.
-func createProposal(
+func (gv *governanceV1) createProposal(
 	proposalType ProposalType,
 	config Config,
 	maxVotingWeight int64,
@@ -344,8 +347,10 @@ func createProposal(
 		return nil, errNotEnoughBalance
 	}
 
+	state := gv.getGovernanceState()
+
 	// Generate unique proposal ID
-	proposalID := nextProposalID()
+	proposalID := state.nextProposalID()
 
 	// Create proposal status with voting schedule and requirements
 	proposalStatus := NewProposalStatus(
@@ -356,7 +361,7 @@ func createProposal(
 	)
 
 	// Get current configuration version for tracking
-	configVersion := getCurrentConfigVersion()
+	configVersion := state.getCurrentConfigVersion()
 
 	// Create the proposal object
 	proposal := NewProposal(
@@ -371,7 +376,7 @@ func createProposal(
 	)
 
 	// Store the proposal in state
-	success := addProposal(proposal)
+	success := state.addProposal(proposal)
 	if !success {
 		return nil, errDataNotFound
 	}
@@ -381,10 +386,12 @@ func createProposal(
 
 // getUserVotingInfoSnapshot retrieves voting information snapshot for proposal creation.
 // Calculates voting weights at specific time point for fair voting.
-func getUserVotingInfoSnapshot(
+func (gv *governanceV1) getUserVotingInfoSnapshot(
 	current,
 	smoothingPeriod int64,
 ) (map[string]*VotingInfo, int64, error) {
+	state := gv.getGovernanceState()
+
 	// Calculate snapshot time by going back by smoothing period
 	snapshotTime := current - smoothingPeriod
 
@@ -393,10 +400,10 @@ func getUserVotingInfoSnapshot(
 	var ok bool
 
 	// Use custom snapshot function if available
-	if getUserVotingInfoSnapshotFn != nil {
-		votingInfos, maxVotingWeight, ok = getUserVotingInfoSnapshotFn(snapshotTime)
+	if state.getUserVotingInfoSnapshotFn != nil {
+		votingInfos, maxVotingWeight, ok = state.getUserVotingInfoSnapshotFn(snapshotTime)
 	} else {
-		votingInfos, maxVotingWeight, ok = getUserVotingInfotWithDelegationSnapshots(snapshotTime)
+		votingInfos, maxVotingWeight, ok = gv.getUserVotingInfotWithDelegationSnapshots(snapshotTime)
 	}
 
 	if !ok || maxVotingWeight <= 0 {
@@ -408,7 +415,7 @@ func getUserVotingInfoSnapshot(
 
 // getUserVotingInfotWithDelegationSnapshots retrieves voting info from staker delegation snapshots.
 // Integrates with staker contract to get actual delegation amounts.
-func getUserVotingInfotWithDelegationSnapshots(
+func (gv *governanceV1) getUserVotingInfotWithDelegationSnapshots(
 	snapshotTime int64,
 ) (map[string]*VotingInfo, int64, bool) {
 	// Get delegation snapshots from staker contract
@@ -431,32 +438,4 @@ func getUserVotingInfotWithDelegationSnapshots(
 	}
 
 	return userVotes, maxVotingWeight, true
-}
-
-// updateProposalUserVotes stores voting information for specific proposal.
-// Links voting eligibility data to proposal for later use during voting.
-func updateProposalUserVotes(
-	proposal *Proposal,
-	userVotingInfos map[string]*VotingInfo,
-) bool {
-	// Store the voting information mapping for this proposal
-	proposalUserVotingInfos.Set(formatInt(proposal.ID()), userVotingInfos)
-
-	return true
-}
-
-// hasActiveProposal checks if address already has active proposal.
-// Enforces one-proposal-per-address rule to prevent spam.
-func hasActiveProposal(proposerAddress address, current int64) bool {
-	// Get all proposals for this address
-	proposals := getUserProposals(proposerAddress)
-
-	// Check if any proposal is still active
-	for _, proposal := range proposals {
-		if proposal.IsActive(current) {
-			return true
-		}
-	}
-
-	return false
 }

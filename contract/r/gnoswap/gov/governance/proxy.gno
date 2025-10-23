@@ -5,7 +5,7 @@ func ProposeText(
 	cur realm,
 	title string,
 	description string,
-) (uint64, error) {
+) int64 {
 	return getImplementation().ProposeText(
 		title,
 		description,
@@ -17,15 +17,15 @@ func ProposeCommunityPoolSpend(
 	cur realm,
 	title string,
 	description string,
+	to address,
 	tokenPath string,
-	toAddress address,
-	amount uint64,
-) (uint64, error) {
+	amount int64,
+) int64 {
 	return getImplementation().ProposeCommunityPoolSpend(
 		title,
 		description,
+		to,
 		tokenPath,
-		toAddress,
 		amount,
 	)
 }
@@ -35,32 +35,34 @@ func ProposeParameterChange(
 	cur realm,
 	title string,
 	description string,
-	changes string,
-) (uint64, error) {
+	numToExecute int64,
+	executions string,
+) int64 {
 	return getImplementation().ProposeParameterChange(
 		title,
 		description,
-		changes,
+		numToExecute,
+		executions,
 	)
 }
 
 // Vote casts a vote on a proposal
 func Vote(
 	cur realm,
-	proposalId uint64,
-	voteType uint8,
-) error {
+	proposalId int64,
+	yes bool,
+) string {
 	return getImplementation().Vote(
 		proposalId,
-		voteType,
+		yes,
 	)
 }
 
 // Execute executes a passed proposal
 func Execute(
 	cur realm,
-	proposalId uint64,
-) error {
+	proposalId int64,
+) int64 {
 	return getImplementation().Execute(
 		proposalId,
 	)
@@ -69,8 +71,8 @@ func Execute(
 // Cancel cancels a proposal before voting begins
 func Cancel(
 	cur realm,
-	proposalId uint64,
-) error {
+	proposalId int64,
+) int64 {
 	return getImplementation().Cancel(
 		proposalId,
 	)
@@ -79,14 +81,14 @@ func Cancel(
 // Reconfigure updates the governance configuration
 func Reconfigure(
 	cur realm,
-	votingStartDelay uint64,
-	votingPeriod uint64,
-	votingWeightSmoothingDuration uint64,
-	quorum uint64,
-	proposalCreationThreshold uint64,
-	executionDelay uint64,
-	executionWindow uint64,
-) error {
+	votingStartDelay int64,
+	votingPeriod int64,
+	votingWeightSmoothingDuration int64,
+	quorum int64,
+	proposalCreationThreshold int64,
+	executionDelay int64,
+	executionWindow int64,
+) int64 {
 	return getImplementation().Reconfigure(
 		votingStartDelay,
 		votingPeriod,
