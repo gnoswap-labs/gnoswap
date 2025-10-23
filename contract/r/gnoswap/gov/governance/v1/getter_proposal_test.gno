@@ -1,9 +1,8 @@
-package governance
+package v1
 
 import (
 	"testing"
 
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/uassert"
 )
 
@@ -13,8 +12,8 @@ func TestGetterProposal_All(t *testing.T) {
 		name          string
 		proposalId    int64
 		proposal      *Proposal
-		getterFunc    func(int64) interface{}
-		expectedValue interface{}
+		getterFunc    func(gv *governanceV1, id int64) any
+		expectedValue any
 		expectedPanic bool
 		panicMessage  string
 	}{
@@ -35,7 +34,9 @@ func TestGetterProposal_All(t *testing.T) {
 				metadata: &ProposalMetadata{title: "TestTitle", description: "TestDesc"},
 				data:     &ProposalData{proposalType: Text},
 			},
-			getterFunc:    func(id int64) interface{} { return GetProposerByProposalId(id) },
+			getterFunc:    func(gv *governanceV1, id int64) any {
+				return gv.GetProposerByProposalId(id)
+			},
 			expectedValue: "g1proposer",
 		},
 		{
@@ -55,14 +56,18 @@ func TestGetterProposal_All(t *testing.T) {
 				metadata: &ProposalMetadata{title: "TestTitle", description: "TestDesc"},
 				data:     &ProposalData{proposalType: Text},
 			},
-			getterFunc:    func(id int64) interface{} { return GetProposalTypeByProposalId(id) },
+			getterFunc:    func(gv *governanceV1, id int64) any {
+				return gv.GetProposalTypeByProposalId(id)
+			},
 			expectedValue: "Text",
 		},
 		{
 			name:          "Get non-existent proposal",
 			proposalId:    999,
 			proposal:      nil,
-			getterFunc:    func(id int64) interface{} { return GetProposerByProposalId(id) },
+			getterFunc:    func(gv *governanceV1, id int64) any {
+				return gv.GetProposerByProposalId(id)
+			},
 			expectedPanic: true,
 			panicMessage:  "[GNOSWAP-GOVERNANCE-003] requested data not found",
 		},
@@ -71,20 +76,22 @@ func TestGetterProposal_All(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			proposals = avl.NewTree()              // reset proposals state
-			proposalManager = NewProposalManager() // reset proposalManager state
+			// proposals = avl.NewTree()              // reset proposals state
+			// proposalManager = NewProposalManager() // reset proposalManager state
+			gv := newMockGovernance()
+			state := gv.getGovernanceState()
 
 			if tc.proposal != nil {
-				addProposal(tc.proposal)
+				state.addProposal(tc.proposal)
 			}
 
 			// when & then
 			if tc.expectedPanic {
 				uassert.PanicsWithMessage(t, tc.panicMessage, func() {
-					tc.getterFunc(tc.proposalId)
+					tc.getterFunc(gv, tc.proposalId)
 				})
 			} else {
-				result := tc.getterFunc(tc.proposalId)
+				result := tc.getterFunc(gv, tc.proposalId)
 				uassert.Equal(t, result, tc.expectedValue)
 			}
 		})

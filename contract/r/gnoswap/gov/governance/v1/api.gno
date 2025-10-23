@@ -1,4 +1,4 @@
-package governance
+package v1
 
 import (
 	"chain/runtime"
@@ -9,30 +9,18 @@ import (
 	"gno.land/p/onbloc/json"
 )
 
-func createProposalJsonNode(id int64, proposal *Proposal) *json.Node {
-	return json.Builder().
-		WriteString("id", formatInt(id)).
-		WriteString("configVersion", formatInt(proposal.ConfigVersion)).
-		WriteString("proposer", proposal.Proposer().String()).
-		WriteString("status", b64Encode(getProposalStatus(id))).
-		WriteString("type", proposal.Type().String()).
-		WriteString("title", proposal.Title()).
-		WriteString("description", proposal.Description()).
-		WriteString("vote", b64Encode(getProposalVotes(id))).
-		WriteString("extra", b64Encode(getProposalExtraData(id))).
-		Node()
-}
-
 // GetProposalById returns a single proposal with necessary information.
-func GetProposalById(id int64) string {
-	_, exists := getProposal(id)
+func (gv *governanceV1) GetProposalById(id int64) string {
+	state := gv.getGovernanceState()
+	_, exists := state.getProposal(id)
 	if !exists {
 		return ""
 	}
 
 	proposalsObj := metaNode()
 	proposalArr := json.ArrayNode("", nil)
-	proposalObj := getProposalById(id)
+
+	proposalObj := state.getProposalById(id)
 	proposalArr.AppendArray(proposalObj)
 	proposalsObj.AppendObject("proposals", proposalArr)
 
@@ -40,22 +28,24 @@ func GetProposalById(id int64) string {
 }
 
 // GetVoteStatusFromProposalById returns the vote status(max, yes, no) of a proposal.
-func GetVoteStatusFromProposalById(id int64) string {
-	_, exists := getProposal(id)
+func (gv *governanceV1) GetVoteStatusFromProposalById(id int64) string {
+	state := gv.getGovernanceState()
+	_, exists := state.getProposal(id)
 	if !exists {
 		return ""
 	}
 
 	votesObj := metaNode()
 	votesObj.AppendObject("proposalId", json.StringNode("proposalId", formatInt(id)))
-	votesObj.AppendObject("votes", json.StringNode("votes", b64Encode(getProposalVotes(id)))) // max, yes, no
+	votesObj.AppendObject("votes", json.StringNode("votes", b64Encode(state.getProposalVotes(id)))) // max, yes, no
 
 	return marshal(votesObj)
 }
 
 // GetVoteByAddressFromProposalById returns the vote of an address from a certain proposal.
-func GetVoteByAddressFromProposalById(addr address, id int64) string {
-	vote, exists := getProposalUserVotingInfo(id, addr)
+func (gv *governanceV1) GetVoteByAddressFromProposalById(addr address, id int64) string {
+	state := gv.getGovernanceState()
+	vote, exists := state.getProposalUserVotingInfo(id, addr)
 	if !exists {
 		return ""
 	}
@@ -70,24 +60,14 @@ func GetVoteByAddressFromProposalById(addr address, id int64) string {
 }
 
 // getProposalById is a helper function for GetProposals and GetProposalById.
-func getProposalById(id int64) *json.Node {
-	proposal := mustGetProposal(id)
-	return createProposalJsonNode(id, proposal)
-}
-
-func createVoteJsonNode(addr address, id int64, vote *VotingInfo) *json.Node {
-	return json.Builder().
-		WriteString("proposalId", formatInt(id)).
-		WriteString("voteYes", formatBool(vote.votedYes)).
-		WriteString("voteWeight", formatInt(vote.votedWeight)).
-		WriteString("voteHeight", formatInt(vote.votedHeight)).
-		WriteString("voteTimestamp", formatInt(vote.votedAt)).
-		Node()
+func (gs *governanceState) getProposalById(id int64) *json.Node {
+	proposal := mustGetProposal(gs, id)
+	return gs.createProposalJsonNode(id, proposal)
 }
 
 // getProposalExtraData returns extra data of a proposal based on its type.
-func getProposalExtraData(proposalId int64) string {
-	proposal, exist := getProposal(proposalId)
+func (gs *governanceState) getProposalExtraData(proposalId int64) string {
+	proposal, exist := gs.getProposal(proposalId)
 	if !exist {
 		return ""
 	}
@@ -96,17 +76,17 @@ func getProposalExtraData(proposalId int64) string {
 	case Text:
 		return ""
 	case CommunityPoolSpend:
-		return getCommunityPoolSpendProposalData(proposalId)
+		return gs.getCommunityPoolSpendProposalData(proposalId)
 	case ParameterChange:
-		return getParameterChangeProposalData(proposalId)
+		return gs.getParameterChangeProposalData(proposalId)
 	}
 
 	return ""
 }
 
 // getCommunityPoolSpendProposalData returns community pool spending proposal data including recipient address, token path, and amount.
-func getCommunityPoolSpendProposalData(proposalId int64) string {
-	proposal := mustGetProposal(proposalId)
+func (gs *governanceState) getCommunityPoolSpendProposalData(proposalId int64) string {
+	proposal := mustGetProposal(gs, proposalId)
 	spend := proposal.data.CommunityPoolSpend()
 
 	proposalObj := json.Builder().
@@ -119,8 +99,8 @@ func getCommunityPoolSpendProposalData(proposalId int64) string {
 }
 
 // getParameterChangeProposalData returns parameter change proposal data as a joined string of messages.
-func getParameterChangeProposalData(proposalId int64) string {
-	proposal := mustGetProposal(proposalId)
+func (gs *governanceState) getParameterChangeProposalData(proposalId int64) string {
+	proposal := mustGetProposal(gs, proposalId)
 
 	msgs := proposal.data.Execution().msgs
 	msgsStr := strings.Join(msgs, "*GOV*")
@@ -129,8 +109,8 @@ func getParameterChangeProposalData(proposalId int64) string {
 }
 
 // getProposalStatus returns status of a proposal.
-func getProposalStatus(id int64) string {
-	proposal, exist := getProposal(id)
+func (gs *governanceState) getProposalStatus(id int64) string {
+	proposal, exist := gs.getProposal(id)
 	if !exist {
 		return ""
 	}
@@ -166,8 +146,8 @@ func getProposalStatus(id int64) string {
 }
 
 // getProposalVotes returns votes of a proposal.
-func getProposalVotes(id int64) string {
-	proposal, exist := getProposal(id)
+func (gs *governanceState) getProposalVotes(id int64) string {
+	proposal, exist := gs.getProposal(id)
 	if !exist {
 		return ""
 	}
@@ -182,6 +162,30 @@ func getProposalVotes(id int64) string {
 		Node()
 
 	return marshal(proposalObj)
+}
+
+func (gs *governanceState) createProposalJsonNode(id int64, proposal *Proposal) *json.Node {
+	return json.Builder().
+		WriteString("id", formatInt(id)).
+		WriteString("configVersion", formatInt(proposal.ConfigVersion)).
+		WriteString("proposer", proposal.Proposer().String()).
+		WriteString("status", b64Encode(gs.getProposalStatus(id))).
+		WriteString("type", proposal.Type().String()).
+		WriteString("title", proposal.Title()).
+		WriteString("description", proposal.Description()).
+		WriteString("vote", b64Encode(gs.getProposalVotes(id))).
+		WriteString("extra", b64Encode(gs.getProposalExtraData(id))).
+		Node()
+}
+
+func createVoteJsonNode(addr address, id int64, vote *VotingInfo) *json.Node {
+	return json.Builder().
+		WriteString("proposalId", formatInt(id)).
+		WriteString("voteYes", formatBool(vote.votedYes)).
+		WriteString("voteWeight", formatInt(vote.votedWeight)).
+		WriteString("voteHeight", formatInt(vote.votedHeight)).
+		WriteString("voteTimestamp", formatInt(vote.votedAt)).
+		Node()
 }
 
 func metaNode() *json.Node {

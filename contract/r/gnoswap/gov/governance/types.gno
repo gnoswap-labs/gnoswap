@@ -6,8 +6,7 @@ import (
 
 type IGovernance interface {
 	IGovernanceManager
-	// IGovernanceGetter
-	// IGovernanceApi
+	IGovernanceApi
 }
 
 type IGovernanceManager interface {
@@ -59,23 +58,10 @@ type IGovernanceManager interface {
 	) int64
 }
 
-type IGovernanceGetter interface {
-	// Proposal getters
-	// GetProposal(proposalId uint64) (*Proposal, error)
-	// GetProposals() []*Proposal
-	// GetProposalsByAddress(address address) []*Proposal
-	// GetProposalType(proposalId uint64) (ProposalType, error)
-	// GetProposalStatus(proposalId uint64) (ProposalStatusType, error)
-
-	// // Config getters
-	// GetConfig(version uint64) (*Config, error)
-}
-
 type IGovernanceApi interface {
-	// ApiGetProposals() string
-	// ApiGetProposalById(proposalId uint64) string
-	// ApiGetProposalVotes(proposalId uint64) string
-	// ApiGetConfig() string
+	GetProposalById(id int64) string
+	GetVoteStatusFromProposalById(id int64) string
+	GetVoteByAddressFromProposalById(addr address, id int64) string
 }
 
 type IGovernanceStore interface {
