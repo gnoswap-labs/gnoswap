@@ -31,9 +31,9 @@ package governance
 // }
 
 // ApiGetProposals returns all proposals in JSON format
-func ApiGetProposals() string {
-	return getImplementation().ApiGetProposals()
-}
+// func ApiGetProposals() string {
+// 	return getImplementation().ApiGetProposals()
+// }
 
 // ApiGetProposalById returns a proposal by ID in JSON format
 func ApiGetProposalById(proposalId uint64) string {

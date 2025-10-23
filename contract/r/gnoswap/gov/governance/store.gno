@@ -15,20 +15,39 @@ func (s StoreKey) String() string {
 }
 
 const (
+	// Governance state
+	StoreKeyGovernanceState StoreKey = "governanceState" // Governance state
+
 	// Core Proposal Management
 	StoreKeyProposals      StoreKey = "proposals"      // AVL tree of all proposals by ID
 	StoreKeyProposalNextID StoreKey = "proposalNextID" // Counter for next proposal ID
-
-	// Configuration Management
-	// StoreKeyConfigs           StoreKey = "configs"           // AVL tree of configs by version
-	// StoreKeyConfigNextVersion StoreKey = "configNextVersion" // Counter for next config version
-
-	// // User Association
-	// StoreKeyProposalManager StoreKey = "proposalManager" // User-to-proposals mapping
 )
 
 type governanceStore struct {
 	kvStore store.KVStore
+}
+
+// Governance state
+func (s *governanceStore) HasGovernanceStateStoreKey() bool {
+	return s.kvStore.Has(StoreKeyGovernanceState.String())
+}
+
+func (s *governanceStore) GetGovernanceState() GovernanceState {
+	result, err := s.kvStore.Get(StoreKeyGovernanceState.String())
+	if err != nil {
+		panic(err)
+	}
+
+	governanceState, ok := result.(GovernanceState)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to GovernanceState: %T", result))
+	}
+
+	return governanceState
+}
+
+func (s *governanceStore) SetGovernanceState(governanceState GovernanceState) error {
+	return s.kvStore.Set(StoreKeyGovernanceState.String(), governanceState)
 }
 
 // Proposal storage methods

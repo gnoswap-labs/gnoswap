@@ -1,4 +1,4 @@
-package governance
+package v1
 
 import (
 	"chain"
@@ -32,8 +32,7 @@ type Config struct {
 // Reconfigure updates governance configuration.
 // Only admin or governance contract can call this function.
 // Updates all governance parameters and emits a "Reconfigure" event.
-func Reconfigure(
-	cur realm,
+func (g *governanceV1) Reconfigure(
 	votingStartDelay int64,
 	votingPeriod int64,
 	votingWeightSmoothingDuration int64,
@@ -43,19 +42,19 @@ func Reconfigure(
 	executionWindow int64,
 ) int64 {
 	// Check if system is halted before proceeding
-	halt.AssertIsNotHaltedGovernanceWithVersion(1)
+	halt.AssertIsNotHaltedGovernance()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	// Mint and distribute GNS tokens as part of the process
 	en.MintAndDistributeGns(cross)
 
 	// Store previous version for event emission
-	previousVersion := getCurrentConfigVersion()
+	previousVersion := g.getGovernanceState().getCurrentConfigVersion()
 
 	// Apply the new configuration
-	nextVersion, newCfg := reconfigure(
+	nextVersion, newCfg := g.reconfigure(
 		votingStartDelay,
 		votingPeriod,
 		votingWeightSmoothingDuration,
@@ -87,7 +86,7 @@ func Reconfigure(
 
 // reconfigure updates the Governor's configuration.
 // Creates new configuration and stores it with incremented version number.
-func reconfigure(
+func (g *governanceV1) reconfigure(
 	votingStartDelay int64,
 	votingPeriod int64,
 	votingWeightSmoothingDuration int64,
@@ -107,11 +106,13 @@ func reconfigure(
 		ExecutionWindow:               executionWindow,
 	}
 
+	state := g.getGovernanceState()
+
 	// Generate next version number
-	nextVersion := nextConfigVersion()
+	nextVersion := state.nextConfigVersion()
 
 	// Store the new configuration with version
-	setConfig(nextVersion, cfg)
+	state.setConfig(nextVersion, cfg)
 
 	return nextVersion, cfg
 }

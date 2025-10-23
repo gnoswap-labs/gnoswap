@@ -15,7 +15,12 @@ func registerGovernanceV1() {
 }
 
 func initStoreData(governanceStore governance.IGovernanceStore) error {
-	// TODO
+	governanceState := NewGovernanceState()
+
+	err := governanceStore.SetGovernanceState(governanceState)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -78,6 +78,10 @@ type IGovernanceApi interface {
 }
 
 type IGovernanceStore interface {
+	HasGovernanceStateStoreKey() bool
+	GetGovernanceState() GovernanceState
+	SetGovernanceState(governanceState GovernanceState) error
+
 	// Proposal storage
 	HasProposalsStoreKey() bool
 	GetProposals() *avl.Tree
@@ -86,31 +90,8 @@ type IGovernanceStore interface {
 	HasProposalNextIDStoreKey() bool
 	GetProposalNextID() uint64
 	SetProposalNextID(nextID uint64) error
+}
 
-	// HasProposal(proposalId uint64) bool
-	// GetProposal(proposalId uint64) (*Proposal, bool)
-	// SetProposal(proposalId uint64, proposal *Proposal) error
-
-	// // Config storage
-	// HasConfigsStoreKey() bool
-	// GetConfigs() *avl.Tree
-	// SetConfigs(configs *avl.Tree) error
-
-	// HasConfigNextVersionStoreKey() bool
-	// GetConfigNextVersion() uint64
-	// SetConfigNextVersion(version uint64) error
-
-	// HasConfig(version uint64) bool
-	// GetConfig(version uint64) (*Config, bool)
-	// SetConfig(version uint64, config *Config) error
-
-	// // Proposal manager storage
-	// HasProposalManagerStoreKey() bool
-	// GetProposalManager() *ProposalManager
-	// SetProposalManager(manager *ProposalManager) error
-
-	// // Voting info storage
-	// HasProposalVotesStoreKey() bool
-	// GetProposalVotes() *avl.Tree
-	// SetProposalVotes(votes *avl.Tree) error
+type GovernanceState interface {
+	CurrentConfigVersion() int64
 }

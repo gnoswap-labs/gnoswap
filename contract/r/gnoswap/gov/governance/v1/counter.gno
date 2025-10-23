@@ -1,4 +1,4 @@
-package governance
+package v1
 
 // Counter manages unique incrementing IDs.
 type Counter struct {

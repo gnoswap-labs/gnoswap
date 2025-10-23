@@ -1,9 +1,8 @@
-package governance
+package v1
 
 import "gno.land/p/nt/avl"
 
-// Global state variables for governance system
-var (
+type governanceState struct {
 	configCounter   *Counter // Counter for generating config version numbers
 	proposalCounter *Counter // Counter for generating unique proposal IDs
 
@@ -14,24 +13,36 @@ var (
 
 	// Function to retrieve user voting snapshots (can be overridden for testing)
 	getUserVotingInfoSnapshotFn func(snapshotTime int64) (map[string]*VotingInfo, int64, bool)
-)
+}
+
+func NewGovernanceState() *governanceState {
+	gs := &governanceState{
+		configCounter:   NewCounter(),
+		proposalCounter: NewCounter(),
+		configs:         avl.NewTree(),
+		proposals:       avl.NewTree(),
+		proposalManager: NewProposalManager(),
+		proposalUserVotingInfos: avl.NewTree(),
+	}
+
+	gs.initConfig()
+
+	return gs
+}
 
 // init initializes the governance system state when the contract is deployed.
 // This function sets up all necessary data structures and default configurations.
-func init() {
-	initConfig()
-	initProposal()
-	initStakerDelegationSnapshots()
-}
+// func init() {
+// 	initConfig()
+// 	initProposal()
+// 	initStakerDelegationSnapshots()
+// }
 
 // initConfig initializes the governance configuration system.
 // Sets up the configuration counter and creates the default initial configuration.
-func initConfig() {
-	configCounter = NewCounter()
-	configs = avl.NewTree()
-
+func (gs *governanceState) initConfig() {
 	// Create the initial governance configuration with default parameters
-	nextConfigVersion := nextConfigVersion()
+	nextConfigVersion := gs.nextConfigVersion()
 	config := Config{
 		VotingStartDelay:              86400,         // 1 day - delay before voting starts
 		VotingPeriod:                  604800,        // 7 days - duration for collecting votes
@@ -42,7 +53,7 @@ func initConfig() {
 		ExecutionWindow:               2592000,       // 30 days - window for executing proposals
 	}
 
-	setConfig(nextConfigVersion, config)
+	gs.setConfig(nextConfigVersion, config)
 }
 
 // initProposal initializes the proposal management system.
@@ -56,18 +67,22 @@ func initProposal() {
 
 // initStakerDelegationSnapshots initializes the voting snapshot function.
 // Sets up the default function to retrieve voting weights from staker contract.
-func initStakerDelegationSnapshots() {
-	getUserVotingInfoSnapshotFn = func(snapshotTime int64) (map[string]*VotingInfo, int64, bool) {
-		return getUserVotingInfotWithDelegationSnapshots(snapshotTime)
-	}
+// func initStakerDelegationSnapshots() {
+// 	getUserVotingInfoSnapshotFn = func(snapshotTime int64) (map[string]*VotingInfo, int64, bool) {
+// 		return getUserVotingInfotWithDelegationSnapshots(snapshotTime)
+// 	}
+// }
+
+func (gs *governanceState) CurrentConfigVersion() int64 {
+	return gs.getCurrentConfigVersion()
 }
 
 // getCurrentConfigVersion returns the current governance configuration version.
 //
 // Returns:
 //   - int64: current configuration version number
-func getCurrentConfigVersion() int64 {
-	return configCounter.Get()
+func (gs *governanceState) getCurrentConfigVersion() int64 {
+	return gs.configCounter.Get()
 }
 
 // nextConfigVersion increments and returns the next configuration version number.
@@ -75,16 +90,16 @@ func getCurrentConfigVersion() int64 {
 //
 // Returns:
 //   - int64: next configuration version number
-func nextConfigVersion() int64 {
-	return configCounter.next()
+func (gs *governanceState) nextConfigVersion() int64 {
+	return gs.configCounter.next()
 }
 
 // getCurrentProposalID returns the current proposal ID (last assigned).
 //
 // Returns:
 //   - int64: current proposal ID
-func getCurrentProposalID() int64 {
-	return proposalCounter.Get()
+func (gs *governanceState) getCurrentProposalID() int64 {
+	return gs.proposalCounter.Get()
 }
 
 // nextProposalID increments and returns the next unique proposal ID.
@@ -92,8 +107,8 @@ func getCurrentProposalID() int64 {
 //
 // Returns:
 //   - int64: next unique proposal ID
-func nextProposalID() int64 {
-	return proposalCounter.next()
+func (gs *governanceState) nextProposalID() int64 {
+	return gs.proposalCounter.next()
 }
 
 // getConfig retrieves a specific governance configuration by version number.
@@ -104,8 +119,8 @@ func nextProposalID() int64 {
 // Returns:
 //   - Config: governance configuration for the specified version
 //   - bool: true if configuration exists, false otherwise
-func getConfig(version int64) (cfg Config, ok bool) {
-	if val, exists := configs.Get(formatInt(version)); !exists {
+func (gs *governanceState) getConfig(version int64) (cfg Config, ok bool) {
+	if val, exists := gs.configs.Get(formatInt(version)); !exists {
 		return
 	} else {
 		cfg, ok = val.(Config)
@@ -119,8 +134,8 @@ func getConfig(version int64) (cfg Config, ok bool) {
 // Parameters:
 //   - version: configuration version number
 //   - config: governance configuration to store
-func setConfig(version int64, config Config) {
-	configs.Set(formatInt(version), config)
+func (gs *governanceState) setConfig(version int64, config Config) {
+	gs.configs.Set(formatInt(version), config)
 }
 
 // getCurrentConfig retrieves the current active governance configuration.
@@ -128,8 +143,8 @@ func setConfig(version int64, config Config) {
 // Returns:
 //   - Config: current governance configuration
 //   - bool: true if configuration exists, false otherwise
-func getCurrentConfig() (Config, bool) {
-	return getConfig(getCurrentConfigVersion())
+func (gs *governanceState) getCurrentConfig() (Config, bool) {
+	return gs.getConfig(gs.getCurrentConfigVersion())
 }
 
 // getProposal retrieves a specific proposal by its ID.
@@ -140,8 +155,8 @@ func getCurrentConfig() (Config, bool) {
 // Returns:
 //   - *Proposal: pointer to the proposal if found
 //   - bool: true if proposal exists, false otherwise
-func getProposal(proposalID int64) (proposal *Proposal, ok bool) {
-	if val, exists := proposals.Get(formatInt(proposalID)); !exists {
+func (gs *governanceState) getProposal(proposalID int64) (proposal *Proposal, ok bool) {
+	if val, exists := gs.proposals.Get(formatInt(proposalID)); !exists {
 		return
 	} else {
 		proposal, ok = val.(*Proposal)
@@ -157,13 +172,13 @@ func getProposal(proposalID int64) (proposal *Proposal, ok bool) {
 //
 // Returns:
 //   - bool: true if proposal was successfully added
-func addProposal(proposal *Proposal) bool {
+func (gs *governanceState) addProposal(proposal *Proposal) bool {
 	id := proposal.ID()
 	// Store proposal in main proposals tree
-	proposals.Set(formatInt(id), proposal)
+	gs.proposals.Set(formatInt(id), proposal)
 
 	// Register proposal with user in proposal manager
-	proposalManager.addProposal(proposal.Proposer(), id)
+	gs.proposalManager.addProposal(proposal.Proposer(), id)
 
 	return true
 }
@@ -175,13 +190,13 @@ func addProposal(proposal *Proposal) bool {
 //
 // Returns:
 //   - []*Proposal: slice of proposals created by the user
-func getUserProposals(user address) (proposals []*Proposal) {
+func (gs *governanceState) getUserProposals(user address) (proposals []*Proposal) {
 	// Get proposal IDs for this user
-	proposalIDs := proposalManager.GetUserProposals(user)
+	proposalIDs := gs.proposalManager.GetUserProposals(user)
 
 	// Retrieve each proposal by ID
 	for _, proposalID := range proposalIDs {
-		if proposal, ok := getProposal(proposalID); !ok {
+		if proposal, ok := gs.getProposal(proposalID); !ok {
 			continue // Skip if proposal not found (shouldn't happen)
 		} else {
 			proposals = append(proposals, proposal)
@@ -199,9 +214,9 @@ func getUserProposals(user address) (proposals []*Proposal) {
 // Returns:
 //   - map[string]*VotingInfo: mapping of user addresses to voting information
 //   - bool: true if voting information exists for the proposal
-func getProposalUserVotingInfos(proposalID int64) (userVotingInfos map[string]*VotingInfo, ok bool) {
+func (gs *governanceState) getProposalUserVotingInfos(proposalID int64) (userVotingInfos map[string]*VotingInfo, ok bool) {
 	id := formatInt(proposalID)
-	if userVotingInfosI, exists := proposalUserVotingInfos.Get(id); !exists {
+	if userVotingInfosI, exists := gs.proposalUserVotingInfos.Get(id); !exists {
 		return
 	} else {
 		userVotingInfos, ok = userVotingInfosI.(map[string]*VotingInfo)
@@ -218,9 +233,9 @@ func getProposalUserVotingInfos(proposalID int64) (userVotingInfos map[string]*V
 // Returns:
 //   - *VotingInfo: voting information for the user
 //   - bool: true if voting information exists for the user
-func getProposalUserVotingInfo(proposalID int64, userAddress address) (*VotingInfo, bool) {
+func (gs *governanceState) getProposalUserVotingInfo(proposalID int64, userAddress address) (*VotingInfo, bool) {
 	// First get all voting info for the proposal
-	userVotingInfos, exists := getProposalUserVotingInfos(proposalID)
+	userVotingInfos, exists := gs.getProposalUserVotingInfos(proposalID)
 	if !exists {
 		return nil, false
 	}
