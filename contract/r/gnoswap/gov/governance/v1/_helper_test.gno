@@ -42,7 +42,7 @@ var (
 	stakerPath = "gno.land/r/gnoswap/v1/staker"
 	stkRealm   = testing.NewCodeRealm(stakerPath)
 
-	govPath  = "gno.land/r/gnoswap/v1/gov/governance"
+	govPath  = "gno.land/r/gnoswap/gov/governance"
 	govRealm = testing.NewCodeRealm(govPath)
 
 	govStakerAddr, _     = access.GetAddress(prbac.ROLE_GOV_STAKER.String())

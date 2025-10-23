@@ -1,48 +1,75 @@
 package v1
 
-// import (
-// 	"gno.land/p/nt/avl"
-// )
+import (
+	"gno.land/p/nt/avl"
+	"gno.land/r/gnoswap/gov/governance"
+)
 
-// type mockGovernanceStore struct {
-// 	proposals *avl.Tree
-// 	nextID uint64
-// }
+type mockGovernanceStore struct {
+	governanceState governance.GovernanceState
+	proposals       *avl.Tree
+	nextID          uint64
+}
 
-// func (m *mockGovernanceStore) HasProposalsStoreKey() bool {
-// 	return false
-// }
+func (m *mockGovernanceStore) HasGovernanceStateStoreKey() bool {
+	return m.governanceState != nil
+}
 
-// func (m *mockGovernance)
+func (m *mockGovernanceStore) GetGovernanceState() governance.GovernanceState {
+	if m.governanceState == nil {
+		m.governanceState = NewGovernanceState()
+	}
+	return m.governanceState
+}
 
-// func (m *mockGovernanceStore) GetProposals() *avl.Tree {
-// 	return m.proposals
-// }
+func (m *mockGovernanceStore) SetGovernanceState(governanceState governance.GovernanceState) error {
+	m.governanceState = governanceState
+	return nil
+}
 
-// func (m *mockGovernanceStore) SetProposals(proposals *avl.Tree) error {
-// 	m.proposals = proposals
-// 	return nil
-// }
+func (m *mockGovernanceStore) HasProposalsStoreKey() bool {
+	return m.proposals != nil
+}
 
-// func (m *mockGovernanceStore) HasProposalNextIDStoreKey() bool {
-// 	return false
-// }
+func (m *mockGovernanceStore) GetProposals() *avl.Tree {
+	return m.proposals
+}
 
-// func (m *mockGovernanceStore) GetProposalNextID() uint64 {
-// 	return m.nextID
-// }
+func (m *mockGovernanceStore) SetProposals(proposals *avl.Tree) error {
+	m.proposals = proposals
+	return nil
+}
 
-// func (m *mockGovernanceStore) SetProposalNextID(nextID uint64) error {
-// 	m.nextID = nextID
-// 	return nil
-// }
+func (m *mockGovernanceStore) HasProposalNextIDStoreKey() bool {
+	return true
+}
 
-// func newMockGovernance() *governanceV1 {
-// 	return &governanceV1{
-// 		store: &mockGovernanceStore{proposals: avl.NewTree(), nextID: 1},
-// 	}
-// }
+func (m *mockGovernanceStore) GetProposalNextID() uint64 {
+	return m.nextID
+}
 
-// func newMockGovernanceStore() *mockGovernanceStore {
-// 	return &mockGovernanceStore{proposals: avl.NewTree(), nextID: 1}
-// }
+func (m *mockGovernanceStore) SetProposalNextID(nextID uint64) error {
+	m.nextID = nextID
+	return nil
+}
+
+func newMockGovernance() *governanceV1 {
+	store := &mockGovernanceStore{
+		proposals: avl.NewTree(),
+		nextID:    1,
+	}
+	store.governanceState = NewGovernanceState()
+	
+	return &governanceV1{
+		store: store,
+	}
+}
+
+func newMockGovernanceStore() *mockGovernanceStore {
+	store := &mockGovernanceStore{
+		proposals: avl.NewTree(),
+		nextID:    1,
+	}
+	store.governanceState = NewGovernanceState()
+	return store
+}
