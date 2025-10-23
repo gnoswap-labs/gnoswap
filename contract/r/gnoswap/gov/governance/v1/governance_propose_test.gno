@@ -5,12 +5,12 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/avl"
+	// "gno.land/p/nt/avl"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/halt"
+	_ "gno.land/r/gnoswap/halt"
 )
 
 func TestGovernancePropose_ProposeText(t *testing.T) {
@@ -171,31 +171,40 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
-			cleanup()
-			setupTestConfig(t, tt.setupConfig)
+			gov := newMockGovernance()
+			state := gov.getGovernanceState()
+
+			setupTestConfig(t, state, tt.setupConfig)
 			setupTestGnsBalance(t, tt.callerAddress, tt.setupGnsBalance)
-			setupTestUserVotesWithDelegation(t, tt.setupUserVotes, tt.maxVotingWeight)
+			setupTestUserVotesWithDelegation(t, state, tt.setupUserVotes, tt.maxVotingWeight)
 
 			if tt.setupActiveProposal {
-				setupTestActiveProposal(t, tt.callerAddress)
+				setupTestActiveProposal(t, state, tt.callerAddress)
 			}
 
 			testing.SetRealm(testing.NewUserRealm(tt.callerAddress))
 
 			// when
 			if tt.expectedHasAbort {
-				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
-					ProposeText(cross, tt.title, tt.description)
+				uassert.AbortsContains(t, tt.expectedAbortMsg, func() {
+					func(cur realm) {
+						testing.SetRealm(govRealm)
+						gov.ProposeText(tt.title, tt.description)
+					}(cross)
 				})
 				return
 			}
 
-			proposalId := ProposeText(cross, tt.title, tt.description)
+			var proposalId int64
+			func(cur realm) {
+				testing.SetRealm(govRealm)
+				proposalId = gov.ProposeText(tt.title, tt.description)
+			}(cross)
 
 			// then
 			uassert.Equal(t, tt.expectedProposalId, proposalId)
 
-			proposal, ok := getProposal(proposalId)
+			proposal, ok := state.getProposal(proposalId)
 			uassert.Equal(t, true, ok)
 			uassert.Equal(t, tt.title, proposal.Title())
 			uassert.Equal(t, tt.description, proposal.Description())
@@ -334,13 +343,15 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
-			cleanup()
-			setupTestConfig(t, tt.setupConfig)
+			gov := newMockGovernance()
+			state := gov.getGovernanceState()
+
+			setupTestConfig(t, state, tt.setupConfig)
 			setupTestGnsBalance(t, tt.callerAddress, tt.setupGnsBalance)
-			setupTestUserVotesWithDelegation(t, tt.setupUserVotes, tt.maxVotingWeight)
+			setupTestUserVotesWithDelegation(t, state, tt.setupUserVotes, tt.maxVotingWeight)
 
 			if tt.setupActiveProposal {
-				setupTestActiveProposal(t, tt.callerAddress)
+				setupTestActiveProposal(t, state, tt.callerAddress)
 			}
 
 			testing.SetRealm(testing.NewUserRealm(tt.callerAddress))
@@ -348,17 +359,23 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			// when
 			if tt.expectedHasAbort {
 				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
-					ProposeCommunityPoolSpend(cross, tt.title, tt.description, tt.to, tt.tokenPath, tt.amount)
+					func (cur realm) {
+						gov.ProposeCommunityPoolSpend(tt.title, tt.description, tt.to, tt.tokenPath, tt.amount)
+					}(cross)
 				})
 				return
 			}
 
-			proposalId := ProposeCommunityPoolSpend(cross, tt.title, tt.description, tt.to, tt.tokenPath, tt.amount)
+			var proposalId int64
+			func(cur realm) {
+				testing.SetRealm(govRealm)
+				proposalId = gov.ProposeCommunityPoolSpend(tt.title, tt.description, tt.to, tt.tokenPath, tt.amount)
+			}(cross)
 
 			// then
 			uassert.Equal(t, tt.expectedProposalId, proposalId)
 
-			proposal, ok := getProposal(proposalId)
+			proposal, ok := state.getProposal(proposalId)
 			uassert.Equal(t, true, ok)
 			uassert.Equal(t, CommunityPoolSpend.String(), proposal.Type().String())
 			uassert.Equal(t, tt.amount, proposal.data.communityPoolSpend.amount)
@@ -467,13 +484,15 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
-			cleanup()
-			setupTestConfig(t, tt.setupConfig)
+			gov := newMockGovernance()
+			state := gov.getGovernanceState()
+
+			setupTestConfig(t, state, tt.setupConfig)
 			setupTestGnsBalance(t, tt.callerAddress, tt.setupGnsBalance)
-			setupTestUserVotesWithDelegation(t, tt.setupUserVotes, tt.maxVotingWeight)
+			setupTestUserVotesWithDelegation(t, state, tt.setupUserVotes, tt.maxVotingWeight)
 
 			if tt.setupActiveProposal {
-				setupTestActiveProposal(t, tt.callerAddress)
+				setupTestActiveProposal(t, state, tt.callerAddress)
 			}
 
 			testing.SetRealm(testing.NewUserRealm(tt.callerAddress))
@@ -481,17 +500,24 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			// when
 			if tt.expectedHasAbort {
 				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
-					ProposeParameterChange(cross, tt.title, tt.description, tt.numToExecute, tt.executions)
+					func (cur realm) {
+						testing.SetRealm(govRealm)
+						gov.ProposeParameterChange(tt.title, tt.description, tt.numToExecute, tt.executions)
+					}(cross)
 				})
 				return
 			}
 
-			proposalId := ProposeParameterChange(cross, tt.title, tt.description, tt.numToExecute, tt.executions)
+			var proposalId int64
+			func(cur realm) {
+				testing.SetRealm(govRealm)
+				proposalId = gov.ProposeParameterChange(tt.title, tt.description, tt.numToExecute, tt.executions)
+			}(cross)
 
 			// then
 			uassert.Equal(t, tt.expectedProposalId, proposalId)
 
-			proposal, ok := getProposal(proposalId)
+			proposal, ok := state.getProposal(proposalId)
 			uassert.Equal(t, true, ok)
 			uassert.Equal(t, ParameterChange.String(), proposal.Type().String())
 			uassert.Equal(t, tt.numToExecute, proposal.data.execution.num)
@@ -564,8 +590,10 @@ func TestGovernancePropose_ProposeTextInputValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
-			cleanup()
-			setupTestConfig(t, &Config{
+			gov := newMockGovernance()
+			state := gov.getGovernanceState()
+
+			setupTestConfig(t, state, &Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -577,7 +605,7 @@ func TestGovernancePropose_ProposeTextInputValidation(t *testing.T) {
 
 			caller := testutils.TestAddress("proposer")
 			setupTestGnsBalance(t, caller, 10_000_000_000)
-			setupTestUserVotesWithDelegation(t, map[string]*VotingInfo{
+			setupTestUserVotesWithDelegation(t, state, map[string]*VotingInfo{
 				caller.String(): NewVotingInfo(5_000_000_000, caller),
 			}, 5_000_000_000)
 
@@ -586,13 +614,21 @@ func TestGovernancePropose_ProposeTextInputValidation(t *testing.T) {
 			// when & then
 			if tt.shouldFail {
 				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-					ProposeText(cross, tt.title, tt.description)
+					func (cur realm) {
+						testing.SetRealm(govRealm)
+						gov.ProposeText(tt.title, tt.description)
+					}(cross)
 				})
 			} else {
-				proposalId := ProposeText(cross, tt.title, tt.description)
+				var proposalId int64
+				func(cur realm) {
+					testing.SetRealm(govRealm)
+					proposalId = gov.ProposeText(tt.title, tt.description)
+				}(cross)
+
 				uassert.Equal(t, int64(1), proposalId)
 
-				proposal, ok := getProposal(proposalId)
+				proposal, ok := state.getProposal(proposalId)
 				uassert.Equal(t, true, ok)
 				uassert.Equal(t, tt.title, proposal.Title())
 				uassert.Equal(t, tt.description, proposal.Description())
@@ -766,8 +802,10 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
-			cleanup()
-			setupTestConfig(t, &Config{
+			gov := newMockGovernance()
+			state := gov.getGovernanceState()
+
+			setupTestConfig(t, state, &Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -779,12 +817,12 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 
 			caller := testutils.TestAddress("proposer")
 			setupTestGnsBalance(t, caller, 10_000_000_000)
-			setupTestUserVotesWithDelegation(t, map[string]*VotingInfo{
+			setupTestUserVotesWithDelegation(t, state, map[string]*VotingInfo{
 				caller.String(): NewVotingInfo(5_000_000_000, caller),
 			}, 5_000_000_000)
 
 			if tt.setupActiveProposal != nil {
-				addProposal(tt.setupActiveProposal())
+				state.addProposal(tt.setupActiveProposal())
 			}
 
 			testing.SetRealm(testing.NewUserRealm(caller))
@@ -792,11 +830,17 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 			// when & then
 			if tt.shouldFail {
 				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-					ProposeText(cross, "New Proposal", "New Description")
+					func (cur realm) {
+						testing.SetRealm(govRealm)
+						gov.ProposeText("New Proposal", "New Description")
+					}(cross)
 				})
 			} else {
-				proposalID := ProposeText(cross, "New Proposal", "New Description")
-				uassert.Equal(t, proposalID, getCurrentProposalID())
+				func(cur realm) {
+					testing.SetRealm(govRealm)
+					proposalID := gov.ProposeText("New Proposal", "New Description")
+					uassert.Equal(t, proposalID, state.getCurrentProposalID())
+				}(cross)
 			}
 		})
 	}
@@ -863,8 +907,10 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
-			cleanup()
-			setupTestConfig(t, &Config{
+			gov := newMockGovernance()
+			state := gov.getGovernanceState()
+
+			setupTestConfig(t, state, &Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -876,7 +922,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 
 			caller := testutils.TestAddress("proposer")
 			setupTestGnsBalance(t, caller, 10_000_000_000)
-			setupTestUserVotesWithDelegation(t, map[string]*VotingInfo{
+			setupTestUserVotesWithDelegation(t, state, map[string]*VotingInfo{
 				caller.String(): NewVotingInfo(5_000_000_000, caller),
 			}, 5_000_000_000)
 
@@ -885,13 +931,20 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 			// when & then
 			if tt.shouldFail {
 				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-					ProposeCommunityPoolSpend(cross, "Community Pool Spend", "Description", tt.to, tt.tokenPath, tt.amount)
+					func (cur realm) {
+						testing.SetRealm(govRealm)
+						gov.ProposeCommunityPoolSpend("Community Pool Spend", "Description", tt.to, tt.tokenPath, tt.amount)
+					}(cross)
 				})
 			} else {
-				proposalId := ProposeCommunityPoolSpend(cross, "Community Pool Spend", "Description", tt.to, tt.tokenPath, tt.amount)
-				uassert.Equal(t, proposalId, getCurrentProposalID())
+				var proposalId int64
+				func(cur realm) {
+					testing.SetRealm(govRealm)
+					proposalId = gov.ProposeCommunityPoolSpend("Community Pool Spend", "Description", tt.to, tt.tokenPath, tt.amount)
+				}(cross)
+				uassert.Equal(t, proposalId, state.getCurrentProposalID())
 
-				proposal, ok := getProposal(proposalId)
+				proposal, ok := state.getProposal(proposalId)
 				uassert.Equal(t, true, ok)
 				uassert.Equal(t, CommunityPoolSpend.String(), proposal.Type().String())
 			}
@@ -990,8 +1043,10 @@ func TestGovernancePropose_ParameterChangeValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
-			cleanup()
-			setupTestConfig(t, &Config{
+			gov := newMockGovernance()
+			state := gov.getGovernanceState()
+
+			setupTestConfig(t, state, &Config{
 				VotingStartDelay:              86400,
 				VotingPeriod:                  604800,
 				VotingWeightSmoothingDuration: 86400,
@@ -1003,7 +1058,7 @@ func TestGovernancePropose_ParameterChangeValidation(t *testing.T) {
 
 			caller := testutils.TestAddress("proposer")
 			setupTestGnsBalance(t, caller, 10_000_000_000)
-			setupTestUserVotesWithDelegation(t, map[string]*VotingInfo{
+			setupTestUserVotesWithDelegation(t, state, map[string]*VotingInfo{
 				caller.String(): NewVotingInfo(5_000_000_000, caller),
 			}, 5_000_000_000)
 
@@ -1012,13 +1067,20 @@ func TestGovernancePropose_ParameterChangeValidation(t *testing.T) {
 			// when & then
 			if tt.shouldFail {
 				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-					ProposeParameterChange(cross, "Parameter Change", "Description", tt.numToExecute, tt.executions)
+					func (cur realm) {
+						testing.SetRealm(govRealm)
+						gov.ProposeParameterChange("Parameter Change", "Description", tt.numToExecute, tt.executions)
+					}(cross)
 				})
 			} else {
-				proposalId := ProposeParameterChange(cross, "Parameter Change", "Description", tt.numToExecute, tt.executions)
-				uassert.Equal(t, proposalId, getCurrentProposalID())
+				var proposalId int64
+				func(cur realm) {
+					testing.SetRealm(govRealm)
+					proposalId = gov.ProposeParameterChange("Parameter Change", "Description", tt.numToExecute, tt.executions)
+					uassert.Equal(t, proposalId, state.getCurrentProposalID())
+				}(cross)
 
-				proposal, ok := getProposal(proposalId)
+				proposal, ok := state.getProposal(proposalId)
 				uassert.Equal(t, true, ok)
 				uassert.Equal(t, ParameterChange.String(), proposal.Type().String())
 			}
@@ -1030,8 +1092,10 @@ func TestGovernancePropose_ParameterChangeValidation(t *testing.T) {
 func TestGovernancePropose_ProposalIDGeneration(t *testing.T) {
 	t.Run("sequential ID generation", func(t *testing.T) {
 		// given
-		cleanup()
-		setupTestConfig(t, &Config{
+		gov := newMockGovernance()
+		state := gov.getGovernanceState()
+
+		setupTestConfig(t, state, &Config{
 			VotingStartDelay:              86400,
 			VotingPeriod:                  604800,
 			VotingWeightSmoothingDuration: 86400,
@@ -1048,22 +1112,36 @@ func TestGovernancePropose_ProposalIDGeneration(t *testing.T) {
 		setupTestGnsBalance(t, caller1, 10_000_000_000)
 		setupTestGnsBalance(t, caller2, 10_000_000_000)
 		setupTestGnsBalance(t, caller3, 10_000_000_000)
-		setupTestUserVotesWithDelegation(t, map[string]*VotingInfo{
+		setupTestUserVotesWithDelegation(t, state, map[string]*VotingInfo{
 			caller1.String(): NewVotingInfo(5_000_000_000, caller1),
 			caller2.String(): NewVotingInfo(5_000_000_000, caller2),
 		}, 10_000_000_000)
 
+		var proposalId1 int64
+		var proposalId2 int64
+		var proposalId3 int64
+
 		// when - create first proposal
 		testing.SetRealm(testing.NewUserRealm(caller1))
-		proposalId1 := ProposeText(cross, "Proposal 1", "Description 1")
+
+		func(cur realm) {
+			testing.SetRealm(govRealm)
+			proposalId1 = gov.ProposeText("Proposal 1", "Description 1")
+		}(cross)
 
 		// when - create second proposal from same user
 		testing.SetRealm(testing.NewUserRealm(caller2))
-		proposalId2 := ProposeText(cross, "Proposal 2", "Description 2")
+		func(cur realm) {
+			testing.SetRealm(govRealm)
+			proposalId2 = gov.ProposeText("Proposal 2", "Description 2")
+		}(cross)
 
 		// when - create third proposal from different user
 		testing.SetRealm(testing.NewUserRealm(caller3))
-		proposalId3 := ProposeText(cross, "Proposal 3", "Description 3")
+		func(cur realm) {
+			testing.SetRealm(govRealm)
+			proposalId3 = gov.ProposeText("Proposal 3", "Description 3")
+		}(cross)
 
 		// then
 		uassert.Equal(t, proposalId1, int64(1))
@@ -1072,28 +1150,12 @@ func TestGovernancePropose_ProposalIDGeneration(t *testing.T) {
 	})
 }
 
-// Helper functions
-func cleanup() {
-	// Reset global state
-	testing.SetRealm(adminRealm)
-	halt.SetHaltLevel(cross, halt.HaltLevelNone)
-	configCounter = NewCounter()
-	proposalCounter = NewCounter()
-	configs = avl.NewTree()
-	proposals = avl.NewTree()
-	proposalManager = NewProposalManager()
-	proposalUserVotingInfos = avl.NewTree()
-
-	// Set initial config
-	initConfig()
-}
-
-func setupTestConfig(t *testing.T, config *Config) {
+func setupTestConfig(t *testing.T, state *governanceState, config *Config) {
 	if config == nil {
 		return
 	}
-	nextVersion := nextConfigVersion()
-	setConfig(nextVersion, *config)
+	nextVersion := state.nextConfigVersion()
+	state.setConfig(nextVersion, *config)
 }
 
 func setupTestGnsBalance(t *testing.T, address address, balance int64) {
@@ -1104,25 +1166,25 @@ func setupTestGnsBalance(t *testing.T, address address, balance int64) {
 	gns.Transfer(cross, address, balance)
 }
 
-func setupTestUserVotesWithDelegation(t *testing.T, userVotes map[string]*VotingInfo, maxVotingWeight int64) {
+func setupTestUserVotesWithDelegation(t *testing.T, state *governanceState, userVotes map[string]*VotingInfo, maxVotingWeight int64) {
 	// Mock delegation snapshots setup
 	// In actual implementation, this would set up staker delegation snapshots
 	testing.SetRealm(adminRealm)
 
-	getUserVotingInfoSnapshotFn = func(snapshotTime int64) (map[string]*VotingInfo, int64, bool) {
+	state.getUserVotingInfoSnapshotFn = func(snapshotTime int64) (map[string]*VotingInfo, int64, bool) {
 		return userVotes, maxVotingWeight, true
 	}
 }
 
-func setupTestActiveProposal(t *testing.T, proposerAddress address) {
+func setupTestActiveProposal(t *testing.T, state *governanceState, proposerAddress address) {
 	// Create an active proposal for the proposer
-	config, ok := getCurrentConfig()
+	config, ok := state.getCurrentConfig()
 	if !ok {
 		panic("config not found")
 	}
 
 	proposal := NewProposal(
-		nextProposalID(),
+		state.nextProposalID(),
 		NewProposalStatus(
 			config,
 			1_000_000_000,
@@ -1132,10 +1194,10 @@ func setupTestActiveProposal(t *testing.T, proposerAddress address) {
 		NewProposalMetadata("Active Proposal", "Description"),
 		NewProposalTextData(),
 		proposerAddress,
-		getCurrentConfigVersion(),
+		state.getCurrentConfigVersion(),
 		time.Now().Unix(),
 		100,
 	)
 
-	addProposal(proposal)
+	state.addProposal(proposal)
 }

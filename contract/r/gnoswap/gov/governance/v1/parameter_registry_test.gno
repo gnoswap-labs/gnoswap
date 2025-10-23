@@ -137,7 +137,8 @@ func TestParameterHandlerOptions_Execute(t *testing.T) {
 // TestCreateParameterHandlers tests the creation of all parameter handlers
 func TestCreateParameterHandlers(t *testing.T) {
 	// given & when
-	registry := createParameterHandlers()
+	gov := newMockGovernance()
+	registry := gov.createParameterHandlers()
 
 	// then
 	uassert.NotNil(t, registry)
