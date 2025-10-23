@@ -91,7 +91,7 @@ gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/gov/staker -pkgpath gno.la
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/gov/governance -pkgpath gno.land/r/gnoswap/v1/gov/governance -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy launchpad
-gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/launchpad -pkgpath gno.land/r/gnoswap/v1/launchpad -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/launchpad -pkgpath gno.land/r/gnoswap/launchpad -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy referral
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/referral -pkgpath gno.land/r/gnoswap/referral -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
