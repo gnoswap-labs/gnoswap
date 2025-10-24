@@ -17,7 +17,7 @@ func (gv *governanceV1) GetVotedHeight(proposalID int64, address address) int64 
 		panic(errDataNotFound)
 	}
 
-	return proposalUserVotingInfo.votedHeight
+	return proposalUserVotingInfo.VotedHeight()
 }
 
 func (gv *governanceV1) GetVotedAt(proposalID int64, address address) int64 {
@@ -27,5 +27,5 @@ func (gv *governanceV1) GetVotedAt(proposalID int64, address address) int64 {
 		panic(errDataNotFound)
 	}
 
-	return proposalUserVotingInfo.votedAt
+	return proposalUserVotingInfo.VotedAt()
 }

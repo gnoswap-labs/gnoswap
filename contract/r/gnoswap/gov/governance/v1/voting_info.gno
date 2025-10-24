@@ -72,6 +72,32 @@ func (v *VotingInfo) VotedWeight() int64 {
 	return v.votedWeight
 }
 
+// VotedHeight returns the block height when the vote was cast.
+// Returns 0 if the user hasn't voted yet.
+//
+// Returns:
+//   - int64: block height when vote was cast
+func (v *VotingInfo) VotedHeight() int64 {
+	if !v.voted {
+		return 0
+	}
+
+	return v.votedHeight
+}
+
+// VotedAt returns the timestamp when the vote was cast.
+// Returns 0 if the user hasn't voted yet.
+//
+// Returns:
+//   - int64: timestamp when vote was cast
+func (v *VotingInfo) VotedAt() int64 {
+	if !v.voted {
+		return 0
+	}
+
+	return v.votedAt
+}
+
 // voteYes records a "yes" vote with the specified weight and timing information.
 // This is an internal helper method that delegates to the main vote function.
 //

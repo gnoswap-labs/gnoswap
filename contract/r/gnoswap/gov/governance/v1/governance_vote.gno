@@ -5,7 +5,7 @@ import (
 	"chain/runtime"
 	"time"
 
-	en "gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
 )
 
@@ -40,10 +40,11 @@ func (gv *governanceV1) Vote(proposalID int64, yes bool) string {
 	currentAt := time.Now()
 
 	// Mint and distribute GNS tokens as part of the voting process
-	en.MintAndDistributeGns(cross)
+	emission.MintAndDistributeGns(cross)
 
 	// Extract voter address from realm context
-	voter := runtime.PreviousRealm().Address()
+	voterRealm := runtime.PreviousRealm()
+	voter := voterRealm.Address()
 
 	// Process the vote and get updated vote tallies
 	userVote, totalYesVoteWeight, totalNoVoteWeight, err := gv.vote(
@@ -58,20 +59,23 @@ func (gv *governanceV1) Vote(proposalID int64, yes bool) string {
 	}
 
 	// Emit voting event for tracking and transparency
-	previousRealm := runtime.PreviousRealm()
+	// previousRealm := runtime.PreviousRealm()
+	userVoteWeight := formatInt(userVote.VotedWeight())
+	voterStr := voter.String()
+
 	chain.Emit(
 		"Vote",
-		"prevAddr", previousRealm.Address().String(),
-		"prevPkgPath", previousRealm.PkgPath(),
+		"prevAddr", voterStr,
+		"prevPkgPath", voterRealm.PkgPath(),
 		"proposalId", formatInt(proposalID),
-		"voter", voter.String(),
+		"voter", voterStr,
 		"yes", userVote.VotingType(),
-		"voteWeight", formatInt(userVote.VotedWeight()),
+		"voteWeight", userVoteWeight,
 		"voteYes", formatInt(totalYesVoteWeight),
 		"voteNo", formatInt(totalNoVoteWeight),
 	)
 
-	return formatInt(userVote.VotedWeight())
+	return userVoteWeight
 }
 
 // vote handles core voting logic.

@@ -301,7 +301,6 @@ func CreateParameterHandlers() *ParameterRegistry {
 			function:   "CollectProtocol",
 			paramCount: 6,
 			handlerFunc: func(params []string) error {
-				// Collect protocol fees
 				pl.CollectProtocol(
 					cross,
 					params[0],                      // token0Path
@@ -350,9 +349,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 			paramCount: 1,
 			handlerFunc: func(params []string) error {
 				// Set fee required to create new pools
-				func (cur realm) {
-					pl.SetPoolCreationFee(cross, parseInt64(params[0])) // fee
-				}(cross)
+				pl.SetPoolCreationFee(cross, parseInt64(params[0])) // fee
 				return nil
 			},
 		},

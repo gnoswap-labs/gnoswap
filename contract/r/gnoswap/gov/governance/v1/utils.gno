@@ -9,7 +9,7 @@ import (
 
 // b64Encode encodes a string to base64.
 func b64Encode(data string) string {
-	return string(base64.StdEncoding.EncodeToString([]byte(data)))
+	return base64.StdEncoding.EncodeToString([]byte(data))
 }
 
 // formatInt formats an integer to a string.

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"gno.land/r/gnoswap/common"
-	en "gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
 
 	"gno.land/r/gnoswap/gov/governance"
@@ -46,23 +46,21 @@ func (gv *governanceV1) Execute(proposalID int64) int64 {
 	currentAt := time.Now().Unix()
 
 	// Mint and distribute GNS tokens as part of the execution process
-	en.MintAndDistributeGns(cross)
+	emission.MintAndDistributeGns(cross)
 
 	var proposal *Proposal
 	var err error
 
-	func (cur realm) {
-		// Attempt to execute the proposal with current context
-		proposal, err = gv.executeProposal(
-			proposalID,
-			currentAt,
-			currentHeight,
-			caller,
-		)
-		if err != nil {
-			panic(err)
-		}
-	}(cross)
+	// Attempt to execute the proposal with current context
+	proposal, err = gv.executeProposal(
+		proposalID,
+		currentAt,
+		currentHeight,
+		caller,
+	)
+	if err != nil {
+		panic(err)
+	}
 
 	// Emit execution event for tracking and auditing
 	previousRealm := runtime.PreviousRealm()
@@ -164,7 +162,7 @@ func (gv *governanceV1) Cancel(proposalID int64) int64 {
 	currentAt := time.Now().Unix()
 
 	// Mint and distribute GNS tokens as part of the process
-	en.MintAndDistributeGns(cross)
+	emission.MintAndDistributeGns(cross)
 
 	// Attempt to cancel the proposal
 	proposal, err := gv.cancel(proposalID, currentAt, currentHeight, caller)

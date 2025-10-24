@@ -367,12 +367,12 @@ type ExecutionInfo struct {
 // Returns:
 //   - []ParameterChangeInfo: slice of parsed parameter change information
 func (e *ExecutionInfo) ParameterChangesInfos() []ParameterChangeInfo {
+	infos := make([]ParameterChangeInfo, 0)
+
 	// Return empty slice if no executions
 	if e.num <= 0 {
-		return []ParameterChangeInfo{}
+		return infos
 	}
-
-	infos := make([]ParameterChangeInfo, 0)
 
 	// Parse each execution message
 	for _, msg := range e.msgs {
@@ -407,11 +407,10 @@ type ParameterChangeInfo struct {
 // makeExecuteMessage creates a message to execute a function.
 // Message format: <pkgPath>*EXE*<function>*EXE*<params>.
 func makeExecuteMessage(pkgPath, function string, params []string) string {
-	messageParams := make([]string, 0)
-
-	messageParams = append(messageParams, pkgPath)
-	messageParams = append(messageParams, function)
-	messageParams = append(messageParams, strings.Join(params, ","))
-
+	messageParams := []string{
+		pkgPath,
+		function,
+		strings.Join(params, ","),
+	}
 	return strings.Join(messageParams, parameterSeparator)
 }

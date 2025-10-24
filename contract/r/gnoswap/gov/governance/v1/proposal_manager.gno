@@ -10,27 +10,30 @@ type ProposalManager struct {
 // GetUserProposals retrieves all proposal IDs created by a specific user.
 // Returns an empty slice if the user has no proposals.
 func (pm *ProposalManager) GetUserProposals(user address) []int64 {
-	// Check if user has any proposals
-	_, ok := pm.userProposals[user.String()]
-	if !ok {
-		return []int64{}
-	}
+	userAddress := user.String()
+	proposalIds := make([]int64, 0)
 
-	proposalIDs := make([]int64, 0)
+	// Check if user has any proposals
+	_, ok := pm.userProposals[userAddress]
+	if !ok {
+		return proposalIds
+	}
 
 	// Collect all proposal IDs for this user
-	for proposalID := range pm.userProposals[user.String()] {
-		proposalIDs = append(proposalIDs, proposalID)
+	for proposalID := range pm.userProposals[userAddress] {
+		proposalIds = append(proposalIds, proposalID)
 	}
 
-	return proposalIDs
+	return proposalIds
 }
 
 // HasProposal checks if a specific user has created a specific proposal.
 // Returns true if the user created the specified proposal.
 func (pm *ProposalManager) HasProposal(user address, proposalID int64) bool {
+	userAddress := user.String()
+
 	// First check if user has any proposals
-	proposals, ok := pm.userProposals[user.String()]
+	proposals, ok := pm.userProposals[userAddress]
 	if !ok {
 		return false
 	}
@@ -51,13 +54,15 @@ func (pm *ProposalManager) HasProposal(user address, proposalID int64) bool {
 //   - user: address of the proposal creator
 //   - proposalID: ID of the created proposal
 func (pm *ProposalManager) addProposal(user address, proposalID int64) {
+	userAddress := user.String()
+
 	// Initialize user's proposal map if it doesn't exist
-	if _, ok := pm.userProposals[user.String()]; !ok {
-		pm.userProposals[user.String()] = make(map[int64]bool)
+	if _, ok := pm.userProposals[userAddress]; !ok {
+		pm.userProposals[userAddress] = make(map[int64]bool)
 	}
 
 	// Add the proposal to the user's list
-	pm.userProposals[user.String()][proposalID] = true
+	pm.userProposals[userAddress][proposalID] = true
 }
 
 // removeProposal removes the association between a user and proposal.
@@ -67,18 +72,20 @@ func (pm *ProposalManager) addProposal(user address, proposalID int64) {
 //   - user: address of the proposal creator
 //   - proposalID: ID of the proposal to remove
 func (pm *ProposalManager) removeProposal(user address, proposalID int64) {
+	userAddress := user.String()
+
 	// Exit early if user doesn't have the proposal
 	if !pm.HasProposal(user, proposalID) {
 		return
 	}
 
 	// Double-check user exists (defensive programming)
-	if _, ok := pm.userProposals[user.String()]; !ok {
+	if _, ok := pm.userProposals[userAddress]; !ok {
 		return
 	}
 
 	// Remove the proposal from user's list
-	delete(pm.userProposals[user.String()], proposalID)
+	delete(pm.userProposals[userAddress], proposalID)
 }
 
 // NewProposalManager creates a new proposal manager instance.
