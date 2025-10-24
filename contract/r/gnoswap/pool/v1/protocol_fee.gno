@@ -41,12 +41,12 @@ func (i *poolV1) HandleWithdrawalFee(
 	poolPath string,
 	positionCaller address,
 ) (string, string) { // uint256 x2
-	halt.AssertIsNotHaltedPoolWithVersion(1)
-	halt.AssertIsNotHaltedWithdrawWithVersion(1)
+	halt.AssertIsNotHaltedPool()
+	halt.AssertIsNotHaltedWithdraw()
 
 	// only position contract can call this function
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsPositionWithVersion(1, caller)
+	access.AssertIsPosition(caller)
 
 	common.MustRegistered(token0Path)
 	common.MustRegistered(token1Path)
@@ -85,10 +85,10 @@ func (i *poolV1) HandleWithdrawalFee(
 // SetPoolCreationFee sets the poolCreationFee.
 // Only admin or governance can call this function.
 func (i *poolV1) SetPoolCreationFee(fee int64) {
-	halt.AssertIsNotHaltedPoolWithVersion(1)
+	halt.AssertIsNotHaltedPool()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	prevPoolCreationFee := i.store.GetPoolCreationFee()
 	err := i.setPoolCreationFee(fee)
@@ -109,10 +109,10 @@ func (i *poolV1) SetPoolCreationFee(fee int64) {
 // SetWithdrawalFee sets the withdrawal fee.
 // Only admin or governance can call this function.
 func (i *poolV1) SetWithdrawalFee(fee uint64) {
-	halt.AssertIsNotHaltedPoolWithVersion(1)
+	halt.AssertIsNotHaltedPool()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	prevWithdrawalFee := i.store.GetWithdrawalFeeBPS()
 

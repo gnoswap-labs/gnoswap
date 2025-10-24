@@ -50,10 +50,10 @@ func (i *poolV1) Mint(
 	liquidityAmount string,
 	positionCaller address,
 ) (string, string) {
-	halt.AssertIsNotHaltedPoolWithVersion(1)
+	halt.AssertIsNotHaltedPool()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsPositionWithVersion(1, caller)
+	access.AssertIsPosition(caller)
 	access.AssertIsValidAddress(positionCaller)
 
 	liquidity := u256.MustFromDecimal(liquidityAmount)
@@ -110,10 +110,10 @@ func (i *poolV1) Burn(
 	liquidityAmount string, // uint128
 	positionCaller address,
 ) (string, string) {
-	halt.AssertIsNotHaltedPoolWithVersion(1)
+	halt.AssertIsNotHaltedPool()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsPositionWithVersion(1, caller)
+	access.AssertIsPosition(caller)
 	access.AssertIsValidAddress(positionCaller)
 
 	liqAmount := u256.MustFromDecimal(liquidityAmount)
@@ -187,11 +187,11 @@ func (i *poolV1) Collect(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	halt.AssertIsNotHaltedPoolWithVersion(1)
-	halt.AssertIsNotHaltedWithdrawWithVersion(1)
+	halt.AssertIsNotHaltedPool()
+	halt.AssertIsNotHaltedWithdraw()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsPositionWithVersion(1, caller)
+	access.AssertIsPosition(caller)
 	access.AssertIsValidAddress(recipient)
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
@@ -277,11 +277,11 @@ func (i *poolV1) CollectProtocol(
 	amount0Requested string, // uint128
 	amount1Requested string, // uint128
 ) (string, string) {
-	halt.AssertIsNotHaltedPoolWithVersion(1)
-	halt.AssertIsNotHaltedWithdrawWithVersion(1)
+	halt.AssertIsNotHaltedPool()
+	halt.AssertIsNotHaltedWithdraw()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	common.MustRegistered(token0Path)
 	common.MustRegistered(token1Path)
@@ -378,7 +378,7 @@ func (i *poolV1) IncreaseObservationCardinalityLimit(
 	fee uint32,
 	cardinalityNext uint16,
 ) {
-	halt.AssertIsNotHaltedPoolWithVersion(1)
+	halt.AssertIsNotHaltedPool()
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
 	err := increaseObservationCardinalityLimitByPool(pool, cardinalityNext)

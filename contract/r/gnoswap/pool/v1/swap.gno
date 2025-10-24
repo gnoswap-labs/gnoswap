@@ -40,7 +40,7 @@ var (
 // Only callable by staker contract.
 func (i *poolV1) SetTickCrossHook(hook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsStakerWithVersion(1, caller)
+	access.AssertIsStaker(caller)
 
 	err := i.store.SetTickCrossHook(hook)
 	if err != nil {
@@ -56,7 +56,7 @@ func (i *poolV1) SetTickCrossHook(hook func(poolPath string, tickId int32, zeroF
 // Only callable by staker contract.
 func (i *poolV1) SetSwapStartHook(hook func(poolPath string, timestamp int64)) {
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsStakerWithVersion(1, caller)
+	access.AssertIsStaker(caller)
 
 	err := i.store.SetSwapStartHook(hook)
 	if err != nil {
@@ -72,7 +72,7 @@ func (i *poolV1) SetSwapStartHook(hook func(poolPath string, timestamp int64)) {
 // Only callable by staker contract.
 func (i *poolV1) SetSwapEndHook(hook func(poolPath string) error) {
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsStakerWithVersion(1, caller)
+	access.AssertIsStaker(caller)
 
 	err := i.store.SetSwapEndHook(hook)
 	if err != nil {
@@ -134,7 +134,7 @@ func (i *poolV1) Swap(
 	payer address,
 	swapCallback func(cur realm, amount0Delta, amount1Delta string) error,
 ) (string, string) {
-	halt.AssertIsNotHaltedPoolWithVersion(1)
+	halt.AssertIsNotHaltedPool()
 
 	previousRealm := runtime.PreviousRealm()
 	assertIsNotAllowedEOA(previousRealm)
