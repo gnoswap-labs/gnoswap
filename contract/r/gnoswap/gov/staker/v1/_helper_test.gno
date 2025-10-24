@@ -135,6 +135,7 @@ func unmarshal(data string) *json.Node {
 // mockGovStakerStore is a mock implementation of IGovStakerStore for testing
 type mockGovStakerStore struct {
 	state staker.GovStakerState
+	delegationSnapshots staker.DelegationSnapshot
 }
 
 func newMockGovStakerStore() staker.IGovStakerStore {
@@ -151,6 +152,19 @@ func (m *mockGovStakerStore) GetGovStakerState() staker.GovStakerState {
 
 func (m *mockGovStakerStore) SetGovStakerState(state staker.GovStakerState) error {
 	m.state = state
+	return nil
+}
+
+func (m *mockGovStakerStore) HasDelegationSnapshotsKey() bool {
+	return m.delegationSnapshots != nil
+}
+
+func (m *mockGovStakerStore) GetDelegationSnapshots() staker.DelegationSnapshot {
+	return m.delegationSnapshots
+}
+
+func (m *mockGovStakerStore) SetDelegationSnapshots(snapshot staker.DelegationSnapshot) error {
+	m.delegationSnapshots = snapshot
 	return nil
 }
 
