@@ -3,6 +3,7 @@ package governance
 type IGovernance interface {
 	IGovernanceManager
 	IGovernanceApi
+	IVoteApi
 }
 
 type IGovernanceManager interface {
@@ -61,7 +62,6 @@ type IGovernanceApi interface {
 	GetYeaByProposalId(id int64) int64
 	GetNayByProposalId(id int64) int64
 
-
 	GetProposalById(id int64) string
 	GetVoteStatusFromProposalById(id int64) string
 	GetVoteByAddressFromProposalById(addr address, id int64) string
@@ -74,6 +74,12 @@ type IGovernanceApi interface {
 	GetExecutionStateByProposalId(id int64) string
 	GetLatestConfig() Config
 	GetConfig(configVersion int64) Config
+}
+
+type IVoteApi interface {
+	GetVoteWeight(proposalID int64, address address) int64
+	GetVotedHeight(proposalID int64, address address) int64
+	GetVotedAt(proposalID int64, address address) int64
 }
 
 type IGovernanceStore interface {

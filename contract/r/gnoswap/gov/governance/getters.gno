@@ -55,3 +55,15 @@ func GetLatestConfig() Config {
 func GetConfig(configVersion int64) Config {
 	return getImplementation().GetConfig(configVersion)
 }
+
+func GetVoteWeight(proposalID int64, address address) int64 {
+	return getImplementation().GetVoteWeight(proposalID, address)
+}
+
+func GetVotedHeight(proposalID int64, address address) int64 {
+	return getImplementation().GetVotedHeight(proposalID, address)
+}
+
+func GetVotedAt(proposalID int64, address address) int64 {
+	return getImplementation().GetVotedAt(proposalID, address)
+}
