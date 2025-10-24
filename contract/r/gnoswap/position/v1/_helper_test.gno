@@ -10,6 +10,7 @@ import (
 	"gno.land/p/nt/testutils"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gnft"
+	"gno.land/r/gnoswap/mock"
 
 	"gno.land/r/gnoswap/v1/pool"
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -435,7 +436,10 @@ func initPositionTest(t *testing.T) {
 	t.Helper()
 
 	pool.InitPoolTest(t)
-	mockInstance = newMockPosition()
+	mockInstance = &positionV1{
+		store:       mock.NewMockPositionStore(),
+		nftAccessor: mock.NewMockNFTAccessor(),
+	}
 }
 
 // set pool create fee to 0 for testing

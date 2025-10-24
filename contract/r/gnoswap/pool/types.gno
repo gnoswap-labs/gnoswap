@@ -31,13 +31,13 @@ type IPoolManager interface {
 	)
 
 	// SetPoolCreationFee sets the pool creation fee.
-	SetPoolCreationFee(
-		poolCreationFee int64,
-	)
+	SetPoolCreationFee(fee int64)
 
-	// SetWithdrawalFee sets the withdrawal fee.
-	SetWithdrawalFeeBPS(
-		withdrawalFeeBPS uint64,
+	IncreaseObservationCardinalityLimit(
+		token0Path string,
+		token1Path string,
+		fee uint32,
+		cardinalityNext uint16,
 	)
 }
 
@@ -77,12 +77,23 @@ type IPoolPosition interface {
 		amount0Requested string,
 		amount1Requested string,
 	) (string, string)
+
+	SetWithdrawalFee(fee uint64)
+
+	HandleWithdrawalFee(
+		positionId uint64,
+		token0Path string,
+		amount0 string,
+		token1Path string,
+		amount1 string,
+		poolPath string,
+		positionCaller address,
+	) (string, string)
 }
 
 // IPoolSwap interface defines swap and protocol fee operations.
 // These methods handle token swaps and protocol fee management.
 type IPoolSwap interface {
-	// Swap executes a token swap.
 	Swap(
 		token0Path string,
 		token1Path string,
@@ -91,20 +102,16 @@ type IPoolSwap interface {
 		zeroForOne bool,
 		amountSpecified string,
 		sqrtPriceLimitX96 string,
-		caller address,
+		payer address,
+		swapCallback func(cur realm, amount0Delta, amount1Delta string) error,
 	) (string, string)
 
-	// DrySwap simulates a swap without executing it.
-	DrySwap(
-		token0Path string,
-		token1Path string,
-		fee uint32,
-		zeroForOne bool,
-		amountSpecified string,
-		sqrtPriceLimitX96 string,
-	) (string, string)
+	SetSwapEndHook(hook func(poolPath string) error)
 
-	// CollectProtocol collects accumulated protocol fees.
+	SetSwapStartHook(hook func(poolPath string, timestamp int64))
+
+	SetTickCrossHook(hook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64))
+
 	CollectProtocol(
 		token0Path string,
 		token1Path string,
@@ -114,50 +121,97 @@ type IPoolSwap interface {
 		amount1Requested string,
 	) (string, string)
 
-	// SetFeeProtocol sets the protocol fee percentage.
-	SetFeeProtocol(
-		feeProtocol0 uint8,
-		feeProtocol1 uint8,
-	)
+	SetFeeProtocol(feeProtocol0, feeProtocol1 uint8)
 }
 
 // IPoolGetter interface defines data retrieval operations.
 // These methods provide read-only access to pool state and data.
 type IPoolGetter interface {
-	// GetPoolPath returns the pool path for given tokens and fee.
-	GetPoolPath(token0Path, token1Path string, fee uint32) string
+	DrySwap(
+		token0Path string,
+		token1Path string,
+		fee uint32,
+		zeroForOne bool,
+		amountSpecified string,
+		sqrtPriceLimitX96 string,
+	) (string, string, bool)
 
-	// GetSlot0SqrtPriceX96 returns the current sqrt price.
-	GetSlot0SqrtPriceX96(poolPath string) *u256.Uint
-
-	// GetSlot0Tick returns the current tick.
-	GetSlot0Tick(poolPath string) int32
-
-	// GetLiquidity returns current liquidity.
-	GetLiquidity(poolPath string) string
-
-	// GetBalanceToken0 returns token0 balance.
-	GetBalanceToken0(poolPath string) string
-
-	// GetBalanceToken1 returns token1 balance.
-	GetBalanceToken1(poolPath string) string
-
-	// GetFeeGrowthGlobalX128 returns global fee growth values.
-	GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint)
-
-	// GetPositionFeeGrowthInsideLastX128 returns position fee growth.
-	GetPositionFeeGrowthInsideLastX128(poolPath, key string) (*u256.Uint, *u256.Uint)
-
-	// GetObservation returns oracle observation data.
-	GetObservation(poolPath string, secondsAgo int64) (int64, string, string, int64)
-
-	// ExistsPoolPath checks if pool exists.
 	ExistsPoolPath(poolPath string) bool
 
-	// ApiGetPool returns pool data as JSON.
+	GetBalanceToken0(poolPath string) string
+
+	GetBalanceToken1(poolPath string) string
+
+	GetFee(poolPath string) uint32
+
+	GetFeeAmountTickSpacing(fee uint32) (spacing int32)
+
+	GetFeeGrowthGlobal0X128(poolPath string) string
+
+	GetFeeGrowthGlobal1X128(poolPath string) string
+
+	GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint)
+
+	GetLiquidity(poolPath string) string
+
+	GetMaxLiquidityPerTick(poolPath string) string
+
+	GetObservation(poolPath string, secondsAgo int64) (tickCumulative int64, liquidityCumulative, secondsPerLiquidityCumulativeX128 string, blockTimestamp int64)
+
+	GetPoolCreationFee() int64
+
+	GetPositionFeeGrowthInside0LastX128(poolPath, key string) string
+
+	GetPositionFeeGrowthInside1LastX128(poolPath, key string) string
+
+	GetPositionFeeGrowthInsideLastX128(poolPath, key string) (*u256.Uint, *u256.Uint)
+
+	GetPositionLiquidity(poolPath, key string) *u256.Uint
+
+	GetPositionTokensOwed0(poolPath, key string) string
+
+	GetPositionTokensOwed1(poolPath, key string) string
+
+	GetProtocolFeesToken0(poolPath string) string
+
+	GetProtocolFeesToken1(poolPath string) string
+
+	GetSlot0FeeProtocol(poolPath string) uint8
+
+	GetSlot0SqrtPriceX96(poolPath string) *u256.Uint
+
+	GetSlot0Tick(poolPath string) int32
+
+	GetSlot0Unlocked(poolPath string) bool
+
+	GetTickCumulativeOutside(poolPath string, tick int32) int64
+
+	GetTickFeeGrowthOutside0X128(poolPath string, tick int32) string
+
+	GetTickFeeGrowthOutside1X128(poolPath string, tick int32) string
+
+	GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (*u256.Uint, *u256.Uint)
+
+	GetTickInitialized(poolPath string, tick int32) bool
+
+	GetTickLiquidityGross(poolPath string, tick int32) string
+
+	GetTickLiquidityNet(poolPath string, tick int32) string
+
+	GetTickSecondsOutside(poolPath string, tick int32) uint32
+
+	GetTickSecondsPerLiquidityOutsideX128(poolPath string, tick int32) string
+
+	GetTickSpacing(poolPath string) int32
+
+	GetToken0Path(poolPath string) string
+
+	GetToken1Path(poolPath string) string
+
+	GetWithdrawalFee() uint64
+
 	ApiGetPool(poolPath string) string
 
-	// ApiGetTWAP returns time-weighted average price.
 	ApiGetTWAP(poolPath string, secondsAgo uint32) string
 }
 
@@ -168,18 +222,35 @@ type IPoolGetter interface {
 // All pool implementations (v1, v2, etc.) use this interface to access
 // and modify pool state, ensuring data consistency across versions.
 type IPoolStore interface {
+	HasPools() bool
 	GetPools() *avl.Tree
 	SetPools(pools *avl.Tree) error
 
+	HasFeeAmountTickSpacing() bool
 	GetFeeAmountTickSpacing() *avl.Tree
 	SetFeeAmountTickSpacing(feeAmountTickSpacing *avl.Tree) error
 
+	HasSlot0FeeProtocol() bool
 	GetSlot0FeeProtocol() uint8
 	SetSlot0FeeProtocol(slot0FeeProtocol uint8) error
 
+	HasPoolCreationFee() bool
 	GetPoolCreationFee() int64
 	SetPoolCreationFee(poolCreationFee int64) error
 
+	HasWithdrawalFeeBPS() bool
 	GetWithdrawalFeeBPS() uint64
 	SetWithdrawalFeeBPS(withdrawalFeeBPS uint64) error
+
+	HasSwapStartHook() bool
+	GetSwapStartHook() func(poolPath string, timestamp int64)
+	SetSwapStartHook(swapStartHook func(poolPath string, timestamp int64)) error
+
+	HasSwapEndHook() bool
+	GetSwapEndHook() func(poolPath string) error
+	SetSwapEndHook(swapEndHook func(poolPath string) error) error
+
+	HasTickCrossHook() bool
+	GetTickCrossHook() func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)
+	SetTickCrossHook(tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)) error
 }
