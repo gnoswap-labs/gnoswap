@@ -52,6 +52,10 @@ type IGovStakerStore interface {
 	HasGovStakerStateKey() bool
 	GetGovStakerState() GovStakerState
 	SetGovStakerState(state GovStakerState) error
+
+	HasDelegationSnapshotsKey() bool
+	GetDelegationSnapshots() DelegationSnapshot
+	SetDelegationSnapshots(snapshot DelegationSnapshot) error
 }
 
 // State interface for gov/staker state management

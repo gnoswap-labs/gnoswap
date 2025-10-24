@@ -4,6 +4,10 @@ import (
 	"gno.land/r/gnoswap/gov/staker"
 )
 
+func (gs *govStakerV1) HasDelegationSnapshotsKey() bool {
+	return gs.store.HasDelegationSnapshotsKey()
+}
+
 // GetDelegationSnapshots retrieves the delegation snapshot at a specific point in time.
 // This function reconstructs historical delegation states by taking the current snapshot
 // and reversing the effects of delegation records that occurred after the specified time.
@@ -45,4 +49,8 @@ func (gs *govStakerV1) GetDelegationSnapshots(snapshotTime int64) (staker.Delega
 	}
 
 	return result, true
+}
+
+func (gs *govStakerV1) SetDelegationSnapshots(snapshot staker.DelegationSnapshot) error {
+	return gs.store.SetDelegationSnapshots(snapshot)
 }
