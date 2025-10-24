@@ -21,41 +21,41 @@ func TestRegistryHandler_Execute(t *testing.T) {
 		{
 			name:   "Success - Execute with valid params",
 			params: []string{"param1", "param2"},
-			handlerFn: &ParameterHandlerOptions{
-				pkgPath:    "test/pkg",
-				function:   "testFunc",
-				paramCount: 2,
-				handlerFunc: func([]string) error {
+			handlerFn: governance.NewParameterHandlerOptions(
+				"test/pkg",
+				"testFunc",
+				2,
+				func([]string) error {
 					return nil
 				},
-			},
+			),
 			expectedError: false,
 		},
 		{
 			name:   "Failure - Different param count",
 			params: []string{"param1"},
-			handlerFn: &ParameterHandlerOptions{
-				pkgPath:    "test/pkg",
-				function:   "testFunc",
-				paramCount: 2,
-				handlerFunc: func([]string) error {
+			handlerFn: governance.NewParameterHandlerOptions(
+				"test/pkg",
+				"testFunc",
+				2,
+				func([]string) error {
 					return ufmt.Errorf("test error")
 				},
-			},
+			),
 			expectedError:  true,
 			expectedErrMsg: "expected 2 parameters, got 1",
 		},
 		{
 			name:   "Failure - Execute with error",
 			params: []string{"param1"},
-			handlerFn: &ParameterHandlerOptions{
-				pkgPath:    "test/pkg",
-				function:   "testFunc",
-				paramCount: 1,
-				handlerFunc: func([]string) error {
+			handlerFn: governance.NewParameterHandlerOptions(
+				"test/pkg",
+				"testFunc",
+				1,
+				func([]string) error {
 					return ufmt.Errorf("test error")
 				},
-			},
+			),
 			expectedError:  true,
 			expectedErrMsg: "test error",
 		},

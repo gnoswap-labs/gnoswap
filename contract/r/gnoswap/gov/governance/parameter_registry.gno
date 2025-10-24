@@ -52,6 +52,30 @@ type ParameterHandlerOptions struct {
 	handlerFunc func([]string) error // Function that executes the parameter change
 }
 
+// NewParameterHandlerOptions creates a new parameter handler with the specified configuration.
+//
+// Parameters:
+//   - pkgPath: package path of the target contract
+//   - function: function name to be called
+//   - paramCount: expected number of parameters
+//   - handlerFunc: function that executes the parameter change
+//
+// Returns:
+//   - ParameterHandler: configured parameter handler interface
+func NewParameterHandlerOptions(
+	pkgPath,
+	function string,
+	paramCount int,
+	handlerFunc func([]string) error,
+) ParameterHandler {
+	return &ParameterHandlerOptions{
+		pkgPath:     pkgPath,
+		function:    function,
+		paramCount:  paramCount,
+		handlerFunc: handlerFunc,
+	}
+}
+
 // HandlerKey generates a unique key for this handler based on package path and function name.
 //
 // Returns:
@@ -80,30 +104,6 @@ func (h *ParameterHandlerOptions) Execute(params []string) error {
 	}
 
 	return fn(cross)
-}
-
-// NewParameterHandlerOptions creates a new parameter handler with the specified configuration.
-//
-// Parameters:
-//   - pkgPath: package path of the target contract
-//   - function: function name to be called
-//   - paramCount: expected number of parameters
-//   - handlerFunc: function that executes the parameter change
-//
-// Returns:
-//   - ParameterHandler: configured parameter handler interface
-func NewParameterHandlerOptions(
-	pkgPath,
-	function string,
-	paramCount int,
-	handlerFunc func([]string) error,
-) ParameterHandler {
-	return &ParameterHandlerOptions{
-		pkgPath:     pkgPath,
-		function:    function,
-		paramCount:  paramCount,
-		handlerFunc: handlerFunc,
-	}
 }
 
 // ParameterRegistry manages the collection of parameter handlers for governance execution.

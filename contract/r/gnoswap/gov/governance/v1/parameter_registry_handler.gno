@@ -11,9 +11,9 @@ import (
 // if they need to save and restore state during governance operations.
 type ParameterRegistryHandler interface {
 	// GetState returns the current state that should be preserved
-	GetState() interface{}
+	GetState() any
 	// RestoreState restores the handler to the given state
-	RestoreState(state interface{}) error
+	RestoreState(state any) error
 }
 
 // stateManager handles state preservation for parameter handlers that implement
@@ -110,7 +110,7 @@ type registryHandler struct {
 // Returns:
 //   - ParameterRegistryHandler: wrapped function that implements the interface
 func NewRegistryHandler(fn func(params []string) error) ParameterRegistryHandler {
-	return &registryHandler{fn}
+	return &registryHandler{ fn }
 }
 
 // Execute runs the wrapped function with the provided parameters.
@@ -131,14 +131,14 @@ func (h *registryHandler) Execute(params []string) error {
 //
 // Returns:
 //   - error: always nil
-func (h *registryHandler) RestoreState(state interface{}) error {
+func (h *registryHandler) RestoreState(state any) error {
 	return nil
 }
 
 // GetState returns nil for simple registry handlers since they don't manage state.
 //
 // Returns:
-//   - interface{}: always nil
-func (h *registryHandler) GetState() interface{} {
+//   - any: always nil
+func (h *registryHandler) GetState() any {
 	return nil
 }
