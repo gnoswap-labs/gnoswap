@@ -36,5 +36,5 @@ var (
 	// GOV_XGNS_ADDR is the derived address for the xGNS governance package.
 	GOV_XGNS_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/gov/xgns")
 	// LAUNCHPAD_ADDR is the derived address for the launchpad package.
-	LAUNCHPAD_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/v1/launchpad")
+	LAUNCHPAD_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/launchpad")
 )

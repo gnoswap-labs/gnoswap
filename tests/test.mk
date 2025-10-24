@@ -282,19 +282,19 @@ propose-param:
 create-launchpad-project:
 	$(info ************ create bar project ************)
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/test_token/bar -func Approve -args $(ADDR_LAUNCHPAD) -args $(MAX_APPROVE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/launchpad -func CreateProject -args "Test Launch" -args "gno.land/r/gnoswap/v1/test_token/bar" -args "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" -args 10000000000 -args "gno.land/r/gnoswap/gns" -args "0" -args 20 -args 30 -args 50 -args 1740385500 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func CreateProject -args "Test Launch" -args "gno.land/r/gnoswap/v1/test_token/bar" -args "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" -args 10000000000 -args "gno.land/r/gnoswap/gns" -args "0" -args 20 -args 30 -args 50 -args 1740385500 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo
 
 
 # deposit to project
 deposit-to-project:
 	$(info ************ deposit to project ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/launchpad -func DepositGns -args "gno.land/r/gnoswap/v1/test_token/obl:4215:30" -args 1000000 -args "" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func DepositGns -args "gno.land/r/gnoswap/v1/test_token/obl:4215:30" -args 1000000 -args "" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo
 
 
 # collect project token
 collect-project-token:
 	$(info ************ collect project token ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/launchpad -func CollectRewardByProjectId -args "gno.land/r/gnoswap/v1/test_token/obl:4215" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func CollectRewardByProjectId -args "gno.land/r/gnoswap/v1/test_token/obl:4215" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo

@@ -8,12 +8,17 @@ import (
 	"testing"
 	"time"
 
-	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/ufmt"
 
+	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/launchpad"
+
+	"gno.land/r/gnoswap/launchpad"
+	_ "gno.land/r/gnoswap/launchpad/v1"
+
 	"gno.land/r/onbloc/obl"
 )
 
@@ -22,6 +27,8 @@ var (
 	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	launchpadAddr, _ = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	launchpadRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/launchpad")
+
 	projectAddr      = testutils.TestAddress("project-owner")
 	projectRealm     = testing.NewUserRealm(projectAddr)
 )
@@ -81,6 +88,7 @@ func createOBLProject() {
 	println("[EXPECTED] Project created with ID:", projectId)
 
 	// [INFO] Validate project info
+	testing.SetRealm(launchpadRealm)
 	projectStats := unmarshal(launchpad.ApiGetProjectStatisticsByProjectId(projectId))
 	println("[EXPECTED] Project name:", projectStats["name"])
 	println("[EXPECTED] Project token path:", projectStats["tokenPath"])
@@ -105,13 +113,14 @@ func createOBLProject() {
 
 // Refund ended project without deposit
 func refundEndedProjectWithoutDeposit() {
-	testing.SetRealm(adminRealm)
 	projectId := "gno.land/r/onbloc/obl:123"
 
+	testing.SetRealm(launchpadRealm)
 	println("[INFO] Checking project status before refund")
 	projectStats := unmarshal(launchpad.ApiGetProjectStatisticsByProjectId(projectId))
 	println("[INFO] Project status:", projectStats["status"])
 
+	testing.SetRealm(adminRealm)
 	println("[INFO] Checking OBL balance before refund")
 	oblBalanceBefore := obl.BalanceOf(projectAddr)
 	println("[INFO] Project OBL balance before refund:", oblBalanceBefore)

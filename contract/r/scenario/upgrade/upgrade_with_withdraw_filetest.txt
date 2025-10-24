@@ -17,7 +17,7 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/gnoswap/gnft"
-	"gno.land/r/gnoswap/v1/launchpad"
+	"gno.land/r/gnoswap/launchpad"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	"gno.land/r/gnoswap/access"
@@ -550,7 +550,7 @@ func collectLaunchpadDeposit() {
 // [EXPECTED] router should be changed g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp to g1cnz5gm2l09pm2k6rknjjar9a2w53fdhk4yjzy5
 // [EXPECTED] staker should be changed g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu to g14fclvfqynndp0l6kpyxkpgn4sljw9rr96hz46l
 // [EXPECTED] dev ops should be changed g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9 to g1v3jhvmmswve97h6lta047h6lta047h6luwedp9
-// [EXPECTED] launchpad should be changed g122mau2lp2rc0scs8d27pkkuys4w54mdy2tuer3 to g1qslhn7vn69e09zwmz5hlz0273v3c33u5z8d9j7
+// [EXPECTED] launchpad should be changed g1x6r75sxlkp9zfqufew0vcuq9sfclsq8uaqkru9 to g1qslhn7vn69e09zwmz5hlz0273v3c33u5z8d9j7
 //
 // [SCENARIO] 6.1. Skip 100 heights to check time based reward
 // [INFO] current block height 944
