@@ -197,3 +197,13 @@ func metaNode() *json.Node {
 		WriteString("now", strconv.FormatInt(now, 10)).
 		Node()
 }
+
+// marshal marshals a JSON node to a string.
+func marshal(data *json.Node) string {
+	b, err := json.Marshal(data)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return string(b)
+}

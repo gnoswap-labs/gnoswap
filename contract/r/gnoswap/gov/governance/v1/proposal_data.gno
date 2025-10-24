@@ -403,3 +403,15 @@ type ParameterChangeInfo struct {
 	function string   // Function name to call
 	params   []string // Parameters to pass to the function
 }
+
+// makeExecuteMessage creates a message to execute a function.
+// Message format: <pkgPath>*EXE*<function>*EXE*<params>.
+func makeExecuteMessage(pkgPath, function string, params []string) string {
+	messageParams := make([]string, 0)
+
+	messageParams = append(messageParams, pkgPath)
+	messageParams = append(messageParams, function)
+	messageParams = append(messageParams, strings.Join(params, ","))
+
+	return strings.Join(messageParams, parameterSeparator)
+}

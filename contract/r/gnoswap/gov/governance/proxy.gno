@@ -71,9 +71,7 @@ func Cancel(
 	cur realm,
 	proposalId int64,
 ) int64 {
-	return getImplementation().Cancel(
-		proposalId,
-	)
+	return getImplementation().Cancel(proposalId)
 }
 
 // Reconfigure updates the governance configuration

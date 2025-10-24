@@ -159,3 +159,103 @@ func TestCreateParameterHandlers(t *testing.T) {
 		uassert.NotNil(t, handler)
 	}
 }
+
+
+// TestParseNumber tests number parsing
+func TestParseNumber(t *testing.T) {
+	tests := []struct {
+		name                 string
+		input                string
+		kind                 numberKind
+		expected             interface{}
+		expectedPanic        bool
+		expectedPanicMessage string
+	}{
+		{
+			name:     "Parse int",
+			input:    "123",
+			kind:     kindInt,
+			expected: int(123),
+		},
+		{
+			name:     "Parse int64",
+			input:    "123456789",
+			kind:     kindInt64,
+			expected: int64(123456789),
+		},
+		{
+			name:     "Parse uint64",
+			input:    "123456789",
+			kind:     kindUint64,
+			expected: uint64(123456789),
+		},
+		{
+			name:                 "Invalid number",
+			input:                "invalid",
+			kind:                 kindInt,
+			expectedPanic:        true,
+			expectedPanicMessage: "invalid int value: invalid",
+		},
+		{
+			name:                 "Invalid kind",
+			input:                "123",
+			kind:                 numberKind(999),
+			expectedPanic:        true,
+			expectedPanicMessage: "unsupported number kind: %!v((unhandled))",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.expectedPanic {
+				uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
+					parseNumber(tc.input, tc.kind)
+				})
+			} else {
+				result := parseNumber(tc.input, tc.kind)
+				uassert.Equal(t, result, tc.expected)
+			}
+		})
+	}
+}
+
+// TestParseBool tests boolean parsing
+func TestParseBool(t *testing.T) {
+	tests := []struct {
+		name                 string
+		input                string
+		expected             bool
+		expectedPanic        bool
+		expectedPanicMessage string
+	}{
+		{
+			name:     "Parse true",
+			input:    "true",
+			expected: true,
+		},
+		{
+			name:     "Parse false",
+			input:    "false",
+			expected: false,
+		},
+		{
+			name:                 "Invalid boolean",
+			input:                "invalid",
+			expectedPanic:        true,
+			expectedPanicMessage: "invalid bool value: invalid",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.expectedPanic {
+				uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
+					parseBool(tc.input)
+				})
+			} else {
+				result := parseBool(tc.input)
+				uassert.Equal(t, result, tc.expected)
+			}
+		})
+	}
+}

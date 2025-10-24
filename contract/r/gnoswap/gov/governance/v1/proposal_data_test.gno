@@ -199,3 +199,39 @@ func TestParameterChangeInfo_Parsing(t *testing.T) {
 		})
 	}
 }
+
+// TestMakeExecuteMessage tests message creation
+func TestMakeExecuteMessage(t *testing.T) {
+	tests := []struct {
+		name     string
+		pkgPath  string
+		function string
+		params   []string
+		expected string
+	}{
+		{
+			name:     "Create message with no params",
+			pkgPath:  "test/pkg",
+			function: "testFunc",
+			params:   []string{},
+			expected: "test/pkg*EXE*testFunc*EXE*",
+		},
+		{
+			name:     "Create message with params",
+			pkgPath:  "test/pkg",
+			function: "testFunc",
+			params:   []string{"param1", "param2"},
+			expected: "test/pkg*EXE*testFunc*EXE*param1,param2",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			result := makeExecuteMessage(tc.pkgPath, tc.function, tc.params)
+
+			// then
+			uassert.Equal(t, result, tc.expected)
+		})
+	}
+}

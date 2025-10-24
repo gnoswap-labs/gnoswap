@@ -97,6 +97,12 @@ func TestConfig_Reconfigure(t *testing.T) {
 				halt.SetHaltLevel(cross, halt.HaltLevelNone)
 			}
 
+			// restore halt state after test to ensure no other tests are affected
+			defer func() {
+				testing.SetRealm(adminRealm)
+				halt.SetHaltLevel(cross, halt.HaltLevelNone)
+			}()
+
 			testing.SetRealm(testing.NewUserRealm(address("notgov")))
 
 			if tc.isAdmin {
