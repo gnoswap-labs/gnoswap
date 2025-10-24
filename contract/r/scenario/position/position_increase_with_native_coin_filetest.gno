@@ -18,6 +18,7 @@ import (
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/onbloc/foo"
 
+	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 )
 

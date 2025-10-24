@@ -19,7 +19,7 @@ const (
 	// The fee is denominated in BPS (Basis Points)
 	// Example: 100 BPS = 1%
 	// This parameter can be modified through governance.
-	defaultWithdrawalFeeBPS = uint64(1000)
+	defaultWithdrawalFeeBPS = uint64(100)
 )
 
 func init() {

@@ -18,6 +18,15 @@ func ExistsPoolPath(poolPath string) bool {
 	return getImplementation().ExistsPoolPath(poolPath)
 }
 
+func GetPool(token0Path, token1Path string, fee uint32) *Pool {
+	pool := getImplementation().GetPool(token0Path, token1Path, fee)
+	if pool == nil {
+		return nil
+	}
+
+	return pool.Clone()
+}
+
 func GetBalanceToken0(poolPath string) string {
 	return getImplementation().GetBalanceToken0(poolPath)
 }

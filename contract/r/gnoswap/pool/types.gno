@@ -138,6 +138,8 @@ type IPoolGetter interface {
 
 	ExistsPoolPath(poolPath string) bool
 
+	GetPool(token0Path, token1Path string, fee uint32) *Pool
+
 	GetBalanceToken0(poolPath string) string
 
 	GetBalanceToken1(poolPath string) string

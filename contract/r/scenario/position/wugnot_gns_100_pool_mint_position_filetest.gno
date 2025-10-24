@@ -20,6 +20,7 @@ import (
 
 	"gno.land/r/gnoland/wugnot"
 
+	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 )
 

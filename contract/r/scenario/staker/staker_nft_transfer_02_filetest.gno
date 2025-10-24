@@ -22,6 +22,7 @@ import (
 
 	"gno.land/r/gnoswap/gns"
 
+	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 
 	pl "gno.land/r/gnoswap/pool"

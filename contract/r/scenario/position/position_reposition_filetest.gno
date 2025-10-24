@@ -14,6 +14,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
@@ -162,6 +163,7 @@ func executeSwap() {
 		},
 	)
 
+	testing.SetRealm(adminRealm)
 	p = pool.GetPool(barPath, fooPath, fee500)
 	println("[DEBUG] Tick after swap:", p.Slot0Tick())
 
@@ -218,6 +220,7 @@ func checkRepositionedState() {
 }
 
 func executeSwapInNewRange() {
+	testing.SetRealm(adminRealm)
 	p := pool.GetPool(barPath, fooPath, fee500)
 	println("[DEBUG] Tick before second swap:", p.Slot0Tick())
 	println("[DEBUG] Pool liquidity:", p.Liquidity().ToString())

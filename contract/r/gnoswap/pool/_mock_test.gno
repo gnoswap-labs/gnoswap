@@ -1,12 +1,13 @@
-package mock
+package pool
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/gnoswap/mock"
 )
 
 type MockPool struct {
 	Version  string
-	Response *MockResponse
+	Response *mock.MockResponse
 }
 
 func (m *MockPool) CreatePool(
@@ -182,6 +183,15 @@ func (m *MockPool) ExistsPoolPath(poolPath string) bool {
 	}
 
 	return res[0].(bool)
+}
+
+func (m *MockPool) GetPool(token0Path, token1Path string, fee uint32) *Pool {
+	res, ok := m.Response.Get("GetPool")
+	if !ok {
+		return nil
+	}
+
+	return res[0].(*Pool)
 }
 
 func (m *MockPool) GetBalanceToken0(poolPath string) string {
@@ -535,9 +545,9 @@ func (m *MockPool) ApiGetTWAP(poolPath string, secondsAgo uint32) string {
 	return res[0].(string)
 }
 
-func NewMockPool(version string) *MockPool {
+func newMockPool(version string) *MockPool {
 	return &MockPool{
 		Version:  version,
-		Response: NewMockResponse(),
+		Response: mock.NewMockResponse(),
 	}
 }

@@ -30,6 +30,7 @@ import (
 	pn "gno.land/r/gnoswap/position"
 	sr "gno.land/r/gnoswap/v1/staker"
 
+	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/rbac"
 )

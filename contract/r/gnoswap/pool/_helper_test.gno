@@ -13,7 +13,6 @@ import (
 )
 
 var (
-	_ IPool      = (*mock.MockPool)(nil)
 	_ IPoolStore = (*mock.MockPoolStore)(nil)
 )
 
@@ -37,6 +36,6 @@ func resetTestState(t *testing.T) {
 
 func makeMockInitializer(version string) func(_ IPoolStore) IPool {
 	return func(_ IPoolStore) IPool {
-		return mock.NewMockPool(version)
+		return newMockPool(version)
 	}
 }

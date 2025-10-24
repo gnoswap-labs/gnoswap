@@ -6,7 +6,6 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/uassert"
-	"gno.land/r/gnoswap/mock"
 )
 
 // TestRegisterInitializer tests the pool upgrade system with table-driven approach
@@ -217,7 +216,7 @@ func TestCreatePool(t *testing.T) {
 		CreatePool(cross, tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPriceX96)
 
 		// Assert - verify that the mock pool's CreatePool was called
-		mPool := implementation.(*mock.MockPool)
+		mPool := implementation.(*MockPool)
 		if mPool.Response.CallCount("CreatePool") == 0 {
 			t.Error("CreatePool was not called on the implementation")
 		}
@@ -270,7 +269,7 @@ func TestMint(t *testing.T) {
 		}
 
 		testing.SetRealm(tt.callerRealm)
-		mockPool := implementation.(*mock.MockPool)
+		mockPool := implementation.(*MockPool)
 
 		// Action
 		Mint(cross, tt.token0Path, tt.token1Path, tt.fee, tt.tickLower, tt.tickUpper, tt.liquidityAmount, tt.positionCaller)
@@ -333,7 +332,7 @@ func TestBurn(t *testing.T) {
 		Burn(cross, tt.token0Path, tt.token1Path, tt.fee, tt.tickLower, tt.tickUpper, tt.liquidityAmount, tt.positionCaller)
 
 		// Assert
-		mockPool := implementation.(*mock.MockPool)
+		mockPool := implementation.(*MockPool)
 		if mockPool.Response.CallCount("Burn") == 0 {
 			t.Error("Burn was not called on the implementation")
 		}
@@ -393,7 +392,7 @@ func TestCollect(t *testing.T) {
 		Collect(cross, tt.token0Path, tt.token1Path, tt.fee, tt.recipient, tt.tickLower, tt.tickUpper, tt.amount0Requested, tt.amount1Requested)
 
 		// Assert
-		mockPool := implementation.(*mock.MockPool)
+		mockPool := implementation.(*MockPool)
 		if mockPool.Response.CallCount("Collect") == 0 {
 			t.Error("Collect was not called on the implementation")
 		}
@@ -449,7 +448,7 @@ func TestCollectProtocol(t *testing.T) {
 		CollectProtocol(cross, tt.token0Path, tt.token1Path, tt.fee, tt.recipient, tt.amount0Requested, tt.amount1Requested)
 
 		// Assert
-		mockPool := implementation.(*mock.MockPool)
+		mockPool := implementation.(*MockPool)
 		if mockPool.Response.CallCount("CollectProtocol") == 0 {
 			t.Error("CollectProtocol was not called on the implementation")
 		}
@@ -511,7 +510,7 @@ func TestSwap(t *testing.T) {
 		})
 
 		// Assert
-		mockPool := implementation.(*mock.MockPool)
+		mockPool := implementation.(*MockPool)
 		if mockPool.Response.CallCount("Swap") == 0 {
 			t.Error("Swap was not called on the implementation")
 		}
@@ -567,7 +566,7 @@ func TestDrySwap(t *testing.T) {
 		DrySwap(tt.token0Path, tt.token1Path, tt.fee, tt.zeroForOne, tt.amountSpecified, tt.sqrtPriceLimitX96)
 
 		// Assert
-		mockPool := implementation.(*mock.MockPool)
+		mockPool := implementation.(*MockPool)
 		if mockPool.Response.CallCount("DrySwap") == 0 {
 			t.Error("DrySwap was not called on the implementation")
 		}
@@ -611,7 +610,7 @@ func TestSetFeeProtocol(t *testing.T) {
 		SetFeeProtocol(cross, tt.feeProtocol0, tt.feeProtocol1)
 
 		// Assert - no return value to check, just verify no panic
-		mockPool := implementation.(*mock.MockPool)
+		mockPool := implementation.(*MockPool)
 		if mockPool.Response.CallCount("SetFeeProtocol") == 0 {
 			t.Error("SetFeeProtocol was not called on the implementation")
 		}
@@ -648,7 +647,7 @@ func TestGetSlot0SqrtPriceX96(t *testing.T) {
 		if tt.setup != nil {
 			tt.setup(t)
 		}
-		mockPool := implementation.(*mock.MockPool)
+		mockPool := implementation.(*MockPool)
 		mockPool.Response.Set("GetSlot0SqrtPriceX96", tt.expectedSqrt)
 		testing.SetRealm(tt.callerRealm)
 
@@ -693,7 +692,7 @@ func TestGetSlot0Tick(t *testing.T) {
 			tt.setup(t)
 		}
 
-		mockPool := implementation.(*mock.MockPool)
+		mockPool := implementation.(*MockPool)
 		mockPool.Response.Set("GetSlot0Tick", tt.expectedTick)
 		testing.SetRealm(tt.callerRealm)
 
@@ -738,7 +737,7 @@ func TestGetLiquidity(t *testing.T) {
 			tt.setup(t)
 		}
 
-		mockPool := implementation.(*mock.MockPool)
+		mockPool := implementation.(*MockPool)
 		mockPool.Response.Set("GetLiquidity", tt.expectedLiquidity)
 
 		testing.SetRealm(tt.callerRealm)
@@ -784,7 +783,7 @@ func TestGetBalanceToken0(t *testing.T) {
 			tt.setup(t)
 		}
 
-		mockPool := implementation.(*mock.MockPool)
+		mockPool := implementation.(*MockPool)
 		mockPool.Response.Set("GetBalanceToken0", tt.expectedBalance)
 
 		testing.SetRealm(tt.callerRealm)
@@ -830,7 +829,7 @@ func TestGetBalanceToken1(t *testing.T) {
 			tt.setup(t)
 		}
 
-		mockPool := implementation.(*mock.MockPool)
+		mockPool := implementation.(*MockPool)
 		mockPool.Response.Set("GetBalanceToken1", tt.expectedBalance)
 
 		testing.SetRealm(tt.callerRealm)
@@ -878,7 +877,7 @@ func TestGetFeeGrowthGlobalX128(t *testing.T) {
 			tt.setup(t)
 		}
 
-		mockPool := implementation.(*mock.MockPool)
+		mockPool := implementation.(*MockPool)
 		mockPool.Response.Set("GetFeeGrowthGlobalX128", tt.expectedFee0, tt.expectedFee1)
 
 		testing.SetRealm(tt.callerRealm)
@@ -928,7 +927,7 @@ func TestGetPositionFeeGrowthInsideLastX128(t *testing.T) {
 			tt.setup(t)
 		}
 
-		mockPool := implementation.(*mock.MockPool)
+		mockPool := implementation.(*MockPool)
 		mockPool.Response.Set("GetPositionFeeGrowthInsideLastX128", tt.expectedFee0, tt.expectedFee1)
 
 		testing.SetRealm(tt.callerRealm)
@@ -982,7 +981,7 @@ func TestGetObservation(t *testing.T) {
 			tt.setup(t)
 		}
 
-		mockPool := implementation.(*mock.MockPool)
+		mockPool := implementation.(*MockPool)
 		mockPool.Response.Set("GetObservation", tt.expectedTick, tt.expectedSqrt, tt.expectedLiquidity, tt.expectedTimestamp)
 
 		testing.SetRealm(tt.callerRealm)
@@ -1037,7 +1036,7 @@ func TestExistsPoolPath(t *testing.T) {
 			tt.setup(t)
 		}
 
-		mockPool := implementation.(*mock.MockPool)
+		mockPool := implementation.(*MockPool)
 		mockPool.Response.Set("ExistsPoolPath", tt.expectedExists)
 
 		testing.SetRealm(tt.callerRealm)
@@ -1083,7 +1082,7 @@ func TestApiGetPool(t *testing.T) {
 			tt.setup(t)
 		}
 
-		mockPool := implementation.(*mock.MockPool)
+		mockPool := implementation.(*MockPool)
 		mockPool.Response.Set("ApiGetPool", tt.expectedJSON)
 
 		testing.SetRealm(tt.callerRealm)
@@ -1131,7 +1130,7 @@ func TestApiGetTWAP(t *testing.T) {
 			tt.setup(t)
 		}
 
-		mockPool := implementation.(*mock.MockPool)
+		mockPool := implementation.(*MockPool)
 		mockPool.Response.Set("ApiGetTWAP", tt.expectedTWAP)
 
 		testing.SetRealm(tt.callerRealm)

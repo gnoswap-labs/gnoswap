@@ -10,7 +10,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
-	_ "gno.land/r/gnoswap/protocol_fee"
+	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/gnoswap/access"
@@ -177,6 +177,7 @@ func main() {
 		},
 	)
 
+	testing.SetRealm(adminRealm)
 	thisPool = pool.GetPool(barPath, fooPath, fee500)
 	poolTick := thisPool.Slot0Tick()
 	println("[EXPECTED] Pool tick:", poolTick, "expected: -1")
@@ -221,6 +222,7 @@ func main() {
 		},
 	)
 
+	testing.SetRealm(adminRealm)
 	thisPool = pool.GetPool(barPath, fooPath, fee500)
 	poolTick = thisPool.Slot0Tick()
 	println("[EXPECTED] Pool tick:", poolTick, "expected: -1")

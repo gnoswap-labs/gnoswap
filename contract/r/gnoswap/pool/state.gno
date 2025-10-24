@@ -52,7 +52,9 @@ func init() {
 func initRegisterReadableContract() {
 	positionAddr := access.MustGetAddress(prbac.ROLE_POSITION.String())
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
+	routerAddr := access.MustGetAddress(prbac.ROLE_ROUTER.String())
 
+	kvStore.AddAuthorizedCaller(routerAddr, store.ReadOnly)
 	kvStore.AddAuthorizedCaller(positionAddr, store.ReadOnly)
 	kvStore.AddAuthorizedCaller(stakerAddr, store.ReadOnly)
 }
