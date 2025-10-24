@@ -3,7 +3,7 @@ package v1
 import (
 	"chain"
 	"chain/banker"
-	// "strings"
+	"strings"
 	"testing"
 	"time"
 
@@ -216,65 +216,65 @@ func TestGovernanceExecute_ExecuteProposalPrivate(t *testing.T) {
 		expectedHasError     bool
 		expectedErrorMessage string
 	}{
-		// {
-		// 	name:           "success - execute parameter change",
-		// 	proposalId:     1,
-		// 	executedAt:     time.Now().Unix(),
-		// 	executedHeight: 1000,
-		// 	executedBy:     testutils.TestAddress("executor"),
-		// 	setupProposal: func() *Proposal {
-		// 		proposal := NewProposal(
-		// 			1,
-		// 			NewProposalStatus(
-		// 				testConfig,
-		// 				10_000_000_000,
-		// 				true,
-		// 				time.Now().Add(-time.Hour*24*10).Unix(),
-		// 			),
-		// 			NewProposalMetadata("Parameter Change", "Change Parameters"),
-		// 			NewProposalExecutionData(1, "gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0"),
-		// 			testutils.TestAddress("proposer"),
-		// 			1,
-		// 			time.Now().Add(-time.Hour*24*10).Unix(),
-		// 			100,
-		// 		)
-		// 		proposal.status.vote(true, 6_000_000_000)
-		// 		return proposal
-		// 	}(),
-		// 	expectedHasError: false,
-		// },
-		// {
-		// 	name:           "success - execute community pool spend",
-		// 	proposalId:     1,
-		// 	executedAt:     time.Now().Unix(),
-		// 	executedHeight: 1000,
-		// 	executedBy:     testutils.TestAddress("executor"),
-		// 	setupProposal: func() *Proposal {
-		// 		proposal := NewProposal(
-		// 			1,
-		// 			NewProposalStatus(
-		// 				testConfig,
-		// 				10_000_000_000,
-		// 				true,
-		// 				time.Now().Add(-time.Hour*24*10).Unix(),
-		// 			),
-		// 			NewProposalMetadata("Community Pool Spend", "Spend from pool"),
-		// 			NewProposalCommunityPoolSpendData(
-		// 				"gno.land/r/gnoswap/gns",
-		// 				testutils.TestAddress("recipient"),
-		// 				1_000_000_000,
-		// 				"gno.land/r/gnoswap/community_pool",
-		// 			),
-		// 			testutils.TestAddress("proposer"),
-		// 			1,
-		// 			time.Now().Add(-time.Hour*24*10).Unix(),
-		// 			100,
-		// 		)
-		// 		proposal.status.vote(true, 6_000_000_000)
-		// 		return proposal
-		// 	}(),
-		// 	expectedHasError: false,
-		// },
+		{
+			name:           "success - execute parameter change",
+			proposalId:     1,
+			executedAt:     time.Now().Unix(),
+			executedHeight: 1000,
+			executedBy:     testutils.TestAddress("executor"),
+			setupProposal: func() *Proposal {
+				proposal := NewProposal(
+					1,
+					NewProposalStatus(
+						testConfig,
+						10_000_000_000,
+						true,
+						time.Now().Add(-time.Hour*24*10).Unix(),
+					),
+					NewProposalMetadata("Parameter Change", "Change Parameters"),
+					NewProposalExecutionData(1, "gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0"),
+					testutils.TestAddress("proposer"),
+					1,
+					time.Now().Add(-time.Hour*24*10).Unix(),
+					100,
+				)
+				proposal.status.vote(true, 6_000_000_000)
+				return proposal
+			}(),
+			expectedHasError: false,
+		},
+		{
+			name:           "success - execute community pool spend",
+			proposalId:     1,
+			executedAt:     time.Now().Unix(),
+			executedHeight: 1000,
+			executedBy:     testutils.TestAddress("executor"),
+			setupProposal: func() *Proposal {
+				proposal := NewProposal(
+					1,
+					NewProposalStatus(
+						testConfig,
+						10_000_000_000,
+						true,
+						time.Now().Add(-time.Hour*24*10).Unix(),
+					),
+					NewProposalMetadata("Community Pool Spend", "Spend from pool"),
+					NewProposalCommunityPoolSpendData(
+						"gno.land/r/gnoswap/gns",
+						testutils.TestAddress("recipient"),
+						1_000_000_000,
+						"gno.land/r/gnoswap/community_pool",
+					),
+					testutils.TestAddress("proposer"),
+					1,
+					time.Now().Add(-time.Hour*24*10).Unix(),
+					100,
+				)
+				proposal.status.vote(true, 6_000_000_000)
+				return proposal
+			}(),
+			expectedHasError: false,
+		},
 		{
 			name:                 "fail - proposal not found",
 			proposalId:           999,
@@ -819,224 +819,224 @@ func TestGovernanceExecute_ExecutionTiming(t *testing.T) {
 }
 
 // Test community pool spend execution scenarios
-// func TestGovernanceExecute_CommunityPoolSpendExecution(t *testing.T) {
-// 	tests := []struct {
-// 		name                 string
-// 		tokenPath            string
-// 		amount               int64
-// 		recipientAddress     address
-// 		communityPoolBalance int64
-// 		expectedError        string
-// 		expectedHasAbort     bool
-// 		description          string
-// 	}{
-// 		{
-// 			name:                 "success - sufficient balance",
-// 			tokenPath:            "gno.land/r/gnoswap/gns",
-// 			amount:               1_000_000_000,
-// 			recipientAddress:     testutils.TestAddress("recipient"),
-// 			communityPoolBalance: 5_000_000_000,
-// 			expectedHasAbort:     false,
-// 		},
-// 		{
-// 			name:                 "success - exact balance",
-// 			tokenPath:            "gno.land/r/gnoswap/gns",
-// 			amount:               1_000_000_000,
-// 			recipientAddress:     testutils.TestAddress("recipient"),
-// 			communityPoolBalance: 1_000_000_000,
-// 			expectedHasAbort:     false,
-// 		},
-// 		{
-// 			name:                 "fail - insufficient balance",
-// 			tokenPath:            "gno.land/r/gnoswap/gns",
-// 			amount:               2_000_000_000_000_000,
-// 			recipientAddress:     testutils.TestAddress("recipient"),
-// 			communityPoolBalance: 1_000_000_000,
-// 			expectedError:        "insufficient balance",
-// 			expectedHasAbort:     true,
-// 		},
-// 		{
-// 			name:                 "success - WUGNOT transfer",
-// 			tokenPath:            "gno.land/r/gnoland/wugnot",
-// 			amount:               1_000_000_000,
-// 			recipientAddress:     testutils.TestAddress("recipient"),
-// 			communityPoolBalance: 5_000_000_000,
-// 			expectedHasAbort:     false,
-// 			description:          "WUGNOT should be converted to ugnot",
-// 		},
-// 		{
-// 			name:                 "success - large amount transfer",
-// 			tokenPath:            "gno.land/r/gnoswap/gns",
-// 			amount:               9223372036854775807, // MAX_INT64
-// 			recipientAddress:     testutils.TestAddress("recipient"),
-// 			communityPoolBalance: 9223372036854775807,
-// 			expectedHasAbort:     true,
-// 			expectedError:        "insufficient balance",
-// 			description:          "Large amount transfer should fail",
-// 		},
-// 	}
+func TestGovernanceExecute_CommunityPoolSpendExecution(t *testing.T) {
+	tests := []struct {
+		name                 string
+		tokenPath            string
+		amount               int64
+		recipientAddress     address
+		communityPoolBalance int64
+		expectedError        string
+		expectedHasAbort     bool
+		description          string
+	}{
+		{
+			name:                 "success - sufficient balance",
+			tokenPath:            "gno.land/r/gnoswap/gns",
+			amount:               1_000_000_000,
+			recipientAddress:     testutils.TestAddress("recipient"),
+			communityPoolBalance: 5_000_000_000,
+			expectedHasAbort:     false,
+		},
+		{
+			name:                 "success - exact balance",
+			tokenPath:            "gno.land/r/gnoswap/gns",
+			amount:               1_000_000_000,
+			recipientAddress:     testutils.TestAddress("recipient"),
+			communityPoolBalance: 1_000_000_000,
+			expectedHasAbort:     false,
+		},
+		{
+			name:                 "fail - insufficient balance",
+			tokenPath:            "gno.land/r/gnoswap/gns",
+			amount:               2_000_000_000_000_000,
+			recipientAddress:     testutils.TestAddress("recipient"),
+			communityPoolBalance: 1_000_000_000,
+			expectedError:        "insufficient balance",
+			expectedHasAbort:     true,
+		},
+		{
+			name:                 "success - WUGNOT transfer",
+			tokenPath:            "gno.land/r/gnoland/wugnot",
+			amount:               1_000_000_000,
+			recipientAddress:     testutils.TestAddress("recipient"),
+			communityPoolBalance: 5_000_000_000,
+			expectedHasAbort:     false,
+			description:          "WUGNOT should be converted to ugnot",
+		},
+		{
+			name:                 "success - large amount transfer",
+			tokenPath:            "gno.land/r/gnoswap/gns",
+			amount:               9223372036854775807, // MAX_INT64
+			recipientAddress:     testutils.TestAddress("recipient"),
+			communityPoolBalance: 9223372036854775807,
+			expectedHasAbort:     true,
+			expectedError:        "insufficient balance",
+			description:          "Large amount transfer should fail",
+		},
+	}
 
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			// given
-// 			gov := newMockGovernance()
-// 			state := gov.GetGovernanceState()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// given
+			gov := newMockGovernance()
+			state := gov.GetGovernanceState()
 
-// 			setupGovernanceExecuteTestCommunityPoolBalance(t)
-// 			proposal := NewProposal(
-// 				1,
-// 				NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix()),
-// 				NewProposalMetadata("Community Pool Spend", "Description"),
-// 				NewProposalCommunityPoolSpendData(
-// 					tt.tokenPath,
-// 					tt.recipientAddress,
-// 					tt.amount,
-// 					"gno.land/r/gnoswap/community_pool",
-// 				),
-// 				testutils.TestAddress("proposer"),
-// 				1,
-// 				time.Now().Add(-time.Hour*24*15).Unix(),
-// 				100,
-// 			)
-// 			proposal.status.vote(true, 6_000_000_000)
-// 			setupExecuteTestProposal(t, state, proposal)
+			setupGovernanceExecuteTestCommunityPoolBalance(t)
+			proposal := NewProposal(
+				1,
+				NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix()),
+				NewProposalMetadata("Community Pool Spend", "Description"),
+				NewProposalCommunityPoolSpendData(
+					tt.tokenPath,
+					tt.recipientAddress,
+					tt.amount,
+					"gno.land/r/gnoswap/community_pool",
+				),
+				testutils.TestAddress("proposer"),
+				1,
+				time.Now().Add(-time.Hour*24*15).Unix(),
+				100,
+			)
+			proposal.status.vote(true, 6_000_000_000)
+			setupExecuteTestProposal(t, state, proposal)
 
-// 			// Mock community pool balance setup would go here
+			// Mock community pool balance setup would go here
 
-// 			testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("executor")))
+			testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("executor")))
 
-// 			// when & then
-// 			if tt.expectedHasAbort {
-// 				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-// 					func (cur realm) {
-// 						testing.SetRealm(govRealm)
-// 						gov.Execute(1)
-// 					}(cross)
-// 				})
-// 			} else {
-// 				var resultId int64
-// 				func (cur realm) {
-// 					testing.SetRealm(govRealm)
-// 					resultId = gov.Execute(1)
-// 				}(cross)
-// 				uassert.Equal(t, int64(1), resultId)
+			// when & then
+			if tt.expectedHasAbort {
+				uassert.AbortsWithMessage(t, tt.expectedError, func() {
+					func (cur realm) {
+						testing.SetRealm(govRealm)
+						gov.Execute(1)
+					}(cross)
+				})
+			} else {
+				var resultId int64
+				func (cur realm) {
+					testing.SetRealm(govRealm)
+					resultId = gov.Execute(1)
+				}(cross)
+				uassert.Equal(t, int64(1), resultId)
 
-// 				// Verify execution state
-// 				proposal, _ := state.getProposal(resultId)
-// 				uassert.Equal(t, true, proposal.status.IsExecuted(time.Now().Unix()))
-// 			}
-// 		})
-// 	}
-// }
+				// Verify execution state
+				proposal, _ := state.getProposal(resultId)
+				uassert.Equal(t, true, proposal.status.IsExecuted(time.Now().Unix()))
+			}
+		})
+	}
+}
 
 // Test parameter change execution scenarios
-// func TestGovernanceExecute_ParameterChangeExecution(t *testing.T) {
-// 	tests := []struct {
-// 		name             string
-// 		numToExecute     int64
-// 		executions       string
-// 		expectedError    string
-// 		expectedHasAbort bool
-// 		description      string
-// 	}{
-// 		{
-// 			name:             "success - single parameter change",
-// 			numToExecute:     1,
-// 			executions:       "gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0",
-// 			expectedHasAbort: false,
-// 		},
-// 		{
-// 			name:         "success - multiple parameter changes",
-// 			numToExecute: 2,
-// 			executions: "gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0*GOV*" +
-// 				"gno.land/r/gnoswap/v1/pool*EXE*SetWithdrawalFee*EXE*0",
-// 			expectedHasAbort: false,
-// 		},
-// 		{
-// 			name:         "success - maximum executions",
-// 			numToExecute: 10,
-// 			executions: strings.Join([]string{
-// 				"gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0",
-// 				"gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0",
-// 				"gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0",
-// 				"gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0",
-// 				"gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0",
-// 				"gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0",
-// 				"gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0",
-// 				"gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0",
-// 				"gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0",
-// 				"gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0",
-// 			}, "*GOV*"),
-// 			expectedHasAbort: false,
-// 		},
-// 		{
-// 			name:             "fail - nonexistent function",
-// 			numToExecute:     1,
-// 			executions:       "gno.land/r/demo/config*EXE*nonexistentFunction*EXE*value",
-// 			expectedError:    "handler not found for gno.land/r/demo/config:nonexistentFunction",
-// 			expectedHasAbort: true,
-// 		},
-// 		{
-// 			name:             "fail - invalid parameter type",
-// 			numToExecute:     1,
-// 			executions:       "gno.land/r/demo/config*EXE*setParam*EXE*invalidType",
-// 			expectedError:    "handler not found for gno.land/r/demo/config:setParam",
-// 			expectedHasAbort: true,
-// 		},
-// 		{
-// 			name:             "fail - unauthorized contract",
-// 			numToExecute:     1,
-// 			executions:       "gno.land/r/unauthorized/contract*EXE*setParam*EXE*value",
-// 			expectedError:    "handler not found for gno.land/r/unauthorized/contract:setParam",
-// 			expectedHasAbort: true,
-// 		},
-// 	}
+func TestGovernanceExecute_ParameterChangeExecution(t *testing.T) {
+	tests := []struct {
+		name             string
+		numToExecute     int64
+		executions       string
+		expectedError    string
+		expectedHasAbort bool
+		description      string
+	}{
+		{
+			name:             "success - single parameter change",
+			numToExecute:     1,
+			executions:       "gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0",
+			expectedHasAbort: false,
+		},
+		{
+			name:         "success - multiple parameter changes",
+			numToExecute: 2,
+			executions: "gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0*GOV*" +
+				"gno.land/r/gnoswap/v1/pool*EXE*SetWithdrawalFee*EXE*0",
+			expectedHasAbort: false,
+		},
+		{
+			name:         "success - maximum executions",
+			numToExecute: 10,
+			executions: strings.Join([]string{
+				"gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0",
+				"gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0",
+				"gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0",
+				"gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0",
+				"gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0",
+				"gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0",
+				"gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0",
+				"gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0",
+				"gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0",
+				"gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0",
+			}, "*GOV*"),
+			expectedHasAbort: false,
+		},
+		{
+			name:             "fail - nonexistent function",
+			numToExecute:     1,
+			executions:       "gno.land/r/demo/config*EXE*nonexistentFunction*EXE*value",
+			expectedError:    "handler not found for gno.land/r/demo/config:nonexistentFunction",
+			expectedHasAbort: true,
+		},
+		{
+			name:             "fail - invalid parameter type",
+			numToExecute:     1,
+			executions:       "gno.land/r/demo/config*EXE*setParam*EXE*invalidType",
+			expectedError:    "handler not found for gno.land/r/demo/config:setParam",
+			expectedHasAbort: true,
+		},
+		{
+			name:             "fail - unauthorized contract",
+			numToExecute:     1,
+			executions:       "gno.land/r/unauthorized/contract*EXE*setParam*EXE*value",
+			expectedError:    "handler not found for gno.land/r/unauthorized/contract:setParam",
+			expectedHasAbort: true,
+		},
+	}
 
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			// given
-// 			gov := newMockGovernance()
-// 			state := gov.GetGovernanceState()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// given
+			gov := newMockGovernance()
+			state := gov.GetGovernanceState()
 
-// 			setupGovernanceExecuteTestCommunityPoolBalance(t)
-// 			proposal := NewProposal(
-// 				1,
-// 				NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix()),
-// 				NewProposalMetadata("Parameter Change", "Description"),
-// 				NewProposalExecutionData(tt.numToExecute, tt.executions),
-// 				testutils.TestAddress("proposer"),
-// 				1,
-// 				time.Now().Add(-time.Hour*24*15).Unix(),
-// 				100,
-// 			)
-// 			proposal.status.vote(true, 6_000_000_000)
-// 			setupExecuteTestProposal(t, state, proposal)
+			setupGovernanceExecuteTestCommunityPoolBalance(t)
+			proposal := NewProposal(
+				1,
+				NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix()),
+				NewProposalMetadata("Parameter Change", "Description"),
+				NewProposalExecutionData(tt.numToExecute, tt.executions),
+				testutils.TestAddress("proposer"),
+				1,
+				time.Now().Add(-time.Hour*24*15).Unix(),
+				100,
+			)
+			proposal.status.vote(true, 6_000_000_000)
+			setupExecuteTestProposal(t, state, proposal)
 
-// 			testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("executor")))
+			testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("executor")))
 
-// 			// when & then
-// 			if tt.expectedHasAbort {
-// 				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-// 					func (cur realm) {
-// 						testing.SetRealm(govRealm)
-// 						gov.Execute(1)
-// 					}(cross)
-// 				})
-// 			} else {
-// 				var resultId int64
-// 				func (cur realm) {
-// 					testing.SetRealm(govRealm)
-// 					resultId = gov.Execute(1)
-// 				}(cross)
-// 				uassert.Equal(t, int64(1), resultId)
+			// when & then
+			if tt.expectedHasAbort {
+				uassert.AbortsWithMessage(t, tt.expectedError, func() {
+					func (cur realm) {
+						testing.SetRealm(govRealm)
+						gov.Execute(1)
+					}(cross)
+				})
+			} else {
+				var resultId int64
+				func (cur realm) {
+					testing.SetRealm(govRealm)
+					resultId = gov.Execute(1)
+				}(cross)
+				uassert.Equal(t, int64(1), resultId)
 
-// 				// Verify execution state
-// 				proposal, _ := state.getProposal(resultId)
-// 				uassert.Equal(t, true, proposal.status.IsExecuted(time.Now().Unix()))
-// 			}
-// 		})
-// 	}
-// }
+				// Verify execution state
+				proposal, _ := state.getProposal(resultId)
+				uassert.Equal(t, true, proposal.status.IsExecuted(time.Now().Unix()))
+			}
+		})
+	}
+}
 
 // Test comprehensive cancellation scenarios
 func TestGovernanceExecute_CancellationScenarios(t *testing.T) {

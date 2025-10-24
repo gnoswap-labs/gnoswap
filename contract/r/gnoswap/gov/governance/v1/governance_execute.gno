@@ -8,6 +8,8 @@ import (
 	"gno.land/r/gnoswap/common"
 	en "gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
+
+	"gno.land/r/gnoswap/gov/governance"
 )
 
 // Execute executes an approved proposal.
@@ -106,7 +108,7 @@ func (gv *governanceV1) executeProposal(
 	}
 
 	// Create parameter registry for handling execution actions
-	parameterRegistry := gv.createParameterHandlers()
+	parameterRegistry := governance.CreateParameterHandlers()
 
 	// Execute proposal based on its type
 	switch proposal.Type() {
@@ -209,7 +211,7 @@ func (gv *governanceV1) cancel(
 // Handles token transfers from community pool to specified recipients.
 func executeCommunityPoolSpend(
 	proposal *Proposal,
-	parameterRegistry *ParameterRegistry,
+	parameterRegistry *governance.ParameterRegistry,
 	executedAt int64,
 	executedHeight int64,
 	executedBy address,
@@ -223,7 +225,7 @@ func executeCommunityPoolSpend(
 	parameterChangesInfos := proposal.data.execution.ParameterChangesInfos()
 	for _, parameterChangeInfo := range parameterChangesInfos {
 		// Get the appropriate handler for this parameter change
-		handler, err := parameterRegistry.handler(parameterChangeInfo.pkgPath, parameterChangeInfo.function)
+		handler, err := parameterRegistry.Handler(parameterChangeInfo.pkgPath, parameterChangeInfo.function)
 		if err != nil {
 			return err
 		}
@@ -242,7 +244,7 @@ func executeCommunityPoolSpend(
 // Handles governance configuration updates and system parameter modifications.
 func executeParameterChange(
 	proposal *Proposal,
-	parameterRegistry *ParameterRegistry,
+	parameterRegistry *governance.ParameterRegistry,
 	executedAt int64,
 	executedHeight int64,
 	executedBy address,
@@ -251,7 +253,7 @@ func executeParameterChange(
 	parameterChangesInfos := proposal.data.execution.ParameterChangesInfos()
 	for _, parameterChangeInfo := range parameterChangesInfos {
 		// Get the appropriate handler for this parameter change
-		handler, err := parameterRegistry.handler(parameterChangeInfo.pkgPath, parameterChangeInfo.function)
+		handler, err := parameterRegistry.Handler(parameterChangeInfo.pkgPath, parameterChangeInfo.function)
 		if err != nil {
 			return err
 		}

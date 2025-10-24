@@ -5,6 +5,8 @@ import (
 
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
+
+	"gno.land/r/gnoswap/gov/governance"
 )
 
 // TestRegistryHandler_Execute tests the execution functionality of registry handler
@@ -12,7 +14,7 @@ func TestRegistryHandler_Execute(t *testing.T) {
 	tests := []struct {
 		name           string
 		params         []string
-		handlerFn      ParameterHandler
+		handlerFn      governance.ParameterHandler
 		expectedError  bool
 		expectedErrMsg string
 	}{

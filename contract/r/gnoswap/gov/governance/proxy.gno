@@ -63,9 +63,7 @@ func Execute(
 	cur realm,
 	proposalId int64,
 ) int64 {
-	return getImplementation().Execute(
-		proposalId,
-	)
+	return getImplementation().Execute(proposalId)
 }
 
 // Cancel cancels a proposal before voting begins

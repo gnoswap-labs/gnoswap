@@ -1,4 +1,4 @@
-package v1
+package governance
 
 import (
 	"testing"
@@ -51,11 +51,11 @@ func TestParameterRegistry_RegisterAndHandler(t *testing.T) {
 					paramCount:  tc.paramCount,
 					handlerFunc: tc.handlerFunc,
 				}
-				registry.register(handler)
+				registry.Register(handler)
 			}
 
 			// when
-			handler, err := registry.handler(tc.pkgPath, tc.function)
+			handler, err := registry.Handler(tc.pkgPath, tc.function)
 
 			// then
 			if tc.expectedError {
@@ -137,8 +137,7 @@ func TestParameterHandlerOptions_Execute(t *testing.T) {
 // TestCreateParameterHandlers tests the creation of all parameter handlers
 func TestCreateParameterHandlers(t *testing.T) {
 	// given & when
-	gov := newMockGovernance()
-	registry := gov.createParameterHandlers()
+	registry := CreateParameterHandlers()
 
 	// then
 	uassert.NotNil(t, registry)
@@ -155,7 +154,7 @@ func TestCreateParameterHandlers(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		handler, err := registry.handler(tc.pkgPath, tc.function)
+		handler, err := registry.Handler(tc.pkgPath, tc.function)
 		uassert.Nil(t, err)
 		uassert.NotNil(t, handler)
 	}
