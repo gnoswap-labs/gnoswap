@@ -111,7 +111,7 @@ func TestAddLiquidity(t *testing.T) {
 				caller:         alice,
 			},
 			expectError:     true,
-			errorType:       "panic",
+			errorType:       "abort",
 			expectedMessage: "[GNOSWAP-POOL-008] requested data not found || expected poolPath(invalid/pool/path) to exist",
 		},
 		{

@@ -4,6 +4,7 @@ import (
 	"chain"
 	"chain/runtime"
 
+	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
 
@@ -57,6 +58,8 @@ func (i *poolV1) HandleWithdrawalFee(
 
 	feeAmount0, afterAmount0 := calculateAmountWithFee(u256.MustFromDecimal(amount0), u256.NewUint(fee))
 	feeAmount1, afterAmount1 := calculateAmountWithFee(u256.MustFromDecimal(amount1), u256.NewUint(fee))
+
+	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 
 	pf.AddToProtocolFee(cross, token0Path, safeConvertToInt64(feeAmount0))
 	common.SafeGRC20TransferFrom(cross, token0Path, positionCaller, protocolFeeAddr, safeConvertToInt64(feeAmount0))

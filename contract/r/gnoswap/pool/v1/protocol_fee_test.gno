@@ -1,14 +1,17 @@
 package v1
 
 import (
+	"chain"
 	"strconv"
 	"strings"
 	"testing"
 
+	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 
@@ -31,7 +34,7 @@ func TestSetPoolCreationFee(t *testing.T) {
 			action: func() {
 				const newFee = 2_000_000_000
 				testing.SetRealm(testing.NewUserRealm(alice))
-				mockInstance.SetPoolCreationFee(newFee)
+				mockInstanceSetPoolCreationFee(newFee)
 			},
 			verify:      nil,
 			expected:    "unauthorized: caller g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh is not admin or governance",
@@ -43,10 +46,10 @@ func TestSetPoolCreationFee(t *testing.T) {
 				const newFee = 2_000_000_000
 				govRealm := testing.NewUserRealm(govAddr)
 				testing.SetRealm(govRealm)
-				mockInstance.SetPoolCreationFee(newFee)
+				mockInstanceSetPoolCreationFee(newFee)
 			},
 			verify: func() string {
-				return strconv.FormatInt(mockInstance.GetPoolCreationFee(), 10)
+				return strconv.FormatInt(getMockInstance().GetPoolCreationFee(), 10)
 			},
 			expected:    strconv.FormatInt(2_000_000_000, 10),
 			shouldPanic: false,
@@ -83,7 +86,7 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			action: func() {
 				const newFee = 2_000_000_000
 				testing.SetRealm(testing.NewUserRealm(alice))
-				mockInstance.SetPoolCreationFee(newFee)
+				mockInstanceSetPoolCreationFee(newFee)
 			},
 			verify:      nil,
 			expected:    "unauthorized: caller g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh is not admin or governance",
@@ -94,10 +97,10 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			action: func() {
 				const newFee = 2_000_000_000
 				testing.SetRealm(adminRealm)
-				mockInstance.SetPoolCreationFee(newFee)
+				mockInstanceSetPoolCreationFee(newFee)
 			},
 			verify: func() string {
-				return strconv.FormatInt(mockInstance.GetPoolCreationFee(), 10)
+				return strconv.FormatInt(getMockInstance().GetPoolCreationFee(), 10)
 			},
 			expected:    strconv.FormatInt(2_000_000_000, 10),
 			shouldPanic: false,
@@ -107,10 +110,10 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			action: func() {
 				const newFee = 1_000_000_000
 				testing.SetRealm(adminRealm)
-				mockInstance.SetPoolCreationFee(newFee)
+				mockInstanceSetPoolCreationFee(newFee)
 			},
 			verify: func() string {
-				return strconv.FormatInt(mockInstance.GetPoolCreationFee(), 10)
+				return strconv.FormatInt(getMockInstance().GetPoolCreationFee(), 10)
 			},
 			expected:    strconv.FormatInt(1_000_000_000, 10),
 			shouldPanic: false,
@@ -147,48 +150,61 @@ func TestHandleWithdrawalFee(t *testing.T) {
 		{
 			name: "Panic if caller is not position contract",
 			action: func(t *testing.T) {
-				testing.SetOriginCaller(adminAddr)
-				mockInstance.HandleWithdrawalFee(0, "gno.land/r/onbloc/foo", "0", "gno.land/r/onbloc/foo", "0", "", adminAddr)
+				testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("unauthorized")))
+				mockInstanceHandleWithdrawalFee(0, "gno.land/r/onbloc/foo", "0", "gno.land/r/onbloc/foo", "0", "", adminAddr)
+			},
+			verify:      nil,
+			expected:    "unauthorized: caller g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg is not position",
+			shouldPanic: true,
+		},
+		{
+			name: "Panic if pkgPath is not registered",
+			action: func(t *testing.T) {
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				mockInstanceHandleWithdrawalFee(0, "pkgPath", "1000", "pkgPath", "1000", "poolPath", adminAddr)
 			},
 			verify:      nil,
 			expected:    "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not position",
 			shouldPanic: true,
 		},
 		{
-			name: "Panic if pkgPath is not registered",
-			action: func(t *testing.T) {
-				testing.SetRealm(testing.NewUserRealm(positionAddr))
-				mockInstance.HandleWithdrawalFee(0, "pkgPath", "1000", "pkgPath", "1000", "poolPath", adminAddr)
-			},
-			verify:      nil,
-			expected:    "[GNOSWAP-COMMON-004] token is not registered || token(pkgPath)",
-			shouldPanic: true,
-		},
-		{
 			name: "Success call by position contract",
 			action: func(t *testing.T) {
-				testing.SetRealm(testing.NewUserRealm(alice))
-				TokenApprove(t, wugnotPath, alice, poolAddr, 1000)
-				TokenApprove(t, gnsPath, alice, poolAddr, 1000)
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				TokenApprove(t, wugnotPath, adminAddr, poolAddr, 1000)
+				TokenApprove(t, gnsPath, adminAddr, poolAddr, 1000)
+
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				gns.Approve(cross, poolAddr, 100000000000)
+				wugnot.Approve(cross, poolAddr, 100000000000)
+
+				mockInstanceCreatePool(wugnotPath, gnsPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000}})
+				wugnot.Deposit(cross)
+				wugnot.Transfer(cross, poolAddr, 1000000000)
+				gns.Transfer(cross, poolAddr, 1000000000)
 
 				testing.SetRealm(posRealm)
-				mockInstance.Mint(
+				mockInstanceMint(
 					wugnotPath,
 					gnsPath,
 					fee3000,
 					int32(1020),
 					int32(5040),
 					"1000",
-					alice,
+					adminAddr,
 				)
 			},
 			verify: func(t *testing.T) (string, string) {
-				testing.SetRealm(testing.NewUserRealm(alice))
-				TokenApprove(t, wugnotPath, alice, poolAddr, 10000000000)
-				TokenApprove(t, gnsPath, alice, poolAddr, 1000000000)
-				testing.SetRealm(testing.NewUserRealm(positionAddr))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				TokenApprove(t, wugnotPath, adminAddr, poolAddr, 10000000000)
+				TokenApprove(t, gnsPath, adminAddr, poolAddr, 1000000000)
 				poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
-				return mockInstance.HandleWithdrawalFee(2, wugnotPath, "1000", gnsPath, "1000", poolPath, alice)
+
+				testing.SetRealm(posRealm)
+				return mockInstanceHandleWithdrawalFee(2, wugnotPath, "1000", gnsPath, "1000", poolPath, adminAddr)
 			},
 			expected:    "900,900",
 			shouldPanic: false,
@@ -230,7 +246,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 				const newFee = uint64(200)
 				userRealm := testing.NewUserRealm(alice)
 				testing.SetRealm(userRealm)
-				mockInstance.SetWithdrawalFee(newFee)
+				mockInstanceSetWithdrawalFee(newFee)
 			},
 			verify:      nil,
 			expected:    "unauthorized: caller g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh is not admin or governance",
@@ -242,7 +258,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 				const newFee = uint64(200)
 				adminRealm := testing.NewUserRealm(adminAddr)
 				testing.SetRealm(adminRealm)
-				mockInstance.SetWithdrawalFee(newFee)
+				mockInstanceSetWithdrawalFee(newFee)
 			},
 			expected:    strconv.FormatUint(200, 10),
 			shouldPanic: false,
@@ -253,10 +269,10 @@ func TestSetWithdrawalFee(t *testing.T) {
 				const newFee = uint64(200)
 				govRealm := testing.NewUserRealm(govAddr)
 				testing.SetRealm(govRealm)
-				mockInstance.SetWithdrawalFee(newFee)
+				mockInstanceSetWithdrawalFee(newFee)
 			},
 			verify: func(t *testing.T) string {
-				return strconv.FormatUint(mockInstance.GetWithdrawalFee(), 10)
+				return strconv.FormatUint(getMockInstance().GetWithdrawalFee(), 10)
 			},
 			expected:    strconv.FormatUint(200, 10),
 			shouldPanic: false,
@@ -267,7 +283,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 				const newFee = uint64(MaxBpsValue + 1)
 				govRealm := testing.NewUserRealm(govAddr)
 				testing.SetRealm(govRealm)
-				mockInstance.SetWithdrawalFee(newFee)
+				mockInstanceSetWithdrawalFee(newFee)
 			},
 			verify:      nil,
 			expected:    "must be in range 0 ~ 1000",
@@ -362,7 +378,7 @@ func TestProtocolFee(t *testing.T) {
 				// No action needed, just verify initial state
 			},
 			verify: func(t *testing.T) interface{} {
-				return mockInstance.store.GetSlot0FeeProtocol()
+				return getMockInstance().store.GetSlot0FeeProtocol()
 			},
 			expected:    uint8(0),
 			shouldPanic: false,
@@ -371,11 +387,11 @@ func TestProtocolFee(t *testing.T) {
 			name: "create first pool with zero creation fee",
 			action: func(t *testing.T) {
 				testing.SetRealm(adminRealm)
-				mockInstance.SetPoolCreationFee(0)
-				mockInstance.CreatePool(barPath, fooPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+				mockInstanceSetPoolCreationFee(0)
+				mockInstanceCreatePool(barPath, fooPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
 			},
 			verify: func(t *testing.T) interface{} {
-				return mockInstance.store.GetSlot0FeeProtocol()
+				return getMockInstance().store.GetSlot0FeeProtocol()
 			},
 			expected:    uint8(0),
 			shouldPanic: false,
@@ -383,10 +399,12 @@ func TestProtocolFee(t *testing.T) {
 		{
 			name: "get protocol fee from created pool",
 			action: func(t *testing.T) {
-				// Pool already created in previous test
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				mockInstanceSetPoolCreationFee(0)
+				mockInstanceCreatePool(barPath, fooPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
 			},
 			verify: func(t *testing.T) interface{} {
-				pool := mockInstance.mustGetPoolBy(barPath, fooPath, 3000)
+				pool := getMockInstance().mustGetPoolBy(barPath, fooPath, 3000)
 				return pool.Slot0FeeProtocol()
 			},
 			expected:    uint8(0),
@@ -395,7 +413,7 @@ func TestProtocolFee(t *testing.T) {
 		{
 			name: "panic when setting fee protocol with invalid values (3, 3)",
 			action: func(t *testing.T) {
-				_, err := mockInstance.setFeeProtocol(3, 3)
+				_, err := getMockInstance().setFeeProtocol(3, 3)
 				if err != nil {
 					panic(err)
 				}
@@ -407,7 +425,7 @@ func TestProtocolFee(t *testing.T) {
 		{
 			name: "panic when setting fee protocol with invalid values (6, 3)",
 			action: func(t *testing.T) {
-				_, err := mockInstance.setFeeProtocol(6, 3)
+				_, err := getMockInstance().setFeeProtocol(6, 3)
 				if err != nil {
 					panic(err)
 				}
@@ -419,7 +437,7 @@ func TestProtocolFee(t *testing.T) {
 		{
 			name: "panic when setting fee protocol with invalid values (3, 6)",
 			action: func(t *testing.T) {
-				_, err := mockInstance.setFeeProtocol(3, 6)
+				_, err := getMockInstance().setFeeProtocol(3, 6)
 				if err != nil {
 					panic(err)
 				}
@@ -431,7 +449,7 @@ func TestProtocolFee(t *testing.T) {
 		{
 			name: "panic when setting fee protocol with invalid values (11, 11)",
 			action: func(t *testing.T) {
-				_, err := mockInstance.setFeeProtocol(11, 11)
+				_, err := getMockInstance().setFeeProtocol(11, 11)
 				if err != nil {
 					panic(err)
 				}
@@ -443,7 +461,7 @@ func TestProtocolFee(t *testing.T) {
 		{
 			name: "panic when setting fee protocol with invalid values (6, 11)",
 			action: func(t *testing.T) {
-				_, err := mockInstance.setFeeProtocol(6, 11)
+				_, err := getMockInstance().setFeeProtocol(6, 11)
 				if err != nil {
 					panic(err)
 				}
@@ -455,7 +473,7 @@ func TestProtocolFee(t *testing.T) {
 		{
 			name: "panic when setting fee protocol with invalid values (11, 6)",
 			action: func(t *testing.T) {
-				_, err := mockInstance.setFeeProtocol(11, 6)
+				_, err := getMockInstance().setFeeProtocol(11, 6)
 				if err != nil {
 					panic(err)
 				}
@@ -467,13 +485,13 @@ func TestProtocolFee(t *testing.T) {
 		{
 			name: "set fee protocol to valid values (10, 10)",
 			action: func(t *testing.T) {
-				_, err := mockInstance.setFeeProtocol(10, 10)
+				_, err := getMockInstance().setFeeProtocol(10, 10)
 				if err != nil {
 					panic(err)
 				}
 			},
 			verify: func(t *testing.T) interface{} {
-				return mockInstance.store.GetSlot0FeeProtocol()
+				return getMockInstance().store.GetSlot0FeeProtocol()
 			},
 			expected:    uint8(170), // 10 + (10 << 4) = 170
 			shouldPanic: false,
@@ -481,10 +499,14 @@ func TestProtocolFee(t *testing.T) {
 		{
 			name: "check if previous pool's protocol fee is updated",
 			action: func(t *testing.T) {
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				mockInstanceSetPoolCreationFee(0)
+				getMockInstance().store.SetSlot0FeeProtocol(170)
+				mockInstanceCreatePool(barPath, fooPath, 3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
 				// Fee already set in previous test
 			},
 			verify: func(t *testing.T) interface{} {
-				pool := mockInstance.mustGetPoolBy(barPath, fooPath, 3000)
+				pool := getMockInstance().mustGetPoolBy(barPath, fooPath, 3000)
 				return pool.Slot0FeeProtocol()
 			},
 			expected:    uint8(170),
@@ -493,10 +515,13 @@ func TestProtocolFee(t *testing.T) {
 		{
 			name: "create second pool with updated protocol fee",
 			action: func(t *testing.T) {
-				mockInstance.CreatePool(barPath, fooPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				mockInstanceSetPoolCreationFee(0)
+				getMockInstance().store.SetSlot0FeeProtocol(170)
+				mockInstanceCreatePool(barPath, fooPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 			},
 			verify: func(t *testing.T) interface{} {
-				pool := mockInstance.mustGetPoolBy(barPath, fooPath, 500)
+				pool := getMockInstance().mustGetPoolBy(barPath, fooPath, 500)
 				return pool.Slot0FeeProtocol()
 			},
 			expected:    uint8(170),
@@ -534,8 +559,9 @@ func TestProtocolFeesDisabledWhenNotConfigured(t *testing.T) {
 
 	// Create pool with initial price at tick -10000
 	testing.SetRealm(adminRealm)
-	gns.Approve(cross, poolAddr, mockInstance.GetPoolCreationFee())
-	mockInstance.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
+	gns.Approve(cross, poolAddr, getMockInstance().GetPoolCreationFee())
+	mockInstanceSetPoolCreationFee(0)
+	mockInstanceCreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 
 	// Approve tokens for minting liquidity
 	foo.Approve(cross, poolAddr, maxApprove)
@@ -543,7 +569,7 @@ func TestProtocolFeesDisabledWhenNotConfigured(t *testing.T) {
 
 	// Mint liquidity position across full tick range
 	testing.SetRealm(posRealm)
-	mockInstance.Mint(
+	mockInstanceMint(
 		barPath,
 		fooPath,
 		fee500,
@@ -571,7 +597,7 @@ func TestProtocolFeesDisabledWhenNotConfigured(t *testing.T) {
 
 	// Perform swap from token0 to token1 (bar -> foo)
 	testing.SetRealm(rouRealm)
-	mockInstance.Swap(
+	mockInstanceSwap(
 		barPath,
 		fooPath,
 		fee500,
@@ -584,7 +610,7 @@ func TestProtocolFeesDisabledWhenNotConfigured(t *testing.T) {
 	)
 
 	// Perform swap from token1 to token0 (foo -> bar)
-	mockInstance.Swap(
+	mockInstanceSwap(
 		barPath,
 		fooPath,
 		fee500,
@@ -597,7 +623,7 @@ func TestProtocolFeesDisabledWhenNotConfigured(t *testing.T) {
 	)
 
 	// Verify that no protocol fees were collected since protocol fees are not enabled
-	thisPool := mockInstance.mustGetPoolBy(barPath, fooPath, fee500)
+	thisPool := getMockInstance().mustGetPoolBy(barPath, fooPath, fee500)
 	uassert.Equal(t, thisPool.ProtocolFeesToken0().ToString(), "0")
 	uassert.Equal(t, thisPool.ProtocolFeesToken1().ToString(), "0")
 

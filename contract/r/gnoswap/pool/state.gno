@@ -8,6 +8,9 @@ import (
 	"gno.land/p/gnoswap/store"
 	"gno.land/p/gnoswap/version_manager"
 	"gno.land/r/gnoswap/access"
+
+	// initialize rbac roles
+	_ "gno.land/r/gnoswap/rbac"
 )
 
 var (
@@ -47,10 +50,10 @@ func init() {
 }
 
 func initRegisterReadableContract() {
-	poolAddr := access.MustGetAddress(prbac.ROLE_POOL.String())
+	positionAddr := access.MustGetAddress(prbac.ROLE_POSITION.String())
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 
-	kvStore.AddAuthorizedCaller(poolAddr, store.ReadOnly)
+	kvStore.AddAuthorizedCaller(positionAddr, store.ReadOnly)
 	kvStore.AddAuthorizedCaller(stakerAddr, store.ReadOnly)
 }
 

@@ -84,8 +84,6 @@ func setupPools(t *testing.T) {
 		return
 	}
 
-	pool.InitPoolTest(t)
-
 	testing.SetRealm(adminRealm)
 	pool.SetPoolCreationFee(cross, 0)
 

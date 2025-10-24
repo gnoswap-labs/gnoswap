@@ -12,15 +12,9 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
-)
-
-var (
-	positionAddr    = access.MustGetAddressWithVersion(prabc.ROLE_POSITION.String(), 1)
-	poolAddr        = access.MustGetAddressWithVersion(prabc.ROLE_POOL.String(), 1)
-	protocolFeeAddr = access.MustGetAddressWithVersion(prabc.ROLE_PROTOCOL_FEE.String(), 1)
-	routerAddr      = access.MustGetAddressWithVersion(prabc.ROLE_ROUTER.String(), 1)
 )
 
 // Mint adds liquidity to a pool position.
@@ -74,6 +68,8 @@ func (i *poolV1) Mint(
 	if err != nil {
 		panic(err)
 	}
+
+	poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
 
 	if amount0.Gt(zero) {
 		i.safeTransferFrom(pool, positionCaller, poolAddr, pool.Token0Path(), amount0, true)
@@ -219,6 +215,8 @@ func (i *poolV1) Collect(
 
 	amount1Req := u256.MustFromDecimal(amount1Requested)
 	amount1 = collectToken(amount1Req, position.TokensOwed1(), pool.BalanceToken1())
+
+	positionAddr := access.MustGetAddress(prabc.ROLE_POSITION.String())
 
 	if amount0.Gt(u256.Zero()) {
 		tokenOwed0, overflow := u256.Zero().SubOverflow(position.TokensOwed0(), amount0)

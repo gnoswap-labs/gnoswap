@@ -109,7 +109,7 @@ func TestProtocolFees_ManagementAndCollection(t *testing.T) {
 			deductAmount1 := u256.MustFromDecimal(test.deductionAmount["token1"])
 
 			// When: Execute protocol fee deduction
-			actualDeducted0, actualDeducted1 := mockInstance.saveProtocolFees(pool, deductAmount0, deductAmount1)
+			actualDeducted0, actualDeducted1 := getMockInstance().saveProtocolFees(pool, deductAmount0, deductAmount1)
 
 			// Then: Verify expected deduction and remaining balance
 			expectedDeducted0 := u256.MustFromDecimal(test.expectedDeducted["token0"])
@@ -333,7 +333,7 @@ func TestSwapComputation_CoreEngine(t *testing.T) {
 			}
 
 			// When: Execute swap computation
-			result, err := mockInstance.computeSwap(mockPool, computation)
+			result, err := getMockInstance().computeSwap(mockPool, computation)
 			// Then: Verify computation result
 			if err != nil {
 				t.Fatalf("Unexpected error during swap computation: %v", err)
@@ -405,7 +405,7 @@ func TestDrySwap_ValidationAndFailures(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			// When: DrySwap for pre-transaction validation using DSL parameters
 			swapParams := test.swapBuilder()
-			amount0, amount1, success := mockInstance.DrySwap(
+			amount0, amount1, success := getMockInstance().DrySwap(
 				swapParams.token0,
 				swapParams.token1,
 				swapParams.fee,
@@ -435,7 +435,7 @@ func TestSwap_ExecutionAndSecurity(t *testing.T) {
 			description: "Block transactions in locked pool",
 			setupCondition: func(t *testing.T) *pl.Pool {
 				InitialisePoolTest(t)
-				pool := mockInstance.mustGetPoolBy(wugnotPath, gnsPath, STANDARD_FEE_TIER)
+				pool := getMockInstance().mustGetPoolBy(wugnotPath, gnsPath, STANDARD_FEE_TIER)
 				slot0 := pool.Slot0()
 				slot0.SetUnlocked(false)
 				pool.SetSlot0(slot0)
@@ -455,7 +455,7 @@ func TestSwap_ExecutionAndSecurity(t *testing.T) {
 			description: "Prevent meaningless zero swap",
 			setupCondition: func(t *testing.T) *pl.Pool {
 				InitialisePoolTest(t)
-				pool := mockInstance.mustGetPoolBy(wugnotPath, gnsPath, STANDARD_FEE_TIER)
+				pool := getMockInstance().mustGetPoolBy(wugnotPath, gnsPath, STANDARD_FEE_TIER)
 				slot0 := pool.Slot0()
 				slot0.SetUnlocked(true)
 				pool.SetSlot0(slot0)
@@ -490,7 +490,7 @@ func TestSwap_ExecutionAndSecurity(t *testing.T) {
 			testing.SetRealm(rouRealm)
 
 			uassert.AbortsWithMessage(t, test.expectedError, func() {
-				mockInstance.Swap(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+				mockInstanceSwap(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 					alice, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 					test.swapParams.priceLimit, routerAddr,
 					func(cur realm, amount0Delta string, amount1Delta string) error {
@@ -555,7 +555,7 @@ func TestSwapConsistency_DryVsActual(t *testing.T) {
 			test.setupScenario(t)
 
 			// When: DrySwap for pre-calculation
-			dryAmount0, dryAmount1, drySuccess := mockInstance.DrySwap(
+			dryAmount0, dryAmount1, drySuccess := getMockInstance().DrySwap(
 				wugnotPath, gnsPath, STANDARD_FEE_TIER,
 				test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 				test.swapParams.priceLimit)
@@ -568,7 +568,7 @@ func TestSwapConsistency_DryVsActual(t *testing.T) {
 
 			testing.SetRealm(rouRealm)
 
-			actualAmount0, actualAmount1 := mockInstance.Swap(wugnotPath, gnsPath, STANDARD_FEE_TIER,
+			actualAmount0, actualAmount1 := mockInstanceSwap(wugnotPath, gnsPath, STANDARD_FEE_TIER,
 				routerAddr, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 				test.swapParams.priceLimit, routerAddr,
 				func(cur realm, amount0Delta string, amount1Delta string) error {
@@ -672,7 +672,7 @@ func TestSwap_TradingPatterns(t *testing.T) {
 
 			testing.SetRealm(rouRealm)
 
-			actualAmount0, actualAmount1 := mockInstance.Swap(wugnotPath, gnsPath, STANDARD_FEE_TIER,
+			actualAmount0, actualAmount1 := mockInstanceSwap(wugnotPath, gnsPath, STANDARD_FEE_TIER,
 				alice, pattern.swapParams.zeroForOne, pattern.swapParams.amountSpecified,
 				pattern.swapParams.priceLimit, routerAddr,
 				func(cur realm, amount0Delta string, amount1Delta string) error {
@@ -747,7 +747,7 @@ func TestSwap_ExtremeMarketConditions(t *testing.T) {
 
 			testing.SetRealm(rouRealm)
 
-			actualAmount0, actualAmount1 := mockInstance.Swap(wugnotPath, gnsPath, STANDARD_FEE_TIER,
+			actualAmount0, actualAmount1 := mockInstanceSwap(wugnotPath, gnsPath, STANDARD_FEE_TIER,
 				alice, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 				test.swapParams.priceLimit, routerAddr,
 				func(cur realm, amount0Delta string, amount1Delta string) error {
@@ -781,7 +781,7 @@ func TestSwap_FeeTierOptimization(t *testing.T) {
 
 		testing.SetRealm(rouRealm)
 
-		actualAmount0, actualAmount1 := mockInstance.Swap(wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER,
+		actualAmount0, actualAmount1 := mockInstanceSwap(wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER,
 			adminAddr, true, "40012000",
 			common.TickMathGetSqrtRatioAtTick(-887220).ToString(), routerAddr,
 			func(cur realm, amount0Delta string, amount1Delta string) error {
@@ -850,15 +850,15 @@ func setupScatteredLiquidityPool(t *testing.T) {
 	TokenApprove(t, wugnotPath, adminAddr, poolAddr, maxApprove)
 	TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
 
-	mockInstance.CreatePool(wugnotPath, gnsPath, STANDARD_FEE_TIER,
+	mockInstanceCreatePool(wugnotPath, gnsPath, STANDARD_FEE_TIER,
 		common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 
 	testing.SetRealm(posRealm)
 	// 4 dispersed liquidity positions
-	mockInstance.Mint(wugnotPath, gnsPath, STANDARD_FEE_TIER, -10020, -9000, "10000000", adminAddr)
-	mockInstance.Mint(wugnotPath, gnsPath, STANDARD_FEE_TIER, -4980, -4020, "20000000", adminAddr)
-	mockInstance.Mint(wugnotPath, gnsPath, STANDARD_FEE_TIER, 0, 1020, "30000000", adminAddr)
-	mockInstance.Mint(wugnotPath, gnsPath, STANDARD_FEE_TIER, 8040, 10020, "40000000", adminAddr)
+	mockInstanceMint(wugnotPath, gnsPath, STANDARD_FEE_TIER, -10020, -9000, "10000000", adminAddr)
+	mockInstanceMint(wugnotPath, gnsPath, STANDARD_FEE_TIER, -4980, -4020, "20000000", adminAddr)
+	mockInstanceMint(wugnotPath, gnsPath, STANDARD_FEE_TIER, 0, 1020, "30000000", adminAddr)
+	mockInstanceMint(wugnotPath, gnsPath, STANDARD_FEE_TIER, 8040, 10020, "40000000", adminAddr)
 
 	// Prepare tokens
 	testing.SetOriginCaller(adminAddr)
@@ -883,13 +883,13 @@ func setupExtremePriceRangePool(t *testing.T) {
 	TokenApprove(t, wugnotPath, adminAddr, poolAddr, maxApprove)
 	TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
 
-	mockInstance.CreatePool(wugnotPath, gnsPath, STANDARD_FEE_TIER,
+	mockInstanceCreatePool(wugnotPath, gnsPath, STANDARD_FEE_TIER,
 		common.TickMathGetSqrtRatioAtTick(100000).ToString())
 
 	testing.SetRealm(posRealm)
 	// Extreme range liquidity
-	mockInstance.Mint(wugnotPath, gnsPath, STANDARD_FEE_TIER, -100020, -99960, "500000", adminAddr)
-	mockInstance.Mint(wugnotPath, gnsPath, STANDARD_FEE_TIER, 99960, 100020, "500000", adminAddr)
+	mockInstanceMint(wugnotPath, gnsPath, STANDARD_FEE_TIER, -100020, -99960, "500000", adminAddr)
+	mockInstanceMint(wugnotPath, gnsPath, STANDARD_FEE_TIER, 99960, 100020, "500000", adminAddr)
 
 	// Prepare tokens
 	testing.SetOriginCaller(adminAddr)
@@ -1034,7 +1034,7 @@ func setupUltraLowFeePool(t *testing.T) *pl.Pool {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	wugnot.Approve(cross, poolAddr, maxApprove)
 	gns.Approve(cross, poolAddr, maxApprove)
-	mockInstance.CreatePool(wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER, EQUAL_PRICE_RATIO)
+	mockInstanceCreatePool(wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER, EQUAL_PRICE_RATIO)
 
 	// Prepare tokens
 	testing.SetOriginCaller(adminAddr)
@@ -1047,8 +1047,8 @@ func setupUltraLowFeePool(t *testing.T) *pl.Pool {
 
 	// Add liquidity
 	testing.SetRealm(posRealm)
-	mockInstance.Mint(wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER, -100, 100, "10000000", adminAddr)
-	mockInstance.Mint(wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER, -100, 100, "10000000", adminAddr)
+	mockInstanceMint(wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER, -100, 100, "10000000", adminAddr)
+	mockInstanceMint(wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER, -100, 100, "10000000", adminAddr)
 
 	// Send tokens to router
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
@@ -1057,6 +1057,6 @@ func setupUltraLowFeePool(t *testing.T) *pl.Pool {
 	gns.Transfer(cross, routerAddr, 20000000)
 	wugnot.Approve(cross, poolAddr, maxApprove)
 
-	pool := mockInstance.mustGetPoolBy(wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER)
+	pool := getMockInstance().mustGetPoolBy(wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER)
 	return pool
 }

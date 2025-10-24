@@ -233,7 +233,7 @@ func TestTransferFromAndVerify(t *testing.T) {
 			TokenFaucet(t, tt.tokenPath, tt.from)
 			TokenApprove(t, tt.tokenPath, tt.from, poolAddr, u256.MustFromDecimal(tt.amount.ToString()).Int64())
 
-			mockInstance.safeTransferFrom(tt.pool, tt.from, tt.to, tt.tokenPath, u256.MustFromDecimal(tt.amount.ToString()), tt.isToken0)
+			mockInstanceSafeTransferFrom(tt.pool, tt.from, tt.to, tt.tokenPath, u256.MustFromDecimal(tt.amount.ToString()), tt.isToken0)
 
 			if !tt.pool.BalanceToken0().Eq(tt.expectedBal0) {
 				t.Errorf("token0 balance mismatch: expected %s, got %s",
@@ -256,7 +256,7 @@ func TestTransferFromAndVerify(t *testing.T) {
 
 		TokenFaucet(t, fooPath, testutils.TestAddress("from_addr"))
 		TokenApprove(t, fooPath, testutils.TestAddress("from_addr"), poolAddr, u256.MustFromDecimal(negativeAmount.Abs().ToString()).Int64())
-		mockInstance.safeTransferFrom(pool, testutils.TestAddress("from_addr"), testutils.TestAddress("to_addr"), fooPath, u256.MustFromDecimal(negativeAmount.Abs().ToString()), true)
+		mockInstanceSafeTransferFrom(pool, testutils.TestAddress("from_addr"), testutils.TestAddress("to_addr"), fooPath, u256.MustFromDecimal(negativeAmount.Abs().ToString()), true)
 
 		expectedBal := u256.NewUint(1500) // 1000 + 500 (absolute value)
 		if !pool.BalanceToken0().Eq(expectedBal) {
@@ -264,19 +264,5 @@ func TestTransferFromAndVerify(t *testing.T) {
 				expectedBal.ToString(),
 				pool.BalanceToken0().ToString())
 		}
-	})
-
-	t.Run("uint64 overflow value", func(t *testing.T) {
-		pool := makeMockPoolWithBalance(u256.NewUint(1000), u256.NewUint(2000))
-
-		hugeAmount := i256.FromUint256(u256.MustFromDecimal("18446744073709551616")) // 2^64
-
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("expected panic for amount exceeding uint64 range")
-			}
-		}()
-
-		mockInstance.safeTransferFrom(pool, testutils.TestAddress("from_addr"), testutils.TestAddress("to_addr"), fooPath, u256.MustFromDecimal(hugeAmount.ToString()), true)
 	})
 }

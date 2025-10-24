@@ -87,7 +87,7 @@ func setupTestPool(t *testing.T, token0, token1 string, fee uint32, sqrtPrice st
 	t.Helper()
 	initPoolTest(t)
 
-	tickSpacing := mockInstance.GetFeeAmountTickSpacing(fee)
+	tickSpacing := getMockInstance().GetFeeAmountTickSpacing(fee)
 	poolParams := newPoolParams(token0, token1, fee, sqrtPrice, tickSpacing, 0)
 	return newPool(poolParams)
 }
@@ -129,7 +129,7 @@ func createPositionWithValidation(t *testing.T, pool *pl.Pool, scenario Position
 	if !exists {
 		t.Fatalf("Position was not created with key: %s", positionKey)
 	}
-	position := positionValue.(*pl.PositionInfo)
+	position := positionValue.(pl.PositionInfo)
 
 	// Validate liquidity
 	if position.Liquidity().ToString() != scenario.liquidity {
@@ -169,7 +169,7 @@ func simulateFeeGrowth(t *testing.T, pool *pl.Pool, feeGrowth0, feeGrowth1 strin
 }
 
 // validatePositionFees checks if position has accumulated expected fees
-func validatePositionFees(t *testing.T, position *pl.PositionInfo, expectedLevel string) {
+func validatePositionFees(t *testing.T, position pl.PositionInfo, expectedLevel string) {
 	t.Helper()
 
 	hasToken0Fees := position.TokensOwed0().Gt(u256.Zero())
@@ -189,7 +189,7 @@ func validatePositionFees(t *testing.T, position *pl.PositionInfo, expectedLevel
 }
 
 // assertPositionInvariants validates that position maintains expected invariants
-func assertPositionInvariants(t *testing.T, position *pl.PositionInfo) {
+func assertPositionInvariants(t *testing.T, position pl.PositionInfo) {
 	t.Helper()
 
 	// Liquidity should never be negative (represented as uint)
@@ -483,7 +483,7 @@ func TestPositionUpdate_FeeAccumulation(t *testing.T) {
 				}
 
 				// Ensure invariants
-				assertPositionInvariants(t, &newPos)
+				assertPositionInvariants(t, newPos)
 			}
 
 			t.Logf("✓ %s: %s - %s",
@@ -680,7 +680,7 @@ func TestModifyPosition_WithDifferentPrice(t *testing.T) {
 		// Validate final position state
 		positionValue, exists := pool.Positions().Get(posKey)
 		uassert.True(t, exists, "Position should still exist")
-		position := positionValue.(*pl.PositionInfo)
+		position := positionValue.(pl.PositionInfo)
 		uassert.Equal(t, MEDIUM_LIQUIDITY, position.Liquidity().ToString(), "Final liquidity should match")
 	})
 }
@@ -695,7 +695,7 @@ func TestModifyPositionEdgeCases(t *testing.T) {
 			fooPath,
 			FeeTier500,
 			sqrtPrice,
-			mockInstance.GetFeeAmountTickSpacing(fee500),
+			getMockInstance().GetFeeAmountTickSpacing(fee500),
 			0,
 		)
 		pool := newPool(poolParams)
@@ -716,7 +716,7 @@ func TestModifyPositionEdgeCases(t *testing.T) {
 			fooPath,
 			FeeTier500,
 			sqrtPrice,
-			mockInstance.GetFeeAmountTickSpacing(fee500),
+			getMockInstance().GetFeeAmountTickSpacing(fee500),
 			0,
 		)
 		pool := newPool(poolParams)
@@ -860,7 +860,7 @@ func TestPositionFeeCollection_Scenarios(t *testing.T) {
 			if scenario.tradingVolume != "none" {
 				// Get current position to update fees
 				positionValue, _ := pool.Positions().Get(posKey)
-				position := positionValue.(*pl.PositionInfo)
+				position := positionValue.(pl.PositionInfo)
 
 				// Calculate simulated fee amounts based on liquidity share
 				// This is a simplified simulation for testing
@@ -888,7 +888,7 @@ func TestPositionFeeCollection_Scenarios(t *testing.T) {
 
 			// Then: Validate fee accumulation
 			positionValue, _ := pool.Positions().Get(posKey)
-			position := positionValue.(*pl.PositionInfo)
+			position := positionValue.(pl.PositionInfo)
 
 			validatePositionFees(t, position, scenario.expectedFeeLevel)
 
@@ -928,7 +928,7 @@ func TestPositionFeeCalculation_EdgeCases(t *testing.T) {
 
 		posKey, _ := getPositionKey(CONCENTRATED_LOWER, CONCENTRATED_UPPER)
 		positionValue, _ := pool.Positions().Get(posKey)
-		position := positionValue.(*pl.PositionInfo)
+		position := positionValue.(pl.PositionInfo)
 
 		// Verify fees are calculated
 		uassert.True(t, position.TokensOwed0().Gt(u256.Zero()), "Should have token0 fees")
@@ -974,7 +974,7 @@ func TestPositionFeeCalculation_EdgeCases(t *testing.T) {
 			if r.inRange {
 				posKey, _ := getPositionKey(r.tickLower, r.tickUpper)
 				positionValue, _ := pool.Positions().Get(posKey)
-				position := positionValue.(*pl.PositionInfo)
+				position := positionValue.(pl.PositionInfo)
 
 				// Simulate fee accumulation for in-range positions
 				position.SetTokensOwed0(u256.NewUint(1000))
@@ -998,7 +998,7 @@ func TestPositionFeeCalculation_EdgeCases(t *testing.T) {
 
 			posKey, _ := getPositionKey(r.tickLower, r.tickUpper)
 			positionValue, _ := pool.Positions().Get(posKey)
-			position := positionValue.(*pl.PositionInfo)
+			position := positionValue.(pl.PositionInfo)
 
 			if r.inRange {
 				uassert.True(t, position.TokensOwed0().Gt(u256.Zero()) || position.TokensOwed1().Gt(u256.Zero()),
@@ -1049,7 +1049,7 @@ func TestPositionSecurity_EdgeCases(t *testing.T) {
 		// Then: Verify position is updated, not duplicated
 		positionValue, exists := pool.Positions().Get(posKey)
 		uassert.True(t, exists, "Position should exist")
-		position := positionValue.(*pl.PositionInfo)
+		position := positionValue.(pl.PositionInfo)
 
 		expectedLiquidity := new(u256.Uint).Add(
 			u256.MustFromDecimal(MEDIUM_LIQUIDITY),
@@ -1143,7 +1143,7 @@ func TestPositionSecurity_EdgeCases(t *testing.T) {
 		// Then: Verify position state
 		positionValue, exists := pool.Positions().Get(posKey)
 		uassert.True(t, exists, "Position entry should still exist")
-		position := positionValue.(*pl.PositionInfo)
+		position := positionValue.(pl.PositionInfo)
 
 		uassert.Equal(t, "0", position.Liquidity().ToString(),
 			"Liquidity should be zero after complete removal")

@@ -15,12 +15,14 @@ func TestNewPoolParams(t *testing.T) {
 	t.Run(
 		"success - normal token pair",
 		func(t *testing.T) {
+			initPoolTest(t)
+
 			params := newPoolParams(
 				"token0",
 				"token1",
 				500,       // 0.05% fee
 				"1000000", // example sqrt price
-				mockInstance.GetFeeAmountTickSpacing(500),
+				getMockInstance().GetFeeAmountTickSpacing(500),
 				0,
 			)
 
@@ -41,12 +43,14 @@ func TestNewPoolParams(t *testing.T) {
 	t.Run(
 		"Success - native token wrapped wugnot token",
 		func(t *testing.T) {
+			initPoolTest(t)
+
 			params := newPoolParams(
 				GNOT,
 				"token1",
 				500,
 				"1000000",
-				mockInstance.GetFeeAmountTickSpacing(500),
+				getMockInstance().GetFeeAmountTickSpacing(500),
 				0,
 			)
 			token0, _ := params.wrap()
@@ -76,7 +80,7 @@ func TestNewPoolParam(t *testing.T) {
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: MAX_PRICE_IMPACT,
 			sqrtPriceX96:    u256.MustFromDecimal(MAX_PRICE_IMPACT),
-			tickSpacing:     mockInstance.GetFeeAmountTickSpacing(FeeTier3000),
+			tickSpacing:     getMockInstance().GetFeeAmountTickSpacing(FeeTier3000),
 			expectedPanic:   false,
 		},
 	}
@@ -117,7 +121,7 @@ func TestIsInOrder(t *testing.T) {
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: MAX_PRICE_IMPACT,
 			sqrtPriceX96:    u256.MustFromDecimal(MAX_PRICE_IMPACT),
-			tickSpacing:     mockInstance.GetFeeAmountTickSpacing(FeeTier3000),
+			tickSpacing:     getMockInstance().GetFeeAmountTickSpacing(FeeTier3000),
 			expectedPanic:   false,
 		},
 	}
@@ -159,7 +163,7 @@ func TestUpdateWithWrapping(t *testing.T) {
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: MAX_PRICE_IMPACT,
 			sqrtPriceX96:    u256.MustFromDecimal(MAX_PRICE_IMPACT),
-			tickSpacing:     mockInstance.GetFeeAmountTickSpacing(FeeTier3000),
+			tickSpacing:     getMockInstance().GetFeeAmountTickSpacing(FeeTier3000),
 			expectedPanic:   false,
 		},
 		{
@@ -169,7 +173,7 @@ func TestUpdateWithWrapping(t *testing.T) {
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: "4295128740", // MIN_SQRT_RATIO + 1
 			sqrtPriceX96:    u256.MustFromDecimal("4295128740"),
-			tickSpacing:     mockInstance.GetFeeAmountTickSpacing(FeeTier3000),
+			tickSpacing:     getMockInstance().GetFeeAmountTickSpacing(FeeTier3000),
 			expectedPanic:   false,
 		},
 		{
@@ -179,7 +183,7 @@ func TestUpdateWithWrapping(t *testing.T) {
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: "4295128738",                       // MIN_SQRT_RATIO - 1
 			sqrtPriceX96:    u256.MustFromDecimal("4295128738"), // Fixed to match the string
-			tickSpacing:     mockInstance.GetFeeAmountTickSpacing(FeeTier3000),
+			tickSpacing:     getMockInstance().GetFeeAmountTickSpacing(FeeTier3000),
 			expectedPanic:   true,
 			expectedMsg:     "out of range for numeric value",
 		},
@@ -190,7 +194,7 @@ func TestUpdateWithWrapping(t *testing.T) {
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: "1461446703485210103287273052203988822378723970342", // MAX_SQRT_RATIO + 1
 			sqrtPriceX96:    u256.MustFromDecimal("1461446703485210103287273052203988822378723970342"),
-			tickSpacing:     mockInstance.GetFeeAmountTickSpacing(FeeTier3000),
+			tickSpacing:     getMockInstance().GetFeeAmountTickSpacing(FeeTier3000),
 			expectedPanic:   true,
 			expectedMsg:     "out of range for numeric value",
 		},
@@ -201,7 +205,7 @@ func TestUpdateWithWrapping(t *testing.T) {
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: sqrtPriceX96FromTick.ToString(),
 			sqrtPriceX96:    sqrtPriceX96FromTick,
-			tickSpacing:     mockInstance.GetFeeAmountTickSpacing(FeeTier3000),
+			tickSpacing:     getMockInstance().GetFeeAmountTickSpacing(FeeTier3000),
 			expectedPanic:   false,
 		},
 		{
@@ -211,7 +215,7 @@ func TestUpdateWithWrapping(t *testing.T) {
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: "4295128738", // MIN_SQRT_RATIO - 1
 			sqrtPriceX96:    u256.MustFromDecimal("4295128738"),
-			tickSpacing:     mockInstance.GetFeeAmountTickSpacing(FeeTier3000),
+			tickSpacing:     getMockInstance().GetFeeAmountTickSpacing(FeeTier3000),
 			expectedPanic:   true,
 			expectedMsg:     "out of range for numeric value",
 		},
@@ -277,7 +281,7 @@ func TestWrap(t *testing.T) {
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: MAX_PRICE_IMPACT,
 			sqrtPriceX96:    u256.MustFromDecimal(MAX_PRICE_IMPACT),
-			tickSpacing:     mockInstance.GetFeeAmountTickSpacing(FeeTier3000),
+			tickSpacing:     getMockInstance().GetFeeAmountTickSpacing(FeeTier3000),
 			expectedPanic:   false,
 		},
 	}
@@ -322,7 +326,7 @@ func TestGeneratePoolPath(t *testing.T) {
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: MAX_PRICE_IMPACT,
 			sqrtPriceX96:    u256.MustFromDecimal(MAX_PRICE_IMPACT),
-			tickSpacing:     mockInstance.GetFeeAmountTickSpacing(FeeTier3000),
+			tickSpacing:     getMockInstance().GetFeeAmountTickSpacing(FeeTier3000),
 			expectedPanic:   false,
 		},
 	}

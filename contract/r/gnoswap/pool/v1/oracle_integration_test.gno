@@ -90,7 +90,7 @@ func TestOracle_SwapScenarios(t *testing.T) {
 					"Tick cumulative should accumulate even with zero liquidity")
 
 				// Liquidity cumulative should remain zero
-				uassert.Equal(t, "0", obs.LiquidityCumulative(),
+				uassert.Equal(t, "0", obs.LiquidityCumulative().ToString(),
 					"Liquidity cumulative should remain zero")
 			},
 		},

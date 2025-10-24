@@ -14,6 +14,7 @@ import (
 
 	"gno.land/r/gnoswap/pool"
 	pl "gno.land/r/gnoswap/pool"
+	pool_v1 "gno.land/r/gnoswap/pool/v1"
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
@@ -83,6 +84,8 @@ var (
 
 	mockInstance        *positionV1
 	registeredTestStore = false
+
+	initializedPool = false
 )
 
 func TokenFaucet(t *testing.T, tokenPath string, to address) {
@@ -432,10 +435,26 @@ func burnUsdc(addr address) {
 	usdc.Burn(cross, addr, usdc.BalanceOf(addr))
 }
 
+func initPoolTest(t *testing.T) {
+	t.Helper()
+	const mockPoolPath = "gno.land/r/gnoswap/pool/mock"
+
+	if !initializedPool {
+		initializedPool = true
+
+		testing.SetRealm(testing.NewCodeRealm(mockPoolPath))
+		pool.RegisterInitializer(cross, func(_ pool.IPoolStore) pool.IPool {
+			return pool_v1.NewPoolV1(mock.NewMockPoolStore())
+		})
+	}
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	pool.UpgradeImpl(cross, mockPoolPath)
+}
+
 func initPositionTest(t *testing.T) {
 	t.Helper()
-
-	pool.InitPoolTest(t)
+	initPoolTest(t)
 	mockInstance = &positionV1{
 		store:       mock.NewMockPositionStore(),
 		nftAccessor: mock.NewMockNFTAccessor(),

@@ -273,8 +273,8 @@ func setupTestPool(t *testing.T) {
 		"",
 	)
 
-	pool := pl.GetPool(barPath, fooPath, FEE_MEDIUM)
-	uassert.Equal(t, pool.Liquidity().ToString(), "1000000")
+	pool := pl.GetPoolPath(barPath, fooPath, FEE_MEDIUM)
+	uassert.Equal(t, pl.GetLiquidity(pool), "1000000")
 }
 
 func TestExactOutAmountValidation(t *testing.T) {

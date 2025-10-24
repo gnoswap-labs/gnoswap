@@ -150,10 +150,10 @@ func NewMockPoolStoreWithHook(
 	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64),
 ) *MockPoolStore {
 	feeAmountTickSpacing := avl.NewTree()
-	feeAmountTickSpacing.Set("100", 1)
-	feeAmountTickSpacing.Set("500", 5)
-	feeAmountTickSpacing.Set("3000", 30)
-	feeAmountTickSpacing.Set("10000", 100)
+	feeAmountTickSpacing.Set("100", int32(1))
+	feeAmountTickSpacing.Set("500", int32(10))
+	feeAmountTickSpacing.Set("3000", int32(60))
+	feeAmountTickSpacing.Set("10000", int32(200))
 
 	return &MockPoolStore{
 		pools:                avl.NewTree(),

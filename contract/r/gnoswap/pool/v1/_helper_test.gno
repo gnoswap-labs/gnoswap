@@ -76,11 +76,20 @@ var (
 	alice      = testutils.TestAddress("alice")
 	adminRealm = testing.NewUserRealm(adminAddr)
 
+	poolPath        = "gno.land/r/gnoswap/pool"
+	positionPath    = "gno.land/r/gnoswap/position"
+	routerPath      = "gno.land/r/gnoswap/router"
+	protocolFeePath = "gno.land/r/gnoswap/protocol_fee"
+
+	poolAddr        = chain.PackageAddress(poolPath)
+	positionAddr    = chain.PackageAddress(positionPath)
+	routerAddr      = chain.PackageAddress(routerPath)
+	protocolFeeAddr = chain.PackageAddress(protocolFeePath)
+
 	posPath  = "gno.land/r/gnoswap/position"
 	posRealm = testing.NewCodeRealm(posPath)
 
-	routerPath = "gno.land/r/gnoswap/router"
-	rouRealm   = testing.NewCodeRealm(routerPath)
+	rouRealm = testing.NewCodeRealm(routerPath)
 
 	addrUsedInTest = []address{addr01, addr02}
 
@@ -104,8 +113,8 @@ func InitialisePoolTest(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		TokenApprove(t, gnsPath, adminAddr, poolAddr, maxApprove)
 		poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
-		if !mockInstance.ExistsPoolPath(poolPath) {
-			mockInstance.CreatePool(wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
+		if !getMockInstance().ExistsPoolPath(poolPath) {
+			mockInstanceCreatePool(wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
 		}
 	}()
 
@@ -245,7 +254,7 @@ func MintPosition(t *testing.T,
 	t.Helper()
 	testing.SetRealm(posRealm)
 
-	return mockInstance.Mint(
+	return mockInstanceMint(
 		token0,
 		token1,
 		fee,
@@ -641,25 +650,26 @@ func initPoolTest(t *testing.T) {
 	}
 }
 
+type mockSlot0 struct {
+	sqrtPriceX96 *u256.Uint
+	tick         int32
+	feeProtocol  uint8
+	unlocked     bool
+}
+
+type mockBalances struct {
+	token0 *u256.Uint
+	token1 *u256.Uint
+}
+
 type createMockPoolParams struct {
-	token0Path  string
-	token1Path  string
-	fee         uint32
-	tickSpacing int32
-	slot0       struct {
-		sqrtPriceX96 *u256.Uint
-		tick         int32
-		feeProtocol  uint8
-		unlocked     bool
-	}
-	balances struct {
-		token0 *u256.Uint
-		token1 *u256.Uint
-	}
-	protocolFees struct {
-		token0 *u256.Uint
-		token1 *u256.Uint
-	}
+	token0Path           string
+	token1Path           string
+	fee                  uint32
+	tickSpacing          int32
+	slot0                mockSlot0
+	balances             mockBalances
+	protocolFees         mockBalances
 	maxLiquidityPerTick  *u256.Uint
 	feeGrowthGlobal0X128 *u256.Uint
 	feeGrowthGlobal1X128 *u256.Uint
@@ -703,4 +713,110 @@ func makeMockPool(params createMockPoolParams) *pl.Pool {
 	pool.SetObservationState(params.observationState)
 
 	return pool
+}
+
+func getMockInstance() *poolV1 {
+	if mockInstance == nil {
+		mockInstance = &poolV1{
+			store: mock.NewMockPoolStore(),
+		}
+	}
+
+	return mockInstance
+}
+
+func mockInstanceSetPoolCreationFee(fee int64) {
+	func(cur realm) {
+		const currentPoolPath = "gno.land/r/gnoswap/pool"
+		testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
+		getMockInstance().SetPoolCreationFee(fee)
+	}(cross)
+}
+
+func mockInstanceCreatePool(token0Path string, token1Path string, fee uint32, sqrtPrice string) {
+	func(cur realm) {
+		const currentPoolPath = "gno.land/r/gnoswap/pool"
+		testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
+		getMockInstance().CreatePool(token0Path, token1Path, fee, sqrtPrice)
+	}(cross)
+}
+
+func mockInstanceIncreaseObservationCardinalityLimit(token0Path string, token1Path string, fee uint32, newCardinalityLimit uint16) {
+	func(cur realm) {
+		const currentPoolPath = "gno.land/r/gnoswap/pool"
+		testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
+		getMockInstance().IncreaseObservationCardinalityLimit(token0Path, token1Path, fee, newCardinalityLimit)
+	}(cross)
+}
+
+func mockInstanceMint(token0Path string, token1Path string, fee uint32, tickLower int32, tickUpper int32, liquidityAmount string, positionCaller address) (string, string) {
+	return func(cur realm) (string, string) {
+		const currentPoolPath = "gno.land/r/gnoswap/pool"
+		testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
+		return getMockInstance().Mint(token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
+	}(cross)
+}
+
+func mockInstanceBurn(token0Path string, token1Path string, fee uint32, tickLower int32, tickUpper int32, liquidityAmount string, positionCaller address) (string, string) {
+	return func(cur realm) (string, string) {
+		const currentPoolPath = "gno.land/r/gnoswap/pool"
+		testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
+		return getMockInstance().Burn(token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
+	}(cross)
+}
+
+func mockInstanceCollect(token0Path string, token1Path string, fee uint32, recipient address, tickLower int32, tickUpper int32, amount0Requested string, amount1Requested string) (string, string) {
+	return func(cur realm) (string, string) {
+		const currentPoolPath = "gno.land/r/gnoswap/pool"
+		testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
+		return getMockInstance().Collect(token0Path, token1Path, fee, recipient, tickLower, tickUpper, amount0Requested, amount1Requested)
+	}(cross)
+}
+
+func mockInstanceCollectProtocol(token0Path string, token1Path string, fee uint32, recipient address, amount0Requested string, amount1Requested string) (string, string) {
+	return func(cur realm) (string, string) {
+		const currentPoolPath = "gno.land/r/gnoswap/pool"
+		testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
+		return getMockInstance().CollectProtocol(token0Path, token1Path, fee, recipient, amount0Requested, amount1Requested)
+	}(cross)
+}
+
+func mockInstanceSwap(token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, payer address, swapCallback func(cur realm, amount0Delta string, amount1Delta string) error) (string, string) {
+	return func(cur realm) (string, string) {
+		const currentPoolPath = "gno.land/r/gnoswap/pool"
+		testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
+		return getMockInstance().Swap(token0Path, token1Path, fee, recipient, zeroForOne, amountSpecified, sqrtPriceLimitX96, payer, swapCallback)
+	}(cross)
+}
+
+func mockInstanceHandleWithdrawalFee(positionId uint64, token0Path string, amount0 string, token1Path string, amount1 string, poolPath string, positionCaller address) (string, string) {
+	return func(cur realm) (string, string) {
+		const currentPoolPath = "gno.land/r/gnoswap/pool"
+		testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
+		return getMockInstance().HandleWithdrawalFee(positionId, token0Path, amount0, token1Path, amount1, poolPath, positionCaller)
+	}(cross)
+}
+
+func mockInstanceSetWithdrawalFee(fee uint64) {
+	func(cur realm) {
+		const currentPoolPath = "gno.land/r/gnoswap/pool"
+		testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
+		getMockInstance().SetWithdrawalFee(fee)
+	}(cross)
+}
+
+func mockInstanceSetFeeProtocol(feeProtocol0 uint8, feeProtocol1 uint8) {
+	func(cur realm) {
+		const currentPoolPath = "gno.land/r/gnoswap/pool"
+		testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
+		getMockInstance().SetFeeProtocol(feeProtocol0, feeProtocol1)
+	}(cross)
+}
+
+func mockInstanceSafeTransferFrom(pool *pl.Pool, from, to address, tokenPath string, amount *u256.Uint, isToken0 bool) {
+	func(cur realm) {
+		const currentPoolPath = "gno.land/r/gnoswap/pool"
+		testing.SetRealm(testing.NewCodeRealm(currentPoolPath))
+		getMockInstance().safeTransferFrom(pool, from, to, tokenPath, amount, isToken0)
+	}(cross)
 }

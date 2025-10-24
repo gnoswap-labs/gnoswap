@@ -43,8 +43,6 @@ func main() {
 
 // testSuccessfulBurn tests successful burning of all liquidity from a position
 func testSuccessfulBurn(t *testing.T) {
-	pool.InitPoolTest(t)
-
 	// Given: Pool exists with minted position
 	barTokenPath := "gno.land/r/onbloc/bar"
 	bazTokenPath := "gno.land/r/onbloc/baz"

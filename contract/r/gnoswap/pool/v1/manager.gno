@@ -4,6 +4,7 @@ import (
 	"chain"
 	"chain/runtime"
 
+	prabc "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
@@ -101,6 +102,8 @@ func (i *poolV1) CreatePool(
 	poolCreationFee := i.store.GetPoolCreationFee()
 
 	if poolCreationFee > 0 {
+		protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+
 		gns.TransferFrom(cross, runtime.PreviousRealm().Address(), protocolFeeAddr, poolCreationFee)
 		pf.AddToProtocolFee(cross, GNS_PATH, poolCreationFee)
 

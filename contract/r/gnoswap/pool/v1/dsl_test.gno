@@ -85,11 +85,11 @@ func (e *PoolTestEnv) GivenPoolCreated(token0, token1 string, fee uint32, sqrtPr
 	// Set pool creation fee to 0 for testing
 	e.AsAdmin()
 	testing.SetRealm(adminRealm)
-	mockInstance.SetPoolCreationFee(0)
+	mockInstanceSetPoolCreationFee(0)
 
 	// Create the pool
-	mockInstance.CreatePool(token0, token1, fee, sqrtPriceX96)
-	pool := mockInstance.mustGetPool(poolKey)
+	mockInstanceCreatePool(token0, token1, fee, sqrtPriceX96)
+	pool := getMockInstance().mustGetPool(poolKey)
 	e.pools[poolKey] = pool
 
 	return e
@@ -130,7 +130,7 @@ func (e *PoolTestEnv) AndLiquidityProvided(params LiquidityParams) *PoolTestEnv 
 
 	// Add liquidity
 	testing.SetRealm(posRealm)
-	amount0, amount1 := mockInstance.Mint(
+	amount0, amount1 := mockInstanceMint(
 		params.token0,
 		params.token1,
 		params.fee,
@@ -177,7 +177,7 @@ func (e *PoolTestEnv) WhenSwapExecuted(params SwapParams) (*u256.Uint, *u256.Uin
 
 	// Execute swap
 	testing.SetRealm(rouRealm)
-	amount0Str, amount1Str := mockInstance.Swap(
+	amount0Str, amount1Str := mockInstanceSwap(
 		params.token0,
 		params.token1,
 		params.fee,
@@ -402,7 +402,7 @@ func (b *PoolBuilder) Create(env *PoolTestEnv) *PoolTestEnv {
 func assertPoolExists(t *testing.T, token0, token1 string, fee uint32) {
 	t.Helper()
 	poolPath := GetPoolPath(token0, token1, fee)
-	uassert.True(t, mockInstance.ExistsPoolPath(poolPath), "Pool should exist")
+	uassert.True(t, getMockInstance().ExistsPoolPath(poolPath), "Pool should exist")
 }
 
 func assertSwapSuccess(t *testing.T, amount0, amount1 *u256.Uint, expectedAmount0, expectedAmount1 string) {

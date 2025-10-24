@@ -67,8 +67,6 @@ func main() {
 
 // testDrySwapVsActualSwap tests DrySwap prediction against actual Swap execution
 func testDrySwapVsActualSwap(t *testing.T) {
-	pool.InitPoolTest(t)
-
 	// Given: Pool exists with minted position
 	println("[INFO] Setting up pool and position for comparison test")
 	println("[INFO] Token0:", barPath)

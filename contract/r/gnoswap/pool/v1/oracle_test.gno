@@ -216,24 +216,25 @@ func TestPool_IncreaseObservationCardinalityLimit(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			initPoolTest(t)
 			pool := createTestPool()
+			currentTime := time.Now().Unix()
+			observationState := pool.ObservationState()
 
 			if tt.initialCardinality > 0 {
-				currentTime := time.Now().Unix()
-				observationState := pool.ObservationState()
 				writeObservation(observationState, currentTime, pool.Slot0Tick(), pool.Liquidity())
 				observationState.SetCardinality(tt.initialCardinality)
 				observationState.SetCardinalityLimit(tt.initialCardinalityLimit)
+				pool.SetObservationState(observationState)
 			} else {
 				pool.SetObservationState(nil)
 			}
 
 			if tt.expectError {
-				uassert.AbortsContains(t, tt.errorContains, func() {
-					mockInstance.IncreaseObservationCardinalityLimit(pool.Token0Path(), pool.Token1Path(), pool.Fee(), tt.newCardinalityLimit)
-				})
+				err := increaseObservationCardinalityLimitByPool(pool, tt.newCardinalityLimit)
+				uassert.ErrorContains(t, err, tt.errorContains)
 			} else {
-				mockInstance.IncreaseObservationCardinalityLimit(pool.Token0Path(), pool.Token1Path(), pool.Fee(), tt.newCardinalityLimit)
+				increaseObservationCardinalityLimitByPool(pool, tt.newCardinalityLimit)
 				observationState := pool.ObservationState()
 				uassert.Equal(t, tt.newCardinalityLimit, observationState.CardinalityLimit(), "Cardinality limit mismatch")
 			}

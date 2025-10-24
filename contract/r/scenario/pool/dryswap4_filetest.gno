@@ -61,8 +61,6 @@ func main() {
 
 // testDrySwapZeroForOneFalse tests DrySwap with zeroForOne=false
 func testDrySwapZeroForOneFalse(t *testing.T) {
-	pool.InitPoolTest(t)
-
 	// Given: Pool exists with minted position
 	println("[INFO] Token0:", barPath)
 	println("[INFO] Token1:", fooPath)

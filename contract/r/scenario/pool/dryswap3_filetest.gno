@@ -63,8 +63,6 @@ func main() {
 
 // testDrySwapFailureCases tests DrySwap behavior in failure scenarios
 func testDrySwapFailureCases(t *testing.T) {
-	pool.InitPoolTest(t)
-
 	// Given: Pool exists but no liquidity is provided
 	println("[INFO] Token0:", barPath)
 	println("[INFO] Token1:", fooPath)

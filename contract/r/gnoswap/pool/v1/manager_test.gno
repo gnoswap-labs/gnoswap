@@ -32,7 +32,7 @@ func TestTickSpacingMap(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		spacing := mockInstance.GetFeeAmountTickSpacing(tt.fee)
+		spacing := getMockInstance().GetFeeAmountTickSpacing(tt.fee)
 		if spacing != tt.tickSpacing {
 			t.Errorf("For fee %d, expected tick spacing %d, got %d",
 				tt.fee, tt.tickSpacing, spacing)
@@ -113,21 +113,24 @@ func TestCreatePool(t *testing.T) {
 		},
 	}
 
+	initPoolTest(t)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	mockInstance.SetPoolCreationFee(0)
+	mockInstanceSetPoolCreationFee(0)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			testing.SetRealm(testing.NewUserRealm(adminAddr))
+
 			if tt.shouldPanic {
 				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
-					mockInstance.CreatePool(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
+					mockInstanceCreatePool(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
 				})
 			} else {
-				mockInstance.CreatePool(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
+				mockInstanceCreatePool(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
 
 				// verify pool was created correctly
 				poolPath := GetPoolPath(tt.token0Path, tt.token1Path, tt.fee)
-				pool := mockInstance.mustGetPool(poolPath)
+				pool := getMockInstance().mustGetPool(poolPath)
 
 				// check if GNOT was properly wrapped
 				expectedToken0 := tt.token0Path
@@ -150,8 +153,6 @@ func TestCreatePool(t *testing.T) {
 			}
 		})
 	}
-
-	resetObject(t)
 }
 
 func TestGetPool(t *testing.T) {
@@ -167,10 +168,10 @@ func TestGetPool(t *testing.T) {
 			name: "Panic - unregistered poolPath",
 			setupFn: func(t *testing.T) {
 				testing.SetRealm(adminRealm)
-				mockInstance.SetPoolCreationFee(0)
+				mockInstanceSetPoolCreationFee(0)
 			},
 			action: func(t *testing.T) *pl.Pool {
-				return mockInstance.GetPool(barPath, fooPath, fee500)
+				return getMockInstance().GetPool(barPath, fooPath, fee500)
 			},
 			shouldPanic: true,
 			expected:    "[GNOSWAP-POOL-008] requested data not found || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500) to exist",
@@ -179,11 +180,11 @@ func TestGetPool(t *testing.T) {
 			name: "success - get pool (bar:foo:500)",
 			setupFn: func(t *testing.T) {
 				testing.SetRealm(adminRealm)
-				mockInstance.SetPoolCreationFee(0)
-				mockInstance.CreatePool(barPath, fooPath, fee500, "4295128740")
+				mockInstanceSetPoolCreationFee(0)
+				mockInstanceCreatePool(barPath, fooPath, fee500, "4295128740")
 			},
 			action: func(t *testing.T) *pl.Pool {
-				return mockInstance.GetPool(barPath, fooPath, fee500)
+				return getMockInstance().GetPool(barPath, fooPath, fee500)
 			},
 			verifyFn: func(t *testing.T, pool *pl.Pool) {
 				if pool.Token0Path() != barPath {

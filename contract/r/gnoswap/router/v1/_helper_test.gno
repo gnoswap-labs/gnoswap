@@ -9,7 +9,9 @@ import (
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/mock"
 	pl "gno.land/r/gnoswap/pool"
+	pool_v1 "gno.land/r/gnoswap/pool/v1"
 	pn "gno.land/r/gnoswap/position"
 	position_v1 "gno.land/r/gnoswap/position/v1"
 	sr "gno.land/r/gnoswap/v1/staker"
@@ -93,6 +95,7 @@ var (
 	addrUsedInTest = []address{addr01, addr02}
 
 	registeredTestStore = false
+	registeredTestPool  = false
 )
 
 func TokenFaucet(t *testing.T, tokenPath string, to address) {
@@ -461,10 +464,27 @@ func MakeForthMintPositionWithoutFee(t *testing.T) (uint64, string, string, stri
 func initRouterTest(t *testing.T) {
 	t.Helper()
 
-	pl.InitPoolTest(t)
+	initPoolTest(t)
 	registerPositionTest(t)
 
 	registeredTestStore = true
+}
+
+func initPoolTest(t *testing.T) {
+	t.Helper()
+	const mockPoolPath = "gno.land/r/gnoswap/pool/mock"
+
+	if !registeredTestPool {
+		registeredTestPool = true
+
+		testing.SetRealm(testing.NewCodeRealm(mockPoolPath))
+		pl.RegisterInitializer(cross, func(_ pl.IPoolStore) pl.IPool {
+			return pool_v1.NewPoolV1(mock.NewMockPoolStore())
+		})
+	}
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	pl.UpgradeImpl(cross, mockPoolPath)
 }
 
 // registerPositionTest registers the position mock implementation
