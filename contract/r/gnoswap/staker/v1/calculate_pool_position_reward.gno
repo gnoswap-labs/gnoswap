@@ -1,4 +1,4 @@
-package staker
+package v1
 
 // Reward is a struct for storing reward for a position.
 // Internal reward is the GNS reward, external reward is the reward for other incentives.

@@ -1,4 +1,4 @@
-package staker
+package v1
 
 // WRAP & UNWRAP
 const (
