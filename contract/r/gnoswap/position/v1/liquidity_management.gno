@@ -5,7 +5,7 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/common"
-	pl "gno.land/r/gnoswap/v1/pool"
+	pl "gno.land/r/gnoswap/pool"
 )
 
 type AddLiquidityParams struct {

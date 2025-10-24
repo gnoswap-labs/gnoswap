@@ -18,8 +18,8 @@ import (
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
+	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
-	pl "gno.land/r/gnoswap/v1/pool"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"

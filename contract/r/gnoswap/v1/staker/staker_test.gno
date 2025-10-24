@@ -7,7 +7,7 @@ import (
 	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/emission"
-	pl "gno.land/r/gnoswap/v1/pool"
+	pl "gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"

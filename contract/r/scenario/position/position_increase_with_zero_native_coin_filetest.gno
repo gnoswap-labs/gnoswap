@@ -14,8 +14,8 @@ import (
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
-	"gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/onbloc/foo"
 
 	_ "gno.land/r/gnoswap/position/v1"

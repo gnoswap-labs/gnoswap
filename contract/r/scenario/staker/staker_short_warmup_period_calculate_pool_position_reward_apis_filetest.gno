@@ -16,7 +16,7 @@ import (
 
 	"gno.land/r/gnoswap/gns"
 
-	pl "gno.land/r/gnoswap/v1/pool"
+	pl "gno.land/r/gnoswap/pool"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"

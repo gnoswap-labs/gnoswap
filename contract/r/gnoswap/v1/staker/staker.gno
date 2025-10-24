@@ -16,8 +16,8 @@ import (
 	"gno.land/r/gnoswap/gns"
 
 	en "gno.land/r/gnoswap/emission"
+	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
-	pl "gno.land/r/gnoswap/v1/pool"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"

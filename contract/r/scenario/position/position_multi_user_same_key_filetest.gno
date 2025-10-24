@@ -16,8 +16,8 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
-	"gno.land/r/gnoswap/v1/pool"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"

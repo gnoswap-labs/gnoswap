@@ -10,7 +10,7 @@ import (
 
 	"gno.land/r/gnoswap/access"
 
-	"gno.land/r/gnoswap/v1/pool"
+	"gno.land/r/gnoswap/pool"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"

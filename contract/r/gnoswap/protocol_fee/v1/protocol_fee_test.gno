@@ -22,7 +22,7 @@ var (
 	aliceAddr     = testutils.TestAddress("alice")
 
 	// contract paths
-	poolPath      = "gno.land/r/gnoswap/v1/pool"
+	poolPath      = "gno.land/r/gnoswap/pool"
 	positionPath  = "gno.land/r/gnoswap/position"
 	routerPath    = "gno.land/r/gnoswap/router"
 	stakerPath    = "gno.land/r/gnoswap/v1/staker"

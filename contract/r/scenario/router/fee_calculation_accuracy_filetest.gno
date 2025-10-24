@@ -10,9 +10,9 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
+	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
-	pl "gno.land/r/gnoswap/v1/pool"
 
 	_ "gno.land/r/gnoswap/rbac"
 
