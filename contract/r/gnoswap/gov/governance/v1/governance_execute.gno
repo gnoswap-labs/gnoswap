@@ -223,7 +223,8 @@ func executeCommunityPoolSpend(
 	parameterChangesInfos := proposal.data.execution.ParameterChangesInfos()
 	for _, parameterChangeInfo := range parameterChangesInfos {
 		// Get the appropriate handler for this parameter change
-		handler, err := parameterRegistry.Handler(parameterChangeInfo.pkgPath, parameterChangeInfo.function)
+		key := governance.MakeHandlerKey(parameterChangeInfo.pkgPath, parameterChangeInfo.function)
+		handler, err := parameterRegistry.Handler(key)
 		if err != nil {
 			return err
 		}
@@ -251,7 +252,8 @@ func executeParameterChange(
 	parameterChangesInfos := proposal.data.execution.ParameterChangesInfos()
 	for _, parameterChangeInfo := range parameterChangesInfos {
 		// Get the appropriate handler for this parameter change
-		handler, err := parameterRegistry.Handler(parameterChangeInfo.pkgPath, parameterChangeInfo.function)
+		key := governance.MakeHandlerKey(parameterChangeInfo.pkgPath, parameterChangeInfo.function)
+		handler, err := parameterRegistry.Handler(key)
 		if err != nil {
 			return err
 		}

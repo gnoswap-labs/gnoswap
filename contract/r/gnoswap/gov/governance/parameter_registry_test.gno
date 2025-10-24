@@ -55,7 +55,8 @@ func TestParameterRegistry_RegisterAndHandler(t *testing.T) {
 			}
 
 			// when
-			handler, err := registry.Handler(tc.pkgPath, tc.function)
+			key := MakeHandlerKey(tc.pkgPath, tc.function)
+			handler, err := registry.Handler(key)
 
 			// then
 			if tc.expectedError {
@@ -154,7 +155,8 @@ func TestCreateParameterHandlers(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		handler, err := registry.Handler(tc.pkgPath, tc.function)
+		key := MakeHandlerKey(tc.pkgPath, tc.function)
+		handler, err := registry.Handler(key)
 		uassert.Nil(t, err)
 		uassert.NotNil(t, handler)
 	}

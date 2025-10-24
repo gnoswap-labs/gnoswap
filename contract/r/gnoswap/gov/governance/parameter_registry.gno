@@ -131,10 +131,7 @@ func (r *ParameterRegistry) Register(handler ParameterHandlerOptions) {
 // Returns:
 //   - ParameterHandler: the matching parameter handler
 //   - error: error if handler not found or casting fails
-func (r *ParameterRegistry) Handler(pkgPath, function string) (ParameterHandler, error) {
-	// Generate lookup key
-	key := MakeHandlerKey(pkgPath, function)
-
+func (r *ParameterRegistry) Handler(key string) (ParameterHandler, error) {
 	// Retrieve handler from registry
 	h, exists := r.handlers.Get(key)
 	if !exists {
@@ -155,7 +152,7 @@ func (r *ParameterRegistry) Handler(pkgPath, function string) (ParameterHandler,
 // Returns:
 //   - *ParameterRegistry: new registry instance
 func NewParameterRegistry() *ParameterRegistry {
-	return &ParameterRegistry{handlers: avl.NewTree()}
+	return &ParameterRegistry{ handlers: avl.NewTree() }
 }
 
 // MakeHandlerKey creates a unique identifier for a handler based on package path and function.
