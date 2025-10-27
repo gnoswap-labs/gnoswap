@@ -1,4 +1,4 @@
-package v1
+package staker
 
 // DelegationRecord represents a single delegation event in the system.
 // This struct tracks delegation or undelegation actions with their associated metadata

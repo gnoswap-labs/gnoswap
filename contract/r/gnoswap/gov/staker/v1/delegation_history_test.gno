@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"gno.land/p/nt/uassert"
+	"gno.land/r/gnoswap/gov/staker"
 )
 
 // TestDelegationHistory_GetRecordsBy tests filtering records by snapshot time
@@ -17,9 +18,9 @@ func TestDelegationHistory_GetRecordsBy(t *testing.T) {
 		{
 			name: "Get records after snapshot time",
 			records: DelegationHistory{
-				&DelegationRecord{createdAt: 100},
-				&DelegationRecord{createdAt: 200},
-				&DelegationRecord{createdAt: 300},
+				&staker.DelegationRecord{createdAt: 100},
+				&staker.DelegationRecord{createdAt: 200},
+				&staker.DelegationRecord{createdAt: 300},
 			},
 			snapshotTime:  150,
 			expectedCount: 2,
@@ -27,8 +28,8 @@ func TestDelegationHistory_GetRecordsBy(t *testing.T) {
 		{
 			name: "Get all records when snapshot time is before all",
 			records: DelegationHistory{
-				&DelegationRecord{createdAt: 100},
-				&DelegationRecord{createdAt: 200},
+				&staker.DelegationRecord{createdAt: 100},
+				&staker.DelegationRecord{createdAt: 200},
 			},
 			snapshotTime:  50,
 			expectedCount: 2,
@@ -36,8 +37,8 @@ func TestDelegationHistory_GetRecordsBy(t *testing.T) {
 		{
 			name: "Get no records when snapshot time is after all",
 			records: DelegationHistory{
-				&DelegationRecord{createdAt: 100},
-				&DelegationRecord{createdAt: 200},
+				&staker.DelegationRecord{createdAt: 100},
+				&staker.DelegationRecord{createdAt: 200},
 			},
 			snapshotTime:  300,
 			expectedCount: 0,
@@ -66,13 +67,13 @@ func TestDelegationHistory_AddRecord(t *testing.T) {
 	tests := []struct {
 		name           string
 		initialRecords DelegationHistory
-		newRecord      *DelegationRecord
+		newRecord      *staker.DelegationRecord
 		expectedCount  int
 	}{
 		{
 			name:           "Add record to empty history",
 			initialRecords: DelegationHistory{},
-			newRecord: &DelegationRecord{
+			newRecord: &staker.DelegationRecord{
 				delegationType: DelegateType,
 				delegateFrom:   address("g1from"),
 				delegateTo:     address("g1to"),
@@ -83,9 +84,9 @@ func TestDelegationHistory_AddRecord(t *testing.T) {
 		{
 			name: "Add record to existing history",
 			initialRecords: DelegationHistory{
-				&DelegationRecord{createdAt: 100},
+				&staker.DelegationRecord{createdAt: 100},
 			},
-			newRecord: &DelegationRecord{
+			newRecord: &staker.DelegationRecord{
 				delegationType: UnDelegateType,
 				delegateFrom:   address("g1from"),
 				delegateTo:     address("g1to"),
@@ -120,9 +121,9 @@ func TestDelegationHistory_RemoveRecordsBy(t *testing.T) {
 		{
 			name: "Remove old records",
 			initialRecords: DelegationHistory{
-				&DelegationRecord{createdAt: 100},
-				&DelegationRecord{createdAt: 200},
-				&DelegationRecord{createdAt: 300},
+				&staker.DelegationRecord{createdAt: 100},
+				&staker.DelegationRecord{createdAt: 200},
+				&staker.DelegationRecord{createdAt: 300},
 			},
 			previousTime:  150,
 			expectedCount: 2,
@@ -130,8 +131,8 @@ func TestDelegationHistory_RemoveRecordsBy(t *testing.T) {
 		{
 			name: "Remove all records",
 			initialRecords: DelegationHistory{
-				&DelegationRecord{createdAt: 100},
-				&DelegationRecord{createdAt: 200},
+				&staker.DelegationRecord{createdAt: 100},
+				&staker.DelegationRecord{createdAt: 200},
 			},
 			previousTime:  50,
 			expectedCount: 2,
@@ -139,8 +140,8 @@ func TestDelegationHistory_RemoveRecordsBy(t *testing.T) {
 		{
 			name: "Remove no records",
 			initialRecords: DelegationHistory{
-				&DelegationRecord{createdAt: 100},
-				&DelegationRecord{createdAt: 200},
+				&staker.DelegationRecord{createdAt: 100},
+				&staker.DelegationRecord{createdAt: 200},
 			},
 			previousTime:  300,
 			expectedCount: 0,

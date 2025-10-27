@@ -9,16 +9,19 @@ import (
 
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/protocol_fee"
+	"gno.land/r/gnoswap/gov/staker"
 )
 
 // GetLockedAmount returns total locked GNS.
 func (gs *govStakerV1) GetLockedAmount() int64 {
 	lockedAmount := int64(0)
 
-	state := gs.getState()
-	delegations := state.Delegations()
+	delegations, err := gs.store.GetAllDelegations()
+	if err != nil {
+		panic(err)
+	}
 	delegations.Iterate("", "", func(key string, value any) bool {
-		delegation, ok := value.(*Delegation)
+		delegation, ok := value.(*staker.Delegation)
 		if !ok {
 			panic(ufmt.Sprintf("failed to cast delegations's element to *Delegation: %T", value))
 		}
@@ -44,18 +47,14 @@ func (gs *govStakerV1) GetClaimableRewardByRewardID(rewardID string) string {
 	emission.MintAndDistributeGns(cross)
 	protocol_fee.DistributeProtocolFee(cross)
 
-	state := gs.getState()
-	emissionRewardManager := state.EmissionRewardManager().(*EmissionRewardManager)
-	protocolFeeRewardManager := state.ProtocolFeeRewardManager().(*ProtocolFeeRewardManager)
-
 	emissionDistributedAmount := emission.GetAccuDistributedToGovStaker()
-	emissionReward, err := emissionRewardManager.GetClaimableRewardAmount(emissionDistributedAmount, rewardID, time.Now().Unix())
+	emissionReward, err := gs.emissionRewardManager.GetClaimableRewardAmount(emissionDistributedAmount, rewardID, time.Now().Unix())
 	if err != nil {
 		panic(err)
 	}
 
 	protocolFeeDistributedAmounts := gs.getDistributedProtocolFees()
-	protocolFeeRewards, err := protocolFeeRewardManager.GetClaimableRewardAmounts(protocolFeeDistributedAmounts, rewardID, time.Now().Unix())
+	protocolFeeRewards, err := gs.protocolFeeRewardManager.GetClaimableRewardAmounts(protocolFeeDistributedAmounts, rewardID, time.Now().Unix())
 	if err != nil {
 		panic(err)
 	}

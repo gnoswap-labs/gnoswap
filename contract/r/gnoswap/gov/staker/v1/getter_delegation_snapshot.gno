@@ -1,11 +1,18 @@
 package v1
 
 import (
+	"time"
+
 	"gno.land/r/gnoswap/gov/staker"
 )
 
 func (gs *govStakerV1) HasDelegationSnapshotsKey() bool {
-	return gs.store.HasDelegationSnapshotsKey()
+	// Check if any snapshots exist
+	snapshots, err := gs.store.GetAllDelegationSnapshots()
+	if err != nil {
+		return false
+	}
+	return snapshots.Size() > 0
 }
 
 // GetDelegationSnapshots retrieves the delegation snapshot at a specific point in time.
@@ -26,31 +33,22 @@ func (gs *govStakerV1) HasDelegationSnapshotsKey() bool {
 func (gs *govStakerV1) GetDelegationSnapshots(snapshotTime int64) (staker.DelegationSnapshot, bool) {
 	// Get current delegation snapshots and create a working copy
 	delegationSnapshots := gs.getDelegationSnapshots()
-	currentDelegationSnapshot := delegationSnapshots.clone()
+	currentDelegationSnapshot := delegationSnapshots.Clone()
 
 	// Get delegation history and filter for records after snapshot time
 	delegationHistory := gs.getDelegationHistory()
 	historyRecords := delegationHistory.getRecordsBy(snapshotTime)
-
+	
 	// Apply records in reverse order to reconstruct historical state
-	// This effectively "undoes" all delegation changes that happened after snapshotTime
 	for i := len(historyRecords) - 1; i >= 0; i-- {
-		currentDelegationSnapshot = currentDelegationSnapshot.subRecord(historyRecords[i])
+		currentDelegationSnapshot = currentDelegationSnapshot.SubRecord(historyRecords[i])
 	}
 
-	// Convert internal DelegationSnapshot to staker.DelegationSnapshot
-	result := make(staker.DelegationSnapshot)
-	for delegatee, item := range currentDelegationSnapshot {
-		result[delegatee] = &staker.DelegationSnapshotItem{
-			Delegatee:        delegatee,
-			DelegatorAddress: item.DelegatorAddress(),
-			DelegateGns:      item.DelegationAmount(),
-		}
-	}
-
-	return result, true
+	return currentDelegationSnapshot, true
 }
 
 func (gs *govStakerV1) SetDelegationSnapshots(snapshot staker.DelegationSnapshot) error {
-	return gs.store.SetDelegationSnapshots(snapshot)
+	// Store doesn't have SetDelegationSnapshots, use SetDelegationSnapshot with current time
+	timestamp := time.Now().Unix()
+	return gs.store.SetDelegationSnapshot(timestamp, snapshot)
 }

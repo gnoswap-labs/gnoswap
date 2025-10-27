@@ -1,4 +1,4 @@
-package v1
+package staker
 
 // Error message constants
 const (
@@ -74,8 +74,8 @@ func (d *Delegation) CollectableAmount(currentTime int64) (total int64) {
 	return
 }
 
-// unDelegate processes an undelegation with lockup period
-func (d *Delegation) unDelegate(
+// UnDelegate processes an undelegation with lockup period
+func (d *Delegation) UnDelegate(
 	amount, currentHeight, currentTimestamp, unDelegationLockupPeriod int64,
 ) {
 	d.unDelegateAmount += amount
@@ -89,7 +89,7 @@ func (d *Delegation) unDelegate(
 }
 
 // UnDelegateWithoutLockup processes an immediate undelegation without lockup
-func (d *Delegation) unDelegateWithoutLockup(
+func (d *Delegation) UnDelegateWithoutLockup(
 	amount, currentHeight, currentTime int64,
 ) {
 	d.unDelegateAmount += amount
@@ -103,7 +103,7 @@ func (d *Delegation) unDelegateWithoutLockup(
 }
 
 // Collect processes the collection of available amounts
-func (d *Delegation) collect(amount, currentTime int64) error {
+func (d *Delegation) Collect(amount, currentTime int64) error {
 	if amount > d.CollectableAmount(currentTime) {
 		return makeErrorWithDetails(
 			errInvalidAmount,

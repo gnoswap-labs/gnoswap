@@ -1,4 +1,4 @@
-package v1
+package staker
 
 type Counter struct {
 	id int64

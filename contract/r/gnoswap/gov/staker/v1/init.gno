@@ -10,19 +10,6 @@ func init() {
 
 func registerGovStakerV1() {
 	staker.RegisterInitializer(cross, func(store staker.IGovStakerStore) staker.IGovStaker {
-		err := initStoreData(store)
-		if err != nil {
-			panic(err)
-		}
-
 		return NewGovStakerV1(store)
 	})
-}
-
-func initStoreData(store staker.IGovStakerStore) error {
-	if !store.HasGovStakerStateKey() {
-		return store.SetGovStakerState(NewGovStakerStateV1())
-	}
-
-	return nil
 }

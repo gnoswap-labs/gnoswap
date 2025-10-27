@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"gno.land/p/nt/uassert"
+	"gno.land/r/gnoswap/gov/staker"
 )
 
 // Test GetDelegationSnapshots
@@ -32,7 +33,7 @@ func TestGetDelegationSnapshots(t *testing.T) {
 			setupState: func() {
 				// Setup delegation snapshots
 				snapshots := make(DelegationSnapshot)
-				snapshots["user1"] = &DelegationSnapshotItem{
+				snapshots["user1"] = &staker.DelegationSnapshotItem{
 					delegationAmount: 1000,
 					delegatorAddress: address("user1"),
 				}
@@ -60,7 +61,7 @@ func TestGetDelegationSnapshots(t *testing.T) {
 			setupState: func() {
 				// Setup delegation snapshots
 				snapshots := make(DelegationSnapshot)
-				snapshots["user1"] = &DelegationSnapshotItem{
+				snapshots["user1"] = &staker.DelegationSnapshotItem{
 					delegationAmount: 1500,
 					delegatorAddress: address("user1"),
 				}
@@ -88,11 +89,11 @@ func TestGetDelegationSnapshots(t *testing.T) {
 			setupState: func() {
 				// Setup delegation snapshots
 				snapshots := make(DelegationSnapshot)
-				snapshots["user1"] = &DelegationSnapshotItem{
+				snapshots["user1"] = &staker.DelegationSnapshotItem{
 					delegationAmount: 2000,
 					delegatorAddress: address("user1"),
 				}
-				snapshots["user2"] = &DelegationSnapshotItem{
+				snapshots["user2"] = &staker.DelegationSnapshotItem{
 					delegationAmount: 1000,
 					delegatorAddress: address("user2"),
 				}
@@ -149,7 +150,7 @@ func TestGetDelegationSnapshots(t *testing.T) {
 			setupState: func() {
 				// Setup delegation snapshots
 				snapshots := make(DelegationSnapshot)
-				snapshots["user1"] = &DelegationSnapshotItem{
+				snapshots["user1"] = &staker.DelegationSnapshotItem{
 					delegationAmount: 1000,
 					delegatorAddress: address("user1"),
 				}
@@ -214,7 +215,7 @@ func TestGetDelegationSnapshots_SpecificScenarios(t *testing.T) {
 				snapshots := make(DelegationSnapshot)
 
 				// Current snapshot shows 1000 delegated
-				snapshots["user1"] = &DelegationSnapshotItem{
+				snapshots["user1"] = &staker.DelegationSnapshotItem{
 					delegationAmount: 1000,
 					delegatorAddress: address("user1"),
 				}
@@ -245,7 +246,7 @@ func TestGetDelegationSnapshots_SpecificScenarios(t *testing.T) {
 				snapshots := make(DelegationSnapshot)
 
 				// Current snapshot shows 1000 delegated
-				snapshots["user1"] = &DelegationSnapshotItem{
+				snapshots["user1"] = &staker.DelegationSnapshotItem{
 					delegationAmount: 1000,
 					delegatorAddress: address("user1"),
 				}
@@ -276,7 +277,7 @@ func TestGetDelegationSnapshots_SpecificScenarios(t *testing.T) {
 				snapshots := make(DelegationSnapshot)
 
 				// Current snapshot shows 500 delegated
-				snapshots["user1"] = &DelegationSnapshotItem{
+				snapshots["user1"] = &staker.DelegationSnapshotItem{
 					delegationAmount: 500,
 					delegatorAddress: address("user1"),
 				}

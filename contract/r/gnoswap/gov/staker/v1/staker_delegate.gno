@@ -11,6 +11,7 @@ import (
 	"gno.land/r/gnoswap/gov/xgns"
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/referral"
+	"gno.land/r/gnoswap/gov/staker"
 )
 
 // Delegate delegates GNS tokens to an address.
@@ -252,12 +253,15 @@ func (gs *govStakerV1) CollectUndelegatedGns() int64 {
 	xgns.Burn(cross, caller, collectedAmount)
 	gns.Transfer(cross, caller, collectedAmount)
 
-	state := gs.getState()
-	state.SetTotalLockedAmount(state.TotalLockedAmount() - collectedAmount)
-	if state.TotalLockedAmount() < 0 {
-		state.SetTotalLockedAmount(0)
+	// Update total locked amount directly in store
+	currentLocked := gs.store.GetTotalLockedAmount()
+	newLocked := currentLocked - collectedAmount
+	if newLocked < 0 {
+		newLocked = 0
 	}
-	gs.setState(state)
+	if err := gs.store.SetTotalLockedAmount(newLocked); err != nil {
+		panic(err)
+	}
 
 	chain.Emit(
 		"CollectUndelegatedGns",
@@ -279,9 +283,9 @@ func (gs *govStakerV1) delegate(
 	amount,
 	currentHeight,
 	currentTimestamp int64,
-) (*Delegation, error) {
+) (*staker.Delegation, error) {
 	delegationID := gs.nextDelegationID()
-	delegation := NewDelegation(
+	delegation := staker.NewDelegation(
 		delegationID,
 		from,
 		to,
@@ -289,17 +293,29 @@ func (gs *govStakerV1) delegate(
 		currentHeight,
 		currentTimestamp,
 	)
-	delegationRecord := NewDelegationDelegateRecordBy(delegation)
+	delegationRecord := staker.NewDelegationRecord(
+		staker.DelegateType,
+		amount, // delegationAmount
+		from,
+		to,
+		currentTimestamp,
+	)
 
 	gs.addDelegation(delegationID, delegation)
 	gs.addDelegationRecord(delegationRecord)
 	gs.addStakeEmissionReward(from.String(), amount, currentTimestamp)
 	gs.addStakeProtocolFeeReward(from.String(), amount, time.Now().Unix())
 
-	state := gs.getState()
-	state.SetTotalDelegatedAmount(state.TotalDelegatedAmount() + amount)
-	state.SetTotalLockedAmount(state.TotalLockedAmount() + amount)
-	gs.setState(state)
+	// Update total amounts directly in store
+	currentDelegated := gs.store.GetTotalDelegatedAmount()
+	if err := gs.store.SetTotalDelegatedAmount(currentDelegated + amount); err != nil {
+		panic(err)
+	}
+	
+	currentLocked := gs.store.GetTotalLockedAmount()
+	if err := gs.store.SetTotalLockedAmount(currentLocked + amount); err != nil {
+		panic(err)
+	}
 
 	return delegation, nil
 }
@@ -333,15 +349,20 @@ func (gs *govStakerV1) unDelegate(
 			currentUnDelegationAmount = delegation.DelegatedAmount()
 		}
 
-		state := gs.getState()
-		delegation.unDelegate(
+		// Get lockup period from store
+		lockupPeriod, err := gs.store.GetUnDelegationLockupPeriod()
+		if err != nil {
+			panic(err)
+		}
+		
+		delegation.UnDelegate(
 			currentUnDelegationAmount,
 			currentHeight,
 			currentTimestamp,
-			state.UnDelegationLockupPeriod(),
+			lockupPeriod,
 		)
 
-		delegationRecord := NewDelegationWithdrawRecordBy(delegation, currentUnDelegationAmount, currentTimestamp)
+		delegationRecord := staker.NewDelegationWithdrawRecordBy(delegation, currentUnDelegationAmount, currentTimestamp)
 
 		gs.setDelegation(delegation.ID(), delegation)
 		gs.addDelegationRecord(delegationRecord)
@@ -354,12 +375,15 @@ func (gs *govStakerV1) unDelegate(
 		}
 	}
 
-	state := gs.getState()
-	state.SetTotalDelegatedAmount(state.TotalDelegatedAmount() - amount)
-	if state.TotalDelegatedAmount() < 0 {
-		state.SetTotalDelegatedAmount(0)
+	// Update total delegated amount directly in store
+	currentDelegated := gs.store.GetTotalDelegatedAmount()
+	newDelegated := currentDelegated - amount
+	if newDelegated < 0 {
+		newDelegated = 0
 	}
-	gs.setState(state)
+	if err := gs.store.SetTotalDelegatedAmount(newDelegated); err != nil {
+		panic(err)
+	}
 
 	return amount, nil
 }
@@ -393,7 +417,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 			currentUnDelegationAmount = delegation.DelegatedAmount()
 		}
 
-		delegation.unDelegateWithoutLockup(
+		delegation.UnDelegateWithoutLockup(
 			currentUnDelegationAmount,
 			currentHeight,
 			currentTime,
@@ -405,12 +429,15 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 		}
 	}
 
-	state := gs.getState()
-	state.SetTotalDelegatedAmount(state.TotalDelegatedAmount() - amount)
-	if state.TotalDelegatedAmount() < 0 {
-		state.SetTotalDelegatedAmount(0)
+	// Update total delegated amount directly in store
+	currentDelegated := gs.store.GetTotalDelegatedAmount()
+	newDelegated := currentDelegated - amount
+	if newDelegated < 0 {
+		newDelegated = 0
 	}
-	gs.setState(state)
+	if err := gs.store.SetTotalDelegatedAmount(newDelegated); err != nil {
+		panic(err)
+	}
 
 	return amount, nil
 }
@@ -433,12 +460,13 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 			continue
 		}
 
-		err := delegation.collect(collectableAmount, currentTime)
+		err := delegation.Collect(collectableAmount, currentTime)
 		if err != nil {
 			return collectedAmount, err
 		}
 
-		collectedAmount, err = addToCollectedAmount(collectedAmount, collectableAmount)
+		// Simple addition since addToCollectedAmount was removed
+		collectedAmount += collectableAmount
 		if err != nil {
 			return collectedAmount, err
 		}

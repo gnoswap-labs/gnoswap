@@ -1,4 +1,4 @@
-package v1
+package staker
 
 // DelegationWithdraw represents a pending withdrawal from a delegation.
 // This struct tracks undelegated amounts that are subject to lockup periods

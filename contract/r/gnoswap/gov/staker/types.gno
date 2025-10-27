@@ -1,5 +1,9 @@
 package staker
 
+import (
+	"gno.land/p/nt/avl"
+)
+
 // Main interface that combines all sub-interfaces
 type IGovStaker interface {
 	IGovStakerDelegation
@@ -47,48 +51,41 @@ type IGovStakerAdmin interface {
 	SetUnDelegationLockupPeriodByAdmin(period int64)
 }
 
-// Storage interface
 type IGovStakerStore interface {
-	HasGovStakerStateKey() bool
-	GetGovStakerState() GovStakerState
-	SetGovStakerState(state GovStakerState) error
+	// Basic configuration
+	GetUnDelegationLockupPeriod() (int64, error)
+	SetUnDelegationLockupPeriod(period int64) error
 
-	HasDelegationSnapshotsKey() bool
-	GetDelegationSnapshots() DelegationSnapshot
-	SetDelegationSnapshots(snapshot DelegationSnapshot) error
+	GetEmissionRewardBalance() (int64, error)
+	SetEmissionRewardBalance(balance int64) error
+
+	GetTotalDelegatedAmount() int64
+	SetTotalDelegatedAmount(amount int64) error
+
+	GetTotalLockedAmount() int64
+	SetTotalLockedAmount(amount int64) error
+
+	// Delegation management
+	GetDelegation(id int64) (*Delegation, bool)
+	SetDelegation(id int64, delegation *Delegation) error
+	RemoveDelegation(id int64) error
+	GetAllDelegations() (*avl.Tree, error)
+
+	GetDelegationNextID() (int64, error)
+	SetDelegationNextID(nextID int64) error
+	IncrementDelegationNextID() (int64, error)
+
+	// Delegation history
+	AddDelegationRecord(record *DelegationRecord) error
+	GetDelegationHistory() ([]*DelegationRecord, error)
+
+	// User delegation mapping
+	GetUserDelegations(user string) (map[string][]int64, error)
+	AddUserDelegation(from, to string, delegationID int64) error
+	RemoveUserDelegation(from, to string, delegationID int64) error
+
+	// Delegation snapshots
+	SetDelegationSnapshot(timestamp int64, snapshot DelegationSnapshot) error
+	GetDelegationSnapshot(timestamp int64) (DelegationSnapshot, bool)
+	GetAllDelegationSnapshots() (*avl.Tree, error)
 }
-
-// State interface for gov/staker state management
-type GovStakerState interface {
-	// Lockup configuration
-	UnDelegationLockupPeriod() int64
-	SetUnDelegationLockupPeriod(period int64)
-
-	// Reward balances
-	EmissionRewardBalance() int64
-	SetEmissionRewardBalance(balance int64)
-
-	// Aggregate metrics
-	TotalDelegatedAmount() int64
-	SetTotalDelegatedAmount(amount int64)
-
-	TotalLockedAmount() int64
-	SetTotalLockedAmount(amount int64)
-}
-
-// DelegationSnapshot represents delegations at a specific time
-type DelegationSnapshot map[string]*DelegationSnapshotItem
-
-// DelegationSnapshotItem represents a snapshot item
-type DelegationSnapshotItem struct {
-	Delegatee        string
-	DelegatorAddress address
-	DelegateGns      int64
-	DelegateXgns     int64
-}
-
-// DelegationAmount returns the delegation amount in GNS
-func (d *DelegationSnapshotItem) DelegationAmount() int64 {
-	return d.DelegateGns
-}
-

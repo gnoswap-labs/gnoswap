@@ -1,8 +1,12 @@
 package v1
 
+import (
+	"gno.land/r/gnoswap/gov/staker"
+)
+
 // DelegationHistory represents a chronological list of delegation records
 // used to track delegation changes over time for snapshot calculations
-type DelegationHistory []*DelegationRecord
+type DelegationHistory []*staker.DelegationRecord
 
 // getRecordsBy retrieves delegation records that occurred at or after the specified snapshot time.
 // This method is used to filter historical records for calculating delegation snapshots at specific points in time.
@@ -44,7 +48,7 @@ func (dh DelegationHistory) getRecordsBy(snapshotTime int64) DelegationHistory {
 //
 // Returns:
 //   - DelegationHistory: updated history with the new record appended
-func (dh DelegationHistory) addRecord(delegationRecord *DelegationRecord) DelegationHistory {
+func (dh DelegationHistory) addRecord(delegationRecord *staker.DelegationRecord) DelegationHistory {
 	return append(dh, delegationRecord)
 }
 
