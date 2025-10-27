@@ -6,68 +6,52 @@ import (
 	"gno.land/r/gnoswap/gov/governance"
 )
 
-func mustGetProposal(state *governanceState, proposalId int64) *Proposal {
-	proposal, ok := state.getProposal(proposalId)
-	if !ok {
-		panic(errDataNotFound)
-	}
-
-	return proposal
-}
+// mustGetProposal is now a method on governanceV1 (defined in instance.gno)
 
 func (gv *governanceV1) GetProposerByProposalId(proposalId int64) string {
-	state := gv.GetGovernanceState()
-	return mustGetProposal(state, proposalId).proposer.String()
+	return gv.mustGetProposal(proposalId).proposer.String()
 }
 
 func (gv *governanceV1) GetProposalTypeByProposalId(proposalId int64) string {
-	state := gv.GetGovernanceState()
-	return mustGetProposal(state, proposalId).data.proposalType.String()
+	return gv.mustGetProposal(proposalId).data.proposalType.String()
 }
 
 func (gv *governanceV1) GetYeaByProposalId(proposalId int64) int64 {
-	state := gv.GetGovernanceState()
-	return mustGetProposal(state, proposalId).status.YesWeight()
+	return gv.mustGetProposal(proposalId).status.YesWeight()
 }
 
 func (gv *governanceV1) GetNayByProposalId(proposalId int64) int64 {
-	state := gv.GetGovernanceState()
-	return mustGetProposal(state, proposalId).status.NoWeight()
+	return gv.mustGetProposal(proposalId).status.NoWeight()
 }
 
 func (gv *governanceV1) GetConfigVersionByProposalId(proposalId int64) int64 {
-	state := gv.GetGovernanceState()
-	return mustGetProposal(state, proposalId).configVersion
+	return gv.mustGetProposal(proposalId).configVersion
 }
 
 func (gv *governanceV1) GetQuorumAmountByProposalId(proposalId int64) int64 {
-	state := gv.GetGovernanceState()
-	return mustGetProposal(state, proposalId).status.voteStatus.quorumAmount
+	return gv.mustGetProposal(proposalId).status.voteStatus.quorumAmount
 }
 
 func (gv *governanceV1) GetTitleByProposalId(proposalId int64) string {
-	state := gv.GetGovernanceState()
-	return mustGetProposal(state, proposalId).metadata.title
+	return gv.mustGetProposal(proposalId).metadata.title
 }
 
 func (gv *governanceV1) GetDescriptionByProposalId(proposalId int64) string {
-	state := gv.GetGovernanceState()
-	return mustGetProposal(state, proposalId).metadata.description
+	return gv.mustGetProposal(proposalId).metadata.description
 }
 
 // GetExecutionStateByProposalId is deprecated. Use GetProposalStatusById instead.
 // This function is kept for backward compatibility.
 func (gv *governanceV1) GetExecutionStateByProposalId(proposalId int64) string {
-	state := gv.GetGovernanceState()
 	currentAt := time.Now().Unix()
-	proposal := mustGetProposal(state, proposalId)
+	proposal := gv.mustGetProposal(proposalId)
 
 	return proposal.Status(currentAt)
 }
 
 func (gv *governanceV1) GetLatestConfig() governance.Config {
-	state := gv.GetGovernanceState()
-	config, ok := state.getCurrentConfig()
+	currentVersion := gv.getCurrentConfigVersion()
+	config, ok := gv.getConfig(currentVersion)
 	if !ok {
 		panic(errDataNotFound)
 	}
@@ -76,8 +60,7 @@ func (gv *governanceV1) GetLatestConfig() governance.Config {
 }
 
 func (gv *governanceV1) GetConfig(configVersion int64) governance.Config {
-	state := gv.GetGovernanceState()
-	config, ok := state.getConfig(configVersion)
+	config, ok := gv.getConfig(configVersion)
 	if !ok {
 		panic(errDataNotFound)
 	}

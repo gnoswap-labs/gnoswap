@@ -1,8 +1,8 @@
 package v1
 
 // assertCallerIsProposer panics if the caller is not the proposer of the given proposal.
-func assertCallerIsProposer(state *governanceState, proposalID int64, caller address) {
-	proposal, exists := state.getProposal(proposalID)
+func assertCallerIsProposer(gv *governanceV1, proposalID int64, caller address) {
+	proposal, exists := gv.getProposal(proposalID)
 	if !exists {
 		panic(errProposalNotFound)
 	}

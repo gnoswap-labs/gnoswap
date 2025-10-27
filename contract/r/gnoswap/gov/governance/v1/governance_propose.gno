@@ -8,8 +8,8 @@ import (
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
 
-	"gno.land/r/gnoswap/v1/gov/staker"
 	"gno.land/r/gnoswap/gov/governance"
+	"gno.land/r/gnoswap/v1/gov/staker"
 )
 
 // ProposeText creates a text proposal for community discussion.
@@ -46,15 +46,13 @@ func (gv *governanceV1) ProposeText(
 	createdHeight := runtime.ChainHeight()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
-	state := gv.GetGovernanceState()
-
-	config, ok := state.getCurrentConfig()
+	config, ok := gv.getCurrentConfig()
 	if !ok {
 		panic(errDataNotFound)
 	}
 
 	// Check if caller already has an active proposal (one proposal per address)
-	if state.hasActiveProposal(callerAddress, createdAt) {
+	if gv.hasActiveProposal(callerAddress, createdAt) {
 		panic(errAlreadyActiveProposal)
 	}
 
@@ -84,7 +82,7 @@ func (gv *governanceV1) ProposeText(
 	}
 
 	// Store voting information for the proposal
-	success := state.updateProposalUserVotes(proposal, userVotes)
+	success := gv.updateProposalUserVotes(proposal, userVotes)
 	if !success {
 		panic(errDataNotFound)
 	}
@@ -148,15 +146,13 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 	createdHeight := runtime.ChainHeight()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
-	state := gv.GetGovernanceState()
-
-	config, ok := state.getCurrentConfig()
+	config, ok := gv.getCurrentConfig()
 	if !ok {
 		panic(errDataNotFound)
 	}
 
 	// Check if caller already has an active proposal (one proposal per address)
-	if state.hasActiveProposal(callerAddress, createdAt) {
+	if gv.hasActiveProposal(callerAddress, createdAt) {
 		panic(errAlreadyActiveProposal)
 	}
 
@@ -186,7 +182,7 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 	}
 
 	// Store voting information for the proposal
-	success := state.updateProposalUserVotes(proposal, userVotes)
+	success := gv.updateProposalUserVotes(proposal, userVotes)
 	if !success {
 		panic(errDataNotFound)
 	}
@@ -256,15 +252,13 @@ func (gv *governanceV1) ProposeParameterChange(
 	createdHeight := runtime.ChainHeight()
 	gnsBalance := gns.BalanceOf(callerAddress)
 
-	state := gv.GetGovernanceState()
-
-	config, ok := state.getCurrentConfig()
+	config, ok := gv.getCurrentConfig()
 	if !ok {
 		panic(errDataNotFound)
 	}
 
 	// Check if caller already has an active proposal (one proposal per address)
-	if state.hasActiveProposal(callerAddress, createdAt) {
+	if gv.hasActiveProposal(callerAddress, createdAt) {
 		panic(errAlreadyActiveProposal)
 	}
 
@@ -294,7 +288,7 @@ func (gv *governanceV1) ProposeParameterChange(
 	}
 
 	// Store voting information for the proposal
-	success := state.updateProposalUserVotes(proposal, userVotes)
+	success := gv.updateProposalUserVotes(proposal, userVotes)
 	if !success {
 		panic(errDataNotFound)
 	}
@@ -349,10 +343,8 @@ func (gv *governanceV1) createProposal(
 		return nil, errNotEnoughBalance
 	}
 
-	state := gv.GetGovernanceState()
-
 	// Generate unique proposal ID
-	proposalID := state.nextProposalID()
+	proposalID := gv.nextProposalID()
 
 	// Create proposal status with voting schedule and requirements
 	proposalStatus := NewProposalStatus(
@@ -363,7 +355,7 @@ func (gv *governanceV1) createProposal(
 	)
 
 	// Get current configuration version for tracking
-	configVersion := state.getCurrentConfigVersion()
+	configVersion := gv.getCurrentConfigVersion()
 
 	// Create the proposal object
 	proposal := NewProposal(
@@ -378,7 +370,7 @@ func (gv *governanceV1) createProposal(
 	)
 
 	// Store the proposal in state
-	success := state.addProposal(proposal)
+	success := gv.addProposal(proposal)
 	if !success {
 		return nil, errDataNotFound
 	}
@@ -392,8 +384,6 @@ func (gv *governanceV1) getUserVotingInfoSnapshot(
 	current,
 	smoothingPeriod int64,
 ) (map[string]*VotingInfo, int64, error) {
-	state := gv.GetGovernanceState()
-
 	// Calculate snapshot time by going back by smoothing period
 	snapshotTime := current - smoothingPeriod
 
@@ -402,8 +392,8 @@ func (gv *governanceV1) getUserVotingInfoSnapshot(
 	var ok bool
 
 	// Use custom snapshot function if available
-	if state.getUserVotingInfoSnapshotFn != nil {
-		votingInfos, maxVotingWeight, ok = state.getUserVotingInfoSnapshotFn(snapshotTime)
+	if gv.getUserVotingInfoSnapshotFn != nil {
+		votingInfos, maxVotingWeight, ok = gv.getUserVotingInfoSnapshotFn(snapshotTime)
 	} else {
 		votingInfos, maxVotingWeight, ok = getUserVotingInfotWithDelegationSnapshots(snapshotTime)
 	}

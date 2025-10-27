@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"gno.land/p/nt/avl"
 	"gno.land/r/gnoswap/gov/governance"
 )
 
@@ -20,9 +21,67 @@ func registerGovernanceV1() {
 }
 
 func initStoreData(governanceStore governance.IGovernanceStore) error {
-	governanceState := NewGovernanceState()
+	// Initialize counters if not already set
+	if !governanceStore.HasConfigCounterStoreKey() {
+		err := governanceStore.SetConfigCounter(0)
+		if err != nil {
+			return err
+		}
+	}
 
-	err := governanceStore.SetGovernanceState(governanceState)
+	if !governanceStore.HasProposalCounterStoreKey() {
+		err := governanceStore.SetProposalCounter(0)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Initialize AVL trees if not already set
+	if !governanceStore.HasConfigsStoreKey() {
+		err := governanceStore.SetConfigs(avl.NewTree())
+		if err != nil {
+			return err
+		}
+	}
+
+	if !governanceStore.HasProposalsStoreKey() {
+		err := governanceStore.SetProposals(avl.NewTree())
+		if err != nil {
+			return err
+		}
+	}
+
+	if !governanceStore.HasProposalUserVotingInfosStoreKey() {
+		err := governanceStore.SetProposalUserVotingInfos(avl.NewTree())
+		if err != nil {
+			return err
+		}
+	}
+
+	if !governanceStore.HasUserProposalsStoreKey() {
+		err := governanceStore.SetUserProposals(avl.NewTree())
+		if err != nil {
+			return err
+		}
+	}
+
+	// Initialize default configuration
+	nextConfigVersion, err := governanceStore.IncrementConfigCounter()
+	if err != nil {
+		return err
+	}
+
+	config := governance.Config{
+		VotingStartDelay:              86400,         // 1 day - delay before voting starts
+		VotingPeriod:                  604800,        // 7 days - duration for collecting votes
+		VotingWeightSmoothingDuration: 86400,         // 1 day - period for averaging voting weight
+		Quorum:                        50,            // 50% of total xGNS supply required
+		ProposalCreationThreshold:     1_000_000_000, // 1 billion - minimum balance to create proposals
+		ExecutionDelay:                86400,         // 1 day - waiting period before execution
+		ExecutionWindow:               2592000,       // 30 days - window for executing proposals
+	}
+
+	err = governanceStore.SetConfig(nextConfigVersion, config)
 	if err != nil {
 		return err
 	}

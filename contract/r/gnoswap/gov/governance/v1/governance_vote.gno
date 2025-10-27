@@ -86,10 +86,8 @@ func (gv *governanceV1) vote(
 	votedHeight,
 	votedAt int64,
 ) (*VotingInfo, int64, int64, error) {
-	state := gv.GetGovernanceState()
-
 	// Retrieve the proposal from storage
-	proposal, ok := state.getProposal(proposalID)
+	proposal, ok := gv.getProposal(proposalID)
 	if !ok {
 		return nil, 0, 0, makeErrorWithDetails(errDataNotFound, "not found proposal")
 	}
@@ -100,7 +98,7 @@ func (gv *governanceV1) vote(
 	}
 
 	// Get user's voting information for this proposal
-	userVote, ok := state.getProposalUserVotingInfo(proposalID, voterAddress)
+	userVote, ok := gv.getProposalUserVotingInfo(proposalID, voterAddress)
 	if !ok {
 		return nil, 0, 0, makeErrorWithDetails(errDataNotFound, "not found user's voting info")
 	}

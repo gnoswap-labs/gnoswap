@@ -1,8 +1,7 @@
 package v1
 
 func (gv *governanceV1) GetVoteWeight(proposalID int64, address address) int64 {
-	state := gv.GetGovernanceState()
-	proposalUserVotingInfo, ok := state.getProposalUserVotingInfo(proposalID, address)
+	proposalUserVotingInfo, ok := gv.getProposalUserVotingInfo(proposalID, address)
 	if !ok {
 		panic(errDataNotFound)
 	}
@@ -11,8 +10,7 @@ func (gv *governanceV1) GetVoteWeight(proposalID int64, address address) int64 {
 }
 
 func (gv *governanceV1) GetVotedHeight(proposalID int64, address address) int64 {
-	state := gv.GetGovernanceState()
-	proposalUserVotingInfo, ok := state.getProposalUserVotingInfo(proposalID, address)
+	proposalUserVotingInfo, ok := gv.getProposalUserVotingInfo(proposalID, address)
 	if !ok {
 		panic(errDataNotFound)
 	}
@@ -21,8 +19,7 @@ func (gv *governanceV1) GetVotedHeight(proposalID int64, address address) int64 
 }
 
 func (gv *governanceV1) GetVotedAt(proposalID int64, address address) int64 {
-	state := gv.GetGovernanceState()
-	proposalUserVotingInfo, ok := state.getProposalUserVotingInfo(proposalID, address)
+	proposalUserVotingInfo, ok := gv.getProposalUserVotingInfo(proposalID, address)
 	if !ok {
 		panic(errDataNotFound)
 	}

@@ -81,10 +81,8 @@ func (gv *governanceV1) executeProposal(
 	executedHeight int64,
 	executedBy address,
 ) (*Proposal, error) {
-	state := gv.GetGovernanceState()
-
 	// Retrieve the proposal from storage
-	proposal, ok := state.getProposal(proposalID)
+	proposal, ok := gv.getProposal(proposalID)
 	if !ok {
 		return nil, errDataNotFound
 	}
@@ -154,8 +152,7 @@ func (gv *governanceV1) Cancel(proposalID int64) int64 {
 	halt.AssertIsNotHaltedGovernance()
 
 	caller := runtime.PreviousRealm().Address()
-	state := gv.GetGovernanceState()
-	assertCallerIsProposer(state, proposalID, caller)
+	assertCallerIsProposer(gv, proposalID, caller)
 
 	// Get current blockchain state and caller information
 	currentHeight := runtime.ChainHeight()
@@ -188,10 +185,8 @@ func (gv *governanceV1) cancel(
 	proposalID, canceledAt, canceledHeight int64,
 	canceledBy address,
 ) (proposal *Proposal, err error) {
-	state := gv.GetGovernanceState()
-
 	// Retrieve the proposal from storage
-	proposal, ok := state.getProposal(proposalID)
+	proposal, ok := gv.getProposal(proposalID)
 	if !ok {
 		return nil, errDataNotFound
 	}

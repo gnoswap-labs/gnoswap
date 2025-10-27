@@ -33,7 +33,7 @@ func (gv *governanceV1) Reconfigure(
 	en.MintAndDistributeGns(cross)
 
 	// Store previous version for event emission
-	previousVersion := gv.GetGovernanceState().getCurrentConfigVersion()
+	previousVersion := gv.getCurrentConfigVersion()
 
 	// Apply the new configuration
 	nextVersion, newCfg := gv.reconfigure(
@@ -88,13 +88,14 @@ func (gv *governanceV1) reconfigure(
 		ExecutionWindow:               executionWindow,
 	}
 
-	state := gv.GetGovernanceState()
-
 	// Generate next version number
-	nextVersion := state.nextConfigVersion()
+	nextVersion := gv.nextConfigVersion()
 
 	// Store the new configuration with version
-	state.setConfig(nextVersion, cfg)
+	err := gv.setConfig(nextVersion, cfg)
+	if err != nil {
+		panic("failed to set config: " + err.Error())
+	}
 
 	return nextVersion, cfg
 }

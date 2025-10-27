@@ -83,15 +83,38 @@ type IVoteApi interface {
 }
 
 type IGovernanceStore interface {
-	HasGovernanceStateStoreKey() bool
-	GetGovernanceState() GovernanceState
-	SetGovernanceState(governanceState GovernanceState) error
+	// Counter methods
+	HasConfigCounterStoreKey() bool
+	GetConfigCounter() int64
+	SetConfigCounter(counter int64) error
+	IncrementConfigCounter() (int64, error)
 
-	HasProposalNextIDStoreKey() bool
-	GetProposalNextID() uint64
-	SetProposalNextID(nextID uint64) error
-}
+	HasProposalCounterStoreKey() bool
+	GetProposalCounter() int64
+	SetProposalCounter(counter int64) error
+	IncrementProposalCounter() (int64, error)
 
-type GovernanceState interface {
-	CurrentConfigVersion() int64
+	// Config methods
+	HasConfigsStoreKey() bool
+	GetConfig(version int64) (Config, bool)
+	SetConfig(version int64, config Config) error
+	SetConfigs(configs interface{}) error
+
+	// Proposal methods
+	HasProposalsStoreKey() bool
+	GetProposal(proposalID int64) (interface{}, bool)
+	SetProposal(proposalID int64, proposal interface{}) error
+	SetProposals(proposals interface{}) error
+
+	// Proposal voting info methods
+	HasProposalUserVotingInfosStoreKey() bool
+	GetProposalVotingInfos(proposalID int64) (interface{}, bool)
+	SetProposalVotingInfos(proposalID int64, votingInfos interface{}) error
+	SetProposalUserVotingInfos(votingInfos interface{}) error
+
+	// User proposals methods
+	HasUserProposalsStoreKey() bool
+	GetUserProposalIDs(user string) ([]int64, bool)
+	AddUserProposal(user string, proposalID int64) error
+	SetUserProposals(userProposals interface{}) error
 }
