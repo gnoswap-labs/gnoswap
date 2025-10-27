@@ -27,7 +27,6 @@ var (
 	errInvalidWithdrawalFeePct   = errors.New("[GNOSWAP-POOL-017] invalid withdrawal fee percentage")
 	errLockedPool                = errors.New("[GNOSWAP-POOL-018] can't swap while pool is locked")
 	errPriceOutOfRange           = errors.New("[GNOSWAP-POOL-019] swap price out of range")
-	errMustBeNegative            = errors.New("[GNOSWAP-POOL-020] negative value expected")
 	errTransferFailed            = errors.New("[GNOSWAP-POOL-021] token transfer failed")
 	errInvalidTickAndTickSpacing = errors.New("[GNOSWAP-POOL-022] invalid tick and tick spacing requested")
 	errInvalidAddress            = errors.New("[GNOSWAP-POOL-023] invalid address")
@@ -38,6 +37,7 @@ var (
 	errInvalidPayer              = errors.New("[GNOSWAP-POOL-028] invalid payer")
 	errNotAccessEOA              = errors.New("[GNOSWAP-POOL-029] not access EOA")
 	errInsufficientPayment       = errors.New("[GNOSWAP-POOL-030] insufficient payment")
+	errNotInitializedObservation = errors.New("[GNOSWAP-POOL-031] not initialized observation")
 )
 
 // newErrorWithDetail adds detail to an error message.

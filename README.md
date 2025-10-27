@@ -67,7 +67,7 @@ make test-folder FOLDER=tests/scenario/router
 
 ```bash
 cd $WORKDIR/gno/examples
-gno test -root-dir $WORKDIR/gno -v=false ./gno.land/r/gnoswap/v1/pool
+gno test -root-dir $WORKDIR/gno -v=false ./gno.land/r/gnoswap/pool
 ```
 
 ## Security

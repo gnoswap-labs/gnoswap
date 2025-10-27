@@ -4,6 +4,32 @@ import (
 	"strings"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
+	"gno.land/r/gnoswap/pool"
+)
+
+var Q192 = u256.Zero().Lsh(u256.One(), 192)
+
+var (
+	minSqrtRatio = u256.MustFromDecimal(MIN_SQRT_RATIO)
+	maxSqrtRatio = u256.MustFromDecimal(MAX_SQRT_RATIO)
+)
+
+const (
+	FeeTier100   uint32 = 100
+	FeeTier500   uint32 = 500
+	FeeTier3000  uint32 = 3000
+	FeeTier10000 uint32 = 10000
+)
+
+const (
+	GNOT           string = "gnot"
+	WRAPPED_WUGNOT string = "gno.land/r/gnoland/wugnot"
+)
+
+const (
+	MIN_SQRT_RATIO string = "4295128739"
+	MAX_SQRT_RATIO string = "1461446703485210103287273052203988822378723970342"
 )
 
 // poolCreateConfig holds the essential parameters for creating a new pool.
@@ -42,12 +68,12 @@ func (p *poolCreateConfig) Token0Path() string       { return p.token0Path }
 func (p *poolCreateConfig) Token1Path() string       { return p.token1Path }
 func (p *poolCreateConfig) Fee() uint32              { return p.fee }
 
-func (p *poolCreateConfig) updateWithWrapping() (*poolCreateConfig, error) {
+func (p *poolCreateConfig) updateWithWrapping() error {
 	token0Path, token1Path := p.wrap()
 
 	// Always validate that the price is within valid range
 	if err := validateSqrtPriceX96(p.sqrtPriceX96); err != nil {
-		return nil, err
+		return err
 	}
 
 	if !p.isInOrder() {
@@ -58,13 +84,16 @@ func (p *poolCreateConfig) updateWithWrapping() (*poolCreateConfig, error) {
 
 		// Check if calculated price is within valid range
 		if err := validateSqrtPriceX96(newPrice); err != nil {
-			return nil, err
+			return err
 		}
 
 		p.sqrtPriceX96 = newPrice
 	}
 
-	return newPoolParams(token0Path, token1Path, p.fee, p.sqrtPriceX96.ToString(), p.tickSpacing, p.slot0FeeProtocol), nil
+	p.token0Path = token0Path
+	p.token1Path = token1Path
+
+	return nil
 }
 
 func (p *poolCreateConfig) isSameTokenPath() bool {
@@ -90,7 +119,7 @@ func (p *poolCreateConfig) wrap() (string, string) {
 }
 
 func (p *poolCreateConfig) poolPath() string {
-	return MakePoolPath(p.token0Path, p.token1Path, p.fee)
+	return pool.GetPoolPath(p.token0Path, p.token1Path, p.fee)
 }
 
 func (p *poolCreateConfig) isSupportedFee(feeTier uint32) bool {
@@ -98,5 +127,25 @@ func (p *poolCreateConfig) isSupportedFee(feeTier uint32) bool {
 	case FeeTier100, FeeTier500, FeeTier3000, FeeTier10000:
 		return true
 	}
+	return false
+}
+
+// validateSqrtPriceX96 validates that the given sqrtPriceX96 is within valid range
+func validateSqrtPriceX96(sqrtPriceX96 *u256.Uint) error {
+	if sqrtPriceX96.Lt(minSqrtRatio) || sqrtPriceX96.Gt(maxSqrtRatio) {
+		return makeErrorWithDetails(
+			errOutOfRange,
+			ufmt.Sprintf("sqrtPriceX96(%s) is out of range", sqrtPriceX96.ToString()),
+		)
+	}
+	return nil
+}
+
+func isValidFeeTier(feeTier uint32) bool {
+	switch feeTier {
+	case FeeTier100, FeeTier500, FeeTier3000, FeeTier10000:
+		return true
+	}
+
 	return false
 }

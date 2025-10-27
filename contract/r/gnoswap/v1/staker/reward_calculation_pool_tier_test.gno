@@ -3,7 +3,7 @@ package staker
 import (
 	"testing"
 
-	pl "gno.land/r/gnoswap/v1/pool"
+	pl "gno.land/r/gnoswap/pool"
 )
 
 func TestTierRatioFromCounts(t *testing.T) {

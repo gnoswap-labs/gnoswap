@@ -17,7 +17,9 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
-	"gno.land/r/gnoswap/v1/pool"
+	"gno.land/r/gnoswap/pool"
+
+	_ "gno.land/r/gnoswap/pool/v1"
 )
 
 var t *testing.T
@@ -67,8 +69,6 @@ func main() {
 
 // testDrySwapVsActualSwap tests DrySwap prediction against actual Swap execution
 func testDrySwapVsActualSwap(t *testing.T) {
-	pool.InitPoolTest(t)
-
 	// Given: Pool exists with minted position
 	println("[INFO] Setting up pool and position for comparison test")
 	println("[INFO] Token0:", barPath)

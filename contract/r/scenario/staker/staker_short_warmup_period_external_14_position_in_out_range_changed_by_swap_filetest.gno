@@ -13,13 +13,14 @@ import (
 
 	"gno.land/r/gnoswap/access"
 
+	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/router/v1"
 
+	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 	rr "gno.land/r/gnoswap/router"
-	pl "gno.land/r/gnoswap/v1/pool"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	"gno.land/r/gnoswap/gnft"
@@ -272,6 +273,7 @@ func after50Blocks() {
 }
 
 func makePosition1OutRange() {
+	testing.SetRealm(adminRealm)
 	poolTick := pl.GetSlot0Tick(poolPath)
 	if poolTick != 0 {
 		panic("expected pool tick to be 0")
@@ -302,6 +304,7 @@ func makePosition1OutRange() {
 		panic("unexpected swap result")
 	}
 
+	testing.SetRealm(adminRealm)
 	poolTick = pl.GetSlot0Tick(poolPath)
 	if poolTick != -195 {
 		panic("expected pool tick to be -195")

@@ -26,7 +26,7 @@ import (
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/rbac"
 	gov_staker "gno.land/r/gnoswap/v1/gov/staker"
-	"gno.land/r/gnoswap/v1/pool"
+	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
 	"gno.land/r/onbloc/bar"
@@ -544,7 +544,7 @@ func collectLaunchpadDeposit() {
 // [EXPECTED] gov_governance should be changed g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd to g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5
 // [EXPECTED] gov_staker should be changed g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa to g1gt2xzjcmhp2t08yh0nkmc3q822sr87t5n92rm0
 // [EXPECTED] gov_xgns should be changed g1vfgdch449480u52q9g824rpx62hm5ahazkh0vp to g16gjmzf8725njf48325nl3yx3ve53wdu4ru53vm
-// [EXPECTED] pool should be changed g148tjamj80yyrm309z7rk690an22thd2l3z8ank to g126swhfaq2vyvvjywevhgw7lv9hg8qan93dasu8
+// [EXPECTED] pool should be changed g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v to g126swhfaq2vyvvjywevhgw7lv9hg8qan93dasu8
 // [EXPECTED] position should be changed g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye to g1vsm68lq9cpn7x507s6gh59anmx86kxfhzyszu2
 // [EXPECTED] protocol_fee should be changed g1r340tuven27z8wq50u8d20eqrsj470082682tp to g1397dea8xlfv5858xzhsly7k998xm2zlvrm93t2
 // [EXPECTED] router should be changed g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp to g1cnz5gm2l09pm2k6rknjjar9a2w53fdhk4yjzy5

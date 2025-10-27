@@ -10,6 +10,10 @@ import (
 // These keys are prefixed with the domain address to ensure namespace isolation.
 type StoreKey string
 
+func (s StoreKey) String() string {
+	return string(s)
+}
+
 const (
 	// Pool data storage keys
 	StoreKeyPools                StoreKey = "pools"                // AVL tree containing all pools
@@ -17,8 +21,13 @@ const (
 	StoreKeySlot0FeeProtocol     StoreKey = "slot0FeeProtocol"     // Protocol fee percentage
 
 	// Protocol fee storage keys
-	StoreKeyPoolCreationFee StoreKey = "poolCreationFee" // Pool creation fee amount
-	StoreKeyWithdrawalFee   StoreKey = "withdrawalFee"   // Withdrawal fee in basis points
+	StoreKeyPoolCreationFee  StoreKey = "poolCreationFee"  // Pool creation fee amount
+	StoreKeyWithdrawalFeeBPS StoreKey = "withdrawalFeeBPS" // Withdrawal fee in basis points
+
+	// Swap hook storage keys
+	StoreKeySwapStartHook StoreKey = "swapStartHook" // Swap start hook function
+	StoreKeySwapEndHook   StoreKey = "swapEndHook"   // Swap end hook function
+	StoreKeyTickCrossHook StoreKey = "tickCrossHook" // Tick cross hook function
 )
 
 // poolStore implements the IPoolStore interface for pool domain storage.
@@ -27,10 +36,14 @@ type poolStore struct {
 	kvStore store.KVStore
 }
 
+func (s *poolStore) HasPools() bool {
+	return s.kvStore.Has(StoreKeyPools.String())
+}
+
 // GetPools retrieves the AVL tree containing all pool data.
 // This is the main data structure that stores all pool instances.
 func (s *poolStore) GetPools() *avl.Tree {
-	result, err := s.kvStore.Get(s.makeKey(StoreKeyPools))
+	result, err := s.kvStore.Get(StoreKeyPools.String())
 	if err != nil {
 		panic(err)
 	}
@@ -45,13 +58,17 @@ func (s *poolStore) GetPools() *avl.Tree {
 
 // SetPools stores the AVL tree containing all pool data.
 func (s *poolStore) SetPools(pools *avl.Tree) error {
-	return s.kvStore.Set(s.makeKey(StoreKeyPools), pools)
+	return s.kvStore.Set(StoreKeyPools.String(), pools)
+}
+
+func (s *poolStore) HasFeeAmountTickSpacing() bool {
+	return s.kvStore.Has(StoreKeyFeeAmountTickSpacing.String())
 }
 
 // GetFeeAmountTickSpacing retrieves the mapping between fee amounts and tick spacing.
 // This mapping determines the tick spacing for each supported fee tier.
 func (s *poolStore) GetFeeAmountTickSpacing() *avl.Tree {
-	result, err := s.kvStore.Get(s.makeKey(StoreKeyFeeAmountTickSpacing))
+	result, err := s.kvStore.Get(StoreKeyFeeAmountTickSpacing.String())
 	if err != nil {
 		panic(err)
 	}
@@ -66,12 +83,16 @@ func (s *poolStore) GetFeeAmountTickSpacing() *avl.Tree {
 
 // SetFeeAmountTickSpacing stores the mapping between fee amounts and tick spacing.
 func (s *poolStore) SetFeeAmountTickSpacing(feeAmountTickSpacing *avl.Tree) error {
-	return s.kvStore.Set(s.makeKey(StoreKeyFeeAmountTickSpacing), feeAmountTickSpacing)
+	return s.kvStore.Set(StoreKeyFeeAmountTickSpacing.String(), feeAmountTickSpacing)
+}
+
+func (s *poolStore) HasSlot0FeeProtocol() bool {
+	return s.kvStore.Has(StoreKeySlot0FeeProtocol.String())
 }
 
 // GetSlot0FeeProtocol retrieves the protocol fee percentage for slot0.
 func (s *poolStore) GetSlot0FeeProtocol() uint8 {
-	result, err := s.kvStore.Get(s.makeKey(StoreKeySlot0FeeProtocol))
+	result, err := s.kvStore.Get(StoreKeySlot0FeeProtocol.String())
 	if err != nil {
 		panic(err)
 	}
@@ -86,12 +107,16 @@ func (s *poolStore) GetSlot0FeeProtocol() uint8 {
 
 // SetSlot0FeeProtocol stores the protocol fee percentage for slot0.
 func (s *poolStore) SetSlot0FeeProtocol(slot0FeeProtocol uint8) error {
-	return s.kvStore.Set(s.makeKey(StoreKeySlot0FeeProtocol), slot0FeeProtocol)
+	return s.kvStore.Set(StoreKeySlot0FeeProtocol.String(), slot0FeeProtocol)
+}
+
+func (s *poolStore) HasPoolCreationFee() bool {
+	return s.kvStore.Has(StoreKeyPoolCreationFee.String())
 }
 
 // GetPoolCreationFee retrieves the pool creation fee amount.
 func (s *poolStore) GetPoolCreationFee() int64 {
-	result, err := s.kvStore.Get(s.makeKey(StoreKeyPoolCreationFee))
+	result, err := s.kvStore.Get(StoreKeyPoolCreationFee.String())
 	if err != nil {
 		panic(err)
 	}
@@ -106,12 +131,16 @@ func (s *poolStore) GetPoolCreationFee() int64 {
 
 // SetPoolCreationFee stores the pool creation fee amount.
 func (s *poolStore) SetPoolCreationFee(poolCreationFee int64) error {
-	return s.kvStore.Set(s.makeKey(StoreKeyPoolCreationFee), poolCreationFee)
+	return s.kvStore.Set(StoreKeyPoolCreationFee.String(), poolCreationFee)
+}
+
+func (s *poolStore) HasWithdrawalFeeBPS() bool {
+	return s.kvStore.Has(StoreKeyWithdrawalFeeBPS.String())
 }
 
 // GetWithdrawalFeeBPS retrieves the withdrawal fee in basis points.
 func (s *poolStore) GetWithdrawalFeeBPS() uint64 {
-	result, err := s.kvStore.Get(s.makeKey(StoreKeyWithdrawalFee))
+	result, err := s.kvStore.Get(StoreKeyWithdrawalFeeBPS.String())
 	if err != nil {
 		panic(err)
 	}
@@ -126,13 +155,82 @@ func (s *poolStore) GetWithdrawalFeeBPS() uint64 {
 
 // SetWithdrawalFeeBPS stores the withdrawal fee in basis points.
 func (s *poolStore) SetWithdrawalFeeBPS(withdrawalFeeBPS uint64) error {
-	return s.kvStore.Set(s.makeKey(StoreKeyWithdrawalFee), withdrawalFeeBPS)
+	return s.kvStore.Set(StoreKeyWithdrawalFeeBPS.String(), withdrawalFeeBPS)
 }
 
-// makeKey creates a namespaced key by combining the domain address with the store key.
-// This ensures that each domain has its own isolated storage namespace.
-func (s *poolStore) makeKey(key StoreKey) string {
-	return ufmt.Sprintf("%s:%s", s.kvStore.GetDomainAddress(), key)
+// HasSwapStartHook checks if the swap start hook is set.
+func (s *poolStore) HasSwapStartHook() bool {
+	return s.kvStore.Has(StoreKeySwapStartHook.String())
+}
+
+// GetSwapStartHook retrieves the swap start hook function.
+func (s *poolStore) GetSwapStartHook() func(poolPath string, timestamp int64) {
+	result, err := s.kvStore.Get(StoreKeySwapStartHook.String())
+	if err != nil {
+		panic(err)
+	}
+
+	swapStartHook, ok := result.(func(poolPath string, timestamp int64))
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to func(poolPath string, timestamp int64): %T", result))
+	}
+
+	return swapStartHook
+}
+
+// SetSwapStartHook stores the swap start hook function.
+func (s *poolStore) SetSwapStartHook(swapStartHook func(poolPath string, timestamp int64)) error {
+	return s.kvStore.Set(StoreKeySwapStartHook.String(), swapStartHook)
+}
+
+// HasSwapEndHook checks if the swap end hook is set.
+func (s *poolStore) HasSwapEndHook() bool {
+	return s.kvStore.Has(StoreKeySwapEndHook.String())
+}
+
+// GetSwapEndHook retrieves the swap end hook function.
+func (s *poolStore) GetSwapEndHook() func(poolPath string) error {
+	result, err := s.kvStore.Get(StoreKeySwapEndHook.String())
+	if err != nil {
+		panic(err)
+	}
+
+	swapEndHook, ok := result.(func(poolPath string) error)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to func(poolPath string): %T", result))
+	}
+
+	return swapEndHook
+}
+
+// SetSwapEndHook stores the swap end hook function.
+func (s *poolStore) SetSwapEndHook(swapEndHook func(poolPath string) error) error {
+	return s.kvStore.Set(StoreKeySwapEndHook.String(), swapEndHook)
+}
+
+// HasTickCrossHook checks if the tick cross hook is set.
+func (s *poolStore) HasTickCrossHook() bool {
+	return s.kvStore.Has(StoreKeyTickCrossHook.String())
+}
+
+// GetTickCrossHook retrieves the tick cross hook function.
+func (s *poolStore) GetTickCrossHook() func(poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
+	result, err := s.kvStore.Get(StoreKeyTickCrossHook.String())
+	if err != nil {
+		panic(err)
+	}
+
+	tickCrossHook, ok := result.(func(poolPath string, tickId int32, zeroForOne bool, timestamp int64))
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to func(poolPath string, tickId int32, zeroForOne bool, timestamp int64): %T", result))
+	}
+
+	return tickCrossHook
+}
+
+// SetTickCrossHook stores the tick cross hook function.
+func (s *poolStore) SetTickCrossHook(tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)) error {
+	return s.kvStore.Set(StoreKeyTickCrossHook.String(), tickCrossHook)
 }
 
 // NewPoolStore creates a new pool store instance with the provided KV store.

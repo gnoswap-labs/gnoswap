@@ -15,15 +15,16 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
+	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
-	pl "gno.land/r/gnoswap/v1/pool"
 
 	"gno.land/p/nt/testutils"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 

@@ -11,7 +11,7 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	pl "gno.land/r/gnoswap/v1/pool"
+	pl "gno.land/r/gnoswap/pool"
 )
 
 const (

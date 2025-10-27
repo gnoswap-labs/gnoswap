@@ -13,7 +13,9 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
-	"gno.land/r/gnoswap/v1/pool"
+	"gno.land/r/gnoswap/pool"
+
+	_ "gno.land/r/gnoswap/pool/v1"
 )
 
 var t *testing.T
@@ -61,8 +63,6 @@ func main() {
 
 // testDrySwapZeroForOneFalse tests DrySwap with zeroForOne=false
 func testDrySwapZeroForOneFalse(t *testing.T) {
-	pool.InitPoolTest(t)
-
 	// Given: Pool exists with minted position
 	println("[INFO] Token0:", barPath)
 	println("[INFO] Token1:", fooPath)
