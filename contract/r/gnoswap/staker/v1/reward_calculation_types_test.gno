@@ -92,7 +92,7 @@ func TestDecodeUint(t *testing.T) {
 			"invalid",
 			"18446744073709551616", // overflow
 			"",                     // empty
-			"abc123",              // mixed
+			"abc123",               // mixed
 		}
 
 		for _, input := range invalidInputs {

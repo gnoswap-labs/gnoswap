@@ -2,7 +2,8 @@ package v1
 
 import (
 	"gno.land/p/nt/avl"
-	"gno.land/p/nt/ufmt"
+
+	sr "gno.land/r/gnoswap/staker"
 )
 
 const (
@@ -11,16 +12,6 @@ const (
 	Tier2        = 2
 	Tier3        = 3
 )
-
-// 100%, 0%, 0% if no tier2 and tier3
-// 80%, 0%, 20% if no tier2
-// 70%, 30%, 0% if no tier3
-// 50%, 30%, 20% if has tier2 and tier3
-type TierRatio struct {
-	Tier1 uint64
-	Tier2 uint64
-	Tier3 uint64
-}
 
 // TierRatioFromCounts calculates the ratio distribution for each tier based on pool counts.
 //
@@ -31,48 +22,33 @@ type TierRatio struct {
 //
 // Returns:
 // - TierRatio: The ratio distribution across tier 1, 2, and 3, scaled up by 100.
-func TierRatioFromCounts(tier1Count, tier2Count, tier3Count uint64) TierRatio {
+func TierRatioFromCounts(tier1Count, tier2Count, tier3Count uint64) sr.TierRatio {
 	// tier1 always exists
 	if tier2Count == 0 && tier3Count == 0 {
-		return TierRatio{
+		return sr.TierRatio{
 			Tier1: 100,
 			Tier2: 0,
 			Tier3: 0,
 		}
 	}
 	if tier2Count == 0 {
-		return TierRatio{
+		return sr.TierRatio{
 			Tier1: 80,
 			Tier2: 0,
 			Tier3: 20,
 		}
 	}
 	if tier3Count == 0 {
-		return TierRatio{
+		return sr.TierRatio{
 			Tier1: 70,
 			Tier2: 30,
 			Tier3: 0,
 		}
 	}
-	return TierRatio{
+	return sr.TierRatio{
 		Tier1: 50,
 		Tier2: 30,
 		Tier3: 20,
-	}
-}
-
-// Get returns the ratio(scaled up by 100) for the given tier.
-func (self *TierRatio) Get(tier uint64) uint64 {
-	switch tier {
-	case Tier1:
-		return self.Tier1
-	case Tier2:
-		return self.Tier2
-	case Tier3:
-		return self.Tier3
-	default:
-		panic(makeErrorWithDetails(
-			errInvalidPoolTier, ufmt.Sprintf("unsupported tier(%d)", tier)))
 	}
 }
 
@@ -90,7 +66,7 @@ func (self *TierRatio) Get(tier uint64) uint64 {
 type PoolTier struct {
 	membership *avl.Tree // poolPath -> tier(1, 2, 3)
 
-	tierRatio TierRatio
+	tierRatio sr.TierRatio
 
 	counts [AllTierCount]uint64
 
@@ -134,10 +110,37 @@ func NewPoolTier(pools *Pools, currentHeight int64, currentTime int64, initialPo
 	return result
 }
 
+func NewPoolTierBy(
+	membership *avl.Tree,
+	tierRatio sr.TierRatio,
+	counts [AllTierCount]uint64,
+	lastRewardCacheTimestamp int64,
+	lastRewardCacheHeight int64,
+	currentEmission int64,
+	getEmission func() int64,
+	getHalvingBlocksInRange func(start, end int64) ([]int64, []int64),
+) *PoolTier {
+	return &PoolTier{
+		membership:               membership,
+		tierRatio:                tierRatio,
+		counts:                   counts,
+		lastRewardCacheTimestamp: lastRewardCacheTimestamp,
+		lastRewardCacheHeight:    lastRewardCacheHeight,
+		getEmission:              getEmission,
+		getHalvingBlocksInRange:  getHalvingBlocksInRange,
+		currentEmission:          currentEmission,
+	}
+}
+
 // CurrentReward returns the current per-pool reward for the given tier.
 func (self *PoolTier) CurrentReward(tier uint64) int64 {
 	currentEmission := self.getEmission()
-	tierRatio := int64(self.tierRatio.Get(tier))
+	tierRatio, err := self.tierRatio.Get(tier)
+	if err != nil {
+		panic(makeErrorWithDetails(errInvalidPoolTier, err.Error()))
+	}
+
+	tierRatioInt64 := int64(tierRatio)
 	count := int64(self.CurrentCount(tier))
 
 	// Check for zero count to prevent division by zero
@@ -145,7 +148,7 @@ func (self *PoolTier) CurrentReward(tier uint64) int64 {
 		return 0
 	}
 
-	tierEmission := safeMulInt64(currentEmission, tierRatio)
+	tierEmission := safeMulInt64(currentEmission, tierRatioInt64)
 
 	return tierEmission / count / 100
 }

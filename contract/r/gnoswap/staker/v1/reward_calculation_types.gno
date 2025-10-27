@@ -30,8 +30,8 @@ func EncodeUint(num uint64) string {
 
 func EncodeInt64(num int64) string {
 	if num < 0 {
-        panic(ufmt.Sprintf("negative value not supported: %d", num))
-    }
+		panic(ufmt.Sprintf("negative value not supported: %d", num))
+	}
 	return EncodeUint(uint64(num))
 }
 

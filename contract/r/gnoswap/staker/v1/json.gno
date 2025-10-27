@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"gno.land/p/onbloc/json"
+	sr "gno.land/r/gnoswap/staker"
 )
 
 // JsonResponse is an interface that all JSON response types must implement.
@@ -47,7 +48,7 @@ type ApiExternalIncentive struct {
 	Refunded         bool   `json:"refunded"`
 }
 
-func newApiExternalIncentive(ictv *ExternalIncentive) ApiExternalIncentive {
+func newApiExternalIncentive(ictv *sr.ExternalIncentive) ApiExternalIncentive {
 	now := time.Now().Unix()
 	isActive := false
 	if now >= ictv.startTimestamp && now <= ictv.endTimestamp {

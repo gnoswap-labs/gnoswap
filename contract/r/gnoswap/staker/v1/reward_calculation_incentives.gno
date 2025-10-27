@@ -1,48 +1,8 @@
 package v1
 
 import (
-	"time"
-
 	"gno.land/p/nt/avl"
 )
-
-// Incentives represents a collection of external incentives for a specific pool.
-//
-// Fields:
-//
-//   - incentives: AVL tree storing ExternalIncentive objects indexed by incentiveId
-//     The incentiveId serves as the key to efficiently lookup incentive details
-//
-//   - targetPoolPath: String identifier for the pool this incentive collection belongs to
-//     Used to associate incentives with their corresponding liquidity pool
-//
-//   - unclaimablePeriods: Tree storing periods when rewards cannot be claimed
-//     Maps start timestamp (key) to end timestamp (value)
-//     An end timestamp of 0 indicates an ongoing unclaimable period
-//     Used to track intervals when staking rewards are not claimable
-type Incentives struct {
-	incentives         *avl.Tree // (incentiveId) => ExternalIncentive
-	archivedIncentives *avl.Tree // (incentiveId) => ExternalIncentive (ended incentives)
-
-	targetPoolPath string // The target pool path for this incentive collection
-
-	unclaimablePeriods *UintTree // startTimestamp => endTimestamp
-}
-
-// NewIncentives creates a new Incentives instance.
-func NewIncentives(targetPoolPath string) Incentives {
-	result := Incentives{
-		targetPoolPath:     targetPoolPath,
-		unclaimablePeriods: NewUintTree(),
-		incentives:         avl.NewTree(),
-		archivedIncentives: avl.NewTree(),
-	}
-
-	// initial unclaimable period starts, as there cannot be any staked positions yet.
-	currentTimestamp := time.Now().Unix()
-	result.unclaimablePeriods.set(currentTimestamp, int64(0))
-	return result
-}
 
 // Get incentive by incentiveId (checks both active and archived)
 func (self *Incentives) Get(incentiveId string) (*ExternalIncentive, bool) {

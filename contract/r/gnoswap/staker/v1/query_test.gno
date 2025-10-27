@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
-	u256 "gno.land/p/gnoswap/uint256"
 )
 
 func TestQueryPoolData(t *testing.T) {

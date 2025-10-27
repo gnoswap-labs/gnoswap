@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/ufmt"
 	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/ufmt"
 )
 
 func TestIncentives_ArchiveIncentive(t *testing.T) {
