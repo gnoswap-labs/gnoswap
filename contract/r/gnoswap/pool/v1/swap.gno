@@ -183,10 +183,6 @@ func (i *poolV1) Swap(
 					panic(err)
 				}
 			}
-			err := swapEndHook(pool.PoolPath())
-			if err != nil {
-				panic(err)
-			}
 		}
 	}()
 
