@@ -225,6 +225,10 @@ func (s *stakerStore) SetIncentiveCounter(counter *Counter) error {
 	return s.kvStore.Set(StoreKeyIncentiveCounter.String(), counter)
 }
 
+func (s *stakerStore) NextIncentiveID(creator address, timestamp int64) string {
+	return makeIncentiveID(creator, timestamp)
+}
+
 // TokenSpecificMinimumRewards
 func (s *stakerStore) HasTokenSpecificMinimumRewardsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyTokenSpecificMinimumRewards.String())
@@ -510,4 +514,8 @@ func NewStakerStore(kvStore store.KVStore) IStakerStore {
 
 func uint64ToString(id uint64) string {
 	return strconv.FormatUint(id, 10)
+}
+
+func makeIncentiveID(creator address, timestamp int64) string {
+	return ufmt.Sprintf("%s:%d", creator.String(), timestamp)
 }

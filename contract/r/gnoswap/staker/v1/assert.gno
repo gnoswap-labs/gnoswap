@@ -8,7 +8,7 @@ import (
 	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gnft"
-	pl "gno.land/r/gnoswap/v1/pool"
+	pl "gno.land/r/gnoswap/pool"
 )
 
 // assertIsValidAmount ensures the amount is non-negative.
@@ -33,8 +33,8 @@ func assertIsValidRewardAmountFormat(rewardAmountStr string) {
 }
 
 // assertIsDepositor ensures the caller is the owner of the deposit.
-func assertIsDepositor(caller address, positionId uint64) {
-	deposit := deposits.get(positionId)
+func assertIsDepositor(s *stakerV1, caller address, positionId uint64) {
+	deposit := s.getDeposits().get(positionId)
 	if deposit == nil {
 		panic(makeErrorWithDetails(
 			errDataNotFound,
@@ -42,17 +42,17 @@ func assertIsDepositor(caller address, positionId uint64) {
 		))
 	}
 
-	if caller != deposit.owner {
+	if caller != deposit.Owner() {
 		panic(makeErrorWithDetails(
 			errNoPermission,
-			ufmt.Sprintf("caller(%s) is not depositor(%s)", caller.String(), deposit.owner.String()),
+			ufmt.Sprintf("caller(%s) is not depositor(%s)", caller.String(), deposit.Owner().String()),
 		))
 	}
 }
 
 // assertIsNotStaked ensures the position is not already staked.
-func assertIsNotStaked(positionId uint64) {
-	if deposits.Has(positionId) {
+func assertIsNotStaked(s *stakerV1, positionId uint64) {
+	if s.getDeposits().Has(positionId) {
 		panic(makeErrorWithDetails(
 			errAlreadyStaked,
 			ufmt.Sprintf("positionId(%d) already staked", positionId),
@@ -92,9 +92,24 @@ func assertIsValidPoolTier(tier uint64) {
 }
 
 // assertIsGreaterThanMinimumRewardAmount ensures the reward amount meets minimum requirements.
-func assertIsGreaterThanMinimumRewardAmount(rewardToken string, rewardAmount int64) {
-	minReward := GetMinimumRewardAmountForToken(rewardToken)
-	if rewardAmount < minReward {
+func assertIsGreaterThanMinimumRewardAmount(s *stakerV1, rewardToken string, rewardAmount int64) {
+	minReward, found := s.store.GetTokenSpecificMinimumRewards().Get(rewardToken)
+	if !found {
+		panic(makeErrorWithDetails(
+			errInvalidInput,
+			ufmt.Sprintf("rewardToken(%s) not found", rewardToken),
+		))
+	}
+
+	minRewardInt64, ok := minReward.(int64)
+	if !ok {
+		panic(makeErrorWithDetails(
+			errInvalidInput,
+			ufmt.Sprintf("rewardToken(%s) is not int64", rewardToken),
+		))
+	}
+
+	if rewardAmount < minRewardInt64 {
 		panic(makeErrorWithDetails(
 			errInvalidInput,
 			ufmt.Sprintf("rewardAmount(%d) is less than minimum required amount(%d)", rewardAmount, minReward),
@@ -103,14 +118,14 @@ func assertIsGreaterThanMinimumRewardAmount(rewardToken string, rewardAmount int
 }
 
 // assertIsAllowedForExternalReward ensures the token is allowed for external rewards.
-func assertIsAllowedForExternalReward(poolPath, tokenPath string) {
+func assertIsAllowedForExternalReward(s *stakerV1, poolPath, tokenPath string) {
 	token0, token1, _ := poolPathDivide(poolPath)
 
 	if tokenPath == token0 || tokenPath == token1 {
 		return
 	}
 
-	allowed := contains(allowedTokens, tokenPath)
+	allowed := contains(s.store.GetAllowedTokens(), tokenPath)
 	if allowed {
 		return
 	}

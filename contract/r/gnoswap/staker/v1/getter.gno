@@ -42,7 +42,7 @@ func (s *stakerV1) GetPoolIncentiveIdList(poolPath string) []string {
 	incentives := pool.Incentives()
 
 	ids := []string{}
-	incentives.Incentives().Iterate("", "", func(key string, value any) bool {
+	incentives.IncentiveTrees().Iterate("", "", func(key string, value any) bool {
 		ids = append(ids, key)
 		return true
 	})
@@ -55,7 +55,7 @@ func (s *stakerV1) getIncentive(poolPath string, incentiveId string) *sr.Externa
 	pool := s.getPoolByPoolPath(poolPath)
 
 	incentives := pool.Incentives()
-	incentive, exist := incentives.Incentives().Get(incentiveId)
+	incentive, exist := incentives.IncentiveTrees().Get(incentiveId)
 	if !exist {
 		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
 	}
@@ -208,9 +208,7 @@ func (s *stakerV1) GetDepositInternalRewardLastCollectTimestamp(lpTokenId uint64
 
 // GetDepositExternalRewardLastCollectTimestamp returns the last collect timestamp of a deposit.
 func (s *stakerV1) GetDepositExternalRewardLastCollectTimestamp(lpTokenId uint64, incentiveId string) int64 {
-	deposit := s.getDeposit(lpTokenId)
-
-	return deposit.ExternalRewardLastCollectTime(incentiveId)
+	return s.getDepositResolver(lpTokenId).ExternalRewardLastCollectTime(incentiveId)
 }
 
 // GetDepositWarmUp returns the warm-up records of a deposit.
@@ -287,6 +285,9 @@ func (s *stakerV1) GetPrintExternalInfo() string {
 			if !ok {
 				panic("failed to cast value to *ExternalIncentive")
 			}
+
+			incentiveResolver := NewExternalIncentiveResolver(incentive)
+
 			if incentive.TargetPoolPath() == deposit.TargetPoolPath() {
 				externalIncentive := ApiExternalDebugIncentive{
 					PoolPath:          incentive.TargetPoolPath(),
@@ -298,7 +299,7 @@ func (s *stakerV1) GetPrintExternalInfo() string {
 					RewardPerSecond:   strconv.FormatInt(incentive.RewardPerSecond(), 10),
 					Refundee:          incentive.Refundee(),
 					TokenAmountFull:   incentive.DepositGnsAmount(),
-					TokenAmountToGive: incentive.RewardSpent(time.Now().Unix()),
+					TokenAmountToGive: incentiveResolver.RewardSpent(time.Now().Unix()),
 				}
 
 				externalIncentivesList = append(externalIncentivesList, externalIncentive)
@@ -350,8 +351,9 @@ func (s *stakerV1) IsArchivedExternalIncentive(incentiveId string) bool {
 	}
 
 	incentives := pool.Incentives()
+	incentiveResolver := NewIncentivesResolver(incentives)
 
-	return incentives.IsArchived(incentiveId)
+	return incentiveResolver.IsArchived(incentiveId)
 }
 
 // makeExternalPositionsNode creates JSON nodes for external position data.

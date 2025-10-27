@@ -2,11 +2,11 @@ package v1
 
 import sr "gno.land/r/gnoswap/staker"
 
-var _ sr.IStaker = &stakerV1{}
-
 type stakerV1 struct {
 	store            sr.IStakerStore
 	emissionAccessor sr.EmissionAccessor
+
+	// Global batch processor for current swap
 	currentSwapBatch *SwapBatchProcessor
 }
 
@@ -74,10 +74,22 @@ func (s *stakerV1) updateExternalIncentives(externalIncentives *ExternalIncentiv
 	s.store.SetExternalIncentives(externalIncentives.tree)
 }
 
-func NewStakerV1(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAccessor) *stakerV1 {
-	return &stakerV1{
+func (s *stakerV1) getDepositResolver(lpTokenId uint64) *DepositResolver {
+	return NewDepositResolver(s.getDeposit(lpTokenId))
+}
+
+func NewStakerV1(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAccessor) sr.IStaker {
+	instance := &stakerV1{
 		store:            stakerStore,
 		emissionAccessor: emissionAccessor,
 		currentSwapBatch: nil,
 	}
+
+	instance.setupSwapHooks()
+
+	emissionAccessor.SetOnDistributionPctChangeCallback(func(emissionAmountPerSecond int64) {
+		instance.emissionCacheUpdateHook(emissionAmountPerSecond)
+	})
+
+	return instance
 }

@@ -14,17 +14,17 @@ import (
 
 // GetDepositGnsAmount returns the current deposit amount in GNS.
 func (s *stakerV1) GetDepositGnsAmount() int64 {
-	return depositGnsAmount
+	return s.store.GetDepositGnsAmount()
 }
 
 // GetMinimumRewardAmount returns the default minimum reward amount required for external incentives.
 func (s *stakerV1) GetMinimumRewardAmount() int64 {
-	return minimumRewardAmount
+	return s.store.GetMinimumRewardAmount()
 }
 
 // GetMinimumRewardAmountForToken returns the minimum reward amount for a specific token.
 func (s *stakerV1) GetMinimumRewardAmountForToken(tokenPath string) int64 {
-	amountI, found := tokenSpecificMinimumRewards.Get(tokenPath)
+	amountI, found := s.store.GetTokenSpecificMinimumRewards().Get(tokenPath)
 	if found {
 		amount, ok := amountI.(int64)
 		if !ok {
@@ -38,7 +38,7 @@ func (s *stakerV1) GetMinimumRewardAmountForToken(tokenPath string) int64 {
 
 // GetSpecificTokenMinimumRewardAmount returns the explicitly set minimum reward amount for a token.
 func (s *stakerV1) GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool) {
-	amountI, found := tokenSpecificMinimumRewards.Get(tokenPath)
+	amountI, found := s.store.GetTokenSpecificMinimumRewards().Get(tokenPath)
 	if !found {
 		return 0, false
 	}
@@ -59,8 +59,8 @@ func (s *stakerV1) SetDepositGnsAmount(amount int64) {
 
 	assertIsValidAmount(amount)
 
-	prevDepositGnsAmount := getDepositGnsAmount()
-	setDepositGnsAmount(amount)
+	prevDepositGnsAmount := s.getDepositGnsAmount()
+	s.setDepositGnsAmount(amount)
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -82,8 +82,8 @@ func (s *stakerV1) SetMinimumRewardAmount(amount int64) {
 
 	assertIsValidAmount(amount)
 
-	prevMinimumRewardAmount := getMinimumRewardAmount()
-	setMinimumRewardAmount(amount)
+	prevMinimumRewardAmount := s.getMinimumRewardAmount()
+	s.setMinimumRewardAmount(amount)
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -117,16 +117,16 @@ func (s *stakerV1) SetTokenMinimumRewardAmount(paramsStr string) {
 		))
 	}
 
-	prevAmount, found := GetSpecificTokenMinimumRewardAmount(tokenPath)
+	prevAmount, found := s.GetSpecificTokenMinimumRewardAmount(tokenPath)
 
 	// If amount is 0, remove the entry; otherwise, set it.
 	if amount64 == 0 {
 		// Only attempt removal if an entry actually existed
 		if found {
-			tokenSpecificMinimumRewards.Remove(tokenPath)
+			s.store.GetTokenSpecificMinimumRewards().Remove(tokenPath)
 		}
 	} else {
-		tokenSpecificMinimumRewards.Set(tokenPath, amount64)
+		s.store.GetTokenSpecificMinimumRewards().Set(tokenPath, amount64)
 	}
 
 	previousRealm := runtime.PreviousRealm()
@@ -143,21 +143,21 @@ func (s *stakerV1) SetTokenMinimumRewardAmount(paramsStr string) {
 }
 
 // setDepositGnsAmount internally updates the deposit GNS amount.
-func setDepositGnsAmount(amount int64) {
-	depositGnsAmount = amount
+func (s *stakerV1) setDepositGnsAmount(amount int64) {
+	s.store.SetDepositGnsAmount(amount)
 }
 
 // setMinimumRewardAmount internally updates the minimum reward amount.
-func setMinimumRewardAmount(amount int64) {
-	minimumRewardAmount = amount
+func (s *stakerV1) setMinimumRewardAmount(amount int64) {
+	s.store.SetMinimumRewardAmount(amount)
 }
 
 // getDepositGnsAmount internally retrieves the deposit GNS amount.
-func getDepositGnsAmount() int64 {
-	return depositGnsAmount
+func (s *stakerV1) getDepositGnsAmount() int64 {
+	return s.store.GetDepositGnsAmount()
 }
 
 // getMinimumRewardAmount internally retrieves the minimum reward amount.
-func getMinimumRewardAmount() int64 {
-	return minimumRewardAmount
+func (s *stakerV1) getMinimumRewardAmount() int64 {
+	return s.store.GetMinimumRewardAmount()
 }

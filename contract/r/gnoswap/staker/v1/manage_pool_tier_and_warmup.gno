@@ -9,9 +9,9 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
+	sr "gno.land/r/gnoswap/staker"
 
-	en "gno.land/r/gnoswap/emission"
-	pl "gno.land/r/gnoswap/v1/pool"
+	pl "gno.land/r/gnoswap/pool"
 )
 
 const (
@@ -30,7 +30,7 @@ func (s *stakerV1) SetPoolTier(poolPath string, tier uint64) {
 	assertIsValidPoolTier(tier)
 
 	currentTime := time.Now().Unix()
-	setPoolTier(poolPath, tier, currentTime)
+	s.setPoolTier(poolPath, tier, currentTime)
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -56,7 +56,7 @@ func (s *stakerV1) ChangePoolTier(poolPath string, tier uint64) {
 	assertIsValidPoolTier(tier)
 
 	currentTime := time.Now().Unix()
-	previousTier, newTier := changePoolTier(poolPath, tier, currentTime)
+	previousTier, newTier := s.changePoolTier(poolPath, tier, currentTime)
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -82,7 +82,7 @@ func (s *stakerV1) RemovePoolTier(poolPath string) {
 	assertIsPoolExists(poolPath)
 
 	currentTime := time.Now().Unix()
-	removePoolTier(poolPath, currentTime)
+	s.removePoolTier(poolPath, currentTime)
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -103,7 +103,7 @@ func (s *stakerV1) SetWarmUp(pct, timeDuration int64) {
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
-	setWarmUp(pct, timeDuration)
+	s.setWarmUp(pct, timeDuration)
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -116,39 +116,47 @@ func (s *stakerV1) SetWarmUp(pct, timeDuration int64) {
 }
 
 // setPoolTier internally sets the pool tier.
-func setPoolTier(poolPath string, tier uint64, currentTime int64) {
-	en.MintAndDistributeGns(cross)
+func (s *stakerV1) setPoolTier(poolPath string, tier uint64, currentTime int64) {
+	s.emissionAccessor.MintAndDistributeGns()
 
-	pool := pools.GetPoolOrNil(poolPath)
+	pool := s.getPools().GetPoolOrNil(poolPath)
 	if pool == nil {
-		pool = NewPool(poolPath, time.Now().Unix())
-		pools.set(poolPath, pool)
+		pool = sr.NewPool(poolPath, time.Now().Unix())
+		s.getPools().set(poolPath, pool)
 	}
-	poolTier.changeTier(runtime.ChainHeight(), currentTime, pools, poolPath, tier)
+	poolTier := s.getPoolTier()
+	poolTier.changeTier(runtime.ChainHeight(), currentTime, s.getPools(), poolPath, tier)
+	s.updatePoolTier(poolTier)
 }
 
 // changePoolTier internally changes the pool tier and returns old and new tiers.
-func changePoolTier(poolPath string, tier uint64, currentTime int64) (uint64, uint64) {
-	en.MintAndDistributeGns(cross)
+func (s *stakerV1) changePoolTier(poolPath string, tier uint64, currentTime int64) (uint64, uint64) {
+	s.emissionAccessor.MintAndDistributeGns()
+	poolTier := s.getPoolTier()
 	previousTier := poolTier.CurrentTier(poolPath)
 
-	poolTier.changeTier(runtime.ChainHeight(), currentTime, pools, poolPath, tier)
+	poolTier.changeTier(runtime.ChainHeight(), currentTime, s.getPools(), poolPath, tier)
+	s.updatePoolTier(poolTier)
 
 	return previousTier, tier
 }
 
 // removePoolTier internally removes the pool from tier system.
-func removePoolTier(poolPath string, currentTime int64) {
-	en.MintAndDistributeGns(cross)
+func (s *stakerV1) removePoolTier(poolPath string, currentTime int64) {
+	s.emissionAccessor.MintAndDistributeGns()
 
-	poolTier.changeTier(runtime.ChainHeight(), currentTime, pools, poolPath, NOT_EMISSION_TARGET_TIER)
+	poolTier := s.getPoolTier()
+	poolTier.changeTier(runtime.ChainHeight(), currentTime, s.getPools(), poolPath, NOT_EMISSION_TARGET_TIER)
+	s.updatePoolTier(poolTier)
 }
 
 // setWarmUp internally sets the warm-up parameters.
-func setWarmUp(pct, timeDuration int64) {
-	en.MintAndDistributeGns(cross)
+func (s *stakerV1) setWarmUp(pct, timeDuration int64) {
+	s.emissionAccessor.MintAndDistributeGns()
 
-	modifyWarmup(pctToIndex(pct), timeDuration)
+	warmupTemplate := s.store.GetWarmupTemplate()
+	modifyWarmup(warmupTemplate, pctToIndex(pct), timeDuration)
+	s.store.SetWarmupTemplate(warmupTemplate)
 }
 
 // pctToIndex converts percentage to warmup index.

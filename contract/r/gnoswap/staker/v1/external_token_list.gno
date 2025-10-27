@@ -9,6 +9,8 @@ import (
 	"gno.land/r/gnoswap/halt"
 )
 
+var defaultAllowed = []string{GNOT, GNS_PATH}
+
 // AddToken adds a new token path to the list of allowed tokens
 // Only the admin can add a new token.
 //
@@ -22,7 +24,7 @@ func (s *stakerV1) AddToken(tokenPath string) {
 	halt.AssertIsNotHaltedStakerWithVersion(1)
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
-	if err := modifyTokenList(tokenPath, addTokenValidator, addTokenExecutor); err != nil {
+	if err := modifyTokenList(s, tokenPath, addTokenValidator, addTokenExecutor); err != nil {
 		panic(err.Error())
 	}
 
@@ -50,7 +52,7 @@ func (s *stakerV1) RemoveToken(tokenPath string) {
 	halt.AssertIsNotHaltedStakerWithVersion(1)
 	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
 
-	if err := modifyTokenList(tokenPath, removeTokenValidator, removeTokenExecutor); err != nil {
+	if err := modifyTokenList(s, tokenPath, removeTokenValidator, removeTokenExecutor); err != nil {
 		panic(err.Error())
 	}
 
@@ -70,7 +72,7 @@ type TokenValidator func(tokenPath string) error
 type TokenExecutor func(tokenPath string, tokens []string) []string
 
 // modifyTokenList handles common token modification logics, such as admin check, validation, and execution.
-func modifyTokenList(tokenPath string, validator TokenValidator, executor TokenExecutor) error {
+func modifyTokenList(s *stakerV1, tokenPath string, validator TokenValidator, executor TokenExecutor) error {
 	// validate token operation if validator is provided
 	if validator != nil {
 		if err := validator(tokenPath); err != nil {
@@ -78,7 +80,9 @@ func modifyTokenList(tokenPath string, validator TokenValidator, executor TokenE
 		}
 	}
 
+	allowedTokens := s.store.GetAllowedTokens()
 	allowedTokens = executor(tokenPath, allowedTokens)
+	s.store.SetAllowedTokens(allowedTokens)
 	return nil
 }
 

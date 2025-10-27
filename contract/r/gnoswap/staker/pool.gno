@@ -2,7 +2,6 @@ package staker
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -136,8 +135,8 @@ func (p *Pool) SetIncentives(incentives Incentives) {
 }
 
 // Ticks returns the ticks
-func (p *Pool) Ticks() Ticks {
-	return p.ticks
+func (p *Pool) Ticks() *Ticks {
+	return &p.ticks
 }
 
 // SetTicks sets the ticks
@@ -218,7 +217,7 @@ type Incentives struct {
 // Incentives Getter/Setter methods
 
 // Incentives returns the incentives tree
-func (i *Incentives) Incentives() *avl.Tree {
+func (i *Incentives) IncentiveTrees() *avl.Tree {
 	return i.incentives
 }
 
@@ -689,6 +688,6 @@ func (ratio *TierRatio) Get(tier uint64) (uint64, error) {
 	case 3:
 		return ratio.Tier3, nil
 	default:
-		return 0, errors.New(fmt.Sprintf("unsupported tier(%d)", tier))
+		return 0, errors.New(ufmt.Sprintf("unsupported tier(%d)", tier))
 	}
 }

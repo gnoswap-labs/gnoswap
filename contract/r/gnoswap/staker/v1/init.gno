@@ -6,7 +6,8 @@ import (
 
 	"gno.land/p/nt/avl"
 	"gno.land/r/gnoswap/emission"
-	"gno.land/r/gnoswap/staker"
+
+	sr "gno.land/r/gnoswap/staker"
 )
 
 const (
@@ -25,23 +26,17 @@ func init() {
 }
 
 func registerStakerV1() {
-	staker.RegisterInitializer(cross, func(stakerStore staker.IStakerStore, emissionAccessor staker.EmissionAccessor) staker.IStaker {
+	sr.RegisterInitializer(cross, func(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAccessor) sr.IStaker {
 		err := initStoreData(stakerStore, emissionAccessor)
 		if err != nil {
 			panic(err)
 		}
 
-		instance := NewStakerV1(stakerStore, emissionAccessor)
-
-		emissionAccessor.SetOnDistributionPctChangeCallback(func(emissionAmountPerSecond int64) {
-			instance.emissionCacheUpdateHook(emissionAmountPerSecond)
-		})
-
-		return instance
+		return NewStakerV1(stakerStore, emissionAccessor)
 	})
 }
 
-func initStoreData(stakerStore staker.IStakerStore, emissionAccessor staker.EmissionAccessor) error {
+func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAccessor) error {
 	if !stakerStore.HasDepositGnsAmountStoreKey() {
 		err := stakerStore.SetDepositGnsAmount(defaultDepositGnsAmount)
 		if err != nil {
@@ -92,7 +87,7 @@ func initStoreData(stakerStore staker.IStakerStore, emissionAccessor staker.Emis
 	}
 
 	if !stakerStore.HasIncentiveCounterStoreKey() {
-		err := stakerStore.SetIncentiveCounter(staker.NewCounter())
+		err := stakerStore.SetIncentiveCounter(sr.NewCounter())
 		if err != nil {
 			return err
 		}
@@ -113,7 +108,7 @@ func initStoreData(stakerStore staker.IStakerStore, emissionAccessor staker.Emis
 	}
 
 	if !stakerStore.HasWarmupTemplateStoreKey() {
-		err := stakerStore.SetWarmupTemplate(staker.DefaultWarmupTemplate())
+		err := stakerStore.SetWarmupTemplate(sr.DefaultWarmupTemplate())
 		if err != nil {
 			return err
 		}
@@ -195,12 +190,12 @@ func initStoreData(stakerStore staker.IStakerStore, emissionAccessor staker.Emis
 	return nil
 }
 
-func initializePoolTier(stakerStore staker.IStakerStore) (*PoolTier, *Pools) {
+func initializePoolTier(stakerStore sr.IStakerStore) (*PoolTier, *Pools) {
 	// Initialize tier 1 with GNOT:GNS 0.3% pool
 	pools := NewPools()
 	pl := NewPools().GetPoolOrNil(MUST_EXISTS_IN_TIER_1)
 	if pl == nil {
-		pl = NewPool(MUST_EXISTS_IN_TIER_1, time.Now().Unix())
+		pl = sr.NewPool(MUST_EXISTS_IN_TIER_1, time.Now().Unix())
 		pools.set(MUST_EXISTS_IN_TIER_1, pl)
 	}
 

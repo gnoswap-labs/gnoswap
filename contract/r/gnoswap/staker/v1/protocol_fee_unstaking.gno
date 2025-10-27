@@ -16,14 +16,15 @@ import (
 const FEE_PRECISION = 10000
 
 // GetUnstakingFee returns the current unstaking fee rate in basis points.
-func (s *stakerV1) GetUnstakingFee() int64 { return unstakingFee }
+func (s *stakerV1) GetUnstakingFee() int64 { return s.store.GetUnstakingFee() }
 
 // handleStakingRewardFee calculates and applies the unstaking fee.
-func handleStakingRewardFee(
+func (s *stakerV1) handleStakingRewardFee(
 	tokenPath string,
 	amount int64,
 	internal bool,
 ) (int64, int64, error) {
+	unstakingFee := s.GetUnstakingFee()
 	if unstakingFee == 0 {
 		return amount, 0, nil
 	}
@@ -59,9 +60,9 @@ func (s *stakerV1) SetUnStakingFee(fee int64) {
 
 	assertIsValidFeeRate(fee)
 
-	prevUnStakingFee := GetUnstakingFee()
+	prevUnStakingFee := s.GetUnstakingFee()
 
-	setUnStakingFee(fee)
+	s.setUnStakingFee(fee)
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -74,6 +75,6 @@ func (s *stakerV1) SetUnStakingFee(fee int64) {
 }
 
 // setUnStakingFee internally updates the unstaking fee.
-func setUnStakingFee(fee int64) {
-	unstakingFee = fee
+func (s *stakerV1) setUnStakingFee(fee int64) {
+	s.store.SetUnstakingFee(fee)
 }

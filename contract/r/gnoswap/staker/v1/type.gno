@@ -153,6 +153,19 @@ func (self *DepositResolver) updateExternalRewardLastCollectTime(incentiveID str
 	return nil
 }
 
+func (self *DepositResolver) FindWarmup(currentTime int64) int {
+	for i, warmup := range self.Warmups() {
+		if currentTime < warmup.NextWarmupTime {
+			return i
+		}
+	}
+	return len(self.Warmups()) - 1
+}
+
+func (self *DepositResolver) GetWarmup(index int) sr.Warmup {
+	return self.Warmups()[index]
+}
+
 func NewDepositResolver(
 	deposit *sr.Deposit,
 ) *DepositResolver {

@@ -51,22 +51,22 @@ type ApiExternalIncentive struct {
 func newApiExternalIncentive(ictv *sr.ExternalIncentive) ApiExternalIncentive {
 	now := time.Now().Unix()
 	isActive := false
-	if now >= ictv.startTimestamp && now <= ictv.endTimestamp {
+	if now >= ictv.StartTimestamp() && now <= ictv.EndTimestamp() {
 		isActive = true
 	}
 	return ApiExternalIncentive{
-		IncentiveId:      ictv.incentiveId,
-		PoolPath:         ictv.targetPoolPath,
-		RewardToken:      ictv.rewardToken,
-		RewardAmount:     ictv.rewardAmount,
-		StartTimestamp:   ictv.startTimestamp,
-		EndTimestamp:     ictv.endTimestamp,
+		IncentiveId:      ictv.IncentiveId(),
+		PoolPath:         ictv.TargetPoolPath(),
+		RewardToken:      ictv.RewardToken(),
+		RewardAmount:     ictv.RewardAmount(),
+		StartTimestamp:   ictv.StartTimestamp(),
+		EndTimestamp:     ictv.EndTimestamp(),
 		Active:           isActive,
-		RewardPerSecond:  ictv.rewardPerSecond,
-		Refundee:         ictv.refundee.String(),
-		CreatedHeight:    ictv.createdHeight,
-		DepositGnsAmount: ictv.depositGnsAmount,
-		Refunded:         ictv.refunded,
+		RewardPerSecond:  ictv.RewardPerSecond(),
+		Refundee:         ictv.Refundee().String(),
+		CreatedHeight:    ictv.CreatedHeight(),
+		DepositGnsAmount: ictv.DepositGnsAmount(),
+		Refunded:         ictv.Refunded(),
 	}
 }
 
@@ -99,8 +99,8 @@ type ApiInternalIncentive struct {
 	RewardPerSecond string `json:"rewardPerSecond"`
 }
 
-func newApiInternalIncentive(poolPath string, tier uint64) ApiInternalIncentive {
-	perSecond := calculateInternalRewardPerSecondByPoolPath(poolPath)
+func newApiInternalIncentive(s *stakerV1, poolPath string, tier uint64) ApiInternalIncentive {
+	perSecond := s.calculateInternalRewardPerSecondByPoolPath(poolPath)
 	return ApiInternalIncentive{
 		PoolPath:        poolPath,
 		Tier:            tier,
@@ -151,19 +151,19 @@ type ApiStake struct {
 	StakeDuration  uint64  `json:"stakeDuration"`  // The duration of the stake
 }
 
-func newApiStake(tokenId uint64, deposit *Deposit) ApiStake {
+func newApiStake(tokenId uint64, deposit *sr.Deposit) ApiStake {
 	stakeDuration := uint64(0)
-	if runtime.ChainHeight() > deposit.stakeTime {
+	if runtime.ChainHeight() > deposit.StakeTime() {
 		now := time.Now().Unix()
-		stakeDuration = uint64(now - deposit.stakeTime)
+		stakeDuration = uint64(now - deposit.StakeTime())
 	}
 
 	return ApiStake{
 		PositionId:     tokenId,
-		Owner:          deposit.owner,
-		StakeTimestamp: deposit.stakeTime,
-		StakeTime:      deposit.stakeTime,
-		TargetPoolPath: deposit.targetPoolPath,
+		Owner:          deposit.Owner(),
+		StakeTimestamp: deposit.StakeTime(),
+		StakeTime:      deposit.StakeTime(),
+		TargetPoolPath: deposit.TargetPoolPath(),
 		StakeDuration:  stakeDuration,
 	}
 }

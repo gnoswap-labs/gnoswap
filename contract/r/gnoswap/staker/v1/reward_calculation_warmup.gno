@@ -5,12 +5,13 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
+	sr "gno.land/r/gnoswap/staker"
 )
 
 const maxDurationOneYear = int64(365 * 86400) // 31,536,000 seconds
 
 // expected to be called by governance
-func modifyWarmup(index int, timeDuration int64) {
+func modifyWarmup(warmupTemplate []sr.Warmup, index int, timeDuration int64) {
 	if index >= len(warmupTemplate) {
 		panic(ufmt.Sprintf("index(%d) is out of range", index))
 	}
@@ -37,12 +38,12 @@ func modifyWarmup(index int, timeDuration int64) {
 	warmupTemplate[index].TimeDuration = timeDuration
 }
 
-func instantiateWarmup(currentTime int64) []Warmup {
-	warmups := make([]Warmup, 0)
+func instantiateWarmup(warmupTemplate []sr.Warmup, currentTime int64) []sr.Warmup {
+	warmups := make([]sr.Warmup, 0)
 	for i, warmup := range warmupTemplate {
 		nextWarmupTime := safeAddTime(currentTime, warmup.TimeDuration)
 
-		warmups = append(warmups, Warmup{
+		warmups = append(warmups, sr.Warmup{
 			Index:          warmup.Index,
 			TimeDuration:   warmup.TimeDuration,
 			NextWarmupTime: nextWarmupTime,
@@ -57,21 +58,7 @@ func instantiateWarmup(currentTime int64) []Warmup {
 	return warmups
 }
 
-// safeAddTime performs safe addition with overflow protection
-func safeAddTime(currentTime, duration int64) int64 {
-	if duration == math.MaxInt64 {
-		return math.MaxInt64
-	}
-
-	// Check for overflow before addition
-	if currentTime > 0 && duration > math.MaxInt64-currentTime {
-		return math.MaxInt64
-	}
-
-	return currentTime + duration
-}
-
-func (warmup *Warmup) apply(poolReward int64, positionLiquidity, stakedLiquidity *u256.Uint) (int64, int64) {
+func applyWarmup(warmup sr.Warmup, poolReward int64, positionLiquidity, stakedLiquidity *u256.Uint) (int64, int64) {
 	if stakedLiquidity.IsZero() {
 		return 0, 0
 	}
@@ -100,15 +87,16 @@ func (warmup *Warmup) apply(poolReward int64, positionLiquidity, stakedLiquidity
 	return safeConvertToInt64(totalReward), safeConvertToInt64(totalPenalty)
 }
 
-func (self *Deposit) FindWarmup(currentTime int64) int {
-	for i, warmup := range self.warmups {
-		if currentTime < warmup.NextWarmupTime {
-			return i
-		}
+// safeAddTime performs safe addition with overflow protection
+func safeAddTime(currentTime, duration int64) int64 {
+	if duration == math.MaxInt64 {
+		return math.MaxInt64
 	}
-	return len(self.warmups) - 1
-}
 
-func (self *Deposit) GetWarmup(index int) Warmup {
-	return self.warmups[index]
+	// Check for overflow before addition
+	if currentTime > 0 && duration > math.MaxInt64-currentTime {
+		return math.MaxInt64
+	}
+
+	return currentTime + duration
 }

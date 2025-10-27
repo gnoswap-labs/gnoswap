@@ -136,6 +136,7 @@ type IStakerStore interface {
 	HasIncentiveCounterStoreKey() bool
 	GetIncentiveCounter() *Counter
 	SetIncentiveCounter(counter *Counter) error
+	NextIncentiveID(creator address, timestamp int64) string
 
 	// TokenSpecificMinimumRewards
 	HasTokenSpecificMinimumRewardsStoreKey() bool
