@@ -30,7 +30,7 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(threshold int64) {
 	halt.AssertIsNotHaltedGovStaker()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	// Calculate cutoff time by subtracting threshold from current time
 	cutoffTimestamp := time.Now().Unix() - threshold
@@ -65,7 +65,7 @@ func (gs *govStakerV1) SetUnDelegationLockupPeriodByAdmin(period int64) {
 	halt.AssertIsNotHaltedGovStaker()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	if period < 0 {
 		panic("period must be greater than 0")

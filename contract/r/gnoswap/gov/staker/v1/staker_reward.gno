@@ -105,7 +105,7 @@ func (gs *govStakerV1) CollectRewardFromLaunchPad(to address) {
 	halt.AssertIsNotHaltedWithdraw()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsLaunchpadWithVersion(1, caller)
+	access.AssertIsLaunchpad(caller)
 
 	from := runtime.CurrentRealm().Address()
 	currentTimestamp := time.Now().Unix()
@@ -180,9 +180,9 @@ func (gs *govStakerV1) SetAmountByProjectWallet(addr address, amount int64, add 
 	caller := runtime.PreviousRealm().Address()
 	currentTimestamp := time.Now().Unix()
 
-	access.AssertIsLaunchpadWithVersion(1, caller)
+	access.AssertIsLaunchpad(caller)
 
-	launchpadAddr, exists := access.GetAddressWithVersion(prbac.ROLE_LAUNCHPAD.String(), 1)
+	launchpadAddr, exists := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	if !exists {
 		panic(ufmt.Sprintf("launchpad address not found"))
 	}
