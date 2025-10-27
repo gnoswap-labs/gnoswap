@@ -18,9 +18,9 @@ func TestDelegationHistory_GetRecordsBy(t *testing.T) {
 		{
 			name: "Get records after snapshot time",
 			records: DelegationHistory{
-				&staker.DelegationRecord{createdAt: 100},
-				&staker.DelegationRecord{createdAt: 200},
-				&staker.DelegationRecord{createdAt: 300},
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 200),
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 300),
 			},
 			snapshotTime:  150,
 			expectedCount: 2,
@@ -28,8 +28,8 @@ func TestDelegationHistory_GetRecordsBy(t *testing.T) {
 		{
 			name: "Get all records when snapshot time is before all",
 			records: DelegationHistory{
-				&staker.DelegationRecord{createdAt: 100},
-				&staker.DelegationRecord{createdAt: 200},
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 200),
 			},
 			snapshotTime:  50,
 			expectedCount: 2,
@@ -37,8 +37,8 @@ func TestDelegationHistory_GetRecordsBy(t *testing.T) {
 		{
 			name: "Get no records when snapshot time is after all",
 			records: DelegationHistory{
-				&staker.DelegationRecord{createdAt: 100},
-				&staker.DelegationRecord{createdAt: 200},
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 200),
 			},
 			snapshotTime:  300,
 			expectedCount: 0,
@@ -73,25 +73,27 @@ func TestDelegationHistory_AddRecord(t *testing.T) {
 		{
 			name:           "Add record to empty history",
 			initialRecords: DelegationHistory{},
-			newRecord: &staker.DelegationRecord{
-				delegationType: DelegateType,
-				delegateFrom:   address("g1from"),
-				delegateTo:     address("g1to"),
-				createdAt:      100,
-			},
+			newRecord: staker.NewDelegationRecord(
+				staker.DelegateType,
+				0,
+				address("g1from"),
+				address("g1to"),
+				100,
+			),
 			expectedCount: 1,
 		},
 		{
 			name: "Add record to existing history",
 			initialRecords: DelegationHistory{
-				&staker.DelegationRecord{createdAt: 100},
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
 			},
-			newRecord: &staker.DelegationRecord{
-				delegationType: UnDelegateType,
-				delegateFrom:   address("g1from"),
-				delegateTo:     address("g1to"),
-				createdAt:      200,
-			},
+			newRecord: staker.NewDelegationRecord(
+				staker.UnDelegateType,
+				0,
+				address("g1from"),
+				address("g1to"),
+				200,
+			),
 			expectedCount: 2,
 		},
 	}
@@ -121,9 +123,9 @@ func TestDelegationHistory_RemoveRecordsBy(t *testing.T) {
 		{
 			name: "Remove old records",
 			initialRecords: DelegationHistory{
-				&staker.DelegationRecord{createdAt: 100},
-				&staker.DelegationRecord{createdAt: 200},
-				&staker.DelegationRecord{createdAt: 300},
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 200),
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 300),
 			},
 			previousTime:  150,
 			expectedCount: 2,
@@ -131,8 +133,8 @@ func TestDelegationHistory_RemoveRecordsBy(t *testing.T) {
 		{
 			name: "Remove all records",
 			initialRecords: DelegationHistory{
-				&staker.DelegationRecord{createdAt: 100},
-				&staker.DelegationRecord{createdAt: 200},
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 200),
 			},
 			previousTime:  50,
 			expectedCount: 2,
@@ -140,8 +142,8 @@ func TestDelegationHistory_RemoveRecordsBy(t *testing.T) {
 		{
 			name: "Remove no records",
 			initialRecords: DelegationHistory{
-				&staker.DelegationRecord{createdAt: 100},
-				&staker.DelegationRecord{createdAt: 200},
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 200),
 			},
 			previousTime:  300,
 			expectedCount: 0,

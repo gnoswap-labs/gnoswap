@@ -36,7 +36,7 @@ func (d DelegationSnapshot) AddRecord(delegationRecord *DelegationRecord) Delega
 	// Create new snapshot item if it doesn't exist
 	_, ok := d[delegateToStr]
 	if !ok {
-		d[delegateToStr] = NewDelegationSnapshotItem(delegateTo)
+		d[delegateToStr] = NewDelegationSnapshotItem(0, delegateTo)
 	}
 
 	// Apply the delegation record to the snapshot item
@@ -66,7 +66,7 @@ func (d DelegationSnapshot) SubRecord(delegationRecord *DelegationRecord) Delega
 	// Create new snapshot item if it doesn't exist
 	_, ok := d[delegateToStr]
 	if !ok {
-		d[delegateToStr] = NewDelegationSnapshotItem(delegateTo)
+		d[delegateToStr] = NewDelegationSnapshotItem(0, delegateTo)
 	}
 
 	// Subtract the delegation record from the snapshot item
@@ -149,9 +149,9 @@ func (d *DelegationSnapshotItem) SubRecord(delegationRecord *DelegationRecord) {
 //
 // Returns:
 //   - *DelegationSnapshotItem: new snapshot item with zero delegation amount
-func NewDelegationSnapshotItem(delegatorAddress address) *DelegationSnapshotItem {
+func NewDelegationSnapshotItem(amount int64, delegatorAddress address) *DelegationSnapshotItem {
 	return &DelegationSnapshotItem{
 		delegatorAddress: delegatorAddress,
-		delegationAmount: 0,
+		delegationAmount: amount,
 	}
 }

@@ -44,7 +44,13 @@ func (gs *govStakerV1) GetDelegationSnapshots(snapshotTime int64) (staker.Delega
 		currentDelegationSnapshot = currentDelegationSnapshot.SubRecord(historyRecords[i])
 	}
 
-	return currentDelegationSnapshot, true
+	// Convert internal DelegationSnapshot to staker.DelegationSnapshot
+	result := make(staker.DelegationSnapshot)
+	for delegatee, item := range currentDelegationSnapshot {
+		result[delegatee] = staker.NewDelegationSnapshotItem(item.DelegationAmount(), item.DelegatorAddress())
+	}
+
+	return result, true
 }
 
 func (gs *govStakerV1) SetDelegationSnapshots(snapshot staker.DelegationSnapshot) error {

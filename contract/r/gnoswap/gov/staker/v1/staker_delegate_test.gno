@@ -15,7 +15,7 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
-	_ "gno.land/r/gnoswap/gov/staker"
+	"gno.land/r/gnoswap/gov/staker"
 
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/xgns"
@@ -308,27 +308,24 @@ func TestStakerDelegate_Redelegate(t *testing.T) {
 
 // Test CollectUndelegatedGns function
 func TestStakerDelegate_CollectUndelegatedGns(t *testing.T) {
-	// Initialize gov staker
-	gs := createTestGovStaker()
-
 	tests := []struct {
 		name             string
 		caller           address
 		expectPanic      bool
 		expectedError    string
-		setupCollectable func()
-		cleanupMocks     func()
+		setupCollectable func(gs *govStakerV1)
+		cleanupMocks     func(gs *govStakerV1)
 		expectedAmount   int64
 	}{
 		{
 			name:        "Successful collection",
 			caller:      testutils.TestAddress("alice"),
 			expectPanic: false,
-			setupCollectable: func() {
+			setupCollectable: func(gs *govStakerV1) {
 				cleanupStakerDelegateTest(t, gs)
 				setupStakerDelegateTestCollectableAmount(t, gs, testutils.TestAddress("alice"), minimumAmount)
 			},
-			cleanupMocks: func() {
+			cleanupMocks: func(gs *govStakerV1) {
 				cleanupStakerDelegateTest(t, gs)
 			},
 			expectedAmount: minimumAmount,
@@ -337,10 +334,10 @@ func TestStakerDelegate_CollectUndelegatedGns(t *testing.T) {
 			name:        "No collectable amount returns zero",
 			caller:      testutils.TestAddress("alice"),
 			expectPanic: false,
-			setupCollectable: func() {
+			setupCollectable: func(gs *govStakerV1) {
 				cleanupStakerDelegateTest(t, gs)
 			},
-			cleanupMocks: func() {
+			cleanupMocks: func(gs *govStakerV1) {
 				cleanupStakerDelegateTest(t, gs)
 			},
 			expectedAmount: 0,
@@ -350,8 +347,10 @@ func TestStakerDelegate_CollectUndelegatedGns(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Setup test environment with collectable amount
-			tt.setupCollectable()
-			defer tt.cleanupMocks()
+			gs := createTestGovStaker()
+
+			tt.setupCollectable(gs)
+			defer tt.cleanupMocks(gs)
 
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
@@ -809,13 +808,15 @@ func TestStakerDelegate_EdgeCasesAndBoundaries(t *testing.T) {
 // Helper functions
 func cleanupStakerDelegateTest(t *testing.T, gs *govStakerV1) {
 	// Reset delegation state
-	state := gs.getState()
-	state.delegationCounter = NewCounter()
-	state.delegations = avl.NewTree()
-	state.delegationManager = NewDelegationManager()
-	state.delegationHistory = make(DelegationHistory, 0)
-	state.delegationSnapshots = make(DelegationSnapshot)
-	gs.setState(state)
+	mockStore := gs.store.(*mockGovStakerStore)
+	mockStore.delegationNextID = 1
+	mockStore.delegations = avl.NewTree()
+	mockStore.delegationHistory = make([]*staker.DelegationRecord, 0)
+	mockStore.delegationSnapshots = avl.NewTree()
+	mockStore.userDelegations = make(map[string]map[string][]int64)
+
+	// Reset managers
+	gs.delegationManager = NewDelegationManager()
 
 	setupStakerDelegateTestGNSBalance(t)
 }
@@ -844,7 +845,7 @@ func setupStakerDelegateTestGNSBalance(t *testing.T) {
 
 func setupStakerDelegateTestDelegation(t *testing.T, gs *govStakerV1, from, to address, amount int64) {
 	delegationID := gs.nextDelegationID()
-	delegation := NewDelegation(delegationID, from, to, amount, 100, 100)
+	delegation := staker.NewDelegation(delegationID, from, to, amount, 100, 100)
 	gs.addDelegation(delegationID, delegation)
 
 	testing.SetRealm(testing.NewUserRealm(from))
@@ -857,10 +858,10 @@ func setupStakerDelegateTestDelegation(t *testing.T, gs *govStakerV1, from, to a
 func setupStakerDelegateTestCollectableAmount(t *testing.T, gs *govStakerV1, user address, amount int64) {
 	// Create a delegation that has been undelegated and is collectable
 	delegationID := gs.nextDelegationID()
-	delegation := NewDelegation(delegationID, user, testutils.TestAddress("validator1"), amount, 100, 100)
+	delegation := staker.NewDelegation(delegationID, user, testutils.TestAddress("validator1"), amount, 100, 100)
 
 	// Undelegate with zero lockup period for immediate collection
-	delegation.unDelegate(amount, 200, 100, 0)
+	delegation.UnDelegateWithoutLockup(amount, 200, 100)
 
 	gs.addDelegation(delegationID, delegation)
 

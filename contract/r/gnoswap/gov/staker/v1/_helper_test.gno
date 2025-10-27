@@ -3,11 +3,8 @@ package v1
 import (
 	"chain"
 	"chain/banker"
-	"errors"
-	"strconv"
 	"testing"
 
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/onbloc/json"
 

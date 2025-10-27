@@ -183,6 +183,8 @@ func uint64ToString(n uint64) string {
 // createTestGovStaker creates a govStakerV1 instance for testing
 func createTestGovStaker() *govStakerV1 {
 	store := newMockGovStakerStore()
+	// Initialize required values
+	store.(*mockGovStakerStore).unDelegationLockupPeriod = 86400 // 1 day default
 	gs := NewGovStakerV1(store).(*govStakerV1)
 	return gs
 }

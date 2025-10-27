@@ -23,7 +23,7 @@ func TestGetDelegationSnapshots(t *testing.T) {
 			setupState: func() {
 				// Reset state
 				gs.setDelegationHistory(make(DelegationHistory, 0))
-				gs.setDelegationSnapshots(make(DelegationSnapshot))
+				gs.setDelegationSnapshots(make(staker.DelegationSnapshot))
 			},
 			snapshotTime: 100,
 			expectFound:  true,
@@ -32,24 +32,21 @@ func TestGetDelegationSnapshots(t *testing.T) {
 			name: "Get snapshot with existing data",
 			setupState: func() {
 				// Setup delegation snapshots
-				snapshots := make(DelegationSnapshot)
-				snapshots["user1"] = &staker.DelegationSnapshotItem{
-					delegationAmount: 1000,
-					delegatorAddress: address("user1"),
-				}
+				snapshots := make(staker.DelegationSnapshot)
+				snapshots["user1"] = staker.NewDelegationSnapshotItem(1000, address("user1"))
 				gs.setDelegationSnapshots(snapshots)
 
 				// Setup delegation history
 				history := make(DelegationHistory, 0)
 
 				// Add a delegation record after snapshot time
-				record := &DelegationRecord{
-					delegateFrom:   address("user1"),
-					delegateTo:     address("validator1"),
-					delegateAmount: 500,
-					delegationType: DelegateType,
-					createdAt:      150, // After snapshot time
-				}
+				record := staker.NewDelegationRecord(
+					staker.DelegateType,
+					500,
+					address("user1"),
+					address("validator1"),
+					150, // After snapshot time
+				)
 				history = history.addRecord(record)
 				gs.setDelegationHistory(history)
 			},
@@ -60,24 +57,21 @@ func TestGetDelegationSnapshots(t *testing.T) {
 			name: "Get snapshot with history records before snapshot time",
 			setupState: func() {
 				// Setup delegation snapshots
-				snapshots := make(DelegationSnapshot)
-				snapshots["user1"] = &staker.DelegationSnapshotItem{
-					delegationAmount: 1500,
-					delegatorAddress: address("user1"),
-				}
+				snapshots := make(staker.DelegationSnapshot)
+				snapshots["user1"] = staker.NewDelegationSnapshotItem(1500, address("user1"))
 				gs.setDelegationSnapshots(snapshots)
 
 				// Setup delegation history with records before snapshot time
 				history := make(DelegationHistory, 0)
 
 				// Add a delegation record before snapshot time (should be subtracted)
-				record := &DelegationRecord{
-					delegateFrom:   address("user1"),
-					delegateTo:     address("validator1"),
-					delegateAmount: 500,
-					delegationType: DelegateType,
-					createdAt:      50, // Before snapshot time
-				}
+				record := staker.NewDelegationRecord(
+					staker.DelegateType,
+					500,
+					address("user1"),
+					address("validator1"),
+					50, // Before snapshot time
+				)
 				history = history.addRecord(record)
 				gs.setDelegationHistory(history)
 			},
@@ -88,53 +82,47 @@ func TestGetDelegationSnapshots(t *testing.T) {
 			name: "Get snapshot with multiple history records",
 			setupState: func() {
 				// Setup delegation snapshots
-				snapshots := make(DelegationSnapshot)
-				snapshots["user1"] = &staker.DelegationSnapshotItem{
-					delegationAmount: 2000,
-					delegatorAddress: address("user1"),
-				}
-				snapshots["user2"] = &staker.DelegationSnapshotItem{
-					delegationAmount: 1000,
-					delegatorAddress: address("user2"),
-				}
+				snapshots := make(staker.DelegationSnapshot)
+				snapshots["user1"] = staker.NewDelegationSnapshotItem(2000, address("user1"))
+				snapshots["user2"] = staker.NewDelegationSnapshotItem(1000, address("user2"))
 				gs.setDelegationSnapshots(snapshots)
 
 				// Setup delegation history with multiple records
 				history := make(DelegationHistory, 0)
 
 				// Records before snapshot time (should be subtracted)
-				record1 := &DelegationRecord{
-					delegateFrom:   address("user1"),
-					delegateTo:     address("validator1"),
-					delegateAmount: 300,
-					delegationType: DelegateType,
-					createdAt:      30,
-				}
+				record1 := staker.NewDelegationRecord(
+					staker.DelegateType,
+					300,
+					address("user1"),
+					address("validator1"),
+					30,
+				)
 
-				record2 := &DelegationRecord{
-					delegateFrom:   address("user1"),
-					delegateTo:     address("validator1"),
-					delegateAmount: 200,
-					delegationType: DelegateType,
-					createdAt:      70,
-				}
+				record2 := staker.NewDelegationRecord(
+					staker.DelegateType,
+					200,
+					address("user1"),
+					address("validator1"),
+					70,
+				)
 
-				record3 := &DelegationRecord{
-					delegateFrom:   address("user2"),
-					delegateTo:     address("validator2"),
-					delegateAmount: 100,
-					delegationType: DelegateType,
-					createdAt:      80,
-				}
+				record3 := staker.NewDelegationRecord(
+					staker.DelegateType,
+					100,
+					address("user2"),
+					address("validator2"),
+					80,
+				)
 
 				// Record after snapshot time (should not be subtracted)
-				record4 := &DelegationRecord{
-					delegateFrom:   address("user1"),
-					delegateTo:     address("validator1"),
-					delegateAmount: 400,
-					delegationType: DelegateType,
-					createdAt:      150,
-				}
+				record4 := staker.NewDelegationRecord(
+					staker.DelegateType,
+					400,
+					address("user1"),
+					address("validator1"),
+					150,
+				)
 
 				history = history.addRecord(record1)
 				history = history.addRecord(record2)
@@ -149,23 +137,20 @@ func TestGetDelegationSnapshots(t *testing.T) {
 			name: "Get snapshot with undelegate records",
 			setupState: func() {
 				// Setup delegation snapshots
-				snapshots := make(DelegationSnapshot)
-				snapshots["user1"] = &staker.DelegationSnapshotItem{
-					delegationAmount: 1000,
-					delegatorAddress: address("user1"),
-				}
+				snapshots := make(staker.DelegationSnapshot)
+				snapshots["user1"] = staker.NewDelegationSnapshotItem(1000, address("user1"))
 				gs.setDelegationSnapshots(snapshots)
 
 				// Setup delegation history with undelegate record
 				history := make(DelegationHistory, 0)
 
-				record := &DelegationRecord{
-					delegateFrom:   address("user1"),
-					delegateTo:     address("validator1"),
-					delegateAmount: 300,
-					delegationType: UnDelegateType, // Undelegate
-					createdAt:      50,
-				}
+				record := staker.NewDelegationRecord(
+					staker.UnDelegateType, // Undelegate
+					300,
+					address("user1"),
+					address("validator1"),
+					50,
+				)
 				history = history.addRecord(record)
 				gs.setDelegationHistory(history)
 			},
@@ -212,55 +197,50 @@ func TestGetDelegationSnapshots_SpecificScenarios(t *testing.T) {
 			setupState: func() {
 				// Reset state
 				gs.setDelegationHistory(make(DelegationHistory, 0))
-				snapshots := make(DelegationSnapshot)
+				snapshots := make(staker.DelegationSnapshot)
 
-				// Current snapshot shows 1000 delegated
-				snapshots["user1"] = &staker.DelegationSnapshotItem{
-					delegationAmount: 1000,
-					delegatorAddress: address("user1"),
-				}
+				// Current snapshot shows validator1 has received 1000 in delegations
+				snapshots["validator1"] = staker.NewDelegationSnapshotItem(1000, address("validator1"))
 				gs.setDelegationSnapshots(snapshots)
 
-				// But there was a delegate of 200 at time 50
-				// So at time 100, it should be 1000
-				record := &DelegationRecord{
-					delegateFrom:   address("user1"),
-					delegateTo:     address("validator1"),
-					delegateAmount: 200,
-					delegationType: DelegateType,
-					createdAt:      50,
-				}
+				// There was a delegate of 200 to validator1 at time 50
+				// Since this happened before snapshot time (100), it should NOT be subtracted
+				// So at time 100, validator1 should still have 1000
+				record := staker.NewDelegationRecord(
+					staker.DelegateType,
+					200,
+					address("user1"),
+					address("validator1"),
+					50,
+				)
 				history := make(DelegationHistory, 0)
 				history = history.addRecord(record)
 				gs.setDelegationHistory(history)
 			},
 			snapshotTime:           100,
-			userAddress:            "user1",
-			expectedUserDelegation: 1000, // 1000
+			userAddress:            "validator1",  // Check validator1, not user1
+			expectedUserDelegation: 1000,
 		},
 		{
 			name: "Snapshot calculation with delegate user1 to user1 record before time",
 			setupState: func() {
 				// Reset state
 				gs.setDelegationHistory(make(DelegationHistory, 0))
-				snapshots := make(DelegationSnapshot)
+				snapshots := make(staker.DelegationSnapshot)
 
 				// Current snapshot shows 1000 delegated
-				snapshots["user1"] = &staker.DelegationSnapshotItem{
-					delegationAmount: 1000,
-					delegatorAddress: address("user1"),
-				}
+				snapshots["user1"] = staker.NewDelegationSnapshotItem(1000, address("user1"))
 				gs.setDelegationSnapshots(snapshots)
 
 				// But there was a delegate of 200 at time 50
 				// So at time 100, it should be 1000
-				record := &DelegationRecord{
-					delegateFrom:   address("user1"),
-					delegateTo:     address("user1"),
-					delegateAmount: 200,
-					delegationType: DelegateType,
-					createdAt:      150,
-				}
+				record := staker.NewDelegationRecord(
+					staker.DelegateType,
+					200,
+					address("user1"),
+					address("user1"),
+					150,
+				)
 				history := make(DelegationHistory, 0)
 				history = history.addRecord(record)
 				gs.setDelegationHistory(history)
@@ -274,31 +254,29 @@ func TestGetDelegationSnapshots_SpecificScenarios(t *testing.T) {
 			setupState: func() {
 				// Reset state
 				gs.setDelegationHistory(make(DelegationHistory, 0))
-				snapshots := make(DelegationSnapshot)
+				snapshots := make(staker.DelegationSnapshot)
 
-				// Current snapshot shows 500 delegated
-				snapshots["user1"] = &staker.DelegationSnapshotItem{
-					delegationAmount: 500,
-					delegatorAddress: address("user1"),
-				}
+				// Current snapshot shows validator1 has 500 in delegations
+				snapshots["validator1"] = staker.NewDelegationSnapshotItem(500, address("validator1"))
 				gs.setDelegationSnapshots(snapshots)
 
-				// But there was an undelegate of 100 at time 50
-				// So at time 100, it should be 500 + 100 = 600 (we add back the undelegate)
-				record := &DelegationRecord{
-					delegateFrom:   address("user1"),
-					delegateTo:     address("validator1"),
-					delegateAmount: 100,
-					delegationType: UnDelegateType,
-					createdAt:      50,
-				}
+				// There was an undelegate of 100 from validator1 at time 50
+				// Since this happened before snapshot time (100), it should NOT be subtracted
+				// So at time 100, validator1 should still have 500
+				record := staker.NewDelegationRecord(
+					staker.UnDelegateType,
+					100,
+					address("user1"),
+					address("validator1"),
+					50,
+				)
 				history := make(DelegationHistory, 0)
 				history = history.addRecord(record)
 				gs.setDelegationHistory(history)
 			},
 			snapshotTime:           100,
-			userAddress:            "user1",
-			expectedUserDelegation: 500, // 500 + 100
+			userAddress:            "validator1",  // Check validator1, not user1
+			expectedUserDelegation: 500,  // Undelegate happened before snapshot time, already reflected
 		},
 	}
 
@@ -315,7 +293,7 @@ func TestGetDelegationSnapshots_SpecificScenarios(t *testing.T) {
 
 			// Check specific user delegation amount
 			if item, exists := snapshot[tt.userAddress]; exists {
-				uassert.Equal(t, item.DelegateGns, tt.expectedUserDelegation)
+				uassert.Equal(t, item.DelegationAmount(), tt.expectedUserDelegation)
 			}
 		})
 	}
@@ -336,7 +314,7 @@ func TestGetDelegationSnapshots_EdgeCases(t *testing.T) {
 			name: "Zero snapshot time",
 			setupState: func() {
 				gs.setDelegationHistory(make(DelegationHistory, 0))
-				gs.setDelegationSnapshots(make(DelegationSnapshot))
+				gs.setDelegationSnapshots(make(staker.DelegationSnapshot))
 			},
 			snapshotTime: 0,
 			description:  "Should handle zero snapshot time",
@@ -346,16 +324,16 @@ func TestGetDelegationSnapshots_EdgeCases(t *testing.T) {
 			setupState: func() {
 				history := make(DelegationHistory, 0)
 
-				record := &DelegationRecord{
-					delegateFrom:   address("user1"),
-					delegateTo:     address("validator1"),
-					delegateAmount: 100,
-					delegationType: DelegateType,
-					createdAt:      50,
-				}
+				record := staker.NewDelegationRecord(
+					staker.DelegateType,
+					100,
+					address("user1"),
+					address("validator1"),
+					50,
+				)
 				history = history.addRecord(record)
 				gs.setDelegationHistory(history)
-				gs.setDelegationSnapshots(make(DelegationSnapshot))
+				gs.setDelegationSnapshots(make(staker.DelegationSnapshot))
 			},
 			snapshotTime: -10,
 			description:  "Should handle negative snapshot time",
@@ -365,16 +343,16 @@ func TestGetDelegationSnapshots_EdgeCases(t *testing.T) {
 			setupState: func() {
 				history := make(DelegationHistory, 0)
 
-				record := &DelegationRecord{
-					delegateFrom:   address("user1"),
-					delegateTo:     address("validator1"),
-					delegateAmount: 100,
-					delegationType: DelegateType,
-					createdAt:      1000,
-				}
+				record := staker.NewDelegationRecord(
+					staker.DelegateType,
+					100,
+					address("user1"),
+					address("validator1"),
+					1000,
+				)
 				history = history.addRecord(record)
 				gs.setDelegationHistory(history)
-				gs.setDelegationSnapshots(make(DelegationSnapshot))
+				gs.setDelegationSnapshots(make(staker.DelegationSnapshot))
 			},
 			snapshotTime: 999999999,
 			description:  "Should handle very large snapshot time",

@@ -25,10 +25,6 @@ const (
 	StoreKeyDelegationHistory   = "delegationHistory"   // List of delegation records
 	StoreKeyDelegationSnapshots = "delegationSnapshots" // AVL tree of snapshots by timestamp
 	StoreKeyUserDelegations     = "userDelegations"     // Nested maps of user delegations
-
-	// Reward managers
-	StoreKeyEmissionRewardManager    = "emissionRewardManager"
-	StoreKeyProtocolFeeRewardManager = "protocolFeeRewardManager"
 )
 
 // govStakerStore is the concrete implementation of IGovStakerStore

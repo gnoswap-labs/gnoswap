@@ -12,6 +12,8 @@ import (
 	_ "gno.land/r/gnoswap/router"
 	_ "gno.land/r/gnoswap/router/v1"
 
+	"gno.land/r/gnoswap/gov/staker"
+
 	"gno.land/p/nt/uassert"
 )
 
@@ -47,7 +49,7 @@ func TestDelegationManagement(t *testing.T) {
 
 			// Given: Create new delegation
 			delegationID := gs.nextDelegationID()
-			delegation := NewDelegation(
+			delegation := staker.NewDelegation(
 				delegationID,
 				tt.delegateFrom,
 				tt.delegateTo,
@@ -92,7 +94,7 @@ func TestGetUserDelegations(t *testing.T) {
 				// Add multiple delegations for the user
 				for i := 0; i < 3; i++ {
 					delegationID := gs.nextDelegationID()
-					delegation := NewDelegation(
+					delegation := staker.NewDelegation(
 						delegationID,
 						user,
 						address("g1validator1234567890abcdefghijklmnop"),
@@ -150,7 +152,7 @@ func TestRemoveDelegation(t *testing.T) {
 			name: "Remove existing delegation",
 			setupState: func(gs *govStakerV1) int64 {
 				delegationID := gs.nextDelegationID()
-				delegation := NewDelegation(
+				delegation := staker.NewDelegation(
 					delegationID,
 					address("g1user1234567890abcdefghijklmnopqrst"),
 					address("g1validator1234567890abcdefghijklmno"),
@@ -215,13 +217,13 @@ func TestDelegationHistoryManagement(t *testing.T) {
 			initialLength := len(initialHistory)
 
 			// Create delegation record
-			record := &DelegationRecord{
-				delegateFrom:   address("g1user1234567890abcdefghijklmnopqrst"),
-				delegateTo:     address("g1validator1234567890abcdefghijklmno"),
-				delegateAmount: 1000,
-				delegationType: DelegateType,
-				createdAt:      100,
-			}
+			record := staker.NewDelegationRecord(
+				staker.DelegateType,
+				1000,
+				address("g1user1234567890abcdefghijklmnopqrst"),
+				address("g1validator1234567890abcdefghijklmno"),
+				100,
+			)
 
 			// When: Add delegation record
 			gs.addDelegationRecord(record)
@@ -249,11 +251,8 @@ func TestDelegationSnapshotsManagement(t *testing.T) {
 			gs := createTestGovStaker()
 
 			// Given: Create new snapshot
-			newSnapshot := make(DelegationSnapshot)
-			newSnapshot["user1"] = &DelegationSnapshotItem{
-				delegationAmount: 1000,
-				delegatorAddress: address("user1"),
-			}
+			newSnapshot := make(staker.DelegationSnapshot)
+			newSnapshot["user1"] = staker.NewDelegationSnapshotItem(int64(1000), address("user1"))
 
 			// When: Set delegation snapshots
 			gs.setDelegationSnapshots(newSnapshot)
@@ -263,8 +262,8 @@ func TestDelegationSnapshotsManagement(t *testing.T) {
 			uassert.Equal(t, len(retrievedSnapshot), len(newSnapshot))
 
 			if item, exists := retrievedSnapshot["user1"]; exists {
-				uassert.Equal(t, item.delegationAmount, int64(1000))
-				uassert.Equal(t, item.delegatorAddress, address("user1"))
+				uassert.Equal(t, item.DelegationAmount(), int64(1000))
+				uassert.Equal(t, item.DelegatorAddress(), address("user1"))
 			} else {
 				t.Errorf("Expected snapshot item for user1 not found")
 			}

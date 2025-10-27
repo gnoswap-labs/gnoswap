@@ -642,36 +642,24 @@ func setupStakerRewardStakerTokenBalance(t *testing.T) {
 
 func setupStakerRewardTestEmissionRewards(t *testing.T, gs *govStakerV1, addr address, amount int64, emissionReward int64, currentHeight int64) {
 	// Setup emission rewards for testing
-	state := gs.getState()
-	emissionRewardManager := state.EmissionRewardManager().(*EmissionRewardManager)
-	emissionRewardManager.updateAccumulatedRewardX128PerStake(emissionReward, currentHeight)
-	emissionRewardManager.addStake(addr.String(), amount, currentHeight)
-	gs.setState(state)
+	gs.emissionRewardManager.updateAccumulatedRewardX128PerStake(emissionReward, currentHeight)
+	gs.emissionRewardManager.addStake(addr.String(), amount, currentHeight)
 }
 
 func setupStakerRewardTestProtocolFeeRewards(t *testing.T, gs *govStakerV1, addr address, amount int64, protocolFeeReward map[string]int64, currentHeight int64) {
 	// Setup protocol fee rewards for testing
-	state := gs.getState()
-	protocolFeeRewardManager := state.ProtocolFeeRewardManager().(*ProtocolFeeRewardManager)
-	protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(protocolFeeReward, currentHeight)
-	protocolFeeRewardManager.addStake(addr.String(), amount, currentHeight)
-	gs.setState(state)
+	gs.protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(protocolFeeReward, currentHeight)
+	gs.protocolFeeRewardManager.addStake(addr.String(), amount, currentHeight)
 }
 
 func setupStakerRewardTestAccumulateEmissionRewards(t *testing.T, gs *govStakerV1, amount, currentHeight int64) {
 	// Setup emission rewards for testing
-	state := gs.getState()
-	emissionRewardManager := state.EmissionRewardManager().(*EmissionRewardManager)
-	emissionRewardManager.updateAccumulatedRewardX128PerStake(amount, currentHeight)
-	gs.setState(state)
+	gs.emissionRewardManager.updateAccumulatedRewardX128PerStake(amount, currentHeight)
 }
 
 func setupStakerRewardTestAccumulateProtocolFeeRewards(t *testing.T, gs *govStakerV1, distributedAmounts map[string]int64, currentHeight int64) {
 	// Setup protocol fee rewards for testing
-	state := gs.getState()
-	protocolFeeRewardManager := state.ProtocolFeeRewardManager().(*ProtocolFeeRewardManager)
-	protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentHeight)
-	gs.setState(state)
+	gs.protocolFeeRewardManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentHeight)
 }
 
 func setupStakerRewardTestLaunchpadDeposit(t *testing.T, gs *govStakerV1, addr address, amount int64) {
