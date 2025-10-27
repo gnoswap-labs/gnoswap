@@ -53,38 +53,50 @@ type IGovStakerAdmin interface {
 
 type IGovStakerStore interface {
 	// Basic configuration
+	HasUnDelegationLockupPeriodStoreKey() bool
 	GetUnDelegationLockupPeriod() (int64, error)
 	SetUnDelegationLockupPeriod(period int64) error
 
+	HasEmissionRewardBalanceStoreKey() bool
 	GetEmissionRewardBalance() (int64, error)
 	SetEmissionRewardBalance(balance int64) error
 
+	HasTotalDelegatedAmountStoreKey() bool
 	GetTotalDelegatedAmount() int64
 	SetTotalDelegatedAmount(amount int64) error
 
+	HasTotalLockedAmountStoreKey() bool
 	GetTotalLockedAmount() int64
 	SetTotalLockedAmount(amount int64) error
 
 	// Delegation management
+	HasDelegationsStoreKey() bool
+	HasDelegation(id int64) bool
 	GetDelegation(id int64) (*Delegation, bool)
 	SetDelegation(id int64, delegation *Delegation) error
 	RemoveDelegation(id int64) error
 	GetAllDelegations() (*avl.Tree, error)
 
+	HasDelegationNextIDStoreKey() bool
 	GetDelegationNextID() (int64, error)
 	SetDelegationNextID(nextID int64) error
 	IncrementDelegationNextID() (int64, error)
 
 	// Delegation history
+	HasDelegationHistoryStoreKey() bool
 	AddDelegationRecord(record *DelegationRecord) error
 	GetDelegationHistory() ([]*DelegationRecord, error)
 
 	// User delegation mapping
+	HasUserDelegationsStoreKey() bool
+	HasUserDelegations(user string) bool
 	GetUserDelegations(user string) (map[string][]int64, error)
 	AddUserDelegation(from, to string, delegationID int64) error
 	RemoveUserDelegation(from, to string, delegationID int64) error
 
 	// Delegation snapshots
+	HasDelegationSnapshotsStoreKey() bool
+	HasDelegationSnapshot(timestamp int64) bool
 	SetDelegationSnapshot(timestamp int64, snapshot DelegationSnapshot) error
 	GetDelegationSnapshot(timestamp int64) (DelegationSnapshot, bool)
 	GetAllDelegationSnapshots() (*avl.Tree, error)

@@ -4,9 +4,9 @@ import (
 	"errors"
 	"strconv"
 
+	"gno.land/p/gnoswap/store"
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
-	"gno.land/p/gnoswap/store"
 )
 
 // Storage key constants
@@ -32,6 +32,8 @@ type govStakerStore struct {
 	kvStore store.KVStore
 }
 
+var _ IGovStakerStore = (*govStakerStore)(nil)
+
 // NewGovStakerStore creates a new governance staker store instance
 func NewGovStakerStore(kvStore store.KVStore) IGovStakerStore {
 	return &govStakerStore{
@@ -40,6 +42,11 @@ func NewGovStakerStore(kvStore store.KVStore) IGovStakerStore {
 }
 
 // Basic configuration methods
+func (s *govStakerStore) HasUnDelegationLockupPeriodStoreKey() bool {
+	_, err := s.kvStore.Get(StoreKeyUnDelegationLockupPeriod)
+	return err == nil
+}
+
 func (s *govStakerStore) GetUnDelegationLockupPeriod() (int64, error) {
 	result, err := s.kvStore.Get(StoreKeyUnDelegationLockupPeriod)
 	if err != nil {
@@ -57,6 +64,11 @@ func (s *govStakerStore) GetUnDelegationLockupPeriod() (int64, error) {
 
 func (s *govStakerStore) SetUnDelegationLockupPeriod(period int64) error {
 	return s.kvStore.Set(StoreKeyUnDelegationLockupPeriod, period)
+}
+
+func (s *govStakerStore) HasEmissionRewardBalanceStoreKey() bool {
+	_, err := s.kvStore.Get(StoreKeyEmissionRewardBalance)
+	return err == nil
 }
 
 func (s *govStakerStore) GetEmissionRewardBalance() (int64, error) {
@@ -78,6 +90,11 @@ func (s *govStakerStore) SetEmissionRewardBalance(balance int64) error {
 	return s.kvStore.Set(StoreKeyEmissionRewardBalance, balance)
 }
 
+func (s *govStakerStore) HasTotalDelegatedAmountStoreKey() bool {
+	_, err := s.kvStore.Get(StoreKeyTotalDelegatedAmount)
+	return err == nil
+}
+
 func (s *govStakerStore) GetTotalDelegatedAmount() int64 {
 	result, err := s.kvStore.Get(StoreKeyTotalDelegatedAmount)
 	if err != nil {
@@ -95,6 +112,11 @@ func (s *govStakerStore) GetTotalDelegatedAmount() int64 {
 
 func (s *govStakerStore) SetTotalDelegatedAmount(amount int64) error {
 	return s.kvStore.Set(StoreKeyTotalDelegatedAmount, amount)
+}
+
+func (s *govStakerStore) HasTotalLockedAmountStoreKey() bool {
+	_, err := s.kvStore.Get(StoreKeyTotalLockedAmount)
+	return err == nil
 }
 
 func (s *govStakerStore) GetTotalLockedAmount() int64 {
@@ -117,6 +139,20 @@ func (s *govStakerStore) SetTotalLockedAmount(amount int64) error {
 }
 
 // Delegation management methods
+func (s *govStakerStore) HasDelegationsStoreKey() bool {
+	_, err := s.kvStore.Get(StoreKeyDelegations)
+	return err == nil
+}
+
+func (s *govStakerStore) HasDelegation(id int64) bool {
+	delegations, err := s.getAllDelegations()
+	if err != nil {
+		return false
+	}
+	_, exists := delegations.Get(int64ToString(id))
+	return exists
+}
+
 func (s *govStakerStore) GetDelegation(id int64) (*Delegation, bool) {
 	delegations, err := s.getAllDelegations()
 	if err != nil {
@@ -175,6 +211,11 @@ func (s *govStakerStore) getAllDelegations() (*avl.Tree, error) {
 	return delegations, nil
 }
 
+func (s *govStakerStore) HasDelegationNextIDStoreKey() bool {
+	_, err := s.kvStore.Get(StoreKeyDelegationNextID)
+	return err == nil
+}
+
 func (s *govStakerStore) GetDelegationNextID() (int64, error) {
 	result, err := s.kvStore.Get(StoreKeyDelegationNextID)
 	if err != nil {
@@ -210,6 +251,11 @@ func (s *govStakerStore) IncrementDelegationNextID() (int64, error) {
 }
 
 // Delegation history methods
+func (s *govStakerStore) HasDelegationHistoryStoreKey() bool {
+	_, err := s.kvStore.Get(StoreKeyDelegationHistory)
+	return err == nil
+}
+
 func (s *govStakerStore) AddDelegationRecord(record *DelegationRecord) error {
 	history, err := s.GetDelegationHistory()
 	if err != nil {
@@ -236,6 +282,20 @@ func (s *govStakerStore) GetDelegationHistory() ([]*DelegationRecord, error) {
 }
 
 // User delegation mapping methods
+func (s *govStakerStore) HasUserDelegationsStoreKey() bool {
+	_, err := s.kvStore.Get(StoreKeyUserDelegations)
+	return err == nil
+}
+
+func (s *govStakerStore) HasUserDelegations(user string) bool {
+	allUserDelegations, err := s.getAllUserDelegations()
+	if err != nil {
+		return false
+	}
+	_, exists := allUserDelegations[user]
+	return exists
+}
+
 func (s *govStakerStore) GetUserDelegations(user string) (map[string][]int64, error) {
 	allUserDelegations, err := s.getAllUserDelegations()
 	if err != nil {
@@ -301,6 +361,20 @@ func (s *govStakerStore) getAllUserDelegations() (map[string]map[string][]int64,
 }
 
 // Delegation snapshot methods
+func (s *govStakerStore) HasDelegationSnapshotsStoreKey() bool {
+	_, err := s.kvStore.Get(StoreKeyDelegationSnapshots)
+	return err == nil
+}
+
+func (s *govStakerStore) HasDelegationSnapshot(timestamp int64) bool {
+	snapshots, err := s.getAllDelegationSnapshots()
+	if err != nil {
+		return false
+	}
+	_, exists := snapshots.Get(int64ToString(timestamp))
+	return exists
+}
+
 func (s *govStakerStore) SetDelegationSnapshot(timestamp int64, snapshot DelegationSnapshot) error {
 	snapshots, err := s.getAllDelegationSnapshots()
 	if err != nil {

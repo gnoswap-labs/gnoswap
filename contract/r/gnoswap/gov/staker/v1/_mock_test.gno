@@ -27,6 +27,8 @@ type mockGovStakerStore struct {
 	delegationSnapshots *avl.Tree // map[int64]staker.DelegationSnapshot
 }
 
+var _ staker.IGovStakerStore = (*mockGovStakerStore)(nil)
+
 func newMockGovStakerStore() staker.IGovStakerStore {
 	return &mockGovStakerStore{
 		delegations:         avl.NewTree(),
@@ -38,6 +40,10 @@ func newMockGovStakerStore() staker.IGovStakerStore {
 }
 
 // Basic configuration methods
+func (m *mockGovStakerStore) HasUnDelegationLockupPeriodStoreKey() bool {
+	return m.unDelegationLockupPeriod != 0
+}
+
 func (m *mockGovStakerStore) GetUnDelegationLockupPeriod() (int64, error) {
 	if m.unDelegationLockupPeriod == 0 {
 		return 0, errNotInitialized
@@ -50,6 +56,10 @@ func (m *mockGovStakerStore) SetUnDelegationLockupPeriod(period int64) error {
 	return nil
 }
 
+func (m *mockGovStakerStore) HasEmissionRewardBalanceStoreKey() bool {
+	return true // Always available in mock
+}
+
 func (m *mockGovStakerStore) GetEmissionRewardBalance() (int64, error) {
 	return m.emissionRewardBalance, nil
 }
@@ -59,6 +69,10 @@ func (m *mockGovStakerStore) SetEmissionRewardBalance(balance int64) error {
 	return nil
 }
 
+func (m *mockGovStakerStore) HasTotalDelegatedAmountStoreKey() bool {
+	return true // Always available in mock
+}
+
 func (m *mockGovStakerStore) GetTotalDelegatedAmount() int64 {
 	return m.totalDelegatedAmount
 }
@@ -66,6 +80,10 @@ func (m *mockGovStakerStore) GetTotalDelegatedAmount() int64 {
 func (m *mockGovStakerStore) SetTotalDelegatedAmount(amount int64) error {
 	m.totalDelegatedAmount = amount
 	return nil
+}
+
+func (m *mockGovStakerStore) HasTotalLockedAmountStoreKey() bool {
+	return true // Always available in mock
 }
 
 func (m *mockGovStakerStore) GetTotalLockedAmount() int64 {
@@ -78,6 +96,15 @@ func (m *mockGovStakerStore) SetTotalLockedAmount(amount int64) error {
 }
 
 // Delegation management methods
+func (m *mockGovStakerStore) HasDelegationsStoreKey() bool {
+	return true // Always available in mock
+}
+
+func (m *mockGovStakerStore) HasDelegation(id int64) bool {
+	_, exists := m.delegations.Get(uint64ToString(uint64(id)))
+	return exists
+}
+
 func (m *mockGovStakerStore) GetDelegation(id int64) (*staker.Delegation, bool) {
 	value, exists := m.delegations.Get(uint64ToString(uint64(id)))
 	if !exists {
@@ -100,6 +127,10 @@ func (m *mockGovStakerStore) GetAllDelegations() (*avl.Tree, error) {
 	return m.delegations, nil
 }
 
+func (m *mockGovStakerStore) HasDelegationNextIDStoreKey() bool {
+	return true // Always available in mock
+}
+
 func (m *mockGovStakerStore) GetDelegationNextID() (int64, error) {
 	return m.delegationNextID, nil
 }
@@ -115,6 +146,10 @@ func (m *mockGovStakerStore) IncrementDelegationNextID() (int64, error) {
 }
 
 // Delegation history methods
+func (m *mockGovStakerStore) HasDelegationHistoryStoreKey() bool {
+	return true // Always available in mock
+}
+
 func (m *mockGovStakerStore) AddDelegationRecord(record *staker.DelegationRecord) error {
 	m.delegationHistory = append(m.delegationHistory, record)
 	return nil
@@ -125,6 +160,15 @@ func (m *mockGovStakerStore) GetDelegationHistory() ([]*staker.DelegationRecord,
 }
 
 // User delegation mapping methods
+func (m *mockGovStakerStore) HasUserDelegationsStoreKey() bool {
+	return true // Always available in mock
+}
+
+func (m *mockGovStakerStore) HasUserDelegations(user string) bool {
+	_, exists := m.userDelegations[user]
+	return exists
+}
+
 func (m *mockGovStakerStore) GetUserDelegations(user string) (map[string][]int64, error) {
 	if delegations, exists := m.userDelegations[user]; exists {
 		return delegations, nil
@@ -156,6 +200,15 @@ func (m *mockGovStakerStore) RemoveUserDelegation(from, to string, delegationID 
 }
 
 // Delegation snapshot methods
+func (m *mockGovStakerStore) HasDelegationSnapshotsStoreKey() bool {
+	return true // Always available in mock
+}
+
+func (m *mockGovStakerStore) HasDelegationSnapshot(timestamp int64) bool {
+	_, exists := m.delegationSnapshots.Get(uint64ToString(uint64(timestamp)))
+	return exists
+}
+
 func (m *mockGovStakerStore) SetDelegationSnapshot(timestamp int64, snapshot staker.DelegationSnapshot) error {
 	m.delegationSnapshots.Set(uint64ToString(uint64(timestamp)), snapshot)
 	return nil
