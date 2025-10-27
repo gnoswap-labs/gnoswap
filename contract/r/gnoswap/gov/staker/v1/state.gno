@@ -82,7 +82,7 @@ func (g *govStakerV1) addDelegation(delegationID int64, delegation *staker.Deleg
 		delegation.DelegateTo(),
 		delegationID,
 	)
-	
+
 	// Update user delegations in store
 	if err := g.store.AddUserDelegation(
 		string(delegation.DelegateFrom()),
@@ -119,7 +119,7 @@ func (g *govStakerV1) removeDelegation(delegationID int64) bool {
 		delegation.DelegateTo(),
 		delegationID,
 	)
-	
+
 	// Update user delegations in store
 	if err := g.store.RemoveUserDelegation(
 		string(delegation.DelegateFrom()),
@@ -175,8 +175,10 @@ func (g *govStakerV1) getDelegationHistory() DelegationHistory {
 	if err != nil {
 		panic(err)
 	}
-	// Convert []*staker.DelegationRecord to DelegationHistory
-	return DelegationHistory(history)
+	// Create a new DelegationHistory to avoid realm conversion issues
+	result := make(DelegationHistory, len(history))
+	copy(result, history)
+	return result
 }
 
 // addDelegationRecord adds a new delegation record to history and updates snapshots.
@@ -188,20 +190,20 @@ func (g *govStakerV1) addDelegationRecord(delegationRecord *staker.DelegationRec
 	if err := g.store.AddDelegationRecord(delegationRecord); err != nil {
 		panic(err)
 	}
-	
+
 	// Update snapshots
 	timestamp := delegationRecord.CreatedAt()
 	snapshot, exists := g.store.GetDelegationSnapshot(timestamp)
 	if !exists {
 		snapshot = make(staker.DelegationSnapshot)
 	}
-	
+
 	// Add record to snapshot
 	if snapshot == nil {
 		snapshot = make(staker.DelegationSnapshot)
 	}
 	snapshot.AddRecord(delegationRecord)
-	
+
 	if err := g.store.SetDelegationSnapshot(timestamp, snapshot); err != nil {
 		panic(err)
 	}
@@ -231,18 +233,18 @@ func (g *govStakerV1) getDelegationSnapshots() staker.DelegationSnapshot {
 	if err != nil {
 		panic(err)
 	}
-	
+
 	if snapshots.Size() == 0 {
 		return make(staker.DelegationSnapshot)
 	}
-	
+
 	// Get the most recent snapshot
 	_, value := snapshots.GetByIndex(snapshots.Size() - 1)
 	snapshot, ok := value.(staker.DelegationSnapshot)
 	if !ok {
 		panic(ufmt.Sprintf("failed to cast to DelegationSnapshot: %T", value))
 	}
-	
+
 	return snapshot
 }
 
