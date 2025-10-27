@@ -50,7 +50,7 @@ func (s *govStakerStore) GetUnDelegationLockupPeriod() (int64, error) {
 	result, err := s.kvStore.Get(StoreKeyUnDelegationLockupPeriod)
 	if err != nil {
 		// Return default value if not initialized
-		return 300, nil // 5 minutes default
+		return 0, errors.New("undelegation lockup period not initialized")
 	}
 
 	period, ok := result.(int64)
