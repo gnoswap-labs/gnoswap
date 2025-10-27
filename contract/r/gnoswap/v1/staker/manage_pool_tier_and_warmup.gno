@@ -11,7 +11,7 @@ import (
 	"gno.land/r/gnoswap/halt"
 
 	en "gno.land/r/gnoswap/emission"
-	pl "gno.land/r/gnoswap/pool"
+	pl "gno.land/r/gnoswap/v1/pool"
 )
 
 const (

@@ -13,8 +13,8 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/common"
-	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
+	pl "gno.land/r/gnoswap/v1/pool"
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"

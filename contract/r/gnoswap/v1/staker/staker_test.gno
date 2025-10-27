@@ -7,7 +7,7 @@ import (
 	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/emission"
-	pl "gno.land/r/gnoswap/pool"
+	pl "gno.land/r/gnoswap/v1/pool"
 
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
@@ -16,7 +16,6 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/rbac"
 
-	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 )
 
