@@ -195,11 +195,9 @@ func (i *poolV1) Collect(
 	access.AssertIsValidAddress(recipient)
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
-	// Use recipient address instead of getPrevAddr() for position key generation
-	// Because positions are created with the recipient's address in Mint function,
-	// and we need to access the same position that was originally created.
-	// GetPrevAddr() would return the position contract address, but the actual
-	// position is stored under the recipient's address key.
+	// Generate position key by combining position contract path with tick range
+	// The key is composed of the position contract's address and the tick boundaries,
+	// allowing the pool to uniquely identify and access position data.
 	positionKey, err := getPositionKey(tickLower, tickUpper)
 	if err != nil {
 		panic(err)
@@ -365,7 +363,7 @@ func (i *poolV1) saveProtocolFees(pool *pl.Pool, amount0, amount1 *u256.Uint) (*
 
 	token1Fees, underflow := u256.Zero().SubOverflow(pool.ProtocolFeesToken1(), amount1)
 	if underflow {
-		panic(errOverFlow)
+		panic(errUnderflow)
 	}
 	pool.SetProtocolFeesToken1(token1Fees)
 
