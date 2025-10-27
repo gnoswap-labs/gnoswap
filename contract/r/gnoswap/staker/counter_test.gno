@@ -1,4 +1,4 @@
-package v1
+package staker
 
 import (
 	"testing"
@@ -48,9 +48,9 @@ func TestCounter_Behavior(t *testing.T) {
 				c.id = tc.initValue
 			}
 
-			// when: call next() as many times as needed
+			// when: call Next() as many times as needed
 			for i := 0; i < tc.callNextTimes; i++ {
-				c.next()
+				c.Next()
 			}
 
 			// then: check id value
