@@ -108,7 +108,7 @@ func (d *DelegationWithdraw) IsCollected() bool {
 //   - error: nil on success, error if collection is not allowed
 func (d *DelegationWithdraw) collect(amount int64, currentTime int64) error {
 	if !d.IsCollectable(currentTime) {
-		return errInvalidAmount
+		return errWithdrawNotCollectable
 	}
 
 	d.collected = true

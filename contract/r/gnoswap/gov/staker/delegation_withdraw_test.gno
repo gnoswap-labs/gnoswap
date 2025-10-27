@@ -203,7 +203,7 @@ func TestDelegationWithdraw_Collect(t *testing.T) {
 			},
 			collectAmount: 50,
 			currentTime:   2000,
-			expectedError: errInvalidAmount,
+			expectedError: errWithdrawNotCollectable,
 		},
 		{
 			name: "Cannot collect if already collected",
@@ -214,7 +214,7 @@ func TestDelegationWithdraw_Collect(t *testing.T) {
 			},
 			collectAmount: 50,
 			currentTime:   2000,
-			expectedError: errInvalidAmount,
+			expectedError: errWithdrawNotCollectable,
 		},
 	}
 

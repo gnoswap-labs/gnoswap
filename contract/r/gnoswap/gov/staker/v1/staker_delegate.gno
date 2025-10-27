@@ -462,13 +462,15 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 
 		err := delegation.Collect(collectableAmount, currentTime)
 		if err != nil {
-			return collectedAmount, err
+			msg := makeErrorWithDetails(errInvalidAmount, err.Error())
+			return collectedAmount, msg
 		}
 
 		// Simple addition since addToCollectedAmount was removed
 		collectedAmount += collectableAmount
 		if err != nil {
-			return collectedAmount, err
+			msg := makeErrorWithDetails(errInvalidAmount, err.Error())
+			return collectedAmount, msg
 		}
 
 		// Remove empty delegations to keep storage clean

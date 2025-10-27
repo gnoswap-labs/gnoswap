@@ -1,11 +1,5 @@
 package staker
 
-// Error message constants
-const (
-	errCollectAmountExceedsCollectable = "amount to collect is greater than collectable amount"
-	errOverflowInCollectedAmount       = "overflow in delegation collected amount: current(%d) + collect(%d)"
-)
-
 // DelegationType represents the type of delegation operation
 type DelegationType string
 
@@ -105,10 +99,7 @@ func (d *Delegation) UnDelegateWithoutLockup(
 // Collect processes the collection of available amounts
 func (d *Delegation) Collect(amount, currentTime int64) error {
 	if amount > d.CollectableAmount(currentTime) {
-		return makeErrorWithDetails(
-			errInvalidAmount,
-			errCollectAmountExceedsCollectable,
-		)
+		return errCollectAmountExceedsCollectable
 	}
 
 	return d.processCollection(amount, currentTime)
