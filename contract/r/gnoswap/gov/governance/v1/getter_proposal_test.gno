@@ -69,25 +69,22 @@ func TestGetterProposal_All(t *testing.T) {
 				return gv.GetProposerByProposalId(id)
 			},
 			expectedPanic: true,
-			panicMessage:  "[GNOSWAP-GOVERNANCE-003] requested data not found",
+			panicMessage:  "proposal(999) not found",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			// proposals = avl.NewTree()              // reset proposals state
-			// proposalManager = NewProposalManager() // reset proposalManager state
 			gv := newMockGovernance()
-			state := gv.GetGovernanceState()
 
 			if tc.proposal != nil {
-				state.addProposal(tc.proposal)
+				gv.addProposal(tc.proposal)
 			}
 
 			// when & then
 			if tc.expectedPanic {
-				uassert.PanicsWithMessage(t, tc.panicMessage, func() {
+				uassert.PanicsContains(t, tc.panicMessage, func() {
 					tc.getterFunc(gv, tc.proposalId)
 				})
 			} else {

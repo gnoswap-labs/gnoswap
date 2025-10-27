@@ -1,9 +1,8 @@
 package v1
 
 import (
-	"strconv"
-
 	"gno.land/p/nt/avl"
+	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/gov/governance"
 )
 
@@ -154,7 +153,9 @@ func (g *governanceV1) updateProposalUserVotes(proposal *Proposal, userVotingInf
 func (g *governanceV1) mustGetProposal(id int64) *Proposal {
 	proposal, exists := g.getProposal(id)
 	if !exists {
-		panic("proposal not found: " + strconv.FormatInt(id, 10))
+		detail := ufmt.Sprintf("proposal(%d) not found", id)
+		msg := makeErrorWithDetails(errProposalNotFound, detail)
+		panic(msg)
 	}
 	return proposal
 }

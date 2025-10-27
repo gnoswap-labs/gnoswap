@@ -88,7 +88,6 @@ func TestConfig_Reconfigure(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// given: set realm and halt state
 			gs := newMockGovernance()
-			state := gs.GetGovernanceState()
 
 			testing.SetRealm(adminRealm)
 			if tc.halted {
@@ -141,8 +140,8 @@ func TestConfig_Reconfigure(t *testing.T) {
 						tc.executionWindow,
 					)
 				}(cross)
-				cfg, ok := state.getCurrentConfig()
-				uassert.True(t, ok)
+				cfg := gs.GetLatestConfig()
+				uassert.NotNil(t, cfg)
 				uassert.Equal(t, cfg.VotingStartDelay, tc.votingStartDelay)
 				uassert.Equal(t, cfg.VotingPeriod, tc.votingPeriod)
 				uassert.Equal(t, cfg.VotingWeightSmoothingDuration, tc.votingWeightSmoothingDuration)

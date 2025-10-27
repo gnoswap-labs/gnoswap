@@ -12,7 +12,18 @@ import (
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/gov/governance"
 )
+
+var testConfig = governance.Config{
+	VotingStartDelay:              86400,         // 1 day
+	VotingPeriod:                  604800,        // 7 days
+	VotingWeightSmoothingDuration: 86400,         // 1 day
+	Quorum:                        50,            // 50%
+	ProposalCreationThreshold:     1_000_000_000, // 1 billion
+	ExecutionDelay:                86400,         // 1 day
+	ExecutionWindow:               2592000,       // 30 days
+}
 
 func TestGovernanceExecute_Execute(t *testing.T) {
 	tests := []struct {
@@ -169,11 +180,10 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.GetGovernanceState()
 
 			setupGovernanceExecuteTestCommunityPoolBalance(t)
 			if tt.setupProposal != nil {
-				setupExecuteTestProposal(t, state, tt.setupProposal)
+				setupExecuteTestProposal(t, gov, tt.setupProposal)
 			}
 
 			testing.SetRealm(testing.NewUserRealm(tt.executor))
@@ -197,7 +207,7 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 				uassert.Equal(t, tt.expectedProposalId, resultId)
 			}(cross)
 
-			proposal, _ := state.getProposal(tt.proposalId)
+			proposal, _ := gov.getProposal(tt.proposalId)
 			uassert.Equal(t, true, proposal.status.IsExecuted(time.Now().Unix()))
 		})
 	}
@@ -342,11 +352,10 @@ func TestGovernanceExecute_ExecuteProposalPrivate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.GetGovernanceState()
 
 			setupGovernanceExecuteTestCommunityPoolBalance(t)
 			if tt.setupProposal != nil {
-				setupExecuteTestProposal(t, state, tt.setupProposal)
+				setupExecuteTestProposal(t, gov, tt.setupProposal)
 			}
 
 			// when
@@ -506,11 +515,10 @@ func TestGovernanceExecute_Cancel(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.GetGovernanceState()
 
 			setupGovernanceExecuteTestCommunityPoolBalance(t)
 			if tt.setupProposal != nil {
-				setupExecuteTestProposal(t, state, tt.setupProposal)
+				setupExecuteTestProposal(t, gov, tt.setupProposal)
 			}
 
 			testing.SetRealm(testing.NewUserRealm(tt.canceler))
@@ -535,7 +543,7 @@ func TestGovernanceExecute_Cancel(t *testing.T) {
 			// then
 			uassert.Equal(t, tt.expectedProposalId, resultId)
 
-			proposal, _ := state.getProposal(tt.proposalId)
+			proposal, _ := gov.getProposal(tt.proposalId)
 			uassert.Equal(t, true, proposal.status.IsCanceled(time.Now().Unix()))
 		})
 	}
@@ -703,11 +711,10 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.GetGovernanceState()
 
 			setupGovernanceExecuteTestCommunityPoolBalance(t)
 			if tt.setupProposal != nil {
-				setupExecuteTestProposal(t, state, tt.setupProposal())
+				setupExecuteTestProposal(t, gov, tt.setupProposal())
 			}
 
 			testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("executor")))
@@ -784,7 +791,6 @@ func TestGovernanceExecute_ExecutionTiming(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.GetGovernanceState()
 
 			setupGovernanceExecuteTestCommunityPoolBalance(t)
 			proposal := NewProposal(
@@ -798,7 +804,7 @@ func TestGovernanceExecute_ExecutionTiming(t *testing.T) {
 				100,
 			)
 			proposal.status.vote(true, 6_000_000_000)
-			setupExecuteTestProposal(t, state, proposal)
+			setupExecuteTestProposal(t, gov, proposal)
 
 			testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("executor")))
 
@@ -880,7 +886,6 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.GetGovernanceState()
 
 			setupGovernanceExecuteTestCommunityPoolBalance(t)
 			proposal := NewProposal(
@@ -899,7 +904,7 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(t *testing.T) {
 				100,
 			)
 			proposal.status.vote(true, 6_000_000_000)
-			setupExecuteTestProposal(t, state, proposal)
+			setupExecuteTestProposal(t, gov, proposal)
 
 			// Mock community pool balance setup would go here
 
@@ -922,7 +927,7 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(t *testing.T) {
 				uassert.Equal(t, int64(1), resultId)
 
 				// Verify execution state
-				proposal, _ := state.getProposal(resultId)
+				proposal, _ := gov.getProposal(resultId)
 				uassert.Equal(t, true, proposal.status.IsExecuted(time.Now().Unix()))
 			}
 		})
@@ -996,7 +1001,6 @@ func TestGovernanceExecute_ParameterChangeExecution(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.GetGovernanceState()
 
 			setupGovernanceExecuteTestCommunityPoolBalance(t)
 			proposal := NewProposal(
@@ -1010,7 +1014,7 @@ func TestGovernanceExecute_ParameterChangeExecution(t *testing.T) {
 				100,
 			)
 			proposal.status.vote(true, 6_000_000_000)
-			setupExecuteTestProposal(t, state, proposal)
+			setupExecuteTestProposal(t, gov, proposal)
 
 			testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("executor")))
 
@@ -1031,7 +1035,7 @@ func TestGovernanceExecute_ParameterChangeExecution(t *testing.T) {
 				uassert.Equal(t, int64(1), resultId)
 
 				// Verify execution state
-				proposal, _ := state.getProposal(resultId)
+				proposal, _ := gov.getProposal(resultId)
 				uassert.Equal(t, true, proposal.status.IsExecuted(time.Now().Unix()))
 			}
 		})
@@ -1106,7 +1110,6 @@ func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
 			gov := newMockGovernance()
-			state := gov.GetGovernanceState()
 
 			setupGovernanceExecuteTestCommunityPoolBalance(t)
 
@@ -1124,7 +1127,7 @@ func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
 					tt.cancellationTime.Unix(),
 					100,
 				)
-				setupExecuteTestProposal(t, state, proposal)
+				setupExecuteTestProposal(t, gov, proposal)
 			}
 
 			testing.SetRealm(testing.NewUserRealm(tt.canceler))
@@ -1146,7 +1149,7 @@ func TestGovernanceExecute_CancellationScenarios(t *testing.T) {
 				uassert.Equal(t, proposalId, resultId)
 
 				// Verify cancellation state
-				proposal, _ := state.getProposal(proposalId)
+				proposal, _ := gov.getProposal(proposalId)
 				uassert.Equal(t, true, proposal.status.IsCanceled(time.Now().Unix()))
 			}
 		})
@@ -1158,7 +1161,6 @@ func TestGovernanceExecute_ReExecutionPrevention(t *testing.T) {
 	t.Run("prevent double execution", func(t *testing.T) {
 		// given
 		gov := newMockGovernance()
-		state := gov.GetGovernanceState()
 
 		setupGovernanceExecuteTestCommunityPoolBalance(t)
 		proposal := NewProposal(
@@ -1172,7 +1174,7 @@ func TestGovernanceExecute_ReExecutionPrevention(t *testing.T) {
 			100,
 		)
 		proposal.status.vote(true, 6_000_000_000)
-		setupExecuteTestProposal(t, state, proposal)
+		setupExecuteTestProposal(t, gov, proposal)
 
 		testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("executor")))
 
@@ -1197,8 +1199,8 @@ func TestGovernanceExecute_ReExecutionPrevention(t *testing.T) {
 }
 
 // Helper functions for execute tests
-func setupExecuteTestProposal(t *testing.T, state *governanceState, proposal *Proposal) {
-	state.addProposal(proposal)
+func setupExecuteTestProposal(t *testing.T, gov *governanceV1, proposal *Proposal) {
+	gov.addProposal(proposal)
 }
 
 func setupGovernanceExecuteTestCommunityPoolBalance(t *testing.T) {
