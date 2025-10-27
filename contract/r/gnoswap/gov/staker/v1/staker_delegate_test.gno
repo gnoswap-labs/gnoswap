@@ -821,8 +821,8 @@ func cleanupStakerDelegateTest(t *testing.T, gs *govStakerV1) {
 	mockStore.delegationSnapshots = avl.NewTree()
 	mockStore.userDelegations = make(map[string]map[string][]int64)
 
-	// Reset managers
-	gs.delegationManager = NewDelegationManager()
+	// Reset managers in store
+	mockStore.delegationManager = staker.NewDelegationManager()
 
 	setupStakerDelegateTestGNSBalance(t)
 }

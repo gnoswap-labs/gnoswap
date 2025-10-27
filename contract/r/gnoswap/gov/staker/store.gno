@@ -3,6 +3,7 @@ package staker
 import (
 	"errors"
 	"strconv"
+	"strings"
 
 	"gno.land/p/gnoswap/store"
 	"gno.land/p/nt/avl"
@@ -25,6 +26,12 @@ const (
 	StoreKeyDelegationHistory   = "delegationHistory"   // List of delegation records
 	StoreKeyDelegationSnapshots = "delegationSnapshots" // AVL tree of snapshots by timestamp
 	StoreKeyUserDelegations     = "userDelegations"     // Nested maps of user delegations
+
+	// Manager states
+	StoreKeyEmissionRewardManager = "emissionRewardManager"
+	StoreKeyProtocolFeeRewardManager = "protocolFeeRewardManager"
+	StoreKeyDelegationManager = "delegationManager"
+	StoreKeyLaunchpadProjectDeposits = "launchpadProjectDeposits"
 )
 
 // govStakerStore is the concrete implementation of IGovStakerStore
@@ -358,7 +365,7 @@ func (s *govStakerStore) HasDelegationSnapshotsStoreKey() bool {
 }
 
 func (s *govStakerStore) HasDelegationSnapshot(timestamp int64) bool {
-	snapshots, err := s.getAllDelegationSnapshots()
+	snapshots, err := s.GetAllDelegationSnapshots()
 	if err != nil {
 		return false
 	}
@@ -367,7 +374,7 @@ func (s *govStakerStore) HasDelegationSnapshot(timestamp int64) bool {
 }
 
 func (s *govStakerStore) SetDelegationSnapshot(timestamp int64, snapshot DelegationSnapshot) error {
-	snapshots, err := s.getAllDelegationSnapshots()
+	snapshots, err := s.GetAllDelegationSnapshots()
 	if err != nil {
 		return err
 	}
@@ -377,7 +384,7 @@ func (s *govStakerStore) SetDelegationSnapshot(timestamp int64, snapshot Delegat
 }
 
 func (s *govStakerStore) GetDelegationSnapshot(timestamp int64) (DelegationSnapshot, bool) {
-	snapshots, err := s.getAllDelegationSnapshots()
+	snapshots, err := s.GetAllDelegationSnapshots()
 	if err != nil {
 		return nil, false
 	}
@@ -396,10 +403,6 @@ func (s *govStakerStore) GetDelegationSnapshot(timestamp int64) (DelegationSnaps
 }
 
 func (s *govStakerStore) GetAllDelegationSnapshots() (*avl.Tree, error) {
-	return s.getAllDelegationSnapshots()
-}
-
-func (s *govStakerStore) getAllDelegationSnapshots() (*avl.Tree, error) {
 	result, err := s.kvStore.Get(StoreKeyDelegationSnapshots)
 	if err != nil {
 		// If key doesn't exist, return empty tree
@@ -412,6 +415,98 @@ func (s *govStakerStore) getAllDelegationSnapshots() (*avl.Tree, error) {
 	}
 
 	return snapshots, nil
+}
+
+func (s *govStakerStore) HasEmissionRewardManagerStoreKey() bool {
+	return s.kvStore.Has(StoreKeyEmissionRewardManager)
+}
+
+func (s *govStakerStore) GetEmissionRewardManager() (*EmissionRewardManager, error) {
+	result, err := s.kvStore.Get(StoreKeyEmissionRewardManager)
+	if err != nil {
+		return nil, err
+	}
+
+	manager, ok := result.(*EmissionRewardManager)
+	if !ok {
+		return nil, errors.New(ufmt.Sprintf("failed to cast result to *EmissionRewardManager: %T", result))
+	}
+
+	return manager, nil
+}
+
+func (s *govStakerStore) SetEmissionRewardManager(manager *EmissionRewardManager) error {
+	return s.kvStore.Set(StoreKeyEmissionRewardManager, manager)
+}
+
+func (s *govStakerStore) HasProtocolFeeRewardManagerStoreKey() bool {
+	return s.kvStore.Has(StoreKeyProtocolFeeRewardManager)
+}
+
+func (s *govStakerStore) GetProtocolFeeRewardManager() (*ProtocolFeeRewardManager, error) {
+	result, err := s.kvStore.Get(StoreKeyProtocolFeeRewardManager)
+	if err != nil {
+		return nil, err
+	}
+
+	manager, ok := result.(*ProtocolFeeRewardManager)
+	if !ok {
+		return nil, errors.New(ufmt.Sprintf("failed to cast result to *ProtocolFeeRewardManager: %T", result))
+	}
+
+	return manager, nil
+}
+
+func (s *govStakerStore) SetProtocolFeeRewardManager(manager *ProtocolFeeRewardManager) error {
+	return s.kvStore.Set(StoreKeyProtocolFeeRewardManager, manager)
+}
+
+func (s *govStakerStore) HasDelegationManagerStoreKey() bool {
+	return s.kvStore.Has(StoreKeyDelegationManager)
+}
+
+func (s *govStakerStore) GetDelegationManager() (*DelegationManager, error) {
+	result, err := s.kvStore.Get(StoreKeyDelegationManager)
+	if err != nil {
+		return nil, err
+	}
+
+	manager, ok := result.(*DelegationManager)
+	if !ok {
+		return nil, errors.New(ufmt.Sprintf("failed to cast result to *DelegationManager: %T", result))
+	}
+
+	return manager, nil
+}
+
+func (s *govStakerStore) SetDelegationManager(manager *DelegationManager) error {
+	return s.kvStore.Set(StoreKeyDelegationManager, manager)
+}
+
+func (s *govStakerStore) HasLaunchpadProjectDepositsStoreKey() bool {
+	return s.kvStore.Has(StoreKeyLaunchpadProjectDeposits)
+}
+
+func (s *govStakerStore) GetLaunchpadProjectDeposits() (*LaunchpadProjectDeposits, error) {
+	result, err := s.kvStore.Get(StoreKeyLaunchpadProjectDeposits)
+	if err != nil {
+		// If not found, return a new instance
+		if strings.Contains(err.Error(), "not found") {
+			return NewLaunchpadProjectDeposits(), nil
+		}
+		return nil, err
+	}
+
+	deposits, ok := result.(*LaunchpadProjectDeposits)
+	if !ok {
+		return nil, errors.New(ufmt.Sprintf("failed to cast result to *LaunchpadProjectDeposits: %T", result))
+	}
+
+	return deposits, nil
+}
+
+func (s *govStakerStore) SetLaunchpadProjectDeposits(deposits *LaunchpadProjectDeposits) error {
+	return s.kvStore.Set(StoreKeyLaunchpadProjectDeposits, deposits)
 }
 
 // Helper functions

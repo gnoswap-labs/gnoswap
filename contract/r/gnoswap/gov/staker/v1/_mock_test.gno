@@ -25,6 +25,12 @@ type mockGovStakerStore struct {
 	
 	// Snapshots
 	delegationSnapshots *avl.Tree // map[int64]staker.DelegationSnapshot
+
+	// Manager states
+	emissionRewardManager *staker.EmissionRewardManager
+	protocolFeeRewardManager *staker.ProtocolFeeRewardManager
+	delegationManager *staker.DelegationManager
+	launchpadProjectDeposits *staker.LaunchpadProjectDeposits
 }
 
 var _ staker.IGovStakerStore = (*mockGovStakerStore)(nil)
@@ -224,6 +230,70 @@ func (m *mockGovStakerStore) GetDelegationSnapshot(timestamp int64) (staker.Dele
 
 func (m *mockGovStakerStore) GetAllDelegationSnapshots() (*avl.Tree, error) {
 	return m.delegationSnapshots, nil
+}
+
+func (m *mockGovStakerStore) HasEmissionRewardManagerStoreKey() bool {
+	return true // Always available in mock
+}
+
+func (m *mockGovStakerStore) GetEmissionRewardManager() (*staker.EmissionRewardManager, error) {
+	if m.emissionRewardManager == nil {
+		m.emissionRewardManager = staker.NewEmissionRewardManager()
+	}
+	return m.emissionRewardManager, nil
+}
+
+func (m *mockGovStakerStore) SetEmissionRewardManager(manager *staker.EmissionRewardManager) error {
+	m.emissionRewardManager = manager
+	return nil
+}
+
+func (m *mockGovStakerStore) HasProtocolFeeRewardManagerStoreKey() bool {
+	return true // Always available in mock
+}
+
+func (m *mockGovStakerStore) GetProtocolFeeRewardManager() (*staker.ProtocolFeeRewardManager, error) {
+	if m.protocolFeeRewardManager == nil {
+		m.protocolFeeRewardManager = staker.NewProtocolFeeRewardManager()
+	}
+	return m.protocolFeeRewardManager, nil
+}
+
+func (m *mockGovStakerStore) SetProtocolFeeRewardManager(manager *staker.ProtocolFeeRewardManager) error {
+	m.protocolFeeRewardManager = manager
+	return nil
+}
+
+func (m *mockGovStakerStore) HasDelegationManagerStoreKey() bool {
+	return true // Always available in mock
+}
+
+func (m *mockGovStakerStore) GetDelegationManager() (*staker.DelegationManager, error) {
+	if m.delegationManager == nil {
+		m.delegationManager = staker.NewDelegationManager()
+	}
+	return m.delegationManager, nil
+}
+
+func (m *mockGovStakerStore) SetDelegationManager(manager *staker.DelegationManager) error {
+	m.delegationManager = manager
+	return nil
+}
+
+func (m *mockGovStakerStore) HasLaunchpadProjectDepositsStoreKey() bool {
+	return true // Always available in mock
+}
+
+func (m *mockGovStakerStore) GetLaunchpadProjectDeposits() (*staker.LaunchpadProjectDeposits, error) {
+	if m.launchpadProjectDeposits == nil {
+		m.launchpadProjectDeposits = staker.NewLaunchpadProjectDeposits()
+	}
+	return m.launchpadProjectDeposits, nil
+}
+
+func (m *mockGovStakerStore) SetLaunchpadProjectDeposits(deposits *staker.LaunchpadProjectDeposits) error {
+	m.launchpadProjectDeposits = deposits
+	return nil
 }
 
 var errNotInitialized = errors.New("not initialized")

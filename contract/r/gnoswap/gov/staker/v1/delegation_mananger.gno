@@ -1,11 +1,11 @@
 package v1
 
-// DelegationManager manages the mapping between users and their delegation IDs.
-// It provides efficient lookup and management of user delegations organized by delegator and delegatee addresses.
-type DelegationManager struct {
-	// userDelegations maps delegator address -> delegatee address -> list of delegation IDs
-	// This nested mapping allows efficient retrieval of delegations by both delegator and delegatee
-	userDelegations map[string]map[string][]int64
+import (
+	"gno.land/r/gnoswap/gov/staker"
+)
+
+type DelegationManagerResolver struct {
+	*staker.DelegationManager
 }
 
 // GetUserDelegationIDsWithDelegatee retrieves all delegation IDs for a specific delegator-delegatee pair.
@@ -17,11 +17,12 @@ type DelegationManager struct {
 //
 // Returns:
 //   - []int64: list of delegation IDs for the specified pair
-func (dm *DelegationManager) GetUserDelegationIDsWithDelegatee(delegator address, delegatee address) []int64 {
+func (dm *DelegationManagerResolver) GetUserDelegationIDsWithDelegatee(delegator, delegatee address) []int64 {
 	delegatorAddress := delegator.String()
 	delegateeAddress := delegatee.String()
 
-	return dm.userDelegations[delegatorAddress][delegateeAddress]
+	ids, _ := dm.GetDelegateeIDs(delegatorAddress, delegateeAddress)
+	return ids
 }
 
 // GetUserDelegationIDs retrieves all delegation IDs for a specific delegator across all delegatees.
@@ -32,17 +33,18 @@ func (dm *DelegationManager) GetUserDelegationIDsWithDelegatee(delegator address
 //
 // Returns:
 //   - []int64: list of all delegation IDs for the delegator
-func (dm *DelegationManager) GetUserDelegationIDs(delegator address) []int64 {
+func (dm *DelegationManagerResolver) GetUserDelegationIDs(delegator address) []int64 {
 	delegatorAddress := delegator.String()
 	delegationIDs := make([]int64, 0)
 
-	// Return empty slice if no delegations exist for this user
-	if dm.userDelegations[delegatorAddress] == nil {
+	// Get all delegations for this delegator
+	delegations, exists := dm.GetDelegatorDelegations(delegatorAddress)
+	if !exists {
 		return delegationIDs
 	}
 
 	// Collect delegation IDs from all delegatees
-	for _, toDelegations := range dm.userDelegations[delegatorAddress] {
+	for _, toDelegations := range delegations {
 		delegationIDs = append(delegationIDs, toDelegations...)
 	}
 
@@ -57,33 +59,23 @@ func (dm *DelegationManager) GetUserDelegationIDs(delegator address) []int64 {
 //   - delegator: address of the user who made the delegation
 //   - delegatee: address of the user who received the delegation
 //   - delegationID: unique identifier for the delegation
-func (dm *DelegationManager) addDelegation(delegator, delegatee address, delegationID int64) {
+func (dm *DelegationManagerResolver) addDelegation(delegator, delegatee address, delegationID int64) {
 	delegatorAddress := delegator.String()
 	delegateeAddress := delegatee.String()
 
-	// Initialize delegator map if it doesn't exist
-	if _, ok := dm.userDelegations[delegatorAddress]; !ok {
-		dm.userDelegations[delegatorAddress] = make(map[string][]int64)
-	}
+	// Get existing IDs
+	ids, _ := dm.GetDelegateeIDs(delegatorAddress, delegateeAddress)
 
-	// Initialize delegatee slice if it doesn't exist
-	if _, ok := dm.userDelegations[delegatorAddress][delegateeAddress]; !ok {
-		dm.userDelegations[delegatorAddress][delegateeAddress] = make([]int64, 0)
-	}
-
-	// Check for duplicate delegation IDs before adding
-	delegationIDs := dm.userDelegations[delegatorAddress][delegateeAddress]
-	for _, id := range delegationIDs {
+	// Check for duplicates
+	for _, id := range ids {
 		if id == delegationID {
 			return
 		}
 	}
 
 	// Add the new delegation ID
-	dm.userDelegations[delegatorAddress][delegateeAddress] = append(
-		delegationIDs,
-		delegationID,
-	)
+	ids = append(ids, delegationID)
+	dm.SetDelegateeIDs(delegatorAddress, delegateeAddress, ids)
 }
 
 // removeDelegation removes a delegation ID from the manager's tracking system.
@@ -93,26 +85,19 @@ func (dm *DelegationManager) addDelegation(delegator, delegatee address, delegat
 //   - delegator: address of the user who made the delegation
 //   - delegatee: address of the user who received the delegation
 //   - delegationID: unique identifier for the delegation to remove
-func (dm *DelegationManager) removeDelegation(delegator, delegatee address, delegationID int64) {
+func (dm *DelegationManagerResolver) removeDelegation(delegator, delegatee address, delegationID int64) {
 	delegatorAddress := delegator.String()
 	delegateeAddress := delegatee.String()
 
-	// Check if delegator exists in the map
-	userDelegations, ok := dm.userDelegations[delegatorAddress]
-	if !ok {
+	// Get existing IDs
+	ids, exists := dm.GetDelegateeIDs(delegatorAddress, delegateeAddress)
+	if !exists {
 		return
 	}
 
-	// Check if delegatee exists for this delegator
-	delegationIDs, ok := userDelegations[delegateeAddress]
-	if !ok {
-		return
-	}
-
+	// Find and remove the delegation ID
 	index := -1
-
-	// Find the index of the delegation ID to remove
-	for i, id := range delegationIDs {
+	for i, id := range ids {
 		if id == delegationID {
 			index = i
 			break
@@ -121,20 +106,8 @@ func (dm *DelegationManager) removeDelegation(delegator, delegatee address, dele
 
 	// Remove the delegation ID if found
 	if index != -1 {
-		dm.userDelegations[delegatorAddress][delegateeAddress] = append(
-			delegationIDs[:index],
-			delegationIDs[index+1:]...,
-		)
+		ids = append(ids[:index], ids[index+1:]...)
+		dm.SetDelegateeIDs(delegatorAddress, delegateeAddress, ids)
 	}
 }
 
-// NewDelegationManager creates a new instance of DelegationManager.
-// This factory function initializes the nested map structure for tracking user delegations.
-//
-// Returns:
-//   - *DelegationManager: initialized delegation manager instance
-func NewDelegationManager() *DelegationManager {
-	return &DelegationManager{
-		userDelegations: make(map[string]map[string][]int64),
-	}
-}

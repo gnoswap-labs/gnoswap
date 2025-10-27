@@ -100,4 +100,21 @@ type IGovStakerStore interface {
 	SetDelegationSnapshot(timestamp int64, snapshot DelegationSnapshot) error
 	GetDelegationSnapshot(timestamp int64) (DelegationSnapshot, bool)
 	GetAllDelegationSnapshots() (*avl.Tree, error)
+
+	// Manager states
+	HasEmissionRewardManagerStoreKey() bool
+	GetEmissionRewardManager() (*EmissionRewardManager, error)
+	SetEmissionRewardManager(manager *EmissionRewardManager) error
+
+	HasProtocolFeeRewardManagerStoreKey() bool
+	GetProtocolFeeRewardManager() (*ProtocolFeeRewardManager, error)
+	SetProtocolFeeRewardManager(manager *ProtocolFeeRewardManager) error
+
+	HasDelegationManagerStoreKey() bool
+	GetDelegationManager() (*DelegationManager, error)
+	SetDelegationManager(manager *DelegationManager) error
+
+	HasLaunchpadProjectDepositsStoreKey() bool
+	GetLaunchpadProjectDeposits() (*LaunchpadProjectDeposits, error)
+	SetLaunchpadProjectDeposits(deposits *LaunchpadProjectDeposits) error
 }
