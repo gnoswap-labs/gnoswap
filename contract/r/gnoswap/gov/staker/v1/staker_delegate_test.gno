@@ -365,7 +365,7 @@ func TestStakerDelegate_CollectUndelegatedGns(t *testing.T) {
 				func(cur realm) {
 					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 					result := gs.CollectUndelegatedGns()
-					uassert.Equal(t, result, tt.expectedAmount)
+					uassert.Equal(t, tt.expectedAmount, result)
 				}(cross)
 			}
 		})
@@ -569,6 +569,12 @@ func TestStakerDelegate_LockupPeriodAndWithdrawal(t *testing.T) {
 			user := testutils.TestAddress("alice")
 			validator := testutils.TestAddress("validator")
 
+			// Set lockup period if needed
+			if tt.lockupPeriod > 0 {
+				mockStore := gs.store.(*mockGovStakerStore)
+				mockStore.unDelegationLockupPeriod = tt.lockupPeriod
+			}
+
 			// For large amount test, setup sufficient balance
 			//
 			// This value is set to test overflow-related behavior.
@@ -583,7 +589,7 @@ func TestStakerDelegate_LockupPeriodAndWithdrawal(t *testing.T) {
 
 			testing.SetRealm(testing.NewUserRealm(user))
 
-			func (cur realm) {
+			func(cur realm) {
 				testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 				// Delegate
 				gs.Delegate(validator, tt.delegateAmount, "")
@@ -611,7 +617,7 @@ func TestStakerDelegate_LockupPeriodAndWithdrawal(t *testing.T) {
 					result := gs.CollectUndelegatedGns()
 					// In successful cases, should return some amount
 					// The exact amount depends on implementation details
-					uassert.Equal(t, result, tt.expectedCollectable)
+					uassert.Equal(t, tt.expectedCollectable, result)
 				}(cross)
 			}
 		})
@@ -714,7 +720,7 @@ func TestStakerDelegate_EdgeCasesAndBoundaries(t *testing.T) {
 
 				// Pre-setup delegation
 				testing.SetRealm(testing.NewUserRealm(user))
-				func (cur realm) {
+				func(cur realm) {
 					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 					gs.Delegate(validator, amount, "")
 				}(cross)
@@ -734,7 +740,7 @@ func TestStakerDelegate_EdgeCasesAndBoundaries(t *testing.T) {
 
 				// Pre-setup delegation
 				testing.SetRealm(testing.NewUserRealm(user))
-				func (cur realm) {
+				func(cur realm) {
 					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 					gs.Delegate(validator1, amount, "")
 				}(cross)
@@ -860,8 +866,8 @@ func setupStakerDelegateTestCollectableAmount(t *testing.T, gs *govStakerV1, use
 	delegationID := gs.nextDelegationID()
 	delegation := staker.NewDelegation(delegationID, user, testutils.TestAddress("validator1"), amount, 100, 100)
 
-	// Undelegate with zero lockup period for immediate collection
-	delegation.UnDelegateWithoutLockup(amount, 200, 100)
+	// Undelegate with very short lockup period
+	delegation.UnDelegate(amount, 200, 100, 0) // 0 second lockup
 
 	gs.addDelegation(delegationID, delegation)
 

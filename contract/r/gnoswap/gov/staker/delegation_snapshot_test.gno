@@ -1,4 +1,4 @@
-package v1
+package staker
 
 import (
 	"testing"
@@ -69,7 +69,7 @@ func TestDelegationSnapshot_AddRecord(t *testing.T) {
 			snapshot := tc.initialSnapshot
 
 			// when
-			snapshot.addRecord(tc.record)
+			snapshot.AddRecord(tc.record)
 
 			// then
 			item, exists := snapshot[tc.record.DelegateTo().String()]
@@ -131,7 +131,7 @@ func TestDelegationSnapshot_SubRecord(t *testing.T) {
 			snapshot := tc.initialSnapshot
 
 			// when
-			snapshot.subRecord(tc.record)
+			snapshot.SubRecord(tc.record)
 
 			// then
 			item, exists := snapshot[tc.record.DelegateTo().String()]
@@ -169,7 +169,7 @@ func TestDelegationSnapshot_Clone(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// when
-			cloned := tc.snapshot.clone()
+			cloned := tc.snapshot.Clone()
 
 			// then
 			uassert.Equal(t, len(cloned), len(tc.snapshot))
@@ -219,7 +219,7 @@ func TestDelegationSnapshotItem_Methods(t *testing.T) {
 			uassert.Equal(t, item.IsEmpty(), tc.expectedEmpty)
 
 			// Test clone
-			cloned := item.clone()
+			cloned := item.Clone()
 			uassert.Equal(t, cloned.DelegatorAddress(), tc.delegatorAddress)
 			uassert.Equal(t, cloned.DelegationAmount(), tc.delegationAmount)
 		})

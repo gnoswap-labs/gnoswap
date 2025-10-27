@@ -170,7 +170,7 @@ func NewDelegationWithdrawWithoutLockup(
 		unDelegatedHeight: createdHeight,
 		unDelegatedAt:     createdAt,
 		collectableTime:   createdAt,
-		collectedAmount:   unDelegateAmount,
+		collectedAmount:   unDelegateAmount, // Immediately collected
 		collectedAt:       createdAt,
 		collected:         true,
 	}

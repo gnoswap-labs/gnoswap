@@ -71,7 +71,7 @@ func (d *Delegation) CollectableAmount(currentTime int64) (total int64) {
 	for _, withdraw := range d.withdraws {
 		total += withdraw.CollectableAmount(currentTime)
 	}
-	return
+	return total
 }
 
 // UnDelegate processes an undelegation with lockup period
@@ -93,7 +93,7 @@ func (d *Delegation) UnDelegateWithoutLockup(
 	amount, currentHeight, currentTime int64,
 ) {
 	d.unDelegateAmount += amount
-	d.collectedAmount += amount
+	d.collectedAmount += amount // Immediately collected
 	d.withdraws = append(d.withdraws, NewDelegationWithdrawWithoutLockup(
 		d.id,
 		amount,
