@@ -40,6 +40,7 @@ var (
 )
 
 func main() {
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
 	println("[SCENARIO] 1. Delegate gns to admin")
 	delegateGnsToAdmin()

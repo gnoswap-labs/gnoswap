@@ -26,20 +26,9 @@ var (
 
 func init() {
 	kvStore = store.NewKVStore(currentAddress)
-	initRegisterReadableContract()
 	versionManager = version_manager.NewVersionManager(domainPath, kvStore, initializeDomainStore)
 
 	implementation = nil
-}
-
-func initRegisterReadableContract() {
-	/* Allow test package to read governance state (workaround for testing) */
-
-	testPackageAddress := chain.PackageAddress("gno.land/r/gnoswap/v1/main")
-	kvStore.AddAuthorizedCaller(testPackageAddress, store.ReadOnly)
-
-	mainAddress := chain.PackageAddress("main")
-	kvStore.AddAuthorizedCaller(mainAddress, store.ReadOnly)
 }
 
 func initializeDomainStore(kvStore store.KVStore) any {
