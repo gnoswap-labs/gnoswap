@@ -29,6 +29,7 @@ import (
 	"gno.land/p/nt/uassert"
 
 	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
+	_ "gno.land/r/gnoswap/staker/v1"
 )
 
 const (

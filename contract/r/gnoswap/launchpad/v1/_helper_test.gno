@@ -3,6 +3,8 @@ package v1
 import (
 	"gno.land/p/nt/avl"
 	"gno.land/r/gnoswap/launchpad"
+
+	_ "gno.land/r/gnoswap/staker/v1"
 )
 
 // Test helper functions to access and manipulate state for testing purposes

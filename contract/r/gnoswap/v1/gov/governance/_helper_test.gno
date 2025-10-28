@@ -8,6 +8,8 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
+
+	_ "gno.land/r/gnoswap/staker/v1"
 )
 
 var (
