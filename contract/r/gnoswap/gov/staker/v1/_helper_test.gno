@@ -54,7 +54,7 @@ var (
 
 	max_timeout int64 = 9999999999
 
-	realmPrefix = "/gno.land/r/gnoswap/v1/gov/staker"
+	realmPrefix = "/gno.land/r/gnoswap/gov/staker"
 )
 
 // Realms to mock frames

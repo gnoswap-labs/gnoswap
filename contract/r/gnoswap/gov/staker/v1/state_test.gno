@@ -17,6 +17,44 @@ import (
 	"gno.land/p/nt/uassert"
 )
 
+// Test lockup period management
+func TestUnDelegationLockupPeriod(t *testing.T) {
+	tests := []struct {
+		name           string
+		setPeriod      int64
+		expectedPeriod int64
+	}{
+		{
+			name:           "Set standard lockup period",
+			setPeriod:      60 * 60 * 24 * 7, // 7 days
+			expectedPeriod: 60 * 60 * 24 * 7,
+		},
+		{
+			name:           "Set custom lockup period",
+			setPeriod:      60 * 60 * 24 * 14, // 14 days
+			expectedPeriod: 60 * 60 * 24 * 14,
+		},
+		{
+			name:           "Set zero lockup period",
+			setPeriod:      0,
+			expectedPeriod: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// When: Set lockup period
+			gs := createTestGovStaker()
+			gs.setUnDelegationLockupPeriod(tt.setPeriod)
+
+			// Then: Should return expected period
+			result, _ := gs.store.GetUnDelegationLockupPeriod()
+			// uassert.NoError(t, err)
+			uassert.Equal(t, result, tt.expectedPeriod)
+		})
+	}
+}
+
 // Test delegation management
 func TestDelegationManagement(t *testing.T) {
 	tests := []struct {
