@@ -15,7 +15,7 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/pool"
+	"gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gov/governance"
 	_ "gno.land/r/gnoswap/gov/governance/v1"
@@ -78,7 +78,7 @@ func delegateGnsToAdmin() {
 
 func proposeChangePoolCreationFee() int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	proposalID := governance.ProposeParameterChange(cross, "createfee", "change", 1, "gno.land/r/gnoswap/v1/pool*EXE*SetPoolCreationFee*EXE*500")
+	proposalID := governance.ProposeParameterChange(cross, "createfee", "change", 1, "gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*500")
 
 	ufmt.Printf("[INFO] Change Pool Creation Fee Proposal ID: %d\n", proposalID)
 	return proposalID

@@ -954,7 +954,7 @@ func TestGovernanceExecute_ParameterChangeExecution(t *testing.T) {
 			name:         "success - multiple parameter changes",
 			numToExecute: 2,
 			executions: "gno.land/r/gnoswap/v1/staker*EXE*SetUnStakingFee*EXE*0*GOV*" +
-				"gno.land/r/gnoswap/v1/pool*EXE*SetWithdrawalFee*EXE*0",
+				"gno.land/r/gnoswap/pool*EXE*SetWithdrawalFee*EXE*0",
 			expectedHasAbort: false,
 		},
 		{

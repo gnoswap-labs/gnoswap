@@ -10,6 +10,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	plp "gno.land/p/gnoswap/gnsmath"
+
+	_ "gno.land/r/gnoswap/pool/v1"
 )
 
 const (

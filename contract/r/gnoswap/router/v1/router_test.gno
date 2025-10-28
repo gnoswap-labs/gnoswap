@@ -18,8 +18,8 @@ import (
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
+	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
-	pl "gno.land/r/gnoswap/v1/pool"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -246,7 +246,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 			name:             "success - gnot -> gns",
 			tokenPath0:       wugnotTokenPath,
 			tokenPath1:       gnsTokenPath,
-			feeTier:          pl.FeeTier500,
+			feeTier:          uint32(500),
 			recipient:        alice,
 			tickLower:        -200,
 			tickUpper:        200,
@@ -414,7 +414,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 			name:             "success - gnot -> gns",
 			tokenPath0:       wugnotTokenPath,
 			tokenPath1:       gnsTokenPath,
-			feeTier:          pl.FeeTier500,
+			feeTier:          uint32(500),
 			recipient:        alice,
 			tickLower:        -200,
 			tickUpper:        200,
@@ -597,7 +597,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 			name:             "success - gns -> gnot",
 			tokenPath0:       wugnotTokenPath,
 			tokenPath1:       gnsTokenPath,
-			feeTier:          pl.FeeTier10000,
+			feeTier:          uint32(10000),
 			recipient:        alice,
 			tickLower:        -200,
 			tickUpper:        200,

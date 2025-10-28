@@ -10,7 +10,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/common"
-	pl "gno.land/r/gnoswap/v1/pool"
+	pl "gno.land/r/gnoswap/pool"
 )
 
 var (

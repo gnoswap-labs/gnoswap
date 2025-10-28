@@ -6,7 +6,26 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
+	pl "gno.land/r/gnoswap/pool"
+)
+
+const (
+	MAX_UINT64  string = "18446744073709551615"
+	MAX_INT64   string = "9223372036854775807"
+	MAX_INT128  string = "170141183460469231731687303715884105727"
+	MAX_UINT128 string = "340282366920938463463374607431768211455"
+
+	INT64_MIN int64 = -9223372036854775808
+	INT64_MAX int64 = 9223372036854775807
+
+	Q96_RESOLUTION  uint = 96
+	Q128_RESOLUTION uint = 128
+
+	Q64  string = "18446744073709551616"                    // 2 ** 64
+	Q96  string = "79228162514264337593543950336"           // 2 ** 96
+	Q128 string = "340282366920938463463374607431768211456" // 2 ** 128
 )
 
 // safeConvertToUint64 safely converts a *u256.Uint value to a uint64, ensuring no overflow.
@@ -115,16 +134,6 @@ func u256Min(num1, num2 *u256.Uint) *u256.Uint {
 	return num2
 }
 
-// checkTransferError checks transfer error.
-func checkTransferError(err error) {
-	if err != nil {
-		panic(newErrorWithDetail(
-			errTransferFailed,
-			err.Error(),
-		))
-	}
-}
-
 // checkOverFlowInt128 checks if the value overflows the int128 range.
 func checkOverFlowInt128(value *i256.Int) {
 	if value.Gt(i256.MustFromDecimal(MAX_INT128)) {
@@ -148,6 +157,8 @@ func checkTickSpacing(tick, tickSpacing int32) {
 func formatUint(v any) string {
 	switch v := v.(type) {
 	case uint8:
+		return strconv.FormatUint(uint64(v), 10)
+	case uint16:
 		return strconv.FormatUint(uint64(v), 10)
 	case uint32:
 		return strconv.FormatUint(uint64(v), 10)
@@ -177,61 +188,32 @@ func formatBool(v bool) string {
 	return strconv.FormatBool(v)
 }
 
-// validateSqrtPriceX96 validates that the given sqrtPriceX96 is within valid range
-func validateSqrtPriceX96(sqrtPriceX96 *u256.Uint) error {
-	if sqrtPriceX96.Lt(minSqrtRatio) || sqrtPriceX96.Gt(maxSqrtRatio) {
-		return makeErrorWithDetails(
-			errOutOfRange,
-			ufmt.Sprintf("sqrtPriceX96(%s) is out of range", sqrtPriceX96.ToString()),
-		)
-	}
-	return nil
-}
-
-func isValidFeeTier(feeTier uint32) bool {
-	switch feeTier {
-	case FeeTier100, FeeTier500, FeeTier3000, FeeTier10000:
-		return true
+func tickTreeToString(tickTree *avl.Tree) string {
+	if tickTree == nil {
+		return "[]"
 	}
 
-	return false
-}
+	tickInfoStrings := []string{}
 
-// MakePoolPath generates a unique pool path string based on the token paths and fee tier.
-func MakePoolPath(token0Path, token1Path string, fee uint32) string {
-	// All the token paths in the pool are sorted in alphabetical order.
-	if strings.Compare(token1Path, token0Path) < 0 {
-		token0Path, token1Path = token1Path, token0Path
-	}
+	tickTree.Iterate("", "", func(tickKey string, tickValue any) bool {
+		tick, err := strconv.ParseInt(tickKey, 10, 32)
+		if err != nil {
+			panic(err)
+		}
+		tickInfo, ok := tickValue.(pl.TickInfo)
+		if !ok {
+			panic("failed to cast tick info to TickInfo")
+		}
 
-	return ufmt.Sprintf("%s:%s:%d", token0Path, token1Path, fee)
-}
+		tickInfoStrings = append(tickInfoStrings, ufmt.Sprintf(
+			`{"tick":%d,"feeGrowthOutside0X128":"%s","feeGrowthOutside1X128":"%s"}`,
+			tick,
+			tickInfo.FeeGrowthOutside0X128().ToString(),
+			tickInfo.FeeGrowthOutside1X128().ToString(),
+		))
 
-// validateTicks validates the tick range for a liquidity position.
-//
-// This function performs three essential checks to ensure the provided
-// tick values are valid before creating or modifying a liquidity position.
-func validateTicks(tickLower, tickUpper int32) error {
-	if tickLower >= tickUpper {
-		return makeErrorWithDetails(
-			errInvalidTickRange,
-			ufmt.Sprintf("tickLower(%d), tickUpper(%d)", tickLower, tickUpper),
-		)
-	}
+		return false
+	})
 
-	if tickLower < MIN_TICK {
-		return makeErrorWithDetails(
-			errTickLowerInvalid,
-			ufmt.Sprintf("tickLower(%d) < MIN_TICK(%d)", tickLower, MIN_TICK),
-		)
-	}
-
-	if tickUpper > MAX_TICK {
-		return makeErrorWithDetails(
-			errTickUpperInvalid,
-			ufmt.Sprintf("tickUpper(%d) > MAX_TICK(%d)", tickUpper, MAX_TICK),
-		)
-	}
-
-	return nil
+	return "[" + strings.Join(tickInfoStrings, ",") + "]"
 }

@@ -7,46 +7,54 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/common"
+	pl "gno.land/r/gnoswap/pool"
+)
+
+const (
+	MIN_TICK int32 = -887272
+	MAX_TICK int32 = 887272
 )
 
 // GetTickLiquidityGross returns the gross liquidity for the specified tick.
-func (p *Pool) GetTickLiquidityGross(tick int32) *u256.Uint {
-	return p.mustGetTick(tick).liquidityGross
+func GetTickLiquidityGross(p *pl.Pool, tick int32) *u256.Uint {
+	return mustGetTick(p, tick).LiquidityGross()
 }
 
 // GetTickLiquidityNet returns the net liquidity for the specified tick.
-func (p *Pool) GetTickLiquidityNet(tick int32) *i256.Int {
-	return p.mustGetTick(tick).liquidityNet
+func GetTickLiquidityNet(p *pl.Pool, tick int32) *i256.Int {
+	return mustGetTick(p, tick).LiquidityNet()
 }
 
 // GetTickFeeGrowthOutside0X128 returns the fee growth outside the tick for token 0.
-func (p *Pool) GetTickFeeGrowthOutside0X128(tick int32) *u256.Uint {
-	return p.mustGetTick(tick).feeGrowthOutside0X128
+func GetTickFeeGrowthOutside0X128(p *pl.Pool, tick int32) *u256.Uint {
+	return mustGetTick(p, tick).FeeGrowthOutside0X128()
 }
 
 // GetTickFeeGrowthOutside1X128 returns the fee growth outside the tick for token 1.
-func (p *Pool) GetTickFeeGrowthOutside1X128(tick int32) *u256.Uint {
-	return p.mustGetTick(tick).feeGrowthOutside1X128
+func GetTickFeeGrowthOutside1X128(p *pl.Pool, tick int32) *u256.Uint {
+	return mustGetTick(p, tick).FeeGrowthOutside1X128()
 }
 
 // GetTickCumulativeOutside returns the cumulative liquidity outside the tick.
-func (p *Pool) GetTickCumulativeOutside(tick int32) int64 {
-	return p.mustGetTick(tick).tickCumulativeOutside
+func GetTickCumulativeOutside(p *pl.Pool, tick int32) int64 {
+	return mustGetTick(p, tick).TickCumulativeOutside()
 }
 
 // GetTickSecondsPerLiquidityOutsideX128 returns the seconds per liquidity outside the tick.
-func (p *Pool) GetTickSecondsPerLiquidityOutsideX128(tick int32) *u256.Uint {
-	return p.mustGetTick(tick).secondsPerLiquidityOutsideX128
+func GetTickSecondsPerLiquidityOutsideX128(p *pl.Pool, tick int32) *u256.Uint {
+	return mustGetTick(p, tick).SecondsPerLiquidityOutsideX128()
 }
 
 // GetTickSecondsOutside returns the seconds outside the tick.
-func (p *Pool) GetTickSecondsOutside(tick int32) uint32 {
-	return p.mustGetTick(tick).secondsOutside
+func GetTickSecondsOutside(p *pl.Pool, tick int32) uint32 {
+	return mustGetTick(p, tick).SecondsOutside()
 }
 
 // GetTickInitialized returns whether the tick is initialized.
-func (p *Pool) GetTickInitialized(tick int32) bool {
-	return p.mustGetTick(tick).initialized
+func GetTickInitialized(p *pl.Pool, tick int32) bool {
+	return mustGetTick(p, tick).Initialized()
 }
 
 // getFeeGrowthInside calculates the fee growth within a specified tick range.
@@ -91,15 +99,16 @@ func (p *Pool) GetTickInitialized(tick int32) bool {
 //	println("Fee Growth Inside (Token 1):", feeGrowth1)
 //
 // ```
-func (p *Pool) getFeeGrowthInside(
+func getFeeGrowthInside(
+	p *pl.Pool,
 	tickLower int32,
 	tickUpper int32,
 	tickCurrent int32,
 	feeGrowthGlobal0X128 *u256.Uint,
 	feeGrowthGlobal1X128 *u256.Uint,
 ) (*u256.Uint, *u256.Uint) {
-	lower := p.getTick(tickLower)
-	upper := p.getTick(tickUpper)
+	lower := getTick(p, tickLower)
+	upper := getTick(p, tickUpper)
 
 	feeGrowthBelow0X128, feeGrowthBelow1X128 := getFeeGrowthBelowX128(tickLower, tickCurrent, feeGrowthGlobal0X128, feeGrowthGlobal1X128, lower)
 	feeGrowthAbove0X128, feeGrowthAbove1X128 := getFeeGrowthAboveX128(tickUpper, tickCurrent, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper)
@@ -157,7 +166,8 @@ func (p *Pool) getFeeGrowthInside(
 //	println("Tick flipped:", flipped)
 //
 // ```
-func (p *Pool) tickUpdate(
+func tickUpdate(
+	p *pl.Pool,
 	tick int32,
 	tickCurrent int32,
 	liquidityDelta *i256.Int,
@@ -170,10 +180,10 @@ func (p *Pool) tickUpdate(
 	feeGrowthGlobal0X128 = feeGrowthGlobal0X128.NilToZero()
 	feeGrowthGlobal1X128 = feeGrowthGlobal1X128.NilToZero()
 
-	tickInfo := p.getTick(tick)
+	tickInfo := getTick(p, tick)
 
-	liquidityGrossBefore := tickInfo.liquidityGross.Clone()
-	liquidityGrossAfter := liquidityMathAddDelta(liquidityGrossBefore, liquidityDelta)
+	liquidityGrossBefore := tickInfo.LiquidityGross().Clone()
+	liquidityGrossAfter := common.LiquidityMathAddDelta(liquidityGrossBefore, liquidityDelta)
 
 	if !(liquidityGrossAfter.Lte(maxLiquidity)) {
 		panic(newErrorWithDetail(
@@ -186,53 +196,54 @@ func (p *Pool) tickUpdate(
 
 	if liquidityGrossBefore.IsZero() {
 		if tick <= tickCurrent {
-			tickInfo.feeGrowthOutside0X128 = feeGrowthGlobal0X128.Clone()
-			tickInfo.feeGrowthOutside1X128 = feeGrowthGlobal1X128.Clone()
+			tickInfo.SetFeeGrowthOutside0X128(feeGrowthGlobal0X128.Clone())
+			tickInfo.SetFeeGrowthOutside1X128(feeGrowthGlobal1X128.Clone())
 		}
-		tickInfo.initialized = true
+		tickInfo.SetInitialized(true)
 	}
 
-	tickInfo.liquidityGross = liquidityGrossAfter.Clone()
+	tickInfo.SetLiquidityGross(liquidityGrossAfter.Clone())
 
 	if upper {
-		tickInfo.liquidityNet = i256.Zero().Sub(tickInfo.liquidityNet, liquidityDelta)
-		checkOverFlowInt128(tickInfo.liquidityNet)
+		tickInfo.SetLiquidityNet(i256.Zero().Sub(tickInfo.LiquidityNet(), liquidityDelta))
+		checkOverFlowInt128(tickInfo.LiquidityNet())
 	} else {
-		tickInfo.liquidityNet = i256.Zero().Add(tickInfo.liquidityNet, liquidityDelta)
-		checkOverFlowInt128(tickInfo.liquidityNet)
+		tickInfo.SetLiquidityNet(i256.Zero().Add(tickInfo.LiquidityNet(), liquidityDelta))
+		checkOverFlowInt128(tickInfo.LiquidityNet())
 	}
 
-	p.setTick(tick, tickInfo)
+	setTick(p, tick, tickInfo)
 
 	return flipped
 }
 
 // tickCross updates a tick's state when it is crossed and returns the liquidity net.
-func (p *Pool) tickCross(
+func tickCross(
+	p *pl.Pool,
 	tick int32,
 	feeGrowthGlobal0X128 *u256.Uint,
 	feeGrowthGlobal1X128 *u256.Uint,
 ) *i256.Int {
-	thisTick := p.getTick(tick)
+	thisTick := getTick(p, tick)
 
-	thisTick.feeGrowthOutside0X128 = u256.Zero().Sub(feeGrowthGlobal0X128, thisTick.feeGrowthOutside0X128)
-	thisTick.feeGrowthOutside1X128 = u256.Zero().Sub(feeGrowthGlobal1X128, thisTick.feeGrowthOutside1X128)
+	thisTick.SetFeeGrowthOutside0X128(u256.Zero().Sub(feeGrowthGlobal0X128, thisTick.FeeGrowthOutside0X128()))
+	thisTick.SetFeeGrowthOutside1X128(u256.Zero().Sub(feeGrowthGlobal1X128, thisTick.FeeGrowthOutside1X128()))
 
-	p.setTick(tick, thisTick)
+	setTick(p, tick, thisTick)
 
-	return thisTick.liquidityNet.Clone()
+	return thisTick.LiquidityNet().Clone()
 }
 
 // setTick updates the tick data for the specified tick index in the pool.
-func (p *Pool) setTick(tick int32, newTickInfo TickInfo) {
+func setTick(p *pl.Pool, tick int32, newTickInfo pl.TickInfo) {
 	tickStr := strconv.Itoa(int(tick))
-	p.ticks.Set(tickStr, newTickInfo)
+	p.Ticks().Set(tickStr, newTickInfo)
 }
 
 // deleteTick deletes the tick data for the specified tick index in the pool.
-func (p *Pool) deleteTick(tick int32) {
+func deleteTick(p *pl.Pool, tick int32) {
 	tickStr := strconv.Itoa(int(tick))
-	p.ticks.Remove(tickStr)
+	p.Ticks().Remove(tickStr)
 }
 
 // getTick retrieves the TickInfo associated with the specified tick index from the pool.
@@ -252,19 +263,18 @@ func (p *Pool) deleteTick(tick int32) {
 // Use Case:
 // This function ensures the retrieved tick data is always valid and safe for further operations,
 // such as calculations or updates, by sanitizing nil fields in the TickInfo structure.
-func (p *Pool) getTick(tick int32) TickInfo {
+func getTick(p *pl.Pool, tick int32) pl.TickInfo {
 	tickStr := formatInt(tick)
-	iTickInfo, exist := p.ticks.Get(tickStr)
+	iTickInfo, exist := p.Ticks().Get(tickStr)
 	if !exist {
-		tickInfo := TickInfo{}
-		tickInfo.valueOrZero()
-		return tickInfo
+		return pl.NewTickInfo()
 	}
 
-	tickInfo, ok := iTickInfo.(TickInfo)
+	tickInfo, ok := iTickInfo.(pl.TickInfo)
 	if !ok {
 		panic(ufmt.Sprintf("failed to cast tickInfo to TickInfo: %T", iTickInfo))
 	}
+
 	return tickInfo
 }
 
@@ -295,9 +305,9 @@ func (p *Pool) getTick(tick int32) TickInfo {
 //	ufmt.Println("Tick Info:", tickInfo)
 //
 // ```
-func (p *Pool) mustGetTick(tick int32) TickInfo {
+func mustGetTick(p *pl.Pool, tick int32) *pl.TickInfo {
 	tickStr := formatInt(tick)
-	iTickInfo, exist := p.ticks.Get(tickStr)
+	iTickInfo, exist := p.Ticks().Get(tickStr)
 	if !exist {
 		panic(newErrorWithDetail(
 			errDataNotFound,
@@ -305,12 +315,12 @@ func (p *Pool) mustGetTick(tick int32) TickInfo {
 		))
 	}
 
-	info, ok := iTickInfo.(TickInfo)
+	info, ok := iTickInfo.(pl.TickInfo)
 	if !ok {
 		panic("failed to cast tick info to TickInfo")
 	}
 
-	return info
+	return &info
 }
 
 // calculateMaxLiquidityPerTick calculates the maximum liquidity
@@ -368,14 +378,14 @@ func calculateMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
 func getFeeGrowthBelowX128(
 	tickLower, tickCurrent int32,
 	feeGrowthGlobal0X128, feeGrowthGlobal1X128 *u256.Uint,
-	lowerTick TickInfo,
+	lowerTick pl.TickInfo,
 ) (*u256.Uint, *u256.Uint) {
 	if tickCurrent >= tickLower {
-		return lowerTick.feeGrowthOutside0X128, lowerTick.feeGrowthOutside1X128
+		return lowerTick.FeeGrowthOutside0X128(), lowerTick.FeeGrowthOutside1X128()
 	}
 
-	feeGrowthBelow0X128 := u256.Zero().Sub(feeGrowthGlobal0X128, lowerTick.feeGrowthOutside0X128)
-	feeGrowthBelow1X128 := u256.Zero().Sub(feeGrowthGlobal1X128, lowerTick.feeGrowthOutside1X128)
+	feeGrowthBelow0X128 := u256.Zero().Sub(feeGrowthGlobal0X128, lowerTick.FeeGrowthOutside0X128())
+	feeGrowthBelow1X128 := u256.Zero().Sub(feeGrowthGlobal1X128, lowerTick.FeeGrowthOutside1X128())
 
 	return feeGrowthBelow0X128, feeGrowthBelow1X128
 }
@@ -421,14 +431,43 @@ func getFeeGrowthBelowX128(
 func getFeeGrowthAboveX128(
 	tickUpper, tickCurrent int32,
 	feeGrowthGlobal0X128, feeGrowthGlobal1X128 *u256.Uint,
-	upperTick TickInfo,
+	upperTick pl.TickInfo,
 ) (*u256.Uint, *u256.Uint) {
 	if tickCurrent < tickUpper {
-		return upperTick.feeGrowthOutside0X128, upperTick.feeGrowthOutside1X128
+		return upperTick.FeeGrowthOutside0X128(), upperTick.FeeGrowthOutside1X128()
 	}
 
-	feeGrowthAbove0X128 := u256.Zero().Sub(feeGrowthGlobal0X128, upperTick.feeGrowthOutside0X128)
-	feeGrowthAbove1X128 := u256.Zero().Sub(feeGrowthGlobal1X128, upperTick.feeGrowthOutside1X128)
+	feeGrowthAbove0X128 := u256.Zero().Sub(feeGrowthGlobal0X128, upperTick.FeeGrowthOutside0X128())
+	feeGrowthAbove1X128 := u256.Zero().Sub(feeGrowthGlobal1X128, upperTick.FeeGrowthOutside1X128())
 
 	return feeGrowthAbove0X128, feeGrowthAbove1X128
+}
+
+// validateTicks validates the tick range for a liquidity position.
+//
+// This function performs three essential checks to ensure the provided
+// tick values are valid before creating or modifying a liquidity position.
+func validateTicks(tickLower, tickUpper int32) error {
+	if tickLower >= tickUpper {
+		return makeErrorWithDetails(
+			errInvalidTickRange,
+			ufmt.Sprintf("tickLower(%d), tickUpper(%d)", tickLower, tickUpper),
+		)
+	}
+
+	if tickLower < MIN_TICK {
+		return makeErrorWithDetails(
+			errTickLowerInvalid,
+			ufmt.Sprintf("tickLower(%d) < MIN_TICK(%d)", tickLower, MIN_TICK),
+		)
+	}
+
+	if tickUpper > MAX_TICK {
+		return makeErrorWithDetails(
+			errTickUpperInvalid,
+			ufmt.Sprintf("tickUpper(%d) > MAX_TICK(%d)", tickUpper, MAX_TICK),
+		)
+	}
+
+	return nil
 }

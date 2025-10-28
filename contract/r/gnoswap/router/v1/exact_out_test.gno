@@ -7,8 +7,8 @@ import (
 
 	"gno.land/p/nt/uassert"
 
+	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
-	pl "gno.land/r/gnoswap/v1/pool"
 
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
@@ -273,8 +273,8 @@ func setupTestPool(t *testing.T) {
 		"",
 	)
 
-	pool := pl.GetPool(barPath, fooPath, FEE_MEDIUM)
-	uassert.Equal(t, pool.Liquidity().ToString(), "1000000")
+	pool := pl.GetPoolPath(barPath, fooPath, FEE_MEDIUM)
+	uassert.Equal(t, pl.GetLiquidity(pool), "1000000")
 }
 
 func TestExactOutAmountValidation(t *testing.T) {

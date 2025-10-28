@@ -5,8 +5,8 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/common"
+	pl "gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
-	pl "gno.land/r/gnoswap/v1/pool"
 )
 
 const (

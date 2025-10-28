@@ -15,14 +15,15 @@ import (
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
 
+	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 	rr "gno.land/r/gnoswap/router"
-	pl "gno.land/r/gnoswap/v1/pool"
 	sr "gno.land/r/gnoswap/v1/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/router/v1"
@@ -231,6 +232,7 @@ func stakeToken_1_2() {
 }
 
 func makePosition1OutRange() {
+	testing.SetRealm(adminRealm)
 	poolTick := pl.GetSlot0Tick(poolPath)
 	if poolTick != 0 {
 		panic("expected pool tick to be 0")

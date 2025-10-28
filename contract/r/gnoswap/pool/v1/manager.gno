@@ -4,16 +4,21 @@ import (
 	"chain"
 	"chain/runtime"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/emission"
-	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
+	pl "gno.land/r/gnoswap/pool"
 
+	en "gno.land/r/gnoswap/emission"
 	pf "gno.land/r/gnoswap/protocol_fee"
+
+	"gno.land/r/gnoswap/gns"
 )
+
+const GNS_PATH string = "gno.land/r/gnoswap/gns"
 
 // CreatePool creates a new concentrated liquidity pool.
 //
@@ -50,37 +55,32 @@ import (
 //	2. Execute swap to move price toward market rate
 //	3. Remove the liquidity
 //	The executor's LP losses offset arbitrage gains (minus fees).
-func (p *poolV1) CreatePool(
+func (i *poolV1) CreatePool(
 	token0Path string,
 	token1Path string,
 	fee uint32,
 	sqrtPriceX96 string,
 ) {
-	// NOTE: Halt does not manage versions.
-	// Since only one instance is activated using the proxy pattern, versions are not specified.
 	halt.AssertIsNotHaltedPool()
 
 	assertIsNotEqualsTokens(token0Path, token1Path)
 	assertIsSupportedFeeTier(fee)
+	assertIsNotExistsPoolPath(i, token0Path, token1Path, fee)
 
-	pools := p.store.GetPools()
-	assertIsNotExistsPoolPath(pools, token0Path, token1Path, fee)
+	en.MintAndDistributeGns(cross)
 
-	emission.MintAndDistributeGns(cross)
-
-	tickSpacing := p.GetFeeAmountTickSpacing(fee)
-	slot0FeeProtocol := p.store.GetSlot0FeeProtocol()
+	slot0FeeProtocol := i.store.GetSlot0FeeProtocol()
 
 	poolInfo := newPoolParams(
 		token0Path,
 		token1Path,
 		fee,
 		sqrtPriceX96,
-		tickSpacing,
+		i.GetFeeAmountTickSpacing(fee),
 		slot0FeeProtocol,
 	)
 
-	poolInfo, err := poolInfo.updateWithWrapping()
+	err := poolInfo.updateWithWrapping()
 	if err != nil {
 		panic(err)
 	}
@@ -90,12 +90,20 @@ func (p *poolV1) CreatePool(
 	common.MustRegistered(poolInfo.token1Path)
 
 	pool := newPool(poolInfo)
+
+	pools := i.store.GetPools()
 	pools.Set(poolInfo.poolPath(), pool)
 
-	poolCreationFee := p.store.GetPoolCreationFee()
-	protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	err = i.store.SetPools(pools)
+	if err != nil {
+		panic(err)
+	}
+
+	poolCreationFee := i.store.GetPoolCreationFee()
 
 	if poolCreationFee > 0 {
+		protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+
 		gns.TransferFrom(cross, runtime.PreviousRealm().Address(), protocolFeeAddr, poolCreationFee)
 		pf.AddToProtocolFee(cross, GNS_PATH, poolCreationFee)
 
@@ -125,60 +133,172 @@ func (p *poolV1) CreatePool(
 	)
 }
 
-// SetPoolCreationFee sets the poolCreationFee.
-// Only admin or governance can call this function.
-func (p *poolV1) SetPoolCreationFee(
-	poolCreationFee int64,
-) {
-	// NOTE: Halt does not manage versions.
-	// Since only one instance is activated using the proxy pattern, versions are not specified.
+// SetFeeProtocol sets the protocol fee percentage for all pools.
+//
+// Parameters:
+//   - feeProtocol0, feeProtocol1: fee percentages (0-10)
+//
+// Only callable by admin or governance.
+func (i *poolV1) SetFeeProtocol(feeProtocol0, feeProtocol1 uint8) {
 	halt.AssertIsNotHaltedPool()
 
-	// NOTE: Access does not manage versions.
-	// Since only one instance is activated using the proxy pattern, versions are not specified.
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	prevPoolCreationFee := p.store.GetPoolCreationFee()
-
-	err := p.store.SetPoolCreationFee(poolCreationFee)
+	err := i.setFeeProtocolInternal(feeProtocol0, feeProtocol1, "SetFeeProtocol")
 	if err != nil {
 		panic(err)
 	}
-
-	previousRealm := runtime.PreviousRealm()
-	chain.Emit(
-		"SetPoolCreationFee",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"prevFee", formatInt(prevPoolCreationFee),
-		"newFee", formatInt(poolCreationFee),
-	)
 }
 
-// SetWithdrawalFee sets the withdrawal fee.
-// Only admin or governance can call this function.
-func (p *poolV1) SetWithdrawalFeeBPS(
-	withdrawalFeeBPS uint64,
-) {
-	halt.AssertIsNotHaltedPool()
+// setFeeAmountTickSpacing associates a tick spacing value with a fee amount.
+func (i *poolV1) setFeeAmountTickSpacing(fee uint32, tickSpacing int32) error {
+	feeStr := formatUint(fee)
 
-	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	feeAmountTickSpacing := i.store.GetFeeAmountTickSpacing()
+	feeAmountTickSpacing.Set(feeStr, tickSpacing)
 
-	prevWithdrawalFee := p.store.GetWithdrawalFeeBPS()
+	return i.store.SetFeeAmountTickSpacing(feeAmountTickSpacing)
+}
 
-	err := p.store.SetWithdrawalFeeBPS(withdrawalFeeBPS)
-	if err != nil {
-		panic(err)
+// mustGetPool retrieves a pool instance by its path and ensures it exists.
+func (i *poolV1) mustGetPool(poolPath string) (pool *pl.Pool) {
+	pools := i.store.GetPools()
+
+	iPool, exist := pools.Get(poolPath)
+	if !exist {
+		panic(newErrorWithDetail(
+			errDataNotFound,
+			ufmt.Sprintf("expected poolPath(%s) to exist", poolPath),
+		))
 	}
+
+	pool, ok := iPool.(*pl.Pool)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast pool to *Pool: %T", iPool))
+	}
+
+	return pool
+}
+
+func (i *poolV1) mustGetPoolBy(token0Path, token1Path string, fee uint32) *pl.Pool {
+	poolPath := GetPoolPath(token0Path, token1Path, fee)
+	return i.mustGetPool(poolPath)
+}
+
+// setFeeProtocolInternal updates the protocol fee for all pools and emits an event.
+func (i *poolV1) setFeeProtocolInternal(feeProtocol0, feeProtocol1 uint8, eventName string) error {
+	oldFee := i.store.GetSlot0FeeProtocol()
+	newFee, err := i.setFeeProtocol(feeProtocol0, feeProtocol1)
+	if err != nil {
+		return err
+	}
+
+	feeProtocol0Old := oldFee % 16
+	feeProtocol1Old := oldFee >> 4
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
-		"SetWithdrawalFee",
+		eventName,
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"prevFee", formatUint(prevWithdrawalFee),
-		"newFee", formatUint(withdrawalFeeBPS),
+		"prevFeeProtocol0", formatUint(feeProtocol0Old),
+		"prevFeeProtocol1", formatUint(feeProtocol1Old),
+		"feeProtocol0", formatUint(feeProtocol0),
+		"feeProtocol1", formatUint(feeProtocol1),
+		"newFee", formatUint(newFee),
 	)
+
+	return nil
+}
+
+// setFeeProtocol updates the protocol fee configuration for all managed pools.
+//
+// This function combines the protocol fee values for token0 and token1 into a single `uint8` value,
+// where:
+//   - Lower 4 bits store feeProtocol0 (for token0).
+//   - Upper 4 bits store feeProtocol1 (for token1).
+//
+// The updated fee protocol is applied uniformly to all pools managed by the system.
+//
+// Parameters:
+//   - feeProtocol0: protocol fee for token0 (must be 0 or between 4 and 10 inclusive).
+//   - feeProtocol1: protocol fee for token1 (must be 0 or between 4 and 10 inclusive).
+//
+// Returns:
+//   - newFee (uint8): the combined fee protocol value.
+//
+// Example:
+// If feeProtocol0 = 4 and feeProtocol1 = 5:
+//
+//	newFee = 4 + (5 << 4)
+//	// Results in: 0x54 (84 in decimal)
+//	// Binary: 0101 0100
+//	//         ^^^^ ^^^^
+//	//       fee1=5  fee0=4
+//
+// Notes:
+//   - This function ensures that all pools under management are updated to use the same fee protocol.
+//   - Caller restrictions (e.g., admin or governance) are not enforced in this function.
+//   - Ensure the system is not halted before updating fees.
+func (i *poolV1) setFeeProtocol(feeProtocol0, feeProtocol1 uint8) (uint8, error) {
+	if err := validateFeeProtocol(feeProtocol0, feeProtocol1); err != nil {
+		return 0, err
+	}
+
+	// combine both protocol fee into a single byte:
+	// - feePrtocol0 occupies the lower 4 bits
+	// - feeProtocol1 is shifted the lower 4 positions to occupy the upper 4 bits
+	newFee := feeProtocol0 + (feeProtocol1 << 4) // ( << 4 ) = ( * 16 )
+
+	pools := i.store.GetPools()
+
+	// Update slot0 for each pool
+	pools.Iterate("", "", func(poolPath string, iPool any) bool {
+		pool, ok := iPool.(*pl.Pool)
+		if !ok {
+			panic("failed to cast pool to *Pool")
+		}
+
+		slot0 := pool.Slot0()
+		slot0.SetFeeProtocol(newFee)
+
+		pool.SetSlot0(slot0)
+
+		return false
+	})
+
+	// update slot0
+	err := i.store.SetSlot0FeeProtocol(newFee)
+	if err != nil {
+		return 0, err
+	}
+
+	return newFee, nil
+}
+
+// validateFeeProtocol validates the fee protocol values for token0 and token1.
+//
+// This function checks whether the provided fee protocol values (`feeProtocol0` and `feeProtocol1`)
+// are valid using the `isValidFeeProtocolValue` function. If either value is invalid, it returns
+// an error indicating that the protocol fee percentage is invalid.
+//
+// Parameters:
+//   - feeProtocol0: uint8, the fee protocol value for token0.
+//   - feeProtocol1: uint8, the fee protocol value for token1.
+//
+// Returns:
+//   - error: Returns `errInvalidProtocolFeePct` if either `feeProtocol0` or `feeProtocol1` is invalid.
+//     Returns `nil` if both values are valid.
+func validateFeeProtocol(feeProtocol0, feeProtocol1 uint8) error {
+	if !isValidFeeProtocolValue(feeProtocol0) || !isValidFeeProtocolValue(feeProtocol1) {
+		return errInvalidProtocolFeePct
+	}
+	return nil
+}
+
+// isValidFeeProtocolValue checks if a fee protocol value is within acceptable range.
+// valid values are either 0 or between 4 and 10 inclusive.
+func isValidFeeProtocolValue(value uint8) bool {
+	return value == 0 || (value >= 4 && value <= 10)
 }

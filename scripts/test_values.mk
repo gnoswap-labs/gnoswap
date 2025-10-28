@@ -26,7 +26,7 @@ TEST_VALUES:=gno/examples/gno.land/p/gnoswap/uint256 \
 	   gno/examples/gno.land/r/gnoswap/gov/xgns \
 	   gno/examples/gno.land/r/gnoswap/emission \
 	   gno/examples/gno.land/r/gnoswap/protocol_fee \
-	   gno/examples/gno.land/r/gnoswap/v1/pool \
+	   gno/examples/gno.land/r/gnoswap/pool \
 	   gno/examples/gno.land/r/gnoswap/position \
 	   gno/examples/gno.land/r/gnoswap/router \
 	   gno/examples/gno.land/r/gnoswap/v1/staker \

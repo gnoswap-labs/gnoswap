@@ -28,7 +28,7 @@ loadpkg gno.land/r/gnoswap/referral
 loadpkg gno.land/r/gnoswap/gnft
 loadpkg gno.land/r/gnoswap/community_pool
 loadpkg gno.land/r/gnoswap/protocol_fee
-loadpkg gno.land/r/gnoswap/v1/pool
+loadpkg gno.land/r/gnoswap/pool
 loadpkg gno.land/r/gnoswap/position
 loadpkg gno.land/r/gnoswap/router
 loadpkg gno.land/r/gnoswap/v1/staker
@@ -60,7 +60,7 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/community_pool
 gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/protocol_fee -pkgpath gno.land/r/gnoswap/v2/protocol_fee -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy pool
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/v1/pool -pkgpath gno.land/r/gnoswap/v2/pool -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/pool -pkgpath gno.land/r/gnoswap/v2/pool -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy position
 gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/position -pkgpath gno.land/r/gnoswap/v2/position -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1

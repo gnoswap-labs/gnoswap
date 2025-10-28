@@ -9,7 +9,7 @@ import (
 	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/common"
-	pl "gno.land/r/gnoswap/v1/pool"
+	pl "gno.land/r/gnoswap/pool"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 )
