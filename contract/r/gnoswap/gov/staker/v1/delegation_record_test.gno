@@ -1,16 +1,17 @@
-package staker
+package v1
 
 import (
 	"testing"
 
 	"gno.land/p/nt/uassert"
+	"gno.land/r/gnoswap/gov/staker"
 )
 
 // TestNewDelegationRecord tests the creation of new delegation records
 func TestNewDelegationRecord(t *testing.T) {
 	tests := []struct {
 		name                     string
-		delegationType           DelegationType
+		delegationType           staker.DelegationType
 		delegationAmount         int64
 		delegateFrom             address
 		delegateTo               address
@@ -20,7 +21,7 @@ func TestNewDelegationRecord(t *testing.T) {
 	}{
 		{
 			name:                     "Create delegate record",
-			delegationType:           DelegateType,
+			delegationType:           staker.DelegateType,
 			delegationAmount:         100,
 			delegateFrom:             address("g1from"),
 			delegateTo:               address("g1to"),
@@ -30,7 +31,7 @@ func TestNewDelegationRecord(t *testing.T) {
 		},
 		{
 			name:                     "Create undelegate record",
-			delegationType:           UnDelegateType,
+			delegationType:           staker.UnDelegateType,
 			delegationAmount:         50,
 			delegateFrom:             address("g1from"),
 			delegateTo:               address("g1to"),
@@ -43,7 +44,7 @@ func TestNewDelegationRecord(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// when
-			record := NewDelegationRecord(
+			record := staker.NewDelegationRecord(
 				tc.delegationType,
 				tc.delegationAmount,
 				tc.delegateFrom,
@@ -67,19 +68,13 @@ func TestNewDelegationRecord(t *testing.T) {
 func TestNewDelegationWithdrawRecordBy(t *testing.T) {
 	tests := []struct {
 		name           string
-		delegation     *Delegation
+		delegation     *staker.Delegation
 		withdrawAmount int64
 		currentTime    int64
 	}{
 		{
 			name: "Create withdraw record from delegation",
-			delegation: &Delegation{
-				id:             1,
-				delegateAmount: 100,
-				delegateFrom:   address("g1from"),
-				delegateTo:     address("g1to"),
-				createdAt:      1000,
-			},
+			delegation: NewDelegation(1, address("g1from"), address("g1to"), 100, 1000, 1000),
 			withdrawAmount: 50,
 			currentTime:    2000,
 		},
@@ -88,7 +83,7 @@ func TestNewDelegationWithdrawRecordBy(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// when
-			record := NewDelegationWithdrawRecordBy(
+			record := staker.NewDelegationWithdrawRecordBy(
 				tc.delegation,
 				tc.withdrawAmount,
 				tc.currentTime,
@@ -96,7 +91,7 @@ func TestNewDelegationWithdrawRecordBy(t *testing.T) {
 
 			// then
 			uassert.NotNil(t, record)
-			uassert.Equal(t, record.DelegationType().String(), UnDelegateType.String())
+			uassert.Equal(t, record.DelegationType().String(), staker.UnDelegateType.String())
 			uassert.Equal(t, record.UnDelegateAmount(), tc.withdrawAmount)
 			uassert.Equal(t, record.DelegateFrom(), tc.delegation.DelegateFrom())
 			uassert.Equal(t, record.DelegateTo(), tc.delegation.DelegateTo())

@@ -62,10 +62,6 @@ func initStoreData(store staker.IGovStakerStore) error {
 		if err != nil {
 			return err
 		}
-		err = store.RemoveDelegation(0) // Remove the dummy
-		if err != nil {
-			return err
-		}
 	}
 
 	// Initialize delegation history
@@ -74,20 +70,11 @@ func initStoreData(store staker.IGovStakerStore) error {
 		if err != nil {
 			return err
 		}
-		// Clear the dummy record by getting and resetting
-		_, err = store.GetDelegationHistory()
-		if err != nil {
-			return err
-		}
 	}
 
 	// Initialize user delegations
 	if !store.HasUserDelegationsStoreKey() {
 		err := store.AddUserDelegation("", "", 0) // Initialize with dummy
-		if err != nil {
-			return err
-		}
-		err = store.RemoveUserDelegation("", "", 0) // Remove the dummy
 		if err != nil {
 			return err
 		}
@@ -100,6 +87,42 @@ func initStoreData(store staker.IGovStakerStore) error {
 			return err
 		}
 		// The snapshot tree is should be initialized
+	}
+
+	// Initialize EmissionRewardManager
+	if !store.HasEmissionRewardManagerStoreKey() {
+		emissionRewardManager := staker.NewEmissionRewardManager()
+		err := store.SetEmissionRewardManager(emissionRewardManager)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Initialize ProtocolFeeRewardManager
+	if !store.HasProtocolFeeRewardManagerStoreKey() {
+		protocolFeeRewardManager := staker.NewProtocolFeeRewardManager()
+		err := store.SetProtocolFeeRewardManager(protocolFeeRewardManager)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Initialize LaunchpadProjectDeposits
+	if !store.HasLaunchpadProjectDepositsStoreKey() {
+		launchpadDeposits := staker.NewLaunchpadProjectDeposits()
+		err := store.SetLaunchpadProjectDeposits(launchpadDeposits)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Initialize DelegationManager
+	if !store.HasDelegationManagerStoreKey() {
+		delegationManager := staker.NewDelegationManager()
+		err := store.SetDelegationManager(delegationManager)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
