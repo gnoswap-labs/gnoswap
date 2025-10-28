@@ -106,7 +106,7 @@ func (s *governanceStore) GetConfigs() *avl.Tree {
 	return configs
 }
 
-func (s *governanceStore) SetConfigs(configs interface{}) error {
+func (s *governanceStore) SetConfigs(configs *avl.Tree) error {
 	return s.kvStore.Set(StoreKeyConfigs.String(), configs)
 }
 
@@ -160,7 +160,7 @@ func (s *governanceStore) GetProposals() *avl.Tree {
 	return proposals
 }
 
-func (s *governanceStore) SetProposals(proposals interface{}) error {
+func (s *governanceStore) SetProposals(proposals *avl.Tree) error {
 	return s.kvStore.Set(StoreKeyProposals.String(), proposals)
 }
 
@@ -204,7 +204,7 @@ func (s *governanceStore) GetProposalUserVotingInfos() *avl.Tree {
 	return votingInfos
 }
 
-func (s *governanceStore) SetProposalUserVotingInfos(votingInfos interface{}) error {
+func (s *governanceStore) SetProposalUserVotingInfos(votingInfos *avl.Tree) error {
 	return s.kvStore.Set(StoreKeyProposalUserVotingInfos.String(), votingInfos)
 }
 
@@ -252,7 +252,7 @@ func (s *governanceStore) GetUserProposals() *avl.Tree {
 	return userProposals
 }
 
-func (s *governanceStore) SetUserProposals(userProposals interface{}) error {
+func (s *governanceStore) SetUserProposals(userProposals *avl.Tree) error {
 	return s.kvStore.Set(StoreKeyUserProposals.String(), userProposals)
 }
 

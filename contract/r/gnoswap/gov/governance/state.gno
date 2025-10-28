@@ -1,7 +1,6 @@
 package governance
 
 import (
-	"chain"
 	"chain/runtime"
 	"errors"
 

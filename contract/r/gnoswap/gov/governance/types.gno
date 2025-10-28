@@ -1,5 +1,9 @@
 package governance
 
+import (
+	"gno.land/p/nt/avl"
+)
+
 type IGovernance interface {
 	IGovernanceManager
 	IGovernanceApi
@@ -98,23 +102,23 @@ type IGovernanceStore interface {
 	HasConfigsStoreKey() bool
 	GetConfig(version int64) (Config, bool)
 	SetConfig(version int64, config Config) error
-	SetConfigs(configs interface{}) error
+	SetConfigs(configs *avl.Tree) error
 
 	// Proposal methods
 	HasProposalsStoreKey() bool
 	GetProposal(proposalID int64) (interface{}, bool)
 	SetProposal(proposalID int64, proposal interface{}) error
-	SetProposals(proposals interface{}) error
+	SetProposals(proposals *avl.Tree) error
 
 	// Proposal voting info methods
 	HasProposalUserVotingInfosStoreKey() bool
 	GetProposalVotingInfos(proposalID int64) (interface{}, bool)
 	SetProposalVotingInfos(proposalID int64, votingInfos interface{}) error
-	SetProposalUserVotingInfos(votingInfos interface{}) error
+	SetProposalUserVotingInfos(votingInfos *avl.Tree) error
 
 	// User proposals methods
 	HasUserProposalsStoreKey() bool
 	GetUserProposalIDs(user string) ([]int64, bool)
 	AddUserProposal(user string, proposalID int64) error
-	SetUserProposals(userProposals interface{}) error
+	SetUserProposals(userProposals *avl.Tree) error
 }

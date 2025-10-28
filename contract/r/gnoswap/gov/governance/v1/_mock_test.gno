@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"errors"
-
 	"gno.land/p/nt/avl"
 	"gno.land/r/gnoswap/gov/governance"
 )
@@ -77,12 +75,9 @@ func (m *mockGovernanceStore) SetConfig(version int64, config governance.Config)
 	return nil
 }
 
-func (m *mockGovernanceStore) SetConfigs(configs interface{}) error {
-	if tree, ok := configs.(*avl.Tree); ok {
-		m.configs = tree
-		return nil
-	}
-	return errors.New("invalid configs type")
+func (m *mockGovernanceStore) SetConfigs(configs *avl.Tree) error {
+	m.configs = configs
+	return nil
 }
 
 // Proposal methods
@@ -105,12 +100,9 @@ func (m *mockGovernanceStore) SetProposal(proposalID int64, proposal interface{}
 	return nil
 }
 
-func (m *mockGovernanceStore) SetProposals(proposals interface{}) error {
-	if tree, ok := proposals.(*avl.Tree); ok {
-		m.proposals = tree
-		return nil
-	}
-	return errors.New("invalid proposals type")
+func (m *mockGovernanceStore) SetProposals(proposals *avl.Tree) error {
+	m.proposals = proposals
+	return nil
 }
 
 // Proposal voting info methods
@@ -133,12 +125,9 @@ func (m *mockGovernanceStore) SetProposalVotingInfos(proposalID int64, votingInf
 	return nil
 }
 
-func (m *mockGovernanceStore) SetProposalUserVotingInfos(votingInfos interface{}) error {
-	if tree, ok := votingInfos.(*avl.Tree); ok {
-		m.proposalUserVotingInfos = tree
-		return nil
-	}
-	return errors.New("invalid voting infos type")
+func (m *mockGovernanceStore) SetProposalUserVotingInfos(votingInfos *avl.Tree) error {
+	m.proposalUserVotingInfos = votingInfos
+	return nil
 }
 
 // User proposals methods
@@ -171,12 +160,9 @@ func (m *mockGovernanceStore) AddUserProposal(user string, proposalID int64) err
 	return nil
 }
 
-func (m *mockGovernanceStore) SetUserProposals(userProposals interface{}) error {
-	if tree, ok := userProposals.(*avl.Tree); ok {
-		m.userProposals = tree
-		return nil
-	}
-	return errors.New("invalid user proposals type")
+func (m *mockGovernanceStore) SetUserProposals(userProposals *avl.Tree) error {
+	m.userProposals = userProposals
+	return nil
 }
 
 func newMockGovernance() *governanceV1 {
