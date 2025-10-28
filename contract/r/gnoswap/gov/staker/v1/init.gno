@@ -57,29 +57,6 @@ func initStoreData(store staker.IGovStakerStore) error {
 		}
 	}
 
-	if !store.HasDelegationsStoreKey() {
-		err := store.SetDelegation(0, &staker.Delegation{}) // Initialize with dummy to create the tree
-		if err != nil {
-			return err
-		}
-	}
-
-	// Initialize delegation history
-	if !store.HasDelegationHistoryStoreKey() {
-		err := store.AddDelegationRecord(&staker.DelegationRecord{}) // Initialize with dummy
-		if err != nil {
-			return err
-		}
-	}
-
-	// Initialize user delegations
-	if !store.HasUserDelegationsStoreKey() {
-		err := store.AddUserDelegation("", "", 0) // Initialize with dummy
-		if err != nil {
-			return err
-		}
-	}
-
 	// Initialize delegation snapshots
 	if !store.HasDelegationSnapshotsStoreKey() {
 		err := store.SetDelegationSnapshot(0, staker.DelegationSnapshot{})

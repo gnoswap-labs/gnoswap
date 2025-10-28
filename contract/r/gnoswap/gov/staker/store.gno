@@ -79,8 +79,7 @@ func (s *govStakerStore) HasEmissionRewardBalanceStoreKey() bool {
 func (s *govStakerStore) GetEmissionRewardBalance() (int64, error) {
 	result, err := s.kvStore.Get(StoreKeyEmissionRewardBalance)
 	if err != nil {
-		// Return 0 if not initialized
-		return 0, nil
+		panic("failed to get emission reward balance: " + err.Error())
 	}
 
 	balance, ok := result.(int64)
@@ -102,8 +101,7 @@ func (s *govStakerStore) HasTotalDelegatedAmountStoreKey() bool {
 func (s *govStakerStore) GetTotalDelegatedAmount() int64 {
 	result, err := s.kvStore.Get(StoreKeyTotalDelegatedAmount)
 	if err != nil {
-		// Return 0 if key doesn't exist (initial state)
-		return 0
+		panic("failed to get total delegated amount: " + err.Error())
 	}
 
 	amount, ok := result.(int64)
@@ -125,8 +123,7 @@ func (s *govStakerStore) HasTotalLockedAmountStoreKey() bool {
 func (s *govStakerStore) GetTotalLockedAmount() int64 {
 	result, err := s.kvStore.Get(StoreKeyTotalLockedAmount)
 	if err != nil {
-		// Return 0 if key doesn't exist (initial state)
-		return 0
+		panic("failed to get total locked amount: " + err.Error())
 	}
 
 	amount, ok := result.(int64)
@@ -220,8 +217,7 @@ func (s *govStakerStore) HasDelegationNextIDStoreKey() bool {
 func (s *govStakerStore) GetDelegationNextID() (int64, error) {
 	result, err := s.kvStore.Get(StoreKeyDelegationNextID)
 	if err != nil {
-		// Return 1 if not initialized (starting ID)
-		return 1, nil
+		panic("failed to get delegation next ID: " + err.Error())
 	}
 
 	nextID, ok := result.(int64)
