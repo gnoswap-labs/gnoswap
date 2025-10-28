@@ -50,7 +50,7 @@ func (s *stakerV1) MintAndStake(
 	deadline int64,
 	referrer string,
 ) (uint64, string, string, string, string) {
-	halt.AssertIsNotHaltedStakerWithVersion(1)
+	halt.AssertIsNotHaltedStaker()
 
 	// if one click native
 	if token0 == GNOT || token1 == GNOT {

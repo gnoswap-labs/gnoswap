@@ -52,10 +52,10 @@ func (s *stakerV1) GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64,
 // SetDepositGnsAmount sets the GNS deposit amount required for creating external incentives.
 // Only admin or governance can call this function.
 func (s *stakerV1) SetDepositGnsAmount(amount int64) {
-	halt.AssertIsNotHaltedStakerWithVersion(1)
+	halt.AssertIsNotHaltedStaker()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	assertIsValidAmount(amount)
 
@@ -75,10 +75,10 @@ func (s *stakerV1) SetDepositGnsAmount(amount int64) {
 // SetMinimumRewardAmount sets the default minimum reward amount for external incentives.
 // Only admin or governance can call this function.
 func (s *stakerV1) SetMinimumRewardAmount(amount int64) {
-	halt.AssertIsNotHaltedStakerWithVersion(1)
+	halt.AssertIsNotHaltedStaker()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	assertIsValidAmount(amount)
 
@@ -98,10 +98,10 @@ func (s *stakerV1) SetMinimumRewardAmount(amount int64) {
 // SetTokenMinimumRewardAmount sets the minimum reward amount for a specific token.
 // Only admin or governance can call this function.
 func (s *stakerV1) SetTokenMinimumRewardAmount(paramsStr string) {
-	halt.AssertIsNotHaltedStakerWithVersion(1)
+	halt.AssertIsNotHaltedStaker()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	assertIsValidRewardAmountFormat(paramsStr)
 

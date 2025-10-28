@@ -21,8 +21,8 @@ var defaultAllowed = []string{GNOT, GNS_PATH}
 //   - If the caller is not the admin
 func (s *stakerV1) AddToken(tokenPath string) {
 	caller := runtime.PreviousRealm().Address()
-	halt.AssertIsNotHaltedStakerWithVersion(1)
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	halt.AssertIsNotHaltedStaker()
+	access.AssertIsAdminOrGovernance(caller)
 
 	if err := modifyTokenList(s, tokenPath, addTokenValidator, addTokenExecutor); err != nil {
 		panic(err.Error())
@@ -49,8 +49,8 @@ func (s *stakerV1) AddToken(tokenPath string) {
 //   - If the caller is not the admin
 func (s *stakerV1) RemoveToken(tokenPath string) {
 	caller := runtime.PreviousRealm().Address()
-	halt.AssertIsNotHaltedStakerWithVersion(1)
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	halt.AssertIsNotHaltedStaker()
+	access.AssertIsAdminOrGovernance(caller)
 
 	if err := modifyTokenList(s, tokenPath, removeTokenValidator, removeTokenExecutor); err != nil {
 		panic(err.Error())

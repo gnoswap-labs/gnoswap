@@ -272,7 +272,7 @@ func (s *stakerV1) emissionCacheUpdateHook(emissionAmountPerSecond int64) {
 //
 // Note: Out-of-range positions earn no rewards but can be staked.
 func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
-	halt.AssertIsNotHaltedStakerWithVersion(1)
+	halt.AssertIsNotHaltedStaker()
 
 	assertIsNotStaked(s, positionId)
 
@@ -459,8 +459,8 @@ func transferDeposit(positionId uint64, owner, caller, to address) error {
 // Returns poolPath, gnsAmount, externalRewards map, externalPenalties map.
 func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, string, map[string]int64, map[string]int64) {
 	caller := runtime.PreviousRealm().Address()
-	halt.AssertIsNotHaltedStakerWithVersion(1)
-	halt.AssertIsNotHaltedWithdrawWithVersion(1)
+	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedWithdraw()
 
 	assertIsDepositor(s, caller, positionId)
 
@@ -669,8 +669,8 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 //   - Position must be currently staked
 func (s *stakerV1) UnStakeToken(positionId uint64, unwrapResult bool) string { // poolPath
 	caller := runtime.PreviousRealm().Address()
-	halt.AssertIsNotHaltedStakerWithVersion(1)
-	halt.AssertIsNotHaltedWithdrawWithVersion(1)
+	halt.AssertIsNotHaltedStaker()
+	halt.AssertIsNotHaltedWithdraw()
 	assertIsDepositor(s, caller, positionId)
 
 	deposit := s.getDeposits().get(positionId)

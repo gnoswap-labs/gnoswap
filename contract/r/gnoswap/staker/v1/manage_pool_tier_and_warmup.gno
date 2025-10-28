@@ -21,10 +21,10 @@ const (
 // SetPoolTier assigns a tier level to a pool for internal GNS emission rewards.
 // Only admin or governance can call this function.
 func (s *stakerV1) SetPoolTier(poolPath string, tier uint64) {
-	halt.AssertIsNotHaltedStakerWithVersion(1)
+	halt.AssertIsNotHaltedStaker()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	assertIsPoolExists(poolPath)
 	assertIsValidPoolTier(tier)
@@ -47,10 +47,10 @@ func (s *stakerV1) SetPoolTier(poolPath string, tier uint64) {
 // ChangePoolTier modifies the tier level of an existing pool.
 // Only admin or governance can call this function.
 func (s *stakerV1) ChangePoolTier(poolPath string, tier uint64) {
-	halt.AssertIsNotHaltedStakerWithVersion(1)
+	halt.AssertIsNotHaltedStaker()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	assertIsPoolExists(poolPath)
 	assertIsValidPoolTier(tier)
@@ -74,10 +74,10 @@ func (s *stakerV1) ChangePoolTier(poolPath string, tier uint64) {
 // RemovePoolTier removes a pool from internal GNS emission rewards.
 // Only admin or governance can call this function.
 func (s *stakerV1) RemovePoolTier(poolPath string) {
-	halt.AssertIsNotHaltedStakerWithVersion(1)
+	halt.AssertIsNotHaltedStaker()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	assertIsPoolExists(poolPath)
 
@@ -98,10 +98,10 @@ func (s *stakerV1) RemovePoolTier(poolPath string) {
 // SetWarmUp configures the warm-up percentage and duration for rewards.
 // Only admin or governance can call this function.
 func (s *stakerV1) SetWarmUp(pct, timeDuration int64) {
-	halt.AssertIsNotHaltedStakerWithVersion(1)
+	halt.AssertIsNotHaltedStaker()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	s.setWarmUp(pct, timeDuration)
 
