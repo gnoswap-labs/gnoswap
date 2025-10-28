@@ -316,16 +316,16 @@ func (gv *governanceV1) ProposeParameterChange(
 // createProposal handles proposal creation logic.
 // Validates input data, checks proposer eligibility, and creates proposal object.
 func (gv *governanceV1) createProposal(
-	proposalType ProposalType,
+	proposalType governance.ProposalType,
 	config governance.Config,
 	maxVotingWeight int64,
-	proposalMetadata *ProposalMetadata,
-	proposalData *ProposalData,
+	proposalMetadata *governance.ProposalMetadata,
+	proposalData *governance.ProposalData,
 	proposerAddress address,
 	proposerGnsBalance int64,
 	createdAt int64,
 	createdHeight int64,
-) (*Proposal, error) {
+) (*governance.Proposal, error) {
 	// Validate proposal metadata (title and description)
 	err := proposalMetadata.Validate()
 	if err != nil {
@@ -347,7 +347,7 @@ func (gv *governanceV1) createProposal(
 	proposalID := gv.nextProposalID()
 
 	// Create proposal status with voting schedule and requirements
-	proposalStatus := NewProposalStatus(
+	proposalStatus := governance.NewProposalStatus(
 		config,
 		maxVotingWeight,
 		proposalType.IsExecutable(),
@@ -358,7 +358,7 @@ func (gv *governanceV1) createProposal(
 	configVersion := gv.getCurrentConfigVersion()
 
 	// Create the proposal object
-	proposal := NewProposal(
+	proposal := governance.NewProposal(
 		proposalID,
 		proposalStatus,
 		proposalMetadata,

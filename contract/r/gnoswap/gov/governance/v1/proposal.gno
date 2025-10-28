@@ -1,239 +1,145 @@
 package v1
 
-// Proposal represents a governance proposal with all its associated data and state.
-// This is the core structure that tracks proposal lifecycle from creation to execution.
-type Proposal struct {
-	id            int64             // Unique identifier for the proposal
-	proposer      address           // The address of the proposer
-	configVersion int64             // The version of the governance config used
-	status        *ProposalStatus   // Current status and voting information
-	metadata      *ProposalMetadata // Title and description
-	data          *ProposalData     // Type-specific proposal data
-	createdAt     int64             // Creation timestamp
-	createdHeight int64             // Block height at creation
+import (
+	"gno.land/r/gnoswap/gov/governance"
+)
+
+type ProposalResolver struct {
+	statusResolver *ProposalStatusResolver
+	dataResolver *ProposalDataResolver
+	metadataResolver *ProposalMetadataResolver
 }
 
-// ID returns the unique identifier of the proposal.
-func (p *Proposal) ID() int64 {
-	return p.id
-}
-
-// Type returns the type of this proposal.
-func (p *Proposal) Type() ProposalType {
-	return p.data.ProposalType()
-}
-
-// IsTextType checks if this is a text proposal.
-func (p *Proposal) IsTextType() bool {
-	return p.Type() == Text
-}
-
-// IsCommunityPoolSpendType checks if this is a community pool spend proposal.
-func (p *Proposal) IsCommunityPoolSpendType() bool {
-	return p.Type() == CommunityPoolSpend
-}
-
-// IsParameterChangeType checks if this is a parameter change proposal.
-func (p *Proposal) IsParameterChangeType() bool {
-	return p.Type() == ParameterChange
-}
-
-// Status returns the current status string of the proposal at the given time.
-func (p *Proposal) Status(current int64) string {
-	return p.status.StatusType(current).String()
-}
-
-// StatusType returns the current status type of the proposal at the given time.
-func (p *Proposal) StatusType(current int64) ProposalStatusType {
-	return p.status.StatusType(current)
+func NewProposalResolver(
+	statusResolver *ProposalStatusResolver,
+	dataResolver *ProposalDataResolver,
+	metadataResolver *ProposalMetadataResolver,
+) *ProposalResolver {
+	return &ProposalResolver{
+		statusResolver: statusResolver,
+		dataResolver: dataResolver,
+		metadataResolver: metadataResolver,
+	}
 }
 
 // IsActive determines if the proposal is currently active (can be voted on or executed).
 // A proposal is considered active if it's not rejected, expired, executed, or canceled.
-func (p *Proposal) IsActive(current int64) bool {
+func (r *ProposalResolver) IsActive(proposal *governance.Proposal, current int64) bool {
 	// Text proposals become inactive once they pass (no execution needed)
-	if p.IsTextType() {
-		if p.status.IsPassed(current) {
+	if proposal.IsTextType() {
+		if r.statusResolver.IsPassed(current) {
 			return false
 		}
 	}
 
 	// If the proposal is rejected, expired, executed, or canceled, it is not active
-	if p.status.IsRejected(current) ||
-		p.status.IsExpired(current) ||
-		p.status.IsExecuted(current) ||
-		p.status.IsCanceled(current) {
+	if r.statusResolver.IsRejected(current) ||
+		r.statusResolver.IsExpired(current) ||
+		r.statusResolver.IsExecuted(current) ||
+		r.statusResolver.IsCanceled(current) {
 		return false
 	}
 
 	return true
 }
 
-// IsVotingPeriod checks if the proposal is currently in its voting period.
-func (p *Proposal) IsVotingPeriod(votedAt int64) bool {
-	return p.StatusType(votedAt) == StatusActive
-}
-
-// IsExecutable determines if the proposal can be executed at the given time.
-// Only executable proposal types that have passed voting can be executed.
-func (p *Proposal) IsExecutable(current int64) bool {
-	// Only certain proposal types can be executed
-	if !p.Type().IsExecutable() {
-		return false
-	}
-
-	return p.status.IsExecutable(current)
-}
-
 // Validate performs comprehensive validation of the proposal data and metadata.
 // This ensures all proposal components meet requirements before storage.
-func (p *Proposal) Validate() error {
+func (r *ProposalResolver) Validate(proposal *governance.Proposal) error {
 	// Validate type-specific proposal data
-	if err := p.data.Validate(); err != nil {
+	if err := r.dataResolver.Validate(proposal.Data()); err != nil {
 		return err
 	}
 
 	// Validate proposal metadata (title and description)
-	if err := p.metadata.Validate(); err != nil {
+	if err := r.metadataResolver.Validate(proposal.Metadata()); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// Title returns the proposal title.
-func (p *Proposal) Title() string {
-	return p.metadata.Title()
+// Status returns the current status string of the proposal at the given time.
+func (r *ProposalResolver) Status(current int64) string {
+	return r.statusResolver.StatusType(current).String()
 }
 
-// Description returns the proposal description.
-func (p *Proposal) Description() string {
-	return p.metadata.Description()
+// StatusType returns the current status type of the proposal at the given time.
+func (r *ProposalResolver) StatusType(current int64) governance.ProposalStatusType {
+	return r.statusResolver.StatusType(current)
 }
 
-// ConfigVersion returns the governance configuration version used for this proposal.
-func (p *Proposal) ConfigVersion() int64 {
-	return p.configVersion
+// IsVotingPeriod checks if the proposal is currently in its voting period.
+func (r *ProposalResolver) IsVotingPeriod(votedAt int64) bool {
+	return r.StatusType(votedAt) == governance.StatusActive
 }
 
-// IsProposer checks if the given address is the proposer of this proposal.
-func (p *Proposal) IsProposer(addr address) bool {
-	return p.proposer == addr
-}
+// IsExecutable determines if the proposal can be executed at the given time.
+// Only executable proposal types that have passed voting can be executed.
+func (r *ProposalResolver) IsExecutable(proposal *governance.Proposal, current int64) bool {
+	// Only certain proposal types can be executed
+	if !proposal.Type().IsExecutable() {
+		return false
+	}
 
-// Proposer returns the address of the proposal creator.
-func (p *Proposal) Proposer() address {
-	return p.proposer
-}
-
-// CreatedAt returns the creation timestamp of the proposal.
-func (p *Proposal) CreatedAt() int64 {
-	return p.status.schedule.createTime
-}
-
-// VotingYesWeight returns the total weight of "yes" votes.
-func (p *Proposal) VotingYesWeight() int64 {
-	return p.status.voteStatus.yea
-}
-
-// VotingNoWeight returns the total weight of "no" votes.
-func (p *Proposal) VotingNoWeight() int64 {
-	return p.status.voteStatus.nay
-}
-
-// VotingTotalWeight returns total weight of all votes cast.
-func (p *Proposal) VotingTotalWeight() int64 {
-	return p.status.voteStatus.TotalVoteWeight()
-}
-
-// VotingQuorumAmount returns minimum vote weight required for proposal to pass.
-func (p *Proposal) VotingQuorumAmount() int64 {
-	return p.status.voteStatus.quorumAmount
-}
-
-// VotingMaxWeight returns maximum possible voting weight for this proposal.
-func (p *Proposal) VotingMaxWeight() int64 {
-	return p.status.voteStatus.maxVotingWeight
+	return r.statusResolver.IsExecutable(current)
 }
 
 // CommunityPoolSpendTokenPath returns the token path for community pool spend proposals.
 // Returns empty string for other proposal types.
-func (p *Proposal) CommunityPoolSpendTokenPath() string {
-	if p.data == nil {
+func (r *ProposalResolver) CommunityPoolSpendTokenPath(proposal *governance.Proposal) string {
+	if proposal.Data() == nil {
 		return ""
 	}
 
-	return p.data.communityPoolSpend.tokenPath
+	return proposal.Data().CommunityPoolSpend().TokenPath()
 }
 
 // vote records a vote for this proposal and updates vote tallies.
 // This is an internal method called during voting process.
-func (p *Proposal) vote(votedYes bool, weight int64) error {
-	return p.status.vote(votedYes, weight)
+func (r *ProposalResolver) vote(votedYes bool, weight int64) error {
+	return r.statusResolver.vote(votedYes, weight)
 }
 
 // updateVoteStatus updates the voting status with new parameters.
 // This is used for dynamic voting requirement adjustments.
-func (p *Proposal) updateVoteStatus(maxVotingWeight, quorum int64) error {
-	return p.status.updateVoteStatus(maxVotingWeight, quorum)
+func (r *ProposalResolver) updateVoteStatus(maxVotingWeight, quorum int64) error {
+	return r.statusResolver.updateVoteStatus(maxVotingWeight, quorum)
 }
 
 // execute marks the proposal as executed and records execution details.
 // This method validates execution conditions before proceeding.
-func (p *Proposal) execute(executedAt int64, executedHeight int64, executedBy address) error {
+func (r *ProposalResolver) execute(
+	proposal *governance.Proposal,
+	executedAt int64,
+	executedHeight int64,
+	executedBy address,
+) error {
 	// Verify proposal is in executable state
-	if !p.IsExecutable(executedAt) {
+	if !r.IsExecutable(proposal, executedAt) {
 		return errProposalNotExecutable
 	}
 
 	// Mark proposal as executed
-	return p.status.execute(executedAt, executedHeight, executedBy)
+	return r.statusResolver.execute(executedAt, executedHeight, executedBy)
 }
 
 // cancel marks the proposal as canceled and records cancellation details.
 // This method validates cancellation conditions before proceeding.
-func (p *Proposal) cancel(canceledAt int64, canceledHeight int64, canceledBy address) error {
-	if p.status.IsCanceled(canceledAt) {
+func (r *ProposalResolver) cancel(
+	proposal *governance.Proposal,
+	canceledAt int64,
+	canceledHeight int64,
+	canceledBy address,
+) error {
+	if r.statusResolver.IsCanceled(canceledAt) {
 		return errAlreadyCanceledProposal
 	}
 
-	if !p.status.IsUpcoming(canceledAt) {
+	if !r.statusResolver.IsUpcoming(canceledAt) {
 		return errUnableToCancleVotingProposal
 	}
 
 	// Mark proposal as canceled
-	return p.status.cancel(canceledAt, canceledHeight, canceledBy)
-}
-
-// NewProposal creates a new proposal instance with the provided parameters.
-// NewProposal is the main constructor for creating governance proposals.
-//   - metadata: proposal title and description
-//   - data: type-specific proposal data
-//   - proposerAddress: address of the proposal creator
-//   - configVersion: governance configuration version
-//   - createdAt: creation timestamp
-//   - createdHeight: creation block height
-//
-// Returns:
-//   - *Proposal: newly created proposal instance
-func NewProposal(
-	proposalID int64,
-	status *ProposalStatus,
-	metadata *ProposalMetadata,
-	data *ProposalData,
-	proposerAddress address,
-	configVersion int64,
-	createdAt int64,
-	createdHeight int64,
-) *Proposal {
-	return &Proposal{
-		id:            proposalID,
-		proposer:      proposerAddress,
-		status:        status,
-		metadata:      metadata,
-		data:          data,
-		configVersion: configVersion,
-		createdAt:     createdAt,
-		createdHeight: createdHeight,
-	}
+	return r.statusResolver.cancel(canceledAt, canceledHeight, canceledBy)
 }

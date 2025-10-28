@@ -20,46 +20,46 @@ func NewProposalStatusResolver(status *governance.ProposalStatus) *ProposalStatu
 //
 // Returns:
 //   - ProposalStatusType: current status of the proposal
-func (p *ProposalStatusResolver) StatusType(current int64) ProposalStatusType {
+func (p *ProposalStatusResolver) StatusType(current int64) governance.ProposalStatusType {
 	actionStatus := p.ActionStatus()
 
 	// Check action-based statuses first (these override time-based statuses)
 	if actionStatus.IsExecuted() {
-		return StatusExecuted
+		return governance.StatusExecuted
 	}
 
 	if actionStatus.IsCanceled() {
-		return StatusCanceled
+		return governance.StatusCanceled
 	}
 
 	schedule := p.Schedule()
 
 	// Check time-based statuses
 	if !schedule.IsPassedActiveAt(current) {
-		return StatusUpcoming
+		return governance.StatusUpcoming
 	}
 
 	if !schedule.IsPassedVotingEndedAt(current) {
-		return StatusActive
+		return governance.StatusActive
 	}
 
 	voteStatus := p.VoteStatus()
 
 	// Check voting outcome
 	if voteStatus.IsRejected() {
-		return StatusRejected
+		return governance.StatusRejected
 	}
 
 	// For passed proposals, check execution status
 	if !actionStatus.IsExecutable() || !schedule.IsPassedExecutableAt(current) {
-		return StatusPassed
+		return governance.StatusPassed
 	}
 
 	if !schedule.IsPassedExpiredAt(current) {
-		return StatusExecutable
+		return governance.StatusExecutable
 	}
 
-	return StatusExpired
+	return governance.StatusExpired
 }
 
 // IsUpcoming checks if the proposal is in upcoming status.

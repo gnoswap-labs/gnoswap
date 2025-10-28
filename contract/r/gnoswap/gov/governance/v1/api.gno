@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"gno.land/p/onbloc/json"
+
+	"gno.land/r/gnoswap/gov/governance"
 )
 
 // GetProposalById returns a single proposal with necessary information.
@@ -67,11 +69,11 @@ func (gv *governanceV1) getProposalExtraData(proposalId int64) string {
 	proposal := gv.mustGetProposal(proposalId)
 
 	switch proposal.Type() {
-	case Text:
+	case governance.Text:
 		return ""
-	case CommunityPoolSpend:
+	case governance.CommunityPoolSpend:
 		return gv.getCommunityPoolSpendProposalData(proposalId)
-	case ParameterChange:
+	case governance.ParameterChange:
 		return gv.getParameterChangeProposalData(proposalId)
 	}
 
@@ -81,12 +83,12 @@ func (gv *governanceV1) getProposalExtraData(proposalId int64) string {
 // getCommunityPoolSpendProposalData returns community pool spending proposal data including recipient address, token path, and amount.
 func (gv *governanceV1) getCommunityPoolSpendProposalData(proposalId int64) string {
 	proposal := gv.mustGetProposal(proposalId)
-	spend := proposal.data.CommunityPoolSpend()
+	spend := proposal.Data().CommunityPoolSpend()
 
 	proposalObj := json.Builder().
-		WriteString("to", spend.to.String()).
-		WriteString("tokenPath", spend.tokenPath).
-		WriteString("amount", formatInt(spend.amount)).
+		WriteString("to", spend.To().String()).
+		WriteString("tokenPath", spend.TokenPath()).
+		WriteString("amount", formatInt(spend.Amount())).
 		Node()
 
 	return marshal(proposalObj)
@@ -96,7 +98,7 @@ func (gv *governanceV1) getCommunityPoolSpendProposalData(proposalId int64) stri
 func (gv *governanceV1) getParameterChangeProposalData(proposalId int64) string {
 	proposal := gv.mustGetProposal(proposalId)
 
-	msgs := proposal.data.Execution().msgs
+	msgs := proposal.Data().Execution().Msgs()
 	msgsStr := strings.Join(msgs, "*GOV*")
 
 	return msgsStr
@@ -109,28 +111,28 @@ func (gv *governanceV1) getProposalStatus(id int64) string {
 	// Get current status dynamically
 	status := proposal.Status(time.Now().Unix())
 
-	schedule := proposal.status.schedule
+	schedule := proposal.Status().Schedule()
 	// Create status node with schedule and current status
 	node := json.Builder().
 		WriteString("status", status).
-		WriteString("createTime", formatInt(schedule.createTime)).
-		WriteString("activeTime", formatInt(schedule.activeTime)).
-		WriteString("votingEndTime", formatInt(schedule.votingEndTime)).
-		WriteString("executableTime", formatInt(schedule.executableTime)).
-		WriteString("expiredTime", formatInt(schedule.expiredTime))
+		WriteString("createTime", formatInt(schedule.CreateTime())).
+		WriteString("activeTime", formatInt(schedule.ActiveTime())).
+		WriteString("votingEndTime", formatInt(schedule.VotingEndTime())).
+		WriteString("executableTime", formatInt(schedule.ExecutableTime())).
+		WriteString("expiredTime", formatInt(schedule.ExpiredTime()))
 
 	// Add action state if applicable
-	if proposal.status.IsCanceled(time.Now().Unix()) {
+	if proposal.Status().IsCanceled(time.Now().Unix()) {
 		node.
 			WriteString("canceled", formatBool(true)).
-			WriteString("canceledAt", formatInt(proposal.status.actionStatus.canceledAt)).
-			WriteString("canceledBy", proposal.status.actionStatus.canceledBy.String())
+			WriteString("canceledAt", formatInt(proposal.Status().ActionStatus().CanceledAt())).
+			WriteString("canceledBy", proposal.Status().ActionStatus().CanceledBy().String())
 	}
-	if proposal.status.IsExecuted(time.Now().Unix()) {
+	if proposal.Status().IsExecuted(time.Now().Unix()) {
 		node.
 			WriteString("executed", formatBool(true)).
-			WriteString("executedAt", formatInt(proposal.status.actionStatus.executedAt)).
-			WriteString("executedBy", proposal.status.actionStatus.executedBy.String())
+			WriteString("executedAt", formatInt(proposal.Status().ActionStatus().ExecutedAt())).
+			WriteString("executedBy", proposal.Status().ActionStatus().ExecutedBy().String())
 	}
 
 	return marshal(node.Node())
@@ -142,23 +144,23 @@ func (gv *governanceV1) getProposalVotes(id int64) string {
 	if !exist {
 		return ""
 	}
-	voting := proposal.status.voteStatus
-	maxVoting := formatInt(voting.maxVotingWeight)
+	voting := proposal.Status().VoteStatus()
+	maxVoting := formatInt(voting.MaxVotingWeight())
 
 	proposalObj := json.Builder().
-		WriteString("quorum", formatInt(voting.quorumAmount)).
+		WriteString("quorum", formatInt(voting.QuorumAmount())).
 		WriteString("max", maxVoting).
-		WriteString("yes", formatInt(voting.yea)).
-		WriteString("no", formatInt(voting.nay)).
+		WriteString("yes", formatInt(voting.YesWeight())).
+		WriteString("no", formatInt(voting.NoWeight())).
 		Node()
 
 	return marshal(proposalObj)
 }
 
-func (gv *governanceV1) createProposalJsonNode(id int64, proposal *Proposal) *json.Node {
+func (gv *governanceV1) createProposalJsonNode(id int64, proposal *governance.Proposal) *json.Node {
 	return json.Builder().
 		WriteString("id", formatInt(id)).
-		WriteString("configVersion", formatInt(proposal.ConfigVersion)).
+		WriteString("configVersion", formatInt(proposal.ConfigVersion())).
 		WriteString("proposer", proposal.Proposer().String()).
 		WriteString("status", b64Encode(gv.getProposalStatus(id))).
 		WriteString("type", proposal.Type().String()).

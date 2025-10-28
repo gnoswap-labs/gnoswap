@@ -71,13 +71,13 @@ func (g *governanceV1) getCurrentConfig() (governance.Config, bool) {
 }
 
 // Proposal methods
-func (g *governanceV1) getProposal(id int64) (*Proposal, bool) {
+func (g *governanceV1) getProposal(id int64) (*governance.Proposal, bool) {
 	proposalRaw, exists := g.store.GetProposal(id)
 	if !exists {
 		return nil, false
 	}
 
-	proposal, ok := proposalRaw.(*Proposal)
+	proposal, ok := proposalRaw.(*governance.Proposal)
 	if !ok {
 		return nil, false
 	}
@@ -85,7 +85,7 @@ func (g *governanceV1) getProposal(id int64) (*Proposal, bool) {
 	return proposal, true
 }
 
-func (g *governanceV1) addProposal(proposal *Proposal) bool {
+func (g *governanceV1) addProposal(proposal *governance.Proposal) bool {
 	// Set the proposal (ID already set in proposal)
 	err := g.store.SetProposal(proposal.ID(), proposal)
 	if err != nil {
@@ -123,7 +123,7 @@ func (g *governanceV1) hasActiveProposal(proposerAddress address, current int64)
 
 	// Check if any proposal is still active
 	for _, proposalRaw := range proposals {
-		if proposal, ok := proposalRaw.(*Proposal); ok {
+		if proposal, ok := proposalRaw.(*governance.Proposal); ok {
 			if proposal.IsActive(current) {
 				return true
 			}
@@ -138,7 +138,7 @@ func (g *governanceV1) getProposalUserVotingInfos(proposalID int64) (interface{}
 	return g.store.GetProposalVotingInfos(proposalID)
 }
 
-func (g *governanceV1) updateProposalUserVotes(proposal *Proposal, userVotingInfos map[string]*VotingInfo) bool {
+func (g *governanceV1) updateProposalUserVotes(proposal *governance.Proposal, userVotingInfos map[string]*VotingInfo) bool {
 	// Convert map to avl.Tree for storage
 	tree := avl.NewTree()
 	for addr, info := range userVotingInfos {
@@ -150,7 +150,7 @@ func (g *governanceV1) updateProposalUserVotes(proposal *Proposal, userVotingInf
 }
 
 // Helper methods for API
-func (g *governanceV1) mustGetProposal(id int64) *Proposal {
+func (g *governanceV1) mustGetProposal(id int64) *governance.Proposal {
 	proposal, exists := g.getProposal(id)
 	if !exists {
 		detail := ufmt.Sprintf("proposal(%d) not found", id)
@@ -176,7 +176,7 @@ func (g *governanceV1) getProposalUserVotingInfo(proposalID int64, addr address)
 		return nil, false
 	}
 
-	info, ok := infoRaw.(*VotingInfo)
+	info, ok := infoRaw.(*governance.VotingInfo)
 	if !ok {
 		return nil, false
 	}

@@ -80,7 +80,7 @@ func (gv *governanceV1) executeProposal(
 	executedAt int64,
 	executedHeight int64,
 	executedBy address,
-) (*Proposal, error) {
+) (*governance.Proposal, error) {
 	// Retrieve the proposal from storage
 	proposal, ok := gv.getProposal(proposalID)
 	if !ok {
@@ -184,7 +184,7 @@ func (gv *governanceV1) Cancel(proposalID int64) int64 {
 func (gv *governanceV1) cancel(
 	proposalID, canceledAt, canceledHeight int64,
 	canceledBy address,
-) (proposal *Proposal, err error) {
+) (proposal *governance.Proposal, err error) {
 	// Retrieve the proposal from storage
 	proposal, ok := gv.getProposal(proposalID)
 	if !ok {
@@ -203,7 +203,7 @@ func (gv *governanceV1) cancel(
 // executeCommunityPoolSpend executes community pool spending proposals.
 // Handles token transfers from community pool to specified recipients.
 func executeCommunityPoolSpend(
-	proposal *Proposal,
+	proposal *governance.Proposal,
 	parameterRegistry *governance.ParameterRegistry,
 	executedAt int64,
 	executedHeight int64,
@@ -211,11 +211,11 @@ func executeCommunityPoolSpend(
 ) error {
 	// Verify token registration for community pool spending
 	if proposal.IsCommunityPoolSpendType() {
-		common.MustRegistered(proposal.CommunityPoolSpendTokenPath())
+		common.MustRegistered(proposal.Data().CommunityPoolSpend().TokenPath())
 	}
 
 	// Execute all parameter changes defined in the proposal
-	parameterChangesInfos := proposal.data.execution.ParameterChangesInfos()
+	parameterChangesInfos := proposal.Data().Execution().ParameterChangesInfos()
 	for _, parameterChangeInfo := range parameterChangesInfos {
 		// Get the appropriate handler for this parameter change
 		key := governance.MakeHandlerKey(parameterChangeInfo.pkgPath, parameterChangeInfo.function)
@@ -237,14 +237,14 @@ func executeCommunityPoolSpend(
 // executeParameterChange executes parameter change proposals.
 // Handles governance configuration updates and system parameter modifications.
 func executeParameterChange(
-	proposal *Proposal,
+	proposal *governance.Proposal,
 	parameterRegistry *governance.ParameterRegistry,
 	executedAt int64,
 	executedHeight int64,
 	executedBy address,
 ) error {
 	// Execute all parameter changes defined in the proposal
-	parameterChangesInfos := proposal.data.execution.ParameterChangesInfos()
+	parameterChangesInfos := proposal.Data().Execution().ParameterChangesInfos()
 	for _, parameterChangeInfo := range parameterChangesInfos {
 		// Get the appropriate handler for this parameter change
 		key := governance.MakeHandlerKey(parameterChangeInfo.pkgPath, parameterChangeInfo.function)

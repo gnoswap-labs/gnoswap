@@ -212,7 +212,7 @@ func (r *ProposalDataResolver) validateParameterChange(data *governance.Proposal
 //
 // Returns:
 //   - []ParameterChangeInfo: slice of parsed parameter change information
-func (r *ProposalDataResolver) ParameterChangesInfos(execution *governance.ExecutionInfo) []ParameterChangeInfo {
+func (r *ProposalDataResolver) ParameterChangesInfos(execution *governance.ExecutionInfo) []governance.ParameterChangeInfo {
 	infos := make([]governance.ParameterChangeInfo, 0)
 
 	// Return empty slice if no executions
@@ -230,10 +230,10 @@ func (r *ProposalDataResolver) ParameterChangesInfos(execution *governance.Execu
 
 		pkgPath := params[0]
 		function := params[1]
-		params := strings.Split(params[2], ",")
+		param := strings.Split(params[2], ",")
 
 		// Create parameter change info structure
-		info := governance.NewParameterChangeInfo(pkgPath, function, params)
+		info := governance.NewParameterChangeInfo(pkgPath, function, param)
 		infos = append(infos, info)
 	}
 
@@ -293,14 +293,14 @@ func NewProposalCommunityPoolSpendData(
 //
 // Returns:
 //   - *ProposalData: proposal data configured for parameter changes
-func NewProposalExecutionData(numToExecute int64, executions string) *ProposalData {
+func NewProposalExecutionData(numToExecute int64, executions string) *governance.ProposalData {
 	// Split execution string into individual messages
 	msgs := strings.Split(executions, messageSeparator)
 
-	return NewProposalData(
-		ParameterChange,
-		CommunityPoolSpendInfo{},
-		ExecutionInfo{numToExecute, msgs},
+	return governance.NewProposalData(
+		governance.ParameterChange,
+		governance.NewCommunityPoolSpendInfo(address(""), "", 0),
+		governance.NewExecutionInfo(numToExecute, msgs),
 	)
 }
 
