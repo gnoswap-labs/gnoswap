@@ -209,7 +209,7 @@ func TestGovernancePropose_ProposeText(t *testing.T) {
 			uassert.Equal(t, tt.title, proposal.Title())
 			uassert.Equal(t, tt.description, proposal.Description())
 			uassert.Equal(t, tt.callerAddress, proposal.Proposer())
-			uassert.Equal(t, Text.String(), proposal.Type().String())
+			uassert.Equal(t, governance.Text.String(), proposal.Type().String())
 		})
 	}
 }
@@ -376,10 +376,10 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 
 			proposal, ok := gov.getProposal(proposalId)
 			uassert.Equal(t, true, ok)
-			uassert.Equal(t, CommunityPoolSpend.String(), proposal.Type().String())
-			uassert.Equal(t, tt.amount, proposal.data.communityPoolSpend.amount)
-			uassert.Equal(t, tt.to, proposal.data.communityPoolSpend.to)
-			uassert.Equal(t, tt.tokenPath, proposal.CommunityPoolSpendTokenPath())
+			uassert.Equal(t, governance.CommunityPoolSpend.String(), proposal.Type().String())
+			uassert.Equal(t, tt.amount, proposal.Data().CommunityPoolSpend().Amount())
+			uassert.Equal(t, tt.to, proposal.Data().CommunityPoolSpend().To())
+			uassert.Equal(t, tt.tokenPath, proposal.Data().CommunityPoolSpend().TokenPath())
 		})
 	}
 }
@@ -517,9 +517,9 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 
 			proposal, ok := gov.getProposal(proposalId)
 			uassert.Equal(t, true, ok)
-			uassert.Equal(t, ParameterChange.String(), proposal.Type().String())
-			uassert.Equal(t, tt.numToExecute, proposal.data.execution.num)
-			uassert.Equal(t, tt.executions, strings.Join(proposal.data.execution.msgs, "*GOV*"))
+			uassert.Equal(t, governance.ParameterChange.String(), proposal.Type().String())
+			uassert.Equal(t, tt.numToExecute, proposal.Data().Execution().Num())
+			uassert.Equal(t, tt.executions, strings.Join(proposal.Data().Execution().Msgs(), "*GOV*"))
 		})
 	}
 }
@@ -638,18 +638,18 @@ func TestGovernancePropose_ProposeTextInputValidation(t *testing.T) {
 func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 	tests := []struct {
 		name                string
-		setupActiveProposal func() *Proposal
+		setupActiveProposal func() *governance.Proposal
 		expectedError       string
 		shouldFail          bool
 		description         string
 	}{
 		{
 			name: "fail - upcoming proposal exists",
-			setupActiveProposal: func() *Proposal {
-				return NewProposal(
+			setupActiveProposal: func() *governance.Proposal {
+				return governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
-					NewProposalMetadata("Active", "Description"),
+					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					governance.NewProposalMetadata("Active", "Description"),
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
 					1,
@@ -663,11 +663,11 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 		},
 		{
 			name: "fail - active proposal exists",
-			setupActiveProposal: func() *Proposal {
-				return NewProposal(
+			setupActiveProposal: func() *governance.Proposal {
+				return governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*25).Unix()),
-					NewProposalMetadata("Active", "Description"),
+					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*25).Unix()),
+					governance.NewProposalMetadata("Active", "Description"),
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
 					1,
@@ -681,11 +681,11 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 		},
 		{
 			name: "fail - passed proposal exists",
-			setupActiveProposal: func() *Proposal {
-				proposal := NewProposal(
+			setupActiveProposal: func() *governance.Proposal {
+				proposal := governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*10).Unix()),
-					NewProposalMetadata("Passed", "Description"),
+					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*10).Unix()),
+					governance.NewProposalMetadata("Passed", "Description"),
 					NewProposalExecutionData(1, "test*EXE*func*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
@@ -701,11 +701,11 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 		},
 		{
 			name: "fail - executable proposal exists",
-			setupActiveProposal: func() *Proposal {
-				proposal := NewProposal(
+			setupActiveProposal: func() *governance.Proposal {
+				proposal := governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*12).Unix()),
-					NewProposalMetadata("Executable", "Description"),
+					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*12).Unix()),
+					governance.NewProposalMetadata("Executable", "Description"),
 					NewProposalExecutionData(1, "test*EXE*func*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
@@ -721,11 +721,11 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 		},
 		{
 			name: "success - executed proposal exists",
-			setupActiveProposal: func() *Proposal {
-				proposal := NewProposal(
+			setupActiveProposal: func() *governance.Proposal {
+				proposal := governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*20).Unix()),
-					NewProposalMetadata("Executed", "Description"),
+					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*20).Unix()),
+					governance.NewProposalMetadata("Executed", "Description"),
 					NewProposalExecutionData(1, "test*EXE*func*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
@@ -741,11 +741,11 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 		},
 		{
 			name: "success - canceled proposal exists",
-			setupActiveProposal: func() *Proposal {
-				proposal := NewProposal(
+			setupActiveProposal: func() *governance.Proposal {
+				proposal := governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
-					NewProposalMetadata("Canceled", "Description"),
+					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					governance.NewProposalMetadata("Canceled", "Description"),
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
 					1,
@@ -760,11 +760,11 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 		},
 		{
 			name: "success - expired proposal exists",
-			setupActiveProposal: func() *Proposal {
-				return NewProposal(
+			setupActiveProposal: func() *governance.Proposal {
+				return governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*40).Unix()),
-					NewProposalMetadata("Expired", "Description"),
+					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*40).Unix()),
+					governance.NewProposalMetadata("Expired", "Description"),
 					NewProposalExecutionData(1, "test*EXE*func*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
@@ -777,11 +777,11 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 		},
 		{
 			name: "success - rejected proposal exists",
-			setupActiveProposal: func() *Proposal {
-				proposal := NewProposal(
+			setupActiveProposal: func() *governance.Proposal {
+				proposal := governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*10).Unix()),
-					NewProposalMetadata("Rejected", "Description"),
+					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*10).Unix()),
+					governance.NewProposalMetadata("Rejected", "Description"),
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
 					1,
@@ -941,7 +941,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 
 				proposal, ok := gov.getProposal(proposalId)
 				uassert.Equal(t, true, ok)
-				uassert.Equal(t, CommunityPoolSpend.String(), proposal.Type().String())
+				uassert.Equal(t, governance.CommunityPoolSpend.String(), proposal.Type().String())
 			}
 		})
 	}
@@ -1173,15 +1173,15 @@ func setupTestActiveProposal(t *testing.T, gov *governanceV1, proposerAddress ad
 	// Create an active proposal for the proposer
 	config, _ := gov.getCurrentConfig()
 
-	proposal := NewProposal(
+	proposal := governance.NewProposal(
 		gov.nextProposalID(),
-		NewProposalStatus(
+		governance.NewProposalStatus(
 			config,
 			1_000_000_000,
 			false,
 			time.Now().Unix(),
 		),
-		NewProposalMetadata("Active Proposal", "Description"),
+		governance.NewProposalMetadata("Active Proposal", "Description"),
 		NewProposalTextData(),
 		proposerAddress,
 		gov.getCurrentConfigVersion(),

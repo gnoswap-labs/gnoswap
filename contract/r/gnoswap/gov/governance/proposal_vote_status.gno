@@ -9,6 +9,10 @@ type ProposalVoteStatus struct {
 	quorumAmount    int64 // How many total votes must be collected for the proposal to be valid
 }
 
+/* Getter methods */
+func (p *ProposalVoteStatus) MaxVotingWeight() int64 { return p.maxVotingWeight }
+func (p *ProposalVoteStatus) QuorumAmount() int64 { return p.quorumAmount }
+
 // TotalVoteWeight returns the total weight of all votes cast (yes + no).
 //
 // Returns:
@@ -99,7 +103,7 @@ func (p *ProposalVoteStatus) IsPassed() bool {
 //
 // Returns:
 //   - error: always nil (reserved for future validation)
-func (p *ProposalVoteStatus) addYesVoteWeight(yea int64) error {
+func (p *ProposalVoteStatus) AddYesVoteWeight(yea int64) error {
 	p.yea += yea
 	return nil
 }
@@ -112,12 +116,12 @@ func (p *ProposalVoteStatus) addYesVoteWeight(yea int64) error {
 //
 // Returns:
 //   - error: always nil (reserved for future validation)
-func (p *ProposalVoteStatus) addNoVoteWeight(nay int64) error {
+func (p *ProposalVoteStatus) AddNoVoteWeight(nay int64) error {
 	p.nay += nay
 	return nil
 }
 
-// updateVoteStatus updates the voting parameters and recalculates the quorum requirement.
+// UpdateVoteStatus updates the voting parameters and recalculates the quorum requirement.
 // This can be used if voting parameters change dynamically.
 //
 // Parameters:
@@ -126,7 +130,7 @@ func (p *ProposalVoteStatus) addNoVoteWeight(nay int64) error {
 //
 // Returns:
 //   - error: always nil (reserved for future validation)
-func (p *ProposalVoteStatus) updateVoteStatus(maxVotingWeight, quorum int64) error {
+func (p *ProposalVoteStatus) UpdateVoteStatus(maxVotingWeight, quorum int64) error {
 	// Update maximum voting weight
 	p.maxVotingWeight = maxVotingWeight
 

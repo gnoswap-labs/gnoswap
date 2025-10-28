@@ -67,10 +67,10 @@ func (gv *governanceV1) ProposeText(
 
 	// Create the text proposal with metadata
 	proposal, err := gv.createProposal(
-		Text,
+		governance.Text,
 		config,
 		maxVotingWeight,
-		NewProposalMetadata(title, description),
+		governance.NewProposalMetadata(title, description),
 		NewProposalTextData(),
 		callerAddress,
 		gnsBalance,
@@ -167,10 +167,10 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 
 	// Create the community pool spend proposal with execution data
 	proposal, err := gv.createProposal(
-		CommunityPoolSpend,
+		governance.CommunityPoolSpend,
 		config,
 		maxVotingWeight,
-		NewProposalMetadata(title, description),
+		governance.NewProposalMetadata(title, description),
 		NewProposalCommunityPoolSpendData(tokenPath, to, amount, governance.COMMUNITY_POOL_PATH),
 		callerAddress,
 		gnsBalance,
@@ -273,10 +273,10 @@ func (gv *governanceV1) ProposeParameterChange(
 
 	// Create the parameter change proposal with execution data
 	proposal, err := gv.createProposal(
-		ParameterChange,
+		governance.ParameterChange,
 		config,
 		maxVotingWeight,
-		NewProposalMetadata(title, description),
+		governance.NewProposalMetadata(title, description),
 		NewProposalExecutionData(numToExecute, executions),
 		callerAddress,
 		gnsBalance,
@@ -327,13 +327,15 @@ func (gv *governanceV1) createProposal(
 	createdHeight int64,
 ) (*governance.Proposal, error) {
 	// Validate proposal metadata (title and description)
-	err := proposalMetadata.Validate()
+	metadataResolver := NewProposalMetadataResolver()
+	err := metadataResolver.Validate(proposalMetadata)
 	if err != nil {
 		return nil, err
 	}
 
 	// Validate proposal data (type-specific validation)
-	err = proposalData.Validate()
+	dataResolver := NewProposalDataResolver()
+	err = dataResolver.Validate(proposalData)
 	if err != nil {
 		return nil, err
 	}

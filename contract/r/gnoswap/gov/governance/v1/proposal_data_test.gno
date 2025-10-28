@@ -5,6 +5,7 @@ import (
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
+	"gno.land/r/gnoswap/gov/governance"
 )
 
 // TestProposalMetadata_Validation tests metadata validation
@@ -50,7 +51,7 @@ func TestProposalMetadata_Validation(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			metadata := NewProposalMetadata(tc.title, tc.description)
+			metadata := governance.NewProposalMetadata(tc.title, tc.description)
 
 			// when
 			err := metadata.Validate()
@@ -71,52 +72,38 @@ func TestProposalMetadata_Validation(t *testing.T) {
 func TestProposalData_Validation(t *testing.T) {
 	tests := []struct {
 		name          string
-		proposalType  ProposalType
-		spendInfo     CommunityPoolSpendInfo
-		execution     ExecutionInfo
+		proposalType  governance.ProposalType
+		spendInfo     governance.CommunityPoolSpendInfo
+		execution     governance.ExecutionInfo
 		expectedError bool
 	}{
 		{
 			name:          "Success - Valid Text proposal",
-			proposalType:  Text,
+			proposalType:  governance.Text,
 			expectedError: false,
 		},
 		{
 			name:         "Success - Valid CommunityPoolSpend proposal",
-			proposalType: CommunityPoolSpend,
-			spendInfo: CommunityPoolSpendInfo{
-				to:        testutils.TestAddress("g1recipient"),
-				tokenPath: "test/token",
-				amount:    1000,
-			},
+			proposalType: governance.CommunityPoolSpend,
+			spendInfo: governance.NewCommunityPoolSpendInfo(testutils.TestAddress("g1recipient"), "test/token", 1000),
 			expectedError: false,
 		},
 		{
 			name:         "Success - Valid ParameterChange proposal",
-			proposalType: ParameterChange,
-			execution: ExecutionInfo{
-				num:  1,
-				msgs: []string{"pkg1*EXE*func1*EXE*param1,param2"},
-			},
+			proposalType: governance.ParameterChange,
+			execution: governance.NewExecutionInfo(1, []string{"pkg1*EXE*func1*EXE*param1,param2"}),
 			expectedError: false,
 		},
 		{
 			name:         "Failure - Invalid CommunityPoolSpend proposal",
-			proposalType: CommunityPoolSpend,
-			spendInfo: CommunityPoolSpendInfo{
-				to:        address(""),
-				tokenPath: "",
-				amount:    0,
-			},
+			proposalType: governance.CommunityPoolSpend,
+			spendInfo: governance.NewCommunityPoolSpendInfo(address(""), "", 0),
 			expectedError: true,
 		},
 		{
 			name:         "Failure - Invalid ParameterChange proposal",
 			proposalType: ParameterChange,
-			execution: ExecutionInfo{
-				num:  0,
-				msgs: []string{},
-			},
+			execution: governance.NewExecutionInfo(0, []string{}),
 			expectedError: true,
 		},
 	}
@@ -159,7 +146,7 @@ func TestParameterChangeInfo_Parsing(t *testing.T) {
 		name          string
 		num           int64
 		msgs          []string
-		expectedInfos []ParameterChangeInfo
+		expectedInfos []governance.ParameterChangeInfo
 	}{
 		{
 			name: "Success - Valid parameter changes",
@@ -168,7 +155,7 @@ func TestParameterChangeInfo_Parsing(t *testing.T) {
 				"pkg1*EXE*func1*EXE*param1,param2",
 				"pkg2*EXE*func2*EXE*param3,param4",
 			},
-			expectedInfos: []ParameterChangeInfo{
+			expectedInfos: []governance.ParameterChangeInfo{
 				{pkgPath: "pkg1", function: "func1", params: []string{"param1", "param2"}},
 				{pkgPath: "pkg2", function: "func2", params: []string{"param3", "param4"}},
 			},

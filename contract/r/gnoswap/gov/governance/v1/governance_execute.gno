@@ -48,7 +48,7 @@ func (gv *governanceV1) Execute(proposalID int64) int64 {
 	// Mint and distribute GNS tokens as part of the execution process
 	emission.MintAndDistributeGns(cross)
 
-	var proposal *Proposal
+	var proposal *governance.Proposal
 	var err error
 
 	// Attempt to execute the proposal with current context
@@ -93,12 +93,12 @@ func (gv *governanceV1) executeProposal(
 	}
 
 	// Verify proposal is in executable state (timing and voting requirements met)
-	if !proposal.IsExecutable(executedAt) {
+	if !gv.proposalResolver.IsExecutable(proposal, executedAt) {
 		return nil, errProposalNotExecutable
 	}
 
 	// Mark proposal as executed in its status
-	err := proposal.execute(executedAt, executedHeight, executedBy)
+	err := gv.proposalResolver.execute(proposal, executedAt, executedHeight, executedBy)
 	if err != nil {
 		return nil, err
 	}
@@ -108,13 +108,13 @@ func (gv *governanceV1) executeProposal(
 
 	// Execute proposal based on its type
 	switch proposal.Type() {
-	case CommunityPoolSpend:
+	case governance.CommunityPoolSpend:
 		// Execute community pool spending (token transfers)
 		err = executeCommunityPoolSpend(proposal, parameterRegistry, executedAt, executedHeight, executedBy)
 		if err != nil {
 			return nil, err
 		}
-	case ParameterChange:
+	case governance.ParameterChange:
 		// Execute parameter changes (governance configuration updates)
 		err = executeParameterChange(proposal, parameterRegistry, executedAt, executedHeight, executedBy)
 		if err != nil {
@@ -192,7 +192,7 @@ func (gv *governanceV1) cancel(
 	}
 
 	// Attempt to cancel the proposal (this validates cancellation conditions)
-	err = proposal.cancel(canceledAt, canceledHeight, canceledBy)
+	err = gv.proposalResolver.cancel(proposal, canceledAt, canceledHeight, canceledBy)
 	if err != nil {
 		return nil, err
 	}
@@ -215,17 +215,18 @@ func executeCommunityPoolSpend(
 	}
 
 	// Execute all parameter changes defined in the proposal
-	parameterChangesInfos := proposal.Data().Execution().ParameterChangesInfos()
+	dataResolver := NewProposalDataResolver()
+	parameterChangesInfos := dataResolver.ParameterChangesInfos(proposal.Data().Execution())
 	for _, parameterChangeInfo := range parameterChangesInfos {
 		// Get the appropriate handler for this parameter change
-		key := governance.MakeHandlerKey(parameterChangeInfo.pkgPath, parameterChangeInfo.function)
+		key := governance.MakeHandlerKey(parameterChangeInfo.PkgPath(), parameterChangeInfo.Function())
 		handler, err := parameterRegistry.Handler(key)
 		if err != nil {
 			return err
 		}
 
 		// Execute the parameter change with provided parameters
-		err = handler.Execute(parameterChangeInfo.params)
+		err = handler.Execute(parameterChangeInfo.Params())
 		if err != nil {
 			return err
 		}
@@ -244,17 +245,18 @@ func executeParameterChange(
 	executedBy address,
 ) error {
 	// Execute all parameter changes defined in the proposal
-	parameterChangesInfos := proposal.Data().Execution().ParameterChangesInfos()
+	dataResolver := NewProposalDataResolver()
+	parameterChangesInfos := dataResolver.ParameterChangesInfos(proposal.Data().Execution())
 	for _, parameterChangeInfo := range parameterChangesInfos {
 		// Get the appropriate handler for this parameter change
-		key := governance.MakeHandlerKey(parameterChangeInfo.pkgPath, parameterChangeInfo.function)
+		key := governance.MakeHandlerKey(parameterChangeInfo.PkgPath(), parameterChangeInfo.Function())
 		handler, err := parameterRegistry.Handler(key)
 		if err != nil {
 			return err
 		}
 
 		// Execute the parameter change with provided parameters
-		err = handler.Execute(parameterChangeInfo.params)
+		err = handler.Execute(parameterChangeInfo.Params())
 		if err != nil {
 			return err
 		}

@@ -248,8 +248,8 @@ func (r *ProposalDataResolver) ParameterChangesInfos(execution *governance.Execu
 func NewProposalTextData() *governance.ProposalData {
 	return governance.NewProposalData(
 		governance.Text,
-		governance.CommunityPoolSpendInfo{},
-		governance.ExecutionInfo{},
+		&governance.CommunityPoolSpendInfo{},
+		&governance.ExecutionInfo{},
 	)
 }
 

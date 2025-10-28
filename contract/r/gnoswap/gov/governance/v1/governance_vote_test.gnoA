@@ -764,7 +764,7 @@ func TestGovernanceVote_QuorumCalculation(t *testing.T) {
 	}
 }
 
-func setupTestProposal(t *testing.T, gov *governanceV1, proposal *Proposal) {
+func setupTestProposal(t *testing.T, gov *governanceV1, proposal *governance.Proposal) {
 	gov.addProposal(proposal)
 	
 	// Initialize empty voting info tree for the proposal if not exists

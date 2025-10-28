@@ -109,7 +109,7 @@ func (gv *governanceV1) getProposalStatus(id int64) string {
 	proposal := gv.mustGetProposal(id)
 
 	// Get current status dynamically
-	status := proposal.Status(time.Now().Unix())
+	status := gv.proposalResolver.Status(proposal, time.Now().Unix())
 
 	schedule := proposal.Status().Schedule()
 	// Create status node with schedule and current status
@@ -122,13 +122,13 @@ func (gv *governanceV1) getProposalStatus(id int64) string {
 		WriteString("expiredTime", formatInt(schedule.ExpiredTime()))
 
 	// Add action state if applicable
-	if proposal.Status().IsCanceled(time.Now().Unix()) {
+	if proposal.Status().ActionStatus().IsCanceled() {
 		node.
 			WriteString("canceled", formatBool(true)).
 			WriteString("canceledAt", formatInt(proposal.Status().ActionStatus().CanceledAt())).
 			WriteString("canceledBy", proposal.Status().ActionStatus().CanceledBy().String())
 	}
-	if proposal.Status().IsExecuted(time.Now().Unix()) {
+	if proposal.Status().ActionStatus().IsExecuted() {
 		node.
 			WriteString("executed", formatBool(true)).
 			WriteString("executedAt", formatInt(proposal.Status().ActionStatus().ExecutedAt())).

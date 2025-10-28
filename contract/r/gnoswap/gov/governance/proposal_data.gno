@@ -45,9 +45,9 @@ func NewProposalMetadata(title string, description string) *ProposalMetadata {
 // ProposalData contains the type-specific data for a proposal.
 // This structure holds different data depending on the proposal type.
 type ProposalData struct {
-	proposalType       ProposalType           // Type of proposal (Text, CommunityPoolSpend, ParameterChange)
-	communityPoolSpend CommunityPoolSpendInfo // Data for community pool spending proposals
-	execution          ExecutionInfo          // Data for parameter change proposals
+	proposalType       ProposalType            // Type of proposal (Text, CommunityPoolSpend, ParameterChange)
+	communityPoolSpend *CommunityPoolSpendInfo // Data for community pool spending proposals
+	execution          *ExecutionInfo          // Data for parameter change proposals
 }
 
 // ProposalType returns the type of this proposal.
@@ -61,16 +61,16 @@ func (p *ProposalData) ProposalType() ProposalType {
 // CommunityPoolSpend returns the community pool spending information.
 //
 // Returns:
-//   - CommunityPoolSpendInfo: community pool spending details
-func (p *ProposalData) CommunityPoolSpend() CommunityPoolSpendInfo {
+//   - *CommunityPoolSpendInfo: community pool spending details
+func (p *ProposalData) CommunityPoolSpend() *CommunityPoolSpendInfo {
 	return p.communityPoolSpend
 }
 
 // Execution returns the execution information for parameter changes.
 //
 // Returns:
-//   - ExecutionInfo: parameter change execution details
-func (p *ProposalData) Execution() ExecutionInfo {
+//   - *ExecutionInfo: parameter change execution details
+func (p *ProposalData) Execution() *ExecutionInfo {
 	return p.execution
 }
 
@@ -83,7 +83,7 @@ func (p *ProposalData) Execution() ExecutionInfo {
 //
 // Returns:
 //   - *ProposalData: new proposal data instance
-func NewProposalData(proposalType ProposalType, communityPoolSpend CommunityPoolSpendInfo, execution ExecutionInfo) *ProposalData {
+func NewProposalData(proposalType ProposalType, communityPoolSpend *CommunityPoolSpendInfo, execution *ExecutionInfo) *ProposalData {
 	return &ProposalData{
 		proposalType:       proposalType,
 		communityPoolSpend: communityPoolSpend,
@@ -136,8 +136,8 @@ type ParameterChangeInfo struct {
 	params   []string // Parameters to pass to the function
 }
 
-func NewParameterChangeInfo(pkgPath string, function string, params []string) *ParameterChangeInfo {
-	return &ParameterChangeInfo{
+func NewParameterChangeInfo(pkgPath string, function string, params []string) ParameterChangeInfo {
+	return ParameterChangeInfo{
 		pkgPath:  pkgPath,
 		function: function,
 		params:   params,

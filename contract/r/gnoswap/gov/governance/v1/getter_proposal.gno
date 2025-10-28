@@ -9,35 +9,35 @@ import (
 // mustGetProposal is now a method on governanceV1 (defined in instance.gno)
 
 func (gv *governanceV1) GetProposerByProposalId(proposalId int64) string {
-	return gv.mustGetProposal(proposalId).proposer.String()
+	return gv.mustGetProposal(proposalId).Proposer().String()
 }
 
 func (gv *governanceV1) GetProposalTypeByProposalId(proposalId int64) string {
-	return gv.mustGetProposal(proposalId).data.proposalType.String()
+	return gv.mustGetProposal(proposalId).Data().ProposalType().String()
 }
 
 func (gv *governanceV1) GetYeaByProposalId(proposalId int64) int64 {
-	return gv.mustGetProposal(proposalId).status.YesWeight()
+	return gv.mustGetProposal(proposalId).Status().YesWeight()
 }
 
 func (gv *governanceV1) GetNayByProposalId(proposalId int64) int64 {
-	return gv.mustGetProposal(proposalId).status.NoWeight()
+	return gv.mustGetProposal(proposalId).Status().NoWeight()
 }
 
 func (gv *governanceV1) GetConfigVersionByProposalId(proposalId int64) int64 {
-	return gv.mustGetProposal(proposalId).configVersion
+	return gv.mustGetProposal(proposalId).ConfigVersion()
 }
 
 func (gv *governanceV1) GetQuorumAmountByProposalId(proposalId int64) int64 {
-	return gv.mustGetProposal(proposalId).status.voteStatus.quorumAmount
+	return gv.mustGetProposal(proposalId).Status().VoteStatus().QuorumAmount()
 }
 
 func (gv *governanceV1) GetTitleByProposalId(proposalId int64) string {
-	return gv.mustGetProposal(proposalId).metadata.title
+	return gv.mustGetProposal(proposalId).Metadata().Title()
 }
 
 func (gv *governanceV1) GetDescriptionByProposalId(proposalId int64) string {
-	return gv.mustGetProposal(proposalId).metadata.description
+	return gv.mustGetProposal(proposalId).Metadata().Description()
 }
 
 // GetExecutionStateByProposalId is deprecated. Use GetProposalStatusById instead.
@@ -46,7 +46,7 @@ func (gv *governanceV1) GetExecutionStateByProposalId(proposalId int64) string {
 	currentAt := time.Now().Unix()
 	proposal := gv.mustGetProposal(proposalId)
 
-	return proposal.Status(currentAt)
+	return gv.proposalResolver.Status(proposal, currentAt)
 }
 
 func (gv *governanceV1) GetLatestConfig() governance.Config {

@@ -11,6 +11,13 @@ type ProposalScheduleStatus struct {
 	expiredTime    int64 // When execution window ends (ExecutableTime + ExecutionWindow)
 }
 
+/* Getter methods */
+func (p *ProposalScheduleStatus) CreateTime() int64 { return p.createTime }
+func (p *ProposalScheduleStatus) ActiveTime() int64 { return p.activeTime }
+func (p *ProposalScheduleStatus) VotingEndTime() int64 { return p.votingEndTime }
+func (p *ProposalScheduleStatus) ExecutableTime() int64 { return p.executableTime }
+func (p *ProposalScheduleStatus) ExpiredTime() int64 { return p.expiredTime }
+
 // IsPassedCreatedAt checks if the current time has passed the proposal creation time.
 // This is always true once a proposal exists.
 //

@@ -24,6 +24,15 @@ type ProposalActionStatus struct {
 	executable bool // Whether this proposal type supports execution
 }
 
+/* Getter methods */
+func (p *ProposalActionStatus) Canceled() bool { return p.canceled }
+func (p *ProposalActionStatus) CanceledAt() int64 { return p.canceledAt }
+func (p *ProposalActionStatus) CanceledHeight() int64 { return p.canceledHeight }
+func (p *ProposalActionStatus) Executed() bool { return p.executed }
+func (p *ProposalActionStatus) ExecutedAt() int64 { return p.executedAt }
+func (p *ProposalActionStatus) ExecutedHeight() int64 { return p.executedHeight }
+func (p *ProposalActionStatus) Executable() bool { return p.executable }
+
 // IsCanceled returns whether the proposal has been canceled.
 //
 // Returns:

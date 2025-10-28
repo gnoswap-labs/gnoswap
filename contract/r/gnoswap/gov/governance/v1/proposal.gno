@@ -25,18 +25,19 @@ func NewProposalResolver(
 // IsActive determines if the proposal is currently active (can be voted on or executed).
 // A proposal is considered active if it's not rejected, expired, executed, or canceled.
 func (r *ProposalResolver) IsActive(proposal *governance.Proposal, current int64) bool {
+	status := proposal.Status()
 	// Text proposals become inactive once they pass (no execution needed)
 	if proposal.IsTextType() {
-		if r.statusResolver.IsPassed(current) {
+		if r.statusResolver.IsPassed(status, current) {
 			return false
 		}
 	}
 
 	// If the proposal is rejected, expired, executed, or canceled, it is not active
-	if r.statusResolver.IsRejected(current) ||
-		r.statusResolver.IsExpired(current) ||
-		r.statusResolver.IsExecuted(current) ||
-		r.statusResolver.IsCanceled(current) {
+	if r.statusResolver.IsRejected(status, current) ||
+		r.statusResolver.IsExpired(status, current) ||
+		r.statusResolver.IsExecuted(status, current) ||
+		r.statusResolver.IsCanceled(status, current) {
 		return false
 	}
 
@@ -60,18 +61,18 @@ func (r *ProposalResolver) Validate(proposal *governance.Proposal) error {
 }
 
 // Status returns the current status string of the proposal at the given time.
-func (r *ProposalResolver) Status(current int64) string {
-	return r.statusResolver.StatusType(current).String()
+func (r *ProposalResolver) Status(proposal *governance.Proposal, current int64) string {
+	return r.statusResolver.StatusType(proposal.Status(), current).String()
 }
 
 // StatusType returns the current status type of the proposal at the given time.
-func (r *ProposalResolver) StatusType(current int64) governance.ProposalStatusType {
-	return r.statusResolver.StatusType(current)
+func (r *ProposalResolver) StatusType(proposal *governance.Proposal, current int64) governance.ProposalStatusType {
+	return r.statusResolver.StatusType(proposal.Status(), current)
 }
 
 // IsVotingPeriod checks if the proposal is currently in its voting period.
-func (r *ProposalResolver) IsVotingPeriod(votedAt int64) bool {
-	return r.StatusType(votedAt) == governance.StatusActive
+func (r *ProposalResolver) IsVotingPeriod(proposal *governance.Proposal, votedAt int64) bool {
+	return r.StatusType(proposal, votedAt) == governance.StatusActive
 }
 
 // IsExecutable determines if the proposal can be executed at the given time.
@@ -82,7 +83,7 @@ func (r *ProposalResolver) IsExecutable(proposal *governance.Proposal, current i
 		return false
 	}
 
-	return r.statusResolver.IsExecutable(current)
+	return r.statusResolver.IsExecutable(proposal.Status(), current)
 }
 
 // CommunityPoolSpendTokenPath returns the token path for community pool spend proposals.
@@ -97,14 +98,14 @@ func (r *ProposalResolver) CommunityPoolSpendTokenPath(proposal *governance.Prop
 
 // vote records a vote for this proposal and updates vote tallies.
 // This is an internal method called during voting process.
-func (r *ProposalResolver) vote(votedYes bool, weight int64) error {
-	return r.statusResolver.vote(votedYes, weight)
+func (r *ProposalResolver) Vote(proposal *governance.Proposal, votedYes bool, weight int64) error {
+	return r.statusResolver.vote(proposal.Status(), votedYes, weight)
 }
 
 // updateVoteStatus updates the voting status with new parameters.
 // This is used for dynamic voting requirement adjustments.
-func (r *ProposalResolver) updateVoteStatus(maxVotingWeight, quorum int64) error {
-	return r.statusResolver.updateVoteStatus(maxVotingWeight, quorum)
+func (r *ProposalResolver) updateVoteStatus(proposal *governance.Proposal, maxVotingWeight, quorum int64) error {
+	return r.statusResolver.updateVoteStatus(proposal.Status(), maxVotingWeight, quorum)
 }
 
 // execute marks the proposal as executed and records execution details.
@@ -121,7 +122,7 @@ func (r *ProposalResolver) execute(
 	}
 
 	// Mark proposal as executed
-	return r.statusResolver.execute(executedAt, executedHeight, executedBy)
+	return r.statusResolver.execute(proposal.Status(), executedAt, executedHeight, executedBy)
 }
 
 // cancel marks the proposal as canceled and records cancellation details.
@@ -132,14 +133,15 @@ func (r *ProposalResolver) cancel(
 	canceledHeight int64,
 	canceledBy address,
 ) error {
-	if r.statusResolver.IsCanceled(canceledAt) {
+	status := proposal.Status()
+	if r.statusResolver.IsCanceled(status, canceledAt) {
 		return errAlreadyCanceledProposal
 	}
 
-	if !r.statusResolver.IsUpcoming(canceledAt) {
+	if !r.statusResolver.IsUpcoming(status, canceledAt) {
 		return errUnableToCancleVotingProposal
 	}
 
 	// Mark proposal as canceled
-	return r.statusResolver.cancel(canceledAt, canceledHeight, canceledBy)
+	return r.statusResolver.cancel(status, canceledAt, canceledHeight, canceledBy)
 }

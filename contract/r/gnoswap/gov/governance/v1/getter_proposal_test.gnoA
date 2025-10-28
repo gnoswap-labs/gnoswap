@@ -20,12 +20,12 @@ func TestGetterProposal_All(t *testing.T) {
 		{
 			name:       "Get proposer address",
 			proposalId: 1,
-			proposal: &Proposal{
+			proposal: &governance.Proposal{
 				id:            1,
 				proposer:      address("g1proposer"),
 				configVersion: 42,
-				status: &ProposalStatus{
-					voteStatus: &ProposalVoteStatus{
+				status: &governance.ProposalStatus{
+					voteStatus: &governance.ProposalVoteStatus{
 						quorumAmount: 100,
 						yea:          10,
 						nay:          5,
