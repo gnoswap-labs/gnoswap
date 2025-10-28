@@ -13,11 +13,11 @@ import (
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
+	pl "gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 	pf "gno.land/r/gnoswap/protocol_fee"
 	"gno.land/r/gnoswap/rbac"
 	"gno.land/r/gnoswap/referral"
-	pl "gno.land/r/gnoswap/v1/pool"
 )
 
 var (

@@ -18,7 +18,7 @@ var (
 	EMISSION_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/emission")
 
 	// POOL_ADDR is the derived address for the pool package.
-	POOL_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/v1/pool")
+	POOL_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/pool")
 	// POSITION_ADDR is the derived address for the position package.
 	POSITION_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/position")
 	// ROUTER_ADDR is the derived address for the router package.

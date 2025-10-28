@@ -3,8 +3,8 @@ package v1
 import (
 	"chain/runtime"
 
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
+	pl "gno.land/r/gnoswap/pool"
 )
 
 func assertIsNotAllowedEOA(previousRealm runtime.Realm) {
@@ -37,10 +37,10 @@ func assertIsSupportedFeeTier(fee uint32) {
 }
 
 // assertIsNotExistsPoolPath asserts that the pool path does not exist.
-func assertIsNotExistsPoolPath(pools *avl.Tree, token0Path, token1Path string, fee uint32) {
-	poolPath := MakePoolPath(token0Path, token1Path, fee)
+func assertIsNotExistsPoolPath(instance *poolV1, token0Path, token1Path string, fee uint32) {
+	poolPath := pl.GetPoolPath(token0Path, token1Path, fee)
 
-	if pools.Has(poolPath) {
+	if instance.store.GetPools().Has(poolPath) {
 		panic(newErrorWithDetail(
 			errPoolAlreadyExists,
 			ufmt.Sprintf("expected poolPath(%s:%s:%d) not to exist", token0Path, token1Path, fee),

@@ -4,8 +4,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt"
 
+	pl "gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
-	pl "gno.land/r/gnoswap/v1/pool"
 )
 
 // MustGetPosition returns a position for a given position ID.

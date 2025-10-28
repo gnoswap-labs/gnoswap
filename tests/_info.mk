@@ -2,7 +2,7 @@
 ADDR_WUGNOT := g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum
 
 # based on v1
-ADDR_POOL := g148tjamj80yyrm309z7rk690an22thd2l3z8ank
+ADDR_POOL := g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v
 ADDR_POSITION := g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye
 ADDR_ROUTER := g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp
 ADDR_STAKER := g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu

@@ -6,6 +6,7 @@ import (
 	plp "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
+	pl "gno.land/r/gnoswap/pool"
 )
 
 // bitMask8 is used for efficient modulo 256 operations
@@ -42,7 +43,8 @@ const bitMask8 = 0xff // 256 - 1
 //
 // Notes:
 //   - The `tick` must be divisible by `tickSpacing`. If not, the function will panic.
-func (p *Pool) tickBitmapFlipTick(
+func tickBitmapFlipTick(
+	p *pl.Pool,
 	tick int32,
 	tickSpacing int32,
 ) {
@@ -50,13 +52,14 @@ func (p *Pool) tickBitmapFlipTick(
 	wordPos, bitPos := tickBitmapPosition(tick / tickSpacing)
 
 	mask := u256.Zero().Lsh(u256.One(), uint(bitPos))
-	current := p.getTickBitmap(wordPos)
-	p.setTickBitmap(wordPos, u256.Zero().Xor(current, mask))
+	current := getTickBitmap(p, wordPos)
+	setTickBitmap(p, wordPos, u256.Zero().Xor(current, mask))
 }
 
 // tickBitmapNextInitializedTickWithInOneWord finds the next initialized tick within
 // one word of the bitmap.
-func (p *Pool) tickBitmapNextInitializedTickWithInOneWord(
+func tickBitmapNextInitializedTickWithInOneWord(
+	p *pl.Pool,
 	tick int32,
 	tickSpacing int32,
 	lte bool,
@@ -69,7 +72,7 @@ func (p *Pool) tickBitmapNextInitializedTickWithInOneWord(
 
 	wordPos, bitPos := getWordAndBitPos(compress, lte)
 	mask := getMaskBit(uint(bitPos), lte)
-	masked := u256.Zero().And(p.getTickBitmap(wordPos), mask)
+	masked := u256.Zero().And(getTickBitmap(p, wordPos), mask)
 	initialized := !masked.IsZero()
 
 	nextTick := getNextTick(lte, initialized, compress, bitPos, tickSpacing, masked)
@@ -78,13 +81,13 @@ func (p *Pool) tickBitmapNextInitializedTickWithInOneWord(
 
 // getTickBitmap gets the tick bitmap for the given word position
 // if the tick bitmap is not initialized, initialize it to zero
-func (p *Pool) getTickBitmap(wordPos int16) *u256.Uint {
+func getTickBitmap(p *pl.Pool, wordPos int16) *u256.Uint {
 	wordPosStr := strconv.Itoa(int(wordPos))
 
-	value, exist := p.tickBitmaps.Get(wordPosStr)
+	value, exist := p.TickBitmaps().Get(wordPosStr)
 	if !exist {
-		p.initTickBitmap(wordPos)
-		value, exist = p.tickBitmaps.Get(wordPosStr)
+		initTickBitmap(p, wordPos)
+		value, exist = p.TickBitmaps().Get(wordPosStr)
 		if !exist {
 			panic(newErrorWithDetail(
 				errDataNotFound,
@@ -101,14 +104,14 @@ func (p *Pool) getTickBitmap(wordPos int16) *u256.Uint {
 }
 
 // setTickBitmap sets the tick bitmap for the given word position
-func (p *Pool) setTickBitmap(wordPos int16, tickBitmap *u256.Uint) {
+func setTickBitmap(p *pl.Pool, wordPos int16, tickBitmap *u256.Uint) {
 	wordPosStr := strconv.Itoa(int(wordPos))
-	p.tickBitmaps.Set(wordPosStr, tickBitmap)
+	p.TickBitmaps().Set(wordPosStr, tickBitmap)
 }
 
 // initTickBitmap initializes the tick bitmap for the given word position
-func (p *Pool) initTickBitmap(wordPos int16) {
-	p.setTickBitmap(wordPos, u256.Zero())
+func initTickBitmap(p *pl.Pool, wordPos int16) {
+	setTickBitmap(p, wordPos, u256.Zero())
 }
 
 // tickBitmapPosition calculates the word and bit position for a given tick

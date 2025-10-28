@@ -18,8 +18,8 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 
+	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
-	pl "gno.land/r/gnoswap/v1/pool"
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
@@ -224,7 +224,7 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			name:             "success - gns -> gnot",
 			tokenPath0:       wugnotPath,
 			tokenPath1:       gnsPath,
-			feeTier:          pl.FeeTier500,
+			feeTier:          uint32(500),
 			recipient:        alice,
 			tickLower:        -200,
 			tickUpper:        200,
@@ -235,7 +235,7 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			inputToken:       gnsPath,
 			outputToken:      "gnot",
 			amountIn:         "100",
-			routeArr:         BuildSingleHopRoutePath(gnsPath, wugnotPath, pl.FeeTier500),
+			routeArr:         BuildSingleHopRoutePath(gnsPath, wugnotPath, uint32(500)),
 			quoteArr:         "100",
 			amountOutMin:     "85",
 			expectedAmount0:  "100",

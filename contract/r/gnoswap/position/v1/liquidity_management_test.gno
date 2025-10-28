@@ -8,7 +8,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/common"
-	pl "gno.land/r/gnoswap/v1/pool"
+	pl "gno.land/r/gnoswap/pool"
 )
 
 func initialSetup(t *testing.T) {
@@ -111,7 +111,7 @@ func TestAddLiquidity(t *testing.T) {
 				caller:         alice,
 			},
 			expectError:     true,
-			errorType:       "panic",
+			errorType:       "abort",
 			expectedMessage: "[GNOSWAP-POOL-008] requested data not found || expected poolPath(invalid/pool/path) to exist",
 		},
 		{

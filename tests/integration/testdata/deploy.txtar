@@ -70,7 +70,7 @@ gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/emission -pkgpath gno.land
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/protocol_fee -pkgpath gno.land/r/gnoswap/protocol_fee -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy pool
-gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/pool -pkgpath gno.land/r/gnoswap/v1/pool -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/pool -pkgpath gno.land/r/gnoswap/pool -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy position
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/position -pkgpath gno.land/r/gnoswap/position -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1

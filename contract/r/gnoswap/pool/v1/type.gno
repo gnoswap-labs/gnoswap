@@ -1,33 +1,12 @@
 package v1
 
 import (
-	"time"
-
-	"gno.land/p/nt/avl"
-
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/common"
+	pl "gno.land/r/gnoswap/pool"
 )
-
-type PositionInfo struct {
-	liquidity *u256.Uint // amount of liquidity owned by this position
-
-	// Fee growth per unit of liquidity as of the last update
-	// Used to calculate uncollected fees for token0
-	feeGrowthInside0LastX128 *u256.Uint
-
-	// Fee growth per unit of liquidity as of the last update
-	// Used to calculate uncollected fees for token1
-	feeGrowthInside1LastX128 *u256.Uint
-
-	// accumulated fees in token0 waiting to be collected
-	tokensOwed0 *u256.Uint
-
-	// accumulated fees in token1 waiting to be collected
-	tokensOwed1 *u256.Uint
-}
 
 // ModifyPositionParams repersents the parameters for modifying a liquidity position.
 // This structure is used internally both `Mint` and `Burn` operation to manage
@@ -111,13 +90,13 @@ func newSwapState(
 	amountSpecifiedRemaining *i256.Int,
 	feeGrowthGlobalX128 *u256.Uint,
 	liquidity *u256.Uint,
-	slot0 Slot0,
+	slot0 pl.Slot0,
 ) SwapState {
 	return SwapState{
 		amountSpecifiedRemaining: amountSpecifiedRemaining,
 		amountCalculated:         i256.Zero(),
-		sqrtPriceX96:             slot0.sqrtPriceX96,
-		tick:                     slot0.tick,
+		sqrtPriceX96:             slot0.SqrtPriceX96(),
+		tick:                     slot0.Tick(),
 		feeGrowthGlobalX128:      feeGrowthGlobalX128,
 		protocolFee:              u256.Zero(),
 		liquidity:                liquidity,
@@ -154,11 +133,12 @@ type StepComputations struct {
 }
 
 // init initializes the computation for a single swap step
-func (step *StepComputations) initSwapStep(state SwapState, pool *Pool, zeroForOne bool) {
+func (step *StepComputations) initSwapStep(state SwapState, p *pl.Pool, zeroForOne bool) {
 	step.sqrtPriceStartX96 = state.sqrtPriceX96
-	step.tickNext, step.initialized = pool.tickBitmapNextInitializedTickWithInOneWord(
+	step.tickNext, step.initialized = tickBitmapNextInitializedTickWithInOneWord(
+		p,
 		state.tick,
-		pool.tickSpacing,
+		p.TickSpacing(),
 		zeroForOne,
 	)
 
@@ -179,112 +159,18 @@ func (step *StepComputations) clampTickNext() {
 	}
 }
 
-// valueOrZero initializes nil fields in PositionInfo to zero.
-//
-// This function ensures that all numeric fields in the PositionInfo struct are not nil.
-// If a field is nil, it is replaced with a zero value, maintaining consistency and preventing
-// potential null pointer issues during calculations.
-//
-// Fields affected:
-//   - liquidity: The liquidity amount associated with the position.
-//   - feeGrowthInside0LastX128: Fee growth for token 0 inside the tick range, last recorded value.
-//   - feeGrowthInside1LastX128: Fee growth for token 1 inside the tick range, last recorded value.
-//   - tokensOwed0: The amount of token 0 owed to the position owner.
-//   - tokensOwed1: The amount of token 1 owed to the position owner.
-//
-// Behavior:
-//   - If a field is nil, it is set to its equivalent zero value.
-//   - If a field already has a value, it remains unchanged.
-//
-// Example:
-//
-//	position := &PositionInfo{}
-//	position.valueOrZero()
-//	println(position.liquidity) // Output: 0
-//
-// Notes:
-//   - This function is useful for ensuring numeric fields are properly initialized
-//     before performing operations or calculations.
-//   - Prevents runtime errors caused by nil values.
-func (p *PositionInfo) valueOrZero() {
-	p.liquidity = p.liquidity.NilToZero()
-	p.feeGrowthInside0LastX128 = p.feeGrowthInside0LastX128.NilToZero()
-	p.feeGrowthInside1LastX128 = p.feeGrowthInside1LastX128.NilToZero()
-	p.tokensOwed0 = p.tokensOwed0.NilToZero()
-	p.tokensOwed1 = p.tokensOwed1.NilToZero()
-}
-
-// TickInfo stores information about a specific tick in the pool.
-// TIcks represent discrete price points that can be used as boundaries for positions.
-type TickInfo struct {
-	liquidityGross *u256.Uint // total position liquidity that references this tick
-	liquidityNet   *i256.Int  // amount of net liquidity added (subtracted) when tick is crossed from left to right (right to left)
-
-	// fee growth per unit of liquidity on the _other_ side of this tick (relative to the current tick)
-	// only has relative meaning, not absolute — the value depends on when the tick is initialized
-	feeGrowthOutside0X128 *u256.Uint
-	feeGrowthOutside1X128 *u256.Uint
-
-	tickCumulativeOutside int64 // cumulative tick value on the other side of the tick
-
-	// the seconds per unit of liquidity on the _other_ side of this tick (relative to the current tick)
-	// only has relative meaning, not absolute — the value depends on when the tick is initialized
-	secondsPerLiquidityOutsideX128 *u256.Uint
-
-	// the seconds spent on the other side of the tick (relative to the current tick)
-	// only has relative meaning, not absolute — the value depends on when the tick is initialized
-	secondsOutside uint32
-
-	initialized bool // whether the tick is initialized
-}
-
-// valueOrZero ensures that all fields of TickInfo are valid by setting nil fields to zero,
-// while retaining existing values if they are not nil.
-// This function updates the TickInfo struct to replace any nil values in its fields
-// with their respective zero values, ensuring data consistency.
-//
-// Behavior:
-// - If a field is nil, it is replaced with its zero value.
-// - If a field already has a valid value, the value remains unchanged.
-//
-// Fields:
-// - liquidityGross: Gross liquidity for the tick, set to zero if nil, otherwise retains its value.
-// - liquidityNet: Net liquidity for the tick, set to zero if nil, otherwise retains its value.
-// - feeGrowthOutside0X128: Accumulated fee growth for token0 outside the tick, set to zero if nil, otherwise retains its value.
-// - feeGrowthOutside1X128: Accumulated fee growth for token1 outside the tick, set to zero if nil, otherwise retains its value.
-// - secondsPerLiquidityOutsideX128: Time per liquidity outside the tick, set to zero if nil, otherwise retains its value.
-//
-// Use Case:
-// This function ensures all numeric fields in TickInfo are non-nil and have valid values,
-// preventing potential runtime errors caused by nil values during operations like arithmetic or comparisons.
-func (t *TickInfo) valueOrZero() {
-	t.liquidityGross = t.liquidityGross.NilToZero()
-	t.liquidityNet = t.liquidityNet.NilToZero()
-	t.feeGrowthOutside0X128 = t.feeGrowthOutside0X128.NilToZero()
-	t.feeGrowthOutside1X128 = t.feeGrowthOutside1X128.NilToZero()
-	t.secondsPerLiquidityOutsideX128 = t.secondsPerLiquidityOutsideX128.NilToZero()
-}
-
-func newPool(poolInfo *poolCreateConfig) *Pool {
+func newPool(poolInfo *poolCreateConfig) *pl.Pool {
 	maxLiquidityPerTick := calculateMaxLiquidityPerTick(poolInfo.tickSpacing)
 	tick := common.TickMathGetTickAtSqrtRatio(poolInfo.SqrtPriceX96())
-	slot0 := newSlot0(poolInfo.SqrtPriceX96(), tick, poolInfo.slot0FeeProtocol, true)
 
-	return &Pool{
-		token0Path:           poolInfo.Token0Path(),
-		token1Path:           poolInfo.Token1Path(),
-		balances:             newBalances(),
-		fee:                  poolInfo.Fee(),
-		tickSpacing:          poolInfo.TickSpacing(),
-		maxLiquidityPerTick:  maxLiquidityPerTick,
-		slot0:                slot0,
-		feeGrowthGlobal0X128: u256.Zero(),
-		feeGrowthGlobal1X128: u256.Zero(),
-		protocolFees:         newProtocolFees(),
-		liquidity:            u256.Zero(),
-		ticks:                avl.NewTree(),
-		tickBitmaps:          avl.NewTree(),
-		positions:            avl.NewTree(),
-		observationState:     newObservationState(time.Now().Unix()),
-	}
+	return pl.NewPool(
+		poolInfo.Token0Path(),
+		poolInfo.Token1Path(),
+		poolInfo.Fee(),
+		poolInfo.SqrtPriceX96(),
+		poolInfo.TickSpacing(),
+		tick,
+		poolInfo.slot0FeeProtocol,
+		maxLiquidityPerTick,
+	)
 }
