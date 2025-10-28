@@ -46,47 +46,36 @@ func (d *DelegationWithdraw) UnDelegatedAt() int64 {
 	return d.unDelegatedAt
 }
 
-// CollectableAmount calculates the amount available for collection at the given time.
-// Returns zero if the withdrawal is not yet collectable or has been fully collected.
-//
-// Parameters:
-//   - currentTime: current timestamp to check collectability against
+// UnDelegatedHeight returns the height when the undelegation occurred.
 //
 // Returns:
-//   - int64: amount available for collection
-func (d *DelegationWithdraw) CollectableAmount(currentTime int64) int64 {
-	if d.IsCollectable(currentTime) {
-		return d.unDelegateAmount - d.collectedAmount
-	}
-
-	return 0
+//   - int64: undelegation height
+func (d *DelegationWithdraw) UnDelegatedHeight() int64 {
+	return d.unDelegatedHeight
 }
 
-// IsCollectable determines whether the withdrawal can be collected at the given time.
-// A withdrawal is collectable if:
-// - The undelegated amount is positive
-// - There is remaining uncollected amount
-// - The current time is at or after the collectable time
-//
-// Parameters:
-//   - currentTime: current timestamp to check against
+// CollectedAmount returns the amount that has already been collected.
 //
 // Returns:
-//   - bool: true if the withdrawal can be collected, false otherwise
-func (d *DelegationWithdraw) IsCollectable(currentTime int64) bool {
-	if d.unDelegateAmount <= 0 {
-		return false
-	}
+//   - int64: collected amount
+func (d *DelegationWithdraw) CollectedAmount() int64 {
+	return d.collectedAmount
+}
 
-	if d.unDelegateAmount-d.collectedAmount <= 0 {
-		return false
-	}
+// CollectableTime returns the timestamp when collection becomes available.
+//
+// Returns:
+//   - int64: collectable time
+func (d *DelegationWithdraw) CollectableTime() int64 {
+	return d.collectableTime
+}
 
-	if currentTime < d.collectableTime {
-		return false
-	}
-
-	return true
+// CollectedAt returns the timestamp when collection occurred.
+//
+// Returns:
+//   - int64: collection timestamp
+func (d *DelegationWithdraw) CollectedAt() int64 {
+	return d.collectedAt
 }
 
 // IsCollected returns whether the withdrawal has been fully collected.
@@ -97,25 +86,28 @@ func (d *DelegationWithdraw) IsCollected() bool {
 	return d.collected
 }
 
-// collect processes the collection of the specified amount from this withdrawal.
-// This method validates collectability and updates the collection state.
+// SetCollected sets the collected status.
 //
 // Parameters:
-//   - amount: amount to collect
-//   - currentTime: current timestamp
+//   - collected: new collected status
+func (d *DelegationWithdraw) SetCollected(collected bool) {
+	d.collected = collected
+}
+
+// SetCollectedAt sets the collection timestamp.
 //
-// Returns:
-//   - error: nil on success, error if collection is not allowed
-func (d *DelegationWithdraw) collect(amount int64, currentTime int64) error {
-	if !d.IsCollectable(currentTime) {
-		return errWithdrawNotCollectable
-	}
+// Parameters:
+//   - collectedAt: collection timestamp
+func (d *DelegationWithdraw) SetCollectedAt(collectedAt int64) {
+	d.collectedAt = collectedAt
+}
 
-	d.collected = true
-	d.collectedAt = currentTime
-	d.collectedAmount += amount
-
-	return nil
+// SetCollectedAmount sets the collected amount.
+//
+// Parameters:
+//   - amount: collected amount
+func (d *DelegationWithdraw) SetCollectedAmount(amount int64) {
+	d.collectedAmount = amount
 }
 
 // NewDelegationWithdraw creates a new delegation withdrawal with lockup period.

@@ -5,6 +5,5 @@ import (
 )
 
 var (
-	errCollectAmountExceedsCollectable = errors.New("amount to collect is greater than collectable amount")
-	errWithdrawNotCollectable = errors.New("withdraw is not collectable")
+	ErrWithdrawNotCollectable = errors.New("withdraw is not collectable")
 )

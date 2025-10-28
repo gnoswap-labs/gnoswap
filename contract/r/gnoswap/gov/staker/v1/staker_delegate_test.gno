@@ -865,9 +865,10 @@ func setupStakerDelegateTestCollectableAmount(t *testing.T, gs *govStakerV1, use
 	// Create a delegation that has been undelegated and is collectable
 	delegationID := gs.nextDelegationID()
 	delegation := staker.NewDelegation(delegationID, user, testutils.TestAddress("validator1"), amount, 100, 100)
+	resolver := NewDelegationResolver(delegation)
 
 	// Undelegate with very short lockup period
-	delegation.UnDelegate(amount, 200, 100, 0) // 0 second lockup
+	resolver.UnDelegate(amount, 200, 100, 0) // 0 second lockup
 
 	gs.addDelegation(delegationID, delegation)
 

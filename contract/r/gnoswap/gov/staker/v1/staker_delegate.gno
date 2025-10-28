@@ -75,13 +75,15 @@ func (gs *govStakerV1) Delegate(
 
 	registeredReferrer := registerReferrer(caller, referrer)
 
+	resolver := NewDelegationResolver(delegation)
+
 	chain.Emit(
 		"Delegate",
 		"prevAddr", prevRealm.Address().String(),
 		"prevRealm", prevRealm.PkgPath(),
-		"from", delegation.DelegateFrom().String(),
-		"to", delegation.DelegateTo().String(),
-		"amount", formatInt(delegation.DelegatedAmount()),
+		"from", resolver.delegation.DelegateFrom().String(),
+		"to", resolver.delegation.DelegateTo().String(),
+		"amount", formatInt(resolver.DelegatedAmount()),
 		"referrer", registeredReferrer,
 	)
 
@@ -215,6 +217,7 @@ func (gs *govStakerV1) Redelegate(
 	)
 
 	prevRealm := runtime.PreviousRealm()
+	resolver := NewDelegationResolver(delegation)
 	chain.Emit(
 		"Redelegate",
 		"prevAddr", prevRealm.Address().String(),
@@ -222,7 +225,7 @@ func (gs *govStakerV1) Redelegate(
 		"from", delegator.String(),
 		"previousDelegatee", delegatee.String(),
 		"newDelegatee", newDelegatee.String(),
-		"amount", formatInt(delegation.DelegatedAmount()),
+		"amount", formatInt(resolver.DelegatedAmount()),
 	)
 
 	return amount
@@ -338,15 +341,16 @@ func (gs *govStakerV1) unDelegate(
 
 	// Process undelegation across multiple delegation records if necessary
 	for _, delegation := range delegations {
-		if delegation.IsEmpty() {
+		resolver := NewDelegationResolver(delegation)
+		if resolver.IsEmpty() {
 			gs.removeDelegation(delegation.ID())
 			continue
 		}
 
 		currentUnDelegationAmount := unDelegationAmount
 
-		if currentUnDelegationAmount > delegation.DelegatedAmount() {
-			currentUnDelegationAmount = delegation.DelegatedAmount()
+		if currentUnDelegationAmount > resolver.DelegatedAmount() {
+			currentUnDelegationAmount = resolver.DelegatedAmount()
 		}
 
 		// Get lockup period from store
@@ -355,7 +359,7 @@ func (gs *govStakerV1) unDelegate(
 			panic(err)
 		}
 		
-		delegation.UnDelegate(
+		resolver.UnDelegate(
 			currentUnDelegationAmount,
 			currentHeight,
 			currentTimestamp,
@@ -406,18 +410,19 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 
 	// Process undelegation across multiple delegation records if necessary
 	for _, delegation := range delegations {
-		if delegation.IsEmpty() {
+		resolver := NewDelegationResolver(delegation)
+		if resolver.IsEmpty() {
 			gs.removeDelegation(delegation.ID())
 			continue
 		}
 
 		currentUnDelegationAmount := unDelegationAmount
 
-		if currentUnDelegationAmount > delegation.DelegatedAmount() {
-			currentUnDelegationAmount = delegation.DelegatedAmount()
+		if currentUnDelegationAmount > resolver.DelegatedAmount() {
+			currentUnDelegationAmount = resolver.DelegatedAmount()
 		}
 
-		delegation.UnDelegateWithoutLockup(
+		resolver.UnDelegateWithoutLockup(
 			currentUnDelegationAmount,
 			currentHeight,
 			currentTime,
@@ -454,13 +459,14 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 
 	// Collect from all available delegations
 	for _, delegation := range delegations {
-		collectableAmount := delegation.CollectableAmount(currentTime)
+		resolver := NewDelegationResolver(delegation)
+		collectableAmount := resolver.CollectableAmount(currentTime)
 
 		if collectableAmount == 0 {
 			continue
 		}
 
-		err := delegation.Collect(collectableAmount, currentTime)
+		err := resolver.Collect(collectableAmount, currentTime)
 		if err != nil {
 			msg := makeErrorWithDetails(errInvalidAmount, err.Error())
 			return collectedAmount, msg
@@ -474,7 +480,7 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 		}
 
 		// Remove empty delegations to keep storage clean
-		if delegation.IsEmpty() {
+		if resolver.IsEmpty() {
 			gs.removeDelegation(delegation.ID())
 		}
 	}

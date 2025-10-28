@@ -33,15 +33,17 @@ func (gs *govStakerV1) HasDelegationSnapshotsKey() bool {
 func (gs *govStakerV1) GetDelegationSnapshots(snapshotTime int64) (staker.DelegationSnapshot, bool) {
 	// Get current delegation snapshots and create a working copy
 	delegationSnapshots := gs.getDelegationSnapshots()
-	currentDelegationSnapshot := delegationSnapshots.Clone()
+	resolver := NewDelegationSnapshotResolver(delegationSnapshots)
+	currentDelegationSnapshot := resolver.Clone()
 
 	// Get delegation history and filter for records after snapshot time
 	delegationHistory := gs.getDelegationHistory()
 	historyRecords := delegationHistory.getRecordsBy(snapshotTime)
-	
+
 	// Apply records in reverse order to reconstruct historical state
 	for i := len(historyRecords) - 1; i >= 0; i-- {
-		currentDelegationSnapshot = currentDelegationSnapshot.SubRecord(historyRecords[i])
+		currentResolver := NewDelegationSnapshotResolver(currentDelegationSnapshot)
+		currentDelegationSnapshot = currentResolver.SubRecord(historyRecords[i])
 	}
 
 	// Convert internal DelegationSnapshot to staker.DelegationSnapshot

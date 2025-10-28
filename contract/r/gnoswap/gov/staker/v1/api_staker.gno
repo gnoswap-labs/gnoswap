@@ -25,7 +25,7 @@ func (gs *govStakerV1) GetLockedAmount() int64 {
 		if !ok {
 			panic(ufmt.Sprintf("failed to cast delegations's element to *Delegation: %T", value))
 		}
-		lockedAmount += delegation.DelegatedAmount()
+		lockedAmount += NewDelegationResolver(delegation).LockedAmount()
 		return false
 	})
 

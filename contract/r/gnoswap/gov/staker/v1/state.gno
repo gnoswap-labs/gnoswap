@@ -228,7 +228,8 @@ func (g *govStakerV1) addDelegationRecord(delegationRecord *staker.DelegationRec
 	if snapshot == nil {
 		snapshot = make(staker.DelegationSnapshot)
 	}
-	snapshot.AddRecord(delegationRecord)
+	resolver := NewDelegationSnapshotResolver(snapshot)
+	snapshot = resolver.AddRecord(delegationRecord)
 
 	if err := g.store.SetDelegationSnapshot(timestamp, snapshot); err != nil {
 		panic(err)

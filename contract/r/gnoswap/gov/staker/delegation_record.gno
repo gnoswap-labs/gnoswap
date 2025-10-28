@@ -107,26 +107,6 @@ func NewDelegationRecord(
 	}
 }
 
-// NewDelegationDelegateRecordBy creates a delegation record from an existing Delegation instance.
-// This factory function is used to create historical records for delegation actions.
-//
-// Parameters:
-//   - delegation: the delegation instance to create a record from
-//
-// Returns:
-//   - *DelegationRecord: delegation record representing the delegation action
-func NewDelegationDelegateRecordBy(
-	delegation *Delegation,
-) *DelegationRecord {
-	return NewDelegationRecord(
-		DelegateType,
-		delegation.DelegatedAmount(),
-		delegation.DelegateFrom(),
-		delegation.DelegateTo(),
-		delegation.CreatedAt(),
-	)
-}
-
 // NewDelegationWithdrawRecordBy creates an undelegation record for a withdrawal action.
 // This factory function is used to create historical records for undelegation actions.
 //
