@@ -1,4 +1,4 @@
-package v1
+package governance
 
 // ProposalScheduleStatus represents the pre-calculated time schedule for a proposal.
 // This structure defines all the important timestamps in a proposal's lifecycle,

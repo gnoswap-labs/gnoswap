@@ -1,4 +1,12 @@
-package v1
+package governance
+
+import (
+	"errors"
+)
+
+var (
+	errProposalNotExecutable = errors.New("proposal not executable")
+)
 
 // ProposalActionStatus tracks the execution and cancellation status of a proposal.
 // This structure manages the action-related state including who performed actions and when.
@@ -69,7 +77,7 @@ func (p *ProposalActionStatus) IsExecutable() bool {
 //
 // Returns:
 //   - error: cancellation error if proposal cannot be canceled
-func (p *ProposalActionStatus) cancel(canceledAt int64, canceledHeight int64, canceledBy address) error {
+func (p *ProposalActionStatus) Cancel(canceledAt int64, canceledHeight int64, canceledBy address) error {
 	// Only executable proposals can be canceled (text proposals cannot)
 	if !p.executable {
 		return errProposalNotExecutable
@@ -94,7 +102,7 @@ func (p *ProposalActionStatus) cancel(canceledAt int64, canceledHeight int64, ca
 //
 // Returns:
 //   - error: execution error if proposal cannot be executed
-func (p *ProposalActionStatus) execute(executedAt int64, executedHeight int64, executedBy address) error {
+func (p *ProposalActionStatus) Execute(executedAt int64, executedHeight int64, executedBy address) error {
 	// Only executable proposals can be executed (text proposals cannot)
 	if !p.executable {
 		return errProposalNotExecutable

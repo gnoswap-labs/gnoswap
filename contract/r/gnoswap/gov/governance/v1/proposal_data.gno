@@ -4,29 +4,13 @@ import (
 	"strings"
 
 	"gno.land/p/nt/ufmt"
+	"gno.land/r/gnoswap/gov/governance"
 )
 
-// ProposalMetadata contains descriptive information about a proposal.
-// This includes the title and description that are displayed to voters.
-type ProposalMetadata struct {
-	title       string // Proposal title (max 255 characters)
-	description string // Detailed proposal description (max 10,000 characters)
-}
+type ProposalMetadataResolver struct{}
 
-// Title returns the proposal title.
-//
-// Returns:
-//   - string: proposal title
-func (p *ProposalMetadata) Title() string {
-	return p.title
-}
-
-// Description returns the proposal description.
-//
-// Returns:
-//   - string: proposal description
-func (p *ProposalMetadata) Description() string {
-	return p.description
+func NewProposalMetadataResolver() *ProposalMetadataResolver {
+	return &ProposalMetadataResolver{}
 }
 
 // Validate performs comprehensive validation of the proposal metadata.
@@ -34,14 +18,14 @@ func (p *ProposalMetadata) Description() string {
 //
 // Returns:
 //   - error: validation error if metadata is invalid
-func (p *ProposalMetadata) Validate() error {
+func (r *ProposalMetadataResolver) Validate(metadata *governance.ProposalMetadata) error {
 	// Validate title meets requirements
-	if err := p.validateTitle(p.title); err != nil {
+	if err := r.validateTitle(metadata.Title()); err != nil {
 		return err
 	}
 
 	// Validate description meets requirements
-	if err := p.validateDescription(p.description); err != nil {
+	if err := r.validateDescription(metadata.Description()); err != nil {
 		return err
 	}
 
@@ -55,7 +39,7 @@ func (p *ProposalMetadata) Validate() error {
 //
 // Returns:
 //   - error: validation error if title is invalid
-func (p *ProposalMetadata) validateTitle(title string) error {
+func (r *ProposalMetadataResolver) validateTitle(title string) error {
 	// Title cannot be empty
 	if title == "" {
 		return makeErrorWithDetails(
@@ -82,7 +66,7 @@ func (p *ProposalMetadata) validateTitle(title string) error {
 //
 // Returns:
 //   - error: validation error if description is invalid
-func (p *ProposalMetadata) validateDescription(description string) error {
+func (r *ProposalMetadataResolver) validateDescription(description string) error {
 	// Description cannot be empty
 	if description == "" {
 		return makeErrorWithDetails(
@@ -102,51 +86,11 @@ func (p *ProposalMetadata) validateDescription(description string) error {
 	return nil
 }
 
-// NewProposalMetadata creates a new proposal metadata instance with trimmed input.
-//
-// Parameters:
-//   - title: proposal title
-//   - description: proposal description
-//
-// Returns:
-//   - *ProposalMetadata: new metadata instance with trimmed whitespace
-func NewProposalMetadata(title string, description string) *ProposalMetadata {
-	return &ProposalMetadata{
-		title:       strings.TrimSpace(title),
-		description: strings.TrimSpace(description),
-	}
-}
+// ProposalDataResolver handles business logic for proposal data.
+type ProposalDataResolver struct{}
 
-// ProposalData contains the type-specific data for a proposal.
-// This structure holds different data depending on the proposal type.
-type ProposalData struct {
-	proposalType       ProposalType           // Type of proposal (Text, CommunityPoolSpend, ParameterChange)
-	communityPoolSpend CommunityPoolSpendInfo // Data for community pool spending proposals
-	execution          ExecutionInfo          // Data for parameter change proposals
-}
-
-// ProposalType returns the type of this proposal.
-//
-// Returns:
-//   - ProposalType: the proposal type
-func (p *ProposalData) ProposalType() ProposalType {
-	return p.proposalType
-}
-
-// CommunityPoolSpend returns the community pool spending information.
-//
-// Returns:
-//   - CommunityPoolSpendInfo: community pool spending details
-func (p *ProposalData) CommunityPoolSpend() CommunityPoolSpendInfo {
-	return p.communityPoolSpend
-}
-
-// Execution returns the execution information for parameter changes.
-//
-// Returns:
-//   - ExecutionInfo: parameter change execution details
-func (p *ProposalData) Execution() ExecutionInfo {
-	return p.execution
+func NewProposalDataResolver() *ProposalDataResolver {
+	return &ProposalDataResolver{}
 }
 
 // Validate performs type-specific validation of the proposal data.
@@ -154,20 +98,15 @@ func (p *ProposalData) Execution() ExecutionInfo {
 //
 // Returns:
 //   - error: validation error if data is invalid
-func (p *ProposalData) Validate() error {
-	// Validate based on proposal type
-	if p.proposalType == Text {
-		return p.validateText()
+func (r *ProposalDataResolver) Validate(data *governance.ProposalData) error {
+	switch data.ProposalType() {
+	case governance.Text:
+		return r.validateText(data)
+	case governance.CommunityPoolSpend:
+		return r.validateCommunityPoolSpend(data)
+	case governance.ParameterChange:
+		return r.validateParameterChange(data)
 	}
-
-	if p.proposalType == CommunityPoolSpend {
-		return p.validateCommunityPoolSpend()
-	}
-
-	if p.proposalType == ParameterChange {
-		return p.validateParameterChange()
-	}
-
 	return nil
 }
 
@@ -176,7 +115,7 @@ func (p *ProposalData) Validate() error {
 //
 // Returns:
 //   - error: always nil for text proposals
-func (p *ProposalData) validateText() error {
+func (r *ProposalDataResolver) validateText(_ *governance.ProposalData) error {
 	return nil
 }
 
@@ -185,9 +124,10 @@ func (p *ProposalData) validateText() error {
 //
 // Returns:
 //   - error: validation error if community pool spend data is invalid
-func (p *ProposalData) validateCommunityPoolSpend() error {
+func (r *ProposalDataResolver) validateCommunityPoolSpend(data *governance.ProposalData) error {
 	// Validate recipient address
-	if !p.communityPoolSpend.to.IsValid() {
+	communityPoolSpend := data.CommunityPoolSpend()
+	if !communityPoolSpend.To().IsValid() {
 		return makeErrorWithDetails(
 			errInvalidInput,
 			ufmt.Sprintf("to is invalid address"),
@@ -195,7 +135,7 @@ func (p *ProposalData) validateCommunityPoolSpend() error {
 	}
 
 	// Validate token path is provided
-	if p.communityPoolSpend.tokenPath == "" {
+	if communityPoolSpend.TokenPath() == "" {
 		return makeErrorWithDetails(
 			errInvalidInput,
 			ufmt.Sprintf("tokenPath is empty"),
@@ -203,7 +143,7 @@ func (p *ProposalData) validateCommunityPoolSpend() error {
 	}
 
 	// Validate amount is positive
-	if p.communityPoolSpend.amount == 0 {
+	if communityPoolSpend.Amount() == 0 {
 		return makeErrorWithDetails(
 			errInvalidInput,
 			ufmt.Sprintf("amount is 0"),
@@ -218,9 +158,13 @@ func (p *ProposalData) validateCommunityPoolSpend() error {
 //
 // Returns:
 //   - error: validation error if parameter change data is invalid
-func (p *ProposalData) validateParameterChange() error {
+func (r *ProposalDataResolver) validateParameterChange(data *governance.ProposalData) error {
+	execution := data.Execution()
+	num := execution.Num()
+	msgs := execution.Msgs()
+
 	// Validate execution count is positive
-	if p.execution.num <= 0 {
+	if num <= 0 {
 		return makeErrorWithDetails(
 			errInvalidInput,
 			ufmt.Sprintf("numToExecute is less than or equal to 0"),
@@ -228,7 +172,7 @@ func (p *ProposalData) validateParameterChange() error {
 	}
 
 	// Validate execution messages are provided
-	if len(p.execution.msgs) == 0 {
+	if len(msgs) == 0 {
 		return makeErrorWithDetails(
 			errInvalidInput,
 			ufmt.Sprintf("executions is empty"),
@@ -236,7 +180,7 @@ func (p *ProposalData) validateParameterChange() error {
 	}
 
 	// Validate execution count matches message count
-	if len(p.execution.msgs) != int(p.execution.num) {
+	if len(msgs) != int(num) {
 		return makeErrorWithDetails(
 			errInvalidInput,
 			ufmt.Sprintf("executions is not equal to numToExecute"),
@@ -244,7 +188,7 @@ func (p *ProposalData) validateParameterChange() error {
 	}
 
 	// Validate execution count doesn't exceed maximum
-	if p.execution.num > maxNumberOfExecution {
+	if num > maxNumberOfExecution {
 		return makeErrorWithDetails(
 			errInvalidInput,
 			ufmt.Sprintf("numToExecute is greater than %d", maxNumberOfExecution),
@@ -252,8 +196,8 @@ func (p *ProposalData) validateParameterChange() error {
 	}
 
 	// Validate parameter change message format
-	parameterChangesInfos := p.execution.ParameterChangesInfos()
-	if len(parameterChangesInfos) != int(p.execution.num) {
+	parameterChangesInfos := r.ParameterChangesInfos(execution)
+	if len(parameterChangesInfos) != int(num) {
 		return makeErrorWithDetails(
 			errInvalidInput,
 			ufmt.Sprintf("invalid parameter change info"),
@@ -263,21 +207,37 @@ func (p *ProposalData) validateParameterChange() error {
 	return nil
 }
 
-// NewProposalData creates a new proposal data instance with the specified components.
-//
-// Parameters:
-//   - proposalType: type of the proposal
-//   - communityPoolSpend: community pool spending information
-//   - execution: parameter change execution information
+// ParameterChangesInfos parses the execution messages and returns structured parameter change information.
+// Each message is expected to be in format: pkgPath*EXE*function*EXE*params
 //
 // Returns:
-//   - *ProposalData: new proposal data instance
-func NewProposalData(proposalType ProposalType, communityPoolSpend CommunityPoolSpendInfo, execution ExecutionInfo) *ProposalData {
-	return &ProposalData{
-		proposalType:       proposalType,
-		communityPoolSpend: communityPoolSpend,
-		execution:          execution,
+//   - []ParameterChangeInfo: slice of parsed parameter change information
+func (r *ProposalDataResolver) ParameterChangesInfos(execution *governance.ExecutionInfo) []ParameterChangeInfo {
+	infos := make([]governance.ParameterChangeInfo, 0)
+
+	// Return empty slice if no executions
+	if execution.Num() <= 0 {
+		return infos
 	}
+
+	// Parse each execution message
+	for _, msg := range execution.Msgs() {
+		// Split message into components: pkgPath, function, params
+		params := strings.Split(msg, parameterSeparator)
+		if len(params) != 3 {
+			continue // Skip malformed messages
+		}
+
+		pkgPath := params[0]
+		function := params[1]
+		params := strings.Split(params[2], ",")
+
+		// Create parameter change info structure
+		info := governance.NewParameterChangeInfo(pkgPath, function, params)
+		infos = append(infos, info)
+	}
+
+	return infos
 }
 
 // NewProposalTextData creates proposal data for a text proposal.
@@ -285,11 +245,11 @@ func NewProposalData(proposalType ProposalType, communityPoolSpend CommunityPool
 //
 // Returns:
 //   - *ProposalData: proposal data configured for text proposal
-func NewProposalTextData() *ProposalData {
-	return NewProposalData(
-		Text,
-		CommunityPoolSpendInfo{},
-		ExecutionInfo{},
+func NewProposalTextData() *governance.ProposalData {
+	return governance.NewProposalData(
+		governance.Text,
+		governance.CommunityPoolSpendInfo{},
+		governance.ExecutionInfo{},
 	)
 }
 
@@ -309,7 +269,7 @@ func NewProposalCommunityPoolSpendData(
 	to address,
 	amount int64,
 	communityPoolPackagePath string,
-) *ProposalData {
+) *governance.ProposalData {
 	// Create execution message for the token transfer
 	executionInfoMessage := makeExecuteMessage(
 		communityPoolPackagePath,
@@ -317,13 +277,10 @@ func NewProposalCommunityPoolSpendData(
 		[]string{tokenPath, to.String(), ufmt.Sprintf("%d", amount)},
 	)
 
-	return NewProposalData(
-		CommunityPoolSpend,
-		CommunityPoolSpendInfo{to, tokenPath, amount},
-		ExecutionInfo{
-			num:  1,
-			msgs: []string{executionInfoMessage},
-		},
+	return governance.NewProposalData(
+		governance.CommunityPoolSpend,
+		governance.NewCommunityPoolSpendInfo(to, tokenPath, amount),
+		governance.NewExecutionInfo(1, []string{executionInfoMessage}),
 	)
 }
 
@@ -345,63 +302,6 @@ func NewProposalExecutionData(numToExecute int64, executions string) *ProposalDa
 		CommunityPoolSpendInfo{},
 		ExecutionInfo{numToExecute, msgs},
 	)
-}
-
-// CommunityPoolSpendInfo contains information for community pool spending proposals.
-type CommunityPoolSpendInfo struct {
-	to        address // Recipient address for token transfer
-	tokenPath string  // Path of the token to transfer
-	amount    int64   // Amount of tokens to transfer
-}
-
-// ExecutionInfo contains information for parameter change execution.
-// Messages are encoded strings that specify function calls and parameters.
-type ExecutionInfo struct {
-	num  int64    // Number of parameter changes to execute
-	msgs []string // Execution messages separated by messageSeparator (*GOV*)
-}
-
-// ParameterChangesInfos parses the execution messages and returns structured parameter change information.
-// Each message is expected to be in format: pkgPath*EXE*function*EXE*params
-//
-// Returns:
-//   - []ParameterChangeInfo: slice of parsed parameter change information
-func (e *ExecutionInfo) ParameterChangesInfos() []ParameterChangeInfo {
-	infos := make([]ParameterChangeInfo, 0)
-
-	// Return empty slice if no executions
-	if e.num <= 0 {
-		return infos
-	}
-
-	// Parse each execution message
-	for _, msg := range e.msgs {
-		// Split message into components: pkgPath, function, params
-		params := strings.Split(msg, parameterSeparator)
-		if len(params) != 3 {
-			continue // Skip malformed messages
-		}
-
-		pkgPath := params[0]
-		function := params[1]
-		executionParams := strings.Split(params[2], ",")
-
-		// Create parameter change info structure
-		infos = append(infos, ParameterChangeInfo{
-			pkgPath:  pkgPath,
-			function: function,
-			params:   executionParams,
-		})
-	}
-
-	return infos
-}
-
-// ParameterChangeInfo represents a single parameter change to be executed.
-type ParameterChangeInfo struct {
-	pkgPath  string   // Package path of the target contract
-	function string   // Function name to call
-	params   []string // Parameters to pass to the function
 }
 
 // makeExecuteMessage creates a message to execute a function.

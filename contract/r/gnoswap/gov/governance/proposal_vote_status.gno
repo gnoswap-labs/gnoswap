@@ -1,4 +1,4 @@
-package v1
+package governance
 
 // ProposalVoteStatus tracks the voting tallies and requirements for a proposal.
 // This structure manages vote counting, quorum calculation, and voting outcome determination.
@@ -101,7 +101,6 @@ func (p *ProposalVoteStatus) IsPassed() bool {
 //   - error: always nil (reserved for future validation)
 func (p *ProposalVoteStatus) addYesVoteWeight(yea int64) error {
 	p.yea += yea
-
 	return nil
 }
 
@@ -115,7 +114,6 @@ func (p *ProposalVoteStatus) addYesVoteWeight(yea int64) error {
 //   - error: always nil (reserved for future validation)
 func (p *ProposalVoteStatus) addNoVoteWeight(nay int64) error {
 	p.nay += nay
-
 	return nil
 }
 

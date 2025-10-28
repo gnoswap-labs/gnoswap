@@ -1,4 +1,4 @@
-package v1
+package governance
 
 import (
 	"testing"
@@ -64,9 +64,9 @@ func TestProposalActionStatus_CancelAndExecute(t *testing.T) {
 			// when
 			var err error
 			if tc.operation == "cancel" {
-				err = status.cancel(tc.timestamp, tc.height, tc.actor)
+				err = status.Cancel(tc.timestamp, tc.height, tc.actor)
 			} else {
-				err = status.execute(tc.timestamp, tc.height, tc.actor)
+				err = status.Execute(tc.timestamp, tc.height, tc.actor)
 			}
 
 			// then
