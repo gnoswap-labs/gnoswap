@@ -52,8 +52,8 @@ func (gs *govStakerV1) GetClaimableRewardByRewardID(rewardID string) string {
 	if err != nil {
 		panic(err)
 	}
-	resolvedEmissionManager := &EmissionRewardManagerResolver{emissionRewardManager}
-	emissionReward, err := resolvedEmissionManager.GetClaimableRewardAmount(emissionDistributedAmount, rewardID, time.Now().Unix())
+	emissionResolver := NewEmissionRewardManagerResolver(emissionRewardManager)
+	emissionReward, err := emissionResolver.GetClaimableRewardAmount(emissionDistributedAmount, rewardID, time.Now().Unix())
 	if err != nil {
 		panic(err)
 	}
@@ -63,8 +63,8 @@ func (gs *govStakerV1) GetClaimableRewardByRewardID(rewardID string) string {
 	if err != nil {
 		panic(err)
 	}
-	resolvedProtocolFeeManager := &ProtocolFeeRewardManagerResolver{protocolFeeRewardManager}
-	protocolFeeRewards, err := resolvedProtocolFeeManager.GetClaimableRewardAmounts(protocolFeeDistributedAmounts, rewardID, time.Now().Unix())
+	protocolFeeResolver := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
+	protocolFeeRewards, err := protocolFeeResolver.GetClaimableRewardAmounts(protocolFeeDistributedAmounts, rewardID, time.Now().Unix())
 	if err != nil {
 		panic(err)
 	}

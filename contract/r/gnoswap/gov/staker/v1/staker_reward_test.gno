@@ -614,6 +614,127 @@ func TestStakerReward_TokenTransferScenarios(t *testing.T) {
 	}
 }
 
+// Test reward calculation accuracy
+func TestStakerReward_RewardCalculationAccuracy(t *testing.T) {
+	tests := []struct {
+		name                     string
+		userStake                int64
+		totalStake               int64
+		emissionReward           int64
+		protocolFeeReward        map[string]int64
+		updatedEmissionReward    int64
+		updatedProtocolFeeReward map[string]int64
+		expectedEmission         int64
+		expectedProtocol         map[string]int64
+		description              string
+	}{
+		{
+			name:           "equal stake distribution",
+			userStake:      1_000_000_000,
+			totalStake:     10_000_000_000,
+			emissionReward: 0,
+			protocolFeeReward: map[string]int64{
+				GNS_PATH: 0,
+				barPath:  0,
+			},
+			updatedEmissionReward: 100_000_000,
+			updatedProtocolFeeReward: map[string]int64{
+				GNS_PATH: 50_000_000,
+				barPath:  30_000_000,
+			},
+			expectedEmission: 99_999_999,
+			expectedProtocol: map[string]int64{
+				GNS_PATH: 49_999_999,
+				barPath:  29_999_999,
+			},
+		},
+		{
+			name:           "small stake proportion",
+			userStake:      1_000_000,         // 1M
+			totalStake:     1_000_000_000_000, // 1T
+			emissionReward: 0,
+			protocolFeeReward: map[string]int64{
+				GNS_PATH: 0,
+			},
+			updatedEmissionReward: 1_000,
+			updatedProtocolFeeReward: map[string]int64{
+				GNS_PATH: 1_000,
+			},
+			expectedEmission: 999, // 0.0001% of total (with precision loss)
+			expectedProtocol: map[string]int64{
+				GNS_PATH: 999, // 0.0001% of 1B
+			},
+		},
+		{
+			name:           "maximum stake scenario",
+			userStake:      9223372036854775807, // MAX_INT64
+			totalStake:     9223372036854775807,
+			emissionReward: 0,
+			protocolFeeReward: map[string]int64{
+				GNS_PATH: 2_000_000_000,
+			},
+			updatedEmissionReward: 0,
+			updatedProtocolFeeReward: map[string]int64{
+				GNS_PATH: 2_000_000_000,
+			},
+			expectedEmission: 0,
+			expectedProtocol: map[string]int64{
+				GNS_PATH: 0,
+			},
+		},
+		{
+			name:                     "zero total pool",
+			userStake:                1_000_000_000,
+			totalStake:               10_000_000_000,
+			emissionReward:           0,
+			protocolFeeReward:        map[string]int64{},
+			updatedEmissionReward:    0,
+			updatedProtocolFeeReward: map[string]int64{},
+			expectedEmission:         0,
+			expectedProtocol:         map[string]int64{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given: Setup reward pools and stakes
+			cleanupStakerRewardTest(t)
+
+			gs := createTestGovStaker()
+
+			user := testutils.TestAddress("user")
+			setupStakerRewardTestEmissionRewards(t, gs, user, tt.userStake, tt.emissionReward, 100)
+			setupStakerRewardTestProtocolFeeRewards(t, gs, user, tt.userStake, tt.protocolFeeReward, 100)
+
+			setupStakerRewardTestAccumulateEmissionRewards(t, gs, tt.updatedEmissionReward, 1000)
+			setupStakerRewardTestAccumulateProtocolFeeRewards(t, gs, tt.updatedProtocolFeeReward, 1000)
+
+			// When: Claim rewards
+			emissionRewardManager, err := gs.store.GetEmissionRewardManager()
+			uassert.NoError(t, err)
+
+			emissionResolver := NewEmissionRewardManagerResolver(emissionRewardManager)
+			emission, emissionErr := emissionResolver.claimRewards(user.String(), 1000)
+			
+			protocolFeeRewardManager, err := gs.store.GetProtocolFeeRewardManager()
+			uassert.NoError(t, err)
+			protocolResolver := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
+			protocol, protocolFeeErr := protocolResolver.claimRewards(user.String(), 1000)
+
+			// Then: Check calculated amounts
+			uassert.NoError(t, emissionErr)
+			uassert.NoError(t, protocolFeeErr)
+			uassert.Equal(t, emission, tt.expectedEmission)
+
+			for token, expectedAmount := range tt.expectedProtocol {
+				actualAmount, exists := protocol[token]
+				uassert.True(t, exists)
+				uassert.Equal(t, actualAmount, expectedAmount)
+			}
+		})
+	}
+}
+
 // Helper functions for test setup
 func cleanupStakerRewardTest(t *testing.T) {
 	// Create new test govStaker instance for fresh state
