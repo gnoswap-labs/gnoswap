@@ -9,6 +9,10 @@ type EmissionRewardManagerResolver struct {
 	*staker.EmissionRewardManager
 }
 
+func NewEmissionRewardManagerResolver(emissionRewardManager *staker.EmissionRewardManager) *EmissionRewardManagerResolver {
+	return &EmissionRewardManagerResolver{emissionRewardManager}
+}
+
 // GetClaimableRewardAmount calculates the claimable reward amount for a specific address.
 func (self *EmissionRewardManagerResolver) GetClaimableRewardAmount(
 	currentDistributedAmount int64,

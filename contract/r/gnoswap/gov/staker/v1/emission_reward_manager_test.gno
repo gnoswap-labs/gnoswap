@@ -5,6 +5,8 @@ import (
 
 	"gno.land/p/nt/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/gov/staker"
 )
 
 // Test EmissionRewardManager creation
@@ -20,14 +22,15 @@ func TestNewEmissionRewardManager(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// When: Create new emission reward manager
-			manager := NewEmissionRewardManager()
+			manager := staker.NewEmissionRewardManager()
+			resolver := NewEmissionRewardManagerResolver(manager)
 
 			// Then: Should initialize with zero values
-			uassert.NotEqual(t, manager, nil)
-			uassert.Equal(t, manager.GetAccumulatedRewardX128PerStake().ToString(), "0")
-			uassert.Equal(t, manager.GetAccumulatedTimestamp(), int64(0))
-			uassert.Equal(t, manager.GetTotalStakedAmount(), int64(0))
-			uassert.Equal(t, manager.GetDistributedAmount(), int64(0))
+			uassert.NotEqual(t, resolver, nil)
+			uassert.Equal(t, resolver.GetAccumulatedRewardX128PerStake().ToString(), "0")
+			uassert.Equal(t, resolver.GetAccumulatedTimestamp(), int64(0))
+			uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(0))
+			uassert.Equal(t, resolver.GetDistributedAmount(), int64(0))
 		})
 	}
 }
@@ -36,18 +39,18 @@ func TestNewEmissionRewardManager(t *testing.T) {
 func TestEmissionRewardManager_GetAccumulatedRewardX128PerStake(t *testing.T) {
 	tests := []struct {
 		name     string
-		setup    func(*EmissionRewardManager)
+		setup    func(*EmissionRewardManagerResolver)
 		expected string
 	}{
 		{
 			name:     "Initial accumulated reward should be zero",
-			setup:    func(m *EmissionRewardManager) {},
+			setup:    func(m *EmissionRewardManagerResolver) {},
 			expected: "0",
 		},
 		{
 			name: "After setting accumulated reward",
-			setup: func(m *EmissionRewardManager) {
-				m.accumulatedRewardX128PerStake = u256.NewUintFromInt64(1000)
+			setup: func(m *EmissionRewardManagerResolver) {
+				m.SetAccumulatedRewardX128PerStake(u256.NewUintFromInt64(1000))
 			},
 			expected: "1000",
 		},
@@ -56,11 +59,12 @@ func TestEmissionRewardManager_GetAccumulatedRewardX128PerStake(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward manager
-			manager := NewEmissionRewardManager()
-			tt.setup(manager)
+			manager := staker.NewEmissionRewardManager()
+			resolver := NewEmissionRewardManagerResolver(manager)
+			tt.setup(resolver)
 
 			// When: Get accumulated reward X128 per stake
-			result := manager.GetAccumulatedRewardX128PerStake()
+			result := resolver.GetAccumulatedRewardX128PerStake()
 
 			// Then: Should return expected value
 			uassert.Equal(t, result.ToString(), tt.expected)
@@ -72,7 +76,7 @@ func TestEmissionRewardManager_GetAccumulatedRewardX128PerStake(t *testing.T) {
 func TestEmissionRewardManager_GetClaimableRewardAmount(t *testing.T) {
 	tests := []struct {
 		name                     string
-		setupManager             func(*EmissionRewardManager)
+		setupManager             func(*EmissionRewardManagerResolver)
 		currentDistributedAmount int64
 		address                  string
 		currentHeight            int64
@@ -80,7 +84,7 @@ func TestEmissionRewardManager_GetClaimableRewardAmount(t *testing.T) {
 	}{
 		{
 			name:                     "No reward state for address",
-			setupManager:             func(m *EmissionRewardManager) {},
+			setupManager:             func(m *EmissionRewardManagerResolver) {},
 			currentDistributedAmount: 1000,
 			address:                  "user1",
 			currentHeight:            100,
@@ -88,10 +92,10 @@ func TestEmissionRewardManager_GetClaimableRewardAmount(t *testing.T) {
 		},
 		{
 			name: "With existing reward state",
-			setupManager: func(m *EmissionRewardManager) {
+			setupManager: func(m *EmissionRewardManagerResolver) {
 				// Add stake to create reward state
 				m.addStake("user1", 1000, 50)
-				m.totalStakedAmount = 1000
+				m.SetTotalStakedAmount(1000)
 			},
 			currentDistributedAmount: 1000,
 			address:                  "user1",
@@ -103,11 +107,12 @@ func TestEmissionRewardManager_GetClaimableRewardAmount(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward manager setup
-			manager := NewEmissionRewardManager()
-			tt.setupManager(manager)
+			manager := staker.NewEmissionRewardManager()
+			resolver := NewEmissionRewardManagerResolver(manager)
+			tt.setupManager(resolver)
 
 			// When: Get claimable reward amount
-			result, _ := manager.GetClaimableRewardAmount(
+			result, _ := resolver.GetClaimableRewardAmount(
 				tt.currentDistributedAmount,
 				tt.address,
 				tt.currentHeight,
@@ -144,20 +149,22 @@ func TestEmissionRewardManager_addStake(t *testing.T) {
 		},
 	}
 
-	manager := NewEmissionRewardManager()
+	manager := staker.NewEmissionRewardManager()
+	resolver := NewEmissionRewardManagerResolver(manager)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// When: Add stake
-			manager.addStake(tt.address, tt.amount, tt.currentHeight)
+			resolver.addStake(tt.address, tt.amount, tt.currentHeight)
 
 			// Then: Total staked amount should be updated
-			uassert.Equal(t, manager.GetTotalStakedAmount(), tt.expectedTotal)
+			uassert.Equal(t, resolver.GetTotalStakedAmount(), tt.expectedTotal)
 
 			// And: Reward state should be created/updated
-			rewardStateI, ok := manager.rewardStates.Get(tt.address)
+			rewardState, ok, err := resolver.GetRewardState(tt.address)
+			uassert.NoError(t, err)
 			uassert.True(t, ok)
-			uassert.NotEqual(t, rewardStateI, nil)
+			uassert.NotEqual(t, rewardState, nil)
 		})
 	}
 }
@@ -190,14 +197,15 @@ func TestEmissionRewardManager_removeStake(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Manager with initial stake
-			manager := NewEmissionRewardManager()
-			manager.addStake("user1", tt.initialAmount, 50)
+			manager := staker.NewEmissionRewardManager()
+			resolver := NewEmissionRewardManagerResolver(manager)
+			resolver.addStake("user1", tt.initialAmount, 50)
 
 			// When: Remove stake
-			manager.removeStake("user1", tt.removeAmount, tt.currentHeight)
+			resolver.removeStake("user1", tt.removeAmount, tt.currentHeight)
 
 			// Then: Total staked amount should be updated
-			uassert.Equal(t, manager.GetTotalStakedAmount(), tt.expectedAmount)
+			uassert.Equal(t, resolver.GetTotalStakedAmount(), tt.expectedAmount)
 		})
 	}
 }
@@ -206,7 +214,7 @@ func TestEmissionRewardManager_removeStake(t *testing.T) {
 func TestEmissionRewardManager_claimRewards(t *testing.T) {
 	tests := []struct {
 		name           string
-		setupManager   func(*EmissionRewardManager)
+		setupManager   func(*EmissionRewardManagerResolver)
 		address        string
 		currentHeight  int64
 		expectError    bool
@@ -214,7 +222,7 @@ func TestEmissionRewardManager_claimRewards(t *testing.T) {
 	}{
 		{
 			name:           "Claim rewards for non-existent user",
-			setupManager:   func(m *EmissionRewardManager) {},
+			setupManager:   func(m *EmissionRewardManagerResolver) {},
 			address:        "user1",
 			currentHeight:  100,
 			expectedReward: 0,
@@ -222,9 +230,8 @@ func TestEmissionRewardManager_claimRewards(t *testing.T) {
 		},
 		{
 			name: "Claim rewards for existing user",
-			setupManager: func(m *EmissionRewardManager) {
+			setupManager: func(m *EmissionRewardManagerResolver) {
 				m.addStake("user1", 1000, 50)
-				// Simulate some distributed rewards
 				m.updateAccumulatedRewardX128PerStake(1000, 50)
 			},
 			address:        "user1",
@@ -237,11 +244,17 @@ func TestEmissionRewardManager_claimRewards(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward manager setup
-			manager := NewEmissionRewardManager()
-			tt.setupManager(manager)
+			manager := staker.NewEmissionRewardManager()
+			resolver := NewEmissionRewardManagerResolver(manager)
+			tt.setupManager(resolver)
 
 			// When: Claim rewards
-			reward, err := manager.claimRewards(tt.address, tt.currentHeight)
+			println("=== Before claiming rewards ===")
+			claimableReward, _ := resolver.GetClaimableRewardAmount(resolver.GetDistributedAmount(), tt.address, tt.currentHeight)
+			println("Claimable reward amount:", claimableReward)
+			
+			reward, err := resolver.claimRewards(tt.address, tt.currentHeight)
+			println("Actual claimed reward:", reward)
 
 			// Then: Check result
 			if tt.expectError {
@@ -258,16 +271,16 @@ func TestEmissionRewardManager_claimRewards(t *testing.T) {
 func TestEmissionRewardManager_calculateAccumulatedRewardX128PerStake(t *testing.T) {
 	tests := []struct {
 		name                     string
-		setupManager             func(*EmissionRewardManager)
+		setupManager             func(*EmissionRewardManagerResolver)
 		currentDistributedAmount int64
 		currentHeight            int64
 		shouldIncrease           bool
 	}{
 		{
 			name: "Current height less than accumulated height",
-			setupManager: func(m *EmissionRewardManager) {
-				m.accumulatedTimestamp = 200
-				m.accumulatedRewardX128PerStake = u256.NewUintFromInt64(1000)
+			setupManager: func(m *EmissionRewardManagerResolver) {
+				m.SetAccumulatedTimestamp(200)
+				m.SetAccumulatedRewardX128PerStake(u256.NewUintFromInt64(1000))
 			},
 			currentDistributedAmount: 1000,
 			currentHeight:            100,
@@ -275,10 +288,10 @@ func TestEmissionRewardManager_calculateAccumulatedRewardX128PerStake(t *testing
 		},
 		{
 			name: "No staked amount",
-			setupManager: func(m *EmissionRewardManager) {
-				m.totalStakedAmount = 0
-				m.accumulatedTimestamp = 50
-				m.accumulatedRewardX128PerStake = u256.NewUintFromInt64(500)
+			setupManager: func(m *EmissionRewardManagerResolver) {
+				m.SetTotalStakedAmount(0)
+				m.SetAccumulatedTimestamp(50)
+				m.SetAccumulatedRewardX128PerStake(u256.NewUintFromInt64(500))
 			},
 			currentDistributedAmount: 1000,
 			currentHeight:            100,
@@ -286,11 +299,11 @@ func TestEmissionRewardManager_calculateAccumulatedRewardX128PerStake(t *testing
 		},
 		{
 			name: "Normal reward calculation",
-			setupManager: func(m *EmissionRewardManager) {
-				m.totalStakedAmount = 1000
-				m.distributedAmount = 500
-				m.accumulatedTimestamp = 50
-				m.accumulatedRewardX128PerStake = u256.NewUintFromInt64(0)
+			setupManager: func(m *EmissionRewardManagerResolver) {
+				m.SetTotalStakedAmount(1000)
+				m.SetDistributedAmount(500)
+				m.SetAccumulatedTimestamp(50)
+				m.SetAccumulatedRewardX128PerStake(u256.NewUintFromInt64(0))
 			},
 			currentDistributedAmount: 1000,
 			currentHeight:            100,
@@ -301,15 +314,16 @@ func TestEmissionRewardManager_calculateAccumulatedRewardX128PerStake(t *testing
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward manager setup
-			manager := NewEmissionRewardManager()
+			manager := staker.NewEmissionRewardManager()
+			resolver := NewEmissionRewardManagerResolver(manager)
 			initialReward := u256.NewUintFromInt64(0)
-			tt.setupManager(manager)
-			if manager.accumulatedRewardX128PerStake != nil {
-				initialReward = manager.accumulatedRewardX128PerStake.Clone()
+			tt.setupManager(resolver)
+			if resolver.GetAccumulatedRewardX128PerStake() != nil {
+				initialReward = resolver.GetAccumulatedRewardX128PerStake().Clone()
 			}
 
 			// When: Calculate accumulated reward X128 per stake
-			result, _ := manager.calculateAccumulatedRewardX128PerStake(
+			result, _ := resolver.calculateAccumulatedRewardX128PerStake(
 				tt.currentDistributedAmount,
 				tt.currentHeight,
 			)
@@ -328,16 +342,16 @@ func TestEmissionRewardManager_calculateAccumulatedRewardX128PerStake(t *testing
 func TestEmissionRewardManager_updateAccumulatedRewardX128PerStake(t *testing.T) {
 	tests := []struct {
 		name                     string
-		setupManager             func(*EmissionRewardManager)
+		setupManager             func(*EmissionRewardManagerResolver)
 		currentDistributedAmount int64
 		currentHeight            int64
 		shouldUpdate             bool
 	}{
 		{
 			name: "Should not update when current height is less",
-			setupManager: func(m *EmissionRewardManager) {
-				m.accumulatedTimestamp = 200
-				m.distributedAmount = 500
+			setupManager: func(m *EmissionRewardManagerResolver) {
+				m.SetAccumulatedTimestamp(200)
+				m.SetDistributedAmount(500)
 			},
 			currentDistributedAmount: 1000,
 			currentHeight:            100,
@@ -345,10 +359,10 @@ func TestEmissionRewardManager_updateAccumulatedRewardX128PerStake(t *testing.T)
 		},
 		{
 			name: "Should not update when no staked amount",
-			setupManager: func(m *EmissionRewardManager) {
-				m.accumulatedTimestamp = 50
-				m.totalStakedAmount = 0
-				m.distributedAmount = 500
+			setupManager: func(m *EmissionRewardManagerResolver) {
+				m.SetAccumulatedTimestamp(50)
+				m.SetTotalStakedAmount(0)
+				m.SetDistributedAmount(500)
 			},
 			currentDistributedAmount: 1000,
 			currentHeight:            100,
@@ -356,10 +370,10 @@ func TestEmissionRewardManager_updateAccumulatedRewardX128PerStake(t *testing.T)
 		},
 		{
 			name: "Should update normally",
-			setupManager: func(m *EmissionRewardManager) {
-				m.accumulatedTimestamp = 50
-				m.totalStakedAmount = 1000
-				m.distributedAmount = 500
+			setupManager: func(m *EmissionRewardManagerResolver) {
+				m.SetAccumulatedTimestamp(50)
+				m.SetTotalStakedAmount(1000)
+				m.SetDistributedAmount(500)
 			},
 			currentDistributedAmount: 1000,
 			currentHeight:            100,
@@ -370,24 +384,26 @@ func TestEmissionRewardManager_updateAccumulatedRewardX128PerStake(t *testing.T)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward manager setup
-			manager := NewEmissionRewardManager()
-			tt.setupManager(manager)
-			initialHeight := manager.accumulatedTimestamp
-			initialDistributed := manager.distributedAmount
+			manager := staker.NewEmissionRewardManager()
+			resolver := NewEmissionRewardManagerResolver(manager)
+
+			tt.setupManager(resolver)
+			initialHeight := resolver.GetAccumulatedTimestamp()
+			initialDistributed := resolver.GetDistributedAmount()
 
 			// When: Update accumulated reward X128 per stake
-			manager.updateAccumulatedRewardX128PerStake(
+			resolver.updateAccumulatedRewardX128PerStake(
 				tt.currentDistributedAmount,
 				tt.currentHeight,
 			)
 
 			// Then: Check if state was updated as expected
 			if tt.shouldUpdate {
-				uassert.Equal(t, manager.accumulatedTimestamp, tt.currentHeight)
-				uassert.Equal(t, manager.distributedAmount, tt.currentDistributedAmount)
+				uassert.Equal(t, resolver.GetAccumulatedTimestamp(), tt.currentHeight)
+				uassert.Equal(t, resolver.GetDistributedAmount(), tt.currentDistributedAmount)
 			} else {
-				uassert.Equal(t, manager.accumulatedTimestamp, initialHeight)
-				uassert.Equal(t, manager.distributedAmount, initialDistributed)
+				uassert.Equal(t, resolver.GetAccumulatedTimestamp(), initialHeight)
+				uassert.Equal(t, resolver.GetDistributedAmount(), initialDistributed)
 			}
 		})
 	}
@@ -399,33 +415,30 @@ func TestEmissionRewardManager_updateAccumulatedRewardX128PerStake(t *testing.T)
 // the new state is not persisted in the tree, and this was a bug.
 // With the fixed code, the state should be saved correctly.
 func TestEmissionRewardManager_removeStake_persistsStateForNewAddress(t *testing.T) {
-	manager := NewEmissionRewardManager()
+	manager := staker.NewEmissionRewardManager()
+	resolver := NewEmissionRewardManagerResolver(manager)
 
 	// Prepare: advance global accumulator once for safety
-	manager.accumulatedRewardX128PerStake = u256.NewUint(0)
-	manager.updateAccumulatedRewardX128PerStake(0, 10)
+	resolver.SetAccumulatedRewardX128PerStake(u256.NewUint(0))
+	resolver.updateAccumulatedRewardX128PerStake(0, 10)
 
 	// When: calling removeStake on an address that does not exist yet
 	addr := "user-new"
-	uassert.Equal(t, manager.totalStakedAmount, int64(0))
-	uassert.Equal(t, manager.GetTotalStakedAmount(), int64(0))
+	uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(0))
 
-	err := manager.removeStake(addr, 100, 20)
+	err := resolver.removeStake(addr, 100, 20)
 	uassert.NoError(t, err)
 
 	// Then: state should be persisted in the tree
 	// (this fails in the buggy version where Set was missing)
-	if ri, ok := manager.rewardStates.Get(addr); !ok {
-		t.Fatalf("expected reward state to be persisted for new address after removeStake, but not found (bug)")
-	} else {
-		// Type and field checks
-		rs, castOK := ri.(*EmissionRewardState)
-		uassert.True(t, castOK)
-		uassert.NotEqual(t, rs, nil)
-		uassert.Equal(t, rs.stakedAmount, int64(0)) // clamped to 0, no negative values
-		// rewardDebtX128 should be a cloned snapshot
-		uassert.NotEqual(t, rs.rewardDebtX128, nil)
-	}
+	rs, ok, err := resolver.GetRewardState(addr)
+	uassert.NoError(t, err)
+	uassert.True(t, ok)
+
+	uassert.NotEqual(t, rs, nil)
+	uassert.Equal(t, rs.GetStakedAmount(), int64(0)) // clamped to 0, no negative values
+	// rewardDebtX128 should be a cloned snapshot
+	uassert.NotEqual(t, rs.GetRewardDebtX128(), nil)
 }
 
 // removeStake bug reproduction 2 (defensive check):
@@ -434,29 +447,30 @@ func TestEmissionRewardManager_removeStake_persistsStateForNewAddress(t *testing
 // In the buggy version, this may rely on pointer aliasing instead of Set persistence.
 // This test ensures round-trip read/write correctness.
 func TestEmissionRewardManager_removeStake_updatesPersistedState(t *testing.T) {
-	manager := NewEmissionRewardManager()
+	manager := staker.NewEmissionRewardManager()
+	resolver := NewEmissionRewardManagerResolver(manager)
 
 	addr := "user1"
 	// Given: add stake → creates and saves state
-	err := manager.addStake(addr, 1000, 50)
+	err := resolver.addStake(addr, 1000, 50)
 	uassert.NoError(t, err)
-	uassert.Equal(t, manager.GetTotalStakedAmount(), int64(1000))
+	uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(1000))
 
 	// When: remove part of the stake
-	err = manager.removeStake(addr, 300, 100)
+	err = resolver.removeStake(addr, 300, 100)
 	uassert.NoError(t, err)
-	uassert.Equal(t, manager.GetTotalStakedAmount(), int64(700))
+	uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(700))
 
 	// Then: re-read from tree should reflect the reduced stake
-	ri, ok := manager.rewardStates.Get(addr)
+	rs, ok, err := resolver.GetRewardState(addr)
+	uassert.NoError(t, err)
 	uassert.True(t, ok)
-	rs, castOK := ri.(*EmissionRewardState)
-	uassert.True(t, castOK)
+
 	uassert.NotEqual(t, rs, nil)
-	uassert.Equal(t, rs.stakedAmount, int64(700))
+	uassert.Equal(t, rs.GetStakedAmount(), int64(700))
 
 	// Extra check: subsequent operations should remain consistent
-	claimed, err := manager.claimRewards(addr, 120)
+	claimed, err := resolver.claimRewards(addr, 120)
 	uassert.NoError(t, err)
 	// Since no rewards were distributed, claimed amount should be zero
 	uassert.Equal(t, claimed, int64(0))

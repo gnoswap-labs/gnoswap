@@ -8,6 +8,10 @@ type DelegationManagerResolver struct {
 	*staker.DelegationManager
 }
 
+func NewDelegationManagerResolver(delegationManager *staker.DelegationManager) *DelegationManagerResolver {
+	return &DelegationManagerResolver{delegationManager}
+}
+
 // GetUserDelegationIDsWithDelegatee retrieves all delegation IDs for a specific delegator-delegatee pair.
 // This method is used to find delegations from a specific user to a specific delegate.
 //

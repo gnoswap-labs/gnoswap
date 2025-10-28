@@ -13,54 +13,8 @@ type EmissionRewardStateResolver struct {
 	*staker.EmissionRewardState
 }
 
-/* Getters */
-func (self *EmissionRewardStateResolver) getRewardDebtX128() *u256.Uint {
-	return self.GetRewardDebtX128()
-}
-
-func (self *EmissionRewardStateResolver) getAccumulatedRewardAmount() int64 {
-	return self.GetAccumulatedRewardAmount()
-}
-
-func (self *EmissionRewardStateResolver) getAccumulatedTimestamp() int64 {
-	return self.GetAccumulatedTimestamp()
-}
-
-func (self *EmissionRewardStateResolver) getClaimedRewardAmount() int64 {
-	return self.GetClaimedRewardAmount()
-}
-
-func (self *EmissionRewardStateResolver) getClaimedTimestamp() int64 {
-	return self.GetClaimedTimestamp()
-}
-
-func (self *EmissionRewardStateResolver) getStakedAmount() int64 {
-	return self.GetStakedAmount()
-}
-
-/* Setters */
-func (self *EmissionRewardStateResolver) setRewardDebtX128(rewardDebtX128 *u256.Uint) {
-	self.SetRewardDebtX128(rewardDebtX128)
-}
-
-func (self *EmissionRewardStateResolver) setAccumulatedRewardAmount(accumulatedRewardAmount int64) {
-	self.SetAccumulatedRewardAmount(accumulatedRewardAmount)
-}
-
-func (self *EmissionRewardStateResolver) setAccumulatedTimestamp(accumulatedTimestamp int64) {
-	self.SetAccumulatedTimestamp(accumulatedTimestamp)
-}
-
-func (self *EmissionRewardStateResolver) setClaimedRewardAmount(claimedRewardAmount int64) {
-	self.SetClaimedRewardAmount(claimedRewardAmount)
-}
-
-func (self *EmissionRewardStateResolver) setClaimedTimestamp(claimedTimestamp int64) {
-	self.SetClaimedTimestamp(claimedTimestamp)
-}
-
-func (self *EmissionRewardStateResolver) setStakedAmount(stakedAmount int64) {
-	self.SetStakedAmount(stakedAmount)
+func NewEmissionRewardStateResolver(emissionRewardState *staker.EmissionRewardState) *EmissionRewardStateResolver {
+	return &EmissionRewardStateResolver{emissionRewardState}
 }
 
 // IsClaimable checks if rewards can be claimed at the given timestamp.
@@ -161,7 +115,7 @@ func (self *EmissionRewardStateResolver) adjustStake(delta int64) {
 	if newAmt < 0 {
 		newAmt = 0
 	}
-	self.setStakedAmount(newAmt)
+	self.SetStakedAmount(newAmt)
 }
 
 // claimRewards processes reward claiming and updates the claim state.
@@ -179,11 +133,13 @@ func (self *EmissionRewardStateResolver) claimRewards(currentTimestamp int64) (i
 	}
 
 	accumulatedRewardAmount := self.GetAccumulatedRewardAmount()
+	previousClaimedAmount := self.GetClaimedRewardAmount()
+	claimableAmount := accumulatedRewardAmount - previousClaimedAmount
 
-	self.setClaimedRewardAmount(accumulatedRewardAmount)
-	self.setClaimedTimestamp(currentTimestamp)
+	self.SetClaimedRewardAmount(accumulatedRewardAmount)
+	self.SetClaimedTimestamp(currentTimestamp)
 
-	return accumulatedRewardAmount - self.GetClaimedRewardAmount(), nil
+	return claimableAmount, nil
 }
 
 // updateRewardDebtX128 updates the reward debt and accumulates new rewards.
@@ -203,12 +159,12 @@ func (self *EmissionRewardStateResolver) updateRewardDebtX128(
 
 	// Accumulate newly earned rewards
 	if rewardAmount != 0 {
-		self.setAccumulatedRewardAmount(self.getAccumulatedRewardAmount() + rewardAmount)
+		self.SetAccumulatedRewardAmount(self.GetAccumulatedRewardAmount() + rewardAmount)
 	}
 
 	// Deep copy to avoid aliasing with external state
-	self.setRewardDebtX128(accumulatedRewardX128PerStake.Clone())
-	self.setAccumulatedTimestamp(currentTimestamp)
+	self.SetRewardDebtX128(accumulatedRewardX128PerStake.Clone())
+	self.SetAccumulatedTimestamp(currentTimestamp)
 	return nil
 }
 

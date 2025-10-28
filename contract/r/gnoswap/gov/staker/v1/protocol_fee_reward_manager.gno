@@ -9,6 +9,10 @@ type ProtocolFeeRewardManagerResolver struct {
 	*staker.ProtocolFeeRewardManager
 }
 
+func NewProtocolFeeRewardManagerResolver(manager *staker.ProtocolFeeRewardManager) *ProtocolFeeRewardManagerResolver {
+	return &ProtocolFeeRewardManagerResolver{ manager }
+}
+
 // GetClaimableRewardAmounts calculates the claimable reward amounts for all tokens for a specific address.
 // This method computes rewards based on current protocol fee distribution state and staking history.
 //
@@ -78,7 +82,6 @@ func (self *ProtocolFeeRewardManagerResolver) calculateAccumulatedRewardX128PerS
 			if accumulatedProtocolFeesX128PerStake[token] == nil {
 				accumulatedProtocolFeesX128PerStake[token] = u256.NewUint(0)
 			}
-			continue
 		}
 
 		// Scale the fee delta by 2^128 for precision

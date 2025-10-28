@@ -11,6 +11,10 @@ type ProtocolFeeRewardStateResolver struct {
 	*staker.ProtocolFeeRewardState
 }
 
+func NewProtocolFeeRewardStateResolver(protocolFeeRewardState *staker.ProtocolFeeRewardState) *ProtocolFeeRewardStateResolver {
+	return &ProtocolFeeRewardStateResolver{ protocolFeeRewardState }
+}
+
 // IsClaimable checks if rewards can be claimed at the given timestamp.
 // Rewards are claimable if the current timestamp is greater than the last claimed timestamp.
 //

@@ -5,6 +5,7 @@ import (
 
 	"gno.land/p/nt/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/gnoswap/gov/staker"
 )
 
 // Test EmissionRewardState creation
@@ -38,14 +39,15 @@ func TestNewEmissionRewardState(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// When: Create new emission reward state
-			state := NewEmissionRewardState(tt.accumulatedRewardX128PerStake)
+			state := staker.NewEmissionRewardState(tt.accumulatedRewardX128PerStake)
+			resolver := NewEmissionRewardStateResolver(state)
 
 			// Then: Should initialize correctly
-			uassert.NotEqual(t, state, nil)
-			uassert.Equal(t, state.rewardDebtX128.ToString(), tt.expectedRewardDebt)
-			uassert.Equal(t, state.accumulatedRewardAmount, tt.expectedAccumulatedRewardAmount)
-			uassert.Equal(t, state.claimedRewardAmount, tt.expectedClaimedRewardAmount)
-			uassert.Equal(t, state.stakedAmount, tt.expectedStakedAmount)
+			uassert.NotEqual(t, resolver, nil)
+			uassert.Equal(t, resolver.GetRewardDebtX128().ToString(), tt.expectedRewardDebt)
+			uassert.Equal(t, resolver.GetAccumulatedRewardAmount(), tt.expectedAccumulatedRewardAmount)
+			uassert.Equal(t, resolver.GetClaimedRewardAmount(), tt.expectedClaimedRewardAmount)
+			uassert.Equal(t, resolver.GetStakedAmount(), tt.expectedStakedAmount)
 		})
 	}
 }
@@ -87,11 +89,12 @@ func TestEmissionRewardState_IsClaimable(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward state with claimed height
-			state := NewEmissionRewardState(u256.NewUint(0))
-			state.claimedTimestamp = tt.claimedHeight
+			state := staker.NewEmissionRewardState(u256.NewUint(0))
+			resolver := NewEmissionRewardStateResolver(state)
+			resolver.SetClaimedTimestamp(tt.claimedHeight)
 
 			// When: Check if claimable
-			result := state.IsClaimable(tt.currentHeight)
+			result := resolver.IsClaimable(tt.currentHeight)
 
 			// Then: Should return expected result
 			uassert.Equal(t, result, tt.expected)
@@ -103,17 +106,17 @@ func TestEmissionRewardState_IsClaimable(t *testing.T) {
 func TestEmissionRewardState_GetClaimableRewardAmount(t *testing.T) {
 	tests := []struct {
 		name                          string
-		setupState                    func(*EmissionRewardState)
+		setupState                    func(*EmissionRewardStateResolver)
 		accumulatedRewardX128PerStake *u256.Uint
 		currentHeight                 int64
 		expected                      int64
 	}{
 		{
 			name: "No accumulated rewards and no new rewards",
-			setupState: func(s *EmissionRewardState) {
-				s.accumulatedRewardAmount = 0
-				s.stakedAmount = 1000
-				s.rewardDebtX128 = u256.NewUint(0)
+			setupState: func(s *EmissionRewardStateResolver) {
+				s.SetAccumulatedRewardAmount(0)
+				s.SetStakedAmount(1000)
+				s.SetRewardDebtX128(u256.NewUint(0))
 			},
 			accumulatedRewardX128PerStake: u256.NewUint(0),
 			currentHeight:                 100,
@@ -121,10 +124,10 @@ func TestEmissionRewardState_GetClaimableRewardAmount(t *testing.T) {
 		},
 		{
 			name: "With accumulated rewards",
-			setupState: func(s *EmissionRewardState) {
-				s.accumulatedRewardAmount = 500
-				s.stakedAmount = 1000
-				s.rewardDebtX128 = u256.NewUint(0)
+			setupState: func(s *EmissionRewardStateResolver) {
+				s.SetAccumulatedRewardAmount(500)
+				s.SetStakedAmount(1000)
+				s.SetRewardDebtX128(u256.NewUint(0))
 			},
 			accumulatedRewardX128PerStake: u256.NewUint(0),
 			currentHeight:                 100,
@@ -132,11 +135,11 @@ func TestEmissionRewardState_GetClaimableRewardAmount(t *testing.T) {
 		},
 		{
 			name: "With new rewards to calculate",
-			setupState: func(s *EmissionRewardState) {
-				s.accumulatedRewardAmount = 0
-				s.stakedAmount = 1000
-				s.rewardDebtX128 = u256.NewUint(0)
-				s.accumulatedTimestamp = 50
+			setupState: func(s *EmissionRewardStateResolver) {
+				s.SetAccumulatedRewardAmount(0)
+				s.SetStakedAmount(1000)
+				s.SetRewardDebtX128(u256.NewUint(0))
+				s.SetAccumulatedTimestamp(50)
 			},
 			accumulatedRewardX128PerStake: u256.NewUintFromInt64(1000).Lsh(u256.NewUintFromInt64(1000), 128), // 1000 << 128
 			currentHeight:                 100,
@@ -147,11 +150,12 @@ func TestEmissionRewardState_GetClaimableRewardAmount(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward state setup
-			state := NewEmissionRewardState(u256.NewUint(0))
-			tt.setupState(state)
+			state := staker.NewEmissionRewardState(u256.NewUint(0))
+			resolver := NewEmissionRewardStateResolver(state)
+			tt.setupState(resolver)
 
 			// When: Get claimable reward amount
-			result, _ := state.GetClaimableRewardAmount(tt.accumulatedRewardX128PerStake, tt.currentHeight)
+			result, _ := resolver.GetClaimableRewardAmount(tt.accumulatedRewardX128PerStake, tt.currentHeight)
 
 			// Then: Should return expected amount
 			uassert.Equal(t, result, tt.expected)
@@ -163,16 +167,16 @@ func TestEmissionRewardState_GetClaimableRewardAmount(t *testing.T) {
 func TestEmissionRewardState_calculateClaimableRewards(t *testing.T) {
 	tests := []struct {
 		name                          string
-		setupState                    func(*EmissionRewardState)
+		setupState                    func(*EmissionRewardStateResolver)
 		accumulatedRewardX128PerStake *u256.Uint
 		currentHeight                 int64
 		expected                      int64
 	}{
 		{
 			name: "Current height less than accumulated height",
-			setupState: func(s *EmissionRewardState) {
-				s.accumulatedTimestamp = 200
-				s.stakedAmount = 1000
+			setupState: func(s *EmissionRewardStateResolver) {
+				s.SetAccumulatedTimestamp(200)
+				s.SetStakedAmount(1000)
 			},
 			accumulatedRewardX128PerStake: u256.NewUintFromInt64(1000),
 			currentHeight:                 100,
@@ -180,10 +184,10 @@ func TestEmissionRewardState_calculateClaimableRewards(t *testing.T) {
 		},
 		{
 			name: "Normal reward calculation",
-			setupState: func(s *EmissionRewardState) {
-				s.accumulatedTimestamp = 50
-				s.stakedAmount = 1000
-				s.rewardDebtX128 = u256.NewUint(0)
+			setupState: func(s *EmissionRewardStateResolver) {
+				s.SetAccumulatedTimestamp(50)
+				s.SetStakedAmount(1000)
+				s.SetRewardDebtX128(u256.NewUint(0))
 			},
 			accumulatedRewardX128PerStake: u256.NewUintFromInt64(1000).Lsh(u256.NewUintFromInt64(1000), 128),
 			currentHeight:                 100,
@@ -191,10 +195,10 @@ func TestEmissionRewardState_calculateClaimableRewards(t *testing.T) {
 		},
 		{
 			name: "No staked amount",
-			setupState: func(s *EmissionRewardState) {
-				s.accumulatedTimestamp = 50
-				s.stakedAmount = 0
-				s.rewardDebtX128 = u256.NewUint(0)
+			setupState: func(s *EmissionRewardStateResolver) {
+				s.SetAccumulatedTimestamp(50)
+				s.SetStakedAmount(0)
+				s.SetRewardDebtX128(u256.NewUint(0))
 			},
 			accumulatedRewardX128PerStake: u256.NewUintFromInt64(1000).Lsh(u256.NewUintFromInt64(1000), 128),
 			currentHeight:                 100,
@@ -202,10 +206,10 @@ func TestEmissionRewardState_calculateClaimableRewards(t *testing.T) {
 		},
 		{
 			name: "debt slightly less than accumulated",
-			setupState: func(s *EmissionRewardState) {
-				s.accumulatedTimestamp = 50
-				s.stakedAmount = 1000
-				s.rewardDebtX128 = u256.NewUintFromInt64(900).Lsh(u256.NewUintFromInt64(900), 128)
+			setupState: func(s *EmissionRewardStateResolver) {
+				s.SetAccumulatedTimestamp(50)
+				s.SetStakedAmount(1000)
+				s.SetRewardDebtX128(u256.NewUintFromInt64(900).Lsh(u256.NewUintFromInt64(900), 128))
 			},
 			accumulatedRewardX128PerStake: u256.NewUintFromInt64(1000).Lsh(u256.NewUintFromInt64(1000), 128),
 			currentHeight:                 100,
@@ -216,11 +220,12 @@ func TestEmissionRewardState_calculateClaimableRewards(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward state setup
-			state := NewEmissionRewardState(u256.NewUint(0))
-			tt.setupState(state)
+			state := staker.NewEmissionRewardState(u256.NewUint(0))
+			resolver := NewEmissionRewardStateResolver(state)
+			tt.setupState(resolver)
 
 			// When: Calculate claimable rewards
-			result, _ := state.calculateClaimableRewards(tt.accumulatedRewardX128PerStake, tt.currentHeight)
+			result, _ := resolver.calculateClaimableRewards(tt.accumulatedRewardX128PerStake, tt.currentHeight)
 
 			// Then: Should return expected amount
 			uassert.Equal(t, result, tt.expected)
@@ -253,14 +258,15 @@ func TestEmissionRewardState_addStake(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward state with initial stake
-			state := NewEmissionRewardState(u256.NewUint(0))
-			state.stakedAmount = tt.initialStake
+			state := staker.NewEmissionRewardState(u256.NewUint(0))
+			resolver := NewEmissionRewardStateResolver(state)
+			resolver.SetStakedAmount(tt.initialStake)
 
 			// When: Add stake
-			state.addStake(tt.addAmount)
+			resolver.addStake(tt.addAmount)
 
 			// Then: Staked amount should be updated
-			uassert.Equal(t, state.stakedAmount, tt.expectedStake)
+			uassert.Equal(t, resolver.GetStakedAmount(), tt.expectedStake)
 		})
 	}
 }
@@ -290,14 +296,15 @@ func TestEmissionRewardState_removeStake(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward state with initial stake
-			state := NewEmissionRewardState(u256.NewUint(0))
-			state.stakedAmount = tt.initialStake
+			state := staker.NewEmissionRewardState(u256.NewUint(0))
+			resolver := NewEmissionRewardStateResolver(state)
+			resolver.SetStakedAmount(tt.initialStake)
 
 			// When: Remove stake
-			state.removeStake(tt.removeAmount)
+			resolver.removeStake(tt.removeAmount)
 
 			// Then: Staked amount should be updated
-			uassert.Equal(t, state.stakedAmount, tt.expectedStake)
+			uassert.Equal(t, resolver.GetStakedAmount(), tt.expectedStake)
 		})
 	}
 }
@@ -306,7 +313,7 @@ func TestEmissionRewardState_removeStake(t *testing.T) {
 func TestEmissionRewardState_claimRewards(t *testing.T) {
 	tests := []struct {
 		name                     string
-		setupState               func(*EmissionRewardState)
+		setupState               func(*EmissionRewardStateResolver)
 		currentHeight            int64
 		expectError              bool
 		expectedClaimedAmount    int64
@@ -314,20 +321,20 @@ func TestEmissionRewardState_claimRewards(t *testing.T) {
 	}{
 		{
 			name: "Claim when not claimable",
-			setupState: func(s *EmissionRewardState) {
-				s.claimedTimestamp = 100
-				s.accumulatedRewardAmount = 1000
-				s.claimedRewardAmount = 500
+			setupState: func(s *EmissionRewardStateResolver) {
+				s.SetClaimedTimestamp(100)
+				s.SetAccumulatedRewardAmount(1000)
+				s.SetClaimedRewardAmount(500)
 			},
 			currentHeight: 100,
 			expectError:   true,
 		},
 		{
 			name: "Successful claim",
-			setupState: func(s *EmissionRewardState) {
-				s.claimedTimestamp = 50
-				s.accumulatedRewardAmount = 1000
-				s.claimedRewardAmount = 300
+			setupState: func(s *EmissionRewardStateResolver) {
+				s.SetClaimedTimestamp(50)
+				s.SetAccumulatedRewardAmount(1000)
+				s.SetClaimedRewardAmount(300)
 			},
 			currentHeight:            100,
 			expectError:              false,
@@ -339,11 +346,12 @@ func TestEmissionRewardState_claimRewards(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward state setup
-			state := NewEmissionRewardState(u256.NewUint(0))
-			tt.setupState(state)
+			state := staker.NewEmissionRewardState(u256.NewUint(0))
+			resolver := NewEmissionRewardStateResolver(state)
+			tt.setupState(resolver)
 
 			// When: Claim rewards
-			claimedAmount, err := state.claimRewards(tt.currentHeight)
+			claimedAmount, err := resolver.claimRewards(tt.currentHeight)
 
 			// Then: Check result
 			if tt.expectError {
@@ -351,8 +359,8 @@ func TestEmissionRewardState_claimRewards(t *testing.T) {
 			} else {
 				uassert.NoError(t, err)
 				uassert.Equal(t, claimedAmount, tt.expectedClaimedAmount)
-				uassert.Equal(t, state.claimedTimestamp, tt.expectedNewClaimedHeight)
-				uassert.Equal(t, state.claimedRewardAmount, state.accumulatedRewardAmount)
+				uassert.Equal(t, resolver.GetClaimedTimestamp(), tt.expectedNewClaimedHeight)
+				uassert.Equal(t, resolver.GetClaimedRewardAmount(), resolver.GetAccumulatedRewardAmount())
 			}
 		})
 	}
@@ -362,7 +370,7 @@ func TestEmissionRewardState_claimRewards(t *testing.T) {
 func TestEmissionRewardState_updateRewardDebtX128(t *testing.T) {
 	tests := []struct {
 		name                          string
-		setupState                    func(*EmissionRewardState)
+		setupState                    func(*EmissionRewardStateResolver)
 		accumulatedRewardX128PerStake *u256.Uint
 		currentHeight                 int64
 		expectedAccumulatedAmount     int64
@@ -370,11 +378,11 @@ func TestEmissionRewardState_updateRewardDebtX128(t *testing.T) {
 	}{
 		{
 			name: "Update with new rewards",
-			setupState: func(s *EmissionRewardState) {
-				s.accumulatedTimestamp = 50
-				s.accumulatedRewardAmount = 200
-				s.stakedAmount = 1000
-				s.rewardDebtX128 = u256.NewUint(0)
+			setupState: func(s *EmissionRewardStateResolver) {
+				s.SetAccumulatedTimestamp(50)
+				s.SetAccumulatedRewardAmount(200)
+				s.SetStakedAmount(1000)
+				s.SetRewardDebtX128(u256.NewUint(0))
 			},
 			accumulatedRewardX128PerStake: u256.NewUintFromInt64(800).Lsh(u256.NewUintFromInt64(800), 128),
 			currentHeight:                 100,
@@ -383,9 +391,9 @@ func TestEmissionRewardState_updateRewardDebtX128(t *testing.T) {
 		},
 		{
 			name: "No update when current height is not greater",
-			setupState: func(s *EmissionRewardState) {
-				s.accumulatedTimestamp = 100
-				s.accumulatedRewardAmount = 200
+			setupState: func(s *EmissionRewardStateResolver) {
+				s.SetAccumulatedTimestamp(100)
+				s.SetAccumulatedRewardAmount(200)
 			},
 			accumulatedRewardX128PerStake: u256.NewUintFromInt64(800),
 			currentHeight:                 100,
@@ -397,16 +405,17 @@ func TestEmissionRewardState_updateRewardDebtX128(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward state setup
-			state := NewEmissionRewardState(u256.NewUint(0))
-			tt.setupState(state)
+			state := staker.NewEmissionRewardState(u256.NewUint(0))
+			resolver := NewEmissionRewardStateResolver(state)
+			tt.setupState(resolver)
 
 			// When: Update reward debt X128
-			state.updateRewardDebtX128(tt.accumulatedRewardX128PerStake, tt.currentHeight)
+			resolver.updateRewardDebtX128(tt.accumulatedRewardX128PerStake, tt.currentHeight)
 
 			// Then: State should be updated correctly
-			uassert.Equal(t, state.accumulatedRewardAmount, tt.expectedAccumulatedAmount)
-			uassert.Equal(t, state.accumulatedTimestamp, tt.expectedAccumulatedHeight)
-			uassert.Equal(t, state.rewardDebtX128.Cmp(tt.accumulatedRewardX128PerStake), 0)
+			uassert.Equal(t, resolver.GetAccumulatedRewardAmount(), tt.expectedAccumulatedAmount)
+			uassert.Equal(t, resolver.GetAccumulatedTimestamp(), tt.expectedAccumulatedHeight)
+			uassert.Equal(t, resolver.GetRewardDebtX128().Cmp(tt.accumulatedRewardX128PerStake), 0)
 		})
 	}
 }
@@ -415,7 +424,7 @@ func TestEmissionRewardState_updateRewardDebtX128(t *testing.T) {
 func TestEmissionRewardState_addStakeWithUpdateRewardDebtX128(t *testing.T) {
 	tests := []struct {
 		name                          string
-		setupState                    func(*EmissionRewardState)
+		setupState                    func(*EmissionRewardStateResolver)
 		amount                        int64
 		accumulatedRewardX128PerStake *u256.Uint
 		currentHeight                 int64
@@ -423,9 +432,9 @@ func TestEmissionRewardState_addStakeWithUpdateRewardDebtX128(t *testing.T) {
 	}{
 		{
 			name: "Add stake with reward debt update",
-			setupState: func(s *EmissionRewardState) {
-				s.stakedAmount = 500
-				s.accumulatedTimestamp = 50
+			setupState: func(s *EmissionRewardStateResolver) {
+				s.SetStakedAmount(500)
+				s.SetAccumulatedTimestamp(50)
 			},
 			amount:                        300,
 			accumulatedRewardX128PerStake: u256.NewUintFromInt64(1000),
@@ -437,20 +446,21 @@ func TestEmissionRewardState_addStakeWithUpdateRewardDebtX128(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward state setup
-			state := NewEmissionRewardState(u256.NewUint(0))
-			tt.setupState(state)
+			state := staker.NewEmissionRewardState(u256.NewUint(0))
+			resolver := NewEmissionRewardStateResolver(state)
+			tt.setupState(resolver)
 
 			// When: Add stake with update reward debt X128
-			state.addStakeWithUpdateRewardDebtX128(
+			resolver.addStakeWithUpdateRewardDebtX128(
 				tt.amount,
 				tt.accumulatedRewardX128PerStake,
 				tt.currentHeight,
 			)
 
 			// Then: Both stake and reward debt should be updated
-			uassert.Equal(t, state.stakedAmount, tt.expectedStakedAmount)
-			uassert.Equal(t, state.accumulatedTimestamp, tt.currentHeight)
-			uassert.Equal(t, state.rewardDebtX128.Cmp(tt.accumulatedRewardX128PerStake), 0)
+			uassert.Equal(t, resolver.GetStakedAmount(), tt.expectedStakedAmount)
+			uassert.Equal(t, resolver.GetAccumulatedTimestamp(), tt.currentHeight)
+			uassert.Equal(t, resolver.GetRewardDebtX128().Cmp(tt.accumulatedRewardX128PerStake), 0)
 		})
 	}
 }
@@ -459,7 +469,7 @@ func TestEmissionRewardState_addStakeWithUpdateRewardDebtX128(t *testing.T) {
 func TestEmissionRewardState_removeStakeWithUpdateRewardDebtX128(t *testing.T) {
 	tests := []struct {
 		name                          string
-		setupState                    func(*EmissionRewardState)
+		setupState                    func(*EmissionRewardStateResolver)
 		amount                        int64
 		accumulatedRewardX128PerStake *u256.Uint
 		currentHeight                 int64
@@ -467,9 +477,9 @@ func TestEmissionRewardState_removeStakeWithUpdateRewardDebtX128(t *testing.T) {
 	}{
 		{
 			name: "Remove stake with reward debt update",
-			setupState: func(s *EmissionRewardState) {
-				s.stakedAmount = 1000
-				s.accumulatedTimestamp = 50
+			setupState: func(s *EmissionRewardStateResolver) {
+				s.SetStakedAmount(1000)
+				s.SetAccumulatedTimestamp(50)
 			},
 			amount:                        300,
 			accumulatedRewardX128PerStake: u256.NewUintFromInt64(1000),
@@ -481,20 +491,21 @@ func TestEmissionRewardState_removeStakeWithUpdateRewardDebtX128(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward state setup
-			state := NewEmissionRewardState(u256.NewUint(0))
-			tt.setupState(state)
+			state := staker.NewEmissionRewardState(u256.NewUint(0))
+			resolver := NewEmissionRewardStateResolver(state)
+			tt.setupState(resolver)
 
 			// When: Remove stake with update reward debt X128
-			state.removeStakeWithUpdateRewardDebtX128(
+			resolver.removeStakeWithUpdateRewardDebtX128(
 				tt.amount,
 				tt.accumulatedRewardX128PerStake,
 				tt.currentHeight,
 			)
 
 			// Then: Both stake and reward debt should be updated
-			uassert.Equal(t, state.stakedAmount, tt.expectedStakedAmount)
-			uassert.Equal(t, state.accumulatedTimestamp, tt.currentHeight)
-			uassert.Equal(t, state.rewardDebtX128.Cmp(tt.accumulatedRewardX128PerStake), 0)
+			uassert.Equal(t, resolver.GetStakedAmount(), tt.expectedStakedAmount)
+			uassert.Equal(t, resolver.GetAccumulatedTimestamp(), tt.currentHeight)
+			uassert.Equal(t, resolver.GetRewardDebtX128().Cmp(tt.accumulatedRewardX128PerStake), 0)
 		})
 	}
 }
@@ -503,7 +514,7 @@ func TestEmissionRewardState_removeStakeWithUpdateRewardDebtX128(t *testing.T) {
 func TestEmissionRewardState_claimRewardsWithUpdateRewardDebtX128(t *testing.T) {
 	tests := []struct {
 		name                          string
-		setupState                    func(*EmissionRewardState)
+		setupState                    func(*EmissionRewardStateResolver)
 		accumulatedRewardX128PerStake *u256.Uint
 		currentHeight                 int64
 		expectError                   bool
@@ -511,11 +522,11 @@ func TestEmissionRewardState_claimRewardsWithUpdateRewardDebtX128(t *testing.T) 
 	}{
 		{
 			name: "Claim with update when claimable",
-			setupState: func(s *EmissionRewardState) {
-				s.claimedTimestamp = 50
-				s.accumulatedRewardAmount = 500
-				s.claimedRewardAmount = 200
-				s.accumulatedTimestamp = 50
+			setupState: func(s *EmissionRewardStateResolver) {
+				s.SetClaimedTimestamp(50)
+				s.SetAccumulatedRewardAmount(500)
+				s.SetClaimedRewardAmount(200)
+				s.SetAccumulatedTimestamp(50)
 			},
 			accumulatedRewardX128PerStake: u256.NewUintFromInt64(1000),
 			currentHeight:                 100,
@@ -524,10 +535,10 @@ func TestEmissionRewardState_claimRewardsWithUpdateRewardDebtX128(t *testing.T) 
 		},
 		{
 			name: "Claim with update when not claimable",
-			setupState: func(s *EmissionRewardState) {
-				s.claimedTimestamp = 100
-				s.accumulatedRewardAmount = 500
-				s.claimedRewardAmount = 200
+			setupState: func(s *EmissionRewardStateResolver) {
+				s.SetClaimedTimestamp(100)
+				s.SetAccumulatedRewardAmount(500)
+				s.SetClaimedRewardAmount(200)
 			},
 			accumulatedRewardX128PerStake: u256.NewUintFromInt64(1000),
 			currentHeight:                 100,
@@ -538,11 +549,12 @@ func TestEmissionRewardState_claimRewardsWithUpdateRewardDebtX128(t *testing.T) 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Given: Emission reward state setup
-			state := NewEmissionRewardState(u256.NewUint(0))
-			tt.setupState(state)
+			state := staker.NewEmissionRewardState(u256.NewUint(0))
+			resolver := NewEmissionRewardStateResolver(state)
+			tt.setupState(resolver)
 
 			// When: Claim rewards with update reward debt X128
-			claimedAmount, err := state.claimRewardsWithUpdateRewardDebtX128(
+			claimedAmount, err := resolver.claimRewardsWithUpdateRewardDebtX128(
 				tt.accumulatedRewardX128PerStake,
 				tt.currentHeight,
 			)
@@ -553,8 +565,8 @@ func TestEmissionRewardState_claimRewardsWithUpdateRewardDebtX128(t *testing.T) 
 			} else {
 				uassert.NoError(t, err)
 				uassert.Equal(t, claimedAmount, tt.expectedClaimedAmount)
-				uassert.Equal(t, state.accumulatedTimestamp, tt.currentHeight)
-				uassert.Equal(t, state.rewardDebtX128.Cmp(tt.accumulatedRewardX128PerStake), 0)
+				uassert.Equal(t, resolver.GetAccumulatedTimestamp(), tt.currentHeight)
+				uassert.Equal(t, resolver.GetRewardDebtX128().Cmp(tt.accumulatedRewardX128PerStake), 0)
 			}
 		})
 	}

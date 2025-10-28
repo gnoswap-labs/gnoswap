@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"gno.land/p/nt/uassert"
+	"gno.land/r/gnoswap/gov/staker"
 )
 
 // TestDelegationManager_AddAndRemoveDelegation tests adding and removing delegations
@@ -58,20 +59,21 @@ func TestDelegationManager_AddAndRemoveDelegation(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			dm := NewDelegationManager()
+			dm := staker.NewDelegationManager()
+			dmResolver := NewDelegationManagerResolver(dm)
 
 			for i := 0; i < tc.delegationCount; i++ {
-				dm.addDelegation(tc.delegator, address("g1delegatee"), int64(i+1))
+				dmResolver.addDelegation(tc.delegator, address("g1delegatee"), int64(i+1))
 			}
 
 			if tc.operation == "add" {
-				dm.addDelegation(tc.delegator, address("g1delegatee"), tc.delegationID)
+				dmResolver.addDelegation(tc.delegator, address("g1delegatee"), tc.delegationID)
 			} else {
-				dm.removeDelegation(tc.delegator, address("g1delegatee"), tc.delegationID)
+				dmResolver.removeDelegation(tc.delegator, address("g1delegatee"), tc.delegationID)
 			}
 
 			// when & then
-			delegations := dm.GetUserDelegationIDs(tc.delegator)
+			delegations := dmResolver.GetUserDelegationIDs(tc.delegator)
 			uassert.Equal(t, len(delegations), tc.expectedCount)
 
 			found := false
@@ -117,13 +119,14 @@ func TestDelegationManager_GetUserDelegationIDs(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			dm := NewDelegationManager()
+			dm := staker.NewDelegationManager()
+			dmResolver := NewDelegationManagerResolver(dm)
 			for _, delegationID := range tc.delegationIDs {
-				dm.addDelegation(tc.delegator, address("g1delegatee"), delegationID)
+				dmResolver.addDelegation(tc.delegator, address("g1delegatee"), delegationID)
 			}
 
 			// when
-			delegations := dm.GetUserDelegationIDs(tc.delegator)
+			delegations := dmResolver.GetUserDelegationIDs(tc.delegator)
 
 			// then
 			uassert.Equal(t, len(delegations), tc.expectedCount)
@@ -144,14 +147,15 @@ func TestDelegationManager_GetUserDelegationIDs(t *testing.T) {
 // TestNewDelegationManager tests creation of new delegation manager
 func TestNewDelegationManager(t *testing.T) {
 	// when
-	dm := NewDelegationManager()
+	dm := staker.NewDelegationManager()
+	dmResolver := NewDelegationManagerResolver(dm)
 
 	// then
 	uassert.NotNil(t, dm)
-	uassert.NotNil(t, dm.userDelegations)
-	uassert.Equal(t, len(dm.userDelegations), 0)
+	uassert.NotNil(t, dmResolver.GetUserDelegations())
+	uassert.Equal(t, len(dmResolver.GetUserDelegations()), 0)
 
 	// Test initial empty state
-	delegations := dm.GetUserDelegationIDs(address("g1any"))
+	delegations := dmResolver.GetUserDelegationIDs(address("g1any"))
 	uassert.Equal(t, len(delegations), 0)
 }
