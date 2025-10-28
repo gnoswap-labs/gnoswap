@@ -7,7 +7,7 @@ import (
 )
 
 type IncentivesResolver struct {
-	sr.Incentives
+	*sr.Incentives
 }
 
 // Get incentive by incentiveId (checks both active and archived)
@@ -20,7 +20,7 @@ func (self *IncentivesResolver) Get(incentiveId string) (*sr.ExternalIncentive, 
 }
 
 func (self *IncentivesResolver) GetIncentiveResolver(incentiveId string) (*ExternalIncentiveResolver, bool) {
-	if incentive, ok := retrieveIncentive(self.IncentiveTrees(), incentiveId); ok {
+	if incentive, ok := self.Get(incentiveId); ok {
 		return NewExternalIncentiveResolver(incentive), true
 	}
 	return nil, false
@@ -215,7 +215,7 @@ func calculateUnClaimableDuration(unclaimableStart, unclaimableEnd, incentiveSta
 	return endTime - startTime
 }
 
-func NewIncentivesResolver(incentives sr.Incentives) *IncentivesResolver {
+func NewIncentivesResolver(incentives *sr.Incentives) *IncentivesResolver {
 	return &IncentivesResolver{
 		Incentives: incentives,
 	}

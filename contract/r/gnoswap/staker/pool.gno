@@ -63,7 +63,7 @@ type Pool struct {
 
 	rewardCache *UintTree // uint64 timestamp -> int64 gnsReward
 
-	incentives Incentives
+	incentives *Incentives
 
 	ticks Ticks // int32 tickId -> Tick tick
 
@@ -125,12 +125,12 @@ func (p *Pool) SetRewardCache(rewardCache *UintTree) {
 }
 
 // Incentives returns the incentives
-func (p *Pool) Incentives() Incentives {
+func (p *Pool) Incentives() *Incentives {
 	return p.incentives
 }
 
 // SetIncentives sets the incentives
-func (p *Pool) SetIncentives(incentives Incentives) {
+func (p *Pool) SetIncentives(incentives *Incentives) {
 	p.incentives = incentives
 }
 
@@ -306,8 +306,8 @@ func (i *Incentives) IterateArchivedIncentives(fn func(incentiveId string, incen
 	})
 }
 
-func NewIncentives(targetPoolPath string) Incentives {
-	result := Incentives{
+func NewIncentives(targetPoolPath string) *Incentives {
+	result := &Incentives{
 		targetPoolPath:     targetPoolPath,
 		unclaimablePeriods: NewUintTree(),
 		incentives:         avl.NewTree(),
@@ -689,5 +689,108 @@ func (ratio *TierRatio) Get(tier uint64) (uint64, error) {
 		return ratio.Tier3, nil
 	default:
 		return 0, errors.New(ufmt.Sprintf("unsupported tier(%d)", tier))
+	}
+}
+
+// SwapBatchProcessor processes tick crosses in batch for a swap
+// This processor accumulates all tick crosses that occur during a single swap
+// and processes them together at the end, reducing redundant calculations
+// and state updates that would occur with individual tick processing
+type SwapBatchProcessor struct {
+	poolPath  string           // The pool path identifier for this swap
+	pool      *Pool            // Reference to the pool being swapped in
+	crosses   []*SwapTickCross // Accumulated tick crosses during the swap
+	timestamp int64            // Timestamp when the swap started
+	isActive  bool             // Flag to prevent accumulation after swap ends
+}
+
+func (s *SwapBatchProcessor) PoolPath() string {
+	return s.poolPath
+}
+
+func (s *SwapBatchProcessor) SetPoolPath(poolPath string) {
+	s.poolPath = poolPath
+}
+
+func (s *SwapBatchProcessor) Pool() *Pool {
+	return s.pool
+}
+
+func (s *SwapBatchProcessor) SetPool(pool *Pool) {
+	s.pool = pool
+}
+
+func (s *SwapBatchProcessor) Crosses() []*SwapTickCross {
+	return s.crosses
+}
+
+func (s *SwapBatchProcessor) SetCrosses(crosses []*SwapTickCross) {
+	s.crosses = crosses
+}
+
+func (s *SwapBatchProcessor) Timestamp() int64 {
+	return s.timestamp
+}
+
+func (s *SwapBatchProcessor) SetTimestamp(timestamp int64) {
+	s.timestamp = timestamp
+}
+
+func (s *SwapBatchProcessor) IsActive() bool {
+	return s.isActive
+}
+
+func (s *SwapBatchProcessor) SetIsActive(isActive bool) {
+	s.isActive = isActive
+}
+
+func (s *SwapBatchProcessor) LastCross() *SwapTickCross {
+	if len(s.crosses) == 0 {
+		return nil
+	}
+
+	return s.crosses[len(s.crosses)-1]
+}
+
+func (s *SwapBatchProcessor) AddCross(tickCross *SwapTickCross) {
+	s.crosses = append(s.crosses, tickCross)
+}
+
+func NewSwapBatchProcessor(poolPath string, pool *Pool, timestamp int64) *SwapBatchProcessor {
+	return &SwapBatchProcessor{
+		poolPath:  poolPath,
+		pool:      pool,
+		crosses:   make([]*SwapTickCross, 0),
+		timestamp: timestamp,
+		isActive:  true,
+	}
+}
+
+// SwapTickCross stores information about a tick cross during a swap
+// This struct is used to accumulate tick cross events during a single swap transaction
+// for batch processing to optimize gas usage and computational efficiency
+type SwapTickCross struct {
+	tickID     int32     // The tick index that was crossed
+	zeroForOne bool      // Direction of the swap (true: token0->token1, false: token1->token0)
+	delta      *i256.Int // Pre-calculated liquidity delta for this tick cross
+}
+
+func (s *SwapTickCross) TickID() int32 {
+	return s.tickID
+}
+
+func (s *SwapTickCross) ZeroForOne() bool {
+	return s.zeroForOne
+}
+
+func (s *SwapTickCross) Delta() *i256.Int {
+	return s.delta
+}
+
+func NewSwapTickCross(tickID int32, zeroForOne bool, delta *i256.Int) *SwapTickCross {
+	return &SwapTickCross{
+		tickID:     tickID,
+		zeroForOne: zeroForOne,
+		delta:      delta,
 	}
 }

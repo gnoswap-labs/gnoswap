@@ -26,13 +26,22 @@ func init() {
 }
 
 func registerStakerV1() {
-	sr.RegisterInitializer(cross, func(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAccessor) sr.IStaker {
+	sr.RegisterInitializer(cross, func(stakerStore sr.IStakerStore, poolAccessor sr.PoolAccessor, emissionAccessor sr.EmissionAccessor) sr.IStaker {
 		err := initStoreData(stakerStore, emissionAccessor)
 		if err != nil {
 			panic(err)
 		}
 
-		return NewStakerV1(stakerStore, emissionAccessor)
+		instance := NewStakerV1(stakerStore, poolAccessor, emissionAccessor)
+
+		instance.setupSwapHooks()
+		emissionAccessor.SetOnDistributionPctChangeCallback(func(emissionAmountPerSecond int64) {
+			func(cur realm) {
+				instance.emissionCacheUpdateHook(emissionAmountPerSecond)
+			}(cross)
+		})
+
+		return instance
 	})
 }
 

@@ -4,10 +4,8 @@ import sr "gno.land/r/gnoswap/staker"
 
 type stakerV1 struct {
 	store            sr.IStakerStore
+	poolAccessor     sr.PoolAccessor
 	emissionAccessor sr.EmissionAccessor
-
-	// Global batch processor for current swap
-	currentSwapBatch *SwapBatchProcessor
 }
 
 func (s *stakerV1) getPools() *Pools {
@@ -78,18 +76,10 @@ func (s *stakerV1) getDepositResolver(lpTokenId uint64) *DepositResolver {
 	return NewDepositResolver(s.getDeposit(lpTokenId))
 }
 
-func NewStakerV1(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAccessor) sr.IStaker {
-	instance := &stakerV1{
+func NewStakerV1(stakerStore sr.IStakerStore, poolAccessor sr.PoolAccessor, emissionAccessor sr.EmissionAccessor) *stakerV1 {
+	return &stakerV1{
 		store:            stakerStore,
+		poolAccessor:     poolAccessor,
 		emissionAccessor: emissionAccessor,
-		currentSwapBatch: nil,
 	}
-
-	instance.setupSwapHooks()
-
-	emissionAccessor.SetOnDistributionPctChangeCallback(func(emissionAmountPerSecond int64) {
-		instance.emissionCacheUpdateHook(emissionAmountPerSecond)
-	})
-
-	return instance
 }

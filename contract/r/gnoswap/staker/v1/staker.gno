@@ -236,9 +236,7 @@ func (s *stakerV1) emissionCacheUpdateHook(emissionAmountPerSecond int64) {
 	if poolTier != nil {
 		currentTime := time.Now().Unix()
 		currentHeight := runtime.ChainHeight()
-		pools := &Pools{
-			tree: s.store.GetPools(),
-		}
+		pools := s.getPools()
 
 		// First cache the current rewards before updating emission
 		poolTier.cacheReward(currentHeight, currentTime, pools)
@@ -314,7 +312,8 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 		panic(err.Error())
 	}
 
-	pool, ok := s.getPools().Get(poolPath)
+	pools := s.getPools()
+	pool, ok := pools.Get(poolPath)
 	if !ok {
 		panic(makeErrorWithDetails(
 			errNonIncentivizedPool,
@@ -326,6 +325,7 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	tickLower, tickUpper := getTickOf(positionId)
 
 	warmups := s.store.GetWarmupTemplate()
+	currentWarmups := instantiateWarmup(warmups, currentTime)
 
 	// staked status
 	deposit := sr.NewDeposit(
@@ -335,12 +335,14 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 		currentTime,
 		tickLower,
 		tickUpper,
-		warmups,
+		currentWarmups,
 	)
 
 	currentTick := pl.GetSlot0Tick(poolPath)
 
-	s.getDeposits().set(positionId, deposit)
+	deposits := s.getDeposits()
+	deposits.set(positionId, deposit)
+
 	s.getStakers().addDeposit(caller, positionId, deposit)
 
 	// transfer NFT ownership to staker contract
@@ -354,7 +356,10 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	signedLiquidity := i256.FromUint256(liquidity)
 
 	currentHeight := runtime.ChainHeight()
-	s.getPoolTier().cacheReward(currentHeight, currentTime, s.getPools())
+
+	poolTier := s.getPoolTier()
+	poolTier.cacheReward(currentHeight, currentTime, pools)
+	s.updatePoolTier(poolTier)
 
 	poolResolver := NewPoolResolver(pool)
 
@@ -364,15 +369,13 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 		poolResolver.modifyDeposit(signedLiquidity, currentTime, currentTick)
 	}
 	// historical tick must be set regardless of the deposit's range
-	pool.HistoricalTick().Set(currentTime, currentTick)
+	poolResolver.HistoricalTick().Set(currentTime, currentTick)
 
 	// This could happen because of how position stores the ticks.
 	// Ticks are negated if the token1 < token0.
-	upperTick := poolResolver.TickResolver(tickUpper)
-	lowerTick := poolResolver.TickResolver(tickLower)
-
-	upperTick.modifyDepositUpper(currentTime, signedLiquidity)
-	lowerTick.modifyDepositLower(currentTime, signedLiquidity)
+	poolResolver.TickResolver(tickUpper).modifyDepositUpper(currentTime, signedLiquidity)
+	poolResolver.TickResolver(tickLower).modifyDepositLower(currentTime, signedLiquidity)
+	s.getPools().set(poolPath, pool)
 
 	chain.Emit(
 		"StakeToken",
@@ -638,7 +641,8 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 		panic(err)
 	}
 
-	s.getDeposits().set(positionId, deposit)
+	deposits := s.getDeposits()
+	deposits.set(positionId, deposit)
 
 	return rewardToUser, rewardPenalty, toUserExternalReward, toUserExternalPenalty
 }

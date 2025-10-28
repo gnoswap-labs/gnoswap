@@ -1,6 +1,39 @@
 package staker
 
-import "gno.land/r/gnoswap/emission"
+import (
+	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/pool"
+)
+
+type PoolAccessor interface {
+	SetTickCrossHook(hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64))
+	SetSwapStartHook(hook func(cur realm, poolPath string, timestamp int64))
+	SetSwapEndHook(hook func(cur realm, poolPath string) error)
+}
+
+type poolAccessor struct{}
+
+func (p *poolAccessor) SetTickCrossHook(hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
+	func(cur realm) {
+		pool.SetTickCrossHook(cross, hook)
+	}(cross)
+}
+
+func (p *poolAccessor) SetSwapStartHook(hook func(cur realm, poolPath string, timestamp int64)) {
+	func(cur realm) {
+		pool.SetSwapStartHook(cross, hook)
+	}(cross)
+}
+
+func (p *poolAccessor) SetSwapEndHook(hook func(cur realm, poolPath string) error) {
+	func(cur realm) {
+		pool.SetSwapEndHook(cross, hook)
+	}(cross)
+}
+
+func newPoolAccessor() PoolAccessor {
+	return &poolAccessor{}
+}
 
 type EmissionAccessor interface {
 	MintAndDistributeGns()

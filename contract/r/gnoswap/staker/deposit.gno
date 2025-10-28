@@ -76,12 +76,28 @@ func (d *Deposit) SetCollectedExternalRewards(collectedExternalRewards map[strin
 	d.collectedExternalRewards = collectedExternalRewards
 }
 
+func (d *Deposit) SetCollectedExternalReward(incentiveID string, reward int64) {
+	if d.collectedExternalRewards == nil {
+		d.collectedExternalRewards = make(map[string]int64)
+	}
+
+	d.collectedExternalRewards[incentiveID] = reward
+}
+
 func (d *Deposit) ExternalRewardLastCollectTimes() map[string]int64 {
 	return d.externalRewardLastCollectTimes
 }
 
 func (d *Deposit) SetExternalRewardLastCollectTimes(externalRewardLastCollectTimes map[string]int64) {
 	d.externalRewardLastCollectTimes = externalRewardLastCollectTimes
+}
+
+func (d *Deposit) SetExternalRewardLastCollectTime(incentiveID string, currentTime int64) {
+	if d.externalRewardLastCollectTimes == nil {
+		d.externalRewardLastCollectTimes = make(map[string]int64)
+	}
+
+	d.externalRewardLastCollectTimes[incentiveID] = currentTime
 }
 
 func (d *Deposit) TickLower() int32 {
@@ -136,6 +152,18 @@ type Warmup struct {
 	TimeDuration   int64
 	NextWarmupTime int64 // time when this warmup period ends
 	WarmupRatio    uint64
+}
+
+func (w *Warmup) SetNextWarmupTime(nextWarmupTime int64) {
+	w.NextWarmupTime = nextWarmupTime
+}
+
+func (w *Warmup) SetWarmupRatio(warmupRatio uint64) {
+	w.WarmupRatio = warmupRatio
+}
+
+func (w *Warmup) SetTimeDuration(timeDuration int64) {
+	w.TimeDuration = timeDuration
 }
 
 func DefaultWarmupTemplate() []Warmup {

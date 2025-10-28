@@ -35,6 +35,7 @@ const (
 	StoreKeyPoolTierGetEmission              StoreKey = "poolTierGetEmission"
 	StoreKeyPoolTierGetHalvingBlocksInRange  StoreKey = "poolTierGetHalvingBlocksInRange"
 	StoreKeyWarmupTemplate                   StoreKey = "warmupTemplate"
+	StoreKeyCurrentSwapBatch                 StoreKey = "currentSwapBatch"
 )
 
 type stakerStore struct {
@@ -226,7 +227,8 @@ func (s *stakerStore) SetIncentiveCounter(counter *Counter) error {
 }
 
 func (s *stakerStore) NextIncentiveID(creator address, timestamp int64) string {
-	return makeIncentiveID(creator, timestamp)
+	counter := s.GetIncentiveCounter()
+	return makeIncentiveID(creator, timestamp, counter.Next())
 }
 
 // TokenSpecificMinimumRewards
@@ -504,6 +506,29 @@ func (s *stakerStore) SetWarmupTemplate(warmups []Warmup) error {
 	return s.kvStore.Set(StoreKeyWarmupTemplate.String(), warmups)
 }
 
+// CurrentSwapBatch
+func (s *stakerStore) HasCurrentSwapBatchStoreKey() bool {
+	return s.kvStore.Has(StoreKeyCurrentSwapBatch.String())
+}
+
+func (s *stakerStore) GetCurrentSwapBatch() *SwapBatchProcessor {
+	result, err := s.kvStore.Get(StoreKeyCurrentSwapBatch.String())
+	if err != nil {
+		panic(err)
+	}
+
+	batch, ok := result.(*SwapBatchProcessor)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to *SwapBatchProcessor: %T", result))
+	}
+
+	return batch
+}
+
+func (s *stakerStore) SetCurrentSwapBatch(batch *SwapBatchProcessor) error {
+	return s.kvStore.Set(StoreKeyCurrentSwapBatch.String(), batch)
+}
+
 // NewStakerStore creates a new staker store instance with the provided KV store.
 // This function is used by the upgrade system to create storage instances for each implementation.
 func NewStakerStore(kvStore store.KVStore) IStakerStore {
@@ -516,6 +541,6 @@ func uint64ToString(id uint64) string {
 	return strconv.FormatUint(id, 10)
 }
 
-func makeIncentiveID(creator address, timestamp int64) string {
-	return ufmt.Sprintf("%s:%d", creator.String(), timestamp)
+func makeIncentiveID(creator address, timestamp int64, index int64) string {
+	return ufmt.Sprintf("%s:%d:%d", creator.String(), timestamp, index)
 }

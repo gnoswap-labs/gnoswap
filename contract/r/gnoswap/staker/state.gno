@@ -42,10 +42,12 @@ func initRegisterReadableContract() {
 	poolAddr := access.MustGetAddress(prbac.ROLE_POOL.String())
 	positionAddr := access.MustGetAddress(prbac.ROLE_POSITION.String())
 	routerAddr := access.MustGetAddress(prbac.ROLE_ROUTER.String())
+	emissionAddr := access.MustGetAddress(prbac.ROLE_EMISSION.String())
 
 	kvStore.AddAuthorizedCaller(poolAddr, store.ReadOnly)
 	kvStore.AddAuthorizedCaller(positionAddr, store.ReadOnly)
 	kvStore.AddAuthorizedCaller(routerAddr, store.ReadOnly)
+	kvStore.AddAuthorizedCaller(emissionAddr, store.ReadOnly)
 }
 
 func initializeDomainStore(kvStore store.KVStore) any {

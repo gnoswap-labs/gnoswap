@@ -196,4 +196,9 @@ type IStakerStore interface {
 	HasWarmupTemplateStoreKey() bool
 	GetWarmupTemplate() []Warmup
 	SetWarmupTemplate(warmups []Warmup) error
+
+	// CurrentSwapBatch
+	HasCurrentSwapBatchStoreKey() bool
+	GetCurrentSwapBatch() *SwapBatchProcessor
+	SetCurrentSwapBatch(batch *SwapBatchProcessor) error
 }

@@ -11,7 +11,7 @@ import (
 const maxDurationOneYear = int64(365 * 86400) // 31,536,000 seconds
 
 // expected to be called by governance
-func modifyWarmup(warmupTemplate []sr.Warmup, index int, timeDuration int64) {
+func modifyWarmup(warmupTemplate []sr.Warmup, index int, timeDuration int64) []sr.Warmup {
 	if index >= len(warmupTemplate) {
 		panic(ufmt.Sprintf("index(%d) is out of range", index))
 	}
@@ -27,7 +27,7 @@ func modifyWarmup(warmupTemplate []sr.Warmup, index int, timeDuration int64) {
 			panic(ufmt.Sprintf("last warmup tier must have duration of math.MaxInt64, got %d", timeDuration))
 		}
 		// No modification needed as it's already math.MaxInt64
-		return
+		return warmupTemplate
 	}
 
 	// Limit non-final tier durations to 1 year (365 days)
@@ -35,7 +35,9 @@ func modifyWarmup(warmupTemplate []sr.Warmup, index int, timeDuration int64) {
 		panic(ufmt.Sprintf("warmup duration cannot exceed 1 year (365 days), got %d seconds", timeDuration))
 	}
 
-	warmupTemplate[index].TimeDuration = timeDuration
+	warmupTemplate[index].SetTimeDuration(timeDuration)
+
+	return warmupTemplate
 }
 
 func instantiateWarmup(warmupTemplate []sr.Warmup, currentTime int64) []sr.Warmup {

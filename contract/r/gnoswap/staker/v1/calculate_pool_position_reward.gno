@@ -14,12 +14,16 @@ type Reward struct {
 
 // calculate total position rewards and penalties
 func (s *stakerV1) calcPositionReward(currentHeight, currentTimestamp int64, positionId uint64) Reward {
-	rewards := calculatePositionReward(CalcPositionRewardParam{
+	pools := s.getPools()
+	poolTier := s.getPoolTier()
+	deposits := s.getDeposits()
+
+	rewards := s.calculatePositionReward(&CalcPositionRewardParam{
 		CurrentHeight: currentHeight,
 		CurrentTime:   currentTimestamp,
-		Deposits:      s.getDeposits(),
-		Pools:         s.getPools(),
-		PoolTier:      s.getPoolTier(),
+		Deposits:      deposits,
+		Pools:         pools,
+		PoolTier:      poolTier,
 		PositionId:    positionId,
 	})
 
@@ -72,9 +76,10 @@ type CalcPositionRewardParam struct {
 	PositionId uint64
 }
 
-func calculatePositionReward(param CalcPositionRewardParam) []Reward {
+func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Reward {
 	// cache per-pool rewards in the internal incentive(tiers)
 	param.PoolTier.cacheReward(param.CurrentHeight, param.CurrentTime, param.Pools)
+	s.updatePoolTier(param.PoolTier)
 
 	deposit := param.Deposits.get(param.PositionId)
 	depositResolver := NewDepositResolver(deposit)
@@ -87,7 +92,7 @@ func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 	}
 	poolResolver := NewPoolResolver(pool)
 
-	lastCollectTime := deposit.InternalRewardLastCollectTime()
+	lastCollectTime := depositResolver.InternalRewardLastCollectTime()
 
 	// Initializes reward/penalty arrays for rewards and penalties for each warmup
 	warmups := len(deposit.Warmups())
@@ -125,7 +130,7 @@ func calculatePositionReward(param CalcPositionRewardParam) []Reward {
 
 		incentiveResolver := NewExternalIncentiveResolver(incentive)
 		// Check if incentive is active during this specific collection period
-		if !incentiveResolver.IsStarted(param.CurrentTime) || incentive.StartTimestamp() >= param.CurrentTime {
+		if !incentiveResolver.IsStarted(param.CurrentTime) || incentiveResolver.StartTimestamp() >= param.CurrentTime {
 			continue
 		}
 

@@ -43,7 +43,8 @@ func (self *ExternalIncentiveResolver) RewardSpent(currentTimestamp int64) int64
 // addDistributedRewardAmount adds the given amount to the distributed reward amount.
 // This function is used to add the distributed reward amount when the incentive is un-staked and refunded.
 func (self *ExternalIncentiveResolver) addDistributedRewardAmount(amount int64) {
-	self.SetDistributedRewardAmount(safeAddInt64(self.DistributedRewardAmount(), amount))
+	distributedRewardAmount := safeAddInt64(self.DistributedRewardAmount(), amount)
+	self.SetDistributedRewardAmount(distributedRewardAmount)
 }
 
 func (self *ExternalIncentiveResolver) Clone() *ExternalIncentiveResolver {
@@ -68,31 +69,27 @@ type DepositResolver struct {
 // InternalRewardLastCollectTime returns the last collect time for the internal reward.
 // If the last collect time is 0, it returns the staked time.
 func (self *DepositResolver) InternalRewardLastCollectTime() int64 {
-	if self.InternalRewardLastCollectTime() == 0 {
-		return self.StakeTime()
+	if self.Deposit.InternalRewardLastCollectTime() == 0 {
+		return self.Deposit.StakeTime()
 	}
 
-	return self.InternalRewardLastCollectTime()
+	return self.Deposit.InternalRewardLastCollectTime()
 }
 
 // ExternalRewardLastCollectTime returns the last collect time for the external reward for the given incentive ID.
 // If the last collect time is 0, it returns the staked time.
 func (self *DepositResolver) ExternalRewardLastCollectTime(incentiveID string) int64 {
-	lastCollectTime, exists := self.ExternalRewardLastCollectTimes()[incentiveID]
+	lastCollectTime, exists := self.Deposit.ExternalRewardLastCollectTimes()[incentiveID]
 	if !exists || lastCollectTime == 0 {
-		return self.StakeTime()
+		return self.Deposit.StakeTime()
 	}
 
 	return lastCollectTime
 }
 
-func (self *DepositResolver) CollectedInternalReward() int64 {
-	return self.CollectedInternalReward()
-}
-
 func (self *DepositResolver) CollectedExternalReward(incentiveID string) int64 {
 	if self.CollectedExternalRewards() == nil {
-		self.SetCollectedExternalRewards(make(map[string]int64))
+		return 0
 	}
 
 	collectedExternalReward, exists := self.CollectedExternalRewards()[incentiveID]
@@ -108,18 +105,8 @@ func (self *DepositResolver) addCollectedInternalReward(reward int64) {
 }
 
 func (self *DepositResolver) addCollectedExternalReward(incentiveID string, reward int64) {
-	if self.CollectedExternalRewards() == nil {
-		self.SetCollectedExternalRewards(make(map[string]int64))
-	}
-
-	collectedExternalRewards := self.CollectedExternalRewards()
-
-	if _, exists := collectedExternalRewards[incentiveID]; !exists {
-		collectedExternalRewards[incentiveID] = 0
-	}
-
-	collectedExternalRewards[incentiveID] = safeAddInt64(collectedExternalRewards[incentiveID], reward)
-	self.SetCollectedExternalRewards(collectedExternalRewards)
+	collectedExternalReward := safeAddInt64(self.CollectedExternalReward(incentiveID), reward)
+	self.SetCollectedExternalReward(incentiveID, collectedExternalReward)
 }
 
 // updateInternalRewardLastCollectTime updates the last collect time for the internal reward.
@@ -146,9 +133,7 @@ func (self *DepositResolver) updateExternalRewardLastCollectTime(incentiveID str
 		return makeErrorWithDetails(errNotAvailableUpdateCollectTime, "currentTime must be greater than external reward last collect time")
 	}
 
-	externalRewardLastCollectTimes := self.ExternalRewardLastCollectTimes()
-	externalRewardLastCollectTimes[incentiveID] = currentTime
-	self.SetExternalRewardLastCollectTimes(externalRewardLastCollectTimes)
+	self.Deposit.SetExternalRewardLastCollectTime(incentiveID, currentTime)
 
 	return nil
 }

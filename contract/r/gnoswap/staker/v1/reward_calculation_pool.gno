@@ -458,7 +458,7 @@ func (self *PoolResolver) modifyDeposit(delta *i256.Int, currentTime int64, next
 		}
 	}
 
-	self.StakedLiquidity().Set(currentTime, deltaApplied)
+	self.Pool.StakedLiquidity().Set(currentTime, deltaApplied)
 
 	return result
 }

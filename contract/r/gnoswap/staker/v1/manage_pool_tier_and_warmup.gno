@@ -155,7 +155,7 @@ func (s *stakerV1) setWarmUp(pct, timeDuration int64) {
 	s.emissionAccessor.MintAndDistributeGns()
 
 	warmupTemplate := s.store.GetWarmupTemplate()
-	modifyWarmup(warmupTemplate, pctToIndex(pct), timeDuration)
+	warmupTemplate = modifyWarmup(warmupTemplate, pctToIndex(pct), timeDuration)
 	s.store.SetWarmupTemplate(warmupTemplate)
 }
 
