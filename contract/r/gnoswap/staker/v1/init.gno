@@ -196,6 +196,13 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 		}
 	}
 
+	if !stakerStore.HasCurrentSwapBatchStoreKey() {
+		err := stakerStore.SetCurrentSwapBatch(nil)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
