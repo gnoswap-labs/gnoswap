@@ -39,7 +39,7 @@ var (
 	routerPath = "gno.land/r/gnoswap/router"
 	rouRealm   = testing.NewCodeRealm(routerPath)
 
-	stakerPath = "gno.land/r/gnoswap/v1/staker"
+	stakerPath = "gno.land/r/gnoswap/staker"
 	stkRealm   = testing.NewCodeRealm(stakerPath)
 
 	govPath  = "gno.land/r/gnoswap/v1/gov/governance"

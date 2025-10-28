@@ -38,7 +38,7 @@ var (
 // Used for reward calculation when positions enter/exit range.
 //
 // Only callable by staker contract.
-func (i *poolV1) SetTickCrossHook(hook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
+func (i *poolV1) SetTickCrossHook(hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
 
@@ -54,7 +54,7 @@ func (i *poolV1) SetTickCrossHook(hook func(poolPath string, tickId int32, zeroF
 // Captures timestamp for time-weighted calculations.
 //
 // Only callable by staker contract.
-func (i *poolV1) SetSwapStartHook(hook func(poolPath string, timestamp int64)) {
+func (i *poolV1) SetSwapStartHook(hook func(cur realm, poolPath string, timestamp int64)) {
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
 
@@ -70,7 +70,7 @@ func (i *poolV1) SetSwapStartHook(hook func(poolPath string, timestamp int64)) {
 // Allows error propagation to revert invalid swaps.
 //
 // Only callable by staker contract.
-func (i *poolV1) SetSwapEndHook(hook func(poolPath string) error) {
+func (i *poolV1) SetSwapEndHook(hook func(cur realm, poolPath string) error) {
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
 
@@ -167,7 +167,7 @@ func (i *poolV1) Swap(
 
 		if swapStartHook != nil {
 			currentTime := time.Now().Unix()
-			swapStartHook(pool.PoolPath(), currentTime)
+			swapStartHook(cross, pool.PoolPath(), currentTime)
 		}
 	}
 
@@ -178,7 +178,7 @@ func (i *poolV1) Swap(
 			swapEndHook := i.store.GetSwapEndHook()
 
 			if swapEndHook != nil {
-				err := swapEndHook(pool.PoolPath())
+				err := swapEndHook(cross, pool.PoolPath())
 				if err != nil {
 					panic(err)
 				}
@@ -692,7 +692,7 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 			tickCrossHook := i.store.GetTickCrossHook()
 
 			currentTime := time.Now().Unix()
-			tickCrossHook(pool.PoolPath(), step.tickNext, zeroForOne, currentTime)
+			tickCrossHook(cross, pool.PoolPath(), step.tickNext, zeroForOne, currentTime)
 		}
 	}
 

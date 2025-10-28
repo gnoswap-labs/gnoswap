@@ -24,7 +24,7 @@ var (
 	// ROUTER_ADDR is the derived address for the router package.
 	ROUTER_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/router")
 	// STAKER_ADDR is the derived address for the staker package.
-	STAKER_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/v1/staker")
+	STAKER_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/staker")
 	// PROTOCOL_FEE_ADDR is the derived address for the protocol fee package.
 	PROTOCOL_FEE_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/protocol_fee")
 	// COMMUNITY_POOL_ADDR is the derived address for the community pool package.

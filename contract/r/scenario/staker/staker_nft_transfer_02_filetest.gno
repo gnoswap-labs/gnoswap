@@ -24,9 +24,10 @@ import (
 
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 
 	pl "gno.land/r/gnoswap/pool"
-	sr "gno.land/r/gnoswap/v1/staker"
+	sr "gno.land/r/gnoswap/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -42,7 +43,7 @@ var (
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -195,7 +196,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] liquidity: 12437
 // [EXPECTED] amount0: 368, amount1: 1000
 // [EXPECTED] pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500
-// [EXPECTED] NFT owner after mint and stake: g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu
+// [EXPECTED] NFT owner after mint and stake: g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3
 //
 // [SCENARIO] 4. Collect reward
 // [INFO] skip blocks to accumulate rewards

@@ -14,7 +14,7 @@ import (
 	pool_v1 "gno.land/r/gnoswap/pool/v1"
 	pn "gno.land/r/gnoswap/position"
 	position_v1 "gno.land/r/gnoswap/position/v1"
-	sr "gno.land/r/gnoswap/v1/staker"
+	sr "gno.land/r/gnoswap/staker"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"

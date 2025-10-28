@@ -22,13 +22,14 @@ import (
 
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
-	sr "gno.land/r/gnoswap/v1/staker"
+	sr "gno.land/r/gnoswap/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
@@ -41,7 +42,7 @@ var (
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -315,9 +316,9 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 4. Stake positions for different users
 // [INFO] admin: approve NFT to staker and stake position 01
-// [EXPECTED] position 01 owner after staking: g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu
+// [EXPECTED] position 01 owner after staking: g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3
 // [INFO] user2: approve NFT to staker and stake position 02
-// [EXPECTED] position 02 owner after staking: g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu
+// [EXPECTED] position 02 owner after staking: g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3
 //
 // [SCENARIO] 5. Collect rewards for different users
 // [INFO] skip blocks to accumulate rewards

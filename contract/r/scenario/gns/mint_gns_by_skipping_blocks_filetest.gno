@@ -12,7 +12,7 @@ import (
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
 
-	_ "gno.land/r/gnoswap/v1/staker"
+	_ "gno.land/r/gnoswap/staker"
 
 	"gno.land/r/gnoswap/access"
 )
