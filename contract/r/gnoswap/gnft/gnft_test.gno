@@ -238,7 +238,6 @@ func TestIsApprovedForAll(t *testing.T) {
 	}
 }
 
-
 func TestSetTokenURI(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -884,6 +883,14 @@ func TestApprove(t *testing.T) {
 			tokenId:     1,
 			shouldPanic: true,
 			panicMsg:    "[GNOSWAP-GNFT-008] cannot transfer to self || cannot approve to current owner g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st for token 1",
+		},
+		{
+			name:        "approve invalid address",
+			callerRealm: addr01Realm,
+			approved:    address(""),
+			tokenId:     1,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-GNFT-004] invalid addresss || address ()",
 		},
 	}
 
