@@ -94,7 +94,6 @@ func (m *mockGovernanceStore) GetProposal(proposalID int64) (*governance.Proposa
 	if m.proposals == nil {
 		return nil, false
 	}
-	// return m.proposals.Get(formatInt(proposalID))
 	proposal, exists := m.proposals.Get(formatInt(proposalID))
 	if !exists {
 		return nil, false
@@ -116,23 +115,35 @@ func (m *mockGovernanceStore) SetProposals(proposals *avl.Tree) error {
 }
 
 // Proposal voting info methods
-func (m *mockGovernanceStore) HasProposalUserVotingInfosStoreKey() bool {
-	return m.proposalUserVotingInfos != nil
+func (m *mockGovernanceStore) HasProposalVotingInfosStoreKey() bool {
+	return true
 }
 
-func (m *mockGovernanceStore) GetProposalVotingInfos(proposalID int64) (interface{}, bool) {
+func (m *mockGovernanceStore) GetProposalUserVotingInfos() *avl.Tree {
+	return m.proposalUserVotingInfos
+}
+
+func (m *mockGovernanceStore) GetProposalVotingInfos(proposalID int64) (map[string]*governance.VotingInfo, bool) {
 	if m.proposalUserVotingInfos == nil {
 		return nil, false
 	}
-	return m.proposalUserVotingInfos.Get(formatInt(proposalID))
+	result, exists := m.proposalUserVotingInfos.Get(formatInt(proposalID))
+	if !exists {
+		return nil, false
+	}
+	return result.(map[string]*governance.VotingInfo), true
 }
 
-func (m *mockGovernanceStore) SetProposalVotingInfos(proposalID int64, votingInfos interface{}) error {
+func (m *mockGovernanceStore) SetProposalVotingInfos(proposalID int64, votingInfos map[string]*governance.VotingInfo) error {
 	if m.proposalUserVotingInfos == nil {
 		m.proposalUserVotingInfos = avl.NewTree()
 	}
 	m.proposalUserVotingInfos.Set(formatInt(proposalID), votingInfos)
 	return nil
+}
+
+func (m *mockGovernanceStore) HasProposalUserVotingInfosStoreKey() bool {
+	return m.proposalUserVotingInfos != nil
 }
 
 func (m *mockGovernanceStore) SetProposalUserVotingInfos(votingInfos *avl.Tree) error {

@@ -16,13 +16,18 @@ func (s StoreKey) String() string {
 }
 
 const (
-	StoreKeyConfigCounter           StoreKey = "configCounter"           // Config version counter
-	StoreKeyProposalCounter         StoreKey = "proposalCounter"         // Proposal ID counter
-	StoreKeyConfigs                 StoreKey = "configs"                 // Configurations AVL tree
-	StoreKeyConfig                  StoreKey = "config"                  // Configuration AVL tree
-	StoreKeyProposals               StoreKey = "proposals"               // Proposals AVL tree
+	StoreKeyConfigCounter   StoreKey = "configCounter"   // Config version counter
+	StoreKeyProposalCounter StoreKey = "proposalCounter" // Proposal ID counter
+
+	StoreKeyConfigs StoreKey = "configs" // Configurations AVL tree
+	StoreKeyConfig  StoreKey = "config"  // Configuration AVL tree
+
+	StoreKeyProposals StoreKey = "proposals" // Proposals AVL tree
+
+	StoreKeyProposalVotingInfos     StoreKey = "proposalVotingInfos"     // Proposal voting infos AVL tree
 	StoreKeyProposalUserVotingInfos StoreKey = "proposalUserVotingInfos" // Proposal voting infos AVL tree
-	StoreKeyUserProposals           StoreKey = "userProposals"           // User proposals mapping AVL tree
+
+	StoreKeyUserProposals StoreKey = "userProposals" // User proposals mapping AVL tree
 )
 
 type governanceStore struct {
@@ -114,11 +119,6 @@ func (s *governanceStore) SetConfigs(configs *avl.Tree) error {
 func (s *governanceStore) HasConfigStoreKey() bool {
 	return s.kvStore.Has(StoreKeyConfig.String())
 }
-
-// func (s *governanceStore) GetCurrentConfig() (Config, bool) {
-// 	currentVersion := s.GetConfigCounter()
-// 	return s.GetConfig(currentVersion.Get())
-// }
 
 func (s *governanceStore) GetConfig(version int64) (Config, bool) {
 	configs := s.GetConfigs()
@@ -217,21 +217,26 @@ func (s *governanceStore) SetProposalUserVotingInfos(votingInfos *avl.Tree) erro
 	return s.kvStore.Set(StoreKeyProposalUserVotingInfos.String(), votingInfos)
 }
 
-func (s *governanceStore) GetProposalUserVotingInfosTree() *avl.Tree {
-	return s.GetProposalUserVotingInfos()
+func (s *governanceStore) HasProposalVotingInfosStoreKey() bool {
+	return s.kvStore.Has(StoreKeyProposalVotingInfos.String())
 }
 
-func (s *governanceStore) GetProposalVotingInfos(proposalID int64) (interface{}, bool) {
+func (s *governanceStore) GetProposalVotingInfos(proposalID int64) (map[string]*VotingInfo, bool) {
 	votingInfos := s.GetProposalUserVotingInfos()
-	result, ok := votingInfos.Get(int64ToString(proposalID))
+	votingInfo, ok := votingInfos.Get(int64ToString(proposalID))
 	if !ok {
 		return nil, false
 	}
 
-	return result, true
+	votingInfoMap, ok := votingInfo.(map[string]*VotingInfo)
+	if !ok {
+		return nil, false
+	}
+
+	return votingInfoMap, true
 }
 
-func (s *governanceStore) SetProposalVotingInfos(proposalID int64, votingInfos interface{}) error {
+func (s *governanceStore) SetProposalVotingInfos(proposalID int64, votingInfos map[string]*VotingInfo) error {
 	if !s.HasProposalUserVotingInfosStoreKey() {
 		return errors.New("proposal user voting infos store key not found")
 	}

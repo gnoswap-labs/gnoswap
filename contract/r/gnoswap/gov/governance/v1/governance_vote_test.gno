@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 
@@ -175,7 +174,7 @@ func TestGovernanceVote_Vote(t *testing.T) {
 
 			if tt.setupProposal != nil {
 				setupTestProposal(t, gov, tt.setupProposal)
-				
+
 				// Use the actual proposal ID from the setup proposal
 				if tt.setupVotingInfos != nil {
 					setupVoteTestUserVotesWithDelegation(t, gov, tt.setupProposal.ID(), tt.setupVotingInfos, 10_000_000_000)
@@ -195,7 +194,7 @@ func TestGovernanceVote_Vote(t *testing.T) {
 				return
 			}
 
-			func (cur realm) {
+			func(cur realm) {
 				testing.SetRealm(govRealm)
 				weight := gov.Vote(tt.proposalID, tt.yes)
 				uassert.Equal(t, tt.expectedWeight, weight)
@@ -590,7 +589,7 @@ func TestGovernanceVote_VotePeriod(t *testing.T) {
 
 			// when & then
 			if tt.shouldPass {
-				func (cur realm) {
+				func(cur realm) {
 					// Mock time to vote time for successful cases
 					testing.SetRealm(govRealm)
 					weight := gov.Vote(1, true)
@@ -678,7 +677,7 @@ func TestGovernanceVote_VoteWeightCalculation(t *testing.T) {
 
 			testing.SetRealm(testing.NewUserRealm(voter))
 
-			func (cur realm) {
+			func(cur realm) {
 				testing.SetRealm(govRealm)
 				// when & then
 				if tt.shouldFail {
@@ -773,11 +772,10 @@ func TestGovernanceVote_QuorumCalculation(t *testing.T) {
 
 func setupTestProposal(t *testing.T, gov *governanceV1, proposal *governance.Proposal) {
 	gov.addProposal(proposal)
-	
+
 	// Initialize empty voting info tree for the proposal if not exists
 	if _, exists := gov.getProposalUserVotingInfos(proposal.ID()); !exists {
-		emptyTree := avl.NewTree()
-		gov.store.SetProposalVotingInfos(proposal.ID(), emptyTree)
+		gov.store.SetProposalVotingInfos(proposal.ID(), make(map[string]*governance.VotingInfo))
 	}
 }
 
@@ -797,18 +795,13 @@ func setupVoteTestUserVotesWithDelegation(t *testing.T, gov *governanceV1, propo
 
 func setupTestVotingInfo(t *testing.T, gov *governanceV1, proposalID int64, voter string, votingInfo *governance.VotingInfo) {
 	// Get existing voting infos or create new ones
-	votingInfosRaw, exists := gov.getProposalUserVotingInfos(proposalID)
-	
-	var votingInfosTree *avl.Tree
-	if exists {
-		votingInfosTree = votingInfosRaw.(*avl.Tree)
-	} else {
-		votingInfosTree = avl.NewTree()
-	}
-	
-	// Set the voting info for the voter
-	votingInfosTree.Set(voter, votingInfo)
+	votingInfos, exists := gov.getProposalUserVotingInfos(proposalID)
 
-	// Store back the updated tree
-	gov.store.SetProposalVotingInfos(proposalID, votingInfosTree)
+	if !exists {
+		votingInfos = make(map[string]*governance.VotingInfo)
+	}
+	votingInfos[voter] = votingInfo
+
+	// Set the voting info for the voter
+	gov.store.SetProposalVotingInfos(proposalID, votingInfos)
 }

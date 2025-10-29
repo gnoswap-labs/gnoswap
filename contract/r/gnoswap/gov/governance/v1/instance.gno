@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/gov/governance"
 )
@@ -14,7 +13,7 @@ type governanceV1 struct {
 }
 
 func NewGovernanceV1(governanceStore governance.IGovernanceStore) governance.IGovernance {
-	gv := &governanceV1{ store: governanceStore }
+	gv := &governanceV1{store: governanceStore}
 
 	// Set default voting info snapshot function
 	gv.getUserVotingInfoSnapshotFn = func(snapshotTime int64) (map[string]*governance.VotingInfo, int64, bool) {
@@ -123,18 +122,12 @@ func (g *governanceV1) hasActiveProposal(proposerAddress address, current int64)
 }
 
 // Proposal voting info methods
-func (g *governanceV1) getProposalUserVotingInfos(proposalID int64) (interface{}, bool) {
+func (g *governanceV1) getProposalUserVotingInfos(proposalID int64) (map[string]*governance.VotingInfo, bool) {
 	return g.store.GetProposalVotingInfos(proposalID)
 }
 
 func (g *governanceV1) updateProposalUserVotes(proposal *governance.Proposal, userVotingInfos map[string]*governance.VotingInfo) bool {
-	// Convert map to avl.Tree for storage
-	tree := avl.NewTree()
-	for addr, info := range userVotingInfos {
-		tree.Set(addr, info)
-	}
-
-	err := g.store.SetProposalVotingInfos(proposal.ID(), tree)
+	err := g.store.SetProposalVotingInfos(proposal.ID(), userVotingInfos)
 	return err == nil
 }
 
@@ -155,20 +148,6 @@ func (g *governanceV1) getProposalUserVotingInfo(proposalID int64, addr address)
 		return nil, false
 	}
 
-	votingInfos, ok := votingInfosRaw.(*avl.Tree)
-	if !ok {
-		return nil, false
-	}
-
-	infoRaw, exists := votingInfos.Get(addr.String())
-	if !exists {
-		return nil, false
-	}
-
-	info, ok := infoRaw.(*governance.VotingInfo)
-	if !ok {
-		return nil, false
-	}
-
-	return info, true
+	votingInfo, exists := votingInfosRaw[addr.String()]
+	return votingInfo, exists
 }
