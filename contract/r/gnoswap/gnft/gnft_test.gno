@@ -140,6 +140,75 @@ func TestOwnerOf(t *testing.T) {
 	}
 }
 
+func TestSetApprovalForAll(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func()
+		callerRealm runtime.Realm
+		operator    address
+		approved    bool
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name: "approve operator for all tokens",
+			setup: func() {
+				resetObject(t)
+			},
+			callerRealm: addr01Realm,
+			operator:    addr02,
+			approved:    true,
+			shouldPanic: false,
+		},
+		{
+			name: "revoke operator approval for all tokens",
+			setup: func() {
+				resetObject(t)
+				testing.SetRealm(addr01Realm)
+				SetApprovalForAll(cross, addr02, true)
+			},
+			callerRealm: addr01Realm,
+			operator:    addr02,
+			approved:    false,
+			shouldPanic: false,
+		},
+		{
+			name: "approve invalid operator address",
+			setup: func() {
+				resetObject(t)
+			},
+			callerRealm: addr01Realm,
+			operator:    address(""),
+			approved:    true,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-GNFT-004] invalid addresss",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup()
+			}
+
+			testing.SetRealm(tt.callerRealm)
+
+			if tt.shouldPanic {
+				uassert.AbortsContains(t, tt.panicMsg, func() {
+					SetApprovalForAll(cross, tt.operator, tt.approved)
+				})
+			} else {
+				err := SetApprovalForAll(cross, tt.operator, tt.approved)
+				uassert.NoError(t, err)
+
+				// Verify approval status
+				result := IsApprovedForAll(tt.callerRealm.Address(), tt.operator)
+				uassert.Equal(t, tt.approved, result)
+			}
+		})
+	}
+}
+
 func TestIsApprovedForAll(t *testing.T) {
 	tests := []struct {
 		name             string
