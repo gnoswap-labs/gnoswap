@@ -49,6 +49,7 @@ func (lpd *LaunchpadProjectDeposits) SetDeposit(ownerAddress string, amount int6
 }
 
 // RemoveDeposit removes the deposit for a specific owner.
-func (lpd *LaunchpadProjectDeposits) RemoveDeposit(ownerAddress string) {
-	lpd.deposits.Remove(ownerAddress)
+func (lpd *LaunchpadProjectDeposits) RemoveDeposit(ownerAddress string) bool {
+	_, ok := lpd.deposits.Remove(ownerAddress)
+	return ok
 }

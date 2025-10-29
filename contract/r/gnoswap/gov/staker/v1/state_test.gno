@@ -429,6 +429,52 @@ func TestLaunchpadStakeOperations(t *testing.T) {
 	}
 }
 
+// Test launchpad deposit removal
+func TestRemoveLaunchpadProjectDeposit(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupState    func(gs *govStakerV1) string
+		expectSuccess bool
+	}{
+		{
+			name: "Remove existing deposit",
+			setupState: func(gs *govStakerV1) string {
+				ownerAddress := "g1projectowner9876543210abcdefghijklm"
+				gs.setLaunchpadProjectDeposit(ownerAddress, 3000)
+				return ownerAddress
+			},
+			expectSuccess: true,
+		},
+		{
+			name: "Remove non-existent deposit",
+			setupState: func(_ *govStakerV1) string {
+				return "g1nonexistentowner1234567890abcdefgh"
+			},
+			expectSuccess: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gs := createTestGovStaker()
+			// Given: Setup state
+			ownerAddress := tt.setupState(gs)
+
+			// When: Remove launchpad project deposit
+			result := gs.removeLaunchpadProjectDeposit(ownerAddress)
+
+			// Then: Should return expected result
+			uassert.Equal(t, result, tt.expectSuccess)
+
+			if tt.expectSuccess {
+				// Verify deposit was removed
+				_, exists := gs.getLaunchpadProjectDeposit(ownerAddress)
+				uassert.False(t, exists)
+			}
+		})
+	}
+}
+
 // Test partial launchpad stake removal
 func TestPartialLaunchpadStakeRemoval(t *testing.T) {
 	tests := []struct {

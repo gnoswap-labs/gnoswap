@@ -296,13 +296,7 @@ func (gs *govStakerV1) delegate(
 		currentHeight,
 		currentTimestamp,
 	)
-	delegationRecord := staker.NewDelegationRecord(
-		staker.DelegateType,
-		amount, // delegationAmount
-		from,
-		to,
-		currentTimestamp,
-	)
+	delegationRecord := NewDelegationDelegateRecordBy(delegation)
 
 	gs.addDelegation(delegationID, delegation)
 	gs.addDelegationRecord(delegationRecord)

@@ -382,6 +382,23 @@ func (g *govStakerV1) claimRewardsEmissionReward(address string, currentTimestam
 	return amount, nil
 }
 
+// removeLaunchpadProjectDeposit removes a launchpad project deposit record.
+//
+// Parameters:
+//   - ownerAddress: project owner's address identifier
+//
+// Returns:
+//   - bool: true if successfully removed
+func (g *govStakerV1) removeLaunchpadProjectDeposit(ownerAddress string) bool {
+	launchpadProjectDeposits, err := g.store.GetLaunchpadProjectDeposits()
+	if err != nil {
+		return false
+	}
+	ok := launchpadProjectDeposits.RemoveDeposit(ownerAddress)
+
+	return ok
+}
+
 // addStakeProtocolFeeReward adds stake to protocol fee reward tracking for an address.
 // This method distributes protocol fees and updates the protocol fee reward state.
 //

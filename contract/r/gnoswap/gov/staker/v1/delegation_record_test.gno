@@ -99,3 +99,41 @@ func TestNewDelegationWithdrawRecordBy(t *testing.T) {
 		})
 	}
 }
+
+// TestNewDelegationDelegateRecordBy tests creating delegate records from delegation
+func TestNewDelegationDelegateRecordBy(t *testing.T) {
+	tests := []struct {
+		name       string
+		// delegation *staker.Delegation
+		id int64
+		delegateFrom address
+		delegateTo address
+		delegateAmount int64
+		createdAt int64
+	}{
+		{
+			name: "Create delegate record from delegation",
+			id: 1,
+			delegateFrom: address("g1from"),
+			delegateTo: address("g1to"),
+			delegateAmount: 100,
+			createdAt: 1000,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			delegation := staker.NewDelegation(tc.id, tc.delegateFrom, tc.delegateTo, tc.delegateAmount, 1000, tc.createdAt)
+			record := NewDelegationDelegateRecordBy(delegation)
+
+			// then
+			uassert.NotNil(t, record)
+			uassert.Equal(t, record.DelegationType().String(), staker.DelegateType.String())
+			uassert.Equal(t, record.DelegateAmount(), tc.delegateAmount)
+			uassert.Equal(t, record.DelegateFrom(), tc.delegateFrom)
+			uassert.Equal(t, record.DelegateTo(), tc.delegateTo)
+			uassert.Equal(t, record.CreatedAt(), tc.createdAt)
+		})
+	}
+}
