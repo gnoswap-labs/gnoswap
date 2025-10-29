@@ -91,12 +91,10 @@ type IGovernanceStore interface {
 	HasConfigCounterStoreKey() bool
 	GetConfigCounter() *Counter
 	SetConfigCounter(counter *Counter) error
-	IncrementConfigCounter() (int64, error)
 
 	HasProposalCounterStoreKey() bool
 	GetProposalCounter() *Counter
 	SetProposalCounter(counter *Counter) error
-	IncrementProposalCounter() (int64, error)
 
 	// Config methods
 	HasConfigsStoreKey() bool

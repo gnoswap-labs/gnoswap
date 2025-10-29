@@ -84,12 +84,8 @@ func initStoreData(governanceStore governance.IGovernanceStore) error {
 
 	// Initialize default configuration
 	if !governanceStore.HasConfigStoreKey() {
-		nextConfigVersion, err := governanceStore.IncrementConfigCounter()
-		if err != nil {
-			return err
-		}
-
-		err = governanceStore.SetConfig(nextConfigVersion, defaultConfig)
+		nextConfigVersion := governanceStore.GetConfigCounter().Next()
+		err := governanceStore.SetConfig(nextConfigVersion, defaultConfig)
 		if err != nil {
 			return err
 		}

@@ -29,11 +29,6 @@ func (m *mockGovernanceStore) SetConfigCounter(counter *governance.Counter) erro
 	return nil
 }
 
-func (m *mockGovernanceStore) IncrementConfigCounter() (int64, error) {
-	m.configCounter.Next()
-	return m.configCounter.Get(), nil
-}
-
 func (m *mockGovernanceStore) HasProposalCounterStoreKey() bool {
 	return true
 }
@@ -45,11 +40,6 @@ func (m *mockGovernanceStore) GetProposalCounter() *governance.Counter {
 func (m *mockGovernanceStore) SetProposalCounter(counter *governance.Counter) error {
 	m.proposalCounter = counter
 	return nil
-}
-
-func (m *mockGovernanceStore) IncrementProposalCounter() (int64, error) {
-	m.proposalCounter.Next()
-	return m.proposalCounter.Get(), nil
 }
 
 // Config methods

@@ -57,13 +57,6 @@ func (s *governanceStore) SetConfigCounter(counter *Counter) error {
 	return s.kvStore.Set(StoreKeyConfigCounter.String(), counter)
 }
 
-func (s *governanceStore) IncrementConfigCounter() (int64, error) {
-	current := s.GetConfigCounter()
-	next := current.Next()
-	err := s.SetConfigCounter(next)
-	return next.Get(), err
-}
-
 func (s *governanceStore) HasProposalCounterStoreKey() bool {
 	return s.kvStore.Has(StoreKeyProposalCounter.String())
 }
@@ -84,13 +77,6 @@ func (s *governanceStore) GetProposalCounter() *Counter {
 
 func (s *governanceStore) SetProposalCounter(counter *Counter) error {
 	return s.kvStore.Set(StoreKeyProposalCounter.String(), counter)
-}
-
-func (s *governanceStore) IncrementProposalCounter() (int64, error) {
-	current := s.GetProposalCounter()
-	next := current.Next()
-	err := s.SetProposalCounter(next)
-	return next.Get(), err
 }
 
 // Configs methods

@@ -29,11 +29,7 @@ func (g *governanceV1) getCurrentConfigVersion() int64 {
 }
 
 func (g *governanceV1) nextConfigVersion() int64 {
-	newVersion, err := g.store.IncrementConfigCounter()
-	if err != nil {
-		panic("failed to increment config counter: " + err.Error())
-	}
-	return newVersion
+	return g.store.GetConfigCounter().Next()
 }
 
 // Proposal ID methods
@@ -42,11 +38,7 @@ func (g *governanceV1) getCurrentProposalID() int64 {
 }
 
 func (g *governanceV1) nextProposalID() int64 {
-	newID, err := g.store.IncrementProposalCounter()
-	if err != nil {
-		panic("failed to increment proposal counter: " + err.Error())
-	}
-	return newID
+	return g.store.GetProposalCounter().Next()
 }
 
 // Config methods
