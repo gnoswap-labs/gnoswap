@@ -171,7 +171,7 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 		config,
 		maxVotingWeight,
 		governance.NewProposalMetadata(title, description),
-		NewProposalCommunityPoolSpendData(tokenPath, to, amount, governance.COMMUNITY_POOL_PATH),
+		NewProposalCommunityPoolSpendData(tokenPath, to, amount, COMMUNITY_POOL_PATH),
 		callerAddress,
 		gnsBalance,
 		createdAt,

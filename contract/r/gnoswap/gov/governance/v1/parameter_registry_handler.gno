@@ -2,8 +2,6 @@ package v1
 
 import (
 	"gno.land/p/nt/ufmt"
-
-	"gno.land/r/gnoswap/gov/governance"
 )
 
 // ParameterRegistryHandler is an interface for handlers that need to manage state
@@ -43,8 +41,8 @@ func newStateManager() *stateManager {
 //
 // Returns:
 //   - error: always nil (state saving is optional)
-func (sm *stateManager) SaveState(pkgPath, function string, handler governance.ParameterHandler) error {
-	key := governance.MakeHandlerKey(pkgPath, function)
+func (sm *stateManager) SaveState(pkgPath, function string, handler ParameterHandler) error {
+	key := makeHandlerKey(pkgPath, function)
 
 	// Check if the handler implements the ParameterRegistryHandler interface
 	if sh, ok := handler.(ParameterRegistryHandler); ok {
@@ -79,7 +77,7 @@ func (sm *stateManager) RestoreStates() error {
 		err := handler.RestoreState(state.state)
 		if err != nil {
 			return ufmt.Errorf("failed to restore state for %s: %v",
-				governance.MakeHandlerKey(state.pkgPath, state.function), err)
+				makeHandlerKey(state.pkgPath, state.function), err)
 		}
 	}
 
@@ -91,7 +89,7 @@ type handlerState struct {
 	pkgPath  string           // Package path of the handler
 	function string           // Function name of the handler
 	state    any              // Preserved state data
-	handler  governance.ParameterHandler // Reference to the handler instance
+	handler  ParameterHandler // Reference to the handler instance
 }
 
 // registryHandler wraps existing functions as a ParameterHandler interface.

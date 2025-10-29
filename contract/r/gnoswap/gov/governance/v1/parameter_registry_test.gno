@@ -1,4 +1,4 @@
-package governance
+package v1
 
 import (
 	"testing"
@@ -55,7 +55,7 @@ func TestParameterRegistry_RegisterAndHandler(t *testing.T) {
 			}
 
 			// when
-			key := MakeHandlerKey(tc.pkgPath, tc.function)
+			key := makeHandlerKey(tc.pkgPath, tc.function)
 			handler, err := registry.Handler(key)
 
 			// then
@@ -155,7 +155,7 @@ func TestCreateParameterHandlers(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		key := MakeHandlerKey(tc.pkgPath, tc.function)
+		key := makeHandlerKey(tc.pkgPath, tc.function)
 		handler, err := registry.Handler(key)
 		uassert.Nil(t, err)
 		uassert.NotNil(t, handler)

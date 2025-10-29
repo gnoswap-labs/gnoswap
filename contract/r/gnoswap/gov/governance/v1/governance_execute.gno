@@ -106,7 +106,7 @@ func (gv *governanceV1) executeProposal(
 	}
 
 	// Create parameter registry for handling execution actions
-	parameterRegistry := governance.CreateParameterHandlers()
+	parameterRegistry := CreateParameterHandlers()
 
 	// Execute proposal based on its type
 	switch proposal.Type() {
@@ -208,7 +208,7 @@ func (gv *governanceV1) cancel(
 // Handles token transfers from community pool to specified recipients.
 func executeCommunityPoolSpend(
 	proposal *governance.Proposal,
-	parameterRegistry *governance.ParameterRegistry,
+	parameterRegistry *ParameterRegistry,
 	executedAt int64,
 	executedHeight int64,
 	executedBy address,
@@ -223,7 +223,7 @@ func executeCommunityPoolSpend(
 	parameterChangesInfos := dataResolver.ParameterChangesInfos()
 	for _, parameterChangeInfo := range parameterChangesInfos {
 		// Get the appropriate handler for this parameter change
-		key := governance.MakeHandlerKey(parameterChangeInfo.PkgPath(), parameterChangeInfo.Function())
+		key := makeHandlerKey(parameterChangeInfo.PkgPath(), parameterChangeInfo.Function())
 		handler, err := parameterRegistry.Handler(key)
 		if err != nil {
 			return err
@@ -243,7 +243,7 @@ func executeCommunityPoolSpend(
 // Handles governance configuration updates and system parameter modifications.
 func executeParameterChange(
 	proposal *governance.Proposal,
-	parameterRegistry *governance.ParameterRegistry,
+	parameterRegistry *ParameterRegistry,
 	executedAt int64,
 	executedHeight int64,
 	executedBy address,
@@ -253,7 +253,7 @@ func executeParameterChange(
 	parameterChangesInfos := dataResolver.ParameterChangesInfos()
 	for _, parameterChangeInfo := range parameterChangesInfos {
 		// Get the appropriate handler for this parameter change
-		key := governance.MakeHandlerKey(parameterChangeInfo.PkgPath(), parameterChangeInfo.Function())
+		key := makeHandlerKey(parameterChangeInfo.PkgPath(), parameterChangeInfo.Function())
 		handler, err := parameterRegistry.Handler(key)
 		if err != nil {
 			return err

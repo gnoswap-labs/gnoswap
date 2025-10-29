@@ -5,8 +5,6 @@ import (
 
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
-
-	"gno.land/r/gnoswap/gov/governance"
 )
 
 // TestRegistryHandler_Execute tests the execution functionality of registry handler
@@ -14,14 +12,14 @@ func TestRegistryHandler_Execute(t *testing.T) {
 	tests := []struct {
 		name           string
 		params         []string
-		handlerFn      governance.ParameterHandler
+		handlerFn      ParameterHandler
 		expectedError  bool
 		expectedErrMsg string
 	}{
 		{
 			name:   "Success - Execute with valid params",
 			params: []string{"param1", "param2"},
-			handlerFn: governance.NewParameterHandlerOptions(
+			handlerFn: NewParameterHandlerOptions(
 				"test/pkg",
 				"testFunc",
 				2,
@@ -34,7 +32,7 @@ func TestRegistryHandler_Execute(t *testing.T) {
 		{
 			name:   "Failure - Different param count",
 			params: []string{"param1"},
-			handlerFn: governance.NewParameterHandlerOptions(
+			handlerFn: NewParameterHandlerOptions(
 				"test/pkg",
 				"testFunc",
 				2,
@@ -48,7 +46,7 @@ func TestRegistryHandler_Execute(t *testing.T) {
 		{
 			name:   "Failure - Execute with error",
 			params: []string{"param1"},
-			handlerFn: governance.NewParameterHandlerOptions(
+			handlerFn: NewParameterHandlerOptions(
 				"test/pkg",
 				"testFunc",
 				1,

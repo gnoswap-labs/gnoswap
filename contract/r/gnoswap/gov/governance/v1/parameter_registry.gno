@@ -1,9 +1,6 @@
-package governance
+package v1
 
 import (
-	"strconv"
-	"strings"
-
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 
@@ -16,6 +13,7 @@ import (
 	pf "gno.land/r/gnoswap/protocol_fee"
 	rr "gno.land/r/gnoswap/router"
 	sr "gno.land/r/gnoswap/v1/staker"
+	"gno.land/r/gnoswap/gov/governance"
 
 	"gno.land/r/gnoswap/halt"
 )
@@ -81,7 +79,7 @@ func NewParameterHandlerOptions(
 // Returns:
 //   - string: unique identifier for the handler
 func (h *ParameterHandlerOptions) HandlerKey() string {
-	return MakeHandlerKey(h.pkgPath, h.function)
+	return makeHandlerKey(h.pkgPath, h.function)
 }
 
 // Execute validates parameter count and executes the handler function.
@@ -99,11 +97,12 @@ func (h *ParameterHandlerOptions) Execute(params []string) error {
 	}
 
 	// Create realm context function and execute handler
-	fn := func(cur realm) error {
-		return h.handlerFunc(params)
-	}
+	// fn := func(cur realm) error {
+	// 	return h.handlerFunc(params)
+	// }
 
-	return fn(cross)
+	// return fn(cross)
+	return h.handlerFunc(params)
 }
 
 // ParameterRegistry manages the collection of parameter handlers for governance execution.
@@ -155,7 +154,7 @@ func NewParameterRegistry() *ParameterRegistry {
 	return &ParameterRegistry{ handlers: avl.NewTree() }
 }
 
-// MakeHandlerKey creates a unique identifier for a handler based on package path and function.
+// makeHandlerKey creates a unique identifier for a handler based on package path and function.
 //
 // Parameters:
 //   - pkgPath: package path of the target contract
@@ -163,7 +162,7 @@ func NewParameterRegistry() *ParameterRegistry {
 //
 // Returns:
 //   - string: unique key in format "pkgPath:function"
-func MakeHandlerKey(pkgPath, function string) string {
+func makeHandlerKey(pkgPath, function string) string {
 	return ufmt.Sprintf("%s:%s", pkgPath, function)
 }
 
@@ -277,7 +276,7 @@ func CreateParameterHandlers() *ParameterRegistry {
 				executionWindow := parseInt64(params[6])
 
 				// Reconfigure governance parameters through governance process
-				Reconfigure(
+				governance.Reconfigure(
 					cross,
 					votingStartDelay,
 					votingPeriod,
@@ -598,112 +597,4 @@ func registerHandlers(registry *ParameterRegistry, handlerOptions []*ParameterHa
 	for _, handlerOption := range handlerOptions {
 		registry.Register(*handlerOption)
 	}
-}
-
-
-/* Utils */
-
-// numberKind represents the type of number to parse.
-type numberKind int
-
-const (
-	kindInt numberKind = iota
-	kindInt64
-	kindUint64
-)
-
-// parseNumber parses a string to a number (int, int64, or uint64) with proper validation.
-func parseNumber(s string, kind numberKind) any {
-	if len(strings.TrimSpace(s)) == 0 {
-		panic(ufmt.Sprint("invalid number value: empty or whitespace string"))
-	}
-
-	switch kind {
-	case kindInt:
-		num, err := strconv.ParseInt(s, 10, 64)
-		if err != nil {
-			panic(ufmt.Sprintf("invalid int value: %s", s))
-		}
-		return int(num)
-	case kindInt64:
-		num, err := strconv.ParseInt(s, 10, 64)
-		if err != nil {
-			panic(ufmt.Sprintf("invalid int64 value: %s", s))
-		}
-		return num
-	case kindUint64:
-		num, err := strconv.ParseUint(s, 10, 64)
-		if err != nil {
-			panic(ufmt.Sprintf("invalid uint64 value: %s", s))
-		}
-		return num
-	default:
-		panic(ufmt.Sprintf("unsupported number kind: %v", kind))
-	}
-}
-
-// parseBool parses a string to a boolean.
-func parseBool(s string) bool {
-	if len(strings.TrimSpace(s)) == 0 {
-		panic(ufmt.Sprint("invalid bool value: empty or whitespace string"))
-	}
-
-	switch s {
-	case "true":
-		return true
-	case "false":
-		return false
-	default:
-		panic(ufmt.Sprintf("invalid bool value: %s", s))
-	}
-}
-
-
-// parseInt parses a string to int with proper validation and overflow checking.
-func parseInt(s string) int {
-	if len(strings.TrimSpace(s)) == 0 {
-		panic(ufmt.Sprint("invalid int value: empty or whitespace string"))
-	}
-
-	num, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
-		panic(ufmt.Sprintf("invalid int value: %s", s))
-	}
-
-	const maxInt = int(^uint(0) >> 1)
-	const minInt = -maxInt - 1
-
-	if num > int64(maxInt) || num < int64(minInt) {
-		panic(ufmt.Sprintf("int overflow: value %d exceeds int range [%d, %d]", num, minInt, maxInt))
-	}
-
-	return int(num)
-}
-
-// parseInt64 parses a string to int64 with proper validation.
-func parseInt64(s string) int64 {
-	if len(strings.TrimSpace(s)) == 0 {
-		panic(ufmt.Sprint("invalid int64 value: empty or whitespace string"))
-	}
-
-	num, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
-		panic(ufmt.Sprintf("invalid int64 value: %s", s))
-	}
-
-	return num
-}
-
-// parseUint64 parses a string to uint64 with proper validation.
-func parseUint64(s string) uint64 {
-	if len(strings.TrimSpace(s)) == 0 {
-		panic(ufmt.Sprint("invalid uint64 value: empty or whitespace string"))
-	}
-
-	num, err := strconv.ParseUint(s, 10, 64)
-	if err != nil {
-		panic(ufmt.Sprintf("invalid uint64 value: %s", s))
-	}
-
-	return num
 }
