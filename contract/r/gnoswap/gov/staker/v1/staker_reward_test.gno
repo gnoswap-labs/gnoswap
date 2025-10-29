@@ -764,7 +764,7 @@ func setupStakerRewardStakerTokenBalance(t *testing.T) {
 func setupStakerRewardTestEmissionRewards(t *testing.T, gs *govStakerV1, addr address, amount int64, emissionReward int64, currentHeight int64) {
 	// Setup emission rewards for testing
 	emissionRewardManager, _ := gs.store.GetEmissionRewardManager()
-	resolvedManager := &EmissionRewardManagerResolver{emissionRewardManager}
+	resolvedManager := NewEmissionRewardManagerResolver(emissionRewardManager)
 	resolvedManager.updateAccumulatedRewardX128PerStake(emissionReward, currentHeight)
 	resolvedManager.addStake(addr.String(), amount, currentHeight)
 	gs.store.SetEmissionRewardManager(emissionRewardManager)
@@ -782,7 +782,7 @@ func setupStakerRewardTestProtocolFeeRewards(t *testing.T, gs *govStakerV1, addr
 func setupStakerRewardTestAccumulateEmissionRewards(t *testing.T, gs *govStakerV1, amount, currentHeight int64) {
 	// Setup emission rewards for testing
 	emissionRewardManager, _ := gs.store.GetEmissionRewardManager()
-	resolvedManager := &EmissionRewardManagerResolver{emissionRewardManager}
+	resolvedManager := NewEmissionRewardManagerResolver(emissionRewardManager)
 	resolvedManager.updateAccumulatedRewardX128PerStake(amount, currentHeight)
 	gs.store.SetEmissionRewardManager(emissionRewardManager)
 }

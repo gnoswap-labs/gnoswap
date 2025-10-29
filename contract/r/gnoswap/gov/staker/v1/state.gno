@@ -301,7 +301,7 @@ func (g *govStakerV1) addStakeEmissionReward(address string, amount int64, curre
 	if err != nil {
 		return err
 	}
-	resolvedManager := &EmissionRewardManagerResolver{emissionRewardManager}
+	resolvedManager := NewEmissionRewardManagerResolver(emissionRewardManager)
 
 	err = resolvedManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
 	if err != nil {
@@ -330,7 +330,7 @@ func (g *govStakerV1) removeStakeEmissionReward(address string, amount int64, cu
 	if err != nil {
 		return err
 	}
-	resolvedManager := &EmissionRewardManagerResolver{emissionRewardManager}
+	resolvedManager := NewEmissionRewardManagerResolver(emissionRewardManager)
 
 	err = resolvedManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
 	if err != nil {
@@ -362,7 +362,7 @@ func (g *govStakerV1) claimRewardsEmissionReward(address string, currentTimestam
 	if err != nil {
 		return 0, err
 	}
-	resolvedManager := &EmissionRewardManagerResolver{emissionRewardManager}
+	resolvedManager := NewEmissionRewardManagerResolver(emissionRewardManager)
 
 	err = resolvedManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
 	if err != nil {
