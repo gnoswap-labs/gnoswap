@@ -8,6 +8,13 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
+	_ "gno.land/r/gnoswap/router/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 )
 
 var (
@@ -39,7 +46,7 @@ var (
 	routerPath = "gno.land/r/gnoswap/router"
 	rouRealm   = testing.NewCodeRealm(routerPath)
 
-	stakerPath = "gno.land/r/gnoswap/v1/staker"
+	stakerPath = "gno.land/r/gnoswap/staker"
 	stkRealm   = testing.NewCodeRealm(stakerPath)
 
 	govPath  = "gno.land/r/gnoswap/v1/gov/governance"

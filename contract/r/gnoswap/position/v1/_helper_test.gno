@@ -26,6 +26,8 @@ import (
 	"gno.land/r/onbloc/usdc"
 
 	"gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/staker/v1"
 )
 
 const (

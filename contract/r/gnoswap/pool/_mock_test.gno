@@ -127,15 +127,15 @@ func (m *MockPool) Swap(
 	return res[0].(string), res[1].(string)
 }
 
-func (m *MockPool) SetSwapEndHook(hook func(poolPath string) error) {
+func (m *MockPool) SetSwapEndHook(hook func(cur realm, poolPath string) error) {
 	m.Response.Get("SetSwapEndHook")
 }
 
-func (m *MockPool) SetSwapStartHook(hook func(poolPath string, timestamp int64)) {
+func (m *MockPool) SetSwapStartHook(hook func(cur realm, poolPath string, timestamp int64)) {
 	m.Response.Get("SetSwapStartHook")
 }
 
-func (m *MockPool) SetTickCrossHook(hook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
+func (m *MockPool) SetTickCrossHook(hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	m.Response.Get("SetTickCrossHook")
 }
 
