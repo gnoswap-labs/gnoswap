@@ -51,7 +51,7 @@ func initStoreData(store staker.IGovStakerStore) error {
 
 	// Initialize delegation management
 	if !store.HasDelegationNextIDStoreKey() {
-		err := store.SetDelegationNextID(int64(1))
+		err := store.SetDelegationNextID(staker.NewCounter())
 		if err != nil {
 			return err
 		}

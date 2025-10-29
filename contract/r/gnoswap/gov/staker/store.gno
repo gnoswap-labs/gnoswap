@@ -214,37 +214,36 @@ func (s *govStakerStore) HasDelegationNextIDStoreKey() bool {
 	return s.kvStore.Has(StoreKeyDelegationNextID)
 }
 
-func (s *govStakerStore) GetDelegationNextID() (int64, error) {
+func (s *govStakerStore) GetDelegationNextID() (*Counter, error) {
 	result, err := s.kvStore.Get(StoreKeyDelegationNextID)
 	if err != nil {
 		panic("failed to get delegation next ID: " + err.Error())
 	}
 
-	nextID, ok := result.(int64)
+	counter, ok := result.(*Counter)
 	if !ok {
-		return 0, errors.New(ufmt.Sprintf("failed to cast result to int64: %T", result))
+		return nil, errors.New("failed to cast result to *Counter type")
 	}
 
-	return nextID, nil
+	return counter, nil
 }
 
-func (s *govStakerStore) SetDelegationNextID(nextID int64) error {
-	return s.kvStore.Set(StoreKeyDelegationNextID, nextID)
+func (s *govStakerStore) SetDelegationNextID(counter *Counter) error {
+	return s.kvStore.Set(StoreKeyDelegationNextID, counter)
 }
 
 func (s *govStakerStore) IncrementDelegationNextID() (int64, error) {
-	nextID, err := s.GetDelegationNextID()
+	counter, err := s.GetDelegationNextID()
 	if err != nil {
 		return 0, err
 	}
 
-	nextID++
-	err = s.SetDelegationNextID(nextID)
+	err = s.SetDelegationNextID(counter.Next())
 	if err != nil {
 		return 0, err
 	}
 
-	return nextID, nil
+	return counter.Get(), nil
 }
 
 // Delegation history methods

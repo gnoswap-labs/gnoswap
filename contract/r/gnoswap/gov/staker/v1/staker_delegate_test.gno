@@ -815,7 +815,7 @@ func TestStakerDelegate_EdgeCasesAndBoundaries(t *testing.T) {
 func cleanupStakerDelegateTest(t *testing.T, gs *govStakerV1) {
 	// Reset delegation state
 	mockStore := gs.store.(*mockGovStakerStore)
-	mockStore.delegationNextID = 1
+	mockStore.delegationNextID = staker.NewCounter()
 	mockStore.delegations = avl.NewTree()
 	mockStore.delegationHistory = make([]*staker.DelegationRecord, 0)
 	mockStore.delegationSnapshots = avl.NewTree()

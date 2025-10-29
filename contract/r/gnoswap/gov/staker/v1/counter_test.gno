@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"gno.land/p/nt/uassert"
+	"gno.land/r/gnoswap/gov/staker"
 )
 
 // TestCounter_NewCounter tests the creation of new Counter instances
@@ -21,7 +22,7 @@ func TestCounter_NewCounter(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// when
-			counter := NewCounter()
+			counter := staker.NewCounter()
 
 			// then
 			uassert.NotNil(t, counter)
@@ -57,12 +58,12 @@ func TestCounter_Next(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			counter := NewCounter()
+			counter := staker.NewCounter()
 
 			// when
 			var lastID int64
 			for i := 0; i < tc.callCount; i++ {
-				lastID = counter.next()
+				lastID = counter.Next().Get()
 			}
 
 			// then
@@ -99,9 +100,9 @@ func TestCounter_Get(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			counter := NewCounter()
+			counter := staker.NewCounter()
 			for i := 0; i < tc.nextCalls; i++ {
-				counter.next()
+				counter.Next()
 			}
 
 			// when

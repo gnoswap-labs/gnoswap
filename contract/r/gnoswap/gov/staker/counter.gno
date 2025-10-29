@@ -1,4 +1,4 @@
-package v1
+package staker
 
 type Counter struct {
 	id int64
@@ -7,7 +7,7 @@ type Counter struct {
 func NewCounter() *Counter    { return &Counter{id: 0} }
 func (c *Counter) Get() int64 { return c.id }
 
-func (c *Counter) next() int64 {
+func (c *Counter) Next() *Counter {
 	c.id++
-	return c.id
+	return c
 }
