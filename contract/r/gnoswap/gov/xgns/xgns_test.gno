@@ -1,6 +1,7 @@
 package xgns
 
 import (
+	"math"
 	"testing"
 
 	"gno.land/p/demo/tokens/grc20"
@@ -62,6 +63,7 @@ func TestXgns_Mint(t *testing.T) {
 		name            string
 		caller          address
 		to              address
+		setupAmount     int64
 		amount          int64
 		expectedPanic   bool
 		expectedMessage string
@@ -87,6 +89,15 @@ func TestXgns_Mint(t *testing.T) {
 			expectedMessage: "invalid amount",
 		},
 		{
+			name:            "Fail mint causing total supply overflow",
+			caller:          govStakerAddress,
+			to:              govStakerAddress,
+			setupAmount:     math.MaxInt64 - 100,
+			amount:          200,
+			expectedPanic:   true,
+			expectedMessage: "mint overflow",
+		},
+		{
 			name:            "Fail mint by unauthorized caller",
 			caller:          adminAddr,
 			to:              govStakerAddress,
@@ -101,6 +112,11 @@ func TestXgns_Mint(t *testing.T) {
 			cleanup(t)
 
 			// given
+			if tc.setupAmount > 0 {
+				testing.SetRealm(testing.NewUserRealm(govStakerAddress))
+				Mint(cross, govStakerAddress, tc.setupAmount)
+			}
+
 			initialSupply := TotalSupply()
 			initialBalance := BalanceOf(tc.to)
 
@@ -131,6 +147,7 @@ func TestXgns_MintByLaunchPad(t *testing.T) {
 		name            string
 		realmPath       string
 		to              address
+		setupAmount     int64
 		amount          int64
 		expectedPanic   bool
 		expectedMessage string
@@ -156,6 +173,15 @@ func TestXgns_MintByLaunchPad(t *testing.T) {
 			expectedMessage: "invalid amount",
 		},
 		{
+			name:            "Fail mint causing total supply overflow",
+			realmPath:       "gno.land/r/gnoswap/launchpad",
+			to:              launchpadAddress,
+			setupAmount:     math.MaxInt64 - 100,
+			amount:          200,
+			expectedPanic:   true,
+			expectedMessage: "mint overflow",
+		},
+		{
 			name:            "Fail mint by unauthorized caller",
 			realmPath:       "gno.land/r/unauthorized",
 			to:              launchpadAddress,
@@ -170,6 +196,11 @@ func TestXgns_MintByLaunchPad(t *testing.T) {
 			cleanup(t)
 
 			// given
+			if tc.setupAmount > 0 {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
+				MintByLaunchPad(cross, launchpadAddress, tc.setupAmount)
+			}
+
 			initialSupply := TotalSupply()
 			initialBalance := BalanceOf(tc.to)
 
