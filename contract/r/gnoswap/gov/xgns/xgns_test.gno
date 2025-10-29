@@ -146,6 +146,39 @@ func TestXgns_VotingSupply(t *testing.T) {
 	}
 }
 
+func TestXgns_VotingSupplyEdgeCases(t *testing.T) {
+	cleanup()
+
+	// Test when launchpad balance is zero
+	testing.SetRealm(testing.NewUserRealm(getGovStakerAddress()))
+	Mint(cross, getGovStakerAddress(), 1000)
+
+	votingSupply := VotingSupply()
+	totalSupply := TotalSupply()
+	if votingSupply != totalSupply {
+		t.Errorf("VotingSupply with zero launchpad balance failed. Expected %d, got %d", totalSupply, votingSupply)
+	}
+
+	cleanup()
+
+	// Test when total supply is zero
+	votingSupply = VotingSupply()
+	if votingSupply != 0 {
+		t.Errorf("VotingSupply with zero total supply failed. Expected 0, got %d", votingSupply)
+	}
+
+	cleanup()
+
+	// Test when only launchpad has balance (voting supply should be zero)
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
+	MintByLaunchPad(cross, getLaunchpadAddress(), 500)
+
+	votingSupply = VotingSupply()
+	if votingSupply != 0 {
+		t.Errorf("VotingSupply with only launchpad balance failed. Expected 0, got %d", votingSupply)
+	}
+}
+
 func TestXgns_BurnUnauthorized(t *testing.T) {
 	cleanup(t)
 
