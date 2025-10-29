@@ -228,7 +228,7 @@ func (s *govStakerStore) GetDelegationCounter() (*Counter, error) {
 	return counter, nil
 }
 
-func (s *govStakerStore) SetDelegationCounter(counter *Counter) error {
+func (s *govStakerStore) SetDelegationCounter(counter int64) error {
 	return s.kvStore.Set(StoreKeyDelegationNextID, counter)
 }
 

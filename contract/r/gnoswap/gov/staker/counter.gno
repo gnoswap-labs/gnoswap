@@ -6,8 +6,9 @@ type Counter struct {
 
 func NewCounter() *Counter    { return &Counter{id: 0} }
 func (c *Counter) Get() int64 { return c.id }
+func (c *Counter) Set(id int64) { c.id = id }
 
-func (c *Counter) Next() *Counter {
+func (c *Counter) Next() int64 {
 	c.id++
-	return c
+	return c.id
 }

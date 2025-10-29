@@ -79,7 +79,7 @@ type IGovStakerStore interface {
 
 	HasDelegationCounterStoreKe() bool
 	GetDelegationCounter() (*Counter, error)
-	SetDelegationCounter(counter *Counter) error
+	SetDelegationCounter(counter int64) error
 	IncrementDelegationNextID() (int64, error)
 
 	// Delegation history

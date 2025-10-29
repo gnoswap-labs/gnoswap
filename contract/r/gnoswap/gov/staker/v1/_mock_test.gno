@@ -141,14 +141,15 @@ func (m *mockGovStakerStore) GetDelegationCounter() (*staker.Counter, error) {
 	return m.delegationNextID, nil
 }
 
-func (m *mockGovStakerStore) SetDelegationCounter(counter *staker.Counter) error {
-	m.delegationNextID = counter
+func (m *mockGovStakerStore) SetDelegationCounter(counter int64) error {
+	m.delegationNextID.Set(counter)
 	return nil
 }
 
 func (m *mockGovStakerStore) IncrementDelegationNextID() (int64, error) {
-	m.delegationNextID.Next()
-	return m.delegationNextID.Get(), nil
+	counter := m.delegationNextID.Next()
+	m.delegationNextID.Set(counter)
+	return counter, nil
 }
 
 // Delegation history methods

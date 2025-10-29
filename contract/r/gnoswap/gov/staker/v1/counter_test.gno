@@ -63,7 +63,7 @@ func TestCounter_Next(t *testing.T) {
 			// when
 			var lastID int64
 			for i := 0; i < tc.callCount; i++ {
-				lastID = counter.Next().Get()
+				lastID = counter.Next()
 			}
 
 			// then
