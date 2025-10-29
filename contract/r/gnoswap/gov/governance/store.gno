@@ -19,6 +19,7 @@ const (
 	StoreKeyConfigCounter           StoreKey = "configCounter"           // Config version counter
 	StoreKeyProposalCounter         StoreKey = "proposalCounter"         // Proposal ID counter
 	StoreKeyConfigs                 StoreKey = "configs"                 // Configurations AVL tree
+	StoreKeyConfig                  StoreKey = "config"                  // Configuration AVL tree
 	StoreKeyProposals               StoreKey = "proposals"               // Proposals AVL tree
 	StoreKeyProposalUserVotingInfos StoreKey = "proposalUserVotingInfos" // Proposal voting infos AVL tree
 	StoreKeyUserProposals           StoreKey = "userProposals"           // User proposals mapping AVL tree
@@ -110,10 +111,14 @@ func (s *governanceStore) SetConfigs(configs *avl.Tree) error {
 	return s.kvStore.Set(StoreKeyConfigs.String(), configs)
 }
 
-func (s *governanceStore) GetCurrentConfig() (Config, bool) {
-	currentVersion := s.GetConfigCounter()
-	return s.GetConfig(currentVersion.Get())
+func (s *governanceStore) HasConfigStoreKey() bool {
+	return s.kvStore.Has(StoreKeyConfig.String())
 }
+
+// func (s *governanceStore) GetCurrentConfig() (Config, bool) {
+// 	currentVersion := s.GetConfigCounter()
+// 	return s.GetConfig(currentVersion.Get())
+// }
 
 func (s *governanceStore) GetConfig(version int64) (Config, bool) {
 	configs := s.GetConfigs()

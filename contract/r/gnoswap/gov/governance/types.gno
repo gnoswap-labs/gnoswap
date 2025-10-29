@@ -100,9 +100,11 @@ type IGovernanceStore interface {
 
 	// Config methods
 	HasConfigsStoreKey() bool
-	GetConfig(version int64) (Config, bool)
-	SetConfig(version int64, config Config) error
 	SetConfigs(configs *avl.Tree) error
+
+	HasConfigStoreKey() bool
+	SetConfig(version int64, config Config) error
+	GetConfig(version int64) (Config, bool)
 
 	// Proposal methods
 	HasProposalsStoreKey() bool

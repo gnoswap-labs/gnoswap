@@ -75,15 +75,24 @@ func initStoreData(governanceStore governance.IGovernanceStore) error {
 		}
 	}
 
-	// Initialize default configuration
-	nextConfigVersion, err := governanceStore.IncrementConfigCounter()
-	if err != nil {
-		return err
+	if !governanceStore.HasConfigsStoreKey() {
+		err := governanceStore.SetConfigs(avl.NewTree())
+		if err != nil {
+			return err
+		}
 	}
 
-	err = governanceStore.SetConfig(nextConfigVersion, defaultConfig)
-	if err != nil {
-		return err
+	// Initialize default configuration
+	if !governanceStore.HasConfigStoreKey() {
+		nextConfigVersion, err := governanceStore.IncrementConfigCounter()
+		if err != nil {
+			return err
+		}
+
+		err = governanceStore.SetConfig(nextConfigVersion, defaultConfig)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

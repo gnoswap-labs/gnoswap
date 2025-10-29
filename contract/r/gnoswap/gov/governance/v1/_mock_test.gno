@@ -9,6 +9,7 @@ type mockGovernanceStore struct {
 	configCounter           *governance.Counter
 	proposalCounter         *governance.Counter
 	configs                 *avl.Tree
+	config                  governance.Config
 	proposals               *avl.Tree
 	proposalUserVotingInfos *avl.Tree
 	userProposals           *avl.Tree
@@ -56,6 +57,15 @@ func (m *mockGovernanceStore) HasConfigsStoreKey() bool {
 	return m.configs != nil
 }
 
+func (m *mockGovernanceStore) SetConfigs(configs *avl.Tree) error {
+	m.configs = configs
+	return nil
+}
+
+func (m *mockGovernanceStore) HasConfigStoreKey() bool {
+	return m.config != governance.Config{}
+}
+
 func (m *mockGovernanceStore) GetConfig(version int64) (governance.Config, bool) {
 	if m.configs == nil {
 		return governance.Config{}, false
@@ -72,11 +82,6 @@ func (m *mockGovernanceStore) SetConfig(version int64, config governance.Config)
 		m.configs = avl.NewTree()
 	}
 	m.configs.Set(formatInt(version), config)
-	return nil
-}
-
-func (m *mockGovernanceStore) SetConfigs(configs *avl.Tree) error {
-	m.configs = configs
 	return nil
 }
 
