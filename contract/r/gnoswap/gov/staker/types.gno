@@ -102,6 +102,8 @@ type IGovStakerStore interface {
 	HasDelegationSnapshot(timestamp int64) bool
 	SetDelegationSnapshot(timestamp int64, snapshot DelegationSnapshot) error
 	GetDelegationSnapshot(timestamp int64) (DelegationSnapshot, bool)
+
+	SetAllDelegationSnapshots(snapshots *avl.Tree) error
 	GetAllDelegationSnapshots() (*avl.Tree, error)
 
 	// Manager states

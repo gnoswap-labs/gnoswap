@@ -238,6 +238,11 @@ func (m *mockGovStakerStore) GetDelegationSnapshot(timestamp int64) (staker.Dele
 	return value.(staker.DelegationSnapshot), true
 }
 
+func (m *mockGovStakerStore) SetAllDelegationSnapshots(snapshots *avl.Tree) error {
+	m.delegationSnapshots = snapshots
+	return nil
+}
+
 func (m *mockGovStakerStore) GetAllDelegationSnapshots() (*avl.Tree, error) {
 	return m.delegationSnapshots, nil
 }

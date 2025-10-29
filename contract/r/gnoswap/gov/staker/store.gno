@@ -147,15 +147,10 @@ func (s *govStakerStore) SetDelegations(delegations *avl.Tree) error {
 	return s.kvStore.Set(StoreKeyDelegations, delegations)
 }
 
-
-
-
-
-
 func (s *govStakerStore) HasDelegation(id int64) bool {
 	delegations, err := s.getAllDelegations()
 	if err != nil {
-		return false
+		panic(err)
 	}
 	_, exists := delegations.Get(int64ToString(id))
 	return exists
@@ -164,12 +159,12 @@ func (s *govStakerStore) HasDelegation(id int64) bool {
 func (s *govStakerStore) GetDelegation(id int64) (*Delegation, bool) {
 	delegations, err := s.getAllDelegations()
 	if err != nil {
-		return nil, false
+		panic(err)
 	}
 
 	result, exists := delegations.Get(int64ToString(id))
 	if !exists {
-		return nil, false
+		panic(err)
 	}
 
 	delegation, ok := result.(*Delegation)
@@ -207,8 +202,7 @@ func (s *govStakerStore) GetAllDelegations() (*avl.Tree, error) {
 func (s *govStakerStore) getAllDelegations() (*avl.Tree, error) {
 	result, err := s.kvStore.Get(StoreKeyDelegations)
 	if err != nil {
-		// If key doesn't exist, return empty tree
-		return avl.NewTree(), nil
+		panic(err)
 	}
 
 	delegations, ok := result.(*avl.Tree)
@@ -283,7 +277,7 @@ func (s *govStakerStore) HasUserDelegationsStoreKey() bool {
 func (s *govStakerStore) HasUserDelegations(user string) bool {
 	allUserDelegations, err := s.getAllUserDelegations()
 	if err != nil {
-		return false
+		panic(err)
 	}
 	_, exists := allUserDelegations[user]
 	return exists
@@ -345,8 +339,7 @@ func (s *govStakerStore) RemoveUserDelegation(from, to string, delegationID int6
 func (s *govStakerStore) getAllUserDelegations() (map[string]map[string][]int64, error) {
 	result, err := s.kvStore.Get(StoreKeyUserDelegations)
 	if err != nil {
-		// If key doesn't exist, return empty map
-		return make(map[string]map[string][]int64), nil
+		panic(err)
 	}
 
 	userDelegations, ok := result.(map[string]map[string][]int64)
@@ -365,7 +358,7 @@ func (s *govStakerStore) HasDelegationSnapshotsStoreKey() bool {
 func (s *govStakerStore) HasDelegationSnapshot(timestamp int64) bool {
 	snapshots, err := s.GetAllDelegationSnapshots()
 	if err != nil {
-		return false
+		panic(err)
 	}
 	_, exists := snapshots.Get(int64ToString(timestamp))
 	return exists
@@ -384,7 +377,7 @@ func (s *govStakerStore) SetDelegationSnapshot(timestamp int64, snapshot Delegat
 func (s *govStakerStore) GetDelegationSnapshot(timestamp int64) (DelegationSnapshot, bool) {
 	snapshots, err := s.GetAllDelegationSnapshots()
 	if err != nil {
-		return nil, false
+		panic(err)
 	}
 
 	result, exists := snapshots.Get(int64ToString(timestamp))
@@ -400,11 +393,14 @@ func (s *govStakerStore) GetDelegationSnapshot(timestamp int64) (DelegationSnaps
 	return snapshot, true
 }
 
+func (s *govStakerStore) SetAllDelegationSnapshots(snapshots *avl.Tree) error {
+	return s.kvStore.Set(StoreKeyDelegationSnapshots, snapshots)
+}
+
 func (s *govStakerStore) GetAllDelegationSnapshots() (*avl.Tree, error) {
 	result, err := s.kvStore.Get(StoreKeyDelegationSnapshots)
 	if err != nil {
-		// If key doesn't exist, return empty tree
-		return avl.NewTree(), nil
+		panic(err)
 	}
 
 	snapshots, ok := result.(*avl.Tree)

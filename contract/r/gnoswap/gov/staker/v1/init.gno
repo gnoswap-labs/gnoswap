@@ -60,11 +60,15 @@ func initStoreData(store staker.IGovStakerStore) error {
 
 	// Initialize delegation snapshots
 	if !store.HasDelegationSnapshotsStoreKey() {
-		err := store.SetDelegationSnapshot(0, staker.DelegationSnapshot{})
+		err := store.SetAllDelegationSnapshots(avl.NewTree())
 		if err != nil {
 			return err
 		}
-		// The snapshot tree is should be initialized
+
+		err = store.SetDelegationSnapshot(0, make(staker.DelegationSnapshot, 0))
+		if err != nil {
+			return err
+		}
 	}
 
 	if !store.HasDelegationsStoreKey() {
