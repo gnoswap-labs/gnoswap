@@ -439,7 +439,7 @@ func initStakerTest(t *testing.T) {
 	initPoolTest(t)
 
 	mockInstance = &stakerV1{
-		store:            mock.NewMockStakerStore(),
+		store:            newMockStakerStore(),
 		poolAccessor:     newMockPoolAccessor(),
 		emissionAccessor: newMockEmissionAccessor(),
 	}
@@ -464,7 +464,7 @@ func initPoolTest(t *testing.T) {
 func getMockInstance() *stakerV1 {
 	if mockInstance == nil {
 		mockInstance = &stakerV1{
-			store:            mock.NewMockStakerStore(),
+			store:            newMockStakerStore(),
 			poolAccessor:     newMockPoolAccessor(),
 			emissionAccessor: newMockEmissionAccessor(),
 		}
