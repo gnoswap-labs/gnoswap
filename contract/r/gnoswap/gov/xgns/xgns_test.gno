@@ -7,6 +7,7 @@ import (
 	"gno.land/p/nt/ownable"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
+	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/access"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -88,6 +89,39 @@ func TestBurnFail(t *testing.T) {
 	uassert.AbortsWithMessage(t, "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not launchpad", func() {
 		BurnByLaunchPad(cross, govStakerAddress, amount)
 	})
+}
+
+func TestRender(t *testing.T) {
+	// Test empty path - should return token home
+	result := Render("")
+	if result == "" {
+		t.Errorf("Render('') should return token home, got empty string")
+	}
+
+	// Setup: mint some tokens to test balance rendering
+	testing.SetRealm(testing.NewUserRealm(govStakerAddress))
+	testAddr := govStakerAddress
+	initialBalance := BalanceOf(testAddr)
+	mintAmount := int64(1000)
+	Mint(cross, testAddr, mintAmount)
+
+	// Test balance path
+	result = Render("balance/" + string(testAddr))
+	expectedBalance := initialBalance + mintAmount
+	expected := ufmt.Sprintf("%d\n", expectedBalance)
+	if result != expected {
+		t.Errorf("Render('balance/addr') failed. Expected %s, got %s", expected, result)
+	}
+
+	// Test invalid path - should return 404
+	result = Render("invalid/path")
+	expected = "404\n"
+	if result != expected {
+		t.Errorf("Render('invalid/path') failed. Expected %s, got %s", expected, result)
+	}
+
+	// Cleanup
+	Burn(cross, testAddr, mintAmount)
 }
 
 // getContractAddress retrieves the address which registered the role
