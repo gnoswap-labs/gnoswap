@@ -435,6 +435,14 @@ func TestMint(t *testing.T) {
 			shouldPanic:   true,
 			panicMsg:      "token id already exists",
 		},
+		{
+			name:          "mint failed by unauthorized caller",
+			callerRealm:   addr01Realm,
+			tokenIdToMint: 10,
+			addressToMint: addr01,
+			shouldPanic:   true,
+			panicMsg:      "ownable: caller is not owner",
+		},
 	}
 
 	for _, tt := range tests {
@@ -447,6 +455,7 @@ func TestMint(t *testing.T) {
 
 			if tt.shouldPanic {
 				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
+					testing.SetRealm(tt.callerRealm)
 					Mint(cross, tt.addressToMint, tid(tt.tokenIdToMint))
 				})
 
@@ -824,6 +833,140 @@ func TestApprove(t *testing.T) {
 				approved, _ := GetApproved(tid(tt.tokenId))
 				uassert.Equal(t, tt.approved, approved)
 			}
+		})
+	}
+}
+
+func TestHaltedOperations(t *testing.T) {
+	tests := []struct {
+		name        string
+		operation   string
+		setup       func()
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:      "Mint when halted",
+			operation: "Mint",
+			setup: func() {
+				resetObject(t)
+				setHalted(true)
+			},
+			shouldPanic: true,
+			panicMsg:    "halted: position",
+		},
+		{
+			name:      "Burn when halted",
+			operation: "Burn",
+			setup: func() {
+				resetObject(t)
+				testing.SetRealm(positionRealm)
+				Mint(cross, addr01, tid(1))
+				setHalted(true)
+			},
+			shouldPanic: true,
+			panicMsg:    "halted: position",
+		},
+		{
+			name:      "SafeTransferFrom when halted",
+			operation: "SafeTransferFrom",
+			setup: func() {
+				resetObject(t)
+				testing.SetRealm(positionRealm)
+				Mint(cross, addr01, tid(1))
+				testing.SetRealm(addr01Realm)
+				Approve(cross, stakerRealm.Address(), tid(1))
+				setHalted(true)
+			},
+			shouldPanic: true,
+			panicMsg:    "halted: position",
+		},
+		{
+			name:      "TransferFrom when halted",
+			operation: "TransferFrom",
+			setup: func() {
+				resetObject(t)
+				testing.SetRealm(positionRealm)
+				Mint(cross, addr01, tid(1))
+				testing.SetRealm(addr01Realm)
+				Approve(cross, stakerRealm.Address(), tid(1))
+				setHalted(true)
+			},
+			shouldPanic: true,
+			panicMsg:    "halted: position",
+		},
+		{
+			name:      "Approve when halted",
+			operation: "Approve",
+			setup: func() {
+				resetObject(t)
+				testing.SetRealm(positionRealm)
+				Mint(cross, addr01, tid(1))
+				setHalted(true)
+			},
+			shouldPanic: true,
+			panicMsg:    "halted: position",
+		},
+		{
+			name:      "SetApprovalForAll when halted",
+			operation: "SetApprovalForAll",
+			setup: func() {
+				resetObject(t)
+				setHalted(true)
+			},
+			shouldPanic: true,
+			panicMsg:    "halted: position",
+		},
+		{
+			name:      "SetTokenURI when halted",
+			operation: "SetTokenURI",
+			setup: func() {
+				resetObject(t)
+				testing.SetRealm(positionRealm)
+				Mint(cross, addr01, tid(1))
+				setHalted(true)
+			},
+			shouldPanic: true,
+			panicMsg:    "halted: position",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup()
+			}
+
+			if tt.shouldPanic {
+				uassert.AbortsWithMessage(t, tt.panicMsg, func() {
+					switch tt.operation {
+					case "Mint":
+						testing.SetRealm(positionRealm)
+						Mint(cross, addr01, tid(1))
+					case "Burn":
+						testing.SetRealm(positionRealm)
+						Burn(cross, tid(1))
+					case "SafeTransferFrom":
+						testing.SetRealm(stakerRealm)
+						SafeTransferFrom(cross, addr01, addr02, tid(1))
+					case "TransferFrom":
+						testing.SetRealm(stakerRealm)
+						TransferFrom(cross, addr01, addr02, tid(1))
+					case "Approve":
+						testing.SetRealm(addr01Realm)
+						Approve(cross, addr02, tid(1))
+					case "SetApprovalForAll":
+						testing.SetRealm(addr01Realm)
+						SetApprovalForAll(cross, addr02, true)
+					case "SetTokenURI":
+						testing.SetRealm(positionRealm)
+						SetTokenURI(cross, tid(1), "test-uri")
+					}
+				})
+			}
+
+			// Cleanup: unhalt for next test
+			setHalted(false)
 		})
 	}
 }
