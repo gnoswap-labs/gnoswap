@@ -172,49 +172,66 @@ func TestIsApprovedForAll(t *testing.T) {
 func TestSetTokenURI(t *testing.T) {
 	tests := []struct {
 		name             string
+		setup            func()
 		callerRealm      runtime.Realm
 		tokenId          uint64
 		expectedHasAbort bool
 		expectedErrMsg   string
 	}{
 		{
-			name:             "set token uri expected error",
-			callerRealm:      addr01Realm,
+			name: "successfully set token uri by owner",
+			setup: func() {
+				resetObject(t)
+				testing.SetRealm(positionRealm)
+				// Mint token without URI by directly calling nft.Mint
+				ownerAddress := owner.Owner()
+				checkErr(nft.Mint(ownerAddress, tid(1)))
+			},
+			callerRealm:      positionRealm,
+			tokenId:          1,
+			expectedHasAbort: false,
+		},
+		{
+			name: "fail to set token uri on already set token",
+			setup: func() {
+				resetObject(t)
+				testing.SetRealm(positionRealm)
+				Mint(cross, addr01, tid(1))
+			},
+			callerRealm:      positionRealm,
 			tokenId:          1,
 			expectedHasAbort: true,
 			expectedErrMsg:   "[GNOSWAP-GNFT-002] cannot set URI || token id (1) has already set URI",
 		},
 		{
-			name:             "set token uri is failed by not owner",
-			callerRealm:      addr02Realm,
-			tokenId:          1,
-			expectedHasAbort: true,
-			expectedErrMsg:   "[GNOSWAP-GNFT-002] cannot set URI || token id (1) has already set URI",
-		},
-		{
-			name:             "set token uri is failed by empty token uri",
+			name: "fail to set token uri by unauthorized caller",
+			setup: func() {
+				resetObject(t)
+				testing.SetRealm(positionRealm)
+				Mint(cross, addr01, tid(1))
+			},
 			callerRealm:      addr01Realm,
 			tokenId:          1,
 			expectedHasAbort: true,
-			expectedErrMsg:   "[GNOSWAP-GNFT-002] cannot set URI || token id (1) has already set URI",
+			expectedErrMsg:   "ownable: caller is not owner",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resetObject(t)
-
-			// token id 1 is pre-minted
-			testing.SetRealm(positionRealm)
-			Mint(cross, addr01, tid(1))
+			if tt.setup != nil {
+				tt.setup()
+			}
 
 			testing.SetRealm(tt.callerRealm)
 			if tt.expectedHasAbort {
 				uassert.AbortsWithMessage(t, tt.expectedErrMsg, func() {
-					SetTokenURI(cross, tid(tt.tokenId), "not change")
+					SetTokenURI(cross, tid(tt.tokenId), "test-uri")
 				})
 			} else {
-				SetTokenURI(cross, tid(tt.tokenId), "not change")
+				result, err := SetTokenURI(cross, tid(tt.tokenId), "test-uri")
+				uassert.NoError(t, err)
+				uassert.True(t, result)
 			}
 		})
 	}
