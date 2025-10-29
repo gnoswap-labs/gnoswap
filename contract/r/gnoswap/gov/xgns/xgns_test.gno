@@ -14,13 +14,7 @@ import (
 	"gno.land/r/gnoswap/rbac"
 )
 
-var (
-	adminAddr        = getContractAddress(prbac.ROLE_ADMIN.String())
-	govStakerAddress = getContractAddress(prbac.ROLE_GOV_STAKER.String())
-	launchpadAddress = getContractAddress(prbac.ROLE_LAUNCHPAD.String())
-)
-
-func TestTotalSupply(t *testing.T) {
+func TestXgns_TotalSupply(t *testing.T) {
 	expectedSupply := int64(0)
 	actualSupply := TotalSupply()
 	if actualSupply != expectedSupply {
@@ -28,13 +22,13 @@ func TestTotalSupply(t *testing.T) {
 	}
 }
 
-func TestMint(t *testing.T) {
+func TestXgns_Mint(t *testing.T) {
 	amount := int64(1000)
 	initialSupply := TotalSupply()
 
 	// Test Mint success
-	testing.SetRealm(testing.NewUserRealm(govStakerAddress))
-	Mint(cross, govStakerAddress, amount)
+	testing.SetRealm(testing.NewUserRealm(getGovStakerAddress()))
+	Mint(cross, getGovStakerAddress(), amount)
 
 	expectedSupply := initialSupply + amount
 	actualSupply := TotalSupply()
@@ -43,22 +37,22 @@ func TestMint(t *testing.T) {
 	}
 
 	expectedBalance := amount
-	actualBalance := BalanceOf(govStakerAddress)
+	actualBalance := BalanceOf(getGovStakerAddress())
 	if actualBalance < expectedBalance {
 		t.Errorf("Mint() failed. Expected balance at least %d, got %d", expectedBalance, actualBalance)
 	}
 
 	// Cleanup
-	Burn(cross, govStakerAddress, amount)
+	Burn(cross, getGovStakerAddress(), amount)
 }
 
-func TestMintByLaunchPad(t *testing.T) {
+func TestXgns_MintByLaunchPad(t *testing.T) {
 	amount := int64(500)
 	initialSupply := TotalSupply()
 
 	// Test MintByLaunchPad success
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
-	MintByLaunchPad(cross, launchpadAddress, amount)
+	MintByLaunchPad(cross, getLaunchpadAddress(), amount)
 
 	expectedSupply := initialSupply + amount
 	actualSupply := TotalSupply()
@@ -67,34 +61,34 @@ func TestMintByLaunchPad(t *testing.T) {
 	}
 
 	// Cleanup
-	BurnByLaunchPad(cross, launchpadAddress, amount)
+	BurnByLaunchPad(cross, getLaunchpadAddress(), amount)
 }
 
-func TestMintFail(t *testing.T) {
+func TestXgns_MintUnauthorized(t *testing.T) {
 	amount := int64(100)
-	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(getAdminAddress()))
 	uassert.AbortsWithMessage(t, "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not gov_staker", func() {
-		Mint(cross, govStakerAddress, amount)
+		Mint(cross, getGovStakerAddress(), amount)
 	})
 	uassert.AbortsWithMessage(t, "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not launchpad", func() {
-		MintByLaunchPad(cross, govStakerAddress, amount)
+		MintByLaunchPad(cross, getGovStakerAddress(), amount)
 	})
 }
 
-func TestBurn(t *testing.T) {
+func TestXgns_Burn(t *testing.T) {
 	mintAmount := int64(1000)
 	burnAmount := int64(200)
 	initialSupply := TotalSupply()
 
 	// Test Burn by gov staker
-	testing.SetRealm(testing.NewUserRealm(govStakerAddress))
-	Mint(cross, govStakerAddress, mintAmount)
+	testing.SetRealm(testing.NewUserRealm(getGovStakerAddress()))
+	Mint(cross, getGovStakerAddress(), mintAmount)
 
-	initialBalance := BalanceOf(govStakerAddress)
-	Burn(cross, govStakerAddress, burnAmount)
+	initialBalance := BalanceOf(getGovStakerAddress())
+	Burn(cross, getGovStakerAddress(), burnAmount)
 
 	expectedBalance := initialBalance - burnAmount
-	actualBalance := BalanceOf(govStakerAddress)
+	actualBalance := BalanceOf(getGovStakerAddress())
 	if actualBalance != expectedBalance {
 		t.Errorf("Burn() failed. Expected balance %d, got %d", expectedBalance, actualBalance)
 	}
@@ -106,40 +100,40 @@ func TestBurn(t *testing.T) {
 	}
 
 	// Cleanup
-	remainingBalance := BalanceOf(govStakerAddress)
+	remainingBalance := BalanceOf(getGovStakerAddress())
 	if remainingBalance > 0 {
-		Burn(cross, govStakerAddress, mintAmount-burnAmount)
+		Burn(cross, getGovStakerAddress(), mintAmount-burnAmount)
 	}
 }
 
-func TestBurnByLaunchPad(t *testing.T) {
+func TestXgns_BurnByLaunchPad(t *testing.T) {
 	mintAmount := int64(1000)
 	burnAmount := int64(200)
 
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
-	MintByLaunchPad(cross, launchpadAddress, mintAmount)
-	BurnByLaunchPad(cross, launchpadAddress, burnAmount)
+	MintByLaunchPad(cross, getLaunchpadAddress(), mintAmount)
+	BurnByLaunchPad(cross, getLaunchpadAddress(), burnAmount)
 	expectedBalance := mintAmount - burnAmount
-	actualBalance := BalanceOf(launchpadAddress)
+	actualBalance := BalanceOf(getLaunchpadAddress())
 	if actualBalance < expectedBalance {
 		t.Errorf("BurnByLaunchPad() failed. Expected at least %d, got %d", expectedBalance, actualBalance)
 	}
 
 	// reset state by burn all
-	currentBalance := BalanceOf(launchpadAddress)
-	BurnByLaunchPad(cross, launchpadAddress, currentBalance)
+	currentBalance := BalanceOf(getLaunchpadAddress())
+	BurnByLaunchPad(cross, getLaunchpadAddress(), currentBalance)
 }
 
-func TestVotingSupply(t *testing.T) {
+func TestXgns_VotingSupply(t *testing.T) {
 	initialSupply := int64(1000)
 	launchpadBalance := int64(200)
 
-	testing.SetRealm(testing.NewUserRealm(govStakerAddress))
-	Mint(cross, govStakerAddress, initialSupply-launchpadBalance)
+	testing.SetRealm(testing.NewUserRealm(getGovStakerAddress()))
+	Mint(cross, getGovStakerAddress(), initialSupply-launchpadBalance)
 
-	testing.SetRealm(testing.NewUserRealm(launchpadAddress))
-	MintByLaunchPad(cross, launchpadAddress, launchpadBalance)
+	testing.SetRealm(testing.NewUserRealm(getLaunchpadAddress()))
+	MintByLaunchPad(cross, getLaunchpadAddress(), launchpadBalance)
 
 	expectedVotingSupply := initialSupply - launchpadBalance
 	actualVotingSupply := VotingSupply()
@@ -148,63 +142,107 @@ func TestVotingSupply(t *testing.T) {
 	}
 
 	expectedBalance := launchpadBalance
-	actualBalance := BalanceOf(launchpadAddress)
+	actualBalance := BalanceOf(getLaunchpadAddress())
 	if actualBalance != expectedBalance {
 		t.Errorf("BalanceOf() failed. Expected %d, got %d", expectedBalance, actualBalance)
 	}
 }
 
-func TestBurnFail(t *testing.T) {
+func TestXgns_BurnUnauthorized(t *testing.T) {
 	amount := int64(100)
-	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	testing.SetRealm(testing.NewUserRealm(getAdminAddress()))
 	uassert.AbortsWithMessage(t, "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not gov_staker", func() {
-		Burn(cross, govStakerAddress, amount)
+		Burn(cross, getGovStakerAddress(), amount)
 	})
 	uassert.AbortsWithMessage(t, "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not launchpad", func() {
-		BurnByLaunchPad(cross, govStakerAddress, amount)
+		BurnByLaunchPad(cross, getGovStakerAddress(), amount)
 	})
 }
 
-func TestBalanceOf(t *testing.T) {
+func TestXgns_BalanceOf(t *testing.T) {
 	// Test balance for address with zero balance
-	zeroBalance := BalanceOf(adminAddr)
+	zeroBalance := BalanceOf(getAdminAddress())
 	if zeroBalance < 0 {
 		t.Errorf("BalanceOf() should not return negative value, got %d", zeroBalance)
 	}
 
 	// Test balance after minting
-	testing.SetRealm(testing.NewUserRealm(govStakerAddress))
+	testing.SetRealm(testing.NewUserRealm(getGovStakerAddress()))
 	mintAmount := int64(500)
-	initialBalance := BalanceOf(govStakerAddress)
-	Mint(cross, govStakerAddress, mintAmount)
+	initialBalance := BalanceOf(getGovStakerAddress())
+	Mint(cross, getGovStakerAddress(), mintAmount)
 
-	newBalance := BalanceOf(govStakerAddress)
+	newBalance := BalanceOf(getGovStakerAddress())
 	expectedBalance := initialBalance + mintAmount
 	if newBalance != expectedBalance {
 		t.Errorf("BalanceOf() failed after mint. Expected %d, got %d", expectedBalance, newBalance)
 	}
 
 	// Cleanup
-	Burn(cross, govStakerAddress, mintAmount)
+	Burn(cross, getGovStakerAddress(), mintAmount)
 }
 
-func TestEdgeCases(t *testing.T) {
-	testing.SetRealm(testing.NewUserRealm(govStakerAddress))
+func TestXgns_EdgeCases(t *testing.T) {
+	testing.SetRealm(testing.NewUserRealm(getGovStakerAddress()))
+
+	// Test minting with negative amount - should panic with "invalid amount"
+	uassert.AbortsWithMessage(t, "invalid amount", func() {
+		Mint(cross, getGovStakerAddress(), -100)
+	})
+
+	// Test burning with negative amount - should panic with "invalid amount"
+	uassert.AbortsWithMessage(t, "invalid amount", func() {
+		Burn(cross, getGovStakerAddress(), -100)
+	})
 
 	// Test burning more than balance - should panic
-	Mint(cross, govStakerAddress, 100)
+	Mint(cross, getGovStakerAddress(), 100)
 	uassert.AbortsWithMessage(t, "insufficient balance", func() {
-		Burn(cross, govStakerAddress, 10000)
+		Burn(cross, getGovStakerAddress(), 10000)
 	})
 
 	// Cleanup
-	currentBalance := BalanceOf(govStakerAddress)
+	currentBalance := BalanceOf(getGovStakerAddress())
 	if currentBalance >= 100 {
-		Burn(cross, govStakerAddress, 100)
+		Burn(cross, getGovStakerAddress(), 100)
 	}
 }
 
-func TestRender(t *testing.T) {
+func TestXgns_ZeroAmount(t *testing.T) {
+	testing.SetRealm(testing.NewUserRealm(getGovStakerAddress()))
+	initialSupply := TotalSupply()
+	initialBalance := BalanceOf(getGovStakerAddress())
+
+	// Test minting with zero amount - should succeed but not change anything
+	Mint(cross, getGovStakerAddress(), 0)
+
+	newSupply := TotalSupply()
+	newBalance := BalanceOf(getGovStakerAddress())
+
+	if newSupply != initialSupply {
+		t.Errorf("Mint(0) should not change total supply. Expected %d, got %d", initialSupply, newSupply)
+	}
+
+	if newBalance != initialBalance {
+		t.Errorf("Mint(0) should not change balance. Expected %d, got %d", initialBalance, newBalance)
+	}
+
+	// Test burning with zero amount - should succeed but not change anything
+	Burn(cross, getGovStakerAddress(), 0)
+
+	finalSupply := TotalSupply()
+	finalBalance := BalanceOf(getGovStakerAddress())
+
+	if finalSupply != newSupply {
+		t.Errorf("Burn(0) should not change total supply. Expected %d, got %d", newSupply, finalSupply)
+	}
+
+	if finalBalance != newBalance {
+		t.Errorf("Burn(0) should not change balance. Expected %d, got %d", newBalance, finalBalance)
+	}
+}
+
+func TestXgns_Render(t *testing.T) {
 	// Test empty path - should return token home
 	result := Render("")
 	if result == "" {
@@ -212,8 +250,8 @@ func TestRender(t *testing.T) {
 	}
 
 	// Setup: mint some tokens to test balance rendering
-	testing.SetRealm(testing.NewUserRealm(govStakerAddress))
-	testAddr := govStakerAddress
+	testing.SetRealm(testing.NewUserRealm(getGovStakerAddress()))
+	testAddr := getGovStakerAddress()
 	initialBalance := BalanceOf(testAddr)
 	mintAmount := int64(1000)
 	Mint(cross, testAddr, mintAmount)
@@ -237,13 +275,29 @@ func TestRender(t *testing.T) {
 	Burn(cross, testAddr, mintAmount)
 }
 
-// getContractAddress retrieves the address which registered the role
-func getContractAddress(roleName string) address {
-	addr, exists := access.GetAddress(roleName)
-	if !exists {
-		return rbac.DefaultRoleAddresses[prbac.SystemRole(roleName)]
-	}
+// Helper functions
 
+func getAdminAddress() address {
+	addr, exists := access.GetAddress(prbac.ROLE_ADMIN.String())
+	if !exists {
+		return rbac.DefaultRoleAddresses[prbac.ROLE_ADMIN]
+	}
+	return addr
+}
+
+func getGovStakerAddress() address {
+	addr, exists := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+	if !exists {
+		return rbac.DefaultRoleAddresses[prbac.ROLE_GOV_STAKER]
+	}
+	return addr
+}
+
+func getLaunchpadAddress() address {
+	addr, exists := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	if !exists {
+		return rbac.DefaultRoleAddresses[prbac.ROLE_LAUNCHPAD]
+	}
 	return addr
 }
 
