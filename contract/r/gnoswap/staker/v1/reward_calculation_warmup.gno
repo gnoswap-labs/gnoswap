@@ -41,7 +41,7 @@ func modifyWarmup(warmupTemplate []sr.Warmup, index int, timeDuration int64) []s
 }
 
 func instantiateWarmup(warmupTemplate []sr.Warmup, currentTime int64) []sr.Warmup {
-	warmups := make([]sr.Warmup, 0)
+	warmups := make([]sr.Warmup, 0, len(warmupTemplate))
 	for i, warmup := range warmupTemplate {
 		nextWarmupTime := safeAddTime(currentTime, warmup.TimeDuration)
 
