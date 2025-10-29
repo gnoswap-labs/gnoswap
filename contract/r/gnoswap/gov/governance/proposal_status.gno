@@ -51,6 +51,18 @@ type ProposalStatus struct {
 	voteStatus   *ProposalVoteStatus     // Voting tallies and requirements
 }
 
+func NewProposalStatusInstance(
+	schedule *ProposalScheduleStatus,
+	actionStatus *ProposalActionStatus,
+	voteStatus *ProposalVoteStatus,
+) *ProposalStatus {
+	return &ProposalStatus{
+		schedule:     schedule,
+		actionStatus: actionStatus,
+		voteStatus:   voteStatus,
+	}
+}
+
 /* Getter methods */
 func (s *ProposalStatus) Schedule() *ProposalScheduleStatus { return s.schedule }
 func (s *ProposalStatus) ActionStatus() *ProposalActionStatus { return s.actionStatus }
@@ -72,40 +84,4 @@ func (s *ProposalStatus) YesWeight() int64 {
 //   - int64: total "no" vote weight
 func (s *ProposalStatus) NoWeight() int64 {
 	return s.voteStatus.NoWeight()
-}
-
-// NewProposalStatus creates a new proposal status with the specified configuration.
-// This initializes all status components with the governance configuration and timing.
-//
-// Parameters:
-//   - config: governance configuration to use
-//   - maxVotingWeight: maximum voting weight for this proposal
-//   - executable: whether this proposal type can be executed
-//   - createdAt: timestamp when proposal was created
-//
-// Returns:
-//   - *ProposalStatus: new proposal status instance
-func NewProposalStatus(
-	config Config,
-	maxVotingWeight int64,
-	executable bool,
-	createdAt int64,
-) *ProposalStatus {
-	return &ProposalStatus{
-		// Initialize time-based scheduling
-		schedule: NewProposalScheduleStatus(
-			config.VotingStartDelay,
-			config.VotingPeriod,
-			config.ExecutionDelay,
-			config.ExecutionWindow,
-			createdAt,
-		),
-		// Initialize action status (execution/cancellation tracking)
-		actionStatus: NewProposalActionStatus(executable),
-		// Initialize vote status with voting requirements
-		voteStatus: NewProposalVoteStatus(
-			maxVotingWeight,
-			config.Quorum,
-		),
-	}
 }

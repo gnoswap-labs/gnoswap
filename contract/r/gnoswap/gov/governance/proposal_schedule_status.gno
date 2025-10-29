@@ -11,6 +11,22 @@ type ProposalScheduleStatus struct {
 	expiredTime    int64 // When execution window ends (ExecutableTime + ExecutionWindow)
 }
 
+func NewProposalScheduleStatusInstance(
+	createTime int64,
+	activeTime int64,
+	votingEndTime int64,
+	executableTime int64,
+	expiredTime int64,
+) *ProposalScheduleStatus {
+	return &ProposalScheduleStatus{
+		createTime: createTime,
+		activeTime: activeTime,
+		votingEndTime: votingEndTime,
+		executableTime: executableTime,
+		expiredTime: expiredTime,
+	}
+}
+
 /* Getter methods */
 func (p *ProposalScheduleStatus) CreateTime() int64 { return p.createTime }
 func (p *ProposalScheduleStatus) ActiveTime() int64 { return p.activeTime }
@@ -18,98 +34,9 @@ func (p *ProposalScheduleStatus) VotingEndTime() int64 { return p.votingEndTime 
 func (p *ProposalScheduleStatus) ExecutableTime() int64 { return p.executableTime }
 func (p *ProposalScheduleStatus) ExpiredTime() int64 { return p.expiredTime }
 
-// IsPassedCreatedAt checks if the current time has passed the proposal creation time.
-// This is always true once a proposal exists.
-//
-// Parameters:
-//   - current: timestamp to check against
-//
-// Returns:
-//   - bool: true if current time is at or after creation time
-func (p *ProposalScheduleStatus) IsPassedCreatedAt(current int64) bool {
-	return p.createTime <= current
-}
-
-// IsPassedActiveAt checks if the current time has passed the voting start time.
-// When true, the proposal enters its active voting period.
-//
-// Parameters:
-//   - current: timestamp to check against
-//
-// Returns:
-//   - bool: true if voting period has started
-func (p *ProposalScheduleStatus) IsPassedActiveAt(current int64) bool {
-	return p.activeTime <= current
-}
-
-// IsPassedVotingEndedAt checks if the current time has passed the voting end time.
-// When true, no more votes can be cast on the proposal.
-//
-// Parameters:
-//   - current: timestamp to check against
-//
-// Returns:
-//   - bool: true if voting period has ended
-func (p *ProposalScheduleStatus) IsPassedVotingEndedAt(current int64) bool {
-	return p.votingEndTime <= current
-}
-
-// IsPassedExecutableAt checks if the current time has passed the execution start time.
-// When true, approved proposals can be executed (after execution delay).
-//
-// Parameters:
-//   - current: timestamp to check against
-//
-// Returns:
-//   - bool: true if execution window has started
-func (p *ProposalScheduleStatus) IsPassedExecutableAt(current int64) bool {
-	return p.executableTime <= current
-}
-
-// IsPassedExpiredAt checks if the current time has passed the execution expiration time.
-// When true, the proposal can no longer be executed and has expired.
-//
-// Parameters:
-//   - current: timestamp to check against
-//
-// Returns:
-//   - bool: true if execution window has expired
-func (p *ProposalScheduleStatus) IsPassedExpiredAt(current int64) bool {
-	return p.expiredTime <= current
-}
-
-// NewProposalScheduleStatus creates a new schedule status with calculated timestamps.
-// This constructor takes the governance timing parameters and calculates all
-// important timestamps for the proposal's lifecycle.
-//
-// Parameters:
-//   - votingStartDelay: delay before voting starts (seconds)
-//   - votingPeriod: duration of voting period (seconds)
-//   - executionDelay: delay before execution can start (seconds)
-//   - executionWindow: window during which execution is allowed (seconds)
-//   - createdAt: timestamp when proposal was created
-//
-// Returns:
-//   - *ProposalScheduleStatus: new schedule status with calculated times
-func NewProposalScheduleStatus(
-	votingStartDelay,
-	votingPeriod,
-	executionDelay,
-	executionWindow,
-	createdAt int64,
-) *ProposalScheduleStatus {
-	// Calculate all phase timestamps based on creation time and configuration
-	createTime := createdAt
-	activeTime := createTime + votingStartDelay      // When voting can start
-	votingEndTime := activeTime + votingPeriod       // When voting ends
-	executableTime := votingEndTime + executionDelay // When execution can start
-	expiredTime := executableTime + executionWindow  // When execution window closes
-
-	return &ProposalScheduleStatus{
-		createTime:     createTime,
-		activeTime:     activeTime,
-		votingEndTime:  votingEndTime,
-		executableTime: executableTime,
-		expiredTime:    expiredTime,
-	}
-}
+/* Setter methods */
+func (p *ProposalScheduleStatus) SetCreateTime(createTime int64) { p.createTime = createTime }
+func (p *ProposalScheduleStatus) SetActiveTime(activeTime int64) { p.activeTime = activeTime }
+func (p *ProposalScheduleStatus) SetVotingEndTime(votingEndTime int64) { p.votingEndTime = votingEndTime }
+func (p *ProposalScheduleStatus) SetExecutableTime(executableTime int64) { p.executableTime = executableTime }
+func (p *ProposalScheduleStatus) SetExpiredTime(expiredTime int64) { p.expiredTime = expiredTime }

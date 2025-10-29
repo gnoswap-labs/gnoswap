@@ -1,9 +1,10 @@
-package governance
+package v1
 
 import (
 	"testing"
 
 	"gno.land/p/nt/uassert"
+	"gno.land/r/gnoswap/gov/governance"
 )
 
 // TestProposalActionStatus_CancelAndExecute tests cancel and execute operations
@@ -59,14 +60,14 @@ func TestProposalActionStatus_CancelAndExecute(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			status := NewProposalActionStatus(tc.executable)
-
+			status := governance.NewProposalActionStatus(tc.executable)
+			resolver := NewProposalActionStatusResolver(status)
 			// when
 			var err error
 			if tc.operation == "cancel" {
-				err = status.Cancel(tc.timestamp, tc.height, tc.actor)
+				err = resolver.Cancel(tc.timestamp, tc.height, tc.actor)
 			} else {
-				err = status.Execute(tc.timestamp, tc.height, tc.actor)
+				err = resolver.Execute(tc.timestamp, tc.height, tc.actor)
 			}
 
 			// then
@@ -75,11 +76,11 @@ func TestProposalActionStatus_CancelAndExecute(t *testing.T) {
 			} else {
 				uassert.Nil(t, err)
 				if tc.operation == "cancel" {
-					uassert.True(t, status.IsCanceled())
-					uassert.Equal(t, status.CanceledBy(), tc.actor)
+					uassert.True(t, resolver.Canceled())
+					uassert.Equal(t, resolver.CanceledBy(), tc.actor)
 				} else {
-					uassert.True(t, status.IsExecuted())
-					uassert.Equal(t, status.ExecutedBy(), tc.actor)
+					uassert.True(t, resolver.IsExecuted())
+					uassert.Equal(t, resolver.ExecutedBy(), tc.actor)
 				}
 			}
 		})
@@ -105,13 +106,14 @@ func TestNewProposalActionStatus(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// when
-			status := NewProposalActionStatus(tc.executable)
+			status := governance.NewProposalActionStatus(tc.executable)
+			resolver := NewProposalActionStatusResolver(status)
 
 			// then
 			uassert.NotNil(t, status)
-			uassert.Equal(t, status.IsExecutable(), tc.executable)
-			uassert.False(t, status.IsCanceled())
-			uassert.False(t, status.IsExecuted())
+			uassert.Equal(t, resolver.IsExecutable(), tc.executable)
+			uassert.False(t, resolver.Canceled())
+			uassert.False(t, resolver.IsExecuted())
 		})
 	}
 }

@@ -1,4 +1,4 @@
-package governance
+package v1
 
 import (
 	"testing"
@@ -92,17 +92,18 @@ func TestProposalScheduleStatus_TimeChecks(t *testing.T) {
 			// when & then
 			for stateName, expectedResult := range tc.expectedStates {
 				var result bool
+				resolver := NewProposalScheduleStatusResolver(status)
 				switch stateName {
 				case "IsPassedCreatedAt":
-					result = status.IsPassedCreatedAt(tc.currentTime.Unix())
+					result = resolver.IsPassedCreatedAt(tc.currentTime.Unix())
 				case "IsPassedActiveAt":
-					result = status.IsPassedActiveAt(tc.currentTime.Unix())
+					result = resolver.IsPassedActiveAt(tc.currentTime.Unix())
 				case "IsPassedVotingEndedAt":
-					result = status.IsPassedVotingEndedAt(tc.currentTime.Unix())
+					result = resolver.IsPassedVotingEndedAt(tc.currentTime.Unix())
 				case "IsPassedExecutableAt":
-					result = status.IsPassedExecutableAt(tc.currentTime.Unix())
+					result = resolver.IsPassedExecutableAt(tc.currentTime.Unix())
 				case "IsPassedExpiredAt":
-					result = status.IsPassedExpiredAt(tc.currentTime.Unix())
+					result = resolver.IsPassedExpiredAt(tc.currentTime.Unix())
 				}
 
 				uassert.Equal(t, result, expectedResult)
@@ -152,11 +153,11 @@ func TestNewProposalScheduleStatus(t *testing.T) {
 
 			// then
 			uassert.NotNil(t, status)
-			uassert.Equal(t, status.createTime, tc.createdAt)
-			uassert.Equal(t, status.activeTime, tc.createdAt+tc.votingStartDelay)
-			uassert.Equal(t, status.votingEndTime, status.activeTime+tc.votingPeriod)
-			uassert.Equal(t, status.executableTime, status.votingEndTime+tc.executionDelay)
-			uassert.Equal(t, status.expiredTime, status.executableTime+tc.executionWindow)
+			uassert.Equal(t, status.CreateTime(), tc.createdAt)
+			uassert.Equal(t, status.ActiveTime(), tc.createdAt+tc.votingStartDelay)
+			uassert.Equal(t, status.VotingEndTime(), status.ActiveTime()+tc.votingPeriod)
+			uassert.Equal(t, status.ExecutableTime(), status.VotingEndTime()+tc.executionDelay)
+			uassert.Equal(t, status.ExpiredTime(), status.ExecutableTime()+tc.executionWindow)
 		})
 	}
 }

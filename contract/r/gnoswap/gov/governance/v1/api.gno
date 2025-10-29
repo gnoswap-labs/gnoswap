@@ -123,7 +123,7 @@ func (gv *governanceV1) getProposalStatus(id int64) string {
 		WriteString("expiredTime", formatInt(schedule.ExpiredTime()))
 
 	// Add action state if applicable
-	if proposal.Status().ActionStatus().IsCanceled() {
+	if proposal.Status().ActionStatus().Canceled() {
 		node.
 			WriteString("canceled", formatBool(true)).
 			WriteString("canceledAt", formatInt(proposal.Status().ActionStatus().CanceledAt())).

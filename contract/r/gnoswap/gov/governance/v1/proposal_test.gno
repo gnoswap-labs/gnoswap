@@ -94,7 +94,7 @@ func TestProposal_Validation(t *testing.T) {
 			}
 			proposal := governance.NewProposal(
 				1,
-				governance.NewProposalStatus(config, 1000, governance.Text.IsExecutable(), baseTime),
+				NewProposalStatus(config, 1000, governance.Text.IsExecutable(), baseTime),
 				tc.metadata,
 				tc.data,
 				address("g1proposer"),
@@ -162,7 +162,7 @@ func TestProposal_StatusOperations(t *testing.T) {
 			// given
 			proposal := governance.NewProposal(
 				1,
-				governance.NewProposalStatus(config, 1000, tc.proposalType.IsExecutable(), baseTime.Unix()),
+				NewProposalStatus(config, 1000, tc.proposalType.IsExecutable(), baseTime.Unix()),
 				governance.NewProposalMetadata("Test", "Test"),
 				governance.NewProposalData(tc.proposalType, nil, nil),
 				address("g1proposer"),
@@ -226,7 +226,7 @@ func TestNewProposal(t *testing.T) {
 			// when
 			proposal := governance.NewProposal(
 				1,
-				governance.NewProposalStatus(config, 1000, tc.proposalType.IsExecutable(), baseTime),
+				NewProposalStatus(config, 1000, tc.proposalType.IsExecutable(), baseTime),
 				governance.NewProposalMetadata(tc.title, tc.description),
 				governance.NewProposalData(tc.proposalType, nil, nil),
 				tc.proposer,

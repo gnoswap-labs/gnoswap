@@ -32,7 +32,7 @@ func TestGovernanceVote_Vote(t *testing.T) {
 			voter:      testutils.TestAddress("voter"),
 			setupProposal: governance.NewProposal(
 				1,
-				governance.NewProposalStatus(
+				NewProposalStatus(
 					testConfig,
 					10_000_000_000, // max voting weight
 					true,
@@ -57,7 +57,7 @@ func TestGovernanceVote_Vote(t *testing.T) {
 			voter:      testutils.TestAddress("voter"),
 			setupProposal: governance.NewProposal(
 				1,
-				governance.NewProposalStatus(
+				NewProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
@@ -90,7 +90,7 @@ func TestGovernanceVote_Vote(t *testing.T) {
 			voter:      testutils.TestAddress("voter_no_weight"),
 			setupProposal: governance.NewProposal(
 				1,
-				governance.NewProposalStatus(
+				NewProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
@@ -116,7 +116,7 @@ func TestGovernanceVote_Vote(t *testing.T) {
 			voter:      testutils.TestAddress("voter"),
 			setupProposal: governance.NewProposal(
 				1,
-				governance.NewProposalStatus(
+				NewProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
@@ -142,7 +142,7 @@ func TestGovernanceVote_Vote(t *testing.T) {
 			voter:      testutils.TestAddress("voter_already"),
 			setupProposal: governance.NewProposal(
 				1,
-				governance.NewProposalStatus(
+				NewProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
@@ -237,7 +237,7 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 			votedAt:      time.Now().Unix(),
 			setupProposal: governance.NewProposal(
 				1,
-				governance.NewProposalStatus(
+				NewProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
@@ -263,7 +263,7 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 			votedAt:      time.Now().Unix(),
 			setupProposal: governance.NewProposal(
 				1,
-				governance.NewProposalStatus(
+				NewProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
@@ -299,7 +299,7 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 			votedAt:      time.Now().Unix(),
 			setupProposal: governance.NewProposal(
 				1,
-				governance.NewProposalStatus(
+				NewProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
@@ -324,7 +324,7 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 			votedAt:      time.Now().Unix(),
 			setupProposal: governance.NewProposal(
 				1,
-				governance.NewProposalStatus(
+				NewProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
@@ -416,7 +416,7 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 			setupProposal: func() *governance.Proposal {
 				return governance.NewProposal(
 					1,
-					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
 					governance.NewProposalMetadata("Test", "Description"),
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
@@ -436,7 +436,7 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 			setupProposal: func() *governance.Proposal {
 				proposal := governance.NewProposal(
 					1,
-					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
 					governance.NewProposalMetadata("Test", "Description"),
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
@@ -459,7 +459,7 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 			setupProposal: func() *governance.Proposal {
 				proposal := governance.NewProposal(
 					1,
-					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*10).Unix()),
+					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*10).Unix()),
 					governance.NewProposalMetadata("Test", "Description"),
 					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
@@ -483,7 +483,7 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 			setupProposal: func() *governance.Proposal {
 				proposal := governance.NewProposal(
 					1,
-					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*40).Unix()),
+					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*40).Unix()),
 					governance.NewProposalMetadata("Test", "Description"),
 					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
@@ -573,7 +573,7 @@ func TestGovernanceVote_VotePeriod(t *testing.T) {
 
 			proposal := governance.NewProposal(
 				1,
-				governance.NewProposalStatus(testConfig, 10_000_000_000, true, tt.proposalTime),
+				NewProposalStatus(testConfig, 10_000_000_000, true, tt.proposalTime),
 				governance.NewProposalMetadata("Test", "Description"),
 				NewProposalTextData(),
 				testutils.TestAddress("proposer"),
@@ -656,7 +656,7 @@ func TestGovernanceVote_VoteWeightCalculation(t *testing.T) {
 
 			proposal := governance.NewProposal(
 				1,
-				governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()-testConfig.VotingStartDelay),
+				NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()-testConfig.VotingStartDelay),
 				governance.NewProposalMetadata("Test", "Description"),
 				NewProposalTextData(),
 				testutils.TestAddress("proposer"),
@@ -742,7 +742,7 @@ func TestGovernanceVote_QuorumCalculation(t *testing.T) {
 
 			proposal := governance.NewProposal(
 				1,
-				governance.NewProposalStatus(customConfig, eligibleWeight, true, time.Now().Add(-time.Hour*24*10).Unix()),
+				NewProposalStatus(customConfig, eligibleWeight, true, time.Now().Add(-time.Hour*24*10).Unix()),
 				governance.NewProposalMetadata("Test", "Description"),
 				NewProposalTextData(),
 				testutils.TestAddress("proposer"),

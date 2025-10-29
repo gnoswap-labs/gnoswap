@@ -64,7 +64,7 @@ func TestProposalStatus_StatusType(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			status := governance.NewProposalStatus(config, tc.maxVotingWeight, tc.executable, baseTime.Unix())
+			status := NewProposalStatus(config, tc.maxVotingWeight, tc.executable, baseTime.Unix())
 			resolver := NewProposalStatusResolver(status)
 			if tc.isExecuted {
 				_ = resolver.execute(tc.currentTime.Unix(), 100, address("g1executor"))
@@ -132,7 +132,7 @@ func TestProposalStatus_VotingOperations(t *testing.T) {
 				ExecutionWindow:  200,
 				Quorum:           tc.quorum,
 			}
-			status := governance.NewProposalStatus(config, tc.maxVotingWeight, true, time.Now().Unix())
+			status := NewProposalStatus(config, tc.maxVotingWeight, true, time.Now().Unix())
 			resolver := NewProposalStatusResolver(status)
 
 			// when

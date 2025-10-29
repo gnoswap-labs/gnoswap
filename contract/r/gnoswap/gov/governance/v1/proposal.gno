@@ -41,8 +41,8 @@ func (r *ProposalResolver) IsActive(current int64) bool {
 	// If the proposal is rejected, expired, executed, or canceled, it is not active
 	if r.statusResolver.IsRejected(current) ||
 		r.statusResolver.IsExpired(current) ||
-		r.statusResolver.IsExecuted(current) ||
-		r.statusResolver.IsCanceled(current) {
+		r.statusResolver.actionStatusResolver.IsExecuted() ||
+		r.statusResolver.actionStatusResolver.Canceled() {
 		return false
 	}
 

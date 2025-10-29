@@ -26,7 +26,7 @@ func TestGetterProposal_All(t *testing.T) {
 			proposalId: 1,
 			proposal: governance.NewProposal(
 				1,
-				governance.NewProposalStatus(governance.Config{
+				NewProposalStatus(governance.Config{
 					VotingStartDelay: 100,
 					VotingPeriod:     200,
 					ExecutionDelay:   100,
@@ -50,7 +50,7 @@ func TestGetterProposal_All(t *testing.T) {
 			proposalId: 1,
 			proposal: governance.NewProposal(
 				1,
-				governance.NewProposalStatus(governance.Config{
+				NewProposalStatus(governance.Config{
 					VotingStartDelay: 100,
 					VotingPeriod:     200,
 					ExecutionDelay:   100,

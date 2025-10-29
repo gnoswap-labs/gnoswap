@@ -33,12 +33,41 @@ func (p *ProposalActionStatus) ExecutedAt() int64 { return p.executedAt }
 func (p *ProposalActionStatus) ExecutedHeight() int64 { return p.executedHeight }
 func (p *ProposalActionStatus) Executable() bool { return p.executable }
 
-// IsCanceled returns whether the proposal has been canceled.
-//
-// Returns:
-//   - bool: true if proposal has been canceled
-func (p *ProposalActionStatus) IsCanceled() bool {
-	return p.canceled
+/* Setter methods */
+func (p *ProposalActionStatus) SetCanceled(canceled bool) {
+	p.canceled = canceled
+}
+
+func (p *ProposalActionStatus) SetCanceledAt(canceledAt int64) {
+	p.canceledAt = canceledAt
+}
+
+func (p *ProposalActionStatus) SetCanceledHeight(canceledHeight int64) {
+	p.canceledHeight = canceledHeight
+}
+
+func (p *ProposalActionStatus) SetCanceledBy(canceledBy address) {
+	p.canceledBy = canceledBy
+}
+
+func (p *ProposalActionStatus) SetExecuted(executed bool) {
+	p.executed = executed
+}
+
+func (p *ProposalActionStatus) SetExecutedAt(executedAt int64) {
+	p.executedAt = executedAt
+}
+
+func (p *ProposalActionStatus) SetExecutedHeight(executedHeight int64) {
+	p.executedHeight = executedHeight
+}
+
+func (p *ProposalActionStatus) SetExecutedBy(executedBy address) {
+	p.executedBy = executedBy
+}
+
+func (p *ProposalActionStatus) SetExecutable(executable bool) {
+	p.executable = executable
 }
 
 // CanceledBy returns the address that canceled the proposal.
@@ -74,56 +103,6 @@ func (p *ProposalActionStatus) ExecutedBy() address {
 //   - bool: true if proposal type supports execution
 func (p *ProposalActionStatus) IsExecutable() bool {
 	return p.executable
-}
-
-// cancel marks the proposal as canceled and records cancellation details.
-// This method validates that the proposal is eligible for cancellation.
-//
-// Parameters:
-//   - canceledAt: timestamp when cancellation occurred
-//   - canceledHeight: block height when cancellation occurred
-//   - canceledBy: address performing the cancellation
-//
-// Returns:
-//   - error: cancellation error if proposal cannot be canceled
-func (p *ProposalActionStatus) Cancel(canceledAt int64, canceledHeight int64, canceledBy address) error {
-	// Only executable proposals can be canceled (text proposals cannot)
-	if !p.executable {
-		return errProposalNotExecutable
-	}
-
-	// Record cancellation details
-	p.canceled = true
-	p.canceledAt = canceledAt
-	p.canceledHeight = canceledHeight
-	p.canceledBy = canceledBy
-
-	return nil
-}
-
-// execute marks the proposal as executed and records execution details.
-// This method validates that the proposal is eligible for execution.
-//
-// Parameters:
-//   - executedAt: timestamp when execution occurred
-//   - executedHeight: block height when execution occurred
-//   - executedBy: address performing the execution
-//
-// Returns:
-//   - error: execution error if proposal cannot be executed
-func (p *ProposalActionStatus) Execute(executedAt int64, executedHeight int64, executedBy address) error {
-	// Only executable proposals can be executed (text proposals cannot)
-	if !p.executable {
-		return errProposalNotExecutable
-	}
-
-	// Record execution details
-	p.executed = true
-	p.executedAt = executedAt
-	p.executedHeight = executedHeight
-	p.executedBy = executedBy
-
-	return nil
 }
 
 // NewProposalActionStatus creates a new action status for a proposal.

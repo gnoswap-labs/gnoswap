@@ -349,7 +349,7 @@ func (gv *governanceV1) createProposal(
 	proposalID := gv.nextProposalID()
 
 	// Create proposal status with voting schedule and requirements
-	proposalStatus := governance.NewProposalStatus(
+	proposalStatus := NewProposalStatus(
 		config,
 		maxVotingWeight,
 		proposalType.IsExecutable(),

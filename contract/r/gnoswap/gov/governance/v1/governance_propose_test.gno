@@ -648,7 +648,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 			setupActiveProposal: func() *governance.Proposal {
 				return governance.NewProposal(
 					1,
-					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
 					governance.NewProposalMetadata("Active", "Description"),
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
@@ -666,7 +666,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 			setupActiveProposal: func() *governance.Proposal {
 				return governance.NewProposal(
 					1,
-					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*25).Unix()),
+					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*25).Unix()),
 					governance.NewProposalMetadata("Active", "Description"),
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
@@ -684,7 +684,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 			setupActiveProposal: func() *governance.Proposal {
 				proposal := governance.NewProposal(
 					1,
-					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*10).Unix()),
+					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*10).Unix()),
 					governance.NewProposalMetadata("Passed", "Description"),
 					NewProposalExecutionData(1, "test*EXE*func*EXE*param"),
 					testutils.TestAddress("proposer"),
@@ -705,7 +705,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 			setupActiveProposal: func() *governance.Proposal {
 				proposal := governance.NewProposal(
 					1,
-					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*12).Unix()),
+					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*12).Unix()),
 					governance.NewProposalMetadata("Executable", "Description"),
 					NewProposalExecutionData(1, "test*EXE*func*EXE*param"),
 					testutils.TestAddress("proposer"),
@@ -726,7 +726,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 			setupActiveProposal: func() *governance.Proposal {
 				proposal := governance.NewProposal(
 					1,
-					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*20).Unix()),
+					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*20).Unix()),
 					governance.NewProposalMetadata("Executed", "Description"),
 					NewProposalExecutionData(1, "test*EXE*func*EXE*param"),
 					testutils.TestAddress("proposer"),
@@ -747,7 +747,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 			setupActiveProposal: func() *governance.Proposal {
 				proposal := governance.NewProposal(
 					1,
-					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
 					governance.NewProposalMetadata("Canceled", "Description"),
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
@@ -767,7 +767,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 			setupActiveProposal: func() *governance.Proposal {
 				return governance.NewProposal(
 					1,
-					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*40).Unix()),
+					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*40).Unix()),
 					governance.NewProposalMetadata("Expired", "Description"),
 					NewProposalExecutionData(1, "test*EXE*func*EXE*param"),
 					testutils.TestAddress("proposer"),
@@ -784,7 +784,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 			setupActiveProposal: func() *governance.Proposal {
 				proposal := governance.NewProposal(
 					1,
-					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*10).Unix()),
+					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*10).Unix()),
 					governance.NewProposalMetadata("Rejected", "Description"),
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
@@ -1180,7 +1180,7 @@ func setupTestActiveProposal(t *testing.T, gov *governanceV1, proposerAddress ad
 
 	proposal := governance.NewProposal(
 		gov.nextProposalID(),
-		governance.NewProposalStatus(
+		NewProposalStatus(
 			config,
 			1_000_000_000,
 			false,
