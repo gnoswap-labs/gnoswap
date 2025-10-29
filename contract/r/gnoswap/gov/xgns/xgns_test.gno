@@ -15,6 +15,8 @@ import (
 )
 
 func TestXgns_TotalSupply(t *testing.T) {
+	cleanup(t)
+
 	expectedSupply := int64(0)
 	actualSupply := TotalSupply()
 	if actualSupply != expectedSupply {
@@ -23,6 +25,8 @@ func TestXgns_TotalSupply(t *testing.T) {
 }
 
 func TestXgns_Mint(t *testing.T) {
+	cleanup(t)
+
 	amount := int64(1000)
 	initialSupply := TotalSupply()
 
@@ -41,12 +45,11 @@ func TestXgns_Mint(t *testing.T) {
 	if actualBalance < expectedBalance {
 		t.Errorf("Mint() failed. Expected balance at least %d, got %d", expectedBalance, actualBalance)
 	}
-
-	// Cleanup
-	Burn(cross, getGovStakerAddress(), amount)
 }
 
 func TestXgns_MintByLaunchPad(t *testing.T) {
+	cleanup(t)
+
 	amount := int64(500)
 	initialSupply := TotalSupply()
 
@@ -59,12 +62,11 @@ func TestXgns_MintByLaunchPad(t *testing.T) {
 	if actualSupply != expectedSupply {
 		t.Errorf("MintByLaunchPad() failed. Expected total supply %d, got %d", expectedSupply, actualSupply)
 	}
-
-	// Cleanup
-	BurnByLaunchPad(cross, getLaunchpadAddress(), amount)
 }
 
 func TestXgns_MintUnauthorized(t *testing.T) {
+	cleanup(t)
+
 	amount := int64(100)
 	testing.SetRealm(testing.NewUserRealm(getAdminAddress()))
 	uassert.AbortsWithMessage(t, "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not gov_staker", func() {
@@ -76,6 +78,8 @@ func TestXgns_MintUnauthorized(t *testing.T) {
 }
 
 func TestXgns_Burn(t *testing.T) {
+	cleanup(t)
+
 	mintAmount := int64(1000)
 	burnAmount := int64(200)
 	initialSupply := TotalSupply()
@@ -98,15 +102,11 @@ func TestXgns_Burn(t *testing.T) {
 	if actualSupply != expectedSupply {
 		t.Errorf("Burn() failed. Expected total supply %d, got %d", expectedSupply, actualSupply)
 	}
-
-	// Cleanup
-	remainingBalance := BalanceOf(getGovStakerAddress())
-	if remainingBalance > 0 {
-		Burn(cross, getGovStakerAddress(), mintAmount-burnAmount)
-	}
 }
 
 func TestXgns_BurnByLaunchPad(t *testing.T) {
+	cleanup(t)
+
 	mintAmount := int64(1000)
 	burnAmount := int64(200)
 
@@ -119,13 +119,11 @@ func TestXgns_BurnByLaunchPad(t *testing.T) {
 	if actualBalance < expectedBalance {
 		t.Errorf("BurnByLaunchPad() failed. Expected at least %d, got %d", expectedBalance, actualBalance)
 	}
-
-	// reset state by burn all
-	currentBalance := BalanceOf(getLaunchpadAddress())
-	BurnByLaunchPad(cross, getLaunchpadAddress(), currentBalance)
 }
 
 func TestXgns_VotingSupply(t *testing.T) {
+	cleanup(t)
+
 	initialSupply := int64(1000)
 	launchpadBalance := int64(200)
 
@@ -149,6 +147,8 @@ func TestXgns_VotingSupply(t *testing.T) {
 }
 
 func TestXgns_BurnUnauthorized(t *testing.T) {
+	cleanup(t)
+
 	amount := int64(100)
 	testing.SetRealm(testing.NewUserRealm(getAdminAddress()))
 	uassert.AbortsWithMessage(t, "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not gov_staker", func() {
@@ -160,6 +160,8 @@ func TestXgns_BurnUnauthorized(t *testing.T) {
 }
 
 func TestXgns_BalanceOf(t *testing.T) {
+	cleanup(t)
+
 	// Test balance for address with zero balance
 	zeroBalance := BalanceOf(getAdminAddress())
 	if zeroBalance < 0 {
@@ -177,12 +179,11 @@ func TestXgns_BalanceOf(t *testing.T) {
 	if newBalance != expectedBalance {
 		t.Errorf("BalanceOf() failed after mint. Expected %d, got %d", expectedBalance, newBalance)
 	}
-
-	// Cleanup
-	Burn(cross, getGovStakerAddress(), mintAmount)
 }
 
 func TestXgns_EdgeCases(t *testing.T) {
+	cleanup(t)
+
 	testing.SetRealm(testing.NewUserRealm(getGovStakerAddress()))
 
 	// Test minting with negative amount - should panic with "invalid amount"
@@ -200,15 +201,11 @@ func TestXgns_EdgeCases(t *testing.T) {
 	uassert.AbortsWithMessage(t, "insufficient balance", func() {
 		Burn(cross, getGovStakerAddress(), 10000)
 	})
-
-	// Cleanup
-	currentBalance := BalanceOf(getGovStakerAddress())
-	if currentBalance >= 100 {
-		Burn(cross, getGovStakerAddress(), 100)
-	}
 }
 
 func TestXgns_ZeroAmount(t *testing.T) {
+	cleanup(t)
+
 	testing.SetRealm(testing.NewUserRealm(getGovStakerAddress()))
 	initialSupply := TotalSupply()
 	initialBalance := BalanceOf(getGovStakerAddress())
@@ -243,6 +240,8 @@ func TestXgns_ZeroAmount(t *testing.T) {
 }
 
 func TestXgns_Render(t *testing.T) {
+	cleanup(t)
+
 	// Test empty path - should return token home
 	result := Render("")
 	if result == "" {
@@ -270,9 +269,6 @@ func TestXgns_Render(t *testing.T) {
 	if result != expected {
 		t.Errorf("Render('invalid/path') failed. Expected %s, got %s", expected, result)
 	}
-
-	// Cleanup
-	Burn(cross, testAddr, mintAmount)
 }
 
 // Helper functions
