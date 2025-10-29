@@ -333,12 +333,12 @@ func (s *MockStakerStore) SetCurrentSwapBatch(batch *sr.SwapBatchProcessor) erro
 func NewMockStakerStore() *MockStakerStore {
 	return &MockStakerStore{
 		depositGnsAmount:            1_000_000_000,
-		minimumRewardAmount:         0,
+		minimumRewardAmount:         1_000_000_000,
 		deposits:                    avl.NewTree(),
 		externalIncentives:          avl.NewTree(),
 		stakers:                     avl.NewTree(),
 		totalEmissionSent:           0,
-		allowedTokens:               []string{},
+		allowedTokens:               []string{"gnot", "gno.land/r/gnoswap/gns"},
 		incentiveCounter:            sr.NewCounter(),
 		tokenSpecificMinimumRewards: avl.NewTree(),
 		unstakingFee:                0,

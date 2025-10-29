@@ -887,13 +887,12 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 }
 
 func TestCanonicalWarmup_1(t *testing.T) {
+	canonical := Setup(t)
 	warmupTemplate := getMockInstance().store.GetWarmupTemplate()
 	warmupTemplate = modifyWarmup(warmupTemplate, 0, 10*blockPerSecond)
 	warmupTemplate = modifyWarmup(warmupTemplate, 1, 10*blockPerSecond)
 	warmupTemplate = modifyWarmup(warmupTemplate, 2, 10*blockPerSecond)
 	getMockInstance().store.SetWarmupTemplate(warmupTemplate)
-
-	canonical := Setup(t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	canonical.CreatePool(gnousdc, 1, 150)
@@ -968,13 +967,12 @@ func TestCanonicalWarmup_1(t *testing.T) {
 }
 
 func TestCanonicalWarmup_2(t *testing.T) {
+	canonical := Setup(t)
 	warmupTemplate := getMockInstance().store.GetWarmupTemplate()
 	warmupTemplate = modifyWarmup(warmupTemplate, 0, 10*blockPerSecond)
 	warmupTemplate = modifyWarmup(warmupTemplate, 1, 10*blockPerSecond)
 	warmupTemplate = modifyWarmup(warmupTemplate, 2, 10*blockPerSecond)
 	getMockInstance().store.SetWarmupTemplate(warmupTemplate)
-
-	canonical := Setup(t)
 
 	gnousdc := GetPoolPath(wugnotPath, gnsPath, 3000)
 	canonical.CreatePool(gnousdc, 1, 150)

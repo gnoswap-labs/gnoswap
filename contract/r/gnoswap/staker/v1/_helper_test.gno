@@ -78,15 +78,13 @@ var (
 	initializedPosition bool
 )
 
-func CreatePool(t *testing.T,
+func CreatePool(
 	token0 string,
 	token1 string,
 	fee uint32,
 	sqrtPriceX96 string,
 	caller address,
 ) {
-	t.Helper()
-
 	testing.SetRealm(testing.NewUserRealm(caller))
 	poolPath := pl.GetPoolPath(token0, token1, fee)
 	if !pl.ExistsPoolPath(poolPath) {
@@ -108,7 +106,7 @@ func CreateSecondPoolWithoutFee(t *testing.T) {
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFee(cross, 0)
 
-	CreatePool(t,
+	CreatePool(
 		barPath,
 		bazPath,
 		fee3000,
@@ -438,28 +436,23 @@ func isInErrorRange(expected uint64, actual uint64) bool {
 
 func initStakerTest(t *testing.T) {
 	t.Helper()
+	initPoolTest(t)
+
 	mockInstance = &stakerV1{
 		store:            mock.NewMockStakerStore(),
 		poolAccessor:     newMockPoolAccessor(),
 		emissionAccessor: newMockEmissionAccessor(),
 	}
-
-	const mockPoolPath = "gno.land/r/gnoswap/pool/mock"
-	const mockPositionPath = "gno.land/r/gnoswap/position/mock"
-
-	initPoolTest(t)
 }
 
 func initPoolTest(t *testing.T) {
 	t.Helper()
-
 	const mockPoolPath = "gno.land/r/gnoswap/pool/mock"
 
 	if !initializedPool {
 		initializedPool = true
-
 		testing.SetRealm(testing.NewCodeRealm(mockPoolPath))
-		pl.RegisterInitializer(cross, func(_ pl.IPoolStore) pl.IPool {
+		pl.RegisterInitializer(cross, func(s pl.IPoolStore) pl.IPool {
 			return pool_v1.NewPoolV1(mock.NewMockPoolStore())
 		})
 	}
@@ -501,6 +494,13 @@ func mockInstanceStakeToken(positionId uint64, referrer string) {
 	}(cross)
 }
 
+func mockInstanceCollectReward(positionId uint64, unwrapResult bool) {
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+		getMockInstance().CollectReward(positionId, unwrapResult)
+	}(cross)
+}
+
 func mockInstanceAddToken(tokenPath string) {
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
@@ -519,5 +519,19 @@ func mockInstanceSetUnstakingFee(fee int64) {
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
 		getMockInstance().SetUnStakingFee(fee)
+	}(cross)
+}
+
+func mockInstanceCreateExternalIncentive(poolPath string, rewardToken string, rewardAmount int64, startTimestamp int64, endTimestamp int64) {
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+		getMockInstance().CreateExternalIncentive(poolPath, rewardToken, rewardAmount, startTimestamp, endTimestamp)
+	}(cross)
+}
+
+func mockInstanceSetPoolTier(poolPath string, tier uint64) {
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+		getMockInstance().SetPoolTier(poolPath, tier)
 	}(cross)
 }

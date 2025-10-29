@@ -17,7 +17,6 @@ import (
 	"gno.land/r/gnoswap/gns"
 
 	en "gno.land/r/gnoswap/emission"
-	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -338,7 +337,7 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 		currentWarmups,
 	)
 
-	currentTick := pl.GetSlot0Tick(poolPath)
+	currentTick := s.poolAccessor.GetSlot0Tick(poolPath)
 
 	deposits := s.getDeposits()
 	deposits.set(positionId, deposit)
@@ -717,7 +716,7 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 	}
 
 	currentTime := time.Now().Unix()
-	currentTick := pl.GetSlot0Tick(depositResolver.TargetPoolPath())
+	currentTick := s.poolAccessor.GetSlot0Tick(depositResolver.TargetPoolPath())
 	signedLiquidity := i256.Zero().Neg(i256.FromUint256(depositResolver.Liquidity()))
 	if pn.IsInRange(positionId) {
 		poolResolver.modifyDeposit(signedLiquidity, currentTime, currentTick)

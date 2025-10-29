@@ -1,12 +1,30 @@
 package v1
 
 import (
+	"testing"
+
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/pool"
 	sr "gno.land/r/gnoswap/staker"
 )
 
 type mockPoolAccessor struct{}
+
+func (p *mockPoolAccessor) ExistsPoolPath(poolPath string) bool {
+	testing.SetRealm(adminRealm)
+	return func(cur realm) bool {
+		testing.SetRealm(adminRealm)
+		return pool.ExistsPoolPath(poolPath)
+	}(cross)
+}
+
+func (p *mockPoolAccessor) GetSlot0Tick(poolPath string) int32 {
+	testing.SetRealm(adminRealm)
+	return func(cur realm) int32 {
+		testing.SetRealm(adminRealm)
+		return pool.GetSlot0Tick(poolPath)
+	}(cross)
+}
 
 func (p *mockPoolAccessor) SetTickCrossHook(hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	func(cur realm) {

@@ -10,8 +10,6 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
 	sr "gno.land/r/gnoswap/staker"
-
-	pl "gno.land/r/gnoswap/pool"
 )
 
 const (
@@ -26,7 +24,7 @@ func (s *stakerV1) SetPoolTier(poolPath string, tier uint64) {
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	assertIsPoolExists(poolPath)
+	assertIsPoolExists(s, poolPath)
 	assertIsValidPoolTier(tier)
 
 	currentTime := time.Now().Unix()
@@ -52,7 +50,7 @@ func (s *stakerV1) ChangePoolTier(poolPath string, tier uint64) {
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	assertIsPoolExists(poolPath)
+	assertIsPoolExists(s, poolPath)
 	assertIsValidPoolTier(tier)
 
 	currentTime := time.Now().Unix()
@@ -79,7 +77,7 @@ func (s *stakerV1) RemovePoolTier(poolPath string) {
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	assertIsPoolExists(poolPath)
+	assertIsPoolExists(s, poolPath)
 
 	currentTime := time.Now().Unix()
 	s.removePoolTier(poolPath, currentTime)
@@ -176,8 +174,8 @@ func pctToIndex(pct int64) int {
 }
 
 // assertPoolMustExist panics if the pool doesn't exist.
-func assertPoolMustExist(poolPath string) {
-	if !pl.ExistsPoolPath(poolPath) {
+func assertPoolMustExist(s *stakerV1, poolPath string) {
+	if !s.poolAccessor.ExistsPoolPath(poolPath) {
 		panic(makeErrorWithDetails(
 			errInvalidPoolPath,
 			ufmt.Sprintf("pool(%s) does not exist", poolPath),

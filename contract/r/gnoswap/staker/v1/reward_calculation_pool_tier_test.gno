@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"gno.land/p/nt/uassert"
+	pl "gno.land/r/gnoswap/pool"
 	sr "gno.land/r/gnoswap/staker"
-	pl "gno.land/r/gnoswap/v1/pool"
 )
 
 func TestTierRatioFromCounts(t *testing.T) {

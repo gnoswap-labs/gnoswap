@@ -507,8 +507,8 @@ func NewExternalIncentive(
 	startTimestamp int64, // timestamp is in unix time(seconds)
 	endTimestamp int64,
 	refundee address,
-	createdHeight int64,
 	depositGnsAmount int64,
+	createdHeight int64,
 	currentTime int64, // current time in unix time(seconds)
 	isRequestUnwrap bool, // whether original deposit was native GNOT
 ) *ExternalIncentive {
@@ -570,9 +570,18 @@ func (t *Ticks) Get(tickId int32) *Tick {
 	return tick
 }
 
+func (self *Ticks) Has(tickId int32) bool {
+	return self.tree.Has(EncodeInt(tickId))
+}
+
 // SetTick sets a tick by ID
 func (t *Ticks) SetTick(tickId int32, tick *Tick) {
-	t.tree.Set(ufmt.Sprintf("%d", tickId), tick)
+	if tick.stakedLiquidityGross.IsZero() {
+		t.tree.Remove(EncodeInt(tickId))
+		return
+	}
+
+	t.tree.Set(EncodeInt(tickId), tick)
 }
 
 // IterateTicks iterates over all ticks

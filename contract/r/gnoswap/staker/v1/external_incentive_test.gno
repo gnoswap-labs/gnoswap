@@ -62,8 +62,8 @@ func TestCreateExternalIncentiveWithAllowedTokens(t *testing.T) {
 				startTime,
 				endTime,
 				creator,
-				runtime.ChainHeight(),
 				0,
+				runtime.ChainHeight(),
 				currentTime,
 				true,
 			)

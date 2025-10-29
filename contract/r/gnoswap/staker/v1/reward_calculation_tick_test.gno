@@ -39,19 +39,19 @@ func TestTicks(t *testing.T) {
 	}
 
 	tick.SetStakedLiquidityGross(u256.MustFromDecimal("1"))
-	ticks.Tree().Set(EncodeInt(100), tick)
-	uassert.True(t, ticks.Tree().Has(EncodeInt(100)))
+	ticks.SetTick(100, tick)
+	uassert.True(t, ticks.Has(100))
 
 	tick.SetStakedLiquidityGross(u256.Zero())
-	ticks.Tree().Set(EncodeInt(100), tick)
-	uassert.False(t, ticks.Tree().Has(EncodeInt(100)))
+	ticks.SetTick(100, tick)
+	uassert.False(t, ticks.Has(100))
 }
 
 func TestTicksBasic(t *testing.T) {
 	ticks := sr.NewTicks()
 
 	tick100 := ticks.Get(100)
-	uassert.True(t, ticks.Tree().Has(EncodeInt(100)))
+	uassert.True(t, ticks.Has(100))
 	uassert.Equal(t, tick100.Id(), int32(100))
 
 	tick100Again := ticks.Get(100)
@@ -59,8 +59,8 @@ func TestTicksBasic(t *testing.T) {
 	uassert.True(t, tick100Again.StakedLiquidityGross().IsZero())
 	uassert.True(t, tick100Again.StakedLiquidityDelta().IsZero())
 
-	ticks.Tree().Set(EncodeInt(100), tick100)
-	uassert.False(t, ticks.Tree().Has(EncodeInt(100)))
+	ticks.SetTick(100, tick100)
+	uassert.False(t, ticks.Has(100))
 }
 
 func TestModifyDepositLower(t *testing.T) {

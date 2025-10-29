@@ -399,6 +399,7 @@ func (self *canonicalRewardState) StakeToken(positionId uint64, targetPoolPath s
 	self.global.deposits.set(positionId, deposit)
 
 	self.global.poolTier.cacheReward(currentHeight, currentTimestamp, self.global.pools)
+	getMockInstance().updatePoolTier(self.global.poolTier)
 
 	signedLiquidity := i256.FromUint256(deposit.Liquidity())
 	poolResolver := NewPoolResolver(pool)
@@ -469,8 +470,8 @@ func newExternalIncentiveBy(
 		startTimestamp,
 		endTimestamp,
 		refundee,
-		currentHeight,
 		0,
+		currentHeight,
 		currentTimestamp,
 		false,
 	)
@@ -580,7 +581,7 @@ func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {
 		// backward
 		for i := pool.tick; i > tick; i-- {
 			// uninitialized tick
-			if !globalPool.Ticks().Tree().Has(EncodeInt(i)) {
+			if !globalPool.Ticks().Has(i) {
 				continue
 			}
 
@@ -591,7 +592,7 @@ func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {
 		// forward
 		for i := pool.tick + 1; i <= tick; i++ {
 			// uninitialized tick
-			if !globalPool.Ticks().Tree().Has(EncodeInt(i)) {
+			if !globalPool.Ticks().Has(i) {
 				continue
 			}
 

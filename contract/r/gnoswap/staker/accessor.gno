@@ -6,12 +6,23 @@ import (
 )
 
 type PoolAccessor interface {
+	ExistsPoolPath(poolPath string) bool
+	GetSlot0Tick(poolPath string) int32
+
 	SetTickCrossHook(hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64))
 	SetSwapStartHook(hook func(cur realm, poolPath string, timestamp int64))
 	SetSwapEndHook(hook func(cur realm, poolPath string) error)
 }
 
 type poolAccessor struct{}
+
+func (p *poolAccessor) ExistsPoolPath(poolPath string) bool {
+	return pool.ExistsPoolPath(poolPath)
+}
+
+func (p *poolAccessor) GetSlot0Tick(poolPath string) int32 {
+	return pool.GetSlot0Tick(poolPath)
+}
 
 func (p *poolAccessor) SetTickCrossHook(hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	func(cur realm) {

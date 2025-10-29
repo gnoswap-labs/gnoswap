@@ -38,7 +38,7 @@ func (s *stakerV1) CreateExternalIncentive(
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsUser(runtime.PreviousRealm())
 
-	assertIsPoolExists(targetPoolPath)
+	assertIsPoolExists(s, targetPoolPath)
 	assertIsGreaterThanMinimumRewardAmount(s, rewardToken, rewardAmount)
 	assertIsAllowedForExternalReward(s, targetPoolPath, rewardToken)
 	assertIsValidIncentiveStartTime(startTimestamp)
@@ -84,8 +84,8 @@ func (s *stakerV1) CreateExternalIncentive(
 		startTimestamp,
 		endTimestamp,
 		caller,
-		currentHeight,
 		depositGnsAmount,
+		currentHeight,
 		currentTime,
 		isRequestUnwrap,
 	)
@@ -142,7 +142,7 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 	halt.AssertIsNotHaltedStaker()
 	halt.AssertIsNotHaltedWithdraw()
 
-	assertIsPoolExists(targetPoolPath)
+	assertIsPoolExists(s, targetPoolPath)
 
 	pool, exists := s.getPools().Get(targetPoolPath)
 	if !exists {

@@ -27,8 +27,8 @@ func TestIncentives_ArchiveIncentive(t *testing.T) {
 		currentTime-3600,
 		currentTime+3600,
 		creator,
-		runtime.ChainHeight(),
 		100,
+		runtime.ChainHeight(),
 		currentTime,
 		false,
 	)
@@ -47,7 +47,7 @@ func TestIncentives_ArchiveIncentive(t *testing.T) {
 	incentives.archiveIncentive(incentive.IncentiveId())
 
 	// Verify incentive is no longer in active collection
-	if _, exists := incentives.Get(incentive.IncentiveId()); exists {
+	if _, exists := incentives.IncentiveTrees().Get(incentive.IncentiveId()); exists {
 		t.Fatal("incentive should not exist in active collection after archiving")
 	}
 
@@ -83,8 +83,8 @@ func TestIncentives_GetAllInTimestamps_ExcludesArchived(t *testing.T) {
 		currentTime-1800,
 		currentTime+1800,
 		creator,
-		runtime.ChainHeight(),
 		100,
+		runtime.ChainHeight(),
 		currentTime,
 		false,
 	)
@@ -98,8 +98,8 @@ func TestIncentives_GetAllInTimestamps_ExcludesArchived(t *testing.T) {
 		currentTime-7200,
 		currentTime-3600,
 		creator,
-		runtime.ChainHeight(),
 		100,
+		runtime.ChainHeight(),
 		currentTime,
 		false,
 	)
@@ -167,11 +167,11 @@ func TestIncentives_ArchiveEdgeCasesAndMultiple(t *testing.T) {
 			poolPath,
 			GNS_PATH,
 			1000,
-			currentTime-int64(i*1000),
-			currentTime+int64(i*1000),
+			currentTime-int64((i+1)*1000),
+			currentTime+int64((i+1)*1000),
 			creator,
-			runtime.ChainHeight(),
 			100,
+			runtime.ChainHeight(),
 			currentTime,
 			false,
 		)

@@ -8,7 +8,6 @@ import (
 	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gnft"
-	pl "gno.land/r/gnoswap/pool"
 )
 
 // assertIsValidAmount ensures the amount is non-negative.
@@ -72,8 +71,8 @@ func assertIsPositionOwner(positionId uint64, caller address) {
 }
 
 // assertIsPoolExists ensures the pool exists.
-func assertIsPoolExists(poolPath string) {
-	if !pl.ExistsPoolPath(poolPath) {
+func assertIsPoolExists(s *stakerV1, poolPath string) {
+	if !s.poolAccessor.ExistsPoolPath(poolPath) {
 		panic(makeErrorWithDetails(
 			errInvalidPoolPath,
 			ufmt.Sprintf("pool(%s) does not exist", poolPath),
@@ -93,7 +92,7 @@ func assertIsValidPoolTier(tier uint64) {
 
 // assertIsGreaterThanMinimumRewardAmount ensures the reward amount meets minimum requirements.
 func assertIsGreaterThanMinimumRewardAmount(s *stakerV1, rewardToken string, rewardAmount int64) {
-	minReward := int64(0)
+	minReward := s.getMinimumRewardAmount()
 
 	if minRewardI, found := s.store.GetTokenSpecificMinimumRewards().Get(rewardToken); found {
 		minRewardInt64, ok := minRewardI.(int64)

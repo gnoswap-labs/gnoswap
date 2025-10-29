@@ -31,8 +31,8 @@ func TestStakeToken_WithEndedIncentives(t *testing.T) {
 		currentTime-7200, // Started 2 hours ago
 		currentTime-3600, // Ended 1 hour ago
 		creator,
-		100, // createdHeight
 		100, // depositGnsAmount
+		100, // createdHeight
 		currentTime,
 		false, // isRequestUnwrap
 	)
