@@ -28,6 +28,48 @@ func TestTotalSupply(t *testing.T) {
 	}
 }
 
+func TestMint(t *testing.T) {
+	amount := int64(1000)
+	initialSupply := TotalSupply()
+
+	// Test Mint success
+	testing.SetRealm(testing.NewUserRealm(govStakerAddress))
+	Mint(cross, govStakerAddress, amount)
+
+	expectedSupply := initialSupply + amount
+	actualSupply := TotalSupply()
+	if actualSupply != expectedSupply {
+		t.Errorf("Mint() failed. Expected total supply %d, got %d", expectedSupply, actualSupply)
+	}
+
+	expectedBalance := amount
+	actualBalance := BalanceOf(govStakerAddress)
+	if actualBalance < expectedBalance {
+		t.Errorf("Mint() failed. Expected balance at least %d, got %d", expectedBalance, actualBalance)
+	}
+
+	// Cleanup
+	Burn(cross, govStakerAddress, amount)
+}
+
+func TestMintByLaunchPad(t *testing.T) {
+	amount := int64(500)
+	initialSupply := TotalSupply()
+
+	// Test MintByLaunchPad success
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
+	MintByLaunchPad(cross, launchpadAddress, amount)
+
+	expectedSupply := initialSupply + amount
+	actualSupply := TotalSupply()
+	if actualSupply != expectedSupply {
+		t.Errorf("MintByLaunchPad() failed. Expected total supply %d, got %d", expectedSupply, actualSupply)
+	}
+
+	// Cleanup
+	BurnByLaunchPad(cross, launchpadAddress, amount)
+}
+
 func TestMintFail(t *testing.T) {
 	amount := int64(100)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
