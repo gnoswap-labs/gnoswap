@@ -106,6 +106,11 @@ func (m *mockGovStakerStore) HasDelegationsStoreKey() bool {
 	return true // Always available in mock
 }
 
+func (m *mockGovStakerStore) SetDelegations(delegations *avl.Tree) error {
+	m.delegations = delegations
+	return nil
+}
+
 func (m *mockGovStakerStore) HasDelegation(id int64) bool {
 	_, exists := m.delegations.Get(uint64ToString(uint64(id)))
 	return exists
@@ -133,23 +138,17 @@ func (m *mockGovStakerStore) GetAllDelegations() (*avl.Tree, error) {
 	return m.delegations, nil
 }
 
-func (m *mockGovStakerStore) HasDelegationCounterStoreKe() bool {
+func (m *mockGovStakerStore) HasDelegationCounterStoreKey() bool {
 	return true // Always available in mock
 }
 
-func (m *mockGovStakerStore) GetDelegationCounter() (*staker.Counter, error) {
-	return m.delegationNextID, nil
+func (m *mockGovStakerStore) GetDelegationCounter() *staker.Counter {
+	return m.delegationNextID
 }
 
-func (m *mockGovStakerStore) SetDelegationCounter(counter int64) error {
-	m.delegationNextID.Set(counter)
+func (m *mockGovStakerStore) SetDelegationCounter(counter *staker.Counter) error {
+	m.delegationNextID = counter
 	return nil
-}
-
-func (m *mockGovStakerStore) IncrementDelegationNextID() (int64, error) {
-	counter := m.delegationNextID.Next()
-	m.delegationNextID.Set(counter)
-	return counter, nil
 }
 
 // Delegation history methods
@@ -166,6 +165,11 @@ func (m *mockGovStakerStore) GetDelegationHistory() ([]*staker.DelegationRecord,
 	return m.delegationHistory, nil
 }
 
+func (m *mockGovStakerStore) SetDelegationHistory(history []*staker.DelegationRecord) error {
+	m.delegationHistory = history
+	return nil
+}
+
 // User delegation mapping methods
 func (m *mockGovStakerStore) HasUserDelegationsStoreKey() bool {
 	return true // Always available in mock
@@ -174,6 +178,11 @@ func (m *mockGovStakerStore) HasUserDelegationsStoreKey() bool {
 func (m *mockGovStakerStore) HasUserDelegations(user string) bool {
 	_, exists := m.userDelegations[user]
 	return exists
+}
+
+func (m *mockGovStakerStore) SetUserDelegations(user string, delegations map[string][]int64) error {
+	m.userDelegations[user] = delegations
+	return nil
 }
 
 func (m *mockGovStakerStore) GetUserDelegations(user string) (map[string][]int64, error) {

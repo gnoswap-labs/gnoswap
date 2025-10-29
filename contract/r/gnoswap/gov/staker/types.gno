@@ -70,27 +70,30 @@ type IGovStakerStore interface {
 	SetTotalLockedAmount(amount int64) error
 
 	// Delegation management
-	HasDelegationsStoreKey() bool
 	HasDelegation(id int64) bool
 	GetDelegation(id int64) (*Delegation, bool)
 	SetDelegation(id int64, delegation *Delegation) error
 	RemoveDelegation(id int64) error
+
+	HasDelegationsStoreKey() bool
+	SetDelegations(delegations *avl.Tree) error
 	GetAllDelegations() (*avl.Tree, error)
 
-	HasDelegationCounterStoreKe() bool
-	GetDelegationCounter() (*Counter, error)
-	SetDelegationCounter(counter int64) error
-	IncrementDelegationNextID() (int64, error)
+	HasDelegationCounterStoreKey() bool
+	GetDelegationCounter() *Counter
+	SetDelegationCounter(counter *Counter) error
 
 	// Delegation history
 	HasDelegationHistoryStoreKey() bool
 	AddDelegationRecord(record *DelegationRecord) error
 	GetDelegationHistory() ([]*DelegationRecord, error)
+	SetDelegationHistory(history []*DelegationRecord) error
 
 	// User delegation mapping
 	HasUserDelegationsStoreKey() bool
 	HasUserDelegations(user string) bool
 	GetUserDelegations(user string) (map[string][]int64, error)
+	SetUserDelegations(user string, delegations map[string][]int64) error
 	AddUserDelegation(from, to string, delegationID int64) error
 	RemoveUserDelegation(from, to string, delegationID int64) error
 

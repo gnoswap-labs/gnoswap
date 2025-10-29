@@ -143,6 +143,15 @@ func (s *govStakerStore) HasDelegationsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyDelegations)
 }
 
+func (s *govStakerStore) SetDelegations(delegations *avl.Tree) error {
+	return s.kvStore.Set(StoreKeyDelegations, delegations)
+}
+
+
+
+
+
+
 func (s *govStakerStore) HasDelegation(id int64) bool {
 	delegations, err := s.getAllDelegations()
 	if err != nil {
@@ -210,11 +219,11 @@ func (s *govStakerStore) getAllDelegations() (*avl.Tree, error) {
 	return delegations, nil
 }
 
-func (s *govStakerStore) HasDelegationCounterStoreKe() bool {
+func (s *govStakerStore) HasDelegationCounterStoreKey() bool {
 	return s.kvStore.Has(StoreKeyDelegationNextID)
 }
 
-func (s *govStakerStore) GetDelegationCounter() (*Counter, error) {
+func (s *govStakerStore) GetDelegationCounter() *Counter {
 	result, err := s.kvStore.Get(StoreKeyDelegationNextID)
 	if err != nil {
 		panic("failed to get delegation next ID: " + err.Error())
@@ -222,28 +231,14 @@ func (s *govStakerStore) GetDelegationCounter() (*Counter, error) {
 
 	counter, ok := result.(*Counter)
 	if !ok {
-		return nil, errors.New("failed to cast result to *Counter type")
+		panic(ufmt.Sprintf("failed to cast result to Counter: %T", result))
 	}
 
-	return counter, nil
+	return counter
 }
 
-func (s *govStakerStore) SetDelegationCounter(counter int64) error {
+func (s *govStakerStore) SetDelegationCounter(counter *Counter) error {
 	return s.kvStore.Set(StoreKeyDelegationNextID, counter)
-}
-
-func (s *govStakerStore) IncrementDelegationNextID() (int64, error) {
-	counter, err := s.GetDelegationCounter()
-	if err != nil {
-		return 0, err
-	}
-
-	err = s.SetDelegationCounter(counter.Next())
-	if err != nil {
-		return 0, err
-	}
-
-	return counter.Get(), nil
 }
 
 // Delegation history methods
@@ -276,6 +271,10 @@ func (s *govStakerStore) GetDelegationHistory() ([]*DelegationRecord, error) {
 	return history, nil
 }
 
+func (s *govStakerStore) SetDelegationHistory(history []*DelegationRecord) error {
+	return s.kvStore.Set(StoreKeyDelegationHistory, history)
+}
+
 // User delegation mapping methods
 func (s *govStakerStore) HasUserDelegationsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyUserDelegations)
@@ -288,6 +287,10 @@ func (s *govStakerStore) HasUserDelegations(user string) bool {
 	}
 	_, exists := allUserDelegations[user]
 	return exists
+}
+
+func (s *govStakerStore) SetUserDelegations(user string, delegations map[string][]int64) error {
+	return s.kvStore.Set(StoreKeyUserDelegations, delegations)
 }
 
 func (s *govStakerStore) GetUserDelegations(user string) (map[string][]int64, error) {

@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"gno.land/p/nt/avl"
 	"gno.land/r/gnoswap/gov/staker"
 )
 
@@ -50,8 +51,8 @@ func initStoreData(store staker.IGovStakerStore) error {
 	}
 
 	// Initialize delegation management
-	if !store.HasDelegationCounterStoreKe() {
-		err := store.SetDelegationCounter(0)
+	if !store.HasDelegationCounterStoreKey() {
+		err := store.SetDelegationCounter(staker.NewCounter())
 		if err != nil {
 			return err
 		}
@@ -64,6 +65,27 @@ func initStoreData(store staker.IGovStakerStore) error {
 			return err
 		}
 		// The snapshot tree is should be initialized
+	}
+
+	if !store.HasDelegationsStoreKey() {
+		err := store.SetDelegations(avl.NewTree())
+		if err != nil {
+			return err
+		}
+	}
+
+	if !store.HasDelegationHistoryStoreKey() {
+		err := store.SetDelegationHistory(make([]*staker.DelegationRecord, 0))
+		if err != nil {
+			return err
+		}
+	}
+
+	if !store.HasUserDelegationsStoreKey() {
+		err := store.SetUserDelegations("", make(map[string][]int64))
+		if err != nil {
+			return err
+		}
 	}
 
 	// Initialize EmissionRewardManager
