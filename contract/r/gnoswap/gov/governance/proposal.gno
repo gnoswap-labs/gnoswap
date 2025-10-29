@@ -53,11 +53,6 @@ func (p *Proposal) VotingNoWeight() int64 {
 	return p.status.voteStatus.nay
 }
 
-// VotingTotalWeight returns total weight of all votes cast.
-func (p *Proposal) VotingTotalWeight() int64 {
-	return p.status.voteStatus.TotalVoteWeight()
-}
-
 // VotingQuorumAmount returns minimum vote weight required for proposal to pass.
 func (p *Proposal) VotingQuorumAmount() int64 {
 	return p.status.voteStatus.quorumAmount

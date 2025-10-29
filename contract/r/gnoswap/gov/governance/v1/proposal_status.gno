@@ -12,6 +12,24 @@ func NewProposalStatusResolver(status *governance.ProposalStatus) *ProposalStatu
 	return &ProposalStatusResolver{status}
 }
 
+// TotalVoteWeight returns the total weight of all votes cast.
+//
+// Returns:
+//   - int64: total vote weight
+func (p *ProposalStatusResolver) TotalVoteWeight() int64 {
+	resolver := NewProposalVoteStatusResolver(p.VoteStatus())
+	return resolver.TotalVoteWeight()
+}
+
+// DiffVoteWeight returns the absolute difference between yes and no votes.
+//
+// Returns:
+//   - int64: absolute difference in vote weights
+func (p *ProposalStatusResolver) DiffVoteWeight() int64 {
+	resolver := NewProposalVoteStatusResolver(p.VoteStatus())
+	return resolver.DiffVoteWeight()
+}
+
 // StatusType determines the current status of the proposal based on timing, voting, and actions.
 // This is the main status calculation method that considers all factors.
 //
@@ -44,9 +62,10 @@ func (p *ProposalStatusResolver) StatusType(current int64) governance.ProposalSt
 	}
 
 	voteStatus := p.VoteStatus()
+	resolver := NewProposalVoteStatusResolver(voteStatus)
 
 	// Check voting outcome
-	if voteStatus.IsRejected() {
+	if resolver.IsRejected() {
 		return governance.StatusRejected
 	}
 
@@ -188,11 +207,12 @@ func (p *ProposalStatusResolver) execute(executedAt int64, executedHeight int64,
 // Returns:
 //   - error: voting error if operation fails
 func (p *ProposalStatusResolver) vote(votedYes bool, weight int64) error {
+	resolver := NewProposalVoteStatusResolver(p.VoteStatus())
 	if votedYes {
-		return p.VoteStatus().AddYesVoteWeight(weight)
+		return resolver.AddYesVoteWeight(weight)
 	}
 
-	return p.VoteStatus().AddNoVoteWeight(weight)
+	return resolver.AddNoVoteWeight(weight)
 }
 
 // updateVoteStatus updates the voting parameters and recalculates requirements.
@@ -205,5 +225,6 @@ func (p *ProposalStatusResolver) vote(votedYes bool, weight int64) error {
 // Returns:
 //   - error: update error if operation fails
 func (p *ProposalStatusResolver) updateVoteStatus(maxVotingWeight, quorum int64) error {
-	return p.VoteStatus().UpdateVoteStatus(maxVotingWeight, quorum)
+	resolver := NewProposalVoteStatusResolver(p.VoteStatus())
+	return resolver.UpdateVoteStatus(maxVotingWeight, quorum)
 }

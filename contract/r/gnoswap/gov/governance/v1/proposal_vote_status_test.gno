@@ -1,9 +1,11 @@
-package governance
+package v1
 
 import (
 	"testing"
 
 	"gno.land/p/nt/uassert"
+
+	"gno.land/r/gnoswap/gov/governance"
 )
 
 // TestProposalVoteStatus_VotingOperations tests voting operations and status
@@ -63,23 +65,24 @@ func TestProposalVoteStatus_VotingOperations(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			status := NewProposalVoteStatus(tc.maxVotingWeight, tc.quorum)
+			status := governance.NewProposalVoteStatus(tc.maxVotingWeight, tc.quorum)
+			resolver := NewProposalVoteStatusResolver(status)
 
 			// when
 			if tc.yesVotes > 0 {
-				_ = status.addYesVoteWeight(tc.yesVotes)
+				_ = resolver.AddYesVoteWeight(tc.yesVotes)
 			}
 			if tc.noVotes > 0 {
-				_ = status.addNoVoteWeight(tc.noVotes)
+				_ = resolver.AddNoVoteWeight(tc.noVotes)
 			}
 
 			// then
-			uassert.Equal(t, status.YesWeight(), tc.yesVotes)
-			uassert.Equal(t, status.NoWeight(), tc.noVotes)
-			uassert.Equal(t, status.TotalVoteWeight(), tc.yesVotes+tc.noVotes)
-			uassert.Equal(t, status.IsVotingFinished(), tc.expectedFinished)
-			uassert.Equal(t, status.IsRejected(), tc.expectedRejected)
-			uassert.Equal(t, status.IsPassed(), tc.expectedPassed)
+			uassert.Equal(t, resolver.YesWeight(), tc.yesVotes)
+			uassert.Equal(t, resolver.NoWeight(), tc.noVotes)
+			uassert.Equal(t, resolver.TotalVoteWeight(), tc.yesVotes+tc.noVotes)
+			uassert.Equal(t, resolver.IsVotingFinished(), tc.expectedFinished)
+			uassert.Equal(t, resolver.IsRejected(), tc.expectedRejected)
+			uassert.Equal(t, resolver.IsPassed(), tc.expectedPassed)
 		})
 	}
 }
@@ -123,14 +126,15 @@ func TestProposalVoteStatus_UpdateVoteStatus(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			status := NewProposalVoteStatus(tc.initialMax, tc.initialQuorum)
+			status := governance.NewProposalVoteStatus(tc.initialMax, tc.initialQuorum)
+			resolver := NewProposalVoteStatusResolver(status)
 
 			// when
-			_ = status.updateVoteStatus(tc.newMax, tc.newQuorum)
+			_ = resolver.UpdateVoteStatus(tc.newMax, tc.newQuorum)
 
 			// then
-			uassert.Equal(t, status.maxVotingWeight, tc.newMax)
-			uassert.Equal(t, status.quorumAmount, tc.expectedQuorum)
+			uassert.Equal(t, resolver.MaxVotingWeight(), tc.newMax)
+			uassert.Equal(t, resolver.QuorumAmount(), tc.expectedQuorum)
 		})
 	}
 }
@@ -166,14 +170,15 @@ func TestNewProposalVoteStatus(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// when
-			status := NewProposalVoteStatus(tc.maxVotingWeight, tc.quorum)
+			status := governance.NewProposalVoteStatus(tc.maxVotingWeight, tc.quorum)
+			resolver := NewProposalVoteStatusResolver(status)
 
 			// then
 			uassert.NotNil(t, status)
-			uassert.Equal(t, status.maxVotingWeight, tc.maxVotingWeight)
-			uassert.Equal(t, status.quorumAmount, tc.expectedQuorum)
-			uassert.Equal(t, status.yea, int64(0))
-			uassert.Equal(t, status.nay, int64(0))
+			uassert.Equal(t, resolver.MaxVotingWeight(), tc.maxVotingWeight)
+			uassert.Equal(t, resolver.QuorumAmount(), tc.expectedQuorum)
+			uassert.Equal(t, resolver.YesWeight(), int64(0))
+			uassert.Equal(t, resolver.NoWeight(), int64(0))
 		})
 	}
 }

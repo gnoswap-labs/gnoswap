@@ -74,22 +74,6 @@ func (s *ProposalStatus) NoWeight() int64 {
 	return s.voteStatus.NoWeight()
 }
 
-// TotalVoteWeight returns the total weight of all votes cast.
-//
-// Returns:
-//   - int64: total vote weight
-func (s *ProposalStatus) TotalVoteWeight() int64 {
-	return s.voteStatus.TotalVoteWeight()
-}
-
-// DiffVoteWeight returns the absolute difference between yes and no votes.
-//
-// Returns:
-//   - int64: absolute difference in vote weights
-func (s *ProposalStatus) DiffVoteWeight() int64 {
-	return s.voteStatus.DiffVoteWeight()
-}
-
 // NewProposalStatus creates a new proposal status with the specified configuration.
 // This initializes all status components with the governance configuration and timing.
 //

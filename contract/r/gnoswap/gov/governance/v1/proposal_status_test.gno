@@ -146,8 +146,10 @@ func TestProposalStatus_VotingOperations(t *testing.T) {
 			// then
 			uassert.Equal(t, status.YesWeight(), tc.voteYes)
 			uassert.Equal(t, status.NoWeight(), tc.voteNo)
-			uassert.Equal(t, status.TotalVoteWeight(), tc.expectedTotal)
-			uassert.Equal(t, status.DiffVoteWeight(), tc.expectedDiff)
+
+			statusResolver := NewProposalStatusResolver(status)
+			uassert.Equal(t, statusResolver.TotalVoteWeight(), tc.expectedTotal)
+			uassert.Equal(t, statusResolver.DiffVoteWeight(), tc.expectedDiff)
 		})
 	}
 }

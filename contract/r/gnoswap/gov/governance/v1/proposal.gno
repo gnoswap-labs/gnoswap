@@ -23,6 +23,11 @@ func NewProposalResolver(proposal *governance.Proposal) *ProposalResolver {
 	}
 }
 
+// VotingTotalWeight returns total weight of all votes cast.
+func (r *ProposalResolver) VotingTotalWeight() int64 {
+	return r.statusResolver.TotalVoteWeight()
+}
+
 // IsActive determines if the proposal is currently active (can be voted on or executed).
 // A proposal is considered active if it's not rejected, expired, executed, or canceled.
 func (r *ProposalResolver) IsActive(current int64) bool {

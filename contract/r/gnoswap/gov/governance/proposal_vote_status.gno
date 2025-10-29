@@ -13,27 +13,6 @@ type ProposalVoteStatus struct {
 func (p *ProposalVoteStatus) MaxVotingWeight() int64 { return p.maxVotingWeight }
 func (p *ProposalVoteStatus) QuorumAmount() int64 { return p.quorumAmount }
 
-// TotalVoteWeight returns the total weight of all votes cast (yes + no).
-//
-// Returns:
-//   - int64: combined weight of all votes
-func (p *ProposalVoteStatus) TotalVoteWeight() int64 {
-	return p.yea + p.nay
-}
-
-// DiffVoteWeight returns the absolute difference between yes and no votes.
-// This can be used to determine the margin of victory or defeat.
-//
-// Returns:
-//   - int64: absolute difference between yes and no vote weights
-func (p *ProposalVoteStatus) DiffVoteWeight() int64 {
-	if p.yea > p.nay {
-		return p.yea - p.nay
-	}
-
-	return p.nay - p.yea
-}
-
 // YesWeight returns the total weight of "yes" votes.
 //
 // Returns:
@@ -50,94 +29,21 @@ func (p *ProposalVoteStatus) NoWeight() int64 {
 	return p.nay
 }
 
-// IsVotingFinished determines if voting has effectively ended due to mathematical impossibility
-// of changing the outcome. This happens when the remaining uncast votes cannot change the result.
-//
-// Returns:
-//   - bool: true if voting outcome is mathematically determined
-func (p *ProposalVoteStatus) IsVotingFinished() bool {
-	totalVotes := p.TotalVoteWeight()
-
-	// If we haven't reached quorum yet, voting is not finished
-	if totalVotes < p.quorumAmount {
-		return false
-	}
-
-	// Calculate remaining votes that could still be cast
-	remainingVotes := p.maxVotingWeight - totalVotes
-
-	// If the difference between yes/no is greater than remaining votes,
-	// the outcome cannot change, so voting is effectively finished
-	return remainingVotes-p.DiffVoteWeight() <= 0
+/* Setter methods */
+func (p *ProposalVoteStatus) SetYesWeight(yes int64) {
+	p.yea = yes
 }
 
-// IsRejected determines if the proposal has been rejected by voting.
-// A proposal is rejected if voting is finished and it did not pass.
-//
-// Returns:
-//   - bool: true if proposal has been rejected
-func (p *ProposalVoteStatus) IsRejected() bool {
-	// Only consider rejection if voting is finished
-	if !p.IsVotingFinished() {
-		return false
-	}
-
-	// Proposal is rejected if it didn't pass
-	return !p.IsPassed()
+func (p *ProposalVoteStatus) SetNoWeight(no int64) {
+	p.nay = no
 }
 
-// IsPassed determines if the proposal has passed the voting requirements.
-// A proposal passes if it receives at least the quorum amount of "yes" votes.
-//
-// Returns:
-//   - bool: true if proposal has passed
-func (p *ProposalVoteStatus) IsPassed() bool {
-	return p.yea >= p.quorumAmount
-}
-
-// addYesVoteWeight adds the specified weight to the "yes" vote tally.
-// This is called when a user votes "yes" on the proposal.
-//
-// Parameters:
-//   - yea: vote weight to add to "yes" votes
-//
-// Returns:
-//   - error: always nil (reserved for future validation)
-func (p *ProposalVoteStatus) AddYesVoteWeight(yea int64) error {
-	p.yea += yea
-	return nil
-}
-
-// addNoVoteWeight adds the specified weight to the "no" vote tally.
-// This is called when a user votes "no" on the proposal.
-//
-// Parameters:
-//   - nay: vote weight to add to "no" votes
-//
-// Returns:
-//   - error: always nil (reserved for future validation)
-func (p *ProposalVoteStatus) AddNoVoteWeight(nay int64) error {
-	p.nay += nay
-	return nil
-}
-
-// UpdateVoteStatus updates the voting parameters and recalculates the quorum requirement.
-// This can be used if voting parameters change dynamically.
-//
-// Parameters:
-//   - maxVotingWeight: updated maximum voting weight
-//   - quorum: updated quorum percentage
-//
-// Returns:
-//   - error: always nil (reserved for future validation)
-func (p *ProposalVoteStatus) UpdateVoteStatus(maxVotingWeight, quorum int64) error {
-	// Update maximum voting weight
+func (p *ProposalVoteStatus) SetMaxVotingWeight(maxVotingWeight int64) {
 	p.maxVotingWeight = maxVotingWeight
+}
 
-	// Recalculate quorum amount based on new parameters
-	p.quorumAmount = maxVotingWeight * quorum / 100
-
-	return nil
+func (p *ProposalVoteStatus) SetQuorumAmount(quorumAmount int64) {
+	p.quorumAmount = quorumAmount
 }
 
 // NewProposalVoteStatus creates a new vote status for a proposal.
