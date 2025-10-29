@@ -165,6 +165,45 @@ func TestBurnFail(t *testing.T) {
 	})
 }
 
+func TestBalanceOf(t *testing.T) {
+	// Test balance for address with zero balance
+	zeroBalance := BalanceOf(adminAddr)
+	if zeroBalance < 0 {
+		t.Errorf("BalanceOf() should not return negative value, got %d", zeroBalance)
+	}
+
+	// Test balance after minting
+	testing.SetRealm(testing.NewUserRealm(govStakerAddress))
+	mintAmount := int64(500)
+	initialBalance := BalanceOf(govStakerAddress)
+	Mint(cross, govStakerAddress, mintAmount)
+
+	newBalance := BalanceOf(govStakerAddress)
+	expectedBalance := initialBalance + mintAmount
+	if newBalance != expectedBalance {
+		t.Errorf("BalanceOf() failed after mint. Expected %d, got %d", expectedBalance, newBalance)
+	}
+
+	// Cleanup
+	Burn(cross, govStakerAddress, mintAmount)
+}
+
+func TestEdgeCases(t *testing.T) {
+	testing.SetRealm(testing.NewUserRealm(govStakerAddress))
+
+	// Test burning more than balance - should panic
+	Mint(cross, govStakerAddress, 100)
+	uassert.AbortsWithMessage(t, "insufficient balance", func() {
+		Burn(cross, govStakerAddress, 10000)
+	})
+
+	// Cleanup
+	currentBalance := BalanceOf(govStakerAddress)
+	if currentBalance >= 100 {
+		Burn(cross, govStakerAddress, 100)
+	}
+}
+
 func TestRender(t *testing.T) {
 	// Test empty path - should return token home
 	result := Render("")
