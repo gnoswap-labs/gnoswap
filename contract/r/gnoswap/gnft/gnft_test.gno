@@ -48,21 +48,84 @@ func TestMetadata(t *testing.T) {
 }
 
 func TestBalanceOf(t *testing.T) {
-	resetObject(t)
-	testing.SetRealm(positionRealm)
-	Mint(cross, addr01, tid(100))
-
 	tests := []struct {
 		name     string
+		setup    func()
 		addr     address
 		expected int64
 	}{
-		{"BalanceOf(addr01)", addr01, 1},
-		{"BalanceOf(addr02)", addr02, 0},
+		{
+			name: "balance with one NFT",
+			setup: func() {
+				resetObject(t)
+				testing.SetRealm(positionRealm)
+				Mint(cross, addr01, tid(100))
+			},
+			addr:     addr01,
+			expected: 1,
+		},
+		{
+			name: "balance with zero NFTs",
+			setup: func() {
+				resetObject(t)
+				testing.SetRealm(positionRealm)
+				Mint(cross, addr01, tid(100))
+			},
+			addr:     addr02,
+			expected: 0,
+		},
+		{
+			name: "balance with multiple NFTs",
+			setup: func() {
+				resetObject(t)
+				testing.SetRealm(positionRealm)
+				Mint(cross, addr01, tid(1))
+				Mint(cross, addr01, tid(2))
+				Mint(cross, addr01, tid(3))
+			},
+			addr:     addr01,
+			expected: 3,
+		},
+		{
+			name: "balance after transfer",
+			setup: func() {
+				resetObject(t)
+				testing.SetRealm(positionRealm)
+				Mint(cross, addr01, tid(1))
+				Mint(cross, addr01, tid(2))
+				// Transfer one NFT to addr02
+				testing.SetRealm(addr01Realm)
+				Approve(cross, stakerRealm.Address(), tid(1))
+				testing.SetRealm(stakerRealm)
+				TransferFrom(cross, addr01, addr02, tid(1))
+			},
+			addr:     addr01,
+			expected: 1,
+		},
+		{
+			name: "balance of recipient after transfer",
+			setup: func() {
+				resetObject(t)
+				testing.SetRealm(positionRealm)
+				Mint(cross, addr01, tid(1))
+				Mint(cross, addr01, tid(2))
+				// Transfer one NFT to addr02
+				testing.SetRealm(addr01Realm)
+				Approve(cross, stakerRealm.Address(), tid(1))
+				testing.SetRealm(stakerRealm)
+				TransferFrom(cross, addr01, addr02, tid(1))
+			},
+			addr:     addr02,
+			expected: 1,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup()
+			}
+
 			balance, _ := BalanceOf(tt.addr)
 			uassert.Equal(t, tt.expected, balance)
 		})
