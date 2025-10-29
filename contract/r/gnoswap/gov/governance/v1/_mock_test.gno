@@ -52,10 +52,6 @@ func (m *mockGovernanceStore) SetConfigs(configs *avl.Tree) error {
 	return nil
 }
 
-func (m *mockGovernanceStore) HasConfigStoreKey() bool {
-	return m.config != governance.Config{}
-}
-
 func (m *mockGovernanceStore) GetConfig(version int64) (governance.Config, bool) {
 	if m.configs == nil {
 		return governance.Config{}, false

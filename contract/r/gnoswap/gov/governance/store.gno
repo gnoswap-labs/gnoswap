@@ -102,10 +102,6 @@ func (s *governanceStore) SetConfigs(configs *avl.Tree) error {
 	return s.kvStore.Set(StoreKeyConfigs.String(), configs)
 }
 
-func (s *governanceStore) HasConfigStoreKey() bool {
-	return s.kvStore.Has(StoreKeyConfig.String())
-}
-
 func (s *governanceStore) GetConfig(version int64) (Config, bool) {
 	configs := s.GetConfigs()
 	result, ok := configs.Get(int64ToString(version))

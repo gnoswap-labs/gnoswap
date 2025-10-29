@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"strconv"
 	"gno.land/p/nt/avl"
 	"gno.land/r/gnoswap/gov/governance"
 )
@@ -46,9 +47,14 @@ func initStoreData(governanceStore governance.IGovernanceStore) error {
 		}
 	}
 
-	// Initialize AVL trees if not already set
+	// Initialize Configs with default configuration if not already set
 	if !governanceStore.HasConfigsStoreKey() {
-		err := governanceStore.SetConfigs(avl.NewTree())
+		configs := avl.NewTree()
+		nextConfigVersion := governanceStore.GetConfigCounter().Next()
+
+		configs.Set(formatConfigKey(nextConfigVersion), defaultConfig)
+
+		err := governanceStore.SetConfigs(configs)
 		if err != nil {
 			return err
 		}
@@ -75,21 +81,9 @@ func initStoreData(governanceStore governance.IGovernanceStore) error {
 		}
 	}
 
-	if !governanceStore.HasConfigsStoreKey() {
-		err := governanceStore.SetConfigs(avl.NewTree())
-		if err != nil {
-			return err
-		}
-	}
-
-	// Initialize default configuration
-	if !governanceStore.HasConfigStoreKey() {
-		nextConfigVersion := governanceStore.GetConfigCounter().Next()
-		err := governanceStore.SetConfig(nextConfigVersion, defaultConfig)
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
+}
+
+func formatConfigKey(version int64) string {
+	return strconv.FormatInt(version, 10)
 }
