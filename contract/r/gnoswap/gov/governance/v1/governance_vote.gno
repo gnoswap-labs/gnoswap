@@ -92,8 +92,10 @@ func (gv *governanceV1) vote(
 		return nil, 0, 0, makeErrorWithDetails(errDataNotFound, "not found proposal")
 	}
 
+	proposalResolver := NewProposalResolver(proposal)
+
 	// Check if current time is within voting period
-	if !gv.proposalResolver.IsVotingPeriod(proposal, votedAt) {
+	if !proposalResolver.IsVotingPeriod(votedAt) {
 		return nil, 0, 0, makeErrorWithDetails(errUnableToVoteOutOfPeriod, "can not vote out of voting period")
 	}
 
@@ -115,12 +117,14 @@ func (gv *governanceV1) vote(
 		return nil, 0, 0, err
 	}
 
+	resolver := NewProposalResolver(proposal)
+
 	// Update proposal vote tallies
-	err = gv.proposalResolver.Vote(proposal, votedYes, votingWeight)
+	err = resolver.Vote(votedYes, votingWeight)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 
 	// Return updated vote information and current tallies
-	return userVote, proposal.VotingYesWeight(), proposal.VotingNoWeight(), nil
+	return userVote, resolver.VotingYesWeight(), resolver.VotingNoWeight(), nil
 }

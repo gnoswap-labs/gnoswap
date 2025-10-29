@@ -9,29 +9,12 @@ import (
 type governanceV1 struct {
 	store governance.IGovernanceStore
 
-	// Resolvers for business logic
-	proposalResolver  *ProposalResolver
-	statusResolver    *ProposalStatusResolver
-	metadataResolver  *ProposalMetadataResolver
-	dataResolver      *ProposalDataResolver
-
 	// Function to retrieve user voting snapshots (can be overridden for testing)
 	getUserVotingInfoSnapshotFn func(snapshotTime int64) (map[string]*VotingInfo, int64, bool)
 }
 
 func NewGovernanceV1(governanceStore governance.IGovernanceStore) governance.IGovernance {
-	statusResolver := NewProposalStatusResolver()
-	metadataResolver := NewProposalMetadataResolver()
-	dataResolver := NewProposalDataResolver()
-	proposalResolver := NewProposalResolver(statusResolver, dataResolver, metadataResolver)
-
-	gv := &governanceV1{
-		store: governanceStore,
-		statusResolver: statusResolver,
-		metadataResolver: metadataResolver,
-		dataResolver: dataResolver,
-		proposalResolver: proposalResolver,
-	}
+	gv := &governanceV1{ store: governanceStore }
 
 	// Set default voting info snapshot function
 	gv.getUserVotingInfoSnapshotFn = func(snapshotTime int64) (map[string]*VotingInfo, int64, bool) {
@@ -134,7 +117,8 @@ func (g *governanceV1) hasActiveProposal(proposerAddress address, current int64)
 	// Check if any proposal is still active
 	for _, proposalRaw := range proposals {
 		if proposal, ok := proposalRaw.(*governance.Proposal); ok {
-			if g.proposalResolver.IsActive(proposal, current) {
+			proposalResolver := NewProposalResolver(proposal)
+			if proposalResolver.IsActive(current) {
 				return true
 			}
 		}

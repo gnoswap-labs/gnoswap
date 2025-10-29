@@ -692,7 +692,8 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					time.Now().Add(-time.Hour*24*10).Unix(),
 					100,
 				)
-				proposal.status.vote(true, 6_000_000_000)
+				statusResolver := NewProposalStatusResolver(proposal.Status())
+				statusResolver.vote(true, 6_000_000_000)
 				return proposal
 			},
 			expectedError: "[GNOSWAP-GOVERNANCE-019] already active proposal",
@@ -712,7 +713,8 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					time.Now().Add(-time.Hour*24*12).Unix(),
 					100,
 				)
-				proposal.status.vote(true, 6_000_000_000)
+				statusResolver := NewProposalStatusResolver(proposal.Status())
+				statusResolver.vote(true, 6_000_000_000)
 				return proposal
 			},
 			expectedError: "[GNOSWAP-GOVERNANCE-019] already active proposal",
@@ -732,8 +734,9 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					time.Now().Add(-time.Hour*24*20).Unix(),
 					100,
 				)
-				proposal.status.vote(true, 6_000_000_000)
-				proposal.status.execute(time.Now().Unix(), 100, testutils.TestAddress("executor"))
+				statusResolver := NewProposalStatusResolver(proposal.Status())
+				statusResolver.vote(true, 6_000_000_000)
+				statusResolver.execute(time.Now().Unix(), 100, testutils.TestAddress("executor"))
 				return proposal
 			},
 			shouldFail:  false,
@@ -752,7 +755,8 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					time.Now().Unix(),
 					100,
 				)
-				proposal.status.cancel(time.Now().Unix(), 100, testutils.TestAddress("proposer"))
+				statusResolver := NewProposalStatusResolver(proposal.Status())
+				statusResolver.cancel(time.Now().Unix(), 100, testutils.TestAddress("proposer"))
 				return proposal
 			},
 			shouldFail:  false,
@@ -788,7 +792,8 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 					time.Now().Add(-time.Hour*24*10).Unix(),
 					100,
 				)
-				proposal.status.vote(false, 6_000_000_000) // Majority no votes
+				statusResolver := NewProposalStatusResolver(proposal.Status())
+				statusResolver.vote(false, 6_000_000_000) // Majority no votes
 				return proposal
 			},
 			shouldFail:  false,
@@ -1076,7 +1081,7 @@ func TestGovernancePropose_ParameterChangeValidation(t *testing.T) {
 
 				proposal, ok := gov.getProposal(proposalId)
 				uassert.Equal(t, true, ok)
-				uassert.Equal(t, ParameterChange.String(), proposal.Type().String())
+				uassert.Equal(t, governance.ParameterChange.String(), proposal.Type().String())
 			}
 		})
 	}

@@ -7,10 +7,14 @@ import (
 	"gno.land/r/gnoswap/gov/governance"
 )
 
-type ProposalMetadataResolver struct{}
+type ProposalMetadataResolver struct{
+	*governance.ProposalMetadata
+}
 
-func NewProposalMetadataResolver() *ProposalMetadataResolver {
-	return &ProposalMetadataResolver{}
+func NewProposalMetadataResolver(metadata *governance.ProposalMetadata) *ProposalMetadataResolver {
+	return &ProposalMetadataResolver{
+		ProposalMetadata: metadata,
+	}
 }
 
 // Validate performs comprehensive validation of the proposal metadata.
@@ -18,14 +22,14 @@ func NewProposalMetadataResolver() *ProposalMetadataResolver {
 //
 // Returns:
 //   - error: validation error if metadata is invalid
-func (r *ProposalMetadataResolver) Validate(metadata *governance.ProposalMetadata) error {
+func (r *ProposalMetadataResolver) Validate() error {
 	// Validate title meets requirements
-	if err := r.validateTitle(metadata.Title()); err != nil {
+	if err := r.validateTitle(r.Title()); err != nil {
 		return err
 	}
 
 	// Validate description meets requirements
-	if err := r.validateDescription(metadata.Description()); err != nil {
+	if err := r.validateDescription(r.Description()); err != nil {
 		return err
 	}
 
@@ -87,10 +91,14 @@ func (r *ProposalMetadataResolver) validateDescription(description string) error
 }
 
 // ProposalDataResolver handles business logic for proposal data.
-type ProposalDataResolver struct{}
+type ProposalDataResolver struct{
+	*governance.ProposalData
+}
 
-func NewProposalDataResolver() *ProposalDataResolver {
-	return &ProposalDataResolver{}
+func NewProposalDataResolver(proposalData *governance.ProposalData) *ProposalDataResolver {
+	return &ProposalDataResolver{
+		ProposalData: proposalData,
+	}
 }
 
 // Validate performs type-specific validation of the proposal data.
@@ -98,14 +106,14 @@ func NewProposalDataResolver() *ProposalDataResolver {
 //
 // Returns:
 //   - error: validation error if data is invalid
-func (r *ProposalDataResolver) Validate(data *governance.ProposalData) error {
-	switch data.ProposalType() {
+func (r *ProposalDataResolver) Validate() error {
+	switch r.ProposalType() {
 	case governance.Text:
-		return r.validateText(data)
+		return r.validateText()
 	case governance.CommunityPoolSpend:
-		return r.validateCommunityPoolSpend(data)
+		return r.validateCommunityPoolSpend()
 	case governance.ParameterChange:
-		return r.validateParameterChange(data)
+		return r.validateParameterChange()
 	}
 	return nil
 }
@@ -115,7 +123,7 @@ func (r *ProposalDataResolver) Validate(data *governance.ProposalData) error {
 //
 // Returns:
 //   - error: always nil for text proposals
-func (r *ProposalDataResolver) validateText(_ *governance.ProposalData) error {
+func (r *ProposalDataResolver) validateText() error {
 	return nil
 }
 
@@ -124,9 +132,9 @@ func (r *ProposalDataResolver) validateText(_ *governance.ProposalData) error {
 //
 // Returns:
 //   - error: validation error if community pool spend data is invalid
-func (r *ProposalDataResolver) validateCommunityPoolSpend(data *governance.ProposalData) error {
+func (r *ProposalDataResolver) validateCommunityPoolSpend() error {
 	// Validate recipient address
-	communityPoolSpend := data.CommunityPoolSpend()
+	communityPoolSpend := r.ProposalData.CommunityPoolSpend()
 	if !communityPoolSpend.To().IsValid() {
 		return makeErrorWithDetails(
 			errInvalidInput,
@@ -158,8 +166,8 @@ func (r *ProposalDataResolver) validateCommunityPoolSpend(data *governance.Propo
 //
 // Returns:
 //   - error: validation error if parameter change data is invalid
-func (r *ProposalDataResolver) validateParameterChange(data *governance.ProposalData) error {
-	execution := data.Execution()
+func (r *ProposalDataResolver) validateParameterChange() error {
+	execution := r.Execution()
 	num := execution.Num()
 	msgs := execution.Msgs()
 
@@ -196,7 +204,7 @@ func (r *ProposalDataResolver) validateParameterChange(data *governance.Proposal
 	}
 
 	// Validate parameter change message format
-	parameterChangesInfos := r.ParameterChangesInfos(execution)
+	parameterChangesInfos := r.ParameterChangesInfos()
 	if len(parameterChangesInfos) != int(num) {
 		return makeErrorWithDetails(
 			errInvalidInput,
@@ -212,16 +220,16 @@ func (r *ProposalDataResolver) validateParameterChange(data *governance.Proposal
 //
 // Returns:
 //   - []ParameterChangeInfo: slice of parsed parameter change information
-func (r *ProposalDataResolver) ParameterChangesInfos(execution *governance.ExecutionInfo) []governance.ParameterChangeInfo {
+func (r *ProposalDataResolver) ParameterChangesInfos() []governance.ParameterChangeInfo {
 	infos := make([]governance.ParameterChangeInfo, 0)
 
 	// Return empty slice if no executions
-	if execution.Num() <= 0 {
+	if r.Execution().Num() <= 0 {
 		return infos
 	}
 
 	// Parse each execution message
-	for _, msg := range execution.Msgs() {
+	for _, msg := range r.Execution().Msgs() {
 		// Split message into components: pkgPath, function, params
 		params := strings.Split(msg, parameterSeparator)
 		if len(params) != 3 {

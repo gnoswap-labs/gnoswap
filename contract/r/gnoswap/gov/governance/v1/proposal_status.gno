@@ -4,10 +4,12 @@ import (
 	"gno.land/r/gnoswap/gov/governance"
 )
 
-type ProposalStatusResolver struct {}
+type ProposalStatusResolver struct {
+	*governance.ProposalStatus
+}
 
-func NewProposalStatusResolver() *ProposalStatusResolver {
-	return &ProposalStatusResolver{}
+func NewProposalStatusResolver(status *governance.ProposalStatus) *ProposalStatusResolver {
+	return &ProposalStatusResolver{status}
 }
 
 // StatusType determines the current status of the proposal based on timing, voting, and actions.
@@ -18,19 +20,19 @@ func NewProposalStatusResolver() *ProposalStatusResolver {
 //
 // Returns:
 //   - ProposalStatusType: current status of the proposal
-func (p *ProposalStatusResolver) StatusType(status *governance.ProposalStatus, current int64) governance.ProposalStatusType {
-	// actionStatus := p.ActionStatus()
+func (p *ProposalStatusResolver) StatusType(current int64) governance.ProposalStatusType {
+	actionStatus := p.ActionStatus()
 
 	// Check action-based statuses first (these override time-based statuses)
-	if status.ActionStatus().IsExecuted() {
+	if actionStatus.IsExecuted() {
 		return governance.StatusExecuted
 	}
 
-	if status.ActionStatus().IsCanceled() {
+	if actionStatus.IsCanceled() {
 		return governance.StatusCanceled
 	}
 
-	schedule := status.Schedule()
+	schedule := p.Schedule()
 
 	// Check time-based statuses
 	if !schedule.IsPassedActiveAt(current) {
@@ -41,7 +43,7 @@ func (p *ProposalStatusResolver) StatusType(status *governance.ProposalStatus, c
 		return governance.StatusActive
 	}
 
-	voteStatus := status.VoteStatus()
+	voteStatus := p.VoteStatus()
 
 	// Check voting outcome
 	if voteStatus.IsRejected() {
@@ -49,7 +51,7 @@ func (p *ProposalStatusResolver) StatusType(status *governance.ProposalStatus, c
 	}
 
 	// For passed proposals, check execution status
-	if !status.ActionStatus().IsExecutable() || !schedule.IsPassedExecutableAt(current) {
+	if !p.ActionStatus().IsExecutable() || !schedule.IsPassedExecutableAt(current) {
 		return governance.StatusPassed
 	}
 
@@ -67,8 +69,8 @@ func (p *ProposalStatusResolver) StatusType(status *governance.ProposalStatus, c
 //
 // Returns:
 //   - bool: true if proposal is upcoming
-func (p *ProposalStatusResolver) IsUpcoming(status *governance.ProposalStatus, current int64) bool {
-	return p.StatusType(status, current) == governance.StatusUpcoming
+func (p *ProposalStatusResolver) IsUpcoming(current int64) bool {
+	return p.StatusType(current) == governance.StatusUpcoming
 }
 
 // IsActive checks if the proposal is in active voting status.
@@ -78,8 +80,8 @@ func (p *ProposalStatusResolver) IsUpcoming(status *governance.ProposalStatus, c
 //
 // Returns:
 //   - bool: true if proposal is active (voting period)
-func (p *ProposalStatusResolver) IsActive(status *governance.ProposalStatus, current int64) bool {
-	return p.StatusType(status, current) == governance.StatusActive
+func (p *ProposalStatusResolver) IsActive(current int64) bool {
+	return p.StatusType(current) == governance.StatusActive
 }
 
 // IsPassed checks if the proposal has passed voting.
@@ -89,8 +91,8 @@ func (p *ProposalStatusResolver) IsActive(status *governance.ProposalStatus, cur
 //
 // Returns:
 //   - bool: true if proposal has passed
-func (p *ProposalStatusResolver) IsPassed(status *governance.ProposalStatus, current int64) bool {
-	return p.StatusType(status, current) == governance.StatusPassed
+func (p *ProposalStatusResolver) IsPassed(current int64) bool {
+	return p.StatusType(current) == governance.StatusPassed
 }
 
 // IsRejected checks if the proposal has been rejected by voting.
@@ -100,8 +102,8 @@ func (p *ProposalStatusResolver) IsPassed(status *governance.ProposalStatus, cur
 //
 // Returns:
 //   - bool: true if proposal was rejected
-func (p *ProposalStatusResolver) IsRejected(status *governance.ProposalStatus, current int64) bool {
-	return p.StatusType(status, current) == governance.StatusRejected
+func (p *ProposalStatusResolver) IsRejected(current int64) bool {
+	return p.StatusType(current) == governance.StatusRejected
 }
 
 // IsExecutable checks if the proposal is in executable status.
@@ -111,8 +113,8 @@ func (p *ProposalStatusResolver) IsRejected(status *governance.ProposalStatus, c
 //
 // Returns:
 //   - bool: true if proposal can be executed
-func (p *ProposalStatusResolver) IsExecutable(status *governance.ProposalStatus, current int64) bool {
-	return p.StatusType(status, current) == governance.StatusExecutable
+func (p *ProposalStatusResolver) IsExecutable(current int64) bool {
+	return p.StatusType(current) == governance.StatusExecutable
 }
 
 // IsExpired checks if the proposal execution window has expired.
@@ -122,8 +124,8 @@ func (p *ProposalStatusResolver) IsExecutable(status *governance.ProposalStatus,
 //
 // Returns:
 //   - bool: true if proposal has expired
-func (p *ProposalStatusResolver) IsExpired(status *governance.ProposalStatus, current int64) bool {
-	return p.StatusType(status, current) == governance.StatusExpired
+func (p *ProposalStatusResolver) IsExpired(current int64) bool {
+	return p.StatusType(current) == governance.StatusExpired
 }
 
 // IsExecuted checks if the proposal has been executed.
@@ -133,8 +135,8 @@ func (p *ProposalStatusResolver) IsExpired(status *governance.ProposalStatus, cu
 //
 // Returns:
 //   - bool: true if proposal has been executed
-func (p *ProposalStatusResolver) IsExecuted(status *governance.ProposalStatus, current int64) bool {
-	return p.StatusType(status, current) == governance.StatusExecuted
+func (p *ProposalStatusResolver) IsExecuted(current int64) bool {
+	return p.StatusType(current) == governance.StatusExecuted
 }
 
 // IsCanceled checks if the proposal has been canceled.
@@ -144,8 +146,8 @@ func (p *ProposalStatusResolver) IsExecuted(status *governance.ProposalStatus, c
 //
 // Returns:
 //   - bool: true if proposal has been canceled
-func (p *ProposalStatusResolver) IsCanceled(status *governance.ProposalStatus, current int64) bool {
-	return p.StatusType(status, current) == governance.StatusCanceled
+func (p *ProposalStatusResolver) IsCanceled(current int64) bool {
+	return p.StatusType(current) == governance.StatusCanceled
 }
 
 // cancel marks the proposal as canceled with the provided details.
@@ -158,8 +160,8 @@ func (p *ProposalStatusResolver) IsCanceled(status *governance.ProposalStatus, c
 //
 // Returns:
 //   - error: cancellation error if operation fails
-func (p *ProposalStatusResolver) cancel(status *governance.ProposalStatus, canceledAt int64, canceledHeight int64, canceledBy address) error {
-	return status.ActionStatus().Cancel(canceledAt, canceledHeight, canceledBy)
+func (p *ProposalStatusResolver) cancel(canceledAt int64, canceledHeight int64, canceledBy address) error {
+	return p.ActionStatus().Cancel(canceledAt, canceledHeight, canceledBy)
 }
 
 // execute marks the proposal as executed with the provided details.
@@ -172,8 +174,8 @@ func (p *ProposalStatusResolver) cancel(status *governance.ProposalStatus, cance
 //
 // Returns:
 //   - error: execution error if operation fails
-func (p *ProposalStatusResolver) execute(status *governance.ProposalStatus, executedAt int64, executedHeight int64, executedBy address) error {
-	return status.ActionStatus().Execute(executedAt, executedHeight, executedBy)
+func (p *ProposalStatusResolver) execute(executedAt int64, executedHeight int64, executedBy address) error {
+	return p.ActionStatus().Execute(executedAt, executedHeight, executedBy)
 }
 
 // vote records a vote on the proposal and updates vote tallies.
@@ -185,12 +187,12 @@ func (p *ProposalStatusResolver) execute(status *governance.ProposalStatus, exec
 //
 // Returns:
 //   - error: voting error if operation fails
-func (p *ProposalStatusResolver) vote(status *governance.ProposalStatus, votedYes bool, weight int64) error {
+func (p *ProposalStatusResolver) vote(votedYes bool, weight int64) error {
 	if votedYes {
-		return status.VoteStatus().AddYesVoteWeight(weight)
+		return p.VoteStatus().AddYesVoteWeight(weight)
 	}
 
-	return status.VoteStatus().AddNoVoteWeight(weight)
+	return p.VoteStatus().AddNoVoteWeight(weight)
 }
 
 // updateVoteStatus updates the voting parameters and recalculates requirements.
@@ -202,6 +204,6 @@ func (p *ProposalStatusResolver) vote(status *governance.ProposalStatus, votedYe
 //
 // Returns:
 //   - error: update error if operation fails
-func (p *ProposalStatusResolver) updateVoteStatus(status *governance.ProposalStatus, maxVotingWeight, quorum int64) error {
-	return status.VoteStatus().UpdateVoteStatus(maxVotingWeight, quorum)
+func (p *ProposalStatusResolver) updateVoteStatus(maxVotingWeight, quorum int64) error {
+	return p.VoteStatus().UpdateVoteStatus(maxVotingWeight, quorum)
 }

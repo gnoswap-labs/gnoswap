@@ -5,17 +5,18 @@ import (
 )
 
 type ProposalResolver struct {
+	*governance.Proposal
 	statusResolver *ProposalStatusResolver
 	dataResolver *ProposalDataResolver
 	metadataResolver *ProposalMetadataResolver
 }
 
-func NewProposalResolver(
-	statusResolver *ProposalStatusResolver,
-	dataResolver *ProposalDataResolver,
-	metadataResolver *ProposalMetadataResolver,
-) *ProposalResolver {
+func NewProposalResolver(proposal *governance.Proposal) *ProposalResolver {
+	statusResolver := NewProposalStatusResolver(proposal.Status())
+	dataResolver := NewProposalDataResolver(proposal.Data())
+	metadataResolver := NewProposalMetadataResolver(proposal.Metadata())
 	return &ProposalResolver{
+		Proposal: proposal,
 		statusResolver: statusResolver,
 		dataResolver: dataResolver,
 		metadataResolver: metadataResolver,
@@ -24,20 +25,19 @@ func NewProposalResolver(
 
 // IsActive determines if the proposal is currently active (can be voted on or executed).
 // A proposal is considered active if it's not rejected, expired, executed, or canceled.
-func (r *ProposalResolver) IsActive(proposal *governance.Proposal, current int64) bool {
-	status := proposal.Status()
+func (r *ProposalResolver) IsActive(current int64) bool {
 	// Text proposals become inactive once they pass (no execution needed)
-	if proposal.IsTextType() {
-		if r.statusResolver.IsPassed(status, current) {
+	if r.IsTextType() {
+		if r.statusResolver.IsPassed(current) {
 			return false
 		}
 	}
 
 	// If the proposal is rejected, expired, executed, or canceled, it is not active
-	if r.statusResolver.IsRejected(status, current) ||
-		r.statusResolver.IsExpired(status, current) ||
-		r.statusResolver.IsExecuted(status, current) ||
-		r.statusResolver.IsCanceled(status, current) {
+	if r.statusResolver.IsRejected(current) ||
+		r.statusResolver.IsExpired(current) ||
+		r.statusResolver.IsExecuted(current) ||
+		r.statusResolver.IsCanceled(current) {
 		return false
 	}
 
@@ -46,14 +46,14 @@ func (r *ProposalResolver) IsActive(proposal *governance.Proposal, current int64
 
 // Validate performs comprehensive validation of the proposal data and metadata.
 // This ensures all proposal components meet requirements before storage.
-func (r *ProposalResolver) Validate(proposal *governance.Proposal) error {
+func (r *ProposalResolver) Validate() error {
 	// Validate type-specific proposal data
-	if err := r.dataResolver.Validate(proposal.Data()); err != nil {
+	if err := r.dataResolver.Validate(); err != nil {
 		return err
 	}
 
 	// Validate proposal metadata (title and description)
-	if err := r.metadataResolver.Validate(proposal.Metadata()); err != nil {
+	if err := r.metadataResolver.Validate(); err != nil {
 		return err
 	}
 
@@ -61,87 +61,84 @@ func (r *ProposalResolver) Validate(proposal *governance.Proposal) error {
 }
 
 // Status returns the current status string of the proposal at the given time.
-func (r *ProposalResolver) Status(proposal *governance.Proposal, current int64) string {
-	return r.statusResolver.StatusType(proposal.Status(), current).String()
+func (r *ProposalResolver) Status(current int64) string {
+	return r.statusResolver.StatusType(current).String()
 }
 
 // StatusType returns the current status type of the proposal at the given time.
-func (r *ProposalResolver) StatusType(proposal *governance.Proposal, current int64) governance.ProposalStatusType {
-	return r.statusResolver.StatusType(proposal.Status(), current)
+func (r *ProposalResolver) StatusType(current int64) governance.ProposalStatusType {
+	return r.statusResolver.StatusType(current)
 }
 
 // IsVotingPeriod checks if the proposal is currently in its voting period.
-func (r *ProposalResolver) IsVotingPeriod(proposal *governance.Proposal, votedAt int64) bool {
-	return r.StatusType(proposal, votedAt) == governance.StatusActive
+func (r *ProposalResolver) IsVotingPeriod(votedAt int64) bool {
+	return r.StatusType(votedAt) == governance.StatusActive
 }
 
 // IsExecutable determines if the proposal can be executed at the given time.
 // Only executable proposal types that have passed voting can be executed.
-func (r *ProposalResolver) IsExecutable(proposal *governance.Proposal, current int64) bool {
+func (r *ProposalResolver) IsExecutable(current int64) bool {
 	// Only certain proposal types can be executed
-	if !proposal.Type().IsExecutable() {
+	if !r.dataResolver.ProposalType().IsExecutable() {
 		return false
 	}
 
-	return r.statusResolver.IsExecutable(proposal.Status(), current)
+	return r.statusResolver.IsExecutable(current)
 }
 
 // CommunityPoolSpendTokenPath returns the token path for community pool spend proposals.
 // Returns empty string for other proposal types.
-func (r *ProposalResolver) CommunityPoolSpendTokenPath(proposal *governance.Proposal) string {
-	if proposal.Data() == nil {
+func (r *ProposalResolver) CommunityPoolSpendTokenPath() string {
+	if r.Data() == nil {
 		return ""
 	}
 
-	return proposal.Data().CommunityPoolSpend().TokenPath()
+	return r.dataResolver.CommunityPoolSpend().TokenPath()
 }
 
 // vote records a vote for this proposal and updates vote tallies.
 // This is an internal method called during voting process.
-func (r *ProposalResolver) Vote(proposal *governance.Proposal, votedYes bool, weight int64) error {
-	return r.statusResolver.vote(proposal.Status(), votedYes, weight)
+func (r *ProposalResolver) Vote(votedYes bool, weight int64) error {
+	return r.statusResolver.vote(votedYes, weight)
 }
 
 // updateVoteStatus updates the voting status with new parameters.
 // This is used for dynamic voting requirement adjustments.
-func (r *ProposalResolver) updateVoteStatus(proposal *governance.Proposal, maxVotingWeight, quorum int64) error {
-	return r.statusResolver.updateVoteStatus(proposal.Status(), maxVotingWeight, quorum)
+func (r *ProposalResolver) updateVoteStatus(maxVotingWeight, quorum int64) error {
+	return r.statusResolver.updateVoteStatus(maxVotingWeight, quorum)
 }
 
 // execute marks the proposal as executed and records execution details.
 // This method validates execution conditions before proceeding.
 func (r *ProposalResolver) execute(
-	proposal *governance.Proposal,
 	executedAt int64,
 	executedHeight int64,
 	executedBy address,
 ) error {
 	// Verify proposal is in executable state
-	if !r.IsExecutable(proposal, executedAt) {
+	if !r.IsExecutable(executedAt) {
 		return errProposalNotExecutable
 	}
 
 	// Mark proposal as executed
-	return r.statusResolver.execute(proposal.Status(), executedAt, executedHeight, executedBy)
+	return r.statusResolver.execute(executedAt, executedHeight, executedBy)
 }
 
 // cancel marks the proposal as canceled and records cancellation details.
 // This method validates cancellation conditions before proceeding.
 func (r *ProposalResolver) cancel(
-	proposal *governance.Proposal,
 	canceledAt int64,
 	canceledHeight int64,
 	canceledBy address,
 ) error {
-	status := proposal.Status()
-	if r.statusResolver.IsCanceled(status, canceledAt) {
+	if r.statusResolver.IsCanceled(canceledAt) {
 		return errAlreadyCanceledProposal
 	}
 
-	if !r.statusResolver.IsUpcoming(status, canceledAt) {
+	if !r.statusResolver.IsUpcoming(canceledAt) {
 		return errUnableToCancleVotingProposal
 	}
 
 	// Mark proposal as canceled
-	return r.statusResolver.cancel(status, canceledAt, canceledHeight, canceledBy)
+	return r.statusResolver.cancel(canceledAt, canceledHeight, canceledBy)
 }

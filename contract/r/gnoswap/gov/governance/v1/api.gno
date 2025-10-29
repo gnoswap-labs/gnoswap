@@ -107,9 +107,10 @@ func (gv *governanceV1) getParameterChangeProposalData(proposalId int64) string 
 // getProposalStatus returns status of a proposal.
 func (gv *governanceV1) getProposalStatus(id int64) string {
 	proposal := gv.mustGetProposal(id)
+	proposalResolver := NewProposalResolver(proposal)
 
 	// Get current status dynamically
-	status := gv.proposalResolver.Status(proposal, time.Now().Unix())
+	status := proposalResolver.Status(time.Now().Unix())
 
 	schedule := proposal.Status().Schedule()
 	// Create status node with schedule and current status

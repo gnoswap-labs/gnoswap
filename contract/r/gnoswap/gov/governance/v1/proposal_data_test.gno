@@ -54,7 +54,7 @@ func TestProposalMetadata_Validation(t *testing.T) {
 			metadata := governance.NewProposalMetadata(tc.title, tc.description)
 
 			// when
-			err := metadata.Validate()
+			err := NewProposalMetadataResolver(metadata).Validate()
 
 			// then
 			if tc.expectedError {
@@ -73,8 +73,8 @@ func TestProposalData_Validation(t *testing.T) {
 	tests := []struct {
 		name          string
 		proposalType  governance.ProposalType
-		spendInfo     governance.CommunityPoolSpendInfo
-		execution     governance.ExecutionInfo
+		spendInfo     *governance.CommunityPoolSpendInfo
+		execution     *governance.ExecutionInfo
 		expectedError bool
 	}{
 		{
@@ -102,7 +102,7 @@ func TestProposalData_Validation(t *testing.T) {
 		},
 		{
 			name:         "Failure - Invalid ParameterChange proposal",
-			proposalType: ParameterChange,
+			proposalType: governance.ParameterChange,
 			execution: governance.NewExecutionInfo(0, []string{}),
 			expectedError: true,
 		},
@@ -111,10 +111,10 @@ func TestProposalData_Validation(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			data := NewProposalData(tc.proposalType, tc.spendInfo, tc.execution)
+			data := governance.NewProposalData(tc.proposalType, tc.spendInfo, tc.execution)
 
 			// when
-			err := data.Validate()
+			err := NewProposalDataResolver(data).Validate()
 
 			// then
 			if tc.expectedError {
@@ -123,16 +123,16 @@ func TestProposalData_Validation(t *testing.T) {
 				uassert.NoError(t, err)
 				uassert.Equal(t, data.ProposalType().String(), tc.proposalType.String())
 
-				if tc.proposalType == CommunityPoolSpend {
-					uassert.Equal(t, data.CommunityPoolSpend().to, tc.spendInfo.to)
-					uassert.Equal(t, data.CommunityPoolSpend().tokenPath, tc.spendInfo.tokenPath)
-					uassert.Equal(t, data.CommunityPoolSpend().amount, tc.spendInfo.amount)
+				if tc.proposalType == governance.CommunityPoolSpend {
+					uassert.Equal(t, data.CommunityPoolSpend().To(), tc.spendInfo.To())
+					uassert.Equal(t, data.CommunityPoolSpend().TokenPath(), tc.spendInfo.TokenPath())
+					uassert.Equal(t, data.CommunityPoolSpend().Amount(), tc.spendInfo.Amount())
 				}
 
-				if tc.proposalType == ParameterChange {
-					uassert.Equal(t, data.Execution().num, tc.execution.num)
-					for i := int64(0); i < data.Execution().num; i++ {
-						uassert.Equal(t, data.Execution().msgs[i], tc.execution.msgs[i])
+				if tc.proposalType == governance.ParameterChange {
+					uassert.Equal(t, data.Execution().Num(), tc.execution.Num())
+					for i := int64(0); i < data.Execution().Num(); i++ {
+						uassert.Equal(t, data.Execution().Msgs()[i], tc.execution.Msgs()[i])
 					}
 				}
 			}
@@ -156,32 +156,32 @@ func TestParameterChangeInfo_Parsing(t *testing.T) {
 				"pkg2*EXE*func2*EXE*param3,param4",
 			},
 			expectedInfos: []governance.ParameterChangeInfo{
-				{pkgPath: "pkg1", function: "func1", params: []string{"param1", "param2"}},
-				{pkgPath: "pkg2", function: "func2", params: []string{"param3", "param4"}},
+				governance.NewParameterChangeInfo("pkg1", "func1", []string{"param1", "param2"}),
+				governance.NewParameterChangeInfo("pkg2", "func2", []string{"param3", "param4"}),
 			},
 		},
 		{
 			name:          "Success - Empty parameter changes",
 			num:           0,
 			msgs:          []string{},
-			expectedInfos: []ParameterChangeInfo{},
+			expectedInfos: []governance.ParameterChangeInfo{},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			info := ExecutionInfo{num: tc.num, msgs: tc.msgs}
+			info := governance.NewExecutionInfo(tc.num, tc.msgs)
 
 			// when
-			infos := info.ParameterChangesInfos()
+			infos := NewProposalDataResolver(governance.NewProposalData(governance.ParameterChange, nil, info)).ParameterChangesInfos()
 
 			// then
 			uassert.Equal(t, len(infos), len(tc.expectedInfos))
 			for i, expectedInfo := range tc.expectedInfos {
-				uassert.Equal(t, infos[i].pkgPath, expectedInfo.pkgPath)
-				uassert.Equal(t, infos[i].function, expectedInfo.function)
-				uassert.Equal(t, len(infos[i].params), len(expectedInfo.params))
+				uassert.Equal(t, infos[i].PkgPath(), expectedInfo.PkgPath())
+				uassert.Equal(t, infos[i].Function(), expectedInfo.Function())
+				uassert.Equal(t, len(infos[i].Params()), len(expectedInfo.Params()))
 			}
 		})
 	}

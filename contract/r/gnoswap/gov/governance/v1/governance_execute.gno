@@ -92,13 +92,15 @@ func (gv *governanceV1) executeProposal(
 		return nil, errTextProposalNotExecutable
 	}
 
+	proposalResolver := NewProposalResolver(proposal)
+
 	// Verify proposal is in executable state (timing and voting requirements met)
-	if !gv.proposalResolver.IsExecutable(proposal, executedAt) {
+	if !proposalResolver.IsExecutable(executedAt) {
 		return nil, errProposalNotExecutable
 	}
 
 	// Mark proposal as executed in its status
-	err := gv.proposalResolver.execute(proposal, executedAt, executedHeight, executedBy)
+	err := proposalResolver.execute(executedAt, executedHeight, executedBy)
 	if err != nil {
 		return nil, err
 	}
@@ -191,8 +193,10 @@ func (gv *governanceV1) cancel(
 		return nil, errDataNotFound
 	}
 
+	proposalResolver := NewProposalResolver(proposal)
+
 	// Attempt to cancel the proposal (this validates cancellation conditions)
-	err = gv.proposalResolver.cancel(proposal, canceledAt, canceledHeight, canceledBy)
+	err = proposalResolver.cancel(canceledAt, canceledHeight, canceledBy)
 	if err != nil {
 		return nil, err
 	}
@@ -215,8 +219,8 @@ func executeCommunityPoolSpend(
 	}
 
 	// Execute all parameter changes defined in the proposal
-	dataResolver := NewProposalDataResolver()
-	parameterChangesInfos := dataResolver.ParameterChangesInfos(proposal.Data().Execution())
+	dataResolver := NewProposalDataResolver(proposal.Data())
+	parameterChangesInfos := dataResolver.ParameterChangesInfos()
 	for _, parameterChangeInfo := range parameterChangesInfos {
 		// Get the appropriate handler for this parameter change
 		key := governance.MakeHandlerKey(parameterChangeInfo.PkgPath(), parameterChangeInfo.Function())
@@ -245,8 +249,8 @@ func executeParameterChange(
 	executedBy address,
 ) error {
 	// Execute all parameter changes defined in the proposal
-	dataResolver := NewProposalDataResolver()
-	parameterChangesInfos := dataResolver.ParameterChangesInfos(proposal.Data().Execution())
+	dataResolver := NewProposalDataResolver(proposal.Data())
+	parameterChangesInfos := dataResolver.ParameterChangesInfos()
 	for _, parameterChangeInfo := range parameterChangesInfos {
 		// Get the appropriate handler for this parameter change
 		key := governance.MakeHandlerKey(parameterChangeInfo.PkgPath(), parameterChangeInfo.Function())

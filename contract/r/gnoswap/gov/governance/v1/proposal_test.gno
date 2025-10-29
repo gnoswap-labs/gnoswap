@@ -14,31 +14,31 @@ import (
 func TestProposal_TypeOperations(t *testing.T) {
 	tests := []struct {
 		name           string
-		proposalType   ProposalType
+		proposalType   governance.ProposalType
 		expectedString string
 		isExecutable   bool
 	}{
 		{
 			name:           "Text proposal",
-			proposalType:   Text,
+			proposalType:   governance.Text,
 			expectedString: "Text",
 			isExecutable:   false,
 		},
 		{
 			name:           "CommunityPoolSpend proposal",
-			proposalType:   CommunityPoolSpend,
+			proposalType:   governance.CommunityPoolSpend,
 			expectedString: "CommunityPoolSpend",
 			isExecutable:   true,
 		},
 		{
 			name:           "ParameterChange proposal",
-			proposalType:   ParameterChange,
+			proposalType:   governance.ParameterChange,
 			expectedString: "ParameterChange",
 			isExecutable:   true,
 		},
 		{
 			name:           "Unknown proposal type",
-			proposalType:   "UNKNOWN",
+			proposalType:   governance.ProposalType("UNKNOWN"),
 			expectedString: "Unknown",
 			isExecutable:   false,
 		},
@@ -57,46 +57,26 @@ func TestProposal_TypeOperations(t *testing.T) {
 func TestProposal_Validation(t *testing.T) {
 	tests := []struct {
 		name          string
-		metadata      *ProposalMetadata
-		data          *ProposalData
+		metadata      *governance.ProposalMetadata
+		data          *governance.ProposalData
 		expectedError bool
 	}{
 		{
 			name: "Valid Text proposal",
-			metadata: &ProposalMetadata{
-				title:       "Valid Title",
-				description: "Valid Description",
-			},
-			data: &ProposalData{
-				proposalType: Text,
-			},
+			metadata: governance.NewProposalMetadata("Valid Title", "Valid Description"),
+			data: governance.NewProposalData(governance.Text, nil, nil),
 			expectedError: false,
 		},
 		{
 			name: "Invalid metadata",
-			metadata: &ProposalMetadata{
-				title:       "",
-				description: "Valid Description",
-			},
-			data: &ProposalData{
-				proposalType: Text,
-			},
+			metadata: governance.NewProposalMetadata("", "Valid Description"),
+			data: governance.NewProposalData(governance.Text, nil, nil),
 			expectedError: true,
 		},
 		{
 			name: "Invalid CommunityPoolSpend proposal",
-			metadata: &ProposalMetadata{
-				title:       "Valid Title",
-				description: "Valid Description",
-			},
-			data: &ProposalData{
-				proposalType: CommunityPoolSpend,
-				communityPoolSpend: CommunityPoolSpendInfo{
-					to:        address(""),
-					tokenPath: "",
-					amount:    0,
-				},
-			},
+			metadata: governance.NewProposalMetadata("Valid Title", "Valid Description"),
+			data: governance.NewProposalData(governance.CommunityPoolSpend, governance.NewCommunityPoolSpendInfo(address(""), "", 0), nil),
 			expectedError: true,
 		},
 	}
@@ -104,13 +84,27 @@ func TestProposal_Validation(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			proposal := &Proposal{
-				metadata: tc.metadata,
-				data:     tc.data,
+			baseTime := time.Now().Unix()
+			config := governance.Config{
+				VotingStartDelay: 100,
+				VotingPeriod:     200,
+				ExecutionDelay:   100,
+				ExecutionWindow:  200,
+				Quorum:           50,
 			}
+			proposal := governance.NewProposal(
+				1,
+				governance.NewProposalStatus(config, 1000, governance.Text.IsExecutable(), baseTime),
+				tc.metadata,
+				tc.data,
+				address("g1proposer"),
+				1,
+				baseTime,
+				runtime.ChainHeight(),
+			)
 
 			// when
-			err := proposal.Validate()
+			err := NewProposalResolver(proposal).Validate()
 
 			// then
 			if tc.expectedError {
@@ -135,7 +129,7 @@ func TestProposal_StatusOperations(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		proposalType   ProposalType
+		proposalType   governance.ProposalType
 		currentTime    time.Time
 		isExecuted     bool
 		isCanceled     bool
@@ -143,20 +137,20 @@ func TestProposal_StatusOperations(t *testing.T) {
 	}{
 		{
 			name:           "Active Text proposal",
-			proposalType:   Text,
+			proposalType:   governance.Text,
 			currentTime:    baseTime.Add(time.Duration(150) * time.Second),
 			expectedActive: true,
 		},
 		{
 			name:           "Executed proposal",
-			proposalType:   CommunityPoolSpend,
+			proposalType:   governance.CommunityPoolSpend,
 			currentTime:    baseTime.Add(time.Duration(100+200+100) * time.Second), // voting start + voting period + execution delay
 			isExecuted:     true,
 			expectedActive: false,
 		},
 		{
 			name:           "Canceled proposal",
-			proposalType:   ParameterChange,
+			proposalType:   governance.ParameterChange,
 			currentTime:    baseTime,
 			isCanceled:     true,
 			expectedActive: false,
@@ -166,11 +160,11 @@ func TestProposal_StatusOperations(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			proposal := NewProposal(
+			proposal := governance.NewProposal(
 				1,
-				NewProposalStatus(config, 1000, tc.proposalType.IsExecutable(), baseTime.Unix()),
-				&ProposalMetadata{title: "Test", description: "Test"},
-				&ProposalData{proposalType: tc.proposalType},
+				governance.NewProposalStatus(config, 1000, tc.proposalType.IsExecutable(), baseTime.Unix()),
+				governance.NewProposalMetadata("Test", "Test"),
+				governance.NewProposalData(tc.proposalType, nil, nil),
 				address("g1proposer"),
 				1,
 				baseTime.Unix(),
@@ -178,39 +172,39 @@ func TestProposal_StatusOperations(t *testing.T) {
 			)
 
 			if tc.isExecuted {
-				err := proposal.execute(tc.currentTime.Unix(), 100, address("g1executor"))
+				err := NewProposalResolver(proposal).execute(tc.currentTime.Unix(), 100, address("g1executor"))
 				uassert.NoError(t, err)
 			}
 			if tc.isCanceled {
-				err := proposal.cancel(tc.currentTime.Unix(), 100, address("g1canceler"))
+				err := NewProposalResolver(proposal).cancel(tc.currentTime.Unix(), 100, address("g1canceler"))
 				uassert.NoError(t, err)
 			}
 
 			// when & then
-			uassert.Equal(t, proposal.IsActive(tc.currentTime.Unix()), tc.expectedActive)
+			uassert.Equal(t, NewProposalResolver(proposal).IsActive(tc.currentTime.Unix()), tc.expectedActive)
 		})
 	}
 }
 
-// TestNewProposal tests creation of new proposal
+// // TestNewProposal tests creation of new proposal
 func TestNewProposal(t *testing.T) {
 	tests := []struct {
 		name         string
-		proposalType ProposalType
+		proposalType governance.ProposalType
 		title        string
 		description  string
 		proposer     address
 	}{
 		{
 			name:         "Create Text proposal",
-			proposalType: Text,
+			proposalType: governance.Text,
 			title:        "Test Title",
 			description:  "Test Description",
 			proposer:     address("g1proposer"),
 		},
 		{
 			name:         "Create CommunityPoolSpend proposal",
-			proposalType: CommunityPoolSpend,
+			proposalType: governance.CommunityPoolSpend,
 			title:        "Spend Proposal",
 			description:  "Community Pool Spend",
 			proposer:     address("g1proposer"),
@@ -230,11 +224,11 @@ func TestNewProposal(t *testing.T) {
 			}
 
 			// when
-			proposal := NewProposal(
+			proposal := governance.NewProposal(
 				1,
-				NewProposalStatus(config, 1000, tc.proposalType.IsExecutable(), baseTime),
-				NewProposalMetadata(tc.title, tc.description),
-				&ProposalData{proposalType: tc.proposalType},
+				governance.NewProposalStatus(config, 1000, tc.proposalType.IsExecutable(), baseTime),
+				governance.NewProposalMetadata(tc.title, tc.description),
+				governance.NewProposalData(tc.proposalType, nil, nil),
 				tc.proposer,
 				1,
 				baseTime,
@@ -242,12 +236,13 @@ func TestNewProposal(t *testing.T) {
 			)
 
 			// then
+			resolver := NewProposalResolver(proposal)
 			uassert.NotNil(t, proposal)
-			uassert.Equal(t, proposal.Type().String(), tc.proposalType.String())
-			uassert.Equal(t, proposal.Title(), tc.title)
-			uassert.Equal(t, proposal.Description(), tc.description)
-			uassert.Equal(t, proposal.Proposer().String(), tc.proposer.String())
-			uassert.Equal(t, proposal.CreatedAt(), baseTime)
+			uassert.Equal(t, resolver.Type().String(), tc.proposalType.String())
+			uassert.Equal(t, resolver.Title(), tc.title)
+			uassert.Equal(t, resolver.Description(), tc.description)
+			uassert.Equal(t, resolver.Proposer().String(), tc.proposer.String())
+			uassert.Equal(t, resolver.CreatedAt(), baseTime)
 		})
 	}
 }

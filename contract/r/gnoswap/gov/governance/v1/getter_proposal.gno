@@ -44,9 +44,10 @@ func (gv *governanceV1) GetDescriptionByProposalId(proposalId int64) string {
 // This function is kept for backward compatibility.
 func (gv *governanceV1) GetExecutionStateByProposalId(proposalId int64) string {
 	currentAt := time.Now().Unix()
-	proposal := gv.mustGetProposal(proposalId)
 
-	return gv.proposalResolver.Status(proposal, currentAt)
+	proposal := gv.mustGetProposal(proposalId)
+	proposalResolver := NewProposalResolver(proposal)
+	return proposalResolver.Status(currentAt)
 }
 
 func (gv *governanceV1) GetLatestConfig() governance.Config {

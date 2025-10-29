@@ -27,21 +27,21 @@ func TestProposalStatus_StatusType(t *testing.T) {
 		executable      bool
 		isExecuted      bool
 		isCanceled      bool
-		expectedStatus  ProposalStatusType
+		expectedStatus  governance.ProposalStatusType
 	}{
 		{
 			name:            "Status Upcoming",
 			currentTime:     baseTime.Add(time.Duration(50) * time.Second),
 			maxVotingWeight: 1000,
 			executable:      true,
-			expectedStatus:  StatusUpcoming,
+			expectedStatus:  governance.StatusUpcoming,
 		},
 		{
 			name:            "Status Active",
 			currentTime:     baseTime.Add(time.Duration(150) * time.Second),
 			maxVotingWeight: 1000,
 			executable:      true,
-			expectedStatus:  StatusActive,
+			expectedStatus:  governance.StatusActive,
 		},
 		{
 			name:            "Status Executed",
@@ -49,7 +49,7 @@ func TestProposalStatus_StatusType(t *testing.T) {
 			maxVotingWeight: 1000,
 			executable:      true,
 			isExecuted:      true,
-			expectedStatus:  StatusExecuted,
+			expectedStatus:  governance.StatusExecuted,
 		},
 		{
 			name:            "Status Canceled",
@@ -57,23 +57,24 @@ func TestProposalStatus_StatusType(t *testing.T) {
 			maxVotingWeight: 1000,
 			executable:      true,
 			isCanceled:      true,
-			expectedStatus:  StatusCanceled,
+			expectedStatus:  governance.StatusCanceled,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			status := NewProposalStatus(config, tc.maxVotingWeight, tc.executable, baseTime.Unix())
+			status := governance.NewProposalStatus(config, tc.maxVotingWeight, tc.executable, baseTime.Unix())
+			resolver := NewProposalStatusResolver(status)
 			if tc.isExecuted {
-				_ = status.execute(tc.currentTime.Unix(), 100, address("g1executor"))
+				_ = resolver.execute(tc.currentTime.Unix(), 100, address("g1executor"))
 			}
 			if tc.isCanceled {
-				_ = status.cancel(tc.currentTime.Unix(), 100, address("g1canceler"))
+				_ = resolver.cancel(tc.currentTime.Unix(), 100, address("g1canceler"))
 			}
 
 			// when
-			statusType := status.StatusType(tc.currentTime.Unix())
+			statusType := resolver.StatusType(tc.currentTime.Unix())
 
 			// then
 			uassert.Equal(t, statusType.String(), tc.expectedStatus.String())
@@ -131,14 +132,15 @@ func TestProposalStatus_VotingOperations(t *testing.T) {
 				ExecutionWindow:  200,
 				Quorum:           tc.quorum,
 			}
-			status := NewProposalStatus(config, tc.maxVotingWeight, true, time.Now().Unix())
+			status := governance.NewProposalStatus(config, tc.maxVotingWeight, true, time.Now().Unix())
+			resolver := NewProposalStatusResolver(status)
 
 			// when
 			if tc.voteYes > 0 {
-				_ = status.vote(true, tc.voteYes)
+				_ = resolver.vote(true, tc.voteYes)
 			}
 			if tc.voteNo > 0 {
-				_ = status.vote(false, tc.voteNo)
+				_ = resolver.vote(false, tc.voteNo)
 			}
 
 			// then

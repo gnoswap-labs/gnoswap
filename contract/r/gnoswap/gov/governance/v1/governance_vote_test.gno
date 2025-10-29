@@ -8,7 +8,7 @@ import (
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 
-	// "gno.land/r/gnoswap/gov/governance"
+	"gno.land/r/gnoswap/gov/governance"
 )
 
 func TestGovernanceVote_Vote(t *testing.T) {
@@ -18,7 +18,7 @@ func TestGovernanceVote_Vote(t *testing.T) {
 		proposalID       int64
 		yes              bool
 		voter            address
-		setupProposal    *Proposal
+		setupProposal    *governance.Proposal
 		setupVotingInfos map[string]*VotingInfo
 		// then
 		expectedWeight   string
@@ -30,15 +30,15 @@ func TestGovernanceVote_Vote(t *testing.T) {
 			proposalID: 1,
 			yes:        true,
 			voter:      testutils.TestAddress("voter"),
-			setupProposal: NewProposal(
+			setupProposal: governance.NewProposal(
 				1,
-				NewProposalStatus(
+				governance.NewProposalStatus(
 					testConfig,
 					10_000_000_000, // max voting weight
 					true,
 					time.Now().Unix()-testConfig.VotingStartDelay,
 				),
-				NewProposalMetadata("Test Proposal", "Test Description"),
+				governance.NewProposalMetadata("Test Proposal", "Test Description"),
 				NewProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
@@ -55,15 +55,15 @@ func TestGovernanceVote_Vote(t *testing.T) {
 			proposalID: 1,
 			yes:        false,
 			voter:      testutils.TestAddress("voter"),
-			setupProposal: NewProposal(
+			setupProposal: governance.NewProposal(
 				1,
-				NewProposalStatus(
+				governance.NewProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
 					time.Now().Unix()-testConfig.VotingStartDelay,
 				),
-				NewProposalMetadata("Test Proposal", "Test Description"),
+				governance.NewProposalMetadata("Test Proposal", "Test Description"),
 				NewProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
@@ -83,46 +83,46 @@ func TestGovernanceVote_Vote(t *testing.T) {
 			expectedHasAbort: true,
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-003] requested data not found || not found proposal",
 		},
-		// {
-		// 	name:       "fail - no voting weight",
-		// 	proposalID: 1,
-		// 	yes:        true,
-		// 	voter:      testutils.TestAddress("voter"),
-		// 	setupProposal: NewProposal(
-		// 		1,
-		// 		NewProposalStatus(
-		// 			testConfig,
-		// 			10_000_000_000,
-		// 			true,
-		// 			time.Now().Unix()-testConfig.VotingStartDelay,
-		// 		),
-		// 		NewProposalMetadata("Test Proposal", "Test Description"),
-		// 		NewProposalTextData(),
-		// 		testutils.TestAddress("proposer"),
-		// 		1,
-		// 		time.Now().Unix()-testConfig.VotingStartDelay,
-		// 		100,
-		// 	),
-		// 	setupVotingInfos: map[string]*VotingInfo{
-		// 		testutils.TestAddress("voter").String(): NewVotingInfo(0, testutils.TestAddress("voter")),
-		// 	},
-		// 	expectedHasAbort: true,
-		// 	expectedAbortMsg: "[GNOSWAP-GOVERNANCE-007] not enough voting power || no voting weight",
-		// },
+		{
+			name:       "fail - no voting weight",
+			proposalID: 1,
+			yes:        true,
+			voter:      testutils.TestAddress("voter_no_weight"),
+			setupProposal: governance.NewProposal(
+				1,
+				governance.NewProposalStatus(
+					testConfig,
+					10_000_000_000,
+					true,
+					time.Now().Unix()-testConfig.VotingStartDelay,
+				),
+				governance.NewProposalMetadata("Test Proposal", "Test Description"),
+				NewProposalTextData(),
+				testutils.TestAddress("proposer"),
+				1,
+				time.Now().Unix()-testConfig.VotingStartDelay,
+				100,
+			),
+			setupVotingInfos: map[string]*VotingInfo{
+				testutils.TestAddress("voter_no_weight").String(): NewVotingInfo(0, testutils.TestAddress("voter_no_weight")),
+			},
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-007] not enough voting power || no voting weight",
+		},
 		{
 			name:       "fail - voting period ended",
 			proposalID: 1,
 			yes:        true,
 			voter:      testutils.TestAddress("voter"),
-			setupProposal: NewProposal(
+			setupProposal: governance.NewProposal(
 				1,
-				NewProposalStatus(
+				governance.NewProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
 					time.Now().Add(-time.Second*60*60*24*8).Unix(), // 8 days ago (past voting period)
 				),
-				NewProposalMetadata("Test Proposal", "Test Description"),
+				governance.NewProposalMetadata("Test Proposal", "Test Description"),
 				NewProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
@@ -135,36 +135,36 @@ func TestGovernanceVote_Vote(t *testing.T) {
 			expectedHasAbort: true,
 			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || can not vote out of voting period",
 		},
-		// {
-		// 	name:       "fail - already voted",
-		// 	proposalID: 1,
-		// 	yes:        true,
-		// 	voter:      testutils.TestAddress("voter"),
-		// 	setupProposal: NewProposal(
-		// 		1,
-		// 		NewProposalStatus(
-		// 			testConfig,
-		// 			10_000_000_000,
-		// 			true,
-		// 			time.Now().Unix()-testConfig.VotingStartDelay,
-		// 		),
-		// 		NewProposalMetadata("Test Proposal", "Test Description"),
-		// 		NewProposalTextData(),
-		// 		testutils.TestAddress("proposer"),
-		// 		1,
-		// 		time.Now().Unix()-testConfig.VotingStartDelay,
-		// 		100,
-		// 	),
-		// 	setupVotingInfos: map[string]*VotingInfo{
-		// 		testutils.TestAddress("voter").String(): func() *VotingInfo {
-		// 			vi := NewVotingInfo(5_000_000_000, testutils.TestAddress("voter"))
-		// 			vi.vote(true, 5_000_000_000, 100, time.Now().Unix()) // Already voted
-		// 			return vi
-		// 		}(),
-		// 	},
-		// 	expectedHasAbort: true,
-		// 	expectedAbortMsg: "[GNOSWAP-GOVERNANCE-006] can not vote twice",
-		// },
+		{
+			name:       "fail - already voted",
+			proposalID: 1,
+			yes:        true,
+			voter:      testutils.TestAddress("voter_already"),
+			setupProposal: governance.NewProposal(
+				1,
+				governance.NewProposalStatus(
+					testConfig,
+					10_000_000_000,
+					true,
+					time.Now().Unix()-testConfig.VotingStartDelay,
+				),
+				governance.NewProposalMetadata("Test Proposal", "Test Description"),
+				NewProposalTextData(),
+				testutils.TestAddress("proposer"),
+				1,
+				time.Now().Unix()-testConfig.VotingStartDelay,
+				100,
+			),
+			setupVotingInfos: map[string]*VotingInfo{
+				testutils.TestAddress("voter_already").String(): func() *VotingInfo {
+					vi := NewVotingInfo(5_000_000_000, testutils.TestAddress("voter_already"))
+					vi.vote(true, 5_000_000_000, 100, time.Now().Unix()) // Already voted
+					return vi
+				}(),
+			},
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-006] can not vote twice",
+		},
 	}
 
 	for _, tt := range tests {
@@ -186,8 +186,8 @@ func TestGovernanceVote_Vote(t *testing.T) {
 			// when
 			if tt.expectedHasAbort {
 				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
-					testing.SetRealm(govRealm)
 					func(cur realm) {
+						testing.SetRealm(govRealm)
 						gov.Vote(tt.proposalID, tt.yes)
 					}(cross)
 				})
@@ -220,7 +220,7 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 		votedYes        bool
 		votedHeight     int64
 		votedAt         int64
-		setupProposal   *Proposal
+		setupProposal   *governance.Proposal
 		setupVotingInfo *VotingInfo
 		// then
 		expectedYesWeight int64
@@ -235,15 +235,15 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 			votedYes:     true,
 			votedHeight:  100,
 			votedAt:      time.Now().Unix(),
-			setupProposal: NewProposal(
+			setupProposal: governance.NewProposal(
 				1,
-				NewProposalStatus(
+				governance.NewProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
 					time.Now().Unix()-testConfig.VotingStartDelay,
 				),
-				NewProposalMetadata("Test Proposal", "Test Description"),
+				governance.NewProposalMetadata("Test Proposal", "Test Description"),
 				NewProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
@@ -261,15 +261,15 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 			votedYes:     false,
 			votedHeight:  100,
 			votedAt:      time.Now().Unix(),
-			setupProposal: NewProposal(
+			setupProposal: governance.NewProposal(
 				1,
-				NewProposalStatus(
+				governance.NewProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
 					time.Now().Unix()-testConfig.VotingStartDelay,
 				),
-				NewProposalMetadata("Test Proposal", "Test Description"),
+				governance.NewProposalMetadata("Test Proposal", "Test Description"),
 				NewProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
@@ -297,15 +297,15 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 			votedYes:     true,
 			votedHeight:  100,
 			votedAt:      time.Now().Unix(),
-			setupProposal: NewProposal(
+			setupProposal: governance.NewProposal(
 				1,
-				NewProposalStatus(
+				governance.NewProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
 					time.Now().Unix()-testConfig.VotingStartDelay,
 				),
-				NewProposalMetadata("Test Proposal", "Test Description"),
+				governance.NewProposalMetadata("Test Proposal", "Test Description"),
 				NewProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
@@ -322,15 +322,15 @@ func TestGovernanceVote_VotePrivate(t *testing.T) {
 			votedYes:     true,
 			votedHeight:  100,
 			votedAt:      time.Now().Unix(),
-			setupProposal: NewProposal(
+			setupProposal: governance.NewProposal(
 				1,
-				NewProposalStatus(
+				governance.NewProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
 					time.Now().Unix()-testConfig.VotingStartDelay,
 				),
-				NewProposalMetadata("Test Proposal", "Test Description"),
+				governance.NewProposalMetadata("Test Proposal", "Test Description"),
 				NewProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
@@ -390,7 +390,7 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 		proposalID    int64
 		yes           bool
 		voter         address
-		setupProposal func() *Proposal
+		setupProposal func() *governance.Proposal
 		setupHalt     bool
 		expectedError string
 	}{
@@ -413,11 +413,11 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 			proposalID: 1,
 			yes:        true,
 			voter:      testutils.TestAddress("voter"),
-			setupProposal: func() *Proposal {
-				return NewProposal(
+			setupProposal: func() *governance.Proposal {
+				return governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
-					NewProposalMetadata("Test", "Description"),
+					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					governance.NewProposalMetadata("Test", "Description"),
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
 					1,
@@ -433,18 +433,20 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 			proposalID: 1,
 			yes:        true,
 			voter:      testutils.TestAddress("voter"),
-			setupProposal: func() *Proposal {
-				proposal := NewProposal(
+			setupProposal: func() *governance.Proposal {
+				proposal := governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
-					NewProposalMetadata("Test", "Description"),
+					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					governance.NewProposalMetadata("Test", "Description"),
 					NewProposalTextData(),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Unix(),
 					100,
 				)
-				proposal.status.cancel(time.Now().Unix(), 100, testutils.TestAddress("canceler"))
+
+				resolver := NewProposalStatusResolver(proposal.Status())
+				resolver.cancel(time.Now().Unix(), 100, testutils.TestAddress("canceler"))
 				return proposal
 			},
 			expectedError: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || can not vote out of voting period",
@@ -454,19 +456,21 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 			proposalID: 1,
 			yes:        true,
 			voter:      testutils.TestAddress("voter"),
-			setupProposal: func() *Proposal {
-				proposal := NewProposal(
+			setupProposal: func() *governance.Proposal {
+				proposal := governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*10).Unix()),
-					NewProposalMetadata("Test", "Description"),
+					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*10).Unix()),
+					governance.NewProposalMetadata("Test", "Description"),
 					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*10).Unix(),
 					100,
 				)
-				proposal.status.vote(true, 6_000_000_000)
-				proposal.status.execute(time.Now().Unix(), 100, testutils.TestAddress("executor"))
+
+				resolver := NewProposalStatusResolver(proposal.Status())
+				resolver.vote(true, 6_000_000_000)
+				resolver.execute(time.Now().Unix(), 100, testutils.TestAddress("executor"))
 				return proposal
 			},
 			expectedError: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || can not vote out of voting period",
@@ -476,11 +480,11 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 			proposalID: 1,
 			yes:        true,
 			voter:      testutils.TestAddress("voter"),
-			setupProposal: func() *Proposal {
-				proposal := NewProposal(
+			setupProposal: func() *governance.Proposal {
+				proposal := governance.NewProposal(
 					1,
-					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*40).Unix()),
-					NewProposalMetadata("Test", "Description"),
+					governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*40).Unix()),
+					governance.NewProposalMetadata("Test", "Description"),
 					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
@@ -567,10 +571,10 @@ func TestGovernanceVote_VotePeriod(t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
-			proposal := NewProposal(
+			proposal := governance.NewProposal(
 				1,
-				NewProposalStatus(testConfig, 10_000_000_000, true, tt.proposalTime),
-				NewProposalMetadata("Test", "Description"),
+				governance.NewProposalStatus(testConfig, 10_000_000_000, true, tt.proposalTime),
+				governance.NewProposalMetadata("Test", "Description"),
 				NewProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
@@ -650,10 +654,10 @@ func TestGovernanceVote_VoteWeightCalculation(t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
-			proposal := NewProposal(
+			proposal := governance.NewProposal(
 				1,
-				NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()-testConfig.VotingStartDelay),
-				NewProposalMetadata("Test", "Description"),
+				governance.NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()-testConfig.VotingStartDelay),
+				governance.NewProposalMetadata("Test", "Description"),
 				NewProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
@@ -736,10 +740,10 @@ func TestGovernanceVote_QuorumCalculation(t *testing.T) {
 			customConfig := testConfig
 			customConfig.Quorum = tt.quorumPercent
 
-			proposal := NewProposal(
+			proposal := governance.NewProposal(
 				1,
-				NewProposalStatus(customConfig, eligibleWeight, true, time.Now().Add(-time.Hour*24*10).Unix()),
-				NewProposalMetadata("Test", "Description"),
+				governance.NewProposalStatus(customConfig, eligibleWeight, true, time.Now().Add(-time.Hour*24*10).Unix()),
+				governance.NewProposalMetadata("Test", "Description"),
 				NewProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
@@ -747,18 +751,20 @@ func TestGovernanceVote_QuorumCalculation(t *testing.T) {
 				100,
 			)
 
+			resolver := NewProposalStatusResolver(proposal.Status())
 			// Simulate voting
 			if tt.yesVotes > 0 {
-				proposal.status.vote(true, tt.yesVotes)
+				resolver.vote(true, tt.yesVotes)
 			}
 			if tt.noVotes > 0 {
-				proposal.status.vote(false, tt.noVotes)
+				resolver.vote(false, tt.noVotes)
 			}
 
 			setupTestProposal(t, gov, proposal)
 
 			// then
-			uassert.Equal(t, tt.expectedTotalVoteWeight, proposal.status.TotalVoteWeight())
+			statusResolver := NewProposalStatusResolver(proposal.Status())
+			uassert.Equal(t, tt.expectedTotalVoteWeight, statusResolver.TotalVoteWeight())
 			uassert.Equal(t, tt.expectedQuorumAmount, proposal.VotingQuorumAmount())
 		})
 	}
@@ -801,7 +807,7 @@ func setupTestVotingInfo(t *testing.T, gov *governanceV1, proposalID int64, vote
 	
 	// Set the voting info for the voter
 	votingInfosTree.Set(voter, votingInfo)
-	
+
 	// Store back the updated tree
 	gov.store.SetProposalVotingInfos(proposalID, votingInfosTree)
 }

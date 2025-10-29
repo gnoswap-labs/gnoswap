@@ -1,9 +1,13 @@
 package v1
 
 import (
+	"chain/runtime"
 	"testing"
+	"time"
 
 	"gno.land/p/nt/uassert"
+
+	"gno.land/r/gnoswap/gov/governance"
 )
 
 // TestGetterProposal_All tests all getter functions related to Proposal using table-driven tests.
@@ -11,7 +15,7 @@ func TestGetterProposal_All(t *testing.T) {
 	tests := []struct {
 		name          string
 		proposalId    int64
-		proposal      *Proposal
+		proposal      *governance.Proposal
 		getterFunc    func(gv *governanceV1, id int64) any
 		expectedValue any
 		expectedPanic bool
@@ -20,20 +24,22 @@ func TestGetterProposal_All(t *testing.T) {
 		{
 			name:       "Get proposer address",
 			proposalId: 1,
-			proposal: &governance.Proposal{
-				id:            1,
-				proposer:      address("g1proposer"),
-				configVersion: 42,
-				status: &governance.ProposalStatus{
-					voteStatus: &governance.ProposalVoteStatus{
-						quorumAmount: 100,
-						yea:          10,
-						nay:          5,
-					},
-				},
-				metadata: &ProposalMetadata{title: "TestTitle", description: "TestDesc"},
-				data:     &ProposalData{proposalType: Text},
-			},
+			proposal: governance.NewProposal(
+				1,
+				governance.NewProposalStatus(governance.Config{
+					VotingStartDelay: 100,
+					VotingPeriod:     200,
+					ExecutionDelay:   100,
+					ExecutionWindow:  200,
+					Quorum:           50,
+				}, 1000, true, time.Now().Unix()),
+				governance.NewProposalMetadata("TestTitle", "TestDesc"),
+				governance.NewProposalData(governance.Text, nil, nil),
+				address("g1proposer"),
+				42,
+				time.Now().Unix(),
+				runtime.ChainHeight(),
+			),
 			getterFunc:    func(gv *governanceV1, id int64) any {
 				return gv.GetProposerByProposalId(id)
 			},
@@ -42,20 +48,22 @@ func TestGetterProposal_All(t *testing.T) {
 		{
 			name:       "Get proposal type",
 			proposalId: 1,
-			proposal: &Proposal{
-				id:            1,
-				proposer:      address("g1proposer"),
-				configVersion: 42,
-				status: &ProposalStatus{
-					voteStatus: &ProposalVoteStatus{
-						quorumAmount: 100,
-						yea:          10,
-						nay:          5,
-					},
-				},
-				metadata: &ProposalMetadata{title: "TestTitle", description: "TestDesc"},
-				data:     &ProposalData{proposalType: Text},
-			},
+			proposal: governance.NewProposal(
+				1,
+				governance.NewProposalStatus(governance.Config{
+					VotingStartDelay: 100,
+					VotingPeriod:     200,
+					ExecutionDelay:   100,
+					ExecutionWindow:  200,
+					Quorum:           50,
+				}, 1000, true, time.Now().Unix()),
+				governance.NewProposalMetadata("TestTitle", "TestDesc"),
+				governance.NewProposalData(governance.Text, nil, nil),
+				address("g1proposer"),
+				42,
+				time.Now().Unix(),
+				runtime.ChainHeight(),
+			),
 			getterFunc:    func(gv *governanceV1, id int64) any {
 				return gv.GetProposalTypeByProposalId(id)
 			},
