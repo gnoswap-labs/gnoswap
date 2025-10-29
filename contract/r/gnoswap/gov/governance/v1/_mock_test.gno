@@ -85,14 +85,19 @@ func (m *mockGovernanceStore) HasProposalsStoreKey() bool {
 	return m.proposals != nil
 }
 
-func (m *mockGovernanceStore) GetProposal(proposalID int64) (interface{}, bool) {
+func (m *mockGovernanceStore) GetProposal(proposalID int64) (*governance.Proposal, bool) {
 	if m.proposals == nil {
 		return nil, false
 	}
-	return m.proposals.Get(formatInt(proposalID))
+	// return m.proposals.Get(formatInt(proposalID))
+	proposal, exists := m.proposals.Get(formatInt(proposalID))
+	if !exists {
+		return nil, false
+	}
+	return proposal.(*governance.Proposal), true
 }
 
-func (m *mockGovernanceStore) SetProposal(proposalID int64, proposal interface{}) error {
+func (m *mockGovernanceStore) SetProposal(proposalID int64, proposal *governance.Proposal) error {
 	if m.proposals == nil {
 		m.proposals = avl.NewTree()
 	}

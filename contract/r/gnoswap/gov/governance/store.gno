@@ -164,17 +164,21 @@ func (s *governanceStore) SetProposals(proposals *avl.Tree) error {
 	return s.kvStore.Set(StoreKeyProposals.String(), proposals)
 }
 
-func (s *governanceStore) GetProposal(proposalID int64) (interface{}, bool) {
+func (s *governanceStore) GetProposal(proposalID int64) (*Proposal, bool) {
 	proposals := s.GetProposals()
 	result, ok := proposals.Get(int64ToString(proposalID))
 	if !ok {
 		return nil, false
 	}
 
-	return result, true
+	proposal, ok := result.(*Proposal)
+	if !ok {
+		return nil, false
+	}
+	return proposal, true
 }
 
-func (s *governanceStore) SetProposal(proposalID int64, proposal interface{}) error {
+func (s *governanceStore) SetProposal(proposalID int64, proposal *Proposal) error {
 	if !s.HasProposalsStoreKey() {
 		return errors.New("proposals store key not found")
 	}

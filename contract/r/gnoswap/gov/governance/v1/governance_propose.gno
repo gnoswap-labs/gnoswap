@@ -385,11 +385,11 @@ func (gv *governanceV1) createProposal(
 func (gv *governanceV1) getUserVotingInfoSnapshot(
 	current,
 	smoothingPeriod int64,
-) (map[string]*VotingInfo, int64, error) {
+) (map[string]*governance.VotingInfo, int64, error) {
 	// Calculate snapshot time by going back by smoothing period
 	snapshotTime := current - smoothingPeriod
 
-	var votingInfos map[string]*VotingInfo
+	var votingInfos map[string]*governance.VotingInfo
 	var maxVotingWeight int64
 	var ok bool
 
@@ -411,7 +411,7 @@ func (gv *governanceV1) getUserVotingInfoSnapshot(
 // Integrates with staker contract to get actual delegation amounts.
 func getUserVotingInfotWithDelegationSnapshots(
 	snapshotTime int64,
-) (map[string]*VotingInfo, int64, bool) {
+) (map[string]*governance.VotingInfo, int64, bool) {
 	// Get delegation snapshots from staker contract
 	delegationSnapshots, ok := staker.GetDelegationSnapshots(snapshotTime)
 	if !ok {
@@ -419,7 +419,7 @@ func getUserVotingInfotWithDelegationSnapshots(
 	}
 
 	maxVotingWeight := int64(0)
-	userVotes := make(map[string]*VotingInfo)
+	userVotes := make(map[string]*governance.VotingInfo)
 
 	// Process each delegation snapshot
 	for _, snapshot := range delegationSnapshots {
@@ -427,7 +427,7 @@ func getUserVotingInfotWithDelegationSnapshots(
 		delegationAmount := snapshot.DelegationAmount()
 
 		// Create voting info for each delegator
-		userVotes[delegatorAddress.String()] = NewVotingInfo(delegationAmount, delegatorAddress)
+		userVotes[delegatorAddress.String()] = governance.NewVotingInfo(delegationAmount, delegatorAddress)
 		maxVotingWeight += delegationAmount
 	}
 

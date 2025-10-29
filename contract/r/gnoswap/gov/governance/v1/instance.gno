@@ -10,14 +10,14 @@ type governanceV1 struct {
 	store governance.IGovernanceStore
 
 	// Function to retrieve user voting snapshots (can be overridden for testing)
-	getUserVotingInfoSnapshotFn func(snapshotTime int64) (map[string]*VotingInfo, int64, bool)
+	getUserVotingInfoSnapshotFn func(snapshotTime int64) (map[string]*governance.VotingInfo, int64, bool)
 }
 
 func NewGovernanceV1(governanceStore governance.IGovernanceStore) governance.IGovernance {
 	gv := &governanceV1{ store: governanceStore }
 
 	// Set default voting info snapshot function
-	gv.getUserVotingInfoSnapshotFn = func(snapshotTime int64) (map[string]*VotingInfo, int64, bool) {
+	gv.getUserVotingInfoSnapshotFn = func(snapshotTime int64) (map[string]*governance.VotingInfo, int64, bool) {
 		return getUserVotingInfotWithDelegationSnapshots(snapshotTime)
 	}
 
@@ -65,13 +65,8 @@ func (g *governanceV1) getCurrentConfig() (governance.Config, bool) {
 
 // Proposal methods
 func (g *governanceV1) getProposal(id int64) (*governance.Proposal, bool) {
-	proposalRaw, exists := g.store.GetProposal(id)
+	proposal, exists := g.store.GetProposal(id)
 	if !exists {
-		return nil, false
-	}
-
-	proposal, ok := proposalRaw.(*governance.Proposal)
-	if !ok {
 		return nil, false
 	}
 
@@ -132,7 +127,7 @@ func (g *governanceV1) getProposalUserVotingInfos(proposalID int64) (interface{}
 	return g.store.GetProposalVotingInfos(proposalID)
 }
 
-func (g *governanceV1) updateProposalUserVotes(proposal *governance.Proposal, userVotingInfos map[string]*VotingInfo) bool {
+func (g *governanceV1) updateProposalUserVotes(proposal *governance.Proposal, userVotingInfos map[string]*governance.VotingInfo) bool {
 	// Convert map to avl.Tree for storage
 	tree := avl.NewTree()
 	for addr, info := range userVotingInfos {
@@ -154,7 +149,7 @@ func (g *governanceV1) mustGetProposal(id int64) *governance.Proposal {
 	return proposal
 }
 
-func (g *governanceV1) getProposalUserVotingInfo(proposalID int64, addr address) (*VotingInfo, bool) {
+func (g *governanceV1) getProposalUserVotingInfo(proposalID int64, addr address) (*governance.VotingInfo, bool) {
 	votingInfosRaw, exists := g.getProposalUserVotingInfos(proposalID)
 	if !exists {
 		return nil, false
@@ -170,7 +165,7 @@ func (g *governanceV1) getProposalUserVotingInfo(proposalID int64, addr address)
 		return nil, false
 	}
 
-	info, ok := infoRaw.(*VotingInfo)
+	info, ok := infoRaw.(*governance.VotingInfo)
 	if !ok {
 		return nil, false
 	}

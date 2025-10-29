@@ -172,13 +172,13 @@ func (gv *governanceV1) createProposalJsonNode(id int64, proposal *governance.Pr
 		Node()
 }
 
-func createVoteJsonNode(addr address, id int64, vote *VotingInfo) *json.Node {
+func createVoteJsonNode(addr address, id int64, vote *governance.VotingInfo) *json.Node {
 	return json.Builder().
 		WriteString("proposalId", formatInt(id)).
-		WriteString("voteYes", formatBool(vote.votedYes)).
-		WriteString("voteWeight", formatInt(vote.votedWeight)).
-		WriteString("voteHeight", formatInt(vote.votedHeight)).
-		WriteString("voteTimestamp", formatInt(vote.votedAt)).
+		WriteString("voteYes", formatBool(vote.VotedYes())).
+		WriteString("voteWeight", formatInt(vote.VotedWeight())).
+		WriteString("voteHeight", formatInt(vote.VotedHeight())).
+		WriteString("voteTimestamp", formatInt(vote.VotedAt())).
 		Node()
 }
 

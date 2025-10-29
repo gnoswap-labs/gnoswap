@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"gno.land/p/nt/uassert"
+	"gno.land/r/gnoswap/gov/governance"
 )
 
 // TestVotingInfo_NewVotingInfo tests the creation of new VotingInfo instances
@@ -12,51 +13,35 @@ func TestVotingInfo_NewVotingInfo(t *testing.T) {
 		name               string
 		availableWeight    int64
 		voterAddress       address
-		expectedVotingInfo *VotingInfo
+		expectedVotingInfo *governance.VotingInfo
 	}{
 		{
 			name:            "Create new voting info with positive weight",
 			availableWeight: 100,
 			voterAddress:    address("g1voter"),
-			expectedVotingInfo: &VotingInfo{
-				availableVoteWeight: 100,
-				voterAddress:        address("g1voter"),
-				votedWeight:         0,
-				votedHeight:         0,
-				votedAt:             0,
-				votedYes:            false,
-				voted:               false,
-			},
+			expectedVotingInfo: governance.NewVotingInfo(100, address("g1voter")),
 		},
 		{
 			name:            "Create new voting info with zero weight",
 			availableWeight: 0,
 			voterAddress:    address("g1voter2"),
-			expectedVotingInfo: &VotingInfo{
-				availableVoteWeight: 0,
-				voterAddress:        address("g1voter2"),
-				votedWeight:         0,
-				votedHeight:         0,
-				votedAt:             0,
-				votedYes:            false,
-				voted:               false,
-			},
+			expectedVotingInfo: governance.NewVotingInfo(0, address("g1voter2")),
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// when
-			result := NewVotingInfo(tc.availableWeight, tc.voterAddress)
+			result := governance.NewVotingInfo(tc.availableWeight, tc.voterAddress)
 
 			// then
-			uassert.Equal(t, result.availableVoteWeight, tc.expectedVotingInfo.availableVoteWeight)
-			uassert.Equal(t, result.voterAddress, tc.expectedVotingInfo.voterAddress)
-			uassert.Equal(t, result.votedWeight, tc.expectedVotingInfo.votedWeight)
-			uassert.Equal(t, result.votedHeight, tc.expectedVotingInfo.votedHeight)
-			uassert.Equal(t, result.votedAt, tc.expectedVotingInfo.votedAt)
-			uassert.Equal(t, result.votedYes, tc.expectedVotingInfo.votedYes)
-			uassert.Equal(t, result.voted, tc.expectedVotingInfo.voted)
+			uassert.Equal(t, result.AvailableVoteWeight(), tc.expectedVotingInfo.AvailableVoteWeight())
+			uassert.Equal(t, result.VoterAddress(), tc.expectedVotingInfo.VoterAddress())
+			uassert.Equal(t, result.VotedWeight(), tc.expectedVotingInfo.VotedWeight())
+			uassert.Equal(t, result.VotedHeight(), tc.expectedVotingInfo.VotedHeight())
+			uassert.Equal(t, result.VotedAt(), tc.expectedVotingInfo.VotedAt())
+			uassert.Equal(t, result.VotedYes(), tc.expectedVotingInfo.VotedYes())
+			uassert.Equal(t, result.IsVoted(), tc.expectedVotingInfo.IsVoted())
 		})
 	}
 }
@@ -65,7 +50,7 @@ func TestVotingInfo_NewVotingInfo(t *testing.T) {
 func TestVotingInfo_VoteExecution(t *testing.T) {
 	tests := []struct {
 		name            string
-		votingInfo      *VotingInfo
+		votingInfo      *governance.VotingInfo
 		voteYes         bool
 		weight          int64
 		height          int64
@@ -76,10 +61,7 @@ func TestVotingInfo_VoteExecution(t *testing.T) {
 	}{
 		{
 			name: "Vote yes successfully",
-			votingInfo: &VotingInfo{
-				availableVoteWeight: 100,
-				voterAddress:        address("g1voter"),
-			},
+			votingInfo: governance.NewVotingInfo(100, address("g1voter")),
 			voteYes:         true,
 			weight:          50,
 			height:          1000,
@@ -90,10 +72,7 @@ func TestVotingInfo_VoteExecution(t *testing.T) {
 		},
 		{
 			name: "Vote no successfully",
-			votingInfo: &VotingInfo{
-				availableVoteWeight: 100,
-				voterAddress:        address("g1voter"),
-			},
+			votingInfo: governance.NewVotingInfo(100, address("g1voter")),
 			voteYes:         false,
 			weight:          50,
 			height:          1000,
@@ -104,11 +83,7 @@ func TestVotingInfo_VoteExecution(t *testing.T) {
 		},
 		{
 			name: "Cannot vote twice",
-			votingInfo: &VotingInfo{
-				availableVoteWeight: 100,
-				voterAddress:        address("g1voter"),
-				voted:               true,
-			},
+			votingInfo: governance.NewVotingInfo(100, address("g1voter")),
 			voteYes:         true,
 			weight:          50,
 			height:          1000,
@@ -122,15 +97,16 @@ func TestVotingInfo_VoteExecution(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// when
-			err := tc.votingInfo.vote(tc.voteYes, tc.weight, tc.height, tc.timestamp)
+			resolver := NewVotingInfoResolver(tc.votingInfo)
+			err := resolver.vote(tc.voteYes, tc.weight, tc.height, tc.timestamp)
 
 			// then
 			if tc.expectedError == nil {
-				uassert.Equal(t, tc.votingInfo.voted, tc.expectedVoted)
-				uassert.Equal(t, tc.votingInfo.votedYes, tc.expectedVoteYes)
-				uassert.Equal(t, tc.votingInfo.votedWeight, tc.weight)
-				uassert.Equal(t, tc.votingInfo.votedHeight, tc.height)
-				uassert.Equal(t, tc.votingInfo.votedAt, tc.timestamp)
+				uassert.Equal(t, tc.votingInfo.IsVoted(), tc.expectedVoted)
+				uassert.Equal(t, tc.votingInfo.VotedYes(), tc.expectedVoteYes)
+				uassert.Equal(t, tc.votingInfo.VotedWeight(), tc.weight)
+				uassert.Equal(t, tc.votingInfo.VotedHeight(), tc.height)
+				uassert.Equal(t, tc.votingInfo.VotedAt(), tc.timestamp)
 			} else {
 				uassert.ErrorIs(t, err, tc.expectedError)
 			}
@@ -142,7 +118,7 @@ func TestVotingInfo_VoteExecution(t *testing.T) {
 func TestVotingInfo_VotingTypeAndStatus(t *testing.T) {
 	tests := []struct {
 		name               string
-		votingInfo         *VotingInfo
+		votingInfo         func() *governance.VotingInfo
 		expectedVotingType string
 		expectedIsVoted    bool
 		expectedVotedYes   bool
@@ -150,9 +126,11 @@ func TestVotingInfo_VotingTypeAndStatus(t *testing.T) {
 	}{
 		{
 			name: "Yes vote status",
-			votingInfo: &VotingInfo{
-				voted:    true,
-				votedYes: true,
+			votingInfo: func() *governance.VotingInfo {
+				vi := governance.NewVotingInfo(100, address("g1voter"))
+				vi.SetVoted(true)
+				vi.SetVotedYes(true)
+				return vi
 			},
 			expectedVotingType: "yes",
 			expectedIsVoted:    true,
@@ -161,9 +139,11 @@ func TestVotingInfo_VotingTypeAndStatus(t *testing.T) {
 		},
 		{
 			name: "No vote status",
-			votingInfo: &VotingInfo{
-				voted:    true,
-				votedYes: false,
+			votingInfo: func() *governance.VotingInfo {
+				vi := governance.NewVotingInfo(100, address("g1voter"))
+				vi.SetVoted(true)
+				vi.SetVotedYes(false)
+				return vi
 			},
 			expectedVotingType: "no",
 			expectedIsVoted:    true,
@@ -172,9 +152,9 @@ func TestVotingInfo_VotingTypeAndStatus(t *testing.T) {
 		},
 		{
 			name: "Not voted status",
-			votingInfo: &VotingInfo{
-				voted:    false,
-				votedYes: false,
+			votingInfo: func() *governance.VotingInfo {
+				vi := governance.NewVotingInfo(100, address("g1voter"))
+				return vi
 			},
 			expectedVotingType: "no",
 			expectedIsVoted:    false,
@@ -186,48 +166,48 @@ func TestVotingInfo_VotingTypeAndStatus(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// when & then
-			uassert.Equal(t, tc.votingInfo.VotingType(), tc.expectedVotingType)
-			uassert.Equal(t, tc.votingInfo.IsVoted(), tc.expectedIsVoted)
-			uassert.Equal(t, tc.votingInfo.VotedYes(), tc.expectedVotedYes)
-			uassert.Equal(t, tc.votingInfo.VotedNo(), tc.expectedVotedNo)
+			uassert.Equal(t, tc.votingInfo().VotingType(), tc.expectedVotingType)
+			uassert.Equal(t, tc.votingInfo().IsVoted(), tc.expectedIsVoted)
+			uassert.Equal(t, tc.votingInfo().VotedYes(), tc.expectedVotedYes)
+			uassert.Equal(t, tc.votingInfo().VotedNo(), tc.expectedVotedNo)
 		})
 	}
 }
 
 // TestVotingInfo_VoteWeights tests the vote weight getters
 func TestVotingInfo_VoteWeights(t *testing.T) {
+	voterAddr := address("g1voter")
 	tests := []struct {
 		name                    string
-		votingInfo              *VotingInfo
+		votingInfo              func() *governance.VotingInfo
 		expectedAvailableWeight int64
 		expectedVotedWeight     int64
 	}{
 		{
 			name: "Get weights before voting",
-			votingInfo: &VotingInfo{
-				availableVoteWeight: 100,
-				votedWeight:         0,
-				voted:               false,
+			votingInfo: func() *governance.VotingInfo {
+				vi := governance.NewVotingInfo(100, voterAddr)
+				return vi
 			},
 			expectedAvailableWeight: 100,
 			expectedVotedWeight:     0,
 		},
 		{
 			name: "Get weights after voting",
-			votingInfo: &VotingInfo{
-				availableVoteWeight: 100,
-				votedWeight:         50,
-				voted:               true,
+			votingInfo: func() *governance.VotingInfo {
+				vi := governance.NewVotingInfo(100, voterAddr)
+				vi.SetVoted(true)
+				vi.SetVotedWeight(50)
+				return vi
 			},
 			expectedAvailableWeight: 100,
 			expectedVotedWeight:     50,
 		},
 		{
 			name: "Get weights with zero available weight",
-			votingInfo: &VotingInfo{
-				availableVoteWeight: 0,
-				votedWeight:         0,
-				voted:               false,
+			votingInfo: func() *governance.VotingInfo {
+				vi := governance.NewVotingInfo(0, voterAddr)
+				return vi
 			},
 			expectedAvailableWeight: 0,
 			expectedVotedWeight:     0,
@@ -237,8 +217,8 @@ func TestVotingInfo_VoteWeights(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// when & then
-			uassert.Equal(t, tc.votingInfo.AvailableVoteWeight(), tc.expectedAvailableWeight)
-			uassert.Equal(t, tc.votingInfo.VotedWeight(), tc.expectedVotedWeight)
+			uassert.Equal(t, tc.votingInfo().AvailableVoteWeight(), tc.expectedAvailableWeight)
+			uassert.Equal(t, tc.votingInfo().VotedWeight(), tc.expectedVotedWeight)
 		})
 	}
 }

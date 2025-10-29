@@ -7,6 +7,8 @@ import (
 
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
+
+	"gno.land/r/gnoswap/gov/governance"
 )
 
 // Vote casts a vote on a proposal.
@@ -85,7 +87,7 @@ func (gv *governanceV1) vote(
 	votedYes bool,
 	votedHeight,
 	votedAt int64,
-) (*VotingInfo, int64, int64, error) {
+) (*governance.VotingInfo, int64, int64, error) {
 	// Retrieve the proposal from storage
 	proposal, ok := gv.getProposal(proposalID)
 	if !ok {
@@ -110,9 +112,9 @@ func (gv *governanceV1) vote(
 	if votingWeight <= 0 {
 		return nil, 0, 0, makeErrorWithDetails(errNotEnoughVotingWeight, "no voting weight")
 	}
-
+	userVoteResolver := NewVotingInfoResolver(userVote)
 	// Record the vote in user's voting info (this also prevents double voting)
-	err := userVote.vote(votedYes, votingWeight, votedHeight, votedAt)
+	err := userVoteResolver.vote(votedYes, votingWeight, votedHeight, votedAt)
 	if err != nil {
 		return nil, 0, 0, err
 	}

@@ -1,101 +1,17 @@
 package v1
 
-// VotingInfo tracks voting-related information for a specific user on a specific proposal.
-// This structure maintains the user's voting eligibility, voting history, and voting power.
-type VotingInfo struct {
-	voterAddress        address // Address of the voter
-	availableVoteWeight int64   // Total voting weight available to this user for this proposal
-	votedWeight         int64   // Actual weight used when voting (0 if not voted)
-	votedHeight         int64   // Block height when vote was cast
-	votedAt             int64   // Timestamp when vote was cast
-	votedYes            bool    // True if voted "yes", false if voted "no"
-	voted               bool    // True if user has already voted
+import (
+	"gno.land/r/gnoswap/gov/governance"
+)
+
+type VotingInfoResolver struct {
+	*governance.VotingInfo
 }
 
-// VotingType returns a human-readable string representation of the vote choice.
-//
-// Returns:
-//   - string: "yes" or "no" based on voting choice
-func (v *VotingInfo) VotingType() string {
-	if v.votedYes {
-		return "yes"
+func NewVotingInfoResolver(votingInfo *governance.VotingInfo) *VotingInfoResolver {
+	return &VotingInfoResolver{
+		VotingInfo: votingInfo,
 	}
-
-	return "no"
-}
-
-// IsVoted checks if the user has already cast their vote.
-//
-// Returns:
-//   - bool: true if user has voted on this proposal
-func (v *VotingInfo) IsVoted() bool {
-	return v.voted
-}
-
-// VotedYes checks if the user voted "yes" on the proposal.
-// Only meaningful if IsVoted() returns true.
-//
-// Returns:
-//   - bool: true if user voted "yes"
-func (v *VotingInfo) VotedYes() bool {
-	return v.votedYes
-}
-
-// VotedNo checks if the user voted "no" on the proposal.
-// Only meaningful if IsVoted() returns true.
-//
-// Returns:
-//   - bool: true if user voted "no"
-func (v *VotingInfo) VotedNo() bool {
-	return !v.votedYes
-}
-
-// AvailableVoteWeight returns the total voting weight available to this user.
-// This weight is determined at proposal creation time based on delegation snapshots.
-//
-// Returns:
-//   - int64: available voting weight
-func (v *VotingInfo) AvailableVoteWeight() int64 {
-	return v.availableVoteWeight
-}
-
-// VotedWeight returns the weight actually used when voting.
-// Returns 0 if the user hasn't voted yet.
-//
-// Returns:
-//   - int64: weight used for voting, or 0 if not voted
-func (v *VotingInfo) VotedWeight() int64 {
-	if !v.voted {
-		return 0
-	}
-
-	return v.votedWeight
-}
-
-// VotedHeight returns the block height when the vote was cast.
-// Returns 0 if the user hasn't voted yet.
-//
-// Returns:
-//   - int64: block height when vote was cast
-func (v *VotingInfo) VotedHeight() int64 {
-	if !v.voted {
-		return 0
-	}
-
-	return v.votedHeight
-}
-
-// VotedAt returns the timestamp when the vote was cast.
-// Returns 0 if the user hasn't voted yet.
-//
-// Returns:
-//   - int64: timestamp when vote was cast
-func (v *VotingInfo) VotedAt() int64 {
-	if !v.voted {
-		return 0
-	}
-
-	return v.votedAt
 }
 
 // voteYes records a "yes" vote with the specified weight and timing information.
@@ -108,7 +24,7 @@ func (v *VotingInfo) VotedAt() int64 {
 //
 // Returns:
 //   - error: voting error if vote cannot be recorded
-func (v *VotingInfo) voteYes(weight int64, votedHeight int64, votedAt int64) error {
+func (v *VotingInfoResolver) voteYes(weight int64, votedHeight int64, votedAt int64) error {
 	return v.vote(true, weight, votedHeight, votedAt)
 }
 
@@ -122,7 +38,7 @@ func (v *VotingInfo) voteYes(weight int64, votedHeight int64, votedAt int64) err
 //
 // Returns:
 //   - error: voting error if vote cannot be recorded
-func (v *VotingInfo) voteNo(weight int64, votedHeight int64, votedAt int64) error {
+func (v *VotingInfoResolver) voteNo(weight int64, votedHeight int64, votedAt int64) error {
 	return v.vote(false, weight, votedHeight, votedAt)
 }
 
@@ -137,36 +53,18 @@ func (v *VotingInfo) voteNo(weight int64, votedHeight int64, votedAt int64) erro
 //
 // Returns:
 //   - error: voting error if user has already voted
-func (v *VotingInfo) vote(votedYes bool, weight int64, votedHeight int64, votedAt int64) error {
+func (v *VotingInfoResolver) vote(votedYes bool, weight int64, votedHeight int64, votedAt int64) error {
 	// Prevent double voting - each user can only vote once per proposal
-	if v.voted {
+	if v.IsVoted() {
 		return errAlreadyVoted
 	}
 
 	// Record all voting details
-	v.votedWeight = weight
-	v.votedHeight = votedHeight
-	v.votedAt = votedAt
-	v.voted = true
-	v.votedYes = votedYes
+	v.SetVotedWeight(weight)
+	v.SetVotedHeight(votedHeight)
+	v.SetVotedAt(votedAt)
+	v.SetVoted(true)
+	v.SetVotedYes(votedYes)
 
 	return nil
-}
-
-// NewVotingInfo creates a new voting information structure for a user.
-// This constructor initializes the voting eligibility based on delegation snapshots.
-//
-// Parameters:
-//   - availableVoteWeight: total voting weight available to this user
-//   - voterAddress: address of the voter
-//
-// Returns:
-//   - *VotingInfo: newly created voting information structure
-func NewVotingInfo(availableVoteWeight int64, voterAddress address) *VotingInfo {
-	return &VotingInfo{
-		availableVoteWeight: availableVoteWeight,
-		voterAddress:        voterAddress,
-		// Other fields are initialized to zero values (false, 0)
-		// voted starts as false, indicating no vote has been cast
-	}
 }

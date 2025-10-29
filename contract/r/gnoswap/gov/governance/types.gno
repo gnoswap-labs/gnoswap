@@ -106,8 +106,8 @@ type IGovernanceStore interface {
 
 	// Proposal methods
 	HasProposalsStoreKey() bool
-	GetProposal(proposalID int64) (interface{}, bool)
-	SetProposal(proposalID int64, proposal interface{}) error
+	GetProposal(proposalID int64) (*Proposal, bool)
+	SetProposal(proposalID int64, proposal *Proposal) error
 	SetProposals(proposals *avl.Tree) error
 
 	// Proposal voting info methods
