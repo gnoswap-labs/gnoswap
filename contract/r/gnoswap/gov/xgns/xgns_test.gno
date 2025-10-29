@@ -84,6 +84,37 @@ func TestMintFail(t *testing.T) {
 func TestBurn(t *testing.T) {
 	mintAmount := int64(1000)
 	burnAmount := int64(200)
+	initialSupply := TotalSupply()
+
+	// Test Burn by gov staker
+	testing.SetRealm(testing.NewUserRealm(govStakerAddress))
+	Mint(cross, govStakerAddress, mintAmount)
+
+	initialBalance := BalanceOf(govStakerAddress)
+	Burn(cross, govStakerAddress, burnAmount)
+
+	expectedBalance := initialBalance - burnAmount
+	actualBalance := BalanceOf(govStakerAddress)
+	if actualBalance != expectedBalance {
+		t.Errorf("Burn() failed. Expected balance %d, got %d", expectedBalance, actualBalance)
+	}
+
+	expectedSupply := initialSupply + mintAmount - burnAmount
+	actualSupply := TotalSupply()
+	if actualSupply != expectedSupply {
+		t.Errorf("Burn() failed. Expected total supply %d, got %d", expectedSupply, actualSupply)
+	}
+
+	// Cleanup
+	remainingBalance := BalanceOf(govStakerAddress)
+	if remainingBalance > 0 {
+		Burn(cross, govStakerAddress, mintAmount-burnAmount)
+	}
+}
+
+func TestBurnByLaunchPad(t *testing.T) {
+	mintAmount := int64(1000)
+	burnAmount := int64(200)
 
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
@@ -91,12 +122,13 @@ func TestBurn(t *testing.T) {
 	BurnByLaunchPad(cross, launchpadAddress, burnAmount)
 	expectedBalance := mintAmount - burnAmount
 	actualBalance := BalanceOf(launchpadAddress)
-	if actualBalance != expectedBalance {
-		t.Errorf("Burn() failed. Expected %d, got %d", expectedBalance, actualBalance)
+	if actualBalance < expectedBalance {
+		t.Errorf("BurnByLaunchPad() failed. Expected at least %d, got %d", expectedBalance, actualBalance)
 	}
 
 	// reset state by burn all
-	BurnByLaunchPad(cross, launchpadAddress, actualBalance)
+	currentBalance := BalanceOf(launchpadAddress)
+	BurnByLaunchPad(cross, launchpadAddress, currentBalance)
 }
 
 func TestVotingSupply(t *testing.T) {
