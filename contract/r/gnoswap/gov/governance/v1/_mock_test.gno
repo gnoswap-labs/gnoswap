@@ -6,8 +6,8 @@ import (
 )
 
 type mockGovernanceStore struct {
-	configCounter           int64
-	proposalCounter         int64
+	configCounter           *governance.Counter
+	proposalCounter         *governance.Counter
 	configs                 *avl.Tree
 	proposals               *avl.Tree
 	proposalUserVotingInfos *avl.Tree
@@ -19,36 +19,36 @@ func (m *mockGovernanceStore) HasConfigCounterStoreKey() bool {
 	return true
 }
 
-func (m *mockGovernanceStore) GetConfigCounter() int64 {
+func (m *mockGovernanceStore) GetConfigCounter() *governance.Counter {
 	return m.configCounter
 }
 
-func (m *mockGovernanceStore) SetConfigCounter(counter int64) error {
+func (m *mockGovernanceStore) SetConfigCounter(counter *governance.Counter) error {
 	m.configCounter = counter
 	return nil
 }
 
 func (m *mockGovernanceStore) IncrementConfigCounter() (int64, error) {
-	m.configCounter++
-	return m.configCounter, nil
+	m.configCounter.Next()
+	return m.configCounter.Get(), nil
 }
 
 func (m *mockGovernanceStore) HasProposalCounterStoreKey() bool {
 	return true
 }
 
-func (m *mockGovernanceStore) GetProposalCounter() int64 {
+func (m *mockGovernanceStore) GetProposalCounter() *governance.Counter {
 	return m.proposalCounter
 }
 
-func (m *mockGovernanceStore) SetProposalCounter(counter int64) error {
+func (m *mockGovernanceStore) SetProposalCounter(counter *governance.Counter) error {
 	m.proposalCounter = counter
 	return nil
 }
 
 func (m *mockGovernanceStore) IncrementProposalCounter() (int64, error) {
-	m.proposalCounter++
-	return m.proposalCounter, nil
+	m.proposalCounter.Next()
+	return m.proposalCounter.Get(), nil
 }
 
 // Config methods
@@ -179,8 +179,8 @@ func newMockGovernance() *governanceV1 {
 
 func newMockGovernanceStore() *mockGovernanceStore {
 	return &mockGovernanceStore{
-		configCounter:           0,
-		proposalCounter:         0,
+		configCounter:           governance.NewCounter(),
+		proposalCounter:         governance.NewCounter(),
 		configs:                 avl.NewTree(),
 		proposals:               avl.NewTree(),
 		proposalUserVotingInfos: avl.NewTree(),

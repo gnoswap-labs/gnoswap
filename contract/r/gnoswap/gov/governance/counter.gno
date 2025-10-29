@@ -1,4 +1,4 @@
-package v1
+package governance
 
 // Counter manages unique incrementing IDs.
 type Counter struct {
@@ -12,14 +12,12 @@ func NewCounter() *Counter {
 	}
 }
 
-// next increments and returns the next ID.
-func (c *Counter) next() int64 {
-	c.id++
-
-	return c.id
-}
-
 // Get returns the current ID without incrementing.
-func (c *Counter) Get() int64 {
-	return c.id
+func (c *Counter) Get() int64   { return c.id }
+func (c *Counter) Set(id int64) { c.id = id }
+
+// next increments and returns the next ID.
+func (c *Counter) Next() *Counter {
+	c.id++
+	return c
 }

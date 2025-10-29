@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"gno.land/p/nt/uassert"
+
+	"gno.land/r/gnoswap/gov/governance"
 )
 
 // Test for NewCounter, next, and Get methods.
@@ -43,14 +45,14 @@ func TestCounter_Behavior(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given: create counter and set initial value if needed
-			c := NewCounter()
+			c := governance.NewCounter()
 			if tc.initValue > 0 {
-				c.id = tc.initValue
+				c.Set(tc.initValue)
 			}
 
 			// when: call next() as many times as needed
 			for i := 0; i < tc.callNextTimes; i++ {
-				c.next()
+				c.Next()
 			}
 
 			// then: check id value

@@ -89,13 +89,13 @@ type IVoteApi interface {
 type IGovernanceStore interface {
 	// Counter methods
 	HasConfigCounterStoreKey() bool
-	GetConfigCounter() int64
-	SetConfigCounter(counter int64) error
+	GetConfigCounter() *Counter
+	SetConfigCounter(counter *Counter) error
 	IncrementConfigCounter() (int64, error)
 
 	HasProposalCounterStoreKey() bool
-	GetProposalCounter() int64
-	SetProposalCounter(counter int64) error
+	GetProposalCounter() *Counter
+	SetProposalCounter(counter *Counter) error
 	IncrementProposalCounter() (int64, error)
 
 	// Config methods

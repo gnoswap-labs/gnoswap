@@ -33,42 +33,42 @@ func (s *governanceStore) HasConfigCounterStoreKey() bool {
 	return s.kvStore.Has(StoreKeyConfigCounter.String())
 }
 
-func (s *governanceStore) GetConfigCounter() int64 {
+func (s *governanceStore) GetConfigCounter() *Counter {
 	result, err := s.kvStore.Get(StoreKeyConfigCounter.String())
 	if err != nil {
 		panic(err)
 	}
 
-	counter, ok := result.(int64)
+	counter, ok := result.(*Counter)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to int64: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *Counter: %T", result))
 	}
 
 	return counter
 }
 
-func (s *governanceStore) SetConfigCounter(counter int64) error {
+func (s *governanceStore) SetConfigCounter(counter *Counter) error {
 	return s.kvStore.Set(StoreKeyConfigCounter.String(), counter)
 }
 
 func (s *governanceStore) IncrementConfigCounter() (int64, error) {
 	current := s.GetConfigCounter()
-	next := current + 1
+	next := current.Next()
 	err := s.SetConfigCounter(next)
-	return next, err
+	return next.Get(), err
 }
 
 func (s *governanceStore) HasProposalCounterStoreKey() bool {
 	return s.kvStore.Has(StoreKeyProposalCounter.String())
 }
 
-func (s *governanceStore) GetProposalCounter() int64 {
+func (s *governanceStore) GetProposalCounter() *Counter {
 	result, err := s.kvStore.Get(StoreKeyProposalCounter.String())
 	if err != nil {
 		panic(err)
 	}
 
-	counter, ok := result.(int64)
+	counter, ok := result.(*Counter)
 	if !ok {
 		panic(ufmt.Sprintf("failed to cast result to int64: %T", result))
 	}
@@ -76,15 +76,15 @@ func (s *governanceStore) GetProposalCounter() int64 {
 	return counter
 }
 
-func (s *governanceStore) SetProposalCounter(counter int64) error {
+func (s *governanceStore) SetProposalCounter(counter *Counter) error {
 	return s.kvStore.Set(StoreKeyProposalCounter.String(), counter)
 }
 
 func (s *governanceStore) IncrementProposalCounter() (int64, error) {
 	current := s.GetProposalCounter()
-	next := current + 1
+	next := current.Next()
 	err := s.SetProposalCounter(next)
-	return next, err
+	return next.Get(), err
 }
 
 // Configs methods
@@ -112,7 +112,7 @@ func (s *governanceStore) SetConfigs(configs *avl.Tree) error {
 
 func (s *governanceStore) GetCurrentConfig() (Config, bool) {
 	currentVersion := s.GetConfigCounter()
-	return s.GetConfig(currentVersion)
+	return s.GetConfig(currentVersion.Get())
 }
 
 func (s *governanceStore) GetConfig(version int64) (Config, bool) {

@@ -26,7 +26,7 @@ func NewGovernanceV1(governanceStore governance.IGovernanceStore) governance.IGo
 
 // Config version methods
 func (g *governanceV1) getCurrentConfigVersion() int64 {
-	return g.store.GetConfigCounter()
+	return g.store.GetConfigCounter().Get()
 }
 
 func (g *governanceV1) nextConfigVersion() int64 {
@@ -39,7 +39,7 @@ func (g *governanceV1) nextConfigVersion() int64 {
 
 // Proposal ID methods
 func (g *governanceV1) getCurrentProposalID() int64 {
-	return g.store.GetProposalCounter()
+	return g.store.GetProposalCounter().Get()
 }
 
 func (g *governanceV1) nextProposalID() int64 {
