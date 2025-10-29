@@ -44,7 +44,7 @@ func (self *ProtocolFeeRewardManagerResolver) GetClaimableRewardAmounts(
 		return nil, err
 	}
 
-	resolvedState := &ProtocolFeeRewardStateResolver{rewardState}
+	resolvedState := NewProtocolFeeRewardStateResolver(rewardState)
 	return resolvedState.GetClaimableRewardAmounts(accumulatedRewardX128PerStake, currentTimestamp)
 }
 
@@ -159,7 +159,7 @@ func (self *ProtocolFeeRewardManagerResolver) addStake(address string, amount in
 		rewardState = staker.NewProtocolFeeRewardState(self.GetAllAccumulatedProtocolFeeX128PerStake())
 	}
 
-	resolvedState := &ProtocolFeeRewardStateResolver{rewardState}
+	resolvedState := NewProtocolFeeRewardStateResolver(rewardState)
 	err = resolvedState.addStakeWithUpdateRewardDebtX128(amount, self.GetAllAccumulatedProtocolFeeX128PerStake(), currentTimestamp)
 	if err != nil {
 		return err
@@ -188,7 +188,7 @@ func (self *ProtocolFeeRewardManagerResolver) removeStake(address string, amount
 		rewardState = staker.NewProtocolFeeRewardState(self.GetAllAccumulatedProtocolFeeX128PerStake())
 	}
 
-	resolvedState := &ProtocolFeeRewardStateResolver{rewardState}
+	resolvedState := NewProtocolFeeRewardStateResolver(rewardState)
 	err = resolvedState.removeStakeWithUpdateRewardDebtX128(amount, self.GetAllAccumulatedProtocolFeeX128PerStake(), currentTimestamp)
 	if err != nil {
 		return err
@@ -220,7 +220,7 @@ func (self *ProtocolFeeRewardManagerResolver) claimRewards(address string, curre
 		return make(map[string]int64), nil
 	}
 
-	resolvedState := &ProtocolFeeRewardStateResolver{rewardState}
+	resolvedState := NewProtocolFeeRewardStateResolver(rewardState)
 	claimedRewards, err := resolvedState.claimRewardsWithUpdateRewardDebtX128(
 		self.GetAllAccumulatedProtocolFeeX128PerStake(),
 		currentTimestamp,

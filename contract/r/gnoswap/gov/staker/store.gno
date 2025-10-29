@@ -210,11 +210,11 @@ func (s *govStakerStore) getAllDelegations() (*avl.Tree, error) {
 	return delegations, nil
 }
 
-func (s *govStakerStore) HasDelegationNextIDStoreKey() bool {
+func (s *govStakerStore) HasDelegationCounterStoreKe() bool {
 	return s.kvStore.Has(StoreKeyDelegationNextID)
 }
 
-func (s *govStakerStore) GetDelegationNextID() (*Counter, error) {
+func (s *govStakerStore) GetDelegationCounter() (*Counter, error) {
 	result, err := s.kvStore.Get(StoreKeyDelegationNextID)
 	if err != nil {
 		panic("failed to get delegation next ID: " + err.Error())
@@ -228,17 +228,17 @@ func (s *govStakerStore) GetDelegationNextID() (*Counter, error) {
 	return counter, nil
 }
 
-func (s *govStakerStore) SetDelegationNextID(counter *Counter) error {
+func (s *govStakerStore) SetDelegationCounter(counter *Counter) error {
 	return s.kvStore.Set(StoreKeyDelegationNextID, counter)
 }
 
 func (s *govStakerStore) IncrementDelegationNextID() (int64, error) {
-	counter, err := s.GetDelegationNextID()
+	counter, err := s.GetDelegationCounter()
 	if err != nil {
 		return 0, err
 	}
 
-	err = s.SetDelegationNextID(counter.Next())
+	err = s.SetDelegationCounter(counter.Next())
 	if err != nil {
 		return 0, err
 	}

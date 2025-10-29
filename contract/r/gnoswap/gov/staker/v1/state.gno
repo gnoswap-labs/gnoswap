@@ -81,7 +81,7 @@ func (g *govStakerV1) addDelegation(delegationID int64, delegation *staker.Deleg
 	if err != nil {
 		return false
 	}
-	resolvedManager := &DelegationManagerResolver{delegationManager}
+	resolvedManager := NewDelegationManagerResolver(delegationManager)
 	resolvedManager.addDelegation(
 		delegation.DelegateFrom(),
 		delegation.DelegateTo(),
@@ -126,7 +126,7 @@ func (g *govStakerV1) removeDelegation(delegationID int64) bool {
 	if err != nil {
 		return false
 	}
-	resolvedManager := &DelegationManagerResolver{delegationManager}
+	resolvedManager := NewDelegationManagerResolver(delegationManager)
 	resolvedManager.removeDelegation(
 		delegation.DelegateFrom(),
 		delegation.DelegateTo(),
@@ -160,7 +160,8 @@ func (g *govStakerV1) getUserDelegations(user address) (delegations []*staker.De
 	if err != nil {
 		return delegations
 	}
-	resolvedManager := &DelegationManagerResolver{delegationManager}
+
+	resolvedManager := NewDelegationManagerResolver(delegationManager)
 	for _, delegationID := range resolvedManager.GetUserDelegationIDs(user) {
 		if delegation := g.getDelegation(delegationID); delegation != nil {
 			delegations = append(delegations, delegation)
@@ -397,7 +398,7 @@ func (g *govStakerV1) addStakeProtocolFeeReward(address string, amount int64, cu
 	if err != nil {
 		return err
 	}
-	resolvedManager := &ProtocolFeeRewardManagerResolver{protocolFeeRewardManager}
+	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 
 	err = resolvedManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
 	if err != nil {
@@ -428,7 +429,7 @@ func (g *govStakerV1) removeStakeProtocolFeeReward(address string, amount int64,
 	if err != nil {
 		return err
 	}
-	resolvedManager := &ProtocolFeeRewardManagerResolver{protocolFeeRewardManager}
+	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 
 	err = resolvedManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
 	if err != nil {
@@ -462,7 +463,7 @@ func (g *govStakerV1) claimRewardsProtocolFeeReward(address string, currentTimes
 	if err != nil {
 		return nil, err
 	}
-	resolvedManager := &ProtocolFeeRewardManagerResolver{protocolFeeRewardManager}
+	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 
 	err = resolvedManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
 	if err != nil {
@@ -503,7 +504,7 @@ func (g *govStakerV1) getLaunchpadProjectDeposit(ownerAddress string) (int64, bo
 	if err != nil {
 		return 0, false
 	}
-	resolvedDeposits := &LaunchpadProjectDepositsResolver{launchpadDeposits}
+	resolvedDeposits := NewLaunchpadProjectDepositsResolver(launchpadDeposits)
 	return resolvedDeposits.getLaunchpadProjectDeposit(ownerAddress)
 }
 
@@ -520,7 +521,7 @@ func (g *govStakerV1) setLaunchpadProjectDeposit(ownerAddress string, deposit in
 	if err != nil {
 		return false
 	}
-	resolvedDeposits := &LaunchpadProjectDepositsResolver{launchpadDeposits}
+	resolvedDeposits := NewLaunchpadProjectDepositsResolver(launchpadDeposits)
 	resolvedDeposits.setLaunchpadProjectDeposit(ownerAddress, deposit)
 	if err := g.store.SetLaunchpadProjectDeposits(launchpadDeposits); err != nil {
 		return false

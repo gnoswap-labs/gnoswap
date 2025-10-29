@@ -77,9 +77,9 @@ type IGovStakerStore interface {
 	RemoveDelegation(id int64) error
 	GetAllDelegations() (*avl.Tree, error)
 
-	HasDelegationNextIDStoreKey() bool
-	GetDelegationNextID() (*Counter, error)
-	SetDelegationNextID(counter *Counter) error
+	HasDelegationCounterStoreKe() bool
+	GetDelegationCounter() (*Counter, error)
+	SetDelegationCounter(counter *Counter) error
 	IncrementDelegationNextID() (int64, error)
 
 	// Delegation history

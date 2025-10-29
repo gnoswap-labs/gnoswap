@@ -8,6 +8,10 @@ type LaunchpadProjectDepositsResolver struct {
 	*staker.LaunchpadProjectDeposits
 }
 
+func NewLaunchpadProjectDepositsResolver(launchpadProjectDeposits *staker.LaunchpadProjectDeposits) *LaunchpadProjectDepositsResolver {
+	return &LaunchpadProjectDepositsResolver{launchpadProjectDeposits}
+}
+
 // getLaunchpadProjectDeposit retrieves the deposit amount for a launchpad project.
 //
 // Parameters:

@@ -133,15 +133,15 @@ func (m *mockGovStakerStore) GetAllDelegations() (*avl.Tree, error) {
 	return m.delegations, nil
 }
 
-func (m *mockGovStakerStore) HasDelegationNextIDStoreKey() bool {
+func (m *mockGovStakerStore) HasDelegationCounterStoreKe() bool {
 	return true // Always available in mock
 }
 
-func (m *mockGovStakerStore) GetDelegationNextID() (*staker.Counter, error) {
+func (m *mockGovStakerStore) GetDelegationCounter() (*staker.Counter, error) {
 	return m.delegationNextID, nil
 }
 
-func (m *mockGovStakerStore) SetDelegationNextID(counter *staker.Counter) error {
+func (m *mockGovStakerStore) SetDelegationCounter(counter *staker.Counter) error {
 	m.delegationNextID = counter
 	return nil
 }

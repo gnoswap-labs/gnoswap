@@ -773,9 +773,11 @@ func setupStakerRewardTestEmissionRewards(t *testing.T, gs *govStakerV1, addr ad
 func setupStakerRewardTestProtocolFeeRewards(t *testing.T, gs *govStakerV1, addr address, amount int64, protocolFeeReward map[string]int64, currentHeight int64) {
 	// Setup protocol fee rewards for testing
 	protocolFeeRewardManager, _ := gs.store.GetProtocolFeeRewardManager()
-	resolvedManager := &ProtocolFeeRewardManagerResolver{protocolFeeRewardManager}
+
+	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 	resolvedManager.updateAccumulatedProtocolFeeX128PerStake(protocolFeeReward, currentHeight)
 	resolvedManager.addStake(addr.String(), amount, currentHeight)
+
 	gs.store.SetProtocolFeeRewardManager(protocolFeeRewardManager)
 }
 
