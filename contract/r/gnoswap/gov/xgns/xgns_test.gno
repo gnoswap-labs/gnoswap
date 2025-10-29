@@ -271,6 +271,53 @@ func TestXgns_Render(t *testing.T) {
 	}
 }
 
+func TestXgns_HaltedMint(t *testing.T) {
+	cleanup()
+
+	// Setup halted state
+	testing.SetRealm(testing.NewUserRealm(getAdminAddress()))
+	halt.SetOperationStatus(cross, halt.OpTypeXGns, 1, true)
+
+	// Test Mint should fail when halted
+	testing.SetRealm(testing.NewUserRealm(getGovStakerAddress()))
+	uassert.AbortsWithMessage(t, "halted: xgns", func() {
+		Mint(cross, getGovStakerAddress(), 100)
+	})
+
+	// Test MintByLaunchPad should fail when halted
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
+	uassert.AbortsWithMessage(t, "halted: xgns", func() {
+		MintByLaunchPad(cross, getLaunchpadAddress(), 100)
+	})
+}
+
+func TestXgns_HaltedBurn(t *testing.T) {
+	cleanup()
+
+	// Setup: mint tokens first
+	testing.SetRealm(testing.NewUserRealm(getGovStakerAddress()))
+	Mint(cross, getGovStakerAddress(), 100)
+
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
+	MintByLaunchPad(cross, getLaunchpadAddress(), 100)
+
+	// Setup halted state
+	testing.SetRealm(testing.NewUserRealm(getAdminAddress()))
+	halt.SetOperationStatus(cross, halt.OpTypeXGns, 1, true)
+
+	// Test Burn should fail when halted
+	testing.SetRealm(testing.NewUserRealm(getGovStakerAddress()))
+	uassert.AbortsWithMessage(t, "halted: xgns", func() {
+		Burn(cross, getGovStakerAddress(), 50)
+	})
+
+	// Test BurnByLaunchPad should fail when halted
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
+	uassert.AbortsWithMessage(t, "halted: xgns", func() {
+		BurnByLaunchPad(cross, getLaunchpadAddress(), 50)
+	})
+}
+
 // Helper functions
 
 func getAdminAddress() address {
