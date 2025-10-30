@@ -1,5 +1,25 @@
 package staker
 
+// DelegationHistory represents a chronological list of delegation records
+// used to track delegation changes over time for snapshot calculations
+type DelegationHistory []*DelegationRecord
+
+func (dh DelegationHistory) Records() []*DelegationRecord {
+	return dh
+}
+
+func (dh DelegationHistory) SetRecords(records []*DelegationRecord) DelegationHistory {
+	return records
+}
+
+func (dh DelegationHistory) AddRecord(record *DelegationRecord) DelegationHistory {
+	return append(dh, record)
+}
+
+func NewDelegationHistory() DelegationHistory {
+	return make(DelegationHistory, 0)
+}
+
 // DelegationRecord represents a single delegation event in the system.
 // This struct tracks delegation or undelegation actions with their associated metadata
 // and is used for historical tracking and snapshot calculations.

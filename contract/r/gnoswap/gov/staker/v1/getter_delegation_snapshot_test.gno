@@ -19,7 +19,7 @@ func TestGetDelegationSnapshots(t *testing.T) {
 			name: "Get snapshot with empty state",
 			setupState: func(gs *govStakerV1) {
 				// Reset state
-				gs.setDelegationHistory(make(DelegationHistory, 0))
+				gs.setDelegationHistory(make(staker.DelegationHistory, 0))
 				gs.setDelegationSnapshots(make(staker.DelegationSnapshot))
 			},
 			snapshotTime: 100,
@@ -34,7 +34,7 @@ func TestGetDelegationSnapshots(t *testing.T) {
 				gs.setDelegationSnapshots(snapshots)
 
 				// Setup delegation history
-				history := make(DelegationHistory, 0)
+				history := make(staker.DelegationHistory, 0)
 
 				// Add a delegation record after snapshot time
 				record := staker.NewDelegationRecord(
@@ -44,7 +44,8 @@ func TestGetDelegationSnapshots(t *testing.T) {
 					address("validator1"),
 					150, // After snapshot time
 				)
-				history = history.addRecord(record)
+				historyResolver := NewDelegationHistoryResolver(history)
+				history = historyResolver.addRecord(record)
 				gs.setDelegationHistory(history)
 			},
 			snapshotTime: 100,
@@ -59,7 +60,7 @@ func TestGetDelegationSnapshots(t *testing.T) {
 				gs.setDelegationSnapshots(snapshots)
 
 				// Setup delegation history with records before snapshot time
-				history := make(DelegationHistory, 0)
+				history := make(staker.DelegationHistory, 0)
 
 				// Add a delegation record before snapshot time (should be subtracted)
 				record := staker.NewDelegationRecord(
@@ -69,7 +70,8 @@ func TestGetDelegationSnapshots(t *testing.T) {
 					address("validator1"),
 					50, // Before snapshot time
 				)
-				history = history.addRecord(record)
+				historyResolver := NewDelegationHistoryResolver(history)
+				history = historyResolver.addRecord(record)
 				gs.setDelegationHistory(history)
 			},
 			snapshotTime: 100,
@@ -85,7 +87,7 @@ func TestGetDelegationSnapshots(t *testing.T) {
 				gs.setDelegationSnapshots(snapshots)
 
 				// Setup delegation history with multiple records
-				history := make(DelegationHistory, 0)
+				history := make(staker.DelegationHistory, 0)
 
 				// Records before snapshot time (should be subtracted)
 				record1 := staker.NewDelegationRecord(
@@ -121,10 +123,11 @@ func TestGetDelegationSnapshots(t *testing.T) {
 					150,
 				)
 
-				history = history.addRecord(record1)
-				history = history.addRecord(record2)
-				history = history.addRecord(record3)
-				history = history.addRecord(record4)
+				historyResolver := NewDelegationHistoryResolver(history)
+				history = historyResolver.addRecord(record1)
+				history = historyResolver.addRecord(record2)
+				history = historyResolver.addRecord(record3)
+				history = historyResolver.addRecord(record4)
 				gs.setDelegationHistory(history)
 			},
 			snapshotTime: 100,
@@ -139,7 +142,7 @@ func TestGetDelegationSnapshots(t *testing.T) {
 				gs.setDelegationSnapshots(snapshots)
 
 				// Setup delegation history with undelegate record
-				history := make(DelegationHistory, 0)
+				history := make(staker.DelegationHistory, 0)
 
 				record := staker.NewDelegationRecord(
 					staker.UnDelegateType, // Undelegate
@@ -148,7 +151,8 @@ func TestGetDelegationSnapshots(t *testing.T) {
 					address("validator1"),
 					50,
 				)
-				history = history.addRecord(record)
+				historyResolver := NewDelegationHistoryResolver(history)
+				history = historyResolver.addRecord(record)
 				gs.setDelegationHistory(history)
 			},
 			snapshotTime: 100,
@@ -191,7 +195,7 @@ func TestGetDelegationSnapshots_SpecificScenarios(t *testing.T) {
 			name: "Snapshot calculation with delegate user1 to validator1 record before time",
 			setupState: func(gs *govStakerV1) {
 				// Reset state
-				gs.setDelegationHistory(make(DelegationHistory, 0))
+				gs.setDelegationHistory(make(staker.DelegationHistory, 0))
 				snapshots := make(staker.DelegationSnapshot)
 
 				// Current snapshot shows validator1 has received 1000 in delegations
@@ -208,8 +212,9 @@ func TestGetDelegationSnapshots_SpecificScenarios(t *testing.T) {
 					address("validator1"),
 					50,
 				)
-				history := make(DelegationHistory, 0)
-				history = history.addRecord(record)
+				history := make(staker.DelegationHistory, 0)
+				historyResolver := NewDelegationHistoryResolver(history)
+				history = historyResolver.addRecord(record)
 				gs.setDelegationHistory(history)
 			},
 			snapshotTime:           100,
@@ -220,7 +225,7 @@ func TestGetDelegationSnapshots_SpecificScenarios(t *testing.T) {
 			name: "Snapshot calculation with delegate user1 to user1 record before time",
 			setupState: func(gs *govStakerV1) {
 				// Reset state
-				gs.setDelegationHistory(make(DelegationHistory, 0))
+				gs.setDelegationHistory(make(staker.DelegationHistory, 0))
 				snapshots := make(staker.DelegationSnapshot)
 
 				// Current snapshot shows 1000 delegated
@@ -236,8 +241,9 @@ func TestGetDelegationSnapshots_SpecificScenarios(t *testing.T) {
 					address("user1"),
 					150,
 				)
-				history := make(DelegationHistory, 0)
-				history = history.addRecord(record)
+				history := make(staker.DelegationHistory, 0)
+				historyResolver := NewDelegationHistoryResolver(history)
+				history = historyResolver.addRecord(record)
 				gs.setDelegationHistory(history)
 			},
 			snapshotTime:           100,
@@ -248,7 +254,7 @@ func TestGetDelegationSnapshots_SpecificScenarios(t *testing.T) {
 			name: "Snapshot calculation with undelegate record before time",
 			setupState: func(gs *govStakerV1) {
 				// Reset state
-				gs.setDelegationHistory(make(DelegationHistory, 0))
+				gs.setDelegationHistory(make(staker.DelegationHistory, 0))
 				snapshots := make(staker.DelegationSnapshot)
 
 				// Current snapshot shows validator1 has 500 in delegations
@@ -265,8 +271,9 @@ func TestGetDelegationSnapshots_SpecificScenarios(t *testing.T) {
 					address("validator1"),
 					50,
 				)
-				history := make(DelegationHistory, 0)
-				history = history.addRecord(record)
+				history := make(staker.DelegationHistory, 0)
+				historyResolver := NewDelegationHistoryResolver(history)
+				history = historyResolver.addRecord(record)
 				gs.setDelegationHistory(history)
 			},
 			snapshotTime:           100,
@@ -311,7 +318,7 @@ func TestGetDelegationSnapshots_EdgeCases(t *testing.T) {
 		{
 			name: "Zero snapshot time",
 			setupState: func(gs *govStakerV1) {
-				gs.setDelegationHistory(make(DelegationHistory, 0))
+				gs.setDelegationHistory(make(staker.DelegationHistory, 0))
 				gs.setDelegationSnapshots(make(staker.DelegationSnapshot))
 			},
 			snapshotTime: 0,
@@ -320,7 +327,7 @@ func TestGetDelegationSnapshots_EdgeCases(t *testing.T) {
 		{
 			name: "Negative snapshot time",
 			setupState: func(gs *govStakerV1) {
-				history := make(DelegationHistory, 0)
+				history := make(staker.DelegationHistory, 0)
 
 				record := staker.NewDelegationRecord(
 					staker.DelegateType,
@@ -329,7 +336,8 @@ func TestGetDelegationSnapshots_EdgeCases(t *testing.T) {
 					address("validator1"),
 					50,
 				)
-				history = history.addRecord(record)
+				historyResolver := NewDelegationHistoryResolver(history)
+				history = historyResolver.addRecord(record)
 				gs.setDelegationHistory(history)
 				gs.setDelegationSnapshots(make(staker.DelegationSnapshot))
 			},
@@ -339,7 +347,7 @@ func TestGetDelegationSnapshots_EdgeCases(t *testing.T) {
 		{
 			name: "Very large snapshot time",
 			setupState: func(gs *govStakerV1) {
-				history := make(DelegationHistory, 0)
+				history := make(staker.DelegationHistory, 0)
 
 				record := staker.NewDelegationRecord(
 					staker.DelegateType,
@@ -348,7 +356,8 @@ func TestGetDelegationSnapshots_EdgeCases(t *testing.T) {
 					address("validator1"),
 					1000,
 				)
-				history = history.addRecord(record)
+				historyResolver := NewDelegationHistoryResolver(history)
+				history = historyResolver.addRecord(record)
 				gs.setDelegationHistory(history)
 				gs.setDelegationSnapshots(make(staker.DelegationSnapshot))
 			},

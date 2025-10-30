@@ -248,13 +248,13 @@ func (s *govStakerStore) AddDelegationRecord(record *DelegationRecord) error {
 	return s.kvStore.Set(StoreKeyDelegationHistory, history)
 }
 
-func (s *govStakerStore) GetDelegationHistory() ([]*DelegationRecord, error) {
+func (s *govStakerStore) GetDelegationHistory() (DelegationHistory, error) {
 	result, err := s.kvStore.Get(StoreKeyDelegationHistory)
 	if err != nil {
 		return nil, err
 	}
 
-	history, ok := result.([]*DelegationRecord)
+	history, ok := result.(DelegationHistory)
 	if !ok {
 		return nil, errors.New(ufmt.Sprintf("failed to cast result to []*DelegationRecord: %T", result))
 	}
@@ -262,7 +262,7 @@ func (s *govStakerStore) GetDelegationHistory() ([]*DelegationRecord, error) {
 	return history, nil
 }
 
-func (s *govStakerStore) SetDelegationHistory(history []*DelegationRecord) error {
+func (s *govStakerStore) SetDelegationHistory(history DelegationHistory) error {
 	return s.kvStore.Set(StoreKeyDelegationHistory, history)
 }
 

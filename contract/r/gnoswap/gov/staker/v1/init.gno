@@ -74,7 +74,7 @@ func initStoreData(store staker.IGovStakerStore) error {
 	}
 
 	if !store.HasDelegationHistoryStoreKey() {
-		err := store.SetDelegationHistory(make([]*staker.DelegationRecord, 0))
+		err := store.SetDelegationHistory(make(staker.DelegationHistory, 0))
 		if err != nil {
 			return err
 		}

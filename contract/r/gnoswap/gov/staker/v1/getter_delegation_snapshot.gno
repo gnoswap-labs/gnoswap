@@ -39,7 +39,8 @@ func (gs *govStakerV1) GetDelegationSnapshots(snapshotTime int64) (staker.Delega
 
 	// Get delegation history and filter for records after snapshot time
 	delegationHistory := gs.getDelegationHistory()
-	historyRecords := delegationHistory.getRecordsBy(snapshotTime)
+	historyResolver := NewDelegationHistoryResolver(delegationHistory)
+	historyRecords := historyResolver.getRecordsBy(snapshotTime)
 
 	// Apply records in reverse order to reconstruct historical state
 	for i := len(historyRecords) - 1; i >= 0; i-- {

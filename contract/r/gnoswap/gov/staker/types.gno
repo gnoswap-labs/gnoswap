@@ -85,9 +85,9 @@ type IGovStakerStore interface {
 
 	// Delegation history
 	HasDelegationHistoryStoreKey() bool
-	AddDelegationRecord(record *DelegationRecord) error
-	GetDelegationHistory() ([]*DelegationRecord, error)
-	SetDelegationHistory(history []*DelegationRecord) error
+	AddDelegationRecord(delegationRecord *DelegationRecord) error
+	GetDelegationHistory() (DelegationHistory, error)
+	SetDelegationHistory(delegationHistory DelegationHistory) error
 
 	// Delegation snapshots
 	HasDelegationSnapshotStoreKey() bool

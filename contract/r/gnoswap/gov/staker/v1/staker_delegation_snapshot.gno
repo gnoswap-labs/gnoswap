@@ -37,7 +37,8 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(threshold int64) {
 
 	// Filter records after cutoff time
 	delegationHistory := gs.getDelegationHistory()
-	recentDelegationHistory := delegationHistory.getRecordsBy(cutoffTimestamp)
+	historyResolver := NewDelegationHistoryResolver(delegationHistory)
+	recentDelegationHistory := historyResolver.getRecordsBy(cutoffTimestamp)
 
 	// Update delegation history with filtered records
 	gs.setDelegationHistory(recentDelegationHistory)

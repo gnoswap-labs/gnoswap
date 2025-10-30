@@ -4,9 +4,9 @@ import (
 	"gno.land/r/gnoswap/gov/staker"
 )
 
-// DelegationHistory represents a chronological list of delegation records
-// used to track delegation changes over time for snapshot calculations
-type DelegationHistory []*staker.DelegationRecord
+type DelegationHistoryResolver struct {
+	staker.DelegationHistory
+}
 
 // getRecordsBy retrieves delegation records that occurred at or after the specified snapshot time.
 // This method is used to filter historical records for calculating delegation snapshots at specific points in time.
@@ -16,13 +16,13 @@ type DelegationHistory []*staker.DelegationRecord
 //
 // Returns:
 //   - DelegationHistory: filtered records occurring at or after snapshotTime
-func (dh DelegationHistory) getRecordsBy(snapshotTime int64) DelegationHistory {
-	records := make(DelegationHistory, 0)
+func (dh *DelegationHistoryResolver) getRecordsBy(snapshotTime int64) staker.DelegationHistory {
+	records := make(staker.DelegationHistory, 0)
 
 	historyIndex := -1
 
 	// Find the first record at or after the snapshot time
-	for index, record := range dh {
+	for index, record := range dh.Records() {
 		if record.CreatedAt() >= snapshotTime {
 			historyIndex = index
 			break
@@ -35,7 +35,7 @@ func (dh DelegationHistory) getRecordsBy(snapshotTime int64) DelegationHistory {
 	}
 
 	// Return all records from the found index onwards
-	records = append(records, dh[historyIndex:]...)
+	records = append(records, dh.Records()[historyIndex:]...)
 
 	return records
 }
@@ -48,8 +48,8 @@ func (dh DelegationHistory) getRecordsBy(snapshotTime int64) DelegationHistory {
 //
 // Returns:
 //   - DelegationHistory: updated history with the new record appended
-func (dh DelegationHistory) addRecord(delegationRecord *staker.DelegationRecord) DelegationHistory {
-	return append(dh, delegationRecord)
+func (dh *DelegationHistoryResolver) addRecord(delegationRecord *staker.DelegationRecord) staker.DelegationHistory {
+	return dh.AddRecord(delegationRecord)
 }
 
 // removeRecordsBy removes historical records that occurred before the specified time.
@@ -60,6 +60,12 @@ func (dh DelegationHistory) addRecord(delegationRecord *staker.DelegationRecord)
 //
 // Returns:
 //   - DelegationHistory: filtered history containing only records at or after previousTime
-func (dh DelegationHistory) removeRecordsBy(previousTime int64) DelegationHistory {
+func (dh *DelegationHistoryResolver) removeRecordsBy(previousTime int64) staker.DelegationHistory {
 	return dh.getRecordsBy(previousTime)
+}
+
+func NewDelegationHistoryResolver(history staker.DelegationHistory) *DelegationHistoryResolver {
+	return &DelegationHistoryResolver{
+		DelegationHistory: history,
+	}
 }

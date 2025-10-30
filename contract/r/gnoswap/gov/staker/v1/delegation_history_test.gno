@@ -11,13 +11,13 @@ import (
 func TestDelegationHistory_GetRecordsBy(t *testing.T) {
 	tests := []struct {
 		name          string
-		records       DelegationHistory
+		records       staker.DelegationHistory
 		snapshotTime  int64
 		expectedCount int
 	}{
 		{
 			name: "Get records after snapshot time",
-			records: DelegationHistory{
+			records: staker.DelegationHistory{
 				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
 				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 200),
 				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 300),
@@ -27,7 +27,7 @@ func TestDelegationHistory_GetRecordsBy(t *testing.T) {
 		},
 		{
 			name: "Get all records when snapshot time is before all",
-			records: DelegationHistory{
+			records: staker.DelegationHistory{
 				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
 				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 200),
 			},
@@ -36,7 +36,7 @@ func TestDelegationHistory_GetRecordsBy(t *testing.T) {
 		},
 		{
 			name: "Get no records when snapshot time is after all",
-			records: DelegationHistory{
+			records: staker.DelegationHistory{
 				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
 				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 200),
 			},
@@ -45,7 +45,7 @@ func TestDelegationHistory_GetRecordsBy(t *testing.T) {
 		},
 		{
 			name:          "Empty history",
-			records:       DelegationHistory{},
+			records:       staker.DelegationHistory{},
 			snapshotTime:  100,
 			expectedCount: 0,
 		},
@@ -53,8 +53,9 @@ func TestDelegationHistory_GetRecordsBy(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			historyResolver := NewDelegationHistoryResolver(tc.records)
 			// when
-			result := tc.records.getRecordsBy(tc.snapshotTime)
+			result := historyResolver.getRecordsBy(tc.snapshotTime)
 
 			// then
 			uassert.Equal(t, len(result), tc.expectedCount)
@@ -66,13 +67,13 @@ func TestDelegationHistory_GetRecordsBy(t *testing.T) {
 func TestDelegationHistory_AddRecord(t *testing.T) {
 	tests := []struct {
 		name           string
-		initialRecords DelegationHistory
+		initialRecords staker.DelegationHistory
 		newRecord      *staker.DelegationRecord
 		expectedCount  int
 	}{
 		{
 			name:           "Add record to empty history",
-			initialRecords: DelegationHistory{},
+			initialRecords: staker.DelegationHistory{},
 			newRecord: staker.NewDelegationRecord(
 				staker.DelegateType,
 				0,
@@ -84,7 +85,7 @@ func TestDelegationHistory_AddRecord(t *testing.T) {
 		},
 		{
 			name: "Add record to existing history",
-			initialRecords: DelegationHistory{
+			initialRecords: staker.DelegationHistory{
 				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
 			},
 			newRecord: staker.NewDelegationRecord(
@@ -102,9 +103,10 @@ func TestDelegationHistory_AddRecord(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
 			history := tc.initialRecords
+			historyResolver := NewDelegationHistoryResolver(history)
 
 			// when
-			history = history.addRecord(tc.newRecord)
+			history = historyResolver.addRecord(tc.newRecord)
 
 			// then
 			uassert.Equal(t, len(history), tc.expectedCount)
@@ -116,13 +118,13 @@ func TestDelegationHistory_AddRecord(t *testing.T) {
 func TestDelegationHistory_RemoveRecordsBy(t *testing.T) {
 	tests := []struct {
 		name           string
-		initialRecords DelegationHistory
+		initialRecords staker.DelegationHistory
 		previousTime   int64
 		expectedCount  int
 	}{
 		{
 			name: "Remove old records",
-			initialRecords: DelegationHistory{
+			initialRecords: staker.DelegationHistory{
 				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
 				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 200),
 				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 300),
@@ -132,7 +134,7 @@ func TestDelegationHistory_RemoveRecordsBy(t *testing.T) {
 		},
 		{
 			name: "Remove all records",
-			initialRecords: DelegationHistory{
+			initialRecords: staker.DelegationHistory{
 				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
 				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 200),
 			},
@@ -141,7 +143,7 @@ func TestDelegationHistory_RemoveRecordsBy(t *testing.T) {
 		},
 		{
 			name: "Remove no records",
-			initialRecords: DelegationHistory{
+			initialRecords: staker.DelegationHistory{
 				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
 				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 200),
 			},
@@ -154,9 +156,10 @@ func TestDelegationHistory_RemoveRecordsBy(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
 			history := tc.initialRecords
+			historyResolver := NewDelegationHistoryResolver(history)
 
 			// when
-			history = history.removeRecordsBy(tc.previousTime)
+			history = historyResolver.removeRecordsBy(tc.previousTime)
 
 			// then
 			uassert.Equal(t, len(history), tc.expectedCount)

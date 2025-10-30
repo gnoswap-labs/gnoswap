@@ -20,7 +20,7 @@ type mockGovStakerStore struct {
 	// Delegation data
 	delegations       *avl.Tree // map[int64]*staker.Delegation
 	delegationNextID  *staker.Counter
-	delegationHistory []*staker.DelegationRecord
+	delegationHistory staker.DelegationHistory
 	userDelegations   map[string]map[string][]int64
 
 	// Snapshots
@@ -40,7 +40,7 @@ func newMockGovStakerStore() staker.IGovStakerStore {
 		delegations:         avl.NewTree(),
 		delegationSnapshots: make(staker.DelegationSnapshot, 0),
 		userDelegations:     make(map[string]map[string][]int64),
-		delegationHistory:   make([]*staker.DelegationRecord, 0),
+		delegationHistory:   make(staker.DelegationHistory, 0),
 		delegationNextID:    staker.NewCounter(),
 	}
 }
@@ -161,11 +161,11 @@ func (m *mockGovStakerStore) AddDelegationRecord(record *staker.DelegationRecord
 	return nil
 }
 
-func (m *mockGovStakerStore) GetDelegationHistory() ([]*staker.DelegationRecord, error) {
+func (m *mockGovStakerStore) GetDelegationHistory() (staker.DelegationHistory, error) {
 	return m.delegationHistory, nil
 }
 
-func (m *mockGovStakerStore) SetDelegationHistory(history []*staker.DelegationRecord) error {
+func (m *mockGovStakerStore) SetDelegationHistory(history staker.DelegationHistory) error {
 	m.delegationHistory = history
 	return nil
 }

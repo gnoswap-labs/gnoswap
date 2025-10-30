@@ -178,15 +178,13 @@ func (g *govStakerV1) getUserDelegationsWithDelegatee(user address, delegatee ad
 //
 // Returns:
 //   - DelegationHistory: chronological list of delegation records
-func (g *govStakerV1) getDelegationHistory() DelegationHistory {
+func (g *govStakerV1) getDelegationHistory() staker.DelegationHistory {
 	history, err := g.store.GetDelegationHistory()
 	if err != nil {
 		panic(err)
 	}
-	// Create a new DelegationHistory to avoid realm conversion issues
-	result := make(DelegationHistory, len(history))
-	copy(result, history)
-	return result
+
+	return history
 }
 
 // addDelegationRecord adds a new delegation record to history and updates snapshots.
@@ -214,13 +212,9 @@ func (g *govStakerV1) addDelegationRecord(delegationRecord *staker.DelegationRec
 //
 // Parameters:
 //   - history: new delegation history to set
-func (g *govStakerV1) setDelegationHistory(history DelegationHistory) {
-	// Clear existing history and re-add all records
-	// Note: This is inefficient but maintains compatibility
-	for _, record := range history {
-		if err := g.store.AddDelegationRecord(record); err != nil {
-			panic(err)
-		}
+func (g *govStakerV1) setDelegationHistory(history staker.DelegationHistory) {
+	if err := g.store.SetDelegationHistory(history); err != nil {
+		panic(err)
 	}
 }
 
