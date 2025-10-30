@@ -73,7 +73,7 @@ func AssertIsNotHaltedWithdraw() {
 	AssertIsNotHaltedOperation(OpTypeWithdraw)
 }
 
-// AssertIsNotHaltedOperationWithVersion panics if the specified operation type is halted.
+// AssertIsNotHaltedOperation panics if the specified operation type is halted.
 // Panics with error details including operation type name.
 func AssertIsNotHaltedOperation(op OpType) {
 	if halted := isHaltedOperation(op); halted {
