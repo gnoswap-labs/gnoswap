@@ -339,7 +339,6 @@ func TestGrc20regHelper_TransferFrom(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup approval if needed - as the token owner (from address)
 			if tt.setupApproval {
-				testing.SetOriginCaller(tt.from)
 				testing.SetRealm(testing.NewUserRealm(tt.from))
 				Approve(cross, tt.path, tt.caller, tt.approvalAmt)
 			}
