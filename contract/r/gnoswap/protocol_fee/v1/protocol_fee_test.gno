@@ -26,7 +26,7 @@ var (
 	positionPath  = "gno.land/r/gnoswap/position"
 	routerPath    = "gno.land/r/gnoswap/router"
 	stakerPath    = "gno.land/r/gnoswap/staker"
-	govStakerPath = "gno.land/r/gnoswap/v1/gov/staker"
+	govStakerPath = "gno.land/r/gnoswap/gov/staker"
 
 	stakerRealm    = testing.NewCodeRealm(stakerPath)
 	govStakerRealm = testing.NewCodeRealm(govStakerPath)

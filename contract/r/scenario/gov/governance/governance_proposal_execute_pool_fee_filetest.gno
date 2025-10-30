@@ -19,16 +19,18 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/pool"
 
+	govStaker "gno.land/r/gnoswap/gov/staker"
+	_ "gno.land/r/gnoswap/gov/staker/v1"
+
 	"gno.land/r/gnoswap/gov/governance"
 	_ "gno.land/r/gnoswap/gov/governance/v1"
-
-	govStaker "gno.land/r/gnoswap/v1/gov/staker"
 
 	"gno.land/r/gnoswap/gns"
 )
 
 var (
-	adminAddr, _     = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminAddr        = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	govStakerAddr    = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
 	currentBlockTime = int64(2)
 )
 
@@ -72,7 +74,6 @@ func delegateGnsToAdmin() {
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	govStakerAddr := address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
 	gns.Approve(cross, govStakerAddr, delegatedAmount)
 	govStaker.Delegate(cross, adminAddr, int64(delegatedAmount), "")
 

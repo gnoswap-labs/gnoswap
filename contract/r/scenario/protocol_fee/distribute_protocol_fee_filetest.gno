@@ -27,7 +27,7 @@ var (
 var (
 	adminRealm     = testing.NewUserRealm(adminAddr)
 	stakerRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
-	govStakerRealm = testing.NewCodeRealm("gno.land/r/gnoswap/v1/gov/staker")
+	govStakerRealm = testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker")
 )
 
 func main() {

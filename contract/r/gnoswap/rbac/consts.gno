@@ -32,7 +32,7 @@ var (
 	// GOV_GOVERNANCE_ADDR is the derived address for the governance package.
 	GOV_GOVERNANCE_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/gov/governance")
 	// GOV_STAKER_ADDR is the derived address for the governance staker package.
-	GOV_STAKER_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/v1/gov/staker")
+	GOV_STAKER_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/gov/staker")
 	// GOV_XGNS_ADDR is the derived address for the xGNS governance package.
 	GOV_XGNS_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/gov/xgns")
 	// LAUNCHPAD_ADDR is the derived address for the launchpad package.

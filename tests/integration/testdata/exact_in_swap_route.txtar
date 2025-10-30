@@ -32,7 +32,7 @@ loadpkg gno.land/r/gnoswap/position
 loadpkg gno.land/r/gnoswap/router
 loadpkg gno.land/r/gnoswap/staker
 loadpkg gno.land/r/gnoswap/v1/gov/xgns
-loadpkg gno.land/r/gnoswap/v1/gov/staker
+loadpkg gno.land/r/gnoswap/gov/staker
 loadpkg gno.land/r/gnoswap/gov/governance
 loadpkg gno.land/r/gnoswap/launchpad
 

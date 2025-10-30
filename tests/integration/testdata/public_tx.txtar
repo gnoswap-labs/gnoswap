@@ -91,7 +91,7 @@ gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/staker -pkgpath gno.land/r
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/community_pool -pkgpath gno.land/r/gnoswap/community_pool -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy gov/staker
-gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/gov/staker -pkgpath gno.land/r/gnoswap/v1/gov/staker -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/gov/staker -pkgpath gno.land/r/gnoswap/gov/staker -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy gov/governance
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/gov/governance -pkgpath gno.land/r/gnoswap/gov/governance -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
@@ -343,15 +343,15 @@ stdout '(10000 uint64)'
 
 
 ## delegate to user2
-gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gov/staker -func Delegate -args ${user2_user_addr} -args 5000000000 -args "" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gov/staker -func GetDelegationAmountFromTo -args ${test1_user_addr} -args ${user2_user_addr} -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1em9s40nfrwd2aqn9ypjv7d9x9z9c8uk5uxrza9 -args 18446744073709551615 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func Delegate -args ${user2_user_addr} -args 5000000000 -args "" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func GetDelegationAmountFromTo -args ${test1_user_addr} -args ${user2_user_addr} -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stdout '(5000000000 uint64)'
 
 
 ## redelegate partial from user2 to user3
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gov/staker -func Redelegate -args ${user2_user_addr} -args ${user3_user_addr} -args 200000000 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gov/staker -func GetDelegationAmountFromTo -args ${test1_user_addr} -args ${user3_user_addr} -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func Redelegate -args ${user2_user_addr} -args ${user3_user_addr} -args 200000000 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func GetDelegationAmountFromTo -args ${test1_user_addr} -args ${user3_user_addr} -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stdout '(200000000 uint64)'
 
 

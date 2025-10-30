@@ -8,8 +8,8 @@ import (
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
 
+	"gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/gov/governance"
-	"gno.land/r/gnoswap/v1/gov/staker"
 )
 
 // ProposeText creates a text proposal for community discussion.
