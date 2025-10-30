@@ -588,6 +588,15 @@ func TestSwapMathComputeSwapStepFail(t *testing.T) {
 			fee_pips:         1,
 			expected_message: errInvalidPoolSqrtPrice.Error(),
 		},
+		{
+			name:             "sqrt_price_above_maximum",
+			current_x96:      MAX_SQRT_RATIO,
+			target_x96:       new(u256.Uint).Add(MAX_SQRT_RATIO, u256.One()),
+			liquidity:        u256.MustFromDecimal("1"),
+			amount_remaining: i256.MustFromDecimal("1000000000000000000"),
+			fee_pips:         1,
+			expected_message: errInvalidPoolSqrtPrice.Error(),
+		},
 	}
 
 	for _, test := range tests {
