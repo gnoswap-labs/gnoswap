@@ -21,7 +21,7 @@ var (
 	communityPoolAddr = rbac.DefaultRoleAddresses[prabc.ROLE_COMMUNITY_POOL]
 
 	gnsPath  = "gno.land/r/gnoswap/gns"
-	govRealm = testing.NewCodeRealm("gno.land/r/gnoswap/v1/gov/governance")
+	govRealm = testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance")
 
 	dummyCaller   = testing.NewUserRealm(testutils.TestAddress("dummyCaller"))
 	dummyReceiver = testutils.TestAddress("dummyReceiver")

@@ -16,7 +16,9 @@ import (
 
 	"gno.land/r/gnoswap/access"
 
-	"gno.land/r/gnoswap/v1/gov/governance"
+	"gno.land/r/gnoswap/gov/governance"
+	_ "gno.land/r/gnoswap/gov/governance/v1"
+
 	govStaker "gno.land/r/gnoswap/v1/gov/staker"
 
 	"gno.land/r/gnoswap/gns"
@@ -28,6 +30,7 @@ var (
 )
 
 func main() {
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
 
 	println("[SCENARIO] 1. Delegate gns to admin")
@@ -75,7 +78,7 @@ func delegateGnsToAdmin() {
 
 func proposeReconfigureGovernance() int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	proposalID := governance.ProposeParameterChange(cross, "gov", "reconfigure", 1, "gno.land/r/gnoswap/v1/gov/governance*EXE*Reconfigure*EXE*123,456,789,1234,5678,12345,67890")
+	proposalID := governance.ProposeParameterChange(cross, "gov", "reconfigure", 1, "gno.land/r/gnoswap/gov/governance*EXE*Reconfigure*EXE*123,456,789,1234,5678,12345,67890")
 
 	ufmt.Printf("[INFO] Reconfigure Governance Parameters Proposal ID: %d\n", proposalID)
 	return proposalID

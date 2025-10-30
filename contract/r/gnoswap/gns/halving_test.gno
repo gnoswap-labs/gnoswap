@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	govRealm = testing.NewCodeRealm("gno.land/r/gnoswap/v1/gov/governance")
+	govRealm = testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance")
 
 	startHeight int64 = runtime.ChainHeight()
 
