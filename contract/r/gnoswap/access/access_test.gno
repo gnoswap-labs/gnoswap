@@ -14,13 +14,9 @@ func TestGetAddress(t *testing.T) {
 	testRole := "test_role"
 
 	// Save original state
-	originalRoles := make(map[string]map[int]address)
+	originalRoles := make(map[string]address)
 	for k, v := range roleAddresses {
-		addressCopy := make(map[int]address)
-		for k, v := range v {
-			addressCopy[k] = v
-		}
-		originalRoles[k] = addressCopy
+		originalRoles[k] = v
 	}
 	defer func() {
 		roleAddresses = originalRoles
@@ -29,7 +25,7 @@ func TestGetAddress(t *testing.T) {
 	tests := []struct {
 		name           string
 		setupRole      string
-		setupAddrs     map[int]address
+		setupAddrs     address
 		queryRole      string
 		expectedAddr   address
 		expectedExists bool
@@ -37,7 +33,7 @@ func TestGetAddress(t *testing.T) {
 		{
 			name:           "non-existent role",
 			setupRole:      "",
-			setupAddrs:     map[int]address{},
+			setupAddrs:     address(""),
 			queryRole:      testRole,
 			expectedAddr:   "",
 			expectedExists: false,
@@ -45,31 +41,23 @@ func TestGetAddress(t *testing.T) {
 		{
 			name:           "existing role with single address",
 			setupRole:      testRole,
-			setupAddrs:     map[int]address{1: testAddr},
+			setupAddrs:     testAddr,
 			queryRole:      testRole,
 			expectedAddr:   testAddr,
 			expectedExists: true,
 		},
 		{
-			name:           "existing role with multiple versions",
-			setupRole:      testRole,
-			setupAddrs:     map[int]address{1: address("g1old123456789abcdef"), 2: testAddr},
-			queryRole:      testRole,
-			expectedAddr:   testAddr, // Should return latest
-			expectedExists: true,
-		},
-		{
 			name:           "query different role",
 			setupRole:      testRole,
-			setupAddrs:     map[int]address{1: testAddr},
+			setupAddrs:     testAddr,
 			queryRole:      "different_role",
 			expectedAddr:   "",
 			expectedExists: false,
 		},
 		{
 			name:           "empty address list",
-			setupRole:      testRole,
-			setupAddrs:     map[int]address{},
+			setupRole:      "",
+			setupAddrs:     address(""),
 			queryRole:      testRole,
 			expectedAddr:   "",
 			expectedExists: false,
@@ -78,6 +66,8 @@ func TestGetAddress(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			roleAddresses = make(map[string]address)
+
 			// Setup
 			if tt.setupRole != "" {
 				roleAddresses[tt.setupRole] = tt.setupAddrs
@@ -102,102 +92,11 @@ func TestGetAddress(t *testing.T) {
 	}
 }
 
-func TestGetAddressWithVersion(t *testing.T) {
-	testRole := "test_role"
-	addr1 := address("g1test111111111111111")
-	addr2 := address("g1test222222222222222")
-	addr3 := address("g1test333333333333333")
-
-	// Save original state
-	originalRoles := make(map[string]map[int]address)
-	for k, v := range roleAddresses {
-		addressCopy := make(map[int]address)
-		for k, v := range v {
-			addressCopy[k] = v
-		}
-		originalRoles[k] = addressCopy
-	}
-	defer func() {
-		roleAddresses = originalRoles
-	}()
-
-	// Setup test data
-	roleAddresses[testRole] = map[int]address{1: addr1, 2: addr2, 3: addr3}
-
-	tests := []struct {
-		name           string
-		role           string
-		version        int
-		expectedAddr   address
-		expectedExists bool
-	}{
-		{
-			name:           "get version 0",
-			role:           testRole,
-			version:        0,
-			expectedAddr:   addr1,
-			expectedExists: false,
-		},
-		{
-			name:           "get version 1",
-			role:           testRole,
-			version:        1,
-			expectedAddr:   addr1,
-			expectedExists: true,
-		},
-		{
-			name:           "get version 2",
-			role:           testRole,
-			version:        2,
-			expectedAddr:   addr2,
-			expectedExists: true,
-		},
-		{
-			name:           "get version 3",
-			role:           testRole,
-			version:        3,
-			expectedAddr:   addr3,
-			expectedExists: true,
-		},
-		{
-			name:           "negative version",
-			role:           testRole,
-			version:        -1,
-			expectedAddr:   "",
-			expectedExists: false,
-		},
-		{
-			name:           "non-existent role",
-			role:           "non_existent",
-			version:        0,
-			expectedAddr:   "",
-			expectedExists: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			addr, ok := GetAddressWithVersion(tt.role, tt.version)
-
-			if ok != tt.expectedExists {
-				t.Errorf("Expected exists=%v, got %v", tt.expectedExists, ok)
-			}
-			if ok && addr != tt.expectedAddr {
-				t.Errorf("Expected address=%s, got %s", tt.expectedAddr, addr)
-			}
-		})
-	}
-}
-
 func TestGetRoleAddresses(t *testing.T) {
 	// Save original state
-	originalRoles := make(map[string]map[int]address)
+	originalRoles := make(map[string]address)
 	for k, v := range roleAddresses {
-		addressCopy := make(map[int]address)
-		for k, v := range v {
-			addressCopy[k] = v
-		}
-		originalRoles[k] = addressCopy
+		originalRoles[k] = v
 	}
 	defer func() {
 		roleAddresses = originalRoles
@@ -205,51 +104,34 @@ func TestGetRoleAddresses(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		setupRoles map[string]map[int]address
-		expected   map[string]map[int]address
+		setupRoles map[string]address
+		expected   map[string]address
 	}{
 		{
 			name:       "empty roles",
-			setupRoles: map[string]map[int]address{},
-			expected:   map[string]map[int]address{},
+			setupRoles: map[string]address{},
+			expected:   map[string]address{},
 		},
 		{
 			name: "single role",
-			setupRoles: map[string]map[int]address{
-				"role1": {1: address("g1test111111111111111")},
+			setupRoles: map[string]address{
+				"role1": address("g1test111111111111111"),
 			},
-			expected: map[string]map[int]address{
-				"role1": {1: address("g1test111111111111111")},
+			expected: map[string]address{
+				"role1": address("g1test111111111111111"),
 			},
 		},
 		{
 			name: "multiple roles",
-			setupRoles: map[string]map[int]address{
-				"role1": {1: address("g1test111111111111111")},
-				"role2": {1: address("g1test222222222222222")},
-				"role3": {1: address("g1test333333333333333")},
+			setupRoles: map[string]address{
+				"role1": address("g1test111111111111111"),
+				"role2": address("g1test222222222222222"),
+				"role3": address("g1test333333333333333"),
 			},
-			expected: map[string]map[int]address{
-				"role1": {1: address("g1test111111111111111")},
-				"role2": {1: address("g1test222222222222222")},
-				"role3": {1: address("g1test333333333333333")},
-			},
-		},
-		{
-			name: "roles with multiple versions",
-			setupRoles: map[string]map[int]address{
-				"role1": {
-					1: address("g1test111111111111111"),
-					2: address("g1test111111111111112"),
-					3: address("g1test111111111111113"),
-				},
-			},
-			expected: map[string]map[int]address{
-				"role1": {
-					1: address("g1test111111111111111"),
-					2: address("g1test111111111111112"),
-					3: address("g1test111111111111113"),
-				},
+			expected: map[string]address{
+				"role1": address("g1test111111111111111"),
+				"role2": address("g1test222222222222222"),
+				"role3": address("g1test333333333333333"),
 			},
 		},
 	}
@@ -257,7 +139,7 @@ func TestGetRoleAddresses(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			roleAddresses = make(map[string]map[int]address)
+			roleAddresses = make(map[string]address)
 			for role, addrs := range tt.setupRoles {
 				roleAddresses[role] = addrs
 			}
@@ -283,15 +165,13 @@ func TestGetRoleAddresses(t *testing.T) {
 					continue
 				}
 
-				for i, expectedAddr := range expectedAddrs {
-					if actualAddrs[i] != expectedAddr {
-						t.Errorf("Role %s[%d]: expected %s, got %s", role, i, expectedAddr, actualAddrs[i])
-					}
+				if actualAddrs != expectedAddrs {
+					t.Errorf("Role %s: expected %s, got %s", role, expectedAddrs, actualAddrs)
 				}
 			}
 
 			// Verify original map is not modified by modifying returned map
-			addresses["new_role"] = map[int]address{1: address("g1new123456789abcdef")}
+			addresses["new_role"] = address("g1new123456789abcdef")
 			if len(roleAddresses) != len(tt.setupRoles) {
 				t.Errorf("Original map should not be modified")
 			}
@@ -305,13 +185,9 @@ func TestIsAuthorized(t *testing.T) {
 	testRole := "test_role"
 
 	// Save original state
-	originalRoles := make(map[string]map[int]address)
+	originalRoles := make(map[string]address)
 	for k, v := range roleAddresses {
-		addressCopy := make(map[int]address)
-		for k, v := range v {
-			addressCopy[k] = v
-		}
-		originalRoles[k] = addressCopy
+		originalRoles[k] = v
 	}
 	defer func() {
 		roleAddresses = originalRoles
@@ -320,7 +196,7 @@ func TestIsAuthorized(t *testing.T) {
 	tests := []struct {
 		name         string
 		setupRole    string
-		setupAddrs   map[int]address
+		setupAddrs   address
 		queryRole    string
 		queryAddr    address
 		expectedAuth bool
@@ -328,7 +204,7 @@ func TestIsAuthorized(t *testing.T) {
 		{
 			name:         "non-existent role",
 			setupRole:    "",
-			setupAddrs:   map[int]address{},
+			setupAddrs:   address(""),
 			queryRole:    testRole,
 			queryAddr:    testAddr,
 			expectedAuth: false,
@@ -336,7 +212,7 @@ func TestIsAuthorized(t *testing.T) {
 		{
 			name:         "existing role with correct address",
 			setupRole:    testRole,
-			setupAddrs:   map[int]address{1: testAddr},
+			setupAddrs:   testAddr,
 			queryRole:    testRole,
 			queryAddr:    testAddr,
 			expectedAuth: true,
@@ -344,7 +220,7 @@ func TestIsAuthorized(t *testing.T) {
 		{
 			name:         "existing role with incorrect address",
 			setupRole:    testRole,
-			setupAddrs:   map[int]address{1: testAddr},
+			setupAddrs:   testAddr,
 			queryRole:    testRole,
 			queryAddr:    otherAddr,
 			expectedAuth: false,
@@ -352,32 +228,8 @@ func TestIsAuthorized(t *testing.T) {
 		{
 			name:         "query different role",
 			setupRole:    testRole,
-			setupAddrs:   map[int]address{1: testAddr},
+			setupAddrs:   testAddr,
 			queryRole:    "different_role",
-			queryAddr:    testAddr,
-			expectedAuth: false,
-		},
-		{
-			name:         "multiple addresses in role - first matches",
-			setupRole:    testRole,
-			setupAddrs:   map[int]address{1: testAddr, 2: otherAddr},
-			queryRole:    testRole,
-			queryAddr:    testAddr,
-			expectedAuth: false,
-		},
-		{
-			name:         "multiple addresses in role - last matches",
-			setupRole:    testRole,
-			setupAddrs:   map[int]address{1: otherAddr, 2: testAddr},
-			queryRole:    testRole,
-			queryAddr:    testAddr,
-			expectedAuth: true,
-		},
-		{
-			name:         "multiple addresses in role - none match",
-			setupRole:    testRole,
-			setupAddrs:   map[int]address{1: address("g1addr1234567890abcdef"), 2: address("g1addr2234567890abcdef")},
-			queryRole:    testRole,
 			queryAddr:    testAddr,
 			expectedAuth: false,
 		},
@@ -406,100 +258,9 @@ func TestIsAuthorized(t *testing.T) {
 	}
 }
 
-func TestIsAuthorizedWithVersion(t *testing.T) {
-	testAddr1 := address("g1test111111111111111")
-	testAddr2 := address("g1test222222222222222")
-	testAddr3 := address("g1test333333333333333")
-	testRole := "test_role"
-
-	// Save original state
-	originalRoles := make(map[string]map[int]address)
-	for k, v := range roleAddresses {
-		addressCopy := make(map[int]address)
-		for k, v := range v {
-			addressCopy[k] = v
-		}
-		originalRoles[k] = addressCopy
-	}
-	defer func() {
-		roleAddresses = originalRoles
-	}()
-
-	// Setup
-	roleAddresses[testRole] = map[int]address{1: testAddr1, 2: testAddr2, 3: testAddr3}
-
-	tests := []struct {
-		name         string
-		role         string
-		version      int
-		caller       address
-		expectedAuth bool
-	}{
-		{
-			name:         "version 0 out of bounds",
-			role:         testRole,
-			version:      0,
-			caller:       testAddr1,
-			expectedAuth: false,
-		},
-		{
-			name:         "version 1 with correct address",
-			role:         testRole,
-			version:      1,
-			caller:       testAddr1,
-			expectedAuth: true,
-		},
-		{
-			name:         "version 2 with correct address",
-			role:         testRole,
-			version:      2,
-			caller:       testAddr2,
-			expectedAuth: true,
-		},
-		{
-			name:         "version 3 with correct address",
-			role:         testRole,
-			version:      3,
-			caller:       testAddr3,
-			expectedAuth: true,
-		},
-		{
-			name:         "version 3 with wrong address",
-			role:         testRole,
-			version:      3,
-			caller:       testAddr1,
-			expectedAuth: false,
-		},
-		{
-			name:         "negative version",
-			role:         testRole,
-			version:      -1,
-			caller:       testAddr1,
-			expectedAuth: false,
-		},
-		{
-			name:         "non-existent role",
-			role:         "non_existent",
-			version:      0,
-			caller:       testAddr1,
-			expectedAuth: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			authorized := IsAuthorizedWithVersion(tt.role, tt.version, tt.caller)
-
-			if authorized != tt.expectedAuth {
-				t.Errorf("Expected authorized=%v, got %v", tt.expectedAuth, authorized)
-			}
-		})
-	}
-}
-
 func TestSetRoleAddress(t *testing.T) {
 	// Save original state
-	originalRoles := make(map[string]map[int]address)
+	originalRoles := make(map[string]address)
 	for k, v := range roleAddresses {
 		originalRoles[k] = v
 	}
@@ -509,7 +270,7 @@ func TestSetRoleAddress(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		setupRoles  map[string]map[int]address
+		setupRoles  map[string]address
 		roleName    string
 		roleAddress address
 		shouldPanic bool
@@ -517,8 +278,8 @@ func TestSetRoleAddress(t *testing.T) {
 	}{
 		{
 			name: "set new role",
-			setupRoles: map[string]map[int]address{
-				"admin": {1: testutils.TestAddress("admin")},
+			setupRoles: map[string]address{
+				"admin": testutils.TestAddress("admin"),
 			},
 			roleName:    "newrole",
 			roleAddress: testutils.TestAddress("newrole"),
@@ -526,8 +287,8 @@ func TestSetRoleAddress(t *testing.T) {
 		},
 		{
 			name: "update existing role",
-			setupRoles: map[string]map[int]address{
-				"admin": {1: testutils.TestAddress("admin")},
+			setupRoles: map[string]address{
+				"admin": testutils.TestAddress("admin"),
 			},
 			roleName:    "admin",
 			roleAddress: testutils.TestAddress("newadmin"),
@@ -535,8 +296,8 @@ func TestSetRoleAddress(t *testing.T) {
 		},
 		{
 			name: "set role with invalid address",
-			setupRoles: map[string]map[int]address{
-				"admin": {1: testutils.TestAddress("admin")},
+			setupRoles: map[string]address{
+				"admin": testutils.TestAddress("admin"),
 			},
 			roleName:    "invalid",
 			roleAddress: address(""),
@@ -568,10 +329,10 @@ func TestSetRoleAddress(t *testing.T) {
 			}
 
 			if _, exists := roleAddresses[tt.roleName]; !exists {
-				roleAddresses[tt.roleName] = make(map[int]address)
+				roleAddresses[tt.roleName] = address("")
 			}
 
-			roleAddresses[tt.roleName][1] = tt.roleAddress
+			roleAddresses[tt.roleName] = tt.roleAddress
 
 			if !tt.shouldPanic {
 				// Verify set operation
@@ -589,7 +350,7 @@ func TestSetRoleAddress(t *testing.T) {
 
 func TestRemoveRole(t *testing.T) {
 	// Save original state
-	originalRoles := make(map[string]map[int]address)
+	originalRoles := make(map[string]address)
 	for k, v := range roleAddresses {
 		originalRoles[k] = v
 	}
@@ -599,25 +360,25 @@ func TestRemoveRole(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		setupRoles  map[string]map[int]address
+		setupRoles  map[string]address
 		roleName    string
 		shouldPanic bool
 		panicMsg    string
 	}{
 		{
 			name: "remove existing role",
-			setupRoles: map[string]map[int]address{
-				"admin":      {1: testutils.TestAddress("admin")},
-				"governance": {1: testutils.TestAddress("governance")},
-				"custom":     {1: testutils.TestAddress("custom")},
+			setupRoles: map[string]address{
+				"admin":      testutils.TestAddress("admin"),
+				"governance": testutils.TestAddress("governance"),
+				"custom":     testutils.TestAddress("custom"),
 			},
 			roleName:    "custom",
 			shouldPanic: false,
 		},
 		{
 			name: "remove non-existent role",
-			setupRoles: map[string]map[int]address{
-				"admin": {1: testutils.TestAddress("admin")},
+			setupRoles: map[string]address{
+				"admin": testutils.TestAddress("admin"),
 			},
 			roleName:    "nonexistent",
 			shouldPanic: true,
