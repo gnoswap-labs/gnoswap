@@ -37,6 +37,11 @@ func TestXgns_TotalSupply(t *testing.T) {
 			mintAmount:     1000,
 			expectedSupply: 1000,
 		},
+		{
+			name:           "Total supply with minimum amount",
+			mintAmount:     1,
+			expectedSupply: 1,
+		},
 	}
 
 	for _, tc := range tests {
@@ -79,6 +84,12 @@ func TestXgns_Mint(t *testing.T) {
 			caller: govStakerAddress,
 			to:     govStakerAddress,
 			amount: 0,
+		},
+		{
+			name:   "Success mint with minimum amount",
+			caller: govStakerAddress,
+			to:     govStakerAddress,
+			amount: 1,
 		},
 		{
 			name:            "Fail mint with negative amount",
@@ -163,6 +174,12 @@ func TestXgns_MintByLaunchPad(t *testing.T) {
 			realmPath: "gno.land/r/gnoswap/launchpad",
 			to:        launchpadAddress,
 			amount:    0,
+		},
+		{
+			name:      "Success mint with minimum amount",
+			realmPath: "gno.land/r/gnoswap/launchpad",
+			to:        launchpadAddress,
+			amount:    1,
 		},
 		{
 			name:            "Fail mint with negative amount",
@@ -251,6 +268,13 @@ func TestXgns_Burn(t *testing.T) {
 			burnAmount: 0,
 		},
 		{
+			name:       "Success burn with minimum amount",
+			caller:     govStakerAddress,
+			from:       govStakerAddress,
+			mintAmount: 10,
+			burnAmount: 1,
+		},
+		{
 			name:            "Fail burn with negative amount",
 			caller:          govStakerAddress,
 			from:            govStakerAddress,
@@ -334,6 +358,13 @@ func TestXgns_BurnByLaunchPad(t *testing.T) {
 			from:       launchpadAddress,
 			mintAmount: 1000,
 			burnAmount: 0,
+		},
+		{
+			name:       "Success burn with minimum amount",
+			realmPath:  "gno.land/r/gnoswap/launchpad",
+			from:       launchpadAddress,
+			mintAmount: 10,
+			burnAmount: 1,
 		},
 		{
 			name:            "Fail burn with negative amount",
@@ -483,6 +514,24 @@ func TestXgns_BalanceOf(t *testing.T) {
 			targetAddr:      govStakerAddress,
 			mintAmount:      500,
 			expectedBalance: 500,
+		},
+		{
+			name:            "Empty address returns zero balance",
+			targetAddr:      address(""),
+			mintAmount:      0,
+			expectedBalance: 0,
+		},
+		{
+			name:            "Non-existent address returns zero balance",
+			targetAddr:      address("g1nonexistentaddressxxxxxxxxxxxxxxxxxxx"),
+			mintAmount:      0,
+			expectedBalance: 0,
+		},
+		{
+			name:            "Balance with minimum mint amount",
+			targetAddr:      govStakerAddress,
+			mintAmount:      1,
+			expectedBalance: 1,
 		},
 	}
 
