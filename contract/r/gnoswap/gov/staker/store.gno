@@ -3,7 +3,6 @@ package staker
 import (
 	"errors"
 	"strconv"
-	"strings"
 
 	"gno.land/p/gnoswap/store"
 	"gno.land/p/nt/avl"
@@ -28,9 +27,9 @@ const (
 	StoreKeyUserDelegations     = "userDelegations"     // Nested maps of user delegations
 
 	// Manager states
-	StoreKeyEmissionRewardManager = "emissionRewardManager"
+	StoreKeyEmissionRewardManager    = "emissionRewardManager"
 	StoreKeyProtocolFeeRewardManager = "protocolFeeRewardManager"
-	StoreKeyDelegationManager = "delegationManager"
+	StoreKeyDelegationManager        = "delegationManager"
 	StoreKeyLaunchpadProjectDeposits = "launchpadProjectDeposits"
 )
 
@@ -283,7 +282,7 @@ func (s *govStakerStore) HasUserDelegations(user string) bool {
 	return exists
 }
 
-func (s *govStakerStore) SetUserDelegations(user string, delegations map[string][]int64) error {
+func (s *govStakerStore) SetUserDelegations(delegations map[string]map[string][]int64) error {
 	return s.kvStore.Set(StoreKeyUserDelegations, delegations)
 }
 
@@ -484,10 +483,6 @@ func (s *govStakerStore) HasLaunchpadProjectDepositsStoreKey() bool {
 func (s *govStakerStore) GetLaunchpadProjectDeposits() (*LaunchpadProjectDeposits, error) {
 	result, err := s.kvStore.Get(StoreKeyLaunchpadProjectDeposits)
 	if err != nil {
-		// If not found, return a new instance
-		if strings.Contains(err.Error(), "not found") {
-			return NewLaunchpadProjectDeposits(), nil
-		}
 		return nil, err
 	}
 

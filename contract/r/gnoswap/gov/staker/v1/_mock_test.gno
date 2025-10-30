@@ -180,8 +180,8 @@ func (m *mockGovStakerStore) HasUserDelegations(user string) bool {
 	return exists
 }
 
-func (m *mockGovStakerStore) SetUserDelegations(user string, delegations map[string][]int64) error {
-	m.userDelegations[user] = delegations
+func (m *mockGovStakerStore) SetUserDelegations(delegations map[string]map[string][]int64) error {
+	m.userDelegations = delegations
 	return nil
 }
 
