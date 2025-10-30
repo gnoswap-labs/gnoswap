@@ -3,6 +3,9 @@ package xgns
 import (
 	"testing"
 
+	"gno.land/p/demo/tokens/grc20"
+	"gno.land/p/nt/ownable"
+	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 	"gno.land/r/gnoswap/access"
 
@@ -95,4 +98,9 @@ func getContractAddress(roleName string) address {
 	}
 
 	return addr
+}
+
+func cleanup(t *testing.T) {
+	admin = ownable.NewWithAddress(testutils.TestAddress("admin"))
+	token, ledger = grc20.NewToken("XGNS", "xGNS", 6)
 }

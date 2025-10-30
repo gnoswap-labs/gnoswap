@@ -106,11 +106,11 @@ type IPoolSwap interface {
 		swapCallback func(cur realm, amount0Delta, amount1Delta string) error,
 	) (string, string)
 
-	SetSwapEndHook(hook func(poolPath string) error)
+	SetSwapEndHook(hook func(cur realm, poolPath string) error)
 
-	SetSwapStartHook(hook func(poolPath string, timestamp int64))
+	SetSwapStartHook(hook func(cur realm, poolPath string, timestamp int64))
 
-	SetTickCrossHook(hook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64))
+	SetTickCrossHook(hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64))
 
 	CollectProtocol(
 		token0Path string,
@@ -245,14 +245,14 @@ type IPoolStore interface {
 	SetWithdrawalFeeBPS(withdrawalFeeBPS uint64) error
 
 	HasSwapStartHook() bool
-	GetSwapStartHook() func(poolPath string, timestamp int64)
-	SetSwapStartHook(swapStartHook func(poolPath string, timestamp int64)) error
+	GetSwapStartHook() func(cur realm, poolPath string, timestamp int64)
+	SetSwapStartHook(swapStartHook func(cur realm, poolPath string, timestamp int64)) error
 
 	HasSwapEndHook() bool
-	GetSwapEndHook() func(poolPath string) error
-	SetSwapEndHook(swapEndHook func(poolPath string) error) error
+	GetSwapEndHook() func(cur realm, poolPath string) error
+	SetSwapEndHook(swapEndHook func(cur realm, poolPath string) error) error
 
 	HasTickCrossHook() bool
-	GetTickCrossHook() func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)
-	SetTickCrossHook(tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)) error
+	GetTickCrossHook() func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)
+	SetTickCrossHook(tickCrossHook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) error
 }

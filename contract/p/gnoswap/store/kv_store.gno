@@ -69,9 +69,9 @@ func (k *kvStore) Get(key string) (any, error) {
 // Set stores a value with the given key
 // Checks write permission before setting the value
 func (k *kvStore) Set(key string, value any) error {
-	caller := runtime.CurrentRealm().Address()
+	currentRealm := runtime.CurrentRealm()
 
-	if !k.IsWriteAuthorized(caller) {
+	if currentRealm.IsCode() && !k.IsWriteAuthorized(currentRealm.Address()) {
 		return ErrWritePermissionDenied
 	}
 
@@ -98,8 +98,16 @@ func (k *kvStore) Delete(key string) error {
 	return nil
 }
 
+func (k *kvStore) IsDomainAddress(addr address) bool {
+	return k.domainAddress == addr
+}
+
 // IsReadAuthorized checks if the caller has read permission
 func (k *kvStore) IsReadAuthorized(caller address) bool {
+	if k.IsDomainAddress(caller) {
+		return true
+	}
+
 	if !k.isRegisteredAuthorizedCaller(caller) {
 		return false
 	}
@@ -109,6 +117,10 @@ func (k *kvStore) IsReadAuthorized(caller address) bool {
 
 // IsWriteAuthorized checks if the caller has write permission
 func (k *kvStore) IsWriteAuthorized(caller address) bool {
+	if k.IsDomainAddress(caller) {
+		return true
+	}
+
 	if !k.isRegisteredAuthorizedCaller(caller) {
 		return false
 	}

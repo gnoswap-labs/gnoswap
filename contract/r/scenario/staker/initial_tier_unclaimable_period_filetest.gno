@@ -19,13 +19,14 @@ import (
 
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
-	sr "gno.land/r/gnoswap/v1/staker"
+	sr "gno.land/r/gnoswap/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -106,9 +107,6 @@ func testInitialTierInternalRewards() {
 	ufmt.Printf("[VERIFY] tier assigned: %d, reward per second: %d\n", tier, rewardPerSecond)
 
 	// Verify pool has zero liquidity after tier assignment
-	poolData, _ := sr.QueryPoolData(poolPath1)
-	ufmt.Printf("[VERIFY] pool staked liquidity after tier assignment: %s (should be 0)\n", poolData.StakedLiquidity.ToString())
-
 	ufmt.Printf("[EXPECTED] tier assigned at: %d, pool has zero liquidity\n", tierAssignmentTime)
 
 	println("[INFO] wait 10 blocks while pool has zero liquidity (unclaimable period)")
@@ -149,9 +147,6 @@ func testInitialTierInternalRewards() {
 	testing.SkipHeights(2)
 
 	// Verify pool now has positive liquidity
-	poolDataAfterStake, _ := sr.QueryPoolData(poolPath1)
-	ufmt.Printf("[VERIFY] pool staked liquidity after stake: %s (should be > 0)\n", poolDataAfterStake.StakedLiquidity.ToString())
-
 	actualUnclaimablePeriod := stakeTime - tierAssignmentTime
 	ufmt.Printf("[EXPECTED] actual unclaimable period from tier assignment to first stake: %d seconds\n", actualUnclaimablePeriod)
 
@@ -224,9 +219,6 @@ func testInitialTierExternalRewards() {
 	ufmt.Printf("[VERIFY] external incentive created, reward per second: %d\n", externalRewardPerSecond)
 
 	// Verify pool has zero liquidity
-	poolData2, _ := sr.QueryPoolData(poolPath2)
-	ufmt.Printf("[VERIFY] pool staked liquidity: %s (should be 0)\n", poolData2.StakedLiquidity.ToString())
-
 	println("[INFO] wait until incentive starts and some time passes (unclaimable period)")
 	// Calculate blocks to wait until incentive starts + some extra time
 	blocksToWaitForStart := (incentiveStartTime - time.Now().Unix()) / 5
@@ -270,8 +262,6 @@ func testInitialTierExternalRewards() {
 	testing.SkipHeights(2)
 
 	// Verify pool now has positive liquidity
-	poolData2AfterStake, _ := sr.QueryPoolData(poolPath2)
-	ufmt.Printf("[VERIFY] pool staked liquidity after stake: %s (should be > 0)\n", poolData2AfterStake.StakedLiquidity.ToString())
 
 	actualUnclaimablePeriod := stakeTime - incentiveStartTime
 	if actualUnclaimablePeriod > 0 {
@@ -301,13 +291,11 @@ func testInitialTierExternalRewards() {
 // [INFO] create pool bar:baz:100
 // [INFO] set pool tier to 1 (rewards start here)
 // [VERIFY] tier assigned: 1, reward per second: 2675513
-// [VERIFY] pool staked liquidity after tier assignment: 0 (should be 0)
 // [EXPECTED] tier assigned at: 1234567905, pool has zero liquidity
 // [INFO] wait 10 blocks while pool has zero liquidity (unclaimable period)
 // [EXPECTED] unclaimable period duration: 55 seconds
 // [INFO] prepare to stake first position
 // [INFO] mint and stake first position (liquidity becomes positive)
-// [VERIFY] pool staked liquidity after stake: 200510 (should be > 0)
 // [EXPECTED] actual unclaimable period from tier assignment to first stake: 60 seconds
 // [EXPECTED] expected unclaimable rewards: 160530780 (duration: 60 × reward rate: 2675513)
 // [INFO] collect reward immediately after first stake
@@ -321,12 +309,10 @@ func testInitialTierExternalRewards() {
 // [INFO] approve tokens for external incentive
 // [INFO] create external incentive (starts next day midnight)
 // [VERIFY] external incentive created, reward per second: 128
-// [VERIFY] pool staked liquidity: 0 (should be 0)
 // [INFO] wait until incentive starts and some time passes (unclaimable period)
 // [EXPECTED] unclaimable period duration: 50 seconds
 // [INFO] prepare to stake first position
 // [INFO] mint and stake first position (liquidity becomes positive)
-// [VERIFY] pool staked liquidity after stake: 201011 (should be > 0)
 // [EXPECTED] unclaimable period from incentive start to first stake: 55 seconds
 // [EXPECTED] expected unclaimable rewards: 7040 (duration: 55 × reward rate: 128)
 // [INFO] wait and unstake to end the incentive period

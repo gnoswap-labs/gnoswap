@@ -20,7 +20,7 @@ var (
 	positionPath  = "gno.land/r/gnoswap/position"
 	positionRealm = testing.NewCodeRealm(positionPath)
 
-	stakerPath  = "gno.land/r/gnoswap/v1/staker"
+	stakerPath  = "gno.land/r/gnoswap/staker"
 	stakerRealm = testing.NewCodeRealm(stakerPath)
 
 	addr01      = testutils.TestAddress("addr01")
@@ -454,7 +454,7 @@ func TestTransferFrom(t *testing.T) {
 			toAddr:            addr02,
 			tokenIdToTransfer: 1,
 			shouldPanic:       true,
-			panicMsg:          "caller is not token owner or approved || caller g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu is not owner g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st or approved for token 1",
+			panicMsg:          "caller is not token owner or approved || caller g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 is not owner g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st or approved for token 1",
 		},
 		{
 			name: "transfer token owned by other user with approval",

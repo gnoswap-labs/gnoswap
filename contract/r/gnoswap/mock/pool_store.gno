@@ -10,9 +10,9 @@ type MockPoolStore struct {
 	slot0FeeProtocol     uint8
 	poolCreationFee      int64
 	withdrawalFeeBPS     uint64
-	swapStartHook        func(poolPath string, timestamp int64)
-	swapEndHook          func(poolPath string) error
-	tickCrossHook        func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)
+	swapStartHook        func(cur realm, poolPath string, timestamp int64)
+	swapEndHook          func(cur realm, poolPath string) error
+	tickCrossHook        func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)
 }
 
 func (s *MockPoolStore) HasPools() bool {
@@ -98,12 +98,12 @@ func (s *MockPoolStore) HasSwapStartHook() bool {
 }
 
 // GetSwapStartHook retrieves the swap start hook function.
-func (s *MockPoolStore) GetSwapStartHook() func(poolPath string, timestamp int64) {
+func (s *MockPoolStore) GetSwapStartHook() func(cur realm, poolPath string, timestamp int64) {
 	return s.swapStartHook
 }
 
 // SetSwapStartHook stores the swap start hook function.
-func (s *MockPoolStore) SetSwapStartHook(swapStartHook func(poolPath string, timestamp int64)) error {
+func (s *MockPoolStore) SetSwapStartHook(swapStartHook func(cur realm, poolPath string, timestamp int64)) error {
 	s.swapStartHook = swapStartHook
 	return nil
 }
@@ -114,12 +114,12 @@ func (s *MockPoolStore) HasSwapEndHook() bool {
 }
 
 // GetSwapEndHook retrieves the swap end hook function.
-func (s *MockPoolStore) GetSwapEndHook() func(poolPath string) error {
+func (s *MockPoolStore) GetSwapEndHook() func(cur realm, poolPath string) error {
 	return s.swapEndHook
 }
 
 // SetSwapEndHook stores the swap end hook function.
-func (s *MockPoolStore) SetSwapEndHook(swapEndHook func(poolPath string) error) error {
+func (s *MockPoolStore) SetSwapEndHook(swapEndHook func(cur realm, poolPath string) error) error {
 	s.swapEndHook = swapEndHook
 	return nil
 }
@@ -130,12 +130,12 @@ func (s *MockPoolStore) HasTickCrossHook() bool {
 }
 
 // GetTickCrossHook retrieves the tick cross hook function.
-func (s *MockPoolStore) GetTickCrossHook() func(poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
+func (s *MockPoolStore) GetTickCrossHook() func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
 	return s.tickCrossHook
 }
 
 // SetTickCrossHook stores the tick cross hook function.
-func (s *MockPoolStore) SetTickCrossHook(tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)) error {
+func (s *MockPoolStore) SetTickCrossHook(tickCrossHook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) error {
 	s.tickCrossHook = tickCrossHook
 	return nil
 }
@@ -145,9 +145,9 @@ func NewMockPoolStore() *MockPoolStore {
 }
 
 func NewMockPoolStoreWithHook(
-	swapStartHook func(poolPath string, timestamp int64),
-	swapEndHook func(poolPath string) error,
-	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64),
+	swapStartHook func(cur realm, poolPath string, timestamp int64),
+	swapEndHook func(cur realm, poolPath string) error,
+	tickCrossHook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64),
 ) *MockPoolStore {
 	feeAmountTickSpacing := avl.NewTree()
 	feeAmountTickSpacing.Set("100", int32(1))

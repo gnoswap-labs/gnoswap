@@ -20,6 +20,7 @@ import (
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -34,7 +35,7 @@ import (
 const (
 	INT64_MAX int64 = 9223372036854775807
 
-	STAKER_PATH string  = "gno.land/r/gnoswap/v1/staker"
+	STAKER_PATH string  = "gno.land/r/gnoswap/staker"
 	WUGNOT_ADDR address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	MIN_PRICE string = "4295128740"

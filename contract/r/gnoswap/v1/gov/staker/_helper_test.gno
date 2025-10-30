@@ -62,7 +62,7 @@ var (
 
 	posRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/position")
 	rouRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/router")
-	stakerRealm = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
 )
 
 func makeFakeAddress(name string) address {
