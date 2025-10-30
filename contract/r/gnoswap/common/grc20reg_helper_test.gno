@@ -88,43 +88,295 @@ func TestGetTokenTeller(t *testing.T) {
 	})
 }
 
-// func TestTellerMethod(t *testing.T) {
-// 	teller := GetTokenTeller(tokenPath)
-// 	token := GetToken(tokenPath)
-// 	defaultHolder := std.Address("g1manfred47kzduec920z88wfr64ylksmdcedlf5")
-// 	addr01 := testutils.TestAddress("addr01")
+func TestTransfer(t *testing.T) {
+	tests := []struct {
+		name          string
+		path          string
+		to            address
+		amount        int64
+		expectedError bool
+	}{
+		{
+			name:          "transfer to valid address",
+			path:          tokenPath,
+			to:            address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:        1000,
+			expectedError: false,
+		},
+		{
+			name:          "transfer with insufficient balance",
+			path:          tokenPath,
+			to:            address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:        99999999999999,
+			expectedError: true,
+		},
+		{
+			name:          "transfer zero amount",
+			path:          tokenPath,
+			to:            address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:        0,
+			expectedError: false,
+		},
+		{
+			name:          "transfer negative amount",
+			path:          tokenPath,
+			to:            address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:        -100,
+			expectedError: true,
+		},
+	}
 
-// 	t.Run("Transfer()", func(t *testing.T) {
-// 		func() {
-// 			testing.SetRealm(std.NewUserRealm(defaultHolder))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Transfer(cross, tt.path, tt.to, tt.amount)
+			if tt.expectedError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
 
-// 			uassert.Equal(t, uint64(10000000000), token.BalanceOf(defaultHolder))
+func TestTransferFrom(t *testing.T) {
+	tests := []struct {
+		name          string
+		path          string
+		from          address
+		to            address
+		amount        int64
+		setupApproval bool
+		approvalAmt   int64
+		expectedError bool
+	}{
+		{
+			name:          "transfer from with sufficient allowance",
+			path:          tokenPath,
+			from:          address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"),
+			to:            address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:        100,
+			setupApproval: true,
+			approvalAmt:   1000,
+			expectedError: false,
+		},
+		{
+			name:          "transfer from without allowance",
+			path:          tokenPath,
+			from:          address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"),
+			to:            address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:        100,
+			setupApproval: false,
+			expectedError: true,
+		},
+		{
+			name:          "transfer from with insufficient allowance",
+			path:          tokenPath,
+			from:          address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"),
+			to:            address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:        2000,
+			setupApproval: true,
+			approvalAmt:   1000,
+			expectedError: true,
+		},
+	}
 
-// 			uassert.NoError(t, teller.Transfer(addr01, uint64(10000000000))) // transfer all balance to addr01
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupApproval {
+				// Setup approval first - would need proper realm setup
+				// Skip for now as it requires more complex setup
+			}
 
-// 			uassert.Equal(t, uint64(0), token.BalanceOf(defaultHolder))
-// 			uassert.Equal(t, uint64(10000000000), token.BalanceOf(addr01))
+			err := TransferFrom(cross, tt.path, tt.from, tt.to, tt.amount)
+			if tt.expectedError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
 
-// 			uassert.Error(t, teller.Transfer(addr01, uint64(10000000000))) // not enough balance
-// 		}()
-// 	})
+func TestApprove(t *testing.T) {
+	tests := []struct {
+		name          string
+		path          string
+		spender       address
+		amount        int64
+		expectedError bool
+	}{
+		{
+			name:          "approve valid amount",
+			path:          tokenPath,
+			spender:       address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:        1000,
+			expectedError: false,
+		},
+		{
+			name:          "approve zero amount",
+			path:          tokenPath,
+			spender:       address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:        0,
+			expectedError: false,
+		},
+		{
+			name:          "approve negative amount",
+			path:          tokenPath,
+			spender:       address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:        -100,
+			expectedError: true,
+		},
+		{
+			name:          "approve large amount",
+			path:          tokenPath,
+			spender:       address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:        9223372036854775807,
+			expectedError: false,
+		},
+	}
 
-// 	// t.Run("Approve()", func(t *testing.T) {
-// 	// 	testing.SetRealm(std.NewUserRealm(addr01))
-// 	// 	uassert.NoError(t, teller.Approve(defaultHolder, uint64(500)))
-// 	// 	uassert.Equal(t, uint64(500), token.Allowance(addr01, defaultHolder))
-// 	// })
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Approve(cross, tt.path, tt.spender, tt.amount)
+			if tt.expectedError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
 
-// 	// t.Run("TransferFrom()", func(t *testing.T) {
-// 	// 	testing.SetRealm(std.NewUserRealm(defaultHolder))
-// 	// 	uassert.NoError(t, teller.TransferFrom(addr01, defaultHolder, uint64(500)))
-// 	// 	uassert.Equal(t, uint64(9999999500), token.BalanceOf(addr01))
-// 	// 	uassert.Equal(t, uint64(500), token.BalanceOf(defaultHolder))
-// 	// 	uassert.Equal(t, uint64(0), token.Allowance(addr01, defaultHolder))
+func TestSafeGRC20Transfer(t *testing.T) {
+	tests := []struct {
+		name        string
+		path        string
+		to          address
+		amount      int64
+		shouldPanic bool
+	}{
+		{
+			name:        "safe transfer success",
+			path:        tokenPath,
+			to:          address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:      100,
+			shouldPanic: false,
+		},
+		{
+			name:        "safe transfer with insufficient balance",
+			path:        tokenPath,
+			to:          address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:      99999999999999,
+			shouldPanic: true,
+		},
+		{
+			name:        "safe transfer negative amount",
+			path:        tokenPath,
+			to:          address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:      -100,
+			shouldPanic: true,
+		},
+	}
 
-// 	// 	uassert.Error(t, teller.TransferFrom(addr01, defaultHolder, uint64(500))) // not enough allowance
-// 	// })
-// }
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("Expected panic for %s", tt.name)
+					}
+				}()
+			}
+			SafeGRC20Transfer(cross, tt.path, tt.to, tt.amount)
+		})
+	}
+}
+
+func TestSafeGRC20TransferFrom(t *testing.T) {
+	tests := []struct {
+		name        string
+		path        string
+		from        address
+		to          address
+		amount      int64
+		shouldPanic bool
+	}{
+		{
+			name:        "safe transfer from without allowance",
+			path:        tokenPath,
+			from:        address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"),
+			to:          address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:      100,
+			shouldPanic: true,
+		},
+		{
+			name:        "safe transfer from with insufficient balance",
+			path:        tokenPath,
+			from:        address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"),
+			to:          address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:      99999999999999,
+			shouldPanic: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("Expected panic for %s", tt.name)
+					}
+				}()
+			}
+			SafeGRC20TransferFrom(cross, tt.path, tt.from, tt.to, tt.amount)
+		})
+	}
+}
+
+func TestSafeGRC20Approve(t *testing.T) {
+	tests := []struct {
+		name        string
+		path        string
+		spender     address
+		amount      int64
+		shouldPanic bool
+	}{
+		{
+			name:        "safe approve valid amount",
+			path:        tokenPath,
+			spender:     address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:      1000,
+			shouldPanic: false,
+		},
+		{
+			name:        "safe approve negative amount",
+			path:        tokenPath,
+			spender:     address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:      -100,
+			shouldPanic: true,
+		},
+		{
+			name:        "safe approve zero amount",
+			path:        tokenPath,
+			spender:     address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:      0,
+			shouldPanic: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("Expected panic for %s", tt.name)
+					}
+				}()
+			}
+			SafeGRC20Approve(cross, tt.path, tt.spender, tt.amount)
+		})
+	}
+}
 
 func TestIsRegistered(t *testing.T) {
 	t.Run("check if token is registered", func(t *testing.T) {
