@@ -474,13 +474,16 @@ func TestExistsUserSendCoins(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Mock the getUserSendCoins function by testing the logic directly
-			var result bool
-			if tt.sendCoins == nil {
-				result = false
-			} else {
-				result = len(tt.sendCoins) > 0
+			coins := make(chain.Coins, 0)
+			if tt.sendCoins != nil {
+				for denom, amount := range tt.sendCoins {
+					coins = append(coins, chain.Coin{Denom: denom, Amount: amount})
+				}
 			}
+
+			testing.SetOriginSend(coins)
+
+			result := ExistsUserSendCoins()
 
 			uassert.Equal(t, result, tt.expectedResult, tt.description)
 		})
