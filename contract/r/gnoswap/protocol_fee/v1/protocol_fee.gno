@@ -102,7 +102,7 @@ func (pf *protocolFeeV1) SetDevOpsPct(pct int64) {
 	halt.AssertIsNotHaltedProtocolFee()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	assertIsValidPercent(pct)
 
@@ -138,7 +138,7 @@ func (pf *protocolFeeV1) SetGovStakerPct(pct int64) {
 	halt.AssertIsNotHaltedProtocolFee()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernanceWithVersion(1, caller)
+	access.AssertIsAdminOrGovernance(caller)
 
 	assertIsValidPercent(pct)
 

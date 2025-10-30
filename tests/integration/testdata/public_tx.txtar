@@ -94,7 +94,7 @@ gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/community_pool -pkgpath gn
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/gov/staker -pkgpath gno.land/r/gnoswap/gov/staker -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy gov/governance
-gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/gov/governance -pkgpath gno.land/r/gnoswap/v1/gov/governance -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/gov/governance -pkgpath gno.land/r/gnoswap/gov/governance -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy launchpad
 gnokey maketx addpkg -pkgdir ../../contract/r/gnoswap/launchpad -pkgpath gno.land/r/gnoswap/launchpad -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
@@ -356,10 +356,10 @@ stdout '(200000000 uint64)'
 
 
 # propose proposal
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gov/governance -func ProposeText -args "title01" -args "description01" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gov/governance -func GetProposalById -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeText -args "title01" -args "description01" -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func GetProposalById -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stdout 'title01'
 
 # cancel proposal
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gov/governance -func Cancel -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func Cancel -args 1 -gas-fee 1ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
 stdout OK
