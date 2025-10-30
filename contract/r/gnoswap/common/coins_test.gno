@@ -7,8 +7,8 @@ import (
 	"gno.land/p/nt/uassert"
 )
 
-// TestIsUserSendGNOTAmount tests the isUserSendGNOTAmount function with various scenarios
-func TestIsUserSendGNOTAmount(t *testing.T) {
+// TestCoins_IsUserSendGNOTAmount tests the isUserSendGNOTAmount function with various scenarios
+func TestCoins_IsUserSendGNOTAmount(t *testing.T) {
 	tests := []struct {
 		name           string
 		sendCoins      map[string]int64
@@ -111,8 +111,8 @@ func TestIsUserSendGNOTAmount(t *testing.T) {
 	}
 }
 
-// TestHasUnsupportedNativeCoins tests the hasUnsupportedNativeCoins function with various scenarios
-func TestHasUnsupportedNativeCoins(t *testing.T) {
+// TestCoins_HasUnsupportedNativeCoins tests the hasUnsupportedNativeCoins function with various scenarios
+func TestCoins_HasUnsupportedNativeCoins(t *testing.T) {
 	tests := []struct {
 		name           string
 		sendCoins      map[string]int64
@@ -209,8 +209,8 @@ func TestHasUnsupportedNativeCoins(t *testing.T) {
 	}
 }
 
-// TestIsGNOTPath tests the IsGNOTPath function with various path scenarios
-func TestIsGNOTPath(t *testing.T) {
+// TestCoins_IsGNOTPath tests the IsGNOTPath function with various path scenarios
+func TestCoins_IsGNOTPath(t *testing.T) {
 	tests := []struct {
 		name           string
 		path           string
@@ -263,8 +263,8 @@ func TestIsGNOTPath(t *testing.T) {
 	}
 }
 
-// TestIsGNOTNativePath tests the IsGNOTNativePath function
-func TestIsGNOTNativePath(t *testing.T) {
+// TestCoins_IsGNOTNativePath tests the IsGNOTNativePath function
+func TestCoins_IsGNOTNativePath(t *testing.T) {
 	tests := []struct {
 		name           string
 		path           string
@@ -311,8 +311,8 @@ func TestIsGNOTNativePath(t *testing.T) {
 	}
 }
 
-// TestIsGNOTWrappedPath tests the IsGNOTWrappedPath function
-func TestIsGNOTWrappedPath(t *testing.T) {
+// TestCoins_IsGNOTWrappedPath tests the IsGNOTWrappedPath function
+func TestCoins_IsGNOTWrappedPath(t *testing.T) {
 	tests := []struct {
 		name           string
 		path           string
@@ -365,8 +365,8 @@ func TestIsGNOTWrappedPath(t *testing.T) {
 	}
 }
 
-// TestExistsUserSendCoins tests the ExistsUserSendCoins function
-func TestExistsUserSendCoins(t *testing.T) {
+// TestCoins_ExistsUserSendCoins tests the ExistsUserSendCoins function
+func TestCoins_ExistsUserSendCoins(t *testing.T) {
 	tests := []struct {
 		name           string
 		sendCoins      map[string]int64
@@ -441,8 +441,8 @@ func TestExistsUserSendCoins(t *testing.T) {
 	}
 }
 
-// TestGetUserSendCoins tests the getUserSendCoins function logic
-func TestGetUserSendCoins(t *testing.T) {
+// TestCoins_GetUserSendCoins tests the getUserSendCoins function logic
+func TestCoins_GetUserSendCoins(t *testing.T) {
 	tests := []struct {
 		name       string
 		inputCoins []struct {
@@ -581,8 +581,8 @@ func TestGetUserSendCoins(t *testing.T) {
 	}
 }
 
-// TestConstants tests the constants used in the coins package
-func TestConstants(t *testing.T) {
+// TestCoins_Constants tests the constants used in the coins package
+func TestCoins_Constants(t *testing.T) {
 	tests := []struct {
 		name     string
 		actual   string

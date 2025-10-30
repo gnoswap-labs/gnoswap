@@ -17,7 +17,7 @@ var (
 	MAX_SQRT_RATIO = "1461446703485210103287273052203988822378723970342"
 )
 
-func TestGetSqrtRatioAtTick(t *testing.T) {
+func TestTickMath_GetSqrtRatioAtTick(t *testing.T) {
 	tests := []struct {
 		name                 string
 		tick                 int32
@@ -195,7 +195,7 @@ func TestGetSqrtRatioAtTick(t *testing.T) {
 	}
 }
 
-func TestGetTickAtSqrtRatio(t *testing.T) {
+func TestTickMath_GetTickAtSqrtRatio(t *testing.T) {
 	tests := []struct {
 		name                 string
 		sqrtPriceX96         string
@@ -364,7 +364,7 @@ func TestGetTickAtSqrtRatio(t *testing.T) {
 	}
 }
 
-func TestPrecisionValidation(t *testing.T) {
+func TestTickMath_PrecisionValidation(t *testing.T) {
 	// Test precision for various absolute tick values
 	absTicks := []int32{
 		50, 100, 250, 500, 1000, 2500, 3000, 4000, 5000,
@@ -397,7 +397,7 @@ func TestPrecisionValidation(t *testing.T) {
 	}
 }
 
-func TestConstants(t *testing.T) {
+func TestTickMath_Constants(t *testing.T) {
 	tests := []struct {
 		name          string
 		tick          int32
@@ -427,7 +427,7 @@ func TestConstants(t *testing.T) {
 	}
 }
 
-func TestRatioValidation(t *testing.T) {
+func TestTickMath_RatioValidation(t *testing.T) {
 	// Test various sqrt ratios as in TypeScript tests
 	tests := []struct {
 		name        string
@@ -520,7 +520,7 @@ func TestRatioValidation(t *testing.T) {
 	}
 }
 
-func TestBoundaryConditions(t *testing.T) {
+func TestTickMath_BoundaryConditions(t *testing.T) {
 	tests := []struct {
 		name             string
 		tick             int32
@@ -569,7 +569,7 @@ func TestBoundaryConditions(t *testing.T) {
 	}
 }
 
-func TestSqrtRatioBoundaryConditions(t *testing.T) {
+func TestTickMath_SqrtRatioBoundaryConditions(t *testing.T) {
 	tests := []struct {
 		name             string
 		sqrtRatio        string

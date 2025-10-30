@@ -11,7 +11,7 @@ import (
 
 var tokenPath = "gno.land/r/demo/defi/foo20"
 
-func TestGetToken(t *testing.T) {
+func TestGrc20regHelper_GetToken(t *testing.T) {
 	tests := []struct {
 		name        string
 		path        string
@@ -58,7 +58,7 @@ func TestGetToken(t *testing.T) {
 	}
 }
 
-func TestTokenMethod(t *testing.T) {
+func TestGrc20regHelper_TokenMethod(t *testing.T) {
 	token := GetToken(tokenPath)
 
 	t.Run("GetName()", func(t *testing.T) {
@@ -99,7 +99,7 @@ func TestTokenMethod(t *testing.T) {
 	})
 }
 
-func TestGetTokenTeller(t *testing.T) {
+func TestGrc20regHelper_GetTokenTeller(t *testing.T) {
 	tests := []struct {
 		name        string
 		path        string
@@ -141,7 +141,7 @@ func TestGetTokenTeller(t *testing.T) {
 	}
 }
 
-func TestTransfer(t *testing.T) {
+func TestGrc20regHelper_Transfer(t *testing.T) {
 	tests := []struct {
 		name          string
 		path          string
@@ -229,7 +229,7 @@ func TestTransfer(t *testing.T) {
 	}
 }
 
-func TestTransferFrom(t *testing.T) {
+func TestGrc20regHelper_TransferFrom(t *testing.T) {
 	tests := []struct {
 		name          string
 		path          string
@@ -332,7 +332,7 @@ func TestTransferFrom(t *testing.T) {
 	}
 }
 
-func TestApprove(t *testing.T) {
+func TestGrc20regHelper_Approve(t *testing.T) {
 	tests := []struct {
 		name          string
 		path          string
@@ -406,7 +406,7 @@ func TestApprove(t *testing.T) {
 	}
 }
 
-func TestSafeGRC20Transfer(t *testing.T) {
+func TestGrc20regHelper_SafeGRC20Transfer(t *testing.T) {
 	tests := []struct {
 		name        string
 		path        string
@@ -458,7 +458,7 @@ func TestSafeGRC20Transfer(t *testing.T) {
 	}
 }
 
-func TestSafeGRC20TransferFrom(t *testing.T) {
+func TestGrc20regHelper_SafeGRC20TransferFrom(t *testing.T) {
 	tests := []struct {
 		name        string
 		path        string
@@ -507,7 +507,7 @@ func TestSafeGRC20TransferFrom(t *testing.T) {
 	}
 }
 
-func TestSafeGRC20Approve(t *testing.T) {
+func TestGrc20regHelper_SafeGRC20Approve(t *testing.T) {
 	tests := []struct {
 		name        string
 		path        string
@@ -559,7 +559,7 @@ func TestSafeGRC20Approve(t *testing.T) {
 	}
 }
 
-func TestIsRegistered(t *testing.T) {
+func TestGrc20regHelper_IsRegistered(t *testing.T) {
 	tests := []struct {
 		name          string
 		path          string
@@ -599,7 +599,7 @@ func TestIsRegistered(t *testing.T) {
 	}
 }
 
-func TestMustRegistered(t *testing.T) {
+func TestGrc20regHelper_MustRegistered(t *testing.T) {
 	tests := []struct {
 		name        string
 		paths       []string
@@ -656,7 +656,7 @@ func TestMustRegistered(t *testing.T) {
 	}
 }
 
-func TestExtractTokenPathsFromRender(t *testing.T) {
+func TestGrc20regHelper_ExtractTokenPathsFromRender(t *testing.T) {
 	var (
 		wugnotPath = "gno.land/r/gnoland/wugnot"
 		gnsPath    = "gno.land/r/gnoswap/gns"
@@ -720,7 +720,7 @@ func TestExtractTokenPathsFromRender(t *testing.T) {
 	}
 }
 
-func TestTotalSupply(t *testing.T) {
+func TestGrc20regHelper_TotalSupply(t *testing.T) {
 	tests := []struct {
 		name           string
 		path           string
@@ -764,7 +764,7 @@ func TestTotalSupply(t *testing.T) {
 	}
 }
 
-func TestBalanceOf(t *testing.T) {
+func TestGrc20regHelper_BalanceOf(t *testing.T) {
 	defaultHolder := address("g1manfred47kzduec920z88wfr64ylksmdcedlf5")
 
 	tests := []struct {
@@ -821,7 +821,7 @@ func TestBalanceOf(t *testing.T) {
 	}
 }
 
-func TestAllowance(t *testing.T) {
+func TestGrc20regHelper_Allowance(t *testing.T) {
 	owner := address("g1manfred47kzduec920z88wfr64ylksmdcedlf5")
 	spender := address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum")
 

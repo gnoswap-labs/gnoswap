@@ -10,7 +10,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-func TestToAscendingOrder(t *testing.T) {
+func TestLiquidityAmounts_ToAscendingOrder(t *testing.T) {
 	tests := []struct {
 		name      string
 		a         *u256.Uint
@@ -63,7 +63,7 @@ func TestToAscendingOrder(t *testing.T) {
 	}
 }
 
-func TestToUint128(t *testing.T) {
+func TestLiquidityAmounts_ToUint128(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
@@ -104,7 +104,7 @@ func TestToUint128(t *testing.T) {
 	}
 }
 
-func TestSafeConvertToUint128(t *testing.T) {
+func TestLiquidityAmounts_SafeConvertToUint128(t *testing.T) {
 	tests := []struct {
 		name        string
 		input       *u256.Uint
@@ -149,7 +149,7 @@ func TestSafeConvertToUint128(t *testing.T) {
 	}
 }
 
-func TestComputeLiquidityForAmount0(t *testing.T) {
+func TestLiquidityAmounts_ComputeLiquidityForAmount0(t *testing.T) {
 	testCases := []struct {
 		name        string
 		sqrtRatioA  string
@@ -227,7 +227,7 @@ func TestComputeLiquidityForAmount0(t *testing.T) {
 	}
 }
 
-func TestComputeLiquidityForAmount1(t *testing.T) {
+func TestLiquidityAmounts_ComputeLiquidityForAmount1(t *testing.T) {
 	q96 := u256.MustFromDecimal(Q96)
 
 	tests := []struct {
@@ -282,7 +282,7 @@ func TestComputeLiquidityForAmount1(t *testing.T) {
 	}
 }
 
-func TestGetLiquidityForAmounts(t *testing.T) {
+func TestLiquidityAmounts_GetLiquidityForAmounts(t *testing.T) {
 	q96 := u256.MustFromDecimal(Q96)
 
 	tests := []struct {
@@ -357,7 +357,7 @@ func TestGetLiquidityForAmounts(t *testing.T) {
 	}
 }
 
-func TestComputeAmount0ForLiquidity(t *testing.T) {
+func TestLiquidityAmounts_ComputeAmount0ForLiquidity(t *testing.T) {
 	q96 := u256.MustFromDecimal("79228162514264337593543950336") // 2^96
 
 	tests := []struct {
@@ -420,7 +420,7 @@ func TestComputeAmount0ForLiquidity(t *testing.T) {
 	}
 }
 
-func TestComputeAmount1ForLiquidity(t *testing.T) {
+func TestLiquidityAmounts_ComputeAmount1ForLiquidity(t *testing.T) {
 	q96 := u256.MustFromDecimal(Q96) // 2^96 = 79228162514264337593543950336
 
 	tests := []struct {
@@ -475,7 +475,7 @@ func TestComputeAmount1ForLiquidity(t *testing.T) {
 	}
 }
 
-func TestGetAmountsForLiquidity(t *testing.T) {
+func TestLiquidityAmounts_GetAmountsForLiquidity(t *testing.T) {
 	q96 := u256.MustFromDecimal(Q96) // 2^96 = 79228162514264337593543950336
 
 	tests := []struct {
@@ -561,7 +561,7 @@ func TestGetAmountsForLiquidity(t *testing.T) {
 	}
 }
 
-func TestExtremeRatioValues(t *testing.T) {
+func TestLiquidityAmounts_ExtremeRatioValues(t *testing.T) {
 	tests := []struct {
 		name             string
 		testFunc         func() string
@@ -606,7 +606,7 @@ func TestExtremeRatioValues(t *testing.T) {
 	}
 }
 
-func TestMulDivOverflowProtection(t *testing.T) {
+func TestLiquidityAmounts_MulDivOverflowProtection(t *testing.T) {
 	tests := []struct {
 		name             string
 		value            *u256.Uint
@@ -648,7 +648,7 @@ func TestMulDivOverflowProtection(t *testing.T) {
 	}
 }
 
-func TestLiquidityMathAddDelta(t *testing.T) {
+func TestLiquidityAmounts_LiquidityMathAddDelta(t *testing.T) {
 	tests := []struct {
 		name      string
 		fn        func()
