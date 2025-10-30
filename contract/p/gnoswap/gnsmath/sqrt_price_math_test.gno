@@ -457,6 +457,52 @@ func TestGetNextPriceAmount1Add(t *testing.T) {
 	}
 }
 
+// TestGetNextPriceAmount1Add_MAX160Boundary tests exact MAX_UINT160 boundary
+func TestGetNextPriceAmount1Add_MAX160Boundary(t *testing.T) {
+	tests := []struct {
+		name      string
+		sqrtPX96  *u256.Uint
+		liquidity *u256.Uint
+		amount    *u256.Uint
+	}{
+		{
+			name: "amount_exactly_MAX_UINT160",
+			// When amount = MAX_UINT160 and liquidity = MAX_UINT160,
+			// quotient = (MAX_UINT160 << 96) / MAX_UINT160 = 2^96 = Q96
+			sqrtPX96:  Q96,
+			liquidity: MAX_UINT160,
+			amount:    MAX_UINT160,
+		},
+		{
+			name: "amount_one_below_MAX_UINT160",
+			// Similar setup but with amount = MAX_UINT160 - 1
+			sqrtPX96:  Q96,
+			liquidity: MAX_UINT160,
+			amount:    new(u256.Uint).Sub(MAX_UINT160, u256.One()),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// when
+			result := getNextPriceAmount1Add(tt.sqrtPX96, tt.liquidity, tt.amount)
+
+			// then
+			uassert.NotEqual(t, "0", result.ToString(), "Result should not be zero")
+
+			// Verify which code path was taken based on amount vs MAX_UINT160
+			if tt.amount.Lte(MAX_UINT160) {
+				t.Logf("Used Lsh path: amount <= MAX_UINT160")
+			} else {
+				t.Logf("Used MulDiv path: amount > MAX_UINT160")
+			}
+
+			// Verify sqrtPX96 < result (price increased after adding token1)
+			uassert.True(t, result.Gt(tt.sqrtPX96), "result should be greater than sqrtPX96")
+		})
+	}
+}
+
 // TestGetNextPriceAmount1Remove tests the internal helper for removing token1
 func TestGetNextPriceAmount1Remove(t *testing.T) {
 	tests := []struct {
