@@ -6,8 +6,8 @@ import (
 
 	"gno.land/r/gnoswap/access"
 
-	_ "gno.land/r/gnoswap/rbac"
 	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
 	pf "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -25,7 +25,7 @@ var (
 
 var (
 	adminRealm     = testing.NewUserRealm(adminAddr)
-	stakerRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
 	govStakerRealm = testing.NewCodeRealm("gno.land/r/gnoswap/v1/gov/staker")
 )
 

@@ -18,7 +18,7 @@ import (
 
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/launchpad"
-	sr "gno.land/r/gnoswap/v1/staker"
+	sr "gno.land/r/gnoswap/staker"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -548,7 +548,7 @@ func collectLaunchpadDeposit() {
 // [EXPECTED] position should be changed g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye to g1vsm68lq9cpn7x507s6gh59anmx86kxfhzyszu2
 // [EXPECTED] protocol_fee should be changed g1r340tuven27z8wq50u8d20eqrsj470082682tp to g1397dea8xlfv5858xzhsly7k998xm2zlvrm93t2
 // [EXPECTED] router should be changed g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp to g1cnz5gm2l09pm2k6rknjjar9a2w53fdhk4yjzy5
-// [EXPECTED] staker should be changed g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu to g14fclvfqynndp0l6kpyxkpgn4sljw9rr96hz46l
+// [EXPECTED] staker should be changed g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 to g14fclvfqynndp0l6kpyxkpgn4sljw9rr96hz46l
 // [EXPECTED] dev ops should be changed g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9 to g1v3jhvmmswve97h6lta047h6lta047h6luwedp9
 // [EXPECTED] launchpad should be changed g1x6r75sxlkp9zfqufew0vcuq9sfclsq8uaqkru9 to g1qslhn7vn69e09zwmz5hlz0273v3c33u5z8d9j7
 //

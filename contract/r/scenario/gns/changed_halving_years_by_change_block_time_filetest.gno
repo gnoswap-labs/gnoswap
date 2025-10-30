@@ -12,7 +12,7 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
-	_ "gno.land/r/gnoswap/v1/staker"
+	_ "gno.land/r/gnoswap/staker"
 )
 
 var t *testing.T

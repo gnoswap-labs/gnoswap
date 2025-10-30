@@ -12,7 +12,7 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 	pf "gno.land/r/gnoswap/protocol_fee"
 	rr "gno.land/r/gnoswap/router"
-	sr "gno.land/r/gnoswap/v1/staker"
+	sr "gno.land/r/gnoswap/staker"
 	"gno.land/r/gnoswap/gov/governance"
 
 	"gno.land/r/gnoswap/halt"
@@ -28,7 +28,7 @@ const (
 	COMMON_PATH         = "gno.land/r/gnoswap/common"
 	POOL_PATH           = "gno.land/r/gnoswap/pool"
 	ROUTER_PATH         = "gno.land/r/gnoswap/router"
-	STAKER_PATH         = "gno.land/r/gnoswap/v1/staker"
+	STAKER_PATH         = "gno.land/r/gnoswap/staker"
 	PROTOCOL_FEE_PATH   = "gno.land/r/gnoswap/protocol_fee"
 	COMMUNITY_POOL_PATH = "gno.land/r/gnoswap/community_pool"
 	GOV_GOVERNANCE_PATH = "gno.land/r/gnoswap/gov/governance"
