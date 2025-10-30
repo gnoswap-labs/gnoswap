@@ -1,6 +1,7 @@
 package common
 
 import (
+	"math"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -203,7 +204,7 @@ func TestGrc20regHelper_Transfer(t *testing.T) {
 			name:          "transfer max int64 amount",
 			path:          tokenPath,
 			to:            address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
-			amount:        9223372036854775807,
+			amount:        math.MaxInt64,
 			expectedError: true,
 		},
 	}
@@ -366,7 +367,7 @@ func TestGrc20regHelper_Approve(t *testing.T) {
 			name:          "approve large amount",
 			path:          tokenPath,
 			spender:       address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
-			amount:        9223372036854775807,
+			amount:        math.MaxInt64,
 			expectedError: false,
 		},
 		{

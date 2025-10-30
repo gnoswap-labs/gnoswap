@@ -2,6 +2,7 @@ package common
 
 import (
 	"chain"
+	"math"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -74,22 +75,22 @@ func TestCoins_IsUserSendGNOTAmount(t *testing.T) {
 		},
 		{
 			name:           "max_int64_amount",
-			sendCoins:      map[string]int64{GNOT_DENOM: 9223372036854775807},
-			expectedAmount: 9223372036854775807,
+			sendCoins:      map[string]int64{GNOT_DENOM: math.MaxInt64},
+			expectedAmount: math.MaxInt64,
 			expectedResult: true,
 			description:    "Max int64 amount should match correctly",
 		},
 		{
 			name:           "min_int64_amount",
-			sendCoins:      map[string]int64{GNOT_DENOM: -9223372036854775808},
-			expectedAmount: -9223372036854775808,
+			sendCoins:      map[string]int64{GNOT_DENOM: math.MinInt64},
+			expectedAmount: math.MinInt64,
 			expectedResult: false,
 			description:    "Min int64 amount should return false (negative)",
 		},
 		{
 			name:           "max_int64_expected_different",
-			sendCoins:      map[string]int64{GNOT_DENOM: 9223372036854775807},
-			expectedAmount: 9223372036854775806,
+			sendCoins:      map[string]int64{GNOT_DENOM: math.MaxInt64},
+			expectedAmount: math.MaxInt64 - 1,
 			expectedResult: false,
 			description:    "Max int64 with different expected should return false",
 		},
@@ -169,13 +170,13 @@ func TestCoins_HasUnsupportedNativeCoins(t *testing.T) {
 		},
 		{
 			name:           "gnot_with_max_amount",
-			sendCoins:      map[string]int64{GNOT_DENOM: 9223372036854775807},
+			sendCoins:      map[string]int64{GNOT_DENOM: math.MaxInt64},
 			expectedResult: false,
 			description:    "GNOT with max int64 amount - should return false (no unsupported)",
 		},
 		{
 			name:           "gnot_with_min_amount",
-			sendCoins:      map[string]int64{GNOT_DENOM: -9223372036854775808},
+			sendCoins:      map[string]int64{GNOT_DENOM: math.MinInt64},
 			expectedResult: false,
 			description:    "GNOT with min int64 amount - should return false (filtered out)",
 		},
