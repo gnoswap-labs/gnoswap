@@ -853,3 +853,177 @@ func TestBitMath_ExhaustiveSmallRange(t *testing.T) {
 		}
 	}
 }
+
+// TestBitMath_ShiftLevelBoundariesWithMultipleBits tests complex bit patterns
+// at each shift level boundary to ensure the algorithm handles multiple bits correctly
+func TestBitMath_ShiftLevelBoundariesWithMultipleBits(t *testing.T) {
+	tests := []struct {
+		name   string
+		value  *u256.Uint
+		expMSB uint8
+		expLSB uint8
+		desc   string
+	}{
+		{
+			name:   "128_boundary_above_and_below",
+			value:  new(u256.Uint).Add(new(u256.Uint).Lsh(u256.One(), 128), new(u256.Uint).Lsh(u256.One(), 64)),
+			expMSB: 128,
+			expLSB: 64,
+			desc:   "2^128 + 2^64: tests 128 shift level true, then 64 level true",
+		},
+		{
+			name:   "127_and_126_consecutive",
+			value:  new(u256.Uint).Add(new(u256.Uint).Lsh(u256.One(), 127), new(u256.Uint).Lsh(u256.One(), 126)),
+			expMSB: 127,
+			expLSB: 126,
+			desc:   "2^127 + 2^126: tests 128 shift false, then processes lower bits",
+		},
+		{
+			name:   "64_boundary_above_and_below",
+			value:  new(u256.Uint).Add(new(u256.Uint).Lsh(u256.One(), 64), new(u256.Uint).Lsh(u256.One(), 32)),
+			expMSB: 64,
+			expLSB: 32,
+			desc:   "2^64 + 2^32: tests 128, 64 shift levels",
+		},
+		{
+			name:   "63_and_62_consecutive",
+			value:  new(u256.Uint).Add(new(u256.Uint).Lsh(u256.One(), 63), new(u256.Uint).Lsh(u256.One(), 62)),
+			expMSB: 63,
+			expLSB: 62,
+			desc:   "2^63 + 2^62: tests 128, 64 shift false",
+		},
+		{
+			name:   "32_boundary_crossing",
+			value:  new(u256.Uint).Add(new(u256.Uint).Lsh(u256.One(), 32), new(u256.Uint).Lsh(u256.One(), 16)),
+			expMSB: 32,
+			expLSB: 16,
+			desc:   "2^32 + 2^16: tests multiple shift levels",
+		},
+		{
+			name:   "31_and_30_consecutive",
+			value:  new(u256.Uint).Add(new(u256.Uint).Lsh(u256.One(), 31), new(u256.Uint).Lsh(u256.One(), 30)),
+			expMSB: 31,
+			expLSB: 30,
+			desc:   "2^31 + 2^30: just below 32 boundary",
+		},
+		{
+			name:   "16_boundary_crossing",
+			value:  new(u256.Uint).Add(new(u256.Uint).Lsh(u256.One(), 16), new(u256.Uint).Lsh(u256.One(), 8)),
+			expMSB: 16,
+			expLSB: 8,
+			desc:   "2^16 + 2^8: tests 16 and 8 shift levels",
+		},
+		{
+			name:   "15_and_14_consecutive",
+			value:  new(u256.Uint).Add(new(u256.Uint).Lsh(u256.One(), 15), new(u256.Uint).Lsh(u256.One(), 14)),
+			expMSB: 15,
+			expLSB: 14,
+			desc:   "2^15 + 2^14: just below 16 boundary",
+		},
+		{
+			name:   "8_boundary_crossing",
+			value:  new(u256.Uint).Add(new(u256.Uint).Lsh(u256.One(), 8), new(u256.Uint).Lsh(u256.One(), 4)),
+			expMSB: 8,
+			expLSB: 4,
+			desc:   "2^8 + 2^4: tests 8 and 4 shift levels",
+		},
+		{
+			name:   "7_and_6_consecutive",
+			value:  new(u256.Uint).Add(new(u256.Uint).Lsh(u256.One(), 7), new(u256.Uint).Lsh(u256.One(), 6)),
+			expMSB: 7,
+			expLSB: 6,
+			desc:   "2^7 + 2^6: just below 8 boundary",
+		},
+		{
+			name:   "4_boundary_crossing",
+			value:  new(u256.Uint).Add(new(u256.Uint).Lsh(u256.One(), 4), new(u256.Uint).Lsh(u256.One(), 2)),
+			expMSB: 4,
+			expLSB: 2,
+			desc:   "2^4 + 2^2: tests 4 and 2 shift levels",
+		},
+		{
+			name:   "3_and_2_consecutive",
+			value:  new(u256.Uint).Add(new(u256.Uint).Lsh(u256.One(), 3), new(u256.Uint).Lsh(u256.One(), 2)),
+			expMSB: 3,
+			expLSB: 2,
+			desc:   "2^3 + 2^2: just below 4 boundary",
+		},
+		{
+			name:   "2_boundary_crossing",
+			value:  new(u256.Uint).Add(new(u256.Uint).Lsh(u256.One(), 2), u256.One()),
+			expMSB: 2,
+			expLSB: 0,
+			desc:   "2^2 + 2^0: tests 2 shift level and lowest bit",
+		},
+		{
+			name:   "highest_and_lowest_bits",
+			value:  new(u256.Uint).Add(new(u256.Uint).Lsh(u256.One(), 255), u256.One()),
+			expMSB: 255,
+			expLSB: 0,
+			desc:   "2^255 + 2^0: maximum MSB and minimum LSB span",
+		},
+		{
+			name: "multiple_shift_boundaries",
+			value: new(u256.Uint).Add(
+				new(u256.Uint).Add(
+					new(u256.Uint).Lsh(u256.One(), 128),
+					new(u256.Uint).Lsh(u256.One(), 64),
+				),
+				new(u256.Uint).Add(
+					new(u256.Uint).Lsh(u256.One(), 32),
+					new(u256.Uint).Lsh(u256.One(), 16),
+				),
+			),
+			expMSB: 128,
+			expLSB: 16,
+			desc:   "2^128 + 2^64 + 2^32 + 2^16: multiple shift boundaries",
+		},
+		{
+			name: "all_major_boundaries",
+			value: new(u256.Uint).Add(
+				new(u256.Uint).Add(
+					new(u256.Uint).Add(
+						new(u256.Uint).Lsh(u256.One(), 128),
+						new(u256.Uint).Lsh(u256.One(), 64),
+					),
+					new(u256.Uint).Add(
+						new(u256.Uint).Lsh(u256.One(), 32),
+						new(u256.Uint).Lsh(u256.One(), 16),
+					),
+				),
+				new(u256.Uint).Add(
+					new(u256.Uint).Add(
+						new(u256.Uint).Lsh(u256.One(), 8),
+						new(u256.Uint).Lsh(u256.One(), 4),
+					),
+					new(u256.Uint).Add(
+						new(u256.Uint).Lsh(u256.One(), 2),
+						u256.One(),
+					),
+				),
+			),
+			expMSB: 128,
+			expLSB: 0,
+			desc:   "All shift level boundaries: 2^128 + 2^64 + 2^32 + 2^16 + 2^8 + 2^4 + 2^2 + 2^0",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Logf("Testing: %s", tc.desc)
+
+			// when
+			msb := BitMathMostSignificantBit(tc.value)
+			lsb := BitMathLeastSignificantBit(tc.value)
+
+			// then
+			uassert.Equal(t, msb, tc.expMSB, "MSB mismatch")
+			uassert.Equal(t, lsb, tc.expLSB, "LSB mismatch")
+
+			// Verify MSB >= LSB invariant
+			uassert.True(t, msb >= lsb, "MSB must be >= LSB")
+
+			t.Logf("Value has MSB at position %d, LSB at position %d", msb, lsb)
+		})
+	}
+}
