@@ -12,39 +12,50 @@ import (
 var tokenPath = "gno.land/r/demo/defi/foo20"
 
 func TestGetToken(t *testing.T) {
-	t.Run("get regsitered token", func(t *testing.T) {
-		token := GetToken(tokenPath)
-		if token == nil {
-			t.Error("Expected non-nil token for foo20")
-		}
-	})
+	tests := []struct {
+		name        string
+		path        string
+		shouldPanic bool
+	}{
+		{
+			name:        "get registered token",
+			path:        tokenPath,
+			shouldPanic: false,
+		},
+		{
+			name:        "get non registered token",
+			path:        "not_registered_token",
+			shouldPanic: true,
+		},
+		{
+			name:        "get token with empty string path",
+			path:        "",
+			shouldPanic: true,
+		},
+		{
+			name:        "get token with invalid path format",
+			path:        "invalid/path/format",
+			shouldPanic: true,
+		},
+	}
 
-	t.Run("get non registered token", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("Expected panic for non-registered token")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("Expected panic for %s", tt.name)
+					}
+				}()
 			}
-		}()
-		GetToken("not_registered_token")
-	})
 
-	t.Run("get token with empty string path", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("Expected panic for empty string path")
-			}
-		}()
-		GetToken("")
-	})
+			token := GetToken(tt.path)
 
-	t.Run("get token with invalid path format", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("Expected panic for invalid path format")
+			if !tt.shouldPanic && token == nil {
+				t.Error("Expected non-nil token")
 			}
-		}()
-		GetToken("invalid/path/format")
-	})
+		})
+	}
 }
 
 func TestTokenMethod(t *testing.T) {
@@ -89,30 +100,45 @@ func TestTokenMethod(t *testing.T) {
 }
 
 func TestGetTokenTeller(t *testing.T) {
-	t.Run("get registered token teller", func(t *testing.T) {
-		teller := GetTokenTeller(tokenPath)
-		if teller == nil {
-			t.Error("Expected non-nil teller for foo20")
-		}
-	})
+	tests := []struct {
+		name        string
+		path        string
+		shouldPanic bool
+	}{
+		{
+			name:        "get registered token teller",
+			path:        tokenPath,
+			shouldPanic: false,
+		},
+		{
+			name:        "get non registered token teller",
+			path:        "not_registered_teller",
+			shouldPanic: true,
+		},
+		{
+			name:        "get token teller with empty string path",
+			path:        "",
+			shouldPanic: true,
+		},
+	}
 
-	t.Run("get non registered token teller", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("Expected panic for non-registered token teller")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("Expected panic for %s", tt.name)
+					}
+				}()
 			}
-		}()
-		GetTokenTeller("not_registered_teller")
-	})
 
-	t.Run("get token teller with empty string path", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("Expected panic for empty string path")
+			teller := GetTokenTeller(tt.path)
+
+			if !tt.shouldPanic && teller == nil {
+				t.Error("Expected non-nil teller")
 			}
-		}()
-		GetTokenTeller("")
-	})
+		})
+	}
 }
 
 func TestTransfer(t *testing.T) {
@@ -534,71 +560,100 @@ func TestSafeGRC20Approve(t *testing.T) {
 }
 
 func TestIsRegistered(t *testing.T) {
-	t.Run("check if token is registered", func(t *testing.T) {
-		uassert.NoError(t, IsRegistered(tokenPath))
-	})
+	tests := []struct {
+		name          string
+		path          string
+		expectedError bool
+	}{
+		{
+			name:          "check if token is registered",
+			path:          tokenPath,
+			expectedError: false,
+		},
+		{
+			name:          "check if token is not registered",
+			path:          "not_registered_token",
+			expectedError: true,
+		},
+		{
+			name:          "check with empty string path",
+			path:          "",
+			expectedError: true,
+		},
+		{
+			name:          "check with invalid path format",
+			path:          "invalid/path",
+			expectedError: true,
+		},
+	}
 
-	t.Run("check if token is not registered", func(t *testing.T) {
-		uassert.Error(t, IsRegistered("not_registered_token"))
-	})
-
-	t.Run("check with empty string path", func(t *testing.T) {
-		uassert.Error(t, IsRegistered(""))
-	})
-
-	t.Run("check with invalid path format", func(t *testing.T) {
-		uassert.Error(t, IsRegistered("invalid/path"))
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := IsRegistered(tt.path)
+			if tt.expectedError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestMustRegistered(t *testing.T) {
-	t.Run("must be registered single token", func(t *testing.T) {
-		MustRegistered(tokenPath)
-	})
+	tests := []struct {
+		name        string
+		paths       []string
+		shouldPanic bool
+	}{
+		{
+			name:        "must be registered single token",
+			paths:       []string{tokenPath},
+			shouldPanic: false,
+		},
+		{
+			name:        "panic for non registered token",
+			paths:       []string{"not_registered"},
+			shouldPanic: true,
+		},
+		{
+			name:        "must be registered with no parameters",
+			paths:       []string{},
+			shouldPanic: false,
+		},
+		{
+			name:        "must be registered with multiple registered tokens",
+			paths:       []string{tokenPath, tokenPath},
+			shouldPanic: false,
+		},
+		{
+			name:        "panic with first token unregistered in multiple",
+			paths:       []string{"not_registered", tokenPath},
+			shouldPanic: true,
+		},
+		{
+			name:        "panic with second token unregistered in multiple",
+			paths:       []string{tokenPath, "not_registered"},
+			shouldPanic: true,
+		},
+		{
+			name:        "panic with empty string in multiple tokens",
+			paths:       []string{tokenPath, ""},
+			shouldPanic: true,
+		},
+	}
 
-	t.Run("panic for non registered token", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("Expected panic for non-registered token")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("Expected panic for %s", tt.name)
+					}
+				}()
 			}
-		}()
-		MustRegistered("not_registered")
-	})
-
-	t.Run("must be registered with no parameters", func(t *testing.T) {
-		MustRegistered()
-	})
-
-	t.Run("must be registered with multiple registered tokens", func(t *testing.T) {
-		MustRegistered(tokenPath, tokenPath)
-	})
-
-	t.Run("panic with first token unregistered in multiple", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("Expected panic for first unregistered token")
-			}
-		}()
-		MustRegistered("not_registered", tokenPath)
-	})
-
-	t.Run("panic with second token unregistered in multiple", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("Expected panic for second unregistered token")
-			}
-		}()
-		MustRegistered(tokenPath, "not_registered")
-	})
-
-	t.Run("panic with empty string in multiple tokens", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("Expected panic for empty string token")
-			}
-		}()
-		MustRegistered(tokenPath, "")
-	})
+			MustRegistered(tt.paths...)
+		})
+	}
 }
 
 func TestExtractTokenPathsFromRender(t *testing.T) {
@@ -666,98 +721,175 @@ func TestExtractTokenPathsFromRender(t *testing.T) {
 }
 
 func TestTotalSupply(t *testing.T) {
-	t.Run("get total supply for registered token", func(t *testing.T) {
-		// result from grc2reg and (direct import/call) should be the same
-		uassert.Equal(t, foo20.TotalSupply(), TotalSupply(tokenPath))
-	})
+	tests := []struct {
+		name           string
+		path           string
+		expectedSupply int64
+		shouldPanic    bool
+	}{
+		{
+			name:           "get total supply for registered token",
+			path:           tokenPath,
+			expectedSupply: foo20.TotalSupply(),
+			shouldPanic:    false,
+		},
+		{
+			name:        "panic with unregistered token",
+			path:        "not_registered_token",
+			shouldPanic: true,
+		},
+		{
+			name:        "panic with empty string path",
+			path:        "",
+			shouldPanic: true,
+		},
+	}
 
-	t.Run("panic with unregistered token", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("Expected panic for unregistered token")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("Expected panic for %s", tt.name)
+					}
+				}()
 			}
-		}()
-		TotalSupply("not_registered_token")
-	})
 
-	t.Run("panic with empty string path", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("Expected panic for empty string path")
+			supply := TotalSupply(tt.path)
+
+			if !tt.shouldPanic {
+				uassert.Equal(t, tt.expectedSupply, supply)
 			}
-		}()
-		TotalSupply("")
-	})
+		})
+	}
 }
 
 func TestBalanceOf(t *testing.T) {
 	defaultHolder := address("g1manfred47kzduec920z88wfr64ylksmdcedlf5")
 
-	t.Run("get balance for registered token", func(t *testing.T) {
-		// result from grc2reg and (direct import/call) should be the same
-		uassert.Equal(t, foo20.BalanceOf(defaultHolder), BalanceOf(tokenPath, defaultHolder))
-	})
+	tests := []struct {
+		name            string
+		path            string
+		addr            address
+		expectedBalance int64
+		shouldPanic     bool
+	}{
+		{
+			name:            "get balance for registered token",
+			path:            tokenPath,
+			addr:            defaultHolder,
+			expectedBalance: foo20.BalanceOf(defaultHolder),
+			shouldPanic:     false,
+		},
+		{
+			name:        "panic with unregistered token",
+			path:        "not_registered_token",
+			addr:        defaultHolder,
+			shouldPanic: true,
+		},
+		{
+			name:        "panic with empty string path",
+			path:        "",
+			addr:        defaultHolder,
+			shouldPanic: true,
+		},
+		{
+			name:            "get balance for empty address",
+			path:            tokenPath,
+			addr:            address(""),
+			expectedBalance: int64(0),
+			shouldPanic:     false,
+		},
+	}
 
-	t.Run("panic with unregistered token", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("Expected panic for unregistered token")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("Expected panic for %s", tt.name)
+					}
+				}()
 			}
-		}()
-		BalanceOf("not_registered_token", defaultHolder)
-	})
 
-	t.Run("panic with empty string path", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("Expected panic for empty string path")
+			balance := BalanceOf(tt.path, tt.addr)
+
+			if !tt.shouldPanic {
+				uassert.Equal(t, tt.expectedBalance, balance)
 			}
-		}()
-		BalanceOf("", defaultHolder)
-	})
-
-	t.Run("get balance for empty address", func(t *testing.T) {
-		result := BalanceOf(tokenPath, address(""))
-		uassert.Equal(t, int64(0), result)
-	})
+		})
+	}
 }
 
 func TestAllowance(t *testing.T) {
 	owner := address("g1manfred47kzduec920z88wfr64ylksmdcedlf5")
 	spender := address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum")
 
-	t.Run("get allowance for registered token", func(t *testing.T) {
-		// result from grc2reg and (direct import/call) should be the same
-		uassert.Equal(t, foo20.Allowance(owner, spender), Allowance(tokenPath, owner, spender))
-	})
+	tests := []struct {
+		name              string
+		path              string
+		owner             address
+		spender           address
+		expectedAllowance int64
+		shouldPanic       bool
+	}{
+		{
+			name:              "get allowance for registered token",
+			path:              tokenPath,
+			owner:             owner,
+			spender:           spender,
+			expectedAllowance: foo20.Allowance(owner, spender),
+			shouldPanic:       false,
+		},
+		{
+			name:        "panic with unregistered token",
+			path:        "not_registered_token",
+			owner:       owner,
+			spender:     spender,
+			shouldPanic: true,
+		},
+		{
+			name:        "panic with empty string path",
+			path:        "",
+			owner:       owner,
+			spender:     spender,
+			shouldPanic: true,
+		},
+		{
+			name:              "get allowance with empty owner address",
+			path:              tokenPath,
+			owner:             address(""),
+			spender:           spender,
+			expectedAllowance: int64(0),
+			shouldPanic:       false,
+		},
+		{
+			name:              "get allowance with empty spender address",
+			path:              tokenPath,
+			owner:             owner,
+			spender:           address(""),
+			expectedAllowance: int64(0),
+			shouldPanic:       false,
+		},
+	}
 
-	t.Run("panic with unregistered token", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("Expected panic for unregistered token")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("Expected panic for %s", tt.name)
+					}
+				}()
 			}
-		}()
-		Allowance("not_registered_token", owner, spender)
-	})
 
-	t.Run("panic with empty string path", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("Expected panic for empty string path")
+			allowance := Allowance(tt.path, tt.owner, tt.spender)
+
+			if !tt.shouldPanic {
+				uassert.Equal(t, tt.expectedAllowance, allowance)
 			}
-		}()
-		Allowance("", owner, spender)
-	})
-
-	t.Run("get allowance with empty owner address", func(t *testing.T) {
-		result := Allowance(tokenPath, address(""), spender)
-		uassert.Equal(t, int64(0), result)
-	})
-
-	t.Run("get allowance with empty spender address", func(t *testing.T) {
-		result := Allowance(tokenPath, owner, address(""))
-		uassert.Equal(t, int64(0), result)
-	})
+		})
+	}
 }
 
 // areSlicesEqual compares two slices of strings
