@@ -159,17 +159,20 @@ func TestSvgGenerator_genImageRaw_CoordinateRanges(t *testing.T) {
 				// Verify SVG contains linearGradient with coordinates
 				uassert.True(t, strings.Contains(svg, "linearGradient"))
 
-				// The coordinates should be formatted in the SVG
+				// Extract and validate coordinate values
+				x1, y1, x2, y2 := extractCoordinates(t, svg)
+
 				// x1 should be between 7-13
+				uassert.True(t, x1 >= 7 && x1 <= 13)
+
 				// y1 should be between 7-13
+				uassert.True(t, y1 >= 7 && y1 <= 13)
+
 				// x2 should be between 121-126
+				uassert.True(t, x2 >= 121 && x2 <= 126)
+
 				// y2 should be between 121-126
-				// We can't extract exact values easily without parsing,
-				// but we verify the SVG is well-formed
-				uassert.True(t, strings.Contains(svg, "x1="))
-				uassert.True(t, strings.Contains(svg, "y1="))
-				uassert.True(t, strings.Contains(svg, "x2="))
-				uassert.True(t, strings.Contains(svg, "y2="))
+				uassert.True(t, y2 >= 121 && y2 <= 126)
 			}
 		})
 	}
@@ -264,4 +267,65 @@ func TestSvgGenerator_genImageURI_Uniqueness(t *testing.T) {
 			}
 		})
 	}
+}
+
+// extractCoordinates parses x1, y1, x2, y2 coordinate values from SVG string.
+// The SVG format is: <linearGradient ... x1="7" y1="10" x2="123" y2="122" ...>
+func extractCoordinates(t *testing.T, svg string) (x1, y1, x2, y2 int) {
+	// Find linearGradient tag
+	gradientIdx := strings.Index(svg, "linearGradient")
+	if gradientIdx == -1 {
+		t.Fatal("linearGradient tag not found")
+	}
+
+	// Extract the linearGradient tag content (up to closing >)
+	gradientStart := gradientIdx
+	gradientEnd := strings.Index(svg[gradientStart:], ">")
+	if gradientEnd == -1 {
+		t.Fatal("linearGradient closing > not found")
+	}
+	gradientTag := svg[gradientStart : gradientStart+gradientEnd]
+
+	// Extract x1
+	x1 = extractIntValue(t, gradientTag, "x1=\"")
+	// Extract y1
+	y1 = extractIntValue(t, gradientTag, "y1=\"")
+	// Extract x2
+	x2 = extractIntValue(t, gradientTag, "x2=\"")
+	// Extract y2
+	y2 = extractIntValue(t, gradientTag, "y2=\"")
+
+	return x1, y1, x2, y2
+}
+
+// extractIntValue extracts an integer value after the given prefix.
+// For example, extractIntValue(tag, "x1=\"") extracts 7 from "x1=\"7\""
+func extractIntValue(t *testing.T, text, prefix string) int {
+	idx := strings.Index(text, prefix)
+	if idx == -1 {
+		t.Fatalf("prefix %s not found in text", prefix)
+	}
+
+	// Start after the prefix
+	start := idx + len(prefix)
+	// Find the closing quote
+	end := strings.Index(text[start:], "\"")
+	if end == -1 {
+		t.Fatal("closing quote not found")
+	}
+
+	// Extract the number string
+	numStr := text[start : start+end]
+
+	// Parse to integer
+	result := 0
+	for i := 0; i < len(numStr); i++ {
+		ch := numStr[i]
+		if ch < '0' || ch > '9' {
+			t.Fatalf("invalid digit in number: %c", ch)
+		}
+		result = result*10 + int(ch-'0')
+	}
+
+	return result
 }
