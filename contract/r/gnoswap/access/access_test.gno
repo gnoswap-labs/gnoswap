@@ -421,6 +421,213 @@ func TestRemoveRole(t *testing.T) {
 	}
 }
 
+func TestAccess_MustGetAddress(t *testing.T) {
+	testRole := "test_role"
+	testAddr := address("g1test123456789abcdef")
+
+	// Save original state
+	originalRoles := make(map[string]map[int]address)
+	for k, v := range roleAddresses {
+		addressCopy := make(map[int]address)
+		for k, v := range v {
+			addressCopy[k] = v
+		}
+		originalRoles[k] = addressCopy
+	}
+	defer func() {
+		roleAddresses = originalRoles
+	}()
+
+	tests := []struct {
+		name        string
+		setupRole   string
+		setupAddrs  map[int]address
+		queryRole   string
+		expectedAddr address
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:         "existing role returns address",
+			setupRole:    testRole,
+			setupAddrs:   map[int]address{1: testAddr},
+			queryRole:    testRole,
+			expectedAddr: testAddr,
+			shouldPanic:  false,
+		},
+		{
+			name:        "non-existent role panics",
+			setupRole:   testRole,
+			setupAddrs:  map[int]address{1: testAddr},
+			queryRole:   "nonexistent",
+			shouldPanic: true,
+			panicMsg:    "role nonexistent not found",
+		},
+		{
+			name:        "empty role map panics",
+			setupRole:   "",
+			setupAddrs:  map[int]address{},
+			queryRole:   testRole,
+			shouldPanic: true,
+			panicMsg:    "not found",
+		},
+		{
+			name:         "existing role with multiple versions returns latest",
+			setupRole:    testRole,
+			setupAddrs:   map[int]address{1: address("g1old123456789abcdef"), 2: testAddr},
+			queryRole:    testRole,
+			expectedAddr: testAddr,
+			shouldPanic:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			roleAddresses = make(map[string]map[int]address)
+			if tt.setupRole != "" {
+				roleAddresses[tt.setupRole] = tt.setupAddrs
+			}
+
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r != nil {
+						if tt.panicMsg != "" && !containsString(r, tt.panicMsg) {
+							t.Errorf("Expected panic containing %q, got %v", tt.panicMsg, r)
+						}
+					} else {
+						t.Errorf("Expected panic but didn't panic")
+					}
+				}()
+			}
+
+			addr := MustGetAddress(tt.queryRole)
+
+			if !tt.shouldPanic {
+				if addr != tt.expectedAddr {
+					t.Errorf("Expected address=%s, got %s", tt.expectedAddr, addr)
+				}
+			}
+		})
+	}
+}
+
+func TestAccess_MustGetAddressWithVersion(t *testing.T) {
+	testRole := "test_role"
+	addr1 := address("g1test111111111111111")
+	addr2 := address("g1test222222222222222")
+	addr3 := address("g1test333333333333333")
+
+	// Save original state
+	originalRoles := make(map[string]map[int]address)
+	for k, v := range roleAddresses {
+		addressCopy := make(map[int]address)
+		for k, v := range v {
+			addressCopy[k] = v
+		}
+		originalRoles[k] = addressCopy
+	}
+	defer func() {
+		roleAddresses = originalRoles
+	}()
+
+	tests := []struct {
+		name         string
+		setupRole    string
+		setupAddrs   map[int]address
+		queryRole    string
+		queryVersion int
+		expectedAddr address
+		shouldPanic  bool
+		panicMsg     string
+	}{
+		{
+			name:         "existing role and version returns address",
+			setupRole:    testRole,
+			setupAddrs:   map[int]address{1: addr1, 2: addr2, 3: addr3},
+			queryRole:    testRole,
+			queryVersion: 2,
+			expectedAddr: addr2,
+			shouldPanic:  false,
+		},
+		{
+			name:         "non-existent role panics",
+			setupRole:    testRole,
+			setupAddrs:   map[int]address{1: addr1},
+			queryRole:    "nonexistent",
+			queryVersion: 1,
+			shouldPanic:  true,
+			panicMsg:     "role nonexistent version 1 not found",
+		},
+		{
+			name:         "non-existent version panics",
+			setupRole:    testRole,
+			setupAddrs:   map[int]address{1: addr1, 2: addr2},
+			queryRole:    testRole,
+			queryVersion: 99,
+			shouldPanic:  true,
+			panicMsg:     "version 99 not found",
+		},
+		{
+			name:         "version 0 not found panics",
+			setupRole:    testRole,
+			setupAddrs:   map[int]address{1: addr1},
+			queryRole:    testRole,
+			queryVersion: 0,
+			shouldPanic:  true,
+			panicMsg:     "not found",
+		},
+		{
+			name:         "get version 1",
+			setupRole:    testRole,
+			setupAddrs:   map[int]address{1: addr1, 2: addr2, 3: addr3},
+			queryRole:    testRole,
+			queryVersion: 1,
+			expectedAddr: addr1,
+			shouldPanic:  false,
+		},
+		{
+			name:         "get version 3",
+			setupRole:    testRole,
+			setupAddrs:   map[int]address{1: addr1, 2: addr2, 3: addr3},
+			queryRole:    testRole,
+			queryVersion: 3,
+			expectedAddr: addr3,
+			shouldPanic:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			roleAddresses = make(map[string]map[int]address)
+			if tt.setupRole != "" {
+				roleAddresses[tt.setupRole] = tt.setupAddrs
+			}
+
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r != nil {
+						if tt.panicMsg != "" && !containsString(r, tt.panicMsg) {
+							t.Errorf("Expected panic containing %q, got %v", tt.panicMsg, r)
+						}
+					} else {
+						t.Errorf("Expected panic but didn't panic")
+					}
+				}()
+			}
+
+			addr := MustGetAddressWithVersion(tt.queryRole, tt.queryVersion)
+
+			if !tt.shouldPanic {
+				if addr != tt.expectedAddr {
+					t.Errorf("Expected address=%s, got %s", tt.expectedAddr, addr)
+				}
+			}
+		})
+	}
+}
+
 // Helper function to check if error contains string
 func containsString(r interface{}, substr string) bool {
 	switch v := r.(type) {
