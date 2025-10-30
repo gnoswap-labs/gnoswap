@@ -146,7 +146,7 @@ create-external-incentive:
 	@echo
 
 	# THEN CREATE EXTERNAL INCENTIVE
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func CreateExternalIncentive -args "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000" -args "gno.land/r/gnoswap/gns" -args 1000000000 -args $(TOMORROW_MIDNIGHT) -args $(INCENTIVE_END) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func CreateExternalIncentive -args "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000" -args "gno.land/r/gnoswap/gns" -args 1000000000 -args $(TOMORROW_MIDNIGHT) -args $(INCENTIVE_END) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo
 
 
@@ -154,21 +154,21 @@ create-external-incentive:
 stake-token-1:
 	$(info ************ stake token 1  ************)
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/gnft -func Approve -args $(ADDR_STAKER) -args 1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func StakeToken -args 1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func StakeToken -args 1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo
 
 
 # collect staking reward
 collect-staking-reward-1:
 	$(info ************ collect reward 1  ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func CollectReward -args 1 -args false -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func CollectReward -args 1 -args false -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo
 
 
 # unstake token
 unstake-token-1:
 	$(info ************ unstake token 1  ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/staker -func UnStakeToken -args 1 -args true -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func UnStakeToken -args 1 -args true -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo
 
 

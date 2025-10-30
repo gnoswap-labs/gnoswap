@@ -164,13 +164,13 @@ func (s *poolStore) HasSwapStartHook() bool {
 }
 
 // GetSwapStartHook retrieves the swap start hook function.
-func (s *poolStore) GetSwapStartHook() func(poolPath string, timestamp int64) {
+func (s *poolStore) GetSwapStartHook() func(cur realm, poolPath string, timestamp int64) {
 	result, err := s.kvStore.Get(StoreKeySwapStartHook.String())
 	if err != nil {
 		panic(err)
 	}
 
-	swapStartHook, ok := result.(func(poolPath string, timestamp int64))
+	swapStartHook, ok := result.(func(cur realm, poolPath string, timestamp int64))
 	if !ok {
 		panic(ufmt.Sprintf("failed to cast result to func(poolPath string, timestamp int64): %T", result))
 	}
@@ -179,7 +179,7 @@ func (s *poolStore) GetSwapStartHook() func(poolPath string, timestamp int64) {
 }
 
 // SetSwapStartHook stores the swap start hook function.
-func (s *poolStore) SetSwapStartHook(swapStartHook func(poolPath string, timestamp int64)) error {
+func (s *poolStore) SetSwapStartHook(swapStartHook func(cur realm, poolPath string, timestamp int64)) error {
 	return s.kvStore.Set(StoreKeySwapStartHook.String(), swapStartHook)
 }
 
@@ -189,13 +189,13 @@ func (s *poolStore) HasSwapEndHook() bool {
 }
 
 // GetSwapEndHook retrieves the swap end hook function.
-func (s *poolStore) GetSwapEndHook() func(poolPath string) error {
+func (s *poolStore) GetSwapEndHook() func(cur realm, poolPath string) error {
 	result, err := s.kvStore.Get(StoreKeySwapEndHook.String())
 	if err != nil {
 		panic(err)
 	}
 
-	swapEndHook, ok := result.(func(poolPath string) error)
+	swapEndHook, ok := result.(func(cur realm, poolPath string) error)
 	if !ok {
 		panic(ufmt.Sprintf("failed to cast result to func(poolPath string): %T", result))
 	}
@@ -204,7 +204,7 @@ func (s *poolStore) GetSwapEndHook() func(poolPath string) error {
 }
 
 // SetSwapEndHook stores the swap end hook function.
-func (s *poolStore) SetSwapEndHook(swapEndHook func(poolPath string) error) error {
+func (s *poolStore) SetSwapEndHook(swapEndHook func(cur realm, poolPath string) error) error {
 	return s.kvStore.Set(StoreKeySwapEndHook.String(), swapEndHook)
 }
 
@@ -214,13 +214,13 @@ func (s *poolStore) HasTickCrossHook() bool {
 }
 
 // GetTickCrossHook retrieves the tick cross hook function.
-func (s *poolStore) GetTickCrossHook() func(poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
+func (s *poolStore) GetTickCrossHook() func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
 	result, err := s.kvStore.Get(StoreKeyTickCrossHook.String())
 	if err != nil {
 		panic(err)
 	}
 
-	tickCrossHook, ok := result.(func(poolPath string, tickId int32, zeroForOne bool, timestamp int64))
+	tickCrossHook, ok := result.(func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64))
 	if !ok {
 		panic(ufmt.Sprintf("failed to cast result to func(poolPath string, tickId int32, zeroForOne bool, timestamp int64): %T", result))
 	}
@@ -229,7 +229,7 @@ func (s *poolStore) GetTickCrossHook() func(poolPath string, tickId int32, zeroF
 }
 
 // SetTickCrossHook stores the tick cross hook function.
-func (s *poolStore) SetTickCrossHook(tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)) error {
+func (s *poolStore) SetTickCrossHook(tickCrossHook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) error {
 	return s.kvStore.Set(StoreKeyTickCrossHook.String(), tickCrossHook)
 }
 

@@ -152,15 +152,15 @@ func Swap(
 	)
 }
 
-func SetSwapEndHook(cur realm, hook func(poolPath string) error) {
+func SetSwapEndHook(cur realm, hook func(cur realm, poolPath string) error) {
 	getImplementation().SetSwapEndHook(hook)
 }
 
-func SetSwapStartHook(cur realm, hook func(poolPath string, timestamp int64)) {
+func SetSwapStartHook(cur realm, hook func(cur realm, poolPath string, timestamp int64)) {
 	getImplementation().SetSwapStartHook(hook)
 }
 
-func SetTickCrossHook(cur realm, hook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
+func SetTickCrossHook(cur realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	getImplementation().SetTickCrossHook(hook)
 }
 

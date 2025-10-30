@@ -29,7 +29,7 @@ TEST_VALUES:=gno/examples/gno.land/p/gnoswap/uint256 \
 	   gno/examples/gno.land/r/gnoswap/pool \
 	   gno/examples/gno.land/r/gnoswap/position \
 	   gno/examples/gno.land/r/gnoswap/router \
-	   gno/examples/gno.land/r/gnoswap/v1/staker \
+	   gno/examples/gno.land/r/gnoswap/staker \
 	   gno/examples/gno.land/r/gnoswap/community_pool \
 	   gno/examples/gno.land/r/gnoswap/gov/staker \
 	   gno/examples/gno.land/r/gnoswap/v1/gov/governance \
