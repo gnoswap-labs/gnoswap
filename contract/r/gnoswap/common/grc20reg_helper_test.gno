@@ -27,6 +27,24 @@ func TestGetToken(t *testing.T) {
 		}()
 		GetToken("not_registered_token")
 	})
+
+	t.Run("get token with empty string path", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Expected panic for empty string path")
+			}
+		}()
+		GetToken("")
+	})
+
+	t.Run("get token with invalid path format", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Expected panic for invalid path format")
+			}
+		}()
+		GetToken("invalid/path/format")
+	})
 }
 
 func TestTokenMethod(t *testing.T) {
@@ -86,6 +104,15 @@ func TestGetTokenTeller(t *testing.T) {
 		}()
 		GetTokenTeller("not_registered_teller")
 	})
+
+	t.Run("get token teller with empty string path", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Expected panic for empty string path")
+			}
+		}()
+		GetTokenTeller("")
+	})
 }
 
 func TestTransfer(t *testing.T) {
@@ -95,6 +122,7 @@ func TestTransfer(t *testing.T) {
 		to            address
 		amount        int64
 		expectedError bool
+		shouldPanic   bool
 	}{
 		{
 			name:          "transfer to valid address",
@@ -124,15 +152,52 @@ func TestTransfer(t *testing.T) {
 			amount:        -100,
 			expectedError: true,
 		},
+		{
+			name:        "transfer with unregistered token path",
+			path:        "not_registered_token",
+			to:          address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:      1000,
+			shouldPanic: true,
+		},
+		{
+			name:        "transfer with empty string path",
+			path:        "",
+			to:          address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:      1000,
+			shouldPanic: true,
+		},
+		{
+			name:          "transfer to empty address",
+			path:          tokenPath,
+			to:            address(""),
+			amount:        1000,
+			expectedError: true,
+		},
+		{
+			name:          "transfer max int64 amount",
+			path:          tokenPath,
+			to:            address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:        9223372036854775807,
+			expectedError: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("Expected panic for %s", tt.name)
+					}
+				}()
+			}
 			err := Transfer(cross, tt.path, tt.to, tt.amount)
-			if tt.expectedError {
-				uassert.Error(t, err)
-			} else {
-				uassert.NoError(t, err)
+			if !tt.shouldPanic {
+				if tt.expectedError {
+					uassert.Error(t, err)
+				} else {
+					uassert.NoError(t, err)
+				}
 			}
 		})
 	}
@@ -148,6 +213,7 @@ func TestTransferFrom(t *testing.T) {
 		setupApproval bool
 		approvalAmt   int64
 		expectedError bool
+		shouldPanic   bool
 	}{
 		{
 			name:          "transfer from with sufficient allowance",
@@ -178,20 +244,63 @@ func TestTransferFrom(t *testing.T) {
 			approvalAmt:   1000,
 			expectedError: true,
 		},
+		{
+			name:        "transfer from with unregistered token",
+			path:        "not_registered_token",
+			from:        address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"),
+			to:          address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:      100,
+			shouldPanic: true,
+		},
+		{
+			name:          "transfer from with empty from address",
+			path:          tokenPath,
+			from:          address(""),
+			to:            address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:        100,
+			expectedError: true,
+		},
+		{
+			name:          "transfer from with empty to address",
+			path:          tokenPath,
+			from:          address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"),
+			to:            address(""),
+			amount:        100,
+			expectedError: true,
+		},
+		{
+			name:          "transfer from zero amount with zero allowance",
+			path:          tokenPath,
+			from:          address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"),
+			to:            address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:        0,
+			setupApproval: false,
+			expectedError: false,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("Expected panic for %s", tt.name)
+					}
+				}()
+			}
+
 			if tt.setupApproval {
 				// Setup approval first - would need proper realm setup
 				// Skip for now as it requires more complex setup
 			}
 
 			err := TransferFrom(cross, tt.path, tt.from, tt.to, tt.amount)
-			if tt.expectedError {
-				uassert.Error(t, err)
-			} else {
-				uassert.NoError(t, err)
+			if !tt.shouldPanic {
+				if tt.expectedError {
+					uassert.Error(t, err)
+				} else {
+					uassert.NoError(t, err)
+				}
 			}
 		})
 	}
@@ -204,6 +313,7 @@ func TestApprove(t *testing.T) {
 		spender       address
 		amount        int64
 		expectedError bool
+		shouldPanic   bool
 	}{
 		{
 			name:          "approve valid amount",
@@ -233,15 +343,38 @@ func TestApprove(t *testing.T) {
 			amount:        9223372036854775807,
 			expectedError: false,
 		},
+		{
+			name:        "approve with unregistered token",
+			path:        "not_registered_token",
+			spender:     address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:      1000,
+			shouldPanic: true,
+		},
+		{
+			name:          "approve with empty spender address",
+			path:          tokenPath,
+			spender:       address(""),
+			amount:        1000,
+			expectedError: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("Expected panic for %s", tt.name)
+					}
+				}()
+			}
 			err := Approve(cross, tt.path, tt.spender, tt.amount)
-			if tt.expectedError {
-				uassert.Error(t, err)
-			} else {
-				uassert.NoError(t, err)
+			if !tt.shouldPanic {
+				if tt.expectedError {
+					uassert.Error(t, err)
+				} else {
+					uassert.NoError(t, err)
+				}
 			}
 		})
 	}
@@ -274,6 +407,13 @@ func TestSafeGRC20Transfer(t *testing.T) {
 			path:        tokenPath,
 			to:          address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
 			amount:      -100,
+			shouldPanic: true,
+		},
+		{
+			name:        "safe transfer with unregistered token",
+			path:        "not_registered_token",
+			to:          address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:      100,
 			shouldPanic: true,
 		},
 	}
@@ -315,6 +455,14 @@ func TestSafeGRC20TransferFrom(t *testing.T) {
 			from:        address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"),
 			to:          address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
 			amount:      99999999999999,
+			shouldPanic: true,
+		},
+		{
+			name:        "safe transfer from with unregistered token",
+			path:        "not_registered_token",
+			from:        address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"),
+			to:          address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:      100,
 			shouldPanic: true,
 		},
 	}
@@ -362,6 +510,13 @@ func TestSafeGRC20Approve(t *testing.T) {
 			amount:      0,
 			shouldPanic: false,
 		},
+		{
+			name:        "safe approve with unregistered token",
+			path:        "not_registered_token",
+			spender:     address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			amount:      1000,
+			shouldPanic: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -386,10 +541,18 @@ func TestIsRegistered(t *testing.T) {
 	t.Run("check if token is not registered", func(t *testing.T) {
 		uassert.Error(t, IsRegistered("not_registered_token"))
 	})
+
+	t.Run("check with empty string path", func(t *testing.T) {
+		uassert.Error(t, IsRegistered(""))
+	})
+
+	t.Run("check with invalid path format", func(t *testing.T) {
+		uassert.Error(t, IsRegistered("invalid/path"))
+	})
 }
 
 func TestMustRegistered(t *testing.T) {
-	t.Run("must be registered", func(t *testing.T) {
+	t.Run("must be registered single token", func(t *testing.T) {
 		MustRegistered(tokenPath)
 	})
 
@@ -400,6 +563,41 @@ func TestMustRegistered(t *testing.T) {
 			}
 		}()
 		MustRegistered("not_registered")
+	})
+
+	t.Run("must be registered with no parameters", func(t *testing.T) {
+		MustRegistered()
+	})
+
+	t.Run("must be registered with multiple registered tokens", func(t *testing.T) {
+		MustRegistered(tokenPath, tokenPath)
+	})
+
+	t.Run("panic with first token unregistered in multiple", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Expected panic for first unregistered token")
+			}
+		}()
+		MustRegistered("not_registered", tokenPath)
+	})
+
+	t.Run("panic with second token unregistered in multiple", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Expected panic for second unregistered token")
+			}
+		}()
+		MustRegistered(tokenPath, "not_registered")
+	})
+
+	t.Run("panic with empty string in multiple tokens", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Expected panic for empty string token")
+			}
+		}()
+		MustRegistered(tokenPath, "")
 	})
 }
 
@@ -468,23 +666,98 @@ func TestExtractTokenPathsFromRender(t *testing.T) {
 }
 
 func TestTotalSupply(t *testing.T) {
-	// result from grc2reg and (direct import/call) should be the same
-	uassert.Equal(t, foo20.TotalSupply(), TotalSupply(tokenPath))
+	t.Run("get total supply for registered token", func(t *testing.T) {
+		// result from grc2reg and (direct import/call) should be the same
+		uassert.Equal(t, foo20.TotalSupply(), TotalSupply(tokenPath))
+	})
+
+	t.Run("panic with unregistered token", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Expected panic for unregistered token")
+			}
+		}()
+		TotalSupply("not_registered_token")
+	})
+
+	t.Run("panic with empty string path", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Expected panic for empty string path")
+			}
+		}()
+		TotalSupply("")
+	})
 }
 
 func TestBalanceOf(t *testing.T) {
 	defaultHolder := address("g1manfred47kzduec920z88wfr64ylksmdcedlf5")
 
-	// result from grc2reg and (direct import/call) should be the same
-	uassert.Equal(t, foo20.BalanceOf(defaultHolder), BalanceOf(tokenPath, defaultHolder))
+	t.Run("get balance for registered token", func(t *testing.T) {
+		// result from grc2reg and (direct import/call) should be the same
+		uassert.Equal(t, foo20.BalanceOf(defaultHolder), BalanceOf(tokenPath, defaultHolder))
+	})
+
+	t.Run("panic with unregistered token", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Expected panic for unregistered token")
+			}
+		}()
+		BalanceOf("not_registered_token", defaultHolder)
+	})
+
+	t.Run("panic with empty string path", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Expected panic for empty string path")
+			}
+		}()
+		BalanceOf("", defaultHolder)
+	})
+
+	t.Run("get balance for empty address", func(t *testing.T) {
+		result := BalanceOf(tokenPath, address(""))
+		uassert.Equal(t, int64(0), result)
+	})
 }
 
 func TestAllowance(t *testing.T) {
 	owner := address("g1manfred47kzduec920z88wfr64ylksmdcedlf5")
 	spender := address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum")
 
-	// result from grc2reg and (direct import/call) should be the same
-	uassert.Equal(t, foo20.Allowance(owner, spender), Allowance(tokenPath, owner, spender))
+	t.Run("get allowance for registered token", func(t *testing.T) {
+		// result from grc2reg and (direct import/call) should be the same
+		uassert.Equal(t, foo20.Allowance(owner, spender), Allowance(tokenPath, owner, spender))
+	})
+
+	t.Run("panic with unregistered token", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Expected panic for unregistered token")
+			}
+		}()
+		Allowance("not_registered_token", owner, spender)
+	})
+
+	t.Run("panic with empty string path", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Expected panic for empty string path")
+			}
+		}()
+		Allowance("", owner, spender)
+	})
+
+	t.Run("get allowance with empty owner address", func(t *testing.T) {
+		result := Allowance(tokenPath, address(""), spender)
+		uassert.Equal(t, int64(0), result)
+	})
+
+	t.Run("get allowance with empty spender address", func(t *testing.T) {
+		result := Allowance(tokenPath, owner, address(""))
+		uassert.Equal(t, int64(0), result)
+	})
 }
 
 // areSlicesEqual compares two slices of strings
