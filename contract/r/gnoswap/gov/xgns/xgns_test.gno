@@ -427,6 +427,18 @@ func TestXgns_VotingSupply(t *testing.T) {
 			launchpadAmount:      500,
 			expectedVotingSupply: 0,
 		},
+		{
+			name:                 "Launchpad balance equals total supply",
+			govStakerAmount:      0,
+			launchpadAmount:      1000,
+			expectedVotingSupply: 0,
+		},
+		{
+			name:                 "Multiple mints with large amounts",
+			govStakerAmount:      1000000000,
+			launchpadAmount:      500000000,
+			expectedVotingSupply: 1000000000,
+		},
 	}
 
 	for _, tc := range tests {
