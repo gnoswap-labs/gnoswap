@@ -24,7 +24,6 @@ const (
 	StoreKeyDelegations         = "delegations"         // AVL tree of delegations
 	StoreKeyDelegationHistory   = "delegationHistory"   // List of delegation records
 	StoreKeyDelegationSnapshots = "delegationSnapshots" // AVL tree of snapshots by timestamp
-	StoreKeyUserDelegations     = "userDelegations"     // Nested maps of user delegations
 
 	// Manager states
 	StoreKeyEmissionRewardManager    = "emissionRewardManager"
@@ -266,87 +265,6 @@ func (s *govStakerStore) GetDelegationHistory() ([]*DelegationRecord, error) {
 
 func (s *govStakerStore) SetDelegationHistory(history []*DelegationRecord) error {
 	return s.kvStore.Set(StoreKeyDelegationHistory, history)
-}
-
-// User delegation mapping methods
-func (s *govStakerStore) HasUserDelegationsStoreKey() bool {
-	return s.kvStore.Has(StoreKeyUserDelegations)
-}
-
-func (s *govStakerStore) HasUserDelegations(user string) bool {
-	allUserDelegations, err := s.getAllUserDelegations()
-	if err != nil {
-		panic(err)
-	}
-	_, exists := allUserDelegations[user]
-	return exists
-}
-
-func (s *govStakerStore) SetUserDelegations(delegations map[string]map[string][]int64) error {
-	return s.kvStore.Set(StoreKeyUserDelegations, delegations)
-}
-
-func (s *govStakerStore) GetUserDelegations(user string) (map[string][]int64, error) {
-	allUserDelegations, err := s.getAllUserDelegations()
-	if err != nil {
-		return nil, err
-	}
-
-	if delegations, exists := allUserDelegations[user]; exists {
-		return delegations, nil
-	}
-
-	return make(map[string][]int64), nil
-}
-
-func (s *govStakerStore) AddUserDelegation(from, to string, delegationID int64) error {
-	allUserDelegations, err := s.getAllUserDelegations()
-	if err != nil {
-		return err
-	}
-
-	if _, exists := allUserDelegations[from]; !exists {
-		allUserDelegations[from] = make(map[string][]int64)
-	}
-
-	allUserDelegations[from][to] = append(allUserDelegations[from][to], delegationID)
-
-	return s.kvStore.Set(StoreKeyUserDelegations, allUserDelegations)
-}
-
-func (s *govStakerStore) RemoveUserDelegation(from, to string, delegationID int64) error {
-	allUserDelegations, err := s.getAllUserDelegations()
-	if err != nil {
-		return err
-	}
-
-	if delegations, exists := allUserDelegations[from]; exists {
-		if ids, exists := delegations[to]; exists {
-			// Remove the delegationID from the slice
-			for i, id := range ids {
-				if id == delegationID {
-					delegations[to] = append(ids[:i], ids[i+1:]...)
-					break
-				}
-			}
-		}
-	}
-
-	return s.kvStore.Set(StoreKeyUserDelegations, allUserDelegations)
-}
-
-func (s *govStakerStore) getAllUserDelegations() (map[string]map[string][]int64, error) {
-	result, err := s.kvStore.Get(StoreKeyUserDelegations)
-	if err != nil {
-		panic(err)
-	}
-
-	userDelegations, ok := result.(map[string]map[string][]int64)
-	if !ok {
-		return nil, errors.New(ufmt.Sprintf("failed to cast result to map[string]map[string][]int64: %T", result))
-	}
-
-	return userDelegations, nil
 }
 
 // Delegation snapshot methods

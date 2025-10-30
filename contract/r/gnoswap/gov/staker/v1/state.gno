@@ -86,15 +86,6 @@ func (g *govStakerV1) addDelegation(delegationID int64, delegation *staker.Deleg
 		return false
 	}
 
-	// Update user delegations in store
-	if err := g.store.AddUserDelegation(
-		string(delegation.DelegateFrom()),
-		string(delegation.DelegateTo()),
-		delegationID,
-	); err != nil {
-		return false
-	}
-
 	return true
 }
 
@@ -128,15 +119,6 @@ func (g *govStakerV1) removeDelegation(delegationID int64) bool {
 		delegationID,
 	)
 	if err := g.store.SetDelegationManager(delegationManager); err != nil {
-		return false
-	}
-
-	// Update user delegations in store
-	if err := g.store.RemoveUserDelegation(
-		string(delegation.DelegateFrom()),
-		string(delegation.DelegateTo()),
-		delegationID,
-	); err != nil {
 		return false
 	}
 

@@ -89,14 +89,6 @@ type IGovStakerStore interface {
 	GetDelegationHistory() ([]*DelegationRecord, error)
 	SetDelegationHistory(history []*DelegationRecord) error
 
-	// User delegation mapping
-	HasUserDelegationsStoreKey() bool
-	HasUserDelegations(user string) bool
-	GetUserDelegations(user string) (map[string][]int64, error)
-	SetUserDelegations(delegations map[string]map[string][]int64) error
-	AddUserDelegation(from, to string, delegationID int64) error
-	RemoveUserDelegation(from, to string, delegationID int64) error
-
 	// Delegation snapshots
 	HasDelegationSnapshotStoreKey() bool
 	SetDelegationSnapshot(snapshot DelegationSnapshot) error

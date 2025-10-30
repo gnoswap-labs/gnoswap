@@ -80,13 +80,6 @@ func initStoreData(store staker.IGovStakerStore) error {
 		}
 	}
 
-	if !store.HasUserDelegationsStoreKey() {
-		err := store.SetUserDelegations(make(map[string]map[string][]int64))
-		if err != nil {
-			return err
-		}
-	}
-
 	// Initialize EmissionRewardManager
 	if !store.HasEmissionRewardManagerStoreKey() {
 		emissionRewardManager := staker.NewEmissionRewardManager()
