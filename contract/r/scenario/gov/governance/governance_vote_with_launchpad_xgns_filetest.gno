@@ -20,20 +20,24 @@ import (
 	"gno.land/r/gnoswap/access"
 
 	gs "gno.land/r/gnoswap/v1/gov/staker"
-	"gno.land/r/gnoswap/v1/gov/governance"
+
+	"gno.land/r/gnoswap/gov/governance"
+	_ "gno.land/r/gnoswap/gov/governance/v1"
+
 	"gno.land/r/gnoswap/gov/xgns"
 
 	gns "gno.land/r/gnoswap/gns"
 )
 
 var (
-	adminAddr, _     = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminAddr        = access.MustGetAddress(prbac.ROLE_ADMIN.String())
 	dummyAddr        = testutils.TestAddress("dummy")
 	user01           = testutils.TestAddress("user01")
 	currentBlockTime = int64(2)
 )
 
 func main() {
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
 
 	println("[SCENARIO] 1. Check Initial gns and xgns Supply")

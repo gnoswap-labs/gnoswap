@@ -32,5 +32,5 @@ TEST_VALUES:=gno/examples/gno.land/p/gnoswap/uint256 \
 	   gno/examples/gno.land/r/gnoswap/staker \
 	   gno/examples/gno.land/r/gnoswap/community_pool \
 	   gno/examples/gno.land/r/gnoswap/v1/gov/staker \
-	   gno/examples/gno.land/r/gnoswap/v1/gov/governance \
+	   gno/examples/gno.land/r/gnoswap/gov/governance \
 	   gno/examples/gno.land/r/gnoswap/launchpad
