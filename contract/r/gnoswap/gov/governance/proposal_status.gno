@@ -51,7 +51,7 @@ type ProposalStatus struct {
 	voteStatus   *ProposalVoteStatus     // Voting tallies and requirements
 }
 
-func NewProposalStatusInstance(
+func NewProposalStatusBy(
 	schedule *ProposalScheduleStatus,
 	actionStatus *ProposalActionStatus,
 	voteStatus *ProposalVoteStatus,

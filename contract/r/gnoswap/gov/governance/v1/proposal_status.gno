@@ -256,5 +256,5 @@ func NewProposalStatus(
 	)
 	actionStatus := governance.NewProposalActionStatus(executable)
 	voteStatus := governance.NewProposalVoteStatus(maxVotingWeight, config.Quorum)
-	return governance.NewProposalStatusInstance(schedule, actionStatus, voteStatus)
+	return governance.NewProposalStatusBy(schedule, actionStatus, voteStatus)
 }
