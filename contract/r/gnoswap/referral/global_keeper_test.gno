@@ -67,6 +67,22 @@ func TestGlobalKeeper_TryRegister(t *testing.T) {
 			expectedResult:   false,
 			expectedHasPanic: false,
 		},
+		{
+			name:             "Fail register with invalid referral - invalid format",
+			callerRealm:      routerRealm,
+			addr:             testutils.TestAddress("test6"),
+			referral:         "invalid_ref",
+			expectedResult:   false,
+			expectedHasPanic: false,
+		},
+		{
+			name:             "Fail register with invalid user address",
+			callerRealm:      routerRealm,
+			addr:             address(""),
+			referral:         testutils.TestAddress("referrer4").String(),
+			expectedResult:   false,
+			expectedHasPanic: false,
+		},
 	}
 
 	for _, tc := range tests {
@@ -129,6 +145,18 @@ func TestGlobalKeeper_GetReferral(t *testing.T) {
 			setupReferral:    "",
 			expectedReferral: "",
 		},
+		{
+			name:             "Empty result for invalid address - empty string",
+			addr:             "",
+			setupReferral:    "",
+			expectedReferral: "",
+		},
+		{
+			name:             "Empty result for invalid address - invalid format",
+			addr:             "invalid",
+			setupReferral:    "",
+			expectedReferral: "",
+		},
 	}
 
 	for _, tc := range tests {
@@ -173,6 +201,18 @@ func TestGlobalKeeper_HasReferral(t *testing.T) {
 		{
 			name:          "False for zero address referral",
 			addr:          testutils.TestAddress("user3").String(),
+			setupReferral: "",
+			expectedHas:   false,
+		},
+		{
+			name:          "False for invalid address - empty string",
+			addr:          "",
+			setupReferral: "",
+			expectedHas:   false,
+		},
+		{
+			name:          "False for invalid address - invalid format",
+			addr:          "invalid",
 			setupReferral: "",
 			expectedHas:   false,
 		},
