@@ -1215,6 +1215,106 @@ func TestHaltedOperations(t *testing.T) {
 	}
 }
 
+func Test_setTokenURI(t *testing.T) {
+	tests := []struct {
+		name          string
+		setup         func()
+		ownerAddr     address
+		tokenId       uint64
+		tokenURI      string
+		expectedError bool
+		errorContains string
+	}{
+		{
+			name: "successfully sets URI for token owned by caller",
+			setup: func() {
+				// Mint token to position owner
+				ownerAddr := owner.Owner()
+				nft.Mint(ownerAddr, tid(100))
+			},
+			ownerAddr:     owner.Owner(),
+			tokenId:       100,
+			tokenURI:      "custom-uri",
+			expectedError: false,
+		},
+		{
+			name: "fails for non-existent token",
+			setup: func() {
+				// No token minted
+			},
+			ownerAddr:     owner.Owner(),
+			tokenId:       999,
+			tokenURI:      "custom-uri",
+			expectedError: true,
+			errorContains: "invalid token id",
+		},
+		{
+			name: "overwrites URI when already set (private function allows this)",
+			setup: func() {
+				// Mint and set URI
+				ownerAddr := owner.Owner()
+				nft.Mint(ownerAddr, tid(200))
+				// Set URI first time using nested realms
+				testing.SetRealm(testing.NewUserRealm(ownerAddr))
+				func() {
+					testing.SetRealm(testing.NewCodeRealm("gno.land/r/test"))
+					setTokenURI(tid(200), grc721.TokenURI("first-uri"))
+				}()
+			},
+			ownerAddr:     owner.Owner(),
+			tokenId:       200,
+			tokenURI:      "second-uri",
+			expectedError: false, // private setTokenURI allows overwriting
+		},
+		{
+			name: "fails when caller is not token owner",
+			setup: func() {
+				// Mint token to addr01
+				nft.Mint(addr01, tid(300))
+			},
+			ownerAddr:     addr02, // Different owner trying to set URI
+			tokenId:       300,
+			tokenURI:      "unauthorized-uri",
+			expectedError: true,
+			errorContains: "caller is not token owner",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			resetObject(t)
+
+			if tc.setup != nil {
+				tc.setup()
+			}
+
+			// when
+			var err error
+			testing.SetRealm(testing.NewUserRealm(tc.ownerAddr))
+			func() {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/test"))
+				err = setTokenURI(tid(tc.tokenId), grc721.TokenURI(tc.tokenURI))
+			}()
+
+			// then
+			if tc.expectedError {
+				uassert.Error(t, err)
+				if tc.errorContains != "" && err != nil {
+					uassert.True(t, strings.Contains(err.Error(), tc.errorContains))
+				}
+			} else {
+				uassert.NoError(t, err)
+
+				// Verify URI was set correctly
+				uri, err := TokenURI(tid(tc.tokenId))
+				uassert.NoError(t, err)
+				uassert.Equal(t, tc.tokenURI, uri)
+			}
+		})
+	}
+}
+
 func resetObject(t *testing.T) {
 	t.Helper()
 
