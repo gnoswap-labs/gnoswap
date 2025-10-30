@@ -70,6 +70,53 @@ func TestGetNextPriceAmount0Add(t *testing.T) {
 	}
 }
 
+// TestGetNextPriceAmount0Add_BranchCoverage tests specific branch conditions
+func TestGetNextPriceAmount0Add_BranchCoverage(t *testing.T) {
+	tests := []struct {
+		name             string
+		currentSqrtPrice *u256.Uint
+		liquidity        *u256.Uint
+		amountToAdd      *u256.Uint
+		description      string
+	}{
+		{
+			name:             "quotient_check_passes_denominator_gte",
+			currentSqrtPrice: Q96,
+			liquidity:        u256.MustFromDecimal("1000000000000000000"),
+			amountToAdd:      u256.MustFromDecimal("100000000000000000"),
+			description:      "Fast path: quotient check passes and denominator >= liquidityShifted",
+		},
+		{
+			name:             "quotient_check_fails_uses_fallback",
+			currentSqrtPrice: MAX_SQRT_RATIO,
+			liquidity:        u256.One(),
+			amountToAdd:      MAX_SQRT_RATIO,
+			description:      "Fallback path: multiplication overflow causes quotient check to fail",
+		},
+		{
+			name:             "denominator_overflow_fallback",
+			currentSqrtPrice: encodePriceSqrt("1", "1"),
+			liquidity:        u256.NewUint(2),
+			amountToAdd:      MAX_SQRT_RATIO,
+			description:      "Fallback path: denominator overflow causes fallback",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// given
+			t.Logf("Testing: %s", tt.description)
+
+			// when
+			result := getNextPriceAmount0Add(tt.currentSqrtPrice, tt.liquidity, tt.amountToAdd)
+
+			// then - verify result is valid
+			uassert.True(t, result.Gt(u256.Zero()), "Result should be greater than zero")
+			uassert.True(t, result.Lte(tt.currentSqrtPrice), "Price should decrease when adding token0")
+		})
+	}
+}
+
 // TestGetNextPriceAmount0Remove tests the internal helper for removing token0
 func TestGetNextPriceAmount0Remove(t *testing.T) {
 	tiny := u256.One()
@@ -177,6 +224,52 @@ func TestGetNextPriceAmount0Remove(t *testing.T) {
 			}
 			after := getNextPriceAmount0Remove(tt.current, tt.liquidity, tt.amountToRemove)
 			tt.validate(t, before, after)
+		})
+	}
+}
+
+// TestGetNextPriceAmount0Remove_PanicConditions tests each panic condition separately
+func TestGetNextPriceAmount0Remove_PanicConditions(t *testing.T) {
+	tests := []struct {
+		name           string
+		current        *u256.Uint
+		liquidity      *u256.Uint
+		amountToRemove *u256.Uint
+		panicMsg       string
+		description    string
+	}{
+		{
+			name:           "quotient_check_fails_overflow",
+			current:        Q96,
+			liquidity:      u256.One(),
+			amountToRemove: MAX_UINT256,
+			panicMsg:       errInvalidPoolSqrtPrice.Error(),
+			description:    "Panic when amountTimesSqrtPrice / amountToRemove != currentSqrtPriceX96",
+		},
+		{
+			name:           "liquidity_shifted_not_greater_than_product",
+			current:        Q96,
+			liquidity:      u256.MustFromDecimal("1000"),
+			amountToRemove: u256.MustFromDecimal("100000000000000000000"),
+			panicMsg:       errInvalidPoolSqrtPrice.Error(),
+			description:    "Panic when liquidityShifted <= amountTimesSqrtPrice",
+		},
+		{
+			name:           "both_conditions_fail",
+			current:        u256.MustFromDecimal("1000000000000000000"),
+			liquidity:      u256.One(),
+			amountToRemove: MAX_UINT256,
+			panicMsg:       errInvalidPoolSqrtPrice.Error(),
+			description:    "Panic when both quotient check fails AND liquidity is insufficient",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Logf("Testing: %s", tt.description)
+			uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+				_ = getNextPriceAmount0Remove(tt.current, tt.liquidity, tt.amountToRemove)
+			})
 		})
 	}
 }
@@ -530,6 +623,53 @@ func TestGetNextPriceAmount1Remove(t *testing.T) {
 
 			result := getNextPriceAmount1Remove(tt.sqrtPX96, tt.liquidity, tt.amount)
 			uassert.Equal(t, tt.expected.ToString(), result.ToString())
+		})
+	}
+}
+
+// TestGetNextPriceAmount1Remove_MAX160Boundary tests exact MAX_UINT160 boundary
+func TestGetNextPriceAmount1Remove_MAX160Boundary(t *testing.T) {
+	tests := []struct {
+		name      string
+		sqrtPX96  *u256.Uint
+		liquidity *u256.Uint
+		amount    *u256.Uint
+	}{
+		{
+			name: "amount_exactly_MAX_UINT160",
+			// When amount = MAX_UINT160 and liquidity = MAX_UINT160,
+			// quotient = (MAX_UINT160 << 96) / MAX_UINT160 = 2^96 = Q96
+			// MAX_SQRT_RATIO >> Q96, so sqrtPX96 > quotient condition is satisfied
+			sqrtPX96:  MAX_SQRT_RATIO,
+			liquidity: MAX_UINT160,
+			amount:    MAX_UINT160,
+		},
+		{
+			name: "amount_one_below_MAX_UINT160",
+			// Similar setup but with amount = MAX_UINT160 - 1
+			sqrtPX96:  MAX_SQRT_RATIO,
+			liquidity: MAX_UINT160,
+			amount:    new(u256.Uint).Sub(MAX_UINT160, u256.One()),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// when
+			result := getNextPriceAmount1Remove(tt.sqrtPX96, tt.liquidity, tt.amount)
+
+			// then
+			uassert.NotEqual(t, "0", result.ToString(), "Result should not be zero")
+
+			// Verify which code path was taken based on amount vs MAX_UINT160
+			if tt.amount.Lte(MAX_UINT160) {
+				t.Logf("Used Lsh path: amount <= MAX_UINT160")
+			} else {
+				t.Logf("Used MulDivRoundingUp path: amount > MAX_UINT160")
+			}
+
+			// Verify sqrtPX96 > result (price decreased after removing token1)
+			uassert.True(t, tt.sqrtPX96.Gt(result), "sqrtPX96 should be greater than result")
 		})
 	}
 }
