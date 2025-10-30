@@ -4,13 +4,20 @@ import (
 	"math"
 	"testing"
 
+	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/demo/defi/foo20"
 )
 
-var tokenPath = "gno.land/r/demo/defi/foo20"
+var (
+	tokenPath     = "gno.land/r/demo/defi/foo20"
+	testRealm     = testing.NewCodeRealm("gno.land/r/gnoswap/common")
+	alice         = testutils.TestAddress("alice")
+	bob           = testutils.TestAddress("bob")
+	defaultHolder = address("g1manfred47kzduec920z88wfr64ylksmdcedlf5") // foo20 initial token holder
+)
 
 func TestGrc20regHelper_GetToken(t *testing.T) {
 	tests := []struct {
@@ -144,57 +151,68 @@ func TestGrc20regHelper_GetTokenTeller(t *testing.T) {
 
 func TestGrc20regHelper_Transfer(t *testing.T) {
 	tests := []struct {
-		name          string
-		path          string
-		to            address
-		amount        int64
-		expectedError bool
-		shouldPanic   bool
+		name            string
+		caller          address
+		path            string
+		to              address
+		amount          int64
+		expectedError   bool
+		shouldAbort     bool
+		abortContains   string
 	}{
 		{
 			name:          "transfer to valid address",
+			caller:        defaultHolder,
 			path:          tokenPath,
-			to:            address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			to:            bob,
 			amount:        1000,
 			expectedError: false,
 		},
 		{
 			name:          "transfer with insufficient balance",
+			caller:        alice, // alice has no tokens
 			path:          tokenPath,
-			to:            address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			to:            bob,
 			amount:        99999999999999,
 			expectedError: true,
 		},
 		{
 			name:          "transfer zero amount",
+			caller:        defaultHolder,
 			path:          tokenPath,
-			to:            address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			to:            bob,
 			amount:        0,
 			expectedError: false,
 		},
 		{
 			name:          "transfer negative amount",
+			caller:        defaultHolder,
 			path:          tokenPath,
-			to:            address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			to:            bob,
 			amount:        -100,
 			expectedError: true,
 		},
 		{
-			name:        "transfer with unregistered token path",
-			path:        "not_registered_token",
-			to:          address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
-			amount:      1000,
-			shouldPanic: true,
+			name:          "transfer with unregistered token",
+			caller:        defaultHolder,
+			path:          "not_registered_token",
+			to:            bob,
+			amount:        1000,
+			shouldAbort:   true,
+			abortContains: "unknown token",
 		},
 		{
-			name:        "transfer with empty string path",
-			path:        "",
-			to:          address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
-			amount:      1000,
-			shouldPanic: true,
+			name:          "transfer with empty token path",
+			caller:        defaultHolder,
+			path:          "",
+			to:            bob,
+			amount:        1000,
+			shouldAbort:   true,
+			abortContains: "unknown token",
 		},
 		{
 			name:          "transfer to empty address",
+			caller:        defaultHolder,
 			path:          tokenPath,
 			to:            address(""),
 			amount:        1000,
@@ -202,8 +220,9 @@ func TestGrc20regHelper_Transfer(t *testing.T) {
 		},
 		{
 			name:          "transfer max int64 amount",
+			caller:        defaultHolder,
 			path:          tokenPath,
-			to:            address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			to:            bob,
 			amount:        math.MaxInt64,
 			expectedError: true,
 		},
@@ -211,15 +230,15 @@ func TestGrc20regHelper_Transfer(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				defer func() {
-					if r := recover(); r == nil {
-						t.Errorf("Expected panic for %s", tt.name)
-					}
-				}()
-			}
-			err := Transfer(cross, tt.path, tt.to, tt.amount)
-			if !tt.shouldPanic {
+			testing.SetOriginCaller(tt.caller)
+			testing.SetRealm(testing.NewUserRealm(tt.caller))
+
+			if tt.shouldAbort {
+				uassert.AbortsContains(t, tt.abortContains, func() {
+					Transfer(cross, tt.path, tt.to, tt.amount)
+				})
+			} else {
+				err := Transfer(cross, tt.path, tt.to, tt.amount)
 				if tt.expectedError {
 					uassert.Error(t, err)
 				} else {
@@ -233,6 +252,7 @@ func TestGrc20regHelper_Transfer(t *testing.T) {
 func TestGrc20regHelper_TransferFrom(t *testing.T) {
 	tests := []struct {
 		name          string
+		caller        address
 		path          string
 		from          address
 		to            address
@@ -240,13 +260,15 @@ func TestGrc20regHelper_TransferFrom(t *testing.T) {
 		setupApproval bool
 		approvalAmt   int64
 		expectedError bool
-		shouldPanic   bool
+		shouldAbort   bool
+		abortContains string
 	}{
 		{
 			name:          "transfer from with sufficient allowance",
+			caller:        alice,
 			path:          tokenPath,
-			from:          address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"),
-			to:            address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			from:          defaultHolder,
+			to:            bob,
 			amount:        100,
 			setupApproval: true,
 			approvalAmt:   1000,
@@ -254,52 +276,59 @@ func TestGrc20regHelper_TransferFrom(t *testing.T) {
 		},
 		{
 			name:          "transfer from without allowance",
+			caller:        bob,
 			path:          tokenPath,
-			from:          address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"),
-			to:            address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			from:          defaultHolder,
+			to:            alice,
 			amount:        100,
 			setupApproval: false,
 			expectedError: true,
 		},
 		{
 			name:          "transfer from with insufficient allowance",
+			caller:        alice,
 			path:          tokenPath,
-			from:          address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"),
-			to:            address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			from:          defaultHolder,
+			to:            bob,
 			amount:        2000,
 			setupApproval: true,
 			approvalAmt:   1000,
 			expectedError: true,
 		},
 		{
-			name:        "transfer from with unregistered token",
-			path:        "not_registered_token",
-			from:        address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"),
-			to:          address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
-			amount:      100,
-			shouldPanic: true,
+			name:          "transfer from with unregistered token",
+			caller:        alice,
+			path:          "not_registered_token",
+			from:          defaultHolder,
+			to:            bob,
+			amount:        100,
+			shouldAbort:   true,
+			abortContains: "unknown token",
 		},
 		{
 			name:          "transfer from with empty from address",
+			caller:        alice,
 			path:          tokenPath,
 			from:          address(""),
-			to:            address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			to:            bob,
 			amount:        100,
 			expectedError: true,
 		},
 		{
 			name:          "transfer from with empty to address",
+			caller:        alice,
 			path:          tokenPath,
-			from:          address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"),
+			from:          defaultHolder,
 			to:            address(""),
 			amount:        100,
 			expectedError: true,
 		},
 		{
 			name:          "transfer from zero amount with zero allowance",
+			caller:        alice,
 			path:          tokenPath,
-			from:          address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"),
-			to:            address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			from:          defaultHolder,
+			to:            bob,
 			amount:        0,
 			setupApproval: false,
 			expectedError: false,
@@ -308,21 +337,23 @@ func TestGrc20regHelper_TransferFrom(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				defer func() {
-					if r := recover(); r == nil {
-						t.Errorf("Expected panic for %s", tt.name)
-					}
-				}()
-			}
-
+			// Setup approval if needed - as the token owner (from address)
 			if tt.setupApproval {
-				// Setup approval first - would need proper realm setup
-				// Skip for now as it requires more complex setup
+				testing.SetOriginCaller(tt.from)
+				testing.SetRealm(testing.NewUserRealm(tt.from))
+				Approve(cross, tt.path, tt.caller, tt.approvalAmt)
 			}
 
-			err := TransferFrom(cross, tt.path, tt.from, tt.to, tt.amount)
-			if !tt.shouldPanic {
+			// Now perform TransferFrom as the caller
+			testing.SetOriginCaller(tt.caller)
+			testing.SetRealm(testing.NewUserRealm(tt.caller))
+
+			if tt.shouldAbort {
+				uassert.AbortsContains(t, tt.abortContains, func() {
+					TransferFrom(cross, tt.path, tt.from, tt.to, tt.amount)
+				})
+			} else {
+				err := TransferFrom(cross, tt.path, tt.from, tt.to, tt.amount)
 				if tt.expectedError {
 					uassert.Error(t, err)
 				} else {
@@ -336,49 +367,58 @@ func TestGrc20regHelper_TransferFrom(t *testing.T) {
 func TestGrc20regHelper_Approve(t *testing.T) {
 	tests := []struct {
 		name          string
+		caller        address
 		path          string
 		spender       address
 		amount        int64
 		expectedError bool
-		shouldPanic   bool
+		shouldAbort   bool
+		abortContains string
 	}{
 		{
 			name:          "approve valid amount",
+			caller:        defaultHolder,
 			path:          tokenPath,
-			spender:       address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			spender:       alice,
 			amount:        1000,
 			expectedError: false,
 		},
 		{
 			name:          "approve zero amount",
+			caller:        defaultHolder,
 			path:          tokenPath,
-			spender:       address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			spender:       alice,
 			amount:        0,
 			expectedError: false,
 		},
 		{
 			name:          "approve negative amount",
+			caller:        defaultHolder,
 			path:          tokenPath,
-			spender:       address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			spender:       alice,
 			amount:        -100,
 			expectedError: true,
 		},
 		{
 			name:          "approve large amount",
+			caller:        defaultHolder,
 			path:          tokenPath,
-			spender:       address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			spender:       alice,
 			amount:        math.MaxInt64,
 			expectedError: false,
 		},
 		{
-			name:        "approve with unregistered token",
-			path:        "not_registered_token",
-			spender:     address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
-			amount:      1000,
-			shouldPanic: true,
+			name:          "approve with unregistered token",
+			caller:        defaultHolder,
+			path:          "not_registered_token",
+			spender:       alice,
+			amount:        1000,
+			shouldAbort:   true,
+			abortContains: "unknown token",
 		},
 		{
 			name:          "approve with empty spender address",
+			caller:        defaultHolder,
 			path:          tokenPath,
 			spender:       address(""),
 			amount:        1000,
@@ -388,15 +428,15 @@ func TestGrc20regHelper_Approve(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				defer func() {
-					if r := recover(); r == nil {
-						t.Errorf("Expected panic for %s", tt.name)
-					}
-				}()
-			}
-			err := Approve(cross, tt.path, tt.spender, tt.amount)
-			if !tt.shouldPanic {
+			testing.SetOriginCaller(tt.caller)
+			testing.SetRealm(testing.NewUserRealm(tt.caller))
+
+			if tt.shouldAbort {
+				uassert.AbortsContains(t, tt.abortContains, func() {
+					Approve(cross, tt.path, tt.spender, tt.amount)
+				})
+			} else {
+				err := Approve(cross, tt.path, tt.spender, tt.amount)
 				if tt.expectedError {
 					uassert.Error(t, err)
 				} else {
@@ -409,153 +449,214 @@ func TestGrc20regHelper_Approve(t *testing.T) {
 
 func TestGrc20regHelper_SafeGRC20Transfer(t *testing.T) {
 	tests := []struct {
-		name        string
-		path        string
-		to          address
-		amount      int64
-		shouldPanic bool
+		name          string
+		caller        address
+		path          string
+		to            address
+		amount        int64
+		shouldAbort   bool
+		abortContains string
 	}{
 		{
 			name:        "safe transfer success",
+			caller:      defaultHolder,
 			path:        tokenPath,
-			to:          address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			to:          bob,
 			amount:      100,
-			shouldPanic: false,
+			shouldAbort: false,
 		},
 		{
-			name:        "safe transfer with insufficient balance",
-			path:        tokenPath,
-			to:          address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
-			amount:      99999999999999,
-			shouldPanic: true,
+			name:          "safe transfer with insufficient balance",
+			caller:        alice, // alice has no tokens
+			path:          tokenPath,
+			to:            bob,
+			amount:        99999999999999,
+			shouldAbort:   true,
+			abortContains: "insufficient balance",
 		},
 		{
-			name:        "safe transfer negative amount",
-			path:        tokenPath,
-			to:          address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
-			amount:      -100,
-			shouldPanic: true,
+			name:          "safe transfer negative amount",
+			caller:        defaultHolder,
+			path:          tokenPath,
+			to:            bob,
+			amount:        -100,
+			shouldAbort:   true,
+			abortContains: "invalid amount",
 		},
 		{
-			name:        "safe transfer with unregistered token",
-			path:        "not_registered_token",
-			to:          address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
-			amount:      100,
-			shouldPanic: true,
+			name:          "safe transfer with unregistered token",
+			caller:        defaultHolder,
+			path:          "not_registered_token",
+			to:            bob,
+			amount:        100,
+			shouldAbort:   true,
+			abortContains: "unknown token",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				defer func() {
-					if r := recover(); r == nil {
-						t.Errorf("Expected panic for %s", tt.name)
-					}
-				}()
+			testing.SetOriginCaller(tt.caller)
+			testing.SetRealm(testing.NewUserRealm(tt.caller))
+
+			if tt.shouldAbort {
+				uassert.AbortsContains(t, tt.abortContains, func() {
+					SafeGRC20Transfer(cross, tt.path, tt.to, tt.amount)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					SafeGRC20Transfer(cross, tt.path, tt.to, tt.amount)
+				})
 			}
-			SafeGRC20Transfer(cross, tt.path, tt.to, tt.amount)
 		})
 	}
 }
 
 func TestGrc20regHelper_SafeGRC20TransferFrom(t *testing.T) {
 	tests := []struct {
-		name        string
-		path        string
-		from        address
-		to          address
-		amount      int64
-		shouldPanic bool
+		name          string
+		caller        address
+		path          string
+		from          address
+		to            address
+		amount        int64
+		setupApproval bool
+		approvalAmt   int64
+		shouldAbort   bool
+		abortContains string
 	}{
 		{
-			name:        "safe transfer from without allowance",
-			path:        tokenPath,
-			from:        address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"),
-			to:          address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
-			amount:      100,
-			shouldPanic: true,
+			name:          "safe transfer from without allowance",
+			caller:        bob,
+			path:          tokenPath,
+			from:          defaultHolder,
+			to:            alice,
+			amount:        100,
+			setupApproval: false,
+			shouldAbort:   true,
+			abortContains: "insufficient allowance",
 		},
 		{
-			name:        "safe transfer from with insufficient balance",
-			path:        tokenPath,
-			from:        address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"),
-			to:          address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
-			amount:      99999999999999,
-			shouldPanic: true,
+			name:          "safe transfer from with insufficient balance",
+			caller:        alice,
+			path:          tokenPath,
+			from:          defaultHolder,
+			to:            bob,
+			amount:        99999999999999,
+			setupApproval: true,
+			approvalAmt:   99999999999999,
+			shouldAbort:   true,
+			abortContains: "insufficient balance",
 		},
 		{
-			name:        "safe transfer from with unregistered token",
-			path:        "not_registered_token",
-			from:        address("g1manfred47kzduec920z88wfr64ylksmdcedlf5"),
-			to:          address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
-			amount:      100,
-			shouldPanic: true,
+			name:          "safe transfer from with unregistered token",
+			caller:        alice,
+			path:          "not_registered_token",
+			from:          defaultHolder,
+			to:            bob,
+			amount:        100,
+			shouldAbort:   true,
+			abortContains: "unknown token",
+		},
+		{
+			name:          "safe transfer from with sufficient allowance",
+			caller:        bob,
+			path:          tokenPath,
+			from:          defaultHolder,
+			to:            alice,
+			amount:        100,
+			setupApproval: true,
+			approvalAmt:   1000,
+			shouldAbort:   false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				defer func() {
-					if r := recover(); r == nil {
-						t.Errorf("Expected panic for %s", tt.name)
-					}
-				}()
+			// Setup approval if needed
+			if tt.setupApproval {
+				testing.SetOriginCaller(tt.from)
+				testing.SetRealm(testing.NewUserRealm(tt.from))
+				Approve(cross, tt.path, tt.caller, tt.approvalAmt)
 			}
-			SafeGRC20TransferFrom(cross, tt.path, tt.from, tt.to, tt.amount)
+
+			// Now perform SafeGRC20TransferFrom as the caller
+			testing.SetOriginCaller(tt.caller)
+			testing.SetRealm(testing.NewUserRealm(tt.caller))
+
+			if tt.shouldAbort {
+				uassert.AbortsContains(t, tt.abortContains, func() {
+					SafeGRC20TransferFrom(cross, tt.path, tt.from, tt.to, tt.amount)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					SafeGRC20TransferFrom(cross, tt.path, tt.from, tt.to, tt.amount)
+				})
+			}
 		})
 	}
 }
 
 func TestGrc20regHelper_SafeGRC20Approve(t *testing.T) {
 	tests := []struct {
-		name        string
-		path        string
-		spender     address
-		amount      int64
-		shouldPanic bool
+		name          string
+		caller        address
+		path          string
+		spender       address
+		amount        int64
+		shouldAbort   bool
+		abortContains string
 	}{
 		{
 			name:        "safe approve valid amount",
+			caller:      defaultHolder,
 			path:        tokenPath,
-			spender:     address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			spender:     alice,
 			amount:      1000,
-			shouldPanic: false,
+			shouldAbort: false,
 		},
 		{
-			name:        "safe approve negative amount",
-			path:        tokenPath,
-			spender:     address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
-			amount:      -100,
-			shouldPanic: true,
+			name:          "safe approve negative amount",
+			caller:        defaultHolder,
+			path:          tokenPath,
+			spender:       alice,
+			amount:        -100,
+			shouldAbort:   true,
+			abortContains: "invalid amount",
 		},
 		{
 			name:        "safe approve zero amount",
+			caller:      defaultHolder,
 			path:        tokenPath,
-			spender:     address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
+			spender:     alice,
 			amount:      0,
-			shouldPanic: false,
+			shouldAbort: false,
 		},
 		{
-			name:        "safe approve with unregistered token",
-			path:        "not_registered_token",
-			spender:     address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"),
-			amount:      1000,
-			shouldPanic: true,
+			name:          "safe approve with unregistered token",
+			caller:        defaultHolder,
+			path:          "not_registered_token",
+			spender:       alice,
+			amount:        1000,
+			shouldAbort:   true,
+			abortContains: "unknown token",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				defer func() {
-					if r := recover(); r == nil {
-						t.Errorf("Expected panic for %s", tt.name)
-					}
-				}()
+			testing.SetOriginCaller(tt.caller)
+			testing.SetRealm(testing.NewUserRealm(tt.caller))
+
+			if tt.shouldAbort {
+				uassert.AbortsContains(t, tt.abortContains, func() {
+					SafeGRC20Approve(cross, tt.path, tt.spender, tt.amount)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					SafeGRC20Approve(cross, tt.path, tt.spender, tt.amount)
+				})
 			}
-			SafeGRC20Approve(cross, tt.path, tt.spender, tt.amount)
 		})
 	}
 }
