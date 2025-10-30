@@ -229,9 +229,14 @@ func TestSetTokenURI(t *testing.T) {
 					SetTokenURI(cross, tid(tt.tokenId), "test-uri")
 				})
 			} else {
-				result, err := SetTokenURI(cross, tid(tt.tokenId), "test-uri")
+				expectedURI := "test-uri"
+				result, err := SetTokenURI(cross, tid(tt.tokenId), grc721.TokenURI(expectedURI))
 				uassert.NoError(t, err)
 				uassert.True(t, result)
+
+				uri, err := TokenURI(tid(tt.tokenId))
+				uassert.NoError(t, err)
+				uassert.Equal(t, expectedURI, uri)
 			}
 		})
 	}
