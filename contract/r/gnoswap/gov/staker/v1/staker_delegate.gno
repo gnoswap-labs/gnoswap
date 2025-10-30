@@ -8,10 +8,10 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/gov/xgns"
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/referral"
-	"gno.land/r/gnoswap/gov/staker"
 )
 
 // Delegate delegates GNS tokens to an address.
@@ -296,7 +296,12 @@ func (gs *govStakerV1) delegate(
 		currentHeight,
 		currentTimestamp,
 	)
-	delegationRecord := NewDelegationDelegateRecordBy(delegation)
+	delegationResolver := NewDelegationResolver(delegation)
+	delegationRecord := staker.NewDelegationDelegateRecordBy(
+		delegation,
+		delegationResolver.DelegatedAmount(),
+		currentTimestamp,
+	)
 
 	gs.addDelegation(delegationID, delegation)
 	gs.addDelegationRecord(delegationRecord)
@@ -308,7 +313,7 @@ func (gs *govStakerV1) delegate(
 	if err := gs.store.SetTotalDelegatedAmount(currentDelegated + amount); err != nil {
 		panic(err)
 	}
-	
+
 	currentLocked := gs.store.GetTotalLockedAmount()
 	if err := gs.store.SetTotalLockedAmount(currentLocked + amount); err != nil {
 		panic(err)
@@ -352,7 +357,7 @@ func (gs *govStakerV1) unDelegate(
 		if err != nil {
 			panic(err)
 		}
-		
+
 		resolver.UnDelegate(
 			currentUnDelegationAmount,
 			currentHeight,

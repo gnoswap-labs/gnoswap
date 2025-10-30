@@ -1,17 +1,16 @@
-package v1
+package staker
 
 import (
 	"testing"
 
 	"gno.land/p/nt/uassert"
-	"gno.land/r/gnoswap/gov/staker"
 )
 
 // TestNewDelegationRecord tests the creation of new delegation records
 func TestNewDelegationRecord(t *testing.T) {
 	tests := []struct {
 		name                     string
-		delegationType           staker.DelegationType
+		delegationType           DelegationType
 		delegationAmount         int64
 		delegateFrom             address
 		delegateTo               address
@@ -21,7 +20,7 @@ func TestNewDelegationRecord(t *testing.T) {
 	}{
 		{
 			name:                     "Create delegate record",
-			delegationType:           staker.DelegateType,
+			delegationType:           DelegateType,
 			delegationAmount:         100,
 			delegateFrom:             address("g1from"),
 			delegateTo:               address("g1to"),
@@ -31,7 +30,7 @@ func TestNewDelegationRecord(t *testing.T) {
 		},
 		{
 			name:                     "Create undelegate record",
-			delegationType:           staker.UnDelegateType,
+			delegationType:           UnDelegateType,
 			delegationAmount:         50,
 			delegateFrom:             address("g1from"),
 			delegateTo:               address("g1to"),
@@ -44,7 +43,7 @@ func TestNewDelegationRecord(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// when
-			record := staker.NewDelegationRecord(
+			record := NewDelegationRecord(
 				tc.delegationType,
 				tc.delegationAmount,
 				tc.delegateFrom,
@@ -68,13 +67,13 @@ func TestNewDelegationRecord(t *testing.T) {
 func TestNewDelegationWithdrawRecordBy(t *testing.T) {
 	tests := []struct {
 		name           string
-		delegation     *staker.Delegation
+		delegation     *Delegation
 		withdrawAmount int64
 		currentTime    int64
 	}{
 		{
-			name: "Create withdraw record from delegation",
-			delegation: NewDelegation(1, address("g1from"), address("g1to"), 100, 1000, 1000),
+			name:           "Create withdraw record from delegation",
+			delegation:     NewDelegation(1, address("g1from"), address("g1to"), 100, 1000, 1000),
 			withdrawAmount: 50,
 			currentTime:    2000,
 		},
@@ -83,7 +82,7 @@ func TestNewDelegationWithdrawRecordBy(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// when
-			record := staker.NewDelegationWithdrawRecordBy(
+			record := NewDelegationWithdrawRecordBy(
 				tc.delegation,
 				tc.withdrawAmount,
 				tc.currentTime,
@@ -91,7 +90,7 @@ func TestNewDelegationWithdrawRecordBy(t *testing.T) {
 
 			// then
 			uassert.NotNil(t, record)
-			uassert.Equal(t, record.DelegationType().String(), staker.UnDelegateType.String())
+			uassert.Equal(t, record.DelegationType().String(), UnDelegateType.String())
 			uassert.Equal(t, record.UnDelegateAmount(), tc.withdrawAmount)
 			uassert.Equal(t, record.DelegateFrom(), tc.delegation.DelegateFrom())
 			uassert.Equal(t, record.DelegateTo(), tc.delegation.DelegateTo())
@@ -103,33 +102,34 @@ func TestNewDelegationWithdrawRecordBy(t *testing.T) {
 // TestNewDelegationDelegateRecordBy tests creating delegate records from delegation
 func TestNewDelegationDelegateRecordBy(t *testing.T) {
 	tests := []struct {
-		name       string
-		// delegation *staker.Delegation
-		id int64
-		delegateFrom address
-		delegateTo address
+		name string
+		// delegation *Delegation
+		id             int64
+		delegateFrom   address
+		delegateTo     address
 		delegateAmount int64
-		createdAt int64
+		createdAt      int64
 	}{
 		{
-			name: "Create delegate record from delegation",
-			id: 1,
-			delegateFrom: address("g1from"),
-			delegateTo: address("g1to"),
+			name:           "Create delegate record from delegation",
+			id:             1,
+			delegateFrom:   address("g1from"),
+			delegateTo:     address("g1to"),
 			delegateAmount: 100,
-			createdAt: 1000,
+			createdAt:      1000,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// when
-			delegation := staker.NewDelegation(tc.id, tc.delegateFrom, tc.delegateTo, tc.delegateAmount, 1000, tc.createdAt)
-			record := NewDelegationDelegateRecordBy(delegation)
+			delegation := NewDelegation(tc.id, tc.delegateFrom, tc.delegateTo, tc.delegateAmount, 1000, tc.createdAt)
+			delegationAmount := delegation.TotalDelegatedAmount() - delegation.UnDelegatedAmount()
+			record := NewDelegationDelegateRecordBy(delegation, delegationAmount, tc.createdAt)
 
 			// then
 			uassert.NotNil(t, record)
-			uassert.Equal(t, record.DelegationType().String(), staker.DelegateType.String())
+			uassert.Equal(t, record.DelegationType().String(), DelegateType.String())
 			uassert.Equal(t, record.DelegateAmount(), tc.delegateAmount)
 			uassert.Equal(t, record.DelegateFrom(), tc.delegateFrom)
 			uassert.Equal(t, record.DelegateTo(), tc.delegateTo)
