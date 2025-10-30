@@ -77,7 +77,7 @@ func (s *govStakerStore) HasEmissionRewardBalanceStoreKey() bool {
 func (s *govStakerStore) GetEmissionRewardBalance() (int64, error) {
 	result, err := s.kvStore.Get(StoreKeyEmissionRewardBalance)
 	if err != nil {
-		panic("failed to get emission reward balance: " + err.Error())
+		return 0, err
 	}
 
 	balance, ok := result.(int64)
@@ -96,18 +96,18 @@ func (s *govStakerStore) HasTotalDelegatedAmountStoreKey() bool {
 	return s.kvStore.Has(StoreKeyTotalDelegatedAmount)
 }
 
-func (s *govStakerStore) GetTotalDelegatedAmount() int64 {
+func (s *govStakerStore) GetTotalDelegatedAmount() (int64, error) {
 	result, err := s.kvStore.Get(StoreKeyTotalDelegatedAmount)
 	if err != nil {
-		panic("failed to get total delegated amount: " + err.Error())
+		return 0, err
 	}
 
 	amount, ok := result.(int64)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to int64: %T", result))
+		return 0, errors.New(ufmt.Sprintf("failed to cast result to int64: %T", result))
 	}
 
-	return amount
+	return amount, nil
 }
 
 func (s *govStakerStore) SetTotalDelegatedAmount(amount int64) error {
@@ -118,18 +118,18 @@ func (s *govStakerStore) HasTotalLockedAmountStoreKey() bool {
 	return s.kvStore.Has(StoreKeyTotalLockedAmount)
 }
 
-func (s *govStakerStore) GetTotalLockedAmount() int64 {
+func (s *govStakerStore) GetTotalLockedAmount() (int64, error) {
 	result, err := s.kvStore.Get(StoreKeyTotalLockedAmount)
 	if err != nil {
-		panic("failed to get total locked amount: " + err.Error())
+		return 0, err
 	}
 
 	amount, ok := result.(int64)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to int64: %T", result))
+		return 0, errors.New(ufmt.Sprintf("failed to cast result to int64: %T", result))
 	}
 
-	return amount
+	return amount, nil
 }
 
 func (s *govStakerStore) SetTotalLockedAmount(amount int64) error {
@@ -200,7 +200,7 @@ func (s *govStakerStore) GetAllDelegations() (*avl.Tree, error) {
 func (s *govStakerStore) getAllDelegations() (*avl.Tree, error) {
 	result, err := s.kvStore.Get(StoreKeyDelegations)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	delegations, ok := result.(*avl.Tree)
@@ -215,18 +215,18 @@ func (s *govStakerStore) HasDelegationCounterStoreKey() bool {
 	return s.kvStore.Has(StoreKeyDelegationNextID)
 }
 
-func (s *govStakerStore) GetDelegationCounter() *Counter {
+func (s *govStakerStore) GetDelegationCounter() (*Counter, error) {
 	result, err := s.kvStore.Get(StoreKeyDelegationNextID)
 	if err != nil {
-		panic("failed to get delegation next ID: " + err.Error())
+		return nil, err
 	}
 
 	counter, ok := result.(*Counter)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to Counter: %T", result))
+		return nil, errors.New(ufmt.Sprintf("failed to cast result to Counter: %T", result))
 	}
 
-	return counter
+	return counter, nil
 }
 
 func (s *govStakerStore) SetDelegationCounter(counter *Counter) error {
@@ -251,8 +251,7 @@ func (s *govStakerStore) AddDelegationRecord(record *DelegationRecord) error {
 func (s *govStakerStore) GetDelegationHistory() ([]*DelegationRecord, error) {
 	result, err := s.kvStore.Get(StoreKeyDelegationHistory)
 	if err != nil {
-		// If key doesn't exist, return empty slice
-		return make([]*DelegationRecord, 0), nil
+		return nil, err
 	}
 
 	history, ok := result.([]*DelegationRecord)

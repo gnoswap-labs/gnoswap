@@ -16,20 +16,20 @@ type mockGovStakerStore struct {
 	emissionRewardBalance    int64
 	totalDelegatedAmount     int64
 	totalLockedAmount        int64
-	
+
 	// Delegation data
-	delegations      *avl.Tree // map[int64]*staker.Delegation
-	delegationNextID *staker.Counter
+	delegations       *avl.Tree // map[int64]*staker.Delegation
+	delegationNextID  *staker.Counter
 	delegationHistory []*staker.DelegationRecord
 	userDelegations   map[string]map[string][]int64
-	
+
 	// Snapshots
 	delegationSnapshots staker.DelegationSnapshot
 
 	// Manager states
-	emissionRewardManager *staker.EmissionRewardManager
+	emissionRewardManager    *staker.EmissionRewardManager
 	protocolFeeRewardManager *staker.ProtocolFeeRewardManager
-	delegationManager *staker.DelegationManager
+	delegationManager        *staker.DelegationManager
 	launchpadProjectDeposits *staker.LaunchpadProjectDeposits
 }
 
@@ -79,8 +79,8 @@ func (m *mockGovStakerStore) HasTotalDelegatedAmountStoreKey() bool {
 	return true // Always available in mock
 }
 
-func (m *mockGovStakerStore) GetTotalDelegatedAmount() int64 {
-	return m.totalDelegatedAmount
+func (m *mockGovStakerStore) GetTotalDelegatedAmount() (int64, error) {
+	return m.totalDelegatedAmount, nil
 }
 
 func (m *mockGovStakerStore) SetTotalDelegatedAmount(amount int64) error {
@@ -92,8 +92,8 @@ func (m *mockGovStakerStore) HasTotalLockedAmountStoreKey() bool {
 	return true // Always available in mock
 }
 
-func (m *mockGovStakerStore) GetTotalLockedAmount() int64 {
-	return m.totalLockedAmount
+func (m *mockGovStakerStore) GetTotalLockedAmount() (int64, error) {
+	return m.totalLockedAmount, nil
 }
 
 func (m *mockGovStakerStore) SetTotalLockedAmount(amount int64) error {
@@ -142,8 +142,8 @@ func (m *mockGovStakerStore) HasDelegationCounterStoreKey() bool {
 	return true // Always available in mock
 }
 
-func (m *mockGovStakerStore) GetDelegationCounter() *staker.Counter {
-	return m.delegationNextID
+func (m *mockGovStakerStore) GetDelegationCounter() (*staker.Counter, error) {
+	return m.delegationNextID, nil
 }
 
 func (m *mockGovStakerStore) SetDelegationCounter(counter *staker.Counter) error {

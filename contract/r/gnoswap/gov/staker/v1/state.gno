@@ -24,7 +24,11 @@ func (g *govStakerV1) setUnDelegationLockupPeriod(period int64) {
 // Returns:
 //   - int64: next available delegation ID
 func (g *govStakerV1) nextDelegationID() int64 {
-	counter := g.store.GetDelegationCounter()
+	counter, err := g.store.GetDelegationCounter()
+	if err != nil {
+		panic(err)
+	}
+
 	return counter.Next()
 }
 

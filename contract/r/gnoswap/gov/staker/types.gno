@@ -62,11 +62,11 @@ type IGovStakerStore interface {
 	SetEmissionRewardBalance(balance int64) error
 
 	HasTotalDelegatedAmountStoreKey() bool
-	GetTotalDelegatedAmount() int64
+	GetTotalDelegatedAmount() (int64, error)
 	SetTotalDelegatedAmount(amount int64) error
 
 	HasTotalLockedAmountStoreKey() bool
-	GetTotalLockedAmount() int64
+	GetTotalLockedAmount() (int64, error)
 	SetTotalLockedAmount(amount int64) error
 
 	// Delegation management
@@ -80,7 +80,7 @@ type IGovStakerStore interface {
 	GetAllDelegations() (*avl.Tree, error)
 
 	HasDelegationCounterStoreKey() bool
-	GetDelegationCounter() *Counter
+	GetDelegationCounter() (*Counter, error)
 	SetDelegationCounter(counter *Counter) error
 
 	// Delegation history
