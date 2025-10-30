@@ -49,10 +49,12 @@ func TestMetadata(t *testing.T) {
 
 func TestBalanceOf(t *testing.T) {
 	tests := []struct {
-		name     string
-		setup    func()
-		addr     address
-		expected int64
+		name        string
+		setup       func()
+		addr        address
+		expected    int64
+		shouldPanic bool
+		panicMsg    string
 	}{
 		{
 			name: "balance with one NFT",
@@ -505,6 +507,21 @@ func TestTransferFrom(t *testing.T) {
 			shouldPanic:       true,
 			panicMsg:          "unauthorized: caller g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st is not staker",
 		},
+		{
+			name: "transfer to self",
+			setup: func(cur realm) {
+				testing.SetRealm(positionRealm)
+				Mint(cross, addr01, tid(100))
+				testing.SetRealm(addr01Realm)
+				Approve(cross, stakerRealm.Address(), tid(100))
+			},
+			callerRealm:       stakerRealm,
+			fromAddr:          addr01,
+			toAddr:            addr01,
+			tokenIdToTransfer: 100,
+			shouldPanic:       true,
+			panicMsg:          "cannot send transfer to self",
+		},
 	}
 
 	for _, tt := range tests {
@@ -808,6 +825,21 @@ func TestSafeTransferFrom(t *testing.T) {
 			tokenId:     1,
 			shouldPanic: true,
 			panicMsg:    "unauthorized: caller g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st is not staker",
+		},
+		{
+			name: "safe transfer to self",
+			setup: func(cur realm) {
+				testing.SetRealm(positionRealm)
+				Mint(cross, addr01, tid(100))
+				testing.SetRealm(addr01Realm)
+				Approve(cross, stakerRealm.Address(), tid(100))
+			},
+			callerRealm: stakerRealm,
+			from:        addr01,
+			to:          addr01,
+			tokenId:     100,
+			shouldPanic: true,
+			panicMsg:    "cannot send transfer to self",
 		},
 	}
 
