@@ -181,7 +181,7 @@ func (g *govStakerV1) getUserDelegationsWithDelegatee(user address, delegatee ad
 	if err != nil {
 		return delegations
 	}
-	resolvedManager := &DelegationManagerResolver{delegationManager}
+	resolvedManager := NewDelegationManagerResolver(delegationManager)
 	for _, delegationID := range resolvedManager.GetUserDelegationIDsWithDelegatee(user, delegatee) {
 		if delegation := g.getDelegation(delegationID); delegation != nil {
 			delegations = append(delegations, delegation)
@@ -391,9 +391,9 @@ func (g *govStakerV1) removeLaunchpadProjectDeposit(ownerAddress string) bool {
 	if err != nil {
 		return false
 	}
-	ok := launchpadProjectDeposits.RemoveDeposit(ownerAddress)
 
-	return ok
+	resolver := NewLaunchpadProjectDepositsResolver(launchpadProjectDeposits)
+	return resolver.RemoveDeposit(ownerAddress)
 }
 
 // addStakeProtocolFeeReward adds stake to protocol fee reward tracking for an address.

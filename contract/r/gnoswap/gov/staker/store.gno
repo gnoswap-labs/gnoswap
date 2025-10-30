@@ -163,7 +163,7 @@ func (s *govStakerStore) GetDelegation(id int64) (*Delegation, bool) {
 
 	result, exists := delegations.Get(int64ToString(id))
 	if !exists {
-		panic(err)
+		return nil, false
 	}
 
 	delegation, ok := result.(*Delegation)

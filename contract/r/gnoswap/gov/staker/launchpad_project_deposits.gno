@@ -27,29 +27,3 @@ func (lpd *LaunchpadProjectDeposits) GetDeposits() *avl.Tree {
 func (lpd *LaunchpadProjectDeposits) SetDeposits(deposits *avl.Tree) {
 	lpd.deposits = deposits
 }
-
-// GetDeposit retrieves the deposit amount for a specific owner.
-func (lpd *LaunchpadProjectDeposits) GetDeposit(ownerAddress string) (int64, bool) {
-	deposit, exists := lpd.deposits.Get(ownerAddress)
-	if !exists {
-		return 0, false
-	}
-	
-	amount, ok := deposit.(int64)
-	if !ok {
-		return 0, false
-	}
-	
-	return amount, true
-}
-
-// SetDeposit sets the deposit amount for a specific owner.
-func (lpd *LaunchpadProjectDeposits) SetDeposit(ownerAddress string, amount int64) {
-	lpd.deposits.Set(ownerAddress, amount)
-}
-
-// RemoveDeposit removes the deposit for a specific owner.
-func (lpd *LaunchpadProjectDeposits) RemoveDeposit(ownerAddress string) bool {
-	_, ok := lpd.deposits.Remove(ownerAddress)
-	return ok
-}
