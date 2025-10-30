@@ -1144,3 +1144,867 @@ func TestApiGetTWAP(t *testing.T) {
 		}
 	}
 }
+
+// TestSetPoolCreationFee tests the SetPoolCreationFee proxy function
+func TestSetPoolCreationFee(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func(t *testing.T)
+		fee         int64
+		callerRealm runtime.Realm
+	}{
+		{
+			name: "set pool creation fee is success",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
+			},
+			fee:         1000000,
+			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
+		},
+	}
+
+	for _, tt := range tests {
+		// Setup
+		resetTestState(t)
+
+		if tt.setup != nil {
+			tt.setup(t)
+		}
+
+		testing.SetRealm(tt.callerRealm)
+
+		// Action
+		SetPoolCreationFee(cross, tt.fee)
+
+		// Assert
+		mockPool := implementation.(*MockPool)
+		if mockPool.Response.CallCount("SetPoolCreationFee") == 0 {
+			t.Error("SetPoolCreationFee was not called on the implementation")
+		}
+	}
+}
+
+// TestIncreaseObservationCardinalityLimit tests the IncreaseObservationCardinalityLimit proxy function
+func TestIncreaseObservationCardinalityLimit(t *testing.T) {
+	tests := []struct {
+		name            string
+		setup           func(t *testing.T)
+		token0Path      string
+		token1Path      string
+		fee             uint32
+		cardinalityNext uint16
+		callerRealm     runtime.Realm
+	}{
+		{
+			name: "increase observation cardinality limit is success",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
+			},
+			token0Path:      "gno.land/r/gnoswap/test_token/token0",
+			token1Path:      "gno.land/r/gnoswap/test_token/token1",
+			fee:             3000,
+			cardinalityNext: 100,
+			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
+		},
+	}
+
+	for _, tt := range tests {
+		// Setup
+		resetTestState(t)
+
+		if tt.setup != nil {
+			tt.setup(t)
+		}
+
+		testing.SetRealm(tt.callerRealm)
+
+		// Action
+		IncreaseObservationCardinalityLimit(cross, tt.token0Path, tt.token1Path, tt.fee, tt.cardinalityNext)
+
+		// Assert
+		mockPool := implementation.(*MockPool)
+		if mockPool.Response.CallCount("IncreaseObservationCardinalityLimit") == 0 {
+			t.Error("IncreaseObservationCardinalityLimit was not called on the implementation")
+		}
+	}
+}
+
+// TestSetWithdrawalFee tests the SetWithdrawalFee proxy function
+func TestSetWithdrawalFee(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func(t *testing.T)
+		fee         uint64
+		callerRealm runtime.Realm
+	}{
+		{
+			name: "set withdrawal fee is success",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
+			},
+			fee:         100,
+			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
+		},
+	}
+
+	for _, tt := range tests {
+		// Setup
+		resetTestState(t)
+
+		if tt.setup != nil {
+			tt.setup(t)
+		}
+
+		testing.SetRealm(tt.callerRealm)
+
+		// Action
+		SetWithdrawalFee(cross, tt.fee)
+
+		// Assert
+		mockPool := implementation.(*MockPool)
+		if mockPool.Response.CallCount("SetWithdrawalFee") == 0 {
+			t.Error("SetWithdrawalFee was not called on the implementation")
+		}
+	}
+}
+
+// TestHandleWithdrawalFee tests the HandleWithdrawalFee proxy function
+func TestHandleWithdrawalFee(t *testing.T) {
+	tests := []struct {
+		name            string
+		setup           func(t *testing.T)
+		positionId      uint64
+		token0Path      string
+		amount0         string
+		token1Path      string
+		amount1         string
+		poolPath        string
+		positionCaller  address
+		callerRealm     runtime.Realm
+		expectedAmount0 string
+		expectedAmount1 string
+	}{
+		{
+			name: "handle withdrawal fee is success",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
+			},
+			positionId:      1,
+			token0Path:      "gno.land/r/gnoswap/test_token/token0",
+			amount0:         "1000000",
+			token1Path:      "gno.land/r/gnoswap/test_token/token1",
+			amount1:         "1000000",
+			poolPath:        "mock_pool_path",
+			positionCaller:  "gno1...",
+			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
+			expectedAmount0: "990000",
+			expectedAmount1: "990000",
+		},
+	}
+
+	for _, tt := range tests {
+		// Setup
+		resetTestState(t)
+
+		if tt.setup != nil {
+			tt.setup(t)
+		}
+
+		mockPool := implementation.(*MockPool)
+		mockPool.Response.Set("HandleWithdrawalFee", tt.expectedAmount0, tt.expectedAmount1)
+
+		testing.SetRealm(tt.callerRealm)
+
+		// Action
+		amount0, amount1 := HandleWithdrawalFee(cross, tt.positionId, tt.token0Path, tt.amount0, tt.token1Path, tt.amount1, tt.poolPath, tt.positionCaller)
+
+		// Assert
+		if mockPool.Response.CallCount("HandleWithdrawalFee") == 0 {
+			t.Error("HandleWithdrawalFee was not called on the implementation")
+		}
+		if amount0 != tt.expectedAmount0 {
+			t.Errorf("HandleWithdrawalFee() amount0 = %v, want %v", amount0, tt.expectedAmount0)
+		}
+		if amount1 != tt.expectedAmount1 {
+			t.Errorf("HandleWithdrawalFee() amount1 = %v, want %v", amount1, tt.expectedAmount1)
+		}
+	}
+}
+
+// TestSetSwapEndHook tests the SetSwapEndHook proxy function
+func TestSetSwapEndHook(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func(t *testing.T)
+		callerRealm runtime.Realm
+	}{
+		{
+			name: "set swap end hook is success",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
+			},
+			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
+		},
+	}
+
+	for _, tt := range tests {
+		// Setup
+		resetTestState(t)
+
+		if tt.setup != nil {
+			tt.setup(t)
+		}
+
+		testing.SetRealm(tt.callerRealm)
+
+		// Action
+		SetSwapEndHook(cross, func(cur realm, poolPath string) error {
+			return nil
+		})
+
+		// Assert
+		mockPool := implementation.(*MockPool)
+		if mockPool.Response.CallCount("SetSwapEndHook") == 0 {
+			t.Error("SetSwapEndHook was not called on the implementation")
+		}
+	}
+}
+
+// TestSetSwapStartHook tests the SetSwapStartHook proxy function
+func TestSetSwapStartHook(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func(t *testing.T)
+		callerRealm runtime.Realm
+	}{
+		{
+			name: "set swap start hook is success",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
+			},
+			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
+		},
+	}
+
+	for _, tt := range tests {
+		// Setup
+		resetTestState(t)
+
+		if tt.setup != nil {
+			tt.setup(t)
+		}
+
+		testing.SetRealm(tt.callerRealm)
+
+		// Action
+		SetSwapStartHook(cross, func(cur realm, poolPath string, timestamp int64) {})
+
+		// Assert
+		mockPool := implementation.(*MockPool)
+		if mockPool.Response.CallCount("SetSwapStartHook") == 0 {
+			t.Error("SetSwapStartHook was not called on the implementation")
+		}
+	}
+}
+
+// TestSetTickCrossHook tests the SetTickCrossHook proxy function
+func TestSetTickCrossHook(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func(t *testing.T)
+		callerRealm runtime.Realm
+	}{
+		{
+			name: "set tick cross hook is success",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
+			},
+			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
+		},
+	}
+
+	for _, tt := range tests {
+		// Setup
+		resetTestState(t)
+
+		if tt.setup != nil {
+			tt.setup(t)
+		}
+
+		testing.SetRealm(tt.callerRealm)
+
+		// Action
+		SetTickCrossHook(cross, func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {})
+
+		// Assert
+		mockPool := implementation.(*MockPool)
+		if mockPool.Response.CallCount("SetTickCrossHook") == 0 {
+			t.Error("SetTickCrossHook was not called on the implementation")
+		}
+	}
+}
+
+// TestGetPoolCreationFee tests the GetPoolCreationFee proxy function
+func TestGetPoolCreationFee(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func(t *testing.T)
+		expectedFee int64
+	}{
+		{
+			name: "get pool creation fee is success",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
+			},
+			expectedFee: 1000000,
+		},
+	}
+
+	for _, tt := range tests {
+		// Setup
+		resetTestState(t)
+
+		if tt.setup != nil {
+			tt.setup(t)
+		}
+
+		mockPool := implementation.(*MockPool)
+		mockPool.Response.Set("GetPoolCreationFee", tt.expectedFee)
+
+		// Action
+		fee := GetPoolCreationFee()
+
+		// Assert
+		if fee != tt.expectedFee {
+			t.Errorf("GetPoolCreationFee() = %v, want %v", fee, tt.expectedFee)
+		}
+	}
+}
+
+// TestGetWithdrawalFee tests the GetWithdrawalFee proxy function
+func TestGetWithdrawalFee(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func(t *testing.T)
+		expectedFee uint64
+	}{
+		{
+			name: "get withdrawal fee is success",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
+			},
+			expectedFee: 100,
+		},
+	}
+
+	for _, tt := range tests {
+		// Setup
+		resetTestState(t)
+
+		if tt.setup != nil {
+			tt.setup(t)
+		}
+
+		mockPool := implementation.(*MockPool)
+		mockPool.Response.Set("GetWithdrawalFee", tt.expectedFee)
+
+		// Action
+		fee := GetWithdrawalFee()
+
+		// Assert
+		if fee != tt.expectedFee {
+			t.Errorf("GetWithdrawalFee() = %v, want %v", fee, tt.expectedFee)
+		}
+	}
+}
+
+// TestGetFee tests the GetFee proxy function
+func TestGetFee(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func(t *testing.T)
+		poolPath    string
+		expectedFee uint32
+	}{
+		{
+			name: "get fee is success",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
+			},
+			poolPath:    "mock_pool_path",
+			expectedFee: 3000,
+		},
+	}
+
+	for _, tt := range tests {
+		// Setup
+		resetTestState(t)
+
+		if tt.setup != nil {
+			tt.setup(t)
+		}
+
+		mockPool := implementation.(*MockPool)
+		mockPool.Response.Set("GetFee", tt.expectedFee)
+
+		// Action
+		fee := GetFee(tt.poolPath)
+
+		// Assert
+		if fee != tt.expectedFee {
+			t.Errorf("GetFee() = %v, want %v", fee, tt.expectedFee)
+		}
+	}
+}
+
+// TestGetFeeAmountTickSpacing tests the GetFeeAmountTickSpacing proxy function
+func TestGetFeeAmountTickSpacing(t *testing.T) {
+	tests := []struct {
+		name            string
+		setup           func(t *testing.T)
+		fee             uint32
+		expectedSpacing int32
+	}{
+		{
+			name: "get fee amount tick spacing is success",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
+			},
+			fee:             3000,
+			expectedSpacing: 60,
+		},
+	}
+
+	for _, tt := range tests {
+		// Setup
+		resetTestState(t)
+
+		if tt.setup != nil {
+			tt.setup(t)
+		}
+
+		mockPool := implementation.(*MockPool)
+		mockPool.Response.Set("GetFeeAmountTickSpacing", tt.expectedSpacing)
+
+		// Action
+		spacing := GetFeeAmountTickSpacing(tt.fee)
+
+		// Assert
+		if spacing != tt.expectedSpacing {
+			t.Errorf("GetFeeAmountTickSpacing() = %v, want %v", spacing, tt.expectedSpacing)
+		}
+	}
+}
+
+// TestGetMaxLiquidityPerTick tests the GetMaxLiquidityPerTick proxy function
+func TestGetMaxLiquidityPerTick(t *testing.T) {
+	tests := []struct {
+		name              string
+		setup             func(t *testing.T)
+		poolPath          string
+		expectedLiquidity string
+	}{
+		{
+			name: "get max liquidity per tick is success",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
+			},
+			poolPath:          "mock_pool_path",
+			expectedLiquidity: "1000000",
+		},
+	}
+
+	for _, tt := range tests {
+		// Setup
+		resetTestState(t)
+
+		if tt.setup != nil {
+			tt.setup(t)
+		}
+
+		mockPool := implementation.(*MockPool)
+		mockPool.Response.Set("GetMaxLiquidityPerTick", tt.expectedLiquidity)
+
+		// Action
+		liquidity := GetMaxLiquidityPerTick(tt.poolPath)
+
+		// Assert
+		if liquidity != tt.expectedLiquidity {
+			t.Errorf("GetMaxLiquidityPerTick() = %v, want %v", liquidity, tt.expectedLiquidity)
+		}
+	}
+}
+
+// TestGetSlot0FeeProtocol tests the GetSlot0FeeProtocol proxy function
+func TestGetSlot0FeeProtocol(t *testing.T) {
+	tests := []struct {
+		name                string
+		setup               func(t *testing.T)
+		poolPath            string
+		expectedFeeProtocol uint8
+	}{
+		{
+			name: "get slot0 fee protocol is success",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
+			},
+			poolPath:            "mock_pool_path",
+			expectedFeeProtocol: 10,
+		},
+	}
+
+	for _, tt := range tests {
+		// Setup
+		resetTestState(t)
+
+		if tt.setup != nil {
+			tt.setup(t)
+		}
+
+		mockPool := implementation.(*MockPool)
+		mockPool.Response.Set("GetSlot0FeeProtocol", tt.expectedFeeProtocol)
+
+		// Action
+		feeProtocol := GetSlot0FeeProtocol(tt.poolPath)
+
+		// Assert
+		if feeProtocol != tt.expectedFeeProtocol {
+			t.Errorf("GetSlot0FeeProtocol() = %v, want %v", feeProtocol, tt.expectedFeeProtocol)
+		}
+	}
+}
+
+// TestGetSlot0Unlocked tests the GetSlot0Unlocked proxy function
+func TestGetSlot0Unlocked(t *testing.T) {
+	tests := []struct {
+		name             string
+		setup            func(t *testing.T)
+		poolPath         string
+		expectedUnlocked bool
+	}{
+		{
+			name: "get slot0 unlocked is success",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
+			},
+			poolPath:         "mock_pool_path",
+			expectedUnlocked: true,
+		},
+	}
+
+	for _, tt := range tests {
+		// Setup
+		resetTestState(t)
+
+		if tt.setup != nil {
+			tt.setup(t)
+		}
+
+		mockPool := implementation.(*MockPool)
+		mockPool.Response.Set("GetSlot0Unlocked", tt.expectedUnlocked)
+
+		// Action
+		unlocked := GetSlot0Unlocked(tt.poolPath)
+
+		// Assert
+		if unlocked != tt.expectedUnlocked {
+			t.Errorf("GetSlot0Unlocked() = %v, want %v", unlocked, tt.expectedUnlocked)
+		}
+	}
+}
+
+// TestGetToken0Path tests the GetToken0Path proxy function
+func TestGetToken0Path(t *testing.T) {
+	tests := []struct {
+		name         string
+		setup        func(t *testing.T)
+		poolPath     string
+		expectedPath string
+	}{
+		{
+			name: "get token0 path is success",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
+			},
+			poolPath:     "mock_pool_path",
+			expectedPath: "gno.land/r/gnoswap/test_token/token0",
+		},
+	}
+
+	for _, tt := range tests {
+		// Setup
+		resetTestState(t)
+
+		if tt.setup != nil {
+			tt.setup(t)
+		}
+
+		mockPool := implementation.(*MockPool)
+		mockPool.Response.Set("GetToken0Path", tt.expectedPath)
+
+		// Action
+		path := GetToken0Path(tt.poolPath)
+
+		// Assert
+		if path != tt.expectedPath {
+			t.Errorf("GetToken0Path() = %v, want %v", path, tt.expectedPath)
+		}
+	}
+}
+
+// TestGetToken1Path tests the GetToken1Path proxy function
+func TestGetToken1Path(t *testing.T) {
+	tests := []struct {
+		name         string
+		setup        func(t *testing.T)
+		poolPath     string
+		expectedPath string
+	}{
+		{
+			name: "get token1 path is success",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
+			},
+			poolPath:     "mock_pool_path",
+			expectedPath: "gno.land/r/gnoswap/test_token/token1",
+		},
+	}
+
+	for _, tt := range tests {
+		// Setup
+		resetTestState(t)
+
+		if tt.setup != nil {
+			tt.setup(t)
+		}
+
+		mockPool := implementation.(*MockPool)
+		mockPool.Response.Set("GetToken1Path", tt.expectedPath)
+
+		// Action
+		path := GetToken1Path(tt.poolPath)
+
+		// Assert
+		if path != tt.expectedPath {
+			t.Errorf("GetToken1Path() = %v, want %v", path, tt.expectedPath)
+		}
+	}
+}
+
+// TestGetTickSpacing tests the GetTickSpacing proxy function
+func TestGetTickSpacing(t *testing.T) {
+	tests := []struct {
+		name            string
+		setup           func(t *testing.T)
+		poolPath        string
+		expectedSpacing int32
+	}{
+		{
+			name: "get tick spacing is success",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
+			},
+			poolPath:        "mock_pool_path",
+			expectedSpacing: 60,
+		},
+	}
+
+	for _, tt := range tests {
+		// Setup
+		resetTestState(t)
+
+		if tt.setup != nil {
+			tt.setup(t)
+		}
+
+		mockPool := implementation.(*MockPool)
+		mockPool.Response.Set("GetTickSpacing", tt.expectedSpacing)
+
+		// Action
+		spacing := GetTickSpacing(tt.poolPath)
+
+		// Assert
+		if spacing != tt.expectedSpacing {
+			t.Errorf("GetTickSpacing() = %v, want %v", spacing, tt.expectedSpacing)
+		}
+	}
+}
+
+// TestGetProtocolFeesToken0 tests the GetProtocolFeesToken0 proxy function
+func TestGetProtocolFeesToken0(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func(t *testing.T)
+		poolPath    string
+		expectedFee string
+	}{
+		{
+			name: "get protocol fees token0 is success",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
+			},
+			poolPath:    "mock_pool_path",
+			expectedFee: "1000",
+		},
+	}
+
+	for _, tt := range tests {
+		// Setup
+		resetTestState(t)
+
+		if tt.setup != nil {
+			tt.setup(t)
+		}
+
+		mockPool := implementation.(*MockPool)
+		mockPool.Response.Set("GetProtocolFeesToken0", tt.expectedFee)
+
+		// Action
+		fee := GetProtocolFeesToken0(tt.poolPath)
+
+		// Assert
+		if fee != tt.expectedFee {
+			t.Errorf("GetProtocolFeesToken0() = %v, want %v", fee, tt.expectedFee)
+		}
+	}
+}
+
+// TestGetProtocolFeesToken1 tests the GetProtocolFeesToken1 proxy function
+func TestGetProtocolFeesToken1(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func(t *testing.T)
+		poolPath    string
+		expectedFee string
+	}{
+		{
+			name: "get protocol fees token1 is success",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
+			},
+			poolPath:    "mock_pool_path",
+			expectedFee: "1000",
+		},
+	}
+
+	for _, tt := range tests {
+		// Setup
+		resetTestState(t)
+
+		if tt.setup != nil {
+			tt.setup(t)
+		}
+
+		mockPool := implementation.(*MockPool)
+		mockPool.Response.Set("GetProtocolFeesToken1", tt.expectedFee)
+
+		// Action
+		fee := GetProtocolFeesToken1(tt.poolPath)
+
+		// Assert
+		if fee != tt.expectedFee {
+			t.Errorf("GetProtocolFeesToken1() = %v, want %v", fee, tt.expectedFee)
+		}
+	}
+}
+
+// TestGetPositionLiquidity tests the GetPositionLiquidity proxy function
+func TestGetPositionLiquidity(t *testing.T) {
+	tests := []struct {
+		name              string
+		setup             func(t *testing.T)
+		poolPath          string
+		key               string
+		expectedLiquidity *u256.Uint
+	}{
+		{
+			name: "get position liquidity is success",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				UpgradeImpl(cross, "gno.land/r/gnoswap/pool/v1")
+			},
+			poolPath:          "mock_pool_path",
+			key:               "mock_key",
+			expectedLiquidity: u256.NewUint(1000000),
+		},
+	}
+
+	for _, tt := range tests {
+		// Setup
+		resetTestState(t)
+
+		if tt.setup != nil {
+			tt.setup(t)
+		}
+
+		mockPool := implementation.(*MockPool)
+		mockPool.Response.Set("GetPositionLiquidity", tt.expectedLiquidity)
+
+		// Action
+		liquidity := GetPositionLiquidity(tt.poolPath, tt.key)
+
+		// Assert
+		if liquidity == nil {
+			t.Error("GetPositionLiquidity() returned nil")
+		}
+	}
+}
