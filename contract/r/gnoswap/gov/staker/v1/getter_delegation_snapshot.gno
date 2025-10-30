@@ -1,18 +1,19 @@
 package v1
 
 import (
-	"time"
-
 	"gno.land/r/gnoswap/gov/staker"
 )
 
 func (gs *govStakerV1) HasDelegationSnapshotsKey() bool {
 	// Check if any snapshots exist
-	snapshots, err := gs.store.GetAllDelegationSnapshots()
+	snapshot, err := gs.store.GetDelegationSnapshot()
 	if err != nil {
+		panic(err)
+	}
+	if len(snapshot) == 0 {
 		return false
 	}
-	return snapshots.Size() > 0
+	return true
 }
 
 // GetDelegationSnapshots retrieves the delegation snapshot at a specific point in time.
@@ -53,10 +54,4 @@ func (gs *govStakerV1) GetDelegationSnapshots(snapshotTime int64) (staker.Delega
 	}
 
 	return result, true
-}
-
-func (gs *govStakerV1) SetDelegationSnapshots(snapshot staker.DelegationSnapshot) error {
-	// Store doesn't have SetDelegationSnapshots, use SetDelegationSnapshot with current time
-	timestamp := time.Now().Unix()
-	return gs.store.SetDelegationSnapshot(timestamp, snapshot)
 }

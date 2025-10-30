@@ -350,64 +350,26 @@ func (s *govStakerStore) getAllUserDelegations() (map[string]map[string][]int64,
 }
 
 // Delegation snapshot methods
-func (s *govStakerStore) HasDelegationSnapshotsStoreKey() bool {
+func (s *govStakerStore) HasDelegationSnapshotStoreKey() bool {
 	return s.kvStore.Has(StoreKeyDelegationSnapshots)
 }
 
-func (s *govStakerStore) HasDelegationSnapshot(timestamp int64) bool {
-	snapshots, err := s.GetAllDelegationSnapshots()
-	if err != nil {
-		panic(err)
-	}
-	_, exists := snapshots.Get(int64ToString(timestamp))
-	return exists
+func (s *govStakerStore) SetDelegationSnapshot(snapshot DelegationSnapshot) error {
+	return s.kvStore.Set(StoreKeyDelegationSnapshots, snapshot)
 }
 
-func (s *govStakerStore) SetDelegationSnapshot(timestamp int64, snapshot DelegationSnapshot) error {
-	snapshots, err := s.GetAllDelegationSnapshots()
+func (s *govStakerStore) GetDelegationSnapshot() (DelegationSnapshot, error) {
+	result, err := s.kvStore.Get(StoreKeyDelegationSnapshots)
 	if err != nil {
-		return err
-	}
-
-	snapshots.Set(int64ToString(timestamp), snapshot)
-	return s.kvStore.Set(StoreKeyDelegationSnapshots, snapshots)
-}
-
-func (s *govStakerStore) GetDelegationSnapshot(timestamp int64) (DelegationSnapshot, bool) {
-	snapshots, err := s.GetAllDelegationSnapshots()
-	if err != nil {
-		panic(err)
-	}
-
-	result, exists := snapshots.Get(int64ToString(timestamp))
-	if !exists {
-		return nil, false
+		return nil, err
 	}
 
 	snapshot, ok := result.(DelegationSnapshot)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to DelegationSnapshot: %T", result))
+		return nil, errors.New(ufmt.Sprintf("failed to cast result to DelegationSnapshot: %T", result))
 	}
 
-	return snapshot, true
-}
-
-func (s *govStakerStore) SetAllDelegationSnapshots(snapshots *avl.Tree) error {
-	return s.kvStore.Set(StoreKeyDelegationSnapshots, snapshots)
-}
-
-func (s *govStakerStore) GetAllDelegationSnapshots() (*avl.Tree, error) {
-	result, err := s.kvStore.Get(StoreKeyDelegationSnapshots)
-	if err != nil {
-		panic(err)
-	}
-
-	snapshots, ok := result.(*avl.Tree)
-	if !ok {
-		return nil, errors.New(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
-	}
-
-	return snapshots, nil
+	return snapshot, nil
 }
 
 func (s *govStakerStore) HasEmissionRewardManagerStoreKey() bool {

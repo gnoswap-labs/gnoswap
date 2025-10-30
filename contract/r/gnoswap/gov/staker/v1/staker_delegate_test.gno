@@ -818,7 +818,7 @@ func cleanupStakerDelegateTest(t *testing.T, gs *govStakerV1) {
 	mockStore.delegationNextID = staker.NewCounter()
 	mockStore.delegations = avl.NewTree()
 	mockStore.delegationHistory = make([]*staker.DelegationRecord, 0)
-	mockStore.delegationSnapshots = avl.NewTree()
+	mockStore.delegationSnapshots = make(staker.DelegationSnapshot, 0)
 	mockStore.userDelegations = make(map[string]map[string][]int64)
 
 	// Reset managers in store

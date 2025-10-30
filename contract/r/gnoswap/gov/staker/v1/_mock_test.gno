@@ -24,7 +24,7 @@ type mockGovStakerStore struct {
 	userDelegations   map[string]map[string][]int64
 	
 	// Snapshots
-	delegationSnapshots *avl.Tree // map[int64]staker.DelegationSnapshot
+	delegationSnapshots staker.DelegationSnapshot
 
 	// Manager states
 	emissionRewardManager *staker.EmissionRewardManager
@@ -38,7 +38,7 @@ var _ staker.IGovStakerStore = (*mockGovStakerStore)(nil)
 func newMockGovStakerStore() staker.IGovStakerStore {
 	return &mockGovStakerStore{
 		delegations:         avl.NewTree(),
-		delegationSnapshots: avl.NewTree(),
+		delegationSnapshots: make(staker.DelegationSnapshot, 0),
 		userDelegations:     make(map[string]map[string][]int64),
 		delegationHistory:   make([]*staker.DelegationRecord, 0),
 		delegationNextID:    staker.NewCounter(),
@@ -216,35 +216,17 @@ func (m *mockGovStakerStore) RemoveUserDelegation(from, to string, delegationID 
 }
 
 // Delegation snapshot methods
-func (m *mockGovStakerStore) HasDelegationSnapshotsStoreKey() bool {
+func (m *mockGovStakerStore) HasDelegationSnapshotStoreKey() bool {
 	return true // Always available in mock
 }
 
-func (m *mockGovStakerStore) HasDelegationSnapshot(timestamp int64) bool {
-	_, exists := m.delegationSnapshots.Get(uint64ToString(uint64(timestamp)))
-	return exists
-}
-
-func (m *mockGovStakerStore) SetDelegationSnapshot(timestamp int64, snapshot staker.DelegationSnapshot) error {
-	m.delegationSnapshots.Set(uint64ToString(uint64(timestamp)), snapshot)
-	return nil
-}
-
-func (m *mockGovStakerStore) GetDelegationSnapshot(timestamp int64) (staker.DelegationSnapshot, bool) {
-	value, exists := m.delegationSnapshots.Get(uint64ToString(uint64(timestamp)))
-	if !exists {
-		return nil, false
-	}
-	return value.(staker.DelegationSnapshot), true
-}
-
-func (m *mockGovStakerStore) SetAllDelegationSnapshots(snapshots *avl.Tree) error {
-	m.delegationSnapshots = snapshots
-	return nil
-}
-
-func (m *mockGovStakerStore) GetAllDelegationSnapshots() (*avl.Tree, error) {
+func (m *mockGovStakerStore) GetDelegationSnapshot() (staker.DelegationSnapshot, error) {
 	return m.delegationSnapshots, nil
+}
+
+func (m *mockGovStakerStore) SetDelegationSnapshot(snapshot staker.DelegationSnapshot) error {
+	m.delegationSnapshots = snapshot
+	return nil
 }
 
 func (m *mockGovStakerStore) HasEmissionRewardManagerStoreKey() bool {

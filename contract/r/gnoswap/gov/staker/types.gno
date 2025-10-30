@@ -98,13 +98,9 @@ type IGovStakerStore interface {
 	RemoveUserDelegation(from, to string, delegationID int64) error
 
 	// Delegation snapshots
-	HasDelegationSnapshotsStoreKey() bool
-	HasDelegationSnapshot(timestamp int64) bool
-	SetDelegationSnapshot(timestamp int64, snapshot DelegationSnapshot) error
-	GetDelegationSnapshot(timestamp int64) (DelegationSnapshot, bool)
-
-	SetAllDelegationSnapshots(snapshots *avl.Tree) error
-	GetAllDelegationSnapshots() (*avl.Tree, error)
+	HasDelegationSnapshotStoreKey() bool
+	SetDelegationSnapshot(snapshot DelegationSnapshot) error
+	GetDelegationSnapshot() (DelegationSnapshot, error)
 
 	// Manager states
 	HasEmissionRewardManagerStoreKey() bool

@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"time"
 	"gno.land/p/nt/avl"
 	"gno.land/r/gnoswap/gov/staker"
 )
@@ -60,13 +59,8 @@ func initStoreData(store staker.IGovStakerStore) error {
 	}
 
 	// Initialize delegation snapshots
-	if !store.HasDelegationSnapshotsStoreKey() {
-		err := store.SetAllDelegationSnapshots(avl.NewTree())
-		if err != nil {
-			return err
-		}
-
-		err = store.SetDelegationSnapshot(time.Now().Unix(), make(staker.DelegationSnapshot, 0))
+	if !store.HasDelegationSnapshotStoreKey() {
+		err := store.SetDelegationSnapshot(make(staker.DelegationSnapshot, 0))
 		if err != nil {
 			return err
 		}

@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"time"
-
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/emission"
@@ -215,21 +213,13 @@ func (g *govStakerV1) addDelegationRecord(delegationRecord *staker.DelegationRec
 		panic(err)
 	}
 
-	// Update snapshots
-	timestamp := delegationRecord.CreatedAt()
-	snapshot, exists := g.store.GetDelegationSnapshot(timestamp)
-	if !exists {
-		snapshot = make(staker.DelegationSnapshot)
-	}
-
-	// Add record to snapshot
-	if snapshot == nil {
-		snapshot = make(staker.DelegationSnapshot)
+	snapshot, err := g.store.GetDelegationSnapshot()
+	if err != nil {
+		panic(err)
 	}
 	resolver := NewDelegationSnapshotResolver(snapshot)
 	snapshot = resolver.AddRecord(delegationRecord)
-
-	if err := g.store.SetDelegationSnapshot(timestamp, snapshot); err != nil {
+	if err := g.store.SetDelegationSnapshot(snapshot); err != nil {
 		panic(err)
 	}
 }
@@ -254,20 +244,9 @@ func (g *govStakerV1) setDelegationHistory(history DelegationHistory) {
 //   - DelegationSnapshot: current delegation state for all delegatees
 func (g *govStakerV1) getDelegationSnapshots() staker.DelegationSnapshot {
 	// Get the latest snapshot
-	snapshots, err := g.store.GetAllDelegationSnapshots()
+	snapshot, err := g.store.GetDelegationSnapshot()
 	if err != nil {
 		panic(err)
-	}
-
-	if snapshots.Size() == 0 {
-		return make(staker.DelegationSnapshot)
-	}
-
-	// Get the most recent snapshot
-	_, value := snapshots.GetByIndex(snapshots.Size() - 1)
-	snapshot, ok := value.(staker.DelegationSnapshot)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast to DelegationSnapshot: %T", value))
 	}
 
 	return snapshot
@@ -279,8 +258,8 @@ func (g *govStakerV1) getDelegationSnapshots() staker.DelegationSnapshot {
 //   - snapshot: new delegation snapshot to set
 func (g *govStakerV1) setDelegationSnapshots(snapshot staker.DelegationSnapshot) {
 	// Set with current timestamp
-	timestamp := time.Now().Unix()
-	if err := g.store.SetDelegationSnapshot(timestamp, snapshot); err != nil {
+	err := g.store.SetDelegationSnapshot(snapshot)
+	if err != nil {
 		panic(err)
 	}
 }
