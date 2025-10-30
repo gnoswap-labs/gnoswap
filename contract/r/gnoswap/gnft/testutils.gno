@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
 )
 
@@ -16,11 +18,7 @@ func InitGNFTTest(t *testing.T) {
 }
 
 func setHalted(halted bool) {
-	adminAddr := getAdminAddress()
+	adminAddr, _ := access.GetAddress(rbac.ROLE_ADMIN.String())
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	halt.SetOperationStatus(cross, halt.OpTypePosition, 1, halted)
-}
-
-func getAdminAddress() address {
-	return "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"
 }
