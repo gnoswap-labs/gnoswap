@@ -229,43 +229,57 @@ func TestComputeLiquidityForAmount0(t *testing.T) {
 
 func TestComputeLiquidityForAmount1(t *testing.T) {
 	q96 := u256.MustFromDecimal(Q96)
-	amount1 := u256.MustFromDecimal("1000000")
 
-	t.Run("Basic liquidity calculation", func(t *testing.T) {
-		sqrtRatioAX96 := q96                                                // 2^96 (1 in Q96)
-		sqrtRatioBX96 := new(u256.Uint).Mul(q96, u256.MustFromDecimal("4")) // 4^96 (4 in Q96)
+	tests := []struct {
+		name             string
+		sqrtRatioAX96    *u256.Uint
+		sqrtRatioBX96    *u256.Uint
+		amount1          *u256.Uint
+		expected         string
+		expectedPanic    bool
+		expectedPanicMsg string
+	}{
+		{
+			name:          "Basic liquidity calculation",
+			sqrtRatioAX96: q96,
+			sqrtRatioBX96: new(u256.Uint).Mul(q96, u256.MustFromDecimal("4")),
+			amount1:       u256.MustFromDecimal("1000000"),
+			expected:      "333333",
+			expectedPanic: false,
+		},
+		{
+			name:             "Zero liquidity with equal ratios",
+			sqrtRatioAX96:    q96,
+			sqrtRatioBX96:    q96,
+			amount1:          u256.MustFromDecimal("1000000"),
+			expectedPanic:    true,
+			expectedPanicMsg: "[GNOSWAP-COMMON-010] identical ticks || sqrtRatioAX96 (79228162514264337593543950336) and sqrtRatioBX96 (79228162514264337593543950336) are identical",
+		},
+		{
+			name:          "Large liquidity calculation",
+			sqrtRatioAX96: q96,
+			sqrtRatioBX96: new(u256.Uint).Mul(q96, u256.NewUint(16)),
+			amount1:       u256.MustFromDecimal("1000000000"),
+			expected:      "66666666",
+			expectedPanic: false,
+		},
+	}
 
-		expected := u256.MustFromDecimal("333333") // Expected liquidity
-		result := computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1)
-
-		if !result.Eq(expected) {
-			t.Errorf("Expected %s but got %s", expected.ToString(), result.ToString())
-		}
-	})
-
-	t.Run("Zero liquidity with equal ratios", func(t *testing.T) {
-		sqrtRatioAX96 := q96 // 2^96 (1 in Q96)
-		sqrtRatioBX96 := q96 // Same as lower tick
-
-		uassert.PanicsWithMessage(t,
-			"[GNOSWAP-COMMON-010] identical ticks || sqrtRatioAX96 (79228162514264337593543950336) and sqrtRatioBX96 (79228162514264337593543950336) are identical",
-			func() {
-				_ = computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1)
-			})
-	})
-
-	t.Run("Large liquidity calculation", func(t *testing.T) {
-		sqrtRatioAX96 := q96                                       // 1x
-		sqrtRatioBX96 := new(u256.Uint).Mul(q96, u256.NewUint(16)) // 16x
-		largeAmount := u256.MustFromDecimal("1000000000")
-
-		expected := u256.MustFromDecimal("66666666") // 1B / 16 = 62.5M
-		result := computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, largeAmount)
-
-		if !result.Eq(expected) {
-			t.Errorf("Expected %s but got %s", expected.ToString(), result.ToString())
-		}
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.expectedPanic {
+				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
+					_ = computeLiquidityForAmount1(tt.sqrtRatioAX96, tt.sqrtRatioBX96, tt.amount1)
+				})
+			} else {
+				result := computeLiquidityForAmount1(tt.sqrtRatioAX96, tt.sqrtRatioBX96, tt.amount1)
+				expected := u256.MustFromDecimal(tt.expected)
+				if !result.Eq(expected) {
+					t.Errorf("Expected %s but got %s", expected, result.ToString())
+				}
+			}
+		})
+	}
 }
 
 func TestGetLiquidityForAmounts(t *testing.T) {
@@ -548,56 +562,90 @@ func TestGetAmountsForLiquidity(t *testing.T) {
 }
 
 func TestExtremeRatioValues(t *testing.T) {
-	t.Run("Zero sqrtRatio handling", func(t *testing.T) {
-		// computeAmount0ForLiquidity already handles zero check
-		result := computeAmount0ForLiquidity(
-			u256.Zero(),
-			u256.MustFromDecimal(Q96),
-			u256.NewUint(1000000),
-		)
-		uassert.Equal(t, "0", result.ToString())
-	})
+	tests := []struct {
+		name             string
+		testFunc         func() string
+		expected         string
+		shouldNotPanic   bool
+	}{
+		{
+			name: "Zero sqrtRatio handling",
+			testFunc: func() string {
+				result := computeAmount0ForLiquidity(
+					u256.Zero(),
+					u256.MustFromDecimal(Q96),
+					u256.NewUint(1000000),
+				)
+				return result.ToString()
+			},
+			expected: "0",
+		},
+		{
+			name: "Maximum possible sqrtRatio",
+			testFunc: func() string {
+				maxSqrtRatio := u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")
+				liquidity := u256.NewUint(1000)
+				result := computeAmount1ForLiquidity(
+					u256.MustFromDecimal(Q96),
+					maxSqrtRatio,
+					liquidity,
+				)
+				return result.ToString()
+			},
+			shouldNotPanic: true,
+		},
+	}
 
-	t.Run("Maximum possible sqrtRatio", func(t *testing.T) {
-		maxSqrtRatio := u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")
-		liquidity := u256.NewUint(1000)
-
-		// Should not panic
-		_ = computeAmount1ForLiquidity(
-			u256.MustFromDecimal(Q96),
-			maxSqrtRatio,
-			liquidity,
-		)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.testFunc()
+			if tt.expected != "" {
+				uassert.Equal(t, tt.expected, result)
+			}
+		})
+	}
 }
 
 func TestMulDivOverflowProtection(t *testing.T) {
-	t.Run("Large values causing uint128 overflow - should panic", func(t *testing.T) {
-		largeValue := u256.MustFromDecimal("57896044618658097711785492504343953926634992332820282019728792003956564819967")
-		sqrtRatioA := u256.MustFromDecimal(Q96)
-		sqrtRatioB := new(u256.Uint).Mul(sqrtRatioA, u256.NewUint(2))
+	tests := []struct {
+		name             string
+		value            *u256.Uint
+		sqrtRatioA       *u256.Uint
+		sqrtRatioB       *u256.Uint
+		expectedPanic    bool
+		expectedPanicMsg string
+	}{
+		{
+			name:             "Large values causing uint128 overflow - should panic",
+			value:            u256.MustFromDecimal("57896044618658097711785492504343953926634992332820282019728792003956564819967"),
+			sqrtRatioA:       u256.MustFromDecimal(Q96),
+			sqrtRatioB:       new(u256.Uint).Mul(u256.MustFromDecimal(Q96), u256.NewUint(2)),
+			expectedPanic:    true,
+			expectedPanicMsg: "[GNOSWAP-COMMON-009] overflow: amount(115792089237316195423570985008687907853269984665640564039457584007913129639934) overflows uint128 range",
+		},
+		{
+			name:          "Large but safe values - should not panic",
+			value:         u256.MustFromDecimal("170141183460469231731687303715884105727"),
+			sqrtRatioA:    u256.MustFromDecimal(Q96),
+			sqrtRatioB:    new(u256.Uint).Mul(u256.MustFromDecimal(Q96), u256.NewUint(2)),
+			expectedPanic: false,
+		},
+	}
 
-		uassert.PanicsWithMessage(t,
-			"[GNOSWAP-COMMON-009] overflow: amount(115792089237316195423570985008687907853269984665640564039457584007913129639934) overflows uint128 range",
-			func() {
-				_ = computeLiquidityForAmount0(sqrtRatioA, sqrtRatioB, largeValue)
-			})
-	})
-
-	t.Run("Large but safe values - should not panic", func(t *testing.T) {
-		// Nearly half of MAX_UINT128
-		safeValue := u256.MustFromDecimal("170141183460469231731687303715884105727")
-		sqrtRatioA := u256.MustFromDecimal(Q96)
-		sqrtRatioB := new(u256.Uint).Mul(sqrtRatioA, u256.NewUint(2))
-
-		// Should complete without panic
-		result := computeLiquidityForAmount0(sqrtRatioA, sqrtRatioB, safeValue)
-
-		// Result should be within uint128 range
-		if result.Gt(maxUint128) {
-			t.Errorf("Result exceeds uint128 range")
-		}
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.expectedPanic {
+				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
+					_ = computeLiquidityForAmount0(tt.sqrtRatioA, tt.sqrtRatioB, tt.value)
+				})
+			} else {
+				result := computeLiquidityForAmount0(tt.sqrtRatioA, tt.sqrtRatioB, tt.value)
+				if result.Gt(maxUint128) {
+					t.Errorf("Result exceeds uint128 range")
+				}
+			}
+		})
+	}
 }
 
 func TestLiquidityMathAddDelta(t *testing.T) {
