@@ -176,30 +176,58 @@ func TestTotalSupply(t *testing.T) {
 }
 
 func TestOwnerOf(t *testing.T) {
+	resetObject(t)
+	testing.SetRealm(positionRealm)
+	Mint(cross, addr01, tid(1))
+	Mint(cross, addr02, tid(2))
+
 	tests := []struct {
 		name        string
+		setup       func()
 		tokenId     uint64
-		shouldPanic bool
-		panicMsg    string
+		shouldError bool
+		errorMsg    string
 		expected    address
 	}{
-		// {"OwnerOf(1)", 1, false, "", addr01},
-		{"OwnerOf(500)", 500, false, errInvalidTokenId, addr01},
+		{
+			name:        "valid token owner",
+			tokenId:     1,
+			shouldError: false,
+			expected:    addr01,
+		},
+		{
+			name:        "non-existent token",
+			tokenId:     999,
+			shouldError: true,
+			errorMsg:    errInvalidTokenId,
+		},
+		{
+			name: "burned token",
+			setup: func() {
+				testing.SetRealm(positionRealm)
+				Burn(cross, tid(2))
+			},
+			tokenId:     2,
+			shouldError: true,
+			errorMsg:    errInvalidTokenId,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					OwnerOf(tid(tt.tokenId))
-				})
-			} else {
-				ownerAddr, err := OwnerOf(tid(tt.tokenId))
+			if tt.setup != nil {
+				tt.setup()
+			}
+
+			ownerAddr, err := OwnerOf(tid(tt.tokenId))
+			if tt.shouldError {
+				uassert.Error(t, err)
 				if err != nil {
-					uassert.Equal(t, tt.panicMsg, err.Error())
-				} else {
-					uassert.Equal(t, tt.expected, ownerAddr)
+					uassert.Equal(t, tt.errorMsg, err.Error())
 				}
+			} else {
+				uassert.NoError(t, err)
+				uassert.Equal(t, tt.expected, ownerAddr)
 			}
 		})
 	}
@@ -247,6 +275,17 @@ func TestSetApprovalForAll(t *testing.T) {
 			approved:    true,
 			shouldPanic: true,
 			panicMsg:    "[GNOSWAP-GNFT-004] invalid addresss",
+		},
+		{
+			name: "approve self as operator",
+			setup: func() {
+				resetObject(t)
+			},
+			callerRealm: addr01Realm,
+			operator:    addr01,
+			approved:    true,
+			shouldPanic: true,
+			panicMsg:    "approval to current owner",
 		},
 	}
 
@@ -623,6 +662,7 @@ func TestMint(t *testing.T) {
 func TestBurn(t *testing.T) {
 	tests := []struct {
 		name            string
+		setup           func()
 		callerRealm     runtime.Realm
 		tokenIdToBurn   uint64
 		expectedBalance int64
@@ -651,6 +691,18 @@ func TestBurn(t *testing.T) {
 			shouldPanic:     true,
 			panicMsg:        errInvalidTokenId,
 		},
+		{
+			name: "burn already burned token",
+			setup: func() {
+				testing.SetRealm(positionRealm)
+				Burn(cross, tid(1))
+			},
+			callerRealm:     positionRealm,
+			tokenIdToBurn:   1,
+			expectedBalance: 0,
+			shouldPanic:     true,
+			panicMsg:        errInvalidTokenId,
+		},
 	}
 
 	for _, tt := range tests {
@@ -660,6 +712,10 @@ func TestBurn(t *testing.T) {
 			// token id 1 is pre-minted
 			testing.SetRealm(positionRealm)
 			Mint(cross, testutils.TestAddress("human"), tid(1))
+
+			if tt.setup != nil {
+				tt.setup()
+			}
 
 			testing.SetRealm(tt.callerRealm)
 
@@ -942,6 +998,7 @@ func TestApprove(t *testing.T) {
 
 	tests := []struct {
 		name        string
+		setup       func()
 		callerRealm runtime.Realm
 		approved    address
 		tokenId     uint64
@@ -987,10 +1044,25 @@ func TestApprove(t *testing.T) {
 			shouldPanic: true,
 			panicMsg:    "[GNOSWAP-GNFT-004] invalid addresss || address ()",
 		},
+		{
+			name: "re-approve same address (idempotency)",
+			setup: func() {
+				testing.SetRealm(addr01Realm)
+				Approve(cross, addr02, tid(1))
+			},
+			callerRealm: addr01Realm,
+			approved:    addr02,
+			tokenId:     1,
+			shouldPanic: false,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup()
+			}
+
 			testing.SetRealm(tt.callerRealm)
 
 			if tt.shouldPanic {
