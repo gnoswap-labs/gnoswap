@@ -32,7 +32,7 @@ const (
 )
 
 const (
-	defaultDevOpsPct = 0
+	defaultDevOpsPct = int64(0)
 )
 
 type protocolFeeStore struct {
