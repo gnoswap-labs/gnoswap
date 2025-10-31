@@ -46,43 +46,79 @@ func TestIsOwner(t *testing.T) {
 }
 
 func TestIsPendingOwner(t *testing.T) {
-	// Reset manager for test
-	manager = prbac.NewRBACWithAddress(ADMIN)
-
-	// Initially no pending owner
-	if IsPendingOwner(DEV_OPS) {
-		t.Error("Should not have pending owner initially")
-	}
-
-	// Note: Cannot test with actual pending owner due to ownable2step requiring std.PreviousRealm()
-	// Test basic functionality with no pending owner
 	tests := []struct {
-		name     string
-		addr     address
-		expected bool
+		name             string
+		setupPending     bool
+		pendingOwnerAddr address
+		checkAddr        address
+		expected         bool
 	}{
 		{
-			name:     "No pending owner - DEV_OPS should return false",
-			addr:     DEV_OPS,
-			expected: false,
+			name:         "No pending owner - DEV_OPS should return false",
+			setupPending: false,
+			checkAddr:    DEV_OPS,
+			expected:     false,
 		},
 		{
-			name:     "No pending owner - ADMIN should return false",
-			addr:     ADMIN,
-			expected: false,
+			name:         "No pending owner - ADMIN should return false",
+			setupPending: false,
+			checkAddr:    ADMIN,
+			expected:     false,
 		},
 		{
-			name:     "No pending owner - random address should return false",
-			addr:     COMMUNITY_POOL_ADDR,
-			expected: false,
+			name:         "No pending owner - random address should return false",
+			setupPending: false,
+			checkAddr:    COMMUNITY_POOL_ADDR,
+			expected:     false,
+		},
+		{
+			name:             "With pending owner - correct address should return true",
+			setupPending:     true,
+			pendingOwnerAddr: DEV_OPS,
+			checkAddr:        DEV_OPS,
+			expected:         true,
+		},
+		{
+			name:             "With pending owner - different address should return false",
+			setupPending:     true,
+			pendingOwnerAddr: DEV_OPS,
+			checkAddr:        ADMIN,
+			expected:         false,
+		},
+		{
+			name:             "With pending owner - random address should return false",
+			setupPending:     true,
+			pendingOwnerAddr: DEV_OPS,
+			checkAddr:        COMMUNITY_POOL_ADDR,
+			expected:         false,
+		},
+		{
+			name:             "With pending owner - empty address should return false",
+			setupPending:     true,
+			pendingOwnerAddr: DEV_OPS,
+			checkAddr:        address(""),
+			expected:         false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := IsPendingOwner(tt.addr)
+			// Reset manager for each test
+			manager = prbac.NewRBACWithAddress(ADMIN)
+
+			// Setup pending owner if needed
+			if tt.setupPending {
+				testing.SetRealm(testing.NewUserRealm(ADMIN))
+				err := manager.TransferOwnershipBy(tt.pendingOwnerAddr, ADMIN)
+				if err != nil {
+					t.Fatalf("Failed to set up pending owner: %v", err)
+				}
+			}
+
+			// Check IsPendingOwner
+			result := IsPendingOwner(tt.checkAddr)
 			if result != tt.expected {
-				t.Errorf("IsPendingOwner(%s) = %v, want %v", tt.addr, result, tt.expected)
+				t.Errorf("IsPendingOwner(%s) = %v, want %v", tt.checkAddr, result, tt.expected)
 			}
 		})
 	}
