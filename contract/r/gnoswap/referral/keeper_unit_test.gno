@@ -311,7 +311,7 @@ func TestKeeperValidation(t *testing.T) {
 }
 
 // TestKeeperNewKeeper tests the NewKeeper constructor
-func TestKeeperNewKeeper(t *testing.T) {
+func TestKeeper_NewKeeper(t *testing.T) {
 	t.Run("creates new keeper instance", func(t *testing.T) {
 		k := NewKeeper()
 		uassert.NotNil(t, k)

@@ -286,7 +286,7 @@ func TestGlobalKeeper_IsEmpty(t *testing.T) {
 	}
 }
 
-func TestGlobalKeeper_GetKeeper(t *testing.T) {
+func TestGlobalKeeper_getKeeper(t *testing.T) {
 	tests := []struct {
 		name           string
 		expectedNotNil bool

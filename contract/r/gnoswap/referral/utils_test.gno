@@ -11,7 +11,7 @@ import (
 	"gno.land/r/gnoswap/access"
 )
 
-func TestIsValidCaller_AllAuthorizedRoles(t *testing.T) {
+func TestUtils_isValidCaller_AllAuthorizedRoles(t *testing.T) {
 	tests := []struct {
 		name     string
 		roleName string
@@ -59,7 +59,7 @@ func TestIsValidCaller_AllAuthorizedRoles(t *testing.T) {
 	}
 }
 
-func TestIsValidCaller_UnauthorizedCallers(t *testing.T) {
+func TestUtils_isValidCaller_UnauthorizedCallers(t *testing.T) {
 	tests := []struct {
 		name   string
 		caller address
@@ -89,7 +89,7 @@ func TestIsValidCaller_UnauthorizedCallers(t *testing.T) {
 	}
 }
 
-func TestIsValidCaller_EdgeCases(t *testing.T) {
+func TestUtils_isValidCaller_EdgeCases(t *testing.T) {
 	tests := []struct {
 		name   string
 		caller address
@@ -115,7 +115,7 @@ func TestIsValidCaller_EdgeCases(t *testing.T) {
 	}
 }
 
-func TestIsValidCaller_MultipleRolesConsistency(t *testing.T) {
+func TestUtils_isValidCaller_MultipleRolesConsistency(t *testing.T) {
 	// Test that multiple calls with the same authorized role return consistent results
 	t.Run("consistent authorization for same role", func(t *testing.T) {
 		// given
@@ -143,7 +143,7 @@ func TestIsValidCaller_MultipleRolesConsistency(t *testing.T) {
 	})
 }
 
-func TestIsValidCaller_RoleIsolation(t *testing.T) {
+func TestUtils_isValidCaller_RoleIsolation(t *testing.T) {
 	// Test that authorization is properly isolated by role
 	t.Run("different authorized roles all work", func(t *testing.T) {
 		roles := []string{
