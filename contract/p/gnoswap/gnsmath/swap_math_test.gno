@@ -822,43 +822,9 @@ func TestSwapMath_handleExactIn(t *testing.T) {
 		expectedSqrtNext       *u256.Uint
 		expectedAmountIn       *u256.Uint
 	}{
-		// Equality boundary cases - testing the condition: amountRemainingLessFee.Gte(amountIn)
-		{
-			name:                 "amountRemainingLessFee_exactly_equals_amountIn",
-			zeroForOne:           false, // price increasing
-			currentX96:           encodePriceSqrtTest(t, "1", "1"),
-			targetX96:            encodePriceSqrtTest(t, "121", "100"),
-			liquidity:            u256.MustFromDecimal("2000000000000000000"),
-			amountRemainingAbs:   u256.MustFromDecimal("191691827470254872"),
-			withoutFeeRateInPips: u256.NewUint(1000000 - 600), // 99.94%
-			expectedSqrtNext:     u256.MustFromDecimal("86817301926621333616440630103"), // partial move (doesn't reach target)
-			expectedAmountIn:     u256.MustFromDecimal("200000000000000000"), // amount needed to reach target
-		},
-		{
-			name:                 "amountRemainingLessFee_slightly_above_amountIn",
-			zeroForOne:           false,
-			currentX96:           encodePriceSqrtTest(t, "1", "1"),
-			targetX96:            encodePriceSqrtTest(t, "121", "100"),
-			liquidity:            u256.MustFromDecimal("2000000000000000000"),
-			amountRemainingAbs:   u256.MustFromDecimal("191691827470254873"),
-			withoutFeeRateInPips: u256.NewUint(1000000 - 600),
-			expectedSqrtNext:     u256.MustFromDecimal("86817301926621333656054711360"), // partial move
-			expectedAmountIn:     u256.MustFromDecimal("200000000000000000"),
-		},
-		{
-			name:                 "amountRemainingLessFee_slightly_below_amountIn",
-			zeroForOne:           false,
-			currentX96:           encodePriceSqrtTest(t, "1", "1"),
-			targetX96:            encodePriceSqrtTest(t, "121", "100"),
-			liquidity:            u256.MustFromDecimal("2000000000000000000"),
-			amountRemainingAbs:   u256.MustFromDecimal("191691827470254871"),
-			withoutFeeRateInPips: u256.NewUint(1000000 - 600),
-			expectedSqrtNext:     u256.MustFromDecimal("86817301926621333576826548846"), // partial move
-			expectedAmountIn:     u256.MustFromDecimal("200000000000000000"),
-		},
 		// Zero after fee case - testing: amountRemainingLessFee.IsZero()
 		{
-			name:                 "very_small_amount_becomes_zero_after_fee",
+			name:                 "amount_becomes_zero_after_fee_one_for_zero",
 			zeroForOne:           false,
 			currentX96:           encodePriceSqrtTest(t, "1", "1"),
 			targetX96:            encodePriceSqrtTest(t, "121", "100"),
@@ -867,6 +833,109 @@ func TestSwapMath_handleExactIn(t *testing.T) {
 			withoutFeeRateInPips: u256.NewUint(1000000 - 3000), // 99.7%: 1 * 997000 / 1000000 = 0
 			expectedSqrtNext:     encodePriceSqrtTest(t, "1", "1"), // no price move
 			expectedAmountIn:     u256.Zero(),
+		},
+		{
+			name:                 "amount_becomes_zero_after_fee_zero_for_one",
+			zeroForOne:           true,
+			currentX96:           encodePriceSqrtTest(t, "121", "100"),
+			targetX96:            encodePriceSqrtTest(t, "1", "1"),
+			liquidity:            u256.MustFromDecimal("2000000000000000000"),
+			amountRemainingAbs:   u256.One(),
+			withoutFeeRateInPips: u256.NewUint(1000000 - 3000),
+			expectedSqrtNext:     encodePriceSqrtTest(t, "121", "100"), // no price move
+			expectedAmountIn:     u256.Zero(),
+		},
+		// Hit target case - testing: amountRemainingLessFee.Gte(amountIn)
+		{
+			name:                 "sufficient_amount_hits_target_one_for_zero",
+			zeroForOne:           false, // price increasing
+			currentX96:           encodePriceSqrtTest(t, "1", "1"),
+			targetX96:            encodePriceSqrtTest(t, "121", "100"),
+			liquidity:            u256.MustFromDecimal("2000000000000000000"),
+			amountRemainingAbs:   u256.MustFromDecimal("500000000000000000"), // large enough
+			withoutFeeRateInPips: u256.NewUint(1000000 - 600),
+			expectedSqrtNext:     u256.MustFromDecimal("87150978765690771352898345369"), // hit target
+			expectedAmountIn:     u256.MustFromDecimal("200000000000000000"),
+		},
+		{
+			name:                 "sufficient_amount_hits_target_zero_for_one",
+			zeroForOne:           true, // price decreasing
+			currentX96:           encodePriceSqrtTest(t, "121", "100"),
+			targetX96:            encodePriceSqrtTest(t, "1", "1"),
+			liquidity:            u256.MustFromDecimal("2000000000000000000"),
+			amountRemainingAbs:   u256.MustFromDecimal("500000000000000000"),
+			withoutFeeRateInPips: u256.NewUint(1000000 - 600),
+			expectedSqrtNext:     u256.MustFromDecimal("79228162514264337593543950336"), // hit target
+			expectedAmountIn:     u256.MustFromDecimal("181818181818181819"),
+		},
+		// Partial move case - testing: amountRemainingLessFee < amountIn
+		{
+			name:                 "insufficient_amount_partial_move_one_for_zero",
+			zeroForOne:           false,
+			currentX96:           encodePriceSqrtTest(t, "1", "1"),
+			targetX96:            encodePriceSqrtTest(t, "121", "100"),
+			liquidity:            u256.MustFromDecimal("2000000000000000000"),
+			amountRemainingAbs:   u256.MustFromDecimal("100000000000000000"), // not enough
+			withoutFeeRateInPips: u256.NewUint(1000000 - 600),
+			expectedSqrtNext:     u256.MustFromDecimal("83187193795102126543093341534"), // partial move
+			expectedAmountIn:     u256.MustFromDecimal("200000000000000000"), // amount to reach target
+		},
+		{
+			name:                 "insufficient_amount_partial_move_zero_for_one",
+			zeroForOne:           true,
+			currentX96:           encodePriceSqrtTest(t, "121", "100"),
+			targetX96:            encodePriceSqrtTest(t, "1", "1"),
+			liquidity:            u256.MustFromDecimal("2000000000000000000"),
+			amountRemainingAbs:   u256.MustFromDecimal("100000000000000000"),
+			withoutFeeRateInPips: u256.NewUint(1000000 - 600),
+			expectedSqrtNext:     u256.MustFromDecimal("82610146825152607951621562921"), // partial move
+			expectedAmountIn:     u256.MustFromDecimal("181818181818181819"),
+		},
+		// Edge cases - zero liquidity
+		{
+			name:                 "zero_liquidity_one_for_zero",
+			zeroForOne:           false,
+			currentX96:           encodePriceSqrtTest(t, "1", "1"),
+			targetX96:            encodePriceSqrtTest(t, "2", "1"),
+			liquidity:            u256.Zero(),
+			amountRemainingAbs:   u256.MustFromDecimal("1000000"),
+			withoutFeeRateInPips: u256.NewUint(1000000 - 3000),
+			expectedSqrtNext:     encodePriceSqrtTest(t, "2", "1"), // hit target (no liquidity needed)
+			expectedAmountIn:     u256.Zero(),
+		},
+		{
+			name:                 "zero_liquidity_zero_for_one",
+			zeroForOne:           true,
+			currentX96:           encodePriceSqrtTest(t, "2", "1"),
+			targetX96:            encodePriceSqrtTest(t, "1", "1"),
+			liquidity:            u256.Zero(),
+			amountRemainingAbs:   u256.MustFromDecimal("1000000"),
+			withoutFeeRateInPips: u256.NewUint(1000000 - 3000),
+			expectedSqrtNext:     encodePriceSqrtTest(t, "1", "1"), // hit target
+			expectedAmountIn:     u256.Zero(),
+		},
+		// Edge cases - extreme prices
+		{
+			name:                 "near_min_sqrt_ratio",
+			zeroForOne:           false,
+			currentX96:           MIN_SQRT_RATIO,
+			targetX96:            new(u256.Uint).Add(MIN_SQRT_RATIO, u256.NewUint(100000)),
+			liquidity:            u256.MustFromDecimal("1000000000000000000"),
+			amountRemainingAbs:   u256.MustFromDecimal("100000000000000"),
+			withoutFeeRateInPips: u256.NewUint(1000000 - 3000),
+			expectedSqrtNext:     u256.MustFromDecimal("4295228739"),
+			expectedAmountIn:     u256.One(),
+		},
+		{
+			name:                 "near_max_sqrt_ratio",
+			zeroForOne:           true,
+			currentX96:           MAX_SQRT_RATIO,
+			targetX96:            new(u256.Uint).Sub(MAX_SQRT_RATIO, u256.NewUint(100000)),
+			liquidity:            u256.MustFromDecimal("1000000000000000000"),
+			amountRemainingAbs:   u256.MustFromDecimal("100000000000000"),
+			withoutFeeRateInPips: u256.NewUint(1000000 - 3000),
+			expectedSqrtNext:     u256.MustFromDecimal("1461446703485210103287273052203988822378723870342"),
+			expectedAmountIn:     u256.One(),
 		},
 	}
 
@@ -900,36 +969,100 @@ func TestSwapMath_handleExactOut(t *testing.T) {
 		expectedSqrtNext   *u256.Uint
 		expectedAmountOut  *u256.Uint
 	}{
-		// Testing condition: amountRemainingAbs.Gte(amountOut)
+		// Hit target case - testing: amountRemainingAbs.Gte(amountOut)
 		{
-			name:               "requested_output_less_than_target_produces",
+			name:               "sufficient_output_hits_target_one_for_zero",
 			zeroForOne:         false, // price increasing
 			currentX96:         encodePriceSqrtTest(t, "1", "1"),
 			targetX96:          encodePriceSqrtTest(t, "121", "100"),
 			liquidity:          u256.MustFromDecimal("2000000000000000000"),
-			amountRemainingAbs: u256.MustFromDecimal("100"), // very small request
-			expectedSqrtNext:   u256.MustFromDecimal("79228162514264341554952076050"), // partial move
-			expectedAmountOut:  u256.MustFromDecimal("181818181818181818"), // amount to reach target
-		},
-		{
-			name:               "requested_output_exactly_reaches_target",
-			zeroForOne:         false,
-			currentX96:         encodePriceSqrtTest(t, "1", "1"),
-			targetX96:          encodePriceSqrtTest(t, "121", "100"),
-			liquidity:          u256.MustFromDecimal("2000000000000000000"),
-			amountRemainingAbs: u256.MustFromDecimal("500000000000000000"), // large enough to hit target
-			expectedSqrtNext:   u256.MustFromDecimal("87150978765690771352898345369"), // should hit target
+			amountRemainingAbs: u256.MustFromDecimal("500000000000000000"), // large enough
+			expectedSqrtNext:   encodePriceSqrtTest(t, "121", "100"), // hit target
 			expectedAmountOut:  u256.MustFromDecimal("181818181818181818"),
 		},
 		{
-			name:               "requested_output_exceeds_target",
+			name:               "sufficient_output_hits_target_zero_for_one",
+			zeroForOne:         true, // price decreasing
+			currentX96:         encodePriceSqrtTest(t, "121", "100"),
+			targetX96:          encodePriceSqrtTest(t, "1", "1"),
+			liquidity:          u256.MustFromDecimal("2000000000000000000"),
+			amountRemainingAbs: u256.MustFromDecimal("500000000000000000"),
+			expectedSqrtNext:   u256.MustFromDecimal("79228162514264337593543950336"), // hit target
+			expectedAmountOut:  u256.MustFromDecimal("199999999999999999"),
+		},
+		// Partial move case - testing: amountRemainingAbs < amountOut
+		{
+			name:               "insufficient_output_partial_move_one_for_zero",
 			zeroForOne:         false,
 			currentX96:         encodePriceSqrtTest(t, "1", "1"),
 			targetX96:          encodePriceSqrtTest(t, "121", "100"),
 			liquidity:          u256.MustFromDecimal("2000000000000000000"),
-			amountRemainingAbs: u256.MustFromDecimal("50000000000000000"),
+			amountRemainingAbs: u256.MustFromDecimal("50000000000000000"), // not enough
 			expectedSqrtNext:   u256.MustFromDecimal("81259653860783935993378410602"), // partial move
 			expectedAmountOut:  u256.MustFromDecimal("181818181818181818"), // amount to reach target
+		},
+		{
+			name:               "insufficient_output_partial_move_zero_for_one",
+			zeroForOne:         true,
+			currentX96:         encodePriceSqrtTest(t, "121", "100"),
+			targetX96:          encodePriceSqrtTest(t, "1", "1"),
+			liquidity:          u256.MustFromDecimal("2000000000000000000"),
+			amountRemainingAbs: u256.MustFromDecimal("100000000000000000"),
+			expectedSqrtNext:   u256.MustFromDecimal("83189570639977554473221147852"), // partial move
+			expectedAmountOut:  u256.MustFromDecimal("199999999999999999"),
+		},
+		// Edge cases - zero liquidity
+		{
+			name:               "zero_liquidity_one_for_zero",
+			zeroForOne:         false,
+			currentX96:         encodePriceSqrtTest(t, "1", "1"),
+			targetX96:          encodePriceSqrtTest(t, "2", "1"),
+			liquidity:          u256.Zero(),
+			amountRemainingAbs: u256.MustFromDecimal("1000000"),
+			expectedSqrtNext:   encodePriceSqrtTest(t, "2", "1"), // hit target
+			expectedAmountOut:  u256.Zero(),
+		},
+		{
+			name:               "zero_liquidity_zero_for_one",
+			zeroForOne:         true,
+			currentX96:         encodePriceSqrtTest(t, "2", "1"),
+			targetX96:          encodePriceSqrtTest(t, "1", "1"),
+			liquidity:          u256.Zero(),
+			amountRemainingAbs: u256.MustFromDecimal("1000000"),
+			expectedSqrtNext:   encodePriceSqrtTest(t, "1", "1"), // hit target
+			expectedAmountOut:  u256.Zero(),
+		},
+		// Edge cases - extreme prices
+		{
+			name:               "near_min_sqrt_ratio",
+			zeroForOne:         false,
+			currentX96:         MIN_SQRT_RATIO,
+			targetX96:          new(u256.Uint).Add(MIN_SQRT_RATIO, u256.NewUint(100000)),
+			liquidity:          u256.MustFromDecimal("1000000000000000000"),
+			amountRemainingAbs: u256.MustFromDecimal("100000000000000"),
+			expectedSqrtNext:   u256.MustFromDecimal("4295128740"),
+			expectedAmountOut:  u256.MustFromDecimal("429454444180818889404638630100188"),
+		},
+		{
+			name:               "near_max_sqrt_ratio",
+			zeroForOne:         true,
+			currentX96:         MAX_SQRT_RATIO,
+			targetX96:          new(u256.Uint).Sub(MAX_SQRT_RATIO, u256.NewUint(100000)),
+			liquidity:          u256.MustFromDecimal("1000000000000000000"),
+			amountRemainingAbs: u256.MustFromDecimal("100000000000000"),
+			expectedSqrtNext:   new(u256.Uint).Sub(MAX_SQRT_RATIO, u256.NewUint(100000)),
+			expectedAmountOut:  u256.Zero(),
+		},
+		// Edge cases - very small amount
+		{
+			name:               "very_small_output_request",
+			zeroForOne:         false,
+			currentX96:         encodePriceSqrtTest(t, "1", "1"),
+			targetX96:          encodePriceSqrtTest(t, "121", "100"),
+			liquidity:          u256.MustFromDecimal("2000000000000000000"),
+			amountRemainingAbs: u256.One(), // 1 unit
+			expectedSqrtNext:   u256.MustFromDecimal("79228162514264337633158031594"), // minimal partial move
+			expectedAmountOut:  u256.MustFromDecimal("181818181818181818"),
 		},
 	}
 
