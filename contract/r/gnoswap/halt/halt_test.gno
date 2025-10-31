@@ -849,6 +849,109 @@ func TestHalt_NewHaltStateManagerByConfig_Independence(t *testing.T) {
 	}
 }
 
+func TestHalt_SetOperationStatusNextVersion(t *testing.T) {
+	tests := []struct {
+		name             string
+		caller           address
+		opType           OpType
+		halted           bool
+		expectedVersion  int
+		shouldPanic      bool
+		expectedPanicMsg string
+	}{
+		{
+			name:            "Admin can set operation status next version",
+			caller:          adminAddr,
+			opType:          OpTypePool,
+			halted:          true,
+			expectedVersion: 2,
+			shouldPanic:     false,
+		},
+		{
+			name:            "Governance can set operation status next version",
+			caller:          govAddr,
+			opType:          OpTypePosition,
+			halted:          false,
+			expectedVersion: 2,
+			shouldPanic:     false,
+		},
+		{
+			name:             "Unauthorized caller cannot set",
+			caller:           unauthorizedAddr,
+			opType:           OpTypeRouter,
+			halted:           true,
+			expectedVersion:  0,
+			shouldPanic:      true,
+			expectedPanicMsg: "unauthorized",
+		},
+		{
+			name:             "Invalid operation type",
+			caller:           adminAddr,
+			opType:           OpType("invalid"),
+			halted:           true,
+			expectedVersion:  0,
+			shouldPanic:      true,
+			expectedPanicMsg: "invalid operation type",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			cleanup()
+			setupAdmin()
+			testing.SetOriginCaller(tt.caller)
+
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
+					SetOperationStatusNextVersion(cross, tt.opType, tt.halted)
+				})
+			} else {
+				// Execute
+				SetOperationStatusNextVersion(cross, tt.opType, tt.halted)
+
+				// Verify version incremented
+				version, err := haltStates.GetOperationVersion(tt.opType)
+				uassert.NoError(t, err)
+				uassert.Equal(t, version, tt.expectedVersion)
+
+				// Verify halt status
+				isHalted, err := haltStates.IsOperationHaltedWithVersion(tt.opType, tt.expectedVersion)
+				uassert.NoError(t, err)
+				uassert.Equal(t, isHalted, tt.halted)
+			}
+		})
+	}
+}
+
+func TestHalt_SetOperationStatusNextVersion_MultipleVersions(t *testing.T) {
+	cleanup()
+	setupAdmin()
+	testing.SetOriginCaller(adminAddr)
+
+	// Create version 2
+	SetOperationStatusNextVersion(cross, OpTypePool, true)
+	version, err := haltStates.GetOperationVersion(OpTypePool)
+	uassert.NoError(t, err)
+	uassert.Equal(t, version, 2)
+
+	// Create version 3
+	SetOperationStatusNextVersion(cross, OpTypePool, false)
+	version, err = haltStates.GetOperationVersion(OpTypePool)
+	uassert.NoError(t, err)
+	uassert.Equal(t, version, 3)
+
+	// Verify version 2 is halted
+	isHalted, err := haltStates.IsOperationHaltedWithVersion(OpTypePool, 2)
+	uassert.NoError(t, err)
+	uassert.Equal(t, isHalted, true)
+
+	// Verify version 3 is not halted
+	isHalted, err = haltStates.IsOperationHaltedWithVersion(OpTypePool, 3)
+	uassert.NoError(t, err)
+	uassert.Equal(t, isHalted, false)
+}
+
 // Test helpers
 func cleanup() {
 	haltStates = newHaltStateManagerByConfig(newNoneConfig())
