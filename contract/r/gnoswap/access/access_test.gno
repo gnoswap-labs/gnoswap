@@ -25,7 +25,7 @@ func TestGetAddress(t *testing.T) {
 	tests := []struct {
 		name           string
 		setupRole      string
-		setupAddrs     address
+		setupAddr     address
 		queryRole      string
 		expectedAddr   address
 		expectedExists bool
@@ -33,7 +33,7 @@ func TestGetAddress(t *testing.T) {
 		{
 			name:           "non-existent role",
 			setupRole:      "",
-			setupAddrs:     address(""),
+			setupAddr:     address(""),
 			queryRole:      testRole,
 			expectedAddr:   "",
 			expectedExists: false,
@@ -41,7 +41,7 @@ func TestGetAddress(t *testing.T) {
 		{
 			name:           "existing role with single address",
 			setupRole:      testRole,
-			setupAddrs:     testAddr,
+			setupAddr:     testAddr,
 			queryRole:      testRole,
 			expectedAddr:   testAddr,
 			expectedExists: true,
@@ -49,7 +49,7 @@ func TestGetAddress(t *testing.T) {
 		{
 			name:           "query different role",
 			setupRole:      testRole,
-			setupAddrs:     testAddr,
+			setupAddr:     testAddr,
 			queryRole:      "different_role",
 			expectedAddr:   "",
 			expectedExists: false,
@@ -57,7 +57,7 @@ func TestGetAddress(t *testing.T) {
 		{
 			name:           "empty address list",
 			setupRole:      "",
-			setupAddrs:     address(""),
+			setupAddr:     address(""),
 			queryRole:      testRole,
 			expectedAddr:   "",
 			expectedExists: false,
@@ -66,11 +66,11 @@ func TestGetAddress(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			roleAddresses = make(map[string]address)
+		    roleAddresses = make(map[string]address)
 
 			// Setup
 			if tt.setupRole != "" {
-				roleAddresses[tt.setupRole] = tt.setupAddrs
+				roleAddresses[tt.setupRole] = tt.setupAddr
 			}
 
 			// Test
@@ -196,7 +196,7 @@ func TestIsAuthorized(t *testing.T) {
 	tests := []struct {
 		name         string
 		setupRole    string
-		setupAddrs   address
+		setupAddr   address
 		queryRole    string
 		queryAddr    address
 		expectedAuth bool
@@ -204,7 +204,7 @@ func TestIsAuthorized(t *testing.T) {
 		{
 			name:         "non-existent role",
 			setupRole:    "",
-			setupAddrs:   address(""),
+			setupAddr:   address(""),
 			queryRole:    testRole,
 			queryAddr:    testAddr,
 			expectedAuth: false,
@@ -212,7 +212,7 @@ func TestIsAuthorized(t *testing.T) {
 		{
 			name:         "existing role with correct address",
 			setupRole:    testRole,
-			setupAddrs:   testAddr,
+			setupAddr:   testAddr,
 			queryRole:    testRole,
 			queryAddr:    testAddr,
 			expectedAuth: true,
@@ -220,7 +220,7 @@ func TestIsAuthorized(t *testing.T) {
 		{
 			name:         "existing role with incorrect address",
 			setupRole:    testRole,
-			setupAddrs:   testAddr,
+			setupAddr:   testAddr,
 			queryRole:    testRole,
 			queryAddr:    otherAddr,
 			expectedAuth: false,
@@ -228,7 +228,7 @@ func TestIsAuthorized(t *testing.T) {
 		{
 			name:         "query different role",
 			setupRole:    testRole,
-			setupAddrs:   testAddr,
+			setupAddr:   testAddr,
 			queryRole:    "different_role",
 			queryAddr:    testAddr,
 			expectedAuth: false,
@@ -239,7 +239,7 @@ func TestIsAuthorized(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
 			if tt.setupRole != "" {
-				roleAddresses[tt.setupRole] = tt.setupAddrs
+				roleAddresses[tt.setupRole] = tt.setupAddr
 			}
 
 			// Test
@@ -426,13 +426,9 @@ func TestAccess_MustGetAddress(t *testing.T) {
 	testAddr := address("g1test123456789abcdef")
 
 	// Save original state
-	originalRoles := make(map[string]map[int]address)
+	originalRoles := make(map[string]address)
 	for k, v := range roleAddresses {
-		addressCopy := make(map[int]address)
-		for k, v := range v {
-			addressCopy[k] = v
-		}
-		originalRoles[k] = addressCopy
+		originalRoles[k] = v
 	}
 	defer func() {
 		roleAddresses = originalRoles
@@ -441,7 +437,7 @@ func TestAccess_MustGetAddress(t *testing.T) {
 	tests := []struct {
 		name        string
 		setupRole   string
-		setupAddrs  map[int]address
+		setupAddr   address
 		queryRole   string
 		expectedAddr address
 		shouldPanic bool
@@ -450,7 +446,7 @@ func TestAccess_MustGetAddress(t *testing.T) {
 		{
 			name:         "existing role returns address",
 			setupRole:    testRole,
-			setupAddrs:   map[int]address{1: testAddr},
+			setupAddr:    testAddr,
 			queryRole:    testRole,
 			expectedAddr: testAddr,
 			shouldPanic:  false,
@@ -458,7 +454,7 @@ func TestAccess_MustGetAddress(t *testing.T) {
 		{
 			name:        "non-existent role panics",
 			setupRole:   testRole,
-			setupAddrs:  map[int]address{1: testAddr},
+			setupAddr:   testAddr,
 			queryRole:   "nonexistent",
 			shouldPanic: true,
 			panicMsg:    "role nonexistent not found",
@@ -466,7 +462,7 @@ func TestAccess_MustGetAddress(t *testing.T) {
 		{
 			name:        "empty role map panics",
 			setupRole:   "",
-			setupAddrs:  map[int]address{},
+			setupAddr:   address(""),
 			queryRole:   testRole,
 			shouldPanic: true,
 			panicMsg:    "not found",
@@ -476,9 +472,9 @@ func TestAccess_MustGetAddress(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			roleAddresses = make(map[string]map[int]address)
+			roleAddresses = make(map[string]address)
 			if tt.setupRole != "" {
-				roleAddresses[tt.setupRole] = tt.setupAddrs
+				roleAddresses[tt.setupRole] = tt.setupAddr
 			}
 
 			if tt.shouldPanic {
