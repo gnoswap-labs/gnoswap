@@ -96,7 +96,9 @@ func (pfs *protocolFeeState) setGovStakerPct(pct int64) (int64, error) {
 			ufmt.Sprintf("pct(%d) should not be negative", pct),
 		)
 	}
+
 	devOpsPct := 10000 - pct
+
 	if _, err := pfs.setDevOpsPct(devOpsPct); err != nil {
 		return 0, err
 	}
@@ -109,14 +111,7 @@ func (pfs *protocolFeeState) addAccuToGovStaker(tokenPath string, amount int64) 
 	before := pfs.GetAccuTransferToGovStakerByTokenPath(tokenPath)
 
 	// Check for overflow
-	if amount > 0 && before > 0 && before > (9223372036854775807-amount) {
-		panic(makeErrorWithDetail(
-			errInvalidAmount,
-			ufmt.Sprintf("overflow detected: before(%d) + amount(%d) would exceed int64 max", before, amount),
-		))
-	}
-
-	after := before + amount
+	after := safeAddInt64(before, amount)
 	pfs.store.SetAccuToGovStakerItem(tokenPath, after)
 }
 
@@ -125,14 +120,7 @@ func (pfs *protocolFeeState) addAccuToDevOps(tokenPath string, amount int64) {
 	before := pfs.GetAccuTransferToDevOpsByTokenPath(tokenPath)
 
 	// Check for overflow
-	if amount > 0 && before > 0 && before > (9223372036854775807-amount) {
-		panic(makeErrorWithDetail(
-			errInvalidAmount,
-			ufmt.Sprintf("overflow detected: before(%d) + amount(%d) would exceed int64 max", before, amount),
-		))
-	}
-
-	after := before + amount
+	after := safeAddInt64(before, amount)
 	pfs.store.SetAccuToDevOpsItem(tokenPath, after)
 }
 
@@ -171,7 +159,7 @@ func retrieveAmount(tree *avl.Tree, key string) int64 {
 // updateDistributedToGovStakerHistory updates the distributedToGovStakerHistory.
 func (pfs *protocolFeeState) updateDistributedToGovStakerHistory(tokenPath string, amount int64) {
 	prevAmount := retrievePrevAmount(pfs.store.GetDistributedToGovStakerHistory(), tokenPath)
-	afterAmount := prevAmount + amount
+	afterAmount := safeAddInt64(prevAmount, amount)
 
 	pfs.store.SetDistributedToGovStakerHistoryItem(tokenPath, afterAmount)
 }
@@ -179,7 +167,7 @@ func (pfs *protocolFeeState) updateDistributedToGovStakerHistory(tokenPath strin
 // updateDistributedToDevOpsHistory updates the distributedToDevOpsHistory.
 func (pfs *protocolFeeState) updateDistributedToDevOpsHistory(tokenPath string, amount int64) {
 	prevAmount := retrievePrevAmount(pfs.store.GetDistributedToDevOpsHistory(), tokenPath)
-	afterAmount := prevAmount + amount
+	afterAmount := safeAddInt64(prevAmount, amount)
 
 	pfs.store.SetDistributedToDevOpsHistoryItem(tokenPath, afterAmount)
 }

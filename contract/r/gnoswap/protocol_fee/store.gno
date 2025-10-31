@@ -105,6 +105,7 @@ func (s *protocolFeeStore) SetAccuToGovStakerItem(tokenPath string, amount int64
 	}
 
 	accuToGovStaker.Set(tokenPath, amount)
+	s.kvStore.Set(StoreKeyAccuToGovStaker.String(), accuToGovStaker)
 
 	return nil
 }
@@ -153,6 +154,7 @@ func (s *protocolFeeStore) SetAccuToDevOpsItem(tokenPath string, amount int64) e
 	}
 
 	accuToDevOps.Set(tokenPath, amount)
+	s.kvStore.Set(StoreKeyAccuToDevOps.String(), accuToDevOps)
 
 	return nil
 }
@@ -201,6 +203,7 @@ func (s *protocolFeeStore) SetDistributedToGovStakerHistoryItem(tokenPath string
 	}
 
 	distributedToGovStakerHistory.Set(tokenPath, amount)
+	s.kvStore.Set(StoreKeyDistributedToGovStakerHistory.String(), distributedToGovStakerHistory)
 
 	return nil
 }
@@ -249,6 +252,7 @@ func (s *protocolFeeStore) SetDistributedToDevOpsHistoryItem(tokenPath string, a
 	}
 
 	distributedToDevOpsHistory.Set(tokenPath, amount)
+	s.kvStore.Set(StoreKeyDistributedToDevOpsHistory.String(), distributedToDevOpsHistory)
 
 	return nil
 }
@@ -315,6 +319,7 @@ func (s *protocolFeeStore) SetTokenListWithAmountItem(tokenPath string, amount i
 	}
 
 	tokenListWithAmounts[tokenPath] = amount
+	s.kvStore.Set(StoreKeyTokenListWithAmounts.String(), tokenListWithAmounts)
 
 	return nil
 }

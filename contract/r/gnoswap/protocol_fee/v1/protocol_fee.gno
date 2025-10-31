@@ -3,7 +3,6 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
-	"math"
 	"strconv"
 	"strings"
 
@@ -57,7 +56,7 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 		}
 
 		toDevOpsAmount := distributeAmount * pf.getProtocolFeeState().DevOpsPct() / 10000 // default 0%
-		toGovStakerAmount := distributeAmount - toDevOpsAmount                            // default 100%
+		toGovStakerAmount := safeSubInt64(distributeAmount, toDevOpsAmount)               // default 100%
 
 		// Distribute to DevOps
 		if err := pf.getProtocolFeeState().distributeToDevOps(token, toDevOpsAmount); err != nil {
@@ -190,14 +189,9 @@ func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) {
 	}
 
 	// Check for overflow
-	if amount > 0 && currentAmount > 0 && currentAmount > (math.MaxInt64-amount) {
-		panic(makeErrorWithDetail(
-			errInvalidAmount,
-			ufmt.Sprintf("overflow detected: current(%d) + amount(%d) would exceed int64 max", currentAmount, amount),
-		))
-	}
+	addedAmount := safeAddInt64(currentAmount, amount)
 
-	pf.store.SetTokenListWithAmountItem(tokenPath, currentAmount+amount)
+	pf.store.SetTokenListWithAmountItem(tokenPath, addedAmount)
 }
 
 // ClearTokenListWithAmount clears the tokenListWithAmount.
