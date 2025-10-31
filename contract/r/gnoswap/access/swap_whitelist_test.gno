@@ -169,12 +169,14 @@ func TestGetWhitelistedSwaps(t *testing.T) {
 		officialRouter   address
 		whitelistRouters []address
 		expectedCount    int
+		description      string
 	}{
 		{
 			name:             "only official router",
 			officialRouter:   testutils.TestAddress("official"),
 			whitelistRouters: []address{},
 			expectedCount:    1,
+			description:      "should return 1 when only official router exists",
 		},
 		{
 			name:           "official router plus whitelisted",
@@ -184,12 +186,24 @@ func TestGetWhitelistedSwaps(t *testing.T) {
 				testutils.TestAddress("router2"),
 			},
 			expectedCount: 3,
+			description:   "should return 3 when official + 2 whitelisted routers",
 		},
 		{
 			name:             "no official router",
 			officialRouter:   address(""),
 			whitelistRouters: []address{testutils.TestAddress("router1")},
 			expectedCount:    1,
+			description:      "should return 1 when only whitelisted router exists",
+		},
+		{
+			name:           "official router also in whitelist (no duplication)",
+			officialRouter: testutils.TestAddress("official"),
+			whitelistRouters: []address{
+				testutils.TestAddress("official"), // Same as official router
+				testutils.TestAddress("router1"),
+			},
+			expectedCount: 2,
+			description:   "should return 2 without duplication when official router is also whitelisted",
 		},
 	}
 
@@ -208,7 +222,16 @@ func TestGetWhitelistedSwaps(t *testing.T) {
 			}
 
 			routers := GetWhitelistedSwaps()
-			uassert.Equal(t, len(routers), tt.expectedCount)
+			uassert.Equal(t, len(routers), tt.expectedCount, ufmt.Sprintf("%s: expected %d routers, got %d", tt.description, tt.expectedCount, len(routers)))
+
+			// Verify no duplicates
+			seen := make(map[address]bool)
+			for _, r := range routers {
+				if seen[r] {
+					t.Errorf("Duplicate router found: %s", r.String())
+				}
+				seen[r] = true
+			}
 		})
 	}
 }

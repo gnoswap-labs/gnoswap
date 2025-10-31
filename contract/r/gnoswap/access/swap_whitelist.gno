@@ -68,8 +68,11 @@ func GetWhitelistedSwaps() []address {
 		routers = append(routers, officialRouter)
 	}
 
-	// Add whitelisted routers
+	// Add whitelisted routers (skip if already added as official router)
 	for router := range swapWhitelist {
+		if ok && router == officialRouter {
+			continue // Skip duplicate
+		}
 		routers = append(routers, router)
 	}
 
