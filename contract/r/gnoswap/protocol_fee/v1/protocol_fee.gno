@@ -55,8 +55,9 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 			distributeAmount = balance
 		}
 
-		toDevOpsAmount := distributeAmount * pf.getProtocolFeeState().DevOpsPct() / 10000 // default 0%
-		toGovStakerAmount := safeSubInt64(distributeAmount, toDevOpsAmount)               // default 100%
+		devOpsPct := pf.getProtocolFeeState().DevOpsPct()
+		toDevOpsAmount := safeMulDiv(distributeAmount, devOpsPct, 10000)    // default 0%
+		toGovStakerAmount := safeSubInt64(distributeAmount, toDevOpsAmount) // default 100%
 
 		// Distribute to DevOps
 		if err := pf.getProtocolFeeState().distributeToDevOps(token, toDevOpsAmount); err != nil {
