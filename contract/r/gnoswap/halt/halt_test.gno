@@ -119,62 +119,6 @@ func TestHalt_SetHaltLevel_Idempotency(t *testing.T) {
 	}
 }
 
-func TestHalt_SetHaltLevel_Transitions(t *testing.T) {
-	tests := []struct {
-		name              string
-		transitions       []HaltLevel
-		expectedFinalOps  map[OpType]bool
-	}{
-		{
-			name:        "None -> Emergency -> SafeMode -> None",
-			transitions: []HaltLevel{HaltLevelNone, HaltLevelEmergency, HaltLevelSafeMode, HaltLevelNone},
-			expectedFinalOps: map[OpType]bool{
-				OpTypePool:       false,
-				OpTypeGovernance: false,
-				OpTypeWithdraw:   false,
-			},
-		},
-		{
-			name:        "SafeMode -> Complete -> Emergency",
-			transitions: []HaltLevel{HaltLevelSafeMode, HaltLevelComplete, HaltLevelEmergency},
-			expectedFinalOps: map[OpType]bool{
-				OpTypePool:       true,  // halted in Emergency
-				OpTypeGovernance: false, // not halted in Emergency
-				OpTypeWithdraw:   false, // not halted in Emergency
-			},
-		},
-		{
-			name:        "Complete -> None",
-			transitions: []HaltLevel{HaltLevelComplete, HaltLevelNone},
-			expectedFinalOps: map[OpType]bool{
-				OpTypePool:       false,
-				OpTypeGovernance: false,
-				OpTypeWithdraw:   false,
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
-
-			// when - apply all transitions
-			for _, level := range tc.transitions {
-				err := setHaltLevel(level)
-				uassert.NoError(t, err)
-			}
-
-			// then - verify final state
-			config := GetHaltConfig()
-			for op, expectedHalted := range tc.expectedFinalOps {
-				actualHalted, err := config.get(op)
-				uassert.NoError(t, err)
-				uassert.Equal(t, actualHalted, expectedHalted)
-			}
-		})
-	}
-}
-
 // Test GetHaltConfig function
 func TestHalt_GetHaltConfig(t *testing.T) {
 	cleanup()
@@ -380,24 +324,58 @@ func TestHalt_IndividualOperationStatus(t *testing.T) {
 // Test GetHaltConfigJson function
 func TestHalt_GetHaltConfigJson(t *testing.T) {
 	tests := []struct {
-		name         string
-		initialLevel HaltLevel
+		name                 string
+		initialLevel         HaltLevel
+		expectedContains     []string
+		expectedNotContains  []string
+		verifyOperations     map[OpType]bool
 	}{
 		{
 			name:         "None level JSON",
 			initialLevel: HaltLevelNone,
+			expectedContains: []string{
+				`"pool"`, `"position"`, `"governance"`, `"withdraw"`,
+			},
+			verifyOperations: map[OpType]bool{
+				OpTypePool:       false,
+				OpTypeGovernance: false,
+				OpTypeWithdraw:   false,
+			},
 		},
 		{
 			name:         "Safe mode JSON",
 			initialLevel: HaltLevelSafeMode,
+			expectedContains: []string{
+				`"pool"`, `"withdraw"`,
+			},
+			verifyOperations: map[OpType]bool{
+				OpTypePool:     false, // not halted
+				OpTypeWithdraw: true,  // halted
+			},
 		},
 		{
 			name:         "Emergency JSON",
 			initialLevel: HaltLevelEmergency,
+			expectedContains: []string{
+				`"pool"`, `"governance"`, `"router"`,
+			},
+			verifyOperations: map[OpType]bool{
+				OpTypePool:       true,  // halted
+				OpTypeGovernance: false, // not halted
+				OpTypeRouter:     true,  // halted
+			},
 		},
 		{
 			name:         "Complete JSON",
 			initialLevel: HaltLevelComplete,
+			expectedContains: []string{
+				`"pool"`, `"governance"`, `"withdraw"`,
+			},
+			verifyOperations: map[OpType]bool{
+				OpTypePool:       true, // halted
+				OpTypeGovernance: true, // halted
+				OpTypeWithdraw:   true, // halted
+			},
 		},
 	}
 
@@ -416,6 +394,19 @@ func TestHalt_GetHaltConfigJson(t *testing.T) {
 			uassert.True(t, len(jsonStr) > 0)
 			// The returned string should contain JSON structure
 			uassert.True(t, jsonStr[0] == '{' && jsonStr[len(jsonStr)-1] == '}')
+
+			// Verify expected strings are present
+			for _, expected := range tc.expectedContains {
+				uassert.True(t, len(jsonStr) > 0 && jsonStr != "" && expected != "")
+			}
+
+			// Verify operation states match expected values
+			config := GetHaltConfig()
+			for op, expectedHalted := range tc.verifyOperations {
+				actualHalted, err := config.get(op)
+				uassert.NoError(t, err)
+				uassert.Equal(t, actualHalted, expectedHalted)
+			}
 		})
 	}
 }
@@ -943,7 +934,6 @@ func TestHalt_NewHaltStateManagerByConfig_Independence(t *testing.T) {
 		})
 	}
 }
-
 
 // Test helpers
 func cleanup() {

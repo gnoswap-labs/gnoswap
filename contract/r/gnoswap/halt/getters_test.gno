@@ -308,39 +308,49 @@ func TestGetters_IsHalted_InvalidOpType(t *testing.T) {
 		opTypes          []OpType
 		expectedError    bool
 		expectedErrorMsg string
+		expectedHalted   bool
 	}{
 		{
 			name:             "Single invalid OpType",
 			opTypes:          []OpType{OpType("invalid_op")},
 			expectedError:    true,
 			expectedErrorMsg: "invalid operation type: invalid_op",
+			expectedHalted:   true,
 		},
 		{
 			name:             "Valid and invalid OpTypes mixed",
 			opTypes:          []OpType{OpTypePool, OpType("invalid_op")},
 			expectedError:    true,
 			expectedErrorMsg: "invalid operation type: invalid_op",
+			expectedHalted:   true,
 		},
 		{
-			name:          "All valid OpTypes",
-			opTypes:       []OpType{OpTypePool, OpTypePosition},
-			expectedError: false,
+			name:           "All valid OpTypes",
+			opTypes:        []OpType{OpTypePool, OpTypePosition},
+			expectedError:  false,
+			expectedHalted: false,
+		},
+		{
+			name:           "Empty OpTypes list",
+			opTypes:        []OpType{},
+			expectedError:  false,
+			expectedHalted: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := setHaltLevel(HaltLevelNone)
-	uassert.NoError(t, err)
+			uassert.NoError(t, err)
 			halted, err := IsHalted(tt.opTypes...)
 
 			if tt.expectedError {
 				uassert.Error(t, err)
 				uassert.ErrorContains(t, err, tt.expectedErrorMsg)
-				uassert.True(t, halted) // Should return true on error
 			} else {
 				uassert.NoError(t, err)
 			}
+			uassert.Equal(t, halted, tt.expectedHalted)
 		})
 	}
 }

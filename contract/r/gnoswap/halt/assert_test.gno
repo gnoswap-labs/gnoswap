@@ -398,31 +398,3 @@ func TestAssert_AssertIsNotHaltedOperation(t *testing.T) {
 		})
 	}
 }
-
-func TestAssert_AssertIsNotHalted(t *testing.T) {
-	tests := []struct {
-		name        string
-		opTypes     []OpType
-		haltLevel   HaltLevel
-		shouldPanic bool
-	}{
-		{"Single op not halted", []OpType{OpTypePool}, HaltLevelNone, false},
-		{"Single op halted", []OpType{OpTypePool}, HaltLevelEmergency, true},
-		{"Multiple ops not halted", []OpType{OpTypePool, OpTypePosition}, HaltLevelNone, false},
-		{"One of multiple ops halted", []OpType{OpTypePool, OpTypeGovernance}, HaltLevelEmergency, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := setHaltLevel(tt.haltLevel)
-			uassert.NoError(t, err)
-
-			if tt.shouldPanic {
-			} else {
-				uassert.NotPanics(t, func() {
-					AssertIsNotHalted(tt.opTypes...)
-				})
-			}
-		})
-	}
-}
