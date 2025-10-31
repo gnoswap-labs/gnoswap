@@ -4,9 +4,7 @@ import (
 	"errors"
 )
 
-var (
-	errProposalNotExecutable = errors.New("proposal not executable")
-)
+var errProposalNotExecutable = errors.New("proposal not executable")
 
 // ProposalActionStatus tracks the execution and cancellation status of a proposal.
 // This structure manages the action-related state including who performed actions and when.
@@ -25,50 +23,30 @@ type ProposalActionStatus struct {
 }
 
 /* Getter methods */
-func (p *ProposalActionStatus) Canceled() bool { return p.canceled }
-func (p *ProposalActionStatus) CanceledAt() int64 { return p.canceledAt }
+func (p *ProposalActionStatus) Canceled() bool        { return p.canceled }
+func (p *ProposalActionStatus) CanceledAt() int64     { return p.canceledAt }
 func (p *ProposalActionStatus) CanceledHeight() int64 { return p.canceledHeight }
-func (p *ProposalActionStatus) Executed() bool { return p.executed }
-func (p *ProposalActionStatus) ExecutedAt() int64 { return p.executedAt }
+func (p *ProposalActionStatus) Executed() bool        { return p.executed }
+func (p *ProposalActionStatus) ExecutedAt() int64     { return p.executedAt }
 func (p *ProposalActionStatus) ExecutedHeight() int64 { return p.executedHeight }
-func (p *ProposalActionStatus) Executable() bool { return p.executable }
+func (p *ProposalActionStatus) Executable() bool      { return p.executable }
 
 /* Setter methods */
-func (p *ProposalActionStatus) SetCanceled(canceled bool) {
-	p.canceled = canceled
-}
-
-func (p *ProposalActionStatus) SetCanceledAt(canceledAt int64) {
-	p.canceledAt = canceledAt
-}
-
+func (p *ProposalActionStatus) SetCanceled(canceled bool)      { p.canceled = canceled }
+func (p *ProposalActionStatus) SetCanceledAt(canceledAt int64) { p.canceledAt = canceledAt }
 func (p *ProposalActionStatus) SetCanceledHeight(canceledHeight int64) {
 	p.canceledHeight = canceledHeight
 }
 
-func (p *ProposalActionStatus) SetCanceledBy(canceledBy address) {
-	p.canceledBy = canceledBy
-}
-
-func (p *ProposalActionStatus) SetExecuted(executed bool) {
-	p.executed = executed
-}
-
-func (p *ProposalActionStatus) SetExecutedAt(executedAt int64) {
-	p.executedAt = executedAt
-}
-
+func (p *ProposalActionStatus) SetCanceledBy(canceledBy address) { p.canceledBy = canceledBy }
+func (p *ProposalActionStatus) SetExecuted(executed bool)        { p.executed = executed }
+func (p *ProposalActionStatus) SetExecutedAt(executedAt int64)   { p.executedAt = executedAt }
 func (p *ProposalActionStatus) SetExecutedHeight(executedHeight int64) {
 	p.executedHeight = executedHeight
 }
 
-func (p *ProposalActionStatus) SetExecutedBy(executedBy address) {
-	p.executedBy = executedBy
-}
-
-func (p *ProposalActionStatus) SetExecutable(executable bool) {
-	p.executable = executable
-}
+func (p *ProposalActionStatus) SetExecutedBy(executedBy address) { p.executedBy = executedBy }
+func (p *ProposalActionStatus) SetExecutable(executable bool)    { p.executable = executable }
 
 // CanceledBy returns the address that canceled the proposal.
 // Only meaningful if IsCanceled() returns true.

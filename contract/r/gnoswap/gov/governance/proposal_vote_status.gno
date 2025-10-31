@@ -11,7 +11,7 @@ type ProposalVoteStatus struct {
 
 /* Getter methods */
 func (p *ProposalVoteStatus) MaxVotingWeight() int64 { return p.maxVotingWeight }
-func (p *ProposalVoteStatus) QuorumAmount() int64 { return p.quorumAmount }
+func (p *ProposalVoteStatus) QuorumAmount() int64    { return p.quorumAmount }
 
 // YesWeight returns the total weight of "yes" votes.
 //
@@ -30,20 +30,12 @@ func (p *ProposalVoteStatus) NoWeight() int64 {
 }
 
 /* Setter methods */
-func (p *ProposalVoteStatus) SetYesWeight(yes int64) {
-	p.yea = yes
-}
+func (p *ProposalVoteStatus) SetYesWeight(yes int64) { p.yea = yes }
+func (p *ProposalVoteStatus) SetNoWeight(no int64)   { p.nay = no }
 
-func (p *ProposalVoteStatus) SetNoWeight(no int64) {
-	p.nay = no
-}
-
+func (p *ProposalVoteStatus) SetQuorumAmount(quorumAmount int64) { p.quorumAmount = quorumAmount }
 func (p *ProposalVoteStatus) SetMaxVotingWeight(maxVotingWeight int64) {
 	p.maxVotingWeight = maxVotingWeight
-}
-
-func (p *ProposalVoteStatus) SetQuorumAmount(quorumAmount int64) {
-	p.quorumAmount = quorumAmount
 }
 
 // NewProposalVoteStatus creates a new vote status for a proposal.
