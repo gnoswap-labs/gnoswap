@@ -10,32 +10,41 @@ import (
 
 // protocolFeeState holds all the state variables for protocol fee management
 type protocolFeeState struct {
-	// By default, devOps will get 0% of the protocol fee (which means gov/staker will get 100% of the protocol fee)
-	// This percentage can be modified through governance.
-	devOpsPct int64 // 0%
-
-	// accumulated amount distributed to gov/staker by token path
-	accuToGovStaker *avl.Tree
-	accuToDevOps    *avl.Tree
-
-	// distributedToDevOpsHistory and distributedToGovStakerHistory are used to keep track of the distribution history
-	distributedToGovStakerHistory *avl.Tree
-	distributedToDevOpsHistory    *avl.Tree
-
-	tokenListWithAmount map[string]int64 // tokenPath -> amount
+	store protocol_fee.IProtocolFeeStore
 }
 
 // DevOpsPct returns the percentage of protocol fees allocated to DevOps.
-func (pfs *protocolFeeState) DevOpsPct() int64 { return pfs.devOpsPct }
+func (pfs *protocolFeeState) DevOpsPct() int64 {
+	return pfs.store.GetDevOpsPct()
+}
 
 // GovStakerPct returns the percentage of protocol fees allocated to Gov/Staker.
-func (pfs *protocolFeeState) GovStakerPct() int64 { return 10000 - pfs.devOpsPct }
+func (pfs *protocolFeeState) GovStakerPct() int64 {
+	return 10000 - pfs.store.GetDevOpsPct()
+}
 
 // AccuToGovStaker returns the accumulated amounts distributed to Gov/Staker.
-func (pfs *protocolFeeState) AccuToGovStaker() *avl.Tree { return pfs.accuToGovStaker }
+func (pfs *protocolFeeState) AccuToGovStaker() *avl.Tree {
+	return pfs.store.GetAccuToGovStaker()
+}
 
 // AccuToDevOps returns the accumulated amounts distributed to DevOps.
-func (pfs *protocolFeeState) AccuToDevOps() *avl.Tree { return pfs.accuToDevOps }
+func (pfs *protocolFeeState) AccuToDevOps() *avl.Tree {
+	return pfs.store.GetAccuToDevOps()
+}
+
+func (pfs *protocolFeeState) TokenListWithAmounts() map[string]int64 {
+	return pfs.store.GetTokenListWithAmounts()
+}
+
+func (pfs *protocolFeeState) TokenAmountOfTokenPath(tokenPath string) int64 {
+	amount, exists := pfs.store.GetTokenListWithAmountItem(tokenPath)
+	if !exists {
+		return 0
+	}
+
+	return amount
+}
 
 // distributeToDevOps distributes tokens to DevOps and updates related state.
 // Amount should be greater than 0 (already checked in DistributeProtocolFee).
@@ -74,7 +83,7 @@ func (pfs *protocolFeeState) setDevOpsPct(pct int64) (int64, error) {
 		)
 	}
 
-	pfs.devOpsPct = pct
+	pfs.store.SetDevOpsPct(pct)
 
 	return pct, nil
 }
@@ -108,7 +117,7 @@ func (pfs *protocolFeeState) addAccuToGovStaker(tokenPath string, amount int64) 
 	}
 
 	after := before + amount
-	pfs.accuToGovStaker.Set(tokenPath, after)
+	pfs.store.SetAccuToGovStakerItem(tokenPath, after)
 }
 
 // addAccuToDevOps adds the amount to the accuToDevOps by token path.
@@ -124,17 +133,27 @@ func (pfs *protocolFeeState) addAccuToDevOps(tokenPath string, amount int64) {
 	}
 
 	after := before + amount
-	pfs.accuToDevOps.Set(tokenPath, after)
+	pfs.store.SetAccuToDevOpsItem(tokenPath, after)
 }
 
 // GetAccuTransferToGovStakerByTokenPath gets the accumulated amount to gov/staker by token path.
 func (pfs *protocolFeeState) GetAccuTransferToGovStakerByTokenPath(tokenPath string) int64 {
-	return retrieveAmount(pfs.accuToGovStaker, tokenPath)
+	return retrieveAmount(pfs.store.GetAccuToGovStaker(), tokenPath)
 }
 
 // GetAccuTransferToDevOpsByTokenPath gets the accumulated amount to devOps by token path.
 func (pfs *protocolFeeState) GetAccuTransferToDevOpsByTokenPath(tokenPath string) int64 {
-	return retrieveAmount(pfs.accuToDevOps, tokenPath)
+	return retrieveAmount(pfs.store.GetAccuToDevOps(), tokenPath)
+}
+
+// GetDistributedToGovStakerHistoryByTokenPath gets the history of distributed amounts to Gov/Staker by token path.
+func (pfs *protocolFeeState) GetDistributedToGovStakerHistoryByTokenPath(tokenPath string) int64 {
+	return retrieveAmount(pfs.store.GetDistributedToGovStakerHistory(), tokenPath)
+}
+
+// GetDistributedToDevOpsHistoryByTokenPath gets the history of distributed amounts to DevOps by token path.
+func (pfs *protocolFeeState) GetDistributedToDevOpsHistoryByTokenPath(tokenPath string) int64 {
+	return retrieveAmount(pfs.store.GetDistributedToDevOpsHistory(), tokenPath)
 }
 
 func retrieveAmount(tree *avl.Tree, key string) int64 {
@@ -151,18 +170,18 @@ func retrieveAmount(tree *avl.Tree, key string) int64 {
 
 // updateDistributedToGovStakerHistory updates the distributedToGovStakerHistory.
 func (pfs *protocolFeeState) updateDistributedToGovStakerHistory(tokenPath string, amount int64) {
-	prevAmount := retrievePrevAmount(pfs.distributedToGovStakerHistory, tokenPath)
+	prevAmount := retrievePrevAmount(pfs.store.GetDistributedToGovStakerHistory(), tokenPath)
 	afterAmount := prevAmount + amount
 
-	pfs.distributedToGovStakerHistory.Set(tokenPath, afterAmount)
+	pfs.store.SetDistributedToGovStakerHistoryItem(tokenPath, afterAmount)
 }
 
 // updateDistributedToDevOpsHistory updates the distributedToDevOpsHistory.
 func (pfs *protocolFeeState) updateDistributedToDevOpsHistory(tokenPath string, amount int64) {
-	prevAmount := retrievePrevAmount(pfs.distributedToDevOpsHistory, tokenPath)
+	prevAmount := retrievePrevAmount(pfs.store.GetDistributedToDevOpsHistory(), tokenPath)
 	afterAmount := prevAmount + amount
 
-	pfs.distributedToDevOpsHistory.Set(tokenPath, afterAmount)
+	pfs.store.SetDistributedToDevOpsHistoryItem(tokenPath, afterAmount)
 }
 
 func retrievePrevAmount(tree *avl.Tree, key string) (amount int64) {
@@ -180,17 +199,12 @@ func retrievePrevAmount(tree *avl.Tree, key string) (amount int64) {
 
 // clearTokenListWithAmount clears the tokenListWithAmount.
 func (pfs *protocolFeeState) clearTokenListWithAmount() {
-	pfs.tokenListWithAmount = make(map[string]int64)
+	pfs.store.SetTokenListWithAmounts(make(map[string]int64))
 }
 
 // NewProtocolFeeState creates a new instance of protocolFeeState with initialized values
-func NewProtocolFeeState() protocol_fee.ProtocolFeeState {
+func NewProtocolFeeStateBy(protocolFeeStore protocol_fee.IProtocolFeeStore) *protocolFeeState {
 	return &protocolFeeState{
-		devOpsPct:                     0, // 0%
-		accuToGovStaker:               avl.NewTree(),
-		accuToDevOps:                  avl.NewTree(),
-		distributedToGovStakerHistory: avl.NewTree(),
-		distributedToDevOpsHistory:    avl.NewTree(),
-		tokenListWithAmount:           make(map[string]int64),
+		store: protocolFeeStore,
 	}
 }

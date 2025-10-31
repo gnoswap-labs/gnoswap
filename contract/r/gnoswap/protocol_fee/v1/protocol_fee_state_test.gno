@@ -3,10 +3,8 @@ package v1
 import (
 	"testing"
 
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/uassert"
 
-	"gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/rbac" // Initialize contract roles
 )
 
@@ -17,26 +15,8 @@ import (
 func newProtocolFeeStateInternal(t *testing.T) *protocolFeeState {
 	t.Helper()
 	return &protocolFeeState{
-		devOpsPct:                     0,
-		accuToGovStaker:               avl.NewTree(),
-		accuToDevOps:                  avl.NewTree(),
-		distributedToGovStakerHistory: avl.NewTree(),
-		distributedToDevOpsHistory:    avl.NewTree(),
-		tokenListWithAmount:           make(map[string]int64),
+		store: newMockProtocolFeeStore(),
 	}
-}
-
-type mockProtocolFeeStore struct {
-	state *protocolFeeState
-}
-
-func (m *mockProtocolFeeStore) GetProtocolFeeState() protocol_fee.ProtocolFeeState { return m.state }
-func (m *mockProtocolFeeStore) SetProtocolFeeState(state protocol_fee.ProtocolFeeState) error {
-	if pfs, ok := state.(*protocolFeeState); ok {
-		m.state = pfs
-		return nil
-	}
-	panic("invalid protocol fee state type")
 }
 
 /* Main tests */
@@ -188,7 +168,7 @@ func TestProtocolFeeStateSetDevOpsPct(t *testing.T) {
 			pfs := newProtocolFeeStateInternal(t)
 
 			// Initially should be 0
-			uassert.Equal(t, pfs.devOpsPct, int64(0))
+			uassert.Equal(t, pfs.DevOpsPct(), int64(0))
 			_, err := pfs.setDevOpsPct(test.percentage)
 
 			if test.shouldError {
@@ -235,17 +215,17 @@ func TestProtocolFeeStateClearTokenListWithAmount(t *testing.T) {
 
 			// Setup initial data
 			for token, amount := range test.initialData {
-				pfs.tokenListWithAmount[token] = amount
+				pfs.store.SetTokenListWithAmountItem(token, amount)
 			}
 
 			// Verify initial state
-			uassert.Equal(t, len(pfs.tokenListWithAmount), len(test.initialData))
+			uassert.Equal(t, len(pfs.store.GetTokenListWithAmounts()), len(test.initialData))
 
 			// Clear the list
 			pfs.clearTokenListWithAmount()
 
 			// Verify final state
-			uassert.Equal(t, len(pfs.tokenListWithAmount), test.expectedLen)
+			uassert.Equal(t, len(pfs.store.GetTokenListWithAmounts()), test.expectedLen)
 		})
 	}
 }
@@ -293,7 +273,7 @@ func TestProtocolFeeStateUpdateDistributedToGovStakerHistory(t *testing.T) {
 			}
 
 			// Check if history was updated correctly
-			historyValue, exists := pfs.distributedToGovStakerHistory.Get(test.tokenPath)
+			historyValue, exists := pfs.store.GetDistributedToGovStakerHistory().Get(test.tokenPath)
 			uassert.True(t, exists)
 			uassert.Equal(t, historyValue.(int64), test.expectedSum)
 		})
@@ -343,7 +323,7 @@ func TestProtocolFeeStateUpdateDistributedToDevOpsHistory(t *testing.T) {
 			}
 
 			// Check if history was updated correctly
-			historyValue, exists := pfs.distributedToDevOpsHistory.Get(test.tokenPath)
+			historyValue, exists := pfs.store.GetDistributedToDevOpsHistory().Get(test.tokenPath)
 			uassert.True(t, exists)
 			uassert.Equal(t, historyValue.(int64), test.expectedSum)
 		})
