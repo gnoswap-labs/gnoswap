@@ -10,7 +10,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-func TestSwapMathComputeSwapStep(t *testing.T) {
+func TestSwapMath_SwapMathComputeSwapStep(t *testing.T) {
 	tests := []struct {
 		name                           string
 		currentX96, targetX96          *u256.Uint
@@ -237,7 +237,7 @@ func TestSwapMathComputeSwapStep(t *testing.T) {
 	}
 }
 
-func TestSwapMathFeeConsistency(t *testing.T) {
+func TestSwapMath_FeeConsistency(t *testing.T) {
 	tests := []struct {
 		name      string
 		current   *u256.Uint
@@ -334,7 +334,7 @@ func TestSwapMathFeeConsistency(t *testing.T) {
 	}
 }
 
-func TestSwapMathPriceBounds(t *testing.T) {
+func TestSwapMath_PriceBounds(t *testing.T) {
 	tests := []struct {
 		name         string
 		current      *u256.Uint
@@ -387,7 +387,7 @@ func TestSwapMathPriceBounds(t *testing.T) {
 	}
 }
 
-func TestSwapMathSymmetry(t *testing.T) {
+func TestSwapMath_Symmetry(t *testing.T) {
 	tests := []struct {
 		name      string
 		current   *u256.Uint
@@ -444,7 +444,7 @@ func TestSwapMathSymmetry(t *testing.T) {
 	}
 }
 
-func TestSwapMathBoundaries(t *testing.T) {
+func TestSwapMath_Boundaries(t *testing.T) {
 	tests := []struct {
 		name              string
 		current_x96       *u256.Uint
@@ -498,7 +498,7 @@ func TestSwapMathBoundaries(t *testing.T) {
 	}
 }
 
-func TestSwapMathPartialFill(t *testing.T) {
+func TestSwapMath_PartialFill(t *testing.T) {
 	tests := []struct {
 		name      string
 		current   *u256.Uint
@@ -551,7 +551,7 @@ func TestSwapMathPartialFill(t *testing.T) {
 	}
 }
 
-func TestSwapMathComputeSwapStepFail(t *testing.T) {
+func TestSwapMath_SwapMathComputeSwapStepFail(t *testing.T) {
 	tests := []struct {
 		name             string
 		current_x96      *u256.Uint
@@ -614,7 +614,7 @@ func TestSwapMathComputeSwapStepFail(t *testing.T) {
 	}
 }
 
-func TestSwapMathHighPrecision(t *testing.T) {
+func TestSwapMath_HighPrecision(t *testing.T) {
 	tests := []struct {
 		name      string
 		current   *u256.Uint
@@ -678,7 +678,7 @@ func TestSwapMathHighPrecision(t *testing.T) {
 	}
 }
 
-func TestSwapMathExtremeFees(t *testing.T) {
+func TestSwapMath_ExtremeFees(t *testing.T) {
 	tests := []struct {
 		name           string
 		fee_pips       uint64
@@ -741,7 +741,7 @@ func TestSwapMathExtremeFees(t *testing.T) {
 	}
 }
 
-func TestSwapMathConsistencyChecks(t *testing.T) {
+func TestSwapMath_ConsistencyChecks(t *testing.T) {
 	tests := []struct {
 		name      string
 		current   *u256.Uint
@@ -823,7 +823,7 @@ func TestSwapMathConsistencyChecks(t *testing.T) {
 
 // TestSwapMathComputeSwapStep_IsMaxExactInCombinations tests all combinations of exactIn flag
 // This ensures both code paths (positive/negative amountRemaining) work correctly
-func TestSwapMathComputeSwapStep_IsMaxExactInCombinations(t *testing.T) {
+func TestSwapMath_SwapMathComputeSwapStep_IsMaxExactInCombinations(t *testing.T) {
 	tests := []struct {
 		name                 string
 		currentX96, targetX96 *u256.Uint
@@ -914,7 +914,7 @@ func TestSwapMathComputeSwapStep_IsMaxExactInCombinations(t *testing.T) {
 }
 
 // TestSwapMathHandleExactIn_EqualityBoundary tests exact equality boundary in handleExactIn
-func TestSwapMathHandleExactIn_EqualityBoundary(t *testing.T) {
+func TestSwapMath_handleExactIn_EqualityBoundary(t *testing.T) {
 	tests := []struct {
 		name            string
 		currentX96      *u256.Uint
@@ -979,7 +979,7 @@ func TestSwapMathHandleExactIn_EqualityBoundary(t *testing.T) {
 }
 
 // TestSwapMathHandleExactIn_ZeroAfterFee tests the case where amountRemainingLessFee becomes zero
-func TestSwapMathHandleExactIn_ZeroAfterFee(t *testing.T) {
+func TestSwapMath_handleExactIn_ZeroAfterFee(t *testing.T) {
 	tests := []struct {
 		name            string
 		currentX96      *u256.Uint
@@ -1022,7 +1022,7 @@ func TestSwapMathHandleExactIn_ZeroAfterFee(t *testing.T) {
 }
 
 // TestSwapMathHandleExactOut_Overcalculation tests exact output overcalculation protection
-func TestSwapMathHandleExactOut_Overcalculation(t *testing.T) {
+func TestSwapMath_handleExactOut_Overcalculation(t *testing.T) {
 	tests := []struct {
 		name            string
 		currentX96      *u256.Uint
@@ -1067,7 +1067,7 @@ func TestSwapMathHandleExactOut_Overcalculation(t *testing.T) {
 }
 
 // TestSwapMathHandleExactOut_BoundaryConditions tests handleExactOut branch coverage
-func TestSwapMathHandleExactOut_BoundaryConditions(t *testing.T) {
+func TestSwapMath_handleExactOut_BoundaryConditions(t *testing.T) {
 	tests := []struct {
 		name            string
 		currentX96      *u256.Uint

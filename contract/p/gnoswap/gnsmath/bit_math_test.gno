@@ -7,7 +7,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-func TestBitMathMostSignificantBit(t *testing.T) {
+func TestBitMath_BitMathMostSignificantBit(t *testing.T) {
 	tests := []struct {
 		name        string
 		input       string
@@ -177,7 +177,7 @@ func TestBitMathMostSignificantBit(t *testing.T) {
 	}
 }
 
-func TestBitMathMostSignificantBit_PowersOfTwo(t *testing.T) {
+func TestBitMath_BitMathMostSignificantBit_PowersOfTwo(t *testing.T) {
 	// Test all powers of 2 from 2^0 to 2^255
 	for i := 0; i < 256; i++ {
 		num := new(u256.Uint).Lsh(u256.One(), uint(i))
@@ -186,7 +186,7 @@ func TestBitMathMostSignificantBit_PowersOfTwo(t *testing.T) {
 	}
 }
 
-func TestBitMathLeastSignificantBit(t *testing.T) {
+func TestBitMath_BitMathLeastSignificantBit(t *testing.T) {
 	tests := []struct {
 		name        string
 		input       string
@@ -350,7 +350,7 @@ func TestBitMathLeastSignificantBit(t *testing.T) {
 	}
 }
 
-func TestBitMathLeastSignificantBit_PowersOfTwo(t *testing.T) {
+func TestBitMath_BitMathLeastSignificantBit_PowersOfTwo(t *testing.T) {
 	// Test all powers of 2 from 2^0 to 2^255
 	for i := 0; i < 256; i++ {
 		num := new(u256.Uint).Lsh(u256.One(), uint(i))
@@ -400,7 +400,7 @@ func TestBitMath_SingleBitConsistency(t *testing.T) {
 
 // Additional test cases to add to the existing test file
 
-func TestBitMathLeastSignificantBit_MaxUint256MinusOne(t *testing.T) {
+func TestBitMath_BitMathLeastSignificantBit_MaxUint256MinusOne(t *testing.T) {
 	// MAX_UINT256 - 1 = ...639934 (even number, LSB should be 1)
 	maxMinusOne := new(u256.Uint).Sub(
 		u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935"),
@@ -625,7 +625,7 @@ func TestBitMath_ShiftTableCompleteness(t *testing.T) {
 }
 
 // TestBitMathInputPreservation verifies that bit math functions do not mutate their input.
-func TestBitMathInputPreservation(t *testing.T) {
+func TestBitMath_InputPreservation(t *testing.T) {
 	cases := []struct {
 		name string
 		val  string
@@ -669,7 +669,7 @@ func TestBitMathInputPreservation(t *testing.T) {
 }
 
 // TestBitMathIdempotency ensures that multiple calls with the same input produce consistent results
-func TestBitMathIdempotency(t *testing.T) {
+func TestBitMath_Idempotency(t *testing.T) {
 	values := []string{
 		"42",
 		"65535",
@@ -706,7 +706,7 @@ func TestBitMathIdempotency(t *testing.T) {
 }
 
 // TestBitMathMemoryReuse specifically tests temp.Clone() is used instead of mutating the input parameter.
-func TestBitMathMemoryReuse(t *testing.T) {
+func TestBitMath_MemoryReuse(t *testing.T) {
 	// Test with 2^128 - a value that triggers multiple shift operations
 	v := "340282366920938463463374607431768211456"
 
