@@ -177,7 +177,7 @@ func TestAssertIsAdminWithRoleUpdate(t *testing.T) {
 	initRbac()
 
 	// Change admin role to a different address
-	err := manager.UpdateRoleAddress(prbac.ROLE_ADMIN.String(), 1, DEV_OPS)
+	err := manager.UpdateRoleAddress(prbac.ROLE_ADMIN.String(), DEV_OPS)
 	if err != nil {
 		t.Fatalf("Failed to update admin role address: %v", err)
 	}

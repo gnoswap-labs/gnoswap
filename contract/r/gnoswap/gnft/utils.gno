@@ -14,7 +14,7 @@ import (
 )
 
 func getPositionAddress() address {
-	addr, exists := access.GetAddressWithVersion(prabc.ROLE_POSITION.String(), 1)
+	addr, exists := access.GetAddress(prabc.ROLE_POSITION.String())
 	if !exists {
 		return rbac.DefaultRoleAddresses[prabc.ROLE_POSITION]
 	}

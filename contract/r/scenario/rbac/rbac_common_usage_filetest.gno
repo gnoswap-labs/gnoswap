@@ -122,7 +122,7 @@ func testDynamicRoleUpdates() {
 	newFrontendAddr := testutils.TestAddress("new_frontend_service")
 
 	// Update to new address
-	err = testManager.UpdateRoleAddress("frontend_service", 1, newFrontendAddr)
+	err = testManager.UpdateRoleAddress("frontend_service", newFrontendAddr)
 	uassert.NoError(t, err)
 
 	// Verify old address is no longer authorized

@@ -84,85 +84,11 @@ func AssertIsGovXGNS(caller address) {
 	AssertIsAuthorized(prbac.ROLE_XGNS.String(), caller)
 }
 
-// AssertIsAdminOrGovernance panics if the caller is not admin or governance.
-// Used for functions that require elevated privileges.
-func AssertIsAdminOrGovernanceWithVersion(version int, caller address) {
-	if !IsAuthorized(prbac.ROLE_ADMIN.String(), caller) && !IsAuthorizedWithVersion(prbac.ROLE_GOVERNANCE.String(), version, caller) {
-		panic(ufmt.Errorf("unauthorized: caller %s is not admin or governance", caller))
-	}
-}
-
-// AssertIsGovernanceWithVersion panics if the caller is not governance.
-// Used for governance-only functions.
-func AssertIsGovernanceWithVersion(version int, caller address) {
-	AssertIsAuthorizedWithVersion(prbac.ROLE_GOVERNANCE.String(), version, caller)
-}
-
-// AssertIsGovStakerWithVersion panics if the caller is not governance staker.
-// Used for governance staking functions.
-func AssertIsGovStakerWithVersion(version int, caller address) {
-	AssertIsAuthorizedWithVersion(prbac.ROLE_GOV_STAKER.String(), version, caller)
-}
-
-// AssertIsRouterWithVersion panics if the caller is not router.
-// Used for router-only functions.
-func AssertIsRouterWithVersion(version int, caller address) {
-	AssertIsAuthorizedWithVersion(prbac.ROLE_ROUTER.String(), version, caller)
-}
-
-// AssertIsPoolWithVersion panics if the caller is not pool.
-// Used for pool-only functions.
-func AssertIsPoolWithVersion(version int, caller address) {
-	AssertIsAuthorizedWithVersion(prbac.ROLE_POOL.String(), version, caller)
-}
-
-// AssertIsPositionWithVersion panics if the caller is not position.
-// Used for position-only functions.
-func AssertIsPositionWithVersion(version int, caller address) {
-	AssertIsAuthorizedWithVersion(prbac.ROLE_POSITION.String(), version, caller)
-}
-
-// AssertIsStakerWithVersion panics if the caller is not staker.
-// Used for staker-only functions.
-func AssertIsStakerWithVersion(version int, caller address) {
-	AssertIsAuthorizedWithVersion(prbac.ROLE_STAKER.String(), version, caller)
-}
-
-// AssertIsLaunchpadWithVersion panics if the caller is not launchpad.
-// Used for launchpad-only functions.
-func AssertIsLaunchpadWithVersion(version int, caller address) {
-	AssertIsAuthorizedWithVersion(prbac.ROLE_LAUNCHPAD.String(), version, caller)
-}
-
-// AssertIsProtocolFeeWithVersion panics if the caller is not protocol fee.
-// Used for protocol fee management functions.
-func AssertIsProtocolFeeWithVersion(version int, caller address) {
-	AssertIsAuthorizedWithVersion(prbac.ROLE_PROTOCOL_FEE.String(), version, caller)
-}
-
-// AssertIsGovXGNSWithVersion panics if the caller is not xGNS governance.
-// Used for xGNS governance functions.
-func AssertIsGovXGNSWithVersion(version int, caller address) {
-	AssertIsAuthorizedWithVersion(prbac.ROLE_XGNS.String(), version, caller)
-}
-
 // AssertIsAuthorized panics if the caller does not have the specified role.
 // Also panics if the role does not exist.
 func AssertIsAuthorized(roleName string, caller address) {
 	if !IsAuthorized(roleName, caller) {
 		if _, ok := GetAddress(roleName); !ok {
-			panic(ufmt.Errorf("role %s does not exist", roleName))
-		}
-
-		panic(ufmt.Errorf("unauthorized: caller %s is not %s", caller, roleName))
-	}
-}
-
-// AssertIsAuthorizedWithVersion panics if the caller does not have the specified role.
-// Also panics if the role does not exist.
-func AssertIsAuthorizedWithVersion(roleName string, version int, caller address) {
-	if !IsAuthorizedWithVersion(roleName, version, caller) {
-		if _, ok := GetAddressWithVersion(roleName, version); !ok {
 			panic(ufmt.Errorf("role %s does not exist", roleName))
 		}
 
@@ -186,22 +112,6 @@ func AssertHasAnyRole(caller address, roleNames ...string) {
 	panic(ufmt.Errorf("unauthorized: caller %s is not any of the roles %v", caller, roleNames))
 }
 
-// AssertHasAnyRoleWithVersion panics if the caller does not have any of the specified roles.
-// Also panics if any of the roles do not exist.
-func AssertHasAnyRoleWithVersion(version int, caller address, roleNames ...string) {
-	for _, roleName := range roleNames {
-		if _, ok := GetAddressWithVersion(roleName, version); !ok {
-			panic(ufmt.Errorf("role %s does not exist", roleName))
-		}
-
-		if IsAuthorizedWithVersion(roleName, version, caller) {
-			return
-		}
-	}
-
-	panic(ufmt.Errorf("unauthorized: caller %s is not any of the roles %v", caller, roleNames))
-}
-
 // AssertIsValidAddress panics if the provided address is invalid.
 func AssertIsValidAddress(addr address) {
 	if !addr.IsValid() {
@@ -214,14 +124,6 @@ func AssertIsValidAddress(addr address) {
 func AssertIsUser(r runtime.Realm) {
 	if !r.IsUser() {
 		panic(ufmt.Errorf("caller is not user"))
-	}
-}
-
-// AssertIsSwapWhitelisted panics if the caller is not on the swap whitelist.
-// Used to restrict swap operations to authorized routers only.
-func AssertIsSwapWhitelisted(caller address) {
-	if !IsSwapWhitelisted(caller) {
-		panic(ufmt.Errorf("unauthorized: caller %s is not a whitelisted router", caller))
 	}
 }
 
