@@ -78,7 +78,7 @@ func TestGlobalKeeper_TryRegister(t *testing.T) {
 		{
 			name:             "Fail register with invalid user address",
 			callerRealm:      routerRealm,
-			addr:             address(""),
+			addr:             zeroAddress,
 			referral:         testutils.TestAddress("referrer4").String(),
 			expectedResult:   false,
 			expectedHasPanic: false,

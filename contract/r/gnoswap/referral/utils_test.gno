@@ -95,10 +95,6 @@ func TestIsValidCaller_EdgeCases(t *testing.T) {
 		caller address
 	}{
 		{
-			name:   "empty address is unauthorized",
-			caller: address(""),
-		},
-		{
 			name:   "zero address is unauthorized",
 			caller: zeroAddress,
 		},

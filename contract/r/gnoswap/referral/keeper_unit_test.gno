@@ -134,7 +134,7 @@ func TestKeeperValidateAddresses(t *testing.T) {
 		},
 		{
 			name:          "invalid user address - empty string",
-			addr:          address(""),
+			addr:          zeroAddress,
 			refAddr:       keeperAddr1,
 			expectedError: ErrInvalidAddress,
 		},
@@ -158,7 +158,7 @@ func TestKeeperValidateAddresses(t *testing.T) {
 		},
 		{
 			name:          "both addresses invalid",
-			addr:          address(""),
+			addr:          zeroAddress,
 			refAddr:       address("invalid"),
 			expectedError: ErrInvalidAddress,
 		},
@@ -210,7 +210,7 @@ func TestKeeperValidateAddressesThroughSetReferral(t *testing.T) {
 
 	t.Run("validates through different caller contexts", func(t *testing.T) {
 		origCaller := runtime.OriginCaller()
-		testing.SetOriginCaller(address(""))
+		testing.SetOriginCaller(zeroAddress)
 		defer func() {
 			testing.SetOriginCaller(origCaller)
 		}()
@@ -489,7 +489,7 @@ func TestKeeperGet(t *testing.T) {
 		{
 			name:          "invalid address - empty string",
 			setup:         func(k *keeper) {},
-			addr:          address(""),
+			addr:          zeroAddress,
 			expectedRef:   zeroAddress,
 			expectedError: ErrInvalidAddress,
 		},
