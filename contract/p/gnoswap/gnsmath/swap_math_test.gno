@@ -903,7 +903,7 @@ func TestSwapMath_SwapMathComputeSwapStep_IsMaxExactInCombinations(t *testing.T)
 }
 
 // TestSwapMathHandleExactIn_EqualityBoundary tests exact equality boundary in handleExactIn
-func TestSwapMath_handleExactIn_EqualityBoundary(t *testing.T) {
+func TestSwapMath_handleExactIn(t *testing.T) {
 	tests := []struct {
 		name            string
 		currentX96      *u256.Uint
@@ -912,7 +912,9 @@ func TestSwapMath_handleExactIn_EqualityBoundary(t *testing.T) {
 		amountRemaining *i256.Int
 		feePips         uint64
 		description     string
+		expectPriceMove bool
 	}{
+		// Equality boundary cases
 		{
 			name:            "amountRemainingLessFee_exactly_equals_amountIn",
 			currentX96:      encodePriceSqrtTest(t, "1", "1"),
@@ -921,6 +923,7 @@ func TestSwapMath_handleExactIn_EqualityBoundary(t *testing.T) {
 			amountRemaining: i256.MustFromDecimal("191691827470254872"),
 			feePips:         600,
 			description:     "amountRemainingLessFee == amountIn, should hit target exactly",
+			expectPriceMove: true,
 		},
 		{
 			name:            "amountRemainingLessFee_slightly_above_amountIn",
@@ -930,6 +933,7 @@ func TestSwapMath_handleExactIn_EqualityBoundary(t *testing.T) {
 			amountRemaining: i256.MustFromDecimal("191691827470254873"),
 			feePips:         600,
 			description:     "amountRemainingLessFee > amountIn, should hit target exactly",
+			expectPriceMove: true,
 		},
 		{
 			name:            "amountRemainingLessFee_slightly_below_amountIn",
@@ -939,6 +943,18 @@ func TestSwapMath_handleExactIn_EqualityBoundary(t *testing.T) {
 			amountRemaining: i256.MustFromDecimal("191691827470254871"),
 			feePips:         600,
 			description:     "amountRemainingLessFee < amountIn, should NOT hit target",
+			expectPriceMove: true,
+		},
+		// Zero after fee case
+		{
+			name:            "very_small_amount_becomes_zero_after_fee",
+			currentX96:      encodePriceSqrtTest(t, "1", "1"),
+			targetX96:       encodePriceSqrtTest(t, "121", "100"),
+			liquidity:       u256.MustFromDecimal("2000000000000000000"),
+			amountRemaining: i256.One(), // 1 unit
+			feePips:         3000,        // 0.3% fee: 1 * 997000 / 1000000 = 0 (rounds down)
+			description:     "Amount of 1 becomes 0 after fee deduction due to rounding",
+			expectPriceMove: false,
 		},
 	}
 
@@ -952,23 +968,26 @@ func TestSwapMath_handleExactIn_EqualityBoundary(t *testing.T) {
 			)
 
 			// then
-			isMax := sqrtNext.Eq(tt.targetX96)
-
-			// Verify results are valid
-			uassert.True(t, amountIn.Gte(u256.Zero()), "amountIn should be >= 0")
-			uassert.True(t, amountOut.Gte(u256.Zero()), "amountOut should be >= 0")
+			if !tt.expectPriceMove {
+				// when amountRemainingLessFee is zero, price shouldn't move
+				uassert.Equal(t, tt.currentX96.ToString(), sqrtNext.ToString(),
+					"Price should not move when amount after fee is zero")
+				uassert.Equal(t, "0", amountIn.ToString(), "amountIn should be 0")
+				uassert.Equal(t, "0", amountOut.ToString(), "amountOut should be 0")
+			} else {
+				// Verify results are valid
+				uassert.True(t, amountIn.Gte(u256.Zero()), "amountIn should be >= 0")
+				uassert.True(t, amountOut.Gte(u256.Zero()), "amountOut should be >= 0")
+			}
 			uassert.True(t, feeAmount.Gte(u256.Zero()), "feeAmount should be >= 0")
 
-			// Log the boundary condition status
-			t.Logf("sqrtNext == target: %v", isMax)
-			t.Logf("amountIn: %s, amountOut: %s, feeAmount: %s",
-				amountIn.ToString(), amountOut.ToString(), feeAmount.ToString())
+			t.Logf("sqrtNext: %s, amountIn: %s, amountOut: %s, feeAmount: %s",
+				sqrtNext.ToString(), amountIn.ToString(), amountOut.ToString(), feeAmount.ToString())
 		})
 	}
 }
 
-// TestSwapMathHandleExactIn_ZeroAfterFee tests the case where amountRemainingLessFee becomes zero
-func TestSwapMath_handleExactIn_ZeroAfterFee(t *testing.T) {
+func TestSwapMath_handleExactOut(t *testing.T) {
 	tests := []struct {
 		name            string
 		currentX96      *u256.Uint
@@ -978,49 +997,7 @@ func TestSwapMath_handleExactIn_ZeroAfterFee(t *testing.T) {
 		feePips         uint64
 		description     string
 	}{
-		{
-			name:            "very_small_amount_becomes_zero_after_fee",
-			currentX96:      encodePriceSqrtTest(t, "1", "1"),
-			targetX96:       encodePriceSqrtTest(t, "121", "100"),
-			liquidity:       u256.MustFromDecimal("2000000000000000000"),
-			amountRemaining: i256.One(), // 1 unit
-			feePips:         3000,        // 0.3% fee: 1 * 997000 / 1000000 = 0 (rounds down)
-			description:     "Amount of 1 becomes 0 after fee deduction due to rounding",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Logf("Testing: %s", tt.description)
-
-			// when
-			sqrtNext, amountIn, amountOut, feeAmount := SwapMathComputeSwapStep(
-				tt.currentX96, tt.targetX96, tt.liquidity, tt.amountRemaining, tt.feePips,
-			)
-
-			// then - when amountRemainingLessFee is zero, price shouldn't move
-			uassert.Equal(t, tt.currentX96.ToString(), sqrtNext.ToString(),
-				"Price should not move when amount after fee is zero")
-			uassert.Equal(t, "0", amountIn.ToString(), "amountIn should be 0")
-			uassert.Equal(t, "0", amountOut.ToString(), "amountOut should be 0")
-			uassert.True(t, feeAmount.Gte(u256.Zero()), "feeAmount should be >= 0")
-
-			t.Logf("sqrtNext: %s (unchanged)", sqrtNext.ToString())
-		})
-	}
-}
-
-// TestSwapMathHandleExactOut_Overcalculation tests exact output overcalculation protection
-func TestSwapMath_handleExactOut_Overcalculation(t *testing.T) {
-	tests := []struct {
-		name            string
-		currentX96      *u256.Uint
-		targetX96       *u256.Uint
-		liquidity       *u256.Uint
-		amountRemaining *i256.Int
-		feePips         uint64
-		description     string
-	}{
+		// Overcalculation case
 		{
 			name:       "exactOut_calculated_exceeds_requested",
 			currentX96: encodePriceSqrtTest(t, "1", "1"),
@@ -1031,41 +1008,7 @@ func TestSwapMath_handleExactOut_Overcalculation(t *testing.T) {
 			feePips:         600,
 			description:     "Exact output request smaller than target would produce",
 		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Logf("Testing: %s", tt.description)
-
-			// when
-			sqrtNext, amountIn, amountOut, feeAmount := SwapMathComputeSwapStep(
-				tt.currentX96, tt.targetX96, tt.liquidity, tt.amountRemaining, tt.feePips,
-			)
-
-			// then - amountOut should be capped at requested amount
-			requestedOut := tt.amountRemaining.Abs()
-			uassert.True(t, amountOut.Lte(requestedOut),
-				"amountOut should not exceed requested amount")
-			uassert.True(t, amountIn.Gt(u256.Zero()), "amountIn should be > 0")
-			uassert.True(t, feeAmount.Gte(u256.Zero()), "feeAmount should be >= 0")
-
-			t.Logf("Requested out: %s, Actual out: %s", requestedOut.ToString(), amountOut.ToString())
-			t.Logf("sqrtNext: %s", sqrtNext.ToString())
-		})
-	}
-}
-
-// TestSwapMathHandleExactOut_BoundaryConditions tests handleExactOut branch coverage
-func TestSwapMath_handleExactOut_BoundaryConditions(t *testing.T) {
-	tests := []struct {
-		name            string
-		currentX96      *u256.Uint
-		targetX96       *u256.Uint
-		liquidity       *u256.Uint
-		amountRemaining *i256.Int
-		feePips         uint64
-		description     string
-	}{
+		// Boundary conditions
 		{
 			name:            "exactOut_exactly_reaches_target",
 			currentX96:      encodePriceSqrtTest(t, "1", "1"),
@@ -1096,6 +1039,9 @@ func TestSwapMath_handleExactOut_BoundaryConditions(t *testing.T) {
 			)
 
 			// then - verify basic invariants
+			requestedOut := tt.amountRemaining.Abs()
+			uassert.True(t, amountOut.Lte(requestedOut),
+				"amountOut should not exceed requested amount")
 			uassert.True(t, amountIn.Gt(u256.Zero()), "amountIn should be > 0")
 			uassert.True(t, amountOut.Gt(u256.Zero()), "amountOut should be > 0")
 			uassert.True(t, feeAmount.Gte(u256.Zero()), "feeAmount should be >= 0")
@@ -1103,13 +1049,8 @@ func TestSwapMath_handleExactOut_BoundaryConditions(t *testing.T) {
 			// Verify price moved in correct direction (!zeroForOne, so price should increase)
 			uassert.True(t, sqrtNext.Gte(tt.currentX96), "Price should increase for !zeroForOne")
 
-			// Log whether target was hit
-			isMax := sqrtNext.Eq(tt.targetX96)
-			if isMax {
-				t.Logf("Hit target price exactly")
-			} else {
-				t.Logf("Did not hit target price (partial move)")
-			}
+			t.Logf("Requested out: %s, Actual out: %s", requestedOut.ToString(), amountOut.ToString())
+			t.Logf("sqrtNext: %s", sqrtNext.ToString())
 
 			t.Logf("amountOut: %s", amountOut.ToString())
 		})
