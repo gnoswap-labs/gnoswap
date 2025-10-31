@@ -162,6 +162,30 @@ func TestTransferOwnership(t *testing.T) {
 			expectedHasAborted:     true,
 			expectedAbortedMessage: "caller is not owner",
 		},
+		{
+			name:                   "transfer ownership failed to invalid address format",
+			ownerAddr:              ADMIN,
+			transferAddr:           address("invalid"),
+			transferRealm:          testing.NewUserRealm(ADMIN),
+			expectedHasAborted:     true,
+			expectedAbortedMessage: "invalid address",
+		},
+		{
+			name:                   "transfer ownership failed to malformed address",
+			ownerAddr:              ADMIN,
+			transferAddr:           address("g1"),
+			transferRealm:          testing.NewUserRealm(ADMIN),
+			expectedHasAborted:     true,
+			expectedAbortedMessage: "invalid address",
+		},
+		{
+			name:                   "transfer ownership to self should succeed",
+			ownerAddr:              ADMIN,
+			transferAddr:           ADMIN,
+			transferRealm:          testing.NewUserRealm(ADMIN),
+			expectedHasAborted:     false,
+			expectedAbortedMessage: "",
+		},
 	}
 
 	for _, tt := range tests {
@@ -185,6 +209,34 @@ func TestTransferOwnership(t *testing.T) {
 				TransferOwnership(cross, tt.transferAddr)
 			}
 		})
+	}
+}
+
+func TestOwnership_TransferOwnershipTwice(t *testing.T) {
+	// Reset manager for test
+	manager = prbac.NewRBACWithAddress(ADMIN)
+
+	// First transfer
+	testing.SetOriginCaller(ADMIN)
+	TransferOwnership(cross, DEV_OPS)
+
+	// Verify first pending owner
+	if GetPendingOwner() != DEV_OPS {
+		t.Errorf("First pending owner should be %s, got %s", DEV_OPS, GetPendingOwner())
+	}
+
+	// Second transfer to different address
+	testing.SetOriginCaller(ADMIN)
+	TransferOwnership(cross, COMMUNITY_POOL_ADDR)
+
+	// Verify pending owner updated
+	if GetPendingOwner() != COMMUNITY_POOL_ADDR {
+		t.Errorf("Pending owner should be updated to %s, got %s", COMMUNITY_POOL_ADDR, GetPendingOwner())
+	}
+
+	// Owner should still be ADMIN
+	if GetOwner() != ADMIN {
+		t.Errorf("Owner should still be %s, got %s", ADMIN, GetOwner())
 	}
 }
 
@@ -260,6 +312,28 @@ func TestAcceptOwnership(t *testing.T) {
 				t.Errorf("Owner not changed correctly, got %s, want %s", GetOwner(), tt.expectedOwner)
 			}
 		})
+	}
+}
+
+func TestOwnership_AcceptOwnershipWithoutPendingOwner(t *testing.T) {
+	// Reset manager for test
+	manager = prbac.NewRBACWithAddress(ADMIN)
+
+	// Try to accept ownership without setting pending owner
+	testing.SetOriginCaller(DEV_OPS)
+
+	uassert.AbortsContains(t, "caller is not pending owner", func() {
+		AcceptOwnership(cross)
+	})
+
+	// Owner should remain unchanged
+	if GetOwner() != ADMIN {
+		t.Errorf("Owner should still be %s, got %s", ADMIN, GetOwner())
+	}
+
+	// Pending owner should still be empty
+	if GetPendingOwner() != "" {
+		t.Errorf("Pending owner should be empty, got %s", GetPendingOwner())
 	}
 }
 
