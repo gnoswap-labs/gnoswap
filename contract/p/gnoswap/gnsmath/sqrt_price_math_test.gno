@@ -23,9 +23,7 @@ func TestSqrtPriceMath_getNextPriceAmount0Add(t *testing.T) {
 		liquidity        *u256.Uint
 		amountToAdd      *u256.Uint
 		expected         *u256.Uint
-		validateOnly     bool
 	}{
-		// Normal cases
 		{
 			name:             "simple_case: price halves",
 			currentSqrtPrice: encodePriceSqrt("1", "1"), // √(1/1) * 2^96
@@ -61,40 +59,48 @@ func TestSqrtPriceMath_getNextPriceAmount0Add(t *testing.T) {
 			amountToAdd:      u256.One(),
 			expected:         new(u256.Uint).Add(MIN_SQRT_RATIO, u256.NewUint(2)),
 		},
-		// Branch coverage cases
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := getNextPriceAmount0Add(tt.currentSqrtPrice, tt.liquidity, tt.amountToAdd)
+			uassert.Equal(t, tt.expected.ToString(), result.ToString())
+		})
+	}
+}
+
+func TestSqrtPriceMath_getNextPriceAmount0Add_BranchCoverage(t *testing.T) {
+	tests := []struct {
+		name             string
+		currentSqrtPrice *u256.Uint
+		liquidity        *u256.Uint
+		amountToAdd      *u256.Uint
+	}{
 		{
 			name:             "quotient_check_passes_denominator_gte",
 			currentSqrtPrice: Q96,
 			liquidity:        u256.MustFromDecimal("1000000000000000000"),
 			amountToAdd:      u256.MustFromDecimal("100000000000000000"),
-			validateOnly:     true,
 		},
 		{
 			name:             "quotient_check_fails_uses_fallback",
 			currentSqrtPrice: MAX_SQRT_RATIO,
 			liquidity:        u256.One(),
 			amountToAdd:      MAX_SQRT_RATIO,
-			validateOnly:     true,
 		},
 		{
 			name:             "denominator_overflow_fallback",
 			currentSqrtPrice: encodePriceSqrt("1", "1"),
 			liquidity:        u256.NewUint(2),
 			amountToAdd:      MAX_SQRT_RATIO,
-			validateOnly:     true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := getNextPriceAmount0Add(tt.currentSqrtPrice, tt.liquidity, tt.amountToAdd)
-
-			if tt.validateOnly {
-				uassert.True(t, result.Gt(u256.Zero()), "Result should be greater than zero")
-				uassert.True(t, result.Lte(tt.currentSqrtPrice), "Price should decrease when adding token0")
-			} else {
-				uassert.Equal(t, tt.expected.ToString(), result.ToString())
-			}
+			uassert.True(t, result.Gt(u256.Zero()), "Result should be greater than zero")
+			uassert.True(t, result.Lte(tt.currentSqrtPrice), "Price should decrease when adding token0")
 		})
 	}
 }
@@ -327,14 +333,13 @@ func TestSqrtPriceMath_getNextSqrtPriceFromAmount0RoundingUp(t *testing.T) {
 // TestGetNextPriceAmount1Add tests the internal helper for adding token1
 func TestSqrtPriceMath_getNextPriceAmount1Add(t *testing.T) {
 	tests := []struct {
-		name         string
-		sqrtPX96     *u256.Uint
-		liquidity    *u256.Uint
-		amount       *u256.Uint
-		expected     *u256.Uint
-		shouldPanic  bool
-		panicMsg     string
-		validateOnly bool
+		name        string
+		sqrtPX96    *u256.Uint
+		liquidity   *u256.Uint
+		amount      *u256.Uint
+		expected    *u256.Uint
+		shouldPanic bool
+		panicMsg    string
 	}{
 		{
 			name:      "normal_addition",
@@ -385,21 +390,6 @@ func TestSqrtPriceMath_getNextPriceAmount1Add(t *testing.T) {
 			amount:    u256.MustFromDecimal("100"),
 			expected:  u256.MustFromDecimal("7922816251426438054483134"),
 		},
-		// MAX160 boundary cases
-		{
-			name:         "amount_exactly_MAX_UINT160",
-			sqrtPX96:     Q96,
-			liquidity:    MAX_UINT160,
-			amount:       MAX_UINT160,
-			validateOnly: true,
-		},
-		{
-			name:         "amount_one_below_MAX_UINT160",
-			sqrtPX96:     Q96,
-			liquidity:    MAX_UINT160,
-			amount:       new(u256.Uint).Sub(MAX_UINT160, u256.One()),
-			validateOnly: true,
-		},
 	}
 
 	for _, tt := range tests {
@@ -412,13 +402,37 @@ func TestSqrtPriceMath_getNextPriceAmount1Add(t *testing.T) {
 			}
 
 			result := getNextPriceAmount1Add(tt.sqrtPX96, tt.liquidity, tt.amount)
+			uassert.Equal(t, tt.expected.ToString(), result.ToString())
+		})
+	}
+}
 
-			if tt.validateOnly {
-				uassert.NotEqual(t, "0", result.ToString(), "Result should not be zero")
-				uassert.True(t, result.Gt(tt.sqrtPX96), "result should be greater than sqrtPX96")
-			} else {
-				uassert.Equal(t, tt.expected.ToString(), result.ToString())
-			}
+func TestSqrtPriceMath_getNextPriceAmount1Add_MAX160Boundary(t *testing.T) {
+	tests := []struct {
+		name      string
+		sqrtPX96  *u256.Uint
+		liquidity *u256.Uint
+		amount    *u256.Uint
+	}{
+		{
+			name:      "amount_exactly_MAX_UINT160",
+			sqrtPX96:  Q96,
+			liquidity: MAX_UINT160,
+			amount:    MAX_UINT160,
+		},
+		{
+			name:      "amount_one_below_MAX_UINT160",
+			sqrtPX96:  Q96,
+			liquidity: MAX_UINT160,
+			amount:    new(u256.Uint).Sub(MAX_UINT160, u256.One()),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := getNextPriceAmount1Add(tt.sqrtPX96, tt.liquidity, tt.amount)
+			uassert.NotEqual(t, "0", result.ToString(), "Result should not be zero")
+			uassert.True(t, result.Gt(tt.sqrtPX96), "result should be greater than sqrtPX96")
 		})
 	}
 }
@@ -426,14 +440,13 @@ func TestSqrtPriceMath_getNextPriceAmount1Add(t *testing.T) {
 // TestGetNextPriceAmount1Remove tests the internal helper for removing token1
 func TestSqrtPriceMath_getNextPriceAmount1Remove(t *testing.T) {
 	tests := []struct {
-		name         string
-		sqrtPX96     *u256.Uint
-		liquidity    *u256.Uint
-		amount       *u256.Uint
-		expected     *u256.Uint
-		shouldPanic  bool
-		panicMsg     string
-		validateOnly bool
+		name        string
+		sqrtPX96    *u256.Uint
+		liquidity   *u256.Uint
+		amount      *u256.Uint
+		expected    *u256.Uint
+		shouldPanic bool
+		panicMsg    string
 	}{
 		{
 			name:      "normal_removal_small",
@@ -577,21 +590,6 @@ func TestSqrtPriceMath_getNextPriceAmount1Remove(t *testing.T) {
 			amount:    new(u256.Uint).Rsh(MAX_UINT256, 200),
 			expected:  u256.MustFromDecimal("113078212145816597093331040047546785012958969394330622548958957437722684299"),
 		},
-		// MAX160 boundary cases
-		{
-			name:         "amount_exactly_MAX_UINT160",
-			sqrtPX96:     MAX_SQRT_RATIO,
-			liquidity:    MAX_UINT160,
-			amount:       MAX_UINT160,
-			validateOnly: true,
-		},
-		{
-			name:         "amount_one_below_MAX_UINT160",
-			sqrtPX96:     MAX_SQRT_RATIO,
-			liquidity:    MAX_UINT160,
-			amount:       new(u256.Uint).Sub(MAX_UINT160, u256.One()),
-			validateOnly: true,
-		},
 	}
 
 	for _, tt := range tests {
@@ -604,13 +602,37 @@ func TestSqrtPriceMath_getNextPriceAmount1Remove(t *testing.T) {
 			}
 
 			result := getNextPriceAmount1Remove(tt.sqrtPX96, tt.liquidity, tt.amount)
+			uassert.Equal(t, tt.expected.ToString(), result.ToString())
+		})
+	}
+}
 
-			if tt.validateOnly {
-				uassert.NotEqual(t, "0", result.ToString(), "Result should not be zero")
-				uassert.True(t, tt.sqrtPX96.Gt(result), "sqrtPX96 should be greater than result")
-			} else {
-				uassert.Equal(t, tt.expected.ToString(), result.ToString())
-			}
+func TestSqrtPriceMath_getNextPriceAmount1Remove_MAX160Boundary(t *testing.T) {
+	tests := []struct {
+		name      string
+		sqrtPX96  *u256.Uint
+		liquidity *u256.Uint
+		amount    *u256.Uint
+	}{
+		{
+			name:      "amount_exactly_MAX_UINT160",
+			sqrtPX96:  MAX_SQRT_RATIO,
+			liquidity: MAX_UINT160,
+			amount:    MAX_UINT160,
+		},
+		{
+			name:      "amount_one_below_MAX_UINT160",
+			sqrtPX96:  MAX_SQRT_RATIO,
+			liquidity: MAX_UINT160,
+			amount:    new(u256.Uint).Sub(MAX_UINT160, u256.One()),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := getNextPriceAmount1Remove(tt.sqrtPX96, tt.liquidity, tt.amount)
+			uassert.NotEqual(t, "0", result.ToString(), "Result should not be zero")
+			uassert.True(t, tt.sqrtPX96.Gt(result), "sqrtPX96 should be greater than result")
 		})
 	}
 }
