@@ -332,6 +332,11 @@ func TestBitMath_BitMathLeastSignificantBit(t *testing.T) {
 			input:    "1606938044258990275541962092341162602522202993782792835302425600",
 			expected: 10,
 		},
+		{
+			name:     "max_uint256_minus_one",
+			input:    "115792089237316195423570985008687907853269984665640564039457584007913129639934",
+			expected: 1,
+		},
 	}
 
 	for _, tc := range tests {
@@ -396,19 +401,6 @@ func TestBitMath_SingleBitConsistency(t *testing.T) {
 			t.Errorf("Single bit 2^%d: MSB=%d, LSB=%d, expected both=%d", i, msb, lsb, i)
 		}
 	}
-}
-
-// Additional test cases to add to the existing test file
-
-func TestBitMath_BitMathLeastSignificantBit_MaxUint256MinusOne(t *testing.T) {
-	// MAX_UINT256 - 1 = ...639934 (even number, LSB should be 1)
-	maxMinusOne := new(u256.Uint).Sub(
-		u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935"),
-		u256.One(),
-	)
-
-	result := BitMathLeastSignificantBit(maxMinusOne)
-	uassert.Equal(t, result, uint8(1))
 }
 
 func TestBitMath_PseudoRandomLargeNumbers(t *testing.T) {
@@ -528,28 +520,24 @@ func TestBitMath_VerifyCalculations(t *testing.T) {
 	verifyTests := []struct {
 		name        string
 		input       string
-		binaryForm  string
 		expectedMSB uint8
 		expectedLSB uint8
 	}{
 		{
 			name:        "complex_number_with_msb_209",
 			input:       "1606938044258990275541962092341162602522202993782792835302425600",
-			binaryForm:  "complex number",
 			expectedMSB: 209,
 			expectedLSB: 10,
 		},
 		{
 			name:        "verify_12",
 			input:       "12",
-			binaryForm:  "0b1100",
 			expectedMSB: 3,
 			expectedLSB: 2,
 		},
 		{
 			name:        "verify_96",
 			input:       "96",
-			binaryForm:  "0b1100000",
 			expectedMSB: 6,
 			expectedLSB: 5,
 		},
