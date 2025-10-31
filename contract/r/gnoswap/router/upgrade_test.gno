@@ -251,7 +251,7 @@ func TestExactInSwapRoute(t *testing.T) {
 
 		// Assert
 		mockRouter := implementation.(*MockRouter)
-		if mockRouter.Response.CallCount("ExactInSwapRoute") == 0 {
+		if mockRouter.Response.CallCount("ExactInSwapRoute") != 1 {
 			t.Error("ExactInSwapRoute was not called on the implementation")
 		}
 	}
@@ -307,7 +307,7 @@ func TestExactInSingleSwapRoute(t *testing.T) {
 
 		// Assert
 		mockRouter := implementation.(*MockRouter)
-		if mockRouter.Response.CallCount("ExactInSingleSwapRoute") == 0 {
+		if mockRouter.Response.CallCount("ExactInSingleSwapRoute") != 1 {
 			t.Error("ExactInSingleSwapRoute was not called on the implementation")
 		}
 	}
@@ -363,7 +363,7 @@ func TestExactOutSwapRoute(t *testing.T) {
 
 		// Assert
 		mockRouter := implementation.(*MockRouter)
-		if mockRouter.Response.CallCount("ExactOutSwapRoute") == 0 {
+		if mockRouter.Response.CallCount("ExactOutSwapRoute") != 1 {
 			t.Error("ExactOutSwapRoute was not called on the implementation")
 		}
 	}
@@ -419,7 +419,7 @@ func TestExactOutSingleSwapRoute(t *testing.T) {
 
 		// Assert
 		mockRouter := implementation.(*MockRouter)
-		if mockRouter.Response.CallCount("ExactOutSingleSwapRoute") == 0 {
+		if mockRouter.Response.CallCount("ExactOutSingleSwapRoute") != 1 {
 			t.Error("ExactOutSingleSwapRoute was not called on the implementation")
 		}
 	}
@@ -475,7 +475,7 @@ func TestDrySwapRoute(t *testing.T) {
 		DrySwapRoute(tt.inputToken, tt.outputToken, tt.specifiedAmount, tt.swapTypeStr, tt.strRouteArr, tt.quoteArr, tt.tokenAmountLimit)
 
 		// Assert
-		if mockRouter.Response.CallCount("DrySwapRoute") == 0 {
+		if mockRouter.Response.CallCount("DrySwapRoute") != 1 {
 			t.Error("DrySwapRoute was not called on the implementation")
 		}
 	}
@@ -527,7 +527,7 @@ func TestSwapCallback(t *testing.T) {
 		SwapCallback(tt.token0Path, tt.token1Path, tt.amount0Delta, tt.amount1Delta, tt.payer)
 
 		// Assert
-		if mockRouter.Response.CallCount("SwapCallback") == 0 {
+		if mockRouter.Response.CallCount("SwapCallback") != 1 {
 			t.Error("SwapCallback was not called on the implementation")
 		}
 	}
@@ -567,7 +567,7 @@ func TestGetSwapFee(t *testing.T) {
 		fee := GetSwapFee()
 
 		// Assert
-		if mockRouter.Response.CallCount("GetSwapFee") == 0 {
+		if mockRouter.Response.CallCount("GetSwapFee") != 1 {
 			t.Error("GetSwapFee was not called on the implementation")
 		}
 		if fee != tt.expectedFee {
@@ -612,7 +612,7 @@ func TestSetSwapFee(t *testing.T) {
 
 		// Assert
 		mockRouter := implementation.(*MockRouter)
-		if mockRouter.Response.CallCount("SetSwapFee") == 0 {
+		if mockRouter.Response.CallCount("SetSwapFee") != 1 {
 			t.Error("SetSwapFee was not called on the implementation")
 		}
 	}

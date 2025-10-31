@@ -244,7 +244,7 @@ func TestCreatePool(t *testing.T) {
 
 		// Assert - verify that the mock pool's CreatePool was called
 		mPool := implementation.(*MockPool)
-		if mPool.Response.CallCount("CreatePool") == 0 {
+		if mPool.Response.CallCount("CreatePool") != 1 {
 			t.Error("CreatePool was not called on the implementation")
 		}
 	}
@@ -302,7 +302,7 @@ func TestMint(t *testing.T) {
 		Mint(cross, tt.token0Path, tt.token1Path, tt.fee, tt.tickLower, tt.tickUpper, tt.liquidityAmount, tt.positionCaller)
 
 		// Assert
-		if mockPool.Response.CallCount("Mint") == 0 {
+		if mockPool.Response.CallCount("Mint") != 1 {
 			t.Error("Mint was not called on the implementation")
 		}
 	}
@@ -360,7 +360,7 @@ func TestBurn(t *testing.T) {
 
 		// Assert
 		mockPool := implementation.(*MockPool)
-		if mockPool.Response.CallCount("Burn") == 0 {
+		if mockPool.Response.CallCount("Burn") != 1 {
 			t.Error("Burn was not called on the implementation")
 		}
 	}
@@ -420,7 +420,7 @@ func TestCollect(t *testing.T) {
 
 		// Assert
 		mockPool := implementation.(*MockPool)
-		if mockPool.Response.CallCount("Collect") == 0 {
+		if mockPool.Response.CallCount("Collect") != 1 {
 			t.Error("Collect was not called on the implementation")
 		}
 	}
@@ -476,7 +476,7 @@ func TestCollectProtocol(t *testing.T) {
 
 		// Assert
 		mockPool := implementation.(*MockPool)
-		if mockPool.Response.CallCount("CollectProtocol") == 0 {
+		if mockPool.Response.CallCount("CollectProtocol") != 1 {
 			t.Error("CollectProtocol was not called on the implementation")
 		}
 	}
@@ -538,7 +538,7 @@ func TestSwap(t *testing.T) {
 
 		// Assert
 		mockPool := implementation.(*MockPool)
-		if mockPool.Response.CallCount("Swap") == 0 {
+		if mockPool.Response.CallCount("Swap") != 1 {
 			t.Error("Swap was not called on the implementation")
 		}
 	}
@@ -594,7 +594,7 @@ func TestDrySwap(t *testing.T) {
 
 		// Assert
 		mockPool := implementation.(*MockPool)
-		if mockPool.Response.CallCount("DrySwap") == 0 {
+		if mockPool.Response.CallCount("DrySwap") != 1 {
 			t.Error("DrySwap was not called on the implementation")
 		}
 	}
@@ -638,7 +638,7 @@ func TestSetFeeProtocol(t *testing.T) {
 
 		// Assert - no return value to check, just verify no panic
 		mockPool := implementation.(*MockPool)
-		if mockPool.Response.CallCount("SetFeeProtocol") == 0 {
+		if mockPool.Response.CallCount("SetFeeProtocol") != 1 {
 			t.Error("SetFeeProtocol was not called on the implementation")
 		}
 	}
@@ -682,7 +682,7 @@ func TestGetSlot0SqrtPriceX96(t *testing.T) {
 		sqrtPrice := GetSlot0SqrtPriceX96(tt.poolPath)
 
 		// Assert
-		if mockPool.Response.CallCount("GetSlot0SqrtPriceX96") == 0 {
+		if mockPool.Response.CallCount("GetSlot0SqrtPriceX96") != 1 {
 			t.Error("GetSlot0SqrtPriceX96 was not called on the implementation")
 		}
 		if sqrtPrice == nil {
@@ -730,7 +730,7 @@ func TestGetSlot0Tick(t *testing.T) {
 		tick := GetSlot0Tick(tt.poolPath)
 
 		// Assert
-		if mockPool.Response.CallCount("GetSlot0Tick") == 0 {
+		if mockPool.Response.CallCount("GetSlot0Tick") != 1 {
 			t.Error("GetSlot0Tick was not called on the implementation")
 		}
 		if tick != tt.expectedTick {
@@ -779,7 +779,7 @@ func TestGetLiquidity(t *testing.T) {
 		liquidity := GetLiquidity(tt.poolPath)
 
 		// Assert
-		if mockPool.Response.CallCount("GetLiquidity") == 0 {
+		if mockPool.Response.CallCount("GetLiquidity") != 1 {
 			t.Error("GetLiquidity was not called on the implementation")
 		}
 		if liquidity != tt.expectedLiquidity {
@@ -828,7 +828,7 @@ func TestGetBalanceToken0(t *testing.T) {
 		balance := GetBalanceToken0(tt.poolPath)
 
 		// Assert
-		if mockPool.Response.CallCount("GetBalanceToken0") == 0 {
+		if mockPool.Response.CallCount("GetBalanceToken0") != 1 {
 			t.Error("GetBalanceToken0 was not called on the implementation")
 		}
 		if balance != tt.expectedBalance {
@@ -877,7 +877,7 @@ func TestGetBalanceToken1(t *testing.T) {
 		balance := GetBalanceToken1(tt.poolPath)
 
 		// Assert
-		if mockPool.Response.CallCount("GetBalanceToken1") == 0 {
+		if mockPool.Response.CallCount("GetBalanceToken1") != 1 {
 			t.Error("GetBalanceToken1 was not called on the implementation")
 		}
 		if balance != tt.expectedBalance {
@@ -928,7 +928,7 @@ func TestGetFeeGrowthGlobalX128(t *testing.T) {
 		fee0, fee1 := GetFeeGrowthGlobalX128(tt.poolPath)
 
 		// Assert
-		if mockPool.Response.CallCount("GetFeeGrowthGlobalX128") == 0 {
+		if mockPool.Response.CallCount("GetFeeGrowthGlobalX128") != 1 {
 			t.Error("GetFeeGrowthGlobalX128 was not called on the implementation")
 		}
 		if fee0 == nil || fee1 == nil {
@@ -981,7 +981,7 @@ func TestGetPositionFeeGrowthInsideLastX128(t *testing.T) {
 		fee0, fee1 := GetPositionFeeGrowthInsideLastX128(tt.poolPath, tt.key)
 
 		// Assert
-		if mockPool.Response.CallCount("GetPositionFeeGrowthInsideLastX128") == 0 {
+		if mockPool.Response.CallCount("GetPositionFeeGrowthInsideLastX128") != 1 {
 			t.Error("GetPositionFeeGrowthInsideLastX128 was not called on the implementation")
 		}
 		if fee0 == nil || fee1 == nil {
@@ -1038,7 +1038,7 @@ func TestGetObservation(t *testing.T) {
 		tick, sqrt, liquidity, timestamp := GetObservation(tt.poolPath, tt.secondsAgo)
 
 		// Assert
-		if mockPool.Response.CallCount("GetObservation") == 0 {
+		if mockPool.Response.CallCount("GetObservation") != 1 {
 			t.Error("GetObservation was not called on the implementation")
 		}
 		if tick != tt.expectedTick {
@@ -1096,7 +1096,7 @@ func TestExistsPoolPath(t *testing.T) {
 		exists := ExistsPoolPath(tt.poolPath)
 
 		// Assert
-		if mockPool.Response.CallCount("ExistsPoolPath") == 0 {
+		if mockPool.Response.CallCount("ExistsPoolPath") != 1 {
 			t.Error("ExistsPoolPath was not called on the implementation")
 		}
 		if exists != tt.expectedExists {
@@ -1145,7 +1145,7 @@ func TestApiGetPool(t *testing.T) {
 		json := ApiGetPool(tt.poolPath)
 
 		// Assert
-		if mockPool.Response.CallCount("ApiGetPool") == 0 {
+		if mockPool.Response.CallCount("ApiGetPool") != 1 {
 			t.Error("ApiGetPool was not called on the implementation")
 		}
 		if json != tt.expectedJSON {
@@ -1196,7 +1196,7 @@ func TestApiGetTWAP(t *testing.T) {
 		twap := ApiGetTWAP(tt.poolPath, tt.secondsAgo)
 
 		// Assert
-		if mockPool.Response.CallCount("ApiGetTWAP") == 0 {
+		if mockPool.Response.CallCount("ApiGetTWAP") != 1 {
 			t.Error("ApiGetTWAP was not called on the implementation")
 		}
 		if twap != tt.expectedTWAP {
@@ -1241,7 +1241,7 @@ func TestSetPoolCreationFee(t *testing.T) {
 
 		// Assert
 		mockPool := implementation.(*MockPool)
-		if mockPool.Response.CallCount("SetPoolCreationFee") == 0 {
+		if mockPool.Response.CallCount("SetPoolCreationFee") != 1 {
 			t.Error("SetPoolCreationFee was not called on the implementation")
 		}
 	}
@@ -1289,7 +1289,7 @@ func TestIncreaseObservationCardinalityLimit(t *testing.T) {
 
 		// Assert
 		mockPool := implementation.(*MockPool)
-		if mockPool.Response.CallCount("IncreaseObservationCardinalityLimit") == 0 {
+		if mockPool.Response.CallCount("IncreaseObservationCardinalityLimit") != 1 {
 			t.Error("IncreaseObservationCardinalityLimit was not called on the implementation")
 		}
 	}
@@ -1331,7 +1331,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 
 		// Assert
 		mockPool := implementation.(*MockPool)
-		if mockPool.Response.CallCount("SetWithdrawalFee") == 0 {
+		if mockPool.Response.CallCount("SetWithdrawalFee") != 1 {
 			t.Error("SetWithdrawalFee was not called on the implementation")
 		}
 	}
@@ -1391,7 +1391,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 		amount0, amount1 := HandleWithdrawalFee(cross, tt.positionId, tt.token0Path, tt.amount0, tt.token1Path, tt.amount1, tt.poolPath, tt.positionCaller)
 
 		// Assert
-		if mockPool.Response.CallCount("HandleWithdrawalFee") == 0 {
+		if mockPool.Response.CallCount("HandleWithdrawalFee") != 1 {
 			t.Error("HandleWithdrawalFee was not called on the implementation")
 		}
 		if amount0 != tt.expectedAmount0 {
@@ -1439,7 +1439,7 @@ func TestSetSwapEndHook(t *testing.T) {
 
 		// Assert
 		mockPool := implementation.(*MockPool)
-		if mockPool.Response.CallCount("SetSwapEndHook") == 0 {
+		if mockPool.Response.CallCount("SetSwapEndHook") != 1 {
 			t.Error("SetSwapEndHook was not called on the implementation")
 		}
 	}
@@ -1479,7 +1479,7 @@ func TestSetSwapStartHook(t *testing.T) {
 
 		// Assert
 		mockPool := implementation.(*MockPool)
-		if mockPool.Response.CallCount("SetSwapStartHook") == 0 {
+		if mockPool.Response.CallCount("SetSwapStartHook") != 1 {
 			t.Error("SetSwapStartHook was not called on the implementation")
 		}
 	}
@@ -1519,7 +1519,7 @@ func TestSetTickCrossHook(t *testing.T) {
 
 		// Assert
 		mockPool := implementation.(*MockPool)
-		if mockPool.Response.CallCount("SetTickCrossHook") == 0 {
+		if mockPool.Response.CallCount("SetTickCrossHook") != 1 {
 			t.Error("SetTickCrossHook was not called on the implementation")
 		}
 	}
@@ -1559,7 +1559,7 @@ func TestGetPoolCreationFee(t *testing.T) {
 		fee := GetPoolCreationFee()
 
 		// Assert
-		if mockPool.Response.CallCount("GetPoolCreationFee") == 0 {
+		if mockPool.Response.CallCount("GetPoolCreationFee") != 1 {
 			t.Error("GetPoolCreationFee was not called on the implementation")
 		}
 		if fee != tt.expectedFee {
@@ -1602,7 +1602,7 @@ func TestGetWithdrawalFee(t *testing.T) {
 		fee := GetWithdrawalFee()
 
 		// Assert
-		if mockPool.Response.CallCount("GetWithdrawalFee") == 0 {
+		if mockPool.Response.CallCount("GetWithdrawalFee") != 1 {
 			t.Error("GetWithdrawalFee was not called on the implementation")
 		}
 		if fee != tt.expectedFee {
@@ -1647,7 +1647,7 @@ func TestGetFee(t *testing.T) {
 		fee := GetFee(tt.poolPath)
 
 		// Assert
-		if mockPool.Response.CallCount("GetFee") == 0 {
+		if mockPool.Response.CallCount("GetFee") != 1 {
 			t.Error("GetFee was not called on the implementation")
 		}
 		if fee != tt.expectedFee {
@@ -1692,7 +1692,7 @@ func TestGetFeeAmountTickSpacing(t *testing.T) {
 		spacing := GetFeeAmountTickSpacing(tt.fee)
 
 		// Assert
-		if mockPool.Response.CallCount("GetFeeAmountTickSpacing") == 0 {
+		if mockPool.Response.CallCount("GetFeeAmountTickSpacing") != 1 {
 			t.Error("GetFeeAmountTickSpacing was not called on the implementation")
 		}
 		if spacing != tt.expectedSpacing {
@@ -1737,7 +1737,7 @@ func TestGetMaxLiquidityPerTick(t *testing.T) {
 		liquidity := GetMaxLiquidityPerTick(tt.poolPath)
 
 		// Assert
-		if mockPool.Response.CallCount("GetMaxLiquidityPerTick") == 0 {
+		if mockPool.Response.CallCount("GetMaxLiquidityPerTick") != 1 {
 			t.Error("GetMaxLiquidityPerTick was not called on the implementation")
 		}
 		if liquidity != tt.expectedLiquidity {
@@ -1782,7 +1782,7 @@ func TestGetSlot0FeeProtocol(t *testing.T) {
 		feeProtocol := GetSlot0FeeProtocol(tt.poolPath)
 
 		// Assert
-		if mockPool.Response.CallCount("GetSlot0FeeProtocol") == 0 {
+		if mockPool.Response.CallCount("GetSlot0FeeProtocol") != 1 {
 			t.Error("GetSlot0FeeProtocol was not called on the implementation")
 		}
 		if feeProtocol != tt.expectedFeeProtocol {
@@ -1827,7 +1827,7 @@ func TestGetSlot0Unlocked(t *testing.T) {
 		unlocked := GetSlot0Unlocked(tt.poolPath)
 
 		// Assert
-		if mockPool.Response.CallCount("GetSlot0Unlocked") == 0 {
+		if mockPool.Response.CallCount("GetSlot0Unlocked") != 1 {
 			t.Error("GetSlot0Unlocked was not called on the implementation")
 		}
 		if unlocked != tt.expectedUnlocked {
@@ -1872,7 +1872,7 @@ func TestGetToken0Path(t *testing.T) {
 		path := GetToken0Path(tt.poolPath)
 
 		// Assert
-		if mockPool.Response.CallCount("GetToken0Path") == 0 {
+		if mockPool.Response.CallCount("GetToken0Path") != 1 {
 			t.Error("GetToken0Path was not called on the implementation")
 		}
 		if path != tt.expectedPath {
@@ -1917,7 +1917,7 @@ func TestGetToken1Path(t *testing.T) {
 		path := GetToken1Path(tt.poolPath)
 
 		// Assert
-		if mockPool.Response.CallCount("GetToken1Path") == 0 {
+		if mockPool.Response.CallCount("GetToken1Path") != 1 {
 			t.Error("GetToken1Path was not called on the implementation")
 		}
 		if path != tt.expectedPath {
@@ -1962,7 +1962,7 @@ func TestGetTickSpacing(t *testing.T) {
 		spacing := GetTickSpacing(tt.poolPath)
 
 		// Assert
-		if mockPool.Response.CallCount("GetTickSpacing") == 0 {
+		if mockPool.Response.CallCount("GetTickSpacing") != 1 {
 			t.Error("GetTickSpacing was not called on the implementation")
 		}
 		if spacing != tt.expectedSpacing {
@@ -2007,7 +2007,7 @@ func TestGetProtocolFeesToken0(t *testing.T) {
 		fee := GetProtocolFeesToken0(tt.poolPath)
 
 		// Assert
-		if mockPool.Response.CallCount("GetProtocolFeesToken0") == 0 {
+		if mockPool.Response.CallCount("GetProtocolFeesToken0") != 1 {
 			t.Error("GetProtocolFeesToken0 was not called on the implementation")
 		}
 		if fee != tt.expectedFee {
@@ -2052,7 +2052,7 @@ func TestGetProtocolFeesToken1(t *testing.T) {
 		fee := GetProtocolFeesToken1(tt.poolPath)
 
 		// Assert
-		if mockPool.Response.CallCount("GetProtocolFeesToken1") == 0 {
+		if mockPool.Response.CallCount("GetProtocolFeesToken1") != 1 {
 			t.Error("GetProtocolFeesToken1 was not called on the implementation")
 		}
 		if fee != tt.expectedFee {
@@ -2099,7 +2099,7 @@ func TestGetPositionLiquidity(t *testing.T) {
 		liquidity := GetPositionLiquidity(tt.poolPath, tt.key)
 
 		// Assert
-		if mockPool.Response.CallCount("GetPositionLiquidity") == 0 {
+		if mockPool.Response.CallCount("GetPositionLiquidity") != 1 {
 			t.Error("GetPositionLiquidity was not called on the implementation")
 		}
 		if liquidity == nil {

@@ -106,7 +106,7 @@ func TestDelegate(t *testing.T) {
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
-			if mockGovStaker.Response.CallCount("Delegate") == 0 {
+			if mockGovStaker.Response.CallCount("Delegate") != 1 {
 				t.Error("Delegate was not called on the implementation")
 			}
 		})
@@ -140,7 +140,7 @@ func TestUndelegate(t *testing.T) {
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
-			if mockGovStaker.Response.CallCount("Undelegate") == 0 {
+			if mockGovStaker.Response.CallCount("Undelegate") != 1 {
 				t.Error("Undelegate was not called on the implementation")
 			}
 		})
@@ -176,7 +176,7 @@ func TestRedelegate(t *testing.T) {
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
-			if mockGovStaker.Response.CallCount("Redelegate") == 0 {
+			if mockGovStaker.Response.CallCount("Redelegate") != 1 {
 				t.Error("Redelegate was not called on the implementation")
 			}
 		})
@@ -206,7 +206,7 @@ func TestCollectUndelegatedGns(t *testing.T) {
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
-			if mockGovStaker.Response.CallCount("CollectUndelegatedGns") == 0 {
+			if mockGovStaker.Response.CallCount("CollectUndelegatedGns") != 1 {
 				t.Error("CollectUndelegatedGns was not called on the implementation")
 			}
 		})
@@ -236,7 +236,7 @@ func TestCollectReward(t *testing.T) {
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
-			if mockGovStaker.Response.CallCount("CollectReward") == 0 {
+			if mockGovStaker.Response.CallCount("CollectReward") != 1 {
 				t.Error("CollectReward was not called on the implementation")
 			}
 		})
@@ -268,7 +268,7 @@ func TestCollectRewardFromLaunchPad(t *testing.T) {
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
-			if mockGovStaker.Response.CallCount("CollectRewardFromLaunchPad") == 0 {
+			if mockGovStaker.Response.CallCount("CollectRewardFromLaunchPad") != 1 {
 				t.Error("CollectRewardFromLaunchPad was not called on the implementation")
 			}
 		})
@@ -304,7 +304,7 @@ func TestSetAmountByProjectWallet(t *testing.T) {
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
-			if mockGovStaker.Response.CallCount("SetAmountByProjectWallet") == 0 {
+			if mockGovStaker.Response.CallCount("SetAmountByProjectWallet") != 1 {
 				t.Error("SetAmountByProjectWallet was not called on the implementation")
 			}
 		})
@@ -336,7 +336,7 @@ func TestCleanStakerDelegationSnapshotByAdmin(t *testing.T) {
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
-			if mockGovStaker.Response.CallCount("CleanStakerDelegationSnapshotByAdmin") == 0 {
+			if mockGovStaker.Response.CallCount("CleanStakerDelegationSnapshotByAdmin") != 1 {
 				t.Error("CleanStakerDelegationSnapshotByAdmin was not called on the implementation")
 			}
 		})
@@ -368,7 +368,7 @@ func TestSetUnDelegationLockupPeriodByAdmin(t *testing.T) {
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
-			if mockGovStaker.Response.CallCount("SetUnDelegationLockupPeriodByAdmin") == 0 {
+			if mockGovStaker.Response.CallCount("SetUnDelegationLockupPeriodByAdmin") != 1 {
 				t.Error("SetUnDelegationLockupPeriodByAdmin was not called on the implementation")
 			}
 		})
@@ -396,7 +396,7 @@ func TestGetTotalxGnsSupply(t *testing.T) {
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
-			if mockGovStaker.Response.CallCount("GetTotalxGnsSupply") == 0 {
+			if mockGovStaker.Response.CallCount("GetTotalxGnsSupply") != 1 {
 				t.Error("GetTotalxGnsSupply was not called on the implementation")
 			}
 		})
@@ -424,7 +424,7 @@ func TestGetTotalVoteWeight(t *testing.T) {
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
-			if mockGovStaker.Response.CallCount("GetTotalVoteWeight") == 0 {
+			if mockGovStaker.Response.CallCount("GetTotalVoteWeight") != 1 {
 				t.Error("GetTotalVoteWeight was not called on the implementation")
 			}
 		})
@@ -452,7 +452,7 @@ func TestGetTotalDelegated(t *testing.T) {
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
-			if mockGovStaker.Response.CallCount("GetTotalDelegated") == 0 {
+			if mockGovStaker.Response.CallCount("GetTotalDelegated") != 1 {
 				t.Error("GetTotalDelegated was not called on the implementation")
 			}
 		})
@@ -480,7 +480,7 @@ func TestGetTotalLockedAmount(t *testing.T) {
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
-			if mockGovStaker.Response.CallCount("GetTotalLockedAmount") == 0 {
+			if mockGovStaker.Response.CallCount("GetTotalLockedAmount") != 1 {
 				t.Error("GetTotalLockedAmount was not called on the implementation")
 			}
 		})
@@ -508,7 +508,7 @@ func TestGetLockedAmount(t *testing.T) {
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
-			if mockGovStaker.Response.CallCount("GetLockedAmount") == 0 {
+			if mockGovStaker.Response.CallCount("GetLockedAmount") != 1 {
 				t.Error("GetLockedAmount was not called on the implementation")
 			}
 		})
@@ -538,7 +538,7 @@ func TestGetDelegationSnapshots(t *testing.T) {
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
-			if mockGovStaker.Response.CallCount("GetDelegationSnapshots") == 0 {
+			if mockGovStaker.Response.CallCount("GetDelegationSnapshots") != 1 {
 				t.Error("GetDelegationSnapshots was not called on the implementation")
 			}
 		})
@@ -568,7 +568,7 @@ func TestGetClaimableRewardByAddress(t *testing.T) {
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
-			if mockGovStaker.Response.CallCount("GetClaimableRewardByAddress") == 0 {
+			if mockGovStaker.Response.CallCount("GetClaimableRewardByAddress") != 1 {
 				t.Error("GetClaimableRewardByAddress was not called on the implementation")
 			}
 		})
@@ -598,7 +598,7 @@ func TestGetClaimableRewardByLaunchpad(t *testing.T) {
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
-			if mockGovStaker.Response.CallCount("GetClaimableRewardByLaunchpad") == 0 {
+			if mockGovStaker.Response.CallCount("GetClaimableRewardByLaunchpad") != 1 {
 				t.Error("GetClaimableRewardByLaunchpad was not called on the implementation")
 			}
 		})
@@ -628,7 +628,7 @@ func TestGetClaimableRewardByRewardID(t *testing.T) {
 
 			// Assert
 			mockGovStaker := implementation.(*MockGovStaker)
-			if mockGovStaker.Response.CallCount("GetClaimableRewardByRewardID") == 0 {
+			if mockGovStaker.Response.CallCount("GetClaimableRewardByRewardID") != 1 {
 				t.Error("GetClaimableRewardByRewardID was not called on the implementation")
 			}
 		})

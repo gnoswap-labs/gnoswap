@@ -175,7 +175,7 @@ func TestDistributeProtocolFee(t *testing.T) {
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("DistributeProtocolFee") == 0 {
+			if mockProtocolFee.Response.CallCount("DistributeProtocolFee") != 1 {
 				t.Error("DistributeProtocolFee was not called on the implementation")
 			}
 		})
@@ -206,7 +206,7 @@ func TestSetDevOpsPct(t *testing.T) {
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("SetDevOpsPct") == 0 {
+			if mockProtocolFee.Response.CallCount("SetDevOpsPct") != 1 {
 				t.Error("SetDevOpsPct was not called on the implementation")
 			}
 		})
@@ -237,7 +237,7 @@ func TestSetGovStakerPct(t *testing.T) {
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("SetGovStakerPct") == 0 {
+			if mockProtocolFee.Response.CallCount("SetGovStakerPct") != 1 {
 				t.Error("SetGovStakerPct was not called on the implementation")
 			}
 		})
@@ -270,7 +270,7 @@ func TestAddToProtocolFee(t *testing.T) {
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("AddToProtocolFee") == 0 {
+			if mockProtocolFee.Response.CallCount("AddToProtocolFee") != 1 {
 				t.Error("AddToProtocolFee was not called on the implementation")
 			}
 		})
@@ -299,7 +299,7 @@ func TestClearTokenListWithAmount(t *testing.T) {
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("ClearTokenListWithAmount") == 0 {
+			if mockProtocolFee.Response.CallCount("ClearTokenListWithAmount") != 1 {
 				t.Error("ClearTokenListWithAmount was not called on the implementation")
 			}
 		})
@@ -328,7 +328,7 @@ func TestClearAccuTransferToGovStaker(t *testing.T) {
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("ClearAccuTransferToGovStaker") == 0 {
+			if mockProtocolFee.Response.CallCount("ClearAccuTransferToGovStaker") != 1 {
 				t.Error("ClearAccuTransferToGovStaker was not called on the implementation")
 			}
 		})
@@ -357,7 +357,7 @@ func TestGetDevOpsPct(t *testing.T) {
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("GetDevOpsPct") == 0 {
+			if mockProtocolFee.Response.CallCount("GetDevOpsPct") != 1 {
 				t.Error("GetDevOpsPct was not called on the implementation")
 			}
 		})
@@ -386,7 +386,7 @@ func TestGetGovStakerPct(t *testing.T) {
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("GetGovStakerPct") == 0 {
+			if mockProtocolFee.Response.CallCount("GetGovStakerPct") != 1 {
 				t.Error("GetGovStakerPct was not called on the implementation")
 			}
 		})
@@ -415,7 +415,7 @@ func TestGetTokenListWithAmount(t *testing.T) {
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("GetTokenListWithAmount") == 0 {
+			if mockProtocolFee.Response.CallCount("GetTokenListWithAmount") != 1 {
 				t.Error("GetTokenListWithAmount was not called on the implementation")
 			}
 		})
@@ -446,7 +446,7 @@ func TestGetAmountOfToken(t *testing.T) {
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("GetAmountOfToken") == 0 {
+			if mockProtocolFee.Response.CallCount("GetAmountOfToken") != 1 {
 				t.Error("GetAmountOfToken was not called on the implementation")
 			}
 		})
@@ -475,7 +475,7 @@ func TestGetAccuTransfersToGovStaker(t *testing.T) {
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("GetAccuTransfersToGovStaker") == 0 {
+			if mockProtocolFee.Response.CallCount("GetAccuTransfersToGovStaker") != 1 {
 				t.Error("GetAccuTransfersToGovStaker was not called on the implementation")
 			}
 		})
@@ -504,7 +504,7 @@ func TestGetAccuTransfersToDevOps(t *testing.T) {
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("GetAccuTransfersToDevOps") == 0 {
+			if mockProtocolFee.Response.CallCount("GetAccuTransfersToDevOps") != 1 {
 				t.Error("GetAccuTransfersToDevOps was not called on the implementation")
 			}
 		})
@@ -535,7 +535,7 @@ func TestGetAccuTransferToGovStakerByTokenPath(t *testing.T) {
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("GetAccuTransferToGovStakerByTokenPath") == 0 {
+			if mockProtocolFee.Response.CallCount("GetAccuTransferToGovStakerByTokenPath") != 1 {
 				t.Error("GetAccuTransferToGovStakerByTokenPath was not called on the implementation")
 			}
 		})
@@ -566,7 +566,7 @@ func TestGetAccuTransferToDevOpsByTokenPath(t *testing.T) {
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("GetAccuTransferToDevOpsByTokenPath") == 0 {
+			if mockProtocolFee.Response.CallCount("GetAccuTransferToDevOpsByTokenPath") != 1 {
 				t.Error("GetAccuTransferToDevOpsByTokenPath was not called on the implementation")
 			}
 		})
@@ -597,7 +597,7 @@ func TestGetHistoryOfDistributedToGovStakerByTokenPath(t *testing.T) {
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("GetHistoryOfDistributedToGovStakerByTokenPath") == 0 {
+			if mockProtocolFee.Response.CallCount("GetHistoryOfDistributedToGovStakerByTokenPath") != 1 {
 				t.Error("GetHistoryOfDistributedToGovStakerByTokenPath was not called on the implementation")
 			}
 		})
@@ -628,7 +628,7 @@ func TestGetHistoryOfDistributedToDevOpsByTokenPath(t *testing.T) {
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("GetHistoryOfDistributedToDevOpsByTokenPath") == 0 {
+			if mockProtocolFee.Response.CallCount("GetHistoryOfDistributedToDevOpsByTokenPath") != 1 {
 				t.Error("GetHistoryOfDistributedToDevOpsByTokenPath was not called on the implementation")
 			}
 		})
@@ -657,7 +657,7 @@ func TestApiGetAccuTransferToGovStaker(t *testing.T) {
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("ApiGetAccuTransferToGovStaker") == 0 {
+			if mockProtocolFee.Response.CallCount("ApiGetAccuTransferToGovStaker") != 1 {
 				t.Error("ApiGetAccuTransferToGovStaker was not called on the implementation")
 			}
 		})
@@ -686,7 +686,7 @@ func TestApiGetAccuTransferToDevOps(t *testing.T) {
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("ApiGetAccuTransferToDevOps") == 0 {
+			if mockProtocolFee.Response.CallCount("ApiGetAccuTransferToDevOps") != 1 {
 				t.Error("ApiGetAccuTransferToDevOps was not called on the implementation")
 			}
 		})
@@ -715,7 +715,7 @@ func TestApiGetHistoryTransferToGovStaker(t *testing.T) {
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("ApiGetHistoryTransferToGovStaker") == 0 {
+			if mockProtocolFee.Response.CallCount("ApiGetHistoryTransferToGovStaker") != 1 {
 				t.Error("ApiGetHistoryTransferToGovStaker was not called on the implementation")
 			}
 		})
@@ -744,7 +744,7 @@ func TestApiGetHistoryTransferToDevOps(t *testing.T) {
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("ApiGetHistoryTransferToDevOps") == 0 {
+			if mockProtocolFee.Response.CallCount("ApiGetHistoryTransferToDevOps") != 1 {
 				t.Error("ApiGetHistoryTransferToDevOps was not called on the implementation")
 			}
 		})
@@ -773,7 +773,7 @@ func TestApiGetActualBalance(t *testing.T) {
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("ApiGetActualBalance") == 0 {
+			if mockProtocolFee.Response.CallCount("ApiGetActualBalance") != 1 {
 				t.Error("ApiGetActualBalance was not called on the implementation")
 			}
 		})
@@ -802,7 +802,7 @@ func TestApiGetRecordedBalance(t *testing.T) {
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("ApiGetRecordedBalance") == 0 {
+			if mockProtocolFee.Response.CallCount("ApiGetRecordedBalance") != 1 {
 				t.Error("ApiGetRecordedBalance was not called on the implementation")
 			}
 		})
@@ -831,7 +831,7 @@ func TestApiGetUnrecordedBalance(t *testing.T) {
 
 			// Assert
 			mockProtocolFee := implementation.(*MockProtocolFee)
-			if mockProtocolFee.Response.CallCount("ApiGetUnrecordedBalance") == 0 {
+			if mockProtocolFee.Response.CallCount("ApiGetUnrecordedBalance") != 1 {
 				t.Error("ApiGetUnrecordedBalance was not called on the implementation")
 			}
 		})

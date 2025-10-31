@@ -239,7 +239,7 @@ func TestStakeToken(t *testing.T) {
 
 		// Assert
 		mockStaker := implementation.(*MockStaker)
-		if mockStaker.Response.CallCount("StakeToken") == 0 {
+		if mockStaker.Response.CallCount("StakeToken") != 1 {
 			t.Error("StakeToken was not called on the implementation")
 		}
 	}
@@ -283,7 +283,7 @@ func TestUnStakeToken(t *testing.T) {
 
 		// Assert
 		mockStaker := implementation.(*MockStaker)
-		if mockStaker.Response.CallCount("UnStakeToken") == 0 {
+		if mockStaker.Response.CallCount("UnStakeToken") != 1 {
 			t.Error("UnStakeToken was not called on the implementation")
 		}
 	}
@@ -327,7 +327,7 @@ func TestCollectReward(t *testing.T) {
 
 		// Assert
 		mockStaker := implementation.(*MockStaker)
-		if mockStaker.Response.CallCount("CollectReward") == 0 {
+		if mockStaker.Response.CallCount("CollectReward") != 1 {
 			t.Error("CollectReward was not called on the implementation")
 		}
 	}
@@ -371,7 +371,7 @@ func TestSetPoolTier(t *testing.T) {
 
 		// Assert
 		mockStaker := implementation.(*MockStaker)
-		if mockStaker.Response.CallCount("SetPoolTier") == 0 {
+		if mockStaker.Response.CallCount("SetPoolTier") != 1 {
 			t.Error("SetPoolTier was not called on the implementation")
 		}
 	}
@@ -421,7 +421,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 
 		// Assert
 		mockStaker := implementation.(*MockStaker)
-		if mockStaker.Response.CallCount("CreateExternalIncentive") == 0 {
+		if mockStaker.Response.CallCount("CreateExternalIncentive") != 1 {
 			t.Error("CreateExternalIncentive was not called on the implementation")
 		}
 	}
@@ -461,7 +461,7 @@ func TestGetDepositGnsAmount(t *testing.T) {
 		result := GetDepositGnsAmount()
 
 		// Assert
-		if mockStaker.Response.CallCount("GetDepositGnsAmount") == 0 {
+		if mockStaker.Response.CallCount("GetDepositGnsAmount") != 1 {
 			t.Error("GetDepositGnsAmount was not called on the implementation")
 		}
 		if result != tt.expected {
@@ -506,7 +506,7 @@ func TestGetPoolTier(t *testing.T) {
 		result := GetPoolTier(tt.poolPath)
 
 		// Assert
-		if mockStaker.Response.CallCount("GetPoolTier") == 0 {
+		if mockStaker.Response.CallCount("GetPoolTier") != 1 {
 			t.Error("GetPoolTier was not called on the implementation")
 		}
 		if result != tt.expected {
@@ -551,7 +551,7 @@ func TestIsStaked(t *testing.T) {
 		result := IsStaked(tt.positionId)
 
 		// Assert
-		if mockStaker.Response.CallCount("IsStaked") == 0 {
+		if mockStaker.Response.CallCount("IsStaked") != 1 {
 			t.Error("IsStaked was not called on the implementation")
 		}
 		if result != tt.expected {

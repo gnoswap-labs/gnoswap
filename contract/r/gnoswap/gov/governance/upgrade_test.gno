@@ -109,7 +109,7 @@ func TestProposeText(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("ProposeText") == 0 {
+			if mockGovernance.Response.CallCount("ProposeText") != 1 {
 				t.Error("ProposeText was not called on the implementation")
 			}
 		})
@@ -148,7 +148,7 @@ func TestProposeCommunityPoolSpend(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("ProposeCommunityPoolSpend") == 0 {
+			if mockGovernance.Response.CallCount("ProposeCommunityPoolSpend") != 1 {
 				t.Error("ProposeCommunityPoolSpend was not called on the implementation")
 			}
 		})
@@ -185,7 +185,7 @@ func TestProposeParameterChange(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("ProposeParameterChange") == 0 {
+			if mockGovernance.Response.CallCount("ProposeParameterChange") != 1 {
 				t.Error("ProposeParameterChange was not called on the implementation")
 			}
 		})
@@ -223,7 +223,7 @@ func TestVote(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("Vote") == 0 {
+			if mockGovernance.Response.CallCount("Vote") != 1 {
 				t.Error("Vote was not called on the implementation")
 			}
 		})
@@ -254,7 +254,7 @@ func TestExecute(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("Execute") == 0 {
+			if mockGovernance.Response.CallCount("Execute") != 1 {
 				t.Error("Execute was not called on the implementation")
 			}
 		})
@@ -285,7 +285,7 @@ func TestCancel(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("Cancel") == 0 {
+			if mockGovernance.Response.CallCount("Cancel") != 1 {
 				t.Error("Cancel was not called on the implementation")
 			}
 		})
@@ -328,7 +328,7 @@ func TestReconfigure(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("Reconfigure") == 0 {
+			if mockGovernance.Response.CallCount("Reconfigure") != 1 {
 				t.Error("Reconfigure was not called on the implementation")
 			}
 		})
@@ -359,7 +359,7 @@ func TestGetProposerByProposalId(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetProposerByProposalId") == 0 {
+			if mockGovernance.Response.CallCount("GetProposerByProposalId") != 1 {
 				t.Error("GetProposerByProposalId was not called on the implementation")
 			}
 		})
@@ -390,7 +390,7 @@ func TestGetProposalTypeByProposalId(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetProposalTypeByProposalId") == 0 {
+			if mockGovernance.Response.CallCount("GetProposalTypeByProposalId") != 1 {
 				t.Error("GetProposalTypeByProposalId was not called on the implementation")
 			}
 		})
@@ -421,7 +421,7 @@ func TestGetYeaByProposalId(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetYeaByProposalId") == 0 {
+			if mockGovernance.Response.CallCount("GetYeaByProposalId") != 1 {
 				t.Error("GetYeaByProposalId was not called on the implementation")
 			}
 		})
@@ -452,7 +452,7 @@ func TestGetNayByProposalId(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetNayByProposalId") == 0 {
+			if mockGovernance.Response.CallCount("GetNayByProposalId") != 1 {
 				t.Error("GetNayByProposalId was not called on the implementation")
 			}
 		})
@@ -483,7 +483,7 @@ func TestGetProposalById(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetProposalById") == 0 {
+			if mockGovernance.Response.CallCount("GetProposalById") != 1 {
 				t.Error("GetProposalById was not called on the implementation")
 			}
 		})
@@ -514,7 +514,7 @@ func TestGetVoteStatusFromProposalById(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetVoteStatusFromProposalById") == 0 {
+			if mockGovernance.Response.CallCount("GetVoteStatusFromProposalById") != 1 {
 				t.Error("GetVoteStatusFromProposalById was not called on the implementation")
 			}
 		})
@@ -547,7 +547,7 @@ func TestGetVoteByAddressFromProposalById(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetVoteByAddressFromProposalById") == 0 {
+			if mockGovernance.Response.CallCount("GetVoteByAddressFromProposalById") != 1 {
 				t.Error("GetVoteByAddressFromProposalById was not called on the implementation")
 			}
 		})
@@ -578,7 +578,7 @@ func TestGetConfigVersionByProposalId(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetConfigVersionByProposalId") == 0 {
+			if mockGovernance.Response.CallCount("GetConfigVersionByProposalId") != 1 {
 				t.Error("GetConfigVersionByProposalId was not called on the implementation")
 			}
 		})
@@ -609,7 +609,7 @@ func TestGetQuorumAmountByProposalId(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetQuorumAmountByProposalId") == 0 {
+			if mockGovernance.Response.CallCount("GetQuorumAmountByProposalId") != 1 {
 				t.Error("GetQuorumAmountByProposalId was not called on the implementation")
 			}
 		})
@@ -640,7 +640,7 @@ func TestGetTitleByProposalId(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetTitleByProposalId") == 0 {
+			if mockGovernance.Response.CallCount("GetTitleByProposalId") != 1 {
 				t.Error("GetTitleByProposalId was not called on the implementation")
 			}
 		})
@@ -671,7 +671,7 @@ func TestGetDescriptionByProposalId(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetDescriptionByProposalId") == 0 {
+			if mockGovernance.Response.CallCount("GetDescriptionByProposalId") != 1 {
 				t.Error("GetDescriptionByProposalId was not called on the implementation")
 			}
 		})
@@ -702,7 +702,7 @@ func TestGetExecutionStateByProposalId(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetExecutionStateByProposalId") == 0 {
+			if mockGovernance.Response.CallCount("GetExecutionStateByProposalId") != 1 {
 				t.Error("GetExecutionStateByProposalId was not called on the implementation")
 			}
 		})
@@ -731,7 +731,7 @@ func TestGetLatestConfig(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetLatestConfig") == 0 {
+			if mockGovernance.Response.CallCount("GetLatestConfig") != 1 {
 				t.Error("GetLatestConfig was not called on the implementation")
 			}
 		})
@@ -762,7 +762,7 @@ func TestGetConfig(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetConfig") == 0 {
+			if mockGovernance.Response.CallCount("GetConfig") != 1 {
 				t.Error("GetConfig was not called on the implementation")
 			}
 		})
@@ -795,7 +795,7 @@ func TestGetVoteWeight(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetVoteWeight") == 0 {
+			if mockGovernance.Response.CallCount("GetVoteWeight") != 1 {
 				t.Error("GetVoteWeight was not called on the implementation")
 			}
 		})
@@ -828,7 +828,7 @@ func TestGetVotedHeight(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetVotedHeight") == 0 {
+			if mockGovernance.Response.CallCount("GetVotedHeight") != 1 {
 				t.Error("GetVotedHeight was not called on the implementation")
 			}
 		})
@@ -861,7 +861,7 @@ func TestGetVotedAt(t *testing.T) {
 
 			// Assert
 			mockGovernance := implementation.(*MockGovernance)
-			if mockGovernance.Response.CallCount("GetVotedAt") == 0 {
+			if mockGovernance.Response.CallCount("GetVotedAt") != 1 {
 				t.Error("GetVotedAt was not called on the implementation")
 			}
 		})

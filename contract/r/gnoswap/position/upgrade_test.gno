@@ -262,7 +262,7 @@ func TestMint(t *testing.T) {
 
 		// Assert
 		mockPosition := implementation.(*MockPosition)
-		if mockPosition.Response.CallCount("Mint") == 0 {
+		if mockPosition.Response.CallCount("Mint") != 1 {
 			t.Error("Mint was not called on the implementation")
 		}
 	}
@@ -314,7 +314,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 
 		// Assert
 		mockPosition := implementation.(*MockPosition)
-		if mockPosition.Response.CallCount("IncreaseLiquidity") == 0 {
+		if mockPosition.Response.CallCount("IncreaseLiquidity") != 1 {
 			t.Error("IncreaseLiquidity was not called on the implementation")
 		}
 	}
@@ -366,7 +366,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 
 		// Assert
 		mockPosition := implementation.(*MockPosition)
-		if mockPosition.Response.CallCount("DecreaseLiquidity") == 0 {
+		if mockPosition.Response.CallCount("DecreaseLiquidity") != 1 {
 			t.Error("DecreaseLiquidity was not called on the implementation")
 		}
 	}
@@ -420,7 +420,7 @@ func TestReposition(t *testing.T) {
 
 		// Assert
 		mockPosition := implementation.(*MockPosition)
-		if mockPosition.Response.CallCount("Reposition") == 0 {
+		if mockPosition.Response.CallCount("Reposition") != 1 {
 			t.Error("Reposition was not called on the implementation")
 		}
 	}
@@ -464,7 +464,7 @@ func TestCollectFee(t *testing.T) {
 
 		// Assert
 		mockPosition := implementation.(*MockPosition)
-		if mockPosition.Response.CallCount("CollectFee") == 0 {
+		if mockPosition.Response.CallCount("CollectFee") != 1 {
 			t.Error("CollectFee was not called on the implementation")
 		}
 	}
@@ -508,7 +508,7 @@ func TestSetPositionOperator(t *testing.T) {
 
 		// Assert
 		mockPosition := implementation.(*MockPosition)
-		if mockPosition.Response.CallCount("SetPositionOperator") == 0 {
+		if mockPosition.Response.CallCount("SetPositionOperator") != 1 {
 			t.Error("SetPositionOperator was not called on the implementation")
 		}
 	}
@@ -552,7 +552,7 @@ func TestGetPosition(t *testing.T) {
 		GetPosition(tt.positionId)
 
 		// Assert
-		if mockPosition.Response.CallCount("GetPosition") == 0 {
+		if mockPosition.Response.CallCount("GetPosition") != 1 {
 			t.Error("GetPosition was not called on the implementation")
 		}
 	}
@@ -598,7 +598,7 @@ func TestIsBurned(t *testing.T) {
 		result := IsBurned(tt.positionId)
 
 		// Assert
-		if mockPosition.Response.CallCount("IsBurned") == 0 {
+		if mockPosition.Response.CallCount("IsBurned") != 1 {
 			t.Error("IsBurned was not called on the implementation")
 		}
 		if result != tt.expected {
@@ -647,7 +647,7 @@ func TestIsInRange(t *testing.T) {
 		result := IsInRange(tt.positionId)
 
 		// Assert
-		if mockPosition.Response.CallCount("IsInRange") == 0 {
+		if mockPosition.Response.CallCount("IsInRange") != 1 {
 			t.Error("IsInRange was not called on the implementation")
 		}
 		if result != tt.expected {
@@ -696,7 +696,7 @@ func TestGetPositionFeeGrowthInside0LastX128(t *testing.T) {
 		result := GetPositionFeeGrowthInside0LastX128(tt.positionId)
 
 		// Assert
-		if mockPosition.Response.CallCount("GetPositionFeeGrowthInside0LastX128") == 0 {
+		if mockPosition.Response.CallCount("GetPositionFeeGrowthInside0LastX128") != 1 {
 			t.Error("GetPositionFeeGrowthInside0LastX128 was not called on the implementation")
 		}
 		if result == nil {
@@ -745,7 +745,7 @@ func TestGetPositionFeeGrowthInside1LastX128(t *testing.T) {
 		result := GetPositionFeeGrowthInside1LastX128(tt.positionId)
 
 		// Assert
-		if mockPosition.Response.CallCount("GetPositionFeeGrowthInside1LastX128") == 0 {
+		if mockPosition.Response.CallCount("GetPositionFeeGrowthInside1LastX128") != 1 {
 			t.Error("GetPositionFeeGrowthInside1LastX128 was not called on the implementation")
 		}
 		if result == nil {
@@ -794,7 +794,7 @@ func TestGetPositionLiquidity(t *testing.T) {
 		result := GetPositionLiquidity(tt.positionId)
 
 		// Assert
-		if mockPosition.Response.CallCount("GetPositionLiquidity") == 0 {
+		if mockPosition.Response.CallCount("GetPositionLiquidity") != 1 {
 			t.Error("GetPositionLiquidity was not called on the implementation")
 		}
 		if result == nil {
@@ -843,7 +843,7 @@ func TestGetPositionOperator(t *testing.T) {
 		result := GetPositionOperator(tt.positionId)
 
 		// Assert
-		if mockPosition.Response.CallCount("GetPositionOperator") == 0 {
+		if mockPosition.Response.CallCount("GetPositionOperator") != 1 {
 			t.Error("GetPositionOperator was not called on the implementation")
 		}
 		if result != tt.expected {
@@ -892,7 +892,7 @@ func TestGetPositionPoolKey(t *testing.T) {
 		result := GetPositionPoolKey(tt.positionId)
 
 		// Assert
-		if mockPosition.Response.CallCount("GetPositionPoolKey") == 0 {
+		if mockPosition.Response.CallCount("GetPositionPoolKey") != 1 {
 			t.Error("GetPositionPoolKey was not called on the implementation")
 		}
 		if result != tt.expected {
@@ -941,7 +941,7 @@ func TestGetPositionTickLower(t *testing.T) {
 		result := GetPositionTickLower(tt.positionId)
 
 		// Assert
-		if mockPosition.Response.CallCount("GetPositionTickLower") == 0 {
+		if mockPosition.Response.CallCount("GetPositionTickLower") != 1 {
 			t.Error("GetPositionTickLower was not called on the implementation")
 		}
 		if result != tt.expected {
@@ -990,7 +990,7 @@ func TestGetPositionTickUpper(t *testing.T) {
 		result := GetPositionTickUpper(tt.positionId)
 
 		// Assert
-		if mockPosition.Response.CallCount("GetPositionTickUpper") == 0 {
+		if mockPosition.Response.CallCount("GetPositionTickUpper") != 1 {
 			t.Error("GetPositionTickUpper was not called on the implementation")
 		}
 		if result != tt.expected {
@@ -1039,7 +1039,7 @@ func TestGetPositionTokensOwed0(t *testing.T) {
 		result := GetPositionTokensOwed0(tt.positionId)
 
 		// Assert
-		if mockPosition.Response.CallCount("GetPositionTokensOwed0") == 0 {
+		if mockPosition.Response.CallCount("GetPositionTokensOwed0") != 1 {
 			t.Error("GetPositionTokensOwed0 was not called on the implementation")
 		}
 		if result == nil {
@@ -1088,7 +1088,7 @@ func TestGetPositionTokensOwed1(t *testing.T) {
 		result := GetPositionTokensOwed1(tt.positionId)
 
 		// Assert
-		if mockPosition.Response.CallCount("GetPositionTokensOwed1") == 0 {
+		if mockPosition.Response.CallCount("GetPositionTokensOwed1") != 1 {
 			t.Error("GetPositionTokensOwed1 was not called on the implementation")
 		}
 		if result == nil {
@@ -1139,7 +1139,7 @@ func TestGetUnclaimedFee(t *testing.T) {
 		fee0, fee1 := GetUnclaimedFee(tt.positionId)
 
 		// Assert
-		if mockPosition.Response.CallCount("GetUnclaimedFee") == 0 {
+		if mockPosition.Response.CallCount("GetUnclaimedFee") != 1 {
 			t.Error("GetUnclaimedFee was not called on the implementation")
 		}
 		if fee0 == nil || fee1 == nil {
@@ -1188,7 +1188,7 @@ func TestGetPositionOwner(t *testing.T) {
 		result := GetPositionOwner(tt.positionId)
 
 		// Assert
-		if mockPosition.Response.CallCount("GetPositionOwner") == 0 {
+		if mockPosition.Response.CallCount("GetPositionOwner") != 1 {
 			t.Error("GetPositionOwner was not called on the implementation")
 		}
 		if result != tt.expected {
@@ -1237,7 +1237,7 @@ func TestApiGetPosition(t *testing.T) {
 		result := ApiGetPosition(tt.positionId)
 
 		// Assert
-		if mockPosition.Response.CallCount("ApiGetPosition") == 0 {
+		if mockPosition.Response.CallCount("ApiGetPosition") != 1 {
 			t.Error("ApiGetPosition was not called on the implementation")
 		}
 		if result != tt.expected {
@@ -1286,7 +1286,7 @@ func TestApiGetPositionUnclaimedFeeByPositionID(t *testing.T) {
 		result := ApiGetPositionUnclaimedFeeByPositionID(tt.positionId)
 
 		// Assert
-		if mockPosition.Response.CallCount("ApiGetPositionUnclaimedFeeByPositionID") == 0 {
+		if mockPosition.Response.CallCount("ApiGetPositionUnclaimedFeeByPositionID") != 1 {
 			t.Error("ApiGetPositionUnclaimedFeeByPositionID was not called on the implementation")
 		}
 		if result != tt.expected {
