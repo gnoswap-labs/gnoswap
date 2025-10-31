@@ -230,7 +230,6 @@ func TestGrc20regHelper_Transfer(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testing.SetOriginCaller(tt.caller)
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			if tt.shouldAbort {
@@ -344,7 +343,6 @@ func TestGrc20regHelper_TransferFrom(t *testing.T) {
 			}
 
 			// Now perform TransferFrom as the caller
-			testing.SetOriginCaller(tt.caller)
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			if tt.shouldAbort {
@@ -427,7 +425,6 @@ func TestGrc20regHelper_Approve(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testing.SetOriginCaller(tt.caller)
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			if tt.shouldAbort {
@@ -495,7 +492,6 @@ func TestGrc20regHelper_SafeGRC20Transfer(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testing.SetOriginCaller(tt.caller)
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			if tt.shouldAbort {
@@ -574,13 +570,11 @@ func TestGrc20regHelper_SafeGRC20TransferFrom(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup approval if needed
 			if tt.setupApproval {
-				testing.SetOriginCaller(tt.from)
 				testing.SetRealm(testing.NewUserRealm(tt.from))
 				Approve(cross, tt.path, tt.caller, tt.approvalAmt)
 			}
 
 			// Now perform SafeGRC20TransferFrom as the caller
-			testing.SetOriginCaller(tt.caller)
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			if tt.shouldAbort {
@@ -644,7 +638,6 @@ func TestGrc20regHelper_SafeGRC20Approve(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testing.SetOriginCaller(tt.caller)
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			if tt.shouldAbort {
