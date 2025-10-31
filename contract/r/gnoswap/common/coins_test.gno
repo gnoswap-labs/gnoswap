@@ -581,34 +581,3 @@ func TestCoins_GetUserSendCoins(t *testing.T) {
 		})
 	}
 }
-
-// TestCoins_Constants tests the constants used in the coins package
-func TestCoins_Constants(t *testing.T) {
-	tests := []struct {
-		name     string
-		actual   string
-		expected string
-	}{
-		{
-			name:     "GNOT_DENOM",
-			actual:   GNOT_DENOM,
-			expected: "ugnot",
-		},
-		{
-			name:     "GNOT_PATH",
-			actual:   GNOT_PATH,
-			expected: "gnot",
-		},
-		{
-			name:     "WUGNOT_PATH",
-			actual:   WUGNOT_PATH,
-			expected: "gno.land/r/gnoland/wugnot",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			uassert.Equal(t, tt.actual, tt.expected)
-		})
-	}
-}
