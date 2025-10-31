@@ -58,6 +58,7 @@ func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			cleanup()
 
 			// when
 			err := setHaltLevel(tc.inputLevel)
@@ -81,6 +82,7 @@ func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 
 // Test GetHaltConfig function
 func TestHalt_GetHaltConfig(t *testing.T) {
+	cleanup()
 
 	// given - set a specific configuration
 	err := setHaltLevel(HaltLevelSafeMode)
@@ -185,6 +187,7 @@ func TestHalt_IsHalted(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			cleanup()
 
 			// given
 			err := setHaltLevel(tc.initialLevel)
@@ -260,6 +263,7 @@ func TestHalt_IndividualOperationStatus(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			cleanup()
 
 			// given
 			err := setHaltLevel(tc.initialLevel)
@@ -304,6 +308,7 @@ func TestHalt_GetHaltConfigJson(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			cleanup()
 
 			// given
 			err := setHaltLevel(tc.initialLevel)
@@ -369,6 +374,7 @@ func TestHalt_SetHaltLevel_WithAuthorization(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			cleanup()
 
 			testing.SetRealm(testing.NewUserRealm(tc.callerAddress))
 
@@ -453,6 +459,7 @@ func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			cleanup()
 
 			testing.SetRealm(testing.NewUserRealm(tc.callerAddress))
 
@@ -514,6 +521,7 @@ func TestHalt_IntegrationScenarios(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			cleanup()
 
 			// Set initial level
 			err := setHaltLevel(tc.initialLevel)
@@ -542,6 +550,7 @@ func TestHalt_IntegrationScenarios(t *testing.T) {
 // Test edge cases
 func TestHalt_EdgeCases(t *testing.T) {
 	t.Run("GetHaltConfig independence", func(t *testing.T) {
+		cleanup()
 
 		configByGetter := GetHaltConfig()
 
@@ -559,6 +568,7 @@ func TestHalt_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("IsHalted with no operations", func(t *testing.T) {
+		cleanup()
 		err := setHaltLevel(HaltLevelComplete)
 		uassert.NoError(t, err)
 
@@ -569,6 +579,7 @@ func TestHalt_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("Multiple halt level changes", func(t *testing.T) {
+		cleanup()
 
 		// Start with emergency
 		err := setHaltLevel(HaltLevelEmergency)
@@ -588,6 +599,7 @@ func TestHalt_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("HaltConfig Clone method", func(t *testing.T) {
+		cleanup()
 
 		original := newSafeModeConfig()
 		cloned := original.Clone()
@@ -607,6 +619,7 @@ func TestHalt_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("HaltConfig IsHalted method", func(t *testing.T) {
+		cleanup()
 
 		config := newNoneConfig()
 
@@ -834,4 +847,10 @@ func TestHalt_NewHaltStateManagerByConfig_Independence(t *testing.T) {
 			uassert.Equal(t, modifiedHalted, tc.modifyValue)
 		})
 	}
+}
+
+
+// Test helpers
+func cleanup() {
+	haltStates = newHaltStateManagerByConfig(newNoneConfig())
 }

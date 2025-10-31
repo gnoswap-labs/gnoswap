@@ -279,3 +279,53 @@ func TestGetters_isHaltedOperation(t *testing.T) {
 		})
 	}
 }
+
+func TestGetters_isHaltedOperation_InvalidOpType(t *testing.T) {
+	haltStates = newHaltStateManagerByConfig(getConfigByLevel(HaltLevelNone))
+
+	uassert.PanicsWithMessage(t, "invalid operation type: invalid_op", func() {
+		isHaltedOperation(OpType("invalid_op"))
+	})
+}
+
+func TestGetters_IsHalted_InvalidOpType(t *testing.T) {
+	tests := []struct {
+		name             string
+		opTypes          []OpType
+		expectedError    bool
+		expectedErrorMsg string
+	}{
+		{
+			name:             "Single invalid OpType",
+			opTypes:          []OpType{OpType("invalid_op")},
+			expectedError:    true,
+			expectedErrorMsg: "invalid operation type: invalid_op",
+		},
+		{
+			name:             "Valid and invalid OpTypes mixed",
+			opTypes:          []OpType{OpTypePool, OpType("invalid_op")},
+			expectedError:    true,
+			expectedErrorMsg: "invalid operation type: invalid_op",
+		},
+		{
+			name:          "All valid OpTypes",
+			opTypes:       []OpType{OpTypePool, OpTypePosition},
+			expectedError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			haltStates = newHaltStateManagerByConfig(getConfigByLevel(HaltLevelNone))
+			halted, err := IsHalted(tt.opTypes...)
+
+			if tt.expectedError {
+				uassert.Error(t, err)
+				uassert.ErrorContains(t, err, tt.expectedErrorMsg)
+				uassert.True(t, halted) // Should return true on error
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
