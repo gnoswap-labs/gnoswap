@@ -812,154 +812,141 @@ func TestSwapMath_ConsistencyChecks(t *testing.T) {
 
 func TestSwapMath_handleExactIn(t *testing.T) {
 	tests := []struct {
-		name            string
-		currentX96      *u256.Uint
-		targetX96       *u256.Uint
-		liquidity       *u256.Uint
-		amountRemaining *i256.Int
-		feePips         uint64
-		description     string
-		expectPriceMove bool
+		name                   string
+		zeroForOne             bool
+		currentX96             *u256.Uint
+		targetX96              *u256.Uint
+		liquidity              *u256.Uint
+		amountRemainingAbs     *u256.Uint
+		withoutFeeRateInPips   *u256.Uint
+		expectedSqrtNext       *u256.Uint
+		expectedAmountIn       *u256.Uint
 	}{
-		// Equality boundary cases
+		// Equality boundary cases - testing the condition: amountRemainingLessFee.Gte(amountIn)
 		{
-			name:            "amountRemainingLessFee_exactly_equals_amountIn",
-			currentX96:      encodePriceSqrtTest(t, "1", "1"),
-			targetX96:       encodePriceSqrtTest(t, "121", "100"),
-			liquidity:       u256.MustFromDecimal("2000000000000000000"),
-			amountRemaining: i256.MustFromDecimal("191691827470254872"),
-			feePips:         600,
-			description:     "amountRemainingLessFee == amountIn, should hit target exactly",
-			expectPriceMove: true,
+			name:                 "amountRemainingLessFee_exactly_equals_amountIn",
+			zeroForOne:           false, // price increasing
+			currentX96:           encodePriceSqrtTest(t, "1", "1"),
+			targetX96:            encodePriceSqrtTest(t, "121", "100"),
+			liquidity:            u256.MustFromDecimal("2000000000000000000"),
+			amountRemainingAbs:   u256.MustFromDecimal("191691827470254872"),
+			withoutFeeRateInPips: u256.NewUint(1000000 - 600), // 99.94%
+			expectedSqrtNext:     u256.MustFromDecimal("86817301926621333616440630103"), // partial move (doesn't reach target)
+			expectedAmountIn:     u256.MustFromDecimal("200000000000000000"), // amount needed to reach target
 		},
 		{
-			name:            "amountRemainingLessFee_slightly_above_amountIn",
-			currentX96:      encodePriceSqrtTest(t, "1", "1"),
-			targetX96:       encodePriceSqrtTest(t, "121", "100"),
-			liquidity:       u256.MustFromDecimal("2000000000000000000"),
-			amountRemaining: i256.MustFromDecimal("191691827470254873"),
-			feePips:         600,
-			description:     "amountRemainingLessFee > amountIn, should hit target exactly",
-			expectPriceMove: true,
+			name:                 "amountRemainingLessFee_slightly_above_amountIn",
+			zeroForOne:           false,
+			currentX96:           encodePriceSqrtTest(t, "1", "1"),
+			targetX96:            encodePriceSqrtTest(t, "121", "100"),
+			liquidity:            u256.MustFromDecimal("2000000000000000000"),
+			amountRemainingAbs:   u256.MustFromDecimal("191691827470254873"),
+			withoutFeeRateInPips: u256.NewUint(1000000 - 600),
+			expectedSqrtNext:     u256.MustFromDecimal("86817301926621333656054711360"), // partial move
+			expectedAmountIn:     u256.MustFromDecimal("200000000000000000"),
 		},
 		{
-			name:            "amountRemainingLessFee_slightly_below_amountIn",
-			currentX96:      encodePriceSqrtTest(t, "1", "1"),
-			targetX96:       encodePriceSqrtTest(t, "121", "100"),
-			liquidity:       u256.MustFromDecimal("2000000000000000000"),
-			amountRemaining: i256.MustFromDecimal("191691827470254871"),
-			feePips:         600,
-			description:     "amountRemainingLessFee < amountIn, should NOT hit target",
-			expectPriceMove: true,
+			name:                 "amountRemainingLessFee_slightly_below_amountIn",
+			zeroForOne:           false,
+			currentX96:           encodePriceSqrtTest(t, "1", "1"),
+			targetX96:            encodePriceSqrtTest(t, "121", "100"),
+			liquidity:            u256.MustFromDecimal("2000000000000000000"),
+			amountRemainingAbs:   u256.MustFromDecimal("191691827470254871"),
+			withoutFeeRateInPips: u256.NewUint(1000000 - 600),
+			expectedSqrtNext:     u256.MustFromDecimal("86817301926621333576826548846"), // partial move
+			expectedAmountIn:     u256.MustFromDecimal("200000000000000000"),
 		},
-		// Zero after fee case
+		// Zero after fee case - testing: amountRemainingLessFee.IsZero()
 		{
-			name:            "very_small_amount_becomes_zero_after_fee",
-			currentX96:      encodePriceSqrtTest(t, "1", "1"),
-			targetX96:       encodePriceSqrtTest(t, "121", "100"),
-			liquidity:       u256.MustFromDecimal("2000000000000000000"),
-			amountRemaining: i256.One(), // 1 unit
-			feePips:         3000,        // 0.3% fee: 1 * 997000 / 1000000 = 0 (rounds down)
-			description:     "Amount of 1 becomes 0 after fee deduction due to rounding",
-			expectPriceMove: false,
+			name:                 "very_small_amount_becomes_zero_after_fee",
+			zeroForOne:           false,
+			currentX96:           encodePriceSqrtTest(t, "1", "1"),
+			targetX96:            encodePriceSqrtTest(t, "121", "100"),
+			liquidity:            u256.MustFromDecimal("2000000000000000000"),
+			amountRemainingAbs:   u256.One(), // 1 unit
+			withoutFeeRateInPips: u256.NewUint(1000000 - 3000), // 99.7%: 1 * 997000 / 1000000 = 0
+			expectedSqrtNext:     encodePriceSqrtTest(t, "1", "1"), // no price move
+			expectedAmountIn:     u256.Zero(),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Logf("Testing: %s", tt.description)
-
 			// when
-			sqrtNext, amountIn, amountOut, feeAmount := SwapMathComputeSwapStep(
-				tt.currentX96, tt.targetX96, tt.liquidity, tt.amountRemaining, tt.feePips,
+			sqrtNext, amountIn := handleExactIn(
+				tt.zeroForOne,
+				tt.currentX96,
+				tt.targetX96,
+				tt.liquidity,
+				tt.amountRemainingAbs,
+				tt.withoutFeeRateInPips,
 			)
 
 			// then
-			if !tt.expectPriceMove {
-				// when amountRemainingLessFee is zero, price shouldn't move
-				uassert.Equal(t, tt.currentX96.ToString(), sqrtNext.ToString(),
-					"Price should not move when amount after fee is zero")
-				uassert.Equal(t, "0", amountIn.ToString(), "amountIn should be 0")
-				uassert.Equal(t, "0", amountOut.ToString(), "amountOut should be 0")
-			} else {
-				// Verify results are valid
-				uassert.True(t, amountIn.Gte(u256.Zero()), "amountIn should be >= 0")
-				uassert.True(t, amountOut.Gte(u256.Zero()), "amountOut should be >= 0")
-			}
-			uassert.True(t, feeAmount.Gte(u256.Zero()), "feeAmount should be >= 0")
-
-			t.Logf("sqrtNext: %s, amountIn: %s, amountOut: %s, feeAmount: %s",
-				sqrtNext.ToString(), amountIn.ToString(), amountOut.ToString(), feeAmount.ToString())
+			uassert.Equal(t, tt.expectedSqrtNext.ToString(), sqrtNext.ToString())
+			uassert.Equal(t, tt.expectedAmountIn.ToString(), amountIn.ToString())
 		})
 	}
 }
 
 func TestSwapMath_handleExactOut(t *testing.T) {
 	tests := []struct {
-		name            string
-		currentX96      *u256.Uint
-		targetX96       *u256.Uint
-		liquidity       *u256.Uint
-		amountRemaining *i256.Int
-		feePips         uint64
-		description     string
+		name               string
+		zeroForOne         bool
+		currentX96         *u256.Uint
+		targetX96          *u256.Uint
+		liquidity          *u256.Uint
+		amountRemainingAbs *u256.Uint
+		expectedSqrtNext   *u256.Uint
+		expectedAmountOut  *u256.Uint
 	}{
-		// Overcalculation case
+		// Testing condition: amountRemainingAbs.Gte(amountOut)
 		{
-			name:       "exactOut_calculated_exceeds_requested",
-			currentX96: encodePriceSqrtTest(t, "1", "1"),
-			targetX96:  encodePriceSqrtTest(t, "121", "100"),
-			liquidity:  u256.MustFromDecimal("2000000000000000000"),
-			// Request very small output that's less than what hitting target would produce
-			amountRemaining: i256.MustFromDecimal("-100"), // exactOut (negative)
-			feePips:         600,
-			description:     "Exact output request smaller than target would produce",
-		},
-		// Boundary conditions
-		{
-			name:            "exactOut_exactly_reaches_target",
-			currentX96:      encodePriceSqrtTest(t, "1", "1"),
-			targetX96:       encodePriceSqrtTest(t, "121", "100"),
-			liquidity:       u256.MustFromDecimal("2000000000000000000"),
-			amountRemaining: i256.MustFromDecimal("-500000000000000000"), // Large enough to hit target
-			feePips:         600,
-			description:     "Exact output large enough to reach target price",
+			name:               "requested_output_less_than_target_produces",
+			zeroForOne:         false, // price increasing
+			currentX96:         encodePriceSqrtTest(t, "1", "1"),
+			targetX96:          encodePriceSqrtTest(t, "121", "100"),
+			liquidity:          u256.MustFromDecimal("2000000000000000000"),
+			amountRemainingAbs: u256.MustFromDecimal("100"), // very small request
+			expectedSqrtNext:   u256.MustFromDecimal("79228162514264341554952076050"), // partial move
+			expectedAmountOut:  u256.MustFromDecimal("181818181818181818"), // amount to reach target
 		},
 		{
-			name:            "exactOut_partial_move_insufficient_liquidity",
-			currentX96:      encodePriceSqrtTest(t, "1", "1"),
-			targetX96:       encodePriceSqrtTest(t, "121", "100"),
-			liquidity:       u256.MustFromDecimal("2000000000000000000"),
-			amountRemaining: i256.MustFromDecimal("-50000000000000000"), // Too small to hit target
-			feePips:         600,
-			description:     "Exact output too small to reach target, partial move",
+			name:               "requested_output_exactly_reaches_target",
+			zeroForOne:         false,
+			currentX96:         encodePriceSqrtTest(t, "1", "1"),
+			targetX96:          encodePriceSqrtTest(t, "121", "100"),
+			liquidity:          u256.MustFromDecimal("2000000000000000000"),
+			amountRemainingAbs: u256.MustFromDecimal("500000000000000000"), // large enough to hit target
+			expectedSqrtNext:   u256.MustFromDecimal("87150978765690771352898345369"), // should hit target
+			expectedAmountOut:  u256.MustFromDecimal("181818181818181818"),
+		},
+		{
+			name:               "requested_output_exceeds_target",
+			zeroForOne:         false,
+			currentX96:         encodePriceSqrtTest(t, "1", "1"),
+			targetX96:          encodePriceSqrtTest(t, "121", "100"),
+			liquidity:          u256.MustFromDecimal("2000000000000000000"),
+			amountRemainingAbs: u256.MustFromDecimal("50000000000000000"),
+			expectedSqrtNext:   u256.MustFromDecimal("81259653860783935993378410602"), // partial move
+			expectedAmountOut:  u256.MustFromDecimal("181818181818181818"), // amount to reach target
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Logf("Testing: %s", tt.description)
-
 			// when
-			sqrtNext, amountIn, amountOut, feeAmount := SwapMathComputeSwapStep(
-				tt.currentX96, tt.targetX96, tt.liquidity, tt.amountRemaining, tt.feePips,
+			sqrtNext, amountOut := handleExactOut(
+				tt.zeroForOne,
+				tt.currentX96,
+				tt.targetX96,
+				tt.liquidity,
+				tt.amountRemainingAbs,
 			)
 
-			// then - verify basic invariants
-			requestedOut := tt.amountRemaining.Abs()
-			uassert.True(t, amountOut.Lte(requestedOut),
-				"amountOut should not exceed requested amount")
-			uassert.True(t, amountIn.Gt(u256.Zero()), "amountIn should be > 0")
-			uassert.True(t, amountOut.Gt(u256.Zero()), "amountOut should be > 0")
-			uassert.True(t, feeAmount.Gte(u256.Zero()), "feeAmount should be >= 0")
-
-			// Verify price moved in correct direction (!zeroForOne, so price should increase)
-			uassert.True(t, sqrtNext.Gte(tt.currentX96), "Price should increase for !zeroForOne")
-
-			t.Logf("Requested out: %s, Actual out: %s", requestedOut.ToString(), amountOut.ToString())
-			t.Logf("sqrtNext: %s", sqrtNext.ToString())
-
-			t.Logf("amountOut: %s", amountOut.ToString())
+			// then
+			uassert.Equal(t, tt.expectedSqrtNext.ToString(), sqrtNext.ToString())
+			uassert.Equal(t, tt.expectedAmountOut.ToString(), amountOut.ToString())
 		})
 	}
 }

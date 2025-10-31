@@ -3,8 +3,8 @@ package gnsmath
 import (
 	"testing"
 
-	"gno.land/p/nt/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/uassert"
 )
 
 func TestBitMath_BitMathMostSignificantBit(t *testing.T) {
@@ -841,4 +841,3 @@ func TestBitMath_ExhaustiveSmallRange(t *testing.T) {
 		}
 	}
 }
-
