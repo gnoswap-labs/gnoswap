@@ -1,6 +1,7 @@
 package access
 
 import (
+	"chain"
 	"chain/runtime"
 	"testing"
 
@@ -545,6 +546,35 @@ func TestAssertIsUser(t *testing.T) {
 			} else {
 				uassert.NotPanics(t, func() {
 					AssertIsUser(tt.realm)
+				})
+			}
+		})
+	}
+}
+
+func TestAssert_assertIsRBAC(t *testing.T) {
+	rbacAddress := chain.PackageAddress("gno.land/r/gnoswap/rbac")
+	unauthorizedAddr := address("g1unauthorized123456789")
+
+	tests := []struct {
+		name        string
+		caller      address
+		shouldPanic bool
+	}{
+		{"rbac package address", rbacAddress, false},
+		{"unauthorized address", unauthorizedAddr, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				expectedMsg := ufmt.Sprintf("unauthorized: caller %s is not rbac", tt.caller.String())
+				uassert.PanicsWithMessage(t, expectedMsg, func() {
+					assertIsRBAC(tt.caller)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					assertIsRBAC(tt.caller)
 				})
 			}
 		})
