@@ -13,13 +13,25 @@ func TestRegisterInitializer(t *testing.T) {
 		setup                func(t *testing.T)
 		initializer          func(s IGovStakerStore) IGovStaker
 		callerRealm          runtime.Realm
+		expectedVersion      string
 		expectedHasAbort     bool
 		expectedAbortMessage string
 	}{
 		{
-			name:        "register initializer is success",
-			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"),
-			initializer: makeMockInitializer("v1"),
+			name:            "register initializer is success",
+			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"),
+			initializer:     makeMockInitializer("v1"),
+			expectedVersion: "v1",
+		},
+		{
+			name: "register multiple different initializers",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+			},
+			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/new_version"),
+			initializer:     makeMockInitializer("new_version"),
+			expectedVersion: "v1",
 		},
 		{
 			name: "register initializer is failed by duplicate registration",
@@ -57,6 +69,9 @@ func TestRegisterInitializer(t *testing.T) {
 				})
 			} else {
 				RegisterInitializer(cross, tt.initializer)
+
+				impl := implementation.(*MockGovStaker)
+				uassert.Equal(t, impl.Version, tt.expectedVersion)
 			}
 		})
 	}
@@ -85,8 +100,15 @@ func TestDelegate(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
-			result := Delegate(cross, tt.to, tt.amount, tt.referrer)
-			_ = result
+
+			// Action
+			Delegate(cross, tt.to, tt.amount, tt.referrer)
+
+			// Assert
+			mockGovStaker := implementation.(*MockGovStaker)
+			if mockGovStaker.Response.CallCount("Delegate") == 0 {
+				t.Error("Delegate was not called on the implementation")
+			}
 		})
 	}
 }
@@ -112,8 +134,15 @@ func TestUndelegate(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
-			result := Undelegate(cross, tt.from, tt.amount)
-			_ = result
+
+			// Action
+			Undelegate(cross, tt.from, tt.amount)
+
+			// Assert
+			mockGovStaker := implementation.(*MockGovStaker)
+			if mockGovStaker.Response.CallCount("Undelegate") == 0 {
+				t.Error("Undelegate was not called on the implementation")
+			}
 		})
 	}
 }
@@ -141,8 +170,15 @@ func TestRedelegate(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
-			result := Redelegate(cross, tt.delegatee, tt.newDelegatee, tt.amount)
-			_ = result
+
+			// Action
+			Redelegate(cross, tt.delegatee, tt.newDelegatee, tt.amount)
+
+			// Assert
+			mockGovStaker := implementation.(*MockGovStaker)
+			if mockGovStaker.Response.CallCount("Redelegate") == 0 {
+				t.Error("Redelegate was not called on the implementation")
+			}
 		})
 	}
 }
@@ -164,8 +200,15 @@ func TestCollectUndelegatedGns(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
-			result := CollectUndelegatedGns(cross)
-			_ = result
+
+			// Action
+			CollectUndelegatedGns(cross)
+
+			// Assert
+			mockGovStaker := implementation.(*MockGovStaker)
+			if mockGovStaker.Response.CallCount("CollectUndelegatedGns") == 0 {
+				t.Error("CollectUndelegatedGns was not called on the implementation")
+			}
 		})
 	}
 }
@@ -187,7 +230,15 @@ func TestCollectReward(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
+
+			// Action
 			CollectReward(cross)
+
+			// Assert
+			mockGovStaker := implementation.(*MockGovStaker)
+			if mockGovStaker.Response.CallCount("CollectReward") == 0 {
+				t.Error("CollectReward was not called on the implementation")
+			}
 		})
 	}
 }
@@ -211,7 +262,15 @@ func TestCollectRewardFromLaunchPad(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
+
+			// Action
 			CollectRewardFromLaunchPad(cross, tt.to)
+
+			// Assert
+			mockGovStaker := implementation.(*MockGovStaker)
+			if mockGovStaker.Response.CallCount("CollectRewardFromLaunchPad") == 0 {
+				t.Error("CollectRewardFromLaunchPad was not called on the implementation")
+			}
 		})
 	}
 }
@@ -239,7 +298,15 @@ func TestSetAmountByProjectWallet(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
+
+			// Action
 			SetAmountByProjectWallet(cross, tt.addr, tt.amount, tt.add)
+
+			// Assert
+			mockGovStaker := implementation.(*MockGovStaker)
+			if mockGovStaker.Response.CallCount("SetAmountByProjectWallet") == 0 {
+				t.Error("SetAmountByProjectWallet was not called on the implementation")
+			}
 		})
 	}
 }
@@ -263,7 +330,15 @@ func TestCleanStakerDelegationSnapshotByAdmin(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
+
+			// Action
 			CleanStakerDelegationSnapshotByAdmin(cross, tt.threshold)
+
+			// Assert
+			mockGovStaker := implementation.(*MockGovStaker)
+			if mockGovStaker.Response.CallCount("CleanStakerDelegationSnapshotByAdmin") == 0 {
+				t.Error("CleanStakerDelegationSnapshotByAdmin was not called on the implementation")
+			}
 		})
 	}
 }
@@ -287,7 +362,15 @@ func TestSetUnDelegationLockupPeriodByAdmin(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
+
+			// Action
 			SetUnDelegationLockupPeriodByAdmin(cross, tt.period)
+
+			// Assert
+			mockGovStaker := implementation.(*MockGovStaker)
+			if mockGovStaker.Response.CallCount("SetUnDelegationLockupPeriodByAdmin") == 0 {
+				t.Error("SetUnDelegationLockupPeriodByAdmin was not called on the implementation")
+			}
 		})
 	}
 }
@@ -308,8 +391,14 @@ func TestGetTotalxGnsSupply(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
-			result := GetTotalxGnsSupply()
-			_ = result
+			// Action
+			GetTotalxGnsSupply()
+
+			// Assert
+			mockGovStaker := implementation.(*MockGovStaker)
+			if mockGovStaker.Response.CallCount("GetTotalxGnsSupply") == 0 {
+				t.Error("GetTotalxGnsSupply was not called on the implementation")
+			}
 		})
 	}
 }
@@ -330,8 +419,14 @@ func TestGetTotalVoteWeight(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
-			result := GetTotalVoteWeight()
-			_ = result
+			// Action
+			GetTotalVoteWeight()
+
+			// Assert
+			mockGovStaker := implementation.(*MockGovStaker)
+			if mockGovStaker.Response.CallCount("GetTotalVoteWeight") == 0 {
+				t.Error("GetTotalVoteWeight was not called on the implementation")
+			}
 		})
 	}
 }
@@ -352,8 +447,14 @@ func TestGetTotalDelegated(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
-			result := GetTotalDelegated()
-			_ = result
+			// Action
+			GetTotalDelegated()
+
+			// Assert
+			mockGovStaker := implementation.(*MockGovStaker)
+			if mockGovStaker.Response.CallCount("GetTotalDelegated") == 0 {
+				t.Error("GetTotalDelegated was not called on the implementation")
+			}
 		})
 	}
 }
@@ -374,8 +475,14 @@ func TestGetTotalLockedAmount(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
-			result := GetTotalLockedAmount()
-			_ = result
+			// Action
+			GetTotalLockedAmount()
+
+			// Assert
+			mockGovStaker := implementation.(*MockGovStaker)
+			if mockGovStaker.Response.CallCount("GetTotalLockedAmount") == 0 {
+				t.Error("GetTotalLockedAmount was not called on the implementation")
+			}
 		})
 	}
 }
@@ -396,8 +503,14 @@ func TestGetLockedAmount(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
-			result := GetLockedAmount()
-			_ = result
+			// Action
+			GetLockedAmount()
+
+			// Assert
+			mockGovStaker := implementation.(*MockGovStaker)
+			if mockGovStaker.Response.CallCount("GetLockedAmount") == 0 {
+				t.Error("GetLockedAmount was not called on the implementation")
+			}
 		})
 	}
 }
@@ -420,8 +533,14 @@ func TestGetDelegationSnapshots(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
-			result, ok := GetDelegationSnapshots(tt.snapshotTime)
-			_, _ = result, ok
+			// Action
+			GetDelegationSnapshots(tt.snapshotTime)
+
+			// Assert
+			mockGovStaker := implementation.(*MockGovStaker)
+			if mockGovStaker.Response.CallCount("GetDelegationSnapshots") == 0 {
+				t.Error("GetDelegationSnapshots was not called on the implementation")
+			}
 		})
 	}
 }
@@ -444,8 +563,14 @@ func TestGetClaimableRewardByAddress(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
-			result := GetClaimableRewardByAddress(tt.addr)
-			_ = result
+			// Action
+			GetClaimableRewardByAddress(tt.addr)
+
+			// Assert
+			mockGovStaker := implementation.(*MockGovStaker)
+			if mockGovStaker.Response.CallCount("GetClaimableRewardByAddress") == 0 {
+				t.Error("GetClaimableRewardByAddress was not called on the implementation")
+			}
 		})
 	}
 }
@@ -468,8 +593,14 @@ func TestGetClaimableRewardByLaunchpad(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
-			result := GetClaimableRewardByLaunchpad(tt.addr)
-			_ = result
+			// Action
+			GetClaimableRewardByLaunchpad(tt.addr)
+
+			// Assert
+			mockGovStaker := implementation.(*MockGovStaker)
+			if mockGovStaker.Response.CallCount("GetClaimableRewardByLaunchpad") == 0 {
+				t.Error("GetClaimableRewardByLaunchpad was not called on the implementation")
+			}
 		})
 	}
 }
@@ -492,8 +623,14 @@ func TestGetClaimableRewardByRewardID(t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
-			result := GetClaimableRewardByRewardID(tt.rewardID)
-			_ = result
+			// Action
+			GetClaimableRewardByRewardID(tt.rewardID)
+
+			// Assert
+			mockGovStaker := implementation.(*MockGovStaker)
+			if mockGovStaker.Response.CallCount("GetClaimableRewardByRewardID") == 0 {
+				t.Error("GetClaimableRewardByRewardID was not called on the implementation")
+			}
 		})
 	}
 }

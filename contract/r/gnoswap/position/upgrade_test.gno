@@ -15,13 +15,25 @@ func TestRegisterInitializer(t *testing.T) {
 		setup                func(t *testing.T)
 		initializer          func(s IPositionStore) IPosition
 		callerRealm          runtime.Realm
+		expectedVersion      string
 		expectedHasAbort     bool
 		expectedAbortMessage string
 	}{
 		{
-			name:        "register initializer is success",
-			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"),
-			initializer: makeMockInitializer("v1"),
+			name:            "register initializer is success",
+			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"),
+			initializer:     makeMockInitializer("v1"),
+			expectedVersion: "v1",
+		},
+		{
+			name: "register multiple different initializers",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+			},
+			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/position/new_version"),
+			initializer:     makeMockInitializer("new_version"),
+			expectedVersion: "v1",
 		},
 		{
 			name: "register initializer is failed by duplicate registration",
@@ -40,11 +52,6 @@ func TestRegisterInitializer(t *testing.T) {
 			initializer:          makeMockInitializer("v1"),
 			expectedHasAbort:     true,
 			expectedAbortMessage: "version_manager: caller is not in the domain path",
-		},
-		{
-			name:        "register multiple different initializers",
-			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"),
-			initializer: makeMockInitializer("v1"),
 		},
 	}
 
@@ -65,6 +72,9 @@ func TestRegisterInitializer(t *testing.T) {
 			})
 		} else {
 			RegisterInitializer(cross, tt.initializer)
+
+			impl := implementation.(*MockPosition)
+			uassert.Equal(t, impl.Version, tt.expectedVersion)
 		}
 	}
 }
@@ -76,6 +86,7 @@ func TestUpgradeImpl(t *testing.T) {
 		setup                func(t *testing.T)
 		packagePath          string
 		callerRealm          runtime.Realm
+		expectedVersion      string
 		expectedHasAbort     bool
 		expectedAbortMessage string
 	}{
@@ -84,25 +95,38 @@ func TestUpgradeImpl(t *testing.T) {
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
+
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/new_version"))
+				RegisterInitializer(cross, makeMockInitializer("new_version"))
 			},
-			packagePath: "gno.land/r/gnoswap/position/v1",
-			callerRealm: testing.NewUserRealm(adminAddr),
+			packagePath:     "gno.land/r/gnoswap/position/new_version",
+			callerRealm:     testing.NewUserRealm(adminAddr),
+			expectedVersion: "new_version",
 		},
 		{
 			name: "upgrade impl is failed by non-admin caller",
 			setup: func(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
 				RegisterInitializer(cross, makeMockInitializer("v1"))
+
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/new_version"))
+				RegisterInitializer(cross, makeMockInitializer("new_version"))
 			},
-			packagePath:          "gno.land/r/gnoswap/position/v1",
+			packagePath:          "gno.land/r/gnoswap/position/new_version",
 			callerRealm:          testing.NewCodeRealm("gno.land/r/gnoswap/invalid"),
+			expectedVersion:      "v1",
 			expectedHasAbort:     true,
 			expectedAbortMessage: "unauthorized: caller g1ute9mjth6la3nrkeaaj4ec0nh3ypj4ngy0jnjh is not admin",
 		},
 		{
-			name:                 "upgrade impl is failed by initializer not found",
+			name: "upgrade impl is failed by initializer not found",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+			},
 			packagePath:          "gno.land/r/gnoswap/position/nonexistent",
 			callerRealm:          testing.NewUserRealm(adminAddr),
+			expectedVersion:      "v1",
 			expectedHasAbort:     true,
 			expectedAbortMessage: "version_manager: initializer not found for package path:gno.land/r/gnoswap/position/nonexistent",
 		},
@@ -126,6 +150,9 @@ func TestUpgradeImpl(t *testing.T) {
 		} else {
 			UpgradeImpl(cross, tt.packagePath)
 		}
+
+		impl := implementation.(*MockPosition)
+		uassert.Equal(t, impl.Version, tt.expectedVersion)
 	}
 }
 

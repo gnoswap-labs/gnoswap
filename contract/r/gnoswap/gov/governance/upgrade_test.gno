@@ -19,13 +19,25 @@ func TestRegisterInitializer(t *testing.T) {
 		setup                func(t *testing.T)
 		initializer          func(s IGovernanceStore) IGovernance
 		callerRealm          runtime.Realm
+		expectedVersion      string
 		expectedHasAbort     bool
 		expectedAbortMessage string
 	}{
 		{
-			name:        "register initializer is success",
-			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"),
-			initializer: makeMockInitializer("v1"),
+			name:            "register initializer is success",
+			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"),
+			initializer:     makeMockInitializer("v1"),
+			expectedVersion: "v1",
+		},
+		{
+			name: "register multiple different initializers",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+			},
+			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/new_version"),
+			initializer:     makeMockInitializer("new_version"),
+			expectedVersion: "v1",
 		},
 		{
 			name: "register initializer is failed by duplicate registration",
@@ -63,6 +75,9 @@ func TestRegisterInitializer(t *testing.T) {
 				})
 			} else {
 				RegisterInitializer(cross, tt.initializer)
+
+				impl := implementation.(*MockGovernance)
+				uassert.Equal(t, impl.Version, tt.expectedVersion)
 			}
 		})
 	}
@@ -88,8 +103,15 @@ func TestProposeText(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := ProposeText(cross, tt.title, tt.description)
-			_ = result
+
+			// Action
+			ProposeText(cross, tt.title, tt.description)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("ProposeText") == 0 {
+				t.Error("ProposeText was not called on the implementation")
+			}
 		})
 	}
 }
@@ -120,8 +142,15 @@ func TestProposeCommunityPoolSpend(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := ProposeCommunityPoolSpend(cross, tt.title, tt.description, tt.to, tt.tokenPath, tt.amount)
-			_ = result
+
+			// Action
+			ProposeCommunityPoolSpend(cross, tt.title, tt.description, tt.to, tt.tokenPath, tt.amount)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("ProposeCommunityPoolSpend") == 0 {
+				t.Error("ProposeCommunityPoolSpend was not called on the implementation")
+			}
 		})
 	}
 }
@@ -150,8 +179,15 @@ func TestProposeParameterChange(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := ProposeParameterChange(cross, tt.title, tt.description, tt.numToExecute, tt.executions)
-			_ = result
+
+			// Action
+			ProposeParameterChange(cross, tt.title, tt.description, tt.numToExecute, tt.executions)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("ProposeParameterChange") == 0 {
+				t.Error("ProposeParameterChange was not called on the implementation")
+			}
 		})
 	}
 }
@@ -181,8 +217,15 @@ func TestVote(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := Vote(cross, tt.proposalId, tt.yes)
-			_ = result
+
+			// Action
+			Vote(cross, tt.proposalId, tt.yes)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("Vote") == 0 {
+				t.Error("Vote was not called on the implementation")
+			}
 		})
 	}
 }
@@ -205,8 +248,15 @@ func TestExecute(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := Execute(cross, tt.proposalId)
-			_ = result
+
+			// Action
+			Execute(cross, tt.proposalId)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("Execute") == 0 {
+				t.Error("Execute was not called on the implementation")
+			}
 		})
 	}
 }
@@ -229,32 +279,39 @@ func TestCancel(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := Cancel(cross, tt.proposalId)
-			_ = result
+
+			// Action
+			Cancel(cross, tt.proposalId)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("Cancel") == 0 {
+				t.Error("Cancel was not called on the implementation")
+			}
 		})
 	}
 }
 
 func TestReconfigure(t *testing.T) {
 	tests := []struct {
-		name                         string
-		votingStartDelay             int64
-		votingPeriod                 int64
+		name                          string
+		votingStartDelay              int64
+		votingPeriod                  int64
 		votingWeightSmoothingDuration int64
-		quorum                       int64
-		proposalCreationThreshold    int64
-		executionDelay               int64
-		executionWindow              int64
+		quorum                        int64
+		proposalCreationThreshold     int64
+		executionDelay                int64
+		executionWindow               int64
 	}{
 		{
-			name:                         "reconfigure is success",
-			votingStartDelay:             100,
-			votingPeriod:                 200,
+			name:                          "reconfigure is success",
+			votingStartDelay:              100,
+			votingPeriod:                  200,
 			votingWeightSmoothingDuration: 50,
-			quorum:                       1000,
-			proposalCreationThreshold:    500,
-			executionDelay:               150,
-			executionWindow:              300,
+			quorum:                        1000,
+			proposalCreationThreshold:     500,
+			executionDelay:                150,
+			executionWindow:               300,
 		},
 	}
 
@@ -265,8 +322,15 @@ func TestReconfigure(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := Reconfigure(cross, tt.votingStartDelay, tt.votingPeriod, tt.votingWeightSmoothingDuration, tt.quorum, tt.proposalCreationThreshold, tt.executionDelay, tt.executionWindow)
-			_ = result
+
+			// Action
+			Reconfigure(cross, tt.votingStartDelay, tt.votingPeriod, tt.votingWeightSmoothingDuration, tt.quorum, tt.proposalCreationThreshold, tt.executionDelay, tt.executionWindow)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("Reconfigure") == 0 {
+				t.Error("Reconfigure was not called on the implementation")
+			}
 		})
 	}
 }
@@ -289,8 +353,15 @@ func TestGetProposerByProposalId(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := GetProposerByProposalId(tt.id)
-			_ = result
+
+			// Action
+			GetProposerByProposalId(tt.id)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("GetProposerByProposalId") == 0 {
+				t.Error("GetProposerByProposalId was not called on the implementation")
+			}
 		})
 	}
 }
@@ -313,8 +384,15 @@ func TestGetProposalTypeByProposalId(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := GetProposalTypeByProposalId(tt.id)
-			_ = result
+
+			// Action
+			GetProposalTypeByProposalId(tt.id)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("GetProposalTypeByProposalId") == 0 {
+				t.Error("GetProposalTypeByProposalId was not called on the implementation")
+			}
 		})
 	}
 }
@@ -337,8 +415,15 @@ func TestGetYeaByProposalId(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := GetYeaByProposalId(tt.id)
-			_ = result
+
+			// Action
+			GetYeaByProposalId(tt.id)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("GetYeaByProposalId") == 0 {
+				t.Error("GetYeaByProposalId was not called on the implementation")
+			}
 		})
 	}
 }
@@ -361,8 +446,15 @@ func TestGetNayByProposalId(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := GetNayByProposalId(tt.id)
-			_ = result
+
+			// Action
+			GetNayByProposalId(tt.id)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("GetNayByProposalId") == 0 {
+				t.Error("GetNayByProposalId was not called on the implementation")
+			}
 		})
 	}
 }
@@ -385,8 +477,15 @@ func TestGetProposalById(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := GetProposalById(tt.id)
-			_ = result
+
+			// Action
+			GetProposalById(tt.id)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("GetProposalById") == 0 {
+				t.Error("GetProposalById was not called on the implementation")
+			}
 		})
 	}
 }
@@ -409,8 +508,15 @@ func TestGetVoteStatusFromProposalById(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := GetVoteStatusFromProposalById(tt.id)
-			_ = result
+
+			// Action
+			GetVoteStatusFromProposalById(tt.id)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("GetVoteStatusFromProposalById") == 0 {
+				t.Error("GetVoteStatusFromProposalById was not called on the implementation")
+			}
 		})
 	}
 }
@@ -435,8 +541,15 @@ func TestGetVoteByAddressFromProposalById(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := GetVoteByAddressFromProposalById(tt.addr, tt.id)
-			_ = result
+
+			// Action
+			GetVoteByAddressFromProposalById(tt.addr, tt.id)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("GetVoteByAddressFromProposalById") == 0 {
+				t.Error("GetVoteByAddressFromProposalById was not called on the implementation")
+			}
 		})
 	}
 }
@@ -459,8 +572,15 @@ func TestGetConfigVersionByProposalId(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := GetConfigVersionByProposalId(tt.id)
-			_ = result
+
+			// Action
+			GetConfigVersionByProposalId(tt.id)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("GetConfigVersionByProposalId") == 0 {
+				t.Error("GetConfigVersionByProposalId was not called on the implementation")
+			}
 		})
 	}
 }
@@ -483,8 +603,15 @@ func TestGetQuorumAmountByProposalId(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := GetQuorumAmountByProposalId(tt.id)
-			_ = result
+
+			// Action
+			GetQuorumAmountByProposalId(tt.id)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("GetQuorumAmountByProposalId") == 0 {
+				t.Error("GetQuorumAmountByProposalId was not called on the implementation")
+			}
 		})
 	}
 }
@@ -507,8 +634,15 @@ func TestGetTitleByProposalId(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := GetTitleByProposalId(tt.id)
-			_ = result
+
+			// Action
+			GetTitleByProposalId(tt.id)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("GetTitleByProposalId") == 0 {
+				t.Error("GetTitleByProposalId was not called on the implementation")
+			}
 		})
 	}
 }
@@ -531,8 +665,15 @@ func TestGetDescriptionByProposalId(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := GetDescriptionByProposalId(tt.id)
-			_ = result
+
+			// Action
+			GetDescriptionByProposalId(tt.id)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("GetDescriptionByProposalId") == 0 {
+				t.Error("GetDescriptionByProposalId was not called on the implementation")
+			}
 		})
 	}
 }
@@ -555,8 +696,15 @@ func TestGetExecutionStateByProposalId(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := GetExecutionStateByProposalId(tt.id)
-			_ = result
+
+			// Action
+			GetExecutionStateByProposalId(tt.id)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("GetExecutionStateByProposalId") == 0 {
+				t.Error("GetExecutionStateByProposalId was not called on the implementation")
+			}
 		})
 	}
 }
@@ -577,8 +725,15 @@ func TestGetLatestConfig(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := GetLatestConfig()
-			_ = result
+
+			// Action
+			GetLatestConfig()
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("GetLatestConfig") == 0 {
+				t.Error("GetLatestConfig was not called on the implementation")
+			}
 		})
 	}
 }
@@ -601,8 +756,15 @@ func TestGetConfig(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := GetConfig(tt.configVersion)
-			_ = result
+
+			// Action
+			GetConfig(tt.configVersion)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("GetConfig") == 0 {
+				t.Error("GetConfig was not called on the implementation")
+			}
 		})
 	}
 }
@@ -627,8 +789,15 @@ func TestGetVoteWeight(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := GetVoteWeight(tt.proposalID, tt.address)
-			_ = result
+
+			// Action
+			GetVoteWeight(tt.proposalID, tt.address)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("GetVoteWeight") == 0 {
+				t.Error("GetVoteWeight was not called on the implementation")
+			}
 		})
 	}
 }
@@ -653,8 +822,15 @@ func TestGetVotedHeight(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := GetVotedHeight(tt.proposalID, tt.address)
-			_ = result
+
+			// Action
+			GetVotedHeight(tt.proposalID, tt.address)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("GetVotedHeight") == 0 {
+				t.Error("GetVotedHeight was not called on the implementation")
+			}
 		})
 	}
 }
@@ -679,8 +855,15 @@ func TestGetVotedAt(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
-			result := GetVotedAt(tt.proposalID, tt.address)
-			_ = result
+
+			// Action
+			GetVotedAt(tt.proposalID, tt.address)
+
+			// Assert
+			mockGovernance := implementation.(*MockGovernance)
+			if mockGovernance.Response.CallCount("GetVotedAt") == 0 {
+				t.Error("GetVotedAt was not called on the implementation")
+			}
 		})
 	}
 }

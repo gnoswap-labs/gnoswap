@@ -13,13 +13,25 @@ func TestRegisterInitializer(t *testing.T) {
 		setup                func(t *testing.T)
 		initializer          func(s IProtocolFeeStore) IProtocolFee
 		callerRealm          runtime.Realm
+		expectedVersion      string
 		expectedHasAbort     bool
 		expectedAbortMessage string
 	}{
 		{
-			name:        "register initializer is success",
-			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1"),
-			initializer: makeMockInitializer("v1"),
+			name:            "register initializer is success",
+			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1"),
+			initializer:     makeMockInitializer("v1"),
+			expectedVersion: "v1",
+		},
+		{
+			name: "register multiple different initializers",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+			},
+			callerRealm:     testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/new_version"),
+			initializer:     makeMockInitializer("new_version"),
+			expectedVersion: "v1",
 		},
 		{
 			name: "register initializer is failed by duplicate registration",
@@ -57,6 +69,9 @@ func TestRegisterInitializer(t *testing.T) {
 				})
 			} else {
 				RegisterInitializer(cross, tt.initializer)
+
+				impl := implementation.(*MockProtocolFee)
+				uassert.Equal(t, impl.Version, tt.expectedVersion)
 			}
 		})
 	}
@@ -68,6 +83,7 @@ func TestUpgradeImpl(t *testing.T) {
 		setup                func(t *testing.T)
 		packagePath          string
 		callerRealm          runtime.Realm
+		expectedVersion      string
 		expectedHasAbort     bool
 		expectedAbortMessage string
 	}{
@@ -80,8 +96,9 @@ func TestUpgradeImpl(t *testing.T) {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v2"))
 				RegisterInitializer(cross, makeMockInitializer("v2"))
 			},
-			packagePath: "gno.land/r/gnoswap/protocol_fee/v2",
-			callerRealm: testing.NewUserRealm(adminAddr),
+			packagePath:     "gno.land/r/gnoswap/protocol_fee/v2",
+			callerRealm:     testing.NewUserRealm(adminAddr),
+			expectedVersion: "v2",
 		},
 		{
 			name: "upgrade impl is failed by non-admin caller",
@@ -94,6 +111,7 @@ func TestUpgradeImpl(t *testing.T) {
 			},
 			packagePath:          "gno.land/r/gnoswap/protocol_fee/v2",
 			callerRealm:          testing.NewUserRealm("g1test"),
+			expectedVersion:      "v1",
 			expectedHasAbort:     true,
 			expectedAbortMessage: "unauthorized: caller g1test is not admin",
 		},
@@ -105,6 +123,7 @@ func TestUpgradeImpl(t *testing.T) {
 			},
 			packagePath:          "gno.land/r/gnoswap/protocol_fee/v2",
 			callerRealm:          testing.NewUserRealm(adminAddr),
+			expectedVersion:      "v1",
 			expectedHasAbort:     true,
 			expectedAbortMessage: "version_manager: initializer not found for package path:gno.land/r/gnoswap/protocol_fee/v2",
 		},
@@ -127,6 +146,9 @@ func TestUpgradeImpl(t *testing.T) {
 			} else {
 				UpgradeImpl(cross, tt.packagePath)
 			}
+
+			impl := implementation.(*MockProtocolFee)
+			uassert.Equal(t, impl.Version, tt.expectedVersion)
 		})
 	}
 }
@@ -147,8 +169,15 @@ func TestDistributeProtocolFee(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-			result := DistributeProtocolFee(cross)
-			_ = result
+
+			// Action
+			DistributeProtocolFee(cross)
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("DistributeProtocolFee") == 0 {
+				t.Error("DistributeProtocolFee was not called on the implementation")
+			}
 		})
 	}
 }
@@ -171,7 +200,15 @@ func TestSetDevOpsPct(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
+
+			// Action
 			SetDevOpsPct(cross, tt.pct)
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("SetDevOpsPct") == 0 {
+				t.Error("SetDevOpsPct was not called on the implementation")
+			}
 		})
 	}
 }
@@ -194,7 +231,15 @@ func TestSetGovStakerPct(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
+
+			// Action
 			SetGovStakerPct(cross, tt.pct)
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("SetGovStakerPct") == 0 {
+				t.Error("SetGovStakerPct was not called on the implementation")
+			}
 		})
 	}
 }
@@ -219,7 +264,15 @@ func TestAddToProtocolFee(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
+
+			// Action
 			AddToProtocolFee(cross, tt.tokenPath, tt.amount)
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("AddToProtocolFee") == 0 {
+				t.Error("AddToProtocolFee was not called on the implementation")
+			}
 		})
 	}
 }
@@ -240,7 +293,15 @@ func TestClearTokenListWithAmount(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
+
+			// Action
 			ClearTokenListWithAmount(cross)
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("ClearTokenListWithAmount") == 0 {
+				t.Error("ClearTokenListWithAmount was not called on the implementation")
+			}
 		})
 	}
 }
@@ -261,7 +322,15 @@ func TestClearAccuTransferToGovStaker(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
+
+			// Action
 			ClearAccuTransferToGovStaker(cross)
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("ClearAccuTransferToGovStaker") == 0 {
+				t.Error("ClearAccuTransferToGovStaker was not called on the implementation")
+			}
 		})
 	}
 }
@@ -282,8 +351,15 @@ func TestGetDevOpsPct(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-			result := GetDevOpsPct()
-			_ = result
+
+			// Action
+			GetDevOpsPct()
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("GetDevOpsPct") == 0 {
+				t.Error("GetDevOpsPct was not called on the implementation")
+			}
 		})
 	}
 }
@@ -304,8 +380,15 @@ func TestGetGovStakerPct(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-			result := GetGovStakerPct()
-			_ = result
+
+			// Action
+			GetGovStakerPct()
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("GetGovStakerPct") == 0 {
+				t.Error("GetGovStakerPct was not called on the implementation")
+			}
 		})
 	}
 }
@@ -326,8 +409,15 @@ func TestGetTokenListWithAmount(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-			result := GetTokenListWithAmount()
-			_ = result
+
+			// Action
+			GetTokenListWithAmount()
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("GetTokenListWithAmount") == 0 {
+				t.Error("GetTokenListWithAmount was not called on the implementation")
+			}
 		})
 	}
 }
@@ -350,8 +440,15 @@ func TestGetAmountOfToken(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-			result := GetAmountOfToken(tt.tokenPath)
-			_ = result
+
+			// Action
+			GetAmountOfToken(tt.tokenPath)
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("GetAmountOfToken") == 0 {
+				t.Error("GetAmountOfToken was not called on the implementation")
+			}
 		})
 	}
 }
@@ -372,8 +469,15 @@ func TestGetAccuTransfersToGovStaker(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-			result := GetAccuTransfersToGovStaker()
-			_ = result
+
+			// Action
+			GetAccuTransfersToGovStaker()
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("GetAccuTransfersToGovStaker") == 0 {
+				t.Error("GetAccuTransfersToGovStaker was not called on the implementation")
+			}
 		})
 	}
 }
@@ -394,8 +498,15 @@ func TestGetAccuTransfersToDevOps(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-			result := GetAccuTransfersToDevOps()
-			_ = result
+
+			// Action
+			GetAccuTransfersToDevOps()
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("GetAccuTransfersToDevOps") == 0 {
+				t.Error("GetAccuTransfersToDevOps was not called on the implementation")
+			}
 		})
 	}
 }
@@ -418,8 +529,15 @@ func TestGetAccuTransferToGovStakerByTokenPath(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-			result := GetAccuTransferToGovStakerByTokenPath(tt.tokenPath)
-			_ = result
+
+			// Action
+			GetAccuTransferToGovStakerByTokenPath(tt.tokenPath)
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("GetAccuTransferToGovStakerByTokenPath") == 0 {
+				t.Error("GetAccuTransferToGovStakerByTokenPath was not called on the implementation")
+			}
 		})
 	}
 }
@@ -442,8 +560,15 @@ func TestGetAccuTransferToDevOpsByTokenPath(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-			result := GetAccuTransferToDevOpsByTokenPath(tt.tokenPath)
-			_ = result
+
+			// Action
+			GetAccuTransferToDevOpsByTokenPath(tt.tokenPath)
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("GetAccuTransferToDevOpsByTokenPath") == 0 {
+				t.Error("GetAccuTransferToDevOpsByTokenPath was not called on the implementation")
+			}
 		})
 	}
 }
@@ -466,8 +591,15 @@ func TestGetHistoryOfDistributedToGovStakerByTokenPath(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-			result := GetHistoryOfDistributedToGovStakerByTokenPath(tt.tokenPath)
-			_ = result
+
+			// Action
+			GetHistoryOfDistributedToGovStakerByTokenPath(tt.tokenPath)
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("GetHistoryOfDistributedToGovStakerByTokenPath") == 0 {
+				t.Error("GetHistoryOfDistributedToGovStakerByTokenPath was not called on the implementation")
+			}
 		})
 	}
 }
@@ -490,8 +622,15 @@ func TestGetHistoryOfDistributedToDevOpsByTokenPath(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-			result := GetHistoryOfDistributedToDevOpsByTokenPath(tt.tokenPath)
-			_ = result
+
+			// Action
+			GetHistoryOfDistributedToDevOpsByTokenPath(tt.tokenPath)
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("GetHistoryOfDistributedToDevOpsByTokenPath") == 0 {
+				t.Error("GetHistoryOfDistributedToDevOpsByTokenPath was not called on the implementation")
+			}
 		})
 	}
 }
@@ -512,8 +651,15 @@ func TestApiGetAccuTransferToGovStaker(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-			result := ApiGetAccuTransferToGovStaker()
-			_ = result
+
+			// Action
+			ApiGetAccuTransferToGovStaker()
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("ApiGetAccuTransferToGovStaker") == 0 {
+				t.Error("ApiGetAccuTransferToGovStaker was not called on the implementation")
+			}
 		})
 	}
 }
@@ -534,8 +680,15 @@ func TestApiGetAccuTransferToDevOps(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-			result := ApiGetAccuTransferToDevOps()
-			_ = result
+
+			// Action
+			ApiGetAccuTransferToDevOps()
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("ApiGetAccuTransferToDevOps") == 0 {
+				t.Error("ApiGetAccuTransferToDevOps was not called on the implementation")
+			}
 		})
 	}
 }
@@ -556,8 +709,15 @@ func TestApiGetHistoryTransferToGovStaker(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-			result := ApiGetHistoryTransferToGovStaker()
-			_ = result
+
+			// Action
+			ApiGetHistoryTransferToGovStaker()
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("ApiGetHistoryTransferToGovStaker") == 0 {
+				t.Error("ApiGetHistoryTransferToGovStaker was not called on the implementation")
+			}
 		})
 	}
 }
@@ -578,8 +738,15 @@ func TestApiGetHistoryTransferToDevOps(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-			result := ApiGetHistoryTransferToDevOps()
-			_ = result
+
+			// Action
+			ApiGetHistoryTransferToDevOps()
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("ApiGetHistoryTransferToDevOps") == 0 {
+				t.Error("ApiGetHistoryTransferToDevOps was not called on the implementation")
+			}
 		})
 	}
 }
@@ -600,8 +767,15 @@ func TestApiGetActualBalance(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-			result := ApiGetActualBalance()
-			_ = result
+
+			// Action
+			ApiGetActualBalance()
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("ApiGetActualBalance") == 0 {
+				t.Error("ApiGetActualBalance was not called on the implementation")
+			}
 		})
 	}
 }
@@ -622,8 +796,15 @@ func TestApiGetRecordedBalance(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-			result := ApiGetRecordedBalance()
-			_ = result
+
+			// Action
+			ApiGetRecordedBalance()
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("ApiGetRecordedBalance") == 0 {
+				t.Error("ApiGetRecordedBalance was not called on the implementation")
+			}
 		})
 	}
 }
@@ -644,8 +825,15 @@ func TestApiGetUnrecordedBalance(t *testing.T) {
 			RegisterInitializer(cross, makeMockInitializer("v1"))
 
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee"))
-			result := ApiGetUnrecordedBalance()
-			_ = result
+
+			// Action
+			ApiGetUnrecordedBalance()
+
+			// Assert
+			mockProtocolFee := implementation.(*MockProtocolFee)
+			if mockProtocolFee.Response.CallCount("ApiGetUnrecordedBalance") == 0 {
+				t.Error("ApiGetUnrecordedBalance was not called on the implementation")
+			}
 		})
 	}
 }
