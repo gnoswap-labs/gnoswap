@@ -20,6 +20,8 @@ func TestSwapMath_SwapMathComputeSwapStep(t *testing.T) {
 		sqrtNextX96                    *u256.Uint
 		chkSqrtNextX96                 func(sqrtRatioNextX96, priceTarget *u256.Uint)
 		amountIn, amountOut, feeAmount string
+		shouldPanic                    bool
+		panicMsg                       string
 	}{
 		// Basic swap
 		{
@@ -222,10 +224,60 @@ func TestSwapMath_SwapMathComputeSwapStep(t *testing.T) {
 			feeAmount: "1",
 		},
 		// Target price uses partial input amount (removed problematic test case)
+		// Fail cases
+		{
+			name:             "nil_inputs",
+			currentX96:       nil,
+			targetX96:        nil,
+			liquidity:        nil,
+			amountRemaining:  nil,
+			feePips:          600,
+			shouldPanic:      true,
+			panicMsg:         "SwapMathComputeSwapStep: invalid input",
+		},
+		{
+			name:             "fee_pips_exceeds_maximum",
+			currentX96:       encodePriceSqrtTest(t, "1", "1"),
+			targetX96:        encodePriceSqrtTest(t, "101", "100"),
+			liquidity:        u256.MustFromDecimal("2000000000000000000"),
+			amountRemaining:  i256.MustFromDecimal("1000000000000000000"),
+			feePips:          1000001,
+			shouldPanic:      true,
+			panicMsg:         "SwapMathComputeSwapStep: feePips must be less than or equal to 1000000",
+		},
+		{
+			name:             "sqrt_price_below_minimum",
+			currentX96:       u256.MustFromDecimal("2"),
+			targetX96:        u256.MustFromDecimal("1"),
+			liquidity:        u256.MustFromDecimal("1"),
+			amountRemaining:  i256.MustFromDecimal("100"),
+			feePips:          1,
+			shouldPanic:      true,
+			panicMsg:         errInvalidPoolSqrtPrice.Error(),
+		},
+		{
+			name:             "sqrt_price_above_maximum",
+			currentX96:       MAX_SQRT_RATIO,
+			targetX96:        new(u256.Uint).Add(MAX_SQRT_RATIO, u256.One()),
+			liquidity:        u256.MustFromDecimal("1"),
+			amountRemaining:  i256.MustFromDecimal("1000000000000000000"),
+			feePips:          1,
+			shouldPanic:      true,
+			panicMsg:         errInvalidPoolSqrtPrice.Error(),
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			if test.shouldPanic {
+				uassert.PanicsWithMessage(t, test.panicMsg, func() {
+					SwapMathComputeSwapStep(
+						test.currentX96, test.targetX96, test.liquidity, test.amountRemaining, test.feePips,
+					)
+				})
+				return
+			}
+
 			sqrtRatioNextX96, amountIn, amountOut, feeAmount := SwapMathComputeSwapStep(
 				test.currentX96, test.targetX96, test.liquidity, test.amountRemaining, test.feePips,
 			)
@@ -547,69 +599,6 @@ func TestSwapMath_PartialFill(t *testing.T) {
 				"Fee %s should equal remainder %s",
 				fee_amt.ToString(), expected_fee.ToString(),
 			)
-		})
-	}
-}
-
-func TestSwapMath_SwapMathComputeSwapStepFail(t *testing.T) {
-	tests := []struct {
-		name             string
-		current_x96      *u256.Uint
-		target_x96       *u256.Uint
-		liquidity        *u256.Uint
-		amount_remaining *i256.Int
-		fee_pips         uint64
-		expected_message string
-	}{
-		{
-			name:             "nil_inputs",
-			current_x96:      nil,
-			target_x96:       nil,
-			liquidity:        nil,
-			amount_remaining: nil,
-			fee_pips:         600,
-			expected_message: "SwapMathComputeSwapStep: invalid input",
-		},
-		{
-			name:             "fee_pips_exceeds_maximum",
-			current_x96:      encodePriceSqrtTest(t, "1", "1"),
-			target_x96:       encodePriceSqrtTest(t, "101", "100"),
-			liquidity:        u256.MustFromDecimal("2000000000000000000"),
-			amount_remaining: i256.MustFromDecimal("1000000000000000000"),
-			fee_pips:         1000001,
-			expected_message: "SwapMathComputeSwapStep: feePips must be less than or equal to 1000000",
-		},
-		{
-			name:             "sqrt_price_below_minimum",
-			current_x96:      u256.MustFromDecimal("2"),
-			target_x96:       u256.MustFromDecimal("1"),
-			liquidity:        u256.MustFromDecimal("1"),
-			amount_remaining: i256.MustFromDecimal("100"),
-			fee_pips:         1,
-			expected_message: errInvalidPoolSqrtPrice.Error(),
-		},
-		{
-			name:             "sqrt_price_above_maximum",
-			current_x96:      MAX_SQRT_RATIO,
-			target_x96:       new(u256.Uint).Add(MAX_SQRT_RATIO, u256.One()),
-			liquidity:        u256.MustFromDecimal("1"),
-			amount_remaining: i256.MustFromDecimal("1000000000000000000"),
-			fee_pips:         1,
-			expected_message: errInvalidPoolSqrtPrice.Error(),
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			uassert.PanicsWithMessage(t, test.expected_message, func() {
-				SwapMathComputeSwapStep(
-					test.current_x96,
-					test.target_x96,
-					test.liquidity,
-					test.amount_remaining,
-					test.fee_pips,
-				)
-			})
 		})
 	}
 }
