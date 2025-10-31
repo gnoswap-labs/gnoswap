@@ -23,24 +23,23 @@ Access control system manages permissions across all protocol contracts using ro
 ## Key Functions
 
 ### `GetAddress`
+
 Returns address for a role.
 
 ### `SetRoleAddresses`
+
 Updates all role addresses (RBAC only).
 
 ### `IsAuthorized`
+
 Checks if address has role.
 
 ### Assert Functions
+
 - `AssertIsAdmin` - Require admin role
 - `AssertIsGovernance` - Require governance
 - `AssertIsAdminOrGovernance` - Admin or governance
 - `AssertIsRouter`, `AssertIsPool`, etc.
-
-### Swap Whitelist
-- `UpdateSwapWhiteList` - Add to whitelist
-- `RemoveFromSwapWhiteList` - Remove from whitelist
-- `IsSwapWhitelisted` - Check whitelist status
 
 ## Usage
 
@@ -55,14 +54,10 @@ access.AssertIsAdminOrGovernance(caller)
 
 // Get role address
 addr, exists := access.GetAddress("router")
-
-// Manage whitelist
-access.UpdateSwapWhiteList(routerAddr)
 ```
 
 ## Security
 
 - Centralized permission management
 - Role-based authorization
-- Swap whitelist for approved routers
 - RBAC-only role updates

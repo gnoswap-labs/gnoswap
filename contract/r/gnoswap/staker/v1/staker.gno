@@ -30,11 +30,11 @@ const ZERO_ADDRESS = address("")
 var (
 	adminAddr         = getRoleAddress(prbac.ROLE_ADMIN)
 	devOpsAddr        = getRoleAddress(prbac.ROLE_DEVOPS)
-	communityPoolAddr = getRoleAddressWithVersion(prbac.ROLE_COMMUNITY_POOL, 1)
-	stakerAddr        = getRoleAddressWithVersion(prbac.ROLE_STAKER, 1)
-	govStakerAddr     = getRoleAddressWithVersion(prbac.ROLE_GOV_STAKER, 1)
-	protocolFeeAddr   = getRoleAddressWithVersion(prbac.ROLE_PROTOCOL_FEE, 1)
-	positionAddr      = getRoleAddressWithVersion(prbac.ROLE_POSITION, 1)
+	communityPoolAddr = getRoleAddress(prbac.ROLE_COMMUNITY_POOL)
+	stakerAddr        = getRoleAddress(prbac.ROLE_STAKER)
+	govStakerAddr     = getRoleAddress(prbac.ROLE_GOV_STAKER)
+	protocolFeeAddr   = getRoleAddress(prbac.ROLE_PROTOCOL_FEE)
+	positionAddr      = getRoleAddress(prbac.ROLE_POSITION)
 )
 
 // Deposits manages all staked positions.

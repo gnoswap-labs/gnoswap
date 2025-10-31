@@ -138,16 +138,6 @@ func getRoleAddress(role prbac.SystemRole) address {
 	return addr
 }
 
-// getRoleAddressWithVersion retrieves the address for a system role.
-func getRoleAddressWithVersion(role prbac.SystemRole, version int) address {
-	addr, exists := access.GetAddressWithVersion(role.String(), version)
-	if !exists {
-		return rbac.DefaultRoleAddresses[role]
-	}
-
-	return addr
-}
-
 // safeConvertToInt64 safely converts a *u256.Uint value to an int64, ensuring no overflow.
 //
 // This function attempts to convert the given *u256.Uint value to an int64. If the value exceeds

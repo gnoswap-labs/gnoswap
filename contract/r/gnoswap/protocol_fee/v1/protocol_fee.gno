@@ -206,7 +206,7 @@ func (pf *protocolFeeV1) ClearTokenListWithAmount() {
 	halt.AssertIsNotHaltedProtocolFee()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsGovStakerWithVersion(1, caller)
+	access.AssertIsGovStaker(caller)
 
 	pf.getProtocolFeeState().clearTokenListWithAmount()
 }
@@ -222,7 +222,7 @@ func (pf *protocolFeeV1) ClearAccuTransferToGovStaker() {
 	halt.AssertIsNotHaltedProtocolFee()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsGovStakerWithVersion(1, caller)
+	access.AssertIsGovStaker(caller)
 
 	pf.getProtocolFeeState().accuToGovStaker = avl.NewTree()
 }
