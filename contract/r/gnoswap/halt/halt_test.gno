@@ -17,6 +17,7 @@ func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 		inputLevel       HaltLevel
 		expectedConfig   HaltConfig
 		expectedHasError bool
+		expectedErrorMsg string
 	}{
 		{
 			name:             "Success set none level",
@@ -47,12 +48,14 @@ func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 			inputLevel:       HaltLevel("INVALID"),
 			expectedConfig:   nil,
 			expectedHasError: true,
+			expectedErrorMsg: "invalid halt level: INVALID",
 		},
 		{
 			name:             "Fail empty level",
 			inputLevel:       HaltLevel(""),
 			expectedConfig:   nil,
 			expectedHasError: true,
+			expectedErrorMsg: "invalid halt level: ",
 		},
 	}
 
@@ -66,6 +69,7 @@ func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 			// then
 			if tc.expectedHasError {
 				uassert.Error(t, err)
+				uassert.ErrorContains(t, err, tc.expectedErrorMsg)
 			} else {
 				uassert.NoError(t, err)
 
@@ -75,6 +79,97 @@ func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 					uassert.NoError(t, err)
 					uassert.Equal(t, actualHalted, expectedHalted)
 				}
+			}
+		})
+	}
+}
+
+func TestHalt_SetHaltLevel_Idempotency(t *testing.T) {
+	tests := []struct {
+		name  string
+		level HaltLevel
+	}{
+		{"Idempotent None level", HaltLevelNone},
+		{"Idempotent SafeMode level", HaltLevelSafeMode},
+		{"Idempotent Emergency level", HaltLevelEmergency},
+		{"Idempotent Complete level", HaltLevelComplete},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cleanup()
+
+			// given - set level once
+			err := setHaltLevel(tc.level)
+			uassert.NoError(t, err)
+			firstConfig := GetHaltConfig()
+
+			// when - set same level again
+			err = setHaltLevel(tc.level)
+			uassert.NoError(t, err)
+
+			// then - config should remain the same
+			secondConfig := GetHaltConfig()
+			for op, firstHalted := range firstConfig {
+				secondHalted, err := secondConfig.get(op)
+				uassert.NoError(t, err)
+				uassert.Equal(t, secondHalted, firstHalted)
+			}
+		})
+	}
+}
+
+func TestHalt_SetHaltLevel_Transitions(t *testing.T) {
+	tests := []struct {
+		name              string
+		transitions       []HaltLevel
+		expectedFinalOps  map[OpType]bool
+	}{
+		{
+			name:        "None -> Emergency -> SafeMode -> None",
+			transitions: []HaltLevel{HaltLevelNone, HaltLevelEmergency, HaltLevelSafeMode, HaltLevelNone},
+			expectedFinalOps: map[OpType]bool{
+				OpTypePool:       false,
+				OpTypeGovernance: false,
+				OpTypeWithdraw:   false,
+			},
+		},
+		{
+			name:        "SafeMode -> Complete -> Emergency",
+			transitions: []HaltLevel{HaltLevelSafeMode, HaltLevelComplete, HaltLevelEmergency},
+			expectedFinalOps: map[OpType]bool{
+				OpTypePool:       true,  // halted in Emergency
+				OpTypeGovernance: false, // not halted in Emergency
+				OpTypeWithdraw:   false, // not halted in Emergency
+			},
+		},
+		{
+			name:        "Complete -> None",
+			transitions: []HaltLevel{HaltLevelComplete, HaltLevelNone},
+			expectedFinalOps: map[OpType]bool{
+				OpTypePool:       false,
+				OpTypeGovernance: false,
+				OpTypeWithdraw:   false,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cleanup()
+
+			// when - apply all transitions
+			for _, level := range tc.transitions {
+				err := setHaltLevel(level)
+				uassert.NoError(t, err)
+			}
+
+			// then - verify final state
+			config := GetHaltConfig()
+			for op, expectedHalted := range tc.expectedFinalOps {
+				actualHalted, err := config.get(op)
+				uassert.NoError(t, err)
+				uassert.Equal(t, actualHalted, expectedHalted)
 			}
 		})
 	}
