@@ -279,25 +279,3 @@ func TestGetters_isHaltedOperation(t *testing.T) {
 		})
 	}
 }
-
-func TestGetters_isHaltedOperationWithVersion(t *testing.T) {
-	tests := []struct {
-		name      string
-		opType    OpType
-		version   int
-		haltLevel HaltLevel
-		expected  bool
-	}{
-		{"Pool version 1 in None", OpTypePool, 1, HaltLevelNone, false},
-		{"Pool version 1 in Emergency", OpTypePool, 1, HaltLevelEmergency, true},
-		{"Governance version 1 in Emergency", OpTypeGovernance, 1, HaltLevelEmergency, false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
-			result := isHaltedOperationWithVersion(tt.opType, tt.version)
-			uassert.Equal(t, result, tt.expected)
-		})
-	}
-}

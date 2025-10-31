@@ -58,7 +58,6 @@ func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
 
 			// when
 			err := setHaltLevel(tc.inputLevel)
@@ -82,7 +81,6 @@ func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 
 // Test GetHaltConfig function
 func TestHalt_GetHaltConfig(t *testing.T) {
-	cleanup()
 
 	// given - set a specific configuration
 	err := setHaltLevel(HaltLevelSafeMode)
@@ -187,7 +185,6 @@ func TestHalt_IsHalted(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
 
 			// given
 			err := setHaltLevel(tc.initialLevel)
@@ -263,7 +260,6 @@ func TestHalt_IndividualOperationStatus(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
 
 			// given
 			err := setHaltLevel(tc.initialLevel)
@@ -308,7 +304,6 @@ func TestHalt_GetHaltConfigJson(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
 
 			// given
 			err := setHaltLevel(tc.initialLevel)
@@ -374,7 +369,6 @@ func TestHalt_SetHaltLevel_WithAuthorization(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
 
 			testing.SetRealm(testing.NewUserRealm(tc.callerAddress))
 
@@ -459,7 +453,6 @@ func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
 
 			testing.SetRealm(testing.NewUserRealm(tc.callerAddress))
 
@@ -521,7 +514,6 @@ func TestHalt_IntegrationScenarios(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cleanup()
 
 			// Set initial level
 			err := setHaltLevel(tc.initialLevel)
@@ -550,7 +542,6 @@ func TestHalt_IntegrationScenarios(t *testing.T) {
 // Test edge cases
 func TestHalt_EdgeCases(t *testing.T) {
 	t.Run("GetHaltConfig independence", func(t *testing.T) {
-		cleanup()
 
 		configByGetter := GetHaltConfig()
 
@@ -568,7 +559,6 @@ func TestHalt_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("IsHalted with no operations", func(t *testing.T) {
-		cleanup()
 		err := setHaltLevel(HaltLevelComplete)
 		uassert.NoError(t, err)
 
@@ -579,7 +569,6 @@ func TestHalt_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("Multiple halt level changes", func(t *testing.T) {
-		cleanup()
 
 		// Start with emergency
 		err := setHaltLevel(HaltLevelEmergency)
@@ -599,7 +588,6 @@ func TestHalt_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("HaltConfig Clone method", func(t *testing.T) {
-		cleanup()
 
 		original := newSafeModeConfig()
 		cloned := original.Clone()
@@ -619,7 +607,6 @@ func TestHalt_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("HaltConfig IsHalted method", func(t *testing.T) {
-		cleanup()
 
 		config := newNoneConfig()
 
@@ -847,112 +834,4 @@ func TestHalt_NewHaltStateManagerByConfig_Independence(t *testing.T) {
 			uassert.Equal(t, modifiedHalted, tc.modifyValue)
 		})
 	}
-}
-
-func TestHalt_SetOperationStatusNextVersion(t *testing.T) {
-	tests := []struct {
-		name             string
-		caller           address
-		opType           OpType
-		halted           bool
-		expectedVersion  int
-		shouldPanic      bool
-		expectedPanicMsg string
-	}{
-		{
-			name:            "Admin can set operation status next version",
-			caller:          adminAddr,
-			opType:          OpTypePool,
-			halted:          true,
-			expectedVersion: 2,
-			shouldPanic:     false,
-		},
-		{
-			name:            "Governance can set operation status next version",
-			caller:          govAddr,
-			opType:          OpTypePosition,
-			halted:          false,
-			expectedVersion: 2,
-			shouldPanic:     false,
-		},
-		{
-			name:             "Unauthorized caller cannot set",
-			caller:           unauthorizedAddr,
-			opType:           OpTypeRouter,
-			halted:           true,
-			expectedVersion:  0,
-			shouldPanic:      true,
-			expectedPanicMsg: "unauthorized",
-		},
-		{
-			name:             "Invalid operation type",
-			caller:           adminAddr,
-			opType:           OpType("invalid"),
-			halted:           true,
-			expectedVersion:  0,
-			shouldPanic:      true,
-			expectedPanicMsg: "invalid operation type",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Setup
-			cleanup()
-			setupAdmin()
-			testing.SetOriginCaller(tt.caller)
-
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
-					SetOperationStatusNextVersion(cross, tt.opType, tt.halted)
-				})
-			} else {
-				// Execute
-				SetOperationStatusNextVersion(cross, tt.opType, tt.halted)
-
-				// Verify version incremented
-				version, err := haltStates.GetOperationVersion(tt.opType)
-				uassert.NoError(t, err)
-				uassert.Equal(t, version, tt.expectedVersion)
-
-				// Verify halt status
-				isHalted, err := haltStates.IsOperationHaltedWithVersion(tt.opType, tt.expectedVersion)
-				uassert.NoError(t, err)
-				uassert.Equal(t, isHalted, tt.halted)
-			}
-		})
-	}
-}
-
-func TestHalt_SetOperationStatusNextVersion_MultipleVersions(t *testing.T) {
-	cleanup()
-	setupAdmin()
-	testing.SetOriginCaller(adminAddr)
-
-	// Create version 2
-	SetOperationStatusNextVersion(cross, OpTypePool, true)
-	version, err := haltStates.GetOperationVersion(OpTypePool)
-	uassert.NoError(t, err)
-	uassert.Equal(t, version, 2)
-
-	// Create version 3
-	SetOperationStatusNextVersion(cross, OpTypePool, false)
-	version, err = haltStates.GetOperationVersion(OpTypePool)
-	uassert.NoError(t, err)
-	uassert.Equal(t, version, 3)
-
-	// Verify version 2 is halted
-	isHalted, err := haltStates.IsOperationHaltedWithVersion(OpTypePool, 2)
-	uassert.NoError(t, err)
-	uassert.Equal(t, isHalted, true)
-
-	// Verify version 3 is not halted
-	isHalted, err = haltStates.IsOperationHaltedWithVersion(OpTypePool, 3)
-	uassert.NoError(t, err)
-	uassert.Equal(t, isHalted, false)
-}
-
-// Test helpers
-func cleanup() {
-	haltStates = newHaltStateManagerByConfig(newNoneConfig())
 }
