@@ -20,7 +20,8 @@ func TestGetters_IsHaltedPool(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 			result := IsHaltedPool()
 			uassert.Equal(t, result, tt.expected)
 		})
@@ -41,7 +42,8 @@ func TestGetters_IsHaltedPosition(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 			result := IsHaltedPosition()
 			uassert.Equal(t, result, tt.expected)
 		})
@@ -62,7 +64,8 @@ func TestGetters_IsHaltedProtocolFee(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 			result := IsHaltedProtocolFee()
 			uassert.Equal(t, result, tt.expected)
 		})
@@ -83,7 +86,8 @@ func TestGetters_IsHaltedRouter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 			result := IsHaltedRouter()
 			uassert.Equal(t, result, tt.expected)
 		})
@@ -104,7 +108,8 @@ func TestGetters_IsHaltedStaker(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 			result := IsHaltedStaker()
 			uassert.Equal(t, result, tt.expected)
 		})
@@ -125,7 +130,8 @@ func TestGetters_IsHaltedLaunchpad(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 			result := IsHaltedLaunchpad()
 			uassert.Equal(t, result, tt.expected)
 		})
@@ -146,7 +152,8 @@ func TestGetters_IsHaltedGovernance(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 			result := IsHaltedGovernance()
 			uassert.Equal(t, result, tt.expected)
 		})
@@ -167,7 +174,8 @@ func TestGetters_IsHaltedGovStaker(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 			result := IsHaltedGovStaker()
 			uassert.Equal(t, result, tt.expected)
 		})
@@ -188,7 +196,8 @@ func TestGetters_IsHaltedXGns(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 			result := IsHaltedXGns()
 			uassert.Equal(t, result, tt.expected)
 		})
@@ -209,7 +218,8 @@ func TestGetters_IsHaltedCommunityPool(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 			result := IsHaltedCommunityPool()
 			uassert.Equal(t, result, tt.expected)
 		})
@@ -230,7 +240,8 @@ func TestGetters_IsHaltedEmission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 			result := IsHaltedEmission()
 			uassert.Equal(t, result, tt.expected)
 		})
@@ -251,7 +262,8 @@ func TestGetters_IsHaltedWithdraw(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 			result := IsHaltedWithdraw()
 			uassert.Equal(t, result, tt.expected)
 		})
@@ -273,7 +285,8 @@ func TestGetters_isHaltedOperation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 			result := isHaltedOperation(tt.opType)
 			uassert.Equal(t, result, tt.expected)
 		})
@@ -281,7 +294,8 @@ func TestGetters_isHaltedOperation(t *testing.T) {
 }
 
 func TestGetters_isHaltedOperation_InvalidOpType(t *testing.T) {
-	haltStates = newHaltStateManagerByConfig(getConfigByLevel(HaltLevelNone))
+	err := setHaltLevel(HaltLevelNone)
+	uassert.NoError(t, err)
 
 	uassert.PanicsWithMessage(t, "invalid operation type: invalid_op", func() {
 		isHaltedOperation(OpType("invalid_op"))
@@ -316,7 +330,8 @@ func TestGetters_IsHalted_InvalidOpType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(HaltLevelNone))
+			err := setHaltLevel(HaltLevelNone)
+	uassert.NoError(t, err)
 			halted, err := IsHalted(tt.opTypes...)
 
 			if tt.expectedError {

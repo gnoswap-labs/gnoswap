@@ -21,7 +21,8 @@ func TestAssert_AssertIsNotHaltedPool(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, "halted: pool", func() {
@@ -50,7 +51,8 @@ func TestAssert_AssertIsNotHaltedPosition(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, "halted: position", func() {
@@ -79,7 +81,8 @@ func TestAssert_AssertIsNotHaltedProtocolFee(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, "halted: protocol_fee", func() {
@@ -108,7 +111,8 @@ func TestAssert_AssertIsNotHaltedRouter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, "halted: router", func() {
@@ -137,7 +141,8 @@ func TestAssert_AssertIsNotHaltedStaker(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, "halted: staker", func() {
@@ -166,7 +171,8 @@ func TestAssert_AssertIsNotHaltedLaunchpad(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, "halted: launchpad", func() {
@@ -195,7 +201,8 @@ func TestAssert_AssertIsNotHaltedGovernance(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, "halted: governance", func() {
@@ -224,7 +231,8 @@ func TestAssert_AssertIsNotHaltedGovStaker(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, "halted: gov_staker", func() {
@@ -253,7 +261,8 @@ func TestAssert_AssertIsNotHaltedXGns(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, "halted: xgns", func() {
@@ -282,7 +291,8 @@ func TestAssert_AssertIsNotHaltedCommunityPool(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, "halted: community_pool", func() {
@@ -311,7 +321,8 @@ func TestAssert_AssertIsNotHaltedEmission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, "halted: emission", func() {
@@ -340,7 +351,8 @@ func TestAssert_AssertIsNotHaltedWithdraw(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, "halted: withdraw", func() {
@@ -370,7 +382,8 @@ func TestAssert_AssertIsNotHaltedOperation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
 				expectedMsg := "halted: " + tt.opType.String()
@@ -401,7 +414,8 @@ func TestAssert_AssertIsNotHalted(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			haltStates = newHaltStateManagerByConfig(getConfigByLevel(tt.haltLevel))
+			err := setHaltLevel(tt.haltLevel)
+			uassert.NoError(t, err)
 
 			if tt.shouldPanic {
 			} else {
@@ -410,21 +424,5 @@ func TestAssert_AssertIsNotHalted(t *testing.T) {
 				})
 			}
 		})
-	}
-}
-
-// Helper function to get config by halt level
-func getConfigByLevel(level HaltLevel) HaltConfig {
-	switch level {
-	case HaltLevelNone:
-		return newNoneConfig()
-	case HaltLevelSafeMode:
-		return newSafeModeConfig()
-	case HaltLevelEmergency:
-		return newEmergencyConfig()
-	case HaltLevelComplete:
-		return newCompleteConfig()
-	default:
-		return newNoneConfig()
 	}
 }
