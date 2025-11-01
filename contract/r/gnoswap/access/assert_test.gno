@@ -5,6 +5,7 @@ import (
 	"chain/runtime"
 	"testing"
 
+	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 
@@ -21,9 +22,9 @@ func TestAssertIsAdminOrGovernance(t *testing.T) {
 		roleAddresses = originalRoles
 	}()
 
-	adminAddr := address("g1admin123456789abcdef")
-	govAddr := address("g1governance123456789a")
-	unauthorizedAddr := address("g1unauthorized123456789")
+	adminAddr := testutils.TestAddress("admin")
+	govAddr := testutils.TestAddress("governance")
+	unauthorizedAddr := testutils.TestAddress("unauthorized")
 
 	tests := []struct {
 		name        string
@@ -102,18 +103,18 @@ func TestAssertFunctions(t *testing.T) {
 	}()
 
 	// Test addresses
-	adminAddr := address("g1admin123456789abcdef")
-	govAddr := address("g1governance123456789a")
-	routerAddr := address("g1router123456789abcdef")
-	poolAddr := address("g1pool1234567890abcdef")
-	positionAddr := address("g1position123456789abcd")
-	stakerAddr := address("g1staker123456789abcdef")
-	launchpadAddr := address("g1launchpad123456789ab")
-	emissionAddr := address("g1emission123456789abc")
-	protocolFeeAddr := address("g1protocolfee123456789")
-	xgnsAddr := address("g1xgns1234567890abcdef")
-	govStakerAddr := address("g1govstaker123456789ab")
-	unauthorizedAddr := address("g1unauthorized123456789")
+	adminAddr := testutils.TestAddress("admin")
+	govAddr := testutils.TestAddress("governance")
+	routerAddr := testutils.TestAddress("router")
+	poolAddr := testutils.TestAddress("pool")
+	positionAddr := testutils.TestAddress("position")
+	stakerAddr := testutils.TestAddress("staker")
+	launchpadAddr := testutils.TestAddress("launchpad")
+	emissionAddr := testutils.TestAddress("emission")
+	protocolFeeAddr := testutils.TestAddress("protocolfee")
+	xgnsAddr := testutils.TestAddress("xgns")
+	govStakerAddr := testutils.TestAddress("govstaker")
+	unauthorizedAddr := testutils.TestAddress("unauthorized")
 
 	tests := []struct {
 		name           string
@@ -314,8 +315,8 @@ func TestAssertIsAuthorized(t *testing.T) {
 		roleAddresses = originalRoles
 	}()
 
-	authorizedAddr := address("g1authorized12345678ab")
-	unauthorizedAddr := address("g1unauthorized123456789")
+	authorizedAddr := testutils.TestAddress("authorized")
+	unauthorizedAddr := testutils.TestAddress("unauthorized")
 	testRole := "test_role"
 
 	tests := []struct {
@@ -397,10 +398,10 @@ func TestAssertHasAnyRole(t *testing.T) {
 		roleAddresses = originalRoles
 	}()
 
-	adminAddr := address("g1admin123456789abcdef")
-	routerAddr := address("g1router123456789abcde")
-	unauthorizedAddr := address("g1unauthorized123456789")
-	poolAddr := address("g1pool1234567890abcdef")
+	adminAddr := testutils.TestAddress("admin")
+	routerAddr := testutils.TestAddress("router")
+	unauthorizedAddr := testutils.TestAddress("unauthorized")
+	poolAddr := testutils.TestAddress("pool")
 
 	tests := []struct {
 		name        string
@@ -526,7 +527,7 @@ func TestAssertIsUser(t *testing.T) {
 	}{
 		{
 			name:        "user realm",
-			realm:       testing.NewUserRealm(address("g1user1234567890abcdef")),
+			realm:       testing.NewUserRealm(testutils.TestAddress("user")),
 			shouldPanic: false,
 		},
 		{
@@ -554,7 +555,7 @@ func TestAssertIsUser(t *testing.T) {
 
 func TestAssert_assertIsRBAC(t *testing.T) {
 	rbacAddress := chain.PackageAddress("gno.land/r/gnoswap/rbac")
-	unauthorizedAddr := address("g1unauthorized123456789")
+	unauthorizedAddr := testutils.TestAddress("unauthorized")
 
 	tests := []struct {
 		name        string

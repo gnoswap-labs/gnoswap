@@ -10,7 +10,7 @@ import (
 
 func TestGetAddress(t *testing.T) {
 	// Setup test data
-	testAddr := address("g1test123456789abcdef")
+	testAddr := testutils.TestAddress("test")
 	testRole := "test_role"
 
 	// Save original state
@@ -115,23 +115,23 @@ func TestGetRoleAddresses(t *testing.T) {
 		{
 			name: "single role",
 			setupRoles: map[string]address{
-				"role1": address("g1test111111111111111"),
+				"role1": testutils.TestAddress("role1"),
 			},
 			expected: map[string]address{
-				"role1": address("g1test111111111111111"),
+				"role1": testutils.TestAddress("role1"),
 			},
 		},
 		{
 			name: "multiple roles",
 			setupRoles: map[string]address{
-				"role1": address("g1test111111111111111"),
-				"role2": address("g1test222222222222222"),
-				"role3": address("g1test333333333333333"),
+				"role1": testutils.TestAddress("role1"),
+				"role2": testutils.TestAddress("role2"),
+				"role3": testutils.TestAddress("role3"),
 			},
 			expected: map[string]address{
-				"role1": address("g1test111111111111111"),
-				"role2": address("g1test222222222222222"),
-				"role3": address("g1test333333333333333"),
+				"role1": testutils.TestAddress("role1"),
+				"role2": testutils.TestAddress("role2"),
+				"role3": testutils.TestAddress("role3"),
 			},
 		},
 	}
@@ -171,7 +171,7 @@ func TestGetRoleAddresses(t *testing.T) {
 			}
 
 			// Verify original map is not modified by modifying returned map
-			addresses["new_role"] = address("g1new123456789abcdef")
+			addresses["new_role"] = testutils.TestAddress("new")
 			if len(roleAddresses) != len(tt.setupRoles) {
 				t.Errorf("Original map should not be modified")
 			}
@@ -180,8 +180,8 @@ func TestGetRoleAddresses(t *testing.T) {
 }
 
 func TestIsAuthorized(t *testing.T) {
-	testAddr := address("g1test123456789abcdef")
-	otherAddr := address("g1other123456789abcde")
+	testAddr := testutils.TestAddress("test")
+	otherAddr := testutils.TestAddress("other")
 	testRole := "test_role"
 
 	// Save original state
@@ -423,7 +423,7 @@ func TestRemoveRole(t *testing.T) {
 
 func TestAccess_MustGetAddress(t *testing.T) {
 	testRole := "test_role"
-	testAddr := address("g1test123456789abcdef")
+	testAddr := testutils.TestAddress("test")
 
 	// Save original state
 	originalRoles := make(map[string]address)
