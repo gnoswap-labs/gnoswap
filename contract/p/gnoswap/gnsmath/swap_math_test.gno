@@ -822,7 +822,6 @@ func TestSwapMath_handleExactIn(t *testing.T) {
 		expectedSqrtNext       *u256.Uint
 		expectedAmountIn       *u256.Uint
 	}{
-		// Zero after fee case - testing: amountRemainingLessFee.IsZero()
 		{
 			name:                 "amount_becomes_zero_after_fee_one_for_zero",
 			zeroForOne:           false,
@@ -845,7 +844,6 @@ func TestSwapMath_handleExactIn(t *testing.T) {
 			expectedSqrtNext:     encodePriceSqrtTest(t, "121", "100"), // no price move
 			expectedAmountIn:     u256.Zero(),
 		},
-		// Hit target case - testing: amountRemainingLessFee.Gte(amountIn)
 		{
 			name:                 "sufficient_amount_hits_target_one_for_zero",
 			zeroForOne:           false, // price increasing
@@ -868,7 +866,6 @@ func TestSwapMath_handleExactIn(t *testing.T) {
 			expectedSqrtNext:     u256.MustFromDecimal("79228162514264337593543950336"), // hit target
 			expectedAmountIn:     u256.MustFromDecimal("181818181818181819"),
 		},
-		// Partial move case - testing: amountRemainingLessFee < amountIn
 		{
 			name:                 "insufficient_amount_partial_move_one_for_zero",
 			zeroForOne:           false,
@@ -891,7 +888,6 @@ func TestSwapMath_handleExactIn(t *testing.T) {
 			expectedSqrtNext:     u256.MustFromDecimal("82610146825152607951621562921"), // partial move
 			expectedAmountIn:     u256.MustFromDecimal("181818181818181819"),
 		},
-		// Edge cases - zero liquidity
 		{
 			name:                 "zero_liquidity_one_for_zero",
 			zeroForOne:           false,
@@ -914,7 +910,6 @@ func TestSwapMath_handleExactIn(t *testing.T) {
 			expectedSqrtNext:     encodePriceSqrtTest(t, "1", "1"), // hit target
 			expectedAmountIn:     u256.Zero(),
 		},
-		// Edge cases - extreme prices
 		{
 			name:                 "near_min_sqrt_ratio",
 			zeroForOne:           false,
@@ -969,7 +964,6 @@ func TestSwapMath_handleExactOut(t *testing.T) {
 		expectedSqrtNext   *u256.Uint
 		expectedAmountOut  *u256.Uint
 	}{
-		// Hit target case - testing: amountRemainingAbs.Gte(amountOut)
 		{
 			name:               "sufficient_output_hits_target_one_for_zero",
 			zeroForOne:         false, // price increasing
@@ -990,7 +984,6 @@ func TestSwapMath_handleExactOut(t *testing.T) {
 			expectedSqrtNext:   u256.MustFromDecimal("79228162514264337593543950336"), // hit target
 			expectedAmountOut:  u256.MustFromDecimal("199999999999999999"),
 		},
-		// Partial move case - testing: amountRemainingAbs < amountOut
 		{
 			name:               "insufficient_output_partial_move_one_for_zero",
 			zeroForOne:         false,
@@ -1011,7 +1004,6 @@ func TestSwapMath_handleExactOut(t *testing.T) {
 			expectedSqrtNext:   u256.MustFromDecimal("83189570639977554473221147852"), // partial move
 			expectedAmountOut:  u256.MustFromDecimal("199999999999999999"),
 		},
-		// Edge cases - zero liquidity
 		{
 			name:               "zero_liquidity_one_for_zero",
 			zeroForOne:         false,
@@ -1032,7 +1024,6 @@ func TestSwapMath_handleExactOut(t *testing.T) {
 			expectedSqrtNext:   encodePriceSqrtTest(t, "1", "1"), // hit target
 			expectedAmountOut:  u256.Zero(),
 		},
-		// Edge cases - extreme prices
 		{
 			name:               "near_min_sqrt_ratio",
 			zeroForOne:         false,
@@ -1053,7 +1044,6 @@ func TestSwapMath_handleExactOut(t *testing.T) {
 			expectedSqrtNext:   new(u256.Uint).Sub(MAX_SQRT_RATIO, u256.NewUint(100000)),
 			expectedAmountOut:  u256.Zero(),
 		},
-		// Edge cases - very small amount
 		{
 			name:               "very_small_output_request",
 			zeroForOne:         false,
