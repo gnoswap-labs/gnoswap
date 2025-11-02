@@ -186,3 +186,445 @@ func TestAssertIsPoolOrPositionOrRouterOrStaker(t *testing.T) {
 		})
 	}
 }
+
+func TestProtocolFee_AddToProtocolFee_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name        string
+		tokenPath   string
+		amount      int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:        "error - negative amount",
+			tokenPath:   "gno.land/r/foo",
+			amount:      -1,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-PROTOCOL_FEE-003] invalid amount || amount(-1) should not be negative",
+		},
+		{
+			name:        "error - negative large amount",
+			tokenPath:   "gno.land/r/foo",
+			amount:      -999999,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-PROTOCOL_FEE-003] invalid amount || amount(-999999) should not be negative",
+		},
+		{
+			name:      "success - zero amount",
+			tokenPath: "gno.land/r/foo",
+			amount:    0,
+		},
+		{
+			name:      "success - minimum positive amount",
+			tokenPath: "gno.land/r/foo",
+			amount:    1,
+		},
+		{
+			name:      "success - large amount",
+			tokenPath: "gno.land/r/foo",
+			amount:    9223372036854775806, // MAX_INT64 - 1
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pf := createTestProtocolFee(t)
+			testing.SetRealm(testing.NewCodeRealm(poolPath))
+
+			// When & Then
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, tt.panicMsg, func() {
+					func(cur realm) {
+						pf.AddToProtocolFee(tt.tokenPath, tt.amount)
+					}(cross)
+				})
+			} else {
+				func(cur realm) {
+					pf.AddToProtocolFee(tt.tokenPath, tt.amount)
+				}(cross)
+				if tt.amount > 0 {
+					uassert.Equal(t, pf.getProtocolFeeState().tokenListWithAmount[tt.tokenPath], tt.amount)
+				}
+			}
+		})
+	}
+}
+
+func TestProtocolFee_AddToProtocolFee_Overflow(t *testing.T) {
+	tests := []struct {
+		name         string
+		tokenPath    string
+		initialValue int64
+		addAmount    int64
+		shouldPanic  bool
+		panicMsg     string
+	}{
+		{
+			name:         "error - overflow at boundary",
+			tokenPath:    "gno.land/r/foo",
+			initialValue: 9223372036854775806, // MAX_INT64 - 1
+			addAmount:    2,
+			shouldPanic:  true,
+			panicMsg:     "overflow detected",
+		},
+		{
+			name:         "error - overflow with large values",
+			tokenPath:    "gno.land/r/foo",
+			initialValue: 9223372036854775800,
+			addAmount:    10,
+			shouldPanic:  true,
+			panicMsg:     "overflow detected",
+		},
+		{
+			name:         "success - at exact boundary",
+			tokenPath:    "gno.land/r/foo",
+			initialValue: 9223372036854775806, // MAX_INT64 - 1
+			addAmount:    1,
+			shouldPanic:  false,
+		},
+		{
+			name:         "success - normal addition",
+			tokenPath:    "gno.land/r/foo",
+			initialValue: 1000,
+			addAmount:    500,
+			shouldPanic:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pf := createTestProtocolFee(t)
+			pf.getProtocolFeeState().tokenListWithAmount[tt.tokenPath] = tt.initialValue
+			testing.SetRealm(testing.NewCodeRealm(poolPath))
+
+			// When & Then
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, tt.panicMsg, func() {
+					func(cur realm) {
+						pf.AddToProtocolFee(tt.tokenPath, tt.addAmount)
+					}(cross)
+				})
+			} else {
+				func(cur realm) {
+					pf.AddToProtocolFee(tt.tokenPath, tt.addAmount)
+				}(cross)
+				expectedTotal := tt.initialValue + tt.addAmount
+				uassert.Equal(t, pf.getProtocolFeeState().tokenListWithAmount[tt.tokenPath], expectedTotal)
+			}
+		})
+	}
+}
+
+func TestProtocolFee_AddToProtocolFee_UnauthorizedCaller(t *testing.T) {
+	tests := []struct {
+		name        string
+		prevRealm   runtime.Realm
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:        "error - unauthorized user realm",
+			prevRealm:   testing.NewUserRealm(aliceAddr),
+			shouldPanic: true,
+			panicMsg:    "unauthorized: caller",
+		},
+		{
+			name:        "error - unauthorized code realm",
+			prevRealm:   testing.NewCodeRealm("gno.land/r/unknown/contract"),
+			shouldPanic: true,
+			panicMsg:    "unauthorized: caller",
+		},
+		{
+			name:        "success - pool contract",
+			prevRealm:   testing.NewCodeRealm(poolPath),
+			shouldPanic: false,
+		},
+		{
+			name:        "success - position contract",
+			prevRealm:   testing.NewCodeRealm(positionPath),
+			shouldPanic: false,
+		},
+		{
+			name:        "success - router contract",
+			prevRealm:   testing.NewCodeRealm(routerPath),
+			shouldPanic: false,
+		},
+		{
+			name:        "success - staker contract",
+			prevRealm:   stakerRealm,
+			shouldPanic: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pf := createTestProtocolFee(t)
+			testing.SetRealm(tt.prevRealm)
+
+			// When & Then
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, tt.panicMsg, func() {
+					func(cur realm) {
+						pf.AddToProtocolFee("gno.land/r/foo", 100)
+					}(cross)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					func(cur realm) {
+						pf.AddToProtocolFee("gno.land/r/foo", 100)
+					}(cross)
+				})
+			}
+		})
+	}
+}
+
+func TestProtocolFee_ClearAccuTransferToGovStaker(t *testing.T) {
+	tests := []struct {
+		name        string
+		prevRealm   runtime.Realm
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:        "error - unauthorized caller",
+			prevRealm:   dummyRealm,
+			shouldPanic: true,
+			panicMsg:    "is not gov_staker",
+		},
+		{
+			name:        "error - admin cannot clear",
+			prevRealm:   adminRealm,
+			shouldPanic: true,
+			panicMsg:    "is not gov_staker",
+		},
+		{
+			name:        "success - gov staker can clear",
+			prevRealm:   govStakerRealm,
+			shouldPanic: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pf := createTestProtocolFee(t)
+			pf.getProtocolFeeState().accuToGovStaker.Set("gno.land/r/foo", int64(1000))
+			testing.SetRealm(tt.prevRealm)
+
+			// When & Then
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, tt.panicMsg, func() {
+					func(cur realm) {
+						pf.ClearAccuTransferToGovStaker()
+					}(cross)
+				})
+			} else {
+				func(cur realm) {
+					pf.ClearAccuTransferToGovStaker()
+				}(cross)
+				// Verify tree was cleared
+				uassert.Equal(t, pf.getProtocolFeeState().accuToGovStaker.Size(), 0)
+			}
+		})
+	}
+}
+
+func TestProtocolFee_SetDevOpsPct_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name        string
+		pct         int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:        "error - negative percentage",
+			pct:         -1,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(-1) should not be smaller than 0",
+		},
+		{
+			name:        "error - very large negative",
+			pct:         -999999,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(-999999) should not be smaller than 0",
+		},
+		{
+			name:        "error - above maximum",
+			pct:         10001,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(10001) should not be bigger than 10000",
+		},
+		{
+			name:        "error - very large percentage",
+			pct:         999999,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(999999) should not be bigger than 10000",
+		},
+		{
+			name:        "success - minimum boundary (0%)",
+			pct:         0,
+			shouldPanic: false,
+		},
+		{
+			name:        "success - maximum boundary (100%)",
+			pct:         10000,
+			shouldPanic: false,
+		},
+		{
+			name:        "success - middle value (50%)",
+			pct:         5000,
+			shouldPanic: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pf := createTestProtocolFee(t)
+			testing.SetRealm(adminRealm)
+
+			// When & Then
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, tt.panicMsg, func() {
+					func(cur realm) {
+						pf.SetDevOpsPct(tt.pct)
+					}(cross)
+				})
+			} else {
+				func(cur realm) {
+					pf.SetDevOpsPct(tt.pct)
+				}(cross)
+				uassert.Equal(t, pf.getProtocolFeeState().DevOpsPct(), tt.pct)
+				uassert.Equal(t, pf.getProtocolFeeState().GovStakerPct(), 10000-tt.pct)
+			}
+		})
+	}
+}
+
+func TestProtocolFee_SetGovStakerPct_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name        string
+		pct         int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:        "error - negative percentage",
+			pct:         -1,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(-1) should not be smaller than 0",
+		},
+		{
+			name:        "error - very large negative",
+			pct:         -999999,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(-999999) should not be smaller than 0",
+		},
+		{
+			name:        "error - above maximum",
+			pct:         10001,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(10001) should not be bigger than 10000",
+		},
+		{
+			name:        "error - very large percentage",
+			pct:         999999,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(999999) should not be bigger than 10000",
+		},
+		{
+			name:        "success - minimum boundary (0%)",
+			pct:         0,
+			shouldPanic: false,
+		},
+		{
+			name:        "success - maximum boundary (100%)",
+			pct:         10000,
+			shouldPanic: false,
+		},
+		{
+			name:        "success - middle value (75%)",
+			pct:         7500,
+			shouldPanic: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pf := createTestProtocolFee(t)
+			testing.SetRealm(adminRealm)
+
+			// When & Then
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, tt.panicMsg, func() {
+					func(cur realm) {
+						pf.SetGovStakerPct(tt.pct)
+					}(cross)
+				})
+			} else {
+				func(cur realm) {
+					pf.SetGovStakerPct(tt.pct)
+				}(cross)
+				uassert.Equal(t, pf.getProtocolFeeState().GovStakerPct(), tt.pct)
+				uassert.Equal(t, pf.getProtocolFeeState().DevOpsPct(), 10000-tt.pct)
+			}
+		})
+	}
+}
+
+func TestProtocolFee_AssertIsValidPercent(t *testing.T) {
+	tests := []struct {
+		name        string
+		pct         int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:        "error - negative",
+			pct:         -1,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(-1) should not be smaller than 0",
+		},
+		{
+			name:        "error - over maximum",
+			pct:         10001,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(10001) should not be bigger than 10000",
+		},
+		{
+			name:        "success - zero",
+			pct:         0,
+			shouldPanic: false,
+		},
+		{
+			name:        "success - maximum",
+			pct:         10000,
+			shouldPanic: false,
+		},
+		{
+			name:        "success - middle",
+			pct:         5000,
+			shouldPanic: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// When & Then
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, tt.panicMsg, func() {
+					assertIsValidPercent(tt.pct)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					assertIsValidPercent(tt.pct)
+				})
+			}
+		})
+	}
+}

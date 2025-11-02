@@ -1177,3 +1177,198 @@ func TestReposition(t *testing.T) {
 		})
 	}
 }
+
+// TestAssertValidLiquidityAmount tests assertValidLiquidityAmount function
+func TestAssertValidLiquidityAmount(t *testing.T) {
+	tests := []struct {
+		name        string
+		liquidity   string
+		shouldPanic bool
+		errorMsg    string
+	}{
+		{
+			name:        "valid - positive liquidity",
+			liquidity:   "1000",
+			shouldPanic: false,
+		},
+		{
+			name:        "valid - large liquidity",
+			liquidity:   "999999999999999999",
+			shouldPanic: false,
+		},
+		{
+			name:        "valid - minimum positive",
+			liquidity:   "1",
+			shouldPanic: false,
+		},
+		{
+			name:        "invalid - zero liquidity",
+			liquidity:   "0",
+			shouldPanic: true,
+			errorMsg:    "[GNOSWAP-POSITION-010] zero liquidity || liquidity amount must be greater than 0, got 0",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
+					assertValidLiquidityAmount(tt.liquidity)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					assertValidLiquidityAmount(tt.liquidity)
+				})
+			}
+		})
+	}
+}
+
+// TestAssertSlippageIsNotExceeded tests assertSlippageIsNotExceeded function
+func TestAssertSlippageIsNotExceeded(t *testing.T) {
+	tests := []struct {
+		name        string
+		amount0     *u256.Uint
+		amount1     *u256.Uint
+		amount0Min  *u256.Uint
+		amount1Min  *u256.Uint
+		shouldPanic bool
+		errorMsg    string
+	}{
+		{
+			name:        "no panic - exact match",
+			amount0:     u256.NewUint(100),
+			amount1:     u256.NewUint(200),
+			amount0Min:  u256.NewUint(100),
+			amount1Min:  u256.NewUint(200),
+			shouldPanic: false,
+		},
+		{
+			name:        "no panic - amounts exceed minimums",
+			amount0:     u256.NewUint(150),
+			amount1:     u256.NewUint(250),
+			amount0Min:  u256.NewUint(100),
+			amount1Min:  u256.NewUint(200),
+			shouldPanic: false,
+		},
+		{
+			name:        "panic - amount0 below minimum",
+			amount0:     u256.NewUint(90),
+			amount1:     u256.NewUint(200),
+			amount0Min:  u256.NewUint(100),
+			amount1Min:  u256.NewUint(200),
+			shouldPanic: true,
+			errorMsg:    "[GNOSWAP-POSITION-002] slippage failed || amount0(90) >= amount0Min(100) && amount1(200) >= amount1Min(200)",
+		},
+		{
+			name:        "panic - amount1 below minimum",
+			amount0:     u256.NewUint(100),
+			amount1:     u256.NewUint(190),
+			amount0Min:  u256.NewUint(100),
+			amount1Min:  u256.NewUint(200),
+			shouldPanic: true,
+			errorMsg:    "[GNOSWAP-POSITION-002] slippage failed || amount0(100) >= amount0Min(100) && amount1(190) >= amount1Min(200)",
+		},
+		{
+			name:        "panic - both below minimum",
+			amount0:     u256.NewUint(90),
+			amount1:     u256.NewUint(190),
+			amount0Min:  u256.NewUint(100),
+			amount1Min:  u256.NewUint(200),
+			shouldPanic: true,
+			errorMsg:    "[GNOSWAP-POSITION-002] slippage failed || amount0(90) >= amount0Min(100) && amount1(190) >= amount1Min(200)",
+		},
+		{
+			name:        "no panic - zero values",
+			amount0:     u256.Zero(),
+			amount1:     u256.Zero(),
+			amount0Min:  u256.Zero(),
+			amount1Min:  u256.Zero(),
+			shouldPanic: false,
+		},
+		{
+			name:        "no panic - large numbers",
+			amount0:     u256.MustFromDecimal("1000000000000000000"),
+			amount1:     u256.MustFromDecimal("2000000000000000000"),
+			amount0Min:  u256.MustFromDecimal("1000000000000000000"),
+			amount1Min:  u256.MustFromDecimal("2000000000000000000"),
+			shouldPanic: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
+					assertSlippageIsNotExceeded(tt.amount0, tt.amount1, tt.amount0Min, tt.amount1Min)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					assertSlippageIsNotExceeded(tt.amount0, tt.amount1, tt.amount0Min, tt.amount1Min)
+				})
+			}
+		})
+	}
+}
+
+// TestAssertEqualsAddress tests assertEqualsAddress function
+func TestAssertEqualsAddress(t *testing.T) {
+	validAddr1 := address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
+	validAddr2 := address("g1us8428u2a5satrlxzagqqa5m6vmuze025anjlj")
+	invalidAddr := address("invalid")
+
+	tests := []struct {
+		name        string
+		prevAddr    address
+		otherAddr   address
+		shouldPanic bool
+	}{
+		{
+			name:        "equal valid addresses",
+			prevAddr:    validAddr1,
+			otherAddr:   validAddr1,
+			shouldPanic: false,
+		},
+		{
+			name:        "different valid addresses - should panic",
+			prevAddr:    validAddr1,
+			otherAddr:   validAddr2,
+			shouldPanic: true,
+		},
+		{
+			name:        "first address invalid",
+			prevAddr:    invalidAddr,
+			otherAddr:   validAddr1,
+			shouldPanic: true,
+		},
+		{
+			name:        "second address invalid",
+			prevAddr:    validAddr1,
+			otherAddr:   invalidAddr,
+			shouldPanic: true,
+		},
+		{
+			name:        "both addresses invalid",
+			prevAddr:    invalidAddr,
+			otherAddr:   address("another_invalid"),
+			shouldPanic: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Error("Expected panic but got none")
+					}
+				}()
+				assertEqualsAddress(tt.prevAddr, tt.otherAddr)
+			} else {
+				uassert.NotPanics(t, func() {
+					assertEqualsAddress(tt.prevAddr, tt.otherAddr)
+				})
+			}
+		})
+	}
+}

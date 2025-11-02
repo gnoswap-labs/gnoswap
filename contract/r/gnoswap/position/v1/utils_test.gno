@@ -518,3 +518,409 @@ func TestSubUint256(t *testing.T) {
 		})
 	}
 }
+
+// TestFormatUint tests formatUint function with edge cases
+func TestFormatUint(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       any
+		expected    string
+		shouldPanic bool
+		errorMsg    string
+	}{
+		{
+			name:        "uint8 zero",
+			input:       uint8(0),
+			expected:    "0",
+			shouldPanic: false,
+		},
+		{
+			name:        "uint8 max",
+			input:       uint8(255),
+			expected:    "255",
+			shouldPanic: false,
+		},
+		{
+			name:        "uint32 zero",
+			input:       uint32(0),
+			expected:    "0",
+			shouldPanic: false,
+		},
+		{
+			name:        "uint32 max",
+			input:       uint32(4294967295),
+			expected:    "4294967295",
+			shouldPanic: false,
+		},
+		{
+			name:        "uint64 zero",
+			input:       uint64(0),
+			expected:    "0",
+			shouldPanic: false,
+		},
+		{
+			name:        "uint64 max",
+			input:       uint64(18446744073709551615),
+			expected:    "18446744073709551615",
+			shouldPanic: false,
+		},
+		{
+			name:        "invalid type int",
+			input:       int(123),
+			shouldPanic: true,
+			errorMsg:    "invalid type: int",
+		},
+		{
+			name:        "invalid type string",
+			input:       "123",
+			shouldPanic: true,
+			errorMsg:    "invalid type: string",
+		},
+		{
+			name:        "invalid type float64",
+			input:       float64(3.14),
+			shouldPanic: true,
+			errorMsg:    "invalid type: unknown",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
+					formatUint(tt.input)
+				})
+			} else {
+				result := formatUint(tt.input)
+				uassert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
+// TestFormatInt tests formatInt function with edge cases
+func TestFormatInt(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       any
+		expected    string
+		shouldPanic bool
+		errorMsg    string
+	}{
+		{
+			name:        "int zero",
+			input:       int(0),
+			expected:    "0",
+			shouldPanic: false,
+		},
+		{
+			name:        "int positive",
+			input:       int(123),
+			expected:    "123",
+			shouldPanic: false,
+		},
+		{
+			name:        "int negative",
+			input:       int(-123),
+			expected:    "-123",
+			shouldPanic: false,
+		},
+		{
+			name:        "int32 min",
+			input:       int32(-2147483648),
+			expected:    "-2147483648",
+			shouldPanic: false,
+		},
+		{
+			name:        "int32 max",
+			input:       int32(2147483647),
+			expected:    "2147483647",
+			shouldPanic: false,
+		},
+		{
+			name:        "int64 min",
+			input:       int64(-9223372036854775808),
+			expected:    "-9223372036854775808",
+			shouldPanic: false,
+		},
+		{
+			name:        "int64 max",
+			input:       int64(9223372036854775807),
+			expected:    "9223372036854775807",
+			shouldPanic: false,
+		},
+		{
+			name:        "invalid type uint",
+			input:       uint(123),
+			shouldPanic: true,
+			errorMsg:    "invalid type: uint",
+		},
+		{
+			name:        "invalid type string",
+			input:       "123",
+			shouldPanic: true,
+			errorMsg:    "invalid type: string",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
+					formatInt(tt.input)
+				})
+			} else {
+				result := formatInt(tt.input)
+				uassert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
+// TestFormatBool tests formatBool function
+func TestFormatBool(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    bool
+		expected string
+	}{
+		{
+			name:     "true",
+			input:    true,
+			expected: "true",
+		},
+		{
+			name:     "false",
+			input:    false,
+			expected: "false",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := formatBool(tt.input)
+			uassert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+// TestMustParseInt64 tests mustParseInt64 function with edge cases
+func TestMustParseInt64(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       string
+		expected    int64
+		shouldPanic bool
+	}{
+		{
+			name:        "zero",
+			input:       "0",
+			expected:    0,
+			shouldPanic: false,
+		},
+		{
+			name:        "positive number",
+			input:       "12345",
+			expected:    12345,
+			shouldPanic: false,
+		},
+		{
+			name:        "negative number",
+			input:       "-12345",
+			expected:    -12345,
+			shouldPanic: false,
+		},
+		{
+			name:        "max int64",
+			input:       "9223372036854775807",
+			expected:    9223372036854775807,
+			shouldPanic: false,
+		},
+		{
+			name:        "min int64",
+			input:       "-9223372036854775808",
+			expected:    -9223372036854775808,
+			shouldPanic: false,
+		},
+		{
+			name:        "invalid - empty string",
+			input:       "",
+			shouldPanic: true,
+		},
+		{
+			name:        "invalid - non-numeric",
+			input:       "abc",
+			shouldPanic: true,
+		},
+		{
+			name:        "invalid - overflow",
+			input:       "9223372036854775808",
+			shouldPanic: true,
+		},
+		{
+			name:        "invalid - underflow",
+			input:       "-9223372036854775809",
+			shouldPanic: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Error("Expected panic but got none")
+					}
+				}()
+				mustParseInt64(tt.input)
+			} else {
+				result := mustParseInt64(tt.input)
+				uassert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
+// TestSafeConvertToInt64 tests safeConvertToInt64 function with edge cases
+func TestSafeConvertToInt64(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       *u256.Uint
+		expected    int64
+		shouldPanic bool
+		errorMsg    string
+	}{
+		{
+			name:        "zero",
+			input:       u256.Zero(),
+			expected:    0,
+			shouldPanic: false,
+		},
+		{
+			name:        "one",
+			input:       u256.One(),
+			expected:    1,
+			shouldPanic: false,
+		},
+		{
+			name:        "max int64",
+			input:       u256.MustFromDecimal("9223372036854775807"),
+			expected:    9223372036854775807,
+			shouldPanic: false,
+		},
+		{
+			name:        "max int64 + 1 (overflow)",
+			input:       u256.MustFromDecimal("9223372036854775808"),
+			shouldPanic: true,
+			errorMsg:    "amount(9223372036854775808) overflows int64 range (max: 9223372036854775807)",
+		},
+		{
+			name:        "large value (overflow)",
+			input:       u256.MustFromDecimal("18446744073709551615"),
+			shouldPanic: true,
+		},
+		{
+			name:        "very large value",
+			input:       u256.MustFromDecimal("999999999999999999999999"),
+			shouldPanic: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					r := recover()
+					if r == nil {
+						t.Error("Expected panic but got none")
+					}
+					if tt.errorMsg != "" {
+						if str, ok := r.(string); ok {
+							uassert.Equal(t, tt.errorMsg, str)
+						}
+					}
+				}()
+				safeConvertToInt64(tt.input)
+			} else {
+				result := safeConvertToInt64(tt.input)
+				uassert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
+// TestIsSlippageExceeded tests isSlippageExceeded function
+func TestIsSlippageExceeded(t *testing.T) {
+	tests := []struct {
+		name       string
+		amount0    *u256.Uint
+		amount1    *u256.Uint
+		amount0Min *u256.Uint
+		amount1Min *u256.Uint
+		expected   bool
+	}{
+		{
+			name:       "no slippage - exact match",
+			amount0:    u256.NewUint(100),
+			amount1:    u256.NewUint(200),
+			amount0Min: u256.NewUint(100),
+			amount1Min: u256.NewUint(200),
+			expected:   false,
+		},
+		{
+			name:       "no slippage - amounts exceed minimums",
+			amount0:    u256.NewUint(150),
+			amount1:    u256.NewUint(250),
+			amount0Min: u256.NewUint(100),
+			amount1Min: u256.NewUint(200),
+			expected:   false,
+		},
+		{
+			name:       "slippage - amount0 below minimum",
+			amount0:    u256.NewUint(90),
+			amount1:    u256.NewUint(200),
+			amount0Min: u256.NewUint(100),
+			amount1Min: u256.NewUint(200),
+			expected:   true,
+		},
+		{
+			name:       "slippage - amount1 below minimum",
+			amount0:    u256.NewUint(100),
+			amount1:    u256.NewUint(190),
+			amount0Min: u256.NewUint(100),
+			amount1Min: u256.NewUint(200),
+			expected:   true,
+		},
+		{
+			name:       "slippage - both below minimum",
+			amount0:    u256.NewUint(90),
+			amount1:    u256.NewUint(190),
+			amount0Min: u256.NewUint(100),
+			amount1Min: u256.NewUint(200),
+			expected:   true,
+		},
+		{
+			name:       "edge case - zero values",
+			amount0:    u256.Zero(),
+			amount1:    u256.Zero(),
+			amount0Min: u256.Zero(),
+			amount1Min: u256.Zero(),
+			expected:   false,
+		},
+		{
+			name:       "large numbers - no slippage",
+			amount0:    u256.MustFromDecimal("1000000000000000000"),
+			amount1:    u256.MustFromDecimal("2000000000000000000"),
+			amount0Min: u256.MustFromDecimal("1000000000000000000"),
+			amount1Min: u256.MustFromDecimal("2000000000000000000"),
+			expected:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isSlippageExceeded(tt.amount0, tt.amount1, tt.amount0Min, tt.amount1Min)
+			uassert.Equal(t, tt.expected, result)
+		})
+	}
+}

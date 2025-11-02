@@ -5,6 +5,7 @@ import (
 
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/uassert"
+	"gno.land/p/nt/ufmt"
 	pl "gno.land/r/gnoswap/pool"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -757,4 +758,179 @@ func setMockPoolTick(
 
 func deleteMockPoolTick(pool *pl.Pool, tick int32) {
 	deleteTick(pool, tick)
+}
+
+// TestValidateTicks tests tick validation with edge cases
+func TestValidateTicks(t *testing.T) {
+	tests := []struct {
+		name        string
+		tickLower   int32
+		tickUpper   int32
+		shouldError bool
+		errorMsg    string
+	}{
+		{
+			name:        "valid ticks in range",
+			tickLower:   -1000,
+			tickUpper:   1000,
+			shouldError: false,
+		},
+		{
+			name:        "valid ticks at MIN/MAX boundaries",
+			tickLower:   MIN_TICK,
+			tickUpper:   MAX_TICK,
+			shouldError: false,
+		},
+		{
+			name:        "valid ticks near boundaries",
+			tickLower:   MIN_TICK + 1,
+			tickUpper:   MAX_TICK - 1,
+			shouldError: false,
+		},
+		{
+			name:        "tickLower below MIN_TICK",
+			tickLower:   MIN_TICK - 1,
+			tickUpper:   0,
+			shouldError: true,
+			errorMsg:    "tick out of range",
+		},
+		{
+			name:        "tickUpper above MAX_TICK",
+			tickLower:   0,
+			tickUpper:   MAX_TICK + 1,
+			shouldError: true,
+			errorMsg:    "tick out of range",
+		},
+		{
+			name:        "tickLower equals tickUpper",
+			tickLower:   100,
+			tickUpper:   100,
+			shouldError: true,
+			errorMsg:    "tick range invalid",
+		},
+		{
+			name:        "tickLower > tickUpper",
+			tickLower:   1000,
+			tickUpper:   -1000,
+			shouldError: true,
+			errorMsg:    "tick range invalid",
+		},
+		{
+			name:        "zero ticks",
+			tickLower:   0,
+			tickUpper:   100,
+			shouldError: false,
+		},
+		{
+			name:        "negative range valid",
+			tickLower:   -1000,
+			tickUpper:   -100,
+			shouldError: false,
+		},
+		{
+			name:        "tickLower at MIN, tickUpper at MAX",
+			tickLower:   MIN_TICK,
+			tickUpper:   MAX_TICK,
+			shouldError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateTicks(tt.tickLower, tt.tickUpper)
+			if tt.shouldError {
+				uassert.NotNil(t, err, "Expected error but got none")
+				if err != nil && tt.errorMsg != "" {
+					uassert.True(t, len(err.Error()) > 0, "Error message should not be empty")
+				}
+			} else {
+				uassert.Nil(t, err, "Expected no error but got: "+ufmt.Sprintf("%v", err))
+			}
+		})
+	}
+}
+
+// TestTickBoundaries tests tick boundary constants
+func TestTickBoundaries(t *testing.T) {
+	t.Run("MIN_TICK constant", func(t *testing.T) {
+		uassert.Equal(t, int32(-887272), MIN_TICK)
+	})
+
+	t.Run("MAX_TICK constant", func(t *testing.T) {
+		uassert.Equal(t, int32(887272), MAX_TICK)
+	})
+
+	t.Run("MIN_TICK is negative of MAX_TICK", func(t *testing.T) {
+		uassert.Equal(t, -MIN_TICK, MAX_TICK)
+	})
+}
+
+// TestCheckTickSpacingWithPoolTicks tests tick spacing validation
+func TestCheckTickSpacingWithPoolTicks(t *testing.T) {
+	tests := []struct {
+		name        string
+		tick        int32
+		tickSpacing int32
+		shouldPanic bool
+	}{
+		{
+			name:        "MIN_TICK with spacing 1",
+			tick:        MIN_TICK,
+			tickSpacing: 1,
+			shouldPanic: false,
+		},
+		{
+			name:        "MAX_TICK with spacing 1",
+			tick:        MAX_TICK,
+			tickSpacing: 1,
+			shouldPanic: false,
+		},
+		{
+			name:        "MIN_TICK with spacing 10 (aligned)",
+			tick:        -887270, // MIN_TICK rounded to nearest 10
+			tickSpacing: 10,
+			shouldPanic: false,
+		},
+		{
+			name:        "MAX_TICK with spacing 10 (aligned)",
+			tick:        887270, // MAX_TICK rounded to nearest 10
+			tickSpacing: 10,
+			shouldPanic: false,
+		},
+		{
+			name:        "MIN_TICK with spacing 10 (not aligned)",
+			tick:        MIN_TICK,
+			tickSpacing: 10,
+			shouldPanic: true,
+		},
+		{
+			name:        "MAX_TICK with spacing 10 (not aligned)",
+			tick:        MAX_TICK,
+			tickSpacing: 10,
+			shouldPanic: true,
+		},
+		{
+			name:        "zero tick with any spacing",
+			tick:        0,
+			tickSpacing: 60,
+			shouldPanic: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t,
+					ufmt.Sprintf("[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick(%d) MOD tickSpacing(%d) != 0(%d)",
+						tt.tick, tt.tickSpacing, tt.tick%tt.tickSpacing),
+					func() {
+						checkTickSpacing(tt.tick, tt.tickSpacing)
+					})
+			} else {
+				uassert.NotPanics(t, func() {
+					checkTickSpacing(tt.tick, tt.tickSpacing)
+				})
+			}
+		})
+	}
 }

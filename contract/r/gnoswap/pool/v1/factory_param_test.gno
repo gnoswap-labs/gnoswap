@@ -344,3 +344,253 @@ func TestGeneratePoolPath(t *testing.T) {
 		})
 	}
 }
+
+// TestIsValidFeeTier tests validation of fee tier values
+func TestIsValidFeeTier(t *testing.T) {
+	tests := []struct {
+		name     string
+		feeTier  uint32
+		expected bool
+	}{
+		{
+			name:     "valid - FeeTier100",
+			feeTier:  FeeTier100,
+			expected: true,
+		},
+		{
+			name:     "valid - FeeTier500",
+			feeTier:  FeeTier500,
+			expected: true,
+		},
+		{
+			name:     "valid - FeeTier3000",
+			feeTier:  FeeTier3000,
+			expected: true,
+		},
+		{
+			name:     "valid - FeeTier10000",
+			feeTier:  FeeTier10000,
+			expected: true,
+		},
+		{
+			name:     "invalid - zero",
+			feeTier:  0,
+			expected: false,
+		},
+		{
+			name:     "invalid - 99",
+			feeTier:  99,
+			expected: false,
+		},
+		{
+			name:     "invalid - 101",
+			feeTier:  101,
+			expected: false,
+		},
+		{
+			name:     "invalid - 499",
+			feeTier:  499,
+			expected: false,
+		},
+		{
+			name:     "invalid - 501",
+			feeTier:  501,
+			expected: false,
+		},
+		{
+			name:     "invalid - 2999",
+			feeTier:  2999,
+			expected: false,
+		},
+		{
+			name:     "invalid - 3001",
+			feeTier:  3001,
+			expected: false,
+		},
+		{
+			name:     "invalid - 9999",
+			feeTier:  9999,
+			expected: false,
+		},
+		{
+			name:     "invalid - 10001",
+			feeTier:  10001,
+			expected: false,
+		},
+		{
+			name:     "invalid - max uint32",
+			feeTier:  4294967295,
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isValidFeeTier(tt.feeTier)
+			uassert.Equal(t, tt.expected, result, "Fee tier validation result should match expected")
+		})
+	}
+}
+
+// TestValidateSqrtPriceX96 tests validation of sqrtPriceX96 values
+func TestValidateSqrtPriceX96(t *testing.T) {
+	tests := []struct {
+		name        string
+		sqrtPriceX96 *u256.Uint
+		shouldError bool
+	}{
+		{
+			name:         "valid - at MIN_SQRT_RATIO",
+			sqrtPriceX96: u256.MustFromDecimal(MIN_SQRT_RATIO),
+			shouldError:  false,
+		},
+		{
+			name:         "valid - just above MIN_SQRT_RATIO",
+			sqrtPriceX96: u256.MustFromDecimal("4295128740"),
+			shouldError:  false,
+		},
+		{
+			name:         "valid - at MAX_SQRT_RATIO",
+			sqrtPriceX96: u256.MustFromDecimal(MAX_SQRT_RATIO),
+			shouldError:  false,
+		},
+		{
+			name:         "valid - just below MAX_SQRT_RATIO",
+			sqrtPriceX96: u256.MustFromDecimal("1461446703485210103287273052203988822378723970341"),
+			shouldError:  false,
+		},
+		{
+			name:         "valid - middle value",
+			sqrtPriceX96: u256.MustFromDecimal("79228162514264337593543950336"),
+			shouldError:  false,
+		},
+		{
+			name:         "invalid - below MIN_SQRT_RATIO",
+			sqrtPriceX96: u256.MustFromDecimal("4295128738"),
+			shouldError:  true,
+		},
+		{
+			name:         "invalid - zero",
+			sqrtPriceX96: u256.Zero(),
+			shouldError:  true,
+		},
+		{
+			name:         "invalid - one",
+			sqrtPriceX96: u256.One(),
+			shouldError:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateSqrtPriceX96(tt.sqrtPriceX96)
+			if tt.shouldError {
+				uassert.NotNil(t, err, "Expected error but got none")
+			} else {
+				uassert.Nil(t, err, "Expected no error but got: "+ufmt.Sprintf("%v", err))
+			}
+		})
+	}
+}
+
+// TestIsSameTokenPath tests detection of duplicate token paths
+func TestIsSameTokenPath(t *testing.T) {
+	tests := []struct {
+		name       string
+		token0Path string
+		token1Path string
+		expected   bool
+	}{
+		{
+			name:       "different tokens",
+			token0Path: gnsPath,
+			token1Path: wugnotPath,
+			expected:   false,
+		},
+		{
+			name:       "same token path",
+			token0Path: gnsPath,
+			token1Path: gnsPath,
+			expected:   true,
+		},
+		{
+			name:       "empty strings",
+			token0Path: "",
+			token1Path: "",
+			expected:   true,
+		},
+		{
+			name:       "one empty one valid",
+			token0Path: gnsPath,
+			token1Path: "",
+			expected:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			params := newPoolParams(tt.token0Path, tt.token1Path, FeeTier3000, MAX_PRICE_IMPACT, 60, 0)
+			result := params.isSameTokenPath()
+			uassert.Equal(t, tt.expected, result, "Same token path check should match expected")
+		})
+	}
+}
+
+// TestIsSupportedFee tests fee tier support validation
+func TestIsSupportedFee(t *testing.T) {
+	params := newPoolParams(gnsPath, wugnotPath, FeeTier3000, MAX_PRICE_IMPACT, 60, 0)
+
+	tests := []struct {
+		name     string
+		feeTier  uint32
+		expected bool
+	}{
+		{
+			name:     "supported - 100",
+			feeTier:  FeeTier100,
+			expected: true,
+		},
+		{
+			name:     "supported - 500",
+			feeTier:  FeeTier500,
+			expected: true,
+		},
+		{
+			name:     "supported - 3000",
+			feeTier:  FeeTier3000,
+			expected: true,
+		},
+		{
+			name:     "supported - 10000",
+			feeTier:  FeeTier10000,
+			expected: true,
+		},
+		{
+			name:     "unsupported - 0",
+			feeTier:  0,
+			expected: false,
+		},
+		{
+			name:     "unsupported - 200",
+			feeTier:  200,
+			expected: false,
+		},
+		{
+			name:     "unsupported - 5000",
+			feeTier:  5000,
+			expected: false,
+		},
+		{
+			name:     "unsupported - max uint32",
+			feeTier:  4294967295,
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := params.isSupportedFee(tt.feeTier)
+			uassert.Equal(t, tt.expected, result, "Fee support check should match expected")
+		})
+	}
+}

@@ -349,3 +349,405 @@ func TestProtocolFeeStateUpdateDistributedToDevOpsHistory(t *testing.T) {
 		})
 	}
 }
+
+func TestProtocolFeeState_SetDevOpsPct_NegativeValues(t *testing.T) {
+	tests := []struct {
+		name        string
+		pct         int64
+		shouldError bool
+		errorMsg    string
+	}{
+		{
+			name:        "error - negative percentage -1",
+			pct:         -1,
+			shouldError: true,
+			errorMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(-1) should not be negative",
+		},
+		{
+			name:        "error - large negative percentage",
+			pct:         -9999,
+			shouldError: true,
+			errorMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(-9999) should not be negative",
+		},
+		{
+			name:        "error - very large negative",
+			pct:         -999999999,
+			shouldError: true,
+			errorMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(-999999999) should not be negative",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pfs := newProtocolFeeStateInternal(t)
+
+			// When
+			_, err := pfs.setDevOpsPct(tt.pct)
+
+			// Then
+			if tt.shouldError {
+				uassert.Error(t, err)
+				uassert.Equal(t, err.Error(), tt.errorMsg)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestProtocolFeeState_SetGovStakerPct_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name            string
+		pct             int64
+		shouldError     bool
+		errorMsg        string
+		expectedDevOps  int64
+		expectedGovPct  int64
+	}{
+		{
+			name:        "error - negative percentage",
+			pct:         -1,
+			shouldError: true,
+			errorMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(-1) should not be negative",
+		},
+		{
+			name:        "error - very large negative",
+			pct:         -999999,
+			shouldError: true,
+			errorMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(-999999) should not be negative",
+		},
+		{
+			name:           "success - minimum boundary 0%",
+			pct:            0,
+			shouldError:    false,
+			expectedDevOps: 10000,
+			expectedGovPct: 0,
+		},
+		{
+			name:           "success - maximum boundary 100%",
+			pct:            10000,
+			shouldError:    false,
+			expectedDevOps: 0,
+			expectedGovPct: 10000,
+		},
+		{
+			name:           "success - middle value 50%",
+			pct:            5000,
+			shouldError:    false,
+			expectedDevOps: 5000,
+			expectedGovPct: 5000,
+		},
+		{
+			name:           "success - 75%",
+			pct:            7500,
+			shouldError:    false,
+			expectedDevOps: 2500,
+			expectedGovPct: 7500,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pfs := newProtocolFeeStateInternal(t)
+
+			// When
+			resultPct, err := pfs.setGovStakerPct(tt.pct)
+
+			// Then
+			if tt.shouldError {
+				uassert.Error(t, err)
+				uassert.Equal(t, err.Error(), tt.errorMsg)
+			} else {
+				uassert.NoError(t, err)
+				uassert.Equal(t, resultPct, tt.expectedGovPct)
+				uassert.Equal(t, pfs.DevOpsPct(), tt.expectedDevOps)
+				uassert.Equal(t, pfs.GovStakerPct(), tt.expectedGovPct)
+			}
+		})
+	}
+}
+
+func TestProtocolFeeState_AddAccuToGovStaker_Overflow(t *testing.T) {
+	tests := []struct {
+		name         string
+		tokenPath    string
+		initialValue int64
+		addAmount    int64
+		shouldPanic  bool
+		panicMsg     string
+	}{
+		{
+			name:         "error - overflow at boundary",
+			tokenPath:    "test_token",
+			initialValue: 9223372036854775806, // MAX_INT64 - 1
+			addAmount:    2,
+			shouldPanic:  true,
+			panicMsg:     "overflow detected",
+		},
+		{
+			name:         "error - overflow with large values",
+			tokenPath:    "test_token",
+			initialValue: 9223372036854775800,
+			addAmount:    10,
+			shouldPanic:  true,
+			panicMsg:     "overflow detected",
+		},
+		{
+			name:         "success - at exact boundary",
+			tokenPath:    "test_token",
+			initialValue: 9223372036854775806, // MAX_INT64 - 1
+			addAmount:    1,
+			shouldPanic:  false,
+		},
+		{
+			name:         "success - normal addition",
+			tokenPath:    "test_token",
+			initialValue: 1000,
+			addAmount:    500,
+			shouldPanic:  false,
+		},
+		{
+			name:         "success - zero initial value",
+			tokenPath:    "test_token",
+			initialValue: 0,
+			addAmount:    100,
+			shouldPanic:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pfs := newProtocolFeeStateInternal(t)
+			if tt.initialValue > 0 {
+				pfs.accuToGovStaker.Set(tt.tokenPath, tt.initialValue)
+			}
+
+			// When & Then
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, tt.panicMsg, func() {
+					pfs.addAccuToGovStaker(tt.tokenPath, tt.addAmount)
+				})
+			} else {
+				pfs.addAccuToGovStaker(tt.tokenPath, tt.addAmount)
+				expectedTotal := tt.initialValue + tt.addAmount
+				uassert.Equal(t, pfs.GetAccuTransferToGovStakerByTokenPath(tt.tokenPath), expectedTotal)
+			}
+		})
+	}
+}
+
+func TestProtocolFeeState_AddAccuToDevOps_Overflow(t *testing.T) {
+	tests := []struct {
+		name         string
+		tokenPath    string
+		initialValue int64
+		addAmount    int64
+		shouldPanic  bool
+		panicMsg     string
+	}{
+		{
+			name:         "error - overflow at boundary",
+			tokenPath:    "test_token",
+			initialValue: 9223372036854775806, // MAX_INT64 - 1
+			addAmount:    2,
+			shouldPanic:  true,
+			panicMsg:     "overflow detected",
+		},
+		{
+			name:         "error - overflow with large values",
+			tokenPath:    "test_token",
+			initialValue: 9223372036854775800,
+			addAmount:    10,
+			shouldPanic:  true,
+			panicMsg:     "overflow detected",
+		},
+		{
+			name:         "success - at exact boundary",
+			tokenPath:    "test_token",
+			initialValue: 9223372036854775806, // MAX_INT64 - 1
+			addAmount:    1,
+			shouldPanic:  false,
+		},
+		{
+			name:         "success - normal addition",
+			tokenPath:    "test_token",
+			initialValue: 2000,
+			addAmount:    800,
+			shouldPanic:  false,
+		},
+		{
+			name:         "success - zero initial value",
+			tokenPath:    "test_token",
+			initialValue: 0,
+			addAmount:    500,
+			shouldPanic:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pfs := newProtocolFeeStateInternal(t)
+			if tt.initialValue > 0 {
+				pfs.accuToDevOps.Set(tt.tokenPath, tt.initialValue)
+			}
+
+			// When & Then
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, tt.panicMsg, func() {
+					pfs.addAccuToDevOps(tt.tokenPath, tt.addAmount)
+				})
+			} else {
+				pfs.addAccuToDevOps(tt.tokenPath, tt.addAmount)
+				expectedTotal := tt.initialValue + tt.addAmount
+				uassert.Equal(t, pfs.GetAccuTransferToDevOpsByTokenPath(tt.tokenPath), expectedTotal)
+			}
+		})
+	}
+}
+
+func TestProtocolFeeState_RetrieveAmount_NonExistentKey(t *testing.T) {
+	tests := []struct {
+		name         string
+		tokenPath    string
+		setupData    map[string]int64
+		expectedAmt  int64
+	}{
+		{
+			name:        "non-existent key returns zero",
+			tokenPath:   "non_existent_token",
+			setupData:   map[string]int64{},
+			expectedAmt: 0,
+		},
+		{
+			name:      "existing key returns correct value",
+			tokenPath: "test_token",
+			setupData: map[string]int64{
+				"test_token": 1000,
+			},
+			expectedAmt: 1000,
+		},
+		{
+			name:      "different key returns zero",
+			tokenPath: "different_token",
+			setupData: map[string]int64{
+				"test_token": 1000,
+			},
+			expectedAmt: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pfs := newProtocolFeeStateInternal(t)
+			for token, amount := range tt.setupData {
+				pfs.accuToGovStaker.Set(token, amount)
+			}
+
+			// When
+			result := pfs.GetAccuTransferToGovStakerByTokenPath(tt.tokenPath)
+
+			// Then
+			uassert.Equal(t, result, tt.expectedAmt)
+		})
+	}
+}
+
+func TestProtocolFeeState_ClearTokenListWithAmount_MultipleTokens(t *testing.T) {
+	tests := []struct {
+		name        string
+		initialData map[string]int64
+	}{
+		{
+			name: "clear list with many tokens",
+			initialData: map[string]int64{
+				"token1": 100,
+				"token2": 200,
+				"token3": 300,
+				"token4": 400,
+				"token5": 500,
+			},
+		},
+		{
+			name: "clear list with large amounts",
+			initialData: map[string]int64{
+				"token1": 9223372036854775806,
+				"token2": 9223372036854775805,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pfs := newProtocolFeeStateInternal(t)
+			for token, amount := range tt.initialData {
+				pfs.tokenListWithAmount[token] = amount
+			}
+			uassert.Equal(t, len(pfs.tokenListWithAmount), len(tt.initialData))
+
+			// When
+			pfs.clearTokenListWithAmount()
+
+			// Then
+			uassert.Equal(t, len(pfs.tokenListWithAmount), 0)
+
+			// Verify all tokens were removed
+			for token := range tt.initialData {
+				_, exists := pfs.tokenListWithAmount[token]
+				uassert.False(t, exists)
+			}
+		})
+	}
+}
+
+func TestProtocolFeeState_UpdateDistributedHistory_Consecutive(t *testing.T) {
+	tests := []struct {
+		name              string
+		tokenPath         string
+		amounts           []int64
+		expectedGovStaker int64
+		expectedDevOps    int64
+	}{
+		{
+			name:              "consecutive updates to both histories",
+			tokenPath:         "test_token",
+			amounts:           []int64{100, 200, 300},
+			expectedGovStaker: 600,
+			expectedDevOps:    600,
+		},
+		{
+			name:              "single update",
+			tokenPath:         "test_token",
+			amounts:           []int64{1000},
+			expectedGovStaker: 1000,
+			expectedDevOps:    1000,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			pfs := newProtocolFeeStateInternal(t)
+
+			// When - update both histories
+			for _, amount := range tt.amounts {
+				pfs.updateDistributedToGovStakerHistory(tt.tokenPath, amount)
+				pfs.updateDistributedToDevOpsHistory(tt.tokenPath, amount)
+			}
+
+			// Then - verify both histories
+			govValue, govExists := pfs.distributedToGovStakerHistory.Get(tt.tokenPath)
+			uassert.True(t, govExists)
+			uassert.Equal(t, govValue.(int64), tt.expectedGovStaker)
+
+			devValue, devExists := pfs.distributedToDevOpsHistory.Get(tt.tokenPath)
+			uassert.True(t, devExists)
+			uassert.Equal(t, devValue.(int64), tt.expectedDevOps)
+		})
+	}
+}

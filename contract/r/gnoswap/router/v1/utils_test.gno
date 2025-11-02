@@ -592,3 +592,474 @@ func TestParsePoolPathsByRoutePathArr(t *testing.T) {
 		})
 	}
 }
+
+// TestFormatUint tests formatUint function with edge cases
+func TestFormatUint(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       any
+		expected    string
+		shouldPanic bool
+		errorMsg    string
+	}{
+		{
+			name:        "uint8 zero",
+			input:       uint8(0),
+			expected:    "0",
+			shouldPanic: false,
+		},
+		{
+			name:        "uint8 max",
+			input:       uint8(255),
+			expected:    "255",
+			shouldPanic: false,
+		},
+		{
+			name:        "uint32 zero",
+			input:       uint32(0),
+			expected:    "0",
+			shouldPanic: false,
+		},
+		{
+			name:        "uint32 max",
+			input:       uint32(4294967295),
+			expected:    "4294967295",
+			shouldPanic: false,
+		},
+		{
+			name:        "uint64 zero",
+			input:       uint64(0),
+			expected:    "0",
+			shouldPanic: false,
+		},
+		{
+			name:        "uint64 max",
+			input:       uint64(18446744073709551615),
+			expected:    "18446744073709551615",
+			shouldPanic: false,
+		},
+		{
+			name:        "invalid type int",
+			input:       int(123),
+			shouldPanic: true,
+			errorMsg:    "invalid type: int",
+		},
+		{
+			name:        "invalid type string",
+			input:       "123",
+			shouldPanic: true,
+			errorMsg:    "invalid type: string",
+		},
+		{
+			name:        "invalid type float64",
+			input:       float64(3.14),
+			shouldPanic: true,
+			errorMsg:    "invalid type: unknown",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
+					formatUint(tt.input)
+				})
+			} else {
+				result := formatUint(tt.input)
+				uassert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
+// TestFormatInt64 tests formatInt64 function with edge cases
+func TestFormatInt64(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       any
+		expected    string
+		shouldPanic bool
+		errorMsg    string
+	}{
+		{
+			name:        "int8 zero",
+			input:       int8(0),
+			expected:    "0",
+			shouldPanic: false,
+		},
+		{
+			name:        "int8 positive",
+			input:       int8(127),
+			expected:    "127",
+			shouldPanic: false,
+		},
+		{
+			name:        "int8 negative",
+			input:       int8(-128),
+			expected:    "-128",
+			shouldPanic: false,
+		},
+		{
+			name:        "int16 max",
+			input:       int16(32767),
+			expected:    "32767",
+			shouldPanic: false,
+		},
+		{
+			name:        "int16 min",
+			input:       int16(-32768),
+			expected:    "-32768",
+			shouldPanic: false,
+		},
+		{
+			name:        "int32 max",
+			input:       int32(2147483647),
+			expected:    "2147483647",
+			shouldPanic: false,
+		},
+		{
+			name:        "int32 min",
+			input:       int32(-2147483648),
+			expected:    "-2147483648",
+			shouldPanic: false,
+		},
+		{
+			name:        "int64 max",
+			input:       int64(9223372036854775807),
+			expected:    "9223372036854775807",
+			shouldPanic: false,
+		},
+		{
+			name:        "int64 min",
+			input:       int64(-9223372036854775808),
+			expected:    "-9223372036854775808",
+			shouldPanic: false,
+		},
+		{
+			name:        "invalid type uint",
+			input:       uint(123),
+			shouldPanic: true,
+			errorMsg:    "invalid type uint",
+		},
+		{
+			name:        "invalid type string",
+			input:       "123",
+			shouldPanic: true,
+			errorMsg:    "invalid type string",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
+					formatInt64(tt.input)
+				})
+			} else {
+				result := formatInt64(tt.input)
+				uassert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
+// TestAssertHopsInRange tests assertHopsInRange function
+func TestAssertHopsInRange(t *testing.T) {
+	tests := []struct {
+		name        string
+		hops        int
+		shouldPanic bool
+	}{
+		{
+			name:        "valid - 1 hop",
+			hops:        1,
+			shouldPanic: false,
+		},
+		{
+			name:        "valid - 2 hops",
+			hops:        2,
+			shouldPanic: false,
+		},
+		{
+			name:        "valid - 3 hops",
+			hops:        3,
+			shouldPanic: false,
+		},
+		{
+			name:        "invalid - 0 hops",
+			hops:        0,
+			shouldPanic: true,
+		},
+		{
+			name:        "invalid - 4 hops",
+			hops:        4,
+			shouldPanic: true,
+		},
+		{
+			name:        "invalid - negative hops",
+			hops:        -1,
+			shouldPanic: true,
+		},
+		{
+			name:        "invalid - large number",
+			hops:        100,
+			shouldPanic: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Error("Expected panic but got none")
+					}
+				}()
+				assertHopsInRange(tt.hops)
+			} else {
+				uassert.NotPanics(t, func() {
+					assertHopsInRange(tt.hops)
+				})
+			}
+		})
+	}
+}
+
+// TestBuildSingleHopRoutePath tests BuildSingleHopRoutePath function
+func TestBuildSingleHopRoutePath(t *testing.T) {
+	tests := []struct {
+		name        string
+		tokenA      string
+		tokenB      string
+		fee         uint32
+		expected    string
+		shouldPanic bool
+		errorMsg    string
+	}{
+		{
+			name:        "valid route",
+			tokenA:      "tokenA",
+			tokenB:      "tokenB",
+			fee:         500,
+			expected:    "tokenA:tokenB:500",
+			shouldPanic: false,
+		},
+		{
+			name:        "valid with different fee",
+			tokenA:      "gno.land/r/demo/wugnot",
+			tokenB:      "gno.land/r/demo/usdc",
+			fee:         3000,
+			expected:    "gno.land/r/demo/wugnot:gno.land/r/demo/usdc:3000",
+			shouldPanic: false,
+		},
+		{
+			name:        "valid with large fee",
+			tokenA:      "tokenX",
+			tokenB:      "tokenY",
+			fee:         10000,
+			expected:    "tokenX:tokenY:10000",
+			shouldPanic: false,
+		},
+		{
+			name:        "invalid - empty tokenA",
+			tokenA:      "",
+			tokenB:      "tokenB",
+			fee:         500,
+			shouldPanic: true,
+			errorMsg:    "token addresses cannot be empty",
+		},
+		{
+			name:        "invalid - empty tokenB",
+			tokenA:      "tokenA",
+			tokenB:      "",
+			fee:         500,
+			shouldPanic: true,
+			errorMsg:    "token addresses cannot be empty",
+		},
+		{
+			name:        "invalid - both empty",
+			tokenA:      "",
+			tokenB:      "",
+			fee:         500,
+			shouldPanic: true,
+			errorMsg:    "token addresses cannot be empty",
+		},
+		{
+			name:        "invalid - same tokens",
+			tokenA:      "tokenA",
+			tokenB:      "tokenA",
+			fee:         500,
+			shouldPanic: true,
+			errorMsg:    "tokenA and tokenB cannot be the same",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
+					BuildSingleHopRoutePath(tt.tokenA, tt.tokenB, tt.fee)
+				})
+			} else {
+				result := BuildSingleHopRoutePath(tt.tokenA, tt.tokenB, tt.fee)
+				uassert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
+// TestBuildMultiHopRoutePath tests BuildMultiHopRoutePath function
+func TestBuildMultiHopRoutePath(t *testing.T) {
+	tests := []struct {
+		name        string
+		hops        []string
+		expected    string
+		shouldPanic bool
+		errorMsg    string
+	}{
+		{
+			name:        "valid - 2 hops",
+			hops:        []string{"tokenA:tokenB:500", "tokenB:tokenC:3000"},
+			expected:    "tokenA:tokenB:500*POOL*tokenB:tokenC:3000",
+			shouldPanic: false,
+		},
+		{
+			name:        "valid - 3 hops",
+			hops:        []string{"tokenA:tokenB:500", "tokenB:tokenC:3000", "tokenC:tokenD:10000"},
+			expected:    "tokenA:tokenB:500*POOL*tokenB:tokenC:3000*POOL*tokenC:tokenD:10000",
+			shouldPanic: false,
+		},
+		{
+			name:        "valid - 1 hop (edge case)",
+			hops:        []string{"tokenA:tokenB:500"},
+			expected:    "tokenA:tokenB:500",
+			shouldPanic: false,
+		},
+		{
+			name:        "invalid - 0 hops",
+			hops:        []string{},
+			shouldPanic: true,
+			errorMsg:    "multi-hop path requires at least 2 hops",
+		},
+		{
+			name:        "invalid - 4 hops",
+			hops:        []string{"a:b:1", "b:c:2", "c:d:3", "d:e:4"},
+			shouldPanic: true,
+			errorMsg:    "multi-hop path supports maximum 3 hops",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
+					BuildMultiHopRoutePath(tt.hops...)
+				})
+			} else {
+				result := BuildMultiHopRoutePath(tt.hops...)
+				uassert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
+// TestGetDataForSinglePathWithError tests getDataForSinglePathWithError edge cases
+func TestGetDataForSinglePathWithError(t *testing.T) {
+	tests := []struct {
+		name       string
+		poolPath   string
+		wantToken0 string
+		wantToken1 string
+		wantFee    uint32
+		wantError  bool
+		errorMsg   string
+	}{
+		{
+			name:       "valid path",
+			poolPath:   "tokenA:tokenB:500",
+			wantToken0: "tokenA",
+			wantToken1: "tokenB",
+			wantFee:    500,
+			wantError:  false,
+		},
+		{
+			name:       "valid path with spaces",
+			poolPath:   " tokenA : tokenB :500",
+			wantToken0: "tokenA",
+			wantToken1: "tokenB",
+			wantFee:    500,
+			wantError:  false,
+		},
+		{
+			name:      "invalid - missing parts",
+			poolPath:  "tokenA:tokenB",
+			wantError: true,
+			errorMsg:  "len(poolPathSplit) != 3",
+		},
+		{
+			name:      "invalid - too many parts",
+			poolPath:  "tokenA:tokenB:500:extra",
+			wantError: true,
+			errorMsg:  "len(poolPathSplit) != 3",
+		},
+		{
+			name:      "invalid - non-numeric fee",
+			poolPath:  "tokenA:tokenB:abc",
+			wantError: true,
+			errorMsg:  "invalid fee",
+		},
+		{
+			name:      "invalid - empty first token",
+			poolPath:  ":tokenB:500",
+			wantError: true,
+			errorMsg:  "token addresses cannot be empty",
+		},
+		{
+			name:      "invalid - empty second token",
+			poolPath:  "tokenA::500",
+			wantError: true,
+			errorMsg:  "token addresses cannot be empty",
+		},
+		{
+			name:      "invalid - both tokens empty",
+			poolPath:  "::500",
+			wantError: true,
+			errorMsg:  "token addresses cannot be empty",
+		},
+		{
+			name:       "edge case - zero fee",
+			poolPath:   "tokenA:tokenB:0",
+			wantToken0: "tokenA",
+			wantToken1: "tokenB",
+			wantFee:    0,
+			wantError:  false,
+		},
+		{
+			name:       "edge case - large fee",
+			poolPath:   "tokenA:tokenB:4294967295",
+			wantToken0: "tokenA",
+			wantToken1: "tokenB",
+			wantFee:    4294967295,
+			wantError:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			token0, token1, fee, err := getDataForSinglePathWithError(tt.poolPath)
+
+			if tt.wantError {
+				uassert.True(t, err != nil, "expected error but got none")
+				if tt.errorMsg != "" {
+					uassert.True(t, strings.Contains(err.Error(), tt.errorMsg),
+						"error message should contain: "+tt.errorMsg)
+				}
+			} else {
+				uassert.Nil(t, err)
+				uassert.Equal(t, tt.wantToken0, token0)
+				uassert.Equal(t, tt.wantToken1, token1)
+				uassert.Equal(t, tt.wantFee, fee)
+			}
+		})
+	}
+}

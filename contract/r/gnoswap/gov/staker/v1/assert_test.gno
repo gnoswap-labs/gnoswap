@@ -25,6 +25,16 @@ func TestStakerDelegate_validateDelegateAmount(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name:        "Valid large multiple",
+			amount:      minimumAmount * 100,
+			expectError: false,
+		},
+		{
+			name:        "Valid max safe int64",
+			amount:      (9223372036854775807 / minimumAmount) * minimumAmount,
+			expectError: false,
+		},
+		{
 			name:        "Amount less than minimum",
 			amount:      minimumAmount - 1,
 			expectError: true,
@@ -33,6 +43,12 @@ func TestStakerDelegate_validateDelegateAmount(t *testing.T) {
 		{
 			name:        "Amount not multiple of minimum",
 			amount:      minimumAmount + 1,
+			expectError: true,
+			expectedMsg: "[GNOSWAP-GOV_STAKER-004] invalid amount || amount must be multiple of 1000000",
+		},
+		{
+			name:        "Amount not multiple - small offset",
+			amount:      minimumAmount * 5 + 123,
 			expectError: true,
 			expectedMsg: "[GNOSWAP-GOV_STAKER-004] invalid amount || amount must be multiple of 1000000",
 		},
@@ -47,6 +63,18 @@ func TestStakerDelegate_validateDelegateAmount(t *testing.T) {
 			amount:      -100,
 			expectError: true,
 			expectedMsg: "[GNOSWAP-GOV_STAKER-011] can not delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:-100)",
+		},
+		{
+			name:        "Negative multiple of minimum",
+			amount:      -minimumAmount,
+			expectError: true,
+			expectedMsg: "[GNOSWAP-GOV_STAKER-011] can not delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:-1000000)",
+		},
+		{
+			name:        "One less than minimum",
+			amount:      1,
+			expectError: true,
+			expectedMsg: "[GNOSWAP-GOV_STAKER-011] can not delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:1)",
 		},
 	}
 

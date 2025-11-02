@@ -161,3 +161,204 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 		})
 	})
 }
+
+func TestAssertIsValidAmount(t *testing.T) {
+	tests := []struct {
+		name        string
+		amount      int64
+		shouldPanic bool
+	}{
+		{"valid zero", 0, false},
+		{"valid positive", 100, false},
+		{"valid large positive", 9223372036854775807, false},
+		{"invalid negative", -1, true},
+		{"invalid large negative", -9223372036854775808, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, "must be positive", func() {
+					assertIsValidAmount(tt.amount)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					assertIsValidAmount(tt.amount)
+				})
+			}
+		})
+	}
+}
+
+func TestAssertIsValidRewardAmountFormat(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       string
+		shouldPanic bool
+	}{
+		{"valid format", "gno.land/r/demo/gns:1000", false},
+		{"valid format with large amount", "gno.land/r/demo/gns:999999999999", false},
+		{"invalid no colon", "gno.land/r/demo/gns1000", true},
+		{"invalid empty", "", true},
+		{"invalid only colon", ":", false}, // This actually passes the format check
+		{"invalid multiple colons", "token:path:amount", false}, // SplitN with 2 allows this
+		{"invalid missing amount", "gno.land/r/demo/gns:", false},
+		{"invalid missing token", ":1000", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, "invalid format", func() {
+					assertIsValidRewardAmountFormat(tt.input)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					assertIsValidRewardAmountFormat(tt.input)
+				})
+			}
+		})
+	}
+}
+
+func TestAssertIsValidPoolTier(t *testing.T) {
+	tests := []struct {
+		name        string
+		tier        uint64
+		shouldPanic bool
+	}{
+		{"valid tier 0", 0, false},
+		{"valid tier 1", 1, false},
+		{"valid tier 2", 2, false},
+		{"invalid tier equals AllTierCount", AllTierCount, true},
+		{"invalid tier greater than AllTierCount", AllTierCount + 1, true},
+		{"invalid large tier", 999999, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, "must be less than", func() {
+					assertIsValidPoolTier(tt.tier)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					assertIsValidPoolTier(tt.tier)
+				})
+			}
+		})
+	}
+}
+
+func TestAssertIsValidFeeRate(t *testing.T) {
+	tests := []struct {
+		name        string
+		fee         int64
+		shouldPanic bool
+	}{
+		{"valid zero fee", 0, false},
+		{"valid mid fee", 500, false},
+		{"valid max fee", 1000, false},
+		{"invalid negative fee", -1, true},
+		{"invalid large negative", -999, true},
+		{"invalid over max", 1001, true},
+		{"invalid large over max", 9999, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, "must be in range", func() {
+					assertIsValidFeeRate(tt.fee)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					assertIsValidFeeRate(tt.fee)
+				})
+			}
+		})
+	}
+}
+
+func TestAssertIsValidIncentiveEndTime(t *testing.T) {
+	tests := []struct {
+		name        string
+		endTime     int64
+		shouldPanic bool
+	}{
+		{"valid current time", time.Now().Unix(), false},
+		{"valid future time", time.Now().AddDate(1, 0, 0).Unix(), false},
+		{"valid far future", 253402300798, false}, // 9999-12-31 23:59:58
+		{"invalid at max epoch", 253402300799, true}, // 9999-12-31 23:59:59
+		{"invalid over max epoch", 253402300800, true},
+		{"invalid far future", 999999999999, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, "cannot be later than", func() {
+					assertIsValidIncentiveEndTime(tt.endTime)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					assertIsValidIncentiveEndTime(tt.endTime)
+				})
+			}
+		})
+	}
+}
+
+func TestAssertIsValidIncentiveDuration(t *testing.T) {
+	tests := []struct {
+		name        string
+		duration    int64
+		shouldPanic bool
+	}{
+		{"valid 90 days", TIMESTAMP_90DAYS, false},
+		{"valid 180 days", TIMESTAMP_180DAYS, false},
+		{"valid 365 days", TIMESTAMP_365DAYS, false},
+		{"invalid 0", 0, true},
+		{"invalid 1 day", 86400, true},
+		{"invalid 30 days", 2592000, true},
+		{"invalid 91 days", 7862400, true},
+		{"invalid negative", -7776000, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, "must be 90, 180, 365 days", func() {
+					assertIsValidIncentiveDuration(tt.duration)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					assertIsValidIncentiveDuration(tt.duration)
+				})
+			}
+		})
+	}
+}
+
+func TestIsMidnight(t *testing.T) {
+	tests := []struct {
+		name     string
+		time     time.Time
+		expected bool
+	}{
+		{"midnight UTC", time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), true},
+		{"midnight local", time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local), true},
+		{"not midnight - 1 second after", time.Date(2024, 1, 1, 0, 0, 1, 0, time.UTC), false},
+		{"not midnight - 1 minute after", time.Date(2024, 1, 1, 0, 1, 0, 0, time.UTC), false},
+		{"not midnight - 1 hour after", time.Date(2024, 1, 1, 1, 0, 0, 0, time.UTC), false},
+		{"not midnight - noon", time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC), false},
+		{"not midnight - almost midnight", time.Date(2024, 1, 1, 23, 59, 59, 0, time.UTC), false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isMidnight(tt.time)
+			uassert.Equal(t, tt.expected, result)
+		})
+	}
+}
