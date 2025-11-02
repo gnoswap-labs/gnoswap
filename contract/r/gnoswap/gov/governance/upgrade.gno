@@ -27,7 +27,7 @@ func RegisterInitializer(cur realm, initializer func(governanceStore IGovernance
 }
 
 // UpgradeImplementation switches to a new implementation version
-func UpgradeImpl(targetPackagePath string) {
+func UpgradeImpl(cur realm, targetPackagePath string) {
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
@@ -40,4 +40,9 @@ func UpgradeImpl(targetPackagePath string) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+// GetImplementationPackagePath returns the package path of the currently active implementation.
+func GetImplementationPackagePath() string {
+	return versionManager.GetCurrentPackagePath()
 }
