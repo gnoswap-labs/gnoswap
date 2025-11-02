@@ -305,6 +305,7 @@ func TestCalculateAmountToMint(t *testing.T) {
 	resetEmissionState(t)
 	InitGnsTest(t)
 	startTimestamp := GetHalvingYearStartTimestamp(1)
+	endTimestamp := GetHalvingYearEndTimestamp(12)
 
 	tests := []struct {
 		name               string
@@ -383,6 +384,31 @@ func TestCalculateAmountToMint(t *testing.T) {
 			inputFromTimestamp: GetHalvingYearStartTimestamp(1) - 100,
 			inputToTimestamp:   GetHalvingYearStartTimestamp(1) - 1,
 			expectedAmount:     0,
+		},
+		// Edge cases
+		{
+			name:               "fromTimestamp greater than toTimestamp",
+			inputFromTimestamp: startTimestamp + 1000,
+			inputToTimestamp:   startTimestamp,
+			expectedAmount:     0,
+		},
+		{
+			name:               "fromTimestamp before start, toTimestamp after start",
+			inputFromTimestamp: startTimestamp - 100,
+			inputToTimestamp:   startTimestamp + 100,
+			expectedAmount:     GetAmountPerSecondPerHalvingYear(1) * 101,
+		},
+		{
+			name:               "spanning year 1 to year 3",
+			inputFromTimestamp: GetHalvingYearStartTimestamp(1),
+			inputToTimestamp:   GetHalvingYearEndTimestamp(3),
+			expectedAmount:     GetHalvingAmountsPerYear(1) + GetHalvingAmountsPerYear(2) + GetHalvingAmountsPerYear(3),
+		},
+		{
+			name:               "before start to after end (full emission)",
+			inputFromTimestamp: startTimestamp - 1000,
+			inputToTimestamp:   endTimestamp + 1000,
+			expectedAmount:     MAX_EMISSION_AMOUNT,
 		},
 	}
 
