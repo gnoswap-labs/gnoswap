@@ -186,6 +186,14 @@ func (i *poolV1) mustGetPoolBy(token0Path, token1Path string, fee uint32) *pl.Po
 	return i.mustGetPool(poolPath)
 }
 
+// savePool updates a pool in the pools tree and persists to storage.
+// This ensures that modifications to pool objects are properly saved.
+func (i *poolV1) savePool(pool *pl.Pool) error {
+	pools := i.store.GetPools()
+	pools.Set(pool.PoolPath(), pool)
+	return i.store.SetPools(pools)
+}
+
 // setFeeProtocolInternal updates the protocol fee for all pools and emits an event.
 func (i *poolV1) setFeeProtocolInternal(feeProtocol0, feeProtocol1 uint8, eventName string) error {
 	oldFee := i.store.GetSlot0FeeProtocol()

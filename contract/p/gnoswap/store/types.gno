@@ -1,5 +1,7 @@
 package store
 
+import "gno.land/p/nt/avl"
+
 type Permission uint8
 
 const (
@@ -22,6 +24,24 @@ type KVStore interface {
 
 	// Get retrieves a value by key
 	Get(key string) (any, error)
+
+	// GetInt64 retrieves a int64 value by key
+	GetInt64(key string) (int64, error)
+
+	// GetUint64 retrieves a uint64 value by key
+	GetUint64(key string) (uint64, error)
+
+	// GetBool retrieves a bool value by key
+	GetBool(key string) (bool, error)
+
+	// GetString retrieves a string value by key
+	GetString(key string) (string, error)
+
+	// GetAddress retrieves an address value by key
+	GetAddress(key string) (address, error)
+
+	// GetTree retrieves a tree value by key
+	GetTree(key string) (*avl.Tree, error)
 
 	// Set stores a value with the given key
 	Set(key string, value any) error

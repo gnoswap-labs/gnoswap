@@ -19,8 +19,8 @@ import (
 //
 // Only callable by admin or governance.
 func TransferToken(cur realm, tokenPath string, to address, amount int64) {
-	halt.AssertIsNotHaltedCommunityPoolWithVersion(1)
-	halt.AssertIsNotHaltedWithdrawWithVersion(1)
+	halt.AssertIsNotHaltedCommunityPool()
+	halt.AssertIsNotHaltedWithdraw()
 
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)

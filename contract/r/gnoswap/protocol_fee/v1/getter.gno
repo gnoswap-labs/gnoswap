@@ -1,10 +1,5 @@
 package v1
 
-import (
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/ufmt"
-)
-
 // GetDevOpsPct returns the percentage allocated to devOps.
 func (pf *protocolFeeV1) GetDevOpsPct() int64 {
 	return pf.getProtocolFeeState().DevOpsPct()
@@ -17,12 +12,12 @@ func (pf *protocolFeeV1) GetGovStakerPct() int64 {
 
 // GetTokenListWithAmount returns the token path and amount.
 func (pf *protocolFeeV1) GetTokenListWithAmount() map[string]int64 {
-	return pf.getProtocolFeeState().tokenListWithAmount
+	return pf.getProtocolFeeState().TokenListWithAmounts()
 }
 
 // GetAmountOfToken returns the amount of token.
 func (pf *protocolFeeV1) GetAmountOfToken(tokenPath string) int64 {
-	amount, exists := pf.getProtocolFeeState().tokenListWithAmount[tokenPath]
+	amount, exists := pf.getProtocolFeeState().TokenListWithAmounts()[tokenPath]
 	if !exists {
 		return 0
 	}
@@ -33,7 +28,7 @@ func (pf *protocolFeeV1) GetAmountOfToken(tokenPath string) int64 {
 func (pf *protocolFeeV1) GetAccuTransfersToGovStaker() map[string]int64 {
 	accuTransfers := make(map[string]int64)
 
-	pf.getProtocolFeeState().accuToGovStaker.Iterate("", "", func(key string, value any) bool {
+	pf.getProtocolFeeState().AccuToGovStaker().Iterate("", "", func(key string, value any) bool {
 		amount, ok := value.(int64)
 		if !ok {
 			return false
@@ -50,7 +45,7 @@ func (pf *protocolFeeV1) GetAccuTransfersToGovStaker() map[string]int64 {
 func (pf *protocolFeeV1) GetAccuTransfersToDevOps() map[string]int64 {
 	accuTransfers := make(map[string]int64)
 
-	pf.getProtocolFeeState().accuToDevOps.Iterate("", "", func(key string, value any) bool {
+	pf.getProtocolFeeState().AccuToDevOps().Iterate("", "", func(key string, value any) bool {
 		amount, ok := value.(int64)
 		if !ok {
 			return false
@@ -75,25 +70,10 @@ func (pf *protocolFeeV1) GetAccuTransferToDevOpsByTokenPath(path string) int64 {
 
 // GetHistoryOfDistributedToGovStakerByTokenPath returns the history of distributed to gov/staker by token path.
 func (pf *protocolFeeV1) GetHistoryOfDistributedToGovStakerByTokenPath(path string) int64 {
-	history := pf.getProtocolFeeState().distributedToGovStakerHistory
-	return retrieveHistory(history, path)
+	return pf.getProtocolFeeState().GetDistributedToGovStakerHistoryByTokenPath(path)
 }
 
 // GetHistoryOfDistributedToDevOpsByTokenPath returns the history of distributed to devOps by token path.
 func (pf *protocolFeeV1) GetHistoryOfDistributedToDevOpsByTokenPath(path string) int64 {
-	history := pf.getProtocolFeeState().distributedToDevOpsHistory
-	return retrieveHistory(history, path)
-}
-
-// retrieveHistory retrieves distribution history amount from AVL tree.
-func retrieveHistory(tree *avl.Tree, key string) int64 {
-	amountI, exists := tree.Get(key)
-	if !exists {
-		return 0
-	}
-	res, ok := amountI.(int64)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast amount to int64: %T", amountI))
-	}
-	return res
+	return pf.getProtocolFeeState().GetDistributedToDevOpsHistoryByTokenPath(path)
 }
