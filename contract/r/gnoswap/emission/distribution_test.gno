@@ -643,65 +643,81 @@ func TestCalculateAmount_Panic(t *testing.T) {
 
 // TestDuplicateTargetsFix verifies that the duplicate target vulnerability has been fixed
 func TestDistribution_SetOnDistributionPctChangeCallback(t *testing.T) {
+	currentEmissionAmount := int64(0)
+
 	tests := []struct {
-		name        string
-		setup       func()
-		caller      address
-		callback    func(int64)
-		wantErr     bool
-		errMsg      string
+		name                   string
+		setup                  func()
+		caller                 address
+		callback               func(int64)
+		emissionAmount         int64
+		expectedEmissionAmount int64
+		wantErr                bool
+		errMsg                 string
 	}{
 		{
 			name:   "success - staker can set callback",
 			caller: stakerAddr,
 			callback: func(amount int64) {
-				// Mock callback function
+				currentEmissionAmount = amount
 			},
-			wantErr: false,
+			emissionAmount:         100,
+			expectedEmissionAmount: 100,
+			wantErr:                false,
 		},
 		{
 			name:   "panic - non-staker cannot set callback",
 			caller: adminAddr,
 			callback: func(amount int64) {
-				// Mock callback function
+				currentEmissionAmount = amount
 			},
-			wantErr: true,
-			errMsg:  ufmt.Sprintf("unauthorized: caller %s is not staker", adminAddr.String()),
+			emissionAmount:         100,
+			expectedEmissionAmount: 0,
+			wantErr:                true,
+			errMsg:                 ufmt.Sprintf("unauthorized: caller %s is not staker", adminAddr.String()),
 		},
 		{
 			name:   "panic - regular user cannot set callback",
 			caller: alice,
 			callback: func(amount int64) {
-				// Mock callback function
+				currentEmissionAmount = amount
 			},
-			wantErr: true,
-			errMsg:  ufmt.Sprintf("unauthorized: caller %s is not staker", alice.String()),
+			emissionAmount:         100,
+			expectedEmissionAmount: 0,
+			wantErr:                true,
+			errMsg:                 ufmt.Sprintf("unauthorized: caller %s is not staker", alice.String()),
 		},
 		{
-			name:   "success - can set nil callback",
-			caller: stakerAddr,
-			callback: nil,
-			wantErr: false,
+			name:                   "success - can set nil callback",
+			caller:                 stakerAddr,
+			callback:               nil,
+			emissionAmount:         100,
+			expectedEmissionAmount: 0,
+			wantErr:                false,
 		},
 		{
-			name: "success - existing callback is called with 0 when replaced",
+			name:   "success - existing callback is called with 0 when replaced",
 			caller: stakerAddr,
 			setup: func() {
 				// Set initial callback
 				testing.SetRealm(stakerRealm)
 				SetOnDistributionPctChangeCallback(cross, func(amount int64) {
-					// Initial callback - will be replaced
+					currentEmissionAmount = amount
 				})
 			},
 			callback: func(amount int64) {
-				// New callback
+				currentEmissionAmount = amount
 			},
-			wantErr: false,
+			emissionAmount:         100,
+			expectedEmissionAmount: 100,
+			wantErr:                false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			currentEmissionAmount = 0
+
 			// Given
 			resetObject(t)
 			if tt.setup != nil {
@@ -722,19 +738,27 @@ func TestDistribution_SetOnDistributionPctChangeCallback(t *testing.T) {
 				SetOnDistributionPctChangeCallback(cross, tt.callback)
 			})
 
-			// Then - callback is set (no direct way to verify internal state)
+			// Then - callback is called with 100
+			if onDistributionPctChangeCallback != nil {
+				onDistributionPctChangeCallback(tt.emissionAmount)
+			}
+
+			// Then
+			if onDistributionPctChangeCallback != nil {
+				uassert.Equal(t, currentEmissionAmount, tt.expectedEmissionAmount)
+			}
 		})
 	}
 }
 
 func TestDistribution_GetDistributionBpsPct_EdgeCases(t *testing.T) {
 	tests := []struct {
-		name        string
-		setup       func()
-		target      int
-		want        int64
-		wantErr     bool
-		errMsg      string
+		name    string
+		setup   func()
+		target  int
+		want    int64
+		wantErr bool
+		errMsg  string
 	}{
 		{
 			name:   "success - get LIQUIDITY_STAKER default percentage",
@@ -867,9 +891,9 @@ func TestDistribution_GetDistributionBpsPct_EdgeCases(t *testing.T) {
 func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 	t.Run("GetDistributedToStaker", func(t *testing.T) {
 		tests := []struct {
-			name   string
-			setup  func()
-			want   int64
+			name  string
+			setup func()
+			want  int64
 		}{
 			{
 				name:  "success - initial value is 0",
@@ -914,9 +938,9 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 
 	t.Run("GetDistributedToDevOps", func(t *testing.T) {
 		tests := []struct {
-			name   string
-			setup  func()
-			want   int64
+			name  string
+			setup func()
+			want  int64
 		}{
 			{
 				name:  "success - initial value is 0",
@@ -950,9 +974,9 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 
 	t.Run("GetDistributedToCommunityPool", func(t *testing.T) {
 		tests := []struct {
-			name   string
-			setup  func()
-			want   int64
+			name  string
+			setup func()
+			want  int64
 		}{
 			{
 				name:  "success - initial value is 0",
@@ -986,9 +1010,9 @@ func TestDistribution_GetterFunctions_EdgeCases(t *testing.T) {
 
 	t.Run("GetDistributedToGovStaker", func(t *testing.T) {
 		tests := []struct {
-			name   string
-			setup  func()
-			want   int64
+			name  string
+			setup func()
+			want  int64
 		}{
 			{
 				name:  "success - initial value is 0",
