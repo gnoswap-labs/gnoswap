@@ -29,6 +29,8 @@ TX_EXPIRE := 9999999999
 MAKEFILE := $(shell realpath $(firstword $(MAKEFILE_LIST)))
 ROOT_DIR:=$(shell dirname $(MAKEFILE))/../
 
+VERSION := v1
+
 
 # TODO: change below 2 values based on which chain to deploy
 GNOLAND_RPC_URL ?= localhost:26657
