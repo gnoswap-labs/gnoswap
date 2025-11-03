@@ -1,6 +1,7 @@
 package emission
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -164,11 +165,11 @@ func TestMintAndDistributeGnsWithDistributionStartTime(t *testing.T) {
 
 func TestEmission_MintAndDistributeGns_EdgeCases(t *testing.T) {
 	tests := []struct {
-		name        string
-		setup       func()
-		wantErr     bool
-		errMsg      string
-		verify      func(t *testing.T)
+		name    string
+		setup   func()
+		wantErr bool
+		errMsg  string
+		verify  func(t *testing.T)
 	}{
 		{
 			name: "success - distributes with leftover from previous round",
@@ -293,12 +294,12 @@ func TestEmission_MintAndDistributeGns_EdgeCases(t *testing.T) {
 
 func TestEmission_SetDistributionStartTime_EdgeCases(t *testing.T) {
 	tests := []struct {
-		name        string
-		setup       func()
-		timestamp   int64
-		caller      address
-		wantErr     bool
-		errMsg      string
+		name      string
+		setup     func()
+		timestamp int64
+		caller    address
+		wantErr   bool
+		errMsg    string
 	}{
 		{
 			name:      "success - set to exact current time + 1",
@@ -321,9 +322,23 @@ func TestEmission_SetDistributionStartTime_EdgeCases(t *testing.T) {
 		},
 		{
 			name:      "panic - max int64 timestamp",
-			timestamp: 9223372036854775807,
+			timestamp: math.MaxInt64,
+			caller:    adminAddr,
+			wantErr:   true,
+			errMsg:    "distribution end timestamp must be before max int64 timestamp",
+		},
+		{
+			name:      "success - max int64 timestamp - total distribution duration",
+			timestamp: math.MaxInt64 - totalDistributionDuration,
 			caller:    adminAddr,
 			wantErr:   false,
+		},
+		{
+			name:      "panic - max int64 timestamp - total distribution duration + 1",
+			timestamp: math.MaxInt64 - totalDistributionDuration + 1,
+			caller:    adminAddr,
+			wantErr:   true,
+			errMsg:    "distribution end timestamp must be before max int64 timestamp",
 		},
 	}
 
@@ -355,9 +370,9 @@ func TestEmission_SetDistributionStartTime_EdgeCases(t *testing.T) {
 
 func TestEmission_GetLeftGNSAmount(t *testing.T) {
 	tests := []struct {
-		name   string
-		setup  func()
-		want   int64
+		name  string
+		setup func()
+		want  int64
 	}{
 		{
 			name:  "success - initial value is 0",
@@ -398,9 +413,9 @@ func TestEmission_GetLeftGNSAmount(t *testing.T) {
 
 func TestEmission_GetLastExecutedTimestamp(t *testing.T) {
 	tests := []struct {
-		name   string
-		setup  func()
-		want   int64
+		name  string
+		setup func()
+		want  int64
 	}{
 		{
 			name:  "success - initial value is 0",
@@ -441,9 +456,9 @@ func TestEmission_GetLastExecutedTimestamp(t *testing.T) {
 
 func TestEmission_GetDistributionStartTimestamp(t *testing.T) {
 	tests := []struct {
-		name   string
-		setup  func()
-		want   int64
+		name  string
+		setup func()
+		want  int64
 	}{
 		{
 			name:  "success - initial value is 0",
