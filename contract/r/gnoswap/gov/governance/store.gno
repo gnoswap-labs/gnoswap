@@ -125,7 +125,7 @@ func (s *governanceStore) SetConfig(version int64, config Config) error {
 	configs := s.GetConfigs()
 	configs.Set(int64ToString(version), config)
 
-	return nil
+	return s.kvStore.Set(StoreKeyConfigs.String(), configs)
 }
 
 // Proposals methods
@@ -173,7 +173,7 @@ func (s *governanceStore) SetProposal(proposalID int64, proposal *Proposal) erro
 	proposals := s.GetProposals()
 	proposals.Set(int64ToString(proposalID), proposal)
 
-	return nil
+	return s.kvStore.Set(StoreKeyProposals.String(), proposals)
 }
 
 // Proposal User Voting Infos methods
@@ -226,7 +226,7 @@ func (s *governanceStore) SetProposalVotingInfos(proposalID int64, votingInfos m
 	allVotingInfos := s.GetProposalUserVotingInfos()
 	allVotingInfos.Set(int64ToString(proposalID), votingInfos)
 
-	return nil
+	return s.kvStore.Set(StoreKeyProposalUserVotingInfos.String(), allVotingInfos)
 }
 
 // User Proposals methods
@@ -288,7 +288,7 @@ func (s *governanceStore) AddUserProposal(user string, proposalID int64) error {
 	proposalIDs = append(proposalIDs, proposalID)
 	userProposals.Set(user, proposalIDs)
 
-	return nil
+	return s.kvStore.Set(StoreKeyUserProposals.String(), userProposals)
 }
 
 // NewGovernanceStore creates a new governance store instance with the provided KV store.

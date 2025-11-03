@@ -17,9 +17,7 @@ func createTestProtocolFeeV1(t *testing.T) *protocolFeeV1 {
 	t.Helper()
 
 	return &protocolFeeV1{
-		store: &mockProtocolFeeStore{
-			state: newProtocolFeeStateInternal(t),
-		},
+		store: newMockProtocolFeeStore(),
 	}
 }
 
@@ -226,8 +224,8 @@ func TestApiGetActualBalance(t *testing.T) {
 	qux.Transfer(cross, protocolFeeAddr, 2500)
 
 	// Record only part of the amounts (use internal state for testing)
-	pf.getProtocolFeeState().tokenListWithAmount["gno.land/r/onbloc/bar"] = 1000
-	pf.getProtocolFeeState().tokenListWithAmount["gno.land/r/onbloc/qux"] = 2000
+	pf.store.SetTokenListWithAmountItem("gno.land/r/onbloc/bar", 1000)
+	pf.store.SetTokenListWithAmountItem("gno.land/r/onbloc/qux", 2000)
 
 	result := pf.ApiGetActualBalance()
 
@@ -262,8 +260,8 @@ func TestApiGetRecordedBalance(t *testing.T) {
 	qux.Transfer(cross, protocolFeeAddr, 2500)
 
 	// Record only part of the amounts (use internal state for testing)
-	pf.getProtocolFeeState().tokenListWithAmount["gno.land/r/onbloc/bar"] = 1000
-	pf.getProtocolFeeState().tokenListWithAmount["gno.land/r/onbloc/qux"] = 2000
+	pf.store.SetTokenListWithAmountItem("gno.land/r/onbloc/bar", 1000)
+	pf.store.SetTokenListWithAmountItem("gno.land/r/onbloc/qux", 2000)
 
 	// Call API function
 	result := pf.ApiGetRecordedBalance()
@@ -302,8 +300,8 @@ func TestApiGetUnrecordedBalance(t *testing.T) {
 	qux.Transfer(cross, protocolFeeAddr, 2500)
 
 	// Record only part of the amounts (use internal state for testing)
-	pf.getProtocolFeeState().tokenListWithAmount["gno.land/r/onbloc/bar"] = 1000
-	pf.getProtocolFeeState().tokenListWithAmount["gno.land/r/onbloc/qux"] = 2000
+	pf.store.SetTokenListWithAmountItem("gno.land/r/onbloc/bar", 1000)
+	pf.store.SetTokenListWithAmountItem("gno.land/r/onbloc/qux", 2000)
 
 	result := pf.ApiGetUnrecordedBalance()
 
@@ -336,7 +334,7 @@ func TestApiGetUnrecordedBalance_NoUnrecorded(t *testing.T) {
 	bar.Transfer(cross, protocolFeeAddr, 1000)
 
 	// Record the exact amount (use internal state for testing)
-	pf.getProtocolFeeState().tokenListWithAmount["gno.land/r/onbloc/bar"] = 1000
+	pf.store.SetTokenListWithAmountItem("gno.land/r/onbloc/bar", 1000)
 
 	// Call API function
 	result := pf.ApiGetUnrecordedBalance()
