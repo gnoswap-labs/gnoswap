@@ -171,6 +171,50 @@ func TestDeposit_IsEnded(t *testing.T) {
 	}
 }
 
+func TestDeposit_IsWithdrawn(t *testing.T) {
+	tests := []struct {
+		name             string
+		withdrawnTime    int64
+		withdrawnHeight  int64
+		expectedWithdawn bool
+	}{
+		{
+			name:             "not withdrawn when both time and height are zero",
+			withdrawnTime:    0,
+			withdrawnHeight:  0,
+			expectedWithdawn: false,
+		},
+		{
+			name:             "not withdrawn when only time is set",
+			withdrawnTime:    100,
+			withdrawnHeight:  0,
+			expectedWithdawn: false,
+		},
+		{
+			name:             "not withdrawn when only height is set",
+			withdrawnTime:    0,
+			withdrawnHeight:  100,
+			expectedWithdawn: false,
+		},
+		{
+			name:             "withdrawn when both time and height are set",
+			withdrawnTime:    100,
+			withdrawnHeight:  100,
+			expectedWithdawn: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			deposit := &Deposit{
+				withdrawnTime:   tt.withdrawnTime,
+				withdrawnHeight: tt.withdrawnHeight,
+			}
+			uassert.Equal(t, tt.expectedWithdawn, deposit.IsWithdrawn())
+		})
+	}
+}
+
 func TestDeposit_Withdraw(t *testing.T) {
 	tests := []struct {
 		name              string
