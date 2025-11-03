@@ -1,3 +1,13 @@
+# This test needs to be moved to the gno directory along with the contract implementation,
+# as running txtar directly from the current directory is not yet supported.
+#
+# When running the test, place the txtar file in the `gno.land/pkg/integration/testdata` directory,
+# then navigate to `integration` and run the test with `go test -v . -run TestTestdata/<file name>`.
+#
+# When moving the contract code, test files should not be included. This is because the `utils_test.gno` file still remains.
+# The test directory configuration has been modified on the premise that it will be executed from the gno directory, not the gnoswap directory.
+# The paths in `deploy.mk` are configured based on the gnoswap directory, so the contents of the two files may differ.
+
 loadpkg gno.land/p/nt/avl
 loadpkg gno.land/p/nt/ufmt
 loadpkg gno.land/p/onbloc/json
@@ -109,3 +119,29 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/launchpad -pkg
 
 ### deploy referral
 gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/referral -pkgpath gno.land/r/gnoswap/referral -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+## deploy versioned realm (v1)
+
+### deploy protocol_fee
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/protocol_fee/v1 -pkgpath gno.land/r/gnoswap/protocol_fee/v1 -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy pool
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/pool/v1 -pkgpath gno.land/r/gnoswap/pool/v1 -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy position
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/position/v1 -pkgpath gno.land/r/gnoswap/position/v1 -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy router
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/router/v1 -pkgpath gno.land/r/gnoswap/router/v1 -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy staker
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/staker/v1 -pkgpath gno.land/r/gnoswap/staker/v1 -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy gov/staker
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/gov/staker/v1 -pkgpath gno.land/r/gnoswap/gov/staker/v1 -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy gov/governance
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/gov/governance/v1 -pkgpath gno.land/r/gnoswap/gov/governance/v1 -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy launchpad
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/launchpad/v1 -pkgpath gno.land/r/gnoswap/launchpad/v1 -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
