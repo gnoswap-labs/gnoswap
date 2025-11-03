@@ -494,5 +494,6 @@ func TestConcurrency_StateConsistencyAfterOperations(t *testing.T) {
 	deposit, err = lp.getDeposit(depositID)
 	uassert.NoError(t, err)
 	uassert.True(t, deposit.IsWithdrawn(), "deposit should be withdrawn")
+	uassert.True(t, deposit.WithdrawnHeight() > 0, "withdrawn height should be set")
 	uassert.True(t, deposit.WithdrawnTime() > 0, "withdrawn time should be set")
 }

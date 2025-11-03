@@ -215,6 +215,39 @@ func TestDeposit_IsWithdrawn(t *testing.T) {
 	}
 }
 
+func TestDeposit_WithdrawnHeight(t *testing.T) {
+	tests := []struct {
+		name            string
+		withdrawnHeight int64
+		expected        int64
+	}{
+		{
+			name:            "zero withdrawn height",
+			withdrawnHeight: 0,
+			expected:        0,
+		},
+		{
+			name:            "positive withdrawn height",
+			withdrawnHeight: 12345,
+			expected:        12345,
+		},
+		{
+			name:            "max int64 withdrawn height",
+			withdrawnHeight: 9223372036854775807,
+			expected:        9223372036854775807,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			deposit := &Deposit{
+				withdrawnHeight: tt.withdrawnHeight,
+			}
+			uassert.Equal(t, tt.expected, deposit.WithdrawnHeight())
+		})
+	}
+}
+
 func TestDeposit_Withdraw(t *testing.T) {
 	tests := []struct {
 		name              string
@@ -261,9 +294,11 @@ func TestDeposit_Withdraw(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			amount := tt.deposit.withdraw(1, tt.currentTime)
+			currentHeight := int64(123)
+			amount := tt.deposit.withdraw(currentHeight, tt.currentTime)
 			uassert.Equal(t, tt.expectedAmount, amount)
-			uassert.Equal(t, tt.currentTime, tt.deposit.withdrawnTime)
+			uassert.Equal(t, tt.currentTime, tt.deposit.WithdrawnTime())
+			uassert.Equal(t, currentHeight, tt.deposit.WithdrawnHeight())
 			uassert.Equal(t, tt.expectedRemaining, tt.deposit.depositAmount)
 			uassert.Equal(t, tt.expectedWithdrawn, tt.deposit.IsWithdrawn())
 		})
