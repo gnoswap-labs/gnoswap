@@ -1,18 +1,5 @@
 package halt
 
-// AssertIsNotHalted panics if any of the specified operation types are halted.
-// Panics with error if operation type is invalid or any operation is halted.
-func AssertIsNotHalted(opTypes ...OpType) {
-	halted, err := IsHalted(opTypes...)
-	if err != nil {
-		panic(err)
-	}
-
-	if halted {
-		panic(halted)
-	}
-}
-
 // AssertIsNotHaltedPool panics if pool operations are halted.
 func AssertIsNotHaltedPool() {
 	AssertIsNotHaltedOperation(OpTypePool)
