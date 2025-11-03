@@ -435,9 +435,9 @@ func TestIsValidFeeTier(t *testing.T) {
 // TestValidateSqrtPriceX96 tests validation of sqrtPriceX96 values
 func TestValidateSqrtPriceX96(t *testing.T) {
 	tests := []struct {
-		name        string
+		name         string
 		sqrtPriceX96 *u256.Uint
-		shouldError bool
+		shouldError  bool
 	}{
 		{
 			name:         "valid - at MIN_SQRT_RATIO",
