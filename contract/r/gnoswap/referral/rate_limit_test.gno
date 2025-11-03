@@ -4,6 +4,7 @@ import (
 	"chain/runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
@@ -339,6 +340,77 @@ func TestRateLimit_ErrorPropagation(t *testing.T) {
 				uassert.NoError(t, err)
 				err = k.update(tc.userAddr, testutils.TestAddress("err6"))
 				uassert.ErrorIs(t, err, tc.expectedError)
+			}
+		})
+	}
+}
+
+func TestRateLimit_TimeBoundaryConditions(t *testing.T) {
+	tests := []struct {
+		name             string
+		userAddr         address
+		referrerAddr     address
+		secondRefAddr    address
+		timeSinceLastOp  int64
+		expectedError    error
+		expectedErrorMsg string
+	}{
+		{
+			name:             "24 hours minus 1 second - rate limited",
+			userAddr:         testutils.TestAddress("timeBound1"),
+			referrerAddr:     testutils.TestAddress("timeBound2"),
+			secondRefAddr:    testutils.TestAddress("timeBound3"),
+			timeSinceLastOp:  MinTimeBetweenUpdates - 1, // 86399
+			expectedError:    ErrTooManyRequests,
+			expectedErrorMsg: "too many requests",
+		},
+		{
+			name:             "exactly 24 hours - allowed",
+			userAddr:         testutils.TestAddress("timeBound4"),
+			referrerAddr:     testutils.TestAddress("timeBound5"),
+			secondRefAddr:    testutils.TestAddress("timeBound6"),
+			timeSinceLastOp:  MinTimeBetweenUpdates, // 86400
+			expectedError:    nil,
+			expectedErrorMsg: "",
+		},
+		{
+			name:             "24 hours plus 1 second - allowed",
+			userAddr:         testutils.TestAddress("timeBound7"),
+			referrerAddr:     testutils.TestAddress("timeBound8"),
+			secondRefAddr:    testutils.TestAddress("timeBound9"),
+			timeSinceLastOp:  MinTimeBetweenUpdates + 1, // 86401
+			expectedError:    nil,
+			expectedErrorMsg: "",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			cleanup := setupValidCaller()
+			defer cleanup()
+			k := setupRateLimitKeeper()
+
+			// First registration
+			err := k.register(tc.userAddr, tc.referrerAddr)
+			uassert.NoError(t, err)
+
+			// Manually set lastOps to simulate time passage
+			now := time.Now().Unix()
+			k.lastOps[tc.userAddr.String()] = now - tc.timeSinceLastOp
+
+			// when - attempt update
+			err = k.update(tc.userAddr, tc.secondRefAddr)
+
+			// then
+			if tc.expectedError != nil {
+				uassert.ErrorIs(t, err, tc.expectedError)
+			} else {
+				uassert.NoError(t, err)
+				// Verify update succeeded
+				ref, err := k.get(tc.userAddr)
+				uassert.NoError(t, err)
+				uassert.Equal(t, tc.secondRefAddr.String(), ref.String())
 			}
 		})
 	}
