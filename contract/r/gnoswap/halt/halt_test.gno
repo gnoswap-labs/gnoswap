@@ -17,6 +17,7 @@ func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 		inputLevel       HaltLevel
 		expectedConfig   HaltConfig
 		expectedHasError bool
+		expectedErrorMsg string
 	}{
 		{
 			name:             "Success set none level",
@@ -47,12 +48,14 @@ func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 			inputLevel:       HaltLevel("INVALID"),
 			expectedConfig:   nil,
 			expectedHasError: true,
+			expectedErrorMsg: "invalid halt level: INVALID",
 		},
 		{
 			name:             "Fail empty level",
 			inputLevel:       HaltLevel(""),
 			expectedConfig:   nil,
 			expectedHasError: true,
+			expectedErrorMsg: "invalid halt level: ",
 		},
 	}
 
@@ -66,6 +69,7 @@ func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 			// then
 			if tc.expectedHasError {
 				uassert.Error(t, err)
+				uassert.ErrorContains(t, err, tc.expectedErrorMsg)
 			} else {
 				uassert.NoError(t, err)
 
@@ -75,6 +79,41 @@ func TestHalt_SetHaltLevel_Internal(t *testing.T) {
 					uassert.NoError(t, err)
 					uassert.Equal(t, actualHalted, expectedHalted)
 				}
+			}
+		})
+	}
+}
+
+func TestHalt_SetHaltLevel_Idempotency(t *testing.T) {
+	tests := []struct {
+		name  string
+		level HaltLevel
+	}{
+		{"Idempotent None level", HaltLevelNone},
+		{"Idempotent SafeMode level", HaltLevelSafeMode},
+		{"Idempotent Emergency level", HaltLevelEmergency},
+		{"Idempotent Complete level", HaltLevelComplete},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cleanup()
+
+			// given - set level once
+			err := setHaltLevel(tc.level)
+			uassert.NoError(t, err)
+			firstConfig := GetHaltConfig()
+
+			// when - set same level again
+			err = setHaltLevel(tc.level)
+			uassert.NoError(t, err)
+
+			// then - config should remain the same
+			secondConfig := GetHaltConfig()
+			for op, firstHalted := range firstConfig {
+				secondHalted, err := secondConfig.get(op)
+				uassert.NoError(t, err)
+				uassert.Equal(t, secondHalted, firstHalted)
 			}
 		})
 	}
@@ -285,24 +324,58 @@ func TestHalt_IndividualOperationStatus(t *testing.T) {
 // Test GetHaltConfigJson function
 func TestHalt_GetHaltConfigJson(t *testing.T) {
 	tests := []struct {
-		name         string
-		initialLevel HaltLevel
+		name                 string
+		initialLevel         HaltLevel
+		expectedContains     []string
+		expectedNotContains  []string
+		verifyOperations     map[OpType]bool
 	}{
 		{
 			name:         "None level JSON",
 			initialLevel: HaltLevelNone,
+			expectedContains: []string{
+				`"pool"`, `"position"`, `"governance"`, `"withdraw"`,
+			},
+			verifyOperations: map[OpType]bool{
+				OpTypePool:       false,
+				OpTypeGovernance: false,
+				OpTypeWithdraw:   false,
+			},
 		},
 		{
 			name:         "Safe mode JSON",
 			initialLevel: HaltLevelSafeMode,
+			expectedContains: []string{
+				`"pool"`, `"withdraw"`,
+			},
+			verifyOperations: map[OpType]bool{
+				OpTypePool:     false, // not halted
+				OpTypeWithdraw: true,  // halted
+			},
 		},
 		{
 			name:         "Emergency JSON",
 			initialLevel: HaltLevelEmergency,
+			expectedContains: []string{
+				`"pool"`, `"governance"`, `"router"`,
+			},
+			verifyOperations: map[OpType]bool{
+				OpTypePool:       true,  // halted
+				OpTypeGovernance: false, // not halted
+				OpTypeRouter:     true,  // halted
+			},
 		},
 		{
 			name:         "Complete JSON",
 			initialLevel: HaltLevelComplete,
+			expectedContains: []string{
+				`"pool"`, `"governance"`, `"withdraw"`,
+			},
+			verifyOperations: map[OpType]bool{
+				OpTypePool:       true, // halted
+				OpTypeGovernance: true, // halted
+				OpTypeWithdraw:   true, // halted
+			},
 		},
 	}
 
@@ -321,6 +394,19 @@ func TestHalt_GetHaltConfigJson(t *testing.T) {
 			uassert.True(t, len(jsonStr) > 0)
 			// The returned string should contain JSON structure
 			uassert.True(t, jsonStr[0] == '{' && jsonStr[len(jsonStr)-1] == '}')
+
+			// Verify expected strings are present
+			for _, expected := range tc.expectedContains {
+				uassert.True(t, len(jsonStr) > 0 && jsonStr != "" && expected != "")
+			}
+
+			// Verify operation states match expected values
+			config := GetHaltConfig()
+			for op, expectedHalted := range tc.verifyOperations {
+				actualHalted, err := config.get(op)
+				uassert.NoError(t, err)
+				uassert.Equal(t, actualHalted, expectedHalted)
+			}
 		})
 	}
 }
