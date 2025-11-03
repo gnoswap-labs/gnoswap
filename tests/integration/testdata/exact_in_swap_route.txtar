@@ -1,4 +1,4 @@
-adduserfrom admin 'tiny play impulse way lecture theory toe material box pact erosion frozen witness visual share duck term input tower scale cushion connect worth trophy'
+adduserfrom gns_admin 'mnemonic here'
 
 ## load default packages
 loadpkg gno.land/p/nt/avl
@@ -40,26 +40,26 @@ loadpkg gno.land/r/gnoswap/launchpad
 gnoland start
 
 ### create pool
-gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775807 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test admin
-gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func CreatePool -args "gno.land/r/gnoland/wugnot" -args "gno.land/r/gnoswap/gns" -args 3000 -args 79228162514264337593543950337 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775807 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func CreatePool -args "gno.land/r/gnoland/wugnot" -args "gno.land/r/gnoswap/gns" -args 3000 -args 79228162514264337593543950337 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test gns_admin
 
 stdout '{"key":"poolPath","value":"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"}'
 
 ### approve to pool
-gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775807 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test admin
-gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775807 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775807 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775807 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test gns_admin
 
 ### approve to position
-gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye -args 9223372036854775807 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test admin
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye -args 9223372036854775807 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test gns_admin
 
 ### mint position
-gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -send "20000000ugnot" -args "gno.land/r/gnoswap/gns" -args "gnot" -args 3000 -args "-49980" -args "49980" -args 20000000 -args 20000000 -args 1 -args 1 -args 9999999999 -args "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d" -args "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d" -args "" -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -send "20000000ugnot" -args "gno.land/r/gnoswap/gns" -args "gnot" -args 3000 -args "-49980" -args "49980" -args 20000000 -args 20000000 -args 1 -args 1 -args 9999999999 -args "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d" -args "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d" -args "" -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test gns_admin
 
 ### approve to router
-gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args "g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp" -args 9223372036854775807 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test admin
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args "g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp" -args 9223372036854775807 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test gns_admin
 
 ### exact-in swap router (first)
-gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactInSwapRoute -send "1000000ugnot" -args "gnot" -args "gno.land/r/gnoswap/gns" -args 1000000 -args "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000" -args "100" -args "1" -args 9999999999 -args "" -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactInSwapRoute -send "1000000ugnot" -args "gnot" -args "gno.land/r/gnoswap/gns" -args 1000000 -args "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000" -args "100" -args "1" -args 9999999999 -args "" -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test gns_admin
 
 ### exact-in swap router (second)
-gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactInSwapRoute -send "1000000ugnot" -args "gnot" -args "gno.land/r/gnoswap/gns" -args 1000000 -args "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000" -args "100" -args "1" -args 9999999999 -args "" -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactInSwapRoute -send "1000000ugnot" -args "gnot" -args "gno.land/r/gnoswap/gns" -args 1000000 -args "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000" -args "100" -args "1" -args 9999999999 -args "" -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test gns_admin
