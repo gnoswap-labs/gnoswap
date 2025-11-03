@@ -155,7 +155,7 @@ func TestValidEmissionAmountEdgeCases(t *testing.T) {
 		{"Already at max, trying to mint more", MAX_EMISSION_AMOUNT, 1, true},
 		{"One below max, trying to mint 1", MAX_EMISSION_AMOUNT - 1, 1, false},
 		{"One below max, trying to mint 2", MAX_EMISSION_AMOUNT - 1, 2, true},
-		{"Negative amount", 0, -1, false},
+		{"Negative amount", 0, -1, true},
 	}
 
 	for _, tt := range tests {

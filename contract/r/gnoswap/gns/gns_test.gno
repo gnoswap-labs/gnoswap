@@ -57,7 +57,7 @@ func TestValidEmissionAmount(t *testing.T) {
 			name:         "should panic if emission amount is too large",
 			amount:       MAXIMUM_SUPPLY,
 			shouldError:  true,
-			errorMessage: "too many emission amount: 1000000000000000",
+			errorMessage: "[GNOSWAP-GNS-002] too many emission reward || too many emission amount: 1000000000000000",
 		},
 		{
 			name:   "should not panic if emission amount is not too large",
