@@ -29,7 +29,7 @@ import (
 	_ "gno.land/r/gnoswap/gov/staker/v1"
 )
 
-func TestDepositGns(t *testing.T) {
+func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
 
 	launchpadAddr := chain.PackageAddress(launchpadPackagePath)
@@ -534,7 +534,7 @@ func TestDepositGns(t *testing.T) {
 	}
 }
 
-func TestDepositGnsPrivate(t *testing.T) {
+func TestLaunchpadDeposit_depositGns(t *testing.T) {
 	userAddr := testutils.TestAddress("user")
 
 	tests := []struct {
@@ -583,7 +583,7 @@ func TestDepositGnsPrivate(t *testing.T) {
 	}
 }
 
-func TestStakeGovernance(t *testing.T) {
+func TestLaunchpadDeposit_stakeGovernance(t *testing.T) {
 	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
 	launchpadAddr := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
 

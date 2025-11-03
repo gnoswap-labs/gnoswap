@@ -368,7 +368,7 @@ func TestRewardManager_NewRewardManager(t *testing.T) {
 	}
 }
 
-func TestTimestampBasedRewardCalculation_ConstantTime(t *testing.T) {
+func TestRewardManager_TimestampBasedRewardCalculationConstantTime(t *testing.T) {
 	// Test that rewards are calculated based on time duration, not block count
 	// Scenario: 100 seconds duration should distribute rewards evenly per second
 
@@ -452,7 +452,7 @@ func TestTimestampBasedRewardCalculation_ConstantTime(t *testing.T) {
 	uassert.Equal(t, true, totalDistributed >= 745 && totalDistributed <= 755)
 }
 
-func TestTimestampBasedRewardCalculation_VariableBlockTime(t *testing.T) {
+func TestRewardManager_TimestampBasedRewardCalculationVariableBlockTime(t *testing.T) {
 	// Test that rewards work correctly even with variable block times
 	// Scenario: Blocks come at irregular intervals, but rewards should still be time-based
 

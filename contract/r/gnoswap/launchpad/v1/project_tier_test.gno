@@ -240,7 +240,7 @@ func TestProjectTier_DepositAndWithdraw(t *testing.T) {
 	}
 }
 
-func TestNewProjectTier(t *testing.T) {
+func TestProjectTier_NewProjectTier(t *testing.T) {
 	tests := []struct {
 		name                  string
 		projectID             string

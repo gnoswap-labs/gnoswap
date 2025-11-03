@@ -173,7 +173,7 @@ func TestProjectCondition_CheckCondition(t *testing.T) {
 	}
 }
 
-func TestNewProjectCondition(t *testing.T) {
+func TestProjectCondition_NewProjectCondition(t *testing.T) {
 	tests := []struct {
 		name              string
 		tokenPath         string
@@ -204,7 +204,7 @@ func TestNewProjectCondition(t *testing.T) {
 	}
 }
 
-func TestNewProjectConditionsWithError(t *testing.T) {
+func TestProjectCondition_NewProjectConditionsWithError(t *testing.T) {
 	tests := []struct {
 		name             string
 		conditionTokens  string

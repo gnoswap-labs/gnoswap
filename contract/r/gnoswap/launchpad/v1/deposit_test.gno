@@ -305,7 +305,7 @@ func TestDeposit_Withdraw(t *testing.T) {
 	}
 }
 
-func TestNewDeposit(t *testing.T) {
+func TestDeposit_NewDeposit(t *testing.T) {
 	testAddr := testutils.TestAddress("test")
 	projectID := "gno.land/r/onbloc/obl:123"
 

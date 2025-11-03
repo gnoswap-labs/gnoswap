@@ -17,7 +17,7 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 )
 
-func TestCollectDepositGns(t *testing.T) {
+func TestLaunchpadWithdraw_CollectDepositGns(t *testing.T) {
 	userAddr := testutils.TestAddress("user1")
 	otherAddr := testutils.TestAddress("other")
 
@@ -87,7 +87,7 @@ func TestCollectDepositGns(t *testing.T) {
 	}
 }
 
-func TestWithdrawDeposit(t *testing.T) {
+func TestLaunchpadWithdraw_WithdrawDeposit(t *testing.T) {
 	const currentDepositID = "1"
 	userAddr := testutils.TestAddress("user2")
 
@@ -130,7 +130,7 @@ func TestWithdrawDeposit(t *testing.T) {
 	}
 }
 
-func TestCollectDepositGns_TokensRemainLocked(t *testing.T) {
+func TestLaunchpadWithdraw_CollectDepositGnsTokensRemainLocked(t *testing.T) {
 	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
 	launchpadAddr := chain.PackageAddress(launchpadPackagePath)
 
@@ -195,7 +195,7 @@ func TestCollectDepositGns_TokensRemainLocked(t *testing.T) {
 }
 
 // This test verifies complete balance restoration after deposit and withdrawal
-func TestCollectDepositGns_FullBalanceRestoration(t *testing.T) {
+func TestLaunchpadWithdraw_CollectDepositGnsFullBalanceRestoration(t *testing.T) {
 	// init test environment
 	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
 	launchpadAddr := chain.PackageAddress(launchpadPackagePath)

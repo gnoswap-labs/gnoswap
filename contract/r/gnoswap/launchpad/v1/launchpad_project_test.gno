@@ -20,7 +20,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
-func TestCreateProject_ShouldFail(t *testing.T) {
+func TestLaunchpadProject_CreateProjectShouldFail(t *testing.T) {
 	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	oblPath := "gno.land/r/onbloc/obl"
@@ -118,7 +118,7 @@ func TestCreateProject_ShouldFail(t *testing.T) {
 	}
 }
 
-func TestCreateProject_Internal(t *testing.T) {
+func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	projectAddr := testutils.TestAddress("projectAddr")
 	oblPath := "gno.land/r/onbloc/obl"
@@ -288,7 +288,7 @@ func TestCreateProject_Internal(t *testing.T) {
 	}
 }
 
-func TestCreateProjectPrivate_Multiple(t *testing.T) {
+func TestLaunchpadProject_CreateProjectPrivateMultiple(t *testing.T) {
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	projectAddr := testutils.TestAddress("projectAddr")
 	oblPath := "gno.land/r/onbloc/obl"
@@ -369,7 +369,7 @@ func TestCreateProjectPrivate_Multiple(t *testing.T) {
 	}
 }
 
-func TestCreateProjectParams_ValidatName(t *testing.T) {
+func TestLaunchpadProject_CreateProjectParamsValidatName(t *testing.T) {
 	tests := []struct {
 		name          string
 		projectName   string
@@ -409,7 +409,7 @@ func TestCreateProjectParams_ValidatName(t *testing.T) {
 	}
 }
 
-func TestCreateProjectParams_ValidateTokenPath(t *testing.T) {
+func TestLaunchpadProject_CreateProjectParamsValidateTokenPath(t *testing.T) {
 	tests := []struct {
 		name          string
 		tokenPath     string
@@ -449,7 +449,7 @@ func TestCreateProjectParams_ValidateTokenPath(t *testing.T) {
 	}
 }
 
-func TestCreateProjectParams_ValidateRecipient(t *testing.T) {
+func TestLaunchpadProject_CreateProjectParamsValidateRecipient(t *testing.T) {
 	tests := []struct {
 		name          string
 		recipient     address
@@ -484,7 +484,7 @@ func TestCreateProjectParams_ValidateRecipient(t *testing.T) {
 	}
 }
 
-func TestCreateProjectParams_ValidateDepositAmount(t *testing.T) {
+func TestLaunchpadProject_CreateProjectParamsValidateDepositAmount(t *testing.T) {
 	tests := []struct {
 		name          string
 		depositAmount int64
@@ -524,7 +524,7 @@ func TestCreateProjectParams_ValidateDepositAmount(t *testing.T) {
 	}
 }
 
-func TestCreateProjectParams_ValidateRatio(t *testing.T) {
+func TestLaunchpadProject_CreateProjectParamsValidateRatio(t *testing.T) {
 	tests := []struct {
 		name          string
 		tier30Ratio   int64
@@ -567,7 +567,7 @@ func TestCreateProjectParams_ValidateRatio(t *testing.T) {
 	}
 }
 
-func TestCreateProjectParams_ValidateStartTime(t *testing.T) {
+func TestLaunchpadProject_CreateProjectParamsValidateStartTime(t *testing.T) {
 	projectMinimumStartDelayTime := int64(60 * 60) // 1 hour
 
 	tests := []struct {
@@ -614,7 +614,7 @@ func TestCreateProjectParams_ValidateStartTime(t *testing.T) {
 	}
 }
 
-func TestCreateProjectParams_ValidateConditions(t *testing.T) {
+func TestLaunchpadProject_CreateProjectParamsValidateConditions(t *testing.T) {
 	tests := []struct {
 		name             string
 		conditionTokens  string
