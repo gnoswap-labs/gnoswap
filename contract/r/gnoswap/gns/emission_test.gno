@@ -400,9 +400,6 @@ func TestEmissionStateUninitializedBehavior(t *testing.T) {
 			uassert.False(t, es.isActive(ts))
 		}
 	})
-
-	// Note: getCurrentYear with uninitialized state (0,0) will actually calculate year based on timestamp
-	// Skip this test as the behavior is different than expected
 }
 
 // TestEmissionStateAddSubHalvingYearAmounts tests add/sub operations with edge cases
