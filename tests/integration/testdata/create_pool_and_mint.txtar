@@ -1,0 +1,171 @@
+loadpkg gno.land/p/nt/avl
+loadpkg gno.land/p/nt/ufmt
+loadpkg gno.land/p/onbloc/json
+loadpkg gno.land/p/nt/ownable
+loadpkg gno.land/p/demo/tokens/grc20
+loadpkg gno.land/p/demo/tokens/grc721
+loadpkg gno.land/r/demo/defi/foo20
+
+loadpkg gno.land/r/sys/users
+loadpkg gno.land/r/gnoland/wugnot
+loadpkg gno.land/r/demo/defi/grc20reg
+
+adduserfrom gns_admin 'tiny play impulse way lecture theory toe material box pact erosion frozen witness visual share duck term input tower scale cushion connect worth trophy'
+
+adduser gnoswap
+patchpkg "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" $gnoswap_user_addr
+
+adduser test_admin
+patchpkg "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" $test_admin_user_addr
+
+adduser user1
+patchpkg "g16a7etgm9z2r653ucl36rj0l2yqcxgrz2jyegzx" $user1_user_addr
+
+adduser gnoswap_pool
+patchpkg "g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v" $gnoswap_pool_user_addr
+
+adduser gnoswap_router
+patchpkg "g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp" $gnoswap_router_user_addr
+
+## start a new node
+gnoland start 
+
+
+## deploy test-tokens
+
+### deploy usdc
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/onbloc/usdc -pkgpath gno.land/r/onbloc/usdc -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy foo
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/onbloc/foo -pkgpath gno.land/r/onbloc/foo -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy bar
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/onbloc/bar -pkgpath gno.land/r/onbloc/bar -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy baz
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/onbloc/baz -pkgpath gno.land/r/onbloc/baz -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy qux
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/onbloc/qux -pkgpath gno.land/r/onbloc/qux -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy obl
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/onbloc/obl -pkgpath gno.land/r/onbloc/obl -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+## deploy packages
+
+### deploy uint256
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/uint256 -pkgpath gno.land/p/gnoswap/uint256 -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+## deploy int256
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/int256 -pkgpath gno.land/p/gnoswap/int256 -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+## deploy gnsmath
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/gnsmath -pkgpath gno.land/p/gnoswap/gnsmath -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+## deploy rbac
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/rbac -pkgpath gno.land/p/gnoswap/rbac -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+## deploy store
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/store -pkgpath gno.land/p/gnoswap/store -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+## deploy version manager
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/version_manager -pkgpath gno.land/p/gnoswap/version_manager -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+## deploy realm
+
+### deploy acccess
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/access -pkgpath gno.land/r/gnoswap/access -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy rbac realm
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/rbac -pkgpath gno.land/r/gnoswap/rbac -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy halt realm
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/halt -pkgpath gno.land/r/gnoswap/halt -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy common
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/common -pkgpath gno.land/r/gnoswap/common -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy referral
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/referral -pkgpath gno.land/r/gnoswap/referral -gas-fee 100000000ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test test1
+
+
+### deploy gns
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/gns -pkgpath gno.land/r/gnoswap/gns -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy gnft
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/gnft -pkgpath gno.land/r/gnoswap/gnft -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy gov/xgns:115
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/gov/xgns -pkgpath gno.land/r/gnoswap/gov/xgns -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy emission
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/emission -pkgpath gno.land/r/gnoswap/emission -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy protocol_fee
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/protocol_fee -pkgpath gno.land/r/gnoswap/protocol_fee -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy pool
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/pool -pkgpath gno.land/r/gnoswap/pool -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy position
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/position -pkgpath gno.land/r/gnoswap/position -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy router
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/router -pkgpath gno.land/r/gnoswap/router -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy staker
+# gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/staker -pkgpath gno.land/r/gnoswap/staker -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+## deploy versioned realm (v1)
+
+### deploy protocol_fee
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/protocol_fee/v1 -pkgpath gno.land/r/gnoswap/protocol_fee/v1 -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy pool
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/pool/v1 -pkgpath gno.land/r/gnoswap/pool/v1 -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy position
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/position/v1 -pkgpath gno.land/r/gnoswap/position/v1 -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy router
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/router/v1 -pkgpath gno.land/r/gnoswap/router/v1 -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+### deploy staker
+# gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/staker/v1 -pkgpath gno.land/r/gnoswap/staker/v1 -gas-fee 100000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+
+### Send wugnot to neccessary accounts
+gnokey maketx send -send 10000000000ugnot -to $gns_admin_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
+
+### Send wugnot to neccessary address
+gnokey maketx send -send 100000000ugnot -to $test_admin_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
+gnokey maketx send -send 500000000ugnot -to $user1_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
+gnokey maketx send -send 500000000ugnot -to $test_admin_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
+
+### Transfer 1_000_000_000 GNS
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $test_admin_user_addr -args 1000000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "transfer 1_000_000_000 GNS" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_user_addr -args 100000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $test_admin_user_addr -args 100000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+
+### Create pool
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func CreatePool -args "gno.land/r/gnoland/wugnot" -args "gno.land/r/gnoswap/gns" -args 3000 -args 79228162514264337593543950337 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test gns_admin
+
+## Check created pool 
+gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.ExistsPoolPath(\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\")"
+stdout true
+
+
+## Mint position
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Deposit -send "100000000ugnot" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -send "50000000ugnot" -args gno.land/r/gnoswap/gns -args "gnot" -args 3000 -args "-887220" -args "887220" -args 50000000 -args 50000000 -args 1 -args 1 -args 9999999999 -args $gns_admin_user_addr -args $gns_admin_user_addr -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+
+### Execute swaps
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args $gnoswap_pool_user_addr -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args $gnoswap_router_user_addr -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactInSwapRoute -args gno.land/r/gnoswap/gns -args gno.land/r/gnoland/wugnot -args 1000000 -args "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000" -args "100" -args "0" -args 9999999999 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactInSwapRoute -send "1000000ugnot" -args "gnot" -args gno.land/r/gnoswap/gns -args 1000000 -args "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000" -args "100" -args "0" -args 9999999999 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactInSwapRoute -args gno.land/r/gnoswap/gns -args gno.land/r/gnoland/wugnot -args 500000 -args "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000" -args "100" -args "0" -args 9999999999 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
