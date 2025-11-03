@@ -418,3 +418,56 @@ func TestProjectTier_EdgeCases(t *testing.T) {
 	// Should handle gracefully (likely zero or unchanged)
 	// The actual behavior depends on implementation details
 }
+
+func TestProjectTier_makeProjectTierID(t *testing.T) {
+	tests := []struct {
+		name       string
+		projectID  string
+		duration   int64
+		expectedID string
+	}{
+		{
+			name:       "create tier id with tier 30",
+			projectID:  "gno.land/r/demo/token:100",
+			duration:   30,
+			expectedID: "gno.land/r/demo/token:100:30",
+		},
+		{
+			name:       "create tier id with tier 90",
+			projectID:  "gno.land/r/demo/token:100",
+			duration:   90,
+			expectedID: "gno.land/r/demo/token:100:90",
+		},
+		{
+			name:       "create tier id with tier 180",
+			projectID:  "gno.land/r/demo/token:100",
+			duration:   180,
+			expectedID: "gno.land/r/demo/token:100:180",
+		},
+		{
+			name:       "create tier id with zero duration",
+			projectID:  "gno.land/r/demo/token:100",
+			duration:   0,
+			expectedID: "gno.land/r/demo/token:100:0",
+		},
+		{
+			name:       "create tier id with negative duration",
+			projectID:  "gno.land/r/demo/token:100",
+			duration:   -1,
+			expectedID: "gno.land/r/demo/token:100:-1",
+		},
+		{
+			name:       "create tier id with empty project id",
+			projectID:  "",
+			duration:   30,
+			expectedID: ":30",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := makeProjectTierID(tt.projectID, tt.duration)
+			uassert.Equal(t, result, tt.expectedID)
+		})
+	}
+}
