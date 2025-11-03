@@ -655,7 +655,7 @@ func TestXgns_Halted(t *testing.T) {
 			}
 
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
-			halt.SetOperationStatus(cross, halt.OpTypeXGns, 1, true)
+			halt.SetOperationStatus(cross, halt.OpTypeXGns, true)
 
 			// when & then
 			switch tc.operation {
@@ -703,6 +703,6 @@ func resetHalt(t *testing.T) {
 	t.Helper()
 	if adminAddr, ok := access.GetAddress(prbac.ROLE_ADMIN.String()); ok {
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
-		halt.SetOperationStatus(cross, halt.OpTypeXGns, 1, false)
+		halt.SetOperationStatus(cross, halt.OpTypeXGns, false)
 	}
 }
