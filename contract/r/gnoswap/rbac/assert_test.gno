@@ -10,7 +10,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
-func TestAssertIsOwner(t *testing.T) {
+func TestAssert_assertIsOwner(t *testing.T) {
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
 
@@ -65,7 +65,7 @@ func TestAssertIsOwner(t *testing.T) {
 	}
 }
 
-func TestAssertIsPendingOwner(t *testing.T) {
+func TestAssert_assertIsPendingOwner(t *testing.T) {
 	tests := []struct {
 		name        string
 		addr        address
@@ -123,7 +123,7 @@ func TestAssertIsPendingOwner(t *testing.T) {
 	}
 }
 
-func TestAssertIsAdmin(t *testing.T) {
+func TestAssert_assertIsAdmin(t *testing.T) {
 	testing.SetRealm(testing.NewUserRealm(ADMIN))
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
@@ -171,13 +171,13 @@ func TestAssertIsAdmin(t *testing.T) {
 	}
 }
 
-func TestAssertIsAdminWithRoleUpdate(t *testing.T) {
+func TestAssert_assertIsAdminWithRoleUpdate(t *testing.T) {
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
 	initRbac()
 
 	// Change admin role to a different address
-	err := manager.UpdateRoleAddress(prbac.ROLE_ADMIN.String(), 1, DEV_OPS)
+	err := manager.UpdateRoleAddress(prbac.ROLE_ADMIN.String(), DEV_OPS)
 	if err != nil {
 		t.Fatalf("Failed to update admin role address: %v", err)
 	}
@@ -216,7 +216,7 @@ func TestAssertIsAdminWithRoleUpdate(t *testing.T) {
 	}
 }
 
-func TestAssertFunctionsIntegration(t *testing.T) {
+func TestAssert_assertFunctionsIntegration(t *testing.T) {
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac"))
@@ -270,6 +270,149 @@ func TestAssertFunctionsIntegration(t *testing.T) {
 			assertIsAdmin(DEV_OPS)
 		})
 	})
+}
+
+func TestAssert_assertIsValidRoleName(t *testing.T) {
+	tests := []struct {
+		name        string
+		roleName    string
+		shouldPanic bool
+		expectedMsg string
+	}{
+		{
+			name:        "Valid role name should not panic",
+			roleName:    "valid_role",
+			shouldPanic: false,
+		},
+		{
+			name:        "Another valid role name should not panic",
+			roleName:    "admin",
+			shouldPanic: false,
+		},
+		{
+			name:        "Empty role name should panic",
+			roleName:    "",
+			shouldPanic: true,
+			expectedMsg: "invalid role name || role name: ",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+					assertIsValidRoleName(tt.roleName)
+				})
+			} else {
+				assertIsValidRoleName(tt.roleName)
+			}
+		})
+	}
+}
+
+func TestAssert_assertIsValidAddress(t *testing.T) {
+	tests := []struct {
+		name        string
+		addr        address
+		shouldPanic bool
+		expectedMsg string
+	}{
+		{
+			name:        "Valid address should not panic",
+			addr:        ADMIN,
+			shouldPanic: false,
+		},
+		{
+			name:        "Another valid address should not panic",
+			addr:        DEV_OPS,
+			shouldPanic: false,
+		},
+		{
+			name:        "Empty address should panic",
+			addr:        address(""),
+			shouldPanic: true,
+			expectedMsg: "invalid address || address: ",
+		},
+		{
+			name:        "Invalid address format should panic",
+			addr:        address("invalid"),
+			shouldPanic: true,
+			expectedMsg: "invalid address || address: invalid",
+		},
+		{
+			name:        "Malformed address should panic",
+			addr:        address("g1"),
+			shouldPanic: true,
+			expectedMsg: "invalid address || address: g1",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+					assertIsValidAddress(tt.addr)
+				})
+			} else {
+				assertIsValidAddress(tt.addr)
+			}
+		})
+	}
+}
+
+func TestAssert_assertIsAdminOrGovernance(t *testing.T) {
+	// Reset manager for test
+	manager = prbac.NewRBACWithAddress(ADMIN)
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac"))
+	initRbac()
+
+	tests := []struct {
+		name        string
+		addr        address
+		shouldPanic bool
+		expectedMsg string
+	}{
+		{
+			name:        "Admin address should not panic",
+			addr:        ADMIN,
+			shouldPanic: false,
+		},
+		{
+			name:        "Governance address should not panic",
+			addr:        GOV_GOVERNANCE_ADDR,
+			shouldPanic: false,
+		},
+		{
+			name:        "Dev ops address should panic",
+			addr:        DEV_OPS,
+			shouldPanic: true,
+			expectedMsg: "caller is not admin or governance || caller: g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9",
+		},
+		{
+			name:        "Random address should panic",
+			addr:        COMMUNITY_POOL_ADDR,
+			shouldPanic: true,
+			expectedMsg: "caller is not admin or governance || caller: g13lpjmjhl2du7whed3wxe4n5508txxja6ezxeg7",
+		},
+		{
+			name:        "Empty address should panic",
+			addr:        address(""),
+			shouldPanic: true,
+			expectedMsg: "caller is not admin or governance || caller: ",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.expectedMsg, func() {
+					assertIsAdminOrGovernance(tt.addr)
+				})
+			} else {
+				assertIsAdminOrGovernance(tt.addr)
+			}
+		})
+	}
 }
 
 // Note: contains function is defined in rbac_test.gno to avoid duplication

@@ -69,7 +69,12 @@ func testInitData(t *testing.T) {
 	mockPositions.Set("test_position", positionInfo)
 	mockPool.SetPositions(mockPositions)
 
-	getMockInstance().store.GetPools().Set("token0:token1:3000", mockPool)
+	pools := getMockInstance().store.GetPools()
+	pools.Set("token0:token1:3000", mockPool)
+	err := getMockInstance().store.SetPools(pools)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func TestGetters(t *testing.T) {

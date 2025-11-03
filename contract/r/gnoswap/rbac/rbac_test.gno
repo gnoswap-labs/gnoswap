@@ -9,7 +9,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
-func TestRegisterRoleWithAddressParameter(t *testing.T) {
+func TestRbac_RegisterRole(t *testing.T) {
 	tests := []struct {
 		name          string
 		setup         func()
@@ -83,7 +83,7 @@ func TestRegisterRoleWithAddressParameter(t *testing.T) {
 				initRbac()
 				// Pre-register a role
 				manager.RegisterRole("duplicate_role", testutils.TestAddress("original"))
-				manager.UpdateRoleAddress("duplicate_role", 1, testutils.TestAddress("original"))
+				manager.UpdateRoleAddress("duplicate_role", testutils.TestAddress("original"))
 			},
 			roleName:      "duplicate_role",
 			roleAddress:   testutils.TestAddress("new_address"),
@@ -127,6 +127,42 @@ func TestRegisterRoleWithAddressParameter(t *testing.T) {
 			shouldPanic:   true,
 			panicContains: "caller is not admin or governance",
 		},
+		{
+			name: "Register role with empty role name fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:      "",
+			roleAddress:   testutils.TestAddress("valid_address"),
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "invalid role name",
+		},
+		{
+			name: "Register role with invalid address format fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:      "valid_role_invalid_addr",
+			roleAddress:   address("invalid"),
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "invalid address",
+		},
+		{
+			name: "Register role with malformed address fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:      "valid_role_malformed",
+			roleAddress:   address("g1"),
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "invalid address",
+		},
 	}
 
 	for _, tt := range tests {
@@ -147,17 +183,12 @@ func TestRegisterRoleWithAddressParameter(t *testing.T) {
 				addr, err := manager.GetRoleAddress(tt.roleName)
 				uassert.NoError(t, err, "Failed to get role address")
 				uassert.Equal(t, addr, tt.roleAddress, "Role address mismatch")
-
-				// Verify role is synchronized with access package
-				allRoles := manager.GetRoleAddresses(tt.roleName)
-				registeredAddr := allRoles[manager.GetRoleLatestVersion(tt.roleName)]
-				uassert.Equal(t, registeredAddr, tt.roleAddress, "Address mismatch in role map")
 			}
 		})
 	}
 }
 
-func TestRemoveRole(t *testing.T) {
+func TestRbac_RemoveRole(t *testing.T) {
 	tests := []struct {
 		name        string
 		setup       func()
@@ -242,7 +273,7 @@ func TestRemoveRole(t *testing.T) {
 	}
 }
 
-func TestGetRoleAddress(t *testing.T) {
+func TestRbac_GetRoleAddress(t *testing.T) {
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
 	initRbac()
@@ -284,7 +315,7 @@ func TestGetRoleAddress(t *testing.T) {
 	}
 }
 
-func TestUpdateRoleAddress(t *testing.T) {
+func TestRbac_UpdateRoleAddress_Basic(t *testing.T) {
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
 	initRbac()
@@ -325,7 +356,7 @@ func TestUpdateRoleAddress(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test manager functionality directly
-			err := manager.UpdateRoleAddress(tt.roleName, 1, tt.addr)
+			err := manager.UpdateRoleAddress(tt.roleName, tt.addr)
 
 			if tt.shouldErr {
 				if err == nil {
@@ -365,7 +396,7 @@ func TestUpdateAccessRoleAddresses(t *testing.T) {
 		t.Fatalf("Failed to register test role: %v", err)
 	}
 
-	err = manager.UpdateRoleAddress(testRole, 1, DEV_OPS)
+	err = manager.UpdateRoleAddress(testRole, DEV_OPS)
 	if err != nil {
 		t.Fatalf("Failed to update role address: %v", err)
 	}
@@ -411,7 +442,7 @@ func TestAddressChangeComplete(t *testing.T) {
 				manager = prbac.NewRBACWithAddress(ADMIN)
 				initRbac()
 				manager.RegisterRole("custom_role", testutils.TestAddress("custom_address"))
-				manager.UpdateRoleAddress("custom_role", 1, testutils.TestAddress("custom"))
+				manager.UpdateRoleAddress("custom_role", testutils.TestAddress("custom"))
 			},
 			roleName:      "custom_role",
 			oldAddress:    testutils.TestAddress("custom"),
@@ -450,7 +481,7 @@ func TestAddressChangeComplete(t *testing.T) {
 
 				// Change pool too
 				newPoolAddr := testutils.TestAddress("new_pool")
-				err = manager.UpdateRoleAddress(prbac.ROLE_POOL.String(), 1, newPoolAddr)
+				err = manager.UpdateRoleAddress(prbac.ROLE_POOL.String(), newPoolAddr)
 				if err != nil {
 					t.Errorf("Failed to update pool address: %v", err)
 				}
@@ -485,7 +516,7 @@ func TestAddressChangeComplete(t *testing.T) {
 			}
 
 			// Update address
-			err = manager.UpdateRoleAddress(tt.roleName, 1, tt.newAddress)
+			err = manager.UpdateRoleAddress(tt.roleName, tt.newAddress)
 			if tt.expectSuccess && err != nil {
 				t.Fatalf("UpdateRoleAddress failed: %v", err)
 			} else if !tt.expectSuccess && err == nil {
@@ -578,7 +609,7 @@ func TestRBACToAccessSync(t *testing.T) {
 						t.Errorf("Failed to register role %s: %v", op.roleName, err)
 					}
 				case "update":
-					err := manager.UpdateRoleAddress(op.roleName, 1, op.address)
+					err := manager.UpdateRoleAddress(op.roleName, op.address)
 					if err != nil {
 						t.Errorf("Failed to update role %s: %v", op.roleName, err)
 					}
@@ -591,13 +622,13 @@ func TestRBACToAccessSync(t *testing.T) {
 			}
 
 			// Verify final state in RBAC
-			allRoles := manager.GetRoleAddresses(tt.operations[len(tt.operations)-1].roleName)
+			allRoles := manager.GetAllRoleAddresses()
 			for roleName, expectedAddr := range tt.verifyRoles {
 				if len(allRoles) == 0 {
 					continue
 				}
 
-				actualAddr := allRoles[manager.GetRoleLatestVersion(roleName)]
+				actualAddr := allRoles[roleName]
 				if actualAddr != expectedAddr {
 					t.Errorf("Role %s address mismatch: got %s, want %s", roleName, actualAddr, expectedAddr)
 				}
@@ -606,11 +637,283 @@ func TestRBACToAccessSync(t *testing.T) {
 			// Verify removed roles don't exist
 			for _, op := range tt.operations {
 				if op.action == "remove" {
-					if len(allRoles) != 0 {
+					_, exists := allRoles[op.roleName]
+					if exists {
 						t.Errorf("Role %s should not exist after removal", op.roleName)
 						continue
 					}
 				}
+			}
+		})
+	}
+}
+
+func TestRbac_UpdateRoleAddress_WithAuthorization(t *testing.T) {
+	tests := []struct {
+		name          string
+		setup         func()
+		roleName      string
+		newAddr       address
+		callerRealm   address
+		shouldPanic   bool
+		panicContains string
+	}{
+		{
+			name: "Update role with admin caller succeeds",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+				testing.SetRealm(testing.NewUserRealm(ADMIN))
+				RegisterRole(cross, "test_update_role_admin", testutils.TestAddress("old_addr"))
+			},
+			roleName:    "test_update_role_admin",
+			newAddr:     testutils.TestAddress("new_addr"),
+			callerRealm: ADMIN,
+			shouldPanic: false,
+		},
+		{
+			name: "Update role with governance caller succeeds",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+				testing.SetRealm(testing.NewUserRealm(ADMIN))
+				RegisterRole(cross, "test_update_role_gov", testutils.TestAddress("old_addr"))
+			},
+			roleName:    "test_update_role_gov",
+			newAddr:     testutils.TestAddress("new_addr_gov"),
+			callerRealm: GOV_GOVERNANCE_ADDR,
+			shouldPanic: false,
+		},
+		{
+			name: "Update role with unauthorized caller fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+				testing.SetRealm(testing.NewUserRealm(ADMIN))
+				RegisterRole(cross, "test_update_role_unauth", testutils.TestAddress("old_addr"))
+			},
+			roleName:      "test_update_role_unauth",
+			newAddr:       testutils.TestAddress("new_addr_unauth"),
+			callerRealm:   testutils.TestAddress("random_user"),
+			shouldPanic:   true,
+			panicContains: "caller is not admin or governance",
+		},
+		{
+			name: "Update role with devops caller fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+				testing.SetRealm(testing.NewUserRealm(ADMIN))
+				RegisterRole(cross, "test_update_role_devops", testutils.TestAddress("old_addr"))
+			},
+			roleName:      "test_update_role_devops",
+			newAddr:       testutils.TestAddress("new_addr_devops"),
+			callerRealm:   DEV_OPS,
+			shouldPanic:   true,
+			panicContains: "caller is not admin or governance",
+		},
+		{
+			name: "Update role with empty role name fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:      "",
+			newAddr:       testutils.TestAddress("new_addr"),
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "invalid role name",
+		},
+		{
+			name: "Update role with empty address fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+				testing.SetRealm(testing.NewUserRealm(ADMIN))
+				RegisterRole(cross, "test_update_role_empty_addr", testutils.TestAddress("old_addr"))
+			},
+			roleName:      "test_update_role_empty_addr",
+			newAddr:       address(""),
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "invalid address",
+		},
+		{
+			name: "Update role with invalid address format fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+				testing.SetRealm(testing.NewUserRealm(ADMIN))
+				RegisterRole(cross, "test_update_role_invalid_addr", testutils.TestAddress("old_addr"))
+			},
+			roleName:      "test_update_role_invalid_addr",
+			newAddr:       address("invalid"),
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "invalid address",
+		},
+		{
+			name: "Update role with malformed address fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+				testing.SetRealm(testing.NewUserRealm(ADMIN))
+				RegisterRole(cross, "test_update_role_malformed", testutils.TestAddress("old_addr"))
+			},
+			roleName:      "test_update_role_malformed",
+			newAddr:       address("g1"),
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "invalid address",
+		},
+		{
+			name: "Update non-existent role fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:      "non_existent_role",
+			newAddr:       testutils.TestAddress("new_addr"),
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "does not exist",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
+
+			// Set realm to the specified caller for authorization testing
+			testing.SetRealm(testing.NewUserRealm(tt.callerRealm))
+
+			if tt.shouldPanic {
+				uassert.AbortsContains(t, tt.panicContains, func() {
+					UpdateRoleAddress(cross, tt.roleName, tt.newAddr)
+				})
+			} else {
+				UpdateRoleAddress(cross, tt.roleName, tt.newAddr)
+
+				// Verify the role address was updated
+				addr, err := manager.GetRoleAddress(tt.roleName)
+				uassert.NoError(t, err, "Failed to get role address")
+				uassert.Equal(t, addr, tt.newAddr, "Role address was not updated correctly")
+			}
+		})
+	}
+}
+
+func TestRbac_RemoveRole_WithAuthorization(t *testing.T) {
+	tests := []struct {
+		name          string
+		setup         func()
+		roleName      string
+		callerRealm   address
+		shouldPanic   bool
+		panicContains string
+	}{
+		{
+			name: "Remove role with admin caller succeeds",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+				testing.SetRealm(testing.NewUserRealm(ADMIN))
+				RegisterRole(cross, "test_remove_role_admin", testutils.TestAddress("test_addr"))
+			},
+			roleName:    "test_remove_role_admin",
+			callerRealm: ADMIN,
+			shouldPanic: false,
+		},
+		{
+			name: "Remove role with governance caller succeeds",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+				testing.SetRealm(testing.NewUserRealm(ADMIN))
+				RegisterRole(cross, "test_remove_role_gov", testutils.TestAddress("test_addr"))
+			},
+			roleName:    "test_remove_role_gov",
+			callerRealm: GOV_GOVERNANCE_ADDR,
+			shouldPanic: false,
+		},
+		{
+			name: "Remove role with unauthorized caller fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+				testing.SetRealm(testing.NewUserRealm(ADMIN))
+				RegisterRole(cross, "test_remove_role_unauth", testutils.TestAddress("test_addr"))
+			},
+			roleName:      "test_remove_role_unauth",
+			callerRealm:   testutils.TestAddress("random_user"),
+			shouldPanic:   true,
+			panicContains: "caller is not admin or governance",
+		},
+		{
+			name: "Remove role with devops caller fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+				testing.SetRealm(testing.NewUserRealm(ADMIN))
+				RegisterRole(cross, "test_remove_role_devops", testutils.TestAddress("test_addr"))
+			},
+			roleName:      "test_remove_role_devops",
+			callerRealm:   DEV_OPS,
+			shouldPanic:   true,
+			panicContains: "caller is not admin or governance",
+		},
+		{
+			name: "Remove role with empty role name fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:      "",
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "invalid role name",
+		},
+		{
+			name: "Remove system role fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:      prbac.ROLE_ADMIN.String(),
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "cannot remove system role",
+		},
+		{
+			name: "Remove non-existent role fails",
+			setup: func() {
+				manager = prbac.NewRBACWithAddress(ADMIN)
+				initRbac()
+			},
+			roleName:      "non_existent_role",
+			callerRealm:   ADMIN,
+			shouldPanic:   true,
+			panicContains: "does not exist",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
+
+			// Set realm to the specified caller for authorization testing
+			testing.SetRealm(testing.NewUserRealm(tt.callerRealm))
+
+			if tt.shouldPanic {
+				uassert.AbortsContains(t, tt.panicContains, func() {
+					RemoveRole(cross, tt.roleName)
+				})
+			} else {
+				RemoveRole(cross, tt.roleName)
+
+				// Verify the role was actually removed
+				_, err := manager.GetRoleAddress(tt.roleName)
+				uassert.Error(t, err, "Role should not exist after removal")
 			}
 		})
 	}

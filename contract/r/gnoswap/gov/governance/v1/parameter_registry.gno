@@ -4,16 +4,15 @@ import (
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 
-	"gno.land/r/gnoswap/access"
 	cp "gno.land/r/gnoswap/community_pool"
 	en "gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/rbac"
 
+	"gno.land/r/gnoswap/gov/governance"
 	pl "gno.land/r/gnoswap/pool"
 	pf "gno.land/r/gnoswap/protocol_fee"
 	rr "gno.land/r/gnoswap/router"
 	sr "gno.land/r/gnoswap/staker"
-	"gno.land/r/gnoswap/gov/governance"
 
 	"gno.land/r/gnoswap/halt"
 )
@@ -151,7 +150,7 @@ func (r *ParameterRegistry) Handler(key string) (ParameterHandler, error) {
 // Returns:
 //   - *ParameterRegistry: new registry instance
 func NewParameterRegistry() *ParameterRegistry {
-	return &ParameterRegistry{ handlers: avl.NewTree() }
+	return &ParameterRegistry{handlers: avl.NewTree()}
 }
 
 // makeHandlerKey creates a unique identifier for a handler based on package path and function.
@@ -177,29 +176,6 @@ func CreateParameterHandlers() *ParameterRegistry {
 
 	// Define all handler configurations for different system components
 	handlers := []*ParameterHandlerOptions{
-		// Access control
-		{
-			pkgPath:    ACCESS_PATH,
-			function:   "UpdateSwapWhiteList",
-			paramCount: 1,
-			handlerFunc: func(params []string) error {
-				// Update swap whitelist
-				access.UpdateSwapWhiteList(cross, address(params[0]))
-
-				return nil
-			},
-		},
-		{
-			pkgPath:    ACCESS_PATH,
-			function:   "RemoveFromSwapWhiteList",
-			paramCount: 1,
-			handlerFunc: func(params []string) error {
-				// Remove from swap whitelist
-				access.RemoveFromSwapWhiteList(cross, address(params[0]))
-
-				return nil
-			},
-		},
 		// Community pool token transfers
 		{
 			pkgPath:    COMMUNITY_POOL_PATH,
@@ -495,28 +471,13 @@ func CreateParameterHandlers() *ParameterRegistry {
 		{
 			pkgPath:    HALT_PATH,
 			function:   "SetOperationStatus",
-			paramCount: 3,
-			handlerFunc: func(params []string) error {
-				// Enable or disable specific operation types
-				opType := halt.OpType(params[0])
-				version := parseInt(params[1])
-				allowed := parseBool(params[2])
-
-				halt.SetOperationStatus(cross, opType, version, allowed)
-
-				return nil
-			},
-		},
-		{
-			pkgPath:    HALT_PATH,
-			function:   "SetOperationStatusNextVersion",
 			paramCount: 2,
 			handlerFunc: func(params []string) error {
 				// Enable or disable specific operation types
 				opType := halt.OpType(params[0])
 				allowed := parseBool(params[1])
 
-				halt.SetOperationStatusNextVersion(cross, opType, allowed)
+				halt.SetOperationStatus(cross, opType, allowed)
 
 				return nil
 			},
@@ -540,28 +501,13 @@ func CreateParameterHandlers() *ParameterRegistry {
 		{
 			pkgPath:    RBAC_PATH,
 			function:   "UpdateRoleAddress",
-			paramCount: 3,
-			handlerFunc: func(params []string) error {
-				roleName := params[0]
-				version := parseInt(params[1])
-				roleAddress := address(params[2])
-
-				// Update role address
-				rbac.UpdateRoleAddress(cross, roleName, version, roleAddress)
-
-				return nil
-			},
-		},
-		{
-			pkgPath:    RBAC_PATH,
-			function:   "UpdateRoleAddressNextVersion",
 			paramCount: 2,
 			handlerFunc: func(params []string) error {
 				roleName := params[0]
 				roleAddress := address(params[1])
 
-				// Update role address next version
-				rbac.UpdateRoleAddressNextVersion(cross, roleName, roleAddress)
+				// Update role address
+				rbac.UpdateRoleAddress(cross, roleName, roleAddress)
 
 				return nil
 			},
