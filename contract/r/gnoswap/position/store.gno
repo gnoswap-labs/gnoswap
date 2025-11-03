@@ -99,7 +99,7 @@ func (s *positionStore) SetPosition(positionId uint64, position Position) error 
 
 	positions.Set(uint64ToString(positionId), position)
 
-	return nil
+	return s.kvStore.Set(StoreKeyPositions.String(), positions)
 }
 
 func (s *positionStore) RemovePosition(positionId uint64) error {
@@ -111,7 +111,7 @@ func (s *positionStore) RemovePosition(positionId uint64) error {
 
 	positions.Remove(uint64ToString(positionId))
 
-	return nil
+	return s.kvStore.Set(StoreKeyPositions.String(), positions)
 }
 
 // NewPositionStore creates a new protocol fee store instance with the provided KV store.
