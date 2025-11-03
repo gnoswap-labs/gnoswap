@@ -202,6 +202,17 @@ func TestDeposit_Withdraw(t *testing.T) {
 			expectedWithdrawn: true,
 			expectedRemaining: 0,
 		},
+		{
+			name: "withdraw with max int64 amount",
+			deposit: &Deposit{
+				depositAmount:   9223372036854775807, // MaxInt64
+				withdrawnHeight: 0,
+			},
+			currentTime:       100,
+			expectedAmount:    9223372036854775807,
+			expectedWithdrawn: true,
+			expectedRemaining: 0,
+		},
 	}
 
 	for _, tt := range tests {
@@ -244,6 +255,19 @@ func TestNewDeposit(t *testing.T) {
 			endBlockTime:       1000,
 			endBlockHeight:     100,
 			expectedID:         "123",
+		},
+		{
+			name:               "create deposit with zero values",
+			depositID:          "0",
+			projectID:          projectID,
+			tier:               0,
+			depositor:          testAddr,
+			depositAmount:      0,
+			createdBlockTime:   0,
+			createdBlockHeight: 0,
+			endBlockTime:       0,
+			endBlockHeight:     0,
+			expectedID:         "0",
 		},
 	}
 

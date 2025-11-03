@@ -38,13 +38,31 @@ func TestCounter_Behavior(t *testing.T) {
 			callNextTimes: 3,
 			expectedId:    13,
 		},
+		{
+			name:          "Large initial value near MaxInt64",
+			initValue:     9223372036854775800, // MaxInt64 - 7
+			callNextTimes: 5,
+			expectedId:    9223372036854775805, // MaxInt64 - 2
+		},
+		{
+			name:          "Negative initial value",
+			initValue:     -10,
+			callNextTimes: 15,
+			expectedId:    5,
+		},
+		{
+			name:          "Call next many times",
+			initValue:     0,
+			callNextTimes: 1000,
+			expectedId:    1000,
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given: create counter and set initial value if needed
 			c := NewCounter()
-			if tc.initValue > 0 {
+			if tc.initValue != 0 {
 				c.id = tc.initValue
 			}
 
