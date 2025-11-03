@@ -15,7 +15,9 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/gov/staker"
+
+	"gno.land/r/gnoswap/gov/staker"
+	_ "gno.land/r/gnoswap/gov/staker/v1"
 
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"

@@ -28,7 +28,7 @@ func TotalSupply() int64 {
 // VotingSupply returns total supply eligible for voting.
 func VotingSupply() int64 {
 	total := token.TotalSupply()
-	launchpad, ok := access.GetAddressWithVersion(prbac.ROLE_LAUNCHPAD.String(), 1)
+	launchpad, ok := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	if !ok {
 		panic(ufmt.Sprintf("launchpad address not found"))
 	}
@@ -70,10 +70,10 @@ func Render(path string) string {
 //
 // Only callable by governance staker contract.
 func Mint(cur realm, to address, amount int64) {
-	halt.AssertIsNotHaltedXGnsWithVersion(1)
+	halt.AssertIsNotHaltedXGns()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsGovStakerWithVersion(1, caller)
+	access.AssertIsGovStaker(caller)
 
 	checkErr(ledger.Mint(to, amount))
 }
@@ -86,10 +86,10 @@ func Mint(cur realm, to address, amount int64) {
 //
 // Only callable by launchpad contract.
 func MintByLaunchPad(cur realm, to address, amount int64) {
-	halt.AssertIsNotHaltedXGnsWithVersion(1)
+	halt.AssertIsNotHaltedXGns()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsLaunchpadWithVersion(1, caller)
+	access.AssertIsLaunchpad(caller)
 
 	checkErr(ledger.Mint(to, amount))
 }
@@ -102,10 +102,10 @@ func MintByLaunchPad(cur realm, to address, amount int64) {
 //
 // Only callable by governance staker contract.
 func Burn(cur realm, from address, amount int64) {
-	halt.AssertIsNotHaltedXGnsWithVersion(1)
+	halt.AssertIsNotHaltedXGns()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsGovStakerWithVersion(1, caller)
+	access.AssertIsGovStaker(caller)
 
 	checkErr(ledger.Burn(from, amount))
 }
@@ -118,10 +118,10 @@ func Burn(cur realm, from address, amount int64) {
 //
 // Only callable by launchpad contract.
 func BurnByLaunchPad(cur realm, from address, amount int64) {
-	halt.AssertIsNotHaltedXGnsWithVersion(1)
+	halt.AssertIsNotHaltedXGns()
 
 	caller := runtime.PreviousRealm().Address()
-	access.AssertIsLaunchpadWithVersion(1, caller)
+	access.AssertIsLaunchpad(caller)
 
 	checkErr(ledger.Burn(from, amount))
 }

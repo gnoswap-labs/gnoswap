@@ -5,7 +5,7 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
-	gov_staker "gno.land/r/gnoswap/v1/gov/staker"
+	gov_staker "gno.land/r/gnoswap/gov/staker"
 )
 
 // CollectProtocolFee collects protocol fee from gov/staker for project recipient wallets.

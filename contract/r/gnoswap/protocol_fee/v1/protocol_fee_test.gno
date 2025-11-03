@@ -26,7 +26,7 @@ var (
 	positionPath  = "gno.land/r/gnoswap/position"
 	routerPath    = "gno.land/r/gnoswap/router"
 	stakerPath    = "gno.land/r/gnoswap/staker"
-	govStakerPath = "gno.land/r/gnoswap/v1/gov/staker"
+	govStakerPath = "gno.land/r/gnoswap/gov/staker"
 
 	stakerRealm    = testing.NewCodeRealm(stakerPath)
 	govStakerRealm = testing.NewCodeRealm(govStakerPath)
@@ -37,9 +37,7 @@ func createTestProtocolFee(t *testing.T) *protocolFeeV1 {
 	t.Helper()
 
 	return &protocolFeeV1{
-		store: &mockProtocolFeeStore{
-			state: newProtocolFeeStateInternal(t),
-		},
+		store: newMockProtocolFeeStore(),
 	}
 }
 
@@ -79,7 +77,9 @@ func TestAddToProtocolFee(t *testing.T) {
 			func(cur realm) {
 				pf.AddToProtocolFee(test.tokenPath, test.amount)
 			}(cross)
-			uassert.Equal(t, pf.getProtocolFeeState().tokenListWithAmount[test.tokenPath], test.want)
+
+			tokenListWithAmount := pf.store.GetTokenListWithAmounts()
+			uassert.Equal(t, tokenListWithAmount[test.tokenPath], test.want)
 		})
 	}
 }
@@ -109,10 +109,10 @@ func TestClearTokenListWithAmount(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			// Reset and setup test data for each test case
 			pf := createTestProtocolFee(t)
-			pf.getProtocolFeeState().tokenListWithAmount = map[string]int64{
+			pf.store.SetTokenListWithAmounts(map[string]int64{
 				"gno.land/r/foo": 100,
 				"gno.land/r/baz": 200,
-			}
+			})
 
 			testing.SetRealm(test.prevRealm)
 
@@ -126,7 +126,9 @@ func TestClearTokenListWithAmount(t *testing.T) {
 				func(cur realm) {
 					pf.ClearTokenListWithAmount()
 				}(cross)
-				uassert.Equal(t, len(pf.getProtocolFeeState().tokenListWithAmount), len(test.want))
+
+				tokenListWithAmount := pf.store.GetTokenListWithAmounts()
+				uassert.Equal(t, len(tokenListWithAmount), len(test.want))
 			}
 		})
 	}

@@ -14,12 +14,15 @@ import (
 	"gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
+	_ "gno.land/r/gnoswap/gov/staker"
+	_ "gno.land/r/gnoswap/gov/staker/v1"
+
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 
-	"gno.land/r/gnoswap/v1/gov/staker"
+	"gno.land/r/gnoswap/gov/staker"
 
 	"gno.land/r/gnoswap/launchpad"
 	_ "gno.land/r/gnoswap/launchpad/v1"

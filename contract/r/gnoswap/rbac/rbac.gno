@@ -29,15 +29,12 @@ func initRbac() {
 			))
 		}
 
-		registeredVersion := manager.GetRoleLatestVersion(role.String())
-
 		// Update access package with the role address
-		access.SetRoleAddress(cross, role.String(), registeredVersion, addr)
+		access.SetRoleAddress(cross, role.String(), addr)
 	}
 }
 
 // RegisterRole registers a new role in the RBAC system.
-// registered role version is 1 by initialization
 //
 // Parameters:
 //   - roleName: name of the role to register
@@ -61,10 +58,8 @@ func RegisterRole(cur realm, roleName string, roleAddress address) {
 		))
 	}
 
-	registeredVersion := manager.GetRoleLatestVersion(roleName)
-
 	// Update the role address immediately after registration
-	err = manager.UpdateRoleAddress(roleName, registeredVersion, roleAddress)
+	err = manager.UpdateRoleAddress(roleName, roleAddress)
 	if err != nil {
 		panic(makeErrorWithDetails(
 			errInvalidAddress,
@@ -73,8 +68,8 @@ func RegisterRole(cur realm, roleName string, roleAddress address) {
 	}
 
 	// Set the role in access control
-	access.SetRoleAddress(cross, roleName, registeredVersion, roleAddress)
-	emitRegisterRoleEvent(roleName, registeredVersion, roleAddress)
+	access.SetRoleAddress(cross, roleName, roleAddress)
+	emitRegisterRoleEvent(roleName, roleAddress)
 }
 
 // UpdateRoleAddress updates the address assigned to a role.
@@ -84,13 +79,13 @@ func RegisterRole(cur realm, roleName string, roleAddress address) {
 //   - addr: new address for the role
 //
 // Only callable by admin or governance.
-func UpdateRoleAddress(cur realm, roleName string, version int, addr address) {
+func UpdateRoleAddress(cur realm, roleName string, addr address) {
 	caller := runtime.PreviousRealm().Address()
 	assertIsAdminOrGovernance(caller)
 	assertIsValidRoleName(roleName)
 	assertIsValidAddress(addr)
 
-	err := manager.UpdateRoleAddress(roleName, version, addr)
+	err := manager.UpdateRoleAddress(roleName, addr)
 	if err != nil {
 		panic(makeErrorWithDetails(
 			err,
@@ -99,37 +94,8 @@ func UpdateRoleAddress(cur realm, roleName string, version int, addr address) {
 	}
 
 	// Set the role address in access control
-	access.SetRoleAddress(cross, roleName, version, addr)
-	emitUpdateRoleAddressEvent(roleName, version, addr)
-}
-
-// UpdateRoleAddressNextVersion updates the address assigned to a role new version.
-// updated version is incremented by 1
-//
-// Parameters:
-//   - roleName: name of the role
-//   - addr: new address for the role
-//
-// Only callable by admin or governance.
-func UpdateRoleAddressNextVersion(cur realm, roleName string, addr address) {
-	caller := runtime.PreviousRealm().Address()
-	assertIsAdminOrGovernance(caller)
-	assertIsValidRoleName(roleName)
-	assertIsValidAddress(addr)
-
-	err := manager.UpdateRoleAddressNextVersion(roleName, addr)
-	if err != nil {
-		panic(makeErrorWithDetails(
-			err,
-			ufmt.Sprintf("role name: %s, address: %s", roleName, addr.String()),
-		))
-	}
-
-	newVersion := manager.GetRoleLatestVersion(roleName)
-
-	// Set the role address in access control
-	access.SetRoleAddress(cross, roleName, newVersion, addr)
-	emitUpdateRoleAddressEvent(roleName, newVersion, addr)
+	access.SetRoleAddress(cross, roleName, addr)
+	emitUpdateRoleAddressEvent(roleName, addr)
 }
 
 // RemoveRole removes a role from the RBAC system.
@@ -159,9 +125,4 @@ func RemoveRole(cur realm, roleName string) {
 // GetRoleAddress returns the address assigned to roleName.
 func GetRoleAddress(roleName string) (address, error) {
 	return manager.GetRoleAddress(roleName)
-}
-
-// GetRoleAddressWithVersion returns the address assigned to roleName.
-func GetRoleAddressWithVersion(roleName string, version int) (address, error) {
-	return manager.GetRoleAddressWithVersion(roleName, version)
 }

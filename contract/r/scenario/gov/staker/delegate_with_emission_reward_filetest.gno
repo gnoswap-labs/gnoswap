@@ -14,7 +14,9 @@ import (
 	"gno.land/r/gnoswap/access"
 	en "gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/gov/staker"
+
+	"gno.land/r/gnoswap/gov/staker"
+	_ "gno.land/r/gnoswap/gov/staker/v1"
 )
 
 var (

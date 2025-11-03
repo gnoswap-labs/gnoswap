@@ -33,8 +33,8 @@ loadpkg gno.land/r/gnoswap/position
 loadpkg gno.land/r/gnoswap/router
 loadpkg gno.land/r/gnoswap/staker
 loadpkg gno.land/r/gnoswap/gov/xgns
-loadpkg gno.land/r/gnoswap/v1/gov/staker
-loadpkg gno.land/r/gnoswap/v1/gov/governance
+loadpkg gno.land/r/gnoswap/gov/staker
+loadpkg gno.land/r/gnoswap/gov/governance
 loadpkg gno.land/r/gnoswap/launchpad
 
 
@@ -75,10 +75,10 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/staker -pkgpat
 gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/gov/xgns -pkgpath gno.land/r/gnoswap/v2/gov/xgns -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy gov/staker
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/v1/gov/staker -pkgpath gno.land/r/gnoswap/v2/gov/staker -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/gov/staker -pkgpath gno.land/r/gnoswap/v2/gov/staker -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy gov/governance
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/v1/gov/governance -pkgpath gno.land/r/gnoswap/v2/gov/governance -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/gov/governance -pkgpath gno.land/r/gnoswap/v2/gov/governance -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 ### deploy launchpad
 gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/launchpad -pkgpath gno.land/r/gnoswap/v2/launchpad -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1

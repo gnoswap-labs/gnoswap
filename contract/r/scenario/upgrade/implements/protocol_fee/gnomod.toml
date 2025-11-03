@@ -1,0 +1,2 @@
+module = "gno.land/r/gnoswap/protocol_fee/test"
+gno = "0.9"

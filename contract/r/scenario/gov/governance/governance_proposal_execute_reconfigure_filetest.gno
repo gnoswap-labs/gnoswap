@@ -16,18 +16,23 @@ import (
 
 	"gno.land/r/gnoswap/access"
 
-	"gno.land/r/gnoswap/v1/gov/governance"
-	govStaker "gno.land/r/gnoswap/v1/gov/staker"
+	"gno.land/r/gnoswap/gov/governance"
+	_ "gno.land/r/gnoswap/gov/governance/v1"
+
+	govStaker "gno.land/r/gnoswap/gov/staker"
+	_ "gno.land/r/gnoswap/gov/staker/v1"
 
 	"gno.land/r/gnoswap/gns"
 )
 
 var (
-	adminAddr, _     = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminAddr        = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	govStakerAddr    = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
 	currentBlockTime = int64(2)
 )
 
 func main() {
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
 
 	println("[SCENARIO] 1. Delegate gns to admin")
@@ -66,7 +71,6 @@ func delegateGnsToAdmin() {
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	govStakerAddr := address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
 	gns.Approve(cross, govStakerAddr, delegatedAmount)
 	govStaker.Delegate(cross, adminAddr, int64(delegatedAmount), "")
 
@@ -75,7 +79,7 @@ func delegateGnsToAdmin() {
 
 func proposeReconfigureGovernance() int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	proposalID := governance.ProposeParameterChange(cross, "gov", "reconfigure", 1, "gno.land/r/gnoswap/v1/gov/governance*EXE*Reconfigure*EXE*123,456,789,1234,5678,12345,67890")
+	proposalID := governance.ProposeParameterChange(cross, "gov", "reconfigure", 1, "gno.land/r/gnoswap/gov/governance*EXE*Reconfigure*EXE*123,456,789,1234,5678,12345,67890")
 
 	ufmt.Printf("[INFO] Reconfigure Governance Parameters Proposal ID: %d\n", proposalID)
 	return proposalID

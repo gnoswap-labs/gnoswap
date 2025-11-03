@@ -12,4 +12,5 @@ var (
 	ErrWritePermissionDenied  = errors.New("write permission denied")
 	ErrReadPermissionDenied   = errors.New("read permission denied")
 	ErrUpdatePermissionDenied = errors.New("update permission denied")
+	ErrFailedCast             = errors.New("failed to cast")
 )
