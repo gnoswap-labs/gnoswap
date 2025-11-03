@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
@@ -34,7 +33,7 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 	sentToGovStakerForEvent := make([]string, 0)
 	toReturnDistributedToGovStaker := make(map[string]int64)
 
-	for token, amount := range pf.getProtocolFeeState().tokenListWithAmount {
+	for token, amount := range pf.store.GetTokenListWithAmounts() {
 		balance := common.BalanceOf(token, protocolFeeAddr)
 
 		// amount should be less than or equal to balance
@@ -56,8 +55,9 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 			distributeAmount = balance
 		}
 
-		toDevOpsAmount := distributeAmount * pf.getProtocolFeeState().DevOpsPct() / 10000 // default 0%
-		toGovStakerAmount := distributeAmount - toDevOpsAmount                            // default 100%
+		devOpsPct := pf.getProtocolFeeState().DevOpsPct()
+		toDevOpsAmount := safeMulDiv(distributeAmount, devOpsPct, 10000)    // default 0%
+		toGovStakerAmount := safeSubInt64(distributeAmount, toDevOpsAmount) // default 100%
 
 		// Distribute to DevOps
 		if err := pf.getProtocolFeeState().distributeToDevOps(token, toDevOpsAmount); err != nil {
@@ -184,17 +184,15 @@ func (pf *protocolFeeV1) AddToProtocolFee(tokenPath string, amount int64) {
 		))
 	}
 
-	currentAmount := pf.getProtocolFeeState().tokenListWithAmount[tokenPath]
-
-	// Check for overflow
-	if amount > 0 && currentAmount > 0 && currentAmount > (9223372036854775807-amount) {
-		panic(makeErrorWithDetail(
-			errInvalidAmount,
-			ufmt.Sprintf("overflow detected: current(%d) + amount(%d) would exceed int64 max", currentAmount, amount),
-		))
+	currentAmount, exists := pf.store.GetTokenListWithAmountItem(tokenPath)
+	if !exists {
+		currentAmount = 0
 	}
 
-	pf.getProtocolFeeState().tokenListWithAmount[tokenPath] += amount
+	// Check for overflow
+	addedAmount := safeAddInt64(currentAmount, amount)
+
+	pf.store.SetTokenListWithAmountItem(tokenPath, addedAmount)
 }
 
 // ClearTokenListWithAmount clears the tokenListWithAmount.
@@ -224,7 +222,7 @@ func (pf *protocolFeeV1) ClearAccuTransferToGovStaker() {
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsGovStaker(caller)
 
-	pf.getProtocolFeeState().accuToGovStaker = avl.NewTree()
+	pf.store.InitializeAccuToGovStaker()
 }
 
 func makeEventString(tokenPath string, amount int64) string {

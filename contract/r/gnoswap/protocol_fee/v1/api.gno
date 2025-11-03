@@ -14,7 +14,7 @@ import (
 
 // ApiGetAccuTransferToGovStaker returns accumulated transfers to gov/staker as JSON.
 func (pf *protocolFeeV1) ApiGetAccuTransferToGovStaker() string {
-	distributedAmountList := pf.getProtocolFeeState().accuToGovStaker
+	distributedAmountList := pf.store.GetAccuToGovStaker()
 	if distributedAmountList == nil {
 		return ""
 	}
@@ -24,7 +24,7 @@ func (pf *protocolFeeV1) ApiGetAccuTransferToGovStaker() string {
 
 // ApiGetAccuTransferToDevOps returns accumulated transfers to devOps as JSON.
 func (pf *protocolFeeV1) ApiGetAccuTransferToDevOps() string {
-	distributedAmountList := pf.getProtocolFeeState().accuToDevOps
+	distributedAmountList := pf.store.GetAccuToDevOps()
 	if distributedAmountList == nil {
 		return ""
 	}
@@ -34,7 +34,7 @@ func (pf *protocolFeeV1) ApiGetAccuTransferToDevOps() string {
 
 // ApiGetHistoryTransferToGovStaker returns transfer history to gov/staker as JSON.
 func (pf *protocolFeeV1) ApiGetHistoryTransferToGovStaker() string {
-	historyTransferList := pf.getProtocolFeeState().distributedToGovStakerHistory
+	historyTransferList := pf.store.GetDistributedToGovStakerHistory()
 	if historyTransferList == nil {
 		return ""
 	}
@@ -44,7 +44,7 @@ func (pf *protocolFeeV1) ApiGetHistoryTransferToGovStaker() string {
 
 // ApiGetHistoryTransferToDevOps returns transfer history to devOps as JSON.
 func (pf *protocolFeeV1) ApiGetHistoryTransferToDevOps() string {
-	historyTransferList := pf.getProtocolFeeState().distributedToDevOpsHistory
+	historyTransferList := pf.store.GetDistributedToDevOpsHistory()
 	if historyTransferList == nil {
 		return ""
 	}
@@ -56,7 +56,7 @@ func (pf *protocolFeeV1) ApiGetActualBalance() string {
 	tokenMap := make(map[string]int64)
 
 	// get all recorded tokens
-	for token := range pf.getProtocolFeeState().tokenListWithAmount {
+	for token := range pf.store.GetTokenListWithAmounts() {
 		actualBalance := common.BalanceOf(token, protocolFeeAddr)
 		tokenMap[token] = actualBalance
 	}
@@ -77,7 +77,7 @@ func (pf *protocolFeeV1) ApiGetActualBalance() string {
 
 // ApiGetRecordedBalance returns the recorded tokens and their amounts
 func (pf *protocolFeeV1) ApiGetRecordedBalance() string {
-	tokenList := pf.getProtocolFeeState().tokenListWithAmount
+	tokenList := pf.store.GetTokenListWithAmounts()
 	if tokenList == nil {
 		return ""
 	}
@@ -98,7 +98,7 @@ func (pf *protocolFeeV1) ApiGetUnrecordedBalance() string {
 	unrecordedMap := make(map[string]int64)
 
 	// Check all recorded tokens for discrepancies
-	for token, recordedAmount := range pf.getProtocolFeeState().tokenListWithAmount {
+	for token, recordedAmount := range pf.store.GetTokenListWithAmounts() {
 		actualBalance := common.BalanceOf(token, protocolFeeAddr)
 		if actualBalance > recordedAmount {
 			unrecordedAmount := actualBalance - recordedAmount
