@@ -207,10 +207,10 @@ func (s *mockProtocolFeeStore) SetTokenListWithAmountItem(tokenPath string, amou
 func newMockProtocolFeeStore() protocol_fee.IProtocolFeeStore {
 	return &mockProtocolFeeStore{
 		devOpsPct:                     0,
-		accuToGovStaker:               &avl.Tree{},
-		accuToDevOps:                  &avl.Tree{},
-		distributedToGovStakerHistory: &avl.Tree{},
-		distributedToDevOpsHistory:    &avl.Tree{},
+		accuToGovStaker:               avl.NewTree(),
+		accuToDevOps:                  avl.NewTree(),
+		distributedToGovStakerHistory: avl.NewTree(),
+		distributedToDevOpsHistory:    avl.NewTree(),
 		tokenListWithAmounts:          make(map[string]int64),
 	}
 }
