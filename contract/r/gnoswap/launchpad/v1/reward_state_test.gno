@@ -140,7 +140,7 @@ func TestRewardState_CalculateReward(t *testing.T) {
 	}
 }
 
-func TestNewRewardState(t *testing.T) {
+func TestRewardState_NewRewardState(t *testing.T) {
 	tests := []struct {
 		name                string
 		priceDebt           *u256.Uint

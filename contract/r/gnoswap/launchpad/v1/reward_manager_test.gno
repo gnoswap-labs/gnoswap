@@ -324,7 +324,7 @@ func TestRewardManager_CollectReward(t *testing.T) {
 	}
 }
 
-func TestNewRewardManager(t *testing.T) {
+func TestRewardManager_NewRewardManager(t *testing.T) {
 	tests := []struct {
 		name                          string
 		totalDistributeAmount         int64

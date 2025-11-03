@@ -7,7 +7,7 @@ import (
 )
 
 // Test for NewCounter, next, and Get methods.
-func TestCounter_Behavior(t *testing.T) {
+func TestCounter_NewCounter(t *testing.T) {
 	tests := []struct {
 		name          string
 		initValue     int64
