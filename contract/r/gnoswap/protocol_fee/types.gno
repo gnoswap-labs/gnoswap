@@ -41,13 +41,39 @@ type IProtocolFeeApi interface {
 }
 
 type IProtocolFeeStore interface {
-	GetProtocolFeeState() ProtocolFeeState
-	SetProtocolFeeState(protocolFeeState ProtocolFeeState) error
-}
+	HasDevOpsPctStoreKey() bool
+	InitializeDevOpsPct() error
+	GetDevOpsPct() int64
+	SetDevOpsPct(pct int64) error
 
-type ProtocolFeeState interface {
-	DevOpsPct() int64
-	GovStakerPct() int64
-	AccuToGovStaker() *avl.Tree
-	AccuToDevOps() *avl.Tree
+	HasAccuToGovStakerStoreKey() bool
+	InitializeAccuToGovStaker() error
+	GetAccuToGovStaker() *avl.Tree
+	GetAccuToGovStakerItem(tokenPath string) (int64, bool)
+	SetAccuToGovStakerItem(tokenPath string, amount int64) error
+
+	HasAccuToDevOpsStoreKey() bool
+	InitializeAccuToDevOps() error
+	GetAccuToDevOps() *avl.Tree
+	GetAccuToDevOpsItem(tokenPath string) (int64, bool)
+	SetAccuToDevOpsItem(tokenPath string, amount int64) error
+
+	HasDistributedToGovStakerHistoryStoreKey() bool
+	InitializeDistributedToGovStakerHistory() error
+	GetDistributedToGovStakerHistory() *avl.Tree
+	GetDistributedToGovStakerHistoryItem(tokenPath string) (int64, bool)
+	SetDistributedToGovStakerHistoryItem(tokenPath string, amount int64) error
+
+	HasDistributedToDevOpsHistoryStoreKey() bool
+	InitializeDistributedToDevOpsHistory() error
+	GetDistributedToDevOpsHistory() *avl.Tree
+	GetDistributedToDevOpsHistoryItem(tokenPath string) (int64, bool)
+	SetDistributedToDevOpsHistoryItem(tokenPath string, amount int64) error
+
+	HasTokenListWithAmountsStoreKey() bool
+	InitializeTokenListWithAmount() error
+	GetTokenListWithAmounts() map[string]int64
+	SetTokenListWithAmounts(tokenListWithAmounts map[string]int64) error
+	GetTokenListWithAmountItem(tokenPath string) (int64, bool)
+	SetTokenListWithAmountItem(tokenPath string, amount int64) error
 }

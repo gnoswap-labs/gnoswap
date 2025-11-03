@@ -3,6 +3,7 @@ package store
 import (
 	"chain/runtime"
 
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 )
 
@@ -64,6 +65,60 @@ func (k *kvStore) Get(key string) (any, error) {
 	}
 
 	return value, nil
+}
+
+func (k *kvStore) GetInt64(key string) (int64, error) {
+	result, err := k.Get(key)
+	if err != nil {
+		return 0, err
+	}
+
+	return CastToInt64(result)
+}
+
+func (k *kvStore) GetUint64(key string) (uint64, error) {
+	result, err := k.Get(key)
+	if err != nil {
+		return 0, err
+	}
+
+	return CastToUint64(result)
+}
+
+func (k *kvStore) GetBool(key string) (bool, error) {
+	result, err := k.Get(key)
+	if err != nil {
+		return false, err
+	}
+
+	return CastToBool(result)
+}
+
+func (k *kvStore) GetString(key string) (string, error) {
+	result, err := k.Get(key)
+	if err != nil {
+		return "", err
+	}
+
+	return CastToString(result)
+}
+
+func (k *kvStore) GetAddress(key string) (address, error) {
+	result, err := k.Get(key)
+	if err != nil {
+		return address(""), err
+	}
+
+	return CastToAddress(result)
+}
+
+func (k *kvStore) GetTree(key string) (*avl.Tree, error) {
+	result, err := k.Get(key)
+	if err != nil {
+		return nil, err
+	}
+
+	return CastToTree(result)
 }
 
 // Set stores a value with the given key

@@ -119,18 +119,3 @@ func isHaltedOperation(op OpType) bool {
 
 	return halted
 }
-
-// isHaltedOperationWithVersion returns halt status for the specified operation type and version.
-// Panics if operation type is invalid.
-func isHaltedOperationWithVersion(op OpType, version int) bool {
-	if !op.IsValid() {
-		panic(makeErrorWithDetails(errInvalidOpType, op.String()))
-	}
-
-	halted, err := haltStates.IsOperationHaltedWithVersion(op, version)
-	if err != nil {
-		panic(err)
-	}
-
-	return halted
-}
