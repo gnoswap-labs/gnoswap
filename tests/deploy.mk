@@ -13,7 +13,7 @@ init: send-ugnot-must deploy-test-tokens deploy-libraries deploy-base-contracts 
 deploy-test-tokens: deploy-bar deploy-baz deploy-foo deploy-obl deploy-qux deploy-usdc
 
 .PHONY: deploy-libraries
-deploy-libraries: deploy-uint256 deploy-int256 deploy-rbac deploy-gnsmath
+deploy-libraries: deploy-uint256 deploy-int256 deploy-rbac deploy-gnsmath deploy-store deploy-version_manager
 
 .PHONY: deploy-base-contracts
 deploy-base-contracts: deploy-access deploy-rbac-realm deploy-halt-realm deploy-referral deploy-gns deploy-emission
@@ -32,6 +32,16 @@ send-ugnot-must:
 deploy-gnsmath:
 	$(info ************ deploy gnsmath ************)
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/gnsmath -pkgpath gno.land/p/gnoswap/gnsmath -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
+	@echo
+
+deploy-store:
+	$(info ************ deploy store ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/store -pkgpath gno.land/p/gnoswap/store -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
+	@echo
+
+deploy-version_manager:
+	$(info ************ deploy version_manager ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/version_manager -pkgpath gno.land/p/gnoswap/version_manager -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
 	@echo
 
 deploy-int256:
