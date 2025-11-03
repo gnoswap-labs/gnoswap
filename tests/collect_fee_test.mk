@@ -2,7 +2,7 @@ include _info.mk
 
 # Paths for contracts
 GNS_PATH := gno.land/r/gnoswap/gns
-WUGNOT_PATH := gno.land/r/demo/wugnot
+WUGNOT_PATH := gno.land/r/gnoland/wugnot
 ROUTER_PATH := gno.land/r/gnoswap/router
 POSITION_PATH := gno.land/r/gnoswap/position
 POOL_PATH := gno.land/r/gnoswap/pool
@@ -79,7 +79,7 @@ execute-swaps:
 .PHONY: decrease-liquidity
 decrease-liquidity:
 	$(info ************ Step 5: Decreasing liquidity ************)
-	@echo "" | gnokey maketx call -pkgpath $(POSITION_PATH) -func DecreaseLiquidity -args 1 -args "1000000" -args "1000000" -args "1000000" -args $(TX_EXPIRE) -args true -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath $(POSITION_PATH) -func DecreaseLiquidity -args 1 -args "1000000" -args "1" -args "1" -args $(TX_EXPIRE) -args true -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo
 
 .PHONY: collect-fees

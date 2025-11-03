@@ -1,12 +1,12 @@
 include _info.mk
 
 GNS_PATH := gno.land/r/gnoswap/gns
-USDC_PATH := gno.land/r/gnoswap/v1/test_token/usdc
-BAZ_PATH := gno.land/r/gnoswap/v1/test_token/baz
-BAR_PATH := gno.land/r/gnoswap/v1/test_token/bar
-OBL_PATH := gno.land/r/gnoswap/v1/test_token/obl
-QUX_PATH := gno.land/r/gnoswap/v1/test_token/qux
-FOO_PATH := gno.land/r/gnoswap/v1/test_token/foo
+USDC_PATH := gno.land/r/onbloc/usdc
+BAZ_PATH := gno.land/r/onbloc/baz
+BAR_PATH := gno.land/r/onbloc/bar
+OBL_PATH := gno.land/r/onbloc/obl
+QUX_PATH := gno.land/r/onbloc/qux
+FOO_PATH := gno.land/r/onbloc/foo
 
 ADDR_TEST_ADMIN :=
 ADDR_USER_1 :=
