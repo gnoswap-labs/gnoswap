@@ -31,7 +31,7 @@ func RegisterInitializer(cur realm, initializer func(govStakerStore IGovStakerSt
 
 // UpgradeImpl upgrades the implementation to a new version
 // Only admin can call this function
-func UpgradeImpl(packagePath string) {
+func UpgradeImpl(cur realm, packagePath string) {
 	// Check admin permission
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdmin(caller)
@@ -45,4 +45,9 @@ func UpgradeImpl(packagePath string) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+// GetImplementationPackagePath returns the package path of the currently active implementation.
+func GetImplementationPackagePath() string {
+	return versionManager.GetCurrentPackagePath()
 }
