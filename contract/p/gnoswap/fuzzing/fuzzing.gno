@@ -154,6 +154,46 @@ func (t *T) Uint64Range(min, max uint64) uint64 {
 	return Uint64Range(min, max).value(t).(uint64)
 }
 
+// Int8Range generates an int8 in [min, max].
+func (t *T) Int8Range(min, max int8) int8 {
+	return Int8Range(min, max).value(t).(int8)
+}
+
+// Int16Range generates an int16 in [min, max].
+func (t *T) Int16Range(min, max int16) int16 {
+	return Int16Range(min, max).value(t).(int16)
+}
+
+// Int32Range generates an int32 in [min, max].
+func (t *T) Int32Range(min, max int32) int32 {
+	return Int32Range(min, max).value(t).(int32)
+}
+
+// Uint8Range generates a uint8 in [min, max].
+func (t *T) Uint8Range(min, max uint8) uint8 {
+	return Uint8Range(min, max).value(t).(uint8)
+}
+
+// Uint16Range generates a uint16 in [min, max].
+func (t *T) Uint16Range(min, max uint16) uint16 {
+	return Uint16Range(min, max).value(t).(uint16)
+}
+
+// Uint32Range generates a uint32 in [min, max].
+func (t *T) Uint32Range(min, max uint32) uint32 {
+	return Uint32Range(min, max).value(t).(uint32)
+}
+
+// Float32Range generates a float32 in [min, max].
+func (t *T) Float32Range(min, max float32) float32 {
+	return Float32Range(min, max).value(t).(float32)
+}
+
+// Float64Range generates a float64 in [min, max].
+func (t *T) Float64Range(min, max float64) float64 {
+	return Float64Range(min, max).value(t).(float64)
+}
+
 // Bool generates a boolean.
 func (t *T) Bool() bool {
 	return Bool().value(t).(bool)
@@ -197,6 +237,26 @@ func (t *T) SliceOf(elemGen *Generator) []any {
 // SliceOfN generates a slice with length in [minLen, maxLen].
 func (t *T) SliceOfN(elemGen *Generator, minLen, maxLen int) []any {
 	return SliceOfN(elemGen, minLen, maxLen).value(t).([]any)
+}
+
+// SliceOfDistinct generates a slice with distinct elements.
+func (t *T) SliceOfDistinct(elemGen *Generator, keyFn func(any) any) []any {
+	return SliceOfDistinct(elemGen, keyFn).value(t).([]any)
+}
+
+// SliceOfNDistinct generates a slice with distinct elements and length bounds.
+func (t *T) SliceOfNDistinct(elemGen *Generator, minLen, maxLen int, keyFn func(any) any) []any {
+	return SliceOfNDistinct(elemGen, minLen, maxLen, keyFn).value(t).([]any)
+}
+
+// StringOf generates a string from custom rune generator.
+func (t *T) StringOf(runeGen *Generator) string {
+	return StringOf(runeGen).value(t).(string)
+}
+
+// StringOfN generates a string from custom rune generator with length bounds.
+func (t *T) StringOfN(runeGen *Generator, minLen, maxLen int) string {
+	return StringOfN(runeGen, minLen, maxLen).value(t).(string)
 }
 
 // MapOf generates a map using key and value generators.

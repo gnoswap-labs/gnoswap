@@ -70,9 +70,19 @@ The `*T` context provides convenience methods for generating values:
 
 **Integers:**
 - `IntRange(min, max)` - int in [min, max]
+- `Int8Range(min, max)` - int8 in [min, max]
+- `Int16Range(min, max)` - int16 in [min, max]
+- `Int32Range(min, max)` - int32 in [min, max]
 - `Int64Range(min, max)` - int64 in [min, max]
 - `UintRange(min, max)` - uint in [min, max]
+- `Uint8Range(min, max)` - uint8 in [min, max]
+- `Uint16Range(min, max)` - uint16 in [min, max]
+- `Uint32Range(min, max)` - uint32 in [min, max]
 - `Uint64Range(min, max)` - uint64 in [min, max]
+
+**Floating Point:**
+- `Float32Range(min, max)` - float32 in [min, max] (biased towards 0, min, max)
+- `Float64Range(min, max)` - float64 in [min, max] (biased towards 0, min, max)
 
 **Primitives:**
 - `Bool()` - random boolean (50/50)
@@ -84,10 +94,14 @@ The `*T` context provides convenience methods for generating values:
 **Strings:**
 - `String()` - string with length [0, 100]
 - `StringN(minLen, maxLen)` - string with custom length bounds
+- `StringOf(runeGen)` - string from custom rune generator
+- `StringOfN(runeGen, minLen, maxLen)` - string from custom rune generator with length bounds
 
 **Collections:**
 - `SliceOf(elemGen)` - slice with length [0, 100]
 - `SliceOfN(elemGen, minLen, maxLen)` - slice with custom length bounds
+- `SliceOfDistinct(elemGen, keyFn)` - slice with distinct elements
+- `SliceOfNDistinct(elemGen, minLen, maxLen, keyFn)` - slice with distinct elements and length bounds
 - `MapOf(keyGen, valueGen)` - map with size [0, 100]
 - `MapOfN(keyGen, valueGen, minSize, maxSize)` - map with custom size bounds
 
@@ -170,6 +184,105 @@ fuzzing.Check(t, func(ft *fuzzing.T) {
 ```
 
 ## Examples
+
+### Testing with Float Values
+
+```go
+func TestFloatCalculation(t *testing.T) {
+    fuzzing.Check(t, func(ft *fuzzing.T) {
+        price := ft.Float64Range(0.01, 1000.0)
+        amount := ft.Float64Range(1.0, 100.0)
+        
+        total := price * amount
+        
+        // Property: total should be positive
+        if total <= 0 {
+            ft.Fatalf("total should be positive: %f", total)
+        }
+    })
+}
+```
+
+### Testing with Custom Rune Generators
+
+```go
+func TestHexString(t *testing.T) {
+    fuzzing.Check(t, func(ft *fuzzing.T) {
+        // Generate strings with only hex characters
+        hexRune := ft.SampledFrom([]any{
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            'a', 'b', 'c', 'd', 'e', 'f',
+        }).(rune)
+        
+        hexGen := fuzzing.RuneRange('0', 'f') // Simplified for example
+        hexStr := ft.StringOfN(hexGen, 8, 16)
+        
+        // Property: should be valid hex
+        if len(hexStr) < 8 || len(hexStr) > 16 {
+            ft.Fatalf("invalid hex string length: %d", len(hexStr))
+        }
+    })
+}
+```
+
+### Testing with Distinct Collections
+
+```go
+func TestUniqueIDs(t *testing.T) {
+    fuzzing.Check(t, func(ft *fuzzing.T) {
+        // Generate slice of distinct IDs
+        ids := ft.SliceOfNDistinct(
+            fuzzing.IntRange(1, 100),
+            5, 10,
+            nil, // use elements directly as keys
+        )
+        
+        // Verify all IDs are unique
+        seen := make(map[int]bool)
+        for _, id := range ids {
+            val := id.(int)
+            if seen[val] {
+                ft.Fatalf("duplicate ID: %d", val)
+            }
+            seen[val] = true
+        }
+    })
+}
+
+// Testing with custom key function
+type User struct {
+    ID   int
+    Name string
+}
+
+func TestUniqueUsers(t *testing.T) {
+    fuzzing.Check(t, func(ft *fuzzing.T) {
+        userGen := fuzzing.Custom(func(ft *fuzzing.T) any {
+            return User{
+                ID:   ft.IntRange(1, 50),
+                Name: ft.String(),
+            }
+        })
+        
+        // Generate distinct users by ID
+        users := ft.SliceOfNDistinct(
+            userGen,
+            3, 8,
+            func(v any) any { return v.(User).ID }, // key by ID
+        )
+        
+        // All user IDs should be unique
+        seenIDs := make(map[int]bool)
+        for _, u := range users {
+            user := u.(User)
+            if seenIDs[user.ID] {
+                ft.Fatalf("duplicate user ID: %d", user.ID)
+            }
+            seenIDs[user.ID] = true
+        }
+    })
+}
+```
 
 ### Testing Pool Swap Invariants
 
@@ -296,23 +409,23 @@ func TestTreeDepth(t *testing.T) {
 - Geometric distribution for natural sizes
 
 **Generators:**
-- Primitives: Int, Uint, Bool, Byte, Rune, String (all with Range variants)
-- Collections: Slice, Map
-- Combinators: Map, Filter, Custom, Deferred, Just, SampledFrom, OneOf, Permutation
-- Repetition: Repeat, RepeatAvg
+- **Primitives**: Int, Int8/16/32/64, Uint, Uint8/16/32/64, Float32/64, Bool, Byte, Rune, String
+- **Collections**: Slice, SliceOfDistinct, Map
+- **Strings**: String, StringN, StringOf, StringOfN (with custom rune generators)
+- **Combinators**: Map, Filter, Custom, Deferred, Just, SampledFrom, OneOf, Permutation
+- **Repetition**: Repeat, RepeatAvg
 
-**Testing:**
-- Comprehensive test coverage (950+ lines of tests)
-- All tests passing
-- Bitstream, utils, and generator modules fully tested
+**Features:**
+- All numeric types with Range variants
+- Float generation with bias towards boundaries and zero
+- Custom rune generators for constrained strings
+- Distinct element generation with custom key functions
+- Biased generation for better edge case discovery
 
 ### ❌ Not Implemented Yet
 
 - **Shrinking**: Automatic test case minimization (infrastructure in place, algorithm pending)
-- **State machines**: Structured stateful testing with Check() method
-- **Additional types**: Int8/16/32, Uint8/16/32, Float32/64
-- **Advanced strings**: StringOf with custom rune generators
-- **Distinct collections**: SliceOfDistinct, SliceOfNDistinct
+- **State machines**: Structured stateful testing with StateMachine interface
 - **Gnoswap types**: Uint256, Int256 domain-specific generators
 
 ### ❌ Not Available (Gno Limitations)
@@ -344,13 +457,13 @@ func TestTreeDepth(t *testing.T) {
 
 ```
 fuzzing/
-├── bitstream.gno       # Core bitstream + JSF64 PRNG (245 lines)
-├── utils.gno           # Generation utilities (246 lines)
-├── generator.gno       # Generator interface + combinators (293 lines)
-├── fuzzing.gno         # Main API: Check, T, Config (253 lines)
-├── primitives.gno      # Int, String, Bool, Byte, Rune (212 lines)
-├── collections.gno     # Slice, Map (74 lines)
-└── *_test.gno          # Comprehensive tests (950+ lines)
+├── bitstream.gno       # Core bitstream + JSF64 PRNG
+├── utils.gno           # Generation utilities + float helpers
+├── generator.gno       # Generator interface + combinators
+├── fuzzing.gno         # Main API: Check, T, Config
+├── primitives.gno      # All numeric types, strings, runes
+├── collections.gno     # Slice, Map, Distinct variants
+└── README.md           # This file
 ```
 
 ## License

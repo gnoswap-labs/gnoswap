@@ -23,6 +23,63 @@ func genFloat01(s bitStream) float64 {
 	return float64(u) / (1 << 53)
 }
 
+// genFloat32 generates a float32 in [0, 1) from bitstream.
+func genFloat32(s bitStream) float32 {
+	// Generate 24 bits for mantissa (IEEE 754 single precision)
+	u := s.drawBits(24)
+	return float32(u) / (1 << 24)
+}
+
+// genFloat64Range generates a float64 in [min, max] with optional bias.
+func genFloat64Range(s bitStream, min, max float64, bias bool) float64 {
+	assertf(min <= max, "genFloat64Range: min > max")
+
+	f := genFloat01(s)
+	if bias {
+		// Bias towards boundaries and zero
+		if flipBiasedCoin(s, 0.1) {
+			// Return boundary
+			if flipBiasedCoin(s, 0.5) {
+				return min
+			}
+			return max
+		}
+		// Check if range includes zero
+		if min <= 0 && max >= 0 {
+			if flipBiasedCoin(s, 0.1) {
+				return 0
+			}
+		}
+	}
+
+	return min + f*(max-min)
+}
+
+// genFloat32Range generates a float32 in [min, max] with optional bias.
+func genFloat32Range(s bitStream, min, max float32, bias bool) float32 {
+	assertf(min <= max, "genFloat32Range: min > max")
+
+	f := genFloat32(s)
+	if bias {
+		// Bias towards boundaries and zero
+		if flipBiasedCoin(s, 0.1) {
+			// Return boundary
+			if flipBiasedCoin(s, 0.5) {
+				return min
+			}
+			return max
+		}
+		// Check if range includes zero
+		if min <= 0 && max >= 0 {
+			if flipBiasedCoin(s, 0.1) {
+				return 0
+			}
+		}
+	}
+
+	return min + f*(max-min)
+}
+
 // genGeom generates a geometrically distributed value.
 // Used for biased generation of integers.
 func genGeom(s bitStream, p float64) uint64 {
