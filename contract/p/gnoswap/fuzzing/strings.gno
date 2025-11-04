@@ -32,7 +32,7 @@ func (g *runeGen) String() string {
 }
 
 func (g *runeRangeGen) String() string {
-	return "RuneRange(...)"
+	return sprintf("RuneRange(%d, %d)", g.min, g.max)
 }
 
 func (g *stringGen) String() string {

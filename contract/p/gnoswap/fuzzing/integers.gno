@@ -58,43 +58,43 @@ type uint8RangeGen struct {
 // String methods
 
 func (g *intRangeGen) String() string {
-	return "IntRange(...)"
+	return sprintf("IntRange(%d, %d)", g.min, g.max)
 }
 
 func (g *int64RangeGen) String() string {
-	return "Int64Range(...)"
+	return sprintf("Int64Range(%d, %d)", g.min, g.max)
 }
 
 func (g *int32RangeGen) String() string {
-	return "Int32Range(...)"
+	return sprintf("Int32Range(%d, %d)", g.min, g.max)
 }
 
 func (g *int16RangeGen) String() string {
-	return "Int16Range(...)"
+	return sprintf("Int16Range(%d, %d)", g.min, g.max)
 }
 
 func (g *int8RangeGen) String() string {
-	return "Int8Range(...)"
+	return sprintf("Int8Range(%d, %d)", g.min, g.max)
 }
 
 func (g *uintRangeGen) String() string {
-	return "UintRange(...)"
+	return sprintf("UintRange(%d, %d)", g.min, g.max)
 }
 
 func (g *uint64RangeGen) String() string {
-	return "Uint64Range(...)"
+	return sprintf("Uint64Range(%d, %d)", g.min, g.max)
 }
 
 func (g *uint32RangeGen) String() string {
-	return "Uint32Range(...)"
+	return sprintf("Uint32Range(%d, %d)", g.min, g.max)
 }
 
 func (g *uint16RangeGen) String() string {
-	return "Uint16Range(...)"
+	return sprintf("Uint16Range(%d, %d)", g.min, g.max)
 }
 
 func (g *uint8RangeGen) String() string {
-	return "Uint8Range(...)"
+	return sprintf("Uint8Range(%d, %d)", g.min, g.max)
 }
 
 // value methods

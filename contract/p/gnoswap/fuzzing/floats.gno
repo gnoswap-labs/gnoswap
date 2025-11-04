@@ -18,11 +18,11 @@ type float32RangeGen struct {
 // String methods
 
 func (g *float64RangeGen) String() string {
-	return "Float64Range(...)"
+	return sprintf("Float64Range(%g, %g)", g.min, g.max)
 }
 
 func (g *float32RangeGen) String() string {
-	return "Float32Range(...)"
+	return sprintf("Float32Range(%g, %g)", g.min, g.max)
 }
 
 // value methods

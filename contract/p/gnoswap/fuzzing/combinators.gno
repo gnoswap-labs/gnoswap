@@ -41,34 +41,34 @@ type permGen struct {
 // String methods
 
 func (g *mappedGen) String() string {
-	return "Map(" + g.gen.String() + ", ...)"
+	return "Map(" + g.gen.String() + ")"
 }
 
 func (g *sampledGen) String() string {
 	if len(g.slice) == 1 {
-		return "Just(...)"
+		return "Just"
 	}
-	return "SampledFrom(...)"
+	return "SampledFrom"
 }
 
 func (g *oneOfGen) String() string {
-	return "OneOf(...)"
+	return "OneOf"
 }
 
 func (g *filteredGen) String() string {
-	return g.gen.String() + ".Filter(...)"
+	return g.gen.String() + ".Filter"
 }
 
 func (g *customGen) String() string {
-	return "Custom(...)"
+	return "Custom"
 }
 
 func (g *deferredGen) String() string {
-	return "Deferred(...)"
+	return "Deferred"
 }
 
 func (g *permGen) String() string {
-	return "Permutation(...)"
+	return "Permutation"
 }
 
 // value methods

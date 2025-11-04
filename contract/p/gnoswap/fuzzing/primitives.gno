@@ -25,7 +25,7 @@ func (g *byteGen) String() string {
 }
 
 func (g *byteRangeGen) String() string {
-	return "ByteRange(...)"
+	return sprintf("ByteRange(%d, %d)", g.min, g.max)
 }
 
 // value methods
