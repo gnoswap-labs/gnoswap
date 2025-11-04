@@ -17,7 +17,7 @@ type mockGovernanceStore struct {
 
 // Counter methods
 func (m *mockGovernanceStore) HasConfigCounterStoreKey() bool {
-	return true
+	return m.configCounter != nil
 }
 
 func (m *mockGovernanceStore) GetConfigCounter() *governance.Counter {
@@ -30,7 +30,7 @@ func (m *mockGovernanceStore) SetConfigCounter(counter *governance.Counter) erro
 }
 
 func (m *mockGovernanceStore) HasProposalCounterStoreKey() bool {
-	return true
+	return m.proposalCounter != nil
 }
 
 func (m *mockGovernanceStore) GetProposalCounter() *governance.Counter {
