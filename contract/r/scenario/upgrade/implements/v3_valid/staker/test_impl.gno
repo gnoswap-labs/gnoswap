@@ -3,8 +3,8 @@ package v3_valid
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/r/gnoswap/staker"
-	"gno.land/r/gnoswap/staker/v1"
+	staker "gno.land/r/gnoswap/staker"
+	v1 "gno.land/r/gnoswap/staker/v1"
 )
 
 func NewV3ValidStaker(store staker.IStakerStore, poolAccessor staker.PoolAccessor, emissionAccessor staker.EmissionAccessor) staker.IStaker {

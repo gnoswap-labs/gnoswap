@@ -3,23 +3,17 @@ package mock
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/r/gnoswap/staker"
-	"gno.land/r/gnoswap/staker/v1"
+	staker "gno.land/r/gnoswap/staker"
+	v1 "gno.land/r/gnoswap/staker/v1"
 )
 
-func NewV3ValidStaker(store staker.IStakerStore, poolAccessor staker.PoolAccessor, emissionAccessor staker.EmissionAccessor) staker.IStaker {
+func NewMockStaker(store staker.IStakerStore, poolAccessor staker.PoolAccessor, emissionAccessor staker.EmissionAccessor) *TestStaker {
 	instance := v1.NewStakerV1(store, poolAccessor, emissionAccessor)
 
 	return &TestStaker{
 		instance: instance,
 		mockFns:  make(map[string]func(args ...any) any),
 	}
-}
-
-func init() {
-	staker.RegisterInitializer(cross, func(store staker.IStakerStore, poolAccessor staker.PoolAccessor, emissionAccessor staker.EmissionAccessor) staker.IStaker {
-		return NewV3ValidStaker(store, poolAccessor, emissionAccessor)
-	})
 }
 
 // TestStaker is a minimal test implementation that panics on all methods

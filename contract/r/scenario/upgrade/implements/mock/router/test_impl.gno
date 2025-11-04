@@ -2,11 +2,11 @@
 package mock
 
 import (
-	"gno.land/r/gnoswap/router"
-	"gno.land/r/gnoswap/router/v1"
+	router "gno.land/r/gnoswap/router"
+	v1 "gno.land/r/gnoswap/router/v1"
 )
 
-func NewV3ValidRouter(store router.IRouterStore) router.IRouter {
+func NewMockRouter(store router.IRouterStore) *TestRouter {
 	instance := v1.NewRouterV1(store)
 
 	return &TestRouter{
@@ -17,7 +17,7 @@ func NewV3ValidRouter(store router.IRouterStore) router.IRouter {
 
 func init() {
 	router.RegisterInitializer(cross, func(store router.IRouterStore) router.IRouter {
-		return NewV3ValidRouter(store)
+		return NewMockRouter(store)
 	})
 }
 
@@ -25,6 +25,10 @@ func init() {
 type TestRouter struct {
 	instance router.IRouter
 	mockFns  map[string]func(args ...any) any
+}
+
+func (t *TestRouter) GetInstance() router.IRouter {
+	return t.instance
 }
 
 func (t *TestRouter) SetMockFn(fnName string, fn func(args ...any) any) {
