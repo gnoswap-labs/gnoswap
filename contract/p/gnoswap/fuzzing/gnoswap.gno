@@ -136,7 +136,7 @@ func (g *int256Gen) value(t *T) any {
 
 	// Apply sign
 	if g.allowNegative && flipBiasedCoin(t.s, 0.5) {
-		result = new(int256.Int).Neg(result)
+		result = result.Neg(result)
 	}
 
 	// Handle zero
@@ -176,16 +176,31 @@ type tickRangeGen struct {
 }
 
 func (g *tickRangeGen) value(t *T) any {
-	// 15% chance for boundary values
+	// Helper function to align tick to spacing
+	alignTick := func(tick int32) int32 {
+		if g.tickSpacing > 0 {
+			tick = (tick / g.tickSpacing) * g.tickSpacing
+		}
+		// Ensure within bounds
+		if tick < MIN_TICK {
+			tick = MIN_TICK
+		}
+		if tick > MAX_TICK {
+			tick = MAX_TICK
+		}
+		return tick
+	}
+
+	// 15% chance for boundary values (aligned to spacing)
 	if flipBiasedCoin(t.s, 0.15) {
 		choice, _, _ := genIntRange(t.s, 0, 2, false)
 		switch choice {
 		case 0:
-			return int32(MIN_TICK)
+			return alignTick(int32(MIN_TICK))
 		case 1:
-			return int32(MAX_TICK)
+			return alignTick(int32(MAX_TICK))
 		case 2:
-			return int32(0)
+			return alignTick(int32(0))
 		}
 	}
 
@@ -193,20 +208,7 @@ func (g *tickRangeGen) value(t *T) any {
 	tick64, _, _ := genIntRange(t.s, MIN_TICK, MAX_TICK, true)
 	tick := int32(tick64)
 
-	// Align to spacing
-	if g.tickSpacing > 0 {
-		tick = (tick / g.tickSpacing) * g.tickSpacing
-	}
-
-	// Ensure within bounds
-	if tick < MIN_TICK {
-		tick = MIN_TICK
-	}
-	if tick > MAX_TICK {
-		tick = MAX_TICK
-	}
-
-	return tick
+	return alignTick(tick)
 }
 
 func (g *tickRangeGen) String() string {
