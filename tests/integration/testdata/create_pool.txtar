@@ -1,4 +1,4 @@
-adduserfrom admin 'source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast'
+adduserfrom gns_admin 'mnemonic here'
 
 ## load default packages
 loadpkg gno.land/p/nt/avl
@@ -40,7 +40,7 @@ loadpkg gno.land/r/gnoswap/launchpad
 gnoland start
 
 ### create pool
-gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775807 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test admin
-gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func CreatePool -args "gno.land/r/gnoland/wugnot" -args "gno.land/r/gnoswap/gns" -args 3000 -args 79228162514264337593543950337 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775807 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func CreatePool -args "gno.land/r/gnoland/wugnot" -args "gno.land/r/gnoswap/gns" -args 3000 -args 79228162514264337593543950337 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test gns_admin
 
 stdout '{"key":"poolPath","value":"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"}'
