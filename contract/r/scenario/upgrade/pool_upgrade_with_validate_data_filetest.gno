@@ -35,6 +35,7 @@ var (
 	fee3000 = uint32(3000)
 
 	barFoo500PoolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	positionId        = uint64(1)
 )
 
 const (
@@ -60,11 +61,15 @@ func main() {
 	checkPoolData(barFoo500PoolPath)
 	println()
 
-	println("[SCENARIO] 5. Pool Contract Upgrade to v2_invalid")
+	println("[SCENARIO] 5. Check position data by v1 version:", positionId)
+	checkPositionData(positionId)
+	println()
+
+	println("[SCENARIO] 6. Pool Contract Upgrade to v2_invalid")
 	upgradePoolContractToV2Invalid()
 	println()
 
-	println("[SCENARIO] 6. Mint position with v2_invalid (should panic)")
+	println("[SCENARIO] 7. Mint position with v2_invalid (should panic)")
 	withAbortsWithMessage(func() {
 		mintPosition(barPath, fooPath, fee500, -960, 960, "30000000", "30000000", "0", "0", time.Now().Unix()+3600, adminAddr, adminAddr)
 	},
@@ -72,7 +77,7 @@ func main() {
 	)
 	println()
 
-	println("[SCENARIO] 7. Check pool data with v2_invalid (should panic):", barFoo500PoolPath)
+	println("[SCENARIO] 8. Check pool data with v2_invalid (should panic):", barFoo500PoolPath)
 	withAbortsWithMessage(func() {
 		checkPoolData(barFoo500PoolPath)
 	},
@@ -80,15 +85,23 @@ func main() {
 	)
 	println()
 
-	println("[SCENARIO] 8. Pool Contract Upgrade to v3_valid")
+	println("[SCENARIO] 9. Check position data with v2_invalid:", positionId)
+	checkPositionData(positionId)
+	println()
+
+	println("[SCENARIO] 10. Pool Contract Upgrade to v3_valid")
 	upgradePoolContractToV3Valid()
 	println()
 
-	println("[SCENARIO] 9. Check pool data by v3_valid version after upgrade:", barFoo500PoolPath)
+	println("[SCENARIO] 11. Check pool data by v3_valid version after upgrade:", barFoo500PoolPath)
 	checkPoolData(barFoo500PoolPath)
 	println()
 
-	println("[SCENARIO] 10. Mint position with v3_valid after upgrade")
+	println("[SCENARIO] 12. Check position data by v3_valid version after upgrade:", positionId)
+	checkPositionData(positionId)
+	println()
+
+	println("[SCENARIO] 13. Mint position with v3_valid after upgrade")
 	mintPosition(barPath, fooPath, fee500, -960, 960, "30000000", "30000000", "0", "0", time.Now().Unix()+3600, adminAddr, adminAddr)
 	println()
 }
@@ -155,6 +168,18 @@ func checkPoolData(poolPath string) {
 	println("[EXPECTED] Liquidity:", poolData.Liquidity().ToString())
 }
 
+func checkPositionData(positionId uint64) {
+	println("[INFO] Check position data")
+	testing.SetRealm(adminRealm)
+
+	positionData, _ := position.GetPosition(positionId)
+	println("[EXPECTED] Position ID:", positionId)
+	println("[EXPECTED] PoolKey:", positionData.PoolKey())
+	println("[EXPECTED] Liquidity:", positionData.Liquidity())
+	println("[EXPECTED] TickLower:", positionData.TickLower())
+	println("[EXPECTED] TickUpper:", positionData.TickUpper())
+}
+
 func withAbortsWithMessage(callback func(), logMessage string) {
 	uassert.AbortsContains(t, "implementation", func() {
 		callback()
@@ -187,23 +212,39 @@ func withAbortsWithMessage(callback func(), logMessage string) {
 // [EXPECTED] Slot0 tick: 0
 // [EXPECTED] Liquidity: 1066918731
 //
-// [SCENARIO] 5. Pool Contract Upgrade to v2_invalid
+// [SCENARIO] 5. Check position data by v1 version: 1
+// [INFO] Check position data
+// [EXPECTED] Position ID: 1
+// [EXPECTED] PoolKey: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Liquidity: &(struct{(array[(1066918731 uint64),(0 uint64),(0 uint64),(0 uint64)] [4]uint64)} gno.land/p/gnoswap/uint256.Uint)
+// [EXPECTED] TickLower: -960
+// [EXPECTED] TickUpper: 960
+//
+// [SCENARIO] 6. Pool Contract Upgrade to v2_invalid
 // [INFO] Upgrade pool contract to v2_invalid
 // [EXPECTED] Upgraded pool contract to v2_invalid: gno.land/r/gnoswap/pool/v2_invalid
 //
-// [SCENARIO] 6. Mint position with v2_invalid (should panic)
+// [SCENARIO] 7. Mint position with v2_invalid (should panic)
 // [INFO] Mint position
 // [EXPECTED] Mint position panics correctly with v2_invalid
 //
-// [SCENARIO] 7. Check pool data with v2_invalid (should panic): gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [SCENARIO] 8. Check pool data with v2_invalid (should panic): gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
 // [INFO] Check pool data
 // [EXPECTED] Check pool data panics correctly with v2_invalid
 //
-// [SCENARIO] 8. Pool Contract Upgrade to v3_valid
+// [SCENARIO] 9. Check position data with v2_invalid: 1
+// [INFO] Check position data
+// [EXPECTED] Position ID: 1
+// [EXPECTED] PoolKey: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Liquidity: &(struct{(array[(1066918731 uint64),(0 uint64),(0 uint64),(0 uint64)] [4]uint64)} gno.land/p/gnoswap/uint256.Uint)
+// [EXPECTED] TickLower: -960
+// [EXPECTED] TickUpper: 960
+//
+// [SCENARIO] 10. Pool Contract Upgrade to v3_valid
 // [INFO] Upgrade pool contract to v3_valid
 // [EXPECTED] Upgraded pool contract to v3_valid: gno.land/r/gnoswap/pool/v3_valid
 //
-// [SCENARIO] 9. Check pool data by v3_valid version after upgrade: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [SCENARIO] 11. Check pool data by v3_valid version after upgrade: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
 // [INFO] Check pool data
 // [EXPECTED] Pool data: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
 // [EXPECTED] Token0 path: gno.land/r/onbloc/bar
@@ -213,7 +254,15 @@ func withAbortsWithMessage(callback func(), logMessage string) {
 // [EXPECTED] Slot0 tick: 0
 // [EXPECTED] Liquidity: 1066918731
 //
-// [SCENARIO] 10. Mint position with v3_valid after upgrade
+// [SCENARIO] 12. Check position data by v3_valid version after upgrade: 1
+// [INFO] Check position data
+// [EXPECTED] Position ID: 1
+// [EXPECTED] PoolKey: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [EXPECTED] Liquidity: &(struct{(array[(1066918731 uint64),(0 uint64),(0 uint64),(0 uint64)] [4]uint64)} gno.land/p/gnoswap/uint256.Uint)
+// [EXPECTED] TickLower: -960
+// [EXPECTED] TickUpper: 960
+//
+// [SCENARIO] 13. Mint position with v3_valid after upgrade
 // [INFO] Mint position
 // [EXPECTED] Position ID: 2
 // [EXPECTED] Liquidity: 640151238
