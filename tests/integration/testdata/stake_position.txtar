@@ -10,7 +10,7 @@ loadpkg gno.land/r/sys/users
 loadpkg gno.land/r/gnoland/wugnot
 loadpkg gno.land/r/demo/defi/grc20reg
 
-adduserfrom gns_admin 'tiny play impulse way lecture theory toe material box pact erosion frozen witness visual share duck term input tower scale cushion connect worth trophy'
+adduserfrom gns_admin 'mnemonic here'
 
 adduser gnoswap
 patchpkg "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" $gnoswap_user_addr
@@ -118,9 +118,25 @@ stdout 1
 ### Stake position
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gnft -func Approve -args g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 -args 1 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test gns_admin
 gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func StakeToken -args 1 -args "" -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test gns_admin
+gnokey query vm/qeval --data "gno.land/r/gnoswap/staker.IsStaked(1)"
+stdout true
+
+### Ownership of GNFT must be recognized as belonging to the staker.
+gnokey query vm/qeval --data "gno.land/r/gnoswap/gnft.OwnerOf(\"1\")"
+stdout 'g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/common.BalanceOf(\"gno.land/r/onbloc/bar\", \"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\")"
 stdout 5000000
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/common.BalanceOf(\"gno.land/r/onbloc/foo\", \"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\")"
 stdout 5000000
+
+### Unstake position
+gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func UnStakeToken -args 1 -args false -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test gns_admin
+gnokey query vm/qeval --data "gno.land/r/gnoswap/staker.IsStaked(1)"
+stdout false
+
+### Check the ownership of GNFT
+### The original owner's address must be returned, not the staker's address.
+gnokey query vm/qeval --data "gno.land/r/gnoswap/gnft.OwnerOf(\"1\")"
+stdout 'g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d'
