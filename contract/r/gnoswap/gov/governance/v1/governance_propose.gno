@@ -409,14 +409,6 @@ func (gv *governanceV1) getUserVotingInfoSnapshot(
 
 // getUserVotingInfotWithDelegationSnapshots retrieves voting info from staker delegation snapshots.
 // Integrates with staker contract to get actual delegation amounts.
-//
-// NOTE: This function is not unit tested because it has an external dependency on the staker contract.
-// It is tested indirectly through:
-//   1. Integration tests where staker is properly initialized
-//   2. Other tests that override getUserVotingInfoSnapshotFn to provide mock data
-//
-// The function is used as the default implementation in NewGovernanceV1 but can be overridden
-// for testing purposes through the getUserVotingInfoSnapshotFn field.
 func getUserVotingInfotWithDelegationSnapshots(
 	snapshotTime int64,
 ) (map[string]*governance.VotingInfo, int64, bool) {
