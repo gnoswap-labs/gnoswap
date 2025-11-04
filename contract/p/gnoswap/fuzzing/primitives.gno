@@ -3,16 +3,23 @@ package fuzzing
 // Primitive type generators and methods.
 // Provides generators for bool and byte types.
 
-// Type definitions
+// Generator constructors
 
-type boolGen struct{}
+func Bool() *Generator { return newGenerator(&boolGen{}) }
 
-type byteGen struct {
-	min    uint64
-	max    uint64
-	hasMin bool
-	hasMax bool
-}
+func Byte() *Generator { return newGenerator(&byteGen{}) }
+func ByteMin(min byte) *Generator { return newGenerator(&byteGen{min: uint64(min), hasMin: true}) }
+func ByteMax(max byte) *Generator { return newGenerator(&byteGen{max: uint64(max), hasMax: true}) }
+func ByteRange(min, max byte) *Generator { return newGenerator(&byteGen{min: uint64(min), max: uint64(max), hasMin: true, hasMax: true}) }
+
+// T convenience methods
+
+func (t *T) Bool() bool { return Bool().value(t).(bool) }
+
+func (t *T) Byte() byte { return Byte().value(t).(byte) }
+func (t *T) ByteMin(min byte) byte { return ByteMin(min).value(t).(byte) }
+func (t *T) ByteMax(max byte) byte { return ByteMax(max).value(t).(byte) }
+func (t *T) ByteRange(min, max byte) byte { return ByteRange(min, max).value(t).(byte) }
 
 // String methods
 
@@ -45,20 +52,13 @@ func (g *byteGen) value(t *T) any {
 	return byte(v)
 }
 
-// Generator constructors
+// Type definitions
 
-func Bool() *Generator { return newGenerator(&boolGen{}) }
+type boolGen struct{}
 
-func Byte() *Generator { return newGenerator(&byteGen{}) }
-func ByteMin(min byte) *Generator { return newGenerator(&byteGen{min: uint64(min), hasMin: true}) }
-func ByteMax(max byte) *Generator { return newGenerator(&byteGen{max: uint64(max), hasMax: true}) }
-func ByteRange(min, max byte) *Generator { return newGenerator(&byteGen{min: uint64(min), max: uint64(max), hasMin: true, hasMax: true}) }
-
-// T convenience methods
-
-func (t *T) Bool() bool { return Bool().value(t).(bool) }
-
-func (t *T) Byte() byte { return Byte().value(t).(byte) }
-func (t *T) ByteMin(min byte) byte { return ByteMin(min).value(t).(byte) }
-func (t *T) ByteMax(max byte) byte { return ByteMax(max).value(t).(byte) }
-func (t *T) ByteRange(min, max byte) byte { return ByteRange(min, max).value(t).(byte) }
+type byteGen struct {
+	min    uint64
+	max    uint64
+	hasMin bool
+	hasMax bool
+}

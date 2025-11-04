@@ -5,26 +5,79 @@ import "math"
 // Collection generators and methods.
 // Provides generators for slices and maps with various configurations.
 
-// Type definitions
+// Generator constructors
 
-type sliceOfGen struct {
-	elemGen *Generator
-	minLen  int
-	maxLen  int
+// SliceOf creates a slice generator.
+func SliceOf(elemGen *Generator) *Generator {
+	return newGenerator(&sliceOfGen{elemGen: elemGen, minLen: 0, maxLen: 100})
 }
 
-type sliceOfDistinctGen struct {
-	elemGen *Generator
-	keyFn   func(any) any
-	minLen  int
-	maxLen  int
+// SliceOfN creates a slice generator with length in [minLen, maxLen].
+func SliceOfN(elemGen *Generator, minLen, maxLen int) *Generator {
+	return newGenerator(&sliceOfGen{elemGen: elemGen, minLen: minLen, maxLen: maxLen})
 }
 
-type mapOfGen struct {
-	keyGen   *Generator
-	valueGen *Generator
-	minSize  int
-	maxSize  int
+// SliceOfDistinct creates a slice generator with distinct elements.
+// Elements are compared using the keyFn (if nil, elements are compared directly).
+func SliceOfDistinct(elemGen *Generator, keyFn func(any) any) *Generator {
+	return newGenerator(&sliceOfDistinctGen{
+		elemGen: elemGen,
+		keyFn:   keyFn,
+		minLen:  0,
+		maxLen:  100,
+	})
+}
+
+// SliceOfNDistinct creates a slice generator with distinct elements and length bounds.
+func SliceOfNDistinct(elemGen *Generator, minLen, maxLen int, keyFn func(any) any) *Generator {
+	return newGenerator(&sliceOfDistinctGen{
+		elemGen: elemGen,
+		keyFn:   keyFn,
+		minLen:  minLen,
+		maxLen:  maxLen,
+	})
+}
+
+// MapOf creates a map generator.
+func MapOf(keyGen, valueGen *Generator) *Generator {
+	return newGenerator(&mapOfGen{keyGen: keyGen, valueGen: valueGen, minSize: 0, maxSize: 100})
+}
+
+// MapOfN creates a map generator with size in [minSize, maxSize].
+func MapOfN(keyGen, valueGen *Generator, minSize, maxSize int) *Generator {
+	return newGenerator(&mapOfGen{keyGen: keyGen, valueGen: valueGen, minSize: minSize, maxSize: maxSize})
+}
+
+// T convenience methods
+
+// SliceOf generates a slice using the given element generator.
+func (t *T) SliceOf(elemGen *Generator) []any {
+	return SliceOf(elemGen).value(t).([]any)
+}
+
+// SliceOfN generates a slice with length in [minLen, maxLen].
+func (t *T) SliceOfN(elemGen *Generator, minLen, maxLen int) []any {
+	return SliceOfN(elemGen, minLen, maxLen).value(t).([]any)
+}
+
+// SliceOfDistinct generates a slice with distinct elements.
+func (t *T) SliceOfDistinct(elemGen *Generator, keyFn func(any) any) []any {
+	return SliceOfDistinct(elemGen, keyFn).value(t).([]any)
+}
+
+// SliceOfNDistinct generates a slice with distinct elements and length bounds.
+func (t *T) SliceOfNDistinct(elemGen *Generator, minLen, maxLen int, keyFn func(any) any) []any {
+	return SliceOfNDistinct(elemGen, minLen, maxLen, keyFn).value(t).([]any)
+}
+
+// MapOf generates a map using key and value generators.
+func (t *T) MapOf(keyGen, valueGen *Generator) map[any]any {
+	return MapOf(keyGen, valueGen).value(t).(map[any]any)
+}
+
+// MapOfN generates a map with size in [minSize, maxSize].
+func (t *T) MapOfN(keyGen, valueGen *Generator, minSize, maxSize int) map[any]any {
+	return MapOfN(keyGen, valueGen, minSize, maxSize).value(t).(map[any]any)
 }
 
 // String methods
@@ -106,77 +159,24 @@ func (g *mapOfGen) value(t *T) any {
 	return m
 }
 
-// Generator constructors
+// Type definitions
 
-// SliceOf creates a slice generator.
-func SliceOf(elemGen *Generator) *Generator {
-	return newGenerator(&sliceOfGen{elemGen: elemGen, minLen: 0, maxLen: 100})
+type sliceOfGen struct {
+	elemGen *Generator
+	minLen  int
+	maxLen  int
 }
 
-// SliceOfN creates a slice generator with length in [minLen, maxLen].
-func SliceOfN(elemGen *Generator, minLen, maxLen int) *Generator {
-	return newGenerator(&sliceOfGen{elemGen: elemGen, minLen: minLen, maxLen: maxLen})
+type sliceOfDistinctGen struct {
+	elemGen *Generator
+	keyFn   func(any) any
+	minLen  int
+	maxLen  int
 }
 
-// SliceOfDistinct creates a slice generator with distinct elements.
-// Elements are compared using the keyFn (if nil, elements are compared directly).
-func SliceOfDistinct(elemGen *Generator, keyFn func(any) any) *Generator {
-	return newGenerator(&sliceOfDistinctGen{
-		elemGen: elemGen,
-		keyFn:   keyFn,
-		minLen:  0,
-		maxLen:  100,
-	})
-}
-
-// SliceOfNDistinct creates a slice generator with distinct elements and length bounds.
-func SliceOfNDistinct(elemGen *Generator, minLen, maxLen int, keyFn func(any) any) *Generator {
-	return newGenerator(&sliceOfDistinctGen{
-		elemGen: elemGen,
-		keyFn:   keyFn,
-		minLen:  minLen,
-		maxLen:  maxLen,
-	})
-}
-
-// MapOf creates a map generator.
-func MapOf(keyGen, valueGen *Generator) *Generator {
-	return newGenerator(&mapOfGen{keyGen: keyGen, valueGen: valueGen, minSize: 0, maxSize: 100})
-}
-
-// MapOfN creates a map generator with size in [minSize, maxSize].
-func MapOfN(keyGen, valueGen *Generator, minSize, maxSize int) *Generator {
-	return newGenerator(&mapOfGen{keyGen: keyGen, valueGen: valueGen, minSize: minSize, maxSize: maxSize})
-}
-
-// T convenience methods
-
-// SliceOf generates a slice using the given element generator.
-func (t *T) SliceOf(elemGen *Generator) []any {
-	return SliceOf(elemGen).value(t).([]any)
-}
-
-// SliceOfN generates a slice with length in [minLen, maxLen].
-func (t *T) SliceOfN(elemGen *Generator, minLen, maxLen int) []any {
-	return SliceOfN(elemGen, minLen, maxLen).value(t).([]any)
-}
-
-// SliceOfDistinct generates a slice with distinct elements.
-func (t *T) SliceOfDistinct(elemGen *Generator, keyFn func(any) any) []any {
-	return SliceOfDistinct(elemGen, keyFn).value(t).([]any)
-}
-
-// SliceOfNDistinct generates a slice with distinct elements and length bounds.
-func (t *T) SliceOfNDistinct(elemGen *Generator, minLen, maxLen int, keyFn func(any) any) []any {
-	return SliceOfNDistinct(elemGen, minLen, maxLen, keyFn).value(t).([]any)
-}
-
-// MapOf generates a map using key and value generators.
-func (t *T) MapOf(keyGen, valueGen *Generator) map[any]any {
-	return MapOf(keyGen, valueGen).value(t).(map[any]any)
-}
-
-// MapOfN generates a map with size in [minSize, maxSize].
-func (t *T) MapOfN(keyGen, valueGen *Generator, minSize, maxSize int) map[any]any {
-	return MapOfN(keyGen, valueGen, minSize, maxSize).value(t).(map[any]any)
+type mapOfGen struct {
+	keyGen   *Generator
+	valueGen *Generator
+	minSize  int
+	maxSize  int
 }

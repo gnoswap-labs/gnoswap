@@ -5,145 +5,6 @@ import "math"
 // Combinator generators and methods.
 // Provides generators for combining, transforming, and selecting from other generators.
 
-// Type definitions
-
-type mappedGen struct {
-	gen *Generator
-	fn  func(any) any
-}
-
-type sampledGen struct {
-	slice []any
-}
-
-type oneOfGen struct {
-	gens []*Generator
-}
-
-type filteredGen struct {
-	gen       *Generator
-	predicate func(any) bool
-}
-
-type customGen struct {
-	fn func(*T) any
-}
-
-type deferredGen struct {
-	gen *Generator
-	fn  func() *Generator
-}
-
-type permGen struct {
-	slice []any
-}
-
-// String methods
-
-func (g *mappedGen) String() string {
-	return "Map(" + g.gen.String() + ")"
-}
-
-func (g *sampledGen) String() string {
-	if len(g.slice) == 1 {
-		return "Just"
-	}
-	return "SampledFrom"
-}
-
-func (g *oneOfGen) String() string {
-	return "OneOf"
-}
-
-func (g *filteredGen) String() string {
-	return g.gen.String() + ".Filter"
-}
-
-func (g *customGen) String() string {
-	return "Custom"
-}
-
-func (g *deferredGen) String() string {
-	return "Deferred"
-}
-
-func (g *permGen) String() string {
-	return "Permutation"
-}
-
-// value methods
-
-func (g *mappedGen) value(t *T) any {
-	return g.fn(g.gen.value(t))
-}
-
-func (g *sampledGen) value(t *T) any {
-	i := genIndex(t.s, len(g.slice), true)
-	return g.slice[i]
-}
-
-func (g *oneOfGen) value(t *T) any {
-	i := genIndex(t.s, len(g.gens), true)
-	return g.gens[i].value(t)
-}
-
-func (g *filteredGen) value(t *T) any {
-	return find(g.maybeValue, t, small)
-}
-
-func (g *filteredGen) maybeValue(t *T) (any, bool) {
-	v := g.gen.value(t)
-	if g.predicate(v) {
-		return v, true
-	}
-	return nil, false
-}
-
-func (g *customGen) value(t *T) any {
-	return find(g.maybeValue, t, small)
-}
-
-func (g *customGen) maybeValue(t *T) (any, bool) {
-	// Create a temporary T for the custom function
-	// This allows catching invalid data exceptions
-	defer func() {
-		if r := recover(); r != nil {
-			if _, ok := r.(invalidData); !ok {
-				panic(r)
-			}
-		}
-	}()
-
-	return g.fn(t), true
-}
-
-func (g *deferredGen) value(t *T) any {
-	if g.gen == nil {
-		g.gen = g.fn()
-	}
-	return g.gen.value(t)
-}
-
-func (g *permGen) value(t *T) any {
-	s := make([]any, len(g.slice))
-	copy(s, g.slice)
-
-	n := len(s)
-	m := n - 1
-	if m < 0 {
-		m = 0
-	}
-
-	// Fisher-Yates shuffle with repeat controller for shrinking
-	repeat := newRepeat(0, m, math.MaxInt, "permute")
-	for i := 0; repeat.more(t.s); i++ {
-		j, _, _ := genUintRange(t.s, uint64(i), uint64(n-1), false)
-		s[i], s[j] = s[j], s[i]
-	}
-
-	return s
-}
-
 // Generator constructors
 
 // Map transforms values from one generator to another.
@@ -290,4 +151,143 @@ func (t *T) RepeatAvg(minCount, maxCount int, avgCount float64, fn func() bool) 
 			r.reject()
 		}
 	}
+}
+
+// String methods
+
+func (g *mappedGen) String() string {
+	return "Map(" + g.gen.String() + ")"
+}
+
+func (g *sampledGen) String() string {
+	if len(g.slice) == 1 {
+		return "Just"
+	}
+	return "SampledFrom"
+}
+
+func (g *oneOfGen) String() string {
+	return "OneOf"
+}
+
+func (g *filteredGen) String() string {
+	return g.gen.String() + ".Filter"
+}
+
+func (g *customGen) String() string {
+	return "Custom"
+}
+
+func (g *deferredGen) String() string {
+	return "Deferred"
+}
+
+func (g *permGen) String() string {
+	return "Permutation"
+}
+
+// value methods
+
+func (g *mappedGen) value(t *T) any {
+	return g.fn(g.gen.value(t))
+}
+
+func (g *sampledGen) value(t *T) any {
+	i := genIndex(t.s, len(g.slice), true)
+	return g.slice[i]
+}
+
+func (g *oneOfGen) value(t *T) any {
+	i := genIndex(t.s, len(g.gens), true)
+	return g.gens[i].value(t)
+}
+
+func (g *filteredGen) value(t *T) any {
+	return find(g.maybeValue, t, small)
+}
+
+func (g *filteredGen) maybeValue(t *T) (any, bool) {
+	v := g.gen.value(t)
+	if g.predicate(v) {
+		return v, true
+	}
+	return nil, false
+}
+
+func (g *customGen) value(t *T) any {
+	return find(g.maybeValue, t, small)
+}
+
+func (g *customGen) maybeValue(t *T) (any, bool) {
+	// Create a temporary T for the custom function
+	// This allows catching invalid data exceptions
+	defer func() {
+		if r := recover(); r != nil {
+			if _, ok := r.(invalidData); !ok {
+				panic(r)
+			}
+		}
+	}()
+
+	return g.fn(t), true
+}
+
+func (g *deferredGen) value(t *T) any {
+	if g.gen == nil {
+		g.gen = g.fn()
+	}
+	return g.gen.value(t)
+}
+
+func (g *permGen) value(t *T) any {
+	s := make([]any, len(g.slice))
+	copy(s, g.slice)
+
+	n := len(s)
+	m := n - 1
+	if m < 0 {
+		m = 0
+	}
+
+	// Fisher-Yates shuffle with repeat controller for shrinking
+	repeat := newRepeat(0, m, math.MaxInt, "permute")
+	for i := 0; repeat.more(t.s); i++ {
+		j, _, _ := genUintRange(t.s, uint64(i), uint64(n-1), false)
+		s[i], s[j] = s[j], s[i]
+	}
+
+	return s
+}
+
+// Type definitions
+
+type mappedGen struct {
+	gen *Generator
+	fn  func(any) any
+}
+
+type sampledGen struct {
+	slice []any
+}
+
+type oneOfGen struct {
+	gens []*Generator
+}
+
+type filteredGen struct {
+	gen       *Generator
+	predicate func(any) bool
+}
+
+type customGen struct {
+	fn func(*T) any
+}
+
+type deferredGen struct {
+	gen *Generator
+	fn  func() *Generator
+}
+
+type permGen struct {
+	slice []any
 }

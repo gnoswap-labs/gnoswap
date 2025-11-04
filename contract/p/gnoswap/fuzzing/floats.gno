@@ -6,21 +6,29 @@ import "math"
 // Provides generators for float32 and float64 types.
 // Supports full range, min-bounded, max-bounded, and range-bounded variants.
 
-// Type definitions
+// Generator constructors
 
-type float64Gen struct {
-	min    float64
-	max    float64
-	hasMin bool
-	hasMax bool
-}
+func Float64() *Generator { return newGenerator(&float64Gen{}) }
+func Float64Min(min float64) *Generator { return newGenerator(&float64Gen{min: min, hasMin: true}) }
+func Float64Max(max float64) *Generator { return newGenerator(&float64Gen{max: max, hasMax: true}) }
+func Float64Range(min, max float64) *Generator { return newGenerator(&float64Gen{min: min, max: max, hasMin: true, hasMax: true}) }
 
-type float32Gen struct {
-	min    float32
-	max    float32
-	hasMin bool
-	hasMax bool
-}
+func Float32() *Generator { return newGenerator(&float32Gen{}) }
+func Float32Min(min float32) *Generator { return newGenerator(&float32Gen{min: min, hasMin: true}) }
+func Float32Max(max float32) *Generator { return newGenerator(&float32Gen{max: max, hasMax: true}) }
+func Float32Range(min, max float32) *Generator { return newGenerator(&float32Gen{min: min, max: max, hasMin: true, hasMax: true}) }
+
+// T convenience methods
+
+func (t *T) Float64() float64 { return Float64().value(t).(float64) }
+func (t *T) Float64Min(min float64) float64 { return Float64Min(min).value(t).(float64) }
+func (t *T) Float64Max(max float64) float64 { return Float64Max(max).value(t).(float64) }
+func (t *T) Float64Range(min, max float64) float64 { return Float64Range(min, max).value(t).(float64) }
+
+func (t *T) Float32() float32 { return Float32().value(t).(float32) }
+func (t *T) Float32Min(min float32) float32 { return Float32Min(min).value(t).(float32) }
+func (t *T) Float32Max(max float32) float32 { return Float32Max(max).value(t).(float32) }
+func (t *T) Float32Range(min, max float32) float32 { return Float32Range(min, max).value(t).(float32) }
 
 // String methods
 
@@ -70,26 +78,18 @@ func (g *float32Gen) value(t *T) any {
 	return genFloat32Range(t.s, min, max, true)
 }
 
-// Generator constructors
+// Type definitions
 
-func Float64() *Generator { return newGenerator(&float64Gen{}) }
-func Float64Min(min float64) *Generator { return newGenerator(&float64Gen{min: min, hasMin: true}) }
-func Float64Max(max float64) *Generator { return newGenerator(&float64Gen{max: max, hasMax: true}) }
-func Float64Range(min, max float64) *Generator { return newGenerator(&float64Gen{min: min, max: max, hasMin: true, hasMax: true}) }
+type float64Gen struct {
+	min    float64
+	max    float64
+	hasMin bool
+	hasMax bool
+}
 
-func Float32() *Generator { return newGenerator(&float32Gen{}) }
-func Float32Min(min float32) *Generator { return newGenerator(&float32Gen{min: min, hasMin: true}) }
-func Float32Max(max float32) *Generator { return newGenerator(&float32Gen{max: max, hasMax: true}) }
-func Float32Range(min, max float32) *Generator { return newGenerator(&float32Gen{min: min, max: max, hasMin: true, hasMax: true}) }
-
-// T convenience methods
-
-func (t *T) Float64() float64 { return Float64().value(t).(float64) }
-func (t *T) Float64Min(min float64) float64 { return Float64Min(min).value(t).(float64) }
-func (t *T) Float64Max(max float64) float64 { return Float64Max(max).value(t).(float64) }
-func (t *T) Float64Range(min, max float64) float64 { return Float64Range(min, max).value(t).(float64) }
-
-func (t *T) Float32() float32 { return Float32().value(t).(float32) }
-func (t *T) Float32Min(min float32) float32 { return Float32Min(min).value(t).(float32) }
-func (t *T) Float32Max(max float32) float32 { return Float32Max(max).value(t).(float32) }
-func (t *T) Float32Range(min, max float32) float32 { return Float32Range(min, max).value(t).(float32) }
+type float32Gen struct {
+	min    float32
+	max    float32
+	hasMin bool
+	hasMax bool
+}
