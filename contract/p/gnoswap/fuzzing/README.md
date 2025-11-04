@@ -422,11 +422,42 @@ func TestTreeDepth(t *testing.T) {
 - Distinct element generation with custom key functions
 - Biased generation for better edge case discovery
 
+### 🎯 Gnoswap Domain-Specific Generators
+
+**Big Number Types:**
+- `Uint256(maxBits)` - Generate uint256 values with bit limit
+- `Uint256WithBoundaries(maxBits)` - Include special values (0, 1, MAX_UINT128, etc.)
+- `Int256(allowZero, allowNegative, maxBits)` - Generate int256 values
+- `Int256WithBoundaries(...)` - Include special values (0, ±1, ±MAX_INT128, etc.)
+
+**Pool & Position:**
+- `TickRange(tickSpacing)` - Valid tick values respecting spacing
+- `TickRangeWithBoundaries(tickSpacing)` - Include MIN_TICK, MAX_TICK, 0
+- `FeeAmount()` - Valid fee tiers (100, 500, 3000, 10000 = 0.01%, 0.05%, 0.3%, 1%)
+- `TickSpacing(feeAmount)` - Valid tick spacing for fee tier
+- `SqrtPriceX96()` - Valid sqrt price values
+
+**Tokens & Addresses:**
+- `GnoAddress()` - Valid gno address format
+- `TokenPath()` - Token realm paths (gno.land/r/...)
+- `TokenPair()` - Pair of distinct token paths
+
+**Time & Ratios:**
+- `Timestamp()` - Block timestamps (past, present, future)
+- `TimestampRange(min, max)` - Timestamp within range
+- `Percentage()` - 0-100 percentage values
+- `BasisPoints()` - 0-10000 basis points (0-100%)
+- `PercentageWithBoundaries()` - Include 0%, 1%, 50%, 99%, 100%
+
+**Amounts & Balances:**
+- `TokenAmount(decimals)` - Token amounts with decimal precision
+- `LiquidityAmount()` - Valid liquidity values
+- `RewardAmount()` - Reward distribution amounts
+
 ### ❌ Not Implemented Yet
 
 - **Shrinking**: Automatic test case minimization (infrastructure in place, algorithm pending)
 - **State machines**: Structured stateful testing with StateMachine interface
-- **Gnoswap types**: Uint256, Int256 domain-specific generators
 
 ### ❌ Not Available (Gno Limitations)
 
@@ -463,7 +494,152 @@ fuzzing/
 ├── fuzzing.gno         # Main API: Check, T, Config
 ├── primitives.gno      # All numeric types, strings, runes
 ├── collections.gno     # Slice, Map, Distinct variants
+├── gnoswap.gno         # Gnoswap domain-specific generators
 └── README.md           # This file
+```
+
+## Gnoswap-Specific Usage Examples
+
+### Big Number Generation
+
+```go
+import (
+	"testing"
+	"gno.land/p/gnoswap/fuzzing"
+	"gno.land/p/gnoswap/uint256"
+)
+
+func TestPoolWithFuzzedAmounts(t *testing.T) {
+	fuzzing.Check(t, func(t *fuzzing.T) {
+		// Generate uint256 for token amounts
+		amount0 := t.Uint256(128) // Use up to 128 bits
+		amount1 := t.Uint256WithBoundaries(128) // Higher chance of edge cases
+		
+		// Generate int256 for deltas (can be negative)
+		delta := t.Int256(true, true, 128) // allowZero=true, allowNegative=true
+		
+		// Use in pool operations
+		// pool.Swap(amount0, amount1, delta)
+	})
+}
+```
+
+### Pool & Position Testing
+
+```go
+func TestPositionInRange(t *testing.T) {
+	fuzzing.Check(t, func(t *fuzzing.T) {
+		// Generate valid fee amount
+		feeAmount := t.FeeAmount() // 100, 500, 3000, or 10000
+		
+		// Get corresponding tick spacing
+		tickSpacing := t.TickSpacing(feeAmount)
+		
+		// Generate valid ticks
+		tickLower := t.TickRange(tickSpacing)
+		tickUpper := t.TickRange(tickSpacing)
+		
+		// Ensure proper ordering
+		if tickLower > tickUpper {
+			tickLower, tickUpper = tickUpper, tickLower
+		}
+		
+		// Generate sqrt price
+		sqrtPrice := t.SqrtPriceX96()
+		
+		// Test position creation
+		// position := NewPosition(tickLower, tickUpper, sqrtPrice, feeAmount)
+	})
+}
+```
+
+### Token & Address Testing
+
+```go
+func TestTokenTransfer(t *testing.T) {
+	fuzzing.Check(t, func(t *fuzzing.T) {
+		// Generate addresses
+		from := t.GnoAddress()
+		to := t.GnoAddress()
+		
+		// Generate token pair
+		tokens := t.TokenPair() // Returns [token0, token1]
+		token0 := tokens[0]
+		token1 := tokens[1]
+		
+		// Generate amounts with decimals
+		amount := t.TokenAmount(18, 128) // 18 decimals, 128-bit max
+		
+		// Test transfer
+		// Transfer(from, to, token0, amount)
+	})
+}
+```
+
+### Liquidity & Rewards Testing
+
+```go
+func TestLiquidityRewards(t *testing.T) {
+	fuzzing.Check(t, func(t *fuzzing.T) {
+		// Generate liquidity amount
+		liquidity := t.LiquidityAmount() // uint128
+		
+		// Generate reward amount
+		reward := t.RewardAmount(128)
+		
+		// Generate time range
+		startTime := t.Timestamp(1600000000, 1700000000)
+		endTime := t.Timestamp(1700000000, 1800000000)
+		
+		// Generate percentage (in basis points)
+		feeRate := t.Percentage() // 0-10000 (0%-100%)
+		slippage := t.BasisPoints(500) // 0-500 (0%-5%)
+		
+		// Test reward calculation
+		// CalculateReward(liquidity, reward, startTime, endTime, feeRate, slippage)
+	})
+}
+```
+
+### Complex Pool Scenarios
+
+```go
+func TestPoolOperations(t *testing.T) {
+	fuzzing.Check(t, func(t *fuzzing.T) {
+		// Setup pool parameters
+		feeAmount := t.FeeAmount()
+		tickSpacing := t.TickSpacing(feeAmount)
+		sqrtPrice := t.SqrtPriceX96()
+		
+		// Generate token pair
+		tokens := t.TokenPair()
+		
+		// Generate multiple positions
+		numPositions := t.IntRange(1, 10)
+		positions := make([]Position, numPositions)
+		
+		for i := 0; i < numPositions; i++ {
+			tickLower := t.TickRange(tickSpacing)
+			tickUpper := t.TickRange(tickSpacing)
+			if tickLower > tickUpper {
+				tickLower, tickUpper = tickUpper, tickLower
+			}
+			
+			liquidity := t.LiquidityAmount()
+			positions[i] = Position{tickLower, tickUpper, liquidity}
+		}
+		
+		// Generate swap amount
+		swapAmount := t.TokenAmount(18, 96)
+		
+		// Test complex pool state
+		// pool := CreatePool(tokens[0], tokens[1], feeAmount, sqrtPrice)
+		// for _, pos := range positions {
+		//     pool.AddLiquidity(pos)
+		// }
+		// pool.Swap(swapAmount)
+	})
+}
 ```
 
 ## License
