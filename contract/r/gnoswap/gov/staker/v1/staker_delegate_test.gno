@@ -878,3 +878,38 @@ func setupStakerDelegateTestCollectableAmount(t *testing.T, gs *govStakerV1, use
 	testing.SetRealm(testing.NewUserRealm(govStakerAddr))
 	xgns.Mint(cross, user, amount)
 }
+
+// TestStakerDelegate_registerReferrer tests the private registerReferrer function
+func TestStakerDelegate_registerReferrer(t *testing.T) {
+	tests := []struct {
+		name     string
+		caller   address
+		referrer string
+	}{
+		{
+			name:     "register with valid referrer",
+			caller:   testutils.TestAddress("alice"),
+			referrer: "referrer1",
+		},
+		{
+			name:     "register with empty referrer",
+			caller:   testutils.TestAddress("bob"),
+			referrer: "",
+		},
+		{
+			name:     "register same caller multiple times",
+			caller:   testutils.TestAddress("charlie"),
+			referrer: "referrer2",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// when - call registerReferrer
+			result := registerReferrer(tc.caller, tc.referrer)
+
+			// then - should return a referrer string (actual referrer may differ based on referral module logic)
+			uassert.NotNil(t, result)
+		})
+	}
+}

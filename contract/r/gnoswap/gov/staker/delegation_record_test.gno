@@ -6,6 +6,61 @@ import (
 	"gno.land/p/nt/uassert"
 )
 
+// TestDelegationRecord_NewDelegationHistory tests the creation of new delegation history
+func TestDelegationRecord_NewDelegationHistory(t *testing.T) {
+	// when
+	history := NewDelegationHistory()
+
+	// then
+	uassert.NotNil(t, history)
+	uassert.Equal(t, len(history), 0)
+	uassert.Equal(t, len(history.Records()), 0)
+}
+
+// TestDelegationRecord_DelegationHistoryOperations tests DelegationHistory operations
+func TestDelegationRecord_DelegationHistoryOperations(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{
+			name: "Add records to history",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			history := NewDelegationHistory()
+			record1 := NewDelegationRecord(DelegateType, 100, address("g1from"), address("g1to"), 1000)
+			record2 := NewDelegationRecord(UnDelegateType, 50, address("g1from"), address("g1to"), 2000)
+
+			// when - add first record
+			history = history.AddRecord(record1)
+
+			// then
+			uassert.Equal(t, len(history), 1)
+			uassert.Equal(t, len(history.Records()), 1)
+			uassert.Equal(t, history.Records()[0].DelegateAmount(), int64(100))
+
+			// when - add second record
+			history = history.AddRecord(record2)
+
+			// then
+			uassert.Equal(t, len(history), 2)
+			uassert.Equal(t, len(history.Records()), 2)
+			uassert.Equal(t, history.Records()[1].UnDelegateAmount(), int64(50))
+
+			// when - set records
+			newRecords := []*DelegationRecord{record1}
+			history = history.SetRecords(newRecords)
+
+			// then
+			uassert.Equal(t, len(history), 1)
+			uassert.Equal(t, len(history.Records()), 1)
+		})
+	}
+}
+
 // TestNewDelegationRecord tests the creation of new delegation records
 func TestNewDelegationRecord(t *testing.T) {
 	tests := []struct {

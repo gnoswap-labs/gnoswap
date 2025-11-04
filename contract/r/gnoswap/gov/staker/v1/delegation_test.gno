@@ -695,3 +695,134 @@ func TestDelegation_EdgeCases(t *testing.T) {
 		})
 	}
 }
+
+// TestDelegation_addToCollectedAmount tests the private addToCollectedAmount function
+func TestDelegation_addToCollectedAmount(t *testing.T) {
+	tests := []struct {
+		name             string
+		collectedAmount  int64
+		amount           int64
+		expectedResult   int64
+		expectedHasError bool
+	}{
+		{
+			name:             "add positive amount",
+			collectedAmount:  100,
+			amount:           50,
+			expectedResult:   150,
+			expectedHasError: false,
+		},
+		{
+			name:             "add zero amount",
+			collectedAmount:  100,
+			amount:           0,
+			expectedResult:   100,
+			expectedHasError: false,
+		},
+		{
+			name:             "add negative amount",
+			collectedAmount:  100,
+			amount:           -30,
+			expectedResult:   70,
+			expectedHasError: false,
+		},
+		{
+			name:             "both zero",
+			collectedAmount:  0,
+			amount:           0,
+			expectedResult:   0,
+			expectedHasError: false,
+		},
+		{
+			name:             "large values",
+			collectedAmount:  9223372036854775000,
+			amount:           100,
+			expectedResult:   9223372036854775100,
+			expectedHasError: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			result, err := addToCollectedAmount(tc.collectedAmount, tc.amount)
+
+			// then
+			if tc.expectedHasError {
+				uassert.NotNil(t, err)
+			} else {
+				uassert.Nil(t, err)
+				uassert.Equal(t, result, tc.expectedResult)
+			}
+		})
+	}
+}
+
+// TestDelegation_min tests the private min function
+func TestDelegation_min(t *testing.T) {
+	tests := []struct {
+		name           string
+		a              int64
+		b              int64
+		expectedResult int64
+	}{
+		{
+			name:           "a is smaller",
+			a:              10,
+			b:              20,
+			expectedResult: 10,
+		},
+		{
+			name:           "b is smaller",
+			a:              30,
+			b:              15,
+			expectedResult: 15,
+		},
+		{
+			name:           "both equal",
+			a:              50,
+			b:              50,
+			expectedResult: 50,
+		},
+		{
+			name:           "negative values - a smaller",
+			a:              -100,
+			b:              -50,
+			expectedResult: -100,
+		},
+		{
+			name:           "negative values - b smaller",
+			a:              -30,
+			b:              -60,
+			expectedResult: -60,
+		},
+		{
+			name:           "one negative one positive",
+			a:              -10,
+			b:              10,
+			expectedResult: -10,
+		},
+		{
+			name:           "both zero",
+			a:              0,
+			b:              0,
+			expectedResult: 0,
+		},
+		{
+			name:           "max int64",
+			a:              9223372036854775807,
+			b:              100,
+			expectedResult: 100,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			result := min(tc.a, tc.b)
+
+			// then
+			uassert.Equal(t, result, tc.expectedResult)
+		})
+	}
+}

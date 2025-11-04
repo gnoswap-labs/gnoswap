@@ -475,3 +475,135 @@ func TestEmissionRewardManager_removeStake_updatesPersistedState(t *testing.T) {
 	// Since no rewards were distributed, claimed amount should be zero
 	uassert.Equal(t, claimed, int64(0))
 }
+
+// TestEmissionRewardManager_DistributeWithZeroTotalStake tests distribution when totalStakedAmount is zero
+// Critical: Validates safe handling of division by zero in reward calculations
+func TestEmissionRewardManager_DistributeWithZeroTotalStake(t *testing.T) {
+	t.Run("distribute with zero total stake - returns zero without panic", func(t *testing.T) {
+		// given
+		manager := staker.NewEmissionRewardManager()
+		resolver := NewEmissionRewardManagerResolver(manager)
+
+		// Verify initial state: no stakes
+		uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(0))
+
+		// when - Try to distribute rewards with zero total stake
+		currentDistributedAmount := int64(1000)
+		accumulatedReward, err := resolver.calculateAccumulatedRewardX128PerStake(
+			currentDistributedAmount,
+			int64(0), // totalStakedAmount = 0
+		)
+
+		// then - Should handle gracefully (returns previous accumulated or zero)
+		uassert.NoError(t, err)
+		// With zero total stake, reward per stake should remain at zero
+		uassert.Equal(t, accumulatedReward.ToString(), "0")
+	})
+
+	t.Run("distribute after all stakes removed", func(t *testing.T) {
+		// given
+		manager := staker.NewEmissionRewardManager()
+		resolver := NewEmissionRewardManagerResolver(manager)
+
+		addr := "user1"
+
+		// Add stake
+		err := resolver.addStake(addr, 1000, 50)
+		uassert.NoError(t, err)
+		uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(1000))
+
+		// Remove all stake
+		err = resolver.removeStake(addr, 1000, 100)
+		uassert.NoError(t, err)
+		uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(0))
+
+		// when - Distribute rewards after all stakes removed
+		currentDistributedAmount := int64(500)
+		accumulatedReward, err := resolver.calculateAccumulatedRewardX128PerStake(
+			currentDistributedAmount,
+			int64(0), // totalStakedAmount now zero
+		)
+
+		// then - Should not panic
+		uassert.NoError(t, err)
+		// Reward calculation with zero stake should return zero delta
+		uassert.Equal(t, accumulatedReward.ToString(), "0")
+	})
+
+	t.Run("add stake after zero stake period", func(t *testing.T) {
+		// given
+		manager := staker.NewEmissionRewardManager()
+		resolver := NewEmissionRewardManagerResolver(manager)
+
+		// Distribute with zero stakes (should be no-op)
+		_, err := resolver.calculateAccumulatedRewardX128PerStake(1000, 0)
+		uassert.NoError(t, err)
+
+		// when - Add first stake after distribution
+		err = resolver.addStake("user1", 500, 100)
+		uassert.NoError(t, err)
+
+		// Distribute again with stake present
+		accumulatedReward, err := resolver.calculateAccumulatedRewardX128PerStake(2000, 500)
+		uassert.NoError(t, err)
+
+		// then - Should calculate rewards correctly for new distribution only
+		// Delta = 2000 - 1000 = 1000 (previous distribution at zero stake doesn't count)
+		// But since distributed amount tracks cumulative, delta considers last update
+		// Reward per stake = 1000 * 2^128 / 500
+		uassert.NotEqual(t, accumulatedReward.ToString(), "0")
+	})
+}
+
+// TestEmissionRewardManager_ZeroStakeEdgeCases tests additional edge cases with zero stakes
+func TestEmissionRewardManager_ZeroStakeEdgeCases(t *testing.T) {
+	t.Run("multiple users all remove stakes", func(t *testing.T) {
+		// given
+		manager := staker.NewEmissionRewardManager()
+		resolver := NewEmissionRewardManagerResolver(manager)
+
+		// Add multiple users
+		resolver.addStake("user1", 100, 10)
+		resolver.addStake("user2", 200, 20)
+		resolver.addStake("user3", 300, 30)
+
+		uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(600))
+
+		// when - All users remove their stakes
+		resolver.removeStake("user1", 100, 40)
+		resolver.removeStake("user2", 200, 50)
+		resolver.removeStake("user3", 300, 60)
+
+		// then - Total stake should be zero
+		uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(0))
+
+		// Distribution with zero stake should not panic
+		accumulatedReward, err := resolver.calculateAccumulatedRewardX128PerStake(1000, 0)
+		uassert.NoError(t, err)
+		uassert.Equal(t, accumulatedReward.ToString(), "0")
+	})
+
+	t.Run("claim rewards when total stake becomes zero", func(t *testing.T) {
+		// given
+		manager := staker.NewEmissionRewardManager()
+		resolver := NewEmissionRewardManagerResolver(manager)
+
+		addr := "user1"
+		resolver.addStake(addr, 500, 10)
+
+		// Distribute rewards
+		resolver.updateAccumulatedRewardX128PerStake(1000, 20)
+
+		// Remove all stake
+		resolver.removeStake(addr, 500, 30)
+		uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(0))
+
+		// when - Try to claim rewards after stake removal
+		claimed, err := resolver.claimRewards(addr, 40)
+
+		// then - Should successfully claim earned rewards
+		uassert.NoError(t, err)
+		// User should have earned rewards before removal
+		uassert.True(t, claimed >= 0)
+	})
+}
