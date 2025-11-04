@@ -11,8 +11,8 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/position"
 
-	_ "gno.land/r/gnoswap/position/test"
 	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/position/v2_invalid"
 )
 
 var t = &testing.T{}
@@ -24,7 +24,7 @@ var (
 
 const (
 	positionV1Path   = "gno.land/r/gnoswap/position/v1"
-	positionTestPath = "gno.land/r/gnoswap/position/test"
+	positionTestPath = "gno.land/r/gnoswap/position/v2_invalid"
 )
 
 func main() {
@@ -143,10 +143,10 @@ func verifyTestImplementation() {
 // [SCENARIO] 2. Upgrade position contract to test version
 // [INFO] Current version: gno.land/r/gnoswap/position/v1
 // [INFO] Upgrading position contract to test version
-// [EXPECTED] Position upgraded to: gno.land/r/gnoswap/position/test
+// [EXPECTED] Position upgraded to: gno.land/r/gnoswap/position/v2_invalid
 //
 // [SCENARIO] 3. Verify test implementation panics correctly
-// [INFO] Current version: gno.land/r/gnoswap/position/test
+// [INFO] Current version: gno.land/r/gnoswap/position/v2_invalid
 // [INFO] Testing Mint function panics correctly
 // [EXPECTED] Mint panics correctly
 // [INFO] Testing IncreaseLiquidity function panics correctly

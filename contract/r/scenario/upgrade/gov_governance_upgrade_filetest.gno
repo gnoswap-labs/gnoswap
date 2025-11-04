@@ -11,8 +11,8 @@ import (
 	"gno.land/r/gnoswap/access"
 	govGovernance "gno.land/r/gnoswap/gov/governance"
 
-	_ "gno.land/r/gnoswap/gov/governance/test"
 	_ "gno.land/r/gnoswap/gov/governance/v1"
+	_ "gno.land/r/gnoswap/gov/governance/v2_invalid"
 )
 
 var t = &testing.T{}
@@ -24,7 +24,7 @@ var (
 
 const (
 	govGovernanceV1Path   = "gno.land/r/gnoswap/gov/governance/v1"
-	govGovernanceTestPath = "gno.land/r/gnoswap/gov/governance/test"
+	govGovernanceTestPath = "gno.land/r/gnoswap/gov/governance/v2_invalid"
 )
 
 func main() {
@@ -148,10 +148,10 @@ func verifyTestImplementation() {
 // [SCENARIO] 2. Upgrade gov/governance contract to test version
 // [INFO] Current version: gno.land/r/gnoswap/gov/governance/v1
 // [INFO] Upgrading gov/governance contract to test version
-// [EXPECTED] Gov/Governance upgraded to: gno.land/r/gnoswap/gov/governance/test
+// [EXPECTED] Gov/Governance upgraded to: gno.land/r/gnoswap/gov/governance/v2_invalid
 //
 // [SCENARIO] 3. Verify test implementation panics correctly
-// [INFO] Current version: gno.land/r/gnoswap/gov/governance/test
+// [INFO] Current version: gno.land/r/gnoswap/gov/governance/v2_invalid
 // [INFO] Testing ProposeText function panics correctly
 // [EXPECTED] ProposeText panics correctly
 // [INFO] Testing Vote function panics correctly

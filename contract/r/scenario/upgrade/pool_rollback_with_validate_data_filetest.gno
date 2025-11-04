@@ -16,8 +16,8 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
-	_ "gno.land/r/gnoswap/pool/test"
 	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/pool/v2_invalid"
 )
 
 var t *testing.T
@@ -38,7 +38,7 @@ var (
 
 const (
 	poolV1Path   = "gno.land/r/gnoswap/pool/v1"
-	poolTestPath = "gno.land/r/gnoswap/pool/test"
+	poolTestPath = "gno.land/r/gnoswap/pool/v2_invalid"
 )
 
 func main() {
@@ -169,7 +169,7 @@ func withAbortsWithMessage(callback func(), expectedAbortMessage string, logMess
 //
 // [SCENARIO] 4. Pool Contract Upgrade to test version
 // [INFO] Upgrade pool contract to test version
-// [EXPECTED] Upgraded pool contract to test version: gno.land/r/gnoswap/pool/test
+// [EXPECTED] Upgraded pool contract to test version: gno.land/r/gnoswap/pool/v2_invalid
 //
 // [SCENARIO] 5. Check pool data with panic by test version: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
 // [INFO] Check pool data
