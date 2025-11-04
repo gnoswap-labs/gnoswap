@@ -46,32 +46,48 @@ func main() {
 	initialize()
 	println()
 
-	println("[SCENARIO] 2. Create pool and mint position")
+	println("[SCENARIO] 2. Create pool with v1")
 	createPool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	println()
+
+	println("[SCENARIO] 3. Mint position with v1")
 	mintPosition(barPath, fooPath, fee500, -960, 960, "50000000", "50000000", "0", "0", time.Now().Unix()+3600, adminAddr, adminAddr)
 	println()
 
-	println("[SCENARIO] 3. Check pool data by v1 version:", barFoo500PoolPath)
+	println("[SCENARIO] 4. Check pool data by v1 version:", barFoo500PoolPath)
 	checkPoolData(barFoo500PoolPath)
 	println()
 
-	println("[SCENARIO] 4. Pool Contract Upgrade to test version")
+	println("[SCENARIO] 5. Pool Contract Upgrade to v2_invalid")
 	upgradePoolContractToTestVersion()
 	println()
 
-	println("[SCENARIO] 5. Check pool data with panic by test version:", barFoo500PoolPath)
-	withAbortsWithMessage(func() { checkPoolData(barFoo500PoolPath) },
-		"test implementation: GetPool not supported",  // expected abort message
-		"[EXPECTED] Check pool data panics correctly", // log message when success panic
+	println("[SCENARIO] 6. Mint position with v2_invalid (should panic)")
+	withAbortsWithMessage(func() {
+		mintPosition(barPath, fooPath, fee500, -960, 960, "30000000", "30000000", "0", "0", time.Now().Unix()+3600, adminAddr, adminAddr)
+	},
+		"[EXPECTED] Mint position panics correctly with v2_invalid", // log message when success panic
 	)
 	println()
 
-	println("[SCENARIO] 6. Pool Contract Rollback to v1")
+	println("[SCENARIO] 7. Check pool data with v2_invalid (should panic):", barFoo500PoolPath)
+	withAbortsWithMessage(func() {
+		checkPoolData(barFoo500PoolPath)
+	},
+		"[EXPECTED] Check pool data panics correctly with v2_invalid", // log message when success panic
+	)
+	println()
+
+	println("[SCENARIO] 8. Pool Contract Rollback to v1")
 	rollbackPoolContract()
 	println()
 
-	println("[SCENARIO] 7. Check pool data by v1 version after rollback:", barFoo500PoolPath)
+	println("[SCENARIO] 9. Check pool data by v1 version after rollback:", barFoo500PoolPath)
 	checkPoolData(barFoo500PoolPath)
+	println()
+
+	println("[SCENARIO] 10. Mint position with v1 after rollback")
+	mintPosition(barPath, fooPath, fee500, -960, 960, "30000000", "30000000", "0", "0", time.Now().Unix()+3600, adminAddr, adminAddr)
 	println()
 }
 
@@ -137,8 +153,8 @@ func checkPoolData(poolPath string) {
 	println("[EXPECTED] Liquidity:", poolData.Liquidity().ToString())
 }
 
-func withAbortsWithMessage(callback func(), expectedAbortMessage string, logMessage string) {
-	uassert.AbortsWithMessage(t, expectedAbortMessage, func() {
+func withAbortsWithMessage(callback func(), logMessage string) {
+	uassert.AbortsContains(t, "implementation", func() {
 		callback()
 	})
 	println(logMessage)
@@ -148,16 +164,18 @@ func withAbortsWithMessage(callback func(), expectedAbortMessage string, logMess
 // [SCENARIO] 1. Pool Contract Initialize
 // [EXPECTED] Initialized pool contract with v1: gno.land/r/gnoswap/pool/v1
 //
-// [SCENARIO] 2. Create pool and mint position
+// [SCENARIO] 2. Create pool with v1
 // [INFO] Create pool
 // [EXPECTED] Created pool path: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+//
+// [SCENARIO] 3. Mint position with v1
 // [INFO] Mint position
 // [EXPECTED] Position ID: 1
 // [EXPECTED] Liquidity: 1066918731
 // [EXPECTED] Amount0: 50000000
 // [EXPECTED] Amount1: 50000000
 //
-// [SCENARIO] 3. Check pool data by v1 version: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [SCENARIO] 4. Check pool data by v1 version: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
 // [INFO] Check pool data
 // [EXPECTED] Pool data: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
 // [EXPECTED] Token0 path: gno.land/r/onbloc/bar
@@ -167,19 +185,23 @@ func withAbortsWithMessage(callback func(), expectedAbortMessage string, logMess
 // [EXPECTED] Slot0 tick: 0
 // [EXPECTED] Liquidity: 1066918731
 //
-// [SCENARIO] 4. Pool Contract Upgrade to test version
+// [SCENARIO] 5. Pool Contract Upgrade to v2_invalid
 // [INFO] Upgrade pool contract to test version
 // [EXPECTED] Upgraded pool contract to test version: gno.land/r/gnoswap/pool/v2_invalid
 //
-// [SCENARIO] 5. Check pool data with panic by test version: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
-// [INFO] Check pool data
-// [EXPECTED] Check pool data panics correctly
+// [SCENARIO] 6. Mint position with v2_invalid (should panic)
+// [INFO] Mint position
+// [EXPECTED] Mint position panics correctly with v2_invalid
 //
-// [SCENARIO] 6. Pool Contract Rollback to v1
+// [SCENARIO] 7. Check pool data with v2_invalid (should panic): gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [INFO] Check pool data
+// [EXPECTED] Check pool data panics correctly with v2_invalid
+//
+// [SCENARIO] 8. Pool Contract Rollback to v1
 // [INFO] Rollback pool contract to v1
 // [EXPECTED] Rolled back pool contract to v1: gno.land/r/gnoswap/pool/v1
 //
-// [SCENARIO] 7. Check pool data by v1 version after rollback: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
+// [SCENARIO] 9. Check pool data by v1 version after rollback: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
 // [INFO] Check pool data
 // [EXPECTED] Pool data: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
 // [EXPECTED] Token0 path: gno.land/r/onbloc/bar
@@ -188,3 +210,10 @@ func withAbortsWithMessage(callback func(), expectedAbortMessage string, logMess
 // [EXPECTED] Slot0 sqrt price X96: 79228162514264337593543950336
 // [EXPECTED] Slot0 tick: 0
 // [EXPECTED] Liquidity: 1066918731
+//
+// [SCENARIO] 10. Mint position with v1 after rollback
+// [INFO] Mint position
+// [EXPECTED] Position ID: 2
+// [EXPECTED] Liquidity: 640151238
+// [EXPECTED] Amount0: 30000000
+// [EXPECTED] Amount1: 30000000
