@@ -1,0 +1,2 @@
+module = "gno.land/r/gnoswap/gov/staker/mock"
+gno = "0.9"

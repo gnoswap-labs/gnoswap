@@ -3,108 +3,199 @@ package v2_invalid
 
 import (
 	protocolFee "gno.land/r/gnoswap/protocol_fee"
+	v1 "gno.land/r/gnoswap/protocol_fee/v1"
 )
+
+func NewV2InvalidProtocolFee(store protocolFee.IProtocolFeeStore) protocolFee.IProtocolFee {
+	instance := v1.NewProtocolFeeV1(store)
+
+	return &TestProtocolFee{
+		instance:      instance,
+		activeMethods: make(map[string]bool),
+	}
+}
 
 func init() {
 	protocolFee.RegisterInitializer(cross, func(store protocolFee.IProtocolFeeStore) protocolFee.IProtocolFee {
-		return &TestProtocolFee{}
+		return NewV2InvalidProtocolFee(store)
 	})
 }
 
-// TestProtocolFee is a minimal test implementation that panics on all methods
-type TestProtocolFee struct{}
+// TestProtocolFee is a minimal test implementation that delegates to v1 only when method is activated
+type TestProtocolFee struct {
+	instance      protocolFee.IProtocolFee
+	activeMethods map[string]bool
+}
+
+func (t *TestProtocolFee) SetActiveMethod(fnName string, activated bool) {
+	t.activeMethods[fnName] = activated
+}
+
+func (t *TestProtocolFee) isActive(fnName string) bool {
+	active, ok := t.activeMethods[fnName]
+	return ok && active
+}
 
 // IProtocolFeeManager interface
 func (t *TestProtocolFee) DistributeProtocolFee() map[string]int64 {
-	panic("test implementation: DistributeProtocolFee not supported")
+	if !t.isActive("DistributeProtocolFee") {
+		panic("test implementation: DistributeProtocolFee not supported")
+	}
+	return t.instance.DistributeProtocolFee()
 }
 
 func (t *TestProtocolFee) SetDevOpsPct(pct int64) {
-	panic("test implementation: SetDevOpsPct not supported")
+	if !t.isActive("SetDevOpsPct") {
+		panic("test implementation: SetDevOpsPct not supported")
+	}
+	t.instance.SetDevOpsPct(pct)
 }
 
 func (t *TestProtocolFee) SetGovStakerPct(pct int64) {
-	panic("test implementation: SetGovStakerPct not supported")
+	if !t.isActive("SetGovStakerPct") {
+		panic("test implementation: SetGovStakerPct not supported")
+	}
+	t.instance.SetGovStakerPct(pct)
 }
 
 func (t *TestProtocolFee) AddToProtocolFee(tokenPath string, amount int64) {
-	panic("test implementation: AddToProtocolFee not supported")
+	if !t.isActive("AddToProtocolFee") {
+		panic("test implementation: AddToProtocolFee not supported")
+	}
+	t.instance.AddToProtocolFee(tokenPath, amount)
 }
 
 func (t *TestProtocolFee) ClearTokenListWithAmount() {
-	panic("test implementation: ClearTokenListWithAmount not supported")
+	if !t.isActive("ClearTokenListWithAmount") {
+		panic("test implementation: ClearTokenListWithAmount not supported")
+	}
+	t.instance.ClearTokenListWithAmount()
 }
 
 func (t *TestProtocolFee) ClearAccuTransferToGovStaker() {
-	panic("test implementation: ClearAccuTransferToGovStaker not supported")
+	if !t.isActive("ClearAccuTransferToGovStaker") {
+		panic("test implementation: ClearAccuTransferToGovStaker not supported")
+	}
+	t.instance.ClearAccuTransferToGovStaker()
 }
 
 // IProtocolFeeGetter interface
 func (t *TestProtocolFee) GetDevOpsPct() int64 {
-	panic("test implementation: GetDevOpsPct not supported")
+	if !t.isActive("GetDevOpsPct") {
+		panic("test implementation: GetDevOpsPct not supported")
+	}
+	return t.instance.GetDevOpsPct()
 }
 
 func (t *TestProtocolFee) GetGovStakerPct() int64 {
-	panic("test implementation: GetGovStakerPct not supported")
+	if !t.isActive("GetGovStakerPct") {
+		panic("test implementation: GetGovStakerPct not supported")
+	}
+	return t.instance.GetGovStakerPct()
 }
 
 func (t *TestProtocolFee) GetTokenListWithAmount() map[string]int64 {
-	panic("test implementation: GetTokenListWithAmount not supported")
+	if !t.isActive("GetTokenListWithAmount") {
+		panic("test implementation: GetTokenListWithAmount not supported")
+	}
+	return t.instance.GetTokenListWithAmount()
 }
 
 func (t *TestProtocolFee) GetAmountOfToken(tokenPath string) int64 {
-	panic("test implementation: GetAmountOfToken not supported")
+	if !t.isActive("GetAmountOfToken") {
+		panic("test implementation: GetAmountOfToken not supported")
+	}
+	return t.instance.GetAmountOfToken(tokenPath)
 }
 
 func (t *TestProtocolFee) GetAccuTransfersToGovStaker() map[string]int64 {
-	panic("test implementation: GetAccuTransfersToGovStaker not supported")
+	if !t.isActive("GetAccuTransfersToGovStaker") {
+		panic("test implementation: GetAccuTransfersToGovStaker not supported")
+	}
+	return t.instance.GetAccuTransfersToGovStaker()
 }
 
 func (t *TestProtocolFee) GetAccuTransfersToDevOps() map[string]int64 {
-	panic("test implementation: GetAccuTransfersToDevOps not supported")
+	if !t.isActive("GetAccuTransfersToDevOps") {
+		panic("test implementation: GetAccuTransfersToDevOps not supported")
+	}
+	return t.instance.GetAccuTransfersToDevOps()
 }
 
 func (t *TestProtocolFee) GetAccuTransferToGovStakerByTokenPath(path string) int64 {
-	panic("test implementation: GetAccuTransferToGovStakerByTokenPath not supported")
+	if !t.isActive("GetAccuTransferToGovStakerByTokenPath") {
+		panic("test implementation: GetAccuTransferToGovStakerByTokenPath not supported")
+	}
+	return t.instance.GetAccuTransferToGovStakerByTokenPath(path)
 }
 
 func (t *TestProtocolFee) GetAccuTransferToDevOpsByTokenPath(path string) int64 {
-	panic("test implementation: GetAccuTransferToDevOpsByTokenPath not supported")
+	if !t.isActive("GetAccuTransferToDevOpsByTokenPath") {
+		panic("test implementation: GetAccuTransferToDevOpsByTokenPath not supported")
+	}
+	return t.instance.GetAccuTransferToDevOpsByTokenPath(path)
 }
 
 func (t *TestProtocolFee) GetHistoryOfDistributedToGovStakerByTokenPath(path string) int64 {
-	panic("test implementation: GetHistoryOfDistributedToGovStakerByTokenPath not supported")
+	if !t.isActive("GetHistoryOfDistributedToGovStakerByTokenPath") {
+		panic("test implementation: GetHistoryOfDistributedToGovStakerByTokenPath not supported")
+	}
+	return t.instance.GetHistoryOfDistributedToGovStakerByTokenPath(path)
 }
 
 func (t *TestProtocolFee) GetHistoryOfDistributedToDevOpsByTokenPath(path string) int64 {
-	panic("test implementation: GetHistoryOfDistributedToDevOpsByTokenPath not supported")
+	if !t.isActive("GetHistoryOfDistributedToDevOpsByTokenPath") {
+		panic("test implementation: GetHistoryOfDistributedToDevOpsByTokenPath not supported")
+	}
+	return t.instance.GetHistoryOfDistributedToDevOpsByTokenPath(path)
 }
 
 // IProtocolFeeApi interface
 func (t *TestProtocolFee) ApiGetAccuTransferToGovStaker() string {
-	panic("test implementation: ApiGetAccuTransferToGovStaker not supported")
+	if !t.isActive("ApiGetAccuTransferToGovStaker") {
+		panic("test implementation: ApiGetAccuTransferToGovStaker not supported")
+	}
+	return t.instance.ApiGetAccuTransferToGovStaker()
 }
 
 func (t *TestProtocolFee) ApiGetAccuTransferToDevOps() string {
-	panic("test implementation: ApiGetAccuTransferToDevOps not supported")
+	if !t.isActive("ApiGetAccuTransferToDevOps") {
+		panic("test implementation: ApiGetAccuTransferToDevOps not supported")
+	}
+	return t.instance.ApiGetAccuTransferToDevOps()
 }
 
 func (t *TestProtocolFee) ApiGetHistoryTransferToGovStaker() string {
-	panic("test implementation: ApiGetHistoryTransferToGovStaker not supported")
+	if !t.isActive("ApiGetHistoryTransferToGovStaker") {
+		panic("test implementation: ApiGetHistoryTransferToGovStaker not supported")
+	}
+	return t.instance.ApiGetHistoryTransferToGovStaker()
 }
 
 func (t *TestProtocolFee) ApiGetHistoryTransferToDevOps() string {
-	panic("test implementation: ApiGetHistoryTransferToDevOps not supported")
+	if !t.isActive("ApiGetHistoryTransferToDevOps") {
+		panic("test implementation: ApiGetHistoryTransferToDevOps not supported")
+	}
+	return t.instance.ApiGetHistoryTransferToDevOps()
 }
 
 func (t *TestProtocolFee) ApiGetActualBalance() string {
-	panic("test implementation: ApiGetActualBalance not supported")
+	if !t.isActive("ApiGetActualBalance") {
+		panic("test implementation: ApiGetActualBalance not supported")
+	}
+	return t.instance.ApiGetActualBalance()
 }
 
 func (t *TestProtocolFee) ApiGetRecordedBalance() string {
-	panic("test implementation: ApiGetRecordedBalance not supported")
+	if !t.isActive("ApiGetRecordedBalance") {
+		panic("test implementation: ApiGetRecordedBalance not supported")
+	}
+	return t.instance.ApiGetRecordedBalance()
 }
 
 func (t *TestProtocolFee) ApiGetUnrecordedBalance() string {
-	panic("test implementation: ApiGetUnrecordedBalance not supported")
+	if !t.isActive("ApiGetUnrecordedBalance") {
+		panic("test implementation: ApiGetUnrecordedBalance not supported")
+	}
+	return t.instance.ApiGetUnrecordedBalance()
 }
