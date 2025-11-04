@@ -46,6 +46,9 @@ func CheckWithConfig(t *testing.T, cfg *Config, property func(*T)) {
 	baseSeed := cfg.BaseSeed
 	if baseSeed == 0 {
 		// Use time-based seed for randomized testing
+		// Note: In Gno test environment, time.Now() is fixed to first block timestamp,
+		// so tests will be deterministic. In production/real blockchain, each block
+		// has a different timestamp, enabling true randomization.
 		baseSeed = uint64(time.Now().UnixNano())
 	}
 
