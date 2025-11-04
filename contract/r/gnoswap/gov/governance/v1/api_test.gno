@@ -126,46 +126,34 @@ func TestAPI_createVoteJsonNode(t *testing.T) {
 
 // TestAPI_metaNode tests the private metaNode function
 func TestAPI_metaNode(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "create meta node with height and timestamp",
-		},
-	}
+	// when
+	node := metaNode()
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// when
-			node := metaNode()
+	// then
+	uassert.NotNil(t, node)
 
-			// then
-			uassert.NotNil(t, node)
+	// Verify JSON node structure by marshaling
+	jsonStr := marshal(node)
+	uassert.NotNil(t, jsonStr)
 
-			// Verify JSON node structure by marshaling
-			jsonStr := marshal(node)
-			uassert.NotNil(t, jsonStr)
+	// Parse back to verify structure
+	parsedNode, err := json.Unmarshal([]byte(jsonStr))
+	uassert.Nil(t, err)
+	uassert.NotNil(t, parsedNode)
 
-			// Parse back to verify structure
-			parsedNode, err := json.Unmarshal([]byte(jsonStr))
-			uassert.Nil(t, err)
-			uassert.NotNil(t, parsedNode)
+	// Verify height field exists
+	heightNode, err := parsedNode.GetKey("height")
+	uassert.Nil(t, err)
+	uassert.NotNil(t, heightNode)
+	height := heightNode.MustString()
+	uassert.True(t, len(height) > 0)
 
-			// Verify height field exists
-			heightNode, err := parsedNode.GetKey("height")
-			uassert.Nil(t, err)
-			uassert.NotNil(t, heightNode)
-			height := heightNode.MustString()
-			uassert.True(t, len(height) > 0)
-
-			// Verify now field exists
-			nowNode, err := parsedNode.GetKey("now")
-			uassert.Nil(t, err)
-			uassert.NotNil(t, nowNode)
-			now := nowNode.MustString()
-			uassert.True(t, len(now) > 0)
-		})
-	}
+	// Verify now field exists
+	nowNode, err := parsedNode.GetKey("now")
+	uassert.Nil(t, err)
+	uassert.NotNil(t, nowNode)
+	now := nowNode.MustString()
+	uassert.True(t, len(now) > 0)
 }
 
 // TestAPI_marshal tests the private marshal function

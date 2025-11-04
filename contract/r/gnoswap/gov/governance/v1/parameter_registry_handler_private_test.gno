@@ -8,25 +8,13 @@ import (
 
 // TestParameterRegistryHandler_newStateManager tests the private newStateManager function
 func TestParameterRegistryHandler_newStateManager(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "create new state manager",
-		},
-	}
+	// when
+	sm := newStateManager()
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// when
-			sm := newStateManager()
-
-			// then
-			uassert.NotNil(t, sm)
-			uassert.NotNil(t, sm.states)
-			uassert.Equal(t, len(sm.states), 0)
-		})
-	}
+	// then
+	uassert.NotNil(t, sm)
+	uassert.NotNil(t, sm.states)
+	uassert.Equal(t, len(sm.states), 0)
 }
 
 // TestParameterRegistryHandler_registerHandlers tests the private registerHandlers function
