@@ -70,7 +70,7 @@ func CheckWithConfig(t *testing.T, cfg *Config, property func(*T)) {
 					// Check if it's a test failure
 					if err, ok := r.(*testFailure); ok {
 						// Test failed - report with seed for reproduction
-						t.Errorf("Iteration %d failed (seed=%d): %s\n%s", i, seed, err.msg, err.trace)
+						t.Errorf("Iteration %d failed (seed=%d): %s", i, seed, err.msg)
 
 						// TODO: Implement shrinking
 						// For now, just report the original failure
@@ -103,17 +103,15 @@ func newT(seed uint64, verbose bool) *T {
 	}
 }
 
-// testFailure represents a test failure with message and trace.
+// testFailure represents a test failure with message.
 type testFailure struct {
-	msg   string
-	trace string
+	msg string
 }
 
 // Fatalf fails the test with a formatted message.
 func (t *T) Fatalf(format string, args ...interface{}) {
 	panic(&testFailure{
-		msg:   sprintf(format, args...),
-		trace: "", // TODO: Capture stack trace
+		msg: sprintf(format, args...),
 	})
 }
 
