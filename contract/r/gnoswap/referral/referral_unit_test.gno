@@ -15,25 +15,56 @@ import (
 func TestReferral_NewReferral(t *testing.T) {
 	tests := []struct {
 		name                 string
+		setupExistingKeeper  bool
+		setupReferralData    bool
 		expectedNotNil       bool
 		expectedKeeperNotNil bool
+		shouldReuseKeeper    bool
 	}{
 		{
 			name:                 "creates valid referral instance",
+			setupExistingKeeper:  false,
+			setupReferralData:    false,
 			expectedNotNil:       true,
 			expectedKeeperNotNil: true,
+			shouldReuseKeeper:    false,
 		},
 		{
-			name:                 "creates new keeper instance",
+			name:                 "creates new keeper when gReferralKeeper is nil",
+			setupExistingKeeper:  false,
+			setupReferralData:    false,
 			expectedNotNil:       true,
 			expectedKeeperNotNil: true,
+			shouldReuseKeeper:    false,
+		},
+		{
+			name:                 "reuses existing keeper when gReferralKeeper exists",
+			setupExistingKeeper:  true,
+			setupReferralData:    true,
+			expectedNotNil:       true,
+			expectedKeeperNotNil: true,
+			shouldReuseKeeper:    true,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			// No setup needed for constructor test
+			cleanup := setupCaller("router")
+			defer cleanup()
+
+			if tc.setupExistingKeeper {
+				gReferralKeeper = NewKeeper()
+				if tc.setupReferralData {
+					// Add data to existing keeper to verify reuse
+					testAddr := testutils.TestAddress("existingTest")
+					testRef := testutils.TestAddress("existingRef")
+					err := gReferralKeeper.register(testAddr, testRef)
+					uassert.NoError(t, err)
+				}
+			} else {
+				gReferralKeeper = nil
+			}
 
 			// when
 			r := NewReferral()
@@ -44,6 +75,12 @@ func TestReferral_NewReferral(t *testing.T) {
 			}
 			if tc.expectedKeeperNotNil {
 				uassert.NotNil(t, r.keeper)
+			}
+			if tc.shouldReuseKeeper && tc.setupReferralData {
+				// Verify existing data persists (keeper was reused)
+				testAddr := testutils.TestAddress("existingTest")
+				has := r.Has(testAddr)
+				uassert.True(t, has)
 			}
 		})
 	}

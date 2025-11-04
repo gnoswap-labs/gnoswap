@@ -348,76 +348,6 @@ func TestSafeConvertToInt128(t *testing.T) {
 	}
 }
 
-func TestToUint128(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		expected string
-	}{
-		{
-			name:     "within range - no change",
-			input:    "12345",
-			expected: "12345",
-		},
-		{
-			name:     "zero value",
-			input:    "0",
-			expected: "0",
-		},
-		{
-			name:     "max uint128 - no change",
-			input:    MAX_UINT128,
-			expected: MAX_UINT128,
-		},
-		{
-			name:     "overflow - should mask to max uint128",
-			input:    MAX_UINT256,
-			expected: MAX_UINT128,
-		},
-		{
-			name:     "overflow - just over max uint128",
-			input:    "340282366920938463463374607431768211456", // MAX_UINT128 + 1
-			expected: "0",                                       // Should wrap to 0 due to masking
-		},
-		// Additional masking tests
-		{
-			name:     "exactly 2^128 wraps to 0",
-			input:    "340282366920938463463374607431768211456", // 2^128
-			expected: "0",
-		},
-		{
-			name:     "2^128 + 1 wraps to 1",
-			input:    "340282366920938463463374607431768211457",
-			expected: "1",
-		},
-		{
-			name:     "2^129 wraps to 0",
-			input:    "680564733841876926926749214863536422912", // 2^129
-			expected: "0",
-		},
-		{
-			name:     "q96 value",
-			input:    Q96,
-			expected: Q96,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			original := u256.MustFromDecimal(tt.input)
-			originalStr := original.ToString()
-
-			result := toUint128(original)
-
-			// Verify result
-			uassert.Equal(t, tt.expected, result.ToString())
-
-			// Verify input wasn't mutated
-			uassert.Equal(t, originalStr, original.ToString())
-		})
-	}
-}
-
 func TestToUint128InputPreservation(t *testing.T) {
 	tests := []struct {
 		name                      string
@@ -615,64 +545,6 @@ func TestToUint128MaskedValuesRange(t *testing.T) {
 	// Verify specific values
 	uassert.Equal(t, "318775800626314356294205765087544249638", resultMaxSqrt.ToString())
 	uassert.Equal(t, "318775800626314356294205765087544249637", resultMaxPrice.ToString())
-}
-
-func TestCheckOverFlowInt128(t *testing.T) {
-	tests := []struct {
-		name        string
-		input       *i256.Int
-		shouldPanic bool
-		errorMsg    string
-	}{
-		{
-			name:        "Valid value within int128 range",
-			input:       i256.MustFromDecimal("1"),
-			shouldPanic: false,
-		},
-		{
-			name:        "Edge case - MAX_INT128",
-			input:       i256.MustFromDecimal(MAX_INT128),
-			shouldPanic: false,
-		},
-		{
-			name:        "Overflow case - exceeds MAX_INT128",
-			input:       i256.MustFromDecimal("170141183460469231731687303715884105728"), // MAX_INT128 + 1
-			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-026] overflow: amount(170141183460469231731687303715884105728) overflows int128 range",
-		},
-		// Test negative values - they should NOT panic since they're within int128 range
-		{
-			name:        "negative small value",
-			input:       i256.MustFromDecimal("-1"),
-			shouldPanic: false,
-		},
-		{
-			name:        "negative large value",
-			input:       i256.MustFromDecimal("-170141183460469231731687303715884105728"), // -2^127
-			shouldPanic: false,
-		},
-		{
-			name:        "very large positive (MAX_INT256)",
-			input:       i256.MustFromDecimal(MAX_INT256),
-			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-026] overflow: amount(57896044618658097711785492504343953926634992332820282019728792003956564819967) overflows int128 range",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			defer func() {
-				if r := recover(); r != nil {
-					if !tt.shouldPanic {
-						t.Errorf("Unexpected panic: %v", r)
-					}
-				} else if tt.shouldPanic {
-					t.Errorf("Expected panic but none occurred")
-				}
-			}()
-			checkOverFlowInt128(tt.input)
-		})
-	}
 }
 
 func TestCheckOverFlowInt128_BoundaryValues(t *testing.T) {
@@ -1184,4 +1056,180 @@ func TestFormatFunctions(t *testing.T) {
 			})
 		}
 	})
+}
+
+// TestToUint128 tests the toUint128 function with edge cases
+func TestToUint128(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       *u256.Uint
+		expected    string
+		shouldPanic bool
+		errorMsg    string
+	}{
+		{
+			name:        "nil value panics",
+			input:       nil,
+			shouldPanic: true,
+			errorMsg:    "[GNOSWAP-POOL-006] invalid input data || value is nil",
+		},
+		{
+			name:        "zero value",
+			input:       u256.Zero(),
+			expected:    "0",
+			shouldPanic: false,
+		},
+		{
+			name:        "one value",
+			input:       u256.One(),
+			expected:    "1",
+			shouldPanic: false,
+		},
+		{
+			name:        "max uint128",
+			input:       u256.MustFromDecimal(MAX_UINT128),
+			expected:    MAX_UINT128,
+			shouldPanic: false,
+		},
+		{
+			name:        "max uint128 + 1 gets masked",
+			input:       new(u256.Uint).Add(u256.MustFromDecimal(MAX_UINT128), u256.One()),
+			expected:    "0", // wraps around due to masking
+			shouldPanic: false,
+		},
+		{
+			name:        "large value gets masked",
+			input:       u256.MustFromDecimal("340282366920938463463374607431768211456"), // 2^128
+			expected:    "0",                                                             // wraps to 0
+			shouldPanic: false,
+		},
+		{
+			name:        "Q96 value",
+			input:       u256.MustFromDecimal(Q96),
+			expected:    Q96,
+			shouldPanic: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
+					toUint128(tt.input)
+				})
+			} else {
+				result := toUint128(tt.input)
+				uassert.Equal(t, tt.expected, result.ToString())
+			}
+		})
+	}
+}
+
+// TestCheckOverFlowInt128 tests overflow detection for int128
+func TestCheckOverFlowInt128(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       *i256.Int
+		shouldPanic bool
+		errorMsg    string
+	}{
+		{
+			name:        "zero value",
+			input:       i256.Zero(),
+			shouldPanic: false,
+		},
+		{
+			name:        "positive value within range",
+			input:       i256.MustFromDecimal("1000000000000000000"),
+			shouldPanic: false,
+		},
+		{
+			name:        "max int128",
+			input:       i256.MustFromDecimal(MAX_INT128),
+			shouldPanic: false,
+		},
+		{
+			name:        "max int128 + 1",
+			input:       new(i256.Int).Add(i256.MustFromDecimal(MAX_INT128), i256.One()),
+			shouldPanic: true,
+			errorMsg:    "[GNOSWAP-POOL-026] overflow: amount(170141183460469231731687303715884105728) overflows int128 range",
+		},
+		{
+			name:        "very large value",
+			input:       i256.MustFromDecimal("999999999999999999999999999999999999999"),
+			shouldPanic: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Error("Expected panic but none occurred")
+					}
+				}()
+				checkOverFlowInt128(tt.input)
+			} else {
+				uassert.NotPanics(t, func() {
+					checkOverFlowInt128(tt.input)
+				})
+			}
+		})
+	}
+}
+
+// TestFormatUint_AdditionalEdgeCases tests additional edge cases for formatUint
+func TestFormatUint_AdditionalEdgeCases(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       any
+		expected    string
+		shouldPanic bool
+		errorMsg    string
+	}{
+		{
+			name:        "uint16 max",
+			input:       uint16(65535),
+			expected:    "65535",
+			shouldPanic: false,
+		},
+		{
+			name:        "uint16 zero",
+			input:       uint16(0),
+			expected:    "0",
+			shouldPanic: false,
+		},
+		{
+			name:        "uint16 one",
+			input:       uint16(1),
+			expected:    "1",
+			shouldPanic: false,
+		},
+		{
+			name:        "float64 type",
+			input:       float64(3.14),
+			shouldPanic: true,
+			errorMsg:    "invalid type: unknown",
+		},
+		{
+			name:        "bool type",
+			input:       true,
+			shouldPanic: true,
+			errorMsg:    "invalid type: bool",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.errorMsg, func() {
+					formatUint(tt.input)
+				})
+			} else {
+				result := formatUint(tt.input)
+				uassert.Equal(t, tt.expected, result)
+			}
+		})
+	}
 }
