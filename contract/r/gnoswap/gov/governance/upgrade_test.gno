@@ -7,11 +7,6 @@ import (
 	"gno.land/p/nt/uassert"
 )
 
-// NOTE: UpgradeImpl tests cannot be included because UpgradeImpl(packagePath string)
-// lacks a `cur realm` parameter, which causes "frame not found" errors when
-// runtime.PreviousRealm() is called in tests. However, proxy and getter function tests
-// CAN be included because RegisterInitializer internally calls updateImplementation(),
-// making the implementation available immediately after RegisterInitializer.
 
 func TestUpgrade_RegisterInitializer(t *testing.T) {
 	tests := []struct {
@@ -78,6 +73,86 @@ func TestUpgrade_RegisterInitializer(t *testing.T) {
 
 				impl := implementation.(*MockGovernance)
 				uassert.Equal(t, impl.Version, tt.expectedVersion)
+			}
+		})
+	}
+}
+
+func TestUpgrade_UpgradeImpl(t *testing.T) {
+	tests := []struct {
+		name                 string
+		setup                func(t *testing.T)
+		targetPackagePath    string
+		callerRealm          runtime.Realm
+		expectedPath         string
+		expectedHasAbort     bool
+		expectedAbortMessage string
+	}{
+		{
+			name: "upgrade from v1 to v2 by admin",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v2"))
+				RegisterInitializer(cross, makeMockInitializer("v2"))
+			},
+			targetPackagePath: "gno.land/r/gnoswap/gov/governance/v2",
+			callerRealm:       testing.NewUserRealm(adminAddr),
+			expectedPath:      "gno.land/r/gnoswap/gov/governance/v2",
+		},
+		{
+			name: "fail - unauthorized caller",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v2"))
+				RegisterInitializer(cross, makeMockInitializer("v2"))
+			},
+			targetPackagePath:    "gno.land/r/gnoswap/gov/governance/v2",
+			callerRealm:          testing.NewUserRealm("g1unauthorized"),
+			expectedHasAbort:     true,
+			expectedAbortMessage: "caller g1unauthorized is not admin or governance",
+		},
+		{
+			name: "fail - target version not registered",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+			},
+			targetPackagePath:    "gno.land/r/gnoswap/gov/governance/v999",
+			callerRealm:          testing.NewUserRealm(adminAddr),
+			expectedHasAbort:     true,
+			expectedAbortMessage: "version_manager: initializer not found",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+
+			if tt.setup != nil {
+				tt.setup(t)
+			}
+
+			testing.SetRealm(tt.callerRealm)
+
+			if tt.expectedHasAbort {
+				uassert.AbortsContains(t, tt.expectedAbortMessage, func() {
+					func(cur realm) {
+						testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
+						UpgradeImpl(cur, tt.targetPackagePath)
+					}(cross)
+				})
+			} else {
+				func(cur realm) {
+					testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
+					UpgradeImpl(cur, tt.targetPackagePath)
+				}(cross)
+
+				path := GetImplementationPackagePath()
+				uassert.Equal(t, path, tt.expectedPath)
 			}
 		})
 	}
