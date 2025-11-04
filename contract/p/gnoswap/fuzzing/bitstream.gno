@@ -1,6 +1,7 @@
 package fuzzing
 
 import (
+	"fmt"
 	"math"
 	"math/bits"
 )
@@ -237,9 +238,7 @@ func assertf(ok bool, format string, args ...interface{}) {
 	}
 }
 
-// sprintf is a simple sprintf implementation for panic messages.
+// sprintf formats a string with arguments using fmt.Sprintf.
 func sprintf(format string, args ...interface{}) string {
-	// Simplified sprintf for basic usage
-	// In real implementation, use proper formatting
-	return format
+	return fmt.Sprintf(format, args...)
 }

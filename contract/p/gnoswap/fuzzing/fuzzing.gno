@@ -2,6 +2,7 @@ package fuzzing
 
 import (
 	"testing"
+	"time"
 )
 
 // Config configures the property-based test execution.
@@ -44,9 +45,8 @@ func CheckWithConfig(t *testing.T, cfg *Config, property func(*T)) {
 
 	baseSeed := cfg.BaseSeed
 	if baseSeed == 0 {
-		// In real implementation, use time-based seed or from environment
-		// For now, use a fixed seed for determinism
-		baseSeed = 1
+		// Use time-based seed for randomized testing
+		baseSeed = uint64(time.Now().UnixNano())
 	}
 
 	for i := 0; i < cfg.Iterations; i++ {
