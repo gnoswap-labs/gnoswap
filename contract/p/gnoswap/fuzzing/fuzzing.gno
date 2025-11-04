@@ -123,6 +123,14 @@ func (t *T) Errorf(format string, args ...interface{}) {
 	t.Fatalf(format, args...)
 }
 
+// Logf logs a formatted message.
+func (t *T) Logf(format string, args ...interface{}) {
+	if t.verbose {
+		// In verbose mode, would log to output
+		// For now, no-op
+	}
+}
+
 // Helper marks the calling function as a test helper.
 // This is a no-op in Gno but kept for API compatibility.
 func (t *T) Helper() {
@@ -310,96 +318,4 @@ func (t *T) RepeatAvg(minCount, maxCount int, avgCount float64, fn func() bool) 
 			r.reject()
 		}
 	}
-}
-
-// Gnoswap domain-specific T methods
-
-// Uint256 generates a uint256 value with specified maximum bits.
-func (t *T) Uint256(maxBits uint) any {
-	return Uint256(maxBits).value(t)
-}
-
-// Uint256WithBoundaries generates a uint256 with higher probability of boundary cases.
-func (t *T) Uint256WithBoundaries(maxBits uint) any {
-	return Uint256WithBoundaries(maxBits).value(t)
-}
-
-// Int256 generates an int256 value with specified constraints.
-func (t *T) Int256(allowZero, allowNegative bool, maxBits uint) any {
-	return Int256(allowZero, allowNegative, maxBits).value(t)
-}
-
-// Int256WithBoundaries generates an int256 with higher probability of boundary cases.
-func (t *T) Int256WithBoundaries(allowZero, allowNegative bool, maxBits uint) any {
-	return Int256WithBoundaries(allowZero, allowNegative, maxBits).value(t)
-}
-
-// TickRange generates valid tick values respecting tick spacing.
-func (t *T) TickRange(tickSpacing int32) int32 {
-	return TickRange(tickSpacing).value(t).(int32)
-}
-
-// TickRangeWithBoundaries generates tick values with higher probability of boundaries.
-func (t *T) TickRangeWithBoundaries(tickSpacing int32) int32 {
-	return TickRangeWithBoundaries(tickSpacing).value(t).(int32)
-}
-
-// FeeAmount generates valid fee tier values (100, 500, 3000, 10000).
-func (t *T) FeeAmount() uint32 {
-	return FeeAmount().value(t).(uint32)
-}
-
-// TickSpacing generates valid tick spacing for the given fee amount.
-func (t *T) TickSpacing(feeAmount uint32) int32 {
-	return TickSpacing(feeAmount).value(t).(int32)
-}
-
-// SqrtPriceX96 generates valid sqrt price values in Q64.96 format.
-func (t *T) SqrtPriceX96() any {
-	return SqrtPriceX96().value(t)
-}
-
-// GnoAddress generates valid gno address format.
-func (t *T) GnoAddress() any {
-	return GnoAddress().value(t)
-}
-
-// TokenPath generates token realm paths.
-func (t *T) TokenPath() string {
-	return TokenPath().value(t).(string)
-}
-
-// TokenPair generates a pair of distinct token paths.
-func (t *T) TokenPair() []string {
-	return TokenPair().value(t).([]string)
-}
-
-// Timestamp generates Unix timestamp values.
-func (t *T) Timestamp(min, max int64) int64 {
-	return Timestamp(min, max).value(t).(int64)
-}
-
-// Percentage generates percentage values in basis points (0-10000).
-func (t *T) Percentage() uint64 {
-	return Percentage().value(t).(uint64)
-}
-
-// BasisPoints generates basis point values (1bp = 0.01%).
-func (t *T) BasisPoints(max uint64) uint64 {
-	return BasisPoints(max).value(t).(uint64)
-}
-
-// TokenAmount generates token amounts considering decimals.
-func (t *T) TokenAmount(decimals uint8, maxBits uint) any {
-	return TokenAmount(decimals, maxBits).value(t)
-}
-
-// LiquidityAmount generates liquidity values (typically uint128).
-func (t *T) LiquidityAmount() any {
-	return LiquidityAmount().value(t)
-}
-
-// RewardAmount generates reward values.
-func (t *T) RewardAmount(maxBits uint) any {
-	return RewardAmount(maxBits).value(t)
 }
