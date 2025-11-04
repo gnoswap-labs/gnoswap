@@ -27,36 +27,6 @@ func TestInstance_NewGovernanceV1(t *testing.T) {
 	uassert.True(t, ok)
 	uassert.NotNil(t, gv.store)
 	uassert.NotNil(t, gv.getUserVotingInfoSnapshotFn)
-}
-
-// TestInstance_DefaultVotingSnapshotFunction tests the default voting snapshot function
-func TestInstance_DefaultVotingSnapshotFunction(t *testing.T) {
-	// given
-	store := createMockGovernanceStore()
-
-	// when
-	impl := NewGovernanceV1(store)
-
-	// then
-	gv, ok := impl.(*governanceV1)
-	uassert.True(t, ok)
-
-	// Verify the snapshot function is not nil
-	uassert.NotNil(t, gv.getUserVotingInfoSnapshotFn)
-}
-
-// TestInstance_StoreAccess tests that the instance can access the store
-func TestInstance_StoreAccess(t *testing.T) {
-	// given
-	store := createMockGovernanceStore()
-
-	// when
-	impl := NewGovernanceV1(store)
-
-	// then
-	gv, ok := impl.(*governanceV1)
-	uassert.True(t, ok)
-	uassert.NotNil(t, gv.store)
 
 	// Verify store methods are accessible
 	counter := gv.store.GetProposalCounter()
