@@ -2,14 +2,32 @@ package fuzzing
 
 import "math"
 
-// Collection generators: Slice, Map, Permutation
+// Collection generators and methods.
+// Provides generators for slices and maps with various configurations.
 
-// sliceOfGen generates slices.
+// Type definitions
+
 type sliceOfGen struct {
 	elemGen *Generator
 	minLen  int
 	maxLen  int
 }
+
+type sliceOfDistinctGen struct {
+	elemGen *Generator
+	keyFn   func(any) any
+	minLen  int
+	maxLen  int
+}
+
+type mapOfGen struct {
+	keyGen   *Generator
+	valueGen *Generator
+	minSize  int
+	maxSize  int
+}
+
+// String methods
 
 func (g *sliceOfGen) String() string {
 	if g.minLen == 0 && g.maxLen == math.MaxInt {
@@ -18,31 +36,11 @@ func (g *sliceOfGen) String() string {
 	return "SliceOfN(" + g.elemGen.String() + ", ...)"
 }
 
-func (g *sliceOfGen) value(t *T) any {
-	n, _, _ := genIntRange(t.s, int64(g.minLen), int64(g.maxLen), true)
-	slice := make([]any, n)
-	for i := range slice {
-		slice[i] = g.elemGen.value(t)
+func (g *sliceOfDistinctGen) String() string {
+	if g.minLen == 0 && g.maxLen == math.MaxInt {
+		return "SliceOfDistinct(" + g.elemGen.String() + ")"
 	}
-	return slice
-}
-
-// SliceOf creates a slice generator.
-func SliceOf(elemGen *Generator) *Generator {
-	return newGenerator(&sliceOfGen{elemGen: elemGen, minLen: 0, maxLen: 100})
-}
-
-// SliceOfN creates a slice generator with length in [minLen, maxLen].
-func SliceOfN(elemGen *Generator, minLen, maxLen int) *Generator {
-	return newGenerator(&sliceOfGen{elemGen: elemGen, minLen: minLen, maxLen: maxLen})
-}
-
-// mapOfGen generates maps.
-type mapOfGen struct {
-	keyGen   *Generator
-	valueGen *Generator
-	minSize  int
-	maxSize  int
+	return "SliceOfNDistinct(" + g.elemGen.String() + ", ...)"
 }
 
 func (g *mapOfGen) String() string {
@@ -52,40 +50,15 @@ func (g *mapOfGen) String() string {
 	return "MapOfN(" + g.keyGen.String() + ", " + g.valueGen.String() + ", ...)"
 }
 
-func (g *mapOfGen) value(t *T) any {
-	n, _, _ := genIntRange(t.s, int64(g.minSize), int64(g.maxSize), true)
-	m := make(map[any]any)
-	for i := 0; i < int(n); i++ {
-		key := g.keyGen.value(t)
-		value := g.valueGen.value(t)
-		m[key] = value
+// value methods
+
+func (g *sliceOfGen) value(t *T) any {
+	n, _, _ := genIntRange(t.s, int64(g.minLen), int64(g.maxLen), true)
+	slice := make([]any, n)
+	for i := range slice {
+		slice[i] = g.elemGen.value(t)
 	}
-	return m
-}
-
-// MapOf creates a map generator.
-func MapOf(keyGen, valueGen *Generator) *Generator {
-	return newGenerator(&mapOfGen{keyGen: keyGen, valueGen: valueGen, minSize: 0, maxSize: 100})
-}
-
-// MapOfN creates a map generator with size in [minSize, maxSize].
-func MapOfN(keyGen, valueGen *Generator, minSize, maxSize int) *Generator {
-	return newGenerator(&mapOfGen{keyGen: keyGen, valueGen: valueGen, minSize: minSize, maxSize: maxSize})
-}
-
-// sliceOfDistinctGen generates slices with distinct elements.
-type sliceOfDistinctGen struct {
-	elemGen *Generator
-	keyFn   func(any) any
-	minLen  int
-	maxLen  int
-}
-
-func (g *sliceOfDistinctGen) String() string {
-	if g.minLen == 0 && g.maxLen == math.MaxInt {
-		return "SliceOfDistinct(" + g.elemGen.String() + ")"
-	}
-	return "SliceOfNDistinct(" + g.elemGen.String() + ", ...)"
+	return slice
 }
 
 func (g *sliceOfDistinctGen) value(t *T) any {
@@ -122,6 +95,29 @@ func (g *sliceOfDistinctGen) value(t *T) any {
 	return slice
 }
 
+func (g *mapOfGen) value(t *T) any {
+	n, _, _ := genIntRange(t.s, int64(g.minSize), int64(g.maxSize), true)
+	m := make(map[any]any)
+	for i := 0; i < int(n); i++ {
+		key := g.keyGen.value(t)
+		value := g.valueGen.value(t)
+		m[key] = value
+	}
+	return m
+}
+
+// Generator constructors
+
+// SliceOf creates a slice generator.
+func SliceOf(elemGen *Generator) *Generator {
+	return newGenerator(&sliceOfGen{elemGen: elemGen, minLen: 0, maxLen: 100})
+}
+
+// SliceOfN creates a slice generator with length in [minLen, maxLen].
+func SliceOfN(elemGen *Generator, minLen, maxLen int) *Generator {
+	return newGenerator(&sliceOfGen{elemGen: elemGen, minLen: minLen, maxLen: maxLen})
+}
+
 // SliceOfDistinct creates a slice generator with distinct elements.
 // Elements are compared using the keyFn (if nil, elements are compared directly).
 func SliceOfDistinct(elemGen *Generator, keyFn func(any) any) *Generator {
@@ -141,4 +137,46 @@ func SliceOfNDistinct(elemGen *Generator, minLen, maxLen int, keyFn func(any) an
 		minLen:  minLen,
 		maxLen:  maxLen,
 	})
+}
+
+// MapOf creates a map generator.
+func MapOf(keyGen, valueGen *Generator) *Generator {
+	return newGenerator(&mapOfGen{keyGen: keyGen, valueGen: valueGen, minSize: 0, maxSize: 100})
+}
+
+// MapOfN creates a map generator with size in [minSize, maxSize].
+func MapOfN(keyGen, valueGen *Generator, minSize, maxSize int) *Generator {
+	return newGenerator(&mapOfGen{keyGen: keyGen, valueGen: valueGen, minSize: minSize, maxSize: maxSize})
+}
+
+// T convenience methods
+
+// SliceOf generates a slice using the given element generator.
+func (t *T) SliceOf(elemGen *Generator) []any {
+	return SliceOf(elemGen).value(t).([]any)
+}
+
+// SliceOfN generates a slice with length in [minLen, maxLen].
+func (t *T) SliceOfN(elemGen *Generator, minLen, maxLen int) []any {
+	return SliceOfN(elemGen, minLen, maxLen).value(t).([]any)
+}
+
+// SliceOfDistinct generates a slice with distinct elements.
+func (t *T) SliceOfDistinct(elemGen *Generator, keyFn func(any) any) []any {
+	return SliceOfDistinct(elemGen, keyFn).value(t).([]any)
+}
+
+// SliceOfNDistinct generates a slice with distinct elements and length bounds.
+func (t *T) SliceOfNDistinct(elemGen *Generator, minLen, maxLen int, keyFn func(any) any) []any {
+	return SliceOfNDistinct(elemGen, minLen, maxLen, keyFn).value(t).([]any)
+}
+
+// MapOf generates a map using key and value generators.
+func (t *T) MapOf(keyGen, valueGen *Generator) map[any]any {
+	return MapOf(keyGen, valueGen).value(t).(map[any]any)
+}
+
+// MapOfN generates a map with size in [minSize, maxSize].
+func (t *T) MapOfN(keyGen, valueGen *Generator, minSize, maxSize int) map[any]any {
+	return MapOfN(keyGen, valueGen, minSize, maxSize).value(t).(map[any]any)
 }
