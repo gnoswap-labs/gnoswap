@@ -220,8 +220,8 @@ func TestProposalStatus_VotingOperations(t *testing.T) {
 	}
 }
 
-// TestProposalStatus_PrivateMethods tests private methods of proposal status
-func TestProposalStatus_PrivateMethods(t *testing.T) {
+// TestProposalStatusResolver_PrivateMethods tests private methods of proposal status resolver
+func TestProposalStatusResolver_PrivateMethods(t *testing.T) {
 	baseTime := time.Unix(1000, 0)
 	config := governance.Config{
 		VotingStartDelay: 100,
