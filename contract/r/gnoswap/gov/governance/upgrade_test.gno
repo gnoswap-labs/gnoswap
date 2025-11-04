@@ -13,7 +13,7 @@ import (
 // CAN be included because RegisterInitializer internally calls updateImplementation(),
 // making the implementation available immediately after RegisterInitializer.
 
-func TestRegisterInitializer(t *testing.T) {
+func TestUpgrade_RegisterInitializer(t *testing.T) {
 	tests := []struct {
 		name                 string
 		setup                func(t *testing.T)
@@ -83,7 +83,7 @@ func TestRegisterInitializer(t *testing.T) {
 	}
 }
 
-func TestProposeText(t *testing.T) {
+func TestUpgrade_ProposeText(t *testing.T) {
 	tests := []struct {
 		name        string
 		title       string
@@ -116,7 +116,7 @@ func TestProposeText(t *testing.T) {
 	}
 }
 
-func TestProposeCommunityPoolSpend(t *testing.T) {
+func TestUpgrade_ProposeCommunityPoolSpend(t *testing.T) {
 	tests := []struct {
 		name        string
 		title       string
@@ -155,7 +155,7 @@ func TestProposeCommunityPoolSpend(t *testing.T) {
 	}
 }
 
-func TestProposeParameterChange(t *testing.T) {
+func TestUpgrade_ProposeParameterChange(t *testing.T) {
 	tests := []struct {
 		name         string
 		title        string
@@ -192,7 +192,7 @@ func TestProposeParameterChange(t *testing.T) {
 	}
 }
 
-func TestVote(t *testing.T) {
+func TestUpgrade_Vote(t *testing.T) {
 	tests := []struct {
 		name       string
 		proposalId int64
@@ -230,7 +230,7 @@ func TestVote(t *testing.T) {
 	}
 }
 
-func TestExecute(t *testing.T) {
+func TestUpgrade_Execute(t *testing.T) {
 	tests := []struct {
 		name       string
 		proposalId int64
@@ -261,7 +261,7 @@ func TestExecute(t *testing.T) {
 	}
 }
 
-func TestCancel(t *testing.T) {
+func TestUpgrade_Cancel(t *testing.T) {
 	tests := []struct {
 		name       string
 		proposalId int64
@@ -292,7 +292,7 @@ func TestCancel(t *testing.T) {
 	}
 }
 
-func TestReconfigure(t *testing.T) {
+func TestUpgrade_Reconfigure(t *testing.T) {
 	tests := []struct {
 		name                          string
 		votingStartDelay              int64
@@ -335,7 +335,7 @@ func TestReconfigure(t *testing.T) {
 	}
 }
 
-func TestGetProposerByProposalId(t *testing.T) {
+func TestUpgrade_GetProposerByProposalId(t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
@@ -366,7 +366,7 @@ func TestGetProposerByProposalId(t *testing.T) {
 	}
 }
 
-func TestGetProposalTypeByProposalId(t *testing.T) {
+func TestUpgrade_GetProposalTypeByProposalId(t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
@@ -397,7 +397,7 @@ func TestGetProposalTypeByProposalId(t *testing.T) {
 	}
 }
 
-func TestGetYeaByProposalId(t *testing.T) {
+func TestUpgrade_GetYeaByProposalId(t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
@@ -428,7 +428,7 @@ func TestGetYeaByProposalId(t *testing.T) {
 	}
 }
 
-func TestGetNayByProposalId(t *testing.T) {
+func TestUpgrade_GetNayByProposalId(t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
@@ -459,7 +459,7 @@ func TestGetNayByProposalId(t *testing.T) {
 	}
 }
 
-func TestGetProposalById(t *testing.T) {
+func TestUpgrade_GetProposalById(t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
@@ -490,7 +490,7 @@ func TestGetProposalById(t *testing.T) {
 	}
 }
 
-func TestGetVoteStatusFromProposalById(t *testing.T) {
+func TestUpgrade_GetVoteStatusFromProposalById(t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
@@ -521,7 +521,7 @@ func TestGetVoteStatusFromProposalById(t *testing.T) {
 	}
 }
 
-func TestGetVoteByAddressFromProposalById(t *testing.T) {
+func TestUpgrade_GetVoteByAddressFromProposalById(t *testing.T) {
 	tests := []struct {
 		name string
 		addr address
@@ -554,7 +554,7 @@ func TestGetVoteByAddressFromProposalById(t *testing.T) {
 	}
 }
 
-func TestGetConfigVersionByProposalId(t *testing.T) {
+func TestUpgrade_GetConfigVersionByProposalId(t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
@@ -585,7 +585,7 @@ func TestGetConfigVersionByProposalId(t *testing.T) {
 	}
 }
 
-func TestGetQuorumAmountByProposalId(t *testing.T) {
+func TestUpgrade_GetQuorumAmountByProposalId(t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
@@ -616,7 +616,7 @@ func TestGetQuorumAmountByProposalId(t *testing.T) {
 	}
 }
 
-func TestGetTitleByProposalId(t *testing.T) {
+func TestUpgrade_GetTitleByProposalId(t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
@@ -647,7 +647,7 @@ func TestGetTitleByProposalId(t *testing.T) {
 	}
 }
 
-func TestGetDescriptionByProposalId(t *testing.T) {
+func TestUpgrade_GetDescriptionByProposalId(t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
@@ -678,7 +678,7 @@ func TestGetDescriptionByProposalId(t *testing.T) {
 	}
 }
 
-func TestGetExecutionStateByProposalId(t *testing.T) {
+func TestUpgrade_GetExecutionStateByProposalId(t *testing.T) {
 	tests := []struct {
 		name string
 		id   int64
@@ -709,7 +709,7 @@ func TestGetExecutionStateByProposalId(t *testing.T) {
 	}
 }
 
-func TestGetLatestConfig(t *testing.T) {
+func TestUpgrade_GetLatestConfig(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -738,7 +738,7 @@ func TestGetLatestConfig(t *testing.T) {
 	}
 }
 
-func TestGetConfig(t *testing.T) {
+func TestUpgrade_GetConfig(t *testing.T) {
 	tests := []struct {
 		name          string
 		configVersion int64
@@ -769,7 +769,7 @@ func TestGetConfig(t *testing.T) {
 	}
 }
 
-func TestGetVoteWeight(t *testing.T) {
+func TestUpgrade_GetVoteWeight(t *testing.T) {
 	tests := []struct {
 		name       string
 		proposalID int64
@@ -802,7 +802,7 @@ func TestGetVoteWeight(t *testing.T) {
 	}
 }
 
-func TestGetVotedHeight(t *testing.T) {
+func TestUpgrade_GetVotedHeight(t *testing.T) {
 	tests := []struct {
 		name       string
 		proposalID int64
@@ -835,7 +835,7 @@ func TestGetVotedHeight(t *testing.T) {
 	}
 }
 
-func TestGetVotedAt(t *testing.T) {
+func TestUpgrade_GetVotedAt(t *testing.T) {
 	tests := []struct {
 		name       string
 		proposalID int64
@@ -864,6 +864,41 @@ func TestGetVotedAt(t *testing.T) {
 			if mockGovernance.Response.CallCount("GetVotedAt") != 1 {
 				t.Error("GetVotedAt was not called on the implementation")
 			}
+		})
+	}
+}
+
+func TestUpgrade_GetImplementationPackagePath(t *testing.T) {
+	tests := []struct {
+		name         string
+		packagePath  string
+		expectedPath string
+	}{
+		{
+			name:         "get package path after v1 registration",
+			packagePath:  "gno.land/r/gnoswap/gov/governance/v1",
+			expectedPath: "gno.land/r/gnoswap/gov/governance/v1",
+		},
+		{
+			name:         "get package path after v2 registration",
+			packagePath:  "gno.land/r/gnoswap/gov/governance/v2",
+			expectedPath: "gno.land/r/gnoswap/gov/governance/v2",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			testing.SetRealm(testing.NewCodeRealm(tt.packagePath))
+			RegisterInitializer(cross, makeMockInitializer(tt.packagePath))
+
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
+
+			// when
+			path := GetImplementationPackagePath()
+
+			// then
+			uassert.Equal(t, path, tt.expectedPath)
 		})
 	}
 }
