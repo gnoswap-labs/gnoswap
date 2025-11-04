@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -357,6 +358,143 @@ func TestProposalStatusResolver_PrivateMethods(t *testing.T) {
 
 			// then
 			tc.verify(t, resolver, err)
+		})
+	}
+}
+
+// TestProposalStatus_NewProposalStatus tests the NewProposalStatus constructor
+func TestProposalStatus_NewProposalStatus(t *testing.T) {
+	tests := []struct {
+		name            string
+		config          governance.Config
+		maxVotingWeight int64
+		executable      bool
+		createdAt       int64
+	}{
+		{
+			name: "Create with standard config",
+			config: governance.Config{
+				VotingStartDelay: 100,
+				VotingPeriod:     200,
+				ExecutionDelay:   100,
+				ExecutionWindow:  200,
+				Quorum:           50,
+			},
+			maxVotingWeight: 10_000_000_000,
+			executable:      true,
+			createdAt:       1000,
+		},
+		{
+			name: "Create with zero delays",
+			config: governance.Config{
+				VotingStartDelay: 0,
+				VotingPeriod:     0,
+				ExecutionDelay:   0,
+				ExecutionWindow:  0,
+				Quorum:           0,
+			},
+			maxVotingWeight: 0,
+			executable:      false,
+			createdAt:       0,
+		},
+		{
+			name: "Create with negative delays",
+			config: governance.Config{
+				VotingStartDelay: -1,
+				VotingPeriod:     -1,
+				ExecutionDelay:   -1,
+				ExecutionWindow:  -1,
+				Quorum:           -1,
+			},
+			maxVotingWeight: -1,
+			executable:      true,
+			createdAt:       -1,
+		},
+		{
+			name: "Create with int64 max values",
+			config: governance.Config{
+				VotingStartDelay: math.MaxInt64,
+				VotingPeriod:     math.MaxInt64,
+				ExecutionDelay:   math.MaxInt64,
+				ExecutionWindow:  math.MaxInt64,
+				Quorum:           math.MaxInt64,
+			},
+			maxVotingWeight: math.MaxInt64,
+			executable:      true,
+			createdAt:       math.MaxInt64,
+		},
+		{
+			name: "Create with int64 min values",
+			config: governance.Config{
+				VotingStartDelay: math.MinInt64,
+				VotingPeriod:     math.MinInt64,
+				ExecutionDelay:   math.MinInt64,
+				ExecutionWindow:  math.MinInt64,
+				Quorum:           math.MinInt64,
+			},
+			maxVotingWeight: math.MinInt64,
+			executable:      false,
+			createdAt:       math.MinInt64,
+		},
+		{
+			name: "Create with mixed boundary values",
+			config: governance.Config{
+				VotingStartDelay: math.MinInt64,
+				VotingPeriod:     -1,
+				ExecutionDelay:   0,
+				ExecutionWindow:  1,
+				Quorum:           math.MaxInt64,
+			},
+			maxVotingWeight: 1000,
+			executable:      true,
+			createdAt:       0,
+		},
+		{
+			name: "Create non-executable proposal",
+			config: governance.Config{
+				VotingStartDelay: 100,
+				VotingPeriod:     200,
+				ExecutionDelay:   100,
+				ExecutionWindow:  200,
+				Quorum:           50,
+			},
+			maxVotingWeight: 10_000_000_000,
+			executable:      false,
+			createdAt:       time.Now().Unix(),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			status := NewProposalStatus(tc.config, tc.maxVotingWeight, tc.executable, tc.createdAt)
+
+			// then
+			uassert.NotNil(t, status)
+
+			// Verify schedule status
+			schedule := status.Schedule()
+			uassert.NotNil(t, schedule)
+			uassert.Equal(t, schedule.CreateTime(), tc.createdAt)
+			uassert.Equal(t, schedule.ActiveTime(), tc.createdAt+tc.config.VotingStartDelay)
+			uassert.Equal(t, schedule.VotingEndTime(), tc.createdAt+tc.config.VotingStartDelay+tc.config.VotingPeriod)
+			uassert.Equal(t, schedule.ExecutableTime(), tc.createdAt+tc.config.VotingStartDelay+tc.config.VotingPeriod+tc.config.ExecutionDelay)
+			uassert.Equal(t, schedule.ExpiredTime(), tc.createdAt+tc.config.VotingStartDelay+tc.config.VotingPeriod+tc.config.ExecutionDelay+tc.config.ExecutionWindow)
+
+			// Verify action status
+			actionStatus := status.ActionStatus()
+			uassert.NotNil(t, actionStatus)
+			uassert.Equal(t, actionStatus.IsExecutable(), tc.executable)
+			uassert.False(t, actionStatus.IsExecuted())
+			uassert.False(t, actionStatus.Canceled())
+
+			// Verify vote status
+			voteStatus := status.VoteStatus()
+			uassert.NotNil(t, voteStatus)
+			uassert.Equal(t, voteStatus.MaxVotingWeight(), tc.maxVotingWeight)
+			uassert.Equal(t, voteStatus.QuorumAmount(), tc.maxVotingWeight*tc.config.Quorum/100)
+			uassert.Equal(t, voteStatus.YesWeight(), int64(0))
+			uassert.Equal(t, voteStatus.NoWeight(), int64(0))
 		})
 	}
 }
