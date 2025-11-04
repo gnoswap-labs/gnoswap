@@ -1,6 +1,7 @@
 package governance
 
 import (
+	"math"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -41,12 +42,36 @@ func TestProposalScheduleStatus_NewProposalScheduleStatusInstance(t *testing.T) 
 			expiredTime:    0,
 		},
 		{
-			name:           "create with large time values",
-			createTime:     9999999999,
-			activeTime:     9999999999,
-			votingEndTime:  9999999999,
-			executableTime: 9999999999,
-			expiredTime:    9999999999,
+			name:           "create with negative times",
+			createTime:     -1,
+			activeTime:     -1,
+			votingEndTime:  -1,
+			executableTime: -1,
+			expiredTime:    -1,
+		},
+		{
+			name:           "create with int64 max values",
+			createTime:     math.MaxInt64,
+			activeTime:     math.MaxInt64,
+			votingEndTime:  math.MaxInt64,
+			executableTime: math.MaxInt64,
+			expiredTime:    math.MaxInt64,
+		},
+		{
+			name:           "create with int64 min values",
+			createTime:     math.MinInt64,
+			activeTime:     math.MinInt64,
+			votingEndTime:  math.MinInt64,
+			executableTime: math.MinInt64,
+			expiredTime:    math.MinInt64,
+		},
+		{
+			name:           "create with mixed boundary values",
+			createTime:     math.MinInt64,
+			activeTime:     -1,
+			votingEndTime:  0,
+			executableTime: 1,
+			expiredTime:    math.MaxInt64,
 		},
 	}
 
@@ -112,6 +137,45 @@ func TestProposalScheduleStatus_Setters(t *testing.T) {
 			newVotingEnd:      0,
 			newExecutable:     0,
 			newExpired:        0,
+		},
+		{
+			name:              "update to negative",
+			initialCreate:     1000,
+			initialActive:     1100,
+			initialVotingEnd:  1300,
+			initialExecutable: 1400,
+			initialExpired:    1600,
+			newCreate:         -1,
+			newActive:         -1,
+			newVotingEnd:      -1,
+			newExecutable:     -1,
+			newExpired:        -1,
+		},
+		{
+			name:              "update to int64 max",
+			initialCreate:     0,
+			initialActive:     0,
+			initialVotingEnd:  0,
+			initialExecutable: 0,
+			initialExpired:    0,
+			newCreate:         math.MaxInt64,
+			newActive:         math.MaxInt64,
+			newVotingEnd:      math.MaxInt64,
+			newExecutable:     math.MaxInt64,
+			newExpired:        math.MaxInt64,
+		},
+		{
+			name:              "update to int64 min",
+			initialCreate:     0,
+			initialActive:     0,
+			initialVotingEnd:  0,
+			initialExecutable: 0,
+			initialExpired:    0,
+			newCreate:         math.MinInt64,
+			newActive:         math.MinInt64,
+			newVotingEnd:      math.MinInt64,
+			newExecutable:     math.MinInt64,
+			newExpired:        math.MinInt64,
 		},
 	}
 
