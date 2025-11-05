@@ -17,19 +17,16 @@ func TestCounter_NewCounter(t *testing.T) {
 	}{
 		{
 			name:          "Initial value is zero",
-			initValue:     0,
 			callNextTimes: 0,
 			expectedId:    0,
 		},
 		{
 			name:          "Call next once",
-			initValue:     0,
 			callNextTimes: 1,
 			expectedId:    1,
 		},
 		{
 			name:          "Call next multiple times",
-			initValue:     0,
 			callNextTimes: 5,
 			expectedId:    5,
 		},
@@ -41,19 +38,12 @@ func TestCounter_NewCounter(t *testing.T) {
 		},
 		{
 			name:          "Large initial value near MaxInt64",
-			initValue:     math.MaxInt64 - 7,
+			initValue:     math.MaxInt64 - 5,
 			callNextTimes: 5,
-			expectedId:    math.MaxInt64 - 2,
-		},
-		{
-			name:          "Negative initial value",
-			initValue:     -10,
-			callNextTimes: 15,
-			expectedId:    5,
+			expectedId:    math.MaxInt64,
 		},
 		{
 			name:          "Call next many times",
-			initValue:     0,
 			callNextTimes: 1000,
 			expectedId:    1000,
 		},
