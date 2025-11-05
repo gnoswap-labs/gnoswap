@@ -29,9 +29,6 @@ var (
 	errProposalNotFound                               = errors.New("[GNOSWAP-GOVERNANCE-020] proposal not found")
 	errProposalNotExecutable                          = errors.New("[GNOSWAP-GOVERNANCE-021] proposal not executable")
 	errNotProposer                                    = errors.New("[GNOSWAP-GOVERNANCE-022] not proposer")
-	errInvalidConfig                                  = errors.New("[GNOSWAP-GOVERNANCE-023] invalid config")
-	errInvalidQuorum                                  = errors.New("[GNOSWAP-GOVERNANCE-024] quorum must be between 0 and 100")
-	errConfigOverflow                                 = errors.New("[GNOSWAP-GOVERNANCE-025] config values would cause timestamp overflow")
 )
 
 // makeErrorWithDetails creates an error with additional context.

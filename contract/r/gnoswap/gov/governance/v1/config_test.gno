@@ -95,7 +95,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "votingStartDelay cannot be negative",
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || votingStartDelay cannot be negative",
 		},
 		{
 			name:                          "Fail: negative voting period",
@@ -110,7 +110,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "votingPeriod cannot be negative",
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || votingPeriod cannot be negative",
 		},
 		{
 			name:                          "Fail: negative execution delay",
@@ -125,7 +125,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                -1,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "executionDelay cannot be negative",
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || executionDelay cannot be negative",
 		},
 		{
 			name:                          "Fail: negative execution window",
@@ -140,7 +140,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               -1,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "executionWindow cannot be negative",
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || executionWindow cannot be negative",
 		},
 		{
 			name:                          "Fail: negative voting weight smoothing duration",
@@ -155,7 +155,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "votingWeightSmoothingDuration cannot be negative",
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || votingWeightSmoothingDuration cannot be negative",
 		},
 		{
 			name:                          "Fail: negative proposal creation threshold",
@@ -170,7 +170,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "proposalCreationThreshold cannot be negative",
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || proposalCreationThreshold cannot be negative",
 		},
 		{
 			name:                          "Fail: quorum below 0",
@@ -185,7 +185,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-024] quorum must be between 0 and 100",
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || quorum must be between 0 and 100",
 		},
 		{
 			name:                          "Fail: quorum above 100",
@@ -200,7 +200,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-024] quorum must be between 0 and 100",
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || quorum must be between 0 and 100",
 		},
 	}
 
