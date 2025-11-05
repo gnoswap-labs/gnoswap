@@ -101,6 +101,11 @@ func (n *MockNFTAccessor) OwnerOf(tid grc721.TokenID) (address, error) {
 	return n.owners[tid], nil
 }
 
+func (n *MockNFTAccessor) SetOwner(tid grc721.TokenID, owner address) error {
+	n.owners[tid] = owner
+	return nil
+}
+
 func NewMockPositionStore() *MockPositionStore {
 	store := &MockPositionStore{positions: avl.NewTree(), nextID: 1}
 	return store
