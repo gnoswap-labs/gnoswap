@@ -2,11 +2,13 @@ package v1
 
 import (
 	"chain/runtime"
+	"math"
 	"testing"
 	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/avl"
+	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 )
 
@@ -876,4 +878,239 @@ func TestRewardManager_MultipleDeposits_DifferentTimings(t *testing.T) {
 	totalDistributed := reward1 + reward2 + reward3
 	uassert.Equal(t, true, totalDistributed >= 995 && totalDistributed <= 1005,
 		"Total distributed should equal total amount")
+}
+// TestRewardManager_ClaimableTimeOverflow tests potential overflow in claimableTime calculation (line 120)
+// Tests: claimableTime := deposit.DepositTime() + r.rewardClaimableDuration
+func TestRewardManager_ClaimableTimeOverflow(t *testing.T) {
+	tests := []struct {
+		name              string
+		depositTime       int64
+		claimableDuration int64
+		expectedResult    int64
+		description       string
+	}{
+		{
+			name:              "normal case",
+			depositTime:       1000,
+			claimableDuration: 500,
+			expectedResult:    1500,
+			description:       "Normal addition",
+		},
+		{
+			name:              "boundary - exactly MaxInt64",
+			depositTime:       math.MaxInt64 - 1000,
+			claimableDuration: 1000,
+			expectedResult:    math.MaxInt64,
+			description:       "Should handle boundary at MaxInt64",
+		},
+		// TODO: Add overflow test case after implementing overflow check in main code
+		// Currently, MaxInt64 + 1 would wrap to negative (Go behavior)
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// given
+			manager := NewRewardManager(
+				1000000,
+				time.Now().Unix(),
+				time.Now().Unix()+1000,
+				100,
+				time.Now().Unix(),
+			)
+			manager.rewardClaimableDuration = tt.claimableDuration
+
+			deposit := NewDeposit(
+				"test_deposit",
+				"test_project:100",
+				30,
+				testutils.TestAddress("depositor"),
+				1000000,
+				100,
+				tt.depositTime,
+				tt.depositTime+1000,
+			)
+
+			// when
+			rewardState := manager.addRewardStateByDeposit(deposit)
+			claimableTime := rewardState.ClaimableTime()
+
+			// then
+			uassert.Equal(t, tt.expectedResult, claimableTime,
+				"claimableTime should match expected result")
+		})
+	}
+}
+
+// TestRewardManager_ClaimedAmountOverflow tests potential overflow in claimedAmount update (line 268)  
+// Tests: rewardState.setClaimedAmount(rewardState.ClaimedAmount() + claimableReward)
+func TestRewardManager_ClaimedAmountOverflow(t *testing.T) {
+	tests := []struct {
+		name             string
+		initialClaimed   int64
+		claimableReward  int64
+		expectedResult   int64
+		description      string
+	}{
+		{
+			name:            "normal case",
+			initialClaimed:  1000,
+			claimableReward: 500,
+			expectedResult:  1500,
+			description:     "Normal addition",
+		},
+		{
+			name:            "boundary - exactly MaxInt64",
+			initialClaimed:  math.MaxInt64 - 1000,
+			claimableReward: 1000,
+			expectedResult:  math.MaxInt64,
+			description:     "Should handle boundary at MaxInt64",
+		},
+		// TODO: Add overflow test case after implementing overflow check in main code
+		// Currently, MaxInt64 + 1 would wrap to negative (Go behavior)
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// given
+			currentTime := time.Now().Unix()
+			distributeStart := currentTime - 1000
+			distributeEnd := currentTime + 1000
+
+			manager := NewRewardManager(
+				10000000,
+				distributeStart,
+				distributeEnd,
+				100,
+				currentTime,
+			)
+			manager.rewardClaimableDuration = 100
+
+			deposit := NewDeposit(
+				"test_deposit",
+				"test_project:100",
+				30,
+				testutils.TestAddress("depositor"),
+				1000000,
+				100,
+				currentTime-500,
+				distributeEnd,
+			)
+
+			rewardState := manager.addRewardStateByDeposit(deposit)
+			
+			// Setup: Set initial claimed amount
+			rewardState.setClaimedAmount(tt.initialClaimed)
+			manager.rewards.Set(deposit.ID(), rewardState)
+
+			// Setup: Configure accumulated reward to generate exact claimableReward
+			// Using priceDebtX128 for precise calculation
+			priceDebtX128 := rewardState.PriceDebtX128()
+			totalReward := tt.initialClaimed + tt.claimableReward
+			depositAmount := deposit.DepositAmount()
+			
+			// actualRewardPerDepositX128 = (totalReward << 128) / depositAmount
+			actualRewardX128 := u256.NewUint(uint64(totalReward))
+			actualRewardX128 = u256.Zero().Lsh(actualRewardX128, 128)
+			actualRewardX128 = u256.Zero().Div(actualRewardX128, u256.NewUint(uint64(depositAmount)))
+			
+			// accumRewardPerDepositX128 = actualRewardPerDepositX128 + priceDebtX128
+			accumX128 := u256.Zero().Add(actualRewardX128, priceDebtX128)
+			manager.accumulatedRewardPerDepositX128 = accumX128
+
+			// when
+			_, _ = manager.collectReward(deposit.ID(), currentTime+200)
+			
+			// then
+			updatedState, _ := manager.getDepositRewardState(deposit.ID())
+			newClaimedAmount := updatedState.ClaimedAmount()
+			
+			// Allow precision loss of 1 due to uint256 division truncation
+			diff := tt.expectedResult - newClaimedAmount
+			uassert.True(t, diff >= 0 && diff <= 1,
+				"claimedAmount should match expected result (allowing precision loss of 1)")
+		})
+	}
+}
+
+// TestRewardManager_TotalClaimedAmountOverflow tests potential overflow in totalClaimedAmount (line 270)
+// Tests: r.totalClaimedAmount += claimableReward  
+func TestRewardManager_TotalClaimedAmountOverflow(t *testing.T) {
+	tests := []struct {
+		name             string
+		initialTotal     int64
+		claimableReward  int64
+		expectedResult   int64
+		description      string
+	}{
+		{
+			name:            "normal case",
+			initialTotal:    1000,
+			claimableReward: 500,
+			expectedResult:  1500,
+			description:     "Normal addition",
+		},
+		{
+			name:            "boundary - exactly MaxInt64",
+			initialTotal:    math.MaxInt64 - 500,
+			claimableReward: 500,
+			expectedResult:  math.MaxInt64,
+			description:     "Should handle boundary at MaxInt64",
+		},
+		// TODO: Add overflow test case after implementing overflow check in main code
+		// Currently, MaxInt64 + 1 would wrap to negative (Go behavior)
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// given
+			currentTime := time.Now().Unix()
+			distributeStart := currentTime - 1000
+			distributeEnd := currentTime + 1000
+
+			manager := NewRewardManager(
+				10000000,
+				distributeStart,
+				distributeEnd,
+				100,
+				currentTime,
+			)
+			manager.rewardClaimableDuration = 100
+			manager.totalClaimedAmount = tt.initialTotal
+
+			deposit := NewDeposit(
+				"test_deposit",
+				"test_project:100",
+				30,
+				testutils.TestAddress("depositor"),
+				1000000,
+				100,
+				currentTime-500,
+				distributeEnd,
+			)
+
+			rewardState := manager.addRewardStateByDeposit(deposit)
+			
+			// Setup: Configure accumulated reward to generate exact claimableReward
+			priceDebtX128 := rewardState.PriceDebtX128()
+			totalReward := tt.claimableReward
+			depositAmount := deposit.DepositAmount()
+			
+			actualRewardX128 := u256.NewUint(uint64(totalReward))
+			actualRewardX128 = u256.Zero().Lsh(actualRewardX128, 128)
+			actualRewardX128 = u256.Zero().Div(actualRewardX128, u256.NewUint(uint64(depositAmount)))
+			
+			accumX128 := u256.Zero().Add(actualRewardX128, priceDebtX128)
+			manager.accumulatedRewardPerDepositX128 = accumX128
+
+			// when
+			_, _ = manager.collectReward(deposit.ID(), currentTime+200)
+
+			// then
+			newTotal := manager.totalClaimedAmount
+			// Allow precision loss of 1 due to uint256 division truncation
+			diff := tt.expectedResult - newTotal
+			uassert.True(t, diff >= 0 && diff <= 1,
+				"totalClaimedAmount should match expected result (allowing precision loss of 1)")
+		})
+	}
 }
