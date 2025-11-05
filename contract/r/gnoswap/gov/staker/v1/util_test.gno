@@ -413,3 +413,165 @@ func TestUtil_safeConvertToInt64(t *testing.T) {
 		})
 	}
 }
+
+// TestUtil_ErrorCases tests error and panic conditions for utility functions
+func TestUtil_ErrorCases(t *testing.T) {
+	t.Run("updateUint64InTree panics on insufficient balance", func(t *testing.T) {
+		// given
+		tree := avl.NewTree()
+		tree.Set("key1", uint64(50))
+
+		// when/then - try to subtract more than available
+		uassert.PanicsWithMessage(t, "[GNOSWAP-GOV_STAKER-010] not enough balance || not enough balance: current(50) < requested(100)", func() {
+			updateUint64InTree(tree, "key1", 100, false)
+		})
+	})
+
+	t.Run("updateUint64InTree with zero delta", func(t *testing.T) {
+		// given
+		tree := avl.NewTree()
+		tree.Set("key1", uint64(100))
+
+		// when - update with zero delta
+		result := updateUint64InTree(tree, "key1", 0, true)
+
+		// then - value should remain unchanged
+		uassert.Equal(t, result, uint64(100))
+	})
+
+	t.Run("updateUint64InTree overflow on add", func(t *testing.T) {
+		// given
+		tree := avl.NewTree()
+		maxUint64 := uint64(18446744073709551615)
+		tree.Set("key1", maxUint64-1)
+
+		// when - add causing overflow
+		result := updateUint64InTree(tree, "key1", 10, true)
+
+		// then - should overflow (wraps around in uint64)
+		uassert.True(t, result < maxUint64) // Wrapped around
+	})
+
+	t.Run("getUint64FromTree panics on wrong type", func(t *testing.T) {
+		// given
+		tree := avl.NewTree()
+		tree.Set("key1", int64(100)) // Wrong type (int64 instead of uint64)
+
+		// when/then - try to get as uint64
+		uassert.PanicsWithMessage(t, "failed to cast value to uint64: int64", func() {
+			getUint64FromTree(tree, "key1")
+		})
+	})
+
+	t.Run("getOrCreateInnerTree panics on wrong type", func(t *testing.T) {
+		// given
+		tree := avl.NewTree()
+		tree.Set("key1", uint64(100)) // Wrong type (uint64 instead of *avl.Tree)
+
+		// when/then - try to get as tree
+		uassert.PanicsWithMessage(t, "failed to cast value to *avl.Tree: uint64", func() {
+			getOrCreateInnerTree(tree, "key1")
+		})
+	})
+
+	t.Run("safeConvertToInt64 panics on overflow", func(t *testing.T) {
+		// given - value exceeding int64 max
+		value := u256.NewUint(9223372036854775808) // int64 max + 1
+
+		// when/then - should panic
+		uassert.PanicsWithMessage(t, "amount(9223372036854775808) overflows int64 range (max 9223372036854775807)", func() {
+			safeConvertToInt64(value)
+		})
+	})
+
+	t.Run("safeConvertToInt64 with max int64", func(t *testing.T) {
+		// given - exactly max int64
+		value := u256.NewUint(9223372036854775807)
+
+		// when
+		result := safeConvertToInt64(value)
+
+		// then - should succeed
+		uassert.Equal(t, result, int64(9223372036854775807))
+	})
+
+	t.Run("safeConvertToInt64 panics on uint64 overflow", func(t *testing.T) {
+		// given - value exceeding uint64 max
+		value := u256.MustFromDecimal("18446744073709551616") // uint64 max + 1
+
+		// when/then - should panic
+		uassert.PanicsWithMessage(t, "amount(18446744073709551616) overflows int64 range (max 9223372036854775807)", func() {
+			safeConvertToInt64(value)
+		})
+	})
+
+	t.Run("marshal panics on invalid JSON", func(t *testing.T) {
+		// Note: It's difficult to make json.Marshal fail with valid *json.Node
+		// This test verifies marshal succeeds with empty node
+		// given
+		data := json.Builder().Node()
+
+		// when
+		result := marshal(data)
+
+		// then
+		uassert.Equal(t, result, "{}")
+	})
+
+	t.Run("formatInt with negative max", func(t *testing.T) {
+		// given
+		minInt64 := int64(-9223372036854775808)
+
+		// when
+		result := formatInt(minInt64)
+
+		// then
+		uassert.Equal(t, result, "-9223372036854775808")
+	})
+
+	t.Run("formatUint with max value", func(t *testing.T) {
+		// given
+		maxUint64 := uint64(18446744073709551615)
+
+		// when
+		result := formatUint(maxUint64)
+
+		// then
+		uassert.Equal(t, result, "18446744073709551615")
+	})
+
+	t.Run("b64Encode with special characters", func(t *testing.T) {
+		// given
+		specialChars := "!@#$%^&*()_+-=[]{}|;:',.<>?/~`"
+
+		// when
+		result := b64Encode(specialChars)
+
+		// then - should encode correctly
+		uassert.NotEqual(t, result, "")
+		uassert.NotEqual(t, result, specialChars)
+	})
+
+	t.Run("milliToSec with negative value", func(t *testing.T) {
+		// given
+		negativeMs := int64(-5000)
+
+		// when
+		result := milliToSec(negativeMs)
+
+		// then - should handle negative correctly
+		uassert.Equal(t, result, int64(-5))
+	})
+
+	t.Run("updateUint64InTree subtract exact amount", func(t *testing.T) {
+		// given
+		tree := avl.NewTree()
+		tree.Set("key1", uint64(100))
+
+		// when - subtract exact amount
+		result := updateUint64InTree(tree, "key1", 100, false)
+
+		// then - should be zero
+		uassert.Equal(t, result, uint64(0))
+	})
+}
