@@ -2,6 +2,7 @@ package v1
 
 import (
 	"testing"
+	"math"
 
 	"gno.land/p/nt/uassert"
 )
@@ -40,9 +41,9 @@ func TestCounter_NewCounter(t *testing.T) {
 		},
 		{
 			name:          "Large initial value near MaxInt64",
-			initValue:     9223372036854775800, // MaxInt64 - 7
+			initValue:     math.MaxInt64 - 7,
 			callNextTimes: 5,
-			expectedId:    9223372036854775805, // MaxInt64 - 2
+			expectedId:    math.MaxInt64 - 2,
 		},
 		{
 			name:          "Negative initial value",

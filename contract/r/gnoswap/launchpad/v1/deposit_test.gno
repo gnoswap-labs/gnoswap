@@ -2,6 +2,7 @@ package v1
 
 import (
 	"testing"
+	"math"
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
@@ -233,8 +234,8 @@ func TestDeposit_WithdrawnHeight(t *testing.T) {
 		},
 		{
 			name:            "max int64 withdrawn height",
-			withdrawnHeight: 9223372036854775807,
-			expected:        9223372036854775807,
+			withdrawnHeight: math.MaxInt64,
+			expected:        math.MaxInt64,
 		},
 	}
 

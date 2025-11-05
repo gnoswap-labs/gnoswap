@@ -2,6 +2,7 @@ package v1
 
 import (
 	"testing"
+	"math"
 
 	"gno.land/p/nt/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -122,8 +123,8 @@ func TestUtils_safeConvertToInt64(t *testing.T) {
 		},
 		{
 			name:          "convert MaxInt64",
-			value:         u256.NewUintFromInt64(9223372036854775807),
-			expectedInt64: 9223372036854775807,
+			value:         u256.NewUintFromInt64(math.MaxInt64),
+			expectedInt64: math.MaxInt64,
 			expectedPanic: false,
 		},
 		{
