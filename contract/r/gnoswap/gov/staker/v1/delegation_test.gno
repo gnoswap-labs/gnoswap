@@ -826,3 +826,101 @@ func TestDelegation_min(t *testing.T) {
 		})
 	}
 }
+
+// TestDelegation_CollectErrors tests error cases for Collect function
+func TestDelegation_CollectErrors(t *testing.T) {
+	t.Run("Collect amount exceeds collectable", func(t *testing.T) {
+		// given
+		delegation := NewDelegation(
+			1,
+			address("g1delegator"),
+			address("g1validator"),
+			1000,
+			100,
+			100,
+		)
+		resolver := NewDelegationResolver(delegation)
+
+		// Undelegate and wait for lockup
+		resolver.UnDelegate(500, 100, 100, 86400) // 1 day lockup
+
+		// when - try to collect more than collectable (0 at currentTime=100)
+		err := resolver.Collect(100, 100) // lockup not passed
+
+		// then
+		uassert.NotNil(t, err)
+		uassert.Equal(t, err.Error(), "amount to collect is greater than collectable amount")
+	})
+
+	t.Run("Collect with negative amount", func(t *testing.T) {
+		// given
+		delegation := NewDelegation(
+			1,
+			address("g1delegator"),
+			address("g1validator"),
+			1000,
+			100,
+			100,
+		)
+		resolver := NewDelegationResolver(delegation)
+
+		// Undelegate with lockup
+		resolver.UnDelegate(500, 100, 100, 86400)
+
+		// when - try to collect negative amount after lockup (treated as no-op)
+		currentTime := int64(100 + 86400 + 1)
+		collectableBefore := resolver.CollectableAmount(currentTime)
+		err := resolver.Collect(-100, currentTime)
+
+		// then - should succeed (negative amount is treated as zero)
+		uassert.Nil(t, err)
+		uassert.Equal(t, resolver.CollectableAmount(currentTime), collectableBefore) // nothing was collected
+	})
+
+	t.Run("Collect exact collectable amount", func(t *testing.T) {
+		// given
+		delegation := NewDelegation(
+			1,
+			address("g1delegator"),
+			address("g1validator"),
+			1000,
+			100,
+			100,
+		)
+		resolver := NewDelegationResolver(delegation)
+
+		// Undelegate with lockup
+		resolver.UnDelegate(500, 100, 100, 86400)
+
+		// when - collect exact collectable amount after lockup passes
+		currentTime := int64(100 + 86400 + 1)
+		collectableAmount := resolver.CollectableAmount(currentTime)
+		err := resolver.Collect(collectableAmount, currentTime)
+
+		// then - should succeed
+		uassert.Nil(t, err)
+		uassert.Equal(t, resolver.CollectableAmount(currentTime), int64(0))
+	})
+
+	t.Run("Collect zero amount", func(t *testing.T) {
+		// given
+		delegation := NewDelegation(
+			1,
+			address("g1delegator"),
+			address("g1validator"),
+			1000,
+			100,
+			100,
+		)
+		resolver := NewDelegationResolver(delegation)
+
+		// Undelegate without lockup
+		resolver.UnDelegateWithoutLockup(500, 100, 100)
+
+		// when - collect zero amount
+		err := resolver.Collect(0, 200)
+
+		// then - should succeed (no-op)
+		uassert.Nil(t, err)
+	})
+}
