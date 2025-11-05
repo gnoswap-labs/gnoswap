@@ -314,9 +314,3 @@ func TestValidAmount_PositiveValue(t *testing.T) {
 		assertIsValidAmount(1000)
 	})
 }
-
-// Helper function to get governance address
-func getGovernanceAddr() address {
-	addr, _ := access.GetAddress(prbac.ROLE_GOVERNANCE.String())
-	return addr
-}
