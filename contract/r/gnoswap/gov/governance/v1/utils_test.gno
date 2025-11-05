@@ -6,51 +6,6 @@ import (
 	"gno.land/p/nt/uassert"
 )
 
-// TestUtils_b64Encode tests base64 encoding
-func TestUtils_b64Encode(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		expected string
-	}{
-		{
-			name:     "encode simple string",
-			input:    "hello",
-			expected: "aGVsbG8=",
-		},
-		{
-			name:     "encode empty string",
-			input:    "",
-			expected: "",
-		},
-		{
-			name:     "encode string with special characters",
-			input:    "Hello, World!",
-			expected: "SGVsbG8sIFdvcmxkIQ==",
-		},
-		{
-			name:     "encode unicode string",
-			input:    "안녕하세요",
-			expected: "7JWI64WV7ZWY7IS47JqU",
-		},
-		{
-			name:     "encode JSON string",
-			input:    `{"key":"value"}`,
-			expected: "eyJrZXkiOiJ2YWx1ZSJ9",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// when
-			result := b64Encode(tc.input)
-
-			// then
-			uassert.Equal(t, result, tc.expected)
-		})
-	}
-}
-
 // TestUtils_formatBool tests boolean formatting
 func TestUtils_formatBool(t *testing.T) {
 	tests := []struct {
