@@ -7,6 +7,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
+	"gno.land/r/gnoswap/staker"
 	sr "gno.land/r/gnoswap/staker"
 )
 
@@ -220,14 +221,77 @@ func TestCurrentGlobalRewardRatioAccumulation(t *testing.T) {
 // Test CurrentTick
 func TestCurrentTick(t *testing.T) {
 	tests := []struct {
-		name        string
-		poolPath    string
-		currentTime int64
+		name                 string
+		poolPath             string
+		setupHistoricalTicks func(poolResolver *PoolResolver)
+		currentTime          int64
+		expectedTick         int32
+		expectedPanic        bool
+		expectedPanicMessage string
 	}{
 		{
-			name:        "get current tick",
-			poolPath:    "test_pool",
-			currentTime: 1000,
+			name:     "get current tick by valid historical ticks",
+			poolPath: "test_pool",
+			setupHistoricalTicks: func(poolResolver *PoolResolver) {
+				historicalTicks := staker.NewUintTree()
+				historicalTicks.Set(1, int32(1))
+				historicalTicks.Set(2, int32(2))
+				historicalTicks.Set(3, int32(3))
+
+				poolResolver.Pool.SetHistoricalTick(historicalTicks)
+			},
+			currentTime:          1000,
+			expectedTick:         3,
+			expectedPanic:        false,
+			expectedPanicMessage: "",
+		},
+		{
+			name:     "get current tick by valid historical ticks",
+			poolPath: "test_pool",
+			setupHistoricalTicks: func(poolResolver *PoolResolver) {
+				historicalTicks := staker.NewUintTree()
+				historicalTicks.Set(1, int32(1))
+				historicalTicks.Set(2, int32(2))
+				historicalTicks.Set(3, int32(3))
+				historicalTicks.Set(1001, int32(3))
+
+				poolResolver.Pool.SetHistoricalTick(historicalTicks)
+			},
+			currentTime:          1000,
+			expectedTick:         3,
+			expectedPanic:        false,
+			expectedPanicMessage: "",
+		},
+		{
+			name:     "get current tick by invalid historical ticks (int64 type)",
+			poolPath: "test_pool",
+			setupHistoricalTicks: func(poolResolver *PoolResolver) {
+				historicalTicks := staker.NewUintTree()
+				historicalTicks.Set(1, int64(1))
+				historicalTicks.Set(2, int64(2))
+				historicalTicks.Set(3, int64(3))
+
+				poolResolver.Pool.SetHistoricalTick(historicalTicks)
+			},
+			currentTime:          1000,
+			expectedPanic:        true,
+			expectedPanicMessage: "failed to cast value to int32: int64",
+		},
+		{
+			name:     "get current tick by invalid historical ticks (string type)",
+			poolPath: "test_pool",
+			setupHistoricalTicks: func(poolResolver *PoolResolver) {
+				historicalTicks := staker.NewUintTree()
+				historicalTicks.Set(1, "1")
+				historicalTicks.Set(2, "2")
+				historicalTicks.Set(3, "3")
+
+				poolResolver.Pool.SetHistoricalTick(historicalTicks)
+			},
+			currentTime:          1000,
+			expectedTick:         3,
+			expectedPanic:        true,
+			expectedPanicMessage: "failed to cast value to int32: string",
 		},
 	}
 
@@ -236,10 +300,18 @@ func TestCurrentTick(t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, tt.currentTime)
 			poolResolver := NewPoolResolver(pool)
 
-			tick := poolResolver.CurrentTick(tt.currentTime)
+			if tt.setupHistoricalTicks != nil {
+				tt.setupHistoricalTicks(poolResolver)
+			}
 
-			// Tick should be a valid int32
-			_ = tick
+			if tt.expectedPanic {
+				uassert.PanicsContains(t, tt.expectedPanicMessage, func() {
+					poolResolver.CurrentTick(tt.currentTime)
+				})
+			} else {
+				tick := poolResolver.CurrentTick(tt.currentTime)
+				uassert.Equal(t, tt.expectedTick, tick)
+			}
 		})
 	}
 }
