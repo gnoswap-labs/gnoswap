@@ -2,6 +2,7 @@ package v1
 
 import (
 	"testing"
+	"strings"
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
@@ -226,24 +227,5 @@ func TestAPI_marshal(t *testing.T) {
 
 // Helper function to check if string contains substring
 func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(substr) == 0 || findSubstring(s, substr))
-}
-
-func findSubstring(s, substr string) bool {
-	if len(substr) > len(s) {
-		return false
-	}
-	for i := 0; i <= len(s)-len(substr); i++ {
-		match := true
-		for j := 0; j < len(substr); j++ {
-			if s[i+j] != substr[j] {
-				match = false
-				break
-			}
-		}
-		if match {
-			return true
-		}
-	}
-	return false
+	return len(s) >= len(substr) && (s == substr || len(substr) == 0 || strings.Contains(s, substr))
 }
