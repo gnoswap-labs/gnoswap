@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"strings"
 	"testing"
 	"time"
 
@@ -65,24 +64,12 @@ func TestAssertIsNotExpired(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					uassert.NotNil(t, r, "expected panic but got none")
-					var errMsg string
-					switch v := r.(type) {
-					case error:
-						errMsg = v.Error()
-					case string:
-						errMsg = v
-					default:
-						t.Errorf("unexpected panic type: %T", r)
-						return
-					}
-					uassert.True(t, strings.Contains(errMsg, tt.errorMsg), "error message should contain: "+tt.errorMsg+", got: "+errMsg)
-				}()
+				uassert.PanicsContains(t, tt.errorMsg, func() {
+					assertIsNotExpired(tt.deadline)
+				})
+			} else {
+				assertIsNotExpired(tt.deadline)
 			}
-
-			assertIsNotExpired(tt.deadline)
 		})
 	}
 }
@@ -166,15 +153,12 @@ func TestAssertIsValidUserCoinSend(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					uassert.NotNil(t, r, "expected panic but got none")
-					errMsg := r.(error).Error()
-					uassert.True(t, strings.Contains(errMsg, tt.errorMsg), "error message should contain: "+tt.errorMsg)
-				}()
+				uassert.PanicsContains(t, tt.errorMsg, func() {
+					assertIsValidUserCoinSend(tt.tokenPath, tt.amount)
+				})
+			} else {
+				assertIsValidUserCoinSend(tt.tokenPath, tt.amount)
 			}
-
-			assertIsValidUserCoinSend(tt.tokenPath, tt.amount)
 		})
 	}
 }
@@ -259,15 +243,12 @@ func TestAssertIsValidSqrtPriceLimitX96(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					uassert.NotNil(t, r, "expected panic but got none")
-					errMsg := r.(error).Error()
-					uassert.True(t, strings.Contains(errMsg, tt.errorMsg), "error message should contain: "+tt.errorMsg)
-				}()
+				uassert.PanicsContains(t, tt.errorMsg, func() {
+					assertIsValidSqrtPriceLimitX96(tt.input)
+				})
+			} else {
+				assertIsValidSqrtPriceLimitX96(tt.input)
 			}
-
-			assertIsValidSqrtPriceLimitX96(tt.input)
 		})
 	}
 }
@@ -380,15 +361,12 @@ func TestAssertIsValidSingleSwapRouteArrPath(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					uassert.NotNil(t, r, "expected panic but got none")
-					errMsg := r.(error).Error()
-					uassert.True(t, strings.Contains(errMsg, tt.errorMsg), "error message should contain: "+tt.errorMsg)
-				}()
+				uassert.PanicsContains(t, tt.errorMsg, func() {
+					assertIsValidSingleSwapRouteArrPath(tt.routePaths, tt.inputToken, tt.outputToken)
+				})
+			} else {
+				assertIsValidSingleSwapRouteArrPath(tt.routePaths, tt.inputToken, tt.outputToken)
 			}
-
-			assertIsValidSingleSwapRouteArrPath(tt.routePaths, tt.inputToken, tt.outputToken)
 		})
 	}
 }
@@ -513,15 +491,12 @@ func TestAssertIsValidRoutePaths(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					uassert.NotNil(t, r, "expected panic but got none")
-					errMsg := r.(error).Error()
-					uassert.True(t, strings.Contains(errMsg, tt.errorMsg), "error message should contain: "+tt.errorMsg)
-				}()
+				uassert.PanicsContains(t, tt.errorMsg, func() {
+					assertIsValidRoutePaths(tt.routePaths, tt.inputToken, tt.outputToken)
+				})
+			} else {
+				assertIsValidRoutePaths(tt.routePaths, tt.inputToken, tt.outputToken)
 			}
-
-			assertIsValidRoutePaths(tt.routePaths, tt.inputToken, tt.outputToken)
 		})
 	}
 }
@@ -563,15 +538,12 @@ func TestAssertIsExistsPools(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					uassert.NotNil(t, r, "expected panic but got none")
-					errMsg := r.(error).Error()
-					uassert.True(t, strings.Contains(errMsg, tt.errorMsg), "error message should contain: "+tt.errorMsg+", got: "+errMsg)
-				}()
+				uassert.PanicsContains(t, tt.errorMsg, func() {
+					assertIsExistsPools(tt.routePathArr)
+				})
+			} else {
+				assertIsExistsPools(tt.routePathArr)
 			}
-
-			assertIsExistsPools(tt.routePathArr)
 		})
 	}
 }

@@ -11,6 +11,11 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/gns"
+	pl "gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
@@ -865,24 +870,12 @@ func TestProcessRoute_ErrorCases(t *testing.T) {
 			router := mockRouter()
 
 			if tt.expectPanic {
-				defer func() {
-					r := recover()
-					uassert.NotNil(t, r, "expected panic but got none")
-					var errMsg string
-					switch v := r.(type) {
-					case error:
-						errMsg = v.Error()
-					case string:
-						errMsg = v
-					default:
-						t.Errorf("unexpected panic type: %T", r)
-						return
-					}
-					uassert.True(t, strings.Contains(errMsg, tt.panicMsg), "panic message should contain: "+tt.panicMsg+", got: "+errMsg)
-				}()
+				uassert.PanicsContains(t, tt.panicMsg, func() {
+					op.processRoute(router, tt.route, tt.toSwap, tt.swapType)
+				})
+			} else {
+				op.processRoute(router, tt.route, tt.toSwap, tt.swapType)
 			}
-
-			_, _, _ = op.processRoute(router, tt.route, tt.toSwap, tt.swapType)
 		})
 	}
 }
@@ -1004,33 +997,52 @@ func TestProcessRoutes_OverflowDetection(t *testing.T) {
 			name: "normal amounts - no overflow",
 			op: &baseSwapOperation{
 				amountSpecified: i256.NewInt(1000),
-				routes:          []string{"route1"},
+				routes:          []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"},
 				quotes:          []string{"100"},
 			},
 			expectPanic: false,
+		},
+		{
+			name: "overflow amounts - MaxInt64 + 1",
+			op: &baseSwapOperation{
+				amountSpecified: i256.MustFromDecimal("9223372036854775808"), // MaxInt64 + 1
+				routes:          []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"},
+				quotes:          []string{"100"},
+			},
+			expectPanic: true,
+			panicMsg:    "[GNOSWAP-POOL-026] overflow",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.expectPanic {
-				defer func() {
-					r := recover()
-					uassert.NotNil(t, r, "expected panic but got none")
-					var errMsg string
-					switch v := r.(type) {
-					case error:
-						errMsg = v.Error()
-					case string:
-						errMsg = v
-					}
-					uassert.True(t, strings.Contains(errMsg, tt.panicMsg), "panic message should contain: "+tt.panicMsg)
-				}()
+			initRouterTest(t)
+
+			testing.SetRealm(adminRealm)
+			gns.Approve(cross, poolAddr, math.MaxInt64)
+			bar.Approve(cross, poolAddr, math.MaxInt64)
+			baz.Approve(cross, poolAddr, math.MaxInt64)
+			bar.Approve(cross, routerAddr, math.MaxInt64)
+			baz.Approve(cross, routerAddr, math.MaxInt64)
+			pl.CreatePool(cross, barPath, bazPath, 500, "79228162514264337593543950336")
+			pn.Mint(cross, barPath, bazPath, 500, int32(-6960), int32(6960), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")
+
+			router := mockRouter()
+
+			processRoutesFn := func(cur realm) error {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
+				_, _, err := tt.op.processRoutes(router, ExactIn)
+				return err
 			}
 
-			// This test would require actual router setup for full execution
-			// For now, we just test that the structure is correct
-			uassert.NotNil(t, tt.op)
+			if tt.expectPanic {
+				uassert.AbortsContains(t, tt.panicMsg, func() {
+					processRoutesFn(cross)
+				})
+			} else {
+				err := processRoutesFn(cross)
+				uassert.NoError(t, err)
+			}
 		})
 	}
 }
@@ -1109,25 +1121,13 @@ func TestHandleMultiSwap_SwapTypes(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.expectPanic && tt.needsRouter {
-				defer func() {
-					r := recover()
-					uassert.NotNil(t, r, "expected panic but got none")
-					var errMsg string
-					switch v := r.(type) {
-					case error:
-						errMsg = v.Error()
-					case string:
-						errMsg = v
-					}
-					uassert.True(t, strings.Contains(errMsg, tt.panicMsg), "panic message should contain: "+tt.panicMsg)
-				}()
-
+				uassert.PanicsContains(t, tt.panicMsg, func() {
+					router := mockRouter()
+					router.handleMultiSwap(tt.swapType, tt.route, tt.numHops, tt.amountSpecified, tt.withUnwrap)
+				})
+			} else {
 				router := mockRouter()
 				router.handleMultiSwap(tt.swapType, tt.route, tt.numHops, tt.amountSpecified, tt.withUnwrap)
-			} else {
-				// Just verify the parameters are structured correctly
-				uassert.NotNil(t, tt.route)
-				uassert.NotNil(t, tt.amountSpecified)
 			}
 		})
 	}
