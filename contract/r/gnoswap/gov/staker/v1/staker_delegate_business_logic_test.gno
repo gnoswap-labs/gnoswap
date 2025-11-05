@@ -35,10 +35,10 @@ func TestBusinessLogic_UndelegateExcessAmount(t *testing.T) {
 
 		// Verify delegation
 		delegatedBefore, _ := gs.store.GetTotalDelegatedAmount()
-		uassert.Equal(t, delegatedBefore, minimumAmount)
+		uassert.Equal(t, delegatedBefore, int64(minimumAmount))
 
 		// when - Alice tries to undelegate more than delegated (excess amount)
-		excessAmount := int64(minimumAmount + minimumAmount/2)
+		excessAmount := int64(minimumAmount * 2)
 		func(cur realm) {
 			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 			// Should not panic, should process only available amount
@@ -51,7 +51,7 @@ func TestBusinessLogic_UndelegateExcessAmount(t *testing.T) {
 
 		// Verify total locked equals undelegated amount (pending withdrawal)
 		totalLocked, _ := gs.store.GetTotalLockedAmount()
-		uassert.Equal(t, totalLocked, minimumAmount)
+		uassert.Equal(t, totalLocked, int64(minimumAmount))
 	})
 
 	t.Run("undelegate partial excess - verifies capping logic", func(t *testing.T) {

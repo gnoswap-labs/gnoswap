@@ -833,8 +833,10 @@ func setupStakerDelegateTestGNSBalance(t *testing.T) {
 	amount := int64(1_000_000_000)
 	gns.Transfer(cross, testutils.TestAddress("alice"), amount)
 	gns.Transfer(cross, testutils.TestAddress("bob"), amount)
+	gns.Transfer(cross, testutils.TestAddress("charlie"), amount)
 	gns.Transfer(cross, testutils.TestAddress("validator1"), amount)
 	gns.Transfer(cross, testutils.TestAddress("validator2"), amount)
+	gns.Transfer(cross, testutils.TestAddress("validator3"), amount)
 
 	testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("alice")))
 	gns.Approve(cross, govStakerAddr, amount)
@@ -842,10 +844,16 @@ func setupStakerDelegateTestGNSBalance(t *testing.T) {
 	testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("bob")))
 	gns.Approve(cross, govStakerAddr, amount)
 
+	testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("charlie")))
+	gns.Approve(cross, govStakerAddr, amount)
+
 	testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("validator1")))
 	gns.Approve(cross, govStakerAddr, amount)
 
 	testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("validator2")))
+	gns.Approve(cross, govStakerAddr, amount)
+
+	testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("validator3")))
 	gns.Approve(cross, govStakerAddr, amount)
 }
 
