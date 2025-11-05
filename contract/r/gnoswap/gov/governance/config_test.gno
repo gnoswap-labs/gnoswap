@@ -204,7 +204,7 @@ func TestConfig_IsValid(t *testing.T) {
 			},
 			currentTime:      0,
 			expectedError:    true,
-			expectedErrorMsg: "executionDelay cannot be negative",
+			expectedErrorMsg: "votingPeriod cannot be negative",
 		},
 		{
 			name: "Invalid: ExecutionDelay overflow when summed",
@@ -219,7 +219,7 @@ func TestConfig_IsValid(t *testing.T) {
 			},
 			currentTime:      0,
 			expectedError:    true,
-			expectedErrorMsg: "executionWindow cannot be negative",
+			expectedErrorMsg: "executionDelay cannot be negative",
 		},
 		{
 			name: "Invalid: ExecutionWindow overflow when summed",
@@ -234,7 +234,7 @@ func TestConfig_IsValid(t *testing.T) {
 			},
 			currentTime:      1,
 			expectedError:    true,
-			expectedErrorMsg: "total delay cannot be negative",
+			expectedErrorMsg: "executionWindow cannot be negative",
 		},
 		{
 			name: "Invalid: currentTime overflow when summed",
