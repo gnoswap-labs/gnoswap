@@ -32,22 +32,22 @@ func TestLaunchpadWithdraw_CollectDepositGns(t *testing.T) {
 		expectedAbortMessage string
 		expectedAmount       int64
 	}{
-		// {
-		// 	name:             "collect deposit gns successfully",
-		// 	depositID:        "1",
-		// 	callerAddress:    userAddr,
-		// 	expectedHasAbort: false,
-		// 	expectedAmount:   1000000000,
-		// },
 		{
-			name:                 "collect deposit gns failed by invalid deposit id",
+			name:             "success - collect deposit gns successfully",
+			depositID:        "1",
+			callerAddress:    userAddr,
+			expectedHasAbort: false,
+			expectedAmount:   1000000000,
+		},
+		{
+			name:                 "fail - collect deposit gns with invalid deposit id",
 			depositID:            "invalid_deposit",
 			callerAddress:        userAddr,
 			expectedHasAbort:     true,
 			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-020] not exist deposit || (invalid_deposit)",
 		},
 		{
-			name:                 "collect deposit gns failed by invalid owner",
+			name:                 "fail - collect deposit gns with invalid owner",
 			depositID:            "1",
 			callerAddress:        otherAddr,
 			expectedHasAbort:     true,
