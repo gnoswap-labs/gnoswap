@@ -28,13 +28,13 @@ func ExistsUserSendCoins() bool {
 //
 // Returns false in the following cases:
 //   - GNOT was sent and amount does not match expected
-//   - No GNOT was sent (regardless of expected amount)
 func isUserSendGNOTAmount(amount int64) bool {
 	sendCoins := getUserSendCoins()
 
-	gnotAmount, exists := sendCoins[GNOT_DENOM]
-	if !exists {
-		return false
+	gnotAmount := int64(0)
+
+	if amount, exists := sendCoins[GNOT_DENOM]; exists {
+		gnotAmount = amount
 	}
 
 	return gnotAmount == amount

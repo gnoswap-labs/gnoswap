@@ -21,7 +21,7 @@ func TestCoins_IsUserSendGNOTAmount(t *testing.T) {
 			name:           "no_coins_sent",
 			sendCoins:      map[string]int64{},
 			expectedAmount: 0,
-			expectedResult: false,
+			expectedResult: true,
 			description:    "No coins sent, expected amount 0 - should return false",
 		},
 		{
@@ -49,7 +49,7 @@ func TestCoins_IsUserSendGNOTAmount(t *testing.T) {
 			name:           "gnot_sent_zero_amount",
 			sendCoins:      map[string]int64{GNOT_DENOM: 0},
 			expectedAmount: 0,
-			expectedResult: false,
+			expectedResult: true,
 			description:    "GNOT sent with zero amount, expected zero - should return false",
 		},
 		{
