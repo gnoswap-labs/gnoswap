@@ -39,6 +39,18 @@ func (c Config) IsValid(currentTime int64) error {
 		return errors.New("executionWindow cannot be negative")
 	}
 
+	if c.VotingWeightSmoothingDuration < 0 {
+		return errors.New("votingWeightSmoothingDuration cannot be negative")
+	}
+
+	if c.ProposalCreationThreshold < 0 {
+		return errors.New("proposalCreationThreshold cannot be negative")
+	}
+
+	if c.Quorum < 0 || c.Quorum > 100 {
+		return errors.New("quorum must be between 0 and 100")
+	}
+
 	sum := int64(0)
 
 	sum += c.VotingStartDelay

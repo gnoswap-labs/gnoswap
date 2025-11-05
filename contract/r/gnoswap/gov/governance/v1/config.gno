@@ -12,8 +12,7 @@ import (
 	"gno.land/r/gnoswap/gov/governance"
 )
 
-// makeConfig creates and validates a new governance configuration.
-// Returns validated config or panics if validation fails.
+// makeConfig creates a new governance configuration.
 func makeConfig(
 	votingStartDelay int64,
 	votingPeriod int64,
@@ -69,7 +68,7 @@ func (gv *governanceV1) Reconfigure(
 	currentTime := time.Now().Unix()
 
 	if err := newCfg.IsValid(currentTime); err != nil {
-		makeErrorWithDetails(errInvalidConfiguration, err.Error())
+		panic(makeErrorWithDetails(errInvalidConfiguration, err.Error()))
 	}
 
 	// Mint and distribute GNS tokens as part of the process

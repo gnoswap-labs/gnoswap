@@ -96,7 +96,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || votingStartDelay cannot be negative",
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-023] invalid configuration || votingStartDelay cannot be negative",
 		},
 		{
 			name:                          "Fail: negative voting period",
@@ -111,7 +111,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || votingPeriod cannot be negative",
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-023] invalid configuration || votingPeriod cannot be negative",
 		},
 		{
 			name:                          "Fail: negative execution delay",
@@ -126,7 +126,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                -1,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || executionDelay cannot be negative",
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-023] invalid configuration || executionDelay cannot be negative",
 		},
 		{
 			name:                          "Fail: negative execution window",
@@ -141,7 +141,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               -1,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || executionWindow cannot be negative",
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-023] invalid configuration || executionWindow cannot be negative",
 		},
 		{
 			name:                          "Fail: negative voting weight smoothing duration",
@@ -156,7 +156,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || votingWeightSmoothingDuration cannot be negative",
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-023] invalid configuration || votingWeightSmoothingDuration cannot be negative",
 		},
 		{
 			name:                          "Fail: negative proposal creation threshold",
@@ -171,7 +171,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || proposalCreationThreshold cannot be negative",
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-023] invalid configuration || proposalCreationThreshold cannot be negative",
 		},
 		{
 			name:                          "Fail: quorum below 0",
@@ -186,7 +186,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || quorum must be between 0 and 100",
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-023] invalid configuration || quorum must be between 0 and 100",
 		},
 		{
 			name:                          "Fail: quorum above 100",
@@ -201,7 +201,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || quorum must be between 0 and 100",
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-023] invalid configuration || quorum must be between 0 and 100",
 		},
 	}
 
@@ -353,11 +353,9 @@ func TestConfig_makeConfig(t *testing.T) {
 		proposalCreationThreshold     int64
 		executionDelay                int64
 		executionWindow               int64
-		expectedHasPanic              bool
-		expectedPanicMsg              string
 	}{
 		{
-			name:                          "Success: normal config",
+			name:                          "Normal config",
 			votingStartDelay:              100,
 			votingPeriod:                  200,
 			votingWeightSmoothingDuration: 50,
@@ -365,10 +363,9 @@ func TestConfig_makeConfig(t *testing.T) {
 			proposalCreationThreshold:     1000,
 			executionDelay:                100,
 			executionWindow:               200,
-			expectedHasPanic:              false,
 		},
 		{
-			name:                          "Success: zero values",
+			name:                          "Zero values",
 			votingStartDelay:              0,
 			votingPeriod:                  0,
 			votingWeightSmoothingDuration: 0,
@@ -376,10 +373,9 @@ func TestConfig_makeConfig(t *testing.T) {
 			proposalCreationThreshold:     0,
 			executionDelay:                0,
 			executionWindow:               0,
-			expectedHasPanic:              false,
 		},
 		{
-			name:                          "Success: max quorum",
+			name:                          "Max quorum",
 			votingStartDelay:              100,
 			votingPeriod:                  200,
 			votingWeightSmoothingDuration: 50,
@@ -387,70 +383,40 @@ func TestConfig_makeConfig(t *testing.T) {
 			proposalCreationThreshold:     1000,
 			executionDelay:                100,
 			executionWindow:               200,
-			expectedHasPanic:              false,
 		},
 		{
-			name:                          "Fail: negative voting start delay",
+			name:                          "Negative values (no validation in makeConfig)",
 			votingStartDelay:              -1,
-			votingPeriod:                  200,
-			votingWeightSmoothingDuration: 50,
-			quorum:                        50,
-			proposalCreationThreshold:     1000,
-			executionDelay:                100,
-			executionWindow:               200,
-			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || votingStartDelay cannot be negative",
-		},
-		{
-			name:                          "Fail: quorum above 100",
-			votingStartDelay:              100,
-			votingPeriod:                  200,
-			votingWeightSmoothingDuration: 50,
-			quorum:                        101,
-			proposalCreationThreshold:     1000,
-			executionDelay:                100,
-			executionWindow:               200,
-			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || quorum must be between 0 and 100",
+			votingPeriod:                  -1,
+			votingWeightSmoothingDuration: -1,
+			quorum:                        -1,
+			proposalCreationThreshold:     -1,
+			executionDelay:                -1,
+			executionWindow:               -1,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			if tc.expectedHasPanic {
-				// when & then
-				uassert.PanicsWithMessage(t, tc.expectedPanicMsg, func() {
-					makeConfig(
-						tc.votingStartDelay,
-						tc.votingPeriod,
-						tc.votingWeightSmoothingDuration,
-						tc.quorum,
-						tc.proposalCreationThreshold,
-						tc.executionDelay,
-						tc.executionWindow,
-					)
-				})
-			} else {
-				// when
-				cfg := makeConfig(
-					tc.votingStartDelay,
-					tc.votingPeriod,
-					tc.votingWeightSmoothingDuration,
-					tc.quorum,
-					tc.proposalCreationThreshold,
-					tc.executionDelay,
-					tc.executionWindow,
-				)
+			// when
+			cfg := makeConfig(
+				tc.votingStartDelay,
+				tc.votingPeriod,
+				tc.votingWeightSmoothingDuration,
+				tc.quorum,
+				tc.proposalCreationThreshold,
+				tc.executionDelay,
+				tc.executionWindow,
+			)
 
-				// then
-				uassert.Equal(t, cfg.VotingStartDelay, tc.votingStartDelay)
-				uassert.Equal(t, cfg.VotingPeriod, tc.votingPeriod)
-				uassert.Equal(t, cfg.VotingWeightSmoothingDuration, tc.votingWeightSmoothingDuration)
-				uassert.Equal(t, cfg.Quorum, tc.quorum)
-				uassert.Equal(t, cfg.ProposalCreationThreshold, tc.proposalCreationThreshold)
-				uassert.Equal(t, cfg.ExecutionDelay, tc.executionDelay)
-				uassert.Equal(t, cfg.ExecutionWindow, tc.executionWindow)
-			}
+			// then
+			uassert.Equal(t, cfg.VotingStartDelay, tc.votingStartDelay)
+			uassert.Equal(t, cfg.VotingPeriod, tc.votingPeriod)
+			uassert.Equal(t, cfg.VotingWeightSmoothingDuration, tc.votingWeightSmoothingDuration)
+			uassert.Equal(t, cfg.Quorum, tc.quorum)
+			uassert.Equal(t, cfg.ProposalCreationThreshold, tc.proposalCreationThreshold)
+			uassert.Equal(t, cfg.ExecutionDelay, tc.executionDelay)
+			uassert.Equal(t, cfg.ExecutionWindow, tc.executionWindow)
 		})
 	}
 }
