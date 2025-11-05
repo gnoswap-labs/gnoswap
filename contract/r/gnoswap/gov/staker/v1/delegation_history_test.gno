@@ -166,3 +166,132 @@ func TestDelegationHistory_RemoveRecordsBy(t *testing.T) {
 		})
 	}
 }
+
+// TestNewDelegationHistoryResolver tests the constructor
+func TestNewDelegationHistoryResolver(t *testing.T) {
+	tests := []struct {
+		name    string
+		history staker.DelegationHistory
+	}{
+		{
+			name:    "Create with empty history",
+			history: staker.DelegationHistory{},
+		},
+		{
+			name: "Create with existing records",
+			history: staker.DelegationHistory{
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
+				staker.NewDelegationRecord(staker.UnDelegateType, 0, address("g1from"), address("g1to"), 200),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			resolver := NewDelegationHistoryResolver(tc.history)
+
+			// then
+			uassert.NotNil(t, resolver)
+			uassert.Equal(t, len(resolver.Records()), len(tc.history))
+		})
+	}
+}
+
+// TestDelegationHistory_ErrorCases tests error and boundary cases
+func TestDelegationHistory_ErrorCases(t *testing.T) {
+	t.Run("getRecordsBy with exact timestamp match", func(t *testing.T) {
+		// given
+		records := staker.DelegationHistory{
+			staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
+			staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 200),
+			staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 300),
+		}
+		resolver := NewDelegationHistoryResolver(records)
+
+		// when - exact match on timestamp
+		result := resolver.getRecordsBy(200)
+
+		// then - should include the exact match and all after
+		uassert.Equal(t, len(result), 2)
+	})
+
+	t.Run("addRecord multiple times", func(t *testing.T) {
+		// given
+		history := staker.DelegationHistory{}
+		resolver := NewDelegationHistoryResolver(history)
+
+		// when - add multiple records
+		history = resolver.addRecord(staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100))
+		resolver = NewDelegationHistoryResolver(history)
+		history = resolver.addRecord(staker.NewDelegationRecord(staker.UnDelegateType, 0, address("g1from"), address("g1to"), 200))
+		resolver = NewDelegationHistoryResolver(history)
+		history = resolver.addRecord(staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 300))
+
+		// then - should have all records
+		uassert.Equal(t, len(history), 3)
+	})
+
+	t.Run("removeRecordsBy with negative time", func(t *testing.T) {
+		// given
+		records := staker.DelegationHistory{
+			staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
+			staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 200),
+		}
+		resolver := NewDelegationHistoryResolver(records)
+
+		// when - remove with negative time
+		result := resolver.removeRecordsBy(-100)
+
+		// then - should return all records (all are after negative time)
+		uassert.Equal(t, len(result), 2)
+	})
+
+	t.Run("getRecordsBy with very large timestamp", func(t *testing.T) {
+		// given
+		records := staker.DelegationHistory{
+			staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
+			staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 200),
+		}
+		resolver := NewDelegationHistoryResolver(records)
+
+		// when - get records with very large timestamp
+		maxInt64 := int64(9223372036854775807)
+		result := resolver.getRecordsBy(maxInt64)
+
+		// then - should return empty (no records after max timestamp)
+		uassert.Equal(t, len(result), 0)
+	})
+
+	t.Run("addRecord with different delegation types", func(t *testing.T) {
+		// given
+		history := staker.DelegationHistory{}
+		resolver := NewDelegationHistoryResolver(history)
+
+		// when - add different types of records
+		history = resolver.addRecord(staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100))
+		resolver = NewDelegationHistoryResolver(history)
+		history = resolver.addRecord(staker.NewDelegationRecord(staker.UnDelegateType, 0, address("g1from"), address("g1to"), 200))
+		resolver = NewDelegationHistoryResolver(history)
+		history = resolver.addRecord(staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from2"), address("g1to2"), 300))
+
+		// then - should have all records
+		uassert.Equal(t, len(history), 3)
+	})
+
+	t.Run("removeRecordsBy boundary - remove exactly at first record time", func(t *testing.T) {
+		// given
+		records := staker.DelegationHistory{
+			staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
+			staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 200),
+			staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 300),
+		}
+		resolver := NewDelegationHistoryResolver(records)
+
+		// when - remove at exact time of first record
+		result := resolver.removeRecordsBy(100)
+
+		// then - should keep all records (inclusive)
+		uassert.Equal(t, len(result), 3)
+	})
+}
