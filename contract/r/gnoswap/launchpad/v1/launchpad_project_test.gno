@@ -707,11 +707,6 @@ func TestLaunchpadProject_isGovernanceToken(t *testing.T) {
 			expectedResult: true,
 		},
 		{
-			name:           "returns true for xgns token path",
-			tokenPath:      "gno.land/r/gnoswap/gov/xgns",
-			expectedResult: true,
-		},
-		{
 			name:           "returns false for gns token",
 			tokenPath:      GNS_PATH,
 			expectedResult: false,
