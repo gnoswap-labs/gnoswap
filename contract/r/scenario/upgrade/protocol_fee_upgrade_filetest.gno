@@ -12,7 +12,7 @@ import (
 	protocolFee "gno.land/r/gnoswap/protocol_fee"
 
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
-	_ "gno.land/r/gnoswap/protocol_fee/test"
+	_ "gno.land/r/gnoswap/protocol_fee/v2_invalid"
 )
 
 var t = &testing.T{}
@@ -24,7 +24,7 @@ var (
 
 const (
 	protocolFeeV1Path   = "gno.land/r/gnoswap/protocol_fee/v1"
-	protocolFeeTestPath = "gno.land/r/gnoswap/protocol_fee/test"
+	protocolFeeTestPath = "gno.land/r/gnoswap/protocol_fee/v2_invalid"
 )
 
 func main() {
@@ -143,10 +143,10 @@ func verifyTestImplementation() {
 // [SCENARIO] 2. Upgrade protocol_fee contract to test version
 // [INFO] Current version: gno.land/r/gnoswap/protocol_fee/v1
 // [INFO] Upgrading protocol_fee contract to test version
-// [EXPECTED] ProtocolFee upgraded to: gno.land/r/gnoswap/protocol_fee/test
+// [EXPECTED] ProtocolFee upgraded to: gno.land/r/gnoswap/protocol_fee/v2_invalid
 //
 // [SCENARIO] 3. Verify test implementation panics correctly
-// [INFO] Current version: gno.land/r/gnoswap/protocol_fee/test
+// [INFO] Current version: gno.land/r/gnoswap/protocol_fee/v2_invalid
 // [INFO] Testing DistributeProtocolFee function panics correctly
 // [EXPECTED] DistributeProtocolFee panics correctly
 // [INFO] Testing SetDevOpsPct function panics correctly
