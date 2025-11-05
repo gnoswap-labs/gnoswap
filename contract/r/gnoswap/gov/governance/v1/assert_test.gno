@@ -102,19 +102,12 @@ func TestAssert_assertCallerIsProposer(t *testing.T) {
 			gv := newMockGovernance()
 			tt.setupProposal(gv)
 
+			// when & then
 			if tt.expectedPanic {
-				// when & then
 				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
 					assertCallerIsProposer(gv, tt.proposalID, tt.caller)
 				})
 			} else {
-				defer func() {
-					if r := recover(); r != nil {
-						t.Errorf("unexpected panic: %v", r)
-					}
-				}()
-
-			    // then
 				uassert.NotPanics(t, func() {
                     assertCallerIsProposer(gv, tt.proposalID, tt.caller)
                 })
