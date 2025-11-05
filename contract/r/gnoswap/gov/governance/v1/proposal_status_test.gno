@@ -126,18 +126,18 @@ func TestProposalStatus_StatusType(t *testing.T) {
 
 			// Add votes if specified
 			if tc.voteYes > 0 {
-				_ = resolver.vote(true, tc.voteYes)
+				resolver.vote(true, tc.voteYes)
 			}
 			if tc.voteNo > 0 {
-				_ = resolver.vote(false, tc.voteNo)
+				resolver.vote(false, tc.voteNo)
 			}
 
 			// Execute or cancel if specified
 			if tc.isExecuted {
-				_ = resolver.execute(tc.currentTime.Unix(), 100, address("g1executor"))
+				resolver.execute(tc.currentTime.Unix(), 100, address("g1executor"))
 			}
 			if tc.isCanceled {
-				_ = resolver.cancel(tc.currentTime.Unix(), 100, address("g1canceler"))
+				resolver.cancel(tc.currentTime.Unix(), 100, address("g1canceler"))
 			}
 
 			// when
