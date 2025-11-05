@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"gno.land/p/nt/uassert"
+	"gno.land/r/gnoswap/gov/governance"
 	"gno.land/r/gnoswap/halt"
 )
 
@@ -313,16 +314,16 @@ func TestConfig_reconfigure(t *testing.T) {
 			gs := newMockGovernance()
 
 			func (cur realm) {
-				// given: create and validate config
-				cfg := makeConfig(
-					tc.votingStartDelay,
-					tc.votingPeriod,
-					tc.votingWeightSmoothingDuration,
-					tc.quorum,
-					tc.proposalCreationThreshold,
-					tc.executionDelay,
-					tc.executionWindow,
-				)
+				// given: create config directly
+				cfg := governance.Config{
+					VotingStartDelay:              tc.votingStartDelay,
+					VotingPeriod:                  tc.votingPeriod,
+					VotingWeightSmoothingDuration: tc.votingWeightSmoothingDuration,
+					Quorum:                        tc.quorum,
+					ProposalCreationThreshold:     tc.proposalCreationThreshold,
+					ExecutionDelay:                tc.executionDelay,
+					ExecutionWindow:               tc.executionWindow,
+				}
 
 				// when: call reconfigure
 				nextVersion := gs.reconfigure(cfg)
@@ -337,6 +338,119 @@ func TestConfig_reconfigure(t *testing.T) {
 				uassert.Equal(t, cfg.ExecutionDelay, tc.executionDelay)
 				uassert.Equal(t, cfg.ExecutionWindow, tc.executionWindow)
 			}(cross)
+		})
+	}
+}
+
+// Test for makeConfig function.
+func TestConfig_makeConfig(t *testing.T) {
+	tests := []struct {
+		name                          string
+		votingStartDelay              int64
+		votingPeriod                  int64
+		votingWeightSmoothingDuration int64
+		quorum                        int64
+		proposalCreationThreshold     int64
+		executionDelay                int64
+		executionWindow               int64
+		expectedHasPanic              bool
+		expectedPanicMsg              string
+	}{
+		{
+			name:                          "Success: normal config",
+			votingStartDelay:              100,
+			votingPeriod:                  200,
+			votingWeightSmoothingDuration: 50,
+			quorum:                        50,
+			proposalCreationThreshold:     1000,
+			executionDelay:                100,
+			executionWindow:               200,
+			expectedHasPanic:              false,
+		},
+		{
+			name:                          "Success: zero values",
+			votingStartDelay:              0,
+			votingPeriod:                  0,
+			votingWeightSmoothingDuration: 0,
+			quorum:                        0,
+			proposalCreationThreshold:     0,
+			executionDelay:                0,
+			executionWindow:               0,
+			expectedHasPanic:              false,
+		},
+		{
+			name:                          "Success: max quorum",
+			votingStartDelay:              100,
+			votingPeriod:                  200,
+			votingWeightSmoothingDuration: 50,
+			quorum:                        100,
+			proposalCreationThreshold:     1000,
+			executionDelay:                100,
+			executionWindow:               200,
+			expectedHasPanic:              false,
+		},
+		{
+			name:                          "Fail: negative voting start delay",
+			votingStartDelay:              -1,
+			votingPeriod:                  200,
+			votingWeightSmoothingDuration: 50,
+			quorum:                        50,
+			proposalCreationThreshold:     1000,
+			executionDelay:                100,
+			executionWindow:               200,
+			expectedHasPanic:              true,
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || votingStartDelay cannot be negative",
+		},
+		{
+			name:                          "Fail: quorum above 100",
+			votingStartDelay:              100,
+			votingPeriod:                  200,
+			votingWeightSmoothingDuration: 50,
+			quorum:                        101,
+			proposalCreationThreshold:     1000,
+			executionDelay:                100,
+			executionWindow:               200,
+			expectedHasPanic:              true,
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || quorum must be between 0 and 100",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.expectedHasPanic {
+				// when & then
+				uassert.PanicsWithMessage(t, tc.expectedPanicMsg, func() {
+					makeConfig(
+						tc.votingStartDelay,
+						tc.votingPeriod,
+						tc.votingWeightSmoothingDuration,
+						tc.quorum,
+						tc.proposalCreationThreshold,
+						tc.executionDelay,
+						tc.executionWindow,
+					)
+				})
+			} else {
+				// when
+				cfg := makeConfig(
+					tc.votingStartDelay,
+					tc.votingPeriod,
+					tc.votingWeightSmoothingDuration,
+					tc.quorum,
+					tc.proposalCreationThreshold,
+					tc.executionDelay,
+					tc.executionWindow,
+				)
+
+				// then
+				uassert.Equal(t, cfg.VotingStartDelay, tc.votingStartDelay)
+				uassert.Equal(t, cfg.VotingPeriod, tc.votingPeriod)
+				uassert.Equal(t, cfg.VotingWeightSmoothingDuration, tc.votingWeightSmoothingDuration)
+				uassert.Equal(t, cfg.Quorum, tc.quorum)
+				uassert.Equal(t, cfg.ProposalCreationThreshold, tc.proposalCreationThreshold)
+				uassert.Equal(t, cfg.ExecutionDelay, tc.executionDelay)
+				uassert.Equal(t, cfg.ExecutionWindow, tc.executionWindow)
+			}
 		})
 	}
 }
