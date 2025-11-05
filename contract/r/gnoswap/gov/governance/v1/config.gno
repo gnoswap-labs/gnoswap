@@ -3,6 +3,7 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
+	"time"
 
 	"gno.land/r/gnoswap/access"
 	en "gno.land/r/gnoswap/emission"
@@ -89,8 +90,12 @@ func (gv *governanceV1) reconfigure(
 	}
 
 	// Validate the new configuration
-	assertConfigRanges(cfg)
-	assertNoConfigSumOverflow(cfg)
+	assertIsValidConfigRanges(cfg)
+	assertIsNotOverflowDelay(cfg)
+
+	// Check if current time + all delays would overflow
+	totalDelay := cfg.VotingStartDelay + cfg.VotingPeriod + cfg.ExecutionDelay + cfg.ExecutionWindow
+	assertIsNotOverflowSchdule(time.Now().Unix(), totalDelay)
 
 	// Generate next version number
 	nextVersion := gv.nextConfigVersion()

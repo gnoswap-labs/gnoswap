@@ -16,11 +16,11 @@ func assertCallerIsProposer(gv *governanceV1, proposalID int64, caller address) 
 	}
 }
 
-// assertConfigRanges validates that all config values are within valid ranges.
+// assertIsValidConfigRanges validates that all config values are within valid ranges.
 // Panics if any parameter is invalid:
 //   - All time delays and thresholds must be non-negative
 //   - Quorum must be between 0 and 100
-func assertConfigRanges(cfg governance.Config) {
+func assertIsValidConfigRanges(cfg governance.Config) {
 	if cfg.VotingStartDelay < 0 {
 		panic(makeErrorWithDetails(errOutOfRange, "votingStartDelay cannot be negative"))
 	}
@@ -46,9 +46,9 @@ func assertConfigRanges(cfg governance.Config) {
 	}
 }
 
-// assertNoConfigSumOverflow checks if summing config delays causes overflow.
+// assertIsNotOverflowDelay checks if summing config delays causes overflow.
 // This is a pure function without time dependency for easier testing.
-func assertNoConfigSumOverflow(cfg governance.Config) {
+func assertIsNotOverflowDelay(cfg governance.Config) {
 	sum := int64(0)
 
 	sum += cfg.VotingStartDelay
@@ -72,8 +72,8 @@ func assertNoConfigSumOverflow(cfg governance.Config) {
 	}
 }
 
-// assertTimestampOverflow checks if adding a delay to current time causes overflow.
-func assertTimestampOverflow(currentTime, totalDelay int64) {
+// assertIsNotOverflowSchdule checks if adding a delay to current time causes overflow.
+func assertIsNotOverflowSchdule(currentTime, totalDelay int64) {
 	if currentTime+totalDelay < 0 {
 		panic(makeErrorWithDetails(errOutOfRange, "timestamp calculations may cause overflow"))
 	}

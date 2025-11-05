@@ -8,8 +8,8 @@ import (
 	"gno.land/r/gnoswap/gov/governance"
 )
 
-// Test for assertConfigRanges function.
-func TestAssert_assertConfigRanges(t *testing.T) {
+// Test for assertIsValidConfigRanges function.
+func TestAssert_assertIsValidConfigRanges(t *testing.T) {
 	tests := []struct {
 		name                          string
 		votingStartDelay              int64
@@ -170,21 +170,21 @@ func TestAssert_assertConfigRanges(t *testing.T) {
 				// when & then
 				uassert.AbortsWithMessage(t, tc.expectedPanicMsg, func() {
 					func(cur realm) {
-						assertConfigRanges(cfg)
+						assertIsValidConfigRanges(cfg)
 					}(cross)
 				})
 			} else {
 				// when & then
 				func(cur realm) {
-					assertConfigRanges(cfg)
+					assertIsValidConfigRanges(cfg)
 				}(cross)
 			}
 		})
 	}
 }
 
-// Test for assertNoConfigSumOverflow function.
-func TestAssert_assertNoConfigSumOverflow(t *testing.T) {
+// Test for assertIsNotOverflowDelay function.
+func TestAssert_assertIsNotOverflowDelay(t *testing.T) {
 	tests := []struct {
 		name                          string
 		votingStartDelay              int64
@@ -285,21 +285,21 @@ func TestAssert_assertNoConfigSumOverflow(t *testing.T) {
 				// when & then
 				uassert.AbortsWithMessage(t, tc.expectedPanicMsg, func() {
 					func(cur realm) {
-						assertNoConfigSumOverflow(cfg)
+						assertIsNotOverflowDelay(cfg)
 					}(cross)
 				})
 			} else {
 				// when & then
 				func(cur realm) {
-					assertNoConfigSumOverflow(cfg)
+					assertIsNotOverflowDelay(cfg)
 				}(cross)
 			}
 		})
 	}
 }
 
-// Test for assertTimestampOverflow function.
-func TestAssert_assertTimestampOverflow(t *testing.T) {
+// Test for assertIsNotOverflowSchdule function.
+func TestAssert_assertIsNotOverflowSchdule(t *testing.T) {
 	tests := []struct {
 		name             string
 		currentTime      int64
@@ -360,13 +360,13 @@ func TestAssert_assertTimestampOverflow(t *testing.T) {
 				// when & then
 				uassert.AbortsWithMessage(t, tc.expectedPanicMsg, func() {
 					func(cur realm) {
-						assertTimestampOverflow(tc.currentTime, tc.totalDelay)
+						assertIsNotOverflowSchdule(tc.currentTime, tc.totalDelay)
 					}(cross)
 				})
 			} else {
 				// when & then
 				func(cur realm) {
-					assertTimestampOverflow(tc.currentTime, tc.totalDelay)
+					assertIsNotOverflowSchdule(tc.currentTime, tc.totalDelay)
 				}(cross)
 			}
 		})
