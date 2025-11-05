@@ -18,6 +18,8 @@ import (
 )
 
 func TestLaunchpadWithdraw_CollectDepositGns(t *testing.T) {
+	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
+
 	userAddr := testutils.TestAddress("user1")
 	otherAddr := testutils.TestAddress("other")
 
@@ -66,23 +68,28 @@ func TestLaunchpadWithdraw_CollectDepositGns(t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(tt.callerAddress))
 			testing.SkipHeights(60*60*24*180/5 + 2)
 
-			collectDepositFn := func() {
-				func(cur realm) {
-					lp.CollectDepositGns(tt.depositID)
-				}(cross)
-			}
-
 			if tt.expectedHasAbort {
+				collectDepositFn := func() {
+					func(cur realm) {
+						lp.CollectDepositGns(tt.depositID)
+					}(cross)
+				}
 				uassert.AbortsContains(t, tt.expectedAbortMessage, collectDepositFn)
 				return
 			}
 
+			// Success case
+			var amount int64
+			var err error
+			testing.SetOriginCaller(tt.callerAddress)
 			func(cur realm) {
-				amount, err := lp.CollectDepositGns(tt.depositID)
-				testing.SkipHeights(-(60*60*24*180/5 + 2))
-				uassert.NoError(t, err)
-				uassert.Equal(t, tt.expectedAmount, amount)
+				testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+				amount, err = lp.CollectDepositGns(tt.depositID)
 			}(cross)
+
+			testing.SkipHeights(-(60*60*24*180/5 + 2))
+			uassert.NoError(t, err)
+			uassert.Equal(t, tt.expectedAmount, amount)
 		})
 	}
 }

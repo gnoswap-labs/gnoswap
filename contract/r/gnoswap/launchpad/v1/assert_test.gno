@@ -60,18 +60,13 @@ func TestAssert_assertIsValidAmount(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.expectedPanic {
-				defer func() {
-					r := recover()
-					uassert.NotNil(t, r)
-					uassert.ErrorContains(t, r.(error), tt.expectedError)
-				}()
+				uassert.PanicsContains(t, tt.expectedError, func() {
+					assertIsValidAmount(tt.amount)
+				})
+				return
 			}
 
 			assertIsValidAmount(tt.amount)
-
-			if tt.expectedPanic {
-				t.Fatal("expected panic but did not occur")
-			}
 		})
 	}
 }
@@ -163,17 +158,13 @@ func TestAssert_assertIsDepositOwner(t *testing.T) {
 
 			// when & then
 			if tt.expectedPanic {
-				defer func() {
-					r := recover()
-					uassert.NotNil(t, r)
-					uassert.ErrorContains(t, r.(error), tt.expectedError)
-				}()
-
-				lp.assertIsDepositOwner(depositID, tt.caller)
-				t.Fatal("expected panic but did not occur")
-			} else {
-				lp.assertIsDepositOwner(depositID, tt.caller)
+				uassert.PanicsContains(t, tt.expectedError, func() {
+					lp.assertIsDepositOwner(depositID, tt.caller)
+				})
+				return
 			}
+
+			lp.assertIsDepositOwner(depositID, tt.caller)
 		})
 	}
 }
@@ -222,7 +213,7 @@ func TestAssert_assertHasProject(t *testing.T) {
 			},
 			caller:        otherUser,
 			expectedPanic: true,
-			expectedError: "is not the owner of any project",
+			expectedError: "GNOSWAP-LAUNCHPAD-026",
 		},
 		{
 			name: "panic when projects tree is empty",
@@ -231,7 +222,7 @@ func TestAssert_assertHasProject(t *testing.T) {
 			},
 			caller:        otherUser,
 			expectedPanic: true,
-			expectedError: "is not the owner of any project",
+			expectedError: "GNOSWAP-LAUNCHPAD-026",
 		},
 		{
 			name: "valid - caller owns one of multiple projects",
@@ -283,7 +274,7 @@ func TestAssert_assertHasProject(t *testing.T) {
 			},
 			caller:        projectOwner,
 			expectedPanic: true,
-			expectedError: "is not the owner of any project",
+			expectedError: "GNOSWAP-LAUNCHPAD-026",
 		},
 	}
 
@@ -296,17 +287,13 @@ func TestAssert_assertHasProject(t *testing.T) {
 
 			// when & then
 			if tt.expectedPanic {
-				defer func() {
-					r := recover()
-					uassert.NotNil(t, r)
-					uassert.ErrorContains(t, r.(error), tt.expectedError)
-				}()
-
-				lp.assertHasProject(tt.caller)
-				t.Fatal("expected panic but did not occur")
-			} else {
-				lp.assertHasProject(tt.caller)
+				uassert.PanicsContains(t, tt.expectedError, func() {
+					lp.assertHasProject(tt.caller)
+				})
+				return
 			}
+
+			lp.assertHasProject(tt.caller)
 		})
 	}
 }
