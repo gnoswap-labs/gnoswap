@@ -34,14 +34,6 @@ func makeConfig(
 		ExecutionWindow:               executionWindow,
 	}
 
-	// Validate the new configuration
-	assertIsValidConfigRanges(cfg)
-	assertIsNotOverflowDelay(cfg)
-
-	// Check if current time + all delays would overflow
-	totalDelay := cfg.VotingStartDelay + cfg.VotingPeriod + cfg.ExecutionDelay + cfg.ExecutionWindow
-	assertIsNotOverflowSchedule(time.Now().Unix(), totalDelay)
-
 	return cfg
 }
 
@@ -73,6 +65,12 @@ func (gv *governanceV1) Reconfigure(
 		executionDelay,
 		executionWindow,
 	)
+
+	currentTime := time.Now().Unix()
+
+	if err := newCfg.IsValid(currentTime); err != nil {
+		makeErrorWithDetails(errInvalidConfiguration, err.Error())
+	}
 
 	// Mint and distribute GNS tokens as part of the process
 	en.MintAndDistributeGns(cross)
