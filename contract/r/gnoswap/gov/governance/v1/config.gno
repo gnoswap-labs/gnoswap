@@ -12,6 +12,39 @@ import (
 	"gno.land/r/gnoswap/gov/governance"
 )
 
+// makeConfig creates and validates a new governance configuration.
+// Returns validated config or panics if validation fails.
+func makeConfig(
+	votingStartDelay int64,
+	votingPeriod int64,
+	votingWeightSmoothingDuration int64,
+	quorum int64,
+	proposalCreationThreshold int64,
+	executionDelay int64,
+	executionWindow int64,
+) governance.Config {
+	// Create new configuration with provided parameters
+	cfg := governance.Config{
+		VotingStartDelay:              votingStartDelay,
+		VotingPeriod:                  votingPeriod,
+		VotingWeightSmoothingDuration: votingWeightSmoothingDuration,
+		Quorum:                        quorum,
+		ProposalCreationThreshold:     proposalCreationThreshold,
+		ExecutionDelay:                executionDelay,
+		ExecutionWindow:               executionWindow,
+	}
+
+	// Validate the new configuration
+	assertIsValidConfigRanges(cfg)
+	assertIsNotOverflowDelay(cfg)
+
+	// Check if current time + all delays would overflow
+	totalDelay := cfg.VotingStartDelay + cfg.VotingPeriod + cfg.ExecutionDelay + cfg.ExecutionWindow
+	assertIsNotOverflowSchedule(time.Now().Unix(), totalDelay)
+
+	return cfg
+}
+
 // Reconfigure updates governance configuration.
 // Only admin or governance contract can call this function.
 // Updates all governance parameters and emits a "Reconfigure" event.
@@ -30,14 +63,8 @@ func (gv *governanceV1) Reconfigure(
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	// Mint and distribute GNS tokens as part of the process
-	en.MintAndDistributeGns(cross)
-
-	// Store previous version for event emission
-	previousVersion := gv.getCurrentConfigVersion()
-
-	// Apply the new configuration
-	nextVersion, newCfg := gv.reconfigure(
+	// Create and validate new configuration
+	newCfg := makeConfig(
 		votingStartDelay,
 		votingPeriod,
 		votingWeightSmoothingDuration,
@@ -46,6 +73,15 @@ func (gv *governanceV1) Reconfigure(
 		executionDelay,
 		executionWindow,
 	)
+
+	// Mint and distribute GNS tokens as part of the process
+	en.MintAndDistributeGns(cross)
+
+	// Store previous version for event emission
+	previousVersion := gv.getCurrentConfigVersion()
+
+	// Apply the new configuration
+	nextVersion := gv.reconfigure(newCfg)
 
 	// Emit configuration change event with all parameters
 	previousRealm := runtime.PreviousRealm()
@@ -67,36 +103,8 @@ func (gv *governanceV1) Reconfigure(
 	return nextVersion
 }
 
-// reconfigure updates the Governor's configuration.
-// Creates new configuration and stores it with incremented version number.
-func (gv *governanceV1) reconfigure(
-	votingStartDelay int64,
-	votingPeriod int64,
-	votingWeightSmoothingDuration int64,
-	quorum int64,
-	proposalCreationThreshold int64,
-	executionDelay int64,
-	executionWindow int64,
-) (int64, governance.Config) {
-	// Create new configuration with provided parameters
-	cfg := governance.Config{
-		VotingStartDelay:              votingStartDelay,
-		VotingPeriod:                  votingPeriod,
-		VotingWeightSmoothingDuration: votingWeightSmoothingDuration,
-		Quorum:                        quorum,
-		ProposalCreationThreshold:     proposalCreationThreshold,
-		ExecutionDelay:                executionDelay,
-		ExecutionWindow:               executionWindow,
-	}
-
-	// Validate the new configuration
-	assertIsValidConfigRanges(cfg)
-	assertIsNotOverflowDelay(cfg)
-
-	// Check if current time + all delays would overflow
-	totalDelay := cfg.VotingStartDelay + cfg.VotingPeriod + cfg.ExecutionDelay + cfg.ExecutionWindow
-	assertIsNotOverflowSchdule(time.Now().Unix(), totalDelay)
-
+// reconfigure stores the validated configuration with incremented version number.
+func (gv *governanceV1) reconfigure(cfg governance.Config) int64 {
 	// Generate next version number
 	nextVersion := gv.nextConfigVersion()
 
@@ -106,5 +114,5 @@ func (gv *governanceV1) reconfigure(
 		panic("failed to set config: " + err.Error())
 	}
 
-	return nextVersion, cfg
+	return nextVersion
 }

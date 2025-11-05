@@ -168,16 +168,14 @@ func TestAssert_assertIsValidConfigRanges(t *testing.T) {
 
 			if tc.expectedHasPanic {
 				// when & then
-				uassert.AbortsWithMessage(t, tc.expectedPanicMsg, func() {
-					func(cur realm) {
-						assertIsValidConfigRanges(cfg)
-					}(cross)
+				uassert.PanicsWithMessage(t, tc.expectedPanicMsg, func() {
+					assertIsValidConfigRanges(cfg)
 				})
 			} else {
 				// when & then
-				func(cur realm) {
+				uassert.NotPanics(t, func() {
 					assertIsValidConfigRanges(cfg)
-				}(cross)
+				})
 			}
 		})
 	}
@@ -283,23 +281,21 @@ func TestAssert_assertIsNotOverflowDelay(t *testing.T) {
 
 			if tc.expectedHasPanic {
 				// when & then
-				uassert.AbortsWithMessage(t, tc.expectedPanicMsg, func() {
-					func(cur realm) {
-						assertIsNotOverflowDelay(cfg)
-					}(cross)
+				uassert.PanicsWithMessage(t, tc.expectedPanicMsg, func() {
+					assertIsNotOverflowDelay(cfg)
 				})
 			} else {
 				// when & then
-				func(cur realm) {
+				uassert.NotPanics(t, func() {
 					assertIsNotOverflowDelay(cfg)
-				}(cross)
+				})
 			}
 		})
 	}
 }
 
-// Test for assertIsNotOverflowSchdule function.
-func TestAssert_assertIsNotOverflowSchdule(t *testing.T) {
+// Test for assertIsNotOverflowSchedule function.
+func TestAssert_assertIsNotOverflowSchedule(t *testing.T) {
 	tests := []struct {
 		name             string
 		currentTime      int64
@@ -358,16 +354,14 @@ func TestAssert_assertIsNotOverflowSchdule(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.expectedHasPanic {
 				// when & then
-				uassert.AbortsWithMessage(t, tc.expectedPanicMsg, func() {
-					func(cur realm) {
-						assertIsNotOverflowSchdule(tc.currentTime, tc.totalDelay)
-					}(cross)
+				uassert.PanicsWithMessage(t, tc.expectedPanicMsg, func() {
+					assertIsNotOverflowSchedule(tc.currentTime, tc.totalDelay)
 				})
 			} else {
 				// when & then
-				func(cur realm) {
-					assertIsNotOverflowSchdule(tc.currentTime, tc.totalDelay)
-				}(cross)
+				uassert.NotPanics(t, func() {
+					assertIsNotOverflowSchedule(tc.currentTime, tc.totalDelay)
+				})
 			}
 		})
 	}

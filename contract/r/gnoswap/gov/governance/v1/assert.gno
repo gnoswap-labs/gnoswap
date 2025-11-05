@@ -72,8 +72,8 @@ func assertIsNotOverflowDelay(cfg governance.Config) {
 	}
 }
 
-// assertIsNotOverflowSchdule checks if adding a delay to current time causes overflow.
-func assertIsNotOverflowSchdule(currentTime, totalDelay int64) {
+// assertIsNotOverflowSchedule checks if adding a delay to current time causes overflow.
+func assertIsNotOverflowSchedule(currentTime, totalDelay int64) {
 	if currentTime+totalDelay < 0 {
 		panic(makeErrorWithDetails(errOutOfRange, "timestamp calculations may cause overflow"))
 	}

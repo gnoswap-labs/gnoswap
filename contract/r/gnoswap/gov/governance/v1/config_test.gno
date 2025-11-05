@@ -313,8 +313,8 @@ func TestConfig_reconfigure(t *testing.T) {
 			gs := newMockGovernance()
 
 			func (cur realm) {
-				// when: call reconfigure
-				nextVersion, cfg := gs.reconfigure(
+				// given: create and validate config
+				cfg := makeConfig(
 					tc.votingStartDelay,
 					tc.votingPeriod,
 					tc.votingWeightSmoothingDuration,
@@ -323,6 +323,9 @@ func TestConfig_reconfigure(t *testing.T) {
 					tc.executionDelay,
 					tc.executionWindow,
 				)
+
+				// when: call reconfigure
+				nextVersion := gs.reconfigure(cfg)
 
 				// then: check config state
 				uassert.True(t, nextVersion > 0)
