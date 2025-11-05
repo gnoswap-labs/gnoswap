@@ -11,8 +11,8 @@ import (
 	"gno.land/r/gnoswap/access"
 	govStaker "gno.land/r/gnoswap/gov/staker"
 
-	_ "gno.land/r/gnoswap/gov/staker/test"
 	_ "gno.land/r/gnoswap/gov/staker/v1"
+	_ "gno.land/r/gnoswap/gov/staker/v2_invalid"
 )
 
 var t = &testing.T{}
@@ -24,7 +24,7 @@ var (
 
 const (
 	govStakerV1Path   = "gno.land/r/gnoswap/gov/staker/v1"
-	govStakerTestPath = "gno.land/r/gnoswap/gov/staker/test"
+	govStakerTestPath = "gno.land/r/gnoswap/gov/staker/v2_invalid"
 )
 
 func main() {
@@ -164,10 +164,10 @@ func verifyTestImplementation() {
 // [SCENARIO] 2. Upgrade gov/staker contract to test version
 // [INFO] Current version: gno.land/r/gnoswap/gov/staker/v1
 // [INFO] Upgrading gov/staker contract to test version
-// [EXPECTED] Gov/Staker upgraded to: gno.land/r/gnoswap/gov/staker/test
+// [EXPECTED] Gov/Staker upgraded to: gno.land/r/gnoswap/gov/staker/v2_invalid
 //
 // [SCENARIO] 3. Verify test implementation panics correctly
-// [INFO] Current version: gno.land/r/gnoswap/gov/staker/test
+// [INFO] Current version: gno.land/r/gnoswap/gov/staker/v2_invalid
 // [INFO] Testing Delegate function panics correctly
 // [EXPECTED] Delegate panics correctly
 // [INFO] Testing Undelegate function panics correctly

@@ -11,7 +11,7 @@ import (
 	"gno.land/r/gnoswap/pool"
 
 	_ "gno.land/r/gnoswap/pool/v1"
-	_ "gno.land/r/gnoswap/pool/test"
+	_ "gno.land/r/gnoswap/pool/v2_invalid"
 )
 
 var t *testing.T
@@ -23,7 +23,7 @@ var (
 
 const (
 	poolV1Path   = "gno.land/r/gnoswap/pool/v1"
-	poolTestPath = "gno.land/r/gnoswap/pool/test"
+	poolTestPath = "gno.land/r/gnoswap/pool/v2_invalid"
 )
 
 func main() {
@@ -59,6 +59,6 @@ func testPoolRollback() {
 // Output:
 // [SCENARIO] Pool Contract Rollback Test
 // [INFO] Preparing: Upgrading to test version
-// [INFO] Current version: gno.land/r/gnoswap/pool/test
+// [INFO] Current version: gno.land/r/gnoswap/pool/v2_invalid
 // [INFO] Rolling back pool contract to v1
 // [EXPECTED] Pool rolled back to: gno.land/r/gnoswap/pool/v1
