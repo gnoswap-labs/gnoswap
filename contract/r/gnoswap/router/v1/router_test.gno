@@ -1014,3 +1014,967 @@ func createMultiHopPools(t *testing.T) {
 	pn.Mint(cross, bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")
 	pn.Mint(cross, quxPath, fooPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")
 }
+
+// Test GetSwapFee
+func TestGetSwapFee(t *testing.T) {
+	router := mockRouter()
+
+	// Default fee should be 0 or set value
+	fee := router.GetSwapFee()
+	uassert.True(t, fee >= 0, "fee should be non-negative")
+}
+
+// Test calculateRouterFee
+func TestCalculateRouterFee(t *testing.T) {
+	tests := []struct {
+		name     string
+		amount   *u256.Uint
+		swapFee  uint64
+		expected int64
+	}{
+		{
+			name:     "zero fee",
+			amount:   u256.NewUint(1000),
+			swapFee:  0,
+			expected: 0,
+		},
+		{
+			name:     "0.15% fee (15 bps)",
+			amount:   u256.NewUint(10000),
+			swapFee:  15,
+			expected: 15, // 10000 * 15 / 10000 = 15
+		},
+		{
+			name:     "1% fee (100 bps)",
+			amount:   u256.NewUint(10000),
+			swapFee:  100,
+			expected: 100, // 10000 * 100 / 10000 = 100
+		},
+		{
+			name:     "10% fee (1000 bps)",
+			amount:   u256.NewUint(10000),
+			swapFee:  1000,
+			expected: 1000, // 10000 * 1000 / 10000 = 1000
+		},
+		{
+			name:     "small amount with fee",
+			amount:   u256.NewUint(10),
+			swapFee:  100,
+			expected: 0, // 10 * 100 / 10000 = 0.1 rounded down to 0
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := calculateRouterFee(tt.amount, tt.swapFee)
+			uassert.Equal(t, result, tt.expected)
+		})
+	}
+}
+
+// Test calculateExactOutWithRouterFee
+func TestCalculateExactOutWithRouterFee(t *testing.T) {
+	tests := []struct {
+		name     string
+		amount   *u256.Uint
+		swapFee  uint64
+		expected string
+	}{
+		{
+			name:     "zero fee returns same amount",
+			amount:   u256.NewUint(1000),
+			swapFee:  0,
+			expected: "1000",
+		},
+		{
+			name:     "0.15% fee calculation",
+			amount:   u256.NewUint(10000),
+			swapFee:  15,
+			expected: "10015", // 10000 * 10000 / (10000 - 15) = 10015.01...
+		},
+		{
+			name:     "1% fee calculation",
+			amount:   u256.NewUint(10000),
+			swapFee:  100,
+			expected: "10101", // 10000 * 10000 / (10000 - 100) = 10101.01...
+		},
+		{
+			name:     "large amount with small fee",
+			amount:   u256.NewUint(1000000000),
+			swapFee:  15,
+			expected: "1001502253", // 1000000000 * 10000 / 9985
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := calculateExactOutWithRouterFee(tt.amount, tt.swapFee)
+			uassert.Equal(t, result.ToString(), tt.expected)
+		})
+	}
+}
+
+// ========== Router Dry Swap Tests ==========
+
+// Test SwapProcessor ProcessSwapAmount
+func TestSwapProcessor_ProcessSwapAmount(t *testing.T) {
+	router := mockRouter()
+	processor := &SwapProcessor{router: router}
+
+	tests := []struct {
+		name            string
+		amountSpecified *i256.Int
+		quote           int
+		expectError     bool
+		expectedResult  string
+	}{
+		{
+			name:            "100% quote",
+			amountSpecified: i256.NewInt(1000),
+			quote:           100,
+			expectError:     false,
+			expectedResult:  "1000",
+		},
+		{
+			name:            "50% quote",
+			amountSpecified: i256.NewInt(1000),
+			quote:           50,
+			expectError:     false,
+			expectedResult:  "500",
+		},
+		{
+			name:            "1% quote",
+			amountSpecified: i256.NewInt(10000),
+			quote:           1,
+			expectError:     false,
+			expectedResult:  "100",
+		},
+		{
+			name:            "0% quote",
+			amountSpecified: i256.NewInt(1000),
+			quote:           0,
+			expectError:     false,
+			expectedResult:  "0",
+		},
+		{
+			name:            "quote above 100",
+			amountSpecified: i256.NewInt(1000),
+			quote:           101,
+			expectError:     true,
+		},
+		{
+			name:            "negative quote",
+			amountSpecified: i256.NewInt(1000),
+			quote:           -1,
+			expectError:     true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := processor.ProcessSwapAmount(tt.amountSpecified, tt.quote)
+
+			if tt.expectError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+				uassert.Equal(t, result.ToString(), tt.expectedResult)
+			}
+		})
+	}
+}
+
+// Test SwapProcessor ValidateSwapResults
+func TestSwapProcessor_ValidateSwapResults(t *testing.T) {
+	router := mockRouter()
+	processor := &SwapProcessor{router: router}
+
+	tests := []struct {
+		name            string
+		swapType        SwapType
+		resultAmountIn  *u256.Uint
+		resultAmountOut *u256.Uint
+		amountSpecified *i256.Int
+		amountLimit     *i256.Int
+		expectedSuccess bool
+	}{
+		{
+			name:            "ExactIn - success case",
+			swapType:        ExactIn,
+			resultAmountIn:  u256.NewUint(1000),
+			resultAmountOut: u256.NewUint(950),
+			amountSpecified: i256.NewInt(1000),
+			amountLimit:     i256.NewInt(900),
+			expectedSuccess: true,
+		},
+		{
+			name:            "ExactIn - too few received",
+			swapType:        ExactIn,
+			resultAmountIn:  u256.NewUint(1000),
+			resultAmountOut: u256.NewUint(850),
+			amountSpecified: i256.NewInt(1000),
+			amountLimit:     i256.NewInt(900),
+			expectedSuccess: false,
+		},
+		{
+			name:            "ExactOut - success case",
+			swapType:        ExactOut,
+			resultAmountIn:  u256.NewUint(1050),
+			resultAmountOut: u256.NewUint(1000),
+			amountSpecified: i256.NewInt(-1000),
+			amountLimit:     i256.NewInt(1100),
+			expectedSuccess: true,
+		},
+		{
+			name:            "ExactOut - too much spent",
+			swapType:        ExactOut,
+			resultAmountIn:  u256.NewUint(1150),
+			resultAmountOut: u256.NewUint(1000),
+			amountSpecified: i256.NewInt(-1000),
+			amountLimit:     i256.NewInt(1100),
+			expectedSuccess: false,
+		},
+		{
+			name:            "zero amounts",
+			swapType:        ExactIn,
+			resultAmountIn:  u256.Zero(),
+			resultAmountOut: u256.Zero(),
+			amountSpecified: i256.NewInt(1000),
+			amountLimit:     i256.NewInt(900),
+			expectedSuccess: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, _, success := processor.ValidateSwapResults(
+				tt.swapType,
+				tt.resultAmountIn,
+				tt.resultAmountOut,
+				tt.amountSpecified,
+				tt.amountLimit,
+			)
+
+			uassert.Equal(t, success, tt.expectedSuccess)
+		})
+	}
+}
+
+// Test SwapProcessor AddSwapResults
+func TestSwapProcessor_AddSwapResults(t *testing.T) {
+	router := mockRouter()
+	processor := &SwapProcessor{router: router}
+
+	tests := []struct {
+		name            string
+		resultAmountIn  *u256.Uint
+		resultAmountOut *u256.Uint
+		amountIn        *u256.Uint
+		amountOut       *u256.Uint
+		expectError     bool
+		expectedIn      string
+		expectedOut     string
+	}{
+		{
+			name:            "normal addition",
+			resultAmountIn:  u256.NewUint(1000),
+			resultAmountOut: u256.NewUint(950),
+			amountIn:        u256.NewUint(500),
+			amountOut:       u256.NewUint(475),
+			expectError:     false,
+			expectedIn:      "1500",
+			expectedOut:     "1425",
+		},
+		{
+			name:            "zero additions",
+			resultAmountIn:  u256.Zero(),
+			resultAmountOut: u256.Zero(),
+			amountIn:        u256.Zero(),
+			amountOut:       u256.Zero(),
+			expectError:     false,
+			expectedIn:      "0",
+			expectedOut:     "0",
+		},
+		{
+			name:            "adding to existing results",
+			resultAmountIn:  u256.NewUint(999999),
+			resultAmountOut: u256.NewUint(888888),
+			amountIn:        u256.NewUint(1),
+			amountOut:       u256.NewUint(1),
+			expectError:     false,
+			expectedIn:      "1000000",
+			expectedOut:     "888889",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			newIn, newOut, err := processor.AddSwapResults(
+				tt.resultAmountIn,
+				tt.resultAmountOut,
+				tt.amountIn,
+				tt.amountOut,
+			)
+
+			if tt.expectError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+				uassert.Equal(t, newIn.ToString(), tt.expectedIn)
+				uassert.Equal(t, newOut.ToString(), tt.expectedOut)
+			}
+		})
+	}
+}
+
+// ========== Router Parser and Validator Tests ==========
+
+// Test RouteParser creation
+func TestNewRouteParser(t *testing.T) {
+	parser := NewRouteParser()
+	uassert.NotNil(t, parser)
+}
+
+// Test RouteParser ParseRoutes
+func TestRouteParser_ParseRoutes(t *testing.T) {
+	parser := NewRouteParser()
+
+	tests := []struct {
+		name          string
+		routes        string
+		quotes        string
+		expectError   bool
+		expectedError string
+	}{
+		{
+			name:        "valid single route",
+			routes:      "tokenA:tokenB:500",
+			quotes:      "100",
+			expectError: false,
+		},
+		{
+			name:        "valid two routes",
+			routes:      "tokenA:tokenB:500,tokenA:tokenC:3000",
+			quotes:      "50,50",
+			expectError: false,
+		},
+		{
+			name:          "empty routes",
+			routes:        "",
+			quotes:        "100",
+			expectError:   true,
+			expectedError: "routes cannot be empty",
+		},
+		{
+			name:          "empty quotes",
+			routes:        "tokenA:tokenB:500",
+			quotes:        "",
+			expectError:   true,
+			expectedError: "routes cannot be empty",
+		},
+		{
+			name:          "mismatch count",
+			routes:        "tokenA:tokenB:500,tokenA:tokenC:3000",
+			quotes:        "100",
+			expectError:   true,
+			expectedError: "mismatch between routes(2) and quotes(1) length",
+		},
+		{
+			name:          "invalid quote sum",
+			routes:        "tokenA:tokenB:500,tokenA:tokenC:3000",
+			quotes:        "40,50",
+			expectError:   true,
+			expectedError: "quote sum(90) must be 100",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			routes, quotes, err := parser.ParseRoutes(tt.routes, tt.quotes)
+
+			if tt.expectError {
+				uassert.Error(t, err)
+				if tt.expectedError != "" {
+					uassert.True(t, strings.Contains(err.Error(), tt.expectedError),
+						"expected error to contain: "+tt.expectedError)
+				}
+			} else {
+				uassert.NoError(t, err)
+				uassert.NotNil(t, routes)
+				uassert.NotNil(t, quotes)
+			}
+		})
+	}
+}
+
+// Test RouteParser ValidateQuoteSum
+func TestRouteParser_ValidateQuoteSum(t *testing.T) {
+	parser := NewRouteParser()
+
+	tests := []struct {
+		name        string
+		quotes      []string
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name:        "perfect sum 100",
+			quotes:      []string{"50", "50"},
+			expectError: false,
+		},
+		{
+			name:        "three quotes summing to 100",
+			quotes:      []string{"33", "33", "34"},
+			expectError: false,
+		},
+		{
+			name:        "sum less than 100",
+			quotes:      []string{"40", "40"},
+			expectError: true,
+			errorMsg:    "quote sum(80) must be 100",
+		},
+		{
+			name:        "sum greater than 100",
+			quotes:      []string{"60", "60"},
+			expectError: true,
+			errorMsg:    "quote sum exceeds 100 at index",
+		},
+		{
+			name:        "quote with zero",
+			quotes:      []string{"0", "100"},
+			expectError: true,
+			errorMsg:    "must be positive value",
+		},
+		{
+			name:        "quote exceeds 100",
+			quotes:      []string{"101"},
+			expectError: true,
+			errorMsg:    "must be less than or equal to",
+		},
+		{
+			name:        "invalid quote format",
+			quotes:      []string{"abc", "50"},
+			expectError: true,
+			errorMsg:    "invalid quote",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := parser.ValidateQuoteSum(tt.quotes)
+
+			if tt.expectError {
+				uassert.Error(t, err)
+				if tt.errorMsg != "" {
+					uassert.True(t, strings.Contains(err.Error(), tt.errorMsg),
+						"expected error to contain: "+tt.errorMsg)
+				}
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
+// Test RouteParser ValidateRoutesAndQuotes
+func TestRouteParser_ValidateRoutesAndQuotes(t *testing.T) {
+	parser := NewRouteParser()
+
+	tests := []struct {
+		name        string
+		routes      []string
+		quotes      []string
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name:        "valid single route",
+			routes:      []string{"route1"},
+			quotes:      []string{"100"},
+			expectError: false,
+		},
+		{
+			name:        "valid seven routes (maximum)",
+			routes:      []string{"r1", "r2", "r3", "r4", "r5", "r6", "r7"},
+			quotes:      []string{"14", "14", "14", "14", "14", "15", "15"},
+			expectError: false,
+		},
+		{
+			name:        "zero routes",
+			routes:      []string{},
+			quotes:      []string{},
+			expectError: true,
+			errorMsg:    "route length(0) must be 1~7",
+		},
+		{
+			name:        "eight routes (exceeds maximum)",
+			routes:      []string{"r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8"},
+			quotes:      []string{"12", "12", "12", "12", "13", "13", "13", "13"},
+			expectError: true,
+			errorMsg:    "route length(8) must be 1~7",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := parser.ValidateRoutesAndQuotes(tt.routes, tt.quotes)
+
+			if tt.expectError {
+				uassert.Error(t, err)
+				if tt.errorMsg != "" {
+					uassert.True(t, strings.Contains(err.Error(), tt.errorMsg),
+						"expected error to contain: "+tt.errorMsg)
+				}
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
+// Test SwapValidator amount
+func TestSwapValidator_Amount(t *testing.T) {
+	validator := &SwapValidator{}
+
+	tests := []struct {
+		name        string
+		amount      string
+		expectError bool
+		expected    string
+	}{
+		{
+			name:        "positive amount",
+			amount:      "1000",
+			expectError: false,
+			expected:    "1000",
+		},
+		{
+			name:        "zero amount",
+			amount:      "0",
+			expectError: false,
+			expected:    "0",
+		},
+		{
+			name:        "negative amount",
+			amount:      "-100",
+			expectError: true,
+		},
+		{
+			name:        "large amount",
+			amount:      "999999999999999",
+			expectError: false,
+			expected:    "999999999999999",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := validator.amount(tt.amount)
+
+			if tt.expectError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+				uassert.Equal(t, result.ToString(), tt.expected)
+			}
+		})
+	}
+}
+
+// Test SwapValidator amountLimit
+func TestSwapValidator_AmountLimit(t *testing.T) {
+	validator := &SwapValidator{}
+
+	tests := []struct {
+		name        string
+		amountLimit string
+		expectError bool
+		expected    string
+	}{
+		{
+			name:        "positive limit",
+			amountLimit: "1000",
+			expectError: false,
+			expected:    "1000",
+		},
+		{
+			name:        "zero limit",
+			amountLimit: "0",
+			expectError: true,
+		},
+		{
+			name:        "negative limit",
+			amountLimit: "-100",
+			expectError: false,
+			expected:    "-100",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := validator.amountLimit(tt.amountLimit)
+
+			if tt.expectError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+				uassert.Equal(t, result.ToString(), tt.expected)
+			}
+		})
+	}
+}
+
+// Test SwapValidator swapType
+func TestSwapValidator_SwapType(t *testing.T) {
+	validator := &SwapValidator{}
+
+	tests := []struct {
+		name        string
+		swapTypeStr string
+		expectError bool
+		expected    SwapType
+	}{
+		{
+			name:        "EXACT_IN",
+			swapTypeStr: "EXACT_IN",
+			expectError: false,
+			expected:    ExactIn,
+		},
+		{
+			name:        "EXACT_OUT",
+			swapTypeStr: "EXACT_OUT",
+			expectError: false,
+			expected:    ExactOut,
+		},
+		{
+			name:        "invalid type",
+			swapTypeStr: "Invalid",
+			expectError: true,
+		},
+		{
+			name:        "empty string",
+			swapTypeStr: "",
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := validator.swapType(tt.swapTypeStr)
+
+			if tt.expectError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+				// Just verify it returned without error, can't compare SwapType directly
+				uassert.True(t, result == tt.expected, "swap type should match expected")
+			}
+		})
+	}
+}
+
+// Test SwapValidator slippage
+func TestSwapValidator_Slippage(t *testing.T) {
+	validator := &SwapValidator{}
+
+	tests := []struct {
+		name        string
+		swapType    SwapType
+		amountIn    *u256.Uint
+		amountOut   *u256.Uint
+		limit       *u256.Uint
+		expectError bool
+	}{
+		{
+			name:        "ExactIn - sufficient output",
+			swapType:    ExactIn,
+			amountIn:    u256.NewUint(1000),
+			amountOut:   u256.NewUint(950),
+			limit:       u256.NewUint(900),
+			expectError: false,
+		},
+		{
+			name:        "ExactIn - insufficient output",
+			swapType:    ExactIn,
+			amountIn:    u256.NewUint(1000),
+			amountOut:   u256.NewUint(850),
+			limit:       u256.NewUint(900),
+			expectError: true,
+		},
+		{
+			name:        "ExactOut - acceptable input",
+			swapType:    ExactOut,
+			amountIn:    u256.NewUint(1050),
+			amountOut:   u256.NewUint(1000),
+			limit:       u256.NewUint(1100),
+			expectError: false,
+		},
+		{
+			name:        "ExactOut - excessive input",
+			swapType:    ExactOut,
+			amountIn:    u256.NewUint(1150),
+			amountOut:   u256.NewUint(1000),
+			limit:       u256.NewUint(1100),
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validator.slippage(tt.swapType, tt.amountIn, tt.amountOut, tt.limit)
+
+			if tt.expectError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
+// Test SwapValidator exactOutAmount
+func TestSwapValidator_ExactOutAmount(t *testing.T) {
+	validator := &SwapValidator{}
+
+	tests := []struct {
+		name            string
+		resultAmount    *u256.Uint
+		specifiedAmount *u256.Uint
+		swapCount       int64
+		expectError     bool
+	}{
+		{
+			name:            "exact match",
+			resultAmount:    u256.NewUint(1000),
+			specifiedAmount: u256.NewUint(1000),
+			swapCount:       1,
+			expectError:     false,
+		},
+		{
+			name:            "within tolerance",
+			resultAmount:    u256.NewUint(1001),
+			specifiedAmount: u256.NewUint(1000),
+			swapCount:       2,
+			expectError:     false,
+		},
+		{
+			name:            "exceeds tolerance",
+			resultAmount:    u256.NewUint(1010),
+			specifiedAmount: u256.NewUint(1000),
+			swapCount:       1,
+			expectError:     true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validator.exactOutAmount(tt.resultAmount, tt.specifiedAmount, tt.swapCount)
+
+			if tt.expectError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
+// Test GnotSwapHandler
+func TestGnotSwapHandler_Creation(t *testing.T) {
+	tests := []struct {
+		name          string
+		beforeBalance int64
+		wrappedAmount int64
+	}{
+		{
+			name:          "zero balances",
+			beforeBalance: 0,
+			wrappedAmount: 0,
+		},
+		{
+			name:          "positive balances",
+			beforeBalance: 1000,
+			wrappedAmount: 500,
+		},
+		{
+			name:          "large balances",
+			beforeBalance: 9223372036854775807,
+			wrappedAmount: 1000000,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler := newGnotSwapHandler(tt.beforeBalance, tt.wrappedAmount)
+
+			uassert.NotNil(t, handler)
+			uassert.Equal(t, handler.BeforeBalance, tt.beforeBalance)
+			uassert.Equal(t, handler.WrappedAmount, tt.wrappedAmount)
+		})
+	}
+}
+
+// Test validateRoutesAndQuotes convenience function
+func TestValidateRoutesAndQuotes(t *testing.T) {
+	tests := []struct {
+		name        string
+		routes      string
+		quotes      string
+		expectError bool
+	}{
+		{
+			name:        "valid single route",
+			routes:      "tokenA:tokenB:500",
+			quotes:      "100",
+			expectError: false,
+		},
+		{
+			name:        "valid multiple routes",
+			routes:      "tokenA:tokenB:500,tokenA:tokenC:3000",
+			quotes:      "50,50",
+			expectError: false,
+		},
+		{
+			name:        "invalid - empty",
+			routes:      "",
+			quotes:      "",
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			routes, quotes, err := validateRoutesAndQuotes(tt.routes, tt.quotes)
+
+			if tt.expectError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+				uassert.NotNil(t, routes)
+				uassert.NotNil(t, quotes)
+			}
+		})
+	}
+}
+
+// ========== Edge Cases and Integration Tests ==========
+
+// Test protocol fee with boundary values
+func TestCalculateRouterFee_BoundaryValues(t *testing.T) {
+	tests := []struct {
+		name     string
+		amount   *u256.Uint
+		swapFee  uint64
+		expected int64
+	}{
+		{
+			name:     "minimum non-zero fee",
+			amount:   u256.NewUint(10000),
+			swapFee:  1,
+			expected: 1,
+		},
+		{
+			name:     "maximum allowed fee (10%)",
+			amount:   u256.NewUint(10000),
+			swapFee:  1000,
+			expected: 1000,
+		},
+		{
+			name:     "amount of 1 with fee",
+			amount:   u256.NewUint(1),
+			swapFee:  100,
+			expected: 0, // rounds down
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := calculateRouterFee(tt.amount, tt.swapFee)
+			uassert.Equal(t, result, tt.expected)
+		})
+	}
+}
+
+// Test quote validation with edge cases
+func TestRouteParser_ValidateQuoteSum_EdgeCases(t *testing.T) {
+	parser := NewRouteParser()
+
+	tests := []struct {
+		name        string
+		quotes      []string
+		expectError bool
+	}{
+		{
+			name:        "all quotes equal",
+			quotes:      []string{"25", "25", "25", "25"},
+			expectError: false,
+		},
+		{
+			name:        "one large quote",
+			quotes:      []string{"99", "1"},
+			expectError: false,
+		},
+		{
+			name:        "negative quote string",
+			quotes:      []string{"-50", "150"},
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := parser.ValidateQuoteSum(tt.quotes)
+
+			if tt.expectError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
+// Test swap processor with extreme amounts
+func TestSwapProcessor_ProcessSwapAmount_ExtremeValues(t *testing.T) {
+	router := mockRouter()
+	processor := &SwapProcessor{router: router}
+
+	tests := []struct {
+		name            string
+		amountSpecified *i256.Int
+		quote           int
+		expectError     bool
+	}{
+		{
+			name:            "max int64 amount",
+			amountSpecified: i256.NewInt(9223372036854775807),
+			quote:           1,
+			expectError:     false,
+		},
+		{
+			name:            "very large amount with 100% quote",
+			amountSpecified: i256.MustFromDecimal("999999999999999999"),
+			quote:           100,
+			expectError:     false,
+		},
+		{
+			name:            "zero amount with any quote",
+			amountSpecified: i256.Zero(),
+			quote:           50,
+			expectError:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := processor.ProcessSwapAmount(tt.amountSpecified, tt.quote)
+
+			if tt.expectError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+				uassert.NotNil(t, result)
+			}
+		})
+	}
+}
