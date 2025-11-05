@@ -108,15 +108,16 @@ func TestAssert_assertCallerIsProposer(t *testing.T) {
 					assertCallerIsProposer(gv, tt.proposalID, tt.caller)
 				})
 			} else {
-				// when
 				defer func() {
 					if r := recover(); r != nil {
 						t.Errorf("unexpected panic: %v", r)
 					}
 				}()
-				assertCallerIsProposer(gv, tt.proposalID, tt.caller)
 
-				// then - no panic occurred
+			    // then
+				uassert.NotPanics(t, func() {
+                    assertCallerIsProposer(gv, tt.proposalID, tt.caller)
+                })
 			}
 		})
 	}
