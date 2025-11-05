@@ -95,7 +95,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-023] voting start delay cannot be negative",
+			expectedPanicMsg:              "votingStartDelay cannot be negative",
 		},
 		{
 			name:                          "Fail: negative voting period",
@@ -110,7 +110,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-024] voting period cannot be negative",
+			expectedPanicMsg:              "votingPeriod cannot be negative",
 		},
 		{
 			name:                          "Fail: negative execution delay",
@@ -125,7 +125,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                -1,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-025] execution delay cannot be negative",
+			expectedPanicMsg:              "executionDelay cannot be negative",
 		},
 		{
 			name:                          "Fail: negative execution window",
@@ -140,7 +140,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               -1,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-026] execution window cannot be negative",
+			expectedPanicMsg:              "executionWindow cannot be negative",
 		},
 		{
 			name:                          "Fail: negative voting weight smoothing duration",
@@ -155,7 +155,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-027] voting weight smoothing duration cannot be negative",
+			expectedPanicMsg:              "votingWeightSmoothingDuration cannot be negative",
 		},
 		{
 			name:                          "Fail: negative proposal creation threshold",
@@ -170,7 +170,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-028] proposal creation threshold cannot be negative",
+			expectedPanicMsg:              "proposalCreationThreshold cannot be negative",
 		},
 		{
 			name:                          "Fail: quorum below 0",
@@ -185,7 +185,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-029] quorum must be between 0 and 100",
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-024] quorum must be between 0 and 100",
 		},
 		{
 			name:                          "Fail: quorum above 100",
@@ -200,7 +200,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 			executionDelay:                30,
 			executionWindow:               60,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-029] quorum must be between 0 and 100",
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-024] quorum must be between 0 and 100",
 		},
 	}
 

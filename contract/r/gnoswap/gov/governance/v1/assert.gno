@@ -1,6 +1,9 @@
 package v1
 
 import (
+	"math"
+	"time"
+
 	"gno.land/r/gnoswap/gov/governance"
 )
 
@@ -16,55 +19,55 @@ func assertCallerIsProposer(gv *governanceV1, proposalID int64, caller address) 
 	}
 }
 
-// AssertIsValidConfig validates governance configuration parameters.
+// assertIsValidConfig validates governance configuration parameters.
 // Panics if any parameter is invalid:
-//   - All time delays must be non-negative
+//   - All time delays and thresholds must be non-negative
 //   - Quorum must be between 0 and 100
-//   - Proposal creation threshold must be non-negative
-//   - Voting weight smoothing duration must be non-negative
-//   - The sum of all delays must not cause int64 overflow
-func AssertIsValidConfig(cfg governance.Config) {
-	// Validate all time-related parameters are non-negative
+//   - The sum of all delays must not cause int64 overflow when added to current time
+func assertIsValidConfig(cfg governance.Config) {
 	if cfg.VotingStartDelay < 0 {
-		panic("[GNOSWAP-GOVERNANCE-023] voting start delay cannot be negative")
+		panic(makeErrorWithDetails(errInvalidConfig, "votingStartDelay cannot be negative"))
 	}
 	if cfg.VotingPeriod < 0 {
-		panic("[GNOSWAP-GOVERNANCE-024] voting period cannot be negative")
+		panic(makeErrorWithDetails(errInvalidConfig, "votingPeriod cannot be negative"))
 	}
 	if cfg.ExecutionDelay < 0 {
-		panic("[GNOSWAP-GOVERNANCE-025] execution delay cannot be negative")
+		panic(makeErrorWithDetails(errInvalidConfig, "executionDelay cannot be negative"))
 	}
 	if cfg.ExecutionWindow < 0 {
-		panic("[GNOSWAP-GOVERNANCE-026] execution window cannot be negative")
+		panic(makeErrorWithDetails(errInvalidConfig, "executionWindow cannot be negative"))
 	}
 	if cfg.VotingWeightSmoothingDuration < 0 {
-		panic("[GNOSWAP-GOVERNANCE-027] voting weight smoothing duration cannot be negative")
+		panic(makeErrorWithDetails(errInvalidConfig, "votingWeightSmoothingDuration cannot be negative"))
 	}
 	if cfg.ProposalCreationThreshold < 0 {
-		panic("[GNOSWAP-GOVERNANCE-028] proposal creation threshold cannot be negative")
+		panic(makeErrorWithDetails(errInvalidConfig, "proposalCreationThreshold cannot be negative"))
 	}
 
 	// Validate quorum is in valid range (0-100)
 	if cfg.Quorum < 0 || cfg.Quorum > 100 {
-		panic("[GNOSWAP-GOVERNANCE-029] quorum must be between 0 and 100")
+		panic(errInvalidQuorum)
 	}
 
 	// Check for potential int64 overflow when calculating proposal timestamps
-	// The calculation in NewProposalScheduleStatus is:
-	// activeTime := createTime + votingStartDelay
-	// votingEndTime := activeTime + votingPeriod
-	// executableTime := votingEndTime + executionDelay
-	// expiredTime := executableTime + executionWindow
-	//
-	// We need to ensure: votingStartDelay + votingPeriod + executionDelay + executionWindow
-	// doesn't overflow when added to a reasonable createdAt timestamp.
-	sum := int64(0)
-	sum = safeAddInt64(sum, cfg.VotingStartDelay)
-	sum = safeAddInt64(sum, cfg.VotingPeriod)
-	sum = safeAddInt64(sum, cfg.ExecutionDelay)
-	sum = safeAddInt64(sum, cfg.ExecutionWindow)
+	// Simulate the same calculation with current time to detect overflow at each step
+	currentTime := time.Now().Unix()
+	if cfg.VotingStartDelay > 0 && currentTime > math.MaxInt64-cfg.VotingStartDelay {
+		panic(makeErrorWithDetails(errConfigOverflow, "currentTime + votingStartDelay exceeds MaxInt64"))
+	}
 
-	// Additional safety check: ensure the sum leaves room for reasonable timestamps
-	// (e.g., Unix timestamps are typically in the range of 0 to ~2^31 for dates until 2038,
-	// or larger for far future dates, but should not approach MaxInt64)
+	activeTime := currentTime + cfg.VotingStartDelay
+	if cfg.VotingPeriod > 0 && activeTime > math.MaxInt64-cfg.VotingPeriod {
+		panic(makeErrorWithDetails(errConfigOverflow, "activeTime + votingPeriod exceeds MaxInt64"))
+	}
+
+	votingEndTime := activeTime + cfg.VotingPeriod
+	if cfg.ExecutionDelay > 0 && votingEndTime > math.MaxInt64-cfg.ExecutionDelay {
+		panic(makeErrorWithDetails(errConfigOverflow, "votingEndTime + executionDelay exceeds MaxInt64"))
+	}
+
+	executableTime := votingEndTime + cfg.ExecutionDelay
+	if cfg.ExecutionWindow > 0 && executableTime > math.MaxInt64-cfg.ExecutionWindow {
+		panic(makeErrorWithDetails(errConfigOverflow, "executableTime + executionWindow exceeds MaxInt64"))
+	}
 }
