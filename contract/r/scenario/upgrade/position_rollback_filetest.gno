@@ -11,7 +11,7 @@ import (
 	"gno.land/r/gnoswap/position"
 
 	_ "gno.land/r/gnoswap/position/v1"
-	_ "gno.land/r/gnoswap/position/test"
+	_ "gno.land/r/gnoswap/position/v2_invalid"
 )
 
 var t *testing.T
@@ -23,7 +23,7 @@ var (
 
 const (
 	positionV1Path   = "gno.land/r/gnoswap/position/v1"
-	positionTestPath = "gno.land/r/gnoswap/position/test"
+	positionTestPath = "gno.land/r/gnoswap/position/v2_invalid"
 )
 
 func main() {
@@ -59,6 +59,6 @@ func testPositionRollback() {
 // Output:
 // [SCENARIO] Position Contract Rollback Test
 // [INFO] Preparing: Upgrading to test version
-// [INFO] Current version: gno.land/r/gnoswap/position/test
+// [INFO] Current version: gno.land/r/gnoswap/position/v2_invalid
 // [INFO] Rolling back position contract to v1
 // [EXPECTED] Position rolled back to: gno.land/r/gnoswap/position/v1
