@@ -1225,6 +1225,189 @@ func TestGovernanceExecute_ReExecutionPrevention(t *testing.T) {
 	})
 }
 
+// TestGovernanceExecute_executeCommunityPoolSpend tests the private executeCommunityPoolSpend function
+func TestGovernanceExecute_executeCommunityPoolSpend(t *testing.T) {
+	tests := []struct {
+		name             string
+		setupProposal    func() *governance.Proposal
+		setupRegistry    func() *ParameterRegistry
+		executedAt       int64
+		executedHeight   int64
+		executedBy       address
+		expectedError    string
+		expectedHasError bool
+	}{
+		{
+			name: "success - valid community pool spend",
+			setupProposal: func() *governance.Proposal {
+				return governance.NewProposal(
+					1,
+					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					governance.NewProposalMetadata("Community Pool Spend", "Test proposal"),
+					NewProposalCommunityPoolSpendData(
+						"gno.land/r/gnoswap/gns",
+						testutils.TestAddress("recipient"),
+						1_000_000,
+						"gno.land/r/gnoswap/community_pool",
+					),
+					testutils.TestAddress("proposer"),
+					1,
+					time.Now().Unix(),
+					100,
+				)
+			},
+			setupRegistry: func() *ParameterRegistry {
+				return CreateParameterHandlers()
+			},
+			executedAt:       time.Now().Unix(),
+			executedHeight:   200,
+			executedBy:       testutils.TestAddress("executor"),
+			expectedHasError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// given
+			setupGovernanceExecuteTestCommunityPoolBalance(t)
+			proposal := tt.setupProposal()
+			registry := tt.setupRegistry()
+
+			// when
+			var err error
+			func(cur realm) {
+				testing.SetRealm(govRealm)
+				err = executeCommunityPoolSpend(
+					proposal,
+					registry,
+					tt.executedAt,
+					tt.executedHeight,
+					tt.executedBy,
+				)
+			}(cross)
+
+			// then
+			if tt.expectedHasError {
+				uassert.NotNil(t, err)
+				uassert.Equal(t, tt.expectedError, err.Error())
+			} else {
+				uassert.Nil(t, err)
+			}
+		})
+	}
+}
+
+// TestGovernanceExecute_executeParameterChange tests the private executeParameterChange function
+func TestGovernanceExecute_executeParameterChange(t *testing.T) {
+	tests := []struct {
+		name             string
+		setupProposal    func() *governance.Proposal
+		setupRegistry    func() *ParameterRegistry
+		executedAt       int64
+		executedHeight   int64
+		executedBy       address
+		expectedError    string
+		expectedHasError bool
+	}{
+		{
+			name: "success - single parameter change",
+			setupProposal: func() *governance.Proposal {
+				return governance.NewProposal(
+					1,
+					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					governance.NewProposalMetadata("Parameter Change", "Test proposal"),
+					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*100"),
+					testutils.TestAddress("proposer"),
+					1,
+					time.Now().Unix(),
+					100,
+				)
+			},
+			setupRegistry: func() *ParameterRegistry {
+				return CreateParameterHandlers()
+			},
+			executedAt:       time.Now().Unix(),
+			executedHeight:   200,
+			executedBy:       testutils.TestAddress("executor"),
+			expectedHasError: false,
+		},
+		{
+			name: "success - no parameter changes",
+			setupProposal: func() *governance.Proposal {
+				return governance.NewProposal(
+					1,
+					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					governance.NewProposalMetadata("Parameter Change", "Test proposal"),
+					NewProposalExecutionData(0, ""),
+					testutils.TestAddress("proposer"),
+					1,
+					time.Now().Unix(),
+					100,
+				)
+			},
+			setupRegistry: func() *ParameterRegistry {
+				return NewParameterRegistry()
+			},
+			executedAt:       time.Now().Unix(),
+			executedHeight:   200,
+			executedBy:       testutils.TestAddress("executor"),
+			expectedHasError: false,
+		},
+		{
+			name: "fail - handler not found",
+			setupProposal: func() *governance.Proposal {
+				return governance.NewProposal(
+					1,
+					NewProposalStatus(testConfig, 10_000_000_000, true, time.Now().Unix()),
+					governance.NewProposalMetadata("Parameter Change", "Test proposal"),
+					NewProposalExecutionData(1, "gno.land/r/nonexistent/package*EXE*NonExistentFunction*EXE*123"),
+					testutils.TestAddress("proposer"),
+					1,
+					time.Now().Unix(),
+					100,
+				)
+			},
+			setupRegistry: func() *ParameterRegistry {
+				return NewParameterRegistry()
+			},
+			executedAt:       time.Now().Unix(),
+			executedHeight:   200,
+			executedBy:       testutils.TestAddress("executor"),
+			expectedError:    "handler not found",
+			expectedHasError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// given
+			proposal := tt.setupProposal()
+			registry := tt.setupRegistry()
+
+			// when
+			var err error
+			func(cur realm) {
+				testing.SetRealm(govRealm)
+				err = executeParameterChange(
+					proposal,
+					registry,
+					tt.executedAt,
+					tt.executedHeight,
+					tt.executedBy,
+				)
+			}(cross)
+
+			// then
+			if tt.expectedHasError {
+				uassert.NotNil(t, err)
+				uassert.ErrorContains(t, err, tt.expectedError)
+			} else {
+				uassert.Nil(t, err)
+			}
+		})
+	}
+}
+
 // Helper functions for execute tests
 func setupExecuteTestProposal(t *testing.T, gov *governanceV1, proposal *governance.Proposal) {
 	gov.addProposal(proposal)
