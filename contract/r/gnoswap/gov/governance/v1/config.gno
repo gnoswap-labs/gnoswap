@@ -89,7 +89,8 @@ func (gv *governanceV1) reconfigure(
 	}
 
 	// Validate the new configuration
-	assertIsValidConfig(cfg)
+	assertConfigRanges(cfg)
+	assertNoConfigSumOverflow(cfg)
 
 	// Generate next version number
 	nextVersion := gv.nextConfigVersion()

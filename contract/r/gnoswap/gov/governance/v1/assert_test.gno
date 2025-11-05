@@ -8,8 +8,8 @@ import (
 	"gno.land/r/gnoswap/gov/governance"
 )
 
-// Test for assertIsValidConfig function.
-func TestAssert_assertIsValidConfig(t *testing.T) {
+// Test for assertConfigRanges function.
+func TestAssert_assertConfigRanges(t *testing.T) {
 	tests := []struct {
 		name                          string
 		votingStartDelay              int64
@@ -151,53 +151,120 @@ func TestAssert_assertIsValidConfig(t *testing.T) {
 			expectedHasPanic:              true,
 			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || quorum must be between 0 and 100",
 		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			cfg := governance.Config{
+				VotingStartDelay:              tc.votingStartDelay,
+				VotingPeriod:                  tc.votingPeriod,
+				VotingWeightSmoothingDuration: tc.votingWeightSmoothingDuration,
+				Quorum:                        tc.quorum,
+				ProposalCreationThreshold:     tc.proposalCreationThreshold,
+				ExecutionDelay:                tc.executionDelay,
+				ExecutionWindow:               tc.executionWindow,
+			}
+
+			if tc.expectedHasPanic {
+				// when & then
+				uassert.AbortsWithMessage(t, tc.expectedPanicMsg, func() {
+					func(cur realm) {
+						assertConfigRanges(cfg)
+					}(cross)
+				})
+			} else {
+				// when & then
+				func(cur realm) {
+					assertConfigRanges(cfg)
+				}(cross)
+			}
+		})
+	}
+}
+
+// Test for assertNoConfigSumOverflow function.
+func TestAssert_assertNoConfigSumOverflow(t *testing.T) {
+	tests := []struct {
+		name                          string
+		votingStartDelay              int64
+		votingPeriod                  int64
+		votingWeightSmoothingDuration int64
+		quorum                        int64
+		proposalCreationThreshold     int64
+		executionDelay                int64
+		executionWindow               int64
+		expectedHasPanic              bool
+		expectedPanicMsg              string
+	}{
 		{
-			name:                          "Fail: overflow at step 1 (currentTime + votingStartDelay)",
-			votingStartDelay:              math.MaxInt64,
+			name:                          "Success: normal config",
+			votingStartDelay:              100,
+			votingPeriod:                  200,
+			votingWeightSmoothingDuration: 50,
+			quorum:                        50,
+			proposalCreationThreshold:     1000,
+			executionDelay:                100,
+			executionWindow:               200,
+			expectedHasPanic:              false,
+		},
+		{
+			name:                          "Success: zero values",
+			votingStartDelay:              0,
 			votingPeriod:                  0,
 			votingWeightSmoothingDuration: 0,
-			quorum:                        50,
+			quorum:                        0,
 			proposalCreationThreshold:     0,
 			executionDelay:                0,
 			executionWindow:               0,
-			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || currentTime + votingStartDelay exceeds MaxInt64",
+			expectedHasPanic:              false,
 		},
 		{
-			name:                          "Fail: overflow at step 2 (activeTime + votingPeriod)",
-			votingStartDelay:              math.MaxInt64 / 2,
-			votingPeriod:                  math.MaxInt64 / 2,
+			name:                          "Success: max safe values",
+			votingStartDelay:              math.MaxInt64 / 10,
+			votingPeriod:                  math.MaxInt64 / 10,
+			votingWeightSmoothingDuration: 0,
+			quorum:                        50,
+			proposalCreationThreshold:     0,
+			executionDelay:                math.MaxInt64 / 10,
+			executionWindow:               math.MaxInt64 / 10,
+			expectedHasPanic:              false,
+		},
+		{
+			name:                          "Fail: overflow at step 2 (sum + votingPeriod)",
+			votingStartDelay:              math.MaxInt64 / 2 + 1,
+			votingPeriod:                  math.MaxInt64 / 2 + 1,
 			votingWeightSmoothingDuration: 0,
 			quorum:                        50,
 			proposalCreationThreshold:     0,
 			executionDelay:                0,
 			executionWindow:               0,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || activeTime + votingPeriod exceeds MaxInt64",
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || timestamp calculations may cause overflow",
 		},
 		{
-			name:                          "Fail: overflow at step 3 (votingEndTime + executionDelay)",
-			votingStartDelay:              math.MaxInt64 / 3,
-			votingPeriod:                  math.MaxInt64 / 3,
+			name:                          "Fail: overflow at step 3 (sum + executionDelay)",
+			votingStartDelay:              math.MaxInt64 / 4,
+			votingPeriod:                  math.MaxInt64 / 4,
 			votingWeightSmoothingDuration: 0,
 			quorum:                        50,
 			proposalCreationThreshold:     0,
-			executionDelay:                math.MaxInt64 / 3,
+			executionDelay:                math.MaxInt64 / 2 + 10,
 			executionWindow:               0,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || votingEndTime + executionDelay exceeds MaxInt64",
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || timestamp calculations may cause overflow",
 		},
 		{
-			name:                          "Fail: overflow at step 4 (executableTime + executionWindow)",
+			name:                          "Fail: overflow at step 4 (sum + executionWindow)",
 			votingStartDelay:              math.MaxInt64 / 4,
 			votingPeriod:                  math.MaxInt64 / 4,
 			votingWeightSmoothingDuration: 0,
 			quorum:                        50,
 			proposalCreationThreshold:     0,
 			executionDelay:                math.MaxInt64 / 4,
-			executionWindow:               math.MaxInt64 / 4,
+			executionWindow:               math.MaxInt64 / 4 + 100,
 			expectedHasPanic:              true,
-			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || executableTime + executionWindow exceeds MaxInt64",
+			expectedPanicMsg:              "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || timestamp calculations may cause overflow",
 		},
 	}
 
@@ -218,13 +285,88 @@ func TestAssert_assertIsValidConfig(t *testing.T) {
 				// when & then
 				uassert.AbortsWithMessage(t, tc.expectedPanicMsg, func() {
 					func(cur realm) {
-						assertIsValidConfig(cfg)
+						assertNoConfigSumOverflow(cfg)
 					}(cross)
 				})
 			} else {
 				// when & then
 				func(cur realm) {
-					assertIsValidConfig(cfg)
+					assertNoConfigSumOverflow(cfg)
+				}(cross)
+			}
+		})
+	}
+}
+
+// Test for assertTimestampOverflow function.
+func TestAssert_assertTimestampOverflow(t *testing.T) {
+	tests := []struct {
+		name             string
+		currentTime      int64
+		totalDelay       int64
+		expectedHasPanic bool
+		expectedPanicMsg string
+	}{
+		{
+			name:             "Success: normal values",
+			currentTime:      1000000,
+			totalDelay:       500000,
+			expectedHasPanic: false,
+		},
+		{
+			name:             "Success: zero delay",
+			currentTime:      1000000,
+			totalDelay:       0,
+			expectedHasPanic: false,
+		},
+		{
+			name:             "Success: zero current time",
+			currentTime:      0,
+			totalDelay:       1000000,
+			expectedHasPanic: false,
+		},
+		{
+			name:             "Success: max safe values",
+			currentTime:      math.MaxInt64 / 2,
+			totalDelay:       math.MaxInt64 / 2,
+			expectedHasPanic: false,
+		},
+		{
+			name:             "Fail: overflow with max current time",
+			currentTime:      math.MaxInt64,
+			totalDelay:       1,
+			expectedHasPanic: true,
+			expectedPanicMsg: "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || timestamp calculations may cause overflow",
+		},
+		{
+			name:             "Fail: overflow with large values",
+			currentTime:      math.MaxInt64 / 2 + 1,
+			totalDelay:       math.MaxInt64 / 2 + 1,
+			expectedHasPanic: true,
+			expectedPanicMsg: "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || timestamp calculations may cause overflow",
+		},
+		{
+			name:             "Fail: overflow at boundary",
+			currentTime:      math.MaxInt64 - 100,
+			totalDelay:       101,
+			expectedHasPanic: true,
+			expectedPanicMsg: "[GNOSWAP-GOVERNANCE-001] out of range for numeric value || timestamp calculations may cause overflow",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.expectedHasPanic {
+				// when & then
+				uassert.AbortsWithMessage(t, tc.expectedPanicMsg, func() {
+					func(cur realm) {
+						assertTimestampOverflow(tc.currentTime, tc.totalDelay)
+					}(cross)
+				})
+			} else {
+				// when & then
+				func(cur realm) {
+					assertTimestampOverflow(tc.currentTime, tc.totalDelay)
 				}(cross)
 			}
 		})

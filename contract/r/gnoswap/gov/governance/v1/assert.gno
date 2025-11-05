@@ -1,9 +1,6 @@
 package v1
 
 import (
-	"math"
-	"time"
-
 	"gno.land/r/gnoswap/gov/governance"
 )
 
@@ -19,12 +16,11 @@ func assertCallerIsProposer(gv *governanceV1, proposalID int64, caller address) 
 	}
 }
 
-// assertIsValidConfig validates governance configuration parameters.
+// assertConfigRanges validates that all config values are within valid ranges.
 // Panics if any parameter is invalid:
 //   - All time delays and thresholds must be non-negative
 //   - Quorum must be between 0 and 100
-//   - The sum of all delays must not cause int64 overflow when added to current time
-func assertIsValidConfig(cfg governance.Config) {
+func assertConfigRanges(cfg governance.Config) {
 	if cfg.VotingStartDelay < 0 {
 		panic(makeErrorWithDetails(errOutOfRange, "votingStartDelay cannot be negative"))
 	}
@@ -48,26 +44,37 @@ func assertIsValidConfig(cfg governance.Config) {
 	if cfg.Quorum < 0 || cfg.Quorum > 100 {
 		panic(makeErrorWithDetails(errOutOfRange, "quorum must be between 0 and 100"))
 	}
+}
 
-	// Check for potential int64 overflow when calculating proposal timestamps
-	// Simulate the same calculation with current time to detect overflow at each step
-	currentTime := time.Now().Unix()
-	if cfg.VotingStartDelay > 0 && currentTime > math.MaxInt64-cfg.VotingStartDelay {
-		panic(makeErrorWithDetails(errOutOfRange, "currentTime + votingStartDelay exceeds MaxInt64"))
+// assertNoConfigSumOverflow checks if summing config delays causes overflow.
+// This is a pure function without time dependency for easier testing.
+func assertNoConfigSumOverflow(cfg governance.Config) {
+	sum := int64(0)
+
+	sum += cfg.VotingStartDelay
+	if sum < 0 {
+		panic(makeErrorWithDetails(errOutOfRange, "timestamp calculations may cause overflow"))
 	}
 
-	activeTime := currentTime + cfg.VotingStartDelay
-	if cfg.VotingPeriod > 0 && activeTime > math.MaxInt64-cfg.VotingPeriod {
-		panic(makeErrorWithDetails(errOutOfRange, "activeTime + votingPeriod exceeds MaxInt64"))
+	sum += cfg.VotingPeriod
+	if sum < 0 {
+		panic(makeErrorWithDetails(errOutOfRange, "timestamp calculations may cause overflow"))
 	}
 
-	votingEndTime := activeTime + cfg.VotingPeriod
-	if cfg.ExecutionDelay > 0 && votingEndTime > math.MaxInt64-cfg.ExecutionDelay {
-		panic(makeErrorWithDetails(errOutOfRange, "votingEndTime + executionDelay exceeds MaxInt64"))
+	sum += cfg.ExecutionDelay
+	if sum < 0 {
+		panic(makeErrorWithDetails(errOutOfRange, "timestamp calculations may cause overflow"))
 	}
 
-	executableTime := votingEndTime + cfg.ExecutionDelay
-	if cfg.ExecutionWindow > 0 && executableTime > math.MaxInt64-cfg.ExecutionWindow {
-		panic(makeErrorWithDetails(errOutOfRange, "executableTime + executionWindow exceeds MaxInt64"))
+	sum += cfg.ExecutionWindow
+	if sum < 0 {
+		panic(makeErrorWithDetails(errOutOfRange, "timestamp calculations may cause overflow"))
+	}
+}
+
+// assertTimestampOverflow checks if adding a delay to current time causes overflow.
+func assertTimestampOverflow(currentTime, totalDelay int64) {
+	if currentTime+totalDelay < 0 {
+		panic(makeErrorWithDetails(errOutOfRange, "timestamp calculations may cause overflow"))
 	}
 }
