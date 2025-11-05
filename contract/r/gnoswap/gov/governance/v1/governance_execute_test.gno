@@ -1291,9 +1291,6 @@ func TestGovernanceExecute_executeCommunityPoolSpend(t *testing.T) {
 				uassert.NotNil(t, err)
 				uassert.Equal(t, tt.expectedError, err.Error())
 			} else {
-				if err != nil {
-					t.Errorf("unexpected error: %v", err)
-				}
 				uassert.Nil(t, err)
 			}
 		})
@@ -1403,9 +1400,7 @@ func TestGovernanceExecute_executeParameterChange(t *testing.T) {
 			// then
 			if tt.expectedHasError {
 				uassert.NotNil(t, err)
-				if !strings.Contains(err.Error(), tt.expectedError) {
-					t.Errorf("expected error to contain '%s', got '%s'", tt.expectedError, err.Error())
-				}
+				uassert.ErrorContains(t, err, tt.expectedError)
 			} else {
 				uassert.Nil(t, err)
 			}
