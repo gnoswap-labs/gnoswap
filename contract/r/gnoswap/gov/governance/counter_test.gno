@@ -1,11 +1,9 @@
-package v1
+package governance
 
 import (
 	"testing"
 
 	"gno.land/p/nt/uassert"
-
-	"gno.land/r/gnoswap/gov/governance"
 )
 
 // Test for NewCounter, next, and Get methods.
@@ -45,7 +43,7 @@ func TestCounter_Behavior(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given: create counter and set initial value if needed
-			c := governance.NewCounter()
+			c := NewCounter()
 			if tc.initValue > 0 {
 				c.Set(tc.initValue)
 			}
