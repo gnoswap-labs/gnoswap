@@ -10,13 +10,6 @@ loadpkg gno.land/r/sys/users
 loadpkg gno.land/r/gnoland/wugnot
 loadpkg gno.land/r/demo/defi/grc20reg
 
-loadpkg gno.land/r/onbloc/usdc
-loadpkg gno.land/r/onbloc/foo
-loadpkg gno.land/r/onbloc/bar
-loadpkg gno.land/r/onbloc/baz
-loadpkg gno.land/r/onbloc/qux
-loadpkg gno.land/r/onbloc/obl
-
 loadpkg gno.land/r/gnoswap/access
 loadpkg gno.land/p/gnoswap/uint256
 loadpkg gno.land/p/gnoswap/int256
@@ -45,20 +38,11 @@ loadpkg gno.land/r/gnoswap/position/v1
 
 adduserfrom gns_admin 'mnemonic here'
 
-adduser gnoswap
-patchpkg "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" $gnoswap_user_addr
-
 adduser test_admin
 patchpkg "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" $test_admin_user_addr
 
 adduser user1
 patchpkg "g16a7etgm9z2r653ucl36rj0l2yqcxgrz2jyegzx" $user1_user_addr
-
-adduser gnoswap_pool
-patchpkg "g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v" $gnoswap_pool_user_addr
-
-adduser gnoswap_router
-patchpkg "g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp" $gnoswap_router_user_addr
 
 ## start a new node
 gnoland start 
@@ -90,12 +74,32 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6a
 gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -send "50000000ugnot" -args gno.land/r/gnoswap/gns -args "gnot" -args 3000 -args "-887220" -args "887220" -args 50000000 -args 50000000 -args 1 -args 1 -args 9999999999 -args $gns_admin_user_addr -args $gns_admin_user_addr -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+stdout 1
+stdout "50000000"
+stdout "50000000"
+stdout "50000000"
 
 ### Decrease Liquidity
 gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func DecreaseLiquidity -args 1 -args "1000000" -args "1" -args "1" -args 9999999999 -args true -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+stdout 1
+stdout "1000000"
+stdout "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
+
 
 ### Increase Liquidity
 gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func IncreaseLiquidity -args 1 -args "1000000" -args "1000000" -args "1" -args "1" -args 9999999999 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+stdout 1
+stdout "1000000"
+stdout "1000000"
+stdout "1000000"
+stdout "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
 
 ### Collect fees with unwrap
 gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func CollectFee -args 1 -args true -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+stdout 1
+stdout "0"
+stdout "0"
+stdout "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
+stdout "0"
+stdout "0"
+
