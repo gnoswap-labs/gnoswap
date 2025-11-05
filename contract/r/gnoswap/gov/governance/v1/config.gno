@@ -88,6 +88,9 @@ func (gv *governanceV1) reconfigure(
 		ExecutionWindow:               executionWindow,
 	}
 
+	// Validate the new configuration
+	AssertIsValidConfig(cfg)
+
 	// Generate next version number
 	nextVersion := gv.nextConfigVersion()
 
