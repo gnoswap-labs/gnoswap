@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -1836,27 +1837,5 @@ func TestUnwrapLeftoverWrappedToken(t *testing.T) {
 
 // Helper function to check if string contains substring
 func contains(str, substr string) bool {
-	return len(str) >= len(substr) && findSubstring(str, substr)
-}
-
-func findSubstring(str, substr string) bool {
-	if len(substr) == 0 {
-		return true
-	}
-	if len(str) < len(substr) {
-		return false
-	}
-	for i := 0; i <= len(str)-len(substr); i++ {
-		match := true
-		for j := 0; j < len(substr); j++ {
-			if str[i+j] != substr[j] {
-				match = false
-				break
-			}
-		}
-		if match {
-			return true
-		}
-	}
-	return false
+	return strings.Contains(str, substr)
 }
