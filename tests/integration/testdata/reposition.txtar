@@ -99,8 +99,11 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args "gno.la
 stdout 1
 stdout "1669251248"
 stdout "5000000"
-stdout "5000000"
-
+stdout OK!
+stdout 'GAS USED:   8[0-9]{7}'
+stdout 'STORAGE DELTA:  5[0-9]{4} bytes'
+stdout 'TOTAL TX COST:  1[0-9]{7}ugnot'
+stdout '{\"type\":\"Mint\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"tickLower\",\"value\":\"\-60\"},{\"key\":\"tickUpper\",\"value\":\"60\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500\"},{\"key\":\"mintTo\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"caller\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"lpPositionId\",\"value\":\"1\"},{\"key\":\"liquidity\",\"value\":\"1669251248\"},{\"key\":\"amount0\",\"value\":\"5000000\"},{\"key\":\"amount1\",\"value\":\"5000000\"},{\"key\":\"sqrtPriceX96\",\"value\":\"79228162514264337593543950337\"},{\"key\":\"token0Balance\",\"value\":\"5000000\"},{\"key\":\"token1Balance\",\"value\":\"5000000\"},{\"key\":\"tickCumulative\",\"value\":\"0\"},{\"key\":\"liquidityCumulative\",\"value\":\"0\"},{\"key\":\"secondsPerLiquidityCumulativeX128\",\"value\":\"0\"},'
 gnokey query vm/qeval --data "gno.land/r/gnoswap/position.GetPosition(1)"
 stdout true
 
@@ -109,20 +112,36 @@ stdout true
 gnokey maketx call -pkgpath gno.land/r/swap_wrapper -func WrappedSwap -args "gno.land/r/onbloc/bar" -args gno.land/r/onbloc/foo -args 500 -args $gns_admin_user_addr -args false -args "20000000" -args "79228162514264337593543950338" -args $gns_admin_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout "0"
 stdout "2"
+stdout 'GAS USED:   5[0-9]{7}'
+stdout 'STORAGE DELTA:  18 bytes'
+stdout 'TOTAL TX COST:  10[0-9]{7}ugnot'
+stdout '{\"type\":"Swap\",'
 
 ### Collect fees before reposition
 gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func CollectFee -args 1 -args false -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout 1
 stdout "0"
-stdout "0"
 stdout "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
-stdout "0"
-stdout "0"
+stdout OK!
+stdout 'GAS USED:   4[0-9]{7}'
+stdout 'STORAGE DELTA:  4359 bytes'
+stdout 'TOTAL TX COST:  10[0-9]{7}ugnot'
+stdout '{\"type\":\"CollectSwapFee\"'
+stdout '{\"key\":\"lpPositionId\",\"value\":\"1\"},{\"key\":\"feeAmount0\",\"value\":\"0\"},{\"key\":\"feeAmount1\",\"value\":\"0\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500\"}'
 
 ### Decrease liquidity to clearing the position
 gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func DecreaseLiquidity -args 1 -args "1669251248" -args "0" -args "0" -args 9999999999 -args false -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout 1
 stdout "1669251248"
+stdout "0"
+stdout "4999999"
+stdout "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+stdout OK!
+stdout 'GAS USED:   (6|7)[0-9]{7}'
+stdout 'STORAGE DELTA:  -1[0-9]{4} bytes'
+stdout 'TOTAL TX COST:  9[0-9]{7}ugnot'
+stdout '{\"type\":\"DecreaseLiquidity\"'
+stdout '{\"key\":\"lpPositionId\",\"value\":\"1\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500\"},{\"key\":\"decreasedLiquidity\",\"value\":\"1669251248\"},{\"key\":\"feeAmount0\",\"value\":\"0\"},{\"key\":\"feeAmount1\",\"value\":\"0\"},{\"key\":\"amount0\",\"value\":\"4999999\"},{\"key\":\"amount1\",\"value\":\"4999999\"},{\"key\":\"unwrapResult\",\"value\":\"false\"},{\"key\":\"sqrtPriceX96\",\"value\":\"79228162514264337593543950338\"},{\"key\":\"positionLiquidity\",\"value\":\"0\"},{\"key\":\"token0Balance\",\"value\":\"1\"},{\"key\":\"token1Balance\",\"value\":\"1\"},{\"key\":\"tickCumulative\",\"value\":\"0\"},{\"key\":\"liquidityCumulative\",\"value\":\"1669251248\"},{\"key\":\"secondsPerLiquidityCumulativeX128\",\"value\":\"203853294900120669829431577235\"},'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/position.GetPosition(1)"
 stdout true
@@ -135,7 +154,12 @@ stdout 9000
 stdout 13000
 stdout "50000000"
 stdout "0"
-
+stdout OK!
+stdout 'GAS USED:   5[0-9]{7}'
+stdout 'STORAGE DELTA:  3[0-9]{4} bytes'
+stdout 'TOTAL TX COST:  10[0-9]{7}ugnot'
+stdout '\"type\":\"Reposition\"'
+stdout '{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"lpPositionId\",\"value\":\"1\"},{\"key\":\"tickLower\",\"value\":\"9000\"},{\"key\":\"tickUpper\",\"value\":\"13000\"},{\"key\":\"liquidity\",\"value\":\"432601712\"},{\"key\":\"amount0\",\"value\":\"50000000\"},{\"key\":\"amount1\",\"value\":\"0\"},{\"key\":\"prevTickLower\",\"value\":\"\-60\"},{\"key\":\"prevTickUpper\",\"value\":\"60\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500\"},{\"key\":\"sqrtPriceX96\",\"value\":\"79228162514264337593543950338\"},{\"key\":\"positionLiquidity\",\"value\":\"432601712\"},{\"key\":\"token0Balance\",\"value\":\"50000001\"},{\"key\":\"token1Balance\",\"value\":\"1\"},{\"key\":\"tickCumulative\",\"value\":\"0\"},{\"key\":\"liquidityCumulative\",\"value\":\"1669251248\"},{\"key\":\"secondsPerLiquidityCumulativeX128\",\"value\":\"203853294900120669829431577235\"}'
 
 
 -- gnomod.toml --

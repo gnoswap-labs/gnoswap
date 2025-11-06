@@ -51,12 +51,6 @@ patchpkg "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" $test_admin_user_addr
 adduser user1
 patchpkg "g16a7etgm9z2r653ucl36rj0l2yqcxgrz2jyegzx" $user1_user_addr
 
-adduser gnoswap_pool
-patchpkg "g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v" $gnoswap_pool_user_addr
-
-adduser gnoswap_router
-patchpkg "g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp" $gnoswap_router_user_addr
-
 ## start a new node
 gnoland start 
 
@@ -99,6 +93,9 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1vc883gs
 gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactOutSwapRoute -args gno.land/r/gnoswap/gns -args "gno.land/r/gnoland/wugnot" -args "1001502" -args "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000" -args "100" -args "10000000" -args 9999999999 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout '("1026619" string)'
 stdout '("-1001502" string)'
+stdout 'GAS USED:   [78][0-9]{7}'
+stdout 'STORAGE DELTA:  5[0-9]{3} bytes'
+stdout '{\"type\":\"ExactOutSwap\",'
 
 ### WUGNOT -> GNS (Exact out with native output)
 ### First, need to deposit more WUGNOT to have enough balance
@@ -107,15 +104,30 @@ gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1vc88
 gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactOutSwapRoute -args "gno.land/r/gnoland/wugnot" -args gno.land/r/gnoswap/gns -args "1001502" -args "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000" -args "100" -args "10000000" -args 9999999999 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout "985440"
 stdout "-1001502"
+stdout 'GAS USED:   [78][0-9]{7}'
+stdout 'STORAGE DELTA:  1 bytes'
+stdout 'STORAGE FEE:    100ugnot'
+stdout 'TOTAL TX COST:  100000100ugnot'
+stdout '{\"type\":\"ExactOutSwap\",'
 
 ### GNS -> WUGNOT with native output (Exact out)
 ### This test verifies that when swapping to WUGNOT, we can receive native GNOT by specifying "gnot" as output
 gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactOutSwapRoute -args gno.land/r/gnoswap/gns -args "gnot" -args "1000000" -args "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000" -args "100" -args "10000000" -args 9999999999 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout "1025899"
 stdout "-1000000"
+stdout 'GAS USED:   [78][0-9]{7}'
+stdout 'STORAGE DELTA:  23 bytes'
+stdout 'STORAGE FEE:    2300ugnot'
+stdout 'TOTAL TX COST:  100002300ugnot'
+stdout '{\"type\":\"ExactOutSwap\",'
 
 ### Native GNOT -> GNS (Exact out with native input)
 ### This test uses native GNOT as input for the swap
 gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactOutSwapRoute -send "10000000ugnot" -args "gnot" -args gno.land/r/gnoswap/gns -args "1000000" -args "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000" -args "100" -args "10000000" -args 9999999999 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout "983161"
 stdout "-1000000"
+stdout 'GAS USED:   [78][0-9]{7}'
+stdout 'STORAGE DELTA:  49 bytes'
+stdout 'STORAGE FEE:    4900ugnot'
+stdout 'TOTAL TX COST:  100004900ugnot'
+stdout '{\"type\":\"ExactOutSwap\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"}'

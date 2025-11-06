@@ -92,22 +92,30 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -send "500000
 
 ## Check pool states
 
-### Token0 Balance Before Swap
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetBalanceToken0(\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500\")"
+stdout "50000000"
 
-### Token1 Balance Before Swap
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetBalanceToken1(\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500\")"
+stdout "50000000"
 
 
 ## Exact-in Swap
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp -args 9223372036854775806 -gas-fee 100000000ugnot -gas-wanted 3000000000 -broadcast -chainid=tendermint_test gns_admin
 gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactInSingleSwapRoute -args "gno.land/r/gnoland/wugnot" -args "gno.land/r/gnoswap/gns" -args "10000000" -args "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500" -args "100" -args "0" -args 9999999999 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+stdout "10000000"
+stdout "-9426230"
+stdout 'GAS USED:   8[0-9]{7}'
+stdout 'STORAGE FEE:    637200ugnot'
+stdout 'STORAGE DELTA:  6372 bytes'
+stdout 'TOTAL TX COST:  100637200ugnot'
+stdout '{\"type\":\"Swap\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp\"},{\"key\":\"prevRealm\",\"value\":\"gno.land/r/gnoswap/router\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500\"},{\"key\":\"zeroForOne\",\"value\":\"true\"},{\"key\":\"requestAmount\",\"value\":\"10000000\"}'
+stdout '{\"type\":\"ExactInSwap\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"input\",\"value\":\"gno.land/r/gnoland/wugnot\"},{\"key\":\"output\",\"value\":\"gno.land/r/gnoswap/gns\"},{\"key\":\"exactAmount\",\"value\":\"10000000\"},{\"key\":\"route\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500\"},{\"key\":\"quote\",\"value\":\"100\"},{\"key\":\"resultInputAmount\",\"value\":\"10000000\"},{\"key\":\"resultOutputAmount\",\"value\":\"-9426230\"},{\"key\":\"referrer\",\"value\":\"\"}\]'
 
 ## Check pool States After Swap
 
-### Token0 Balance Before Swap
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetBalanceToken0(\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500\")"
+stdout "60000000"
 
-### Token1 Balance Before Swap
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetBalanceToken1(\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500\")"
+stdout "40559610"

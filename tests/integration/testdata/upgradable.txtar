@@ -56,6 +56,11 @@ stdout "gno.land/r/gnoswap/pool/v1"
 
 gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func UpgradeImpl -args gno.land/r/gnoswap/pool/v3_valid -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout OK!
+stdout 'GAS USED:   14225496'
+stdout 'STORAGE DELTA:  783 bytes'
+stdout 'STORAGE FEE:    78300ugnot'
+stdout 'TOTAL TX COST:  100078300ugnot'
+stdout 'EVENTS:     \[{\"bytes_delta\":783,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":78300},\"pkg_path\":\"gno.land/r/gnoswap/pool\"}\]'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetImplementationPackagePath()"
 stdout "gno.land/r/gnoswap/pool/v3_valid"
@@ -67,6 +72,11 @@ stderr 'version_manager: initializer not found for package path:gno.land/r/gnosw
 # Rollback to v1 contract
 gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func UpgradeImpl -args gno.land/r/gnoswap/pool/v1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout OK!
+stdout 'GAS USED:   14553556'
+stdout 'STORAGE DELTA:  -784 bytes'
+stdout 'STORAGE REFUND: 78400ugnot'
+stdout 'TOTAL TX COST:  99921600ugnot'
+stdout '[{\"bytes_delta\":\-784,\"fee_refund\":{\"denom\":\"ugnot\",\"amount\":78400},\"pkg_path\":\"gno.land/r/gnoswap/pool\",\"refund_withheld\":false}]'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetImplementationPackagePath()"
 stdout "gno.land/r/gnoswap/pool/v1"

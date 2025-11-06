@@ -93,6 +93,11 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_u
 ### 3. gns_admin has delegated GNS and received xGNS voting power
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeText -args "Test Proposal" -args "This is a test proposal" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout 1
+stdout 'GAS USED:   239[0-9]+'
+stdout 'STORAGE DELTA:  14769 bytes'
+stdout 'STORAGE FEE:    1476900ugnot'
+stdout 'TOTAL TX COST:  101476900ugnot'
+stdout 'EVENTS:     \[{\"type\":\"ProposeText\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"title\",\"value\":\"Test Proposal\"},{\"key\":\"description\",\"value\":\"This is a test proposal\"},{\"key\":\"proposalId\",\"value\":\"1\"},{\"key\":\"quorumAmount\",\"value\":\"1000000000\"},{\"key\":\"maxVotingWeight\",\"value\":\"2000000000\"},{\"key\":\"configVersion\",\"value\":\"2\"},{\"key\":\"createdAt\",\"value\":\".+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/gov/governance/v1\"},{\"bytes_delta\":14769,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":1476900},\"pkg_path\":\"gno.land/r/gnoswap/gov/governance\"}\]'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/gov/governance.GetTitleByProposalId(1)"
 stdout '"Test Proposal"'
@@ -105,7 +110,11 @@ stdout '"active"'
 
 ### Vote the proposal
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func Vote -args 1 -args true -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
-stdout '"1000000000"'
+stdout "1000000000"
+stdout 'GAS USED:   136[0-9]+'
+stdout 'STORAGE DELTA:  12 bytes'
+stdout 'STORAGE FEE:    1200ugnot'
+stdout 'EVENTS:     \[{\"type\":\"Vote\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevPkgPath\",\"value\":\"\"},{\"key\":\"proposalId\",\"value\":\"1\"},{\"key\":\"voter\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"yes\",\"value\":\"yes\"},{\"key\":\"voteWeight\",\"value\":\"1000000000\"},{\"key\":\"voteYes\",\"value\":\"1000000000\"},{\"key\":\"voteNo\",\"value\":\"0\"}\],\"pkg_path\":\"gno.land/r/gnoswap/gov/governance/v1\"},{\"bytes_delta\":12,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":1200},\"pkg_path\":\"gno.land/r/gnoswap/gov/governance\"}\]'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/gov/governance.GetExecutionStateByProposalId(1)"
 stdout '"active"'

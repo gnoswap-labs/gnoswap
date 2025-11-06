@@ -78,3 +78,8 @@ gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Approve -args g1x6r75sxl
 ### Create a new launchpad project
 gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func CreateProject -args "Bar Launchpad Project" -args "gno.land/r/onbloc/bar" -args g1wpex76n9vd6yzerywf047h6lta047h6lqlp5qp -args 1000000000 -args "gno.land/r/onbloc/bar" -args "1000000" -args 10 -args 20 -args 70 -args 1962328182 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout "gno.land/r/onbloc/bar:8"
+stdout OK!
+stdout 'GAS USED:   24[0-9]{6}'
+stdout 'STORAGE DELTA:  30587 bytes'
+stdout 'TOTAL TX COST:  103058700ugnot'
+stdout '{\"type\":\"CreateProject\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"name\",\"value\":\"Bar Launchpad Project\"},{\"key\":\"tokenPath\",\"value\":\"gno.land/r/onbloc/bar\"}'

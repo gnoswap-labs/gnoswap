@@ -98,6 +98,11 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -send "500000
 
 ## Executing swap to move tick
 gnokey maketx call -pkgpath gno.land/r/swap_wrapper -func WrappedSwap -args "gno.land/r/gnoland/wugnot" -args gno.land/r/gnoswap/gns -args 500 -args $gns_admin_user_addr -args false -args "60283363" -args "79228162514264337593543950338" -args $gns_admin_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+stdout 'GAS USED:   53[0-9]{6}'
+stdout 'STORAGE DELTA:  3197 bytes'
+stdout 'TOTAL TX COST:  100319700ugnot'
+stdout '{\"type\":\"Swap\"'
+stdout '{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500\"},{\"key\":\"zeroForOne\",\"value\":\"false\"},{\"key\":\"requestAmount\",\"value\":\"60283363\"},{\"key\":\"sqrtPriceLimitX96\",\"value\":\"79228162514264337593543950338\"},{\"key\":\"payer\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"recipient\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"token0Amount\",\"value\":\"0\"},{\"key\":\"token1Amount\",\"value\":\"2\"},{\"key\":\"protocolFee0\",\"value\":\"0\"},{\"key\":\"protocolFee1\",\"value\":\"0\"},{\"key\":\"sqrtPriceX96\",\"value\":\"79228162514264337593543950338\"},{\"key\":\"exactIn\",\"value\":\"true\"},{\"key\":\"currentTick\",\"value\":\"0\"},{\"key\":\"liquidity\",\"value\":\"50000000\"},{\"key\":\"feeGrowthGlobal0X128\",\"value\":\"0\"},{\"key\":\"feeGrowthGlobal1X128\",\"value\":\"6805647338418769269267492148635\"},{\"key\":\"balanceToken0\",\"value\":\"50000000\"},{\"key\":\"balanceToken1\",\"value\":\"50000000\"},'
 
 
 -- gnomod.toml --

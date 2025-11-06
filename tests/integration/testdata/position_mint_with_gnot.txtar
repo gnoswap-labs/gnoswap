@@ -96,28 +96,59 @@ stdout '(1 uint64)'
 stdout '("50000000" string)'
 stdout '("50000000" string)'
 stdout '("50000000" string)'
+stdout OK!
+stdout 'GAS USED:   89[0-9]{6}'
+stdout 'STORAGE DELTA:  5[0-9]{4} bytes'
+stdout 'TOTAL TX COST:  10[0-9]{7}ugnot'
+stdout '{\"type\":\"Mint\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"tickLower\",\"value\":\"-887220\"},{\"key\":\"tickUpper\",\"value\":\"887220\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\"}'
 
 ## Check minted position
 gnokey query vm/qeval --data "gno.land/r/gnoswap/position.ApiGetPosition(1)"
-# Should show position details with liquidity
+stdout '\\"lpPositionId\\":1'
 
 ## Increase liquidity with native GNOT
 gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func IncreaseLiquidity -send "10000000ugnot" -args 1 -args "10000000" -args "10000000" -args "1" -args "1" -args 9999999999 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
-stdout '("10000000" string)'
-stdout '("10000000" string)'
+stdout "10000000"
+stdout "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
+stdout OK!
+stdout 'GAS USED:   7[0-9]{7}'
+stdout 'STORAGE DELTA:  98 bytes'
+stdout 'TOTAL TX COST:  10[0-9]{7}ugnot'
+stdout '{\"type\":\"IncreaseLiquidity\"'
 
 ## Decrease liquidity from the position
 gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func DecreaseLiquidity -args 1 -args "5000000" -args "1" -args "1" -args 9999999999 -args false -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
-stdout '("5000000" string)'
-stdout '("5000000" string)'
+stdout "5000000"
+stdout "4999999"
+stdout "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
+stdout OK!
+stdout 'GAS USED:   7[0-9]{7}'
+stdout 'STORAGE DELTA:  2199 bytes'
+stdout 'TOTAL TX COST:  10[0-9]{7}ugnot'
+stdout '\"type\":\"DecreaseLiquidity\"'
+stdout '{\"key\":\"lpPositionId\",\"value\":\"1\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\"},{\"key\":\"decreasedLiquidity\",\"value\":\"5000000\"}'
 
 ## Decrease liquidity with unwrap (should receive native GNOT)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func DecreaseLiquidity -args 1 -args "5000000" -args "1" -args "1" -args 9999999999 -args true -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
-stdout '("5000000" string)'
-stdout '("5000000" string)'
+stdout "5000000"
+stdout "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
+stdout OK!
+stdout 'GAS USED:   7[0-9]{7}'
+stdout 'STORAGE DELTA:  32 bytes'
+stdout 'TOTAL TX COST:  10[0-9]{7}ugnot'
+stdout '\"type\":\"DecreaseLiquidity\"'
 
 ## Collect position fees with unwrap (should receive native GNOT for WUGNOT portion)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func CollectFee -args 1 -args true -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+stdout 1
+stdout "0"
+stdout "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
+stdout OK!
+stdout 'GAS USED:   4[0-9]{7}'
+stdout 'STORAGE DELTA:  28 bytes'
+stdout 'TOTAL TX COST:  10[0-9]{7}ugnot'
+stdout '\"type\":"CollectSwapFee\"'
+stdout '\"type\":\"WithdrawalFee\"'
 
 ## Test Mint with both tokens using GNOT
 ### First, deposit some WUGNOT to have balance for comparison
@@ -126,7 +157,10 @@ gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1dexa
 
 ### Mint position with native GNOT as token0Path parameter
 gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -send "30000000ugnot" -args "gnot" -args gno.land/r/gnoswap/gns -args 3000 -args "-887220" -args "887220" -args 30000000 -args 30000000 -args 1 -args 1 -args 9999999999 -args $gns_admin_user_addr -args $gns_admin_user_addr -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
-stdout '(2 uint64)'
-stdout '("30000000" string)'
-stdout '("30000000" string)'
-stdout '("30000000" string)'
+stdout '2'
+stdout "30000000"
+stdout OK!
+stdout 'GAS USED:   9[0-9]{7}'
+stdout 'STORAGE DELTA:  17621 bytes'
+stdout 'TOTAL TX COST:  10[0-9]{7}ugnot'
+stdout '{\"type\":\"Mint\",\"attrs\":\[{\"key\":\"slug\",\"value\":\"GNFT\"},{\"key\":\"to\",\"value\":\"g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye\"},{\"key\":\"tokenId\",\"value\":\"2\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc721\"}'

@@ -99,14 +99,32 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1vc883gs
 gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactInSwapRoute -args gno.land/r/gnoswap/gns -args gno.land/r/gnoland/wugnot -args 1000000 -args "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000" -args "100" -args "0" -args 9999999999 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout '("1000000" string)'
 stdout '("-976042" string)'
+stdout 'GAS USED:   7[0-9]{7}'
+stdout 'STORAGE DELTA:  53[0-9]{2} bytes'
+stdout 'STORAGE FEE:    534700ugnot'
+stdout 'TOTAL TX COST:  100534700ugnot'
+stdout '{\"type\":\"Swap\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp\"},{\"key\":\"prevRealm\",\"value\":\"gno.land/r/gnoswap/router\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\"},{\"key\":\"zeroForOne\",\"value\":\"false\"},{\"key\":\"requestAmount\",\"value\":\"1000000\"}'
+stdout '{\"type\":\"ExactInSwap\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"input\",\"value\":\"gno.land/r/gnoswap/gns\"},{\"key\":\"output\",\"value\":\"gno.land/r/gnoland/wugnot\"},{\"key\":\"exactAmount\",\"value\":\"1000000\"},{\"key\":\"route\",\"value\":\"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000\"},{\"key\":\"quote\",\"value\":\"100\"},{\"key\":\"resultInputAmount\",\"value\":\"1000000\"},{\"key\":\"resultOutputAmount\",\"value\":\"-976042\"},{\"key\":\"referrer\",\"value\":\"\"}\]'
 
 ### WUGNOT -> GNS (exact in with native input)
 gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactInSwapRoute -send "1000000ugnot" -args "gnot" -args gno.land/r/gnoswap/gns -args 1000000 -args "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000" -args "100" -args "0" -args 9999999999 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout '("1000000" string)'
 stdout '("-1014958" string)'
+stdout 'GAS USED:   8[0-9]{7}'
+stdout 'STORAGE DELTA:  3177 bytes'
+stdout 'STORAGE FEE:    317700ugnot'
+stdout 'TOTAL TX COST:  100317700ugnot'
+stdout '{\"type\":\"Swap\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp\"},{\"key\":\"prevRealm\",\"value\":\"gno.land/r/gnoswap/router\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\"},{\"key\":\"zeroForOne\",\"value\":\"true\"},{\"key\":\"requestAmount\",\"value\":\"1000000\"}'
+stdout '{\"type\":\"ExactInSwap\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"input\",\"value\":\"gnot\"},{\"key\":\"output\",\"value\":\"gno.land/r/gnoswap/gns\"},{\"key\":\"exactAmount\",\"value\":\"1000000\"},{\"key\":\"route\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\"},{\"key\":\"quote\",\"value\":\"100\"},{\"key\":\"resultInputAmount\",\"value\":\"1000000\"},{\"key\":\"resultOutputAmount\",\"value\":\"-1014958\"},{\"key\":\"referrer\",\"value\":\"\"}\]'
 
 ### Accumulate more fees by apply another GNS -> WUGNOT Swap
 gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactInSwapRoute -args gno.land/r/gnoswap/gns -args gno.land/r/gnoland/wugnot -args 1000000 -args "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000" -args "100" -args "0" -args 9999999999 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout '("1000000" string)'
 stdout '("-976796" string)'
+stdout 'GAS USED:   7[0-9]{7}'
+stdout 'STORAGE DELTA:  39 bytes'
+stdout 'STORAGE FEE:    3900ugnot'
+stdout 'TOTAL TX COST:  100003900ugnot'
+stdout '{\"type\":\"Swap\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp\"},{\"key\":\"prevRealm\",\"value\":\"gno.land/r/gnoswap/router\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\"},{\"key\":\"zeroForOne\",\"value\":\"false\"},{\"key\":\"requestAmount\",\"value\":\"1000000\"}'
+stdout '{\"type\":\"ExactInSwap\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"input\",\"value\":\"gno.land/r/gnoswap/gns\"},{\"key\":\"output\",\"value\":\"gno.land/r/gnoland/wugnot\"},{\"key\":\"exactAmount\",\"value\":\"1000000\"},{\"key\":\"route\",\"value\":\"gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000\"},{\"key\":\"quote\",\"value\":\"100\"},{\"key\":\"resultInputAmount\",\"value\":\"1000000\"},{\"key\":\"resultOutputAmount\",\"value\":\"-976796\"},{\"key\":\"referrer\",\"value\":\"\"}\]'
