@@ -381,8 +381,16 @@ func (gs *govStakerV1) unDelegate(
 
 		gs.setDelegation(delegation.ID(), delegation)
 		gs.addDelegationRecord(delegationRecord)
-		gs.removeStakeEmissionReward(delegator.String(), currentUnDelegationAmount, currentTimestamp)
-		gs.removeStakeProtocolFeeReward(delegator.String(), currentUnDelegationAmount, currentTimestamp)
+
+		err = gs.removeStakeEmissionReward(delegator.String(), currentUnDelegationAmount, currentTimestamp)
+		if err != nil {
+			panic(err)
+		}
+
+		err = gs.removeStakeProtocolFeeReward(delegator.String(), currentUnDelegationAmount, currentTimestamp)
+		if err != nil {
+			panic(err)
+		}
 
 		unDelegationAmount -= currentUnDelegationAmount
 		if unDelegationAmount <= 0 {

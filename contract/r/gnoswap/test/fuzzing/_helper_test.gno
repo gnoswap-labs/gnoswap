@@ -7,6 +7,7 @@ import (
 	"gno.land/p/gnoswap/fuzzing"
 	"gno.land/p/nt/ufmt"
 
+	"gno.land/r/gnoswap/mock"
 	_ "gno.land/r/gnoswap/rbac"
 
 	_ "gno.land/r/gnoswap/pool/v1"
@@ -134,4 +135,8 @@ func runFuzzTest(t *testing.T, iterations int, fn func(*fuzzing.T, *Result, int)
 	} else {
 		t.Logf("Fuzzing test successfully passed %d iterations", iterations)
 	}
+}
+
+func initStates(t *testing.T) {
+	mock.NewMockPoolStore()
 }
