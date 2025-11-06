@@ -2,6 +2,7 @@ package v1
 
 import (
 	"errors"
+
 	"gno.land/r/gnoswap/gov/staker"
 )
 
@@ -14,7 +15,7 @@ type DelegationResolver struct {
 }
 
 func NewDelegationResolver(delegation *staker.Delegation) *DelegationResolver {
-	return &DelegationResolver{ delegation }
+	return &DelegationResolver{delegation}
 }
 
 func (r *DelegationResolver) Get() *staker.Delegation {
@@ -36,7 +37,7 @@ func (r *DelegationResolver) IsEmpty() bool {
 // CollectableAmount calculates the total amount that can be collected at the given time
 func (r *DelegationResolver) CollectableAmount(currentTime int64) (total int64) {
 	for _, withdraw := range r.delegation.Withdraws() {
-		total += NewDelegationWithdrawResolver(withdraw).CollectableAmount(currentTime)
+		total = safeAddInt64(total, NewDelegationWithdrawResolver(withdraw).CollectableAmount(currentTime))
 	}
 	return total
 }
@@ -45,7 +46,7 @@ func (r *DelegationResolver) CollectableAmount(currentTime int64) (total int64) 
 func (r *DelegationResolver) UnDelegate(
 	amount, currentHeight, currentTimestamp, unDelegationLockupPeriod int64,
 ) {
-	r.delegation.SetUnDelegateAmount(r.delegation.UnDelegatedAmount() + amount)
+	r.delegation.SetUnDelegateAmount(safeAddInt64(r.delegation.UnDelegatedAmount(), amount))
 
 	withdraw := NewDelegationWithdraw(
 		r.delegation.ID(),
@@ -61,8 +62,8 @@ func (r *DelegationResolver) UnDelegate(
 func (r *DelegationResolver) UnDelegateWithoutLockup(
 	amount, currentHeight, currentTime int64,
 ) {
-	r.delegation.SetUnDelegateAmount(r.delegation.UnDelegatedAmount() + amount)
-	r.delegation.SetCollectedAmount(r.delegation.CollectedAmount() + amount)
+	r.delegation.SetUnDelegateAmount(safeAddInt64(r.delegation.UnDelegatedAmount(), amount))
+	r.delegation.SetCollectedAmount(safeAddInt64(r.delegation.CollectedAmount(), amount))
 
 	withdraw := NewDelegationWithdrawWithoutLockup(
 		r.delegation.ID(),
@@ -114,14 +115,17 @@ func (r *DelegationResolver) processCollection(amount, currentTime int64) error 
 			return err
 		}
 		r.delegation.SetCollectedAmount(updatedAmount)
-		remainingToCollect -= amountToCollect
+		remainingToCollect = safeSubInt64(remainingToCollect, amountToCollect)
 	}
 
 	return nil
 }
 
 func addToCollectedAmount(collectedAmount, amount int64) (int64, error) {
-	return collectedAmount + amount, nil
+	if amount < 0 {
+		return 0, errors.New("amount must be non-negative")
+	}
+	return safeAddInt64(collectedAmount, amount), nil
 }
 
 // min returns the smaller of two int64 values

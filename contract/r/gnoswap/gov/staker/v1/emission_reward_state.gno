@@ -46,7 +46,7 @@ func (self *EmissionRewardStateResolver) GetClaimableRewardAmount(
 	if err != nil {
 		return 0, err
 	}
-	return self.GetAccumulatedRewardAmount() + rewardAmount, nil
+	return safeAddInt64(self.GetAccumulatedRewardAmount(), rewardAmount), nil
 }
 
 // calculateClaimableRewards calculates newly earned rewards since the last update.
@@ -111,7 +111,7 @@ func (self *EmissionRewardStateResolver) adjustStake(delta int64) {
 		return
 	}
 	// clamp at zero on underflow
-	newAmt := self.GetStakedAmount() + delta
+	newAmt := safeAddInt64(self.GetStakedAmount(), delta)
 	if newAmt < 0 {
 		newAmt = 0
 	}
@@ -159,7 +159,7 @@ func (self *EmissionRewardStateResolver) updateRewardDebtX128(
 
 	// Accumulate newly earned rewards
 	if rewardAmount != 0 {
-		self.SetAccumulatedRewardAmount(self.GetAccumulatedRewardAmount() + rewardAmount)
+		self.SetAccumulatedRewardAmount(safeAddInt64(self.GetAccumulatedRewardAmount(), rewardAmount))
 	}
 
 	// Deep copy to avoid aliasing with external state
