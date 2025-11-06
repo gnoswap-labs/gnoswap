@@ -121,7 +121,10 @@ func (r *DelegationResolver) processCollection(amount, currentTime int64) error 
 }
 
 func addToCollectedAmount(collectedAmount, amount int64) (int64, error) {
-	return collectedAmount + amount, nil
+    if amount < 0 {
+        return 0, errors.New("amount must be non-negative")
+    }
+    return collectedAmount + amount, nil
 }
 
 // min returns the smaller of two int64 values
