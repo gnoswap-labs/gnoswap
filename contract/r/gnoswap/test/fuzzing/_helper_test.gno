@@ -30,16 +30,11 @@ var (
 )
 
 func runFuzzTest(t *testing.T, iterations int, fn func(*fuzzing.T, *Result, int)) {
-	fuzzingConfig := &fuzzing.Config{
-		BaseSeed:   fuzzing.BASE_SEED,
-		Iterations: iterations,
-		Verbose:    true,
-	}
-
-	result := NewFuzzingResult(fuzzingConfig.BaseSeed)
+	result := NewFuzzingResult(fuzzing.BASE_SEED)
 	index := 0
 
-	fuzzing.CheckWithConfig(t, fuzzingConfig, func(ft *fuzzing.T) {
+	// Use CheckN instead of CheckWithConfig
+	fuzzing.CheckN(t, iterations, func(ft *fuzzing.T) {
 		index++
 
 		isAborted := false

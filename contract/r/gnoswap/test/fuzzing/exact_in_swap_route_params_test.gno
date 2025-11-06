@@ -9,6 +9,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/p/gnoswap/fuzzing"
+	"gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
 )
 
@@ -124,7 +125,7 @@ func (p *exactInSwapRouteParams) ToString() string {
 }
 
 func NewValidExactInSwapRouteParams(t *fuzzing.T) *exactInSwapRouteParams {
-	amountIn := t.Int64Range(1, math.MaxInt64)
+	amountIn := fuzzing.Int64Range(1, math.MaxInt64).Draw(t, "amountIn").(int64)
 	amountInUint256 := u256.NewUintFromInt64(amountIn)
 
 	return &exactInSwapRouteParams{
@@ -140,7 +141,8 @@ func NewValidExactInSwapRouteParams(t *fuzzing.T) *exactInSwapRouteParams {
 }
 
 func NewRandomizedExactInSwapRouteParams(t *fuzzing.T) *exactInSwapRouteParams {
-	amountIn := t.Uint256WithBoundaries(4).ToString()
+	amountInVal := fuzzing.Uint256().Draw(t, "amountIn").(*uint256.Uint)
+	amountIn := amountInVal.ToString()
 
 	return &exactInSwapRouteParams{
 		inputToken:   "gno.land/r/onbloc/bar",
