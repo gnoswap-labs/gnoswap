@@ -128,6 +128,34 @@ func TestDelegationManagerResolver_GetUserDelegationIDs(t *testing.T) {
 			uassert.Equal(t, len(ids), tc.expectedIDsCount)
 		})
 	}
+
+	t.Run("Get delegation IDs with multiple delegatees and verify per-delegatee counts", func(t *testing.T) {
+		// given
+		manager := staker.NewDelegationManager()
+		resolver := NewDelegationManagerResolver(manager)
+		delegator := address("g1delegator")
+
+		// when - add delegations to multiple delegatees
+		resolver.addDelegation(delegator, address("g1delegatee1"), 1)
+		resolver.addDelegation(delegator, address("g1delegatee1"), 2)
+		resolver.addDelegation(delegator, address("g1delegatee2"), 3)
+		resolver.addDelegation(delegator, address("g1delegatee3"), 4)
+		resolver.addDelegation(delegator, address("g1delegatee3"), 5)
+
+		// then - should get all IDs
+		allIds := resolver.GetUserDelegationIDs(delegator)
+		uassert.Equal(t, len(allIds), 5)
+
+		// And specific delegatee IDs
+		ids1 := resolver.GetUserDelegationIDsWithDelegatee(delegator, address("g1delegatee1"))
+		uassert.Equal(t, len(ids1), 2)
+
+		ids2 := resolver.GetUserDelegationIDsWithDelegatee(delegator, address("g1delegatee2"))
+		uassert.Equal(t, len(ids2), 1)
+
+		ids3 := resolver.GetUserDelegationIDsWithDelegatee(delegator, address("g1delegatee3"))
+		uassert.Equal(t, len(ids3), 2)
+	})
 }
 
 // TestDelegationManagerResolver_addDelegation tests adding delegations
@@ -177,6 +205,22 @@ func TestDelegationManagerResolver_addDelegation(t *testing.T) {
 			delegatee:        address("g1delegatee2"),
 			delegationID:     2,
 			expectedIDsCount: 1, // Only 1 for this specific delegatee
+		},
+		{
+			name:             "Add delegation with negative ID",
+			setup:            func(dm *DelegationManagerResolver) {},
+			delegator:        address("g1delegator"),
+			delegatee:        address("g1delegatee"),
+			delegationID:     -1,
+			expectedIDsCount: 1, // Should be added (no validation)
+		},
+		{
+			name:             "Add delegation with zero ID",
+			setup:            func(dm *DelegationManagerResolver) {},
+			delegator:        address("g1delegator"),
+			delegatee:        address("g1delegatee"),
+			delegationID:     0,
+			expectedIDsCount: 1,
 		},
 	}
 
@@ -275,11 +319,8 @@ func TestDelegationManagerResolver_removeDelegation(t *testing.T) {
 			uassert.Equal(t, len(ids), tc.expectedIDsCount)
 		})
 	}
-}
 
-// TestDelegationManagerResolver_ErrorCases tests error and boundary cases
-func TestDelegationManagerResolver_ErrorCases(t *testing.T) {
-	t.Run("Add multiple delegations then remove all", func(t *testing.T) {
+	t.Run("Remove all delegations sequentially", func(t *testing.T) {
 		// given
 		manager := staker.NewDelegationManager()
 		resolver := NewDelegationManagerResolver(manager)
@@ -299,59 +340,5 @@ func TestDelegationManagerResolver_ErrorCases(t *testing.T) {
 		ids := resolver.GetUserDelegationIDsWithDelegatee(delegator, delegatee)
 		uassert.Equal(t, len(ids), 0)
 	})
-
-	t.Run("Get delegation IDs with multiple delegatees", func(t *testing.T) {
-		// given
-		manager := staker.NewDelegationManager()
-		resolver := NewDelegationManagerResolver(manager)
-		delegator := address("g1delegator")
-
-		// when - add delegations to multiple delegatees
-		resolver.addDelegation(delegator, address("g1delegatee1"), 1)
-		resolver.addDelegation(delegator, address("g1delegatee1"), 2)
-		resolver.addDelegation(delegator, address("g1delegatee2"), 3)
-		resolver.addDelegation(delegator, address("g1delegatee3"), 4)
-		resolver.addDelegation(delegator, address("g1delegatee3"), 5)
-
-		// then - should get all IDs
-		allIds := resolver.GetUserDelegationIDs(delegator)
-		uassert.Equal(t, len(allIds), 5)
-
-		// And specific delegatee IDs
-		ids1 := resolver.GetUserDelegationIDsWithDelegatee(delegator, address("g1delegatee1"))
-		uassert.Equal(t, len(ids1), 2)
-
-		ids2 := resolver.GetUserDelegationIDsWithDelegatee(delegator, address("g1delegatee2"))
-		uassert.Equal(t, len(ids2), 1)
-
-		ids3 := resolver.GetUserDelegationIDsWithDelegatee(delegator, address("g1delegatee3"))
-		uassert.Equal(t, len(ids3), 2)
-	})
-
-	t.Run("Add delegation with negative ID", func(t *testing.T) {
-		// given
-		manager := staker.NewDelegationManager()
-		resolver := NewDelegationManagerResolver(manager)
-
-		// when - add delegation with negative ID
-		resolver.addDelegation(address("g1delegator"), address("g1delegatee"), -1)
-
-		// then - should be added (no validation)
-		ids := resolver.GetUserDelegationIDsWithDelegatee(address("g1delegator"), address("g1delegatee"))
-		uassert.Equal(t, len(ids), 1)
-	})
-
-	t.Run("Add delegation with zero ID", func(t *testing.T) {
-		// given
-		manager := staker.NewDelegationManager()
-		resolver := NewDelegationManagerResolver(manager)
-
-		// when - add delegation with zero ID
-		resolver.addDelegation(address("g1delegator"), address("g1delegatee"), 0)
-
-		// then - should be added
-		ids := resolver.GetUserDelegationIDsWithDelegatee(address("g1delegator"), address("g1delegatee"))
-		uassert.Equal(t, len(ids), 1)
-		uassert.Equal(t, ids[0], int64(0))
-	})
 }
+

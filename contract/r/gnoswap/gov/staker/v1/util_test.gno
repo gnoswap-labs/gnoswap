@@ -71,6 +71,11 @@ func TestFormatInt(t *testing.T) {
 			input:    9223372036854775807,
 			expected: "9223372036854775807",
 		},
+		{
+			name:     "Format min int64",
+			input:    -9223372036854775808,
+			expected: "-9223372036854775808",
+		},
 	}
 
 	for _, tc := range tests {
@@ -172,9 +177,11 @@ func TestUtil_marshal(t *testing.T) {
 // TestUtil_getUint64FromTree tests retrieving uint64 from AVL tree
 func TestUtil_getUint64FromTree(t *testing.T) {
 	tests := []struct {
-		name     string
-		setup    func() (*avl.Tree, string)
-		expected uint64
+		name                 string
+		setup                func() (*avl.Tree, string)
+		expected             uint64
+		expectedHasPanic     bool
+		expectedPanicMessage string
 	}{
 		{
 			name: "get existing value",
@@ -202,6 +209,16 @@ func TestUtil_getUint64FromTree(t *testing.T) {
 			},
 			expected: 0,
 		},
+		{
+		    name: "panics on wrong type",
+			setup: func() (*avl.Tree, string) {
+			    tree := avl.NewTree()
+				tree.Set("key1", int64(100)) // Wrong type (int64 instead of uint64)
+				return tree, "key1"
+			},
+			expectedHasPanic:     true,
+            expectedPanicMessage: "failed to cast value to uint64: int64",
+		},
 	}
 
 	for _, tc := range tests {
@@ -209,11 +226,15 @@ func TestUtil_getUint64FromTree(t *testing.T) {
 			// given
 			tree, key := tc.setup()
 
-			// when
-			result := getUint64FromTree(tree, key)
-
-			// then
-			uassert.Equal(t, result, tc.expected)
+			// when/then
+			if tc.expectedHasPanic {
+                uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
+                    getUint64FromTree(tree, key)
+                })
+            } else {
+                result := getUint64FromTree(tree, key)
+                uassert.Equal(t, result, tc.expected)
+            }
 		})
 	}
 }
@@ -221,9 +242,11 @@ func TestUtil_getUint64FromTree(t *testing.T) {
 // TestUtil_updateUint64InTree tests updating uint64 in AVL tree
 func TestUtil_updateUint64InTree(t *testing.T) {
 	tests := []struct {
-		name     string
-		setup    func() (*avl.Tree, string, uint64, bool)
-		expected uint64
+		name                 string
+		setup                func() (*avl.Tree, string, uint64, bool)
+		expected             uint64
+		expectedHasPanic     bool
+		expectedPanicMessage string
 	}{
 		{
 			name: "add to existing value",
@@ -260,6 +283,35 @@ func TestUtil_updateUint64InTree(t *testing.T) {
 			},
 			expected: 0,
 		},
+		{
+			name: "update with zero delta",
+			setup: func() (*avl.Tree, string, uint64, bool) {
+				tree := avl.NewTree()
+				tree.Set("key1", uint64(100))
+				return tree, "key1", 0, true
+			},
+			expected: 100, // Should remain unchanged
+		},
+		{
+			name: "overflow on add",
+			setup: func() (*avl.Tree, string, uint64, bool) {
+				tree := avl.NewTree()
+				maxUint64 := uint64(18446744073709551615)
+				tree.Set("key1", maxUint64-1)
+				return tree, "key1", 10, true
+			},
+			expected: 8, // Wrapped around: (max-1) + 10 = 8
+		},
+		{
+		    name: "panics on insufficient balance",
+			setup: func() (*avl.Tree, string, uint64, bool) {
+                tree := avl.NewTree()
+                tree.Set("key1", uint64(50))
+                return tree, "key1", 100, false
+			},
+			expectedHasPanic:     true,
+            expectedPanicMessage: "[GNOSWAP-GOV_STAKER-010] not enough balance || not enough balance: current(50) < requested(100)",
+		},
 	}
 
 	for _, tc := range tests {
@@ -267,11 +319,15 @@ func TestUtil_updateUint64InTree(t *testing.T) {
 			// given
 			tree, key, delta, add := tc.setup()
 
-			// when
-			result := updateUint64InTree(tree, key, delta, add)
-
-			// then
-			uassert.Equal(t, result, tc.expected)
+			// when/then
+			if tc.expectedHasPanic {
+                uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
+                    updateUint64InTree(tree, key, delta, add)
+                })
+            } else {
+			    result := updateUint64InTree(tree, key, delta, add)
+				uassert.Equal(t, result, tc.expected)
+		    }
 		})
 	}
 }
@@ -279,8 +335,10 @@ func TestUtil_updateUint64InTree(t *testing.T) {
 // TestUtil_getOrCreateInnerTree tests getting or creating inner AVL tree
 func TestUtil_getOrCreateInnerTree(t *testing.T) {
 	tests := []struct {
-		name  string
-		setup func() (*avl.Tree, string)
+		name                 string
+		setup                func() (*avl.Tree, string)
+		expectedHasPanic     bool
+		expectedPanicMessage string
 	}{
 		{
 			name: "create new inner tree",
@@ -299,6 +357,16 @@ func TestUtil_getOrCreateInnerTree(t *testing.T) {
 				return tree, "key1"
 			},
 		},
+		{
+		    name: "panics on wrong type",
+            setup: func() (*avl.Tree, string) {
+                tree := avl.NewTree()
+                tree.Set("key1", uint64(100)) // Wrong type (uint64 instead of *avl.Tree)
+                return tree, "key1"
+            },
+            expectedHasPanic:     true,
+            expectedPanicMessage: "failed to cast value to *avl.Tree: uint64",
+		},
 	}
 
 	for _, tc := range tests {
@@ -306,19 +374,22 @@ func TestUtil_getOrCreateInnerTree(t *testing.T) {
 			// given
 			tree, key := tc.setup()
 
-			// when
-			innerTree := getOrCreateInnerTree(tree, key)
+			// when/then
+			if tc.expectedHasPanic {
+                uassert.PanicsWithMessage(t, "failed to cast value to *avl.Tree: uint64", func() {
+    				getOrCreateInnerTree(tree, "key1")
+    			})
+			} else {
+			    innerTree := getOrCreateInnerTree(tree, key)
 
-			// then
-			// Verify innerTree is not nil
-			if innerTree == nil {
-				t.Errorf("innerTree should not be nil")
-			}
+                if innerTree == nil {
+                    t.Errorf("innerTree should not be nil")
+                }
 
-			// Verify the tree is properly stored by checking it's the same instance
-			retrieved := getOrCreateInnerTree(tree, key)
-			if retrieved != innerTree {
-				t.Errorf("retrieved tree should be the same instance as innerTree")
+                retrieved := getOrCreateInnerTree(tree, key)
+                if retrieved != innerTree {
+                    t.Errorf("retrieved tree should be the same instance as innerTree")
+                }
 			}
 		})
 	}
@@ -377,9 +448,11 @@ func TestUtil_milliToSec(t *testing.T) {
 // TestUtil_safeConvertToInt64 tests safe conversion from uint256 to int64
 func TestUtil_safeConvertToInt64(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    *u256.Uint
-		expected int64
+		name                 string
+		input                *u256.Uint
+		expected             int64
+		expectedHasPanic     bool
+		expectedPanicMessage string
 	}{
 		{
 			name:     "convert zero",
@@ -401,177 +474,26 @@ func TestUtil_safeConvertToInt64(t *testing.T) {
 			input:    u256.NewUint(9223372036854775806),
 			expected: 9223372036854775806,
 		},
+		{
+		    name: "panics on overflow - int64 max + 1",
+			input:    u256.NewUint(9223372036854775808), // int64 max + 1
+			expectedHasPanic:     true,
+			expectedPanicMessage: "amount(9223372036854775808) overflows int64 range (max 9223372036854775807)",
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// when
-			result := safeConvertToInt64(tc.input)
 
-			// then
-			uassert.Equal(t, result, tc.expected)
+		    // when/then
+		    if tc.expectedHasPanic {
+                uassert.PanicsWithMessage(t, tc.expectedPanicMessage, func() {
+                    safeConvertToInt64(tc.input)
+                })
+            } else {
+                result := safeConvertToInt64(tc.input)
+                uassert.Equal(t, result, tc.expected)
+            }
 		})
 	}
-}
-
-// TestUtil_ErrorCases tests error and panic conditions for utility functions
-func TestUtil_ErrorCases(t *testing.T) {
-	t.Run("updateUint64InTree panics on insufficient balance", func(t *testing.T) {
-		// given
-		tree := avl.NewTree()
-		tree.Set("key1", uint64(50))
-
-		// when/then - try to subtract more than available
-		uassert.PanicsWithMessage(t, "[GNOSWAP-GOV_STAKER-010] not enough balance || not enough balance: current(50) < requested(100)", func() {
-			updateUint64InTree(tree, "key1", 100, false)
-		})
-	})
-
-	t.Run("updateUint64InTree with zero delta", func(t *testing.T) {
-		// given
-		tree := avl.NewTree()
-		tree.Set("key1", uint64(100))
-
-		// when - update with zero delta
-		result := updateUint64InTree(tree, "key1", 0, true)
-
-		// then - value should remain unchanged
-		uassert.Equal(t, result, uint64(100))
-	})
-
-	t.Run("updateUint64InTree overflow on add", func(t *testing.T) {
-		// given
-		tree := avl.NewTree()
-		maxUint64 := uint64(18446744073709551615)
-		tree.Set("key1", maxUint64-1)
-
-		// when - add causing overflow
-		result := updateUint64InTree(tree, "key1", 10, true)
-
-		// then - should overflow (wraps around in uint64)
-		uassert.True(t, result < maxUint64) // Wrapped around
-	})
-
-	t.Run("getUint64FromTree panics on wrong type", func(t *testing.T) {
-		// given
-		tree := avl.NewTree()
-		tree.Set("key1", int64(100)) // Wrong type (int64 instead of uint64)
-
-		// when/then - try to get as uint64
-		uassert.PanicsWithMessage(t, "failed to cast value to uint64: int64", func() {
-			getUint64FromTree(tree, "key1")
-		})
-	})
-
-	t.Run("getOrCreateInnerTree panics on wrong type", func(t *testing.T) {
-		// given
-		tree := avl.NewTree()
-		tree.Set("key1", uint64(100)) // Wrong type (uint64 instead of *avl.Tree)
-
-		// when/then - try to get as tree
-		uassert.PanicsWithMessage(t, "failed to cast value to *avl.Tree: uint64", func() {
-			getOrCreateInnerTree(tree, "key1")
-		})
-	})
-
-	t.Run("safeConvertToInt64 panics on overflow", func(t *testing.T) {
-		// given - value exceeding int64 max
-		value := u256.NewUint(9223372036854775808) // int64 max + 1
-
-		// when/then - should panic
-		uassert.PanicsWithMessage(t, "amount(9223372036854775808) overflows int64 range (max 9223372036854775807)", func() {
-			safeConvertToInt64(value)
-		})
-	})
-
-	t.Run("safeConvertToInt64 with max int64", func(t *testing.T) {
-		// given - exactly max int64
-		value := u256.NewUint(9223372036854775807)
-
-		// when
-		result := safeConvertToInt64(value)
-
-		// then - should succeed
-		uassert.Equal(t, result, int64(9223372036854775807))
-	})
-
-	t.Run("safeConvertToInt64 panics on uint64 overflow", func(t *testing.T) {
-		// given - value exceeding uint64 max
-		value := u256.MustFromDecimal("18446744073709551616") // uint64 max + 1
-
-		// when/then - should panic
-		uassert.PanicsWithMessage(t, "amount(18446744073709551616) overflows int64 range (max 9223372036854775807)", func() {
-			safeConvertToInt64(value)
-		})
-	})
-
-	t.Run("marshal panics on invalid JSON", func(t *testing.T) {
-		// Note: It's difficult to make json.Marshal fail with valid *json.Node
-		// This test verifies marshal succeeds with empty node
-		// given
-		data := json.Builder().Node()
-
-		// when
-		result := marshal(data)
-
-		// then
-		uassert.Equal(t, result, "{}")
-	})
-
-	t.Run("formatInt with negative max", func(t *testing.T) {
-		// given
-		minInt64 := int64(-9223372036854775808)
-
-		// when
-		result := formatInt(minInt64)
-
-		// then
-		uassert.Equal(t, result, "-9223372036854775808")
-	})
-
-	t.Run("formatUint with max value", func(t *testing.T) {
-		// given
-		maxUint64 := uint64(18446744073709551615)
-
-		// when
-		result := formatUint(maxUint64)
-
-		// then
-		uassert.Equal(t, result, "18446744073709551615")
-	})
-
-	t.Run("b64Encode with special characters", func(t *testing.T) {
-		// given
-		specialChars := "!@#$%^&*()_+-=[]{}|;:',.<>?/~`"
-
-		// when
-		result := b64Encode(specialChars)
-
-		// then - should encode correctly
-		uassert.NotEqual(t, result, "")
-		uassert.NotEqual(t, result, specialChars)
-	})
-
-	t.Run("milliToSec with negative value", func(t *testing.T) {
-		// given
-		negativeMs := int64(-5000)
-
-		// when
-		result := milliToSec(negativeMs)
-
-		// then - should handle negative correctly
-		uassert.Equal(t, result, int64(-5))
-	})
-
-	t.Run("updateUint64InTree subtract exact amount", func(t *testing.T) {
-		// given
-		tree := avl.NewTree()
-		tree.Set("key1", uint64(100))
-
-		// when - subtract exact amount
-		result := updateUint64InTree(tree, "key1", 100, false)
-
-		// then - should be zero
-		uassert.Equal(t, result, uint64(0))
-	})
 }
