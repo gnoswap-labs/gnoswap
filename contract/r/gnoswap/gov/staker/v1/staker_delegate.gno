@@ -3,6 +3,7 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
+	"errors"
 	"time"
 
 	"gno.land/r/gnoswap/access"
@@ -262,7 +263,7 @@ func (gs *govStakerV1) CollectUndelegatedGns() int64 {
 		panic(err)
 	}
 
-	newLocked := currentLocked - collectedAmount
+	newLocked := safeSubInt64(currentLocked, collectedAmount)
 	if newLocked < 0 {
 		newLocked = 0
 	}
@@ -301,11 +302,13 @@ func (gs *govStakerV1) delegate(
 		currentTimestamp,
 	)
 	delegationResolver := NewDelegationResolver(delegation)
-	delegationRecord := staker.NewDelegationDelegateRecordBy(
-		delegation,
-		delegationResolver.DelegatedAmount(),
-		currentTimestamp,
-	)
+
+	delegatedAmount := delegationResolver.DelegatedAmount()
+	if delegatedAmount < 0 {
+		return nil, errors.New("delegated amount cannot be negative")
+	}
+
+	delegationRecord := staker.NewDelegationDelegateRecordBy(delegation, delegatedAmount, currentTimestamp)
 
 	gs.addDelegation(delegationID, delegation)
 	gs.addDelegationRecord(delegationRecord)
@@ -318,7 +321,7 @@ func (gs *govStakerV1) delegate(
 		panic(err)
 	}
 
-	if err := gs.store.SetTotalDelegatedAmount(currentDelegated + amount); err != nil {
+	if err := gs.store.SetTotalDelegatedAmount(safeAddInt64(currentDelegated, amount)); err != nil {
 		panic(err)
 	}
 
@@ -327,7 +330,7 @@ func (gs *govStakerV1) delegate(
 		panic(err)
 	}
 
-	if err := gs.store.SetTotalLockedAmount(currentLocked + amount); err != nil {
+	if err := gs.store.SetTotalLockedAmount(safeAddInt64(currentLocked, amount)); err != nil {
 		panic(err)
 	}
 
@@ -364,6 +367,10 @@ func (gs *govStakerV1) unDelegate(
 			currentUnDelegationAmount = resolver.DelegatedAmount()
 		}
 
+		if currentUnDelegationAmount < 0 {
+			return 0, errors.New("undelegation amount cannot be negative")
+		}
+
 		// Get lockup period from store
 		lockupPeriod, err := gs.store.GetUnDelegationLockupPeriod()
 		if err != nil {
@@ -384,7 +391,7 @@ func (gs *govStakerV1) unDelegate(
 		gs.removeStakeEmissionReward(delegator.String(), currentUnDelegationAmount, currentTimestamp)
 		gs.removeStakeProtocolFeeReward(delegator.String(), currentUnDelegationAmount, currentTimestamp)
 
-		unDelegationAmount -= currentUnDelegationAmount
+		unDelegationAmount = safeSubInt64(unDelegationAmount, currentUnDelegationAmount)
 		if unDelegationAmount <= 0 {
 			break
 		}
@@ -396,7 +403,7 @@ func (gs *govStakerV1) unDelegate(
 		panic(err)
 	}
 
-	newDelegated := currentDelegated - amount
+	newDelegated := safeSubInt64(currentDelegated, amount)
 	if newDelegated < 0 {
 		newDelegated = 0
 	}
@@ -443,7 +450,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 			currentTime,
 		)
 
-		unDelegationAmount -= currentUnDelegationAmount
+		unDelegationAmount = safeSubInt64(unDelegationAmount, currentUnDelegationAmount)
 		if unDelegationAmount <= 0 {
 			break
 		}
@@ -455,7 +462,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 		panic(err)
 	}
 
-	newDelegated := currentDelegated - amount
+	newDelegated := safeSubInt64(currentDelegated, amount)
 	if newDelegated < 0 {
 		newDelegated = 0
 	}
@@ -492,11 +499,7 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 		}
 
 		// Simple addition since addToCollectedAmount was removed
-		collectedAmount += collectableAmount
-		if err != nil {
-			msg := makeErrorWithDetails(errInvalidAmount, err.Error())
-			return collectedAmount, msg
-		}
+		collectedAmount = safeAddInt64(collectedAmount, collectableAmount)
 
 		// Remove empty delegations to keep storage clean
 		if resolver.IsEmpty() {

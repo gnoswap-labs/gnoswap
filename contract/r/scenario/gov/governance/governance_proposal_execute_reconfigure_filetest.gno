@@ -79,7 +79,7 @@ func delegateGnsToAdmin() {
 
 func proposeReconfigureGovernance() int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	proposalID := governance.ProposeParameterChange(cross, "gov", "reconfigure", 1, "gno.land/r/gnoswap/gov/governance*EXE*Reconfigure*EXE*123,456,789,1234,5678,12345,67890")
+	proposalID := governance.ProposeParameterChange(cross, "gov", "reconfigure", 1, "gno.land/r/gnoswap/gov/governance*EXE*Reconfigure*EXE*123,456,789,60,5678,12345,67890")
 
 	ufmt.Printf("[INFO] Reconfigure Governance Parameters Proposal ID: %d\n", proposalID)
 	return proposalID
@@ -133,4 +133,4 @@ func executeReconfigureGovernance(proposalID int64) {
 //
 // [SCENARIO] 7. Execute the reconfigure governance parameters proposal
 // [EXPECTED] before proposal 1 executing - voting start delay: 86400, voting period: 604800, quorum: 50
-// [EXPECTED] after proposal 1 executing - voting start delay: 123, voting period: 456, quorum: 1234
+// [EXPECTED] after proposal 1 executing - voting start delay: 123, voting period: 456, quorum: 60
