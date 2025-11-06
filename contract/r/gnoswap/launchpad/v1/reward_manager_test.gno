@@ -1441,3 +1441,207 @@ func TestRewardManager_calculateRewardPerDepositX128(t *testing.T) {
 		})
 	}
 }
+
+// TestRewardManager_updateDistributeAmountPerSecondX128 tests the private function updateDistributeAmountPerSecondX128
+// This function calculates and sets the distribute amount per second in X128 format
+func TestRewardManager_updateDistributeAmountPerSecondX128(t *testing.T) {
+	tests := []struct {
+		name                   string
+		totalDistributeAmount  int64
+		distributeStartTime    int64
+		distributeEndTime      int64
+		expectedAmountPerSecond string
+		expectedStartTime      int64
+		expectedEndTime        int64
+		expectNoUpdate         bool
+	}{
+		{
+			name:                  "normal calculation - 100 seconds duration",
+			totalDistributeAmount: 1000,
+			distributeStartTime:   1000,
+			distributeEndTime:     1100,
+			expectedAmountPerSecond: func() string {
+				// 1000 << 128 / 100 = 10 << 128
+				result := u256.Zero().Lsh(u256.NewUint(1000), 128)
+				result = u256.Zero().Div(result, u256.NewUint(100))
+				return result.ToString()
+			}(),
+			expectedStartTime: 1000,
+			expectedEndTime:   1100,
+			expectNoUpdate:    false,
+		},
+		{
+			name:                  "time duration is exactly 1 second - boundary",
+			totalDistributeAmount: 1000,
+			distributeStartTime:   1000,
+			distributeEndTime:     1001,
+			expectedAmountPerSecond: func() string {
+				// 1000 << 128 / 1 = 1000 << 128
+				result := u256.Zero().Lsh(u256.NewUint(1000), 128)
+				return result.ToString()
+			}(),
+			expectedStartTime: 1000,
+			expectedEndTime:   1001,
+			expectNoUpdate:    false,
+		},
+		{
+			name:                  "time duration is zero - no update",
+			totalDistributeAmount: 1000,
+			distributeStartTime:   1000,
+			distributeEndTime:     1000,
+			expectNoUpdate:        true,
+		},
+		{
+			name:                  "time duration is negative - no update",
+			totalDistributeAmount: 1000,
+			distributeStartTime:   2000,
+			distributeEndTime:     1000,
+			expectNoUpdate:        true,
+		},
+		{
+			name:                  "time duration is -1 - boundary",
+			totalDistributeAmount: 1000,
+			distributeStartTime:   1001,
+			distributeEndTime:     1000,
+			expectNoUpdate:        true,
+		},
+		{
+			name:                  "very large duration",
+			totalDistributeAmount: 1000000,
+			distributeStartTime:   1000,
+			distributeEndTime:     1000000000,
+			expectedAmountPerSecond: func() string {
+				// 1000000 << 128 / 999999000
+				result := u256.Zero().Lsh(u256.NewUint(1000000), 128)
+				result = u256.Zero().Div(result, u256.NewUint(999999000))
+				return result.ToString()
+			}(),
+			expectedStartTime: 1000,
+			expectedEndTime:   1000000000,
+			expectNoUpdate:    false,
+		},
+		{
+			name:                  "very small total distribute amount",
+			totalDistributeAmount: 1,
+			distributeStartTime:   1000,
+			distributeEndTime:     2000,
+			expectedAmountPerSecond: func() string {
+				// 1 << 128 / 1000
+				result := u256.Zero().Lsh(u256.NewUint(1), 128)
+				result = u256.Zero().Div(result, u256.NewUint(1000))
+				return result.ToString()
+			}(),
+			expectedStartTime: 1000,
+			expectedEndTime:   2000,
+			expectNoUpdate:    false,
+		},
+		{
+			name:                  "zero total distribute amount",
+			totalDistributeAmount: 0,
+			distributeStartTime:   1000,
+			distributeEndTime:     2000,
+			expectedAmountPerSecond: func() string {
+				// 0 << 128 / 1000 = 0
+				return u256.Zero().ToString()
+			}(),
+			expectedStartTime: 1000,
+			expectedEndTime:   2000,
+			expectNoUpdate:    false,
+		},
+		{
+			name:                  "large total distribute amount",
+			totalDistributeAmount: math.MaxInt64 / 2,
+			distributeStartTime:   1000,
+			distributeEndTime:     2000,
+			expectedAmountPerSecond: func() string {
+				// (MaxInt64/2) << 128 / 1000
+				result := u256.Zero().Lsh(u256.NewUint(uint64(math.MaxInt64/2)), 128)
+				result = u256.Zero().Div(result, u256.NewUint(1000))
+				return result.ToString()
+			}(),
+			expectedStartTime: 1000,
+			expectedEndTime:   2000,
+			expectNoUpdate:    false,
+		},
+		{
+			name:                  "amount equals duration - 1:1 ratio",
+			totalDistributeAmount: 1000,
+			distributeStartTime:   1000,
+			distributeEndTime:     2000,
+			expectedAmountPerSecond: func() string {
+				// 1000 << 128 / 1000 = 1 << 128
+				result := u256.Zero().Lsh(u256.NewUint(1), 128)
+				return result.ToString()
+			}(),
+			expectedStartTime: 1000,
+			expectedEndTime:   2000,
+			expectNoUpdate:    false,
+		},
+		{
+			name:                  "duration much larger than amount",
+			totalDistributeAmount: 100,
+			distributeStartTime:   1000,
+			distributeEndTime:     1000000,
+			expectedAmountPerSecond: func() string {
+				// 100 << 128 / 999000 (very small per second)
+				result := u256.Zero().Lsh(u256.NewUint(100), 128)
+				result = u256.Zero().Div(result, u256.NewUint(999000))
+				return result.ToString()
+			}(),
+			expectedStartTime: 1000,
+			expectedEndTime:   1000000,
+			expectNoUpdate:    false,
+		},
+		{
+			name:                  "amount much larger than duration",
+			totalDistributeAmount: 1000000,
+			distributeStartTime:   1000,
+			distributeEndTime:     1100,
+			expectedAmountPerSecond: func() string {
+				// 1000000 << 128 / 100 (very large per second)
+				result := u256.Zero().Lsh(u256.NewUint(1000000), 128)
+				result = u256.Zero().Div(result, u256.NewUint(100))
+				return result.ToString()
+			}(),
+			expectedStartTime: 1000,
+			expectedEndTime:   1100,
+			expectNoUpdate:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// given
+			manager := &RewardManager{
+				distributeAmountPerSecondX128: u256.Zero(),
+				distributeStartTime:           0,
+				distributeEndTime:             0,
+			}
+
+			// Store initial state
+			initialAmount := manager.distributeAmountPerSecondX128.ToString()
+			initialStart := manager.distributeStartTime
+			initialEnd := manager.distributeEndTime
+
+			// when
+			manager.updateDistributeAmountPerSecondX128(
+				tt.totalDistributeAmount,
+				tt.distributeStartTime,
+				tt.distributeEndTime,
+			)
+
+			// then
+			if tt.expectNoUpdate {
+				// Verify no update occurred
+				uassert.Equal(t, initialAmount, manager.distributeAmountPerSecondX128.ToString())
+				uassert.Equal(t, initialStart, manager.distributeStartTime)
+				uassert.Equal(t, initialEnd, manager.distributeEndTime)
+			} else {
+				// Verify update occurred with correct values
+				uassert.Equal(t, tt.expectedAmountPerSecond, manager.distributeAmountPerSecondX128.ToString())
+				uassert.Equal(t, tt.expectedStartTime, manager.distributeStartTime)
+				uassert.Equal(t, tt.expectedEndTime, manager.distributeEndTime)
+			}
+		})
+	}
+}
