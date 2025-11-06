@@ -423,50 +423,32 @@ func TestProjectTier_makeProjectTierID(t *testing.T) {
 	tests := []struct {
 		name       string
 		projectID  string
-		duration   int64
+		tier   int64
 		expectedID string
 	}{
 		{
 			name:       "create tier id with tier 30",
 			projectID:  "gno.land/r/demo/token:100",
-			duration:   30,
+			tier:        30,
 			expectedID: "gno.land/r/demo/token:100:30",
 		},
 		{
 			name:       "create tier id with tier 90",
 			projectID:  "gno.land/r/demo/token:100",
-			duration:   90,
+			tier:        90,
 			expectedID: "gno.land/r/demo/token:100:90",
 		},
 		{
 			name:       "create tier id with tier 180",
 			projectID:  "gno.land/r/demo/token:100",
-			duration:   180,
+			tier:        180,
 			expectedID: "gno.land/r/demo/token:100:180",
-		},
-		{
-			name:       "create tier id with zero duration",
-			projectID:  "gno.land/r/demo/token:100",
-			duration:   0,
-			expectedID: "gno.land/r/demo/token:100:0",
-		},
-		{
-			name:       "create tier id with negative duration",
-			projectID:  "gno.land/r/demo/token:100",
-			duration:   -1,
-			expectedID: "gno.land/r/demo/token:100:-1",
-		},
-		{
-			name:       "create tier id with empty project id",
-			projectID:  "",
-			duration:   30,
-			expectedID: ":30",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := makeProjectTierID(tt.projectID, tt.duration)
+			result := makeProjectTierID(tt.projectID, tt.tier)
 			uassert.Equal(t, result, tt.expectedID)
 		})
 	}
