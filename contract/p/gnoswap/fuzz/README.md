@@ -1,6 +1,6 @@
-# Fuzzing Package
+# Fuzz Package
 
-A property-based testing and fuzzing library for Gno, ported from [rapid](https://github.com/flyingmutant/rapid).
+A property-based testing and fuzz library for Gno, ported from [rapid](https://github.com/flyingmutant/rapid).
 
 ## License
 
@@ -10,7 +10,7 @@ Original copyright: Copyright 2019 Gregory Petrosyan <gregory.petrosyan@gmail.co
 
 ## Overview
 
-This fuzzing package provides generators for property-based testing in Gno smart contracts. It allows you to:
+This fuzz package provides generators for property-based testing in Gno smart contracts. It allows you to:
 
 - Generate random test data for various types
 - Create complex data structures with constraints
@@ -24,14 +24,14 @@ This fuzzing package provides generators for property-based testing in Gno smart
 ```go
 import (
     "testing"
-    "gno.land/p/gnoswap/fuzzing"
+    "gno.land/p/gnoswap/fuzz"
 )
 
 func TestProperty(t *testing.T) {
-    fuzzing.Check(t, func(ft *fuzzing.T) {
+    fuzz.Check(t, func(ft *fuzz.T) {
         // Generate random test data
-        x := fuzzing.Int64Range(0, 100).Draw(ft, "x").(int64)
-        y := fuzzing.Int64Range(0, 100).Draw(ft, "y").(int64)
+        x := fuzz.Int64Range(0, 100).Draw(ft, "x").(int64)
+        y := fuzz.Int64Range(0, 100).Draw(ft, "y").(int64)
 
         // Test a property
         if x + y != y + x {
@@ -49,11 +49,11 @@ func TestExample() {
     seed := uint64(12345)
 
     // Generate integers
-    intGen := fuzzing.Int64Range(0, 100)
+    intGen := fuzz.Int64Range(0, 100)
     value := intGen.Example(seed).(int64)
 
     // Generate strings
-    strGen := fuzzing.String()
+    strGen := fuzz.String()
     str := strGen.Example(seed).(string)
 }
 ```
@@ -63,6 +63,7 @@ func TestExample() {
 ### ✅ Fully Supported Generators (100% Tested)
 
 #### Primitives
+
 - **Boolean**: `Bool()` ✅
 - **Integers** (all return proper types): ✅
   - **int8**: `Int8()`, `Int8Min()`, `Int8Max()`, `Int8Range()`
@@ -82,10 +83,12 @@ func TestExample() {
 - **Runes**: `Rune()`, `RuneFrom()` ✅
 
 #### Collections ✅
+
 - **Slices**: `SliceOf(elem)`, `SliceOfN(elem, minLen, maxLen)`
 - **Maps**: `MapOf(key, val)`, `MapOfN(key, val, minLen, maxLen)`
 
 #### Combinators ✅
+
 - ✅ `Custom(fn)` - Create custom generators
 - ✅ `Just(val)` - Always return the same value
 - ✅ `SampledFrom(slice)` - Sample from a slice
@@ -95,12 +98,14 @@ func TestExample() {
 - ✅ `Permutation(slice)` - Generate permutations
 
 #### Property-Based Testing ✅
+
 - ✅ `Check(t, prop)` - Run 100 random test cases
 - ✅ `CheckN(t, n, prop)` - Run N random test cases
 
 ### ⚠️ Important Type Information
 
 All integer generators now return **correct types**:
+
 ```go
 Int8().Draw(t, "x")      // returns int8
 Int16().Draw(t, "x")     // returns int16
@@ -121,22 +126,22 @@ This was fixed in the implementation - previously all returned int64/uint64.
 ```go
 package mypackage
 
-import "gno.land/p/gnoswap/fuzzing"
+import "gno.land/p/gnoswap/fuzz"
 
 func TestBasic() {
     seed := uint64(12345)
-    s := fuzzing.NewRandomBitStream(seed, false)
+    s := fuzz.NewRandomBitStream(seed, false)
 
     // Integers
-    intGen := fuzzing.Int64Range(0, 100)
+    intGen := fuzz.Int64Range(0, 100)
     value := intGen.value(s).(int64)
 
     // Strings
-    strGen := fuzzing.StringN(5, 10, 20) // 5-10 runes, max 20 bytes
+    strGen := fuzz.StringN(5, 10, 20) // 5-10 runes, max 20 bytes
     str := strGen.value(s).(string)
 
     // Booleans
-    boolGen := fuzzing.Bool()
+    boolGen := fuzz.Bool()
     flag := boolGen.value(s).(bool)
 }
 ```
@@ -145,10 +150,10 @@ func TestBasic() {
 
 ```go
 // Generate example values with a seed
-intGen := fuzzing.Int64Range(0, 100)
+intGen := fuzz.Int64Range(0, 100)
 value := intGen.Example(12345).(int64)
 
-strGen := fuzzing.String()
+strGen := fuzz.String()
 str := strGen.Example(54321).(string)
 ```
 
@@ -156,14 +161,14 @@ str := strGen.Example(54321).(string)
 
 ```go
 // Generate slices
-elemGen := fuzzing.Int32Range(0, 100)
-sliceGen := fuzzing.SliceOfN(elemGen, 5, 10) // 5-10 elements
+elemGen := fuzz.Int32Range(0, 100)
+sliceGen := fuzz.SliceOfN(elemGen, 5, 10) // 5-10 elements
 slice := sliceGen.value(s).([]any)
 
 // Generate maps
-keyGen := fuzzing.String()
-valGen := fuzzing.Int64()
-mapGen := fuzzing.MapOfN(keyGen, valGen, 3, 5) // 3-5 entries
+keyGen := fuzz.String()
+valGen := fuzz.Int64()
+mapGen := fuzz.MapOfN(keyGen, valGen, 3, 5) // 3-5 entries
 m := mapGen.value(s).(map[any]any)
 ```
 
@@ -175,9 +180,9 @@ type Point struct {
     X, Y int64
 }
 
-pointGen := fuzzing.Custom(func(s bitStream) any {
-    x := fuzzing.Int64Range(-100, 100).value(s).(int64)
-    y := fuzzing.Int64Range(-100, 100).value(s).(int64)
+pointGen := fuzz.Custom(func(s bitStream) any {
+    x := fuzz.Int64Range(-100, 100).value(s).(int64)
+    y := fuzz.Int64Range(-100, 100).value(s).(int64)
     return Point{X: x, Y: y}
 })
 
@@ -188,35 +193,35 @@ point := pointGen.value(s).(Point)
 
 ```go
 // Map: transform generated values
-squareGen := fuzzing.Int32Range(0, 10).Map(func(v any) any {
+squareGen := fuzz.Int32Range(0, 10).Map(func(v any) any {
     n := v.(int32)
     return n * n
 })
 
 // SampledFrom: pick from predefined values
-colorGen := fuzzing.SampledFrom([]any{"red", "green", "blue"})
+colorGen := fuzz.SampledFrom([]any{"red", "green", "blue"})
 
 // OneOf: choose between multiple generators
-mixedGen := fuzzing.OneOf(
-    fuzzing.Int32(),
-    fuzzing.String(),
-    fuzzing.Float64(),
+mixedGen := fuzz.OneOf(
+    fuzz.Int32(),
+    fuzz.String(),
+    fuzz.Float64(),
 )
 
 // Just: always return the same value
-constGen := fuzzing.Just(42)
+constGen := fuzz.Just(42)
 ```
 
 ## State Machine Testing
 
 State machine testing allows you to test stateful systems by generating random sequences of actions.
 
-### Basic Example (Recommended API with *T)
+### Basic Example (Recommended API with \*T)
 
 ```go
 package bank
 
-import "gno.land/p/gnoswap/fuzzing"
+import "gno.land/p/gnoswap/fuzz"
 
 type Bank struct {
     balance int64
@@ -230,20 +235,20 @@ func TestBankStateMachine() {
     bank := &Bank{balance: 0}
 
     // Define actions using *T context (like rapid)
-    actions := map[string]func(*fuzzing.T){
-        "Deposit": func(t *fuzzing.T) {
-            amount := t.Draw(fuzzing.Int64Range(1, 100)).(int64)
+    actions := map[string]func(*fuzz.T){
+        "Deposit": func(t *fuzz.T) {
+            amount := t.Draw(fuzz.Int64Range(1, 100)).(int64)
             bank.balance += amount
         },
-        "Withdraw": func(t *fuzzing.T) {
+        "Withdraw": func(t *fuzz.T) {
             if bank.balance == 0 {
                 t.Skip() // Skip this action if no balance
             }
-            amount := t.Draw(fuzzing.Int64Range(1, bank.balance)).(int64)
+            amount := t.Draw(fuzz.Int64Range(1, bank.balance)).(int64)
             bank.balance -= amount
         },
         // Empty string key is the invariant check
-        "": func(t *fuzzing.T) {
+        "": func(t *fuzz.T) {
             if bank.balance < 0 {
                 t.FailNow() // Invariant violated
             }
@@ -260,16 +265,16 @@ func TestBankStateMachine() {
 ```go
 func TestBankStateMachineLowLevel() {
     seed := uint64(12345)
-    s := fuzzing.NewRandomBitStream(seed, false)
+    s := fuzz.NewRandomBitStream(seed, false)
 
     bank := &Bank{balance: 0}
 
     // Define actions with bitStream
-    actions := []fuzzing.Action{
+    actions := []fuzz.Action{
         {
             Name: "Deposit",
             Run: func(s bitStream) {
-                amount := fuzzing.Int64Range(1, 100).value(s).(int64)
+                amount := fuzz.Int64Range(1, 100).value(s).(int64)
                 bank.balance += amount
             },
         },
@@ -277,9 +282,9 @@ func TestBankStateMachineLowLevel() {
             Name: "Withdraw",
             Run: func(s bitStream) {
                 if bank.balance == 0 {
-                    panic(fuzzing.invalidData("no balance"))
+                    panic(fuzz.invalidData("no balance"))
                 }
-                amount := fuzzing.Int64Range(1, bank.balance).value(s).(int64)
+                amount := fuzz.Int64Range(1, bank.balance).value(s).(int64)
                 bank.balance -= amount
             },
         },
@@ -291,7 +296,7 @@ func TestBankStateMachineLowLevel() {
         }
     }
 
-    sm := fuzzing.NewStateMachine(actions, check, 50)
+    sm := fuzz.NewStateMachine(actions, check, 50)
     sm.Run(s)
 }
 ```
@@ -301,7 +306,7 @@ func TestBankStateMachineLowLevel() {
 ```go
 func TestWithRepeat() {
     seed := uint64(12345)
-    s := fuzzing.NewRandomBitStream(seed, false)
+    s := fuzz.NewRandomBitStream(seed, false)
 
     counter := 0
 
@@ -313,7 +318,7 @@ func TestWithRepeat() {
             if counter > 0 {
                 counter--
             } else {
-                panic(fuzzing.invalidData("counter is zero"))
+                panic(fuzz.invalidData("counter is zero"))
             }
         },
         // Empty string key is for invariant checks
@@ -324,7 +329,7 @@ func TestWithRepeat() {
         },
     }
 
-    fuzzing.Repeat(s, actions, 30)
+    fuzz.Repeat(s, actions, 30)
 }
 ```
 
@@ -350,15 +355,15 @@ func (s *Stack) Pop() int64 {
 
 func TestStack() {
     seed := uint64(12345)
-    bitstream := fuzzing.NewRandomBitStream(seed, false)
+    bitstream := fuzz.NewRandomBitStream(seed, false)
 
     stack := &Stack{}
 
-    actions := []fuzzing.Action{
+    actions := []fuzz.Action{
         {
             Name: "Push",
             Run: func(s bitStream) {
-                val := fuzzing.Int64Range(1, 100).value(s).(int64)
+                val := fuzz.Int64Range(1, 100).value(s).(int64)
                 stack.Push(val)
             },
         },
@@ -367,7 +372,7 @@ func TestStack() {
             Run: func(s bitStream) {
                 if len(stack.items) == 0 {
                     // Skip this action if stack is empty
-                    panic(fuzzing.invalidData("empty stack"))
+                    panic(fuzz.invalidData("empty stack"))
                 }
                 stack.Pop()
             },
@@ -376,7 +381,7 @@ func TestStack() {
             Name: "Peek",
             Run: func(s bitStream) {
                 if len(stack.items) == 0 {
-                    panic(fuzzing.invalidData("empty stack"))
+                    panic(fuzz.invalidData("empty stack"))
                 }
                 _ = stack.items[len(stack.items)-1]
             },
@@ -392,7 +397,7 @@ func TestStack() {
         }
     }
 
-    sm := fuzzing.NewStateMachine(actions, check, 100)
+    sm := fuzz.NewStateMachine(actions, check, 100)
     sm.Run(bitstream)
 }
 ```
@@ -403,12 +408,12 @@ func TestStack() {
 
 ```go
 // Generate different values based on condition
-gen := fuzzing.Custom(func(s bitStream) any {
-    usePositive := fuzzing.Bool().value(s).(bool)
+gen := fuzz.Custom(func(s bitStream) any {
+    usePositive := fuzz.Bool().value(s).(bool)
     if usePositive {
-        return fuzzing.Int64Range(1, 100).value(s)
+        return fuzz.Int64Range(1, 100).value(s)
     }
-    return fuzzing.Int64Range(-100, -1).value(s)
+    return fuzz.Int64Range(-100, -1).value(s)
 })
 ```
 
@@ -427,13 +432,13 @@ type Person struct {
     Address Address
 }
 
-personGen := fuzzing.Custom(func(s bitStream) any {
-    name := fuzzing.StringN(3, 10, 20).value(s).(string)
-    age := fuzzing.Int32Range(0, 120).value(s).(int32)
+personGen := fuzz.Custom(func(s bitStream) any {
+    name := fuzz.StringN(3, 10, 20).value(s).(string)
+    age := fuzz.Int32Range(0, 120).value(s).(int32)
 
-    street := fuzzing.StringN(5, 20, 50).value(s).(string)
-    city := fuzzing.StringN(3, 15, 30).value(s).(string)
-    zip := fuzzing.Int32Range(10000, 99999).value(s).(int32)
+    street := fuzz.StringN(5, 20, 50).value(s).(string)
+    city := fuzz.StringN(3, 15, 30).value(s).(string)
+    zip := fuzz.Int32Range(10000, 99999).value(s).(int32)
 
     return Person{
         Name: name,
@@ -456,16 +461,16 @@ type Tree struct {
     Right *Tree
 }
 
-func treeGen(maxDepth int) *fuzzing.Generator {
-    return fuzzing.Custom(func(s bitStream) any {
-        value := fuzzing.Int64Range(0, 100).value(s).(int64)
+func treeGen(maxDepth int) *fuzz.Generator {
+    return fuzz.Custom(func(s bitStream) any {
+        value := fuzz.Int64Range(0, 100).value(s).(int64)
 
         if maxDepth <= 0 {
             return &Tree{Value: value}
         }
 
-        hasLeft := fuzzing.Bool().value(s).(bool)
-        hasRight := fuzzing.Bool().value(s).(bool)
+        hasLeft := fuzz.Bool().value(s).(bool)
+        hasRight := fuzz.Bool().value(s).(bool)
 
         tree := &Tree{Value: value}
         if hasLeft {
@@ -486,19 +491,19 @@ func treeGen(maxDepth int) *fuzzing.Generator {
 
 ```go
 // Good: constrained generation
-positiveGen := fuzzing.Int64Range(1, 1000)
+positiveGen := fuzz.Int64Range(1, 1000)
 ```
 
 ### 2. Handle Invalid States Gracefully
 
 ```go
-actions := []fuzzing.Action{
+actions := []fuzz.Action{
     {
         Name: "RemoveItem",
         Run: func(s bitStream) {
             if len(items) == 0 {
                 // Skip this action instead of panicking
-                panic(fuzzing.invalidData("no items to remove"))
+                panic(fuzz.invalidData("no items to remove"))
             }
             // ... remove item
         },
@@ -536,7 +541,7 @@ func TestWithSeed() {
     seeds := []uint64{12345, 67890, 11111}
 
     for _, seed := range seeds {
-        s := fuzzing.NewRandomBitStream(seed, false)
+        s := fuzz.NewRandomBitStream(seed, false)
         // Run test with this seed
     }
 }
@@ -546,7 +551,7 @@ func TestWithSeed() {
 
 ### Core Types
 
-- `T` - Test context (like rapid's *T)
+- `T` - Test context (like rapid's \*T)
 - `Generator` - Generates random values
 - `bitStream` - Interface for random bit generation
 - `Action` - State machine action with name and function
@@ -587,18 +592,19 @@ func TestWithSeed() {
 
 ### ✅ Fully Tested (100% Coverage)
 
-| Component | Tests | Status |
-|-----------|-------|--------|
-| **Integer Generators** | 44 tests | ✅ All Pass |
-| **Float Generators** | 8 tests | ✅ All Pass |
-| **String Generators** | 11 tests | ✅ All Pass |
+| Component                 | Tests    | Status      |
+| ------------------------- | -------- | ----------- |
+| **Integer Generators**    | 44 tests | ✅ All Pass |
+| **Float Generators**      | 8 tests  | ✅ All Pass |
+| **String Generators**     | 11 tests | ✅ All Pass |
 | **Collection Generators** | 12 tests | ✅ All Pass |
-| **Combinators** | 10 tests | ✅ All Pass |
-| **Check Function** | 8 tests | ✅ All Pass |
+| **Combinators**           | 10 tests | ✅ All Pass |
+| **Check Function**        | 8 tests  | ✅ All Pass |
 
 **Overall Public API Coverage: 100%** (70/70 functions tested)
 
 See test files:
+
 - `integers_test.gno` - All integer type tests
 - `floats_test.gno` - All float type tests
 - `strings_test.gno` - String and rune tests
@@ -633,7 +639,7 @@ This package is a port of the [rapid](https://github.com/flyingmutant/rapid) lib
 ## File Structure
 
 ```
-fuzzing/
+fuzz/
 ├── data.gno                  # bitStream, PRNG (JSF64), recording
 ├── engine.gno                # T struct, Check(), CheckN(), assert, error types
 ├── utils.gno                 # generation utilities (bias, repeat, etc.)

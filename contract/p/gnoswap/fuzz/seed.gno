@@ -1,4 +1,4 @@
-package fuzzing
+package fuzz
 
 const BASE_SEED = 0
 

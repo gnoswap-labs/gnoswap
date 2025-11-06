@@ -1,4 +1,4 @@
-package fuzzing
+package fuzz
 
 import (
 	"math"
@@ -419,6 +419,7 @@ func TestIntegers_Uint64Max(t *testing.T) {
 		}
 	}
 }
+
 // Test Int8 generator
 func TestIntegers_Int8(t *testing.T) {
 	seed := uint64(12345)
@@ -691,7 +692,6 @@ func TestIntegers_Uint16Max(t *testing.T) {
 		}
 	}
 }
-
 
 // Test Uint32 generator
 func TestIntegers_Uint32(t *testing.T) {

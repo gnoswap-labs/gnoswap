@@ -4,7 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-package fuzzing
+package fuzz
 
 import (
 	"fmt"
@@ -153,9 +153,9 @@ func (t *T) failOnError() {
 // Example:
 //
 //	func TestProperty(t *testing.T) {
-//	    fuzzing.Check(t, func(ft *fuzzing.T) {
-//	        x := fuzzing.Int64Range(0, 100).Draw(ft, "x").(int64)
-//	        y := fuzzing.Int64Range(0, 100).Draw(ft, "y").(int64)
+//	    fuzz.Check(t, func(ft *fuzz.T) {
+//	        x := fuzz.Int64Range(0, 100).Draw(ft, "x").(int64)
+//	        y := fuzz.Int64Range(0, 100).Draw(ft, "y").(int64)
 //
 //	        // Property: x + y should equal y + x (commutative)
 //	        if x + y != y + x {
@@ -190,15 +190,15 @@ func CheckN(t *testing.T, checks int, prop func(*T)) {
 			invalid++
 		} else {
 			// Test failed
-			t.Fatalf("[fuzzing] failed after %d valid tests (seed %d): %v", valid, testSeed, err)
+			t.Fatalf("[fuzz] failed after %d valid tests (seed %d): %v", valid, testSeed, err)
 			return
 		}
 	}
 
 	if valid == checks {
-		t.Logf("[fuzzing] OK, passed %d tests", valid)
+		t.Logf("[fuzz] OK, passed %d tests", valid)
 	} else {
-		t.Errorf("[fuzzing] only generated %d valid tests from %d total", valid, valid+invalid)
+		t.Errorf("[fuzz] only generated %d valid tests from %d total", valid, valid+invalid)
 	}
 }
 

@@ -4,7 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-package fuzzing
+package fuzz
 
 import (
 	"math"
@@ -27,14 +27,14 @@ func bitmask64(n uint) uint64 {
 }
 
 func genFloat01(s bitStream) float64 {
-    u := s.drawBits(53)
+	u := s.drawBits(53)
 	return float64(u) / (1 << 53)
 }
 
 // genGeom generates a geometrically distributed value.
 // Used for biased generation of integers.
 func genGeom(s bitStream, p float64) uint64 {
-    assertf(p > 0 && p < 1, "genGeom: p must be in (0, 1)")
+	assertf(p > 0 && p < 1, "genGeom: p must be in (0, 1)")
 
 	f := genFloat01(s)
 	if f >= 1 {
@@ -56,7 +56,7 @@ func genUintNNoReject(s bitStream, max uint64) uint64 {
 }
 
 func genUintNUnbiased(s bitStream, max uint64) uint64 {
-    bitlen := bits.Len64(max)
+	bitlen := bits.Len64(max)
 
 	for {
 		u := s.drawBits(bitlen)
@@ -70,7 +70,7 @@ func genUintNUnbiased(s bitStream, max uint64) uint64 {
 // Prefers smaller values for better test case minimization.
 // Returns (value, isMin, isMax).
 func genUintNBiased(s bitStream, max uint64) (uint64, bool, bool) {
-    bitlen := bits.Len64(max)
+	bitlen := bits.Len64(max)
 
 	// Draw from geometric distribution for bit length
 	i := s.beginGroup(biasLabel, false)

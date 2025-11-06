@@ -1,4 +1,4 @@
-package fuzzing
+package fuzz
 
 import (
 	"testing"
@@ -257,7 +257,7 @@ func TestStrings_AlphanumericString(t *testing.T) {
 
 		// Verify all runes are lowercase letters
 		for _, r := range val {
-			if !((r >= 'a' && r <= 'z')) {
+			if !(r >= 'a' && r <= 'z') {
 				t.Fatalf("Alphanumeric string produced invalid rune: %c (%d) in %q", r, r, val)
 			}
 		}

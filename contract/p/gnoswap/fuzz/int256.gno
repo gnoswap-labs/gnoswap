@@ -1,4 +1,4 @@
-package fuzzing
+package fuzz
 
 import (
 	"gno.land/p/gnoswap/int256"
@@ -64,7 +64,8 @@ func (g *uint256Gen) value(t *T) any {
 // Uint256 generates random uint256 values across the full uint256 range [0, 2^256-1]
 //
 // Example:
-//   Uint256() generates values from 0 to max uint256
+//
+//	Uint256() generates values from 0 to max uint256
 func Uint256() *Generator {
 	// Max uint256: 2^256 - 1
 	maxStr := "115792089237316195423570985008687907853269984665640564039457584007913129639935"
@@ -79,7 +80,8 @@ func Uint256() *Generator {
 // max: maximum value as decimal string
 //
 // Example:
-//   Uint256Max("1000000") generates values from 0 to 1000000
+//
+//	Uint256Max("1000000") generates values from 0 to 1000000
 func Uint256Max(max string) *Generator {
 	maxVal, err := uint256.FromDecimal(max)
 	if err != nil {
@@ -95,7 +97,8 @@ func Uint256Max(max string) *Generator {
 // min and max are decimal strings
 //
 // Example:
-//   Uint256Range("1000", "999999") generates values between 1000 and 999999
+//
+//	Uint256Range("1000", "999999") generates values between 1000 and 999999
 func Uint256Range(minStr, maxStr string) *Generator {
 	min, err := uint256.FromDecimal(minStr)
 	if err != nil {
@@ -117,7 +120,8 @@ func Uint256Range(minStr, maxStr string) *Generator {
 // min: minimum value as decimal string
 //
 // Example:
-//   Uint256Min("1000") generates values from 1000 to max uint256
+//
+//	Uint256Min("1000") generates values from 1000 to max uint256
 func Uint256Min(min string) *Generator {
 	minVal, err := uint256.FromDecimal(min)
 	if err != nil {
@@ -246,7 +250,8 @@ func (g *int256Gen) value(t *T) any {
 // Int256 generates random int256 values across the full int256 range [-2^255, 2^255-1]
 //
 // Example:
-//   Int256() generates values from min int256 to max int256
+//
+//	Int256() generates values from min int256 to max int256
 func Int256() *Generator {
 	// Max int256: 2^255 - 1
 	// Min int256: -2^255
@@ -264,7 +269,8 @@ func Int256() *Generator {
 // max: maximum value as decimal string
 //
 // Example:
-//   Int256Max("1000000") generates values from min int256 to 1000000
+//
+//	Int256Max("1000000") generates values from min int256 to 1000000
 func Int256Max(max string) *Generator {
 	maxVal, err := int256.FromDecimal(max)
 	if err != nil {
@@ -282,7 +288,8 @@ func Int256Max(max string) *Generator {
 // min and max are decimal strings
 //
 // Example:
-//   Int256Range("-1000", "999999") generates values between -1000 and 999999
+//
+//	Int256Range("-1000", "999999") generates values between -1000 and 999999
 func Int256Range(minStr, maxStr string) *Generator {
 	min, err := int256.FromDecimal(minStr)
 	if err != nil {
@@ -304,7 +311,8 @@ func Int256Range(minStr, maxStr string) *Generator {
 // min: minimum value as decimal string
 //
 // Example:
-//   Int256Min("-1000") generates values from -1000 to max int256
+//
+//	Int256Min("-1000") generates values from -1000 to max int256
 func Int256Min(min string) *Generator {
 	minVal, err := int256.FromDecimal(min)
 	if err != nil {

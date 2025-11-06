@@ -1,10 +1,10 @@
-package fuzzing
+package fuzz
 
 import (
 	"strings"
 	"testing"
 
-	"gno.land/p/gnoswap/fuzzing"
+	"gno.land/p/gnoswap/fuzz"
 	prabc "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/ufmt"
 
@@ -29,12 +29,12 @@ var (
 	initializedRouter   = false
 )
 
-func runFuzzTest(t *testing.T, iterations int, fn func(*fuzzing.T, *Result, int)) {
-	result := NewFuzzingResult(fuzzing.BASE_SEED)
+func runFuzzTest(t *testing.T, iterations int, fn func(*fuzz.T, *Result, int)) {
+	result := NewFuzzResult(fuzz.BASE_SEED)
 	index := 0
 
 	// Use CheckN instead of CheckWithConfig
-	fuzzing.CheckN(t, iterations, func(ft *fuzzing.T) {
+	fuzz.CheckN(t, iterations, func(ft *fuzz.T) {
 		index++
 
 		isAborted := false
@@ -58,13 +58,13 @@ func runFuzzTest(t *testing.T, iterations int, fn func(*fuzzing.T, *Result, int)
 	result.PrintLog(t)
 
 	if result.UnexpectedResultsCount() > 0 {
-		panic(ufmt.Sprintf("Fuzzing test failed with %d unexpected results", result.UnexpectedResultsCount()))
+		panic(ufmt.Sprintf("Fuzz test failed with %d unexpected results", result.UnexpectedResultsCount()))
 	} else {
-		t.Logf("\n=== RESULT: Fuzzing test passed %d iterations (success: %d, errors: %d)", iterations, result.SuccessCount(), result.ErrorMessagesCount())
+		t.Logf("\n=== RESULT: Fuzz test passed %d iterations (success: %d, errors: %d)", iterations, result.SuccessCount(), result.ErrorMessagesCount())
 	}
 }
 
-// initStates initializes the states for the fuzzing test
+// initStates initializes the states for the fuzz test
 func initStates(t *testing.T) {
 	initPoolState(t)
 	initPositionState(t)

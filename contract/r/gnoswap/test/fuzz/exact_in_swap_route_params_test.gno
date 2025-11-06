@@ -1,4 +1,4 @@
-package fuzzing
+package fuzz
 
 import (
 	"math"
@@ -8,12 +8,12 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/p/gnoswap/fuzzing"
+	"gno.land/p/gnoswap/fuzz"
 	"gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
 )
 
-// ExactInSwapRouteParams is the parameters for the ExactInSwapRoute fuzzing test.
+// ExactInSwapRouteParams is the parameters for the ExactInSwapRoute fuzz test.
 type exactInSwapRouteParams struct {
 	inputToken   string
 	outputToken  string
@@ -124,8 +124,8 @@ func (p *exactInSwapRouteParams) ToString() string {
 	)
 }
 
-func NewValidExactInSwapRouteParams(t *fuzzing.T) *exactInSwapRouteParams {
-	amountIn := fuzzing.Int64Range(1, math.MaxInt64).Draw(t, "amountIn").(int64)
+func NewValidExactInSwapRouteParams(t *fuzz.T) *exactInSwapRouteParams {
+	amountIn := fuzz.Int64Range(1, math.MaxInt64).Draw(t, "amountIn").(int64)
 	amountInUint256 := u256.NewUintFromInt64(amountIn)
 
 	return &exactInSwapRouteParams{
@@ -140,8 +140,8 @@ func NewValidExactInSwapRouteParams(t *fuzzing.T) *exactInSwapRouteParams {
 	}
 }
 
-func NewRandomizedExactInSwapRouteParams(t *fuzzing.T) *exactInSwapRouteParams {
-	amountInVal := fuzzing.Uint256().Draw(t, "amountIn").(*uint256.Uint)
+func NewRandomizedExactInSwapRouteParams(t *fuzz.T) *exactInSwapRouteParams {
+	amountInVal := fuzz.Uint256().Draw(t, "amountIn").(*uint256.Uint)
 	amountIn := amountInVal.ToString()
 
 	return &exactInSwapRouteParams{

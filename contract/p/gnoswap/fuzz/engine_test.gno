@@ -1,4 +1,4 @@
-package fuzzing
+package fuzz
 
 import (
 	"testing"

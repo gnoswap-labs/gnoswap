@@ -1,4 +1,4 @@
-package fuzzing
+package fuzz
 
 import (
 	"testing"
@@ -89,7 +89,7 @@ func (r *Result) PrintLog(t *testing.T) {
 	}
 }
 
-func NewFuzzingResult(seed uint64) *Result {
+func NewFuzzResult(seed uint64) *Result {
 	return &Result{
 		seed:              seed,
 		params:            make(map[int]Params),
