@@ -1,6 +1,8 @@
 package v1
 
 import (
+    "errors"
+
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/gov/staker"
 )
@@ -107,6 +109,10 @@ func (self *EmissionRewardManagerResolver) updateAccumulatedRewardX128PerStake(
 // This method ensures rewards are properly calculated before the stake change.
 // Adds stake for specified address and updates reward calculations.
 func (self *EmissionRewardManagerResolver) addStake(address string, amount int64, currentTimestamp int64) error {
+    if amount < 0 {
+        return errors.New("amount must be non-negative")
+    }
+
 	rewardState, ok, err := self.GetRewardState(address)
 	if err != nil {
 		return err
@@ -131,6 +137,10 @@ func (self *EmissionRewardManagerResolver) addStake(address string, amount int64
 // This method ensures rewards are properly calculated before the stake change.
 // Removes stake for specified address and updates reward calculations.
 func (self *EmissionRewardManagerResolver) removeStake(address string, amount int64, currentTimestamp int64) error {
+	if amount < 0 {
+        return errors.New("amount must be non-negative")
+    }
+
 	rewardState, ok, err := self.GetRewardState(address)
 	if err != nil {
 		return err
