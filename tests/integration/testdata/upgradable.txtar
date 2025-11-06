@@ -41,7 +41,7 @@ loadpkg gno.land/r/gnoswap/position
 loadpkg gno.land/r/gnoswap/staker
 
 loadpkg gno.land/r/gnoswap/pool/v1
-loadpkg gno.land/r/gnoswap/pool/test
+loadpkg gno.land/r/gnoswap/pool/v3_valid
 
 adduserfrom gns_admin 'mnemonic here'
 
@@ -54,11 +54,11 @@ gnoland start
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetImplementationPackagePath()"
 stdout "gno.land/r/gnoswap/pool/v1"
 
-gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func UpgradeImpl -args gno.land/r/gnoswap/pool/test -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func UpgradeImpl -args gno.land/r/gnoswap/pool/v3_valid -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout OK!
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetImplementationPackagePath()"
-stdout "gno.land/r/gnoswap/pool/test"
+stdout "gno.land/r/gnoswap/pool/v3_valid"
 
 # Upgrade to non-exists version
 ! gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func UpgradeImpl -args gno.land/r/gnoswap/pool/invalid -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
@@ -72,5 +72,5 @@ gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetImplementationPackagePa
 stdout "gno.land/r/gnoswap/pool/v1"
 
 # Attempting to upgrade contract version with an address that lacks upgrade authority
-! gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func UpgradeImpl -args gno.land/r/gnoswap/pool/test -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" $user1_user_addr
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func UpgradeImpl -args gno.land/r/gnoswap/pool/v3_valid -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" $user1_user_addr
 stderr 'unauthorized: caller'
