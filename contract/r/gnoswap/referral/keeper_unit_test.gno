@@ -114,6 +114,75 @@ func TestKeeperSetReferral(t *testing.T) {
 
 // TestKeeperValidateAddresses tests address validation
 func TestKeeperValidateAddresses(t *testing.T) {
+	tests := []struct {
+		name          string
+		addr          address
+		refAddr       address
+		expectedError error
+	}{
+		{
+			name:          "valid addresses",
+			addr:          keeperAddr1,
+			refAddr:       keeperAddr2,
+			expectedError: nil,
+		},
+		{
+			name:          "self referral",
+			addr:          keeperAddr1,
+			refAddr:       keeperAddr1,
+			expectedError: ErrSelfReferral,
+		},
+		{
+			name:          "invalid user address - empty string",
+			addr:          zeroAddress,
+			refAddr:       keeperAddr1,
+			expectedError: ErrInvalidAddress,
+		},
+		{
+			name:          "invalid user address - invalid format",
+			addr:          address("invalid"),
+			refAddr:       keeperAddr1,
+			expectedError: ErrInvalidAddress,
+		},
+		{
+			name:          "invalid referral address - non-zero invalid",
+			addr:          keeperAddr1,
+			refAddr:       address("invalid_ref"),
+			expectedError: ErrInvalidAddress,
+		},
+		{
+			name:          "zero address referral - valid",
+			addr:          keeperAddr1,
+			refAddr:       zeroAddress,
+			expectedError: nil,
+		},
+		{
+			name:          "both addresses invalid",
+			addr:          zeroAddress,
+			refAddr:       address("invalid"),
+			expectedError: ErrInvalidAddress,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			k := setupKeeperUnit()
+
+			// when
+			err := k.validateAddresses(tc.addr, tc.refAddr)
+
+			// then
+			if tc.expectedError != nil {
+				uassert.ErrorIs(t, err, tc.expectedError)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestKeeperValidateAddressesThroughSetReferral(t *testing.T) {
 	t.Run("validates addresses through setReferral", func(t *testing.T) {
 		cleanup := mockValidCallerKeeper()
 		defer cleanup()
@@ -141,7 +210,7 @@ func TestKeeperValidateAddresses(t *testing.T) {
 
 	t.Run("validates through different caller contexts", func(t *testing.T) {
 		origCaller := runtime.OriginCaller()
-		testing.SetOriginCaller(address(""))
+		testing.SetOriginCaller(zeroAddress)
 		defer func() {
 			testing.SetOriginCaller(origCaller)
 		}()
@@ -242,7 +311,7 @@ func TestKeeperValidation(t *testing.T) {
 }
 
 // TestKeeperNewKeeper tests the NewKeeper constructor
-func TestKeeperNewKeeper(t *testing.T) {
+func TestKeeper_NewKeeper(t *testing.T) {
 	t.Run("creates new keeper instance", func(t *testing.T) {
 		k := NewKeeper()
 		uassert.NotNil(t, k)
@@ -388,4 +457,68 @@ func TestKeeperErrorConditions(t *testing.T) {
 		err = k.register(keeperAddr4, keeperAddr5)
 		uassert.NoError(t, err)
 	})
+}
+
+// TestKeeperGet tests the get function with various inputs
+func TestKeeperGet(t *testing.T) {
+	tests := []struct {
+		name          string
+		setup         func(k *keeper)
+		addr          address
+		expectedRef   address
+		expectedError error
+	}{
+		{
+			name: "valid address with existing referral",
+			setup: func(k *keeper) {
+				cleanup := mockValidCallerKeeper()
+				defer cleanup()
+				k.register(keeperAddr1, keeperAddr2)
+			},
+			addr:          keeperAddr1,
+			expectedRef:   keeperAddr2,
+			expectedError: nil,
+		},
+		{
+			name:          "valid address without referral",
+			setup:         func(k *keeper) {},
+			addr:          keeperAddr1,
+			expectedRef:   zeroAddress,
+			expectedError: ErrNotFound,
+		},
+		{
+			name:          "invalid address - empty string",
+			setup:         func(k *keeper) {},
+			addr:          zeroAddress,
+			expectedRef:   zeroAddress,
+			expectedError: ErrInvalidAddress,
+		},
+		{
+			name:          "invalid address - invalid format",
+			setup:         func(k *keeper) {},
+			addr:          address("invalid"),
+			expectedRef:   zeroAddress,
+			expectedError: ErrInvalidAddress,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			k := setupKeeperUnit()
+			tc.setup(k)
+
+			// when
+			ref, err := k.get(tc.addr)
+
+			// then
+			if tc.expectedError != nil {
+				uassert.ErrorIs(t, err, tc.expectedError)
+				uassert.Equal(t, tc.expectedRef.String(), ref.String())
+			} else {
+				uassert.NoError(t, err)
+				uassert.Equal(t, tc.expectedRef.String(), ref.String())
+			}
+		})
+	}
 }

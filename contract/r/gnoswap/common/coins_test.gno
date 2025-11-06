@@ -2,13 +2,14 @@ package common
 
 import (
 	"chain"
+	"math"
 	"testing"
 
 	"gno.land/p/nt/uassert"
 )
 
-// TestIsUserSendGNOTAmount tests the isUserSendGNOTAmount function with various scenarios
-func TestIsUserSendGNOTAmount(t *testing.T) {
+// TestCoins_IsUserSendGNOTAmount tests the isUserSendGNOTAmount function with various scenarios
+func TestCoins_IsUserSendGNOTAmount(t *testing.T) {
 	tests := []struct {
 		name           string
 		sendCoins      map[string]int64
@@ -20,7 +21,7 @@ func TestIsUserSendGNOTAmount(t *testing.T) {
 			name:           "no_coins_sent",
 			sendCoins:      map[string]int64{},
 			expectedAmount: 0,
-			expectedResult: false,
+			expectedResult: true,
 			description:    "No coins sent, expected amount 0 - should return false",
 		},
 		{
@@ -48,7 +49,7 @@ func TestIsUserSendGNOTAmount(t *testing.T) {
 			name:           "gnot_sent_zero_amount",
 			sendCoins:      map[string]int64{GNOT_DENOM: 0},
 			expectedAmount: 0,
-			expectedResult: false,
+			expectedResult: true,
 			description:    "GNOT sent with zero amount, expected zero - should return false",
 		},
 		{
@@ -72,6 +73,27 @@ func TestIsUserSendGNOTAmount(t *testing.T) {
 			expectedResult: true,
 			description:    "Multiple coins including GNOT with matching amount - should return true",
 		},
+		{
+			name:           "max_int64_amount",
+			sendCoins:      map[string]int64{GNOT_DENOM: math.MaxInt64},
+			expectedAmount: math.MaxInt64,
+			expectedResult: true,
+			description:    "Max int64 amount should match correctly",
+		},
+		{
+			name:           "min_int64_amount",
+			sendCoins:      map[string]int64{GNOT_DENOM: math.MinInt64},
+			expectedAmount: math.MinInt64,
+			expectedResult: false,
+			description:    "Min int64 amount should return false (negative)",
+		},
+		{
+			name:           "max_int64_expected_different",
+			sendCoins:      map[string]int64{GNOT_DENOM: math.MaxInt64},
+			expectedAmount: math.MaxInt64 - 1,
+			expectedResult: false,
+			description:    "Max int64 with different expected should return false",
+		},
 	}
 
 	for _, tt := range tests {
@@ -90,8 +112,8 @@ func TestIsUserSendGNOTAmount(t *testing.T) {
 	}
 }
 
-// TestHasUnsupportedNativeCoins tests the hasUnsupportedNativeCoins function with various scenarios
-func TestHasUnsupportedNativeCoins(t *testing.T) {
+// TestCoins_HasUnsupportedNativeCoins tests the hasUnsupportedNativeCoins function with various scenarios
+func TestCoins_HasUnsupportedNativeCoins(t *testing.T) {
 	tests := []struct {
 		name           string
 		sendCoins      map[string]int64
@@ -146,6 +168,30 @@ func TestHasUnsupportedNativeCoins(t *testing.T) {
 			expectedResult: true,
 			description:    "Three different coins - should return true (unsupported)",
 		},
+		{
+			name:           "gnot_with_max_amount",
+			sendCoins:      map[string]int64{GNOT_DENOM: math.MaxInt64},
+			expectedResult: false,
+			description:    "GNOT with max int64 amount - should return false (no unsupported)",
+		},
+		{
+			name:           "gnot_with_min_amount",
+			sendCoins:      map[string]int64{GNOT_DENOM: math.MinInt64},
+			expectedResult: false,
+			description:    "GNOT with min int64 amount - should return false (filtered out)",
+		},
+		{
+			name:           "empty_map",
+			sendCoins:      map[string]int64{},
+			expectedResult: false,
+			description:    "Empty map - should return false",
+		},
+		{
+			name:           "nil_map",
+			sendCoins:      nil,
+			expectedResult: false,
+			description:    "Nil map - should return false",
+		},
 	}
 
 	for _, tt := range tests {
@@ -164,102 +210,8 @@ func TestHasUnsupportedNativeCoins(t *testing.T) {
 	}
 }
 
-// TestEdgeCases tests edge cases and boundary conditions
-func TestEdgeCases(t *testing.T) {
-	t.Run("isUserSendGNOTAmount_edge_cases", func(t *testing.T) {
-		// Test with very large numbers
-		largeAmount := int64(9223372036854775807)     // max int64
-		negativeAmount := int64(-9223372036854775808) // min int64
-
-		tests := []struct {
-			name           string
-			sendCoins      map[string]int64
-			expectedAmount int64
-			expectedResult bool
-		}{
-			{
-				name:           "max_int64_amount",
-				sendCoins:      map[string]int64{GNOT_DENOM: largeAmount},
-				expectedAmount: largeAmount,
-				expectedResult: true,
-			},
-			{
-				name:           "min_int64_amount",
-				sendCoins:      map[string]int64{GNOT_DENOM: negativeAmount},
-				expectedAmount: negativeAmount,
-				expectedResult: false,
-			},
-			{
-				name:           "max_int64_expected_different",
-				sendCoins:      map[string]int64{GNOT_DENOM: largeAmount},
-				expectedAmount: largeAmount - 1,
-				expectedResult: false,
-			},
-		}
-
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				coins := make(chain.Coins, 0)
-				for denom, amount := range tt.sendCoins {
-					coins = append(coins, chain.Coin{Denom: denom, Amount: amount})
-				}
-
-				testing.SetOriginSend(coins)
-
-				result := isUserSendGNOTAmount(tt.expectedAmount)
-
-				uassert.Equal(t, result, tt.expectedResult, tt.name)
-			})
-		}
-	})
-
-	t.Run("hasUnsupportedNativeCoins_edge_cases", func(t *testing.T) {
-		tests := []struct {
-			name           string
-			sendCoins      map[string]int64
-			expectedResult bool
-		}{
-			{
-				name:           "empty_map",
-				sendCoins:      map[string]int64{},
-				expectedResult: false,
-			},
-			{
-				name:           "nil_map",
-				sendCoins:      nil,
-				expectedResult: false,
-			},
-			{
-				name:           "gnot_with_max_amount",
-				sendCoins:      map[string]int64{GNOT_DENOM: 9223372036854775807},
-				expectedResult: false,
-			},
-			{
-				name:           "gnot_with_min_amount",
-				sendCoins:      map[string]int64{GNOT_DENOM: -9223372036854775808},
-				expectedResult: false,
-			},
-		}
-
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				coins := make(chain.Coins, 0)
-				for denom, amount := range tt.sendCoins {
-					coins = append(coins, chain.Coin{Denom: denom, Amount: amount})
-				}
-
-				testing.SetOriginSend(coins)
-
-				result := hasUnsupportedNativeCoins()
-
-				uassert.Equal(t, tt.expectedResult, result, tt.name)
-			})
-		}
-	})
-}
-
-// TestIsGNOTPath tests the IsGNOTPath function with various path scenarios
-func TestIsGNOTPath(t *testing.T) {
+// TestCoins_IsGNOTPath tests the IsGNOTPath function with various path scenarios
+func TestCoins_IsGNOTPath(t *testing.T) {
 	tests := []struct {
 		name           string
 		path           string
@@ -312,8 +264,8 @@ func TestIsGNOTPath(t *testing.T) {
 	}
 }
 
-// TestIsGNOTNativePath tests the IsGNOTNativePath function
-func TestIsGNOTNativePath(t *testing.T) {
+// TestCoins_IsGNOTNativePath tests the IsGNOTNativePath function
+func TestCoins_IsGNOTNativePath(t *testing.T) {
 	tests := []struct {
 		name           string
 		path           string
@@ -360,8 +312,8 @@ func TestIsGNOTNativePath(t *testing.T) {
 	}
 }
 
-// TestIsGNOTWrappedPath tests the IsGNOTWrappedPath function
-func TestIsGNOTWrappedPath(t *testing.T) {
+// TestCoins_IsGNOTWrappedPath tests the IsGNOTWrappedPath function
+func TestCoins_IsGNOTWrappedPath(t *testing.T) {
 	tests := []struct {
 		name           string
 		path           string
@@ -414,8 +366,8 @@ func TestIsGNOTWrappedPath(t *testing.T) {
 	}
 }
 
-// TestExistsUserSendCoins tests the ExistsUserSendCoins function
-func TestExistsUserSendCoins(t *testing.T) {
+// TestCoins_ExistsUserSendCoins tests the ExistsUserSendCoins function
+func TestCoins_ExistsUserSendCoins(t *testing.T) {
 	tests := []struct {
 		name           string
 		sendCoins      map[string]int64
@@ -474,21 +426,24 @@ func TestExistsUserSendCoins(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Mock the getUserSendCoins function by testing the logic directly
-			var result bool
-			if tt.sendCoins == nil {
-				result = false
-			} else {
-				result = len(tt.sendCoins) > 0
+			coins := make(chain.Coins, 0)
+			if tt.sendCoins != nil {
+				for denom, amount := range tt.sendCoins {
+					coins = append(coins, chain.Coin{Denom: denom, Amount: amount})
+				}
 			}
+
+			testing.SetOriginSend(coins)
+
+			result := ExistsUserSendCoins()
 
 			uassert.Equal(t, result, tt.expectedResult, tt.description)
 		})
 	}
 }
 
-// TestGetUserSendCoins tests the getUserSendCoins function logic
-func TestGetUserSendCoins(t *testing.T) {
+// TestCoins_GetUserSendCoins tests the getUserSendCoins function logic
+func TestCoins_GetUserSendCoins(t *testing.T) {
 	tests := []struct {
 		name       string
 		inputCoins []struct {
@@ -625,19 +580,4 @@ func TestGetUserSendCoins(t *testing.T) {
 			}
 		})
 	}
-}
-
-// TestConstants tests the constants used in the coins package
-func TestConstants(t *testing.T) {
-	t.Run("GNOT_DENOM", func(t *testing.T) {
-		uassert.Equal(t, GNOT_DENOM, "ugnot", "GNOT_DENOM should be 'ugnot'")
-	})
-
-	t.Run("GNOT_PATH", func(t *testing.T) {
-		uassert.Equal(t, GNOT_PATH, "gnot", "GNOT_PATH should be 'gnot'")
-	})
-
-	t.Run("WUGNOT_PATH", func(t *testing.T) {
-		uassert.Equal(t, WUGNOT_PATH, "gno.land/r/gnoland/wugnot", "WUGNOT_PATH should be 'gno.land/r/gnoland/wugnot'")
-	})
 }

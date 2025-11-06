@@ -147,3 +147,170 @@ func testPermissionBasedFunction(
 		})
 	}
 }
+
+// Test GetMinimumRewardAmountForToken
+
+func TestGetMinimumRewardAmountForToken(t *testing.T) {
+	tests := []struct {
+		name           string
+		tokenPath      string
+		setupFunc      func(*stakerV1)
+		expectedAmount int64
+		expectsDefault bool
+	}{
+		{
+			name:      "token with specific minimum",
+			tokenPath: "gno.land/r/onbloc/foo",
+			setupFunc: func(s *stakerV1) {
+				s.store.GetTokenSpecificMinimumRewards().Set("gno.land/r/onbloc/foo", int64(5000000))
+			},
+			expectedAmount: 5000000,
+			expectsDefault: false,
+		},
+		{
+			name:      "token without specific minimum - returns default",
+			tokenPath: "gno.land/r/onbloc/bar",
+			setupFunc: func(s *stakerV1) {
+				// Don't set any specific minimum
+			},
+			expectedAmount: 1_000_000_000, // default from mock
+			expectsDefault: true,
+		},
+		{
+			name:      "different token with specific minimum",
+			tokenPath: "gno.land/r/onbloc/baz",
+			setupFunc: func(s *stakerV1) {
+				s.store.GetTokenSpecificMinimumRewards().Set("gno.land/r/onbloc/baz", int64(10000000))
+			},
+			expectedAmount: 10000000,
+			expectsDefault: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testing.SetRealm(adminRealm)
+			initStakerTest(t)
+			instance := getMockInstance()
+
+			if tt.setupFunc != nil {
+				tt.setupFunc(instance)
+			}
+
+			result := instance.GetMinimumRewardAmountForToken(tt.tokenPath)
+			uassert.Equal(t, tt.expectedAmount, result)
+		})
+	}
+}
+
+// Test GetSpecificTokenMinimumRewardAmount
+
+func TestGetSpecificTokenMinimumRewardAmount(t *testing.T) {
+	tests := []struct {
+		name          string
+		tokenPath     string
+		setupFunc     func(*stakerV1)
+		expectedFound bool
+		expectedValue int64
+	}{
+		{
+			name:      "token with specific amount",
+			tokenPath: "gno.land/r/onbloc/foo",
+			setupFunc: func(s *stakerV1) {
+				s.store.GetTokenSpecificMinimumRewards().Set("gno.land/r/onbloc/foo", int64(3000000))
+			},
+			expectedFound: true,
+			expectedValue: 3000000,
+		},
+		{
+			name:      "token without specific amount",
+			tokenPath: "gno.land/r/onbloc/bar",
+			setupFunc: func(s *stakerV1) {
+				// Don't set anything
+			},
+			expectedFound: false,
+			expectedValue: 0,
+		},
+		{
+			name:      "zero value set explicitly",
+			tokenPath: "gno.land/r/onbloc/baz",
+			setupFunc: func(s *stakerV1) {
+				s.store.GetTokenSpecificMinimumRewards().Set("gno.land/r/onbloc/baz", int64(0))
+			},
+			expectedFound: true,
+			expectedValue: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testing.SetRealm(adminRealm)
+			initStakerTest(t)
+			instance := getMockInstance()
+
+			if tt.setupFunc != nil {
+				tt.setupFunc(instance)
+			}
+
+			value, found := instance.GetSpecificTokenMinimumRewardAmount(tt.tokenPath)
+			uassert.Equal(t, tt.expectedFound, found)
+			if tt.expectedFound {
+				uassert.Equal(t, tt.expectedValue, value)
+			}
+		})
+	}
+}
+
+// Test internal getters and setters
+
+func TestInternalDepositGnsAmountGetterSetter(t *testing.T) {
+	testing.SetRealm(adminRealm)
+	initStakerTest(t)
+	instance := getMockInstance()
+
+	// Test initial value
+	initial := instance.getDepositGnsAmount()
+	uassert.True(t, initial > 0)
+
+	// Test setter and getter
+	newAmount := int64(5_000_000_000)
+	instance.setDepositGnsAmount(newAmount)
+	result := instance.getDepositGnsAmount()
+	uassert.Equal(t, newAmount, result)
+}
+
+func TestInternalMinimumRewardAmountGetterSetter(t *testing.T) {
+	testing.SetRealm(adminRealm)
+	initStakerTest(t)
+	instance := getMockInstance()
+
+	// Test initial value
+	initial := instance.getMinimumRewardAmount()
+	uassert.True(t, initial > 0)
+
+	// Test setter and getter
+	newAmount := int64(2_000_000)
+	instance.setMinimumRewardAmount(newAmount)
+	result := instance.getMinimumRewardAmount()
+	uassert.Equal(t, newAmount, result)
+}
+
+// Edge case tests
+
+func TestValidAmount_NegativeValue(t *testing.T) {
+	uassert.PanicsContains(t, "must be positive", func() {
+		assertIsValidAmount(-1)
+	})
+}
+
+func TestValidAmount_ZeroValue(t *testing.T) {
+	uassert.NotPanics(t, func() {
+		assertIsValidAmount(0)
+	})
+}
+
+func TestValidAmount_PositiveValue(t *testing.T) {
+	uassert.NotPanics(t, func() {
+		assertIsValidAmount(1000)
+	})
+}

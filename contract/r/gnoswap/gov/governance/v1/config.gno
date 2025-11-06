@@ -3,6 +3,7 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
+	"time"
 
 	"gno.land/r/gnoswap/access"
 	en "gno.land/r/gnoswap/emission"
@@ -10,6 +11,30 @@ import (
 
 	"gno.land/r/gnoswap/gov/governance"
 )
+
+// makeConfig creates a new governance configuration.
+func makeConfig(
+	votingStartDelay int64,
+	votingPeriod int64,
+	votingWeightSmoothingDuration int64,
+	quorum int64,
+	proposalCreationThreshold int64,
+	executionDelay int64,
+	executionWindow int64,
+) governance.Config {
+	// Create new configuration with provided parameters
+	cfg := governance.Config{
+		VotingStartDelay:              votingStartDelay,
+		VotingPeriod:                  votingPeriod,
+		VotingWeightSmoothingDuration: votingWeightSmoothingDuration,
+		Quorum:                        quorum,
+		ProposalCreationThreshold:     proposalCreationThreshold,
+		ExecutionDelay:                executionDelay,
+		ExecutionWindow:               executionWindow,
+	}
+
+	return cfg
+}
 
 // Reconfigure updates governance configuration.
 // Only admin or governance contract can call this function.
@@ -29,14 +54,8 @@ func (gv *governanceV1) Reconfigure(
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	// Mint and distribute GNS tokens as part of the process
-	en.MintAndDistributeGns(cross)
-
-	// Store previous version for event emission
-	previousVersion := gv.getCurrentConfigVersion()
-
-	// Apply the new configuration
-	nextVersion, newCfg := gv.reconfigure(
+	// Create and validate new configuration
+	newCfg := makeConfig(
 		votingStartDelay,
 		votingPeriod,
 		votingWeightSmoothingDuration,
@@ -45,6 +64,21 @@ func (gv *governanceV1) Reconfigure(
 		executionDelay,
 		executionWindow,
 	)
+
+	currentTime := time.Now().Unix()
+
+	if err := newCfg.IsValid(currentTime); err != nil {
+		panic(makeErrorWithDetails(errInvalidConfiguration, err.Error()))
+	}
+
+	// Mint and distribute GNS tokens as part of the process
+	en.MintAndDistributeGns(cross)
+
+	// Store previous version for event emission
+	previousVersion := gv.getCurrentConfigVersion()
+
+	// Apply the new configuration
+	nextVersion := gv.reconfigure(newCfg)
 
 	// Emit configuration change event with all parameters
 	previousRealm := runtime.PreviousRealm()
@@ -66,28 +100,8 @@ func (gv *governanceV1) Reconfigure(
 	return nextVersion
 }
 
-// reconfigure updates the Governor's configuration.
-// Creates new configuration and stores it with incremented version number.
-func (gv *governanceV1) reconfigure(
-	votingStartDelay int64,
-	votingPeriod int64,
-	votingWeightSmoothingDuration int64,
-	quorum int64,
-	proposalCreationThreshold int64,
-	executionDelay int64,
-	executionWindow int64,
-) (int64, governance.Config) {
-	// Create new configuration with provided parameters
-	cfg := governance.Config{
-		VotingStartDelay:              votingStartDelay,
-		VotingPeriod:                  votingPeriod,
-		VotingWeightSmoothingDuration: votingWeightSmoothingDuration,
-		Quorum:                        quorum,
-		ProposalCreationThreshold:     proposalCreationThreshold,
-		ExecutionDelay:                executionDelay,
-		ExecutionWindow:               executionWindow,
-	}
-
+// reconfigure stores the validated configuration with incremented version number.
+func (gv *governanceV1) reconfigure(cfg governance.Config) int64 {
 	// Generate next version number
 	nextVersion := gv.nextConfigVersion()
 
@@ -97,5 +111,5 @@ func (gv *governanceV1) reconfigure(
 		panic("failed to set config: " + err.Error())
 	}
 
-	return nextVersion, cfg
+	return nextVersion
 }

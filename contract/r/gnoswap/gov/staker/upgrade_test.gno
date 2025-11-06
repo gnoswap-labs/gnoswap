@@ -634,3 +634,54 @@ func TestGetClaimableRewardByRewardID(t *testing.T) {
 		})
 	}
 }
+
+// TestGetImplementationPackagePath tests the GetImplementationPackagePath getter
+func TestGetImplementationPackagePath(t *testing.T) {
+	tests := []struct {
+		name         string
+		setup        func(t *testing.T)
+		expectedPath string
+	}{
+		{
+			name: "get initial v1 package path",
+			setup: func(t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+			},
+			expectedPath: "gno.land/r/gnoswap/gov/staker/v1",
+		},
+		{
+			name: "get package path after upgrade to v2",
+			setup: func(t *testing.T) {
+				// Register v1
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
+				RegisterInitializer(cross, makeMockInitializer("v1"))
+
+				// Register v2
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v2"))
+				RegisterInitializer(cross, makeMockInitializer("v2"))
+
+				// Upgrade to v2
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				UpgradeImpl(cross, "gno.land/r/gnoswap/gov/staker/v2")
+			},
+			expectedPath: "gno.land/r/gnoswap/gov/staker/v2",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			resetTestState(t)
+			if tc.setup != nil {
+				tc.setup(t)
+			}
+
+			// when
+			currentPath := GetImplementationPackagePath()
+
+			// then
+			uassert.Equal(t, currentPath, tc.expectedPath)
+		})
+	}
+}

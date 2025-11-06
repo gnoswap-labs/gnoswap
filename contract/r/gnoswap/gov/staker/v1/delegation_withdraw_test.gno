@@ -322,3 +322,131 @@ func TestDelegationWithdrawResolver_Collect(t *testing.T) {
 		})
 	}
 }
+
+// TestDelegationWithdrawResolver_CollectErrors tests additional error cases
+func TestDelegationWithdrawResolver_CollectErrors(t *testing.T) {
+	t.Run("Collect with negative amount", func(t *testing.T) {
+		// given
+		withdraw := staker.NewDelegationWithdraw(
+			1,
+			100,
+			100,
+			1000,
+			500,
+		)
+		resolver := NewDelegationWithdrawResolver(withdraw)
+
+		// when - try to collect negative amount after lockup
+		currentTime := int64(2000)
+		err := resolver.Collect(-50, currentTime)
+
+		// then - should succeed (no validation on amount in Collect)
+		uassert.NoError(t, err)
+		uassert.Equal(t, withdraw.CollectedAmount(), int64(-50))
+	})
+
+	t.Run("Collect exactly at collectable time", func(t *testing.T) {
+		// given
+		createdAt := int64(1000)
+		lockupPeriod := int64(500)
+		withdraw := staker.NewDelegationWithdraw(
+			1,
+			100,
+			100,
+			createdAt,
+			lockupPeriod,
+		)
+		resolver := NewDelegationWithdrawResolver(withdraw)
+
+		// when - collect exactly when lockup expires
+		collectableTime := createdAt + lockupPeriod
+		err := resolver.Collect(100, collectableTime)
+
+		// then - should succeed
+		uassert.NoError(t, err)
+		uassert.True(t, withdraw.IsCollected())
+		uassert.Equal(t, withdraw.CollectedAmount(), int64(100))
+	})
+
+	t.Run("Collect one second before collectable time", func(t *testing.T) {
+		// given
+		createdAt := int64(1000)
+		lockupPeriod := int64(500)
+		withdraw := staker.NewDelegationWithdraw(
+			1,
+			100,
+			100,
+			createdAt,
+			lockupPeriod,
+		)
+		resolver := NewDelegationWithdrawResolver(withdraw)
+
+		// when - try to collect one second before lockup expires
+		collectableTime := createdAt + lockupPeriod
+		err := resolver.Collect(100, collectableTime-1)
+
+		// then - should fail
+		uassert.ErrorIs(t, err, staker.ErrWithdrawNotCollectable)
+		uassert.False(t, withdraw.IsCollected())
+	})
+
+	t.Run("Collect with large amount value", func(t *testing.T) {
+		// given
+		largeAmount := int64(9223372036854775807) // max int64
+		withdraw := staker.NewDelegationWithdraw(
+			1,
+			largeAmount,
+			100,
+			1000,
+			500,
+		)
+		resolver := NewDelegationWithdrawResolver(withdraw)
+
+		// when - collect large amount
+		currentTime := int64(2000)
+		err := resolver.Collect(largeAmount, currentTime)
+
+		// then - should succeed
+		uassert.NoError(t, err)
+		uassert.True(t, withdraw.IsCollected())
+		uassert.Equal(t, withdraw.CollectedAmount(), largeAmount)
+	})
+
+	t.Run("IsCollectable with negative undelegate amount", func(t *testing.T) {
+		// given
+		withdraw := staker.NewDelegationWithdraw(
+			1,
+			-100, // negative amount
+			100,
+			1000,
+			500,
+		)
+		resolver := NewDelegationWithdrawResolver(withdraw)
+
+		// when
+		result := resolver.IsCollectable(2000)
+
+		// then - should not be collectable due to negative amount
+		uassert.False(t, result)
+	})
+
+	t.Run("CollectableAmount with partial collection", func(t *testing.T) {
+		// given
+		withdraw := staker.NewDelegationWithdraw(
+			1,
+			100,
+			100,
+			1000,
+			500,
+		)
+		resolver := NewDelegationWithdrawResolver(withdraw)
+
+		// when - collect partial amount first
+		currentTime := int64(2000)
+		_ = resolver.Collect(30, currentTime)
+		remainingCollectable := resolver.CollectableAmount(currentTime)
+
+		// then - should have remaining amount minus what was collected
+		uassert.Equal(t, remainingCollectable, int64(70))
+	})
+}

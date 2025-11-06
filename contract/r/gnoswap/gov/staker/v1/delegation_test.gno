@@ -1,6 +1,7 @@
 package v1
 
 import (
+    "math"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -694,4 +695,177 @@ func TestDelegation_EdgeCases(t *testing.T) {
 			// Assertions are done within the test function
 		})
 	}
+}
+
+// TestDelegation_addToCollectedAmount tests the private addToCollectedAmount function
+func TestDelegation_addToCollectedAmount(t *testing.T) {
+	tests := []struct {
+		name                 string
+		collectedAmount      int64
+		amount               int64
+		expectedResult       int64
+		expectedHasError     bool
+		expectedHasPanic     bool
+		expectedErrorMessage string
+	}{
+		{
+			name:             "add positive amount",
+			collectedAmount:  100,
+			amount:           50,
+			expectedResult:   150,
+			expectedHasError: false,
+		},
+		{
+			name:             "add zero amount",
+			collectedAmount:  100,
+			amount:           0,
+			expectedResult:   100,
+			expectedHasError: false,
+		},
+		{
+			name:             "add negative amount",
+			collectedAmount:  100,
+			amount:           -30,
+			expectedResult:   0,
+			expectedHasError: true,
+		},
+		{
+			name:             "both zero",
+			collectedAmount:  0,
+			amount:           0,
+			expectedResult:   0,
+			expectedHasError: false,
+		},
+		{
+			name:             "large values",
+			collectedAmount:  9223372036854775000,
+			amount:           100,
+			expectedResult:   9223372036854775100,
+			expectedHasError: false,
+		},
+		{
+			name:                "overflow",
+			collectedAmount:      math.MaxInt64, // MaxInt64
+			amount:               1,
+			expectedResult:       0,
+			expectedHasPanic:     true,
+			expectedErrorMessage: "int64 addition overflow",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// when/then
+			if tc.expectedHasPanic {
+    			uassert.PanicsWithMessage(t, tc.expectedErrorMessage, func() {
+       				addToCollectedAmount(tc.collectedAmount, tc.amount)
+    			})
+            } else if tc.expectedHasError {
+                _, err := addToCollectedAmount(tc.collectedAmount, tc.amount)
+				uassert.NotNil(t, err)
+			} else {
+			    result, err := addToCollectedAmount(tc.collectedAmount, tc.amount)
+				uassert.NoError(t, err)
+				uassert.Equal(t, result, tc.expectedResult)
+			}
+		})
+	}
+}
+
+// TestDelegation_CollectErrors tests error cases for Collect function
+func TestDelegation_CollectErrors(t *testing.T) {
+	t.Run("Collect amount exceeds collectable", func(t *testing.T) {
+		// given
+		delegation := NewDelegation(
+			1,
+			address("g1delegator"),
+			address("g1validator"),
+			1000,
+			100,
+			100,
+		)
+		resolver := NewDelegationResolver(delegation)
+
+		// Undelegate and wait for lockup
+		resolver.UnDelegate(500, 100, 100, 86400) // 1 day lockup
+
+		// when - try to collect more than collectable (0 at currentTime=100)
+		err := resolver.Collect(100, 100) // lockup not passed
+
+		// then
+		uassert.NotNil(t, err)
+		uassert.Equal(t, err.Error(), "amount to collect is greater than collectable amount")
+	})
+
+	t.Run("Collect with negative amount", func(t *testing.T) {
+		// given
+		delegation := NewDelegation(
+			1,
+			address("g1delegator"),
+			address("g1validator"),
+			1000,
+			100,
+			100,
+		)
+		resolver := NewDelegationResolver(delegation)
+
+		// Undelegate with lockup
+		resolver.UnDelegate(500, 100, 100, 86400)
+
+		// when - try to collect negative amount after lockup (treated as no-op)
+		currentTime := int64(100 + 86400 + 1)
+		collectableBefore := resolver.CollectableAmount(currentTime)
+		err := resolver.Collect(-100, currentTime)
+
+		// then - should succeed (negative amount is treated as zero)
+		uassert.Nil(t, err)
+		uassert.Equal(t, resolver.CollectableAmount(currentTime), collectableBefore) // nothing was collected
+	})
+
+	t.Run("Collect exact collectable amount", func(t *testing.T) {
+		// given
+		delegation := NewDelegation(
+			1,
+			address("g1delegator"),
+			address("g1validator"),
+			1000,
+			100,
+			100,
+		)
+		resolver := NewDelegationResolver(delegation)
+
+		// Undelegate with lockup
+		resolver.UnDelegate(500, 100, 100, 86400)
+
+		// when - collect exact collectable amount after lockup passes
+		currentTime := int64(100 + 86400 + 1)
+		collectableAmount := resolver.CollectableAmount(currentTime)
+		err := resolver.Collect(collectableAmount, currentTime)
+
+		// then - should succeed
+		uassert.Nil(t, err)
+		uassert.Equal(t, resolver.CollectableAmount(currentTime), int64(0))
+	})
+
+	t.Run("Collect zero amount", func(t *testing.T) {
+		// given
+		delegation := NewDelegation(
+			1,
+			address("g1delegator"),
+			address("g1validator"),
+			1000,
+			100,
+			100,
+		)
+		resolver := NewDelegationResolver(delegation)
+
+		// Undelegate without lockup
+		resolver.UnDelegateWithoutLockup(500, 100, 100)
+
+		// when - collect zero amount
+		err := resolver.Collect(0, 200)
+
+		// then - should succeed (no-op)
+		uassert.Nil(t, err)
+	})
 }

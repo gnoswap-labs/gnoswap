@@ -131,12 +131,59 @@ func TestHaltConfig_Set(t *testing.T) {
 			// then
 			if tc.expectedError {
 				uassert.Error(t, err)
+				uassert.ErrorContains(t, err, "invalid operation type")
 			} else {
 				uassert.NoError(t, err)
 				// Verify the value was set correctly
 				actualValue, getErr := tc.config.get(tc.op)
 				uassert.NoError(t, getErr)
 				uassert.Equal(t, actualValue, tc.value)
+			}
+		})
+	}
+}
+
+func TestHaltConfig_Get_InvalidOpType(t *testing.T) {
+	tests := []struct {
+		name             string
+		config           HaltConfig
+		op               OpType
+		expectedError    bool
+		expectedErrorMsg string
+	}{
+		{
+			name:             "Get non-existent operation from empty config",
+			config:           make(HaltConfig),
+			op:               OpTypePool,
+			expectedError:    true,
+			expectedErrorMsg: "invalid operation type",
+		},
+		{
+			name:             "Get invalid operation type",
+			config:           HaltConfig{OpTypePool: true},
+			op:               OpType("invalid_op"),
+			expectedError:    true,
+			expectedErrorMsg: "invalid operation type",
+		},
+		{
+			name:          "Get valid existing operation",
+			config:        HaltConfig{OpTypePool: true},
+			op:            OpTypePool,
+			expectedError: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			_, err := tc.config.get(tc.op)
+
+			// then
+			if tc.expectedError {
+				uassert.Error(t, err)
+				uassert.ErrorContains(t, err, tc.expectedErrorMsg)
+			} else {
+				uassert.NoError(t, err)
 			}
 		})
 	}

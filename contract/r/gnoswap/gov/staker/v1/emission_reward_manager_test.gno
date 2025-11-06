@@ -1,6 +1,7 @@
 package v1
 
 import (
+    "math"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -102,6 +103,17 @@ func TestEmissionRewardManager_GetClaimableRewardAmount(t *testing.T) {
 			currentHeight:            100,
 			expected:                 1000, // Full distributed amount for single staker
 		},
+		{
+		    name: "Get claimable with past timestamp",
+            setupManager: func(m *EmissionRewardManagerResolver) {
+                m.addStake("user1", 1000, 100)
+                m.updateAccumulatedRewardX128PerStake(1000, 100)
+            },
+            currentDistributedAmount: 2000,
+            address:                  "user1",
+            currentHeight:            50, // past timestamp
+            expected:                 0,  // Should return 0 as no rewards accrued before stake time
+		},
 	}
 
 	for _, tt := range tests {
@@ -127,37 +139,70 @@ func TestEmissionRewardManager_GetClaimableRewardAmount(t *testing.T) {
 // Test addStake
 func TestEmissionRewardManager_addStake(t *testing.T) {
 	tests := []struct {
-		name          string
-		address       string
-		amount        int64
-		currentHeight int64
-		expectedTotal int64
+		name             string
+		address          string
+		amount           int64
+		currentHeight    int64
+		expectedTotal    int64
+		expectedHasError bool
 	}{
 		{
-			name:          "Add stake for new user",
-			address:       "user1",
-			amount:        1000,
-			currentHeight: 100,
-			expectedTotal: 1000,
+			name:             "Add stake for new user",
+			address:          "user1",
+			amount:           1000,
+			currentHeight:    100,
+			expectedTotal:    1000,
+			expectedHasError: false,
 		},
 		{
-			name:          "Add stake for existing user",
-			address:       "user1",
-			amount:        500,
-			currentHeight: 200,
-			expectedTotal: 1500,
+			name:             "Add stake with negative amount",
+			address:          "user1",
+			amount:           -200,
+			currentHeight:    300,
+			expectedTotal:    0, // Should not change when error occurs
+			expectedHasError: true,
+		},
+		{
+			name:             "Add stake with zero amount",
+			address:          "user1",
+			amount:           0,
+			currentHeight:    400,
+			expectedTotal:    0,
+			expectedHasError: false,
+		},
+		{
+			name:             "Add stake causing overflow",
+			address:          "user1",
+			amount:           1,
+			currentHeight:    500,
+			expectedTotal:    0,
+			expectedHasError: true,
 		},
 	}
 
-	manager := staker.NewEmissionRewardManager()
-	resolver := NewEmissionRewardManagerResolver(manager)
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// When: Add stake
-			resolver.addStake(tt.address, tt.amount, tt.currentHeight)
+			// Given: New emission reward manager for each test
+			manager := staker.NewEmissionRewardManager()
+			resolver := NewEmissionRewardManagerResolver(manager)
 
-			// Then: Total staked amount should be updated
+			// Special setup for overflow test
+			if tt.name == "Add stake causing overflow" {
+				// Set total to MaxInt64
+				resolver.SetTotalStakedAmount(math.MaxInt64)
+			}
+
+			// When: Add stake
+			err := resolver.addStake(tt.address, tt.amount, tt.currentHeight)
+
+			// Then: Check error expectation
+			if tt.expectedHasError {
+				uassert.Error(t, err)
+				return
+			}
+
+			// And: Total staked amount should be updated
+			uassert.NoError(t, err)
 			uassert.Equal(t, resolver.GetTotalStakedAmount(), tt.expectedTotal)
 
 			// And: Reward state should be created/updated
@@ -172,25 +217,52 @@ func TestEmissionRewardManager_addStake(t *testing.T) {
 // Test removeStake
 func TestEmissionRewardManager_removeStake(t *testing.T) {
 	tests := []struct {
-		name           string
-		initialAmount  int64
-		removeAmount   int64
-		currentHeight  int64
-		expectedAmount int64
+		name             string
+		initialAmount    int64
+		removeAmount     int64
+		currentHeight    int64
+		expectedAmount   int64
+		expectedHasError bool
 	}{
 		{
-			name:           "Remove partial stake",
-			initialAmount:  1000,
-			removeAmount:   300,
-			currentHeight:  100,
-			expectedAmount: 700,
+			name:             "Remove partial stake",
+			initialAmount:    1000,
+			removeAmount:     300,
+			currentHeight:    100,
+			expectedAmount:   700,
+			expectedHasError: false,
 		},
 		{
-			name:           "Remove all stake",
-			initialAmount:  700,
-			removeAmount:   700,
-			currentHeight:  200,
-			expectedAmount: 0,
+			name:             "Remove all stake",
+			initialAmount:    700,
+			removeAmount:     700,
+			currentHeight:    200,
+			expectedAmount:   0,
+			expectedHasError: false,
+		},
+		{
+			name:             "Remove zero stake",
+			initialAmount:    500,
+			removeAmount:     0,
+			currentHeight:    300,
+			expectedAmount:   500,
+			expectedHasError: false,
+		},
+		{
+			name:             "Remove negative stake (should not allow)",
+			initialAmount:    400,
+			removeAmount:     -100,
+			currentHeight:    400,
+			expectedAmount:   400, // Should not change when error occurs
+			expectedHasError: true,
+		},
+		{
+			name:             "Remove excessive stake (clamps to zero)",
+			initialAmount:    200,
+			removeAmount:     300,
+			currentHeight:    500,
+			expectedAmount:   0, // Clamped to zero
+			expectedHasError: false,
 		},
 	}
 
@@ -199,12 +271,22 @@ func TestEmissionRewardManager_removeStake(t *testing.T) {
 			// Given: Manager with initial stake
 			manager := staker.NewEmissionRewardManager()
 			resolver := NewEmissionRewardManagerResolver(manager)
-			resolver.addStake("user1", tt.initialAmount, 50)
+			if tt.initialAmount > 0 {
+				resolver.addStake("user1", tt.initialAmount, 50)
+			}
 
 			// When: Remove stake
-			resolver.removeStake("user1", tt.removeAmount, tt.currentHeight)
+			err := resolver.removeStake("user1", tt.removeAmount, tt.currentHeight)
 
-			// Then: Total staked amount should be updated
+			// Then: Check error expectation
+			if tt.expectedHasError {
+				uassert.Error(t, err)
+				uassert.Equal(t, resolver.GetTotalStakedAmount(), tt.expectedAmount)
+				return
+			}
+
+			// And: Total staked amount should be updated
+			uassert.NoError(t, err)
 			uassert.Equal(t, resolver.GetTotalStakedAmount(), tt.expectedAmount)
 		})
 	}
@@ -252,7 +334,7 @@ func TestEmissionRewardManager_claimRewards(t *testing.T) {
 			println("=== Before claiming rewards ===")
 			claimableReward, _ := resolver.GetClaimableRewardAmount(resolver.GetDistributedAmount(), tt.address, tt.currentHeight)
 			println("Claimable reward amount:", claimableReward)
-			
+
 			reward, err := resolver.claimRewards(tt.address, tt.currentHeight)
 			println("Actual claimed reward:", reward)
 
@@ -265,6 +347,28 @@ func TestEmissionRewardManager_claimRewards(t *testing.T) {
 			}
 		})
 	}
+
+}
+
+func TestEmissionRewardManager_claimRewards_MultipleTimes(t *testing.T) {
+    t.Run("Claim rewards multiple times", func(t *testing.T) {
+		// given
+		manager := staker.NewEmissionRewardManager()
+		resolver := NewEmissionRewardManagerResolver(manager)
+		resolver.addStake("user1", 1000, 10)
+		resolver.updateAccumulatedRewardX128PerStake(1000, 20)
+
+		// when - claim rewards multiple times
+		claimed1, err1 := resolver.claimRewards("user1", 30)
+		uassert.NoError(t, err1)
+
+		claimed2, err2 := resolver.claimRewards("user1", 40)
+		uassert.NoError(t, err2)
+
+		// then - second claim should return zero (no new rewards)
+		uassert.True(t, claimed1 > 0)
+		uassert.Equal(t, claimed2, int64(0))
+	})
 }
 
 // Test calculateAccumulatedRewardX128PerStake
@@ -309,6 +413,30 @@ func TestEmissionRewardManager_calculateAccumulatedRewardX128PerStake(t *testing
 			currentHeight:            100,
 			shouldIncrease:           true,
 		},
+		{
+		    name: "Calculate with negative distributed amount",
+			setupManager: func(m *EmissionRewardManagerResolver) {
+                m.SetTotalStakedAmount(1000)
+                m.SetDistributedAmount(1500)
+                m.SetAccumulatedTimestamp(50)
+                m.SetAccumulatedRewardX128PerStake(u256.NewUintFromInt64(0))
+            },
+            currentDistributedAmount: 1000, // less than previous
+            currentHeight:            100,
+            shouldIncrease:           false, // should not increase
+		},
+		{
+		    name: "Calculate with max int64",
+			setupManager: func(m *EmissionRewardManagerResolver) {
+                m.SetTotalStakedAmount(1)
+                m.SetDistributedAmount(0)
+                m.SetAccumulatedTimestamp(50)
+                m.SetAccumulatedRewardX128PerStake(u256.NewUintFromInt64(0))
+            },
+            currentDistributedAmount: int64(9223372036854775807), // Max int64
+            currentHeight:            100,
+            shouldIncrease:           true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -316,8 +444,10 @@ func TestEmissionRewardManager_calculateAccumulatedRewardX128PerStake(t *testing
 			// Given: Emission reward manager setup
 			manager := staker.NewEmissionRewardManager()
 			resolver := NewEmissionRewardManagerResolver(manager)
-			initialReward := u256.NewUintFromInt64(0)
 			tt.setupManager(resolver)
+
+			// Capture initial reward state after setup
+			initialReward := u256.NewUintFromInt64(0)
 			if resolver.GetAccumulatedRewardX128PerStake() != nil {
 				initialReward = resolver.GetAccumulatedRewardX128PerStake().Clone()
 			}
@@ -378,6 +508,16 @@ func TestEmissionRewardManager_updateAccumulatedRewardX128PerStake(t *testing.T)
 			currentDistributedAmount: 1000,
 			currentHeight:            100,
 			shouldUpdate:             true,
+		},
+		{
+		    name: "Update with past timestamp",
+	        setupManager: func(m *EmissionRewardManagerResolver) {
+                m.SetAccumulatedTimestamp(100)
+                m.SetDistributedAmount(0)
+            },
+            currentDistributedAmount: 1000,
+            currentHeight:            50, // past timestamp
+            shouldUpdate:             false,
 		},
 	}
 
@@ -474,4 +614,136 @@ func TestEmissionRewardManager_removeStake_updatesPersistedState(t *testing.T) {
 	uassert.NoError(t, err)
 	// Since no rewards were distributed, claimed amount should be zero
 	uassert.Equal(t, claimed, int64(0))
+}
+
+// TestEmissionRewardManager_DistributeWithZeroTotalStake tests distribution when totalStakedAmount is zero
+// Critical: Validates safe handling of division by zero in reward calculations
+func TestEmissionRewardManager_DistributeWithZeroTotalStake(t *testing.T) {
+	t.Run("distribute with zero total stake - returns zero without panic", func(t *testing.T) {
+		// given
+		manager := staker.NewEmissionRewardManager()
+		resolver := NewEmissionRewardManagerResolver(manager)
+
+		// Verify initial state: no stakes
+		uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(0))
+
+		// when - Try to distribute rewards with zero total stake
+		currentDistributedAmount := int64(1000)
+		accumulatedReward, err := resolver.calculateAccumulatedRewardX128PerStake(
+			currentDistributedAmount,
+			int64(0), // totalStakedAmount = 0
+		)
+
+		// then - Should handle gracefully (returns previous accumulated or zero)
+		uassert.NoError(t, err)
+		// With zero total stake, reward per stake should remain at zero
+		uassert.Equal(t, accumulatedReward.ToString(), "0")
+	})
+
+	t.Run("distribute after all stakes removed", func(t *testing.T) {
+		// given
+		manager := staker.NewEmissionRewardManager()
+		resolver := NewEmissionRewardManagerResolver(manager)
+
+		addr := "user1"
+
+		// Add stake
+		err := resolver.addStake(addr, 1000, 50)
+		uassert.NoError(t, err)
+		uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(1000))
+
+		// Remove all stake
+		err = resolver.removeStake(addr, 1000, 100)
+		uassert.NoError(t, err)
+		uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(0))
+
+		// when - Distribute rewards after all stakes removed
+		currentDistributedAmount := int64(500)
+		accumulatedReward, err := resolver.calculateAccumulatedRewardX128PerStake(
+			currentDistributedAmount,
+			int64(0), // totalStakedAmount now zero
+		)
+
+		// then - Should not panic
+		uassert.NoError(t, err)
+		// Reward calculation with zero stake should return zero delta
+		uassert.Equal(t, accumulatedReward.ToString(), "0")
+	})
+
+	t.Run("add stake after zero stake period", func(t *testing.T) {
+		// given
+		manager := staker.NewEmissionRewardManager()
+		resolver := NewEmissionRewardManagerResolver(manager)
+
+		// Distribute with zero stakes (should be no-op)
+		_, err := resolver.calculateAccumulatedRewardX128PerStake(1000, 0)
+		uassert.NoError(t, err)
+
+		// when - Add first stake after distribution
+		err = resolver.addStake("user1", 500, 100)
+		uassert.NoError(t, err)
+
+		// Distribute again with stake present
+		accumulatedReward, err := resolver.calculateAccumulatedRewardX128PerStake(2000, 500)
+		uassert.NoError(t, err)
+
+		// then - Should calculate rewards correctly for new distribution only
+		// Delta = 2000 - 1000 = 1000 (previous distribution at zero stake doesn't count)
+		// But since distributed amount tracks cumulative, delta considers last update
+		// Reward per stake = 1000 * 2^128 / 500
+		uassert.NotEqual(t, accumulatedReward.ToString(), "0")
+	})
+}
+
+// TestEmissionRewardManager_ZeroStakeEdgeCases tests additional edge cases with zero stakes
+func TestEmissionRewardManager_ZeroStakeEdgeCases(t *testing.T) {
+	t.Run("multiple users all remove stakes", func(t *testing.T) {
+		// given
+		manager := staker.NewEmissionRewardManager()
+		resolver := NewEmissionRewardManagerResolver(manager)
+
+		// Add multiple users
+		resolver.addStake("user1", 100, 10)
+		resolver.addStake("user2", 200, 20)
+		resolver.addStake("user3", 300, 30)
+
+		uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(600))
+
+		// when - All users remove their stakes
+		resolver.removeStake("user1", 100, 40)
+		resolver.removeStake("user2", 200, 50)
+		resolver.removeStake("user3", 300, 60)
+
+		// then - Total stake should be zero
+		uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(0))
+
+		// Distribution with zero stake should not panic
+		accumulatedReward, err := resolver.calculateAccumulatedRewardX128PerStake(1000, 0)
+		uassert.NoError(t, err)
+		uassert.Equal(t, accumulatedReward.ToString(), "0")
+	})
+
+	t.Run("claim rewards when total stake becomes zero", func(t *testing.T) {
+		// given
+		manager := staker.NewEmissionRewardManager()
+		resolver := NewEmissionRewardManagerResolver(manager)
+
+		addr := "user1"
+		resolver.addStake(addr, 500, 10)
+
+		// Distribute rewards
+		resolver.updateAccumulatedRewardX128PerStake(1000, 20)
+
+		// Remove all stake
+		resolver.removeStake(addr, 500, 30)
+		uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(0))
+
+		// when - Try to claim rewards after stake removal
+		claimed, err := resolver.claimRewards(addr, 40)
+
+		// then - Should successfully claim earned rewards
+		uassert.NoError(t, err)
+		// User should have earned rewards before removal
+		uassert.True(t, claimed >= 0)
+	})
 }

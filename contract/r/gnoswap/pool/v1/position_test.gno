@@ -1196,3 +1196,257 @@ func TestPositionSecurity_EdgeCases(t *testing.T) {
 		t.Logf("✓ Concurrent updates: Multiple positions coexist successfully")
 	})
 }
+
+// Test public getter functions for position info
+func TestPositionLiquidity(t *testing.T) {
+	tests := []struct {
+		name                 string
+		setupFn              func(t *testing.T) (*pl.Pool, string)
+		expectedResult       string
+		expectedPanic        bool
+		expectedPanicMessage string
+	}{
+		{
+			name: "success - get liquidity of position with non-zero liquidity",
+			setupFn: func(t *testing.T) (*pl.Pool, string) {
+				pool := setupPoolAtPrice(t, 0)
+				key, _ := getPositionKey(-60, 60)
+
+				params := ModifyPositionParams{
+					tickLower:      -60,
+					tickUpper:      60,
+					liquidityDelta: i256.MustFromDecimal("1000000"),
+				}
+
+				modifyPosition(pool, params)
+				return pool, key
+			},
+			expectedResult: "1000000",
+		},
+		{
+			name: "fail - get liquidity of non-existent position (returns zero)",
+			setupFn: func(t *testing.T) (*pl.Pool, string) {
+				pool := setupPoolAtPrice(t, 0)
+				key, _ := getPositionKey(-120, 120)
+				return pool, key
+			},
+			expectedResult:       "0",
+			expectedPanic:        true,
+			expectedPanicMessage: "[GNOSWAP-POOL-008] requested data not found || positionKey(Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tMTIwX18xMjA=) does not exist",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pool, key := tt.setupFn(t)
+
+			liquidity := u256.Zero()
+
+			if tt.expectedPanic {
+				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
+					liquidity = PositionLiquidity(pool, key)
+				})
+			} else {
+				liquidity = PositionLiquidity(pool, key)
+			}
+
+			uassert.Equal(t, tt.expectedResult, liquidity.ToString())
+		})
+	}
+}
+
+func TestPositionFeeGrowthInside0LastX128(t *testing.T) {
+	tests := []struct {
+		name     string
+		setupFn  func(t *testing.T) (*pl.Pool, string)
+		verifyFn func(t *testing.T, feeGrowth *u256.Uint)
+	}{
+		{
+			name: "success - get fee growth for position",
+			setupFn: func(t *testing.T) (*pl.Pool, string) {
+				pool := setupPoolAtPrice(t, 0)
+				key, _ := getPositionKey(-60, 60)
+
+				params := ModifyPositionParams{
+					tickLower:      -60,
+					tickUpper:      60,
+					liquidityDelta: i256.MustFromDecimal("1000000"),
+				}
+
+				modifyPosition(pool, params)
+				return pool, key
+			},
+			verifyFn: func(t *testing.T, feeGrowth *u256.Uint) {
+				uassert.NotNil(t, feeGrowth)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pool, key := tt.setupFn(t)
+			feeGrowth := PositionFeeGrowthInside0LastX128(pool, key)
+			tt.verifyFn(t, feeGrowth)
+		})
+	}
+}
+
+func TestPositionFeeGrowthInside1LastX128(t *testing.T) {
+	tests := []struct {
+		name     string
+		setupFn  func(t *testing.T) (*pl.Pool, string)
+		verifyFn func(t *testing.T, feeGrowth *u256.Uint)
+	}{
+		{
+			name: "success - get fee growth for position",
+			setupFn: func(t *testing.T) (*pl.Pool, string) {
+				pool := setupPoolAtPrice(t, 0)
+				key, _ := getPositionKey(-60, 60)
+
+				params := ModifyPositionParams{
+					tickLower:      -60,
+					tickUpper:      60,
+					liquidityDelta: i256.MustFromDecimal("1000000"),
+				}
+
+				modifyPosition(pool, params)
+				return pool, key
+			},
+			verifyFn: func(t *testing.T, feeGrowth *u256.Uint) {
+				uassert.NotNil(t, feeGrowth)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pool, key := tt.setupFn(t)
+			feeGrowth := PositionFeeGrowthInside1LastX128(pool, key)
+			tt.verifyFn(t, feeGrowth)
+		})
+	}
+}
+
+func TestPositionTokensOwed0(t *testing.T) {
+	tests := []struct {
+		name     string
+		setupFn  func(t *testing.T) (*pl.Pool, string)
+		verifyFn func(t *testing.T, tokensOwed *u256.Uint)
+	}{
+		{
+			name: "success - get tokens owed for position",
+			setupFn: func(t *testing.T) (*pl.Pool, string) {
+				pool := setupPoolAtPrice(t, 0)
+				key, _ := getPositionKey(-60, 60)
+
+				params := ModifyPositionParams{
+					tickLower:      -60,
+					tickUpper:      60,
+					liquidityDelta: i256.MustFromDecimal("1000000"),
+				}
+
+				modifyPosition(pool, params)
+				return pool, key
+			},
+			verifyFn: func(t *testing.T, tokensOwed *u256.Uint) {
+				uassert.NotNil(t, tokensOwed)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pool, key := tt.setupFn(t)
+			tokensOwed := PositionTokensOwed0(pool, key)
+			tt.verifyFn(t, tokensOwed)
+		})
+	}
+}
+
+func TestPositionTokensOwed1(t *testing.T) {
+	tests := []struct {
+		name     string
+		setupFn  func(t *testing.T) (*pl.Pool, string)
+		verifyFn func(t *testing.T, tokensOwed *u256.Uint)
+	}{
+		{
+			name: "success - get tokens owed for position",
+			setupFn: func(t *testing.T) (*pl.Pool, string) {
+				pool := setupPoolAtPrice(t, 0)
+				key, _ := getPositionKey(-60, 60)
+
+				params := ModifyPositionParams{
+					tickLower:      -60,
+					tickUpper:      60,
+					liquidityDelta: i256.MustFromDecimal("1000000"),
+				}
+
+				modifyPosition(pool, params)
+				return pool, key
+			},
+			verifyFn: func(t *testing.T, tokensOwed *u256.Uint) {
+				uassert.NotNil(t, tokensOwed)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pool, key := tt.setupFn(t)
+			tokensOwed := PositionTokensOwed1(pool, key)
+			tt.verifyFn(t, tokensOwed)
+		})
+	}
+}
+
+func TestGetPositionByPool(t *testing.T) {
+	tests := []struct {
+		name        string
+		setupFn     func(t *testing.T) (*pl.Pool, string)
+		shouldExist bool
+		verifyFn    func(t *testing.T, position pl.PositionInfo, exists bool)
+	}{
+		{
+			name: "success - get existing position",
+			setupFn: func(t *testing.T) (*pl.Pool, string) {
+				pool := setupPoolAtPrice(t, 0)
+				key, _ := getPositionKey(-60, 60)
+
+				params := ModifyPositionParams{
+					tickLower:      -60,
+					tickUpper:      60,
+					liquidityDelta: i256.MustFromDecimal("1000000"),
+				}
+
+				modifyPosition(pool, params)
+				return pool, key
+			},
+			shouldExist: true,
+			verifyFn: func(t *testing.T, position pl.PositionInfo, exists bool) {
+				uassert.True(t, exists)
+				uassert.Equal(t, "1000000", position.Liquidity().ToString())
+			},
+		},
+		{
+			name: "success - get non-existent position returns zero position",
+			setupFn: func(t *testing.T) (*pl.Pool, string) {
+				pool := setupPoolAtPrice(t, 0)
+				key, _ := getPositionKey(-120, 120)
+				return pool, key
+			},
+			shouldExist: false,
+			verifyFn: func(t *testing.T, position pl.PositionInfo, exists bool) {
+				uassert.False(t, exists)
+				uassert.Equal(t, "0", position.Liquidity().ToString())
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pool, key := tt.setupFn(t)
+			position, exists := GetPositionByPool(pool, key)
+			tt.verifyFn(t, position, exists)
+		})
+	}
+}
