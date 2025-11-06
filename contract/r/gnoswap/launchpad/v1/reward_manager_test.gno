@@ -1114,3 +1114,330 @@ func TestRewardManager_TotalClaimedAmountOverflow(t *testing.T) {
 		})
 	}
 }
+
+// TestRewardManager_calculateRewardPerDepositX128 tests the private function calculateRewardPerDepositX128
+// This function calculates reward per deposit based on time duration and staking amount
+func TestRewardManager_calculateRewardPerDepositX128(t *testing.T) {
+	tests := []struct {
+		name                   string
+		setupManager           func() *RewardManager
+		rewardPerSecondX128    *u256.Uint
+		totalStaked            int64
+		currentTime            int64
+		expectedResultIsZero   bool
+		expectedHasError       bool
+		expectedErrorContains  string
+		validateResult         func(t *testing.T, result *u256.Uint)
+	}{
+		{
+			name: "normal calculation - valid time range",
+			setupManager: func() *RewardManager {
+				manager := &RewardManager{
+					accumulatedTime:     1000,
+					distributeStartTime: 900,
+					distributeEndTime:   2000,
+				}
+				return manager
+			},
+			rewardPerSecondX128:  u256.MustFromDecimal("1000000000000000000000000000000000000"), // 1 << 128 (1.0)
+			totalStaked:          1000,
+			currentTime:          1100, // 100 seconds elapsed
+			expectedResultIsZero: false,
+			expectedHasError:     false,
+			validateResult: func(t *testing.T, result *u256.Uint) {
+				// (currentTime - accumulatedTime) * rewardPerSecondX128 / totalStaked
+				// = (1100 - 1000) * (1 << 128) / 1000
+				// = 100 * (1 << 128) / 1000
+				expected := u256.MulDiv(
+					u256.NewUint(100),
+					u256.MustFromDecimal("1000000000000000000000000000000000000"),
+					u256.NewUint(1000),
+				)
+				uassert.Equal(t, expected.ToString(), result.ToString())
+			},
+		},
+		{
+			name: "accumulated time adjusted to distribute start time",
+			setupManager: func() *RewardManager {
+				manager := &RewardManager{
+					accumulatedTime:     800,  // before distributeStartTime
+					distributeStartTime: 1000, // should use this as accumulatedTime
+					distributeEndTime:   2000,
+				}
+				return manager
+			},
+			rewardPerSecondX128:  u256.MustFromDecimal("1000000000000000000000000000000000000"),
+			totalStaked:          500,
+			currentTime:          1200,
+			expectedResultIsZero: false,
+			expectedHasError:     false,
+			validateResult: func(t *testing.T, result *u256.Uint) {
+				// Should use distributeStartTime (1000) instead of accumulatedTime (800)
+				// = (1200 - 1000) * (1 << 128) / 500
+				expected := u256.MulDiv(
+					u256.NewUint(200),
+					u256.MustFromDecimal("1000000000000000000000000000000000000"),
+					u256.NewUint(500),
+				)
+				uassert.Equal(t, expected.ToString(), result.ToString())
+			},
+		},
+		{
+			name: "current time before accumulated time - not started yet",
+			setupManager: func() *RewardManager {
+				manager := &RewardManager{
+					accumulatedTime:     1000,
+					distributeStartTime: 900,
+					distributeEndTime:   2000,
+				}
+				return manager
+			},
+			rewardPerSecondX128:  u256.MustFromDecimal("1000000000000000000000000000000000000"),
+			totalStaked:          1000,
+			currentTime:          900, // before accumulatedTime
+			expectedResultIsZero: true,
+			expectedHasError:     false,
+		},
+		{
+			name: "current time equals accumulated time - boundary",
+			setupManager: func() *RewardManager {
+				manager := &RewardManager{
+					accumulatedTime:     1000,
+					distributeStartTime: 900,
+					distributeEndTime:   2000,
+				}
+				return manager
+			},
+			rewardPerSecondX128:  u256.MustFromDecimal("1000000000000000000000000000000000000"),
+			totalStaked:          1000,
+			currentTime:          1000, // exactly at accumulatedTime
+			expectedResultIsZero: true, // timeDuration = 0
+			expectedHasError:     false,
+			validateResult: func(t *testing.T, result *u256.Uint) {
+				// timeDuration = 0, so result should be zero
+				uassert.True(t, result.IsZero())
+			},
+		},
+		{
+			name: "accumulated time past distribute end time",
+			setupManager: func() *RewardManager {
+				manager := &RewardManager{
+					accumulatedTime:     2100, // after distributeEndTime
+					distributeStartTime: 1000,
+					distributeEndTime:   2000,
+				}
+				return manager
+			},
+			rewardPerSecondX128:  u256.MustFromDecimal("1000000000000000000000000000000000000"),
+			totalStaked:          1000,
+			currentTime:          2200,
+			expectedResultIsZero: true,
+			expectedHasError:     false,
+		},
+		{
+			name: "accumulated time equals distribute end time - boundary",
+			setupManager: func() *RewardManager {
+				manager := &RewardManager{
+					accumulatedTime:     2000, // exactly at distributeEndTime
+					distributeStartTime: 1000,
+					distributeEndTime:   2000,
+				}
+				return manager
+			},
+			rewardPerSecondX128:  u256.MustFromDecimal("1000000000000000000000000000000000000"),
+			totalStaked:          1000,
+			currentTime:          2100,
+			expectedResultIsZero: true,
+			expectedHasError:     false,
+		},
+		{
+			name: "current time past distribute end time - capped to end time",
+			setupManager: func() *RewardManager {
+				manager := &RewardManager{
+					accumulatedTime:     1000,
+					distributeStartTime: 900,
+					distributeEndTime:   1500,
+				}
+				return manager
+			},
+			rewardPerSecondX128:  u256.MustFromDecimal("1000000000000000000000000000000000000"),
+			totalStaked:          1000,
+			currentTime:          2000, // past distributeEndTime, should be capped to 1500
+			expectedResultIsZero: false,
+			expectedHasError:     false,
+			validateResult: func(t *testing.T, result *u256.Uint) {
+				// Should cap currentTime to distributeEndTime (1500)
+				// = (1500 - 1000) * (1 << 128) / 1000
+				expected := u256.MulDiv(
+					u256.NewUint(500),
+					u256.MustFromDecimal("1000000000000000000000000000000000000"),
+					u256.NewUint(1000),
+				)
+				uassert.Equal(t, expected.ToString(), result.ToString())
+			},
+		},
+		{
+			name: "current time equals distribute end time - boundary",
+			setupManager: func() *RewardManager {
+				manager := &RewardManager{
+					accumulatedTime:     1000,
+					distributeStartTime: 900,
+					distributeEndTime:   1500,
+				}
+				return manager
+			},
+			rewardPerSecondX128:  u256.MustFromDecimal("1000000000000000000000000000000000000"),
+			totalStaked:          1000,
+			currentTime:          1500, // exactly at distributeEndTime
+			expectedResultIsZero: false,
+			expectedHasError:     false,
+			validateResult: func(t *testing.T, result *u256.Uint) {
+				// = (1500 - 1000) * (1 << 128) / 1000
+				expected := u256.MulDiv(
+					u256.NewUint(500),
+					u256.MustFromDecimal("1000000000000000000000000000000000000"),
+					u256.NewUint(1000),
+				)
+				uassert.Equal(t, expected.ToString(), result.ToString())
+			},
+		},
+		{
+			name: "reward per second is zero - error case",
+			setupManager: func() *RewardManager {
+				manager := &RewardManager{
+					accumulatedTime:     1000,
+					distributeStartTime: 900,
+					distributeEndTime:   2000,
+				}
+				return manager
+			},
+			rewardPerSecondX128:   u256.Zero(),
+			totalStaked:           1000,
+			currentTime:           1100,
+			expectedHasError:      true,
+			expectedErrorContains: "no left reward",
+		},
+		{
+			name: "total staked is zero - returns zero",
+			setupManager: func() *RewardManager {
+				manager := &RewardManager{
+					accumulatedTime:     1000,
+					distributeStartTime: 900,
+					distributeEndTime:   2000,
+				}
+				return manager
+			},
+			rewardPerSecondX128:  u256.MustFromDecimal("1000000000000000000000000000000000000"),
+			totalStaked:          0,
+			currentTime:          1100,
+			expectedResultIsZero: true,
+			expectedHasError:     false,
+		},
+		{
+			name: "total staked boundary - exactly 1",
+			setupManager: func() *RewardManager {
+				manager := &RewardManager{
+					accumulatedTime:     1000,
+					distributeStartTime: 900,
+					distributeEndTime:   2000,
+				}
+				return manager
+			},
+			rewardPerSecondX128:  u256.MustFromDecimal("1000000000000000000000000000000000000"),
+			totalStaked:          1, // minimum positive value
+			currentTime:          1100,
+			expectedResultIsZero: false,
+			expectedHasError:     false,
+			validateResult: func(t *testing.T, result *u256.Uint) {
+				// = (1100 - 1000) * (1 << 128) / 1
+				expected := u256.MulDiv(
+					u256.NewUint(100),
+					u256.MustFromDecimal("1000000000000000000000000000000000000"),
+					u256.NewUint(1),
+				)
+				uassert.Equal(t, expected.ToString(), result.ToString())
+			},
+		},
+		{
+			name: "very large time duration",
+			setupManager: func() *RewardManager {
+				manager := &RewardManager{
+					accumulatedTime:     1000,
+					distributeStartTime: 900,
+					distributeEndTime:   math.MaxInt64,
+				}
+				return manager
+			},
+			rewardPerSecondX128:  u256.NewUint(1000),
+			totalStaked:          1000000,
+			currentTime:          1000000000, // very large
+			expectedResultIsZero: false,
+			expectedHasError:     false,
+			validateResult: func(t *testing.T, result *u256.Uint) {
+				// Should calculate without overflow
+				// = (1000000000 - 1000) * 1000 / 1000000
+				expected := u256.MulDiv(
+					u256.NewUint(999999000),
+					u256.NewUint(1000),
+					u256.NewUint(1000000),
+				)
+				uassert.Equal(t, expected.ToString(), result.ToString())
+			},
+		},
+		{
+			name: "very small reward per second",
+			setupManager: func() *RewardManager {
+				manager := &RewardManager{
+					accumulatedTime:     1000,
+					distributeStartTime: 900,
+					distributeEndTime:   2000,
+				}
+				return manager
+			},
+			rewardPerSecondX128:  u256.NewUint(1), // very small
+			totalStaked:          1000000,
+			currentTime:          1100,
+			expectedResultIsZero: false,
+			expectedHasError:     false,
+			validateResult: func(t *testing.T, result *u256.Uint) {
+				// = (1100 - 1000) * 1 / 1000000 = 100 / 1000000 = 0 (truncated)
+				expected := u256.MulDiv(
+					u256.NewUint(100),
+					u256.NewUint(1),
+					u256.NewUint(1000000),
+				)
+				uassert.Equal(t, expected.ToString(), result.ToString())
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// given
+			manager := tt.setupManager()
+
+			// when
+			result, err := manager.calculateRewardPerDepositX128(
+				tt.rewardPerSecondX128,
+				tt.totalStaked,
+				tt.currentTime,
+			)
+
+			// then
+			if tt.expectedHasError {
+				uassert.NotNil(t, err)
+				if tt.expectedErrorContains != "" {
+					uassert.ErrorContains(t, err, tt.expectedErrorContains)
+				}
+			} else {
+				uassert.Nil(t, err)
+				if tt.expectedResultIsZero {
+					uassert.True(t, result.IsZero())
+				}
+				if tt.validateResult != nil {
+					tt.validateResult(t, result)
+				}
+			}
+		})
+	}
+}
