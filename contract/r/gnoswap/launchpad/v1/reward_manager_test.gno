@@ -1645,3 +1645,278 @@ func TestRewardManager_updateDistributeAmountPerSecondX128(t *testing.T) {
 		})
 	}
 }
+
+// TestRewardManager_addRewardPerDepositX128 tests the private function addRewardPerDepositX128
+// This function accumulates reward per deposit and updates manager state
+func TestRewardManager_addRewardPerDepositX128(t *testing.T) {
+	tests := []struct {
+		name                         string
+		setupManager                 func() *RewardManager
+		rewardPerDepositX128         *u256.Uint
+		currentHeight                int64
+		currentTime                  int64
+		expectedAccumulatedReward    string
+		expectedAccumulatedHeight    int64
+		expectedAccumulatedTime      int64
+		expectNoUpdate               bool
+	}{
+		{
+			name: "normal addition - first reward",
+			setupManager: func() *RewardManager {
+				return &RewardManager{
+					accumulatedRewardPerDepositX128: u256.Zero(),
+					accumulatedHeight:                0,
+					accumulatedTime:                  1000,
+					distributeStartTime:              900,
+					distributeEndTime:                2000,
+				}
+			},
+			rewardPerDepositX128:      u256.NewUint(1000),
+			currentHeight:             150,
+			currentTime:               1100,
+			expectedAccumulatedReward: "1000",
+			expectedAccumulatedHeight: 150,
+			expectedAccumulatedTime:   1100,
+			expectNoUpdate:            false,
+		},
+		{
+			name: "normal addition - accumulating rewards",
+			setupManager: func() *RewardManager {
+				return &RewardManager{
+					accumulatedRewardPerDepositX128: u256.NewUint(5000),
+					accumulatedHeight:                100,
+					accumulatedTime:                  1000,
+					distributeStartTime:              900,
+					distributeEndTime:                2000,
+				}
+			},
+			rewardPerDepositX128:      u256.NewUint(3000),
+			currentHeight:             150,
+			currentTime:               1100,
+			expectedAccumulatedReward: "8000",
+			expectedAccumulatedHeight: 150,
+			expectedAccumulatedTime:   1100,
+			expectNoUpdate:            false,
+		},
+		{
+			name: "reward is zero - no update",
+			setupManager: func() *RewardManager {
+				return &RewardManager{
+					accumulatedRewardPerDepositX128: u256.NewUint(5000),
+					accumulatedHeight:                100,
+					accumulatedTime:                  1000,
+					distributeStartTime:              900,
+					distributeEndTime:                2000,
+				}
+			},
+			rewardPerDepositX128: u256.Zero(),
+			currentHeight:        150,
+			currentTime:          1100,
+			expectNoUpdate:       true,
+		},
+		{
+			name: "accumulated time greater than current time - no update",
+			setupManager: func() *RewardManager {
+				return &RewardManager{
+					accumulatedRewardPerDepositX128: u256.NewUint(5000),
+					accumulatedHeight:                100,
+					accumulatedTime:                  1200,
+					distributeStartTime:              900,
+					distributeEndTime:                2000,
+				}
+			},
+			rewardPerDepositX128: u256.NewUint(1000),
+			currentHeight:        150,
+			currentTime:          1100,
+			expectNoUpdate:       true,
+		},
+		{
+			name: "accumulated time equals current time - boundary",
+			setupManager: func() *RewardManager {
+				return &RewardManager{
+					accumulatedRewardPerDepositX128: u256.NewUint(5000),
+					accumulatedHeight:                100,
+					accumulatedTime:                  1100,
+					distributeStartTime:              900,
+					distributeEndTime:                2000,
+				}
+			},
+			rewardPerDepositX128:      u256.NewUint(1000),
+			currentHeight:             150,
+			currentTime:               1100,
+			expectedAccumulatedReward: "6000",
+			expectedAccumulatedHeight: 150,
+			expectedAccumulatedTime:   1100,
+			expectNoUpdate:            false,
+		},
+		{
+			name: "distribute start time greater than current time - no update",
+			setupManager: func() *RewardManager {
+				return &RewardManager{
+					accumulatedRewardPerDepositX128: u256.NewUint(5000),
+					accumulatedHeight:                100,
+					accumulatedTime:                  900,
+					distributeStartTime:              1200,
+					distributeEndTime:                2000,
+				}
+			},
+			rewardPerDepositX128: u256.NewUint(1000),
+			currentHeight:        150,
+			currentTime:          1100,
+			expectNoUpdate:       true,
+		},
+		{
+			name: "distribute start time equals current time - boundary",
+			setupManager: func() *RewardManager {
+				return &RewardManager{
+					accumulatedRewardPerDepositX128: u256.NewUint(5000),
+					accumulatedHeight:                100,
+					accumulatedTime:                  900,
+					distributeStartTime:              1100,
+					distributeEndTime:                2000,
+				}
+			},
+			rewardPerDepositX128:      u256.NewUint(1000),
+			currentHeight:             150,
+			currentTime:               1100,
+			expectedAccumulatedReward: "6000",
+			expectedAccumulatedHeight: 150,
+			expectedAccumulatedTime:   1100,
+			expectNoUpdate:            false,
+		},
+		{
+			name: "current time past distribute end time - capped",
+			setupManager: func() *RewardManager {
+				return &RewardManager{
+					accumulatedRewardPerDepositX128: u256.NewUint(5000),
+					accumulatedHeight:                100,
+					accumulatedTime:                  1000,
+					distributeStartTime:              900,
+					distributeEndTime:                1500,
+				}
+			},
+			rewardPerDepositX128:      u256.NewUint(1000),
+			currentHeight:             200,
+			currentTime:               2000,
+			expectedAccumulatedReward: "6000",
+			expectedAccumulatedHeight: 200,
+			expectedAccumulatedTime:   1500,
+			expectNoUpdate:            false,
+		},
+		{
+			name: "current time equals distribute end time - boundary",
+			setupManager: func() *RewardManager {
+				return &RewardManager{
+					accumulatedRewardPerDepositX128: u256.NewUint(5000),
+					accumulatedHeight:                100,
+					accumulatedTime:                  1000,
+					distributeStartTime:              900,
+					distributeEndTime:                1500,
+				}
+			},
+			rewardPerDepositX128:      u256.NewUint(1000),
+			currentHeight:             150,
+			currentTime:               1500,
+			expectedAccumulatedReward: "6000",
+			expectedAccumulatedHeight: 150,
+			expectedAccumulatedTime:   1500,
+			expectNoUpdate:            false,
+		},
+		{
+			name: "very large accumulated reward",
+			setupManager: func() *RewardManager {
+				maxUint128 := u256.MustFromDecimal("340282366920938463463374607431768211455")
+				return &RewardManager{
+					accumulatedRewardPerDepositX128: u256.Zero().Sub(maxUint128, u256.NewUint(1000)),
+					accumulatedHeight:                100,
+					accumulatedTime:                  1000,
+					distributeStartTime:              900,
+					distributeEndTime:                2000,
+				}
+			},
+			rewardPerDepositX128: u256.NewUint(500),
+			currentHeight:        150,
+			currentTime:          1100,
+			expectedAccumulatedReward: func() string {
+				maxUint128 := u256.MustFromDecimal("340282366920938463463374607431768211455")
+				result := u256.Zero().Sub(maxUint128, u256.NewUint(500))
+				return result.ToString()
+			}(),
+			expectedAccumulatedHeight: 150,
+			expectedAccumulatedTime:   1100,
+			expectNoUpdate:            false,
+		},
+		{
+			name: "very small reward addition",
+			setupManager: func() *RewardManager {
+				return &RewardManager{
+					accumulatedRewardPerDepositX128: u256.NewUint(1000000),
+					accumulatedHeight:                100,
+					accumulatedTime:                  1000,
+					distributeStartTime:              900,
+					distributeEndTime:                2000,
+				}
+			},
+			rewardPerDepositX128:      u256.NewUint(1),
+			currentHeight:             150,
+			currentTime:               1100,
+			expectedAccumulatedReward: "1000001",
+			expectedAccumulatedHeight: 150,
+			expectedAccumulatedTime:   1100,
+			expectNoUpdate:            false,
+		},
+		{
+			name: "multiple conditions - both time checks pass",
+			setupManager: func() *RewardManager {
+				return &RewardManager{
+					accumulatedRewardPerDepositX128: u256.NewUint(1000),
+					accumulatedHeight:                100,
+					accumulatedTime:                  1000,
+					distributeStartTime:              1000,
+					distributeEndTime:                2000,
+				}
+			},
+			rewardPerDepositX128:      u256.NewUint(500),
+			currentHeight:             150,
+			currentTime:               1500,
+			expectedAccumulatedReward: "1500",
+			expectedAccumulatedHeight: 150,
+			expectedAccumulatedTime:   1500,
+			expectNoUpdate:            false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// given
+			manager := tt.setupManager()
+
+			// Store initial state
+			initialReward := manager.accumulatedRewardPerDepositX128.ToString()
+			initialHeight := manager.accumulatedHeight
+			initialTime := manager.accumulatedTime
+
+			// when
+			err := manager.addRewardPerDepositX128(
+				tt.rewardPerDepositX128,
+				tt.currentHeight,
+				tt.currentTime,
+			)
+
+			// then
+			uassert.Nil(t, err)
+
+			if tt.expectNoUpdate {
+				// Verify no update occurred
+				uassert.Equal(t, initialReward, manager.accumulatedRewardPerDepositX128.ToString())
+				uassert.Equal(t, initialHeight, manager.accumulatedHeight)
+				uassert.Equal(t, initialTime, manager.accumulatedTime)
+			} else {
+				// Verify update occurred with correct values
+				uassert.Equal(t, tt.expectedAccumulatedReward, manager.accumulatedRewardPerDepositX128.ToString())
+				uassert.Equal(t, tt.expectedAccumulatedHeight, manager.accumulatedHeight)
+				uassert.Equal(t, tt.expectedAccumulatedTime, manager.accumulatedTime)
+			}
+		})
+	}
+}
