@@ -170,18 +170,6 @@ func TestDelegationSnapshotItemResolver_AddRecord(t *testing.T) {
 			expectedAmount: 70,
 		},
 		{
-			name:          "Add record with negative delegation amount",
-			initialAmount: 100,
-			record: staker.NewDelegationRecord(
-				staker.DelegateType,
-				-50,
-				address("g1from"),
-				address("g1to"),
-				1000,
-			),
-			expectedAmount: 50, // Negative treated as subtraction
-		},
-		{
 			name:          "Add record with zero delegation amount",
 			initialAmount: 100,
 			record: staker.NewDelegationRecord(

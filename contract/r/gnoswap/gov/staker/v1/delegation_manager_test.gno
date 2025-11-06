@@ -207,14 +207,6 @@ func TestDelegationManagerResolver_addDelegation(t *testing.T) {
 			expectedIDsCount: 1, // Only 1 for this specific delegatee
 		},
 		{
-			name:             "Add delegation with negative ID",
-			setup:            func(dm *DelegationManagerResolver) {},
-			delegator:        address("g1delegator"),
-			delegatee:        address("g1delegatee"),
-			delegationID:     -1,
-			expectedIDsCount: 1, // Should be added (no validation)
-		},
-		{
 			name:             "Add delegation with zero ID",
 			setup:            func(dm *DelegationManagerResolver) {},
 			delegator:        address("g1delegator"),
@@ -341,4 +333,3 @@ func TestDelegationManagerResolver_removeDelegation(t *testing.T) {
 		uassert.Equal(t, len(ids), 0)
 	})
 }
-

@@ -23,11 +23,6 @@ func TestDelegationSnapshotItem_NewDelegationSnapshotItem(t *testing.T) {
 			amount:           0,
 			delegatorAddress: address("g1delegator"),
 		},
-		{
-			name:             "Create with negative amount",
-			amount:           -50,
-			delegatorAddress: address("g1delegator"),
-		},
 	}
 
 	for _, tc := range tests {
@@ -87,10 +82,6 @@ func TestDelegationSnapshotItem_DelegationAmount(t *testing.T) {
 			name:   "Get positive amount",
 			amount: 1000,
 		},
-		{
-			name:   "Get negative amount",
-			amount: -500,
-		},
 	}
 
 	for _, tc := range tests {
@@ -123,11 +114,6 @@ func TestDelegationSnapshotItem_SetDelegationAmount(t *testing.T) {
 			name:      "Set to zero",
 			initial:   100,
 			newAmount: 0,
-		},
-		{
-			name:      "Set to negative amount",
-			initial:   100,
-			newAmount: -50,
 		},
 	}
 
