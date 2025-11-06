@@ -1920,3 +1920,73 @@ func TestRewardManager_addRewardPerDepositX128(t *testing.T) {
 		})
 	}
 }
+
+// TestRewardManager_addRewardState tests the private function addRewardState
+// This function sets reward state for a deposit and returns it
+func TestRewardManager_addRewardState(t *testing.T) {
+	tests := []struct {
+		name         string
+		depositId    string
+		rewardAmount int64
+	}{
+		{
+			name:         "add first reward state",
+			depositId:    "deposit1",
+			rewardAmount: 1000,
+		},
+		{
+			name:         "add second reward state",
+			depositId:    "deposit2",
+			rewardAmount: 2000,
+		},
+		{
+			name:         "add reward state with zero amount",
+			depositId:    "deposit3",
+			rewardAmount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// given
+			manager := &RewardManager{
+				rewards: avl.NewTree(),
+			}
+
+			deposit := NewDeposit(
+				tt.depositId,
+				"project:tier",
+				30,
+				testutils.TestAddress("depositor"),
+				tt.rewardAmount,
+				100,
+				1000,
+				2000,
+			)
+
+			rewardState := NewRewardState(
+				u256.NewUint(1000),
+				tt.rewardAmount,
+				1000,
+				2000,
+				1030,
+			)
+
+			// when
+			result := manager.addRewardState(deposit, rewardState)
+
+			// then
+			uassert.NotNil(t, result)
+
+			// Verify it was stored in the tree
+			stored, exists := manager.rewards.Get(tt.depositId)
+			uassert.True(t, exists)
+			uassert.NotNil(t, stored)
+
+			// Verify the stored state has correct deposit amount
+			storedState, ok := stored.(*RewardState)
+			uassert.True(t, ok)
+			uassert.Equal(t, tt.rewardAmount, storedState.DepositAmount())
+		})
+	}
+}
