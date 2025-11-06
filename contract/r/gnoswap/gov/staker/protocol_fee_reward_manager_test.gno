@@ -10,27 +10,17 @@ import (
 
 // TestNewProtocolFeeRewardManager tests creating a new protocol fee reward manager
 func TestNewProtocolFeeRewardManager(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "Create new protocol fee reward manager",
-		},
-	}
+	t.Run("Create new protocol fee reward manager", func(t *testing.T) {
+		// when
+		manager := NewProtocolFeeRewardManager()
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// when
-			manager := NewProtocolFeeRewardManager()
-
-			// then
-			uassert.NotNil(t, manager)
-			uassert.NotNil(t, manager.GetProtocolFeeAmounts())
-			uassert.NotNil(t, manager.GetAllAccumulatedProtocolFeeX128PerStake())
-			uassert.Equal(t, manager.GetAccumulatedTimestamp(), int64(0))
-			uassert.Equal(t, manager.GetTotalStakedAmount(), int64(0))
-		})
-	}
+		// then
+		uassert.NotNil(t, manager)
+		uassert.NotNil(t, manager.GetProtocolFeeAmounts())
+		uassert.NotNil(t, manager.GetAllAccumulatedProtocolFeeX128PerStake())
+		uassert.Equal(t, manager.GetAccumulatedTimestamp(), int64(0))
+		uassert.Equal(t, manager.GetTotalStakedAmount(), int64(0))
+	})
 }
 
 // TestProtocolFeeRewardManager_SettersAndGetters tests all setter and getter methods

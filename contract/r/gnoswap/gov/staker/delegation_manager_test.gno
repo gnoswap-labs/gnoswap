@@ -8,25 +8,15 @@ import (
 
 // TestDelegationManager_NewDelegationManager tests the DelegationManager constructor
 func TestDelegationManager_NewDelegationManager(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "Create new delegation manager",
-		},
-	}
+    t.Run("Create new delegation manager", func(t *testing.T) {
+		// when
+		dm := NewDelegationManager()
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// when
-			dm := NewDelegationManager()
-
-			// then
-			uassert.NotNil(t, dm)
-			uassert.NotNil(t, dm.GetUserDelegations())
-			uassert.Equal(t, len(dm.GetUserDelegations()), 0)
-		})
-	}
+		// then
+		uassert.NotNil(t, dm)
+		uassert.NotNil(t, dm.GetUserDelegations())
+		uassert.Equal(t, len(dm.GetUserDelegations()), 0)
+	})
 }
 
 // TestDelegationManager_AddAndRemoveDelegation tests adding and removing delegation IDs
@@ -178,30 +168,6 @@ func TestDelegationManager_GetUserDelegationIDs(t *testing.T) {
 				}
 				uassert.Equal(t, totalCount, tc.expectedTotalCount)
 			}
-		})
-	}
-}
-
-// TestNewDelegationManager tests creating a new delegation manager
-func TestNewDelegationManager(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "Create with empty state",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// when
-			dm := NewDelegationManager()
-
-			// then
-			uassert.NotNil(t, dm)
-			delegations := dm.GetUserDelegations()
-			uassert.NotNil(t, delegations)
-			uassert.Equal(t, len(delegations), 0)
 		})
 	}
 }

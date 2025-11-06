@@ -7,22 +7,6 @@ import (
 	"gno.land/p/gnoswap/store"
 )
 
-// TestState_initRegisterReadableContract tests the private initRegisterReadableContract function
-func TestState_initRegisterReadableContract(t *testing.T) {
-	t.Run("register readable contract", func(t *testing.T) {
-		// given - kvStore should exist from init()
-
-		// when - this function is called during init(), but we can verify the result
-		// The function adds governance address as authorized caller
-		// We can't directly test the private function, but we verify it doesn't panic
-		// by calling it again (it should be idempotent or at least not crash)
-
-		// then - no panic should occur
-		// The function has already been called in init(), so kvStore should have the governance address
-		uassert.NotNil(t, kvStore)
-	})
-}
-
 // TestState_initializeDomainStore tests the private initializeDomainStore function
 func TestState_initializeDomainStore(t *testing.T) {
 	t.Run("initialize domain store", func(t *testing.T) {

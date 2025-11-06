@@ -69,19 +69,3 @@ func TestInit_initStoreData(t *testing.T) {
 		uassert.Equal(t, period, customPeriod) // Should still be 2 days, not reset to default 1 day
 	})
 }
-
-// TestInit_registerGovStakerV1 tests the private registerGovStakerV1 function
-func TestInit_registerGovStakerV1(t *testing.T) {
-	t.Run("register gov staker v1", func(t *testing.T) {
-		// given - this function is already called in init()
-		// We can verify it worked by checking that v1 is registered
-
-		// when - try to get implementation (should not panic if v1 is registered)
-		// The function has already been called in init()
-
-		// then - should not panic
-		// We verify by ensuring the module loaded successfully
-		// If registerGovStakerV1 failed, the module wouldn't load
-		uassert.True(t, true) // If we got here, init() succeeded
-	})
-}

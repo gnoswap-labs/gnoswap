@@ -9,27 +9,17 @@ import (
 
 // TestNewDelegationManagerResolver tests the creation of DelegationManagerResolver
 func TestNewDelegationManagerResolver(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "Create new delegation manager resolver",
-		},
-	}
+	t.Run("Create new delegation manager resolver", func(t *testing.T) {
+		// given
+		manager := staker.NewDelegationManager()
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// given
-			manager := staker.NewDelegationManager()
+		// when
+		resolver := NewDelegationManagerResolver(manager)
 
-			// when
-			resolver := NewDelegationManagerResolver(manager)
-
-			// then
-			uassert.NotNil(t, resolver)
-			uassert.NotNil(t, resolver.DelegationManager)
-		})
-	}
+		// then
+		uassert.NotNil(t, resolver)
+		uassert.NotNil(t, resolver.DelegationManager)
+	})
 }
 
 // TestDelegationManagerResolver_GetUserDelegationIDsWithDelegatee tests retrieving delegation IDs for specific pair
