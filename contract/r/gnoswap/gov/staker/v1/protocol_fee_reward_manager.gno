@@ -1,6 +1,8 @@
 package v1
 
 import (
+    "errors"
+
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/gov/staker"
 )
@@ -151,7 +153,11 @@ func (self *ProtocolFeeRewardManagerResolver) updateAccumulatedProtocolFeeX128Pe
 //   - amount: amount of stake to add
 //   - currentTimestamp: current timestamp
 func (self *ProtocolFeeRewardManagerResolver) addStake(address string, amount int64, currentTimestamp int64) error {
-	rewardState, ok, err := self.GetRewardState(address)
+    if amount < 0 {
+        return errors.New("amount must be non-negative")
+    }
+
+    rewardState, ok, err := self.GetRewardState(address)
 	if err != nil {
 		return err
 	}
@@ -180,6 +186,10 @@ func (self *ProtocolFeeRewardManagerResolver) addStake(address string, amount in
 //   - amount: amount of stake to remove
 //   - currentTimestamp: current timestamp
 func (self *ProtocolFeeRewardManagerResolver) removeStake(address string, amount int64, currentTimestamp int64) error {
+    if amount < 0 {
+        return errors.New("amount must be non-negative")
+    }
+
 	rewardState, ok, err := self.GetRewardState(address)
 	if err != nil {
 		return err
