@@ -526,7 +526,7 @@ func (g *govStakerV1) addStakeFromLaunchpad(address string, amount int64, curren
 		deposit = 0
 	}
 
-	deposit += amount
+	deposit = safeAddInt64(deposit, amount)
 	g.setLaunchpadProjectDeposit(launchpadRewardID, deposit)
 
 	return nil
@@ -556,7 +556,7 @@ func (g *govStakerV1) removeStakeFromLaunchpad(address string, amount int64, cur
 		deposit = 0
 	}
 
-	deposit -= amount
+	deposit = safeSubInt64(deposit, amount)
 	if deposit < 0 {
 		deposit = 0
 	}

@@ -56,7 +56,7 @@ func updateUint64InTree(tree *avl.Tree, key string, delta uint64, add bool) uint
 	current := getUint64FromTree(tree, key)
 	var newValue uint64
 	if add {
-		newValue = current + delta
+		newValue = safeAddUint64(current, delta)
 	} else {
 		if current < delta {
 			panic(makeErrorWithDetails(
@@ -64,7 +64,7 @@ func updateUint64InTree(tree *avl.Tree, key string, delta uint64, add bool) uint
 				ufmt.Sprintf("not enough balance: current(%d) < requested(%d)", current, delta),
 			))
 		}
-		newValue = current - delta
+		newValue = safeSubUint64(current, delta)
 	}
 
 	tree.Set(key, newValue)
@@ -145,6 +145,24 @@ func safeSubInt64(a, b int64) int64 {
 
 	if b < 0 && a > math.MaxInt64+b {
 		panic("int64 subtraction overflow")
+	}
+
+	return a - b
+}
+
+// safeAddUint64 performs safe addition of uint64 values, panicking on overflow
+func safeAddUint64(a, b uint64) uint64 {
+	if a > math.MaxUint64-b {
+		panic("uint64 addition overflow")
+	}
+
+	return a + b
+}
+
+// safeSubUint64 performs safe subtraction of uint64 values, panicking on underflow
+func safeSubUint64(a, b uint64) uint64 {
+	if a < b {
+		panic("uint64 subtraction underflow")
 	}
 
 	return a - b

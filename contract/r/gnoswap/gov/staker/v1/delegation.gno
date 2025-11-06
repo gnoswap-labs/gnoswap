@@ -37,7 +37,7 @@ func (r *DelegationResolver) IsEmpty() bool {
 // CollectableAmount calculates the total amount that can be collected at the given time
 func (r *DelegationResolver) CollectableAmount(currentTime int64) (total int64) {
 	for _, withdraw := range r.delegation.Withdraws() {
-		total += NewDelegationWithdrawResolver(withdraw).CollectableAmount(currentTime)
+		total = safeAddInt64(total, NewDelegationWithdrawResolver(withdraw).CollectableAmount(currentTime))
 	}
 	return total
 }

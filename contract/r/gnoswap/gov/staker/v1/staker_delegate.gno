@@ -391,7 +391,7 @@ func (gs *govStakerV1) unDelegate(
 		gs.removeStakeEmissionReward(delegator.String(), currentUnDelegationAmount, currentTimestamp)
 		gs.removeStakeProtocolFeeReward(delegator.String(), currentUnDelegationAmount, currentTimestamp)
 
-		unDelegationAmount -= currentUnDelegationAmount
+		unDelegationAmount = safeSubInt64(unDelegationAmount, currentUnDelegationAmount)
 		if unDelegationAmount <= 0 {
 			break
 		}
@@ -499,11 +499,7 @@ func (gs *govStakerV1) collectDelegations(user address, currentTime int64) (int6
 		}
 
 		// Simple addition since addToCollectedAmount was removed
-		collectedAmount += collectableAmount
-		if err != nil {
-			msg := makeErrorWithDetails(errInvalidAmount, err.Error())
-			return collectedAmount, msg
-		}
+		collectedAmount = safeAddInt64(collectedAmount, collectableAmount)
 
 		// Remove empty delegations to keep storage clean
 		if resolver.IsEmpty() {
