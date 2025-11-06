@@ -3,8 +3,8 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
-	"time"
 	"errors"
+	"time"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
@@ -263,7 +263,7 @@ func (gs *govStakerV1) CollectUndelegatedGns() int64 {
 		panic(err)
 	}
 
-	newLocked := currentLocked - collectedAmount
+	newLocked := safeSubInt64(currentLocked, collectedAmount)
 	if newLocked < 0 {
 		newLocked = 0
 	}
@@ -305,7 +305,7 @@ func (gs *govStakerV1) delegate(
 
 	delegatedAmount := delegationResolver.DelegatedAmount()
 	if delegatedAmount < 0 {
-	    return nil, errors.New("delegated amount cannot be negative")
+		return nil, errors.New("delegated amount cannot be negative")
 	}
 
 	delegationRecord := staker.NewDelegationDelegateRecordBy(delegation, delegatedAmount, currentTimestamp)
@@ -321,7 +321,7 @@ func (gs *govStakerV1) delegate(
 		panic(err)
 	}
 
-	if err := gs.store.SetTotalDelegatedAmount(currentDelegated + amount); err != nil {
+	if err := gs.store.SetTotalDelegatedAmount(safeAddInt64(currentDelegated, amount)); err != nil {
 		panic(err)
 	}
 
@@ -330,7 +330,7 @@ func (gs *govStakerV1) delegate(
 		panic(err)
 	}
 
-	if err := gs.store.SetTotalLockedAmount(currentLocked + amount); err != nil {
+	if err := gs.store.SetTotalLockedAmount(safeAddInt64(currentLocked, amount)); err != nil {
 		panic(err)
 	}
 
@@ -368,8 +368,8 @@ func (gs *govStakerV1) unDelegate(
 		}
 
 		if currentUnDelegationAmount < 0 {
-            return 0, errors.New("undelegation amount cannot be negative")
-        }
+			return 0, errors.New("undelegation amount cannot be negative")
+		}
 
 		// Get lockup period from store
 		lockupPeriod, err := gs.store.GetUnDelegationLockupPeriod()
@@ -403,7 +403,7 @@ func (gs *govStakerV1) unDelegate(
 		panic(err)
 	}
 
-	newDelegated := currentDelegated - amount
+	newDelegated := safeSubInt64(currentDelegated, amount)
 	if newDelegated < 0 {
 		newDelegated = 0
 	}
@@ -450,7 +450,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 			currentTime,
 		)
 
-		unDelegationAmount -= currentUnDelegationAmount
+		unDelegationAmount = safeSubInt64(unDelegationAmount, currentUnDelegationAmount)
 		if unDelegationAmount <= 0 {
 			break
 		}
@@ -462,7 +462,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 		panic(err)
 	}
 
-	newDelegated := currentDelegated - amount
+	newDelegated := safeSubInt64(currentDelegated, amount)
 	if newDelegated < 0 {
 		newDelegated = 0
 	}

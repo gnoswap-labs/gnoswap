@@ -155,7 +155,7 @@ func newApiStake(tokenId uint64, deposit *sr.Deposit) ApiStake {
 	stakeDuration := uint64(0)
 	if runtime.ChainHeight() > deposit.StakeTime() {
 		now := time.Now().Unix()
-		stakeDuration = uint64(now - deposit.StakeTime())
+		stakeDuration = uint64(safeSubInt64(now, deposit.StakeTime()))
 	}
 
 	return ApiStake{

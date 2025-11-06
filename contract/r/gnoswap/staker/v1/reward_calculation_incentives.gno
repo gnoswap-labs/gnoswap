@@ -212,7 +212,7 @@ func calculateUnClaimableDuration(unclaimableStart, unclaimableEnd, incentiveSta
 	}
 
 	// Calculate overlap duration
-	return endTime - startTime
+	return safeSubInt64(endTime, startTime)
 }
 
 func NewIncentivesResolver(incentives *sr.Incentives) *IncentivesResolver {

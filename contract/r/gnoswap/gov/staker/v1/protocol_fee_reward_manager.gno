@@ -1,8 +1,8 @@
 package v1
 
 import (
-    "math"
-    "errors"
+	"errors"
+	"math"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/gov/staker"
@@ -13,7 +13,7 @@ type ProtocolFeeRewardManagerResolver struct {
 }
 
 func NewProtocolFeeRewardManagerResolver(manager *staker.ProtocolFeeRewardManager) *ProtocolFeeRewardManagerResolver {
-	return &ProtocolFeeRewardManagerResolver{ manager }
+	return &ProtocolFeeRewardManagerResolver{manager}
 }
 
 // GetClaimableRewardAmounts calculates the claimable reward amounts for all tokens for a specific address.
@@ -77,7 +77,7 @@ func (self *ProtocolFeeRewardManagerResolver) calculateAccumulatedRewardX128PerS
 	for token, protocolFeeAmount := range protocolFeeAmounts {
 		previousProtocolFeeAmount := self.GetProtocolFeeAmount(token)
 
-		protocolFeeDelta := protocolFeeAmount - previousProtocolFeeAmount
+		protocolFeeDelta := safeSubInt64(protocolFeeAmount, previousProtocolFeeAmount)
 
 		// If no new fees for this token, keep existing rate
 		if protocolFeeDelta <= 0 {
@@ -154,11 +154,11 @@ func (self *ProtocolFeeRewardManagerResolver) updateAccumulatedProtocolFeeX128Pe
 //   - amount: amount of stake to add
 //   - currentTimestamp: current timestamp
 func (self *ProtocolFeeRewardManagerResolver) addStake(address string, amount int64, currentTimestamp int64) error {
-    if amount < 0 {
-        return errors.New("amount must be non-negative")
-    }
+	if amount < 0 {
+		return errors.New("amount must be non-negative")
+	}
 
-    rewardState, ok, err := self.GetRewardState(address)
+	rewardState, ok, err := self.GetRewardState(address)
 	if err != nil {
 		return err
 	}
@@ -178,7 +178,7 @@ func (self *ProtocolFeeRewardManagerResolver) addStake(address string, amount in
 	if amount > 0 && currentTotal > math.MaxInt64-amount {
 		return errors.New("total staked amount would overflow")
 	}
-	self.SetTotalStakedAmount(currentTotal + amount)
+	self.SetTotalStakedAmount(safeAddInt64(currentTotal, amount))
 
 	return nil
 }
@@ -191,9 +191,9 @@ func (self *ProtocolFeeRewardManagerResolver) addStake(address string, amount in
 //   - amount: amount of stake to remove
 //   - currentTimestamp: current timestamp
 func (self *ProtocolFeeRewardManagerResolver) removeStake(address string, amount int64, currentTimestamp int64) error {
-    if amount < 0 {
-        return errors.New("amount must be non-negative")
-    }
+	if amount < 0 {
+		return errors.New("amount must be non-negative")
+	}
 
 	rewardState, ok, err := self.GetRewardState(address)
 	if err != nil {
@@ -211,7 +211,7 @@ func (self *ProtocolFeeRewardManagerResolver) removeStake(address string, amount
 
 	self.setRewardState(address, rewardState)
 
-	updatedTotalStakedAmount := self.GetTotalStakedAmount() - amount
+	updatedTotalStakedAmount := safeSubInt64(self.GetTotalStakedAmount(), amount)
 	if updatedTotalStakedAmount < 0 {
 		updatedTotalStakedAmount = 0
 	}
