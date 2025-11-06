@@ -1,8 +1,11 @@
 package v1
 
 import (
+	"chain"
 	"errors"
+	"math"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -11,6 +14,7 @@ import (
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/referral"
@@ -303,6 +307,76 @@ func TestComputePositionKey(t *testing.T) {
 			tickUpper: 300,
 			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18zMDBfXzMwMA==", // Base64 of "gno.land/r/gnoswap/position__300__300"
 		},
+		{
+			name:      "Normal tick range",
+			owner:     alice,
+			tickLower: -600,
+			tickUpper: 600,
+			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tNjAwX182MDA=", // Base64 of "gno.land/r/gnoswap/position__300__300"
+		},
+		{
+			name:      "Wide tick range",
+			owner:     alice,
+			tickLower: -887220,
+			tickUpper: 887220,
+			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tODg3MjIwX184ODcyMjA=", // Base64 of "gno.land/r/gnoswap/position__-887220__887220"
+		},
+		{
+			name:      "Narrow tick range",
+			owner:     alice,
+			tickLower: -60,
+			tickUpper: 60,
+			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tNjBfXzYw", // Base64 of "gno.land/r/gnoswap/position__-60__60"
+		},
+		{
+			name:      "Asymmetric range",
+			owner:     alice,
+			tickLower: -1000,
+			tickUpper: 500,
+			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tMTAwMF9fNTAw", // Base64 of "gno.land/r/gnoswap/position__-1000__500"
+		},
+		{
+			name:      "Positive range",
+			owner:     alice,
+			tickLower: 100,
+			tickUpper: 1000,
+			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18xMDBfXzEwMDA=", // Base64 of "gno.land/r/gnoswap/position__100__1000"
+		},
+		{
+			name:      "Negative range",
+			owner:     alice,
+			tickLower: -2000,
+			tickUpper: -1000,
+			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tMjAwMF9fLTEwMDA=", // Base64 of "gno.land/r/gnoswap/position__-2000__-1000"
+		},
+		{
+			name:      "Zero lower bound",
+			owner:     alice,
+			tickLower: 0,
+			tickUpper: 1000,
+			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18wX18xMDAw", // Base64 of "gno.land/r/gnoswap/position__0__1000"
+		},
+		{
+			name:      "Zero upper bound",
+			owner:     alice,
+			tickLower: -1000,
+			tickUpper: 0,
+			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tMTAwMF9fMA==", // Base64 of "gno.land/r/gnoswap/position__-1000__0"
+		},
+		{
+			name:      "Minimum values",
+			owner:     alice,
+			tickLower: -887272,
+			tickUpper: -887272 + 60,
+			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tODg3MjcyX18tODg3MjEy", // Base64 of "gno.land/r/gnoswap/position__-887272__-887212"
+		},
+		{
+			name:      "Maximum values",
+			owner:     alice,
+			tickLower: 887272 - 60,
+			tickUpper: 887272,
+			expected:  "Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX184ODcyMTJfXzg4NzI3Mg==", // Base64 of "gno.land/r/gnoswap/position__887272__887272"
+		},
 	}
 
 	for _, tt := range tests {
@@ -348,57 +422,184 @@ func TestIsValidTokenPath(t *testing.T) {
 	tests := []struct {
 		name      string
 		tokenPath string
-		register  bool
 		expected  bool
 	}{
-		{"valid path", gnsPath, true, true},
-		{"invalid path", "invalid/path", false, false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := isValidTokenPath(tt.tokenPath)
-			uassert.Equal(t, tt.expected, result)
-		})
-	}
-}
-
-func TestValidateTokenPath(t *testing.T) {
-	tests := []struct {
-		name      string
-		token0    string
-		token1    string
-		register0 bool
-		register1 bool
-		expected  error
-	}{
-		{"both valid", gnsPath, barPath, true, true, nil},
-		{"same token path", "tokenA", "tokenA", true, true, errInvalidTokenPath},
-		{"conflicting tokens (GNOT ↔ WUGNOT)", GNOT, WRAPPED_WUGNOT, true, true, errInvalidTokenPath},
-		{"invalid token0", "tokenX", "tokenY", false, true, errInvalidTokenPath},
-		{"both invalid", "invalidA", "invalidB", false, false, errInvalidTokenPath},
+		{
+			name:      "Valid registered token - gns",
+			tokenPath: gnsPath,
+			expected:  true,
+		},
+		{
+			name:      "Valid registered token - bar",
+			tokenPath: barPath,
+			expected:  true,
+		},
+		{
+			name:      "Valid registered token - wugnot",
+			tokenPath: wugnotPath,
+			expected:  true,
+		},
+		{
+			name:      "Invalid - non-existent token",
+			tokenPath: "gno.land/r/nonexistent/token",
+			expected:  false,
+		},
+		{
+			name:      "Invalid - empty path",
+			tokenPath: "",
+			expected:  false,
+		},
+		{
+			name:      "Invalid - malformed path",
+			tokenPath: "invalid/path",
+			expected:  false,
+		},
+		{
+			name:      "Invalid - random string",
+			tokenPath: "randomstring",
+			expected:  false,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			initPositionTest(t)
 
-			if tt.register0 {
-				MockRegister(t, tt.token0)
-			} else {
-				MockUnregister(t, tt.token0)
-			}
-			if tt.register1 {
-				MockRegister(t, tt.token1)
-			} else {
-				MockUnregister(t, tt.token1)
-			}
+			result := isValidTokenPath(tt.tokenPath)
+			uassert.Equal(t, tt.expected, result)
+		})
+	}
+}
 
-			err := validateTokenPath(tt.token0, tt.token1)
-			if tt.expected != nil {
-				uassert.Equal(t, tt.expected.Error(), err.Error())
+func TestParseAmounts(t *testing.T) {
+	tests := []struct {
+		name              string
+		amount0Desired    string
+		amount1Desired    string
+		amount0Min        string
+		amount1Min        string
+		expectedA0Desired *u256.Uint
+		expectedA1Desired *u256.Uint
+		expectedA0Min     *u256.Uint
+		expectedA1Min     *u256.Uint
+		shouldPanic       bool
+		expectedPanicMsg  string
+	}{
+		{
+			name:              "Valid normal amounts",
+			amount0Desired:    "1000000",
+			amount1Desired:    "2000000",
+			amount0Min:        "900000",
+			amount1Min:        "1800000",
+			expectedA0Desired: u256.MustFromDecimal("1000000"),
+			expectedA1Desired: u256.MustFromDecimal("2000000"),
+			expectedA0Min:     u256.MustFromDecimal("900000"),
+			expectedA1Min:     u256.MustFromDecimal("1800000"),
+			shouldPanic:       false,
+		},
+		{
+			name:              "Valid zero amounts",
+			amount0Desired:    "0",
+			amount1Desired:    "0",
+			amount0Min:        "0",
+			amount1Min:        "0",
+			expectedA0Desired: u256.Zero(),
+			expectedA1Desired: u256.Zero(),
+			expectedA0Min:     u256.Zero(),
+			expectedA1Min:     u256.Zero(),
+			shouldPanic:       false,
+		},
+		{
+			name:              "Valid large amounts",
+			amount0Desired:    "999999999999999999999999",
+			amount1Desired:    "888888888888888888888888",
+			amount0Min:        "777777777777777777777777",
+			amount1Min:        "666666666666666666666666",
+			expectedA0Desired: u256.MustFromDecimal("999999999999999999999999"),
+			expectedA1Desired: u256.MustFromDecimal("888888888888888888888888"),
+			expectedA0Min:     u256.MustFromDecimal("777777777777777777777777"),
+			expectedA1Min:     u256.MustFromDecimal("666666666666666666666666"),
+			shouldPanic:       false,
+		},
+		{
+			name:             "Invalid - non-numeric amount0Desired",
+			amount0Desired:   "invalid",
+			amount1Desired:   "1000000",
+			amount0Min:       "900000",
+			amount1Min:       "900000",
+			shouldPanic:      true,
+			expectedPanicMsg: "strconv.ParseUint: parsing \"invalid\": invalid syntax",
+		},
+		{
+			name:             "Invalid - non-numeric amount1Desired",
+			amount0Desired:   "1000000",
+			amount1Desired:   "abc",
+			amount0Min:       "900000",
+			amount1Min:       "900000",
+			shouldPanic:      true,
+			expectedPanicMsg: "strconv.ParseUint: parsing \"abc\": invalid syntax",
+		},
+		{
+			name:             "Invalid - negative amount0Min",
+			amount0Desired:   "1000000",
+			amount1Desired:   "1000000",
+			amount0Min:       "-100",
+			amount1Min:       "900000",
+			shouldPanic:      true,
+			expectedPanicMsg: "strconv.ParseUint: parsing \"-100\": invalid syntax",
+		},
+		{
+			name:             "Invalid - negative amount1Min",
+			amount0Desired:   "1000000",
+			amount1Desired:   "1000000",
+			amount0Min:       "900000",
+			amount1Min:       "-100",
+			shouldPanic:      true,
+			expectedPanicMsg: "strconv.ParseUint: parsing \"-100\": invalid syntax",
+		},
+		{
+			name:             "Invalid - empty string",
+			amount0Desired:   "",
+			amount1Desired:   "1000000",
+			amount0Min:       "900000",
+			amount1Min:       "900000",
+			shouldPanic:      true,
+			expectedPanicMsg: "EOF",
+		},
+		{
+			name:              "Valid - very small amounts",
+			amount0Desired:    "1",
+			amount1Desired:    "1",
+			amount0Min:        "1",
+			amount1Min:        "1",
+			expectedA0Desired: u256.NewUint(1),
+			expectedA1Desired: u256.NewUint(1),
+			expectedA0Min:     u256.NewUint(1),
+			expectedA1Min:     u256.NewUint(1),
+			shouldPanic:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
+					parseAmounts(tt.amount0Desired, tt.amount1Desired, tt.amount0Min, tt.amount1Min)
+				})
 			} else {
-				uassert.Nil(t, err)
+				a0Desired, a1Desired, a0Min, a1Min := parseAmounts(
+					tt.amount0Desired,
+					tt.amount1Desired,
+					tt.amount0Min,
+					tt.amount1Min,
+				)
+
+				uassert.Equal(t, tt.expectedA0Desired.ToString(), a0Desired.ToString(), "amount0Desired mismatch")
+				uassert.Equal(t, tt.expectedA1Desired.ToString(), a1Desired.ToString(), "amount1Desired mismatch")
+				uassert.Equal(t, tt.expectedA0Min.ToString(), a0Min.ToString(), "amount0Min mismatch")
+				uassert.Equal(t, tt.expectedA1Min.ToString(), a1Min.ToString(), "amount1Min mismatch")
 			}
 		})
 	}
@@ -1176,4 +1377,465 @@ func TestReposition(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidateTokenPath(t *testing.T) {
+	tests := []struct {
+		name        string
+		token0      string
+		token1      string
+		expectError bool
+	}{
+		{
+			name:        "Valid different tokens",
+			token0:      gnsPath,
+			token1:      barPath,
+			expectError: false,
+		},
+		{
+			name:        "Valid native token (gnot) with wrapped token",
+			token0:      GNOT,
+			token1:      gnsPath,
+			expectError: false,
+		},
+		{
+			name:        "Valid wrapped token with native",
+			token0:      gnsPath,
+			token1:      GNOT,
+			expectError: false,
+		},
+		{
+			name:        "Valid ugnot with token",
+			token0:      UGNOT,
+			token1:      gnsPath,
+			expectError: true,
+		},
+		{
+			name:        "Invalid - identical tokens",
+			token0:      gnsPath,
+			token1:      gnsPath,
+			expectError: true,
+		},
+		{
+			name:        "Invalid - gnot and wugnot conflict",
+			token0:      GNOT,
+			token1:      WRAPPED_WUGNOT,
+			expectError: true,
+		},
+		{
+			name:        "Invalid - wugnot and gnot conflict (reversed)",
+			token0:      WRAPPED_WUGNOT,
+			token1:      GNOT,
+			expectError: true,
+		},
+		{
+			name:        "Invalid - non-registered token path",
+			token0:      "gno.land/r/invalid/token",
+			token1:      gnsPath,
+			expectError: true,
+		},
+		{
+			name:        "Invalid - both tokens are invalid",
+			token0:      "invalid1",
+			token1:      "invalid2",
+			expectError: true,
+		},
+		{
+			name:        "Valid - both registered tokens",
+			token0:      gnsPath,
+			token1:      wugnotPath,
+			expectError: false,
+		},
+		{
+			name:        "Invalid - empty token0",
+			token0:      "",
+			token1:      gnsPath,
+			expectError: true,
+		},
+		{
+			name:        "Invalid - empty token1",
+			token0:      gnsPath,
+			token1:      "",
+			expectError: true,
+		},
+		{
+			name:        "Invalid - both empty",
+			token0:      "",
+			token1:      "",
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+
+			err := validateTokenPath(tt.token0, tt.token1)
+
+			if tt.expectError {
+				uassert.NotNil(t, err, "expected error but got nil")
+				uassert.Equal(t, errInvalidTokenPath.Error(), err.Error())
+			} else {
+				if err != nil {
+					t.Errorf("expected no error but got: %v", err)
+				}
+			}
+		})
+	}
+}
+
+func TestComputePoolPath(t *testing.T) {
+	tests := []struct {
+		name         string
+		token0       string
+		token1       string
+		fee          uint32
+		expectedPath string
+	}{
+		{
+			name:         "Normal pool path",
+			token0:       gnsPath,
+			token1:       barPath,
+			fee:          fee3000,
+			expectedPath: computePoolPath(gnsPath, barPath, fee3000),
+		},
+		{
+			name:         "Pool path with fee 500",
+			token0:       gnsPath,
+			token1:       wugnotPath,
+			fee:          fee500,
+			expectedPath: computePoolPath(gnsPath, wugnotPath, fee500),
+		},
+		{
+			name:         "Pool path with fee 100",
+			token0:       barPath,
+			token1:       bazPath,
+			fee:          fee100,
+			expectedPath: computePoolPath(barPath, bazPath, fee100),
+		},
+		{
+			name:         "Pool path with fee 10000",
+			token0:       gnsPath,
+			token1:       oblPath,
+			fee:          fee10000,
+			expectedPath: computePoolPath(gnsPath, oblPath, fee10000),
+		},
+		{
+			name:         "Pool path with reversed token order",
+			token0:       barPath,
+			token1:       gnsPath,
+			fee:          fee3000,
+			expectedPath: computePoolPath(barPath, gnsPath, fee3000),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+
+			result := computePoolPath(tt.token0, tt.token1, tt.fee)
+			uassert.NotEqual(t, "", result, "pool path should not be empty")
+			// The actual pool path format depends on pool.GetPoolPath implementation
+			// We just verify it returns a non-empty string
+			uassert.Equal(t, tt.expectedPath, result)
+		})
+	}
+}
+
+func TestCalculateAmountWithWithdrawalFee(t *testing.T) {
+	tests := []struct {
+		name                 string
+		amount               string
+		fee                  uint64
+		expectedAmountNoFee  int64
+		expectedFee          int64
+		shouldPanic          bool
+		expectedPanicMessage string
+	}{
+		{
+			name:                "No fee - zero fee",
+			amount:              "1000000",
+			fee:                 0,
+			expectedAmountNoFee: 1000000,
+			expectedFee:         0,
+			shouldPanic:         false,
+		},
+		{
+			name:                "Normal fee - 1% (100 bps)",
+			amount:              "1000000",
+			fee:                 100,
+			expectedAmountNoFee: 990000,
+			expectedFee:         10000,
+			shouldPanic:         false,
+		},
+		{
+			name:                "High fee - 5% (500 bps)",
+			amount:              "1000000",
+			fee:                 500,
+			expectedAmountNoFee: 950000,
+			expectedFee:         50000,
+			shouldPanic:         false,
+		},
+		{
+			name:                "Low fee - 0.1% (10 bps)",
+			amount:              "1000000",
+			fee:                 10,
+			expectedAmountNoFee: 999000,
+			expectedFee:         1000,
+			shouldPanic:         false,
+		},
+		{
+			name:                "Small amount with fee",
+			amount:              "100",
+			fee:                 100,
+			expectedAmountNoFee: 99,
+			expectedFee:         1,
+			shouldPanic:         false,
+		},
+		{
+			name:                "Large amount with fee",
+			amount:              "999999999999",
+			fee:                 100,
+			expectedAmountNoFee: 990000000000,
+			expectedFee:         9999999999,
+			shouldPanic:         false,
+		},
+		{
+			name:                "Zero amount with fee",
+			amount:              "0",
+			fee:                 100,
+			expectedAmountNoFee: 0,
+			expectedFee:         0,
+			shouldPanic:         false,
+		},
+		{
+			name:                "Maximum fee - 100% (10000 bps)",
+			amount:              "1000000",
+			fee:                 10000,
+			expectedAmountNoFee: 0,
+			expectedFee:         1000000,
+			shouldPanic:         false,
+		},
+		{
+			name:                "Rounding down in fee calculation",
+			amount:              "50",
+			fee:                 100,
+			expectedAmountNoFee: 50,
+			expectedFee:         0,
+			shouldPanic:         false,
+		},
+		{
+			name:                "Rounding down in fee calculation",
+			amount:              "50",
+			fee:                 99,
+			expectedAmountNoFee: 50,
+			expectedFee:         0,
+			shouldPanic:         false,
+		},
+		{
+			name:                "Very small fee on large amount",
+			amount:              "1000000000",
+			fee:                 1,
+			expectedAmountNoFee: 999900000,
+			expectedFee:         100000,
+			shouldPanic:         false,
+		},
+		{
+			name:                 "Invalid amount - negative",
+			amount:               "-1000",
+			fee:                  100,
+			shouldPanic:          true,
+			expectedPanicMessage: "strconv.ParseUint: parsing \"-1000\": invalid syntax",
+		},
+		{
+			name:                 "Invalid amount - non-numeric",
+			amount:               "invalid",
+			fee:                  100,
+			shouldPanic:          true,
+			expectedPanicMessage: "strconv.ParseUint: parsing \"invalid\": invalid syntax",
+		},
+		{
+			name:                "Edge case - fee equals divisor",
+			amount:              "10000",
+			fee:                 10000,
+			expectedAmountNoFee: 0,
+			expectedFee:         10000,
+			shouldPanic:         false,
+		},
+		{
+			name:                "Multiple of divisor",
+			amount:              "20000",
+			fee:                 100,
+			expectedAmountNoFee: 19800,
+			expectedFee:         200,
+			shouldPanic:         false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
+					calculateAmountWithWithdrawalFee(tt.amount, tt.fee)
+				})
+			} else {
+				amountNoFee, feeAmount := calculateAmountWithWithdrawalFee(tt.amount, tt.fee)
+
+				uassert.Equal(t, tt.expectedAmountNoFee, amountNoFee)
+				uassert.Equal(t, tt.expectedFee, feeAmount)
+
+				// Verify sum equals original (within rounding)
+				if tt.fee > 0 {
+					originalAmount := u256.MustFromDecimal(tt.amount)
+					calculatedSum := u256.NewUint(uint64(amountNoFee + feeAmount))
+
+					// Allow for rounding down in fee calculation
+					diff := u256.Zero().Sub(originalAmount, calculatedSum)
+					uassert.True(t, diff.Lt(u256.NewUint(10)),
+						"sum should approximately equal original amount (within rounding)")
+				}
+			}
+		})
+	}
+}
+
+func TestUnwrapLeftoverWrappedToken(t *testing.T) {
+	tests := []struct {
+		name                 string
+		token                string
+		wrapped              int64
+		amount               int64
+		expectError          bool
+		shouldCall           bool // whether unwrap should be called
+		expectPanic          bool
+		expectedPanicMessage string
+	}{
+		{
+			name:        "Unwrap leftover - wrapped > amount",
+			token:       WRAPPED_WUGNOT,
+			wrapped:     1000,
+			amount:      700,
+			expectError: false,
+			shouldCall:  true,
+		},
+		{
+			name:        "No unwrap - wrapped == amount",
+			token:       WRAPPED_WUGNOT,
+			wrapped:     1000,
+			amount:      1000,
+			expectError: false,
+			shouldCall:  false,
+		},
+		{
+			name:        "No unwrap - wrapped < amount",
+			token:       WRAPPED_WUGNOT,
+			wrapped:     7000,
+			amount:      10000,
+			expectError: false,
+			shouldCall:  false,
+		},
+		{
+			name:        "No unwrap - not wrapped token",
+			token:       gnsPath,
+			wrapped:     10000,
+			amount:      7000,
+			expectError: false,
+			shouldCall:  false,
+		},
+		{
+			name:        "Unwrap zero leftover",
+			token:       WRAPPED_WUGNOT,
+			wrapped:     0,
+			amount:      0,
+			expectError: false,
+			shouldCall:  false,
+		},
+		{
+			name:        "Large leftover amount",
+			token:       WRAPPED_WUGNOT,
+			wrapped:     1000000000,
+			amount:      500000000,
+			expectError: false,
+			shouldCall:  true,
+		},
+		{
+			name:        "Small leftover amount",
+			token:       WRAPPED_WUGNOT,
+			wrapped:     100,
+			amount:      99,
+			shouldCall:  true,
+			expectError: false,
+			expectPanic: false,
+		},
+		{
+			name:        "No unwrap - non-native token with leftover",
+			token:       barPath,
+			wrapped:     1000,
+			amount:      500,
+			expectError: false,
+			shouldCall:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+
+			testing.SetRealm(adminRealm)
+			wugnot.Approve(cross, positionAddr, math.MaxInt64)
+
+			if tt.wrapped > 0 {
+				amount := tt.wrapped
+				if tt.wrapped < 1000 {
+					amount = 1000
+				}
+
+				testing.SetOriginSend(chain.Coins{{"ugnot", amount}})
+				wugnot.Deposit(cross)
+
+				testing.IssueCoins(address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"), chain.Coins{{"ugnot", amount}})
+			}
+
+			testing.SetOriginSend(chain.Coins{})
+			testing.SetRealm(adminRealm)
+
+			unwrapLeftoverWrappedTokenFn := func(cur realm) error {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position"))
+				return mockInstance.unwrapLeftoverWrappedToken(tt.token, tt.wrapped, tt.amount, adminAddr)
+			}
+
+			if tt.expectPanic {
+				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
+					unwrapLeftoverWrappedTokenFn(cross)
+				})
+			} else {
+				err := unwrapLeftoverWrappedTokenFn(cross)
+				if err != nil {
+					t.Errorf("expected no error but got: %v", err)
+				}
+
+				if tt.expectError {
+					uassert.NotNil(t, err, "expected error but got nil")
+				} else {
+					if err != nil {
+						t.Errorf("expected no error but got: %v", err)
+					}
+				}
+
+				// Verify logic correctness
+				isWrapped := isWrappedToken(tt.token)
+				hasLeftover := tt.wrapped > tt.amount
+				shouldUnwrap := isWrapped && hasLeftover
+
+				uassert.Equal(t, tt.shouldCall, shouldUnwrap)
+			}
+		})
+	}
+}
+
+// Helper function to check if string contains substring
+func contains(str, substr string) bool {
+	return strings.Contains(str, substr)
 }

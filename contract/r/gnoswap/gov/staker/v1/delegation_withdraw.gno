@@ -9,7 +9,7 @@ type DelegationWithdrawResolver struct {
 }
 
 func NewDelegationWithdrawResolver(withdraw *staker.DelegationWithdraw) *DelegationWithdrawResolver {
-	return &DelegationWithdrawResolver{ withdraw }
+	return &DelegationWithdrawResolver{withdraw}
 }
 
 func (r *DelegationWithdrawResolver) Get() *staker.DelegationWithdraw {
@@ -83,7 +83,7 @@ func (r *DelegationWithdrawResolver) Collect(amount int64, currentTime int64) er
 
 	r.withdraw.SetCollected(true)
 	r.withdraw.SetCollectedAt(currentTime)
-	r.withdraw.SetCollectedAmount(r.withdraw.CollectedAmount() + amount)
+	r.withdraw.SetCollectedAmount(safeAddInt64(r.withdraw.CollectedAmount(), amount))
 
 	return nil
 }

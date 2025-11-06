@@ -101,11 +101,15 @@ func (r *DelegationSnapshotItemResolver) Clone() *staker.DelegationSnapshotItem 
 }
 
 func (r *DelegationSnapshotItemResolver) AddRecord(record *staker.DelegationRecord) *staker.DelegationSnapshotItem {
-	amount := r.item.DelegationAmount() + record.DelegateAmount() - record.UnDelegateAmount()
+	amount := safeSubInt64(record.DelegateAmount(), record.UnDelegateAmount())
+	amount = safeAddInt64(amount, r.item.DelegationAmount())
+
 	return staker.NewDelegationSnapshotItem(amount, r.item.DelegatorAddress())
 }
 
 func (r *DelegationSnapshotItemResolver) SubRecord(record *staker.DelegationRecord) *staker.DelegationSnapshotItem {
-	amount := r.item.DelegationAmount() - record.DelegateAmount() + record.UnDelegateAmount()
+	amount := safeSubInt64(r.item.DelegationAmount(), record.DelegateAmount())
+	amount = safeAddInt64(amount, record.UnDelegateAmount())
+
 	return staker.NewDelegationSnapshotItem(amount, r.item.DelegatorAddress())
 }

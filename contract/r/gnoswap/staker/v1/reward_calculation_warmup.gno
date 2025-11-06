@@ -100,5 +100,5 @@ func safeAddTime(currentTime, duration int64) int64 {
 		return math.MaxInt64
 	}
 
-	return currentTime + duration
+	return safeAddInt64(currentTime, duration)
 }

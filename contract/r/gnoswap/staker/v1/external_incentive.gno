@@ -43,7 +43,7 @@ func (s *stakerV1) CreateExternalIncentive(
 	assertIsAllowedForExternalReward(s, targetPoolPath, rewardToken)
 	assertIsValidIncentiveStartTime(startTimestamp)
 	assertIsValidIncentiveEndTime(endTimestamp)
-	assertIsValidIncentiveDuration(endTimestamp - startTimestamp)
+	assertIsValidIncentiveDuration(safeSubInt64(endTimestamp, startTimestamp))
 	// assert that the user has sent the correct amount of native coin
 	assertIsValidUserCoinSend(rewardToken, rewardAmount)
 

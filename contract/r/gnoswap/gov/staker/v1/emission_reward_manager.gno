@@ -1,6 +1,9 @@
 package v1
 
 import (
+	"errors"
+	"math"
+
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/gov/staker"
 )
@@ -53,7 +56,7 @@ func (self *EmissionRewardManagerResolver) calculateAccumulatedRewardX128PerStak
 	}
 
 	// Newly distributed rewards since last update
-	distributedAmountDelta := currentDistributedAmount - self.GetDistributedAmount()
+	distributedAmountDelta := safeSubInt64(currentDistributedAmount, self.GetDistributedAmount())
 	if distributedAmountDelta <= 0 {
 		// Non-positive delta. nothing to do more.
 		return self.GetAccumulatedRewardX128PerStake(), nil
@@ -107,6 +110,10 @@ func (self *EmissionRewardManagerResolver) updateAccumulatedRewardX128PerStake(
 // This method ensures rewards are properly calculated before the stake change.
 // Adds stake for specified address and updates reward calculations.
 func (self *EmissionRewardManagerResolver) addStake(address string, amount int64, currentTimestamp int64) error {
+	if amount < 0 {
+		return errors.New("amount must be non-negative")
+	}
+
 	rewardState, ok, err := self.GetRewardState(address)
 	if err != nil {
 		return err
@@ -123,7 +130,12 @@ func (self *EmissionRewardManagerResolver) addStake(address string, amount int64
 	}
 
 	self.setRewardStates(address, rewardState)
-	self.SetTotalStakedAmount(self.GetTotalStakedAmount() + amount)
+
+	currentTotal := self.GetTotalStakedAmount()
+	if amount > 0 && currentTotal > math.MaxInt64-amount {
+		return errors.New("total staked amount would overflow")
+	}
+	self.SetTotalStakedAmount(safeAddInt64(currentTotal, amount))
 	return nil
 }
 
@@ -131,6 +143,10 @@ func (self *EmissionRewardManagerResolver) addStake(address string, amount int64
 // This method ensures rewards are properly calculated before the stake change.
 // Removes stake for specified address and updates reward calculations.
 func (self *EmissionRewardManagerResolver) removeStake(address string, amount int64, currentTimestamp int64) error {
+	if amount < 0 {
+		return errors.New("amount must be non-negative")
+	}
+
 	rewardState, ok, err := self.GetRewardState(address)
 	if err != nil {
 		return err
@@ -149,7 +165,7 @@ func (self *EmissionRewardManagerResolver) removeStake(address string, amount in
 	// persist updated state
 	self.setRewardStates(address, rewardState)
 
-	updatedTotalStakedAmount := self.GetTotalStakedAmount() - amount
+	updatedTotalStakedAmount := safeSubInt64(self.GetTotalStakedAmount(), amount)
 	if updatedTotalStakedAmount < 0 {
 		updatedTotalStakedAmount = 0
 	}

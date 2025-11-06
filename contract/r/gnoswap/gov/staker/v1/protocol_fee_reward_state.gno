@@ -12,7 +12,7 @@ type ProtocolFeeRewardStateResolver struct {
 }
 
 func NewProtocolFeeRewardStateResolver(protocolFeeRewardState *staker.ProtocolFeeRewardState) *ProtocolFeeRewardStateResolver {
-	return &ProtocolFeeRewardStateResolver{ protocolFeeRewardState }
+	return &ProtocolFeeRewardStateResolver{protocolFeeRewardState}
 }
 
 // IsClaimable checks if rewards can be claimed at the given timestamp.
@@ -105,7 +105,7 @@ func (p *ProtocolFeeRewardStateResolver) calculateClaimableRewards(
 // Parameters:
 //   - amount: amount of stake to add
 func (p *ProtocolFeeRewardStateResolver) addStake(amount int64) {
-	p.SetStakedAmount(p.GetStakedAmount() + amount)
+	p.SetStakedAmount(safeAddInt64(p.GetStakedAmount(), amount))
 }
 
 // removeStake decreases the staked amount for this address.
@@ -183,7 +183,7 @@ func (p *ProtocolFeeRewardStateResolver) updateRewardDebtX128(
 	// Add newly calculated rewards to accumulated amounts
 	accumulatedRewards := p.GetAccumulatedRewards()
 	for token, rewardAmount := range rewardAmounts {
-		p.SetAccumulatedRewardForToken(token, accumulatedRewards[token] + rewardAmount)
+		p.SetAccumulatedRewardForToken(token, safeAddInt64(accumulatedRewards[token], rewardAmount))
 	}
 
 	p.SetAccumulatedTimestamp(currentTimestamp)
