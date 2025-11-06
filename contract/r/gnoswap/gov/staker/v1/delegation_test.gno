@@ -700,11 +700,13 @@ func TestDelegation_EdgeCases(t *testing.T) {
 // TestDelegation_addToCollectedAmount tests the private addToCollectedAmount function
 func TestDelegation_addToCollectedAmount(t *testing.T) {
 	tests := []struct {
-		name             string
-		collectedAmount  int64
-		amount           int64
-		expectedResult   int64
-		expectedHasError bool
+		name                 string
+		collectedAmount      int64
+		amount               int64
+		expectedResult       int64
+		expectedHasError     bool
+		expectedHasPanic     bool
+		expectedErrorMessage string
 	}{
 		{
 			name:             "add positive amount",
@@ -725,7 +727,7 @@ func TestDelegation_addToCollectedAmount(t *testing.T) {
 			collectedAmount:  100,
 			amount:           -30,
 			expectedResult:   0,
-			expectedHasError: true, // Should not allow negative amounts
+			expectedHasError: true,
 		},
 		{
 			name:             "both zero",
@@ -742,24 +744,28 @@ func TestDelegation_addToCollectedAmount(t *testing.T) {
 			expectedHasError: false,
 		},
 		{
-			name:             "overflow",
-			collectedAmount:  math.MaxInt64, // MaxInt64
-			amount:           1,
-			expectedResult:   0,
-			expectedHasError: true,
+			name:                "overflow",
+			collectedAmount:      math.MaxInt64, // MaxInt64
+			amount:               1,
+			expectedResult:       0,
+			expectedHasPanic:     true,
+			expectedErrorMessage: "int64 addition overflow",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// when
-			result, err := addToCollectedAmount(tc.collectedAmount, tc.amount)
-
-			// then
-			if tc.expectedHasError {
+			// when/then
+			if tc.expectedHasPanic {
+    			uassert.PanicsWithMessage(t, tc.expectedErrorMessage, func() {
+       				addToCollectedAmount(tc.collectedAmount, tc.amount)
+    			})
+            } else if tc.expectedHasError {
+                _, err := addToCollectedAmount(tc.collectedAmount, tc.amount)
 				uassert.NotNil(t, err)
 			} else {
-				uassert.Nil(t, err)
+			    result, err := addToCollectedAmount(tc.collectedAmount, tc.amount)
+				uassert.NoError(t, err)
 				uassert.Equal(t, result, tc.expectedResult)
 			}
 		})

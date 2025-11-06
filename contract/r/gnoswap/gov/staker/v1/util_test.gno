@@ -300,7 +300,8 @@ func TestUtil_updateUint64InTree(t *testing.T) {
 				tree.Set("key1", maxUint64-1)
 				return tree, "key1", 10, true
 			},
-			expected: 8, // Wrapped around: (max-1) + 10 = 8
+			expectedHasPanic:     true,
+            expectedPanicMessage: "uint64 addition overflow",
 		},
 		{
 		    name: "panics on insufficient balance",
