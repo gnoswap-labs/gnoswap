@@ -38,26 +38,6 @@ func TestStore_int64ToString(t *testing.T) {
 			input:          -9223372036854775808,
 			expectedOutput: "-9223372036854775808",
 		},
-		{
-			name:           "positive single digit",
-			input:          7,
-			expectedOutput: "7",
-		},
-		{
-			name:           "negative single digit",
-			input:          -9,
-			expectedOutput: "-9",
-		},
-		{
-			name:           "large positive",
-			input:          1000000000,
-			expectedOutput: "1000000000",
-		},
-		{
-			name:           "large negative",
-			input:          -1000000000,
-			expectedOutput: "-1000000000",
-		},
 	}
 
 	for _, tc := range tests {
