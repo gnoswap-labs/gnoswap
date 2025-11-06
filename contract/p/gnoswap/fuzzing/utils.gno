@@ -1,3 +1,9 @@
+// Copyright 2019 Gregory Petrosyan <gregory.petrosyan@gmail.com>
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 package fuzzing
 
 import (
@@ -6,84 +12,29 @@ import (
 )
 
 const (
-	small = 5 // Bias towards small values and small collection sizes
-
-	// Label constants for groups
-	biasLabel      = "bias"
-	intBitsLabel   = "intbits"
-	coinFlipLabel  = "coinflip"
-	repeatLabel    = ":repeat"
-	tryLabel       = "try"
+	biasLabel     = "bias"
+	intBitsLabel  = "intbits"
+	coinFlipLabel = "coinflip"
+	dieRollLabel  = "dieroll"
+	repeatLabel   = "@repeat"
 )
 
-// genFloat01 generates a float64 in [0, 1) from bitstream.
+func bitmask64(n uint) uint64 {
+	if n >= 64 {
+		return math.MaxUint64
+	}
+	return (1 << n) - 1
+}
+
 func genFloat01(s bitStream) float64 {
-	// Generate 53 bits for mantissa (IEEE 754 double precision)
-	u := s.drawBits(53)
+    u := s.drawBits(53)
 	return float64(u) / (1 << 53)
-}
-
-// genFloat32 generates a float32 in [0, 1) from bitstream.
-func genFloat32(s bitStream) float32 {
-	// Generate 24 bits for mantissa (IEEE 754 single precision)
-	u := s.drawBits(24)
-	return float32(u) / (1 << 24)
-}
-
-// genFloat64Range generates a float64 in [min, max] with optional bias.
-func genFloat64Range(s bitStream, min, max float64, bias bool) float64 {
-	assertf(min <= max, "genFloat64Range: min > max")
-
-	f := genFloat01(s)
-	if bias {
-		// Bias towards boundaries and zero
-		if flipBiasedCoin(s, 0.1) {
-			// Return boundary
-			if flipBiasedCoin(s, 0.5) {
-				return min
-			}
-			return max
-		}
-		// Check if range includes zero
-		if min <= 0 && max >= 0 {
-			if flipBiasedCoin(s, 0.1) {
-				return 0
-			}
-		}
-	}
-
-	return min + f*(max-min)
-}
-
-// genFloat32Range generates a float32 in [min, max] with optional bias.
-func genFloat32Range(s bitStream, min, max float32, bias bool) float32 {
-	assertf(min <= max, "genFloat32Range: min > max")
-
-	f := genFloat32(s)
-	if bias {
-		// Bias towards boundaries and zero
-		if flipBiasedCoin(s, 0.1) {
-			// Return boundary
-			if flipBiasedCoin(s, 0.5) {
-				return min
-			}
-			return max
-		}
-		// Check if range includes zero
-		if min <= 0 && max >= 0 {
-			if flipBiasedCoin(s, 0.1) {
-				return 0
-			}
-		}
-	}
-
-	return min + f*(max-min)
 }
 
 // genGeom generates a geometrically distributed value.
 // Used for biased generation of integers.
 func genGeom(s bitStream, p float64) uint64 {
-	assertf(p > 0 && p < 1, "genGeom: p must be in (0, 1)")
+    assertf(p > 0 && p < 1, "genGeom: p must be in (0, 1)")
 
 	f := genFloat01(s)
 	if f >= 1 {
@@ -93,9 +44,19 @@ func genGeom(s bitStream, p float64) uint64 {
 	return uint64(math.Log(1-f) / math.Log(1-p))
 }
 
-// genUintNUnbiased generates a uniform uint64 in [0, max].
-func genUintNUnbiased(s bitStream, max uint64) uint64 {
+func genUintNNoReject(s bitStream, max uint64) uint64 {
 	bitlen := bits.Len64(max)
+	i := s.beginGroup(intBitsLabel, false)
+	u := s.drawBits(bitlen)
+	s.endGroup(i, false)
+	if u > max {
+		u = max
+	}
+	return u
+}
+
+func genUintNUnbiased(s bitStream, max uint64) uint64 {
+    bitlen := bits.Len64(max)
 
 	for {
 		u := s.drawBits(bitlen)
@@ -109,7 +70,7 @@ func genUintNUnbiased(s bitStream, max uint64) uint64 {
 // Prefers smaller values for better test case minimization.
 // Returns (value, isMin, isMax).
 func genUintNBiased(s bitStream, max uint64) (uint64, bool, bool) {
-	bitlen := bits.Len64(max)
+    bitlen := bits.Len64(max)
 
 	// Draw from geometric distribution for bit length
 	i := s.beginGroup(biasLabel, false)
@@ -142,7 +103,6 @@ func genUintNBiased(s bitStream, max uint64) (uint64, bool, bool) {
 	}
 }
 
-// genUintN generates a uint64 in [0, max] with optional bias.
 func genUintN(s bitStream, max uint64, bias bool) (uint64, bool, bool) {
 	if bias {
 		return genUintNBiased(s, max)
@@ -150,65 +110,58 @@ func genUintN(s bitStream, max uint64, bias bool) (uint64, bool, bool) {
 	return genUintNUnbiased(s, max), false, false
 }
 
-// genUintRange generates a uint64 in [min, max] with optional bias.
 func genUintRange(s bitStream, min uint64, max uint64, bias bool) (uint64, bool, bool) {
-	assertf(min <= max, "genUintRange: min > max")
+	if min > max {
+		assertf(false, "invalid range [%v, %v]", min, max)
+	}
 
 	u, lOverflow, rOverflow := genUintN(s, max-min, bias)
+
 	return min + u, lOverflow, rOverflow
 }
 
-// genIntRange generates an int64 in [min, max] with optional bias.
-// Handles negative ranges and prefers zero when range includes it.
 func genIntRange(s bitStream, min int64, max int64, bias bool) (int64, bool, bool) {
-	assertf(min <= max, "genIntRange: min > max")
+	if min > max {
+		assertf(false, "invalid range [%v, %v]", min, max)
+	}
 
 	var posMin, negMin uint64
 	var pNeg float64
-
 	if min >= 0 {
-		// Positive range only
 		posMin = uint64(min)
 		pNeg = 0
 	} else if max <= 0 {
-		// Negative range only
 		negMin = uint64(-max)
 		pNeg = 1
 	} else {
-		// Range includes zero
 		posMin = 0
 		negMin = 1
 		pos := uint64(max) + 1
 		neg := uint64(-min)
 		pNeg = float64(neg) / (float64(neg) + float64(pos))
 		if bias {
-			pNeg = 0.5 // Prefer zero crossing equally
+			pNeg = 0.5
 		}
 	}
 
 	if flipBiasedCoin(s, pNeg) {
-		// Generate negative
 		u, lOverflow, rOverflow := genUintRange(s, negMin, uint64(-min), bias)
 		return -int64(u), rOverflow, lOverflow && max <= 0
 	}
-
-	// Generate positive
 	u, lOverflow, rOverflow := genUintRange(s, posMin, uint64(max), bias)
 	return int64(u), lOverflow && min >= 0, rOverflow
 }
 
-// genIndex generates an index in [0, n-1] with optional bias.
 func genIndex(s bitStream, n int, bias bool) int {
-	assertf(n > 0, "genIndex: n must be positive")
+	assert(n > 0)
 
 	u, _, _ := genUintN(s, uint64(n-1), bias)
+
 	return int(u)
 }
 
-// flipBiasedCoin returns true with probability p.
-// Used for branching decisions in generation.
 func flipBiasedCoin(s bitStream, p float64) bool {
-	assertf(p >= 0 && p <= 1, "flipBiasedCoin: p must be in [0, 1]")
+	assert(p >= 0 && p <= 1)
 
 	i := s.beginGroup(coinFlipLabel, false)
 	f := genFloat01(s)
@@ -217,8 +170,46 @@ func flipBiasedCoin(s bitStream, p float64) bool {
 	return f >= 1-p
 }
 
-// repeat controls iteration count for Repeat-style operations.
-// Implements geometric distribution for natural-looking test sizes.
+type loadedDie struct {
+	table []int
+}
+
+func newLoadedDie(weights []int) *loadedDie {
+	assert(len(weights) > 0)
+
+	if len(weights) == 1 {
+		return &loadedDie{
+			table: []int{0},
+		}
+	}
+
+	total := 0
+	for _, w := range weights {
+		assert(w > 0 && w < 100)
+		total += w
+	}
+
+	table := make([]int, total)
+	i := 0
+	for n, w := range weights {
+		for j := i; i < j+w; i++ {
+			table[i] = n
+		}
+	}
+
+	return &loadedDie{
+		table: table,
+	}
+}
+
+func (d *loadedDie) roll(s bitStream) int {
+	i := s.beginGroup(dieRollLabel, false)
+	ix := genIndex(s, len(d.table), false)
+	s.endGroup(i, false)
+
+	return d.table[ix]
+}
+
 type repeat struct {
 	minCount   int
 	maxCount   int
@@ -232,11 +223,6 @@ type repeat struct {
 	label      string
 }
 
-// newRepeat creates a new repeat controller.
-// minCount: minimum iterations (can be -1 for 0)
-// maxCount: maximum iterations (can be -1 for unlimited)
-// avgCount: average iterations (can be -1 for auto)
-// label: group label
 func newRepeat(minCount int, maxCount int, avgCount float64, label string) *repeat {
 	if minCount < 0 {
 		minCount = 0
@@ -258,21 +244,13 @@ func newRepeat(minCount int, maxCount int, avgCount float64, label string) *repe
 	}
 }
 
-// avg returns the expected average count.
 func (r *repeat) avg() int {
 	return int(math.Ceil(r.avgCount))
 }
 
-// more returns true if another iteration should run.
-// Uses geometric distribution to determine count.
 func (r *repeat) more(s bitStream) bool {
 	if r.group >= 0 {
 		s.endGroup(r.group, r.rejected)
-	}
-
-	// Check forceStop before starting new group
-	if r.forceStop {
-		return false
 	}
 
 	r.group = s.beginGroup(r.label, true)
@@ -280,9 +258,9 @@ func (r *repeat) more(s bitStream) bool {
 
 	pCont := r.pContinue
 	if r.count < r.minCount {
-		pCont = 1 // Must continue until minCount
-	} else if r.count >= r.maxCount {
-		pCont = 0 // Must stop at maxCount
+		pCont = 1
+	} else if r.forceStop || r.count >= r.maxCount {
+		pCont = 0
 	}
 
 	cont := flipBiasedCoin(s, pCont)
@@ -295,9 +273,17 @@ func (r *repeat) more(s bitStream) bool {
 	return cont
 }
 
-// reject marks the current iteration as rejected.
-// Useful for Filter-style operations.
 func (r *repeat) reject() {
+	assert(r.count > 0)
+	r.count--
 	r.rejected = true
 	r.rejections++
+
+	if r.rejections > r.count*2 {
+		if r.count >= r.minCount {
+			r.forceStop = true
+		} else {
+			panic(invalidData("too many rejections in repeat"))
+		}
+	}
 }

@@ -1,182 +1,110 @@
+// Copyright 2019 Gregory Petrosyan <gregory.petrosyan@gmail.com>
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 package fuzzing
 
-import "math"
+import "fmt"
 
-// Collection generators and methods.
-// Provides generators for slices and maps with various configurations.
+// SliceOfN creates a slice generator with min/max length constraints.
+// If minLen >= 0, generated slices have minimum length of minLen.
+// If maxLen >= 0, generated slices have maximum length of maxLen.
+func SliceOfN(elem *Generator, minLen int, maxLen int) *Generator {
+	assertValidRange(minLen, maxLen)
 
-// Generator constructors
-
-// SliceOf creates a slice generator.
-func SliceOf(elemGen *Generator) *Generator {
-	return newGenerator(&sliceOfGen{elemGen: elemGen, minLen: 0, maxLen: 100})
-}
-
-// SliceOfN creates a slice generator with length in [minLen, maxLen].
-func SliceOfN(elemGen *Generator, minLen, maxLen int) *Generator {
-	return newGenerator(&sliceOfGen{elemGen: elemGen, minLen: minLen, maxLen: maxLen})
-}
-
-// SliceOfDistinct creates a slice generator with distinct elements.
-// Elements are compared using the keyFn (if nil, elements are compared directly).
-func SliceOfDistinct(elemGen *Generator, keyFn func(any) any) *Generator {
-	return newGenerator(&sliceOfDistinctGen{
-		elemGen: elemGen,
-		keyFn:   keyFn,
-		minLen:  0,
-		maxLen:  100,
+	return newGenerator(&sliceGen{
+		minLen: minLen,
+		maxLen: maxLen,
+		elem:   elem,
 	})
 }
 
-// SliceOfNDistinct creates a slice generator with distinct elements and length bounds.
-func SliceOfNDistinct(elemGen *Generator, minLen, maxLen int, keyFn func(any) any) *Generator {
-	return newGenerator(&sliceOfDistinctGen{
-		elemGen: elemGen,
-		keyFn:   keyFn,
-		minLen:  minLen,
-		maxLen:  maxLen,
+// SliceOf creates a slice generator with no length constraints.
+func SliceOf(elem *Generator) *Generator {
+	return SliceOfN(elem, -1, -1)
+}
+
+type sliceGen struct {
+	minLen int
+	maxLen int
+	elem   *Generator
+}
+
+func (g *sliceGen) String() string {
+	if g.minLen < 0 && g.maxLen < 0 {
+		return fmt.Sprintf("SliceOf(%v)", g.elem)
+	}
+	return fmt.Sprintf("SliceOfN(%v, minLen=%v, maxLen=%v)", g.elem, g.minLen, g.maxLen)
+}
+
+func (g *sliceGen) value(t *T) any {
+	repeat := newRepeat(g.minLen, g.maxLen, -1, g.elem.String())
+
+	sl := make([]any, 0, repeat.avg())
+	for repeat.more(t.s) {
+		e := g.elem.value(t)
+		sl = append(sl, e)
+	}
+
+	return sl
+}
+
+// MapOfN creates a map generator with min/max length constraints.
+// If minLen >= 0, generated maps have minimum length of minLen.
+// If maxLen >= 0, generated maps have maximum length of maxLen.
+func MapOfN(key *Generator, val *Generator, minLen int, maxLen int) *Generator {
+	assertValidRange(minLen, maxLen)
+
+	return newGenerator(&mapGen{
+		minLen: minLen,
+		maxLen: maxLen,
+		key:    key,
+		val:    val,
 	})
 }
 
-// MapOf creates a map generator.
-func MapOf(keyGen, valueGen *Generator) *Generator {
-	return newGenerator(&mapOfGen{keyGen: keyGen, valueGen: valueGen, minSize: 0, maxSize: 100})
+// MapOf creates a map generator with no length constraints.
+func MapOf(key *Generator, val *Generator) *Generator {
+	return MapOfN(key, val, -1, -1)
 }
 
-// MapOfN creates a map generator with size in [minSize, maxSize].
-func MapOfN(keyGen, valueGen *Generator, minSize, maxSize int) *Generator {
-	return newGenerator(&mapOfGen{keyGen: keyGen, valueGen: valueGen, minSize: minSize, maxSize: maxSize})
+type mapGen struct {
+	minLen int
+	maxLen int
+	key    *Generator
+	val    *Generator
 }
 
-// T convenience methods
-
-// SliceOf generates a slice using the given element generator.
-func (t *T) SliceOf(elemGen *Generator) []any {
-	return SliceOf(elemGen).value(t).([]any)
-}
-
-// SliceOfN generates a slice with length in [minLen, maxLen].
-func (t *T) SliceOfN(elemGen *Generator, minLen, maxLen int) []any {
-	return SliceOfN(elemGen, minLen, maxLen).value(t).([]any)
-}
-
-// SliceOfDistinct generates a slice with distinct elements.
-func (t *T) SliceOfDistinct(elemGen *Generator, keyFn func(any) any) []any {
-	return SliceOfDistinct(elemGen, keyFn).value(t).([]any)
-}
-
-// SliceOfNDistinct generates a slice with distinct elements and length bounds.
-func (t *T) SliceOfNDistinct(elemGen *Generator, minLen, maxLen int, keyFn func(any) any) []any {
-	return SliceOfNDistinct(elemGen, minLen, maxLen, keyFn).value(t).([]any)
-}
-
-// MapOf generates a map using key and value generators.
-func (t *T) MapOf(keyGen, valueGen *Generator) map[any]any {
-	return MapOf(keyGen, valueGen).value(t).(map[any]any)
-}
-
-// MapOfN generates a map with size in [minSize, maxSize].
-func (t *T) MapOfN(keyGen, valueGen *Generator, minSize, maxSize int) map[any]any {
-	return MapOfN(keyGen, valueGen, minSize, maxSize).value(t).(map[any]any)
-}
-
-// String methods
-
-func (g *sliceOfGen) String() string {
-	if g.minLen == 0 && g.maxLen == math.MaxInt {
-		return "SliceOf(" + g.elemGen.String() + ")"
+func (g *mapGen) String() string {
+	if g.minLen < 0 && g.maxLen < 0 {
+		return fmt.Sprintf("MapOf(%v, %v)", g.key, g.val)
 	}
-	return "SliceOfN(" + g.elemGen.String() + ", ...)"
+	return fmt.Sprintf("MapOfN(%v, %v, minLen=%v, maxLen=%v)", g.key, g.val, g.minLen, g.maxLen)
 }
 
-func (g *sliceOfDistinctGen) String() string {
-	if g.minLen == 0 && g.maxLen == math.MaxInt {
-		return "SliceOfDistinct(" + g.elemGen.String() + ")"
-	}
-	return "SliceOfNDistinct(" + g.elemGen.String() + ", ...)"
-}
+func (g *mapGen) value(t *T) any {
+	label := g.key.String() + "," + g.val.String()
+	repeat := newRepeat(g.minLen, g.maxLen, -1, label)
 
-func (g *mapOfGen) String() string {
-	if g.minSize == 0 && g.maxSize == math.MaxInt {
-		return "MapOf(" + g.keyGen.String() + ", " + g.valueGen.String() + ")"
-	}
-	return "MapOfN(" + g.keyGen.String() + ", " + g.valueGen.String() + ", ...)"
-}
+	m := make(map[any]any, repeat.avg())
+	for repeat.more(t.s) {
+		k := g.key.value(t)
+		v := g.val.value(t)
 
-// value methods
-
-func (g *sliceOfGen) value(t *T) any {
-	n, _, _ := genIntRange(t.s, int64(g.minLen), int64(g.maxLen), true)
-	slice := make([]any, n)
-	for i := range slice {
-		slice[i] = g.elemGen.value(t)
-	}
-	return slice
-}
-
-func (g *sliceOfDistinctGen) value(t *T) any {
-	targetLen, _, _ := genIntRange(t.s, int64(g.minLen), int64(g.maxLen), true)
-	slice := make([]any, 0, targetLen)
-	seen := make(map[any]bool)
-
-	// Try to generate distinct elements
-	// Use a reasonable upper bound to avoid infinite loops
-	maxTries := int(targetLen) * 10
-	if maxTries < 100 {
-		maxTries = 100
-	}
-
-	for len(slice) < int(targetLen) && maxTries > 0 {
-		maxTries--
-
-		i := t.s.beginGroup("distinct_try", false)
-		elem := g.elemGen.value(t)
-		key := elem
-		if g.keyFn != nil {
-			key = g.keyFn(elem)
-		}
-
-		if !seen[key] {
-			seen[key] = true
-			slice = append(slice, elem)
-			t.s.endGroup(i, false)
+		if _, ok := m[k]; ok {
+			repeat.reject()
 		} else {
-			t.s.endGroup(i, true) // Discard duplicate
+			m[k] = v
 		}
 	}
 
-	return slice
-}
-
-func (g *mapOfGen) value(t *T) any {
-	n, _, _ := genIntRange(t.s, int64(g.minSize), int64(g.maxSize), true)
-	m := make(map[any]any)
-	for i := 0; i < int(n); i++ {
-		key := g.keyGen.value(t)
-		value := g.valueGen.value(t)
-		m[key] = value
-	}
 	return m
 }
 
-// Type definitions
-
-type sliceOfGen struct {
-	elemGen *Generator
-	minLen  int
-	maxLen  int
-}
-
-type sliceOfDistinctGen struct {
-	elemGen *Generator
-	keyFn   func(any) any
-	minLen  int
-	maxLen  int
-}
-
-type mapOfGen struct {
-	keyGen   *Generator
-	valueGen *Generator
-	minSize  int
-	maxSize  int
+func assertValidRange(min int, max int) {
+	if max >= 0 && min > max {
+		panic(fmt.Sprintf("invalid range [%d, %d]", min, max))
+	}
 }

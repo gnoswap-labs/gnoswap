@@ -1,367 +1,608 @@
+// Copyright 2019 Gregory Petrosyan <gregory.petrosyan@gmail.com>
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 package fuzzing
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
-// Integer generators and methods.
-// Provides generators for all integer types (int, int8-64, uint, uint8-64).
-// Supports full range, min-bounded, max-bounded, and range-bounded variants.
+const (
+	intSize    = 64 // Gno uses 64-bit integers
+	uintSize   = 64
+	maxUintptr = math.MaxUint64
+)
 
-// Generator constructors - Int variants
+// boolGen generates boolean values
+type boolGen struct{}
 
-func Int() *Generator { return newGenerator(&intGen{}) }
-func IntMin(min int) *Generator { return newGenerator(&intGen{min: int64(min), hasMin: true}) }
-func IntMax(max int) *Generator { return newGenerator(&intGen{max: int64(max), hasMax: true}) }
-func IntRange(min, max int) *Generator { return newGenerator(&intGen{min: int64(min), max: int64(max), hasMin: true, hasMax: true}) }
+func (g *boolGen) String() string {
+	return "Bool()"
+}
 
-func Int8() *Generator { return newGenerator(&int8Gen{min: math.MinInt8, max: math.MaxInt8}) }
-func Int8Min(min int8) *Generator { return newGenerator(&int8Gen{min: int64(min), max: math.MaxInt8}) }
-func Int8Max(max int8) *Generator { return newGenerator(&int8Gen{min: math.MinInt8, max: int64(max)}) }
-func Int8Range(min, max int8) *Generator { return newGenerator(&int8Gen{min: int64(min), max: int64(max)}) }
+func (g *boolGen) value(t *T) any {
+	return t.s.drawBits(1) == 1
+}
 
-func Int16() *Generator { return newGenerator(&int16Gen{min: math.MinInt16, max: math.MaxInt16}) }
-func Int16Min(min int16) *Generator { return newGenerator(&int16Gen{min: int64(min), max: math.MaxInt16}) }
-func Int16Max(max int16) *Generator { return newGenerator(&int16Gen{min: math.MinInt16, max: int64(max)}) }
-func Int16Range(min, max int16) *Generator { return newGenerator(&int16Gen{min: int64(min), max: int64(max)}) }
+// Bool creates a generator for bool values
+func Bool() *Generator {
+	return newGenerator(&boolGen{})
+}
 
-func Int32() *Generator { return newGenerator(&int32Gen{min: math.MinInt32, max: math.MaxInt32}) }
-func Int32Min(min int32) *Generator { return newGenerator(&int32Gen{min: int64(min), max: math.MaxInt32}) }
-func Int32Max(max int32) *Generator { return newGenerator(&int32Gen{min: math.MinInt32, max: int64(max)}) }
-func Int32Range(min, max int32) *Generator { return newGenerator(&int32Gen{min: int64(min), max: int64(max)}) }
+// integerGen generates integer values with optional min/max constraints
+type integerGen struct {
+	kind     string
+	signed   bool
+	smin     int64
+	smax     int64
+	umin     uint64
+	umax     uint64
+	hasMin   bool
+	hasMax   bool
+	bitSize  int // 8, 16, 32, 64, or 0 for native int/uint
+}
 
-func Int64() *Generator { return newGenerator(&int64Gen{}) }
-func Int64Min(min int64) *Generator { return newGenerator(&int64Gen{min: min, hasMin: true}) }
-func Int64Max(max int64) *Generator { return newGenerator(&int64Gen{max: max, hasMax: true}) }
-func Int64Range(min, max int64) *Generator { return newGenerator(&int64Gen{min: min, max: max, hasMin: true, hasMax: true}) }
-
-// Generator constructors - Uint variants
-
-func Uint() *Generator { return newGenerator(&uintGen{}) }
-func UintMin(min uint) *Generator { return newGenerator(&uintGen{min: uint64(min), hasMin: true}) }
-func UintMax(max uint) *Generator { return newGenerator(&uintGen{max: uint64(max), hasMax: true}) }
-func UintRange(min, max uint) *Generator { return newGenerator(&uintGen{min: uint64(min), max: uint64(max), hasMin: true, hasMax: true}) }
-
-func Uint8() *Generator { return newGenerator(&uint8Gen{max: math.MaxUint8}) }
-func Uint8Min(min uint8) *Generator { return newGenerator(&uint8Gen{min: uint64(min), max: math.MaxUint8}) }
-func Uint8Max(max uint8) *Generator { return newGenerator(&uint8Gen{max: uint64(max)}) }
-func Uint8Range(min, max uint8) *Generator { return newGenerator(&uint8Gen{min: uint64(min), max: uint64(max)}) }
-
-func Uint16() *Generator { return newGenerator(&uint16Gen{max: math.MaxUint16}) }
-func Uint16Min(min uint16) *Generator { return newGenerator(&uint16Gen{min: uint64(min), max: math.MaxUint16}) }
-func Uint16Max(max uint16) *Generator { return newGenerator(&uint16Gen{max: uint64(max)}) }
-func Uint16Range(min, max uint16) *Generator { return newGenerator(&uint16Gen{min: uint64(min), max: uint64(max)}) }
-
-func Uint32() *Generator { return newGenerator(&uint32Gen{max: math.MaxUint32}) }
-func Uint32Min(min uint32) *Generator { return newGenerator(&uint32Gen{min: uint64(min), max: math.MaxUint32}) }
-func Uint32Max(max uint32) *Generator { return newGenerator(&uint32Gen{max: uint64(max)}) }
-func Uint32Range(min, max uint32) *Generator { return newGenerator(&uint32Gen{min: uint64(min), max: uint64(max)}) }
-
-func Uint64() *Generator { return newGenerator(&uint64Gen{}) }
-func Uint64Min(min uint64) *Generator { return newGenerator(&uint64Gen{min: min, hasMin: true}) }
-func Uint64Max(max uint64) *Generator { return newGenerator(&uint64Gen{max: max, hasMax: true}) }
-func Uint64Range(min, max uint64) *Generator { return newGenerator(&uint64Gen{min: min, max: max, hasMin: true, hasMax: true}) }
-
-// T convenience methods - Int variants
-
-func (t *T) Int() int { return Int().value(t).(int) }
-func (t *T) IntMin(min int) int { return IntMin(min).value(t).(int) }
-func (t *T) IntMax(max int) int { return IntMax(max).value(t).(int) }
-func (t *T) IntRange(min, max int) int { return IntRange(min, max).value(t).(int) }
-
-func (t *T) Int8() int8 { return Int8().value(t).(int8) }
-func (t *T) Int8Min(min int8) int8 { return Int8Min(min).value(t).(int8) }
-func (t *T) Int8Max(max int8) int8 { return Int8Max(max).value(t).(int8) }
-func (t *T) Int8Range(min, max int8) int8 { return Int8Range(min, max).value(t).(int8) }
-
-func (t *T) Int16() int16 { return Int16().value(t).(int16) }
-func (t *T) Int16Min(min int16) int16 { return Int16Min(min).value(t).(int16) }
-func (t *T) Int16Max(max int16) int16 { return Int16Max(max).value(t).(int16) }
-func (t *T) Int16Range(min, max int16) int16 { return Int16Range(min, max).value(t).(int16) }
-
-func (t *T) Int32() int32 { return Int32().value(t).(int32) }
-func (t *T) Int32Min(min int32) int32 { return Int32Min(min).value(t).(int32) }
-func (t *T) Int32Max(max int32) int32 { return Int32Max(max).value(t).(int32) }
-func (t *T) Int32Range(min, max int32) int32 { return Int32Range(min, max).value(t).(int32) }
-
-func (t *T) Int64() int64 { return Int64().value(t).(int64) }
-func (t *T) Int64Min(min int64) int64 { return Int64Min(min).value(t).(int64) }
-func (t *T) Int64Max(max int64) int64 { return Int64Max(max).value(t).(int64) }
-func (t *T) Int64Range(min, max int64) int64 { return Int64Range(min, max).value(t).(int64) }
-
-// T convenience methods - Uint variants
-
-func (t *T) Uint() uint { return Uint().value(t).(uint) }
-func (t *T) UintMin(min uint) uint { return UintMin(min).value(t).(uint) }
-func (t *T) UintMax(max uint) uint { return UintMax(max).value(t).(uint) }
-func (t *T) UintRange(min, max uint) uint { return UintRange(min, max).value(t).(uint) }
-
-func (t *T) Uint8() uint8 { return Uint8().value(t).(uint8) }
-func (t *T) Uint8Min(min uint8) uint8 { return Uint8Min(min).value(t).(uint8) }
-func (t *T) Uint8Max(max uint8) uint8 { return Uint8Max(max).value(t).(uint8) }
-func (t *T) Uint8Range(min, max uint8) uint8 { return Uint8Range(min, max).value(t).(uint8) }
-
-func (t *T) Uint16() uint16 { return Uint16().value(t).(uint16) }
-func (t *T) Uint16Min(min uint16) uint16 { return Uint16Min(min).value(t).(uint16) }
-func (t *T) Uint16Max(max uint16) uint16 { return Uint16Max(max).value(t).(uint16) }
-func (t *T) Uint16Range(min, max uint16) uint16 { return Uint16Range(min, max).value(t).(uint16) }
-
-func (t *T) Uint32() uint32 { return Uint32().value(t).(uint32) }
-func (t *T) Uint32Min(min uint32) uint32 { return Uint32Min(min).value(t).(uint32) }
-func (t *T) Uint32Max(max uint32) uint32 { return Uint32Max(max).value(t).(uint32) }
-func (t *T) Uint32Range(min, max uint32) uint32 { return Uint32Range(min, max).value(t).(uint32) }
-
-func (t *T) Uint64() uint64 { return Uint64().value(t).(uint64) }
-func (t *T) Uint64Min(min uint64) uint64 { return Uint64Min(min).value(t).(uint64) }
-func (t *T) Uint64Max(max uint64) uint64 { return Uint64Max(max).value(t).(uint64) }
-func (t *T) Uint64Range(min, max uint64) uint64 { return Uint64Range(min, max).value(t).(uint64) }
-
-// String methods
-
-func (g *intGen) String() string {
+func (g *integerGen) String() string {
 	if g.hasMin && g.hasMax {
-		return sprintf("IntRange(%d, %d)", g.min, g.max)
+		if g.signed {
+			return fmt.Sprintf("%sRange(%d, %d)", g.kind, g.smin, g.smax)
+		}
+		return fmt.Sprintf("%sRange(%d, %d)", g.kind, g.umin, g.umax)
 	} else if g.hasMin {
-		return sprintf("IntMin(%d)", g.min)
+		if g.signed {
+			return fmt.Sprintf("%sMin(%d)", g.kind, g.smin)
+		}
+		return fmt.Sprintf("%sMin(%d)", g.kind, g.umin)
 	} else if g.hasMax {
-		return sprintf("IntMax(%d)", g.max)
+		if g.signed {
+			return fmt.Sprintf("%sMax(%d)", g.kind, g.smax)
+		}
+		return fmt.Sprintf("%sMax(%d)", g.kind, g.umax)
 	}
-	return "Int()"
+	return fmt.Sprintf("%s()", g.kind)
 }
 
-func (g *int8Gen) String() string {
-	if g.min == math.MinInt8 && g.max == math.MaxInt8 {
-		return "Int8()"
-	} else if g.min == math.MinInt8 {
-		return sprintf("Int8Max(%d)", g.max)
-	} else if g.max == math.MaxInt8 {
-		return sprintf("Int8Min(%d)", g.min)
+func (g *integerGen) value(t *T) any {
+	if g.signed {
+		i, _, _ := genIntRange(t.s, g.smin, g.smax, true)
+		switch g.bitSize {
+		case 8:
+			return int8(i)
+		case 16:
+			return int16(i)
+		case 32:
+			return int32(i)
+		case 64:
+			return i
+		default: // native int
+			return int(i)
+		}
 	}
-	return sprintf("Int8Range(%d, %d)", g.min, g.max)
-}
-
-func (g *int16Gen) String() string {
-	if g.min == math.MinInt16 && g.max == math.MaxInt16 {
-		return "Int16()"
-	} else if g.min == math.MinInt16 {
-		return sprintf("Int16Max(%d)", g.max)
-	} else if g.max == math.MaxInt16 {
-		return sprintf("Int16Min(%d)", g.min)
+	u, _, _ := genUintRange(t.s, g.umin, g.umax, true)
+	switch g.bitSize {
+	case 8:
+		return uint8(u)
+	case 16:
+		return uint16(u)
+	case 32:
+		return uint32(u)
+	case 64:
+		return u
+	default: // native uint
+		return uint(u)
 	}
-	return sprintf("Int16Range(%d, %d)", g.min, g.max)
 }
 
-func (g *int32Gen) String() string {
-	if g.min == math.MinInt32 && g.max == math.MaxInt32 {
-		return "Int32()"
-	} else if g.min == math.MinInt32 {
-		return sprintf("Int32Max(%d)", g.max)
-	} else if g.max == math.MaxInt32 {
-		return sprintf("Int32Min(%d)", g.min)
-	}
-	return sprintf("Int32Range(%d, %d)", g.min, g.max)
+// Int8 creates a generator for int8 values
+func Int8() *Generator {
+	return newGenerator(&integerGen{
+		kind:    "Int8",
+		signed:  true,
+		smin:    math.MinInt8,
+		smax:    math.MaxInt8,
+		bitSize: 8,
+	})
 }
 
-func (g *int64Gen) String() string {
-	if g.hasMin && g.hasMax {
-		return sprintf("Int64Range(%d, %d)", g.min, g.max)
-	} else if g.hasMin {
-		return sprintf("Int64Min(%d)", g.min)
-	} else if g.hasMax {
-		return sprintf("Int64Max(%d)", g.max)
-	}
-	return "Int64()"
+// Int8Min creates a generator for int8 values >= min
+func Int8Min(min int8) *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Int8",
+		signed: true,
+		bitSize: 8,
+		smin:   int64(min),
+		smax:   math.MaxInt8,
+		hasMin: true,
+	})
 }
 
-func (g *uintGen) String() string {
-	if g.hasMin && g.hasMax {
-		return sprintf("UintRange(%d, %d)", g.min, g.max)
-	} else if g.hasMin {
-		return sprintf("UintMin(%d)", g.min)
-	} else if g.hasMax {
-		return sprintf("UintMax(%d)", g.max)
-	}
-	return "Uint()"
+// Int8Max creates a generator for int8 values <= max
+func Int8Max(max int8) *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Int8",
+		signed: true,
+		bitSize: 8,
+		smin:   math.MinInt8,
+		smax:   int64(max),
+		hasMax: true,
+	})
 }
 
-func (g *uint8Gen) String() string {
-	if g.min == 0 && g.max == math.MaxUint8 {
-		return "Uint8()"
-	} else if g.min == 0 {
-		return sprintf("Uint8Max(%d)", g.max)
-	} else if g.max == math.MaxUint8 {
-		return sprintf("Uint8Min(%d)", g.min)
-	}
-	return sprintf("Uint8Range(%d, %d)", g.min, g.max)
+// Int8Range creates a generator for int8 values in [min, max]
+func Int8Range(min int8, max int8) *Generator {
+	assertf(min <= max, "invalid integer range [%v, %v]", min, max)
+	return newGenerator(&integerGen{
+		kind:   "Int8",
+		signed: true,
+		bitSize: 8,
+		smin:   int64(min),
+		smax:   int64(max),
+		hasMin: true,
+		hasMax: true,
+	})
 }
 
-func (g *uint16Gen) String() string {
-	if g.min == 0 && g.max == math.MaxUint16 {
-		return "Uint16()"
-	} else if g.min == 0 {
-		return sprintf("Uint16Max(%d)", g.max)
-	} else if g.max == math.MaxUint16 {
-		return sprintf("Uint16Min(%d)", g.min)
-	}
-	return sprintf("Uint16Range(%d, %d)", g.min, g.max)
+// Int16 creates a generator for int16 values
+func Int16() *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Int16",
+		signed: true,
+		bitSize: 16,
+		smin:   math.MinInt16,
+		smax:   math.MaxInt16,
+	})
 }
 
-func (g *uint32Gen) String() string {
-	if g.min == 0 && g.max == math.MaxUint32 {
-		return "Uint32()"
-	} else if g.min == 0 {
-		return sprintf("Uint32Max(%d)", g.max)
-	} else if g.max == math.MaxUint32 {
-		return sprintf("Uint32Min(%d)", g.min)
-	}
-	return sprintf("Uint32Range(%d, %d)", g.min, g.max)
+// Int16Min creates a generator for int16 values >= min
+func Int16Min(min int16) *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Int16",
+		signed: true,
+		bitSize: 16,
+		smin:   int64(min),
+		smax:   math.MaxInt16,
+		hasMin: true,
+	})
 }
 
-func (g *uint64Gen) String() string {
-	if g.hasMin && g.hasMax {
-		return sprintf("Uint64Range(%d, %d)", g.min, g.max)
-	} else if g.hasMin {
-		return sprintf("Uint64Min(%d)", g.min)
-	} else if g.hasMax {
-		return sprintf("Uint64Max(%d)", g.max)
-	}
-	return "Uint64()"
+// Int16Max creates a generator for int16 values <= max
+func Int16Max(max int16) *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Int16",
+		signed: true,
+		bitSize: 16,
+		smin:   math.MinInt16,
+		smax:   int64(max),
+		hasMax: true,
+	})
 }
 
-// value methods
-
-func (g *intGen) value(t *T) any {
-	min, max := g.min, g.max
-	if !g.hasMin {
-		min = math.MinInt64
-	}
-	if !g.hasMax {
-		max = math.MaxInt64
-	}
-	v, _, _ := genIntRange(t.s, min, max, true)
-	return int(v)
+// Int16Range creates a generator for int16 values in [min, max]
+func Int16Range(min int16, max int16) *Generator {
+	assertf(min <= max, "invalid integer range [%v, %v]", min, max)
+	return newGenerator(&integerGen{
+		kind:   "Int16",
+		signed: true,
+		bitSize: 16,
+		smin:   int64(min),
+		smax:   int64(max),
+		hasMin: true,
+		hasMax: true,
+	})
 }
 
-func (g *int8Gen) value(t *T) any {
-	v, _, _ := genIntRange(t.s, g.min, g.max, true)
-	return int8(v)
+// Int32 creates a generator for int32 values
+func Int32() *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Int32",
+		signed: true,
+		bitSize: 32,
+		smin:   math.MinInt32,
+		smax:   math.MaxInt32,
+	})
 }
 
-func (g *int16Gen) value(t *T) any {
-	v, _, _ := genIntRange(t.s, g.min, g.max, true)
-	return int16(v)
+// Int32Min creates a generator for int32 values >= min
+func Int32Min(min int32) *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Int32",
+		signed: true,
+		bitSize: 32,
+		smin:   int64(min),
+		smax:   math.MaxInt32,
+		hasMin: true,
+	})
 }
 
-func (g *int32Gen) value(t *T) any {
-	v, _, _ := genIntRange(t.s, g.min, g.max, true)
-	return int32(v)
+// Int32Max creates a generator for int32 values <= max
+func Int32Max(max int32) *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Int32",
+		signed: true,
+		bitSize: 32,
+		smin:   math.MinInt32,
+		smax:   int64(max),
+		hasMax: true,
+	})
 }
 
-func (g *int64Gen) value(t *T) any {
-	min, max := g.min, g.max
-	if !g.hasMin {
-		min = math.MinInt64
-	}
-	if !g.hasMax {
-		max = math.MaxInt64
-	}
-	v, _, _ := genIntRange(t.s, min, max, true)
-	return v
+// Int32Range creates a generator for int32 values in [min, max]
+func Int32Range(min int32, max int32) *Generator {
+	assertf(min <= max, "invalid integer range [%v, %v]", min, max)
+	return newGenerator(&integerGen{
+		kind:   "Int32",
+		signed: true,
+		bitSize: 32,
+		smin:   int64(min),
+		smax:   int64(max),
+		hasMin: true,
+		hasMax: true,
+	})
 }
 
-func (g *uintGen) value(t *T) any {
-	min, max := g.min, g.max
-	if !g.hasMin {
-		min = 0
-	}
-	if !g.hasMax {
-		max = math.MaxUint64
-	}
-	v, _, _ := genUintRange(t.s, min, max, true)
-	return uint(v)
+// Int64 creates a generator for int64 values
+func Int64() *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Int64",
+		signed: true,
+		bitSize: 64,
+		smin:   math.MinInt64,
+		smax:   math.MaxInt64,
+	})
 }
 
-func (g *uint8Gen) value(t *T) any {
-	v, _, _ := genUintRange(t.s, g.min, g.max, true)
-	return uint8(v)
+// Int64Min creates a generator for int64 values >= min
+func Int64Min(min int64) *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Int64",
+		signed: true,
+		bitSize: 64,
+		smin:   min,
+		smax:   math.MaxInt64,
+		hasMin: true,
+	})
 }
 
-func (g *uint16Gen) value(t *T) any {
-	v, _, _ := genUintRange(t.s, g.min, g.max, true)
-	return uint16(v)
+// Int64Max creates a generator for int64 values <= max
+func Int64Max(max int64) *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Int64",
+		signed: true,
+		bitSize: 64,
+		smin:   math.MinInt64,
+		smax:   max,
+		hasMax: true,
+	})
 }
 
-func (g *uint32Gen) value(t *T) any {
-	v, _, _ := genUintRange(t.s, g.min, g.max, true)
-	return uint32(v)
+// Int64Range creates a generator for int64 values in [min, max]
+func Int64Range(min int64, max int64) *Generator {
+	assertf(min <= max, "invalid integer range [%v, %v]", min, max)
+	return newGenerator(&integerGen{
+		kind:   "Int64",
+		signed: true,
+		bitSize: 64,
+		smin:   min,
+		smax:   max,
+		hasMin: true,
+		hasMax: true,
+	})
 }
 
-func (g *uint64Gen) value(t *T) any {
-	min, max := g.min, g.max
-	if !g.hasMin {
-		min = 0
-	}
-	if !g.hasMax {
-		max = math.MaxUint64
-	}
-	v, _, _ := genUintRange(t.s, min, max, true)
-	return v
+// Int creates a generator for int values
+func Int() *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Int",
+		signed: true,
+		bitSize: 0,
+		smin:   math.MinInt64,
+		smax:   math.MaxInt64,
+	})
 }
 
-// Type definitions
-
-type intGen struct {
-	min    int64
-	max    int64
-	hasMin bool
-	hasMax bool
+// IntMin creates a generator for int values >= min
+func IntMin(min int) *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Int",
+		signed: true,
+		bitSize: 0,
+		smin:   int64(min),
+		smax:   math.MaxInt64,
+		hasMin: true,
+	})
 }
 
-type int8Gen struct {
-	min int64
-	max int64
+// IntMax creates a generator for int values <= max
+func IntMax(max int) *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Int",
+		signed: true,
+		bitSize: 0,
+		smin:   math.MinInt64,
+		smax:   int64(max),
+		hasMax: true,
+	})
 }
 
-type int16Gen struct {
-	min int64
-	max int64
+// IntRange creates a generator for int values in [min, max]
+func IntRange(min int, max int) *Generator {
+	assertf(min <= max, "invalid integer range [%v, %v]", min, max)
+	return newGenerator(&integerGen{
+		kind:   "Int",
+		signed: true,
+		bitSize: 0,
+		smin:   int64(min),
+		smax:   int64(max),
+		hasMin: true,
+		hasMax: true,
+	})
 }
 
-type int32Gen struct {
-	min int64
-	max int64
+// Uint8 creates a generator for uint8 values
+func Uint8() *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Uint8",
+		signed: false,
+		umin:   0,
+		umax:   math.MaxUint8,
+		bitSize: 8,
+	})
 }
 
-type int64Gen struct {
-	min    int64
-	max    int64
-	hasMin bool
-	hasMax bool
+// Uint8Min creates a generator for uint8 values >= min
+func Uint8Min(min uint8) *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Uint8",
+		signed: false,
+		umin:   uint64(min),
+		umax:   math.MaxUint8,
+		hasMin: true,
+		bitSize: 8,
+	})
 }
 
-type uintGen struct {
-	min    uint64
-	max    uint64
-	hasMin bool
-	hasMax bool
+// Uint8Max creates a generator for uint8 values <= max
+func Uint8Max(max uint8) *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Uint8",
+		signed: false,
+		umin:   0,
+		umax:   uint64(max),
+		hasMax: true,
+		bitSize: 8,
+	})
 }
 
-type uint8Gen struct {
-	min uint64
-	max uint64
+// Uint8Range creates a generator for uint8 values in [min, max]
+func Uint8Range(min uint8, max uint8) *Generator {
+	assertf(min <= max, "invalid integer range [%v, %v]", min, max)
+	return newGenerator(&integerGen{
+		kind:   "Uint8",
+		signed: false,
+		umin:   uint64(min),
+		umax:   uint64(max),
+		hasMin: true,
+		hasMax: true,
+		bitSize: 8,
+	})
 }
 
-type uint16Gen struct {
-	min uint64
-	max uint64
+// Uint16 creates a generator for uint16 values
+func Uint16() *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Uint16",
+		signed: false,
+		umin:   0,
+		umax:   math.MaxUint16,
+		bitSize: 16,
+	})
 }
 
-type uint32Gen struct {
-	min uint64
-	max uint64
+// Uint16Min creates a generator for uint16 values >= min
+func Uint16Min(min uint16) *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Uint16",
+		signed: false,
+		umin:   uint64(min),
+		umax:   math.MaxUint16,
+		hasMin: true,
+		bitSize: 16,
+	})
 }
 
-type uint64Gen struct {
-	min    uint64
-	max    uint64
-	hasMin bool
-	hasMax bool
+// Uint16Max creates a generator for uint16 values <= max
+func Uint16Max(max uint16) *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Uint16",
+		signed: false,
+		umin:   0,
+		umax:   uint64(max),
+		hasMax: true,
+		bitSize: 16,
+	})
+}
+
+// Uint16Range creates a generator for uint16 values in [min, max]
+func Uint16Range(min uint16, max uint16) *Generator {
+	assertf(min <= max, "invalid integer range [%v, %v]", min, max)
+	return newGenerator(&integerGen{
+		kind:   "Uint16",
+		signed: false,
+		umin:   uint64(min),
+		umax:   uint64(max),
+		hasMin: true,
+		hasMax: true,
+		bitSize: 16,
+	})
+}
+
+// Uint32 creates a generator for uint32 values
+func Uint32() *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Uint32",
+		signed: false,
+		umin:   0,
+		umax:   math.MaxUint32,
+		bitSize: 32,
+	})
+}
+
+// Uint32Min creates a generator for uint32 values >= min
+func Uint32Min(min uint32) *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Uint32",
+		signed: false,
+		umin:   uint64(min),
+		umax:   math.MaxUint32,
+		hasMin: true,
+		bitSize: 32,
+	})
+}
+
+// Uint32Max creates a generator for uint32 values <= max
+func Uint32Max(max uint32) *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Uint32",
+		signed: false,
+		umin:   0,
+		umax:   uint64(max),
+		hasMax: true,
+		bitSize: 32,
+	})
+}
+
+// Uint32Range creates a generator for uint32 values in [min, max]
+func Uint32Range(min uint32, max uint32) *Generator {
+	assertf(min <= max, "invalid integer range [%v, %v]", min, max)
+	return newGenerator(&integerGen{
+		kind:   "Uint32",
+		signed: false,
+		umin:   uint64(min),
+		umax:   uint64(max),
+		hasMin: true,
+		hasMax: true,
+		bitSize: 32,
+	})
+}
+
+// Uint64 creates a generator for uint64 values
+func Uint64() *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Uint64",
+		signed: false,
+		umin:   0,
+		umax:   math.MaxUint64,
+		bitSize: 64,
+	})
+}
+
+// Uint64Min creates a generator for uint64 values >= min
+func Uint64Min(min uint64) *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Uint64",
+		signed: false,
+		umin:   min,
+		umax:   math.MaxUint64,
+		hasMin: true,
+		bitSize: 64,
+	})
+}
+
+// Uint64Max creates a generator for uint64 values <= max
+func Uint64Max(max uint64) *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Uint64",
+		signed: false,
+		umin:   0,
+		umax:   max,
+		hasMax: true,
+		bitSize: 64,
+	})
+}
+
+// Uint64Range creates a generator for uint64 values in [min, max]
+func Uint64Range(min uint64, max uint64) *Generator {
+	assertf(min <= max, "invalid integer range [%v, %v]", min, max)
+	return newGenerator(&integerGen{
+		kind:   "Uint64",
+		signed: false,
+		umin:   min,
+		umax:   max,
+		hasMin: true,
+		hasMax: true,
+		bitSize: 64,
+	})
+}
+
+// Uint creates a generator for uint values
+func Uint() *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Uint",
+		signed: false,
+		umin:   0,
+		umax:   math.MaxUint64,
+		bitSize: 0,
+	})
+}
+
+// UintMin creates a generator for uint values >= min
+func UintMin(min uint) *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Uint",
+		signed: false,
+		umin:   uint64(min),
+		umax:   math.MaxUint64,
+		hasMin: true,
+		bitSize: 0,
+	})
+}
+
+// UintMax creates a generator for uint values <= max
+func UintMax(max uint) *Generator {
+	return newGenerator(&integerGen{
+		kind:   "Uint",
+		signed: false,
+		umin:   0,
+		umax:   uint64(max),
+		hasMax: true,
+		bitSize: 0,
+	})
+}
+
+// UintRange creates a generator for uint values in [min, max]
+func UintRange(min uint, max uint) *Generator {
+	assertf(min <= max, "invalid integer range [%v, %v]", min, max)
+	return newGenerator(&integerGen{
+		kind:   "Uint",
+		signed: false,
+		umin:   uint64(min),
+		umax:   uint64(max),
+		hasMin: true,
+		hasMax: true,
+		bitSize: 0,
+	})
+}
+
+// Byte creates a generator for byte values (alias for Uint8)
+func Byte() *Generator {
+	return Uint8()
+}
+
+// ByteMin creates a generator for byte values >= min
+func ByteMin(min byte) *Generator {
+	return Uint8Min(min)
+}
+
+// ByteMax creates a generator for byte values <= max
+func ByteMax(max byte) *Generator {
+	return Uint8Max(max)
+}
+
+// ByteRange creates a generator for byte values in [min, max]
+func ByteRange(min byte, max byte) *Generator {
+	return Uint8Range(min, max)
 }

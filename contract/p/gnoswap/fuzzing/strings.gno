@@ -1,97 +1,198 @@
+// Copyright 2019 Gregory Petrosyan <gregory.petrosyan@gmail.com>
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 package fuzzing
 
-import "math"
+import (
+	"fmt"
+	"math"
+	"strings"
+	"unicode"
+	"unicode/utf8"
+)
 
-// String and rune generators and methods.
-// Provides generators for strings and runes with various configurations.
-
-// Generator constructors
-
-func Rune() *Generator { return newGenerator(&runeGen{}) }
-func RuneRange(min, max rune) *Generator { return newGenerator(&runeRangeGen{min: min, max: max}) }
-
-func String() *Generator { return newGenerator(&stringGen{minLen: 0, maxLen: 100}) }
-func StringN(minLen, maxLen int) *Generator { return newGenerator(&stringGen{minLen: minLen, maxLen: maxLen}) }
-
-func StringOf(runeGen *Generator) *Generator { return newGenerator(&stringOfGen{runeGen: runeGen, minLen: 0, maxLen: 100}) }
-func StringOfN(runeGen *Generator, minLen, maxLen int) *Generator { return newGenerator(&stringOfGen{runeGen: runeGen, minLen: minLen, maxLen: maxLen}) }
-
-// T convenience methods
-
-func (t *T) Rune() rune { return Rune().value(t).(rune) }
-func (t *T) RuneRange(min, max rune) rune { return RuneRange(min, max).value(t).(rune) }
-
-func (t *T) String() string { return String().value(t).(string) }
-func (t *T) StringN(minLen, maxLen int) string { return StringN(minLen, maxLen).value(t).(string) }
-
-func (t *T) StringOf(runeGen *Generator) string { return StringOf(runeGen).value(t).(string) }
-func (t *T) StringOfN(runeGen *Generator, minLen, maxLen int) string { return StringOfN(runeGen, minLen, maxLen).value(t).(string) }
-
-// String methods
-
-func (g *runeGen) String() string { return "Rune()" }
-func (g *runeRangeGen) String() string { return sprintf("RuneRange(%d, %d)", g.min, g.max) }
-
-func (g *stringGen) String() string {
-	if g.minLen == 0 && g.maxLen == math.MaxInt {
-		return "String()"
+var (
+	defaultRunes = []rune{
+		'A', 'a', '?',
+		'~', '!', '@', '#', '$', '%', '^', '&', '*', '_', '-', '+', '=',
+		'.', ',', ':', ';',
+		' ', '\t', '\r', '\n',
+		'/', '\\', '|',
+		'(', '[', '{', '<',
+		'\'', '"', '`',
+		'\x00', '\x0B', '\x1B', '\x7F', // NUL, VT, ESC, DEL
 	}
-	return "StringN(...)"
+
+	// Common unicode categories
+	defaultTables = []*unicode.RangeTable{
+		unicode.Lu, // Letter, uppercase
+		unicode.Ll, // Letter, lowercase
+		unicode.Nd, // Number, decimal digit
+		unicode.P,  // Punctuation
+		unicode.Sm, // Symbol, math
+		unicode.Z,  // Separator
+	}
+)
+
+// runeGen generates rune values
+type runeGen struct {
+	die      *loadedDie
+	runes    []rune
+	tables   [][]rune
+	default_ bool
 }
 
-func (g *stringOfGen) String() string { return "StringOf(" + g.runeGen.String() + ")" }
-
-// value methods
+func (g *runeGen) String() string {
+	if g.default_ {
+		return "Rune()"
+	}
+	return fmt.Sprintf("Rune(%v runes, %v tables)", len(g.runes), len(g.tables))
+}
 
 func (g *runeGen) value(t *T) any {
-	// Generate valid Unicode code points
-	v, _, _ := genIntRange(t.s, 0, 0x10FFFF, true)
-	// Skip surrogate pairs (0xD800-0xDFFF)
-	if v >= 0xD800 && v <= 0xDFFF {
-		v = 0x20 // Default to space
+	n := g.die.roll(t.s)
+
+	runes := g.runes
+	if len(g.runes) == 0 {
+		runes = g.tables[n]
+	} else if n > 0 {
+		runes = g.tables[n-1]
 	}
-	return rune(v)
+
+	return runes[genIndex(t.s, len(runes), true)]
 }
 
-func (g *runeRangeGen) value(t *T) any {
-	v, _, _ := genIntRange(t.s, int64(g.min), int64(g.max), true)
-	return rune(v)
+// Rune creates a rune generator with default runes and tables
+func Rune() *Generator {
+	return runesFrom(true, defaultRunes, defaultTables...)
+}
+
+// RuneFrom creates a rune generator from provided runes and tables
+func RuneFrom(runes []rune, tables ...*unicode.RangeTable) *Generator {
+	return runesFrom(false, runes, tables...)
+}
+
+func runesFrom(default_ bool, runes []rune, tables ...*unicode.RangeTable) *Generator {
+	if len(tables) == 0 {
+		assertf(len(runes) > 0, "at least one rune should be specified")
+	}
+	if len(runes) == 0 {
+		assertf(len(tables) > 0, "at least one *unicode.RangeTable should be specified")
+	}
+
+	var weights []int
+	if len(runes) > 0 {
+		weights = append(weights, len(tables))
+	}
+	for range tables {
+		weights = append(weights, 1)
+	}
+
+	tables_ := make([][]rune, len(tables))
+	for i := range tables {
+		tables_[i] = expandRangeTable(tables[i])
+		assertf(len(tables_[i]) > 0, "empty *unicode.RangeTable %v", i)
+	}
+
+	return newGenerator(&runeGen{
+		die:      newLoadedDie(weights),
+		runes:    runes,
+		tables:   tables_,
+		default_: default_,
+	})
+}
+
+// stringGen generates string values
+type stringGen struct {
+	elem     *Generator
+	minRunes int
+	maxRunes int
+	maxLen   int
+}
+
+func (g *stringGen) String() string {
+	if g.minRunes < 0 && g.maxRunes < 0 && g.maxLen < 0 {
+		return "String()"
+	}
+	return fmt.Sprintf("StringN(minRunes=%v, maxRunes=%v, maxLen=%v)", g.minRunes, g.maxRunes, g.maxLen)
 }
 
 func (g *stringGen) value(t *T) any {
-	n, _, _ := genIntRange(t.s, int64(g.minLen), int64(g.maxLen), true)
-	runes := make([]rune, n)
-	for i := range runes {
-		runes[i] = Rune().value(t).(rune)
+	repeat := newRepeat(g.minRunes, g.maxRunes, -1, "rune")
+
+	var b strings.Builder
+	b.Grow(repeat.avg())
+
+	maxLen := g.maxLen
+	if maxLen < 0 {
+		maxLen = math.MaxInt
 	}
-	return string(runes)
-}
 
-func (g *stringOfGen) value(t *T) any {
-	n, _, _ := genIntRange(t.s, int64(g.minLen), int64(g.maxLen), true)
-	runes := make([]rune, n)
-	for i := range runes {
-		runes[i] = g.runeGen.value(t).(rune)
+	for repeat.more(t.s) {
+		r := g.elem.value(t).(rune)
+		n := utf8.RuneLen(r)
+
+		if n < 0 || b.Len()+n > maxLen {
+			repeat.reject()
+		} else {
+			b.WriteRune(r)
+		}
 	}
-	return string(runes)
+
+	return b.String()
 }
 
-// Type definitions
-
-type runeGen struct{}
-
-type runeRangeGen struct {
-	min rune
-	max rune
+// String creates a UTF-8 string generator
+func String() *Generator {
+	return StringOfN(Rune(), -1, -1, -1)
 }
 
-type stringGen struct {
-	minLen int
-	maxLen int
+// StringN creates a string generator with constraints on runes and length
+func StringN(minRunes int, maxRunes int, maxLen int) *Generator {
+	return StringOfN(Rune(), minRunes, maxRunes, maxLen)
 }
 
-type stringOfGen struct {
-	runeGen *Generator
-	minLen  int
-	maxLen  int
+// StringOf creates a string generator from a rune generator
+func StringOf(elem *Generator) *Generator {
+	return StringOfN(elem, -1, -1, -1)
+}
+
+// StringOfN creates a UTF-8 string generator with constraints
+func StringOfN(elem *Generator, minRunes int, maxRunes int, maxLen int) *Generator {
+	assertValidRange(minRunes, maxRunes)
+	assertf(maxLen < 0 || maxLen >= maxRunes, "maximum length (%v) should not be less than maximum number of runes (%v)", maxLen, maxRunes)
+
+	return newGenerator(&stringGen{
+		elem:     elem,
+		minRunes: minRunes,
+		maxRunes: maxRunes,
+		maxLen:   maxLen,
+	})
+}
+
+func expandRangeTable(t *unicode.RangeTable) []rune {
+	n := 0
+	for _, r := range t.R16 {
+		n += int(r.Hi-r.Lo)/int(r.Stride) + 1
+	}
+	for _, r := range t.R32 {
+		n += int(r.Hi-r.Lo)/int(r.Stride) + 1
+	}
+
+	ret := make([]rune, 0, n)
+	for _, r := range t.R16 {
+		for i := uint32(r.Lo); i <= uint32(r.Hi); i += uint32(r.Stride) {
+			ret = append(ret, rune(i))
+		}
+	}
+	for _, r := range t.R32 {
+		for i := uint64(r.Lo); i <= uint64(r.Hi); i += uint64(r.Stride) {
+			ret = append(ret, rune(i))
+		}
+	}
+
+	return ret
 }
