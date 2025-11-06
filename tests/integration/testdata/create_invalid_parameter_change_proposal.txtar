@@ -37,8 +37,7 @@ loadpkg gno.land/r/gnoswap/gov/staker/v1
 loadpkg gno.land/r/gnoswap/gov/governance
 loadpkg gno.land/r/gnoswap/gov/governance/v1
 
-# adduserfrom gns_admin 'mnemonic here'
-adduserfrom gns_admin 'tiny play impulse way lecture theory toe material box pact erosion frozen witness visual share duck term input tower scale cushion connect worth trophy'
+adduserfrom gns_admin 'mnemonic here'
 
 adduser gnoswap
 patchpkg "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" $gnoswap_user_addr
