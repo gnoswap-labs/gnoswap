@@ -94,3 +94,7 @@ stderr 'invalid execution: handler not found'
 # Create parameter change proposal with invalid function name
 ! gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeParameterChange -args "poolcreationfee" -args "set" -args 1 -args "gno.land/r/gnoswap/pool*EXE*SetPoolInvalidFunction*EXE*0" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stderr 'handler not found for gno.land/r/gnoswap/pool:SetPoolInvalidFunction'
+
+# Create parameter change proposal with invalid query foramt (different separator)
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeParameterChange -args "poolcreationfee" -args "set" -args 1 -args "gno.land/r/gnoswap/pool**EXE**SetPoolCreationFee**EXE**0" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+stderr 'handler not found for gno.land/r/gnoswap/pool*'
