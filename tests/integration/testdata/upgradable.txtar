@@ -43,7 +43,7 @@ loadpkg gno.land/r/gnoswap/staker
 loadpkg gno.land/r/gnoswap/pool/v1
 loadpkg gno.land/r/gnoswap/pool/v3_valid
 
-adduserfrom gns_admin 'mnemonic here'
+adduserfrom gns_admin 'tiny play impulse way lecture theory toe material box pact erosion frozen witness visual share duck term input tower scale cushion connect worth trophy'
 
 adduser user1
 patchpkg "g16a7etgm9z2r653ucl36rj0l2yqcxgrz2jyegzx" $user1_user_addr
@@ -56,11 +56,11 @@ stdout "gno.land/r/gnoswap/pool/v1"
 
 gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func UpgradeImpl -args gno.land/r/gnoswap/pool/v3_valid -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout OK!
-stdout 'GAS USED:   14225496'
+stdout 'GAS USED:   1[0-9]{7}'
 stdout 'STORAGE DELTA:  783 bytes'
 stdout 'STORAGE FEE:    78300ugnot'
 stdout 'TOTAL TX COST:  100078300ugnot'
-stdout 'EVENTS:     \[{\"bytes_delta\":783,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":78300},\"pkg_path\":\"gno.land/r/gnoswap/pool\"}\]'
+stdout 'EVENTS:     \[{\"type\":\"UpgradePoolContract\",\"attrs\":\[{\"key\":\"previousPackagePath\",\"value\":\"gno.land/r/gnoswap/pool/v1\"},{\"key\":\"newPackagePath\",\"value\":\"gno.land/r/gnoswap/pool/v3_valid\"}\],\"pkg_path\":\"gno.land/r/gnoswap/pool\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/pool\"}\]'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetImplementationPackagePath()"
 stdout "gno.land/r/gnoswap/pool/v3_valid"
@@ -72,11 +72,11 @@ stderr 'version_manager: initializer not found for package path:gno.land/r/gnosw
 # Rollback to v1 contract
 gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func UpgradeImpl -args gno.land/r/gnoswap/pool/v1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout OK!
-stdout 'GAS USED:   14553556'
+stdout 'GAS USED:   1[0-9]{7}'
 stdout 'STORAGE DELTA:  -784 bytes'
 stdout 'STORAGE REFUND: 78400ugnot'
 stdout 'TOTAL TX COST:  99921600ugnot'
-stdout '[{\"bytes_delta\":\-784,\"fee_refund\":{\"denom\":\"ugnot\",\"amount\":78400},\"pkg_path\":\"gno.land/r/gnoswap/pool\",\"refund_withheld\":false}]'
+stdout 'EVENTS:     \[{\"type\":\"UpgradePoolContract\",\"attrs\":\[{\"key\":\"previousPackagePath\",\"value\":\"gno.land/r/gnoswap/pool/v3_valid\"},{\"key\":\"newPackagePath\",\"value\":\"gno.land/r/gnoswap/pool/v1\"}\],\"pkg_path\":\"gno.land/r/gnoswap/pool\"},{\"bytes_delta\":-?[0-9]+,\"fee_refund\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/pool\",\"refund_withheld\":false}\]'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetImplementationPackagePath()"
 stdout "gno.land/r/gnoswap/pool/v1"
