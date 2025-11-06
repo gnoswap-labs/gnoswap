@@ -38,7 +38,7 @@ func TestProperty(t *testing.T) {
             ft.Fatalf("commutativity failed: %d + %d != %d + %d", x, y, y, x)
         }
     })
-    // Automatically runs 100 random test cases
+    // Automatically runs random test cases
 }
 ```
 
@@ -60,12 +60,10 @@ func TestExample() {
 
 ## Core Features
 
-### ✅ Fully Supported Generators (100% Tested)
-
 #### Primitives
 
-- **Boolean**: `Bool()` ✅
-- **Integers** (all return proper types): ✅
+- **Boolean**: `Bool()`
+- **Integers**:
   - **int8**: `Int8()`, `Int8Min()`, `Int8Max()`, `Int8Range()`
   - **int16**: `Int16()`, `Int16Min()`, `Int16Max()`, `Int16Range()`
   - **int32**: `Int32()`, `Int32Min()`, `Int32Max()`, `Int32Range()`
@@ -76,48 +74,31 @@ func TestExample() {
   - **uint32**: `Uint32()`, `Uint32Min()`, `Uint32Max()`, `Uint32Range()`
   - **uint64**: `Uint64()`, `Uint64Min()`, `Uint64Max()`, `Uint64Range()`
   - **uint**: `Uint()`, `UintMin()`, `UintMax()`, `UintRange()`
-- **Floats**: ✅
+- **Floats**:
   - **float32**: `Float32()`, `Float32Min()`, `Float32Max()`, `Float32Range()`
   - **float64**: `Float64()`, `Float64Min()`, `Float64Max()`, `Float64Range()`
-- **Strings**: `String()`, `StringN()`, `StringOf()`, `StringOfN()` ✅
-- **Runes**: `Rune()`, `RuneFrom()` ✅
+- **Strings**: `String()`, `StringN()`, `StringOf()`, `StringOfN()`
+- **Runes**: `Rune()`, `RuneFrom()`
 
-#### Collections ✅
+#### Collections
 
 - **Slices**: `SliceOf(elem)`, `SliceOfN(elem, minLen, maxLen)`
 - **Maps**: `MapOf(key, val)`, `MapOfN(key, val, minLen, maxLen)`
 
-#### Combinators ✅
+#### Combinators
 
-- ✅ `Custom(fn)` - Create custom generators
-- ✅ `Just(val)` - Always return the same value
-- ✅ `SampledFrom(slice)` - Sample from a slice
-- ✅ `OneOf(gens...)` - Choose from multiple generators
-- ✅ `Map(gen, transform)` - Transform generated values
-- ✅ `Deferred(fn)` - Lazy generator for recursive structures
-- ✅ `Permutation(slice)` - Generate permutations
+- `Custom(fn)` - Create custom generators
+- `Just(val)` - Always return the same value
+- `SampledFrom(slice)` - Sample from a slice
+- `OneOf(gens...)` - Choose from multiple generators
+- `Map(gen, transform)` - Transform generated values
+- `Deferred(fn)` - Lazy generator for recursive structures
+- `Permutation(slice)` - Generate permutations
 
-#### Property-Based Testing ✅
+#### Property-Based Testing
 
-- ✅ `Check(t, prop)` - Run 100 random test cases
-- ✅ `CheckN(t, n, prop)` - Run N random test cases
-
-### ⚠️ Important Type Information
-
-All integer generators now return **correct types**:
-
-```go
-Int8().Draw(t, "x")      // returns int8
-Int16().Draw(t, "x")     // returns int16
-Int32().Draw(t, "x")     // returns int32
-Int64().Draw(t, "x")     // returns int64
-Int().Draw(t, "x")       // returns int
-Uint16().Draw(t, "x")    // returns uint16
-Uint32().Draw(t, "x")    // returns uint32
-// etc.
-```
-
-This was fixed in the implementation - previously all returned int64/uint64.
+- `Check(t, prop)` - Run 100 random test cases
+- `CheckN(t, n, prop)` - Run N random test cases
 
 ## Basic Usage
 
@@ -210,196 +191,6 @@ mixedGen := fuzz.OneOf(
 
 // Just: always return the same value
 constGen := fuzz.Just(42)
-```
-
-## State Machine Testing
-
-State machine testing allows you to test stateful systems by generating random sequences of actions.
-
-### Basic Example (Recommended API with \*T)
-
-```go
-package bank
-
-import "gno.land/p/gnoswap/fuzz"
-
-type Bank struct {
-    balance int64
-}
-
-func TestBankStateMachine() {
-    seed := uint64(12345)
-    s := newRandomBitStream(seed, false)
-    t := newT(s)
-
-    bank := &Bank{balance: 0}
-
-    // Define actions using *T context (like rapid)
-    actions := map[string]func(*fuzz.T){
-        "Deposit": func(t *fuzz.T) {
-            amount := t.Draw(fuzz.Int64Range(1, 100)).(int64)
-            bank.balance += amount
-        },
-        "Withdraw": func(t *fuzz.T) {
-            if bank.balance == 0 {
-                t.Skip() // Skip this action if no balance
-            }
-            amount := t.Draw(fuzz.Int64Range(1, bank.balance)).(int64)
-            bank.balance -= amount
-        },
-        // Empty string key is the invariant check
-        "": func(t *fuzz.T) {
-            if bank.balance < 0 {
-                t.FailNow() // Invariant violated
-            }
-        },
-    }
-
-    // Run state machine using (*T).Repeat (same as rapid!)
-    t.Repeat(actions, 50)
-}
-```
-
-### Alternative: Low-level API
-
-```go
-func TestBankStateMachineLowLevel() {
-    seed := uint64(12345)
-    s := fuzz.NewRandomBitStream(seed, false)
-
-    bank := &Bank{balance: 0}
-
-    // Define actions with bitStream
-    actions := []fuzz.Action{
-        {
-            Name: "Deposit",
-            Run: func(s bitStream) {
-                amount := fuzz.Int64Range(1, 100).value(s).(int64)
-                bank.balance += amount
-            },
-        },
-        {
-            Name: "Withdraw",
-            Run: func(s bitStream) {
-                if bank.balance == 0 {
-                    panic(fuzz.invalidData("no balance"))
-                }
-                amount := fuzz.Int64Range(1, bank.balance).value(s).(int64)
-                bank.balance -= amount
-            },
-        },
-    }
-
-    check := func(s bitStream) {
-        if bank.balance < 0 {
-            panic("invariant violated: balance should never be negative")
-        }
-    }
-
-    sm := fuzz.NewStateMachine(actions, check, 50)
-    sm.Run(s)
-}
-```
-
-### Using Repeat Helper
-
-```go
-func TestWithRepeat() {
-    seed := uint64(12345)
-    s := fuzz.NewRandomBitStream(seed, false)
-
-    counter := 0
-
-    actions := map[string]func(bitStream){
-        "Increment": func(s bitStream) {
-            counter++
-        },
-        "Decrement": func(s bitStream) {
-            if counter > 0 {
-                counter--
-            } else {
-                panic(fuzz.invalidData("counter is zero"))
-            }
-        },
-        // Empty string key is for invariant checks
-        "": func(s bitStream) {
-            if counter < 0 {
-                panic("counter should never be negative")
-            }
-        },
-    }
-
-    fuzz.Repeat(s, actions, 30)
-}
-```
-
-### Complex State Machine Example
-
-```go
-type Stack struct {
-    items []int64
-}
-
-func (s *Stack) Push(v int64) {
-    s.items = append(s.items, v)
-}
-
-func (s *Stack) Pop() int64 {
-    if len(s.items) == 0 {
-        panic("pop from empty stack")
-    }
-    v := s.items[len(s.items)-1]
-    s.items = s.items[:len(s.items)-1]
-    return v
-}
-
-func TestStack() {
-    seed := uint64(12345)
-    bitstream := fuzz.NewRandomBitStream(seed, false)
-
-    stack := &Stack{}
-
-    actions := []fuzz.Action{
-        {
-            Name: "Push",
-            Run: func(s bitStream) {
-                val := fuzz.Int64Range(1, 100).value(s).(int64)
-                stack.Push(val)
-            },
-        },
-        {
-            Name: "Pop",
-            Run: func(s bitStream) {
-                if len(stack.items) == 0 {
-                    // Skip this action if stack is empty
-                    panic(fuzz.invalidData("empty stack"))
-                }
-                stack.Pop()
-            },
-        },
-        {
-            Name: "Peek",
-            Run: func(s bitStream) {
-                if len(stack.items) == 0 {
-                    panic(fuzz.invalidData("empty stack"))
-                }
-                _ = stack.items[len(stack.items)-1]
-            },
-        },
-    }
-
-    check := func(s bitStream) {
-        // Invariant: all items should be positive
-        for _, item := range stack.items {
-            if item <= 0 {
-                panic("invariant violated: all items should be positive")
-            }
-        }
-    }
-
-    sm := fuzz.NewStateMachine(actions, check, 100)
-    sm.Run(bitstream)
-}
 ```
 
 ## Advanced Patterns
@@ -588,30 +379,6 @@ func TestWithSeed() {
 - `Example(seed uint64) any` - Generate example value with seed
 - `Map(fn func(any) any) *Generator` - Transform values
 
-## Test Coverage
-
-### ✅ Fully Tested (100% Coverage)
-
-| Component                 | Tests    | Status      |
-| ------------------------- | -------- | ----------- |
-| **Integer Generators**    | 44 tests | ✅ All Pass |
-| **Float Generators**      | 8 tests  | ✅ All Pass |
-| **String Generators**     | 11 tests | ✅ All Pass |
-| **Collection Generators** | 12 tests | ✅ All Pass |
-| **Combinators**           | 10 tests | ✅ All Pass |
-| **Check Function**        | 8 tests  | ✅ All Pass |
-
-**Overall Public API Coverage: 100%** (70/70 functions tested)
-
-See test files:
-
-- `integers_test.gno` - All integer type tests
-- `floats_test.gno` - All float type tests
-- `strings_test.gno` - String and rune tests
-- `collections_test.gno` - Slice and map tests
-- `combinators_test.gno` - Combinator tests
-- `check_test.gno` - Property-based testing with Check()
-
 ## Porting Notes
 
 This package is a port of the [rapid](https://github.com/flyingmutant/rapid) library adapted for Gno. Key differences:
@@ -619,8 +386,7 @@ This package is a port of the [rapid](https://github.com/flyingmutant/rapid) lib
 1. **No Generics**: Gno doesn't support generics, so all generators return `any`
 2. **No Reflection**: `Make[T]()` and reflection-based features are not available
 3. **No Regexp**: `StringMatching()` is not available
-4. **✅ Check Function Implemented**: `Check(t, prop)` and `CheckN(t, n, prop)` are now available!
-5. **Simplified API**: Some advanced features like shrinking and visualization are omitted
+4. **Simplified API**: Some advanced features like shrinking and visualization are omitted
 
 ### ❌ Not Supported (Gno Limitations)
 
@@ -635,29 +401,6 @@ This package is a port of the [rapid](https://github.com/flyingmutant/rapid) lib
 1. **No generic types**: All generators return `any` due to Gno's lack of generics
 2. **No test case shrinking**: Failing test cases are not automatically minimized
 3. **Fixed base seed**: Uses a constant base seed (can be improved with time-based seeding)
-
-## File Structure
-
-```
-fuzz/
-├── data.gno                  # bitStream, PRNG (JSF64), recording
-├── engine.gno                # T struct, Check(), CheckN(), assert, error types
-├── utils.gno                 # generation utilities (bias, repeat, etc.)
-├── generator.gno             # Generator struct and methods
-├── collections.gno           # SliceOf, MapOf
-├── combinators.gno           # Custom, Map, Just, OneOf, Permutation, SampledFrom
-├── integers.gno              # Bool, Int*, Uint*, Byte (44 functions)
-├── floats.gno                # Float32, Float64 (8 functions)
-├── strings.gno               # Rune, String (6 functions)
-├── integers_test.gno         # ✅ 44 tests (100% coverage)
-├── floats_test.gno           # ✅ 8 tests (100% coverage)
-├── strings_test.gno          # ✅ 11 tests (100% coverage)
-├── collections_test.gno      # ✅ 12 tests (100% coverage)
-├── combinators_test.gno      # ✅ 10 tests (100% coverage)
-├── check_test.gno            # ✅ 8 tests (Check/CheckN)
-├── test_debug.gno            # Debug tests for genUintNBiased
-└── README.md                 # This file
-```
 
 ## Contributing
 
