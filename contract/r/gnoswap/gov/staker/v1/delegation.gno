@@ -1,6 +1,7 @@
 package v1
 
 import (
+    "math"
 	"errors"
 	"gno.land/r/gnoswap/gov/staker"
 )
@@ -123,6 +124,9 @@ func (r *DelegationResolver) processCollection(amount, currentTime int64) error 
 func addToCollectedAmount(collectedAmount, amount int64) (int64, error) {
     if amount < 0 {
         return 0, errors.New("amount must be non-negative")
+    }
+    if amount > 0 && collectedAmount > math.MaxInt64-amount {
+        return 0, errors.New("collected amount would overflow")
     }
     return collectedAmount + amount, nil
 }

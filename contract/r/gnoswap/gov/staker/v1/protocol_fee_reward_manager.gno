@@ -1,6 +1,7 @@
 package v1
 
 import (
+    "math"
     "errors"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -173,7 +174,11 @@ func (self *ProtocolFeeRewardManagerResolver) addStake(address string, amount in
 
 	self.setRewardState(address, rewardState)
 
-	self.SetTotalStakedAmount(self.GetTotalStakedAmount() + amount)
+	currentTotal := self.GetTotalStakedAmount()
+	if amount > 0 && currentTotal > math.MaxInt64-amount {
+		return errors.New("total staked amount would overflow")
+	}
+	self.SetTotalStakedAmount(currentTotal + amount)
 
 	return nil
 }
@@ -206,7 +211,11 @@ func (self *ProtocolFeeRewardManagerResolver) removeStake(address string, amount
 
 	self.setRewardState(address, rewardState)
 
-	self.SetTotalStakedAmount(self.GetTotalStakedAmount() - amount)
+	updatedTotalStakedAmount := self.GetTotalStakedAmount() - amount
+	if updatedTotalStakedAmount < 0 {
+		updatedTotalStakedAmount = 0
+	}
+	self.SetTotalStakedAmount(updatedTotalStakedAmount)
 
 	return nil
 }
