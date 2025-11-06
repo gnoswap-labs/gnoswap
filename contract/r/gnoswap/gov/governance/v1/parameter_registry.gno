@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"strings"
+
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 
@@ -16,6 +18,14 @@ import (
 
 	"gno.land/r/gnoswap/halt"
 )
+
+// globalParameterRegistry is initialized once and reused for all validation and execution.
+// This provides consistent validation at proposal creation time and execution time.
+var globalParameterRegistry *ParameterRegistry
+
+func init() {
+	globalParameterRegistry = CreateParameterHandlers()
+}
 
 // Package paths
 const (
@@ -543,4 +553,118 @@ func registerHandlers(registry *ParameterRegistry, handlerOptions []*ParameterHa
 	for _, handlerOption := range handlerOptions {
 		registry.Register(*handlerOption)
 	}
+}
+
+// validateExecutions validates that all executions in a parameter change proposal
+// correspond to registered handlers in the global parameter registry.
+// This function should be called during proposal creation to fail fast on invalid executions.
+//
+// Parameters:
+//   - numToExecute: number of parameter changes to execute
+//   - executions: encoded execution string with parameter changes
+//
+// Returns:
+//   - error: validation error if any execution is invalid
+func validateExecutions(numToExecute int64, executions string) error {
+	// Validate execution count is positive
+	if numToExecute <= 0 {
+		return makeErrorWithDetails(
+			errInvalidInput,
+			ufmt.Sprintf("numToExecute is less than or equal to 0"),
+		)
+	}
+
+	// Split execution string into individual messages
+	msgs := strings.Split(executions, messageSeparator)
+	msgCount := len(msgs)
+
+	// Validate execution messages are provided
+	if msgCount == 0 {
+		return makeErrorWithDetails(
+			errInvalidInput,
+			ufmt.Sprintf("executions is empty"),
+		)
+	}
+
+	// Validate execution count matches message count
+	if msgCount != int(numToExecute) {
+		return makeErrorWithDetails(
+			errInvalidInput,
+			ufmt.Sprintf("executions count (%d) does not match numToExecute (%d)", len(msgs), numToExecute),
+		)
+	}
+
+	// Validate execution count doesn't exceed maximum
+	if numToExecute > maxNumberOfExecution {
+		return makeErrorWithDetails(
+			errInvalidInput,
+			ufmt.Sprintf("numToExecute is greater than %d", maxNumberOfExecution),
+		)
+	}
+
+	// Parse and validate each execution message
+	for i, msg := range msgs {
+		// Split message into components: pkgPath, function, params
+		parts := strings.Split(msg, parameterSeparator)
+		if len(parts) != 3 {
+			return makeErrorWithDetails(
+				errInvalidMessageFormat,
+				ufmt.Sprintf("execution[%d]: expected 3 parts (pkgPath, function, params), got %d", i, len(parts)),
+			)
+		}
+
+		pkgPath := parts[0]
+		function := parts[1]
+		paramStr := parts[2]
+
+		// Validate package path and function are not empty
+		if pkgPath == "" {
+			return makeErrorWithDetails(
+				errInvalidInput,
+				ufmt.Sprintf("execution[%d]: package path is empty", i),
+			)
+		}
+
+		if function == "" {
+			return makeErrorWithDetails(
+				errInvalidInput,
+				ufmt.Sprintf("execution[%d]: function name is empty", i),
+			)
+		}
+
+		// Check if handler exists in registry
+		key := makeHandlerKey(pkgPath, function)
+		handler, err := globalParameterRegistry.Handler(key)
+		if err != nil {
+			return makeErrorWithDetails(
+				errInvalidExecution,
+				ufmt.Sprintf("execution[%d]: %s (key: %s)", i, err.Error(), key),
+			)
+		}
+
+		// Validate parameter count matches handler's expected count
+		params := []string{}
+		if paramStr != "" {
+			params = strings.Split(paramStr, ",")
+		}
+
+		// Get expected parameter count from handler
+		handlerOpts, ok := handler.(*ParameterHandlerOptions)
+		if !ok {
+			return makeErrorWithDetails(
+				errInvalidExecution,
+				ufmt.Sprintf("execution[%d]: failed to get handler options", i),
+			)
+		}
+
+		if len(params) != handlerOpts.paramCount {
+			return makeErrorWithDetails(
+				errInvalidInput,
+				ufmt.Sprintf("execution[%d]: expected %d parameters for %s:%s, got %d",
+					i, handlerOpts.paramCount, pkgPath, function, len(params)),
+			)
+		}
+	}
+
+	return nil
 }

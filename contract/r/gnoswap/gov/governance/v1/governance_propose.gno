@@ -8,8 +8,8 @@ import (
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
 
-	"gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/gov/governance"
+	"gno.land/r/gnoswap/gov/staker"
 )
 
 // ProposeText creates a text proposal for community discussion.
@@ -268,6 +268,11 @@ func (gv *governanceV1) ProposeParameterChange(
 		config.VotingWeightSmoothingDuration,
 	)
 	if err != nil {
+		panic(err)
+	}
+
+	// Validate executions before creating proposal to fail fast on invalid handlers
+	if err := validateExecutions(numToExecute, executions); err != nil {
 		panic(err)
 	}
 
