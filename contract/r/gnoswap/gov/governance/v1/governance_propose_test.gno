@@ -501,7 +501,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-023] invalid execution: handler not found || execution[0]: handler not found for gno.land/r/invalid/package:SetPoolTier (key: gno.land/r/invalid/package:SetPoolTier)",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-024] invalid execution: handler not found || execution[0]: handler not found for gno.land/r/invalid/package:SetPoolTier (key: gno.land/r/invalid/package:SetPoolTier)",
 		},
 		{
 			name:          "fail - invalid function name (handler not found)",
@@ -526,7 +526,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-023] invalid execution: handler not found || execution[0]: handler not found for gno.land/r/gnoswap/staker:InvalidFunction (key: gno.land/r/gnoswap/staker:InvalidFunction)",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-024] invalid execution: handler not found || execution[0]: handler not found for gno.land/r/gnoswap/staker:InvalidFunction (key: gno.land/r/gnoswap/staker:InvalidFunction)",
 		},
 		{
 			name:          "fail - invalid parameter count (too few)",
