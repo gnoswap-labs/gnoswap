@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"math"
 	"testing"
 	"time"
 
@@ -409,45 +408,6 @@ func TestProposalStatus_NewProposalStatus(t *testing.T) {
 			maxVotingWeight: -1,
 			executable:      true,
 			createdAt:       -1,
-		},
-		{
-			name: "Create with int64 max values",
-			config: governance.Config{
-				VotingStartDelay: math.MaxInt64,
-				VotingPeriod:     math.MaxInt64,
-				ExecutionDelay:   math.MaxInt64,
-				ExecutionWindow:  math.MaxInt64,
-				Quorum:           math.MaxInt64,
-			},
-			maxVotingWeight: math.MaxInt64,
-			executable:      true,
-			createdAt:       math.MaxInt64,
-		},
-		{
-			name: "Create with int64 min values",
-			config: governance.Config{
-				VotingStartDelay: math.MinInt64,
-				VotingPeriod:     math.MinInt64,
-				ExecutionDelay:   math.MinInt64,
-				ExecutionWindow:  math.MinInt64,
-				Quorum:           math.MinInt64,
-			},
-			maxVotingWeight: math.MinInt64,
-			executable:      false,
-			createdAt:       math.MinInt64,
-		},
-		{
-			name: "Create with mixed boundary values",
-			config: governance.Config{
-				VotingStartDelay: math.MinInt64,
-				VotingPeriod:     -1,
-				ExecutionDelay:   0,
-				ExecutionWindow:  1,
-				Quorum:           math.MaxInt64,
-			},
-			maxVotingWeight: 1000,
-			executable:      true,
-			createdAt:       0,
 		},
 		{
 			name: "Create non-executable proposal",

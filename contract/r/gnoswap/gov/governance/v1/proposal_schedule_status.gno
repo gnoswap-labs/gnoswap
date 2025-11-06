@@ -94,10 +94,10 @@ func NewProposalScheduleStatus(
 ) *governance.ProposalScheduleStatus {
 	// Calculate all phase timestamps based on creation time and configuration
 	createTime := createdAt
-	activeTime := createTime + votingStartDelay      // When voting can start
-	votingEndTime := activeTime + votingPeriod       // When voting ends
-	executableTime := votingEndTime + executionDelay // When execution can start
-	expiredTime := executableTime + executionWindow  // When execution window closes
+	activeTime := safeAddInt64(createTime, votingStartDelay)      // When voting can start
+	votingEndTime := safeAddInt64(activeTime, votingPeriod)       // When voting ends
+	executableTime := safeAddInt64(votingEndTime, executionDelay) // When execution can start
+	expiredTime := safeAddInt64(executableTime, executionWindow)  // When execution window closes
 
 	return governance.NewProposalScheduleStatusInstance(createTime, activeTime, votingEndTime, executableTime, expiredTime)
 }
