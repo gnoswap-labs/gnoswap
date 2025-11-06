@@ -459,24 +459,20 @@ func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(t *test
 			expectedChangedLen: 0,
 		},
 		{
-			name: "Multiple tokens with mixed positive and zero deltas",
+			name: "Calculate with max int64 delta",
 			setupManager: func(m *ProtocolFeeRewardManagerResolver) {
-				m.SetTotalStakedAmount(1000)
-				initialFees := map[string]int64{
-					"token1": 100,
-					"token2": 200,
-				}
-				m.SetProtocolFeeAmounts(initialFees)
+				m.SetTotalStakedAmount(1)
+				m.SetProtocolFeeAmounts(map[string]int64{
+					"token1": 0,
+				})
 			},
 			protocolFeeAmounts: map[string]int64{
-				"token1": 150, // positive delta
-				"token2": 200, // zero delta
-				"token3": 50,  // new token
+				"token1": 9223372036854775807, // max int64
 			},
 			currentTimestamp:   100,
 			shouldIncrease:     true,
-			expectedResultLen:  3,
-			expectedChangedLen: -1,
+			expectedResultLen:  1,
+			expectedChangedLen: 1,
 		},
 	}
 

@@ -408,8 +408,10 @@ func TestEmissionRewardManager_calculateAccumulatedRewardX128PerStake(t *testing
 			// Given: Emission reward manager setup
 			manager := staker.NewEmissionRewardManager()
 			resolver := NewEmissionRewardManagerResolver(manager)
-			initialReward := u256.NewUintFromInt64(0)
 			tt.setupManager(resolver)
+
+			// Capture initial reward state after setup
+			initialReward := u256.NewUintFromInt64(0)
 			if resolver.GetAccumulatedRewardX128PerStake() != nil {
 				initialReward = resolver.GetAccumulatedRewardX128PerStake().Clone()
 			}
