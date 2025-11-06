@@ -7,10 +7,10 @@ TXTAR_DIR="tests/integration/testdata"
 clean_txtar_file() {
     local file=$1
     local temp_file="${file}.tmp"
-    
+
     # Replace actual mnemonics with placeholder
     sed -E "s/adduserfrom gns_admin '([^']+)'/adduserfrom gns_admin 'mnemonic here'/" "$file" > "$temp_file"
-    
+
     # Check if replacement was made
     if diff -q "$file" "$temp_file" > /dev/null; then
         rm "$temp_file"
