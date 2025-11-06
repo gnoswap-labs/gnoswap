@@ -4,6 +4,7 @@ import (
 	"chain"
 	"chain/runtime"
 	"time"
+	"errors"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
@@ -301,11 +302,13 @@ func (gs *govStakerV1) delegate(
 		currentTimestamp,
 	)
 	delegationResolver := NewDelegationResolver(delegation)
-	delegationRecord := staker.NewDelegationDelegateRecordBy(
-		delegation,
-		delegationResolver.DelegatedAmount(),
-		currentTimestamp,
-	)
+
+	delegatedAmount := delegationResolver.DelegatedAmount()
+	if delegatedAmount < 0 {
+	    return nil, errors.New("delegated amount cannot be negative")
+	}
+
+	delegationRecord := staker.NewDelegationDelegateRecordBy(delegation, delegatedAmount, currentTimestamp)
 
 	gs.addDelegation(delegationID, delegation)
 	gs.addDelegationRecord(delegationRecord)
@@ -363,6 +366,10 @@ func (gs *govStakerV1) unDelegate(
 		if currentUnDelegationAmount > resolver.DelegatedAmount() {
 			currentUnDelegationAmount = resolver.DelegatedAmount()
 		}
+
+		if currentUnDelegationAmount < 0 {
+            return 0, errors.New("undelegation amount cannot be negative")
+        }
 
 		// Get lockup period from store
 		lockupPeriod, err := gs.store.GetUnDelegationLockupPeriod()
