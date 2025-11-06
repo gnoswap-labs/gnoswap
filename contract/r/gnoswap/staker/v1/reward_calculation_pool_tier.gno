@@ -98,8 +98,8 @@ func NewPoolTier(pools *Pools, currentHeight int64, currentTime int64, initialPo
 	result := &PoolTier{
 		membership:               avl.NewTree(),
 		tierRatio:                TierRatioFromCounts(1, 0, 0),
-		lastRewardCacheTimestamp: currentTime + 1,
-		lastRewardCacheHeight:    currentHeight + 1,
+		lastRewardCacheTimestamp: safeAddInt64(currentTime, 1),
+		lastRewardCacheHeight:    safeAddInt64(currentHeight, 1),
 		getEmission:              getEmission,
 		getHalvingBlocksInRange:  getHalvingBlocksInRange,
 		currentEmission:          getEmission(),

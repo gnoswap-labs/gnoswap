@@ -49,6 +49,25 @@ func TestDelegationHistory_GetRecordsBy(t *testing.T) {
 			snapshotTime:  100,
 			expectedCount: 0,
 		},
+		{
+			name: "Exact timestamp match",
+			records: staker.DelegationHistory{
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 200),
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 300),
+			},
+			snapshotTime:  200,
+			expectedCount: 2, // Should include the exact match and all after
+		},
+		{
+			name: "Very large timestamp",
+			records: staker.DelegationHistory{
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 200),
+			},
+			snapshotTime:  9223372036854775807, // max int64
+			expectedCount: 0,                   // No records after max timestamp
+		},
 	}
 
 	for _, tc := range tests {
@@ -85,6 +104,32 @@ func TestDelegationHistory_AddRecord(t *testing.T) {
 		},
 		{
 			name: "Add record to existing history",
+			initialRecords: staker.DelegationHistory{
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
+			},
+			newRecord: staker.NewDelegationRecord(
+				staker.UnDelegateType,
+				0,
+				address("g1from"),
+				address("g1to"),
+				200,
+			),
+			expectedCount: 2,
+		},
+		{
+			name:           "Add multiple records sequentially",
+			initialRecords: staker.DelegationHistory{},
+			newRecord: staker.NewDelegationRecord(
+				staker.DelegateType,
+				0,
+				address("g1from"),
+				address("g1to"),
+				100,
+			),
+			expectedCount: 1,
+		},
+		{
+			name: "Add records with different delegation types",
 			initialRecords: staker.DelegationHistory{
 				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
 			},
@@ -150,6 +195,25 @@ func TestDelegationHistory_RemoveRecordsBy(t *testing.T) {
 			previousTime:  300,
 			expectedCount: 0,
 		},
+		{
+			name: "Remove with negative time",
+			initialRecords: staker.DelegationHistory{
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 200),
+			},
+			previousTime:  -100,
+			expectedCount: 2, // All records are after negative time
+		},
+		{
+			name: "Remove at exact first record time (boundary)",
+			initialRecords: staker.DelegationHistory{
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 200),
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 300),
+			},
+			previousTime:  100,
+			expectedCount: 3, // Should keep all records (inclusive)
+		},
 	}
 
 	for _, tc := range tests {
@@ -166,3 +230,35 @@ func TestDelegationHistory_RemoveRecordsBy(t *testing.T) {
 		})
 	}
 }
+
+// TestDelegationHistory_NewDelegationHistoryResolver tests the constructor
+func TestDelegationHistory_NewDelegationHistoryResolver(t *testing.T) {
+	tests := []struct {
+		name    string
+		history staker.DelegationHistory
+	}{
+		{
+			name:    "Create with empty history",
+			history: staker.DelegationHistory{},
+		},
+		{
+			name: "Create with existing records",
+			history: staker.DelegationHistory{
+				staker.NewDelegationRecord(staker.DelegateType, 0, address("g1from"), address("g1to"), 100),
+				staker.NewDelegationRecord(staker.UnDelegateType, 0, address("g1from"), address("g1to"), 200),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			resolver := NewDelegationHistoryResolver(tc.history)
+
+			// then
+			uassert.NotNil(t, resolver)
+			uassert.Equal(t, len(resolver.Records()), len(tc.history))
+		})
+	}
+}
+

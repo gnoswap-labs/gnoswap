@@ -45,7 +45,7 @@ func (lpdr *LaunchpadProjectDepositsResolver) setLaunchpadProjectDeposit(ownerAd
 //   - amount: amount to add to the deposit
 func (lpdr *LaunchpadProjectDepositsResolver) addDeposit(ownerAddress string, amount int64) {
 	currentDeposit, _ := lpdr.GetDeposit(ownerAddress)
-	newDeposit := currentDeposit + amount
+	newDeposit := safeAddInt64(currentDeposit, amount)
 	if newDeposit < 0 {
 		newDeposit = 0
 	}
