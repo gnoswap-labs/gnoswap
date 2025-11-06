@@ -33,9 +33,6 @@ func UpgradeImpl(cur realm, targetPackagePath string) {
 	access.AssertIsAdminOrGovernance(caller)
 
 	prevPackagePath := versionManager.GetCurrentPackagePath()
-	if prevPackagePath == targetPackagePath {
-		panic("new package path is the same as the current package path")
-	}
 
 	err := versionManager.ChangeImplementation(targetPackagePath)
 	if err != nil {
