@@ -1,6 +1,7 @@
 package v1
 
 import (
+    "math"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -138,51 +139,70 @@ func TestEmissionRewardManager_GetClaimableRewardAmount(t *testing.T) {
 // Test addStake
 func TestEmissionRewardManager_addStake(t *testing.T) {
 	tests := []struct {
-		name          string
-		address       string
-		amount        int64
-		currentHeight int64
-		expectedTotal int64
+		name             string
+		address          string
+		amount           int64
+		currentHeight    int64
+		expectedTotal    int64
+		expectedHasError bool
 	}{
 		{
-			name:          "Add stake for new user",
-			address:       "user1",
-			amount:        1000,
-			currentHeight: 100,
-			expectedTotal: 1000,
+			name:             "Add stake for new user",
+			address:          "user1",
+			amount:           1000,
+			currentHeight:    100,
+			expectedTotal:    1000,
+			expectedHasError: false,
 		},
 		{
-			name:          "Add stake for existing user",
-			address:       "user1",
-			amount:        500,
-			currentHeight: 200,
-			expectedTotal: 1500,
+			name:             "Add stake with negative amount",
+			address:          "user1",
+			amount:           -200,
+			currentHeight:    300,
+			expectedTotal:    0, // Should not change when error occurs
+			expectedHasError: true,
 		},
 		{
-		    name:          "Add stake with negative amount",
-            address:       "user1",
-            amount:        -200,
-            currentHeight: 300,
-            expectedTotal: 1300, // 1500 - 200
+			name:             "Add stake with zero amount",
+			address:          "user1",
+			amount:           0,
+			currentHeight:    400,
+			expectedTotal:    0,
+			expectedHasError: false,
 		},
 		{
-		    name:          "Add stake with zero amount",
-			address:       "user1",
-			amount:        0,
-			currentHeight: 400,
-			expectedTotal: 1300, // No change
+			name:             "Add stake causing overflow",
+			address:          "user1",
+			amount:           1,
+			currentHeight:    500,
+			expectedTotal:    0,
+			expectedHasError: true,
 		},
 	}
 
-	manager := staker.NewEmissionRewardManager()
-	resolver := NewEmissionRewardManagerResolver(manager)
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// When: Add stake
-			resolver.addStake(tt.address, tt.amount, tt.currentHeight)
+			// Given: New emission reward manager for each test
+			manager := staker.NewEmissionRewardManager()
+			resolver := NewEmissionRewardManagerResolver(manager)
 
-			// Then: Total staked amount should be updated
+			// Special setup for overflow test
+			if tt.name == "Add stake causing overflow" {
+				// Set total to MaxInt64
+				resolver.SetTotalStakedAmount(math.MaxInt64)
+			}
+
+			// When: Add stake
+			err := resolver.addStake(tt.address, tt.amount, tt.currentHeight)
+
+			// Then: Check error expectation
+			if tt.expectedHasError {
+				uassert.Error(t, err)
+				return
+			}
+
+			// And: Total staked amount should be updated
+			uassert.NoError(t, err)
 			uassert.Equal(t, resolver.GetTotalStakedAmount(), tt.expectedTotal)
 
 			// And: Reward state should be created/updated
@@ -197,46 +217,52 @@ func TestEmissionRewardManager_addStake(t *testing.T) {
 // Test removeStake
 func TestEmissionRewardManager_removeStake(t *testing.T) {
 	tests := []struct {
-		name           string
-		initialAmount  int64
-		removeAmount   int64
-		currentHeight  int64
-		expectedAmount int64
+		name             string
+		initialAmount    int64
+		removeAmount     int64
+		currentHeight    int64
+		expectedAmount   int64
+		expectedHasError bool
 	}{
 		{
-			name:           "Remove partial stake",
-			initialAmount:  1000,
-			removeAmount:   300,
-			currentHeight:  100,
-			expectedAmount: 700,
+			name:             "Remove partial stake",
+			initialAmount:    1000,
+			removeAmount:     300,
+			currentHeight:    100,
+			expectedAmount:   700,
+			expectedHasError: false,
 		},
 		{
-			name:           "Remove all stake",
-			initialAmount:  700,
-			removeAmount:   700,
-			currentHeight:  200,
-			expectedAmount: 0,
+			name:             "Remove all stake",
+			initialAmount:    700,
+			removeAmount:     700,
+			currentHeight:    200,
+			expectedAmount:   0,
+			expectedHasError: false,
 		},
 		{
-		    name:           "Remove zero stake",
-            initialAmount:  500,
-            removeAmount:   0,
-            currentHeight:  300,
-            expectedAmount: 500,
+			name:             "Remove zero stake",
+			initialAmount:    500,
+			removeAmount:     0,
+			currentHeight:    300,
+			expectedAmount:   500,
+			expectedHasError: false,
 		},
 		{
-		    name:          "Remove negative stake (effectively adds)",
-            initialAmount:  400,
-            removeAmount:   -100,
-            currentHeight:  400,
-            expectedAmount: 500, // 400 - (-100) = 500
+			name:             "Remove negative stake (should not allow)",
+			initialAmount:    400,
+			removeAmount:     -100,
+			currentHeight:    400,
+			expectedAmount:   400, // Should not change when error occurs
+			expectedHasError: true,
 		},
 		{
-		    name:           "Remove excessive stake (clamps to zero)",
-            initialAmount:  200,
-            removeAmount:   300,
-            currentHeight:  500,
-            expectedAmount: 0, // Clamped to zero
+			name:             "Remove excessive stake (clamps to zero)",
+			initialAmount:    200,
+			removeAmount:     300,
+			currentHeight:    500,
+			expectedAmount:   0, // Clamped to zero
+			expectedHasError: false,
 		},
 	}
 
@@ -245,12 +271,22 @@ func TestEmissionRewardManager_removeStake(t *testing.T) {
 			// Given: Manager with initial stake
 			manager := staker.NewEmissionRewardManager()
 			resolver := NewEmissionRewardManagerResolver(manager)
-			resolver.addStake("user1", tt.initialAmount, 50)
+			if tt.initialAmount > 0 {
+				resolver.addStake("user1", tt.initialAmount, 50)
+			}
 
 			// When: Remove stake
-			resolver.removeStake("user1", tt.removeAmount, tt.currentHeight)
+			err := resolver.removeStake("user1", tt.removeAmount, tt.currentHeight)
 
-			// Then: Total staked amount should be updated
+			// Then: Check error expectation
+			if tt.expectedHasError {
+				uassert.Error(t, err)
+				uassert.Equal(t, resolver.GetTotalStakedAmount(), tt.expectedAmount)
+				return
+			}
+
+			// And: Total staked amount should be updated
+			uassert.NoError(t, err)
 			uassert.Equal(t, resolver.GetTotalStakedAmount(), tt.expectedAmount)
 		})
 	}

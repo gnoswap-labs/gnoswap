@@ -1,6 +1,7 @@
 package v1
 
 import (
+    "math"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -723,8 +724,8 @@ func TestDelegation_addToCollectedAmount(t *testing.T) {
 			name:             "add negative amount",
 			collectedAmount:  100,
 			amount:           -30,
-			expectedResult:   70,
-			expectedHasError: false,
+			expectedResult:   0,
+			expectedHasError: true, // Should not allow negative amounts
 		},
 		{
 			name:             "both zero",
@@ -739,6 +740,13 @@ func TestDelegation_addToCollectedAmount(t *testing.T) {
 			amount:           100,
 			expectedResult:   9223372036854775100,
 			expectedHasError: false,
+		},
+		{
+			name:             "overflow",
+			collectedAmount:  math.MaxInt64, // MaxInt64
+			amount:           1,
+			expectedResult:   0,
+			expectedHasError: true,
 		},
 	}
 

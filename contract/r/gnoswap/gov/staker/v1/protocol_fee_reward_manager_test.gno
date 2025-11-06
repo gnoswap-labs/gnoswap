@@ -1,6 +1,7 @@
 package v1
 
 import (
+    "math"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -152,6 +153,7 @@ func TestProtocolFeeRewardManager_addStake(t *testing.T) {
 		amount           int64
 		currentTimestamp int64
 		expectedTotal    int64
+		expectedHasError bool
 	}{
 		{
 			name:             "Add stake for new user",
@@ -159,39 +161,57 @@ func TestProtocolFeeRewardManager_addStake(t *testing.T) {
 			amount:           1000,
 			currentTimestamp: 100,
 			expectedTotal:    1000,
-		},
-		{
-			name:             "Add stake for existing user",
-			address:          "user1",
-			amount:           500,
-			currentTimestamp: 200,
-			expectedTotal:    1500,
+			expectedHasError: false,
 		},
 		{
 			name:             "Add stake with negative amount",
 			address:          "user1",
 			amount:           -200,
 			currentTimestamp: 300,
-			expectedTotal:    1300, // 1500 - 200
+			expectedTotal:    0, // Should not change when error occurs
+			expectedHasError: true,
 		},
 		{
-			name:            "Add stake with zero amount",
-			address:         "user1",
-			amount:          0,
+			name:             "Add stake with zero amount",
+			address:          "user1",
+			amount:           0,
 			currentTimestamp: 400,
-			expectedTotal:   1300, // No change
+			expectedTotal:    0,
+			expectedHasError: false,
+		},
+		{
+			name:             "Add stake causing overflow",
+			address:          "user1",
+			amount:           1,
+			currentTimestamp: 500,
+			expectedTotal:    0,
+			expectedHasError: true,
 		},
 	}
 
-	manager := staker.NewProtocolFeeRewardManager()
-	resolver := NewProtocolFeeRewardManagerResolver(manager)
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// When: Add stake
-			resolver.addStake(tt.address, tt.amount, tt.currentTimestamp)
+			// Given: New protocol fee reward manager for each test
+			manager := staker.NewProtocolFeeRewardManager()
+			resolver := NewProtocolFeeRewardManagerResolver(manager)
 
-			// Then: Total staked amount should be updated
+			// Special setup for overflow test
+			if tt.name == "Add stake causing overflow" {
+				// Set total to MaxInt64
+				resolver.SetTotalStakedAmount(math.MaxInt64)
+			}
+
+			// When: Add stake
+			err := resolver.addStake(tt.address, tt.amount, tt.currentTimestamp)
+
+			// Then: Check error expectation
+			if tt.expectedHasError {
+				uassert.Error(t, err)
+				return
+			}
+
+			// And: Total staked amount should be updated
+			uassert.NoError(t, err)
 			uassert.Equal(t, resolver.GetTotalStakedAmount(), tt.expectedTotal)
 
 			// And: Reward state should be created/updated
@@ -211,6 +231,7 @@ func TestProtocolFeeRewardManager_removeStake(t *testing.T) {
 		removeAmount     int64
 		currentTimestamp int64
 		expectedAmount   int64
+		expectedHasError bool
 	}{
 		{
 			name:             "Remove partial stake",
@@ -218,6 +239,7 @@ func TestProtocolFeeRewardManager_removeStake(t *testing.T) {
 			removeAmount:     300,
 			currentTimestamp: 100,
 			expectedAmount:   700,
+			expectedHasError: false,
 		},
 		{
 			name:             "Remove all stake",
@@ -225,6 +247,7 @@ func TestProtocolFeeRewardManager_removeStake(t *testing.T) {
 			removeAmount:     700,
 			currentTimestamp: 200,
 			expectedAmount:   0,
+			expectedHasError: false,
 		},
 		{
 			name:             "Remove zero stake",
@@ -232,27 +255,31 @@ func TestProtocolFeeRewardManager_removeStake(t *testing.T) {
 			removeAmount:     0,
 			currentTimestamp: 300,
 			expectedAmount:   500,
+			expectedHasError: false,
 		},
 		{
-			name:             "Remove negative stake (effectively adds)",
+			name:             "Remove negative stake (should not allow)",
 			initialAmount:    400,
 			removeAmount:     -100,
 			currentTimestamp: 400,
-			expectedAmount:   500, // 400 - (-100) = 500
+			expectedAmount:   400, // Should not change when error occurs
+			expectedHasError: true,
 		},
 		{
 			name:             "Remove stake when none exists",
 			initialAmount:    0,
 			removeAmount:     100,
 			currentTimestamp: 500,
-			expectedAmount:   -100, // 0 - 100 = -100
+			expectedAmount:   0, // Clamps to zero
+			expectedHasError: false,
 		},
 		{
 			name:             "Remove stake with amount exceeding staked",
 			initialAmount:    100,
 			removeAmount:     200,
 			currentTimestamp: 600,
-			expectedAmount:   -100, // 100 - 200 = -100
+			expectedAmount:   0, // Clamps to zero
+			expectedHasError: false,
 		},
 	}
 
@@ -261,12 +288,22 @@ func TestProtocolFeeRewardManager_removeStake(t *testing.T) {
 			// Given: Manager with initial stake
 			manager := staker.NewProtocolFeeRewardManager()
 			resolver := NewProtocolFeeRewardManagerResolver(manager)
-			resolver.addStake("user1", tt.initialAmount, 50)
+			if tt.initialAmount > 0 {
+				resolver.addStake("user1", tt.initialAmount, 50)
+			}
 
 			// When: Remove stake
-			resolver.removeStake("user1", tt.removeAmount, tt.currentTimestamp)
+			err := resolver.removeStake("user1", tt.removeAmount, tt.currentTimestamp)
 
-			// Then: Total staked amount should be updated
+			// Then: Check error expectation
+			if tt.expectedHasError {
+				uassert.Error(t, err)
+				uassert.Equal(t, resolver.GetTotalStakedAmount(), tt.expectedAmount)
+				return
+			}
+
+			// And: Total staked amount should be updated
+			uassert.NoError(t, err)
 			uassert.Equal(t, resolver.GetTotalStakedAmount(), tt.expectedAmount)
 		})
 	}
