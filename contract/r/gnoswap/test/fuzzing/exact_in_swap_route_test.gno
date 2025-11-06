@@ -24,6 +24,9 @@ func TestFuzzExactInSwapRoute(t *testing.T) {
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 
 	runFuzzTest(t, 100, func(ft *fuzzing.T, fuzzingResult *Result, index int) {
+		// initialize the states for the fuzzing test
+		initStates(t)
+
 		params := NewValidExactInSwapRouteParams(ft)
 		fuzzingResult.AddParams(index, params)
 

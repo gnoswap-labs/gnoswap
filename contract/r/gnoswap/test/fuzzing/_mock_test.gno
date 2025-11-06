@@ -145,10 +145,6 @@ func (s *mockPoolStore) SetTickCrossHook(tickCrossHook func(cur realm, poolPath 
 	return nil
 }
 
-func NewMockPoolStore() *mockPoolStore {
-	return NewMockPoolStoreWithHook(nil, nil, nil)
-}
-
 func NewMockPoolStoreWithHook(
 	swapStartHook func(cur realm, poolPath string, timestamp int64),
 	swapEndHook func(cur realm, poolPath string) error,
@@ -226,10 +222,6 @@ func (s *mockPositionStore) RemovePosition(positionId uint64) error {
 	return nil
 }
 
-func newmockPositionStore() position.IPositionStore {
-	return &mockPositionStore{positions: avl.NewTree(), nextID: 1}
-}
-
 // Mock Router Store
 type mockRouterStore struct {
 	data map[string]any
@@ -284,6 +276,10 @@ func (n *mockNFTAccessor) OwnerOf(tid grc721.TokenID) (address, error) {
 	}
 
 	return n.owners[tid], nil
+}
+
+func newMockPoolStore() *mockPoolStore {
+	return NewMockPoolStoreWithHook(nil, nil, nil)
 }
 
 func newMockPositionStore() *mockPositionStore {
