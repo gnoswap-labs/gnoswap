@@ -7,8 +7,9 @@
 package fuzz
 
 import (
-	"fmt"
 	"math"
+
+	"gno.land/p/nt/ufmt"
 )
 
 const (
@@ -49,21 +50,21 @@ type integerGen struct {
 func (g *integerGen) String() string {
 	if g.hasMin && g.hasMax {
 		if g.signed {
-			return fmt.Sprintf("%sRange(%d, %d)", g.kind, g.smin, g.smax)
+			return ufmt.Sprintf("%sRange(%d, %d)", g.kind, g.smin, g.smax)
 		}
-		return fmt.Sprintf("%sRange(%d, %d)", g.kind, g.umin, g.umax)
+		return ufmt.Sprintf("%sRange(%d, %d)", g.kind, g.umin, g.umax)
 	} else if g.hasMin {
 		if g.signed {
-			return fmt.Sprintf("%sMin(%d)", g.kind, g.smin)
+			return ufmt.Sprintf("%sMin(%d)", g.kind, g.smin)
 		}
-		return fmt.Sprintf("%sMin(%d)", g.kind, g.umin)
+		return ufmt.Sprintf("%sMin(%d)", g.kind, g.umin)
 	} else if g.hasMax {
 		if g.signed {
-			return fmt.Sprintf("%sMax(%d)", g.kind, g.smax)
+			return ufmt.Sprintf("%sMax(%d)", g.kind, g.smax)
 		}
-		return fmt.Sprintf("%sMax(%d)", g.kind, g.umax)
+		return ufmt.Sprintf("%sMax(%d)", g.kind, g.umax)
 	}
-	return fmt.Sprintf("%s()", g.kind)
+	return ufmt.Sprintf("%s()", g.kind)
 }
 
 func (g *integerGen) value(t *T) any {
