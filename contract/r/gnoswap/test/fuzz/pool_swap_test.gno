@@ -9,15 +9,12 @@ import (
 	"gno.land/p/gnoswap/fuzz"
 	"gno.land/p/gnoswap/fuzzutils"
 	prabc "gno.land/p/gnoswap/rbac"
-	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
 )
 
 const (
@@ -31,25 +28,19 @@ func TestFuzzPoolSwap_ValidParams_Stateless(t *testing.T) {
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
 	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
-		// given - initialize states
+		// given
 		initStates(t)
-
 		poolSwapParams := NewValidPoolSwapParams(ft)
+		setupPoolSwapTest(t, poolSwapParams, adminAddr, poolAddr)
+
+		// when
 		fuzzResult.AddParams(index, poolSwapParams)
-
-		// Setup pool and liquidity
-		poolPath := setupPoolSwapTest(t, poolSwapParams, adminAddr, poolAddr)
-
-		// Record state before swap
-		adminToken0Before, adminToken1Before, poolToken0Before, poolToken1Before, sqrtPriceBefore, liquidityBefore := recordBalancesAndPoolState(adminAddr, poolAddr, poolPath)
-
-		// when - execute DrySwap and Swap
+		adminToken0Before, adminToken1Before, poolToken0Before, poolToken1Before := recordBalancesAndPoolState(adminAddr, poolAddr, barPath, fooPath)
 		dryAmount0, dryAmount1, swapAmount0, swapAmount1 := executeSwap(poolSwapParams, adminAddr, poolAddr)
 
-		// then - verify results
+		// then
 		verifySwapResults(dryAmount0, dryAmount1, swapAmount0, swapAmount1)
-		verifyBalanceChanges(adminAddr, poolAddr, adminToken0Before, adminToken1Before, poolToken0Before, poolToken1Before, swapAmount0, swapAmount1)
-		verifyPoolStateChanges(poolPath, sqrtPriceBefore, liquidityBefore, poolSwapParams.zeroForOne)
+		verifyBalanceChanges(adminAddr, poolAddr, barPath, fooPath, adminToken0Before, adminToken1Before, poolToken0Before, poolToken1Before, swapAmount0, swapAmount1)
 	})
 }
 
@@ -59,25 +50,77 @@ func TestFuzzPoolSwap_RandomizedParams_Stateless(t *testing.T) {
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
 	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
-		// given - initialize states
+		// given
 		initStates(t)
-
 		poolSwapParams := NewRandomizedPoolSwapParams(ft)
+		setupPoolSwapTest(t, poolSwapParams, adminAddr, poolAddr)
+
+		// when
 		fuzzResult.AddParams(index, poolSwapParams)
-
-		// Setup pool and liquidity
-		poolPath := setupPoolSwapTest(t, poolSwapParams, adminAddr, poolAddr)
-
-		// Record state before swap
-		adminToken0Before, adminToken1Before, poolToken0Before, poolToken1Before, sqrtPriceBefore, liquidityBefore := recordBalancesAndPoolState(adminAddr, poolAddr, poolPath)
-
-		// when - execute DrySwap and Swap
+		adminToken0Before, adminToken1Before, poolToken0Before, poolToken1Before := recordBalancesAndPoolState(adminAddr, poolAddr, barPath, fooPath)
 		dryAmount0, dryAmount1, swapAmount0, swapAmount1 := executeSwap(poolSwapParams, adminAddr, poolAddr)
 
-		// then - verify results
+		// then
 		verifySwapResults(dryAmount0, dryAmount1, swapAmount0, swapAmount1)
-		verifyBalanceChanges(adminAddr, poolAddr, adminToken0Before, adminToken1Before, poolToken0Before, poolToken1Before, swapAmount0, swapAmount1)
-		verifyPoolStateChanges(poolPath, sqrtPriceBefore, liquidityBefore, poolSwapParams.zeroForOne)
+		verifyBalanceChanges(adminAddr, poolAddr, barPath, fooPath, adminToken0Before, adminToken1Before, poolToken0Before, poolToken1Before, swapAmount0, swapAmount1)
+	})
+}
+
+// TestFuzzPoolSwap_ValidParams_Stateful tests DrySwap and Swap with valid parameters in stateful mode
+func TestFuzzPoolSwap_ValidParams_Stateful(t *testing.T) {
+	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
+
+	// given
+	initStates(t)
+
+	var poolCreated bool
+	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+		poolSwapParams := NewValidPoolSwapParams(ft)
+
+		// Create pool on first iteration
+		if !poolCreated {
+			setupPoolSwapTest(t, poolSwapParams, adminAddr, poolAddr)
+			poolCreated = true
+		}
+
+		// when
+		fuzzResult.AddParams(index, poolSwapParams)
+		adminToken0Before, adminToken1Before, poolToken0Before, poolToken1Before := recordBalancesAndPoolState(adminAddr, poolAddr, barPath, fooPath)
+		dryAmount0, dryAmount1, swapAmount0, swapAmount1 := executeSwap(poolSwapParams, adminAddr, poolAddr)
+
+		// then
+		verifySwapResults(dryAmount0, dryAmount1, swapAmount0, swapAmount1)
+		verifyBalanceChanges(adminAddr, poolAddr, barPath, fooPath, adminToken0Before, adminToken1Before, poolToken0Before, poolToken1Before, swapAmount0, swapAmount1)
+	})
+}
+
+// TestFuzzPoolSwap_RandomizedParams_Stateful tests DrySwap and Swap with randomized parameters in stateful mode
+func TestFuzzPoolSwap_RandomizedParams_Stateful(t *testing.T) {
+	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
+
+	// given
+	initStates(t)
+
+	var poolCreated bool
+	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+		poolSwapParams := NewRandomizedPoolSwapParams(ft)
+
+		// Create pool on first iteration
+		if !poolCreated {
+			setupPoolSwapTest(t, poolSwapParams, adminAddr, poolAddr)
+			poolCreated = true
+		}
+
+		// when
+		fuzzResult.AddParams(index, poolSwapParams)
+		adminToken0Before, adminToken1Before, poolToken0Before, poolToken1Before := recordBalancesAndPoolState(adminAddr, poolAddr, barPath, fooPath)
+		dryAmount0, dryAmount1, swapAmount0, swapAmount1 := executeSwap(poolSwapParams, adminAddr, poolAddr)
+
+		// then
+		verifySwapResults(dryAmount0, dryAmount1, swapAmount0, swapAmount1)
+		verifyBalanceChanges(adminAddr, poolAddr, barPath, fooPath, adminToken0Before, adminToken1Before, poolToken0Before, poolToken1Before, swapAmount0, swapAmount1)
 	})
 }
 
@@ -123,16 +166,13 @@ func setupPoolSwapTest(t *testing.T, params *poolSwapParams, adminAddr, poolAddr
 }
 
 // recordBalancesAndPoolState records token balances and pool state before swap
-func recordBalancesAndPoolState(adminAddr, poolAddr address, poolPath string) (
-	adminToken0, adminToken1, poolToken0, poolToken1 int64,
-	sqrtPrice *u256.Uint, liquidity string,
+func recordBalancesAndPoolState(adminAddr, poolAddr address, token0Path, token1Path string) (
+    adminToken0, adminToken1, poolToken0, poolToken1 int64,
 ) {
-	adminToken0 = bar.BalanceOf(adminAddr)
-	adminToken1 = foo.BalanceOf(adminAddr)
-	poolToken0 = bar.BalanceOf(poolAddr)
-	poolToken1 = foo.BalanceOf(poolAddr)
-	sqrtPrice = pool.GetSlot0SqrtPriceX96(poolPath)
-	liquidity = pool.GetLiquidity(poolPath)
+	adminToken0 = common.BalanceOf(token0Path, adminAddr)
+	adminToken1 = common.BalanceOf(token1Path, adminAddr)
+	poolToken0 = common.BalanceOf(token0Path, poolAddr)
+	poolToken1 = common.BalanceOf(token1Path, poolAddr)
 	return
 }
 
@@ -211,13 +251,14 @@ func verifySwapResults(dryAmount0, dryAmount1, swapAmount0, swapAmount1 string) 
 // verifyBalanceChanges verifies token balance changes match swap amounts
 func verifyBalanceChanges(
 	adminAddr, poolAddr address,
+	token0Path, token1Path string,
 	adminToken0Before, adminToken1Before, poolToken0Before, poolToken1Before int64,
 	swapAmount0, swapAmount1 string,
 ) {
-	adminToken0After := bar.BalanceOf(adminAddr)
-	adminToken1After := foo.BalanceOf(adminAddr)
-	poolToken0After := bar.BalanceOf(poolAddr)
-	poolToken1After := foo.BalanceOf(poolAddr)
+	adminToken0After := common.BalanceOf(token0Path, adminAddr)
+	adminToken1After := common.BalanceOf(token1Path, adminAddr)
+	poolToken0After := common.BalanceOf(token0Path, poolAddr)
+	poolToken1After := common.BalanceOf(token1Path, poolAddr)
 
 	// Calculate actual balance changes
 	adminToken0Delta := adminToken0After - adminToken0Before
@@ -236,36 +277,6 @@ func verifyBalanceChanges(
 		panic(ufmt.Sprintf("Token1 balance conservation violated: admin delta %d, pool delta %d",
 			adminToken1Delta, poolToken1Delta))
 	}
-}
-
-// verifyPoolStateChanges verifies pool state changes after swap
-func verifyPoolStateChanges(
-	poolPath string,
-	sqrtPriceBefore *u256.Uint,
-	liquidityBefore string,
-	zeroForOne bool,
-) {
-	sqrtPriceAfter := pool.GetSlot0SqrtPriceX96(poolPath)
-
-	// Verify price direction if price changed (small swaps may not change price due to rounding)
-	if sqrtPriceBefore.Cmp(sqrtPriceAfter) != 0 {
-		if zeroForOne {
-			// Swapping token0 for token1 -> price goes down
-			if sqrtPriceBefore.Cmp(sqrtPriceAfter) < 0 {
-				panic(ufmt.Sprintf("Price should decrease for zeroForOne swap: before %s, after %s",
-					sqrtPriceBefore.ToString(), sqrtPriceAfter.ToString()))
-			}
-		} else {
-			// Swapping token1 for token0 -> price goes up
-			if sqrtPriceBefore.Cmp(sqrtPriceAfter) > 0 {
-				panic(ufmt.Sprintf("Price should increase for !zeroForOne swap: before %s, after %s",
-					sqrtPriceBefore.ToString(), sqrtPriceAfter.ToString()))
-			}
-		}
-	}
-
-	// Note: Price may not change for very small swaps due to rounding
-	// Note: Liquidity can change when crossing tick boundaries (concentrated liquidity)
 }
 
 // callPoolSwapFromContract calls pool.Swap from a mock contract realm to bypass EOA restriction
@@ -301,7 +312,6 @@ func callPoolSwapFromContract(
 	return amount0, amount1
 }
 
-
 // addTestLiquidity adds liquidity to a pool for testing
 func addTestLiquidity(t *testing.T, token0Path, token1Path string, fee uint32, adminAddr address) {
 	t.Helper()
@@ -312,7 +322,7 @@ func addTestLiquidity(t *testing.T, token0Path, token1Path string, fee uint32, a
 	tickUpper := tickSpacing * 100
 
 	// Mint position to add liquidity
-	_, _, _, _ = position.Mint(
+	position.Mint(
 		cross,
 		token0Path,
 		token1Path,

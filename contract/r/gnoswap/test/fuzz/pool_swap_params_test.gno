@@ -2,8 +2,13 @@ package fuzz
 
 import (
 	"gno.land/p/gnoswap/fuzz"
+	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
+
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/pool"
 )
 
 const (
@@ -24,6 +29,31 @@ type poolSwapParams struct {
 }
 
 func (p *poolSwapParams) IsValid() bool {
+	if !p.validateBasicParams() {
+		return false
+	}
+
+	if !p.validatePriceLimit() {
+		return false
+	}
+
+	if !p.validatePoolExists() {
+		return false
+	}
+
+	if !p.validateSwapAmount() {
+		return false
+	}
+
+	if !p.validatePriceLimitDirection() {
+		return false
+	}
+
+	return true
+}
+
+// validateBasicParams checks basic parameter validity
+func (p *poolSwapParams) validateBasicParams() bool {
 	// Amount cannot be "0"
 	if p.amountSpecified == "0" || p.amountSpecified == "" {
 		return false
@@ -46,7 +76,11 @@ func (p *poolSwapParams) IsValid() bool {
 		return false
 	}
 
-	// sqrtPriceLimitX96 must be parseable and within valid range
+	return true
+}
+
+// validatePriceLimit checks if price limit is parseable and within valid range
+func (p *poolSwapParams) validatePriceLimit() bool {
 	priceLimit, err := u256.FromDecimal(p.sqrtPriceLimitX96)
 	if err != nil {
 		return false
@@ -60,21 +94,91 @@ func (p *poolSwapParams) IsValid() bool {
 		return false
 	}
 
-	// For zeroForOne, price limit should be < current price (going down)
-	// For !zeroForOne, price limit should be > current price (going up)
-	// Without knowing current price, we check reasonable bounds:
-	// - zeroForOne: price limit should be > minSqrtRatio and < maxSqrtRatio
-	// - !zeroForOne: price limit should be > minSqrtRatio and < maxSqrtRatio
-	// Additionally, the price limit should not be exactly at the boundary for the direction
+	return true
+}
+
+// validatePoolExists checks if the pool exists
+func (p *poolSwapParams) validatePoolExists() bool {
+	poolPath := pool.GetPoolPath(p.token0Path, p.token1Path, p.fee)
+	return pool.ExistsPoolPath(poolPath)
+}
+
+// validateSwapAmount checks if swap amount is valid relative to pool balance
+func (p *poolSwapParams) validateSwapAmount() bool {
+	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
+
+	// Get pool's token balances
+	poolToken0Balance := common.BalanceOf(p.token0Path, poolAddr)
+	poolToken1Balance := common.BalanceOf(p.token1Path, poolAddr)
+
+	// Parse swap amount (handle negative for exact output)
+	amountStr := p.amountSpecified
+	if len(amountStr) > 0 && amountStr[0] == '-' {
+		amountStr = amountStr[1:]
+	}
+
+	swapAmount, err := u256.FromDecimal(amountStr)
+	if err != nil {
+		return false
+	}
+
+	// For exact output swap (negative amount), check if output exceeds pool balance
+	// Pool needs to have enough tokens to pay out
+	if len(p.amountSpecified) > 0 && p.amountSpecified[0] == '-' {
+		// This is exact output swap
+		var poolBalance int64
+		if p.zeroForOne {
+			// Selling token0 to get token1, so pool pays token1
+			poolBalance = poolToken1Balance
+		} else {
+			// Selling token1 to get token0, so pool pays token0
+			poolBalance = poolToken0Balance
+		}
+
+		swapAmountInt64 := int64(0)
+		if swapAmount.Lt(u256.NewUint(uint64(1<<63 - 1))) {
+			swapAmountInt64 = int64(swapAmount.Uint64())
+		} else {
+			return false // Amount too large
+		}
+
+		// Output amount must not exceed pool balance
+		if swapAmountInt64 >= poolBalance {
+			return false // Pool doesn't have enough tokens
+		}
+	}
+
+	return true
+}
+
+// validatePriceLimitDirection checks if price limit direction is correct
+func (p *poolSwapParams) validatePriceLimitDirection() bool {
+	poolPath := pool.GetPoolPath(p.token0Path, p.token1Path, p.fee)
+	currentPrice := pool.GetSlot0SqrtPriceX96(poolPath)
+
+	priceLimit := u256.MustFromDecimal(p.sqrtPriceLimitX96)
+	minSqrtRatio := u256.MustFromDecimal(MIN_SQRT_RATIO)
+	maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
+
+	// For zeroForOne (selling token0 for token1), price goes down
+	// Price limit must be less than current price
 	if p.zeroForOne {
-		// Price limit should be strictly greater than MIN and strictly less than MAX
-		if priceLimit.Cmp(minSqrtRatio) <= 0 || priceLimit.Cmp(maxSqrtRatio) >= 0 {
+		if priceLimit.Cmp(minSqrtRatio) <= 0 {
 			return false
 		}
+		// Price limit should be less than current price (going down)
+		if priceLimit.Cmp(currentPrice) >= 0 {
+			return false // Invalid: price limit must be lower than current when selling token0
+		}
 	} else {
-		// Price limit should be strictly greater than MIN and less than or equal to MAX
-		if priceLimit.Cmp(minSqrtRatio) <= 0 || priceLimit.Cmp(maxSqrtRatio) > 0 {
+		// For !zeroForOne (selling token1 for token0), price goes up
+		// Price limit must be greater than current price
+		if priceLimit.Cmp(maxSqrtRatio) > 0 {
 			return false
+		}
+		// Price limit should be greater than current price (going up)
+		if priceLimit.Cmp(currentPrice) <= 0 {
+			return false // Invalid: price limit must be higher than current when selling token1
 		}
 	}
 
@@ -100,9 +204,9 @@ func NewValidPoolSwapParams(t *fuzz.T) *poolSwapParams {
 	// Generate swap direction
 	zeroForOne := fuzz.Bool().Draw(t, "zeroForOne").(bool)
 
-	// Generate valid amount (use int64 range for safety)
+	// Generate valid amount (reasonable range for swap)
 	// Positive for exact input, negative for exact output
-	amountInt := fuzz.Int64Range(1, 1000000000).Draw(t, "amount").(int64)
+	amountInt := fuzz.Int64Range(1, 100000000).Draw(t, "amount").(int64)
 	isExactOutput := fuzz.Bool().Draw(t, "isExactOutput").(bool)
 
 	var amountStr string

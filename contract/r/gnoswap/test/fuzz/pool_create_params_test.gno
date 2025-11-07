@@ -4,6 +4,8 @@ import (
 	"gno.land/p/gnoswap/fuzz"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
+
+	"gno.land/r/gnoswap/pool"
 )
 
 // poolCreateParams is the parameters for the CreatePool fuzzing test.
@@ -47,6 +49,11 @@ func (p *poolCreateParams) IsValid() bool {
 	maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
 
 	if sqrtPrice.Cmp(minSqrtRatio) < 0 || sqrtPrice.Cmp(maxSqrtRatio) > 0 {
+		return false
+	}
+
+	poolPath := pool.GetPoolPath(p.token0Path, p.token1Path, p.fee)
+	if pool.ExistsPoolPath(poolPath) {
 		return false
 	}
 

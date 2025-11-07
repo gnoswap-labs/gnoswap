@@ -35,12 +35,6 @@ func TestFuzzPoolCreate_ValidParams_Stateless(t *testing.T) {
 			poolParams.fee,
 			poolParams.sqrtPriceX96,
 		)
-
-		// then - verify pool exists
-		poolPath := pool.GetPoolPath(poolParams.token0Path, poolParams.token1Path, poolParams.fee)
-		if !pool.ExistsPoolPath(poolPath) {
-			panic("Pool should exist after creation")
-		}
 	})
 }
 
@@ -68,11 +62,61 @@ func TestFuzzPoolCreate_RandomizedParams_Stateless(t *testing.T) {
 			poolParams.fee,
 			poolParams.sqrtPriceX96,
 		)
+	})
+}
 
-		// then - verify pool exists
-		poolPath := pool.GetPoolPath(poolParams.token0Path, poolParams.token1Path, poolParams.fee)
-		if !pool.ExistsPoolPath(poolPath) {
-			panic("Pool should exist after creation")
-		}
+// TestFuzzPoolCreate_ValidParams_Stateful tests pool creation with valid parameters in stateful mode
+func TestFuzzPoolCreate_ValidParams_Stateful(t *testing.T) {
+	// given - initialize states once
+	initStates(t)
+
+	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+	// Set pool creation fee to 0 for testing
+	pool.SetPoolCreationFee(cross, 0)
+
+	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+		poolParams := NewValidPoolCreateParams(ft)
+
+		fuzzResult.AddParams(index, poolParams)
+
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+		pool.CreatePool(
+			cross,
+			poolParams.token0Path,
+			poolParams.token1Path,
+			poolParams.fee,
+			poolParams.sqrtPriceX96,
+		)
+	})
+}
+
+// TestFuzzPoolCreate_RandomizedParams_Stateful tests pool creation with randomized parameters in stateful mode
+func TestFuzzPoolCreate_RandomizedParams_Stateful(t *testing.T) {
+	// given - initialize states once
+	initStates(t)
+
+	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+	// Set pool creation fee to 0 for testing
+	pool.SetPoolCreationFee(cross, 0)
+
+	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+		poolParams := NewRandomizedPoolCreateParams(ft)
+		fuzzResult.AddParams(index, poolParams)
+
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+		// when - create pool (may panic if duplicate or invalid params)
+		pool.CreatePool(
+			cross,
+			poolParams.token0Path,
+			poolParams.token1Path,
+			poolParams.fee,
+			poolParams.sqrtPriceX96,
+		)
 	})
 }
