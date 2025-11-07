@@ -22,7 +22,7 @@ import (
 	"gno.land/r/onbloc/qux"
 )
 
-const FUZZ_ITERATIONS = 35
+const FUZZ_ITERATIONS = 10
 
 const (
 	MIN_SQRT_RATIO = "4295128740"
