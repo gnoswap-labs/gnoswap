@@ -8,12 +8,13 @@ import (
 
 // positionDecreaseLiquidityParams is the parameters for DecreaseLiquidity fuzzing test
 type positionDecreaseLiquidityParams struct {
-	positionId   uint64
-	liquidity    string
-	amount0Min   string
-	amount1Min   string
-	deadline     int64
-	unwrapResult bool
+	positionId      uint64
+	liquidity       string
+	amount0Min      string
+	amount1Min      string
+	deadline        int64
+	unwrapResult    bool
+	actualLiquidity string // actual liquidity of the position for validation
 }
 
 func (p *positionDecreaseLiquidityParams) IsValid() bool {
@@ -29,6 +30,14 @@ func (p *positionDecreaseLiquidityParams) IsValid() bool {
 	}
 	if liq.Lte(u256.Zero()) {
 		return false
+	}
+
+	// Liquidity must not exceed actual position liquidity
+	if p.actualLiquidity != "" {
+		actualLiq, err := u256.FromDecimal(p.actualLiquidity)
+		if err == nil && liq.Gt(actualLiq) {
+			return false
+		}
 	}
 
 	// Min amounts must be parseable and non-negative
@@ -69,26 +78,28 @@ func NewValidPositionDecreaseLiquidityParams(t *fuzz.T, existingPositionId uint6
 	unwrapResult := fuzz.Bool().Draw(t, "unwrapResult").(bool)
 
 	return &positionDecreaseLiquidityParams{
-		positionId:   existingPositionId,
-		liquidity:    liq.ToString(),
-		amount0Min:   "0",
-		amount1Min:   "0",
-		deadline:     fuzz.Int64Range(1700000000, 2000000000).Draw(t, "deadline").(int64),
-		unwrapResult: unwrapResult,
+		positionId:      existingPositionId,
+		liquidity:       liq.ToString(),
+		amount0Min:      "0",
+		amount1Min:      "0",
+		deadline:        fuzz.Int64Range(1700000000, 2000000000).Draw(t, "deadline").(int64),
+		unwrapResult:    unwrapResult,
+		actualLiquidity: maxLiquidity,
 	}
 }
 
-func NewRandomizedPositionDecreaseLiquidityParams(t *fuzz.T, existingPositionId uint64) *positionDecreaseLiquidityParams {
+func NewRandomizedPositionDecreaseLiquidityParams(t *fuzz.T, existingPositionId uint64, actualLiquidity string) *positionDecreaseLiquidityParams {
 	// Generate random liquidity amount
 	liquidity := fuzz.Int64Range(1, 1000000000).Draw(t, "liquidity").(int64)
 	unwrapResult := fuzz.Bool().Draw(t, "unwrapResult").(bool)
 
 	return &positionDecreaseLiquidityParams{
-		positionId:   existingPositionId,
-		liquidity:    ufmt.Sprintf("%d", liquidity),
-		amount0Min:   "0",
-		amount1Min:   "0",
-		deadline:     fuzz.Int64Range(1700000000, 2000000000).Draw(t, "deadline").(int64),
-		unwrapResult: unwrapResult,
+		positionId:      existingPositionId,
+		liquidity:       ufmt.Sprintf("%d", liquidity),
+		amount0Min:      "0",
+		amount1Min:      "0",
+		deadline:        fuzz.Int64Range(1700000000, 2000000000).Draw(t, "deadline").(int64),
+		unwrapResult:    unwrapResult,
+		actualLiquidity: actualLiquidity,
 	}
 }

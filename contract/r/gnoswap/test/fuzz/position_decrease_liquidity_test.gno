@@ -68,9 +68,10 @@ func TestFuzzPositionDecreaseLiquidity_RandomizedParams_Stateless(t *testing.T) 
 
 		// Create pool and initial position
 		tokenId := createTestPosition(t, adminAddr, poolAddr)
+		actualLiquidity := position.GetPositionLiquidity(tokenId).ToString()
 
 		// Generate params for decrease liquidity
-		decreaseParams := NewRandomizedPositionDecreaseLiquidityParams(ft, tokenId)
+		decreaseParams := NewRandomizedPositionDecreaseLiquidityParams(ft, tokenId, actualLiquidity)
 		fuzzResult.AddParams(index, decreaseParams)
 
 		// when - decrease liquidity (may panic with invalid params)
