@@ -7,10 +7,21 @@ import (
 )
 
 const (
-    MIN_PRICE_LIMIT_ZERO_FOR_ONE     = "4295128740"                                          // MIN_SQRT_RATIO + 1
-	MAX_PRICE_LIMIT_ZERO_FOR_ONE     = "79228162514264337593543950336"                       // INITIAL_POOL_PRICE - 1
-	MIN_PRICE_LIMIT_NOT_ZERO_FOR_ONE = "79228162514264337593543950338"                       // INITIAL_POOL_PRICE + 1
-	MAX_PRICE_LIMIT_NOT_ZERO_FOR_ONE = "1461446703485210103287273052203988822378723970341"   // MAX_SQRT_RATIO - 1
+	MIN_PRICE_LIMIT_ZERO_FOR_ONE     = "4295128740"                                        // MIN_SQRT_RATIO + 1
+	MAX_PRICE_LIMIT_ZERO_FOR_ONE     = "79228162514264337593543950336"                     // INITIAL_POOL_PRICE - 1
+	MIN_PRICE_LIMIT_NOT_ZERO_FOR_ONE = "79228162514264337593543950338"                     // INITIAL_POOL_PRICE + 1
+	MAX_PRICE_LIMIT_NOT_ZERO_FOR_ONE = "1461446703485210103287273052203988822378723970341" // MAX_SQRT_RATIO - 1
+)
+
+var (
+	priceLimitZeroForOneGen = fuzz.Uint256RangeFrom(
+		u256.MustFromDecimal(MIN_PRICE_LIMIT_ZERO_FOR_ONE),
+		u256.MustFromDecimal(MAX_PRICE_LIMIT_ZERO_FOR_ONE),
+	)
+	priceLimitNotZeroForOneGen = fuzz.Uint256RangeFrom(
+		u256.MustFromDecimal(MIN_PRICE_LIMIT_NOT_ZERO_FOR_ONE),
+		u256.MustFromDecimal(MAX_PRICE_LIMIT_NOT_ZERO_FOR_ONE),
+	)
 )
 
 // poolSwapParams is the parameters for Swap/DrySwap fuzzing test
@@ -116,11 +127,11 @@ func NewValidPoolSwapParams(t *fuzz.T) *poolSwapParams {
 	var priceLimitStr string
 	if zeroForOne {
 		// Price going down, use lower range (below current price)
-		priceLimit := fuzz.Uint256Range(MIN_PRICE_LIMIT_ZERO_FOR_ONE, MAX_PRICE_LIMIT_ZERO_FOR_ONE).Draw(t, "priceLimit").(*u256.Uint)
+		priceLimit := priceLimitZeroForOneGen.Draw(t, "priceLimit").(*u256.Uint)
 		priceLimitStr = priceLimit.ToString()
 	} else {
 		// Price going up, use higher range (above current price)
-		priceLimit := fuzz.Uint256Range(MIN_PRICE_LIMIT_NOT_ZERO_FOR_ONE, MAX_PRICE_LIMIT_NOT_ZERO_FOR_ONE).Draw(t, "priceLimit").(*u256.Uint)
+		priceLimit := priceLimitNotZeroForOneGen.Draw(t, "priceLimit").(*u256.Uint)
 		priceLimitStr = priceLimit.ToString()
 	}
 
@@ -157,11 +168,11 @@ func NewRandomizedPoolSwapParams(t *fuzz.T) *poolSwapParams {
 	var priceLimitStr string
 	if zeroForOne {
 		// Price going down, use lower range (below current price)
-		priceLimit := fuzz.Uint256Range(MIN_PRICE_LIMIT_ZERO_FOR_ONE, MAX_PRICE_LIMIT_ZERO_FOR_ONE).Draw(t, "priceLimit").(*u256.Uint)
+		priceLimit := priceLimitZeroForOneGen.Draw(t, "priceLimit").(*u256.Uint)
 		priceLimitStr = priceLimit.ToString()
 	} else {
 		// Price going up, use higher range (above current price)
-		priceLimit := fuzz.Uint256Range(MIN_PRICE_LIMIT_NOT_ZERO_FOR_ONE, MAX_PRICE_LIMIT_NOT_ZERO_FOR_ONE).Draw(t, "priceLimit").(*u256.Uint)
+		priceLimit := priceLimitNotZeroForOneGen.Draw(t, "priceLimit").(*u256.Uint)
 		priceLimitStr = priceLimit.ToString()
 	}
 
