@@ -24,7 +24,7 @@ func TestFuzzExactInSwapRoute_ValidParams_Stateless(t *testing.T) {
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	fuzzutils.RunFuzzTestWithCrossPanic(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// initialize the states for the fuzz test
 		initStates(t)
 
@@ -88,7 +88,7 @@ func TestFuzzExactInSwapRoute_RandomizedParams_Stateless(t *testing.T) {
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	fuzzutils.RunFuzzTestWithCrossPanic(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// initialize the states for the fuzz test
 		initStates(t)
 
