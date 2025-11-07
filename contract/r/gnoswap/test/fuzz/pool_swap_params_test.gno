@@ -38,8 +38,8 @@ func (p *poolSwapParams) IsValid() bool {
 		return false
 	}
 
-	minSqrtRatio := u256.MustFromDecimal("4295128739")
-	maxSqrtRatio := u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")
+	minSqrtRatio := u256.MustFromDecimal(MIN_SQRT_RATIO)
+	maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
 
 	// Price limit must be within bounds
 	if priceLimit.Cmp(minSqrtRatio) < 0 || priceLimit.Cmp(maxSqrtRatio) > 0 {

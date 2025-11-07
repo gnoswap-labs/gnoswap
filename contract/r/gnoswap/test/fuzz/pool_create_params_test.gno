@@ -36,10 +36,8 @@ func (p *poolCreateParams) IsValid() bool {
 		return false
 	}
 
-	// MIN_SQRT_RATIO = 4295128739
-	minSqrtRatio := u256.MustFromDecimal("4295128739")
-	// MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342
-	maxSqrtRatio := u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")
+	minSqrtRatio := u256.MustFromDecimal(MIN_SQRT_RATIO)
+	maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
 
 	if sqrtPrice.Cmp(minSqrtRatio) < 0 || sqrtPrice.Cmp(maxSqrtRatio) > 0 {
 		return false
