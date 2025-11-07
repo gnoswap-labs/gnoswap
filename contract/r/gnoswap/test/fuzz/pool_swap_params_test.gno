@@ -6,6 +6,13 @@ import (
 	"gno.land/p/nt/ufmt"
 )
 
+const (
+    MIN_PRICE_LIMIT_ZERO_FOR_ONE     = "4295128740"                                          // MIN_SQRT_RATIO + 1
+	MAX_PRICE_LIMIT_ZERO_FOR_ONE     = "79228162514264337593543950336"                       // INITIAL_POOL_PRICE - 1
+	MIN_PRICE_LIMIT_NOT_ZERO_FOR_ONE = "79228162514264337593543950338"                       // INITIAL_POOL_PRICE + 1
+	MAX_PRICE_LIMIT_NOT_ZERO_FOR_ONE = "1461446703485210103287273052203988822378723970341"   // MAX_SQRT_RATIO - 1
+)
+
 // poolSwapParams is the parameters for Swap/DrySwap fuzzing test
 type poolSwapParams struct {
 	token0Path        string
@@ -23,7 +30,14 @@ func (p *poolSwapParams) IsValid() bool {
 	}
 
 	// Fee must be one of the supported tiers
-	if p.fee != 100 && p.fee != 500 && p.fee != 3000 && p.fee != 10000 {
+	validFee := false
+	for _, tier := range VALID_FEE_TIERS {
+		if p.fee == tier {
+			validFee = true
+			break
+		}
+	}
+	if !validFee {
 		return false
 	}
 
@@ -80,9 +94,8 @@ func (p *poolSwapParams) ToString() string {
 
 func NewValidPoolSwapParams(t *fuzz.T) *poolSwapParams {
 	// Generate valid fee tier
-	feeTiers := []uint32{100, 500, 3000, 10000}
-	feeIndex := fuzz.IntRange(0, len(feeTiers)-1).Draw(t, "feeIndex").(int)
-	fee := feeTiers[feeIndex]
+	feeIndex := fuzz.IntRange(0, len(VALID_FEE_TIERS)-1).Draw(t, "feeIndex").(int)
+	fee := VALID_FEE_TIERS[feeIndex]
 
 	// Generate swap direction
 	zeroForOne := fuzz.Bool().Draw(t, "zeroForOne").(bool)
@@ -100,21 +113,20 @@ func NewValidPoolSwapParams(t *fuzz.T) *poolSwapParams {
 	}
 
 	// Generate valid price limit based on direction
-	// Initial pool price is sqrt(1.0) = 79228162514264337593543950337
 	var priceLimitStr string
 	if zeroForOne {
 		// Price going down, use lower range (below current price)
-		priceLimit := fuzz.Uint256Range("4295128740", "79228162514264337593543950336").Draw(t, "priceLimit").(*u256.Uint)
+		priceLimit := fuzz.Uint256Range(MIN_PRICE_LIMIT_ZERO_FOR_ONE, MAX_PRICE_LIMIT_ZERO_FOR_ONE).Draw(t, "priceLimit").(*u256.Uint)
 		priceLimitStr = priceLimit.ToString()
 	} else {
 		// Price going up, use higher range (above current price)
-		priceLimit := fuzz.Uint256Range("79228162514264337593543950338", "1461446703485210103287273052203988822378723970341").Draw(t, "priceLimit").(*u256.Uint)
+		priceLimit := fuzz.Uint256Range(MIN_PRICE_LIMIT_NOT_ZERO_FOR_ONE, MAX_PRICE_LIMIT_NOT_ZERO_FOR_ONE).Draw(t, "priceLimit").(*u256.Uint)
 		priceLimitStr = priceLimit.ToString()
 	}
 
 	return &poolSwapParams{
-		token0Path:        "gno.land/r/onbloc/bar",
-		token1Path:        "gno.land/r/onbloc/foo",
+		token0Path:        BAR_PATH,
+		token1Path:        FOO_PATH,
 		fee:               fee,
 		zeroForOne:        zeroForOne,
 		amountSpecified:   amountStr,
@@ -124,9 +136,8 @@ func NewValidPoolSwapParams(t *fuzz.T) *poolSwapParams {
 
 func NewRandomizedPoolSwapParams(t *fuzz.T) *poolSwapParams {
 	// Use valid fee tier
-	feeTiers := []uint32{100, 500, 3000, 10000}
-	feeIndex := fuzz.IntRange(0, len(feeTiers)-1).Draw(t, "feeIndex").(int)
-	fee := feeTiers[feeIndex]
+	feeIndex := fuzz.IntRange(0, len(VALID_FEE_TIERS)-1).Draw(t, "feeIndex").(int)
+	fee := VALID_FEE_TIERS[feeIndex]
 
 	// Random direction
 	zeroForOne := fuzz.Bool().Draw(t, "zeroForOne").(bool)
@@ -143,21 +154,20 @@ func NewRandomizedPoolSwapParams(t *fuzz.T) *poolSwapParams {
 	}
 
 	// Generate valid price limit based on direction
-	// Initial pool price is sqrt(1.0) = 79228162514264337593543950337
 	var priceLimitStr string
 	if zeroForOne {
 		// Price going down, use lower range (below current price)
-		priceLimit := fuzz.Uint256Range("4295128740", "79228162514264337593543950336").Draw(t, "priceLimit").(*u256.Uint)
+		priceLimit := fuzz.Uint256Range(MIN_PRICE_LIMIT_ZERO_FOR_ONE, MAX_PRICE_LIMIT_ZERO_FOR_ONE).Draw(t, "priceLimit").(*u256.Uint)
 		priceLimitStr = priceLimit.ToString()
 	} else {
 		// Price going up, use higher range (above current price)
-		priceLimit := fuzz.Uint256Range("79228162514264337593543950338", "1461446703485210103287273052203988822378723970341").Draw(t, "priceLimit").(*u256.Uint)
+		priceLimit := fuzz.Uint256Range(MIN_PRICE_LIMIT_NOT_ZERO_FOR_ONE, MAX_PRICE_LIMIT_NOT_ZERO_FOR_ONE).Draw(t, "priceLimit").(*u256.Uint)
 		priceLimitStr = priceLimit.ToString()
 	}
 
 	return &poolSwapParams{
-		token0Path:        "gno.land/r/onbloc/bar",
-		token1Path:        "gno.land/r/onbloc/foo",
+		token0Path:        BAR_PATH,
+		token1Path:        FOO_PATH,
 		fee:               fee,
 		zeroForOne:        zeroForOne,
 		amountSpecified:   amountStr,

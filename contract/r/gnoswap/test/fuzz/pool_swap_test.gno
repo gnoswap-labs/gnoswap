@@ -108,7 +108,7 @@ func setupPoolSwapTest(t *testing.T, params *poolSwapParams, adminAddr, poolAddr
 			params.token0Path,
 			params.token1Path,
 			params.fee,
-			"79228162514264337593543950337",
+			"79228162514264337593543950337", // sqrt(1.0)
 		)
 	}
 

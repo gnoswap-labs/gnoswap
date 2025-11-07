@@ -26,7 +26,14 @@ func (p *poolCreateParams) IsValid() bool {
 	}
 
 	// Fee must be one of the supported tiers
-	if p.fee != 100 && p.fee != 500 && p.fee != 3000 && p.fee != 10000 {
+	validFee := false
+	for _, tier := range VALID_FEE_TIERS {
+		if p.fee == tier {
+			validFee = true
+			break
+		}
+	}
+	if !validFee {
 		return false
 	}
 
@@ -57,19 +64,28 @@ func (p *poolCreateParams) ToString() string {
 
 func NewValidPoolCreateParams(t *fuzz.T) *poolCreateParams {
 	// Generate valid fee tier
-	feeTiers := []uint32{100, 500, 3000, 10000}
-	feeIndex := fuzz.IntRange(0, len(feeTiers)-1).Draw(t, "feeIndex").(int)
-	fee := feeTiers[feeIndex]
+	feeIndex := fuzz.IntRange(0, len(VALID_FEE_TIERS)-1).Draw(t, "feeIndex").(int)
+	fee := VALID_FEE_TIERS[feeIndex]
 
-	// Generate valid sqrtPriceX96 within range
-	// Use a reasonable range for testing: 10^18 to 10^30
+	// Use a reasonable range for testing: 10^18 to 10^27
 	minPrice := "1000000000000000000"          // 10^18
 	maxPrice := "1000000000000000000000000000" // 10^27
 	sqrtPriceVal := fuzz.Uint256Range(minPrice, maxPrice).Draw(t, "sqrtPrice").(*u256.Uint)
 
+	tokens := []string{
+		BAR_PATH,
+		FOO_PATH,
+		BAZ_PATH,
+		"gnot",
+		"",
+	}
+
+	token0Index := fuzz.IntRange(0, len(tokens)-1).Draw(t, "token0Index").(int)
+	token1Index := fuzz.IntRange(0, len(tokens)-1).Draw(t, "token1Index").(int)
+
 	return &poolCreateParams{
-		token0Path:   "gno.land/r/onbloc/bar",
-		token1Path:   "gno.land/r/onbloc/foo",
+    	token0Path:   tokens[token0Index],
+    	token1Path:   tokens[token1Index],
 		fee:          fee,
 		sqrtPriceX96: sqrtPriceVal.ToString(),
 	}
@@ -79,15 +95,11 @@ func NewRandomizedPoolCreateParams(t *fuzz.T) *poolCreateParams {
 	// Generate random fee (may be invalid)
 	fee := fuzz.Uint32Range(0, 20000).Draw(t, "fee").(uint32)
 
-	// Generate random sqrtPriceX96 (may be invalid)
-	// Use wider range to test boundary conditions
-	sqrtPriceVal := fuzz.Uint256Max("2000000000000000000000000000000000000").Draw(t, "sqrtPrice").(*u256.Uint)
-
-	// Token paths with potential issues
+	sqrtPriceVal := fuzz.Uint256().Draw(t, "sqrtPrice").(*u256.Uint)
 	tokens := []string{
-		"gno.land/r/onbloc/bar",
-		"gno.land/r/onbloc/foo",
-		"gno.land/r/onbloc/baz",
+		BAR_PATH,
+		FOO_PATH,
+		BAZ_PATH,
 		"gnot",
 		"",
 	}

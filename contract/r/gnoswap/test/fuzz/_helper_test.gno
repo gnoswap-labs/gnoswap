@@ -19,8 +19,18 @@ import (
 )
 
 const (
+    // Sqrt price ratio limits
 	MIN_SQRT_RATIO = "4295128739"
 	MAX_SQRT_RATIO = "1461446703485210103287273052203988822378723970342"
+
+	// Token paths
+	BAR_PATH = "gno.land/r/onbloc/bar"
+	FOO_PATH = "gno.land/r/onbloc/foo"
+	BAZ_PATH = "gno.land/r/onbloc/baz"
+)
+
+var (
+	VALID_FEE_TIERS = []uint32{100, 500, 3000, 10000}
 )
 
 var (
