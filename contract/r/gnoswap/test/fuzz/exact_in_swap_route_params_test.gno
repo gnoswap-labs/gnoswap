@@ -164,22 +164,31 @@ func (p *exactInSwapRouteParams) isValidDeadline() bool {
 }
 
 func (p *exactInSwapRouteParams) isValidDrySwap() bool {
-	_, _, success := router.DrySwapRoute(
-		p.inputToken,
-		p.outputToken,
-		p.amountIn,
-		"EXACT_IN",
-		p.routeArr,
-		p.quoteArr,
-		"1",
-	)
-
-	if !success {
-		// if the drySwapRoute fails, check if the amountIn is less than 10
-		return u256.MustFromDecimal(p.amountIn).LtUint64(10)
-	}
+	_, _, success := p.drySwapRoute()
 
 	return success
+}
+
+func (p *exactInSwapRouteParams) drySwapRoute() (string, string, bool) {
+	amountIn, amountOut, success := "0", "0", false
+
+	revive(func() {
+		amountIn, amountOut, success = router.DrySwapRoute(
+			p.inputToken,
+			p.outputToken,
+			p.amountIn,
+			"EXACT_IN",
+			p.routeArr,
+			p.quoteArr,
+			"1",
+		)
+	})
+
+	if amountIn == "0" || amountOut == "0" {
+		return "0", "0", false
+	}
+
+	return amountIn, amountOut, success
 }
 
 func NewValidExactInSwapRouteParams(t *fuzz.T) *exactInSwapRouteParams {
