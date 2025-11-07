@@ -8,32 +8,7 @@ import (
 	"gno.land/p/nt/ufmt"
 )
 
-func RunFuzzTestWithPanic(t *testing.T, iterations int, fn func(*fuzz.T, *Result, int)) {
-	result := NewFuzzResult(fuzz.BASE_SEED)
-	index := 0
-
-	// Use CheckN instead of CheckWithConfig
-	fuzz.CheckN(t, iterations, func(ft *fuzz.T) {
-		index++
-
-		errorMessage, isPanic := handlePanic(func() {
-			fn(ft, result, index)
-		})
-
-		if isPanic {
-			message := strings.TrimSpace(errorMessage)
-			result.AddErrorMessage(index, message)
-		}
-
-		if result.IsValidState(index) == isPanic {
-			result.AddUnexpectedResult(index)
-		}
-	})
-
-	printResultLog(t, iterations, result)
-}
-
-func RunFuzzTestWithCrossPanic(t *testing.T, iterations int, fn func(*fuzz.T, *Result, int)) {
+func RunFuzzTest(t *testing.T, iterations int, fn func(*fuzz.T, *Result, int)) {
 	result := NewFuzzResult(fuzz.BASE_SEED)
 	index := 0
 
