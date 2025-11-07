@@ -41,16 +41,29 @@ func RunFuzzTestWithCrossPanic(t *testing.T, iterations int, fn func(*fuzz.T, *R
 	fuzz.CheckN(t, iterations, func(ft *fuzz.T) {
 		index++
 
-		errorMessage, isCrossPanic := handleCrossPanic(func() {
-			fn(ft, result, index)
+		errorMessage := ""
+		isError := false
+
+		panicMessage, panicked := handlePanic(func() {
+			crossPanicMessage, crossPanicked := handleCrossPanic(func() {
+				fn(ft, result, index)
+			})
+
+			errorMessage = crossPanicMessage
+			isError = crossPanicked
 		})
 
-		if isCrossPanic {
+		if panicked && isError != panicked {
+			errorMessage = panicMessage
+			isError = true
+		}
+
+		if isError {
 			message := strings.TrimSpace(errorMessage)
 			result.AddErrorMessage(index, message)
 		}
 
-		if result.IsValidState(index) == isCrossPanic {
+		if result.IsValidState(index) == isError {
 			result.AddUnexpectedResult(index)
 		}
 	})
