@@ -86,3 +86,79 @@ func TestFuzzPositionDecreaseLiquidity_RandomizedParams_Stateless(t *testing.T) 
 		)
 	})
 }
+
+func TestFuzzPositionDecreaseLiquidity_ValidParams_Stateful(t *testing.T) {
+	initStates(t)
+
+	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+	// Create pool and initial position once with high liquidity
+	tokenId := createTestPosition(t, adminAddr, poolAddr)
+
+	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+		currentLiquidity := position.GetPositionLiquidity(tokenId).ToString()
+
+		decreaseParams := NewValidPositionDecreaseLiquidityParams(ft, tokenId, currentLiquidity)
+		fuzzResult.AddParams(index, decreaseParams)
+
+		_, liquidity, amount0, amount1, _, _, _ := position.DecreaseLiquidity(
+			cross,
+			decreaseParams.positionId,
+			decreaseParams.liquidity,
+			decreaseParams.amount0Min,
+			decreaseParams.amount1Min,
+			decreaseParams.deadline,
+			decreaseParams.unwrapResult,
+		)
+
+		if liquidity == "0" && decreaseParams.liquidity != "0" {
+			panic("Liquidity should be returned")
+		}
+
+		if amount0 == "" || amount1 == "" {
+			panic("Amounts should not be empty")
+		}
+
+		remainingLiquidity := position.GetPositionLiquidity(tokenId).ToString()
+		t.Logf("Iteration %d: Decreased %s, Remaining liquidity: %s", index, liquidity, remainingLiquidity)
+	})
+}
+
+func TestFuzzPositionDecreaseLiquidity_RandomizedParams_Stateful(t *testing.T) {
+	initStates(t)
+
+	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+	tokenId := createTestPosition(t, adminAddr, poolAddr)
+
+	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+		currentLiquidity := position.GetPositionLiquidity(tokenId).ToString()
+
+		// Generate randomized params for decrease liquidity
+		decreaseParams := NewRandomizedPositionDecreaseLiquidityParams(ft, tokenId, currentLiquidity)
+		fuzzResult.AddParams(index, decreaseParams)
+
+		position.DecreaseLiquidity(
+			cross,
+			decreaseParams.positionId,
+			decreaseParams.liquidity,
+			decreaseParams.amount0Min,
+			decreaseParams.amount1Min,
+			decreaseParams.deadline,
+			decreaseParams.unwrapResult,
+		)
+
+		remainingLiquidity := position.GetPositionLiquidity(tokenId).ToString()
+		t.Logf("Iteration %d: Remaining liquidity: %s", index, remainingLiquidity)
+	})
+}
