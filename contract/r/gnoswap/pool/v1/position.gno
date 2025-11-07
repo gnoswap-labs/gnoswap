@@ -350,6 +350,10 @@ func updatePosition(p *pl.Pool, positionParams ModifyPositionParams, tick int32)
 	var flippedLower, flippedUpper bool
 
 	if !positionParams.liquidityDelta.IsZero() {
+		tickSpacing := p.TickSpacing()
+		checkTickSpacing(positionParams.tickLower, tickSpacing)
+		checkTickSpacing(positionParams.tickUpper, tickSpacing)
+
 		flippedLower = tickUpdate(
 			p,
 			positionParams.tickLower,
