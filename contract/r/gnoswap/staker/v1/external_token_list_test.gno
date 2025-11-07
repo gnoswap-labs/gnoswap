@@ -287,3 +287,249 @@ func setupExternalDepositFeePermission(t *testing.T, caller address, permissionN
 	testing.SetOriginCaller(caller)
 	testing.SetRealm(testing.NewUserRealm(caller))
 }
+
+// Test addTokenExecutor edge cases
+func TestAddTokenExecutor(t *testing.T) {
+	tests := []struct {
+		name           string
+		tokenPath      string
+		initialTokens  []string
+		expectedTokens []string
+		expectedLength int
+	}{
+		{
+			name:           "add new token to empty list",
+			tokenPath:      "gno.land/r/onbloc/foo",
+			initialTokens:  []string{},
+			expectedTokens: []string{"gno.land/r/onbloc/foo"},
+			expectedLength: 1,
+		},
+		{
+			name:           "add new token to existing list",
+			tokenPath:      "gno.land/r/onbloc/baz",
+			initialTokens:  []string{"gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar"},
+			expectedTokens: []string{"gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", "gno.land/r/onbloc/baz"},
+			expectedLength: 3,
+		},
+		{
+			name:           "add existing token - no duplicate",
+			tokenPath:      "gno.land/r/onbloc/foo",
+			initialTokens:  []string{"gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar"},
+			expectedTokens: []string{"gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar"},
+			expectedLength: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := addTokenExecutor(tt.tokenPath, tt.initialTokens)
+			uassert.Equal(t, tt.expectedLength, len(result))
+
+			for i, expected := range tt.expectedTokens {
+				uassert.Equal(t, expected, result[i])
+			}
+		})
+	}
+}
+
+// Test removeTokenExecutor edge cases
+func TestRemoveTokenExecutor(t *testing.T) {
+	tests := []struct {
+		name           string
+		tokenPath      string
+		initialTokens  []string
+		expectedTokens []string
+		expectedLength int
+	}{
+		{
+			name:           "remove existing token from middle",
+			tokenPath:      "gno.land/r/onbloc/bar",
+			initialTokens:  []string{"gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", "gno.land/r/onbloc/baz"},
+			expectedTokens: []string{"gno.land/r/onbloc/foo", "gno.land/r/onbloc/baz"},
+			expectedLength: 2,
+		},
+		{
+			name:           "remove first token",
+			tokenPath:      "gno.land/r/onbloc/foo",
+			initialTokens:  []string{"gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar"},
+			expectedTokens: []string{"gno.land/r/onbloc/bar"},
+			expectedLength: 1,
+		},
+		{
+			name:           "remove last token",
+			tokenPath:      "gno.land/r/onbloc/bar",
+			initialTokens:  []string{"gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar"},
+			expectedTokens: []string{"gno.land/r/onbloc/foo"},
+			expectedLength: 1,
+		},
+		{
+			name:           "remove non-existent token - no change",
+			tokenPath:      "gno.land/r/onbloc/nonexistent",
+			initialTokens:  []string{"gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar"},
+			expectedTokens: []string{"gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar"},
+			expectedLength: 2,
+		},
+		{
+			name:           "remove from empty list",
+			tokenPath:      "gno.land/r/onbloc/foo",
+			initialTokens:  []string{},
+			expectedTokens: []string{},
+			expectedLength: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := removeTokenExecutor(tt.tokenPath, tt.initialTokens)
+			uassert.Equal(t, tt.expectedLength, len(result))
+
+			for i, expected := range tt.expectedTokens {
+				uassert.Equal(t, expected, result[i])
+			}
+		})
+	}
+}
+
+// Test addTokenValidator
+func TestAddTokenValidator(t *testing.T) {
+	tests := []struct {
+		name          string
+		tokenPath     string
+		expectError   bool
+		expectedError string
+	}{
+		{
+			name:          "valid new token",
+			tokenPath:     "gno.land/r/onbloc/foo",
+			expectError:   false,
+			expectedError: "",
+		},
+		{
+			name:          "invalid - GNOT is default",
+			tokenPath:     GNOT,
+			expectError:   true,
+			expectedError: "can not add existing token",
+		},
+		{
+			name:          "invalid - GNS_PATH is default",
+			tokenPath:     GNS_PATH,
+			expectError:   true,
+			expectedError: "can not add existing token",
+		},
+		{
+			name:          "valid - custom token path",
+			tokenPath:     "gno.land/r/onbloc/custom",
+			expectError:   false,
+			expectedError: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := addTokenValidator(tt.tokenPath)
+
+			if tt.expectError {
+				uassert.Error(t, err)
+				uassert.ErrorContains(t, err, tt.expectedError)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
+// Test removeTokenValidator
+func TestRemoveTokenValidator(t *testing.T) {
+	tests := []struct {
+		name          string
+		tokenPath     string
+		expectError   bool
+		expectedError string
+	}{
+		{
+			name:          "valid removal - custom token",
+			tokenPath:     "gno.land/r/onbloc/foo",
+			expectError:   false,
+			expectedError: "",
+		},
+		{
+			name:          "invalid - cannot remove GNOT",
+			tokenPath:     GNOT,
+			expectError:   true,
+			expectedError: "can not remove default token",
+		},
+		{
+			name:          "invalid - cannot remove GNS_PATH",
+			tokenPath:     GNS_PATH,
+			expectError:   true,
+			expectedError: "can not remove default token",
+		},
+		{
+			name:          "valid - non-default token",
+			tokenPath:     "gno.land/r/onbloc/custom",
+			expectError:   false,
+			expectedError: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := removeTokenValidator(tt.tokenPath)
+
+			if tt.expectError {
+				uassert.Error(t, err)
+				uassert.ErrorContains(t, err, tt.expectedError)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
+// Test contains helper function
+func TestContainsHelperFunction(t *testing.T) {
+	tests := []struct {
+		name     string
+		slice    []string
+		item     string
+		expected bool
+	}{
+		{
+			name:     "item exists in slice",
+			slice:    []string{"foo", "bar", "baz"},
+			item:     "bar",
+			expected: true,
+		},
+		{
+			name:     "item does not exist in slice",
+			slice:    []string{"foo", "bar", "baz"},
+			item:     "qux",
+			expected: false,
+		},
+		{
+			name:     "empty slice",
+			slice:    []string{},
+			item:     "foo",
+			expected: false,
+		},
+		{
+			name:     "single item - match",
+			slice:    []string{"foo"},
+			item:     "foo",
+			expected: true,
+		},
+		{
+			name:     "single item - no match",
+			slice:    []string{"foo"},
+			item:     "bar",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := contains(tt.slice, tt.item)
+			uassert.Equal(t, tt.expected, result)
+		})
+	}
+}
