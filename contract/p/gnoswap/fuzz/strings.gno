@@ -7,11 +7,12 @@
 package fuzz
 
 import (
-	"fmt"
 	"math"
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"gno.land/p/nt/ufmt"
 )
 
 var (
@@ -49,7 +50,7 @@ func (g *runeGen) String() string {
 	if g.default_ {
 		return "Rune()"
 	}
-	return fmt.Sprintf("Rune(%v runes, %v tables)", len(g.runes), len(g.tables))
+	return ufmt.Sprintf("Rune(%v runes, %v tables)", len(g.runes), len(g.tables))
 }
 
 func (g *runeGen) value(t *T) any {
@@ -117,7 +118,7 @@ func (g *stringGen) String() string {
 	if g.minRunes < 0 && g.maxRunes < 0 && g.maxLen < 0 {
 		return "String()"
 	}
-	return fmt.Sprintf("StringN(minRunes=%v, maxRunes=%v, maxLen=%v)", g.minRunes, g.maxRunes, g.maxLen)
+	return ufmt.Sprintf("StringN(minRunes=%v, maxRunes=%v, maxLen=%v)", g.minRunes, g.maxRunes, g.maxLen)
 }
 
 func (g *stringGen) value(t *T) any {

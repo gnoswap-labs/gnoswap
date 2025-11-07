@@ -7,8 +7,9 @@
 package fuzz
 
 import (
-	"fmt"
 	"testing"
+
+	"gno.land/p/nt/ufmt"
 )
 
 const (
@@ -25,7 +26,7 @@ func assert(ok bool) {
 
 func assertf(ok bool, format string, args ...any) {
 	if !ok {
-		panic(fmt.Sprintf(format, args...))
+		panic(ufmt.Sprintf(format, args...))
 	}
 }
 
@@ -52,25 +53,25 @@ func newT(s bitStream, refDraws ...any) *T {
 // Logf logs a formatted message.
 func (t *T) Logf(format string, args ...any) {
 	// In Gno, we can't use log.Logger, so we just format the message
-	_ = fmt.Sprintf(format, args...)
+	_ = ufmt.Sprintf(format, args...)
 }
 
 // Log logs a message.
 func (t *T) Log(args ...any) {
 	// In Gno, we can't use log.Logger
-	_ = fmt.Sprint(args...)
+	_ = ufmt.Sprint(args...)
 }
 
 // Skipf is equivalent to Logf followed by SkipNow.
 func (t *T) Skipf(format string, args ...any) {
 	t.Logf(format, args...)
-	t.skip(fmt.Sprintf(format, args...))
+	t.skip(ufmt.Sprintf(format, args...))
 }
 
 // Skip is equivalent to Log followed by SkipNow.
 func (t *T) Skip(args ...any) {
 	t.Log(args...)
-	t.skip(fmt.Sprint(args...))
+	t.skip(ufmt.Sprint(args...))
 }
 
 // SkipNow marks the current test case as invalid.
@@ -91,25 +92,25 @@ func (t *T) SkipNow() {
 // Errorf is equivalent to Logf followed by Fail.
 func (t *T) Errorf(format string, args ...any) {
 	t.Logf(format, args...)
-	t.fail(false, fmt.Sprintf(format, args...))
+	t.fail(false, ufmt.Sprintf(format, args...))
 }
 
 // Error is equivalent to Log followed by Fail.
 func (t *T) Error(args ...any) {
 	t.Log(args...)
-	t.fail(false, fmt.Sprint(args...))
+	t.fail(false, ufmt.Sprint(args...))
 }
 
 // Fatalf is equivalent to Logf followed by FailNow.
 func (t *T) Fatalf(format string, args ...any) {
 	t.Logf(format, args...)
-	t.fail(true, fmt.Sprintf(format, args...))
+	t.fail(true, ufmt.Sprintf(format, args...))
 }
 
 // Fatal is equivalent to Log followed by FailNow.
 func (t *T) Fatal(args ...any) {
 	t.Log(args...)
-	t.fail(true, fmt.Sprint(args...))
+	t.fail(true, ufmt.Sprint(args...))
 }
 
 // FailNow marks the test as failed and stops execution immediately.

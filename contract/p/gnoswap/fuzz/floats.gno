@@ -7,9 +7,10 @@
 package fuzz
 
 import (
-	"fmt"
 	"math"
 	"math/bits"
+
+	"gno.land/p/nt/ufmt"
 )
 
 const (
@@ -35,13 +36,13 @@ type floatGen struct {
 
 func (g *floatGen) String() string {
 	if g.min != g.minVal && g.max != g.maxVal {
-		return fmt.Sprintf("%sRange(%g, %g)", g.kind, g.min, g.max)
+		return ufmt.Sprintf("%sRange(%g, %g)", g.kind, g.min, g.max)
 	} else if g.min != g.minVal {
-		return fmt.Sprintf("%sMin(%g)", g.kind, g.min)
+		return ufmt.Sprintf("%sMin(%g)", g.kind, g.min)
 	} else if g.max != g.maxVal {
-		return fmt.Sprintf("%sMax(%g)", g.kind, g.max)
+		return ufmt.Sprintf("%sMax(%g)", g.kind, g.max)
 	}
-	return fmt.Sprintf("%s()", g.kind)
+	return ufmt.Sprintf("%s()", g.kind)
 }
 
 func (g *floatGen) value(t *T) any {

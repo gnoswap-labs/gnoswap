@@ -6,7 +6,7 @@
 
 package fuzz
 
-import "fmt"
+import "gno.land/p/nt/ufmt"
 
 // SliceOfN creates a slice generator with min/max length constraints.
 // If minLen >= 0, generated slices have minimum length of minLen.
@@ -34,9 +34,9 @@ type sliceGen struct {
 
 func (g *sliceGen) String() string {
 	if g.minLen < 0 && g.maxLen < 0 {
-		return fmt.Sprintf("SliceOf(%v)", g.elem)
+		return ufmt.Sprintf("SliceOf(%v)", g.elem)
 	}
-	return fmt.Sprintf("SliceOfN(%v, minLen=%v, maxLen=%v)", g.elem, g.minLen, g.maxLen)
+	return ufmt.Sprintf("SliceOfN(%v, minLen=%v, maxLen=%v)", g.elem, g.minLen, g.maxLen)
 }
 
 func (g *sliceGen) value(t *T) any {
@@ -79,9 +79,9 @@ type mapGen struct {
 
 func (g *mapGen) String() string {
 	if g.minLen < 0 && g.maxLen < 0 {
-		return fmt.Sprintf("MapOf(%v, %v)", g.key, g.val)
+		return ufmt.Sprintf("MapOf(%v, %v)", g.key, g.val)
 	}
-	return fmt.Sprintf("MapOfN(%v, %v, minLen=%v, maxLen=%v)", g.key, g.val, g.minLen, g.maxLen)
+	return ufmt.Sprintf("MapOfN(%v, %v, minLen=%v, maxLen=%v)", g.key, g.val, g.minLen, g.maxLen)
 }
 
 func (g *mapGen) value(t *T) any {
@@ -105,6 +105,6 @@ func (g *mapGen) value(t *T) any {
 
 func assertValidRange(min int, max int) {
 	if max >= 0 && min > max {
-		panic(fmt.Sprintf("invalid range [%d, %d]", min, max))
+		panic(ufmt.Sprintf("invalid range [%d, %d]", min, max))
 	}
 }

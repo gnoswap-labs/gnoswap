@@ -7,9 +7,10 @@
 package fuzz
 
 import (
-	"fmt"
 	"math"
 	"strings"
+
+	"gno.land/p/nt/ufmt"
 )
 
 const tryLabel = "try"
@@ -57,7 +58,7 @@ func find(gen func(*T) (any, bool), t *T, tries int) any {
 		}
 	}
 
-	panic(invalidData(fmt.Sprintf("failed to find suitable value in %d tries", tries)))
+	panic(invalidData(ufmt.Sprintf("failed to find suitable value in %d tries", tries)))
 }
 
 // Deferred creates a generator which defers calling fn until attempting to produce a value.
@@ -91,7 +92,7 @@ type mappedGen struct {
 }
 
 func (g *mappedGen) String() string {
-	return fmt.Sprintf("Map(%v, ...)", g.g)
+	return ufmt.Sprintf("Map(%v, ...)", g.g)
 }
 
 func (g *mappedGen) value(t *T) any {
@@ -118,9 +119,9 @@ type sampledGen struct {
 
 func (g *sampledGen) String() string {
 	if len(g.slice) == 1 {
-		return fmt.Sprintf("Just(%v)", g.slice[0])
+		return ufmt.Sprintf("Just(%v)", g.slice[0])
 	}
-	return fmt.Sprintf("SampledFrom(%v items)", len(g.slice))
+	return ufmt.Sprintf("SampledFrom(%v items)", len(g.slice))
 }
 
 func (g *sampledGen) value(t *T) any {
@@ -143,7 +144,7 @@ type permGen struct {
 }
 
 func (g *permGen) String() string {
-	return fmt.Sprintf("Permutation(%v items)", len(g.slice))
+	return ufmt.Sprintf("Permutation(%v items)", len(g.slice))
 }
 
 func (g *permGen) value(t *T) any {
@@ -183,7 +184,7 @@ func (g *oneOfGen) String() string {
 	for i, gen := range g.gens {
 		strs[i] = gen.String()
 	}
-	return fmt.Sprintf("OneOf(%v)", strings.Join(strs, ", "))
+	return ufmt.Sprintf("OneOf(%v)", strings.Join(strs, ", "))
 }
 
 func (g *oneOfGen) value(t *T) any {
