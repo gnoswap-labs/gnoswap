@@ -9,7 +9,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-func TestCollectDepositReward(t *testing.T) {
+func TestLaunchpadReward_CollectDepositReward(t *testing.T) {
 	tests := []struct {
 		name           string
 		setupFunc      func() (*Deposit, map[string]interface{})
@@ -298,7 +298,7 @@ func TestCollectDepositReward(t *testing.T) {
 }
 
 // TestCollectDepositReward_TimeBoundaries tests edge cases around time boundaries
-func TestCollectDepositReward_TimeBoundaries(t *testing.T) {
+func TestLaunchpadReward_CollectDepositRewardTimeBoundaries(t *testing.T) {
 	tests := []struct {
 		name           string
 		currentTime    int64
