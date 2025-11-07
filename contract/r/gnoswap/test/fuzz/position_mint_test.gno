@@ -28,14 +28,6 @@ func TestFuzzPositionMint_ValidParams_Stateless(t *testing.T) {
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-		// Align ticks to spacing
-		tickSpacing := pool.GetFeeAmountTickSpacing(mintParams.fee)
-		mintParams.tickLower = (mintParams.tickLower / tickSpacing) * tickSpacing
-		mintParams.tickUpper = (mintParams.tickUpper / tickSpacing) * tickSpacing
-		if mintParams.tickLower >= mintParams.tickUpper {
-			mintParams.tickUpper = mintParams.tickLower + tickSpacing
-		}
-
 		// Setup: Create pool if not exists
 		poolPath := pool.GetPoolPath(mintParams.token0Path, mintParams.token1Path, mintParams.fee)
 		if !pool.ExistsPoolPath(poolPath) {
@@ -100,14 +92,6 @@ func TestFuzzPositionMint_RandomizedParams_Stateless(t *testing.T) {
 		fuzzResult.AddParams(index, mintParams)
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
-
-		// Align ticks to spacing
-		tickSpacing := pool.GetFeeAmountTickSpacing(mintParams.fee)
-		mintParams.tickLower = (mintParams.tickLower / tickSpacing) * tickSpacing
-		mintParams.tickUpper = (mintParams.tickUpper / tickSpacing) * tickSpacing
-		if mintParams.tickLower >= mintParams.tickUpper {
-			mintParams.tickUpper = mintParams.tickLower + tickSpacing
-		}
 
 		// Setup: Create pool if not exists
 		poolPath := pool.GetPoolPath(mintParams.token0Path, mintParams.token1Path, mintParams.fee)

@@ -78,9 +78,7 @@ func (p *positionMintParams) IsValid() bool {
 		return false
 	}
 
-	// At least one amount must be meaningful (> 1000 to avoid dust)
-	minAmount := u256.NewUint(1000)
-	if amount0.Lt(minAmount) && amount1.Lt(minAmount) {
+	if amount0.IsZero() && amount1.IsZero() {
 		return false
 	}
 
@@ -119,14 +117,31 @@ func NewValidPositionMintParams(t *fuzz.T) *positionMintParams {
 	feeIndex := fuzz.IntRange(0, len(VALID_FEE_TIERS)-1).Draw(t, "feeIndex").(int)
 	fee := VALID_FEE_TIERS[feeIndex]
 
-	// Generate valid tick range (will be aligned in test setup)
-	// Use a reasonable range around current price (tick 0)
-	tickLower := fuzz.Int32Range(-1000, -1).Draw(t, "tickLower").(int32)
-	tickUpper := fuzz.Int32Range(1, 1000).Draw(t, "tickUpper").(int32)
+	// Calculate tick spacing based on fee tier
+	var tickSpacing int32
+	switch fee {
+	case 100:
+		tickSpacing = 1
+	case 500:
+		tickSpacing = 10
+	case 3000:
+		tickSpacing = 60
+	case 10000:
+		tickSpacing = 200
+	}
 
-	// Ensure tickLower < tickUpper
+	// Generate valid tick range (will be aligned to tick spacing)
+	// Use a reasonable range around current price (tick 0)
+	tickLowerRaw := fuzz.Int32Range(-1000, -1).Draw(t, "tickLowerRaw").(int32)
+	tickUpperRaw := fuzz.Int32Range(1, 1000).Draw(t, "tickUpperRaw").(int32)
+
+	// Align to tick spacing
+	tickLower := (tickLowerRaw / tickSpacing) * tickSpacing
+	tickUpper := (tickUpperRaw / tickSpacing) * tickSpacing
+
+	// Ensure tickLower < tickUpper and at least one spacing apart
 	if tickLower >= tickUpper {
-		tickUpper = tickLower + 1
+		tickUpper = tickLower + tickSpacing
 	}
 
 	// Generate valid amounts
@@ -173,4 +188,3 @@ func NewRandomizedPositionMintParams(t *fuzz.T) *positionMintParams {
 		deadline:       fuzz.Int64Range(1700000000, 2000000000).Draw(t, "deadline").(int64),
 	}
 }
-
