@@ -86,6 +86,100 @@ func TestFuzzPositionCollectFee_RandomizedParams_Stateless(t *testing.T) {
 	})
 }
 
+// TestFuzzPositionCollectFee_ValidParams_Stateful tests CollectFee with valid parameters in stateful manner
+func TestFuzzPositionCollectFee_ValidParams_Stateful(t *testing.T) {
+	initStates(t)
+
+	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+	tokenId := createTestPosition(t, adminAddr, poolAddr)
+
+	// Track total fees collected
+	type feeCollection struct {
+		fee0 string
+		fee1 string
+	}
+	var collections []feeCollection
+
+	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+		// Generate fees by executing swaps
+		generateFeesWithSwap(t, adminAddr, poolAddr)
+
+		// Generate params for collect fee
+		collectParams := NewValidPositionCollectFeeParams(ft, tokenId)
+		fuzzResult.AddParams(index, collectParams)
+
+		// when - collect fee
+		_, fee0, fee1, _, _, poolPath := position.CollectFee(
+			cross,
+			collectParams.positionId,
+			collectParams.unwrapResult,
+		)
+
+		// then - verify fees collected
+		if fee0 == "" || fee1 == "" {
+			panic("Fee amounts should not be empty")
+		}
+
+		if poolPath == "" {
+			panic("Pool path should not be empty")
+		}
+
+		// Track this collection
+		collections = append(collections, feeCollection{
+			fee0: fee0,
+			fee1: fee1,
+		})
+	})
+
+	t.Logf("Position #%d collected fees %d times", tokenId, len(collections))
+}
+
+// TestFuzzPositionCollectFee_RandomizedParams_Stateful tests CollectFee with randomized parameters in stateful manner
+func TestFuzzPositionCollectFee_RandomizedParams_Stateful(t *testing.T) {
+	initStates(t)
+
+	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+	tokenId := createTestPosition(t, adminAddr, poolAddr)
+
+	// Track successful collections
+	successfulCollections := 0
+
+	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+		// Generate fees by executing swaps
+		generateFeesWithSwap(t, adminAddr, poolAddr)
+
+		// Generate params for collect fee
+		collectParams := NewRandomizedPositionCollectFeeParams(ft, tokenId)
+		fuzzResult.AddParams(index, collectParams)
+
+		// when - collect fee (may panic with invalid params)
+		_, fee0, fee1, _, _, _ := position.CollectFee(
+			cross,
+			collectParams.positionId,
+			collectParams.unwrapResult,
+		)
+
+		// Track successful collections
+		if fee0 != "" && fee1 != "" {
+			successfulCollections++
+		}
+	})
+
+	t.Logf("Total successful fee collections: %d out of 100", successfulCollections)
+}
+
 // Helper function to generate fees by executing swaps
 func generateFeesWithSwap(t *testing.T, adminAddr, poolAddr address) {
 	t.Helper()
