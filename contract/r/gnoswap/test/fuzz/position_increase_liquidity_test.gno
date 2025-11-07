@@ -12,6 +12,8 @@ import (
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
+
+	"gno.land/p/nt/ufmt"
 )
 
 // TestFuzzPositionIncreaseLiquidity_ValidParams_Stateless tests IncreaseLiquidity with valid parameters
@@ -91,6 +93,114 @@ func TestFuzzPositionIncreaseLiquidity_RandomizedParams_Stateless(t *testing.T) 
 			increaseParams.amount1Min,
 			increaseParams.deadline,
 		)
+	})
+}
+
+func TestFuzzPositionIncreaseLiquidity_ValidParams_Stateful(t *testing.T) {
+	initStates(t)
+
+	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+	// Create initial position once with high liquidity
+	tokenId := createTestPosition(t, adminAddr, poolAddr)
+
+	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+		// Generate params for increase liquidity
+		increaseParams := NewValidPositionIncreaseLiquidityParams(ft, tokenId)
+		fuzzResult.AddParams(index, increaseParams)
+
+		// Approve tokens
+		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/bar", poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/foo", poolAddr, math.MaxInt64)
+
+		// Get current total liquidity before increase
+		prevTotalLiquidity := position.GetPositionLiquidity(tokenId)
+
+		// when - increase liquidity
+		_, liquidity, amount0, amount1, _ := position.IncreaseLiquidity(
+			cross,
+			increaseParams.positionId,
+			increaseParams.amount0Desired,
+			increaseParams.amount1Desired,
+			increaseParams.amount0Min,
+			increaseParams.amount1Min,
+			increaseParams.deadline,
+		)
+
+		// then - verify liquidity increased
+		if liquidity == "0" {
+			panic("Liquidity should be increased")
+		}
+
+		// Get new total liquidity after increase
+		newTotalLiquidity := position.GetPositionLiquidity(tokenId)
+
+		// Verify total liquidity increased
+		if newTotalLiquidity.Lte(prevTotalLiquidity) {
+			panic(ufmt.Sprintf("Total liquidity should increase: %s <= %s",
+				newTotalLiquidity.ToString(), prevTotalLiquidity.ToString()))
+		}
+
+		// Verify amounts are non-negative
+		if amount0 == "" || amount1 == "" {
+			panic("Amounts should not be empty")
+		}
+	})
+}
+
+func TestFuzzPositionIncreaseLiquidity_RandomizedParams_Stateful(t *testing.T) {
+	initStates(t)
+
+	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	tokenId := createTestPosition(t, adminAddr, poolAddr)
+
+	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+		// Generate params for increase liquidity
+		increaseParams := NewRandomizedPositionIncreaseLiquidityParams(ft, tokenId)
+		fuzzResult.AddParams(index, increaseParams)
+
+		// Approve tokens
+		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/bar", poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/foo", poolAddr, math.MaxInt64)
+
+		// when - increase liquidity (may panic with invalid params)
+		//
+		// Get current total liquidity before increase
+		prevTotalLiquidity := position.GetPositionLiquidity(tokenId)
+
+		// when - increase liquidity
+		_, liquidity, amount0, amount1, _ := position.IncreaseLiquidity(
+			cross,
+			increaseParams.positionId,
+			increaseParams.amount0Desired,
+			increaseParams.amount1Desired,
+			increaseParams.amount0Min,
+			increaseParams.amount1Min,
+			increaseParams.deadline,
+		)
+
+		if liquidity == "0" {
+			panic("Liquidity should be increased")
+		}
+
+		if amount0 == "" || amount1 == "" {
+			panic("Amounts should not be empty")
+		}
+
+		// Get new total liquidity after increase
+		newTotalLiquidity := position.GetPositionLiquidity(tokenId)
+
+		// Verify total liquidity increased
+		if newTotalLiquidity.Lte(prevTotalLiquidity) {
+			panic(ufmt.Sprintf("Total liquidity should increase: %s <= %s",
+				newTotalLiquidity.ToString(), prevTotalLiquidity.ToString()))
+		}
 	})
 }
 

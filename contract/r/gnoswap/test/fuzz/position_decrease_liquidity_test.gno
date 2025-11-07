@@ -99,8 +99,6 @@ func TestFuzzPositionDecreaseLiquidity_ValidParams_Stateful(t *testing.T) {
 	tokenId := createTestPosition(t, adminAddr, poolAddr)
 
 	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
-		testing.SetRealm(testing.NewUserRealm(adminAddr))
-
 		currentLiquidity := position.GetPositionLiquidity(tokenId).ToString()
 
 		decreaseParams := NewValidPositionDecreaseLiquidityParams(ft, tokenId, currentLiquidity)
@@ -123,9 +121,6 @@ func TestFuzzPositionDecreaseLiquidity_ValidParams_Stateful(t *testing.T) {
 		if amount0 == "" || amount1 == "" {
 			panic("Amounts should not be empty")
 		}
-
-		remainingLiquidity := position.GetPositionLiquidity(tokenId).ToString()
-		t.Logf("Iteration %d: Decreased %s, Remaining liquidity: %s", index, liquidity, remainingLiquidity)
 	})
 }
 
@@ -140,8 +135,6 @@ func TestFuzzPositionDecreaseLiquidity_RandomizedParams_Stateful(t *testing.T) {
 	tokenId := createTestPosition(t, adminAddr, poolAddr)
 
 	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
-		testing.SetRealm(testing.NewUserRealm(adminAddr))
-
 		currentLiquidity := position.GetPositionLiquidity(tokenId).ToString()
 
 		// Generate randomized params for decrease liquidity
@@ -157,8 +150,5 @@ func TestFuzzPositionDecreaseLiquidity_RandomizedParams_Stateful(t *testing.T) {
 			decreaseParams.deadline,
 			decreaseParams.unwrapResult,
 		)
-
-		remainingLiquidity := position.GetPositionLiquidity(tokenId).ToString()
-		t.Logf("Iteration %d: Remaining liquidity: %s", index, remainingLiquidity)
 	})
 }
