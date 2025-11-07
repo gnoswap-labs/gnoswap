@@ -1,0 +1,156 @@
+package fuzz
+
+import (
+	"gno.land/p/gnoswap/fuzz"
+	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
+)
+
+// positionRepositionParams is the parameters for Reposition fuzzing test
+type positionRepositionParams struct {
+	positionId     uint64
+	fee            uint32
+	tickLower      int32
+	tickUpper      int32
+	amount0Desired string
+	amount1Desired string
+	amount0Min     string
+	amount1Min     string
+}
+
+func (p *positionRepositionParams) IsValid() bool {
+	// Position ID must be non-zero
+	if p.positionId == 0 {
+		return false
+	}
+
+	// Fee must be one of the supported tiers
+	validFee := false
+	for _, tier := range []uint32{100, 500, 3000, 10000} {
+		if p.fee == tier {
+			validFee = true
+			break
+		}
+	}
+	if !validFee {
+		return false
+	}
+
+	// Tick range must be valid
+	if p.tickLower >= p.tickUpper {
+		return false
+	}
+
+	// Verify tick spacing based on fee tier
+	var tickSpacing int32
+	switch p.fee {
+	case 100:
+		tickSpacing = 1
+	case 500:
+		tickSpacing = 10
+	case 3000:
+		tickSpacing = 60
+	case 10000:
+		tickSpacing = 200
+	default:
+		return false
+	}
+
+	// Ticks must be aligned to tick spacing
+	if p.tickLower%tickSpacing != 0 || p.tickUpper%tickSpacing != 0 {
+		return false
+	}
+
+	// Tick range must be at least one tick spacing
+	if p.tickUpper-p.tickLower < tickSpacing {
+		return false
+	}
+
+	// Amounts must be parseable and non-negative
+	amount0, err0 := u256.FromDecimal(p.amount0Desired)
+	amount1, err1 := u256.FromDecimal(p.amount1Desired)
+	if err0 != nil || err1 != nil {
+		return false
+	}
+	if amount0.Lt(u256.Zero()) || amount1.Lt(u256.Zero()) {
+		return false
+	}
+
+	// At least one amount must be meaningful (> 1000 to avoid dust)
+	minAmount := u256.NewUint(1000)
+	if amount0.Lt(minAmount) && amount1.Lt(minAmount) {
+		return false
+	}
+
+	// Min amounts must be parseable and non-negative
+	amount0Min, err0Min := u256.FromDecimal(p.amount0Min)
+	amount1Min, err1Min := u256.FromDecimal(p.amount1Min)
+	if err0Min != nil || err1Min != nil {
+		return false
+	}
+	if amount0Min.Lt(u256.Zero()) || amount1Min.Lt(u256.Zero()) {
+		return false
+	}
+
+	return true
+}
+
+func (p *positionRepositionParams) ToString() string {
+	return ufmt.Sprintf("positionId: %d, tickLower: %d, tickUpper: %d, amount0Desired: %s, amount1Desired: %s",
+		p.positionId,
+		p.tickLower,
+		p.tickUpper,
+		p.amount0Desired,
+		p.amount1Desired,
+	)
+}
+
+func NewValidPositionRepositionParams(t *fuzz.T, existingPositionId uint64, fee uint32) *positionRepositionParams {
+	// Generate new tick range (different from original)
+	tickLowerRaw := fuzz.Int32Range(-2000, -100).Draw(t, "tickLowerRaw").(int32)
+	tickUpperRaw := fuzz.Int32Range(100, 2000).Draw(t, "tickUpperRaw").(int32)
+
+	// Ensure tickLower < tickUpper
+	if tickLowerRaw >= tickUpperRaw {
+		tickUpperRaw = tickLowerRaw + 100
+	}
+
+	// Generate valid amounts
+	amount0 := fuzz.Int64Range(1000000, 100000000).Draw(t, "amount0").(int64)
+	amount1 := fuzz.Int64Range(1000000, 100000000).Draw(t, "amount1").(int64)
+
+	return &positionRepositionParams{
+		positionId:     existingPositionId,
+		fee:            fee,
+		tickLower:      tickLowerRaw,
+		tickUpper:      tickUpperRaw,
+		amount0Desired: ufmt.Sprintf("%d", amount0),
+		amount1Desired: ufmt.Sprintf("%d", amount1),
+		amount0Min:     "0",
+		amount1Min:     "0",
+	}
+}
+
+func NewRandomizedPositionRepositionParams(t *fuzz.T, existingPositionId uint64) *positionRepositionParams {
+	// Generate random fee
+	fee := fuzz.Uint32Range(0, 20000).Draw(t, "fee").(uint32)
+
+	// Generate wider tick range
+	tickLower := fuzz.Int32Range(-10000, 10000).Draw(t, "tickLower").(int32)
+	tickUpper := fuzz.Int32Range(-10000, 10000).Draw(t, "tickUpper").(int32)
+
+	// Generate wider range of amounts
+	amount0 := fuzz.Int64Range(1, 1000000000).Draw(t, "amount0").(int64)
+	amount1 := fuzz.Int64Range(1, 1000000000).Draw(t, "amount1").(int64)
+
+	return &positionRepositionParams{
+		positionId:     existingPositionId,
+		fee:            fee,
+		tickLower:      tickLower,
+		tickUpper:      tickUpper,
+		amount0Desired: ufmt.Sprintf("%d", amount0),
+		amount1Desired: ufmt.Sprintf("%d", amount1),
+		amount0Min:     "0",
+		amount1Min:     "0",
+	}
+}

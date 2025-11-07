@@ -1,0 +1,141 @@
+package fuzz
+
+import (
+	"math"
+	"testing"
+
+	"gno.land/p/gnoswap/fuzz"
+	"gno.land/p/gnoswap/fuzzutils"
+	prabc "gno.land/p/gnoswap/rbac"
+
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/pool"
+	"gno.land/r/gnoswap/position"
+)
+
+// TestFuzzPositionIncreaseLiquidity_ValidParams_Stateless tests IncreaseLiquidity with valid parameters
+func TestFuzzPositionIncreaseLiquidity_ValidParams_Stateless(t *testing.T) {
+	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
+
+	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+		// given - initialize states
+		initStates(t)
+
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+		// Create pool and initial position first
+		tokenId := createTestPosition(t, adminAddr, poolAddr)
+
+		// Generate params for increase liquidity
+		increaseParams := NewValidPositionIncreaseLiquidityParams(ft, tokenId)
+		fuzzResult.AddParams(index, increaseParams)
+
+		// Approve tokens
+		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/bar", poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/foo", poolAddr, math.MaxInt64)
+
+		// when - increase liquidity
+		_, liquidity, amount0, amount1, _ := position.IncreaseLiquidity(
+			cross,
+			increaseParams.positionId,
+			increaseParams.amount0Desired,
+			increaseParams.amount1Desired,
+			increaseParams.amount0Min,
+			increaseParams.amount1Min,
+			increaseParams.deadline,
+		)
+
+		// then - verify liquidity increased
+		if liquidity == "0" {
+			panic("Liquidity should be increased")
+		}
+
+		// Verify amounts are non-negative
+		if amount0 == "" || amount1 == "" {
+			panic("Amounts should not be empty")
+		}
+	})
+}
+
+// TestFuzzPositionIncreaseLiquidity_RandomizedParams_Stateless tests IncreaseLiquidity with randomized parameters
+func TestFuzzPositionIncreaseLiquidity_RandomizedParams_Stateless(t *testing.T) {
+	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
+
+	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+		// given - initialize states
+		initStates(t)
+
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+		// Create pool and initial position first
+		tokenId := createTestPosition(t, adminAddr, poolAddr)
+
+		// Generate params for increase liquidity
+		increaseParams := NewRandomizedPositionIncreaseLiquidityParams(ft, tokenId)
+		fuzzResult.AddParams(index, increaseParams)
+
+		// Approve tokens
+		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/bar", poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/foo", poolAddr, math.MaxInt64)
+
+		// when - increase liquidity (may panic with invalid params)
+		position.IncreaseLiquidity(
+			cross,
+			increaseParams.positionId,
+			increaseParams.amount0Desired,
+			increaseParams.amount1Desired,
+			increaseParams.amount0Min,
+			increaseParams.amount1Min,
+			increaseParams.deadline,
+		)
+	})
+}
+
+// Helper function to create a test position
+func createTestPosition(t *testing.T, adminAddr, poolAddr address) uint64 {
+	t.Helper()
+
+	token0Path := "gno.land/r/onbloc/bar"
+	token1Path := "gno.land/r/onbloc/foo"
+	fee := uint32(3000)
+
+	// Create pool if not exists
+	poolPath := pool.GetPoolPath(token0Path, token1Path, fee)
+	if !pool.ExistsPoolPath(poolPath) {
+		pool.SetPoolCreationFee(cross, 0)
+		pool.CreatePool(
+			cross,
+			token0Path,
+			token1Path,
+			fee,
+			"79228162514264337593543950337",
+		)
+	}
+
+	// Approve tokens
+	common.SafeGRC20Approve(cross, token0Path, poolAddr, math.MaxInt64)
+	common.SafeGRC20Approve(cross, token1Path, poolAddr, math.MaxInt64)
+
+	// Mint initial position
+	tokenId, _, _, _ := position.Mint(
+		cross,
+		token0Path,
+		token1Path,
+		fee,
+		-1800, // tickLower (aligned to spacing 60)
+		1800,  // tickUpper
+		"10000000",
+		"10000000",
+		"0",
+		"0",
+		2000000000,
+		adminAddr,
+		adminAddr,
+		"",
+	)
+
+	return tokenId
+}
