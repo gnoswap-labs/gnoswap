@@ -9,12 +9,15 @@ import (
 	"gno.land/p/gnoswap/fuzz"
 	"gno.land/p/gnoswap/fuzzutils"
 	prabc "gno.land/p/gnoswap/rbac"
+	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/foo"
 )
 
 const (
@@ -34,87 +37,19 @@ func TestFuzzPoolSwap_ValidParams_Stateless(t *testing.T) {
 		poolSwapParams := NewValidPoolSwapParams(ft)
 		fuzzResult.AddParams(index, poolSwapParams)
 
-		testing.SetRealm(testing.NewUserRealm(adminAddr))
+		// Setup pool and liquidity
+		poolPath := setupPoolSwapTest(t, poolSwapParams, adminAddr, poolAddr)
 
-		// Create pool if not exists
-		exists := pool.ExistsPoolPath(pool.GetPoolPath(poolSwapParams.token0Path, poolSwapParams.token1Path, poolSwapParams.fee))
-		if !exists {
-			pool.SetPoolCreationFee(cross, 0)
-			pool.CreatePool(
-				cross,
-				poolSwapParams.token0Path,
-				poolSwapParams.token1Path,
-				poolSwapParams.fee,
-				"79228162514264337593543950337",
-			)
-		}
+		// Record state before swap
+		adminToken0Before, adminToken1Before, poolToken0Before, poolToken1Before, sqrtPriceBefore, liquidityBefore := recordBalancesAndPoolState(adminAddr, poolAddr, poolPath)
 
-		// Approve tokens
-		common.SafeGRC20Approve(cross, poolSwapParams.token0Path, poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(cross, poolSwapParams.token1Path, poolAddr, math.MaxInt64)
+		// when - execute DrySwap and Swap
+		dryAmount0, dryAmount1, swapAmount0, swapAmount1 := executeSwap(poolSwapParams, adminAddr, poolAddr)
 
-		// Add liquidity
-		addTestLiquidity(t, poolSwapParams.token0Path, poolSwapParams.token1Path, poolSwapParams.fee, adminAddr)
-
-		// when - execute DrySwap
-		dryAmount0, dryAmount1, drySuccess := pool.DrySwap(
-			poolSwapParams.token0Path,
-			poolSwapParams.token1Path,
-			poolSwapParams.fee,
-			poolSwapParams.zeroForOne,
-			poolSwapParams.amountSpecified,
-			poolSwapParams.sqrtPriceLimitX96,
-		)
-
-		if !drySuccess {
-			panic("DrySwap failed")
-		}
-
-		// when - execute Swap
-		swapCallback := func(cur realm, amount0Delta, amount1Delta string) error {
-			delta0, _ := strconv.Atoi(amount0Delta)
-			delta1, _ := strconv.Atoi(amount1Delta)
-
-			var tokenToPay string
-			var amountToPay int64
-
-			if delta0 > 0 {
-				tokenToPay = poolSwapParams.token0Path
-				amountToPay = int64(delta0)
-			} else if delta1 > 0 {
-				tokenToPay = poolSwapParams.token1Path
-				amountToPay = int64(delta1)
-			} else {
-				return nil
-			}
-
-			func(cur realm) {
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				common.SafeGRC20Transfer(cross, tokenToPay, poolAddr, amountToPay)
-			}(cross)
-			return nil
-		}
-
-		swapAmount0, swapAmount1 := callPoolSwapFromContract(
-			poolSwapParams.token0Path,
-			poolSwapParams.token1Path,
-			poolSwapParams.fee,
-			adminAddr,
-			poolSwapParams.zeroForOne,
-			poolSwapParams.amountSpecified,
-			poolSwapParams.sqrtPriceLimitX96,
-			adminAddr,
-			swapCallback,
-		)
-
-		// then - compare results
-		if dryAmount0 != swapAmount0 {
-			panic(ufmt.Sprintf("DrySwap amount0 (%s) != Swap amount0 (%s)", dryAmount0, swapAmount0))
-		}
-
-		if dryAmount1 != swapAmount1 {
-			panic(ufmt.Sprintf("DrySwap amount1 (%s) != Swap amount1 (%s)", dryAmount1, swapAmount1))
-		}
+		// then - verify results
+		verifySwapResults(dryAmount0, dryAmount1, swapAmount0, swapAmount1)
+		verifyBalanceChanges(adminAddr, poolAddr, adminToken0Before, adminToken1Before, poolToken0Before, poolToken1Before, swapAmount0, swapAmount1)
+		verifyPoolStateChanges(poolPath, sqrtPriceBefore, liquidityBefore, poolSwapParams.zeroForOne)
 	})
 }
 
@@ -130,92 +65,214 @@ func TestFuzzPoolSwap_RandomizedParams_Stateless(t *testing.T) {
 		poolSwapParams := NewRandomizedPoolSwapParams(ft)
 		fuzzResult.AddParams(index, poolSwapParams)
 
-		testing.SetRealm(testing.NewUserRealm(adminAddr))
+		// Setup pool and liquidity
+		poolPath := setupPoolSwapTest(t, poolSwapParams, adminAddr, poolAddr)
 
-		// Create pool if not exists
-		exists := pool.ExistsPoolPath(pool.GetPoolPath(poolSwapParams.token0Path, poolSwapParams.token1Path, poolSwapParams.fee))
-		if !exists {
-			pool.SetPoolCreationFee(cross, 0)
-			pool.CreatePool(
-				cross,
-				poolSwapParams.token0Path,
-				poolSwapParams.token1Path,
-				poolSwapParams.fee,
-				"79228162514264337593543950337",
-			)
-		}
+		// Record state before swap
+		adminToken0Before, adminToken1Before, poolToken0Before, poolToken1Before, sqrtPriceBefore, liquidityBefore := recordBalancesAndPoolState(adminAddr, poolAddr, poolPath)
 
-		// Approve tokens
-		common.SafeGRC20Approve(cross, poolSwapParams.token0Path, poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(cross, poolSwapParams.token1Path, poolAddr, math.MaxInt64)
+		// when - execute DrySwap and Swap
+		dryAmount0, dryAmount1, swapAmount0, swapAmount1 := executeSwap(poolSwapParams, adminAddr, poolAddr)
 
-		// Add liquidity
-		addTestLiquidity(t, poolSwapParams.token0Path, poolSwapParams.token1Path, poolSwapParams.fee, adminAddr)
-
-		// when - execute DrySwap
-		dryAmount0, dryAmount1, drySuccess := pool.DrySwap(
-			poolSwapParams.token0Path,
-			poolSwapParams.token1Path,
-			poolSwapParams.fee,
-			poolSwapParams.zeroForOne,
-			poolSwapParams.amountSpecified,
-			poolSwapParams.sqrtPriceLimitX96,
-		)
-
-		if !drySuccess {
-			panic("DrySwap failed")
-		}
-
-		// when - execute Swap
-		swapCallback := func(cur realm, amount0Delta, amount1Delta string) error {
-			delta0, _ := strconv.Atoi(amount0Delta)
-			delta1, _ := strconv.Atoi(amount1Delta)
-
-			var tokenToPay string
-			var amountToPay int64
-
-			if delta0 > 0 {
-				tokenToPay = poolSwapParams.token0Path
-				amountToPay = int64(delta0)
-			} else if delta1 > 0 {
-				tokenToPay = poolSwapParams.token1Path
-				amountToPay = int64(delta1)
-			} else {
-				return nil
-			}
-
-			func(cur realm) {
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				common.SafeGRC20Transfer(cross, tokenToPay, poolAddr, amountToPay)
-			}(cross)
-			return nil
-		}
-
-		swapAmount0, swapAmount1 := callPoolSwapFromContract(
-			poolSwapParams.token0Path,
-			poolSwapParams.token1Path,
-			poolSwapParams.fee,
-			adminAddr,
-			poolSwapParams.zeroForOne,
-			poolSwapParams.amountSpecified,
-			poolSwapParams.sqrtPriceLimitX96,
-			adminAddr,
-			swapCallback,
-		)
-
-		// then - compare results
-		if dryAmount0 != swapAmount0 {
-			panic(ufmt.Sprintf("DrySwap amount0 (%s) != Swap amount0 (%s)", dryAmount0, swapAmount0))
-		}
-
-		if dryAmount1 != swapAmount1 {
-			panic(ufmt.Sprintf("DrySwap amount1 (%s) != Swap amount1 (%s)", dryAmount1, swapAmount1))
-		}
+		// then - verify results
+		verifySwapResults(dryAmount0, dryAmount1, swapAmount0, swapAmount1)
+		verifyBalanceChanges(adminAddr, poolAddr, adminToken0Before, adminToken1Before, poolToken0Before, poolToken1Before, swapAmount0, swapAmount1)
+		verifyPoolStateChanges(poolPath, sqrtPriceBefore, liquidityBefore, poolSwapParams.zeroForOne)
 	})
 }
 
 
 // Helper functions
+
+// poolSwapTestContext holds the test context for pool swap tests
+type poolSwapTestContext struct {
+	adminAddr address
+	poolAddr  address
+	poolPath  string
+	params    *poolSwapParams
+}
+
+// setupPoolSwapTest initializes pool and liquidity for swap test
+func setupPoolSwapTest(t *testing.T, params *poolSwapParams, adminAddr, poolAddr address) string {
+	t.Helper()
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+	poolPath := pool.GetPoolPath(params.token0Path, params.token1Path, params.fee)
+
+	// Create pool if not exists
+	if !pool.ExistsPoolPath(poolPath) {
+		pool.SetPoolCreationFee(cross, 0)
+		pool.CreatePool(
+			cross,
+			params.token0Path,
+			params.token1Path,
+			params.fee,
+			"79228162514264337593543950337",
+		)
+	}
+
+	// Approve tokens
+	common.SafeGRC20Approve(cross, params.token0Path, poolAddr, math.MaxInt64)
+	common.SafeGRC20Approve(cross, params.token1Path, poolAddr, math.MaxInt64)
+
+	// Add liquidity
+	addTestLiquidity(t, params.token0Path, params.token1Path, params.fee, adminAddr)
+
+	return poolPath
+}
+
+// recordBalancesAndPoolState records token balances and pool state before swap
+func recordBalancesAndPoolState(adminAddr, poolAddr address, poolPath string) (
+	adminToken0, adminToken1, poolToken0, poolToken1 int64,
+	sqrtPrice *u256.Uint, liquidity string,
+) {
+	adminToken0 = bar.BalanceOf(adminAddr)
+	adminToken1 = foo.BalanceOf(adminAddr)
+	poolToken0 = bar.BalanceOf(poolAddr)
+	poolToken1 = foo.BalanceOf(poolAddr)
+	sqrtPrice = pool.GetSlot0SqrtPriceX96(poolPath)
+	liquidity = pool.GetLiquidity(poolPath)
+	return
+}
+
+// executeSwap executes DrySwap and Swap, and returns the results
+func executeSwap(params *poolSwapParams, adminAddr, poolAddr address) (dryAmount0, dryAmount1, swapAmount0, swapAmount1 string) {
+	// Execute DrySwap
+	var drySuccess bool
+	dryAmount0, dryAmount1, drySuccess = pool.DrySwap(
+		params.token0Path,
+		params.token1Path,
+		params.fee,
+		params.zeroForOne,
+		params.amountSpecified,
+		params.sqrtPriceLimitX96,
+	)
+
+	if !drySuccess {
+		panic("DrySwap failed")
+	}
+
+	// Execute Swap
+	swapCallback := func(cur realm, amount0Delta, amount1Delta string) error {
+		delta0, err0 := strconv.ParseInt(amount0Delta, 10, 64)
+		delta1, err1 := strconv.ParseInt(amount1Delta, 10, 64)
+
+		if err0 != nil || err1 != nil {
+			panic(ufmt.Sprintf("failed to parse delta: amount0Delta=%s, amount1Delta=%s, err0=%v, err1=%v",
+				amount0Delta, amount1Delta, err0, err1))
+		}
+
+		// Pay token0 if delta0 > 0
+		if delta0 > 0 {
+			func(cur realm) {
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				common.SafeGRC20Transfer(cross, params.token0Path, poolAddr, delta0)
+			}(cross)
+		}
+
+		// Pay token1 if delta1 > 0
+		if delta1 > 0 {
+			func(cur realm) {
+				testing.SetRealm(testing.NewUserRealm(adminAddr))
+				common.SafeGRC20Transfer(cross, params.token1Path, poolAddr, delta1)
+			}(cross)
+		}
+
+		return nil
+	}
+
+	swapAmount0, swapAmount1 = callPoolSwapFromContract(
+		params.token0Path,
+		params.token1Path,
+		params.fee,
+		adminAddr,
+		params.zeroForOne,
+		params.amountSpecified,
+		params.sqrtPriceLimitX96,
+		adminAddr,
+		swapCallback,
+	)
+
+	return
+}
+
+// verifySwapResults verifies DrySwap and Swap results match
+func verifySwapResults(dryAmount0, dryAmount1, swapAmount0, swapAmount1 string) {
+	if dryAmount0 != swapAmount0 {
+		panic(ufmt.Sprintf("DrySwap amount0 (%s) != Swap amount0 (%s)", dryAmount0, swapAmount0))
+	}
+
+	if dryAmount1 != swapAmount1 {
+		panic(ufmt.Sprintf("DrySwap amount1 (%s) != Swap amount1 (%s)", dryAmount1, swapAmount1))
+	}
+}
+
+// verifyBalanceChanges verifies token balance changes match swap amounts
+func verifyBalanceChanges(
+	adminAddr, poolAddr address,
+	adminToken0Before, adminToken1Before, poolToken0Before, poolToken1Before int64,
+	swapAmount0, swapAmount1 string,
+) {
+	adminToken0After := bar.BalanceOf(adminAddr)
+	adminToken1After := foo.BalanceOf(adminAddr)
+	poolToken0After := bar.BalanceOf(poolAddr)
+	poolToken1After := foo.BalanceOf(poolAddr)
+
+	// Calculate actual balance changes
+	adminToken0Delta := adminToken0After - adminToken0Before
+	adminToken1Delta := adminToken1After - adminToken1Before
+	poolToken0Delta := poolToken0After - poolToken0Before
+	poolToken1Delta := poolToken1After - poolToken1Before
+
+	// Verify conservation: admin's loss = pool's gain (for each token)
+	// This is the fundamental invariant: tokens don't disappear or appear from nowhere
+	if adminToken0Delta+poolToken0Delta != 0 {
+		panic(ufmt.Sprintf("Token0 balance conservation violated: admin delta %d, pool delta %d",
+			adminToken0Delta, poolToken0Delta))
+	}
+
+	if adminToken1Delta+poolToken1Delta != 0 {
+		panic(ufmt.Sprintf("Token1 balance conservation violated: admin delta %d, pool delta %d",
+			adminToken1Delta, poolToken1Delta))
+	}
+
+	// Note: We don't verify exact swap delta amounts because:
+	// 1. Swap delta represents the pool's accounting perspective
+	// 2. Actual token transfers may include fees, rounding, etc.
+	// 3. Conservation law above already ensures correctness
+	// 4. DrySwap vs Swap comparison already validates consistency
+}
+
+// verifyPoolStateChanges verifies pool state changes after swap
+func verifyPoolStateChanges(
+	poolPath string,
+	sqrtPriceBefore *u256.Uint,
+	liquidityBefore string,
+	zeroForOne bool,
+) {
+	sqrtPriceAfter := pool.GetSlot0SqrtPriceX96(poolPath)
+
+	// Verify price direction if price changed (small swaps may not change price due to rounding)
+	if sqrtPriceBefore.Cmp(sqrtPriceAfter) != 0 {
+		if zeroForOne {
+			// Swapping token0 for token1 -> price goes down
+			if sqrtPriceBefore.Cmp(sqrtPriceAfter) < 0 {
+				panic(ufmt.Sprintf("Price should decrease for zeroForOne swap: before %s, after %s",
+					sqrtPriceBefore.ToString(), sqrtPriceAfter.ToString()))
+			}
+		} else {
+			// Swapping token1 for token0 -> price goes up
+			if sqrtPriceBefore.Cmp(sqrtPriceAfter) > 0 {
+				panic(ufmt.Sprintf("Price should increase for !zeroForOne swap: before %s, after %s",
+					sqrtPriceBefore.ToString(), sqrtPriceAfter.ToString()))
+			}
+		}
+	}
+
+	// Note: Price may not change for very small swaps due to rounding
+	// Note: Liquidity can change when crossing tick boundaries (concentrated liquidity)
+}
 
 // callPoolSwapFromContract calls pool.Swap from a mock contract realm to bypass EOA restriction
 func callPoolSwapFromContract(
