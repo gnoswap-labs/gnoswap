@@ -1,12 +1,9 @@
 package fuzz
 
 import (
-	"strings"
 	"testing"
 
-	"gno.land/p/gnoswap/fuzz"
 	prabc "gno.land/p/gnoswap/rbac"
-	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/pool"
@@ -28,41 +25,6 @@ var (
 	initializedPosition = false
 	initializedRouter   = false
 )
-
-func runFuzzTest(t *testing.T, iterations int, fn func(*fuzz.T, *Result, int)) {
-	result := NewFuzzResult(fuzz.BASE_SEED)
-	index := 0
-
-	// Use CheckN instead of CheckWithConfig
-	fuzz.CheckN(t, iterations, func(ft *fuzz.T) {
-		index++
-
-		isAborted := false
-
-		r := revive(func() {
-			fn(ft, result, index)
-		})
-
-		if r != nil {
-			isAborted = true
-
-			abortStr := strings.TrimSpace(ufmt.Sprintf("%v", r))
-			result.AddErrorMessage(index, abortStr)
-		}
-
-		if result.IsValidState(index) == isAborted {
-			result.AddUnexpectedResult(index)
-		}
-	})
-
-	result.PrintLog(t)
-
-	if result.UnexpectedResultsCount() > 0 {
-		panic(ufmt.Sprintf("Fuzz test failed with %d unexpected results", result.UnexpectedResultsCount()))
-	} else {
-		t.Logf("\n=== RESULT: Fuzz test passed %d iterations (success: %d, errors: %d)", iterations, result.SuccessCount(), result.ErrorMessagesCount())
-	}
-}
 
 // initStates initializes the states for the fuzz test
 func initStates(t *testing.T) {
