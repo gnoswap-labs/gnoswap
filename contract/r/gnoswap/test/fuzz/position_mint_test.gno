@@ -251,7 +251,7 @@ func TestFuzzPositionMint_RandomizedParams_Stateful(t *testing.T) {
 	}
 
 	// Track minted positions
-	mintedPositions := make(map[uint64]bool)
+	var mintedPositions []uint64
 
 	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		testing.SetRealm(testing.NewUserRealm(adminAddr))

@@ -237,3 +237,27 @@ func NewRandomizedPositionMintParams(t *fuzz.T) *positionMintParams {
 		deadline:       fuzz.Int64Range(1700000000, 2000000000).Draw(t, "deadline").(int64),
 	}
 }
+
+// NewRandomizedPositionMintParamsWithFee creates randomized mint params with a specific fee tier
+func NewRandomizedPositionMintParamsWithFee(t *fuzz.T, fee uint32) *positionMintParams {
+	// Generate wider tick range (may be invalid)
+	tickLower := fuzz.Int32Range(-10000, 10000).Draw(t, "tickLower").(int32)
+	tickUpper := fuzz.Int32Range(-10000, 10000).Draw(t, "tickUpper").(int32)
+
+	// Generate wider range of amounts (may cause issues)
+	amount0 := fuzz.Int64Range(1, 1000000000).Draw(t, "amount0").(int64)
+	amount1 := fuzz.Int64Range(1, 1000000000).Draw(t, "amount1").(int64)
+
+	return &positionMintParams{
+		token0Path:     "gno.land/r/onbloc/bar",
+		token1Path:     "gno.land/r/onbloc/foo",
+		fee:            fee,
+		tickLower:      tickLower,
+		tickUpper:      tickUpper,
+		amount0Desired: ufmt.Sprintf("%d", amount0),
+		amount1Desired: ufmt.Sprintf("%d", amount1),
+		amount0Min:     "0",
+		amount1Min:     "0",
+		deadline:       fuzz.Int64Range(1700000000, 2000000000).Draw(t, "deadline").(int64),
+	}
+}
