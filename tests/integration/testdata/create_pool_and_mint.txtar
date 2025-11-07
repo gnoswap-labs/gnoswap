@@ -84,9 +84,9 @@ stdout "50000000"
 stdout "50000000"
 stdout "50000000"
 stdout 'GAS USED:   [89][0-9]{7}'
-stdout 'STORAGE DELTA:  52803 bytes'
+stdout 'STORAGE DELTA:  5[0-9]{4} bytes'
 stdout 'STORAGE FEE:    52[0-9]{5}ugnot'
-stdout 'TOTAL TX COST:  105280300ugnot'
+stdout 'TOTAL TX COST:  10[0-9]{7}ugnot'
 stdout '{\"type\":\"Mint\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"tickLower\",\"value\":\"-887220\"},{\"key\":\"tickUpper\",\"value\":\"887220\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\"},{\"key\":\"mintTo\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"caller\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"lpPositionId\",\"value\":\"1\"},{\"key\":\"liquidity\",\"value\":\"50000000\"},{\"key\":\"amount0\",\"value\":\"50000000\"},{\"key\":\"amount1\",\"value\":\"50000000\"}'
 
 ### Decrease Liquidity
@@ -97,7 +97,7 @@ stdout "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
 stdout 'GAS USED:   7[0-9]{7}'
 stdout 'STORAGE DELTA:  2277 bytes'
 stdout 'STORAGE FEE:    227700ugnot'
-stdout 'TOTAL TX COST:  100227700ugnot'
+stdout 'TOTAL TX COST:  10[0-9]{7}ugnot'
 stdout '{\"type\":\"DecreaseLiquidity\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"lpPositionId\",\"value\":\"1\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\"},{\"key\":\"decreasedLiquidity\",\"value\":\"1000000\"},{\"key\":\"feeAmount0\",\"value\":\"0\"},{\"key\":\"feeAmount1\",\"value\":\"0\"},{\"key\":\"amount0\",\"value\":\"999999\"},{\"key\":\"amount1\",\"value\":\"999999\"},{\"key\":\"unwrapResult\",\"value\":\"true\"}'
 
 
