@@ -72,20 +72,18 @@ func NewValidPoolCreateParams(t *fuzz.T) *poolCreateParams {
 	maxPrice := "1000000000000000000000000000" // 10^27
 	sqrtPriceVal := fuzz.Uint256Range(minPrice, maxPrice).Draw(t, "sqrtPrice").(*u256.Uint)
 
+	// Registered tokens only
 	tokens := []string{
 		BAR_PATH,
 		FOO_PATH,
-		BAZ_PATH,
-		"gnot",
-		"",
 	}
 
 	token0Index := fuzz.IntRange(0, len(tokens)-1).Draw(t, "token0Index").(int)
 	token1Index := fuzz.IntRange(0, len(tokens)-1).Draw(t, "token1Index").(int)
 
 	return &poolCreateParams{
-    	token0Path:   tokens[token0Index],
-    	token1Path:   tokens[token1Index],
+		token0Path:   tokens[token0Index],
+		token1Path:   tokens[token1Index],
 		fee:          fee,
 		sqrtPriceX96: sqrtPriceVal.ToString(),
 	}
