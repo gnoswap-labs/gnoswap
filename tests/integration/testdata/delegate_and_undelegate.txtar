@@ -84,3 +84,8 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func Undelegate -args
 stdout 0
 stdout 'GAS USED:   13174362'
 stdout '\[{\"type\":\"Undelegate\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"from\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"to\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"amount\",\"value\":\"0\"}\],\"pkg_path\":\"gno.land/r/gnoswap/gov/staker/v1\"}\]'
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func CollectUndelegatedGns -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+stdout 0
+stdout 'GAS USED:   13167187'
+stdout 'EVENTS:     \[\]'
