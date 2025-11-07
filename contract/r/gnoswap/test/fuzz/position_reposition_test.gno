@@ -10,7 +10,6 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 )
 
@@ -45,14 +44,6 @@ func TestFuzzPositionReposition_ValidParams_Stateless(t *testing.T) {
 		// Generate params for reposition
 		repositionParams := NewValidPositionRepositionParams(ft, tokenId, 3000)
 		fuzzResult.AddParams(index, repositionParams)
-
-		// Align ticks to spacing
-		tickSpacing := pool.GetFeeAmountTickSpacing(3000)
-		repositionParams.tickLower = (repositionParams.tickLower / tickSpacing) * tickSpacing
-		repositionParams.tickUpper = (repositionParams.tickUpper / tickSpacing) * tickSpacing
-		if repositionParams.tickLower >= repositionParams.tickUpper {
-			repositionParams.tickUpper = repositionParams.tickLower + tickSpacing
-		}
 
 		// Approve tokens
 		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/bar", poolAddr, math.MaxInt64)
@@ -122,14 +113,6 @@ func TestFuzzPositionReposition_RandomizedParams_Stateless(t *testing.T) {
 		// Generate params for reposition
 		repositionParams := NewRandomizedPositionRepositionParams(ft, tokenId)
 		fuzzResult.AddParams(index, repositionParams)
-
-		// Align ticks to spacing
-		tickSpacing := pool.GetFeeAmountTickSpacing(3000)
-		repositionParams.tickLower = (repositionParams.tickLower / tickSpacing) * tickSpacing
-		repositionParams.tickUpper = (repositionParams.tickUpper / tickSpacing) * tickSpacing
-		if repositionParams.tickLower >= repositionParams.tickUpper {
-			repositionParams.tickUpper = repositionParams.tickLower + tickSpacing
-		}
 
 		// Approve tokens
 		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/bar", poolAddr, math.MaxInt64)

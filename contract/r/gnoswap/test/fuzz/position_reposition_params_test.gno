@@ -106,13 +106,30 @@ func (p *positionRepositionParams) ToString() string {
 }
 
 func NewValidPositionRepositionParams(t *fuzz.T, existingPositionId uint64, fee uint32) *positionRepositionParams {
+	// Calculate tick spacing based on fee tier
+	var tickSpacing int32
+	switch fee {
+	case 100:
+		tickSpacing = 1
+	case 500:
+		tickSpacing = 10
+	case 3000:
+		tickSpacing = 60
+	case 10000:
+		tickSpacing = 200
+	}
+
 	// Generate new tick range (different from original)
 	tickLowerRaw := fuzz.Int32Range(-2000, -100).Draw(t, "tickLowerRaw").(int32)
 	tickUpperRaw := fuzz.Int32Range(100, 2000).Draw(t, "tickUpperRaw").(int32)
 
-	// Ensure tickLower < tickUpper
-	if tickLowerRaw >= tickUpperRaw {
-		tickUpperRaw = tickLowerRaw + 100
+	// Align to tick spacing
+	tickLower := (tickLowerRaw / tickSpacing) * tickSpacing
+	tickUpper := (tickUpperRaw / tickSpacing) * tickSpacing
+
+	// Ensure tickLower < tickUpper and at least one spacing apart
+	if tickLower >= tickUpper {
+		tickUpper = tickLower + tickSpacing
 	}
 
 	// Generate valid amounts
@@ -122,8 +139,8 @@ func NewValidPositionRepositionParams(t *fuzz.T, existingPositionId uint64, fee 
 	return &positionRepositionParams{
 		positionId:     existingPositionId,
 		fee:            fee,
-		tickLower:      tickLowerRaw,
-		tickUpper:      tickUpperRaw,
+		tickLower:      tickLower,
+		tickUpper:      tickUpper,
 		amount0Desired: ufmt.Sprintf("%d", amount0),
 		amount1Desired: ufmt.Sprintf("%d", amount1),
 		amount0Min:     "0",
