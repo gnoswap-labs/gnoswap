@@ -1,11 +1,6 @@
-package fuzz
+package fuzzutils
 
-import (
-	"testing"
-
-	_ "gno.land/r/onbloc/bar"
-	_ "gno.land/r/onbloc/foo"
-)
+import "testing"
 
 type Params interface {
 	IsValid() bool

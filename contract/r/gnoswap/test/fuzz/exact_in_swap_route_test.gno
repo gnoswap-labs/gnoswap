@@ -8,6 +8,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 
 	"gno.land/p/gnoswap/fuzz"
+	"gno.land/p/gnoswap/fuzzutils"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/pool"
@@ -23,7 +24,7 @@ func TestFuzzExactInSwapRoute_ValidParams_Stateless(t *testing.T) {
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	runFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *Result, index int) {
+	fuzzutils.RunFuzzTestWithCrossPanic(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// initialize the states for the fuzz test
 		initStates(t)
 
@@ -87,7 +88,7 @@ func TestFuzzExactInSwapRoute_RandomizedParams_Stateless(t *testing.T) {
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 
-	runFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *Result, index int) {
+	fuzzutils.RunFuzzTestWithCrossPanic(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// initialize the states for the fuzz test
 		initStates(t)
 
