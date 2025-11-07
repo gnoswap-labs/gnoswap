@@ -236,12 +236,6 @@ func verifyBalanceChanges(
 		panic(ufmt.Sprintf("Token1 balance conservation violated: admin delta %d, pool delta %d",
 			adminToken1Delta, poolToken1Delta))
 	}
-
-	// Note: We don't verify exact swap delta amounts because:
-	// 1. Swap delta represents the pool's accounting perspective
-	// 2. Actual token transfers may include fees, rounding, etc.
-	// 3. Conservation law above already ensures correctness
-	// 4. DrySwap vs Swap comparison already validates consistency
 }
 
 // verifyPoolStateChanges verifies pool state changes after swap
@@ -313,7 +307,7 @@ func addTestLiquidity(t *testing.T, token0Path, token1Path string, fee uint32, a
 	t.Helper()
 
 	// Calculate tick range based on fee tier
-	tickSpacing := getTickSpacingForFee(fee)
+	tickSpacing := pool.GetFeeAmountTickSpacing(fee)
 	tickLower := -tickSpacing * 100 // Wide range for testing
 	tickUpper := tickSpacing * 100
 
@@ -334,20 +328,4 @@ func addTestLiquidity(t *testing.T, token0Path, token1Path string, fee uint32, a
 		adminAddr, // caller
 		"",        // referrer
 	)
-}
-
-// getTickSpacingForFee returns tick spacing for a given fee tier
-func getTickSpacingForFee(fee uint32) int32 {
-	switch fee {
-	case 100:
-		return 1
-	case 500:
-		return 10
-	case 3000:
-		return 60
-	case 10000:
-		return 200
-	default:
-		panic(ufmt.Sprintf("invalid fee tier: %d", fee))
-	}
 }
