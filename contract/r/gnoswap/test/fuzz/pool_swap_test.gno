@@ -30,7 +30,7 @@ func TestFuzzPoolSwap_ValidParams_Stateless(t *testing.T) {
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
-	fuzzutils.RunFuzzTestWithCrossPanic(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given - initialize states
 		initStates(t)
 
@@ -58,7 +58,7 @@ func TestFuzzPoolSwap_RandomizedParams_Stateless(t *testing.T) {
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
-	fuzzutils.RunFuzzTestWithCrossPanic(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given - initialize states
 		initStates(t)
 

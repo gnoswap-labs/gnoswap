@@ -15,7 +15,7 @@ import (
 func TestFuzzPoolCreate_ValidParams_Stateless(t *testing.T) {
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 
-	fuzzutils.RunFuzzTestWithCrossPanic(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given - initialize states
 		initStates(t)
 
@@ -48,7 +48,7 @@ func TestFuzzPoolCreate_ValidParams_Stateless(t *testing.T) {
 func TestFuzzPoolCreate_RandomizedParams_Stateless(t *testing.T) {
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 
-	fuzzutils.RunFuzzTestWithCrossPanic(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given - initialize states
 		initStates(t)
 
