@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	prabc "gno.land/p/gnoswap/rbac"
+	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/pool"
@@ -14,8 +15,19 @@ import (
 	position_v1 "gno.land/r/gnoswap/position/v1"
 	router_v1 "gno.land/r/gnoswap/router/v1"
 
-	_ "gno.land/r/onbloc/bar"
-	_ "gno.land/r/onbloc/foo"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
+	"gno.land/r/onbloc/foo"
+	"gno.land/r/onbloc/obl"
+	"gno.land/r/onbloc/qux"
+)
+
+const (
+	MIN_SQRT_RATIO = "4295128740"
+	MAX_SQRT_RATIO = "1461446703485210103287273052203988822378723970341"
+
+	MIN_TICK = int32(-887272)
+	MAX_TICK = int32(887272)
 )
 
 var (
@@ -26,8 +38,43 @@ var (
 	initializedRouter   = false
 )
 
+var (
+	minPriceUint256 = u256.MustFromDecimal(MIN_SQRT_RATIO)
+	maxPriceUint256 = u256.MustFromDecimal(MAX_SQRT_RATIO)
+
+	barPath = "gno.land/r/onbloc/bar"
+	bazPath = "gno.land/r/onbloc/baz"
+	fooPath = "gno.land/r/onbloc/foo"
+	quxPath = "gno.land/r/onbloc/qux"
+	oblPath = "gno.land/r/onbloc/obl"
+
+	defaultTokenPaths = map[string]bool{
+		barPath: true,
+		bazPath: true,
+		fooPath: true,
+		oblPath: true,
+		quxPath: true,
+	}
+
+	defaultFeeTiers = []uint32{
+		100,
+		500,
+		3000,
+		10000,
+	}
+
+	defaultTickSpacings = map[uint32]int32{
+		100:   1,
+		500:   10,
+		3000:  60,
+		10000: 200,
+	}
+)
+
 // initStates initializes the states for the fuzz test
 func initStates(t *testing.T) {
+	burnTestTokens(t)
+
 	initPoolState(t)
 	initPositionState(t)
 	initRouterState(t)
@@ -48,6 +95,7 @@ func initPoolState(t *testing.T) {
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	pool.UpgradeImpl(cross, mockPoolPath)
+	pool.SetPoolCreationFee(cross, 0)
 }
 
 func initPositionState(t *testing.T) {
@@ -82,4 +130,44 @@ func initRouterState(t *testing.T) {
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	router.UpgradeImpl(cross, mockRouterPath)
+}
+
+func mintTestToken(tokenPath string, amount int64) {
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+	switch tokenPath {
+	case barPath:
+		bar.Mint(cross, adminAddr, amount)
+	case bazPath:
+		baz.Mint(cross, adminAddr, amount)
+	case fooPath:
+		foo.Mint(cross, adminAddr, amount)
+	case quxPath:
+		qux.Mint(cross, adminAddr, amount)
+	case oblPath:
+		obl.Mint(cross, adminAddr, amount)
+	default:
+		return
+	}
+}
+
+func burnTestTokens(t *testing.T) {
+	t.Helper()
+
+	poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
+	positionAddr := access.MustGetAddress(prabc.ROLE_POSITION.String())
+	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	stakerAddr := access.MustGetAddress(prabc.ROLE_STAKER.String())
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+	addrs := []address{adminAddr, poolAddr, positionAddr, protocolFeeAddr, stakerAddr}
+
+	for _, addr := range addrs {
+		bar.Burn(cross, addr, bar.BalanceOf(addr))
+		baz.Burn(cross, addr, baz.BalanceOf(addr))
+		foo.Burn(cross, addr, foo.BalanceOf(addr))
+		qux.Burn(cross, addr, qux.BalanceOf(addr))
+		obl.Burn(cross, addr, obl.BalanceOf(addr))
+	}
 }
