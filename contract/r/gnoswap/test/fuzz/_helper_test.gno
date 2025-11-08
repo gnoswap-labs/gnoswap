@@ -18,6 +18,12 @@ import (
 	_ "gno.land/r/onbloc/foo"
 )
 
+const (
+    // Sqrt price ratio limits
+	MIN_SQRT_RATIO = "4295128739"
+	MAX_SQRT_RATIO = "1461446703485210103287273052203988822378723970342"
+)
+
 var (
 	adminAddr = access.MustGetAddress(prabc.ROLE_ADMIN.String())
 
