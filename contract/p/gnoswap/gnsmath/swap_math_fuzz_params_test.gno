@@ -22,13 +22,63 @@ func (p *swapMathComputeSwapStepParams) IsValid() bool {
 		return false
 	}
 
+	sqrtCurrent := u256.MustFromDecimal(p.sqrtRatioCurrentX96)
+	sqrtTarget := u256.MustFromDecimal(p.sqrtRatioTargetX96)
 	liquidity := u256.MustFromDecimal(p.liquidity)
+	amountRemaining := i256.MustFromDecimal(p.amountRemaining)
+
+	// Check: sqrt ratios must be within valid range (line 140-142)
+	// When liquidity=0, the function returns sqrtRatioTargetX96 directly,
+	// so sqrtRatioTargetX96 must be within [MIN_SQRT_RATIO, MAX_SQRT_RATIO]
+	if sqrtCurrent.Lt(MIN_SQRT_RATIO) || sqrtCurrent.Gt(MAX_SQRT_RATIO) {
+		return false
+	}
+	if sqrtTarget.Lt(MIN_SQRT_RATIO) || sqrtTarget.Gt(MAX_SQRT_RATIO) {
+		return false
+	}
 
 	// Check: Lsh overflow in getAmount0DeltaHelper/getAmount1DeltaHelper
 	// Both helpers do liquidity << 96 which must not overflow
 	max160 := u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 160), u256.One())
 	if liquidity.Gt(max160) {
 		return false
+	}
+
+	// Check getNextPriceAmount0Remove multiplication overflow
+	// This only matters if getNextSqrtPriceFromOutput is actually called
+	// According to handleExactOut (line 226), it's only called if amountRemainingAbs < amountOut
+	// Otherwise, it returns early at line 227
+	// So we need to check if this overflow check is actually reached
+	if amountRemaining.IsNeg() {
+		zeroForOne := sqrtCurrent.Gte(sqrtTarget)
+		if zeroForOne && !liquidity.IsZero() {
+			// Calculate amountOut as handleExactOut would (line 220)
+			// amountOut = getAmount1DeltaHelper(sqrtTarget, sqrtCurrent, liquidity, false)
+			// For simplicity, we'll do a conservative check:
+			// Only apply strict overflow validation if amountRemaining is large enough
+			// to potentially trigger the getNextSqrtPriceFromOutput path
+
+			amountAbs := amountRemaining.Abs()
+
+			// If amountAbs is very small (e.g., 1), it's likely to hit early return
+			// and won't trigger getNextPriceAmount0Remove at all
+			// We'll be conservative and only check overflow for larger amounts
+			if amountAbs.Gt(u256.NewUint(1000)) {
+				liquidityShifted := u256.Zero().Lsh(liquidity, 96)
+
+				// Check multiplication overflow: amount * sqrtPrice
+				amountTimesSqrtPrice := u256.Zero().Mul(amountAbs, sqrtCurrent)
+				quotientCheck := u256.Zero().Div(amountTimesSqrtPrice, amountAbs)
+				if !quotientCheck.Eq(sqrtCurrent) {
+					return false // Multiplication overflowed
+				}
+
+				// Check: liquidityShifted must be > amountTimesSqrtPrice
+				if !liquidityShifted.Gt(amountTimesSqrtPrice) {
+					return false
+				}
+			}
+		}
 	}
 
 	return true

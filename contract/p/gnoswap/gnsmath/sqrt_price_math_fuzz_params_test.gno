@@ -206,12 +206,20 @@ type nextPriceAmount0AddParams struct {
 }
 
 func (p *nextPriceAmount0AddParams) IsValid() bool {
+	currentSqrt := u256.MustFromDecimal(p.currentSqrtPriceX96)
 	liquidity := u256.MustFromDecimal(p.liquidity)
+	amount := u256.MustFromDecimal(p.amountToAdd)
 
-	// Check: Lsh overflow - liquidity << 96 must not overflow (line 29)
 	max160 := u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 160), u256.One())
 	if liquidity.Gt(max160) {
 		return false
+	}
+
+	if amount.IsZero() {
+		liquidityShifted := u256.Zero().Lsh(liquidity, 96)
+		if liquidityShifted.Lte(currentSqrt) {
+			return false
+		}
 	}
 
 	return true
@@ -279,9 +287,9 @@ func (p *nextPriceAmount0RemoveParams) IsValid() bool {
 		return false
 	}
 
-	// Check for zero to avoid division by zero
+	// Check: amountToRemove cannot be zero (line 63: division by zero in quotientCheck)
 	if amount.IsZero() {
-		return true
+		return false
 	}
 
 	// Check: liquidityShifted > amountTimesSqrtPrice (line 64)
@@ -353,16 +361,17 @@ func (p *nextPriceAmount1AddParams) IsValid() bool {
 	amount := u256.MustFromDecimal(p.amount)
 	liquidity := u256.MustFromDecimal(p.liquidity)
 
-	// Check: Lsh overflow when amount <= max160 (line 102)
 	max160 := u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 160), u256.One())
-	if amount.Lte(max160) {
-		// Will do: shifted = amount << 96
-		// This is safe because amount <= max160, so amount << 96 <= max256
-	}
+	if !amount.Lte(max160) {
+		if !liquidity.IsZero() {
+			q96 := u256.Zero().Lsh(u256.One(), Q96_RESOLUTION)
+			max256 := u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 256), u256.One())
+			maxAmount := u256.Zero().Div(max256, q96)
 
-	// Check: division by zero
-	if liquidity.IsZero() {
-		return false
+			if amount.Gt(maxAmount) {
+				return false
+			}
+		}
 	}
 
 	return true
