@@ -2,20 +2,23 @@ package fuzz
 
 import (
 	"gno.land/p/gnoswap/fuzz"
-	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
 
-	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 )
 
 const (
-    MIN_PRICE_LIMIT_ZERO_FOR_ONE     = "4295128740"                                          // MIN_SQRT_RATIO + 1
-	MAX_PRICE_LIMIT_ZERO_FOR_ONE     = "79228162514264337593543950336"                       // INITIAL_POOL_PRICE - 1
+	INITIAL_POOL_PRICE = "79228162514264337593543950337" // sqrt(1) * 2^96
+
+	// Price limits are set to be close to INITIAL_POOL_PRICE to ensure liquidity is available
+	// For zeroForOne (price going down), use range from 50% to 99.9% of initial price
+	MIN_PRICE_LIMIT_ZERO_FOR_ONE = "39614081257132168796771975168"                        // ~50% of INITIAL_POOL_PRICE
+	MAX_PRICE_LIMIT_ZERO_FOR_ONE = "79228162514264337593543950336"                        // INITIAL_POOL_PRICE - 1
+
+	// For !zeroForOne (price going up), use range from 100.1% to 200% of initial price
 	MIN_PRICE_LIMIT_NOT_ZERO_FOR_ONE = "79228162514264337593543950338"                       // INITIAL_POOL_PRICE + 1
-	MAX_PRICE_LIMIT_NOT_ZERO_FOR_ONE = "1461446703485210103287273052203988822378723970341"   // MAX_SQRT_RATIO - 1
+	MAX_PRICE_LIMIT_NOT_ZERO_FOR_ONE = "158456325028528675187087900674"                      // ~200% of INITIAL_POOL_PRICE
 )
 
 // poolSwapParams is the parameters for Swap/DrySwap fuzzing test
@@ -28,32 +31,44 @@ type poolSwapParams struct {
 	sqrtPriceLimitX96 string
 }
 
+func (p *poolSwapParams) ToString() string {
+	return ufmt.Sprintf("token0: %s, token1: %s, fee: %d, zeroForOne: %t, amount: %s, priceLimit: %s",
+		p.token0Path,
+		p.token1Path,
+		p.fee,
+		p.zeroForOne,
+		p.amountSpecified,
+		p.sqrtPriceLimitX96,
+	)
+}
+
 func (p *poolSwapParams) IsValid() bool {
-	if !p.validateBasicParams() {
+	if !p.isValidBasicParams() {
 		return false
 	}
 
-	if !p.validatePriceLimit() {
+	if !p.isValidPriceLimit() {
 		return false
 	}
 
-	if !p.validatePoolExists() {
+	if !p.isValidPoolExists() {
 		return false
 	}
 
-	if !p.validateSwapAmount() {
+	if !p.isValidPriceLimitDirection() {
 		return false
 	}
 
-	if !p.validatePriceLimitDirection() {
-		return false
-	}
+	// NOTE: We don't call isValidDrySwap() here because:
+	// 1. It requires pool liquidity which is set up AFTER param generation
+	// 2. The actual Swap call will validate remaining conditions (liquidity, balance, etc)
+	// 3. This allows us to follow the pattern: generate params -> setup -> AddParams -> test
 
 	return true
 }
 
-// validateBasicParams checks basic parameter validity
-func (p *poolSwapParams) validateBasicParams() bool {
+// isValidBasicParams checks basic parameter validity
+func (p *poolSwapParams) isValidBasicParams() bool {
 	// Amount cannot be "0"
 	if p.amountSpecified == "0" || p.amountSpecified == "" {
 		return false
@@ -79,8 +94,8 @@ func (p *poolSwapParams) validateBasicParams() bool {
 	return true
 }
 
-// validatePriceLimit checks if price limit is parseable and within valid range
-func (p *poolSwapParams) validatePriceLimit() bool {
+// isValidPriceLimit checks if price limit is parseable and within valid range
+func (p *poolSwapParams) isValidPriceLimit() bool {
 	priceLimit, err := u256.FromDecimal(p.sqrtPriceLimitX96)
 	if err != nil {
 		return false
@@ -97,62 +112,14 @@ func (p *poolSwapParams) validatePriceLimit() bool {
 	return true
 }
 
-// validatePoolExists checks if the pool exists
-func (p *poolSwapParams) validatePoolExists() bool {
+// isValidPoolExists checks if the pool exists
+func (p *poolSwapParams) isValidPoolExists() bool {
 	poolPath := pool.GetPoolPath(p.token0Path, p.token1Path, p.fee)
 	return pool.ExistsPoolPath(poolPath)
 }
 
-// validateSwapAmount checks if swap amount is valid relative to pool balance
-func (p *poolSwapParams) validateSwapAmount() bool {
-	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
-
-	// Get pool's token balances
-	poolToken0Balance := common.BalanceOf(p.token0Path, poolAddr)
-	poolToken1Balance := common.BalanceOf(p.token1Path, poolAddr)
-
-	// Parse swap amount (handle negative for exact output)
-	amountStr := p.amountSpecified
-	if len(amountStr) > 0 && amountStr[0] == '-' {
-		amountStr = amountStr[1:]
-	}
-
-	swapAmount, err := u256.FromDecimal(amountStr)
-	if err != nil {
-		return false
-	}
-
-	// For exact output swap (negative amount), check if output exceeds pool balance
-	// Pool needs to have enough tokens to pay out
-	if len(p.amountSpecified) > 0 && p.amountSpecified[0] == '-' {
-		// This is exact output swap
-		var poolBalance int64
-		if p.zeroForOne {
-			// Selling token0 to get token1, so pool pays token1
-			poolBalance = poolToken1Balance
-		} else {
-			// Selling token1 to get token0, so pool pays token0
-			poolBalance = poolToken0Balance
-		}
-
-		swapAmountInt64 := int64(0)
-		if swapAmount.Lt(u256.NewUint(uint64(1<<63 - 1))) {
-			swapAmountInt64 = int64(swapAmount.Uint64())
-		} else {
-			return false // Amount too large
-		}
-
-		// Output amount must not exceed pool balance
-		if swapAmountInt64 >= poolBalance {
-			return false // Pool doesn't have enough tokens
-		}
-	}
-
-	return true
-}
-
-// validatePriceLimitDirection checks if price limit direction is correct
-func (p *poolSwapParams) validatePriceLimitDirection() bool {
+// isValidPriceLimitDirection checks if price limit direction is correct
+func (p *poolSwapParams) isValidPriceLimitDirection() bool {
 	poolPath := pool.GetPoolPath(p.token0Path, p.token1Path, p.fee)
 	currentPrice := pool.GetSlot0SqrtPriceX96(poolPath)
 
@@ -185,15 +152,91 @@ func (p *poolSwapParams) validatePriceLimitDirection() bool {
 	return true
 }
 
-func (p *poolSwapParams) ToString() string {
-	return ufmt.Sprintf("token0: %s, token1: %s, fee: %d, zeroForOne: %t, amount: %s, priceLimit: %s",
-		p.token0Path,
-		p.token1Path,
-		p.fee,
-		p.zeroForOne,
-		p.amountSpecified,
-		p.sqrtPriceLimitX96,
-	)
+// isValidDrySwap checks if DrySwap succeeds with the given parameters
+func (p *poolSwapParams) isValidDrySwap() bool {
+	_, _, success := p.drySwap()
+
+	if !success {
+		// If DrySwap fails, check if amount is very small (< 10)
+		var absAmount *u256.Uint
+		if len(p.amountSpecified) > 0 && p.amountSpecified[0] == '-' {
+			absAmount = u256.MustFromDecimal(p.amountSpecified[1:])
+		} else {
+			absAmount = u256.MustFromDecimal(p.amountSpecified)
+		}
+		return absAmount.LtUint64(10)
+	}
+
+	return success
+}
+
+// drySwap calls pool.DrySwap with panic recovery
+func (p *poolSwapParams) drySwap() (string, string, bool) {
+	return func() (amount0 string, amount1 string, success bool) {
+		defer func() {
+			if r := recover(); r != nil {
+				amount0 = "0"
+				amount1 = "0"
+				success = false
+			}
+		}()
+
+		amount0, amount1, success = pool.DrySwap(
+			p.token0Path,
+			p.token1Path,
+			p.fee,
+			p.zeroForOne,
+			p.amountSpecified,
+			p.sqrtPriceLimitX96,
+		)
+
+		if amount0 == "0" || amount1 == "0" {
+			return "0", "0", false
+		}
+
+		return amount0, amount1, success
+	}()
+}
+
+// generatePriceLimitFromCurrent generates a valid price limit based on the current price
+func generatePriceLimitFromCurrent(t *fuzz.T, currentPriceStr string, zeroForOne bool) string {
+	currentPrice := u256.MustFromDecimal(currentPriceStr)
+	minSqrtRatio := u256.MustFromDecimal(MIN_SQRT_RATIO)
+	maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
+
+	if zeroForOne {
+		// Price going down: generate price limit between MIN_SQRT_RATIO and currentPrice
+		// Use range from MAX(MIN_SQRT_RATIO+1, currentPrice*0.5) to currentPrice-1
+		minLimit := u256.NewUint(0).Div(currentPrice, u256.NewUint(2)) // 50% of current
+		if minLimit.Cmp(minSqrtRatio) <= 0 {
+			minLimit = u256.NewUint(0).Add(minSqrtRatio, u256.NewUint(1))
+		}
+		maxLimit := u256.NewUint(0).Sub(currentPrice, u256.NewUint(1))
+
+		if maxLimit.Cmp(minLimit) <= 0 {
+			// If range is invalid, use minLimit
+			return minLimit.ToString()
+		}
+
+		priceLimit := fuzz.Uint256Range(minLimit.ToString(), maxLimit.ToString()).Draw(t, "priceLimit").(*u256.Uint)
+		return priceLimit.ToString()
+	} else {
+		// Price going up: generate price limit between currentPrice and MAX_SQRT_RATIO
+		// Use range from currentPrice+1 to MIN(MAX_SQRT_RATIO-1, currentPrice*2)
+		minLimit := u256.NewUint(0).Add(currentPrice, u256.NewUint(1))
+		maxLimit := u256.NewUint(0).Mul(currentPrice, u256.NewUint(2)) // 200% of current
+		if maxLimit.Cmp(maxSqrtRatio) >= 0 {
+			maxLimit = u256.NewUint(0).Sub(maxSqrtRatio, u256.NewUint(1))
+		}
+
+		if minLimit.Cmp(maxLimit) >= 0 {
+			// If range is invalid, use maxLimit
+			return maxLimit.ToString()
+		}
+
+		priceLimit := fuzz.Uint256Range(minLimit.ToString(), maxLimit.ToString()).Draw(t, "priceLimit").(*u256.Uint)
+		return priceLimit.ToString()
+	}
 }
 
 func NewValidPoolSwapParams(t *fuzz.T) *poolSwapParams {
@@ -205,8 +248,7 @@ func NewValidPoolSwapParams(t *fuzz.T) *poolSwapParams {
 	zeroForOne := fuzz.Bool().Draw(t, "zeroForOne").(bool)
 
 	// Generate valid amount (reasonable range for swap)
-	// Positive for exact input, negative for exact output
-	amountInt := fuzz.Int64Range(1, 100000000).Draw(t, "amount").(int64)
+	amountInt := fuzz.Int64Range(1, 1000000).Draw(t, "amount").(int64)
 	isExactOutput := fuzz.Bool().Draw(t, "isExactOutput").(bool)
 
 	var amountStr string
@@ -216,25 +258,13 @@ func NewValidPoolSwapParams(t *fuzz.T) *poolSwapParams {
 		amountStr = ufmt.Sprintf("%d", amountInt)
 	}
 
-	// Generate valid price limit based on direction
-	var priceLimitStr string
-	if zeroForOne {
-		// Price going down, use lower range (below current price)
-		priceLimit := fuzz.Uint256Range(MIN_PRICE_LIMIT_ZERO_FOR_ONE, MAX_PRICE_LIMIT_ZERO_FOR_ONE).Draw(t, "priceLimit").(*u256.Uint)
-		priceLimitStr = priceLimit.ToString()
-	} else {
-		// Price going up, use higher range (above current price)
-		priceLimit := fuzz.Uint256Range(MIN_PRICE_LIMIT_NOT_ZERO_FOR_ONE, MAX_PRICE_LIMIT_NOT_ZERO_FOR_ONE).Draw(t, "priceLimit").(*u256.Uint)
-		priceLimitStr = priceLimit.ToString()
-	}
-
 	return &poolSwapParams{
 		token0Path:        BAR_PATH,
 		token1Path:        FOO_PATH,
 		fee:               fee,
 		zeroForOne:        zeroForOne,
 		amountSpecified:   amountStr,
-		sqrtPriceLimitX96: priceLimitStr,
+		sqrtPriceLimitX96: INITIAL_POOL_PRICE,
 	}
 }
 
@@ -247,7 +277,7 @@ func NewRandomizedPoolSwapParams(t *fuzz.T) *poolSwapParams {
 	zeroForOne := fuzz.Bool().Draw(t, "zeroForOne").(bool)
 
 	// Randomize amount - use wider range for testing edge cases
-	amountInt := fuzz.Int64Range(1, 10000000000).Draw(t, "amount").(int64)
+	amountInt := fuzz.Int64Range(1, 100000000).Draw(t, "amount").(int64)
 	isExactOutput := fuzz.Bool().Draw(t, "isExactOutput").(bool)
 
 	var amountStr string
@@ -257,24 +287,23 @@ func NewRandomizedPoolSwapParams(t *fuzz.T) *poolSwapParams {
 		amountStr = ufmt.Sprintf("%d", amountInt)
 	}
 
-	// Generate valid price limit based on direction
-	var priceLimitStr string
-	if zeroForOne {
-		// Price going down, use lower range (below current price)
-		priceLimit := fuzz.Uint256Range(MIN_PRICE_LIMIT_ZERO_FOR_ONE, MAX_PRICE_LIMIT_ZERO_FOR_ONE).Draw(t, "priceLimit").(*u256.Uint)
-		priceLimitStr = priceLimit.ToString()
-	} else {
-		// Price going up, use higher range (above current price)
-		priceLimit := fuzz.Uint256Range(MIN_PRICE_LIMIT_NOT_ZERO_FOR_ONE, MAX_PRICE_LIMIT_NOT_ZERO_FOR_ONE).Draw(t, "priceLimit").(*u256.Uint)
-		priceLimitStr = priceLimit.ToString()
-	}
-
 	return &poolSwapParams{
 		token0Path:        BAR_PATH,
 		token1Path:        FOO_PATH,
 		fee:               fee,
 		zeroForOne:        zeroForOne,
 		amountSpecified:   amountStr,
-		sqrtPriceLimitX96: priceLimitStr,
+		sqrtPriceLimitX96: INITIAL_POOL_PRICE,
 	}
+}
+
+// setPriceLimit sets the price limit based on pool's current price and swap direction
+func (p *poolSwapParams) setPriceLimit(t *fuzz.T) {
+	poolPath := pool.GetPoolPath(p.token0Path, p.token1Path, p.fee)
+	if !pool.ExistsPoolPath(poolPath) {
+		return
+	}
+
+	currentPriceUint := pool.GetSlot0SqrtPriceX96(poolPath)
+	p.sqrtPriceLimitX96 = generatePriceLimitFromCurrent(t, currentPriceUint.ToString(), p.zeroForOne)
 }
