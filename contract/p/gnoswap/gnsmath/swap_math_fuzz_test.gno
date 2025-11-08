@@ -24,13 +24,7 @@ func TestFuzzSwapMathComputeSwapStep_ValidParams_Stateless(t *testing.T) {
 		liquidity := u256.MustFromDecimal(params.liquidity)
 		amountRemaining := i256.MustFromDecimal(params.amountRemaining)
 
-		SwapMathComputeSwapStep(
-			sqrtCurrent,
-			sqrtTarget,
-			liquidity,
-			amountRemaining,
-			params.feePips,
-		)
+		SwapMathComputeSwapStep(sqrtCurrent, sqrtTarget, liquidity, amountRemaining, params.feePips)
 	})
 }
 
@@ -49,12 +43,6 @@ func TestFuzzSwapMathComputeSwapStep_RandomizedParams_Stateless(t *testing.T) {
 		liquidity := u256.MustFromDecimal(params.liquidity)
 		amountRemaining := i256.MustFromDecimal(params.amountRemaining)
 
-		SwapMathComputeSwapStep(
-			sqrtCurrent,
-			sqrtTarget,
-			liquidity,
-			amountRemaining,
-			params.feePips,
-		)
+		SwapMathComputeSwapStep(sqrtCurrent, sqrtTarget, liquidity, amountRemaining, params.feePips)
 	})
 }

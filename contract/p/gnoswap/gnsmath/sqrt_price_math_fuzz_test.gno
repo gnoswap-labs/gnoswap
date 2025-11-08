@@ -25,7 +25,7 @@ func TestFuzzGetAmount0Delta_ValidParams_Stateless(t *testing.T) {
 		sqrtB := u256.MustFromDecimal(params.sqrtRatioBX96)
 		liquidity := i256.MustFromDecimal(params.liquidity)
 
-		_ = GetAmount0Delta(sqrtA, sqrtB, liquidity)
+		GetAmount0Delta(sqrtA, sqrtB, liquidity)
 	})
 }
 
@@ -43,7 +43,7 @@ func TestFuzzGetAmount0Delta_RandomizedParams_Stateless(t *testing.T) {
 		sqrtB := u256.MustFromDecimal(params.sqrtRatioBX96)
 		liquidity := i256.MustFromDecimal(params.liquidity)
 
-		_ = GetAmount0Delta(sqrtA, sqrtB, liquidity)
+		GetAmount0Delta(sqrtA, sqrtB, liquidity)
 	})
 }
 
@@ -61,7 +61,7 @@ func TestFuzzGetAmount1Delta_ValidParams_Stateless(t *testing.T) {
 		sqrtB := u256.MustFromDecimal(params.sqrtRatioBX96)
 		liquidity := i256.MustFromDecimal(params.liquidity)
 
-		_ = GetAmount1Delta(sqrtA, sqrtB, liquidity)
+		GetAmount1Delta(sqrtA, sqrtB, liquidity)
 	})
 }
 
@@ -79,7 +79,7 @@ func TestFuzzGetAmount1Delta_RandomizedParams_Stateless(t *testing.T) {
 		sqrtB := u256.MustFromDecimal(params.sqrtRatioBX96)
 		liquidity := i256.MustFromDecimal(params.liquidity)
 
-		_ = GetAmount1Delta(sqrtA, sqrtB, liquidity)
+		GetAmount1Delta(sqrtA, sqrtB, liquidity)
 	})
 }
 
@@ -97,7 +97,7 @@ func TestFuzzGetNextPriceAmount0Add_ValidParams_Stateless(t *testing.T) {
 		liquidity := u256.MustFromDecimal(params.liquidity)
 		amount := u256.MustFromDecimal(params.amountToAdd)
 
-		_ = getNextPriceAmount0Add(sqrtPrice, liquidity, amount)
+		getNextPriceAmount0Add(sqrtPrice, liquidity, amount)
 	})
 }
 
@@ -115,7 +115,7 @@ func TestFuzzGetNextPriceAmount0Add_RandomizedParams_Stateless(t *testing.T) {
 		liquidity := u256.MustFromDecimal(params.liquidity)
 		amount := u256.MustFromDecimal(params.amountToAdd)
 
-		_ = getNextPriceAmount0Add(sqrtPrice, liquidity, amount)
+		getNextPriceAmount0Add(sqrtPrice, liquidity, amount)
 	})
 }
 
@@ -133,7 +133,7 @@ func TestFuzzGetNextPriceAmount0Remove_RandomizedParams_Stateless(t *testing.T) 
 		liquidity := u256.MustFromDecimal(params.liquidity)
 		amount := u256.MustFromDecimal(params.amountToRemove)
 
-		_ = getNextPriceAmount0Remove(sqrtPrice, liquidity, amount)
+		getNextPriceAmount0Remove(sqrtPrice, liquidity, amount)
 	})
 }
 
@@ -151,7 +151,7 @@ func TestFuzzGetNextPriceAmount1Add_RandomizedParams_Stateless(t *testing.T) {
 		liquidity := u256.MustFromDecimal(params.liquidity)
 		amount := u256.MustFromDecimal(params.amount)
 
-		_ = getNextPriceAmount1Add(sqrtPrice, liquidity, amount)
+		getNextPriceAmount1Add(sqrtPrice, liquidity, amount)
 	})
 }
 
@@ -169,7 +169,7 @@ func TestFuzzGetNextPriceAmount1Remove_RandomizedParams_Stateless(t *testing.T) 
 		liquidity := u256.MustFromDecimal(params.liquidity)
 		amount := u256.MustFromDecimal(params.amount)
 
-		_ = getNextPriceAmount1Remove(sqrtPrice, liquidity, amount)
+		getNextPriceAmount1Remove(sqrtPrice, liquidity, amount)
 	})
 }
 
@@ -187,7 +187,7 @@ func TestFuzzGetAmount0DeltaHelper_RandomizedParams_Stateless(t *testing.T) {
 		sqrtB := u256.MustFromDecimal(params.sqrtRatioBX96)
 		liquidity := u256.MustFromDecimal(params.liquidity)
 
-		_ = getAmount0DeltaHelper(sqrtA, sqrtB, liquidity, params.roundUp)
+		getAmount0DeltaHelper(sqrtA, sqrtB, liquidity, params.roundUp)
 	})
 }
 
@@ -205,6 +205,6 @@ func TestFuzzGetAmount1DeltaHelper_RandomizedParams_Stateless(t *testing.T) {
 		sqrtB := u256.MustFromDecimal(params.sqrtRatioBX96)
 		liquidity := u256.MustFromDecimal(params.liquidity)
 
-		_ = getAmount1DeltaHelper(sqrtA, sqrtB, liquidity, params.roundUp)
+		getAmount1DeltaHelper(sqrtA, sqrtB, liquidity, params.roundUp)
 	})
 }
