@@ -1,6 +1,9 @@
 package fuzz
 
 import (
+	"math"
+	"time"
+
 	"gno.land/p/gnoswap/fuzz"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
@@ -32,6 +35,18 @@ func (p *positionIncreaseLiquidityParams) IsValid() bool {
 		return false
 	}
 
+	// Both amounts must be non-zero to avoid zero liquidity issues
+	if amount0.IsZero() || amount1.IsZero() {
+		return false
+	}
+
+	// Prevent token mint overflow in stateful tests
+	// Similar to position mint, limit amounts to prevent cumulative overflow
+	maxSafeAmount := u256.NewUint(uint64(math.MaxInt64 / 1000))
+	if amount0.Gt(maxSafeAmount) || amount1.Gt(maxSafeAmount) {
+		return false
+	}
+
 	// Min amounts must be parseable and non-negative
 	amount0Min, err0Min := u256.FromDecimal(p.amount0Min)
 	amount1Min, err1Min := u256.FromDecimal(p.amount1Min)
@@ -42,8 +57,13 @@ func (p *positionIncreaseLiquidityParams) IsValid() bool {
 		return false
 	}
 
-	// Deadline must be positive
-	if p.deadline <= 0 {
+	// Min amounts must not exceed desired amounts
+	if amount0Min.Gt(amount0) || amount1Min.Gt(amount1) {
+		return false
+	}
+
+	// Deadline must be in the future
+	if p.deadline < time.Now().Unix() {
 		return false
 	}
 
@@ -74,9 +94,12 @@ func NewValidPositionIncreaseLiquidityParams(t *fuzz.T, existingPositionId uint6
 }
 
 func NewRandomizedPositionIncreaseLiquidityParams(t *fuzz.T, existingPositionId uint64) *positionIncreaseLiquidityParams {
-	// Generate wider range of amounts
-	amount0 := fuzz.Int64Range(1, 1000000000).Draw(t, "amount0").(int64)
-	amount1 := fuzz.Int64Range(1, 1000000000).Draw(t, "amount1").(int64)
+	// Generate randomized amounts - full range to test edge cases
+	amount0 := fuzz.Int64Range(math.MinInt64, math.MaxInt64).Draw(t, "amount0").(int64)
+	amount1 := fuzz.Int64Range(math.MinInt64, math.MaxInt64).Draw(t, "amount1").(int64)
+
+	// Randomized deadline - can be past, present, or future
+	deadline := fuzz.Int64Range(0, math.MaxInt64).Draw(t, "deadline").(int64)
 
 	return &positionIncreaseLiquidityParams{
 		positionId:     existingPositionId,
@@ -84,6 +107,6 @@ func NewRandomizedPositionIncreaseLiquidityParams(t *fuzz.T, existingPositionId 
 		amount1Desired: ufmt.Sprintf("%d", amount1),
 		amount0Min:     "0",
 		amount1Min:     "0",
-		deadline:       fuzz.Int64Range(1700000000, 2000000000).Draw(t, "deadline").(int64),
+		deadline:       deadline,
 	}
 }

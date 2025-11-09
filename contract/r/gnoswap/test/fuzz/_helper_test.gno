@@ -1,6 +1,8 @@
 package fuzz
 
 import (
+	"math"
+	"strings"
 	"testing"
 
 	prabc "gno.land/p/gnoswap/rbac"
@@ -35,6 +37,8 @@ const (
 	BAR_PATH = "gno.land/r/onbloc/bar"
 	FOO_PATH = "gno.land/r/onbloc/foo"
 	BAZ_PATH = "gno.land/r/onbloc/baz"
+
+	MAX_TEST_MINT_AMOUNT = math.MaxInt64 / 1000
 )
 
 var (
@@ -144,6 +148,10 @@ func initRouterState(t *testing.T) {
 }
 
 func mintTestToken(tokenPath string, amount int64) {
+	if amount > MAX_TEST_MINT_AMOUNT {
+		panic("mint amount exceeds fuzz test limit")
+	}
+
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	switch tokenPath {
@@ -181,4 +189,19 @@ func burnTestTokens(t *testing.T) {
 		qux.Burn(cross, addr, qux.BalanceOf(addr))
 		obl.Burn(cross, addr, obl.BalanceOf(addr))
 	}
+}
+
+// getTokenPathsFromPosition extracts token0Path and token1Path from a position's pool key
+func getTokenPathsFromPosition(tokenId uint64) (string, string) {
+	poolKey := position.GetPositionPoolKey(tokenId)
+	return parsePoolKey(poolKey)
+}
+
+// parsePoolKey parses a pool key string (format: "token0:token1:fee") and returns token0, token1
+func parsePoolKey(poolKey string) (string, string) {
+	parts := strings.Split(poolKey, ":")
+	if len(parts) != 3 {
+		panic("invalid pool key format")
+	}
+	return parts[0], parts[1]
 }

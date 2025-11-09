@@ -1,6 +1,8 @@
 package fuzz
 
 import (
+	"math"
+
 	"gno.land/p/gnoswap/fuzz"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
@@ -76,9 +78,14 @@ func (p *positionRepositionParams) IsValid() bool {
 		return false
 	}
 
-	// At least one amount must be meaningful (> 1000 to avoid dust)
-	minAmount := u256.NewUint(1000)
-	if amount0.Lt(minAmount) && amount1.Lt(minAmount) {
+	// Both amounts must be non-zero to avoid zero liquidity issues
+	if amount0.IsZero() || amount1.IsZero() {
+		return false
+	}
+
+	// Prevent token mint overflow in stateful tests
+	maxSafeAmount := u256.NewUint(uint64(math.MaxInt64 / 1000))
+	if amount0.Gt(maxSafeAmount) || amount1.Gt(maxSafeAmount) {
 		return false
 	}
 
@@ -89,6 +96,11 @@ func (p *positionRepositionParams) IsValid() bool {
 		return false
 	}
 	if amount0Min.Lt(u256.Zero()) || amount1Min.Lt(u256.Zero()) {
+		return false
+	}
+
+	// Min amounts must not exceed desired amounts
+	if amount0Min.Gt(amount0) || amount1Min.Gt(amount1) {
 		return false
 	}
 
@@ -149,16 +161,16 @@ func NewValidPositionRepositionParams(t *fuzz.T, existingPositionId uint64, fee 
 }
 
 func NewRandomizedPositionRepositionParams(t *fuzz.T, existingPositionId uint64) *positionRepositionParams {
-	// Generate random fee
-	fee := fuzz.Uint32Range(0, 20000).Draw(t, "fee").(uint32)
+	// Generate random fee - full range to test edge cases
+	fee := fuzz.Uint32Range(0, math.MaxUint32).Draw(t, "fee").(uint32)
 
-	// Generate wider tick range
-	tickLower := fuzz.Int32Range(-10000, 10000).Draw(t, "tickLower").(int32)
-	tickUpper := fuzz.Int32Range(-10000, 10000).Draw(t, "tickUpper").(int32)
+	// Generate full tick range - to test invalid ticks
+	tickLower := fuzz.Int32Range(math.MinInt32, math.MaxInt32).Draw(t, "tickLower").(int32)
+	tickUpper := fuzz.Int32Range(math.MinInt32, math.MaxInt32).Draw(t, "tickUpper").(int32)
 
-	// Generate wider range of amounts
-	amount0 := fuzz.Int64Range(1, 1000000000).Draw(t, "amount0").(int64)
-	amount1 := fuzz.Int64Range(1, 1000000000).Draw(t, "amount1").(int64)
+	// Generate randomized amounts - full range to test edge cases
+	amount0 := fuzz.Int64Range(math.MinInt64, math.MaxInt64).Draw(t, "amount0").(int64)
+	amount1 := fuzz.Int64Range(math.MinInt64, math.MaxInt64).Draw(t, "amount1").(int64)
 
 	return &positionRepositionParams{
 		positionId:     existingPositionId,

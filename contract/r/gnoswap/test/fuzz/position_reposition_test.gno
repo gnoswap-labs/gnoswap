@@ -2,6 +2,7 @@ package fuzz
 
 import (
 	"math"
+	"strconv"
 	"testing"
 
 	"gno.land/p/gnoswap/fuzz"
@@ -46,9 +47,19 @@ func TestFuzzPositionReposition_ValidParams_Stateless(t *testing.T) {
 		repositionParams := NewValidPositionRepositionParams(ft, tokenId, 3000)
 		fuzzResult.AddParams(index, repositionParams)
 
+		// Get token paths from position
+		token0Path, token1Path := getTokenPathsFromPosition(tokenId)
+
+		// Mint tokens for reposition - DecreaseLiquidity returned some tokens,
+		// but we need to ensure we have enough for the new position
+		amount0Int64, _ := strconv.ParseInt(repositionParams.amount0Desired, 10, 64)
+		amount1Int64, _ := strconv.ParseInt(repositionParams.amount1Desired, 10, 64)
+		mintTestToken(token0Path, amount0Int64)
+		mintTestToken(token1Path, amount1Int64)
+
 		// Approve tokens
-		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/bar", poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/foo", poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross, token0Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross, token1Path, poolAddr, math.MaxInt64)
 
 		// when - reposition
 		newTokenId, liquidityStr, tickLower, tickUpper, amount0, amount1 := position.Reposition(
@@ -115,9 +126,19 @@ func TestFuzzPositionReposition_RandomizedParams_Stateless(t *testing.T) {
 		repositionParams := NewRandomizedPositionRepositionParams(ft, tokenId)
 		fuzzResult.AddParams(index, repositionParams)
 
+		// Get token paths from position
+		token0Path, token1Path := getTokenPathsFromPosition(tokenId)
+
+		// Mint tokens for reposition - DecreaseLiquidity returned some tokens,
+		// but we need to ensure we have enough for the new position
+		amount0Int64, _ := strconv.ParseInt(repositionParams.amount0Desired, 10, 64)
+		amount1Int64, _ := strconv.ParseInt(repositionParams.amount1Desired, 10, 64)
+		mintTestToken(token0Path, amount0Int64)
+		mintTestToken(token1Path, amount1Int64)
+
 		// Approve tokens
-		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/bar", poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/foo", poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross, token0Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross, token1Path, poolAddr, math.MaxInt64)
 
 		// when - reposition (may panic with invalid params)
 		position.Reposition(
@@ -180,9 +201,19 @@ func TestFuzzPositionReposition_ValidParams_Stateful(t *testing.T) {
 		repositionParams := NewValidPositionRepositionParams(ft, tokenId, 3000)
 		fuzzResult.AddParams(index, repositionParams)
 
+		// Get token paths from position
+		token0Path, token1Path := getTokenPathsFromPosition(tokenId)
+
+		// Mint tokens for reposition - DecreaseLiquidity returned some tokens,
+		// but we need to ensure we have enough for the new position
+		amount0Int64, _ := strconv.ParseInt(repositionParams.amount0Desired, 10, 64)
+		amount1Int64, _ := strconv.ParseInt(repositionParams.amount1Desired, 10, 64)
+		mintTestToken(token0Path, amount0Int64)
+		mintTestToken(token1Path, amount1Int64)
+
 		// Approve tokens
-		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/bar", poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/foo", poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross, token0Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross, token1Path, poolAddr, math.MaxInt64)
 
 		// when - reposition
 		returnedTokenId, liquidityStr, tickLower, tickUpper, amount0, amount1 := position.Reposition(

@@ -2,6 +2,7 @@ package fuzz
 
 import (
 	"math"
+	"strconv"
 	"testing"
 
 	"gno.land/p/gnoswap/fuzz"
@@ -34,9 +35,18 @@ func TestFuzzPositionIncreaseLiquidity_ValidParams_Stateless(t *testing.T) {
 		increaseParams := NewValidPositionIncreaseLiquidityParams(ft, tokenId)
 		fuzzResult.AddParams(index, increaseParams)
 
+		// Get token paths from position
+		token0Path, token1Path := getTokenPathsFromPosition(tokenId)
+
+		// Mint tokens for increase liquidity
+		amount0Int64, _ := strconv.ParseInt(increaseParams.amount0Desired, 10, 64)
+		amount1Int64, _ := strconv.ParseInt(increaseParams.amount1Desired, 10, 64)
+		mintTestToken(token0Path, amount0Int64)
+		mintTestToken(token1Path, amount1Int64)
+
 		// Approve tokens
-		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/bar", poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/foo", poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross, token0Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross, token1Path, poolAddr, math.MaxInt64)
 
 		// when - increase liquidity
 		_, liquidity, amount0, amount1, _ := position.IncreaseLiquidity(
@@ -79,9 +89,18 @@ func TestFuzzPositionIncreaseLiquidity_RandomizedParams_Stateless(t *testing.T) 
 		increaseParams := NewRandomizedPositionIncreaseLiquidityParams(ft, tokenId)
 		fuzzResult.AddParams(index, increaseParams)
 
+		// Get token paths from position
+		token0Path, token1Path := getTokenPathsFromPosition(tokenId)
+
+		// Mint tokens for increase liquidity
+		amount0Int64, _ := strconv.ParseInt(increaseParams.amount0Desired, 10, 64)
+		amount1Int64, _ := strconv.ParseInt(increaseParams.amount1Desired, 10, 64)
+		mintTestToken(token0Path, amount0Int64)
+		mintTestToken(token1Path, amount1Int64)
+
 		// Approve tokens
-		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/bar", poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/foo", poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross, token0Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross, token1Path, poolAddr, math.MaxInt64)
 
 		// when - increase liquidity (may panic with invalid params)
 		position.IncreaseLiquidity(
@@ -112,9 +131,18 @@ func TestFuzzPositionIncreaseLiquidity_ValidParams_Stateful(t *testing.T) {
 		increaseParams := NewValidPositionIncreaseLiquidityParams(ft, tokenId)
 		fuzzResult.AddParams(index, increaseParams)
 
+		// Get token paths from position
+		token0Path, token1Path := getTokenPathsFromPosition(tokenId)
+
+		// Mint tokens for increase liquidity
+		amount0Int64, _ := strconv.ParseInt(increaseParams.amount0Desired, 10, 64)
+		amount1Int64, _ := strconv.ParseInt(increaseParams.amount1Desired, 10, 64)
+		mintTestToken(token0Path, amount0Int64)
+		mintTestToken(token1Path, amount1Int64)
+
 		// Approve tokens
-		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/bar", poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/foo", poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross, token0Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross, token1Path, poolAddr, math.MaxInt64)
 
 		// Get current total liquidity before increase
 		prevTotalLiquidity := position.GetPositionLiquidity(tokenId)
@@ -165,9 +193,18 @@ func TestFuzzPositionIncreaseLiquidity_RandomizedParams_Stateful(t *testing.T) {
 		increaseParams := NewRandomizedPositionIncreaseLiquidityParams(ft, tokenId)
 		fuzzResult.AddParams(index, increaseParams)
 
+		// Get token paths from position
+		token0Path, token1Path := getTokenPathsFromPosition(tokenId)
+
+		// Mint tokens for increase liquidity
+		amount0Int64, _ := strconv.ParseInt(increaseParams.amount0Desired, 10, 64)
+		amount1Int64, _ := strconv.ParseInt(increaseParams.amount1Desired, 10, 64)
+		mintTestToken(token0Path, amount0Int64)
+		mintTestToken(token1Path, amount1Int64)
+
 		// Approve tokens
-		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/bar", poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(cross, "gno.land/r/onbloc/foo", poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross, token0Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross, token1Path, poolAddr, math.MaxInt64)
 
 		// when - increase liquidity (may panic with invalid params)
 		//
@@ -208,9 +245,10 @@ func TestFuzzPositionIncreaseLiquidity_RandomizedParams_Stateful(t *testing.T) {
 func createTestPosition(t *testing.T, adminAddr, poolAddr address) uint64 {
 	t.Helper()
 
-	token0Path := "gno.land/r/onbloc/bar"
-	token1Path := "gno.land/r/onbloc/foo"
-	fee := uint32(3000)
+	config := getNextPositionTokenConfig()
+	token0Path := config.token0Path
+	token1Path := config.token1Path
+	fee := config.fee
 
 	// Create pool if not exists
 	poolPath := pool.GetPoolPath(token0Path, token1Path, fee)
@@ -228,6 +266,11 @@ func createTestPosition(t *testing.T, adminAddr, poolAddr address) uint64 {
 	// Approve tokens
 	common.SafeGRC20Approve(cross, token0Path, poolAddr, math.MaxInt64)
 	common.SafeGRC20Approve(cross, token1Path, poolAddr, math.MaxInt64)
+
+	amount0Int64, _ := strconv.ParseInt("10000000", 10, 64)
+	amount1Int64, _ := strconv.ParseInt("10000000", 10, 64)
+	mintTestToken(token0Path, amount0Int64)
+	mintTestToken(token1Path, amount1Int64)
 
 	// Mint initial position
 	tokenId, _, _, _ := position.Mint(
@@ -248,4 +291,50 @@ func createTestPosition(t *testing.T, adminAddr, poolAddr address) uint64 {
 	)
 
 	return tokenId
+}
+
+type positionTokenConfig struct {
+	token0Path string
+	token1Path string
+	fee        uint32
+}
+
+var (
+	positionTokenConfigs       = buildPositionTokenConfigs()
+	nextPositionTokenConfigIdx = 0
+)
+
+func buildPositionTokenConfigs() []positionTokenConfig {
+	tokenPaths := []string{
+		barPath,
+		bazPath,
+		fooPath,
+		oblPath,
+		quxPath,
+	}
+
+	configs := []positionTokenConfig{}
+	for i := 0; i < len(tokenPaths); i++ {
+		for j := i + 1; j < len(tokenPaths); j++ {
+			for _, fee := range defaultFeeTiers {
+				configs = append(configs, positionTokenConfig{
+					token0Path: tokenPaths[i],
+					token1Path: tokenPaths[j],
+					fee:        fee,
+				})
+			}
+		}
+	}
+
+	return configs
+}
+
+func getNextPositionTokenConfig() positionTokenConfig {
+	if len(positionTokenConfigs) == 0 {
+		panic("position token configs must not be empty")
+	}
+
+	config := positionTokenConfigs[nextPositionTokenConfigIdx%len(positionTokenConfigs)]
+	nextPositionTokenConfigIdx++
+	return config
 }
