@@ -257,13 +257,13 @@ func NewVersionManager(
 }
 
 func makeInitializerSafe(data any) any {
-	fnPtr, ok := data.(*func(store any) any)
+	fn, ok := data.(func(store any) any)
 	if !ok {
-		panic(ufmt.Sprintf("expected *func(store any) any, got %T", data))
+		panic(ufmt.Sprintf("expected func(store any) any, got %T", data))
 	}
 
 	cpy := new(func(store any) any)
-	*cpy = *fnPtr
+	*cpy = fn
 
 	return cpy
 }
