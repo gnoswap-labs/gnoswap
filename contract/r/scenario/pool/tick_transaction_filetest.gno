@@ -160,7 +160,7 @@ func main() {
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta string) error {
-			return mockSwapCallback(fooPath, barPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
 
