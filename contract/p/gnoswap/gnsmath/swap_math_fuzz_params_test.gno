@@ -17,71 +17,313 @@ type swapMathComputeSwapStepParams struct {
 }
 
 func (p *swapMathComputeSwapStepParams) IsValid() bool {
-	// Check feePips range (line 38-39)
+	// Parse and validate basic parameters
+	sqrtCurrent, sqrtTarget, liquidity, amountRemaining, err := p.parseAndValidateBasicParams()
+	if err != nil {
+		return false
+	}
+
+	// Determine swap direction and mode
+	zeroForOne := sqrtCurrent.Gte(sqrtTarget)
+	exactIn := !amountRemaining.IsNeg()
+	amountRemainingAbs := amountRemaining.Abs()
+
+	// Calculate withoutFeeRateInPips for exactIn
+	denominator := uint64(1000000)
+	withoutFeeRateInPips := u256.NewUint(denominator - p.feePips)
+
+	if exactIn {
+		return p.validateExactIn(
+			sqrtCurrent,
+			sqrtTarget,
+			liquidity,
+			amountRemainingAbs,
+			withoutFeeRateInPips,
+			zeroForOne,
+			denominator,
+		)
+	}
+
+	return p.validateExactOut(
+		sqrtCurrent,
+		sqrtTarget,
+		liquidity,
+		amountRemainingAbs,
+		zeroForOne,
+	)
+}
+
+// parseAndValidateBasicParams parses and validates basic parameters
+func (p *swapMathComputeSwapStepParams) parseAndValidateBasicParams() (
+	sqrtCurrent, sqrtTarget, liquidity *u256.Uint,
+	amountRemaining *i256.Int,
+	err error,
+) {
+	sqrtCurrent, err = u256.FromDecimal(p.sqrtRatioCurrentX96)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+
+	sqrtTarget, err = u256.FromDecimal(p.sqrtRatioTargetX96)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+
+	liquidity, err = u256.FromDecimal(p.liquidity)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+
+	amountRemaining, err = i256.FromDecimal(p.amountRemaining)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+
+	// Check basic constraints
 	if p.feePips > 1_000_000 {
+		return nil, nil, nil, nil, errInvalidPoolSqrtPrice
+	}
+
+	if sqrtCurrent.IsZero() || sqrtTarget.IsZero() {
+		return nil, nil, nil, nil, errInvalidPoolSqrtPrice
+	}
+
+	return sqrtCurrent, sqrtTarget, liquidity, amountRemaining, nil
+}
+
+// validateExactIn validates exactIn swap parameters
+func (p *swapMathComputeSwapStepParams) validateExactIn(
+	sqrtCurrent, sqrtTarget, liquidity, amountRemainingAbs, withoutFeeRateInPips *u256.Uint,
+	zeroForOne bool,
+	denominator uint64,
+) bool {
+	// Calculate amount after fee
+	amountRemainingLessFee := u256.MulDiv(
+		amountRemainingAbs,
+		withoutFeeRateInPips,
+		u256.NewUint(denominator),
+	)
+
+	// If fee consumes all amount, it's valid (returns current price)
+	if amountRemainingLessFee.IsZero() {
+		return true
+	}
+
+	// Calculate amount needed to reach target
+	var amountIn *u256.Uint
+	if zeroForOne {
+		amountIn = getAmount0DeltaHelper(sqrtTarget, sqrtCurrent, liquidity, true)
+	} else {
+		amountIn = getAmount1DeltaHelper(sqrtCurrent, sqrtTarget, liquidity, true)
+	}
+
+	// Check if we reach target or do partial move
+	if amountRemainingLessFee.Gte(amountIn) {
+		// Reach target - validate target price is in bounds
+		return sqrtTarget.Gte(MIN_SQRT_RATIO) && sqrtTarget.Lte(MAX_SQRT_RATIO)
+	}
+
+	// Partial move - validate next sqrt price calculation
+	if zeroForOne {
+		return p.validateExactInZeroForOnePartial(sqrtCurrent, liquidity, amountRemainingLessFee)
+	}
+
+	return p.validateExactInOneForZeroPartial(sqrtCurrent, liquidity, amountRemainingLessFee)
+}
+
+// validateExactInZeroForOnePartial validates exactIn zeroForOne partial move
+func (p *swapMathComputeSwapStepParams) validateExactInZeroForOnePartial(
+	sqrtCurrent, liquidity, amountRemainingLessFee *u256.Uint,
+) bool {
+	// Will call getNextSqrtPriceFromAmount0RoundingUp with add=false (remove)
+	// This calls getNextPriceAmount0Remove which has validation:
+	// quotientCheck.Eq(currentSqrtPriceX96) && liquidityShifted.Gt(amountTimesSqrtPrice)
+
+	// Check liquidity << 96 won't overflow
+	max160 := u256.Zero().Lsh(u256.One(), 160)
+	if liquidity.Gte(max160) {
 		return false
 	}
 
-	sqrtCurrent := u256.MustFromDecimal(p.sqrtRatioCurrentX96)
-	sqrtTarget := u256.MustFromDecimal(p.sqrtRatioTargetX96)
-	liquidity := u256.MustFromDecimal(p.liquidity)
-	amountRemaining := i256.MustFromDecimal(p.amountRemaining)
+	liquidityShifted := u256.Zero().Lsh(liquidity, 96)
+	amountTimesSqrtPrice := u256.Zero().Mul(amountRemainingLessFee, sqrtCurrent)
 
-	// Check: sqrt ratios must be within valid range (line 140-142)
-	// When liquidity=0, the function returns sqrtRatioTargetX96 directly,
-	// so sqrtRatioTargetX96 must be within [MIN_SQRT_RATIO, MAX_SQRT_RATIO]
-	if sqrtCurrent.Lt(MIN_SQRT_RATIO) || sqrtCurrent.Gt(MAX_SQRT_RATIO) {
-		return false
-	}
-	if sqrtTarget.Lt(MIN_SQRT_RATIO) || sqrtTarget.Gt(MAX_SQRT_RATIO) {
-		return false
-	}
-
-	// Check: Lsh overflow in getAmount0DeltaHelper/getAmount1DeltaHelper
-	// Both helpers do liquidity << 96 which must not overflow
-	max160 := u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 160), u256.One())
-	if liquidity.Gt(max160) {
-		return false
-	}
-
-	// Check getNextPriceAmount0Remove multiplication overflow
-	// This only matters if getNextSqrtPriceFromOutput is actually called
-	// According to handleExactOut (line 226), it's only called if amountRemainingAbs < amountOut
-	// Otherwise, it returns early at line 227
-	// So we need to check if this overflow check is actually reached
-	if amountRemaining.IsNeg() {
-		zeroForOne := sqrtCurrent.Gte(sqrtTarget)
-		if zeroForOne && !liquidity.IsZero() {
-			// Calculate amountOut as handleExactOut would (line 220)
-			// amountOut = getAmount1DeltaHelper(sqrtTarget, sqrtCurrent, liquidity, false)
-			// For simplicity, we'll do a conservative check:
-			// Only apply strict overflow validation if amountRemaining is large enough
-			// to potentially trigger the getNextSqrtPriceFromOutput path
-
-			amountAbs := amountRemaining.Abs()
-
-			// If amountAbs is very small (e.g., 1), it's likely to hit early return
-			// and won't trigger getNextPriceAmount0Remove at all
-			// We'll be conservative and only check overflow for larger amounts
-			if amountAbs.Gt(u256.NewUint(1000)) {
-				liquidityShifted := u256.Zero().Lsh(liquidity, 96)
-
-				// Check multiplication overflow: amount * sqrtPrice
-				amountTimesSqrtPrice := u256.Zero().Mul(amountAbs, sqrtCurrent)
-				quotientCheck := u256.Zero().Div(amountTimesSqrtPrice, amountAbs)
-				if !quotientCheck.Eq(sqrtCurrent) {
-					return false // Multiplication overflowed
-				}
-
-				// Check: liquidityShifted must be > amountTimesSqrtPrice
-				if !liquidityShifted.Gt(amountTimesSqrtPrice) {
-					return false
-				}
-			}
+	// Check multiplication overflow
+	if !amountRemainingLessFee.IsZero() {
+		quotientCheck := u256.Zero().Div(amountTimesSqrtPrice, amountRemainingLessFee)
+		if !quotientCheck.Eq(sqrtCurrent) {
+			return false
 		}
 	}
 
-	return true
+	// Check liquidityShifted > amountTimesSqrtPrice for getNextPriceAmount0Remove
+	if !liquidityShifted.Gt(amountTimesSqrtPrice) {
+		return false
+	}
+
+	// Check denominator won't be zero
+	if sqrtCurrent.IsZero() {
+		return false
+	}
+
+	// Calculate sqrtNext and validate bounds
+	divValue := u256.Zero().Div(liquidityShifted, sqrtCurrent)
+	denominator := u256.Zero().Add(divValue, amountRemainingLessFee)
+	if denominator.IsZero() {
+		return false
+	}
+
+	sqrtNext := u256.DivRoundingUp(liquidityShifted, denominator)
+	return sqrtNext.Gte(MIN_SQRT_RATIO) && sqrtNext.Lte(MAX_SQRT_RATIO)
+}
+
+// validateExactInOneForZeroPartial validates exactIn oneForZero partial move
+func (p *swapMathComputeSwapStepParams) validateExactInOneForZeroPartial(
+	sqrtCurrent, liquidity, amountRemainingLessFee *u256.Uint,
+) bool {
+	// Will call getNextSqrtPriceFromAmount1RoundingDown with add=true
+	// This calls getNextPriceAmount1Add which adds quotient to sqrtCurrent
+
+	max160 := u256.Zero().Lsh(u256.One(), 160)
+	var quotient *u256.Uint
+
+	if amountRemainingLessFee.Lte(max160) {
+		// Check liquidity is not zero to avoid division by zero
+		if liquidity.IsZero() {
+			return false
+		}
+		shifted := u256.Zero().Lsh(amountRemainingLessFee, 96)
+		quotient = u256.Zero().Div(shifted, liquidity)
+	} else {
+		q96 := u256.Zero().Lsh(u256.One(), 96)
+		if liquidity.IsZero() {
+			return false
+		}
+		quotient = u256.MulDiv(amountRemainingLessFee, q96, liquidity)
+	}
+
+	// Check addition overflow
+	sqrtNext, overflow := u256.Zero().AddOverflow(sqrtCurrent, quotient)
+	if overflow {
+		return false
+	}
+
+	return sqrtNext.Gte(MIN_SQRT_RATIO) && sqrtNext.Lte(MAX_SQRT_RATIO)
+}
+
+// validateExactOut validates exactOut swap parameters
+func (p *swapMathComputeSwapStepParams) validateExactOut(
+	sqrtCurrent, sqrtTarget, liquidity, amountRemainingAbs *u256.Uint,
+	zeroForOne bool,
+) bool {
+	// Calculate amount needed to reach target
+	var amountOut *u256.Uint
+	if zeroForOne {
+		amountOut = getAmount1DeltaHelper(sqrtTarget, sqrtCurrent, liquidity, false)
+	} else {
+		amountOut = getAmount0DeltaHelper(sqrtCurrent, sqrtTarget, liquidity, false)
+	}
+
+	// Check if we reach target or do partial move
+	if amountRemainingAbs.Gte(amountOut) {
+		// Reach target - validate target price is in bounds
+		return sqrtTarget.Gte(MIN_SQRT_RATIO) && sqrtTarget.Lte(MAX_SQRT_RATIO)
+	}
+
+	// Partial move - validate next sqrt price calculation
+	if zeroForOne {
+		return p.validateExactOutZeroForOnePartial(sqrtCurrent, liquidity, amountRemainingAbs)
+	}
+
+	return p.validateExactOutOneForZeroPartial(sqrtCurrent, liquidity, amountRemainingAbs)
+}
+
+// validateExactOutZeroForOnePartial validates exactOut zeroForOne partial move
+func (p *swapMathComputeSwapStepParams) validateExactOutZeroForOnePartial(
+	sqrtCurrent, liquidity, amountRemainingAbs *u256.Uint,
+) bool {
+	// Will call getNextSqrtPriceFromAmount1RoundingDown with add=false (remove)
+	// This just subtracts quotient from sqrtCurrent
+
+	max160 := u256.Zero().Lsh(u256.One(), 160)
+	var quotient *u256.Uint
+
+	if amountRemainingAbs.Lte(max160) {
+		if liquidity.IsZero() {
+			return false
+		}
+		shifted := u256.Zero().Lsh(amountRemainingAbs, 96)
+		quotient = u256.Zero().Div(shifted, liquidity)
+	} else {
+		q96 := u256.Zero().Lsh(u256.One(), 96)
+		if liquidity.IsZero() {
+			return false
+		}
+		quotient = u256.MulDiv(amountRemainingAbs, q96, liquidity)
+	}
+
+	// Check subtraction underflow
+	if sqrtCurrent.Lt(quotient) {
+		return false
+	}
+
+	sqrtNext := u256.Zero().Sub(sqrtCurrent, quotient)
+	return sqrtNext.Gte(MIN_SQRT_RATIO) && sqrtNext.Lte(MAX_SQRT_RATIO)
+}
+
+// validateExactOutOneForZeroPartial validates exactOut oneForZero partial move
+func (p *swapMathComputeSwapStepParams) validateExactOutOneForZeroPartial(
+	sqrtCurrent, liquidity, amountRemainingAbs *u256.Uint,
+) bool {
+	// Will call getNextSqrtPriceFromAmount0RoundingUp with add=true
+	// This calls getNextPriceAmount0Add
+
+	// Check liquidity << 96 won't overflow
+	max160 := u256.Zero().Lsh(u256.One(), 160)
+	if liquidity.Gte(max160) {
+		return false
+	}
+
+	liquidityShifted := u256.Zero().Lsh(liquidity, 96)
+	amountTimesSqrtPrice := u256.Zero().Mul(amountRemainingAbs, sqrtCurrent)
+
+	// Check multiplication overflow
+	if !amountRemainingAbs.IsZero() {
+		quotientCheck := u256.Zero().Div(amountTimesSqrtPrice, amountRemainingAbs)
+		if !quotientCheck.Eq(sqrtCurrent) {
+			// Will use fallback path
+			if sqrtCurrent.IsZero() {
+				return false
+			}
+			divValue := u256.Zero().Div(liquidityShifted, sqrtCurrent)
+			denominator := u256.Zero().Add(divValue, amountRemainingAbs)
+			if denominator.IsZero() {
+				return false
+			}
+			sqrtNext := u256.DivRoundingUp(liquidityShifted, denominator)
+			return sqrtNext.Gte(MIN_SQRT_RATIO) && sqrtNext.Lte(MAX_SQRT_RATIO)
+		}
+	}
+
+	// Fast path - check denominator won't underflow
+	denominator := u256.Zero().Add(liquidityShifted, amountTimesSqrtPrice)
+	if !denominator.Gte(liquidityShifted) {
+		// Will use fallback path
+		if sqrtCurrent.IsZero() {
+			return false
+		}
+		divValue := u256.Zero().Div(liquidityShifted, sqrtCurrent)
+		denom := u256.Zero().Add(divValue, amountRemainingAbs)
+		if denom.IsZero() {
+			return false
+		}
+		sqrtNext := u256.DivRoundingUp(liquidityShifted, denom)
+		return sqrtNext.Gte(MIN_SQRT_RATIO) && sqrtNext.Lte(MAX_SQRT_RATIO)
+	}
+
+	// Calculate sqrtNext using fast path
+	sqrtNext := u256.MulDivRoundingUp(liquidityShifted, sqrtCurrent, denominator)
+	return sqrtNext.Gte(MIN_SQRT_RATIO) && sqrtNext.Lte(MAX_SQRT_RATIO)
 }
 
 func (p *swapMathComputeSwapStepParams) ToString() string {
@@ -96,7 +338,6 @@ func (p *swapMathComputeSwapStepParams) ToString() string {
 }
 
 func NewValidSwapMathComputeSwapStepParams(t *fuzz.T) *swapMathComputeSwapStepParams {
-	// Generate valid sqrt ratios within range
 	sqrtCurrent := fuzz.Uint256Range(
 		MIN_SQRT_RATIO.ToString(),
 		MAX_SQRT_RATIO.ToString(),
@@ -107,7 +348,6 @@ func NewValidSwapMathComputeSwapStepParams(t *fuzz.T) *swapMathComputeSwapStepPa
 		MAX_SQRT_RATIO.ToString(),
 	).Draw(t, "sqrtRatioTargetX96").(*u256.Uint)
 
-	// Ensure current and target are within bounds
 	if sqrtCurrent.Gte(MAX_SQRT_RATIO) {
 		sqrtCurrent = u256.Zero().Sub(MAX_SQRT_RATIO, u256.One())
 	}
@@ -115,27 +355,21 @@ func NewValidSwapMathComputeSwapStepParams(t *fuzz.T) *swapMathComputeSwapStepPa
 		sqrtTarget = u256.Zero().Sub(MAX_SQRT_RATIO, u256.One())
 	}
 
-	// Generate valid liquidity (can be zero or non-zero)
 	liquidityVal := fuzz.Uint64Range(0, 1000000000000000000).Draw(t, "liquidity").(uint64)
 	liquidity := u256.NewUint(liquidityVal)
 
-	// Generate valid amount remaining (both positive for exact in and negative for exact out)
 	isExactIn := fuzz.Bool().Draw(t, "isExactIn").(bool)
 	var amountRemaining *i256.Int
 
 	if isExactIn {
-		// Positive amount for exact in
 		amount := fuzz.Uint64Range(1, 1000000000000).Draw(t, "amountRemainingPositive").(uint64)
 		amountRemaining = i256.FromUint256(u256.NewUint(amount))
 	} else {
-		// Negative amount for exact out
 		amount := fuzz.Uint64Range(1, 1000000000000).Draw(t, "amountRemainingNegative").(uint64)
 		amountRemaining = i256.FromUint256(u256.NewUint(amount))
 		amountRemaining = amountRemaining.Neg(amountRemaining)
 	}
 
-	// Generate valid feePips (standard fee tiers or random valid value)
-	// Avoid 1_000_000 (100% fee) as it causes division by zero in fee calculation
 	standardFees := []uint64{100, 500, 3000, 10000}
 	useStandardFee := fuzz.Bool().Draw(t, "useStandardFee").(bool)
 
@@ -157,13 +391,10 @@ func NewValidSwapMathComputeSwapStepParams(t *fuzz.T) *swapMathComputeSwapStepPa
 }
 
 func NewRandomizedSwapMathComputeSwapStepParams(t *fuzz.T) *swapMathComputeSwapStepParams {
-	// Generate completely random values (may be out of range)
 	sqrtCurrent := fuzz.Uint256().Draw(t, "sqrtRatioCurrentX96").(*u256.Uint)
 	sqrtTarget := fuzz.Uint256().Draw(t, "sqrtRatioTargetX96").(*u256.Uint)
 	liquidity := fuzz.Uint256().Draw(t, "liquidity").(*u256.Uint)
 	amountRemaining := fuzz.Int256().Draw(t, "amountRemaining").(*i256.Int)
-
-	// Generate random feePips (may exceed denominator)
 	feePips := fuzz.Uint64Range(0, 2_000_000).Draw(t, "feePips").(uint64)
 
 	return &swapMathComputeSwapStepParams{
