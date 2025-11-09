@@ -10,7 +10,11 @@ func (lp *launchpadV1) ApiGetProjectRecipientRewardByProjectId(projectId string)
 		return "0"
 	}
 
-	return gs.GetClaimableRewardByAddress(project.(*Project).recipient)
+	proj, ok := project.(*Project)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast project to *Project: %T", project))
+	}
+	return gs.GetClaimableRewardByAddress(proj.recipient)
 }
 
 // ApiGetProjectRecipientRewardByAddress retrieves the claimable reward for a recipient by address.

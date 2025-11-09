@@ -281,7 +281,10 @@ func (s *governanceStore) AddUserProposal(user string, proposalID int64) error {
 	// Get existing proposals for user
 	var proposalIDs []int64
 	if existing, ok := userProposals.Get(user); ok {
-		proposalIDs = existing.([]int64)
+		proposalIDs, ok = existing.([]int64)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast result to []int64: %T", existing))
+		}
 	}
 
 	// Add new proposal ID
