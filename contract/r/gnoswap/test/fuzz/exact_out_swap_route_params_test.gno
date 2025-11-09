@@ -1,0 +1,289 @@
+package fuzz
+
+import (
+	"math"
+	"strconv"
+	"strings"
+	"time"
+
+	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/gnoswap/router"
+
+	"gno.land/p/gnoswap/fuzz"
+	"gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt"
+)
+
+// ExactOutSwapRouteParams is the parameters for the ExactOutSwapRoute fuzz test.
+type exactOutSwapRouteParams struct {
+	inputToken       string
+	outputToken      string
+	amountIn         string
+	routeArr         string
+	quoteArr         string
+	amountInMax      string
+	deadline         int64
+	referrer         string
+	isPreDrySwap     bool
+	preDrySwapResult bool
+}
+
+func (p *exactOutSwapRouteParams) ToString() string {
+	return ufmt.Sprintf("inputToken: %s, outputToken: %s, amountIn: %s, routeArr: %s, quoteArr: %s, amountInMax: %s, deadline: %d, referrer: %s",
+		p.inputToken,
+		p.outputToken,
+		p.amountIn,
+		p.routeArr,
+		p.quoteArr,
+		p.amountInMax,
+		p.deadline,
+		p.referrer,
+	)
+}
+
+func (p *exactOutSwapRouteParams) IsValid() bool {
+	if !p.isValidTokenPair() {
+		return false
+	}
+
+	if !p.isValidAmount() {
+		return false
+	}
+
+	if !p.isValidRouteArr() {
+		return false
+	}
+
+	if !p.isValidQuoteArr() {
+		return false
+	}
+
+	if !p.isValidDeadline() {
+		return false
+	}
+
+	if !p.isValidDrySwap() {
+		return false
+	}
+
+	return true
+}
+
+func (p *exactOutSwapRouteParams) isValidTokenPair() bool {
+	if p.inputToken == "" || p.outputToken == "" {
+		return false
+	}
+
+	return true
+}
+
+func (p *exactOutSwapRouteParams) isValidAmount() bool {
+	amountIn := u256.MustFromDecimal(p.amountIn)
+
+	if amountIn.Cmp(u256.Zero()) <= 0 {
+		return false
+	}
+
+	if amountIn.Cmp(u256.NewUintFromInt64(math.MaxInt64)) > 0 {
+		return false
+	}
+
+	maxAmountOut := u256.MustFromDecimal(p.amountInMax)
+	if maxAmountOut.Cmp(u256.Zero()) <= 0 {
+		return false
+	}
+
+	if maxAmountOut.Cmp(u256.NewUintFromInt64(math.MaxInt64)) > 0 {
+		return false
+	}
+
+	if maxAmountOut.Lt(amountIn) {
+		return false
+	}
+
+	return true
+}
+
+// validate the routeArr
+func (p *exactOutSwapRouteParams) isValidRouteArr() bool {
+	routes := strings.Split(p.routeArr, ",")
+	for _, route := range routes {
+		routePools := strings.Split(route, "*POOL*")
+		if len(routePools) < 1 {
+			return false
+		}
+
+		firstToken := ""
+		lastToken := ""
+
+		for i, routePool := range routePools {
+			inputToken, outputToken, feeInt64 := parsePoolPath(routePool)
+
+			if i == 0 && firstToken != p.inputToken {
+				firstToken = inputToken
+			}
+
+			if lastToken != p.outputToken {
+				lastToken = outputToken
+			}
+
+			if feeInt64 != 100 && feeInt64 != 500 && feeInt64 != 3000 && feeInt64 != 10000 {
+				return false
+			}
+		}
+
+		if firstToken != p.inputToken {
+			return false
+		}
+
+		if lastToken != p.outputToken {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (p *exactOutSwapRouteParams) isValidQuoteArr() bool {
+	quoteSum := int64(0)
+	quotes := make([]int64, 0)
+
+	for _, quote := range strings.Split(p.quoteArr, ",") {
+		quoteInt, err := strconv.ParseInt(quote, 10, 64)
+		if err != nil {
+			return false
+		}
+
+		quoteSum += quoteInt
+		quotes = append(quotes, quoteInt)
+	}
+
+	if quoteSum != 100 {
+		return false
+	}
+
+	return true
+}
+
+func (p *exactOutSwapRouteParams) isValidDeadline() bool {
+	if p.deadline < time.Now().Unix() {
+		return false
+	}
+
+	return true
+}
+
+func (p *exactOutSwapRouteParams) isValidDrySwap() bool {
+	if p.isPreDrySwap {
+		return p.preDrySwapResult
+	}
+
+	_, amountOut, success := p.drySwapRoute()
+
+	if !success {
+		// if the drySwapRoute fails, check if the amountIn is less than 10
+		return u256.MustFromDecimal(p.amountIn).LtUint64(10)
+	}
+
+	amountInInt64 := u256.MustFromDecimal(p.amountIn).Int64()
+	amountOutInt64 := u256.MustFromDecimal(amountOut).Int64()
+
+	poolCount := 0
+
+	for _, route := range strings.Split(p.routeArr, ",") {
+		poolCount += len(strings.Split(route, "*POOL*")) - 1
+	}
+
+	diff := amountInInt64 - amountOutInt64
+	if diff < 0 {
+		diff = -diff
+	}
+
+	if diff > int64(poolCount) {
+		return false
+	}
+
+	return success
+}
+
+func (p *exactOutSwapRouteParams) updateAmountInByPreDrySwap() {
+	p.isPreDrySwap = true
+
+	_, amountOut, success := p.drySwapRoute()
+
+	if success {
+		p.preDrySwapResult = true
+		p.amountIn = amountOut
+	}
+}
+
+func (p *exactOutSwapRouteParams) drySwapRoute() (amountIn string, amountOut string, success bool) {
+	r := revive(func() {
+		func(cur realm) {
+			amountIn, amountOut, success = router.DrySwapRoute(
+				p.inputToken,
+				p.outputToken,
+				p.amountIn,
+				"EXACT_OUT",
+				p.routeArr,
+				p.quoteArr,
+				u256.NewUintFromInt64(math.MaxInt64).ToString(),
+			)
+		}(cross)
+	})
+
+	if r != nil {
+		return "0", "0", false
+	}
+
+	return amountIn, amountOut, success
+}
+
+func NewValidExactOutSwapRouteParams(t *fuzz.T) *exactOutSwapRouteParams {
+	inputToken, outputToken := generateTokenPair(t)
+	routeArr := generateRoutePathArr(t, inputToken, outputToken, 1, 1)
+	quoteArr := generateRouteQuoteArr(t, len(strings.Split(routeArr, ",")))
+
+	amountIn := fuzz.Int64Range(10, 100_000_000_000_000).Draw(t, "amountIn").(int64)
+	amountInUint256 := u256.NewUintFromInt64(amountIn)
+
+	return &exactOutSwapRouteParams{
+		inputToken:       inputToken,
+		outputToken:      outputToken,
+		amountIn:         amountInUint256.ToString(),
+		routeArr:         routeArr,
+		quoteArr:         quoteArr,
+		amountInMax:      u256.NewUintFromInt64(math.MaxInt64).ToString(),
+		deadline:         time.Now().Add(time.Hour).Unix(),
+		referrer:         "",
+		isPreDrySwap:     false,
+		preDrySwapResult: false,
+	}
+}
+
+func NewRandomizedExactOutSwapRouteParams(t *fuzz.T) *exactOutSwapRouteParams {
+	const maxRoutePathCount = 3
+	const maxHops = 3
+
+	inputToken, outputToken := generateTokenPair(t)
+	routeArr := generateRoutePathArr(t, inputToken, outputToken, maxRoutePathCount, maxHops)
+	quoteArr := generateRouteQuoteArr(t, len(strings.Split(routeArr, ",")))
+
+	amountInVal := fuzz.Uint256().Draw(t, "amountIn").(*uint256.Uint)
+	amountIn := amountInVal.ToString()
+	amountInMaxVal := fuzz.Uint256().Draw(t, "amountIn").(*uint256.Uint)
+	amountInMax := amountInMaxVal.ToString()
+
+	return &exactOutSwapRouteParams{
+		inputToken:       inputToken,
+		outputToken:      outputToken,
+		amountIn:         amountIn,
+		routeArr:         routeArr,
+		quoteArr:         quoteArr,
+		amountInMax:      amountInMax,
+		deadline:         time.Now().Add(time.Hour).Unix(),
+		referrer:         "",
+		isPreDrySwap:     false,
+		preDrySwapResult: false,
+	}
+}
