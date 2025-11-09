@@ -28,11 +28,10 @@ func TestFuzzPoolSwap_ValidParams_Stateless(t *testing.T) {
 			setupPoolSwapLiquidity(ft, params)
 		}
 
-		swapAmount := fuzz.Int64Range(1, 100_000_000_000).Draw(ft, "swapAmount").(int64)
-		mintTestToken(params.token0Path, swapAmount)
-		mintTestToken(params.token1Path, swapAmount)
+		params.PreDrySwap()
 
-		params.setPriceLimit(ft)
+		mintTestToken(params.token0Path, params.SwapAmount())
+		mintTestToken(params.token1Path, params.SwapAmount())
 
 		// when
 		fuzzResult.AddParams(index, params)
@@ -55,11 +54,10 @@ func TestFuzzPoolSwap_RandomizedParams_Stateless(t *testing.T) {
 			setupPoolSwapLiquidity(ft, params)
 		}
 
-		swapAmount := fuzz.Int64Range(1, 100_000_000_000).Draw(ft, "swapAmount").(int64)
-		mintTestToken(params.token0Path, swapAmount)
-		mintTestToken(params.token1Path, swapAmount)
+		params.PreDrySwap()
 
-		params.setPriceLimit(ft)
+		mintTestToken(params.token0Path, params.SwapAmount())
+		mintTestToken(params.token1Path, params.SwapAmount())
 
 		// when
 		fuzzResult.AddParams(index, params)
@@ -73,24 +71,19 @@ func TestFuzzPoolSwap_RandomizedParams_Stateless(t *testing.T) {
 func TestFuzzPoolSwap_RandomizedParams_Stateful(t *testing.T) {
 	// given
 	initStates(t)
-	isMinted := false
 
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
-	    params := NewRandomizedPoolSwapParams(ft)
-
-	    if !isMinted {
-			swapAmount := int64(1_000_000_000_000) // Large amount for multiple swaps
-			mintTestToken(params.token0Path, swapAmount)
-			mintTestToken(params.token1Path, swapAmount)
-            isMinted = true
-        }
+		params := NewRandomizedPoolSwapParams(ft)
 
 		setupIterations := fuzz.IntRange(1, 10).Draw(ft, "setupIterations").(int)
 		for i := 0; i < setupIterations; i++ {
 			setupPoolSwapLiquidity(ft, params)
 		}
 
-		params.setPriceLimit(ft)
+		params.PreDrySwap()
+
+		mintTestToken(params.token0Path, params.SwapAmount())
+		mintTestToken(params.token1Path, params.SwapAmount())
 
 		// when
 		fuzzResult.AddParams(index, params)
@@ -102,20 +95,6 @@ func TestFuzzPoolSwap_RandomizedParams_Stateful(t *testing.T) {
 
 // runTestPoolSwap runs the test swap by calling DrySwap and Swap
 func runTestPoolSwap(ft *fuzz.T, params *poolSwapParams) {
-	// Execute DrySwap first
-	dryAmount0, dryAmount1, drySuccess := pool.DrySwap(
-		params.token0Path,
-		params.token1Path,
-		params.fee,
-		params.zeroForOne,
-		params.amountSpecified,
-		params.sqrtPriceLimitX96,
-	)
-
-	if !drySuccess {
-		panic("DrySwap failed")
-	}
-
 	// Execute Swap
 	swapAmount0, swapAmount1 := callPoolSwap(
 		params.token0Path,
@@ -127,11 +106,11 @@ func runTestPoolSwap(ft *fuzz.T, params *poolSwapParams) {
 	)
 
 	// Verify DrySwap and Swap results match
-	if dryAmount0 != swapAmount0 {
+	if params.expectedAmount0 != swapAmount0 {
 		panic("DrySwap amount0 != Swap amount0")
 	}
 
-	if dryAmount1 != swapAmount1 {
+	if params.expectedAmount1 != swapAmount1 {
 		panic("DrySwap amount1 != Swap amount1")
 	}
 }
