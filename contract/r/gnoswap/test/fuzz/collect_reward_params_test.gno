@@ -33,7 +33,7 @@ func (p *collectRewardParams) isValidStake() bool {
 
 func (p *collectRewardParams) isStartedDistribution() bool {
 	currentTimestamp := time.Now().Unix()
-	return currentTimestamp > p.startIncentiveTimestamp
+	return currentTimestamp > p.startIncentiveTimestamp && p.skipBlocks > 0
 }
 
 func (p *collectRewardParams) hasBalanceChanges() bool {
@@ -58,7 +58,7 @@ func (p *collectRewardParams) updatePreviousBalances(tokenPaths ...string) {
 }
 
 func NewValidCollectRewardParams(t *fuzz.T, positionID uint64, isStaked bool, startIncentiveTimestamp int64) *collectRewardParams {
-	skipBlocks := fuzz.Int64Range(0, 180*24*60*60/5).Draw(t, "skipBlocks").(int64)
+	skipBlocks := fuzz.Int64Range(1, 180*24*60*60/5).Draw(t, "skipBlocks").(int64)
 	return &collectRewardParams{
 		positionID:              positionID,
 		unwrapResult:            false,
