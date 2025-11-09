@@ -2,12 +2,13 @@ package fuzz
 
 import (
 	"math"
+	"strconv"
 	"testing"
 
 	"gno.land/p/gnoswap/fuzz"
 	"gno.land/p/gnoswap/fuzzutils"
-	"gno.land/p/nt/ufmt"
 	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -25,8 +26,6 @@ func TestFuzzPositionMint_ValidParams_Stateless(t *testing.T) {
 		initStates(t)
 
 		mintParams := NewValidPositionMintParams(ft)
-		fuzzResult.AddParams(index, mintParams)
-
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 		// Setup: Create pool if not exists
@@ -41,6 +40,13 @@ func TestFuzzPositionMint_ValidParams_Stateless(t *testing.T) {
 				"79228162514264337593543950337",
 			)
 		}
+
+		fuzzResult.AddParams(index, mintParams)
+
+		amount0Int64, _ := strconv.ParseInt(mintParams.amount0Desired, 10, 64)
+		amount1Int64, _ := strconv.ParseInt(mintParams.amount1Desired, 10, 64)
+		mintTestToken(mintParams.token0Path, amount0Int64)
+		mintTestToken(mintParams.token1Path, amount1Int64)
 
 		// Approve tokens
 		common.SafeGRC20Approve(cross, mintParams.token0Path, poolAddr, math.MaxInt64)
@@ -95,16 +101,19 @@ func TestFuzzPositionMint_RandomizedParams_Stateless(t *testing.T) {
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 		// Setup: Create pool if not exists
-		poolPath := pool.GetPoolPath(mintParams.token0Path, mintParams.token1Path, mintParams.fee)
-		if !pool.ExistsPoolPath(poolPath) {
-			pool.SetPoolCreationFee(cross, 0)
-			pool.CreatePool(
-				cross,
-				mintParams.token0Path,
-				mintParams.token1Path,
-				mintParams.fee,
-				"79228162514264337593543950337",
-			)
+		isCreatePool := fuzz.Bool().Draw(ft, "isCreatePool").(bool)
+		if isCreatePool {
+			poolPath := pool.GetPoolPath(mintParams.token0Path, mintParams.token1Path, mintParams.fee)
+			if !pool.ExistsPoolPath(poolPath) {
+				pool.SetPoolCreationFee(cross, 0)
+				pool.CreatePool(
+					cross,
+					mintParams.token0Path,
+					mintParams.token1Path,
+					mintParams.fee,
+					"79228162514264337593543950337",
+				)
+			}
 		}
 
 		// Approve tokens
@@ -164,7 +173,7 @@ func TestFuzzPositionMint_ValidParams_Stateful(t *testing.T) {
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 		// Use fixed fee to ensure all positions are in the same pool
-		mintParams := NewValidPositionMintParamsWithFee(ft, fee)
+		mintParams := NewValidPositionMintParams(ft)
 		fuzzResult.AddParams(index, mintParams)
 
 		// Approve tokens
