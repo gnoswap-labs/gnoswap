@@ -1060,3 +1060,123 @@ func setupUltraLowFeePool(t *testing.T) *pl.Pool {
 	pool := getMockInstance().mustGetPoolBy(wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER)
 	return pool
 }
+
+// TestSwap_PriceLimitEdgeCase_ZeroAmount tests a specific edge case where:
+// - Price limit is extremely close to current price (difference of 1)
+// - Low liquidity in the pool
+// - ExactOutput swap (negative amountSpecified)
+// - This causes one of the amounts to be zero, which should be rejected by validation
+//
+// Reproduced from fuzz test failure:
+// - sqrtPrice: 81258104018314874265769693256
+// - liquidity: 348726074781113
+// - tick: 506
+// - zeroForOne: false
+// - amountSpecified: -178
+// - sqrtPriceLimit: 81258104018314874265769693257 (current + 1)
+// - Result: amount0=0, amount1=2
+func TestSwap_PriceLimitEdgeCase_ZeroAmount(t *testing.T) {
+	// given: Setup pool
+	initPoolTest(t)
+
+	testing.SetRealm(adminRealm)
+	mockInstanceSetPoolCreationFee(0)
+
+	token0Path := barPath
+	token1Path := fooPath
+	fee := ULTRA_LOW_FEE_TIER // 100 = 0.01%
+
+	// Create pool at a specific price to match the failing case
+	// tick 506 corresponds to sqrtPrice around 81258104018314874265769693256
+	targetTick := int32(506)
+	targetPrice := common.TickMathGetSqrtRatioAtTick(targetTick)
+
+	mockInstanceCreatePool(token0Path, token1Path, fee, targetPrice.ToString())
+
+	// Approve tokens for liquidity provision
+	testing.SetRealm(adminRealm)
+	TokenApprove(t, token0Path, adminAddr, poolAddr, maxApprove)
+	TokenApprove(t, token1Path, adminAddr, poolAddr, maxApprove)
+
+	// Add liquidity multiple times to match the failing case
+	// The fuzz test calls setupPoolSwapLiquidity multiple times
+	// Each call adds amountDesired = 1_000_000_000_000
+	// Expected final liquidity: 348726074781113
+	tickLower := targetTick - 10000
+	tickUpper := targetTick + 10000
+
+	testing.SetRealm(posRealm)
+	// Try adding liquidity once with a value that gets us close to 348726074781113
+	mockInstanceMint(token0Path, token1Path, fee, tickLower, tickUpper, "1000000000000", adminAddr)
+
+	// Verify pool state
+	pool := getMockInstance().mustGetPoolBy(token0Path, token1Path, fee)
+	currentPrice := pool.Slot0SqrtPriceX96()
+
+	// when: Define swap callback
+	swapCallback := func(cur realm, amount0Delta, amount1Delta string) error {
+		t.Logf("Callback: amount0=%s, amount1=%s", amount0Delta, amount1Delta)
+		testing.SetRealm(adminRealm)
+
+		amount0 := u256.MustFromDecimal(amount0Delta)
+		amount1 := u256.MustFromDecimal(amount1Delta)
+
+		if amount0.Sign() > 0 {
+			common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0.Int64())
+		}
+		if amount1.Sign() > 0 {
+			common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1.Int64())
+		}
+
+		return nil
+	}
+
+	// Swap parameters matching the failing case
+	zeroForOne := false
+	amountSpecified := "-178"
+
+	// Price limit is current price + 1 (extremely close)
+	currentPriceInt := u256.MustFromDecimal(currentPrice.ToString())
+	priceLimitInt := u256.NewUint(0).Add(currentPriceInt, u256.NewUint(1))
+	sqrtPriceLimitX96 := priceLimitInt.ToString()
+
+	// computeSwap should return amount0=0, amount1=2
+	slot0Start := pool.Slot0()
+	amounts := i256.MustFromDecimal(amountSpecified)
+	feeGrowthGlobalX128 := getFeeGrowthGlobal(pool, zeroForOne)
+	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
+	cache := newSwapCache(feeProtocol, pool.Liquidity().Clone())
+	state := newSwapState(amounts, feeGrowthGlobalX128, cache.liquidityStart, slot0Start)
+
+	comp := SwapComputation{
+		AmountSpecified:   amounts,
+		SqrtPriceLimitX96: priceLimitInt,
+		ZeroForOne:        zeroForOne,
+		ExactInput:        amounts.Gt(i256.Zero()),
+		InitialState:      state,
+		Cache:             cache,
+	}
+
+	result, _ := getMockInstance().computeSwap(pool, comp)
+	uassert.Equal(t, "0", result.Amount0.ToString(), "DrySwap should return amount0=0")
+	uassert.Equal(t, "2", result.Amount1.ToString(), "DrySwap should return amount1=2")
+
+	// then: Actual Swap should panic due to zero amount validation
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/test/mock_swapper"))
+
+		uassert.PanicsWithMessage(t, "[GNOSWAP-POOL-015] invalid swap amount || amount0 or amount1 is zero", func() {
+			getMockInstance().Swap(
+				token0Path,
+				token1Path,
+				fee,
+				adminAddr,
+				zeroForOne,
+				amountSpecified,
+				sqrtPriceLimitX96,
+				adminAddr,
+				swapCallback,
+			)
+		})
+	}(cross)
+}
