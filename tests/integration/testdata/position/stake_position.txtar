@@ -56,39 +56,38 @@ patchpkg "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" $test_admin_user_addr
 adduser user1
 patchpkg "g16a7etgm9z2r653ucl36rj0l2yqcxgrz2jyegzx" $user1_user_addr
 
-## start a new node
 gnoland start 
 
-### Transfer Bar tokens
+# Transfer Bar tokens
 gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Transfer -args $test_admin_user_addr -args 1000000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "transfer 1_000_000_000 GNS" gns_admin
 gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Transfer -args $user1_user_addr -args 100000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 
-### Transfer Foo tokens
+# Transfer Foo tokens
 gnokey maketx call -pkgpath gno.land/r/onbloc/foo -func Transfer -args $test_admin_user_addr -args 1000000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "transfer 1_000_000_000 GNS" gns_admin
 gnokey maketx call -pkgpath gno.land/r/onbloc/foo -func Transfer -args $user1_user_addr -args 100000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 
-### Approve test tokens to pool address
+# Approve test tokens to pool address
 gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 gnokey maketx call -pkgpath gno.land/r/onbloc/foo -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 
-### Approve test tokens to staker address
+# Approve test tokens to staker address
 gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Approve -args g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 gnokey maketx call -pkgpath gno.land/r/onbloc/foo -func Approve -args g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 
-### Create Pool (BAR:FOO:3000)
+# Create Pool (BAR:FOO:3000)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func CreatePool -args "gno.land/r/onbloc/bar" -args "gno.land/r/onbloc/foo" -args 3000 -args 79228162514264337593543950337 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test gns_admin
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.ExistsPoolPath(\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\")"
 stdout true
 
-### Mint position
+# Mint position
 gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args "gno.land/r/onbloc/bar" -args "gno.land/r/onbloc/foo" -args 3000 -args -60 -args 60 -args "5000000" -args "5000000" -args "1" -args "1" -args 9999999999 -args $gns_admin_user_addr -args $gns_admin_user_addr -args "" -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test gns_admin
 stdout 1
 stdout "1669251248"
 stdout "5000000"
 stdout "5000000"
 
-### Setup internal incentive pool
+# Setup internal incentive pool
 gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func SetPoolTier -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000" -args 1 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test gns_admin
 stdout 'GAS USED:   38693225'
 stdout 'STORAGE DELTA:  26169 bytes'
@@ -100,7 +99,7 @@ stdout '\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-
 gnokey query vm/qeval --data "gno.land/r/gnoswap/staker.GetPoolTier(\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\")"
 stdout 1
 
-### Stake position
+# Stake position
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gnft -func Approve -args g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 -args 1 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test gns_admin
 gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func StakeToken -args 1 -args "" -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test gns_admin
 stdout "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
@@ -113,7 +112,7 @@ stdout '\[{\"type\":\"ReferralRegistrationSuccess\",\"attrs\":\[{\"key\":\"addre
 gnokey query vm/qeval --data "gno.land/r/gnoswap/staker.IsStaked(1)"
 stdout true
 
-### Ownership of GNFT must be recognized as belonging to the staker.
+# Ownership of GNFT must be recognized as belonging to the staker.
 gnokey query vm/qeval --data "gno.land/r/gnoswap/gnft.OwnerOf(\"1\")"
 stdout 'g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3'
 
@@ -123,7 +122,7 @@ stdout 5000000
 gnokey query vm/qeval --data "gno.land/r/gnoswap/common.BalanceOf(\"gno.land/r/onbloc/foo\", \"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\")"
 stdout 5000000
 
-### Unstake position
+# Unstake position
 gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func UnStakeToken -args 1 -args false -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test gns_admin
 stdout "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 stdout 'GAS USED:   (5|6)[0-9]{7}'
@@ -134,7 +133,7 @@ stdout '{\"type\":\"CollectReward\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":
 gnokey query vm/qeval --data "gno.land/r/gnoswap/staker.IsStaked(1)"
 stdout false
 
-### Check the ownership of GNFT
-### The original owner's address must be returned, not the staker's address.
+# Check the ownership of GNFT
+# The original owner's address must be returned, not the staker's address.
 gnokey query vm/qeval --data "gno.land/r/gnoswap/gnft.OwnerOf(\"1\")"
 stdout 'g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d'
