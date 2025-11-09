@@ -88,5 +88,16 @@ func initStoreData(poolStore pool.IPoolStore) error {
 		}
 	}
 
+	// Initialize swap end hook with no-op function
+	if !poolStore.HasSwapEndHook() {
+		noopSwapEnd := func(cur realm, poolPath string) error {
+			return nil
+		}
+		err := poolStore.SetSwapEndHook(noopSwapEnd)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
