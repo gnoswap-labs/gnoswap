@@ -30,7 +30,7 @@ func registerPoolV1() {
 	pool.RegisterInitializer(cross, func(poolStore pool.IPoolStore) pool.IPool {
 		err := initStoreData(poolStore)
 		if err != nil {
-			return nil
+			panic(err)
 		}
 
 		return NewPoolV1(poolStore)
@@ -74,6 +74,35 @@ func initStoreData(poolStore pool.IPoolStore) error {
 
 	if !poolStore.HasWithdrawalFeeBPS() {
 		err := poolStore.SetWithdrawalFeeBPS(defaultWithdrawalFeeBPS)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Initialize swap start hook with no-op function
+	if !poolStore.HasSwapStartHook() {
+		noopSwapStart := func(cur realm, poolPath string, timestamp int64) {}
+		err := poolStore.SetSwapStartHook(noopSwapStart)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Initialize swap end hook with no-op function
+	if !poolStore.HasSwapEndHook() {
+		noopSwapEnd := func(cur realm, poolPath string) error {
+			return nil
+		}
+		err := poolStore.SetSwapEndHook(noopSwapEnd)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Initialize tick cross hook with no-op function
+	if !poolStore.HasTickCrossHook() {
+		noopTickCross := func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {}
+		err := poolStore.SetTickCrossHook(noopTickCross)
 		if err != nil {
 			return err
 		}

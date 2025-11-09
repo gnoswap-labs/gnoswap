@@ -2,9 +2,9 @@ package v1
 
 import (
 	"encoding/base64"
+	"math"
 	"strconv"
 	"strings"
-	"math"
 
 	"gno.land/p/nt/ufmt"
 )
@@ -87,7 +87,6 @@ func parseBool(s string) bool {
 		panic(ufmt.Sprintf("invalid bool value: %s", s))
 	}
 }
-
 
 // parseInt parses a string to int with proper validation and overflow checking.
 func parseInt(s string) int {

@@ -20,7 +20,6 @@ const (
 	StoreKeyProposalCounter StoreKey = "proposalCounter" // Proposal ID counter
 
 	StoreKeyConfigs StoreKey = "configs" // Configurations AVL tree
-	StoreKeyConfig  StoreKey = "config"  // Configuration AVL tree
 
 	StoreKeyProposals StoreKey = "proposals" // Proposals AVL tree
 
@@ -281,7 +280,10 @@ func (s *governanceStore) AddUserProposal(user string, proposalID int64) error {
 	// Get existing proposals for user
 	var proposalIDs []int64
 	if existing, ok := userProposals.Get(user); ok {
-		proposalIDs = existing.([]int64)
+		proposalIDs, ok = existing.([]int64)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast result to []int64: %T", existing))
+		}
 	}
 
 	// Add new proposal ID

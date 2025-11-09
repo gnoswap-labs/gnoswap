@@ -11,38 +11,43 @@ func init() {
 
 func registerLaunchpadV1() {
 	launchpad.RegisterInitializer(cross, func(launchpadStore launchpad.ILaunchpadStore) launchpad.ILaunchpad {
-		initStoreData(launchpadStore)
+		err := initStoreData(launchpadStore)
+		if err != nil {
+			panic(err)
+		}
 
 		return NewLaunchpadV1(launchpadStore)
 	})
 }
 
-func initStoreData(launchpadStore launchpad.ILaunchpadStore) {
+func initStoreData(launchpadStore launchpad.ILaunchpadStore) error {
 	if !launchpadStore.HasProjectsKey() {
 		err := launchpadStore.SetProjects(avl.NewTree())
 		if err != nil {
-			panic(err)
+			return err
 		}
 	}
 
 	if !launchpadStore.HasProjectTierRewardManagersKey() {
 		err := launchpadStore.SetProjectTierRewardManagers(avl.NewTree())
 		if err != nil {
-			panic(err)
+			return err
 		}
 	}
 
 	if !launchpadStore.HasDepositCounterKey() {
 		err := launchpadStore.SetDepositCounter(NewCounter())
 		if err != nil {
-			panic(err)
+			return err
 		}
 	}
 
 	if !launchpadStore.HasDepositsKey() {
 		err := launchpadStore.SetDeposits(avl.NewTree())
 		if err != nil {
-			panic(err)
+			return err
 		}
 	}
+
+	return nil
 }

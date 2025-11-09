@@ -139,7 +139,16 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 	return upper
 }
 
-// getMostSignificantBit returns the position of the most significant bit.
+// getMostSignificantBit returns the position of the most significant bit (MSB) in a uint256 value.
+// Uses binary search with pre-computed thresholds for efficient calculation.
+//
+// Parameters:
+//   - r: uint256 value to find MSB for
+//
+// Returns:
+//   - msb: position of the most significant bit (0-255)
+//
+// Used internally for logarithm calculations in tick math.
 func getMostSignificantBit(r *u256.Uint) (msb uint64) {
 	temp := r.Clone()
 
@@ -186,7 +195,27 @@ func getMostSignificantBit(r *u256.Uint) (msb uint64) {
 	return
 }
 
-// TickMathGetTickAtSqrtRatio calculates tick value for given sqrt price ratio, returning greatest tick where getSqrtRatioAtTick(tick) <= ratio, matching Uniswap V3 exactly.
+// TickMathGetTickAtSqrtRatio calculates the tick index for a given square root price ratio.
+//
+// Converts a square root price ratio in Q64.96 format back to its tick index,
+// returning the greatest tick where TickMathGetSqrtRatioAtTick(tick) <= sqrtPriceX96.
+// This matches Uniswap V3's behavior exactly.
+//
+// Parameters:
+//   - sqrtPriceX96: Square root price ratio in Q64.96 format
+//
+// Returns:
+//   - Tick index corresponding to the price
+//
+// Algorithm:
+//  1. Scales ratio from Q64.96 to Q96.128 by left-shifting 32 bits
+//  2. Finds MSB (most significant bit) to determine magnitude
+//  3. Calculates log_2 using fixed-point arithmetic
+//  4. Converts log_2 to log_sqrt(1.0001) to get tick
+//  5. Returns appropriate tick based on bounds checking
+//
+// Panics if sqrtPriceX96 is nil or outside valid range [minSqrtRatio, maxSqrtRatio).
+// Critical for converting prices to ticks for position management.
 func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	if sqrtPriceX96 == nil {
 		panic(newErrorWithDetail(
@@ -268,7 +297,8 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	return tickLowInt32
 }
 
-// abs returns the absolute value of x.
+// abs returns the absolute value of a signed 32-bit integer.
+// Used internally for tick math calculations to handle negative tick indices.
 func abs(x int32) int32 {
 	if x < 0 {
 		return -x

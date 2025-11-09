@@ -879,6 +879,7 @@ func TestRewardManager_MultipleDeposits_DifferentTimings(t *testing.T) {
 	uassert.Equal(t, true, totalDistributed >= 995 && totalDistributed <= 1005,
 		"Total distributed should equal total amount")
 }
+
 // TestRewardManager_ClaimableTimeOverflow tests potential overflow in claimableTime calculation (line 120)
 // Tests: claimableTime := deposit.DepositTime() + r.rewardClaimableDuration
 func TestRewardManager_ClaimableTimeOverflow(t *testing.T) {
@@ -941,15 +942,15 @@ func TestRewardManager_ClaimableTimeOverflow(t *testing.T) {
 	}
 }
 
-// TestRewardManager_ClaimedAmountOverflow tests potential overflow in claimedAmount update (line 268)  
+// TestRewardManager_ClaimedAmountOverflow tests potential overflow in claimedAmount update (line 268)
 // Tests: rewardState.setClaimedAmount(rewardState.ClaimedAmount() + claimableReward)
 func TestRewardManager_ClaimedAmountOverflow(t *testing.T) {
 	tests := []struct {
-		name             string
-		initialClaimed   int64
-		claimableReward  int64
-		expectedResult   int64
-		description      string
+		name            string
+		initialClaimed  int64
+		claimableReward int64
+		expectedResult  int64
+		description     string
 	}{
 		{
 			name:            "normal case",
@@ -997,7 +998,7 @@ func TestRewardManager_ClaimedAmountOverflow(t *testing.T) {
 			)
 
 			rewardState := manager.addRewardStateByDeposit(deposit)
-			
+
 			// Setup: Set initial claimed amount
 			rewardState.setClaimedAmount(tt.initialClaimed)
 			manager.rewards.Set(deposit.ID(), rewardState)
@@ -1007,23 +1008,23 @@ func TestRewardManager_ClaimedAmountOverflow(t *testing.T) {
 			priceDebtX128 := rewardState.PriceDebtX128()
 			totalReward := tt.initialClaimed + tt.claimableReward
 			depositAmount := deposit.DepositAmount()
-			
+
 			// actualRewardPerDepositX128 = (totalReward << 128) / depositAmount
 			actualRewardX128 := u256.NewUint(uint64(totalReward))
 			actualRewardX128 = u256.Zero().Lsh(actualRewardX128, 128)
 			actualRewardX128 = u256.Zero().Div(actualRewardX128, u256.NewUint(uint64(depositAmount)))
-			
+
 			// accumRewardPerDepositX128 = actualRewardPerDepositX128 + priceDebtX128
 			accumX128 := u256.Zero().Add(actualRewardX128, priceDebtX128)
 			manager.accumulatedRewardPerDepositX128 = accumX128
 
 			// when
 			_, _ = manager.collectReward(deposit.ID(), currentTime+200)
-			
+
 			// then
 			updatedState, _ := manager.getDepositRewardState(deposit.ID())
 			newClaimedAmount := updatedState.ClaimedAmount()
-			
+
 			// Allow precision loss of 1 due to uint256 division truncation
 			diff := tt.expectedResult - newClaimedAmount
 			uassert.True(t, diff >= 0 && diff <= 1,
@@ -1033,14 +1034,14 @@ func TestRewardManager_ClaimedAmountOverflow(t *testing.T) {
 }
 
 // TestRewardManager_TotalClaimedAmountOverflow tests potential overflow in totalClaimedAmount (line 270)
-// Tests: r.totalClaimedAmount += claimableReward  
+// Tests: r.totalClaimedAmount += claimableReward
 func TestRewardManager_TotalClaimedAmountOverflow(t *testing.T) {
 	tests := []struct {
-		name             string
-		initialTotal     int64
-		claimableReward  int64
-		expectedResult   int64
-		description      string
+		name            string
+		initialTotal    int64
+		claimableReward int64
+		expectedResult  int64
+		description     string
 	}{
 		{
 			name:            "normal case",
@@ -1089,16 +1090,16 @@ func TestRewardManager_TotalClaimedAmountOverflow(t *testing.T) {
 			)
 
 			rewardState := manager.addRewardStateByDeposit(deposit)
-			
+
 			// Setup: Configure accumulated reward to generate exact claimableReward
 			priceDebtX128 := rewardState.PriceDebtX128()
 			totalReward := tt.claimableReward
 			depositAmount := deposit.DepositAmount()
-			
+
 			actualRewardX128 := u256.NewUint(uint64(totalReward))
 			actualRewardX128 = u256.Zero().Lsh(actualRewardX128, 128)
 			actualRewardX128 = u256.Zero().Div(actualRewardX128, u256.NewUint(uint64(depositAmount)))
-			
+
 			accumX128 := u256.Zero().Add(actualRewardX128, priceDebtX128)
 			manager.accumulatedRewardPerDepositX128 = accumX128
 
@@ -1119,15 +1120,15 @@ func TestRewardManager_TotalClaimedAmountOverflow(t *testing.T) {
 // This function calculates reward per deposit based on time duration and staking amount
 func TestRewardManager_calculateRewardPerDepositX128(t *testing.T) {
 	tests := []struct {
-		name                   string
-		setupManager           func() *RewardManager
-		rewardPerSecondX128    *u256.Uint
-		totalStaked            int64
-		currentTime            int64
-		expectedResultIsZero   bool
-		expectedHasError       bool
-		expectedErrorContains  string
-		validateResult         func(t *testing.T, result *u256.Uint)
+		name                  string
+		setupManager          func() *RewardManager
+		rewardPerSecondX128   *u256.Uint
+		totalStaked           int64
+		currentTime           int64
+		expectedResultIsZero  bool
+		expectedHasError      bool
+		expectedErrorContains string
+		validateResult        func(t *testing.T, result *u256.Uint)
 	}{
 		{
 			name: "normal calculation - valid time range",
@@ -1446,14 +1447,14 @@ func TestRewardManager_calculateRewardPerDepositX128(t *testing.T) {
 // This function calculates and sets the distribute amount per second in X128 format
 func TestRewardManager_updateDistributeAmountPerSecondX128(t *testing.T) {
 	tests := []struct {
-		name                   string
-		totalDistributeAmount  int64
-		distributeStartTime    int64
-		distributeEndTime      int64
+		name                    string
+		totalDistributeAmount   int64
+		distributeStartTime     int64
+		distributeEndTime       int64
 		expectedAmountPerSecond string
-		expectedStartTime      int64
-		expectedEndTime        int64
-		expectNoUpdate         bool
+		expectedStartTime       int64
+		expectedEndTime         int64
+		expectNoUpdate          bool
 	}{
 		{
 			name:                  "normal calculation - 100 seconds duration",
@@ -1650,25 +1651,25 @@ func TestRewardManager_updateDistributeAmountPerSecondX128(t *testing.T) {
 // This function accumulates reward per deposit and updates manager state
 func TestRewardManager_addRewardPerDepositX128(t *testing.T) {
 	tests := []struct {
-		name                         string
-		setupManager                 func() *RewardManager
-		rewardPerDepositX128         *u256.Uint
-		currentHeight                int64
-		currentTime                  int64
-		expectedAccumulatedReward    string
-		expectedAccumulatedHeight    int64
-		expectedAccumulatedTime      int64
-		expectNoUpdate               bool
+		name                      string
+		setupManager              func() *RewardManager
+		rewardPerDepositX128      *u256.Uint
+		currentHeight             int64
+		currentTime               int64
+		expectedAccumulatedReward string
+		expectedAccumulatedHeight int64
+		expectedAccumulatedTime   int64
+		expectNoUpdate            bool
 	}{
 		{
 			name: "normal addition - first reward",
 			setupManager: func() *RewardManager {
 				return &RewardManager{
 					accumulatedRewardPerDepositX128: u256.Zero(),
-					accumulatedHeight:                0,
-					accumulatedTime:                  1000,
-					distributeStartTime:              900,
-					distributeEndTime:                2000,
+					accumulatedHeight:               0,
+					accumulatedTime:                 1000,
+					distributeStartTime:             900,
+					distributeEndTime:               2000,
 				}
 			},
 			rewardPerDepositX128:      u256.NewUint(1000),
@@ -1684,10 +1685,10 @@ func TestRewardManager_addRewardPerDepositX128(t *testing.T) {
 			setupManager: func() *RewardManager {
 				return &RewardManager{
 					accumulatedRewardPerDepositX128: u256.NewUint(5000),
-					accumulatedHeight:                100,
-					accumulatedTime:                  1000,
-					distributeStartTime:              900,
-					distributeEndTime:                2000,
+					accumulatedHeight:               100,
+					accumulatedTime:                 1000,
+					distributeStartTime:             900,
+					distributeEndTime:               2000,
 				}
 			},
 			rewardPerDepositX128:      u256.NewUint(3000),
@@ -1703,10 +1704,10 @@ func TestRewardManager_addRewardPerDepositX128(t *testing.T) {
 			setupManager: func() *RewardManager {
 				return &RewardManager{
 					accumulatedRewardPerDepositX128: u256.NewUint(5000),
-					accumulatedHeight:                100,
-					accumulatedTime:                  1000,
-					distributeStartTime:              900,
-					distributeEndTime:                2000,
+					accumulatedHeight:               100,
+					accumulatedTime:                 1000,
+					distributeStartTime:             900,
+					distributeEndTime:               2000,
 				}
 			},
 			rewardPerDepositX128: u256.Zero(),
@@ -1719,10 +1720,10 @@ func TestRewardManager_addRewardPerDepositX128(t *testing.T) {
 			setupManager: func() *RewardManager {
 				return &RewardManager{
 					accumulatedRewardPerDepositX128: u256.NewUint(5000),
-					accumulatedHeight:                100,
-					accumulatedTime:                  1200,
-					distributeStartTime:              900,
-					distributeEndTime:                2000,
+					accumulatedHeight:               100,
+					accumulatedTime:                 1200,
+					distributeStartTime:             900,
+					distributeEndTime:               2000,
 				}
 			},
 			rewardPerDepositX128: u256.NewUint(1000),
@@ -1735,10 +1736,10 @@ func TestRewardManager_addRewardPerDepositX128(t *testing.T) {
 			setupManager: func() *RewardManager {
 				return &RewardManager{
 					accumulatedRewardPerDepositX128: u256.NewUint(5000),
-					accumulatedHeight:                100,
-					accumulatedTime:                  1100,
-					distributeStartTime:              900,
-					distributeEndTime:                2000,
+					accumulatedHeight:               100,
+					accumulatedTime:                 1100,
+					distributeStartTime:             900,
+					distributeEndTime:               2000,
 				}
 			},
 			rewardPerDepositX128:      u256.NewUint(1000),
@@ -1754,10 +1755,10 @@ func TestRewardManager_addRewardPerDepositX128(t *testing.T) {
 			setupManager: func() *RewardManager {
 				return &RewardManager{
 					accumulatedRewardPerDepositX128: u256.NewUint(5000),
-					accumulatedHeight:                100,
-					accumulatedTime:                  900,
-					distributeStartTime:              1200,
-					distributeEndTime:                2000,
+					accumulatedHeight:               100,
+					accumulatedTime:                 900,
+					distributeStartTime:             1200,
+					distributeEndTime:               2000,
 				}
 			},
 			rewardPerDepositX128: u256.NewUint(1000),
@@ -1770,10 +1771,10 @@ func TestRewardManager_addRewardPerDepositX128(t *testing.T) {
 			setupManager: func() *RewardManager {
 				return &RewardManager{
 					accumulatedRewardPerDepositX128: u256.NewUint(5000),
-					accumulatedHeight:                100,
-					accumulatedTime:                  900,
-					distributeStartTime:              1100,
-					distributeEndTime:                2000,
+					accumulatedHeight:               100,
+					accumulatedTime:                 900,
+					distributeStartTime:             1100,
+					distributeEndTime:               2000,
 				}
 			},
 			rewardPerDepositX128:      u256.NewUint(1000),
@@ -1789,10 +1790,10 @@ func TestRewardManager_addRewardPerDepositX128(t *testing.T) {
 			setupManager: func() *RewardManager {
 				return &RewardManager{
 					accumulatedRewardPerDepositX128: u256.NewUint(5000),
-					accumulatedHeight:                100,
-					accumulatedTime:                  1000,
-					distributeStartTime:              900,
-					distributeEndTime:                1500,
+					accumulatedHeight:               100,
+					accumulatedTime:                 1000,
+					distributeStartTime:             900,
+					distributeEndTime:               1500,
 				}
 			},
 			rewardPerDepositX128:      u256.NewUint(1000),
@@ -1808,10 +1809,10 @@ func TestRewardManager_addRewardPerDepositX128(t *testing.T) {
 			setupManager: func() *RewardManager {
 				return &RewardManager{
 					accumulatedRewardPerDepositX128: u256.NewUint(5000),
-					accumulatedHeight:                100,
-					accumulatedTime:                  1000,
-					distributeStartTime:              900,
-					distributeEndTime:                1500,
+					accumulatedHeight:               100,
+					accumulatedTime:                 1000,
+					distributeStartTime:             900,
+					distributeEndTime:               1500,
 				}
 			},
 			rewardPerDepositX128:      u256.NewUint(1000),
@@ -1828,10 +1829,10 @@ func TestRewardManager_addRewardPerDepositX128(t *testing.T) {
 				maxUint128 := u256.MustFromDecimal("340282366920938463463374607431768211455")
 				return &RewardManager{
 					accumulatedRewardPerDepositX128: u256.Zero().Sub(maxUint128, u256.NewUint(1000)),
-					accumulatedHeight:                100,
-					accumulatedTime:                  1000,
-					distributeStartTime:              900,
-					distributeEndTime:                2000,
+					accumulatedHeight:               100,
+					accumulatedTime:                 1000,
+					distributeStartTime:             900,
+					distributeEndTime:               2000,
 				}
 			},
 			rewardPerDepositX128: u256.NewUint(500),
@@ -1851,10 +1852,10 @@ func TestRewardManager_addRewardPerDepositX128(t *testing.T) {
 			setupManager: func() *RewardManager {
 				return &RewardManager{
 					accumulatedRewardPerDepositX128: u256.NewUint(1000000),
-					accumulatedHeight:                100,
-					accumulatedTime:                  1000,
-					distributeStartTime:              900,
-					distributeEndTime:                2000,
+					accumulatedHeight:               100,
+					accumulatedTime:                 1000,
+					distributeStartTime:             900,
+					distributeEndTime:               2000,
 				}
 			},
 			rewardPerDepositX128:      u256.NewUint(1),
@@ -1870,10 +1871,10 @@ func TestRewardManager_addRewardPerDepositX128(t *testing.T) {
 			setupManager: func() *RewardManager {
 				return &RewardManager{
 					accumulatedRewardPerDepositX128: u256.NewUint(1000),
-					accumulatedHeight:                100,
-					accumulatedTime:                  1000,
-					distributeStartTime:              1000,
-					distributeEndTime:                2000,
+					accumulatedHeight:               100,
+					accumulatedTime:                 1000,
+					distributeStartTime:             1000,
+					distributeEndTime:               2000,
 				}
 			},
 			rewardPerDepositX128:      u256.NewUint(500),

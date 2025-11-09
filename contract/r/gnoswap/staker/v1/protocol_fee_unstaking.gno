@@ -62,7 +62,10 @@ func (s *stakerV1) SetUnStakingFee(fee int64) {
 
 	prevUnStakingFee := s.GetUnstakingFee()
 
-	s.setUnStakingFee(fee)
+	err := s.setUnStakingFee(fee)
+	if err != nil {
+		panic(err)
+	}
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -75,6 +78,6 @@ func (s *stakerV1) SetUnStakingFee(fee int64) {
 }
 
 // setUnStakingFee internally updates the unstaking fee.
-func (s *stakerV1) setUnStakingFee(fee int64) {
-	s.store.SetUnstakingFee(fee)
+func (s *stakerV1) setUnStakingFee(fee int64) error {
+	return s.store.SetUnstakingFee(fee)
 }

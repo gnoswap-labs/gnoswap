@@ -261,4 +261,3 @@ func TestDelegationHistory_NewDelegationHistoryResolver(t *testing.T) {
 		})
 	}
 }
-

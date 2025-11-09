@@ -1,11 +1,11 @@
 package v1
 
 import (
-    "math"
+	"math"
 	"testing"
 
-	"gno.land/p/nt/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/gov/staker"
 )
@@ -393,13 +393,13 @@ func TestProtocolFeeRewardManager_claimRewards_Multipletimes(t *testing.T) {
 // Test calculateAccumulatedRewardX128PerStake
 func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(t *testing.T) {
 	tests := []struct {
-		name                string
-		setupManager        func(*ProtocolFeeRewardManagerResolver)
-		protocolFeeAmounts  map[string]int64
-		currentTimestamp    int64
-		shouldIncrease      bool
-		expectedResultLen   int // -1 means don't check
-		expectedChangedLen  int // -1 means don't check
+		name               string
+		setupManager       func(*ProtocolFeeRewardManagerResolver)
+		protocolFeeAmounts map[string]int64
+		currentTimestamp   int64
+		shouldIncrease     bool
+		expectedResultLen  int // -1 means don't check
+		expectedChangedLen int // -1 means don't check
 	}{
 		{
 			name: "Current timestamp less than accumulated timestamp",
@@ -409,8 +409,8 @@ func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(t *test
 			protocolFeeAmounts: map[string]int64{
 				"token1": 1000,
 			},
-			currentTimestamp: 100,
-			shouldIncrease:   false,
+			currentTimestamp:   100,
+			shouldIncrease:     false,
 			expectedResultLen:  -1,
 			expectedChangedLen: -1,
 		},
@@ -429,8 +429,8 @@ func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(t *test
 			protocolFeeAmounts: map[string]int64{
 				"token1": 1000, // Increase from 500 to 1000
 			},
-			currentTimestamp: 100,
-			shouldIncrease:   true,
+			currentTimestamp:   100,
+			shouldIncrease:     true,
 			expectedResultLen:  -1,
 			expectedChangedLen: -1,
 		},
@@ -449,8 +449,8 @@ func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(t *test
 			protocolFeeAmounts: map[string]int64{
 				"token1": 1000, // No change
 			},
-			currentTimestamp: 100,
-			shouldIncrease:   false,
+			currentTimestamp:   100,
+			shouldIncrease:     false,
 			expectedResultLen:  -1,
 			expectedChangedLen: -1,
 		},
@@ -466,8 +466,8 @@ func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(t *test
 			protocolFeeAmounts: map[string]int64{
 				"token1": 1000,
 			},
-			currentTimestamp: 100,
-			shouldIncrease:   false,
+			currentTimestamp:   100,
+			shouldIncrease:     false,
 			expectedResultLen:  -1,
 			expectedChangedLen: -1,
 		},

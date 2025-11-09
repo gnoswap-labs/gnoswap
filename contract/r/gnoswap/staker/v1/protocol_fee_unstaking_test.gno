@@ -278,14 +278,14 @@ func TestSetUnStakingFeeInternal(t *testing.T) {
 // Test handleStakingRewardFee with various scenarios
 func TestHandleStakingRewardFeeEdgeCases(t *testing.T) {
 	tests := []struct {
-		name          string
-		tokenPath     string
-		amount        int64
-		unstakingFee  int64
-		internal      bool
-		expectedNet   int64
-		expectedFee   int64
-		expectError   bool
+		name         string
+		tokenPath    string
+		amount       int64
+		unstakingFee int64
+		internal     bool
+		expectedNet  int64
+		expectedFee  int64
+		expectError  bool
 	}{
 		{
 			name:         "zero fee results in full amount",

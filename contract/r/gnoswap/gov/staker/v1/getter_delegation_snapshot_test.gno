@@ -381,4 +381,3 @@ func TestGetDelegationSnapshots_EdgeCases(t *testing.T) {
 		})
 	}
 }
-

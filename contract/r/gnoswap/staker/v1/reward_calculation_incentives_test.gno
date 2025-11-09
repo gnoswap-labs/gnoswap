@@ -214,8 +214,8 @@ func TestIncentives_ArchiveEdgeCasesAndMultiple(t *testing.T) {
 // Test IsArchived function
 func TestIsArchived(t *testing.T) {
 	tests := []struct {
-		name              string
-		setupFunc         func(*IncentivesResolver, *sr.ExternalIncentive)
+		name               string
+		setupFunc          func(*IncentivesResolver, *sr.ExternalIncentive)
 		expectedIsArchived bool
 	}{
 		{
@@ -280,32 +280,32 @@ func TestIsArchived(t *testing.T) {
 // Test create function
 func TestIncentivesCreate(t *testing.T) {
 	tests := []struct {
-		name               string
-		incentiveId        string
-		rewardAmount       int64
-		expectedExists     bool
-		expectedRewardAmt  int64
+		name              string
+		incentiveId       string
+		rewardAmount      int64
+		expectedExists    bool
+		expectedRewardAmt int64
 	}{
 		{
-			name:               "create incentive with 5000 reward",
-			incentiveId:        "test_incentive_create",
-			rewardAmount:       5000,
-			expectedExists:     true,
-			expectedRewardAmt:  5000,
+			name:              "create incentive with 5000 reward",
+			incentiveId:       "test_incentive_create",
+			rewardAmount:      5000,
+			expectedExists:    true,
+			expectedRewardAmt: 5000,
 		},
 		{
-			name:               "create incentive with 1000 reward",
-			incentiveId:        "test_incentive_1000",
-			rewardAmount:       1000,
-			expectedExists:     true,
-			expectedRewardAmt:  1000,
+			name:              "create incentive with 1000 reward",
+			incentiveId:       "test_incentive_1000",
+			rewardAmount:      1000,
+			expectedExists:    true,
+			expectedRewardAmt: 1000,
 		},
 		{
-			name:               "create incentive with large reward",
-			incentiveId:        "test_incentive_large",
-			rewardAmount:       1_000_000_000,
-			expectedExists:     true,
-			expectedRewardAmt:  1_000_000_000,
+			name:              "create incentive with large reward",
+			incentiveId:       "test_incentive_large",
+			rewardAmount:      1_000_000_000,
+			expectedExists:    true,
+			expectedRewardAmt: 1_000_000_000,
 		},
 	}
 
@@ -353,10 +353,10 @@ func TestIncentivesCreate(t *testing.T) {
 // Test update function
 func TestIncentivesUpdate(t *testing.T) {
 	tests := []struct {
-		name             string
-		incentiveId      string
-		updateFunc       func(*sr.ExternalIncentive)
-		verifyFunc       func(*testing.T, *sr.ExternalIncentive)
+		name        string
+		incentiveId string
+		updateFunc  func(*sr.ExternalIncentive)
+		verifyFunc  func(*testing.T, *sr.ExternalIncentive)
 	}{
 		{
 			name:        "update incentive - set refunded to true",
@@ -474,11 +474,11 @@ func TestStartUnclaimablePeriod(t *testing.T) {
 // Test endUnclaimablePeriod function
 func TestEndUnclaimablePeriod(t *testing.T) {
 	tests := []struct {
-		name              string
-		startTime         int64
-		endTime           int64
-		expectedEndTime   int64
-		shouldExist       bool
+		name            string
+		startTime       int64
+		endTime         int64
+		expectedEndTime int64
+		shouldExist     bool
 	}{
 		{
 			name:            "end unclaimable period after 3600 seconds",
@@ -542,12 +542,12 @@ func TestEndUnclaimablePeriod(t *testing.T) {
 // Test calculateUnClaimableDuration function
 func TestCalculateUnClaimableDuration(t *testing.T) {
 	tests := []struct {
-		name                      string
-		unclaimableStart          int64
-		unclaimableEnd            int64
-		incentiveStartTimestamp   int64
-		incentiveEndTimestamp     int64
-		expectedDuration          int64
+		name                    string
+		unclaimableStart        int64
+		unclaimableEnd          int64
+		incentiveStartTimestamp int64
+		incentiveEndTimestamp   int64
+		expectedDuration        int64
 	}{
 		{
 			name:                    "full overlap",

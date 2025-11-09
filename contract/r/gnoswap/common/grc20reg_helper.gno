@@ -43,6 +43,11 @@ func MustRegistered(paths ...string) {
 }
 
 // extractTokenPathsFromRender extracts token paths from rendered grc20reg output.
+// Parses the grc20reg.Render() output and extracts all token paths enclosed in brackets.
+// Token paths follow the format: [gno.land/r/package/path]
+//
+// Returns a slice of token paths with brackets removed.
+// Used internally for parsing token registry data.
 func extractTokenPathsFromRender(render string) []string {
 	matches := re.FindAllString(render, -1)
 

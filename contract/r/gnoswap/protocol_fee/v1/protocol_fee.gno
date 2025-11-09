@@ -77,7 +77,9 @@ func (pf *protocolFeeV1) DistributeProtocolFee() map[string]int64 {
 		}
 	}
 
-	pf.getProtocolFeeState().clearTokenListWithAmount()
+	if err := pf.getProtocolFeeState().clearTokenListWithAmount(); err != nil {
+		panic(err)
+	}
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -206,7 +208,9 @@ func (pf *protocolFeeV1) ClearTokenListWithAmount() {
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsGovStaker(caller)
 
-	pf.getProtocolFeeState().clearTokenListWithAmount()
+	if err := pf.getProtocolFeeState().clearTokenListWithAmount(); err != nil {
+		panic(err)
+	}
 }
 
 // ClearAccuTransferToGovStaker clears the accuToGovStaker.

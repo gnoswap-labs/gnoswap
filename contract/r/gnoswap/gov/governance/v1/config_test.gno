@@ -235,7 +235,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 
 			if tc.expectedHasPanic {
 				uassert.AbortsContains(t, tc.expectedPanicMsg, func() {
-					func (cur realm) {
+					func(cur realm) {
 						testing.SetRealm(govRealm)
 						gs.Reconfigure(
 							tc.votingStartDelay,
@@ -249,7 +249,7 @@ func TestConfig_Reconfigure(t *testing.T) {
 					}(cross)
 				})
 			} else {
-				func (cur realm) {
+				func(cur realm) {
 					testing.SetRealm(govRealm)
 					gs.Reconfigure(
 						tc.votingStartDelay,
@@ -313,7 +313,7 @@ func TestConfig_reconfigure(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			gs := newMockGovernance()
 
-			func (cur realm) {
+			func(cur realm) {
 				// given: create config directly
 				cfg := governance.Config{
 					VotingStartDelay:              tc.votingStartDelay,

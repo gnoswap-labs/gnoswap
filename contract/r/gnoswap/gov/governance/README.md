@@ -19,15 +19,18 @@ Governance system enables GNS holders to stake for xGNS voting power, create pro
 ## Core Mechanics
 
 ### Staking Flow
+
 ```
 GNS → Stake → xGNS (voting power) → Delegate → Vote
 ```
+
 1. Stake GNS to receive equal xGNS
 2. Delegate voting power (can be self)
 3. Vote on proposals with delegated power
 4. 7-day lockup for undelegation
 
 ### Proposal Types
+
 - **Text**: Signal proposals without execution
 - **CommunityPoolSpend**: Treasury disbursements
 - **ParameterChange**: Protocol parameter updates
@@ -35,16 +38,19 @@ GNS → Stake → xGNS (voting power) → Delegate → Vote
 ## Proposal Lifecycle
 
 ### Creation
+
 - Requires 1,000 GNS balance
 - One active proposal per address
 - Valid type and parameters required
 
 ### Voting
+
 - 1 day delay before voting starts
 - 7 days voting period
 - Weight = 24hr average delegation (prevents flash loans)
 
 ### Execution
+
 - Requires quorum (50%) and majority (>50%)
 - 1 day timelock after voting
 - 30 day execution window
@@ -53,6 +59,7 @@ GNS → Stake → xGNS (voting power) → Delegate → Vote
 ## Technical Details
 
 ### Vote Weight Calculation
+
 ```go
 // 24-hour average prevents manipulation
 snapshot1 = getDelegationAt(proposalTime - 24hr)
@@ -61,13 +68,16 @@ voteWeight = (snapshot1 + snapshot2) / 2
 ```
 
 ### Dynamic Quorum
+
 ```go
 activeXGNS = totalXGNS - launchpadXGNS
 requiredVotes = activeXGNS * 0.5
 ```
 
 ### Rewards Distribution
+
 xGNS holders earn protocol fees:
+
 ```
 userShare = (userXGNS / totalXGNS) * protocolFees
 ```

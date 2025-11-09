@@ -1,11 +1,11 @@
 package v1
 
 import (
-    "math"
+	"math"
 	"testing"
 
-	"gno.land/p/nt/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/uassert"
 
 	"gno.land/r/gnoswap/gov/staker"
 )
@@ -104,15 +104,15 @@ func TestEmissionRewardManager_GetClaimableRewardAmount(t *testing.T) {
 			expected:                 1000, // Full distributed amount for single staker
 		},
 		{
-		    name: "Get claimable with past timestamp",
-            setupManager: func(m *EmissionRewardManagerResolver) {
-                m.addStake("user1", 1000, 100)
-                m.updateAccumulatedRewardX128PerStake(1000, 100)
-            },
-            currentDistributedAmount: 2000,
-            address:                  "user1",
-            currentHeight:            50, // past timestamp
-            expected:                 0,  // Should return 0 as no rewards accrued before stake time
+			name: "Get claimable with past timestamp",
+			setupManager: func(m *EmissionRewardManagerResolver) {
+				m.addStake("user1", 1000, 100)
+				m.updateAccumulatedRewardX128PerStake(1000, 100)
+			},
+			currentDistributedAmount: 2000,
+			address:                  "user1",
+			currentHeight:            50, // past timestamp
+			expected:                 0,  // Should return 0 as no rewards accrued before stake time
 		},
 	}
 
@@ -334,7 +334,6 @@ func TestEmissionRewardManager_claimRewards(t *testing.T) {
 			println("=== Before claiming rewards ===")
 			claimableReward, _ := resolver.GetClaimableRewardAmount(resolver.GetDistributedAmount(), tt.address, tt.currentHeight)
 			println("Claimable reward amount:", claimableReward)
-
 			reward, err := resolver.claimRewards(tt.address, tt.currentHeight)
 			println("Actual claimed reward:", reward)
 
@@ -351,7 +350,7 @@ func TestEmissionRewardManager_claimRewards(t *testing.T) {
 }
 
 func TestEmissionRewardManager_claimRewards_MultipleTimes(t *testing.T) {
-    t.Run("Claim rewards multiple times", func(t *testing.T) {
+	t.Run("Claim rewards multiple times", func(t *testing.T) {
 		// given
 		manager := staker.NewEmissionRewardManager()
 		resolver := NewEmissionRewardManagerResolver(manager)
@@ -414,28 +413,28 @@ func TestEmissionRewardManager_calculateAccumulatedRewardX128PerStake(t *testing
 			shouldIncrease:           true,
 		},
 		{
-		    name: "Calculate with negative distributed amount",
+			name: "Calculate with negative distributed amount",
 			setupManager: func(m *EmissionRewardManagerResolver) {
-                m.SetTotalStakedAmount(1000)
-                m.SetDistributedAmount(1500)
-                m.SetAccumulatedTimestamp(50)
-                m.SetAccumulatedRewardX128PerStake(u256.NewUintFromInt64(0))
-            },
-            currentDistributedAmount: 1000, // less than previous
-            currentHeight:            100,
-            shouldIncrease:           false, // should not increase
+				m.SetTotalStakedAmount(1000)
+				m.SetDistributedAmount(1500)
+				m.SetAccumulatedTimestamp(50)
+				m.SetAccumulatedRewardX128PerStake(u256.NewUintFromInt64(0))
+			},
+			currentDistributedAmount: 1000, // less than previous
+			currentHeight:            100,
+			shouldIncrease:           false, // should not increase
 		},
 		{
-		    name: "Calculate with max int64",
+			name: "Calculate with max int64",
 			setupManager: func(m *EmissionRewardManagerResolver) {
-                m.SetTotalStakedAmount(1)
-                m.SetDistributedAmount(0)
-                m.SetAccumulatedTimestamp(50)
-                m.SetAccumulatedRewardX128PerStake(u256.NewUintFromInt64(0))
-            },
-            currentDistributedAmount: int64(9223372036854775807), // Max int64
-            currentHeight:            100,
-            shouldIncrease:           true,
+				m.SetTotalStakedAmount(1)
+				m.SetDistributedAmount(0)
+				m.SetAccumulatedTimestamp(50)
+				m.SetAccumulatedRewardX128PerStake(u256.NewUintFromInt64(0))
+			},
+			currentDistributedAmount: int64(9223372036854775807), // Max int64
+			currentHeight:            100,
+			shouldIncrease:           true,
 		},
 	}
 
@@ -510,14 +509,14 @@ func TestEmissionRewardManager_updateAccumulatedRewardX128PerStake(t *testing.T)
 			shouldUpdate:             true,
 		},
 		{
-		    name: "Update with past timestamp",
-	        setupManager: func(m *EmissionRewardManagerResolver) {
-                m.SetAccumulatedTimestamp(100)
-                m.SetDistributedAmount(0)
-            },
-            currentDistributedAmount: 1000,
-            currentHeight:            50, // past timestamp
-            shouldUpdate:             false,
+			name: "Update with past timestamp",
+			setupManager: func(m *EmissionRewardManagerResolver) {
+				m.SetAccumulatedTimestamp(100)
+				m.SetDistributedAmount(0)
+			},
+			currentDistributedAmount: 1000,
+			currentHeight:            50, // past timestamp
+			shouldUpdate:             false,
 		},
 	}
 

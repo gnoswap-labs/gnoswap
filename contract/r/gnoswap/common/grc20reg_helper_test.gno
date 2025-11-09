@@ -151,14 +151,14 @@ func TestGrc20regHelper_GetTokenTeller(t *testing.T) {
 
 func TestGrc20regHelper_Transfer(t *testing.T) {
 	tests := []struct {
-		name            string
-		caller          address
-		path            string
-		to              address
-		amount          int64
-		expectedError   bool
-		shouldAbort     bool
-		abortContains   string
+		name          string
+		caller        address
+		path          string
+		to            address
+		amount        int64
+		expectedError bool
+		shouldAbort   bool
+		abortContains string
 	}{
 		{
 			name:          "transfer to valid address",
