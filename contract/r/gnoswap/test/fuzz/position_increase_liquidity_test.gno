@@ -22,7 +22,7 @@ func TestFuzzPositionIncreaseLiquidity_ValidParams_Stateless(t *testing.T) {
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
-	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given - initialize states
 		initStates(t)
 
@@ -76,7 +76,7 @@ func TestFuzzPositionIncreaseLiquidity_RandomizedParams_Stateless(t *testing.T) 
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
-	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given - initialize states
 		initStates(t)
 
@@ -126,7 +126,7 @@ func TestFuzzPositionIncreaseLiquidity_ValidParams_Stateful(t *testing.T) {
 	// Create initial position once with high liquidity
 	tokenId := createTestPosition(t, adminAddr, poolAddr)
 
-	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// Generate params for increase liquidity
 		increaseParams := NewValidPositionIncreaseLiquidityParams(ft, tokenId)
 		fuzzResult.AddParams(index, increaseParams)
@@ -188,7 +188,7 @@ func TestFuzzPositionIncreaseLiquidity_RandomizedParams_Stateful(t *testing.T) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	tokenId := createTestPosition(t, adminAddr, poolAddr)
 
-	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// Generate params for increase liquidity
 		increaseParams := NewRandomizedPositionIncreaseLiquidityParams(ft, tokenId)
 		fuzzResult.AddParams(index, increaseParams)

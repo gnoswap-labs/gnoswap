@@ -20,7 +20,7 @@ func TestFuzzPositionReposition_ValidParams_Stateless(t *testing.T) {
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
-	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given - initialize states
 		initStates(t)
 
@@ -100,7 +100,7 @@ func TestFuzzPositionReposition_RandomizedParams_Stateless(t *testing.T) {
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
-	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given - initialize states
 		initStates(t)
 
@@ -176,7 +176,7 @@ func TestFuzzPositionReposition_ValidParams_Stateful(t *testing.T) {
 	}
 	var history []repositionHistory
 
-	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 		// Get the current position's liquidity
@@ -274,7 +274,7 @@ func TestFuzzPositionReposition_RandomizedParams_Stateful(t *testing.T) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	tokenId := createTestPosition(t, adminAddr, poolAddr)
 
-	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 		liquidity := position.GetPositionLiquidity(tokenId)

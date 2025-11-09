@@ -14,13 +14,13 @@ import (
 
 // positionIncreaseLiquidityParams is the parameters for IncreaseLiquidity fuzzing test
 type positionIncreaseLiquidityParams struct {
-	positionId      uint64
-	amount0Desired  string
-	amount1Desired  string
-	amount0Min      string
-	amount1Min      string
-	deadline        int64
-	poolPath        string
+	positionId     uint64
+	amount0Desired string
+	amount1Desired string
+	amount0Min     string
+	amount1Min     string
+	deadline       int64
+	poolPath       string
 }
 
 func (p *positionIncreaseLiquidityParams) IsValid() bool {
@@ -110,7 +110,7 @@ func NewRandomizedPositionIncreaseLiquidityParams(t *fuzz.T, existingPositionId 
 		params := newValidPositionIncreaseLiquidityParams(t, existingPositionId)
 		params.amount0Desired = "0"
 		return params
-case 2:
+	case 2:
 		params := newValidPositionIncreaseLiquidityParams(t, existingPositionId)
 		amount := u256.MustFromDecimal(params.amount0Desired)
 		params.amount0Min = amount.Add(amount, u256.NewUint(1)).ToString()
