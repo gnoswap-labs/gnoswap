@@ -24,10 +24,7 @@ func (g *govStakerV1) setUnDelegationLockupPeriod(period int64) {
 // Returns:
 //   - int64: next available delegation ID
 func (g *govStakerV1) nextDelegationID() int64 {
-	counter, err := g.store.GetDelegationCounter()
-	if err != nil {
-		panic(err)
-	}
+	counter := g.store.GetDelegationCounter()
 
 	return counter.Next()
 }
@@ -76,10 +73,7 @@ func (g *govStakerV1) addDelegation(delegationID int64, delegation *staker.Deleg
 	}
 
 	// Update delegation manager
-	delegationManager, err := g.store.GetDelegationManager()
-	if err != nil {
-		return false
-	}
+	delegationManager := g.store.GetDelegationManager()
 	resolvedManager := NewDelegationManagerResolver(delegationManager)
 	resolvedManager.addDelegation(
 		delegation.DelegateFrom(),
@@ -112,10 +106,7 @@ func (g *govStakerV1) removeDelegation(delegationID int64) bool {
 	}
 
 	// Update delegation manager
-	delegationManager, err := g.store.GetDelegationManager()
-	if err != nil {
-		return false
-	}
+	delegationManager := g.store.GetDelegationManager()
 	resolvedManager := NewDelegationManagerResolver(delegationManager)
 	resolvedManager.removeDelegation(
 		delegation.DelegateFrom(),
@@ -137,10 +128,7 @@ func (g *govStakerV1) removeDelegation(delegationID int64) bool {
 // Returns:
 //   - []*Delegation: list of user's delegations
 func (g *govStakerV1) getUserDelegations(user address) (delegations []*staker.Delegation) {
-	delegationManager, err := g.store.GetDelegationManager()
-	if err != nil {
-		return delegations
-	}
+	delegationManager := g.store.GetDelegationManager()
 
 	resolvedManager := NewDelegationManagerResolver(delegationManager)
 	for _, delegationID := range resolvedManager.GetUserDelegationIDs(user) {
@@ -161,10 +149,7 @@ func (g *govStakerV1) getUserDelegations(user address) (delegations []*staker.De
 // Returns:
 //   - []*Delegation: list of user's delegations to the delegatee
 func (g *govStakerV1) getUserDelegationsWithDelegatee(user address, delegatee address) (delegations []*staker.Delegation) {
-	delegationManager, err := g.store.GetDelegationManager()
-	if err != nil {
-		return delegations
-	}
+	delegationManager := g.store.GetDelegationManager()
 	resolvedManager := NewDelegationManagerResolver(delegationManager)
 	for _, delegationID := range resolvedManager.GetUserDelegationIDsWithDelegatee(user, delegatee) {
 		if delegation := g.getDelegation(delegationID); delegation != nil {
@@ -179,10 +164,7 @@ func (g *govStakerV1) getUserDelegationsWithDelegatee(user address, delegatee ad
 // Returns:
 //   - DelegationHistory: chronological list of delegation records
 func (g *govStakerV1) getDelegationHistory() staker.DelegationHistory {
-	history, err := g.store.GetDelegationHistory()
-	if err != nil {
-		panic(err)
-	}
+	history := g.store.GetDelegationHistory()
 
 	return history
 }
@@ -197,10 +179,7 @@ func (g *govStakerV1) addDelegationRecord(delegationRecord *staker.DelegationRec
 		panic(err)
 	}
 
-	snapshot, err := g.store.GetDelegationSnapshot()
-	if err != nil {
-		panic(err)
-	}
+	snapshot := g.store.GetDelegationSnapshot()
 	resolver := NewDelegationSnapshotResolver(snapshot)
 	snapshot = resolver.AddRecord(delegationRecord)
 	if err := g.store.SetDelegationSnapshot(snapshot); err != nil {
@@ -224,10 +203,7 @@ func (g *govStakerV1) setDelegationHistory(history staker.DelegationHistory) {
 //   - DelegationSnapshot: current delegation state for all delegatees
 func (g *govStakerV1) getDelegationSnapshots() staker.DelegationSnapshot {
 	// Get the latest snapshot
-	snapshot, err := g.store.GetDelegationSnapshot()
-	if err != nil {
-		panic(err)
-	}
+	snapshot := g.store.GetDelegationSnapshot()
 
 	return snapshot
 }
@@ -254,19 +230,14 @@ func (g *govStakerV1) setDelegationSnapshots(snapshot staker.DelegationSnapshot)
 func (g *govStakerV1) addStakeEmissionReward(address string, amount int64, currentTimestamp int64) error {
 	distributedAmount := emission.GetAccuDistributedToGovStaker()
 
-	emissionRewardManager, err := g.store.GetEmissionRewardManager()
-	if err != nil {
-		return err
-	}
+	emissionRewardManager := g.store.GetEmissionRewardManager()
 	resolvedManager := NewEmissionRewardManagerResolver(emissionRewardManager)
 
-	err = resolvedManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
-	if err != nil {
+	if err := resolvedManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp); err != nil {
 		return err
 	}
 
-	err = resolvedManager.addStake(address, amount, currentTimestamp)
-	if err != nil {
+	if err := resolvedManager.addStake(address, amount, currentTimestamp); err != nil {
 		return err
 	}
 
@@ -283,19 +254,14 @@ func (g *govStakerV1) addStakeEmissionReward(address string, amount int64, curre
 func (g *govStakerV1) removeStakeEmissionReward(address string, amount int64, currentTimestamp int64) error {
 	distributedAmount := emission.GetAccuDistributedToGovStaker()
 
-	emissionRewardManager, err := g.store.GetEmissionRewardManager()
-	if err != nil {
-		return err
-	}
+	emissionRewardManager := g.store.GetEmissionRewardManager()
 	resolvedManager := NewEmissionRewardManagerResolver(emissionRewardManager)
 
-	err = resolvedManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
-	if err != nil {
+	if err := resolvedManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp); err != nil {
 		return err
 	}
 
-	err = resolvedManager.removeStake(address, amount, currentTimestamp)
-	if err != nil {
+	if err := resolvedManager.removeStake(address, amount, currentTimestamp); err != nil {
 		return err
 	}
 
@@ -315,14 +281,10 @@ func (g *govStakerV1) removeStakeEmissionReward(address string, amount int64, cu
 func (g *govStakerV1) claimRewardsEmissionReward(address string, currentTimestamp int64) (int64, error) {
 	distributedAmount := emission.GetAccuDistributedToGovStaker()
 
-	emissionRewardManager, err := g.store.GetEmissionRewardManager()
-	if err != nil {
-		return 0, err
-	}
+	emissionRewardManager := g.store.GetEmissionRewardManager()
 	resolvedManager := NewEmissionRewardManagerResolver(emissionRewardManager)
 
-	err = resolvedManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp)
-	if err != nil {
+	if err := resolvedManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp); err != nil {
 		return 0, err
 	}
 
@@ -346,10 +308,7 @@ func (g *govStakerV1) claimRewardsEmissionReward(address string, currentTimestam
 // Returns:
 //   - bool: true if successfully removed
 func (g *govStakerV1) removeLaunchpadProjectDeposit(ownerAddress string) bool {
-	launchpadProjectDeposits, err := g.store.GetLaunchpadProjectDeposits()
-	if err != nil {
-		return false
-	}
+	launchpadProjectDeposits := g.store.GetLaunchpadProjectDeposits()
 
 	resolver := NewLaunchpadProjectDepositsResolver(launchpadProjectDeposits)
 	return resolver.RemoveDeposit(ownerAddress)
@@ -367,19 +326,14 @@ func (g *govStakerV1) addStakeProtocolFeeReward(address string, amount int64, cu
 
 	distributedAmounts := g.getDistributedProtocolFees()
 
-	protocolFeeRewardManager, err := g.store.GetProtocolFeeRewardManager()
-	if err != nil {
-		return err
-	}
+	protocolFeeRewardManager := g.store.GetProtocolFeeRewardManager()
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 
-	err = resolvedManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
-	if err != nil {
+	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp); err != nil {
 		return err
 	}
 
-	err = resolvedManager.addStake(address, amount, currentTimestamp)
-	if err != nil {
+	if err := resolvedManager.addStake(address, amount, currentTimestamp); err != nil {
 		return err
 	}
 
@@ -398,19 +352,14 @@ func (g *govStakerV1) removeStakeProtocolFeeReward(address string, amount int64,
 
 	distributedAmounts := g.getDistributedProtocolFees()
 
-	protocolFeeRewardManager, err := g.store.GetProtocolFeeRewardManager()
-	if err != nil {
-		return err
-	}
+	protocolFeeRewardManager := g.store.GetProtocolFeeRewardManager()
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 
-	err = resolvedManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
-	if err != nil {
+	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp); err != nil {
 		return err
 	}
 
-	err = resolvedManager.removeStake(address, amount, currentTimestamp)
-	if err != nil {
+	if err := resolvedManager.removeStake(address, amount, currentTimestamp); err != nil {
 		return err
 	}
 
@@ -432,14 +381,10 @@ func (g *govStakerV1) claimRewardsProtocolFeeReward(address string, currentTimes
 
 	distributedAmounts := g.getDistributedProtocolFees()
 
-	protocolFeeRewardManager, err := g.store.GetProtocolFeeRewardManager()
-	if err != nil {
-		return nil, err
-	}
+	protocolFeeRewardManager := g.store.GetProtocolFeeRewardManager()
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 
-	err = resolvedManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp)
-	if err != nil {
+	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp); err != nil {
 		return nil, err
 	}
 
@@ -473,10 +418,7 @@ func (g *govStakerV1) getDistributedProtocolFees() map[string]int64 {
 //   - int64: deposit amount
 //   - bool: true if project exists, false otherwise
 func (g *govStakerV1) getLaunchpadProjectDeposit(ownerAddress string) (int64, bool) {
-	launchpadDeposits, err := g.store.GetLaunchpadProjectDeposits()
-	if err != nil {
-		return 0, false
-	}
+	launchpadDeposits := g.store.GetLaunchpadProjectDeposits()
 	resolvedDeposits := NewLaunchpadProjectDepositsResolver(launchpadDeposits)
 	return resolvedDeposits.getLaunchpadProjectDeposit(ownerAddress)
 }
@@ -490,10 +432,7 @@ func (g *govStakerV1) getLaunchpadProjectDeposit(ownerAddress string) (int64, bo
 // Returns:
 //   - bool: true if successfully set
 func (g *govStakerV1) setLaunchpadProjectDeposit(ownerAddress string, deposit int64) bool {
-	launchpadDeposits, err := g.store.GetLaunchpadProjectDeposits()
-	if err != nil {
-		return false
-	}
+	launchpadDeposits := g.store.GetLaunchpadProjectDeposits()
 	resolvedDeposits := NewLaunchpadProjectDepositsResolver(launchpadDeposits)
 	resolvedDeposits.setLaunchpadProjectDeposit(ownerAddress, deposit)
 	if err := g.store.SetLaunchpadProjectDeposits(launchpadDeposits); err != nil {

@@ -49,8 +49,13 @@ func (pfs *protocolFeeState) TokenAmountOfTokenPath(tokenPath string) int64 {
 // distributeToDevOps distributes tokens to DevOps and updates related state.
 // Amount should be greater than 0 (already checked in DistributeProtocolFee).
 func (pfs *protocolFeeState) distributeToDevOps(token string, amount int64) error {
-	pfs.addAccuToDevOps(token, amount)
-	pfs.updateDistributedToDevOpsHistory(token, amount)
+	if err := pfs.addAccuToDevOps(token, amount); err != nil {
+		return err
+	}
+
+	if err := pfs.updateDistributedToDevOpsHistory(token, amount); err != nil {
+		return err
+	}
 
 	common.SafeGRC20Transfer(cross, token, devOpsAddr, amount)
 
@@ -60,8 +65,13 @@ func (pfs *protocolFeeState) distributeToDevOps(token string, amount int64) erro
 // distributeToGovStaker distributes tokens to Gov/Staker and updates related state.
 // Amount should be greater than 0 (already checked in DistributeProtocolFee).
 func (pfs *protocolFeeState) distributeToGovStaker(token string, amount int64) error {
-	pfs.addAccuToGovStaker(token, amount)
-	pfs.updateDistributedToGovStakerHistory(token, amount)
+	if err := pfs.addAccuToGovStaker(token, amount); err != nil {
+		return err
+	}
+
+	if err := pfs.updateDistributedToGovStakerHistory(token, amount); err != nil {
+		return err
+	}
 
 	common.SafeGRC20Transfer(cross, token, govStakerAddr, amount)
 
@@ -83,7 +93,9 @@ func (pfs *protocolFeeState) setDevOpsPct(pct int64) (int64, error) {
 		)
 	}
 
-	pfs.store.SetDevOpsPct(pct)
+	if err := pfs.store.SetDevOpsPct(pct); err != nil {
+		return 0, err
+	}
 
 	return pct, nil
 }
@@ -107,21 +119,27 @@ func (pfs *protocolFeeState) setGovStakerPct(pct int64) (int64, error) {
 }
 
 // addAccuToGovStaker adds the amount to the accuToGovStaker by token path.
-func (pfs *protocolFeeState) addAccuToGovStaker(tokenPath string, amount int64) {
+func (pfs *protocolFeeState) addAccuToGovStaker(tokenPath string, amount int64) error {
 	before := pfs.GetAccuTransferToGovStakerByTokenPath(tokenPath)
 
 	// Check for overflow
 	after := safeAddInt64(before, amount)
-	pfs.store.SetAccuToGovStakerItem(tokenPath, after)
+	if err := pfs.store.SetAccuToGovStakerItem(tokenPath, after); err != nil {
+		return err
+	}
+	return nil
 }
 
 // addAccuToDevOps adds the amount to the accuToDevOps by token path.
-func (pfs *protocolFeeState) addAccuToDevOps(tokenPath string, amount int64) {
+func (pfs *protocolFeeState) addAccuToDevOps(tokenPath string, amount int64) error {
 	before := pfs.GetAccuTransferToDevOpsByTokenPath(tokenPath)
 
 	// Check for overflow
 	after := safeAddInt64(before, amount)
-	pfs.store.SetAccuToDevOpsItem(tokenPath, after)
+	if err := pfs.store.SetAccuToDevOpsItem(tokenPath, after); err != nil {
+		return err
+	}
+	return nil
 }
 
 // GetAccuTransferToGovStakerByTokenPath gets the accumulated amount to gov/staker by token path.
@@ -157,19 +175,25 @@ func retrieveAmount(tree *avl.Tree, key string) int64 {
 }
 
 // updateDistributedToGovStakerHistory updates the distributedToGovStakerHistory.
-func (pfs *protocolFeeState) updateDistributedToGovStakerHistory(tokenPath string, amount int64) {
+func (pfs *protocolFeeState) updateDistributedToGovStakerHistory(tokenPath string, amount int64) error {
 	prevAmount := retrievePrevAmount(pfs.store.GetDistributedToGovStakerHistory(), tokenPath)
 	afterAmount := safeAddInt64(prevAmount, amount)
 
-	pfs.store.SetDistributedToGovStakerHistoryItem(tokenPath, afterAmount)
+	if err := pfs.store.SetDistributedToGovStakerHistoryItem(tokenPath, afterAmount); err != nil {
+		return err
+	}
+	return nil
 }
 
 // updateDistributedToDevOpsHistory updates the distributedToDevOpsHistory.
-func (pfs *protocolFeeState) updateDistributedToDevOpsHistory(tokenPath string, amount int64) {
+func (pfs *protocolFeeState) updateDistributedToDevOpsHistory(tokenPath string, amount int64) error {
 	prevAmount := retrievePrevAmount(pfs.store.GetDistributedToDevOpsHistory(), tokenPath)
 	afterAmount := safeAddInt64(prevAmount, amount)
 
-	pfs.store.SetDistributedToDevOpsHistoryItem(tokenPath, afterAmount)
+	if err := pfs.store.SetDistributedToDevOpsHistoryItem(tokenPath, afterAmount); err != nil {
+		return err
+	}
+	return nil
 }
 
 func retrievePrevAmount(tree *avl.Tree, key string) (amount int64) {
@@ -186,8 +210,11 @@ func retrievePrevAmount(tree *avl.Tree, key string) (amount int64) {
 }
 
 // clearTokenListWithAmount clears the tokenListWithAmount.
-func (pfs *protocolFeeState) clearTokenListWithAmount() {
-	pfs.store.SetTokenListWithAmounts(make(map[string]int64))
+func (pfs *protocolFeeState) clearTokenListWithAmount() error {
+	if err := pfs.store.SetTokenListWithAmounts(make(map[string]int64)); err != nil {
+		return err
+	}
+	return nil
 }
 
 // NewProtocolFeeState creates a new instance of protocolFeeState with initialized values

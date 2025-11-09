@@ -48,8 +48,7 @@ func TestUnDelegationLockupPeriod(t *testing.T) {
 			gs.setUnDelegationLockupPeriod(tt.setPeriod)
 
 			// Then: Should return expected period
-			result, _ := gs.store.GetUnDelegationLockupPeriod()
-			// uassert.NoError(t, err)
+			result := gs.store.GetUnDelegationLockupPeriod()
 			uassert.Equal(t, result, tt.expectedPeriod)
 		})
 	}
