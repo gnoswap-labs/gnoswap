@@ -169,7 +169,7 @@ func (i *poolV1) safeSwapCallback(
 	// The contract should transfer tokens to pool within this callback
 
 	amount0Str := zero.ToString()
-	amount1Str := amount.ToString()
+	amount1Str := zero.ToString()
 	beforeTokenBalance := u256.Zero()
 
 	if zeroForOne {
