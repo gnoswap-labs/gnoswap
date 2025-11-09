@@ -79,5 +79,14 @@ func initStoreData(poolStore pool.IPoolStore) error {
 		}
 	}
 
+	// Initialize swap start hook with no-op function
+	if !poolStore.HasSwapStartHook() {
+		noopSwapStart := func(cur realm, poolPath string, timestamp int64) {}
+		err := poolStore.SetSwapStartHook(noopSwapStart)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
