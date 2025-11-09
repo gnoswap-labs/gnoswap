@@ -82,6 +82,7 @@ func MustOwnerOf(tid grc721.TokenID) address {
 // Only callable by position contract.
 func SetTokenURI(cur realm, tid grc721.TokenID, tURI grc721.TokenURI) (bool, error) {
 	halt.AssertIsNotHaltedPosition()
+	owner.AssertOwnedByPrevious()
 
 	assertIsValidTokenURI(tid)
 

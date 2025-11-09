@@ -14,6 +14,7 @@ import (
 
 const (
 	errInvalidTokenId = "invalid token id"
+	testURI           = "test-uri"
 )
 
 var (
@@ -345,49 +346,118 @@ func TestIsApprovedForAll(t *testing.T) {
 func TestSetTokenURI(t *testing.T) {
 	tests := []struct {
 		name             string
+		setup            func(tokenId uint64)
 		callerRealm      runtime.Realm
 		tokenId          uint64
 		expectedHasAbort bool
 		expectedErrMsg   string
 	}{
 		{
-			name:             "set token uri expected error",
-			callerRealm:      addr01Realm,
+			name: "successfully set token uri by owner with token id 1",
+			setup: func(tokenId uint64) {
+				resetObject(t)
+				testing.SetRealm(positionRealm)
+				// Mint token without URI by directly calling nft.Mint
+				ownerAddress := owner.Owner()
+				checkErr(nft.Mint(ownerAddress, tid(tokenId)))
+			},
+			callerRealm:      positionRealm,
+			tokenId:          1,
+			expectedHasAbort: false,
+		},
+		{
+			name: "successfully set token uri by owner with token id 2",
+			setup: func(tokenId uint64) {
+				resetObject(t)
+				testing.SetRealm(positionRealm)
+				ownerAddress := owner.Owner()
+				checkErr(nft.Mint(ownerAddress, tid(tokenId)))
+			},
+			callerRealm:      positionRealm,
+			tokenId:          2,
+			expectedHasAbort: false,
+		},
+		{
+			name: "successfully set token uri by owner with token id 100",
+			setup: func(tokenId uint64) {
+				resetObject(t)
+				testing.SetRealm(positionRealm)
+				ownerAddress := owner.Owner()
+				checkErr(nft.Mint(ownerAddress, tid(tokenId)))
+			},
+			callerRealm:      positionRealm,
+			tokenId:          100,
+			expectedHasAbort: false,
+		},
+		{
+			name: "fail to set token uri on already set token with token id 1",
+			setup: func(tokenId uint64) {
+				resetObject(t)
+				testing.SetRealm(positionRealm)
+				Mint(cross, addr01, tid(tokenId))
+			},
+			callerRealm:      positionRealm,
 			tokenId:          1,
 			expectedHasAbort: true,
 			expectedErrMsg:   "[GNOSWAP-GNFT-002] cannot set URI || token id (1) has already set URI",
 		},
 		{
-			name:             "set token uri is failed by not owner",
-			callerRealm:      addr02Realm,
-			tokenId:          1,
+			name: "fail to set token uri on already set token with token id 999",
+			setup: func(tokenId uint64) {
+				resetObject(t)
+				testing.SetRealm(positionRealm)
+				Mint(cross, addr01, tid(tokenId))
+			},
+			callerRealm:      positionRealm,
+			tokenId:          999,
 			expectedHasAbort: true,
-			expectedErrMsg:   "[GNOSWAP-GNFT-002] cannot set URI || token id (1) has already set URI",
+			expectedErrMsg:   "[GNOSWAP-GNFT-002] cannot set URI || token id (999) has already set URI",
 		},
 		{
-			name:             "set token uri is failed by empty token uri",
+			name: "fail to set token uri by unauthorized caller with token id 1",
+			setup: func(tokenId uint64) {
+				resetObject(t)
+				testing.SetRealm(positionRealm)
+				Mint(cross, addr01, tid(tokenId))
+			},
 			callerRealm:      addr01Realm,
 			tokenId:          1,
 			expectedHasAbort: true,
-			expectedErrMsg:   "[GNOSWAP-GNFT-002] cannot set URI || token id (1) has already set URI",
+			expectedErrMsg:   "ownable: caller is not owner",
+		},
+		{
+			name: "fail to set token uri by unauthorized caller with token id 50",
+			setup: func(tokenId uint64) {
+				resetObject(t)
+				testing.SetRealm(positionRealm)
+				Mint(cross, addr01, tid(tokenId))
+			},
+			callerRealm:      addr01Realm,
+			tokenId:          50,
+			expectedHasAbort: true,
+			expectedErrMsg:   "ownable: caller is not owner",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resetObject(t)
-
-			// token id 1 is pre-minted
-			testing.SetRealm(positionRealm)
-			Mint(cross, addr01, tid(1))
+			if tt.setup != nil {
+				tt.setup(tt.tokenId)
+			}
 
 			testing.SetRealm(tt.callerRealm)
 			if tt.expectedHasAbort {
 				uassert.AbortsWithMessage(t, tt.expectedErrMsg, func() {
-					SetTokenURI(cross, tid(tt.tokenId), "not change")
+					SetTokenURI(cross, tid(tt.tokenId), testURI)
 				})
 			} else {
-				SetTokenURI(cross, tid(tt.tokenId), "not change")
+				result, err := SetTokenURI(cross, tid(tt.tokenId), grc721.TokenURI(testURI))
+				uassert.NoError(t, err)
+				uassert.True(t, result)
+
+				uri, err := TokenURI(tid(tt.tokenId))
+				uassert.NoError(t, err)
+				uassert.Equal(t, testURI, uri)
 			}
 		})
 	}
