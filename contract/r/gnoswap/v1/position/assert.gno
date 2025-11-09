@@ -23,18 +23,28 @@ func assertIsNotExpired(deadline int64) {
 
 // assertValidNumberString panics if the input string does not represent a valid integer.
 func assertValidNumberString(input string) {
-	if len(input) == 0 {
+	n := len(input)
+	if n == 0 {
 		panic(newErrorWithDetail(
 			errInvalidInput,
 			ufmt.Sprintf("input is empty")))
 	}
 
-	bytes := []byte(input)
-	for i, b := range bytes {
-		if i == 0 && b == '-' {
-			continue // Allow if the first character is a negative sign (-)
-		}
-		if b < '0' || b > '9' {
+	isNegative := input[0] == '-'
+
+	if n == 1 && isNegative {
+		panic(newErrorWithDetail(
+			errInvalidInput,
+			ufmt.Sprintf("input string : %s", input)))
+	}
+
+	start := 0
+	if isNegative {
+		start = 1
+	}
+
+	for i := start; i < n; i++ {
+		if input[i] < '0' || input[i] > '9' {
 			panic(newErrorWithDetail(
 				errInvalidInput,
 				ufmt.Sprintf("input string : %s", input)))
