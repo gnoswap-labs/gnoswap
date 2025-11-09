@@ -3,6 +3,7 @@ package fuzz
 import (
 	"testing"
 
+	"gno.land/p/gnoswap/fuzz"
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -181,4 +182,35 @@ func burnTestTokens(t *testing.T) {
 		qux.Burn(cross, addr, qux.BalanceOf(addr))
 		obl.Burn(cross, addr, obl.BalanceOf(addr))
 	}
+}
+
+// getRandomTokenPair returns a random token pair from available test tokens
+func getRandomTokenPair(ft *fuzz.T) (token0Path, token1Path string) {
+	// Available tokens
+	availableTokens := []string{
+		barPath,
+		bazPath,
+		fooPath,
+		quxPath,
+		oblPath,
+	}
+
+	// Select two different random tokens
+	index0 := fuzz.IntRange(0, len(availableTokens)-1).Draw(ft, "tokenIndex0").(int)
+	index1 := fuzz.IntRange(0, len(availableTokens)-1).Draw(ft, "tokenIndex1").(int)
+
+	// Ensure tokens are different
+	for index0 == index1 {
+		index1 = fuzz.IntRange(0, len(availableTokens)-1).Draw(ft, "tokenIndex1Retry").(int)
+	}
+
+	token0Path = availableTokens[index0]
+	token1Path = availableTokens[index1]
+
+	// Ensure token0 < token1 (canonical ordering)
+	if token0Path > token1Path {
+		token0Path, token1Path = token1Path, token0Path
+	}
+
+	return token0Path, token1Path
 }

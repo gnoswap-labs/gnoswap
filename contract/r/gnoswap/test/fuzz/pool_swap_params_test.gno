@@ -255,26 +255,29 @@ func generatePriceLimitFromCurrent(t *fuzz.T, currentPriceStr string, zeroForOne
 
 		priceLimit := fuzz.Uint256Range(minLimit.ToString(), maxLimit.ToString()).Draw(t, "priceLimit").(*u256.Uint)
 		return priceLimit.ToString()
-	} else {
-		// Price going up: generate price limit between currentPrice and MAX_SQRT_RATIO
-		// Use range from currentPrice+1 to MIN(MAX_SQRT_RATIO-1, currentPrice*2)
-		minLimit := u256.NewUint(0).Add(currentPrice, u256.NewUint(1))
-		maxLimit := u256.NewUint(0).Mul(currentPrice, u256.NewUint(2)) // 200% of current
-		if maxLimit.Cmp(maxSqrtRatio) >= 0 {
-			maxLimit = u256.NewUint(0).Sub(maxSqrtRatio, u256.NewUint(1))
-		}
-
-		if minLimit.Cmp(maxLimit) >= 0 {
-			// If range is invalid, use maxLimit
-			return maxLimit.ToString()
-		}
-
-		priceLimit := fuzz.Uint256Range(minLimit.ToString(), maxLimit.ToString()).Draw(t, "priceLimit").(*u256.Uint)
-		return priceLimit.ToString()
 	}
+
+	// Price going up: generate price limit between currentPrice and MAX_SQRT_RATIO
+	// Use range from currentPrice+1 to MIN(MAX_SQRT_RATIO-1, currentPrice*2)
+	minLimit := u256.NewUint(0).Add(currentPrice, u256.NewUint(1))
+	maxLimit := u256.NewUint(0).Mul(currentPrice, u256.NewUint(2)) // 200% of current
+	if maxLimit.Cmp(maxSqrtRatio) >= 0 {
+		maxLimit = u256.NewUint(0).Sub(maxSqrtRatio, u256.NewUint(1))
+	}
+
+	if minLimit.Cmp(maxLimit) >= 0 {
+		// If range is invalid, use maxLimit
+		return maxLimit.ToString()
+	}
+
+	priceLimit := fuzz.Uint256Range(minLimit.ToString(), maxLimit.ToString()).Draw(t, "priceLimit").(*u256.Uint)
+	return priceLimit.ToString()
 }
 
 func NewValidPoolSwapParams(t *fuzz.T) *poolSwapParams {
+	// Generate random token pair
+	token0Path, token1Path := getRandomTokenPair(t)
+
 	// Generate valid fee tier
 	feeIndex := fuzz.IntRange(0, len(VALID_FEE_TIERS)-1).Draw(t, "feeIndex").(int)
 	fee := VALID_FEE_TIERS[feeIndex]
@@ -294,8 +297,8 @@ func NewValidPoolSwapParams(t *fuzz.T) *poolSwapParams {
 	}
 
 	return &poolSwapParams{
-		token0Path:        BAR_PATH,
-		token1Path:        FOO_PATH,
+		token0Path:        token0Path,
+		token1Path:        token1Path,
 		fee:               fee,
 		zeroForOne:        zeroForOne,
 		amountSpecified:   amountStr,
@@ -304,6 +307,9 @@ func NewValidPoolSwapParams(t *fuzz.T) *poolSwapParams {
 }
 
 func NewRandomizedPoolSwapParams(t *fuzz.T) *poolSwapParams {
+	// Generate random token pair
+	token0Path, token1Path := getRandomTokenPair(t)
+
 	// Use valid fee tier
 	feeIndex := fuzz.IntRange(0, len(VALID_FEE_TIERS)-1).Draw(t, "feeIndex").(int)
 	fee := VALID_FEE_TIERS[feeIndex]
@@ -323,8 +329,8 @@ func NewRandomizedPoolSwapParams(t *fuzz.T) *poolSwapParams {
 	}
 
 	return &poolSwapParams{
-		token0Path:        BAR_PATH,
-		token1Path:        FOO_PATH,
+		token0Path:        token0Path,
+		token1Path:        token1Path,
 		fee:               fee,
 		zeroForOne:        zeroForOne,
 		amountSpecified:   amountStr,
