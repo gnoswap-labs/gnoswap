@@ -52,6 +52,7 @@ func (pfs *protocolFeeState) distributeToDevOps(token string, amount int64) erro
 	if err := pfs.addAccuToDevOps(token, amount); err != nil {
 		return err
 	}
+
 	if err := pfs.updateDistributedToDevOpsHistory(token, amount); err != nil {
 		return err
 	}
@@ -67,6 +68,7 @@ func (pfs *protocolFeeState) distributeToGovStaker(token string, amount int64) e
 	if err := pfs.addAccuToGovStaker(token, amount); err != nil {
 		return err
 	}
+
 	if err := pfs.updateDistributedToGovStakerHistory(token, amount); err != nil {
 		return err
 	}

@@ -45,6 +45,7 @@ func initRegisterReadableContract() {
 	if err := kvStore.AddAuthorizedCaller(poolAddr, store.ReadOnly); err != nil {
 		panic(err)
 	}
+
 	if err := kvStore.AddAuthorizedCaller(stakerAddr, store.ReadOnly); err != nil {
 		panic(err)
 	}
