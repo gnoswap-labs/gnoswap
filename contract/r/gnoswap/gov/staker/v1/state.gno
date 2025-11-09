@@ -139,7 +139,7 @@ func (g *govStakerV1) removeDelegation(delegationID int64) bool {
 func (g *govStakerV1) getUserDelegations(user address) (delegations []*staker.Delegation) {
 	delegationManager, err := g.store.GetDelegationManager()
 	if err != nil {
-		return delegations
+		panic(err)
 	}
 
 	resolvedManager := NewDelegationManagerResolver(delegationManager)
@@ -163,7 +163,7 @@ func (g *govStakerV1) getUserDelegations(user address) (delegations []*staker.De
 func (g *govStakerV1) getUserDelegationsWithDelegatee(user address, delegatee address) (delegations []*staker.Delegation) {
 	delegationManager, err := g.store.GetDelegationManager()
 	if err != nil {
-		return delegations
+		panic(err)
 	}
 	resolvedManager := NewDelegationManagerResolver(delegationManager)
 	for _, delegationID := range resolvedManager.GetUserDelegationIDsWithDelegatee(user, delegatee) {
