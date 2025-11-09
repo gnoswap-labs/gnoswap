@@ -98,6 +98,13 @@ func (p *exactOutSwapRouteParams) isValidAmount() bool {
 		return false
 	}
 
+	if p.amountIn != "" && p.amountIn != "0" {
+        amountIn := u256.MustFromDecimal(p.amountIn)
+        if amountIn.Gt(maxAmountIn) {
+            return false
+        }
+    }
+
 	return true
 }
 
@@ -175,7 +182,29 @@ func (p *exactOutSwapRouteParams) isValidDrySwap() bool {
 		return p.preDrySwapResult
 	}
 
-	_, _, success := p.drySwapRoute()
+	_, amountOut, success := p.drySwapRoute()
+
+	if !success {
+		return false
+	}
+
+	amountInInt64 := u256.MustFromDecimal(p.amountIn).Int64()
+	amountOutInt64 := u256.MustFromDecimal(amountOut).Int64()
+
+	poolCount := 0
+
+	for _, route := range strings.Split(p.routeArr, ",") {
+		poolCount += len(strings.Split(route, "*POOL*")) - 1
+	}
+
+	diff := amountInInt64 - amountOutInt64
+	if diff < 0 {
+		diff = -diff
+	}
+
+	if diff > int64(poolCount) {
+		return false
+	}
 
 	return success
 }

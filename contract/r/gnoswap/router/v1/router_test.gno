@@ -1124,55 +1124,54 @@ func TestSwapProcessor_ProcessSwapAmount(t *testing.T) {
 	tests := []struct {
 		name            string
 		amountSpecified *i256.Int
-		quote           int
+		quote           string
 		expectError     bool
 		expectedResult  string
 	}{
 		{
 			name:            "100% quote",
 			amountSpecified: i256.NewInt(1000),
-			quote:           100,
+			quote:           "100",
 			expectError:     false,
 			expectedResult:  "1000",
 		},
 		{
 			name:            "50% quote",
 			amountSpecified: i256.NewInt(1000),
-			quote:           50,
+			quote:           "50",
 			expectError:     false,
 			expectedResult:  "500",
 		},
 		{
 			name:            "1% quote",
 			amountSpecified: i256.NewInt(10000),
-			quote:           1,
+			quote:           "1",
 			expectError:     false,
 			expectedResult:  "100",
 		},
 		{
 			name:            "0% quote",
 			amountSpecified: i256.NewInt(1000),
-			quote:           0,
-			expectError:     false,
-			expectedResult:  "0",
+			quote:           "0",
+			expectError:     true,
 		},
 		{
 			name:            "quote above 100",
 			amountSpecified: i256.NewInt(1000),
-			quote:           101,
+			quote:           "101",
 			expectError:     true,
 		},
 		{
 			name:            "negative quote",
 			amountSpecified: i256.NewInt(1000),
-			quote:           -1,
+			quote:           "-1",
 			expectError:     true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := processor.ProcessSwapAmount(tt.amountSpecified, strconv.ParseInt(tt.quote, 10))
+			result, err := processor.ProcessSwapAmount(tt.amountSpecified, tt.quote)
 
 			if tt.expectError {
 				uassert.Error(t, err)
@@ -1942,32 +1941,32 @@ func TestSwapProcessor_ProcessSwapAmount_ExtremeValues(t *testing.T) {
 	tests := []struct {
 		name            string
 		amountSpecified *i256.Int
-		quote           int
+		quote           string
 		expectError     bool
 	}{
 		{
 			name:            "max int64 amount",
 			amountSpecified: i256.NewInt(9223372036854775807),
-			quote:           1,
+			quote:           "1",
 			expectError:     false,
 		},
 		{
 			name:            "very large amount with 100% quote",
 			amountSpecified: i256.MustFromDecimal("999999999999999999"),
-			quote:           100,
+			quote:           "100",
 			expectError:     false,
 		},
 		{
 			name:            "zero amount with any quote",
 			amountSpecified: i256.Zero(),
-			quote:           50,
-			expectError:     false,
+			quote:           "50",
+			expectError:     true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := processor.ProcessSwapAmount(tt.amountSpecified, strconv.ParseInt(tt.quote, 10))
+			result, err := processor.ProcessSwapAmount(tt.amountSpecified, tt.quote)
 
 			if tt.expectError {
 				uassert.Error(t, err)

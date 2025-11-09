@@ -896,18 +896,16 @@ func TestValidateRouteQuote_EdgeCases(t *testing.T) {
 			amountSpecified: i256.NewInt(0),
 			quote:           "50",
 			index:           0,
-			expectError:     false,
-			expectedResult:  "0",
-			description:     "0 * 50 / 100 = 0",
+			expectError:     true,
+			description:     "0 * 50 / 100 = 0, should error",
 		},
 		{
 			name:            "zero quote percentage",
 			amountSpecified: i256.NewInt(1000),
 			quote:           "0",
 			index:           0,
-			expectError:     false,
-			expectedResult:  "0",
-			description:     "1000 * 0 / 100 = 0",
+			expectError:     true,
+			description:     "1000 * 0 / 100 = 0, should error",
 		},
 		{
 			name:            "100% quote",
@@ -1445,8 +1443,8 @@ func TestValidateRouteQuote_ExtremeValues(t *testing.T) {
 			amountSpecified: i256.NewInt(1),
 			quote:           "1",
 			index:           0,
-			expectError:     false,
-			description:     "Should handle minimal amounts",
+			expectError:     true,
+			description:     "1 * 1 / 100 = 0, should error",
 		},
 	}
 
