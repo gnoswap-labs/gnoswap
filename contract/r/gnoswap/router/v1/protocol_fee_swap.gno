@@ -42,7 +42,8 @@ func (r *routerV1) SetSwapFee(fee uint64) {
 	}
 
 	prevSwapFee := r.store.GetSwapFee()
-	if err := r.setSwapFee(fee); err != nil {
+	err := r.store.SetSwapFee(fee)
+	if err != nil {
 		panic(err)
 	}
 
@@ -54,19 +55,6 @@ func (r *routerV1) SetSwapFee(fee uint64) {
 		"newFee", formatUint(fee),
 		"prevFee", formatUint(prevSwapFee),
 	)
-}
-
-// setSwapFee validates and updates the swap fee rate.
-func (r *routerV1) setSwapFee(fee uint64) error {
-	// 10000 (bps) = 100%
-	if fee > 10000 {
-		return ufmt.Errorf(
-			"%s: fee must be in range 0 to 10000. got %d",
-			errInvalidSwapFee.Error(), fee,
-		)
-	}
-
-	return r.store.SetSwapFee(fee)
 }
 
 // handleSwapFee deducts the protocol fee from the swap amount and transfers it to the protocol fee contract.
