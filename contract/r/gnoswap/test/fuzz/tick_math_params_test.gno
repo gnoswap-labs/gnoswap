@@ -6,11 +6,6 @@ import (
 	"gno.land/p/nt/ufmt"
 )
 
-const (
-	MIN_TICK       = int32(-887272)
-	MAX_TICK       = int32(887272)
-)
-
 // Parameters for TickMathGetSqrtRatioAtTick fuzzing test
 type tickMathGetSqrtRatioAtTickParams struct {
 	tick int32

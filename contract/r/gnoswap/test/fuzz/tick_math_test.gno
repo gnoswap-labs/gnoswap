@@ -10,8 +10,6 @@ import (
 	"gno.land/r/gnoswap/common"
 )
 
-const FUZZ_ITERATIONS = 10
-
 // TestFuzzTickMathGetSqrtRatioAtTick_ValidParams_Stateless tests TickMathGetSqrtRatioAtTick with valid parameters
 func TestFuzzTickMathGetSqrtRatioAtTick_ValidParams_Stateless(t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
