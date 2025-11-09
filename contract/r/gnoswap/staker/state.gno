@@ -27,6 +27,7 @@ func init() {
 	// Create a new KV store instance for this domain
 	kvStore = store.NewKVStore(currentAddress)
 	initRegisterReadableContract()
+	initRegisterWriteableContract()
 
 	// Initialize the initializers map to store implementation registration functions
 	versionManager = version_manager.NewVersionManager(
@@ -42,7 +43,6 @@ func initRegisterReadableContract() {
 	poolAddr := access.MustGetAddress(prbac.ROLE_POOL.String())
 	positionAddr := access.MustGetAddress(prbac.ROLE_POSITION.String())
 	routerAddr := access.MustGetAddress(prbac.ROLE_ROUTER.String())
-	emissionAddr := access.MustGetAddress(prbac.ROLE_EMISSION.String())
 
 	if err := kvStore.AddAuthorizedCaller(poolAddr, store.ReadOnly); err != nil {
 		panic(err)
@@ -55,8 +55,20 @@ func initRegisterReadableContract() {
 	if err := kvStore.AddAuthorizedCaller(routerAddr, store.ReadOnly); err != nil {
 		panic(err)
 	}
+}
 
-	if err := kvStore.AddAuthorizedCaller(emissionAddr, store.ReadOnly); err != nil {
+func initRegisterWriteableContract() {
+	emissionAddr := access.MustGetAddress(prbac.ROLE_EMISSION.String())
+
+	if kvStore.IsReadAuthorized(emissionAddr) {
+		if err := kvStore.UpdateAuthorizedCaller(emissionAddr, store.Write); err != nil {
+			panic(err)
+		}
+
+		return
+	}
+
+	if err := kvStore.AddAuthorizedCaller(emissionAddr, store.Write); err != nil {
 		panic(err)
 	}
 }
@@ -74,6 +86,8 @@ func getImplementation() IStaker {
 }
 
 func updateImplementation() error {
+	initRegisterWriteableContract()
+
 	result := versionManager.GetCurrentImplementation()
 	if result == nil {
 		return errors.New("implementation is not initialized")
