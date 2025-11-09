@@ -67,6 +67,8 @@ func (k *kvStore) Get(key string) (any, error) {
 	return value, nil
 }
 
+// GetInt64 retrieves a value by key and casts it to int64
+// Returns ErrFailedCast if the value is not of type int64
 func (k *kvStore) GetInt64(key string) (int64, error) {
 	result, err := k.Get(key)
 	if err != nil {
@@ -76,6 +78,8 @@ func (k *kvStore) GetInt64(key string) (int64, error) {
 	return CastToInt64(result)
 }
 
+// GetUint64 retrieves a value by key and casts it to uint64
+// Returns ErrFailedCast if the value is not of type uint64
 func (k *kvStore) GetUint64(key string) (uint64, error) {
 	result, err := k.Get(key)
 	if err != nil {
@@ -85,6 +89,8 @@ func (k *kvStore) GetUint64(key string) (uint64, error) {
 	return CastToUint64(result)
 }
 
+// GetBool retrieves a value by key and casts it to bool
+// Returns ErrFailedCast if the value is not of type bool
 func (k *kvStore) GetBool(key string) (bool, error) {
 	result, err := k.Get(key)
 	if err != nil {
@@ -94,6 +100,8 @@ func (k *kvStore) GetBool(key string) (bool, error) {
 	return CastToBool(result)
 }
 
+// GetString retrieves a value by key and casts it to string
+// Returns ErrFailedCast if the value is not of type string
 func (k *kvStore) GetString(key string) (string, error) {
 	result, err := k.Get(key)
 	if err != nil {
@@ -103,6 +111,8 @@ func (k *kvStore) GetString(key string) (string, error) {
 	return CastToString(result)
 }
 
+// GetAddress retrieves a value by key and casts it to address
+// Returns ErrFailedCast if the value is not of type address
 func (k *kvStore) GetAddress(key string) (address, error) {
 	result, err := k.Get(key)
 	if err != nil {
@@ -112,6 +122,8 @@ func (k *kvStore) GetAddress(key string) (address, error) {
 	return CastToAddress(result)
 }
 
+// GetTree retrieves a value by key and casts it to *avl.Tree
+// Returns ErrFailedCast if the value is not of type *avl.Tree
 func (k *kvStore) GetTree(key string) (*avl.Tree, error) {
 	result, err := k.Get(key)
 	if err != nil {
@@ -153,6 +165,7 @@ func (k *kvStore) Delete(key string) error {
 	return nil
 }
 
+// IsDomainAddress checks if the given address is the domain address
 func (k *kvStore) IsDomainAddress(addr address) bool {
 	return k.domainAddress == addr
 }
@@ -251,6 +264,7 @@ func (k *kvStore) isUpdatableAuthorizedCaller() bool {
 	return currentRealm.Address() == k.domainAddress
 }
 
+// makeKey creates a prefixed key with the domain address to ensure isolation
 func (k *kvStore) makeKey(key string) string {
 	return ufmt.Sprintf("%s:%s", k.domainAddress, key)
 }

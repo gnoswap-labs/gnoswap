@@ -256,6 +256,9 @@ func NewVersionManager(
 	}
 }
 
+// makeInitializerSafe creates a safe copy of an initializer function for read-only tree access.
+// This is used by GetInitializers to wrap the internal AVL tree in a read-only view,
+// preventing external modification of registered initializers.
 func makeInitializerSafe(data any) any {
 	fn, ok := data.(func(store any) any)
 	if !ok {
