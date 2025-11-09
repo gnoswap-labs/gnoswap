@@ -76,18 +76,12 @@ func NewValidPoolCreateParams(t *fuzz.T) *poolCreateParams {
 
 	sqrtPriceVal := fuzz.Uint256Range(MIN_SQRT_RATIO, MAX_SQRT_RATIO).Draw(t, "sqrtPrice").(*u256.Uint)
 
-	// Registered tokens only
-	tokens := []string{
-		BAR_PATH,
-		FOO_PATH,
-	}
-
-	token0Index := fuzz.IntRange(0, len(tokens)-1).Draw(t, "token0Index").(int)
-	token1Index := fuzz.IntRange(0, len(tokens)-1).Draw(t, "token1Index").(int)
+	// Generate random token pair
+	token0Path, token1Path := generateTokenPair(t)
 
 	return &poolCreateParams{
-		token0Path:   tokens[token0Index],
-		token1Path:   tokens[token1Index],
+		token0Path:   token0Path,
+		token1Path:   token1Path,
 		fee:          fee,
 		sqrtPriceX96: sqrtPriceVal.ToString(),
 	}
@@ -98,20 +92,13 @@ func NewRandomizedPoolCreateParams(t *fuzz.T) *poolCreateParams {
 	fee := fuzz.Uint32Range(0, 20000).Draw(t, "fee").(uint32)
 
 	sqrtPriceVal := fuzz.Uint256().Draw(t, "sqrtPrice").(*u256.Uint)
-	tokens := []string{
-		BAR_PATH,
-		FOO_PATH,
-		BAZ_PATH,
-		"gnot",
-		"",
-	}
 
-	token0Index := fuzz.IntRange(0, len(tokens)-1).Draw(t, "token0Index").(int)
-	token1Index := fuzz.IntRange(0, len(tokens)-1).Draw(t, "token1Index").(int)
+	// Generate random token pair
+	token0Path, token1Path := generateTokenPair(t)
 
 	return &poolCreateParams{
-		token0Path:   tokens[token0Index],
-		token1Path:   tokens[token1Index],
+		token0Path:   token0Path,
+		token1Path:   token1Path,
 		fee:          fee,
 		sqrtPriceX96: sqrtPriceVal.ToString(),
 	}

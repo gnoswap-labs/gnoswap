@@ -293,7 +293,7 @@ func generatePriceLimitFromCurrent(t *fuzz.T, currentPriceStr string, zeroForOne
 
 func NewValidPoolSwapParams(t *fuzz.T) *poolSwapParams {
 	// Generate random token pair
-	token0Path, token1Path := getRandomTokenPair(t)
+	token0Path, token1Path := generateTokenPair(t)
 
 	// Generate valid fee tier
 	feeIndex := fuzz.IntRange(0, len(VALID_FEE_TIERS)-1).Draw(t, "feeIndex").(int)
@@ -333,7 +333,7 @@ func NewValidPoolSwapParams(t *fuzz.T) *poolSwapParams {
 
 func NewRandomizedPoolSwapParams(t *fuzz.T) *poolSwapParams {
 	// Generate random token pair
-	token0Path, token1Path := getRandomTokenPair(t)
+	token0Path, token1Path := generateTokenPair(t)
 
 	// Use valid fee tier
 	feeIndex := fuzz.IntRange(0, len(VALID_FEE_TIERS)-1).Draw(t, "feeIndex").(int)
