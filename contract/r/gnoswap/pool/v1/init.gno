@@ -99,5 +99,14 @@ func initStoreData(poolStore pool.IPoolStore) error {
 		}
 	}
 
+	// Initialize tick cross hook with no-op function
+	if !poolStore.HasTickCrossHook() {
+		noopTickCross := func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {}
+		err := poolStore.SetTickCrossHook(noopTickCross)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
