@@ -148,23 +148,6 @@ func TestFuzzPositionMint_ValidParams_Stateful(t *testing.T) {
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	// Create pool once
-	token0Path := "gno.land/r/onbloc/bar"
-	token1Path := "gno.land/r/onbloc/foo"
-	fee := uint32(3000)
-
-	poolPath := pool.GetPoolPath(token0Path, token1Path, fee)
-	if !pool.ExistsPoolPath(poolPath) {
-		pool.SetPoolCreationFee(cross, 0)
-		pool.CreatePool(
-			cross,
-			token0Path,
-			token1Path,
-			fee,
-			"79228162514264337593543950337",
-		)
-	}
-
 	// Track minted positions
 	var mintedPositions []uint64
 	var expectedNextTokenId uint64 = 1
@@ -174,14 +157,27 @@ func TestFuzzPositionMint_ValidParams_Stateful(t *testing.T) {
 
 		// Use fixed fee to ensure all positions are in the same pool
 		mintParams := NewValidPositionMintParams(ft)
+		poolPath := pool.GetPoolPath(mintParams.token0Path, mintParams.token1Path, mintParams.fee)
+		if !pool.ExistsPoolPath(poolPath) {
+			pool.SetPoolCreationFee(cross, 0)
+			pool.CreatePool(
+				cross,
+				mintParams.token0Path,
+				mintParams.token1Path,
+				mintParams.fee,
+				"79228162514264337593543950337",
+			)
+		}
 		fuzzResult.AddParams(index, mintParams)
 
-		// Approve tokens
-		common.SafeGRC20Approve(cross, token0Path, poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(cross, token1Path, poolAddr, math.MaxInt64)
+		amount0Int64, _ := strconv.ParseInt(mintParams.amount0Desired, 10, 64)
+		amount1Int64, _ := strconv.ParseInt(mintParams.amount1Desired, 10, 64)
+		mintTestToken(mintParams.token0Path, amount0Int64)
+		mintTestToken(mintParams.token1Path, amount1Int64)
 
-		// Get pool liquidity before mint
-		poolLiquidityBefore := pool.GetLiquidity(poolPath)
+		// Approve tokens
+		common.SafeGRC20Approve(cross, mintParams.token0Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross, mintParams.token1Path, poolAddr, math.MaxInt64)
 
 		// when - mint position
 		tokenId, liquidity, amount0, amount1 := position.Mint(
@@ -223,12 +219,6 @@ func TestFuzzPositionMint_ValidParams_Stateful(t *testing.T) {
 
 		// Track this position
 		mintedPositions = append(mintedPositions, tokenId)
-
-		// Get pool liquidity after mint
-		poolLiquidityAfter := pool.GetLiquidity(poolPath)
-
-		t.Logf("Iteration %d: Minted position #%d with liquidity %s, Pool liquidity: %s -> %s",
-			index, tokenId, liquidity, poolLiquidityBefore, poolLiquidityAfter)
 	})
 
 	t.Logf("Total positions minted: %d", len(mintedPositions))
@@ -240,25 +230,6 @@ func TestFuzzPositionMint_RandomizedParams_Stateful(t *testing.T) {
 	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
 	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
 
-	testing.SetRealm(testing.NewUserRealm(adminAddr))
-
-	// Create pool once
-	token0Path := "gno.land/r/onbloc/bar"
-	token1Path := "gno.land/r/onbloc/foo"
-	fee := uint32(3000)
-
-	poolPath := pool.GetPoolPath(token0Path, token1Path, fee)
-	if !pool.ExistsPoolPath(poolPath) {
-		pool.SetPoolCreationFee(cross, 0)
-		pool.CreatePool(
-			cross,
-			token0Path,
-			token1Path,
-			fee,
-			"79228162514264337593543950337",
-		)
-	}
-
 	// Track minted positions
 	var mintedPositions []uint64
 
@@ -266,12 +237,29 @@ func TestFuzzPositionMint_RandomizedParams_Stateful(t *testing.T) {
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 		// Generate randomized params with fixed fee for the pool
-		mintParams := NewRandomizedPositionMintParamsWithFee(ft, fee)
+		mintParams := NewRandomizedPositionMintParams(ft)
+		poolPath := pool.GetPoolPath(mintParams.token0Path, mintParams.token1Path, mintParams.fee)
+		if !pool.ExistsPoolPath(poolPath) {
+			pool.SetPoolCreationFee(cross, 0)
+			pool.CreatePool(
+				cross,
+				mintParams.token0Path,
+				mintParams.token1Path,
+				mintParams.fee,
+				"79228162514264337593543950337",
+			)
+		}
+
 		fuzzResult.AddParams(index, mintParams)
 
+		amount0Int64, _ := strconv.ParseInt(mintParams.amount0Desired, 10, 64)
+		amount1Int64, _ := strconv.ParseInt(mintParams.amount1Desired, 10, 64)
+		mintTestToken(mintParams.token0Path, amount0Int64)
+		mintTestToken(mintParams.token1Path, amount1Int64)
+
 		// Approve tokens
-		common.SafeGRC20Approve(cross, token0Path, poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(cross, token1Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross, mintParams.token0Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross, mintParams.token1Path, poolAddr, math.MaxInt64)
 
 		// when - mint position (may panic with invalid params)
 		tokenId, _, _, _ := position.Mint(
