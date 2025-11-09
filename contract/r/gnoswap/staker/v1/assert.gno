@@ -7,7 +7,6 @@ import (
 
 	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/gnft"
 )
 
 // assertIsValidAmount ensures the amount is non-negative.
@@ -60,8 +59,8 @@ func assertIsNotStaked(s *stakerV1, positionId uint64) {
 }
 
 // assertIsPositionOwner ensures the caller owns the position NFT.
-func assertIsPositionOwner(positionId uint64, caller address) {
-	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
+func assertIsPositionOwner(s *stakerV1, positionId uint64, caller address) {
+	owner := s.nftAccessor.MustOwnerOf(positionIdFrom(positionId))
 	if owner != caller {
 		panic(makeErrorWithDetails(
 			errNoPermission,

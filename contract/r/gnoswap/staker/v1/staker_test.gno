@@ -9,7 +9,6 @@ import (
 	"gno.land/r/gnoswap/emission"
 	pl "gno.land/r/gnoswap/pool"
 
-	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 
@@ -80,7 +79,7 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 
 		// Stake position
 		testing.SetRealm(testing.NewUserRealm(addr01))
-		gnft.Approve(cross, stakerAddr, positionIdFrom(positionId))
+		getMockInstance().nftAccessor.Approve(stakerAddr, positionIdFrom(positionId))
 
 		mockInstanceStakeToken(positionId, "")
 
@@ -148,7 +147,7 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 			addr02,
 		)
 
-		gnft.Approve(cross, stakerAddr, positionIdFrom(positionId2))
+		getMockInstance().nftAccessor.Approve(stakerAddr, positionIdFrom(positionId2))
 		mockInstanceStakeToken(positionId2, "")
 
 		// Create external incentive with very small amount

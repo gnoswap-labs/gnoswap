@@ -467,6 +467,7 @@ func getMockInstance() *stakerV1 {
 			store:            newMockStakerStore(),
 			poolAccessor:     newMockPoolAccessor(),
 			emissionAccessor: newMockEmissionAccessor(),
+			nftAccessor:      newMockNFTAccessor(),
 		}
 	}
 

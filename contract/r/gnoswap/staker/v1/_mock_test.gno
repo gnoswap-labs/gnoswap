@@ -3,6 +3,7 @@ package v1
 import (
 	"testing"
 
+	"gno.land/p/demo/tokens/grc721"
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/emission"
@@ -147,7 +148,7 @@ func (s *MockStakerStore) SetIncentiveCounter(counter *sr.Counter) error {
 
 func (s *MockStakerStore) NextIncentiveID(addr address, timestamp int64) string {
 	id := s.incentiveCounter.Next()
-	return ufmt.Sprintf("%s:%d:%s", addr, timestamp, id)
+	return ufmt.Sprintf("%s:%d:%d", addr, timestamp, id)
 }
 
 // TokenSpecificMinimumRewards
@@ -426,4 +427,55 @@ func (e *mockEmissionAccessor) SetOnDistributionPctChangeCallback(callback func(
 
 func newMockEmissionAccessor() sr.EmissionAccessor {
 	return &mockEmissionAccessor{}
+}
+
+// Mock NFT Accessor
+type mockNFTAccessor struct {
+	approved map[grc721.TokenID]map[address]bool
+	owners   map[grc721.TokenID]address
+}
+
+func (n *mockNFTAccessor) Approve(approved address, tid grc721.TokenID) error {
+	n.approved[tid][approved] = true
+	return nil
+}
+
+func (n *mockNFTAccessor) Mint(to address, tid grc721.TokenID) grc721.TokenID {
+	n.owners[tid] = to
+	n.approved[tid] = make(map[address]bool)
+	return tid
+}
+
+func (n *mockNFTAccessor) Burn(tid grc721.TokenID) {
+	delete(n.owners, tid)
+	delete(n.approved, tid)
+}
+
+func (n *mockNFTAccessor) TotalSupply() int64 {
+	return int64(len(n.owners))
+}
+
+func (n *mockNFTAccessor) Exists(tid grc721.TokenID) bool {
+	return n.owners[tid] != ""
+}
+
+func (n *mockNFTAccessor) OwnerOf(tid grc721.TokenID) (address, error) {
+	if _, ok := n.owners[tid]; !ok {
+		return "", grc721.ErrCallerIsNotOwner
+	}
+
+	return n.owners[tid], nil
+}
+
+func (n *mockNFTAccessor) MustOwnerOf(tid grc721.TokenID) address {
+	return n.owners[tid]
+}
+
+func (n *mockNFTAccessor) TransferFrom(_ address, to address, tid grc721.TokenID) error {
+	n.owners[tid] = to
+	return nil
+}
+
+func newMockNFTAccessor() *mockNFTAccessor {
+	return &mockNFTAccessor{approved: make(map[grc721.TokenID]map[address]bool), owners: make(map[grc721.TokenID]address)}
 }
