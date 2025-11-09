@@ -65,6 +65,10 @@ func (d *Deposit) WithdrawnTime() int64 {
 	return d.withdrawnTime
 }
 
+func (d *Deposit) WithdrawnHeight() int64 {
+	return d.withdrawnHeight
+}
+
 func (d *Deposit) IsOwner(address address) bool {
 	return d.depositor.String() == address.String()
 }

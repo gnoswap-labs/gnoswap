@@ -82,8 +82,8 @@ func modifyTokenList(s *stakerV1, tokenPath string, validator TokenValidator, ex
 
 	allowedTokens := s.store.GetAllowedTokens()
 	allowedTokens = executor(tokenPath, allowedTokens)
-
-	return s.store.SetAllowedTokens(allowedTokens)
+	s.store.SetAllowedTokens(allowedTokens)
+	return nil
 }
 
 // addTokenExecutor executes token append operation

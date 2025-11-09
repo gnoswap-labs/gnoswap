@@ -125,7 +125,11 @@ func (op *baseSwapOperation) validateRouteQuote(quote string, i int) (*i256.Int,
 	if overflow {
 		panic(errOverFlow)
 	}
+
 	toSwap = i256.Zero().Div(toSwap, PERCENTAGE_DENOMINATOR)
+	if toSwap.IsZero() {
+		return nil, errInvalidSwapAmount
+	}
 
 	return toSwap, nil
 }

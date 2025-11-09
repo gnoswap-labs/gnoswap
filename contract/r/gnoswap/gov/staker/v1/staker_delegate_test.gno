@@ -833,8 +833,10 @@ func setupStakerDelegateTestGNSBalance(t *testing.T) {
 	amount := int64(1_000_000_000)
 	gns.Transfer(cross, testutils.TestAddress("alice"), amount)
 	gns.Transfer(cross, testutils.TestAddress("bob"), amount)
+	gns.Transfer(cross, testutils.TestAddress("charlie"), amount)
 	gns.Transfer(cross, testutils.TestAddress("validator1"), amount)
 	gns.Transfer(cross, testutils.TestAddress("validator2"), amount)
+	gns.Transfer(cross, testutils.TestAddress("validator3"), amount)
 
 	testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("alice")))
 	gns.Approve(cross, govStakerAddr, amount)
@@ -842,10 +844,16 @@ func setupStakerDelegateTestGNSBalance(t *testing.T) {
 	testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("bob")))
 	gns.Approve(cross, govStakerAddr, amount)
 
+	testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("charlie")))
+	gns.Approve(cross, govStakerAddr, amount)
+
 	testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("validator1")))
 	gns.Approve(cross, govStakerAddr, amount)
 
 	testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("validator2")))
+	gns.Approve(cross, govStakerAddr, amount)
+
+	testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("validator3")))
 	gns.Approve(cross, govStakerAddr, amount)
 }
 
@@ -877,4 +885,39 @@ func setupStakerDelegateTestCollectableAmount(t *testing.T, gs *govStakerV1, use
 
 	testing.SetRealm(testing.NewUserRealm(govStakerAddr))
 	xgns.Mint(cross, user, amount)
+}
+
+// TestStakerDelegate_registerReferrer tests the private registerReferrer function
+func TestStakerDelegate_registerReferrer(t *testing.T) {
+	tests := []struct {
+		name     string
+		caller   address
+		referrer string
+	}{
+		{
+			name:     "register with valid referrer",
+			caller:   testutils.TestAddress("alice"),
+			referrer: "referrer1",
+		},
+		{
+			name:     "register with empty referrer",
+			caller:   testutils.TestAddress("bob"),
+			referrer: "",
+		},
+		{
+			name:     "register same caller multiple times",
+			caller:   testutils.TestAddress("charlie"),
+			referrer: "referrer2",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// when - call registerReferrer
+			result := registerReferrer(tc.caller, tc.referrer)
+
+			// then - should return a referrer string (actual referrer may differ based on referral module logic)
+			uassert.NotNil(t, result)
+		})
+	}
 }

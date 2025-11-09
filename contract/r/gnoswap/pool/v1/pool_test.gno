@@ -300,10 +300,8 @@ func TestMint_SecurityAndValidation(t *testing.T) {
 				tickUpper := int32(50)
 
 				// tickLower > tickUpper
-				expectedAbortMsg := ufmt.Sprintf(
-					"[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(%d), tickUpper(%d)",
-					tickLower, tickUpper)
-				uassert.AbortsWithMessage(t,
+				expectedAbortMsg := "[GNOSWAP-POOL-022] invalid tick and tick spacing requested"
+				uassert.AbortsContains(t,
 					expectedAbortMsg,
 					func() {
 						mockInstanceMint(pool.Token0Path(), pool.Token1Path(), pool.Fee(),

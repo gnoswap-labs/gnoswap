@@ -2,6 +2,7 @@ package v1
 
 import (
 	"testing"
+	"math"
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
@@ -171,6 +172,83 @@ func TestDeposit_IsEnded(t *testing.T) {
 	}
 }
 
+func TestDeposit_IsWithdrawn(t *testing.T) {
+	tests := []struct {
+		name             string
+		withdrawnTime    int64
+		withdrawnHeight  int64
+		expectedWithdawn bool
+	}{
+		{
+			name:             "not withdrawn when both time and height are zero",
+			withdrawnTime:    0,
+			withdrawnHeight:  0,
+			expectedWithdawn: false,
+		},
+		{
+			name:             "not withdrawn when only time is set",
+			withdrawnTime:    100,
+			withdrawnHeight:  0,
+			expectedWithdawn: false,
+		},
+		{
+			name:             "not withdrawn when only height is set",
+			withdrawnTime:    0,
+			withdrawnHeight:  100,
+			expectedWithdawn: false,
+		},
+		{
+			name:             "withdrawn when both time and height are set",
+			withdrawnTime:    100,
+			withdrawnHeight:  100,
+			expectedWithdawn: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			deposit := &Deposit{
+				withdrawnTime:   tt.withdrawnTime,
+				withdrawnHeight: tt.withdrawnHeight,
+			}
+			uassert.Equal(t, tt.expectedWithdawn, deposit.IsWithdrawn())
+		})
+	}
+}
+
+func TestDeposit_WithdrawnHeight(t *testing.T) {
+	tests := []struct {
+		name            string
+		withdrawnHeight int64
+		expected        int64
+	}{
+		{
+			name:            "zero withdrawn height",
+			withdrawnHeight: 0,
+			expected:        0,
+		},
+		{
+			name:            "positive withdrawn height",
+			withdrawnHeight: 12345,
+			expected:        12345,
+		},
+		{
+			name:            "max int64 withdrawn height",
+			withdrawnHeight: math.MaxInt64,
+			expected:        math.MaxInt64,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			deposit := &Deposit{
+				withdrawnHeight: tt.withdrawnHeight,
+			}
+			uassert.Equal(t, tt.expected, deposit.WithdrawnHeight())
+		})
+	}
+}
+
 func TestDeposit_Withdraw(t *testing.T) {
 	tests := []struct {
 		name              string
@@ -202,20 +280,33 @@ func TestDeposit_Withdraw(t *testing.T) {
 			expectedWithdrawn: true,
 			expectedRemaining: 0,
 		},
+		{
+			name: "withdraw with max int64 amount",
+			deposit: &Deposit{
+				depositAmount:   9223372036854775807, // MaxInt64
+				withdrawnHeight: 0,
+			},
+			currentTime:       100,
+			expectedAmount:    9223372036854775807,
+			expectedWithdrawn: true,
+			expectedRemaining: 0,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			amount := tt.deposit.withdraw(1, tt.currentTime)
+			currentHeight := int64(123)
+			amount := tt.deposit.withdraw(currentHeight, tt.currentTime)
 			uassert.Equal(t, tt.expectedAmount, amount)
-			uassert.Equal(t, tt.currentTime, tt.deposit.withdrawnTime)
+			uassert.Equal(t, tt.currentTime, tt.deposit.WithdrawnTime())
+			uassert.Equal(t, currentHeight, tt.deposit.WithdrawnHeight())
 			uassert.Equal(t, tt.expectedRemaining, tt.deposit.depositAmount)
 			uassert.Equal(t, tt.expectedWithdrawn, tt.deposit.IsWithdrawn())
 		})
 	}
 }
 
-func TestNewDeposit(t *testing.T) {
+func TestDeposit_NewDeposit(t *testing.T) {
 	testAddr := testutils.TestAddress("test")
 	projectID := "gno.land/r/onbloc/obl:123"
 
@@ -244,6 +335,19 @@ func TestNewDeposit(t *testing.T) {
 			endBlockTime:       1000,
 			endBlockHeight:     100,
 			expectedID:         "123",
+		},
+		{
+			name:               "create deposit with zero values",
+			depositID:          "0",
+			projectID:          projectID,
+			tier:               0,
+			depositor:          testAddr,
+			depositAmount:      0,
+			createdBlockTime:   0,
+			createdBlockHeight: 0,
+			endBlockTime:       0,
+			endBlockHeight:     0,
+			expectedID:         "0",
 		},
 	}
 

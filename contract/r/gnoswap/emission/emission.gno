@@ -11,6 +11,8 @@ import (
 	"gno.land/r/gnoswap/halt"
 )
 
+const totalDistributionDuration = 12 * 365 * 24 * 60 * 60 // 12 years
+
 var (
 	// leftGNSAmount tracks undistributed GNS tokens from previous distributions
 	leftGNSAmount int64
@@ -187,6 +189,10 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 	// Prevent negative timestamps.
 	if startTimestamp < 0 {
 		panic("distribution start timestamp cannot be negative")
+	}
+
+	if startTimestamp > math.MaxInt64-totalDistributionDuration {
+		panic("distribution end timestamp must be before max int64 timestamp")
 	}
 
 	currentTimestamp := time.Now().Unix()

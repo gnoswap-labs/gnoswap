@@ -208,7 +208,7 @@ func (self *PoolResolver) cacheInternalReward(currentTime int64, currentEmission
 
 func (self *PoolResolver) calculateGlobalRewardRatioAccumulation(currentTime int64, currentStakedLiquidity *u256.Uint) *u256.Uint {
 	oldAccTime, oldAcc := self.CurrentGlobalRewardRatioAccumulation(currentTime)
-	timeDiff := currentTime - oldAccTime
+	timeDiff := safeSubInt64(currentTime, oldAccTime)
 	if timeDiff == 0 {
 		return oldAcc.Clone()
 	}
@@ -492,7 +492,7 @@ func (self *PoolResolver) updateUnclaimableAccumulateRewards(currentTime int64) 
 		return
 	}
 
-	unclaimableDuration := currentTime - self.LastUnclaimableTime()
+	unclaimableDuration := safeSubInt64(currentTime, self.LastUnclaimableTime())
 	currentUnclaimableReward := safeMulInt64(unclaimableDuration, self.CurrentReward(self.LastUnclaimableTime()))
 	self.SetUnclaimableAcc(safeAddInt64(self.UnclaimableAcc(), currentUnclaimableReward))
 }

@@ -109,14 +109,14 @@ func TestStakerReward_CollectReward(t *testing.T) {
 			// When & Then: Execute and verify
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-					func (cur realm) {
+					func(cur realm) {
 						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 						gs.CollectReward()
 					}(cross)
 				})
 			} else {
 				uassert.NotPanics(t, func() {
-					func (cur realm) {
+					func(cur realm) {
 						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 						gs.CollectReward()
 					}(cross)
@@ -192,14 +192,14 @@ func TestStakerReward_CollectRewardFromLaunchPad(t *testing.T) {
 			// When & Then: Execute and verify
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-					func (cur realm) {
+					func(cur realm) {
 						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 						gs.CollectRewardFromLaunchPad(tt.to)
 					}(cross)
 				})
 			} else {
 				// Should not panic and collect rewards successfully
-				func (cur realm) {
+				func(cur realm) {
 					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 					gs.CollectRewardFromLaunchPad(tt.to)
 				}(cross)
@@ -294,14 +294,14 @@ func TestStakerReward_SetAmountByProjectWallet(t *testing.T) {
 			// When & Then: Execute and verify
 			if tt.expectPanic {
 				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-					func (cur realm) {
+					func(cur realm) {
 						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 						gs.SetAmountByProjectWallet(tt.addr, tt.amount, tt.add)
 					}(cross)
 				})
 			} else {
 				// Should not panic
-				func (cur realm) {
+				func(cur realm) {
 					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 					gs.SetAmountByProjectWallet(tt.addr, tt.amount, tt.add)
 				}(cross)
@@ -477,14 +477,14 @@ func TestStakerReward_LaunchpadExclusionAndRewards(t *testing.T) {
 			// When: Collect rewards
 			if tt.expectRewardEligible {
 				// Should not panic and collect rewards successfully
-				func (cur realm) {
+				func(cur realm) {
 					testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 					gs.CollectReward()
 				}(cross)
 			} else {
 				// Should panic if not eligible
 				uassert.AbortsWithMessage(t, "no rewards available", func() {
-					func (cur realm) {
+					func(cur realm) {
 						testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 						gs.CollectReward()
 					}(cross)
@@ -802,7 +802,7 @@ func setupStakerRewardTestLaunchpadDeposit(t *testing.T, gs *govStakerV1, addr a
 }
 
 func setupStakerRewardTestLaunchpadRewards(t *testing.T, gs *govStakerV1, addr address, amount int64) {
-	func (cur realm) {
+	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 		gs.addStakeFromLaunchpad(addr.String(), amount, 100)
 	}(cross)
@@ -810,7 +810,7 @@ func setupStakerRewardTestLaunchpadRewards(t *testing.T, gs *govStakerV1, addr a
 
 func setupStakerRewardTestLaunchpadStake(t *testing.T, gs *govStakerV1, addr address, amount int64) {
 	// Setup launchpad stake for removal test
-	func (cur realm) {
+	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 		gs.addStakeFromLaunchpad(addr.String(), amount, 100)
 	}(cross)

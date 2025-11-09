@@ -4,10 +4,12 @@ import (
 	"chain/banker"
 	"testing"
 
+	"gno.land/p/nt/avl"
 	"gno.land/p/onbloc/json"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gov/governance"
 
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
@@ -71,4 +73,15 @@ func ugnotBalanceOf(addr address) uint64 {
 
 func unmarshal(data string) *json.Node {
 	return json.Must(json.Unmarshal([]byte(data)))
+}
+
+func createMockGovernanceStore() *mockGovernanceStore {
+	return &mockGovernanceStore{
+		configCounter:           governance.NewCounter(),
+		proposalCounter:         governance.NewCounter(),
+		configs:                 avl.NewTree(),
+		proposals:               avl.NewTree(),
+		proposalUserVotingInfos: avl.NewTree(),
+		userProposals:           avl.NewTree(),
+	}
 }

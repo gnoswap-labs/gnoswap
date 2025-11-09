@@ -12,11 +12,11 @@ import (
 // mockGovStakerStore is a mock implementation of IGovStakerStore for testing
 type mockGovStakerStore struct {
 	// Basic configuration
-	unDelegationLockupPeriod        int64
-	hasUnDelegationLockupPeriodKey  bool
-	emissionRewardBalance           int64
-	totalDelegatedAmount            int64
-	totalLockedAmount               int64
+	unDelegationLockupPeriod       int64
+	hasUnDelegationLockupPeriodKey bool
+	emissionRewardBalance          int64
+	totalDelegatedAmount           int64
+	totalLockedAmount              int64
 
 	// Delegation data
 	delegations       *avl.Tree // map[int64]*staker.Delegation

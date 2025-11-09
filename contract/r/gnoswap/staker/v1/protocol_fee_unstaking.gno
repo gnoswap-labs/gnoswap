@@ -47,7 +47,7 @@ func (s *stakerV1) handleStakingRewardFee(
 	common.SafeGRC20Transfer(cross, tokenPath, protocolFeeAddr, feeAmount)
 	pf.AddToProtocolFee(cross, tokenPath, feeAmount)
 
-	return amount - feeAmount, feeAmount, nil
+	return safeSubInt64(amount, feeAmount), feeAmount, nil
 }
 
 // SetUnStakingFee sets the unstaking fee rate in basis points.

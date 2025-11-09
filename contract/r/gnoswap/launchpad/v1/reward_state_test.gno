@@ -97,6 +97,26 @@ func TestRewardState_CalculateReward(t *testing.T) {
 			expectedClaimableReward: 0 * 1000,
 			expectedHasError:        false,
 		},
+		{
+			name:                    "calculate claimable reward return zero when reward equals claimedAmount",
+			priceDebt:               u256.NewUintFromInt64(100),
+			depositAmount:           1000,
+			claimedAmount:           100 * 1000,
+			accumRewardPerDeposit:   u256.NewUintFromInt64(200),
+			expectedReward:          100 * 1000,
+			expectedClaimableReward: 0,
+			expectedHasError:        false,
+		},
+		{
+			name:                    "calculate claimable reward return zero when reward less than claimedAmount",
+			priceDebt:               u256.NewUintFromInt64(100),
+			depositAmount:           1000,
+			claimedAmount:           100*1000 + 100,
+			accumRewardPerDeposit:   u256.NewUintFromInt64(200),
+			expectedReward:          100 * 1000,
+			expectedClaimableReward: 0,
+			expectedHasError:        false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -120,7 +140,7 @@ func TestRewardState_CalculateReward(t *testing.T) {
 	}
 }
 
-func TestNewRewardState(t *testing.T) {
+func TestRewardState_NewRewardState(t *testing.T) {
 	tests := []struct {
 		name                string
 		priceDebt           *u256.Uint

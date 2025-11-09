@@ -58,6 +58,11 @@ jobs:
           cd gno
           make install.gno
 
+      - name: Update fuzz test seed
+        run: |
+          chmod +x .github/scripts/update_fuzz_seed.sh
+          .github/scripts/update_fuzz_seed.sh
+
       - name: "Run tests for ${{ matrix.name }}"
         run: |
           chmod +x .github/scripts/run_tests.rb
