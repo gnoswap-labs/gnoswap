@@ -105,7 +105,7 @@ func runTestExactOutSwapRoute(ft *fuzz.T, params *exactOutSwapRouteParams) {
 		cross,
 		params.inputToken,
 		params.outputToken,
-		params.amountIn,
+		params.amountOut,
 		params.routeArr,
 		params.quoteArr,
 		params.amountInMax,

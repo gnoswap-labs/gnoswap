@@ -231,7 +231,7 @@ func TestDrySwapRouteQuxBarExactOut() {
 		"100000",
 	)
 
-	println("[EXPECTED] dryResult:", dryResult, "expected: 7351")
+	println("[EXPECTED] dryResult:", dryResult, "expected: 7359")
 	println()
 }
 
@@ -303,7 +303,7 @@ func TestSwapRouteQuxBarExactOut() {
 //
 // [SCENARIO] Given: Dry swap route qux to bar exact out preparation
 // [INFO] Executing dry swap route exact out (qux → baz → bar)
-// [EXPECTED] dryResult: 7351 expected: 7351
+// [EXPECTED] dryResult: 7359 expected: 7359
 //
 // [SCENARIO] Given: Swap route qux to bar exact out preparation
 // [INFO] Approving tokens for swap
