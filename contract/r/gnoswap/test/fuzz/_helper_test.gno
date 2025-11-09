@@ -5,10 +5,12 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/p/gnoswap/fuzz"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
@@ -217,4 +219,15 @@ func parsePoolKey(poolKey string) (string, string, uint32) {
 	}
 
 	return parts[0], parts[1], uint32(fee)
+}
+
+// randomFutureDeadline draws a randomized future deadline using fuzz helpers
+func randomFutureDeadline(ft *fuzz.T) int64 {
+	bufferSeconds := fuzz.Int64Range(60, 3600).Draw(ft, "deadlineBufferSeconds").(int64)
+	return time.Now().Add(time.Duration(bufferSeconds) * time.Second).Unix()
+}
+
+// defaultFutureDeadline provides a deterministic future deadline when fuzz context is unavailable
+func defaultFutureDeadline() int64 {
+	return time.Now().Add(24 * time.Hour).Unix()
 }

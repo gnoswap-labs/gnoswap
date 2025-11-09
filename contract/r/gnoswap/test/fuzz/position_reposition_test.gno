@@ -33,13 +33,14 @@ func TestFuzzPositionReposition_ValidParams_Stateless(t *testing.T) {
 		liquidity := position.GetPositionLiquidity(tokenId)
 
 		// Clear the position first (Reposition requires position to be fully cleared)
+		deadline := randomFutureDeadline(ft)
 		position.DecreaseLiquidity(
 			cross,
 			tokenId,
 			liquidity.ToString(),
 			"0",
 			"0",
-			2000000000,
+			deadline,
 			false,
 		)
 
@@ -112,13 +113,14 @@ func TestFuzzPositionReposition_RandomizedParams_Stateless(t *testing.T) {
 		liquidity := position.GetPositionLiquidity(tokenId)
 
 		// Clear the position first (Reposition requires position to be fully cleared)
+		deadline := randomFutureDeadline(ft)
 		position.DecreaseLiquidity(
 			cross,
 			tokenId,
 			liquidity.ToString(),
 			"0",
 			"0",
-			2000000000,
+			deadline,
 			false,
 		)
 
@@ -181,13 +183,14 @@ func TestFuzzPositionReposition_ValidParams_Stateful(t *testing.T) {
 		liquidity := position.GetPositionLiquidity(tokenId)
 
 		// Clear the position first (Reposition requires position to be fully cleared)
+		deadline := randomFutureDeadline(ft)
 		position.DecreaseLiquidity(
 			cross,
 			tokenId,
 			liquidity.ToString(),
 			"0",
 			"0",
-			2000000000,
+			deadline,
 			false,
 		)
 
@@ -260,4 +263,56 @@ func TestFuzzPositionReposition_ValidParams_Stateful(t *testing.T) {
 	})
 
 	t.Logf("Position #%d was repositioned %d times", tokenId, len(history))
+}
+
+func TestFuzzPositionReposition_RandomizedParams_Stateful(t *testing.T) {
+	initStates(t)
+
+	adminAddr, _ := access.GetAddress(prabc.ROLE_ADMIN.String())
+	poolAddr, _ := access.GetAddress(prabc.ROLE_POOL.String())
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	tokenId := createTestPosition(t, adminAddr, poolAddr)
+
+	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+		liquidity := position.GetPositionLiquidity(tokenId)
+		deadline := randomFutureDeadline(ft)
+		position.DecreaseLiquidity(
+			cross,
+			tokenId,
+			liquidity.ToString(),
+			"0",
+			"0",
+			deadline,
+			false,
+		)
+
+		repositionParams := NewRandomizedPositionRepositionParams(ft, tokenId)
+		fuzzResult.AddParams(index, repositionParams)
+
+		token0Path, token1Path := getTokenPathsFromPosition(tokenId)
+
+		if amount0Int64, err := strconv.ParseInt(repositionParams.amount0Desired, 10, 64); err == nil && amount0Int64 > 0 {
+			mintTestToken(token0Path, amount0Int64)
+		}
+		if amount1Int64, err := strconv.ParseInt(repositionParams.amount1Desired, 10, 64); err == nil && amount1Int64 > 0 {
+			mintTestToken(token1Path, amount1Int64)
+		}
+
+		common.SafeGRC20Approve(cross, token0Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(cross, token1Path, poolAddr, math.MaxInt64)
+
+		position.Reposition(
+			cross,
+			repositionParams.positionId,
+			repositionParams.tickLower,
+			repositionParams.tickUpper,
+			repositionParams.amount0Desired,
+			repositionParams.amount1Desired,
+			repositionParams.amount0Min,
+			repositionParams.amount1Min,
+		)
+	})
 }

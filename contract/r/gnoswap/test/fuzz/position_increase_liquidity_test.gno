@@ -284,7 +284,7 @@ func createTestPosition(t *testing.T, adminAddr, poolAddr address) uint64 {
 		"10000000",
 		"0",
 		"0",
-		2000000000,
+		defaultFutureDeadline(),
 		adminAddr,
 		adminAddr,
 		"",

@@ -233,7 +233,7 @@ func NewValidPositionMintParams(t *fuzz.T) *positionMintParams {
 		amount1Desired: ufmt.Sprintf("%d", amount1),
 		amount0Min:     "0",
 		amount1Min:     "0",
-		deadline:       fuzz.Int64Range(1700000000, 2000000000).Draw(t, "deadline").(int64),
+		deadline:       randomFutureDeadline(t),
 	}
 }
 
