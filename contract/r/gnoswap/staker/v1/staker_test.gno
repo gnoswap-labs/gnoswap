@@ -79,6 +79,7 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 
 		// Stake position
 		testing.SetRealm(testing.NewUserRealm(addr01))
+		getMockInstance().nftAccessor.Mint(addr01, positionIdFrom(positionId))
 		getMockInstance().nftAccessor.Approve(stakerAddr, positionIdFrom(positionId))
 
 		mockInstanceStakeToken(positionId, "")
@@ -147,6 +148,7 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 			addr02,
 		)
 
+		getMockInstance().nftAccessor.Mint(addr02, positionIdFrom(positionId2))
 		getMockInstance().nftAccessor.Approve(stakerAddr, positionIdFrom(positionId2))
 		mockInstanceStakeToken(positionId2, "")
 

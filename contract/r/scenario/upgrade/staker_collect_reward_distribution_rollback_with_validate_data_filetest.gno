@@ -123,8 +123,8 @@ func initialize() {
 func initializeV2Mock() {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker/v2_mock"))
 
-	staker.RegisterInitializer(cross, func(stakerStore staker.IStakerStore, poolAccessor staker.PoolAccessor, emissionAccessor staker.EmissionAccessor) staker.IStaker {
-		instance := mock.NewMockStaker(stakerStore, poolAccessor, emissionAccessor)
+	staker.RegisterInitializer(cross, func(stakerStore staker.IStakerStore, poolAccessor staker.PoolAccessor, emissionAccessor staker.EmissionAccessor, nftAccessor staker.NFTAccessor) staker.IStaker {
+		instance := mock.NewMockStaker(stakerStore, poolAccessor, emissionAccessor, nftAccessor)
 		instance.SetMockFn("CollectReward", func(args ...any) any {
 			return []any{"10000000", "10000000", make(map[string]int64), make(map[string]int64)}
 		})

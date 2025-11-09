@@ -436,6 +436,9 @@ type mockNFTAccessor struct {
 }
 
 func (n *mockNFTAccessor) Approve(approved address, tid grc721.TokenID) error {
+	if _, ok := n.approved[tid]; !ok {
+		n.approved[tid] = make(map[address]bool)
+	}
 	n.approved[tid][approved] = true
 	return nil
 }

@@ -7,15 +7,15 @@ import (
 	v1 "gno.land/r/gnoswap/staker/v1"
 )
 
-func NewV3ValidStaker(store staker.IStakerStore, poolAccessor staker.PoolAccessor, emissionAccessor staker.EmissionAccessor) staker.IStaker {
+func NewV3ValidStaker(store staker.IStakerStore, poolAccessor staker.PoolAccessor, emissionAccessor staker.EmissionAccessor, nftAccessor staker.NFTAccessor) staker.IStaker {
 	return &TestStaker{
-		instance: v1.NewStakerV1(store, poolAccessor, emissionAccessor),
+		instance: v1.NewStakerV1(store, poolAccessor, emissionAccessor, nftAccessor),
 	}
 }
 
 func init() {
-	staker.RegisterInitializer(cross, func(store staker.IStakerStore, poolAccessor staker.PoolAccessor, emissionAccessor staker.EmissionAccessor) staker.IStaker {
-		return NewV3ValidStaker(store, poolAccessor, emissionAccessor)
+	staker.RegisterInitializer(cross, func(store staker.IStakerStore, poolAccessor staker.PoolAccessor, emissionAccessor staker.EmissionAccessor, nftAccessor staker.NFTAccessor) staker.IStaker {
+		return NewV3ValidStaker(store, poolAccessor, emissionAccessor, nftAccessor)
 	})
 }
 
