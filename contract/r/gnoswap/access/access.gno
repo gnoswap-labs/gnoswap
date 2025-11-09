@@ -16,8 +16,8 @@ func init() {
 // Creates the role if it doesn't exist, updates it if it does.
 //
 // Parameters:
+//   - cur: current realm (used for caller verification)
 //   - roleName: name of the role
-//   - version: version of the role
 //   - roleAddress: address for the role
 //
 // Only callable by RBAC contract.
@@ -84,6 +84,8 @@ func GetRoleAddresses() map[string]address {
 	return addresses
 }
 
+// MustGetAddress returns the address for a role or panics if it doesn't exist.
+// Use this when the role is expected to exist and failure is critical.
 func MustGetAddress(role string) address {
 	addr, ok := GetAddress(role)
 	if !ok {
