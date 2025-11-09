@@ -1,53 +1,48 @@
-// Package rbac provides a flexible, upgradeable Role-Based Access Control (RBAC)
-// system for Gno smart contracts and related applications. It decouples authorization
-// logic from fixed addresses, enabling dynamic registration, update, and removal of roles
-// and permissions.
+// Package rbac provides a simple address-based Role-Based Access Control (RBAC)
+// system for Gno smart contracts. It enables dynamic registration, update, and removal
+// of roles with assigned addresses.
 //
 // ## Overview
 //
-// The RBAC package encapsulates a manager that maintains an internal registry of roles.
-// Each role is defined by a unique name and a set of permissions. A permission is
-// represented by a `PermissionChecker` function that validates whether a given caller
-// (`std.Address`) satisfies the required access conditions.
+// The RBAC package provides a manager that maintains an internal registry of roles.
+// Each role is identified by a unique name and is associated with a single address.
+// Authorization is performed by checking if a given address matches the role's assigned address.
 //
 // Key components of this package include:
 //
-//  1. **Role**: Represents a role with a name and a collection of permission-checking functions.
-//  2. **PermissionChecker**: A function type defined as `func(caller std.Address) error`,
-//     used to verify access for a given permission.
-//  3. **RBAC Manager**: The core type (RBAC) that encapsulates role registration, permission
-//     assignment, verification, updating, and removal.
+//  1. **Role**: Represents a role with a name and an assigned address.
+//  2. **RBAC Manager**: The core type (RBAC) that manages role registration, address
+//     assignment, authorization verification, and role removal.
+//  3. **Ownable2Step**: Provides two-step ownership transfer functionality integrated
+//     into the RBAC manager.
 //
 // ## Key Features
 //
-//   - **Dynamic Role Management**: Roles can be registered, and permissions can be assigned
-//     or updated at runtime without requiring contract redeployment.
-//   - **Multiple Permissions per Role**: A single role can have multiple permissions,
-//     each with its own validation logic.
-//   - **Declarative Role Definition**: The package supports a Functional Option pattern,
-//     allowing roles and their permissions to be defined declaratively via functions like
-//     `DeclareRole` and `WithPermission`.
+//   - **Dynamic Role Management**: Roles can be registered, updated, and removed at runtime
+//     without requiring contract redeployment.
+//   - **Address-Based Authorization**: Each role is associated with a single address,
+//     and authorization is verified by address matching.
+//   - **System Roles**: Predefined system roles (admin, devops, pool, etc.) that cannot
+//     be removed to ensure system integrity.
+//   - **Two-Step Ownership Transfer**: Built-in secure ownership transfer mechanism
+//     requiring explicit acceptance by the new owner.
 //   - **Encapsulation**: Internal state (roles registry) is encapsulated within the RBAC
 //     manager, preventing unintended external modifications.
-//   - **Flexible Validation**: Permission checkers can implement custom logic, supporting
-//     arbitrary access control policies.
 //
 // ## Workflow
 //
 // Typical usage of the RBAC package includes the following steps:
 //
-//  1. **Initialization**: Create a new RBAC manager using `NewRBAC()`.
-//  2. **Role Registration**: Register roles using `RegisterRole` or declaratively with
-//     `DeclareRole`.
-//  3. **Permission Assignment**: Add permissions to roles using `RegisterPermission` or the
-//     `WithPermission` option during role declaration.
-//  4. **Permission Verification**: Validate access by invoking `CheckPermission` with the
-//     role name, permission name, and the caller's address (std.Address).
+//  1. **Initialization**: Create a new RBAC manager using `New()` or `NewRBACWithAddress(addr)`.
+//  2. **Role Registration**: Register roles using `RegisterRole(roleName, address)`.
+//  3. **Authorization Check**: Verify if an address is authorized for a role using
+//     `IsAuthorized(roleName, address)`.
+//  4. **Role Management**: Update role addresses with `UpdateRoleAddress` or remove
+//     non-system roles with `RemoveRole`.
 //
 // ## Example Usage
 //
-// The following example demonstrates how to use the RBAC package in both traditional and
-// declarative styles:
+// The following example demonstrates how to use the RBAC package:
 //
 // ```gno
 // package main
@@ -55,85 +50,98 @@
 // import (
 //
 //	"std"
-//
 //	"gno.land/p/gnoswap/rbac"
-//	"gno.land/p/nt/ufmt"
 //
 // )
 //
 //	func main() {
-//	    // Create a new RBAC manager
-//	    manager := rbac.NewRBAC()
+//	    // Create a new RBAC manager (origin caller becomes owner)
+//	    manager := rbac.New()
 //
 //	    // Define example addresses
-//	    adminAddr := std.Address("admin")
-//	    userAddr  := std.Address("user")
+//	    adminAddr := std.Address("g1...")
+//	    userAddr  := std.Address("g1...")
 //
-//	    // --- Traditional Role Registration ---
-//	    // Register an "admin" role
-//	    if err := manager.RegisterRole("admin"); err != nil {
+//	    // Register an "admin" role with adminAddr
+//	    if err := manager.RegisterRole("admin", adminAddr); err != nil {
 //	        panic(err)
 //	    }
 //
-//	    // Register an "access" permission for the "admin" role.
-//	    // The checker verifies that the caller matches adminAddr.
-//	    adminChecker := func(caller std.Address) error {
-//	        if caller != adminAddr {
-//	            return ufmt.Errorf("caller %s is not admin", caller)
-//	        }
-//	        return nil
-//	    }
-//	    if err := manager.RegisterPermission("admin", "access", adminChecker); err != nil {
+//	    // Register a custom "editor" role with userAddr
+//	    if err := manager.RegisterRole("editor", userAddr); err != nil {
 //	        panic(err)
 //	    }
 //
-//	    // --- Declarative Role Registration ---
-//	    // Register an "editor" role with a "modify" permission using the Functional Option pattern.
-//	    editorChecker := func(caller std.Address) error {
-//	        if caller != userAddr {
-//	            return ufmt.Errorf("caller %s is not editor", caller)
-//	        }
-//	        return nil
-//	    }
-//	    if err := manager.DeclareRole("editor", rbac.WithPermission("modify", editorChecker)); err != nil {
-//	        panic(err)
-//	    }
-//
-//	    // --- Permission Check ---
-//	    // Check if adminAddr has the "access" permission on the "admin" role.
-//	    if err := manager.CheckPermission("admin", "access", adminAddr); err != nil {
-//	        println("Access denied for admin:", err)
-//	    } else {
+//	    // Check if adminAddr is authorized for the "admin" role
+//	    if manager.IsAuthorized("admin", adminAddr) {
 //	        println("Admin access granted")
+//	    }
+//
+//	    // Check if userAddr is authorized for the "admin" role
+//	    if !manager.IsAuthorized("admin", userAddr) {
+//	        println("User does not have admin access")
+//	    }
+//
+//	    // Update the editor role to a different address
+//	    newEditorAddr := std.Address("g1...")
+//	    if err := manager.UpdateRoleAddress("editor", newEditorAddr); err != nil {
+//	        panic(err)
+//	    }
+//
+//	    // Get all role addresses
+//	    allRoles := manager.GetAllRoleAddresses()
+//	    for roleName, addr := range allRoles {
+//	        println(roleName, "->", addr.String())
 //	    }
 //	}
 //
 // ```
 //
+// ## System Roles
+//
+// The package defines several system roles that cannot be removed:
+//
+//   - admin: System administrator role
+//   - devops: DevOps operations role
+//   - community_pool: Community pool management role
+//   - governance: Governance system role
+//   - gov_staker: Governance staker role
+//   - xgns: xGNS token role
+//   - pool: Pool management role
+//   - position: Position management role
+//   - router: Router role
+//   - staker: Staker role
+//   - emission: Emission management role
+//   - launchpad: Launchpad role
+//   - protocol_fee: Protocol fee management role
+//
 // ## Error Handling
 //
-// The package reports errors using the ufmt.Errorf function. Typical errors include:
+// The package defines several error types:
 //
-// - Registering a role that already exists.
-// - Attempting to register a permission for a non-existent role.
-// - Verifying a permission that does not exist on a role.
-// - Failing a permission check due to a caller not meeting the required conditions.
+// - ErrRoleAlreadyExists: Attempting to register a role that already exists.
+// - ErrRoleDoesNotExist: Attempting to access or modify a non-existent role.
+// - ErrCannotRemoveSystemRole: Attempting to remove a system role.
+// - ErrInvalidAddress: Providing an invalid or empty address.
+// - ErrUnauthorized: Caller is not the owner when owner permission is required.
+// - ErrNoPendingOwner: Attempting to accept ownership when no transfer is pending.
+// - ErrPendingUnauthorized: Caller is not the pending owner when accepting ownership.
+//
+// ## Ownership Management
+//
+// The RBAC manager includes built-in two-step ownership transfer functionality:
+//
+//  1. Current owner calls TransferOwnershipBy to initiate transfer.
+//  2. New owner calls AcceptOwnershipBy to complete the transfer.
+//  3. Owner can drop ownership entirely using DropOwnershipBy.
 //
 // ## Limitations and Considerations
 //
-//   - This RBAC implementation does not directly map addresses to roles; instead, it verifies
-//     the caller against permission-checking functions registered for a role.
-//   - Address validation relies on the logic provided within each PermissionChecker. Ensure that
-//     your checkers properly validate `std.Address` values (which follow the Bech32 format).
-//   - The encapsulated RBAC manager is designed to minimize external mutation, but integrating it
-//     with other modules may require additional mapping between addresses and roles.
+//   - Each role can only have one assigned address. For multi-address authorization,
+//     consider creating multiple roles or implementing a wrapper.
+//   - System roles are protected and cannot be removed to ensure system stability.
+//   - Address validation checks for empty strings and calls IsValid() method.
 //
-// # Notes
-//
-//   - The RBAC system is designed to be upgradeable, enabling contracts to modify permission
-//     logic without redeploying the entire contract.
-//   - Both imperative and declarative styles are supported, providing flexibility to developers.
-//
-// Package rbac is intended for use in Gno smart contracts and other systems requiring dynamic,
-// upgradeable access control mechanisms.
+// Package rbac is intended for use in Gno smart contracts requiring simple,
+// address-based access control with role management capabilities.
 package rbac
