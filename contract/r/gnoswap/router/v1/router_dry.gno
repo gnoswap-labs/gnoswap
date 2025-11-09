@@ -243,6 +243,10 @@ func (r *routerV1) drySwapRoute(
 			panic(addDetailToError(errInvalidSwapType, err.Error()))
 		}
 
+		if amountIn.IsZero() || amountOut.IsZero() {
+			return zeroString, zeroString, false
+		}
+
 		// update accumulated results
 		resultAmountIn, resultAmountOut, err = processor.AddSwapResults(resultAmountIn, resultAmountOut, amountIn, amountOut)
 		if err != nil {
