@@ -17,11 +17,7 @@ func TestFuzzCollectReward_InternalIncentive_Stateless(t *testing.T) {
 		// initialize the states for the stateless fuzz test
 		initStates(t)
 
-		if emission.GetDistributionStartTimestamp() == 0 {
-			testing.SetRealm(testing.NewUserRealm(adminAddr))
-			emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
-
-		}
+		emissionStartTimestamp := setupEmissionStartTimestamp(ft)
 
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 		emission.ChangeDistributionPct(cross, 1, 6500, 2, 0, 3, 0, 4, 3500)
@@ -29,7 +25,7 @@ func TestFuzzCollectReward_InternalIncentive_Stateless(t *testing.T) {
 		_, _, positionID := setupInternalIncentivePoolAndPositionByRange(ft, 1, 3)
 		setupStakePosition(ft, positionID)
 
-		params := NewValidCollectRewardParams(ft, positionID, true, emission.GetDistributionStartTimestamp())
+		params := NewValidCollectRewardParams(ft, positionID, true, emissionStartTimestamp)
 		testing.SkipHeights(params.skipBlocks)
 		params.updatePreviousBalances("gno.land/r/gnoswap/gns")
 
@@ -75,4 +71,13 @@ func runTestCollectReward(ft *fuzz.T, params *collectRewardParams) {
 	if isStartedDistribution != hasBalanceChanges {
 		panic(ufmt.Sprintf("invalid reward result: isStartedDistribution: %v, hasBalanceChanges: %v", isStartedDistribution, hasBalanceChanges))
 	}
+}
+
+func setupEmissionStartTimestamp(ft *fuzz.T) int64 {
+	if emission.GetDistributionStartTimestamp() == 0 {
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+		emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
+	}
+
+	return emission.GetDistributionStartTimestamp()
 }

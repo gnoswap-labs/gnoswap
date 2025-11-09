@@ -656,11 +656,13 @@ func newMockStakerStore() *MockStakerStore {
 		poolTierCounts:                   [sr.AllTierCount]uint64{},
 		poolTierLastRewardCacheTimestamp: 0,
 		poolTierLastRewardCacheHeight:    0,
-		poolTierCurrentEmission:          0,
-		poolTierGetEmission:              func() int64 { return 0 },
-		poolTierGetHalvingBlocksInRange:  func(start, end int64) ([]int64, []int64) { return nil, nil },
-		warmupTemplate:                   sr.DefaultWarmupTemplate(),
-		currentSwapBatch:                 &sr.SwapBatchProcessor{},
+		poolTierCurrentEmission:          emission.GetStakerEmissionAmountPerSecond(),
+		poolTierGetEmission:              func() int64 { return emission.GetStakerEmissionAmountPerSecond() },
+		poolTierGetHalvingBlocksInRange: func(start, end int64) ([]int64, []int64) {
+			return emission.GetStakerEmissionAmountPerSecondInRange(start, end)
+		},
+		warmupTemplate:   sr.DefaultWarmupTemplate(),
+		currentSwapBatch: &sr.SwapBatchProcessor{},
 	}
 }
 
