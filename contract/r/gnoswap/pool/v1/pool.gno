@@ -62,6 +62,11 @@ func (i *poolV1) Mint(
 	}
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
+
+	tickSpacing := pool.TickSpacing()
+	checkTickSpacing(tickLower, tickSpacing)
+	checkTickSpacing(tickUpper, tickSpacing)
+
 	liquidityDelta := safeConvertToInt128(liquidity)
 	positionParam := newModifyPositionParams(positionCaller, tickLower, tickUpper, liquidityDelta)
 	_, amount0, amount1, err := modifyPosition(pool, positionParam)
