@@ -7,8 +7,8 @@ import (
 
 	"gno.land/p/gnoswap/fuzz"
 	"gno.land/p/gnoswap/fuzzutils"
-	"gno.land/p/nt/ufmt"
 	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -31,7 +31,8 @@ func TestFuzzPositionCollectFee_ValidParams_Stateless(t *testing.T) {
 		tokenId := createTestPosition(t, adminAddr, poolAddr)
 
 		// Generate fees by executing swaps
-		generateFeesWithSwap(t, adminAddr, poolAddr, tokenId)
+		swapCount := fuzz.IntRange(1, 30).Draw(ft, "swapCount").(int)
+		generateFeesWithSwap(ft, adminAddr, poolAddr, tokenId, swapCount)
 
 		// Generate params for collect fee
 		collectParams := NewValidPositionCollectFeeParams(ft, tokenId)
@@ -53,6 +54,10 @@ func TestFuzzPositionCollectFee_ValidParams_Stateless(t *testing.T) {
 		if poolPath == "" {
 			panic("Pool path should not be empty")
 		}
+
+		if fee0 == "0" && fee1 == "0" && swapCount > 0 {
+			panic(ufmt.Sprintf("fee0 and fee1 should not be 0: fee0=%s, fee1=%s, swapCount=%d", fee0, fee1, swapCount))
+		}
 	})
 }
 
@@ -71,18 +76,23 @@ func TestFuzzPositionCollectFee_RandomizedParams_Stateless(t *testing.T) {
 		tokenId := createTestPosition(t, adminAddr, poolAddr)
 
 		// Generate fees by executing swaps
-		generateFeesWithSwap(t, adminAddr, poolAddr, tokenId)
+		swapCount := fuzz.IntRange(0, 30).Draw(ft, "swapCount").(int)
+		generateFeesWithSwap(ft, adminAddr, poolAddr, tokenId, swapCount)
 
 		// Generate params for collect fee
 		collectParams := NewRandomizedPositionCollectFeeParams(ft, tokenId)
 		fuzzResult.AddParams(index, collectParams)
 
 		// when - collect fee (may panic with invalid params)
-		position.CollectFee(
+		_, fee0, fee1, _, _, _ := position.CollectFee(
 			cross,
 			collectParams.positionId,
 			collectParams.unwrapResult,
 		)
+
+		if fee0 == "0" && fee1 == "0" && swapCount > 0 {
+			panic(ufmt.Sprintf("fee0 and fee1 should not be 0: fee0=%s, fee1=%s, swapCount=%d", fee0, fee1, swapCount))
+		}
 	})
 }
 
@@ -108,7 +118,8 @@ func TestFuzzPositionCollectFee_ValidParams_Stateful(t *testing.T) {
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 		// Generate fees by executing swaps
-		generateFeesWithSwap(t, adminAddr, poolAddr, tokenId)
+		swapCount := fuzz.IntRange(1, 30).Draw(ft, "swapCount").(int)
+		generateFeesWithSwap(ft, adminAddr, poolAddr, tokenId, swapCount)
 
 		// Generate params for collect fee
 		collectParams := NewValidPositionCollectFeeParams(ft, tokenId)
@@ -128,6 +139,10 @@ func TestFuzzPositionCollectFee_ValidParams_Stateful(t *testing.T) {
 
 		if poolPath == "" {
 			panic("Pool path should not be empty")
+		}
+
+		if fee0 == "0" && fee1 == "0" && swapCount > 0 {
+			panic(ufmt.Sprintf("fee0 and fee1 should not be 0: fee0=%s, fee1=%s, swapCount=%d", fee0, fee1, swapCount))
 		}
 
 		// Track this collection
@@ -158,7 +173,8 @@ func TestFuzzPositionCollectFee_RandomizedParams_Stateful(t *testing.T) {
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 		// Generate fees by executing swaps
-		generateFeesWithSwap(t, adminAddr, poolAddr, tokenId)
+		swapCount := fuzz.IntRange(0, 30).Draw(ft, "swapCount").(int)
+		generateFeesWithSwap(ft, adminAddr, poolAddr, tokenId, swapCount)
 
 		// Generate params for collect fee
 		collectParams := NewRandomizedPositionCollectFeeParams(ft, tokenId)
@@ -171,6 +187,10 @@ func TestFuzzPositionCollectFee_RandomizedParams_Stateful(t *testing.T) {
 			collectParams.unwrapResult,
 		)
 
+		if fee0 == "0" && fee1 == "0" && swapCount > 0 {
+			panic(ufmt.Sprintf("fee0 and fee1 should not be 0: fee0=%s, fee1=%s, swapCount=%d", fee0, fee1, swapCount))
+		}
+
 		// Track successful collections
 		if fee0 != "" && fee1 != "" {
 			successfulCollections++
@@ -181,19 +201,12 @@ func TestFuzzPositionCollectFee_RandomizedParams_Stateful(t *testing.T) {
 }
 
 // Helper function to generate fees by executing swaps
-func generateFeesWithSwap(t *testing.T, adminAddr, poolAddr address, positionId uint64) {
-	t.Helper()
-
+func generateFeesWithSwap(ft *fuzz.T, adminAddr, poolAddr address, positionId uint64, swapCount int) {
 	token0Path, token1Path, fee := getPoolInfoFromPosition(positionId)
 	poolPath := pool.GetPoolPath(token0Path, token1Path, fee)
 	if !pool.ExistsPoolPath(poolPath) {
 		panic(ufmt.Sprintf("poolPath(%s) must exist before generating fees", poolPath))
 	}
-
-	// Ensure swapper has enough balance for generating fees
-	swapFundingAmount := int64(2000000)
-	mintTestToken(token0Path, swapFundingAmount)
-	mintTestToken(token1Path, swapFundingAmount)
 
 	// Approve tokens for swap
 	common.SafeGRC20Approve(cross, token0Path, poolAddr, math.MaxInt64)
@@ -230,38 +243,32 @@ func generateFeesWithSwap(t *testing.T, adminAddr, poolAddr address, positionId 
 
 	const mockSwapperPath = "gno.land/r/gnoswap/test/mock_swapper"
 
-	// Execute swap to generate fees
-	// Swap token0 for token1
-	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm(mockSwapperPath))
-		pool.Swap(
-			cross,
-			token0Path,
-			token1Path,
-			fee,
-			adminAddr,
-			true, // zeroForOne
-			"1000000",
-			MIN_PRICE_LIMIT_ZERO_FOR_ONE,
-			adminAddr,
-			swapCallback,
-		)
-	}(cross)
+	for i := 0; i < swapCount; i++ {
+		amountSpecified := fuzz.Int64Range(100, 10000000).Draw(ft, "amountSpecified").(int64)
+		zeroForOne := fuzz.Bool().Draw(ft, "zeroForOne").(bool)
 
-	// Swap token1 for token0
-	func(cur realm) {
-		testing.SetRealm(testing.NewCodeRealm(mockSwapperPath))
-		pool.Swap(
-			cross,
-			token0Path,
-			token1Path,
-			fee,
-			adminAddr,
-			false, // zeroForOne
-			"1000000",
-			MAX_PRICE_LIMIT_NOT_ZERO_FOR_ONE,
-			adminAddr,
-			swapCallback,
-		)
-	}(cross)
+		sqrtPriceLimitX96 := MIN_PRICE_LIMIT_ZERO_FOR_ONE
+		if zeroForOne {
+			mintTestToken(token0Path, amountSpecified)
+		} else {
+			mintTestToken(token1Path, amountSpecified)
+			sqrtPriceLimitX96 = MAX_PRICE_LIMIT_NOT_ZERO_FOR_ONE
+		}
+
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(mockSwapperPath))
+			pool.Swap(
+				cross,
+				token0Path,
+				token1Path,
+				fee,
+				adminAddr,
+				zeroForOne,
+				ufmt.Sprintf("%d", amountSpecified),
+				sqrtPriceLimitX96,
+				adminAddr,
+				swapCallback,
+			)
+		}(cross)
+	}
 }

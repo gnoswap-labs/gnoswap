@@ -110,11 +110,11 @@ func NewValidPositionRepositionParams(t *fuzz.T, existingPositionId uint64) *pos
 func newValidPositionRepositionParams(t *fuzz.T, positionId uint64) *positionRepositionParams {
 	token0Path, token1Path, fee := getPoolInfoFromPosition(positionId)
 	poolPath := pool.GetPoolPath(token0Path, token1Path, fee)
+	currentTick := pool.GetSlot0Tick(poolPath)
+	tickLower, tickUpper := generateRandomTicks(t, currentTick, fee)
 
-	tickLower, tickUpper := sampleRepositionTicks(t, poolPath, fee)
-
-	amount0 := fuzz.Int64Range(1_000_000, 100_000_000).Draw(t, "amount0").(int64)
-	amount1 := fuzz.Int64Range(1_000_000, 100_000_000).Draw(t, "amount1").(int64)
+	amount0 := fuzz.Int64Range(1, 1_000_000_000_000).Draw(t, "amount0").(int64)
+	amount1 := fuzz.Int64Range(1, 1_000_000_000_000).Draw(t, "amount1").(int64)
 
 	return &positionRepositionParams{
 		positionId:     positionId,
@@ -126,17 +126,6 @@ func newValidPositionRepositionParams(t *fuzz.T, positionId uint64) *positionRep
 		amount0Min:     "0",
 		amount1Min:     "0",
 		poolPath:       poolPath,
-	}
-}
-
-func sampleRepositionTicks(t *fuzz.T, poolPath string, fee uint32) (int32, int32) {
-	currentTick := pool.GetSlot0Tick(poolPath)
-
-	switch fuzz.IntRange(0, 1).Draw(t, "repositionTickScenario").(int) {
-	case 0:
-		return generateRandomTicks(t, currentTick, fee)
-	default:
-		return generateInRangeTick(t, currentTick, fee)
 	}
 }
 

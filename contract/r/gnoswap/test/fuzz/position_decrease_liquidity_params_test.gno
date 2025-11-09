@@ -13,13 +13,13 @@ import (
 
 // positionDecreaseLiquidityParams is the parameters for DecreaseLiquidity fuzzing test
 type positionDecreaseLiquidityParams struct {
-	positionId      uint64
-	liquidity       string
-	amount0Min      string
-	amount1Min      string
-	deadline        int64
-	unwrapResult    bool
-	poolPath        string
+	positionId   uint64
+	liquidity    string
+	amount0Min   string
+	amount1Min   string
+	deadline     int64
+	unwrapResult bool
+	poolPath     string
 }
 
 func (p *positionDecreaseLiquidityParams) IsValid() bool {
@@ -126,7 +126,7 @@ func newValidPositionDecreaseLiquidityParams(t *fuzz.T, positionId uint64) *posi
 		panic("position liquidity must be positive for valid decrease fuzz case")
 	}
 
-	percentage := fuzz.Int64Range(10, 90).Draw(t, "percentage").(int64)
+	percentage := fuzz.Int64Range(10, 100).Draw(t, "percentage").(int64)
 
 	liq := u256.NewUint(0).Mul(currentLiquidity, u256.NewUint(uint64(percentage)))
 	liq = liq.Div(liq, u256.NewUint(100))

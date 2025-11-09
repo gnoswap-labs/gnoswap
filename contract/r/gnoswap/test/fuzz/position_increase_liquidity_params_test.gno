@@ -138,8 +138,8 @@ func newValidPositionIncreaseLiquidityParams(t *fuzz.T, positionId uint64) *posi
 		panic("poolPath must exist for position")
 	}
 
-	amount0 := fuzz.Int64Range(1_000_000, 100_000_000).Draw(t, "amount0").(int64)
-	amount1 := fuzz.Int64Range(1_000_000, 100_000_000).Draw(t, "amount1").(int64)
+	amount0 := fuzz.Int64Range(1, 1_000_000_000_000_000).Draw(t, "amount0").(int64)
+	amount1 := fuzz.Int64Range(1, 1_000_000_000_000_000).Draw(t, "amount1").(int64)
 
 	deadlineSeconds := fuzz.Int64Range(30, 600).Draw(t, "deadlineBufferSeconds").(int64)
 	deadline := time.Now().Add(time.Duration(deadlineSeconds) * time.Second).Unix()

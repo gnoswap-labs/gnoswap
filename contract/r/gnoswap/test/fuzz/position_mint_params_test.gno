@@ -209,36 +209,13 @@ func NewValidPositionMintParams(t *fuzz.T) *positionMintParams {
 	feeIndex := fuzz.IntRange(0, len(VALID_FEE_TIERS)-1).Draw(t, "feeIndex").(int)
 	fee := VALID_FEE_TIERS[feeIndex]
 
-	// Calculate tick spacing based on fee tier
-	var tickSpacing int32
-	switch fee {
-	case 100:
-		tickSpacing = 1
-	case 500:
-		tickSpacing = 10
-	case 3000:
-		tickSpacing = 60
-	case 10000:
-		tickSpacing = 200
-	}
-
 	// Generate valid tick range (will be aligned to tick spacing)
 	// Use a reasonable range around current price (tick 0)
-	tickLowerRaw := fuzz.Int32Range(-1000, -1).Draw(t, "tickLowerRaw").(int32)
-	tickUpperRaw := fuzz.Int32Range(1, 1000).Draw(t, "tickUpperRaw").(int32)
-
-	// Align to tick spacing
-	tickLower := (tickLowerRaw / tickSpacing) * tickSpacing
-	tickUpper := (tickUpperRaw / tickSpacing) * tickSpacing
-
-	// Ensure tickLower < tickUpper and at least one spacing apart
-	if tickLower >= tickUpper {
-		tickUpper = tickLower + tickSpacing
-	}
+	tickLower, tickUpper := generateRandomTicks(t, 0, fee)
 
 	// Generate valid amounts
-	amount0 := fuzz.Int64Range(1000000, 100000000).Draw(t, "amount0").(int64)
-	amount1 := fuzz.Int64Range(1000000, 100000000).Draw(t, "amount1").(int64)
+	amount0 := fuzz.Int64Range(1, 1_000_000_000_000).Draw(t, "amount0").(int64)
+	amount1 := fuzz.Int64Range(1, 1_000_000_000_000).Draw(t, "amount1").(int64)
 
 	return &positionMintParams{
 		token0Path:     "gno.land/r/onbloc/bar",
@@ -283,7 +260,8 @@ func NewValidPositionMintParamsWithFee(t *fuzz.T) *positionMintParams {
 func NewRandomizedPositionMintParams(t *fuzz.T) *positionMintParams {
 	token0Path, token1Path := generateTokenPair(t)
 	fee := generateFeeTier(t)
-	tickLower, tickUpper := generateRandomTicks(t, 0, fee)
+	tickLower := fuzz.Int32Range(math.MinInt32, math.MaxInt32).Draw(t, "tickLower").(int32)
+	tickUpper := fuzz.Int32Range(math.MinInt32, math.MaxInt32).Draw(t, "tickUpper").(int32)
 
 	// Generate valid amounts
 	amount0 := fuzz.Int64Range(math.MinInt64, math.MaxInt64).Draw(t, "amount0").(int64)
