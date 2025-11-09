@@ -12,7 +12,7 @@ func TestRegisterInitializer(t *testing.T) {
 	tests := []struct {
 		name                 string
 		setup                func(t *testing.T)
-		initializer          func(s IStakerStore, p PoolAccessor, e EmissionAccessor) IStaker
+		initializer          func(s IStakerStore, p PoolAccessor, e EmissionAccessor, nftAccessor NFTAccessor) IStaker
 		callerRealm          runtime.Realm
 		expectedVersion      string
 		expectedHasAbort     bool

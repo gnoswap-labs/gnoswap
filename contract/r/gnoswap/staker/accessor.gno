@@ -1,7 +1,9 @@
 package staker
 
 import (
+	"gno.land/p/demo/tokens/grc721"
 	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/pool"
 )
 
@@ -77,4 +79,53 @@ func (e *emissionAccessor) SetOnDistributionPctChangeCallback(callback func(emis
 
 func newEmissionAccessor() EmissionAccessor {
 	return &emissionAccessor{}
+}
+
+type NFTAccessor interface {
+	Approve(approved address, tid grc721.TokenID) error
+	Mint(to address, tid grc721.TokenID) grc721.TokenID
+	Burn(tid grc721.TokenID)
+	TransferFrom(from, to address, tid grc721.TokenID) error
+	TotalSupply() int64
+	Exists(tid grc721.TokenID) bool
+	MustOwnerOf(tid grc721.TokenID) address
+	OwnerOf(tid grc721.TokenID) (address, error)
+}
+
+type gnftAccessor struct{}
+
+func (n *gnftAccessor) Approve(approved address, tid grc721.TokenID) error {
+	return gnft.Approve(cross, approved, tid)
+}
+
+func (n *gnftAccessor) Mint(to address, tid grc721.TokenID) grc721.TokenID {
+	return gnft.Mint(cross, to, tid)
+}
+
+func (n *gnftAccessor) Burn(tid grc721.TokenID) {
+	gnft.Burn(cross, tid)
+}
+
+func (n *gnftAccessor) TransferFrom(from, to address, tid grc721.TokenID) error {
+	return gnft.TransferFrom(cross, from, to, tid)
+}
+
+func (n *gnftAccessor) TotalSupply() int64 {
+	return gnft.TotalSupply()
+}
+
+func (n *gnftAccessor) Exists(tid grc721.TokenID) bool {
+	return gnft.Exists(tid)
+}
+
+func (n *gnftAccessor) MustOwnerOf(tid grc721.TokenID) address {
+	return gnft.MustOwnerOf(tid)
+}
+
+func (n *gnftAccessor) OwnerOf(tid grc721.TokenID) (address, error) {
+	return gnft.OwnerOf(tid)
+}
+
+func newNFTAccessor() NFTAccessor {
+	return &gnftAccessor{}
 }

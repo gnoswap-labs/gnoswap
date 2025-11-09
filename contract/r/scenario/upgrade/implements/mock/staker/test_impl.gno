@@ -7,8 +7,8 @@ import (
 	v1 "gno.land/r/gnoswap/staker/v1"
 )
 
-func NewMockStaker(store staker.IStakerStore, poolAccessor staker.PoolAccessor, emissionAccessor staker.EmissionAccessor) *TestStaker {
-	instance := v1.NewStakerV1(store, poolAccessor, emissionAccessor)
+func NewMockStaker(store staker.IStakerStore, poolAccessor staker.PoolAccessor, emissionAccessor staker.EmissionAccessor, nftAccessor staker.NFTAccessor) *TestStaker {
+	instance := v1.NewStakerV1(store, poolAccessor, emissionAccessor, nftAccessor)
 
 	return &TestStaker{
 		instance: instance,

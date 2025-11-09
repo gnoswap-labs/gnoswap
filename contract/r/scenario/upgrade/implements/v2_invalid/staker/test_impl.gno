@@ -7,8 +7,8 @@ import (
 	v1 "gno.land/r/gnoswap/staker/v1"
 )
 
-func NewV2InvalidStaker(store staker.IStakerStore, poolAccessor staker.PoolAccessor, emissionAccessor staker.EmissionAccessor) staker.IStaker {
-	instance := v1.NewStakerV1(store, poolAccessor, emissionAccessor)
+func NewV2InvalidStaker(store staker.IStakerStore, poolAccessor staker.PoolAccessor, emissionAccessor staker.EmissionAccessor, nftAccessor staker.NFTAccessor) staker.IStaker {
+	instance := v1.NewStakerV1(store, poolAccessor, emissionAccessor, nftAccessor)
 
 	return &TestStaker{
 		instance:      instance,
@@ -17,8 +17,8 @@ func NewV2InvalidStaker(store staker.IStakerStore, poolAccessor staker.PoolAcces
 }
 
 func init() {
-	staker.RegisterInitializer(cross, func(store staker.IStakerStore, poolAccessor staker.PoolAccessor, emissionAccessor staker.EmissionAccessor) staker.IStaker {
-		return NewV2InvalidStaker(store, poolAccessor, emissionAccessor)
+	staker.RegisterInitializer(cross, func(store staker.IStakerStore, poolAccessor staker.PoolAccessor, emissionAccessor staker.EmissionAccessor, nftAccessor staker.NFTAccessor) staker.IStaker {
+		return NewV2InvalidStaker(store, poolAccessor, emissionAccessor, nftAccessor)
 	})
 }
 
