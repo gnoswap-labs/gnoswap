@@ -74,10 +74,7 @@ func NewValidPoolCreateParams(t *fuzz.T) *poolCreateParams {
 	feeIndex := fuzz.IntRange(0, len(VALID_FEE_TIERS)-1).Draw(t, "feeIndex").(int)
 	fee := VALID_FEE_TIERS[feeIndex]
 
-	// Use a reasonable range for testing: 10^18 to 10^27
-	minPrice := "1000000000000000000"          // 10^18
-	maxPrice := "1000000000000000000000000000" // 10^27
-	sqrtPriceVal := fuzz.Uint256Range(minPrice, maxPrice).Draw(t, "sqrtPrice").(*u256.Uint)
+	sqrtPriceVal := fuzz.Uint256Range(MIN_SQRT_RATIO, MAX_SQRT_RATIO).Draw(t, "sqrtPrice").(*u256.Uint)
 
 	// Registered tokens only
 	tokens := []string{
