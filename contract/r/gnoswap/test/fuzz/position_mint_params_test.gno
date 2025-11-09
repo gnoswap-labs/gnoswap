@@ -27,8 +27,25 @@ type positionMintParams struct {
 }
 
 func (p *positionMintParams) IsValid() bool {
+	token0Path := p.token0Path
+	token1Path := p.token1Path
+	tickLower := p.tickLower
+	tickUpper := p.tickUpper
+	amount0DesiredStr := p.amount0Desired
+	amount1DesiredStr := p.amount1Desired
+	amount0MinStr := p.amount0Min
+	amount1MinStr := p.amount1Min
+
+	// Mirror position.Mint input normalization so validation matches runtime behavior.
+	if token1Path < token0Path {
+		token0Path, token1Path = token1Path, token0Path
+		amount0DesiredStr, amount1DesiredStr = amount1DesiredStr, amount0DesiredStr
+		amount0MinStr, amount1MinStr = amount1MinStr, amount0MinStr
+		tickLower, tickUpper = -tickUpper, -tickLower
+	}
+
 	// Token paths must be different and not empty
-	if p.token0Path == p.token1Path || p.token0Path == "" || p.token1Path == "" {
+	if token0Path == token1Path || token0Path == "" || token1Path == "" {
 		return false
 	}
 
@@ -45,7 +62,7 @@ func (p *positionMintParams) IsValid() bool {
 	}
 
 	// Tick range must be valid
-	if p.tickLower >= p.tickUpper {
+	if tickLower >= tickUpper {
 		return false
 	}
 
@@ -65,18 +82,18 @@ func (p *positionMintParams) IsValid() bool {
 	}
 
 	// Ticks must be aligned to tick spacing
-	if p.tickLower%tickSpacing != 0 || p.tickUpper%tickSpacing != 0 {
+	if tickLower%tickSpacing != 0 || tickUpper%tickSpacing != 0 {
 		return false
 	}
 
 	// Tick range must be at least one tick spacing
-	if p.tickUpper-p.tickLower < tickSpacing {
+	if tickUpper-tickLower < tickSpacing {
 		return false
 	}
 
 	// Min amounts must be parseable and non-negative
-	amount0Min, err0Min := strconv.ParseInt(p.amount0Min, 10, 64)
-	amount1Min, err1Min := strconv.ParseInt(p.amount1Min, 10, 64)
+	amount0Min, err0Min := strconv.ParseInt(amount0MinStr, 10, 64)
+	amount1Min, err1Min := strconv.ParseInt(amount1MinStr, 10, 64)
 	if err0Min != nil || err1Min != nil {
 		return false
 	}
@@ -86,8 +103,8 @@ func (p *positionMintParams) IsValid() bool {
 	}
 
 	// Amounts must be parseable and non-negative
-	amount0, err0 := strconv.ParseInt(p.amount0Desired, 10, 64)
-	amount1, err1 := strconv.ParseInt(p.amount1Desired, 10, 64)
+	amount0, err0 := strconv.ParseInt(amount0DesiredStr, 10, 64)
+	amount1, err1 := strconv.ParseInt(amount1DesiredStr, 10, 64)
 	if err0 != nil || err1 != nil {
 		return false
 	}
@@ -110,15 +127,15 @@ func (p *positionMintParams) IsValid() bool {
 		return false
 	}
 
-	poolPath := pool.GetPoolPath(p.token0Path, p.token1Path, p.fee)
+	poolPath := pool.GetPoolPath(token0Path, token1Path, p.fee)
 	exists := pool.ExistsPoolPath(poolPath)
 	if !exists {
 		return false
 	}
 
 	currentTick := pool.GetSlot0Tick(poolPath)
-	token0OnlyRange := currentTick < p.tickLower
-	token1OnlyRange := currentTick >= p.tickUpper
+	token0OnlyRange := currentTick < tickLower
+	token1OnlyRange := currentTick >= tickUpper
 	priceInsideRange := !token0OnlyRange && !token1OnlyRange
 
 	if priceInsideRange {
@@ -136,7 +153,7 @@ func (p *positionMintParams) IsValid() bool {
 	}
 
 	// Simulate actual liquidity calculation to detect overflows
-	if !p.canCalculateLiquidityWithoutPanic(poolPath) {
+	if !p.canCalculateLiquidityWithoutPanic(poolPath, tickLower, tickUpper, amount0DesiredStr, amount1DesiredStr) {
 		return false
 	}
 
@@ -144,7 +161,7 @@ func (p *positionMintParams) IsValid() bool {
 }
 
 // canCalculateLiquidityWithoutPanic attempts to calculate liquidity and returns false if it panics
-func (p *positionMintParams) canCalculateLiquidityWithoutPanic(poolPath string) (success bool) {
+func (p *positionMintParams) canCalculateLiquidityWithoutPanic(poolPath string, tickLower, tickUpper int32, amount0Str, amount1Str string) (success bool) {
 	defer func() {
 		if r := recover(); r != nil {
 			// Panic occurred during liquidity calculation (likely overflow)
@@ -153,11 +170,11 @@ func (p *positionMintParams) canCalculateLiquidityWithoutPanic(poolPath string) 
 	}()
 
 	sqrtPriceX96 := pool.GetSlot0SqrtPriceX96(poolPath)
-	sqrtRatioAX96 := common.TickMathGetSqrtRatioAtTick(p.tickLower)
-	sqrtRatioBX96 := common.TickMathGetSqrtRatioAtTick(p.tickUpper)
+	sqrtRatioAX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
+	sqrtRatioBX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
 
-	amount0U256 := u256.MustFromDecimal(p.amount0Desired)
-	amount1U256 := u256.MustFromDecimal(p.amount1Desired)
+	amount0U256 := u256.MustFromDecimal(amount0Str)
+	amount1U256 := u256.MustFromDecimal(amount1Str)
 
 	liquidity := common.GetLiquidityForAmounts(
 		sqrtPriceX96,

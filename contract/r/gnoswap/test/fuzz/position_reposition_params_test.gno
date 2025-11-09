@@ -45,14 +45,6 @@ func (p *positionRepositionParams) IsValid() bool {
 		return false
 	}
 
-	if p.fee != fee {
-		return false
-	}
-
-	if p.poolPath != "" && p.poolPath != poolPath {
-		return false
-	}
-
 	if p.tickLower >= p.tickUpper {
 		return false
 	}
