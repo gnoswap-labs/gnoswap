@@ -262,8 +262,9 @@ func makeInitializerSafe(data any) any {
 		panic(ufmt.Sprintf("expected func(store any) any, got %T", data))
 	}
 
-	cpy := new(func(store any) any)
-	*cpy = fn
+	cpy := func(store any) any {
+		return fn(store)
+	}
 
 	return cpy
 }
