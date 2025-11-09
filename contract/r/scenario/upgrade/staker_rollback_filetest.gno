@@ -11,7 +11,7 @@ import (
 	"gno.land/r/gnoswap/staker"
 
 	_ "gno.land/r/gnoswap/staker/v1"
-	_ "gno.land/r/gnoswap/staker/test"
+	_ "gno.land/r/gnoswap/staker/v2_invalid"
 )
 
 var t *testing.T
@@ -23,7 +23,7 @@ var (
 
 const (
 	stakerV1Path   = "gno.land/r/gnoswap/staker/v1"
-	stakerTestPath = "gno.land/r/gnoswap/staker/test"
+	stakerTestPath = "gno.land/r/gnoswap/staker/v2_invalid"
 )
 
 func main() {
@@ -59,6 +59,6 @@ func testStakerRollback() {
 // Output:
 // [SCENARIO] Staker Contract Rollback Test
 // [INFO] Preparing: Upgrading to test version
-// [INFO] Current version: gno.land/r/gnoswap/staker/test
+// [INFO] Current version: gno.land/r/gnoswap/staker/v2_invalid
 // [INFO] Rolling back staker contract to v1
 // [EXPECTED] Staker rolled back to: gno.land/r/gnoswap/staker/v1

@@ -11,7 +11,7 @@ import (
 	protocolFee "gno.land/r/gnoswap/protocol_fee"
 
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
-	_ "gno.land/r/gnoswap/protocol_fee/test"
+	_ "gno.land/r/gnoswap/protocol_fee/v2_invalid"
 )
 
 var t *testing.T
@@ -23,7 +23,7 @@ var (
 
 const (
 	protocolFeeV1Path   = "gno.land/r/gnoswap/protocol_fee/v1"
-	protocolFeeTestPath = "gno.land/r/gnoswap/protocol_fee/test"
+	protocolFeeTestPath = "gno.land/r/gnoswap/protocol_fee/v2_invalid"
 )
 
 func main() {
@@ -59,6 +59,6 @@ func testProtocolFeeRollback() {
 // Output:
 // [SCENARIO] ProtocolFee Contract Rollback Test
 // [INFO] Preparing: Upgrading to test version
-// [INFO] Current version: gno.land/r/gnoswap/protocol_fee/test
+// [INFO] Current version: gno.land/r/gnoswap/protocol_fee/v2_invalid
 // [INFO] Rolling back protocol_fee contract to v1
 // [EXPECTED] ProtocolFee rolled back to: gno.land/r/gnoswap/protocol_fee/v1

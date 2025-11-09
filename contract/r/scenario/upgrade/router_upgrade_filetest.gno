@@ -12,7 +12,7 @@ import (
 	"gno.land/r/gnoswap/router"
 
 	_ "gno.land/r/gnoswap/router/v1"
-	_ "gno.land/r/gnoswap/router/test"
+	_ "gno.land/r/gnoswap/router/v2_invalid"
 )
 
 var t = &testing.T{}
@@ -24,7 +24,7 @@ var (
 
 const (
 	routerV1Path   = "gno.land/r/gnoswap/router/v1"
-	routerTestPath = "gno.land/r/gnoswap/router/test"
+	routerTestPath = "gno.land/r/gnoswap/router/v2_invalid"
 )
 
 func main() {
@@ -135,10 +135,10 @@ func verifyTestImplementation() {
 // [SCENARIO] 2. Upgrade router contract to test version
 // [INFO] Current version: gno.land/r/gnoswap/router/v1
 // [INFO] Upgrading router contract to test version
-// [EXPECTED] Router upgraded to: gno.land/r/gnoswap/router/test
+// [EXPECTED] Router upgraded to: gno.land/r/gnoswap/router/v2_invalid
 //
 // [SCENARIO] 3. Verify test implementation panics correctly
-// [INFO] Current version: gno.land/r/gnoswap/router/test
+// [INFO] Current version: gno.land/r/gnoswap/router/v2_invalid
 // [INFO] Testing ExactInSwapRoute function panics correctly
 // [EXPECTED] ExactInSwapRoute panics correctly
 // [INFO] Testing SetSwapFee function panics correctly

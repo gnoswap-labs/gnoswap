@@ -12,7 +12,7 @@ import (
 	"gno.land/r/gnoswap/staker"
 
 	_ "gno.land/r/gnoswap/staker/v1"
-	_ "gno.land/r/gnoswap/staker/test"
+	_ "gno.land/r/gnoswap/staker/v2_invalid"
 )
 
 var t = &testing.T{}
@@ -24,7 +24,7 @@ var (
 
 const (
 	stakerV1Path   = "gno.land/r/gnoswap/staker/v1"
-	stakerTestPath = "gno.land/r/gnoswap/staker/test"
+	stakerTestPath = "gno.land/r/gnoswap/staker/v2_invalid"
 )
 
 func main() {
@@ -167,10 +167,10 @@ func verifyTestImplementation() {
 // [SCENARIO] 2. Upgrade staker contract to test version
 // [INFO] Current version: gno.land/r/gnoswap/staker/v1
 // [INFO] Upgrading staker contract to test version
-// [EXPECTED] Staker upgraded to: gno.land/r/gnoswap/staker/test
+// [EXPECTED] Staker upgraded to: gno.land/r/gnoswap/staker/v2_invalid
 //
 // [SCENARIO] 3. Verify test implementation panics correctly
-// [INFO] Current version: gno.land/r/gnoswap/staker/test
+// [INFO] Current version: gno.land/r/gnoswap/staker/v2_invalid
 // [INFO] Testing StakeToken function panics correctly
 // [EXPECTED] StakeToken panics correctly
 // [INFO] Testing SetPoolTier function panics correctly

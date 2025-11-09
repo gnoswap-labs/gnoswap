@@ -12,7 +12,7 @@ import (
 	"gno.land/r/gnoswap/pool"
 
 	_ "gno.land/r/gnoswap/pool/v1"
-	_ "gno.land/r/gnoswap/pool/test"
+	_ "gno.land/r/gnoswap/pool/v2_invalid"
 )
 
 var t = &testing.T{}
@@ -24,7 +24,7 @@ var (
 
 const (
 	poolV1Path   = "gno.land/r/gnoswap/pool/v1"
-	poolTestPath = "gno.land/r/gnoswap/pool/test"
+	poolTestPath = "gno.land/r/gnoswap/pool/v2_invalid"
 )
 
 func main() {
@@ -135,10 +135,10 @@ func verifyTestImplementation() {
 // [SCENARIO] 2. Upgrade pool contract to test version
 // [INFO] Current version: gno.land/r/gnoswap/pool/v1
 // [INFO] Upgrading pool contract to test version
-// [EXPECTED] Pool upgraded to: gno.land/r/gnoswap/pool/test
+// [EXPECTED] Pool upgraded to: gno.land/r/gnoswap/pool/v2_invalid
 //
 // [SCENARIO] 3. Verify test implementation panics correctly
-// [INFO] Current version: gno.land/r/gnoswap/pool/test
+// [INFO] Current version: gno.land/r/gnoswap/pool/v2_invalid
 // [INFO] Testing CreatePool function panics correctly
 // [EXPECTED] CreatePool panics correctly
 // [INFO] Testing SetPoolCreationFee function panics correctly
