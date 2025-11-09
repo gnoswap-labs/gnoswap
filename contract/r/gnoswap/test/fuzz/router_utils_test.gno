@@ -2,16 +2,10 @@ package fuzz
 
 import (
 	"strings"
-	"testing"
-	"time"
 
 	"gno.land/p/gnoswap/fuzz"
-	prabc "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/ufmt"
-	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
-	"gno.land/r/gnoswap/position"
 )
 
 func generateRoutePathArr(f *fuzz.T, inputTokenPath, outputTokenPath string, maxRoutePathCount int, maxHops int) string {
@@ -222,7 +216,7 @@ func setupRouterMintPositionByRoutePath(ft *fuzz.T, routePathArr string) {
 		for _, routePool := range strings.Split(routePath, "*POOL*") {
 			token0Path, token1Path, feeTier := parsePoolPathAlign(routePool)
 
-			setupRouterPool(ft, token0Path, token1Path, feeTier)
+			setupCreatePool(ft, token0Path, token1Path, feeTier)
 
 			// generate parameters for position
 			poolPath := pool.GetPoolPath(token0Path, token1Path, feeTier)
@@ -230,7 +224,7 @@ func setupRouterMintPositionByRoutePath(ft *fuzz.T, routePathArr string) {
 			amountDesired := int64(1_000_000_000_000)
 
 			// setup position
-			setupRouterPosition(
+			setupMintPosition(
 				ft,
 				token0Path,
 				token1Path,
@@ -241,64 +235,4 @@ func setupRouterMintPositionByRoutePath(ft *fuzz.T, routePathArr string) {
 			)
 		}
 	}
-}
-
-// setupRouterPool creates a pool if it doesn't exist and sets the realm to the admin realm.
-func setupRouterPool(
-	ft *fuzz.T,
-	token0Path string,
-	token1Path string,
-	feeTier uint32,
-) {
-	poolPath := pool.GetPoolPath(token0Path, token1Path, feeTier)
-	if !pool.ExistsPoolPath(poolPath) {
-		testing.SetRealm(testing.NewUserRealm(adminAddr))
-
-		currentTick := fuzz.Int32Range(-10000, 10000).Draw(ft, "currentTick").(int32)
-		startPrice := common.TickMathGetSqrtRatioAtTick(currentTick)
-		pool.CreatePool(
-			cross,
-			token0Path,
-			token1Path,
-			feeTier,
-			startPrice.ToString(),
-		)
-	}
-}
-
-// setupRouterPosition mints a position and sets the realm to the admin realm.
-func setupRouterPosition(
-	ft *fuzz.T,
-	token0Path string,
-	token1Path string,
-	feeTier uint32,
-	tickLower int32,
-	tickUpper int32,
-	amountDesired int64,
-) {
-	mintTestToken(token0Path, amountDesired)
-	mintTestToken(token1Path, amountDesired)
-
-	testing.SetRealm(testing.NewUserRealm(adminAddr))
-
-	poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
-	common.SafeGRC20Approve(cross, token0Path, poolAddr, amountDesired)
-	common.SafeGRC20Approve(cross, token1Path, poolAddr, amountDesired)
-
-	position.Mint(
-		cross,
-		token0Path,
-		token1Path,
-		feeTier,
-		tickLower,
-		tickUpper,
-		ufmt.Sprintf("%d", amountDesired),
-		ufmt.Sprintf("%d", amountDesired),
-		"0",
-		"0",
-		time.Now().Add(time.Hour).Unix(),
-		adminAddr,
-		adminAddr,
-		"",
-	)
 }
