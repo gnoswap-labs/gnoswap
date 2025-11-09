@@ -27,6 +27,11 @@ func (p *poolCreateParams) IsValid() bool {
 		return false
 	}
 
+	// Token paths must be in canonical order (token0 < token1)
+	if p.token0Path > p.token1Path {
+		return false
+	}
+
 	// Fee must be one of the supported tiers
 	validFee := false
 	for _, tier := range VALID_FEE_TIERS {

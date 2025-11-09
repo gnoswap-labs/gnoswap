@@ -122,6 +122,11 @@ func (p *poolSwapParams) isValidBasicParams() bool {
 		return false
 	}
 
+	// Token paths must be in canonical order (token0 < token1)
+	if p.token0Path > p.token1Path {
+		return false
+	}
+
 	return true
 }
 
