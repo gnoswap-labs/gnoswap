@@ -191,6 +191,11 @@ func (p *exactOutSwapRouteParams) isValidMintOverflow(amountInStr string) bool {
 		amountInInt64 = 0
 	}
 
+	// Check against MAX_TEST_MINT_AMOUNT limit
+	if amountInInt64 > MAX_TEST_MINT_AMOUNT {
+		return false
+	}
+
 	// Get current total supply of the input token
 	currentSupply := getTokenTotalSupply(p.inputToken)
 

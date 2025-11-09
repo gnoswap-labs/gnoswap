@@ -83,6 +83,47 @@ func generateTickRangeWithFeeTier(f *fuzz.T, minTick, maxTick int32, feeTier uin
 	return tick
 }
 
+func generateRandomTicks(f *fuzz.T, currentTick int32, feeTier uint32) (int32, int32) {
+	tickSpacing := defaultTickSpacings[feeTier]
+
+	tickLower := currentTick - (currentTick % tickSpacing)
+	tickUpper := currentTick + (currentTick % tickSpacing)
+
+	inRangeType := fuzz.IntRange(0, 2).Draw(f, "inRangeType").(int)
+
+	migrateTick := func(tick int32, tickSpacing int32) int32 {
+		left := tick % tickSpacing
+		if tick >= 0 {
+			return tick - left
+		} else {
+			return tick + tickSpacing - left
+		}
+	}
+
+	maxTick := migrateTick(MAX_TICK, tickSpacing)
+	minTick := migrateTick(MIN_TICK, tickSpacing)
+
+	switch inRangeType {
+	case 0:
+		tickLower = fuzz.Int32Range(minTick, currentTick-tickSpacing).Draw(f, "tickLower").(int32)
+		tickUpper = fuzz.Int32Range(tickLower, currentTick-tickSpacing).Draw(f, "tickUpper").(int32)
+	case 1:
+		tickLower = fuzz.Int32Range(minTick, currentTick-tickSpacing).Draw(f, "tickLower").(int32)
+		tickUpper = fuzz.Int32Range(currentTick+tickSpacing, maxTick).Draw(f, "tickUpper").(int32)
+	case 2:
+		tickUpper = fuzz.Int32Range(currentTick+tickSpacing, maxTick).Draw(f, "tickUpper").(int32)
+		tickLower = fuzz.Int32Range(currentTick+tickSpacing, tickUpper-tickSpacing).Draw(f, "tickLower").(int32)
+	}
+	tickLower = migrateTick(tickLower, tickSpacing)
+	tickUpper = migrateTick(tickUpper, tickSpacing)
+
+	if tickLower == tickUpper {
+		tickUpper = tickLower + tickSpacing
+	}
+
+	return tickLower, tickUpper
+}
+
 func generateInRangeTick(f *fuzz.T, currentTick int32, feeTier uint32) (int32, int32) {
 	tickSpacing := defaultTickSpacings[feeTier]
 	currentTick = currentTick - (currentTick % tickSpacing)

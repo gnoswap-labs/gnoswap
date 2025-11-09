@@ -1,11 +1,16 @@
 package fuzz
 
 import (
+	"math"
+	"strconv"
+	"strings"
 	"testing"
+	"time"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/p/gnoswap/fuzz"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
@@ -37,6 +42,8 @@ const (
 	BAR_PATH = "gno.land/r/onbloc/bar"
 	FOO_PATH = "gno.land/r/onbloc/foo"
 	BAZ_PATH = "gno.land/r/onbloc/baz"
+
+	MAX_TEST_MINT_AMOUNT = math.MaxInt64 / 1000
 )
 
 var (
@@ -177,6 +184,10 @@ func initStakerState(t *testing.T) {
 }
 
 func mintTestToken(tokenPath string, amount int64) {
+	if amount > MAX_TEST_MINT_AMOUNT {
+		panic("mint amount exceeds fuzz test limit")
+	}
+
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	switch tokenPath {
@@ -232,4 +243,42 @@ func burnTestTokens(t *testing.T) {
 		qux.Burn(cross, addr, qux.BalanceOf(addr))
 		obl.Burn(cross, addr, obl.BalanceOf(addr))
 	}
+}
+
+// getTokenPathsFromPosition extracts token0Path and token1Path from a position's pool key
+func getTokenPathsFromPosition(tokenId uint64) (string, string) {
+	token0, token1, _ := getPoolInfoFromPosition(tokenId)
+	return token0, token1
+}
+
+// getPoolInfoFromPosition extracts token0Path, token1Path, and fee tier from a position
+func getPoolInfoFromPosition(tokenId uint64) (string, string, uint32) {
+	poolKey := position.GetPositionPoolKey(tokenId)
+	return parsePoolKey(poolKey)
+}
+
+// parsePoolKey parses a pool key string (format: "token0:token1:fee") and returns token0, token1, fee
+func parsePoolKey(poolKey string) (string, string, uint32) {
+	parts := strings.Split(poolKey, ":")
+	if len(parts) != 3 {
+		panic("invalid pool key format")
+	}
+
+	fee, err := strconv.ParseUint(parts[2], 10, 32)
+	if err != nil {
+		panic("invalid fee value in pool key")
+	}
+
+	return parts[0], parts[1], uint32(fee)
+}
+
+// randomFutureDeadline draws a randomized future deadline using fuzz helpers
+func randomFutureDeadline(ft *fuzz.T) int64 {
+	bufferSeconds := fuzz.Int64Range(60, 3600).Draw(ft, "deadlineBufferSeconds").(int64)
+	return time.Now().Add(time.Duration(bufferSeconds) * time.Second).Unix()
+}
+
+// defaultFutureDeadline provides a deterministic future deadline when fuzz context is unavailable
+func defaultFutureDeadline() int64 {
+	return time.Now().Add(24 * time.Hour).Unix()
 }
