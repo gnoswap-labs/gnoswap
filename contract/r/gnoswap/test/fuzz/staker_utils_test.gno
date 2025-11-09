@@ -48,7 +48,7 @@ func setupExternalRewardPoolAndPosition(ft *fuzz.T) (string, string, uint64) {
 	poolPath, incentiveID := setupExternalRewardPool(ft)
 	token0Path, token1Path, feeTier := parsePoolPathAlign(poolPath)
 	tickLower, tickUpper := generateInRangeTick(ft, pool.GetSlot0Tick(poolPath), feeTier)
-	amountDesired := int64(1_000_000_000_000)
+	amountDesired := int64(1_000_000)
 	positionID, _, _, _ := setupMintPosition(ft, token0Path, token1Path, feeTier, tickLower, tickUpper, amountDesired)
 
 	return poolPath, incentiveID, positionID
