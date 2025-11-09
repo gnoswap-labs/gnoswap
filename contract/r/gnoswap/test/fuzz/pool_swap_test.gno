@@ -28,6 +28,12 @@ func TestFuzzPoolSwap_ValidParams_Stateless(t *testing.T) {
 			setupPoolSwapLiquidity(ft, params)
 		}
 
+		// Mint random amount of tokens for admin
+		// This creates scenarios where balance may be insufficient
+		swapAmount := fuzz.Int64Range(1, 100_000_000_000).Draw(ft, "swapAmount").(int64)
+		mintTestToken(params.token0Path, swapAmount)
+		mintTestToken(params.token1Path, swapAmount)
+
 		params.setPriceLimit(ft)
 
 		// when
@@ -51,6 +57,12 @@ func TestFuzzPoolSwap_RandomizedParams_Stateless(t *testing.T) {
 			setupPoolSwapLiquidity(ft, params)
 		}
 
+		// Mint random amount of tokens for admin
+		// This creates scenarios where balance may be insufficient
+		swapAmount := fuzz.Int64Range(1, 100_000_000_000).Draw(ft, "swapAmount").(int64)
+		mintTestToken(params.token0Path, swapAmount)
+		mintTestToken(params.token1Path, swapAmount)
+
 		params.setPriceLimit(ft)
 
 		// when
@@ -65,6 +77,12 @@ func TestFuzzPoolSwap_RandomizedParams_Stateless(t *testing.T) {
 func TestFuzzPoolSwap_RandomizedParams_Stateful(t *testing.T) {
 	// given
 	initStates(t)
+
+	// Mint large amount of tokens for admin ONCE at the beginning for stateful test
+	// This ensures sufficient balance for all iterations
+	swapAmount := int64(1_000_000_000_000) // Large amount for multiple swaps
+	mintTestToken(BAR_PATH, swapAmount)
+	mintTestToken(FOO_PATH, swapAmount)
 
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		params := NewRandomizedPoolSwapParams(ft)

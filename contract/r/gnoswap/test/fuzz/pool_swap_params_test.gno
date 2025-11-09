@@ -5,6 +5,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
 
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 )
 
@@ -59,10 +60,9 @@ func (p *poolSwapParams) IsValid() bool {
 		return false
 	}
 
-	// NOTE: We don't call isValidDrySwap() here because:
-	// 1. It requires pool liquidity which is set up AFTER param generation
-	// 2. The actual Swap call will validate remaining conditions (liquidity, balance, etc)
-	// 3. This allows us to follow the pattern: generate params -> setup -> AddParams -> test
+	if !p.isValidDrySwap() {
+		return false
+	}
 
 	return true
 }
@@ -152,22 +152,56 @@ func (p *poolSwapParams) isValidPriceLimitDirection() bool {
 	return true
 }
 
-// isValidDrySwap checks if DrySwap succeeds with the given parameters
+// isValidDrySwap checks if DrySwap succeeds with the given parameters and user has sufficient balance
 func (p *poolSwapParams) isValidDrySwap() bool {
-	_, _, success := p.drySwap()
+	amount0, amount1, success := p.drySwap()
 
 	if !success {
-		// If DrySwap fails, check if amount is very small (< 10)
-		var absAmount *u256.Uint
-		if len(p.amountSpecified) > 0 && p.amountSpecified[0] == '-' {
-			absAmount = u256.MustFromDecimal(p.amountSpecified[1:])
-		} else {
-			absAmount = u256.MustFromDecimal(p.amountSpecified)
-		}
-		return absAmount.LtUint64(10)
+		return false
 	}
 
-	return success
+	var requiredTokenPath string
+	var requiredAmount *u256.Uint
+
+	if p.zeroForOne {
+		// Selling token0 for token1
+		// amount0 is positive (what we pay), amount1 is negative (what we receive)
+		if len(amount0) > 0 && amount0[0] != '-' && amount0 != "0" {
+			requiredTokenPath = p.token0Path
+			var err error
+			requiredAmount, err = u256.FromDecimal(amount0)
+			if err != nil {
+				return false
+			}
+		} else {
+			// No token0 payment needed, valid
+			return true
+		}
+	} else {
+		// Selling token1 for token0
+		// amount1 is positive (what we pay), amount0 is negative (what we receive)
+		if len(amount1) > 0 && amount1[0] != '-' && amount1 != "0" {
+			requiredTokenPath = p.token1Path
+			var err error
+			requiredAmount, err = u256.FromDecimal(amount1)
+			if err != nil {
+				return false
+			}
+		} else {
+			// No token1 payment needed, valid
+			return true
+		}
+	}
+
+	// Check admin's balance
+	adminBalance := common.BalanceOf(requiredTokenPath, adminAddr)
+	if adminBalance < 0 {
+		return false
+	}
+	adminBalanceUint := u256.NewUint(uint64(adminBalance))
+
+	// Need sufficient balance
+	return adminBalanceUint.Cmp(requiredAmount) >= 0
 }
 
 // drySwap calls pool.DrySwap with panic recovery
@@ -189,10 +223,6 @@ func (p *poolSwapParams) drySwap() (string, string, bool) {
 			p.amountSpecified,
 			p.sqrtPriceLimitX96,
 		)
-
-		if amount0 == "0" || amount1 == "0" {
-			return "0", "0", false
-		}
 
 		return amount0, amount1, success
 	}()
