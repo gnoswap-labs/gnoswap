@@ -95,13 +95,6 @@ func (p *positionMintParams) IsValid() bool {
 		return false
 	}
 
-	// Both amounts must be non-zero to avoid zero liquidity issues
-	// When one amount is 0, depending on the tick range and current price,
-	// it can result in zero liquidity which is invalid
-	if amount0 == 0 || amount1 == 0 {
-		return false
-	}
-
 	// Prevent token mint overflow
 	const maxSafeAmount = math.MaxInt64 / 1000
 	if amount0 > maxSafeAmount || amount1 > maxSafeAmount {
@@ -121,6 +114,25 @@ func (p *positionMintParams) IsValid() bool {
 	exists := pool.ExistsPoolPath(poolPath)
 	if !exists {
 		return false
+	}
+
+	currentTick := pool.GetSlot0Tick(poolPath)
+	token0OnlyRange := currentTick < p.tickLower
+	token1OnlyRange := currentTick >= p.tickUpper
+	priceInsideRange := !token0OnlyRange && !token1OnlyRange
+
+	if priceInsideRange {
+		if amount0 == 0 || amount1 == 0 {
+			return false
+		}
+	} else if token0OnlyRange {
+		if amount0 == 0 {
+			return false
+		}
+	} else if token1OnlyRange {
+		if amount1 == 0 {
+			return false
+		}
 	}
 
 	// Simulate actual liquidity calculation to detect overflows

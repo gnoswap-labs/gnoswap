@@ -110,11 +110,10 @@ func NewRandomizedPositionIncreaseLiquidityParams(t *fuzz.T, existingPositionId 
 		params := newValidPositionIncreaseLiquidityParams(t, existingPositionId)
 		params.amount0Desired = "0"
 		return params
-	case 2:
+case 2:
 		params := newValidPositionIncreaseLiquidityParams(t, existingPositionId)
 		amount := u256.MustFromDecimal(params.amount0Desired)
-		newAmount := u256.NewUint(0).Add(amount, u256.NewUint(1))
-		params.amount0Desired = newAmount.ToString()
+		params.amount0Min = amount.Add(amount, u256.NewUint(1)).ToString()
 		return params
 	case 3:
 		params := newValidPositionIncreaseLiquidityParams(t, existingPositionId)
