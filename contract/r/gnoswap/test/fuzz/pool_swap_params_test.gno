@@ -160,47 +160,52 @@ func (p *poolSwapParams) isValidDrySwap() bool {
 		return false
 	}
 
-	var requiredTokenPath string
-	var requiredAmount *u256.Uint
+	// Determine which token is being paid (positive delta)
+	requiredTokenPath, requiredAmountStr := p.getRequiredPayment(amount0, amount1)
 
-	if p.zeroForOne {
-		// Selling token0 for token1
-		// amount0 is positive (what we pay), amount1 is negative (what we receive)
-		if len(amount0) > 0 && amount0[0] != '-' && amount0 != "0" {
-			requiredTokenPath = p.token0Path
-			var err error
-			requiredAmount, err = u256.FromDecimal(amount0)
-			if err != nil {
-				return false
-			}
-		} else {
-			// No token0 payment needed, valid
-			return true
-		}
-	} else {
-		// Selling token1 for token0
-		// amount1 is positive (what we pay), amount0 is negative (what we receive)
-		if len(amount1) > 0 && amount1[0] != '-' && amount1 != "0" {
-			requiredTokenPath = p.token1Path
-			var err error
-			requiredAmount, err = u256.FromDecimal(amount1)
-			if err != nil {
-				return false
-			}
-		} else {
-			// No token1 payment needed, valid
-			return true
-		}
+	// No payment needed
+	if requiredTokenPath == "" {
+		return true
+	}
+
+	// Parse required amount
+	requiredAmount, err := u256.FromDecimal(requiredAmountStr)
+	if err != nil {
+		return false
 	}
 
 	// Check admin's balance
-	adminBalance := common.BalanceOf(requiredTokenPath, adminAddr)
+	return p.hasEnoughBalance(requiredTokenPath, requiredAmount)
+}
+
+// getRequiredPayment determines which token and amount is required for the swap
+func (p *poolSwapParams) getRequiredPayment(amount0, amount1 string) (tokenPath string, amount string) {
+	if p.zeroForOne {
+		// Selling token0 for token1: amount0 is positive (what we pay)
+		if isPositiveAmount(amount0) {
+			return p.token0Path, amount0
+		}
+	} else {
+		// Selling token1 for token0: amount1 is positive (what we pay)
+		if isPositiveAmount(amount1) {
+			return p.token1Path, amount1
+		}
+	}
+	return "", ""
+}
+
+// isPositiveAmount checks if the amount string represents a positive non-zero value
+func isPositiveAmount(amount string) bool {
+	return len(amount) > 0 && amount[0] != '-' && amount != "0"
+}
+
+// hasEnoughBalance checks if admin has enough balance for the required amount
+func (p *poolSwapParams) hasEnoughBalance(tokenPath string, requiredAmount *u256.Uint) bool {
+	adminBalance := common.BalanceOf(tokenPath, adminAddr)
 	if adminBalance < 0 {
 		return false
 	}
 	adminBalanceUint := u256.NewUint(uint64(adminBalance))
-
-	// Need sufficient balance
 	return adminBalanceUint.Cmp(requiredAmount) >= 0
 }
 
