@@ -181,8 +181,7 @@ func (p *exactOutSwapRouteParams) isValidDrySwap() bool {
 	_, amountOut, success := p.drySwapRoute()
 
 	if !success {
-		// if the drySwapRoute fails, check if the amountIn is less than 10
-		return u256.MustFromDecimal(p.amountIn).LtUint64(10)
+		return false
 	}
 
 	amountInInt64 := u256.MustFromDecimal(p.amountIn).Int64()
@@ -211,10 +210,8 @@ func (p *exactOutSwapRouteParams) updateAmountInByPreDrySwap() {
 
 	_, amountOut, success := p.drySwapRoute()
 
-	if success {
-		p.preDrySwapResult = true
-		p.amountIn = amountOut
-	}
+	p.preDrySwapResult = success
+	p.amountIn = amountOut
 }
 
 func (p *exactOutSwapRouteParams) drySwapRoute() (amountIn string, amountOut string, success bool) {

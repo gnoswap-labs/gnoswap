@@ -37,17 +37,27 @@ type SwapProcessor struct {
 }
 
 // ProcessSwapAmount calculates the exact amount to swap based on quote percentage.
-func (p *SwapProcessor) ProcessSwapAmount(amountSpecified *i256.Int, quote int) (*i256.Int, error) {
-	if quote < MinQuotePercentage || quote > MaxQuotePercentage {
+func (p *SwapProcessor) ProcessSwapAmount(amountSpecified *i256.Int, quote string) (*i256.Int, error) {
+	quoteInt, err := strconv.Atoi(quote)
+	if err != nil {
+		return nil, ufmt.Errorf("invalid quote(%s)", quote)
+	}
+
+	if quoteInt < MinQuotePercentage || quoteInt > MaxQuotePercentage {
 		return nil, ufmt.Errorf(ErrInvalidQuoteRange, quote, MinQuotePercentage, MaxQuotePercentage)
 	}
 
-	toSwap, overflow := i256.Zero().MulOverflow(amountSpecified, i256.NewInt(int64(quote)))
+	toSwap, overflow := i256.Zero().MulOverflow(amountSpecified, i256.NewInt(int64(quoteInt)))
 	if overflow {
 		return nil, ufmt.Errorf(ErrOverflowCalculateSwapAmount)
 	}
 
-	return i256.Zero().Div(toSwap, PERCENTAGE_DENOMINATOR), nil
+	toSwap = i256.Zero().Div(toSwap, PERCENTAGE_DENOMINATOR)
+	if toSwap.IsZero() {
+		return nil, errInvalidSwapAmount
+	}
+
+	return toSwap, nil
 }
 
 // ProcessSingleSwap handles a single-hop swap simulation.
@@ -163,7 +173,6 @@ func (r *routerV1) drySwapRoute(
 	// initialize components
 	validator := &SwapValidator{}
 	processor := &SwapProcessor{router: r}
-	parser := &RouteParser{}
 
 	// validate and parse inputs
 	swapType, err := validator.swapType(swapTypeStr)
@@ -181,7 +190,7 @@ func (r *routerV1) drySwapRoute(
 		panic(addDetailToError(errInvalidInput, err.Error()))
 	}
 
-	routes, quotes, err := parser.ParseRoutes(strRouteArr, quoteArr)
+	routes, quotes, err := NewRouteParser().ParseRoutes(strRouteArr, quoteArr)
 	if err != nil {
 		panic(addDetailToError(errInvalidRoutesAndQuotes, err.Error()))
 	}
@@ -196,18 +205,26 @@ func (r *routerV1) drySwapRoute(
 
 	// initialize accumulators for swap results
 	resultAmountIn, resultAmountOut := zero, zero
+	remainRequestAmount := amountSpecified
 
 	// Process each route
 	for i, route := range routes {
-		// calculate the amount to swap for this route
-		quoteValue, err := strconv.Atoi(quotes[i])
-		if err != nil {
-			panic(addDetailToError(errInvalidInput, err.Error()))
-		}
+		toSwapAmount := i256.Zero()
 
-		toSwap, err := processor.ProcessSwapAmount(amountSpecified, quoteValue)
-		if err != nil {
-			panic(addDetailToError(errInvalidInput, err.Error()))
+		// if it's the last route, use the remaining amount
+		isLastRoute := i == len(routes)-1
+		if !isLastRoute {
+			// calculate the amount to swap for this route
+			swapAmount, err := processor.ProcessSwapAmount(amountSpecified, quotes[i])
+			if err != nil {
+				return zeroString, zeroString, false
+			}
+
+			// update the remaining amount
+			remainRequestAmount = i256.Zero().Sub(remainRequestAmount, swapAmount)
+			toSwapAmount = swapAmount
+		} else {
+			toSwapAmount = remainRequestAmount
 		}
 
 		// determine the number of hops and validate
@@ -217,9 +234,9 @@ func (r *routerV1) drySwapRoute(
 		// execute the appropriate swap type
 		var amountIn, amountOut *u256.Uint
 		if numHops == 1 {
-			amountIn, amountOut, err = processor.ProcessSingleSwap(route, toSwap)
+			amountIn, amountOut, err = processor.ProcessSingleSwap(route, toSwapAmount)
 		} else {
-			amountIn, amountOut, err = processor.ProcessMultiSwap(swapType, route, numHops, toSwap)
+			amountIn, amountOut, err = processor.ProcessMultiSwap(swapType, route, numHops, toSwapAmount)
 		}
 
 		if err != nil {
