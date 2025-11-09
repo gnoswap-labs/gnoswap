@@ -361,6 +361,10 @@ func (p *nextPriceAmount1AddParams) IsValid() bool {
 	amount := u256.MustFromDecimal(p.amount)
 	liquidity := u256.MustFromDecimal(p.liquidity)
 
+	if liquidity.IsZero() {
+		return false
+	}
+
 	max160 := u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 160), u256.One())
 	if !amount.Lte(max160) {
 		if !liquidity.IsZero() {
