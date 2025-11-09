@@ -20,7 +20,6 @@ const (
 	StoreKeyProposalCounter StoreKey = "proposalCounter" // Proposal ID counter
 
 	StoreKeyConfigs StoreKey = "configs" // Configurations AVL tree
-	StoreKeyConfig  StoreKey = "config"  // Configuration AVL tree
 
 	StoreKeyProposals StoreKey = "proposals" // Proposals AVL tree
 
