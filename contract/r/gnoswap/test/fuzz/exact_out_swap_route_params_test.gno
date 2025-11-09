@@ -177,35 +177,41 @@ func (p *exactOutSwapRouteParams) isValidDeadline() bool {
 	return true
 }
 
+// isValidMintOverflow checks if minting the required input tokens would cause int64 overflow
+func (p *exactOutSwapRouteParams) isValidMintOverflow(amountInStr string) bool {
+	amountIn := u256.MustFromDecimal(amountInStr)
+
+	// Convert to int64 for mint check
+	if amountIn.Cmp(u256.NewUintFromInt64(math.MaxInt64)) > 0 {
+		return false
+	}
+
+	amountInInt64 := amountIn.Int64()
+	if amountInInt64 < 0 {
+		amountInInt64 = 0
+	}
+
+	// Get current total supply of the input token
+	currentSupply := getTokenTotalSupply(p.inputToken)
+
+	// Check for overflow: if currentSupply + amountInInt64 > MaxInt64
+	if currentSupply > 0 && amountInInt64 > 0 {
+		if math.MaxInt64-currentSupply < amountInInt64 {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (p *exactOutSwapRouteParams) isValidDrySwap() bool {
+	// If updateAmountInByPreDrySwap() was already called, use cached result
 	if p.isPreDrySwap {
 		return p.preDrySwapResult
 	}
 
-	_, amountOut, success := p.drySwapRoute()
-
-	if !success {
-		return false
-	}
-
-	amountInInt64 := u256.MustFromDecimal(p.amountIn).Int64()
-	amountOutInt64 := u256.MustFromDecimal(amountOut).Int64()
-
-	poolCount := 0
-
-	for _, route := range strings.Split(p.routeArr, ",") {
-		poolCount += len(strings.Split(route, "*POOL*")) - 1
-	}
-
-	diff := amountInInt64 - amountOutInt64
-	if diff < 0 {
-		diff = -diff
-	}
-
-	if diff > int64(poolCount) {
-		return false
-	}
-
+	// Otherwise, run a simple dry swap check
+	_, _, success := p.drySwapRoute()
 	return success
 }
 
@@ -214,9 +220,20 @@ func (p *exactOutSwapRouteParams) updateAmountInByPreDrySwap() {
 
 	amountIn, amountOut, success := p.drySwapRoute()
 
-	p.preDrySwapResult = success
+	if !success {
+		p.preDrySwapResult = false
+		return
+	}
+
+	// Check mint overflow for the required input amount
+	if !p.isValidMintOverflow(amountIn) {
+		p.preDrySwapResult = false
+		return
+	}
+
+	p.preDrySwapResult = true
 	p.amountIn = amountIn      // actual required input amount
-	p.amountOut = amountOut    // desired output amount
+	p.amountOut = amountOut    // use DrySwap's achievable output amount
 }
 
 func (p *exactOutSwapRouteParams) drySwapRoute() (amountIn string, amountOut string, success bool) {
