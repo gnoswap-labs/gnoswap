@@ -15,10 +15,12 @@ import (
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
+	"gno.land/r/gnoswap/staker"
 
 	pool_v1 "gno.land/r/gnoswap/pool/v1"
 	position_v1 "gno.land/r/gnoswap/position/v1"
 	router_v1 "gno.land/r/gnoswap/router/v1"
+	staker_v1 "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -54,6 +56,7 @@ var (
 	initializedPool     = false
 	initializedPosition = false
 	initializedRouter   = false
+	initializedStaker   = false
 )
 
 var (
@@ -87,15 +90,26 @@ var (
 		3000:  60,
 		10000: 200,
 	}
+
+	defaultNFTAccessor      = newMockNFTAccessor()
+	defaultPoolAccessor     = newMockPoolAccessor()
+	defaultEmissionAccessor = newMockEmissionAccessor()
+
+	defaultStakerStore = newMockStakerStore()
 )
 
 // initStates initializes the states for the fuzz test
 func initStates(t *testing.T) {
 	burnTestTokens(t)
 
+	defaultNFTAccessor = newMockNFTAccessor()
+	defaultPoolAccessor = newMockPoolAccessor()
+	defaultEmissionAccessor = newMockEmissionAccessor()
+
 	initPoolState(t)
 	initPositionState(t)
 	initRouterState(t)
+	initStakerState(t)
 }
 
 func initPoolState(t *testing.T) {
@@ -125,7 +139,7 @@ func initPositionState(t *testing.T) {
 
 		testing.SetRealm(testing.NewCodeRealm(mockPositionPath))
 		position.RegisterInitializer(cross, func(_ position.IPositionStore) position.IPosition {
-			return position_v1.NewPositionV1(newMockPositionStore(), newMockNFTAccessor())
+			return position_v1.NewPositionV1(newMockPositionStore(), defaultNFTAccessor)
 		})
 	}
 
@@ -150,6 +164,25 @@ func initRouterState(t *testing.T) {
 	router.UpgradeImpl(cross, mockRouterPath)
 }
 
+func initStakerState(t *testing.T) {
+	t.Helper()
+	const mockStakerPath = "gno.land/r/gnoswap/staker/mock"
+
+	defaultStakerStore = newMockStakerStore()
+
+	if !initializedStaker {
+		initializedStaker = true
+
+		testing.SetRealm(testing.NewCodeRealm(mockStakerPath))
+		staker.RegisterInitializer(cross, func(_ staker.IStakerStore, _ staker.PoolAccessor, _ staker.EmissionAccessor, _ staker.NFTAccessor) staker.IStaker {
+			return staker_v1.NewStakerV1(defaultStakerStore, defaultPoolAccessor, defaultEmissionAccessor, defaultNFTAccessor)
+		})
+	}
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	staker.UpgradeImpl(cross, mockStakerPath)
+}
+
 func mintTestToken(tokenPath string, amount int64) {
 	if amount > MAX_TEST_MINT_AMOUNT {
 		panic("mint amount exceeds fuzz test limit")
@@ -170,6 +203,24 @@ func mintTestToken(tokenPath string, amount int64) {
 		obl.Mint(cross, adminAddr, amount)
 	default:
 		return
+	}
+}
+
+// getTokenTotalSupply returns the total supply of a token
+func getTokenTotalSupply(tokenPath string) int64 {
+	switch tokenPath {
+	case barPath:
+		return bar.TotalSupply()
+	case bazPath:
+		return baz.TotalSupply()
+	case fooPath:
+		return foo.TotalSupply()
+	case quxPath:
+		return qux.TotalSupply()
+	case oblPath:
+		return obl.TotalSupply()
+	default:
+		return 0
 	}
 }
 

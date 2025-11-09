@@ -3,8 +3,16 @@ package fuzz
 import (
 	"strconv"
 	"strings"
+	"testing"
+	"time"
 
 	"gno.land/p/gnoswap/fuzz"
+	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/ufmt"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/pool"
+	"gno.land/r/gnoswap/position"
 )
 
 // Generate methods
@@ -150,4 +158,66 @@ func parsePoolPathAlign(poolPath string) (string, string, uint32) {
 	}
 
 	return token0Path, token1Path, feeTier
+}
+
+// setupCreatePool creates a pool if it doesn't exist and sets the realm to the admin realm.
+func setupCreatePool(
+	ft *fuzz.T,
+	token0Path string,
+	token1Path string,
+	feeTier uint32,
+) string {
+	poolPath := pool.GetPoolPath(token0Path, token1Path, feeTier)
+	if !pool.ExistsPoolPath(poolPath) {
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+		currentTick := fuzz.Int32Range(-10000, 10000).Draw(ft, "currentTick").(int32)
+		startPrice := common.TickMathGetSqrtRatioAtTick(currentTick)
+		pool.CreatePool(
+			cross,
+			token0Path,
+			token1Path,
+			feeTier,
+			startPrice.ToString(),
+		)
+	}
+
+	return poolPath
+}
+
+// setupMintPosition mints a position and sets the realm to the admin realm.
+func setupMintPosition(
+	ft *fuzz.T,
+	token0Path string,
+	token1Path string,
+	feeTier uint32,
+	tickLower int32,
+	tickUpper int32,
+	amountDesired int64,
+) (uint64, string, string, string) {
+	mintTestToken(token0Path, amountDesired)
+	mintTestToken(token1Path, amountDesired)
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+	poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
+	common.SafeGRC20Approve(cross, token0Path, poolAddr, amountDesired)
+	common.SafeGRC20Approve(cross, token1Path, poolAddr, amountDesired)
+
+	return position.Mint(
+		cross,
+		token0Path,
+		token1Path,
+		feeTier,
+		tickLower,
+		tickUpper,
+		ufmt.Sprintf("%d", amountDesired),
+		ufmt.Sprintf("%d", amountDesired),
+		"0",
+		"0",
+		time.Now().Add(time.Hour).Unix(),
+		adminAddr,
+		adminAddr,
+		"",
+	)
 }

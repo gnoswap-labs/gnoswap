@@ -8,9 +8,17 @@ import (
 	"gno.land/p/nt/ufmt"
 )
 
-func RunFuzzTest(t *testing.T, iterations int, fn func(*fuzz.T, *Result, int)) {
+func RunFuzzTest(t *testing.T, iterations int, fn func(*fuzz.T, *Result, int), options ...any) {
 	result := NewFuzzResult(fuzz.BASE_SEED)
+	isHandlePanic := true
 	index := 0
+
+	if len(options) > 0 {
+		handledPanic, ok := options[0].(bool)
+		if ok {
+			isHandlePanic = handledPanic
+		}
+	}
 
 	// Use CheckN instead of CheckWithConfig
 	fuzz.CheckN(t, iterations, func(ft *fuzz.T) {
@@ -19,18 +27,22 @@ func RunFuzzTest(t *testing.T, iterations int, fn func(*fuzz.T, *Result, int)) {
 		errorMessage := ""
 		isError := false
 
-		panicMessage, panicked := handlePanic(func() {
-			crossPanicMessage, crossPanicked := handleCrossPanic(func() {
-				fn(ft, result, index)
+		if isHandlePanic {
+			panicMessage, panicked := handlePanic(func() {
+				crossPanicMessage, crossPanicked := handleCrossPanic(func() {
+					fn(ft, result, index)
+				})
+
+				errorMessage = crossPanicMessage
+				isError = crossPanicked
 			})
 
-			errorMessage = crossPanicMessage
-			isError = crossPanicked
-		})
-
-		if panicked && isError != panicked {
-			errorMessage = panicMessage
-			isError = true
+			if panicked && isError != panicked {
+				errorMessage = panicMessage
+				isError = true
+			}
+		} else {
+			fn(ft, result, index)
 		}
 
 		if isError {
