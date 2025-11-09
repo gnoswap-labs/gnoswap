@@ -36,9 +36,7 @@ func registerStakerV1() {
 
 		instance.setupSwapHooks()
 		emissionAccessor.SetOnDistributionPctChangeCallback(func(emissionAmountPerSecond int64) {
-			func(cur realm) {
-				instance.emissionCacheUpdateHook(emissionAmountPerSecond)
-			}(cross)
+			instance.emissionCacheUpdateHook(emissionAmountPerSecond)
 		})
 
 		return instance

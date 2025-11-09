@@ -112,7 +112,10 @@ func (s *stakerV1) swapStartHook() func(cur realm, poolPath string, timestamp in
 		// Initialize batch processor for this swap
 		// This will accumulate all tick crosses until swap completion
 		currentSwapBatch := sr.NewSwapBatchProcessor(poolPath, pool, timestamp)
-		s.store.SetCurrentSwapBatch(currentSwapBatch)
+		err := s.store.SetCurrentSwapBatch(currentSwapBatch)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -143,7 +146,10 @@ func (s *stakerV1) swapEndHook() func(cur realm, poolPath string) error {
 		}
 
 		// Clean up batch processor
-		s.store.SetCurrentSwapBatch(nil)
+		err = s.store.SetCurrentSwapBatch(nil)
+		if err != nil {
+			return err
+		}
 
 		return nil
 	}

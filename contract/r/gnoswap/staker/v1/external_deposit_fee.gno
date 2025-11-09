@@ -60,7 +60,10 @@ func (s *stakerV1) SetDepositGnsAmount(amount int64) {
 	assertIsValidAmount(amount)
 
 	prevDepositGnsAmount := s.getDepositGnsAmount()
-	s.setDepositGnsAmount(amount)
+	err := s.setDepositGnsAmount(amount)
+	if err != nil {
+		panic(err)
+	}
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -83,7 +86,10 @@ func (s *stakerV1) SetMinimumRewardAmount(amount int64) {
 	assertIsValidAmount(amount)
 
 	prevMinimumRewardAmount := s.getMinimumRewardAmount()
-	s.setMinimumRewardAmount(amount)
+	err := s.setMinimumRewardAmount(amount)
+	if err != nil {
+		panic(err)
+	}
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -143,13 +149,13 @@ func (s *stakerV1) SetTokenMinimumRewardAmount(paramsStr string) {
 }
 
 // setDepositGnsAmount internally updates the deposit GNS amount.
-func (s *stakerV1) setDepositGnsAmount(amount int64) {
-	s.store.SetDepositGnsAmount(amount)
+func (s *stakerV1) setDepositGnsAmount(amount int64) error {
+	return s.store.SetDepositGnsAmount(amount)
 }
 
 // setMinimumRewardAmount internally updates the minimum reward amount.
-func (s *stakerV1) setMinimumRewardAmount(amount int64) {
-	s.store.SetMinimumRewardAmount(amount)
+func (s *stakerV1) setMinimumRewardAmount(amount int64) error {
+	return s.store.SetMinimumRewardAmount(amount)
 }
 
 // getDepositGnsAmount internally retrieves the deposit GNS amount.
