@@ -48,6 +48,7 @@ const (
 
 var (
 	VALID_FEE_TIERS = []uint32{100, 500, 3000, 10000}
+	MAX_UINT128     = u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 128), u256.One())
 )
 
 var (

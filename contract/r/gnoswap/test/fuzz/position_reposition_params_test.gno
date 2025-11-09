@@ -7,6 +7,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
 
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 )
@@ -85,6 +86,41 @@ func (p *positionRepositionParams) IsValid() bool {
 	}
 
 	if amount0Min.Gt(amount0) || amount1Min.Gt(amount1) {
+		return false
+	}
+
+	if !p.IsValidLiquidity() {
+		return false
+	}
+
+	return true
+}
+
+func (p *positionRepositionParams) IsValidLiquidity() (isValid bool) {
+	defer func() {
+		if r := recover(); r != nil {
+			isValid = false
+		}
+	}()
+
+	amount0, err0 := u256.FromDecimal(p.amount0Desired)
+	amount1, err1 := u256.FromDecimal(p.amount1Desired)
+	if err0 != nil || err1 != nil {
+		return false
+	}
+	sqrtPriceX96 := pool.GetSlot0SqrtPriceX96(p.poolPath)
+	sqrtRatioAX96 := common.TickMathGetSqrtRatioAtTick(p.tickLower)
+	sqrtRatioBX96 := common.TickMathGetSqrtRatioAtTick(p.tickUpper)
+
+	liquidity := common.GetLiquidityForAmounts(
+		sqrtPriceX96,
+		sqrtRatioAX96,
+		sqrtRatioBX96,
+		amount0,
+		amount1,
+	)
+
+	if liquidity.IsZero() || liquidity.Gt(MAX_UINT128) {
 		return false
 	}
 
