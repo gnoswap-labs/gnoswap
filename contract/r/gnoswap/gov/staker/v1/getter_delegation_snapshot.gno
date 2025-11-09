@@ -5,15 +5,7 @@ import (
 )
 
 func (gs *govStakerV1) HasDelegationSnapshotsKey() bool {
-	// Check if any snapshots exist
-	snapshot, err := gs.store.GetDelegationSnapshot()
-	if err != nil {
-		panic(err)
-	}
-	if len(snapshot) == 0 {
-		return false
-	}
-	return true
+	return gs.store.HasDelegationSnapshotStoreKey()
 }
 
 // GetDelegationSnapshots retrieves the delegation snapshot at a specific point in time.

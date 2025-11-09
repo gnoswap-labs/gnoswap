@@ -54,19 +54,19 @@ type IGovStakerAdmin interface {
 type IGovStakerStore interface {
 	// Basic configuration
 	HasUnDelegationLockupPeriodStoreKey() bool
-	GetUnDelegationLockupPeriod() (int64, error)
+	GetUnDelegationLockupPeriod() int64
 	SetUnDelegationLockupPeriod(period int64) error
 
 	HasEmissionRewardBalanceStoreKey() bool
-	GetEmissionRewardBalance() (int64, error)
+	GetEmissionRewardBalance() int64
 	SetEmissionRewardBalance(balance int64) error
 
 	HasTotalDelegatedAmountStoreKey() bool
-	GetTotalDelegatedAmount() (int64, error)
+	GetTotalDelegatedAmount() int64
 	SetTotalDelegatedAmount(amount int64) error
 
 	HasTotalLockedAmountStoreKey() bool
-	GetTotalLockedAmount() (int64, error)
+	GetTotalLockedAmount() int64
 	SetTotalLockedAmount(amount int64) error
 
 	// Delegation management
@@ -77,37 +77,37 @@ type IGovStakerStore interface {
 
 	HasDelegationsStoreKey() bool
 	SetDelegations(delegations *avl.Tree) error
-	GetAllDelegations() (*avl.Tree, error)
+	GetAllDelegations() *avl.Tree
 
 	HasDelegationCounterStoreKey() bool
-	GetDelegationCounter() (*Counter, error)
+	GetDelegationCounter() *Counter
 	SetDelegationCounter(counter *Counter) error
 
 	// Delegation history
 	HasDelegationHistoryStoreKey() bool
 	AddDelegationRecord(delegationRecord *DelegationRecord) error
-	GetDelegationHistory() (DelegationHistory, error)
+	GetDelegationHistory() DelegationHistory
 	SetDelegationHistory(delegationHistory DelegationHistory) error
 
 	// Delegation snapshots
 	HasDelegationSnapshotStoreKey() bool
 	SetDelegationSnapshot(snapshot DelegationSnapshot) error
-	GetDelegationSnapshot() (DelegationSnapshot, error)
+	GetDelegationSnapshot() DelegationSnapshot
 
 	// Manager states
 	HasEmissionRewardManagerStoreKey() bool
-	GetEmissionRewardManager() (*EmissionRewardManager, error)
+	GetEmissionRewardManager() *EmissionRewardManager
 	SetEmissionRewardManager(manager *EmissionRewardManager) error
 
 	HasProtocolFeeRewardManagerStoreKey() bool
-	GetProtocolFeeRewardManager() (*ProtocolFeeRewardManager, error)
+	GetProtocolFeeRewardManager() *ProtocolFeeRewardManager
 	SetProtocolFeeRewardManager(manager *ProtocolFeeRewardManager) error
 
 	HasDelegationManagerStoreKey() bool
-	GetDelegationManager() (*DelegationManager, error)
+	GetDelegationManager() *DelegationManager
 	SetDelegationManager(manager *DelegationManager) error
 
 	HasLaunchpadProjectDepositsStoreKey() bool
-	GetLaunchpadProjectDeposits() (*LaunchpadProjectDeposits, error)
+	GetLaunchpadProjectDeposits() *LaunchpadProjectDeposits
 	SetLaunchpadProjectDeposits(deposits *LaunchpadProjectDeposits) error
 }
