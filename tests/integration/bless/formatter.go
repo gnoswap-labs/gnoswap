@@ -13,13 +13,17 @@ const (
 	placeholderPrefix  = "__MASK_PLACEHOLDER_"
 )
 
-var metricPrefixes = []string{
-	"GAS USED:",
-	"GAS WANTED:",
-	"STORAGE DELTA:",
-	"STORAGE FEE:",
-	"TOTAL TX COST:",
-}
+var (
+	metricPrefixes = []string{
+		"GAS USED:",
+		"GAS WANTED:",
+		"STORAGE DELTA:",
+		"STORAGE FEE:",
+		"TOTAL TX COST:",
+	}
+
+	addressPattern = regexp.MustCompile(`g1[0-9a-z]{38}`)
+)
 
 // MaskPattern describes a dynamic field that should be replaced with a regex placeholder.
 type MaskPattern struct {
@@ -65,6 +69,7 @@ func (c Converter) ConvertLine(line string) (string, bool) {
 	var placeholders []placeholder
 
 	line = applyMetricMask(line, &placeholders)
+	line = maskAddresses(line, &placeholders)
 
 	for _, pattern := range c.patterns {
 		line = applyMask(line, pattern, &placeholders)
@@ -161,6 +166,17 @@ func maskDigits(line string, placeholders *[]placeholder) string {
 	}
 
 	return builder.String()
+}
+
+func maskAddresses(line string, placeholders *[]placeholder) string {
+	return addressPattern.ReplaceAllStringFunc(line, func(addr string) string {
+		token := fmt.Sprintf("%s%d__", placeholderPrefix, len(*placeholders))
+		*placeholders = append(*placeholders, placeholder{
+			token:   token,
+			pattern: "g1[0-9a-z]{38}",
+		})
+		return token
+	})
 }
 
 // ParseMaskPatterns parses the comma-separated mask specification.
