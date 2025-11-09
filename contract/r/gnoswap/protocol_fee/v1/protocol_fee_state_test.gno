@@ -222,7 +222,8 @@ func TestProtocolFeeStateClearTokenListWithAmount(t *testing.T) {
 			uassert.Equal(t, len(pfs.store.GetTokenListWithAmounts()), len(test.initialData))
 
 			// Clear the list
-			pfs.clearTokenListWithAmount()
+			err := pfs.clearTokenListWithAmount()
+			uassert.Nil(t, err)
 
 			// Verify final state
 			uassert.Equal(t, len(pfs.store.GetTokenListWithAmounts()), test.expectedLen)

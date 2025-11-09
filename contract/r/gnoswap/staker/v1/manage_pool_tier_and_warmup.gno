@@ -154,7 +154,11 @@ func (s *stakerV1) setWarmUp(pct, timeDuration int64) {
 
 	warmupTemplate := s.store.GetWarmupTemplate()
 	warmupTemplate = modifyWarmup(warmupTemplate, pctToIndex(pct), timeDuration)
-	s.store.SetWarmupTemplate(warmupTemplate)
+
+	err := s.store.SetWarmupTemplate(warmupTemplate)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // pctToIndex converts percentage to warmup index.

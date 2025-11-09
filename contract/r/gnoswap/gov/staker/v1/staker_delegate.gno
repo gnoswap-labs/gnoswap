@@ -257,10 +257,7 @@ func (gs *govStakerV1) CollectUndelegatedGns() int64 {
 	gns.Transfer(cross, caller, collectedAmount)
 
 	// Update total locked amount directly in store
-	currentLocked, err := gs.store.GetTotalLockedAmount()
-	if err != nil {
-		panic(err)
-	}
+	currentLocked := gs.store.GetTotalLockedAmount()
 
 	newLocked := currentLocked - collectedAmount
 	if newLocked < 0 {
@@ -313,19 +310,13 @@ func (gs *govStakerV1) delegate(
 	gs.addStakeProtocolFeeReward(from.String(), amount, time.Now().Unix())
 
 	// Update total amounts directly in store
-	currentDelegated, err := gs.store.GetTotalDelegatedAmount()
-	if err != nil {
-		panic(err)
-	}
+	currentDelegated := gs.store.GetTotalDelegatedAmount()
 
 	if err := gs.store.SetTotalDelegatedAmount(currentDelegated + amount); err != nil {
 		panic(err)
 	}
 
-	currentLocked, err := gs.store.GetTotalLockedAmount()
-	if err != nil {
-		panic(err)
-	}
+	currentLocked := gs.store.GetTotalLockedAmount()
 
 	if err := gs.store.SetTotalLockedAmount(currentLocked + amount); err != nil {
 		panic(err)
@@ -365,10 +356,7 @@ func (gs *govStakerV1) unDelegate(
 		}
 
 		// Get lockup period from store
-		lockupPeriod, err := gs.store.GetUnDelegationLockupPeriod()
-		if err != nil {
-			panic(err)
-		}
+		lockupPeriod := gs.store.GetUnDelegationLockupPeriod()
 
 		resolver.UnDelegate(
 			currentUnDelegationAmount,
@@ -391,10 +379,7 @@ func (gs *govStakerV1) unDelegate(
 	}
 
 	// Update total delegated amount directly in store
-	currentDelegated, err := gs.store.GetTotalDelegatedAmount()
-	if err != nil {
-		panic(err)
-	}
+	currentDelegated := gs.store.GetTotalDelegatedAmount()
 
 	newDelegated := currentDelegated - amount
 	if newDelegated < 0 {
@@ -450,10 +435,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 	}
 
 	// Update total delegated amount directly in store
-	currentDelegated, err := gs.store.GetTotalDelegatedAmount()
-	if err != nil {
-		panic(err)
-	}
+	currentDelegated := gs.store.GetTotalDelegatedAmount()
 
 	newDelegated := currentDelegated - amount
 	if newDelegated < 0 {

@@ -1,7 +1,6 @@
 package staker
 
 import (
-	"errors"
 	"strconv"
 
 	"gno.land/p/gnoswap/store"
@@ -51,19 +50,18 @@ func (s *govStakerStore) HasUnDelegationLockupPeriodStoreKey() bool {
 	return s.kvStore.Has(StoreKeyUnDelegationLockupPeriod)
 }
 
-func (s *govStakerStore) GetUnDelegationLockupPeriod() (int64, error) {
+func (s *govStakerStore) GetUnDelegationLockupPeriod() int64 {
 	result, err := s.kvStore.Get(StoreKeyUnDelegationLockupPeriod)
 	if err != nil {
-		// Return default value if not initialized
-		return 0, errors.New("undelegation lockup period not initialized")
+		panic(err)
 	}
 
 	period, ok := result.(int64)
 	if !ok {
-		return 0, errors.New(ufmt.Sprintf("failed to cast result to int64: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to int64: %T", result))
 	}
 
-	return period, nil
+	return period
 }
 
 func (s *govStakerStore) SetUnDelegationLockupPeriod(period int64) error {
@@ -74,18 +72,18 @@ func (s *govStakerStore) HasEmissionRewardBalanceStoreKey() bool {
 	return s.kvStore.Has(StoreKeyEmissionRewardBalance)
 }
 
-func (s *govStakerStore) GetEmissionRewardBalance() (int64, error) {
+func (s *govStakerStore) GetEmissionRewardBalance() int64 {
 	result, err := s.kvStore.Get(StoreKeyEmissionRewardBalance)
 	if err != nil {
-		return 0, err
+		panic(err)
 	}
 
 	balance, ok := result.(int64)
 	if !ok {
-		return 0, errors.New(ufmt.Sprintf("failed to cast result to int64: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to int64: %T", result))
 	}
 
-	return balance, nil
+	return balance
 }
 
 func (s *govStakerStore) SetEmissionRewardBalance(balance int64) error {
@@ -96,18 +94,18 @@ func (s *govStakerStore) HasTotalDelegatedAmountStoreKey() bool {
 	return s.kvStore.Has(StoreKeyTotalDelegatedAmount)
 }
 
-func (s *govStakerStore) GetTotalDelegatedAmount() (int64, error) {
+func (s *govStakerStore) GetTotalDelegatedAmount() int64 {
 	result, err := s.kvStore.Get(StoreKeyTotalDelegatedAmount)
 	if err != nil {
-		return 0, err
+		panic(err)
 	}
 
 	amount, ok := result.(int64)
 	if !ok {
-		return 0, errors.New(ufmt.Sprintf("failed to cast result to int64: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to int64: %T", result))
 	}
 
-	return amount, nil
+	return amount
 }
 
 func (s *govStakerStore) SetTotalDelegatedAmount(amount int64) error {
@@ -118,18 +116,18 @@ func (s *govStakerStore) HasTotalLockedAmountStoreKey() bool {
 	return s.kvStore.Has(StoreKeyTotalLockedAmount)
 }
 
-func (s *govStakerStore) GetTotalLockedAmount() (int64, error) {
+func (s *govStakerStore) GetTotalLockedAmount() int64 {
 	result, err := s.kvStore.Get(StoreKeyTotalLockedAmount)
 	if err != nil {
-		return 0, err
+		panic(err)
 	}
 
 	amount, ok := result.(int64)
 	if !ok {
-		return 0, errors.New(ufmt.Sprintf("failed to cast result to int64: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to int64: %T", result))
 	}
 
-	return amount, nil
+	return amount
 }
 
 func (s *govStakerStore) SetTotalLockedAmount(amount int64) error {
@@ -146,19 +144,13 @@ func (s *govStakerStore) SetDelegations(delegations *avl.Tree) error {
 }
 
 func (s *govStakerStore) HasDelegation(id int64) bool {
-	delegations, err := s.getAllDelegations()
-	if err != nil {
-		panic(err)
-	}
+	delegations := s.GetAllDelegations()
 	_, exists := delegations.Get(int64ToString(id))
 	return exists
 }
 
 func (s *govStakerStore) GetDelegation(id int64) (*Delegation, bool) {
-	delegations, err := s.getAllDelegations()
-	if err != nil {
-		panic(err)
-	}
+	delegations := s.GetAllDelegations()
 
 	result, exists := delegations.Get(int64ToString(id))
 	if !exists {
@@ -174,59 +166,49 @@ func (s *govStakerStore) GetDelegation(id int64) (*Delegation, bool) {
 }
 
 func (s *govStakerStore) SetDelegation(id int64, delegation *Delegation) error {
-	delegations, err := s.getAllDelegations()
-	if err != nil {
-		return err
-	}
+	delegations := s.GetAllDelegations()
 
 	delegations.Set(int64ToString(id), delegation)
 	return s.kvStore.Set(StoreKeyDelegations, delegations)
 }
 
 func (s *govStakerStore) RemoveDelegation(id int64) error {
-	delegations, err := s.getAllDelegations()
-	if err != nil {
-		return err
-	}
+	delegations := s.GetAllDelegations()
 
 	delegations.Remove(int64ToString(id))
 	return s.kvStore.Set(StoreKeyDelegations, delegations)
 }
 
-func (s *govStakerStore) GetAllDelegations() (*avl.Tree, error) {
-	return s.getAllDelegations()
-}
-
-func (s *govStakerStore) getAllDelegations() (*avl.Tree, error) {
+func (s *govStakerStore) GetAllDelegations() *avl.Tree {
 	result, err := s.kvStore.Get(StoreKeyDelegations)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	delegations, ok := result.(*avl.Tree)
 	if !ok {
-		return nil, errors.New(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
 	}
 
-	return delegations, nil
+	return delegations
 }
 
 func (s *govStakerStore) HasDelegationCounterStoreKey() bool {
 	return s.kvStore.Has(StoreKeyDelegationNextID)
 }
 
-func (s *govStakerStore) GetDelegationCounter() (*Counter, error) {
+func (s *govStakerStore) GetDelegationCounter() *Counter {
 	result, err := s.kvStore.Get(StoreKeyDelegationNextID)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	counter, ok := result.(*Counter)
 	if !ok {
-		return nil, errors.New(ufmt.Sprintf("failed to cast result to Counter: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to Counter: %T", result))
 	}
 
-	return counter, nil
+	return counter
 }
 
 func (s *govStakerStore) SetDelegationCounter(counter *Counter) error {
@@ -239,27 +221,24 @@ func (s *govStakerStore) HasDelegationHistoryStoreKey() bool {
 }
 
 func (s *govStakerStore) AddDelegationRecord(record *DelegationRecord) error {
-	history, err := s.GetDelegationHistory()
-	if err != nil {
-		return err
-	}
+	history := s.GetDelegationHistory()
 
 	history = append(history, record)
 	return s.kvStore.Set(StoreKeyDelegationHistory, history)
 }
 
-func (s *govStakerStore) GetDelegationHistory() (DelegationHistory, error) {
+func (s *govStakerStore) GetDelegationHistory() DelegationHistory {
 	result, err := s.kvStore.Get(StoreKeyDelegationHistory)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	history, ok := result.(DelegationHistory)
 	if !ok {
-		return nil, errors.New(ufmt.Sprintf("failed to cast result to []*DelegationRecord: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to []*DelegationRecord: %T", result))
 	}
 
-	return history, nil
+	return history
 }
 
 func (s *govStakerStore) SetDelegationHistory(history DelegationHistory) error {
@@ -275,36 +254,36 @@ func (s *govStakerStore) SetDelegationSnapshot(snapshot DelegationSnapshot) erro
 	return s.kvStore.Set(StoreKeyDelegationSnapshots, snapshot)
 }
 
-func (s *govStakerStore) GetDelegationSnapshot() (DelegationSnapshot, error) {
+func (s *govStakerStore) GetDelegationSnapshot() DelegationSnapshot {
 	result, err := s.kvStore.Get(StoreKeyDelegationSnapshots)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	snapshot, ok := result.(DelegationSnapshot)
 	if !ok {
-		return nil, errors.New(ufmt.Sprintf("failed to cast result to DelegationSnapshot: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to DelegationSnapshot: %T", result))
 	}
 
-	return snapshot, nil
+	return snapshot
 }
 
 func (s *govStakerStore) HasEmissionRewardManagerStoreKey() bool {
 	return s.kvStore.Has(StoreKeyEmissionRewardManager)
 }
 
-func (s *govStakerStore) GetEmissionRewardManager() (*EmissionRewardManager, error) {
+func (s *govStakerStore) GetEmissionRewardManager() *EmissionRewardManager {
 	result, err := s.kvStore.Get(StoreKeyEmissionRewardManager)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	manager, ok := result.(*EmissionRewardManager)
 	if !ok {
-		return nil, errors.New(ufmt.Sprintf("failed to cast result to *EmissionRewardManager: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *EmissionRewardManager: %T", result))
 	}
 
-	return manager, nil
+	return manager
 }
 
 func (s *govStakerStore) SetEmissionRewardManager(manager *EmissionRewardManager) error {
@@ -315,18 +294,18 @@ func (s *govStakerStore) HasProtocolFeeRewardManagerStoreKey() bool {
 	return s.kvStore.Has(StoreKeyProtocolFeeRewardManager)
 }
 
-func (s *govStakerStore) GetProtocolFeeRewardManager() (*ProtocolFeeRewardManager, error) {
+func (s *govStakerStore) GetProtocolFeeRewardManager() *ProtocolFeeRewardManager {
 	result, err := s.kvStore.Get(StoreKeyProtocolFeeRewardManager)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	manager, ok := result.(*ProtocolFeeRewardManager)
 	if !ok {
-		return nil, errors.New(ufmt.Sprintf("failed to cast result to *ProtocolFeeRewardManager: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *ProtocolFeeRewardManager: %T", result))
 	}
 
-	return manager, nil
+	return manager
 }
 
 func (s *govStakerStore) SetProtocolFeeRewardManager(manager *ProtocolFeeRewardManager) error {
@@ -337,18 +316,18 @@ func (s *govStakerStore) HasDelegationManagerStoreKey() bool {
 	return s.kvStore.Has(StoreKeyDelegationManager)
 }
 
-func (s *govStakerStore) GetDelegationManager() (*DelegationManager, error) {
+func (s *govStakerStore) GetDelegationManager() *DelegationManager {
 	result, err := s.kvStore.Get(StoreKeyDelegationManager)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	manager, ok := result.(*DelegationManager)
 	if !ok {
-		return nil, errors.New(ufmt.Sprintf("failed to cast result to *DelegationManager: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *DelegationManager: %T", result))
 	}
 
-	return manager, nil
+	return manager
 }
 
 func (s *govStakerStore) SetDelegationManager(manager *DelegationManager) error {
@@ -359,18 +338,18 @@ func (s *govStakerStore) HasLaunchpadProjectDepositsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyLaunchpadProjectDeposits)
 }
 
-func (s *govStakerStore) GetLaunchpadProjectDeposits() (*LaunchpadProjectDeposits, error) {
+func (s *govStakerStore) GetLaunchpadProjectDeposits() *LaunchpadProjectDeposits {
 	result, err := s.kvStore.Get(StoreKeyLaunchpadProjectDeposits)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	deposits, ok := result.(*LaunchpadProjectDeposits)
 	if !ok {
-		return nil, errors.New(ufmt.Sprintf("failed to cast result to *LaunchpadProjectDeposits: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *LaunchpadProjectDeposits: %T", result))
 	}
 
-	return deposits, nil
+	return deposits
 }
 
 func (s *govStakerStore) SetLaunchpadProjectDeposits(deposits *LaunchpadProjectDeposits) error {

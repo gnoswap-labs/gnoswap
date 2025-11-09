@@ -32,7 +32,7 @@ func (s *launchpadStore) HasProjectsKey() bool {
 func (s *launchpadStore) GetProjects() *avl.Tree {
 	result, err := s.kvStore.Get(StoreKeyProjects.String())
 	if err != nil {
-		return avl.NewTree()
+		panic(err)
 	}
 
 	projects, ok := result.(*avl.Tree)
@@ -57,7 +57,7 @@ func (s *launchpadStore) HasProjectTierRewardManagersKey() bool {
 func (s *launchpadStore) GetProjectTierRewardManagers() *avl.Tree {
 	result, err := s.kvStore.Get(StoreKeyProjectTierRewardManagers.String())
 	if err != nil {
-		return avl.NewTree()
+		panic(err)
 	}
 
 	managers, ok := result.(*avl.Tree)
@@ -82,7 +82,7 @@ func (s *launchpadStore) HasDepositCounterKey() bool {
 func (s *launchpadStore) GetDepositCounter() Counter {
 	result, err := s.kvStore.Get(StoreKeyDepositCounter.String())
 	if err != nil {
-		return nil
+		panic(err)
 	}
 
 	counter, ok := result.(Counter)
@@ -107,7 +107,7 @@ func (s *launchpadStore) HasDepositsKey() bool {
 func (s *launchpadStore) GetDeposits() *avl.Tree {
 	result, err := s.kvStore.Get(StoreKeyDeposits.String())
 	if err != nil {
-		return avl.NewTree()
+		panic(err)
 	}
 
 	deposits, ok := result.(*avl.Tree)

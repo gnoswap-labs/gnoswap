@@ -47,7 +47,10 @@ func (i *poolV1) ApiGetTWAP(poolPath string, secondsAgo uint32) string {
 		}).String()
 	}
 
-	pool := poolI.(*pl.Pool)
+	pool, ok := poolI.(*pl.Pool)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast poolI to *pl.Pool: %T", poolI))
+	}
 
 	twapTick, err := getTWAP(pool, secondsAgo)
 	if err != nil {

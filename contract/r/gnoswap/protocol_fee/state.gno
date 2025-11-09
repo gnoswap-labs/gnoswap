@@ -41,7 +41,10 @@ func init() {
 func initRegisterReadableContract() {
 	govStakerAddress := access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
 
-	kvStore.AddAuthorizedCaller(govStakerAddress, store.ReadOnly)
+	err := kvStore.AddAuthorizedCaller(govStakerAddress, store.ReadOnly)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func initializeDomainStore(kvStore store.KVStore) any {

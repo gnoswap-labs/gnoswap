@@ -260,8 +260,14 @@ func NewVersionManager(
 // This is used by GetInitializers to wrap the internal AVL tree in a read-only view,
 // preventing external modification of registered initializers.
 func makeInitializerSafe(data any) any {
-	cpy := new(func(store any) any)
-	*cpy = *(data.(*func(store any) any))
+	fn, ok := data.(func(store any) any)
+	if !ok {
+		panic(ufmt.Sprintf("expected func(store any) any, got %T", data))
+	}
+
+	cpy := func(store any) any {
+		return fn(store)
+	}
 
 	return cpy
 }
