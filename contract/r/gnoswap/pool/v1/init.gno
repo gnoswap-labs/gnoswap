@@ -30,7 +30,7 @@ func registerPoolV1() {
 	pool.RegisterInitializer(cross, func(poolStore pool.IPoolStore) pool.IPool {
 		err := initStoreData(poolStore)
 		if err != nil {
-			return nil
+			panic(err)
 		}
 
 		return NewPoolV1(poolStore)
