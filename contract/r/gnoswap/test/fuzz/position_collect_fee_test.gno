@@ -31,7 +31,7 @@ func TestFuzzPositionCollectFee_ValidParams_Stateless(t *testing.T) {
 		tokenId := createTestPosition(t, adminAddr, poolAddr)
 
 		// Generate fees by executing swaps
-		generateFeesWithSwap(t, adminAddr, poolAddr)
+		generateFeesWithSwap(t, adminAddr, poolAddr, tokenId)
 
 		// Generate params for collect fee
 		collectParams := NewValidPositionCollectFeeParams(ft, tokenId)
@@ -71,7 +71,7 @@ func TestFuzzPositionCollectFee_RandomizedParams_Stateless(t *testing.T) {
 		tokenId := createTestPosition(t, adminAddr, poolAddr)
 
 		// Generate fees by executing swaps
-		generateFeesWithSwap(t, adminAddr, poolAddr)
+		generateFeesWithSwap(t, adminAddr, poolAddr, tokenId)
 
 		// Generate params for collect fee
 		collectParams := NewRandomizedPositionCollectFeeParams(ft, tokenId)
@@ -108,7 +108,7 @@ func TestFuzzPositionCollectFee_ValidParams_Stateful(t *testing.T) {
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 		// Generate fees by executing swaps
-		generateFeesWithSwap(t, adminAddr, poolAddr)
+		generateFeesWithSwap(t, adminAddr, poolAddr, tokenId)
 
 		// Generate params for collect fee
 		collectParams := NewValidPositionCollectFeeParams(ft, tokenId)
@@ -158,7 +158,7 @@ func TestFuzzPositionCollectFee_RandomizedParams_Stateful(t *testing.T) {
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 		// Generate fees by executing swaps
-		generateFeesWithSwap(t, adminAddr, poolAddr)
+		generateFeesWithSwap(t, adminAddr, poolAddr, tokenId)
 
 		// Generate params for collect fee
 		collectParams := NewRandomizedPositionCollectFeeParams(ft, tokenId)
@@ -181,12 +181,19 @@ func TestFuzzPositionCollectFee_RandomizedParams_Stateful(t *testing.T) {
 }
 
 // Helper function to generate fees by executing swaps
-func generateFeesWithSwap(t *testing.T, adminAddr, poolAddr address) {
+func generateFeesWithSwap(t *testing.T, adminAddr, poolAddr address, positionId uint64) {
 	t.Helper()
 
-	token0Path := "gno.land/r/onbloc/bar"
-	token1Path := "gno.land/r/onbloc/foo"
-	fee := uint32(3000)
+	token0Path, token1Path, fee := getPoolInfoFromPosition(positionId)
+	poolPath := pool.GetPoolPath(token0Path, token1Path, fee)
+	if !pool.ExistsPoolPath(poolPath) {
+		panic(ufmt.Sprintf("poolPath(%s) must exist before generating fees", poolPath))
+	}
+
+	// Ensure swapper has enough balance for generating fees
+	swapFundingAmount := int64(2000000)
+	mintTestToken(token0Path, swapFundingAmount)
+	mintTestToken(token1Path, swapFundingAmount)
 
 	// Approve tokens for swap
 	common.SafeGRC20Approve(cross, token0Path, poolAddr, math.MaxInt64)

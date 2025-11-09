@@ -25,11 +25,8 @@ func TestFuzzPositionDecreaseLiquidity_ValidParams_Stateless(t *testing.T) {
 		// Create pool and initial position
 		tokenId := createTestPosition(t, adminAddr, poolAddr)
 
-		// Use a fixed max liquidity for testing (actual position liquidity may vary)
-		maxLiquidity := "100000000"
-
 		// Generate params for decrease liquidity
-		decreaseParams := NewValidPositionDecreaseLiquidityParams(ft, tokenId, maxLiquidity)
+		decreaseParams := NewValidPositionDecreaseLiquidityParams(ft, tokenId)
 		fuzzResult.AddParams(index, decreaseParams)
 
 		// when - decrease liquidity
@@ -68,10 +65,8 @@ func TestFuzzPositionDecreaseLiquidity_RandomizedParams_Stateless(t *testing.T) 
 
 		// Create pool and initial position
 		tokenId := createTestPosition(t, adminAddr, poolAddr)
-		actualLiquidity := position.GetPositionLiquidity(tokenId).ToString()
-
 		// Generate params for decrease liquidity
-		decreaseParams := NewRandomizedPositionDecreaseLiquidityParams(ft, tokenId, actualLiquidity)
+		decreaseParams := NewRandomizedPositionDecreaseLiquidityParams(ft, tokenId)
 		fuzzResult.AddParams(index, decreaseParams)
 
 		// when - decrease liquidity (may panic with invalid params)
@@ -99,9 +94,7 @@ func TestFuzzPositionDecreaseLiquidity_ValidParams_Stateful(t *testing.T) {
 	tokenId := createTestPosition(t, adminAddr, poolAddr)
 
 	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
-		currentLiquidity := position.GetPositionLiquidity(tokenId).ToString()
-
-		decreaseParams := NewValidPositionDecreaseLiquidityParams(ft, tokenId, currentLiquidity)
+		decreaseParams := NewValidPositionDecreaseLiquidityParams(ft, tokenId)
 		fuzzResult.AddParams(index, decreaseParams)
 
 		_, liquidity, amount0, amount1, _, _, _ := position.DecreaseLiquidity(
@@ -135,10 +128,8 @@ func TestFuzzPositionDecreaseLiquidity_RandomizedParams_Stateful(t *testing.T) {
 	tokenId := createTestPosition(t, adminAddr, poolAddr)
 
 	fuzzutils.RunFuzzTest(t, 100, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
-		currentLiquidity := position.GetPositionLiquidity(tokenId).ToString()
-
 		// Generate randomized params for decrease liquidity
-		decreaseParams := NewRandomizedPositionDecreaseLiquidityParams(ft, tokenId, currentLiquidity)
+		decreaseParams := NewRandomizedPositionDecreaseLiquidityParams(ft, tokenId)
 		fuzzResult.AddParams(index, decreaseParams)
 
 		position.DecreaseLiquidity(

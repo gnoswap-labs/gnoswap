@@ -2,6 +2,7 @@ package fuzz
 
 import (
 	"math"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -193,15 +194,27 @@ func burnTestTokens(t *testing.T) {
 
 // getTokenPathsFromPosition extracts token0Path and token1Path from a position's pool key
 func getTokenPathsFromPosition(tokenId uint64) (string, string) {
+	token0, token1, _ := getPoolInfoFromPosition(tokenId)
+	return token0, token1
+}
+
+// getPoolInfoFromPosition extracts token0Path, token1Path, and fee tier from a position
+func getPoolInfoFromPosition(tokenId uint64) (string, string, uint32) {
 	poolKey := position.GetPositionPoolKey(tokenId)
 	return parsePoolKey(poolKey)
 }
 
-// parsePoolKey parses a pool key string (format: "token0:token1:fee") and returns token0, token1
-func parsePoolKey(poolKey string) (string, string) {
+// parsePoolKey parses a pool key string (format: "token0:token1:fee") and returns token0, token1, fee
+func parsePoolKey(poolKey string) (string, string, uint32) {
 	parts := strings.Split(poolKey, ":")
 	if len(parts) != 3 {
 		panic("invalid pool key format")
 	}
-	return parts[0], parts[1]
+
+	fee, err := strconv.ParseUint(parts[2], 10, 32)
+	if err != nil {
+		panic("invalid fee value in pool key")
+	}
+
+	return parts[0], parts[1], uint32(fee)
 }

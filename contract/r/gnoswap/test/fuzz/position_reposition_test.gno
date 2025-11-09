@@ -44,7 +44,7 @@ func TestFuzzPositionReposition_ValidParams_Stateless(t *testing.T) {
 		)
 
 		// Generate params for reposition
-		repositionParams := NewValidPositionRepositionParams(ft, tokenId, 3000)
+		repositionParams := NewValidPositionRepositionParams(ft, tokenId)
 		fuzzResult.AddParams(index, repositionParams)
 
 		// Get token paths from position
@@ -198,7 +198,7 @@ func TestFuzzPositionReposition_ValidParams_Stateful(t *testing.T) {
 		}
 
 		// Generate params for reposition
-		repositionParams := NewValidPositionRepositionParams(ft, tokenId, 3000)
+		repositionParams := NewValidPositionRepositionParams(ft, tokenId)
 		fuzzResult.AddParams(index, repositionParams)
 
 		// Get token paths from position
