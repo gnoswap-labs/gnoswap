@@ -50,6 +50,11 @@ func TransferFrom(cur realm, from, to address, amount int64) {
 	checkErr(userTeller.TransferFrom(from, to, amount))
 }
 
+func Mint(cur realm, to address, amount int64) {
+	owner.AssertOwnedByPrevious()
+	checkErr(privateLedger.Mint(to, amount))
+}
+
 func Burn(cur realm, from address, amount int64) {
 	owner.AssertOwnedByPrevious()
 	checkErr(privateLedger.Burn(from, amount))
