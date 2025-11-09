@@ -21,12 +21,10 @@ clean_txtar_file() {
     fi
 }
 
-# Find and clean all txtar files containing mnemonics
-for txtar_file in "$TXTAR_DIR"/*.txtar; do
-    if [ -f "$txtar_file" ]; then
-        if grep -E "adduserfrom gns_admin '[^']+'" "$txtar_file" | grep -v "mnemonic here" > /dev/null 2>&1; then
-            clean_txtar_file "$txtar_file"
-        fi
+# Find and clean all txtar files containing mnemonics (including subdirectories)
+find "$TXTAR_DIR" -type f -name "*.txtar" | while read -r txtar_file; do
+    if grep -E "adduserfrom gns_admin '[^']+'" "$txtar_file" | grep -v "mnemonic here" > /dev/null 2>&1; then
+        clean_txtar_file "$txtar_file"
     fi
 done
 
