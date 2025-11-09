@@ -30,6 +30,7 @@ var (
 	errProposalNotExecutable                          = errors.New("[GNOSWAP-GOVERNANCE-021] proposal not executable")
 	errNotProposer                                    = errors.New("[GNOSWAP-GOVERNANCE-022] not proposer")
 	errInvalidConfiguration                           = errors.New("[GNOSWAP-GOVERNANCE-023] invalid configuration")
+	errInvalidExecution                               = errors.New("[GNOSWAP-GOVERNANCE-024] invalid execution: handler not found")
 )
 
 // makeErrorWithDetails creates an error with additional context.
