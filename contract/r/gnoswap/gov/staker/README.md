@@ -18,19 +18,23 @@ Staker manages distribution of internal (GNS emission) and external (user-provid
 ## Core Features
 
 ### Internal Rewards (GNS Emission)
+
 - Allocated to tiered pools (tiers 1, 2, 3)
 - Split across tiers by TierRatio
 - Distributed proportionally to in-range liquidity
 - Unclaimed rewards go to community pool
 
 ### External Rewards (User Incentives)
+
 - Created for specific pools
 - Constant reward per block
 - Proportional to staked liquidity
 - Unclaimed rewards returned to creator
 
 ### Warmup Periods
+
 Every staked position progresses through warmup periods:
+
 - 0-30 days: 30% rewards (70% to community/creator)
 - 30-60 days: 50% rewards (50% to community/creator)
 - 60-90 days: 70% rewards (30% to community/creator)
@@ -39,21 +43,27 @@ Every staked position progresses through warmup periods:
 ## Key Functions
 
 ### `StakeToken`
+
 Stakes LP position NFT to earn rewards.
 
 ### `UnStakeToken`
+
 Unstakes position and collects all rewards.
 
 ### `CollectReward`
+
 Collects accumulated rewards without unstaking.
 
 ### `MintAndStake`
+
 Mints new position and stakes in single transaction.
 
 ### `CreateExternalIncentive`
+
 Creates external reward program for specific pool.
 
 ### `EndExternalIncentive`
+
 Ends incentive program and returns unused rewards.
 
 ## Reward Calculation Logic
@@ -70,8 +80,9 @@ If all tiers have pools:     [50%, 30%, 20%]
 ```
 
 Mathematical representation:
+
 ```math
-TierRatio(t) = 
+TierRatio(t) =
   [1, 0, 0]        if Count(2) = 0 ∧ Count(3) = 0
   [0.8, 0, 0.2]    if Count(2) = 0
   [0.7, 0.3, 0]    if Count(3) = 0
@@ -85,6 +96,7 @@ poolReward(pool) = (emission × TierRatio[tier(pool)]) / Count(tier(pool))
 ```
 
 Where emission is calculated as:
+
 ```math
 emission = GNSEmissionPerSecond × (avgMsPerBlock/1000) × StakerEmissionRatio
 ```
@@ -100,16 +112,17 @@ The reward for each position is calculated through:
 5. **Apply warmup penalties** based on stake duration
 
 Mathematical formula for total reward ratio:
+
 ```math
 TotalRewardRatio(s,e) = Σ[i=0 to m-1] ΔRaw(αᵢ, βᵢ) × rᵢ
 
 where:
   αᵢ = max(s, Hᵢ₋₁)
   βᵢ = min(e, Hᵢ)
-  
+
 ΔRaw(a, b) = CalcRaw(b) - CalcRaw(a)
 
-CalcRaw(h) = 
+CalcRaw(h) =
   L(h) - U(h)           if tick(h) < ℓ
   U(h) - L(h)           if tick(h) ≥ u
   G(h) - (L(h) + U(h))  otherwise
@@ -123,6 +136,7 @@ where:
 ```
 
 Final position reward:
+
 ```math
 finalReward = TotalRewardRatio × poolReward × positionLiquidity
             = ∫[s to e] (poolReward × positionLiquidity) / TotalStakedLiquidity(h) dh
@@ -138,6 +152,7 @@ When price crosses an initialized tick with staked positions:
 4. **Updates tick accumulation** - Adjusts `CurrentOutsideAccumulation`
 
 The `globalRewardRatioAccumulation` tracks the integral:
+
 ```math
 globalRewardRatioAccumulation = ∫ 1/TotalStakedLiquidity(h) dh
 ```
@@ -147,6 +162,7 @@ This integral is only computed when `TotalStakedLiquidity(h) ≠ 0`, enabling pr
 ### Reward State Tracking
 
 The system maintains:
+
 - **Global accumulation**: Tracks reward ratio across all positions
 - **Tick accumulation**: Tracks rewards "outside" each tick
 - **Position state**: Individual reward calculation parameters

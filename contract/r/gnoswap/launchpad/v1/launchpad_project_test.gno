@@ -20,7 +20,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 )
 
-func TestCreateProject_ShouldFail(t *testing.T) {
+func TestLaunchpadProject_CreateProjectShouldFail(t *testing.T) {
 	adminAddr, _ := access.GetAddress(prbac.ROLE_ADMIN.String())
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	oblPath := "gno.land/r/onbloc/obl"
@@ -118,7 +118,7 @@ func TestCreateProject_ShouldFail(t *testing.T) {
 	}
 }
 
-func TestCreateProject_Internal(t *testing.T) {
+func TestLaunchpadProject_CreateProjectInternal(t *testing.T) {
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	projectAddr := testutils.TestAddress("projectAddr")
 	oblPath := "gno.land/r/onbloc/obl"
@@ -288,7 +288,7 @@ func TestCreateProject_Internal(t *testing.T) {
 	}
 }
 
-func TestCreateProjectPrivate_Multiple(t *testing.T) {
+func TestLaunchpadProject_CreateProjectPrivateMultiple(t *testing.T) {
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	projectAddr := testutils.TestAddress("projectAddr")
 	oblPath := "gno.land/r/onbloc/obl"
@@ -369,7 +369,7 @@ func TestCreateProjectPrivate_Multiple(t *testing.T) {
 	}
 }
 
-func TestCreateProjectParams_ValidatName(t *testing.T) {
+func TestLaunchpadProject_CreateProjectParamsValidatName(t *testing.T) {
 	tests := []struct {
 		name          string
 		projectName   string
@@ -409,7 +409,7 @@ func TestCreateProjectParams_ValidatName(t *testing.T) {
 	}
 }
 
-func TestCreateProjectParams_ValidateTokenPath(t *testing.T) {
+func TestLaunchpadProject_CreateProjectParamsValidateTokenPath(t *testing.T) {
 	tests := []struct {
 		name          string
 		tokenPath     string
@@ -449,7 +449,7 @@ func TestCreateProjectParams_ValidateTokenPath(t *testing.T) {
 	}
 }
 
-func TestCreateProjectParams_ValidateRecipient(t *testing.T) {
+func TestLaunchpadProject_CreateProjectParamsValidateRecipient(t *testing.T) {
 	tests := []struct {
 		name          string
 		recipient     address
@@ -484,7 +484,7 @@ func TestCreateProjectParams_ValidateRecipient(t *testing.T) {
 	}
 }
 
-func TestCreateProjectParams_ValidateDepositAmount(t *testing.T) {
+func TestLaunchpadProject_CreateProjectParamsValidateDepositAmount(t *testing.T) {
 	tests := []struct {
 		name          string
 		depositAmount int64
@@ -524,7 +524,7 @@ func TestCreateProjectParams_ValidateDepositAmount(t *testing.T) {
 	}
 }
 
-func TestCreateProjectParams_ValidateRatio(t *testing.T) {
+func TestLaunchpadProject_CreateProjectParamsValidateRatio(t *testing.T) {
 	tests := []struct {
 		name          string
 		tier30Ratio   int64
@@ -567,7 +567,7 @@ func TestCreateProjectParams_ValidateRatio(t *testing.T) {
 	}
 }
 
-func TestCreateProjectParams_ValidateStartTime(t *testing.T) {
+func TestLaunchpadProject_CreateProjectParamsValidateStartTime(t *testing.T) {
 	projectMinimumStartDelayTime := int64(60 * 60) // 1 hour
 
 	tests := []struct {
@@ -614,7 +614,7 @@ func TestCreateProjectParams_ValidateStartTime(t *testing.T) {
 	}
 }
 
-func TestCreateProjectParams_ValidateConditions(t *testing.T) {
+func TestLaunchpadProject_CreateProjectParamsValidateConditions(t *testing.T) {
 	tests := []struct {
 		name             string
 		conditionTokens  string
@@ -692,4 +692,118 @@ func setupLaunchpadProjectTestEmptyProject(t *testing.T, projectID string) {
 	project := &Project{id: projectID}
 	projects.Set(projectID, project)
 	setTestProjects(projects)
+}
+
+// TestLaunchpadProject_isGovernanceToken tests isGovernanceToken private function
+func TestLaunchpadProject_isGovernanceToken(t *testing.T) {
+	tests := []struct {
+		name           string
+		tokenPath      string
+		expectedResult bool
+	}{
+		{
+			name:           "returns true for governance token",
+			tokenPath:      GOV_XGNS_PATH,
+			expectedResult: true,
+		},
+		{
+			name:           "returns false for gns token",
+			tokenPath:      GNS_PATH,
+			expectedResult: false,
+		},
+		{
+			name:           "returns false for other token",
+			tokenPath:      "gno.land/r/demo/token",
+			expectedResult: false,
+		},
+		{
+			name:           "returns false for empty string",
+			tokenPath:      "",
+			expectedResult: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isGovernanceToken(tt.tokenPath)
+			uassert.Equal(t, result, tt.expectedResult)
+		})
+	}
+}
+
+// TestLaunchpadProject_validateRefundProject tests validateRefundProject private function
+func TestLaunchpadProject_validateRefundProject(t *testing.T) {
+	testAddr := testutils.TestAddress("recipient")
+
+	tests := []struct {
+		name                  string
+		tierStartTime         int64
+		tierEndTime           int64
+		totalDistributeAmount int64
+		totalCollectedAmount  int64
+		recipient             address
+		currentTime           int64
+		expectedHasError      bool
+		expectedError         string
+	}{
+		{
+			name:                  "valid refund - project ended and has remaining amount",
+			tierStartTime:         1000,
+			tierEndTime:           2000,
+			totalDistributeAmount: 100_000_000,
+			totalCollectedAmount:  50_000_000,
+			recipient:             testAddr,
+			currentTime:           2001,
+			expectedHasError:      false,
+		},
+		{
+			name:                  "error when project has no remaining amount",
+			tierStartTime:         1000,
+			tierEndTime:           2000,
+			totalDistributeAmount: 100_000_000,
+			totalCollectedAmount:  100_000_000,
+			recipient:             testAddr,
+			currentTime:           2001,
+			expectedHasError:      true,
+			expectedError:         "no remaining amount",
+		},
+		{
+			name:                  "error when project not ended yet",
+			tierStartTime:         1000,
+			tierEndTime:           2000,
+			totalDistributeAmount: 100_000_000,
+			totalCollectedAmount:  50_000_000,
+			recipient:             testAddr,
+			currentTime:           1500,
+			expectedHasError:      true,
+			expectedError:         "project not ended yet",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a project with tier
+			tier := &ProjectTier{
+				id:                    "test:180",
+				totalDistributeAmount: tt.totalDistributeAmount,
+				totalCollectedAmount:  tt.totalCollectedAmount,
+				startTime:             tt.tierStartTime,
+				endTime:               tt.tierEndTime,
+			}
+
+			project := &Project{
+				id:    "test:100",
+				tiers: make(map[int64]*ProjectTier),
+			}
+			project.tiers[projectTier180] = tier
+
+			err := validateRefundProject(project, tt.recipient, tt.currentTime)
+
+			if tt.expectedHasError {
+				uassert.ErrorContains(t, err, tt.expectedError)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
 }

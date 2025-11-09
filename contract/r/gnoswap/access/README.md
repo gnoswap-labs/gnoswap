@@ -189,7 +189,7 @@ import "gno.land/r/gnoswap/access"
 func SetPoolFeeRate(rate uint64) {
     caller := std.PrevRealm().Addr()
     access.AssertIsAdminOrGovernance(caller)
-    
+
     // Admin/governance authorized, proceed
     setFeeRate(rate)
 }
@@ -205,7 +205,7 @@ import "gno.land/r/gnoswap/access"
 func DistributeRewards(amount uint64) {
     caller := std.PrevRealm().Addr()
     access.AssertIsEmission(caller)
-    
+
     // Only emission contract can distribute
     distributeToStakers(amount)
 }
@@ -221,7 +221,7 @@ import "gno.land/r/gnoswap/access"
 func EmergencyPause() {
     caller := std.PrevRealm().Addr()
     access.AssertHasAnyRole(caller, "admin", "devops", "governance")
-    
+
     // Any of the authorized roles can pause
     pauseProtocol()
 }
@@ -239,7 +239,7 @@ func GetSwapFee(caller address) uint64 {
     if access.IsAuthorized("admin", caller) {
         return 0 // Admin gets free swaps
     }
-    
+
     return standardFee
 }
 ```

@@ -2,12 +2,13 @@ package v1
 
 import (
 	"testing"
+	"math"
 
 	"gno.land/p/nt/uassert"
 )
 
 // Test for NewCounter, next, and Get methods.
-func TestCounter_Behavior(t *testing.T) {
+func TestCounter_NewCounter(t *testing.T) {
 	tests := []struct {
 		name          string
 		initValue     int64
@@ -16,19 +17,16 @@ func TestCounter_Behavior(t *testing.T) {
 	}{
 		{
 			name:          "Initial value is zero",
-			initValue:     0,
 			callNextTimes: 0,
 			expectedId:    0,
 		},
 		{
 			name:          "Call next once",
-			initValue:     0,
 			callNextTimes: 1,
 			expectedId:    1,
 		},
 		{
 			name:          "Call next multiple times",
-			initValue:     0,
 			callNextTimes: 5,
 			expectedId:    5,
 		},
@@ -38,13 +36,24 @@ func TestCounter_Behavior(t *testing.T) {
 			callNextTimes: 3,
 			expectedId:    13,
 		},
+		{
+			name:          "Large initial value near MaxInt64",
+			initValue:     math.MaxInt64 - 5,
+			callNextTimes: 5,
+			expectedId:    math.MaxInt64,
+		},
+		{
+			name:          "Call next many times",
+			callNextTimes: 1000,
+			expectedId:    1000,
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// given: create counter and set initial value if needed
 			c := NewCounter()
-			if tc.initValue > 0 {
+			if tc.initValue != 0 {
 				c.id = tc.initValue
 			}
 

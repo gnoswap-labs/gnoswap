@@ -1,8 +1,8 @@
 package v1
 
 import (
-	gs "gno.land/r/gnoswap/gov/staker"
 	"gno.land/p/nt/ufmt"
+	gs "gno.land/r/gnoswap/gov/staker"
 )
 
 // ApiGetProjectRecipientRewardByProjectId retrieves the claimable reward for a project recipient by project ID.

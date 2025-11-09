@@ -33,7 +33,7 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(threshold int64) {
 	access.AssertIsAdminOrGovernance(caller)
 
 	// Calculate cutoff time by subtracting threshold from current time
-	cutoffTimestamp := time.Now().Unix() - threshold
+	cutoffTimestamp := safeSubInt64(time.Now().Unix(), threshold)
 
 	// Filter records after cutoff time
 	delegationHistory := gs.getDelegationHistory()

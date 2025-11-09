@@ -17,7 +17,9 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 )
 
-func TestCollectDepositGns(t *testing.T) {
+func TestLaunchpadWithdraw_CollectDepositGns(t *testing.T) {
+	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
+
 	userAddr := testutils.TestAddress("user1")
 	otherAddr := testutils.TestAddress("other")
 
@@ -32,22 +34,22 @@ func TestCollectDepositGns(t *testing.T) {
 		expectedAbortMessage string
 		expectedAmount       int64
 	}{
-		// {
-		// 	name:             "collect deposit gns successfully",
-		// 	depositID:        "1",
-		// 	callerAddress:    userAddr,
-		// 	expectedHasAbort: false,
-		// 	expectedAmount:   1000000000,
-		// },
 		{
-			name:                 "collect deposit gns failed by invalid deposit id",
+			name:             "success - collect deposit gns successfully",
+			depositID:        "1",
+			callerAddress:    userAddr,
+			expectedHasAbort: false,
+			expectedAmount:   1000000000,
+		},
+		{
+			name:                 "fail - collect deposit gns with invalid deposit id",
 			depositID:            "invalid_deposit",
 			callerAddress:        userAddr,
 			expectedHasAbort:     true,
 			expectedAbortMessage: "[GNOSWAP-LAUNCHPAD-020] not exist deposit || (invalid_deposit)",
 		},
 		{
-			name:                 "collect deposit gns failed by invalid owner",
+			name:                 "fail - collect deposit gns with invalid owner",
 			depositID:            "1",
 			callerAddress:        otherAddr,
 			expectedHasAbort:     true,
@@ -66,28 +68,33 @@ func TestCollectDepositGns(t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(tt.callerAddress))
 			testing.SkipHeights(60*60*24*180/5 + 2)
 
-			collectDepositFn := func() {
-				func(cur realm) {
-					lp.CollectDepositGns(tt.depositID)
-				}(cross)
-			}
-
 			if tt.expectedHasAbort {
+				collectDepositFn := func() {
+					func(cur realm) {
+						lp.CollectDepositGns(tt.depositID)
+					}(cross)
+				}
 				uassert.AbortsContains(t, tt.expectedAbortMessage, collectDepositFn)
 				return
 			}
 
+			// Success case
+			var amount int64
+			var err error
+			testing.SetOriginCaller(tt.callerAddress)
 			func(cur realm) {
-				amount, err := lp.CollectDepositGns(tt.depositID)
-				testing.SkipHeights(-(60*60*24*180/5 + 2))
-				uassert.NoError(t, err)
-				uassert.Equal(t, tt.expectedAmount, amount)
+				testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
+				amount, err = lp.CollectDepositGns(tt.depositID)
 			}(cross)
+
+			testing.SkipHeights(-(60*60*24*180/5 + 2))
+			uassert.NoError(t, err)
+			uassert.Equal(t, tt.expectedAmount, amount)
 		})
 	}
 }
 
-func TestWithdrawDeposit(t *testing.T) {
+func TestLaunchpadWithdraw_WithdrawDeposit(t *testing.T) {
 	const currentDepositID = "1"
 	userAddr := testutils.TestAddress("user2")
 
@@ -130,7 +137,7 @@ func TestWithdrawDeposit(t *testing.T) {
 	}
 }
 
-func TestCollectDepositGns_TokensRemainLocked(t *testing.T) {
+func TestLaunchpadWithdraw_CollectDepositGnsTokensRemainLocked(t *testing.T) {
 	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
 	launchpadAddr := chain.PackageAddress(launchpadPackagePath)
 
@@ -195,7 +202,7 @@ func TestCollectDepositGns_TokensRemainLocked(t *testing.T) {
 }
 
 // This test verifies complete balance restoration after deposit and withdrawal
-func TestCollectDepositGns_FullBalanceRestoration(t *testing.T) {
+func TestLaunchpadWithdraw_CollectDepositGnsFullBalanceRestoration(t *testing.T) {
 	// init test environment
 	const launchpadPackagePath = "gno.land/r/gnoswap/launchpad"
 	launchpadAddr := chain.PackageAddress(launchpadPackagePath)

@@ -191,3 +191,239 @@ func TestSetUnStakingFee(t *testing.T) {
 		})
 	}
 }
+
+// Test GetUnstakingFee function
+func TestGetUnstakingFee(t *testing.T) {
+	tests := []struct {
+		name        string
+		setFee      int64
+		expectedFee int64
+	}{
+		{
+			name:        "get default fee (zero)",
+			setFee:      0,
+			expectedFee: 0,
+		},
+		{
+			name:        "get custom fee 100",
+			setFee:      100,
+			expectedFee: 100,
+		},
+		{
+			name:        "get custom fee 500",
+			setFee:      500,
+			expectedFee: 500,
+		},
+		{
+			name:        "get max fee",
+			setFee:      maxUnstakingFee,
+			expectedFee: maxUnstakingFee,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initStakerTest(t)
+			instance := getMockInstance()
+
+			// Set the fee
+			instance.store.SetUnstakingFee(tt.setFee)
+
+			// Get and verify
+			actualFee := instance.GetUnstakingFee()
+			uassert.Equal(t, tt.expectedFee, actualFee)
+		})
+	}
+}
+
+// Test setUnStakingFee internal function
+func TestSetUnStakingFeeInternal(t *testing.T) {
+	tests := []struct {
+		name    string
+		fee     int64
+		wantFee int64
+	}{
+		{
+			name:    "set fee to 0",
+			fee:     0,
+			wantFee: 0,
+		},
+		{
+			name:    "set fee to 250",
+			fee:     250,
+			wantFee: 250,
+		},
+		{
+			name:    "set fee to max",
+			fee:     maxUnstakingFee,
+			wantFee: maxUnstakingFee,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initStakerTest(t)
+			instance := getMockInstance()
+
+			// Call internal setter
+			instance.setUnStakingFee(tt.fee)
+
+			// Verify
+			actualFee := instance.GetUnstakingFee()
+			uassert.Equal(t, tt.wantFee, actualFee)
+		})
+	}
+}
+
+// Test handleStakingRewardFee with various scenarios
+func TestHandleStakingRewardFeeEdgeCases(t *testing.T) {
+	tests := []struct {
+		name         string
+		tokenPath    string
+		amount       int64
+		unstakingFee int64
+		internal     bool
+		expectedNet  int64
+		expectedFee  int64
+		expectError  bool
+	}{
+		{
+			name:         "zero fee results in full amount",
+			tokenPath:    gnsPath,
+			amount:       10000,
+			unstakingFee: 0,
+			internal:     false,
+			expectedNet:  10000,
+			expectedFee:  0,
+			expectError:  false,
+		},
+		{
+			name:         "1% fee on 10000",
+			tokenPath:    gnsPath,
+			amount:       10000,
+			unstakingFee: 100, // 1%
+			internal:     false,
+			expectedNet:  9900,
+			expectedFee:  100,
+			expectError:  false,
+		},
+		{
+			name:         "5% fee on 10000",
+			tokenPath:    gnsPath,
+			amount:       10000,
+			unstakingFee: 500, // 5%
+			internal:     false,
+			expectedNet:  9500,
+			expectedFee:  500,
+			expectError:  false,
+		},
+		{
+			name:         "small amount with fee results in zero fee",
+			tokenPath:    gnsPath,
+			amount:       5,
+			unstakingFee: 100, // 1%
+			internal:     false,
+			expectedNet:  5,
+			expectedFee:  0,
+			expectError:  false,
+		},
+		{
+			name:         "internal reward uses GNS_PATH",
+			tokenPath:    barPath,
+			amount:       10000,
+			unstakingFee: 100,
+			internal:     true, // Should convert to GNS_PATH
+			expectedNet:  9900,
+			expectedFee:  100,
+			expectError:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initStakerTest(t)
+			instance := getMockInstance()
+
+			// Set the unstaking fee
+			instance.store.SetUnstakingFee(tt.unstakingFee)
+
+			// Prepare token balance
+			if tt.unstakingFee > 0 {
+				calculatedFee := (tt.amount * tt.unstakingFee) / FEE_PRECISION
+				if calculatedFee > 0 {
+					testing.SetRealm(adminRealm)
+					_ = tt.tokenPath
+					if tt.internal {
+						_ = GNS_PATH
+					}
+					gns.Transfer(cross, stakerAddr, calculatedFee)
+				}
+			}
+
+			testing.SetRealm(testing.NewUserRealm(stakerAddr))
+			netAmount, feeAmount, err := instance.handleStakingRewardFee(tt.tokenPath, tt.amount, tt.internal)
+
+			if tt.expectError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+				uassert.Equal(t, tt.expectedNet, netAmount)
+				uassert.Equal(t, tt.expectedFee, feeAmount)
+			}
+		})
+	}
+}
+
+// Test FEE_PRECISION constant
+func TestFeePrecisionConstant(t *testing.T) {
+	uassert.Equal(t, 10000, FEE_PRECISION)
+}
+
+// Test handleStakingRewardFee calculation precision
+func TestHandleStakingRewardFeeCalculationPrecision(t *testing.T) {
+	tests := []struct {
+		name        string
+		amount      int64
+		fee         int64
+		expectedFee int64
+		expectedNet int64
+	}{
+		{
+			name:        "1 basis point on 1000000",
+			amount:      1000000,
+			fee:         1, // 0.01%
+			expectedFee: 100,
+			expectedNet: 999900,
+		},
+		{
+			name:        "10 basis points on 1000000",
+			amount:      1000000,
+			fee:         10, // 0.1%
+			expectedFee: 1000,
+			expectedNet: 999000,
+		},
+		{
+			name:        "100 basis points on 1000000",
+			amount:      1000000,
+			fee:         100, // 1%
+			expectedFee: 10000,
+			expectedNet: 990000,
+		},
+		{
+			name:        "1000 basis points on 1000000",
+			amount:      1000000,
+			fee:         1000, // 10%
+			expectedFee: 100000,
+			expectedNet: 900000,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Verify calculation: feeAmount = (amount * fee) / FEE_PRECISION
+			calculatedFee := (tt.amount * tt.fee) / FEE_PRECISION
+			uassert.Equal(t, tt.expectedFee, calculatedFee)
+			uassert.Equal(t, tt.expectedNet, tt.amount-calculatedFee)
+		})
+	}
+}

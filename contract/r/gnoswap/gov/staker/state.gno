@@ -15,7 +15,7 @@ import (
 
 var (
 	currentAddress = runtime.CurrentRealm().Address()
-	domainPath = "gno.land/r/gnoswap/gov/staker"
+	domainPath     = "gno.land/r/gnoswap/gov/staker"
 
 	kvStore store.KVStore
 

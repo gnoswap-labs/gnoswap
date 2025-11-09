@@ -8,8 +8,8 @@ import (
 	"gno.land/p/onbloc/json"
 
 	"gno.land/r/gnoswap/emission"
-	"gno.land/r/gnoswap/protocol_fee"
 	"gno.land/r/gnoswap/gov/staker"
+	"gno.land/r/gnoswap/protocol_fee"
 )
 
 // GetLockedAmount returns total locked GNS.

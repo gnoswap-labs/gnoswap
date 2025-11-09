@@ -3,6 +3,7 @@ package v1
 import (
 	"testing"
 
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/uassert"
 	pl "gno.land/r/gnoswap/pool"
 	sr "gno.land/r/gnoswap/staker"
@@ -229,5 +230,215 @@ func TestCurrentRewardPerPool(t *testing.T) {
 	expectedReward2 := emission * 30 / 100 / 1 // 30% ratio, 1 pool
 	if reward2 != expectedReward2 {
 		t.Errorf("Expected tier2 reward %d, got %d", expectedReward2, reward2)
+	}
+}
+
+// Test CurrentReward for different tiers
+func TestCurrentReward(t *testing.T) {
+	tests := []struct {
+		name           string
+		tier           uint64
+		tierCounts     [AllTierCount]uint64
+		emission       int64
+		expectedReward int64
+		shouldBeZero   bool
+	}{
+		{
+			name:           "tier 1 with single pool",
+			tier:           1,
+			tierCounts:     [AllTierCount]uint64{0, 1, 0, 0},
+			emission:       1000000,
+			expectedReward: 1000000,
+			shouldBeZero:   false,
+		},
+		{
+			name:           "tier 2 with single pool",
+			tier:           2,
+			tierCounts:     [AllTierCount]uint64{0, 1, 1, 0},
+			emission:       1000000,
+			expectedReward: 300000,
+			shouldBeZero:   false,
+		},
+		{
+			name:           "tier with zero count",
+			tier:           1,
+			tierCounts:     [AllTierCount]uint64{0, 0, 0, 0},
+			emission:       1000000,
+			expectedReward: 0,
+			shouldBeZero:   true,
+		},
+		{
+			name:           "tier 3 with multiple pools",
+			tier:           3,
+			tierCounts:     [AllTierCount]uint64{0, 1, 1, 2},
+			emission:       1000000,
+			expectedReward: 100000,
+			shouldBeZero:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			poolTier := &PoolTier{
+				tierRatio:   TierRatioFromCounts(tt.tierCounts[Tier1], tt.tierCounts[Tier2], tt.tierCounts[Tier3]),
+				counts:      tt.tierCounts,
+				getEmission: func() int64 { return tt.emission },
+			}
+
+			reward := poolTier.CurrentReward(tt.tier)
+
+			if tt.shouldBeZero {
+				uassert.Equal(t, int64(0), reward)
+			} else {
+				uassert.Equal(t, tt.expectedReward, reward)
+			}
+		})
+	}
+}
+
+// Test NewPoolTierBy constructor
+func TestNewPoolTierBy(t *testing.T) {
+	tests := []struct {
+		name                     string
+		tierCounts               [AllTierCount]uint64
+		lastRewardCacheTimestamp int64
+		lastRewardCacheHeight    int64
+		currentEmission          int64
+	}{
+		{
+			name:                     "create with default values",
+			tierCounts:               [AllTierCount]uint64{0, 1, 0, 0},
+			lastRewardCacheTimestamp: 100,
+			lastRewardCacheHeight:    50,
+			currentEmission:          1000000,
+		},
+		{
+			name:                     "create with multiple tiers",
+			tierCounts:               [AllTierCount]uint64{0, 2, 3, 1},
+			lastRewardCacheTimestamp: 200,
+			lastRewardCacheHeight:    100,
+			currentEmission:          500000,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			poolTier := NewPoolTierBy(
+				avl.NewTree(),
+				TierRatioFromCounts(tt.tierCounts[Tier1], tt.tierCounts[Tier2], tt.tierCounts[Tier3]),
+				tt.tierCounts,
+				tt.lastRewardCacheTimestamp,
+				tt.lastRewardCacheHeight,
+				tt.currentEmission,
+				func() int64 { return tt.currentEmission },
+				func(start, end int64) ([]int64, []int64) { return nil, nil },
+			)
+
+			uassert.NotNil(t, poolTier)
+			uassert.Equal(t, tt.lastRewardCacheTimestamp, poolTier.lastRewardCacheTimestamp)
+			uassert.Equal(t, tt.lastRewardCacheHeight, poolTier.lastRewardCacheHeight)
+			uassert.Equal(t, tt.currentEmission, poolTier.currentEmission)
+		})
+	}
+}
+
+// Test CurrentCount edge cases
+func TestCurrentCountEdgeCases(t *testing.T) {
+	tests := []struct {
+		name          string
+		tier          uint64
+		tierCounts    [AllTierCount]uint64
+		expectedCount int
+	}{
+		{
+			name:          "tier 0 returns 0",
+			tier:          0,
+			tierCounts:    [AllTierCount]uint64{10, 1, 2, 3},
+			expectedCount: 10,
+		},
+		{
+			name:          "tier beyond AllTierCount returns 0",
+			tier:          AllTierCount,
+			tierCounts:    [AllTierCount]uint64{0, 1, 2, 3},
+			expectedCount: 0,
+		},
+		{
+			name:          "tier far beyond AllTierCount returns 0",
+			tier:          100,
+			tierCounts:    [AllTierCount]uint64{0, 1, 2, 3},
+			expectedCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			poolTier := &PoolTier{
+				counts: tt.tierCounts,
+			}
+
+			count := poolTier.CurrentCount(tt.tier)
+			uassert.Equal(t, tt.expectedCount, count)
+		})
+	}
+}
+
+// Test applyCacheToAllPools behavior
+func TestApplyCacheToAllPools(t *testing.T) {
+	tests := []struct {
+		name                   string
+		emissionInThisInterval int64
+		tierCounts             [AllTierCount]uint64
+		numPoolsToAdd          int
+	}{
+		{
+			name:                   "single pool single tier",
+			emissionInThisInterval: 1000,
+			tierCounts:             [AllTierCount]uint64{0, 1, 0, 0},
+			numPoolsToAdd:          1,
+		},
+		{
+			name:                   "multiple pools multiple tiers",
+			emissionInThisInterval: 5000,
+			tierCounts:             [AllTierCount]uint64{0, 2, 2, 1},
+			numPoolsToAdd:          5,
+		},
+		{
+			name:                   "zero emission",
+			emissionInThisInterval: 0,
+			tierCounts:             [AllTierCount]uint64{0, 1, 1, 1},
+			numPoolsToAdd:          3,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pools := NewPools()
+			poolTier := &PoolTier{
+				membership:  avl.NewTree(),
+				tierRatio:   TierRatioFromCounts(tt.tierCounts[Tier1], tt.tierCounts[Tier2], tt.tierCounts[Tier3]),
+				counts:      tt.tierCounts,
+				getEmission: func() int64 { return tt.emissionInThisInterval },
+			}
+
+			currentTime := int64(1000)
+
+			// Add pools to different tiers
+			tier := uint64(1)
+			for i := 0; i < tt.numPoolsToAdd; i++ {
+				poolPath := pl.GetPoolPath("gno.land/r/test/token"+string(rune('A'+i)), "gno.land/r/test/token"+string(rune('B'+i)), 3000)
+				pool := sr.NewPool(poolPath, currentTime)
+				pools.set(poolPath, pool)
+				poolTier.membership.Set(poolPath, tier)
+
+				// Rotate through tiers
+				tier++
+				if tier > 3 {
+					tier = 1
+				}
+			}
+
+			// This should not panic
+			poolTier.applyCacheToAllPools(pools, currentTime, tt.emissionInThisInterval)
+		})
 	}
 }

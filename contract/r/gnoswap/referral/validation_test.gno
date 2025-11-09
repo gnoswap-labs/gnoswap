@@ -130,7 +130,7 @@ func TestValidation_AddressValidation(t *testing.T) {
 	}{
 		{
 			name:          "rejects invalid user address on register",
-			addr:          address(""),
+			addr:          zeroAddress,
 			refAddr:       testutils.TestAddress("valid"),
 			operation:     "register",
 			expectedError: true,
@@ -154,7 +154,7 @@ func TestValidation_AddressValidation(t *testing.T) {
 		},
 		{
 			name:          "rejects invalid user address on update",
-			addr:          address(""),
+			addr:          zeroAddress,
 			refAddr:       testutils.TestAddress("valid"),
 			operation:     "update",
 			expectedError: true,

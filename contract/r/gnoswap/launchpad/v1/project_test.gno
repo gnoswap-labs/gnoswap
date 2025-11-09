@@ -802,7 +802,7 @@ func TestProject_AddProjectCondition(t *testing.T) {
 	}
 }
 
-func TestNewProject(t *testing.T) {
+func TestProject_NewProject(t *testing.T) {
 	tests := []struct {
 		name                  string
 		projectName           string
@@ -873,7 +873,7 @@ func TestNewProject(t *testing.T) {
 	}
 }
 
-func TestMakeProjectID(t *testing.T) {
+func TestProject_makeProjectID(t *testing.T) {
 	tests := []struct {
 		name          string
 		tokenPath     string

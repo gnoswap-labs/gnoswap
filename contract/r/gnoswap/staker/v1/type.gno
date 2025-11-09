@@ -35,7 +35,7 @@ func (self *ExternalIncentiveResolver) RewardSpent(currentTimestamp int64) int64
 		return self.RewardAmount()
 	}
 
-	timeDuration := currentTimestamp - self.StartTimestamp()
+	timeDuration := safeSubInt64(currentTimestamp, self.StartTimestamp())
 	rewardSpent := safeMulInt64(timeDuration, self.RewardPerSecond())
 	return rewardSpent
 }
