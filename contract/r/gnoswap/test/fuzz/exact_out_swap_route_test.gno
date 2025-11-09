@@ -90,9 +90,22 @@ func runTestExactOutSwapRoute(ft *fuzz.T, params *exactOutSwapRouteParams) {
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 
 	// mint test tokens for the input token
-	mintedAmount := u256.MustFromDecimal(params.amountIn).Int64()
-	if mintedAmount < 0 {
-		mintedAmount = 0
+	// For ExactOut, we need to mint the actual required input amount
+	var mintedAmount int64
+	if params.amountIn != "" && params.amountIn != "0" {
+		// Use amountIn from DrySwap if available
+		amountInUint := u256.MustFromDecimal(params.amountIn)
+		mintedAmount = amountInUint.Int64()
+		if mintedAmount < 0 {
+			mintedAmount = 0
+		}
+	} else {
+		// Fallback to amountInMax if amountIn is not set
+		amountInMaxUint := u256.MustFromDecimal(params.amountInMax)
+		mintedAmount = amountInMaxUint.Int64()
+		if mintedAmount < 0 {
+			mintedAmount = 0
+		}
 	}
 
 	mintTestToken(params.inputToken, mintedAmount)
@@ -105,7 +118,7 @@ func runTestExactOutSwapRoute(ft *fuzz.T, params *exactOutSwapRouteParams) {
 		cross,
 		params.inputToken,
 		params.outputToken,
-		params.amountIn,
+		params.amountOut,
 		params.routeArr,
 		params.quoteArr,
 		params.amountInMax,
