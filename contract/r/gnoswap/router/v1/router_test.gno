@@ -1172,7 +1172,7 @@ func TestSwapProcessor_ProcessSwapAmount(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := processor.ProcessSwapAmount(tt.amountSpecified, strconv.parseInt(tt.quote, 10))
+			result, err := processor.ProcessSwapAmount(tt.amountSpecified, strconv.ParseInt(tt.quote, 10))
 
 			if tt.expectError {
 				uassert.Error(t, err)
@@ -1967,7 +1967,7 @@ func TestSwapProcessor_ProcessSwapAmount_ExtremeValues(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := processor.ProcessSwapAmount(tt.amountSpecified, strconv.parseInt(tt.quote, 10))
+			result, err := processor.ProcessSwapAmount(tt.amountSpecified, strconv.ParseInt(tt.quote, 10))
 
 			if tt.expectError {
 				uassert.Error(t, err)
