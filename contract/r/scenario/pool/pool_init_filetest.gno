@@ -150,7 +150,7 @@ func main() {
 		fooPath,
 		fee500,
 		0,
-		10,
+		100,
 		test_liquidityExpectStr,
 		adminAddr,
 	)
@@ -169,7 +169,7 @@ func main() {
 		fee500,
 		adminAddr,
 		true,
-		"1",
+		"5",
 		minPrice,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta string) error {
@@ -180,7 +180,7 @@ func main() {
 	testing.SetRealm(adminRealm)
 	thisPool = pool.GetPool(barPath, fooPath, fee500)
 	poolTick := thisPool.Slot0Tick()
-	println("[EXPECTED] Pool tick:", poolTick, "expected: -1")
+	println("[EXPECTED] Pool tick:", poolTick, "expected: -81")
 	println()
 
 	println("[INFO] Test 5: Updating liquidity when entering range")
@@ -194,7 +194,7 @@ func main() {
 		barPath,
 		fooPath,
 		fee500,
-		-10,
+		-100,
 		0,
 		test_liquidityExpectStr,
 		adminAddr,
@@ -214,7 +214,7 @@ func main() {
 		fee500,
 		adminAddr,
 		true,
-		"1",
+		"5",
 		minPrice,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta string) error {
@@ -225,7 +225,7 @@ func main() {
 	testing.SetRealm(adminRealm)
 	thisPool = pool.GetPool(barPath, fooPath, fee500)
 	poolTick = thisPool.Slot0Tick()
-	println("[EXPECTED] Pool tick:", poolTick, "expected: -1")
+	println("[EXPECTED] Pool tick:", poolTick, "expected: -120")
 	println()
 
 	println("[INFO] Scenario completed")
@@ -286,12 +286,12 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta string,
 // [INFO] Before liquidity: 1000
 // [INFO] Now liquidity: 1000
 // [INFO] Executing swap to move tick
-// [EXPECTED] Pool tick: -1 expected: -1
+// [EXPECTED] Pool tick: -81 expected: -81
 //
 // [INFO] Test 5: Updating liquidity when entering range
 // [INFO] Before liquidity: 1000
 // [INFO] Now liquidity: 2000
 // [INFO] Executing swap to move tick
-// [EXPECTED] Pool tick: -1 expected: -1
+// [EXPECTED] Pool tick: -120 expected: -120
 //
 // [INFO] Scenario completed
