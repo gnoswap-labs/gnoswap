@@ -8,12 +8,14 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
-	"gno.land/r/gnoswap/v1/pool"
+	"gno.land/r/gnoswap/pool"
+
+	_ "gno.land/r/gnoswap/pool/v1"
 )
 
 var t *testing.T
@@ -63,8 +65,6 @@ func main() {
 
 // testDrySwapFailureCases tests DrySwap behavior in failure scenarios
 func testDrySwapFailureCases(t *testing.T) {
-	pool.InitPoolTest(t)
-
 	// Given: Pool exists but no liquidity is provided
 	println("[INFO] Token0:", barPath)
 	println("[INFO] Token1:", fooPath)

@@ -12,12 +12,16 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 )
 
 var (

@@ -7,17 +7,24 @@ import (
 	"strconv"
 	"testing"
 
+	"gno.land/p/nt/ufmt"
+
+	u256 "gno.land/p/gnoswap/uint256"
+
+	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/pool"
+
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
-
-	prbac "gno.land/p/gnoswap/rbac"
-	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/ufmt"
-	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/pool"
 
 	"gno.land/r/gnoswap/gns"
 )
@@ -162,7 +169,7 @@ func TestSwapFooBarFooToBar() {
 	bar.Approve(cross, poolAddr, 16000)
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	poolIn, poolOut := pool.Swap(
 		cross,
 		barPath,
@@ -206,7 +213,7 @@ func TestSwapBarBazBarToBaz() {
 	bar.Approve(cross, poolAddr, 16000)
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	poolIn, poolOut := pool.Swap(
 		cross,
 		barPath,

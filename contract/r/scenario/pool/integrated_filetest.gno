@@ -12,13 +12,15 @@ import (
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 
-	"gno.land/r/gnoswap/v1/pool"
+	"gno.land/r/gnoswap/pool"
+
+	_ "gno.land/r/gnoswap/pool/v1"
 )
 
 var t *testing.T
@@ -83,8 +85,6 @@ func setupPools(t *testing.T) {
 	if poolSetup {
 		return
 	}
-
-	pool.InitPoolTest(t)
 
 	testing.SetRealm(adminRealm)
 	pool.SetPoolCreationFee(cross, 0)
@@ -185,7 +185,7 @@ func testPoolSwapping(t *testing.T) {
 	println("[INFO] Performing Bar to Foo swap")
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	swapIn, swapOut := pool.Swap(
 		cross,
 		barPath,
@@ -299,7 +299,7 @@ func testPoolMultiToken(t *testing.T) {
 	bar.Approve(cross, poolAddr, 16000)
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	swapIn, swapOut := pool.Swap(
 		cross,
 		barPath,

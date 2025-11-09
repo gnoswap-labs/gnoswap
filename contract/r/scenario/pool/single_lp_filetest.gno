@@ -7,17 +7,22 @@ import (
 	"strconv"
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
+
+	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
+	pl "gno.land/r/gnoswap/pool"
+
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
-
-	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/common"
-	pl "gno.land/r/gnoswap/v1/pool"
-
-	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // Constants for fee tiers
@@ -259,7 +264,7 @@ func TestSwap() {
 
 		// set current realm and origin caller
 
-		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 		amount0, amount1 := pl.Swap(
 			cross,
 			barPath,    // token1Path
@@ -300,7 +305,7 @@ func TestSwap() {
 		userOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
 
 		// set current realm and origin caller
-		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 
 		amount0, amount1 := pl.Swap(cross, barPath, fooPath, fee500, adminAddr, true, "5000", test_price, adminAddr, func(cur realm, amount0Delta, amount1Delta string) error {
 			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
@@ -329,7 +334,7 @@ func TestSwap() {
 		userOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
 
 		// set current realm and origin caller
-		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 		amount0, amount1 := pl.Swap(
 			cross,
 			barPath,
@@ -369,7 +374,7 @@ func TestSwap() {
 		userOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
 
 		// set current realm and origin caller
-		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 		amount0, amount1 := pl.Swap(cross, barPath, fooPath, fee500, adminAddr, false, "16000", MAX_PRICE, adminAddr, func(cur realm, amount0Delta, amount1Delta string) error {
 			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, false)
 		}) // give enough amount to take fees away

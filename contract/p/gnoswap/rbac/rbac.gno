@@ -48,7 +48,7 @@ func (rb *RBAC) RegisterRole(roleName string, addr address) error {
 }
 
 // UpdateRoleAddress assigns addr to roleName. Returns ErrRoleDoesNotExist if the role doesn't exist or ErrInvalidAddress if addr is invalid.
-func (rb *RBAC) UpdateRoleAddress(roleName string, version int, addr address) error {
+func (rb *RBAC) UpdateRoleAddress(roleName string, addr address) error {
 	role, exists := rb.roles[roleName]
 	if !exists {
 		return ErrRoleDoesNotExist
@@ -58,21 +58,9 @@ func (rb *RBAC) UpdateRoleAddress(roleName string, version int, addr address) er
 		return ErrInvalidAddress
 	}
 
-	return role.setAddress(version, addr)
-}
+	role.setAddress(addr)
 
-// UpdateRoleAddressNextVersion creates a new version with the specified address for the role
-func (rb *RBAC) UpdateRoleAddressNextVersion(roleName string, addr address) error {
-	role, exists := rb.roles[roleName]
-	if !exists {
-		return ErrRoleDoesNotExist
-	}
-
-	if addr.String() == "" || !addr.IsValid() {
-		return ErrInvalidAddress
-	}
-
-	return role.nextVersionAddress(addr)
+	return nil
 }
 
 // RemoveRole removes roleName from the RBAC system. Returns ErrRoleDoesNotExist if the role doesn't exist or ErrCannotRemoveSystemRole for system roles.
@@ -92,39 +80,15 @@ func (rb *RBAC) RemoveRole(roleName string) error {
 	return nil
 }
 
+// GetAllRoleAddresses returns a map of all role names to their assigned addresses.
 func (rb *RBAC) GetAllRoleAddresses() map[string]address {
 	addresses := make(map[string]address)
 
 	for roleName, role := range rb.roles {
-		addresses[roleName] = role.CurrentAddress()
+		addresses[roleName] = role.Address()
 	}
 
 	return addresses
-}
-
-// GetRoleAddresses returns a map of all role names to their assigned addresses.
-func (rb *RBAC) GetRoleAddresses(roleName string) map[int]address {
-	role, exists := rb.roles[roleName]
-	if !exists {
-		return map[int]address{}
-	}
-
-	addresses := make(map[int]address)
-
-	for version, addr := range role.addresses {
-		addresses[version] = address(addr)
-	}
-
-	return addresses
-}
-
-func (rb *RBAC) GetRoleLatestVersion(roleName string) int {
-	role, exists := rb.roles[roleName]
-	if !exists {
-		return 0
-	}
-
-	return role.latestVersion
 }
 
 // GetRoleAddress returns the address assigned to roleName. Returns ErrRoleDoesNotExist if the role doesn't exist.
@@ -134,21 +98,7 @@ func (rb *RBAC) GetRoleAddress(roleName string) (address, error) {
 		return "", ErrRoleDoesNotExist
 	}
 
-	return role.CurrentAddress(), nil
-}
-
-func (rb *RBAC) GetRoleAddressWithVersion(roleName string, version int) (address, error) {
-	role, exists := rb.roles[roleName]
-	if !exists {
-		return "", ErrRoleDoesNotExist
-	}
-
-	addr, exists := role.getAddress(version)
-	if !exists {
-		return "", ErrVersionDoesNotExist
-	}
-
-	return address(addr), nil
+	return role.Address(), nil
 }
 
 // Owner returns the current owner address.

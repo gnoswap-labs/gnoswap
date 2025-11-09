@@ -28,16 +28,20 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	// "gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gnft"
 
-	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
-	sr "gno.land/r/gnoswap/v1/staker"
+	pl "gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
+	sr "gno.land/r/gnoswap/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
@@ -443,7 +447,7 @@ func positionIdFrom(positionId int) grc721.TokenID {
 // [SCENARIO] 6. Stake position
 // [INFO] approve NFT for staking
 // [INFO] stake position
-// [INFO] position owner after staking: g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu
+// [INFO] position owner after staking: g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3
 //
 // [SCENARIO] 7. Skip to middle of incentive period
 // [INFO] reached middle of incentive period

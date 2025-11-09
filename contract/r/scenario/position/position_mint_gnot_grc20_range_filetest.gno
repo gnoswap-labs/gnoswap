@@ -18,10 +18,14 @@ import (
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/pool"
-	"gno.land/r/gnoswap/v1/position"
+	"gno.land/r/gnoswap/pool"
+	"gno.land/r/gnoswap/position"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 )
 
 const (
@@ -205,7 +209,7 @@ func executeSwap() {
 	gns.Approve(cross, poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing swap to test ranges")
 	amount0, amount1 := pool.Swap(
 		cross,
@@ -229,8 +233,8 @@ func executeSwap() {
 func verifyFinalPositions() {
 	testing.SetRealm(adminRealm)
 
-	pos1fee0, pos1fee1 := position.UnclaimedFee(1)
-	pos2fee0, pos2fee1 := position.UnclaimedFee(2)
+	pos1fee0, pos1fee1 := position.GetUnclaimedFee(1)
+	pos2fee0, pos2fee1 := position.GetUnclaimedFee(2)
 
 	ufmt.Println("[INFO] Checking final position states")
 	ufmt.Printf("[EXPECTED] Position 1 should still be in range\n")

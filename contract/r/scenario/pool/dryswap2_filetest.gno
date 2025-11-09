@@ -12,12 +12,14 @@ import (
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
-	"gno.land/r/gnoswap/v1/pool"
+	"gno.land/r/gnoswap/pool"
+
+	_ "gno.land/r/gnoswap/pool/v1"
 )
 
 var t *testing.T
@@ -39,7 +41,7 @@ var (
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
 	posRealm        = testing.NewUserRealm(positionAddr)
 	routerAddr, _   = access.GetAddress(prbac.ROLE_ROUTER.String())
-	rouRealm        = testing.NewCodeRealm("gno.land/r/gnoswap/v1/router")
+	rouRealm        = testing.NewCodeRealm("gno.land/r/gnoswap/router")
 	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
 )
 
@@ -67,8 +69,6 @@ func main() {
 
 // testDrySwapVsActualSwap tests DrySwap prediction against actual Swap execution
 func testDrySwapVsActualSwap(t *testing.T) {
-	pool.InitPoolTest(t)
-
 	// Given: Pool exists with minted position
 	println("[INFO] Setting up pool and position for comparison test")
 	println("[INFO] Token0:", barPath)
@@ -135,7 +135,7 @@ func testDrySwapVsActualSwap(t *testing.T) {
 	bar.Approve(cross, poolAddr, 16000)
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 
 	// Execute actual swap
 	actualPoolIn, actualPoolOut := pool.Swap(

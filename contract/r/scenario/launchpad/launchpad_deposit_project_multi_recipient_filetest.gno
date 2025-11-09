@@ -9,14 +9,25 @@ import (
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	"gno.land/r/gnoswap/protocol_fee"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+
+	_ "gno.land/r/gnoswap/gov/staker"
+	_ "gno.land/r/gnoswap/gov/staker/v1"
+
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
+
+	"gno.land/r/gnoswap/gov/staker"
+
+	"gno.land/r/gnoswap/launchpad"
+	_ "gno.land/r/gnoswap/launchpad/v1"
+
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/gov/staker"
-	"gno.land/r/gnoswap/v1/launchpad"
-	"gno.land/r/gnoswap/v1/protocol_fee"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
@@ -27,10 +38,13 @@ var (
 	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	launchpadAddr, _   = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	launchpadRealm = testing.NewCodeRealm("gno.land/r/gnoswap/launchpad")
+
 	stakerAddr, _      = access.GetAddress(prbac.ROLE_STAKER.String())
 	stakerRealm        = testing.NewUserRealm(stakerAddr)
 	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 	govStakerAddr, _   = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+	govStakerRealm     = testing.NewUserRealm(govStakerAddr)
 
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
@@ -98,7 +112,7 @@ func createOBLProject() {
 	projectName := "OBL Launchpad Project"
 	rewardTokenPath := "gno.land/r/onbloc/obl"
 	rewardAmount := int64(1_000_000_000)
-	conditionPath := "gno.land/r/gnoswap/v1/gov/xgns"
+	conditionPath := "gno.land/r/gnoswap/gov/xgns"
 	conditionsAmount := "1000000"
 	tier30Ratio := int64(10)
 	tier90Ratio := int64(20)
@@ -128,6 +142,7 @@ func createOBLProject() {
 	println("[EXPECTED] Project created with ID:", projectId)
 
 	// [INFO] Validate project info
+	testing.SetRealm(launchpadRealm)
 	projectStats := unmarshal(launchpad.ApiGetProjectStatisticsByProjectId(projectId))
 	println("[EXPECTED] Project name:", projectStats["name"])
 	println("[EXPECTED] Project token path:", projectStats["tokenPath"])
@@ -170,6 +185,8 @@ func setupProtocolFee(barAmount, quxAmount int64) {
 	println("[INFO] Validating protocol fee balances")
 	println("[EXPECTED] Bar balance:", bar.BalanceOf(protocolFeeAddr))
 	println("[EXPECTED] Qux balance:", qux.BalanceOf(protocolFeeAddr))
+
+	testing.SetRealm(govStakerRealm)
 	println("[EXPECTED] Bar amount in protocol fee:", protocol_fee.GetAmountOfToken("gno.land/r/onbloc/bar"))
 	println("[EXPECTED] Qux amount in protocol fee:", protocol_fee.GetAmountOfToken("gno.land/r/onbloc/qux"))
 }
@@ -202,6 +219,7 @@ func depositGnsTo(toAddress address, projectId, projectTierId string, depositAmo
 	println("[EXPECTED] Deposit created with ID:", depositId)
 
 	// validate deposit
+	testing.SetRealm(launchpadRealm)
 	depositStats := unmarshal(launchpad.ApiGetDepositByDepositId(depositId))
 	println("[EXPECTED] Deposit amount:", depositStats["amount"])
 	println("[EXPECTED] Deposit tier:", depositStats["tier"])
@@ -264,7 +282,7 @@ func unmarshal(data string) map[string]interface{} {
 		"now":                    "1234567890",
 		"depositAmount":          "1000000000",
 		"recipient":              "g1wpex76n9vd6yzerywf047h6lqlp5qp",
-		"conditionPath":          "gno.land/r/gnoswap/v1/gov/xgns",
+		"conditionPath":          "gno.land/r/gnoswap/gov/xgns",
 		"conditionsAmount":       "1000000",
 		"tier30Ratio":            "10",
 		"tier90Ratio":            "20",

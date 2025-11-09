@@ -12,13 +12,20 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
+
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
+
+	"gno.land/r/gnoswap/pool"
+	"gno.land/r/gnoswap/position"
 
 	"gno.land/r/gnoland/wugnot"
-	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/pool"
-	"gno.land/r/gnoswap/v1/position"
-
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 )
@@ -140,7 +147,7 @@ func executeSwap() {
 	println("[DEBUG] Tick before swap:", p.Slot0Tick())
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing swap to change price")
 	amount0, amount1 := pool.Swap(
 		cross,
@@ -157,6 +164,7 @@ func executeSwap() {
 		},
 	)
 
+	testing.SetRealm(adminRealm)
 	p = pool.GetPool(barPath, fooPath, fee500)
 	println("[DEBUG] Tick after swap:", p.Slot0Tick())
 
@@ -213,6 +221,7 @@ func checkRepositionedState() {
 }
 
 func executeSwapInNewRange() {
+	testing.SetRealm(adminRealm)
 	p := pool.GetPool(barPath, fooPath, fee500)
 	println("[DEBUG] Tick before second swap:", p.Slot0Tick())
 	println("[DEBUG] Pool liquidity:", p.Liquidity().ToString())
@@ -221,7 +230,7 @@ func executeSwapInNewRange() {
 	foo.Approve(cross, poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing swap in new range")
 	amount0, amount1 := pool.Swap(
 		cross,

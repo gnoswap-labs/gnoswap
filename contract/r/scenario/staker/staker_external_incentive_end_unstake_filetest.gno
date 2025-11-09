@@ -14,14 +14,18 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	en "gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/gnft"
-	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
-	sr "gno.land/r/gnoswap/v1/staker"
+	pl "gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
+	sr "gno.land/r/gnoswap/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
@@ -33,7 +37,7 @@ var (
 	adminRealm   = testing.NewUserRealm(adminAddr)
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
-	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 

@@ -13,10 +13,15 @@ import (
 	plp "gno.land/p/gnoswap/gnsmath"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/pool"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
 
@@ -143,7 +148,7 @@ func main() {
 	println("[SCENARIO] 4. Executing swap to move tick")
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	pool.Swap(
 		cross,
 		barPath,
@@ -159,6 +164,7 @@ func main() {
 		},
 	)
 
+	testing.SetRealm(adminRealm)
 	thisPool = pool.GetPool(barPath, fooPath, fee100)
 	println("[EXPECTED] Pool tick after swap:", thisPool.Slot0Tick(), "expected: -24082")
 	println("[EXPECTED] Pool sqrt price after swap:", thisPool.Slot0SqrtPriceX96().ToString(), "expected:", testSqrtSubOne.ToString())

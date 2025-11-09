@@ -5,16 +5,20 @@ package main
 import (
 	"testing"
 
+	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/pool"
+
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
-
-	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/pool"
-
-	"gno.land/r/gnoswap/gns"
 )
 
 // Constants for fee tiers

@@ -103,7 +103,7 @@ func TestHalt_GetHaltConfig(t *testing.T) {
 	clonedConfig := GetHaltConfig()
 
 	// Modify internal state
-	haltStates.setOperationHaltState(OpTypePool, 1, true)
+	haltStates.setOperationHalted(OpTypePool, true)
 
 	// Check that the clone is independent
 	halted, err := clonedConfig.get(OpTypePool)
@@ -466,10 +466,10 @@ func TestHalt_SetOperationStatus_WithAuthorization(t *testing.T) {
 			// when/then
 			if tc.expectedHasAbort {
 				uassert.AbortsWithMessage(t, tc.expectedAbortMessage, func() {
-					SetOperationStatus(cross, tc.operationType, 1, tc.halted)
+					SetOperationStatus(cross, tc.operationType, tc.halted)
 				})
 			} else {
-				SetOperationStatus(cross, tc.operationType, 1, tc.halted)
+				SetOperationStatus(cross, tc.operationType, tc.halted)
 
 				// Verify the operation status was set correctly
 				config := GetHaltConfig()
@@ -529,7 +529,7 @@ func TestHalt_IntegrationScenarios(t *testing.T) {
 
 			// Apply custom overrides
 			for op, halted := range tc.customOperations {
-				err := haltStates.setOperationHaltState(op, 1, halted)
+				err := haltStates.setOperationHalted(op, halted)
 				uassert.NoError(t, err)
 			}
 
@@ -555,7 +555,7 @@ func TestHalt_EdgeCases(t *testing.T) {
 		configByGetter := GetHaltConfig()
 
 		// Modify internal state
-		err := haltStates.setOperationHaltState(OpTypePool, 1, true)
+		err := haltStates.setOperationHalted(OpTypePool, true)
 		uassert.NoError(t, err)
 
 		// Both should be independent of internal state and each other
@@ -640,7 +640,6 @@ func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 		description            string
 		expectedManagerNotNil  bool
 		expectedOperationCount int
-		expectedInitialVersion int
 		shouldCheckAllOpsMatch bool
 		customValidations      map[OpType]bool // For specific operation checks
 		shouldDefaultToHalted  bool            // For empty/partial configs
@@ -651,7 +650,6 @@ func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 			description:            "Should initialize with all operations not halted",
 			expectedManagerNotNil:  true,
 			expectedOperationCount: len(OpTypes()),
-			expectedInitialVersion: 1,
 			shouldCheckAllOpsMatch: true,
 			shouldDefaultToHalted:  false,
 		},
@@ -661,7 +659,6 @@ func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 			description:            "Should initialize with safe mode halt states",
 			expectedManagerNotNil:  true,
 			expectedOperationCount: len(OpTypes()),
-			expectedInitialVersion: 1,
 			shouldCheckAllOpsMatch: true,
 			shouldDefaultToHalted:  false,
 		},
@@ -671,7 +668,6 @@ func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 			description:            "Should initialize with emergency halt states",
 			expectedManagerNotNil:  true,
 			expectedOperationCount: len(OpTypes()),
-			expectedInitialVersion: 1,
 			shouldCheckAllOpsMatch: true,
 			shouldDefaultToHalted:  false,
 		},
@@ -681,7 +677,6 @@ func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 			description:            "Should initialize with all operations halted",
 			expectedManagerNotNil:  true,
 			expectedOperationCount: len(OpTypes()),
-			expectedInitialVersion: 1,
 			shouldCheckAllOpsMatch: true,
 			shouldDefaultToHalted:  false,
 		},
@@ -693,7 +688,6 @@ func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 			description:            "Should initialize with all operations halted by default",
 			expectedManagerNotNil:  true,
 			expectedOperationCount: len(OpTypes()),
-			expectedInitialVersion: 1,
 			shouldCheckAllOpsMatch: false,
 			shouldDefaultToHalted:  true,
 		},
@@ -709,7 +703,6 @@ func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 			description:            "Should initialize specified operations correctly, others default to halted",
 			expectedManagerNotNil:  true,
 			expectedOperationCount: len(OpTypes()),
-			expectedInitialVersion: 1,
 			shouldCheckAllOpsMatch: false,
 			customValidations: map[OpType]bool{
 				OpTypePool:       false, // Explicitly set to not halted
@@ -740,7 +733,6 @@ func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 			description:            "Should initialize with mixed halt states correctly",
 			expectedManagerNotNil:  true,
 			expectedOperationCount: len(OpTypes()),
-			expectedInitialVersion: 1,
 			shouldCheckAllOpsMatch: true,
 			shouldDefaultToHalted:  false,
 		},
@@ -764,30 +756,21 @@ func TestHalt_NewHaltStateManagerByConfig(t *testing.T) {
 
 			// Verify all operation types are present with correct states
 			for _, opType := range OpTypes() {
-				state, exists := manager[opType]
+				halted, exists := manager[opType]
 				uassert.True(t, exists)
-				uassert.True(t, state != nil)
-
-				// Verify initial version
-				version := state.LatestVersion()
-				uassert.Equal(t, version, tc.expectedInitialVersion)
-
-				// Verify halt state
-				isHalted, err := state.IsHalted(tc.expectedInitialVersion)
-				uassert.NoError(t, err)
 
 				if tc.shouldCheckAllOpsMatch {
 					// Check against the provided config
 					expectedHalted := config.IsHalted(opType)
-					uassert.Equal(t, isHalted, expectedHalted)
+					uassert.Equal(t, halted, expectedHalted)
 				} else if tc.customValidations != nil {
 					// Check specific operations if defined
 					if expectedHalted, exists := tc.customValidations[opType]; exists {
-						uassert.Equal(t, isHalted, expectedHalted)
+						uassert.Equal(t, halted, expectedHalted)
 					}
 				} else if tc.shouldDefaultToHalted {
 					// All operations should default to halted
-					uassert.Equal(t, isHalted, true)
+					uassert.Equal(t, halted, true)
 				}
 			}
 		})
@@ -850,20 +833,18 @@ func TestHalt_NewHaltStateManagerByConfig_Independence(t *testing.T) {
 			manager := newHaltStateManagerByConfig(config)
 
 			// when - modify one operation state
-			modifyState := manager[tc.modifyOp]
-			err := modifyState.setState(1, tc.modifyValue)
+			err := manager.setOperationHalted(tc.modifyOp, tc.modifyValue)
 			uassert.NoError(t, err)
 
 			// then - verify other operation state is unaffected
-			checkState := manager[tc.checkOp]
-			isHalted, err := checkState.IsHalted(1)
+			halted, err := manager.IsOperationHalted(tc.checkOp)
 			uassert.NoError(t, err)
-			uassert.Equal(t, isHalted, tc.expectedCheckValue)
+			uassert.Equal(t, halted, tc.expectedCheckValue)
 
 			// Additional verification - modified state should have the new value
-			modifiedIsHalted, err := modifyState.IsHalted(1)
+			modifiedHalted, err := manager.IsOperationHalted(tc.modifyOp)
 			uassert.NoError(t, err)
-			uassert.Equal(t, modifiedIsHalted, tc.modifyValue)
+			uassert.Equal(t, modifiedHalted, tc.modifyValue)
 		})
 	}
 }

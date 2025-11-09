@@ -8,15 +8,24 @@ import (
 	"testing"
 	"time"
 
-	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
+
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/pool"
-	"gno.land/r/gnoswap/v1/position"
-	"gno.land/r/gnoswap/v1/router"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/pool"
+	"gno.land/r/gnoswap/position"
+	"gno.land/r/gnoswap/router"
+
+	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 )
@@ -35,7 +44,7 @@ var (
 	adminRealm    = testing.NewUserRealm(adminAddr)
 	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
-	routerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/v1/router")
+	routerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/router")
 
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)

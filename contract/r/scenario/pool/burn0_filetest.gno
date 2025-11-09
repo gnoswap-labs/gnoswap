@@ -13,7 +13,9 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 
-	"gno.land/r/gnoswap/v1/pool"
+	"gno.land/r/gnoswap/pool"
+
+	_ "gno.land/r/gnoswap/pool/v1"
 )
 
 var t *testing.T
@@ -43,8 +45,6 @@ func main() {
 
 // testSuccessfulBurn tests successful burning of all liquidity from a position
 func testSuccessfulBurn(t *testing.T) {
-	pool.InitPoolTest(t)
-
 	// Given: Pool exists with minted position
 	barTokenPath := "gno.land/r/onbloc/bar"
 	bazTokenPath := "gno.land/r/onbloc/baz"

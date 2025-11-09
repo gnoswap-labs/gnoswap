@@ -15,12 +15,16 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/pool"
-	"gno.land/r/gnoswap/v1/position"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/pool"
+	"gno.land/r/gnoswap/position"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 )
 
 const (
@@ -154,7 +158,7 @@ func computePositionKey(
 	tickLower int32,
 	tickUpper int32,
 ) string {
-	positionPackagePath := "gno.land/r/gnoswap/v1/position"
+	positionPackagePath := "gno.land/r/gnoswap/position"
 	key := ufmt.Sprintf("%s__%d__%d", positionPackagePath, tickLower, tickUpper)
 	encoded := base64.StdEncoding.EncodeToString([]byte(key))
 	return encoded

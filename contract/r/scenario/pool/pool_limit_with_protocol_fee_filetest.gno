@@ -10,16 +10,20 @@ import (
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 
+	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/pool"
+
 	"gno.land/r/gnoland/wugnot"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
-
-	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/pool"
-
-	"gno.land/r/gnoswap/gns"
 )
 
 var t *testing.T
@@ -104,7 +108,7 @@ func main() {
 	println("[INFO] Minted position:", mint0, mint1)
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	// SWAP 1 -> 0
 	swap0, swap1 := pool.Swap(
 		cross,

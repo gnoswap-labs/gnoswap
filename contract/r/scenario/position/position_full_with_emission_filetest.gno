@@ -15,19 +15,27 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
+
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
+
+	"gno.land/r/gnoswap/pool"
+	"gno.land/r/gnoswap/position"
 
 	"gno.land/r/gnoland/wugnot"
-	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/pool"
-	"gno.land/r/gnoswap/v1/position"
 )
 
 const (
 	INT64_MAX int64 = 9223372036854775807
 
-	STAKER_PATH string  = "gno.land/r/gnoswap/v1/staker"
+	STAKER_PATH string  = "gno.land/r/gnoswap/staker"
 	WUGNOT_ADDR address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
 	MIN_PRICE string = "4295128740"
@@ -170,7 +178,7 @@ func executeSwaps() {
 	gns.Approve(cross, poolAddr, INT64_MAX)
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing swap WUGNOT -> GNS")
 	amount0, amount1 := pool.Swap(
 		cross,

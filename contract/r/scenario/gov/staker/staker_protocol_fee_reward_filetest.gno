@@ -9,12 +9,17 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	pf "gno.land/r/gnoswap/protocol_fee"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/gov/staker"
-	pf "gno.land/r/gnoswap/v1/protocol_fee"
 
+	"gno.land/r/gnoswap/gov/staker"
+	_ "gno.land/r/gnoswap/gov/staker/v1"
+
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
 )
@@ -29,6 +34,7 @@ var (
 	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 
 	gnoStakerAddr, _ = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+	gnoStakerRealm  = testing.NewUserRealm(gnoStakerAddr)
 
 	aliceAddr = testutils.TestAddress("alice")
 	bobAddr   = testutils.TestAddress("bob")
@@ -112,6 +118,7 @@ func skipBlocksAndDistribute() {
 }
 
 func protocolFeeRewardBob() {
+	testing.SetRealm(gnoStakerRealm)
 	gcr := staker.GetClaimableRewardByAddress(bobAddr)
 	ufmt.Printf("[INFO] claimable reward (bob): %s\n", gcr)
 	testing.SetRealm(bobRealm)
@@ -120,6 +127,7 @@ func protocolFeeRewardBob() {
 }
 
 func protocolFeeRewardAdmin() {
+	testing.SetRealm(gnoStakerRealm)
 	gcr := staker.GetClaimableRewardByAddress(adminAddr)
 	ufmt.Printf("[INFO] claimable reward (adminAddr): %s\n", gcr)
 

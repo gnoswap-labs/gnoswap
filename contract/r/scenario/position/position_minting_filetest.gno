@@ -14,13 +14,17 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/common"
-	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
+	pl "gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 )
 
 // Constants for addresses and approvals
@@ -140,8 +144,8 @@ func testBasicPositionMinting() {
 	println("[EXPECTED] Liquidity:", liquidity)
 	println("[EXPECTED] Amount0:", amount0)
 	println("[EXPECTED] Amount1:", amount1)
-	println("[EXPECTED] Position is not burned:", !pn.PositionGetPositionIsBurned(positionId))
-	println("[EXPECTED] Position is in range:", pn.PositionIsInRange(positionId))
+	println("[EXPECTED] Position is not burned:", !pn.IsBurned(positionId))
+	println("[EXPECTED] Position is in range:", pn.IsInRange(positionId))
 }
 
 func testZeroLiquidityMintingFailure() {

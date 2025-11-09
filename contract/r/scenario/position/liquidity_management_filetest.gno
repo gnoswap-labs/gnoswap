@@ -9,16 +9,24 @@ import (
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
-	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/testutils"
 
-	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/gnft"
-	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
+	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
+
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
+
+	pl "gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
+
+	"gno.land/r/gnoswap/gnft"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 )
@@ -32,8 +40,8 @@ const (
 var (
 	adminAddr, _         = access.GetAddress(prbac.ROLE_ADMIN.String())
 	adminRealm           = testing.NewUserRealm(adminAddr)
-	poolAddr     address = "g148tjamj80yyrm309z7rk690an22thd2l3z8ank"
-	positionAddr address = "g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5"
+	poolAddr     address = "g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v"
+	positionAddr address = "g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye"
 
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
@@ -168,7 +176,7 @@ func testAddLiquiditySuccess() {
 	println("[EXPECTED] Additional amount0:", amount0)
 	println("[EXPECTED] Additional amount1:", amount1)
 	println("[EXPECTED] Pool path:", poolPath)
-	println("[EXPECTED] Total liquidity after addition:", pn.PositionGetPositionLiquidity(positionId).ToString())
+	println("[EXPECTED] Total liquidity after addition:", pn.GetPositionLiquidity(positionId).ToString())
 }
 
 func testAddLiquidityWithInvalidSlippage() {
@@ -365,7 +373,7 @@ func testDecreaseLiquiditySuccess() {
 	)
 
 	println("[INFO] Verifying position exists before decrease")
-	existsBefore := pn.PositionGetPositionIsBurned(positionId)
+	existsBefore := pn.IsBurned(positionId)
 
 	// alice is position owner, so she can approve gnft
 	testing.SetRealm(aliceRealm)
@@ -384,7 +392,7 @@ func testDecreaseLiquiditySuccess() {
 	)
 
 	println("[INFO] Verifying position after decrease")
-	existsAfter := pn.PositionGetPositionIsBurned(positionId)
+	existsAfter := pn.IsBurned(positionId)
 
 	// then
 	println("[EXPECTED] Liquidity decreased successfully")
@@ -394,7 +402,7 @@ func testDecreaseLiquiditySuccess() {
 	println("[EXPECTED] Collected fee1:", fee1)
 	println("[EXPECTED] Collected amount0:", amount0)
 	println("[EXPECTED] Collected amount1:", amount1)
-	println("[EXPECTED] Remaining liquidity:", pn.PositionGetPositionLiquidity(positionId).ToString())
+	println("[EXPECTED] Remaining liquidity:", pn.GetPositionLiquidity(positionId).ToString())
 }
 
 func testDecreaseLiquidityWithOverRemoval() {

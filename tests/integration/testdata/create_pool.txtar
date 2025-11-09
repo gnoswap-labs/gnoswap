@@ -27,20 +27,20 @@ loadpkg gno.land/r/gnoswap/referral
 loadpkg gno.land/r/gnoswap/v1/gnft
 loadpkg gno.land/r/gnoswap/v1/community_pool
 loadpkg gno.land/r/gnoswap/v1/protocol_fee
-loadpkg gno.land/r/gnoswap/v1/pool
-loadpkg gno.land/r/gnoswap/v1/position
-loadpkg gno.land/r/gnoswap/v1/router
-loadpkg gno.land/r/gnoswap/v1/staker
+loadpkg gno.land/r/gnoswap/pool
+loadpkg gno.land/r/gnoswap/position
+loadpkg gno.land/r/gnoswap/router
+loadpkg gno.land/r/gnoswap/staker
 loadpkg gno.land/r/gnoswap/v1/gov/xgns
-loadpkg gno.land/r/gnoswap/v1/gov/staker
-loadpkg gno.land/r/gnoswap/v1/gov/governance
-loadpkg gno.land/r/gnoswap/v1/launchpad
+loadpkg gno.land/r/gnoswap/gov/staker
+loadpkg gno.land/r/gnoswap/gov/governance
+loadpkg gno.land/r/gnoswap/launchpad
 
 ## start a new node
 gnoland start
 
 ### create pool
-gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g148tjamj80yyrm309z7rk690an22thd2l3z8ank -args 9223372036854775807 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test admin
-gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/pool -func CreatePool -args "gno.land/r/gnoland/wugnot" -args "gno.land/r/gnoswap/gns" -args 3000 -args 79228162514264337593543950337 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775807 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func CreatePool -args "gno.land/r/gnoland/wugnot" -args "gno.land/r/gnoswap/gns" -args 3000 -args 79228162514264337593543950337 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test admin
 
 stdout '{"key":"poolPath","value":"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"}'

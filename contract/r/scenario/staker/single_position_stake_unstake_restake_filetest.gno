@@ -12,20 +12,24 @@ import (
 	"gno.land/p/demo/tokens/grc721"
 	"gno.land/p/nt/ufmt"
 
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
-	"gno.land/r/gnoswap/v1/common"
 
 	"gno.land/r/gnoswap/access"
 
+	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/gnft"
 
-	pl "gno.land/r/gnoswap/v1/pool"
-	pn "gno.land/r/gnoswap/v1/position"
-	sr "gno.land/r/gnoswap/v1/staker"
+	pl "gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
+	sr "gno.land/r/gnoswap/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -38,7 +42,7 @@ var (
 
 	stakerAddr, _ = access.GetAddress(prabc.ROLE_STAKER.String())
 	stakerUser    = stakerAddr
-	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/v1/staker")
+	stakerRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
 
 	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
 
@@ -303,7 +307,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 4. First stake operation
 // [INFO] approve NFT to staker for first stake
 // [INFO] stake position 01 for the first time
-// [EXPECTED] position owner after first stake: g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu
+// [EXPECTED] position owner after first stake: g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3
 //
 // [SCENARIO] 5. Collect rewards after first stake
 // [INFO] skip blocks to accumulate rewards
@@ -318,7 +322,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [SCENARIO] 7. Restake operation
 // [INFO] approve NFT to staker for restake
 // [INFO] restake position 01
-// [EXPECTED] position owner after restake: g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu
+// [EXPECTED] position owner after restake: g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3
 // [INFO] position successfully restaked
 //
 // [SCENARIO] 8. Collect rewards after restake

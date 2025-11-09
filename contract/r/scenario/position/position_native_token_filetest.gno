@@ -10,14 +10,24 @@ import (
 	"strconv"
 	"testing"
 
-	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/ufmt"
-	"gno.land/r/gnoland/wugnot"
+
+	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
+
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
+
+	"gno.land/r/gnoswap/pool"
+	"gno.land/r/gnoswap/position"
+
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/pool"
-	"gno.land/r/gnoswap/v1/position"
 )
 
 const (
@@ -126,7 +136,7 @@ func mintPosition() {
 
 func checkUnclaimedFeesBeforeSwap() {
 	testing.SetRealm(adminRealm)
-	amount0, amount1 := position.UnclaimedFee(1)
+	amount0, amount1 := position.GetUnclaimedFee(1)
 
 	ufmt.Printf("[EXPECTED] Unclaimed fee0 should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Unclaimed fee1 should be %s\n", amount1)
@@ -144,7 +154,7 @@ func executeSwap() {
 	wugnot.Approve(cross, routerAddr, INT64_MAX)
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	ufmt.Println("[INFO] Executing swap")
 	amount0, amount1 := pool.Swap(
 		cross,
@@ -167,7 +177,7 @@ func executeSwap() {
 
 func checkUnclaimedFeesAfterSwap() {
 	testing.SetRealm(adminRealm)
-	amount0, amount1 := position.UnclaimedFee(1)
+	amount0, amount1 := position.GetUnclaimedFee(1)
 
 	ufmt.Printf("[EXPECTED] Unclaimed fee0 should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Unclaimed fee1 should be %s\n", amount1)

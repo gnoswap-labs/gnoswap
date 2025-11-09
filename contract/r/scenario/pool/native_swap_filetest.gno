@@ -7,17 +7,21 @@ import (
 	"strconv"
 	"testing"
 
-	"gno.land/r/gnoland/wugnot"
-
-	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/pool"
-	"gno.land/r/onbloc/foo"
+	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/pool"
+
+	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/onbloc/foo"
 )
 
 // Constants for fee tiers
@@ -131,7 +135,7 @@ func TestSwapBuyNative() {
 	foo.Approve(cross, poolAddr, 10000)
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	amount0, amount1 := pool.Swap(
 		cross,
 		WRAPPED_WUGNOT, // token0
@@ -167,7 +171,7 @@ func TestSwapSellNative() {
 	wugnot.Approve(cross, poolAddr, 27123)
 
 	// set current realm and origin caller
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/v1/router"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	amount0, amount1 := pool.Swap( // ugnot 10_000 > foo ??
 		cross,
 		WRAPPED_WUGNOT, // token0

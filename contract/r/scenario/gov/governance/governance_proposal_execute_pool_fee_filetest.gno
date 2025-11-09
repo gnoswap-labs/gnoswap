@@ -9,21 +9,33 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/gov/governance"
-	"gno.land/r/gnoswap/v1/pool"
+	"gno.land/r/gnoswap/pool"
 
-	govStaker "gno.land/r/gnoswap/v1/gov/staker"
+	govStaker "gno.land/r/gnoswap/gov/staker"
+	_ "gno.land/r/gnoswap/gov/staker/v1"
+
+	"gno.land/r/gnoswap/gov/governance"
+	_ "gno.land/r/gnoswap/gov/governance/v1"
+
+	"gno.land/r/gnoswap/gns"
 )
 
 var (
-	adminAddr, _     = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminAddr        = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	govStakerAddr    = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
 	currentBlockTime = int64(2)
 )
 
 func main() {
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
 
 	println("[SCENARIO] 1. Delegate gns to admin")
@@ -62,7 +74,6 @@ func delegateGnsToAdmin() {
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	govStakerAddr := address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
 	gns.Approve(cross, govStakerAddr, delegatedAmount)
 	govStaker.Delegate(cross, adminAddr, int64(delegatedAmount), "")
 
@@ -71,7 +82,7 @@ func delegateGnsToAdmin() {
 
 func proposeChangePoolCreationFee() int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	proposalID := governance.ProposeParameterChange(cross, "createfee", "change", 1, "gno.land/r/gnoswap/v1/pool*EXE*SetPoolCreationFee*EXE*500")
+	proposalID := governance.ProposeParameterChange(cross, "createfee", "change", 1, "gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*500")
 
 	ufmt.Printf("[INFO] Change Pool Creation Fee Proposal ID: %d\n", proposalID)
 	return proposalID

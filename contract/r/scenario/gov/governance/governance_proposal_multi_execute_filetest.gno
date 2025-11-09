@@ -9,22 +9,36 @@ import (
 	"testing"
 	"time"
 
-	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/ufmt"
+
+	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/pool/v1"
+	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
+
+	gs "gno.land/r/gnoswap/gov/staker"
+	_ "gno.land/r/gnoswap/gov/staker/v1"
+
+	"gno.land/r/gnoswap/gov/governance"
+	_ "gno.land/r/gnoswap/gov/governance/v1"
+
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/v1/gov/governance"
-	gs "gno.land/r/gnoswap/v1/gov/staker"
 )
 
 var (
-	adminAddr, _     = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminAddr        = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	govStakerAddr    = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
 	currentBlockTime = int64(2)
 )
 
 func main() {
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	config := governance.GetLatestConfig()
 
 	println("[SCENARIO] 1. Delegate gns to admin")
@@ -66,7 +80,6 @@ func delegateGnsToAdmin() {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	emission.SetDistributionStartTime(cross, time.Now().Unix()+1)
 
-	govStakerAddr := address("g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa")
 	gns.Approve(cross, govStakerAddr, delegatedAmount)
 	gs.Delegate(cross, adminAddr, int64(delegatedAmount), "")
 
@@ -81,7 +94,7 @@ func proposeMultiExecute() int64 {
 		"test_title",
 		"test_description",
 		int64(2),
-		"gno.land/r/gnoswap/v1/pool*EXE*SetPoolCreationFee*EXE*1000*GOV*gno.land/r/gnoswap/v1/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d,905",
+		"gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*1000*GOV*gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d,905",
 	)
 	ufmt.Printf("[INFO] Multi Execute Proposal ID: %d\n", proposalID)
 	return proposalID
@@ -104,7 +117,7 @@ func voteProposal(proposalID int64) {
 
 // [SCENARIO] 4. Execute Multi Proposal
 func executeMultiProposal(proposalID int64) {
-	communityPoolAddr := address("g100fnnlz5eh87p5hvwt8pf279lxaelm8k8md049")
+	communityPoolAddr := address("g13lpjmjhl2du7whed3wxe4n5508txxja6ezxeg7")
 
 	prevBlockTime := currentBlockTime
 	prevCommunityPool := gns.BalanceOf(communityPoolAddr)
