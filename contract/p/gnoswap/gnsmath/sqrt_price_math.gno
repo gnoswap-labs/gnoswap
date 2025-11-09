@@ -100,7 +100,7 @@ func getNextPriceAmount1Add(
 	if amount.Lte(max160) {
 		// Use local variables to avoid allocation conflicts
 		shifted := u256.Zero().Lsh(amount, Q96_RESOLUTION)
-		quotient = u256.Zero().Div(shifted, liquidity)
+		quotient = u256.Zero().MustDiv(shifted, liquidity)
 	} else {
 		quotient = u256.MulDiv(amount, q96, liquidity)
 	}
