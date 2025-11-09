@@ -48,10 +48,6 @@ func (p *poolSwapParams) IsValid() bool {
 		return false
 	}
 
-	if !p.isValidPriceLimit() {
-		return false
-	}
-
 	if !p.isValidPoolExists() {
 		return false
 	}
@@ -88,24 +84,6 @@ func (p *poolSwapParams) isValidBasicParams() bool {
 
 	// Token paths must be different and not empty
 	if p.token0Path == p.token1Path || p.token0Path == "" || p.token1Path == "" {
-		return false
-	}
-
-	return true
-}
-
-// isValidPriceLimit checks if price limit is parseable and within valid range
-func (p *poolSwapParams) isValidPriceLimit() bool {
-	priceLimit, err := u256.FromDecimal(p.sqrtPriceLimitX96)
-	if err != nil {
-		return false
-	}
-
-	minSqrtRatio := u256.MustFromDecimal(MIN_SQRT_RATIO)
-	maxSqrtRatio := u256.MustFromDecimal(MAX_SQRT_RATIO)
-
-	// Price limit must be within bounds
-	if priceLimit.Cmp(minSqrtRatio) < 0 || priceLimit.Cmp(maxSqrtRatio) > 0 {
 		return false
 	}
 
