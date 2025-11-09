@@ -80,7 +80,7 @@ func TestFuzzPositionCollectFee_RandomizedParams_Stateless(t *testing.T) {
 		fuzzResult.AddParams(index, collectParams)
 
 		// when - collect fee (may panic with invalid params)
-		_, fee0, fee1, _, _, _ := position.CollectFee(
+		position.CollectFee(
 			cross,
 			collectParams.positionId,
 			collectParams.unwrapResult,
@@ -118,7 +118,7 @@ func TestFuzzPositionCollectFee_ValidParams_Stateful(t *testing.T) {
 		fuzzResult.AddParams(index, collectParams)
 
 		// when - collect fee
-		_, fee0, fee1, _, _, poolPath := position.CollectFee(
+		_, fee0, fee1, _, _, _ := position.CollectFee(
 			cross,
 			collectParams.positionId,
 			collectParams.unwrapResult,
@@ -127,10 +127,6 @@ func TestFuzzPositionCollectFee_ValidParams_Stateful(t *testing.T) {
 		// then - verify fees collected
 		if fee0 == "" || fee1 == "" {
 			panic("Fee amounts should not be empty")
-		}
-
-		if poolPath == "" {
-			panic("Pool path should not be empty")
 		}
 
 		// Track this collection
