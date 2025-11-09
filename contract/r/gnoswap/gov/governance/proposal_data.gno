@@ -27,6 +27,15 @@ func (p *ProposalMetadata) Description() string {
 	return p.description
 }
 
+/* Setter methods */
+func (p *ProposalMetadata) SetTitle(title string) {
+	p.title = strings.TrimSpace(title)
+}
+
+func (p *ProposalMetadata) SetDescription(description string) {
+	p.description = strings.TrimSpace(description)
+}
+
 // NewProposalMetadata creates a new proposal metadata instance with trimmed input.
 //
 // Parameters:
@@ -74,6 +83,19 @@ func (p *ProposalData) Execution() *ExecutionInfo {
 	return p.execution
 }
 
+/* Setter methods */
+func (p *ProposalData) SetProposalType(proposalType ProposalType) {
+	p.proposalType = proposalType
+}
+
+func (p *ProposalData) SetCommunityPoolSpend(communityPoolSpend *CommunityPoolSpendInfo) {
+	p.communityPoolSpend = communityPoolSpend
+}
+
+func (p *ProposalData) SetExecution(execution *ExecutionInfo) {
+	p.execution = execution
+}
+
 // NewProposalData creates a new proposal data instance with the specified components.
 //
 // Parameters:
@@ -111,6 +133,11 @@ func (i *CommunityPoolSpendInfo) To() address       { return i.to }
 func (i *CommunityPoolSpendInfo) TokenPath() string { return i.tokenPath }
 func (i *CommunityPoolSpendInfo) Amount() int64     { return i.amount }
 
+/* Setter methods */
+func (i *CommunityPoolSpendInfo) SetTo(to address)              { i.to = to }
+func (i *CommunityPoolSpendInfo) SetTokenPath(tokenPath string) { i.tokenPath = tokenPath }
+func (i *CommunityPoolSpendInfo) SetAmount(amount int64)        { i.amount = amount }
+
 // ExecutionInfo contains information for parameter change execution.
 // Messages are encoded strings that specify function calls and parameters.
 type ExecutionInfo struct {
@@ -128,6 +155,10 @@ func NewExecutionInfo(num int64, msgs []string) *ExecutionInfo {
 /* Getter methods */
 func (i *ExecutionInfo) Num() int64     { return i.num }
 func (i *ExecutionInfo) Msgs() []string { return i.msgs }
+
+/* Setter methods */
+func (i *ExecutionInfo) SetNum(num int64)      { i.num = num }
+func (i *ExecutionInfo) SetMsgs(msgs []string) { i.msgs = msgs }
 
 // ParameterChangeInfo represents a single parameter change to be executed.
 type ParameterChangeInfo struct {
@@ -148,3 +179,8 @@ func NewParameterChangeInfo(pkgPath string, function string, params []string) Pa
 func (i *ParameterChangeInfo) PkgPath() string  { return i.pkgPath }
 func (i *ParameterChangeInfo) Function() string { return i.function }
 func (i *ParameterChangeInfo) Params() []string { return i.params }
+
+/* Setter methods */
+func (i *ParameterChangeInfo) SetPkgPath(pkgPath string)   { i.pkgPath = pkgPath }
+func (i *ParameterChangeInfo) SetFunction(function string) { i.function = function }
+func (i *ParameterChangeInfo) SetParams(params []string)   { i.params = params }

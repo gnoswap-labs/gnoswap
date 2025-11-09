@@ -83,6 +83,15 @@ func (p *Proposal) Metadata() *ProposalMetadata {
 	return p.metadata
 }
 
+/* Setter methods */
+func (p *Proposal) SetID(id int64)                         { p.id = id }
+func (p *Proposal) SetProposer(proposer address)           { p.proposer = proposer }
+func (p *Proposal) SetStatus(status *ProposalStatus)       { p.status = status }
+func (p *Proposal) SetMetadata(metadata *ProposalMetadata) { p.metadata = metadata }
+func (p *Proposal) SetData(data *ProposalData)             { p.data = data }
+func (p *Proposal) SetCreatedAt(createdAt int64)           { p.createdAt = createdAt }
+func (p *Proposal) SetCreatedHeight(createdHeight int64)   { p.createdHeight = createdHeight }
+func (p *Proposal) SetConfigVersion(configVersion int64)   { p.configVersion = configVersion }
 
 // IsTextType checks if this is a text proposal.
 func (p *Proposal) IsTextType() bool {
