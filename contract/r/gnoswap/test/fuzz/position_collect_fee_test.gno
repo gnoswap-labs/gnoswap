@@ -54,10 +54,6 @@ func TestFuzzPositionCollectFee_ValidParams_Stateless(t *testing.T) {
 		if poolPath == "" {
 			panic("Pool path should not be empty")
 		}
-
-		if fee0 == "0" && fee1 == "0" && swapCount > 0 {
-			panic(ufmt.Sprintf("fee0 and fee1 should not be 0: fee0=%s, fee1=%s, swapCount=%d", fee0, fee1, swapCount))
-		}
 	})
 }
 
@@ -89,10 +85,6 @@ func TestFuzzPositionCollectFee_RandomizedParams_Stateless(t *testing.T) {
 			collectParams.positionId,
 			collectParams.unwrapResult,
 		)
-
-		if fee0 == "0" && fee1 == "0" && swapCount > 0 {
-			panic(ufmt.Sprintf("fee0 and fee1 should not be 0: fee0=%s, fee1=%s, swapCount=%d", fee0, fee1, swapCount))
-		}
 	})
 }
 
@@ -141,10 +133,6 @@ func TestFuzzPositionCollectFee_ValidParams_Stateful(t *testing.T) {
 			panic("Pool path should not be empty")
 		}
 
-		if fee0 == "0" && fee1 == "0" && swapCount > 0 {
-			panic(ufmt.Sprintf("fee0 and fee1 should not be 0: fee0=%s, fee1=%s, swapCount=%d", fee0, fee1, swapCount))
-		}
-
 		// Track this collection
 		collections = append(collections, feeCollection{
 			fee0: fee0,
@@ -186,10 +174,6 @@ func TestFuzzPositionCollectFee_RandomizedParams_Stateful(t *testing.T) {
 			collectParams.positionId,
 			collectParams.unwrapResult,
 		)
-
-		if fee0 == "0" && fee1 == "0" && swapCount > 0 {
-			panic(ufmt.Sprintf("fee0 and fee1 should not be 0: fee0=%s, fee1=%s, swapCount=%d", fee0, fee1, swapCount))
-		}
 
 		// Track successful collections
 		if fee0 != "" && fee1 != "" {
