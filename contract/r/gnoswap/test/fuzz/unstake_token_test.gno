@@ -5,64 +5,59 @@ import (
 
 	"gno.land/p/gnoswap/fuzz"
 	"gno.land/p/gnoswap/fuzzutils"
+	"gno.land/r/gnoswap/staker"
 )
 
-// TestFuzzUnStakeToken_ValidParams_Stateless fuzzes the UnStakeToken function.
-func TestFuzzUnStakeToken_ValidParams_Stateless(t *testing.T) {
+// TestFuzzUnStakeToken_InternalIncentive_Stateless fuzzes the StakeToken function.
+func TestFuzzUnStakeToken_InternalIncentive_Stateless(t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// initialize the states for the stateless fuzz test
 		initStates(t)
 
-		params := NewRandomizedExactInSwapRouteParams(ft)
+		_, internalIncentiveTier, positionID := setupInternalIncentivePoolAndPosition(ft)
 
-		setupIterations := fuzz.IntRange(1, 10).Draw(ft, "setupIterations").(int)
-		for i := 0; i < setupIterations; i++ {
-			setupRouterMintPositionByRoutePath(ft, params.routeArr)
+		isStaked := internalIncentiveTier > 0 && fuzz.Bool().Draw(ft, "isStaked").(bool)
+		if isStaked {
+			setupStakePosition(ft, positionID)
 		}
+
+		params := NewValidUnStakeTokenParams(ft, positionID, isStaked)
 
 		// add parameters to the fuzz result
 		fuzzResult.AddParams(index, params)
 
-		runTestExactInSwapRoute(ft, params)
+		runTestUnStakeToken(ft, params)
 	})
 }
 
-// TestFuzzUnStakeToken_RandomizedParams_Stateless fuzzes the UnStakeToken function.
-func TestFuzzUnStakeToken_RandomizedParams_Stateless(t *testing.T) {
+// TestFuzzUnStakeToken_ExternalIncentive_Stateless fuzzes the StakeToken function.
+func TestFuzzUnStakeToken_ExternalIncentive_Stateless(t *testing.T) {
 	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// initialize the states for the stateless fuzz test
 		initStates(t)
 
-		params := NewRandomizedExactInSwapRouteParams(ft)
+		_, _, positionID := setupExternalRewardPoolAndPosition(ft)
 
-		setupIterations := fuzz.IntRange(1, 10).Draw(ft, "setupIterations").(int)
-		for i := 0; i < setupIterations; i++ {
-			setupRouterMintPositionByRoutePath(ft, params.routeArr)
+		isStaked := fuzz.Bool().Draw(ft, "isStaked").(bool)
+		if isStaked {
+			setupStakePosition(ft, positionID)
 		}
+
+		params := NewValidUnStakeTokenParams(ft, positionID, isStaked)
 
 		// add parameters to the fuzz result
 		fuzzResult.AddParams(index, params)
 
-		runTestExactInSwapRoute(ft, params)
+		runTestUnStakeToken(ft, params)
 	})
 }
 
-// TestFuzzExactInSwapRoute_RandomizedParams_Stateful fuzzes the ExactInSwapRoute function.
-func TestFuzzUnStakeToken_RandomizedParams_Stateful(t *testing.T) {
-	// initialize the states for the stateful fuzz test
-	initStates(t)
-
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
-		params := NewRandomizedExactInSwapRouteParams(ft)
-
-		setupIterations := fuzz.IntRange(1, 10).Draw(ft, "setupIterations").(int)
-		for i := 0; i < setupIterations; i++ {
-			setupRouterMintPositionByRoutePath(ft, params.routeArr)
-		}
-
-		// add parameters to the fuzz result
-		fuzzResult.AddParams(index, params)
-
-		runTestExactInSwapRoute(ft, params)
-	})
+// runTestStakeToken runs the test swap route.
+func runTestUnStakeToken(ft *fuzz.T, params *unStakeTokenParams) {
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	staker.UnStakeToken(
+		cross,
+		params.positionID,
+		false,
+	)
 }

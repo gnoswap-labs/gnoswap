@@ -1,20 +1,22 @@
 package fuzz
 
 import (
+	"strings"
+
 	"gno.land/p/gnoswap/fuzz"
 	"gno.land/p/nt/ufmt"
-	"gno.land/r/gnoswap/position"
-	"gno.land/r/gnoswap/staker"
 )
 
 // stakeTokenParams is the parameters for the ExactOutSwapRoute fuzz test.
 type stakeTokenParams struct {
-	positionID uint64
-	referrer   string
+	positionID            uint64
+	internalIncentiveTier uint64
+	externalIncentiveIds  []string
 }
 
 func (p *stakeTokenParams) ToString() string {
-	return ufmt.Sprintf("positionID: %d, referrer: %s", p.positionID, p.referrer)
+	externalIncentiveIds := strings.Join(p.externalIncentiveIds, ",")
+	return ufmt.Sprintf("positionID: %d, internalIncentiveTier: %d, externalIncentiveIds: %s", p.positionID, p.internalIncentiveTier, externalIncentiveIds)
 }
 
 func (p *stakeTokenParams) IsValid() bool {
@@ -22,29 +24,29 @@ func (p *stakeTokenParams) IsValid() bool {
 }
 
 func (p *stakeTokenParams) isValidStake() bool {
-	positionInfo, exist := position.GetPosition(p.positionID)
-	if !exist {
-		return false
-	}
-
-	poolPath := positionInfo.PoolKey()
-
-	poolTier := staker.GetPoolTier(poolPath)
-	if poolTier > 0 {
+	if p.internalIncentiveTier > 0 {
 		return true
 	}
 
-	poolTiers := staker.GetPoolIncentiveIdList(poolPath)
-	if len(poolTiers) > 0 {
+	if len(p.externalIncentiveIds) > 0 {
 		return true
 	}
 
 	return false
 }
 
+func (p *stakeTokenParams) setInternalIncentiveTier(tier uint64) {
+	p.internalIncentiveTier = tier
+}
+
+func (p *stakeTokenParams) addExternalIncentiveId(id string) {
+	p.externalIncentiveIds = append(p.externalIncentiveIds, id)
+}
+
 func NewValidStakeTokenParams(t *fuzz.T, positionID uint64) *stakeTokenParams {
 	return &stakeTokenParams{
-		positionID: positionID,
-		referrer:   "",
+		positionID:            positionID,
+		internalIncentiveTier: 0,
+		externalIncentiveIds:  make([]string, 0),
 	}
 }
