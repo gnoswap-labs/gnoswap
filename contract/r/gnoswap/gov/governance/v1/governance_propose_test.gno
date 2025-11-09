@@ -358,7 +358,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			// when
 			if tt.expectedHasAbort {
 				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
-					func (cur realm) {
+					func(cur realm) {
 						gov.ProposeCommunityPoolSpend(tt.title, tt.description, tt.to, tt.tokenPath, tt.amount)
 					}(cross)
 				})
@@ -407,8 +407,8 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			name:          "success - create parameter change proposal",
 			title:         "Parameter Change",
 			description:   "Change system parameters",
-			numToExecute:  2,
-			executions:    "gno.land/r/demo/token*EXE*setParam*EXE*100*GOV*gno.land/r/demo/pool*EXE*setFee*EXE*500",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*0",
 			callerAddress: testutils.TestAddress("proposer"),
 			setupConfig: &governance.Config{
 				VotingStartDelay:              86400,
@@ -476,7 +476,157 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || invalid parameter change info",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-015] invalid message format || execution[0]: expected 3 parts (pkgPath, function, params), got 1",
+		},
+		{
+			name:          "fail - invalid package path (handler not found)",
+			title:         "Parameter Change",
+			description:   "Change system parameters with invalid package",
+			numToExecute:  1,
+			executions:    "gno.land/r/invalid/package*EXE*SetPoolTier*EXE*pool1,1",
+			callerAddress: testutils.TestAddress("proposer"),
+			setupConfig: &governance.Config{
+				VotingStartDelay:              86400,
+				VotingPeriod:                  604800,
+				VotingWeightSmoothingDuration: 86400,
+				Quorum:                        50,
+				ProposalCreationThreshold:     1_000_000_000,
+				ExecutionDelay:                86400,
+				ExecutionWindow:               2592000,
+			},
+			setupGnsBalance:     10_000_000_000,
+			setupActiveProposal: false,
+			setupUserVotes: map[string]*governance.VotingInfo{
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
+			},
+			maxVotingWeight:  5_000_000_000,
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-024] invalid execution: handler not found || execution[0]: handler not found for gno.land/r/invalid/package:SetPoolTier (key: gno.land/r/invalid/package:SetPoolTier)",
+		},
+		{
+			name:          "fail - invalid function name (handler not found)",
+			title:         "Parameter Change",
+			description:   "Change system parameters with invalid function",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/staker*EXE*InvalidFunction*EXE*param1",
+			callerAddress: testutils.TestAddress("proposer"),
+			setupConfig: &governance.Config{
+				VotingStartDelay:              86400,
+				VotingPeriod:                  604800,
+				VotingWeightSmoothingDuration: 86400,
+				Quorum:                        50,
+				ProposalCreationThreshold:     1_000_000_000,
+				ExecutionDelay:                86400,
+				ExecutionWindow:               2592000,
+			},
+			setupGnsBalance:     10_000_000_000,
+			setupActiveProposal: false,
+			setupUserVotes: map[string]*governance.VotingInfo{
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
+			},
+			maxVotingWeight:  5_000_000_000,
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-024] invalid execution: handler not found || execution[0]: handler not found for gno.land/r/gnoswap/staker:InvalidFunction (key: gno.land/r/gnoswap/staker:InvalidFunction)",
+		},
+		{
+			name:          "fail - invalid parameter count (too few)",
+			title:         "Parameter Change",
+			description:   "Change system parameters with wrong parameter count",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/staker*EXE*SetPoolTier*EXE*pool1",
+			callerAddress: testutils.TestAddress("proposer"),
+			setupConfig: &governance.Config{
+				VotingStartDelay:              86400,
+				VotingPeriod:                  604800,
+				VotingWeightSmoothingDuration: 86400,
+				Quorum:                        50,
+				ProposalCreationThreshold:     1_000_000_000,
+				ExecutionDelay:                86400,
+				ExecutionWindow:               2592000,
+			},
+			setupGnsBalance:     10_000_000_000,
+			setupActiveProposal: false,
+			setupUserVotes: map[string]*governance.VotingInfo{
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
+			},
+			maxVotingWeight:  5_000_000_000,
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || execution[0]: expected 2 parameters for gno.land/r/gnoswap/staker:SetPoolTier, got 1",
+		},
+		{
+			name:          "fail - invalid parameter count (too many)",
+			title:         "Parameter Change",
+			description:   "Change system parameters with wrong parameter count",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*100,200",
+			callerAddress: testutils.TestAddress("proposer"),
+			setupConfig: &governance.Config{
+				VotingStartDelay:              86400,
+				VotingPeriod:                  604800,
+				VotingWeightSmoothingDuration: 86400,
+				Quorum:                        50,
+				ProposalCreationThreshold:     1_000_000_000,
+				ExecutionDelay:                86400,
+				ExecutionWindow:               2592000,
+			},
+			setupGnsBalance:     10_000_000_000,
+			setupActiveProposal: false,
+			setupUserVotes: map[string]*governance.VotingInfo{
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
+			},
+			maxVotingWeight:  5_000_000_000,
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || execution[0]: expected 1 parameters for gno.land/r/gnoswap/pool:SetPoolCreationFee, got 2",
+		},
+		{
+			name:          "fail - empty package path",
+			title:         "Parameter Change",
+			description:   "Change system parameters with empty package path",
+			numToExecute:  1,
+			executions:    "*EXE*SetPoolTier*EXE*pool1,1",
+			callerAddress: testutils.TestAddress("proposer"),
+			setupConfig: &governance.Config{
+				VotingStartDelay:              86400,
+				VotingPeriod:                  604800,
+				VotingWeightSmoothingDuration: 86400,
+				Quorum:                        50,
+				ProposalCreationThreshold:     1_000_000_000,
+				ExecutionDelay:                86400,
+				ExecutionWindow:               2592000,
+			},
+			setupGnsBalance:     10_000_000_000,
+			setupActiveProposal: false,
+			setupUserVotes: map[string]*governance.VotingInfo{
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
+			},
+			maxVotingWeight:  5_000_000_000,
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || execution[0]: package path is empty",
+		},
+		{
+			name:          "fail - empty function name",
+			title:         "Parameter Change",
+			description:   "Change system parameters with empty function name",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/staker*EXE**EXE*pool1,1",
+			callerAddress: testutils.TestAddress("proposer"),
+			setupConfig: &governance.Config{
+				VotingStartDelay:              86400,
+				VotingPeriod:                  604800,
+				VotingWeightSmoothingDuration: 86400,
+				Quorum:                        50,
+				ProposalCreationThreshold:     1_000_000_000,
+				ExecutionDelay:                86400,
+				ExecutionWindow:               2592000,
+			},
+			setupGnsBalance:     10_000_000_000,
+			setupActiveProposal: false,
+			setupUserVotes: map[string]*governance.VotingInfo{
+				testutils.TestAddress("proposer").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("proposer")),
+			},
+			maxVotingWeight:  5_000_000_000,
+			expectedHasAbort: true,
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || execution[0]: function name is empty",
 		},
 	}
 
@@ -498,7 +648,7 @@ func TestGovernancePropose_ProposeParameterChange(t *testing.T) {
 			// when
 			if tt.expectedHasAbort {
 				uassert.AbortsWithMessage(t, tt.expectedAbortMsg, func() {
-					func (cur realm) {
+					func(cur realm) {
 						testing.SetRealm(govRealm)
 						gov.ProposeParameterChange(tt.title, tt.description, tt.numToExecute, tt.executions)
 					}(cross)
@@ -611,7 +761,7 @@ func TestGovernancePropose_ProposeTextInputValidation(t *testing.T) {
 			// when & then
 			if tt.shouldFail {
 				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-					func (cur realm) {
+					func(cur realm) {
 						testing.SetRealm(govRealm)
 						gov.ProposeText(tt.title, tt.description)
 					}(cross)
@@ -831,7 +981,7 @@ func TestGovernancePropose_ProposalStateValidation(t *testing.T) {
 			// when & then
 			if tt.shouldFail {
 				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-					func (cur realm) {
+					func(cur realm) {
 						testing.SetRealm(govRealm)
 						gov.ProposeText("New Proposal", "New Description")
 					}(cross)
@@ -931,7 +1081,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 			// when & then
 			if tt.shouldFail {
 				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-					func (cur realm) {
+					func(cur realm) {
 						testing.SetRealm(govRealm)
 						gov.ProposeCommunityPoolSpend("Community Pool Spend", "Description", tt.to, tt.tokenPath, tt.amount)
 					}(cross)
@@ -962,80 +1112,81 @@ func TestGovernancePropose_ParameterChangeValidation(t *testing.T) {
 		shouldFail    bool
 	}{
 		{
-			name:         "success - single execution",
-			numToExecute: 1,
-			executions:   "gno.land/r/demo/token*EXE*setParam*EXE*100",
-			shouldFail:   false,
-		},
-		{
 			name:         "success - 10 executions (maximum)",
 			numToExecute: 10,
-			executions: "gno.land/r/demo/token1*EXE*setParam*EXE*100*GOV*" +
-				"gno.land/r/demo/token2*EXE*setParam*EXE*200*GOV*" +
-				"gno.land/r/demo/token3*EXE*setParam*EXE*300*GOV*" +
-				"gno.land/r/demo/token4*EXE*setParam*EXE*400*GOV*" +
-				"gno.land/r/demo/token5*EXE*setParam*EXE*500*GOV*" +
-				"gno.land/r/demo/token6*EXE*setParam*EXE*600*GOV*" +
-				"gno.land/r/demo/token7*EXE*setParam*EXE*700*GOV*" +
-				"gno.land/r/demo/token8*EXE*setParam*EXE*800*GOV*" +
-				"gno.land/r/demo/token9*EXE*setParam*EXE*900*GOV*" +
-				"gno.land/r/demo/token10*EXE*setParam*EXE*1000",
+			executions: "gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*100*GOV*" +
+				"gno.land/r/gnoswap/pool*EXE*SetWithdrawalFee*EXE*200*GOV*" +
+				"gno.land/r/gnoswap/protocol_fee*EXE*SetDevOpsPct*EXE*300*GOV*" +
+				"gno.land/r/gnoswap/router*EXE*SetSwapFee*EXE*400*GOV*" +
+				"gno.land/r/gnoswap/staker*EXE*SetDepositGnsAmount*EXE*500*GOV*" +
+				"gno.land/r/gnoswap/staker*EXE*SetMinimumRewardAmount*EXE*600*GOV*" +
+				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*700*GOV*" +
+				"gno.land/r/gnoswap/emission*EXE*SetDistributionStartTime*EXE*800*GOV*" +
+				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*900*GOV*" +
+				"gno.land/r/gnoswap/rbac*EXE*RemoveRole*EXE*admin",
 			shouldFail: false,
+		},
+		{
+			name:          "fail - invalid package path and function name",
+			numToExecute:  1,
+			executions:    "gno.land/r/demo/token*EXE*setParam*EXE*100",
+			expectedError: "handler not found for gno.land/r/demo/token:setParam (key: gno.land/r/demo/token:setParam)",
+			shouldFail:    true,
 		},
 		{
 			name:          "fail - zero executions",
 			numToExecute:  0,
 			executions:    "",
-			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || numToExecute is less than or equal to 0",
+			expectedError: "numToExecute is less than or equal to 0",
 			shouldFail:    true,
 		},
 		{
 			name:          "fail - negative executions",
 			numToExecute:  -1,
 			executions:    "gno.land/r/demo/token*EXE*setParam*EXE*100",
-			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || numToExecute is less than or equal to 0",
+			expectedError: "numToExecute is less than or equal to 0",
 			shouldFail:    true,
 		},
 		{
 			name:          "fail - 11 executions (over maximum)",
 			numToExecute:  11,
 			executions:    strings.Repeat("gno.land/r/demo/token*EXE*setParam*EXE*100*GOV*", 10) + "gno.land/r/demo/token11*EXE*setParam*EXE*1100",
-			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || numToExecute is greater than 10",
+			expectedError: "numToExecute is greater than 10",
 			shouldFail:    true,
 		},
 		{
 			name:          "fail - empty executions string",
 			numToExecute:  1,
 			executions:    "",
-			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || invalid parameter change info",
+			expectedError: "execution[0]: expected 3 parts (pkgPath, function, params), got 1",
 			shouldFail:    true,
 		},
 		{
 			name:          "fail - missing *GOV* separator",
 			numToExecute:  2,
 			executions:    "gno.land/r/demo/token1*EXE*setParam*EXE*100gno.land/r/demo/token2*EXE*setParam*EXE*200",
-			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || executions is not equal to numToExecute",
+			expectedError: "executions count (1) does not match numToExecute (2)",
 			shouldFail:    true,
 		},
 		{
 			name:          "fail - missing *EXE* separator",
 			numToExecute:  1,
 			executions:    "gno.land/r/demo/tokensetParam100",
-			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || invalid parameter change info",
+			expectedError: "execution[0]: expected 3 parts (pkgPath, function, params), got 1",
 			shouldFail:    true,
 		},
 		{
 			name:          "fail - insufficient *EXE* separators",
 			numToExecute:  1,
 			executions:    "gno.land/r/demo/token*EXE*setParam",
-			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || invalid parameter change info",
+			expectedError: "execution[0]: expected 3 parts (pkgPath, function, params), got 2",
 			shouldFail:    true,
 		},
 		{
 			name:          "fail - numToExecute mismatch with actual count",
 			numToExecute:  2,
 			executions:    "gno.land/r/demo/token*EXE*setParam*EXE*100",
-			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || executions is not equal to numToExecute",
+			expectedError: "executions count (1) does not match numToExecute (2)",
 			shouldFail:    true,
 		},
 	}
@@ -1065,8 +1216,8 @@ func TestGovernancePropose_ParameterChangeValidation(t *testing.T) {
 
 			// when & then
 			if tt.shouldFail {
-				uassert.AbortsWithMessage(t, tt.expectedError, func() {
-					func (cur realm) {
+				uassert.AbortsContains(t, tt.expectedError, func() {
+					func(cur realm) {
 						testing.SetRealm(govRealm)
 						gov.ProposeParameterChange("Parameter Change", "Description", tt.numToExecute, tt.executions)
 					}(cross)

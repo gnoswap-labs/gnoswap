@@ -105,20 +105,17 @@ func (gv *governanceV1) executeProposal(
 		return nil, err
 	}
 
-	// Create parameter registry for handling execution actions
-	parameterRegistry := CreateParameterHandlers()
-
 	// Execute proposal based on its type
 	switch proposal.Type() {
 	case governance.CommunityPoolSpend:
 		// Execute community pool spending (token transfers)
-		err = executeCommunityPoolSpend(proposal, parameterRegistry, executedAt, executedHeight, executedBy)
+		err = executeCommunityPoolSpend(proposal, globalParameterRegistry, executedAt, executedHeight, executedBy)
 		if err != nil {
 			return nil, err
 		}
 	case governance.ParameterChange:
 		// Execute parameter changes (governance configuration updates)
-		err = executeParameterChange(proposal, parameterRegistry, executedAt, executedHeight, executedBy)
+		err = executeParameterChange(proposal, globalParameterRegistry, executedAt, executedHeight, executedBy)
 		if err != nil {
 			return nil, err
 		}
