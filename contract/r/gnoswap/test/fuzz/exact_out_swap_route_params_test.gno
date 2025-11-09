@@ -18,6 +18,7 @@ import (
 type exactOutSwapRouteParams struct {
 	inputToken       string
 	outputToken      string
+	amountOut        string
 	amountIn         string
 	routeArr         string
 	quoteArr         string
@@ -29,10 +30,10 @@ type exactOutSwapRouteParams struct {
 }
 
 func (p *exactOutSwapRouteParams) ToString() string {
-	return ufmt.Sprintf("inputToken: %s, outputToken: %s, amountIn: %s, routeArr: %s, quoteArr: %s, amountInMax: %s, deadline: %d, referrer: %s",
+	return ufmt.Sprintf("inputToken: %s, outputToken: %s, amountOut: %s, routeArr: %s, quoteArr: %s, amountInMax: %s, deadline: %d, referrer: %s",
 		p.inputToken,
 		p.outputToken,
-		p.amountIn,
+		p.amountOut,
 		p.routeArr,
 		p.quoteArr,
 		p.amountInMax,
@@ -78,28 +79,31 @@ func (p *exactOutSwapRouteParams) isValidTokenPair() bool {
 }
 
 func (p *exactOutSwapRouteParams) isValidAmount() bool {
-	amountIn := u256.MustFromDecimal(p.amountIn)
+	amountOut := u256.MustFromDecimal(p.amountOut)
 
-	if amountIn.Cmp(u256.Zero()) <= 0 {
+	if amountOut.Cmp(u256.Zero()) <= 0 {
 		return false
 	}
 
-	if amountIn.Cmp(u256.NewUintFromInt64(math.MaxInt64)) > 0 {
+	if amountOut.Cmp(u256.NewUintFromInt64(math.MaxInt64)) > 0 {
 		return false
 	}
 
-	maxAmountOut := u256.MustFromDecimal(p.amountInMax)
-	if maxAmountOut.Cmp(u256.Zero()) <= 0 {
+	maxAmountIn := u256.MustFromDecimal(p.amountInMax)
+	if maxAmountIn.Cmp(u256.Zero()) <= 0 {
 		return false
 	}
 
-	if maxAmountOut.Cmp(u256.NewUintFromInt64(math.MaxInt64)) > 0 {
+	if maxAmountIn.Cmp(u256.NewUintFromInt64(math.MaxInt64)) > 0 {
 		return false
 	}
 
-	if maxAmountOut.Lt(amountIn) {
-		return false
-	}
+	if p.amountIn != "" && p.amountIn != "0" {
+        amountIn := u256.MustFromDecimal(p.amountIn)
+        if amountIn.Gt(maxAmountIn) {
+            return false
+        }
+    }
 
 	return true
 }
@@ -173,48 +177,63 @@ func (p *exactOutSwapRouteParams) isValidDeadline() bool {
 	return true
 }
 
+// isValidMintOverflow checks if minting the required input tokens would cause int64 overflow
+func (p *exactOutSwapRouteParams) isValidMintOverflow(amountInStr string) bool {
+	amountIn := u256.MustFromDecimal(amountInStr)
+
+	// Convert to int64 for mint check
+	if amountIn.Cmp(u256.NewUintFromInt64(math.MaxInt64)) > 0 {
+		return false
+	}
+
+	amountInInt64 := amountIn.Int64()
+	if amountInInt64 < 0 {
+		amountInInt64 = 0
+	}
+
+	// Get current total supply of the input token
+	currentSupply := getTokenTotalSupply(p.inputToken)
+
+	// Check for overflow: if currentSupply + amountInInt64 > MaxInt64
+	if currentSupply > 0 && amountInInt64 > 0 {
+		if math.MaxInt64-currentSupply < amountInInt64 {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (p *exactOutSwapRouteParams) isValidDrySwap() bool {
+	// If updateAmountInByPreDrySwap() was already called, use cached result
 	if p.isPreDrySwap {
 		return p.preDrySwapResult
 	}
 
-	_, amountOut, success := p.drySwapRoute()
-
-	if !success {
-		// if the drySwapRoute fails, check if the amountIn is less than 10
-		return u256.MustFromDecimal(p.amountIn).LtUint64(10)
-	}
-
-	amountInInt64 := u256.MustFromDecimal(p.amountIn).Int64()
-	amountOutInt64 := u256.MustFromDecimal(amountOut).Int64()
-
-	poolCount := 0
-
-	for _, route := range strings.Split(p.routeArr, ",") {
-		poolCount += len(strings.Split(route, "*POOL*")) - 1
-	}
-
-	diff := amountInInt64 - amountOutInt64
-	if diff < 0 {
-		diff = -diff
-	}
-
-	if diff > int64(poolCount) {
-		return false
-	}
-
+	// Otherwise, run a simple dry swap check
+	_, _, success := p.drySwapRoute()
 	return success
 }
 
 func (p *exactOutSwapRouteParams) updateAmountInByPreDrySwap() {
 	p.isPreDrySwap = true
 
-	_, amountOut, success := p.drySwapRoute()
+	amountIn, amountOut, success := p.drySwapRoute()
 
-	if success {
-		p.preDrySwapResult = true
-		p.amountIn = amountOut
+	if !success {
+		p.preDrySwapResult = false
+		return
 	}
+
+	// Check mint overflow for the required input amount
+	if !p.isValidMintOverflow(amountIn) {
+		p.preDrySwapResult = false
+		return
+	}
+
+	p.preDrySwapResult = true
+	p.amountIn = amountIn      // actual required input amount
+	p.amountOut = amountOut    // use DrySwap's achievable output amount
 }
 
 func (p *exactOutSwapRouteParams) drySwapRoute() (amountIn string, amountOut string, success bool) {
@@ -223,7 +242,7 @@ func (p *exactOutSwapRouteParams) drySwapRoute() (amountIn string, amountOut str
 			amountIn, amountOut, success = router.DrySwapRoute(
 				p.inputToken,
 				p.outputToken,
-				p.amountIn,
+				p.amountOut,
 				"EXACT_OUT",
 				p.routeArr,
 				p.quoteArr,
@@ -244,13 +263,14 @@ func NewValidExactOutSwapRouteParams(t *fuzz.T) *exactOutSwapRouteParams {
 	routeArr := generateRoutePathArr(t, inputToken, outputToken, 1, 1)
 	quoteArr := generateRouteQuoteArr(t, len(strings.Split(routeArr, ",")))
 
-	amountIn := fuzz.Int64Range(10, 100_000_000_000_000).Draw(t, "amountIn").(int64)
-	amountInUint256 := u256.NewUintFromInt64(amountIn)
+	amountOut := fuzz.Int64Range(10, 100_000_000_000_000).Draw(t, "amountOut").(int64)
+	amountOutUint256 := u256.NewUintFromInt64(amountOut)
 
 	return &exactOutSwapRouteParams{
 		inputToken:       inputToken,
 		outputToken:      outputToken,
-		amountIn:         amountInUint256.ToString(),
+		amountOut:        amountOutUint256.ToString(),
+		amountIn:         "0",
 		routeArr:         routeArr,
 		quoteArr:         quoteArr,
 		amountInMax:      u256.NewUintFromInt64(math.MaxInt64).ToString(),
@@ -269,15 +289,16 @@ func NewRandomizedExactOutSwapRouteParams(t *fuzz.T) *exactOutSwapRouteParams {
 	routeArr := generateRoutePathArr(t, inputToken, outputToken, maxRoutePathCount, maxHops)
 	quoteArr := generateRouteQuoteArr(t, len(strings.Split(routeArr, ",")))
 
-	amountInVal := fuzz.Uint256().Draw(t, "amountIn").(*uint256.Uint)
-	amountIn := amountInVal.ToString()
-	amountInMaxVal := fuzz.Uint256().Draw(t, "amountIn").(*uint256.Uint)
+	amountOutVal := fuzz.Uint256().Draw(t, "amountOut").(*uint256.Uint)
+	amountOut := amountOutVal.ToString()
+	amountInMaxVal := fuzz.Uint256().Draw(t, "amountInMax").(*uint256.Uint)
 	amountInMax := amountInMaxVal.ToString()
 
 	return &exactOutSwapRouteParams{
 		inputToken:       inputToken,
 		outputToken:      outputToken,
-		amountIn:         amountIn,
+		amountOut:        amountOut,
+		amountIn:         "0",
 		routeArr:         routeArr,
 		quoteArr:         quoteArr,
 		amountInMax:      amountInMax,

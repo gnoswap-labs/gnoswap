@@ -15,14 +15,14 @@ import (
 //
 // Security: Only contracts within the domain path can register initializers.
 // Each package path can only register once to prevent duplicate registrations.
-func RegisterInitializer(cur realm, initializer func(stakerStore IStakerStore, poolAccessor PoolAccessor, emissionAccessor EmissionAccessor) IStaker) {
+func RegisterInitializer(cur realm, initializer func(stakerStore IStakerStore, poolAccessor PoolAccessor, emissionAccessor EmissionAccessor, nftAccessor NFTAccessor) IStaker) {
 	initializerFunc := func(domainStore any) any {
 		currentStakerStore, ok := domainStore.(IStakerStore)
 		if !ok {
 			panic("domainStore is not an IStakerStore")
 		}
 
-		return initializer(currentStakerStore, newPoolAccessor(), newEmissionAccessor())
+		return initializer(currentStakerStore, newPoolAccessor(), newEmissionAccessor(), newNFTAccessor())
 	}
 
 	err := versionManager.RegisterInitializer(initializerFunc)

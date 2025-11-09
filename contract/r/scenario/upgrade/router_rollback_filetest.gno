@@ -11,7 +11,7 @@ import (
 	"gno.land/r/gnoswap/router"
 
 	_ "gno.land/r/gnoswap/router/v1"
-	_ "gno.land/r/gnoswap/router/test"
+	_ "gno.land/r/gnoswap/router/v2_invalid"
 )
 
 var t *testing.T
@@ -23,7 +23,7 @@ var (
 
 const (
 	routerV1Path   = "gno.land/r/gnoswap/router/v1"
-	routerTestPath = "gno.land/r/gnoswap/router/test"
+	routerTestPath = "gno.land/r/gnoswap/router/v2_invalid"
 )
 
 func main() {
@@ -59,6 +59,6 @@ func testRouterRollback() {
 // Output:
 // [SCENARIO] Router Contract Rollback Test
 // [INFO] Preparing: Upgrading to test version
-// [INFO] Current version: gno.land/r/gnoswap/router/test
+// [INFO] Current version: gno.land/r/gnoswap/router/v2_invalid
 // [INFO] Rolling back router contract to v1
 // [EXPECTED] Router rolled back to: gno.land/r/gnoswap/router/v1

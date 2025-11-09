@@ -19,13 +19,13 @@ import (
 	_ "gno.land/r/gnoswap/staker/v1"
 
 	// Import test implementation contracts for upgrade
-	_ "gno.land/r/gnoswap/gov/governance/test"
-	_ "gno.land/r/gnoswap/gov/staker/test"
-	_ "gno.land/r/gnoswap/pool/test"
-	_ "gno.land/r/gnoswap/position/test"
-	_ "gno.land/r/gnoswap/protocol_fee/test"
-	_ "gno.land/r/gnoswap/router/test"
-	_ "gno.land/r/gnoswap/staker/test"
+	_ "gno.land/r/gnoswap/gov/governance/v2_invalid"
+	_ "gno.land/r/gnoswap/gov/staker/v2_invalid"
+	_ "gno.land/r/gnoswap/pool/v2_invalid"
+	_ "gno.land/r/gnoswap/position/v2_invalid"
+	_ "gno.land/r/gnoswap/protocol_fee/v2_invalid"
+	_ "gno.land/r/gnoswap/router/v2_invalid"
+	_ "gno.land/r/gnoswap/staker/v2_invalid"
 
 	govGovernance "gno.land/r/gnoswap/gov/governance"
 	govStaker "gno.land/r/gnoswap/gov/staker"
@@ -55,13 +55,13 @@ const (
 	stakerV1Path        = "gno.land/r/gnoswap/staker/v1"
 
 	// Test package paths
-	govGovernanceTestPath = "gno.land/r/gnoswap/gov/governance/test"
-	govStakerTestPath     = "gno.land/r/gnoswap/gov/staker/test"
-	poolTestPath          = "gno.land/r/gnoswap/pool/test"
-	positionTestPath      = "gno.land/r/gnoswap/position/test"
-	protocolFeeTestPath   = "gno.land/r/gnoswap/protocol_fee/test"
-	routerTestPath        = "gno.land/r/gnoswap/router/test"
-	stakerTestPath        = "gno.land/r/gnoswap/staker/test"
+	govGovernanceTestPath = "gno.land/r/gnoswap/gov/governance/v2_invalid"
+	govStakerTestPath     = "gno.land/r/gnoswap/gov/staker/v2_invalid"
+	poolTestPath          = "gno.land/r/gnoswap/pool/v2_invalid"
+	positionTestPath      = "gno.land/r/gnoswap/position/v2_invalid"
+	protocolFeeTestPath   = "gno.land/r/gnoswap/protocol_fee/v2_invalid"
+	routerTestPath        = "gno.land/r/gnoswap/router/v2_invalid"
+	stakerTestPath        = "gno.land/r/gnoswap/staker/v2_invalid"
 )
 
 func main() {
@@ -335,48 +335,48 @@ func testGovStakerUpgradeRollback() {
 // [SCENARIO] 2. Test Pool Contract Upgrade and Rollback
 // [INFO] Initial version: gno.land/r/gnoswap/pool/v1
 // [INFO] Upgrading to test version
-// [EXPECTED] Upgraded to: gno.land/r/gnoswap/pool/test
+// [EXPECTED] Upgraded to: gno.land/r/gnoswap/pool/v2_invalid
 // [INFO] Rolling back to v1
 // [EXPECTED] Rolled back to: gno.land/r/gnoswap/pool/v1
 //
 // [SCENARIO] 3. Test Position Contract Upgrade and Rollback
 // [INFO] Initial version: gno.land/r/gnoswap/position/v1
 // [INFO] Upgrading to test version
-// [EXPECTED] Upgraded to: gno.land/r/gnoswap/position/test
+// [EXPECTED] Upgraded to: gno.land/r/gnoswap/position/v2_invalid
 // [INFO] Rolling back to v1
 // [EXPECTED] Rolled back to: gno.land/r/gnoswap/position/v1
 //
 // [SCENARIO] 4. Test ProtocolFee Contract Upgrade and Rollback
 // [INFO] Initial version: gno.land/r/gnoswap/protocol_fee/v1
 // [INFO] Upgrading to test version
-// [EXPECTED] Upgraded to: gno.land/r/gnoswap/protocol_fee/test
+// [EXPECTED] Upgraded to: gno.land/r/gnoswap/protocol_fee/v2_invalid
 // [INFO] Rolling back to v1
 // [EXPECTED] Rolled back to: gno.land/r/gnoswap/protocol_fee/v1
 //
 // [SCENARIO] 5. Test Router Contract Upgrade and Rollback
 // [INFO] Initial version: gno.land/r/gnoswap/router/v1
 // [INFO] Upgrading to test version
-// [EXPECTED] Upgraded to: gno.land/r/gnoswap/router/test
+// [EXPECTED] Upgraded to: gno.land/r/gnoswap/router/v2_invalid
 // [INFO] Rolling back to v1
 // [EXPECTED] Rolled back to: gno.land/r/gnoswap/router/v1
 //
 // [SCENARIO] 6. Test Staker Contract Upgrade and Rollback
 // [INFO] Initial version: gno.land/r/gnoswap/staker/v1
 // [INFO] Upgrading to test version
-// [EXPECTED] Upgraded to: gno.land/r/gnoswap/staker/test
+// [EXPECTED] Upgraded to: gno.land/r/gnoswap/staker/v2_invalid
 // [INFO] Rolling back to v1
 // [EXPECTED] Rolled back to: gno.land/r/gnoswap/staker/v1
 //
 // [SCENARIO] 7. Test Gov/Governance Contract Upgrade and Rollback
 // [INFO] Initial version: gno.land/r/gnoswap/gov/governance/v1
 // [INFO] Upgrading to test version
-// [EXPECTED] Upgraded to: gno.land/r/gnoswap/gov/governance/test
+// [EXPECTED] Upgraded to: gno.land/r/gnoswap/gov/governance/v2_invalid
 // [INFO] Rolling back to v1
 // [EXPECTED] Rolled back to: gno.land/r/gnoswap/gov/governance/v1
 //
 // [SCENARIO] 8. Test Gov/Staker Contract Upgrade and Rollback
 // [INFO] Initial version: gno.land/r/gnoswap/gov/staker/v1
 // [INFO] Upgrading to test version
-// [EXPECTED] Upgraded to: gno.land/r/gnoswap/gov/staker/test
+// [EXPECTED] Upgraded to: gno.land/r/gnoswap/gov/staker/v2_invalid
 // [INFO] Rolling back to v1
 // [EXPECTED] Rolled back to: gno.land/r/gnoswap/gov/staker/v1

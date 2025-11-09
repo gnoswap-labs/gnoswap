@@ -6,6 +6,7 @@ type stakerV1 struct {
 	store            sr.IStakerStore
 	poolAccessor     sr.PoolAccessor
 	emissionAccessor sr.EmissionAccessor
+	nftAccessor      sr.NFTAccessor
 }
 
 func (s *stakerV1) getPools() *Pools {
@@ -76,10 +77,11 @@ func (s *stakerV1) getDepositResolver(lpTokenId uint64) *DepositResolver {
 	return NewDepositResolver(s.getDeposit(lpTokenId))
 }
 
-func NewStakerV1(stakerStore sr.IStakerStore, poolAccessor sr.PoolAccessor, emissionAccessor sr.EmissionAccessor) *stakerV1 {
+func NewStakerV1(stakerStore sr.IStakerStore, poolAccessor sr.PoolAccessor, emissionAccessor sr.EmissionAccessor, nftAccessor sr.NFTAccessor) *stakerV1 {
 	return &stakerV1{
 		store:            stakerStore,
 		poolAccessor:     poolAccessor,
 		emissionAccessor: emissionAccessor,
+		nftAccessor:      nftAccessor,
 	}
 }
