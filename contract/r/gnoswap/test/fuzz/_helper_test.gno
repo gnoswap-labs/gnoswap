@@ -162,6 +162,24 @@ func mintTestToken(tokenPath string, amount int64) {
 	}
 }
 
+// getTokenTotalSupply returns the total supply of a token
+func getTokenTotalSupply(tokenPath string) int64 {
+	switch tokenPath {
+	case barPath:
+		return bar.TotalSupply()
+	case bazPath:
+		return baz.TotalSupply()
+	case fooPath:
+		return foo.TotalSupply()
+	case quxPath:
+		return qux.TotalSupply()
+	case oblPath:
+		return obl.TotalSupply()
+	default:
+		return 0
+	}
+}
+
 func burnTestTokens(t *testing.T) {
 	t.Helper()
 

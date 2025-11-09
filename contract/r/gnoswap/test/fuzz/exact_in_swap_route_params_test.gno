@@ -60,6 +60,10 @@ func (p *exactInSwapRouteParams) IsValid() bool {
 		return false
 	}
 
+	if !p.isValidMintOverflow() {
+		return false
+	}
+
 	if !p.isValidDrySwap() {
 		return false
 	}
@@ -158,6 +162,33 @@ func (p *exactInSwapRouteParams) isValidQuoteArr() bool {
 func (p *exactInSwapRouteParams) isValidDeadline() bool {
 	if p.deadline < time.Now().Unix() {
 		return false
+	}
+
+	return true
+}
+
+// isValidMintOverflow checks if minting the required tokens would cause int64 overflow
+func (p *exactInSwapRouteParams) isValidMintOverflow() bool {
+	amountIn := u256.MustFromDecimal(p.amountIn)
+
+	// Convert to int64 for mint check
+	if amountIn.Cmp(u256.NewUintFromInt64(math.MaxInt64)) > 0 {
+		return false
+	}
+
+	amountInInt64 := amountIn.Int64()
+	if amountInInt64 < 0 {
+		amountInInt64 = 0
+	}
+
+	// Get current total supply of the input token
+	currentSupply := getTokenTotalSupply(p.inputToken)
+
+	// Check for overflow: if currentSupply + amountInInt64 > MaxInt64
+	if currentSupply > 0 && amountInInt64 > 0 {
+		if math.MaxInt64-currentSupply < amountInInt64 {
+			return false
+		}
 	}
 
 	return true
