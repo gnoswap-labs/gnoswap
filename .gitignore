@@ -359,3 +359,6 @@ pyrightconfig.json
 vendor/
 Gemfile.lock
 .bundle/
+
+## environment make files
+**/*.*.mk
