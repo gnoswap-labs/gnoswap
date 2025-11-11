@@ -119,11 +119,6 @@ mint-gns-gnot:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -send "20000000ugnot" -args "gno.land/r/gnoswap/gns" -args "gnot" -args 3000 -args "-49980" -args "49980" -args 20000000 -args 20000000 -args 1 -args 1 -args $(TX_EXPIRE) -args $(ADDR_ADMIN) -args $(ADDR_ADMIN) -args "" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo
 
-	# SetTokenURI
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/gnft -func SetTokenURIByImageURI -args "1" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
-	@echo
-	
-
 # increase liquidity
 increase-liquidity-position-01:
 	$(info ************ increase position(1) liquidity gnot:gns:3000 ************)
