@@ -183,7 +183,7 @@ func (p *ProposalStatusResolver) IsCanceled(current int64) bool {
 // Returns:
 //   - error: cancellation error if operation fails
 func (p *ProposalStatusResolver) cancel(canceledAt int64, canceledHeight int64, canceledBy address) error {
-	return p.actionStatusResolver.Cancel(canceledAt, canceledHeight, canceledBy)
+	return p.actionStatusResolver.cancel(canceledAt, canceledHeight, canceledBy)
 }
 
 // execute marks the proposal as executed with the provided details.

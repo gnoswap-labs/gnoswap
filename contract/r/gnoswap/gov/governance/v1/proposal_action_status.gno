@@ -21,11 +21,10 @@ func NewProposalActionStatusResolver(status *governance.ProposalActionStatus) *P
 //   - canceledBy: address performing the cancellation
 //
 // Returns:
-//   - error: cancellation error if proposal cannot be canceled
-func (p *ProposalActionStatusResolver) Cancel(canceledAt int64, canceledHeight int64, canceledBy address) error {
-	// Only executable proposals can be canceled (text proposals cannot)
-	if !p.IsExecutable() {
-		return errProposalNotExecutable
+//   - error: already canceled error if proposal action status is already canceled
+func (p *ProposalActionStatusResolver) cancel(canceledAt int64, canceledHeight int64, canceledBy address) error {
+	if p.Canceled() {
+		return errAlreadyCanceledProposal
 	}
 
 	// Record cancellation details
@@ -46,11 +45,15 @@ func (p *ProposalActionStatusResolver) Cancel(canceledAt int64, canceledHeight i
 //   - executedBy: address performing the execution
 //
 // Returns:
-//   - error: execution error if proposal cannot be executed
+//   - error: already canceled error if proposal action status is already canceled
 func (p *ProposalActionStatusResolver) Execute(executedAt int64, executedHeight int64, executedBy address) error {
 	// Only executable proposals can be executed (text proposals cannot)
 	if !p.IsExecutable() {
 		return errProposalNotExecutable
+	}
+
+	if p.Canceled() {
+		return errAlreadyCanceledProposal
 	}
 
 	// Record execution details
