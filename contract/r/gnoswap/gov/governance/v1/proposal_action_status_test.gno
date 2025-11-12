@@ -13,6 +13,7 @@ func TestProposalActionStatus_CancelAndExecute(t *testing.T) {
 		name            string
 		executable      bool
 		operation       string // "cancel" or "execute"
+		canceled        bool
 		timestamp       int64
 		height          int64
 		actor           address
@@ -23,6 +24,7 @@ func TestProposalActionStatus_CancelAndExecute(t *testing.T) {
 			name:          "Success - Cancel executable proposal",
 			executable:    true,
 			operation:     "cancel",
+			canceled:      false,
 			timestamp:     1000,
 			height:        100,
 			actor:         address("g1canceler"),
@@ -32,15 +34,17 @@ func TestProposalActionStatus_CancelAndExecute(t *testing.T) {
 			name:          "Success - Execute executable proposal",
 			executable:    true,
 			operation:     "execute",
+			canceled:      false,
 			timestamp:     1000,
 			height:        100,
 			actor:         address("g1executor"),
 			expectedError: false,
 		},
 		{
-			name:          "Failure - Cancel non-executable proposal",
+			name:          "Failure - Cancel already canceled proposal",
 			executable:    false,
 			operation:     "cancel",
+			canceled:      true,
 			timestamp:     1000,
 			height:        100,
 			actor:         address("g1canceler"),
@@ -50,6 +54,17 @@ func TestProposalActionStatus_CancelAndExecute(t *testing.T) {
 			name:          "Failure - Execute non-executable proposal",
 			executable:    false,
 			operation:     "execute",
+			canceled:      false,
+			timestamp:     1000,
+			height:        100,
+			actor:         address("g1executor"),
+			expectedError: true,
+		},
+		{
+			name:          "Failure - Execute already canceled proposal",
+			executable:    true,
+			operation:     "execute",
+			canceled:      true,
 			timestamp:     1000,
 			height:        100,
 			actor:         address("g1executor"),
@@ -62,10 +77,13 @@ func TestProposalActionStatus_CancelAndExecute(t *testing.T) {
 			// given
 			status := governance.NewProposalActionStatus(tc.executable)
 			resolver := NewProposalActionStatusResolver(status)
+			if tc.canceled {
+				resolver.SetCanceled(true)
+			}
 			// when
 			var err error
 			if tc.operation == "cancel" {
-				err = resolver.Cancel(tc.timestamp, tc.height, tc.actor)
+				err = resolver.cancel(tc.timestamp, tc.height, tc.actor)
 			} else {
 				err = resolver.Execute(tc.timestamp, tc.height, tc.actor)
 			}
