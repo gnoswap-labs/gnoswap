@@ -64,6 +64,13 @@ func (k *keeper) setReferral(addr, refAddr address, eventType string) error {
 				return ErrNotFound
 			}
 		}
+
+		chain.Emit(
+			eventType,
+			"address", addrStr,
+			"referral", refAddrStr,
+		)
+
 		return nil
 	}
 
@@ -76,8 +83,8 @@ func (k *keeper) setReferral(addr, refAddr address, eventType string) error {
 
 	chain.Emit(
 		eventType,
-		"myAddress", addrStr,
-		"refAddress", refAddrStr,
+		"address", addrStr,
+		"referral", refAddrStr,
 	)
 
 	return nil

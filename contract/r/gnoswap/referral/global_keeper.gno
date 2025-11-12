@@ -1,7 +1,5 @@
 package referral
 
-import "chain"
-
 var gReferralKeeper ReferralKeeper
 
 const (
@@ -53,20 +51,11 @@ func IsEmpty() bool {
 // Returns true on success, false on failure.
 func TryRegister(cur realm, addr address, referral string) bool {
 	refAddr := address(referral)
+
 	err := gReferralKeeper.register(addr, refAddr)
 	if err != nil {
-		chain.Emit(
-			EventRegisterFailed,
-			"address", addr.String(),
-			"error", err.Error(),
-		)
 		return false
 	}
 
-	chain.Emit(
-		EventRegisterSuccess,
-		"address", addr.String(),
-		"referral", referral,
-	)
 	return true
 }
