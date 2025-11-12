@@ -1,4 +1,15 @@
-# Local Environment Configuration
+# Default Environment Configuration (Local)
+#
+# PRE-DEPLOYMENT REQUIREMENTS:
+# Before running deployment, ensure the following gnokey account is registered:
+#
+#   Account Name: gnoswap_admin
+#   Check: gnokey list
+#
+# If not registered, add it using:
+#   gnokey add gnoswap_admin
+#
+# This account is used for deploying all contracts and must have sufficient GNOT balance.
 
 # RPC and Chain Configuration
 GNOLAND_RPC_URL ?= localhost:26657

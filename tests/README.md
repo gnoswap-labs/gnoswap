@@ -149,6 +149,21 @@ Each environment configuration file (`scripts/config/*.mk`) should configure:
 
 ### Local Development
 
+** Prerequisites:**
+
+Before starting, ensure `gnoswap_admin` account is registered in gnokey:
+
+```bash
+# Check if account exists
+gnokey list
+
+# If not registered, add it
+gnokey add gnoswap_admin
+
+# Verify the account
+gnokey list | grep gnoswap_admin
+```
+
 **Complete workflow for local testing:**
 
 ```bash
@@ -206,7 +221,6 @@ make deploy ENV=local
 
 # Step 4: Run tests
 make test-pool ENV=local
-make test-swap ENV=local
 ```
 
 ### Staging Environment
@@ -219,7 +233,7 @@ make remove-test
 make deploy ENV=staging
 
 # Step 3: Run comprehensive tests
-make test-all ENV=staging
+make test-pool ENV=staging
 ```
 
 ### Production Environment
@@ -241,15 +255,28 @@ make deploy ENV=production.local
 
 ## Important Notes
 
-1. **Pre-Deployment Steps (MANDATORY)**:
+1. **Gnokey Account Setup (REQUIRED)**:
+
+   - **MUST** have `gnoswap_admin` account registered in gnokey before deployment
+   - Check: `gnokey list`
+   - Add if missing: `gnokey add gnoswap_admin`
+   - This account is used for all contract deployments
+
+2. **Pre-Deployment Steps (MANDATORY)**:
+
    - **Step 1**: Run `make remove-test` to remove all test files
    - **Step 2**: Run `make faucet-admin` for local/test environments
    - **Step 3**: Verify with `make info ENV=<env>` before deployment
-2. **Test Files**: Test files (`*_test.gno`, `testutils.gno`) should NEVER be deployed to the blockchain. They increase costs and may expose internal logic.
 
-3. **Account Requirements**:
+3. **Test Files**: Test files (`*_test.gno`, `testutils.gno`) should NEVER be deployed to the blockchain. They increase costs and may expose internal logic.
+
+4. **Account Requirements**:
+
    - Local/Dev: Use `make faucet-admin` to fund admin accounts
    - Staging/Production: Ensure accounts are pre-funded with sufficient GNOT
-4. **Deployment Order**: Contracts must be deployed in this specific order:
+
+5. **Deployment Order**: Contracts must be deployed in this specific order:
+
    - Test tokens → Libraries → Base contracts → Gnoswap realms → v1 implementations
-5. **Contract Addresses**: Update environment config files with deployed contract addresses after successful deployment.
+
+6. **Contract Addresses**: Update environment config files with deployed contract addresses after successful deployment.
