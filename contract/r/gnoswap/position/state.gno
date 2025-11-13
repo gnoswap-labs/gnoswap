@@ -42,8 +42,13 @@ func initRegisterReadableContract() {
 	poolAddr := access.MustGetAddress(prbac.ROLE_POOL.String())
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 
-	kvStore.AddAuthorizedCaller(poolAddr, store.ReadOnly)
-	kvStore.AddAuthorizedCaller(stakerAddr, store.ReadOnly)
+	if err := kvStore.AddAuthorizedCaller(poolAddr, store.ReadOnly); err != nil {
+		panic(err)
+	}
+
+	if err := kvStore.AddAuthorizedCaller(stakerAddr, store.ReadOnly); err != nil {
+		panic(err)
+	}
 }
 
 func initializeDomainStore(kvStore store.KVStore) any {

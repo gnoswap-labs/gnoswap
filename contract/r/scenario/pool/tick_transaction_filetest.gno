@@ -134,7 +134,7 @@ func main() {
 			testSqrt,
 			testSqrtSubOne,
 			u256.MustFromDecimal(liqToMint),
-			i256.MustFromDecimal("3"),
+			i256.MustFromDecimal("100"),
 			uint64(3000),
 		)
 
@@ -156,18 +156,18 @@ func main() {
 		fee100,
 		adminAddr,
 		true,
-		"3",
+		"100",
 		MIN_PRICE,
 		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta string) error {
-			return mockSwapCallback(fooPath, barPath, amount0Delta, amount1Delta)
+			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
 
 	testing.SetRealm(adminRealm)
 	thisPool = pool.GetPool(barPath, fooPath, fee100)
 	println("[EXPECTED] Pool tick after swap:", thisPool.Slot0Tick(), "expected: -24082")
-	println("[EXPECTED] Pool sqrt price after swap:", thisPool.Slot0SqrtPriceX96().ToString(), "expected:", testSqrtSubOne.ToString())
+	println("[EXPECTED] Pool sqrt price after swap:", thisPool.Slot0SqrtPriceX96().ToString(), "expected: 23768044726356341008264205109")
 	println("[EXPECTED] Pool liquidity after swap:", thisPool.Liquidity().ToString(), "expected: 20000000000")
 	println()
 	println("[INFO] Scenario completed")
@@ -226,7 +226,7 @@ func mockSwapCallback(token0Path string, token1Path string, amount0Delta string,
 //
 // [SCENARIO] 4. Executing swap to move tick
 // [EXPECTED] Pool tick after swap: -24082 expected: -24082
-// [EXPECTED] Pool sqrt price after swap: 23768044760938258284793355980 expected: 23768044760938258284793355980
+// [EXPECTED] Pool sqrt price after swap: 23768044726356341008264205109 expected: 23768044726356341008264205109
 // [EXPECTED] Pool liquidity after swap: 20000000000 expected: 20000000000
 //
 // [INFO] Scenario completed

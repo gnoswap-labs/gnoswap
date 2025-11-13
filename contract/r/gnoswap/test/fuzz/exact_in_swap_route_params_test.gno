@@ -7,6 +7,7 @@ import (
 	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/gnoswap/router"
 
 	"gno.land/p/gnoswap/fuzz"
 	"gno.land/p/gnoswap/uint256"
@@ -25,11 +26,60 @@ type exactInSwapRouteParams struct {
 	referrer     string
 }
 
+func (p *exactInSwapRouteParams) ToString() string {
+	return ufmt.Sprintf("inputToken: %s, outputToken: %s, amountIn: %s, routeArr: %s, quoteArr: %s, amountOutMin: %s, deadline: %d, referrer: %s",
+		p.inputToken,
+		p.outputToken,
+		p.amountIn,
+		p.routeArr,
+		p.quoteArr,
+		p.amountOutMin,
+		p.deadline,
+		p.referrer,
+	)
+}
+
 func (p *exactInSwapRouteParams) IsValid() bool {
+	if !p.isValidTokenPair() {
+		return false
+	}
+
+	if !p.isValidAmount() {
+		return false
+	}
+
+	if !p.isValidRouteArr() {
+		return false
+	}
+
+	if !p.isValidQuoteArr() {
+		return false
+	}
+
+	if !p.isValidDeadline() {
+		return false
+	}
+
+	if !p.isValidMintOverflow() {
+		return false
+	}
+
+	if !p.isValidDrySwap() {
+		return false
+	}
+
+	return true
+}
+
+func (p *exactInSwapRouteParams) isValidTokenPair() bool {
 	if p.inputToken == "" || p.outputToken == "" {
 		return false
 	}
 
+	return true
+}
+
+func (p *exactInSwapRouteParams) isValidAmount() bool {
 	amountIn := u256.MustFromDecimal(p.amountIn)
 
 	if amountIn.Cmp(u256.Zero()) <= 0 {
@@ -45,6 +95,50 @@ func (p *exactInSwapRouteParams) IsValid() bool {
 		return false
 	}
 
+	return true
+}
+
+// validate the routeArr
+func (p *exactInSwapRouteParams) isValidRouteArr() bool {
+	routes := strings.Split(p.routeArr, ",")
+	for _, route := range routes {
+		routePools := strings.Split(route, "*POOL*")
+		if len(routePools) < 1 {
+			return false
+		}
+
+		firstToken := ""
+		lastToken := ""
+
+		for i, routePool := range routePools {
+			inputToken, outputToken, feeInt64 := parsePoolPath(routePool)
+
+			if i == 0 && firstToken != p.inputToken {
+				firstToken = inputToken
+			}
+
+			if lastToken != p.outputToken {
+				lastToken = outputToken
+			}
+
+			if feeInt64 != 100 && feeInt64 != 500 && feeInt64 != 3000 && feeInt64 != 10000 {
+				return false
+			}
+		}
+
+		if firstToken != p.inputToken {
+			return false
+		}
+
+		if lastToken != p.outputToken {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (p *exactInSwapRouteParams) isValidQuoteArr() bool {
 	quoteSum := int64(0)
 	quotes := make([]int64, 0)
 
@@ -62,48 +156,10 @@ func (p *exactInSwapRouteParams) IsValid() bool {
 		return false
 	}
 
-	// validate the routeArr
-	routes := strings.Split(p.routeArr, ",")
-	for _, route := range routes {
-		routePools := strings.Split(route, "*POOL*")
-		if len(routePools) < 1 {
-			return false
-		}
+	return true
+}
 
-		firstToken := ""
-		lastToken := ""
-
-		for _, routePool := range routePools {
-			routePoolParts := strings.Split(routePool, ":")
-			if len(routePoolParts) != 3 {
-				return false
-			}
-
-			if firstToken == "" {
-				firstToken = routePoolParts[0]
-			}
-
-			lastToken = routePoolParts[1]
-
-			feeInt64, err := strconv.ParseInt(routePoolParts[2], 10, 64)
-			if err != nil {
-				return false
-			}
-
-			if firstToken != p.inputToken {
-				return false
-			}
-
-			if lastToken != p.outputToken {
-				return false
-			}
-
-			if feeInt64 != 100 && feeInt64 != 500 && feeInt64 != 3000 && feeInt64 != 10000 {
-				return false
-			}
-		}
-	}
-
+func (p *exactInSwapRouteParams) isValidDeadline() bool {
 	if p.deadline < time.Now().Unix() {
 		return false
 	}
@@ -111,29 +167,80 @@ func (p *exactInSwapRouteParams) IsValid() bool {
 	return true
 }
 
-func (p *exactInSwapRouteParams) ToString() string {
-	return ufmt.Sprintf("inputToken: %s, outputToken: %s, amountIn: %s, routeArr: %s, quoteArr: %s, amountOutMin: %s, deadline: %d, referrer: %s",
-		p.inputToken,
-		p.outputToken,
-		p.amountIn,
-		p.routeArr,
-		p.quoteArr,
-		p.amountOutMin,
-		p.deadline,
-		p.referrer,
-	)
+// isValidMintOverflow checks if minting the required tokens would cause int64 overflow
+func (p *exactInSwapRouteParams) isValidMintOverflow() bool {
+	amountIn := u256.MustFromDecimal(p.amountIn)
+
+	// Convert to int64 for mint check
+	if amountIn.Cmp(u256.NewUintFromInt64(math.MaxInt64)) > 0 {
+		return false
+	}
+
+	amountInInt64 := amountIn.Int64()
+	if amountInInt64 < 0 {
+		amountInInt64 = 0
+	}
+
+	// Check against MAX_TEST_MINT_AMOUNT limit
+	if amountInInt64 > MAX_TEST_MINT_AMOUNT {
+		return false
+	}
+
+	// Get current total supply of the input token
+	currentSupply := getTokenTotalSupply(p.inputToken)
+
+	// Check for overflow: if currentSupply + amountInInt64 > MaxInt64
+	if currentSupply > 0 && amountInInt64 > 0 {
+		if math.MaxInt64-currentSupply < amountInInt64 {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (p *exactInSwapRouteParams) isValidDrySwap() bool {
+	_, _, success := p.drySwapRoute()
+
+	return success
+}
+
+func (p *exactInSwapRouteParams) drySwapRoute() (string, string, bool) {
+	amountIn, amountOut, success := "0", "0", false
+
+	revive(func() {
+		amountIn, amountOut, success = router.DrySwapRoute(
+			p.inputToken,
+			p.outputToken,
+			p.amountIn,
+			"EXACT_IN",
+			p.routeArr,
+			p.quoteArr,
+			"1",
+		)
+	})
+
+	if amountIn == "0" || amountOut == "0" {
+		return "0", "0", false
+	}
+
+	return amountIn, amountOut, success
 }
 
 func NewValidExactInSwapRouteParams(t *fuzz.T) *exactInSwapRouteParams {
-	amountIn := fuzz.Int64Range(1, math.MaxInt64).Draw(t, "amountIn").(int64)
+	inputToken, outputToken := generateTokenPair(t)
+	routeArr := generateRoutePathArr(t, inputToken, outputToken, 1, 1)
+	quoteArr := generateRouteQuoteArr(t, len(strings.Split(routeArr, ",")))
+
+	amountIn := fuzz.Int64Range(10, 100_000_000_000_000).Draw(t, "amountIn").(int64)
 	amountInUint256 := u256.NewUintFromInt64(amountIn)
 
 	return &exactInSwapRouteParams{
-		inputToken:   "gno.land/r/onbloc/bar",
-		outputToken:  "gno.land/r/onbloc/foo",
+		inputToken:   inputToken,
+		outputToken:  outputToken,
 		amountIn:     amountInUint256.ToString(),
-		routeArr:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
-		quoteArr:     "100",
+		routeArr:     routeArr,
+		quoteArr:     quoteArr,
 		amountOutMin: "0",
 		deadline:     time.Now().Add(time.Hour).Unix(),
 		referrer:     "",
@@ -141,15 +248,22 @@ func NewValidExactInSwapRouteParams(t *fuzz.T) *exactInSwapRouteParams {
 }
 
 func NewRandomizedExactInSwapRouteParams(t *fuzz.T) *exactInSwapRouteParams {
+	const maxRoutePathCount = 3
+	const maxHops = 3
+
+	inputToken, outputToken := generateTokenPair(t)
+	routeArr := generateRoutePathArr(t, inputToken, outputToken, maxRoutePathCount, maxHops)
+	quoteArr := generateRouteQuoteArr(t, len(strings.Split(routeArr, ",")))
+
 	amountInVal := fuzz.Uint256().Draw(t, "amountIn").(*uint256.Uint)
 	amountIn := amountInVal.ToString()
 
 	return &exactInSwapRouteParams{
-		inputToken:   "gno.land/r/onbloc/bar",
-		outputToken:  "gno.land/r/onbloc/foo",
+		inputToken:   inputToken,
+		outputToken:  outputToken,
 		amountIn:     amountIn,
-		routeArr:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
-		quoteArr:     "100",
+		routeArr:     routeArr,
+		quoteArr:     quoteArr,
 		amountOutMin: "0",
 		deadline:     time.Now().Add(time.Hour).Unix(),
 		referrer:     "",

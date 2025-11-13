@@ -15,7 +15,7 @@ import (
 
 var (
 	currentAddress = runtime.CurrentRealm().Address()
-	domainPath = "gno.land/r/gnoswap/gov/staker"
+	domainPath     = "gno.land/r/gnoswap/gov/staker"
 
 	kvStore store.KVStore
 
@@ -36,7 +36,10 @@ func init() {
 func initRegisterReadableContract() {
 	governanceAddress := access.MustGetAddress(prbac.ROLE_GOVERNANCE.String())
 
-	kvStore.AddAuthorizedCaller(governanceAddress, store.ReadOnly)
+	err := kvStore.AddAuthorizedCaller(governanceAddress, store.ReadOnly)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func initializeDomainStore(kvStore store.KVStore) any {

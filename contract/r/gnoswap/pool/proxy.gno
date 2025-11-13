@@ -1,5 +1,12 @@
 package pool
 
+// CreatePool creates a new liquidity pool for a token pair.
+//
+// Parameters:
+//   - token0Path: path of the first token
+//   - token1Path: path of the second token
+//   - fee: pool fee tier
+//   - sqrtPriceX96: initial sqrt price (Q64.96 format)
 func CreatePool(
 	cur realm,
 	token0Path string,
@@ -20,6 +27,13 @@ func SetPoolCreationFee(cur realm, fee int64) {
 	getImplementation().SetPoolCreationFee(fee)
 }
 
+// IncreaseObservationCardinalityLimit increases the observation cardinality for a pool.
+//
+// Parameters:
+//   - token0Path: path of the first token
+//   - token1Path: path of the second token
+//   - fee: pool fee tier
+//   - cardinalityNext: new observation cardinality limit
 func IncreaseObservationCardinalityLimit(
 	cur realm,
 	token0Path string,
@@ -35,6 +49,20 @@ func IncreaseObservationCardinalityLimit(
 	)
 }
 
+// Mint adds liquidity to a position.
+//
+// Parameters:
+//   - token0Path: path of the first token
+//   - token1Path: path of the second token
+//   - fee: pool fee tier
+//   - tickLower: lower tick boundary
+//   - tickUpper: upper tick boundary
+//   - liquidityAmount: amount of liquidity to add
+//   - positionCaller: caller address for the position
+//
+// Returns:
+//   - string: amount of token0 added
+//   - string: amount of token1 added
 func Mint(
 	cur realm,
 	token0Path string,
@@ -102,10 +130,28 @@ func Collect(
 	)
 }
 
+// SetWithdrawalFee sets the withdrawal fee rate.
+//
+// Parameters:
+//   - fee: withdrawal fee in basis points
 func SetWithdrawalFee(cur realm, fee uint64) {
 	getImplementation().SetWithdrawalFee(fee)
 }
 
+// HandleWithdrawalFee processes withdrawal fees for a position.
+//
+// Parameters:
+//   - positionId: ID of the position
+//   - token0Path: path of the first token
+//   - amount0: amount of token0 to withdraw
+//   - token1Path: path of the second token
+//   - amount1: amount of token1 to withdraw
+//   - poolPath: pool identifier
+//   - positionCaller: caller address for the position
+//
+// Returns:
+//   - string: net amount of token0 after fees
+//   - string: net amount of token1 after fees
 func HandleWithdrawalFee(
 	cur realm,
 	positionId uint64,
@@ -127,6 +173,22 @@ func HandleWithdrawalFee(
 	)
 }
 
+// Swap executes a token swap in the pool.
+//
+// Parameters:
+//   - token0Path: path of the first token
+//   - token1Path: path of the second token
+//   - fee: pool fee tier
+//   - recipient: recipient address for output tokens
+//   - zeroForOne: true if swapping token0 for token1
+//   - amountSpecified: amount to swap (positive for exact input, negative for exact output)
+//   - sqrtPriceLimitX96: price limit for the swap
+//   - payer: address that will pay for the swap
+//   - swapCallback: callback function for token transfer
+//
+// Returns:
+//   - string: amount of token0 delta
+//   - string: amount of token1 delta
 func Swap(
 	cur realm,
 	token0Path string,
@@ -152,18 +214,34 @@ func Swap(
 	)
 }
 
+// SetSwapEndHook sets the hook to be called at the end of a swap.
 func SetSwapEndHook(cur realm, hook func(cur realm, poolPath string) error) {
 	getImplementation().SetSwapEndHook(hook)
 }
 
+// SetSwapStartHook sets the hook to be called at the start of a swap.
 func SetSwapStartHook(cur realm, hook func(cur realm, poolPath string, timestamp int64)) {
 	getImplementation().SetSwapStartHook(hook)
 }
 
+// SetTickCrossHook sets the hook to be called when a tick is crossed during a swap.
 func SetTickCrossHook(cur realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	getImplementation().SetTickCrossHook(hook)
 }
 
+// CollectProtocol collects protocol fees from a pool.
+//
+// Parameters:
+//   - token0Path: path of the first token
+//   - token1Path: path of the second token
+//   - fee: pool fee tier
+//   - recipient: recipient address for fees
+//   - amount0Requested: amount of token0 to collect
+//   - amount1Requested: amount of token1 to collect
+//
+// Returns:
+//   - string: amount of token0 collected
+//   - string: amount of token1 collected
 func CollectProtocol(
 	cur realm,
 	token0Path string,
@@ -183,6 +261,11 @@ func CollectProtocol(
 	)
 }
 
+// SetFeeProtocol sets the protocol fee rates for a pool.
+//
+// Parameters:
+//   - feeProtocol0: protocol fee rate for token0
+//   - feeProtocol1: protocol fee rate for token1
 func SetFeeProtocol(cur realm, feeProtocol0, feeProtocol1 uint8) {
 	getImplementation().SetFeeProtocol(feeProtocol0, feeProtocol1)
 }

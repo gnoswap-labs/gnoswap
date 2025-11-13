@@ -62,7 +62,13 @@ func (r *Result) PrintLog(t *testing.T) {
 
 	if r.ErrorMessagesCount() > 0 {
 		for i, _ := range r.errorMessages {
-			t.Logf("Iteration %d: %s\n - params: %s", i, r.errorMessages[i], r.params[i].ToString())
+			paramStr := "failed load"
+
+			if r.params[i] != nil {
+				paramStr = r.params[i].ToString()
+			}
+
+			t.Logf("Iteration %d: %s\n - params: %s", i, r.errorMessages[i], paramStr)
 		}
 	} else {
 		t.Logf(" - No error messages")
@@ -73,10 +79,16 @@ func (r *Result) PrintLog(t *testing.T) {
 	if r.UnexpectedResultsCount() > 0 {
 
 		for i, _ := range r.unexpectedResults {
+			paramStr := "failed load"
+
+			if r.params[i] != nil {
+				paramStr = r.params[i].ToString()
+			}
+
 			if r.paramsValidStates[i] {
-				t.Logf("Iteration %d: %s\n - params: %s", i, r.errorMessages[i], r.params[i].ToString())
+				t.Logf("Iteration %d: %s\n - params: %s", i, r.errorMessages[i], paramStr)
 			} else {
-				t.Logf("Iteration %d: %s\n - params: %s", i, "should be failed but passed", r.params[i].ToString())
+				t.Logf("Iteration %d: %s\n - params: %s", i, "should be failed but passed", paramStr)
 			}
 		}
 	} else {

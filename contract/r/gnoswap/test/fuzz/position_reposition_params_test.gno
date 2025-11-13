@@ -1,9 +1,15 @@
 package fuzz
 
 import (
+	"math"
+
 	"gno.land/p/gnoswap/fuzz"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
+
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/pool"
+	"gno.land/r/gnoswap/position"
 )
 
 // positionRepositionParams is the parameters for Reposition fuzzing test
@@ -16,57 +22,42 @@ type positionRepositionParams struct {
 	amount1Desired string
 	amount0Min     string
 	amount1Min     string
+	poolPath       string
 }
 
 func (p *positionRepositionParams) IsValid() bool {
-	// Position ID must be non-zero
 	if p.positionId == 0 {
 		return false
 	}
 
-	// Fee must be one of the supported tiers
-	validFee := false
-	for _, tier := range []uint32{100, 500, 3000, 10000} {
-		if p.fee == tier {
-			validFee = true
-			break
-		}
-	}
-	if !validFee {
+	if _, exists := position.GetPosition(p.positionId); !exists {
 		return false
 	}
 
-	// Tick range must be valid
+	poolPath := position.GetPositionPoolKey(p.positionId)
+	if poolPath == "" || !pool.ExistsPoolPath(poolPath) {
+		return false
+	}
+
+	_, _, fee := parsePoolKey(poolPath)
+
+	tickSpacing, ok := defaultTickSpacings[fee]
+	if !ok {
+		return false
+	}
+
 	if p.tickLower >= p.tickUpper {
 		return false
 	}
 
-	// Verify tick spacing based on fee tier
-	var tickSpacing int32
-	switch p.fee {
-	case 100:
-		tickSpacing = 1
-	case 500:
-		tickSpacing = 10
-	case 3000:
-		tickSpacing = 60
-	case 10000:
-		tickSpacing = 200
-	default:
-		return false
-	}
-
-	// Ticks must be aligned to tick spacing
 	if p.tickLower%tickSpacing != 0 || p.tickUpper%tickSpacing != 0 {
 		return false
 	}
 
-	// Tick range must be at least one tick spacing
 	if p.tickUpper-p.tickLower < tickSpacing {
 		return false
 	}
 
-	// Amounts must be parseable and non-negative
 	amount0, err0 := u256.FromDecimal(p.amount0Desired)
 	amount1, err1 := u256.FromDecimal(p.amount1Desired)
 	if err0 != nil || err1 != nil {
@@ -76,13 +67,15 @@ func (p *positionRepositionParams) IsValid() bool {
 		return false
 	}
 
-	// At least one amount must be meaningful (> 1000 to avoid dust)
-	minAmount := u256.NewUint(1000)
-	if amount0.Lt(minAmount) && amount1.Lt(minAmount) {
+	if amount0.IsZero() || amount1.IsZero() {
 		return false
 	}
 
-	// Min amounts must be parseable and non-negative
+	maxSafeAmount := u256.NewUint(uint64(math.MaxInt64 / 1000))
+	if amount0.Gt(maxSafeAmount) || amount1.Gt(maxSafeAmount) {
+		return false
+	}
+
 	amount0Min, err0Min := u256.FromDecimal(p.amount0Min)
 	amount1Min, err1Min := u256.FromDecimal(p.amount1Min)
 	if err0Min != nil || err1Min != nil {
@@ -92,52 +85,75 @@ func (p *positionRepositionParams) IsValid() bool {
 		return false
 	}
 
+	if amount0Min.Gt(amount0) || amount1Min.Gt(amount1) {
+		return false
+	}
+
+	if !p.IsValidLiquidity() {
+		return false
+	}
+
+	return true
+}
+
+func (p *positionRepositionParams) IsValidLiquidity() (isValid bool) {
+	defer func() {
+		if r := recover(); r != nil {
+			isValid = false
+		}
+	}()
+
+	amount0, err0 := u256.FromDecimal(p.amount0Desired)
+	amount1, err1 := u256.FromDecimal(p.amount1Desired)
+	if err0 != nil || err1 != nil {
+		return false
+	}
+	sqrtPriceX96 := pool.GetSlot0SqrtPriceX96(p.poolPath)
+	sqrtRatioAX96 := common.TickMathGetSqrtRatioAtTick(p.tickLower)
+	sqrtRatioBX96 := common.TickMathGetSqrtRatioAtTick(p.tickUpper)
+
+	liquidity := common.GetLiquidityForAmounts(
+		sqrtPriceX96,
+		sqrtRatioAX96,
+		sqrtRatioBX96,
+		amount0,
+		amount1,
+	)
+
+	if liquidity.IsZero() || liquidity.Gt(MAX_UINT128) {
+		return false
+	}
+
 	return true
 }
 
 func (p *positionRepositionParams) ToString() string {
-	return ufmt.Sprintf("positionId: %d, tickLower: %d, tickUpper: %d, amount0Desired: %s, amount1Desired: %s",
+	return ufmt.Sprintf("positionId: %d, fee: %d, tickLower: %d, tickUpper: %d, poolPath: %s, amount0Desired: %s, amount1Desired: %s",
 		p.positionId,
+		p.fee,
 		p.tickLower,
 		p.tickUpper,
+		p.poolPath,
 		p.amount0Desired,
 		p.amount1Desired,
 	)
 }
 
-func NewValidPositionRepositionParams(t *fuzz.T, existingPositionId uint64, fee uint32) *positionRepositionParams {
-	// Calculate tick spacing based on fee tier
-	var tickSpacing int32
-	switch fee {
-	case 100:
-		tickSpacing = 1
-	case 500:
-		tickSpacing = 10
-	case 3000:
-		tickSpacing = 60
-	case 10000:
-		tickSpacing = 200
-	}
+func NewValidPositionRepositionParams(t *fuzz.T, existingPositionId uint64) *positionRepositionParams {
+	return newValidPositionRepositionParams(t, existingPositionId)
+}
 
-	// Generate new tick range (different from original)
-	tickLowerRaw := fuzz.Int32Range(-2000, -100).Draw(t, "tickLowerRaw").(int32)
-	tickUpperRaw := fuzz.Int32Range(100, 2000).Draw(t, "tickUpperRaw").(int32)
+func newValidPositionRepositionParams(t *fuzz.T, positionId uint64) *positionRepositionParams {
+	token0Path, token1Path, fee := getPoolInfoFromPosition(positionId)
+	poolPath := pool.GetPoolPath(token0Path, token1Path, fee)
+	currentTick := pool.GetSlot0Tick(poolPath)
+	tickLower, tickUpper := generateRandomTicks(t, currentTick, fee)
 
-	// Align to tick spacing
-	tickLower := (tickLowerRaw / tickSpacing) * tickSpacing
-	tickUpper := (tickUpperRaw / tickSpacing) * tickSpacing
-
-	// Ensure tickLower < tickUpper and at least one spacing apart
-	if tickLower >= tickUpper {
-		tickUpper = tickLower + tickSpacing
-	}
-
-	// Generate valid amounts
-	amount0 := fuzz.Int64Range(1000000, 100000000).Draw(t, "amount0").(int64)
-	amount1 := fuzz.Int64Range(1000000, 100000000).Draw(t, "amount1").(int64)
+	amount0 := fuzz.Int64Range(1, 1_000_000_000_000).Draw(t, "amount0").(int64)
+	amount1 := fuzz.Int64Range(1, 1_000_000_000_000).Draw(t, "amount1").(int64)
 
 	return &positionRepositionParams{
-		positionId:     existingPositionId,
+		positionId:     positionId,
 		fee:            fee,
 		tickLower:      tickLower,
 		tickUpper:      tickUpper,
@@ -145,29 +161,42 @@ func NewValidPositionRepositionParams(t *fuzz.T, existingPositionId uint64, fee 
 		amount1Desired: ufmt.Sprintf("%d", amount1),
 		amount0Min:     "0",
 		amount1Min:     "0",
+		poolPath:       poolPath,
 	}
 }
 
 func NewRandomizedPositionRepositionParams(t *fuzz.T, existingPositionId uint64) *positionRepositionParams {
-	// Generate random fee
-	fee := fuzz.Uint32Range(0, 20000).Draw(t, "fee").(uint32)
+	scenario := fuzz.IntRange(0, 3).Draw(t, "repositionScenario").(int)
 
-	// Generate wider tick range
-	tickLower := fuzz.Int32Range(-10000, 10000).Draw(t, "tickLower").(int32)
-	tickUpper := fuzz.Int32Range(-10000, 10000).Draw(t, "tickUpper").(int32)
+	switch scenario {
+	case 0:
+		return newValidPositionRepositionParams(t, existingPositionId)
+	case 1:
+		params := newValidPositionRepositionParams(t, existingPositionId)
+		params.tickLower = params.tickUpper // invalid range
+		return params
+	case 2:
+		params := newValidPositionRepositionParams(t, existingPositionId)
+		params.amount0Desired = "0"
+		params.amount1Desired = "0"
+		return params
+	default:
+		fee := fuzz.Uint32Range(0, math.MaxUint32).Draw(t, "fee").(uint32)
+		tickLower := fuzz.Int32Range(math.MinInt32, math.MaxInt32).Draw(t, "tickLower").(int32)
+		tickUpper := fuzz.Int32Range(math.MinInt32, math.MaxInt32).Draw(t, "tickUpper").(int32)
+		amount0 := fuzz.Int64Range(math.MinInt64, math.MaxInt64).Draw(t, "amount0").(int64)
+		amount1 := fuzz.Int64Range(math.MinInt64, math.MaxInt64).Draw(t, "amount1").(int64)
 
-	// Generate wider range of amounts
-	amount0 := fuzz.Int64Range(1, 1000000000).Draw(t, "amount0").(int64)
-	amount1 := fuzz.Int64Range(1, 1000000000).Draw(t, "amount1").(int64)
-
-	return &positionRepositionParams{
-		positionId:     existingPositionId,
-		fee:            fee,
-		tickLower:      tickLower,
-		tickUpper:      tickUpper,
-		amount0Desired: ufmt.Sprintf("%d", amount0),
-		amount1Desired: ufmt.Sprintf("%d", amount1),
-		amount0Min:     "0",
-		amount1Min:     "0",
+		return &positionRepositionParams{
+			positionId:     existingPositionId,
+			fee:            fee,
+			tickLower:      tickLower,
+			tickUpper:      tickUpper,
+			amount0Desired: ufmt.Sprintf("%d", amount0),
+			amount1Desired: ufmt.Sprintf("%d", amount1),
+			amount0Min:     "0",
+			amount1Min:     "0",
+			poolPath:       "",
+		}
 	}
 }

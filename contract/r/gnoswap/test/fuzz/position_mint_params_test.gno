@@ -1,28 +1,51 @@
 package fuzz
 
 import (
+	"math"
+	"strconv"
+	"time"
+
 	"gno.land/p/gnoswap/fuzz"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/pool"
 )
 
 // positionMintParams is the parameters for the Mint fuzzing test
 type positionMintParams struct {
-	token0Path      string
-	token1Path      string
-	fee             uint32
-	tickLower       int32
-	tickUpper       int32
-	amount0Desired  string
-	amount1Desired  string
-	amount0Min      string
-	amount1Min      string
-	deadline        int64
+	token0Path     string
+	token1Path     string
+	fee            uint32
+	tickLower      int32
+	tickUpper      int32
+	amount0Desired string
+	amount1Desired string
+	amount0Min     string
+	amount1Min     string
+	deadline       int64
 }
 
 func (p *positionMintParams) IsValid() bool {
+	token0Path := p.token0Path
+	token1Path := p.token1Path
+	tickLower := p.tickLower
+	tickUpper := p.tickUpper
+	amount0DesiredStr := p.amount0Desired
+	amount1DesiredStr := p.amount1Desired
+	amount0MinStr := p.amount0Min
+	amount1MinStr := p.amount1Min
+
+	// Mirror position.Mint input normalization so validation matches runtime behavior.
+	if token1Path < token0Path {
+		token0Path, token1Path = token1Path, token0Path
+		amount0DesiredStr, amount1DesiredStr = amount1DesiredStr, amount0DesiredStr
+		amount0MinStr, amount1MinStr = amount1MinStr, amount0MinStr
+		tickLower, tickUpper = -tickUpper, -tickLower
+	}
+
 	// Token paths must be different and not empty
-	if p.token0Path == p.token1Path || p.token0Path == "" || p.token1Path == "" {
+	if token0Path == token1Path || token0Path == "" || token1Path == "" {
 		return false
 	}
 
@@ -39,7 +62,7 @@ func (p *positionMintParams) IsValid() bool {
 	}
 
 	// Tick range must be valid
-	if p.tickLower >= p.tickUpper {
+	if tickLower >= tickUpper {
 		return false
 	}
 
@@ -59,41 +82,110 @@ func (p *positionMintParams) IsValid() bool {
 	}
 
 	// Ticks must be aligned to tick spacing
-	if p.tickLower%tickSpacing != 0 || p.tickUpper%tickSpacing != 0 {
+	if tickLower%tickSpacing != 0 || tickUpper%tickSpacing != 0 {
 		return false
 	}
 
 	// Tick range must be at least one tick spacing
-	if p.tickUpper-p.tickLower < tickSpacing {
-		return false
-	}
-
-	// Amounts must be parseable and non-negative
-	amount0, err0 := u256.FromDecimal(p.amount0Desired)
-	amount1, err1 := u256.FromDecimal(p.amount1Desired)
-	if err0 != nil || err1 != nil {
-		return false
-	}
-	if amount0.Lt(u256.Zero()) || amount1.Lt(u256.Zero()) {
-		return false
-	}
-
-	if amount0.IsZero() && amount1.IsZero() {
+	if tickUpper-tickLower < tickSpacing {
 		return false
 	}
 
 	// Min amounts must be parseable and non-negative
-	amount0Min, err0Min := u256.FromDecimal(p.amount0Min)
-	amount1Min, err1Min := u256.FromDecimal(p.amount1Min)
+	amount0Min, err0Min := strconv.ParseInt(amount0MinStr, 10, 64)
+	amount1Min, err1Min := strconv.ParseInt(amount1MinStr, 10, 64)
 	if err0Min != nil || err1Min != nil {
 		return false
 	}
-	if amount0Min.Lt(u256.Zero()) || amount1Min.Lt(u256.Zero()) {
+
+	if amount0Min < 0 || amount1Min < 0 {
+		return false
+	}
+
+	// Amounts must be parseable and non-negative
+	amount0, err0 := strconv.ParseInt(amount0DesiredStr, 10, 64)
+	amount1, err1 := strconv.ParseInt(amount1DesiredStr, 10, 64)
+	if err0 != nil || err1 != nil {
+		return false
+	}
+	if amount0 < 0 || amount1 < 0 {
+		return false
+	}
+
+	// Prevent token mint overflow
+	const maxSafeAmount = math.MaxInt64 / 1000
+	if amount0 > maxSafeAmount || amount1 > maxSafeAmount {
+		return false
+	}
+
+	if amount0Min > amount0 || amount1Min > amount1 {
 		return false
 	}
 
 	// Deadline must be in the future (relative to some reference time)
-	if p.deadline <= 0 {
+	if p.deadline < time.Now().Unix() {
+		return false
+	}
+
+	poolPath := pool.GetPoolPath(token0Path, token1Path, p.fee)
+	exists := pool.ExistsPoolPath(poolPath)
+	if !exists {
+		return false
+	}
+
+	currentTick := pool.GetSlot0Tick(poolPath)
+	token0OnlyRange := currentTick < tickLower
+	token1OnlyRange := currentTick >= tickUpper
+	priceInsideRange := !token0OnlyRange && !token1OnlyRange
+
+	if priceInsideRange {
+		if amount0 == 0 || amount1 == 0 {
+			return false
+		}
+	} else if token0OnlyRange {
+		if amount0 == 0 {
+			return false
+		}
+	} else if token1OnlyRange {
+		if amount1 == 0 {
+			return false
+		}
+	}
+
+	// Simulate actual liquidity calculation to detect overflows
+	if !p.canCalculateLiquidityWithoutPanic(poolPath, tickLower, tickUpper, amount0DesiredStr, amount1DesiredStr) {
+		return false
+	}
+
+	return true
+}
+
+// canCalculateLiquidityWithoutPanic attempts to calculate liquidity and returns false if it panics
+func (p *positionMintParams) canCalculateLiquidityWithoutPanic(poolPath string, tickLower, tickUpper int32, amount0Str, amount1Str string) (success bool) {
+	defer func() {
+		if r := recover(); r != nil {
+			// Panic occurred during liquidity calculation (likely overflow)
+			success = false
+		}
+	}()
+
+	sqrtPriceX96 := pool.GetSlot0SqrtPriceX96(poolPath)
+	sqrtRatioAX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
+	sqrtRatioBX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
+
+	amount0U256 := u256.MustFromDecimal(amount0Str)
+	amount1U256 := u256.MustFromDecimal(amount1Str)
+
+	liquidity := common.GetLiquidityForAmounts(
+		sqrtPriceX96,
+		sqrtRatioAX96,
+		sqrtRatioBX96,
+		amount0U256,
+		amount1U256,
+	)
+
+	// Zero liquidity is invalid
+	if liquidity.IsZero() {
 		return false
 	}
 
@@ -117,36 +209,13 @@ func NewValidPositionMintParams(t *fuzz.T) *positionMintParams {
 	feeIndex := fuzz.IntRange(0, len(VALID_FEE_TIERS)-1).Draw(t, "feeIndex").(int)
 	fee := VALID_FEE_TIERS[feeIndex]
 
-	// Calculate tick spacing based on fee tier
-	var tickSpacing int32
-	switch fee {
-	case 100:
-		tickSpacing = 1
-	case 500:
-		tickSpacing = 10
-	case 3000:
-		tickSpacing = 60
-	case 10000:
-		tickSpacing = 200
-	}
-
 	// Generate valid tick range (will be aligned to tick spacing)
 	// Use a reasonable range around current price (tick 0)
-	tickLowerRaw := fuzz.Int32Range(-1000, -1).Draw(t, "tickLowerRaw").(int32)
-	tickUpperRaw := fuzz.Int32Range(1, 1000).Draw(t, "tickUpperRaw").(int32)
-
-	// Align to tick spacing
-	tickLower := (tickLowerRaw / tickSpacing) * tickSpacing
-	tickUpper := (tickUpperRaw / tickSpacing) * tickSpacing
-
-	// Ensure tickLower < tickUpper and at least one spacing apart
-	if tickLower >= tickUpper {
-		tickUpper = tickLower + tickSpacing
-	}
+	tickLower, tickUpper := generateRandomTicks(t, 0, fee)
 
 	// Generate valid amounts
-	amount0 := fuzz.Int64Range(1000000, 100000000).Draw(t, "amount0").(int64)
-	amount1 := fuzz.Int64Range(1000000, 100000000).Draw(t, "amount1").(int64)
+	amount0 := fuzz.Int64Range(1, 1_000_000_000_000).Draw(t, "amount0").(int64)
+	amount1 := fuzz.Int64Range(1, 1_000_000_000_000).Draw(t, "amount1").(int64)
 
 	return &positionMintParams{
 		token0Path:     "gno.land/r/onbloc/bar",
@@ -158,26 +227,51 @@ func NewValidPositionMintParams(t *fuzz.T) *positionMintParams {
 		amount1Desired: ufmt.Sprintf("%d", amount1),
 		amount0Min:     "0",
 		amount1Min:     "0",
-		deadline:       fuzz.Int64Range(1700000000, 2000000000).Draw(t, "deadline").(int64),
+		deadline:       randomFutureDeadline(t),
+	}
+}
+
+// NewValidPositionMintParamsWithFee creates valid mint params with a specific fee tier
+func NewValidPositionMintParamsWithFee(t *fuzz.T) *positionMintParams {
+	token0Path, token1Path := generateTokenPair(t)
+	fee := generateFeeTier(t)
+	tickLower, tickUpper := generateRandomTicks(t, 0, fee)
+
+	// Generate valid amounts
+	amount0 := fuzz.Int64Range(0, math.MaxInt64).Draw(t, "amount0").(int64)
+	amount1 := fuzz.Int64Range(0, math.MaxInt64).Draw(t, "amount1").(int64)
+
+	deadline := fuzz.Int64Range(time.Now().Unix(), math.MaxInt64).Draw(t, "deadline").(int64)
+
+	return &positionMintParams{
+		token0Path:     token0Path,
+		token1Path:     token1Path,
+		fee:            fee,
+		tickLower:      tickLower,
+		tickUpper:      tickUpper,
+		amount0Desired: ufmt.Sprintf("%d", amount0),
+		amount1Desired: ufmt.Sprintf("%d", amount1),
+		amount0Min:     "0",
+		amount1Min:     "0",
+		deadline:       deadline,
 	}
 }
 
 func NewRandomizedPositionMintParams(t *fuzz.T) *positionMintParams {
-	// Use valid fee tier
-	feeIndex := fuzz.IntRange(0, len(VALID_FEE_TIERS)-1).Draw(t, "feeIndex").(int)
-	fee := VALID_FEE_TIERS[feeIndex]
+	token0Path, token1Path := generateTokenPair(t)
+	fee := generateFeeTier(t)
+	tickLower := fuzz.Int32Range(math.MinInt32, math.MaxInt32).Draw(t, "tickLower").(int32)
+	tickUpper := fuzz.Int32Range(math.MinInt32, math.MaxInt32).Draw(t, "tickUpper").(int32)
 
-	// Generate wider tick range (may be invalid)
-	tickLower := fuzz.Int32Range(-10000, 10000).Draw(t, "tickLower").(int32)
-	tickUpper := fuzz.Int32Range(-10000, 10000).Draw(t, "tickUpper").(int32)
+	// Generate valid amounts
+	amount0 := fuzz.Int64Range(math.MinInt64, math.MaxInt64).Draw(t, "amount0").(int64)
+	amount1 := fuzz.Int64Range(math.MinInt64, math.MaxInt64).Draw(t, "amount1").(int64)
 
-	// Generate wider range of amounts (may cause issues)
-	amount0 := fuzz.Int64Range(1, 1000000000).Draw(t, "amount0").(int64)
-	amount1 := fuzz.Int64Range(1, 1000000000).Draw(t, "amount1").(int64)
+	deadline := fuzz.Int64Range(time.Now().Unix(), math.MaxInt64).Draw(t, "deadline").(int64)
 
 	return &positionMintParams{
-		token0Path:     "gno.land/r/onbloc/bar",
-		token1Path:     "gno.land/r/onbloc/foo",
+		token0Path:     token0Path,
+		token1Path:     token1Path,
 		fee:            fee,
 		tickLower:      tickLower,
 		tickUpper:      tickUpper,
@@ -185,6 +279,6 @@ func NewRandomizedPositionMintParams(t *fuzz.T) *positionMintParams {
 		amount1Desired: ufmt.Sprintf("%d", amount1),
 		amount0Min:     "0",
 		amount1Min:     "0",
-		deadline:       fuzz.Int64Range(1700000000, 2000000000).Draw(t, "deadline").(int64),
+		deadline:       deadline,
 	}
 }

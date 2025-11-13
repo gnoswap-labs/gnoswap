@@ -8,18 +8,15 @@ import (
 	"gno.land/p/onbloc/json"
 
 	"gno.land/r/gnoswap/emission"
-	"gno.land/r/gnoswap/protocol_fee"
 	"gno.land/r/gnoswap/gov/staker"
+	"gno.land/r/gnoswap/protocol_fee"
 )
 
 // GetLockedAmount returns total locked GNS.
 func (gs *govStakerV1) GetLockedAmount() int64 {
 	lockedAmount := int64(0)
 
-	delegations, err := gs.store.GetAllDelegations()
-	if err != nil {
-		panic(err)
-	}
+	delegations := gs.store.GetAllDelegations()
 	delegations.Iterate("", "", func(key string, value any) bool {
 		delegation, ok := value.(*staker.Delegation)
 		if !ok {
@@ -48,10 +45,7 @@ func (gs *govStakerV1) GetClaimableRewardByRewardID(rewardID string) string {
 	protocol_fee.DistributeProtocolFee(cross)
 
 	emissionDistributedAmount := emission.GetAccuDistributedToGovStaker()
-	emissionRewardManager, err := gs.store.GetEmissionRewardManager()
-	if err != nil {
-		panic(err)
-	}
+	emissionRewardManager := gs.store.GetEmissionRewardManager()
 	emissionResolver := NewEmissionRewardManagerResolver(emissionRewardManager)
 	emissionReward, err := emissionResolver.GetClaimableRewardAmount(emissionDistributedAmount, rewardID, time.Now().Unix())
 	if err != nil {
@@ -59,10 +53,7 @@ func (gs *govStakerV1) GetClaimableRewardByRewardID(rewardID string) string {
 	}
 
 	protocolFeeDistributedAmounts := gs.getDistributedProtocolFees()
-	protocolFeeRewardManager, err := gs.store.GetProtocolFeeRewardManager()
-	if err != nil {
-		panic(err)
-	}
+	protocolFeeRewardManager := gs.store.GetProtocolFeeRewardManager()
 	protocolFeeResolver := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 	protocolFeeRewards, err := protocolFeeResolver.GetClaimableRewardAmounts(protocolFeeDistributedAmounts, rewardID, time.Now().Unix())
 	if err != nil {

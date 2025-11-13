@@ -258,10 +258,7 @@ func (gs *govStakerV1) CollectUndelegatedGns() int64 {
 	gns.Transfer(cross, caller, collectedAmount)
 
 	// Update total locked amount directly in store
-	currentLocked, err := gs.store.GetTotalLockedAmount()
-	if err != nil {
-		panic(err)
-	}
+	currentLocked := gs.store.GetTotalLockedAmount()
 
 	newLocked := safeSubInt64(currentLocked, collectedAmount)
 	if newLocked < 0 {
@@ -302,7 +299,6 @@ func (gs *govStakerV1) delegate(
 		currentTimestamp,
 	)
 	delegationResolver := NewDelegationResolver(delegation)
-
 	delegatedAmount := delegationResolver.DelegatedAmount()
 	if delegatedAmount < 0 {
 		return nil, errors.New("delegated amount cannot be negative")
@@ -316,21 +312,15 @@ func (gs *govStakerV1) delegate(
 	gs.addStakeProtocolFeeReward(from.String(), amount, time.Now().Unix())
 
 	// Update total amounts directly in store
-	currentDelegated, err := gs.store.GetTotalDelegatedAmount()
-	if err != nil {
+	currentDelegated := gs.store.GetTotalDelegatedAmount()
+
+	if err := gs.store.SetTotalDelegatedAmount(currentDelegated + amount); err != nil {
 		panic(err)
 	}
 
-	if err := gs.store.SetTotalDelegatedAmount(safeAddInt64(currentDelegated, amount)); err != nil {
-		panic(err)
-	}
+	currentLocked := gs.store.GetTotalLockedAmount()
 
-	currentLocked, err := gs.store.GetTotalLockedAmount()
-	if err != nil {
-		panic(err)
-	}
-
-	if err := gs.store.SetTotalLockedAmount(safeAddInt64(currentLocked, amount)); err != nil {
+	if err := gs.store.SetTotalLockedAmount(currentLocked + amount); err != nil {
 		panic(err)
 	}
 
@@ -372,10 +362,7 @@ func (gs *govStakerV1) unDelegate(
 		}
 
 		// Get lockup period from store
-		lockupPeriod, err := gs.store.GetUnDelegationLockupPeriod()
-		if err != nil {
-			panic(err)
-		}
+		lockupPeriod := gs.store.GetUnDelegationLockupPeriod()
 
 		resolver.UnDelegate(
 			currentUnDelegationAmount,
@@ -398,10 +385,7 @@ func (gs *govStakerV1) unDelegate(
 	}
 
 	// Update total delegated amount directly in store
-	currentDelegated, err := gs.store.GetTotalDelegatedAmount()
-	if err != nil {
-		panic(err)
-	}
+	currentDelegated := gs.store.GetTotalDelegatedAmount()
 
 	newDelegated := safeSubInt64(currentDelegated, amount)
 	if newDelegated < 0 {
@@ -457,10 +441,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 	}
 
 	// Update total delegated amount directly in store
-	currentDelegated, err := gs.store.GetTotalDelegatedAmount()
-	if err != nil {
-		panic(err)
-	}
+	currentDelegated := gs.store.GetTotalDelegatedAmount()
 
 	newDelegated := safeSubInt64(currentDelegated, amount)
 	if newDelegated < 0 {

@@ -232,10 +232,10 @@ func TestProposalStatusResolver_PrivateMethods(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		setup    func() *ProposalStatusResolver
-		action   func(*ProposalStatusResolver) error
-		verify   func(*testing.T, *ProposalStatusResolver, error)
+		name   string
+		setup  func() *ProposalStatusResolver
+		action func(*ProposalStatusResolver) error
+		verify func(*testing.T, *ProposalStatusResolver, error)
 	}{
 		{
 			name: "cancel - success",

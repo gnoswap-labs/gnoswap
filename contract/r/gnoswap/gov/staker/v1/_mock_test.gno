@@ -12,10 +12,11 @@ import (
 // mockGovStakerStore is a mock implementation of IGovStakerStore for testing
 type mockGovStakerStore struct {
 	// Basic configuration
-	unDelegationLockupPeriod int64
-	emissionRewardBalance    int64
-	totalDelegatedAmount     int64
-	totalLockedAmount        int64
+	unDelegationLockupPeriod       int64
+	hasUnDelegationLockupPeriodKey bool
+	emissionRewardBalance          int64
+	totalDelegatedAmount           int64
+	totalLockedAmount              int64
 
 	// Delegation data
 	delegations       *avl.Tree // map[int64]*staker.Delegation
@@ -47,18 +48,19 @@ func newMockGovStakerStore() staker.IGovStakerStore {
 
 // Basic configuration methods
 func (m *mockGovStakerStore) HasUnDelegationLockupPeriodStoreKey() bool {
-	return m.unDelegationLockupPeriod != 0
+	return m.hasUnDelegationLockupPeriodKey
 }
 
-func (m *mockGovStakerStore) GetUnDelegationLockupPeriod() (int64, error) {
-	if m.unDelegationLockupPeriod == 0 {
-		return 0, errNotInitialized
+func (m *mockGovStakerStore) GetUnDelegationLockupPeriod() int64 {
+	if !m.hasUnDelegationLockupPeriodKey {
+		panic(errNotInitialized)
 	}
-	return m.unDelegationLockupPeriod, nil
+	return m.unDelegationLockupPeriod
 }
 
 func (m *mockGovStakerStore) SetUnDelegationLockupPeriod(period int64) error {
 	m.unDelegationLockupPeriod = period
+	m.hasUnDelegationLockupPeriodKey = true
 	return nil
 }
 
@@ -66,8 +68,8 @@ func (m *mockGovStakerStore) HasEmissionRewardBalanceStoreKey() bool {
 	return true // Always available in mock
 }
 
-func (m *mockGovStakerStore) GetEmissionRewardBalance() (int64, error) {
-	return m.emissionRewardBalance, nil
+func (m *mockGovStakerStore) GetEmissionRewardBalance() int64 {
+	return m.emissionRewardBalance
 }
 
 func (m *mockGovStakerStore) SetEmissionRewardBalance(balance int64) error {
@@ -79,8 +81,8 @@ func (m *mockGovStakerStore) HasTotalDelegatedAmountStoreKey() bool {
 	return true // Always available in mock
 }
 
-func (m *mockGovStakerStore) GetTotalDelegatedAmount() (int64, error) {
-	return m.totalDelegatedAmount, nil
+func (m *mockGovStakerStore) GetTotalDelegatedAmount() int64 {
+	return m.totalDelegatedAmount
 }
 
 func (m *mockGovStakerStore) SetTotalDelegatedAmount(amount int64) error {
@@ -92,8 +94,8 @@ func (m *mockGovStakerStore) HasTotalLockedAmountStoreKey() bool {
 	return true // Always available in mock
 }
 
-func (m *mockGovStakerStore) GetTotalLockedAmount() (int64, error) {
-	return m.totalLockedAmount, nil
+func (m *mockGovStakerStore) GetTotalLockedAmount() int64 {
+	return m.totalLockedAmount
 }
 
 func (m *mockGovStakerStore) SetTotalLockedAmount(amount int64) error {
@@ -134,16 +136,16 @@ func (m *mockGovStakerStore) RemoveDelegation(id int64) error {
 	return nil
 }
 
-func (m *mockGovStakerStore) GetAllDelegations() (*avl.Tree, error) {
-	return m.delegations, nil
+func (m *mockGovStakerStore) GetAllDelegations() *avl.Tree {
+	return m.delegations
 }
 
 func (m *mockGovStakerStore) HasDelegationCounterStoreKey() bool {
 	return true // Always available in mock
 }
 
-func (m *mockGovStakerStore) GetDelegationCounter() (*staker.Counter, error) {
-	return m.delegationNextID, nil
+func (m *mockGovStakerStore) GetDelegationCounter() *staker.Counter {
+	return m.delegationNextID
 }
 
 func (m *mockGovStakerStore) SetDelegationCounter(counter *staker.Counter) error {
@@ -161,8 +163,8 @@ func (m *mockGovStakerStore) AddDelegationRecord(record *staker.DelegationRecord
 	return nil
 }
 
-func (m *mockGovStakerStore) GetDelegationHistory() (staker.DelegationHistory, error) {
-	return m.delegationHistory, nil
+func (m *mockGovStakerStore) GetDelegationHistory() staker.DelegationHistory {
+	return m.delegationHistory
 }
 
 func (m *mockGovStakerStore) SetDelegationHistory(history staker.DelegationHistory) error {
@@ -220,8 +222,8 @@ func (m *mockGovStakerStore) HasDelegationSnapshotStoreKey() bool {
 	return true // Always available in mock
 }
 
-func (m *mockGovStakerStore) GetDelegationSnapshot() (staker.DelegationSnapshot, error) {
-	return m.delegationSnapshots, nil
+func (m *mockGovStakerStore) GetDelegationSnapshot() staker.DelegationSnapshot {
+	return m.delegationSnapshots
 }
 
 func (m *mockGovStakerStore) SetDelegationSnapshot(snapshot staker.DelegationSnapshot) error {
@@ -233,11 +235,11 @@ func (m *mockGovStakerStore) HasEmissionRewardManagerStoreKey() bool {
 	return true // Always available in mock
 }
 
-func (m *mockGovStakerStore) GetEmissionRewardManager() (*staker.EmissionRewardManager, error) {
+func (m *mockGovStakerStore) GetEmissionRewardManager() *staker.EmissionRewardManager {
 	if m.emissionRewardManager == nil {
 		m.emissionRewardManager = staker.NewEmissionRewardManager()
 	}
-	return m.emissionRewardManager, nil
+	return m.emissionRewardManager
 }
 
 func (m *mockGovStakerStore) SetEmissionRewardManager(manager *staker.EmissionRewardManager) error {
@@ -249,11 +251,11 @@ func (m *mockGovStakerStore) HasProtocolFeeRewardManagerStoreKey() bool {
 	return true // Always available in mock
 }
 
-func (m *mockGovStakerStore) GetProtocolFeeRewardManager() (*staker.ProtocolFeeRewardManager, error) {
+func (m *mockGovStakerStore) GetProtocolFeeRewardManager() *staker.ProtocolFeeRewardManager {
 	if m.protocolFeeRewardManager == nil {
 		m.protocolFeeRewardManager = staker.NewProtocolFeeRewardManager()
 	}
-	return m.protocolFeeRewardManager, nil
+	return m.protocolFeeRewardManager
 }
 
 func (m *mockGovStakerStore) SetProtocolFeeRewardManager(manager *staker.ProtocolFeeRewardManager) error {
@@ -265,11 +267,11 @@ func (m *mockGovStakerStore) HasDelegationManagerStoreKey() bool {
 	return true // Always available in mock
 }
 
-func (m *mockGovStakerStore) GetDelegationManager() (*staker.DelegationManager, error) {
+func (m *mockGovStakerStore) GetDelegationManager() *staker.DelegationManager {
 	if m.delegationManager == nil {
 		m.delegationManager = staker.NewDelegationManager()
 	}
-	return m.delegationManager, nil
+	return m.delegationManager
 }
 
 func (m *mockGovStakerStore) SetDelegationManager(manager *staker.DelegationManager) error {
@@ -281,11 +283,11 @@ func (m *mockGovStakerStore) HasLaunchpadProjectDepositsStoreKey() bool {
 	return true // Always available in mock
 }
 
-func (m *mockGovStakerStore) GetLaunchpadProjectDeposits() (*staker.LaunchpadProjectDeposits, error) {
+func (m *mockGovStakerStore) GetLaunchpadProjectDeposits() *staker.LaunchpadProjectDeposits {
 	if m.launchpadProjectDeposits == nil {
 		m.launchpadProjectDeposits = staker.NewLaunchpadProjectDeposits()
 	}
-	return m.launchpadProjectDeposits, nil
+	return m.launchpadProjectDeposits
 }
 
 func (m *mockGovStakerStore) SetLaunchpadProjectDeposits(deposits *staker.LaunchpadProjectDeposits) error {
@@ -304,7 +306,9 @@ func uint64ToString(n uint64) string {
 func createTestGovStaker() *govStakerV1 {
 	store := newMockGovStakerStore()
 	// Initialize required values
-	store.(*mockGovStakerStore).unDelegationLockupPeriod = 86400 // 1 day default
+	mockStore := store.(*mockGovStakerStore)
+	mockStore.unDelegationLockupPeriod = 86400 // 1 day default
+	mockStore.hasUnDelegationLockupPeriodKey = true
 	gs := NewGovStakerV1(store).(*govStakerV1)
 	return gs
 }

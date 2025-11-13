@@ -64,8 +64,7 @@ func TestInit_initStoreData(t *testing.T) {
 		uassert.Nil(t, err)
 
 		// then - custom value should be preserved
-		period, err := store.GetUnDelegationLockupPeriod()
-		uassert.Nil(t, err)
+		period := store.GetUnDelegationLockupPeriod()
 		uassert.Equal(t, period, customPeriod) // Should still be 2 days, not reset to default 1 day
 	})
 }

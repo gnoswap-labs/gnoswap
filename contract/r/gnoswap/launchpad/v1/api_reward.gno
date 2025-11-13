@@ -1,6 +1,9 @@
 package v1
 
-import gs "gno.land/r/gnoswap/gov/staker"
+import (
+	"gno.land/p/nt/ufmt"
+	gs "gno.land/r/gnoswap/gov/staker"
+)
 
 // ApiGetProjectRecipientRewardByProjectId retrieves the claimable reward for a project recipient by project ID.
 func (lp *launchpadV1) ApiGetProjectRecipientRewardByProjectId(projectId string) string {
@@ -10,7 +13,11 @@ func (lp *launchpadV1) ApiGetProjectRecipientRewardByProjectId(projectId string)
 		return "0"
 	}
 
-	return gs.GetClaimableRewardByAddress(project.(*Project).recipient)
+	proj, ok := project.(*Project)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast project to *Project: %T", project))
+	}
+	return gs.GetClaimableRewardByAddress(proj.recipient)
 }
 
 // ApiGetProjectRecipientRewardByAddress retrieves the claimable reward for a recipient by address.

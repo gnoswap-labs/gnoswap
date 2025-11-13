@@ -6,6 +6,7 @@ type stakerV1 struct {
 	store            sr.IStakerStore
 	poolAccessor     sr.PoolAccessor
 	emissionAccessor sr.EmissionAccessor
+	nftAccessor      sr.NFTAccessor
 }
 
 func (s *stakerV1) getPools() *Pools {
@@ -15,7 +16,10 @@ func (s *stakerV1) getPools() *Pools {
 }
 
 func (s *stakerV1) updatePools(pools *Pools) {
-	s.store.SetPools(pools.tree)
+	err := s.store.SetPools(pools.tree)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (s *stakerV1) getPoolTier() *PoolTier {
@@ -32,14 +36,45 @@ func (s *stakerV1) getPoolTier() *PoolTier {
 }
 
 func (s *stakerV1) updatePoolTier(poolTier *PoolTier) {
-	s.store.SetPoolTierMemberships(poolTier.membership)
-	s.store.SetPoolTierRatio(poolTier.tierRatio)
-	s.store.SetPoolTierCounts(poolTier.counts)
-	s.store.SetPoolTierLastRewardCacheTimestamp(poolTier.lastRewardCacheTimestamp)
-	s.store.SetPoolTierLastRewardCacheHeight(poolTier.lastRewardCacheHeight)
-	s.store.SetPoolTierCurrentEmission(poolTier.currentEmission)
-	s.store.SetPoolTierGetEmission(poolTier.getEmission)
-	s.store.SetPoolTierGetHalvingBlocksInRange(poolTier.getHalvingBlocksInRange)
+	err := s.store.SetPoolTierMemberships(poolTier.membership)
+	if err != nil {
+		panic(err)
+	}
+
+	err = s.store.SetPoolTierRatio(poolTier.tierRatio)
+	if err != nil {
+		panic(err)
+	}
+
+	err = s.store.SetPoolTierCounts(poolTier.counts)
+	if err != nil {
+		panic(err)
+	}
+
+	err = s.store.SetPoolTierLastRewardCacheTimestamp(poolTier.lastRewardCacheTimestamp)
+	if err != nil {
+		panic(err)
+	}
+
+	err = s.store.SetPoolTierLastRewardCacheHeight(poolTier.lastRewardCacheHeight)
+	if err != nil {
+		panic(err)
+	}
+
+	err = s.store.SetPoolTierCurrentEmission(poolTier.currentEmission)
+	if err != nil {
+		panic(err)
+	}
+
+	err = s.store.SetPoolTierGetEmission(poolTier.getEmission)
+	if err != nil {
+		panic(err)
+	}
+
+	err = s.store.SetPoolTierGetHalvingBlocksInRange(poolTier.getHalvingBlocksInRange)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (s *stakerV1) getDeposits() *Deposits {
@@ -49,7 +84,10 @@ func (s *stakerV1) getDeposits() *Deposits {
 }
 
 func (s *stakerV1) updateDeposits(deposits *Deposits) {
-	s.store.SetDeposits(deposits.tree)
+	err := s.store.SetDeposits(deposits.tree)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (s *stakerV1) getStakers() *Stakers {
@@ -59,7 +97,10 @@ func (s *stakerV1) getStakers() *Stakers {
 }
 
 func (s *stakerV1) updateStakers(stakers *Stakers) {
-	s.store.SetStakers(stakers.tree)
+	err := s.store.SetStakers(stakers.tree)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (s *stakerV1) getExternalIncentives() *ExternalIncentives {
@@ -69,17 +110,21 @@ func (s *stakerV1) getExternalIncentives() *ExternalIncentives {
 }
 
 func (s *stakerV1) updateExternalIncentives(externalIncentives *ExternalIncentives) {
-	s.store.SetExternalIncentives(externalIncentives.tree)
+	err := s.store.SetExternalIncentives(externalIncentives.tree)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (s *stakerV1) getDepositResolver(lpTokenId uint64) *DepositResolver {
 	return NewDepositResolver(s.getDeposit(lpTokenId))
 }
 
-func NewStakerV1(stakerStore sr.IStakerStore, poolAccessor sr.PoolAccessor, emissionAccessor sr.EmissionAccessor) *stakerV1 {
+func NewStakerV1(stakerStore sr.IStakerStore, poolAccessor sr.PoolAccessor, emissionAccessor sr.EmissionAccessor, nftAccessor sr.NFTAccessor) *stakerV1 {
 	return &stakerV1{
 		store:            stakerStore,
 		poolAccessor:     poolAccessor,
 		emissionAccessor: emissionAccessor,
+		nftAccessor:      nftAccessor,
 	}
 }

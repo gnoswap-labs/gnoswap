@@ -7,7 +7,6 @@ import (
 	"gno.land/p/nt/uassert"
 )
 
-
 func TestUpgrade_RegisterInitializer(t *testing.T) {
 	tests := []struct {
 		name                 string

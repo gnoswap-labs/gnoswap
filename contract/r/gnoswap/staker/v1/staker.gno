@@ -13,7 +13,6 @@ import (
 	"gno.land/r/gnoswap/halt"
 	sr "gno.land/r/gnoswap/staker"
 
-	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
 
 	en "gno.land/r/gnoswap/emission"
@@ -279,7 +278,7 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 
 	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()
-	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
+	owner := s.nftAccessor.MustOwnerOf(positionIdFrom(positionId))
 	currentTime := time.Now().Unix()
 
 	success := referral.TryRegister(cross, caller, referrer)
@@ -345,7 +344,7 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	s.getStakers().addDeposit(caller, positionId, deposit)
 
 	// transfer NFT ownership to staker contract
-	if err := transferDeposit(positionId, owner, caller, stakerAddr); err != nil {
+	if err := s.transferDeposit(positionId, owner, caller, stakerAddr); err != nil {
 		panic(err.Error())
 	}
 
@@ -417,7 +416,7 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 //
 // NFT remains locked in staker until unstaking.
 // Otherwise delegates the transfer to `gnft.TransferFrom`.
-func transferDeposit(positionId uint64, owner, caller, to address) error {
+func (s *stakerV1) transferDeposit(positionId uint64, owner, caller, to address) error {
 	// if owner is the same as to, when mint and stake, it will be the same address
 	if owner == to {
 		return nil
@@ -431,7 +430,7 @@ func transferDeposit(positionId uint64, owner, caller, to address) error {
 	}
 
 	// transfer NFT ownership
-	return gnft.TransferFrom(cross, owner, to, positionIdFrom(positionId))
+	return s.nftAccessor.TransferFrom(owner, to, positionIdFrom(positionId))
 }
 
 // CollectReward harvests accumulated rewards for a staked position. This includes both
@@ -618,6 +617,11 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 	rewardPenalty := formatInt(reward.InternalPenalty)
 	s.store.SetTotalEmissionSent(totalEmissionSent)
 
+	err = s.store.SetTotalEmissionSent(totalEmissionSent)
+	if err != nil {
+		panic(err)
+	}
+
 	chain.Emit(
 		"CollectReward",
 		"prevAddr", previousRealm.Address().String(),
@@ -685,7 +689,7 @@ func (s *stakerV1) UnStakeToken(positionId uint64, unwrapResult bool) string { /
 	}
 
 	// transfer NFT ownership to origin owner
-	gnft.TransferFrom(cross, stakerAddr, deposit.Owner(), positionIdFrom(positionId))
+	s.nftAccessor.TransferFrom(stakerAddr, deposit.Owner(), positionIdFrom(positionId))
 	pn.SetPositionOperator(cross, positionId, ZERO_ADDRESS)
 
 	previousRealm := runtime.PreviousRealm()
@@ -756,7 +760,7 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 	s.getDeposits().remove(positionId)
 	s.getStakers().removeDeposit(deposit.Owner(), positionId)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(positionId))
+	owner := s.nftAccessor.MustOwnerOf(positionIdFrom(positionId))
 	caller := runtime.PreviousRealm().Address()
 	if err := hasTokenOwnership(owner, caller); err != nil {
 		return err

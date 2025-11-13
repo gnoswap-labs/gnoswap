@@ -133,9 +133,9 @@ func TestNewProposalManager(t *testing.T) {
 // TestProposalManager_EdgeCases tests edge cases for proposal manager
 func TestProposalManager_EdgeCases(t *testing.T) {
 	tests := []struct {
-		name          string
-		setup         func(*ProposalManager)
-		verify        func(*testing.T, *ProposalManager)
+		name   string
+		setup  func(*ProposalManager)
+		verify func(*testing.T, *ProposalManager)
 	}{
 		{
 			name: "Add duplicate proposal for same user",

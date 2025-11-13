@@ -28,6 +28,7 @@ func CreateProject(
 	)
 }
 
+// CollectProtocolFee collects accumulated protocol fees from launchpad operations.
 func CollectProtocolFee(cur realm) {
 	getImplementation().CollectProtocolFee()
 }

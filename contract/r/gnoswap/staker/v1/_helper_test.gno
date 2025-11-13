@@ -16,6 +16,7 @@ import (
 	pn "gno.land/r/gnoswap/position"
 
 	pool_v1 "gno.land/r/gnoswap/pool/v1"
+	position_v1 "gno.land/r/gnoswap/position/v1"
 
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
@@ -72,7 +73,8 @@ var (
 	dummyAddr  = testutils.TestAddress("dummy")
 	dummyRealm = testing.NewUserRealm(dummyAddr)
 
-	mockInstance *stakerV1
+	mockInstance     *stakerV1
+	mockGNFTAccessor = newMockNFTAccessor()
 
 	initializedPool     bool
 	initializedPosition bool
@@ -436,12 +438,17 @@ func isInErrorRange(expected uint64, actual uint64) bool {
 
 func initStakerTest(t *testing.T) {
 	t.Helper()
+
+	mockGNFTAccessor = newMockNFTAccessor()
+
 	initPoolTest(t)
+	initPositionTest(t)
 
 	mockInstance = &stakerV1{
 		store:            newMockStakerStore(),
 		poolAccessor:     newMockPoolAccessor(),
 		emissionAccessor: newMockEmissionAccessor(),
+		nftAccessor:      mockGNFTAccessor,
 	}
 }
 
@@ -461,12 +468,29 @@ func initPoolTest(t *testing.T) {
 	pl.UpgradeImpl(cross, mockPoolPath)
 }
 
+func initPositionTest(t *testing.T) {
+	t.Helper()
+	const mockPositionPath = "gno.land/r/gnoswap/position/mock"
+
+	if !initializedPosition {
+		initializedPosition = true
+		testing.SetRealm(testing.NewCodeRealm(mockPositionPath))
+		pn.RegisterInitializer(cross, func(s pn.IPositionStore) pn.IPosition {
+			return position_v1.NewPositionV1(mock.NewMockPositionStore(), mockGNFTAccessor)
+		})
+	}
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	pn.UpgradeImpl(cross, mockPositionPath)
+}
+
 func getMockInstance() *stakerV1 {
 	if mockInstance == nil {
 		mockInstance = &stakerV1{
 			store:            newMockStakerStore(),
 			poolAccessor:     newMockPoolAccessor(),
 			emissionAccessor: newMockEmissionAccessor(),
+			nftAccessor:      mockGNFTAccessor,
 		}
 	}
 

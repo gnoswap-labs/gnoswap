@@ -236,44 +236,44 @@ func TestCurrentRewardPerPool(t *testing.T) {
 // Test CurrentReward for different tiers
 func TestCurrentReward(t *testing.T) {
 	tests := []struct {
-		name            string
-		tier            uint64
-		tierCounts      [AllTierCount]uint64
-		emission        int64
-		expectedReward  int64
-		shouldBeZero    bool
+		name           string
+		tier           uint64
+		tierCounts     [AllTierCount]uint64
+		emission       int64
+		expectedReward int64
+		shouldBeZero   bool
 	}{
 		{
-			name:            "tier 1 with single pool",
-			tier:            1,
-			tierCounts:      [AllTierCount]uint64{0, 1, 0, 0},
-			emission:        1000000,
-			expectedReward:  1000000,
-			shouldBeZero:    false,
+			name:           "tier 1 with single pool",
+			tier:           1,
+			tierCounts:     [AllTierCount]uint64{0, 1, 0, 0},
+			emission:       1000000,
+			expectedReward: 1000000,
+			shouldBeZero:   false,
 		},
 		{
-			name:            "tier 2 with single pool",
-			tier:            2,
-			tierCounts:      [AllTierCount]uint64{0, 1, 1, 0},
-			emission:        1000000,
-			expectedReward:  300000,
-			shouldBeZero:    false,
+			name:           "tier 2 with single pool",
+			tier:           2,
+			tierCounts:     [AllTierCount]uint64{0, 1, 1, 0},
+			emission:       1000000,
+			expectedReward: 300000,
+			shouldBeZero:   false,
 		},
 		{
-			name:            "tier with zero count",
-			tier:            1,
-			tierCounts:      [AllTierCount]uint64{0, 0, 0, 0},
-			emission:        1000000,
-			expectedReward:  0,
-			shouldBeZero:    true,
+			name:           "tier with zero count",
+			tier:           1,
+			tierCounts:     [AllTierCount]uint64{0, 0, 0, 0},
+			emission:       1000000,
+			expectedReward: 0,
+			shouldBeZero:   true,
 		},
 		{
-			name:            "tier 3 with multiple pools",
-			tier:            3,
-			tierCounts:      [AllTierCount]uint64{0, 1, 1, 2},
-			emission:        1000000,
-			expectedReward:  100000,
-			shouldBeZero:    false,
+			name:           "tier 3 with multiple pools",
+			tier:           3,
+			tierCounts:     [AllTierCount]uint64{0, 1, 1, 2},
+			emission:       1000000,
+			expectedReward: 100000,
+			shouldBeZero:   false,
 		},
 	}
 
@@ -385,10 +385,10 @@ func TestCurrentCountEdgeCases(t *testing.T) {
 // Test applyCacheToAllPools behavior
 func TestApplyCacheToAllPools(t *testing.T) {
 	tests := []struct {
-		name                    string
-		emissionInThisInterval  int64
-		tierCounts              [AllTierCount]uint64
-		numPoolsToAdd           int
+		name                   string
+		emissionInThisInterval int64
+		tierCounts             [AllTierCount]uint64
+		numPoolsToAdd          int
 	}{
 		{
 			name:                   "single pool single tier",

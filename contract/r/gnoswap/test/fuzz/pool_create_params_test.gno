@@ -4,6 +4,8 @@ import (
 	"gno.land/p/gnoswap/fuzz"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
+
+	"gno.land/r/gnoswap/pool"
 )
 
 // poolCreateParams is the parameters for the CreatePool fuzzing test.
@@ -50,6 +52,11 @@ func (p *poolCreateParams) IsValid() bool {
 		return false
 	}
 
+	poolPath := pool.GetPoolPath(p.token0Path, p.token1Path, p.fee)
+	if pool.ExistsPoolPath(poolPath) {
+		return false
+	}
+
 	return true
 }
 
@@ -67,23 +74,14 @@ func NewValidPoolCreateParams(t *fuzz.T) *poolCreateParams {
 	feeIndex := fuzz.IntRange(0, len(VALID_FEE_TIERS)-1).Draw(t, "feeIndex").(int)
 	fee := VALID_FEE_TIERS[feeIndex]
 
-	// Use a reasonable range for testing: 10^18 to 10^27
-	minPrice := "1000000000000000000"          // 10^18
-	maxPrice := "1000000000000000000000000000" // 10^27
-	sqrtPriceVal := fuzz.Uint256Range(minPrice, maxPrice).Draw(t, "sqrtPrice").(*u256.Uint)
+	sqrtPriceVal := fuzz.Uint256Range(MIN_SQRT_RATIO, MAX_SQRT_RATIO).Draw(t, "sqrtPrice").(*u256.Uint)
 
-	// Registered tokens only
-	tokens := []string{
-		BAR_PATH,
-		FOO_PATH,
-	}
-
-	token0Index := fuzz.IntRange(0, len(tokens)-1).Draw(t, "token0Index").(int)
-	token1Index := fuzz.IntRange(0, len(tokens)-1).Draw(t, "token1Index").(int)
+	// Generate random token pair
+	token0Path, token1Path := generateTokenPair(t)
 
 	return &poolCreateParams{
-		token0Path:   tokens[token0Index],
-		token1Path:   tokens[token1Index],
+		token0Path:   token0Path,
+		token1Path:   token1Path,
 		fee:          fee,
 		sqrtPriceX96: sqrtPriceVal.ToString(),
 	}
@@ -94,20 +92,13 @@ func NewRandomizedPoolCreateParams(t *fuzz.T) *poolCreateParams {
 	fee := fuzz.Uint32Range(0, 20000).Draw(t, "fee").(uint32)
 
 	sqrtPriceVal := fuzz.Uint256().Draw(t, "sqrtPrice").(*u256.Uint)
-	tokens := []string{
-		BAR_PATH,
-		FOO_PATH,
-		BAZ_PATH,
-		"gnot",
-		"",
-	}
 
-	token0Index := fuzz.IntRange(0, len(tokens)-1).Draw(t, "token0Index").(int)
-	token1Index := fuzz.IntRange(0, len(tokens)-1).Draw(t, "token1Index").(int)
+	// Generate random token pair
+	token0Path, token1Path := generateTokenPair(t)
 
 	return &poolCreateParams{
-		token0Path:   tokens[token0Index],
-		token1Path:   tokens[token1Index],
+		token0Path:   token0Path,
+		token1Path:   token1Path,
 		fee:          fee,
 		sqrtPriceX96: sqrtPriceVal.ToString(),
 	}
