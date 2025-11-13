@@ -48,6 +48,11 @@ func CollectDepositGns(cur realm, depositID string) (int64, error) {
 	return getImplementation().CollectDepositGns(depositID)
 }
 
+// CollectRewardByDepositId collects rewards from a deposit.
+func CollectRewardByDepositId(cur realm, depositID string) int64 {
+	return getImplementation().CollectRewardByDepositId(depositID)
+}
+
 // ApiGetProjectAndTierStatisticsByProjectId retrieves project and tier statistics by project ID.
 func ApiGetProjectAndTierStatisticsByProjectId(projectId string) string {
 	return getImplementation().ApiGetProjectAndTierStatisticsByProjectId(projectId)

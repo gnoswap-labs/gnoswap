@@ -271,14 +271,43 @@ func TestCollectDepositGns(t *testing.T) {
 	}
 }
 
-func TestApiGetProjectAndTierStatisticsByProjectId(t *testing.T) {
+func TestCollectRewardByDepositId(t *testing.T) {
 	tests := []struct {
-		name      string
-		projectId string
+		name        string
+		depositID   string
+		callerRealm runtime.Realm
 	}{
 		{
-			name:      "get project and tier statistics is success",
-			projectId: "project1",
+			name:        "collect reward by deposit id is success",
+			depositID:   "deposit1",
+			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetTestState(t)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
+			RegisterInitializer(cross, makeMockInitializer("v1"))
+			testing.SetRealm(testing.NewUserRealm(adminAddr))
+			UpgradeImpl(cross, "gno.land/r/gnoswap/launchpad/v1")
+
+			testing.SetRealm(tt.callerRealm)
+			result := CollectRewardByDepositId(cross, tt.depositID)
+			_ = result
+		})
+	}
+}
+
+func TestApiGetProjectAndTierStatisticsByProjectId(t *testing.T) {
+	tests := []struct {
+		name        string
+		depositID   string
+		callerRealm runtime.Realm
+	}{
+		{
+			name:        "collect deposit gns is success",
+			depositID:   "deposit1",
+			callerRealm: testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"),
 		},
 	}
 
@@ -290,7 +319,8 @@ func TestApiGetProjectAndTierStatisticsByProjectId(t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
 			UpgradeImpl(cross, "gno.land/r/gnoswap/launchpad/v1")
 
-			result := ApiGetProjectAndTierStatisticsByProjectId(tt.projectId)
+			testing.SetRealm(tt.callerRealm)
+			result := CollectRewardByDepositId(cross, tt.depositID)
 			_ = result
 		})
 	}
