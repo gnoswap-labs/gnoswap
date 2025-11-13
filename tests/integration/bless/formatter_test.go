@@ -69,3 +69,36 @@ func TestMetricMasking(t *testing.T) {
 		t.Fatalf("metric mask mismatch\nwant: %s\ngot:  %s", want, got)
 	}
 }
+
+func TestCurrentTimeMasking(t *testing.T) {
+	patterns, err := ParseMaskPatterns("currentTime,currentHeight")
+	if err != nil {
+		t.Fatalf("ParseMaskPatterns: %v", err)
+	}
+
+	conv := NewConverter("stdout", true, true, patterns)
+
+	// Test attrs array format
+	line := `[{"key":"currentTime","value":"1763004369"},{"key":"currentHeight","value":"17"}]`
+	got, ok := conv.ConvertLine(line)
+	if !ok {
+		t.Fatalf("expected line to be converted")
+	}
+
+	want := `stdout '\[\{\"key\":\"currentTime\",\"value\":\"[0-9]+\"\},\{\"key\":\"currentHeight\",\"value\":\"[0-9]+\"\}\]'`
+	if got != want {
+		t.Fatalf("currentTime mask mismatch\nwant: %s\ngot:  %s", want, got)
+	}
+
+	// Test standard JSON format
+	line2 := `{"currentTime":1763004369,"currentHeight":17}`
+	got2, ok2 := conv.ConvertLine(line2)
+	if !ok2 {
+		t.Fatalf("expected line to be converted")
+	}
+
+	want2 := `stdout '\{\"currentTime\":[0-9]+,\"currentHeight\":[0-9]+\}'`
+	if got2 != want2 {
+		t.Fatalf("currentTime mask mismatch (standard format)\nwant: %s\ngot:  %s", want2, got2)
+	}
+}

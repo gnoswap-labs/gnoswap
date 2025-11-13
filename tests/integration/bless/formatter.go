@@ -8,7 +8,7 @@ import (
 
 const (
 	// DefaultMaskSpec is applied when no custom mask flag is provided.
-	DefaultMaskSpec    = "timestamp,bytes_delta,fee_delta.amount"
+	DefaultMaskSpec    = "timestamp,bytes_delta,fee_delta.amount,currentTime,currentHeight,observationTimestamp"
 	defaultMaskPattern = "[0-9]+"
 	placeholderPrefix  = "__MASK_PLACEHOLDER_"
 )
@@ -22,7 +22,9 @@ var (
 		"TOTAL TX COST:",
 	}
 
+	// Precompiled regex patterns for better performance
 	addressPattern = regexp.MustCompile(`g1[0-9a-z]{38}`)
+	digitPattern   = regexp.MustCompile(`\d{2,}`) // 2자리 이상의 숫자
 )
 
 // MaskPattern describes a dynamic field that should be replaced with a regex placeholder.
@@ -40,6 +42,12 @@ type Converter struct {
 	patterns  []MaskPattern
 }
 
+// placeholder represents a temporary token and its regex replacement pattern.
+type placeholder struct {
+	token   string
+	pattern string
+}
+
 // NewConverter returns a Converter for the provided keyword (stdout/stderr).
 func NewConverter(kind string, trim, skip bool, patterns []MaskPattern) Converter {
 	return Converter{
@@ -52,11 +60,7 @@ func NewConverter(kind string, trim, skip bool, patterns []MaskPattern) Converte
 
 // ConvertLine escapes a single line and returns the formatted expectation.
 func (c Converter) ConvertLine(line string) (string, bool) {
-	if c.trimSpace {
-		line = strings.TrimSpace(line)
-	} else {
-		line = strings.TrimRight(line, "\r\n")
-	}
+	line = c.normalizeLine(line)
 
 	if c.skipEmpty && line == "" {
 		return "", false
@@ -66,30 +70,54 @@ func (c Converter) ConvertLine(line string) (string, bool) {
 		return fmt.Sprintf("%s ''", c.kind), true
 	}
 
-	var placeholders []placeholder
+	placeholders := make([]placeholder, 0, 8) // Pre-allocate with reasonable capacity
 
-	line = applyMetricMask(line, &placeholders)
-	line = maskAddresses(line, &placeholders)
+	// Apply masking in order
+	line = c.applyAllMasks(line, &placeholders)
+
+	// Escape and replace placeholders
+	escaped := c.escapeAndReplace(line, placeholders)
+
+	return fmt.Sprintf("%s '%s'", c.kind, escaped), true
+}
+
+// normalizeLine trims or cleans up the line based on converter settings.
+func (c Converter) normalizeLine(line string) string {
+	if c.trimSpace {
+		return strings.TrimSpace(line)
+	}
+	return strings.TrimRight(line, "\r\n")
+}
+
+// applyAllMasks applies all masking operations to the line.
+func (c Converter) applyAllMasks(line string, placeholders *[]placeholder) string {
+	line = applyMetricMask(line, placeholders)
+	line = maskAddresses(line, placeholders)
 
 	for _, pattern := range c.patterns {
-		line = applyMask(line, pattern, &placeholders)
+		line = applyMask(line, pattern, placeholders)
 	}
 
+	return line
+}
+
+// escapeAndReplace escapes the line and replaces placeholders with their patterns.
+func (c Converter) escapeAndReplace(line string, placeholders []placeholder) string {
 	escaped := regexp.QuoteMeta(line)
+
+	// Replace all placeholders with their regex patterns
 	for _, ph := range placeholders {
 		escaped = strings.ReplaceAll(escaped, ph.token, ph.pattern)
 	}
 
+	// Escape quotes
 	escaped = strings.ReplaceAll(escaped, `"`, `\"`)
 	escaped = strings.ReplaceAll(escaped, `'`, `\'`)
-	return fmt.Sprintf("%s '%s'", c.kind, escaped), true
+
+	return escaped
 }
 
-type placeholder struct {
-	token   string
-	pattern string
-}
-
+// applyMask applies a single mask pattern to the line.
 func applyMask(line string, pattern MaskPattern, placeholders *[]placeholder) string {
 	if pattern.re == nil {
 		return line
@@ -101,22 +129,20 @@ func applyMask(line string, pattern MaskPattern, placeholders *[]placeholder) st
 	}
 
 	var builder strings.Builder
+	builder.Grow(len(line) + len(matches)*len(placeholderPrefix)) // Optimize allocation
+
 	last := 0
 	for _, match := range matches {
-		if len(match) < 6 {
+		valueStart, valueEnd := extractValueIndices(match)
+		if valueStart == -1 {
 			continue
 		}
 
-		valueStart, valueEnd := match[4], match[5]
 		builder.WriteString(line[last:valueStart])
 
-		token := fmt.Sprintf("%s%d__", placeholderPrefix, len(*placeholders))
-		*placeholders = append(*placeholders, placeholder{
-			token:   token,
-			pattern: pattern.replacement,
-		})
-
+		token := createPlaceholder(len(*placeholders), pattern.replacement, placeholders)
 		builder.WriteString(token)
+
 		last = valueEnd
 	}
 
@@ -124,8 +150,40 @@ func applyMask(line string, pattern MaskPattern, placeholders *[]placeholder) st
 	return builder.String()
 }
 
+// extractValueIndices determines the start and end indices of the value to mask.
+func extractValueIndices(match []int) (int, int) {
+	// Check attrs format first (groups 3-5)
+	if len(match) >= 10 && match[6] != -1 && match[7] != -1 {
+		return match[8], match[9] // {"key":"X","value":"123"}
+	}
+
+	// Check standard format (groups 1-2)
+	if len(match) >= 6 && match[2] != -1 && match[3] != -1 {
+		return match[4], match[5] // "X":123
+	}
+
+	// Two-segment pattern
+	if len(match) >= 6 {
+		return match[4], match[5]
+	}
+
+	return -1, -1
+}
+
+// createPlaceholder creates a new placeholder token and adds it to the list.
+func createPlaceholder(index int, pattern string, placeholders *[]placeholder) string {
+	token := fmt.Sprintf("%s%d__", placeholderPrefix, index)
+	*placeholders = append(*placeholders, placeholder{
+		token:   token,
+		pattern: pattern,
+	})
+	return token
+}
+
+// applyMetricMask masks digits in lines starting with known metric prefixes.
 func applyMetricMask(line string, placeholders *[]placeholder) string {
 	trimmed := strings.TrimSpace(line)
+
 	for _, prefix := range metricPrefixes {
 		if strings.HasPrefix(trimmed, prefix) {
 			return maskDigits(line, placeholders)
@@ -135,47 +193,22 @@ func applyMetricMask(line string, placeholders *[]placeholder) string {
 	return line
 }
 
+// maskDigits masks all multi-digit numbers in the line.
 func maskDigits(line string, placeholders *[]placeholder) string {
-	var builder strings.Builder
-	for i := 0; i < len(line); {
-		ch := line[i]
-		if ch < '0' || ch > '9' {
-			builder.WriteByte(ch)
-			i++
-			continue
-		}
-
-		start := i
-		for i < len(line) && line[i] >= '0' && line[i] <= '9' {
-			i++
-		}
-
-		digits := line[start:i]
+	return digitPattern.ReplaceAllStringFunc(line, func(digits string) string {
 		if len(digits) == 1 {
-			builder.WriteString(digits)
-			continue
+			return digits
 		}
 
-		token := fmt.Sprintf("%s%d__", placeholderPrefix, len(*placeholders))
 		pattern := fmt.Sprintf("%c[0-9]{%d}", digits[0], len(digits)-1)
-		*placeholders = append(*placeholders, placeholder{
-			token:   token,
-			pattern: pattern,
-		})
-		builder.WriteString(token)
-	}
-
-	return builder.String()
+		return createPlaceholder(len(*placeholders), pattern, placeholders)
+	})
 }
 
+// maskAddresses replaces all g1 addresses with placeholders.
 func maskAddresses(line string, placeholders *[]placeholder) string {
 	return addressPattern.ReplaceAllStringFunc(line, func(addr string) string {
-		token := fmt.Sprintf("%s%d__", placeholderPrefix, len(*placeholders))
-		*placeholders = append(*placeholders, placeholder{
-			token:   token,
-			pattern: "g1[0-9a-z]{38}",
-		})
-		return token
+		return createPlaceholder(len(*placeholders), "g1[0-9a-z]{38}", placeholders)
 	})
 }
 
@@ -188,21 +221,14 @@ func ParseMaskPatterns(spec string) ([]MaskPattern, error) {
 
 	items := strings.Split(spec, ",")
 	patterns := make([]MaskPattern, 0, len(items))
+
 	for _, item := range items {
 		item = strings.TrimSpace(item)
 		if item == "" {
 			continue
 		}
 
-		key := item
-		replacement := defaultMaskPattern
-		if parts := strings.SplitN(item, "=", 2); len(parts) == 2 {
-			key = strings.TrimSpace(parts[0])
-			replacement = strings.TrimSpace(parts[1])
-			if replacement == "" {
-				replacement = defaultMaskPattern
-			}
-		}
+		key, replacement := parseKeyValue(item)
 
 		mp, err := buildMaskPattern(key, replacement)
 		if err != nil {
@@ -215,6 +241,21 @@ func ParseMaskPatterns(spec string) ([]MaskPattern, error) {
 	return patterns, nil
 }
 
+// parseKeyValue splits "key=value" into key and value, with default value.
+func parseKeyValue(item string) (string, string) {
+	parts := strings.SplitN(item, "=", 2)
+	if len(parts) == 2 {
+		key := strings.TrimSpace(parts[0])
+		replacement := strings.TrimSpace(parts[1])
+		if replacement == "" {
+			replacement = defaultMaskPattern
+		}
+		return key, replacement
+	}
+	return item, defaultMaskPattern
+}
+
+// buildMaskPattern constructs a MaskPattern from a path and replacement string.
 func buildMaskPattern(path, replacement string) (MaskPattern, error) {
 	if path == "" {
 		return MaskPattern{}, fmt.Errorf("mask path is empty")
@@ -222,17 +263,14 @@ func buildMaskPattern(path, replacement string) (MaskPattern, error) {
 
 	segments := strings.Split(path, ".")
 	if len(segments) == 0 || len(segments) > 2 {
-		return MaskPattern{}, fmt.Errorf("mask path %q is invalid", path)
+		return MaskPattern{}, fmt.Errorf("mask path %q is invalid (must have 1 or 2 segments)", path)
 	}
 
 	var expr string
 	if len(segments) == 1 {
-		key := regexp.QuoteMeta(segments[0])
-		expr = fmt.Sprintf(`((?:"%s"|%s)\s*[:=]\s*)(-?\d+)`, key, key)
+		expr = buildSingleSegmentPattern(segments[0])
 	} else {
-		parent := regexp.QuoteMeta(segments[0])
-		child := regexp.QuoteMeta(segments[1])
-		expr = fmt.Sprintf(`((?:"%s"|%s)\s*:\s*\{[^}]*?(?:(?:"%s"|%s)\s*[:=]\s*))(-?\d+)`, parent, parent, child, child)
+		expr = buildTwoSegmentPattern(segments[0], segments[1])
 	}
 
 	re, err := regexp.Compile(expr)
@@ -245,4 +283,29 @@ func buildMaskPattern(path, replacement string) (MaskPattern, error) {
 		replacement: replacement,
 		re:          re,
 	}, nil
+}
+
+// buildSingleSegmentPattern creates regex for single-level keys.
+// Matches both: "currentTime":1234 and {"key":"currentTime","value":"1234"}
+func buildSingleSegmentPattern(key string) string {
+	quotedKey := regexp.QuoteMeta(key)
+
+	// Standard format: "key":123 or key:123
+	standardPattern := fmt.Sprintf(`(?:"%s"|%s)\s*[:=]\s*`, quotedKey, quotedKey)
+
+	// Attrs array format: {"key":"key","value":"123"}
+	attrsPattern := fmt.Sprintf(`\{\"key\":\s*\"%s\"\s*,\s*\"value\":\s*\"`, quotedKey)
+
+	return fmt.Sprintf(`(?:(%s)(-?\d+)|(%s)(-?\d+)(\"))`, standardPattern, attrsPattern)
+}
+
+// buildTwoSegmentPattern creates regex for nested keys like "parent.child".
+func buildTwoSegmentPattern(parent, child string) string {
+	quotedParent := regexp.QuoteMeta(parent)
+	quotedChild := regexp.QuoteMeta(child)
+
+	return fmt.Sprintf(
+		`((?:"%s"|%s)\s*:\s*\{[^}]*?(?:(?:"%s"|%s)\s*[:=]\s*))(-?\d+)`,
+		quotedParent, quotedParent, quotedChild, quotedChild,
+	)
 }
