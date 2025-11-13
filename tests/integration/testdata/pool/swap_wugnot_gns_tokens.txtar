@@ -129,9 +129,10 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1xt9lk80
 stdout 'OK!'
 
 gnokey maketx call -pkgpath gno.land/r/swap_wrapper -func WrappedSwap -args "gno.land/r/gnoland/wugnot" -args gno.land/r/gnoswap/gns -args 500 -args $gns_admin_user_addr -args false -args "60283363" -args "1461446703485210103287273052203988822378723970341" -args $gns_admin_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
-stdout 'OK!'
-stdout 'GAS USED:   5[0-9]{7}'
-stdout 'STORAGE DELTA:  3[0-9]{3} bytes'
+stdout "-27324922"
+stdout "60283363"
+stdout 'GAS USED:   1[0-9]{7}'
+stdout 'STORAGE DELTA:  2[0-9]{4} bytes'
 stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
 stdout '\"type\":\"Swap\"'
 
@@ -143,32 +144,84 @@ gno = "0.9"
 package swap_wrapper
 
 import (
+	"chain"
+
+	i256 "gno.land/p/gnoswap/int256"
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 )
 
+var (
+	poolAddr    = chain.PackageAddress("gno.land/r/gnoswap/pool")
+	wrapperAddr = chain.PackageAddress("gno.land/r/swap_wrapper")
+)
+
 func WrappedSwap(
-    cur realm,
-    token0Path string,
-    token1Path string,
-    fee uint32,
-    recipient address,
-    zeroForOne bool,
-    amountSpecified string,
-    sqrtPriceLimitX96 string,
-    payer address,
+	cur realm,
+	token0Path string,
+	token1Path string,
+	fee uint32,
+	recipient address,
+	zeroForOne bool,
+	amountSpecified string,
+	sqrtPriceLimitX96 string,
+	payer address,
 ) (string, string) {
-    return pool.Swap(
-        cross,
-        token0Path,
-        token1Path,
-        fee,
-        recipient,
-        zeroForOne,
-        amountSpecified,
-        sqrtPriceLimitX96,
-        payer,
-        func(cur realm, amount0Delta, amount1Delta string) error {
-            return nil
-        },
-    )
+	// The pool contract expects swap callbacks to settle the owed token
+	// immediately, otherwise the swap panics with an insufficient payment
+	// error. We forward the callback into handleSwapCallback so this test
+	// harness can transfer the requested token back to the pool.
+	return pool.Swap(
+		cross,
+		token0Path,
+		token1Path,
+		fee,
+		recipient,
+		zeroForOne,
+		amountSpecified,
+		sqrtPriceLimitX96,
+		payer,
+		func(cur realm, amount0Delta, amount1Delta string) error {
+			return handleSwapCallback(
+				token0Path,
+				token1Path,
+				payer,
+				amount0Delta,
+				amount1Delta,
+			)
+		},
+	)
+}
+
+func handleSwapCallback(
+	token0Path string,
+	token1Path string,
+	payer address,
+	amount0Delta string,
+	amount1Delta string,
+) error {
+	zero := i256.Zero()
+
+	amount0 := i256.MustFromDecimal(amount0Delta)
+	amount1 := i256.MustFromDecimal(amount1Delta)
+
+	switch {
+	case amount0.Gt(zero):
+		transferToPool(token0Path, amount0, payer)
+	case amount1.Gt(zero):
+		transferToPool(token1Path, amount1, payer)
+	}
+
+	return nil
+}
+
+func transferToPool(tokenPath string, amount *i256.Int, payer address) {
+	payment := amount.Abs().Int64()
+
+	if payer == wrapperAddr {
+		common.SafeGRC20Transfer(cross, tokenPath, poolAddr, payment)
+		return
+	}
+
+	common.SafeGRC20TransferFrom(cross, tokenPath, payer, poolAddr, payment)
 }
