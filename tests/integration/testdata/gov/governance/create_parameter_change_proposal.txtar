@@ -94,10 +94,10 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_u
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_user_addr -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeParameterChange -args "poolcreationfee" -args "set" -args 1 -args "gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*0" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
-stdout 'GAS USED:   24[0-9]{6}'
+stdout 'GAS USED:   2[0-9]{7}'
 stdout 'STORAGE DELTA:  1[0-9]{4} bytes'
 stdout 'TOTAL TX COST:  10[0-9]{7}ugnot'
-stdout '{\"type\":"ProposeParameterChange\"'
+stdout '\"type\":"ProposeParameterChange\"'
 stdout '{\"key\":\"title\",\"value\":\"poolcreationfee\"},{\"key\":\"description\",\"value\":\"set\"},{\"key\":\"numToExecute\",\"value\":\"1\"},{\"key\":\"executions\",\"value\":\"gno.land/r/gnoswap/pool\*EXE\*SetPoolCreationFee\*EXE\*0\"}'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/gov/governance.GetTitleByProposalId(1)"

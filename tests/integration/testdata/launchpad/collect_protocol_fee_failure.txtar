@@ -87,5 +87,5 @@ stdout "gno.land/r/onbloc/bar:8"
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1x6r75sxlkp9zfqufew0vcuq9sfclsq8uaqkru9 -args 1000000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout OK!
 
-gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func CollectProtocolFee -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" $project_recipient_user_addr
-stderr 'zero delegated amount || g1uat3ezk7qvswm0h2cenfee4y20zt303quzxjkg is not project wallet from launchpad'
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func CollectProtocolFee -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" $project_recipient_user_addr
+stderr 'zero delegated amount'

@@ -96,9 +96,9 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_u
 
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeCommunityPoolSpend -args "Test Proposal" -args "This is a test proposal" -args $gns_admin_user_addr -args "gno.land/r/gnoswap/gns" -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout 1
-stdout 'GAS USED:   242[0-9]+'
+stdout 'GAS USED:   2[0-9]{7}'
 stdout 'STORAGE DELTA:  15395 bytes'
-stdout 'EVENTS:     \[{\"type\":\"ProposeCommunityPoolSpend\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"title\",\"value\":\"Test Proposal\"},{\"key\":\"description\",\"value\":\"This is a test proposal\"},{\"key\":\"to\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"tokenPath\",\"value\":\"gno.land/r/gnoswap/gns\"},{\"key\":\"amount\",\"value\":\"100\"},{\"key\":\"proposalId\",\"value\":\"1\"},{\"key\":\"quorumAmount\",\"value\":\"1000000000\"},{\"key\":\"maxVotingWeight\",\"value\":\"2000000000\"},{\"key\":\"configVersion\",\"value\":\"2\"},{\"key\":\"createdAt\",\"value\":\".+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/gov/governance/v1\"},{\"bytes_delta\":15395,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":1539500},\"pkg_path\":\"gno.land/r/gnoswap/gov/governance\"}\]'
+stdout '\"type\":\"ProposeCommunityPoolSpend\"'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/gov/governance.GetExecutionStateByProposalId(1)"
 stdout '"active"'

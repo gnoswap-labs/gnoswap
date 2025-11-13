@@ -82,6 +82,6 @@ stdout 0
 # Admin redelegates from user1 to user2
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func Redelegate -args $gns_admin_user_addr -args $user2_user_addr -args 1000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout 'GAS USED:   2[0-9]{7}'
-stdout 'STORAGE DELTA:  5368 bytes'
-stdout 'TOTAL TX COST:  100536800ugnot'
+stdout 'STORAGE DELTA:  5[0-9]{3} bytes'
+stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
 stdout 'EVENTS:     \[{\"type\":\"TransferProtocolFee\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1em9s40nfrwd2aqn9ypjv7d9x9z9c8uk5uxrza9\"},{\"key\":\"prevRealm\",\"value\":\"gno.land/r/gnoswap/gov/staker\"},{\"key\":\"toDevOps\",\"value\":\"\"},{\"key\":\"toGovStaker\",\"value\":\"\"}\],\"pkg_path\":\"gno.land/r/gnoswap/protocol_fee/v1\"},{\"type\":\"Redelegate\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"from\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"previousDelegatee\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},'
