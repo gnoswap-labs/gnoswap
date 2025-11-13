@@ -1,12 +1,10 @@
 package referral
 
+import "chain"
+
 var gReferralKeeper ReferralKeeper
 
-const (
-	EventReferralInvalid = "ReferralInvalid"
-	EventRegisterFailed  = "ReferralRegistrationFailed"
-	EventRegisterSuccess = "ReferralRegistrationSuccess"
-)
+const EventRegisterFailed = "ReferralRegistrationFailed"
 
 func init() {
 	if gReferralKeeper == nil {
@@ -54,6 +52,12 @@ func TryRegister(cur realm, addr address, referral string) bool {
 
 	err := gReferralKeeper.register(addr, refAddr)
 	if err != nil {
+		chain.Emit(
+			EventRegisterFailed,
+			"address", addr.String(),
+			"error", err.Error(),
+		)
+
 		return false
 	}
 
