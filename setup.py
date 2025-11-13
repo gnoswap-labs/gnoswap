@@ -29,7 +29,8 @@ class GnoModuleManager:
 
     def __init__(self, workdir: str):
         self.workdir = workdir
-        self.gno_dir = os.path.join(workdir, "gno", "examples", "gno.land")
+        self.gno_dir = os.path.join(workdir, "gno-core", "examples", "gno.land")
+        self.gno_root_dir = os.path.join(workdir, "gno-core", "gno.land")
 
     def extract_module_path_from_gnomod(self, file_path: str) -> Optional[str]:
         """Extract module path from gno.mod file (legacy format)."""
@@ -151,13 +152,6 @@ class ContractCopier:
             if module_info := self.module_manager.get_module_info(root, module_path):
                 self.copy_module(module_info)
 
-        # if "tests" in dirs:
-        #     parent_module_path, parent_dir = self.module_manager.find_parent_module(root)
-        #     if module_info := self.module_manager.get_module_info(parent_dir, parent_module_path):
-        #         src_test_dir = os.path.join(root, "tests")
-        #         self.copy_tests(src_test_dir, module_info.destination_dir)
-
-
 def clone_repository(workdir: str) -> None:
     """Clone the GnoSwap repository."""
     os.chdir(workdir)
@@ -179,6 +173,53 @@ def setup_contracts(workdir: str) -> None:
         copier.process_directory(root, dirs, files)
 
 
+def copy_integration_tests(workdir: str) -> None:
+    """Copy all txtar files from tests/integration/testdata to gno-core/gno.land/pkg/integration/testdata."""
+    module_manager = GnoModuleManager(workdir)
+    src_base = "tests/integration/testdata"
+    dest_base = os.path.join(module_manager.gno_root_dir, "pkg", "integration", "testdata")
+
+    if not os.path.exists(src_base):
+        print(f"Source directory {src_base} does not exist. Skipping integration tests.")
+        return
+
+    # Create destination directory if it doesn't exist
+    if os.path.islink(dest_base) or os.path.isfile(dest_base):
+        os.unlink(dest_base)
+    elif os.path.isdir(dest_base):
+        shutil.rmtree(dest_base)
+    os.makedirs(dest_base, exist_ok=True)
+
+    print(f"Copying integration tests from {src_base} to {dest_base}")
+
+    # Walk through all directories and find txtar files
+    for root, _, files in os.walk(src_base):
+        for file in files:
+            if file.endswith(".txtar"):
+                src_file = os.path.abspath(os.path.join(root, file))
+
+                # Calculate relative path from src_base
+                rel_dir = os.path.relpath(root, src_base)
+
+                # If file is in a subdirectory, add directory name as prefix
+                if rel_dir != ".":
+                    # Convert nested paths to prefix (e.g., "gov/governance" -> "gov_governance_")
+                    prefix = rel_dir.replace(os.sep, "_") + "_"
+                    dest_filename = prefix + file
+                else:
+                    dest_filename = file
+
+                dest_file = os.path.join(dest_base, dest_filename)
+
+                # Remove existing file/link if present
+                if os.path.exists(dest_file) or os.path.islink(dest_file):
+                    os.unlink(dest_file)
+
+                # Create symlink
+                os.symlink(src_file, dest_file)
+                print(f"  Linked: {file} -> {dest_filename}")
+
+
 def main() -> None:
     """Main entry point for the script."""
     parser = argparse.ArgumentParser(description="Set up GnoSwap contracts")
@@ -198,6 +239,7 @@ def main() -> None:
         clone_repository(args.workdir)
 
     setup_contracts(args.workdir)
+    copy_integration_tests(args.workdir)
     print("Setup completed successfully!")
 
 
