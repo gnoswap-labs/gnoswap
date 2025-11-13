@@ -51,6 +51,12 @@ gnoland start
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetImplementationPackagePath()"
 stdout "gno.land/r/gnoswap/pool/v1"
 
+# Fund admin with ugnot for gas and deposits
+gnokey maketx send -send 10000000000ugnot -to $gns_admin_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
+
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/scenario/upgrade/implements/v3_valid/pool -pkgpath gno.land/r/gnoswap/pool/v3_valid -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+
 # Upgrade to the permission probe implementation to capture store access
 gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func UpgradeImpl -args gno.land/r/gnoswap/pool/v_permprobe -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout OK!

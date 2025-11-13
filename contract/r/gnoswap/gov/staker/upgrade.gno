@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"chain"
 	"chain/runtime"
 
 	"gno.land/r/gnoswap/access"
@@ -36,6 +37,8 @@ func UpgradeImpl(cur realm, packagePath string) {
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdmin(caller)
 
+	prevPackagePath := versionManager.GetCurrentPackagePath()
+
 	err := versionManager.ChangeImplementation(packagePath)
 	if err != nil {
 		panic(err)
@@ -45,6 +48,12 @@ func UpgradeImpl(cur realm, packagePath string) {
 	if err != nil {
 		panic(err)
 	}
+
+	chain.Emit(
+		"UpgradeStakerContract",
+		"previousPackagePath", prevPackagePath,
+		"newPackagePath", packagePath,
+	)
 }
 
 // GetImplementationPackagePath returns the package path of the currently active implementation.

@@ -30,8 +30,8 @@ loadpkg gno.land/r/gnoswap/router
 
 loadpkg gno.land/r/gnoswap/protocol_fee/v1
 loadpkg gno.land/r/gnoswap/pool/v1
-loadpkg gno.land/r/gnoswap/pool/v2_invalid
-loadpkg gno.land/r/gnoswap/pool/v3_valid
+
+# loadpkg gno.land/r/gnoswap/pool/v3_valid
 loadpkg gno.land/r/gnoswap/position/v1
 loadpkg gno.land/r/gnoswap/router/v1
 
@@ -41,6 +41,9 @@ gnoland start
 
 # fund admin for gas-intensive operations
 gnokey maketx send -send 15000000000ugnot -to $gns_admin_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
+
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/scenario/upgrade/implements/v2_invalid/pool -pkgpath gno.land/r/gnoswap/pool/v2_invalid -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/scenario/upgrade/implements/v3_valid/pool -pkgpath gno.land/r/gnoswap/pool/v3_valid -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetImplementationPackagePath()"
 stdout "gno.land/r/gnoswap/pool/v1"

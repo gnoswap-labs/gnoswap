@@ -93,7 +93,7 @@ gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Deposit -send "10000
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 
-gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func CreateExternalIncentive -send "1000000000ugnot" -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100" -args "gnot" -args 1000000000 -args 1762560000 -args 1770336000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func CreateExternalIncentive -send "1000000000ugnot" -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100" -args "gnot" -args 1000000000 -args 1763078400 -args 1770854400 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 gnokey query vm/qeval --data "gno.land/r/gnoswap/staker.ApiGetExternalIncentivesByPoolPath(\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100\")"
 
 ## End external incentive (not enough time -> should fail)
