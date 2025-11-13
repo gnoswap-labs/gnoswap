@@ -41,8 +41,6 @@ loadpkg gno.land/r/gnoswap/position
 loadpkg gno.land/r/gnoswap/staker
 
 loadpkg gno.land/r/gnoswap/pool/v1
-loadpkg gno.land/r/gnoswap/pool/v3_valid
-loadpkg gno.land/r/gnoswap/pool/v_permprobe
 
 adduserfrom gns_admin 'mnemonic here'
 
@@ -55,6 +53,8 @@ stdout "gno.land/r/gnoswap/pool/v1"
 gnokey maketx send -send 10000000000ugnot -to $gns_admin_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
 
 gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/scenario/upgrade/implements/v3_valid/pool -pkgpath gno.land/r/gnoswap/pool/v3_valid -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/scenario/upgrade/implements/v_perm_probe -pkgpath gno.land/r/gnoswap/pool/v_permprobe -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
 
 
 # Upgrade to the permission probe implementation to capture store access

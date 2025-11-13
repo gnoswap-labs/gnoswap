@@ -31,7 +31,6 @@ loadpkg gno.land/r/gnoswap/router
 loadpkg gno.land/r/gnoswap/protocol_fee/v1
 loadpkg gno.land/r/gnoswap/pool/v1
 
-# loadpkg gno.land/r/gnoswap/pool/v3_valid
 loadpkg gno.land/r/gnoswap/position/v1
 loadpkg gno.land/r/gnoswap/router/v1
 
