@@ -29,7 +29,8 @@ class GnoModuleManager:
 
     def __init__(self, workdir: str):
         self.workdir = workdir
-        self.gno_dir = os.path.join(workdir, "gno", "examples", "gno.land")
+        self.gno_dir = os.path.join(workdir, "gno-core", "examples", "gno.land")
+        self.gno_root_dir = os.path.join(workdir, "gno-core", "gno.land")
 
     def extract_module_path_from_gnomod(self, file_path: str) -> Optional[str]:
         """Extract module path from gno.mod file (legacy format)."""
@@ -69,12 +70,12 @@ class GnoModuleManager:
             toml_file = os.path.join(current, "gnomod.toml")
             if os.path.exists(toml_file):
                 return self.extract_module_path(toml_file), current
-            
+
             # Fallback to legacy gno.mod format
             mod_file = os.path.join(current, "gno.mod")
             if os.path.exists(mod_file):
                 return self.extract_module_path(mod_file), current
-            
+
             current = os.path.dirname(current)
         return None, None
 
@@ -95,9 +96,13 @@ class ContractCopier:
         self.module_manager = module_manager
 
     def copy_module(self, module_info: ModuleInfo) -> None:
-        print(f"Linking module from {module_info.source_dir} to {module_info.destination_dir}")
+        print(
+            f"Linking module from {module_info.source_dir} to {module_info.destination_dir}"
+        )
 
-        if os.path.islink(module_info.destination_dir) or os.path.isfile(module_info.destination_dir):
+        if os.path.islink(module_info.destination_dir) or os.path.isfile(
+            module_info.destination_dir
+        ):
             os.unlink(module_info.destination_dir)
         elif os.path.isdir(module_info.destination_dir):
             shutil.rmtree(module_info.destination_dir)
@@ -125,7 +130,7 @@ class ContractCopier:
         elif os.path.isdir(dest_dir):
             shutil.rmtree(dest_dir)
         os.makedirs(dest_dir, exist_ok=True)
-        
+
         for test_file in os.listdir(src_test_dir):
             src_file = os.path.join(src_test_dir, test_file)
             dest_file = os.path.join(dest_dir, test_file)
@@ -134,7 +139,7 @@ class ContractCopier:
                     os.unlink(dest_file)
                 elif os.path.isdir(dest_file):
                     shutil.rmtree(dest_file)
-                    
+
                 os.makedirs(os.path.dirname(dest_file), exist_ok=True)
                 os.symlink(src_file, dest_file)
 
@@ -144,18 +149,14 @@ class ContractCopier:
         if "gnomod.toml" in files:
             module_file = os.path.join(root, "gnomod.toml")
         elif "gno.mod" in files:
-            raise ValueError("gno.mod format is outdated. Please use gnomod.toml instead.")
-        
+            raise ValueError(
+                "gno.mod format is outdated. Please use gnomod.toml instead."
+            )
+
         if module_file:
             module_path = self.module_manager.extract_module_path(module_file)
             if module_info := self.module_manager.get_module_info(root, module_path):
                 self.copy_module(module_info)
-
-        # if "tests" in dirs:
-        #     parent_module_path, parent_dir = self.module_manager.find_parent_module(root)
-        #     if module_info := self.module_manager.get_module_info(parent_dir, parent_module_path):
-        #         src_test_dir = os.path.join(root, "tests")
-        #         self.copy_tests(src_test_dir, module_info.destination_dir)
 
 
 def clone_repository(workdir: str) -> None:
@@ -179,6 +180,84 @@ def setup_contracts(workdir: str) -> None:
         copier.process_directory(root, dirs, files)
 
 
+def copy_integration_tests(workdir: str) -> None:
+    """Copy integration test files from tests/integration to gno-core/gno.land/pkg/integration."""
+    module_manager = GnoModuleManager(workdir)
+
+    # Copy testdata txtar files
+    src_testdata = "tests/integration/testdata"
+    dest_testdata = os.path.join(
+        module_manager.gno_root_dir, "pkg", "integration", "testdata"
+    )
+
+    if os.path.exists(src_testdata):
+        # Create destination directory if it doesn't exist
+        if os.path.islink(dest_testdata) or os.path.isfile(dest_testdata):
+            os.unlink(dest_testdata)
+        elif os.path.isdir(dest_testdata):
+            shutil.rmtree(dest_testdata)
+        os.makedirs(dest_testdata, exist_ok=True)
+
+        print(f"Copying integration tests from {src_testdata} to {dest_testdata}")
+
+        # Walk through all directories and find txtar files
+        for root, _, files in os.walk(src_testdata):
+            for file in files:
+                if file.endswith(".txtar"):
+                    src_file = os.path.abspath(os.path.join(root, file))
+
+                    # Calculate relative path from src_testdata
+                    rel_dir = os.path.relpath(root, src_testdata)
+
+                    # If file is in a subdirectory, add directory name as prefix
+                    if rel_dir != ".":
+                        # Convert nested paths to prefix (e.g., "gov/governance" -> "gov_governance_")
+                        prefix = rel_dir.replace(os.sep, "_") + "_"
+                        dest_filename = prefix + file
+                    else:
+                        dest_filename = file
+
+                    dest_file = os.path.join(dest_testdata, dest_filename)
+
+                    # Remove existing file/link if present
+                    if os.path.exists(dest_file) or os.path.islink(dest_file):
+                        os.unlink(dest_file)
+
+                    # Create symlink
+                    os.symlink(src_file, dest_file)
+                    print(f"  Linked: {file} -> {dest_filename}")
+
+    # Copy bless directory
+    src_bless = "tests/integration/bless"
+    dest_bless = os.path.join(
+        module_manager.gno_root_dir, "pkg", "integration", "bless"
+    )
+
+    if os.path.exists(src_bless):
+        # Create destination directory if it doesn't exist
+        if os.path.islink(dest_bless) or os.path.isfile(dest_bless):
+            os.unlink(dest_bless)
+        elif os.path.isdir(dest_bless):
+            shutil.rmtree(dest_bless)
+        os.makedirs(dest_bless, exist_ok=True)
+
+        print(f"Copying bless directory from {src_bless} to {dest_bless}")
+
+        # Copy all files from bless directory
+        for file in os.listdir(src_bless):
+            src_file = os.path.abspath(os.path.join(src_bless, file))
+            dest_file = os.path.join(dest_bless, file)
+
+            if os.path.isfile(src_file):
+                # Remove existing file/link if present
+                if os.path.exists(dest_file) or os.path.islink(dest_file):
+                    os.unlink(dest_file)
+
+                # Create symlink
+                os.symlink(src_file, dest_file)
+                print(f"  Linked: {file}")
+
+
 def main() -> None:
     """Main entry point for the script."""
     parser = argparse.ArgumentParser(description="Set up GnoSwap contracts")
@@ -198,6 +277,7 @@ def main() -> None:
         clone_repository(args.workdir)
 
     setup_contracts(args.workdir)
+    copy_integration_tests(args.workdir)
     print("Setup completed successfully!")
 
 

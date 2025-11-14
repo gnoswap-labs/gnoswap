@@ -1,6 +1,7 @@
 package governance
 
 import (
+	"chain"
 	"chain/runtime"
 
 	"gno.land/r/gnoswap/access"
@@ -31,6 +32,8 @@ func UpgradeImpl(cur realm, targetPackagePath string) {
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
+	prevPackagePath := versionManager.GetCurrentPackagePath()
+
 	err := versionManager.ChangeImplementation(targetPackagePath)
 	if err != nil {
 		panic(err)
@@ -40,6 +43,12 @@ func UpgradeImpl(cur realm, targetPackagePath string) {
 	if err != nil {
 		panic(err)
 	}
+
+	chain.Emit(
+		"UpgradeGovernanceContract",
+		"previousPackagePath", prevPackagePath,
+		"newPackagePath", targetPackagePath,
+	)
 }
 
 // GetImplementationPackagePath returns the package path of the currently active implementation.

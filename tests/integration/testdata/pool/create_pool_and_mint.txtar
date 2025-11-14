@@ -1,0 +1,134 @@
+loadpkg gno.land/p/nt/avl
+loadpkg gno.land/p/nt/ufmt
+loadpkg gno.land/p/onbloc/json
+loadpkg gno.land/p/nt/ownable
+loadpkg gno.land/p/demo/tokens/grc20
+loadpkg gno.land/p/demo/tokens/grc721
+loadpkg gno.land/r/demo/defi/foo20
+
+loadpkg gno.land/r/sys/users
+loadpkg gno.land/r/gnoland/wugnot
+loadpkg gno.land/r/demo/defi/grc20reg
+
+loadpkg gno.land/r/gnoswap/access
+loadpkg gno.land/p/gnoswap/uint256
+loadpkg gno.land/p/gnoswap/int256
+loadpkg gno.land/p/gnoswap/gnsmath
+loadpkg gno.land/p/gnoswap/store
+loadpkg gno.land/p/gnoswap/version_manager
+
+loadpkg gno.land/r/gnoswap/access
+loadpkg gno.land/r/gnoswap/rbac
+loadpkg gno.land/r/gnoswap/halt
+loadpkg gno.land/r/gnoswap/common
+loadpkg gno.land/r/gnoswap/referral
+
+loadpkg gno.land/r/gnoswap/gns
+loadpkg gno.land/r/gnoswap/gnft
+loadpkg gno.land/r/gnoswap/gov/xgns
+loadpkg gno.land/r/gnoswap/emission
+loadpkg gno.land/r/gnoswap/protocol_fee
+
+loadpkg gno.land/r/gnoswap/pool
+loadpkg gno.land/r/gnoswap/position
+
+loadpkg gno.land/r/gnoswap/protocol_fee/v1
+loadpkg gno.land/r/gnoswap/pool/v1
+loadpkg gno.land/r/gnoswap/position/v1
+
+adduserfrom gns_admin 'mnemonic here'
+
+adduser test_admin
+patchpkg "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" $test_admin_user_addr
+
+adduser user1
+patchpkg "g16a7etgm9z2r653ucl36rj0l2yqcxgrz2jyegzx" $user1_user_addr
+
+## start a new node
+gnoland start 
+
+### Send wugnot to neccessary accounts
+gnokey maketx send -send 10000000000ugnot -to $gns_admin_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
+stdout 'OK!'
+stdout 'GAS USED:   4[0-9]{4}'
+stdout 'EVENTS:     \[\]'
+
+### Send wugnot to neccessary address
+gnokey maketx send -send 100000000ugnot -to $test_admin_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
+stdout 'OK!'
+stdout 'GAS USED:   4[0-9]{4}'
+stdout 'EVENTS:     \[\]'
+gnokey maketx send -send 500000000ugnot -to $user1_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
+stdout 'OK!'
+stdout 'GAS USED:   4[0-9]{4}'
+stdout 'EVENTS:     \[\]'
+gnokey maketx send -send 500000000ugnot -to $test_admin_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
+stdout 'OK!'
+stdout 'GAS USED:   4[0-9]{4}'
+stdout 'EVENTS:     \[\]'
+
+### Transfer 1_000_000_000 GNS
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $test_admin_user_addr -args 1000000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "transfer 1_000_000_000 GNS" gns_admin
+stdout 'OK!'
+stdout 'GAS USED:   5[0-9]{6}'
+stdout 'STORAGE DELTA:  2[0-9]{3} bytes'
+stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
+stdout 'EVENTS:     \[\{\"type\":\"Transfer\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/gnoswap/gns\.GNS\"\},\{\"key\":\"from\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"to\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"value\",\"value\":\"1000000000\"\}\],\"pkg_path\":\"gno\.land/p/demo/tokens/grc20\"\},\{\"bytes_delta\":[0-9]+,\"fee_delta\":\{\"denom\":\"ugnot\",\"amount\":[0-9]+\},\"pkg_path\":\"gno\.land/r/gnoswap/gns\"\}\]'
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_user_addr -args 100000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+stdout 'OK!'
+stdout 'GAS USED:   6[0-9]{6}'
+stdout 'STORAGE DELTA:  2[0-9]{3} bytes'
+stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
+stdout 'EVENTS:     \[\{\"type\":\"Transfer\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/gnoswap/gns\.GNS\"\},\{\"key\":\"from\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"to\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"value\",\"value\":\"100000000\"\}\],\"pkg_path\":\"gno\.land/p/demo/tokens/grc20\"\},\{\"bytes_delta\":[0-9]+,\"fee_delta\":\{\"denom\":\"ugnot\",\"amount\":[0-9]+\},\"pkg_path\":\"gno\.land/r/gnoswap/gns\"\}\]'
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $test_admin_user_addr -args 100000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+stdout 'OK!'
+
+### Create pool
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+stdout 'OK!'
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func CreatePool -args "gno.land/r/gnoland/wugnot" -args "gno.land/r/gnoswap/gns" -args 3000 -args 79228162514264337593543950337 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test gns_admin
+stdout 'OK!'
+
+## Check created pool 
+gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.ExistsPoolPath(\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\")"
+stdout true
+
+## Mint position
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Deposit -send "100000000ugnot" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -send "50000000ugnot" -args gno.land/r/gnoswap/gns -args "gnot" -args 3000 -args "-887220" -args "887220" -args 50000000 -args 50000000 -args 1 -args 1 -args 9999999999 -args $gns_admin_user_addr -args $gns_admin_user_addr -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+stdout 'OK!'
+stdout 'GAS USED:   8[0-9]{7}'
+stdout 'STORAGE DELTA:  5[0-9]{4} bytes'
+stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
+stdout '^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$'
+stdout '{\"type\":\"Mint\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"tickLower\",\"value\":\"-887220\"},{\"key\":\"tickUpper\",\"value\":\"887220\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\"},{\"key\":\"mintTo\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"caller\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"lpPositionId\",\"value\":\"1\"},{\"key\":\"liquidity\",\"value\":\"50000000\"},{\"key\":\"amount0\",\"value\":\"50000000\"},{\"key\":\"amount1\",\"value\":\"50000000\"},{\"key\":\"sqrtPriceX96\",\"value\":\"79228162514264337593543950337\"},{\"key\":\"token0Balance\",\"value\":\"50000000\"},{\"key\":\"token1Balance\",\"value\":\"50000000\"},'
+
+### Decrease Liquidity
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func DecreaseLiquidity -args 1 -args "1000000" -args "1" -args "1" -args 9999999999 -args true -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+stdout 'OK!'
+stdout 'GAS USED:   7[0-9]{7}'
+stdout 'STORAGE DELTA:  2[0-9]{3} bytes'
+stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
+stdout '{\"type\":\"DecreaseLiquidity\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"lpPositionId\",\"value\":\"1\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\"},{\"key\":\"decreasedLiquidity\",\"value\":\"1000000\"},{\"key\":\"feeAmount0\",\"value\":\"0\"},{\"key\":\"feeAmount1\",\"value\":\"0\"},{\"key\":\"amount0\",\"value\":\"999999\"},{\"key\":\"amount1\",\"value\":\"999999\"},{\"key\":\"unwrapResult\",\"value\":\"true\"},{\"key\":\"sqrtPriceX96\",\"value\":\"79228162514264337593543950337\"},{\"key\":\"positionLiquidity\",\"value\":\"49000000\"},{\"key\":\"token0Balance\",\"value\":\"49000001\"},{\"key\":\"token1Balance\",\"value\":\"49000001\"},'
+
+
+### Increase Liquidity
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func IncreaseLiquidity -args 1 -args "1000000" -args "1000000" -args "1" -args "1" -args 9999999999 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+stdout 'OK!'
+stdout 'GAS USED:   7[0-9]{7}'
+stdout 'STORAGE DELTA:  -5 bytes'
+stdout 'TOTAL TX COST:  9[0-9]{7}ugnot'
+stdout '{\"type\":\"IncreaseLiquidity\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\"},{\"key\":\"caller\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"lpPositionId\",\"value\":\"1\"},{\"key\":\"liquidity\",\"value\":\"1000000\"},{\"key\":\"amount0\",\"value\":\"1000000\"},{\"key\":\"amount1\",\"value\":\"1000000\"},{\"key\":\"sqrtPriceX96\",\"value\":\"79228162514264337593543950337\"},{\"key\":\"positionLiquidity\",\"value\":\"50000000\"},{\"key\":\"token0Balance\",\"value\":\"50000001\"},{\"key\":\"token1Balance\",\"value\":\"50000001\"},{\"key\":\"tickCumulative\",\"value\":\"0\"},'
+
+### Collect fees with unwrap
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func CollectFee -args 1 -args true -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+stdout 'OK!'
+stdout 'GAS USED:   4[0-9]{7}'
+stdout 'STORAGE DELTA:  5[0-9]{1} bytes'
+stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
+stdout '{\"type\":\"CollectSwapFee\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"lpPositionId\",\"value\":\"1\"},{\"key\":\"feeAmount0\",\"value\":\"0\"},{\"key\":\"feeAmount1\",\"value\":\"0\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\"},{\"key\":\"unwrapResult\",\"value\":\"true\"}\],\"pkg_path\":\"gno.land/r/gnoswap/position/v1\"}'
