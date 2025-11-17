@@ -74,14 +74,28 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $test_ad
 ### Approve GNS to gov/staker contract address
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1em9s40nfrwd2aqn9ypjv7d9x9z9c8uk5uxrza9 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func Delegate -args $gns_admin_user_addr -args 1000000000 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+stdout 1000000000
+stdout 'GAS USED:   2[0-9]{7}'
+stdout 'STORAGE DELTA:  15293 bytes'
+stdout 'TOTAL TX COST:  101529300ugnot'
+stdout 'EVENTS:     \[{\"type\":\"TransferProtocolFee\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1em9s40nfrwd2aqn9ypjv7d9x9z9c8uk5uxrza9\"},{\"key\":\"prevRealm\",\"value\":\"gno.land/r/gnoswap/gov/staker\"},{\"key\":\"toDevOps\",\"value\":\"\"},{\"key\":\"toGovStaker\",\"value\":\"\"}\],\"pkg_path\":\"gno.land/r/gnoswap/protocol_fee/v1\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gns.GNS\"},{\"key\":\"from\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"to\",\"value\":\"g1em9s40nfrwd2aqn9ypjv7d9x9z9c8uk5uxrza9\"},{\"key\":\"value\",\"value\":\"1000000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gov/xgns.xGNS\"},{\"key\":\"from\",\"value\":\"\"},{\"key\":\"to\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"value\",\"value\":\"1000000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Delegate\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"from\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"to\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"amount\",\"value\":\"1000000000\"},{\"key\":\"referrer\",\"value\":\"\"}\],\"pkg_path\":\"gno.land/r/gnoswap/gov/staker/v1\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/gns\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/gov/staker\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/gov/xgns\"}\]'
 
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1em9s40nfrwd2aqn9ypjv7d9x9z9c8uk5uxrza9 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func Delegate -args $gnoswap_user_addr -args 1000000000 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+stdout 1000000000
+stdout 'GAS USED:   2[0-9]{7}'
+stdout 'STORAGE FEE:    640500ugnot'
+stdout 'TOTAL TX COST:  100640500ugnot'
+stdout 'EVENTS:     \[{\"type\":\"TransferProtocolFee\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"prevRealm\",\"value\":\"gno.land/r/gnoswap/gov/staker\"},{\"key\":\"toDevOps\",\"value\":\"\"},{\"key\":\"toGovStaker\",\"value\":\"\"}\],\"pkg_path\":\"gno.land/r/gnoswap/protocol_fee/v1\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gns.GNS\"},{\"key\":\"from\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"to\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"value\",\"value\":\"1000000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gov/xgns.xGNS\"},{\"key\":\"from\",\"value\":\"\"},{\"key\":\"to\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"value\",\"value\":\"1000000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Delegate\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"from\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"to\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"amount\",\"value\":\"1000000000\"},{\"key\":\"referrer\",\"value\":\"\"}\],\"pkg_path\":\"gno.land/r/gnoswap/gov/staker/v1\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/gov/staker\"}\]'
 
 ### Create Text Proposal
 ### reconfigure governance with votingWeightSmoothingDuration set to 0 to immediately count delegations
 ### This should avoid the "not enough voting power" error.
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func Reconfigure -args 0 -args 604800 -args 0 -args 50 -args 0 -args 86400 -args 2592000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+stdout 'GAS USED:   1[0-9]{7}'
+stdout 'STORAGE DELTA:  2561 bytes'
+stdout 'TOTAL TX COST:  100256100ugnot'
+stdout 'EVENTS:     \[{\"type\":\"Reconfigure\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"votingStartDelay\",\"value\":\"0\"},{\"key\":\"votingPeriod\",\"value\":\"[0-9]+\"},{\"key\":\"votingWeightSmoothingDuration\",\"value\":\"0\"},{\"key\":\"quorum\",\"value\":\"50\"},{\"key\":\"proposalCreationThreshold\",\"value\":\"0\"},{\"key\":\"executionDelay\",\"value\":\"[0-9]+\"},{\"key\":\"executionPeriod\",\"value\":\"[0-9]+\"},{\"key\":\"newConfigVersion\",\"value\":\"2\"},{\"key\":\"prevConfigVersion\",\"value\":\"1\"}\],\"pkg_path\":\"gno.land/r/gnoswap/gov/governance/v1\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/gov/governance\"}\]'
 
 ### Wait for a few blocks to ensure the reconfiguration is processed
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_user_addr -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
@@ -89,6 +103,11 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_u
 
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeText -args "Test Proposal" -args "This is a test proposal" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout 1
+stdout 'GAS USED:   2[0-9]{7}'
+stdout 'STORAGE DELTA:  1[0-9]{4} bytes'
+stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
+stdout 'EVENTS:     \[{\"type\":\"ProposeText\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"title\",\"value\":\"Test Proposal\"},{\"key\":\"description\",\"value\":\"This is a test proposal\"},{\"key\":\"proposalId\",\"value\":\"1\"},{\"key\":\"quorumAmount\",\"value\":\"1000000000\"},{\"key\":\"maxVotingWeight\",\"value\":\"2000000000\"},{\"key\":\"configVersion\",\"value\":\"2\"},{\"key\":\"createdAt\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/gov/governance/v1\"},'
+
 
 # Cannot execute text proposal
 ! gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func Execute -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin

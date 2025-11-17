@@ -89,6 +89,10 @@ stdout "5000000"
 stdout "5000000"
 
 gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func SetPoolTier -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000" -args 1 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test gns_admin
+stdout 'GAS USED:   3[0-9]{7}'
+stdout 'STORAGE DELTA:  26169 bytes'
+stdout 'TOTAL TX COST:  12616900ugnot'
+stdout 'EVENTS:     \[{\"type\":\"SetPoolTier\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\"},{\"key\":\"tier\",\"value\":\"1\"},{\"key\":\"currentTime\",\"value\":\"[0-9]+\"},{\"key\":\"currentHeight\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/staker/v1\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/staker\"}\]'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/staker.GetPoolTier(\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\")"
 stdout 1
@@ -97,10 +101,14 @@ stdout 1
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gnft -func Approve -args g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 -args 1 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test gns_admin
 gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func StakeToken -args 1 -args "" -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test gns_admin
 stdout "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+stdout 'GAS USED:   5[0-9]{7}'
+stdout 'STORAGE DELTA:  35273 bytes'
+stdout 'TOTAL TX COST:  13527300ugnot'
+stdout 'EVENTS:     \[{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"slug\",\"value\":\"GNFT\"},{\"key\":\"from\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"to\",\"value\":\"g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3\"},{\"key\":\"tokenId\",\"value\":\"1\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc721\"},{\"type\":\"StakeToken\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"positionId\",\"value\":\"1\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\"},{\"key\":\"liquidity\",\"value\":\"1669251248\"},{\"key\":\"positionUpperTick\",\"value\":\"60\"},{\"key\":\"positionLowerTick\",\"value\":\"-60\"},{\"key\":\"currentTick\",\"value\":\"0\"},{\"key\":\"isInRange\",\"value\":\"true\"},{\"key\":\"referrer\",\"value\":\"\"}\],\"pkg_path\":\"gno.land/r/gnoswap/staker/v1\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/gnft\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/position\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/staker\"}\]'
 
 # Reward collection immediately after staking.
 # No rewards are accumulated between the two function calls, so the total amount of collected rewards should be 0.
 gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func CollectReward -args 1 -args false -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test gns_admin
 stdout "0"
 stdout 'GAS USED:   (3|4)[0-9]{7}'
-stdout '\"type\":\"ProtocolFeeInternalReward\"'
+stdout 'EVENTS:     \[{\"type\":\"ProtocolFeeInternalReward\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"fromPositionId\",\"value\":\"1\"},{\"key\":\"fromPoolPath\",\"value\":\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\"},{\"key\":\"feeTokenPath\",\"value\":\"gno.land/r/gnoswap/gns\"},{\"key\":\"feeAmount\",\"value\":\"0\"}\],\"pkg_path\":\"gno.land/r/gnoswap/staker/v1\"},{\"type\":\"CollectReward\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"positionId\",\"value\":\"1\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\"},{\"key\":\"recipient\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"rewardToken\",\"value\":\"gno.land/r/gnoswap/gns\"},{\"key\":\"rewardAmount\",\"value\":\"0\"},{\"key\":\"rewardToUser\",\"value\":\"0\"},{\"key\":\"rewardToFee\",\"value\":\"0\"},{\"key\":\"rewardPenalty\",\"value\":\"0\"},{\"key\":\"rewardUnClaimableAmount\",\"value\":\"0\"},{\"key\":\"currentTime\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/staker/v1\"}\]'

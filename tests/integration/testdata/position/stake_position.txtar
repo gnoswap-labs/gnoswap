@@ -156,40 +156,37 @@ stdout 'GAS USED:   3[0-9]{6}'
 stdout 'STORAGE DELTA:  1[0-9]{3} bytes'
 stdout 'TOTAL TX COST:  1[0-9]{7}ugnot'
 stdout 'EVENTS:     \[\{\"type\":\"Approval\",\"attrs\":\[\{\"key\":\"slug\",\"value\":\"GNFT\"\},\{\"key\":\"owner\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"to\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"tokenId\",\"value\":\"1\"\}\],\"pkg_path\":\"gno\.land/p/demo/tokens/grc721\"\},\{\"bytes_delta\":[0-9]+,\"fee_delta\":\{\"denom\":\"ugnot\",\"amount\":[0-9]+\},\"pkg_path\":\"gno\.land/r/gnoswap/gnft\"\}\]'
+
 gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func StakeToken -args 1 -args "" -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test gns_admin
 stdout 'OK!'
 stdout 'GAS USED:   [0-9]{8}'
-stdout 'EVENTS:     \[\{\"type\":\"ReferralRegistrationSuccess\",\"attrs\":\[\{\"key\":\"address\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"referral\",\"value\":\"\"\}\],\"pkg_path\":\"gno\.land/r/gnoswap/referral\"\},\{\"type\":\"Transfer\",\"attrs\":\[\{\"key\":\"slug\",\"value\":\"GNFT\"\},\{\"key\":\"from\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"to\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"tokenId\",\"value\":\"1\"\}\],\"pkg_path\":\"gno\.land/p/demo/tokens/grc721\"\},\{\"type\":\"StakeToken\",\"attrs\":\[\{\"key\":\"prevAddr\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"prevRealm\",\"value\":\"\"\},\{\"key\":\"positionId\",\"value\":\"1\"\},\{\"key\":\"poolPath\",\"value\":\"gno\.land/r/onbloc/bar:gno\.land/r/onbloc/foo:3000\"\},\{\"key\":\"liquidity\",\"value\":\"1669251248\"\},\{\"key\":\"positionUpperTick\",\"value\":\"60\"\},\{\"key\":\"positionLowerTick\",\"value\":\"-60\"\},\{\"key\":\"currentTick\",\"value\":\"0\"\},\{\"key\":\"isInRange\",\"value\":\"true\"\},\{\"key\":\"referrer\",\"value\":\"\"\}\],\"pkg_path\":\"gno\.land/r/gnoswap/staker/v1\"\},\{\"bytes_delta\":[0-9]+,\"fee_delta\":\{\"denom\":\"ugnot\",\"amount\":[0-9]+\},\"pkg_path\":\"gno\.land/r/gnoswap/gnft\"\},\{\"bytes_delta\":[0-9]+,\"fee_delta\":\{\"denom\":\"ugnot\",\"amount\":[0-9]+\},\"pkg_path\":\"gno\.land/r/gnoswap/position\"\},\{\"bytes_delta\":[0-9]+,\"fee_delta\":\{\"denom\":\"ugnot\",\"amount\":[0-9]+\},\"pkg_path\":\"gno\.land/r/gnoswap/staker\"\}\]'
+stdout '\[{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"slug\",\"value\":\"GNFT\"},{\"key\":\"from\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"to\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"tokenId\",\"value\":\"1\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc721\"},{\"type\":\"StakeToken\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"positionId\",\"value\":\"1\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\"},{\"key\":\"liquidity\",\"value\":\"1669251248\"},{\"key\":\"positionUpperTick\",\"value\":\"60\"},{\"key\":\"positionLowerTick\",\"value\":\"-60\"},{\"key\":\"currentTick\",\"value\":\"0\"},{\"key\":\"isInRange\",\"value\":\"true\"},{\"key\":\"referrer\",\"value\":\"\"}\],\"pkg_path\":\"gno.land/r/gnoswap/staker/v1\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/gnft\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/position\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/staker\"}\]'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/staker.IsStaked(1)"
-stdout 'height: 0'
-stdout 'data: \(true bool\)'
+stdout true
 
 # Ownership of GNFT must be recognized as belonging to the staker.
 gnokey query vm/qeval --data "gno.land/r/gnoswap/gnft.OwnerOf(\"1\")"
-stdout 'height: 0'
-stdout 'data: \(\"g1[0-9a-z]{38}\" \.uverse\.address\)'
-stdout '\(undefined\)'
+stdout '\"g1[0-9a-z]{38}\"'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/common.BalanceOf(\"gno.land/r/onbloc/bar\", \"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\")"
-stdout 'height: 0'
-stdout 'data: \(5000000 int64\)'
+stdout 5000000
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/common.BalanceOf(\"gno.land/r/onbloc/foo\", \"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\")"
-stdout 'height: 0'
-stdout 'data: \(5000000 int64\)'
+stdout 5000000
 
 # Unstake position
 gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func UnStakeToken -args 1 -args false -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test gns_admin
 stdout 'OK!'
-stdout 'GAS USED:   5[0-9]{7}'
+stdout 'GAS USED:   (5|6)[0-9]{7}'
+stdout 'STORAGE DELTA:  (-)*(5|6)[0-9]{3} bytes'
+stdout 'TOTAL TX COST:  9[0-9]{6}ugnot'
+stdout 'EVENTS:     \[{\"type\":\"ProtocolFeeInternalReward\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"fromPositionId\",\"value\":\"1\"},{\"key\":\"fromPoolPath\",\"value\":\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\"},{\"key\":\"feeTokenPath\",\"value\":\"gno.land/r/gnoswap/gns\"},{\"key\":\"feeAmount\",\"value\":\"0\"}\],\"pkg_path\":\"gno.land/r/gnoswap/staker/v1\"},{\"type\":\"CollectReward\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"positionId\",\"value\":\"1\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\"},{\"key\":\"recipient\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"rewardToken\",\"value\":\"gno.land/r/gnoswap/gns\"},{\"key\":\"rewardAmount\",\"value\":\"0\"},{\"key\":\"rewardToUser\",\"value\":\"0\"},{\"key\":\"rewardToFee\",\"value\":\"0\"},{\"key\":\"rewardPenalty\",\"value\":\"0\"},{\"key\":\"rewardUnClaimableAmount\",\"value\":\"0\"},{\"key\":\"currentTime\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/staker/v1\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"slug\",\"value\":\"GNFT\"},{\"key\":\"from\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"to\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"tokenId\",\"value\":\"1\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc721\"},{\"type\":\"UnStakeToken\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"positionId\",\"value\":\"1\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\"},{\"key\":\"isRequestUnwrap\",\"value\":\"false\"},{\"key\":\"from\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"to\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"}\],\"pkg_path\":\"gno.land/r/gnoswap/staker/v1\"},{\"bytes_delta\":(-)*[0-9]+,\"fee_refund\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/position\",\"refund_withheld\":false},'
+
 gnokey query vm/qeval --data "gno.land/r/gnoswap/staker.IsStaked(1)"
-stdout 'height: 0'
-stdout 'data: \(false bool\)'
+stdout 'false'
 
 # Check the ownership of GNFT
 # The original owner's address must be returned, not the staker's address.
 gnokey query vm/qeval --data "gno.land/r/gnoswap/gnft.OwnerOf(\"1\")"
-stdout 'height: 0'
-stdout 'data: \(\"g1[0-9a-z]{38}\" \.uverse\.address\)'
-stdout '\(undefined\)'
+stdout "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"

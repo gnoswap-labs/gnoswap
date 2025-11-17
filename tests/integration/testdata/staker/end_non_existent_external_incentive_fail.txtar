@@ -86,6 +86,12 @@ stdout true
 
 ### Mint position
 gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args "gno.land/r/onbloc/bar" -args "gno.land/r/onbloc/foo" -args 100 -args -20 -args 20 -args "100000" -args "100000" -args "0" -args "0" -args 9999999999 -args $gns_admin_user_addr -args $gns_admin_user_addr -args "" -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test gns_admin
+stdout 1
+stdout "50002491"
+stdout "100000"
+stdout 'GAS USED:   7[0-9]{7}'
+stdout 'STORAGE DELTA:  50735 bytes'
+stdout 'TOTAL TX COST:  15073500ugnot'
 
 ### Create External Incentives with 90 days
 gnokey maketx send -send 10000000000ugnot -to g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
@@ -93,9 +99,14 @@ gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Deposit -send "10000
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 
-gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func CreateExternalIncentive -send "1000000000ugnot" -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100" -args "gnot" -args 1000000000 -args 1763078400 -args 1770854400 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func CreateExternalIncentive -send "1000000000ugnot" -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100" -args "gnot" -args 1000000000 -args 2773180800 -args 2780956800 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+stdout 'GAS USED:   3[0-9]{7}'
+stdout 'STORAGE DELTA:  28830 bytes'
+stdout 'TOTAL TX COST:  102883000ugnot'
+stdout 'EVENTS:     \[{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoland/wugnot.wugnot\"},{\"key\":\"from\",\"value\":\"\"},{\"key\":\"to\",\"value\":\"g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3\"},{\"key\":\"value\",\"value\":\"1000000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gns.GNS\"},{\"key\":\"from\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"to\",\"value\":\"g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3\"},{\"key\":\"value\",\"value\":\"1000000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"CreateExternalIncentive\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"incentiveId\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d:[0-9]+:1\"},{\"key\":\"targetPoolPath\",\"value\":\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100\"},{\"key\":\"rewardToken\",\"value\":\"gno.land/r/gnoland/wugnot\"},{\"key\":\"rewardAmount\",\"value\":\"1000000000\"},{\"key\":\"startTimestamp\",\"value\":\"[0-9]+\"},{\"key\":\"endTimestamp\",\"value\":\"[0-9]+\"},{\"key\":\"depositGnsAmount\",\"value\":\"1000000000\"},{\"key\":\"currentHeight\",\"value\":\"[0-9]+\"},{\"key\":\"currentTime\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/staker/v1\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoland/wugnot\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/gns\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/staker\"}\]'
+
 gnokey query vm/qeval --data "gno.land/r/gnoswap/staker.ApiGetExternalIncentivesByPoolPath(\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100\")"
 
 ## End external incentive (not enough time -> should fail)
-! gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func EndExternalIncentive -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100" -args "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d:1762480176:1" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func EndExternalIncentive -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100" -args "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d:2773180800:1" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stderr 'cannot end non existent incentive'
