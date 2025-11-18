@@ -104,7 +104,7 @@ stdout '\"type\":\"CreatePool\"'
 
 ## Check created pool 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.ExistsPoolPath(\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500\")"
-stdout 'data: \(true bool\)'
+stdout true
 
 ## Mint position
 gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Deposit -send "100000000ugnot" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin

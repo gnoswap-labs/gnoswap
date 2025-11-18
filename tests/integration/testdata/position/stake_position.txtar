@@ -65,6 +65,7 @@ stdout 'GAS USED:   4[0-9]{6}'
 stdout 'STORAGE DELTA:  2[0-9]{3} bytes'
 stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
 stdout 'EVENTS:     \[\{\"type\":\"Transfer\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/onbloc/bar\.BAR\"\},\{\"key\":\"from\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"to\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"value\",\"value\":\"1000000000\"\}\],\"pkg_path\":\"gno\.land/p/demo/tokens/grc20\"\},\{\"bytes_delta\":[0-9]+,\"fee_delta\":\{\"denom\":\"ugnot\",\"amount\":[0-9]+\},\"pkg_path\":\"gno\.land/r/onbloc/bar\"\}\]'
+
 gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Transfer -args $user1_user_addr -args 100000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout 'OK!'
 stdout 'GAS USED:   4[0-9]{6}'
@@ -79,6 +80,7 @@ stdout 'GAS USED:   4[0-9]{6}'
 stdout 'STORAGE DELTA:  2[0-9]{3} bytes'
 stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
 stdout 'EVENTS:     \[\{\"type\":\"Transfer\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/onbloc/foo\.FOO\"\},\{\"key\":\"from\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"to\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"value\",\"value\":\"1000000000\"\}\],\"pkg_path\":\"gno\.land/p/demo/tokens/grc20\"\},\{\"bytes_delta\":[0-9]+,\"fee_delta\":\{\"denom\":\"ugnot\",\"amount\":[0-9]+\},\"pkg_path\":\"gno\.land/r/onbloc/foo\"\}\]'
+
 gnokey maketx call -pkgpath gno.land/r/onbloc/foo -func Transfer -args $user1_user_addr -args 100000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout 'OK!'
 stdout 'GAS USED:   4[0-9]{6}'
@@ -93,6 +95,7 @@ stdout 'GAS USED:   3[0-9]{6}'
 stdout 'STORAGE DELTA:  1[0-9]{3} bytes'
 stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
 stdout 'EVENTS:     \[\{\"type\":\"Approval\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/onbloc/bar\.BAR\"\},\{\"key\":\"owner\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"spender\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"value\",\"value\":\"9223372036854775806\"\}\],\"pkg_path\":\"gno\.land/p/demo/tokens/grc20\"\},\{\"bytes_delta\":[0-9]+,\"fee_delta\":\{\"denom\":\"ugnot\",\"amount\":[0-9]+\},\"pkg_path\":\"gno\.land/r/onbloc/bar\"\}\]'
+
 gnokey maketx call -pkgpath gno.land/r/onbloc/foo -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout 'OK!'
 stdout 'GAS USED:   3[0-9]{6}'
@@ -107,6 +110,7 @@ stdout 'GAS USED:   3[0-9]{6}'
 stdout 'STORAGE DELTA:  2[0-9]{3} bytes'
 stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
 stdout 'EVENTS:     \[\{\"type\":\"Approval\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/onbloc/bar\.BAR\"\},\{\"key\":\"owner\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"spender\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"value\",\"value\":\"9223372036854775806\"\}\],\"pkg_path\":\"gno\.land/p/demo/tokens/grc20\"\},\{\"bytes_delta\":[0-9]+,\"fee_delta\":\{\"denom\":\"ugnot\",\"amount\":[0-9]+\},\"pkg_path\":\"gno\.land/r/onbloc/bar\"\}\]'
+
 gnokey maketx call -pkgpath gno.land/r/onbloc/foo -func Approve -args g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout 'OK!'
 stdout 'GAS USED:   3[0-9]{6}'
@@ -121,12 +125,14 @@ stdout 'GAS USED:   4[0-9]{6}'
 stdout 'STORAGE DELTA:  1[0-9]{3} bytes'
 stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
 stdout 'EVENTS:     \[\{\"type\":\"Approval\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/gnoswap/gns\.GNS\"\},\{\"key\":\"owner\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"spender\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"value\",\"value\":\"9223372036854775806\"\}\],\"pkg_path\":\"gno\.land/p/demo/tokens/grc20\"\},\{\"bytes_delta\":[0-9]+,\"fee_delta\":\{\"denom\":\"ugnot\",\"amount\":[0-9]+\},\"pkg_path\":\"gno\.land/r/gnoswap/gns\"\}\]'
+
 gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func CreatePool -args "gno.land/r/onbloc/bar" -args "gno.land/r/onbloc/foo" -args 3000 -args 79228162514264337593543950337 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test gns_admin
 stdout 'OK!'
 stdout 'GAS USED:   3[0-9]{7}'
 stdout 'STORAGE DELTA:  2[0-9]{4} bytes'
 stdout 'TOTAL TX COST:  1[0-9]{7}ugnot'
 stdout 'EVENTS:     \[\{\"type\":\"Transfer\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/gnoswap/gns\.GNS\"\},\{\"key\":\"from\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"to\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"value\",\"value\":\"100000000\"\}\],\"pkg_path\":\"gno\.land/p/demo/tokens/grc20\"\},\{\"type\":\"PoolCreationFee\",\"attrs\":\[\{\"key\":\"prevAddr\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"prevRealm\",\"value\":\"\"\},\{\"key\":\"poolPath\",\"value\":\"gno\.land/r/onbloc/bar:gno\.land/r/onbloc/foo:3000\"\},\{\"key\":\"feeTokenPath\",\"value\":\"gno\.land/r/gnoswap/gns\"\},\{\"key\":\"feeAmount\",\"value\":\"100000000\"\}\],\"pkg_path\":\"gno\.land/r/gnoswap/pool/v1\"\},\{\"type\":\"CreatePool\",\"attrs\":\[\{\"key\":\"prevAddr\",\"value\":\"g1[0-9a-z]{38}\"\},\{\"key\":\"prevRealm\",\"value\":\"\"\},\{\"key\":\"token0Path\",\"value\":\"gno\.land/r/onbloc/bar\"\},\{\"key\":\"token1Path\",\"value\":\"gno\.land/r/onbloc/foo\"\},\{\"key\":\"fee\",\"value\":\"3000\"\},\{\"key\":\"sqrtPriceX96\",\"value\":\"79228162514264337593543950337\"\},\{\"key\":\"poolPath\",\"value\":\"gno\.land/r/onbloc/bar:gno\.land/r/onbloc/foo:3000\"\},\{\"key\":\"tick\",\"value\":\"0\"\},\{\"key\":\"tickSpacing\",\"value\":\"60\"\}\],\"pkg_path\":\"gno\.land/r/gnoswap/pool/v1\"\},\{\"bytes_delta\":[0-9]+,\"fee_delta\":\{\"denom\":\"ugnot\",\"amount\":[0-9]+\},\"pkg_path\":\"gno\.land/r/gnoswap/gns\"\},\{\"bytes_delta\":[0-9]+,\"fee_delta\":\{\"denom\":\"ugnot\",\"amount\":[0-9]+\},\"pkg_path\":\"gno\.land/r/gnoswap/pool\"\},\{\"bytes_delta\":[0-9]+,\"fee_delta\":\{\"denom\":\"ugnot\",\"amount\":[0-9]+\},\"pkg_path\":\"gno\.land/r/gnoswap/protocol_fee\"\}\]'
+
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.ExistsPoolPath(\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\")"
 stdout 'height: 0'
 stdout 'data: \(true bool\)'

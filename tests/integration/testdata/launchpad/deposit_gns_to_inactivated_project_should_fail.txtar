@@ -77,11 +77,15 @@ gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Approve -args g1x6r75sxl
 # Create a new launchpad project
 gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func CreateProject -args "Bar Launchpad Project" -args "gno.land/r/onbloc/bar" -args g1wpex76n9vd6yzerywf047h6lta047h6lqlp5qp -args 1000000000 -args "gno.land/r/onbloc/bar" -args "1000000" -args 10 -args 20 -args 70 -args 1962328182 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout "gno.land/r/onbloc/bar:8"
+stdout 'GAS USED:   2[0-9]{7}'
+stdout 'STORAGE DELTA:  30591 bytes'
+stdout 'TOTAL TX COST:  103059100ugnot'
+stdout 'EVENTS:     \[{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/onbloc/bar.BAR\"},{\"key\":\"from\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"to\",\"value\":\"g1x6r75sxlkp9zfqufew0vcuq9sfclsq8uaqkru9\"},{\"key\":\"value\",\"value\":\"1000000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"CreateProject\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"name\",\"value\":\"Bar Launchpad Project\"},{\"key\":\"tokenPath\",\"value\":\"gno.land/r/onbloc/bar\"},{\"key\":\"recipient\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"depositAmount\",\"value\":\"1000000000\"},{\"key\":\"conditionsToken\",\"value\":\"gno.land/r/onbloc/bar\"},{\"key\":\"conditionsAmount\",\"value\":\"1000000\"},{\"key\":\"tier30Ratio\",\"value\":\"10\"},{\"key\":\"tier90Ratio\",\"value\":\"20\"},{\"key\":\"tier180Ratio\",\"value\":\"70\"},{\"key\":\"startTime\",\"value\":\"[0-9]+\"},{\"key\":\"projectId\",\"value\":\"gno.land/r/onbloc/bar:8\"},{\"key\":\"tier30Amount\",\"value\":\"100000000\"},{\"key\":\"tier30EndTime\",\"value\":\"[0-9]+\"},{\"key\":\"tier90Amount\",\"value\":\"200000000\"},{\"key\":\"tier90EndTime\",\"value\":\"[0-9]+\"},{\"key\":\"tier180Amount\",\"value\":\"700000000\"},{\"key\":\"tier180EndTime\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/launchpad/v1\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/launchpad\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/onbloc/bar\"}\]'
 
 # Approve GNS tokens to launchpad realm
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1x6r75sxlkp9zfqufew0vcuq9sfclsq8uaqkru9 -args 1000000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 
-# Time cannot be adjusted in the txtar test environment. Therefor, if `DepositGns` is called after `CreateProject`,
+# Time cannot be adjusted in the txtar test environment. Therefore, if `DepositGns` is called after `CreateProject`,
 # the project will not be activated due to the time difference being only around 1~2 blocks.
 ! gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func DepositGns -args gno.land/r/onbloc/bar:8:30 -args 1000000000 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stderr 'project is inactive || gno.land/r/onbloc/bar:8'
