@@ -47,9 +47,6 @@ loadpkg gno.land/r/gnoswap/staker/v1
 
 adduserfrom gns_admin 'mnemonic here'
 
-# adduser gnoswap
-# patchpkg "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" $gnoswap_user_addr
-
 adduser test_admin
 patchpkg "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" $test_admin_user_addr
 
