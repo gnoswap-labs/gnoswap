@@ -143,6 +143,22 @@ stdout 'GAS USED:   6[0-9]{7}'
 stdout 'STORAGE DELTA:  6364 bytes'
 stdout 'EVENTS:     \[{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gns.GNS\"},{\"key\":\"from\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"to\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"},{\"key\":\"value\",\"value\":\"60283363\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoland/wugnot.wugnot\"},{\"key\":\"from\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"},{\"key\":\"to\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"value\",\"value\":\"27293886\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Swap\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"prevRealm\",\"value\":\"gno.land/r/swap_wrapper\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\"},{\"key\":\"zeroForOne\",\"value\":\"false\"},{\"key\":\"requestAmount\",\"value\":\"60283363\"},{\"key\":\"sqrtPriceLimitX96\",\"value\":\"1461446703485210103287273052203988822378723970341\"},{\"key\":\"payer\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"recipient\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"token0Amount\",\"value\":\"-27293886\"},{\"key\":\"token1Amount\",\"value\":\"60283363\"},{\"key\":\"protocolFee0\",\"value\":\"0\"},{\"key\":\"protocolFee1\",\"value\":\"0\"},{\"key\":\"sqrtPriceX96\",\"value\":\"174464392906408685394356148876\"},{\"key\":\"exactIn\",\"value\":\"true\"},{\"key\":\"currentTick\",\"value\":\"15788\"},{\"key\":\"liquidity\",\"value\":\"50000000\"},{\"key\":\"feeGrowthGlobal0X128\",\"value\":\"0\"},{\"key\":\"feeGrowthGlobal1X128\",\"value\":\"1230808126800372841116295222572854256\"},{\"key\":\"balanceToken0\",\"value\":\"22706115\"},{\"key\":\"balanceToken1\",\"value\":\"110283364\"},{\"key\":\"ticks\",\"value\":\"\[{\\"tick\\":-887220,\\"feeGrowthOutside0X128\\":\\"0\\",\\"feeGrowthOutside1X128\\":\\"0\\"},{\\"tick\\":887220,\\"feeGrowthOutside0X128\\":\\"0\\",\\"feeGrowthOutside1X128\\":\\"0\\"}\]\"},{\"key\":\"tickCumulative\",\"value\":\"[0-9]+\"},{\"key\":\"liquidityCumulative\",\"value\":\"[0-9]+\"},{\"key\":\"secondsPerLiquidityCumulativeX128\",\"value\":\"[0-9]+\"},{\"key\":\"observationTimestamp\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/pool/v1\"},.*,\"pkg_path\":\"gno.land/r/gnoswap/pool\"}\]'
 
+### Verify swap wrapper balance transfers
+## Check GNS balance decreased by swap amount
+gnokey query vm/qeval --data "gno.land/r/gnoswap/gns.BalanceOf(\"$gns_admin_user_addr\")"
+stdout 99998589716636
+
+## Check WUGNOT balance increased by swap output
+gnokey query vm/qeval --data "gno.land/r/gnoland/wugnot.BalanceOf(\"$gns_admin_user_addr\")"
+stdout 126293886
+
+## Verify pool balances
+gnokey query vm/qeval --data "gno.land/r/gnoswap/gns.BalanceOf(\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\")"
+stdout 110283364
+
+gnokey query vm/qeval --data "gno.land/r/gnoland/wugnot.BalanceOf(\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\")"
+stdout 22706115
+
 ### Collect fees with unwrap
 gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func CollectFee -args 1 -args true -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout 1
