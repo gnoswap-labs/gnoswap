@@ -97,11 +97,25 @@ func (vm *versionManager) RegisterInitializer(initializer func(store any) any) e
 	}
 
 	// First registration: activate this version as the current implementation
+	prevPackagePath := vm.currentPackagePath
+
+	// Grant write access to the first (current) implementation
+	err := vm.domainKVStore.AddAuthorizedCaller(previousRealm.Address(), store.Write)
+	if err != nil {
+		return err
+	}
+
+	// Update internal state only after successful permission grant
 	vm.currentPackagePath = targetPackagePath
 	vm.currentImplementation = initializer(vm.initializeDomainStoreFn(vm.domainKVStore))
 
-	// Grant write access to the first (current) implementation
-	return vm.domainKVStore.AddAuthorizedCaller(previousRealm.Address(), store.Write)
+	chain.Emit(
+		"RegisterInitializer",
+		"previousPackagePath", prevPackagePath,
+		"newPackagePath", targetPackagePath,
+	)
+
+	return nil
 }
 
 // ChangeImplementation performs a hot-swap to a different version implementation.
@@ -141,11 +155,11 @@ func (vm *versionManager) ChangeImplementation(packagePath string) error {
 		return errors.New("version_manager: initializer is not a function")
 	}
 
-	// Activate the new implementation by calling its initializer
+	prevPackagePath := vm.currentPackagePath
+	packageAddress := chain.PackageAddress(packagePath)
+
 	vm.currentPackagePath = packagePath
 	vm.currentImplementation = initializer(vm.initializeDomainStoreFn(vm.domainKVStore))
-
-	packageAddress := chain.PackageAddress(vm.currentPackagePath)
 
 	// Update storage permissions for all registered implementations
 	storeAuthorizedCallers, err := vm.domainKVStore.GetAuthorizedCallers()
@@ -168,6 +182,12 @@ func (vm *versionManager) ChangeImplementation(packagePath string) error {
 			return err
 		}
 	}
+
+	chain.Emit(
+		"ChangeImplementation",
+		"previousPackagePath", prevPackagePath,
+		"newPackagePath", packagePath,
+	)
 
 	return nil
 }
@@ -216,7 +236,7 @@ func (vm *versionManager) isContainDomainPath() bool {
 
 	prefix := ufmt.Sprintf("%s/", vm.domainPath)
 
-	return strings.HasPrefix(runtime.PreviousRealm().PkgPath(), prefix)
+	return strings.HasPrefix(previousRealm.PkgPath(), prefix)
 }
 
 // NewVersionManager creates a new version manager instance for a specific domain.

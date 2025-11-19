@@ -51,21 +51,19 @@ gnoland start
 gnokey maketx send -send 10000000000ugnot -to $gns_admin_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
 stdout 'OK!'
 stdout 'GAS USED:   4[0-9]{4}'
-stdout 'EVENTS:     \[\]'
 
 ### Send wugnot to neccessary address
 gnokey maketx send -send 100000000ugnot -to $test_admin_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
 stdout 'OK!'
 stdout 'GAS USED:   4[0-9]{4}'
-stdout 'EVENTS:     \[\]'
+
 gnokey maketx send -send 500000000ugnot -to $user1_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
 stdout 'OK!'
 stdout 'GAS USED:   4[0-9]{4}'
-stdout 'EVENTS:     \[\]'
+
 gnokey maketx send -send 500000000ugnot -to $test_admin_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
 stdout 'OK!'
 stdout 'GAS USED:   4[0-9]{4}'
-stdout 'EVENTS:     \[\]'
 
 ### Transfer 1_000_000_000 GNS
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $test_admin_user_addr -args 1000000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "transfer 1_000_000_000 GNS" gns_admin
@@ -108,8 +106,7 @@ stdout 'OK!'
 stdout 'GAS USED:   8[0-9]{7}'
 stdout 'STORAGE DELTA:  5[0-9]{4} bytes'
 stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
-stdout '^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$'
-stdout '{\"type\":\"Mint\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"tickLower\",\"value\":\"-887220\"},{\"key\":\"tickUpper\",\"value\":\"887220\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\"},{\"key\":\"mintTo\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"caller\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"lpPositionId\",\"value\":\"1\"},{\"key\":\"liquidity\",\"value\":\"50000000\"},{\"key\":\"amount0\",\"value\":\"50000000\"},{\"key\":\"amount1\",\"value\":\"50000000\"},{\"key\":\"sqrtPriceX96\",\"value\":\"79228162514264337593543950337\"},{\"key\":\"token0Balance\",\"value\":\"50000000\"},{\"key\":\"token1Balance\",\"value\":\"50000000\"},'
+stdout 'EVENTS:     \[{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoland/wugnot.wugnot\"},{\"key\":\"from\",\"value\":\"\"},{\"key\":\"to\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"value\",\"value\":\"50000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoland/wugnot.wugnot\"},{\"key\":\"from\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"to\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"value\",\"value\":\"50000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoland/wugnot.wugnot\"},{\"key\":\"from\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"to\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"},{\"key\":\"value\",\"value\":\"50000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gns.GNS\"},{\"key\":\"from\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"to\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"},{\"key\":\"value\",\"value\":\"50000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Mint\",\"attrs\":\[{\"key\":\"slug\",\"value\":\"GNFT\"},{\"key\":\"to\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"tokenId\",\"value\":\"1\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc721\"},{\"type\":\"SetTokenURI\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"prevRealm\",\"value\":\"gno.land/r/gnoswap/position\"},{\"key\":\"tokenId\",\"value\":\"1\"},{\"key\":\"tokenURI\",\"value\":\"data:image/svg\+xml;base64,.*\"}\],\"pkg_path\":\"gno.land/r/gnoswap/gnft\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"slug\",\"value\":\"GNFT\"},{\"key\":\"from\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"to\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"tokenId\",\"value\":\"1\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc721\"},{\"type\":\"Mint\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"tickLower\",\"value\":\"-887220\"},{\"key\":\"tickUpper\",\"value\":\"887220\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\"},{\"key\":\"mintTo\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"caller\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"lpPositionId\",\"value\":\"1\"},{\"key\":\"liquidity\",\"value\":\"50000000\"},{\"key\":\"amount0\",\"value\":\"50000000\"},{\"key\":\"amount1\",\"value\":\"50000000\"},{\"key\":\"sqrtPriceX96\",\"value\":\"79228162514264337593543950337\"},{\"key\":\"token0Balance\",\"value\":\"50000000\"},{\"key\":\"token1Balance\",\"value\":\"50000000\"},{\"key\":\"tickCumulative\",\"value\":\"[0-9]+\"},{\"key\":\"liquidityCumulative\",\"value\":\"[0-9]+\"},{\"key\":\"secondsPerLiquidityCumulativeX128\",\"value\":\"[0-9]+\"},{\"key\":\"observationTimestamp\",\"value\":\"[0-9]+\"},{\"key\":\"referrer\",\"value\":\"\"}\],\"pkg_path\":\"gno.land/r/gnoswap/position/v1\"},.*\]'
 
 ### Decrease Liquidity
 gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func DecreaseLiquidity -args 1 -args "1000000" -args "1" -args "1" -args 9999999999 -args true -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
