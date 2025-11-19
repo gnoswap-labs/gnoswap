@@ -134,7 +134,7 @@ ifndef VERSION
 endif
 	@scripts/patch-upgrade.sh contract/r/gnoswap/$(CONTRACT) $(VERSION)
 	@echo "$(GREEN)Deploying $(CONTRACT) with version $(VERSION) to $(ENV) environment...$(NC)"
-	@$(MAKE) -f scripts/deploy.mk deploy-$(CONTRACT)-version VERSION=$(VERSION) ENV=$(ENV)
+	@$(MAKE) -f scripts/deploy.mk deploy-contract-version CONTRACT=$(CONTRACT) VERSION=$(VERSION) ENV=$(ENV)
 
 .PHONY: upgrade-version
 upgrade-version:

@@ -227,7 +227,7 @@ endif
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/$(CONTRACT)/$(VERSION) -pkgpath gno.land/r/gnoswap/$(CONTRACT)/$(VERSION) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 10000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
 	@echo
 
-upgrade-version:
+upgrade-contract-version:
 ifndef CONTRACT
 	$(error CONTRACT is not set. Usage: make upgrade-version CONTRACT=staker VERSION=v2)
 endif
