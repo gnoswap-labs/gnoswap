@@ -47,6 +47,9 @@ patchpkg "g16a7etgm9z2r653ucl36rj0l2yqcxgrz2jyegzx" $user1_user_addr
 ## start a new node
 gnoland start 
 
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/swap_wrapper -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
+stdout 'OK!'
+
 ### Send wugnot to neccessary accounts
 gnokey maketx send -send 10000000000ugnot -to $gns_admin_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
 stdout 'OK!'
@@ -131,11 +134,116 @@ stdout 'STORAGE DELTA:  -5 bytes'
 stdout 'TOTAL TX COST:  9[0-9]{7}ugnot'
 stdout 'EVENTS:     \[{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoland/wugnot.wugnot\"},{\"key\":\"from\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"to\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"},{\"key\":\"value\",\"value\":\"1000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gns.GNS\"},{\"key\":\"from\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"to\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"},{\"key\":\"value\",\"value\":\"1000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"IncreaseLiquidity\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\"},{\"key\":\"caller\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"lpPositionId\",\"value\":\"1\"},{\"key\":\"liquidity\",\"value\":\"1000000\"},{\"key\":\"amount0\",\"value\":\"1000000\"},{\"key\":\"amount1\",\"value\":\"1000000\"},{\"key\":\"sqrtPriceX96\",\"value\":\"79228162514264337593543950337\"},{\"key\":\"positionLiquidity\",\"value\":\"50000000\"},{\"key\":\"token0Balance\",\"value\":\"50000001\"},{\"key\":\"token1Balance\",\"value\":\"50000001\"},{\"key\":\"tickCumulative\",\"value\":\"0\"},{\"key\":\"liquidityCumulative\",\"value\":\"[0-9]+\"},{\"key\":\"secondsPerLiquidityCumulativeX128\",\"value\":\"[0-9]+\"},{\"key\":\"observationTimestamp\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/position/v1\"},{\"bytes_delta\":(-)*[0-9]+,\"fee_refund\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoland/wugnot\",\"refund_withheld\":false},{\"bytes_delta\":(-)*[0-9]+,\"fee_refund\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/gns\",\"refund_withheld\":false},{\"bytes_delta\":(-)*[0-9]+,\"fee_refund\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/pool\",\"refund_withheld\":false},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/position\"}\]'
 
+## Swap some tokens before collect fees
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1xt9lk80qqng30ahnk9axg2f2m4xdlp375w2x90 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/swap_wrapper -func WrappedSwap -args "gno.land/r/gnoland/wugnot" -args gno.land/r/gnoswap/gns -args 3000 -args $gns_admin_user_addr -args false -args "60283363" -args "1461446703485210103287273052203988822378723970341" -args $gns_admin_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+stdout "-27293886"
+stdout "60283363"
+stdout 'GAS USED:   6[0-9]{7}'
+stdout 'STORAGE DELTA:  6364 bytes'
+stdout 'EVENTS:     \[{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gns.GNS\"},{\"key\":\"from\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"to\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"},{\"key\":\"value\",\"value\":\"60283363\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoland/wugnot.wugnot\"},{\"key\":\"from\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"},{\"key\":\"to\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"value\",\"value\":\"27293886\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Swap\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"prevRealm\",\"value\":\"gno.land/r/swap_wrapper\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\"},{\"key\":\"zeroForOne\",\"value\":\"false\"},{\"key\":\"requestAmount\",\"value\":\"60283363\"},{\"key\":\"sqrtPriceLimitX96\",\"value\":\"1461446703485210103287273052203988822378723970341\"},{\"key\":\"payer\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"recipient\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"token0Amount\",\"value\":\"-27293886\"},{\"key\":\"token1Amount\",\"value\":\"60283363\"},{\"key\":\"protocolFee0\",\"value\":\"0\"},{\"key\":\"protocolFee1\",\"value\":\"0\"},{\"key\":\"sqrtPriceX96\",\"value\":\"174464392906408685394356148876\"},{\"key\":\"exactIn\",\"value\":\"true\"},{\"key\":\"currentTick\",\"value\":\"15788\"},{\"key\":\"liquidity\",\"value\":\"50000000\"},{\"key\":\"feeGrowthGlobal0X128\",\"value\":\"0\"},{\"key\":\"feeGrowthGlobal1X128\",\"value\":\"1230808126800372841116295222572854256\"},{\"key\":\"balanceToken0\",\"value\":\"22706115\"},{\"key\":\"balanceToken1\",\"value\":\"110283364\"},{\"key\":\"ticks\",\"value\":\"\[{\\"tick\\":-887220,\\"feeGrowthOutside0X128\\":\\"0\\",\\"feeGrowthOutside1X128\\":\\"0\\"},{\\"tick\\":887220,\\"feeGrowthOutside0X128\\":\\"0\\",\\"feeGrowthOutside1X128\\":\\"0\\"}\]\"},{\"key\":\"tickCumulative\",\"value\":\"[0-9]+\"},{\"key\":\"liquidityCumulative\",\"value\":\"[0-9]+\"},{\"key\":\"secondsPerLiquidityCumulativeX128\",\"value\":\"[0-9]+\"},{\"key\":\"observationTimestamp\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/pool/v1\"},.*,\"pkg_path\":\"gno.land/r/gnoswap/pool\"}\]'
+
 ### Collect fees with unwrap
 gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func CollectFee -args 1 -args true -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout 1
+stdout "0"
+stdout "179042"
 stdout "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
+stdout "0"
+stdout "180850"
 stdout 'GAS USED:   4[0-9]{7}'
-stdout 'STORAGE DELTA:  5[0-9]{1} bytes'
-stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
-stdout 'EVENTS:     \[{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gns.GNS\"},{\"key\":\"from\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"},{\"key\":\"to\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"value\",\"value\":\"0\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoland/wugnot.wugnot\"},{\"key\":\"from\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"},{\"key\":\"to\",\"value\":\"g1[0-9a-z]+\"},{\"key\":\"value\",\"value\":\"0\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gns.GNS\"},{\"key\":\"from\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"},{\"key\":\"to\",\"value\":\"g1[0-9a-z]+\"},{\"key\":\"value\",\"value\":\"0\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"CollectSwapFee\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"lpPositionId\",\"value\":\"1\"},{\"key\":\"feeAmount0\",\"value\":\"0\"},{\"key\":\"feeAmount1\",\"value\":\"0\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\"},{\"key\":\"unwrapResult\",\"value\":\"true\"}\],\"pkg_path\":\"gno.land/r/gnoswap/position/v1\"},{\"type\":\"WithdrawalFee\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"lpTokenId\",\"value\":\"1\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\"},{\"key\":\"feeAmount0\",\"value\":\"0\"},{\"key\":\"feeAmount1\",\"value\":\"0\"},{\"key\":\"amount0WithoutFee\",\"value\":\"0\"},{\"key\":\"amount1WithoutFee\",\"value\":\"0\"}\],\"pkg_path\":\"gno.land/r/gnoswap/position/v1\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoland/wugnot\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/gns\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/pool\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/position\"}\]'
+stdout 'STORAGE DELTA:  62 bytes'
+stdout 'TOTAL TX COST:  100006200ugnot'
+stdout 'EVENTS:     \[{\"type\":\"Approval\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gns.GNS\"},{\"key\":\"owner\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"},{\"key\":\"spender\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"value\",\"value\":\"180850\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gns.GNS\"},{\"key\":\"from\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"},{\"key\":\"to\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"value\",\"value\":\"179042\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoland/wugnot.wugnot\"},{\"key\":\"from\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"},{\"key\":\"to\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"value\",\"value\":\"0\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gns.GNS\"},{\"key\":\"from\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"},{\"key\":\"to\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"value\",\"value\":\"1808\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"CollectSwapFee\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"lpPositionId\",\"value\":\"1\"},{\"key\":\"feeAmount0\",\"value\":\"0\"},{\"key\":\"feeAmount1\",\"value\":\"179042\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\"},{\"key\":\"unwrapResult\",\"value\":\"true\"}\],\"pkg_path\":\"gno.land/r/gnoswap/position/v1\"},{\"type\":\"WithdrawalFee\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"lpTokenId\",\"value\":\"1\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000\"},{\"key\":\"feeAmount0\",\"value\":\"0\"},{\"key\":\"feeAmount1\",\"value\":\"1808\"},{\"key\":\"amount0WithoutFee\",\"value\":\"0\"},{\"key\":\"amount1WithoutFee\",\"value\":\"179042\"}\],\"pkg_path\":\"gno.land/r/gnoswap/position/v1\"},.*,\"pkg_path\":\"gno.land/r/gnoswap/position\"}\]'
+
+
+
+
+-- gnomod.toml --
+module = "gno.land/r/swap_wrapper"
+gno = "0.9"
+-- callback_mock.gno --
+package swap_wrapper
+
+import (
+	"chain"
+
+	i256 "gno.land/p/gnoswap/int256"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/pool"
+)
+
+var (
+	poolAddr    = chain.PackageAddress("gno.land/r/gnoswap/pool")
+	wrapperAddr = chain.PackageAddress("gno.land/r/swap_wrapper")
+)
+
+func WrappedSwap(
+	cur realm,
+	token0Path string,
+	token1Path string,
+	fee uint32,
+	recipient address,
+	zeroForOne bool,
+	amountSpecified string,
+	sqrtPriceLimitX96 string,
+	payer address,
+) (string, string) {
+	// The pool contract expects swap callbacks to settle the owed token
+	// immediately, otherwise the swap panics with an insufficient payment
+	// error. We forward the callback into handleSwapCallback so this test
+	// harness can transfer the requested token back to the pool.
+	return pool.Swap(
+		cross,
+		token0Path,
+		token1Path,
+		fee,
+		recipient,
+		zeroForOne,
+		amountSpecified,
+		sqrtPriceLimitX96,
+		payer,
+		func(cur realm, amount0Delta, amount1Delta string) error {
+			return handleSwapCallback(
+				token0Path,
+				token1Path,
+				payer,
+				amount0Delta,
+				amount1Delta,
+			)
+		},
+	)
+}
+
+func handleSwapCallback(
+	token0Path string,
+	token1Path string,
+	payer address,
+	amount0Delta string,
+	amount1Delta string,
+) error {
+	zero := i256.Zero()
+
+	amount0 := i256.MustFromDecimal(amount0Delta)
+	amount1 := i256.MustFromDecimal(amount1Delta)
+
+	switch {
+	case amount0.Gt(zero):
+		transferToPool(token0Path, amount0, payer)
+	case amount1.Gt(zero):
+		transferToPool(token1Path, amount1, payer)
+	}
+
+	return nil
+}
+
+func transferToPool(tokenPath string, amount *i256.Int, payer address) {
+	payment := amount.Abs().Int64()
+
+	if payer == wrapperAddr {
+		common.SafeGRC20Transfer(cross, tokenPath, poolAddr, payment)
+		return
+	}
+
+	common.SafeGRC20TransferFrom(cross, tokenPath, payer, poolAddr, payment)
+}
