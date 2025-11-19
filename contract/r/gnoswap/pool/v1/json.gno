@@ -47,13 +47,10 @@ type RpcPool struct {
 	Ticks RpcTicks `json:"ticks"`
 
 	TickBitmaps RpcTickBitmaps `json:"tickBitmaps"`
-
-	Positions RpcPositions `json:"positions"`
 }
 
-func newRpcPool(i *poolV1, poolPath string) RpcPool {
+func newRpcPool(pool *pl.Pool, poolPath string) RpcPool {
 	rpcPool := RpcPool{}
-	pool := i.mustGetPool(poolPath)
 
 	rpcPool.PoolPath = poolPath
 
@@ -125,28 +122,6 @@ func newRpcPool(i *poolV1, poolPath string) RpcPool {
 		return false
 	})
 
-	rpcPositions := []RpcPosition{}
-	pool.Positions().Iterate("", "", func(posKey string, iPositionInfo any) bool {
-		owner, tickLower, tickUpper := posKeyDivide(posKey)
-		posInfo, ok := iPositionInfo.(pl.PositionInfo)
-		if !ok {
-			panic("failed to cast position info to PositionInfo")
-		}
-
-		rpcPositions = append(rpcPositions, RpcPosition{
-			Owner:      owner,
-			TickLower:  tickLower,
-			TickUpper:  tickUpper,
-			Liquidity:  posInfo.Liquidity().ToString(),
-			Token0Owed: posInfo.TokensOwed0().ToString(),
-			Token1Owed: posInfo.TokensOwed1().ToString(),
-		})
-
-		return false
-	})
-
-	rpcPool.Positions = rpcPositions
-
 	return rpcPool
 }
 
@@ -175,7 +150,6 @@ func makePoolNode(pool RpcPool) *json.Node {
 		"liquidity":            json.StringNode("liquidity", pool.Liquidity),
 		"ticks":                pool.Ticks.JSON(),
 		"tickBitmaps":          pool.TickBitmaps.JSON(),
-		"positions":            pool.Positions.JSON(),
 	})
 }
 

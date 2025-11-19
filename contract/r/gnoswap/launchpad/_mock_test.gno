@@ -92,6 +92,14 @@ func (m *MockLaunchpad) CollectDepositGns(depositID string) (int64, error) {
 	return res[0].(int64), res[1].(error)
 }
 
+func (m *MockLaunchpad) CollectRewardByDepositId(depositID string) int64 {
+	res, ok := m.Response.Get("CollectRewardByDepositId")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
 func (m *MockLaunchpad) ApiGetProjectAndTierStatisticsByProjectId(projectId string) string {
 	res, ok := m.Response.Get("ApiGetProjectAndTierStatisticsByProjectId")
 	if !ok {
