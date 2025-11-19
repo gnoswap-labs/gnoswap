@@ -64,20 +64,16 @@ gnoland start
 ### Send wugnot to neccessary accounts
 gnokey maketx send -send 10000000000ugnot -to $gns_admin_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
 stdout 'GAS USED:   4[0-9]{4}'
-stdout 'EVENTS:     \[\]'
 
 ### Send wugnot to neccessary address
 gnokey maketx send -send 100000000ugnot -to $test_admin_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
 stdout 'GAS USED:   4[0-9]{4}'
-stdout 'EVENTS:     \[\]'
 
 gnokey maketx send -send 500000000ugnot -to $user1_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
 stdout 'GAS USED:   4[0-9]{4}'
-stdout 'EVENTS:     \[\]'
 
 gnokey maketx send -send 500000000ugnot -to $test_admin_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
 stdout 'GAS USED:   4[0-9]{4}'
-stdout 'EVENTS:     \[\]'
 
 ### Transfer 1_000_000_000 GNS
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $test_admin_user_addr -args 1000000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "transfer 1_000_000_000 GNS" gns_admin

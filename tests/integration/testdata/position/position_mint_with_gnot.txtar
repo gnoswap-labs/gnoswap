@@ -170,7 +170,7 @@ stdout '104999999'
 
 ## Get initial native GNOT balance before DecreaseLiquidity with unwrap=true
 gnokey query auth/accounts/$gns_admin_user_addr
-stdout '"coins": "[0-9]+ugnot"'
+stdout '"coins": "982138[0-9]{4}ugnot"'
 
 ## Decrease liquidity with unwrap (should receive native GNOT)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func DecreaseLiquidity -args 1 -args "5000000" -args "1" -args "1" -args 9999999999 -args true -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
@@ -182,11 +182,11 @@ stdout 'EVENTS:     \[{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"va
 
 ## Check native GNOT balance increased after unwrap (should have received 4999999 more GNOT)
 gnokey query auth/accounts/$gns_admin_user_addr
-stdout '"coins": "[0-9]+ugnot"'
+stdout '"coins": "972638[0-9]{4}ugnot"'
 
 ## Check wugnot balance remains same after DecreaseLiquidity with unwrap=true
 gnokey query vm/qeval --data "gno.land/r/gnoland/wugnot.BalanceOf(\"${gns_admin_user_addr}\")"
-# stdout 100000000
+stdout 104999999
 
 ## Collect position fees with unwrap (should receive native GNOT for WUGNOT portion)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func CollectFee -args 1 -args true -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
