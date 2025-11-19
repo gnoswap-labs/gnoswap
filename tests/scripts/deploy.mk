@@ -213,3 +213,27 @@ deploy-staker-v1:
 	$(info ************ deploy staker-v1 ************)
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/staker/v1 -pkgpath gno.land/r/gnoswap/staker/v1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
 	@echo
+
+# Deploy contracts with specific version
+# Usage: make deploy-contract-version CONTRACT=staker VERSION=v2
+deploy-contract-version:
+ifndef CONTRACT
+	$(error CONTRACT is not set. Usage: make deploy-contract-version CONTRACT=staker VERSION=v2)
+endif
+ifndef VERSION
+	$(error VERSION is not set. Usage: make deploy-contract-version CONTRACT=staker VERSION=v2)
+endif
+	$(info ************ deploy $(CONTRACT)-$(VERSION) ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/$(CONTRACT)/$(VERSION) -pkgpath gno.land/r/gnoswap/$(CONTRACT)/$(VERSION) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 10000000ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
+	@echo
+
+upgrade-version:
+ifndef CONTRACT
+	$(error CONTRACT is not set. Usage: make upgrade-version CONTRACT=staker VERSION=v2)
+endif
+ifndef VERSION
+	$(error VERSION is not set. Usage: make upgrade-version CONTRACT=staker VERSION=v2)
+endif
+	$(info ************ upgrade implementation of $(CONTRACT)-$(VERSION) ************)
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/$(CONTRACT) -func UpgradeImpl -args "gno.land/r/gnoswap/$(CONTRACT)/$(VERSION)" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 10000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo
