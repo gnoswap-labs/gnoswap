@@ -6,7 +6,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/position"
-	"gno.land/r/gnoswap/position/v1"
+	v1 "gno.land/r/gnoswap/position/v1"
 )
 
 // NFTAccessor implementation for test
