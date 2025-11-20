@@ -3,7 +3,7 @@ package v3_valid
 
 import (
 	"gno.land/r/gnoswap/router"
-	"gno.land/r/gnoswap/router/v1"
+	v1 "gno.land/r/gnoswap/router/v1"
 )
 
 func NewV3ValidRouter(store router.IRouterStore) router.IRouter {
