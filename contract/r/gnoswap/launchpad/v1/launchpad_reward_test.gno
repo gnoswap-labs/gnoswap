@@ -4,9 +4,9 @@ import (
 	"chain/runtime"
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/uassert"
-	u256 "gno.land/p/gnoswap/uint256"
 )
 
 func TestLaunchpadReward_CollectDepositReward(t *testing.T) {
@@ -66,8 +66,9 @@ func TestLaunchpadReward_CollectDepositReward(t *testing.T) {
 				// Create project with tier but without reward manager
 				projects := getTestProjects()
 				project := &Project{
-					id:    "project_1",
-					tiers: make(map[int64]*ProjectTier),
+					id:        "project_1",
+					tokenPath: GNS_PATH,
+					tiers:     make(map[int64]*ProjectTier),
 				}
 				projectTier := &ProjectTier{
 					id:                 "project_1:30",
@@ -100,8 +101,9 @@ func TestLaunchpadReward_CollectDepositReward(t *testing.T) {
 				// Create project with tier
 				projects := getTestProjects()
 				project := &Project{
-					id:    "project_1",
-					tiers: make(map[int64]*ProjectTier),
+					id:        "project_1",
+					tokenPath: GNS_PATH,
+					tiers:     make(map[int64]*ProjectTier),
 				}
 				projectTier := &ProjectTier{
 					id:                  "project_1:30",
@@ -164,8 +166,9 @@ func TestLaunchpadReward_CollectDepositReward(t *testing.T) {
 				// Create project with tier
 				projects := getTestProjects()
 				project := &Project{
-					id:    "project_1",
-					tiers: make(map[int64]*ProjectTier),
+					id:        "project_1",
+					tokenPath: GNS_PATH,
+					tiers:     make(map[int64]*ProjectTier),
 				}
 				projectTier := &ProjectTier{
 					id:                  "project_1:30",
@@ -232,8 +235,9 @@ func TestLaunchpadReward_CollectDepositReward(t *testing.T) {
 				// Create project with tier
 				projects := getTestProjects()
 				project := &Project{
-					id:    "project_1",
-					tiers: make(map[int64]*ProjectTier),
+					id:        "project_1",
+					tokenPath: GNS_PATH,
+					tiers:     make(map[int64]*ProjectTier),
 				}
 				projectTier := &ProjectTier{
 					id:                  "project_1:30",
@@ -284,7 +288,7 @@ func TestLaunchpadReward_CollectDepositReward(t *testing.T) {
 				deposit = tt.deposit
 			}
 
-			amount, err := lp.collectDepositReward(deposit, runtime.ChainHeight(), tt.currentTime)
+			rewardTokenPath, amount, err := lp.collectDepositReward(deposit, runtime.ChainHeight(), tt.currentTime)
 
 			if tt.expectedError != "" {
 				uassert.Error(t, err)
@@ -292,6 +296,7 @@ func TestLaunchpadReward_CollectDepositReward(t *testing.T) {
 			} else {
 				uassert.NoError(t, err)
 				uassert.Equal(t, tt.expectedAmount, amount)
+				uassert.Equal(t, GNS_PATH, rewardTokenPath)
 			}
 		})
 	}
@@ -404,7 +409,7 @@ func TestLaunchpadReward_CollectDepositRewardTimeBoundaries(t *testing.T) {
 			setTestProjectTierRewardManagers(rewardManagers)
 
 			// Collect reward
-			amount, err := lp.collectDepositReward(deposit, 150, tt.currentTime)
+			rewardTokenPath, amount, err := lp.collectDepositReward(deposit, 150, tt.currentTime)
 			if tt.expectedError != "" {
 				uassert.Error(t, err)
 				uassert.Equal(t, tt.expectedError, err.Error())
@@ -412,7 +417,7 @@ func TestLaunchpadReward_CollectDepositRewardTimeBoundaries(t *testing.T) {
 			}
 
 			uassert.NoError(t, err)
-
+			uassert.Equal(t, "gno.land/r/onbloc/obl", rewardTokenPath)
 			// Verify reward
 			if amount < (tt.expectedReward-5) || amount > (tt.expectedReward+5) {
 				t.Errorf("%s: expected ~%d, got %d", tt.description, tt.expectedReward, amount)

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
 )
 
@@ -29,9 +30,15 @@ func (lp *launchpadV1) CollectRewardByDepositId(depositID string) int64 {
 	deposit := lp.mustGetDeposit(depositID)
 	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
-	rewardAmount, err := lp.collectDepositReward(deposit, currentHeight, currentTime)
+
+	rewardTokenPath, rewardAmount, err := lp.collectDepositReward(deposit, currentHeight, currentTime)
 	if err != nil {
 		panic(err)
+	}
+
+	// Transfer reward token to depositor
+	if rewardAmount > 0 {
+		common.SafeGRC20Transfer(cross, rewardTokenPath, deposit.Depositor(), rewardAmount)
 	}
 
 	chain.Emit(
@@ -46,33 +53,39 @@ func (lp *launchpadV1) CollectRewardByDepositId(depositID string) int64 {
 }
 
 // collectDepositReward calculates and collects the reward for a deposit.
-func (lp *launchpadV1) collectDepositReward(deposit *Deposit, currentHeight, currentTime int64) (int64, error) {
+func (lp *launchpadV1) collectDepositReward(deposit *Deposit, currentHeight, currentTime int64) (string, int64, error) {
 	if currentTime <= 0 {
-		return 0, makeErrorWithDetails(errInvalidTime, "currentTime must be positive")
+		return "", 0, makeErrorWithDetails(errInvalidTime, "currentTime must be positive")
 	}
 
-	// Get project tier and reward manager
-	projectTier, err := lp.getProjectTier(deposit.ProjectID(), deposit.Tier())
+	// Get project and tier data
+	project, err := lp.getProject(deposit.ProjectID())
 	if err != nil {
-		return 0, err
+		return "", 0, err
 	}
 
+	projectTier, err := project.getTier(deposit.Tier())
+	if err != nil {
+		return "", 0, err
+	}
+
+	// Get reward manager
 	rewardManager, err := lp.getProjectTierRewardManager(projectTier.ID())
 	if err != nil {
-		return 0, err
+		return "", 0, err
 	}
 
 	// Update reward state before collection
 	err = rewardManager.updateRewardPerDepositX128(projectTier.CurrentDepositAmount(), currentHeight, currentTime)
 	if err != nil {
-		return 0, err
+		return "", 0, err
 	}
 
 	// Collect reward
 	rewardAmount, err := rewardManager.collectReward(deposit.ID(), currentTime)
 	if err != nil {
-		return 0, err
+		return "", 0, err
 	}
 
-	return rewardAmount, nil
+	return project.TokenPath(), rewardAmount, nil
 }
