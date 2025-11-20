@@ -3,8 +3,8 @@ package v1
 import (
 	"testing"
 
-	"gno.land/p/nt/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/uassert"
 )
 
 func TestRewardState_IsClaimable(t *testing.T) {
@@ -42,12 +42,10 @@ func TestRewardState_IsClaimable(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			state := &RewardState{
-				claimableTime: tt.claimableTime,
-			}
+			state := newRewardState(u256.Zero(), 1000, 100, 200, tt.claimableTime)
 
 			// Execute
-			result := state.IsClaimable(tt.currentHeight)
+			result := isRewardStateClaimable(state, tt.currentHeight)
 
 			// Verify
 			uassert.Equal(t, result, tt.expectedIsClaimable)
@@ -122,16 +120,13 @@ func TestRewardState_CalculateReward(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			state := &RewardState{
-				priceDebtX128: u256.Zero().Lsh(tt.priceDebt, 128),
-				depositAmount: tt.depositAmount,
-				claimedAmount: tt.claimedAmount,
-			}
+			state := newRewardState(u256.Zero().Lsh(tt.priceDebt, 128), tt.depositAmount, 100, 200, 100)
+			state.SetClaimedAmount(tt.claimedAmount)
 
 			// Execute
 			accumRewardPerDepositX128 := u256.Zero().Lsh(tt.accumRewardPerDeposit, 128)
-			resultReward := state.calculateReward(accumRewardPerDepositX128)
-			resultClaimableReward := state.calculateClaimableReward(accumRewardPerDepositX128)
+			resultReward := calculateReward(state, accumRewardPerDepositX128)
+			resultClaimableReward := calculateClaimableReward(state, accumRewardPerDepositX128)
 
 			// Verify
 			uassert.Equal(t, resultReward, tt.expectedReward)
@@ -140,7 +135,7 @@ func TestRewardState_CalculateReward(t *testing.T) {
 	}
 }
 
-func TestRewardState_NewRewardState(t *testing.T) {
+func TestRewardState_newRewardState(t *testing.T) {
 	tests := []struct {
 		name                string
 		priceDebt           *u256.Uint
@@ -167,7 +162,7 @@ func TestRewardState_NewRewardState(t *testing.T) {
 			// Setup
 			accumulatedRewardPerDepositX128 := u256.Zero().Lsh(tt.priceDebt, 128)
 			// Execute
-			state := NewRewardState(
+			state := newRewardState(
 				accumulatedRewardPerDepositX128,
 				tt.depositAmount,
 				tt.distributeStartTime,

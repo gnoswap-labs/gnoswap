@@ -73,19 +73,19 @@ func (s *launchpadStore) SetProjectTierRewardManagers(managers *avl.Tree) error 
 	return s.kvStore.Set(StoreKeyProjectTierRewardManagers.String(), managers)
 }
 
-// HasDepositCounterKey checks if the deposit counter key exists in the store.
-func (s *launchpadStore) HasDepositCounterKey() bool {
+// HasDepositCounterStoreKey checks if the deposit counter key exists in the store.
+func (s *launchpadStore) HasDepositCounterStoreKey() bool {
 	return s.kvStore.Has(StoreKeyDepositCounter.String())
 }
 
 // GetDepositCounter retrieves the deposit counter.
-func (s *launchpadStore) GetDepositCounter() Counter {
+func (s *launchpadStore) GetDepositCounter() *Counter {
 	result, err := s.kvStore.Get(StoreKeyDepositCounter.String())
 	if err != nil {
 		panic(err)
 	}
 
-	counter, ok := result.(Counter)
+	counter, ok := result.(*Counter)
 	if !ok {
 		panic(ufmt.Sprintf("failed to cast result to Counter: %T", result))
 	}
@@ -93,11 +93,17 @@ func (s *launchpadStore) GetDepositCounter() Counter {
 	return counter
 }
 
-// SetDepositCounter stores the deposit counter.
-func (s *launchpadStore) SetDepositCounter(counter Counter) error {
+func (s *launchpadStore) SetDepositCounter(counter *Counter) error {
 	return s.kvStore.Set(StoreKeyDepositCounter.String(), counter)
 }
 
+func (s *launchpadStore) NextDepositID() string {
+	counter := s.GetDepositCounter()
+
+	return counter.Next()
+}
+
+// SetDepositCounter stores the deposit counter.
 // HasDepositsKey checks if the deposits key exists in the store.
 func (s *launchpadStore) HasDepositsKey() bool {
 	return s.kvStore.Has(StoreKeyDeposits.String())

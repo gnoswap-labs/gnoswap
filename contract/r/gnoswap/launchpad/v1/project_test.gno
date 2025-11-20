@@ -5,216 +5,129 @@ import (
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
+	"gno.land/r/gnoswap/launchpad"
 )
 
-func TestProject_Getters(t *testing.T) {
-	tests := []struct {
-		name          string
-		id            string
-		projectName   string
-		tokenPath     string
-		depositAmount int64
-		recipient     address
-		createdTime   int64
-		createdHeight int64
-		getterFunc    string
-		expectedValue interface{}
-	}{
-		{
-			name:          "get project ID",
-			id:            "test:123",
-			projectName:   "Test Project",
-			tokenPath:     "gno.land/r/test/token",
-			depositAmount: 1000000,
-			recipient:     testutils.TestAddress("recipient"),
-			createdTime:   1000,
-			createdHeight: 123,
-			getterFunc:    "ID",
-			expectedValue: "test:123",
-		},
-		{
-			name:          "get project name",
-			id:            "test:123",
-			projectName:   "Test Project",
-			tokenPath:     "gno.land/r/test/token",
-			depositAmount: 1000000,
-			recipient:     testutils.TestAddress("recipient"),
-			createdTime:   1000,
-			createdHeight: 123,
-			getterFunc:    "Name",
-			expectedValue: "Test Project",
-		},
-		{
-			name:          "get project token path",
-			id:            "test:123",
-			projectName:   "Test Project",
-			tokenPath:     "gno.land/r/test/token",
-			depositAmount: 1000000,
-			recipient:     testutils.TestAddress("recipient"),
-			createdTime:   1000,
-			createdHeight: 123,
-			getterFunc:    "TokenPath",
-			expectedValue: "gno.land/r/test/token",
-		},
-		{
-			name:          "get project deposit amount",
-			id:            "test:123",
-			projectName:   "Test Project",
-			tokenPath:     "gno.land/r/test/token",
-			depositAmount: 1000000,
-			recipient:     testutils.TestAddress("recipient"),
-			createdTime:   1000,
-			createdHeight: 123,
-			getterFunc:    "DepositAmount",
-			expectedValue: int64(1000000),
-		},
-		{
-			name:          "get project recipient",
-			id:            "test:123",
-			projectName:   "Test Project",
-			tokenPath:     "gno.land/r/test/token",
-			depositAmount: 1000000,
-			recipient:     testutils.TestAddress("recipient"),
-			createdTime:   1000,
-			createdHeight: 123,
-			getterFunc:    "Recipient",
-			expectedValue: testutils.TestAddress("recipient"),
-		},
-		{
-			name:          "get project created time",
-			id:            "test:123",
-			projectName:   "Test Project",
-			tokenPath:     "gno.land/r/test/token",
-			depositAmount: 1000000,
-			recipient:     testutils.TestAddress("recipient"),
-			createdTime:   1000,
-			createdHeight: 123,
-			getterFunc:    "CreatedAt",
-			expectedValue: int64(1000),
-		},
-		{
-			name:          "get project created height",
-			id:            "test:123",
-			projectName:   "Test Project",
-			tokenPath:     "gno.land/r/test/token",
-			depositAmount: 1000000,
-			recipient:     testutils.TestAddress("recipient"),
-			createdTime:   1000,
-			createdHeight: 123,
-			getterFunc:    "CreatedHeight",
-			expectedValue: int64(123),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Setup
-			project := &Project{
-				id:            tt.id,
-				name:          tt.projectName,
-				tokenPath:     tt.tokenPath,
-				depositAmount: tt.depositAmount,
-				recipient:     tt.recipient,
-				conditions:    make(map[string]*ProjectCondition),
-				tiers:         make(map[int64]*ProjectTier),
-				createdAt:     tt.createdTime,
-				createdHeight: tt.createdHeight,
-				tiersRatios: map[int64]int64{
-					30:  33,
-					90:  33,
-					180: 34,
-				},
-			}
-
-			// Execute and verify
-			var result interface{}
-			switch tt.getterFunc {
-			case "ID":
-				result = project.ID()
-			case "Name":
-				result = project.Name()
-			case "TokenPath":
-				result = project.TokenPath()
-			case "DepositAmount":
-				result = project.DepositAmount()
-			case "Recipient":
-				result = project.Recipient()
-			case "CreatedAt":
-				result = project.CreatedAt()
-			case "CreatedHeight":
-				result = project.CreatedHeight()
-			}
-			uassert.Equal(t, result, tt.expectedValue)
-		})
-	}
-}
-
-func TestProject_Status(t *testing.T) {
+func TestProject_IsProjectActive(t *testing.T) {
 	tests := []struct {
 		name             string
-		startHeight      int64
-		endHeight        int64
-		currentHeight    int64
+		startTime        int64
+		endTime          int64
+		currentTime      int64
 		expectedIsActive bool
-		expectedIsEnded  bool
 	}{
 		{
-			name:             "project status inactive and not ended when before start",
-			startHeight:      150,
-			endHeight:        200,
-			currentHeight:    120,
+			name:             "project is inactive before start",
+			startTime:        100,
+			endTime:          200,
+			currentTime:      50,
 			expectedIsActive: false,
-			expectedIsEnded:  false,
 		},
 		{
-			name:             "project status active and not ended during active period",
-			startHeight:      150,
-			endHeight:        200,
-			currentHeight:    175,
+			name:             "project is active during active period",
+			startTime:        100,
+			endTime:          200,
+			currentTime:      150,
 			expectedIsActive: true,
-			expectedIsEnded:  false,
 		},
 		{
-			name:             "project status inactive and ended after end",
-			startHeight:      150,
-			endHeight:        200,
-			currentHeight:    250,
+			name:             "project is inactive after end",
+			startTime:        100,
+			endTime:          200,
+			currentTime:      250,
 			expectedIsActive: false,
-			expectedIsEnded:  true,
 		},
 		{
-			name:             "project status active at start height",
-			startHeight:      150,
-			endHeight:        200,
-			currentHeight:    150,
+			name:             "project is active at start time",
+			startTime:        100,
+			endTime:          200,
+			currentTime:      100,
 			expectedIsActive: true,
-			expectedIsEnded:  false,
+		},
+		{
+			name:             "project is inactive at end time",
+			startTime:        100,
+			endTime:          200,
+			currentTime:      200,
+			expectedIsActive: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			project := &Project{
-				tiers: map[int64]*ProjectTier{
-					projectTier180: {
-						startTime: tt.startHeight,
-						endTime:   tt.endHeight,
-					},
-				},
+			tier := launchpad.NewProjectTier("test_project", 180, 1000000, tt.startTime, tt.endTime)
+
+			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 1000000, testutils.TestAddress("recipient"), 100, 1000)
+			tiers := map[int64]*launchpad.ProjectTier{
+				projectTier180: tier,
 			}
+			project.SetTiers(tiers)
 
-			// Execute and verify
-			isActive := project.IsActive(tt.currentHeight)
-			isEnded := project.IsEnded(tt.currentHeight)
+			// Execute
+			isActive := isProjectActive(project, tt.currentTime)
 
-			uassert.Equal(t, isActive, tt.expectedIsActive)
-			uassert.Equal(t, isEnded, tt.expectedIsEnded)
+			// Verify
+			uassert.Equal(t, tt.expectedIsActive, isActive)
 		})
 	}
 }
 
-func TestProject_IsOwner(t *testing.T) {
+func TestProject_IsProjectEnded(t *testing.T) {
+	tests := []struct {
+		name            string
+		startTime       int64
+		endTime         int64
+		currentTime     int64
+		expectedIsEnded bool
+	}{
+		{
+			name:            "project is not ended before start",
+			startTime:       100,
+			endTime:         200,
+			currentTime:     50,
+			expectedIsEnded: false,
+		},
+		{
+			name:            "project is not ended during active period",
+			startTime:       100,
+			endTime:         200,
+			currentTime:     150,
+			expectedIsEnded: false,
+		},
+		{
+			name:            "project is ended after end time",
+			startTime:       100,
+			endTime:         200,
+			currentTime:     250,
+			expectedIsEnded: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			tier := launchpad.NewProjectTier("test_project", 180, 1000000, tt.startTime, tt.endTime)
+
+			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 1000000, testutils.TestAddress("recipient"), 100, 1000)
+			tiers := map[int64]*launchpad.ProjectTier{
+				projectTier180: tier,
+			}
+			project.SetTiers(tiers)
+
+			// Execute
+			isEnded := isProjectEnded(project, tt.currentTime)
+
+			// Verify
+			uassert.Equal(t, tt.expectedIsEnded, isEnded)
+		})
+	}
+}
+
+func TestProject_IsProjectOwner(t *testing.T) {
+	recipientAddr := testutils.TestAddress("recipient")
+	otherAddr := testutils.TestAddress("other")
+
 	tests := []struct {
 		name           string
 		recipient      address
@@ -223,93 +136,94 @@ func TestProject_IsOwner(t *testing.T) {
 	}{
 		{
 			name:           "caller is owner",
-			recipient:      testutils.TestAddress("owner"),
-			caller:         testutils.TestAddress("owner"),
+			recipient:      recipientAddr,
+			caller:         recipientAddr,
 			expectedResult: true,
 		},
 		{
 			name:           "caller is not owner",
-			recipient:      testutils.TestAddress("owner"),
-			caller:         testutils.TestAddress("other"),
+			recipient:      recipientAddr,
+			caller:         otherAddr,
 			expectedResult: false,
-		},
-		{
-			name:           "different addresses with same string representation",
-			recipient:      testutils.TestAddress("owner"),
-			caller:         testutils.TestAddress("owner"),
-			expectedResult: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			project := &Project{
-				recipient: tt.recipient,
-			}
+			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, tt.recipient, 100, 1000)
 
-			// Execute and verify
-			result := project.IsOwner(tt.caller)
-			uassert.Equal(t, result, tt.expectedResult)
+			// Execute
+			result := isProjectOwner(project, tt.caller)
+
+			// Verify
+			uassert.Equal(t, tt.expectedResult, result)
 		})
 	}
 }
 
-func TestProject_RemainingAmount(t *testing.T) {
+func TestProject_GetProjectRemainingAmount(t *testing.T) {
 	tests := []struct {
 		name              string
-		tiers             map[int64]*ProjectTier
+		tiers             map[int64]*launchpad.ProjectTier
 		expectedRemaining int64
 	}{
 		{
 			name: "calculate remaining amount with multiple tiers",
-			tiers: map[int64]*ProjectTier{
-				30: {
-					totalDistributeAmount: 1000,
-					totalCollectedAmount:  300,
-				},
-				90: {
-					totalDistributeAmount: 2000,
-					totalCollectedAmount:  500,
-				},
-				180: {
-					totalDistributeAmount: 3000,
-					totalCollectedAmount:  800,
-				},
+			tiers: map[int64]*launchpad.ProjectTier{
+				30: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+					tier.SetTotalCollectedAmount(300)
+					return tier
+				}(),
+				90: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 90, 2000, 100, 200)
+					tier.SetTotalCollectedAmount(500)
+					return tier
+				}(),
+				180: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 180, 3000, 100, 200)
+					tier.SetTotalCollectedAmount(800)
+					return tier
+				}(),
 			},
 			expectedRemaining: 4400, // (1000-300) + (2000-500) + (3000-800)
 		},
 		{
 			name: "calculate remaining amount with zero collected",
-			tiers: map[int64]*ProjectTier{
-				30: {
-					totalDistributeAmount: 1000,
-					totalCollectedAmount:  0,
-				},
-				180: {
-					totalDistributeAmount: 2000,
-					totalCollectedAmount:  0,
-				},
+			tiers: map[int64]*launchpad.ProjectTier{
+				30: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+					tier.SetTotalCollectedAmount(0)
+					return tier
+				}(),
+				180: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 180, 2000, 100, 200)
+					tier.SetTotalCollectedAmount(0)
+					return tier
+				}(),
 			},
 			expectedRemaining: 3000,
 		},
 		{
 			name: "calculate remaining amount with fully collected",
-			tiers: map[int64]*ProjectTier{
-				30: {
-					totalDistributeAmount: 1000,
-					totalCollectedAmount:  1000,
-				},
-				180: {
-					totalDistributeAmount: 2000,
-					totalCollectedAmount:  2000,
-				},
+			tiers: map[int64]*launchpad.ProjectTier{
+				30: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+					tier.SetTotalCollectedAmount(1000)
+					return tier
+				}(),
+				180: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 180, 2000, 100, 200)
+					tier.SetTotalCollectedAmount(2000)
+					return tier
+				}(),
 			},
 			expectedRemaining: 0,
 		},
 		{
 			name:              "calculate remaining amount with no tiers",
-			tiers:             map[int64]*ProjectTier{},
+			tiers:             map[int64]*launchpad.ProjectTier{},
 			expectedRemaining: 0,
 		},
 	}
@@ -317,185 +231,334 @@ func TestProject_RemainingAmount(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			project := &Project{
-				tiers: tt.tiers,
-			}
+			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+			project.SetTiers(tt.tiers)
 
 			// Execute
-			result := project.RemainingAmount()
-			uassert.Equal(t, result, tt.expectedRemaining)
+			result := getProjectRemainingAmount(project)
+
+			// Verify
+			uassert.Equal(t, tt.expectedRemaining, result)
 		})
 	}
 }
 
-func TestProject_DepositCounts(t *testing.T) {
+func TestProject_GetProjectTotalDepositCount(t *testing.T) {
 	tests := []struct {
-		name                 string
-		tiers                map[int64]*ProjectTier
-		expectedTotalCount   int64
-		expectedCurrentCount int64
+		name               string
+		tiers              map[int64]*launchpad.ProjectTier
+		expectedTotalCount int64
 	}{
 		{
 			name: "calculate deposit counts with multiple tiers",
-			tiers: map[int64]*ProjectTier{
-				30: {
-					totalDepositCount:  10,
-					totalWithdrawCount: 2,
-				},
-				90: {
-					totalDepositCount:  20,
-					totalWithdrawCount: 5,
-				},
-				180: {
-					totalDepositCount:  15,
-					totalWithdrawCount: 3,
-				},
+			tiers: map[int64]*launchpad.ProjectTier{
+				30: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+					tier.SetTotalDepositCount(10)
+					tier.SetTotalWithdrawCount(2)
+					return tier
+				}(),
+				90: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 90, 2000, 100, 200)
+					tier.SetTotalDepositCount(20)
+					tier.SetTotalWithdrawCount(5)
+					return tier
+				}(),
+				180: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 180, 3000, 100, 200)
+					tier.SetTotalDepositCount(15)
+					tier.SetTotalWithdrawCount(3)
+					return tier
+				}(),
 			},
-			expectedTotalCount:   45, // 10 + 20 + 15
-			expectedCurrentCount: 35, // (10-2) + (20-5) + (15-3)
+			expectedTotalCount: 45, // 10 + 20 + 15
 		},
 		{
 			name: "calculate deposit counts with no withdrawals",
-			tiers: map[int64]*ProjectTier{
-				30: {
-					totalDepositCount:  10,
-					totalWithdrawCount: 0,
-				},
-				180: {
-					totalDepositCount:  20,
-					totalWithdrawCount: 0,
-				},
+			tiers: map[int64]*launchpad.ProjectTier{
+				30: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+					tier.SetTotalDepositCount(10)
+					tier.SetTotalWithdrawCount(0)
+					return tier
+				}(),
+				180: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 180, 2000, 100, 200)
+					tier.SetTotalDepositCount(20)
+					tier.SetTotalWithdrawCount(0)
+					return tier
+				}(),
 			},
-			expectedTotalCount:   30,
-			expectedCurrentCount: 30,
+			expectedTotalCount: 30,
 		},
 		{
-			name:                 "calculate deposit counts with no tiers",
-			tiers:                map[int64]*ProjectTier{},
-			expectedTotalCount:   0,
-			expectedCurrentCount: 0,
+			name:               "calculate deposit counts with no tiers",
+			tiers:              map[int64]*launchpad.ProjectTier{},
+			expectedTotalCount: 0,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			project := &Project{
-				tiers: tt.tiers,
-			}
+			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+			project.SetTiers(tt.tiers)
 
-			// Execute and verify
-			totalCount := project.TotalDepositCount()
-			currentCount := project.CurrentDepositCount()
+			// Execute
+			result := getProjectTotalDepositCount(project)
 
-			uassert.Equal(t, totalCount, tt.expectedTotalCount)
-			uassert.Equal(t, currentCount, tt.expectedCurrentCount)
+			// Verify
+			uassert.Equal(t, tt.expectedTotalCount, result)
 		})
 	}
 }
 
-func TestProject_DepositAmounts(t *testing.T) {
+func TestProject_GetProjectCurrentDepositCount(t *testing.T) {
 	tests := []struct {
-		name                  string
-		tiers                 map[int64]*ProjectTier
-		expectedTotalAmount   int64
-		expectedCurrentAmount int64
+		name                 string
+		tiers                map[int64]*launchpad.ProjectTier
+		expectedCurrentCount int64
+	}{
+		{
+			name: "calculate current deposit counts with withdrawals",
+			tiers: map[int64]*launchpad.ProjectTier{
+				30: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+					tier.SetTotalDepositCount(10)
+					tier.SetTotalWithdrawCount(2)
+					return tier
+				}(),
+				90: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 90, 2000, 100, 200)
+					tier.SetTotalDepositCount(20)
+					tier.SetTotalWithdrawCount(5)
+					return tier
+				}(),
+				180: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 180, 3000, 100, 200)
+					tier.SetTotalDepositCount(15)
+					tier.SetTotalWithdrawCount(3)
+					return tier
+				}(),
+			},
+			expectedCurrentCount: 35, // (10-2) + (20-5) + (15-3)
+		},
+		{
+			name: "calculate current deposit counts with no withdrawals",
+			tiers: map[int64]*launchpad.ProjectTier{
+				30: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+					tier.SetTotalDepositCount(10)
+					tier.SetTotalWithdrawCount(0)
+					return tier
+				}(),
+				180: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 180, 2000, 100, 200)
+					tier.SetTotalDepositCount(20)
+					tier.SetTotalWithdrawCount(0)
+					return tier
+				}(),
+			},
+			expectedCurrentCount: 30,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+			project.SetTiers(tt.tiers)
+
+			// Execute
+			result := getProjectCurrentDepositCount(project)
+
+			// Verify
+			uassert.Equal(t, tt.expectedCurrentCount, result)
+		})
+	}
+}
+
+func TestProject_GetProjectTotalDepositAmount(t *testing.T) {
+	tests := []struct {
+		name                string
+		tiers               map[int64]*launchpad.ProjectTier
+		expectedTotalAmount int64
 	}{
 		{
 			name: "calculate deposit amounts with multiple tiers",
-			tiers: map[int64]*ProjectTier{
-				30: {
-					totalDepositAmount:  1000000,
-					totalWithdrawAmount: 200000,
-				},
-				90: {
-					totalDepositAmount:  2000000,
-					totalWithdrawAmount: 500000,
-				},
-				180: {
-					totalDepositAmount:  1500000,
-					totalWithdrawAmount: 300000,
-				},
+			tiers: map[int64]*launchpad.ProjectTier{
+				30: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+					tier.SetTotalDepositAmount(1000000)
+					tier.SetTotalWithdrawAmount(200000)
+					return tier
+				}(),
+				90: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 90, 2000, 100, 200)
+					tier.SetTotalDepositAmount(2000000)
+					tier.SetTotalWithdrawAmount(500000)
+					return tier
+				}(),
+				180: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 180, 3000, 100, 200)
+					tier.SetTotalDepositAmount(1500000)
+					tier.SetTotalWithdrawAmount(300000)
+					return tier
+				}(),
 			},
-			expectedTotalAmount:   4500000, // 1000000 + 2000000 + 1500000
-			expectedCurrentAmount: 3500000, // (1000000-200000) + (2000000-500000) + (1500000-300000)
+			expectedTotalAmount: 4500000, // 1000000 + 2000000 + 1500000
 		},
 		{
 			name: "calculate deposit amounts with no withdrawals",
-			tiers: map[int64]*ProjectTier{
-				30: {
-					totalDepositAmount:  1000000,
-					totalWithdrawAmount: 0,
-				},
-				180: {
-					totalDepositAmount:  2000000,
-					totalWithdrawAmount: 0,
-				},
+			tiers: map[int64]*launchpad.ProjectTier{
+				30: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+					tier.SetTotalDepositAmount(1000000)
+					tier.SetTotalWithdrawAmount(0)
+					return tier
+				}(),
+				180: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 180, 2000, 100, 200)
+					tier.SetTotalDepositAmount(2000000)
+					tier.SetTotalWithdrawAmount(0)
+					return tier
+				}(),
 			},
-			expectedTotalAmount:   3000000,
-			expectedCurrentAmount: 3000000,
+			expectedTotalAmount: 3000000,
 		},
 		{
-			name:                  "calculate deposit amounts with no tiers",
-			tiers:                 map[int64]*ProjectTier{},
-			expectedTotalAmount:   0,
-			expectedCurrentAmount: 0,
+			name:                "calculate deposit amounts with no tiers",
+			tiers:               map[int64]*launchpad.ProjectTier{},
+			expectedTotalAmount: 0,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			project := &Project{
-				tiers: tt.tiers,
-			}
+			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+			project.SetTiers(tt.tiers)
 
-			// Execute and verify
-			totalAmount := project.TotalDepositAmount()
-			currentAmount := project.CurrentDepositAmount()
+			// Execute
+			result := getProjectTotalDepositAmount(project)
 
-			uassert.Equal(t, totalAmount, tt.expectedTotalAmount)
-			uassert.Equal(t, currentAmount, tt.expectedCurrentAmount)
+			// Verify
+			uassert.Equal(t, tt.expectedTotalAmount, result)
 		})
 	}
 }
 
-func TestProject_TotalCollectedAmount(t *testing.T) {
+func TestProject_GetProjectCurrentDepositAmount(t *testing.T) {
+	tests := []struct {
+		name                  string
+		tiers                 map[int64]*launchpad.ProjectTier
+		expectedCurrentAmount int64
+	}{
+		{
+			name: "calculate current deposit amounts with withdrawals",
+			tiers: map[int64]*launchpad.ProjectTier{
+				30: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+					tier.SetTotalDepositAmount(1000000)
+					tier.SetTotalWithdrawAmount(200000)
+					return tier
+				}(),
+				90: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 90, 2000, 100, 200)
+					tier.SetTotalDepositAmount(2000000)
+					tier.SetTotalWithdrawAmount(500000)
+					return tier
+				}(),
+				180: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 180, 3000, 100, 200)
+					tier.SetTotalDepositAmount(1500000)
+					tier.SetTotalWithdrawAmount(300000)
+					return tier
+				}(),
+			},
+			expectedCurrentAmount: 3500000, // (1000000-200000) + (2000000-500000) + (1500000-300000)
+		},
+		{
+			name: "calculate current deposit amounts with no withdrawals",
+			tiers: map[int64]*launchpad.ProjectTier{
+				30: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+					tier.SetTotalDepositAmount(1000000)
+					tier.SetTotalWithdrawAmount(0)
+					return tier
+				}(),
+				180: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 180, 2000, 100, 200)
+					tier.SetTotalDepositAmount(2000000)
+					tier.SetTotalWithdrawAmount(0)
+					return tier
+				}(),
+			},
+			expectedCurrentAmount: 3000000,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+			project.SetTiers(tt.tiers)
+
+			// Execute
+			result := getProjectCurrentDepositAmount(project)
+
+			// Verify
+			uassert.Equal(t, tt.expectedCurrentAmount, result)
+		})
+	}
+}
+
+func TestProject_GetProjectTotalCollectedAmount(t *testing.T) {
 	tests := []struct {
 		name                    string
-		tiers                   map[int64]*ProjectTier
+		tiers                   map[int64]*launchpad.ProjectTier
 		expectedCollectedAmount int64
 	}{
 		{
 			name: "calculate total collected amount with multiple tiers",
-			tiers: map[int64]*ProjectTier{
-				30: {
-					totalCollectedAmount: 300000,
-				},
-				90: {
-					totalCollectedAmount: 500000,
-				},
-				180: {
-					totalCollectedAmount: 800000,
-				},
+			tiers: map[int64]*launchpad.ProjectTier{
+				30: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+					tier.SetTotalCollectedAmount(300000)
+					return tier
+				}(),
+				90: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 90, 2000, 100, 200)
+					tier.SetTotalCollectedAmount(500000)
+					return tier
+				}(),
+				180: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 180, 3000, 100, 200)
+					tier.SetTotalCollectedAmount(800000)
+					return tier
+				}(),
 			},
 			expectedCollectedAmount: 1600000, // 300000 + 500000 + 800000
 		},
 		{
 			name: "calculate total collected amount with zero collected",
-			tiers: map[int64]*ProjectTier{
-				30: {
-					totalCollectedAmount: 0,
-				},
-				180: {
-					totalCollectedAmount: 0,
-				},
+			tiers: map[int64]*launchpad.ProjectTier{
+				30: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+					tier.SetTotalCollectedAmount(0)
+					return tier
+				}(),
+				180: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 180, 2000, 100, 200)
+					tier.SetTotalCollectedAmount(0)
+					return tier
+				}(),
 			},
 			expectedCollectedAmount: 0,
 		},
 		{
 			name:                    "calculate total collected amount with no tiers",
-			tiers:                   map[int64]*ProjectTier{},
+			tiers:                   map[int64]*launchpad.ProjectTier{},
 			expectedCollectedAmount: 0,
 		},
 	}
@@ -503,59 +566,144 @@ func TestProject_TotalCollectedAmount(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			project := &Project{
-				tiers: tt.tiers,
-			}
+			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+			project.SetTiers(tt.tiers)
 
-			// Execute and verify
-			result := project.TotalCollectedAmount()
-			uassert.Equal(t, result, tt.expectedCollectedAmount)
+			// Execute
+			result := getProjectTotalCollectedAmount(project)
+
+			// Verify
+			uassert.Equal(t, tt.expectedCollectedAmount, result)
 		})
 	}
 }
 
-func TestProject_GetTier(t *testing.T) {
+func TestProject_GetProjectTier(t *testing.T) {
 	tests := []struct {
 		name             string
-		tiers            map[int64]*ProjectTier
+		tiers            map[int64]*launchpad.ProjectTier
 		duration         int64
-		expectedTier     *ProjectTier
 		expectedHasError bool
 		expectedError    string
 	}{
 		{
 			name: "get existing tier",
-			tiers: map[int64]*ProjectTier{
-				30: {
-					id: "test:30",
-				},
-				180: {
-					id: "test:180",
-				},
+			tiers: map[int64]*launchpad.ProjectTier{
+				30: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+					tier.SetID("test:30")
+					return tier
+				}(),
+				180: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 180, 3000, 100, 200)
+					tier.SetID("test:180")
+					return tier
+				}(),
 			},
 			duration:         30,
-			expectedTier:     &ProjectTier{id: "test:30"},
 			expectedHasError: false,
+		},
+		{
+			name: "get non-existing tier",
+			tiers: map[int64]*launchpad.ProjectTier{
+				30: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+					tier.SetID("test:30")
+					return tier
+				}(),
+			},
+			duration:         90,
+			expectedHasError: true,
+			expectedError:    "tier(%!d(MISSING)) not found",
+		},
+		{
+			name:             "get tier from empty project",
+			tiers:            map[int64]*launchpad.ProjectTier{},
+			duration:         30,
+			expectedHasError: true,
+			expectedError:    "tier(%!d(MISSING)) not found",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			project := &Project{
-				tiers: tt.tiers,
-			}
+			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+			project.SetTiers(tt.tiers)
 
 			// Execute
-			tier, err := project.getTier(tt.duration)
+			tier, err := getProjectTier(project, tt.duration)
 
 			// Verify
 			if tt.expectedHasError {
-				uassert.NotNil(t, err)
-				uassert.Equal(t, err.Error(), tt.expectedError)
+				uassert.Error(t, err)
+				uassert.ErrorContains(t, err, "tier")
 			} else {
-				uassert.Nil(t, err)
-				uassert.Equal(t, tier.ID(), tt.expectedTier.ID())
+				uassert.NoError(t, err)
+				uassert.NotNil(t, tier)
+				uassert.Equal(t, tt.tiers[tt.duration].ID(), tier.ID())
+			}
+		})
+	}
+}
+
+func TestProject_GetStandardTier(t *testing.T) {
+	tests := []struct {
+		name        string
+		tiers       map[int64]*launchpad.ProjectTier
+		expectedNil bool
+	}{
+		{
+			name: "get standard tier with 180 days tier",
+			tiers: map[int64]*launchpad.ProjectTier{
+				30: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+					return tier
+				}(),
+				180: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 180, 3000, 100, 200)
+					tier.SetID("test:180")
+					return tier
+				}(),
+			},
+			expectedNil: false,
+		},
+		{
+			name: "get standard tier without 180 days tier",
+			tiers: map[int64]*launchpad.ProjectTier{
+				30: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+					return tier
+				}(),
+				90: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 90, 2000, 100, 200)
+					return tier
+				}(),
+			},
+			expectedNil: true,
+		},
+		{
+			name:        "get standard tier from empty project",
+			tiers:       map[int64]*launchpad.ProjectTier{},
+			expectedNil: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+			project.SetTiers(tt.tiers)
+
+			// Execute
+			standardTier := getStandardTier(project)
+
+			// Verify
+			if tt.expectedNil {
+				uassert.True(t, standardTier == nil, "standard tier should be nil")
+			} else {
+				uassert.True(t, standardTier != nil, "standard tier should not be nil")
+				uassert.Equal(t, "test:180", standardTier.ID())
 			}
 		})
 	}
@@ -563,68 +711,67 @@ func TestProject_GetTier(t *testing.T) {
 
 func TestProject_ValidateRefundRemainingAmount(t *testing.T) {
 	tests := []struct {
-		name             string
-		tiers            map[int64]*ProjectTier
-		currentHeight    int64
-		expectedHasError bool
-		expectedError    string
+		name                  string
+		totalDistributeAmount int64
+		totalCollectedAmount  int64
+		tierStartTime         int64
+		tierEndTime           int64
+		currentTime           int64
+		expectedHasError      bool
+		expectedError         string
 	}{
 		{
-			name: "validate refund with ended project and remaining amount",
-			tiers: map[int64]*ProjectTier{
-				180: {
-					endTime:               200,
-					totalDistributeAmount: 1000,
-					totalCollectedAmount:  600,
-				},
-			},
-			currentHeight:    250,
-			expectedHasError: false,
+			name:                  "refund validation fails when project not ended",
+			totalDistributeAmount: 1000,
+			totalCollectedAmount:  500,
+			tierStartTime:         100,
+			tierEndTime:           200,
+			currentTime:           150,
+			expectedHasError:      true,
+			expectedError:         "project not ended yet",
 		},
 		{
-			name: "validate refund with project not ended",
-			tiers: map[int64]*ProjectTier{
-				180: {
-					endTime:               200,
-					totalDistributeAmount: 1000,
-					totalCollectedAmount:  600,
-				},
-			},
-			currentHeight:    150,
-			expectedHasError: true,
-			expectedError:    "project not ended yet(current:150, endTime: 200)",
+			name:                  "refund validation fails when no remaining amount",
+			totalDistributeAmount: 1000,
+			totalCollectedAmount:  1000,
+			tierStartTime:         100,
+			tierEndTime:           200,
+			currentTime:           250,
+			expectedHasError:      true,
+			expectedError:         "project has no remaining amount",
 		},
 		{
-			name: "validate refund with no remaining amount",
-			tiers: map[int64]*ProjectTier{
-				180: {
-					endTime:               200,
-					totalDistributeAmount: 1000,
-					totalCollectedAmount:  1000,
-				},
-			},
-			currentHeight:    250,
-			expectedHasError: true,
-			expectedError:    "project has no remaining amount",
+			name:                  "refund validation succeeds when ended with remaining amount",
+			totalDistributeAmount: 1000,
+			totalCollectedAmount:  500,
+			tierStartTime:         100,
+			tierEndTime:           200,
+			currentTime:           250,
+			expectedHasError:      false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			project := &Project{
-				tiers: tt.tiers,
+			tier := launchpad.NewProjectTier("test", 180, tt.totalDistributeAmount, tt.tierStartTime, tt.tierEndTime)
+			tier.SetTotalCollectedAmount(tt.totalCollectedAmount)
+
+			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+			tiers := map[int64]*launchpad.ProjectTier{
+				projectTier180: tier,
 			}
+			project.SetTiers(tiers)
 
 			// Execute
-			err := project.validateRefundRemainingAmount(tt.currentHeight)
+			err := validateRefundRemainingAmount(project, tt.currentTime)
 
 			// Verify
 			if tt.expectedHasError {
-				uassert.NotNil(t, err)
-				uassert.Equal(t, err.Error(), tt.expectedError)
+				uassert.Error(t, err)
+				uassert.ErrorContains(t, err, tt.expectedError)
 			} else {
-				uassert.Nil(t, err)
+				uassert.NoError(t, err)
 			}
 		})
 	}
@@ -633,59 +780,77 @@ func TestProject_ValidateRefundRemainingAmount(t *testing.T) {
 func TestProject_AddProjectTier(t *testing.T) {
 	tests := []struct {
 		name          string
-		initialTiers  map[int64]*ProjectTier
+		initialTiers  map[int64]*launchpad.ProjectTier
 		duration      int64
-		tier          *ProjectTier
-		expectedTiers map[int64]*ProjectTier
+		tier          *launchpad.ProjectTier
+		expectedTiers map[int64]*launchpad.ProjectTier
 	}{
 		{
 			name:         "add new tier to empty project",
-			initialTiers: map[int64]*ProjectTier{},
+			initialTiers: map[int64]*launchpad.ProjectTier{},
 			duration:     30,
-			tier: &ProjectTier{
-				id: "test:30",
-			},
-			expectedTiers: map[int64]*ProjectTier{
-				30: {
-					id: "test:30",
-				},
+			tier: func() *launchpad.ProjectTier {
+				tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+				tier.SetID("test:30")
+				return tier
+			}(),
+			expectedTiers: map[int64]*launchpad.ProjectTier{
+				30: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+					tier.SetID("test:30")
+					return tier
+				}(),
 			},
 		},
 		{
 			name: "add tier to existing tiers",
-			initialTiers: map[int64]*ProjectTier{
-				30: {
-					id: "test:30",
-				},
+			initialTiers: map[int64]*launchpad.ProjectTier{
+				30: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+					tier.SetID("test:30")
+					return tier
+				}(),
 			},
 			duration: 90,
-			tier: &ProjectTier{
-				id: "test:90",
-			},
-			expectedTiers: map[int64]*ProjectTier{
-				30: {
-					id: "test:30",
-				},
-				90: {
-					id: "test:90",
-				},
+			tier: func() *launchpad.ProjectTier {
+				tier := launchpad.NewProjectTier("test", 90, 1000, 100, 200)
+				tier.SetID("test:90")
+				return tier
+			}(),
+			expectedTiers: map[int64]*launchpad.ProjectTier{
+				30: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+					tier.SetID("test:30")
+					return tier
+				}(),
+				90: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 90, 1000, 100, 200)
+					tier.SetID("test:90")
+					return tier
+				}(),
 			},
 		},
 		{
 			name: "overwrite existing tier",
-			initialTiers: map[int64]*ProjectTier{
-				30: {
-					id: "test:30_old",
-				},
+			initialTiers: map[int64]*launchpad.ProjectTier{
+				30: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+					tier.SetID("test:30_old")
+					return tier
+				}(),
 			},
 			duration: 30,
-			tier: &ProjectTier{
-				id: "test:30_new",
-			},
-			expectedTiers: map[int64]*ProjectTier{
-				30: {
-					id: "test:30_new",
-				},
+			tier: func() *launchpad.ProjectTier {
+				tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+				tier.SetID("test:30_new")
+				return tier
+			}(),
+			expectedTiers: map[int64]*launchpad.ProjectTier{
+				30: func() *launchpad.ProjectTier {
+					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+					tier.SetID("test:30_new")
+					return tier
+				}(),
 			},
 		},
 	}
@@ -693,327 +858,111 @@ func TestProject_AddProjectTier(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			project := &Project{
-				tiers: tt.initialTiers,
-			}
+			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+			project.SetTiers(tt.initialTiers)
 
 			// Execute
-			project.addProjectTier(tt.duration, tt.tier)
+			addProjectTier(project, tt.duration, tt.tier)
 
 			// Verify
-			uassert.Equal(t, len(project.tiers), len(tt.expectedTiers))
+			tiers := project.Tiers()
+			uassert.Equal(t, len(tiers), len(tt.expectedTiers))
+
 			for duration, expectedTier := range tt.expectedTiers {
-				actualTier, exists := project.tiers[duration]
-				uassert.True(t, exists)
+				actualTier, exists := tiers[duration]
+				uassert.Equal(t, exists, true)
 				uassert.Equal(t, actualTier.ID(), expectedTier.ID())
 			}
 		})
 	}
 }
 
-func TestProject_AddProjectCondition(t *testing.T) {
+func TestProject_CheckProjectConditions(t *testing.T) {
 	tests := []struct {
-		name               string
-		initialConditions  map[string]*ProjectCondition
-		tokenPath          string
-		condition          *ProjectCondition
-		expectedConditions map[string]*ProjectCondition
+		name             string
+		conditions       map[string]*launchpad.ProjectCondition
+		balanceFunc      func(tokenPath string, caller address) int64
+		expectedHasError bool
+		expectedError    string
 	}{
 		{
-			name:              "add new condition to empty project",
-			initialConditions: map[string]*ProjectCondition{},
-			tokenPath:         "gno.land/r/test/token1",
-			condition: &ProjectCondition{
-				tokenPath:     "gno.land/r/test/token1",
-				minimumAmount: 1000,
+			name: "check conditions passes with sufficient balance",
+			conditions: map[string]*launchpad.ProjectCondition{
+				"gno.land/r/demo/gns": func() *launchpad.ProjectCondition {
+					condition := launchpad.NewProjectCondition("gno.land/r/demo/gns", 1000)
+					return condition
+				}(),
 			},
-			expectedConditions: map[string]*ProjectCondition{
-				"gno.land/r/test/token1": {
-					tokenPath:     "gno.land/r/test/token1",
-					minimumAmount: 1000,
-				},
+			balanceFunc: func(tokenPath string, caller address) int64 {
+				return 1500 // More than required
 			},
+			expectedHasError: false,
 		},
 		{
-			name: "add condition to existing conditions",
-			initialConditions: map[string]*ProjectCondition{
-				"gno.land/r/test/token1": {
-					tokenPath:     "gno.land/r/test/token1",
-					minimumAmount: 1000,
-				},
+			name: "check conditions fails with insufficient balance",
+			conditions: map[string]*launchpad.ProjectCondition{
+				"gno.land/r/demo/gns": func() *launchpad.ProjectCondition {
+					condition := launchpad.NewProjectCondition("gno.land/r/demo/gns", 1000)
+					return condition
+				}(),
 			},
-			tokenPath: "gno.land/r/test/token2",
-			condition: &ProjectCondition{
-				tokenPath:     "gno.land/r/test/token2",
-				minimumAmount: 2000,
+			balanceFunc: func(tokenPath string, caller address) int64 {
+				return 500 // Less than required
 			},
-			expectedConditions: map[string]*ProjectCondition{
-				"gno.land/r/test/token1": {
-					tokenPath:     "gno.land/r/test/token1",
-					minimumAmount: 1000,
-				},
-				"gno.land/r/test/token2": {
-					tokenPath:     "gno.land/r/test/token2",
-					minimumAmount: 2000,
-				},
-			},
+			expectedHasError: true,
+			expectedError:    "input amount",
 		},
 		{
-			name: "overwrite existing condition",
-			initialConditions: map[string]*ProjectCondition{
-				"gno.land/r/test/token1": {
-					tokenPath:     "gno.land/r/test/token1",
-					minimumAmount: 1000,
-				},
+			name: "check conditions with multiple tokens",
+			conditions: map[string]*launchpad.ProjectCondition{
+				"gno.land/r/demo/gns": func() *launchpad.ProjectCondition {
+					return launchpad.NewProjectCondition("gno.land/r/demo/gns", 1000)
+				}(),
+				"gno.land/r/demo/usdc": func() *launchpad.ProjectCondition {
+					return launchpad.NewProjectCondition("gno.land/r/demo/usdc", 500)
+				}(),
 			},
-			tokenPath: "gno.land/r/test/token1",
-			condition: &ProjectCondition{
-				tokenPath:     "gno.land/r/test/token1",
-				minimumAmount: 2000,
+			balanceFunc: func(tokenPath string, caller address) int64 {
+				if tokenPath == "gno.land/r/demo/gns" {
+					return 1500
+				}
+				return 600
 			},
-			expectedConditions: map[string]*ProjectCondition{
-				"gno.land/r/test/token1": {
-					tokenPath:     "gno.land/r/test/token1",
-					minimumAmount: 2000,
-				},
+			expectedHasError: false,
+		},
+		{
+			name: "skip zero conditions",
+			conditions: map[string]*launchpad.ProjectCondition{
+				"gno.land/r/demo/xgns": func() *launchpad.ProjectCondition {
+					return launchpad.NewProjectCondition("gno.land/r/demo/xgns", 0)
+				}(),
 			},
+			balanceFunc: func(tokenPath string, caller address) int64 {
+				return 0 // Zero balance is okay for zero condition
+			},
+			expectedHasError: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			project := &Project{
-				conditions: tt.initialConditions,
-			}
+			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+			project.SetConditions(tt.conditions)
+
+			caller := testutils.TestAddress("caller")
 
 			// Execute
-			project.addProjectCondition(tt.tokenPath, tt.condition)
+			err := checkProjectConditions(project, caller, tt.balanceFunc)
 
 			// Verify
-			uassert.Equal(t, len(project.conditions), len(tt.expectedConditions))
-			for tokenPath, expectedCondition := range tt.expectedConditions {
-				actualCondition, exists := project.conditions[tokenPath]
-				uassert.True(t, exists)
-				uassert.Equal(t, actualCondition.TokenPath(), expectedCondition.TokenPath())
-				uassert.Equal(t, actualCondition.MinimumAmount(), expectedCondition.MinimumAmount())
-			}
-		})
-	}
-}
-
-func TestProject_NewProject(t *testing.T) {
-	tests := []struct {
-		name                  string
-		projectName           string
-		tokenPath             string
-		depositAmount         int64
-		recipient             address
-		createdAt             int64
-		createdHeight         int64
-		expectedID            string
-		expectedName          string
-		expectedTokenPath     string
-		expectedDepositAmount int64
-		expectedRecipient     address
-	}{
-		{
-			name:                  "create new project with valid parameters",
-			projectName:           "Test Project",
-			tokenPath:             "gno.land/r/test/token",
-			depositAmount:         1000000,
-			recipient:             testutils.TestAddress("recipient"),
-			createdAt:             1000,
-			createdHeight:         123,
-			expectedID:            "gno.land/r/test/token:123",
-			expectedName:          "Test Project",
-			expectedTokenPath:     "gno.land/r/test/token",
-			expectedDepositAmount: 1000000,
-			expectedRecipient:     testutils.TestAddress("recipient"),
-		},
-		{
-			name:                  "create new project with zero deposit amount",
-			projectName:           "Zero Deposit Project",
-			tokenPath:             "gno.land/r/test/token",
-			depositAmount:         0,
-			recipient:             testutils.TestAddress("recipient"),
-			createdAt:             2000,
-			createdHeight:         456,
-			expectedID:            "gno.land/r/test/token:456",
-			expectedName:          "Zero Deposit Project",
-			expectedTokenPath:     "gno.land/r/test/token",
-			expectedDepositAmount: 0,
-			expectedRecipient:     testutils.TestAddress("recipient"),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Execute
-			project := NewProject(
-				tt.projectName,
-				tt.tokenPath,
-				tt.depositAmount,
-				tt.recipient,
-				tt.createdHeight,
-				tt.createdAt,
-			)
-
-			// Verify
-			uassert.Equal(t, project.ID(), tt.expectedID, "id is different")
-			uassert.Equal(t, project.Name(), tt.expectedName, "not expected name")
-			uassert.Equal(t, project.TokenPath(), tt.expectedTokenPath, "different token path")
-			uassert.Equal(t, project.DepositAmount(), tt.expectedDepositAmount, "different deposit amount")
-			uassert.Equal(t, project.Recipient(), tt.expectedRecipient, "different recipient")
-			uassert.NotNil(t, project.conditions)
-			uassert.NotNil(t, project.tiers)
-			uassert.Equal(t, project.CreatedAt(), tt.createdAt)
-			uassert.Equal(t, project.CreatedHeight(), tt.createdHeight)
-		})
-	}
-}
-
-func TestProject_makeProjectID(t *testing.T) {
-	tests := []struct {
-		name          string
-		tokenPath     string
-		createdHeight int64
-		expectedID    string
-	}{
-		{
-			name:          "generate project ID with valid parameters",
-			tokenPath:     "gno.land/r/test/token",
-			createdHeight: 123,
-			expectedID:    "gno.land/r/test/token:123",
-		},
-		{
-			name:          "generate project ID with zero height",
-			tokenPath:     "gno.land/r/test/token",
-			createdHeight: 0,
-			expectedID:    "gno.land/r/test/token:0",
-		},
-		{
-			name:          "generate project ID with empty token path",
-			tokenPath:     "",
-			createdHeight: 456,
-			expectedID:    ":456",
-		},
-		{
-			name:          "generate project ID with large height",
-			tokenPath:     "gno.land/r/test/token",
-			createdHeight: 999999999,
-			expectedID:    "gno.land/r/test/token:999999999",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Execute
-			result := makeProjectID(tt.tokenPath, tt.createdHeight)
-
-			// Verify
-			uassert.Equal(t, result, tt.expectedID)
-		})
-	}
-}
-
-func TestProject_TimeMethods(t *testing.T) {
-	tests := []struct {
-		name              string
-		standardTier      *ProjectTier
-		expectedStartTime int64
-		expectedEndTime   int64
-	}{
-		{
-			name: "get time information from standard tier",
-			standardTier: &ProjectTier{
-				startTime: 1000,
-				endTime:   2000,
-			},
-			expectedStartTime: 1000,
-			expectedEndTime:   2000,
-		},
-		{
-			name: "get time information with zero values",
-			standardTier: &ProjectTier{
-				startTime: 0,
-				endTime:   0,
-			},
-			expectedStartTime: 0,
-			expectedEndTime:   0,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Setup
-			project := &Project{
-				tiers: map[int64]*ProjectTier{
-					projectTier180: tt.standardTier,
-				},
-			}
-
-			// Execute and verify
-			startTime := project.StartTime()
-			endTime := project.EndTime()
-
-			uassert.Equal(t, startTime, tt.expectedStartTime)
-			uassert.Equal(t, endTime, tt.expectedEndTime)
-		})
-	}
-}
-
-func TestProject_TiersRatios(t *testing.T) {
-	tests := []struct {
-		name           string
-		tiersRatios    map[int64]int64
-		expectedRatios map[int64]int64
-	}{
-		{
-			name: "get tiers ratios with multiple tiers",
-			tiersRatios: map[int64]int64{
-				30:  10,
-				90:  20,
-				180: 70,
-			},
-			expectedRatios: map[int64]int64{
-				30:  10,
-				90:  20,
-				180: 70,
-			},
-		},
-		{
-			name:           "get tiers ratios with empty map",
-			tiersRatios:    map[int64]int64{},
-			expectedRatios: map[int64]int64{},
-		},
-		{
-			name: "get tiers ratios with single tier",
-			tiersRatios: map[int64]int64{
-				180: 100,
-			},
-			expectedRatios: map[int64]int64{
-				180: 100,
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Setup
-			project := &Project{
-				tiersRatios: tt.tiersRatios,
-			}
-
-			// Execute
-			result := project.TiersRatios()
-
-			// Verify
-			uassert.Equal(t, len(result), len(tt.expectedRatios))
-			for duration, expectedRatio := range tt.expectedRatios {
-				actualRatio, exists := result[duration]
-				uassert.True(t, exists)
-				uassert.Equal(t, actualRatio, expectedRatio)
+			if tt.expectedHasError {
+				uassert.Error(t, err)
+				if tt.expectedError != "" {
+					uassert.ErrorContains(t, err, tt.expectedError)
+				}
+			} else {
+				uassert.NoError(t, err)
 			}
 		})
 	}
