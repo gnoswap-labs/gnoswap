@@ -38,7 +38,7 @@ loadpkg gno.land/r/gnoswap/pool/v1
 loadpkg gno.land/r/gnoswap/position/v1
 loadpkg gno.land/r/gnoswap/router/v1
 
-adduserfrom gns_admin 'mnemonic here'
+adduserfrom gns_admin 'tiny play impulse way lecture theory toe material box pact erosion frozen witness visual share duck term input tower scale cushion connect worth trophy'
 
 adduser test_admin
 patchpkg "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" $test_admin_user_addr
@@ -102,7 +102,7 @@ stdout "0"
 ## Upgrade to v3 implementation
 gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func UpgradeImpl -args gno.land/r/gnoswap/pool/v3_valid -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout OK!
-stdout 'EVENTS:     \[{\"type\":\"UpgradePoolContract\",\"attrs\":\[{\"key\":\"previousPackagePath\",\"value\":\"gno.land/r/gnoswap/pool/v1\"},{\"key\":\"newPackagePath\",\"value\":\"gno.land/r/gnoswap/pool/v3_valid\"}\],\"pkg_path\":\"gno.land/r/gnoswap/pool\"}'
+stdout 'EVENTS:     \[{\"type\":\"ChangeImplementation\",\"attrs\":\[{\"key\":\"previousPackagePath\",\"value\":\"gno.land/r/gnoswap/pool/v1\"},{\"key\":\"newPackagePath\",\"value\":\"gno.land/r/gnoswap/pool/v3_valid\"}\],\"pkg_path\":\"gno.land/p/gnoswap/version_manager\"},.*,\"pkg_path\":\"gno.land/r/gnoswap/pool\"}\]'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetImplementationPackagePath()"
 stdout "gno.land/r/gnoswap/pool/v3_valid"
