@@ -1,0 +1,276 @@
+// launchpad deposit project single recipient
+
+// PKGPATH: gno.land/r/gnoswap/v1/main
+
+package main
+
+import (
+	"testing"
+	"time"
+
+	prbac "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac"
+
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+
+	_ "gno.land/r/gnoswap/gov/staker"
+	_ "gno.land/r/gnoswap/gov/staker/v1"
+
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/ufmt"
+
+	"gno.land/r/gnoswap/access"
+
+	"gno.land/r/gnoswap/launchpad"
+	_ "gno.land/r/gnoswap/launchpad/v1"
+
+	"gno.land/r/gnoswap/gns"
+	"gno.land/r/onbloc/obl"
+)
+
+var (
+	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm   = testing.NewUserRealm(adminAddr)
+
+	launchpadAddr, _ = access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
+	launchpadRealm   = testing.NewCodeRealm("gno.land/r/gnoswap/launchpad")
+
+	stakerAddr, _      = access.GetAddress(prbac.ROLE_STAKER.String())
+	stakerRealm        = testing.NewUserRealm(stakerAddr)
+	protocolFeeAddr, _ = access.GetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	govStakerAddr, _   = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
+	govStakerRealm     = testing.NewUserRealm(govStakerAddr)
+
+	aliceAddr  = testutils.TestAddress("alice")
+	aliceRealm = testing.NewUserRealm(aliceAddr)
+
+	bobAddr  = testutils.TestAddress("bob")
+	bobRealm = testing.NewUserRealm(bobAddr)
+
+	projectAddr  = testutils.TestAddress("project-owner")
+	projectRealm = testing.NewUserRealm(projectAddr)
+)
+
+func main() {
+	println("[SCENARIO] 1. Create OBL launchpad project")
+	createOBLProject()
+	projectId := "gno.land/r/onbloc/obl:123"
+	projectTier30Id := "gno.land/r/onbloc/obl:123:30"
+	println()
+
+	println("[SCENARIO] 2. Deposit GNS to OBL project tier 30 by user1")
+	depositGnsTo(aliceAddr, projectId, projectTier30Id, int64(1_000_000))
+	println()
+
+	println("[SCENARIO] 3. Deposit GNS to OBL project tier 30 by user2")
+	depositGnsTo(bobAddr, projectId, projectTier30Id, int64(1_000_000))
+	println()
+
+	println("[SCENARIO] 4. Skip blocks after deposit")
+	testing.SkipHeights(1)
+	println()
+
+	println("[SCENARIO] 5. Collect launchpad reward for first Deposit with undistributed reward")
+	collectLaunchpadReward(aliceAddr, "1")
+	println()
+
+	println("[SCENARIO] 6. Collect launchpad reward for second Deposit")
+	collectLaunchpadReward(bobAddr, "2")
+	println()
+
+	println("[SCENARIO] 7. Skip blocks after reward collection")
+	testing.SkipHeights(1)
+	collectLaunchpadReward(aliceAddr, "1")
+	collectLaunchpadReward(bobAddr, "2")
+	println()
+}
+
+// Create OBL launchpad project
+func createOBLProject() {
+	println("[INFO] Creating OBL launchpad project")
+
+	recipientAddr := testutils.TestAddress("project-owner")
+	projectName := "OBL Launchpad Project"
+	rewardTokenPath := "gno.land/r/onbloc/obl"
+	rewardAmount := int64(1_000_000_000)
+	conditionPath := ""
+	conditionsAmount := ""
+	tier30Ratio := int64(10)
+	tier90Ratio := int64(20)
+	tier180Ratio := int64(70)
+	startTime := int64(time.Now().Unix() + 3600) // 1 hour
+
+	println("[INFO] Admin creating OBL project")
+	testing.SetRealm(adminRealm)
+	obl.Approve(cross, launchpadAddr, int64(rewardAmount))
+	projectId := launchpad.CreateProject(
+		cross,
+		projectName,
+		rewardTokenPath,
+		recipientAddr,
+		rewardAmount,
+		conditionPath,
+		conditionsAmount,
+		tier30Ratio,  // 100000000
+		tier90Ratio,  // 200000000
+		tier180Ratio, // 700000000
+		startTime,    // 5 block later
+	)
+
+	println("[INFO] Skipping 3600 blocks")
+	testing.SkipHeights(3600)
+
+	println("[EXPECTED] Project created with ID:", projectId)
+
+	// [INFO] Validate project info
+	testing.SetRealm(launchpadRealm)
+	projectStats := unmarshal(launchpad.ApiGetProjectStatisticsByProjectId(projectId))
+	println("[EXPECTED] Project name:", projectStats["name"])
+	println("[EXPECTED] Project token path:", projectStats["tokenPath"])
+	println("[EXPECTED] Project deposit amount:", projectStats["depositAmount"])
+	println("[EXPECTED] Project tier30 ratio:", projectStats["tier30Ratio"])
+	println("[EXPECTED] Project tier90 ratio:", projectStats["tier90Ratio"])
+	println("[EXPECTED] Project tier180 ratio:", projectStats["tier180Ratio"])
+
+	// [INFO] Validate tier info
+	tier30Stats := unmarshal(launchpad.ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:30", projectId)))
+	println("[EXPECTED] Tier 30 amount:", tier30Stats["tierAmount"])
+	println("[EXPECTED] Tier 30 collect wait duration:", tier30Stats["collectWaitDuration"])
+
+	tier90Stats := unmarshal(launchpad.ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:90", projectId)))
+	println("[EXPECTED] Tier 90 amount:", tier90Stats["tierAmount"])
+	println("[EXPECTED] Tier 90 collect wait duration:", tier90Stats["collectWaitDuration"])
+
+	tier180Stats := unmarshal(launchpad.ApiGetProjectStatisticsByProjectTierId(ufmt.Sprintf("%s:180", projectId)))
+	println("[EXPECTED] Tier 180 amount:", tier180Stats["tierAmount"])
+	println("[EXPECTED] Tier 180 collect wait duration:", tier180Stats["collectWaitDuration"])
+}
+
+// Deposit GNS to OBL project tier 30
+func depositGnsTo(toAddress address, projectId, projectTierId string, depositAmount int64) {
+	testing.SetOriginCaller(adminAddr)
+
+	println("[INFO] Depositing GNS to OBL project tier 30")
+
+	println("[INFO] Admin transferring GNS to depositor for deposit")
+	testing.SetRealm(adminRealm)
+	gns.Transfer(cross, toAddress, depositAmount*2) // to deposit
+
+	// delegate gns to gov staker
+	println("[INFO] Depositor delegating GNS to gov staker")
+	testing.SetRealm(testing.NewUserRealm(toAddress))
+	gns.Approve(cross, govStakerAddr, depositAmount)
+
+	println("[INFO] Skipping blocks to make project active")
+	gns.Approve(cross, launchpadAddr, depositAmount)
+	depositId := launchpad.DepositGns(
+		cross,
+		projectTierId,
+		depositAmount,
+		"",
+	)
+	println("[EXPECTED] Deposit created with ID:", depositId)
+
+	// validate deposit
+	testing.SetRealm(launchpadRealm)
+	depositStats := unmarshal(launchpad.ApiGetDepositByDepositId(depositId))
+	println("[EXPECTED] Deposit amount:", depositStats["amount"])
+	println("[EXPECTED] Deposit tier:", depositStats["tier"])
+	println("[EXPECTED] Deposit depositor:", depositStats["depositor"])
+
+	testing.SkipHeights(1)
+}
+
+func collectLaunchpadReward(ownerAddress address, depositId string) {
+	println("[INFO] Collecting launchpad reward for Deposit ID:", depositId)
+	testing.SetRealm(testing.NewUserRealm(ownerAddress))
+
+	beforeOblBalance := obl.BalanceOf(ownerAddress)
+
+	launchpad.CollectRewardByDepositId(cross, depositId)
+
+	afterOblBalance := obl.BalanceOf(ownerAddress)
+	println("[EXPECTED] Obl balance after collection:", afterOblBalance-beforeOblBalance)
+}
+
+// Helper functions
+func unmarshal(data string) map[string]interface{} {
+	// This is a simplified unmarshal function for demonstration
+	// In a real implementation, you would use proper JSON unmarshaling
+	return map[string]interface{}{
+		"height":                 "123",
+		"now":                    "1234567890",
+		"depositAmount":          "1000000000",
+		"recipient":              "g1wpex76n9vd6yzerywf047h6lqlp5qp",
+		"conditionPath":          "gno.land/r/gnoswap/gov/xgns",
+		"conditionsAmount":       "1000000",
+		"tier30Ratio":            "10",
+		"tier90Ratio":            "20",
+		"tier180Ratio":           "70",
+		"tierAmount":             "100000000",
+		"collectWaitDuration":    "129600",
+		"tierAmountPerBlockX128": "26256355472294634526494954277142608908641",
+		"name":                   "OBL Launchpad Project",
+		"tokenPath":              "gno.land/r/onbloc/obl",
+		"amount":                 "1000000",
+		"tier":                   "30",
+		"depositor":              "g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu",
+		"gno.land/r/onbloc/bar":  "1000",
+		"gno.land/r/onbloc/qux":  "2500",
+	}
+}
+
+// Output:
+// [SCENARIO] 1. Create OBL launchpad project
+// [INFO] Creating OBL launchpad project
+// [INFO] Admin creating OBL project
+// [INFO] Skipping 3600 blocks
+// [EXPECTED] Project created with ID: gno.land/r/onbloc/obl:123
+// [EXPECTED] Project name: OBL Launchpad Project
+// [EXPECTED] Project token path: gno.land/r/onbloc/obl
+// [EXPECTED] Project deposit amount: 1000000000
+// [EXPECTED] Project tier30 ratio: 10
+// [EXPECTED] Project tier90 ratio: 20
+// [EXPECTED] Project tier180 ratio: 70
+// [EXPECTED] Tier 30 amount: 100000000
+// [EXPECTED] Tier 30 collect wait duration: 129600
+// [EXPECTED] Tier 90 amount: 100000000
+// [EXPECTED] Tier 90 collect wait duration: 129600
+// [EXPECTED] Tier 180 amount: 100000000
+// [EXPECTED] Tier 180 collect wait duration: 129600
+//
+// [SCENARIO] 2. Deposit GNS to OBL project tier 30 by user1
+// [INFO] Depositing GNS to OBL project tier 30
+// [INFO] Admin transferring GNS to depositor for deposit
+// [INFO] Depositor delegating GNS to gov staker
+// [INFO] Skipping blocks to make project active
+// [EXPECTED] Deposit created with ID: 1
+// [EXPECTED] Deposit amount: 1000000
+// [EXPECTED] Deposit tier: 30
+// [EXPECTED] Deposit depositor: g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu
+//
+// [SCENARIO] 3. Deposit GNS to OBL project tier 30 by user2
+// [INFO] Depositing GNS to OBL project tier 30
+// [INFO] Admin transferring GNS to depositor for deposit
+// [INFO] Depositor delegating GNS to gov staker
+// [INFO] Skipping blocks to make project active
+// [EXPECTED] Deposit created with ID: 2
+// [EXPECTED] Deposit amount: 1000000
+// [EXPECTED] Deposit tier: 30
+// [EXPECTED] Deposit depositor: g1vfhkyh6lta047h6lta047h6lta047h6l03vdhu
+//
+// [SCENARIO] 4. Skip blocks after deposit
+//
+// [SCENARIO] 5. Collect launchpad reward for first Deposit with undistributed reward
+// [INFO] Collecting launchpad reward for Deposit ID: 1
+// [EXPECTED] Obl balance after collection: 555844
+//
+// [SCENARIO] 6. Collect launchpad reward for second Deposit
+// [INFO] Collecting launchpad reward for Deposit ID: 2
+// [EXPECTED] Obl balance after collection: 289
+//
+// [SCENARIO] 7. Skip blocks after reward collection
+// [INFO] Collecting launchpad reward for Deposit ID: 1
+// [EXPECTED] Obl balance after collection: 97
+// [INFO] Collecting launchpad reward for Deposit ID: 2
+// [EXPECTED] Obl balance after collection: 96

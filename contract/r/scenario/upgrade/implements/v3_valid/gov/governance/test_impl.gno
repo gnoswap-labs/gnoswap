@@ -3,7 +3,7 @@ package v3_valid
 
 import (
 	"gno.land/r/gnoswap/gov/governance"
-	"gno.land/r/gnoswap/gov/governance/v1"
+	v1 "gno.land/r/gnoswap/gov/governance/v1"
 )
 
 func NewV3ValidGovernance(store governance.IGovernanceStore) governance.IGovernance {
