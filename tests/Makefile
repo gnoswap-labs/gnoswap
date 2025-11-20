@@ -124,6 +124,29 @@ deploy-v1:
 	@echo "$(GREEN)Deploying v1 implementations to $(ENV) environment...$(NC)"
 	@$(MAKE) -f scripts/deploy.mk deploy-gnoswap-impl-v1 ENV=$(ENV)
 
+.PHONY: deploy-version
+deploy-version:
+ifndef CONTRACT
+	$(error CONTRACT is not set. Usage: make deploy-version CONTRACT=pool VERSION=v2)
+endif
+ifndef VERSION
+	$(error VERSION is not set. Usage: make deploy-version CONTRACT=pool VERSION=v2)
+endif
+	@scripts/patch-upgrade.sh contract/r/gnoswap/$(CONTRACT) $(VERSION)
+	@echo "$(GREEN)Deploying $(CONTRACT) with version $(VERSION) to $(ENV) environment...$(NC)"
+	@$(MAKE) -f scripts/deploy.mk deploy-contract-version CONTRACT=$(CONTRACT) VERSION=$(VERSION) ENV=$(ENV)
+
+.PHONY: upgrade-version
+upgrade-version:
+ifndef CONTRACT
+	$(error CONTRACT is not set. Usage: make upgrade-version CONTRACT=pool VERSION=v2)
+endif
+ifndef VERSION
+	$(error VERSION is not set. Usage: make upgrade-version CONTRACT=pool VERSION=v2)
+endif
+	@echo "$(GREEN)Upgrading $(CONTRACT) to version $(VERSION) on $(ENV) environment...$(NC)"
+	@$(MAKE) -f scripts/deploy.mk upgrade-contract-version CONTRACT=$(CONTRACT) VERSION=$(VERSION) ENV=$(ENV)
+
 # Testing targets
 .PHONY: test-pool
 test-pool:
