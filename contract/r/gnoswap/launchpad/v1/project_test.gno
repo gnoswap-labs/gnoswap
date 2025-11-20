@@ -124,7 +124,7 @@ func TestProject_IsProjectEnded(t *testing.T) {
 	}
 }
 
-func TestProject_IsProjectOwner(t *testing.T) {
+func TestProject_IsRecipient(t *testing.T) {
 	recipientAddr := testutils.TestAddress("recipient")
 	otherAddr := testutils.TestAddress("other")
 
@@ -154,7 +154,7 @@ func TestProject_IsProjectOwner(t *testing.T) {
 			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, tt.recipient, 100, 1000)
 
 			// Execute
-			result := isProjectOwner(project, tt.caller)
+			result := project.IsRecipient(tt.caller)
 
 			// Verify
 			uassert.Equal(t, tt.expectedResult, result)

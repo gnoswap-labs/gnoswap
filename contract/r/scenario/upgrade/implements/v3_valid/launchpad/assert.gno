@@ -47,7 +47,7 @@ func (lp *launchpadV1) assertHasProject(caller address) {
 			panic(ufmt.Sprintf("failed to cast projects's element to *launchpad.Project: %T", value))
 		}
 
-		hasProject = isProjectOwner(project, caller)
+		hasProject = project.IsRecipient(caller)
 
 		// if true, break the loop
 		return hasProject

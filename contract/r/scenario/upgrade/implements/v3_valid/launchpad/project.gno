@@ -15,10 +15,6 @@ func isProjectEnded(p *launchpad.Project, currentTime int64) bool {
 	return getStandardTier(p).IsEnded(currentTime)
 }
 
-func isProjectOwner(p *launchpad.Project, caller address) bool {
-	return p.Recipient() == caller
-}
-
 func getProjectRemainingAmount(p *launchpad.Project) int64 {
 	remainingAmount := int64(0)
 

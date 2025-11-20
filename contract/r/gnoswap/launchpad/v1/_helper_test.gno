@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"strconv"
+
 	"gno.land/p/nt/avl"
 	"gno.land/r/gnoswap/launchpad"
 )
@@ -101,7 +103,7 @@ func (s *testLaunchpadStore) SetDepositCounter(counter *launchpad.Counter) error
 }
 
 func (s *testLaunchpadStore) NextDepositID() string {
-	return s.depositCounter.Next()
+	return strconv.FormatInt(s.depositCounter.Next(), 10)
 }
 
 func (s *testLaunchpadStore) HasDepositsKey() bool {

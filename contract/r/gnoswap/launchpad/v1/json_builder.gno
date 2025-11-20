@@ -52,7 +52,7 @@ func projectBuilder(b *json.NodeBuilder, project *launchpad.Project) *json.NodeB
 	tokenPaths := []string{}
 	amounts := []string{}
 
-	for _, condition := range getProjectConditions(project) {
+	for _, condition := range project.Conditions() {
 		tokenPaths = append(tokenPaths, condition.TokenPath())
 		amounts = append(amounts, ufmt.Sprintf("%d", condition.MinimumAmount()))
 	}

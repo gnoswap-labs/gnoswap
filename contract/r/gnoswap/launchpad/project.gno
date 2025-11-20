@@ -132,6 +132,11 @@ func (p *Project) SetCreatedAt(time int64) {
 	p.createdAt = time
 }
 
+// IsRecipient returns true if the project recipient is the given address.
+func (p *Project) IsRecipient(recipient address) bool {
+	return p.recipient == recipient
+}
+
 func NewProject(
 	name string,
 	tokenPath string,

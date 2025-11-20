@@ -274,8 +274,7 @@ func (lp *launchpadV1) transferLeftFromProject(projectID string, recipient addre
 	accumLeftReward := int64(0)
 	accumCollectedReward := int64(0)
 
-	tierMap := getProjectTiers(project)
-	for _, tier := range tierMap {
+	for _, tier := range project.Tiers() {
 		if !tier.IsEnded(currentTime) {
 			return 0, errors.New(ufmt.Sprintf("tier(%d) is not ended", tier.ID()))
 		}
