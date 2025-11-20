@@ -56,6 +56,10 @@ func (t *TestLaunchpad) CollectDepositGns(depositID string) (int64, error) {
 	return t.instance.CollectDepositGns(depositID)
 }
 
+func (t *TestLaunchpad) CollectRewardByDepositId(depositId string) int64 {
+	return t.instance.CollectRewardByDepositId(depositId)
+}
+
 // ILaunchpadApi interface
 func (t *TestLaunchpad) ApiGetProjectAndTierStatisticsByProjectId(projectId string) string {
 	return t.instance.ApiGetProjectAndTierStatisticsByProjectId(projectId)

@@ -96,14 +96,14 @@ func (vm *versionManager) RegisterInitializer(initializer func(store any) any) e
 		return vm.domainKVStore.AddAuthorizedCaller(previousRealm.Address(), store.ReadOnly)
 	}
 
-	// First registration: activate this version as the current implementation
-	prevPackagePath := vm.currentPackagePath
-
 	// Grant write access to the first (current) implementation
 	err := vm.domainKVStore.AddAuthorizedCaller(previousRealm.Address(), store.Write)
 	if err != nil {
 		return err
 	}
+
+	// First registration: activate this version as the current implementation
+	prevPackagePath := vm.currentPackagePath
 
 	// Update internal state only after successful permission grant
 	vm.currentPackagePath = targetPackagePath
@@ -156,8 +156,6 @@ func (vm *versionManager) ChangeImplementation(packagePath string) error {
 	}
 
 	prevPackagePath := vm.currentPackagePath
-	packageAddress := chain.PackageAddress(packagePath)
-
 	vm.currentPackagePath = packagePath
 	vm.currentImplementation = initializer(vm.initializeDomainStoreFn(vm.domainKVStore))
 
@@ -168,6 +166,7 @@ func (vm *versionManager) ChangeImplementation(packagePath string) error {
 	}
 
 	// Reconfigure permissions: write access for new active version, read-only for others
+	packageAddress := chain.PackageAddress(packagePath)
 	for caller := range storeAuthorizedCallers {
 		updatedPermission := store.ReadOnly
 
