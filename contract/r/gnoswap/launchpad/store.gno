@@ -1,6 +1,8 @@
 package launchpad
 
 import (
+	"strconv"
+
 	"gno.land/p/gnoswap/store"
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
@@ -100,7 +102,7 @@ func (s *launchpadStore) SetDepositCounter(counter *Counter) error {
 func (s *launchpadStore) NextDepositID() string {
 	counter := s.GetDepositCounter()
 
-	return counter.Next()
+	return strconv.FormatInt(counter.Next(), 10)
 }
 
 // SetDepositCounter stores the deposit counter.

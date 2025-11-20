@@ -1,7 +1,5 @@
 package launchpad
 
-import "strconv"
-
 // Counter manages unique incrementing IDs.
 type Counter struct {
 	id int64
@@ -15,10 +13,10 @@ func NewCounter() *Counter {
 }
 
 // Next increments the counter and returns the next ID.
-func (c *Counter) Next() string {
+func (c *Counter) Next() int64 {
 	c.id++
 
-	return strconv.FormatInt(c.id, 10)
+	return c.id
 }
 
 // Get returns the current ID without incrementing.
