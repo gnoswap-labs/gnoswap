@@ -1,3 +1,2 @@
-#module = "gno.land/r/gnoswap/pool/v_dup_probe"
 module = "gno.land/r/gnoswap/pool/register_duplicated_version"
 gno = "0.9"
