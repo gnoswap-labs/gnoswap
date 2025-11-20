@@ -122,7 +122,7 @@ func TestTierDurationConsistency(t *testing.T) {
 			projects := lp.store.GetProjects()
 			projects.Set(project.ID(), project)
 			lp.store.SetProjects(projects)
-			tier, _ := project.getTier(tt.tierType)
+			tier, _ := getProjectTier(project, tt.tierType)
 
 			initialStartTime := tier.StartTime()
 			initialEndTime := tier.EndTime()
@@ -158,7 +158,7 @@ func TestTierDurationConsistency(t *testing.T) {
 			}
 
 			// Get tier state after all deposits
-			tierAfterDeposits, _ := project.getTier(tt.tierType)
+			tierAfterDeposits, _ := getProjectTier(project, tt.tierType)
 
 			// Verify nothing changed
 			uassert.Equal(t, initialStartTime, tierAfterDeposits.StartTime(),

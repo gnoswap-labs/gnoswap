@@ -76,19 +76,19 @@ func TestAssert_assertIsDepositOwner(t *testing.T) {
 	otherAddr := testutils.TestAddress("other")
 
 	tests := []struct {
-		name             string
-		setupDeposit     func(*launchpadV1) string
-		depositID        string
-		caller           address
-		expectedPanic    bool
-		expectedError    string
+		name          string
+		setupDeposit  func(*launchpadV1) string
+		depositID     string
+		caller        address
+		expectedPanic bool
+		expectedError string
 	}{
 		{
 			name: "valid - caller is deposit owner",
 			setupDeposit: func(lp *launchpadV1) string {
 				// Create a test deposit
 				depositID := "test_deposit_1"
-				deposit := NewDeposit(
+				deposit := newDeposit(
 					depositID,
 					"test_project:100",
 					30,
@@ -119,7 +119,7 @@ func TestAssert_assertIsDepositOwner(t *testing.T) {
 			name: "panic when caller is not owner",
 			setupDeposit: func(lp *launchpadV1) string {
 				depositID := "test_deposit_2"
-				deposit := NewDeposit(
+				deposit := newDeposit(
 					depositID,
 					"test_project:100",
 					30,
@@ -183,7 +183,7 @@ func TestAssert_assertHasProject(t *testing.T) {
 		{
 			name: "valid - caller owns at least one project",
 			setupProjects: func(lp *launchpadV1) {
-				project := NewProject(
+				project := newProject(
 					"Test Project",
 					"gno.land/r/demo/token",
 					1000000,
@@ -200,7 +200,7 @@ func TestAssert_assertHasProject(t *testing.T) {
 		{
 			name: "panic when caller owns no project",
 			setupProjects: func(lp *launchpadV1) {
-				project := NewProject(
+				project := newProject(
 					"Test Project",
 					"gno.land/r/demo/token",
 					1000000,
@@ -230,7 +230,7 @@ func TestAssert_assertHasProject(t *testing.T) {
 				projects := lp.store.GetProjects()
 
 				// Add project owned by someone else
-				project1 := NewProject(
+				project1 := newProject(
 					"Other Project",
 					"gno.land/r/demo/token1",
 					1000000,
@@ -241,7 +241,7 @@ func TestAssert_assertHasProject(t *testing.T) {
 				projects.Set(project1.ID(), project1)
 
 				// Add project owned by caller
-				project2 := NewProject(
+				project2 := newProject(
 					"My Project",
 					"gno.land/r/demo/token2",
 					1000000,
@@ -261,7 +261,7 @@ func TestAssert_assertHasProject(t *testing.T) {
 
 				// Add multiple projects owned by others
 				for i := 0; i < 3; i++ {
-					project := NewProject(
+					project := newProject(
 						"Other Project",
 						"gno.land/r/demo/token",
 						1000000,

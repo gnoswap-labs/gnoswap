@@ -28,7 +28,7 @@ func (lp *launchpadV1) getProjectTier(projectID string, tierDuration int64) (*la
 		return nil, err
 	}
 
-	tier, ok := project.GetTiers()[tierDuration]
+	tier, ok := project.Tiers()[tierDuration]
 	if !ok {
 		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("tier(%d) not found", tierDuration))
 	}

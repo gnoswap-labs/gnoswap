@@ -2,6 +2,7 @@ package v1
 
 import (
 	"gno.land/p/nt/ufmt"
+	"gno.land/r/gnoswap/launchpad"
 	gs "gno.land/r/gnoswap/gov/staker"
 )
 
@@ -13,11 +14,11 @@ func (lp *launchpadV1) ApiGetProjectRecipientRewardByProjectId(projectId string)
 		return "0"
 	}
 
-	proj, ok := project.(*Project)
+	proj, ok := project.(*launchpad.Project)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast project to *Project: %T", project))
+		panic(ufmt.Sprintf("failed to cast project to *launchpad.Project: %T", project))
 	}
-	return gs.GetClaimableRewardByAddress(proj.recipient)
+	return gs.GetClaimableRewardByAddress(proj.Recipient())
 }
 
 // ApiGetProjectRecipientRewardByAddress retrieves the claimable reward for a recipient by address.

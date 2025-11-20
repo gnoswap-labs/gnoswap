@@ -7,6 +7,7 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/launchpad"
 )
 
 // CollectRewardByDepositId collects reward from a specific deposit.
@@ -46,7 +47,7 @@ func (lp *launchpadV1) CollectRewardByDepositId(depositID string) int64 {
 }
 
 // collectDepositReward calculates and collects the reward for a deposit.
-func (lp *launchpadV1) collectDepositReward(deposit *Deposit, currentHeight, currentTime int64) (int64, error) {
+func (lp *launchpadV1) collectDepositReward(deposit *launchpad.Deposit, currentHeight, currentTime int64) (int64, error) {
 	if currentTime <= 0 {
 		return 0, makeErrorWithDetails(errInvalidTime, "currentTime must be positive")
 	}
@@ -63,13 +64,13 @@ func (lp *launchpadV1) collectDepositReward(deposit *Deposit, currentHeight, cur
 	}
 
 	// Update reward state before collection
-	err = rewardManager.updateRewardPerDepositX128(projectTier.CurrentDepositAmount(), currentHeight, currentTime)
+	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentHeight, currentTime)
 	if err != nil {
 		return 0, err
 	}
 
 	// Collect reward
-	rewardAmount, err := rewardManager.collectReward(deposit.ID(), currentTime)
+	rewardAmount, err := collectReward(rewardManager, deposit.ID(), currentTime)
 	if err != nil {
 		return 0, err
 	}

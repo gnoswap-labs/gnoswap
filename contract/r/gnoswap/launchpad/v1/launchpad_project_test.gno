@@ -113,7 +113,8 @@ func TestLaunchpadProject_CreateProjectShouldFail(t *testing.T) {
 			uassert.NoError(t, err)
 
 			uassert.Equal(t, project.ID(), tt.expectedProjectID)
-			uassert.Equal(t, project.StartTime(), tt.startTime)
+			standardTier := getStandardTier(project)
+			uassert.Equal(t, standardTier.StartTime(), tt.startTime)
 		})
 	}
 }
@@ -689,7 +690,8 @@ func initLaunchpadProjectTestAvgBlockTime(t *testing.T, avgBlockTimeMs int64) {
 
 func setupLaunchpadProjectTestEmptyProject(t *testing.T, projectID string) {
 	projects := getTestProjects()
-	project := &Project{id: projectID}
+	project := launchpad.NewProject(projectID, "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+	project.SetID(projectID)
 	projects.Set(projectID, project)
 	setTestProjects(projects)
 }
@@ -783,19 +785,16 @@ func TestLaunchpadProject_validateRefundProject(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a project with tier
-			tier := &ProjectTier{
-				id:                    "test:180",
-				totalDistributeAmount: tt.totalDistributeAmount,
-				totalCollectedAmount:  tt.totalCollectedAmount,
-				startTime:             tt.tierStartTime,
-				endTime:               tt.tierEndTime,
-			}
+			tier := launchpad.NewProjectTier("test", 180, tt.totalDistributeAmount, tt.tierStartTime, tt.tierEndTime)
+			tier.SetID("test:180")
+			tier.SetTotalCollectedAmount(tt.totalCollectedAmount)
 
-			project := &Project{
-				id:    "test:100",
-				tiers: make(map[int64]*ProjectTier),
-			}
-			project.tiers[projectTier180] = tier
+			project := launchpad.NewProject("test:100", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+			project.SetID("test:100")
+
+			tiers := make(map[int64]*launchpad.ProjectTier)
+			tiers[projectTier180] = tier
+			project.SetTiers(tiers)
 
 			err := validateRefundProject(project, tt.recipient, tt.currentTime)
 

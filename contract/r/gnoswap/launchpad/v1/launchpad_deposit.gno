@@ -10,6 +10,7 @@ import (
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/xgns"
 	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/launchpad"
 	"gno.land/r/gnoswap/referral"
 	gov_staker "gno.land/r/gnoswap/gov/staker"
 )
@@ -89,7 +90,7 @@ func (lp *launchpadV1) depositGns(
 	tierDuration int64,
 	depositAmount int64,
 	callerAddress address,
-) (*Deposit, *RewardState, bool, string, error) {
+) (*launchpad.Deposit, *launchpad.RewardState, bool, string, error) {
 	project, err := lp.getProject(projectID)
 	if err != nil {
 		return nil, nil, false, "", err
@@ -103,12 +104,12 @@ func (lp *launchpadV1) depositGns(
 		return common.BalanceOf(tokenPath, caller)
 	}
 
-	err = project.CheckConditions(callerAddress, balanceOfFn)
+	err = checkProjectConditions(project, callerAddress, balanceOfFn)
 	if err != nil {
 		return nil, nil, false, "", err
 	}
 
-	projectTier, err := project.getTier(tierDuration)
+	projectTier, err := getProjectTier(project, tierDuration)
 	if err != nil {
 		return nil, nil, false, "", err
 	}
@@ -116,12 +117,12 @@ func (lp *launchpadV1) depositGns(
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
 
-	if !projectTier.isActivated(currentTime) {
+	if !projectTier.IsActivated(currentTime) {
 		return nil, nil, false, "", makeErrorWithDetails(errInactiveProject, projectID)
 	}
 
 	depositID := lp.nextDepositID()
-	deposit := NewDeposit(
+	deposit := launchpad.NewDeposit(
 		depositID,
 		projectID,
 		tierDuration,
@@ -129,25 +130,25 @@ func (lp *launchpadV1) depositGns(
 		depositAmount,
 		currentHeight,
 		currentTime,
-		projectTier.endTime,
+		projectTier.EndTime(),
 	)
 
 	// Get state and store deposit
 	deposits := lp.store.GetDeposits()
 	deposits.Set(depositID, deposit)
 
-	projectTier.deposit(deposit)
+	depositToTier(projectTier, deposit)
 
 	rewardManager, err := lp.getProjectTierRewardManager(projectTier.ID())
 	if err != nil {
 		return nil, nil, false, "", err
 	}
 
-	isFirstDeposit := !rewardManager.IsInitialized()
+	isFirstDeposit := !isRewardManagerInitialized(rewardManager)
 
-	rewardState := rewardManager.addRewardStateByDeposit(deposit)
+	rewardState := addRewardStateByDeposit(rewardManager, deposit)
 
-	err = rewardManager.updateRewardPerDepositX128(projectTier.CurrentDepositAmount(), currentHeight, currentTime)
+	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentHeight, currentTime)
 	if err != nil {
 		return nil, nil, false, "", err
 	}
