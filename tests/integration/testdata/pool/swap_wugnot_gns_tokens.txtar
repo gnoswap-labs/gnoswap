@@ -119,6 +119,17 @@ stdout 'EVENTS:     \[{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"va
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1xt9lk80qqng30ahnk9axg2f2m4xdlp375w2x90 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout 'OK!'
 
+gnokey query vm/qeval --data "gno.land/r/gnoswap/gns.BalanceOf(\"$gns_admin_user_addr\")"
+stdout 99998650000000
+
+## Check WUGNOT balance increased by swap output
+gnokey query vm/qeval --data "gno.land/r/gnoland/wugnot.BalanceOf(\"$gns_admin_user_addr\")"
+stdout 100000000
+
+## Verify pool balances
+gnokey query vm/qeval --data "gno.land/r/gnoswap/gns.BalanceOf(\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\")"
+stdout 50000000
+
 gnokey maketx call -pkgpath gno.land/r/swap_wrapper -func WrappedSwap -args "gno.land/r/gnoland/wugnot" -args gno.land/r/gnoswap/gns -args 500 -args $gns_admin_user_addr -args false -args "60283363" -args "1461446703485210103287273052203988822378723970341" -args $gns_admin_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout "-27324922"
 stdout "60283363"

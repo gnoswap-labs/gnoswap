@@ -145,6 +145,9 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_u
 gnokey query vm/qeval --data "gno.land/r/gnoswap/gov/governance.GetExecutionStateByProposalId(1)"
 stdout "executable"
 
+gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetPoolCreationFee()"
+stdout 100000000
+
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func Execute -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout 1
 stdout 'GAS USED:   2[0-9]{7}'
@@ -152,5 +155,5 @@ stdout 'STORAGE DELTA:  70 bytes'
 stdout 'TOTAL TX COST:  100007000ugnot'
 stdout 'EVENTS:     \[{\"type\":\"SetPoolCreationFee\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"prevRealm\",\"value\":\"gno.land/r/gnoswap/gov/governance\"},{\"key\":\"prevFee\",\"value\":\"100000000\"},{\"key\":\"newFee\",\"value\":\"0\"}\],\"pkg_path\":\"gno.land/r/gnoswap/pool/v1\"},{\"type\":\"Execute\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"proposalId\",\"value\":\"1\"}\],\"pkg_path\":\"gno.land/r/gnoswap/gov/governance/v1\"},.*,\"pkg_path\":\"gno.land/r/gnoswap/gov/governance\"}\]'
 
-gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetPoolCreationFee"
+gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetPoolCreationFee()"
 stdout 0
