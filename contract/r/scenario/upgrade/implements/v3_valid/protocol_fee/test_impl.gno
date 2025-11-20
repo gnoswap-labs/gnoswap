@@ -3,7 +3,7 @@ package v3_valid
 
 import (
 	protocolFee "gno.land/r/gnoswap/protocol_fee"
-	"gno.land/r/gnoswap/protocol_fee/v1"
+	v1 "gno.land/r/gnoswap/protocol_fee/v1"
 )
 
 func NewV3ValidProtocolFee(store protocolFee.IProtocolFeeStore) protocolFee.IProtocolFee {
