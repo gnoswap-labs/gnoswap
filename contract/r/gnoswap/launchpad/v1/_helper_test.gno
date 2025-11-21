@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"strconv"
+
 	"gno.land/p/nt/avl"
 	"gno.land/r/gnoswap/launchpad"
 )
@@ -32,7 +34,10 @@ var (
 // initTestStore initializes a new test store
 func initTestStore() {
 	testStore = &testLaunchpadStore{
-		state: NewLaunchpadState(),
+		projects:                  avl.NewTree(),
+		projectTierRewardManagers: avl.NewTree(),
+		depositCounter:            launchpad.NewCounter(),
+		deposits:                  avl.NewTree(),
 	}
 	impl := NewLaunchpadV1(testStore)
 	testImpl = impl.(*launchpadV1)
@@ -46,71 +51,74 @@ func resetTestStore() {
 }
 
 type testLaunchpadStore struct {
-	state launchpad.LaunchpadState
+	projects                  *avl.Tree
+	projectTierRewardManagers *avl.Tree
+	depositCounter            *launchpad.Counter
+	deposits                  *avl.Tree
 }
 
 func (s *testLaunchpadStore) HasProjectsKey() bool {
-	return s.state != nil && s.state.Projects() != nil
+	return s.projects != nil
 }
 
 func (s *testLaunchpadStore) GetProjects() *avl.Tree {
-	if s.state == nil {
+	if s.projects == nil {
 		return avl.NewTree()
 	}
-	return s.state.Projects()
+	return s.projects
 }
 
 func (s *testLaunchpadStore) SetProjects(projects *avl.Tree) error {
-	// For test purposes, we don't actually update the state
-	// as the state is managed internally
+	s.projects = projects
 	return nil
 }
 
 func (s *testLaunchpadStore) HasProjectTierRewardManagersKey() bool {
-	return s.state != nil && s.state.ProjectTierRewardManagers() != nil
+	return s.projectTierRewardManagers != nil
 }
 
 func (s *testLaunchpadStore) GetProjectTierRewardManagers() *avl.Tree {
-	if s.state == nil {
+	if s.projectTierRewardManagers == nil {
 		return avl.NewTree()
 	}
-	return s.state.ProjectTierRewardManagers()
+	return s.projectTierRewardManagers
 }
 
 func (s *testLaunchpadStore) SetProjectTierRewardManagers(managers *avl.Tree) error {
-	// For test purposes, we don't actually update the state
+	s.projectTierRewardManagers = managers
 	return nil
 }
 
-func (s *testLaunchpadStore) HasDepositCounterKey() bool {
-	return s.state != nil && s.state.DepositCounter() != nil
+func (s *testLaunchpadStore) HasDepositCounterStoreKey() bool {
+	return s.depositCounter != nil
 }
 
-func (s *testLaunchpadStore) GetDepositCounter() launchpad.Counter {
-	if s.state == nil {
-		return nil
-	}
-	return s.state.DepositCounter()
+func (s *testLaunchpadStore) GetDepositCounter() *launchpad.Counter {
+	return s.depositCounter
 }
 
-func (s *testLaunchpadStore) SetDepositCounter(counter launchpad.Counter) error {
-	// For test purposes, we don't actually update the state
+func (s *testLaunchpadStore) SetDepositCounter(counter *launchpad.Counter) error {
+	s.depositCounter = counter
 	return nil
+}
+
+func (s *testLaunchpadStore) NextDepositID() string {
+	return strconv.FormatInt(s.depositCounter.Next(), 10)
 }
 
 func (s *testLaunchpadStore) HasDepositsKey() bool {
-	return s.state != nil && s.state.Deposits() != nil
+	return s.deposits != nil
 }
 
 func (s *testLaunchpadStore) GetDeposits() *avl.Tree {
-	if s.state == nil {
+	if s.deposits == nil {
 		return avl.NewTree()
 	}
-	return s.state.Deposits()
+	return s.deposits
 }
 
 func (s *testLaunchpadStore) SetDeposits(deposits *avl.Tree) error {
-	// For test purposes, we don't actually update the state
+	s.deposits = deposits
 	return nil
 }
 
@@ -131,9 +139,7 @@ func setTestProjects(tree *avl.Tree) {
 	}
 	// Direct assignment for test purposes
 	if store, ok := testStore.(*testLaunchpadStore); ok {
-		if state, ok := store.state.(*launchpadState); ok {
-			state.projects = tree
-		}
+		store.projects = tree
 	}
 }
 
@@ -152,14 +158,12 @@ func setTestProjectTierRewardManagers(tree *avl.Tree) {
 	}
 	// Direct assignment for test purposes
 	if store, ok := testStore.(*testLaunchpadStore); ok {
-		if state, ok := store.state.(*launchpadState); ok {
-			state.projectTierRewardManagers = tree
-		}
+		store.projectTierRewardManagers = tree
 	}
 }
 
 // getDeposit is a test helper to get a deposit by ID
-func getDeposit(depositID string) (*Deposit, error) {
+func getDeposit(depositID string) (*launchpad.Deposit, error) {
 	if testStore == nil {
 		return nil, makeErrorWithDetails(errNotExistDeposit, "test store not initialized")
 	}

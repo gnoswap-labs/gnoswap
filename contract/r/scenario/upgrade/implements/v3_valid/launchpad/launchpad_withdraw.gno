@@ -1,4 +1,4 @@
-package v1
+package v3
 
 import (
 	"chain"
@@ -103,7 +103,6 @@ func (lp *launchpadV1) withdrawDeposit(deposit *launchpad.Deposit, currentHeight
 
 	// Process withdrawal from project tier
 	withdrawToTier(projectTier, deposit)
-	project.SetTier(deposit.Tier(), projectTier)
 
 	// Update rewards with new deposit amount after withdrawal
 	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentHeight, currentTime)

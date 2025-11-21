@@ -1,4 +1,4 @@
-package v1
+package v3
 
 import (
 	"chain/runtime"
@@ -52,7 +52,7 @@ func projectBuilder(b *json.NodeBuilder, project *launchpad.Project) *json.NodeB
 	tokenPaths := []string{}
 	amounts := []string{}
 
-	for _, condition := range project.Conditions() {
+	for _, condition := range getProjectConditions(project) {
 		tokenPaths = append(tokenPaths, condition.TokenPath())
 		amounts = append(amounts, ufmt.Sprintf("%d", condition.MinimumAmount()))
 	}

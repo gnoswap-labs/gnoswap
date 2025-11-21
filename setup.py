@@ -29,8 +29,8 @@ class GnoModuleManager:
 
     def __init__(self, workdir: str):
         self.workdir = workdir
-        self.gno_dir = os.path.join(workdir, "gno-core", "examples", "gno.land")
-        self.gno_root_dir = os.path.join(workdir, "gno-core", "gno.land")
+        self.gno_dir = os.path.join(workdir, "gno", "examples", "gno.land")
+        self.gno_root_dir = os.path.join(workdir, "gno", "gno.land")
 
     def extract_module_path_from_gnomod(self, file_path: str) -> Optional[str]:
         """Extract module path from gno.mod file (legacy format)."""
@@ -181,7 +181,7 @@ def setup_contracts(workdir: str) -> None:
 
 
 def copy_integration_tests(workdir: str) -> None:
-    """Copy integration test files from tests/integration to gno-core/gno.land/pkg/integration."""
+    """Copy integration test files from tests/integration to gno/gno.land/pkg/integration."""
     module_manager = GnoModuleManager(workdir)
 
     # Copy testdata txtar files

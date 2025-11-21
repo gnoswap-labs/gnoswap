@@ -1,4 +1,4 @@
-package v1
+package v3
 
 import (
 	"errors"
@@ -98,19 +98,27 @@ func getProjectTotalCollectedAmount(p *launchpad.Project) int64 {
 	return totalCollectedAmount
 }
 
+func getProjectConditions(p *launchpad.Project) map[string]*launchpad.ProjectCondition {
+	return p.Conditions()
+}
+
+func getProjectTiers(p *launchpad.Project) map[int64]*launchpad.ProjectTier {
+	return p.Tiers()
+}
+
 func getProjectTier(p *launchpad.Project, duration int64) (*launchpad.ProjectTier, error) {
-	tier, err := p.GetTier(duration)
-	if err != nil {
-		return nil, makeErrorWithDetails(errDataNotFound, err.Error())
+	tier, exists := p.Tiers()[duration]
+	if !exists {
+		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("tier(%s) not found", duration))
 	}
 
 	return tier, nil
 }
 
 func getStandardTier(p *launchpad.Project) *launchpad.ProjectTier {
-	projectTier, err := p.GetTier(projectTier180)
-	if err != nil {
-		panic(makeErrorWithDetails(errDataNotFound, err.Error()))
+	projectTier, exists := p.Tiers()[projectTier180]
+	if !exists {
+		return nil
 	}
 
 	return projectTier

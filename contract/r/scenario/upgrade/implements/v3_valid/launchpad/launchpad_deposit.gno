@@ -1,4 +1,4 @@
-package v1
+package v3
 
 import (
 	"chain"
@@ -8,11 +8,11 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
-	gov_staker "gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/gov/xgns"
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/launchpad"
 	"gno.land/r/gnoswap/referral"
+	gov_staker "gno.land/r/gnoswap/gov/staker"
 )
 
 // DepositGns deposits GNS tokens to a launchpad project tier.
@@ -138,7 +138,6 @@ func (lp *launchpadV1) depositGns(
 	deposits.Set(depositID, deposit)
 
 	depositToTier(projectTier, deposit)
-	project.SetTier(tierDuration, projectTier)
 
 	rewardManager, err := lp.getProjectTierRewardManager(projectTier.ID())
 	if err != nil {

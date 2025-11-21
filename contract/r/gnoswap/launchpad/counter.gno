@@ -1,4 +1,4 @@
-package v1
+package launchpad
 
 // Counter manages unique incrementing IDs.
 type Counter struct {

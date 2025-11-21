@@ -1,4 +1,4 @@
-package v1
+package launchpad
 
 import (
 	"strconv"
@@ -6,6 +6,8 @@ import (
 
 	"gno.land/p/nt/ufmt"
 )
+
+const stringSplitterPad = "*PAD*"
 
 // ProjectCondition represents a condition for a project.
 //
@@ -20,8 +22,13 @@ type ProjectCondition struct {
 	minimumAmount int64
 }
 
-func (p *ProjectCondition) TokenPath() string    { return p.tokenPath }
-func (p *ProjectCondition) MinimumAmount() int64 { return p.minimumAmount }
+func (p *ProjectCondition) TokenPath() string {
+	return p.tokenPath
+}
+
+func (p *ProjectCondition) MinimumAmount() int64 {
+	return p.minimumAmount
+}
 
 func (p *ProjectCondition) IsAvailable() bool {
 	return p.tokenPath != "" && p.minimumAmount > 0
@@ -29,20 +36,21 @@ func (p *ProjectCondition) IsAvailable() bool {
 
 func (p *ProjectCondition) CheckBalanceCondition(inputTokenPath string, inputAmount int64) error {
 	if p.tokenPath != inputTokenPath {
-		return makeErrorWithDetails(
-			errInvalidData,
-			ufmt.Sprintf("token path(%s) is not matched", inputTokenPath),
-		)
+		return ufmt.Errorf("token path(%s) is not matched", inputTokenPath)
 	}
 
 	if inputAmount < p.minimumAmount {
-		return makeErrorWithDetails(
-			errInvalidData,
-			ufmt.Sprintf("input amount(%d) is less than minimum amount(%d)", inputAmount, p.minimumAmount),
-		)
+		return ufmt.Errorf("input amount(%d) is less than minimum amount(%d)", inputAmount, p.minimumAmount)
 	}
 
 	return nil
+}
+
+func (p ProjectCondition) Clone() *ProjectCondition {
+	return &ProjectCondition{
+		tokenPath:     p.tokenPath,
+		minimumAmount: p.minimumAmount,
+	}
 }
 
 func NewProjectCondition(tokenPath string, minimumAmount int64) *ProjectCondition {
@@ -64,26 +72,17 @@ func NewProjectConditionsWithError(conditionTokens string, conditionAmounts stri
 
 	for index, tokenPath := range tokenPaths {
 		if index >= len(minimumAmounts) {
-			return nil, makeErrorWithDetails(
-				errInvalidData,
-				ufmt.Sprintf("condition amount(%s) is not matched with condition token(%s)", conditionAmounts, conditionTokens),
-			)
+			return nil, ufmt.Errorf("condition amount(%s) is not matched with condition token(%s)", conditionAmounts, conditionTokens)
 		}
 
 		minimumAmount, err := strconv.ParseInt(minimumAmounts[index], 10, 64)
 		if err != nil {
-			return nil, makeErrorWithDetails(
-				errInvalidData,
-				ufmt.Sprintf("condition amount(%s) is not a valid integer", minimumAmounts[index]),
-			)
+			return nil, ufmt.Errorf("condition amount(%s) is not a valid integer", minimumAmounts[index])
 		}
 
 		condition := NewProjectCondition(tokenPath, minimumAmount)
 		if !condition.IsAvailable() {
-			return nil, makeErrorWithDetails(
-				errInvalidData,
-				ufmt.Sprintf("condition(%s) is not available", condition.TokenPath()),
-			)
+			return nil, ufmt.Errorf("condition(%s) is not available", condition.TokenPath())
 		}
 
 		conditions = append(conditions, condition)

@@ -1,8 +1,8 @@
-package v1
+package launchpad
 
 import (
-	"testing"
 	"math"
+	"testing"
 
 	"gno.land/p/nt/uassert"
 )

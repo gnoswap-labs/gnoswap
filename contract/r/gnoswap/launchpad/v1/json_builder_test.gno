@@ -4,10 +4,11 @@ import (
 	"strings"
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/onbloc/json"
-	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/gnoswap/launchpad"
 )
 
 func TestJsonBuilder_projectStatsBuilder(t *testing.T) {
@@ -68,19 +69,17 @@ func TestJsonBuilder_projectStatsBuilder(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup tier with test values
-			tier := &ProjectTier{
-				totalDepositAmount:   tt.totalDepositAmount,
-				totalWithdrawAmount:  tt.totalWithdrawAmount,
-				totalDepositCount:    tt.totalDepositCount,
-				totalWithdrawCount:   tt.totalWithdrawCount,
-				totalCollectedAmount: tt.totalCollectedAmount,
-			}
+			tier := launchpad.NewProjectTier("test_project", 180, 1000000, 100, 200)
+			tier.SetTotalDepositAmount(tt.totalDepositAmount)
+			tier.SetTotalWithdrawAmount(tt.totalWithdrawAmount)
+			tier.SetTotalDepositCount(tt.totalDepositCount)
+			tier.SetTotalWithdrawCount(tt.totalWithdrawCount)
+			tier.SetTotalCollectedAmount(tt.totalCollectedAmount)
 
-			project := &Project{
-				tiers: map[int64]*ProjectTier{
-					projectTier180: tier,
-				},
-			}
+			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 1000000, testutils.TestAddress("recipient"), 100, 1000)
+			tiers := make(map[int64]*launchpad.ProjectTier)
+			tiers[projectTier180] = tier
+			project.SetTiers(tiers)
 
 			// Execute
 			builder := json.Builder()
@@ -127,16 +126,13 @@ func TestJsonBuilder_refundInfoBuilder(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			tier := &ProjectTier{
-				totalDistributeAmount: tt.totalDistributeAmount,
-				totalCollectedAmount:  tt.totalCollectedAmount,
-			}
+			tier := launchpad.NewProjectTier("test_project", 180, tt.totalDistributeAmount, 100, 200)
+			tier.SetTotalCollectedAmount(tt.totalCollectedAmount)
 
-			project := &Project{
-				tiers: map[int64]*ProjectTier{
-					projectTier180: tier,
-				},
-			}
+			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 1000000, testutils.TestAddress("recipient"), 100, 1000)
+			tiers := make(map[int64]*launchpad.ProjectTier)
+			tiers[projectTier180] = tier
+			project.SetTiers(tiers)
 
 			// Execute
 			builder := json.Builder()
@@ -194,18 +190,14 @@ func TestJsonBuilder_tierBuilder(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			tier := &ProjectTier{
-				id:                            tt.tierId,
-				totalDistributeAmount:         tt.totalDistributeAmount,
-				distributeAmountPerSecondX128: u256.NewUintFromInt64(100),
-				startTime:                     tt.startTime,
-				endTime:                       tt.endTime,
-				totalDepositAmount:            tt.totalDepositAmount,
-				totalWithdrawAmount:           tt.totalWithdrawAmount,
-				totalDepositCount:             tt.totalDepositCount,
-				totalWithdrawCount:            tt.totalWithdrawCount,
-				totalCollectedAmount:          tt.totalCollectedAmount,
-			}
+			tier := launchpad.NewProjectTier("test_project", 180, tt.totalDistributeAmount, tt.startTime, tt.endTime)
+			tier.SetID(tt.tierId)
+			tier.SetDistributeAmountPerSecondX128(u256.NewUintFromInt64(100))
+			tier.SetTotalDepositAmount(tt.totalDepositAmount)
+			tier.SetTotalWithdrawAmount(tt.totalWithdrawAmount)
+			tier.SetTotalDepositCount(tt.totalDepositCount)
+			tier.SetTotalWithdrawCount(tt.totalWithdrawCount)
+			tier.SetTotalCollectedAmount(tt.totalCollectedAmount)
 
 			// Execute
 			builder := json.Builder()
@@ -239,29 +231,29 @@ func TestJsonBuilder_projectBuilder(t *testing.T) {
 		expectedHasFields bool
 	}{
 		{
-			name:             "project builder with basic info",
-			projectName:      "Test Project",
-			tokenPath:        "gno.land/r/demo/token",
-			depositAmount:    1000000,
-			recipient:        testAddr,
-			conditionTokens:  []string{"gno.land/r/demo/gns"},
-			conditionAmounts: []int64{1000},
-			createdAt:        1000,
-			tierStartTime:    2000,
-			tierEndTime:      3000,
+			name:              "project builder with basic info",
+			projectName:       "Test Project",
+			tokenPath:         "gno.land/r/demo/token",
+			depositAmount:     1000000,
+			recipient:         testAddr,
+			conditionTokens:   []string{"gno.land/r/demo/gns"},
+			conditionAmounts:  []int64{1000},
+			createdAt:         1000,
+			tierStartTime:     2000,
+			tierEndTime:       3000,
 			expectedHasFields: true,
 		},
 		{
-			name:             "project builder with multiple conditions",
-			projectName:      "Multi Condition",
-			tokenPath:        "gno.land/r/demo/token2",
-			depositAmount:    5000000,
-			recipient:        testAddr,
-			conditionTokens:  []string{"gno.land/r/demo/gns", "gno.land/r/demo/usdc"},
-			conditionAmounts: []int64{1000, 2000},
-			createdAt:        500,
-			tierStartTime:    1500,
-			tierEndTime:      2500,
+			name:              "project builder with multiple conditions",
+			projectName:       "Multi Condition",
+			tokenPath:         "gno.land/r/demo/token2",
+			depositAmount:     5000000,
+			recipient:         testAddr,
+			conditionTokens:   []string{"gno.land/r/demo/gns", "gno.land/r/demo/usdc"},
+			conditionAmounts:  []int64{1000, 2000},
+			createdAt:         500,
+			tierStartTime:     1500,
+			tierEndTime:       2500,
 			expectedHasFields: true,
 		},
 		{
@@ -282,30 +274,23 @@ func TestJsonBuilder_projectBuilder(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			tier := &ProjectTier{
-				startTime: tt.tierStartTime,
-				endTime:   tt.tierEndTime,
-			}
+			tier := launchpad.NewProjectTier("test_project", 180, 1000000, tt.tierStartTime, tt.tierEndTime)
 
-			project := &Project{
-				name:          tt.projectName,
-				tokenPath:     tt.tokenPath,
-				depositAmount: tt.depositAmount,
-				recipient:     tt.recipient,
-				conditions:    make(map[string]*ProjectCondition),
-				tiers: map[int64]*ProjectTier{
-					projectTier180: tier,
-				},
-				createdAt: tt.createdAt,
-			}
+			project := launchpad.NewProject(tt.projectName, tt.tokenPath, tt.depositAmount, tt.recipient, 100, 1000)
+			project.SetCreatedAt(tt.createdAt)
 
 			// Add conditions
+			conditions := make(map[string]*launchpad.ProjectCondition)
 			for i, token := range tt.conditionTokens {
-				project.conditions[token] = &ProjectCondition{
-					tokenPath:     token,
-					minimumAmount: tt.conditionAmounts[i],
-				}
+				condition := launchpad.NewProjectCondition(token, tt.conditionAmounts[i])
+				conditions[token] = condition
 			}
+			project.SetConditions(conditions)
+
+			// Add tier
+			tiers := make(map[int64]*launchpad.ProjectTier)
+			tiers[projectTier180] = tier
+			project.SetTiers(tiers)
 
 			// Execute
 			builder := json.Builder()
@@ -367,15 +352,7 @@ func TestJsonBuilder_depositBuilder(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			deposit := &Deposit{
-				id:            tt.depositId,
-				projectID:     tt.projectId,
-				tier:          tt.tier,
-				depositor:     tt.depositor,
-				depositAmount: tt.depositAmount,
-				createdHeight: tt.createdHeight,
-				createdAt:     tt.createdAt,
-			}
+			deposit := launchpad.NewDeposit(tt.depositId, tt.projectId, tt.tier, tt.depositor, tt.depositAmount, tt.createdHeight, tt.createdAt, 0)
 
 			// Execute
 			builder := json.Builder()

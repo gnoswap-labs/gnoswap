@@ -280,7 +280,7 @@ func TestLaunchpadWithdraw_CollectDepositGnsFullBalanceRestoration(t *testing.T)
 	gns.Transfer(cross, launchpadAddr, depositAmount)
 
 	// Skip to end of tier period
-	projectTier, _ := project.getTier(30)
+	projectTier, _ := getProjectTier(project, 30)
 	testing.SetHeight(projectTier.EndTime() + 1)
 	testing.SkipHeights(60*60*24*180/5 + 2)
 
@@ -370,6 +370,6 @@ func initLaunchpadWithdrawTest(t *testing.T, depositor address) {
 	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	xgns.Mint(cross, launchpadAddr, depositAmount)
 
-	projectTier, _ := project.getTier(30)
+	projectTier, _ := getProjectTier(project, 30)
 	testing.SetHeight(projectTier.EndTime() + 1)
 }
