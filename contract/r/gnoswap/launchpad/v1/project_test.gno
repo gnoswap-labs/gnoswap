@@ -649,9 +649,9 @@ func TestProject_GetProjectTier(t *testing.T) {
 
 func TestProject_GetStandardTier(t *testing.T) {
 	tests := []struct {
-		name        string
-		tiers       map[int64]*launchpad.ProjectTier
-		expectedNil bool
+		name          string
+		tiers         map[int64]*launchpad.ProjectTier
+		expectedPanic bool
 	}{
 		{
 			name: "get standard tier with 180 days tier",
@@ -666,7 +666,7 @@ func TestProject_GetStandardTier(t *testing.T) {
 					return tier
 				}(),
 			},
-			expectedNil: false,
+			expectedPanic: false,
 		},
 		{
 			name: "get standard tier without 180 days tier",
@@ -680,12 +680,12 @@ func TestProject_GetStandardTier(t *testing.T) {
 					return tier
 				}(),
 			},
-			expectedNil: true,
+			expectedPanic: true,
 		},
 		{
-			name:        "get standard tier from empty project",
-			tiers:       map[int64]*launchpad.ProjectTier{},
-			expectedNil: true,
+			name:          "get standard tier from empty project",
+			tiers:         map[int64]*launchpad.ProjectTier{},
+			expectedPanic: true,
 		},
 	}
 
@@ -695,13 +695,14 @@ func TestProject_GetStandardTier(t *testing.T) {
 			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.tiers)
 
-			// Execute
-			standardTier := getStandardTier(project)
-
 			// Verify
-			if tt.expectedNil {
-				uassert.True(t, standardTier == nil, "standard tier should be nil")
+			if tt.expectedPanic {
+				uassert.PanicsContains(t, "[GNOSWAP-LAUNCHPAD-003] requested data not found || tier(180) not found", func() {
+					getStandardTier(project)
+				})
 			} else {
+				standardTier := getStandardTier(project)
+
 				uassert.True(t, standardTier != nil, "standard tier should not be nil")
 				uassert.Equal(t, "test:180", standardTier.ID())
 			}

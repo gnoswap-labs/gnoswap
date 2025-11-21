@@ -99,18 +99,18 @@ func getProjectTotalCollectedAmount(p *launchpad.Project) int64 {
 }
 
 func getProjectTier(p *launchpad.Project, duration int64) (*launchpad.ProjectTier, error) {
-	tier, exists := p.Tiers()[duration]
-	if !exists {
-		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("tier(%s) not found", duration))
+	tier, err := p.GetTier(duration)
+	if err != nil {
+		return nil, makeErrorWithDetails(errDataNotFound, err.Error())
 	}
 
 	return tier, nil
 }
 
 func getStandardTier(p *launchpad.Project) *launchpad.ProjectTier {
-	projectTier, exists := p.Tiers()[projectTier180]
-	if !exists {
-		return nil
+	projectTier, err := p.GetTier(projectTier180)
+	if err != nil {
+		panic(makeErrorWithDetails(errDataNotFound, err.Error()))
 	}
 
 	return projectTier

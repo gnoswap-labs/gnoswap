@@ -46,6 +46,13 @@ func (p *ProjectCondition) CheckBalanceCondition(inputTokenPath string, inputAmo
 	return nil
 }
 
+func (p ProjectCondition) Clone() *ProjectCondition {
+	return &ProjectCondition{
+		tokenPath:     p.tokenPath,
+		minimumAmount: p.minimumAmount,
+	}
+}
+
 func NewProjectCondition(tokenPath string, minimumAmount int64) *ProjectCondition {
 	return &ProjectCondition{
 		tokenPath:     tokenPath,

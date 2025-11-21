@@ -93,6 +93,21 @@ func (lp *launchpadV1) CreateProject(
 		depositAmount,
 	)
 
+	tier30, err := getProjectTier(project, projectTier30)
+	if err != nil {
+		panic(err)
+	}
+
+	tier90, err := getProjectTier(project, projectTier90)
+	if err != nil {
+		panic(err)
+	}
+
+	tier180, err := getProjectTier(project, projectTier180)
+	if err != nil {
+		panic(err)
+	}
+
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"CreateProject",
@@ -109,12 +124,12 @@ func (lp *launchpadV1) CreateProject(
 		"tier180Ratio", formatInt(params.tier180Ratio),
 		"startTime", formatInt(params.startTime),
 		"projectId", project.ID(),
-		"tier30Amount", formatInt(project.Tiers()[projectTier30].TotalDistributeAmount()),
-		"tier30EndTime", formatInt(project.Tiers()[projectTier30].EndTime()),
-		"tier90Amount", formatInt(project.Tiers()[projectTier90].TotalDistributeAmount()),
-		"tier90EndTime", formatInt(project.Tiers()[projectTier90].EndTime()),
-		"tier180Amount", formatInt(project.Tiers()[projectTier180].TotalDistributeAmount()),
-		"tier180EndTime", formatInt(project.Tiers()[projectTier180].EndTime()),
+		"tier30Amount", formatInt(tier30.TotalDistributeAmount()),
+		"tier30EndTime", formatInt(tier30.EndTime()),
+		"tier90Amount", formatInt(tier90.TotalDistributeAmount()),
+		"tier90EndTime", formatInt(tier90.EndTime()),
+		"tier180Amount", formatInt(tier180.TotalDistributeAmount()),
+		"tier180EndTime", formatInt(tier180.EndTime()),
 	)
 
 	return project.ID()
@@ -233,6 +248,22 @@ func (lp *launchpadV1) TransferLeftFromProjectByAdmin(projectID string, recipien
 	}
 
 	previousRealm := runtime.PreviousRealm()
+
+	tier30, err := getProjectTier(project, projectTier30)
+	if err != nil {
+		panic(err)
+	}
+
+	tier90, err := getProjectTier(project, projectTier90)
+	if err != nil {
+		panic(err)
+	}
+
+	tier180, err := getProjectTier(project, projectTier180)
+	if err != nil {
+		panic(err)
+	}
+
 	chain.Emit(
 		"TransferLeftFromProjectByAdmin",
 		"prevAddr", previousRealm.Address().String(),
@@ -241,12 +272,12 @@ func (lp *launchpadV1) TransferLeftFromProjectByAdmin(projectID string, recipien
 		"recipient", recipient.String(),
 		"tokenPath", project.TokenPath(),
 		"leftReward", formatInt(projectLeftReward),
-		"tier30Full", formatInt(project.Tiers()[projectTier30].TotalDepositAmount()),
-		"tier30Left", formatInt(getCalculatedLeftReward(project.Tiers()[projectTier30])),
-		"tier90Full", formatInt(project.Tiers()[projectTier90].TotalDepositAmount()),
-		"tier90Left", formatInt(getCalculatedLeftReward(project.Tiers()[projectTier90])),
-		"tier180Full", formatInt(project.Tiers()[projectTier180].TotalDepositAmount()),
-		"tier180Left", formatInt(getCalculatedLeftReward(project.Tiers()[projectTier180])),
+		"tier30Full", formatInt(tier30.TotalDepositAmount()),
+		"tier30Left", formatInt(getCalculatedLeftReward(tier30)),
+		"tier90Full", formatInt(tier90.TotalDepositAmount()),
+		"tier90Left", formatInt(getCalculatedLeftReward(tier90)),
+		"tier180Full", formatInt(tier180.TotalDepositAmount()),
+		"tier180Left", formatInt(getCalculatedLeftReward(tier180)),
 		"currentHeight", formatInt(currentHeight),
 		"currentTime", formatInt(currentTime),
 	)

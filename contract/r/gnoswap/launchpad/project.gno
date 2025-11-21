@@ -84,6 +84,12 @@ func (p *Project) SetRecipient(recipient address) {
 
 // GetConditions returns the conditions map of the project.
 func (p *Project) Conditions() map[string]*ProjectCondition {
+	conditions := make(map[string]*ProjectCondition)
+
+	for tokenPath, condition := range p.conditions {
+		conditions[tokenPath] = condition.Clone()
+	}
+
 	return p.conditions
 }
 
@@ -94,6 +100,12 @@ func (p *Project) SetConditions(conditions map[string]*ProjectCondition) {
 
 // GetTiers returns the tiers map of the project.
 func (p *Project) Tiers() map[int64]*ProjectTier {
+	tiers := make(map[int64]*ProjectTier)
+
+	for duration, tier := range p.tiers {
+		tiers[duration] = tier.Clone()
+	}
+
 	return p.tiers
 }
 
@@ -130,6 +142,19 @@ func (p *Project) CreatedAt() int64 {
 // SetCreatedAt sets the created time of the project.
 func (p *Project) SetCreatedAt(time int64) {
 	p.createdAt = time
+}
+
+func (p *Project) GetTier(duration int64) (*ProjectTier, error) {
+	tier, exists := p.tiers[duration]
+	if !exists {
+		return nil, ufmt.Errorf("tier(%d) not found", duration)
+	}
+
+	return tier.Clone(), nil
+}
+
+func (p *Project) SetTier(duration int64, tier *ProjectTier) {
+	p.tiers[duration] = tier
 }
 
 // IsRecipient returns true if the project recipient is the given address.

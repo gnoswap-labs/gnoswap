@@ -144,6 +144,21 @@ func (pt *ProjectTier) IsEnded(currentTime int64) bool {
 	return pt.endTime < currentTime
 }
 
+func (pt ProjectTier) Clone() *ProjectTier {
+	return &ProjectTier{
+		id:                            pt.id,
+		totalDistributeAmount:         pt.totalDistributeAmount,
+		distributeAmountPerSecondX128: pt.distributeAmountPerSecondX128.Clone(),
+		startTime:                     pt.startTime,
+		endTime:                       pt.endTime,
+		totalDepositAmount:            pt.totalDepositAmount,
+		totalWithdrawAmount:           pt.totalWithdrawAmount,
+		totalDepositCount:             pt.totalDepositCount,
+		totalWithdrawCount:            pt.totalWithdrawCount,
+		totalCollectedAmount:          pt.totalCollectedAmount,
+	}
+}
+
 // NewProjectTier returns a pointer to a new ProjectTier with the given values.
 func NewProjectTier(
 	projectID string,
