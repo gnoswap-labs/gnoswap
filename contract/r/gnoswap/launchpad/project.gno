@@ -153,6 +153,7 @@ func NewProject(
 		recipient:     recipient,
 		conditions:    make(map[string]*ProjectCondition),
 		tiers:         make(map[int64]*ProjectTier),
+		tiersRatios:   make(map[int64]int64),
 		createdHeight: createdHeight,
 		createdAt:     createdAt,
 	}
