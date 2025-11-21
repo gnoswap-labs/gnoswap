@@ -90,7 +90,7 @@ func (p *Project) Conditions() map[string]*ProjectCondition {
 		conditions[tokenPath] = condition.Clone()
 	}
 
-	return p.conditions
+	return conditions
 }
 
 // SetConditions sets the conditions map of the project.
@@ -106,7 +106,7 @@ func (p *Project) Tiers() map[int64]*ProjectTier {
 		tiers[duration] = tier.Clone()
 	}
 
-	return p.tiers
+	return tiers
 }
 
 // SetTiers sets the tiers map of the project.
