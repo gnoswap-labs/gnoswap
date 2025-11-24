@@ -227,7 +227,7 @@ func collectExternalRewardWithUnwrap() {
 	ufmt.Printf("[EXPECTED] wugnot change (should be 0): %d\n", wugnotChange)
 
 	if ugnotIncrease <= 0 {
-		panic("should have received unwrapped ugnot")
+		panic("should have received unwrapped gnot")
 	}
 
 	if wugnotChange != 0 {

@@ -326,8 +326,8 @@ amountIn, amountOut := ExactInSingleSwapRoute(
 
 3. **Incorrect Native Token Send Amount**:
 
-   - ExactIn functions: Must send exactly `amountIn` of native ugnot
-   - ExactOut functions: Must send exactly `amountInMax` of native ugnot
+   - ExactIn functions: Must send exactly `amountIn` of native gnot
+   - ExactOut functions: Must send exactly `amountInMax` of native gnot
    - Sending wrong amounts will cause transaction reversion
 
 4. **Missing Refund Handling**: When integrating, remember that native GNOT refunds are automatic but require prior WUGNOT approval.

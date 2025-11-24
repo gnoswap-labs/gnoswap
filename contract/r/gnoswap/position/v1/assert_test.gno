@@ -620,7 +620,7 @@ func TestAssertIsValidUserCoinSendWithTokenPair(t *testing.T) {
 			amount0:              "1000",
 			amount1:              "2000",
 			sentCoins:            chain.Coins{chain.Coin{Denom: ugnotDenom, Amount: 500}},
-			expectedPanicMessage: "[GNOSWAP-COMMON-012] user send ugnot amount is not equal to specified amount",
+			expectedPanicMessage: "[GNOSWAP-COMMON-012] user send gnot amount is not equal to specified amount",
 			shouldPanic:          true,
 		},
 		{
@@ -755,7 +755,7 @@ func TestAssertIsValidUserCoinSendWithWrappedTokenPair(t *testing.T) {
 			amount0:              "1000",
 			amount1:              "2000",
 			sentCoins:            chain.Coins{chain.Coin{Denom: ugnotDenom, Amount: 500}},
-			expectedPanicMessage: "[GNOSWAP-COMMON-012] user send ugnot amount is not equal to specified amount",
+			expectedPanicMessage: "[GNOSWAP-COMMON-012] user send gnot amount is not equal to specified amount",
 			shouldPanic:          true,
 		},
 		{
@@ -813,7 +813,7 @@ func TestAssertIsValidUserCoinSendWithWrappedTokenPair(t *testing.T) {
 			amount0:              "0",
 			amount1:              "1000",
 			sentCoins:            chain.Coins{chain.Coin{Denom: ugnotDenom, Amount: 100}},
-			expectedPanicMessage: "[GNOSWAP-COMMON-012] user send ugnot amount is not equal to specified amount",
+			expectedPanicMessage: "[GNOSWAP-COMMON-012] user send gnot amount is not equal to specified amount",
 			shouldPanic:          true,
 		},
 		{

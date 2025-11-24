@@ -228,7 +228,7 @@ func TestCoins_IsGNOTPath(t *testing.T) {
 			name:           "wrapped_ugnot_path",
 			path:           WUGNOT_PATH,
 			expectedResult: true,
-			description:    "Wrapped ugnot path should return true",
+			description:    "Wrapped gnot path should return true",
 		},
 		{
 			name:           "other_path",
@@ -282,7 +282,7 @@ func TestCoins_IsGNOTNativePath(t *testing.T) {
 			name:           "wrapped_ugnot_path",
 			path:           WUGNOT_PATH,
 			expectedResult: false,
-			description:    "Wrapped ugnot path should return false",
+			description:    "Wrapped gnot path should return false",
 		},
 		{
 			name:           "other_path",
@@ -324,7 +324,7 @@ func TestCoins_IsGNOTWrappedPath(t *testing.T) {
 			name:           "wrapped_ugnot_path",
 			path:           WUGNOT_PATH,
 			expectedResult: true,
-			description:    "Wrapped ugnot path should return true",
+			description:    "Wrapped gnot path should return true",
 		},
 		{
 			name:           "native_gnot_path",

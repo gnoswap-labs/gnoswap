@@ -2,17 +2,17 @@ package common
 
 import "chain/banker"
 
-// IsGNOTPath checks if the given path is either native ugnot or wrapped ugnot path
+// IsGNOTPath checks if the given path is either native gnot or wrapped gnot path
 func IsGNOTPath(path string) bool {
 	return path == GNOT_PATH || path == WUGNOT_PATH
 }
 
-// IsGNOTNativePath checks if the given path is the native ugnot path
+// IsGNOTNativePath checks if the given path is the native gnot path
 func IsGNOTNativePath(path string) bool {
 	return path == GNOT_PATH
 }
 
-// IsGNOTWrappedPath checks if the given path is the wrapped ugnot path
+// IsGNOTWrappedPath checks if the given path is the wrapped gnot path
 func IsGNOTWrappedPath(path string) bool {
 	return path == WUGNOT_PATH
 }
@@ -22,7 +22,7 @@ func ExistsUserSendCoins() bool {
 	return len(getUserSendCoins()) > 0
 }
 
-// isUserSendGNOTAmount validates if the user sent the expected ugnot amount
+// isUserSendGNOTAmount validates if the user sent the expected gnot amount
 // Returns true in the following cases:
 //   - GNOT was sent and amount matches expected
 //
