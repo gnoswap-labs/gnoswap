@@ -58,7 +58,7 @@ gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Approve -args g1x6r75sxl
 
 # Create a new launchpad project
 gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func CreateProject -args "Bar Launchpad Project" -args "gno.land/r/onbloc/bar" -args g1wpex76n9vd6yzerywf047h6lta047h6lqlp5qp -args 1000000000 -args "gno.land/r/onbloc/bar" -args "1000000" -args 10 -args 20 -args 70 -args 1962328182 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout "gno.land/r/onbloc/bar:6"
+stdout "gno.land/r/onbloc/bar:7"
 
-! gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func CollectDepositGns -args gno.land/r/onbloc/bar:6 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
-stderr 'not exist deposit || (gno.land/r/onbloc/bar:6)'
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func CollectDepositGns -args gno.land/r/onbloc/bar:7 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+stderr 'not exist deposit || (gno.land/r/onbloc/bar:7)'

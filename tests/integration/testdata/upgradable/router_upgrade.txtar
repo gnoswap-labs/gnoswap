@@ -58,7 +58,7 @@ gnokey query vm/qeval --data "gno.land/r/gnoswap/router.GetImplementationPackage
 stdout "gno.land/r/gnoswap/router/v1"
 
 gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func UpgradeImpl -args gno.land/r/gnoswap/router/v3_valid -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   9[0-9]{6}'
+stdout 'GAS USED:   10[0-9]{6}'
 stdout 'STORAGE DELTA:  780 bytes'
 stdout 'TOTAL TX COST:  100078000ugnot'
 stdout 'EVENTS:     \[{\"type\":\"ChangeImplementation\",\"attrs\":\[{\"key\":\"previousPackagePath\",\"value\":\"gno.land/r/gnoswap/router/v1\"},{\"key\":\"newPackagePath\",\"value\":\"gno.land/r/gnoswap/router/v3_valid\"}\],\"pkg_path\":\"gno.land/p/gnoswap/version_manager\"},.*,\"pkg_path\":\"gno.land/r/gnoswap/router\"}\]'

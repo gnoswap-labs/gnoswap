@@ -94,7 +94,7 @@ stdout 'GAS USED:   2[0-9]{7}'
 stdout 'STORAGE DELTA:  14769 bytes'
 stdout 'STORAGE FEE:    1476900ugnot'
 stdout 'TOTAL TX COST:  101476900ugnot'
-stdout 'EVENTS:     \[{\"type\":\"ProposeText\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"title\",\"value\":\"Test Proposal\"},{\"key\":\"description\",\"value\":\"This is a test proposal\"},{\"key\":\"proposalId\",\"value\":\"1\"},{\"key\":\"quorumAmount\",\"value\":\"1000000000\"},{\"key\":\"maxVotingWeight\",\"value\":\"2000000000\"},{\"key\":\"configVersion\",\"value\":\"2\"},{\"key\":\"createdAt\",\"value\":\".+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/gov/governance/v1\"},{\"bytes_delta\":14769,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":1476900},\"pkg_path\":\"gno.land/r/gnoswap/gov/governance\"}\]'
+stdout 'EVENTS:     \[{\"type\":\"ProposeText\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"title\",\"value\":\"Test Proposal\"},{\"key\":\"description\",\"value\":\"This is a test proposal\"},{\"key\":\"proposalId\",\"value\":\"1\"},{\"key\":\"quorumAmount\",\"value\":\"1000000000\"},{\"key\":\"maxVotingWeight\",\"value\":\"2000000000\"},{\"key\":\"configVersion\",\"value\":\"2\"},{\"key\":\"createdAt\",\"value\":\".+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/gov/governance/v1\"},{\"bytes_delta\":14769,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":1476900},\"pkg_path\":\"gno.land/r/gnoswap/gov/governance\"}\]'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/gov/governance.GetTitleByProposalId(1)"
 stdout '"Test Proposal"'
@@ -111,7 +111,7 @@ stdout "1000000000"
 stdout 'GAS USED:   1[0-9]{7}'
 stdout 'STORAGE DELTA:  12 bytes'
 stdout 'STORAGE FEE:    1200ugnot'
-stdout 'EVENTS:     \[{\"type\":\"Vote\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevPkgPath\",\"value\":\"\"},{\"key\":\"proposalId\",\"value\":\"1\"},{\"key\":\"voter\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"yes\",\"value\":\"yes\"},{\"key\":\"voteWeight\",\"value\":\"1000000000\"},{\"key\":\"voteYes\",\"value\":\"1000000000\"},{\"key\":\"voteNo\",\"value\":\"0\"}\],\"pkg_path\":\"gno.land/r/gnoswap/gov/governance/v1\"},{\"bytes_delta\":12,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":1200},\"pkg_path\":\"gno.land/r/gnoswap/gov/governance\"}\]'
+stdout 'EVENTS:     \[{\"type\":\"Vote\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevPkgPath\",\"value\":\"\"},{\"key\":\"proposalId\",\"value\":\"1\"},{\"key\":\"voter\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"yes\",\"value\":\"yes\"},{\"key\":\"voteWeight\",\"value\":\"1000000000\"},{\"key\":\"voteYes\",\"value\":\"1000000000\"},{\"key\":\"voteNo\",\"value\":\"0\"}\],\"pkg_path\":\"gno.land/r/gnoswap/gov/governance/v1\"},{\"bytes_delta\":12,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":1200},\"pkg_path\":\"gno.land/r/gnoswap/gov/governance\"}\]'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/gov/governance.GetExecutionStateByProposalId(1)"
 stdout '"active"'

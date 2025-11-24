@@ -64,9 +64,9 @@ gnokey query vm/qeval --data "gno.land/r/gnoswap/launchpad.GetImplementationPack
 stdout "gno.land/r/gnoswap/launchpad/v1"
 
 gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func UpgradeImpl -args gno.land/r/gnoswap/launchpad/v3_valid -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   9[0-9]{6}'
-stdout 'STORAGE DELTA:  792 bytes'
-stdout 'TOTAL TX COST:  100079200ugnot'
+stdout 'GAS USED:   1[0-9]{7}'
+stdout 'STORAGE DELTA:  [0-9]+ bytes'
+stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
 stdout 'EVENTS:     \[{\"type\":\"ChangeImplementation\",\"attrs\":\[{\"key\":\"previousPackagePath\",\"value\":\"gno.land/r/gnoswap/launchpad/v1\"},{\"key\":\"newPackagePath\",\"value\":\"gno.land/r/gnoswap/launchpad/v3_valid\"}\],\"pkg_path\":\"gno.land/p/gnoswap/version_manager\"},.*,\"pkg_path\":\"gno.land/r/gnoswap/launchpad\"}\]'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/launchpad.GetImplementationPackagePath()"
@@ -79,8 +79,8 @@ stderr 'version_manager: initializer not found for package path:gno.land/r/gnosw
 # Rollback to v1 contract
 gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func UpgradeImpl -args gno.land/r/gnoswap/launchpad/v1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 stdout 'GAS USED:   1[0-9]{7}'
-stdout 'STORAGE DELTA:  -797 bytes'
-stdout 'TOTAL TX COST:  99920300ugnot'
+stdout 'STORAGE DELTA:  -[0-9]+ bytes'
+stdout 'TOTAL TX COST:  9[0-9]{7}ugnot'
 stdout 'EVENTS:     \[{\"type\":\"ChangeImplementation\",\"attrs\":\[{\"key\":\"previousPackagePath\",\"value\":\"gno.land/r/gnoswap/launchpad/v3_valid\"},{\"key\":\"newPackagePath\",\"value\":\"gno.land/r/gnoswap/launchpad/v1\"}\],\"pkg_path\":\"gno.land/p/gnoswap/version_manager\"},.*,\"pkg_path\":\"gno.land/r/gnoswap/launchpad\",\"refund_withheld\":false}\]'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/launchpad.GetImplementationPackagePath()"

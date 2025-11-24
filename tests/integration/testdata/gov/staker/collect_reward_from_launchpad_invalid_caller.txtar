@@ -58,4 +58,4 @@ loadpkg gno.land/r/gnoswap/gov/staker/v1
 gnoland start
 
 ! gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func CollectRewardFromLaunchPad -args g1wpex76n9vd6yzerywf047h6lta047h6lqlp5qp -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
-stderr 'unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not launchpad'
+stderr 'unauthorized: caller g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 is not launchpad'

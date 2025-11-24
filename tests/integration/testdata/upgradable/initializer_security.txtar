@@ -31,7 +31,7 @@ gnokey maketx send -send 1000000000ugnot -to $test1_user_addr -broadcast -chaini
 gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/scenario/upgrade/implements/v3_valid/pool -pkgpath gno.land/r/gnoswap/pool/v3_valid -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/scenario/upgrade/implements/security/register_duplicated_version -pkgpath gno.land/r/gnoswap/pool/register_duplicated_version -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/scenario/upgrade/implements/security/rogue/try_register_pool_initializer -pkgpath gno.land/r/try_register_pool_initializer -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/scenario/upgrade/implements/security/try_register_pool_initializer -pkgpath gno.land/r/try_register_pool_initializer -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetImplementationPackagePath()"
 stdout "gno.land/r/gnoswap/pool/v1"

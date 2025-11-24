@@ -85,7 +85,7 @@ stdout OK!
 stdout 'GAS USED:   14[0-9]{6}'
 stdout 'STORAGE FEE:    7[0-9]{4}ugnot'
 stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
-stdout 'EVENTS:     \[{\"type\":\"UpgradePoolContract\",\"attrs\":\[{\"key\":\"previousPackagePath\",\"value\":\"gno.land/r/gnoswap/pool/v1\"},{\"key\":\"newPackagePath\",\"value\":\"gno.land/r/gnoswap/pool/v3_valid\"}\],\"pkg_path\":\"gno.land/r/gnoswap/pool\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/pool\"}\]'
+stdout 'EVENTS:     \[{\"type\":\"ChangeImplementation\",\"attrs\":\[{\"key\":\"previousPackagePath\",\"value\":\"gno.land/r/gnoswap/pool/v1\"},{\"key\":\"newPackagePath\",\"value\":\"gno.land/r/gnoswap/pool/v3_valid\"}\],\"pkg_path\":\"gno.land/p/gnoswap/version_manager\"}.*\]'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetImplementationPackagePath()"
 stdout "gno.land/r/gnoswap/pool/v3_valid"
