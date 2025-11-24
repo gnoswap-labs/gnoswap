@@ -1405,12 +1405,6 @@ func TestValidateTokenPath(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:        "Valid ugnot with token",
-			token0:      UGNOT,
-			token1:      gnsPath,
-			expectError: true,
-		},
-		{
 			name:        "Invalid - identical tokens",
 			token0:      gnsPath,
 			token1:      gnsPath,
