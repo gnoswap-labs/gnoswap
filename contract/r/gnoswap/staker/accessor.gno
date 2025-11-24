@@ -1,6 +1,8 @@
 package staker
 
 import (
+	u256 "gno.land/p/gnoswap/uint256"
+
 	"gno.land/p/demo/tokens/grc721"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"
@@ -10,6 +12,7 @@ import (
 type PoolAccessor interface {
 	ExistsPoolPath(poolPath string) bool
 	GetSlot0Tick(poolPath string) int32
+	GetSlot0SqrtPriceX96(poolPath string) *u256.Uint
 
 	SetTickCrossHook(hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64))
 	SetSwapStartHook(hook func(cur realm, poolPath string, timestamp int64))
@@ -24,6 +27,10 @@ func (p *poolAccessor) ExistsPoolPath(poolPath string) bool {
 
 func (p *poolAccessor) GetSlot0Tick(poolPath string) int32 {
 	return pool.GetSlot0Tick(poolPath)
+}
+
+func (p *poolAccessor) GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
+	return pool.GetSlot0SqrtPriceX96(poolPath)
 }
 
 func (p *poolAccessor) SetTickCrossHook(hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
