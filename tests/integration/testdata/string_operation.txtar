@@ -1,0 +1,138 @@
+loadpkg gno.land/p/nt/ufmt
+
+## start a new node
+gnoland start
+
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/basic -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
+
+# Call Empty
+gnokey maketx call -pkgpath gno.land/r/basic -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   236792'
+
+### Only Gas Test ###
+# String Creation
+gnokey maketx call -pkgpath gno.land/r/basic -func CreateString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   237261'
+
+# String Concatenation
+gnokey maketx call -pkgpath gno.land/r/basic -func ConcatString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   238039'
+
+# String Split (manual implementation)
+gnokey maketx call -pkgpath gno.land/r/basic -func SplitString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   1964592'
+
+# String Format (ufmt.Sprintf)
+gnokey maketx call -pkgpath gno.land/r/basic -func FormatString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   2886470'
+
+# String Length
+gnokey maketx call -pkgpath gno.land/r/basic -func LengthString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   239051'
+
+### With Storage Test ###
+# String Creation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func CreateString_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   329316'
+stdout 'STORAGE FEE:    4200ugnot'
+
+# String Concatenation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func ConcatString_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   330782'
+stdout 'STORAGE FEE:    4200ugnot'
+
+# String Split With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func SplitString_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   2101809'
+stdout 'STORAGE FEE:    51800ugnot'
+
+# String Format With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func FormatString_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   2982305'
+stdout 'STORAGE FEE:    5300ugnot'
+
+# String Length With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func LengthString_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   334966'
+stdout 'STORAGE FEE:    500ugnot'
+
+-- gnomod.toml --
+module = "gno.land/r/basic"
+gno = "0.9"
+-- main.gno --
+package basic
+
+import (
+	"strings"
+
+	"gno.land/p/nt/ufmt"
+)
+
+func CreateString(cur realm) {
+	result := "Hello, World!"
+	_ = result
+}
+
+func ConcatString(cur realm) {
+	str1 := "Hello"
+	str2 := "World"
+	result := str1 + ", " + str2 + "!"
+	_ = result
+}
+
+func SplitString(cur realm) {
+	str := "apple,banana,cherry"
+	parts := strings.Split(str, ",")
+	_ = parts
+}
+
+func FormatString(cur realm) {
+	name := "Gno"
+	version := 1
+	result := ufmt.Sprintf("Welcome to %s version %d", name, version)
+	_ = result
+}
+
+func LengthString(cur realm) {
+	str := "Hello, World!"
+	length := len(str)
+	_ = length
+}
+
+var (
+	resultCreate string
+	resultConcat string
+	resultSplit  []string
+	resultFormat string
+	resultLength int
+)
+
+func CreateString_With_Storage(cur realm) {
+	resultCreate = "Hello, World!"
+}
+
+func ConcatString_With_Storage(cur realm) {
+	str1 := "Hello"
+	str2 := "World"
+	resultConcat = str1 + ", " + str2 + "!"
+}
+
+func SplitString_With_Storage(cur realm) {
+	str := "apple,banana,cherry"
+	resultSplit = strings.Split(str, ",")
+}
+
+func FormatString_With_Storage(cur realm) {
+	name := "Gno"
+	version := 1
+	resultFormat = ufmt.Sprintf("Welcome to %s version %d", name, version)
+}
+
+func LengthString_With_Storage(cur realm) {
+	str := "Hello, World!"
+	resultLength = len(str)
+}
+
+func Empty(cur realm) {
+	return
+}
