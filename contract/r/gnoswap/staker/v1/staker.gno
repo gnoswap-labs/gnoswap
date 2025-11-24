@@ -375,6 +375,12 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	poolResolver.TickResolver(tickLower).modifyDepositLower(currentTime, signedLiquidity)
 	s.getPools().set(poolPath, pool)
 
+	// calculate amount0 and amount1 from liquidity
+	sqrtPriceX96 := s.poolAccessor.GetSlot0SqrtPriceX96(poolPath)
+	sqrtPriceLowerX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
+	sqrtPriceUpperX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
+	amount0, amount1 := common.GetAmountsForLiquidity(sqrtPriceX96, sqrtPriceLowerX96, sqrtPriceUpperX96, liquidity)
+
 	chain.Emit(
 		"StakeToken",
 		"prevAddr", previousRealm.Address().String(),
@@ -387,6 +393,8 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 		"currentTick", formatAnyInt(currentTick),
 		"isInRange", formatBool(isInRange),
 		"referrer", actualReferrer,
+		"amount0", amount0,
+		"amount1", amount1,
 	)
 
 	return poolPath
@@ -692,6 +700,17 @@ func (s *stakerV1) UnStakeToken(positionId uint64, unwrapResult bool) string { /
 	s.nftAccessor.TransferFrom(stakerAddr, deposit.Owner(), positionIdFrom(positionId))
 	pn.SetPositionOperator(cross, positionId, ZERO_ADDRESS)
 
+	// get position information for event
+	liquidity := getLiquidity(positionId)
+	tickLower, tickUpper := getTickOf(positionId)
+	currentTick := s.poolAccessor.GetSlot0Tick(poolPath)
+
+	// calculate amount0 and amount1 from liquidity
+	sqrtPriceX96 := s.poolAccessor.GetSlot0SqrtPriceX96(poolPath)
+	sqrtPriceLowerX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
+	sqrtPriceUpperX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
+	amount0, amount1 := common.GetAmountsForLiquidity(sqrtPriceX96, sqrtPriceLowerX96, sqrtPriceUpperX96, liquidity)
+
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"UnStakeToken",
@@ -699,6 +718,12 @@ func (s *stakerV1) UnStakeToken(positionId uint64, unwrapResult bool) string { /
 		"prevRealm", previousRealm.PkgPath(),
 		"positionId", formatUint(positionId),
 		"poolPath", poolPath,
+		"liquidity", liquidity.ToString(),
+		"positionUpperTick", formatAnyInt(tickUpper),
+		"positionLowerTick", formatAnyInt(tickLower),
+		"currentTick", formatAnyInt(currentTick),
+		"amount0", amount0,
+		"amount1", amount1,
 		"isRequestUnwrap", formatBool(unwrapResult),
 		"from", stakerAddr.String(),
 		"to", deposit.Owner().String(),
