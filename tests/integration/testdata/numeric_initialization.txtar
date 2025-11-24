@@ -1,0 +1,321 @@
+loadpkg gno.land/p/gnoswap/uint256
+loadpkg gno.land/p/gnoswap/int256
+
+## start a new node
+gnoland start
+
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/basic -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
+
+# Call Empty
+gnokey maketx call -pkgpath gno.land/r/basic -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   482048'
+
+### Only Gas Test ###
+# Int Initialization
+gnokey maketx call -pkgpath gno.land/r/basic -func InitInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   482467'
+
+# Int8 Initialization
+gnokey maketx call -pkgpath gno.land/r/basic -func InitInt8 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   482477'
+
+# Int32 Initialization
+gnokey maketx call -pkgpath gno.land/r/basic -func InitInt32 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   482487'
+
+# Int64 Initialization
+gnokey maketx call -pkgpath gno.land/r/basic -func InitInt64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   482487'
+
+# Int256 Initialization
+gnokey maketx call -pkgpath gno.land/r/basic -func InitInt256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   3597182'
+
+# Uint Initialization
+gnokey maketx call -pkgpath gno.land/r/basic -func InitUint -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   482507'
+
+# Uint8 Initialization
+gnokey maketx call -pkgpath gno.land/r/basic -func InitUint8 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   482523'
+
+# Uint32 Initialization
+gnokey maketx call -pkgpath gno.land/r/basic -func InitUint32 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   482533'
+
+# Uint64 Initialization
+gnokey maketx call -pkgpath gno.land/r/basic -func InitUint64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   482533'
+
+# Uint256 Initialization
+gnokey maketx call -pkgpath gno.land/r/basic -func InitUint256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   2729336'
+
+# Uint256 Initialization from Zero
+gnokey maketx call -pkgpath gno.land/r/basic -func InitUint256Zero -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   2730522'
+
+# Uint256 Initialization from One
+gnokey maketx call -pkgpath gno.land/r/basic -func InitUint256One -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   2730512'
+
+# Uint256 Initialization from String
+gnokey maketx call -pkgpath gno.land/r/basic -func InitUint256String -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   4537289'
+
+# Int256 Initialization from Zero
+gnokey maketx call -pkgpath gno.land/r/basic -func InitInt256Zero -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   3598404'
+
+# Int256 Initialization from One
+gnokey maketx call -pkgpath gno.land/r/basic -func InitInt256One -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   3598394'
+
+# Int256 Initialization from String
+gnokey maketx call -pkgpath gno.land/r/basic -func InitInt256String -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   5421801'
+
+### With Storage Test ###
+# Int Initialization With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func InitInt_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   576078'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Int8 Initialization With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func InitInt8_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   576184'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Int32 Initialization With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func InitInt32_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   576274'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Int64 Initialization With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func InitInt64_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   576354'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Int256 Initialization With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func InitInt256_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   3758525'
+stdout 'STORAGE FEE:    194800ugnot'
+
+# Uint Initialization With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func InitUint_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   578584'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Uint8 Initialization With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func InitUint8_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   578674'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Uint32 Initialization With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func InitUint32_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   578780'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Uint64 Initialization With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func InitUint64_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   578860'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Uint256 Initialization With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func InitUint256_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   2881331'
+stdout 'STORAGE FEE:    116900ugnot'
+
+# Uint256 Initialization from Zero With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func InitUint256Zero_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   2821826'
+
+# Uint256 Initialization from One With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func InitUint256One_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   2821816'
+
+# Uint256 Initialization from String With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func InitUint256String_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   4628593'
+
+# Int256 Initialization from Zero With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func InitInt256Zero_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   3721186'
+
+# Int256 Initialization from One With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func InitInt256One_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   3721176'
+
+# Int256 Initialization from String With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func InitInt256String_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   5544583'
+
+-- gnomod.toml --
+module = "gno.land/r/basic"
+gno = "0.9"
+-- main.gno --
+package basic
+
+import u256 "gno.land/p/gnoswap/uint256"
+import i256 "gno.land/p/gnoswap/int256"
+
+func InitInt(cur realm) {
+	result := int(100)
+	_ = result
+}
+
+func InitInt8(cur realm) {
+	result := int8(100)
+	_ = result
+}
+
+func InitInt32(cur realm) {
+	result := int32(100)
+	_ = result
+}
+
+func InitInt64(cur realm) {
+	result := int64(100)
+	_ = result
+}
+
+func InitInt256(cur realm) {
+	result := i256.NewInt(100)
+	_ = result
+}
+
+func InitUint(cur realm) {
+	result := uint(100)
+	_ = result
+}
+
+func InitUint8(cur realm) {
+	result := uint8(100)
+	_ = result
+}
+
+func InitUint32(cur realm) {
+	result := uint32(100)
+	_ = result
+}
+
+func InitUint64(cur realm) {
+	result := uint64(100)
+	_ = result
+}
+
+func InitUint256(cur realm) {
+	result := u256.NewUint(100)
+	_ = result
+}
+
+func InitUint256Zero(cur realm) {
+	result := u256.Zero()
+	_ = result
+}
+
+func InitUint256One(cur realm) {
+	result := u256.One()
+	_ = result
+}
+
+func InitUint256String(cur realm) {
+	result := u256.MustFromDecimal("123456789")
+	_ = result
+}
+
+func InitInt256Zero(cur realm) {
+	result := i256.Zero()
+	_ = result
+}
+
+func InitInt256One(cur realm) {
+	result := i256.One()
+	_ = result
+}
+
+func InitInt256String(cur realm) {
+	result := i256.MustFromDecimal("-123456789")
+	_ = result
+}
+
+var (
+	resultInt     int
+	resultInt8    int8
+	resultInt32   int32
+	resultInt64   int64
+	resultInt256  *i256.Int
+	resultUint    uint
+	resultUint8   uint8
+	resultUint32  uint32
+	resultUint64  uint64
+	resultUint256 *u256.Uint
+)
+
+func InitInt_With_Storage(cur realm) {
+	resultInt = int(100)
+}
+
+func InitInt8_With_Storage(cur realm) {
+	resultInt8 = int8(100)
+}
+
+func InitInt32_With_Storage(cur realm) {
+	resultInt32 = int32(100)
+}
+
+func InitInt64_With_Storage(cur realm) {
+	resultInt64 = int64(100)
+}
+
+func InitInt256_With_Storage(cur realm) {
+	resultInt256 = i256.NewInt(100)
+}
+
+func InitUint_With_Storage(cur realm) {
+	resultUint = uint(100)
+}
+
+func InitUint8_With_Storage(cur realm) {
+	resultUint8 = uint8(100)
+}
+
+func InitUint32_With_Storage(cur realm) {
+	resultUint32 = uint32(100)
+}
+
+func InitUint64_With_Storage(cur realm) {
+	resultUint64 = uint64(100)
+}
+
+func InitUint256_With_Storage(cur realm) {
+	resultUint256 = u256.NewUint(100)
+}
+
+func InitUint256Zero_With_Storage(cur realm) {
+	resultUint256 = u256.Zero()
+}
+
+func InitUint256One_With_Storage(cur realm) {
+	resultUint256 = u256.One()
+}
+
+func InitUint256String_With_Storage(cur realm) {
+	resultUint256 = u256.MustFromDecimal("123456789")
+}
+
+func InitInt256Zero_With_Storage(cur realm) {
+	resultInt256 = i256.Zero()
+}
+
+func InitInt256One_With_Storage(cur realm) {
+	resultInt256 = i256.One()
+}
+
+func InitInt256String_With_Storage(cur realm) {
+	resultInt256 = i256.MustFromDecimal("-123456789")
+}
+
+func Empty(cur realm) {
+	return
+}
