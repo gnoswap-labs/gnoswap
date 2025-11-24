@@ -37,8 +37,6 @@ loadpkg gno.land/r/gnoswap/gov/staker/v1
 loadpkg gno.land/r/gnoswap/gov/governance
 loadpkg gno.land/r/gnoswap/gov/governance/v1
 
-adduserfrom gns_admin 'source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast'
-
 adduser gnoswap
 patchpkg "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" $gnoswap_user_addr
 
@@ -57,9 +55,8 @@ patchpkg "g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp" $gnoswap_router_user_addr
 ## start a new node
 gnoland start 
 
-
 ### Send wugnot to neccessary accounts
-gnokey maketx send -send 10000000000ugnot -to $gns_admin_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
+gnokey maketx send -send 10000000000ugnot -to $test1_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
 
 ### Send wugnot to neccessary address
 gnokey maketx send -send 100000000ugnot -to $test_admin_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
@@ -67,34 +64,34 @@ gnokey maketx send -send 500000000ugnot -to $user1_user_addr -insecure-password-
 gnokey maketx send -send 500000000ugnot -to $test_admin_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
 
 ### Transfer 1_000_000_000 GNS
-gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $test_admin_user_addr -args 1000000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "transfer 1_000_000_000 GNS" gns_admin
-gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_user_addr -args 100000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
-gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $test_admin_user_addr -args 100000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $test_admin_user_addr -args 1000000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "transfer 1_000_000_000 GNS" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_user_addr -args 100000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $test_admin_user_addr -args 100000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 
 ### Approve GNS to gov/staker contract address
-gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1em9s40nfrwd2aqn9ypjv7d9x9z9c8uk5uxrza9 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
-gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func Delegate -args $gns_admin_user_addr -args 1000000000 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1em9s40nfrwd2aqn9ypjv7d9x9z9c8uk5uxrza9 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func Delegate -args $test1_user_addr -args 1000000000 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1em9s40nfrwd2aqn9ypjv7d9x9z9c8uk5uxrza9 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
-gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func Delegate -args $gnoswap_user_addr -args 1000000000 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1em9s40nfrwd2aqn9ypjv7d9x9z9c8uk5uxrza9 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func Delegate -args $gnoswap_user_addr -args 1000000000 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 
 ### reconfigure governance with votingWeightSmoothingDuration set to 0 to immediately count delegations
 ### This should avoid the "not enough voting power" error.
-gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func Reconfigure -args 0 -args 604800 -args 0 -args 50 -args 0 -args 86400 -args 2592000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func Reconfigure -args 0 -args 604800 -args 0 -args 50 -args 0 -args 86400 -args 2592000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 
 ### Check GNS balance before proposal
-gnokey query vm/qeval --data "gno.land/r/gnoswap/gns.BalanceOf(\"$gns_admin_user_addr\")"
+gnokey query vm/qeval --data "gno.land/r/gnoswap/gns.BalanceOf(\"$test1_user_addr\")"
 stdout 99996800000000
 
 ### Check xGNS balance (voting power)
-gnokey query vm/qeval --data "gno.land/r/gnoswap/gov/xgns.BalanceOf(\"$gns_admin_user_addr\")"
+gnokey query vm/qeval --data "gno.land/r/gnoswap/gov/xgns.BalanceOf(\"$test1_user_addr\")"
 stdout 2000000000
 
 ### Wait for a few blocks to ensure the reconfiguration is processed
-gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_user_addr -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
-gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_user_addr -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_user_addr -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_user_addr -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeCommunityPoolSpend -args "Test Proposal" -args "This is a test proposal" -args $gns_admin_user_addr -args "gno.land/r/gnoswap/gns" -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeCommunityPoolSpend -args "Test Proposal" -args "This is a test proposal" -args $test1_user_addr -args "gno.land/r/gnoswap/gns" -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 stdout 1
 stdout 'GAS USED:   2[0-9]{7}'
 stdout 'STORAGE DELTA:  15395 bytes'
@@ -104,5 +101,5 @@ gnokey query vm/qeval --data "gno.land/r/gnoswap/gov/governance.GetExecutionStat
 stdout '"active"'
 
 # The proposal cannot be canceled because it is still in active status 
-! gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func Cancel -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func Cancel -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 stderr 'unable to cancel voting proposal'

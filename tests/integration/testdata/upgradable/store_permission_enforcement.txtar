@@ -42,43 +42,40 @@ loadpkg gno.land/r/gnoswap/staker
 
 loadpkg gno.land/r/gnoswap/pool/v1
 
-adduserfrom gns_admin 'source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast'
-
 gnoland start
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetImplementationPackagePath()"
 stdout "gno.land/r/gnoswap/pool/v1"
 
 # Fund admin with ugnot for gas and deposits
-gnokey maketx send -send 10000000000ugnot -to $gns_admin_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
+gnokey maketx send -send 10000000000ugnot -to $test1_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
 
 gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/scenario/upgrade/implements/v3_valid/pool -pkgpath gno.land/r/gnoswap/pool/v3_valid -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/scenario/upgrade/implements/security/attempt_store_writer -pkgpath gno.land/r/gnoswap/pool/attempt_store_writer -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 
-
 # Upgrade to the permission probe implementation to capture store access
-gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func UpgradeImpl -args gno.land/r/gnoswap/pool/attempt_store_writer -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func UpgradeImpl -args gno.land/r/gnoswap/pool/attempt_store_writer -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 stdout OK!
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetImplementationPackagePath()"
 stdout "gno.land/r/gnoswap/pool/attempt_store_writer"
 
 # While v_permprobe is active it can write to the pool store
-gnokey maketx call -pkgpath gno.land/r/gnoswap/pool/attempt_store_writer -func AttemptStoreWrite -args 500000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/pool/attempt_store_writer -func AttemptStoreWrite -args 500000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetPoolCreationFee()"
 stdout 500000000
 
 # Upgrade to v3_valid so v_permprobe loses write permission
-gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func UpgradeImpl -args gno.land/r/gnoswap/pool/v3_valid -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func UpgradeImpl -args gno.land/r/gnoswap/pool/v3_valid -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 stdout OK!
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetImplementationPackagePath()"
 stdout "gno.land/r/gnoswap/pool/v3_valid"
 
 # Direct writes from the previously active package must now fail with write permission denied
-! gnokey maketx call -pkgpath gno.land/r/gnoswap/pool/attempt_store_writer -func AttemptStoreWrite -args 600000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" gns_admin
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/pool/attempt_store_writer -func AttemptStoreWrite -args 600000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
 stderr 'write permission denied'
 
 # Pool creation fee remains unchanged because the write was blocked

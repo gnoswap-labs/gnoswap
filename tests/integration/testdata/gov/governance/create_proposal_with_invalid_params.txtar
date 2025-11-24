@@ -37,8 +37,6 @@ loadpkg gno.land/r/gnoswap/gov/staker/v1
 loadpkg gno.land/r/gnoswap/gov/governance
 loadpkg gno.land/r/gnoswap/gov/governance/v1
 
-adduserfrom gns_admin 'source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast'
-
 adduser gnoswap
 patchpkg "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" $gnoswap_user_addr
 
@@ -51,17 +49,17 @@ patchpkg "g16a7etgm9z2r653ucl36rj0l2yqcxgrz2jyegzx" $user1_user_addr
 gnoland start
 
 # Create text proposal with empty title => should fail
-! gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeText -args "" -args "Lorem ipsum dolor sit amet, consectetur adipiscing elit" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeText -args "" -args "Lorem ipsum dolor sit amet, consectetur adipiscing elit" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 stderr '\[GNOSWAP-GOVERNANCE-002\] invalid input || title is empty'
 
 # Create text proposal with empty description => should fail
-! gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeText -args "Test Proposal Title" -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeText -args "Test Proposal Title" -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 stderr '\[GNOSWAP-GOVERNANCE-002\] invalid input || description is empty'
 
 # Create community pool spend proposal with empty title => should fail
-! gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeCommunityPoolSpend -args "" -args "Lorem ipsum dolor sit amet, consectetur adipiscing elit" -args $gns_admin_user_addr -args "gno.land/r/gnoswap/gns" -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeCommunityPoolSpend -args "" -args "Lorem ipsum dolor sit amet, consectetur adipiscing elit" -args $test1_user_addr -args "gno.land/r/gnoswap/gns" -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 stderr '\[GNOSWAP-GOVERNANCE-002\] invalid input || title is empty'
 
 # Create community pool spend proposal with empty description => should fail
-! gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeCommunityPoolSpend -args "Test Proposal Title" -args "" -args $gns_admin_user_addr -args "gno.land/r/gnoswap/gns" -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeCommunityPoolSpend -args "Test Proposal Title" -args "" -args $test1_user_addr -args "gno.land/r/gnoswap/gns" -args 100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 stderr '\[GNOSWAP-GOVERNANCE-002\] invalid input || title is empty'

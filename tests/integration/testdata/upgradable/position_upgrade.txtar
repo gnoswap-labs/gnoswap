@@ -43,21 +43,18 @@ loadpkg gno.land/r/gnoswap/staker
 loadpkg gno.land/r/gnoswap/pool/v1
 loadpkg gno.land/r/gnoswap/position/v1
 
-adduserfrom gns_admin 'source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast'
-
 adduser user1
 patchpkg "g16a7etgm9z2r653ucl36rj0l2yqcxgrz2jyegzx" $user1_user_addr
 
-
 gnoland start
 
-gnokey maketx send -send 15000000000ugnot -to $gns_admin_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
+gnokey maketx send -send 15000000000ugnot -to $test1_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
 gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/scenario/upgrade/implements/v3_valid/position -pkgpath gno.land/r/gnoswap/position/v3_valid -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/position.GetImplementationPackagePath()"
 stdout "gno.land/r/gnoswap/position/v1"
 
-gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func UpgradeImpl -args gno.land/r/gnoswap/position/v3_valid -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func UpgradeImpl -args gno.land/r/gnoswap/position/v3_valid -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 stdout 'GAS USED:   1[0-9]{7}'
 stdout 'STORAGE DELTA:  800 bytes'
 stdout 'TOTAL TX COST:  100080000ugnot'
@@ -67,11 +64,11 @@ gnokey query vm/qeval --data "gno.land/r/gnoswap/position.GetImplementationPacka
 stdout "gno.land/r/gnoswap/position/v3_valid"
 
 # Upgrade to non-exists version
-! gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func UpgradeImpl -args gno.land/r/gnoswap/position/invalid -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func UpgradeImpl -args gno.land/r/gnoswap/position/invalid -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 stderr 'version_manager: initializer not found for package path:gno.land/r/gnoswap/position/invalid'
 
 # Rollback to v1 contract
-gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func UpgradeImpl -args gno.land/r/gnoswap/position/v1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func UpgradeImpl -args gno.land/r/gnoswap/position/v1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 stdout OK!
 stdout 'GAS USED:   1[0-9]{7}'
 stdout 'STORAGE DELTA:  -805 bytes'

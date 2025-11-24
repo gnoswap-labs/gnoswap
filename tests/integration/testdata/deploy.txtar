@@ -23,7 +23,6 @@ loadpkg gno.land/r/demo/defi/grc20reg
 ## start a new node
 gnoland start 
 
-
 ## deploy test-tokens
 
 ### deploy usdc
