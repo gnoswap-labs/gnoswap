@@ -30,9 +30,9 @@ jobs:
 
       - name: Run setup.py
         run: |
-          python3 setup.py --exclude-tests
+          python3 setup.py --exclude-tests -w .
 
       - name: Run integration tests
         run: |
-          cd gno.land/pkg/integration
+          cd gno/gno.land/pkg/integration
           go test -v . -run .
