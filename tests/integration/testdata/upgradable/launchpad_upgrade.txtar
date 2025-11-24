@@ -52,7 +52,7 @@ loadpkg gno.land/r/gnoswap/gov/governance/v1
 loadpkg gno.land/r/gnoswap/gov/staker/v1
 loadpkg gno.land/r/gnoswap/launchpad/v1
 
-adduserfrom gns_admin 'mnemonic here'
+adduserfrom gns_admin 'source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast'
 
 adduser user1
 patchpkg "g16a7etgm9z2r653ucl36rj0l2yqcxgrz2jyegzx" $user1_user_addr

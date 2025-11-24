@@ -40,7 +40,7 @@ loadpkg gno.land/r/gnoswap/position/v1
 loadpkg gno.land/r/gnoswap/router/v1
 
 
-adduserfrom gns_admin 'mnemonic here'
+adduserfrom gns_admin 'source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast'
 
 adduser gnoswap
 patchpkg "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" $gnoswap_user_addr
