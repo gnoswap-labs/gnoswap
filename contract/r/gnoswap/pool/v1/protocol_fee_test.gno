@@ -164,7 +164,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				mockInstanceHandleWithdrawalFee(0, "pkgPath", "1000", "pkgPath", "1000", "poolPath", adminAddr)
 			},
 			verify:      nil,
-			expected:    "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not position",
+			expected:    "unauthorized: caller g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 is not position",
 			shouldPanic: true,
 		},
 		{

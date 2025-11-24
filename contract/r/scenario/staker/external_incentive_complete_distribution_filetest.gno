@@ -468,7 +468,7 @@ func positionIdFrom(positionId int) grc721.TokenID {
 // [INFO] unstaking position to collect remaining rewards
 // [INFO] rewards collected from unstaking: 0 GNS
 // [INFO] total rewards collected so far: 6263999997 GNS
-// [INFO] position owner after unstaking: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+// [INFO] position owner after unstaking: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 //
 // [SCENARIO] 12. End external incentive and verify no dust
 // [INFO] ending external incentive
