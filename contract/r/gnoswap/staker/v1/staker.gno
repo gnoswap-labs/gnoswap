@@ -375,11 +375,7 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	poolResolver.TickResolver(tickLower).modifyDepositLower(currentTime, signedLiquidity)
 	s.getPools().set(poolPath, pool)
 
-	// calculate amount0 and amount1 from liquidity
-	sqrtPriceX96 := s.poolAccessor.GetSlot0SqrtPriceX96(poolPath)
-	sqrtPriceLowerX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
-	sqrtPriceUpperX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
-	amount0, amount1 := common.GetAmountsForLiquidity(sqrtPriceX96, sqrtPriceLowerX96, sqrtPriceUpperX96, liquidity)
+	amount0, amount1 := s.calculateAmounts(poolPath, tickLower, tickUpper, liquidity)
 
 	chain.Emit(
 		"StakeToken",
@@ -703,13 +699,8 @@ func (s *stakerV1) UnStakeToken(positionId uint64, unwrapResult bool) string { /
 	// get position information for event
 	liquidity := getLiquidity(positionId)
 	tickLower, tickUpper := getTickOf(positionId)
-	currentTick := s.poolAccessor.GetSlot0Tick(poolPath)
 
-	// calculate amount0 and amount1 from liquidity
-	sqrtPriceX96 := s.poolAccessor.GetSlot0SqrtPriceX96(poolPath)
-	sqrtPriceLowerX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
-	sqrtPriceUpperX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
-	amount0, amount1 := common.GetAmountsForLiquidity(sqrtPriceX96, sqrtPriceLowerX96, sqrtPriceUpperX96, liquidity)
+	amount0, amount1 := s.calculateAmounts(poolPath, tickLower, tickUpper, liquidity)
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -719,9 +710,6 @@ func (s *stakerV1) UnStakeToken(positionId uint64, unwrapResult bool) string { /
 		"positionId", formatUint(positionId),
 		"poolPath", poolPath,
 		"liquidity", liquidity.ToString(),
-		"positionUpperTick", formatAnyInt(tickUpper),
-		"positionLowerTick", formatAnyInt(tickLower),
-		"currentTick", formatAnyInt(currentTick),
 		"amount0", amount0,
 		"amount1", amount1,
 		"isRequestUnwrap", formatBool(unwrapResult),
@@ -852,4 +840,12 @@ func getTickOf(positionId uint64) (int32, int32) {
 		panic(ufmt.Sprintf("tickUpper(%d) is less than tickLower(%d)", tickUpper, tickLower))
 	}
 	return tickLower, tickUpper
+}
+
+// calculateAmounts calculates the amounts of token0 and token1 for a given liquidity and range.
+func (s *stakerV1) calculateAmounts(poolPath string, tickLower, tickUpper int32, liquidity *u256.Uint) (string, string) {
+	sqrtPriceX96 := s.poolAccessor.GetSlot0SqrtPriceX96(poolPath)
+	sqrtPriceLowerX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
+	sqrtPriceUpperX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
+	return common.GetAmountsForLiquidity(sqrtPriceX96, sqrtPriceLowerX96, sqrtPriceUpperX96, liquidity)
 }
