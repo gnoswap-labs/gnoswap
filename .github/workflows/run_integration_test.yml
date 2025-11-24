@@ -1,0 +1,38 @@
+name: run-test
+
+on:
+  pull_request:
+
+jobs:
+  run-integration-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out gnoswap repo
+        uses: actions/checkout@v4
+
+      - name: Check out gno
+        uses: actions/checkout@v4
+        with:
+          repository: gnoswap-labs/gno
+          ref: master
+          path: ./gno
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.13
+
+      - name: Run setup.py
+        run: |
+          python3 setup.py --exclude-tests
+
+      - name: Run integration tests
+        run: |
+          cd gno.land/pkg/integration
+          go test -v . -run .
