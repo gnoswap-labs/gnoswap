@@ -1,22 +1,66 @@
 loadpkg gno.land/p/gnoswap/uint256
+loadpkg gno.land/p/gnoswap/int256
 
 ## start a new node
 gnoland start 
 
 gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/basic -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
 
+### Only Gas Test ###
+# Int Add Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func AddInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   253479'
+
+# Int8 Add Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func AddInt8 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   253489'
+
+# Int32 Add Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func AddInt32 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   253499'
+
+# Int64 Add Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func AddInt64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   253499'
+
+# Int256 Add Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func AddInt256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   4117993'
+
 # Uint256 Add Operation
 gnokey maketx call -pkgpath gno.land/r/basic -func AddUint256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3259677'
-stdout 'STORAGE FEE:    116800ugnot'
+stdout 'GAS USED:   3212697'
 
-gnokey maketx call -pkgpath gno.land/r/basic -func AddInt64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+### With Storage Test ###
+# Int Add Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func AddInt_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   344988'
+stdout 'STORAGE FEE:    500ugnot'
 
-gnokey maketx call -pkgpath gno.land/r/basic -func AddInt32 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# Int8 Add Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func AddInt8_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   345100'
+stdout 'STORAGE FEE:    500ugnot'
 
-gnokey maketx call -pkgpath gno.land/r/basic -func AddInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# Int32 Add Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func AddInt32_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   345190'
+stdout 'STORAGE FEE:    500ugnot'
 
-gnokey maketx call -pkgpath gno.land/r/basic -func AddInt8 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# Int64 Add Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func AddInt64_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   345270'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Int256 Add Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func AddInt256_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   4276343'
+stdout 'STORAGE FEE:    194800ugnot'
+
+# Uint256 Add Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func AddUint256_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   3361415'
+stdout 'STORAGE FEE:    116900ugnot'
 
 -- gnomod.toml --
 module = "gno.land/r/basic"
@@ -25,23 +69,7 @@ gno = "0.9"
 package basic
 
 import u256 "gno.land/p/gnoswap/uint256"
-
-var resultUint256 *u256.Uint
-
-func AddUint256(cur realm) {
-    resultUint256 = u256.Zero()
-    resultUint256 = u256.Zero().Add(resultUint256, u256.One())
-}
-
-func AddInt64(cur realm) {
-    result := int64(1)
-    result += 1
-}
-
-func AddInt32(cur realm) {
-    result := int64(1)
-    result += 1
-}
+import i256 "gno.land/p/gnoswap/int256"
 
 func AddInt(cur realm) {
     result := int(1)
@@ -51,4 +79,59 @@ func AddInt(cur realm) {
 func AddInt8(cur realm) {
     result := int8(1)
     result += 1
+}
+
+func AddInt32(cur realm) {
+    result := int64(1)
+    result += 1
+}
+
+func AddInt64(cur realm) {
+    result := int64(1)
+    result += 1
+}
+
+func AddInt256(cur realm) {
+    result := i256.Zero()
+    result = i256.Zero().Add(result, i256.One())
+}
+
+func AddUint256(cur realm) {
+    result := u256.Zero()
+    result = u256.Zero().Add(result, u256.One())
+}
+
+var (
+    rusultInt int
+    resultInt8 int8
+    resultInt32 int64
+    resultInt64 int64
+    resultInt256 *i256.Int
+    resultUint256 *u256.Uint
+)
+
+func AddInt_With_Storage(cur realm) {
+    rusultInt += 1
+}
+
+func AddInt8_With_Storage(cur realm) {
+    resultInt8 += 1
+}
+
+func AddInt32_With_Storage(cur realm) {
+    resultInt32 += 1
+}
+
+func AddInt64_With_Storage(cur realm) {
+    resultInt64 += 1
+}
+
+func AddInt256_With_Storage(cur realm) {
+    resultInt256 = i256.Zero()
+    resultInt256 = i256.Zero().Add(resultInt256, i256.One())
+}
+
+func AddUint256_With_Storage(cur realm) {
+    resultUint256 = u256.Zero()
+    resultUint256 = u256.Zero().Add(resultUint256, u256.One())
 }
