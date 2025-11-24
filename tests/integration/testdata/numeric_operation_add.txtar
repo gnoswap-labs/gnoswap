@@ -1,0 +1,54 @@
+loadpkg gno.land/p/gnoswap/uint256
+
+## start a new node
+gnoland start 
+
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/basic -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
+
+# Uint256 Add Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func AddUint256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   3259677'
+stdout 'STORAGE FEE:    116800ugnot'
+
+gnokey maketx call -pkgpath gno.land/r/basic -func AddInt64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/basic -func AddInt32 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/basic -func AddInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+gnokey maketx call -pkgpath gno.land/r/basic -func AddInt8 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+-- gnomod.toml --
+module = "gno.land/r/basic"
+gno = "0.9"
+-- main.gno --
+package basic
+
+import u256 "gno.land/p/gnoswap/uint256"
+
+var resultUint256 *u256.Uint
+
+func AddUint256(cur realm) {
+    resultUint256 = u256.Zero()
+    resultUint256 = u256.Zero().Add(resultUint256, u256.One())
+}
+
+func AddInt64(cur realm) {
+    result := int64(1)
+    result += 1
+}
+
+func AddInt32(cur realm) {
+    result := int64(1)
+    result += 1
+}
+
+func AddInt(cur realm) {
+    result := int(1)
+    result += 1
+}
+
+func AddInt8(cur realm) {
+    result := int8(1)
+    result += 1
+}
