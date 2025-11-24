@@ -1,0 +1,221 @@
+loadpkg gno.land/p/gnoswap/uint256
+loadpkg gno.land/p/gnoswap/int256
+
+## start a new node
+gnoland start 
+
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/basic -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
+
+# Call Empty
+gnokey maketx call -pkgpath gno.land/r/basic -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   362916'
+
+### Only Gas Test ###
+# Int Sub Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func SubInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   363303'
+
+# Int8 Sub Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func SubInt8 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   363313'
+
+# Int32 Sub Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func SubInt32 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   363323'
+
+# Int64 Sub Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func SubInt64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   363323'
+
+# Int256 Sub Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func SubInt256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   4243277'
+
+# Uint Sub Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func SubUint -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   363343'
+
+# Uint8 Sub Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func SubUint8 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   363359'
+
+# Uint32 Sub Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func SubUint32 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   363369'
+
+# Uint64 Sub Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func SubUint64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   363369'
+
+# Uint256 Sub Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func SubUint256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   3322769'
+
+### With Storage Test ###
+# Int Sub Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func SubInt_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   455866'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Int8 Sub Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func SubInt8_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   455972'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Int32 Sub Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func SubInt32_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   456062'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Int64 Sub Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func SubInt64_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   456142'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Int256 Sub Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func SubInt256_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   4403199'
+stdout 'STORAGE FEE:    194800ugnot'
+
+# Uint Sub Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func SubUint_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   458372'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Uint8 Sub Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func SubUint8_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   458462'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Uint32 Sub Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func SubUint32_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   458568'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Uint64 Sub Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func SubUint64_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   458648'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Uint256 Sub Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func SubUint256_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   3473867'
+stdout 'STORAGE FEE:    116900ugnot'
+
+-- gnomod.toml --
+module = "gno.land/r/basic"
+gno = "0.9"
+-- main.gno --
+package basic
+
+import u256 "gno.land/p/gnoswap/uint256"
+import i256 "gno.land/p/gnoswap/int256"
+
+func SubInt(cur realm) {
+    result := int(1)
+    result -= 1
+}
+
+func SubInt8(cur realm) {
+    result := int8(1)
+    result -= 1
+}
+
+func SubInt32(cur realm) {
+    result := int64(1)
+    result -= 1
+}
+
+func SubInt64(cur realm) {
+    result := int64(1)
+    result -= 1
+}
+
+func SubInt256(cur realm) {
+    result := i256.Zero()
+    result = i256.Zero().Sub(result, i256.One())
+}
+
+func SubUint(cur realm) {
+    result := uint(1)
+    result -= 1
+}
+
+func SubUint8(cur realm) {
+    result := uint8(1)
+    result -= 1
+}
+
+func SubUint32(cur realm) {
+    result := uint32(1)
+    result -= 1
+}
+
+func SubUint64(cur realm) {
+    result := uint64(1)
+    result -= 1
+}
+
+func SubUint256(cur realm) {
+    result := u256.Zero()
+    result = u256.Zero().Sub(result, u256.One())
+}
+
+var (
+    rusultInt int
+    resultInt8 int8
+    resultInt32 int64
+    resultInt64 int64
+    resultInt256 *i256.Int
+    resultUint uint
+    resultUint8 uint8
+    resultUint32 uint32
+    resultUint64 uint64
+    resultUint256 *u256.Uint
+)
+
+func SubInt_With_Storage(cur realm) {
+    rusultInt -= 1
+}
+
+func SubInt8_With_Storage(cur realm) {
+    resultInt8 -= 1
+}
+
+func SubInt32_With_Storage(cur realm) {
+    resultInt32 -= 1
+}
+
+func SubInt64_With_Storage(cur realm) {
+    resultInt64 -= 1
+}
+
+func SubInt256_With_Storage(cur realm) {
+    resultInt256 = i256.Zero()
+    resultInt256 = i256.Zero().Sub(resultInt256, i256.One())
+}
+
+func SubUint_With_Storage(cur realm) {
+    resultUint -= 1
+}
+
+func SubUint8_With_Storage(cur realm) {
+    resultUint8 -= 1
+}
+
+func SubUint32_With_Storage(cur realm) {
+    resultUint32 -= 1
+}
+
+func SubUint64_With_Storage(cur realm) {
+    resultUint64 -= 1
+}
+
+func SubUint256_With_Storage(cur realm) {
+    resultUint256 = u256.Zero()
+    resultUint256 = u256.Zero().Sub(resultUint256, u256.One())
+}
+
+func Empty(cur realm) {
+    return
+}

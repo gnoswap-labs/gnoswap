@@ -1,0 +1,221 @@
+loadpkg gno.land/p/gnoswap/uint256
+loadpkg gno.land/p/gnoswap/int256
+
+## start a new node
+gnoland start 
+
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/basic -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
+
+# Call Empty
+gnokey maketx call -pkgpath gno.land/r/basic -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   362916'
+
+### Only Gas Test ###
+# Int Lsh Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func LshInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   363314'
+
+# Int8 Lsh Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func LshInt8 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   363324'
+
+# Int32 Lsh Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func LshInt32 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   363334'
+
+# Int64 Lsh Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func LshInt64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   363334'
+
+# Int256 Lsh Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func LshInt256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   4222516'
+
+# Uint Lsh Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func LshUint -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   363354'
+
+# Uint8 Lsh Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func LshUint8 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   363370'
+
+# Uint32 Lsh Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func LshUint32 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   363380'
+
+# Uint64 Lsh Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func LshUint64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   363380'
+
+# Uint256 Lsh Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func LshUint256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   3335103'
+
+### With Storage Test ###
+# Int Lsh Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func LshInt_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   455877'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Int8 Lsh Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func LshInt8_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   455983'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Int32 Lsh Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func LshInt32_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   456073'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Int64 Lsh Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func LshInt64_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   456153'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Int256 Lsh Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func LshInt256_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   4382438'
+stdout 'STORAGE FEE:    194800ugnot'
+
+# Uint Lsh Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func LshUint_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   458383'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Uint8 Lsh Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func LshUint8_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   458473'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Uint32 Lsh Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func LshUint32_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   458579'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Uint64 Lsh Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func LshUint64_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   458659'
+stdout 'STORAGE FEE:    500ugnot'
+
+# Uint256 Lsh Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func LshUint256_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   3486201'
+stdout 'STORAGE FEE:    116900ugnot'
+
+-- gnomod.toml --
+module = "gno.land/r/basic"
+gno = "0.9"
+-- main.gno --
+package basic
+
+import u256 "gno.land/p/gnoswap/uint256"
+import i256 "gno.land/p/gnoswap/int256"
+
+func LshInt(cur realm) {
+    result := int(1)
+    result <<= 1
+}
+
+func LshInt8(cur realm) {
+    result := int8(1)
+    result <<= 1
+}
+
+func LshInt32(cur realm) {
+    result := int64(1)
+    result <<= 1
+}
+
+func LshInt64(cur realm) {
+    result := int64(1)
+    result <<= 1
+}
+
+func LshInt256(cur realm) {
+    result := i256.One()
+    result = i256.Zero().Lsh(result, 1)
+}
+
+func LshUint(cur realm) {
+    result := uint(1)
+    result <<= 1
+}
+
+func LshUint8(cur realm) {
+    result := uint8(1)
+    result <<= 1
+}
+
+func LshUint32(cur realm) {
+    result := uint32(1)
+    result <<= 1
+}
+
+func LshUint64(cur realm) {
+    result := uint64(1)
+    result <<= 1
+}
+
+func LshUint256(cur realm) {
+    result := u256.One()
+    result = u256.Zero().Lsh(result, 1)
+}
+
+var (
+    rusultInt int
+    resultInt8 int8
+    resultInt32 int64
+    resultInt64 int64
+    resultInt256 *i256.Int
+    resultUint uint
+    resultUint8 uint8
+    resultUint32 uint32
+    resultUint64 uint64
+    resultUint256 *u256.Uint
+)
+
+func LshInt_With_Storage(cur realm) {
+    rusultInt <<= 1
+}
+
+func LshInt8_With_Storage(cur realm) {
+    resultInt8 <<= 1
+}
+
+func LshInt32_With_Storage(cur realm) {
+    resultInt32 <<= 1
+}
+
+func LshInt64_With_Storage(cur realm) {
+    resultInt64 <<= 1
+}
+
+func LshInt256_With_Storage(cur realm) {
+    resultInt256 = i256.One()
+    resultInt256 = i256.Zero().Lsh(resultInt256, 1)
+}
+
+func LshUint_With_Storage(cur realm) {
+    resultUint <<= 1
+}
+
+func LshUint8_With_Storage(cur realm) {
+    resultUint8 <<= 1
+}
+
+func LshUint32_With_Storage(cur realm) {
+    resultUint32 <<= 1
+}
+
+func LshUint64_With_Storage(cur realm) {
+    resultUint64 <<= 1
+}
+
+func LshUint256_With_Storage(cur realm) {
+    resultUint256 = u256.One()
+    resultUint256 = u256.Zero().Lsh(resultUint256, 1)
+}
+
+func Empty(cur realm) {
+    return
+}
