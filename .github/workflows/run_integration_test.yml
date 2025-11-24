@@ -37,4 +37,4 @@ jobs:
       - name: Run integration tests
         run: |
           cd gno/gno.land/pkg/integration
-          go test -v . -run .
+          go test . -parallel 1 -run .
