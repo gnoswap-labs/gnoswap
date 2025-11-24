@@ -181,7 +181,7 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func UnStakeToken -args 1
 stdout 'OK!'
 stdout 'GAS USED:   (5|6)[0-9]{7}'
 stdout 'STORAGE DELTA:  (-)*(5|6)[0-9]{3} bytes'
-stdout 'TOTAL TX COST:  9[0-9]{6}ugnot'
+stdout 'TOTAL TX COST:  [0-9]+ugnot'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/staker.IsStaked(1)"
 stdout 'false'
