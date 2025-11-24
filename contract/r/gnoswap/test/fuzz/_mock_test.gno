@@ -415,6 +415,7 @@ func (s *MockStakerStore) HasTotalEmissionSentStoreKey() bool {
 func (s *MockStakerStore) GetTotalEmissionSent() int64 {
 	return s.totalEmissionSent
 }
+
 func (s *MockStakerStore) SetTotalEmissionSent(amount int64) error {
 	s.totalEmissionSent = amount
 	return nil

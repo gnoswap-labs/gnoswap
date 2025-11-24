@@ -847,5 +847,6 @@ func (s *stakerV1) calculateAmounts(poolPath string, tickLower, tickUpper int32,
 	sqrtPriceX96 := s.poolAccessor.GetSlot0SqrtPriceX96(poolPath)
 	sqrtPriceLowerX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
 	sqrtPriceUpperX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
+
 	return common.GetAmountsForLiquidity(sqrtPriceX96, sqrtPriceLowerX96, sqrtPriceUpperX96, liquidity)
 }
