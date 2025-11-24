@@ -25,7 +25,7 @@ const (
 // to separate each pool, we use POOL_SEPARATOR
 const (
 	POOL_SEPARATOR        = "*POOL*"
-	gnot           string = "gnot"
+	ugnot          string = "ugnot"
 	wugnotPath     string = "gno.land/r/gnoland/wugnot"
 )
 
@@ -274,7 +274,7 @@ func (p *SwapRouteParams) ExpectedExactAmountByFee(feeBps uint64) string {
 
 // IsUnwrap checks if the swap output is native token.
 func (p *SwapRouteParams) IsUnwrap() bool {
-	return p.outputToken == gnot
+	return p.outputToken == ugnot
 }
 
 func (p *SwapRouteParams) SwapCount() int64 {

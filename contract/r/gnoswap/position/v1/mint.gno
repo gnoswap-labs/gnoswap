@@ -12,7 +12,7 @@ import (
 const (
 	WRAPPED_WUGNOT string = "gno.land/r/gnoland/wugnot"
 	UGNOT          string = "ugnot"
-	GNOT           string = "gnot"
+	GNOT           string = "ugnot"
 )
 
 // mint creates a new liquidity position by adding liquidity to a pool and minting an NFT.

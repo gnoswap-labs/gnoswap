@@ -1,4 +1,4 @@
-// short warm-up period internal gnot:gns:3000 scenario test
+// short warm-up period internal ugnot:gns:3000 scenario test
 
 // PKGPATH: gno.land/r/gnoswap/v1/main
 

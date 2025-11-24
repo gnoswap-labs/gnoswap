@@ -414,6 +414,7 @@ func (s *MockStakerStore) HasTotalEmissionSentStoreKey() bool {
 func (s *MockStakerStore) GetTotalEmissionSent() int64 {
 	return s.totalEmissionSent
 }
+
 func (s *MockStakerStore) SetTotalEmissionSent(amount int64) error {
 	s.totalEmissionSent = amount
 	return nil
@@ -642,7 +643,7 @@ func newMockStakerStore() *MockStakerStore {
 		externalIncentives:          avl.NewTree(),
 		stakers:                     avl.NewTree(),
 		totalEmissionSent:           0,
-		allowedTokens:               []string{"gnot", "gno.land/r/gnoswap/gns", oblPath},
+		allowedTokens:               []string{"ugnot", "gno.land/r/gnoswap/gns", oblPath},
 		incentiveCounter:            sr.NewCounter(),
 		tokenSpecificMinimumRewards: avl.NewTree(),
 		unstakingFee:                0,

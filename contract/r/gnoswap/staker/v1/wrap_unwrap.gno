@@ -35,7 +35,7 @@ func wrapWithTransfer(toAddress address, amount int64) error {
 		)
 	}
 
-	// wrap gnot to wugnot
+	// wrap ugnot to wugnot
 	wugnotAddr := chain.PackageAddress(WUGNOT_PATH)
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	banker_.SendCoins(currentRealmAddr, wugnotAddr, sentCoins)

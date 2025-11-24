@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	GNOT          string = "gnot"
+	GNOT          string = "ugnot"
 	minimumAmount        = 1_000_000 // 1 GNS
 )
 

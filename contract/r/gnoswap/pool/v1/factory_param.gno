@@ -23,7 +23,7 @@ const (
 )
 
 const (
-	GNOT           string = "gnot"
+	GNOT           string = "ugnot"
 	WRAPPED_WUGNOT string = "gno.land/r/gnoland/wugnot"
 )
 

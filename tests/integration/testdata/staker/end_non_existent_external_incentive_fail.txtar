@@ -96,7 +96,7 @@ gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Deposit -send "10000
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 
-gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func CreateExternalIncentive -send "1000000000ugnot" -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100" -args "gnot" -args 1000000000 -args 2773180800 -args 2780956800 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func CreateExternalIncentive -send "1000000000ugnot" -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100" -args "ugnot" -args 1000000000 -args 2773180800 -args 2780956800 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
 stdout 'GAS USED:   3[0-9]{7}'
 stdout 'STORAGE DELTA:  28830 bytes'
 stdout 'TOTAL TX COST:  102883000ugnot'

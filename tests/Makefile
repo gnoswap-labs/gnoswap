@@ -152,7 +152,7 @@ endif
 test-pool:
 	@echo "$(GREEN)Running pool tests on $(ENV) environment...$(NC)"
 	@$(MAKE) -f scripts/test.mk pool-create-gns-wugnot-default ENV=$(ENV)
-	@$(MAKE) -f scripts/test.mk mint-gns-gnot ENV=$(ENV)
+	@$(MAKE) -f scripts/test.mk mint-gns-ugnot ENV=$(ENV)
 
 .PHONY: test-swap
 test-swap:

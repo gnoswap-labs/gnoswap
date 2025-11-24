@@ -106,7 +106,7 @@
 // ### GNOT Path Checks
 //
 //   - IsGNOTPath: Checks if path is native or wrapped GNOT
-//   - IsGNOTNativePath: Checks for native GNOT path ("gnot")
+//   - IsGNOTNativePath: Checks for native GNOT path ("ugnot")
 //   - IsGNOTWrappedPath: Checks for wrapped GNOT path (wugnot)
 //
 // ### User Coin Validation
@@ -131,7 +131,7 @@
 // ### GNOT Paths
 //
 //   - GNOT_DENOM: "ugnot" (native denomination)
-//   - GNOT_PATH: "gnot" (native path identifier)
+//   - GNOT_PATH: "ugnot" (native path identifier)
 //   - WUGNOT_PATH: "gno.land/r/gnoland/wugnot" (wrapped GNOT path)
 //
 // ### Fixed-Point Constants

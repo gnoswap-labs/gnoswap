@@ -80,7 +80,7 @@ gno.land/r/demo/bar:gno.land/r/demo/baz:3000  # if bar < baz alphabetically
 
 **IMPORTANT**: When using native GNOT tokens, there's a critical distinction between token identifiers and route paths:
 
-- **Token Parameters**: Use `"gnot"` for `inputToken` and `outputToken` parameters
+- **Token Parameters**: Use `"ugnot"` for `inputToken` and `outputToken` parameters
 - **Route Paths**: Must use `"gno.land/r/gnoland/wugnot"` in route strings
 
 This dual-identifier system exists because:
@@ -92,19 +92,19 @@ This dual-identifier system exists because:
 **Correct Usage Example**:
 
 ```go
-// CORRECT: inputToken="gnot", route uses wugnot path
+// CORRECT: inputToken="ugnot", route uses wugnot path
 ExactInSwapRoute(
-    "gnot",                                    // input token identifier
+    "ugnot",                                    // input token identifier
     "gno.land/r/demo/bar",                    // output token
     "1000000",
     "gno.land/r/gnoland/wugnot:gno.land/r/demo/bar:3000", // route uses wugnot
     "100", "950000", deadline, ""
 )
 
-// INCORRECT: using "gnot" in route will fail
+// INCORRECT: using "ugnot" in route will fail
 ExactInSwapRoute(
-    "gnot", "gno.land/r/demo/bar", "1000000",
-    "gnot:gno.land/r/demo/bar:3000",          // Wrong: pools don't exist for "gnot"
+    "ugnot", "gno.land/r/demo/bar", "1000000",
+    "ugnot:gno.land/r/demo/bar:3000",          // Wrong: pools don't exist for "ugnot"
     "100", "950000", deadline, ""
 )
 ```
@@ -151,8 +151,8 @@ The Router automatically handles native GNOT token operations through wrapping/u
 
 #### Token Identifier Requirements
 
-- **Input Token**: Use `"gnot"` to specify native GNOT as input token
-- **Output Token**: Use `"gnot"` to specify native GNOT as output token
+- **Input Token**: Use `"ugnot"` to specify native GNOT as input token
+- **Output Token**: Use `"ugnot"` to specify native GNOT as output token
 - **Routes**: Must always use wrapped token path `"gno.land/r/gnoland/wugnot"` in route specifications
 
 #### Native Token Send Requirements
@@ -190,9 +190,9 @@ This approval is required because:
 wugnot.Approve(cross, routerAddress, 1000000) // Approve max amount
 
 // 2. Call swap function with native GNOT, sending ugnot
-// Note: inputToken="gnot" but route uses wugnot path
+// Note: inputToken="ugnot" but route uses wugnot path
 amountIn, amountOut := ExactInSwapRoute(
-    "gnot",                                    // input token (native)
+    "ugnot",                                    // input token (native)
     "gno.land/r/demo/bar",                    // output token
     "1000000",                                // amount (send this much ugnot)
     "gno.land/r/gnoland/wugnot:gno.land/r/demo/bar:3000", // route uses wugnot
@@ -243,7 +243,7 @@ ExactInSwapRoute(
 // Split route for large trades
 ExactInSwapRoute(
     "gno.land/r/demo/usdc",
-    "gnot",
+    "ugnot",
     "10000000000",
     "gno.land/r/demo/usdc:gno.land/r/gnoland/wugnot:500,gno.land/r/demo/usdc:gno.land/r/gnoland/wugnot:3000",
     "60,40",  // 60% through 0.05%, 40% through 0.3%
@@ -283,7 +283,7 @@ wugnot.Approve(cross, routerAddress, 2000000) // Approve more than needed
 
 // STEP 2: ExactIn with native GNOT (send exactly amountIn)
 amountIn, amountOut := ExactInSwapRoute(
-    "gnot",                    // native input
+    "ugnot",                    // native input
     "gno.land/r/demo/bar",     // output token
     "1000000",                 // send this amount of ugnot with call
     "gno.land/r/gnoland/wugnot:gno.land/r/demo/bar:3000",
@@ -293,7 +293,7 @@ amountIn, amountOut := ExactInSwapRoute(
 
 // STEP 3: ExactOut with native GNOT (send amountInMax)
 amountIn, amountOut := ExactOutSwapRoute(
-    "gnot",                    // native input
+    "ugnot",                    // native input
     "gno.land/r/demo/bar",     // output token
     "1000000",                 // exact output desired
     "gno.land/r/gnoland/wugnot:gno.land/r/demo/bar:3000",
@@ -305,7 +305,7 @@ amountIn, amountOut := ExactOutSwapRoute(
 
 // STEP 4: Single swap with partial execution + refund
 amountIn, amountOut := ExactInSingleSwapRoute(
-    "gnot",                    // native input
+    "ugnot",                    // native input
     "gno.land/r/demo/bar",     // output token
     "1000000",                 // send this amount of ugnot with call
     "gno.land/r/gnoland/wugnot:gno.land/r/demo/bar:3000",
@@ -322,7 +322,7 @@ amountIn, amountOut := ExactInSingleSwapRoute(
 
 1. **WUGNOT Approval Forgotten**: Most transaction failures with native GNOT occur because developers forget to approve WUGNOT spending before calling router functions.
 
-2. **Route vs Token Identifier Confusion**: Using `"gnot"` in route strings instead of `"gno.land/r/gnoland/wugnot"` will cause transactions to fail since no pools exist for the `"gnot"` identifier.
+2. **Route vs Token Identifier Confusion**: Using `"ugnot"` in route strings instead of `"gno.land/r/gnoland/wugnot"` will cause transactions to fail since no pools exist for the `"ugnot"` identifier.
 
 3. **Incorrect Native Token Send Amount**:
 
@@ -335,7 +335,7 @@ amountIn, amountOut := ExactInSingleSwapRoute(
 ### Frontend Integration Checklist
 
 - [ ] Implement WUGNOT approval before native GNOT swaps
-- [ ] Use correct token identifiers: `"gnot"` for parameters, `"gno.land/r/gnoland/wugnot"` for routes
+- [ ] Use correct token identifiers: `"ugnot"` for parameters, `"gno.land/r/gnoland/wugnot"` for routes
 - [ ] Send correct native token amounts with function calls
 - [ ] Handle automatic refunds in UI balance updates
 - [ ] Test both partial and full swap scenarios

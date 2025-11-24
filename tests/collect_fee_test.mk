@@ -54,7 +54,7 @@ mint-test-position:
 	@echo "" | gnokey maketx call -pkgpath $(WUGNOT_PATH) -func Approve -args $(ADDR_POSITION) -args $(MAX_APPROVE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 
 	# Mint position with native GNOT (will be wrapped to WUGNOT internally)
-	@echo "" | gnokey maketx call -pkgpath $(POSITION_PATH) -func Mint -send "50000000ugnot" -args $(GNS_PATH) -args "gnot" -args 3000 -args "-887220" -args "887220" -args 50000000 -args 50000000 -args 1 -args 1 -args $(TX_EXPIRE) -args $(ADDR_ADMIN) -args $(ADDR_ADMIN) -args "" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath $(POSITION_PATH) -func Mint -send "50000000ugnot" -args $(GNS_PATH) -args "ugnot" -args 3000 -args "-887220" -args "887220" -args 50000000 -args 50000000 -args 1 -args 1 -args $(TX_EXPIRE) -args $(ADDR_ADMIN) -args $(ADDR_ADMIN) -args "" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo
 
 .PHONY: execute-swaps
@@ -70,7 +70,7 @@ execute-swaps:
 	@echo "" | gnokey maketx call -pkgpath $(ROUTER_PATH) -func ExactInSwapRoute -args $(GNS_PATH) -args $(WUGNOT_PATH) -args 1000000 -args "$(GNS_PATH):$(WUGNOT_PATH):3000" -args "100" -args "0" -args $(TX_EXPIRE) -args "" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 
 	# Swap 2: WUGNOT -> GNS (exact in with native input)
-	@echo "" | gnokey maketx call -pkgpath $(ROUTER_PATH) -func ExactInSwapRoute -send "1000000ugnot" -args "gnot" -args $(GNS_PATH) -args 1000000 -args "$(WUGNOT_PATH):$(GNS_PATH):3000" -args "100" -args "0" -args $(TX_EXPIRE) -args "" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath $(ROUTER_PATH) -func ExactInSwapRoute -send "1000000ugnot" -args "ugnot" -args $(GNS_PATH) -args 1000000 -args "$(WUGNOT_PATH):$(GNS_PATH):3000" -args "100" -args "0" -args $(TX_EXPIRE) -args "" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 
 	# Swap 3: Another GNS -> WUGNOT swap to accumulate more fees
 	@echo "" | gnokey maketx call -pkgpath $(ROUTER_PATH) -func ExactInSwapRoute -args $(GNS_PATH) -args $(WUGNOT_PATH) -args 500000 -args "$(GNS_PATH):$(WUGNOT_PATH):3000" -args "100" -args "0" -args $(TX_EXPIRE) -args "" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin

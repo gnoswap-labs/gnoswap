@@ -649,7 +649,7 @@ func TestProcessTokens(t *testing.T) {
 			isNative1:      false,
 			expectedWrap:   1300,
 			expectPanic:    false,
-			expectMsg:      "[GNOSWAP-POSITION-016] invalid token address || token0(gnot), token1(gno.land/r/gnoswap/gns)",
+			expectMsg:      "[GNOSWAP-POSITION-016] invalid token address || token0(ugnot), token1(gno.land/r/gnoswap/gns)",
 		},
 		{
 			name:           "processTokens is failed by token1 is native",
@@ -678,7 +678,7 @@ func TestProcessTokens(t *testing.T) {
 			isNative1:      true,
 			expectedWrap:   2300,
 			expectPanic:    true,
-			expectMsg:      "[GNOSWAP-POSITION-016] invalid token address || token0(gnot), token1(gnot)",
+			expectMsg:      "[GNOSWAP-POSITION-016] invalid token address || token0(ugnot), token1(ugnot)",
 		},
 		{
 			name:           "processTokens is failed by invalid token path",
@@ -1393,7 +1393,7 @@ func TestValidateTokenPath(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:        "Valid native token (gnot) with wrapped token",
+			name:        "Valid native token (ugnot) with wrapped token",
 			token0:      GNOT,
 			token1:      gnsPath,
 			expectError: false,
@@ -1417,13 +1417,13 @@ func TestValidateTokenPath(t *testing.T) {
 			expectError: true,
 		},
 		{
-			name:        "Invalid - gnot and wugnot conflict",
+			name:        "Invalid - ugnot and wugnot conflict",
 			token0:      GNOT,
 			token1:      WRAPPED_WUGNOT,
 			expectError: true,
 		},
 		{
-			name:        "Invalid - wugnot and gnot conflict (reversed)",
+			name:        "Invalid - wugnot and ugnot conflict (reversed)",
 			token0:      WRAPPED_WUGNOT,
 			token1:      GNOT,
 			expectError: true,

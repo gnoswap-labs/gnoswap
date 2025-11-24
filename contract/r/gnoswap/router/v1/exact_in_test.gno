@@ -223,7 +223,7 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 		expectPanic      bool
 	}{
 		{
-			name:             "success - gns -> gnot",
+			name:             "success - gns -> ugnot",
 			tokenPath0:       wugnotPath,
 			tokenPath1:       gnsPath,
 			feeTier:          uint32(500),
@@ -235,7 +235,7 @@ func TestExactInZeroForOneFalse(t *testing.T) {
 			feeProtocol0:     10,
 			feeProtocol1:     10,
 			inputToken:       gnsPath,
-			outputToken:      "gnot",
+			outputToken:      "ugnot",
 			amountIn:         "100",
 			routeArr:         BuildSingleHopRoutePath(gnsPath, wugnotPath, uint32(500)),
 			quoteArr:         "100",
@@ -373,7 +373,7 @@ func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
 		func() {
 			testing.SetRealm(routerRealm)
 			router.ExactOutSwapRoute(
-				gnot,    // inputToken
+				ugnot,   // inputToken
 				quxPath, // outputToken
 				"3",     // amountSpecified
 				"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/qux:3000", // strRouteArr

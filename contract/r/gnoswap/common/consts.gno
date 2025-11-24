@@ -15,7 +15,7 @@ const (
 
 	// GNOT_PATH is the path identifier for native GNOT in GnoSwap.
 	// Used to identify native GNOT in pool pairs and swap paths.
-	GNOT_PATH = "gnot"
+	GNOT_PATH = "ugnot"
 
 	// WUGNOT_PATH is the package path for wrapped GNOT (wugnot) token.
 	// Wrapped GNOT is an GRC20 representation of native GNOT for DeFi operations.

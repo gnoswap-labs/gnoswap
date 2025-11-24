@@ -28,7 +28,7 @@ func TestWrap(t *testing.T) {
 			name:                  "success by native token",
 			callerAddr:            user1Addr,
 			toAddr:                stakerAddr,
-			tokenPath:             "gnot",
+			tokenPath:             "ugnot",
 			amount:                1000,
 			expectedBalanceChange: 1000,
 			expectedHasError:      false,
@@ -58,7 +58,7 @@ func TestWrap(t *testing.T) {
 			name:                  "failure by native token amount is 999",
 			callerAddr:            user1Addr,
 			toAddr:                stakerAddr,
-			tokenPath:             "gnot",
+			tokenPath:             "ugnot",
 			amount:                999,
 			expectedBalanceChange: 0,
 			expectedHasError:      true,
@@ -68,7 +68,7 @@ func TestWrap(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			isNative := tc.tokenPath == "gnot"
+			isNative := tc.tokenPath == "ugnot"
 			testing.SetRealm(testing.NewUserRealm(tc.callerAddr))
 
 			if isNative {

@@ -244,7 +244,7 @@ func TestCoins_IsGNOTPath(t *testing.T) {
 		},
 		{
 			name:           "similar_but_different_path",
-			path:           "gnot",
+			path:           "ugnot",
 			expectedResult: true,
 			description:    "Exact match with GNOT_PATH should return true",
 		},
@@ -298,7 +298,7 @@ func TestCoins_IsGNOTNativePath(t *testing.T) {
 		},
 		{
 			name:           "exact_gnot_match",
-			path:           "gnot",
+			path:           "ugnot",
 			expectedResult: true,
 			description:    "Exact match with GNOT_PATH should return true",
 		},
