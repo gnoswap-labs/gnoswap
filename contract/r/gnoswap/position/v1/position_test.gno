@@ -1394,14 +1394,14 @@ func TestValidateTokenPath(t *testing.T) {
 		},
 		{
 			name:        "Valid native token (ugnot) with wrapped token",
-			token0:      GNOT,
+			token0:      common.GNOT_DENOM,
 			token1:      gnsPath,
 			expectError: false,
 		},
 		{
 			name:        "Valid wrapped token with native",
 			token0:      gnsPath,
-			token1:      GNOT,
+			token1:      common.GNOT_DENOM,
 			expectError: false,
 		},
 		{
@@ -1412,14 +1412,14 @@ func TestValidateTokenPath(t *testing.T) {
 		},
 		{
 			name:        "Invalid - ugnot and wugnot conflict",
-			token0:      GNOT,
+			token0:      common.GNOT_DENOM,
 			token1:      WRAPPED_WUGNOT,
 			expectError: true,
 		},
 		{
 			name:        "Invalid - wugnot and ugnot conflict (reversed)",
 			token0:      WRAPPED_WUGNOT,
-			token1:      GNOT,
+			token1:      common.GNOT_DENOM,
 			expectError: true,
 		},
 		{

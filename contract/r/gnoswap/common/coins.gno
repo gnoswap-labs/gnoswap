@@ -4,12 +4,12 @@ import "chain/banker"
 
 // IsGNOTPath checks if the given path is either native gnot or wrapped gnot path
 func IsGNOTPath(path string) bool {
-	return path == GNOT_PATH || path == WUGNOT_PATH
+	return path == GNOT_DENOM || path == WUGNOT_PATH
 }
 
 // IsGNOTNativePath checks if the given path is the native gnot path
 func IsGNOTNativePath(path string) bool {
-	return path == GNOT_PATH
+	return path == GNOT_DENOM
 }
 
 // IsGNOTWrappedPath checks if the given path is the wrapped gnot path

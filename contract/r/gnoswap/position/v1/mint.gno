@@ -11,8 +11,6 @@ import (
 
 const (
 	WRAPPED_WUGNOT string = "gno.land/r/gnoland/wugnot"
-	UGNOT          string = "ugnot"
-	GNOT           string = "ugnot"
 )
 
 // mint creates a new liquidity position by adding liquidity to a pool and minting an NFT.
@@ -273,8 +271,8 @@ func validateTokenPath(token0, token1 string) error {
 	if token0 == token1 {
 		return errInvalidTokenPath
 	}
-	if (token0 == GNOT && token1 == WRAPPED_WUGNOT) ||
-		(token0 == WRAPPED_WUGNOT && token1 == GNOT) {
+	if (token0 == common.GNOT_DENOM && token1 == WRAPPED_WUGNOT) ||
+		(token0 == WRAPPED_WUGNOT && token1 == common.GNOT_DENOM) {
 		return errInvalidTokenPath
 	}
 	if (!isNative(token0) && !isValidTokenPath(token0)) ||

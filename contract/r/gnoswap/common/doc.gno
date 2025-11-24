@@ -131,7 +131,7 @@
 // ### GNOT Paths
 //
 //   - GNOT_DENOM: "ugnot" (native denomination)
-//   - GNOT_PATH: "ugnot" (native path identifier)
+//   - GNOT_DENOM: "ugnot" (native path identifier)
 //   - WUGNOT_PATH: "gno.land/r/gnoland/wugnot" (wrapped GNOT path)
 //
 // ### Fixed-Point Constants

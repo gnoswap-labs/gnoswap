@@ -597,7 +597,7 @@ func TestAssertIsValidUserCoinSendWithTokenPair(t *testing.T) {
 	}{
 		{
 			name:        "GNOT native path in token0",
-			token0:      common.GNOT_PATH,
+			token0:      common.GNOT_DENOM,
 			token1:      gnsPath,
 			amount0:     "1000",
 			amount1:     "2000",
@@ -607,7 +607,7 @@ func TestAssertIsValidUserCoinSendWithTokenPair(t *testing.T) {
 		{
 			name:        "GNOT native path in token1",
 			token0:      gnsPath,
-			token1:      common.GNOT_PATH,
+			token1:      common.GNOT_DENOM,
 			amount0:     "2000",
 			amount1:     "1000",
 			sentCoins:   chain.Coins{chain.Coin{Denom: ugnotDenom, Amount: 1000}},
@@ -615,7 +615,7 @@ func TestAssertIsValidUserCoinSendWithTokenPair(t *testing.T) {
 		},
 		{
 			name:                 "GNOT native path with wrong amount",
-			token0:               common.GNOT_PATH,
+			token0:               common.GNOT_DENOM,
 			token1:               gnsPath,
 			amount0:              "1000",
 			amount1:              "2000",
@@ -644,7 +644,7 @@ func TestAssertIsValidUserCoinSendWithTokenPair(t *testing.T) {
 		},
 		{
 			name:                 "Invalid amount0 (non-numeric)",
-			token0:               common.GNOT_PATH,
+			token0:               common.GNOT_DENOM,
 			token1:               gnsPath,
 			amount0:              "abc",
 			amount1:              "2000",
@@ -655,7 +655,7 @@ func TestAssertIsValidUserCoinSendWithTokenPair(t *testing.T) {
 		{
 			name:                 "Invalid amount1 (non-numeric)",
 			token0:               gnsPath,
-			token1:               common.GNOT_PATH,
+			token1:               common.GNOT_DENOM,
 			amount0:              "1000",
 			amount1:              "xyz",
 			sentCoins:            chain.Coins{},
@@ -664,7 +664,7 @@ func TestAssertIsValidUserCoinSendWithTokenPair(t *testing.T) {
 		},
 		{
 			name:        "Large valid amounts",
-			token0:      common.GNOT_PATH,
+			token0:      common.GNOT_DENOM,
 			token1:      gnsPath,
 			amount0:     "999999999999",
 			amount1:     "888888888888",
@@ -673,7 +673,7 @@ func TestAssertIsValidUserCoinSendWithTokenPair(t *testing.T) {
 		},
 		{
 			name:        "Zero amount for GNOT",
-			token0:      common.GNOT_PATH,
+			token0:      common.GNOT_DENOM,
 			token1:      gnsPath,
 			amount0:     "0",
 			amount1:     "1000",
