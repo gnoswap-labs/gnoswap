@@ -3,6 +3,7 @@ package common
 import (
 	"gno.land/p/nt/ufmt"
 
+	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -38,9 +39,10 @@ var (
 	}
 
 	// Pre-computed constants for optimization
-	maxUint256   = u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935") // 2^256 - 1
-	minSqrtRatio = u256.MustFromDecimal("4295128739")                                                                     // same as TickMathGetSqrtRatioAtTick(minTick)
-	maxSqrtRatio = u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")                              // same as TickMathGetSqrtRatioAtTick(maxTick)
+	maxUint256 = u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935") // 2^256 - 1
+	// Use gnsmath package constants for sqrt ratio bounds to avoid duplication
+	minSqrtRatio = gnsmath.MIN_SQRT_RATIO
+	maxSqrtRatio = gnsmath.MAX_SQRT_RATIO
 
 	// MSB calculation thresholds - pre-computed for performance
 	msb128Threshold = u256.MustFromDecimal("340282366920938463463374607431768211455") // 2^128 - 1
