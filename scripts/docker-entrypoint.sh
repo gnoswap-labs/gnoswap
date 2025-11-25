@@ -53,25 +53,90 @@ setup_tests() {
     cd /workspace/contract
 
     # Run setup.py to create symlinks
-    python3 setup.py --exclude-tests -w /workspace
+    python3 setup.py -w /workspace
 
     echo -e "${GREEN}Setup completed!${NC}"
 }
 
-run_test() {
+run_single_test() {
     local test_name=$1
 
     echo -e "${BLUE}Running test: ${test_name}${NC}"
     echo ""
 
     cd /workspace/gno/gno.land/pkg/integration
+    # Use $ anchor to match exact test name (avoid int_test matching uint_test)
+    go test -v . -run "TestTestdata/${test_name}\$"
+}
 
-    if [ "$test_name" = "all" ]; then
-        # Run all tests
-        go test -v . -run "TestTestdata"
-    else
-        # Run specific test
-        go test -v . -run "TestTestdata/${test_name}"
+run_all_tests() {
+    echo -e "${BLUE}Running all integration tests individually...${NC}"
+    echo ""
+
+    cd /workspace/gno/gno.land/pkg/integration
+
+    local tests=()
+    while IFS= read -r test; do
+        tests+=("$test")
+    done < <(find /workspace/contract/tests/integration/testdata -name "*.txtar" -type f | \
+        sed 's|.*/||' | \
+        sed 's|\.txtar||' | \
+        sort)
+
+    local total=${#tests[@]}
+    local passed=0
+    local failed=0
+    local failed_tests=()
+
+    echo -e "${YELLOW}Found ${total} tests to run${NC}"
+    echo ""
+
+    # Disable exit on error to continue running all tests
+    set +e
+
+    for i in "${!tests[@]}"; do
+        local test="${tests[$i]}"
+        local num=$((i + 1))
+
+        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${BLUE}[${num}/${total}] Running: ${test}${NC}"
+        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+        if go test -v . -run "TestTestdata/${test}\$"; then
+            echo -e "${GREEN}✓ PASSED: ${test}${NC}"
+            ((passed++)) || true
+        else
+            echo -e "${RED}✗ FAILED: ${test}${NC}"
+            ((failed++)) || true
+            failed_tests+=("$test")
+        fi
+        echo ""
+    done
+
+    # Re-enable exit on error
+    set -e
+
+    # Print summary
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BLUE}                    TEST SUMMARY                           ${NC}"
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "  Total:  ${total}"
+    echo -e "  ${GREEN}Passed: ${passed}${NC}"
+    echo -e "  ${RED}Failed: ${failed}${NC}"
+
+    if [ ${#failed_tests[@]} -gt 0 ]; then
+        echo ""
+        echo -e "${RED}Failed tests:${NC}"
+        for t in "${failed_tests[@]}"; do
+            echo -e "  ${RED}- ${t}${NC}"
+        done
+    fi
+
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+    # Exit with failure if any test failed
+    if [ $failed -gt 0 ]; then
+        exit 1
     fi
 }
 
@@ -85,7 +150,7 @@ case "${1:-}" in
         ;;
     --all|-a)
         setup_tests
-        run_test "all"
+        run_all_tests
         ;;
     --test|-t)
         if [ -z "${2:-}" ]; then
@@ -94,11 +159,11 @@ case "${1:-}" in
             exit 1
         fi
         setup_tests
-        run_test "$2"
+        run_single_test "$2"
         ;;
     *)
         # Assume it's a test name for convenience
         setup_tests
-        run_test "$1"
+        run_single_test "$1"
         ;;
 esac
