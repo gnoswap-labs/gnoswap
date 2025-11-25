@@ -88,7 +88,10 @@ stdout 99996800000000
 gnokey query vm/qeval --data "gno.land/r/gnoswap/gov/xgns.BalanceOf(\"$test1_user_addr\")"
 stdout 2000000000
 
-### Wait for a few blocks to ensure the reconfiguration is processed
+### Wait for a few blocks to ensure the reconfiguration is processed and delegation is counted
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_user_addr -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_user_addr -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_user_addr -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_user_addr -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_user_addr -args 1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 
