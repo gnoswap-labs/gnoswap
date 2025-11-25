@@ -12,10 +12,11 @@ const (
 )
 
 var (
-	zero  = Zero()
-	one   = One()
-	two   = NewUint(2)
-	three = NewUint(3)
+	zero       = Zero()
+	one        = One()
+	two        = NewUint(2)
+	three      = NewUint(3)
+	maxUint256 = MustFromDecimal(MAX_UINT256)
 )
 
 // Uint represents a 256-bit unsigned integer.
