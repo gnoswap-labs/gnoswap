@@ -13,10 +13,10 @@ const (
 )
 
 var (
-	zero  = Zero()
-	one   = One()
-	two   = NewUint(2)
-	three = NewUint(3)
+	zero  = Uint{0, 0, 0, 0}
+	one   = Uint{1, 0, 0, 0}
+	two   = Uint{2, 0, 0, 0}
+	three = Uint{3, 0, 0, 0}
 )
 
 // Uint represents a 256-bit unsigned integer.
@@ -42,12 +42,12 @@ func NewUintFromInt64(val int64) *Uint {
 
 // Zero returns a new Uint with value 0.
 func Zero() *Uint {
-	return NewUint(0)
+	return &zero
 }
 
 // One returns a new Uint with value 1.
 func One() *Uint {
-	return NewUint(1)
+	return &one
 }
 
 // SetAllOne sets z to the maximum 256-bit value (all bits set to 1) and returns z.

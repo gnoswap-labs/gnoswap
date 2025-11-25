@@ -131,15 +131,17 @@ func (z *Uint) scanScientificFromString(src string) error {
 	if src[(idx+1):] == "0" {
 		return nil
 	}
-	exp := new(Uint)
+	var exp Uint
 	if err := exp.SetFromDecimal(src[(idx + 1):]); err != nil {
 		return err
 	}
 	if exp.GtUint64(77) { // 10**78 is larger than 2**256
 		return ErrBig256Range
 	}
-	exp.Exp(NewUint(10), exp)
-	if _, overflow := z.MulOverflow(z, exp); overflow {
+	var ten Uint
+	ten.SetUint64(10)
+	exp.Exp(&ten, &exp)
+	if _, overflow := z.MulOverflow(z, &exp); overflow {
 		return ErrBig256Range
 	}
 	return nil
