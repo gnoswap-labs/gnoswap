@@ -1,8 +1,8 @@
 package uint256
 
 import (
-	"math"
 	"errors"
+	"math"
 	"math/bits"
 	"strconv"
 )
@@ -120,10 +120,10 @@ func MustFromDecimal(decimal string) *Uint {
 }
 
 // multipliers holds the values that are needed for fromDecimal
-var multipliers = [5]*Uint{
-	{}, // 1 (no miltiplication needed in the first round)
-	{10000000000000000000, 0, 0, 0}, // 10 ^ 19
-	{687399551400673280, 5421010862427522170, 0, 0},                     // 10 ^ 38
+var multipliers = [5]Uint{
+	{0, 0, 0, 0},                                    // 1 (no multiplication needed in the first round)
+	{10000000000000000000, 0, 0, 0},                 // 10 ^ 19
+	{687399551400673280, 5421010862427522170, 0, 0}, // 10 ^ 38
 	{5332261958806667264, 17004971331911604867, 2938735877055718769, 0}, // 10 ^ 57
 	{0, 8607968719199866880, 532749306367912313, 1593091911132452277},   // 10 ^ 76
 }
@@ -139,15 +139,19 @@ func (z *Uint) fromDecimal(bs string) error {
 		num       uint64
 		err       error
 		remaining = len(bs)
+		// Use stack-allocated variables instead of heap allocations
+		base   Uint
+		mulRes Uint
+		addRes Uint
 	)
 	if remaining == 0 {
 		return errors.New("EOF")
 	}
 	// We proceed in steps of 19 characters (nibbles), from least significant to most significant.
 	// This means that the first (up to) 19 characters do not need to be multiplied.
-	// In the second iteration, our slice of 19 characters needs to be multipleied
+	// In the second iteration, our slice of 19 characters needs to be multiplied
 	// by a factor of 10^19. Et cetera.
-	for i, mult := range multipliers {
+	for i := range multipliers {
 		if remaining <= 0 {
 			return nil // Done
 		}
@@ -164,18 +168,18 @@ func (z *Uint) fromDecimal(bs string) error {
 		if i == 0 {
 			z.SetUint64(num)
 		} else {
-			base := NewUint(num)
+			base.SetUint64(num)
 			// Check for overflow in multiplication
-			mulResult, overflow := new(Uint).MulOverflow(base, mult)
+			_, overflow := mulRes.MulOverflow(&base, &multipliers[i])
 			if overflow {
 				return ErrBig256Range
 			}
 			// Check for overflow in addition
-			addResult, overflow := new(Uint).AddOverflow(z, mulResult)
+			_, overflow = addRes.AddOverflow(z, &mulRes)
 			if overflow {
 				return ErrBig256Range
 			}
-			z.Set(addResult)
+			z.Set(&addRes)
 		}
 		// Chop off another 19 characters
 		if remaining > 19 {
