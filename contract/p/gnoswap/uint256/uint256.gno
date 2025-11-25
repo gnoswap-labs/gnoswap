@@ -42,12 +42,14 @@ func NewUintFromInt64(val int64) *Uint {
 
 // Zero returns a new Uint with value 0.
 func Zero() *Uint {
-	return &zero
+	z := zero
+	return &z
 }
 
 // One returns a new Uint with value 1.
 func One() *Uint {
-	return &one
+	z := one
+	return &z
 }
 
 // SetAllOne sets z to the maximum 256-bit value (all bits set to 1) and returns z.
