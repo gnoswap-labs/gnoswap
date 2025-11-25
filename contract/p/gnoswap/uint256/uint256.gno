@@ -17,10 +17,14 @@ var (
 	two        = NewUint(2)
 	three      = NewUint(3)
 	maxUint256 *Uint
+
+	// MaxUint256Value is exported for use by other packages
+	MaxUint256Value *Uint
 )
 
 func init() {
 	maxUint256 = MustFromDecimal(MAX_UINT256)
+	MaxUint256Value = maxUint256
 }
 
 // Uint represents a 256-bit unsigned integer.

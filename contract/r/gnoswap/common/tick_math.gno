@@ -39,13 +39,15 @@ var (
 	}
 
 	// Pre-computed constants for optimization
-	maxUint256 = u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935") // 2^256 - 1
+	// Use uint256 package constant for max value to avoid duplication
+	maxUint256 = u256.MaxUint256Value
 	// Use gnsmath package constants for sqrt ratio bounds to avoid duplication
 	minSqrtRatio = gnsmath.MIN_SQRT_RATIO
 	maxSqrtRatio = gnsmath.MAX_SQRT_RATIO
 
 	// MSB calculation thresholds - pre-computed for performance
-	msb128Threshold = u256.MustFromDecimal("340282366920938463463374607431768211455") // 2^128 - 1
+	// msb128Threshold uses maxUint128 from liquidity_amounts.gno (same value: 2^128 - 1)
+	msb128Threshold = maxUint128
 	msb64Threshold  = u256.MustFromDecimal("18446744073709551615")                    // 2^64 - 1
 	msb32Threshold  = u256.MustFromDecimal("4294967295")                              // 2^32 - 1
 	msb16Threshold  = u256.NewUint(65535)                                             // 2^16 - 1
