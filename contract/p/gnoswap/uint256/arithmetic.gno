@@ -334,33 +334,49 @@ func udivrem(quot, u []uint64, d *Uint) (rem Uint) {
 
 // umul computes full 256 x 256 -> 512 multiplication.
 func umul(x, y *Uint) [8]uint64 {
-	var (
-		res                           [8]uint64
-		carry, carry4, carry5, carry6 uint64
-		res1, res2, res3, res4, res5  uint64
-	)
+	var res [8]uint64
 
-	carry, res[0] = bits.Mul64(x[0], y[0])
-	carry, res1 = umulHop(carry, x[1], y[0])
-	carry, res2 = umulHop(carry, x[2], y[0])
-	carry4, res3 = umulHop(carry, x[3], y[0])
+	topX := highestNonZeroWord(x)
+	topY := highestNonZeroWord(y)
 
-	carry, res[1] = umulHop(res1, x[0], y[1])
-	carry, res2 = umulStep(res2, x[1], y[1], carry)
-	carry, res3 = umulStep(res3, x[2], y[1], carry)
-	carry5, res4 = umulStep(carry4, x[3], y[1], carry)
+	if topX < 0 || topY < 0 {
+		return res
+	}
 
-	carry, res[2] = umulHop(res2, x[0], y[2])
-	carry, res3 = umulStep(res3, x[1], y[2], carry)
-	carry, res4 = umulStep(res4, x[2], y[2], carry)
-	carry6, res5 = umulStep(carry5, x[3], y[2], carry)
+	lenX := topX + 1
+	lenY := topY + 1
 
-	carry, res[3] = umulHop(res3, x[0], y[3])
-	carry, res[4] = umulStep(res4, x[1], y[3], carry)
-	carry, res[5] = umulStep(res5, x[2], y[3], carry)
-	res[7], res[6] = umulStep(carry6, x[3], y[3], carry)
+	for i := 0; i < lenX; i++ {
+		xi := x[i]
+		if xi == 0 {
+			continue
+		}
+		var carry uint64
+		k := i
+		for j := 0; j < lenY; j++ {
+			hi, lo := bits.Mul64(xi, y[j])
+			lo, c := bits.Add64(lo, res[k], 0)
+			hi += c
+			lo, c = bits.Add64(lo, carry, 0)
+			hi += c
+			res[k] = lo
+			carry = hi
+			k++
+		}
+		res[i+lenY] = carry
+	}
 
 	return res
+}
+
+// highestNonZeroWord returns the highest index with non-zero value or -1 if the Uint is zero.
+func highestNonZeroWord(u *Uint) int {
+	for i := 3; i >= 0; i-- {
+		if u[i] != 0 {
+			return i
+		}
+	}
+	return -1
 }
 
 // umulStep computes (hi * 2^64 + lo) = z + (x * y) + carry.
