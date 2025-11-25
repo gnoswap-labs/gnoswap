@@ -1,0 +1,76 @@
+# Gas measurement test for p/gnoswap/gnsmath package
+# Tests Sqrt Price Math and Swap Math functions
+
+loadpkg gno.land/p/gnoswap/uint256
+loadpkg gno.land/p/gnoswap/int256
+loadpkg gno.land/p/gnoswap/gnsmath
+
+## start a new node
+gnoland start
+
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/gnoswap/basic -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
+
+### Sqrt Price Math Functions
+# GetAmount0Delta - Calculate token0 amount difference within price range
+gnokey maketx call -pkgpath gno.land/r/gnoswap/basic -func TestGetAmount0Delta -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   11178951'
+
+# GetAmount1Delta - Calculate token1 amount difference within price range
+gnokey maketx call -pkgpath gno.land/r/gnoswap/basic -func TestGetAmount1Delta -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   10533056'
+
+### Swap Math Functions
+# SwapMathComputeSwapStep - Compute next sqrt price, amounts in/out, and fee
+gnokey maketx call -pkgpath gno.land/r/gnoswap/basic -func TestSwapMathComputeSwapStep -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout 'GAS USED:   14430494'
+
+-- gnomod.toml --
+module = "gno.land/r/gnoswap/basic"
+gno = "0.9"
+
+-- main.gno --
+package basic
+
+import (
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/int256"
+    "gno.land/p/gnoswap/uint256"
+)
+
+// TestGetAmount0Delta tests GetAmount0Delta function
+// Calculates token0 amount difference within a price range with positive liquidity
+func TestGetAmount0Delta(cur realm) {
+	sqrtRatioAX96 := uint256.MustFromDecimal("79228162514264337593543950336") // 2^96
+	sqrtRatioBX96 := uint256.MustFromDecimal("87150978765690771352898345369") // higher price
+	liquidity := int256.MustFromDecimal("1000000000000000000")
+	
+	gnsmath.GetAmount0Delta(sqrtRatioAX96, sqrtRatioBX96, liquidity)
+}
+
+// TestGetAmount1Delta tests GetAmount1Delta function
+// Calculates token1 amount difference within a price range with positive liquidity
+func TestGetAmount1Delta(cur realm) {
+	sqrtRatioAX96 := uint256.MustFromDecimal("79228162514264337593543950336") // 2^96
+	sqrtRatioBX96 := uint256.MustFromDecimal("87150978765690771352898345369") // higher price
+	liquidity := int256.MustFromDecimal("1000000000000000000")
+	
+	gnsmath.GetAmount1Delta(sqrtRatioAX96, sqrtRatioBX96, liquidity)
+}
+
+// TestSwapMathComputeSwapStep tests SwapMathComputeSwapStep function
+// Computes the next sqrt price, amount in, amount out, and fee amount for a swap step
+func TestSwapMathComputeSwapStep(cur realm) {
+	currentX96 := uint256.MustFromDecimal("79228162514264337593543950336")
+	targetX96 := uint256.MustFromDecimal("80120444139456980969479389824")
+	liquidity := uint256.MustFromDecimal("2000000000000000000")
+	amountRemaining := int256.MustFromDecimal("1000000000000000000")
+	feePips := uint64(600)
+	
+	gnsmath.SwapMathComputeSwapStep(
+		currentX96,
+		targetX96,
+		liquidity,
+		amountRemaining,
+		feePips,
+	)
+}
