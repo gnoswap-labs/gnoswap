@@ -1288,27 +1288,27 @@ func TestIsOverflow(t *testing.T) {
 	}{
 		{
 			name:     "zero_not_overflow",
-			input:    &Uint{arr: [4]uint64{0, 0, 0, 0}},
+			input:    &Uint{0, 0, 0, 0},
 			expected: false,
 		},
 		{
 			name:     "max_value_not_overflow",
-			input:    &Uint{arr: [4]uint64{^uint64(0), ^uint64(0), ^uint64(0), ^uint64(0) >> 1}},
+			input:    &Uint{^uint64(0), ^uint64(0), ^uint64(0), ^uint64(0) >> 1},
 			expected: false,
 		},
 		{
 			name:     "bit_255_set_is_overflow",
-			input:    &Uint{arr: [4]uint64{0, 0, 0, uint64(1) << 63}},
+			input:    &Uint{0, 0, 0, uint64(1) << 63},
 			expected: true,
 		},
 		{
 			name:     "all_bits_set_is_overflow",
-			input:    &Uint{arr: [4]uint64{^uint64(0), ^uint64(0), ^uint64(0), ^uint64(0)}},
+			input:    &Uint{^uint64(0), ^uint64(0), ^uint64(0), ^uint64(0)},
 			expected: true,
 		},
 		{
 			name:     "max_plus_one_is_overflow",
-			input:    &Uint{arr: [4]uint64{0, 0, 0, uint64(1) << 63}},
+			input:    &Uint{0, 0, 0, uint64(1) << 63},
 			expected: true,
 		},
 	}
@@ -1474,12 +1474,12 @@ func TestMulModPaths(t *testing.T) {
 			name: "boundary_case_m_arr3_zero",
 			x:    "340282366920938463463374607431768211456", // Q128
 			y:    "340282366920938463463374607431768211456",
-			m:    "340282366920938463463374607431768211455", // m.arr[3] != 0
+			m:    "340282366920938463463374607431768211455", // m[3] != 0
 			want: "1",
-			path: "fast", // Takes fast path because m.arr[3] == 0
+			path: "fast", // Takes fast path because m[3] == 0
 		},
 
-		// Reduce4 path: x*y > 2^256 and m.arr[3] != 0
+		// Reduce4 path: x*y > 2^256 and m[3] != 0
 		{
 			name: "reduce4_path_max_inputs",
 			x:    MAX_UINT256,

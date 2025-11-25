@@ -9,23 +9,23 @@ import (
 // Reciprocal computes a 320-bit value representing 1/m
 //
 // Notes:
-// - specialized for m.arr[3] != 0, hence limited to 2^192 <= m < 2^256
-// - returns zero if m.arr[3] == 0
+// - specialized for m[3] != 0, hence limited to 2^192 <= m < 2^256
+// - returns zero if m[3] == 0
 // - starts with a 32-bit division, refines with newton-raphson iterations
 func Reciprocal(m *Uint) (mu [5]uint64) {
-	if m.arr[3] == 0 {
+	if m[3] == 0 {
 		return mu
 	}
 
-	s := bits.LeadingZeros64(m.arr[3]) // Replace with leadingZeros(m) for general case
+	s := bits.LeadingZeros64(m[3]) // Replace with leadingZeros(m) for general case
 	p := 255 - s                       // floor(log_2(m)), m>0
 
 	// 0 or a power of 2?
 
-	// Check if at least one bit is set in m.arr[2], m.arr[1] or m.arr[0],
-	// or at least two bits in m.arr[3]
+	// Check if at least one bit is set in m[2], m[1] or m[0],
+	// or at least two bits in m[3]
 
-	if m.arr[0]|m.arr[1]|m.arr[2]|(m.arr[3]&(m.arr[3]-1)) == 0 {
+	if m[0]|m[1]|m[2]|(m[3]&(m[3]-1)) == 0 {
 
 		mu[4] = ^uint64(0) >> uint(p&63)
 		mu[3] = ^uint64(0)
@@ -47,7 +47,7 @@ func Reciprocal(m *Uint) (mu [5]uint64) {
 
 	// Extract most significant 32 bits
 
-	yh := uint32(y.arr[3] >> 32)
+	yh := uint32(y[3] >> 32)
 
 	if yh == 0x80000000 { // Avoid overflow in division
 		r0 = 0xffffffff
@@ -59,13 +59,13 @@ func Reciprocal(m *Uint) (mu [5]uint64) {
 
 	t1 := uint64(r0)                 // 2^31/y
 	t1 *= t1                         // 2^62/y^2
-	t1, _ = bits.Mul64(t1, y.arr[3]) // 2^62/y^2 * 2^64/y / 2^64 = 2^62/y
+	t1, _ = bits.Mul64(t1, y[3]) // 2^62/y^2 * 2^64/y / 2^64 = 2^62/y
 
 	r1 := uint64(r0) << 32 // 2^63/y
 	r1 -= t1               // 2^63/y - 2^62/y = 2^62/y
 	r1 *= 2                // 2^63/y
 
-	if (r1 | (y.arr[3] << 1)) == 0 {
+	if (r1 | (y[3] << 1)) == 0 {
 		r1 = ^uint64(0)
 	}
 
@@ -75,10 +75,10 @@ func Reciprocal(m *Uint) (mu [5]uint64) {
 	a2h, a2l := bits.Mul64(r1, r1)
 
 	// multiply by y: e2h:e2l:b2h = 2^126/y^2 * 2^128/y / 2^128 = 2^126/y
-	b2h, _ := bits.Mul64(a2l, y.arr[2])
-	c2h, c2l := bits.Mul64(a2l, y.arr[3])
-	d2h, d2l := bits.Mul64(a2h, y.arr[2])
-	e2h, e2l := bits.Mul64(a2h, y.arr[3])
+	b2h, _ := bits.Mul64(a2l, y[2])
+	c2h, c2l := bits.Mul64(a2l, y[3])
+	d2h, d2l := bits.Mul64(a2h, y[2])
+	e2h, e2l := bits.Mul64(a2h, y[3])
 
 	b2h, c := bits.Add64(b2h, c2l, 0)
 	e2l, c = bits.Add64(e2l, c2h, c)
@@ -96,7 +96,7 @@ func Reciprocal(m *Uint) (mu [5]uint64) {
 	r2l, c := bits.Add64(t2l, t2l, 0)
 	r2h, _ := bits.Add64(t2h, t2h, c)
 
-	if (r2h | r2l | (y.arr[3] << 1)) == 0 {
+	if (r2h | r2l | (y[3] << 1)) == 0 {
 		r2h = ^uint64(0)
 		r2l = ^uint64(0)
 	}
@@ -125,47 +125,47 @@ func Reciprocal(m *Uint) (mu [5]uint64) {
 
 	var q0, q1, q2, q3, q4, t0 uint64
 
-	q0, _ = bits.Mul64(x2, y.arr[0])
-	q1, t0 = bits.Mul64(x3, y.arr[0])
+	q0, _ = bits.Mul64(x2, y[0])
+	q1, t0 = bits.Mul64(x3, y[0])
 	q0, c = bits.Add64(q0, t0, 0)
 	q1, _ = bits.Add64(q1, 0, c)
 
-	t1, _ = bits.Mul64(x1, y.arr[1])
+	t1, _ = bits.Mul64(x1, y[1])
 	q0, c = bits.Add64(q0, t1, 0)
-	q2, t0 = bits.Mul64(x3, y.arr[1])
+	q2, t0 = bits.Mul64(x3, y[1])
 	q1, c = bits.Add64(q1, t0, c)
 	q2, _ = bits.Add64(q2, 0, c)
 
-	t1, t0 = bits.Mul64(x2, y.arr[1])
+	t1, t0 = bits.Mul64(x2, y[1])
 	q0, c = bits.Add64(q0, t0, 0)
 	q1, c = bits.Add64(q1, t1, c)
 	q2, _ = bits.Add64(q2, 0, c)
 
-	t1, t0 = bits.Mul64(x1, y.arr[2])
+	t1, t0 = bits.Mul64(x1, y[2])
 	q0, c = bits.Add64(q0, t0, 0)
 	q1, c = bits.Add64(q1, t1, c)
-	q3, t0 = bits.Mul64(x3, y.arr[2])
+	q3, t0 = bits.Mul64(x3, y[2])
 	q2, c = bits.Add64(q2, t0, c)
 	q3, _ = bits.Add64(q3, 0, c)
 
-	t1, _ = bits.Mul64(x0, y.arr[2])
+	t1, _ = bits.Mul64(x0, y[2])
 	q0, c = bits.Add64(q0, t1, 0)
-	t1, t0 = bits.Mul64(x2, y.arr[2])
+	t1, t0 = bits.Mul64(x2, y[2])
 	q1, c = bits.Add64(q1, t0, c)
 	q2, c = bits.Add64(q2, t1, c)
 	q3, _ = bits.Add64(q3, 0, c)
 
-	t1, t0 = bits.Mul64(x1, y.arr[3])
+	t1, t0 = bits.Mul64(x1, y[3])
 	q1, c = bits.Add64(q1, t0, 0)
 	q2, c = bits.Add64(q2, t1, c)
-	q4, t0 = bits.Mul64(x3, y.arr[3])
+	q4, t0 = bits.Mul64(x3, y[3])
 	q3, c = bits.Add64(q3, t0, c)
 	q4, _ = bits.Add64(q4, 0, c)
 
-	t1, t0 = bits.Mul64(x0, y.arr[3])
+	t1, t0 = bits.Mul64(x0, y[3])
 	q0, c = bits.Add64(q0, t0, 0)
 	q1, c = bits.Add64(q1, t1, c)
-	t1, t0 = bits.Mul64(x2, y.arr[3])
+	t1, t0 = bits.Mul64(x2, y[3])
 	q2, c = bits.Add64(q2, t0, c)
 	q3, c = bits.Add64(q3, t1, c)
 	q4, _ = bits.Add64(q4, 0, c)
@@ -211,60 +211,60 @@ func Reciprocal(m *Uint) (mu [5]uint64) {
 
 	// multiply by y
 
-	x1, x0 = bits.Mul64(d4h, y.arr[0])
-	x3, x2 = bits.Mul64(f4h, y.arr[0])
-	t1, t0 = bits.Mul64(f4l, y.arr[0])
+	x1, x0 = bits.Mul64(d4h, y[0])
+	x3, x2 = bits.Mul64(f4h, y[0])
+	t1, t0 = bits.Mul64(f4l, y[0])
 	x1, c = bits.Add64(x1, t0, 0)
 	x2, c = bits.Add64(x2, t1, c)
 	x3, _ = bits.Add64(x3, 0, c)
 
-	t1, t0 = bits.Mul64(d4h, y.arr[1])
+	t1, t0 = bits.Mul64(d4h, y[1])
 	x1, c = bits.Add64(x1, t0, 0)
 	x2, c = bits.Add64(x2, t1, c)
-	x4, t0 := bits.Mul64(f4h, y.arr[1])
+	x4, t0 := bits.Mul64(f4h, y[1])
 	x3, c = bits.Add64(x3, t0, c)
 	x4, _ = bits.Add64(x4, 0, c)
-	t1, t0 = bits.Mul64(d4l, y.arr[1])
+	t1, t0 = bits.Mul64(d4l, y[1])
 	x0, c = bits.Add64(x0, t0, 0)
 	x1, c = bits.Add64(x1, t1, c)
-	t1, t0 = bits.Mul64(f4l, y.arr[1])
+	t1, t0 = bits.Mul64(f4l, y[1])
 	x2, c = bits.Add64(x2, t0, c)
 	x3, c = bits.Add64(x3, t1, c)
 	x4, _ = bits.Add64(x4, 0, c)
 
-	t1, t0 = bits.Mul64(a4h, y.arr[2])
+	t1, t0 = bits.Mul64(a4h, y[2])
 	x0, c = bits.Add64(x0, t0, 0)
 	x1, c = bits.Add64(x1, t1, c)
-	t1, t0 = bits.Mul64(d4h, y.arr[2])
+	t1, t0 = bits.Mul64(d4h, y[2])
 	x2, c = bits.Add64(x2, t0, c)
 	x3, c = bits.Add64(x3, t1, c)
-	x5, t0 := bits.Mul64(f4h, y.arr[2])
+	x5, t0 := bits.Mul64(f4h, y[2])
 	x4, c = bits.Add64(x4, t0, c)
 	x5, _ = bits.Add64(x5, 0, c)
-	t1, t0 = bits.Mul64(d4l, y.arr[2])
+	t1, t0 = bits.Mul64(d4l, y[2])
 	x1, c = bits.Add64(x1, t0, 0)
 	x2, c = bits.Add64(x2, t1, c)
-	t1, t0 = bits.Mul64(f4l, y.arr[2])
+	t1, t0 = bits.Mul64(f4l, y[2])
 	x3, c = bits.Add64(x3, t0, c)
 	x4, c = bits.Add64(x4, t1, c)
 	x5, _ = bits.Add64(x5, 0, c)
 
-	t1, t0 = bits.Mul64(a4h, y.arr[3])
+	t1, t0 = bits.Mul64(a4h, y[3])
 	x1, c = bits.Add64(x1, t0, 0)
 	x2, c = bits.Add64(x2, t1, c)
-	t1, t0 = bits.Mul64(d4h, y.arr[3])
+	t1, t0 = bits.Mul64(d4h, y[3])
 	x3, c = bits.Add64(x3, t0, c)
 	x4, c = bits.Add64(x4, t1, c)
-	x6, t0 := bits.Mul64(f4h, y.arr[3])
+	x6, t0 := bits.Mul64(f4h, y[3])
 	x5, c = bits.Add64(x5, t0, c)
 	x6, _ = bits.Add64(x6, 0, c)
-	t1, t0 = bits.Mul64(a4l, y.arr[3])
+	t1, t0 = bits.Mul64(a4l, y[3])
 	x0, c = bits.Add64(x0, t0, 0)
 	x1, c = bits.Add64(x1, t1, c)
-	t1, t0 = bits.Mul64(d4l, y.arr[3])
+	t1, t0 = bits.Mul64(d4l, y[3])
 	x2, c = bits.Add64(x2, t0, c)
 	x3, c = bits.Add64(x3, t1, c)
-	t1, t0 = bits.Mul64(f4l, y.arr[3])
+	t1, t0 = bits.Mul64(f4l, y[3])
 	x4, c = bits.Add64(x4, t0, c)
 	x5, c = bits.Add64(x5, t1, c)
 	x6, _ = bits.Add64(x6, 0, c)
@@ -286,68 +286,68 @@ func Reciprocal(m *Uint) (mu [5]uint64) {
 	x3 = r4i
 	x4 = r4h
 
-	q1, q0 = bits.Mul64(x0, y.arr[0])
-	q3, q2 = bits.Mul64(x2, y.arr[0])
-	q5, q4 := bits.Mul64(x4, y.arr[0])
+	q1, q0 = bits.Mul64(x0, y[0])
+	q3, q2 = bits.Mul64(x2, y[0])
+	q5, q4 := bits.Mul64(x4, y[0])
 
-	t1, t0 = bits.Mul64(x1, y.arr[0])
+	t1, t0 = bits.Mul64(x1, y[0])
 	q1, c = bits.Add64(q1, t0, 0)
 	q2, c = bits.Add64(q2, t1, c)
-	t1, t0 = bits.Mul64(x3, y.arr[0])
+	t1, t0 = bits.Mul64(x3, y[0])
 	q3, c = bits.Add64(q3, t0, c)
 	q4, c = bits.Add64(q4, t1, c)
 	q5, _ = bits.Add64(q5, 0, c)
 
-	t1, t0 = bits.Mul64(x0, y.arr[1])
+	t1, t0 = bits.Mul64(x0, y[1])
 	q1, c = bits.Add64(q1, t0, 0)
 	q2, c = bits.Add64(q2, t1, c)
-	t1, t0 = bits.Mul64(x2, y.arr[1])
+	t1, t0 = bits.Mul64(x2, y[1])
 	q3, c = bits.Add64(q3, t0, c)
 	q4, c = bits.Add64(q4, t1, c)
-	q6, t0 := bits.Mul64(x4, y.arr[1])
+	q6, t0 := bits.Mul64(x4, y[1])
 	q5, c = bits.Add64(q5, t0, c)
 	q6, _ = bits.Add64(q6, 0, c)
 
-	t1, t0 = bits.Mul64(x1, y.arr[1])
+	t1, t0 = bits.Mul64(x1, y[1])
 	q2, c = bits.Add64(q2, t0, 0)
 	q3, c = bits.Add64(q3, t1, c)
-	t1, t0 = bits.Mul64(x3, y.arr[1])
+	t1, t0 = bits.Mul64(x3, y[1])
 	q4, c = bits.Add64(q4, t0, c)
 	q5, c = bits.Add64(q5, t1, c)
 	q6, _ = bits.Add64(q6, 0, c)
 
-	t1, t0 = bits.Mul64(x0, y.arr[2])
+	t1, t0 = bits.Mul64(x0, y[2])
 	q2, c = bits.Add64(q2, t0, 0)
 	q3, c = bits.Add64(q3, t1, c)
-	t1, t0 = bits.Mul64(x2, y.arr[2])
+	t1, t0 = bits.Mul64(x2, y[2])
 	q4, c = bits.Add64(q4, t0, c)
 	q5, c = bits.Add64(q5, t1, c)
-	q7, t0 := bits.Mul64(x4, y.arr[2])
+	q7, t0 := bits.Mul64(x4, y[2])
 	q6, c = bits.Add64(q6, t0, c)
 	q7, _ = bits.Add64(q7, 0, c)
 
-	t1, t0 = bits.Mul64(x1, y.arr[2])
+	t1, t0 = bits.Mul64(x1, y[2])
 	q3, c = bits.Add64(q3, t0, 0)
 	q4, c = bits.Add64(q4, t1, c)
-	t1, t0 = bits.Mul64(x3, y.arr[2])
+	t1, t0 = bits.Mul64(x3, y[2])
 	q5, c = bits.Add64(q5, t0, c)
 	q6, c = bits.Add64(q6, t1, c)
 	q7, _ = bits.Add64(q7, 0, c)
 
-	t1, t0 = bits.Mul64(x0, y.arr[3])
+	t1, t0 = bits.Mul64(x0, y[3])
 	q3, c = bits.Add64(q3, t0, 0)
 	q4, c = bits.Add64(q4, t1, c)
-	t1, t0 = bits.Mul64(x2, y.arr[3])
+	t1, t0 = bits.Mul64(x2, y[3])
 	q5, c = bits.Add64(q5, t0, c)
 	q6, c = bits.Add64(q6, t1, c)
-	q8, t0 := bits.Mul64(x4, y.arr[3])
+	q8, t0 := bits.Mul64(x4, y[3])
 	q7, c = bits.Add64(q7, t0, c)
 	q8, _ = bits.Add64(q8, 0, c)
 
-	t1, t0 = bits.Mul64(x1, y.arr[3])
+	t1, t0 = bits.Mul64(x1, y[3])
 	q4, c = bits.Add64(q4, t0, 0)
 	q5, c = bits.Add64(q5, t1, c)
-	t1, t0 = bits.Mul64(x3, y.arr[3])
+	t1, t0 = bits.Mul64(x3, y[3])
 	q6, c = bits.Add64(q6, t0, c)
 	q7, c = bits.Add64(q7, t1, c)
 	q8, _ = bits.Add64(q8, 0, c)
@@ -418,7 +418,7 @@ func Reciprocal(m *Uint) (mu [5]uint64) {
 
 // reduce4 computes the least non-negative residue of x modulo m
 //
-// requires a four-word modulus (m.arr[3] > 1) and its inverse (mu)
+// requires a four-word modulus (m[3] > 1) and its inverse (mu)
 func reduce4(x [8]uint64, m *Uint, mu [5]uint64) (z Uint) {
 	// NB: Most variable names in the comments match the pseudocode for
 	// 	Barrett reduction in the Handbook of Applied Cryptography.
@@ -520,43 +520,43 @@ func reduce4(x [8]uint64, m *Uint, mu [5]uint64) (z Uint) {
 
 	var r0, r1, r2, r3, r4 uint64
 
-	r4, r3 = bits.Mul64(q0, m.arr[3])
-	_, t0 = bits.Mul64(q1, m.arr[3])
+	r4, r3 = bits.Mul64(q0, m[3])
+	_, t0 = bits.Mul64(q1, m[3])
 	r4, _ = bits.Add64(r4, t0, 0)
 
-	t1, r2 = bits.Mul64(q0, m.arr[2])
+	t1, r2 = bits.Mul64(q0, m[2])
 	r3, c = bits.Add64(r3, t1, 0)
-	_, t0 = bits.Mul64(q2, m.arr[2])
+	_, t0 = bits.Mul64(q2, m[2])
 	r4, _ = bits.Add64(r4, t0, c)
 
-	t1, t0 = bits.Mul64(q1, m.arr[2])
+	t1, t0 = bits.Mul64(q1, m[2])
 	r3, c = bits.Add64(r3, t0, 0)
 	r4, _ = bits.Add64(r4, t1, c)
 
-	t1, r1 = bits.Mul64(q0, m.arr[1])
+	t1, r1 = bits.Mul64(q0, m[1])
 	r2, c = bits.Add64(r2, t1, 0)
-	t1, t0 = bits.Mul64(q2, m.arr[1])
+	t1, t0 = bits.Mul64(q2, m[1])
 	r3, c = bits.Add64(r3, t0, c)
 	r4, _ = bits.Add64(r4, t1, c)
 
-	t1, t0 = bits.Mul64(q1, m.arr[1])
+	t1, t0 = bits.Mul64(q1, m[1])
 	r2, c = bits.Add64(r2, t0, 0)
 	r3, c = bits.Add64(r3, t1, c)
-	_, t0 = bits.Mul64(q3, m.arr[1])
+	_, t0 = bits.Mul64(q3, m[1])
 	r4, _ = bits.Add64(r4, t0, c)
 
-	t1, r0 = bits.Mul64(q0, m.arr[0])
+	t1, r0 = bits.Mul64(q0, m[0])
 	r1, c = bits.Add64(r1, t1, 0)
-	t1, t0 = bits.Mul64(q2, m.arr[0])
+	t1, t0 = bits.Mul64(q2, m[0])
 	r2, c = bits.Add64(r2, t0, c)
 	r3, c = bits.Add64(r3, t1, c)
-	_, t0 = bits.Mul64(q4, m.arr[0])
+	_, t0 = bits.Mul64(q4, m[0])
 	r4, _ = bits.Add64(r4, t0, c)
 
-	t1, t0 = bits.Mul64(q1, m.arr[0])
+	t1, t0 = bits.Mul64(q1, m[0])
 	r1, c = bits.Add64(r1, t0, 0)
 	r2, c = bits.Add64(r2, t1, c)
-	t1, t0 = bits.Mul64(q3, m.arr[0])
+	t1, t0 = bits.Mul64(q3, m[0])
 	r3, c = bits.Add64(r3, t0, c)
 	r4, _ = bits.Add64(r4, t1, c)
 
@@ -573,10 +573,10 @@ func reduce4(x [8]uint64, m *Uint, mu [5]uint64) (z Uint) {
 	// if r<0 then r+=m
 
 	if b != 0 {
-		r0, c = bits.Add64(r0, m.arr[0], 0)
-		r1, c = bits.Add64(r1, m.arr[1], c)
-		r2, c = bits.Add64(r2, m.arr[2], c)
-		r3, c = bits.Add64(r3, m.arr[3], c)
+		r0, c = bits.Add64(r0, m[0], 0)
+		r1, c = bits.Add64(r1, m[1], c)
+		r2, c = bits.Add64(r2, m[2], c)
+		r3, c = bits.Add64(r3, m[3], c)
 		r4, _ = bits.Add64(r4, 0, c)
 	}
 
@@ -584,10 +584,10 @@ func reduce4(x [8]uint64, m *Uint, mu [5]uint64) (z Uint) {
 
 	for {
 		// q = r - m
-		q0, b = bits.Sub64(r0, m.arr[0], 0)
-		q1, b = bits.Sub64(r1, m.arr[1], b)
-		q2, b = bits.Sub64(r2, m.arr[2], b)
-		q3, b = bits.Sub64(r3, m.arr[3], b)
+		q0, b = bits.Sub64(r0, m[0], 0)
+		q1, b = bits.Sub64(r1, m[1], b)
+		q2, b = bits.Sub64(r2, m[2], b)
+		q3, b = bits.Sub64(r3, m[3], b)
 		q4, b = bits.Sub64(r4, 0, b)
 
 		// if borrow break
@@ -599,7 +599,7 @@ func reduce4(x [8]uint64, m *Uint, mu [5]uint64) (z Uint) {
 		r4, r3, r2, r1, r0 = q4, q3, q2, q1, q0
 	}
 
-	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = r3, r2, r1, r0
+	z[3], z[2], z[1], z[0] = r3, r2, r1, r0
 
 	return z
 }

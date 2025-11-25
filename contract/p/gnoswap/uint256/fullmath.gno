@@ -34,7 +34,7 @@ func MulDiv(a, b, denominator *Uint) *Uint {
 
 	if (p[4] | p[5] | p[6] | p[7]) == 0 {
 		var lo Uint
-		lo.arr = [4]uint64{p[0], p[1], p[2], p[3]}
+		lo[0], lo[1], lo[2], lo[3] = p[0], p[1], p[2], p[3]
 		return new(Uint).Div(&lo, denominator)
 	}
 
@@ -42,7 +42,7 @@ func MulDiv(a, b, denominator *Uint) *Uint {
 	// If hi >= denominator then floor((hi*2^256 + lo) / denominator) >= 2^256, which is overflow.
 	{
 		var hi Uint
-		hi.arr = [4]uint64{p[4], p[5], p[6], p[7]}
+		hi[0], hi[1], hi[2], hi[3] = p[4], p[5], p[6], p[7]
 		if denominator.Lte(&hi) {
 			panic(ufmt.Sprintf("overflow: denominator(%s) must be greater than hi(%s)", denominator.ToString(), hi.ToString()))
 		}
@@ -60,7 +60,7 @@ func MulDiv(a, b, denominator *Uint) *Uint {
 
 	// return lower 256 bits of quotient
 	var z Uint
-	copy(z.arr[:], quot[:4])
+	copy(z[:], quot[:4])
 	return &z
 }
 

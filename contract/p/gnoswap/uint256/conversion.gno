@@ -12,7 +12,7 @@ import (
 
 // Uint64 returns the lower 64 bits of z as a uint64.
 func (z *Uint) Uint64() uint64 {
-	return z.arr[0]
+	return z[0]
 }
 
 // Int64 returns the lower 64 bits of z as an int64.
@@ -22,18 +22,18 @@ func (z *Uint) Int64() int64 {
 
 // Uint64WithOverflow returns the lower 64 bits of z and true if overflow occurred.
 func (z *Uint) Uint64WithOverflow() (uint64, bool) {
-	return z.arr[0], (z.arr[1] | z.arr[2] | z.arr[3]) != 0
+	return z[0], (z[1] | z[2] | z[3]) != 0
 }
 
 // SetUint64 sets z to the value of x and returns z.
 func (z *Uint) SetUint64(x uint64) *Uint {
-	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, 0, 0, x
+	z[3], z[2], z[1], z[0] = 0, 0, 0, x
 	return z
 }
 
 // IsUint64 reports whether z can be represented as a uint64.
 func (z *Uint) IsUint64() bool {
-	return (z.arr[1] | z.arr[2] | z.arr[3]) == 0
+	return (z[1] | z[2] | z[3]) == 0
 }
 
 // Dec returns the decimal representation of z.
@@ -72,7 +72,7 @@ func (z *Uint) Dec() string {
 	for {
 		// Obtain Q and R for divisor
 		var quot Uint
-		rem := udivrem(quot.arr[:], y.arr[:], divisor)
+		rem := udivrem(quot[:], y[:], divisor)
 		y.Set(&quot) // Set Q for next loop
 		// Convert the R to ascii representation
 		buf = strconv.AppendUint(buf[:0], rem.Uint64(), 10)
@@ -254,8 +254,8 @@ func (z *Uint) SetBytes(buf []byte) *Uint {
 // SetBytes1 sets z from a 1-byte big-endian slice and returns z.
 // Panics if input is shorter than 1 byte.
 func (z *Uint) SetBytes1(in []byte) *Uint {
-	z.arr[3], z.arr[2], z.arr[1] = 0, 0, 0
-	z.arr[0] = uint64(in[0])
+	z[3], z[2], z[1] = 0, 0, 0
+	z[0] = uint64(in[0])
 	return z
 }
 
@@ -263,8 +263,8 @@ func (z *Uint) SetBytes1(in []byte) *Uint {
 // Panics if input is shorter than 2 bytes.
 func (z *Uint) SetBytes2(in []byte) *Uint {
 	_ = in[1] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3], z.arr[2], z.arr[1] = 0, 0, 0
-	z.arr[0] = uint64(binary.BigEndian.Uint16(in[0:2]))
+	z[3], z[2], z[1] = 0, 0, 0
+	z[0] = uint64(binary.BigEndian.Uint16(in[0:2]))
 	return z
 }
 
@@ -272,8 +272,8 @@ func (z *Uint) SetBytes2(in []byte) *Uint {
 // Panics if input is shorter than 3 bytes.
 func (z *Uint) SetBytes3(in []byte) *Uint {
 	_ = in[2] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3], z.arr[2], z.arr[1] = 0, 0, 0
-	z.arr[0] = uint64(binary.BigEndian.Uint16(in[1:3])) | uint64(in[0])<<16
+	z[3], z[2], z[1] = 0, 0, 0
+	z[0] = uint64(binary.BigEndian.Uint16(in[1:3])) | uint64(in[0])<<16
 	return z
 }
 
@@ -281,8 +281,8 @@ func (z *Uint) SetBytes3(in []byte) *Uint {
 // Panics if input is shorter than 4 bytes.
 func (z *Uint) SetBytes4(in []byte) *Uint {
 	_ = in[3] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3], z.arr[2], z.arr[1] = 0, 0, 0
-	z.arr[0] = uint64(binary.BigEndian.Uint32(in[0:4]))
+	z[3], z[2], z[1] = 0, 0, 0
+	z[0] = uint64(binary.BigEndian.Uint32(in[0:4]))
 	return z
 }
 
@@ -290,8 +290,8 @@ func (z *Uint) SetBytes4(in []byte) *Uint {
 // Panics if input is shorter than 5 bytes.
 func (z *Uint) SetBytes5(in []byte) *Uint {
 	_ = in[4] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3], z.arr[2], z.arr[1] = 0, 0, 0
-	z.arr[0] = bigEndianUint40(in[0:5])
+	z[3], z[2], z[1] = 0, 0, 0
+	z[0] = bigEndianUint40(in[0:5])
 	return z
 }
 
@@ -299,8 +299,8 @@ func (z *Uint) SetBytes5(in []byte) *Uint {
 // Panics if input is shorter than 6 bytes.
 func (z *Uint) SetBytes6(in []byte) *Uint {
 	_ = in[5] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3], z.arr[2], z.arr[1] = 0, 0, 0
-	z.arr[0] = bigEndianUint48(in[0:6])
+	z[3], z[2], z[1] = 0, 0, 0
+	z[0] = bigEndianUint48(in[0:6])
 	return z
 }
 
@@ -308,8 +308,8 @@ func (z *Uint) SetBytes6(in []byte) *Uint {
 // Panics if input is shorter than 7 bytes.
 func (z *Uint) SetBytes7(in []byte) *Uint {
 	_ = in[6] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3], z.arr[2], z.arr[1] = 0, 0, 0
-	z.arr[0] = bigEndianUint56(in[0:7])
+	z[3], z[2], z[1] = 0, 0, 0
+	z[0] = bigEndianUint56(in[0:7])
 	return z
 }
 
@@ -317,8 +317,8 @@ func (z *Uint) SetBytes7(in []byte) *Uint {
 // Panics if input is shorter than 8 bytes.
 func (z *Uint) SetBytes8(in []byte) *Uint {
 	_ = in[7] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3], z.arr[2], z.arr[1] = 0, 0, 0
-	z.arr[0] = binary.BigEndian.Uint64(in[0:8])
+	z[3], z[2], z[1] = 0, 0, 0
+	z[0] = binary.BigEndian.Uint64(in[0:8])
 	return z
 }
 
@@ -326,9 +326,9 @@ func (z *Uint) SetBytes8(in []byte) *Uint {
 // Panics if input is shorter than 9 bytes.
 func (z *Uint) SetBytes9(in []byte) *Uint {
 	_ = in[8] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3], z.arr[2] = 0, 0
-	z.arr[1] = uint64(in[0])
-	z.arr[0] = binary.BigEndian.Uint64(in[1:9])
+	z[3], z[2] = 0, 0
+	z[1] = uint64(in[0])
+	z[0] = binary.BigEndian.Uint64(in[1:9])
 	return z
 }
 
@@ -336,9 +336,9 @@ func (z *Uint) SetBytes9(in []byte) *Uint {
 // Panics if input is shorter than 10 bytes.
 func (z *Uint) SetBytes10(in []byte) *Uint {
 	_ = in[9] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3], z.arr[2] = 0, 0
-	z.arr[1] = uint64(binary.BigEndian.Uint16(in[0:2]))
-	z.arr[0] = binary.BigEndian.Uint64(in[2:10])
+	z[3], z[2] = 0, 0
+	z[1] = uint64(binary.BigEndian.Uint16(in[0:2]))
+	z[0] = binary.BigEndian.Uint64(in[2:10])
 	return z
 }
 
@@ -346,9 +346,9 @@ func (z *Uint) SetBytes10(in []byte) *Uint {
 // Panics if input is shorter than 11 bytes.
 func (z *Uint) SetBytes11(in []byte) *Uint {
 	_ = in[10] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3], z.arr[2] = 0, 0
-	z.arr[1] = uint64(binary.BigEndian.Uint16(in[1:3])) | uint64(in[0])<<16
-	z.arr[0] = binary.BigEndian.Uint64(in[3:11])
+	z[3], z[2] = 0, 0
+	z[1] = uint64(binary.BigEndian.Uint16(in[1:3])) | uint64(in[0])<<16
+	z[0] = binary.BigEndian.Uint64(in[3:11])
 	return z
 }
 
@@ -356,9 +356,9 @@ func (z *Uint) SetBytes11(in []byte) *Uint {
 // Panics if input is shorter than 12 bytes.
 func (z *Uint) SetBytes12(in []byte) *Uint {
 	_ = in[11] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3], z.arr[2] = 0, 0
-	z.arr[1] = uint64(binary.BigEndian.Uint32(in[0:4]))
-	z.arr[0] = binary.BigEndian.Uint64(in[4:12])
+	z[3], z[2] = 0, 0
+	z[1] = uint64(binary.BigEndian.Uint32(in[0:4]))
+	z[0] = binary.BigEndian.Uint64(in[4:12])
 	return z
 }
 
@@ -366,9 +366,9 @@ func (z *Uint) SetBytes12(in []byte) *Uint {
 // Panics if input is shorter than 13 bytes.
 func (z *Uint) SetBytes13(in []byte) *Uint {
 	_ = in[12] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3], z.arr[2] = 0, 0
-	z.arr[1] = bigEndianUint40(in[0:5])
-	z.arr[0] = binary.BigEndian.Uint64(in[5:13])
+	z[3], z[2] = 0, 0
+	z[1] = bigEndianUint40(in[0:5])
+	z[0] = binary.BigEndian.Uint64(in[5:13])
 	return z
 }
 
@@ -376,9 +376,9 @@ func (z *Uint) SetBytes13(in []byte) *Uint {
 // Panics if input is shorter than 14 bytes.
 func (z *Uint) SetBytes14(in []byte) *Uint {
 	_ = in[13] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3], z.arr[2] = 0, 0
-	z.arr[1] = bigEndianUint48(in[0:6])
-	z.arr[0] = binary.BigEndian.Uint64(in[6:14])
+	z[3], z[2] = 0, 0
+	z[1] = bigEndianUint48(in[0:6])
+	z[0] = binary.BigEndian.Uint64(in[6:14])
 	return z
 }
 
@@ -386,9 +386,9 @@ func (z *Uint) SetBytes14(in []byte) *Uint {
 // Panics if input is shorter than 15 bytes.
 func (z *Uint) SetBytes15(in []byte) *Uint {
 	_ = in[14] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3], z.arr[2] = 0, 0
-	z.arr[1] = bigEndianUint56(in[0:7])
-	z.arr[0] = binary.BigEndian.Uint64(in[7:15])
+	z[3], z[2] = 0, 0
+	z[1] = bigEndianUint56(in[0:7])
+	z[0] = binary.BigEndian.Uint64(in[7:15])
 	return z
 }
 
@@ -396,9 +396,9 @@ func (z *Uint) SetBytes15(in []byte) *Uint {
 // Panics if input is shorter than 16 bytes.
 func (z *Uint) SetBytes16(in []byte) *Uint {
 	_ = in[15] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3], z.arr[2] = 0, 0
-	z.arr[1] = binary.BigEndian.Uint64(in[0:8])
-	z.arr[0] = binary.BigEndian.Uint64(in[8:16])
+	z[3], z[2] = 0, 0
+	z[1] = binary.BigEndian.Uint64(in[0:8])
+	z[0] = binary.BigEndian.Uint64(in[8:16])
 	return z
 }
 
@@ -406,10 +406,10 @@ func (z *Uint) SetBytes16(in []byte) *Uint {
 // Panics if input is shorter than 17 bytes.
 func (z *Uint) SetBytes17(in []byte) *Uint {
 	_ = in[16] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3] = 0
-	z.arr[2] = uint64(in[0])
-	z.arr[1] = binary.BigEndian.Uint64(in[1:9])
-	z.arr[0] = binary.BigEndian.Uint64(in[9:17])
+	z[3] = 0
+	z[2] = uint64(in[0])
+	z[1] = binary.BigEndian.Uint64(in[1:9])
+	z[0] = binary.BigEndian.Uint64(in[9:17])
 	return z
 }
 
@@ -417,10 +417,10 @@ func (z *Uint) SetBytes17(in []byte) *Uint {
 // Panics if input is shorter than 18 bytes.
 func (z *Uint) SetBytes18(in []byte) *Uint {
 	_ = in[17] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3] = 0
-	z.arr[2] = uint64(binary.BigEndian.Uint16(in[0:2]))
-	z.arr[1] = binary.BigEndian.Uint64(in[2:10])
-	z.arr[0] = binary.BigEndian.Uint64(in[10:18])
+	z[3] = 0
+	z[2] = uint64(binary.BigEndian.Uint16(in[0:2]))
+	z[1] = binary.BigEndian.Uint64(in[2:10])
+	z[0] = binary.BigEndian.Uint64(in[10:18])
 	return z
 }
 
@@ -428,10 +428,10 @@ func (z *Uint) SetBytes18(in []byte) *Uint {
 // Panics if input is shorter than 19 bytes.
 func (z *Uint) SetBytes19(in []byte) *Uint {
 	_ = in[18] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3] = 0
-	z.arr[2] = uint64(binary.BigEndian.Uint16(in[1:3])) | uint64(in[0])<<16
-	z.arr[1] = binary.BigEndian.Uint64(in[3:11])
-	z.arr[0] = binary.BigEndian.Uint64(in[11:19])
+	z[3] = 0
+	z[2] = uint64(binary.BigEndian.Uint16(in[1:3])) | uint64(in[0])<<16
+	z[1] = binary.BigEndian.Uint64(in[3:11])
+	z[0] = binary.BigEndian.Uint64(in[11:19])
 	return z
 }
 
@@ -439,10 +439,10 @@ func (z *Uint) SetBytes19(in []byte) *Uint {
 // Panics if input is shorter than 20 bytes.
 func (z *Uint) SetBytes20(in []byte) *Uint {
 	_ = in[19] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3] = 0
-	z.arr[2] = uint64(binary.BigEndian.Uint32(in[0:4]))
-	z.arr[1] = binary.BigEndian.Uint64(in[4:12])
-	z.arr[0] = binary.BigEndian.Uint64(in[12:20])
+	z[3] = 0
+	z[2] = uint64(binary.BigEndian.Uint32(in[0:4]))
+	z[1] = binary.BigEndian.Uint64(in[4:12])
+	z[0] = binary.BigEndian.Uint64(in[12:20])
 	return z
 }
 
@@ -450,10 +450,10 @@ func (z *Uint) SetBytes20(in []byte) *Uint {
 // Panics if input is shorter than 21 bytes.
 func (z *Uint) SetBytes21(in []byte) *Uint {
 	_ = in[20] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3] = 0
-	z.arr[2] = bigEndianUint40(in[0:5])
-	z.arr[1] = binary.BigEndian.Uint64(in[5:13])
-	z.arr[0] = binary.BigEndian.Uint64(in[13:21])
+	z[3] = 0
+	z[2] = bigEndianUint40(in[0:5])
+	z[1] = binary.BigEndian.Uint64(in[5:13])
+	z[0] = binary.BigEndian.Uint64(in[13:21])
 	return z
 }
 
@@ -461,10 +461,10 @@ func (z *Uint) SetBytes21(in []byte) *Uint {
 // Panics if input is shorter than 22 bytes.
 func (z *Uint) SetBytes22(in []byte) *Uint {
 	_ = in[21] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3] = 0
-	z.arr[2] = bigEndianUint48(in[0:6])
-	z.arr[1] = binary.BigEndian.Uint64(in[6:14])
-	z.arr[0] = binary.BigEndian.Uint64(in[14:22])
+	z[3] = 0
+	z[2] = bigEndianUint48(in[0:6])
+	z[1] = binary.BigEndian.Uint64(in[6:14])
+	z[0] = binary.BigEndian.Uint64(in[14:22])
 	return z
 }
 
@@ -472,10 +472,10 @@ func (z *Uint) SetBytes22(in []byte) *Uint {
 // Panics if input is shorter than 23 bytes.
 func (z *Uint) SetBytes23(in []byte) *Uint {
 	_ = in[22] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3] = 0
-	z.arr[2] = bigEndianUint56(in[0:7])
-	z.arr[1] = binary.BigEndian.Uint64(in[7:15])
-	z.arr[0] = binary.BigEndian.Uint64(in[15:23])
+	z[3] = 0
+	z[2] = bigEndianUint56(in[0:7])
+	z[1] = binary.BigEndian.Uint64(in[7:15])
+	z[0] = binary.BigEndian.Uint64(in[15:23])
 	return z
 }
 
@@ -483,10 +483,10 @@ func (z *Uint) SetBytes23(in []byte) *Uint {
 // Panics if input is shorter than 24 bytes.
 func (z *Uint) SetBytes24(in []byte) *Uint {
 	_ = in[23] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3] = 0
-	z.arr[2] = binary.BigEndian.Uint64(in[0:8])
-	z.arr[1] = binary.BigEndian.Uint64(in[8:16])
-	z.arr[0] = binary.BigEndian.Uint64(in[16:24])
+	z[3] = 0
+	z[2] = binary.BigEndian.Uint64(in[0:8])
+	z[1] = binary.BigEndian.Uint64(in[8:16])
+	z[0] = binary.BigEndian.Uint64(in[16:24])
 	return z
 }
 
@@ -494,10 +494,10 @@ func (z *Uint) SetBytes24(in []byte) *Uint {
 // Panics if input is shorter than 25 bytes.
 func (z *Uint) SetBytes25(in []byte) *Uint {
 	_ = in[24] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3] = uint64(in[0])
-	z.arr[2] = binary.BigEndian.Uint64(in[1:9])
-	z.arr[1] = binary.BigEndian.Uint64(in[9:17])
-	z.arr[0] = binary.BigEndian.Uint64(in[17:25])
+	z[3] = uint64(in[0])
+	z[2] = binary.BigEndian.Uint64(in[1:9])
+	z[1] = binary.BigEndian.Uint64(in[9:17])
+	z[0] = binary.BigEndian.Uint64(in[17:25])
 	return z
 }
 
@@ -505,10 +505,10 @@ func (z *Uint) SetBytes25(in []byte) *Uint {
 // Panics if input is shorter than 26 bytes.
 func (z *Uint) SetBytes26(in []byte) *Uint {
 	_ = in[25] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3] = uint64(binary.BigEndian.Uint16(in[0:2]))
-	z.arr[2] = binary.BigEndian.Uint64(in[2:10])
-	z.arr[1] = binary.BigEndian.Uint64(in[10:18])
-	z.arr[0] = binary.BigEndian.Uint64(in[18:26])
+	z[3] = uint64(binary.BigEndian.Uint16(in[0:2]))
+	z[2] = binary.BigEndian.Uint64(in[2:10])
+	z[1] = binary.BigEndian.Uint64(in[10:18])
+	z[0] = binary.BigEndian.Uint64(in[18:26])
 	return z
 }
 
@@ -516,10 +516,10 @@ func (z *Uint) SetBytes26(in []byte) *Uint {
 // Panics if input is shorter than 27 bytes.
 func (z *Uint) SetBytes27(in []byte) *Uint {
 	_ = in[26] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3] = uint64(binary.BigEndian.Uint16(in[1:3])) | uint64(in[0])<<16
-	z.arr[2] = binary.BigEndian.Uint64(in[3:11])
-	z.arr[1] = binary.BigEndian.Uint64(in[11:19])
-	z.arr[0] = binary.BigEndian.Uint64(in[19:27])
+	z[3] = uint64(binary.BigEndian.Uint16(in[1:3])) | uint64(in[0])<<16
+	z[2] = binary.BigEndian.Uint64(in[3:11])
+	z[1] = binary.BigEndian.Uint64(in[11:19])
+	z[0] = binary.BigEndian.Uint64(in[19:27])
 	return z
 }
 
@@ -527,10 +527,10 @@ func (z *Uint) SetBytes27(in []byte) *Uint {
 // Panics if input is shorter than 28 bytes.
 func (z *Uint) SetBytes28(in []byte) *Uint {
 	_ = in[27] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3] = uint64(binary.BigEndian.Uint32(in[0:4]))
-	z.arr[2] = binary.BigEndian.Uint64(in[4:12])
-	z.arr[1] = binary.BigEndian.Uint64(in[12:20])
-	z.arr[0] = binary.BigEndian.Uint64(in[20:28])
+	z[3] = uint64(binary.BigEndian.Uint32(in[0:4]))
+	z[2] = binary.BigEndian.Uint64(in[4:12])
+	z[1] = binary.BigEndian.Uint64(in[12:20])
+	z[0] = binary.BigEndian.Uint64(in[20:28])
 	return z
 }
 
@@ -538,10 +538,10 @@ func (z *Uint) SetBytes28(in []byte) *Uint {
 // Panics if input is shorter than 29 bytes.
 func (z *Uint) SetBytes29(in []byte) *Uint {
 	_ = in[28] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3] = bigEndianUint40(in[0:5])
-	z.arr[2] = binary.BigEndian.Uint64(in[5:13])
-	z.arr[1] = binary.BigEndian.Uint64(in[13:21])
-	z.arr[0] = binary.BigEndian.Uint64(in[21:29])
+	z[3] = bigEndianUint40(in[0:5])
+	z[2] = binary.BigEndian.Uint64(in[5:13])
+	z[1] = binary.BigEndian.Uint64(in[13:21])
+	z[0] = binary.BigEndian.Uint64(in[21:29])
 	return z
 }
 
@@ -549,10 +549,10 @@ func (z *Uint) SetBytes29(in []byte) *Uint {
 // Panics if input is shorter than 30 bytes.
 func (z *Uint) SetBytes30(in []byte) *Uint {
 	_ = in[29] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3] = bigEndianUint48(in[0:6])
-	z.arr[2] = binary.BigEndian.Uint64(in[6:14])
-	z.arr[1] = binary.BigEndian.Uint64(in[14:22])
-	z.arr[0] = binary.BigEndian.Uint64(in[22:30])
+	z[3] = bigEndianUint48(in[0:6])
+	z[2] = binary.BigEndian.Uint64(in[6:14])
+	z[1] = binary.BigEndian.Uint64(in[14:22])
+	z[0] = binary.BigEndian.Uint64(in[22:30])
 	return z
 }
 
@@ -560,10 +560,10 @@ func (z *Uint) SetBytes30(in []byte) *Uint {
 // Panics if input is shorter than 31 bytes.
 func (z *Uint) SetBytes31(in []byte) *Uint {
 	_ = in[30] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3] = bigEndianUint56(in[0:7])
-	z.arr[2] = binary.BigEndian.Uint64(in[7:15])
-	z.arr[1] = binary.BigEndian.Uint64(in[15:23])
-	z.arr[0] = binary.BigEndian.Uint64(in[23:31])
+	z[3] = bigEndianUint56(in[0:7])
+	z[2] = binary.BigEndian.Uint64(in[7:15])
+	z[1] = binary.BigEndian.Uint64(in[15:23])
+	z[0] = binary.BigEndian.Uint64(in[23:31])
 	return z
 }
 
@@ -571,10 +571,10 @@ func (z *Uint) SetBytes31(in []byte) *Uint {
 // Panics if input is shorter than 32 bytes.
 func (z *Uint) SetBytes32(in []byte) *Uint {
 	_ = in[31] // bounds check hint to compiler; see golang.org/issue/14808
-	z.arr[3] = binary.BigEndian.Uint64(in[0:8])
-	z.arr[2] = binary.BigEndian.Uint64(in[8:16])
-	z.arr[1] = binary.BigEndian.Uint64(in[16:24])
-	z.arr[0] = binary.BigEndian.Uint64(in[24:32])
+	z[3] = binary.BigEndian.Uint64(in[0:8])
+	z[2] = binary.BigEndian.Uint64(in[8:16])
+	z[1] = binary.BigEndian.Uint64(in[16:24])
+	z[0] = binary.BigEndian.Uint64(in[24:32])
 	return z
 }
 

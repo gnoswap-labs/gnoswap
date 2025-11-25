@@ -34,17 +34,17 @@ func TestDec(t *testing.T) {
 	}{
 		{
 			name: "zero",
-			z:    Uint{arr: [4]uint64{0, 0, 0, 0}},
+			z:    Uint{0, 0, 0, 0},
 			want: "0",
 		},
 		{
 			name: "less than 20 digits",
-			z:    Uint{arr: [4]uint64{1234567890, 0, 0, 0}},
+			z:    Uint{1234567890, 0, 0, 0},
 			want: "1234567890",
 		},
 		{
 			name: "max possible value",
-			z:    Uint{arr: [4]uint64{^uint64(0), ^uint64(0), ^uint64(0), ^uint64(0)}},
+			z:    Uint{^uint64(0), ^uint64(0), ^uint64(0), ^uint64(0)},
 			want: "115792089237316195423570985008687907853269984665640564039457584007913129639935",
 		},
 	}

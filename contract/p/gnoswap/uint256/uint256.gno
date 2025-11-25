@@ -1,13 +1,14 @@
 package uint256
 
 import (
+	"math"
 	"errors"
 	"math/bits"
 	"strconv"
 )
 
 const (
-	MaxUint64   = 1<<64 - 1
+	MaxUint64   = math.MaxUint64
 	MAX_UINT256 = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 )
 
@@ -21,13 +22,13 @@ var (
 // Uint represents a 256-bit unsigned integer.
 // It is stored as an array of 4 uint64 in little-endian order,
 // where arr[0] is the least significant and arr[3] is the most significant.
-type Uint struct {
-	arr [4]uint64
-}
+type Uint [4]uint64
 
 // NewUint returns a new Uint initialized with the given uint64 value.
 func NewUint(val uint64) *Uint {
-	return &Uint{arr: [4]uint64{val, 0, 0, 0}}
+	z := &Uint{}
+	z.SetUint64(val)
+	return z
 }
 
 // NewUintFromInt64 returns a new Uint initialized with the given int64 value.
@@ -51,7 +52,7 @@ func One() *Uint {
 
 // SetAllOne sets z to the maximum 256-bit value (all bits set to 1) and returns z.
 func (z *Uint) SetAllOne() *Uint {
-	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = MaxUint64, MaxUint64, MaxUint64, MaxUint64
+	z[3], z[2], z[1], z[0] = MaxUint64, MaxUint64, MaxUint64, MaxUint64
 	return z
 }
 
@@ -63,7 +64,7 @@ func (z *Uint) Set(x *Uint) *Uint {
 
 // SetOne sets z to 1 and returns z.
 func (z *Uint) SetOne() *Uint {
-	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, 0, 0, 1
+	z[3], z[2], z[1], z[0] = 0, 0, 0, 1
 	return z
 }
 
@@ -120,11 +121,11 @@ func MustFromDecimal(decimal string) *Uint {
 
 // multipliers holds the values that are needed for fromDecimal
 var multipliers = [5]*Uint{
-	nil, // represents first round, no multiplication needed
-	{[4]uint64{10000000000000000000, 0, 0, 0}},                                     // 10 ^ 19
-	{[4]uint64{687399551400673280, 5421010862427522170, 0, 0}},                     // 10 ^ 38
-	{[4]uint64{5332261958806667264, 17004971331911604867, 2938735877055718769, 0}}, // 10 ^ 57
-	{[4]uint64{0, 8607968719199866880, 532749306367912313, 1593091911132452277}},   // 10 ^ 76
+	{}, // 1 (no miltiplication needed in the first round)
+	{10000000000000000000, 0, 0, 0}, // 10 ^ 19
+	{687399551400673280, 5421010862427522170, 0, 0},                     // 10 ^ 38
+	{5332261958806667264, 17004971331911604867, 2938735877055718769, 0}, // 10 ^ 57
+	{0, 8607968719199866880, 532749306367912313, 1593091911132452277},   // 10 ^ 76
 }
 
 // fromDecimal parses a decimal string by processing it in 19-character chunks.
@@ -189,13 +190,13 @@ func (z *Uint) fromDecimal(bs string) error {
 // Position n is counted from the right (0 = least significant byte).
 // Returns 0 if n >= 32.
 func (z *Uint) Byte(n *Uint) *Uint {
-	// in z, z.arr[0] is the least significant
+	// in z, z[0] is the least significant
 	if number, overflow := n.Uint64WithOverflow(); !overflow {
 		if number < 32 {
-			number := z.arr[4-1-number/8]
-			offset := (n.arr[0] & 0x7) << 3 // 8*(n.d % 8)
-			z.arr[0] = (number & (0xff00000000000000 >> offset)) >> (56 - offset)
-			z.arr[3], z.arr[2], z.arr[1] = 0, 0, 0
+			number := z[4-1-number/8]
+			offset := (n[0] & 0x7) << 3 // 8*(n.d % 8)
+			z[0] = (number & (0xff00000000000000 >> offset)) >> (56 - offset)
+			z[3], z[2], z[1] = 0, 0, 0
 			return z
 		}
 	}
@@ -207,14 +208,14 @@ func (z *Uint) Byte(n *Uint) *Uint {
 // BitLen(0) returns 0.
 func (z *Uint) BitLen() int {
 	switch {
-	case z.arr[3] != 0:
-		return 192 + bits.Len64(z.arr[3])
-	case z.arr[2] != 0:
-		return 128 + bits.Len64(z.arr[2])
-	case z.arr[1] != 0:
-		return 64 + bits.Len64(z.arr[1])
+	case z[3] != 0:
+		return 192 + bits.Len64(z[3])
+	case z[2] != 0:
+		return 128 + bits.Len64(z[2])
+	case z[1] != 0:
+		return 64 + bits.Len64(z[1])
 	default:
-		return bits.Len64(z.arr[0])
+		return bits.Len64(z[0])
 	}
 }
 
@@ -226,7 +227,7 @@ func (z *Uint) ByteLen() int {
 
 // Clear sets z to 0 and returns z.
 func (z *Uint) Clear() *Uint {
-	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, 0, 0, 0
+	z[3], z[2], z[1], z[0] = 0, 0, 0, 0
 	return z
 }
 
@@ -263,8 +264,8 @@ func (z *Uint) fromHex(hex string) error {
 			if nib == badNibble {
 				return ErrSyntax
 			}
-			z.arr[i] = z.arr[i] << 4
-			z.arr[i] += uint64(nib)
+			z[i] = z[i] << 4
+			z[i] += uint64(nib)
 		}
 		end = start
 	}
@@ -294,10 +295,10 @@ func MustFromHex(hex string) *Uint {
 // Clone returns a new Uint with the same value as z.
 func (z *Uint) Clone() *Uint {
 	var x Uint
-	x.arr[0] = z.arr[0]
-	x.arr[1] = z.arr[1]
-	x.arr[2] = z.arr[2]
-	x.arr[3] = z.arr[3]
+	x[0] = z[0]
+	x[1] = z[1]
+	x[2] = z[2]
+	x[3] = z[3]
 
 	return &x
 }
