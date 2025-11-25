@@ -11,7 +11,8 @@ const (
 )
 
 var (
-	q96       = u256.Zero().Lsh(u256.One(), 96)                               // 2^96
+	// Q96 is exported for use by other packages (e.g., common/liquidity_amounts)
+	Q96       = u256.Zero().Lsh(u256.One(), 96)                               // 2^96
 	max160    = u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 160), u256.One()) // 2^160 - 1
 	maxInt256 = u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 255), u256.One()) // 2^255 - 1
 
@@ -102,7 +103,7 @@ func getNextPriceAmount1Add(
 		shifted := u256.Zero().Lsh(amount, Q96_RESOLUTION)
 		quotient = u256.Zero().MustDiv(shifted, liquidity)
 	} else {
-		quotient = u256.MulDiv(amount, q96, liquidity)
+		quotient = u256.MulDiv(amount, Q96, liquidity)
 	}
 
 	return u256.Zero().Add(sqrtPX96, quotient)
@@ -121,7 +122,7 @@ func getNextPriceAmount1Remove(
 		shifted := u256.Zero().Lsh(amount, Q96_RESOLUTION)
 		quotient = u256.DivRoundingUp(shifted, liquidity)
 	} else {
-		quotient = u256.MulDivRoundingUp(amount, q96, liquidity)
+		quotient = u256.MulDivRoundingUp(amount, Q96, liquidity)
 	}
 
 	if !sqrtPX96.Gt(quotient) {
@@ -242,10 +243,10 @@ func getAmount1DeltaHelper(
 	difference := u256.Zero().Sub(sqrtRatioBX96, sqrtRatioAX96)
 
 	if roundUp {
-		return u256.MulDivRoundingUp(liquidity, difference, q96)
+		return u256.MulDivRoundingUp(liquidity, difference, Q96)
 	}
 
-	return u256.MulDiv(liquidity, difference, q96)
+	return u256.MulDiv(liquidity, difference, Q96)
 }
 
 // GetAmount0Delta calculates the token0 amount difference within a price range, returning

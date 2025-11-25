@@ -3,6 +3,7 @@ package common
 import (
 	"gno.land/p/nt/ufmt"
 
+	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -11,13 +12,13 @@ const (
 	Q96_RESOLUTION  = 96
 	Q128_RESOLUTION = 128
 	MAX_UINT128     = "340282366920938463463374607431768211455" // 2^128 - 1
-	Q96             = "79228162514264337593543950336"           // 2^96
 )
 
 var (
 	maxUint128 = u256.MustFromDecimal(MAX_UINT128)
-	q96Uint    = u256.MustFromDecimal(Q96)
-	q128Mask   = func() *u256.Uint {
+	// Use gnsmath.Q96 to avoid duplicate constant definition
+	q96Uint  = gnsmath.Q96
+	q128Mask = func() *u256.Uint {
 		mask := u256.Zero().Lsh(u256.One(), Q128_RESOLUTION)
 		mask = u256.Zero().Sub(mask, u256.One())
 		return mask
