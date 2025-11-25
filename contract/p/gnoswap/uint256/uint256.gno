@@ -16,8 +16,12 @@ var (
 	one        = One()
 	two        = NewUint(2)
 	three      = NewUint(3)
-	maxUint256 = MustFromDecimal(MAX_UINT256)
+	maxUint256 *Uint
 )
+
+func init() {
+	maxUint256 = MustFromDecimal(MAX_UINT256)
+}
 
 // Uint represents a 256-bit unsigned integer.
 // It is stored as an array of 4 uint64 in little-endian order,
