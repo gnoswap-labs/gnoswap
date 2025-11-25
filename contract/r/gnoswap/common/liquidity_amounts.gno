@@ -17,12 +17,9 @@ const (
 var (
 	maxUint128 = u256.MustFromDecimal(MAX_UINT128)
 	// Use gnsmath.Q96 to avoid duplicate constant definition
-	q96Uint  = gnsmath.Q96
-	q128Mask = func() *u256.Uint {
-		mask := u256.Zero().Lsh(u256.One(), Q128_RESOLUTION)
-		mask = u256.Zero().Sub(mask, u256.One())
-		return mask
-	}()
+	q96Uint = gnsmath.Q96
+	// q128Mask is the same as maxUint128 (2^128 - 1), reuse it
+	q128Mask = maxUint128
 	// only used for return value
 	zero = u256.Zero()
 )

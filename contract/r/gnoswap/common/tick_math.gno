@@ -48,13 +48,13 @@ var (
 	// MSB calculation thresholds - pre-computed for performance
 	// msb128Threshold uses maxUint128 from liquidity_amounts.gno (same value: 2^128 - 1)
 	msb128Threshold = maxUint128
-	msb64Threshold  = u256.MustFromDecimal("18446744073709551615")                    // 2^64 - 1
-	msb32Threshold  = u256.MustFromDecimal("4294967295")                              // 2^32 - 1
-	msb16Threshold  = u256.NewUint(65535)                                             // 2^16 - 1
-	msb8Threshold   = u256.NewUint(255)                                               // 2^8 - 1
-	msb4Threshold   = u256.NewUint(15)                                                // 2^4 - 1
-	msb2Threshold   = u256.NewUint(3)                                                 // 2^2 - 1
-	msb1Threshold   = u256.One()                                                      // 1
+	msb64Threshold  = u256.NewUint(1<<64 - 1) // 2^64 - 1 = 18446744073709551615
+	msb32Threshold  = u256.NewUint(1<<32 - 1) // 2^32 - 1 = 4294967295
+	msb16Threshold  = u256.NewUint(1<<16 - 1) // 2^16 - 1 = 65535
+	msb8Threshold   = u256.NewUint(1<<8 - 1)  // 2^8 - 1 = 255
+	msb4Threshold   = u256.NewUint(1<<4 - 1)  // 2^4 - 1 = 15
+	msb2Threshold   = u256.NewUint(1<<2 - 1)  // 2^2 - 1 = 3
+	msb1Threshold   = u256.One()              // 1
 
 	// Pre-computed constants for tick calculation
 	log2Multiplier = i256.MustFromDecimal("255738958999603826347141")
