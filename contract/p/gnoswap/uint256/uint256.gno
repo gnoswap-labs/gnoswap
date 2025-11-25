@@ -89,10 +89,12 @@ func (z *Uint) SetFromDecimal(s string) (err error) {
 		}
 		s = s[i:]
 	}
-	if len(s) < len(MAX_UINT256) {
+
+	maxLen := len(MAX_UINT256)
+	if len(s) < maxLen {
 		return z.fromDecimal(s)
 	}
-	if len(s) == len(MAX_UINT256) {
+	if len(s) == maxLen {
 		if s > MAX_UINT256 {
 			return ErrBig256Range
 		}
