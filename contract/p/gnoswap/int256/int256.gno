@@ -14,6 +14,17 @@ var (
 
 var one = uint256.NewUint(1)
 
+// Cached min/max values to avoid repeated string parsing
+var (
+	maxInt256 *Int
+	minInt256 *Int
+)
+
+func init() {
+	maxInt256 = MustFromDecimal("57896044618658097711785492504343953926634992332820282019728792003956564819967")
+	minInt256 = MustFromDecimal("-57896044618658097711785492504343953926634992332820282019728792003956564819968")
+}
+
 // Int represents a 256-bit signed integer.
 // It uses a sign-magnitude representation with abs storing the absolute value
 // and neg indicating whether the number is negative.

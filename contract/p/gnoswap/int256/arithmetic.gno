@@ -310,10 +310,10 @@ func (z *Int) Mod(x, y *Int) *Int {
 
 // MaxInt256 returns the maximum value for a 256-bit signed integer (2^255 - 1).
 func MaxInt256() *Int {
-	return MustFromDecimal("57896044618658097711785492504343953926634992332820282019728792003956564819967")
+	return maxInt256.Clone()
 }
 
 // MinInt256 returns the minimum value for a 256-bit signed integer (-2^255).
 func MinInt256() *Int {
-	return MustFromDecimal("-57896044618658097711785492504343953926634992332820282019728792003956564819968")
+	return minInt256.Clone()
 }
