@@ -63,29 +63,39 @@ func (z *Uint) Dec() string {
 		// plus slack so we can copy 19 bytes every iteration).
 		// We init it with zeroes, because when strconv appends the ascii representations,
 		// it will omit leading zeroes.
-		out     = []byte("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
-		divisor = NewUint(10000000000000000000) // 20 digits
-		y       = new(Uint).Set(z)              // copy to avoid modifying z
-		pos     = len(out)                      // position to write to
-		buf     = make([]byte, 0, 19)           // buffer to write uint64:s to
+		out      [98]byte
+		divisor  Uint
+		y        = *z                 // copy z to avoid modifying it
+		pos      = len(out)           // position to write to
+		buf      [19]byte             // buffer to write uint64:s to
+		bufSlice []byte     = buf[:0] // slice for strconv.AppendUint
 	)
+
+	// Initialize out array with '0's
+	for i := range out {
+		out[i] = '0'
+	}
+
+	// Set divisor to 10^19
+	divisor.SetUint64(10000000000000000000)
+
 	for {
 		// Obtain Q and R for divisor
 		var quot Uint
-		rem := udivrem(quot[:], y[:], divisor)
-		y.Set(&quot) // Set Q for next loop
+		rem := udivrem(quot[:], y[:], &divisor)
+		y = quot // Set Q for next loop
 		// Convert the R to ascii representation
-		buf = strconv.AppendUint(buf[:0], rem.Uint64(), 10)
+		bufSlice = strconv.AppendUint(bufSlice[:0], rem.Uint64(), 10)
 		// Copy in the ascii digits
-		copy(out[pos-len(buf):], buf)
+		copy(out[pos-len(bufSlice):], bufSlice)
 		if y.IsZero() {
 			break
 		}
 		// Move 19 digits left
 		pos -= 19
 	}
-	// skip leading zeroes by only using the 'used size' of buf
-	return string(out[pos-len(buf):])
+	// skip leading zeroes by only using the 'used size' of bufSlice
+	return string(out[pos-len(bufSlice):])
 }
 
 // Scan implements the database/sql Scanner interface.

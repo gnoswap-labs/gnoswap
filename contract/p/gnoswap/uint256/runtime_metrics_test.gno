@@ -92,6 +92,9 @@ func TestPublicFunctionRuntimeMetrics(t *testing.T) {
 	dividend := MustFromDecimal("9876543210987654321098765432109876543210")
 	divisor := MustFromDecimal("4294967296")
 
+	// For Dec and ToString tests
+	largeUint := MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935") // max uint256
+
 	tests := []struct {
 		name string
 		run  func(t *testing.T) MetricResult
@@ -191,6 +194,22 @@ func TestPublicFunctionRuntimeMetrics(t *testing.T) {
 				return runMetric(t, "udivrem", iterations, func() {
 					var quotient Uint
 					_ = udivrem(quotient[:], dividend[:], divisor)
+				})
+			},
+		},
+		{
+			name: "Dec",
+			run: func(t *testing.T) MetricResult {
+				return runMetric(t, "Dec", iterations, func() {
+					_ = largeUint.Dec()
+				})
+			},
+		},
+		{
+			name: "ToString",
+			run: func(t *testing.T) MetricResult {
+				return runMetric(t, "ToString", iterations, func() {
+					_ = largeUint.ToString()
 				})
 			},
 		},
