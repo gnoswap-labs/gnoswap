@@ -52,6 +52,12 @@ setup_tests() {
 
     cd /workspace/contract
 
+    # Update txtar files with mnemonic if GNS_ADMIN_MNEMONIC is set
+    if [ -n "${GNS_ADMIN_MNEMONIC}" ]; then
+        echo -e "${YELLOW}Updating txtar files with mnemonic...${NC}"
+        bash /workspace/contract/tests/scripts/update-txtar-mnemonic.sh
+    fi
+
     # Run setup.py to create symlinks
     python3 setup.py -w /workspace
 

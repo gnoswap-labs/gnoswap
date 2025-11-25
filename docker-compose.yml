@@ -6,8 +6,11 @@ services:
     volumes:
       # Mount contract code (read-only for safety)
       - ./contract:/workspace/contract/contract:ro
-      - ./tests:/workspace/contract/tests:ro
+      - ./tests:/workspace/contract/tests
       - ./setup.py:/workspace/contract/setup.py:ro
+    environment:
+      # Pass mnemonic from host environment (optional)
+      - GNS_ADMIN_MNEMONIC=${GNS_ADMIN_MNEMONIC:-}
     working_dir: /workspace/contract
     stdin_open: true
     tty: true
