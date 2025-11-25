@@ -54,40 +54,43 @@ search:
 fmt:
 	find . -name "*.gno" -type f -exec gofumpt -w {} \;
 
-# Docker commands
-docker-build:
-	docker-compose build
+# 📌 Integration test commands (Docker-based)
+.PHONY: integration-test
+integration-test:
+	@bash $(PROJECT_ROOT)/scripts/run-integration-test.sh --all
 
-docker-up:
-	docker-compose up -d
+.PHONY: integration-test-list
+integration-test-list:
+	@bash $(PROJECT_ROOT)/scripts/run-integration-test.sh --list
 
-docker-down:
-	docker-compose down
+.PHONY: integration-test-run
+integration-test-run:
+	@if [ -z "$(TEST)" ]; then \
+		echo "❌ Error: Please specify a test using 'make integration-test-run TEST=<name>'"; \
+		exit 1; \
+	else \
+		bash $(PROJECT_ROOT)/scripts/run-integration-test.sh -t $(TEST); \
+	fi
 
-docker-logs:
-	docker-compose logs -f
-
-docker-shell:
-	docker-compose exec app bash
+.PHONY: integration-test-build
+integration-test-build:
+	@bash $(PROJECT_ROOT)/scripts/run-integration-test.sh --build
 
 # 📌 Help message
 .PHONY: help
 help:
 	@echo "🔹 Available commands:"
 	@echo ""
-	@echo "  make test            Run tests for all folders"
-	@echo "  make test-folder FOLDER=<path>  Run test for a specific folder"
-	@echo "  make setup           Install dependencies (Go, Python, etc.)"
-	@echo "  make clone           Clone GnoVM and Gnoswap repositories"
-	@echo "  make help            Show this help message"
-	@echo "  make clean           Delete the temporary folder"
-	@echo "  make search          Find test files"
-	@echo "  make reset           Reset the test environment"
-	@echo "  make fmt             Format all .gno files"
-	@echo "  make docker-build    Build Docker images"
-	@echo "  make docker-up       Start Docker containers"
-	@echo "  make docker-down     Stop Docker containers"
-	@echo "  make docker-logs     View Docker container logs"
-	@echo "  make docker-shell    Open a shell in the Docker container"
-
-
+	@echo "  make test                             Run tests for all folders"
+	@echo "  make test-folder FOLDER=<path>        Run test for a specific folder"
+	@echo "  make setup                            Install dependencies (Go, Python, etc.)"
+	@echo "  make clone                            Clone GnoVM and Gnoswap repositories"
+	@echo "  make help                             Show this help message"
+	@echo "  make clean                            Delete the temporary folder"
+	@echo "  make search                           Find test files"
+	@echo "  make reset                            Reset the test environment"
+	@echo "  make fmt                              Format all .gno files"
+	@echo "  make integration-test                 Run all integration tests"
+	@echo "  make integration-test-list            List available integration tests"
+	@echo "  make integration-test-run TEST=<name> Run specific integration test"
+	@echo "  make integration-test-build           Rebuild Docker image"

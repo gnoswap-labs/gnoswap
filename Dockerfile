@@ -1,29 +1,34 @@
-FROM python:3.11-slim
+FROM golang:1.24-alpine
 
-# Create a non-root user
-RUN groupadd -r appuser && useradd -r -g appuser -m appuser
+# Install dependencies
+RUN apk add --no-cache \
+    git \
+    bash \
+    python3 \
+    py3-pip \
+    make \
+    jq
 
-RUN pip install uv
+WORKDIR /workspace
 
-WORKDIR /app
+# Clone gno repository (master branch from gnoswap-labs)
+RUN git clone --branch master --single-branch --depth 1 \
+    https://github.com/gnoswap-labs/gno.git /workspace/gno
 
-COPY requirements.txt .
+# Build gno tools
+WORKDIR /workspace/gno
+RUN make install.gno
 
-# install dependencies
-RUN uv venv && \
-    . .venv/bin/activate && \
-    uv pip install -r requirements.txt
+# Set environment variables
+ENV PATH="/root/go/bin:${PATH}"
+ENV GOPATH="/root/go"
 
-# Copy only necessary files
-COPY setup.py .
-COPY scripts/ scripts/
-COPY contract/ contract/
-COPY mapping.yml .
+# Create directory for contract code
+WORKDIR /workspace/contract
 
-# Change ownership of the application files
-RUN chown -R appuser:appuser /app
+# Copy entrypoint script
+COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Switch to non-root user
-USER appuser
-
-CMD ["python3", "setup.py"] 
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["--help"]
