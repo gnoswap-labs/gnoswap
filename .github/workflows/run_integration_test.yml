@@ -6,8 +6,31 @@ on:
   pull_request:
 
 jobs:
-  run-integration-test:
+  list-tests:
     runs-on: ubuntu-latest
+    outputs:
+      tests: ${{ steps.list-tests.outputs.tests }}
+    steps:
+      - name: Check out gnoswap repo
+        uses: actions/checkout@v4
+
+      - name: List integration tests
+        id: list-tests
+        run: |
+          tests=$(find tests/integration/testdata -name "*.txtar" -type f | \
+            sed 's|tests/integration/testdata/||' | \
+            sed 's|/|_|g' | \
+            sed 's|\.txtar||' | \
+            jq -R -s -c 'split("\n")[:-1]')
+          echo "tests=$tests" >> $GITHUB_OUTPUT
+
+  run-integration-test:
+    needs: list-tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        test: ${{ fromJson(needs.list-tests.outputs.tests) }}
 
     steps:
       - name: Check out gnoswap repo
@@ -34,7 +57,7 @@ jobs:
         run: |
           python3 setup.py --exclude-tests -w .
 
-      - name: Run integration tests
+      - name: Run integration test - ${{ matrix.test }}
         run: |
           cd gno/gno.land/pkg/integration
-          go test . -parallel 1 -run .
+          go test -v . -run TestTestdata/${{ matrix.test }}
