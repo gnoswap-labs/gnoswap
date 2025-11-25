@@ -6,9 +6,13 @@ import (
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 
+	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
+
+// q96Test is a test-local copy for readability (uses gnsmath.Q96)
+var q96Test = gnsmath.Q96
 
 func TestLiquidityAmounts_ToAscendingOrder(t *testing.T) {
 	tests := []struct {
@@ -228,7 +232,7 @@ func TestLiquidityAmounts_ComputeLiquidityForAmount0(t *testing.T) {
 }
 
 func TestLiquidityAmounts_ComputeLiquidityForAmount1(t *testing.T) {
-	q96 := u256.MustFromDecimal(Q96)
+	q96 := q96Test
 
 	tests := []struct {
 		name             string
@@ -300,7 +304,7 @@ func TestLiquidityAmounts_ComputeLiquidityForAmount1(t *testing.T) {
 }
 
 func TestLiquidityAmounts_GetLiquidityForAmounts(t *testing.T) {
-	q96 := u256.MustFromDecimal(Q96)
+	q96 := q96Test
 
 	tests := []struct {
 		name          string
@@ -438,7 +442,7 @@ func TestLiquidityAmounts_ComputeAmount0ForLiquidity(t *testing.T) {
 }
 
 func TestLiquidityAmounts_ComputeAmount1ForLiquidity(t *testing.T) {
-	q96 := u256.MustFromDecimal(Q96) // 2^96 = 79228162514264337593543950336
+	q96 := q96Test // 2^96 = 79228162514264337593543950336
 
 	tests := []struct {
 		name           string
@@ -450,7 +454,7 @@ func TestLiquidityAmounts_ComputeAmount1ForLiquidity(t *testing.T) {
 		{
 			name:           "Basic Case - Small Liquidity",
 			sqrtRatioAX96:  q96,
-			sqrtRatioBX96:  new(u256.Uint).Mul(q96, u256.NewUint(4)), // sqrtRatioBX96 = 4 * Q96
+			sqrtRatioBX96:  new(u256.Uint).Mul(q96, u256.NewUint(4)), // sqrtRatioBX96 = 4 * q96Test
 			liquidity:      u256.NewUint(1000000000),
 			expectedAmount: "3000000000", // (4-1)*liquidity = 3 * 10^9
 		},
@@ -471,7 +475,7 @@ func TestLiquidityAmounts_ComputeAmount1ForLiquidity(t *testing.T) {
 		{
 			name:           "Large Liquidity",
 			sqrtRatioAX96:  q96,
-			sqrtRatioBX96:  new(u256.Uint).Mul(q96, u256.NewUint(16)), // sqrtRatioBX96 = 16 * Q96
+			sqrtRatioBX96:  new(u256.Uint).Mul(q96, u256.NewUint(16)), // sqrtRatioBX96 = 16 * q96Test
 			liquidity:      u256.NewUint(1000000000000000000),         // 1e18 liquidity
 			expectedAmount: "15000000000000000000",                    // (16-1) * 1e18 = 15 * 1e18
 		},
@@ -493,7 +497,7 @@ func TestLiquidityAmounts_ComputeAmount1ForLiquidity(t *testing.T) {
 }
 
 func TestLiquidityAmounts_GetAmountsForLiquidity(t *testing.T) {
-	q96 := u256.MustFromDecimal(Q96) // 2^96 = 79228162514264337593543950336
+	q96 := q96Test // 2^96 = 79228162514264337593543950336
 
 	tests := []struct {
 		name            string
@@ -506,9 +510,9 @@ func TestLiquidityAmounts_GetAmountsForLiquidity(t *testing.T) {
 	}{
 		{
 			name:            "Basic Case - Within Range",
-			sqrtRatioX96:    new(u256.Uint).Mul(q96, u256.NewUint(2)), // Current price at 2 * Q96
-			sqrtRatioAX96:   q96,                                      // Lower bound at 1 * Q96
-			sqrtRatioBX96:   new(u256.Uint).Mul(q96, u256.NewUint(4)), // Upper bound at 4 * Q96
+			sqrtRatioX96:    new(u256.Uint).Mul(q96, u256.NewUint(2)), // Current price at 2 * q96Test
+			sqrtRatioAX96:   q96,                                      // Lower bound at 1 * q96Test
+			sqrtRatioBX96:   new(u256.Uint).Mul(q96, u256.NewUint(4)), // Upper bound at 4 * q96Test
 			liquidity:       u256.NewUint(1000000),
 			expectedAmount0: "250000",
 			expectedAmount1: "1000000",
@@ -533,7 +537,7 @@ func TestLiquidityAmounts_GetAmountsForLiquidity(t *testing.T) {
 		},
 		{
 			name:            "Out of Range - Below Lower Bound",
-			sqrtRatioX96:    new(u256.Uint).Div(q96, u256.NewUint(2)), // Current price at 0.5 * Q96
+			sqrtRatioX96:    new(u256.Uint).Div(q96, u256.NewUint(2)), // Current price at 0.5 * q96Test
 			sqrtRatioAX96:   q96,
 			sqrtRatioBX96:   new(u256.Uint).Mul(q96, u256.NewUint(8)),
 			liquidity:       u256.NewUint(500000),
@@ -542,7 +546,7 @@ func TestLiquidityAmounts_GetAmountsForLiquidity(t *testing.T) {
 		},
 		{
 			name:            "Out of Range - Above Upper Bound",
-			sqrtRatioX96:    new(u256.Uint).Mul(q96, u256.NewUint(10)), // Current price at 10 * Q96
+			sqrtRatioX96:    new(u256.Uint).Mul(q96, u256.NewUint(10)), // Current price at 10 * q96Test
 			sqrtRatioAX96:   q96,
 			sqrtRatioBX96:   new(u256.Uint).Mul(q96, u256.NewUint(8)),
 			liquidity:       u256.NewUint(2000000),
@@ -590,7 +594,7 @@ func TestLiquidityAmounts_ExtremeRatioValues(t *testing.T) {
 			testFunc: func() string {
 				result := computeAmount0ForLiquidity(
 					u256.Zero(),
-					u256.MustFromDecimal(Q96),
+					q96Test,
 					u256.NewUint(1000000),
 				)
 				return result.ToString()
@@ -603,7 +607,7 @@ func TestLiquidityAmounts_ExtremeRatioValues(t *testing.T) {
 				maxSqrtRatio := u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")
 				liquidity := u256.NewUint(1000)
 				result := computeAmount1ForLiquidity(
-					u256.MustFromDecimal(Q96),
+					q96Test,
 					maxSqrtRatio,
 					liquidity,
 				)
@@ -635,16 +639,16 @@ func TestLiquidityAmounts_MulDivOverflowProtection(t *testing.T) {
 		{
 			name:             "Large values causing uint128 overflow - should panic",
 			value:            u256.MustFromDecimal("57896044618658097711785492504343953926634992332820282019728792003956564819967"),
-			sqrtRatioA:       u256.MustFromDecimal(Q96),
-			sqrtRatioB:       new(u256.Uint).Mul(u256.MustFromDecimal(Q96), u256.NewUint(2)),
+			sqrtRatioA:       q96Test,
+			sqrtRatioB:       new(u256.Uint).Mul(q96Test, u256.NewUint(2)),
 			expectedPanic:    true,
 			expectedPanicMsg: "[GNOSWAP-COMMON-009] overflow: amount(115792089237316195423570985008687907853269984665640564039457584007913129639934) overflows uint128 range",
 		},
 		{
 			name:          "Large but safe values - should not panic",
 			value:         u256.MustFromDecimal("170141183460469231731687303715884105727"),
-			sqrtRatioA:    u256.MustFromDecimal(Q96),
-			sqrtRatioB:    new(u256.Uint).Mul(u256.MustFromDecimal(Q96), u256.NewUint(2)),
+			sqrtRatioA:    q96Test,
+			sqrtRatioB:    new(u256.Uint).Mul(q96Test, u256.NewUint(2)),
 			expectedPanic: false,
 		},
 	}

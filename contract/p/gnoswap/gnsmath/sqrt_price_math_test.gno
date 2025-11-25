@@ -8,11 +8,10 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// Test data constants
+// Test data constants (Q96 is exported from the package)
 var (
-	Q96         = u256.MustFromDecimal("79228162514264337593543950336") // 2^96
-	MAX_UINT256 = u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935")
-	MAX_UINT160 = u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")
+	maxUint256Test = u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935")
+	maxUint160Test = u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")
 )
 
 // TestGetNextPriceAmount0Add tests the internal helper for adding token0
@@ -171,7 +170,7 @@ func TestSqrtPriceMath_getNextPriceAmount0Remove(t *testing.T) {
 			name:           "overflow_check_fail",
 			current:        Q96,
 			liquidity:      u256.MustFromDecimal("1"),
-			amountToRemove: MAX_UINT256,
+			amountToRemove: maxUint256Test,
 			shouldPanic:    true,
 			panicMsg:       errInvalidPoolSqrtPrice.Error(),
 		},
@@ -203,7 +202,7 @@ func TestSqrtPriceMath_getNextPriceAmount0Remove(t *testing.T) {
 			name:           "both_conditions_fail",
 			current:        u256.MustFromDecimal("1000000000000000000"),
 			liquidity:      u256.One(),
-			amountToRemove: MAX_UINT256,
+			amountToRemove: maxUint256Test,
 			shouldPanic:    true,
 			panicMsg:       errInvalidPoolSqrtPrice.Error(),
 		},
@@ -299,7 +298,7 @@ func TestSqrtPriceMath_getNextSqrtPriceFromAmount0RoundingUp(t *testing.T) {
 			name:        "remove_causes_overflow",
 			sqrtPX96:    Q96,
 			liquidity:   u256.MustFromDecimal("1"),
-			amount:      MAX_UINT256,
+			amount:      maxUint256Test,
 			add:         false,
 			shouldPanic: true,
 			panicMsg:    errInvalidPoolSqrtPrice.Error(),
@@ -359,7 +358,7 @@ func TestSqrtPriceMath_getNextPriceAmount1Add(t *testing.T) {
 			name:      "amount_gt_max160",
 			sqrtPX96:  Q96,
 			liquidity: u256.MustFromDecimal("1000000000000000000"),
-			amount:    new(u256.Uint).Add(MAX_UINT160, u256.MustFromDecimal("1000000000000000000")),
+			amount:    new(u256.Uint).Add(maxUint160Test, u256.MustFromDecimal("1000000000000000000")),
 			expected:  u256.MustFromDecimal("115787736929662111563370814583278000176356624084966981749664"),
 		},
 		{
@@ -415,16 +414,16 @@ func TestSqrtPriceMath_getNextPriceAmount1Add_MAX160Boundary(t *testing.T) {
 		amount    *u256.Uint
 	}{
 		{
-			name:      "amount_exactly_MAX_UINT160",
+			name:      "amount_exactly_maxUint160Test",
 			sqrtPX96:  Q96,
-			liquidity: MAX_UINT160,
-			amount:    MAX_UINT160,
+			liquidity: maxUint160Test,
+			amount:    maxUint160Test,
 		},
 		{
-			name:      "amount_one_below_MAX_UINT160",
+			name:      "amount_one_below_maxUint160Test",
 			sqrtPX96:  Q96,
-			liquidity: MAX_UINT160,
-			amount:    new(u256.Uint).Sub(MAX_UINT160, u256.One()),
+			liquidity: maxUint160Test,
+			amount:    new(u256.Uint).Sub(maxUint160Test, u256.One()),
 		},
 	}
 
@@ -555,7 +554,7 @@ func TestSqrtPriceMath_getNextPriceAmount1Remove(t *testing.T) {
 			name:        "amount_just_above_max160_boundary",
 			sqrtPX96:    u256.MustFromDecimal("200000000000000000000000000000000000000"),
 			liquidity:   u256.MustFromDecimal("1000000000000000000"),
-			amount:      new(u256.Uint).Add(MAX_UINT160, u256.One()), // MAX_UINT160 + 1
+			amount:      new(u256.Uint).Add(maxUint160Test, u256.One()), // maxUint160Test + 1
 			shouldPanic: true,
 			panicMsg:    errSqrtPriceExceedsQuotient.Error(),
 		},
@@ -585,9 +584,9 @@ func TestSqrtPriceMath_getNextPriceAmount1Remove(t *testing.T) {
 		},
 		{
 			name:      "near_overflow_large_values",
-			sqrtPX96:  new(u256.Uint).Rsh(MAX_UINT256, 10),
+			sqrtPX96:  new(u256.Uint).Rsh(maxUint256Test, 10),
 			liquidity: u256.MustFromDecimal("1000000000000000000"),
-			amount:    new(u256.Uint).Rsh(MAX_UINT256, 200),
+			amount:    new(u256.Uint).Rsh(maxUint256Test, 200),
 			expected:  u256.MustFromDecimal("113078212145816597093331040047546785012958969394330622548958957437722684299"),
 		},
 	}
@@ -615,16 +614,16 @@ func TestSqrtPriceMath_getNextPriceAmount1Remove_MAX160Boundary(t *testing.T) {
 		amount    *u256.Uint
 	}{
 		{
-			name:      "amount_exactly_MAX_UINT160",
+			name:      "amount_exactly_maxUint160Test",
 			sqrtPX96:  MAX_SQRT_RATIO,
-			liquidity: MAX_UINT160,
-			amount:    MAX_UINT160,
+			liquidity: maxUint160Test,
+			amount:    maxUint160Test,
 		},
 		{
-			name:      "amount_one_below_MAX_UINT160",
+			name:      "amount_one_below_maxUint160Test",
 			sqrtPX96:  MAX_SQRT_RATIO,
-			liquidity: MAX_UINT160,
-			amount:    new(u256.Uint).Sub(MAX_UINT160, u256.One()),
+			liquidity: maxUint160Test,
+			amount:    new(u256.Uint).Sub(maxUint160Test, u256.One()),
 		},
 	}
 
