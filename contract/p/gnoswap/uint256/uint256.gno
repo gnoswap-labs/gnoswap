@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	MaxUint64   = math.MaxUint64
+	MAX_UINT64   = math.MaxUint64
 	MAX_UINT256 = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 )
 
@@ -52,7 +52,7 @@ func One() *Uint {
 
 // SetAllOne sets z to the maximum 256-bit value (all bits set to 1) and returns z.
 func (z *Uint) SetAllOne() *Uint {
-	z[3], z[2], z[1], z[0] = MaxUint64, MaxUint64, MaxUint64, MaxUint64
+	z[3], z[2], z[1], z[0] = MAX_UINT64, MAX_UINT64, MAX_UINT64, MAX_UINT64
 	return z
 }
 

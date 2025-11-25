@@ -219,7 +219,7 @@ func (z *Uint) SRsh(x *Uint, n uint) *Uint {
 			return z.SetAllOne()
 		}
 	}
-	var a uint64 = MaxUint64 << (64 - n%64)
+	var a uint64 = MAX_UINT64 << (64 - n%64)
 	// Big swaps first
 	switch {
 	case n > 192:
@@ -287,16 +287,16 @@ func (z *Uint) rsh192(x *Uint) *Uint {
 }
 
 func (z *Uint) srsh64(x *Uint) *Uint {
-	z[3], z[2], z[1], z[0] = MaxUint64, x[3], x[2], x[1]
+	z[3], z[2], z[1], z[0] = MAX_UINT64, x[3], x[2], x[1]
 	return z
 }
 
 func (z *Uint) srsh128(x *Uint) *Uint {
-	z[3], z[2], z[1], z[0] = MaxUint64, MaxUint64, x[3], x[2]
+	z[3], z[2], z[1], z[0] = MAX_UINT64, MAX_UINT64, x[3], x[2]
 	return z
 }
 
 func (z *Uint) srsh192(x *Uint) *Uint {
-	z[3], z[2], z[1], z[0] = MaxUint64, MaxUint64, MaxUint64, x[3]
+	z[3], z[2], z[1], z[0] = MAX_UINT64, MAX_UINT64, MAX_UINT64, x[3]
 	return z
 }
