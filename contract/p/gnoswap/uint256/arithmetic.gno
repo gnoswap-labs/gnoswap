@@ -367,9 +367,9 @@ func umul(x, y *Uint) [8]uint64 {
 func umulStep(z, x, y, carry uint64) (hi, lo uint64) {
 	hi, lo = bits.Mul64(x, y)
 	lo, carry = bits.Add64(lo, carry, 0)
-	hi, _ = bits.Add64(hi, 0, carry)
+	hi += carry
 	lo, carry = bits.Add64(lo, z, 0)
-	hi, _ = bits.Add64(hi, 0, carry)
+	hi += carry
 	return hi, lo
 }
 
@@ -377,7 +377,7 @@ func umulStep(z, x, y, carry uint64) (hi, lo uint64) {
 func umulHop(z, x, y uint64) (hi, lo uint64) {
 	hi, lo = bits.Mul64(x, y)
 	lo, carry := bits.Add64(lo, z, 0)
-	hi, _ = bits.Add64(hi, 0, carry)
+	hi += carry
 	return hi, lo
 }
 
