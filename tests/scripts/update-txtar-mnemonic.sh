@@ -30,13 +30,11 @@ update_txtar_file() {
     fi
 }
 
-# Find and update all txtar files containing the mnemonic placeholder
-for txtar_file in "$TXTAR_DIR"/*.txtar; do
-    if [ -f "$txtar_file" ]; then
-        if grep -E -q "adduserfrom gns_admin 'mnemonic here'" "$txtar_file"; then
-            update_txtar_file "$txtar_file"
-        fi
+# Find and update all txtar files containing the mnemonic placeholder (recursively)
+while IFS= read -r -d '' txtar_file; do
+    if grep -E -q "adduserfrom gns_admin 'mnemonic here'" "$txtar_file"; then
+        update_txtar_file "$txtar_file"
     fi
-done
+done < <(find "$TXTAR_DIR" -name "*.txtar" -type f -print0)
 
 echo "Done updating txtar files"
