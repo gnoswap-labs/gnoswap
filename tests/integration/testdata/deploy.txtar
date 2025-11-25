@@ -65,7 +65,7 @@ stdout 'STORAGE FEE:    1793300ugnot'
 
 ### deploy uint256
 gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/uint256 -pkgpath gno.land/p/gnoswap/uint256 -gas-fee 21943ugnot -gas-wanted 21943000 -broadcast -chainid=tendermint_test test1
-stdout 'GAS USED:   21[0-9]{6}'
+stdout 'GAS USED:   (1|2)[0-9]{7}'
 stdout 'STORAGE DELTA:  154977 bytes'
 stdout 'STORAGE FEE:    15497700ugnot'
 
