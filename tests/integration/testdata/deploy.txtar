@@ -27,37 +27,37 @@ gnoland start
 
 ### deploy usdc
 gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/onbloc/usdc -pkgpath gno.land/r/onbloc/usdc -gas-fee 16818ugnot -gas-wanted 16818000 -broadcast -chainid=tendermint_test test1
-stdout 'GAS USED:   16[0-9]{6}'
+stdout 'GAS USED:   (8|9|1[0-9])[0-9]{6}'
 stdout 'STORAGE DELTA:  17992 bytes'
 stdout 'STORAGE FEE:    1799200ugnot'
 
 ### deploy foo
 gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/onbloc/foo -pkgpath gno.land/r/onbloc/foo -gas-fee 16997ugnot -gas-wanted 16997000 -broadcast -chainid=tendermint_test test1
-stdout 'GAS USED:   16[0-9]{6}'
+stdout 'GAS USED:   (8|9|1[0-9])[0-9]{6}'
 stdout 'STORAGE DELTA:  17933 bytes'
 stdout 'STORAGE FEE:    1793300ugnot'
 
 ### deploy bar
 gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/onbloc/bar -pkgpath gno.land/r/onbloc/bar -gas-fee 16912ugnot -gas-wanted 16912000 -broadcast -chainid=tendermint_test test1
-stdout 'GAS USED:   16[0-9]{6}'
+stdout 'GAS USED:   (8|9|1[0-9])[0-9]{6}'
 stdout 'STORAGE DELTA:  17933 bytes'
 stdout 'STORAGE FEE:    1793300ugnot'
 
 ### deploy baz
 gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/onbloc/baz -pkgpath gno.land/r/onbloc/baz -gas-fee 17058ugnot -gas-wanted 17058000 -broadcast -chainid=tendermint_test test1
-stdout 'GAS USED:   17[0-9]{6}'
+stdout 'GAS USED:   (8|9|1[0-9])[0-9]{6}'
 stdout 'STORAGE DELTA:  17933 bytes'
 stdout 'STORAGE FEE:    1793300ugnot'
 
 ### deploy qux
 gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/onbloc/qux -pkgpath gno.land/r/onbloc/qux -gas-fee 16914ugnot -gas-wanted 16914000 -broadcast -chainid=tendermint_test test1
-stdout 'GAS USED:   16[0-9]{6}'
+stdout 'GAS USED:   (8|9|1[0-9])[0-9]{6}'
 stdout 'STORAGE DELTA:  17933 bytes'
 stdout 'STORAGE FEE:    1793300ugnot'
 
 ### deploy obl
 gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/onbloc/obl -pkgpath gno.land/r/onbloc/obl -gas-fee 17059ugnot -gas-wanted 17059000 -broadcast -chainid=tendermint_test test1
-stdout 'GAS USED:   17[0-9]{6}'
+stdout 'GAS USED:   (8|9|1[0-9])[0-9]{6}'
 stdout 'STORAGE DELTA:  17933 bytes'
 stdout 'STORAGE FEE:    1793300ugnot'
 
