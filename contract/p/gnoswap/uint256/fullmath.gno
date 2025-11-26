@@ -22,6 +22,12 @@ import (
 	"gno.land/p/nt/ufmt"
 )
 
+var MAX_UINT256_FROM_DECIMAL *Uint
+
+func init() {
+	MAX_UINT256_FROM_DECIMAL = MustFromDecimal(MAX_UINT256)
+}
+
 // MulDiv calculates (a * b) / denominator with full 512-bit intermediate precision.
 // Panics if denominator is zero or if the result overflows 256 bits.
 func MulDiv(a, b, denominator *Uint) *Uint {
@@ -78,11 +84,11 @@ func MulDivRoundingUp(a, b, denominator *Uint) *Uint {
 	}
 
 	// Add 1 to round up, but check for overflow
-	if result.Eq(MustFromDecimal(MAX_UINT256)) {
+	if result.Eq(MAX_UINT256_FROM_DECIMAL) {
 		panic(ufmt.Sprintf("overflow: result(%s) + 1 would exceed MAX_UINT256", result.ToString()))
 	}
 
-	return new(Uint).Add(result, &one)
+	return new(Uint).Add(result, One())
 }
 
 // DivRoundingUp calculates ceil(x / y) and returns the result.
@@ -93,14 +99,14 @@ func DivRoundingUp(x, y *Uint) *Uint {
 	}
 	div := new(Uint).Div(x, y)
 	mod := new(Uint).Mod(x, y)
-	z := new(Uint).Add(div, gt(mod, &zero))
+	z := new(Uint).Add(div, gt(mod, Zero()))
 	return z
 }
 
 // gt returns One() if x > y, otherwise returns Zero().
 func gt(x, y *Uint) *Uint {
 	if x.Gt(y) {
-		return &one
+		return One()
 	}
-	return &zero
+	return Zero()
 }
