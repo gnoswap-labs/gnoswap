@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"chain/runtime"
 	"testing"
 
 	"gno.land/p/nt/testutils"
@@ -146,51 +145,36 @@ func TestSwapCallback(t *testing.T) {
 func TestSwapCallback_AssertIsRouterV1(t *testing.T) {
 	tests := []struct {
 		name             string
-		setupRealm       func()
+		callerAddress    address
 		shouldError      bool
 		expectedErrorMsg string
 	}{
 		{
-			name: "valid caller from router v1",
-			setupRealm: func() {
-				routerV1Path := "gno.land/r/gnoswap/router/v1"
-				testing.SetRealm(testing.NewCodeRealm(routerV1Path))
-			},
-			shouldError: false,
+			name:          "valid caller from router v1",
+			callerAddress: routerV1Addr,
+			shouldError:   false,
 		},
 		{
-			name: "invalid caller from unauthorized contract",
-			setupRealm: func() {
-				unauthorizedPath := "gno.land/r/unauthorized/contract"
-				testing.SetRealm(testing.NewCodeRealm(unauthorizedPath))
-			},
+			name:             "invalid caller from unauthorized contract",
+			callerAddress:    testutils.TestAddress("unauthorized"),
 			shouldError:      true,
 			expectedErrorMsg: "[GNOSWAP-ROUTER-005]",
 		},
 		{
-			name: "invalid caller from user realm",
-			setupRealm: func() {
-				maliciousUser := testutils.TestAddress("maliciousUser")
-				testing.SetRealm(testing.NewUserRealm(maliciousUser))
-			},
+			name:             "invalid caller from user realm",
+			callerAddress:    testutils.TestAddress("maliciousUser"),
 			shouldError:      true,
 			expectedErrorMsg: "[GNOSWAP-ROUTER-005]",
 		},
 		{
-			name: "invalid caller from different contract",
-			setupRealm: func() {
-				differentContract := "gno.land/r/different/contract"
-				testing.SetRealm(testing.NewCodeRealm(differentContract))
-			},
+			name:             "invalid caller from different contract",
+			callerAddress:    testutils.TestAddress("different"),
 			shouldError:      true,
 			expectedErrorMsg: "[GNOSWAP-ROUTER-005]",
 		},
 		{
-			name: "invalid caller from pool contract",
-			setupRealm: func() {
-				poolPath := "gno.land/r/gnoswap/pool"
-				testing.SetRealm(testing.NewCodeRealm(poolPath))
-			},
+			name:             "invalid caller from pool contract",
+			callerAddress:    poolAddr,
 			shouldError:      true,
 			expectedErrorMsg: "[GNOSWAP-ROUTER-005]",
 		},
@@ -198,20 +182,14 @@ func TestSwapCallback_AssertIsRouterV1(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Setup realm
-			tt.setupRealm()
-
-			// Get caller address
-			caller := runtime.PreviousRealm().Address()
-
 			// Execute and verify
 			if tt.shouldError {
 				uassert.PanicsContains(t, tt.expectedErrorMsg, func() {
-					assertIsRouterV1(caller)
+					assertIsRouterV1(tt.callerAddress)
 				})
 			} else {
 				// Should not panic
-				assertIsRouterV1(caller)
+				assertIsRouterV1(tt.callerAddress)
 			}
 		})
 	}
