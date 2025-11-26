@@ -29,24 +29,6 @@ show_help() {
     echo ""
 }
 
-list_tests() {
-    echo -e "${BLUE}Available integration tests:${NC}"
-    echo ""
-
-    if [ -d "/workspace/contract/tests/integration/testdata" ]; then
-        find /workspace/contract/tests/integration/testdata -name "*.txtar" -type f | \
-            sed 's|.*/||' | \
-            sed 's|\.txtar||' | \
-            sort | \
-            while read test; do
-                echo "  - $test"
-            done
-    else
-        echo -e "${RED}Error: Test directory not found${NC}"
-        exit 1
-    fi
-}
-
 setup_tests() {
     echo -e "${YELLOW}Setting up test environment...${NC}"
 
@@ -65,8 +47,8 @@ run_single_test() {
     echo ""
 
     cd /workspace/gno/gno.land/pkg/integration
-    # Use $ anchor to match exact test name (avoid int_test matching uint_test)
-    go test -v . -run "TestTestdata/${test_name}\$"
+    # Use ^ and $ anchors to match exact test name
+    go test -v . -run "TestTestdata/^${test_name}\$"
 }
 
 run_all_tests() {
@@ -78,10 +60,7 @@ run_all_tests() {
     local tests=()
     while IFS= read -r test; do
         tests+=("$test")
-    done < <(find /workspace/contract/tests/integration/testdata -name "*.txtar" -type f | \
-        sed 's|.*/||' | \
-        sed 's|\.txtar||' | \
-        sort)
+    done < <(cd /workspace/contract && python3 setup.py --list-tests)
 
     local total=${#tests[@]}
     local passed=0
@@ -102,7 +81,7 @@ run_all_tests() {
         echo -e "${BLUE}[${num}/${total}] Running: ${test}${NC}"
         echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
-        if go test -v . -run "TestTestdata/${test}\$"; then
+        if go test -v . -run "TestTestdata/^${test}\$"; then
             echo -e "${GREEN}✓ PASSED: ${test}${NC}"
             ((passed++)) || true
         else
@@ -144,9 +123,6 @@ run_all_tests() {
 case "${1:-}" in
     --help|-h|"")
         show_help
-        ;;
-    --list|-l)
-        list_tests
         ;;
     --all|-a)
         setup_tests

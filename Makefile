@@ -61,7 +61,7 @@ integration-test:
 
 .PHONY: integration-test-list
 integration-test-list:
-	@bash $(PROJECT_ROOT)/scripts/run-integration-test.sh --list
+	@python3 $(PROJECT_ROOT)/setup.py --list-tests
 
 .PHONY: integration-test-run
 integration-test-run:

@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 import argparse
 import subprocess
@@ -263,6 +264,35 @@ def copy_integration_tests(workdir: str) -> None:
                 print(f"  Linked: {file}")
 
 
+def list_integration_tests() -> None:
+    """List all integration tests with their converted names."""
+    src_testdata = "tests/integration/testdata"
+
+    if not os.path.exists(src_testdata):
+        print("Error: Test directory not found", file=sys.stderr)
+        sys.exit(1)
+
+    tests = []
+    for root, _, files in os.walk(src_testdata):
+        for file in files:
+            if file.endswith(".txtar"):
+                # Get relative directory from testdata root
+                rel_dir = os.path.relpath(root, src_testdata)
+                name_without_ext = file.replace(".txtar", "")
+
+                # If in subdirectory, add prefix
+                if rel_dir != ".":
+                    prefix = rel_dir.replace(os.sep, "_") + "_"
+                    converted_name = prefix + name_without_ext
+                else:
+                    converted_name = name_without_ext
+
+                tests.append(converted_name)
+
+    for test in sorted(tests):
+        print(test)
+
+
 def main() -> None:
     """Main entry point for the script."""
     parser = argparse.ArgumentParser(description="Set up GnoSwap contracts")
@@ -280,8 +310,17 @@ def main() -> None:
         action="store_true",
         help="Exclude *test.gno files from linking",
     )
+    parser.add_argument(
+        "--list-tests",
+        action="store_true",
+        help="List all integration tests with converted names",
+    )
 
     args = parser.parse_args()
+
+    if args.list_tests:
+        list_integration_tests()
+        return
 
     if args.clone:
         clone_repository(args.workdir)
