@@ -62,7 +62,7 @@ func (z *Int) And(x, y *Int) *Int {
 	}
 
 	// x & (-y) == x & ^(y-1) == x &^ (y-1)
-	y1 := new(uint256.Uint).Sub(y.abs, uint256.One())
+	y1 := new(uint256.Uint).Sub(y.abs, one)
 	z.abs = z.abs.AndNot(x.abs, y1)
 	z.neg = false
 	return z
