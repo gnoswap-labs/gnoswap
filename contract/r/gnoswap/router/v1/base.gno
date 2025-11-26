@@ -273,7 +273,7 @@ func (p *SwapRouteParams) ExpectedExactAmountByFee(feeBps uint64) string {
 
 // IsUnwrap checks if the swap output is native token.
 func (p *SwapRouteParams) IsUnwrap() bool {
-	return p.outputToken == common.GNOT_DENOM
+	return p.outputToken == GNOT_DENOM
 }
 
 func (p *SwapRouteParams) SwapCount() int64 {
