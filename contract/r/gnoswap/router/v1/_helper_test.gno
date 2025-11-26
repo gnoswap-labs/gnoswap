@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	ugnotDenom string = "ugnot"
+	gnotDenom string = "ugnot"
 
 	gnsPath string = "gno.land/r/gnoswap/gns"
 	barPath string = "gno.land/r/onbloc/bar"
@@ -279,9 +279,9 @@ func ugnotTransfer(t *testing.T, from, to address, amount int64) {
 	t.Helper()
 
 	testing.SetRealm(testing.NewUserRealm(from))
-	testing.SetOriginSend(chain.Coins{{ugnotDenom, int64(amount)}})
+	testing.SetOriginSend(chain.Coins{{gnotDenom, int64(amount)}})
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(from, to, chain.Coins{{ugnotDenom, int64(amount)}})
+	banker_.SendCoins(from, to, chain.Coins{{gnotDenom, int64(amount)}})
 }
 
 func ugnotBalanceOf(t *testing.T, addr address) int64 {
@@ -293,7 +293,7 @@ func ugnotBalanceOf(t *testing.T, addr address) int64 {
 		return 0
 	}
 
-	return coins.AmountOf(ugnotDenom)
+	return coins.AmountOf(gnotDenom)
 }
 
 func ugnotMint(t *testing.T, addr address, denom string, amount int64) {
@@ -315,7 +315,7 @@ func ugnotFaucet(t *testing.T, to address, amount int64) {
 	testing.SetOriginCaller(faucetAddress)
 
 	if ugnotBalanceOf(t, faucetAddress) < amount {
-		newCoins := chain.Coins{{ugnotDenom, int64(amount)}}
+		newCoins := chain.Coins{{gnotDenom, int64(amount)}}
 		ugnotMint(t, faucetAddress, newCoins[0].Denom, newCoins[0].Amount)
 		testing.SetOriginSend(newCoins)
 	}
@@ -327,7 +327,7 @@ func ugnotDeposit(t *testing.T, addr address, amount uint64) {
 	testing.SetRealm(testing.NewUserRealm(addr))
 	wugnotAddr := wugnotAddr
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(addr, wugnotAddr, chain.Coins{{ugnotDenom, int64(amount)}})
+	banker_.SendCoins(addr, wugnotAddr, chain.Coins{{gnotDenom, int64(amount)}})
 	wugnot.Deposit(cross)
 }
 
