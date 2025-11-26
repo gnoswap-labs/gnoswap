@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 import argparse
 import subprocess
@@ -92,8 +93,9 @@ class GnoModuleManager:
 class ContractCopier:
     """Handles linking of contract files and tests."""
 
-    def __init__(self, module_manager: GnoModuleManager):
+    def __init__(self, module_manager: GnoModuleManager, exclude_tests: bool = False):
         self.module_manager = module_manager
+        self.exclude_tests = exclude_tests
 
     def copy_module(self, module_info: ModuleInfo) -> None:
         print(
@@ -114,6 +116,10 @@ class ContractCopier:
             dest_root = os.path.join(module_info.destination_dir, rel_path)
             os.makedirs(dest_root, exist_ok=True)
             for file in files:
+                # Skip test files if exclude_tests option is enabled
+                if self.exclude_tests and file.endswith("test.gno"):
+                    continue
+                
                 src_file = os.path.abspath(os.path.join(root, file))
                 dest_file = os.path.join(dest_root, file)
                 if os.path.exists(dest_file) or os.path.islink(dest_file):
@@ -168,10 +174,10 @@ def clone_repository(workdir: str) -> None:
     os.chdir("gnoswap")
 
 
-def setup_contracts(workdir: str) -> None:
+def setup_contracts(workdir: str, exclude_tests: bool = False) -> None:
     """Set up all contracts and tests."""
     module_manager = GnoModuleManager(workdir)
-    copier = ContractCopier(module_manager)
+    copier = ContractCopier(module_manager, exclude_tests=exclude_tests)
 
     for root, dirs, files in os.walk("contract"):
         copier.process_directory(root, dirs, files)
@@ -258,6 +264,35 @@ def copy_integration_tests(workdir: str) -> None:
                 print(f"  Linked: {file}")
 
 
+def list_integration_tests() -> None:
+    """List all integration tests with their converted names."""
+    src_testdata = "tests/integration/testdata"
+
+    if not os.path.exists(src_testdata):
+        print("Error: Test directory not found", file=sys.stderr)
+        sys.exit(1)
+
+    tests = []
+    for root, _, files in os.walk(src_testdata):
+        for file in files:
+            if file.endswith(".txtar"):
+                # Get relative directory from testdata root
+                rel_dir = os.path.relpath(root, src_testdata)
+                name_without_ext = file.replace(".txtar", "")
+
+                # If in subdirectory, add prefix
+                if rel_dir != ".":
+                    prefix = rel_dir.replace(os.sep, "_") + "_"
+                    converted_name = prefix + name_without_ext
+                else:
+                    converted_name = name_without_ext
+
+                tests.append(converted_name)
+
+    for test in sorted(tests):
+        print(test)
+
+
 def main() -> None:
     """Main entry point for the script."""
     parser = argparse.ArgumentParser(description="Set up GnoSwap contracts")
@@ -270,13 +305,27 @@ def main() -> None:
     parser.add_argument(
         "-c", "--clone", action="store_true", help="Clone the repository"
     )
+    parser.add_argument(
+        "--exclude-tests",
+        action="store_true",
+        help="Exclude *test.gno files from linking",
+    )
+    parser.add_argument(
+        "--list-tests",
+        action="store_true",
+        help="List all integration tests with converted names",
+    )
 
     args = parser.parse_args()
+
+    if args.list_tests:
+        list_integration_tests()
+        return
 
     if args.clone:
         clone_repository(args.workdir)
 
-    setup_contracts(args.workdir)
+    setup_contracts(args.workdir, exclude_tests=args.exclude_tests)
     copy_integration_tests(args.workdir)
     print("Setup completed successfully!")
 

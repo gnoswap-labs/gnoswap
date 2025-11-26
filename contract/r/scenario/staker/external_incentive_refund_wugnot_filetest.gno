@@ -249,7 +249,7 @@ func ugnotBalanceOf(addr address) uint64 {
 // [INFO] WUGNOT balance before creating incentive: 4000000000
 // [INFO] create external incentive with WUGNOT (wrapped token)
 // [INFO] current time: 1234567900
-// [INFO] external incentive created successfully with ID: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d:1234567900:1
+// [INFO] external incentive created successfully with ID: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567900:1
 // [INFO] GNOT balance after creating incentive: 10000000000
 // [INFO] WUGNOT balance after creating incentive: 3000000000
 // [INFO] WUGNOT spent for incentive: 1000000000
@@ -259,7 +259,7 @@ func ugnotBalanceOf(addr address) uint64 {
 // [INFO] end external incentive and check WUGNOT refund
 // [INFO] GNOT balance before ending: 10000000000
 // [INFO] WUGNOT balance before ending: 3000000000
-// [INFO] ending incentive with ID: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d:1234567900:1
+// [INFO] ending incentive with ID: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567900:1
 // [INFO] GNOT balance after ending: 10000000000
 // [INFO] WUGNOT balance after ending: 4000000000
 // [EXPECTED] GNOT change (should be 0): 0

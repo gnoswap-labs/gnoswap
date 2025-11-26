@@ -2,6 +2,13 @@
 ENV ?= default
 include scripts/config/$(ENV).mk
 
+# Patch admin address
+.PHONY: patch-admin-address
+patch-admin-address:
+	$(info ************ patching admin address ************)
+	@bash scripts/patch-admin-address.sh $(ADDR_ADMIN)
+	@echo
+
 ## INIT
 .PHONY: init
 init: deploy-test-tokens deploy-gnoswap

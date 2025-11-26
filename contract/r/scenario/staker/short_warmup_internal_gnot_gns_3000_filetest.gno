@@ -249,7 +249,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] position ID: 1
 // [EXPECTED] liquidity: 1005
 // [EXPECTED] amount0: 50, amount1: 50
-// [EXPECTED] position owner: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+// [EXPECTED] position owner: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 //
 // [SCENARIO] 4. Stake token 01
 // [INFO] approve and stake token 01

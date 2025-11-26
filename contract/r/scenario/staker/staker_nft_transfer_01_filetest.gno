@@ -220,7 +220,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] position ID: 1
 // [EXPECTED] liquidity: 12437
 // [EXPECTED] amount0: 368, amount1: 1000
-// [EXPECTED] position owner: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+// [EXPECTED] position owner: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 //
 // [SCENARIO] 4. Stake position 01
 // [INFO] approve NFT to staker
