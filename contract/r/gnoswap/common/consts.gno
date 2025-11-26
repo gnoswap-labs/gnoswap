@@ -14,7 +14,7 @@ const (
 	// Used in banker operations, pool pairs, and swap paths.
 	GNOT_DENOM = "ugnot"
 
-	// WUGNOT_PATH is the package path for wrapped GNOT (wugnot) token.
-	// Wrapped GNOT is an GRC20 representation of native GNOT for DeFi operations.
+	// WUGNOT_PATH is the package path for wrapped ugnot (wugnot) token.
+	// wrapped ugnot is an GRC20 representation of native GNOT for DeFi operations.
 	WUGNOT_PATH = "gno.land/r/gnoland/wugnot"
 )

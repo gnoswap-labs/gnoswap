@@ -145,7 +145,7 @@ func (p *positionV1) wrapWithTransfer(ugnotAmount int64, toAddress address) erro
 	currentRealmAddr := runtime.CurrentRealm().Address()
 
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(currentRealmAddr, wugnotAddr, chain.Coins{{"ugnot", ugnotAmount}})
+	banker_.SendCoins(currentRealmAddr, wugnotAddr, chain.Coins{{common.GNOT_DENOM, ugnotAmount}})
 	wugnot.Deposit(cross) // Position has wugnot
 
 	// send wugnot: position -> user
@@ -167,7 +167,7 @@ func (p *positionV1) unwrapWithTransferFrom(fromAddress, toAddress address, wugn
 	wugnot.Withdraw(cross, wugnotAmount)
 
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(currentRealmAddr, toAddress, chain.Coins{{"ugnot", wugnotAmount}})
+	banker_.SendCoins(currentRealmAddr, toAddress, chain.Coins{{common.GNOT_DENOM, wugnotAmount}})
 
 	return nil
 }

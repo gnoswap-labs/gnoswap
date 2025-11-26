@@ -51,7 +51,7 @@ func (s *stakerV1) CreateExternalIncentive(
 
 	// transfer reward token from user to staker
 	isRequestUnwrap := false
-	if rewardToken == GNOT {
+	if rewardToken == GNOT_DENOM {
 		isRequestUnwrap = true
 		rewardToken = WUGNOT_PATH
 		err := wrapWithTransfer(stakerAddr, rewardAmount)

@@ -13,7 +13,6 @@ import (
 const (
 	UGNOT_MIN_DEPOSIT_TO_WRAP int64 = 1000
 	WUGNOT_PATH                     = "gno.land/r/gnoland/wugnot"
-	GNOT                            = "ugnot"
 	GNOT_DENOM                      = "ugnot"
 )
 

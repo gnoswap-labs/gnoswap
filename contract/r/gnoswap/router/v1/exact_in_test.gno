@@ -373,7 +373,7 @@ func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
 		func() {
 			testing.SetRealm(routerRealm)
 			router.ExactOutSwapRoute(
-				ugnot,   // inputToken
+				GNOT_DENOM, // inputToken
 				quxPath, // outputToken
 				"3",     // amountSpecified
 				"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/qux:3000", // strRouteArr

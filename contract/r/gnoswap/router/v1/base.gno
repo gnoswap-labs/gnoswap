@@ -87,7 +87,7 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 	// Handle input token independently
 	if isInputNativeToken {
 		sent := banker.OriginSend()
-		ugnotSentByUser := sent.AmountOf("ugnot")
+		ugnotSentByUser := sent.AmountOf(GNOT_DENOM)
 		amountSpecified := specifiedAmount.Int64()
 
 		if ugnotSentByUser != amountSpecified {

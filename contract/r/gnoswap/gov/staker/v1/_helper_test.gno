@@ -17,9 +17,9 @@ import (
 
 // contract Paths
 const (
-	GNS_PATH    string  = "gno.land/r/gnoswap/gns"
-	WUGNOT_ADDR address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
-	GOV_STAKER_PKG_PATH = "gno.land/r/gnoswap/gov/staker"
+	GNS_PATH            string  = "gno.land/r/gnoswap/gns"
+	WUGNOT_ADDR         address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
+	GOV_STAKER_PKG_PATH         = "gno.land/r/gnoswap/gov/staker"
 )
 
 var (
@@ -27,13 +27,13 @@ var (
 	stakerAddr        = access.MustGetAddress(prbac.ROLE_STAKER.String())
 	communityPoolAddr = access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
 
-	govStakerAddr     = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
-	govStakerRealm    = testing.NewUserRealm(govStakerAddr)
+	govStakerAddr  = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
+	govStakerRealm = testing.NewUserRealm(govStakerAddr)
 
-	protocolFeeAddr   = access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
-	launchpadAddr     = access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
+	protocolFeeAddr = access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	launchpadAddr   = access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
 
-	devOpsAddr        = access.MustGetAddress(prbac.ROLE_DEVOPS.String())
+	devOpsAddr = access.MustGetAddress(prbac.ROLE_DEVOPS.String())
 
 	wugnotAddr address = "g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum"
 
@@ -45,7 +45,6 @@ var (
 	usdcPath string = "gno.land/r/onbloc/usdc"
 
 	ugnotDenom string = "ugnot"
-	ugnotPath  string = "ugnot"
 	wugnotPath string = "gno.land/r/gnoland/wugnot"
 
 	fee100  uint32 = 100
@@ -113,8 +112,8 @@ func ugnotFaucet(t *testing.T, to address, amount uint64) {
 	testing.SetOriginCaller(admin)
 
 	if ugnotBalanceOf(t, admin) < amount {
-		ugnotMint(t, admin, ugnotPath, int64(amount))
-		testing.SetOriginSend(chain.Coins{{ugnotPath, int64(amount)}})
+		ugnotMint(t, admin, ugnotDenom, int64(amount))
+		testing.SetOriginSend(chain.Coins{{ugnotDenom, int64(amount)}})
 	}
 	ugnotTransfer(t, admin, to, amount)
 }

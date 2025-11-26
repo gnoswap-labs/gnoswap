@@ -32,7 +32,6 @@ import (
 
 const (
 	ugnotDenom string = "ugnot"
-	ugnotPath  string = "ugnot"
 	wugnotPath string = "gno.land/r/gnoland/wugnot"
 	gnsPath    string = "gno.land/r/gnoswap/gns"
 	barPath    string = "gno.land/r/onbloc/bar"

@@ -139,10 +139,10 @@ func TestCreatePool(t *testing.T) {
 					expectedToken0, expectedToken1 = expectedToken1, expectedToken0
 				}
 
-				if expectedToken0 == GNOT {
+				if expectedToken0 == GNOT_DENOM {
 					expectedToken0 = WRAPPED_WUGNOT
 				}
-				if expectedToken1 == GNOT {
+				if expectedToken1 == GNOT_DENOM {
 					expectedToken1 = WRAPPED_WUGNOT
 				}
 

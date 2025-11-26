@@ -74,9 +74,9 @@ func TestWrap(t *testing.T) {
 			if isNative {
 				ugnotFaucet(t, tc.callerAddr, 1_000)
 
-				testing.SetOriginSend(chain.Coins{{ugnotPath, tc.amount}})
+				testing.SetOriginSend(chain.Coins{{GNOT_DENOM, tc.amount}})
 				banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-				banker_.SendCoins(tc.callerAddr, tc.toAddr, chain.Coins{{ugnotPath, tc.amount}})
+				banker_.SendCoins(tc.callerAddr, tc.toAddr, chain.Coins{{GNOT_DENOM, tc.amount}})
 			} else {
 				ugnotFaucet(t, tc.callerAddr, 1_000)
 				ugnotDeposit(t, tc.callerAddr, 1_000)

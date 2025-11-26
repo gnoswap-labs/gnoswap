@@ -638,7 +638,7 @@ func TestProcessTokens(t *testing.T) {
 		},
 		{
 			name:           "processTokens is failed by token0 is native",
-			token0:         GNOT,
+			token0:         common.GNOT_DENOM,
 			token1:         gnsPath,
 			amount0Desired: "1300",
 			amount1Desired: "200",
@@ -654,7 +654,7 @@ func TestProcessTokens(t *testing.T) {
 		{
 			name:           "processTokens is failed by token1 is native",
 			token0:         gnsPath,
-			token1:         GNOT,
+			token1:         common.GNOT_DENOM,
 			amount0Desired: "150",
 			amount1Desired: "1250",
 			caller:         testutils.TestAddress("user3"),
@@ -667,8 +667,8 @@ func TestProcessTokens(t *testing.T) {
 		},
 		{
 			name:           "processTokens is failed by both tokens are native",
-			token0:         GNOT,
-			token1:         GNOT,
+			token0:         common.GNOT_DENOM,
+			token1:         common.GNOT_DENOM,
 			amount0Desired: "1100",
 			amount1Desired: "1200",
 			caller:         testutils.TestAddress("user4"),
@@ -708,13 +708,13 @@ func TestProcessTokens(t *testing.T) {
 				}
 			}()
 
-			if tt.token0 == GNOT {
+			if tt.token0 == common.GNOT_DENOM {
 				amount, _ := strconv.ParseInt(tt.amount0Desired, 10, 64)
 				ugnotFaucet(t, positionAddr, amount)
 				testing.SetRealm(testing.NewUserRealm(positionAddr))
 				mockInstance.transferUGNOT(positionAddr, positionAddr, amount)
 			}
-			if tt.token1 == GNOT {
+			if tt.token1 == common.GNOT_DENOM {
 				amount, _ := strconv.ParseInt(tt.amount1Desired, 10, 64)
 				ugnotFaucet(t, positionAddr, amount)
 				testing.SetRealm(testing.NewUserRealm(positionAddr))

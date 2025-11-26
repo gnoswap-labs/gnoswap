@@ -59,7 +59,7 @@ func unwrapWithTransfer(toAddress address, wugnotAmount int64) error {
 
 	currentRealmAddr := runtime.CurrentRealm().Address()
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(currentRealmAddr, toAddress, chain.Coins{{"ugnot", int64(wugnotAmount)}})
+	banker_.SendCoins(currentRealmAddr, toAddress, chain.Coins{{GNOT_DENOM, int64(wugnotAmount)}})
 
 	return nil
 }
@@ -78,7 +78,7 @@ func unwrapWithTransferFrom(fromAddress, toAddress address, wugnotAmount int64) 
 	wugnot.Withdraw(cross, wugnotAmount)
 
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(currentRealmAddr, toAddress, chain.Coins{{"ugnot", int64(wugnotAmount)}})
+	banker_.SendCoins(currentRealmAddr, toAddress, chain.Coins{{GNOT_DENOM, int64(wugnotAmount)}})
 
 	return nil
 }
