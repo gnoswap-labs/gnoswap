@@ -307,7 +307,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] admin: mint position 01 (tick range: -1000 ~ 1000)
 // [EXPECTED] admin position ID: 1, liquidity: 20505
 // [EXPECTED] amounts - 0: 1000, 1: 1000
-// [EXPECTED] position 01 owner: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+// [EXPECTED] position 01 owner: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 // [INFO] user2: approve tokens for minting
 // [INFO] user2: mint position 02 (tick range: -1000 ~ 1000)
 // [EXPECTED] user2 position ID: 2, liquidity: 20505
@@ -329,7 +329,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 6. Unstake and verify NFT ownership
 // [INFO] admin: unstake position 01
-// [EXPECTED] position 01 owner after unstaking: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+// [EXPECTED] position 01 owner after unstaking: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 // [INFO] user2: unstake position 02
 // [EXPECTED] position 02 owner after unstaking: g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec
 // [INFO] multi-user staking and ownership verification completed successfully

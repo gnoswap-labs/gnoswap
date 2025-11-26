@@ -615,7 +615,7 @@ func TestLaunchpadDeposit_stakeGovernance(t *testing.T) {
 			userAddress:          adminAddr,
 			expectedError:        false,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not launchpad",
+			expectedAbortMessage: "unauthorized: caller g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 is not launchpad",
 		},
 		{
 			name:                 "stake governance failed by invalid project id",

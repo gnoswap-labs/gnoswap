@@ -302,7 +302,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] position ID: 1
 // [EXPECTED] liquidity: 200510
 // [EXPECTED] amount0: 1000, amount1: 1000
-// [EXPECTED] position owner: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+// [EXPECTED] position owner: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 //
 // [SCENARIO] 4. First stake operation
 // [INFO] approve NFT to staker for first stake
@@ -316,7 +316,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 6. Unstake operation
 // [INFO] unstake position 01
-// [EXPECTED] position owner after unstake: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+// [EXPECTED] position owner after unstake: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 // [INFO] position successfully unstaked and returned to owner
 //
 // [SCENARIO] 7. Restake operation
@@ -333,5 +333,5 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 9. Final unstake operation
 // [INFO] final unstake operation
-// [EXPECTED] position owner after final unstake: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+// [EXPECTED] position owner after final unstake: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 // [INFO] stake-unstake-restake cycle completed successfully
