@@ -12,11 +12,6 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 )
 
-const (
-	MIN_TICK int32 = -887272
-	MAX_TICK int32 = 887272
-)
-
 // GetTickLiquidityGross returns the gross liquidity for the specified tick.
 func GetTickLiquidityGross(p *pl.Pool, tick int32) *u256.Uint {
 	return mustGetTick(p, tick).LiquidityGross()
@@ -330,8 +325,8 @@ func calculateMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
 	// This ensures that the tick range is properly aligned with the tickSpacing
 	// For example, if tickSpacing is 60 and MIN_TICK is -887272:
 	// -887272 / 60 = -14787.866... -> -14787 * 60 = -887220
-	minTick := (MIN_TICK / tickSpacing) * tickSpacing
-	maxTick := (MAX_TICK / tickSpacing) * tickSpacing
+	minTick := (common.MIN_TICK / tickSpacing) * tickSpacing
+	maxTick := (common.MAX_TICK / tickSpacing) * tickSpacing
 	numTicks := uint64((maxTick-minTick)/tickSpacing) + 1
 
 	return u256.Zero().Div(u256.MustFromDecimal(MAX_UINT128), u256.NewUint(numTicks))
@@ -455,17 +450,17 @@ func validateTicks(tickLower, tickUpper int32) error {
 		)
 	}
 
-	if tickLower < MIN_TICK {
+	if tickLower < common.MIN_TICK {
 		return makeErrorWithDetails(
 			errTickLowerInvalid,
-			ufmt.Sprintf("tickLower(%d) < MIN_TICK(%d)", tickLower, MIN_TICK),
+			ufmt.Sprintf("tickLower(%d) < MIN_TICK(%d)", tickLower, common.MIN_TICK),
 		)
 	}
 
-	if tickUpper > MAX_TICK {
+	if tickUpper > common.MAX_TICK {
 		return makeErrorWithDetails(
 			errTickUpperInvalid,
-			ufmt.Sprintf("tickUpper(%d) > MAX_TICK(%d)", tickUpper, MAX_TICK),
+			ufmt.Sprintf("tickUpper(%d) > MAX_TICK(%d)", tickUpper, common.MAX_TICK),
 		)
 	}
 

@@ -152,10 +152,10 @@ func (step *StepComputations) initSwapStep(state SwapState, p *pl.Pool, zeroForO
 // clampTickNext ensures that `tickNext` stays within the min, max tick boundaries
 // as the tick bitmap is not aware of these bounds
 func (step *StepComputations) clampTickNext() {
-	if step.tickNext < MIN_TICK {
-		step.tickNext = MIN_TICK
-	} else if step.tickNext > MAX_TICK {
-		step.tickNext = MAX_TICK
+	if step.tickNext < common.MIN_TICK {
+		step.tickNext = common.MIN_TICK
+	} else if step.tickNext > common.MAX_TICK {
+		step.tickNext = common.MAX_TICK
 	}
 }
 

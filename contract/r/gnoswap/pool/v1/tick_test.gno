@@ -6,6 +6,7 @@ import (
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
+	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -777,27 +778,27 @@ func TestValidateTicks(t *testing.T) {
 		},
 		{
 			name:        "valid ticks at MIN/MAX boundaries",
-			tickLower:   MIN_TICK,
-			tickUpper:   MAX_TICK,
+			tickLower:   common.MIN_TICK,
+			tickUpper:   common.MAX_TICK,
 			shouldError: false,
 		},
 		{
 			name:        "valid ticks near boundaries",
-			tickLower:   MIN_TICK + 1,
-			tickUpper:   MAX_TICK - 1,
+			tickLower:   common.MIN_TICK + 1,
+			tickUpper:   common.MAX_TICK - 1,
 			shouldError: false,
 		},
 		{
-			name:        "tickLower below MIN_TICK",
-			tickLower:   MIN_TICK - 1,
+			name:        "tickLower below common.MIN_TICK",
+			tickLower:   common.MIN_TICK - 1,
 			tickUpper:   0,
 			shouldError: true,
 			errorMsg:    "tick out of range",
 		},
 		{
-			name:        "tickUpper above MAX_TICK",
+			name:        "tickUpper above common.MAX_TICK",
 			tickLower:   0,
-			tickUpper:   MAX_TICK + 1,
+			tickUpper:   common.MAX_TICK + 1,
 			shouldError: true,
 			errorMsg:    "tick out of range",
 		},
@@ -829,8 +830,8 @@ func TestValidateTicks(t *testing.T) {
 		},
 		{
 			name:        "tickLower at MIN, tickUpper at MAX",
-			tickLower:   MIN_TICK,
-			tickUpper:   MAX_TICK,
+			tickLower:   common.MIN_TICK,
+			tickUpper:   common.MAX_TICK,
 			shouldError: false,
 		},
 	}
@@ -852,16 +853,16 @@ func TestValidateTicks(t *testing.T) {
 
 // TestTickBoundaries tests tick boundary constants
 func TestTickBoundaries(t *testing.T) {
-	t.Run("MIN_TICK constant", func(t *testing.T) {
-		uassert.Equal(t, int32(-887272), MIN_TICK)
+	t.Run("common.MIN_TICK constant", func(t *testing.T) {
+		uassert.Equal(t, int32(-887272), int32(common.MIN_TICK))
 	})
 
-	t.Run("MAX_TICK constant", func(t *testing.T) {
-		uassert.Equal(t, int32(887272), MAX_TICK)
+	t.Run("common.MAX_TICK constant", func(t *testing.T) {
+		uassert.Equal(t, int32(887272), int32(common.MAX_TICK))
 	})
 
-	t.Run("MIN_TICK is negative of MAX_TICK", func(t *testing.T) {
-		uassert.Equal(t, -MIN_TICK, MAX_TICK)
+	t.Run("common.MIN_TICK is negative of common.MAX_TICK", func(t *testing.T) {
+		uassert.Equal(t, -int32(common.MIN_TICK), int32(common.MAX_TICK))
 	})
 }
 
@@ -874,38 +875,38 @@ func TestCheckTickSpacingWithPoolTicks(t *testing.T) {
 		shouldPanic bool
 	}{
 		{
-			name:        "MIN_TICK with spacing 1",
-			tick:        MIN_TICK,
+			name:        "common.MIN_TICK with spacing 1",
+			tick:        common.MIN_TICK,
 			tickSpacing: 1,
 			shouldPanic: false,
 		},
 		{
-			name:        "MAX_TICK with spacing 1",
-			tick:        MAX_TICK,
+			name:        "common.MAX_TICK with spacing 1",
+			tick:        common.MAX_TICK,
 			tickSpacing: 1,
 			shouldPanic: false,
 		},
 		{
-			name:        "MIN_TICK with spacing 10 (aligned)",
-			tick:        -887270, // MIN_TICK rounded to nearest 10
+			name:        "common.MIN_TICK with spacing 10 (aligned)",
+			tick:        -887270, // common.MIN_TICK rounded to nearest 10
 			tickSpacing: 10,
 			shouldPanic: false,
 		},
 		{
-			name:        "MAX_TICK with spacing 10 (aligned)",
-			tick:        887270, // MAX_TICK rounded to nearest 10
+			name:        "common.MAX_TICK with spacing 10 (aligned)",
+			tick:        887270, // common.MAX_TICK rounded to nearest 10
 			tickSpacing: 10,
 			shouldPanic: false,
 		},
 		{
-			name:        "MIN_TICK with spacing 10 (not aligned)",
-			tick:        MIN_TICK,
+			name:        "common.MIN_TICK with spacing 10 (not aligned)",
+			tick:        common.MIN_TICK,
 			tickSpacing: 10,
 			shouldPanic: true,
 		},
 		{
-			name:        "MAX_TICK with spacing 10 (not aligned)",
-			tick:        MAX_TICK,
+			name:        "common.MAX_TICK with spacing 10 (not aligned)",
+			tick:        common.MAX_TICK,
 			tickSpacing: 10,
 			shouldPanic: true,
 		},

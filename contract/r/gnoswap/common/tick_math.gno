@@ -39,8 +39,8 @@ var (
 
 	// Pre-computed constants for optimization
 	maxUint256   = u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935") // 2^256 - 1
-	minSqrtRatio = u256.MustFromDecimal("4295128739")                                                                     // same as TickMathGetSqrtRatioAtTick(minTick)
-	maxSqrtRatio = u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")                              // same as TickMathGetSqrtRatioAtTick(maxTick)
+	minSqrtRatio = u256.MustFromDecimal("4295128739")                                                                     // same as TickMathGetSqrtRatioAtTick(MIN_TICK)
+	maxSqrtRatio = u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")                              // same as TickMathGetSqrtRatioAtTick(MAX_TICK)
 
 	// MSB calculation thresholds - pre-computed for performance
 	msb128Threshold = u256.MustFromDecimal("340282366920938463463374607431768211455") // 2^128 - 1
@@ -309,13 +309,13 @@ func abs(x int32) int32 {
 
 // assertValidTickRange panics if tick is outside valid range [-887272, 887272].
 func assertValidTickRange(tick int32) {
-	if tick > maxTick {
+	if tick > MAX_TICK {
 		panic(newErrorWithDetail(
 			errOutOfRange,
 			ufmt.Sprintf("tick is out of range (larger than 887272), tick: %d", tick),
 		))
 	}
-	if tick < minTick {
+	if tick < MIN_TICK {
 		panic(newErrorWithDetail(
 			errOutOfRange,
 			ufmt.Sprintf("tick is out of range (smaller than -887272), tick: %d", tick),

@@ -6,6 +6,7 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/uassert"
+	"gno.land/r/gnoswap/common"
 )
 
 const (
@@ -660,13 +661,13 @@ func TestCheckTickSpacing(t *testing.T) {
 		// Edge cases with extreme tick values
 		{
 			name:        "min tick boundary",
-			tick:        MIN_TICK, // -887272
+			tick:        common.MIN_TICK, // -887272
 			tickSpacing: 1,
 			shouldPanic: false,
 		},
 		{
 			name:        "max tick boundary",
-			tick:        MAX_TICK, // 887272
+			tick:        common.MAX_TICK, // 887272
 			tickSpacing: 1,
 			shouldPanic: false,
 		},
@@ -710,14 +711,14 @@ func TestCheckTickSpacing_EdgeCases(t *testing.T) {
 	}{
 		// Boundary values with tick spacing 1
 		{
-			name:        "MIN_TICK with spacing 1",
-			tick:        MIN_TICK,
+			name:        "common.MIN_TICK with spacing 1",
+			tick:        common.MIN_TICK,
 			tickSpacing: 1,
 			shouldPanic: false,
 		},
 		{
-			name:        "MAX_TICK with spacing 1",
-			tick:        MAX_TICK,
+			name:        "common.MAX_TICK with spacing 1",
+			tick:        common.MAX_TICK,
 			tickSpacing: 1,
 			shouldPanic: false,
 		},

@@ -1,13 +1,13 @@
 package common
 
 const (
-	// minTick is the minimum valid tick index in the concentrated liquidity model.
+	// MIN_TICK is the minimum valid tick index in the concentrated liquidity model.
 	// Represents the lowest possible price: 1.0001^(-887272) ≈ 0
-	minTick = -887272
+	MIN_TICK = -887272
 
-	// maxTick is the maximum valid tick index in the concentrated liquidity model.
+	// MAX_TICK is the maximum valid tick index in the concentrated liquidity model.
 	// Represents the highest possible price: 1.0001^887272 ≈ infinity
-	maxTick = 887272
+	MAX_TICK = 887272
 
 	// GNOT_DENOM is the denomination for native GNOT tokens in the blockchain.
 	// Used in banker operations for native coin transfers.
