@@ -32,10 +32,10 @@ show_help() {
 setup_tests() {
     echo -e "${YELLOW}Setting up test environment...${NC}"
 
-    cd /workspace/contract
+    cd /app
 
     # Run setup.py to create symlinks
-    python3 setup.py --exclude-tests -w /workspace
+    python3 setup.py --exclude-tests -w /app
 
     echo -e "${GREEN}Setup completed!${NC}"
 }
@@ -46,77 +46,15 @@ run_single_test() {
     echo -e "${BLUE}Running test: ${test_name}${NC}"
     echo ""
 
-    cd /workspace/gno/gno.land/pkg/integration
+    cd /app/gno/gno.land/pkg/integration
     # Use ^ and $ anchors to match exact test name
     go test -v . -run "TestTestdata/^${test_name}\$"
 }
 
 run_all_tests() {
-    echo -e "${BLUE}Running all integration tests individually...${NC}"
-    echo ""
-
-    cd /workspace/gno/gno.land/pkg/integration
-
-    local tests=()
-    while IFS= read -r test; do
-        tests+=("$test")
-    done < <(cd /workspace/contract && python3 setup.py --list-tests)
-
-    local total=${#tests[@]}
-    local passed=0
-    local failed=0
-    local failed_tests=()
-
-    echo -e "${YELLOW}Found ${total} tests to run${NC}"
-    echo ""
-
-    # Disable exit on error to continue running all tests
-    set +e
-
-    for i in "${!tests[@]}"; do
-        local test="${tests[$i]}"
-        local num=$((i + 1))
-
-        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-        echo -e "${BLUE}[${num}/${total}] Running: ${test}${NC}"
-        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-
-        if go test -v . -run "TestTestdata/^${test}\$"; then
-            echo -e "${GREEN}✓ PASSED: ${test}${NC}"
-            ((passed++)) || true
-        else
-            echo -e "${RED}✗ FAILED: ${test}${NC}"
-            ((failed++)) || true
-            failed_tests+=("$test")
-        fi
-        echo ""
-    done
-
-    # Re-enable exit on error
-    set -e
-
-    # Print summary
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${BLUE}                    TEST SUMMARY                           ${NC}"
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "  Total:  ${total}"
-    echo -e "  ${GREEN}Passed: ${passed}${NC}"
-    echo -e "  ${RED}Failed: ${failed}${NC}"
-
-    if [ ${#failed_tests[@]} -gt 0 ]; then
-        echo ""
-        echo -e "${RED}Failed tests:${NC}"
-        for t in "${failed_tests[@]}"; do
-            echo -e "  ${RED}- ${t}${NC}"
-        done
-    fi
-
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-
-    # Exit with failure if any test failed
-    if [ $failed -gt 0 ]; then
-        exit 1
-    fi
+    /app/scripts/all-integration-tests.sh \
+        /app/gno/gno.land/pkg/integration \
+        /app
 }
 
 # Main logic

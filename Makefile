@@ -57,7 +57,7 @@ fmt:
 # 📌 Integration test commands (Docker-based)
 .PHONY: integration-test
 integration-test:
-	@bash $(PROJECT_ROOT)/scripts/run-integration-test.sh --all
+	@docker-compose run --rm test --all
 
 .PHONY: integration-test-list
 integration-test-list:
@@ -69,8 +69,12 @@ integration-test-run:
 		echo "❌ Error: Please specify a test using 'make integration-test-run TEST=<name>'"; \
 		exit 1; \
 	else \
-		bash $(PROJECT_ROOT)/scripts/run-integration-test.sh -t $(TEST); \
+		docker-compose run --rm test -t $(TEST); \
 	fi
+
+.PHONY: integration-test-build
+integration-test-build:
+	@docker-compose build
 
 # 📌 Help message
 .PHONY: help
@@ -89,3 +93,4 @@ help:
 	@echo "  make integration-test                 Run all integration tests"
 	@echo "  make integration-test-list            List available integration tests"
 	@echo "  make integration-test-run TEST=<name> Run specific integration test"
+	@echo "  make integration-test-build           Build Docker image for integration tests"

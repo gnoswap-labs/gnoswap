@@ -5,9 +5,10 @@ services:
       dockerfile: Dockerfile
     volumes:
       # Mount contract code (read-only for safety)
-      - ./contract:/workspace/contract/contract:ro
-      - ./tests:/workspace/contract/tests:ro
-      - ./setup.py:/workspace/contract/setup.py:ro
-    working_dir: /workspace/contract
+      - ./contract:/app/contract:ro
+      - ./tests:/app/tests:ro
+      - ./setup.py:/app/setup.py:ro
+      - ./scripts:/app/scripts:ro
+    working_dir: /app
     stdin_open: true
     tty: true
