@@ -62,6 +62,51 @@ Core swap execution (called by Router).
 - Calculates fees
 - Maintains TWAP oracle
 
+#### Swap Callback
+
+The `Swap` function uses a callback pattern for token transfers, following the Uniswap V3 flash swap design.
+
+**Callback Signature**:
+```go
+func(cur realm, amount0Delta, amount1Delta int64) error
+```
+
+**Delta Convention**:
+| Delta | Meaning |
+|-------|---------|
+| Positive (`> 0`) | Amount the pool must RECEIVE (input token) |
+| Negative (`< 0`) | Amount the pool has SENT (output token) |
+
+**Swap Direction Examples**:
+
+For `zeroForOne = true` (token0 → token1):
+- `amount0Delta > 0`: Pool receives token0 (input)
+- `amount1Delta < 0`: Pool sends token1 (output)
+
+For `zeroForOne = false` (token1 → token0):
+- `amount0Delta < 0`: Pool sends token0 (output)
+- `amount1Delta > 0`: Pool receives token1 (input)
+
+**Callback Implementation Example**:
+```go
+func swapCallback(cur realm, amount0Delta, amount1Delta int64) error {
+    if amount0Delta > 0 {
+        // Transfer token0 to pool
+        token0.Transfer(poolAddr, amount0Delta)
+    }
+    if amount1Delta > 0 {
+        // Transfer token1 to pool
+        token1.Transfer(poolAddr, amount1Delta)
+    }
+    return nil
+}
+```
+
+**Important Notes**:
+- The callback MUST transfer at least the positive delta amount to the pool
+- Return `nil` on success, or an error to revert the swap
+- Pool validates balance increase after callback execution
+
 ## Technical Details
 
 ### Price Math

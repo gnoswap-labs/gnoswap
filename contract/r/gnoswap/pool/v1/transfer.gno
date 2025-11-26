@@ -147,18 +147,53 @@ func (i *poolV1) safeTransferFrom(
 	p.SetBalances(poolBalances)
 }
 
-// safeSwapCallback validates the balance of the token path with the swap callback.
-// Parameters:
-//   - p: the pool instance
-//   - tokenPath: the token path that needs to be received by pool
-//   - amountIn: the amount pool must receive (positive value)
-//   - amountOut: the amount pool has sent (as negative i256.Int)
-//   - zeroForOne: swap direction
-//   - swapCallback: callback function to transfer tokens to pool
+// safeSwapCallback executes a swap callback and validates the token payment.
 //
-// The callback receives both deltas following the standard convention:
-//   - Positive delta: tokens the pool must receive
-//   - Negative delta: tokens the pool has sent
+// This function implements the flash swap pattern where the pool first sends output tokens
+// to the recipient, then invokes the callback to receive input tokens from the caller.
+// The callback is responsible for transferring the required input tokens to the pool.
+//
+// Callback Signature:
+//
+//	func(cur realm, amount0Delta, amount1Delta int64) error
+//
+// Delta Convention (following Uniswap V3 standard):
+//   - Positive delta: Amount the pool must RECEIVE (input token)
+//   - Negative delta: Amount the pool has SENT (output token)
+//
+// For zeroForOne swaps (token0 → token1):
+//   - amount0Delta > 0: Pool receives token0 (input)
+//   - amount1Delta < 0: Pool sends token1 (output)
+//
+// For oneForZero swaps (token1 → token0):
+//   - amount0Delta < 0: Pool sends token0 (output)
+//   - amount1Delta > 0: Pool receives token1 (input)
+//
+// Parameters:
+//   - p: The pool instance
+//   - tokenPath: Path of the input token that pool must receive
+//   - amountInInt256: Amount pool must receive (positive i256.Int)
+//   - amountOutInt256: Amount pool has sent (negative i256.Int)
+//   - zeroForOne: Swap direction (true = token0 to token1)
+//   - swapCallback: Callback function that must transfer input tokens to pool
+//
+// The callback needed:
+//  1. Transfer at least `amountIn` of input tokens to the pool
+//  2. Return nil on success, or an error to revert the swap
+//
+// Example callback implementation:
+//
+//	func(cur realm, amount0Delta, amount1Delta int64) error {
+//	    if amount0Delta > 0 {
+//	        // Transfer token0 to pool
+//	        token0.Transfer(poolAddr, amount0Delta)
+//	    }
+//	    if amount1Delta > 0 {
+//	        // Transfer token1 to pool
+//	        token1.Transfer(poolAddr, amount1Delta)
+//	    }
+//	    return nil
+//	}
 func (i *poolV1) safeSwapCallback(
 	p *pl.Pool,
 	tokenPath string,
