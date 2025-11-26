@@ -8,6 +8,7 @@ import (
 	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 
+	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -147,12 +148,24 @@ func (i *poolV1) safeTransferFrom(
 }
 
 // safeSwapCallback validates the balance of the token path with the swap callback.
+// Parameters:
+//   - p: the pool instance
+//   - tokenPath: the token path that needs to be received by pool
+//   - amountIn: the amount pool must receive (positive value)
+//   - amountOut: the amount pool has sent (as negative i256.Int)
+//   - zeroForOne: swap direction
+//   - swapCallback: callback function to transfer tokens to pool
+//
+// The callback receives both deltas following the standard convention:
+//   - Positive delta: tokens the pool must receive
+//   - Negative delta: tokens the pool has sent
 func (i *poolV1) safeSwapCallback(
 	p *pl.Pool,
 	tokenPath string,
-	amount *u256.Uint,
+	amountInInt256 *i256.Int,
+	amountOutInt256 *i256.Int,
 	zeroForOne bool,
-	swapCallback func(cur realm, amount0Delta, amount1Delta string) error,
+	swapCallback func(cur realm, amount0Delta, amount1Delta int64) error,
 ) {
 	if swapCallback == nil {
 		panic(makeErrorWithDetails(
@@ -163,55 +176,56 @@ func (i *poolV1) safeSwapCallback(
 
 	currentAddress := runtime.CurrentRealm().Address()
 
+	amountIn := amountInInt256.Int64()
+	amountOut := amountOutInt256.Int64()
 	balanceBefore := common.BalanceOf(tokenPath, currentAddress)
 
 	// Make callback to the calling contract
 	// The contract should transfer tokens to pool within this callback
-
-	amount0Str := zero.ToString()
-	amount1Str := zero.ToString()
-	beforeTokenBalance := u256.Zero()
+	// Following Uniswap V3 convention:
+	// - Positive delta: amount the pool must receive (input token)
+	// - Negative delta: amount the pool has sent (output token)
+	var amount0Delta, amount1Delta, beforeTokenBalance int64
 
 	if zeroForOne {
-		amount0Str = amount.ToString()
-		beforeTokenBalance = p.BalanceToken0().Clone()
+		// zeroForOne: pool receives token0 (positive), sends token1 (negative)
+		amount0Delta = amountIn
+		amount1Delta = amountOut
+		beforeTokenBalance = p.BalanceToken0().Int64()
 	} else {
-		amount1Str = amount.ToString()
-		beforeTokenBalance = p.BalanceToken1().Clone()
+		// !zeroForOne: pool receives token1 (positive), sends token0 (negative)
+		amount0Delta = amountOut
+		amount1Delta = amountIn
+		beforeTokenBalance = p.BalanceToken1().Int64()
 	}
 
 	// execute swap callback
-	err := swapCallback(cross, amount0Str, amount1Str)
+	err := swapCallback(cross, amount0Delta, amount1Delta)
 	if err != nil {
 		panic(err)
 	}
 
 	balanceAfter := common.BalanceOf(tokenPath, currentAddress)
-	balanceIncrease := balanceAfter - balanceBefore
+	balanceIncrease := safeSubInt64(balanceAfter, balanceBefore)
 
 	// check insufficient payment by swap callback
-	if balanceIncrease < amount.Int64() {
+	if balanceIncrease < amountIn {
 		panic(makeErrorWithDetails(
 			errInsufficientPayment,
-			ufmt.Sprintf("insufficient payment: expected %d, received %d", amount.Int64(), balanceIncrease),
+			ufmt.Sprintf("insufficient payment: expected %d, received %d", amountIn, balanceIncrease),
 		))
 	}
 
 	// check overflow update pool balance
-	resultTokenBalance, overflow := u256.Zero().AddOverflow(beforeTokenBalance, amount)
-	if overflow {
-		panic(makeErrorWithDetails(
-			errBalanceUpdateFailed,
-			ufmt.Sprintf("overflow: %s + %s", beforeTokenBalance.ToString(), amount.ToString()),
-		))
-	}
+	resultTokenBalance := safeAddInt64(beforeTokenBalance, amountIn)
+	resultTokenBalanceUint := u256.NewUintFromInt64(resultTokenBalance)
 
 	poolBalances := p.Balances()
 
 	if zeroForOne {
-		poolBalances.SetToken0(resultTokenBalance)
+		poolBalances.SetToken0(resultTokenBalanceUint)
 	} else {
-		poolBalances.SetToken1(resultTokenBalance)
+		poolBalances.SetToken1(resultTokenBalanceUint)
 	}
 
 	p.SetBalances(poolBalances)

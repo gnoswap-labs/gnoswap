@@ -132,7 +132,7 @@ func (i *poolV1) Swap(
 	amountSpecified string,
 	sqrtPriceLimitX96 string,
 	payer address,
-	swapCallback func(cur realm, amount0Delta, amount1Delta string) error,
+	swapCallback func(cur realm, amount0Delta, amount1Delta int64) error,
 ) (string, string) {
 	halt.AssertIsNotHaltedPool()
 
@@ -233,7 +233,7 @@ func (i *poolV1) Swap(
 		// receive token0 from swap callback
 		// send token1 to recipient (output)
 		if result.Amount1.IsNeg() {
-			i.safeSwapCallback(pool, token0Path, result.Amount0.Abs(), zeroForOne, swapCallback)
+			i.safeSwapCallback(pool, token0Path, result.Amount0, result.Amount1, zeroForOne, swapCallback)
 
 			i.safeTransfer(pool, recipient, token1Path, result.Amount1.Abs(), false)
 		}
@@ -241,7 +241,7 @@ func (i *poolV1) Swap(
 		// receive token1 from swap callback
 		// send token0 to recipient (output)
 		if result.Amount0.IsNeg() {
-			i.safeSwapCallback(pool, token1Path, result.Amount1.Abs(), zeroForOne, swapCallback)
+			i.safeSwapCallback(pool, token1Path, result.Amount1, result.Amount0, zeroForOne, swapCallback)
 
 			i.safeTransfer(pool, recipient, token0Path, result.Amount0.Abs(), true)
 		}
