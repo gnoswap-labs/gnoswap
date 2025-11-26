@@ -93,14 +93,14 @@ func DivRoundingUp(x, y *Uint) *Uint {
 	}
 	div := new(Uint).Div(x, y)
 	mod := new(Uint).Mod(x, y)
-	z := new(Uint).Add(div, gt(mod, Zero()))
+	z := new(Uint).Add(div, gt(mod, zero))
 	return z
 }
 
-// gt returns One() if x > y, otherwise returns Zero().
+// gt returns one if x > y, otherwise returns zero.
 func gt(x, y *Uint) *Uint {
 	if x.Gt(y) {
 		return one
 	}
-	return Zero()
+	return zero
 }

@@ -50,7 +50,7 @@ func (z *Uint) SubOverflow(x, y *Uint) (*Uint, bool) {
 
 // Neg returns -x mod 2^256.
 func (z *Uint) Neg(x *Uint) *Uint {
-	return z.Sub(Zero(), x)
+	return z.Sub(zero, x)
 }
 
 // Mul sets z to the product x*y and returns z.
