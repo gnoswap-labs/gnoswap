@@ -638,7 +638,7 @@ func TestProcessTokens(t *testing.T) {
 		},
 		{
 			name:           "processTokens is failed by token0 is native",
-			token0:         GNOT,
+			token0:         common.GNOT_DENOM,
 			token1:         gnsPath,
 			amount0Desired: "1300",
 			amount1Desired: "200",
@@ -649,12 +649,12 @@ func TestProcessTokens(t *testing.T) {
 			isNative1:      false,
 			expectedWrap:   1300,
 			expectPanic:    false,
-			expectMsg:      "[GNOSWAP-POSITION-016] invalid token address || token0(gnot), token1(gno.land/r/gnoswap/gns)",
+			expectMsg:      "[GNOSWAP-POSITION-016] invalid token address || token0(ugnot), token1(gno.land/r/gnoswap/gns)",
 		},
 		{
 			name:           "processTokens is failed by token1 is native",
 			token0:         gnsPath,
-			token1:         GNOT,
+			token1:         common.GNOT_DENOM,
 			amount0Desired: "150",
 			amount1Desired: "1250",
 			caller:         testutils.TestAddress("user3"),
@@ -667,8 +667,8 @@ func TestProcessTokens(t *testing.T) {
 		},
 		{
 			name:           "processTokens is failed by both tokens are native",
-			token0:         GNOT,
-			token1:         GNOT,
+			token0:         common.GNOT_DENOM,
+			token1:         common.GNOT_DENOM,
 			amount0Desired: "1100",
 			amount1Desired: "1200",
 			caller:         testutils.TestAddress("user4"),
@@ -678,7 +678,7 @@ func TestProcessTokens(t *testing.T) {
 			isNative1:      true,
 			expectedWrap:   2300,
 			expectPanic:    true,
-			expectMsg:      "[GNOSWAP-POSITION-016] invalid token address || token0(gnot), token1(gnot)",
+			expectMsg:      "[GNOSWAP-POSITION-016] invalid token address || token0(ugnot), token1(ugnot)",
 		},
 		{
 			name:           "processTokens is failed by invalid token path",
@@ -708,13 +708,13 @@ func TestProcessTokens(t *testing.T) {
 				}
 			}()
 
-			if tt.token0 == GNOT {
+			if tt.token0 == common.GNOT_DENOM {
 				amount, _ := strconv.ParseInt(tt.amount0Desired, 10, 64)
 				ugnotFaucet(t, positionAddr, amount)
 				testing.SetRealm(testing.NewUserRealm(positionAddr))
 				mockInstance.transferUGNOT(positionAddr, positionAddr, amount)
 			}
-			if tt.token1 == GNOT {
+			if tt.token1 == common.GNOT_DENOM {
 				amount, _ := strconv.ParseInt(tt.amount1Desired, 10, 64)
 				ugnotFaucet(t, positionAddr, amount)
 				testing.SetRealm(testing.NewUserRealm(positionAddr))
@@ -1393,22 +1393,16 @@ func TestValidateTokenPath(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:        "Valid native token (gnot) with wrapped token",
-			token0:      GNOT,
+			name:        "Valid native token (ugnot) with wrapped token",
+			token0:      common.GNOT_DENOM,
 			token1:      gnsPath,
 			expectError: false,
 		},
 		{
 			name:        "Valid wrapped token with native",
 			token0:      gnsPath,
-			token1:      GNOT,
+			token1:      common.GNOT_DENOM,
 			expectError: false,
-		},
-		{
-			name:        "Valid ugnot with token",
-			token0:      UGNOT,
-			token1:      gnsPath,
-			expectError: true,
 		},
 		{
 			name:        "Invalid - identical tokens",
@@ -1417,15 +1411,15 @@ func TestValidateTokenPath(t *testing.T) {
 			expectError: true,
 		},
 		{
-			name:        "Invalid - gnot and wugnot conflict",
-			token0:      GNOT,
+			name:        "Invalid - ugnot and wugnot conflict",
+			token0:      common.GNOT_DENOM,
 			token1:      WRAPPED_WUGNOT,
 			expectError: true,
 		},
 		{
-			name:        "Invalid - wugnot and gnot conflict (reversed)",
+			name:        "Invalid - wugnot and ugnot conflict (reversed)",
 			token0:      WRAPPED_WUGNOT,
-			token1:      GNOT,
+			token1:      common.GNOT_DENOM,
 			expectError: true,
 		},
 		{

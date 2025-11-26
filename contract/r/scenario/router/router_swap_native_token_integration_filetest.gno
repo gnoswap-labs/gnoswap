@@ -50,7 +50,7 @@ var (
 	gnsPath    = "gno.land/r/gnoswap/gns"
 	usdcPath   = "gno.land/r/onbloc/usdc"
 
-	gnotPath = "gnot"
+	gnotPath = "ugnot"
 
 	fee500 uint32 = 500
 

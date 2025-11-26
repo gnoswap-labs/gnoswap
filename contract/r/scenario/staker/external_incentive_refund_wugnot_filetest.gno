@@ -160,7 +160,7 @@ func createExternalIncentiveWithWUGNOT() {
 	sr.CreateExternalIncentive(
 		cross,
 		"gno.land/r/gnoland/wugnot:gno.land/r/onbloc/bar:100",
-		wugnotPath, // Use WUGNOT directly, not "gnot"
+		wugnotPath, // Use WUGNOT directly, not "ugnot"
 		1_000_000_000,
 		1234569600,
 		1234569600+TIMESTAMP_90DAYS,

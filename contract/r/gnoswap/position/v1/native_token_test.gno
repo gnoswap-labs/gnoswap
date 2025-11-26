@@ -198,7 +198,7 @@ func TestIsNative(t *testing.T) {
 	}{
 		{
 			name:     "isNative is success by native token",
-			token:    "gnot",
+			token:    "ugnot",
 			expected: true,
 		},
 		{

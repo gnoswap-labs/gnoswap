@@ -46,7 +46,7 @@ func TestNewPoolParams(t *testing.T) {
 			initPoolTest(t)
 
 			params := newPoolParams(
-				GNOT,
+				GNOT_DENOM,
 				"token1",
 				500,
 				"1000000",
@@ -276,7 +276,7 @@ func TestWrap(t *testing.T) {
 	}{
 		{
 			name:            "success - native token wrapped wugnot token",
-			token0Path:      ugnotPath,
+			token0Path:      GNOT_DENOM,
 			token1Path:      gnsPath,
 			fee:             FeeTier3000,
 			sqrtPriceX96Str: MAX_PRICE_IMPACT,
@@ -294,10 +294,10 @@ func TestWrap(t *testing.T) {
 			expected0 := params.token0Path
 			expected1 := params.token1Path
 
-			if params.token0Path == GNOT {
+			if params.token0Path == GNOT_DENOM {
 				expected0 = WRAPPED_WUGNOT
 			}
-			if params.token1Path == GNOT {
+			if params.token1Path == GNOT_DENOM {
 				expected1 = WRAPPED_WUGNOT
 			}
 

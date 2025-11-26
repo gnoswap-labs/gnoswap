@@ -168,7 +168,7 @@ func createExternalIncentiveWithGNOT() {
 	sr.CreateExternalIncentive(
 		cross,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100",
-		"gnot",
+		"ugnot",
 		1_000_000_000,
 		1234569600,
 		1234569600+TIMESTAMP_90DAYS,

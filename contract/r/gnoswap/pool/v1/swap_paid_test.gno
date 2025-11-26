@@ -325,14 +325,14 @@ func swapPaidSwapCallback(
 	testing.SetRealm(adminRealm)
 
 	const wugnotPath = "gno.land/r/gnoland/wugnot"
-	const ugnotDenom = "ugnot"
+	const gnotDenom = "ugnot"
 
 	amount0Int64, _ := strconv.ParseInt(amount0Delta, 10, 64)
 	amount1Int64, _ := strconv.ParseInt(amount1Delta, 10, 64)
 
 	if amount0Int64 > 0 {
 		if token0Path == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Int64}})
+			testing.SetOriginSend(chain.Coins{{gnotDenom, amount0Int64}})
 			wugnot.Deposit(cross)
 		}
 
@@ -340,7 +340,7 @@ func swapPaidSwapCallback(
 	}
 	if amount1Int64 > 0 {
 		if token1Path == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Int64}})
+			testing.SetOriginSend(chain.Coins{{gnotDenom, amount1Int64}})
 			wugnot.Deposit(cross)
 		}
 

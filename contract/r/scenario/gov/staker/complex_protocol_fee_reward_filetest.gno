@@ -182,7 +182,7 @@ func collectRewardsByDummy() {
 	afterQuxBalance := qux.BalanceOf(dummyAddr)
 	afterGnotBalance := getUgnotBalance(dummyAddr)
 
-	ufmt.Printf("[INFO] collected more protocol fee reward for dummy: bar(%d), qux(%d), gnot(%d)\n", afterBarBalance-prevBarBalance, afterQuxBalance-prevQuxBalance, afterGnotBalance-prevGnotBalance)
+	ufmt.Printf("[INFO] collected more protocol fee reward for dummy: bar(%d), qux(%d), ugnot(%d)\n", afterBarBalance-prevBarBalance, afterQuxBalance-prevQuxBalance, afterGnotBalance-prevGnotBalance)
 }
 
 func unDelegateAndCollectRewardByAdmin() {
@@ -200,7 +200,7 @@ func unDelegateAndCollectRewardByAdmin() {
 	afterQuxBalance := qux.BalanceOf(adminAddr)
 	afterGnotBalance := getUgnotBalance(adminAddr)
 
-	ufmt.Printf("[INFO] admin undelegated %d GNS from dummy2: bar(%d), qux(%d), gnot(%d)\n", minAmount, afterBarBalance-prevBarBalance, afterQuxBalance-prevQuxBalance, afterGnotBalance-prevGnotBalance)
+	ufmt.Printf("[INFO] admin undelegated %d GNS from dummy2: bar(%d), qux(%d), ugnot(%d)\n", minAmount, afterBarBalance-prevBarBalance, afterQuxBalance-prevQuxBalance, afterGnotBalance-prevGnotBalance)
 }
 
 func getUgnotBalance(addr address) int64 {
@@ -230,13 +230,13 @@ func getUgnotBalance(addr address) int64 {
 // [INFO] skipped 10+1 blocks and distributed emission/protocol fee
 //
 // [SCENARIO] 6. Collect rewards
-// [INFO] collected more protocol fee reward for dummy: bar(833), qux(2083), gnot(8333)
+// [INFO] collected more protocol fee reward for dummy: bar(833), qux(2083), ugnot(8333)
 //
 // [SCENARIO] 7. Additional protocol fee deposit
 // [INFO] protocol fee deposited: bar(2500), qux(4000), wugnot(0)
 //
 // [SCENARIO] 8. Collect rewards after additional protocol fee
-// [INFO] collected more protocol fee reward for dummy: bar(2083), qux(3333), gnot(0)
+// [INFO] collected more protocol fee reward for dummy: bar(2083), qux(3333), ugnot(0)
 //
 // [SCENARIO] 9. Admin undelegates dummy2 and collects reward
-// [INFO] admin undelegated 1000000 GNS from dummy2: bar(583), qux(1083), gnot(1666)
+// [INFO] admin undelegated 1000000 GNS from dummy2: bar(583), qux(1083), ugnot(1666)

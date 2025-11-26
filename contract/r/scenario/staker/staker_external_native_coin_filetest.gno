@@ -80,7 +80,7 @@ func main() {
 	mintPosition01()
 	println()
 
-	println("[SCENARIO] 4. Create external incentive with native coin (gnot)")
+	println("[SCENARIO] 4. Create external incentive with native coin (ugnot)")
 	createExternalIncentiveWithNativeCoin()
 	println()
 
@@ -167,12 +167,12 @@ func createExternalIncentiveWithNativeCoin() {
 	banker_.SendCoins(adminAddr, stakerAddr, chain.Coins{{"ugnot", 1_000_000_000}})
 	testing.SetOriginSend(chain.Coins{{"ugnot", 1_000_000_000}})
 
-	println("[INFO] create external incentive with gnot (native coin)")
+	println("[INFO] create external incentive with ugnot (native coin)")
 	sr.CreateExternalIncentive(
 		cross,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", // targetPoolPath
-		"gnot",                      // rewardToken (native coin)
-		1_000_000_000,               // rewardAmount (100 gnot)
+		"ugnot",                     // rewardToken (native coin)
+		1_000_000_000,               // rewardAmount (100 ugnot)
 		1234569600,                  // startTimestamp
 		1234569600+TIMESTAMP_90DAYS, // endTimestamp
 	)
@@ -313,10 +313,10 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] liquidity: 2050516
 // [EXPECTED] amount0: 100000, amount1: 100000
 //
-// [SCENARIO] 4. Create external incentive with native coin (gnot)
+// [SCENARIO] 4. Create external incentive with native coin (ugnot)
 // [INFO] approve wugnot for external incentive
 // [INFO] prepare native coins for external incentive
-// [INFO] create external incentive with gnot (native coin)
+// [INFO] create external incentive with ugnot (native coin)
 // [INFO] native coin external incentive created
 // [INFO] start time: 1234569600, end time: 1242345600
 //

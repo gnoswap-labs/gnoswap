@@ -41,9 +41,9 @@ func (p *positionV1) Reposition(
 	receivedCoins := common.ExistsUserSendCoins()
 	if receivedCoins {
 		if common.IsGNOTPath(token0) {
-			token0 = common.GNOT_PATH
+			token0 = common.GNOT_DENOM
 		} else if common.IsGNOTPath(token1) {
-			token1 = common.GNOT_PATH
+			token1 = common.GNOT_DENOM
 		}
 	}
 

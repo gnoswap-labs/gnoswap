@@ -62,7 +62,7 @@ func main() {
 	initializeWithDefaults()
 	println()
 
-	println("[SCENARIO] 2. Create gnot:gns:3000 pool")
+	println("[SCENARIO] 2. Create ugnot:gns:3000 pool")
 	createPool()
 	println()
 
@@ -312,7 +312,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] set unstaking fee to 0
 // [INFO] register gns change callback
 //
-// [SCENARIO] 2. Create gnot:gns:3000 pool
+// [SCENARIO] 2. Create ugnot:gns:3000 pool
 // [INFO] set pool creation fee to 0
 // [INFO] create wugnot:gns:3000 pool
 // [EXPECTED] pool created with price ratio 1:1

@@ -9,7 +9,7 @@ import (
 	"gno.land/r/gnoswap/halt"
 )
 
-var defaultAllowed = []string{GNOT, GNS_PATH}
+var defaultAllowed = []string{GNOT_DENOM, GNS_PATH}
 
 // AddToken adds a new token path to the list of allowed tokens
 // Only the admin can add a new token.

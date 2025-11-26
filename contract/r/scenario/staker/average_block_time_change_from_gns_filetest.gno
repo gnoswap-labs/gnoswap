@@ -97,7 +97,7 @@ func initAccountAndEmission() {
 	banker_.SendCoins(adminAddr, wugnotAddr, chain.Coins{{"ugnot", 50_000_000_000_000}})
 	testing.SetOriginSend(chain.Coins{{"ugnot", 50_000_000_000_000}})
 
-	println("[INFO] wrap gnot to wugnot")
+	println("[INFO] wrap ugnot to wugnot")
 	wugnot.Deposit(cross)
 	testing.SetOriginSend(nil)
 
@@ -204,7 +204,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // Output:
 // [SCENARIO] 1. Initialize account and emission
 // [INFO] send coins to admin
-// [INFO] wrap gnot to wugnot
+// [INFO] wrap ugnot to wugnot
 // [INFO] register gns change callback
 //
 // [SCENARIO] 2. Create pool

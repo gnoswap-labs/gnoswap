@@ -35,7 +35,7 @@ var (
 
 	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
 
-	gnotPath   = "gnot"
+	gnotPath   = "ugnot"
 	wugnotPath = "gno.land/r/gnoland/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/gns"
 )

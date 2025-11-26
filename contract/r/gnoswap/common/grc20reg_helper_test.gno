@@ -764,15 +764,15 @@ func TestGrc20regHelper_ExtractTokenPathsFromRender(t *testing.T) {
 		`No registered token.`,
 
 		// 1 token
-		`- **wrapped GNOT** - [gno.land/r/gnoland/wugnot](/r/demo/wugnot) - [info](/r/demo/grc20reg:gno.land/r/gnoland/wugnot)`,
+		`- **wrapped ugnot** - [gno.land/r/gnoland/wugnot](/r/demo/wugnot) - [info](/r/demo/grc20reg:gno.land/r/gnoland/wugnot)`,
 
 		// 2 tokens
-		`- **wrapped GNOT** - [gno.land/r/gnoland/wugnot](/r/demo/wugnot) - [info](/r/demo/grc20reg:gno.land/r/gnoland/wugnot)
+		`- **wrapped ugnot** - [gno.land/r/gnoland/wugnot](/r/demo/wugnot) - [info](/r/demo/grc20reg:gno.land/r/gnoland/wugnot)
 - **Gnoswap** - [gno.land/r/gnoswap/gns](/r/gnoswap/v1/gns) - [info](/r/demo/grc20reg:gno.land/r/gnoswap/gns)
 `,
 
 		// 4 tokens
-		`- **wrapped GNOT** - [gno.land/r/gnoland/wugnot](/r/demo/wugnot) - [info](/r/demo/grc20reg:gno.land/r/gnoland/wugnot)
+		`- **wrapped ugnot** - [gno.land/r/gnoland/wugnot](/r/demo/wugnot) - [info](/r/demo/grc20reg:gno.land/r/gnoland/wugnot)
 - **Gnoswap** - [gno.land/r/gnoswap/gns](/r/gnoswap/v1/gns) - [info](/r/demo/grc20reg:gno.land/r/gnoswap/gns)
 - **Baz** - [gno.land/r/onbloc/foo](/r/onbloc/foo) - [info](/r/demo/grc20reg:gno.land/r/onbloc/foo)
 - **Qux** - [gno.land/r/onbloc/qux](/r/onbloc/qux) - [info](/r/demo/grc20reg:gno.land/r/onbloc/qux)
