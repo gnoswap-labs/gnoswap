@@ -1,8 +1,14 @@
 services:
-  app:
-    build: .
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
     volumes:
-      - .:/app
-    environment:
-      - PYTHONUNBUFFERED=1
-    command: python3 setup.py
+      # Mount contract code (read-only for safety)
+      - ./contract:/app/contract:ro
+      - ./tests:/app/tests:ro
+      - ./setup.py:/app/setup.py:ro
+      - ./scripts:/app/scripts:ro
+    working_dir: /app
+    stdin_open: true
+    tty: true

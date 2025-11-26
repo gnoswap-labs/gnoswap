@@ -41,6 +41,7 @@ help:
 	@echo ""
 	@echo "$(GREEN)Pre-Deployment Commands:$(NC)"
 	@echo "  make remove-test                    - [PRE-DEPLOY] Remove all test files before deployment"
+	@echo "  make patch-admin-address            - [PRE-DEPLOY] Patch admin address to the environment configuration"
 	@echo "  make faucet-admin                   - [PRE-DEPLOY] Faucet admin account to necessary accounts"
 	@echo ""
 	@echo "$(GREEN)Deployment Commands:$(NC)"
@@ -87,6 +88,11 @@ remove-test:
 	@echo "$(YELLOW)Removing all *_test.gno and testutils.gno files from project...$(NC)"
 	@chmod +x scripts/remove-test.sh
 	@bash scripts/remove-test.sh
+
+.PHONY: patch-admin-address
+patch-admin-address:
+	@echo "$(GREEN)Patching admin address to $(ENV) environment...$(NC)"
+	@$(MAKE) -f scripts/deploy.mk patch-admin-address ENV=$(ENV)
 
 .PHONY: faucet-admin
 faucet-admin:

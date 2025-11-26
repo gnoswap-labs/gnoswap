@@ -114,7 +114,7 @@ func TestXgns_Mint(t *testing.T) {
 			to:              govStakerAddress,
 			amount:          100,
 			expectedPanic:   true,
-			expectedMessage: "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not gov_staker",
+			expectedMessage: "unauthorized: caller g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 is not gov_staker",
 		},
 	}
 
@@ -299,7 +299,7 @@ func TestXgns_Burn(t *testing.T) {
 			mintAmount:      1000,
 			burnAmount:      100,
 			expectedPanic:   true,
-			expectedMessage: "unauthorized: caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d is not gov_staker",
+			expectedMessage: "unauthorized: caller g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 is not gov_staker",
 		},
 	}
 
