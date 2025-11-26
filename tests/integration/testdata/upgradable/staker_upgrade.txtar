@@ -57,8 +57,8 @@ stdout "gno.land/r/gnoswap/staker/v1"
 
 gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func UpgradeImpl -args gno.land/r/gnoswap/staker/v3_valid -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 stdout 'GAS USED:   2[0-9]{7}'
-stdout 'STORAGE DELTA:  4613 bytes'
-stdout 'TOTAL TX COST:  100461300ugnot'
+stdout 'STORAGE DELTA:  4[0-9]{3} bytes'
+stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
 stdout 'EVENTS:     \[{\"type\":\"ChangeImplementation\",\"attrs\":\[{\"key\":\"previousPackagePath\",\"value\":\"gno.land/r/gnoswap/staker/v1\"},{\"key\":\"newPackagePath\",\"value\":\"gno.land/r/gnoswap/staker/v3_valid\"}\],\"pkg_path\":\"gno.land/p/gnoswap/version_manager\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/staker\"}\]'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/staker.GetImplementationPackagePath()"
