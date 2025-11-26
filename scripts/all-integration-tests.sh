@@ -15,6 +15,10 @@ NC='\033[0m' # No Color
 GNO_INTEGRATION_PATH="${1:-/app/gno/gno.land/pkg/integration}"
 CONTRACT_PATH="${2:-/app}"
 
+# Convert to absolute paths
+GNO_INTEGRATION_PATH="$(cd "$GNO_INTEGRATION_PATH" && pwd)"
+CONTRACT_PATH="$(cd "$CONTRACT_PATH" && pwd)"
+
 echo -e "${BLUE}Running all integration tests individually...${NC}"
 echo ""
 
