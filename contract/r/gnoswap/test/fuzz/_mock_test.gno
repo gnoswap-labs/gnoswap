@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/tokens/grc721"
+	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/emission"
@@ -682,6 +683,14 @@ func (p *mockPoolAccessor) GetSlot0Tick(poolPath string) int32 {
 	return func(cur realm) int32 {
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 		return pool.GetSlot0Tick(poolPath)
+	}(cross)
+}
+
+func (p *mockPoolAccessor) GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	return func(cur realm) *u256.Uint {
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+		return pool.GetSlot0SqrtPriceX96(poolPath)
 	}(cross)
 }
 

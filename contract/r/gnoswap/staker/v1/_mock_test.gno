@@ -3,6 +3,8 @@ package v1
 import (
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
+
 	"gno.land/p/demo/tokens/grc721"
 	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
@@ -113,6 +115,7 @@ func (s *MockStakerStore) HasTotalEmissionSentStoreKey() bool {
 func (s *MockStakerStore) GetTotalEmissionSent() int64 {
 	return s.totalEmissionSent
 }
+
 func (s *MockStakerStore) SetTotalEmissionSent(amount int64) error {
 	s.totalEmissionSent = amount
 	return nil
@@ -378,6 +381,14 @@ func (p *mockPoolAccessor) GetSlot0Tick(poolPath string) int32 {
 	return func(cur realm) int32 {
 		testing.SetRealm(adminRealm)
 		return pool.GetSlot0Tick(poolPath)
+	}(cross)
+}
+
+func (p *mockPoolAccessor) GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
+	testing.SetRealm(adminRealm)
+	return func(cur realm) *u256.Uint {
+		testing.SetRealm(adminRealm)
+		return pool.GetSlot0SqrtPriceX96(poolPath)
 	}(cross)
 }
 

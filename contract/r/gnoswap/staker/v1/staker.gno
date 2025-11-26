@@ -375,6 +375,8 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	poolResolver.TickResolver(tickLower).modifyDepositLower(currentTime, signedLiquidity)
 	s.getPools().set(poolPath, pool)
 
+	amount0, amount1 := s.calculateAmounts(poolPath, tickLower, tickUpper, liquidity)
+
 	chain.Emit(
 		"StakeToken",
 		"prevAddr", previousRealm.Address().String(),
@@ -387,6 +389,8 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 		"currentTick", formatAnyInt(currentTick),
 		"isInRange", formatBool(isInRange),
 		"referrer", actualReferrer,
+		"amount0", amount0,
+		"amount1", amount1,
 	)
 
 	return poolPath
@@ -692,6 +696,12 @@ func (s *stakerV1) UnStakeToken(positionId uint64, unwrapResult bool) string { /
 	s.nftAccessor.TransferFrom(stakerAddr, deposit.Owner(), positionIdFrom(positionId))
 	pn.SetPositionOperator(cross, positionId, ZERO_ADDRESS)
 
+	// get position information for event
+	liquidity := getLiquidity(positionId)
+	tickLower, tickUpper := getTickOf(positionId)
+
+	amount0, amount1 := s.calculateAmounts(poolPath, tickLower, tickUpper, liquidity)
+
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"UnStakeToken",
@@ -699,6 +709,9 @@ func (s *stakerV1) UnStakeToken(positionId uint64, unwrapResult bool) string { /
 		"prevRealm", previousRealm.PkgPath(),
 		"positionId", formatUint(positionId),
 		"poolPath", poolPath,
+		"liquidity", liquidity.ToString(),
+		"amount0", amount0,
+		"amount1", amount1,
 		"isRequestUnwrap", formatBool(unwrapResult),
 		"from", stakerAddr.String(),
 		"to", deposit.Owner().String(),
@@ -827,4 +840,13 @@ func getTickOf(positionId uint64) (int32, int32) {
 		panic(ufmt.Sprintf("tickUpper(%d) is less than tickLower(%d)", tickUpper, tickLower))
 	}
 	return tickLower, tickUpper
+}
+
+// calculateAmounts calculates the amounts of token0 and token1 for a given liquidity and range.
+func (s *stakerV1) calculateAmounts(poolPath string, tickLower, tickUpper int32, liquidity *u256.Uint) (string, string) {
+	sqrtPriceX96 := s.poolAccessor.GetSlot0SqrtPriceX96(poolPath)
+	sqrtPriceLowerX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
+	sqrtPriceUpperX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
+
+	return common.GetAmountsForLiquidity(sqrtPriceX96, sqrtPriceLowerX96, sqrtPriceUpperX96, liquidity)
 }

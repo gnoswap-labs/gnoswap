@@ -344,7 +344,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 6. Unstake position 02
 // [INFO] unstake position 02
-// [EXPECTED] position 02 owner after unstaking: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+// [EXPECTED] position 02 owner after unstaking: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 //
 // [SCENARIO] 7. Collect rewards after unstaking
 // [INFO] collect reward for position 01 after position 02 unstaked

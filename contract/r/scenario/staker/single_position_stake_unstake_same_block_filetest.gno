@@ -257,17 +257,17 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] position ID: 1
 // [EXPECTED] liquidity: 200510
 // [EXPECTED] amount0: 1000, amount1: 1000
-// [EXPECTED] initial position owner: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+// [EXPECTED] initial position owner: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 //
 // [SCENARIO] 4. Stake and unstake in same block
 // [INFO] check initial state before staking
-// [INFO] initial owner: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+// [INFO] initial owner: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 // [INFO] initial GNS balance: 100000000000000
 // [INFO] approve NFT to staker
 // [INFO] stake position 01
 // [EXPECTED] owner after stake: g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3
 // [INFO] immediately unstake position 01 (same block)
-// [EXPECTED] owner after unstake: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+// [EXPECTED] owner after unstake: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 // [EXPECTED] GNS balance after unstake: 100000000000000
 // [EXPECTED] reward from same block staking/unstaking: 0
 // [INFO] no reward accumulated from same block staking/unstaking
@@ -275,7 +275,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 5. Verify final state
 // [INFO] verify final state after same block operations
-// [EXPECTED] final position owner: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+// [EXPECTED] final position owner: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 // [INFO] position is back to original owner and staker state is clean
 // [INFO] test normal staking after same-block operations
 // [EXPECTED] verification - owner after normal stake: g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3

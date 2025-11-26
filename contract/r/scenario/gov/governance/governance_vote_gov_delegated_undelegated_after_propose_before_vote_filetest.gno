@@ -102,7 +102,7 @@ func voteProposalWithDummy(proposalId int64) {
 
 // Output:
 // [SCENARIO] 1. Delegate gns to admin and dummy
-// [INFO] gns delegated to admin g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d (amount: 1000000000)
+// [INFO] gns delegated to admin g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 (amount: 1000000000)
 // [INFO] gns delegated to dummy g1v36k6mteg9jxgujlta047h6lta047h6lydhz9l (amount: 1000000000)
 //
 // [SCENARIO] 2. Skip vote weight smoothing duration for create proposal
