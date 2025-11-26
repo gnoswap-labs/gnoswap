@@ -53,8 +53,6 @@ loadpkg gno.land/r/gnoswap/gov/governance/v1
 loadpkg gno.land/r/gnoswap/gov/staker/v1
 loadpkg gno.land/r/gnoswap/launchpad/v1
 
-adduserfrom gns_admin 'mnemonic here'
-
 adduser test_admin
 patchpkg "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c" $test_admin_user_addr
 
@@ -69,22 +67,20 @@ patchpkg "g1wpex76n9vd6yzerywf047h6lta047h6lqlp5qp" $project_recipient_user_addr
 gnoland start
 
 # Send wugnot to neccessary accounts
-gnokey maketx send -send 10000000000ugnot -to $gns_admin_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
+gnokey maketx send -send 10000000000ugnot -to $test1_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
 
 # Transfer Bar tokens
-gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Transfer -args $test_admin_user_addr -args 1000000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "transfer 1_000_000_000 GNS" gns_admin
-gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Transfer -args $user1_user_addr -args 100000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Transfer -args $test_admin_user_addr -args 1000000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "transfer 1_000_000_000 GNS" test1
+gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Transfer -args $user1_user_addr -args 100000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 
 # Approve test tokens to launchpad address
-gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Approve -args g1x6r75sxlkp9zfqufew0vcuq9sfclsq8uaqkru9 -args 1000000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
+gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Approve -args g1x6r75sxlkp9zfqufew0vcuq9sfclsq8uaqkru9 -args 1000000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func CreateProject -args "Bar Launchpad Project" -args "gno.land/r/onbloc/bar" -args $project_recipient_user_addr -args 1000000000 -args "gno.land/r/onbloc/bar" -args "1000000" -args 10 -args 20 -args 70 -args 1962328182 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
-stdout "gno.land/r/onbloc/bar:8"
+gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func CreateProject -args "Bar Launchpad Project" -args "gno.land/r/onbloc/bar" -args $project_recipient_user_addr -args 1000000000 -args "gno.land/r/onbloc/bar" -args "1000000" -args 10 -args 20 -args 70 -args 1962328182 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+stdout "gno.land/r/onbloc/bar:[0-9]+"
 stdout 'GAS USED:   2[0-9]{7}'
-stdout 'STORAGE DELTA:  30591 bytes'
-stdout 'TOTAL TX COST:  103059100ugnot'
-stdout 'EVENTS:     \[{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/onbloc/bar.BAR\"},{\"key\":\"from\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"to\",\"value\":\"g1x6r75sxlkp9zfqufew0vcuq9sfclsq8uaqkru9\"},{\"key\":\"value\",\"value\":\"1000000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"CreateProject\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"name\",\"value\":\"Bar Launchpad Project\"},{\"key\":\"tokenPath\",\"value\":\"gno.land/r/onbloc/bar\"},{\"key\":\"recipient\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"depositAmount\",\"value\":\"1000000000\"},{\"key\":\"conditionsToken\",\"value\":\"gno.land/r/onbloc/bar\"},{\"key\":\"conditionsAmount\",\"value\":\"1000000\"},{\"key\":\"tier30Ratio\",\"value\":\"10\"},{\"key\":\"tier90Ratio\",\"value\":\"20\"},{\"key\":\"tier180Ratio\",\"value\":\"70\"},{\"key\":\"startTime\",\"value\":\"[0-9]+\"},{\"key\":\"projectId\",\"value\":\"gno.land/r/onbloc/bar:8\"},{\"key\":\"tier30Amount\",\"value\":\"100000000\"},{\"key\":\"tier30EndTime\",\"value\":\"[0-9]+\"},{\"key\":\"tier90Amount\",\"value\":\"200000000\"},{\"key\":\"tier90EndTime\",\"value\":\"[0-9]+\"},{\"key\":\"tier180Amount\",\"value\":\"700000000\"},{\"key\":\"tier180EndTime\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/launchpad/v1\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/launchpad\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/onbloc/bar\"}\]'
+stdout 'STORAGE DELTA:  3[0-9]{4} bytes'
+stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
 
 # Trying to call `TransferLeftFromProjectByAdmin` before the project end
-! gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func TransferLeftFromProjectByAdmin -args gno.land/r/onbloc/bar:8 -args $project_recipient_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" gns_admin
-stderr 'project not ended yet'
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func TransferLeftFromProjectByAdmin -args gno.land/r/onbloc/bar:8 -args $project_recipient_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1

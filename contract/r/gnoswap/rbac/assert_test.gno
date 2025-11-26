@@ -81,7 +81,7 @@ func TestAssert_assertIsPendingOwner(t *testing.T) {
 			name:        "Current owner should panic",
 			addr:        ADMIN,
 			shouldPanic: true,
-			expectedMsg: "caller is not pending owner || caller: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d",
+			expectedMsg: "caller is not pending owner || caller: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
 		},
 		{
 			name:        "Random address should panic",
@@ -197,7 +197,7 @@ func TestAssert_assertIsAdminWithRoleUpdate(t *testing.T) {
 			name:        "Old admin address should panic",
 			addr:        ADMIN,
 			shouldPanic: true,
-			expectedMsg: "caller is not admin || caller: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d",
+			expectedMsg: "caller is not admin || caller: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
 		},
 	}
 
@@ -251,7 +251,7 @@ func TestAssert_assertFunctionsIntegration(t *testing.T) {
 		assertIsPendingOwner(DEV_OPS)
 
 		// ADMIN should not be pending owner
-		uassert.PanicsWithMessage(t, "caller is not pending owner || caller: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", func() {
+		uassert.PanicsWithMessage(t, "caller is not pending owner || caller: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5", func() {
 			assertIsPendingOwner(ADMIN)
 		})
 	})
