@@ -26,74 +26,6 @@ var (
 	zero = u256.Zero()
 )
 
-// toAscendingOrder returns the two values in ascending order.
-func toAscendingOrder(a, b *u256.Uint) (*u256.Uint, *u256.Uint) {
-	if a.Gt(b) {
-		return b, a
-	}
-
-	return a, b
-}
-
-// toUint128 ensures the value fits within uint128 range.
-//
-// Validates and constrains a 256-bit unsigned integer to 128-bit range.
-// Used for liquidity calculations where amounts must fit in compact storage.
-//
-// Parameters:
-//   - value: 256-bit unsigned integer to constrain
-//
-// Returns:
-//   - Masked value if exceeds MAX_UINT128 (2^128 - 1)
-//   - Original value if within range
-//
-// Panics if value is nil.
-// Critical for preventing overflow in liquidity math.
-func toUint128(value *u256.Uint) *u256.Uint {
-	if value == nil {
-		panic(newErrorWithDetail(
-			errInvalidInput,
-			"value is nil",
-		))
-	}
-
-	if value.Gt(maxUint128) {
-		return u256.Zero().And(value, q128Mask)
-	}
-	return value
-}
-
-// safeConvertToUint128 safely ensures a *u256.Uint value fits within the uint128 range.
-//
-// This function verifies that the provided unsigned 256-bit integer does not exceed the maximum value for uint128 (`2^128 - 1`).
-// If the value is within the uint128 range, it is returned as is; otherwise, the function triggers a panic.
-//
-// Parameters:
-// - value (*u256.Uint): The unsigned 256-bit integer to be checked.
-//
-// Returns:
-// - *u256.Uint: The same value if it is within the uint128 range.
-//
-// Panics:
-//   - If the value exceeds the maximum uint128 value (`2^128 - 1`), the function will panic with a descriptive error
-//     indicating the overflow and the original value.
-//
-// Notes:
-// - The constant `MAX_UINT128` is defined as `340282366920938463463374607431768211455` (the largest uint128 value).
-// - No actual conversion occurs since the function works directly with *u256.Uint types.
-//
-// Example:
-// validUint128 := safeConvertToUint128(u256.MustFromDecimal("340282366920938463463374607431768211455")) // Valid
-// safeConvertToUint128(u256.MustFromDecimal("340282366920938463463374607431768211456")) // Panics due to overflow
-func safeConvertToUint128(value *u256.Uint) *u256.Uint {
-	if value.Gt(maxUint128) {
-		panic(ufmt.Sprintf(
-			"%v: amount(%s) overflows uint128 range",
-			errOverFlow, value.ToString()))
-	}
-	return value
-}
-
 // computeLiquidityForAmount0 calculates the liquidity for a given amount of token0.
 //
 // This function computes the maximum possible liquidity that can be provided for `token0`
@@ -104,13 +36,16 @@ func safeConvertToUint128(value *u256.Uint) *u256.Uint {
 //   - sqrtRatioBX96: *u256.Uint - The square root price at the upper tick boundary (Q64.96).
 //   - amount0: *u256.Uint - The amount of token0 to be converted to liquidity.
 //
+// Notes:
+//   - The function assumes the input values are already in ascending order.
+//
 // Returns:
 //   - *u256.Uint: The calculated liquidity, represented as an unsigned 128-bit integer (uint128).
 //
 // Panics:
 //   - If the resulting liquidity exceeds the uint128 range, `safeConvertToUint128` will trigger a panic.
 func computeLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0 *u256.Uint) *u256.Uint {
-	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
+	// sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 	intermediate := u256.MulDiv(sqrtRatioAX96, sqrtRatioBX96, q96Uint)
 
 	diff := u256.Zero().Sub(sqrtRatioBX96, sqrtRatioAX96)
@@ -142,12 +77,11 @@ func computeLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0 *u256.Uint
 //   - The result is not directly limited to uint128, as liquidity values can exceed uint128 bounds.
 //   - If `sqrtRatioAX96 == sqrtRatioBX96`, the function will panic due to division by zero.
 //   - Q96 is a constant representing `2^96`, ensuring that precision is maintained during division.
+//   - The function assumes the input values are already in ascending order.
 //
 // Panics:
 //   - If the resulting liquidity exceeds the uint128 range, `safeConvertToUint128` will trigger a panic.
 func computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1 *u256.Uint) *u256.Uint {
-	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
-
 	diff := u256.Zero().Sub(sqrtRatioBX96, sqrtRatioAX96)
 	if diff.IsZero() {
 		panic(newErrorWithDetail(
@@ -181,13 +115,13 @@ func computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1 *u256.Uint
 //   - The function ensures that liquidity calculations handle edge cases when the current price
 //     is outside the specified range by returning liquidity based on the dominant token.
 func GetLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0, amount1 *u256.Uint) (liquidity *u256.Uint) {
-	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96.Clone(), sqrtRatioBX96.Clone())
+	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 
 	if sqrtRatioX96.Lte(sqrtRatioAX96) {
-		liquidity = computeLiquidityForAmount0(sqrtRatioAX96.Clone(), sqrtRatioBX96.Clone(), amount0.Clone())
+		liquidity = computeLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0)
 	} else if sqrtRatioX96.Lt(sqrtRatioBX96) {
-		liquidity0 := computeLiquidityForAmount0(sqrtRatioX96.Clone(), sqrtRatioBX96.Clone(), amount0.Clone())
-		liquidity1 := computeLiquidityForAmount1(sqrtRatioAX96.Clone(), sqrtRatioX96.Clone(), amount1.Clone())
+		liquidity0 := computeLiquidityForAmount0(sqrtRatioX96, sqrtRatioBX96, amount0)
+		liquidity1 := computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioX96, amount1)
 
 		if liquidity0.Lt(liquidity1) {
 			liquidity = liquidity0
@@ -195,7 +129,7 @@ func GetLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0,
 			liquidity = liquidity1
 		}
 	} else {
-		liquidity = computeLiquidityForAmount1(sqrtRatioAX96.Clone(), sqrtRatioBX96.Clone(), amount1.Clone())
+		liquidity = computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1)
 	}
 	return liquidity
 }
@@ -218,8 +152,8 @@ func GetLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0,
 // - This function assumes the price bounds are expressed in Q64.96 fixed-point format.
 // - The function returns 0 if the liquidity is 0 or the price bounds are invalid.
 // - Handles edge cases where sqrtRatioAX96 equals sqrtRatioBX96 by returning 0 (to prevent division by zero).
+// - The function assumes the input values are already in ascending order.
 func computeAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Uint) *u256.Uint {
-	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 	if sqrtRatioAX96.IsZero() || sqrtRatioBX96.IsZero() || liquidity.IsZero() || sqrtRatioAX96.Eq(sqrtRatioBX96) {
 		return zero
 	}
@@ -253,8 +187,8 @@ func computeAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Ui
 //     to prevent division by zero.
 //   - The calculation assumes sqrtRatioAX96 is always less than or equal to sqrtRatioBX96 after the initial
 //     ascending order sorting.
+//   - The function assumes the input values are already in ascending order.
 func computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Uint) *u256.Uint {
-	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 	if liquidity.IsZero() || sqrtRatioAX96.Eq(sqrtRatioBX96) {
 		return zero
 	}
@@ -360,4 +294,72 @@ func LiquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 			x.ToString(), y.ToString(), z.ToString()))
 	}
 	return z
+}
+
+// toAscendingOrder returns the two values in ascending order.
+func toAscendingOrder(a, b *u256.Uint) (*u256.Uint, *u256.Uint) {
+	if a.Gt(b) {
+		return b, a
+	}
+
+	return a, b
+}
+
+// toUint128 ensures the value fits within uint128 range.
+//
+// Validates and constrains a 256-bit unsigned integer to 128-bit range.
+// Used for liquidity calculations where amounts must fit in compact storage.
+//
+// Parameters:
+//   - value: 256-bit unsigned integer to constrain
+//
+// Returns:
+//   - Masked value if exceeds MAX_UINT128 (2^128 - 1)
+//   - Original value if within range
+//
+// Panics if value is nil.
+// Critical for preventing overflow in liquidity math.
+func toUint128(value *u256.Uint) *u256.Uint {
+	if value == nil {
+		panic(newErrorWithDetail(
+			errInvalidInput,
+			"value is nil",
+		))
+	}
+
+	if value.Gt(maxUint128) {
+		return u256.Zero().And(value, q128Mask)
+	}
+	return value
+}
+
+// safeConvertToUint128 safely ensures a *u256.Uint value fits within the uint128 range.
+//
+// This function verifies that the provided unsigned 256-bit integer does not exceed the maximum value for uint128 (`2^128 - 1`).
+// If the value is within the uint128 range, it is returned as is; otherwise, the function triggers a panic.
+//
+// Parameters:
+// - value (*u256.Uint): The unsigned 256-bit integer to be checked.
+//
+// Returns:
+// - *u256.Uint: The same value if it is within the uint128 range.
+//
+// Panics:
+//   - If the value exceeds the maximum uint128 value (`2^128 - 1`), the function will panic with a descriptive error
+//     indicating the overflow and the original value.
+//
+// Notes:
+// - The constant `MAX_UINT128` is defined as `340282366920938463463374607431768211455` (the largest uint128 value).
+// - No actual conversion occurs since the function works directly with *u256.Uint types.
+//
+// Example:
+// validUint128 := safeConvertToUint128(u256.MustFromDecimal("340282366920938463463374607431768211455")) // Valid
+// safeConvertToUint128(u256.MustFromDecimal("340282366920938463463374607431768211456")) // Panics due to overflow
+func safeConvertToUint128(value *u256.Uint) *u256.Uint {
+	if value.Gt(maxUint128) {
+		panic(ufmt.Sprintf(
+			"%v: amount(%s) overflows uint128 range",
+			errOverFlow, value.ToString()))
+	}
+	return value
 }
