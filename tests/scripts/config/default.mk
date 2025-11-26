@@ -30,7 +30,7 @@ ADDR_GNFT := g1mclfz2dn4lnez0lcjwgz67hh72rdafjmufvfmw
 
 # User Addresses (used for test scripts)
 ADDR_GNOSWAP := g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c
-ADDR_ADMIN := g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
+ADDR_ADMIN := g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 ADDR_TEST := g1mjqcxzek8yacgcvnqfkj0dck67wdyhqlfp9unr
 
 # Test User Addresses

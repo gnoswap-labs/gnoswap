@@ -837,7 +837,7 @@ func TestMint(t *testing.T) {
 			mintTo:           adminAddr,
 			caller:           alice,
 			shouldError:      true,
-			expectedErrorMsg: "[GNOSWAP-POSITION-012] invalid address || (g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh, g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d)",
+			expectedErrorMsg: "[GNOSWAP-POSITION-012] invalid address || (g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh, g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5)",
 			expectedAmount0:  950000,
 			expectedAmount1:  1900000,
 		},
