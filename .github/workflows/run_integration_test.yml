@@ -12,8 +12,30 @@ jobs:
       - name: Check out gnoswap repo
         uses: actions/checkout@v4
 
-      - name: Build Docker image
-        run: docker compose build
+      - name: Check out gno
+        uses: actions/checkout@v4
+        with:
+          repository: gnoswap-labs/gno
+          ref: master
+          path: ./gno
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install gno
+        run: |
+          cd gno
+          make install.gno
+
+      - name: Run setup.py
+        run: python3 setup.py --exclude-tests -w .
 
       - name: Run integration tests
-        run: docker compose run --rm test --all
+        run: ./scripts/all-integration-tests.sh ./gno/gno.land/pkg/integration .
