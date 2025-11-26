@@ -133,7 +133,7 @@ func execute(proposalID int64) {
 
 // Output:
 // [SCENARIO] 1. Delegate gns to admin
-// [INFO] gns delegated to g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d (amount: 1000000000)
+// [INFO] gns delegated to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 (amount: 1000000000)
 //
 // [SCENARIO] 2. Skip vote weight smoothing duration for create proposal
 // [INFO] current height: 43323

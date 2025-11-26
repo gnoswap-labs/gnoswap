@@ -306,7 +306,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] position ID: 1
 // [EXPECTED] liquidity: 200510
 // [EXPECTED] amount0: 1000, amount1: 1000
-// [EXPECTED] position owner: g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d (not staked)
+// [EXPECTED] position owner: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 (not staked)
 //
 // [SCENARIO] 6. Check emission with position minted but not staked
 // [INFO] check emission when position exists but is not staked

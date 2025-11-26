@@ -94,7 +94,7 @@ func proposeMultiExecute() int64 {
 		"test_title",
 		"test_description",
 		int64(2),
-		"gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*1000*GOV*gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d,905",
+		"gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*1000*GOV*gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5,905",
 	)
 	ufmt.Printf("[INFO] Multi Execute Proposal ID: %d\n", proposalID)
 	return proposalID
@@ -134,7 +134,7 @@ func executeMultiProposal(proposalID int64) {
 
 // Output:
 // [SCENARIO] 1. Delegate gns to admin
-// [INFO] gns delegated to g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d (amount: 1000000000)
+// [INFO] gns delegated to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 (amount: 1000000000)
 //
 // [SCENARIO] 2. Skip vote weight smoothing duration for create proposal
 // [INFO] current height: 43323

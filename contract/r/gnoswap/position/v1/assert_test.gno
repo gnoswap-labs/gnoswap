@@ -415,7 +415,7 @@ func TestAssertEqualsAddress(t *testing.T) {
 			name:                 "Different addresses",
 			prevAddr:             adminAddr,
 			otherAddr:            alice,
-			expectedPanicMessage: "[GNOSWAP-POSITION-012] invalid address || (g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d, g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh)",
+			expectedPanicMessage: "[GNOSWAP-POSITION-012] invalid address || (g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5, g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh)",
 			shouldPanic:          true,
 		},
 		{
