@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	MAX_UINT64   = ^uint64(0)
+	MAX_UINT64  = ^uint64(0)
 	MAX_UINT256 = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 )
 
@@ -142,14 +142,11 @@ func (z *Uint) fromDecimal(bs string) error {
 		num       uint64
 		err       error
 		remaining = len(bs)
-		// Use stack-allocated variables instead of heap allocations
-		base   Uint
-		mulRes Uint
-		addRes Uint
 	)
 	if remaining == 0 {
 		return errors.New("EOF")
 	}
+
 	// We proceed in steps of 19 characters (nibbles), from least significant to most significant.
 	// This means that the first (up to) 19 characters do not need to be multiplied.
 	// In the second iteration, our slice of 19 characters needs to be multiplied
@@ -171,18 +168,18 @@ func (z *Uint) fromDecimal(bs string) error {
 		if i == 0 {
 			z.SetUint64(num)
 		} else {
-			base.SetUint64(num)
+			base := &Uint{uint64(num), 0, 0, 0}
 			// Check for overflow in multiplication
-			_, overflow := mulRes.MulOverflow(&base, &multipliers[i])
+			base, overflow := base.MulOverflow(base, &multipliers[i])
 			if overflow {
 				return ErrBig256Range
 			}
 			// Check for overflow in addition
-			_, overflow = addRes.AddOverflow(z, &mulRes)
+			base, overflow = base.AddOverflow(base, z)
 			if overflow {
 				return ErrBig256Range
 			}
-			z.Set(&addRes)
+			z.Set(base)
 		}
 		// Chop off another 19 characters
 		if remaining > 19 {
