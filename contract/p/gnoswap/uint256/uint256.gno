@@ -12,6 +12,8 @@ const (
 	MAX_UINT256 = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 )
 
+var ErrBig256Range = errors.New("hex number > 256 bits")
+
 var (
 	zero  = Uint{0, 0, 0, 0}
 	one   = Uint{1, 0, 0, 0}
@@ -26,9 +28,7 @@ type Uint [4]uint64
 
 // NewUint returns a new Uint initialized with the given uint64 value.
 func NewUint(val uint64) *Uint {
-	z := &Uint{}
-	z.SetUint64(val)
-	return z
+	return &Uint{val, 0, 0, 0}
 }
 
 // NewUintFromInt64 returns a new Uint initialized with the given int64 value.
@@ -37,19 +37,17 @@ func NewUintFromInt64(val int64) *Uint {
 	if val < 0 {
 		panic("val is negative")
 	}
-	return NewUint(uint64(val))
+	return &Uint{uint64(val), 0, 0, 0}
 }
 
 // Zero returns a new Uint with value 0.
 func Zero() *Uint {
-	z := zero
-	return &z
+	return &Uint{0, 0, 0, 0}
 }
 
 // One returns a new Uint with value 1.
 func One() *Uint {
-	z := one
-	return &z
+	return &Uint{1, 0, 0, 0}
 }
 
 // SetAllOne sets z to the maximum 256-bit value (all bits set to 1) and returns z.
@@ -74,12 +72,14 @@ func (z *Uint) SetOne() *Uint {
 // Accepts an optional leading "+" sign but rejects underscores and negative values.
 // Returns ErrBig256Range if the number exceeds 256 bits.
 func (z *Uint) SetFromDecimal(s string) (err error) {
+	sLen := len(s)
 	// Remove max one leading +
-	if len(s) > 0 && s[0] == '+' {
+	if sLen > 0 && s[0] == '+' {
 		s = s[1:]
+		sLen--
 	}
 	// Remove any number of leading zeroes
-	if len(s) > 0 && s[0] == '0' {
+	if sLen > 0 && s[0] == '0' {
 		var i int
 		var c rune
 		for i, c = range s {
@@ -91,10 +91,10 @@ func (z *Uint) SetFromDecimal(s string) (err error) {
 	}
 
 	maxLen := len(MAX_UINT256)
-	if len(s) < maxLen {
+	if sLen < maxLen {
 		return z.fromDecimal(s)
 	}
-	if len(s) == maxLen {
+	if sLen == maxLen {
 		if s > MAX_UINT256 {
 			return ErrBig256Range
 		}
