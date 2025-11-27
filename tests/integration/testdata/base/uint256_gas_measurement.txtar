@@ -26,10 +26,6 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestOne -insecur
 gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestMustFromDecimal -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'GAS USED:   5656423'
 
-# MustFromHex
-gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestMustFromHex -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   2769529'
-
 ### Arithmetic Operations ###
 # Add
 gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
@@ -70,10 +66,6 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestDivMod -inse
 # MulMod
 gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestMulMod -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'GAS USED:   3695358'
-
-# Exp
-gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestExp -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   3911341'
 
 # Neg
 gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestNeg -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
@@ -179,10 +171,6 @@ func TestMustFromDecimal(cur realm) {
 	uint256.MustFromDecimal("123456789012345678901234567890")
 }
 
-func TestMustFromHex(cur realm) {
-	uint256.MustFromHex("0x1234567890abcdef")
-}
-
 // Arithmetic Operations
 func TestAdd(cur realm) {
 	x := uint256.NewUint(1000000)
@@ -254,13 +242,6 @@ func TestMulMod(cur realm) {
 	m := uint256.NewUint(997)
 	z := uint256.Zero()
 	z.MulMod(x, y, m)
-}
-
-func TestExp(cur realm) {
-	base := uint256.NewUint(2)
-	exp := uint256.NewUint(10)
-	z := uint256.Zero()
-	z.Exp(base, exp)
 }
 
 func TestNeg(cur realm) {
