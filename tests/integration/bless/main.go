@@ -18,6 +18,9 @@ type Configuration struct {
 	IntegrationDir string
 	MaskSpec       string
 	DryRun         bool
+	ReportMode     bool
+	OutputFile     string
+	TSVOutput      bool
 }
 
 // CommandOutput represents the output of a single command execution
@@ -59,6 +62,43 @@ func main() {
 		exitWithError(err)
 	}
 
+	// Report mode: generate gas measurement report
+	if config.ReportMode {
+		generator := NewReportGenerator(config)
+
+		var report string
+		var err error
+
+		if config.TSVOutput {
+			report, err = generator.GenerateTSV()
+		} else {
+			report, err = generator.Generate()
+		}
+
+		if err != nil {
+			exitWithError(err)
+		}
+
+		// Output to file or stdout
+		if config.OutputFile != "" {
+			if err := os.WriteFile(config.OutputFile, []byte(report), 0644); err != nil {
+				exitWithError(fmt.Errorf("failed to write report: %w", err))
+			}
+			fmt.Printf("Report written to %s\n", config.OutputFile)
+		} else if config.TSVOutput {
+			// TSV without -output writes to default filename
+			filename := generateTSVFilename(config.TestName)
+			if err := os.WriteFile(filename, []byte(report), 0644); err != nil {
+				exitWithError(fmt.Errorf("failed to write report: %w", err))
+			}
+			fmt.Printf("Report written to %s\n", filename)
+		} else {
+			fmt.Print(report)
+		}
+		return
+	}
+
+	// Bless mode: update txtar with test output
 	processor, err := NewScriptProcessor(config)
 	if err != nil {
 		exitWithError(err)
@@ -82,6 +122,12 @@ func parseFlags() *Configuration {
 		"mask overrides passed to testscriptfmt")
 	flag.BoolVar(&config.DryRun, "dry-run", false,
 		"print updated script to stdout instead of writing the file")
+	flag.BoolVar(&config.ReportMode, "report", false,
+		"generate gas measurement report instead of blessing")
+	flag.StringVar(&config.OutputFile, "output", "",
+		"output file for report (stdout if not specified)")
+	flag.BoolVar(&config.TSVOutput, "tsv", false,
+		"output report as TSV file (auto-generates filename with timestamp)")
 
 	flag.Parse()
 
@@ -556,6 +602,11 @@ func isCommandLine(line string) bool {
 	}
 
 	return true
+}
+
+// generateTSVFilename creates a filename for TSV output
+func generateTSVFilename(testName string) string {
+	return fmt.Sprintf("%s.tsv", testName)
 }
 
 // exitWithError prints an error and exits
