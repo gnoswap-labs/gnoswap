@@ -3,39 +3,63 @@ gnoland start
 
 # Deploy realm without comments
 gnokey maketx addpkg -pkgdir $WORK/nocomment -pkgpath gno.land/r/test/nocomment -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   328452'
 
 # Deploy realm with comments (same logic)
 gnokey maketx addpkg -pkgdir $WORK/withcomment -pkgpath gno.land/r/test/withcomment -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   343204'
 
 # Deploy realm with heavy comments (lots of comments)
 gnokey maketx addpkg -pkgdir $WORK/heavycomment -pkgpath gno.land/r/test/heavycomment -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   390698'
+
+# Deploy caller realm
+gnokey maketx addpkg -pkgdir $WORK/caller -pkgpath gno.land/r/test/caller -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
+# stdout 'GAS USED:   754645'
 
 ### Call each realm to check runtime load cost ###
 
-# Call no comment realm
-gnokey maketx call -pkgpath gno.land/r/test/nocomment -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# Call no comment realm (single)
+gnokey maketx call -pkgpath gno.land/r/test/caller -func CallNoCommentOnce -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   308405'
 
-# Call with comment realm
-gnokey maketx call -pkgpath gno.land/r/test/withcomment -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# Call with comment realm (single)
+gnokey maketx call -pkgpath gno.land/r/test/caller -func CallWithCommentOnce -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   309863'
 
-# Call heavy comment realm
-gnokey maketx call -pkgpath gno.land/r/test/heavycomment -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# Call heavy comment realm (single)
+gnokey maketx call -pkgpath gno.land/r/test/caller -func CallHeavyCommentOnce -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   310669'
 
-### Second call (cached) ###
+### Call twice in same transaction (cached) ###
 
-# Call no comment realm again
-gnokey maketx call -pkgpath gno.land/r/test/nocomment -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# Call no comment realm twice in one tx
+gnokey maketx call -pkgpath gno.land/r/test/caller -func CallNoCommentTwice -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   309915'
 
-# Call heavy comment realm again
-gnokey maketx call -pkgpath gno.land/r/test/heavycomment -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# Call with comment realm twice in one tx
+gnokey maketx call -pkgpath gno.land/r/test/caller -func CallWithCommentTwice -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   311367'
+
+# Call heavy comment realm twice in one tx
+gnokey maketx call -pkgpath gno.land/r/test/caller -func CallHeavyCommentTwice -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   312173'
+
+### Call 5 times in same transaction ###
+
+# Call no comment realm 5x in one tx
+gnokey maketx call -pkgpath gno.land/r/test/caller -func CallNoComment5x -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   314367'
+
+# Call heavy comment realm 5x in one tx
+gnokey maketx call -pkgpath gno.land/r/test/caller -func CallHeavyComment5x -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   316625'
+
+### Call with comment and heavy comment ###
+
+# Call with comment and heavy comment realm in one tx
+gnokey maketx call -pkgpath gno.land/r/test/caller -func CallDiffentFunctionTwiceInSameTx -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   311488'
 
 -- nocomment/gnomod.toml --
 module = "gno.land/r/test/nocomment"
@@ -60,10 +84,6 @@ func Divide(a, b int) int {
 		panic("division by zero")
 	}
 	return a / b
-}
-
-func DoAdd(cur realm) int {
-	return Add(1, 2)
 }
 
 -- withcomment/gnomod.toml --
@@ -98,11 +118,6 @@ func Divide(a, b int) int {
 		panic("division by zero")
 	}
 	return a / b
-}
-
-// DoAdd is an exported function that calls Add internally.
-func DoAdd(cur realm) int {
-	return Add(1, 2)
 }
 
 -- heavycomment/gnomod.toml --
@@ -214,22 +229,65 @@ func Divide(a, b int) int {
 	return a / b
 }
 
-// DoAdd is an exported function that demonstrates internal function calls.
-//
-// This function serves as an entry point for external callers.
-// It internally calls the Add function with predefined parameters.
-//
-// Parameters:
-//   - cur: The current realm context (required for cross-realm calls)
-//
-// Returns:
-//   - int: The result of Add(1, 2), which is 3
-//
-// Example:
-//   result := DoAdd()  // result = 3
-func DoAdd(cur realm) int {
-	// Call the internal Add function with test values
-	// This demonstrates how internal functions can be wrapped
-	// for external access
-	return Add(1, 2)
+-- caller/gnomod.toml --
+module = "gno.land/r/test/caller"
+gno = "0.9"
+-- caller/caller.gno --
+package caller
+
+import (
+	"gno.land/r/test/nocomment"
+	"gno.land/r/test/withcomment"
+	"gno.land/r/test/heavycomment"
+)
+
+// Single calls
+func CallNoCommentOnce(cur realm) {
+	nocomment.Add(1, 2)
+}
+
+func CallWithCommentOnce(cur realm) {
+	withcomment.Add(1, 2)
+}
+
+func CallHeavyCommentOnce(cur realm) {
+	heavycomment.Add(1, 2)
+}
+
+// Double calls (same tx - test caching)
+func CallNoCommentTwice(cur realm) {
+	nocomment.Add(1, 2)
+	nocomment.Add(3, 4)
+}
+
+func CallWithCommentTwice(cur realm) {
+	withcomment.Add(1, 2)
+	withcomment.Add(3, 4)
+}
+
+func CallHeavyCommentTwice(cur realm) {
+	heavycomment.Add(1, 2)
+	heavycomment.Add(3, 4)
+}
+
+// 5x calls (same tx)
+func CallNoComment5x(cur realm) {
+	nocomment.Add(1, 2)
+	nocomment.Add(2, 3)
+	nocomment.Add(3, 4)
+	nocomment.Add(4, 5)
+	nocomment.Add(5, 6)
+}
+
+func CallHeavyComment5x(cur realm) {
+	heavycomment.Add(1, 2)
+	heavycomment.Add(2, 3)
+	heavycomment.Add(3, 4)
+	heavycomment.Add(4, 5)
+	heavycomment.Add(5, 6)
+}
+
+func CallDiffentFunctionTwiceInSameTx(cur realm) {
+	withcomment.Add(1, 2)
+	withcomment.Multiply(3, 4)
 }

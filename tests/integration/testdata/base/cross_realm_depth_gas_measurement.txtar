@@ -24,46 +24,46 @@ gnokey maketx addpkg -pkgdir $WORK/caller -pkgpath gno.land/r/test/caller -gas-f
 ### Baseline ###
 # Direct call (no cross-realm)
 gnokey maketx call -pkgpath gno.land/r/test/caller -func DirectCall -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   209647'
 
 ### Cross-realm depth tests ###
 # Depth 1: Caller -> RealmA
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallDepth1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   331870'
 
 # Depth 2: Caller -> RealmA -> RealmB
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallDepth2 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   441563'
 
 # Depth 3: Caller -> RealmA -> RealmB -> RealmC
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallDepth3 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   538856'
 
 # Depth 4: Caller -> RealmA -> RealmB -> RealmC -> RealmD
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallDepth4 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   623797'
 
 # Depth 5: Caller -> RealmA -> RealmB -> RealmC -> RealmD -> RealmE
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallDepth5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   693706'
 
-### Second call (check caching) ###
-# Depth 1 again
-gnokey maketx call -pkgpath gno.land/r/test/caller -func CallDepth1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+### Second call in same TX (check caching) ###
+# Depth 1 twice in same tx
+gnokey maketx call -pkgpath gno.land/r/test/caller -func CallDepth1Twice -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   333441'
 
-# Depth 5 again
-gnokey maketx call -pkgpath gno.land/r/test/caller -func CallDepth5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# Depth 5 twice in same tx
+gnokey maketx call -pkgpath gno.land/r/test/caller -func CallDepth5Twice -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   700657'
 
 ### Multiple sequential cross-realm calls ###
 # Call depth 1 x 5 times sequentially
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallDepth1x5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   337893'
 
 # Call depth 2 x 5 times sequentially
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallDepth2x5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   452996'
 
 -- realma/gnomod.toml --
 module = "gno.land/r/test/realma"
@@ -226,24 +226,32 @@ func CallDepth5(cur realm) int {
 	return realma.CallBtoCtoDtoE(1, 2)
 }
 
+// Depth 1 twice in same tx (caching test)
+func CallDepth1Twice(cur realm) {
+	realma.Add(1, 2)
+	realma.Add(3, 4)
+}
+
+// Depth 5 twice in same tx (caching test)
+func CallDepth5Twice(cur realm) {
+	realma.CallBtoCtoDtoE(1, 2)
+	realma.CallBtoCtoDtoE(3, 4)
+}
+
 // Multiple depth 1 calls
-func CallDepth1x5(cur realm) int {
-	sum := 0
-	sum += realma.Add(1, 2)
-	sum += realma.Add(2, 3)
-	sum += realma.Add(3, 4)
-	sum += realma.Add(4, 5)
-	sum += realma.Add(5, 6)
-	return sum
+func CallDepth1x5(cur realm) {
+	realma.Add(1, 2)
+	realma.Add(2, 3)
+	realma.Add(3, 4)
+	realma.Add(4, 5)
+	realma.Add(5, 6)
 }
 
 // Multiple depth 2 calls
-func CallDepth2x5(cur realm) int {
-	sum := 0
-	sum += realma.CallB(1, 2)
-	sum += realma.CallB(2, 3)
-	sum += realma.CallB(3, 4)
-	sum += realma.CallB(4, 5)
-	sum += realma.CallB(5, 6)
-	return sum
+func CallDepth2x5(cur realm) {
+	realma.CallB(1, 2)
+	realma.CallB(2, 3)
+	realma.CallB(3, 4)
+	realma.CallB(4, 5)
+	realma.CallB(5, 6)
 }
