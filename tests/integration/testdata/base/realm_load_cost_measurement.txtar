@@ -25,79 +25,79 @@ gnokey maketx addpkg -pkgdir $WORK/caller -pkgpath gno.land/r/test/caller -gas-f
 ### First call (cold - includes load cost) ###
 # Call small realm
 gnokey maketx call -pkgpath gno.land/r/test/small -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   124119'
 
 # Call medium realm
 gnokey maketx call -pkgpath gno.land/r/test/medium -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   205075'
 
 # Call large realm
 gnokey maketx call -pkgpath gno.land/r/test/large -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   455701'
 
 # Call xlarge realm
 gnokey maketx call -pkgpath gno.land/r/test/xlarge -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   793163'
 
 ### Second call (warm - cached?) ###
 # Call small realm again
 gnokey maketx call -pkgpath gno.land/r/test/small -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   124125'
 
 # Call medium realm again
 gnokey maketx call -pkgpath gno.land/r/test/medium -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   205075'
 
 # Call large realm again
 gnokey maketx call -pkgpath gno.land/r/test/large -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   455701'
 
 # Call xlarge realm again
 gnokey maketx call -pkgpath gno.land/r/test/xlarge -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   793163'
 
 ### Third call ###
 # Call small realm 3rd
 gnokey maketx call -pkgpath gno.land/r/test/small -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   124125'
 
 # Call xlarge realm 3rd
 gnokey maketx call -pkgpath gno.land/r/test/xlarge -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   793193'
 
 ### Package load vs Realm load comparison ###
 # Call small package (via caller realm)
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallSmallPkg -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   186890'
 
 # Call xlarge package (via caller realm)
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallXlargePkg -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   899124'
 
 # Call small realm (via caller realm)
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallSmallRealm -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   236774'
 
 # Call xlarge realm (via caller realm)
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallXlargeRealm -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   940900'
 
 ### Second call (package/realm cached?) ###
 # Call small package again
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallSmallPkg -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   186890'
 
 # Call xlarge package again
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallXlargePkg -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   899124'
 
 # Call small realm again
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallSmallRealm -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   236774'
 
 # Call xlarge realm again
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallXlargeRealm -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:'
+# stdout 'GAS USED:   940900'
 
 -- small/gnomod.toml --
 module = "gno.land/r/test/small"
