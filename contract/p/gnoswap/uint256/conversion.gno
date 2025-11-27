@@ -34,15 +34,6 @@ func (z *Uint) IsUint64() bool {
 	return (z[1] | z[2] | z[3]) == 0
 }
 
-var (
-	// out is 98 bytes long: 78 (max size of a string without leading zeroes,
-	// plus slack so we can copy 19 bytes every iteration).
-	// We init it with zeroes, because when strconv appends the ascii representations,
-	// it will omit leading zeroes.
-	out      [98]byte
-	divisor  Uint
-)
-
 // Dec returns the decimal representation of z.
 func (z *Uint) Dec() string {
 	if z.IsZero() {
@@ -66,6 +57,12 @@ func (z *Uint) Dec() string {
 	// 12345 / 100 = 123  (quo)
 	// -> output '45', continue iterate on 123
 	var (
+		// out is 98 bytes long: 78 (max size of a string without leading zeroes,
+		// plus slack so we can copy 19 bytes every iteration).
+		// We init it with zeroes, because when strconv appends the ascii representations,
+		// it will omit leading zeroes.
+		out      [98]byte
+		divisor  Uint
 		y        = *z                 // copy z to avoid modifying it
 		pos      = len(out)           // position to write to
 		buf      [19]byte             // buffer to write uint64:s to
