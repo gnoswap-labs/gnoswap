@@ -103,7 +103,8 @@ gas-report-tsv:
 		echo "   Example: make gas-report-tsv TEST=uint256_gas_measurement"; \
 		exit 1; \
 	else \
-		$(TXTAR_BLESS) -test $(TEST) -integration-dir $(GNO_INTEGRATION_DIR) -report -tsv; \
+		filename="$(TEST)_$$(git rev-parse --short HEAD).tsv"; \
+		$(TXTAR_BLESS) -test $(TEST) -integration-dir $(GNO_INTEGRATION_DIR) -report -tsv -output "$$filename"; \
 	fi
 
 # 📌 Help message

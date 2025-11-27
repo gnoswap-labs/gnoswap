@@ -10,7 +10,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 // Configuration holds all command-line flags
@@ -81,18 +80,18 @@ func main() {
 		}
 
 		// Output to file or stdout
-		if config.TSVOutput {
-			// TSV always writes to file with timestamp
+		if config.OutputFile != "" {
+			if err := os.WriteFile(config.OutputFile, []byte(report), 0644); err != nil {
+				exitWithError(fmt.Errorf("failed to write report: %w", err))
+			}
+			fmt.Printf("Report written to %s\n", config.OutputFile)
+		} else if config.TSVOutput {
+			// TSV without -output writes to default filename
 			filename := generateTSVFilename(config.TestName)
 			if err := os.WriteFile(filename, []byte(report), 0644); err != nil {
 				exitWithError(fmt.Errorf("failed to write report: %w", err))
 			}
 			fmt.Printf("Report written to %s\n", filename)
-		} else if config.OutputFile != "" {
-			if err := os.WriteFile(config.OutputFile, []byte(report), 0644); err != nil {
-				exitWithError(fmt.Errorf("failed to write report: %w", err))
-			}
-			fmt.Printf("Report written to %s\n", config.OutputFile)
 		} else {
 			fmt.Print(report)
 		}
@@ -605,10 +604,9 @@ func isCommandLine(line string) bool {
 	return true
 }
 
-// generateTSVFilename creates a unique filename with timestamp
+// generateTSVFilename creates a filename for TSV output
 func generateTSVFilename(testName string) string {
-	timestamp := time.Now().Format("20060102_150405")
-	return fmt.Sprintf("%s_%s.tsv", testName, timestamp)
+	return fmt.Sprintf("%s.tsv", testName)
 }
 
 // exitWithError prints an error and exits
