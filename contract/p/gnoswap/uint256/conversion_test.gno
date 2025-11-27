@@ -4,28 +4,6 @@ import (
 	"testing"
 )
 
-func TestIsUint64(t *testing.T) {
-	tests := []struct {
-		x    string
-		want bool
-	}{
-		{"0x0", true},
-		{"0x1", true},
-		{"0x10", true},
-		{"0xffffffffffffffff", true},
-		{"0x10000000000000000", false},
-	}
-
-	for _, tc := range tests {
-		x := MustFromHex(tc.x)
-		got := x.IsUint64()
-
-		if got != tc.want {
-			t.Errorf("IsUint64(%s) = %v, want %v", tc.x, got, tc.want)
-		}
-	}
-}
-
 func TestDec(t *testing.T) {
 	testCases := []struct {
 		name string

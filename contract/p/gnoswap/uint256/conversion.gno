@@ -5,9 +5,7 @@ package uint256
 
 import (
 	"encoding/binary"
-	"errors"
 	"strconv"
-	"strings"
 )
 
 // Uint64 returns the lower 64 bits of z as a uint64.
@@ -98,54 +96,6 @@ func (z *Uint) Dec() string {
 	return string(out[pos-len(bufSlice):])
 }
 
-// Scan implements the database/sql Scanner interface.
-// Supports scanning from strings, byte slices, and numeric types. Sets z to 0 if src is nil.
-func (z *Uint) Scan(src any) error {
-	if src == nil {
-		z.Clear()
-		return nil
-	}
-
-	switch src := src.(type) {
-	case string:
-		return z.scanScientificFromString(src)
-	case []byte:
-		return z.scanScientificFromString(string(src))
-	}
-	return errors.New("unsupported type: can't convert to uint256.Uint")
-}
-
-func (z *Uint) scanScientificFromString(src string) error {
-	if len(src) == 0 {
-		z.Clear()
-		return nil
-	}
-
-	idx := strings.IndexByte(src, 'e')
-	if idx == -1 {
-		return z.SetFromDecimal(src)
-	}
-	if err := z.SetFromDecimal(src[:idx]); err != nil {
-		return err
-	}
-	if src[(idx+1):] == "0" {
-		return nil
-	}
-	var exp Uint
-	if err := exp.SetFromDecimal(src[(idx + 1):]); err != nil {
-		return err
-	}
-	if exp.GtUint64(77) { // 10**78 is larger than 2**256
-		return ErrBig256Range
-	}
-	var ten Uint
-	ten.SetUint64(10)
-	exp.Exp(&ten, &exp)
-	if _, overflow := z.MulOverflow(z, &exp); overflow {
-		return ErrBig256Range
-	}
-	return nil
-}
 
 // ToString returns the decimal string representation of z.
 // Returns an empty string if z is nil. This method doesn't exist in holiman's uint256.

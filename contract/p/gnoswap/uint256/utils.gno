@@ -6,7 +6,7 @@ func checkNumberS(input string) error {
 	const fn = "UnmarshalText"
 	l := len(input)
 	if l == 0 {
-		return errEmptyString(fn, input)
+		return errEmptyNumber(fn, input)
 	}
 	if l < 2 || input[0] != '0' ||
 		(input[1] != 'x' && input[1] != 'X') {

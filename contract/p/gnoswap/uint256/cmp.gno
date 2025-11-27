@@ -86,18 +86,3 @@ func (z *Uint) Eq(x *Uint) bool {
 func (z *Uint) Neq(x *Uint) bool {
 	return !z.Eq(x)
 }
-
-// Sgt returns true if z > x when both are interpreted as two's complement signed integers.
-func (z *Uint) Sgt(x *Uint) bool {
-	zSign := z.Sign()
-	xSign := x.Sign()
-
-	switch {
-	case zSign >= 0 && xSign < 0:
-		return true
-	case zSign < 0 && xSign >= 0:
-		return false
-	default:
-		return z.Gt(x)
-	}
-}

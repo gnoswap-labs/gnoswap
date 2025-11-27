@@ -239,67 +239,6 @@ func (z *Uint) Clear() *Uint {
 	return z
 }
 
-const (
-	// hextable  = "0123456789abcdef"
-	bintable  = "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x01\x02\x03\x04\x05\x06\a\b\t\xff\xff\xff\xff\xff\xff\xff\n\v\f\r\x0e\x0f\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\n\v\f\r\x0e\x0f\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-	badNibble = 0xff
-)
-
-// SetFromHex sets z from a hexadecimal string and returns an error if invalid.
-// Requires "0x" or "0X" prefix and rejects leading zeros after prefix, underscores, and negative values.
-// Returns ErrBig256Range if the number exceeds 256 bits.
-func (z *Uint) SetFromHex(hex string) error {
-	return z.fromHex(hex)
-}
-
-// fromHex parses a hex-string into z.
-func (z *Uint) fromHex(hex string) error {
-	if err := checkNumberS(hex); err != nil {
-		return err
-	}
-	if len(hex) > 66 {
-		return ErrBig256Range
-	}
-	z.Clear()
-	end := len(hex)
-	for i := 0; i < 4; i++ {
-		start := end - 16
-		if start < 2 {
-			start = 2
-		}
-		for ri := start; ri < end; ri++ {
-			nib := bintable[hex[ri]]
-			if nib == badNibble {
-				return ErrSyntax
-			}
-			z[i] = z[i] << 4
-			z[i] += uint64(nib)
-		}
-		end = start
-	}
-	return nil
-}
-
-// FromHex creates a new Uint from a hexadecimal string.
-// The string must be 0x-prefixed and represent a value within 256 bits.
-func FromHex(hex string) (*Uint, error) {
-	var z Uint
-	if err := z.fromHex(hex); err != nil {
-		return nil, err
-	}
-	return &z, nil
-}
-
-// MustFromHex creates a new Uint from a hexadecimal string.
-// Panics if the string is invalid or the number exceeds 256 bits.
-func MustFromHex(hex string) *Uint {
-	var z Uint
-	if err := z.fromHex(hex); err != nil {
-		panic(err)
-	}
-	return &z
-}
-
 // Clone returns a new Uint with the same value as z.
 func (z *Uint) Clone() *Uint {
 	var x Uint
