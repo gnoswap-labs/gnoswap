@@ -1,0 +1,627 @@
+## start a new node
+gnoland start
+
+# Deploy small realm (minimal code)
+gnokey maketx addpkg -pkgdir $WORK/small -pkgpath gno.land/r/test/small -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
+
+# Deploy medium realm (more inline code)
+gnokey maketx addpkg -pkgdir $WORK/medium -pkgpath gno.land/r/test/medium -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
+
+# Deploy large realm (lots of inline code)
+gnokey maketx addpkg -pkgdir $WORK/large -pkgpath gno.land/r/test/large -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
+
+# Deploy xlarge realm (very large inline code)
+gnokey maketx addpkg -pkgdir $WORK/xlarge -pkgpath gno.land/r/test/xlarge -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
+
+# Deploy small package (for package load comparison)
+gnokey maketx addpkg -pkgdir $WORK/pkgsmall -pkgpath gno.land/p/test/pkgsmall -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
+
+# Deploy xlarge package (for package load comparison)
+gnokey maketx addpkg -pkgdir $WORK/pkgxlarge -pkgpath gno.land/p/test/pkgxlarge -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
+
+# Deploy caller realm (calls package and realm)
+gnokey maketx addpkg -pkgdir $WORK/caller -pkgpath gno.land/r/test/caller -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
+
+### First call (cold - includes load cost) ###
+# Call small realm
+gnokey maketx call -pkgpath gno.land/r/test/small -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Call medium realm
+gnokey maketx call -pkgpath gno.land/r/test/medium -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Call large realm
+gnokey maketx call -pkgpath gno.land/r/test/large -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Call xlarge realm
+gnokey maketx call -pkgpath gno.land/r/test/xlarge -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### Second call (warm - cached?) ###
+# Call small realm again
+gnokey maketx call -pkgpath gno.land/r/test/small -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Call medium realm again
+gnokey maketx call -pkgpath gno.land/r/test/medium -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Call large realm again
+gnokey maketx call -pkgpath gno.land/r/test/large -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Call xlarge realm again
+gnokey maketx call -pkgpath gno.land/r/test/xlarge -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### Third call ###
+# Call small realm 3rd
+gnokey maketx call -pkgpath gno.land/r/test/small -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Call xlarge realm 3rd
+gnokey maketx call -pkgpath gno.land/r/test/xlarge -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### Package load vs Realm load comparison ###
+# Call small package (via caller realm)
+gnokey maketx call -pkgpath gno.land/r/test/caller -func CallSmallPkg -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Call xlarge package (via caller realm)
+gnokey maketx call -pkgpath gno.land/r/test/caller -func CallXlargePkg -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Call small realm (via caller realm)
+gnokey maketx call -pkgpath gno.land/r/test/caller -func CallSmallRealm -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Call xlarge realm (via caller realm)
+gnokey maketx call -pkgpath gno.land/r/test/caller -func CallXlargeRealm -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### Second call (package/realm cached?) ###
+# Call small package again
+gnokey maketx call -pkgpath gno.land/r/test/caller -func CallSmallPkg -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Call xlarge package again
+gnokey maketx call -pkgpath gno.land/r/test/caller -func CallXlargePkg -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Call small realm again
+gnokey maketx call -pkgpath gno.land/r/test/caller -func CallSmallRealm -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Call xlarge realm again
+gnokey maketx call -pkgpath gno.land/r/test/caller -func CallXlargeRealm -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+-- small/gnomod.toml --
+module = "gno.land/r/test/small"
+gno = "0.9"
+-- small/small.gno --
+package small
+
+// ~100 bytes of code
+func Add(a, b int) int {
+	return a + b
+}
+
+// Wrapper function for external calls (cur realm receives caller context)
+func DoAdd(cur realm) int {
+	return Add(1, 2)
+}
+
+-- medium/gnomod.toml --
+module = "gno.land/r/test/medium"
+gno = "0.9"
+-- medium/medium.gno --
+package medium
+
+// Same Add function
+func Add(a, b int) int {
+	return a + b
+}
+
+// Wrapper function for external calls
+func DoAdd(cur realm) int {
+	return Add(1, 2)
+}
+
+// Extra inline functions (~500 bytes total)
+func Sub(a, b int) int {
+	return a - b
+}
+
+func Mul(a, b int) int {
+	return a * b
+}
+
+func Div(a, b int) int {
+	if b == 0 {
+		return 0
+	}
+	return a / b
+}
+
+func Mod(a, b int) int {
+	if b == 0 {
+		return 0
+	}
+	return a % b
+}
+
+func Max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func Min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func Abs(a int) int {
+	if a < 0 {
+		return -a
+	}
+	return a
+}
+
+-- large/gnomod.toml --
+module = "gno.land/r/test/large"
+gno = "0.9"
+-- large/large.gno --
+package large
+
+// Same Add function
+func Add(a, b int) int {
+	return a + b
+}
+
+// Wrapper function for external calls
+func DoAdd(cur realm) int {
+	return Add(1, 2)
+}
+
+// Many inline functions (~2KB total)
+func Sub(a, b int) int { return a - b }
+func Mul(a, b int) int { return a * b }
+func Div(a, b int) int { if b == 0 { return 0 }; return a / b }
+func Mod(a, b int) int { if b == 0 { return 0 }; return a % b }
+func Max(a, b int) int { if a > b { return a }; return b }
+func Min(a, b int) int { if a < b { return a }; return b }
+func Abs(a int) int { if a < 0 { return -a }; return a }
+
+func Calc1(a, b, c int) int { return a + b*c }
+func Calc2(a, b, c int) int { return a - b*c }
+func Calc3(a, b, c int) int { return a * b + c }
+func Calc4(a, b, c int) int { return a * b - c }
+func Calc5(a, b, c int) int { return (a + b) * c }
+func Calc6(a, b, c int) int { return (a - b) * c }
+func Calc7(a, b, c int) int { return a / (b + 1) * c }
+func Calc8(a, b, c int) int { return a % (b + 1) + c }
+
+func Loop1(n int) int { s := 0; for i := 0; i < n; i++ { s += i }; return s }
+func Loop2(n int) int { s := 1; for i := 1; i <= n; i++ { s *= i }; return s }
+func Loop3(n int) int { s := 0; for i := n; i > 0; i-- { s += i }; return s }
+func Loop4(n int) int { s := 0; for i := 0; i < n; i += 2 { s += i }; return s }
+
+func Str1(a, b string) string { return a + b }
+func Str2(a, b, c string) string { return a + b + c }
+func Str3(a, b, c, d string) string { return a + b + c + d }
+func Str4(a, b, c, d, e string) string { return a + b + c + d + e }
+
+func Complex1(a, b, c, d int) int {
+	r := a * b
+	r = r + c
+	r = r - d
+	r = r / 2
+	return r
+}
+
+func Complex2(a, b, c, d int) int {
+	r := a + b
+	r = r * c
+	r = r / (d + 1)
+	r = r % 100
+	return r
+}
+
+func Complex3(a, b, c, d int) int {
+	if a > b {
+		return c + d
+	}
+	return c - d
+}
+
+func Complex4(a, b, c, d int) int {
+	if a < b {
+		if c < d {
+			return a + c
+		}
+		return a + d
+	}
+	if c < d {
+		return b + c
+	}
+	return b + d
+}
+
+-- xlarge/gnomod.toml --
+module = "gno.land/r/test/xlarge"
+gno = "0.9"
+-- xlarge/xlarge.gno --
+package xlarge
+
+// Same Add function
+func Add(a, b int) int {
+	return a + b
+}
+
+// Wrapper function for external calls
+func DoAdd(cur realm) int {
+	return Add(1, 2)
+}
+
+// Very many inline functions (~5KB+ total)
+func Sub(a, b int) int { return a - b }
+func Mul(a, b int) int { return a * b }
+func Div(a, b int) int { if b == 0 { return 0 }; return a / b }
+func Mod(a, b int) int { if b == 0 { return 0 }; return a % b }
+func Max(a, b int) int { if a > b { return a }; return b }
+func Min(a, b int) int { if a < b { return a }; return b }
+func Abs(a int) int { if a < 0 { return -a }; return a }
+
+func Calc1(a, b, c int) int { return a + b*c }
+func Calc2(a, b, c int) int { return a - b*c }
+func Calc3(a, b, c int) int { return a * b + c }
+func Calc4(a, b, c int) int { return a * b - c }
+func Calc5(a, b, c int) int { return (a + b) * c }
+func Calc6(a, b, c int) int { return (a - b) * c }
+func Calc7(a, b, c int) int { return a / (b + 1) * c }
+func Calc8(a, b, c int) int { return a % (b + 1) + c }
+func Calc9(a, b, c int) int { return (a + b) / (c + 1) }
+func Calc10(a, b, c int) int { return (a * b) % (c + 1) }
+func Calc11(a, b, c int) int { return a + b + c }
+func Calc12(a, b, c int) int { return a - b - c }
+func Calc13(a, b, c int) int { return a * b * c }
+func Calc14(a, b, c int) int { return a / (b + 1) / (c + 1) }
+func Calc15(a, b, c int) int { return (a % 10) + (b % 10) + (c % 10) }
+func Calc16(a, b, c int) int { return (a / 10) * (b / 10) * (c / 10) }
+
+func Loop1(n int) int { s := 0; for i := 0; i < n; i++ { s += i }; return s }
+func Loop2(n int) int { s := 1; for i := 1; i <= n; i++ { s *= i }; return s }
+func Loop3(n int) int { s := 0; for i := n; i > 0; i-- { s += i }; return s }
+func Loop4(n int) int { s := 0; for i := 0; i < n; i += 2 { s += i }; return s }
+func Loop5(n int) int { s := 0; for i := 1; i < n; i += 2 { s += i }; return s }
+func Loop6(n int) int { s := n; for i := 0; i < n; i++ { s -= 1 }; return s }
+func Loop7(n int) int { s := 0; for i := 0; i < n; i++ { s += i * i }; return s }
+func Loop8(n int) int { s := 0; for i := 0; i < n; i++ { s += i * 2 }; return s }
+
+func Str1(a, b string) string { return a + b }
+func Str2(a, b, c string) string { return a + b + c }
+func Str3(a, b, c, d string) string { return a + b + c + d }
+func Str4(a, b, c, d, e string) string { return a + b + c + d + e }
+func Str5(a, b, c, d, e, f string) string { return a + b + c + d + e + f }
+func Str6(a, b, c, d, e, f, g string) string { return a + b + c + d + e + f + g }
+func Str7(a, b, c, d, e, f, g, h string) string { return a + b + c + d + e + f + g + h }
+func Str8(a string) string { return a + a + a + a }
+
+func Complex1(a, b, c, d int) int {
+	r := a * b
+	r = r + c
+	r = r - d
+	r = r / 2
+	return r
+}
+
+func Complex2(a, b, c, d int) int {
+	r := a + b
+	r = r * c
+	r = r / (d + 1)
+	r = r % 100
+	return r
+}
+
+func Complex3(a, b, c, d int) int {
+	if a > b {
+		return c + d
+	}
+	return c - d
+}
+
+func Complex4(a, b, c, d int) int {
+	if a < b {
+		if c < d {
+			return a + c
+		}
+		return a + d
+	}
+	if c < d {
+		return b + c
+	}
+	return b + d
+}
+
+func Complex5(a, b, c, d, e int) int {
+	r := a + b
+	r = r * c
+	r = r - d
+	r = r / (e + 1)
+	return r
+}
+
+func Complex6(a, b, c, d, e int) int {
+	if a > b && c > d {
+		return e
+	}
+	if a < b && c < d {
+		return -e
+	}
+	return 0
+}
+
+func Complex7(a, b, c, d, e int) int {
+	r := 0
+	if a > 0 { r += a }
+	if b > 0 { r += b }
+	if c > 0 { r += c }
+	if d > 0 { r += d }
+	if e > 0 { r += e }
+	return r
+}
+
+func Complex8(a, b, c, d, e int) int {
+	m := a
+	if b > m { m = b }
+	if c > m { m = c }
+	if d > m { m = d }
+	if e > m { m = e }
+	return m
+}
+
+func Big1(a, b, c, d, e, f, g, h int) int {
+	return a + b + c + d + e + f + g + h
+}
+
+func Big2(a, b, c, d, e, f, g, h int) int {
+	return a * b + c * d + e * f + g * h
+}
+
+func Big3(a, b, c, d, e, f, g, h int) int {
+	r := a
+	r = r + b
+	r = r * c
+	r = r - d
+	r = r + e
+	r = r * f
+	r = r - g
+	r = r + h
+	return r
+}
+
+func Big4(a, b, c, d, e, f, g, h int) int {
+	if a > b {
+		if c > d {
+			if e > f {
+				return g + h
+			}
+			return g - h
+		}
+		return c + d
+	}
+	return a + b
+}
+
+-- pkgsmall/gnomod.toml --
+module = "gno.land/p/test/pkgsmall"
+gno = "0.9"
+-- pkgsmall/pkgsmall.gno --
+package pkgsmall
+
+// ~100 bytes of code (same as small realm)
+func Add(a, b int) int {
+	return a + b
+}
+
+-- pkgxlarge/gnomod.toml --
+module = "gno.land/p/test/pkgxlarge"
+gno = "0.9"
+-- pkgxlarge/pkgxlarge.gno --
+package pkgxlarge
+
+// Same Add function
+func Add(a, b int) int {
+	return a + b
+}
+
+// Very many inline functions (~5KB+ total) - same as xlarge realm
+func Sub(a, b int) int { return a - b }
+func Mul(a, b int) int { return a * b }
+func Div(a, b int) int { if b == 0 { return 0 }; return a / b }
+func Mod(a, b int) int { if b == 0 { return 0 }; return a % b }
+func Max(a, b int) int { if a > b { return a }; return b }
+func Min(a, b int) int { if a < b { return a }; return b }
+func Abs(a int) int { if a < 0 { return -a }; return a }
+
+func Calc1(a, b, c int) int { return a + b*c }
+func Calc2(a, b, c int) int { return a - b*c }
+func Calc3(a, b, c int) int { return a * b + c }
+func Calc4(a, b, c int) int { return a * b - c }
+func Calc5(a, b, c int) int { return (a + b) * c }
+func Calc6(a, b, c int) int { return (a - b) * c }
+func Calc7(a, b, c int) int { return a / (b + 1) * c }
+func Calc8(a, b, c int) int { return a % (b + 1) + c }
+func Calc9(a, b, c int) int { return (a + b) / (c + 1) }
+func Calc10(a, b, c int) int { return (a * b) % (c + 1) }
+func Calc11(a, b, c int) int { return a + b + c }
+func Calc12(a, b, c int) int { return a - b - c }
+func Calc13(a, b, c int) int { return a * b * c }
+func Calc14(a, b, c int) int { return a / (b + 1) / (c + 1) }
+func Calc15(a, b, c int) int { return (a % 10) + (b % 10) + (c % 10) }
+func Calc16(a, b, c int) int { return (a / 10) * (b / 10) * (c / 10) }
+
+func Loop1(n int) int { s := 0; for i := 0; i < n; i++ { s += i }; return s }
+func Loop2(n int) int { s := 1; for i := 1; i <= n; i++ { s *= i }; return s }
+func Loop3(n int) int { s := 0; for i := n; i > 0; i-- { s += i }; return s }
+func Loop4(n int) int { s := 0; for i := 0; i < n; i += 2 { s += i }; return s }
+func Loop5(n int) int { s := 0; for i := 1; i < n; i += 2 { s += i }; return s }
+func Loop6(n int) int { s := n; for i := 0; i < n; i++ { s -= 1 }; return s }
+func Loop7(n int) int { s := 0; for i := 0; i < n; i++ { s += i * i }; return s }
+func Loop8(n int) int { s := 0; for i := 0; i < n; i++ { s += i * 2 }; return s }
+
+func Str1(a, b string) string { return a + b }
+func Str2(a, b, c string) string { return a + b + c }
+func Str3(a, b, c, d string) string { return a + b + c + d }
+func Str4(a, b, c, d, e string) string { return a + b + c + d + e }
+func Str5(a, b, c, d, e, f string) string { return a + b + c + d + e + f }
+func Str6(a, b, c, d, e, f, g string) string { return a + b + c + d + e + f + g }
+func Str7(a, b, c, d, e, f, g, h string) string { return a + b + c + d + e + f + g + h }
+func Str8(a string) string { return a + a + a + a }
+
+func Complex1(a, b, c, d int) int {
+	r := a * b
+	r = r + c
+	r = r - d
+	r = r / 2
+	return r
+}
+
+func Complex2(a, b, c, d int) int {
+	r := a + b
+	r = r * c
+	r = r / (d + 1)
+	r = r % 100
+	return r
+}
+
+func Complex3(a, b, c, d int) int {
+	if a > b {
+		return c + d
+	}
+	return c - d
+}
+
+func Complex4(a, b, c, d int) int {
+	if a < b {
+		if c < d {
+			return a + c
+		}
+		return a + d
+	}
+	if c < d {
+		return b + c
+	}
+	return b + d
+}
+
+func Complex5(a, b, c, d, e int) int {
+	r := a + b
+	r = r * c
+	r = r - d
+	r = r / (e + 1)
+	return r
+}
+
+func Complex6(a, b, c, d, e int) int {
+	if a > b && c > d {
+		return e
+	}
+	if a < b && c < d {
+		return -e
+	}
+	return 0
+}
+
+func Complex7(a, b, c, d, e int) int {
+	r := 0
+	if a > 0 { r += a }
+	if b > 0 { r += b }
+	if c > 0 { r += c }
+	if d > 0 { r += d }
+	if e > 0 { r += e }
+	return r
+}
+
+func Complex8(a, b, c, d, e int) int {
+	m := a
+	if b > m { m = b }
+	if c > m { m = c }
+	if d > m { m = d }
+	if e > m { m = e }
+	return m
+}
+
+func Big1(a, b, c, d, e, f, g, h int) int {
+	return a + b + c + d + e + f + g + h
+}
+
+func Big2(a, b, c, d, e, f, g, h int) int {
+	return a * b + c * d + e * f + g * h
+}
+
+func Big3(a, b, c, d, e, f, g, h int) int {
+	r := a
+	r = r + b
+	r = r * c
+	r = r - d
+	r = r + e
+	r = r * f
+	r = r - g
+	r = r + h
+	return r
+}
+
+func Big4(a, b, c, d, e, f, g, h int) int {
+	if a > b {
+		if c > d {
+			if e > f {
+				return g + h
+			}
+			return g - h
+		}
+		return c + d
+	}
+	return a + b
+}
+
+-- caller/gnomod.toml --
+module = "gno.land/r/test/caller"
+gno = "0.9"
+-- caller/caller.gno --
+package caller
+
+import (
+	"gno.land/p/test/pkgsmall"
+	"gno.land/p/test/pkgxlarge"
+	"gno.land/r/test/small"
+	"gno.land/r/test/xlarge"
+)
+
+// Call small package
+func CallSmallPkg(cur realm) int {
+	return pkgsmall.Add(1, 2)
+}
+
+// Call xlarge package
+func CallXlargePkg(cur realm) int {
+	return pkgxlarge.Add(1, 2)
+}
+
+// Call small realm
+func CallSmallRealm(cur realm) int {
+	return small.Add(1, 2)
+}
+
+// Call xlarge realm
+func CallXlargeRealm(cur realm) int {
+	return xlarge.Add(1, 2)
+}

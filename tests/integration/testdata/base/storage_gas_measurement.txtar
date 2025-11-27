@@ -1,0 +1,337 @@
+## start a new node
+gnoland start
+
+# Deploy storage test realm
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/test/storagegas -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
+
+### Baseline ###
+# Empty function (baseline)
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### Storage Write - Different Value Sizes ###
+# Write small int (single int)
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func WriteSmallInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
+
+# Write large int (int64 max)
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func WriteLargeInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
+
+# Write short string (10 chars)
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func WriteShortString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
+
+# Write medium string (100 chars)
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func WriteMediumString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
+
+# Write long string (1000 chars)
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func WriteLongString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
+
+### Storage Read vs Write ###
+# Read existing value (after write)
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func ReadSmallInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Read existing string
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func ReadShortString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Read long string
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func ReadLongString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### New Key vs Update Existing Key ###
+# Create new key (first write to counter1)
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func CreateNewKey1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
+
+# Update existing key (second write to counter1)
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func UpdateExistingKey1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Create new key (first write to counter2)
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func CreateNewKey2 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
+
+# Update existing key (second write to counter2)
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func UpdateExistingKey2 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### Multiple Writes in Single TX ###
+# Write 10 new keys
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func Write10Keys -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
+
+# Update 10 existing keys
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func Update10Keys -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### Struct Storage ###
+# Write small struct (3 fields)
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func WriteSmallStruct -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
+
+# Write large struct (10 fields)
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func WriteLargeStruct -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
+
+# Read small struct
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func ReadSmallStruct -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Read large struct
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func ReadLargeStruct -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### Slice Storage ###
+# Write small slice (10 elements)
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func WriteSmallSlice -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
+
+# Write large slice (100 elements)
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func WriteLargeSlice -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
+
+# Read small slice
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func ReadSmallSlice -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Read large slice
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func ReadLargeSlice -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### Map Storage ###
+# Write small map (10 entries)
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func WriteSmallMap -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
+
+# Write large map (100 entries)
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func WriteLargeMap -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
+
+# Read from small map
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func ReadSmallMap -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Read from large map
+gnokey maketx call -pkgpath gno.land/r/test/storagegas -func ReadLargeMap -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+-- gnomod.toml --
+module = "gno.land/r/test/storagegas"
+gno = "0.9"
+-- main.gno --
+package storagegas
+
+import (
+	"strconv"
+)
+
+// Storage variables - different types and sizes
+var (
+	// Basic types
+	storedSmallInt  int
+	storedLargeInt  int64
+	storedShortStr  string
+	storedMediumStr string
+	storedLongStr   string
+
+	// Counters for new key vs update tests
+	counter1 int
+	counter2 int
+
+	// Multiple keys
+	multiKeys [10]int
+
+	// Struct storage
+	smallStruct SmallStruct
+	largeStruct LargeStruct
+
+	// Slice storage
+	smallSlice []int
+	largeSlice []int
+
+	// Map storage
+	smallMap map[string]int
+	largeMap map[string]int
+)
+
+type SmallStruct struct {
+	A int
+	B int
+	C int
+}
+
+type LargeStruct struct {
+	A, B, C, D, E int
+	F, G, H, I, J int
+}
+
+func Empty(cur realm) {
+	return
+}
+
+// ============ Write Different Value Sizes ============
+
+func WriteSmallInt(cur realm) {
+	storedSmallInt = 42
+}
+
+func WriteLargeInt(cur realm) {
+	storedLargeInt = 9223372036854775807 // max int64
+}
+
+func WriteShortString(cur realm) {
+	storedShortStr = "HelloWorld" // 10 chars
+}
+
+func WriteMediumString(cur realm) {
+	// 100 chars
+	storedMediumStr = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore."
+}
+
+func WriteLongString(cur realm) {
+	// ~1000 chars
+	storedLongStr = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+}
+
+// ============ Read Values ============
+
+func ReadSmallInt(cur realm) int {
+	return storedSmallInt
+}
+
+func ReadShortString(cur realm) string {
+	return storedShortStr
+}
+
+func ReadLongString(cur realm) string {
+	return storedLongStr
+}
+
+// ============ New Key vs Update Existing ============
+
+func CreateNewKey1(cur realm) {
+	counter1 = 100 // First write - creates new storage slot
+}
+
+func UpdateExistingKey1(cur realm) {
+	counter1 = 200 // Second write - updates existing slot
+}
+
+func CreateNewKey2(cur realm) {
+	counter2 = 100 // First write - creates new storage slot
+}
+
+func UpdateExistingKey2(cur realm) {
+	counter2 = 200 // Second write - updates existing slot
+}
+
+// ============ Multiple Writes ============
+
+func Write10Keys(cur realm) {
+	for i := 0; i < 10; i++ {
+		multiKeys[i] = i * 100
+	}
+}
+
+func Update10Keys(cur realm) {
+	for i := 0; i < 10; i++ {
+		multiKeys[i] = i * 200
+	}
+}
+
+// ============ Struct Storage ============
+
+func WriteSmallStruct(cur realm) {
+	smallStruct = SmallStruct{A: 1, B: 2, C: 3}
+}
+
+func WriteLargeStruct(cur realm) {
+	largeStruct = LargeStruct{
+		A: 1, B: 2, C: 3, D: 4, E: 5,
+		F: 6, G: 7, H: 8, I: 9, J: 10,
+	}
+}
+
+func ReadSmallStruct(cur realm) int {
+	return smallStruct.A + smallStruct.B + smallStruct.C
+}
+
+func ReadLargeStruct(cur realm) int {
+	return largeStruct.A + largeStruct.B + largeStruct.C + largeStruct.D + largeStruct.E +
+		largeStruct.F + largeStruct.G + largeStruct.H + largeStruct.I + largeStruct.J
+}
+
+// ============ Slice Storage ============
+
+func WriteSmallSlice(cur realm) {
+	smallSlice = make([]int, 10)
+	for i := 0; i < 10; i++ {
+		smallSlice[i] = i
+	}
+}
+
+func WriteLargeSlice(cur realm) {
+	largeSlice = make([]int, 100)
+	for i := 0; i < 100; i++ {
+		largeSlice[i] = i
+	}
+}
+
+func ReadSmallSlice(cur realm) int {
+	sum := 0
+	for _, v := range smallSlice {
+		sum += v
+	}
+	return sum
+}
+
+func ReadLargeSlice(cur realm) int {
+	sum := 0
+	for _, v := range largeSlice {
+		sum += v
+	}
+	return sum
+}
+
+// ============ Map Storage ============
+
+func WriteSmallMap(cur realm) {
+	smallMap = make(map[string]int)
+	for i := 0; i < 10; i++ {
+		smallMap[strconv.Itoa(i)] = i
+	}
+}
+
+func WriteLargeMap(cur realm) {
+	largeMap = make(map[string]int)
+	for i := 0; i < 100; i++ {
+		largeMap[strconv.Itoa(i)] = i
+	}
+}
+
+func ReadSmallMap(cur realm) int {
+	return smallMap["5"]
+}
+
+func ReadLargeMap(cur realm) int {
+	return largeMap["50"]
+}

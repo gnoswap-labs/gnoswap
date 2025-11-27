@@ -1,0 +1,474 @@
+loadpkg gno.land/p/nt/avl
+
+## start a new node
+gnoland start
+
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/test/datastructgas -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
+
+### Baseline ###
+# Empty function (baseline)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### AVL Tree Operations ###
+## Insert
+# AVL Insert 10 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func AVLInsert10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# AVL Insert 100 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func AVLInsert100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# AVL Insert 1000 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func AVLInsert1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+## Get (from pre-populated tree)
+# AVL Get from 10 items (single lookup)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func AVLGet10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# AVL Get from 100 items (single lookup)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func AVLGet100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# AVL Get from 1000 items (single lookup)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func AVLGet1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+## Iterate
+# AVL Iterate 10 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func AVLIterate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# AVL Iterate 100 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func AVLIterate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### Map Operations ###
+## Insert
+# Map Insert 10 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapInsert10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Map Insert 100 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapInsert100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Map Insert 1000 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapInsert1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+## Get (from pre-populated map)
+# Map Get from 10 items (single lookup)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapGet10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Map Get from 100 items (single lookup)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapGet100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Map Get from 1000 items (single lookup)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapGet1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+## Iterate
+# Map Iterate 10 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapIterate10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Map Iterate 100 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func MapIterate100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### Slice Operations ###
+## Append (no pre-allocation)
+# Slice Append 10 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SliceAppend10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Slice Append 100 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SliceAppend100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Slice Append 1000 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SliceAppend1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+## Pre-allocated (make with capacity)
+# Slice PreAlloc 10 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SlicePreAlloc10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Slice PreAlloc 100 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SlicePreAlloc100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Slice PreAlloc 1000 items
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SlicePreAlloc1000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### Struct Copy vs Pointer ###
+# Small struct copy (3 fields)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SmallStructCopy -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Small struct pointer
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SmallStructPointer -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Large struct copy (10 fields)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func LargeStructCopy -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Large struct pointer
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func LargeStructPointer -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# XLarge struct copy (20 fields)
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func XLargeStructCopy -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# XLarge struct pointer
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func XLargeStructPointer -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### Multiple struct operations (100 iterations) ###
+# Small struct copy x100
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SmallStructCopy100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Small struct pointer x100
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func SmallStructPointer100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Large struct copy x100
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func LargeStructCopy100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Large struct pointer x100
+gnokey maketx call -pkgpath gno.land/r/test/datastructgas -func LargeStructPointer100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+-- gnomod.toml --
+module = "gno.land/r/test/datastructgas"
+gno = "0.9"
+-- main.gno --
+package datastructgas
+
+import (
+	"strconv"
+
+	"gno.land/p/nt/avl"
+)
+
+// Structs for testing
+type SmallStruct struct {
+	A int
+	B int
+	C int
+}
+
+type LargeStruct struct {
+	A, B, C, D, E int
+	F, G, H, I, J int
+}
+
+type XLargeStruct struct {
+	A, B, C, D, E int
+	F, G, H, I, J int
+	K, L, M, N, O int
+	P, Q, R, S, T int
+}
+
+func Empty(cur realm) {
+	return
+}
+
+// ============ AVL Tree Operations ============
+
+func AVLInsert10(cur realm) {
+	tree := avl.NewTree()
+	for i := 0; i < 10; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+}
+
+func AVLInsert100(cur realm) {
+	tree := avl.NewTree()
+	for i := 0; i < 100; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+}
+
+func AVLInsert1000(cur realm) {
+	tree := avl.NewTree()
+	for i := 0; i < 1000; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+}
+
+func AVLGet10(cur realm) {
+	tree := avl.NewTree()
+	for i := 0; i < 10; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	// Single lookup (middle element)
+	_, _ = tree.Get("5")
+}
+
+func AVLGet100(cur realm) {
+	tree := avl.NewTree()
+	for i := 0; i < 100; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	// Single lookup (middle element)
+	_, _ = tree.Get("50")
+}
+
+func AVLGet1000(cur realm) {
+	tree := avl.NewTree()
+	for i := 0; i < 1000; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	// Single lookup (middle element)
+	_, _ = tree.Get("500")
+}
+
+func AVLIterate10(cur realm) {
+	tree := avl.NewTree()
+	for i := 0; i < 10; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	sum := 0
+	tree.Iterate("", "", func(key string, value interface{}) bool {
+		sum += value.(int)
+		return false
+	})
+}
+
+func AVLIterate100(cur realm) {
+	tree := avl.NewTree()
+	for i := 0; i < 100; i++ {
+		tree.Set(strconv.Itoa(i), i)
+	}
+	sum := 0
+	tree.Iterate("", "", func(key string, value interface{}) bool {
+		sum += value.(int)
+		return false
+	})
+}
+
+// ============ Map Operations ============
+
+func MapInsert10(cur realm) {
+	m := make(map[string]int)
+	for i := 0; i < 10; i++ {
+		m[strconv.Itoa(i)] = i
+	}
+}
+
+func MapInsert100(cur realm) {
+	m := make(map[string]int)
+	for i := 0; i < 100; i++ {
+		m[strconv.Itoa(i)] = i
+	}
+}
+
+func MapInsert1000(cur realm) {
+	m := make(map[string]int)
+	for i := 0; i < 1000; i++ {
+		m[strconv.Itoa(i)] = i
+	}
+}
+
+func MapGet10(cur realm) {
+	m := make(map[string]int)
+	for i := 0; i < 10; i++ {
+		m[strconv.Itoa(i)] = i
+	}
+	// Single lookup
+	_ = m["5"]
+}
+
+func MapGet100(cur realm) {
+	m := make(map[string]int)
+	for i := 0; i < 100; i++ {
+		m[strconv.Itoa(i)] = i
+	}
+	// Single lookup
+	_ = m["50"]
+}
+
+func MapGet1000(cur realm) {
+	m := make(map[string]int)
+	for i := 0; i < 1000; i++ {
+		m[strconv.Itoa(i)] = i
+	}
+	// Single lookup
+	_ = m["500"]
+}
+
+func MapIterate10(cur realm) {
+	m := make(map[string]int)
+	for i := 0; i < 10; i++ {
+		m[strconv.Itoa(i)] = i
+	}
+	sum := 0
+	for _, v := range m {
+		sum += v
+	}
+}
+
+func MapIterate100(cur realm) {
+	m := make(map[string]int)
+	for i := 0; i < 100; i++ {
+		m[strconv.Itoa(i)] = i
+	}
+	sum := 0
+	for _, v := range m {
+		sum += v
+	}
+}
+
+// ============ Slice Operations ============
+
+func SliceAppend10(cur realm) {
+	var s []int
+	for i := 0; i < 10; i++ {
+		s = append(s, i)
+	}
+}
+
+func SliceAppend100(cur realm) {
+	var s []int
+	for i := 0; i < 100; i++ {
+		s = append(s, i)
+	}
+}
+
+func SliceAppend1000(cur realm) {
+	var s []int
+	for i := 0; i < 1000; i++ {
+		s = append(s, i)
+	}
+}
+
+func SlicePreAlloc10(cur realm) {
+	s := make([]int, 0, 10)
+	for i := 0; i < 10; i++ {
+		s = append(s, i)
+	}
+}
+
+func SlicePreAlloc100(cur realm) {
+	s := make([]int, 0, 100)
+	for i := 0; i < 100; i++ {
+		s = append(s, i)
+	}
+}
+
+func SlicePreAlloc1000(cur realm) {
+	s := make([]int, 0, 1000)
+	for i := 0; i < 1000; i++ {
+		s = append(s, i)
+	}
+}
+
+// ============ Struct Copy vs Pointer ============
+
+func processSmallStructCopy(s SmallStruct) int {
+	return s.A + s.B + s.C
+}
+
+func processSmallStructPointer(s *SmallStruct) int {
+	return s.A + s.B + s.C
+}
+
+func processLargeStructCopy(s LargeStruct) int {
+	return s.A + s.B + s.C + s.D + s.E + s.F + s.G + s.H + s.I + s.J
+}
+
+func processLargeStructPointer(s *LargeStruct) int {
+	return s.A + s.B + s.C + s.D + s.E + s.F + s.G + s.H + s.I + s.J
+}
+
+func processXLargeStructCopy(s XLargeStruct) int {
+	return s.A + s.B + s.C + s.D + s.E + s.F + s.G + s.H + s.I + s.J +
+		s.K + s.L + s.M + s.N + s.O + s.P + s.Q + s.R + s.S + s.T
+}
+
+func processXLargeStructPointer(s *XLargeStruct) int {
+	return s.A + s.B + s.C + s.D + s.E + s.F + s.G + s.H + s.I + s.J +
+		s.K + s.L + s.M + s.N + s.O + s.P + s.Q + s.R + s.S + s.T
+}
+
+func SmallStructCopy(cur realm) {
+	s := SmallStruct{A: 1, B: 2, C: 3}
+	_ = processSmallStructCopy(s)
+}
+
+func SmallStructPointer(cur realm) {
+	s := &SmallStruct{A: 1, B: 2, C: 3}
+	_ = processSmallStructPointer(s)
+}
+
+func LargeStructCopy(cur realm) {
+	s := LargeStruct{A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7, H: 8, I: 9, J: 10}
+	_ = processLargeStructCopy(s)
+}
+
+func LargeStructPointer(cur realm) {
+	s := &LargeStruct{A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7, H: 8, I: 9, J: 10}
+	_ = processLargeStructPointer(s)
+}
+
+func XLargeStructCopy(cur realm) {
+	s := XLargeStruct{
+		A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7, H: 8, I: 9, J: 10,
+		K: 11, L: 12, M: 13, N: 14, O: 15, P: 16, Q: 17, R: 18, S: 19, T: 20,
+	}
+	_ = processXLargeStructCopy(s)
+}
+
+func XLargeStructPointer(cur realm) {
+	s := &XLargeStruct{
+		A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7, H: 8, I: 9, J: 10,
+		K: 11, L: 12, M: 13, N: 14, O: 15, P: 16, Q: 17, R: 18, S: 19, T: 20,
+	}
+	_ = processXLargeStructPointer(s)
+}
+
+// Multiple iterations to see accumulated difference
+func SmallStructCopy100(cur realm) {
+	s := SmallStruct{A: 1, B: 2, C: 3}
+	sum := 0
+	for i := 0; i < 100; i++ {
+		sum += processSmallStructCopy(s)
+	}
+}
+
+func SmallStructPointer100(cur realm) {
+	s := &SmallStruct{A: 1, B: 2, C: 3}
+	sum := 0
+	for i := 0; i < 100; i++ {
+		sum += processSmallStructPointer(s)
+	}
+}
+
+func LargeStructCopy100(cur realm) {
+	s := LargeStruct{A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7, H: 8, I: 9, J: 10}
+	sum := 0
+	for i := 0; i < 100; i++ {
+		sum += processLargeStructCopy(s)
+	}
+}
+
+func LargeStructPointer100(cur realm) {
+	s := &LargeStruct{A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7, H: 8, I: 9, J: 10}
+	sum := 0
+	for i := 0; i < 100; i++ {
+		sum += processLargeStructPointer(s)
+	}
+}
