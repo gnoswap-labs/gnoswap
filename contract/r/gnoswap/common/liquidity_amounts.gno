@@ -274,26 +274,32 @@ func LiquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 		panic("liquidity_math: x or y is nil")
 	}
 
+	if y.IsZero() {
+		return x.Clone()
+	}
+
 	yAbs := y.Abs()
+	yNeg := y.IsNeg()
+	var z u256.Uint
 
 	// Subtract or add based on the sign of y
-	if y.Lt(i256.Zero()) {
-		z := u256.Zero().Sub(x, yAbs)
-		if z.Gte(x) {
+	if yNeg {
+		_, underflow := z.SubOverflow(x, yAbs)
+		if underflow {
 			panic(ufmt.Sprintf(
 				"liquidity_math: underflow (x: %s, y: %s, z:%s)",
 				x.ToString(), y.ToString(), z.ToString()))
 		}
-		return z
+		return &z
 	}
 
-	z := u256.Zero().Add(x, yAbs)
-	if z.Lt(x) {
+	_, overflow := z.AddOverflow(x, yAbs)
+	if overflow {
 		panic(ufmt.Sprintf(
 			"liquidity_math: overflow (x: %s, y: %s, z:%s)",
 			x.ToString(), y.ToString(), z.ToString()))
 	}
-	return z
+	return &z
 }
 
 // toAscendingOrder returns the two values in ascending order.
