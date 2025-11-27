@@ -112,7 +112,7 @@ func (z *Uint) Scan(src any) error {
 	case []byte:
 		return z.scanScientificFromString(string(src))
 	}
-	return errors.New("default // unsupported type: can't convert to uint256.Uint")
+	return errors.New("unsupported type: can't convert to uint256.Uint")
 }
 
 func (z *Uint) scanScientificFromString(src string) error {
@@ -155,38 +155,6 @@ func (z *Uint) ToString() string {
 	}
 
 	return z.Dec()
-}
-
-// MarshalJSON implements json.Marshaler by marshaling z as a decimal string.
-// This differs from big.Int which uses JSON's native numeric format.
-// Uses string format to avoid JavaScript's 53-bit integer precision limitations.
-func (z *Uint) MarshalJSON() ([]byte, error) {
-	return []byte(`"` + z.Dec() + `"`), nil
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-// Accepts quoted strings (hexadecimal or decimal) or unquoted strings (decimal only).
-func (z *Uint) UnmarshalJSON(input []byte) error {
-	if len(input) < 2 || input[0] != '"' || input[len(input)-1] != '"' {
-		// if not quoted, it must be decimal
-		return z.fromDecimal(string(input))
-	}
-	return z.UnmarshalText(input[1 : len(input)-1])
-}
-
-// MarshalText implements encoding.TextMarshaler by marshaling z as a decimal string.
-// Compatible with big.Int's text marshaling format.
-func (z *Uint) MarshalText() ([]byte, error) {
-	return []byte(z.Dec()), nil
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-// Accepts decimal strings or hexadecimal strings prefixed with 0x or 0X.
-func (z *Uint) UnmarshalText(input []byte) error {
-	if len(input) >= 2 && input[0] == '0' && (input[1] == 'x' || input[1] == 'X') {
-		return z.fromHex(string(input))
-	}
-	return z.fromDecimal(string(input))
 }
 
 // SetBytes interprets buf as a big-endian unsigned integer and sets z to that value.
