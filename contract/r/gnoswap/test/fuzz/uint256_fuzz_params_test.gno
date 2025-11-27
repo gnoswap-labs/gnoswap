@@ -230,9 +230,11 @@ type addOverflowParams struct {
 func (p *addOverflowParams) IsValid() bool {
 	x := u256.MustFromDecimal(p.x)
 	y := u256.MustFromDecimal(p.y)
-	var z u256.Uint
-	_, overflow := z.AddOverflow(x, y)
-	return !overflow
+
+	maxUint256 := u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 256), u256.One())
+	remain := u256.Zero().Sub(maxUint256, y)
+
+	return x.Lte(remain)
 }
 
 func (p *addOverflowParams) ToString() string {

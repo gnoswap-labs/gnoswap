@@ -25,12 +25,20 @@ func TestFuzzUint256Arithmetic_AdditionAssociativity(t *testing.T) {
 		c := u256.MustFromDecimal(params.c)
 
 		// (a + b) + c
-		ab := new(u256.Uint).Add(a, b)
-		left := new(u256.Uint).Add(ab, c)
+		ab, overflowAb := new(u256.Uint).AddOverflow(a, b)
+		left, overflowLeft := new(u256.Uint).AddOverflow(ab, c)
+
+		leftOverflowed := overflowAb || overflowLeft
 
 		// a + (b + c)
-		bc := new(u256.Uint).Add(b, c)
-		right := new(u256.Uint).Add(a, bc)
+		bc, overflowBc := new(u256.Uint).AddOverflow(b, c)
+		right, overflowRight := new(u256.Uint).AddOverflow(a, bc)
+
+		rightOverflowed := overflowBc || overflowRight
+
+		if leftOverflowed != rightOverflowed {
+			panic("Addition associativity failed: left overflowed != right overflowed")
+		}
 
 		if !left.Eq(right) {
 			panic("Addition associativity failed: (a + b) + c != a + (b + c)")
