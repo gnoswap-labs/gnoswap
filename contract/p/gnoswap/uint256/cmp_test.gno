@@ -1,6 +1,7 @@
 package uint256
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -71,13 +72,26 @@ func TestLtUint64(t *testing.T) {
 		{"0", 1, true},
 		{"1", 0, false},
 		{"10", 10, false},
+		{"0xffffffffffffffff", 0, false},
+		{"0x10000000000000000", 10000000000000000, false},
 	}
 
 	for _, tc := range tests {
-		x, err := FromDecimal(tc.x)
-		if err != nil {
-			t.Error(err)
-			continue
+		var x *Uint
+		var err error
+
+		if strings.HasPrefix(tc.x, "0x") {
+			x, err = FromHex(tc.x)
+			if err != nil {
+				t.Error(err)
+				continue
+			}
+		} else {
+			x, err = FromDecimal(tc.x)
+			if err != nil {
+				t.Error(err)
+				continue
+			}
 		}
 
 		got := x.LtUint64(tc.y)
@@ -85,6 +99,22 @@ func TestLtUint64(t *testing.T) {
 		if got != tc.want {
 			t.Errorf("LtUint64(%s, %d) = %v, want %v", tc.x, tc.y, got, tc.want)
 		}
+	}
+}
+
+func TestSGT(t *testing.T) {
+	x := MustFromHex("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe")
+	y := MustFromHex("0x0")
+	actual := x.Sgt(y)
+	if actual {
+		t.Fatalf("Expected %v false", actual)
+	}
+
+	x = MustFromHex("0x0")
+	y = MustFromHex("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe")
+	actual = x.Sgt(y)
+	if !actual {
+		t.Fatalf("Expected %v true", actual)
 	}
 }
 
@@ -160,17 +190,28 @@ func TestEq(t *testing.T) {
 		y    string
 		want bool
 	}{
-		{"18446744073709551615", "18446744073709551615", true},
-		{"18446744073709551615", "18446744073709551616", false},
+		{"0xffffffffffffffff", "18446744073709551615", true},
+		{"0x10000000000000000", "18446744073709551616", true},
 		{"0", "0", true},
 		{"115792089237316195423570985008687907853269984665640564039457584007913129639935", "115792089237316195423570985008687907853269984665640564039457584007913129639935", true},
 	}
 
 	for _, tc := range tests {
-		x, err := FromDecimal(tc.x)
-		if err != nil {
-			t.Error(err)
-			continue
+		var x *Uint
+		var err error
+
+		if strings.HasPrefix(tc.x, "0x") {
+			x, err = FromHex(tc.x)
+			if err != nil {
+				t.Error(err)
+				continue
+			}
+		} else {
+			x, err = FromDecimal(tc.x)
+			if err != nil {
+				t.Error(err)
+				continue
+			}
 		}
 
 		y, err := FromDecimal(tc.y)

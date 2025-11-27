@@ -4,15 +4,17 @@
 // decision making based on Uint values.
 package uint256
 
-import "math/bits"
+import (
+	"math/bits"
+)
 
 // Cmp compares z and x and returns -1 if z < x, 0 if z == x, or +1 if z > x.
 func (z *Uint) Cmp(x *Uint) (r int) {
 	// z < x <=> z - x < 0 i.e. when subtraction overflows.
-	d0, carry := bits.Sub64(z[0], x[0], 0)
-	d1, carry := bits.Sub64(z[1], x[1], carry)
-	d2, carry := bits.Sub64(z[2], x[2], carry)
-	d3, carry := bits.Sub64(z[3], x[3], carry)
+	d0, carry := bits.Sub64(z.arr[0], x.arr[0], 0)
+	d1, carry := bits.Sub64(z.arr[1], x.arr[1], carry)
+	d2, carry := bits.Sub64(z.arr[2], x.arr[2], carry)
+	d3, carry := bits.Sub64(z.arr[3], x.arr[3], carry)
 	if carry == 1 {
 		return -1
 	}
@@ -24,7 +26,7 @@ func (z *Uint) Cmp(x *Uint) (r int) {
 
 // IsZero returns true if z equals 0.
 func (z *Uint) IsZero() bool {
-	return (z[0] | z[1] | z[2] | z[3]) == 0
+	return (z.arr[0] | z.arr[1] | z.arr[2] | z.arr[3]) == 0
 }
 
 // Sign returns the sign of z interpreted as a two's complement signed number.
@@ -33,7 +35,7 @@ func (z *Uint) Sign() int {
 	if z.IsZero() {
 		return 0
 	}
-	if z[3] < 0x8000000000000000 {
+	if z.arr[3] < 0x8000000000000000 {
 		return 1
 	}
 	return -1
@@ -41,21 +43,21 @@ func (z *Uint) Sign() int {
 
 // LtUint64 returns true if z is less than the uint64 value n.
 func (z *Uint) LtUint64(n uint64) bool {
-	return z[0] < n && (z[1]|z[2]|z[3]) == 0
+	return z.arr[0] < n && (z.arr[1]|z.arr[2]|z.arr[3]) == 0
 }
 
 // GtUint64 returns true if z is greater than the uint64 value n.
 func (z *Uint) GtUint64(n uint64) bool {
-	return z[0] > n || (z[1]|z[2]|z[3]) != 0
+	return z.arr[0] > n || (z.arr[1]|z.arr[2]|z.arr[3]) != 0
 }
 
 // Lt returns true if z is less than x.
 func (z *Uint) Lt(x *Uint) bool {
 	// z < x <=> z - x < 0 i.e. when subtraction overflows.
-	_, carry := bits.Sub64(z[0], x[0], 0)
-	_, carry = bits.Sub64(z[1], x[1], carry)
-	_, carry = bits.Sub64(z[2], x[2], carry)
-	_, carry = bits.Sub64(z[3], x[3], carry)
+	_, carry := bits.Sub64(z.arr[0], x.arr[0], 0)
+	_, carry = bits.Sub64(z.arr[1], x.arr[1], carry)
+	_, carry = bits.Sub64(z.arr[2], x.arr[2], carry)
+	_, carry = bits.Sub64(z.arr[3], x.arr[3], carry)
 
 	return carry != 0
 }
@@ -77,10 +79,25 @@ func (z *Uint) Gte(x *Uint) bool {
 
 // Eq returns true if z equals x.
 func (z *Uint) Eq(x *Uint) bool {
-	return (z[0] == x[0]) && (z[1] == x[1]) && (z[2] == x[2]) && (z[3] == x[3])
+	return (z.arr[0] == x.arr[0]) && (z.arr[1] == x.arr[1]) && (z.arr[2] == x.arr[2]) && (z.arr[3] == x.arr[3])
 }
 
 // Neq returns true if z does not equal x.
 func (z *Uint) Neq(x *Uint) bool {
 	return !z.Eq(x)
+}
+
+// Sgt returns true if z > x when both are interpreted as two's complement signed integers.
+func (z *Uint) Sgt(x *Uint) bool {
+	zSign := z.Sign()
+	xSign := x.Sign()
+
+	switch {
+	case zSign >= 0 && xSign < 0:
+		return true
+	case zSign < 0 && xSign >= 0:
+		return false
+	default:
+		return z.Gt(x)
+	}
 }

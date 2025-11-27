@@ -4,45 +4,47 @@
 // calculations using 256-bit unsigned integers.
 package uint256
 
-import "math/bits"
+import (
+	"math/bits"
+)
 
 // Add sets z to the sum x+y and returns z.
 func (z *Uint) Add(x, y *Uint) *Uint {
 	var carry uint64
-	z[0], carry = bits.Add64(x[0], y[0], 0)
-	z[1], carry = bits.Add64(x[1], y[1], carry)
-	z[2], carry = bits.Add64(x[2], y[2], carry)
-	z[3], _ = bits.Add64(x[3], y[3], carry)
+	z.arr[0], carry = bits.Add64(x.arr[0], y.arr[0], 0)
+	z.arr[1], carry = bits.Add64(x.arr[1], y.arr[1], carry)
+	z.arr[2], carry = bits.Add64(x.arr[2], y.arr[2], carry)
+	z.arr[3], _ = bits.Add64(x.arr[3], y.arr[3], carry)
 	return z
 }
 
 // AddOverflow sets z to the sum x+y and returns z and true if overflow occurred.
 func (z *Uint) AddOverflow(x, y *Uint) (*Uint, bool) {
 	var carry uint64
-	z[0], carry = bits.Add64(x[0], y[0], 0)
-	z[1], carry = bits.Add64(x[1], y[1], carry)
-	z[2], carry = bits.Add64(x[2], y[2], carry)
-	z[3], carry = bits.Add64(x[3], y[3], carry)
+	z.arr[0], carry = bits.Add64(x.arr[0], y.arr[0], 0)
+	z.arr[1], carry = bits.Add64(x.arr[1], y.arr[1], carry)
+	z.arr[2], carry = bits.Add64(x.arr[2], y.arr[2], carry)
+	z.arr[3], carry = bits.Add64(x.arr[3], y.arr[3], carry)
 	return z, carry != 0
 }
 
 // Sub sets z to the difference x-y and returns z.
 func (z *Uint) Sub(x, y *Uint) *Uint {
 	var carry uint64
-	z[0], carry = bits.Sub64(x[0], y[0], 0)
-	z[1], carry = bits.Sub64(x[1], y[1], carry)
-	z[2], carry = bits.Sub64(x[2], y[2], carry)
-	z[3], _ = bits.Sub64(x[3], y[3], carry)
+	z.arr[0], carry = bits.Sub64(x.arr[0], y.arr[0], 0)
+	z.arr[1], carry = bits.Sub64(x.arr[1], y.arr[1], carry)
+	z.arr[2], carry = bits.Sub64(x.arr[2], y.arr[2], carry)
+	z.arr[3], _ = bits.Sub64(x.arr[3], y.arr[3], carry)
 	return z
 }
 
 // SubOverflow sets z to the difference x-y and returns z and true if underflow occurred.
 func (z *Uint) SubOverflow(x, y *Uint) (*Uint, bool) {
 	var carry uint64
-	z[0], carry = bits.Sub64(x[0], y[0], 0)
-	z[1], carry = bits.Sub64(x[1], y[1], carry)
-	z[2], carry = bits.Sub64(x[2], y[2], carry)
-	z[3], carry = bits.Sub64(x[3], y[3], carry)
+	z.arr[0], carry = bits.Sub64(x.arr[0], y.arr[0], 0)
+	z.arr[1], carry = bits.Sub64(x.arr[1], y.arr[1], carry)
+	z.arr[2], carry = bits.Sub64(x.arr[2], y.arr[2], carry)
+	z.arr[3], carry = bits.Sub64(x.arr[3], y.arr[3], carry)
 	return z, carry != 0
 }
 
@@ -59,19 +61,19 @@ func (z *Uint) Mul(x, y *Uint) *Uint {
 		res1, res2, res3 uint64
 	)
 
-	carry, res[0] = bits.Mul64(x[0], y[0])
-	carry, res1 = umulHop(carry, x[1], y[0])
-	carry, res2 = umulHop(carry, x[2], y[0])
-	res3 = x[3]*y[0] + carry
+	carry, res.arr[0] = bits.Mul64(x.arr[0], y.arr[0])
+	carry, res1 = umulHop(carry, x.arr[1], y.arr[0])
+	carry, res2 = umulHop(carry, x.arr[2], y.arr[0])
+	res3 = x.arr[3]*y.arr[0] + carry
 
-	carry, res[1] = umulHop(res1, x[0], y[1])
-	carry, res2 = umulStep(res2, x[1], y[1], carry)
-	res3 = res3 + x[2]*y[1] + carry
+	carry, res.arr[1] = umulHop(res1, x.arr[0], y.arr[1])
+	carry, res2 = umulStep(res2, x.arr[1], y.arr[1], carry)
+	res3 = res3 + x.arr[2]*y.arr[1] + carry
 
-	carry, res[2] = umulHop(res2, x[0], y[2])
-	res3 = res3 + x[1]*y[2] + carry
+	carry, res.arr[2] = umulHop(res2, x.arr[0], y.arr[2])
+	res3 = res3 + x.arr[1]*y.arr[2] + carry
 
-	res[3] = res3 + x[0]*y[3]
+	res.arr[3] = res3 + x.arr[0]*y.arr[3]
 
 	return z.Set(&res)
 }
@@ -79,7 +81,7 @@ func (z *Uint) Mul(x, y *Uint) *Uint {
 // MulOverflow sets z to the product x*y and returns z and true if overflow occurred.
 func (z *Uint) MulOverflow(x, y *Uint) (*Uint, bool) {
 	p := umul(x, y)
-	copy(z[:], p[:4])
+	copy(z.arr[:], p[:4])
 	return z, (p[4] | p[5] | p[6] | p[7]) != 0
 }
 
@@ -101,7 +103,7 @@ func (z *Uint) Div(x, y *Uint) *Uint {
 	// x/y ; x > y > 0
 
 	var quot Uint
-	udivrem(quot[:], x[:], y)
+	udivrem(quot.arr[:], x.arr[:], y)
 	return z.Set(&quot)
 }
 
@@ -114,7 +116,7 @@ func (z *Uint) Mod(x, y *Uint) *Uint {
 	switch x.Cmp(y) {
 	case -1:
 		// x < y
-		copy(z[:], x[:])
+		copy(z.arr[:], x.arr[:])
 		return z
 	case 0:
 		// x == y
@@ -132,7 +134,7 @@ func (z *Uint) Mod(x, y *Uint) *Uint {
 	}
 
 	var quot Uint
-	*z = udivrem(quot[:], x[:], y)
+	*z = udivrem(quot.arr[:], x.arr[:], y)
 	return z
 }
 
@@ -144,19 +146,16 @@ func (z *Uint) MulMod(x, y, m *Uint) *Uint {
 	}
 	p := umul(x, y)
 
-	if m[3] != 0 {
+	if m.arr[3] != 0 {
 		mu := Reciprocal(m)
 		r := reduce4(p, m, mu)
 		return z.Set(&r)
 	}
 
 	var (
-		pl Uint
-		ph Uint
+		pl = Uint{arr: [4]uint64{p[0], p[1], p[2], p[3]}}
+		ph = Uint{arr: [4]uint64{p[4], p[5], p[6], p[7]}}
 	)
-
-	pl[0], pl[1], pl[2], pl[3] = p[0], p[1], p[2], p[3]
-	ph[0], ph[1], ph[2], ph[3] = p[4], p[5], p[6], p[7]
 
 	// If the multiplication is within 256 bits use Mod().
 	if ph.IsZero() {
@@ -196,9 +195,76 @@ func (z *Uint) DivMod(x, y, m *Uint) (*Uint, *Uint) {
 	}
 
 	var quot Uint
-	*m = udivrem(quot[:], x[:], y)
+	*m = udivrem(quot.arr[:], x.arr[:], y)
 	*z = quot
 	return z, m
+}
+
+// Exp sets z to base**exponent mod 2**256 and returns z.
+// The result is wrapped at 2^256 boundary.
+func (z *Uint) Exp(base, exponent *Uint) *Uint {
+	res := Uint{arr: [4]uint64{1, 0, 0, 0}}
+	multiplier := *base
+	expBitLen := exponent.BitLen()
+
+	curBit := 0
+	word := exponent.arr[0]
+	for ; curBit < expBitLen && curBit < 64; curBit++ {
+		if word&1 == 1 {
+			res.Mul(&res, &multiplier)
+		}
+		multiplier.squared()
+		word >>= 1
+	}
+
+	word = exponent.arr[1]
+	for ; curBit < expBitLen && curBit < 128; curBit++ {
+		if word&1 == 1 {
+			res.Mul(&res, &multiplier)
+		}
+		multiplier.squared()
+		word >>= 1
+	}
+
+	word = exponent.arr[2]
+	for ; curBit < expBitLen && curBit < 192; curBit++ {
+		if word&1 == 1 {
+			res.Mul(&res, &multiplier)
+		}
+		multiplier.squared()
+		word >>= 1
+	}
+
+	word = exponent.arr[3]
+	for ; curBit < expBitLen && curBit < 256; curBit++ {
+		if word&1 == 1 {
+			res.Mul(&res, &multiplier)
+		}
+		multiplier.squared()
+		word >>= 1
+	}
+	return z.Set(&res)
+}
+
+func (z *Uint) squared() {
+	var (
+		res                    Uint
+		carry0, carry1, carry2 uint64
+		res1, res2             uint64
+	)
+
+	carry0, res.arr[0] = bits.Mul64(z.arr[0], z.arr[0])
+	carry0, res1 = umulHop(carry0, z.arr[0], z.arr[1])
+	carry0, res2 = umulHop(carry0, z.arr[0], z.arr[2])
+
+	carry1, res.arr[1] = umulHop(res1, z.arr[0], z.arr[1])
+	carry1, res2 = umulStep(res2, z.arr[1], z.arr[1], carry1)
+
+	carry2, res.arr[2] = umulHop(res2, z.arr[0], z.arr[2])
+
+	res.arr[3] = 2*(z.arr[0]*z.arr[3]+z.arr[1]*z.arr[2]) + carry0 + carry1 + carry2
+
+	z.Set(&res)
 }
 
 // udivrem divides u by d and produces both quotient and remainder.
@@ -207,21 +273,21 @@ func (z *Uint) DivMod(x, y, m *Uint) (*Uint, *Uint) {
 // See Knuth, Volume 2, section 4.3.1, Algorithm D.
 func udivrem(quot, u []uint64, d *Uint) (rem Uint) {
 	var dLen int
-	for i := len(d) - 1; i >= 0; i-- {
-		if d[i] != 0 {
+	for i := len(d.arr) - 1; i >= 0; i-- {
+		if d.arr[i] != 0 {
 			dLen = i + 1
 			break
 		}
 	}
 
-	shift := uint(bits.LeadingZeros64(d[dLen-1]))
+	shift := uint(bits.LeadingZeros64(d.arr[dLen-1]))
 
 	var dnStorage Uint
-	dn := dnStorage[:dLen]
+	dn := dnStorage.arr[:dLen]
 	for i := dLen - 1; i > 0; i-- {
-		dn[i] = (d[i] << shift) | (d[i-1] >> (64 - shift))
+		dn[i] = (d.arr[i] << shift) | (d.arr[i-1] >> (64 - shift))
 	}
-	dn[0] = d[0] << shift
+	dn[0] = d.arr[0] << shift
 
 	var uLen int
 	for i := len(u) - 1; i >= 0; i-- {
@@ -232,7 +298,7 @@ func udivrem(quot, u []uint64, d *Uint) (rem Uint) {
 	}
 
 	if uLen < dLen {
-		copy(rem[:], u)
+		copy(rem.arr[:], u)
 		return rem
 	}
 
@@ -253,67 +319,51 @@ func udivrem(quot, u []uint64, d *Uint) (rem Uint) {
 	udivremKnuth(quot, un, dn)
 
 	for i := 0; i < dLen-1; i++ {
-		rem[i] = (un[i] >> shift) | (un[i+1] << (64 - shift))
+		rem.arr[i] = (un[i] >> shift) | (un[i+1] << (64 - shift))
 	}
-	rem[dLen-1] = un[dLen-1] >> shift
+	rem.arr[dLen-1] = un[dLen-1] >> shift
 
 	return rem
 }
 
 // umul computes full 256 x 256 -> 512 multiplication.
 func umul(x, y *Uint) [8]uint64 {
-	var res [8]uint64
+	var (
+		res                           [8]uint64
+		carry, carry4, carry5, carry6 uint64
+		res1, res2, res3, res4, res5  uint64
+	)
 
-	topX := highestNonZeroWord(x)
-	topY := highestNonZeroWord(y)
+	carry, res[0] = bits.Mul64(x.arr[0], y.arr[0])
+	carry, res1 = umulHop(carry, x.arr[1], y.arr[0])
+	carry, res2 = umulHop(carry, x.arr[2], y.arr[0])
+	carry4, res3 = umulHop(carry, x.arr[3], y.arr[0])
 
-	if topX < 0 || topY < 0 {
-		return res
-	}
+	carry, res[1] = umulHop(res1, x.arr[0], y.arr[1])
+	carry, res2 = umulStep(res2, x.arr[1], y.arr[1], carry)
+	carry, res3 = umulStep(res3, x.arr[2], y.arr[1], carry)
+	carry5, res4 = umulStep(carry4, x.arr[3], y.arr[1], carry)
 
-	lenX := topX + 1
-	lenY := topY + 1
+	carry, res[2] = umulHop(res2, x.arr[0], y.arr[2])
+	carry, res3 = umulStep(res3, x.arr[1], y.arr[2], carry)
+	carry, res4 = umulStep(res4, x.arr[2], y.arr[2], carry)
+	carry6, res5 = umulStep(carry5, x.arr[3], y.arr[2], carry)
 
-	for i := 0; i < lenX; i++ {
-		xi := x[i]
-		if xi == 0 {
-			continue
-		}
-		var carry uint64
-		k := i
-		for j := 0; j < lenY; j++ {
-			hi, lo := bits.Mul64(xi, y[j])
-			lo, c := bits.Add64(lo, res[k], 0)
-			hi += c
-			lo, c = bits.Add64(lo, carry, 0)
-			hi += c
-			res[k] = lo
-			carry = hi
-			k++
-		}
-		res[i+lenY] = carry
-	}
+	carry, res[3] = umulHop(res3, x.arr[0], y.arr[3])
+	carry, res[4] = umulStep(res4, x.arr[1], y.arr[3], carry)
+	carry, res[5] = umulStep(res5, x.arr[2], y.arr[3], carry)
+	res[7], res[6] = umulStep(carry6, x.arr[3], y.arr[3], carry)
 
 	return res
-}
-
-// highestNonZeroWord returns the highest index with non-zero value or -1 if the Uint is zero.
-func highestNonZeroWord(u *Uint) int {
-	for i := 3; i >= 0; i-- {
-		if u[i] != 0 {
-			return i
-		}
-	}
-	return -1
 }
 
 // umulStep computes (hi * 2^64 + lo) = z + (x * y) + carry.
 func umulStep(z, x, y, carry uint64) (hi, lo uint64) {
 	hi, lo = bits.Mul64(x, y)
 	lo, carry = bits.Add64(lo, carry, 0)
-	hi += carry
+	hi, _ = bits.Add64(hi, 0, carry)
 	lo, carry = bits.Add64(lo, z, 0)
-	hi += carry
+	hi, _ = bits.Add64(hi, 0, carry)
 	return hi, lo
 }
 
@@ -321,7 +371,7 @@ func umulStep(z, x, y, carry uint64) (hi, lo uint64) {
 func umulHop(z, x, y uint64) (hi, lo uint64) {
 	hi, lo = bits.Mul64(x, y)
 	lo, carry := bits.Add64(lo, z, 0)
-	hi += carry
+	hi, _ = bits.Add64(hi, 0, carry)
 	return hi, lo
 }
 
@@ -340,19 +390,18 @@ func udivremBy1(quot, u []uint64, d uint64) (rem uint64) {
 // The quotient is stored in provided quot - len(u)-len(d) words.
 // Updates u to contain the remainder - len(d) words.
 func udivremKnuth(quot, u, d []uint64) {
-	dLen := len(d)
-	dh := d[dLen-1]
-	dl := d[dLen-2]
+	dh := d[len(d)-1]
+	dl := d[len(d)-2]
 	reciprocal := reciprocal2by1(dh)
 
-	for j := len(u) - dLen - 1; j >= 0; j-- {
-		u2 := u[j+dLen]
-		u1 := u[j+dLen-1]
-		u0 := u[j+dLen-2]
+	for j := len(u) - len(d) - 1; j >= 0; j-- {
+		u2 := u[j+len(d)]
+		u1 := u[j+len(d)-1]
+		u0 := u[j+len(d)-2]
 
 		var qhat, rhat uint64
 		if u2 >= dh { // Division overflows.
-			qhat = MAX_UINT64
+			qhat = ^uint64(0)
 			// NOTE: Add "qhat one to big" adjustment (not needed for correctness, but helps avoiding "add back" case).
 		} else {
 			qhat, rhat = udivrem2by1(u2, u1, dh, reciprocal)
@@ -365,10 +414,10 @@ func udivremKnuth(quot, u, d []uint64) {
 
 		// Multiply and subtract.
 		borrow := subMulTo(u[j:], d, qhat)
-		u[j+dLen] = u2 - borrow
+		u[j+len(d)] = u2 - borrow
 		if u2 < borrow { // Too much subtracted, add back.
 			qhat--
-			u[j+dLen] += addTo(u[j:], d)
+			u[j+len(d)] += addTo(u[j:], d)
 		}
 
 		quot[j] = qhat // Store quotient digit.
@@ -378,7 +427,7 @@ func udivremKnuth(quot, u, d []uint64) {
 // isBitSet returns true if bit n-th is set, where n = 0 is LSB.
 // The n must be <= 255.
 func (z *Uint) isBitSet(n uint) bool {
-	return (z[n/64] & (1 << (n % 64))) != 0
+	return (z.arr[n/64] & (1 << (n % 64))) != 0
 }
 
 func (z *Uint) IsOverflow() bool {
@@ -411,7 +460,7 @@ func subMulTo(x, y []uint64, multiplier uint64) uint64 {
 
 // reciprocal2by1 computes <^d, ^0> / d.
 func reciprocal2by1(d uint64) uint64 {
-	reciprocal, _ := bits.Div64(^d, MAX_UINT64, d)
+	reciprocal, _ := bits.Div64(^d, ^uint64(0), d)
 	return reciprocal
 }
 

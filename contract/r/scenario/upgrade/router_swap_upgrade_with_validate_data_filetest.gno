@@ -202,7 +202,7 @@ func upgradeRouterContractToV2Mock() {
 // [INFO] Check position data
 // [EXPECTED] Position ID: 1
 // [EXPECTED] Position key: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
-// [EXPECTED] Liquidity: &(array[(1066918731 uint64),(0 uint64),(0 uint64),(0 uint64)] gno.land/p/gnoswap/uint256.Uint)
+// [EXPECTED] Liquidity: &(struct{(array[(1066918731 uint64),(0 uint64),(0 uint64),(0 uint64)] [4]uint64)} gno.land/p/gnoswap/uint256.Uint)
 // [EXPECTED] Tick lower: -960
 // [EXPECTED] Tick upper: 960
 //
@@ -224,6 +224,6 @@ func upgradeRouterContractToV2Mock() {
 // [INFO] Check position data
 // [EXPECTED] Position ID: 1
 // [EXPECTED] Position key: gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500
-// [EXPECTED] Liquidity: &(array[(1066918731 uint64),(0 uint64),(0 uint64),(0 uint64)] gno.land/p/gnoswap/uint256.Uint)
+// [EXPECTED] Liquidity: &(struct{(array[(1066918731 uint64),(0 uint64),(0 uint64),(0 uint64)] [4]uint64)} gno.land/p/gnoswap/uint256.Uint)
 // [EXPECTED] Tick lower: -960
 // [EXPECTED] Tick upper: 960

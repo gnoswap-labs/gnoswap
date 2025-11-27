@@ -742,7 +742,7 @@ func TestMulDivFloorVsCeil(t *testing.T) {
 						floor.ToString(), ceil.ToString())
 				}
 			} else {
-				expected := new(Uint).Add(floor, &one)
+				expected := new(Uint).Add(floor, one)
 				if !ceil.Eq(expected) {
 					t.Errorf("Expected ceil == floor + 1 for inexact division, got floor=%s, ceil=%s",
 						floor.ToString(), ceil.ToString())
@@ -779,7 +779,7 @@ func TestDivRoundingUpProperty(t *testing.T) {
 
 			ceil := DivRoundingUp(xUint, yUint)
 			floor := new(Uint).Div(xUint, yUint)
-			floorPlusOne := new(Uint).Add(floor, &one)
+			floorPlusOne := new(Uint).Add(floor, one)
 
 			if !ceil.Eq(floor) && !ceil.Eq(floorPlusOne) {
 				t.Errorf("Property failed: ceil(%s) != floor(%s) && ceil != floor+1(%s)",

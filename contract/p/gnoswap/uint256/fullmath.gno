@@ -18,11 +18,9 @@
 // If you need error-returning versions, wrap these functions with appropriate error handling.
 package uint256
 
-var MAX_UINT256_FROM_DECIMAL *Uint
-
-func init() {
-	MAX_UINT256_FROM_DECIMAL = MustFromDecimal(MAX_UINT256)
-}
+import (
+	"gno.land/p/nt/ufmt"
+)
 
 // MulDiv calculates (a * b) / denominator with full 512-bit intermediate precision.
 // Panics if denominator is zero or if the result overflows 256 bits.
@@ -36,7 +34,7 @@ func MulDiv(a, b, denominator *Uint) *Uint {
 
 	if (p[4] | p[5] | p[6] | p[7]) == 0 {
 		var lo Uint
-		lo[0], lo[1], lo[2], lo[3] = p[0], p[1], p[2], p[3]
+		lo.arr = [4]uint64{p[0], p[1], p[2], p[3]}
 		return new(Uint).Div(&lo, denominator)
 	}
 
@@ -44,9 +42,9 @@ func MulDiv(a, b, denominator *Uint) *Uint {
 	// If hi >= denominator then floor((hi*2^256 + lo) / denominator) >= 2^256, which is overflow.
 	{
 		var hi Uint
-		hi[0], hi[1], hi[2], hi[3] = p[4], p[5], p[6], p[7]
+		hi.arr = [4]uint64{p[4], p[5], p[6], p[7]}
 		if denominator.Lte(&hi) {
-			panic("overflow: denominator(" + denominator.ToString() + ") must be greater than hi(" + hi.ToString() + ")")
+			panic(ufmt.Sprintf("overflow: denominator(%s) must be greater than hi(%s)", denominator.ToString(), hi.ToString()))
 		}
 	}
 
@@ -62,7 +60,7 @@ func MulDiv(a, b, denominator *Uint) *Uint {
 
 	// return lower 256 bits of quotient
 	var z Uint
-	copy(z[:], quot[:4])
+	copy(z.arr[:], quot[:4])
 	return &z
 }
 
@@ -80,11 +78,11 @@ func MulDivRoundingUp(a, b, denominator *Uint) *Uint {
 	}
 
 	// Add 1 to round up, but check for overflow
-	if result.Eq(MAX_UINT256_FROM_DECIMAL) {
-		panic("overflow: result(" + result.ToString() + ") + 1 would exceed MAX_UINT256")
+	if result.Eq(MustFromDecimal(MAX_UINT256)) {
+		panic(ufmt.Sprintf("overflow: result(%s) + 1 would exceed MAX_UINT256", result.ToString()))
 	}
 
-	return result.Add(result, &Uint{1, 0, 0, 0})
+	return new(Uint).Add(result, one)
 }
 
 // DivRoundingUp calculates ceil(x / y) and returns the result.
@@ -95,13 +93,14 @@ func DivRoundingUp(x, y *Uint) *Uint {
 	}
 	div := new(Uint).Div(x, y)
 	mod := new(Uint).Mod(x, y)
-	return new(Uint).Add(div, gt(mod, &Uint{0, 0, 0, 0}))
+	z := new(Uint).Add(div, gt(mod, Zero()))
+	return z
 }
 
 // gt returns One() if x > y, otherwise returns Zero().
 func gt(x, y *Uint) *Uint {
 	if x.Gt(y) {
-		return &Uint{1, 0, 0, 0}
+		return one
 	}
-	return &Uint{0, 0, 0, 0}
+	return Zero()
 }

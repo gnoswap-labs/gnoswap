@@ -116,6 +116,99 @@ func TestFromDecimal(t *testing.T) {
 	}
 }
 
+func TestFromHex(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       string
+		expected    string
+		shouldPanic bool
+		panicMsg    string
+	}{
+		// Basic cases
+		{
+			name:     "zero",
+			input:    "0x0",
+			expected: "0",
+		},
+		{
+			name:     "one",
+			input:    "0x1",
+			expected: "1",
+		},
+		{
+			name:     "max_uint256",
+			input:    "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+			expected: MAX_UINT256,
+		},
+
+		// Format cases
+		{
+			name:     "uppercase_0X",
+			input:    "0Xff",
+			expected: "255",
+		},
+		{
+			name:     "mixed_case",
+			input:    "0xAbCdEf",
+			expected: "11259375",
+		},
+
+		// Error cases
+		{
+			name:        "hex_overflow_67_chars",
+			input:       "0x10000000000000000000000000000000000000000000000000000000000000000",
+			shouldPanic: true,
+			panicMsg:    "hex number > 256 bits",
+		},
+		{
+			name:        "no_0x_prefix",
+			input:       "ffffffff",
+			shouldPanic: true,
+			panicMsg:    "UnmarshalText: ffffffff: hex string without 0x prefix",
+		},
+		{
+			name:        "empty_string",
+			input:       "",
+			shouldPanic: true,
+			panicMsg:    "UnmarshalText: : empty hex string",
+		},
+		{
+			name:        "only_0x",
+			input:       "0x",
+			shouldPanic: true,
+			panicMsg:    "UnmarshalText: 0x: hex string \"0x\"",
+		},
+		{
+			name:        "invalid_hex_chars",
+			input:       "0xgg",
+			shouldPanic: true,
+			panicMsg:    "invalid hex string",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				if tt.panicMsg != "" {
+					uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+						MustFromHex(tt.input)
+					})
+				} else {
+					defer func() {
+						if r := recover(); r == nil {
+							t.Errorf("Expected panic but got none")
+						}
+					}()
+					MustFromHex(tt.input)
+				}
+			} else {
+				result := MustFromHex(tt.input)
+				uassert.Equal(t, tt.expected, result.ToString())
+			}
+		})
+	}
+}
+
 func TestComparisonOperations(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -434,11 +527,23 @@ func TestByteOperation(t *testing.T) {
 			n:        23,
 			expected: "1",
 		},
+		{
+			name:     "byte_in_middle",
+			x:        "0xff00ff00ff00ff00ff00", // Hexadecimal format without leading zeros
+			n:        15,
+			expected: "0",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			x := MustFromDecimal(tt.x)
+			var x *Uint
+			if len(tt.x) >= 2 && tt.x[:2] == "0x" {
+				x = MustFromHex(tt.x)
+			} else {
+				x = MustFromDecimal(tt.x)
+			}
+
 			n := NewUint(tt.n)
 			result := x.Byte(n)
 
