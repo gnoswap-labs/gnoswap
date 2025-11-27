@@ -18,6 +18,8 @@ type Configuration struct {
 	IntegrationDir string
 	MaskSpec       string
 	DryRun         bool
+	ReportMode     bool
+	OutputFile     string
 }
 
 // CommandOutput represents the output of a single command execution
@@ -59,6 +61,26 @@ func main() {
 		exitWithError(err)
 	}
 
+	// Report mode: generate gas measurement report
+	if config.ReportMode {
+		generator := NewReportGenerator(config)
+		report, err := generator.Generate()
+		if err != nil {
+			exitWithError(err)
+		}
+
+		if config.OutputFile != "" {
+			if err := os.WriteFile(config.OutputFile, []byte(report), 0644); err != nil {
+				exitWithError(fmt.Errorf("failed to write report: %w", err))
+			}
+			fmt.Printf("Report written to %s\n", config.OutputFile)
+		} else {
+			fmt.Print(report)
+		}
+		return
+	}
+
+	// Bless mode: update txtar with test output
 	processor, err := NewScriptProcessor(config)
 	if err != nil {
 		exitWithError(err)
@@ -82,6 +104,10 @@ func parseFlags() *Configuration {
 		"mask overrides passed to testscriptfmt")
 	flag.BoolVar(&config.DryRun, "dry-run", false,
 		"print updated script to stdout instead of writing the file")
+	flag.BoolVar(&config.ReportMode, "report", false,
+		"generate gas measurement report instead of blessing")
+	flag.StringVar(&config.OutputFile, "output", "",
+		"output file for report (stdout if not specified)")
 
 	flag.Parse()
 
