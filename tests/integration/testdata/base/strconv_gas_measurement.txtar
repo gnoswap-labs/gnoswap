@@ -1,0 +1,224 @@
+## start a new node
+gnoland start
+
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/gnoswap/strconvgas -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
+
+# Call Empty (baseline)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### Itoa Functions ###
+# Itoa (small positive)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func Itoa_SmallPositive -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Itoa (large positive)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func Itoa_LargePositive -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Itoa (negative)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func Itoa_Negative -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Itoa (zero)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func Itoa_Zero -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### FormatInt Functions ###
+# FormatInt (base 10)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func FormatInt_Base10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# FormatInt (base 16)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func FormatInt_Base16 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# FormatInt (base 2)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func FormatInt_Base2 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### FormatUint Functions ###
+# FormatUint (base 10)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func FormatUint_Base10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# FormatUint (max uint64)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func FormatUint_MaxUint64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### Atoi Functions ###
+# Atoi (small number)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func Atoi_SmallNumber -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Atoi (large number)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func Atoi_LargeNumber -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Atoi (negative)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func Atoi_Negative -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### ParseInt Functions ###
+# ParseInt (base 10)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func ParseInt_Base10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# ParseInt (base 16)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func ParseInt_Base16 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# ParseInt (base 2)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func ParseInt_Base2 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### ParseUint Functions ###
+# ParseUint (base 10)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func ParseUint_Base10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# ParseUint (max uint64)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func ParseUint_MaxUint64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### Quote Functions ###
+# Quote (simple string)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func Quote_SimpleString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# Quote (special chars)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func Quote_SpecialChars -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### ParseBool Functions ###
+# ParseBool (true)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func ParseBool_True -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# ParseBool (false)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func ParseBool_False -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+### FormatBool Functions ###
+# FormatBool (true)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func FormatBool_True -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+# FormatBool (false)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconvgas -func FormatBool_False -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:'
+
+-- gnomod.toml --
+module = "gno.land/r/gnoswap/strconvgas"
+gno = "0.9"
+-- main.gno --
+package strconvgas
+
+import (
+	"strconv"
+)
+
+func Empty(cur realm) {
+	return
+}
+
+// Itoa Functions
+func Itoa_SmallPositive(cur realm) {
+	strconv.Itoa(42)
+}
+
+func Itoa_LargePositive(cur realm) {
+	strconv.Itoa(9223372036854775807) // max int64
+}
+
+func Itoa_Negative(cur realm) {
+	strconv.Itoa(-9223372036854775808) // min int64
+}
+
+func Itoa_Zero(cur realm) {
+	strconv.Itoa(0)
+}
+
+// FormatInt Functions
+func FormatInt_Base10(cur realm) {
+	strconv.FormatInt(1234567890, 10)
+}
+
+func FormatInt_Base16(cur realm) {
+	strconv.FormatInt(1234567890, 16)
+}
+
+func FormatInt_Base2(cur realm) {
+	strconv.FormatInt(1234567890, 2)
+}
+
+// FormatUint Functions
+func FormatUint_Base10(cur realm) {
+	strconv.FormatUint(1234567890, 10)
+}
+
+func FormatUint_MaxUint64(cur realm) {
+	strconv.FormatUint(18446744073709551615, 10) // max uint64
+}
+
+// Atoi Functions
+func Atoi_SmallNumber(cur realm) {
+	strconv.Atoi("42")
+}
+
+func Atoi_LargeNumber(cur realm) {
+	strconv.Atoi("9223372036854775807")
+}
+
+func Atoi_Negative(cur realm) {
+	strconv.Atoi("-9223372036854775808")
+}
+
+// ParseInt Functions
+func ParseInt_Base10(cur realm) {
+	strconv.ParseInt("1234567890", 10, 64)
+}
+
+func ParseInt_Base16(cur realm) {
+	strconv.ParseInt("499602d2", 16, 64)
+}
+
+func ParseInt_Base2(cur realm) {
+	strconv.ParseInt("1001001100101100000001011010010", 2, 64)
+}
+
+// ParseUint Functions
+func ParseUint_Base10(cur realm) {
+	strconv.ParseUint("1234567890", 10, 64)
+}
+
+func ParseUint_MaxUint64(cur realm) {
+	strconv.ParseUint("18446744073709551615", 10, 64)
+}
+
+// Quote Functions
+func Quote_SimpleString(cur realm) {
+	strconv.Quote("Hello, World!")
+}
+
+func Quote_SpecialChars(cur realm) {
+	strconv.Quote("Hello\nWorld\t\"Test\"")
+}
+
+// ParseBool Functions
+func ParseBool_True(cur realm) {
+	strconv.ParseBool("true")
+}
+
+func ParseBool_False(cur realm) {
+	strconv.ParseBool("false")
+}
+
+// FormatBool Functions
+func FormatBool_True(cur realm) {
+	strconv.FormatBool(true)
+}
+
+func FormatBool_False(cur realm) {
+	strconv.FormatBool(false)
+}
