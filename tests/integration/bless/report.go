@@ -317,7 +317,7 @@ func (rg *ReportGenerator) formatTSV(report *GasReport) string {
 	var sb strings.Builder
 
 	// Header
-	sb.WriteString("Name\tCategory\tPure Gas Used\tTotal Gas Used\tMethod Call Cost\tStorage (bytes)\n")
+	sb.WriteString("Name\tPure Gas Used\tTotal Gas Used\tMethod Call Cost\tStorage (bytes)\n")
 
 	// All entries (excluding baseline)
 	for _, entry := range report.Entries {
@@ -325,14 +325,8 @@ func (rg *ReportGenerator) formatTSV(report *GasReport) string {
 			continue
 		}
 
-		category := entry.Category
-		if category == "" {
-			category = "Other"
-		}
-
-		sb.WriteString(fmt.Sprintf("%s\t%s\t%d\t%d\t%d\t%d\n",
+		sb.WriteString(fmt.Sprintf("%s\t%d\t%d\t%d\t%d\n",
 			entry.Name,
-			category,
 			entry.PureGas,
 			entry.TotalGas,
 			report.BaselineCost,
