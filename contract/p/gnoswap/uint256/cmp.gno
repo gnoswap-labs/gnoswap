@@ -4,9 +4,7 @@
 // decision making based on Uint values.
 package uint256
 
-import (
-	"math/bits"
-)
+import "math/bits"
 
 // Cmp compares z and x and returns -1 if z < x, 0 if z == x, or +1 if z > x.
 func (z *Uint) Cmp(x *Uint) (r int) {

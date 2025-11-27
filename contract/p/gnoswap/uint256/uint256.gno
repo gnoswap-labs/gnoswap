@@ -2,13 +2,12 @@ package uint256
 
 import (
 	"errors"
-	"math"
 	"math/bits"
 	"strconv"
 )
 
 const (
-	MAX_UINT64   = math.MaxUint64
+	MAX_UINT64   = ^uint64(0)
 	MAX_UINT256 = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 )
 
@@ -248,4 +247,11 @@ func (z *Uint) Clone() *Uint {
 	x[3] = z[3]
 
 	return &x
+}
+
+func (z *Uint) NilToZero() *Uint {
+	if z == nil {
+		z = NewUint(0)
+	}
+	return z
 }

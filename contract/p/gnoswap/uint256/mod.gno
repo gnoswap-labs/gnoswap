@@ -27,11 +27,11 @@ func Reciprocal(m *Uint) (mu [5]uint64) {
 
 	if m[0]|m[1]|m[2]|(m[3]&(m[3]-1)) == 0 {
 
-		mu[4] = ^uint64(0) >> uint(p&63)
-		mu[3] = ^uint64(0)
-		mu[2] = ^uint64(0)
-		mu[1] = ^uint64(0)
-		mu[0] = ^uint64(0)
+		mu[4] = MAX_UINT64 >> uint(p&63)
+		mu[3] = MAX_UINT64
+		mu[2] = MAX_UINT64
+		mu[1] = MAX_UINT64
+		mu[0] = MAX_UINT64
 
 		return mu
 	}
@@ -66,7 +66,7 @@ func Reciprocal(m *Uint) (mu [5]uint64) {
 	r1 *= 2                // 2^63/y
 
 	if (r1 | (y[3] << 1)) == 0 {
-		r1 = ^uint64(0)
+		r1 = MAX_UINT64
 	}
 
 	// Second iteration: 64 -> 128
@@ -97,8 +97,8 @@ func Reciprocal(m *Uint) (mu [5]uint64) {
 	r2h, _ := bits.Add64(t2h, t2h, c)
 
 	if (r2h | r2l | (y[3] << 1)) == 0 {
-		r2h = ^uint64(0)
-		r2l = ^uint64(0)
+		r2h = MAX_UINT64
+		r2l = MAX_UINT64
 	}
 
 	// Third iteration: 128 -> 192

@@ -18,10 +18,6 @@
 // If you need error-returning versions, wrap these functions with appropriate error handling.
 package uint256
 
-import (
-	"gno.land/p/nt/ufmt"
-)
-
 var MAX_UINT256_FROM_DECIMAL *Uint
 
 func init() {
@@ -50,7 +46,7 @@ func MulDiv(a, b, denominator *Uint) *Uint {
 		var hi Uint
 		hi[0], hi[1], hi[2], hi[3] = p[4], p[5], p[6], p[7]
 		if denominator.Lte(&hi) {
-			panic(ufmt.Sprintf("overflow: denominator(%s) must be greater than hi(%s)", denominator.ToString(), hi.ToString()))
+			panic("overflow: denominator(" + denominator.ToString() + ") must be greater than hi(" + hi.ToString() + ")")
 		}
 	}
 
@@ -85,10 +81,10 @@ func MulDivRoundingUp(a, b, denominator *Uint) *Uint {
 
 	// Add 1 to round up, but check for overflow
 	if result.Eq(MAX_UINT256_FROM_DECIMAL) {
-		panic(ufmt.Sprintf("overflow: result(%s) + 1 would exceed MAX_UINT256", result.ToString()))
+		panic("overflow: result(" + result.ToString() + ") + 1 would exceed MAX_UINT256")
 	}
 
-	return new(Uint).Add(result, One())
+	return result.Add(result, &Uint{1, 0, 0, 0})
 }
 
 // DivRoundingUp calculates ceil(x / y) and returns the result.
@@ -99,14 +95,13 @@ func DivRoundingUp(x, y *Uint) *Uint {
 	}
 	div := new(Uint).Div(x, y)
 	mod := new(Uint).Mod(x, y)
-	z := new(Uint).Add(div, gt(mod, Zero()))
-	return z
+	return new(Uint).Add(div, gt(mod, &Uint{0, 0, 0, 0}))
 }
 
 // gt returns One() if x > y, otherwise returns Zero().
 func gt(x, y *Uint) *Uint {
 	if x.Gt(y) {
-		return One()
+		return &Uint{1, 0, 0, 0}
 	}
-	return Zero()
+	return &Uint{0, 0, 0, 0}
 }

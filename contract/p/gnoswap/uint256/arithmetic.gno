@@ -4,9 +4,7 @@
 // calculations using 256-bit unsigned integers.
 package uint256
 
-import (
-	"math/bits"
-)
+import "math/bits"
 
 // Add sets z to the sum x+y and returns z.
 func (z *Uint) Add(x, y *Uint) *Uint {
@@ -342,18 +340,19 @@ func udivremBy1(quot, u []uint64, d uint64) (rem uint64) {
 // The quotient is stored in provided quot - len(u)-len(d) words.
 // Updates u to contain the remainder - len(d) words.
 func udivremKnuth(quot, u, d []uint64) {
-	dh := d[len(d)-1]
-	dl := d[len(d)-2]
+	dLen := len(d)
+	dh := d[dLen-1]
+	dl := d[dLen-2]
 	reciprocal := reciprocal2by1(dh)
 
-	for j := len(u) - len(d) - 1; j >= 0; j-- {
-		u2 := u[j+len(d)]
-		u1 := u[j+len(d)-1]
-		u0 := u[j+len(d)-2]
+	for j := len(u) - dLen - 1; j >= 0; j-- {
+		u2 := u[j+dLen]
+		u1 := u[j+dLen-1]
+		u0 := u[j+dLen-2]
 
 		var qhat, rhat uint64
 		if u2 >= dh { // Division overflows.
-			qhat = ^uint64(0)
+			qhat = MAX_UINT64
 			// NOTE: Add "qhat one to big" adjustment (not needed for correctness, but helps avoiding "add back" case).
 		} else {
 			qhat, rhat = udivrem2by1(u2, u1, dh, reciprocal)
@@ -366,10 +365,10 @@ func udivremKnuth(quot, u, d []uint64) {
 
 		// Multiply and subtract.
 		borrow := subMulTo(u[j:], d, qhat)
-		u[j+len(d)] = u2 - borrow
+		u[j+dLen] = u2 - borrow
 		if u2 < borrow { // Too much subtracted, add back.
 			qhat--
-			u[j+len(d)] += addTo(u[j:], d)
+			u[j+dLen] += addTo(u[j:], d)
 		}
 
 		quot[j] = qhat // Store quotient digit.
@@ -412,7 +411,7 @@ func subMulTo(x, y []uint64, multiplier uint64) uint64 {
 
 // reciprocal2by1 computes <^d, ^0> / d.
 func reciprocal2by1(d uint64) uint64 {
-	reciprocal, _ := bits.Div64(^d, ^uint64(0), d)
+	reciprocal, _ := bits.Div64(^d, MAX_UINT64, d)
 	return reciprocal
 }
 
