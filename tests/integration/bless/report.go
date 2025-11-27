@@ -52,12 +52,30 @@ func NewReportGenerator(config *Configuration) *ReportGenerator {
 
 // Generate runs the test and generates a markdown report
 func (rg *ReportGenerator) Generate() (string, error) {
+	report, err := rg.buildGasReport()
+	if err != nil {
+		return "", err
+	}
+	return rg.formatMarkdown(report), nil
+}
+
+// GenerateTSV runs the test and generates a TSV report
+func (rg *ReportGenerator) GenerateTSV() (string, error) {
+	report, err := rg.buildGasReport()
+	if err != nil {
+		return "", err
+	}
+	return rg.formatTSV(report), nil
+}
+
+// buildGasReport runs the test and builds the gas report
+func (rg *ReportGenerator) buildGasReport() (*GasReport, error) {
 	scriptPath := rg.getScriptPath()
 
 	// Parse txtar to get function names and categories
 	functions, err := rg.parseTxtar(scriptPath)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse txtar: %w", err)
+		return nil, fmt.Errorf("failed to parse txtar: %w", err)
 	}
 
 	// Run test and capture output
@@ -70,9 +88,7 @@ func (rg *ReportGenerator) Generate() (string, error) {
 	gasValues := rg.parseGasOutput(output)
 
 	// Build report
-	report := rg.buildReport(functions, gasValues)
-
-	return rg.formatMarkdown(report), nil
+	return rg.buildReport(functions, gasValues), nil
 }
 
 // getScriptPath returns the full path to the test script
@@ -294,6 +310,37 @@ func (rg *ReportGenerator) formatMarkdown(report *GasReport) string {
 // isBaselineFunction checks if a function is used for baseline measurement
 func isBaselineFunction(name string) bool {
 	return name == "Empty" || strings.HasSuffix(name, "Empty")
+}
+
+// formatTSV generates a TSV format report (all entries, no category grouping)
+func (rg *ReportGenerator) formatTSV(report *GasReport) string {
+	var sb strings.Builder
+
+	// Header
+	sb.WriteString("Name\tCategory\tPure Gas Used\tTotal Gas Used\tMethod Call Cost\tStorage (bytes)\n")
+
+	// All entries (excluding baseline)
+	for _, entry := range report.Entries {
+		if isBaselineFunction(entry.Name) {
+			continue
+		}
+
+		category := entry.Category
+		if category == "" {
+			category = "Other"
+		}
+
+		sb.WriteString(fmt.Sprintf("%s\t%s\t%d\t%d\t%d\t%d\n",
+			entry.Name,
+			category,
+			entry.PureGas,
+			entry.TotalGas,
+			report.BaselineCost,
+			entry.StorageBytes,
+		))
+	}
+
+	return sb.String()
 }
 
 // Category groups entries by category

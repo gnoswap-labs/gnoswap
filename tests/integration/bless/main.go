@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // Configuration holds all command-line flags
@@ -20,6 +21,7 @@ type Configuration struct {
 	DryRun         bool
 	ReportMode     bool
 	OutputFile     string
+	TSVOutput      bool
 }
 
 // CommandOutput represents the output of a single command execution
@@ -64,12 +66,29 @@ func main() {
 	// Report mode: generate gas measurement report
 	if config.ReportMode {
 		generator := NewReportGenerator(config)
-		report, err := generator.Generate()
+
+		var report string
+		var err error
+
+		if config.TSVOutput {
+			report, err = generator.GenerateTSV()
+		} else {
+			report, err = generator.Generate()
+		}
+
 		if err != nil {
 			exitWithError(err)
 		}
 
-		if config.OutputFile != "" {
+		// Output to file or stdout
+		if config.TSVOutput {
+			// TSV always writes to file with timestamp
+			filename := generateTSVFilename(config.TestName)
+			if err := os.WriteFile(filename, []byte(report), 0644); err != nil {
+				exitWithError(fmt.Errorf("failed to write report: %w", err))
+			}
+			fmt.Printf("Report written to %s\n", filename)
+		} else if config.OutputFile != "" {
 			if err := os.WriteFile(config.OutputFile, []byte(report), 0644); err != nil {
 				exitWithError(fmt.Errorf("failed to write report: %w", err))
 			}
@@ -108,6 +127,8 @@ func parseFlags() *Configuration {
 		"generate gas measurement report instead of blessing")
 	flag.StringVar(&config.OutputFile, "output", "",
 		"output file for report (stdout if not specified)")
+	flag.BoolVar(&config.TSVOutput, "tsv", false,
+		"output report as TSV file (auto-generates filename with timestamp)")
 
 	flag.Parse()
 
@@ -582,6 +603,12 @@ func isCommandLine(line string) bool {
 	}
 
 	return true
+}
+
+// generateTSVFilename creates a unique filename with timestamp
+func generateTSVFilename(testName string) string {
+	timestamp := time.Now().Format("20060102_150405")
+	return fmt.Sprintf("%s_%s.tsv", testName, timestamp)
 }
 
 // exitWithError prints an error and exits
