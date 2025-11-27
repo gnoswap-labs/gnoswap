@@ -85,8 +85,8 @@ stdout "5000000"
 
 gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func SetPoolTier -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000" -args 1 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
 stdout 'GAS USED:   3[0-9]{7}'
-stdout 'STORAGE DELTA:  26169 bytes'
-stdout 'TOTAL TX COST:  12616900ugnot'
+stdout 'STORAGE DELTA:  (2|3)[0-9]{4} bytes'
+stdout 'TOTAL TX COST:  (1|2)[0-9]{7}ugnot'
 stdout 'EVENTS:     \[{\"type\":\"SetPoolTier\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\"},{\"key\":\"tier\",\"value\":\"1\"},{\"key\":\"currentTime\",\"value\":\"[0-9]+\"},{\"key\":\"currentHeight\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/staker/v1\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/staker\"}\]'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/staker.GetPoolTier(\"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000\")"

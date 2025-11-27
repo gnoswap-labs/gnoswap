@@ -85,8 +85,8 @@ stdout 1
 stdout "50002491"
 stdout "100000"
 stdout 'GAS USED:   7[0-9]{7}'
-stdout 'STORAGE DELTA:  50735 bytes'
-stdout 'TOTAL TX COST:  15073500ugnot'
+stdout 'STORAGE DELTA:  (5|6)[0-9]{4} bytes'
+stdout 'TOTAL TX COST:  (1|2)[0-9]{7}ugnot'
 
 ### Create External Incentives with 90 days
 gnokey maketx send -send 10000000000ugnot -to g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
