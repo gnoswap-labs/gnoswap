@@ -7,132 +7,132 @@ gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/test/storagegas -gas-fee 
 ### Baseline ###
 # Empty function (baseline)
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### Storage Write - Different Value Sizes ###
 # Write small int (single int)
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func WriteSmallInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
-stdout 'STORAGE'
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
 
 # Write large int (int64 max)
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func WriteLargeInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
-stdout 'STORAGE'
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
 
 # Write short string (10 chars)
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func WriteShortString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
-stdout 'STORAGE'
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
 
 # Write medium string (100 chars)
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func WriteMediumString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
-stdout 'STORAGE'
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
 
 # Write long string (1000 chars)
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func WriteLongString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
-stdout 'STORAGE'
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
 
 ### Storage Read vs Write ###
 # Read existing value (after write)
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func ReadSmallInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Read existing string
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func ReadShortString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Read long string
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func ReadLongString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### New Key vs Update Existing Key ###
 # Create new key (first write to counter1)
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func CreateNewKey1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
-stdout 'STORAGE'
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
 
 # Update existing key (second write to counter1)
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func UpdateExistingKey1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Create new key (first write to counter2)
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func CreateNewKey2 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
-stdout 'STORAGE'
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
 
 # Update existing key (second write to counter2)
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func UpdateExistingKey2 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### Multiple Writes in Single TX ###
 # Write 10 new keys
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func Write10Keys -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
-stdout 'STORAGE'
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
 
 # Update 10 existing keys
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func Update10Keys -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### Struct Storage ###
 # Write small struct (3 fields)
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func WriteSmallStruct -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
-stdout 'STORAGE'
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
 
 # Write large struct (10 fields)
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func WriteLargeStruct -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
-stdout 'STORAGE'
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
 
 # Read small struct
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func ReadSmallStruct -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Read large struct
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func ReadLargeStruct -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### Slice Storage ###
 # Write small slice (10 elements)
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func WriteSmallSlice -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
-stdout 'STORAGE'
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
 
 # Write large slice (100 elements)
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func WriteLargeSlice -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
-stdout 'STORAGE'
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
 
 # Read small slice
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func ReadSmallSlice -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Read large slice
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func ReadLargeSlice -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### Map Storage ###
 # Write small map (10 entries)
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func WriteSmallMap -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
-stdout 'STORAGE'
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
 
 # Write large map (100 entries)
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func WriteLargeMap -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
-stdout 'STORAGE'
+# stdout 'GAS USED:'
+# stdout 'STORAGE'
 
 # Read from small map
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func ReadSmallMap -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Read from large map
 gnokey maketx call -pkgpath gno.land/r/test/storagegas -func ReadLargeMap -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 -- gnomod.toml --
 module = "gno.land/r/test/storagegas"

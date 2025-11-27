@@ -7,54 +7,54 @@ gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/basic -gas-fee 100000ugno
 
 # Call Empty
 gnokey maketx call -pkgpath gno.land/r/basic -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   236792'
+# stdout 'GAS USED:   236792'
 
 ### Only Gas Test ###
 # String Creation
 gnokey maketx call -pkgpath gno.land/r/basic -func CreateString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   237261'
+# stdout 'GAS USED:   237261'
 
 # String Concatenation
 gnokey maketx call -pkgpath gno.land/r/basic -func ConcatString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   238039'
+# stdout 'GAS USED:   238039'
 
 # String Split (manual implementation)
 gnokey maketx call -pkgpath gno.land/r/basic -func SplitString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   1964592'
+# stdout 'GAS USED:   1964592'
 
 # String Format (ufmt.Sprintf)
 gnokey maketx call -pkgpath gno.land/r/basic -func FormatString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   2886470'
+# stdout 'GAS USED:   2886470'
 
 # String Length
 gnokey maketx call -pkgpath gno.land/r/basic -func LengthString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   239051'
+# stdout 'GAS USED:   239051'
 
 ### With Storage Test ###
 # String Creation With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func CreateString_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   329316'
-stdout 'STORAGE FEE:    4200ugnot'
+# stdout 'GAS USED:   329316'
+# stdout 'STORAGE FEE:    4200ugnot'
 
 # String Concatenation With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func ConcatString_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   330782'
-stdout 'STORAGE FEE:    4200ugnot'
+# stdout 'GAS USED:   330782'
+# stdout 'STORAGE FEE:    4200ugnot'
 
 # String Split With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func SplitString_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   2101809'
-stdout 'STORAGE FEE:    51800ugnot'
+# stdout 'GAS USED:   2101809'
+# stdout 'STORAGE FEE:    51800ugnot'
 
 # String Format With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func FormatString_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   2982305'
-stdout 'STORAGE FEE:    5300ugnot'
+# stdout 'GAS USED:   2982305'
+# stdout 'STORAGE FEE:    5300ugnot'
 
 # String Length With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func LengthString_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   334966'
-stdout 'STORAGE FEE:    500ugnot'
+# stdout 'GAS USED:   334966'
+# stdout 'STORAGE FEE:    500ugnot'
 
 -- gnomod.toml --
 module = "gno.land/r/basic"

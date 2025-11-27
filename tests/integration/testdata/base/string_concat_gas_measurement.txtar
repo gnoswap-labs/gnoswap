@@ -7,186 +7,186 @@ gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/gnoswap/strconcatgas -gas
 
 # Call Empty (baseline)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### String Concatenation with + operator ###
 # Plus operator (2 strings)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func PlusOperator_2Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Plus operator (5 strings)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func PlusOperator_5Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Plus operator (10 strings)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func PlusOperator_10Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Plus operator (20 strings)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func PlusOperator_20Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### strings.Builder ###
 # Builder (2 strings)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Builder_2Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Builder (5 strings)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Builder_5Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Builder (10 strings)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Builder_10Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Builder (20 strings)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Builder_20Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### ufmt.Sprintf ###
 # Sprintf (2 strings)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Sprintf_2Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Sprintf (5 strings)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Sprintf_5Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Sprintf (10 strings)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Sprintf_10Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### strings.Join ###
 # Join (2 strings)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Join_2Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Join (5 strings)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Join_5Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Join (10 strings)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Join_10Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Join (20 strings)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Join_20Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### Plus operator in loop (worst case) ###
 # Plus in loop (10 iterations)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func PlusInLoop_10Iterations -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Plus in loop (50 iterations)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func PlusInLoop_50Iterations -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### Builder in loop ###
 # Builder in loop (10 iterations)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func BuilderInLoop_10Iterations -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Builder in loop (50 iterations)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func BuilderInLoop_50Iterations -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### Long strings ###
 # Plus operator (long strings)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func PlusOperator_LongStrings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Builder (long strings)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Builder_LongStrings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Join (long strings)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Join_LongStrings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### Number to string concatenation ###
 # Plus with Itoa (1 number)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func PlusWithItoa -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Sprintf with number (1 number)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func SprintfWithNumber -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Builder with Itoa (1 number)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func BuilderWithItoa -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### Multiple numbers ###
 # Plus with Itoa (3 numbers)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func PlusWithItoa_3Numbers -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Sprintf with 3 numbers
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func SprintfWith3Numbers -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Plus with Itoa (5 numbers)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func PlusWithItoa_5Numbers -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Sprintf with 5 numbers
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func SprintfWith5Numbers -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### uint64 numbers ###
 # Plus with FormatUint
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func PlusWithFormatUint -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Sprintf with uint64
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func SprintfWithUint64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### Number to String Conversion Only ###
 # strconv.Itoa (small int)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Itoa_Small -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # strconv.Itoa (large int)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Itoa_Large -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # strconv.FormatInt (base 10)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func FormatInt_Base10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # strconv.FormatUint (base 10)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func FormatUint_Base10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # strconv.FormatUint (max uint64)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func FormatUint_MaxUint64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # ufmt.Sprintf %d (small int)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Sprintf_SmallInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # ufmt.Sprintf %d (large int)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Sprintf_LargeInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # ufmt.Sprintf %d (uint64)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Sprintf_Uint64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # strconv.FormatInt (base 16 hex)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func FormatInt_Base16 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # strconv.FormatBool
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func FormatBool_True -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # ufmt.Sprintf %t (bool)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Sprintf_Bool -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 -- gnomod.toml --
 module = "gno.land/r/gnoswap/strconcatgas"

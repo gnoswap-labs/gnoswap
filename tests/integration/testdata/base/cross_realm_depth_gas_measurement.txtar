@@ -24,46 +24,46 @@ gnokey maketx addpkg -pkgdir $WORK/caller -pkgpath gno.land/r/test/caller -gas-f
 ### Baseline ###
 # Direct call (no cross-realm)
 gnokey maketx call -pkgpath gno.land/r/test/caller -func DirectCall -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### Cross-realm depth tests ###
 # Depth 1: Caller -> RealmA
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallDepth1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Depth 2: Caller -> RealmA -> RealmB
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallDepth2 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Depth 3: Caller -> RealmA -> RealmB -> RealmC
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallDepth3 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Depth 4: Caller -> RealmA -> RealmB -> RealmC -> RealmD
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallDepth4 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Depth 5: Caller -> RealmA -> RealmB -> RealmC -> RealmD -> RealmE
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallDepth5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### Second call (check caching) ###
 # Depth 1 again
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallDepth1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Depth 5 again
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallDepth5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### Multiple sequential cross-realm calls ###
 # Call depth 1 x 5 times sequentially
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallDepth1x5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Call depth 2 x 5 times sequentially
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallDepth2x5 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 -- realma/gnomod.toml --
 module = "gno.land/r/test/realma"

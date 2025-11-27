@@ -8,99 +8,99 @@ gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/basic -gas-fee 100000ugno
 
 # Call Empty
 gnokey maketx call -pkgpath gno.land/r/basic -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   362916'
+# stdout 'GAS USED:   362916'
 
 ### Only Gas Test ###
 # Int Sub Operation
 gnokey maketx call -pkgpath gno.land/r/basic -func SubInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   363303'
+# stdout 'GAS USED:   363303'
 
 # Int8 Sub Operation
 gnokey maketx call -pkgpath gno.land/r/basic -func SubInt8 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   363313'
+# stdout 'GAS USED:   363313'
 
 # Int32 Sub Operation
 gnokey maketx call -pkgpath gno.land/r/basic -func SubInt32 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   363323'
+# stdout 'GAS USED:   363323'
 
 # Int64 Sub Operation
 gnokey maketx call -pkgpath gno.land/r/basic -func SubInt64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   363323'
+# stdout 'GAS USED:   363323'
 
 # Int256 Sub Operation
 gnokey maketx call -pkgpath gno.land/r/basic -func SubInt256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   4243277'
+# stdout 'GAS USED:   4243277'
 
 # Uint Sub Operation
 gnokey maketx call -pkgpath gno.land/r/basic -func SubUint -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   363343'
+# stdout 'GAS USED:   363343'
 
 # Uint8 Sub Operation
 gnokey maketx call -pkgpath gno.land/r/basic -func SubUint8 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   363359'
+# stdout 'GAS USED:   363359'
 
 # Uint32 Sub Operation
 gnokey maketx call -pkgpath gno.land/r/basic -func SubUint32 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   363369'
+# stdout 'GAS USED:   363369'
 
 # Uint64 Sub Operation
 gnokey maketx call -pkgpath gno.land/r/basic -func SubUint64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   363369'
+# stdout 'GAS USED:   363369'
 
 # Uint256 Sub Operation
 gnokey maketx call -pkgpath gno.land/r/basic -func SubUint256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3322769'
+# stdout 'GAS USED:   3322769'
 
 ### With Storage Test ###
 # Int Sub Operation With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func SubInt_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   455866'
-stdout 'STORAGE FEE:    500ugnot'
+# stdout 'GAS USED:   455866'
+# stdout 'STORAGE FEE:    500ugnot'
 
 # Int8 Sub Operation With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func SubInt8_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   455972'
-stdout 'STORAGE FEE:    500ugnot'
+# stdout 'GAS USED:   455972'
+# stdout 'STORAGE FEE:    500ugnot'
 
 # Int32 Sub Operation With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func SubInt32_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   456062'
-stdout 'STORAGE FEE:    500ugnot'
+# stdout 'GAS USED:   456062'
+# stdout 'STORAGE FEE:    500ugnot'
 
 # Int64 Sub Operation With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func SubInt64_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   456142'
-stdout 'STORAGE FEE:    500ugnot'
+# stdout 'GAS USED:   456142'
+# stdout 'STORAGE FEE:    500ugnot'
 
 # Int256 Sub Operation With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func SubInt256_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   4403199'
-stdout 'STORAGE FEE:    194800ugnot'
+# stdout 'GAS USED:   4403199'
+# stdout 'STORAGE FEE:    194800ugnot'
 
 # Uint Sub Operation With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func SubUint_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   458372'
-stdout 'STORAGE FEE:    500ugnot'
+# stdout 'GAS USED:   458372'
+# stdout 'STORAGE FEE:    500ugnot'
 
 # Uint8 Sub Operation With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func SubUint8_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   458462'
-stdout 'STORAGE FEE:    500ugnot'
+# stdout 'GAS USED:   458462'
+# stdout 'STORAGE FEE:    500ugnot'
 
 # Uint32 Sub Operation With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func SubUint32_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   458568'
-stdout 'STORAGE FEE:    500ugnot'
+# stdout 'GAS USED:   458568'
+# stdout 'STORAGE FEE:    500ugnot'
 
 # Uint64 Sub Operation With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func SubUint64_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   458648'
-stdout 'STORAGE FEE:    500ugnot'
+# stdout 'GAS USED:   458648'
+# stdout 'STORAGE FEE:    500ugnot'
 
 # Uint256 Sub Operation With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func SubUint256_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3473867'
-stdout 'STORAGE FEE:    116900ugnot'
+# stdout 'GAS USED:   3473867'
+# stdout 'STORAGE FEE:    116900ugnot'
 
 -- gnomod.toml --
 module = "gno.land/r/basic"

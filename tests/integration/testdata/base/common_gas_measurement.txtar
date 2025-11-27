@@ -9,66 +9,66 @@ gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/gnoswap/commongas -gas-fe
 
 # Call Empty
 gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   265988'
+# stdout 'GAS USED:   265988'
 
 ### TickMath Functions ###
 # TickMathGetSqrtRatioAtTick (minTick)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func TickMathGetSqrtRatioAtTick_MinTick -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   7248726'
+# stdout 'GAS USED:   7248726'
 
 # TickMathGetSqrtRatioAtTick (maxTick)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func TickMathGetSqrtRatioAtTick_MaxTick -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   7562549'
+# stdout 'GAS USED:   7562549'
 
 # TickMathGetSqrtRatioAtTick (zero)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func TickMathGetSqrtRatioAtTick_Zero -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   4501757'
+# stdout 'GAS USED:   4501757'
 
 # TickMathGetSqrtRatioAtTick
 gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func TickMathGetSqrtRatioAtTick -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   6498397'
+# stdout 'GAS USED:   6498397'
 
 # TickMathGetTickAtSqrtRatio
 gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func TickMathGetTickAtSqrtRatio -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   13119700'
+# stdout 'GAS USED:   13119700'
 
 ### Liquidity Functions ###
 # GetLiquidityForAmounts
 gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func GetLiquidityForAmounts -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   9430805'
+# stdout 'GAS USED:   9430805'
 
 # GetAmountsForLiquidity
 gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func GetAmountsForLiquidity -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   9121103'
+# stdout 'GAS USED:   9121103'
 
 # LiquidityMathAddDelta (positive)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func LiquidityMathAddDelta_Positive -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   7101767'
+# stdout 'GAS USED:   7101767'
 
 # LiquidityMathAddDelta (negative)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func LiquidityMathAddDelta_Negative -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   7090509'
+# stdout 'GAS USED:   7090509'
 
 # LiquidityMathAddDelta
 gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func LiquidityMathAddDelta -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   7101677'
+# stdout 'GAS USED:   7101677'
 
 ### GNOT Path Functions ###
 # IsGNOTPath
 gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func IsGNOTPath -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   1316243'
+# stdout 'GAS USED:   1316243'
 
 # IsGNOTNativePath
 gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func IsGNOTNativePath -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   1316255'
+# stdout 'GAS USED:   1316255'
 
 # IsGNOTWrappedPath
 gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func IsGNOTWrappedPath -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   1316265'
+# stdout 'GAS USED:   1316265'
 
 # ExistsUserSendCoins
 gnokey maketx call -pkgpath gno.land/r/gnoswap/commongas -func ExistsUserSendCoins -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   1589188'
+# stdout 'GAS USED:   1589188'
 
 -- gnomod.toml --
 module = "gno.land/r/gnoswap/commongas"

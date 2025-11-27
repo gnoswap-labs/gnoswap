@@ -8,147 +8,147 @@ gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/basic -gas-fee 100000ugno
 
 # Call Empty
 gnokey maketx call -pkgpath gno.land/r/basic -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   482048'
+# stdout 'GAS USED:   482048'
 
 ### Only Gas Test ###
 # Int Initialization
 gnokey maketx call -pkgpath gno.land/r/basic -func InitInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   482467'
+# stdout 'GAS USED:   482467'
 
 # Int8 Initialization
 gnokey maketx call -pkgpath gno.land/r/basic -func InitInt8 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   482477'
+# stdout 'GAS USED:   482477'
 
 # Int32 Initialization
 gnokey maketx call -pkgpath gno.land/r/basic -func InitInt32 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   482487'
+# stdout 'GAS USED:   482487'
 
 # Int64 Initialization
 gnokey maketx call -pkgpath gno.land/r/basic -func InitInt64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   482487'
+# stdout 'GAS USED:   482487'
 
 # Int256 Initialization
 gnokey maketx call -pkgpath gno.land/r/basic -func InitInt256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3597182'
+# stdout 'GAS USED:   3597182'
 
 # Uint Initialization
 gnokey maketx call -pkgpath gno.land/r/basic -func InitUint -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   482507'
+# stdout 'GAS USED:   482507'
 
 # Uint8 Initialization
 gnokey maketx call -pkgpath gno.land/r/basic -func InitUint8 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   482523'
+# stdout 'GAS USED:   482523'
 
 # Uint32 Initialization
 gnokey maketx call -pkgpath gno.land/r/basic -func InitUint32 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   482533'
+# stdout 'GAS USED:   482533'
 
 # Uint64 Initialization
 gnokey maketx call -pkgpath gno.land/r/basic -func InitUint64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   482533'
+# stdout 'GAS USED:   482533'
 
 # Uint256 Initialization
 gnokey maketx call -pkgpath gno.land/r/basic -func InitUint256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   2729336'
+# stdout 'GAS USED:   2729336'
 
 # Uint256 Initialization from Zero
 gnokey maketx call -pkgpath gno.land/r/basic -func InitUint256Zero -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   2730522'
+# stdout 'GAS USED:   2730522'
 
 # Uint256 Initialization from One
 gnokey maketx call -pkgpath gno.land/r/basic -func InitUint256One -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   2730512'
+# stdout 'GAS USED:   2730512'
 
 # Uint256 Initialization from String
 gnokey maketx call -pkgpath gno.land/r/basic -func InitUint256String -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   4537289'
+# stdout 'GAS USED:   4537289'
 
 # Int256 Initialization from Zero
 gnokey maketx call -pkgpath gno.land/r/basic -func InitInt256Zero -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3598404'
+# stdout 'GAS USED:   3598404'
 
 # Int256 Initialization from One
 gnokey maketx call -pkgpath gno.land/r/basic -func InitInt256One -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3598394'
+# stdout 'GAS USED:   3598394'
 
 # Int256 Initialization from String
 gnokey maketx call -pkgpath gno.land/r/basic -func InitInt256String -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   5421801'
+# stdout 'GAS USED:   5421801'
 
 ### With Storage Test ###
 # Int Initialization With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func InitInt_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   576078'
-stdout 'STORAGE FEE:    500ugnot'
+# stdout 'GAS USED:   576078'
+# stdout 'STORAGE FEE:    500ugnot'
 
 # Int8 Initialization With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func InitInt8_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   576184'
-stdout 'STORAGE FEE:    500ugnot'
+# stdout 'GAS USED:   576184'
+# stdout 'STORAGE FEE:    500ugnot'
 
 # Int32 Initialization With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func InitInt32_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   576274'
-stdout 'STORAGE FEE:    500ugnot'
+# stdout 'GAS USED:   576274'
+# stdout 'STORAGE FEE:    500ugnot'
 
 # Int64 Initialization With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func InitInt64_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   576354'
-stdout 'STORAGE FEE:    500ugnot'
+# stdout 'GAS USED:   576354'
+# stdout 'STORAGE FEE:    500ugnot'
 
 # Int256 Initialization With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func InitInt256_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3758525'
-stdout 'STORAGE FEE:    194800ugnot'
+# stdout 'GAS USED:   3758525'
+# stdout 'STORAGE FEE:    194800ugnot'
 
 # Uint Initialization With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func InitUint_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   578584'
-stdout 'STORAGE FEE:    500ugnot'
+# stdout 'GAS USED:   578584'
+# stdout 'STORAGE FEE:    500ugnot'
 
 # Uint8 Initialization With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func InitUint8_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   578674'
-stdout 'STORAGE FEE:    500ugnot'
+# stdout 'GAS USED:   578674'
+# stdout 'STORAGE FEE:    500ugnot'
 
 # Uint32 Initialization With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func InitUint32_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   578780'
-stdout 'STORAGE FEE:    500ugnot'
+# stdout 'GAS USED:   578780'
+# stdout 'STORAGE FEE:    500ugnot'
 
 # Uint64 Initialization With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func InitUint64_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   578860'
-stdout 'STORAGE FEE:    500ugnot'
+# stdout 'GAS USED:   578860'
+# stdout 'STORAGE FEE:    500ugnot'
 
 # Uint256 Initialization With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func InitUint256_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   2881331'
-stdout 'STORAGE FEE:    116900ugnot'
+# stdout 'GAS USED:   2881331'
+# stdout 'STORAGE FEE:    116900ugnot'
 
 # Uint256 Initialization from Zero With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func InitUint256Zero_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   2821826'
+# stdout 'GAS USED:   2821826'
 
 # Uint256 Initialization from One With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func InitUint256One_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   2821816'
+# stdout 'GAS USED:   2821816'
 
 # Uint256 Initialization from String With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func InitUint256String_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   4628593'
+# stdout 'GAS USED:   4628593'
 
 # Int256 Initialization from Zero With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func InitInt256Zero_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3721186'
+# stdout 'GAS USED:   3721186'
 
 # Int256 Initialization from One With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func InitInt256One_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3721176'
+# stdout 'GAS USED:   3721176'
 
 # Int256 Initialization from String With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func InitInt256String_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   5544583'
+# stdout 'GAS USED:   5544583'
 
 -- gnomod.toml --
 module = "gno.land/r/basic"

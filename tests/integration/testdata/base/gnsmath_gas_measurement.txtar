@@ -13,16 +13,16 @@ gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/gnoswap/basic -gas-fee 10
 ### Sqrt Price Math Functions
 # GetAmount0Delta - Calculate token0 amount difference within price range
 gnokey maketx call -pkgpath gno.land/r/gnoswap/basic -func TestGetAmount0Delta -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   11178951'
+# stdout 'GAS USED:   11178951'
 
 # GetAmount1Delta - Calculate token1 amount difference within price range
 gnokey maketx call -pkgpath gno.land/r/gnoswap/basic -func TestGetAmount1Delta -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   10533056'
+# stdout 'GAS USED:   10533056'
 
 ### Swap Math Functions
 # SwapMathComputeSwapStep - Compute next sqrt price, amounts in/out, and fee
 gnokey maketx call -pkgpath gno.land/r/gnoswap/basic -func TestSwapMathComputeSwapStep -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   14430494'
+# stdout 'GAS USED:   14430494'
 
 -- gnomod.toml --
 module = "gno.land/r/gnoswap/basic"

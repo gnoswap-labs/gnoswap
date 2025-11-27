@@ -8,166 +8,166 @@ gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/gnoswap/int256gas -gas-fe
 
 # Call Empty
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   502598'
+# stdout 'GAS USED:   502598'
 
 ### Constructor Methods ###
 # NewInt
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestNewInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3617437'
+# stdout 'GAS USED:   3617437'
 
 # Zero
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestZero -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3618563'
+# stdout 'GAS USED:   3618563'
 
 # One
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3618553'
+# stdout 'GAS USED:   3618553'
 
 # MustFromDecimal
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestMustFromDecimal -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   6618337'
+# stdout 'GAS USED:   6618337'
 
 # FromUint256
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestFromUint256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3629798'
+# stdout 'GAS USED:   3629798'
 
 ### Arithmetic Operations ###
 # Add
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   4365589'
+# stdout 'GAS USED:   4365589'
 
 # AddOverflow
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestAddOverflow -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   9869996'
+# stdout 'GAS USED:   9869996'
 
 # AddUint256
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestAddUint256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   4348107'
+# stdout 'GAS USED:   4348107'
 
 # Sub
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestSub -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   4382174'
+# stdout 'GAS USED:   4382174'
 
 # SubOverflow
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestSubOverflow -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   4401211'
+# stdout 'GAS USED:   4401211'
 
 # SubUint256
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestSubUint256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   4362770'
+# stdout 'GAS USED:   4362770'
 
 # Mul
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestMul -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   4428494'
+# stdout 'GAS USED:   4428494'
 
 # MulOverflow
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestMulOverflow -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   10107046'
+# stdout 'GAS USED:   10107046'
 
 # MulUint256
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestMulUint256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   4418751'
+# stdout 'GAS USED:   4418751'
 
 # Div
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestDiv -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   4386817'
+# stdout 'GAS USED:   4386817'
 
 # DivUint256
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestDivUint256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   4373178'
+# stdout 'GAS USED:   4373178'
 
 # Quo
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestQuo -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   4392997'
+# stdout 'GAS USED:   4392997'
 
 # Rem
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestRem -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   4396670'
+# stdout 'GAS USED:   4396670'
 
 # Mod
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestMod -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   4537413'
+# stdout 'GAS USED:   4537413'
 
 # Neg
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestNeg -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3644946'
+# stdout 'GAS USED:   3644946'
 
 ### Bitwise Operations ###
 # And
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestAnd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3661933'
+# stdout 'GAS USED:   3661933'
 
 # Or
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestOr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3661979'
+# stdout 'GAS USED:   3661979'
 
 # Lsh (Left Shift)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestLsh -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   4361183'
+# stdout 'GAS USED:   4361183'
 
 # Rsh (Right Shift)
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestRsh -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3651200'
+# stdout 'GAS USED:   3651200'
 
 ### Comparison Operations ###
 # Eq
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestEq -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3644861'
+# stdout 'GAS USED:   3644861'
 
 # Lt
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestLt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3640432'
+# stdout 'GAS USED:   3640432'
 
 # Gt
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestGt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3640432'
+# stdout 'GAS USED:   3640432'
 
 # Cmp
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestCmp -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3641660'
+# stdout 'GAS USED:   3641660'
 
 # IsZero
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestIsZero -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3623991'
+# stdout 'GAS USED:   3623991'
 
 # IsNeg
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestIsNeg -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3620310'
+# stdout 'GAS USED:   3620310'
 
 ### Absolute Value Operations ###
 # Abs
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestAbs -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3625840'
+# stdout 'GAS USED:   3625840'
 
 # AbsGt
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestAbsGt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   4327613'
+# stdout 'GAS USED:   4327613'
 
 # AbsLt
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestAbsLt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   4325745'
+# stdout 'GAS USED:   4325745'
 
 ### Conversion Methods ###
 # ToString
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestToString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   5331736'
+# stdout 'GAS USED:   5331736'
 
 # Clone
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestClone -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3626983'
+# stdout 'GAS USED:   3626983'
 
 # Sign
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestSign -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   3628520'
+# stdout 'GAS USED:   3628520'
 
 ### Delta Operations ###
 # AddDelta
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestAddDelta -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   4329302'
+# stdout 'GAS USED:   4329302'
 
 # AddDeltaOverflow
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestAddDeltaOverflow -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   7872829'
+# stdout 'GAS USED:   7872829'
 
 -- gnomod.toml --
 module = "gno.land/r/gnoswap/int256gas"

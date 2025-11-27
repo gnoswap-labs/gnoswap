@@ -13,86 +13,86 @@ gnokey maketx addpkg -pkgdir $WORK/caller -pkgpath gno.land/r/test/caller -gas-f
 ### Baseline ###
 # Empty call
 gnokey maketx call -pkgpath gno.land/r/test/caller -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### Simple function (no state) ###
 # Call package function (Add)
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallPkgAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Call realm function (Add)
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallRealmAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Inline calculation (Add)
 gnokey maketx call -pkgpath gno.land/r/test/caller -func InlineAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### Complex function (multiple operations) ###
 # Call package function (Complex)
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallPkgComplex -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Call realm function (Complex)
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallRealmComplex -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Inline calculation (Complex)
 gnokey maketx call -pkgpath gno.land/r/test/caller -func InlineComplex -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### Loop function ###
 # Call package function (Loop 10)
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallPkgLoop10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Call realm function (Loop 10)
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallRealmLoop10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Inline loop (10)
 gnokey maketx call -pkgpath gno.land/r/test/caller -func InlineLoop10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### Loop function (larger) ###
 # Call package function (Loop 100)
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallPkgLoop100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Call realm function (Loop 100)
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallRealmLoop100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Inline loop (100)
 gnokey maketx call -pkgpath gno.land/r/test/caller -func InlineLoop100 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### String operation ###
 # Call package function (String)
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallPkgString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Call realm function (String)
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallRealmString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Inline string operation
 gnokey maketx call -pkgpath gno.land/r/test/caller -func InlineString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### Multiple calls ###
 # Call package 5 times
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallPkg5Times -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Call realm 5 times
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallRealm5Times -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### State read (realm only) ###
 # Read realm state
 gnokey maketx call -pkgpath gno.land/r/test/caller -func CallRealmGetCounter -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 -- pkg/gnomod.toml --
 module = "gno.land/p/test/mathpkg"

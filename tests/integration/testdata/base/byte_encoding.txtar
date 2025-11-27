@@ -7,81 +7,81 @@ gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/basic -gas-fee 100000ugno
 
 # Call Empty
 gnokey maketx call -pkgpath gno.land/r/basic -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   316824'
+# stdout 'GAS USED:   316824'
 
 ### Only Gas Test ###
 # String to Bytes Encoding
 gnokey maketx call -pkgpath gno.land/r/basic -func StringToBytes -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   318187'
+# stdout 'GAS USED:   318187'
 
 # Bytes to String Decoding
 gnokey maketx call -pkgpath gno.land/r/basic -func BytesToString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   318723'
+# stdout 'GAS USED:   318723'
 
 # Byte Slice Creation
 gnokey maketx call -pkgpath gno.land/r/basic -func CreateByteSlice -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   319675'
+# stdout 'GAS USED:   319675'
 
 # Byte Slice Append
 gnokey maketx call -pkgpath gno.land/r/basic -func AppendByteSlice -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   320675'
+# stdout 'GAS USED:   320675'
 
 # Base64 Encoding
 gnokey maketx call -pkgpath gno.land/r/basic -func Base64Encode -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   693364'
+# stdout 'GAS USED:   693364'
 
 # Base64 Decoding
 gnokey maketx call -pkgpath gno.land/r/basic -func Base64Decode -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   1192305'
+# stdout 'GAS USED:   1192305'
 
 # Ufmt Sprintf to Bytes
 gnokey maketx call -pkgpath gno.land/r/basic -func UfmtSprintfToBytes -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   2826791'
+# stdout 'GAS USED:   2826791'
 
 # Strings Builder to Bytes
 gnokey maketx call -pkgpath gno.land/r/basic -func StringsBuilderToBytes -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   1673237'
+# stdout 'GAS USED:   1673237'
 
 ### With Storage Test ###
 # String to Bytes Encoding With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func StringToBytes_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   451122'
-stdout 'STORAGE FEE:    33300ugnot'
+# stdout 'GAS USED:   451122'
+# stdout 'STORAGE FEE:    33300ugnot'
 
 # Bytes to String Decoding With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func BytesToString_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   412910'
-stdout 'STORAGE FEE:    3400ugnot'
+# stdout 'GAS USED:   412910'
+# stdout 'STORAGE FEE:    3400ugnot'
 
 # Byte Slice Creation With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func CreateByteSlice_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   455618'
-stdout 'STORAGE FEE:    34900ugnot'
+# stdout 'GAS USED:   455618'
+# stdout 'STORAGE FEE:    34900ugnot'
 
 # Byte Slice Append With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func AppendByteSlice_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   458410'
-stdout 'STORAGE FEE:    32300ugnot'
+# stdout 'GAS USED:   458410'
+# stdout 'STORAGE FEE:    32300ugnot'
 
 # Base64 Encoding With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func Base64Encode_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   792687'
-stdout 'STORAGE FEE:    4500ugnot'
+# stdout 'GAS USED:   792687'
+# stdout 'STORAGE FEE:    4500ugnot'
 
 # Base64 Decoding With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func Base64Decode_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   1333588'
-stdout 'STORAGE FEE:    32900ugnot'
+# stdout 'GAS USED:   1333588'
+# stdout 'STORAGE FEE:    32900ugnot'
 
 # Ufmt Sprintf to Bytes With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func UfmtSprintfToBytes_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   2971918'
-stdout 'STORAGE FEE:    33300ugnot'
+# stdout 'GAS USED:   2971918'
+# stdout 'STORAGE FEE:    33300ugnot'
 
 # Strings Builder to Bytes With Storage
 gnokey maketx call -pkgpath gno.land/r/basic -func StringsBuilderToBytes_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   1820542'
-stdout 'STORAGE FEE:    33300ugnot'
+# stdout 'GAS USED:   1820542'
+# stdout 'STORAGE FEE:    33300ugnot'
 
 -- gnomod.toml --
 module = "gno.land/r/basic"

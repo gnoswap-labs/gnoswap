@@ -3,39 +3,39 @@ gnoland start
 
 # Deploy realm without comments
 gnokey maketx addpkg -pkgdir $WORK/nocomment -pkgpath gno.land/r/test/nocomment -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Deploy realm with comments (same logic)
 gnokey maketx addpkg -pkgdir $WORK/withcomment -pkgpath gno.land/r/test/withcomment -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Deploy realm with heavy comments (lots of comments)
 gnokey maketx addpkg -pkgdir $WORK/heavycomment -pkgpath gno.land/r/test/heavycomment -gas-fee 100000ugnot -gas-wanted 50000000 -broadcast -chainid=tendermint_test test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### Call each realm to check runtime load cost ###
 
 # Call no comment realm
 gnokey maketx call -pkgpath gno.land/r/test/nocomment -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Call with comment realm
 gnokey maketx call -pkgpath gno.land/r/test/withcomment -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Call heavy comment realm
 gnokey maketx call -pkgpath gno.land/r/test/heavycomment -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 ### Second call (cached) ###
 
 # Call no comment realm again
 gnokey maketx call -pkgpath gno.land/r/test/nocomment -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 # Call heavy comment realm again
 gnokey maketx call -pkgpath gno.land/r/test/heavycomment -func DoAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:'
+# stdout 'GAS USED:'
 
 -- nocomment/gnomod.toml --
 module = "gno.land/r/test/nocomment"

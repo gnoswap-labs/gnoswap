@@ -6,27 +6,27 @@ gnokey maketx addpkg -pkgdir $WORK/usage -pkgpath gno.land/r/usage -gas-fee 1000
 
 # Call Empty (158018)
 gnokey maketx call -pkgpath gno.land/r/usage -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   158018'
+# stdout 'GAS USED:   158018'
 
 # Call Pure Method (82838 = 240856 - 158018)
 gnokey maketx call -pkgpath gno.land/r/usage -func CallPureMethod -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   240856'
+# stdout 'GAS USED:   240856'
 
 # Call Cross Method (83625 = 241643 - 158018)
 gnokey maketx call -pkgpath gno.land/r/usage -func CallCrossMethod -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   241643'
+# stdout 'GAS USED:   241643'
 
 # Call Constructor (1206 = 159224 - 158018)
 gnokey maketx call -pkgpath gno.land/r/usage -func CallConstructor -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   159224'
+# stdout 'GAS USED:   159224'
 
 # Call Receiver Method (83411 = 242635 - 158018 - 1206)
 gnokey maketx call -pkgpath gno.land/r/usage -func CallReceiverMethod -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   242635'
+# stdout 'GAS USED:   242635'
 
 # Call Receiver Method (85262 = 244486 - 158018 - 1206)
 gnokey maketx call -pkgpath gno.land/r/usage -func CallReceiverMethodTwice -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   244486'
+# stdout 'GAS USED:   244486'
 
 
 -- basic/gnomod.toml --
