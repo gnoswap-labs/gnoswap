@@ -3,9 +3,9 @@ package gnsmath
 import (
 	"testing"
 
-	"gno.land/p/nt/uassert"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/uassert"
 )
 
 // Test data constants
@@ -208,12 +208,14 @@ func TestSqrtPriceMath_getNextPriceAmount0Remove(t *testing.T) {
 			panicMsg:       errInvalidPoolSqrtPrice.Error(),
 		},
 		{
-			name:           "zero_amount_panics",
-			current:        u256.Zero(),
+			name:           "zero_amount_pass",
+			current:        u256.NewUint(0),
 			liquidity:      u256.NewUint(6416),
-			amountToRemove: u256.Zero(),
-			shouldPanic:    true,
-			panicMsg:       errInvalidPoolSqrtPrice.Error(),
+			amountToRemove: u256.NewUint(0),
+			shouldPanic:    false,
+			validate: func(t *testing.T, before, after *u256.Uint) {
+				uassert.True(t, after.IsZero(), "removal should return zero")
+			},
 		},
 	}
 

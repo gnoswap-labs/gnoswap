@@ -287,11 +287,6 @@ func (p *nextPriceAmount0RemoveParams) IsValid() bool {
 		return false
 	}
 
-	// Check: amountToRemove cannot be zero (line 63: division by zero in quotientCheck)
-	if amount.IsZero() {
-		return false
-	}
-
 	// Check: liquidityShifted > amountTimesSqrtPrice (line 64)
 	liquidityShifted := u256.Zero().Lsh(liquidity, Q96_RESOLUTION)
 	amountTimesSqrtPrice := u256.Zero().Mul(amount, currentSqrt)
