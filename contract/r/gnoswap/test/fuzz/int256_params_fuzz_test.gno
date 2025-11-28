@@ -166,7 +166,7 @@ func NewValidIntSubOverflowParams(t *fuzz.T) *intSubOverflowParams {
 	remaining := new(u256.Uint).Sub(limit, intAbs(x))
 	negYAbs := fuzz.Uint256Range("0", remaining.ToString()).Draw(t, "negYAbs").(*u256.Uint)
 	negY := newIntWithSign(negYAbs, x.IsNeg())
-	y := i256.New().Neg(negY)
+	y := i256.Zero().Neg(negY)
 
 	return &intSubOverflowParams{
 		x: x.ToString(),
@@ -307,7 +307,7 @@ func intAbs(x *i256.Int) *u256.Uint {
 		return u256.Zero().Lsh(u256.One(), 255)
 	}
 	if x.IsNeg() {
-		neg := i256.New().Neg(x)
+		neg := i256.Zero().Neg(x)
 		return &u256.Uint{neg[0], neg[1], neg[2], neg[3]}
 	}
 	return &u256.Uint{x[0], x[1], x[2], x[3]}
