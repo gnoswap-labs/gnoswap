@@ -640,3 +640,10 @@ func (z *Int) WriteToArray32(dest *[32]byte) {
 		dest[31-i] = byte(z[i/8] >> uint64(8*(i%8)))
 	}
 }
+
+func (z *Int) NilToZero() *Int {
+	if z == nil {
+		return Zero()
+	}
+	return z
+}
