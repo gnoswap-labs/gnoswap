@@ -294,7 +294,10 @@ func NewRandomizedIntDivParams(t *fuzz.T) *intDivParams {
 // Helpers
 func addWithinRange(x, y *i256.Int) bool {
 	if x.IsNeg() == y.IsNeg() {
-		sumAbs := new(u256.Uint).Add(x.Abs(), y.Abs())
+		sumAbs, overflow := new(u256.Uint).AddOverflow(x.Abs(), y.Abs())
+		if overflow {
+			return false
+		}
 
 		if x.IsNeg() {
 			return sumAbs.Lte(minInt256Abs)
