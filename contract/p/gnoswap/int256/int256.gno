@@ -31,7 +31,7 @@ func Zero() *Int {
 
 // One returns a new Int set to 1.
 func One() *Int {
-	return &Int{abs: one}
+	return &Int{abs: &uint256.Uint{1, 0, 0, 0}}
 }
 
 // Sign returns the sign of x.
