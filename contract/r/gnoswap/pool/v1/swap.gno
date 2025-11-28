@@ -233,17 +233,17 @@ func (i *poolV1) Swap(
 		// receive token0 from swap callback
 		// send token1 to recipient (output)
 		if result.Amount1.IsNeg() {
-			i.safeSwapCallback(pool, token0Path, result.Amount0.Abs(), zeroForOne, swapCallback)
-
 			i.safeTransfer(pool, recipient, token1Path, result.Amount1.Abs(), false)
+
+			i.safeSwapCallback(pool, token0Path, result.Amount0.Abs(), zeroForOne, swapCallback)
 		}
 	} else {
 		// receive token1 from swap callback
 		// send token0 to recipient (output)
 		if result.Amount0.IsNeg() {
-			i.safeSwapCallback(pool, token1Path, result.Amount1.Abs(), zeroForOne, swapCallback)
-
 			i.safeTransfer(pool, recipient, token0Path, result.Amount0.Abs(), true)
+
+			i.safeSwapCallback(pool, token1Path, result.Amount1.Abs(), zeroForOne, swapCallback)
 		}
 	}
 
