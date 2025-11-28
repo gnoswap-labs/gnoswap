@@ -38,4 +38,4 @@ jobs:
         run: python3 setup.py --exclude-tests -w .
 
       - name: Run integration tests
-        run: ./scripts/all-integration-tests.sh ./gno/gno.land/pkg/integration .
+        run: ./scripts/all-integration-tests.sh ./gno/gno.land/pkg/integration . --skip
