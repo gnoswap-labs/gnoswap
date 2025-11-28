@@ -35,22 +35,9 @@ func MaxInt256() *Int {
 	return &Int{0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x7fffffffffffffff}
 }
 
-// Div sets z to the quotient of x/y, rounding toward negative infinity.
-// Use Quo to truncate toward zero.
+// Div sets z to the quotient of x/y, truncating toward zero (same as Quo).
 func (z *Int) Div(x, y *Int) *Int {
-	if y.IsZero() {
-		panic(ErrZeroDivision)
-	}
-
-	quotient := new(Int).Quo(x, y)
-	remainder := new(Int).Rem(x, y)
-
-	if remainder.IsZero() || x.Sign() == y.Sign() {
-		return z.Set(quotient)
-	}
-
-	// When signs differ and there is a remainder, move one step toward -inf.
-	return z.Sub(quotient, One())
+	return z.Quo(x, y)
 }
 
 func NewInt(val int64) *Int {
@@ -490,16 +477,28 @@ func (z *Int) Lsh(x *Int, n uint) *Int {
 	if n >= 256 {
 		return z.Clear()
 	}
+	// Handle exact multiples of 64 separately to avoid 64-bit shift issues
+	if n&0x3f == 0 {
+		switch n {
+		case 64:
+			z[3], z[2], z[1], z[0] = x[2], x[1], x[0], 0
+		case 128:
+			z[3], z[2], z[1], z[0] = x[1], x[0], 0, 0
+		case 192:
+			z[3], z[2], z[1], z[0] = x[0], 0, 0, 0
+		}
+		return z
+	}
 	switch {
-	case n >= 192:
+	case n > 192:
 		n -= 192
 		z[3], z[2], z[1], z[0] = x[0]<<n, 0, 0, 0
-	case n >= 128:
+	case n > 128:
 		n -= 128
 		z[3] = (x[1] << n) | (x[0] >> (64 - n))
 		z[2] = x[0] << n
 		z[1], z[0] = 0, 0
-	case n >= 64:
+	case n > 64:
 		n -= 64
 		z[3] = (x[2] << n) | (x[1] >> (64 - n))
 		z[2] = (x[1] << n) | (x[0] >> (64 - n))
@@ -525,19 +524,33 @@ func (z *Int) Rsh(x *Int, n uint) *Int {
 }
 
 func (z *Int) rsh(x *Int, n uint) *Int {
-	if n >= 255 {
+	if n >= 256 {
 		return z.Clear()
 	}
+	// Handle exact multiples of 64 separately to avoid 64-bit shift issues
+	if n&0x3f == 0 {
+		switch n {
+		case 0:
+			return z.Set(x)
+		case 64:
+			z[3], z[2], z[1], z[0] = 0, x[3], x[2], x[1]
+		case 128:
+			z[3], z[2], z[1], z[0] = 0, 0, x[3], x[2]
+		case 192:
+			z[3], z[2], z[1], z[0] = 0, 0, 0, x[3]
+		}
+		return z
+	}
 	switch {
-	case n >= 192:
+	case n > 192:
 		n -= 192
 		z[3], z[2], z[1], z[0] = 0, 0, 0, x[3]>>n
-	case n >= 128:
+	case n > 128:
 		n -= 128
 		z[3], z[2] = 0, 0
 		z[1] = x[3] >> n
 		z[0] = (x[3] << (64 - n)) | (x[2] >> n)
-	case n >= 64:
+	case n > 64:
 		n -= 64
 		z[3] = 0
 		z[2] = x[3] >> n
@@ -553,20 +566,34 @@ func (z *Int) rsh(x *Int, n uint) *Int {
 }
 
 func (z *Int) negRsh(x *Int, n uint) *Int {
-	if n >= 255 {
+	if n >= 256 {
 		return z.SetAllBitsOne()
 	}
 	var v uint64 = 0xffffffffffffffff
+	// Handle exact multiples of 64 separately to avoid 64-bit shift issues
+	if n&0x3f == 0 {
+		switch n {
+		case 0:
+			return z.Set(x)
+		case 64:
+			z[3], z[2], z[1], z[0] = v, x[3], x[2], x[1]
+		case 128:
+			z[3], z[2], z[1], z[0] = v, v, x[3], x[2]
+		case 192:
+			z[3], z[2], z[1], z[0] = v, v, v, x[3]
+		}
+		return z
+	}
 	switch {
-	case n >= 192:
+	case n > 192:
 		n -= 192
 		z[3], z[2], z[1], z[0] = v, v, v, (v<<(64-n))|(x[3]>>n)
-	case n >= 128:
+	case n > 128:
 		n -= 128
 		z[3], z[2] = v, v
 		z[1] = (v << (64 - n)) | (x[3] >> n)
 		z[0] = (x[3] << (64 - n)) | (x[2] >> n)
-	case n >= 64:
+	case n > 64:
 		n -= 64
 		z[3] = v
 		z[2] = (v << (64 - n)) | (x[3] >> n)
