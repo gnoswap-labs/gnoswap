@@ -49,9 +49,22 @@ func (z *Int) Neq(x *Int) bool {
 	return !z.Eq(x)
 }
 
-// Div is an alias for Quo for backward compatibility.
+// Div sets z to the quotient of x/y, rounding toward negative infinity.
+// Use Quo to truncate toward zero.
 func (z *Int) Div(x, y *Int) *Int {
-	return z.Quo(x, y)
+	if y.IsZero() {
+		panic(ErrZeroDivision)
+	}
+
+	quotient := new(Int).Quo(x, y)
+	remainder := new(Int).Rem(x, y)
+
+	if remainder.IsZero() || x.Sign() == y.Sign() {
+		return z.Set(quotient)
+	}
+
+	// When signs differ and there is a remainder, move one step toward -inf.
+	return z.Sub(quotient, One())
 }
 
 // IsNeg is an alias for IsNegative for backward compatibility.
