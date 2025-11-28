@@ -43,7 +43,7 @@ func TestAdd(t *testing.T) {
 			continue
 		}
 
-		got := New()
+		got := Zero()
 		got.Add(x, y)
 
 		if got.Neq(want) {
@@ -207,7 +207,7 @@ func TestSub(t *testing.T) {
 			continue
 		}
 
-		got := New()
+		got := Zero()
 		got.Sub(x, y)
 
 		if got.Neq(want) {
@@ -246,7 +246,7 @@ func TestMul(t *testing.T) {
 			continue
 		}
 
-		got := New()
+		got := Zero()
 		got.Mul(x, y)
 
 		if got.Neq(want) {
@@ -341,7 +341,7 @@ func TestInt_SubOverflow(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// z := new(Int)
-			z := New()
+			z := Zero()
 			gotResult, gotOverflow := z.SubOverflow(tt.x, tt.y)
 
 			if gotOverflow != tt.wantOverflow {
@@ -528,7 +528,7 @@ func TestDiv(t *testing.T) {
 			if result.ToString() != tt.expected {
 				t.Errorf("Div(%s, %s) = %s, want %s", tt.x, tt.y, result.ToString(), tt.expected)
 			}
-			if result.IsZero() && result.IsNegative() {
+			if result.IsZero() && result.IsNeg() {
 				t.Errorf("Div(%s, %s) resulted in negative zero", tt.x, tt.y)
 			}
 		})

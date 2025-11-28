@@ -84,13 +84,13 @@ func TestSetString(t *testing.T) {
 			t.Errorf("SetString(%q).abs = %s, want %s", tt.input, got, tt.wantVal)
 		}
 
-		if got := z.IsNegative(); got != tt.wantSign {
+		if got := z.IsNeg(); got != tt.wantSign {
 			t.Errorf("SetString(%q).neg = %v, want %v", tt.input, got, tt.wantSign)
 		}
 	}
 }
 
-func TestAbs(t *testing.T) {
+func TestAbsWithPanicCases(t *testing.T) {
 	tests := []struct {
 		x, want   string
 		wantErr   bool

@@ -19,34 +19,20 @@ var (
 	ErrNegativeNum  = errors.New("negative number")
 )
 
-// Zero returns a new Int set to 0.
 func Zero() *Int {
 	return &Int{}
 }
 
-// One returns a new Int set to 1.
 func One() *Int {
 	return &Int{1, 0, 0, 0}
 }
 
-// MinInt256 returns a new Int set to the minimum value of int256.
 func MinInt256() *Int {
 	return &Int{0, 0, 0, 0x8000000000000000}
 }
 
-// MaxInt256 returns a new Int set to the maximum value of int256.
 func MaxInt256() *Int {
 	return &Int{0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x7fffffffffffffff}
-}
-
-// New returns a new Int set to 0.
-func New() *Int {
-	return &Int{}
-}
-
-// Neq returns true if z != x.
-func (z *Int) Neq(x *Int) bool {
-	return !z.Eq(x)
 }
 
 // Div sets z to the quotient of x/y, rounding toward negative infinity.
@@ -65,11 +51,6 @@ func (z *Int) Div(x, y *Int) *Int {
 
 	// When signs differ and there is a remainder, move one step toward -inf.
 	return z.Sub(quotient, One())
-}
-
-// IsNeg is an alias for IsNegative for backward compatibility.
-func (z *Int) IsNeg() bool {
-	return z.IsNegative()
 }
 
 func NewInt(val int64) *Int {
@@ -125,7 +106,7 @@ func (z *Int) Uint64() uint64 {
 }
 
 func (z *Int) Abs() *u256.Uint {
-	if z.IsNegative() {
+	if z.IsNeg() {
 		if z[3] == 0x8000000000000000 && z[2] == 0 && z[1] == 0 && z[0] == 0 {
 			panic("int256: overflow")
 		}
@@ -153,7 +134,7 @@ func (z *Int) IsOne() bool {
 	return (z[0] == 1) && (z[1]|z[2]|z[3]) == 0
 }
 
-func (z *Int) IsNegative() bool {
+func (z *Int) IsNeg() bool {
 	return z[3]&0x8000000000000000 != 0
 }
 
@@ -177,6 +158,10 @@ func (z *Int) Neg(x *Int) *Int {
 
 func (z *Int) Eq(x *Int) bool {
 	return (z[0] == x[0]) && (z[1] == x[1]) && (z[2] == x[2]) && (z[3] == x[3])
+}
+
+func (z *Int) Neq(x *Int) bool {
+	return !z.Eq(x)
 }
 
 func (z *Int) Add(x, y *Int) *Int {
@@ -274,7 +259,7 @@ func (z *Int) MulOverflow(x, y *Int) (*Int, bool) {
 	z[0], z[1], z[2], z[3] = p[0], p[1], p[2], p[3]
 
 	var overflow bool
-	if ((p[4] | p[5] | p[6] | p[7]) != 0) || z.IsNegative() {
+	if ((p[4] | p[5] | p[6] | p[7]) != 0) || z.IsNeg() {
 		overflow = true
 	}
 
@@ -533,7 +518,7 @@ func (z *Int) Rsh(x *Int, n uint) *Int {
 	if n == 0 {
 		return z.Set(x)
 	}
-	if x.IsNegative() {
+	if x.IsNeg() {
 		return z.negRsh(x, n)
 	}
 	return z.rsh(x, n)
@@ -597,7 +582,7 @@ func (z *Int) negRsh(x *Int, n uint) *Int {
 }
 
 func (z *Int) Sqrt(x *Int) *Int {
-	if x.IsNegative() {
+	if x.IsNeg() {
 		panic(ErrNegativeNum)
 	}
 	if x.IsInt64() {

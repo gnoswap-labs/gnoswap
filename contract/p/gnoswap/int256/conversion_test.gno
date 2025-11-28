@@ -3,7 +3,6 @@ package int256
 import (
 	"testing"
 
-	"gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
 )
 
@@ -78,15 +77,15 @@ func TestSetInt64MinValueOverflow(t *testing.T) {
 
 			// Verify sign is correct
 			if tc.x < 0 {
-				if !z.IsNegative() {
+				if !z.IsNeg() {
 					t.Errorf("SetInt64(%d): expected IsNegative()=true, got false", tc.x)
 				}
 			} else if tc.x > 0 {
-				if z.IsNegative() {
+				if z.IsNeg() {
 					t.Errorf("SetInt64(%d): expected IsNegative()=false, got true", tc.x)
 				}
 			} else { // tc.x == 0
-				if z.IsNegative() {
+				if z.IsNeg() {
 					t.Errorf("SetInt64(0): expected IsNegative()=false (no -0), got true")
 				}
 			}
@@ -126,8 +125,9 @@ func TestUint64(t *testing.T) {
 		{"18446744073709551615", 18446744073709551615},
 		{"18446744073709551616", 0},
 		{"18446744073709551617", 1},
-		{"-1", 1},
-		{"-18446744073709551615", 18446744073709551615},
+		// In two's complement, -1 = 0xFFFF...FFFF, so z[0] = max uint64
+		{"-1", 18446744073709551615},
+		{"-18446744073709551615", 1},
 		{"-18446744073709551616", 0},
 		{"-18446744073709551617", 18446744073709551615},
 	}
@@ -199,54 +199,6 @@ func TestInt64EdgeCases(t *testing.T) {
 			description: "SetInt64(MaxInt64) should round-trip correctly",
 		},
 		{
-			name: "Magnitude 2^63 with negative sign",
-			setupInt: func() *Int {
-				// Create Int with magnitude = 2^63 and neg = true
-				z := new(Int)
-				z.abs = uint256.NewUint(1 << 63)
-				z.neg = true
-				return z
-			},
-			want:        minInt64,
-			description: "Magnitude 2^63 with neg=true should return MinInt64",
-		},
-		{
-			name: "Magnitude 2^63 with positive sign",
-			setupInt: func() *Int {
-				// Create Int with magnitude = 2^63 and neg = false
-				z := new(Int)
-				z.abs = uint256.NewUint(1 << 63)
-				z.neg = false
-				return z
-			},
-			want:        minInt64, // Wraps around due to two's complement
-			description: "Magnitude 2^63 with neg=false wraps to MinInt64",
-		},
-		{
-			name: "Large positive value wrapping",
-			setupInt: func() *Int {
-				// 2^64 - 1 (max uint64)
-				z := new(Int)
-				z.abs = uint256.NewUint(18446744073709551615)
-				z.neg = false
-				return z
-			},
-			want:        -1,
-			description: "Max uint64 wraps to -1 in int64",
-		},
-		{
-			name: "Negative large value",
-			setupInt: func() *Int {
-				// -(2^64 - 1)
-				z := new(Int)
-				z.abs = uint256.NewUint(18446744073709551615)
-				z.neg = true
-				return z
-			},
-			want:        1,
-			description: "-(Max uint64) becomes 1 due to two's complement",
-		},
-		{
 			name: "Zero",
 			setupInt: func() *Int {
 				return Zero()
@@ -255,15 +207,21 @@ func TestInt64EdgeCases(t *testing.T) {
 			description: "Zero should return 0",
 		},
 		{
-			name: "Negative zero prevention",
+			name: "Large positive int256",
 			setupInt: func() *Int {
-				z := new(Int)
-				z.abs = uint256.NewUint(0)
-				z.neg = true // This should be normalized to false
-				return z
+				// Value larger than int64 max
+				return MustFromDecimal("18446744073709551615")
 			},
-			want:        0,
-			description: "Negative zero should return 0",
+			want:        -1, // Truncated to int64
+			description: "Large positive wraps in int64",
+		},
+		{
+			name: "Large negative int256",
+			setupInt: func() *Int {
+				return MustFromDecimal("-18446744073709551615")
+			},
+			want:        1, // Truncated to int64
+			description: "Large negative wraps in int64",
 		},
 	}
 

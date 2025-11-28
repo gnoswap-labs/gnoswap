@@ -4,42 +4,29 @@ import (
 	"testing"
 
 	"gno.land/p/nt/uassert"
-
-	"gno.land/p/gnoswap/uint256"
 )
 
 func TestOr(t *testing.T) {
 	tests := []struct {
 		name       string
-		x, y, want Int
+		x, y, want string
 	}{
-		{
-			name: "all zeroes",
-			x:    Int{abs: uint256.Zero(), neg: false},
-			y:    Int{abs: uint256.Zero(), neg: false},
-			want: Int{abs: uint256.Zero(), neg: false},
-		},
-		{
-			name: "all ones",
-			x:    Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-			y:    Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-			want: Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-		},
-		{
-			name: "mixed",
-			x:    Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-			y:    Int{abs: uint256.NewUint(0), neg: false},
-			want: Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-		},
+		{"all zeroes", "0", "0", "0"},
+		{"all ones", "-1", "-1", "-1"},
+		{"mixed", "-1", "0", "-1"},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got := New()
-			got.Or(&tc.x, &tc.y)
+			x := MustFromDecimal(tc.x)
+			y := MustFromDecimal(tc.y)
+			want := MustFromDecimal(tc.want)
 
-			if got.Neq(&tc.want) {
-				t.Errorf("Or(%v, %v) = %v, want %v", tc.x, tc.y, got, tc.want)
+			got := Zero()
+			got.Or(x, y)
+
+			if got.Neq(want) {
+				t.Errorf("Or(%s, %s) = %s, want %s", tc.x, tc.y, got.ToString(), tc.want)
 			}
 		})
 	}
@@ -48,59 +35,25 @@ func TestOr(t *testing.T) {
 func TestAnd(t *testing.T) {
 	tests := []struct {
 		name       string
-		x, y, want Int
+		x, y, want string
 	}{
-		{
-			name: "all zeroes",
-			x:    Int{abs: uint256.Zero(), neg: false},
-			y:    Int{abs: uint256.Zero(), neg: false},
-			want: Int{abs: uint256.Zero(), neg: false},
-		},
-		{
-			name: "all ones",
-			x:    Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-			y:    Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-			want: Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-		},
-		{
-			name: "mixed",
-			x:    Int{abs: uint256.Zero(), neg: false},
-			y:    Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-			want: Int{abs: uint256.Zero(), neg: false},
-		},
-		{
-			name: "mixed 2",
-			x:    Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-			y:    Int{abs: uint256.Zero(), neg: false},
-			want: Int{abs: uint256.Zero(), neg: false},
-		},
-		{
-			name: "mixed 3",
-			x:    Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-			y:    Int{abs: uint256.Zero(), neg: false},
-			want: Int{abs: uint256.Zero(), neg: false},
-		},
-		{
-			name: "one operand zero",
-			x:    Int{abs: uint256.Zero(), neg: false},
-			y:    Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-			want: Int{abs: uint256.Zero(), neg: false},
-		},
-		{
-			name: "one operand all ones",
-			x:    Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-			y:    Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-			want: Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-		},
+		{"all zeroes", "0", "0", "0"},
+		{"all ones", "-1", "-1", "-1"},
+		{"mixed", "0", "-1", "0"},
+		{"mixed 2", "-1", "0", "0"},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got := New()
-			got.And(&tc.x, &tc.y)
+			x := MustFromDecimal(tc.x)
+			y := MustFromDecimal(tc.y)
+			want := MustFromDecimal(tc.want)
 
-			if got.Neq(&tc.want) {
-				t.Errorf("And(%v, %v) = %v, want %v", tc.x, tc.y, got, tc.want)
+			got := Zero()
+			got.And(x, y)
+
+			if got.Neq(want) {
+				t.Errorf("And(%s, %s) = %s, want %s", tc.x, tc.y, got.ToString(), tc.want)
 			}
 		})
 	}
@@ -122,11 +75,12 @@ func TestRsh(t *testing.T) {
 		{"18446744073709551615", 62, "3"},
 		{"18446744073709551615", 63, "1"},
 		{"18446744073709551615", 64, "0"},
-		{"115792089237316195423570985008687907853269984665640564039457584007913129639935", 0, "115792089237316195423570985008687907853269984665640564039457584007913129639935"},
-		{"115792089237316195423570985008687907853269984665640564039457584007913129639935", 1, "57896044618658097711785492504343953926634992332820282019728792003956564819967"},
-		{"115792089237316195423570985008687907853269984665640564039457584007913129639935", 128, "340282366920938463463374607431768211455"},
-		{"115792089237316195423570985008687907853269984665640564039457584007913129639935", 255, "1"},
-		{"115792089237316195423570985008687907853269984665640564039457584007913129639935", 256, "0"},
+		// Use max int256 value instead of max uint256
+		{"57896044618658097711785492504343953926634992332820282019728792003956564819967", 0, "57896044618658097711785492504343953926634992332820282019728792003956564819967"},
+		{"57896044618658097711785492504343953926634992332820282019728792003956564819967", 1, "28948022309329048855892746252171976963317496166410141009864396001978282409983"},
+		{"57896044618658097711785492504343953926634992332820282019728792003956564819967", 128, "170141183460469231731687303715884105727"},
+		{"57896044618658097711785492504343953926634992332820282019728792003956564819967", 254, "1"},
+		{"57896044618658097711785492504343953926634992332820282019728792003956564819967", 255, "0"},
 		{"-1024", 0, "-1024"},
 		{"-1024", 1, "-512"},
 		{"-1024", 2, "-256"},
@@ -152,7 +106,7 @@ func TestRsh(t *testing.T) {
 			continue
 		}
 
-		got := New()
+		got := Zero()
 		got.Rsh(x, tc.n)
 
 		if got.ToString() != tc.want {
@@ -166,22 +120,21 @@ func TestLsh(t *testing.T) {
 		x    string
 		n    uint
 		want string
-		expectPanic bool
 	}{
-		{"1", 0, "1", false},
-		{"1", 1, "2", false},
-		{"1", 2, "4", false},
-		{"2", 0, "2", false},
-		{"2", 1, "4", false},
-		{"2", 2, "8", false},
-		{"-2", 0, "-2", false},
-		{"-4", 0, "-4", false},
-		{"-8", 0, "-8", false},
-		{"-1", 255, "-57896044618658097711785492504343953926634992332820282019728792003956564819968", false},
-		{"-1", 256, "0", true},
-		{"-2", 255, "0", true},
-		{"-4", 254, "0", true},
-		{"-8", 253, "0", true},
+		{"1", 0, "1"},
+		{"1", 1, "2"},
+		{"1", 2, "4"},
+		{"2", 0, "2"},
+		{"2", 1, "4"},
+		{"2", 2, "8"},
+		{"-2", 0, "-2"},
+		{"-4", 0, "-4"},
+		{"-8", 0, "-8"},
+		{"-1", 255, "-57896044618658097711785492504343953926634992332820282019728792003956564819968"},
+		{"-1", 256, "0"}, // Overflow results in 0
+		{"-2", 255, "0"},
+		{"-4", 254, "0"},
+		{"-8", 253, "0"},
 	}
 
 	for _, tc := range tests {
@@ -191,14 +144,8 @@ func TestLsh(t *testing.T) {
 			continue
 		}
 
-		got := New()
-		if tc.expectPanic {
-			uassert.PanicsWithMessage(t, "Lsh: overflow", func() {
-				got.Lsh(x, tc.n)
-			})
-		} else {
-			got.Lsh(x, tc.n)
-			uassert.Equal(t, tc.want, got.ToString())
-		}
+		got := Zero()
+		got.Lsh(x, tc.n)
+		uassert.Equal(t, tc.want, got.ToString())
 	}
 }
