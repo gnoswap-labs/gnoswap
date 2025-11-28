@@ -3,6 +3,9 @@ package int256
 
 import (
 	"testing"
+
+	"gno.land/p/nt/uassert"
+	"gno.land/p/nt/ufmt"
 )
 
 func TestSign(t *testing.T) {
@@ -72,114 +75,70 @@ func TestSetString(t *testing.T) {
 		}
 
 		if err != nil {
+			println("ERROR", err.Error(), tt.input)
 			t.Errorf("SetString(%q) returned unexpected error: %v", tt.input, err)
 			continue
 		}
 
-		if got := z.abs.ToString(); got != tt.wantVal {
+		if got := z.Abs().ToString(); got != tt.wantVal {
 			t.Errorf("SetString(%q).abs = %s, want %s", tt.input, got, tt.wantVal)
 		}
 
-		if got := z.neg; got != tt.wantSign {
+		if got := z.IsNegative(); got != tt.wantSign {
 			t.Errorf("SetString(%q).neg = %v, want %v", tt.input, got, tt.wantSign)
 		}
 	}
 }
 
-func TestInitiateAbs(t *testing.T) {
+func TestAbs(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    *Int
-		wantNil  bool
-		wantZero bool
+		x, want   string
+		wantErr   bool
+		wantPanic bool
 	}{
-		{
-			name:     "nil input returns new zero Int",
-			input:    nil,
-			wantNil:  false,
-			wantZero: true,
-		},
-		{
-			name:     "nil abs field gets initialized",
-			input:    &Int{abs: nil, neg: false},
-			wantNil:  false,
-			wantZero: true,
-		},
-		{
-			name:     "existing abs field remains unchanged",
-			input:    NewInt(123),
-			wantNil:  false,
-			wantZero: false,
-		},
+		{"0", "0", false, false},
+		{"1", "1", false, false},
+		{"-1", "1", false, false},
+		{"-2", "2", false, false},
+		// Int256 min value overflow: out of range, FromDecimal should error
+		{"-115792089237316195423570985008687907853269984665640564039457584007913129639935", "", true, false},
+		// Int256 most negative value: FromDecimal succeeds, Abs() panics
+		{"-57896044618658097711785492504343953926634992332820282019728792003956564819968", "57896044618658097711785492504343953926634992332820282019728792003956564819968", false, true},
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			result := tc.input.initiateAbs()
+		x, err := FromDecimal(tc.x)
 
-			if result == nil {
-				t.Error("initiateAbs returned nil")
-				return
+		// Check if FromDecimal returned expected error
+		if tc.wantErr {
+			if err == nil {
+				t.Errorf("FromDecimal(%s) expected error, but got nil", tc.x)
 			}
+			continue
+		}
 
-			if (result.abs == nil) != tc.wantNil {
-				t.Errorf("abs field nil status = %v, want %v", result.abs == nil, tc.wantNil)
+		// If we expect no error, but got one
+		if err != nil {
+			t.Errorf("FromDecimal(%s) returned unexpected error: %v", tc.x, err)
+			continue
+		}
+
+		// At this point, x should not be nil
+		if x == nil {
+			t.Errorf("FromDecimal(%s) returned nil without error", tc.x)
+			continue
+		}
+
+		if tc.wantPanic {
+			uassert.PanicsContains(t, "int256: overflow", func() {
+				x.Abs()
+			})
+			ufmt.Printf("Abs(%s) correctly panicked with overflow\n", tc.x)
+		} else {
+			got := x.Abs()
+			if got.ToString() != tc.want {
+				t.Errorf("Abs(%s) = %v, want %v", tc.x, got.ToString(), tc.want)
 			}
-
-			isZero := result.abs != nil && result.abs.IsZero()
-			if isZero != tc.wantZero {
-				t.Errorf("IsZero() = %v, want %v", isZero, tc.wantZero)
-			}
-		})
-	}
-}
-
-func TestInitiateAbsInOperation(t *testing.T) {
-	tests := []struct {
-		name  string
-		setup func() *Int
-		op    func(*Int) *Int
-		want  string
-	}{
-		{
-			name:  "Add with nil receiver",
-			setup: func() *Int { return nil },
-			op:    func(z *Int) *Int { return z.Add(NewInt(10), NewInt(20)) },
-			want:  "30",
-		},
-		{
-			name:  "Add with nil abs field",
-			setup: func() *Int { return &Int{abs: nil} },
-			op:    func(z *Int) *Int { return z.Add(NewInt(10), NewInt(20)) },
-			want:  "30",
-		},
-		{
-			name:  "Sub with nil receiver",
-			setup: func() *Int { return nil },
-			op:    func(z *Int) *Int { return z.Sub(NewInt(30), NewInt(20)) },
-			want:  "10",
-		},
-		{
-			name:  "Sub with nil abs field",
-			setup: func() *Int { return &Int{abs: nil} },
-			op:    func(z *Int) *Int { return z.Sub(NewInt(30), NewInt(20)) },
-			want:  "10",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			z := tc.setup()
-			result := tc.op(z)
-
-			if result == nil {
-				t.Error("operation returned nil")
-				return
-			}
-
-			if got := result.ToString(); got != tc.want {
-				t.Errorf("got %v, want %v", got, tc.want)
-			}
-		})
+		}
 	}
 }
