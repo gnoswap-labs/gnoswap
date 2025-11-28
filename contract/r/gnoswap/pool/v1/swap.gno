@@ -233,17 +233,17 @@ func (i *poolV1) Swap(
 		// receive token0 from swap callback
 		// send token1 to recipient (output)
 		if result.Amount1.IsNeg() {
-			i.safeSwapCallback(pool, token0Path, result.Amount0.Abs(), zeroForOne, swapCallback)
+			i.safeSwapCallback(pool, token0Path, result.Amount0.AbsUint256(), zeroForOne, swapCallback)
 
-			i.safeTransfer(pool, recipient, token1Path, result.Amount1.Abs(), false)
+			i.safeTransfer(pool, recipient, token1Path, result.Amount1.AbsUint256(), false)
 		}
 	} else {
 		// receive token1 from swap callback
 		// send token0 to recipient (output)
 		if result.Amount0.IsNeg() {
-			i.safeSwapCallback(pool, token1Path, result.Amount1.Abs(), zeroForOne, swapCallback)
+			i.safeSwapCallback(pool, token1Path, result.Amount1.AbsUint256(), zeroForOne, swapCallback)
 
-			i.safeTransfer(pool, recipient, token0Path, result.Amount0.Abs(), true)
+			i.safeTransfer(pool, recipient, token0Path, result.Amount0.AbsUint256(), true)
 		}
 	}
 
@@ -331,11 +331,11 @@ func (i *poolV1) DrySwap(
 	}
 
 	if zeroForOne {
-		if pool.BalanceToken1().Lt(result.Amount1.Abs()) {
+		if pool.BalanceToken1().Lt(result.Amount1.AbsUint256()) {
 			return "0", "0", false
 		}
 	} else {
-		if pool.BalanceToken0().Lt(result.Amount0.Abs()) {
+		if pool.BalanceToken0().Lt(result.Amount0.AbsUint256()) {
 			return "0", "0", false
 		}
 	}
