@@ -12,8 +12,6 @@ var (
 	errInvalidSignInMiddleOfNumber = errors.New("invalid sign in middle of number")
 )
 
-var one = &uint256.Uint{1, 0, 0, 0}
-
 // Int represents a 256-bit signed integer.
 // It uses a sign-magnitude representation with abs storing the absolute value
 // and neg indicating whether the number is negative.
@@ -100,14 +98,12 @@ func (z *Int) SetString(s string) (*Int, error) {
 		s = s[1:]
 	}
 
-	// check if the string is empty after removing the sign
-	if len(s) == 0 {
-		return nil, errStringContainsOnlySign
-	}
-
 	// Parallel comparison technique for sign detection
 	// Process in 8-byte chunks
 	sLen := len(s)
+	if sLen == 0 {
+		return nil, errStringContainsOnlySign
+	}
 	i := 0
 
 	// Process 8 bytes at a time

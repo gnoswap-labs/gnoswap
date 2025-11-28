@@ -4,6 +4,8 @@ import (
 	"gno.land/p/gnoswap/uint256"
 )
 
+var one = &uint256.Uint{1, 0, 0, 0}
+
 // Or sets z to the bitwise OR of x and y and returns z.
 // The operation handles two's complement representation for negative numbers.
 func (z *Int) Or(x, y *Int) *Int {
@@ -62,7 +64,7 @@ func (z *Int) And(x, y *Int) *Int {
 	}
 
 	// x & (-y) == x & ^(y-1) == x &^ (y-1)
-	y1 := uint256.Zero().Sub(y.abs, uint256.One())
+	y1 := uint256.Zero().Sub(y.abs, one)
 	z.abs = z.abs.AndNot(x.abs, y1)
 	z.neg = false
 	return z
