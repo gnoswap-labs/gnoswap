@@ -1,10 +1,13 @@
 package v1
 
 import (
+	"chain/runtime"
+
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/halt"
 )
 
 // swapCallback implements the pool's SwapCallback interface.
@@ -15,11 +18,19 @@ import (
 // 1. Flash swaps (receive tokens before paying)
 // 2. Just-in-time token transfers
 // 3. Complex multi-hop swaps without intermediate transfers
+//
+// Only callable from the router v1 implementation contract.
+// It is only used when calling a pool swap function.
 func (r *routerV1) SwapCallback(
 	token0Path, token1Path string,
 	amount0Delta, amount1Delta string,
 	payer address,
 ) error {
+	halt.AssertIsNotHaltedRouter()
+
+	caller := runtime.PreviousRealm().Address()
+	assertIsRouterV1(caller)
+
 	var tokenToPay string
 
 	amountToPay := i256.Zero()
