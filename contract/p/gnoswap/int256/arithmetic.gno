@@ -271,7 +271,7 @@ func (z *Int) Quo(x, y *Int) *Int {
 	z = z.initiateAbs()
 
 	z.abs = z.abs.Div(x.abs, y.abs)
-	z.neg = !(z.abs.IsZero()) && x.neg != y.neg // 0 has no sign
+	z.neg = !z.abs.IsZero() && x.neg != y.neg // 0 has no sign
 	return z
 }
 

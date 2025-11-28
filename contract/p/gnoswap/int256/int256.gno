@@ -12,7 +12,7 @@ var (
 	errInvalidSignInMiddleOfNumber = errors.New("invalid sign in middle of number")
 )
 
-var one = uint256.NewUint(1)
+var one = &uint256.Uint{1, 0, 0, 0}
 
 // Int represents a 256-bit signed integer.
 // It uses a sign-magnitude representation with abs storing the absolute value
@@ -24,12 +24,14 @@ type Int struct {
 
 // Zero returns a new Int set to 0.
 func Zero() *Int {
-	return NewInt(0)
+	return &Int{
+		abs: &uint256.Uint{0, 0, 0, 0},
+	}
 }
 
 // One returns a new Int set to 1.
 func One() *Int {
-	return NewInt(1)
+	return &Int{abs: one}
 }
 
 // Sign returns the sign of x.
@@ -152,17 +154,14 @@ func FromUint256(x *uint256.Uint) *Int {
 	if x == nil {
 		return nil
 	}
-	z := Zero()
-
-	z.SetUint256(x)
-	return z
+	return Zero().SetUint256(x)
 }
 
 // NilToZero returns z if it's non-nil, otherwise returns a new Int set to 0.
 // This differs from the original mempooler int256 implementation.
 func (z *Int) NilToZero() *Int {
 	if z == nil {
-		return NewInt(0)
+		return Zero()
 	}
 	return z
 }
@@ -173,7 +172,7 @@ func (z *Int) NilToZero() *Int {
 // This differs from mempooler int256 by also checking if z itself is nil.
 func (z *Int) initiateAbs() *Int {
 	if z == nil {
-		return NewInt(0)
+		return Zero()
 	}
 	if z.abs == nil {
 		z.abs = new(uint256.Uint)

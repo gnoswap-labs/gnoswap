@@ -10,8 +10,8 @@ func (z *Int) Or(x, y *Int) *Int {
 	if x.neg == y.neg {
 		if x.neg {
 			// (-x) | (-y) == ^(x-1) | ^(y-1) == ^((x-1) & (y-1)) == -(((x-1) & (y-1)) + 1)
-			x1 := new(uint256.Uint).Sub(x.abs, one)
-			y1 := new(uint256.Uint).Sub(y.abs, one)
+			x1 := uint256.Zero().Sub(x.abs, one)
+			y1 := uint256.Zero().Sub(y.abs, one)
 			z.abs = z.abs.Add(z.abs.And(x1, y1), one)
 			z.neg = true // z cannot be zero if x and y are negative
 			return z
@@ -29,7 +29,7 @@ func (z *Int) Or(x, y *Int) *Int {
 	}
 
 	// x | (-y) == x | ^(y-1) == ^((y-1) &^ x) == -(^((y-1) &^ x) + 1)
-	y1 := new(uint256.Uint).Sub(y.abs, one)
+	y1 := uint256.Zero().Sub(y.abs, one)
 	z.abs = z.abs.Add(z.abs.AndNot(y1, x.abs), one)
 	z.neg = true // z cannot be zero if one of x or y is negative
 
@@ -42,8 +42,8 @@ func (z *Int) And(x, y *Int) *Int {
 	if x.neg == y.neg {
 		if x.neg {
 			// (-x) & (-y) == ^(x-1) & ^(y-1) == ^((x-1) | (y-1)) == -(((x-1) | (y-1)) + 1)
-			x1 := new(uint256.Uint).Sub(x.abs, one)
-			y1 := new(uint256.Uint).Sub(y.abs, one)
+			x1 := uint256.Zero().Sub(x.abs, one)
+			y1 := uint256.Zero().Sub(y.abs, one)
 			z.abs = z.abs.Add(z.abs.Or(x1, y1), one)
 			z.neg = true // z cannot be zero if x and y are negative
 			return z
@@ -62,7 +62,7 @@ func (z *Int) And(x, y *Int) *Int {
 	}
 
 	// x & (-y) == x & ^(y-1) == x &^ (y-1)
-	y1 := new(uint256.Uint).Sub(y.abs, uint256.One())
+	y1 := uint256.Zero().Sub(y.abs, uint256.One())
 	z.abs = z.abs.AndNot(x.abs, y1)
 	z.neg = false
 	return z
@@ -79,10 +79,10 @@ func (z *Int) Rsh(x *Int, n uint) *Int {
 	}
 
 	// REF: https://cs.opensource.google/go/go/+/refs/tags/go1.22.1:src/math/big/int.go;l=1118-1126;drc=d57303e65f00b84b528ee682747dbe1fd3316d30
-	t := NewInt(0).Sub(FromUint256(x.abs), NewInt(1))
+	t := Zero().Sub(FromUint256(x.abs), One())
 	t = t.Rsh(t, n)
 
-	_tmp := t.Add(t, NewInt(1))
+	_tmp := t.Add(t, One())
 	z.abs = _tmp.Abs()
 	z.neg = true
 
