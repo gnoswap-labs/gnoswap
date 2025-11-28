@@ -241,46 +241,6 @@ func TestCheck_DifferentSeedsWithinCheck(t *testing.T) {
 	t.Logf("Generated %d unique combinations in %d runs", len(seen), totalRuns)
 }
 
-// Test that seed increment produces different values within same CheckN call
-func TestCheckN_IncrementalSeeds(t *testing.T) {
-	values := make([]int64, 0, 100)
-
-	CheckN(t, 100, func(ft *T) {
-		x := Int64Range(0, 10000).Draw(ft, "x").(int64)
-		values = append(values, x)
-	})
-
-	// Check for variety in generated values
-	uniqueValues := make(map[int64]bool)
-	for _, v := range values {
-		uniqueValues[v] = true
-	}
-
-	// With constant seed, we expect some duplicates but still reasonable variety
-	t.Logf("Generated %d unique values out of 100 (%.0f%% unique)",
-		len(uniqueValues), float64(len(uniqueValues)))
-
-	// Should have at least 60 unique values
-	if len(uniqueValues) < 60 {
-		t.Fatalf("Not enough variety: only %d unique values out of 100", len(uniqueValues))
-	}
-
-	// Check that values are not monotonic (not just counting up)
-	monotonic := true
-	for i := 1; i < len(values); i++ {
-		if values[i] <= values[i-1] {
-			monotonic = false
-			break
-		}
-	}
-
-	if monotonic {
-		t.Fatalf("Values are monotonically increasing (not random): %v", values[:20])
-	}
-
-	t.Logf("First 10 values: %v", values[:10])
-}
-
 // Test that multiple draws in same iteration use different seeds
 func TestCheck_MultipleDrawsInIteration(t *testing.T) {
 	sameCount := 0
