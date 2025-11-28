@@ -3,6 +3,8 @@ package int256
 import "testing"
 
 func TestAdd(t *testing.T) {
+	maxIntStr := MaxInt256().ToString()
+
 	tests := []struct {
 		x, y, want string
 	}{
@@ -18,8 +20,8 @@ func TestAdd(t *testing.T) {
 		{"-1", "-2", "-3"},
 		{"-1", "3", "2"},
 		{"3", "-1", "2"},
-		// OVERFLOW
-		{"115792089237316195423570985008687907853269984665640564039457584007913129639935", "1", "0"},
+		// BOUNDARY
+		{maxIntStr, "0", maxIntStr},
 	}
 
 	for _, tc := range tests {
@@ -167,6 +169,11 @@ func TestAddOverflow(t *testing.T) {
 }
 
 func TestSub(t *testing.T) {
+	maxInt := MaxInt256()
+	maxIntStr := maxInt.ToString()
+	maxIntMinusOneStr := new(Int).Sub(maxInt, One()).ToString()
+	minIntStr := MinInt256().ToString()
+
 	tests := []struct {
 		x, y, want string
 	}{
@@ -175,9 +182,10 @@ func TestSub(t *testing.T) {
 		{"-1", "1", "-2"},
 		{"1", "-1", "2"},
 		{"-1", "-1", "0"},
-		{"-115792089237316195423570985008687907853269984665640564039457584007913129639935", "-115792089237316195423570985008687907853269984665640564039457584007913129639935", "0"},
-		{"-115792089237316195423570985008687907853269984665640564039457584007913129639935", "0", "-115792089237316195423570985008687907853269984665640564039457584007913129639935"},
-		{x: "-115792089237316195423570985008687907853269984665640564039457584007913129639935", y: "1", want: "0"},
+		{minIntStr, minIntStr, "0"},
+		{minIntStr, "0", minIntStr},
+		{maxIntStr, maxIntStr, "0"},
+		{maxIntMinusOneStr, "-1", maxIntStr},
 	}
 
 	for _, tc := range tests {
@@ -492,6 +500,10 @@ func TestInt_MulOverflow(t *testing.T) {
 }
 
 func TestDiv(t *testing.T) {
+	maxInt := MaxInt256()
+	maxIntStr := maxInt.ToString()
+	maxIntHalfStr := new(Int).Rsh(maxInt, 1).ToString()
+
 	tests := []struct {
 		x, y, expected string
 	}{
@@ -505,7 +517,7 @@ func TestDiv(t *testing.T) {
 		{"-10", "3", "-3"},
 		{"7", "3", "2"},
 		{"-7", "3", "-2"},
-		{"115792089237316195423570985008687907853269984665640564039457584007913129639935", "2", "57896044618658097711785492504343953926634992332820282019728792003956564819967"}, // Max uint256 / 2
+		{maxIntStr, "2", maxIntHalfStr}, // Max int256 / 2
 	}
 
 	for _, tt := range tests {
@@ -516,7 +528,7 @@ func TestDiv(t *testing.T) {
 			if result.ToString() != tt.expected {
 				t.Errorf("Div(%s, %s) = %s, want %s", tt.x, tt.y, result.ToString(), tt.expected)
 			}
-			if result.abs.IsZero() && result.neg {
+			if result.IsZero() && result.IsNegative() {
 				t.Errorf("Div(%s, %s) resulted in negative zero", tt.x, tt.y)
 			}
 		})
