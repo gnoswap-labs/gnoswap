@@ -34,6 +34,12 @@ func One() *Int {
 	return &Int{abs: &uint256.Uint{1, 0, 0, 0}}
 }
 
+// Abs returns the absolute value of z.
+func (z *Int) Abs() *uint256.Uint {
+	return z.abs.Clone()
+}
+
+
 // Sign returns the sign of x.
 // It returns -1 if x < 0, 0 if x == 0, and +1 if x > 0.
 func (z *Int) Sign() int {

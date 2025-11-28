@@ -40,10 +40,6 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestAdd -insecure
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestAddOverflow -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'GAS USED:   9869996'
 
-# AddUint256
-gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestAddUint256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   4348107'
-
 # Sub
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestSub -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'GAS USED:   4382174'
@@ -75,18 +71,6 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestDiv -insecure
 # DivUint256
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestDivUint256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'GAS USED:   4373178'
-
-# Quo
-gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestQuo -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   4392997'
-
-# Rem
-gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestRem -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   4396670'
-
-# Mod
-gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestMod -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   4537413'
 
 # Neg
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestNeg -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
@@ -139,14 +123,6 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestIsNeg -insecu
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestAbs -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'GAS USED:   3625840'
 
-# AbsGt
-gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestAbsGt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   4327613'
-
-# AbsLt
-gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestAbsLt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   4325745'
-
 ### Conversion Methods ###
 # ToString
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestToString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
@@ -159,15 +135,6 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestClone -insecu
 # Sign
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestSign -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'GAS USED:   3628520'
-
-### Delta Operations ###
-# AddDelta
-gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestAddDelta -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   4329302'
-
-# AddDeltaOverflow
-gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestAddDeltaOverflow -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   7872829'
 
 -- gnomod.toml --
 module = "gno.land/r/gnoswap/int256gas"
@@ -222,13 +189,6 @@ func TestAddOverflow(cur realm) {
 	z.AddOverflow(x, y)
 }
 
-func TestAddUint256(cur realm) {
-	x := int256.NewInt(1000000)
-	y := uint256.NewUint(500000)
-	z := int256.Zero()
-	z.AddUint256(x, y)
-}
-
 func TestSub(cur realm) {
 	x := int256.NewInt(1000000)
 	y := int256.NewInt(300000)
@@ -241,13 +201,6 @@ func TestSubOverflow(cur realm) {
 	y := int256.NewInt(200)
 	z := int256.Zero()
 	z.SubOverflow(x, y)
-}
-
-func TestSubUint256(cur realm) {
-	x := int256.NewInt(1000000)
-	y := uint256.NewUint(300000)
-	z := int256.Zero()
-	z.SubUint256(x, y)
 }
 
 func TestMul(cur realm) {
@@ -264,13 +217,6 @@ func TestMulOverflow(cur realm) {
 	z.MulOverflow(x, y)
 }
 
-func TestMulUint256(cur realm) {
-	x := int256.NewInt(1000)
-	y := uint256.NewUint(2000)
-	z := int256.Zero()
-	z.MulUint256(x, y)
-}
-
 func TestDiv(cur realm) {
 	x := int256.NewInt(1000000)
 	y := int256.NewInt(3)
@@ -278,32 +224,11 @@ func TestDiv(cur realm) {
 	z.Div(x, y)
 }
 
-func TestDivUint256(cur realm) {
-	x := int256.NewInt(1000000)
-	y := uint256.NewUint(3)
-	z := int256.Zero()
-	z.DivUint256(x, y)
-}
-
 func TestQuo(cur realm) {
 	x := int256.NewInt(-1000000)
 	y := int256.NewInt(3)
 	z := int256.Zero()
 	z.Quo(x, y)
-}
-
-func TestRem(cur realm) {
-	x := int256.NewInt(-1000000)
-	y := int256.NewInt(7)
-	z := int256.Zero()
-	z.Rem(x, y)
-}
-
-func TestMod(cur realm) {
-	x := int256.NewInt(-1000000)
-	y := int256.NewInt(7)
-	z := int256.Zero()
-	z.Mod(x, y)
 }
 
 func TestNeg(cur realm) {
@@ -380,18 +305,6 @@ func TestAbs(cur realm) {
 	x.Abs()
 }
 
-func TestAbsGt(cur realm) {
-	x := int256.NewInt(-1000000)
-	y := uint256.NewUint(500000)
-	x.AbsGt(y)
-}
-
-func TestAbsLt(cur realm) {
-	x := int256.NewInt(-1000000)
-	y := uint256.NewUint(2000000)
-	x.AbsLt(y)
-}
-
 // Conversion Methods
 func TestToString(cur realm) {
 	x := int256.NewInt(-123456789)
@@ -406,19 +319,4 @@ func TestClone(cur realm) {
 func TestSign(cur realm) {
 	x := int256.NewInt(-12345)
 	x.Sign()
-}
-
-// Delta Operations
-func TestAddDelta(cur realm) {
-	z := uint256.NewUint(1000000)
-	x := uint256.NewUint(500000)
-	y := int256.NewInt(300000)
-	int256.AddDelta(z, x, y)
-}
-
-func TestAddDeltaOverflow(cur realm) {
-	z := uint256.NewUint(1000000)
-	x := uint256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935")
-	y := int256.NewInt(1)
-	int256.AddDeltaOverflow(z, x, y)
 }
