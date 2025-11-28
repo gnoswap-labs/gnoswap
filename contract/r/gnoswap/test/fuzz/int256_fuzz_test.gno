@@ -82,11 +82,14 @@ func TestFuzzInt256AddOverflow_RandomizedParams_Stateless(t *testing.T) {
 		var z i256.Int
 		_, overflow := z.AddOverflow(x, y)
 
-		if overflow && params.IsValid() {
+		switch {
+		case params.IsValid() && overflow:
 			panic("IsValid returned true but overflow occurred")
-		}
-		if !overflow && !params.IsValid() {
+		case !params.IsValid() && !overflow:
 			panic("expected overflow" + params.ToString())
+		case !params.IsValid() && overflow:
+			// expected overflow: signal error so fuzz harness aligns with IsValid=false
+			panic("overflow as expected " + params.ToString())
 		}
 	})
 }
@@ -165,11 +168,14 @@ func TestFuzzInt256SubOverflow_RandomizedParams_Stateless(t *testing.T) {
 		var z i256.Int
 		_, overflow := z.SubOverflow(x, y)
 
-		if overflow && params.IsValid() {
+		switch {
+		case params.IsValid() && overflow:
 			panic("IsValid returned true but overflow occurred")
-		}
-		if !overflow && !params.IsValid() {
-			panic("expected overflow" + params.ToString())
+		case !params.IsValid() && !overflow:
+			panic("expected underflow" + params.ToString())
+		case !params.IsValid() && overflow:
+			// expected underflow: signal error so fuzz harness aligns with IsValid=false
+			panic("underflow as expected " + params.ToString())
 		}
 	})
 }
@@ -248,11 +254,14 @@ func TestFuzzInt256MulOverflow_RandomizedParams_Stateless(t *testing.T) {
 		var z i256.Int
 		_, overflow := z.MulOverflow(x, y)
 
-		if overflow && params.IsValid() {
+		switch {
+		case params.IsValid() && overflow:
 			panic("IsValid returned true but overflow occurred")
-		}
-		if !overflow && !params.IsValid() {
+		case !params.IsValid() && !overflow:
 			panic("expected overflow" + params.ToString())
+		case !params.IsValid() && overflow:
+			// expected overflow: signal error so fuzz harness aligns with IsValid=false
+			panic("overflow as expected " + params.ToString())
 		}
 	})
 }

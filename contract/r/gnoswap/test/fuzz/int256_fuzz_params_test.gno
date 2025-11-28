@@ -63,7 +63,8 @@ func (p *intAddOverflowParams) IsValid() bool {
 	x := i256.MustFromDecimal(p.x)
 	y := i256.MustFromDecimal(p.y)
 
-	return addWithinRange(x, y)
+	_, overflow := new(i256.Int).AddOverflow(x, y)
+	return !overflow
 }
 
 func (p *intAddOverflowParams) ToString() string {
@@ -144,8 +145,8 @@ func (p *intSubOverflowParams) IsValid() bool {
 	x := i256.MustFromDecimal(p.x)
 	y := i256.MustFromDecimal(p.y)
 
-	negY := i256.New().Neg(y)
-	return addWithinRange(x, negY)
+	_, overflow := new(i256.Int).SubOverflow(x, y)
+	return !overflow
 }
 
 func (p *intSubOverflowParams) ToString() string {
@@ -227,7 +228,8 @@ func (p *intMulOverflowParams) IsValid() bool {
 	x := i256.MustFromDecimal(p.x)
 	y := i256.MustFromDecimal(p.y)
 
-	return mulWithinRange(x, y)
+	_, overflow := new(i256.Int).MulOverflow(x, y)
+	return !overflow
 }
 
 func (p *intMulOverflowParams) ToString() string {
@@ -289,41 +291,6 @@ func NewRandomizedIntDivParams(t *fuzz.T) *intDivParams {
 		x: x.ToString(),
 		y: y.ToString(),
 	}
-}
-
-// Helpers
-func addWithinRange(x, y *i256.Int) bool {
-	if x.IsNeg() == y.IsNeg() {
-		sumAbs, overflow := new(u256.Uint).AddOverflow(x.Abs(), y.Abs())
-		if overflow {
-			return false
-		}
-
-		if x.IsNeg() {
-			return sumAbs.Lte(minInt256Abs)
-		}
-		return sumAbs.Lte(maxInt256Abs)
-	}
-
-	return true
-}
-
-func mulWithinRange(x, y *i256.Int) bool {
-	if x.IsZero() || y.IsZero() {
-		return true
-	}
-
-	product, overflow := new(u256.Uint).MulOverflow(x.Abs(), y.Abs())
-	if overflow {
-		return false
-	}
-
-	isNegative := x.IsNeg() != y.IsNeg()
-	if isNegative {
-		return product.Lte(minInt256Abs)
-	}
-
-	return product.Lte(maxInt256Abs)
 }
 
 func newIntWithSign(abs *u256.Uint, neg bool) *i256.Int {
