@@ -104,11 +104,11 @@ func (t *TestRouter) DrySwapRoute(inputToken, outputToken, specifiedAmount, swap
 	return result[0].(string), result[1].(string), result[2].(bool)
 }
 
-func (t *TestRouter) SwapCallback(token0Path string, token1Path string, amount0Delta string, amount1Delta string, payer address) error {
+func (t *TestRouter) SwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, payer address) error {
 	result := t.ExecuteFn(
 		"SwapCallback",
 		func(args ...any) any {
-			return t.instance.SwapCallback(args[0].(string), args[1].(string), args[2].(string), args[3].(string), args[4].(address))
+			return t.instance.SwapCallback(args[0].(string), args[1].(string), args[2].(int64), args[3].(int64), args[4].(address))
 		},
 		token0Path, token1Path, amount0Delta, amount1Delta, payer,
 	)

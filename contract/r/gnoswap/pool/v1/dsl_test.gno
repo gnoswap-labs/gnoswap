@@ -164,7 +164,7 @@ func (e *PoolTestEnv) WhenSwapExecuted(params SwapParams) (*u256.Uint, *u256.Uin
 		e.t.Fatalf("Pool not found for %s/%s/%d", params.token0, params.token1, params.fee)
 	}
 
-	swapCallback := func(cur realm, amount0Delta string, amount1Delta string) error {
+	swapCallback := func(cur realm, amount0Delta int64, amount1Delta int64) error {
 		testing.SetRealm(adminRealm)
 		if params.zeroForOne {
 			common.SafeGRC20Transfer(cross, params.token0, e.currentAddress, math.MaxInt64)

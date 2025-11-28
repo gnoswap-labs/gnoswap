@@ -488,8 +488,8 @@ func TestSwapCallback(t *testing.T) {
 		setup        func(t *testing.T)
 		token0Path   string
 		token1Path   string
-		amount0Delta string
-		amount1Delta string
+		amount0Delta int64
+		amount1Delta int64
 		payer        address
 		callerRealm  runtime.Realm
 	}{
@@ -503,8 +503,8 @@ func TestSwapCallback(t *testing.T) {
 			},
 			token0Path:   "gno.land/r/gnoswap/test_token/token0",
 			token1Path:   "gno.land/r/gnoswap/test_token/token1",
-			amount0Delta: "1000000",
-			amount1Delta: "-1000000",
+			amount0Delta: 1000000,
+			amount1Delta: -1000000,
 			payer:        "gno1...",
 			callerRealm:  testing.NewCodeRealm("gno.land/r/gnoswap/router"),
 		},

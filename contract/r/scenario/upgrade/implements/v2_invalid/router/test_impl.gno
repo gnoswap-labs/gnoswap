@@ -71,7 +71,7 @@ func (t *TestRouter) DrySwapRoute(inputToken, outputToken, specifiedAmount, swap
 	return t.instance.DrySwapRoute(inputToken, outputToken, specifiedAmount, swapTypeStr, strRouteArr, quoteArr, tokenAmountLimit)
 }
 
-func (t *TestRouter) SwapCallback(token0Path string, token1Path string, amount0Delta string, amount1Delta string, payer address) error {
+func (t *TestRouter) SwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, payer address) error {
 	if !t.isActive("SwapCallback") {
 		panic("test implementation: SwapCallback not supported")
 	}

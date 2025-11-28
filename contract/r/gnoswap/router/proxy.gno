@@ -104,7 +104,7 @@ func DrySwapRoute(
 }
 
 // SwapCallback is called by pools to transfer tokens during a swap.
-func SwapCallback(token0Path string, token1Path string, amount0Delta string, amount1Delta string, payer address) error {
+func SwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, payer address) error {
 	return func(cur realm) error {
 		return getImplementation().SwapCallback(token0Path, token1Path, amount0Delta, amount1Delta, payer)
 	}(cross)

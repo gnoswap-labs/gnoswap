@@ -46,7 +46,7 @@ func (r *routerV1) swapInner(
 		amountSpecified.ToString(),
 		sqrtPriceLimitX96.ToString(),
 		data.payer,
-		func(cur realm, amount0Delta, amount1Delta string) error {
+		func(cur realm, amount0Delta, amount1Delta int64) error {
 			return router.SwapCallback(token0Path, token1Path, amount0Delta, amount1Delta, data.payer)
 		},
 	)

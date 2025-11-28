@@ -8,7 +8,7 @@ type IRouter interface {
 	ExactOutSingleSwapRoute(inputToken string, outputToken string, amountOut string, routeArr string, amountInMax string, sqrtPriceLimitX96 string, deadline int64, referrer string) (string, string)
 
 	DrySwapRoute(inputToken, outputToken, specifiedAmount, swapTypeStr, strRouteArr, quoteArr, tokenAmountLimit string) (string, string, bool)
-	SwapCallback(token0Path string, token1Path string, amount0Delta string, amount1Delta string, payer address) error
+	SwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, payer address) error
 
 	GetSwapFee() uint64
 	SetSwapFee(fee uint64)

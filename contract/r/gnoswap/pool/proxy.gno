@@ -199,7 +199,7 @@ func Swap(
 	amountSpecified string,
 	sqrtPriceLimitX96 string,
 	payer address,
-	swapCallback func(cur realm, amount0Delta, amount1Delta string) error,
+	swapCallback func(cur realm, amount0Delta, amount1Delta int64) error,
 ) (string, string) {
 	return getImplementation().Swap(
 		token0Path,
