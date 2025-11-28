@@ -48,10 +48,6 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestSub -insecure
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestSubOverflow -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'GAS USED:   4401211'
 
-# SubUint256
-gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestSubUint256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   4362770'
-
 # Mul
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestMul -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'GAS USED:   4428494'
@@ -60,17 +56,9 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestMul -insecure
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestMulOverflow -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'GAS USED:   10107046'
 
-# MulUint256
-gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestMulUint256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   4418751'
-
 # Div
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestDiv -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'GAS USED:   4386817'
-
-# DivUint256
-gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestDivUint256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
-# stdout 'GAS USED:   4373178'
 
 # Neg
 gnokey maketx call -pkgpath gno.land/r/gnoswap/int256gas -func TestNeg -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
@@ -222,13 +210,6 @@ func TestDiv(cur realm) {
 	y := int256.NewInt(3)
 	z := int256.Zero()
 	z.Div(x, y)
-}
-
-func TestQuo(cur realm) {
-	x := int256.NewInt(-1000000)
-	y := int256.NewInt(3)
-	z := int256.Zero()
-	z.Quo(x, y)
 }
 
 func TestNeg(cur realm) {
