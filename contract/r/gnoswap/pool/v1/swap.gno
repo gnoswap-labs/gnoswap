@@ -159,7 +159,9 @@ func (i *poolV1) Swap(
 		return "0", "0"
 	}
 
+	// Apply reentrancy lock to the actual pool state
 	slot0Start.SetUnlocked(false)
+	pool.SetSlot0(slot0Start)
 
 	// Call swap start hook if set
 	if i.store.HasSwapStartHook() {
@@ -172,7 +174,10 @@ func (i *poolV1) Swap(
 	}
 
 	defer func() {
-		slot0Start.SetUnlocked(true)
+		// Release reentrancy lock on the actual pool state
+		slot0End := pool.Slot0()
+		slot0End.SetUnlocked(true)
+		pool.SetSlot0(slot0End)
 
 		if i.store.HasSwapEndHook() {
 			swapEndHook := i.store.GetSwapEndHook()
