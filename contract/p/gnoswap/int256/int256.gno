@@ -5,6 +5,8 @@ import (
 	"errors"
 	"math"
 	"math/bits"
+
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 type Int [4]uint64
@@ -109,15 +111,15 @@ func (z *Int) Uint64() uint64 {
 	return z[0]
 }
 
-func (z *Int) Abs() *Int {
+func (z *Int) Abs() *u256.Uint {
 	if z.IsNegative() {
 		if z[3] == 0x8000000000000000 && z[2] == 0 && z[1] == 0 && z[0] == 0 {
 			panic("int256: overflow")
 		}
-		return z.Clone().Neg(z)
+		neg := new(Int).Neg(z)
+		return &u256.Uint{neg[0], neg[1], neg[2], neg[3]}
 	}
-
-	return z
+	return &u256.Uint{z[0], z[1], z[2], z[3]}
 }
 
 func (z *Int) Sign() int {

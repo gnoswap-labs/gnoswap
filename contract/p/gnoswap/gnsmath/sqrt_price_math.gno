@@ -261,7 +261,7 @@ func GetAmount0Delta(
 	}
 
 	if liquidity.IsNeg() {
-		u := getAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.AbsUint256(), false)
+		u := getAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), false)
 		if u.Gt(maxInt256) {
 			// if u > (2**255 - 1), cannot cast to int256
 			panic(errAmount0DeltaOverflow)
@@ -271,7 +271,7 @@ func GetAmount0Delta(
 		return i256.Zero().Neg(i256.FromUint256(u))
 	}
 
-	u := getAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.AbsUint256(), true)
+	u := getAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), true)
 	if u.Gt(maxInt256) {
 		// if u > (2**255 - 1), cannot cast to int256
 		panic(errAmount0DeltaOverflow)
@@ -293,7 +293,7 @@ func GetAmount1Delta(
 	}
 
 	if liquidity.IsNeg() {
-		u := getAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.AbsUint256(), false)
+		u := getAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), false)
 		if u.Gt(maxInt256) {
 			// if u > (2**255 - 1), cannot cast to int256
 			panic(errAmount1DeltaOverflow)
@@ -303,7 +303,7 @@ func GetAmount1Delta(
 		return i256.Zero().Neg(i256.FromUint256(u))
 	}
 
-	u := getAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.AbsUint256(), true)
+	u := getAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), true)
 	if u.Gt(maxInt256) {
 		// if u > (2**255 - 1), cannot cast to int256
 		panic(errAmount1DeltaOverflow)

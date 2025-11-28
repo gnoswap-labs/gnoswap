@@ -229,15 +229,3 @@ func FromUint256(x *u256.Uint) *Int {
 	return z
 }
 
-// AbsUint256 returns the absolute value of z as a uint256.
-// Panics if z is MinInt256 (which cannot be represented as a positive int256).
-func (z *Int) AbsUint256() *u256.Uint {
-	if z.IsNegative() {
-		if z.IsMinI256() {
-			panic("int256: overflow")
-		}
-		neg := new(Int).Neg(z)
-		return &u256.Uint{neg[0], neg[1], neg[2], neg[3]}
-	}
-	return &u256.Uint{z[0], z[1], z[2], z[3]}
-}
