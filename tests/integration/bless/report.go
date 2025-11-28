@@ -195,6 +195,12 @@ func (rg *ReportGenerator) parseGasOutput(lines []string) []GasValue {
 			continue
 		}
 
+		// Only parse lines that START with known stdout prefixes
+		// This filters out commented lines like "# stdout 'GAS USED:'"
+		if !isValidStdoutLine(trimmed) {
+			continue
+		}
+
 		// Parse GAS USED
 		if matches := gasUsedPattern.FindStringSubmatch(trimmed); len(matches) > 1 {
 			current.GasUsed, _ = strconv.ParseUint(matches[1], 10, 64)
@@ -217,6 +223,17 @@ func (rg *ReportGenerator) parseGasOutput(lines []string) []GasValue {
 	}
 
 	return values
+}
+
+// isValidStdoutLine checks if a line starts with a known stdout prefix.
+// Used to filter out commented lines like "# stdout 'GAS USED:'"
+func isValidStdoutLine(line string) bool {
+	for _, prefix := range defaultStdoutPrefixes {
+		if strings.HasPrefix(line, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 // buildReport creates a GasReport from parsed data

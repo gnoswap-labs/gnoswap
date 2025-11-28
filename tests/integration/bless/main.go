@@ -51,6 +51,7 @@ const (
 var defaultStdoutPrefixes = []string{
 	"GAS USED:",
 	"STORAGE DELTA:",
+	"STORAGE FEE:",
 	"TOTAL TX COST:",
 	"EVENTS:",
 }
