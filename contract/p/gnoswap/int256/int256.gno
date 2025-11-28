@@ -17,6 +17,46 @@ var (
 	ErrNegativeNum  = errors.New("negative number")
 )
 
+// Zero returns a new Int set to 0.
+func Zero() *Int {
+	return &Int{}
+}
+
+// One returns a new Int set to 1.
+func One() *Int {
+	return &Int{1, 0, 0, 0}
+}
+
+// MinInt256 returns a new Int set to the minimum value of int256.
+func MinInt256() *Int {
+	return &Int{0, 0, 0, 0x8000000000000000}
+}
+
+// MaxInt256 returns a new Int set to the maximum value of int256.
+func MaxInt256() *Int {
+	return &Int{0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x7fffffffffffffff}
+}
+
+// New returns a new Int set to 0.
+func New() *Int {
+	return &Int{}
+}
+
+// Neq returns true if z != x.
+func (z *Int) Neq(x *Int) bool {
+	return !z.Eq(x)
+}
+
+// Div is an alias for Quo for backward compatibility.
+func (z *Int) Div(x, y *Int) *Int {
+	return z.Quo(x, y)
+}
+
+// IsNeg is an alias for IsNegative for backward compatibility.
+func (z *Int) IsNeg() bool {
+	return z.IsNegative()
+}
+
 func NewInt(val int64) *Int {
 	z := &Int{}
 	z.SetInt64(val)
