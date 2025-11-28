@@ -54,6 +54,10 @@ func getNextPriceAmount0Add(
 func getNextPriceAmount0Remove(
 	currentSqrtPriceX96, liquidity, amountToRemove *u256.Uint,
 ) *u256.Uint {
+	if amountToRemove.IsZero() {
+		panic(errInvalidPoolSqrtPrice)
+	}
+
 	// liquidityShifted = liquidity << 96
 	liquidityShifted := u256.Zero().Lsh(liquidity, Q96_RESOLUTION)
 	// amountTimesSqrtPrice = amountToRemove * currentSqrtPriceX96

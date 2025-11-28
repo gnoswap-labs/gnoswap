@@ -207,6 +207,14 @@ func TestSqrtPriceMath_getNextPriceAmount0Remove(t *testing.T) {
 			shouldPanic:    true,
 			panicMsg:       errInvalidPoolSqrtPrice.Error(),
 		},
+		{
+			name:           "zero_amount_panics",
+			current:        u256.Zero(),
+			liquidity:      u256.NewUint(6416),
+			amountToRemove: u256.Zero(),
+			shouldPanic:    true,
+			panicMsg:       errInvalidPoolSqrtPrice.Error(),
+		},
 	}
 
 	for _, tt := range tests {
