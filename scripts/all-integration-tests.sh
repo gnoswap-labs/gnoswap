@@ -1,6 +1,6 @@
 #!/bin/bash
 # Run all integration tests individually
-# Usage: ./scripts/run-all-tests.sh [GNO_INTEGRATION_PATH] [CONTRACT_PATH]
+# Usage: ./scripts/all-integration-tests.sh [GNO_INTEGRATION_PATH] [CONTRACT_PATH] [--skip]
 
 set -e
 
@@ -14,6 +14,7 @@ NC='\033[0m' # No Color
 # Default paths (can be overridden by arguments)
 GNO_INTEGRATION_PATH="${1:-/app/gno/gno.land/pkg/integration}"
 CONTRACT_PATH="${2:-/app}"
+SKIP_FLAG="${3:-}"
 
 # Convert to absolute paths
 GNO_INTEGRATION_PATH="$(cd "$GNO_INTEGRATION_PATH" && pwd)"
@@ -27,7 +28,7 @@ cd "$GNO_INTEGRATION_PATH"
 tests=()
 while IFS= read -r test; do
     tests+=("$test")
-done < <(cd "$CONTRACT_PATH" && python3 setup.py --list-tests)
+done < <(cd "$CONTRACT_PATH" && python3 setup.py --list-tests $SKIP_FLAG)
 
 total=${#tests[@]}
 passed=0
