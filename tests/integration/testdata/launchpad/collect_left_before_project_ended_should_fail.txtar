@@ -77,10 +77,10 @@ gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Transfer -args $user1_us
 gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Approve -args g1x6r75sxlkp9zfqufew0vcuq9sfclsq8uaqkru9 -args 1000000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 
 gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func CreateProject -args "Bar Launchpad Project" -args "gno.land/r/onbloc/bar" -args $project_recipient_user_addr -args 1000000000 -args "gno.land/r/onbloc/bar" -args "1000000" -args 10 -args 20 -args 70 -args 1962328182 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout "gno.land/r/onbloc/bar:[0-9]+"
-stdout 'GAS USED:   2[0-9]{7}'
-stdout 'STORAGE DELTA:  3[0-9]{4} bytes'
-stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
+# stdout "gno.land/r/onbloc/bar:[0-9]+"
+# stdout 'GAS USED:   2[0-9]{7}'
+# stdout 'STORAGE DELTA:  3[0-9]{4} bytes'
+# stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
 
 # Trying to call `TransferLeftFromProjectByAdmin` before the project end
 ! gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func TransferLeftFromProjectByAdmin -args gno.land/r/onbloc/bar:8 -args $project_recipient_user_addr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1

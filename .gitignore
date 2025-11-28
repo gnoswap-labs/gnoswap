@@ -363,3 +363,4 @@ Gemfile.lock
 ## environment make files
 **/*.*.mk
 **/*/local.mk
+reports/
