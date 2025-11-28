@@ -46,7 +46,7 @@ func SwapMathComputeSwapStep(
 	// NEGATIVE == EXACT_OUT => Estimated AmountIn
 	exactIn := !amountRemaining.IsNeg()
 
-	amountRemainingAbs := amountRemaining.Abs()
+	amountRemainingAbs := amountRemaining.AbsUint256()
 	feeRateInPips := u256.NewUint(feePips)
 	withoutFeeRateInPips := u256.NewUint(denominator - feePips)
 

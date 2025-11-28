@@ -31,8 +31,8 @@ func (p *getAmount0DeltaParams) IsValid() bool {
 	}
 
 	// Check: Lsh overflow - liquidity << 96 must not overflow
-	// This happens when liquidity.Abs() > 2^160 (because 2^160 << 96 = 2^256 which overflows)
-	liquidityAbs := liquidity.Abs()
+	// This happens when liquidity.AbsUint256() > 2^160 (because 2^160 << 96 = 2^256 which overflows)
+	liquidityAbs := liquidity.AbsUint256()
 	max160 := u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 160), u256.One())
 	if liquidityAbs.Gt(max160) {
 		return false
@@ -116,7 +116,7 @@ func (p *getAmount1DeltaParams) IsValid() bool {
 	sqrtB := u256.MustFromDecimal(p.sqrtRatioBX96)
 	liquidity := i256.MustFromDecimal(p.liquidity)
 
-	liquidityAbs := liquidity.Abs()
+	liquidityAbs := liquidity.AbsUint256()
 
 	// getAmount1DeltaHelper will swap if sqrtA > sqrtB
 	if sqrtA.Gt(sqrtB) {

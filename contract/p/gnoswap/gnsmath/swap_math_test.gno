@@ -371,7 +371,7 @@ func TestSwapMath_FeeConsistency(t *testing.T) {
 
 			if is_partial_fill && !test.amount.IsNeg() { // exactIn mode
 				// For partial fills in exactIn: fee = amountRemaining - amountIn
-				expected_fee := new(u256.Uint).Sub(test.amount.Abs(), amount_in_num)
+				expected_fee := new(u256.Uint).Sub(test.amount.AbsUint256(), amount_in_num)
 				uassert.True(t, fee_amount_num.Eq(expected_fee),
 					ufmt.Sprintf("Partial fill fee should be %s, got %s", expected_fee.ToString(), fee_amount_num.ToString()))
 			} else {
@@ -659,9 +659,9 @@ func TestSwapMath_HighPrecision(t *testing.T) {
 			// For exact input, total consumption should not exceed input
 			if !test.amount.IsNeg() {
 				total := new(u256.Uint).Add(amountInNum, feeAmountNum)
-				uassert.True(t, total.Lte(test.amount.Abs()),
+				uassert.True(t, total.Lte(test.amount.AbsUint256()),
 					ufmt.Sprintf("Total consumption %s should not exceed input %s",
-						total.ToString(), test.amount.Abs().ToString()))
+						total.ToString(), test.amount.AbsUint256().ToString()))
 			}
 		})
 	}
@@ -724,7 +724,7 @@ func TestSwapMath_ExtremeFees(t *testing.T) {
 			}
 
 			// Fee should never exceed original amount
-			uassert.True(t, feeAmountNum.Lte(amount.Abs()),
+			uassert.True(t, feeAmountNum.Lte(amount.AbsUint256()),
 				"Fee should not exceed input amount")
 		})
 	}
@@ -803,7 +803,7 @@ func TestSwapMath_ConsistencyChecks(t *testing.T) {
 			// Conservation check: for exact input
 			if !test.amount.IsNeg() {
 				total := new(u256.Uint).Add(amountInNum, feeAmountNum)
-				uassert.True(t, total.Lte(test.amount.Abs()),
+				uassert.True(t, total.Lte(test.amount.AbsUint256()),
 					"amountIn + feeAmount should not exceed input")
 			}
 		})

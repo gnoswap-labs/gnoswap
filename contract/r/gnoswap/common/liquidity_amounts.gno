@@ -340,7 +340,7 @@ func LiquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 		panic("liquidity_math: x or y is nil")
 	}
 
-	yAbs := y.Abs()
+	yAbs := y.AbsUint256()
 
 	// Subtract or add based on the sign of y
 	if y.Lt(i256.Zero()) {

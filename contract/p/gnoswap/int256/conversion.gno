@@ -4,6 +4,8 @@ import (
 	"errors"
 	"math/bits"
 	"strconv"
+
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 const (
@@ -210,4 +212,32 @@ func (z *Int) fromDecimal(bs string) error {
 		remaining -= 19
 	}
 	return nil
+}
+
+// FromUint256 converts a uint256 to int256.
+// Panics if the uint256 value is greater than MaxInt256 (2^255 - 1).
+func FromUint256(x *u256.Uint) *Int {
+	// Check overflow: if MSB of x[3] is set, value > MaxInt256
+	if x[3] > 0x7fffffffffffffff {
+		panic("int256: overflow - uint256 value exceeds MaxInt256")
+	}
+	z := &Int{}
+	z[0] = x[0]
+	z[1] = x[1]
+	z[2] = x[2]
+	z[3] = x[3]
+	return z
+}
+
+// AbsUint256 returns the absolute value of z as a uint256.
+// Panics if z is MinInt256 (which cannot be represented as a positive int256).
+func (z *Int) AbsUint256() *u256.Uint {
+	if z.IsNegative() {
+		if z.IsMinI256() {
+			panic("int256: overflow")
+		}
+		neg := new(Int).Neg(z)
+		return &u256.Uint{neg[0], neg[1], neg[2], neg[3]}
+	}
+	return &u256.Uint{z[0], z[1], z[2], z[3]}
 }
