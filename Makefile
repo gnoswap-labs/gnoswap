@@ -76,6 +76,37 @@ integration-test-run:
 integration-test-build:
 	@docker-compose build
 
+# 📌 Gas report generation
+BLESS_DIR := $(PROJECT_ROOT)/tests/integration/bless
+GNO_INTEGRATION_DIR ?= $(HOME)/gno/gno.land/pkg/integration
+TXTAR_BLESS := $(shell go env GOPATH)/bin/txtar-bless
+
+.PHONY: bless-install
+bless-install:
+	@cd $(BLESS_DIR) && go build -o $(TXTAR_BLESS) .
+	@echo "✅ Installed txtar-bless to $(TXTAR_BLESS)"
+
+.PHONY: gas-report
+gas-report:
+	@if [ -z "$(TEST)" ]; then \
+		echo "❌ Error: Please specify a test using 'make gas-report TEST=<name>'"; \
+		echo "   Example: make gas-report TEST=uint256_gas_measurement"; \
+		exit 1; \
+	else \
+		$(TXTAR_BLESS) -test $(TEST) -integration-dir $(GNO_INTEGRATION_DIR) -report; \
+	fi
+
+.PHONY: gas-report-tsv
+gas-report-tsv:
+	@if [ -z "$(TEST)" ]; then \
+		echo "❌ Error: Please specify a test using 'make gas-report-tsv TEST=<name>'"; \
+		echo "   Example: make gas-report-tsv TEST=uint256_gas_measurement"; \
+		exit 1; \
+	else \
+		filename="$(TEST)_$$(git rev-parse --short HEAD).tsv"; \
+		$(TXTAR_BLESS) -test $(TEST) -integration-dir $(GNO_INTEGRATION_DIR) -report -tsv -output "$$filename"; \
+	fi
+
 # 📌 Help message
 .PHONY: help
 help:
@@ -94,3 +125,7 @@ help:
 	@echo "  make integration-test-list            List available integration tests"
 	@echo "  make integration-test-run TEST=<name> Run specific integration test"
 	@echo "  make integration-test-build           Build Docker image for integration tests"
+	@echo ""
+	@echo "  make bless-install                    Install bless tool to GOPATH/bin"
+	@echo "  make gas-report TEST=<name>           Generate gas measurement report (markdown)"
+	@echo "  make gas-report-tsv TEST=<name>       Generate gas measurement report (TSV file)"

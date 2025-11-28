@@ -9,43 +9,43 @@ import (
 
 // Or sets z to the bitwise OR of x and y and returns z.
 func (z *Uint) Or(x, y *Uint) *Uint {
-	z.arr[0] = x.arr[0] | y.arr[0]
-	z.arr[1] = x.arr[1] | y.arr[1]
-	z.arr[2] = x.arr[2] | y.arr[2]
-	z.arr[3] = x.arr[3] | y.arr[3]
+	z[0] = x[0] | y[0]
+	z[1] = x[1] | y[1]
+	z[2] = x[2] | y[2]
+	z[3] = x[3] | y[3]
 	return z
 }
 
 // And sets z to the bitwise AND of x and y and returns z.
 func (z *Uint) And(x, y *Uint) *Uint {
-	z.arr[0] = x.arr[0] & y.arr[0]
-	z.arr[1] = x.arr[1] & y.arr[1]
-	z.arr[2] = x.arr[2] & y.arr[2]
-	z.arr[3] = x.arr[3] & y.arr[3]
+	z[0] = x[0] & y[0]
+	z[1] = x[1] & y[1]
+	z[2] = x[2] & y[2]
+	z[3] = x[3] & y[3]
 	return z
 }
 
 // Not sets z to the bitwise NOT of x and returns z.
 func (z *Uint) Not(x *Uint) *Uint {
-	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = ^x.arr[3], ^x.arr[2], ^x.arr[1], ^x.arr[0]
+	z[3], z[2], z[1], z[0] = ^x[3], ^x[2], ^x[1], ^x[0]
 	return z
 }
 
 // AndNot sets z to x AND NOT y and returns z.
 func (z *Uint) AndNot(x, y *Uint) *Uint {
-	z.arr[0] = x.arr[0] &^ y.arr[0]
-	z.arr[1] = x.arr[1] &^ y.arr[1]
-	z.arr[2] = x.arr[2] &^ y.arr[2]
-	z.arr[3] = x.arr[3] &^ y.arr[3]
+	z[0] = x[0] &^ y[0]
+	z[1] = x[1] &^ y[1]
+	z[2] = x[2] &^ y[2]
+	z[3] = x[3] &^ y[3]
 	return z
 }
 
 // Xor sets z to the bitwise XOR of x and y and returns z.
 func (z *Uint) Xor(x, y *Uint) *Uint {
-	z.arr[0] = x.arr[0] ^ y.arr[0]
-	z.arr[1] = x.arr[1] ^ y.arr[1]
-	z.arr[2] = x.arr[2] ^ y.arr[2]
-	z.arr[3] = x.arr[3] ^ y.arr[3]
+	z[0] = x[0] ^ y[0]
+	z[1] = x[1] ^ y[1]
+	z[2] = x[2] ^ y[2]
+	z[3] = x[3] ^ y[3]
 	return z
 }
 
@@ -68,13 +68,13 @@ func (z *Uint) Lsh(x *Uint, n uint) *Uint {
 	// headroom check
 	top := -1
 	for i := 3; i >= 0; i-- {
-		if x.arr[i] != 0 {
+		if x[i] != 0 {
 			top = i
 			break
 		}
 	}
 
-	usedBits := bits.Len64(x.arr[top])  // 1..64
+	usedBits := bits.Len64(x[top])  // 1..64
 	msbIndex := top*64 + (usedBits - 1) // 0..255
 	headroom := 255 - msbIndex          // 0..255
 	if n > uint(headroom) {
@@ -122,19 +122,19 @@ func (z *Uint) lsh(x *Uint, n uint) *Uint {
 	}
 
 	// remaining shifts
-	a = z.arr[0] >> (64 - n)
-	z.arr[0] = z.arr[0] << n
+	a = z[0] >> (64 - n)
+	z[0] = z[0] << n
 
 sh64:
-	b = z.arr[1] >> (64 - n)
-	z.arr[1] = (z.arr[1] << n) | a
+	b = z[1] >> (64 - n)
+	z[1] = (z[1] << n) | a
 
 sh128:
-	a = z.arr[2] >> (64 - n)
-	z.arr[2] = (z.arr[2] << n) | b
+	a = z[2] >> (64 - n)
+	z[2] = (z[2] << n) | b
 
 sh192:
-	z.arr[3] = (z.arr[3] << n) | a
+	z[3] = (z[3] << n) | a
 
 	return z
 }
@@ -180,19 +180,19 @@ func (z *Uint) Rsh(x *Uint, n uint) *Uint {
 	}
 
 	// remaining shifts
-	a = z.arr[3] << (64 - n)
-	z.arr[3] = z.arr[3] >> n
+	a = z[3] << (64 - n)
+	z[3] = z[3] >> n
 
 sh64:
-	b = z.arr[2] << (64 - n)
-	z.arr[2] = (z.arr[2] >> n) | a
+	b = z[2] << (64 - n)
+	z[2] = (z[2] >> n) | a
 
 sh128:
-	a = z.arr[1] << (64 - n)
-	z.arr[1] = (z.arr[1] >> n) | b
+	a = z[1] << (64 - n)
+	z[1] = (z[1] >> n) | b
 
 sh192:
-	z.arr[0] = (z.arr[0] >> n) | a
+	z[0] = (z[0] >> n) | a
 
 	return z
 }
@@ -219,7 +219,7 @@ func (z *Uint) SRsh(x *Uint, n uint) *Uint {
 			return z.SetAllOne()
 		}
 	}
-	var a uint64 = MaxUint64 << (64 - n%64)
+	var a uint64 = MAX_UINT64 << (64 - n%64)
 	// Big swaps first
 	switch {
 	case n > 192:
@@ -242,61 +242,61 @@ func (z *Uint) SRsh(x *Uint, n uint) *Uint {
 	}
 
 	// remaining shifts
-	z.arr[3], a = (z.arr[3]>>n)|a, z.arr[3]<<(64-n)
+	z[3], a = (z[3]>>n)|a, z[3]<<(64-n)
 
 sh64:
-	z.arr[2], a = (z.arr[2]>>n)|a, z.arr[2]<<(64-n)
+	z[2], a = (z[2]>>n)|a, z[2]<<(64-n)
 
 sh128:
-	z.arr[1], a = (z.arr[1]>>n)|a, z.arr[1]<<(64-n)
+	z[1], a = (z[1]>>n)|a, z[1]<<(64-n)
 
 sh192:
-	z.arr[0] = (z.arr[0] >> n) | a
+	z[0] = (z[0] >> n) | a
 
 	return z
 }
 
 func (z *Uint) lsh64(x *Uint) *Uint {
-	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = x.arr[2], x.arr[1], x.arr[0], 0
+	z[3], z[2], z[1], z[0] = x[2], x[1], x[0], 0
 	return z
 }
 
 func (z *Uint) lsh128(x *Uint) *Uint {
-	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = x.arr[1], x.arr[0], 0, 0
+	z[3], z[2], z[1], z[0] = x[1], x[0], 0, 0
 	return z
 }
 
 func (z *Uint) lsh192(x *Uint) *Uint {
-	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = x.arr[0], 0, 0, 0
+	z[3], z[2], z[1], z[0] = x[0], 0, 0, 0
 	return z
 }
 
 func (z *Uint) rsh64(x *Uint) *Uint {
-	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, x.arr[3], x.arr[2], x.arr[1]
+	z[3], z[2], z[1], z[0] = 0, x[3], x[2], x[1]
 	return z
 }
 
 func (z *Uint) rsh128(x *Uint) *Uint {
-	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, 0, x.arr[3], x.arr[2]
+	z[3], z[2], z[1], z[0] = 0, 0, x[3], x[2]
 	return z
 }
 
 func (z *Uint) rsh192(x *Uint) *Uint {
-	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, 0, 0, x.arr[3]
+	z[3], z[2], z[1], z[0] = 0, 0, 0, x[3]
 	return z
 }
 
 func (z *Uint) srsh64(x *Uint) *Uint {
-	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = MaxUint64, x.arr[3], x.arr[2], x.arr[1]
+	z[3], z[2], z[1], z[0] = MAX_UINT64, x[3], x[2], x[1]
 	return z
 }
 
 func (z *Uint) srsh128(x *Uint) *Uint {
-	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = MaxUint64, MaxUint64, x.arr[3], x.arr[2]
+	z[3], z[2], z[1], z[0] = MAX_UINT64, MAX_UINT64, x[3], x[2]
 	return z
 }
 
 func (z *Uint) srsh192(x *Uint) *Uint {
-	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = MaxUint64, MaxUint64, MaxUint64, x.arr[3]
+	z[3], z[2], z[1], z[0] = MAX_UINT64, MAX_UINT64, MAX_UINT64, x[3]
 	return z
 }

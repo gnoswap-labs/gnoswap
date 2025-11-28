@@ -1,0 +1,478 @@
+loadpkg gno.land/p/nt/ufmt
+
+## start a new node
+gnoland start
+
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/gnoswap/strconcatgas -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
+
+# Call Empty (baseline)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   638314'
+
+### String Concatenation with + operator ###
+# Plus operator (2 strings)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func PlusOperator_2Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   638760'
+
+# Plus operator (5 strings)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func PlusOperator_5Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   639111'
+
+# Plus operator (10 strings)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func PlusOperator_10Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   639807'
+
+# Plus operator (20 strings)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func PlusOperator_20Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   641529'
+
+### strings.Builder ###
+# Builder (2 strings)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Builder_2Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   1983474'
+
+# Builder (5 strings)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Builder_5Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2014376'
+
+# Builder (10 strings)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Builder_10Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2065998'
+
+# Builder (20 strings)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Builder_20Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2169597'
+
+### ufmt.Sprintf ###
+# Sprintf (2 strings)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Sprintf_2Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   1143228'
+
+# Sprintf (5 strings)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Sprintf_5Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   1213335'
+
+# Sprintf (10 strings)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Sprintf_10Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   1330152'
+
+### strings.Join ###
+# Join (2 strings)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Join_2Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2032555'
+
+# Join (5 strings)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Join_5Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2104502'
+
+# Join (10 strings)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Join_10Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2224439'
+
+# Join (20 strings)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Join_20Strings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2464283'
+
+### Plus operator in loop (worst case) ###
+# Plus in loop (10 iterations)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func PlusInLoop_10Iterations -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   644463'
+
+# Plus in loop (50 iterations)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func PlusInLoop_50Iterations -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   668083'
+
+### Builder in loop ###
+# Builder in loop (10 iterations)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func BuilderInLoop_10Iterations -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2068899'
+
+# Builder in loop (50 iterations)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func BuilderInLoop_50Iterations -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2493879'
+
+### Long strings ###
+# Plus operator (long strings)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func PlusOperator_LongStrings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   639525'
+
+# Builder (long strings)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Builder_LongStrings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   1995236'
+
+# Join (long strings)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Join_LongStrings -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2057604'
+
+### Number to string concatenation ###
+# Plus with Itoa (1 number)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func PlusWithItoa -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2338434'
+
+# Sprintf with number (1 number)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func SprintfWithNumber -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3209925'
+
+# Builder with Itoa (1 number)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func BuilderWithItoa -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3693421'
+
+### Multiple numbers ###
+# Plus with Itoa (3 numbers)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func PlusWithItoa_3Numbers -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2378014'
+
+# Sprintf with 3 numbers
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func SprintfWith3Numbers -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3243120'
+
+# Plus with Itoa (5 numbers)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func PlusWithItoa_5Numbers -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2425690'
+
+# Sprintf with 5 numbers
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func SprintfWith5Numbers -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3396178'
+
+### uint64 numbers ###
+# Plus with FormatUint
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func PlusWithFormatUint -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2345776'
+
+# Sprintf with uint64
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func SprintfWithUint64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3217295'
+
+### Number to String Conversion Only ###
+# strconv.Itoa (small int)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Itoa_Small -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2320437'
+
+# strconv.Itoa (large int)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Itoa_Large -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2347324'
+
+# strconv.FormatInt (base 10)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func FormatInt_Base10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2340965'
+
+# strconv.FormatUint (base 10)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func FormatUint_Base10 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2339883'
+
+# strconv.FormatUint (max uint64)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func FormatUint_MaxUint64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2345313'
+
+# ufmt.Sprintf %d (small int)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Sprintf_SmallInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2800739'
+
+# ufmt.Sprintf %d (large int)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Sprintf_LargeInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2827676'
+
+# ufmt.Sprintf %d (uint64)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Sprintf_Uint64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2825770'
+
+# strconv.FormatInt (base 16 hex)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func FormatInt_Base16 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3040247'
+
+# strconv.FormatBool
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func FormatBool_True -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2314740'
+
+# ufmt.Sprintf %t (bool)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/strconcatgas -func Sprintf_Bool -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   1120782'
+
+-- gnomod.toml --
+module = "gno.land/r/gnoswap/strconcatgas"
+gno = "0.9"
+-- main.gno --
+package strconcatgas
+
+import (
+	"strconv"
+	"strings"
+
+	"gno.land/p/nt/ufmt"
+)
+
+// Test strings
+var (
+	s1  = "Hello"
+	s2  = "World"
+	s3  = "Gno"
+	s4  = "Swap"
+	s5  = "Test"
+	s6  = "String"
+	s7  = "Concat"
+	s8  = "Gas"
+	s9  = "Measure"
+	s10 = "Done"
+
+	longStr1 = "This is a very long string that contains many characters to test concatenation performance with longer strings in Gno blockchain"
+	longStr2 = "Another long string with similar length to test how different concatenation methods handle larger data in smart contracts"
+	longStr3 = "Third long string for testing purposes, measuring gas consumption across various string manipulation approaches"
+)
+
+func Empty(cur realm) {
+	return
+}
+
+// Plus operator tests
+func PlusOperator_2Strings(cur realm) {
+	_ = s1 + s2
+}
+
+func PlusOperator_5Strings(cur realm) {
+	_ = s1 + s2 + s3 + s4 + s5
+}
+
+func PlusOperator_10Strings(cur realm) {
+	_ = s1 + s2 + s3 + s4 + s5 + s6 + s7 + s8 + s9 + s10
+}
+
+func PlusOperator_20Strings(cur realm) {
+	_ = s1 + s2 + s3 + s4 + s5 + s6 + s7 + s8 + s9 + s10 +
+		s1 + s2 + s3 + s4 + s5 + s6 + s7 + s8 + s9 + s10
+}
+
+// strings.Builder tests
+func Builder_2Strings(cur realm) {
+	var b strings.Builder
+	b.WriteString(s1)
+	b.WriteString(s2)
+	_ = b.String()
+}
+
+func Builder_5Strings(cur realm) {
+	var b strings.Builder
+	b.WriteString(s1)
+	b.WriteString(s2)
+	b.WriteString(s3)
+	b.WriteString(s4)
+	b.WriteString(s5)
+	_ = b.String()
+}
+
+func Builder_10Strings(cur realm) {
+	var b strings.Builder
+	b.WriteString(s1)
+	b.WriteString(s2)
+	b.WriteString(s3)
+	b.WriteString(s4)
+	b.WriteString(s5)
+	b.WriteString(s6)
+	b.WriteString(s7)
+	b.WriteString(s8)
+	b.WriteString(s9)
+	b.WriteString(s10)
+	_ = b.String()
+}
+
+func Builder_20Strings(cur realm) {
+	var b strings.Builder
+	b.WriteString(s1)
+	b.WriteString(s2)
+	b.WriteString(s3)
+	b.WriteString(s4)
+	b.WriteString(s5)
+	b.WriteString(s6)
+	b.WriteString(s7)
+	b.WriteString(s8)
+	b.WriteString(s9)
+	b.WriteString(s10)
+	b.WriteString(s1)
+	b.WriteString(s2)
+	b.WriteString(s3)
+	b.WriteString(s4)
+	b.WriteString(s5)
+	b.WriteString(s6)
+	b.WriteString(s7)
+	b.WriteString(s8)
+	b.WriteString(s9)
+	b.WriteString(s10)
+	_ = b.String()
+}
+
+// ufmt.Sprintf tests
+func Sprintf_2Strings(cur realm) {
+	_ = ufmt.Sprintf("%s%s", s1, s2)
+}
+
+func Sprintf_5Strings(cur realm) {
+	_ = ufmt.Sprintf("%s%s%s%s%s", s1, s2, s3, s4, s5)
+}
+
+func Sprintf_10Strings(cur realm) {
+	_ = ufmt.Sprintf("%s%s%s%s%s%s%s%s%s%s", s1, s2, s3, s4, s5, s6, s7, s8, s9, s10)
+}
+
+// strings.Join tests
+func Join_2Strings(cur realm) {
+	_ = strings.Join([]string{s1, s2}, "")
+}
+
+func Join_5Strings(cur realm) {
+	_ = strings.Join([]string{s1, s2, s3, s4, s5}, "")
+}
+
+func Join_10Strings(cur realm) {
+	_ = strings.Join([]string{s1, s2, s3, s4, s5, s6, s7, s8, s9, s10}, "")
+}
+
+func Join_20Strings(cur realm) {
+	_ = strings.Join([]string{s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10}, "")
+}
+
+// Loop tests (worst case for + operator)
+func PlusInLoop_10Iterations(cur realm) {
+	result := ""
+	for i := 0; i < 10; i++ {
+		result = result + s1
+	}
+	_ = result
+}
+
+func PlusInLoop_50Iterations(cur realm) {
+	result := ""
+	for i := 0; i < 50; i++ {
+		result = result + s1
+	}
+	_ = result
+}
+
+func BuilderInLoop_10Iterations(cur realm) {
+	var b strings.Builder
+	for i := 0; i < 10; i++ {
+		b.WriteString(s1)
+	}
+	_ = b.String()
+}
+
+func BuilderInLoop_50Iterations(cur realm) {
+	var b strings.Builder
+	for i := 0; i < 50; i++ {
+		b.WriteString(s1)
+	}
+	_ = b.String()
+}
+
+// Long string tests
+func PlusOperator_LongStrings(cur realm) {
+	_ = longStr1 + longStr2 + longStr3
+}
+
+func Builder_LongStrings(cur realm) {
+	var b strings.Builder
+	b.WriteString(longStr1)
+	b.WriteString(longStr2)
+	b.WriteString(longStr3)
+	_ = b.String()
+}
+
+func Join_LongStrings(cur realm) {
+	_ = strings.Join([]string{longStr1, longStr2, longStr3}, "")
+}
+
+// Number to string concatenation
+func PlusWithItoa(cur realm) {
+	num := 12345678
+	_ = "Value: " + strconv.Itoa(num) + " units"
+}
+
+func SprintfWithNumber(cur realm) {
+	num := 12345678
+	_ = ufmt.Sprintf("Value: %d units", num)
+}
+
+func BuilderWithItoa(cur realm) {
+	num := 12345678
+	var b strings.Builder
+	b.WriteString("Value: ")
+	b.WriteString(strconv.Itoa(num))
+	b.WriteString(" units")
+	_ = b.String()
+}
+
+// Multiple numbers
+func PlusWithItoa_3Numbers(cur realm) {
+	n1, n2, n3 := 123, 456, 789
+	_ = "a=" + strconv.Itoa(n1) + " b=" + strconv.Itoa(n2) + " c=" + strconv.Itoa(n3)
+}
+
+func SprintfWith3Numbers(cur realm) {
+	n1, n2, n3 := 123, 456, 789
+	_ = ufmt.Sprintf("a=%d b=%d c=%d", n1, n2, n3)
+}
+
+func PlusWithItoa_5Numbers(cur realm) {
+	n1, n2, n3, n4, n5 := 123, 456, 789, 101112, 131415
+	_ = "a=" + strconv.Itoa(n1) + " b=" + strconv.Itoa(n2) + " c=" + strconv.Itoa(n3) + " d=" + strconv.Itoa(n4) + " e=" + strconv.Itoa(n5)
+}
+
+func SprintfWith5Numbers(cur realm) {
+	n1, n2, n3, n4, n5 := 123, 456, 789, 101112, 131415
+	_ = ufmt.Sprintf("a=%d b=%d c=%d d=%d e=%d", n1, n2, n3, n4, n5)
+}
+
+// uint64 numbers
+func PlusWithFormatUint(cur realm) {
+	num := uint64(18446744073709551615)
+	_ = "Value: " + strconv.FormatUint(num, 10) + " units"
+}
+
+func SprintfWithUint64(cur realm) {
+	num := uint64(18446744073709551615)
+	_ = ufmt.Sprintf("Value: %d units", num)
+}
+
+// Number to String Conversion Only (no concatenation)
+func Itoa_Small(cur realm) {
+	_ = strconv.Itoa(42)
+}
+
+func Itoa_Large(cur realm) {
+	_ = strconv.Itoa(9223372036854775807) // max int64
+}
+
+func FormatInt_Base10(cur realm) {
+	_ = strconv.FormatInt(1234567890123, 10)
+}
+
+func FormatUint_Base10(cur realm) {
+	_ = strconv.FormatUint(1234567890123, 10)
+}
+
+func FormatUint_MaxUint64(cur realm) {
+	_ = strconv.FormatUint(18446744073709551615, 10) // max uint64
+}
+
+func Sprintf_SmallInt(cur realm) {
+	_ = ufmt.Sprintf("%d", 42)
+}
+
+func Sprintf_LargeInt(cur realm) {
+	_ = ufmt.Sprintf("%d", 9223372036854775807)
+}
+
+func Sprintf_Uint64(cur realm) {
+	num := uint64(18446744073709551615)
+	_ = ufmt.Sprintf("%d", num)
+}
+
+func FormatInt_Base16(cur realm) {
+	_ = strconv.FormatInt(1234567890123, 16)
+}
+
+func FormatBool_True(cur realm) {
+	_ = strconv.FormatBool(true)
+}
+
+func Sprintf_Bool(cur realm) {
+	_ = ufmt.Sprintf("%t", true)
+}
