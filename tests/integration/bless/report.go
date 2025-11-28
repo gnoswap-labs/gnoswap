@@ -228,7 +228,7 @@ func (rg *ReportGenerator) parseGasOutput(lines []string) []GasValue {
 // isValidStdoutLine checks if a line starts with a known stdout prefix.
 // Used to filter out commented lines like "# stdout 'GAS USED:'"
 func isValidStdoutLine(line string) bool {
-	for _, prefix := range defaultStdoutPrefixes {
+	for prefix := range defaultStdoutPrefixes {
 		if strings.HasPrefix(line, prefix) {
 			return true
 		}
