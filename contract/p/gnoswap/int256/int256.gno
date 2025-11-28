@@ -35,11 +35,6 @@ func MaxInt256() *Int {
 	return &Int{0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x7fffffffffffffff}
 }
 
-// Div sets z to the quotient of x/y, truncating toward zero (same as Quo).
-func (z *Int) Div(x, y *Int) *Int {
-	return z.Quo(x, y)
-}
-
 func NewInt(val int64) *Int {
 	z := &Int{}
 	z.SetInt64(val)
@@ -318,7 +313,7 @@ func (z *Int) SetAllBitsOne() *Int {
 	return z
 }
 
-func (z *Int) Quo(x, y *Int) *Int {
+func (z *Int) Div(x, y *Int) *Int {
 	if x.Sign() > 0 {
 		if y.Sign() > 0 {
 			return z.uquo(x, y)
@@ -621,7 +616,7 @@ func (z *Int) Sqrt(x *Int) *Int {
 	)
 	z1 = z1.Lsh(z1, uint(x.BitLen()+1)>>1)
 	for {
-		z2 = z2.Quo(x, z1)
+		z2 = z2.Div(x, z1)
 		z2 = z2.Add(z2, z1)
 		{
 			a := z2[3] << 63
