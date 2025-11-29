@@ -4,8 +4,6 @@ import (
 	"testing"
 
 	"gno.land/p/nt/ufmt"
-
-	"gno.land/p/gnoswap/uint256"
 )
 
 func TestSetInt64(t *testing.T) {
@@ -77,26 +75,18 @@ func TestSetInt64MinValueOverflow(t *testing.T) {
 				t.Errorf("SetInt64(%d) = %s, want %s", tc.x, got, tc.want)
 			}
 
-			// Verify the internal representation is correct
+			// Verify sign is correct
 			if tc.x < 0 {
-				if !z.neg {
-					t.Errorf("SetInt64(%d): expected neg=true, got neg=false", tc.x)
-				}
-				// Check magnitude for MinInt64
-				if tc.x == minInt64 {
-					expectedMag := uint64(1 << 63) // 2^63
-					gotMag := z.abs.Uint64()
-					if gotMag != expectedMag {
-						t.Errorf("SetInt64(%d): magnitude = %d, want %d", tc.x, gotMag, expectedMag)
-					}
+				if !z.IsNeg() {
+					t.Errorf("SetInt64(%d): expected IsNegative()=true, got false", tc.x)
 				}
 			} else if tc.x > 0 {
-				if z.neg {
-					t.Errorf("SetInt64(%d): expected neg=false, got neg=true", tc.x)
+				if z.IsNeg() {
+					t.Errorf("SetInt64(%d): expected IsNegative()=false, got true", tc.x)
 				}
 			} else { // tc.x == 0
-				if z.neg {
-					t.Errorf("SetInt64(0): expected neg=false (no -0), got neg=true")
+				if z.IsNeg() {
+					t.Errorf("SetInt64(0): expected IsNegative()=false (no -0), got true")
 				}
 			}
 		})
@@ -135,10 +125,11 @@ func TestUint64(t *testing.T) {
 		{"18446744073709551615", 18446744073709551615},
 		{"18446744073709551616", 0},
 		{"18446744073709551617", 1},
-		{"-1", 1},
-		{"-18446744073709551615", 18446744073709551615},
+		// In two's complement, -1 = 0xFFFF...FFFF, so z[0] = max uint64
+		{"-1", 18446744073709551615},
+		{"-18446744073709551615", 1},
 		{"-18446744073709551616", 0},
-		{"-18446744073709551617", 1},
+		{"-18446744073709551617", 18446744073709551615},
 	}
 
 	for _, tc := range tests {
@@ -208,54 +199,6 @@ func TestInt64EdgeCases(t *testing.T) {
 			description: "SetInt64(MaxInt64) should round-trip correctly",
 		},
 		{
-			name: "Magnitude 2^63 with negative sign",
-			setupInt: func() *Int {
-				// Create Int with magnitude = 2^63 and neg = true
-				z := new(Int)
-				z.abs = uint256.NewUint(1 << 63)
-				z.neg = true
-				return z
-			},
-			want:        minInt64,
-			description: "Magnitude 2^63 with neg=true should return MinInt64",
-		},
-		{
-			name: "Magnitude 2^63 with positive sign",
-			setupInt: func() *Int {
-				// Create Int with magnitude = 2^63 and neg = false
-				z := new(Int)
-				z.abs = uint256.NewUint(1 << 63)
-				z.neg = false
-				return z
-			},
-			want:        minInt64, // Wraps around due to two's complement
-			description: "Magnitude 2^63 with neg=false wraps to MinInt64",
-		},
-		{
-			name: "Large positive value wrapping",
-			setupInt: func() *Int {
-				// 2^64 - 1 (max uint64)
-				z := new(Int)
-				z.abs = uint256.NewUint(18446744073709551615)
-				z.neg = false
-				return z
-			},
-			want:        -1,
-			description: "Max uint64 wraps to -1 in int64",
-		},
-		{
-			name: "Negative large value",
-			setupInt: func() *Int {
-				// -(2^64 - 1)
-				z := new(Int)
-				z.abs = uint256.NewUint(18446744073709551615)
-				z.neg = true
-				return z
-			},
-			want:        1,
-			description: "-(Max uint64) becomes 1 due to two's complement",
-		},
-		{
 			name: "Zero",
 			setupInt: func() *Int {
 				return Zero()
@@ -264,15 +207,21 @@ func TestInt64EdgeCases(t *testing.T) {
 			description: "Zero should return 0",
 		},
 		{
-			name: "Negative zero prevention",
+			name: "Large positive int256",
 			setupInt: func() *Int {
-				z := new(Int)
-				z.abs = uint256.NewUint(0)
-				z.neg = true // This should be normalized to false
-				return z
+				// Value larger than int64 max
+				return MustFromDecimal("18446744073709551615")
 			},
-			want:        0,
-			description: "Negative zero should return 0",
+			want:        -1, // Truncated to int64
+			description: "Large positive wraps in int64",
+		},
+		{
+			name: "Large negative int256",
+			setupInt: func() *Int {
+				return MustFromDecimal("-18446744073709551615")
+			},
+			want:        1, // Truncated to int64
+			description: "Large negative wraps in int64",
 		},
 	}
 
@@ -336,100 +285,6 @@ func TestNeg(t *testing.T) {
 	}
 }
 
-func TestInt_NegOverflow(t *testing.T) {
-	maxInt256 := MaxInt256()
-	minInt256 := MinInt256()
-
-	negMaxInt256 := New().Neg(maxInt256)
-
-	tests := []struct {
-		name         string
-		x            *Int
-		wantResult   string
-		wantOverflow bool
-	}{
-		{
-			name:         "negate zero",
-			x:            Zero(),
-			wantResult:   "0",
-			wantOverflow: false,
-		},
-		{
-			name:         "negate positive",
-			x:            NewInt(100),
-			wantResult:   "-100",
-			wantOverflow: false,
-		},
-		{
-			name:         "negate negative",
-			x:            NewInt(-100),
-			wantResult:   "100",
-			wantOverflow: false,
-		},
-		{
-			name:         "negate max_int256",
-			x:            maxInt256,
-			wantResult:   negMaxInt256.ToString(),
-			wantOverflow: false,
-		},
-		{
-			name:         "negate min_int256",
-			x:            minInt256,
-			wantResult:   minInt256.ToString(), // must preserve the original value
-			wantOverflow: true,
-		},
-		{
-			name:         "negate (min_int256 + 1)",
-			x:            new(Int).Add(minInt256, One()),
-			wantResult:   new(Int).Sub(maxInt256, Zero()).ToString(),
-			wantOverflow: false,
-		},
-		{
-			name:         "negate (max_int256 - 1)",
-			x:            MustFromDecimal("57896044618658097711785492504343953926634992332820282019728792003956564819966"), // max_int256 - 1
-			wantResult:   "-57896044618658097711785492504343953926634992332820282019728792003956564819966",
-			wantOverflow: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			z := new(Int)
-			gotResult, gotOverflow := z.NegOverflow(tt.x)
-
-			if gotOverflow != tt.wantOverflow {
-				t.Errorf("overflow = %v, want %v", gotOverflow, tt.wantOverflow)
-				return
-			}
-
-			if gotResult == nil {
-				t.Error("unexpected nil result")
-				return
-			}
-
-			if gotResult.ToString() != tt.wantResult {
-				// use almost equal comparison to handle the precision issue
-				diff := new(Int).Sub(gotResult, MustFromDecimal(tt.wantResult))
-				if diff.Abs().Cmp(uint256.NewUint(1)) > 0 {
-					t.Errorf("result = %v, want %v", gotResult.ToString(), tt.wantResult)
-				}
-			}
-
-			// double negation test (only if there is no overflow)
-			if !tt.wantOverflow {
-				doubleNegResult, doubleNegOverflow := new(Int).NegOverflow(gotResult)
-				if doubleNegOverflow {
-					t.Error("unexpected overflow in double negation")
-				}
-				if doubleNegResult.ToString() != tt.x.ToString() {
-					t.Errorf("double negation result = %v, want %v",
-						doubleNegResult.ToString(), tt.x.ToString())
-				}
-			}
-		})
-	}
-}
-
 func TestSet(t *testing.T) {
 	tests := []struct {
 		x    string
@@ -449,29 +304,6 @@ func TestSet(t *testing.T) {
 		got := z.ToString()
 		if got != tc.want {
 			t.Errorf("set(%s) = %s, want %s", tc.x, got, tc.want)
-		}
-	}
-}
-
-func TestSetUint256(t *testing.T) {
-	tests := []struct {
-		x    string
-		want string
-	}{
-		{"0", "0"},
-		{"1", "1"},
-		{"9223372036854775807", "9223372036854775807"},
-		{"18446744073709551615", "18446744073709551615"},
-	}
-
-	for _, tc := range tests {
-		got := New()
-
-		z := uint256.MustFromDecimal(tc.x)
-		got.SetUint256(z)
-
-		if got.ToString() != tc.want {
-			t.Errorf("SetUint256(%s) = %s, want %s", tc.x, got.ToString(), tc.want)
 		}
 	}
 }
@@ -515,16 +347,16 @@ func TestToString(t *testing.T) {
 		{
 			name: "Large positive number",
 			setup: func() *Int {
-				return MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935")
+				return MustFromDecimal("57896044618658097711785492504343953926634992332820282019728792003956564819967")
 			},
-			expected: "115792089237316195423570985008687907853269984665640564039457584007913129639935",
+			expected: "57896044618658097711785492504343953926634992332820282019728792003956564819967",
 		},
 		{
 			name: "Large negative number",
 			setup: func() *Int {
-				return MustFromDecimal("-115792089237316195423570985008687907853269984665640564039457584007913129639935")
+				return MustFromDecimal("-57896044618658097711785492504343953926634992332820282019728792003956564819968")
 			},
-			expected: "-115792089237316195423570985008687907853269984665640564039457584007913129639935",
+			expected: "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
 		},
 	}
 

@@ -1092,7 +1092,7 @@ func TestSqrtPriceMath_GetAmount0Delta(t *testing.T) {
 			name:          "negative_liquidity",
 			sqrtRatioAX96: u256.MustFromDecimal("1000000"),
 			sqrtRatioBX96: u256.MustFromDecimal("2000000"),
-			liquidity:     i256.New().Neg(i256.FromUint256(u256.MustFromDecimal("5000000"))),
+			liquidity:     i256.Zero().Neg(i256.FromUint256(u256.MustFromDecimal("5000000"))),
 			expected:      "-198070406285660843983859875840",
 		},
 		// Zero liquidity
@@ -1160,14 +1160,14 @@ func TestSqrtPriceMath_GetAmount1Delta(t *testing.T) {
 			name:          "negative_liquidity",
 			sqrtRatioAX96: u256.MustFromDecimal("1000000"),
 			sqrtRatioBX96: u256.MustFromDecimal("2000000"),
-			liquidity:     i256.New().Neg(i256.FromUint256(u256.MustFromDecimal("5000000"))),
+			liquidity:     i256.Zero().Neg(i256.FromUint256(u256.MustFromDecimal("5000000"))),
 			expected:      "0",
 		},
 		{
 			name:          "negative_liquidity_large",
 			sqrtRatioAX96: encodePriceSqrt("1", "1"),
 			sqrtRatioBX96: encodePriceSqrt("4", "1"),
-			liquidity:     i256.New().Neg(i256.FromUint256(u256.MustFromDecimal("1000000000000000000"))),
+			liquidity:     i256.Zero().Neg(i256.FromUint256(u256.MustFromDecimal("1000000000000000000"))),
 			expected:      "-1000000000000000000",
 		},
 		{

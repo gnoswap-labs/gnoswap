@@ -4,42 +4,29 @@ import (
 	"testing"
 
 	"gno.land/p/nt/uassert"
-
-	"gno.land/p/gnoswap/uint256"
 )
 
 func TestOr(t *testing.T) {
 	tests := []struct {
 		name       string
-		x, y, want Int
+		x, y, want string
 	}{
-		{
-			name: "all zeroes",
-			x:    Int{abs: uint256.Zero(), neg: false},
-			y:    Int{abs: uint256.Zero(), neg: false},
-			want: Int{abs: uint256.Zero(), neg: false},
-		},
-		{
-			name: "all ones",
-			x:    Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-			y:    Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-			want: Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-		},
-		{
-			name: "mixed",
-			x:    Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-			y:    Int{abs: uint256.NewUint(0), neg: false},
-			want: Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-		},
+		{"all zeroes", "0", "0", "0"},
+		{"all ones", "-1", "-1", "-1"},
+		{"mixed", "-1", "0", "-1"},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got := New()
-			got.Or(&tc.x, &tc.y)
+			x := MustFromDecimal(tc.x)
+			y := MustFromDecimal(tc.y)
+			want := MustFromDecimal(tc.want)
 
-			if got.Neq(&tc.want) {
-				t.Errorf("Or(%v, %v) = %v, want %v", tc.x, tc.y, got, tc.want)
+			got := Zero()
+			got.Or(x, y)
+
+			if got.Neq(want) {
+				t.Errorf("Or(%s, %s) = %s, want %s", tc.x, tc.y, got.ToString(), tc.want)
 			}
 		})
 	}
@@ -48,157 +35,223 @@ func TestOr(t *testing.T) {
 func TestAnd(t *testing.T) {
 	tests := []struct {
 		name       string
-		x, y, want Int
+		x, y, want string
 	}{
-		{
-			name: "all zeroes",
-			x:    Int{abs: uint256.Zero(), neg: false},
-			y:    Int{abs: uint256.Zero(), neg: false},
-			want: Int{abs: uint256.Zero(), neg: false},
-		},
-		{
-			name: "all ones",
-			x:    Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-			y:    Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-			want: Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-		},
-		{
-			name: "mixed",
-			x:    Int{abs: uint256.Zero(), neg: false},
-			y:    Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-			want: Int{abs: uint256.Zero(), neg: false},
-		},
-		{
-			name: "mixed 2",
-			x:    Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-			y:    Int{abs: uint256.Zero(), neg: false},
-			want: Int{abs: uint256.Zero(), neg: false},
-		},
-		{
-			name: "mixed 3",
-			x:    Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-			y:    Int{abs: uint256.Zero(), neg: false},
-			want: Int{abs: uint256.Zero(), neg: false},
-		},
-		{
-			name: "one operand zero",
-			x:    Int{abs: uint256.Zero(), neg: false},
-			y:    Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-			want: Int{abs: uint256.Zero(), neg: false},
-		},
-		{
-			name: "one operand all ones",
-			x:    Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-			y:    Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-			want: Int{abs: uint256.NewUint(0).SetAllOne(), neg: false},
-		},
+		{"all zeroes", "0", "0", "0"},
+		{"all ones", "-1", "-1", "-1"},
+		{"mixed", "0", "-1", "0"},
+		{"mixed 2", "-1", "0", "0"},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got := New()
-			got.And(&tc.x, &tc.y)
+			x := MustFromDecimal(tc.x)
+			y := MustFromDecimal(tc.y)
+			want := MustFromDecimal(tc.want)
 
-			if got.Neq(&tc.want) {
-				t.Errorf("And(%v, %v) = %v, want %v", tc.x, tc.y, got, tc.want)
+			got := Zero()
+			got.And(x, y)
+
+			if got.Neq(want) {
+				t.Errorf("And(%s, %s) = %s, want %s", tc.x, tc.y, got.ToString(), tc.want)
 			}
+		})
+	}
+}
+
+func TestLsh(t *testing.T) {
+	tests := []struct {
+		name     string
+		x        string
+		n        uint
+		expected string
+	}{
+		{
+			name:     "n is equal 0",
+			x:        "100",
+			n:        0,
+			expected: "100",
+		},
+		{
+			name:     "n is greater than or equal 256",
+			x:        "-4125871947195612497219427349",
+			n:        256,
+			expected: "0",
+		},
+		{
+			name:     "x is non-neg & n is smaller than 256 and greater than or equal 192",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			n:        200,
+			expected: "-1606938044258990275541962092341162602522202993782792835301376",
+		},
+		{
+			name:     "x is non-neg & n is smaller than 192 and greater than or equal 128",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			n:        150,
+			expected: "-1427247692705959881058285969449495136382746624",
+		},
+		{
+			name:     "x is non-neg & n is smaller than 128 and greater than or equal 64",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			n:        100,
+			expected: "-1267650600228229401496703205376",
+		},
+		{
+			name:     "x is non-neg & n is smaller than 64",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			n:        32,
+			expected: "-4294967296",
+		},
+		{
+			name:     "x is neg & n is smaller than 256 and greater than or equal 192",
+			x:        "-11111",
+			n:        200,
+			expected: "-17854688609761640951546740808002657676624197463920611193033588736",
+		},
+		{
+			name:     "x is neg & n is smaller than 192 and greater than or equal 128",
+			x:        "-11111",
+			n:        150,
+			expected: "-15858149113655920238438615406553340460348697739264",
+		},
+		{
+			name:     "x is neg & n is smaller than 128 and greater than or equal 64",
+			x:        "-11111",
+			n:        100,
+			expected: "-14084865819135856880029869314932736",
+		},
+		{
+			name:     "x is neg & n is smaller than 64",
+			x:        "-11111",
+			n:        32,
+			expected: "-47721381625856",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			x := MustFromDecimal(tt.x)
+			z := new(Int).Lsh(x, tt.n)
+			uassert.Equal(t, tt.expected, z.ToString())
 		})
 	}
 }
 
 func TestRsh(t *testing.T) {
 	tests := []struct {
-		x    string
-		n    uint
-		want string
+		name     string
+		x        string
+		n        uint
+		expected string
 	}{
-		{"1024", 0, "1024"},
-		{"1024", 1, "512"},
-		{"1024", 2, "256"},
-		{"1024", 10, "1"},
-		{"1024", 11, "0"},
-		{"18446744073709551615", 0, "18446744073709551615"},
-		{"18446744073709551615", 1, "9223372036854775807"},
-		{"18446744073709551615", 62, "3"},
-		{"18446744073709551615", 63, "1"},
-		{"18446744073709551615", 64, "0"},
-		{"115792089237316195423570985008687907853269984665640564039457584007913129639935", 0, "115792089237316195423570985008687907853269984665640564039457584007913129639935"},
-		{"115792089237316195423570985008687907853269984665640564039457584007913129639935", 1, "57896044618658097711785492504343953926634992332820282019728792003956564819967"},
-		{"115792089237316195423570985008687907853269984665640564039457584007913129639935", 128, "340282366920938463463374607431768211455"},
-		{"115792089237316195423570985008687907853269984665640564039457584007913129639935", 255, "1"},
-		{"115792089237316195423570985008687907853269984665640564039457584007913129639935", 256, "0"},
-		{"-1024", 0, "-1024"},
-		{"-1024", 1, "-512"},
-		{"-1024", 2, "-256"},
-		{"-1024", 10, "-1"},
-		{"-1024", 10, "-1"},
-		{"-9223372036854775808", 0, "-9223372036854775808"},
-		{"-9223372036854775808", 1, "-4611686018427387904"},
-		{"-9223372036854775808", 62, "-2"},
-		{"-9223372036854775808", 63, "-1"},
-		{"-9223372036854775808", 64, "-1"},
-		{"-57896044618658097711785492504343953926634992332820282019728792003956564819968", 0, "-57896044618658097711785492504343953926634992332820282019728792003956564819968"},
-		{"-57896044618658097711785492504343953926634992332820282019728792003956564819968", 1, "-28948022309329048855892746252171976963317496166410141009864396001978282409984"},
-		{"-57896044618658097711785492504343953926634992332820282019728792003956564819968", 253, "-4"},
-		{"-57896044618658097711785492504343953926634992332820282019728792003956564819968", 254, "-2"},
-		{"-57896044618658097711785492504343953926634992332820282019728792003956564819968", 255, "-1"},
-		{"-57896044618658097711785492504343953926634992332820282019728792003956564819968", 256, "-1"},
+		{
+			name:     "n is equal 0",
+			x:        "100",
+			n:        0,
+			expected: "100",
+		},
+		{
+			name:     "x is non-neg & n is greater than or equal 255",
+			x:        "431247391574329147932",
+			n:        255,
+			expected: "0",
+		},
+		{
+			name:     "x is non-neg & n is smaller than 256 and greater than or equal 192",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			n:        200,
+			expected: "36028797018963967",
+		},
+		{
+			name:     "x is non-neg & n is smaller than 192 and greater than or equal 128",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			n:        150,
+			expected: "40564819207303340847894502572031",
+		},
+		{
+			name:     "x is non-neg & n is smaller than 128 and greater than or equal 64",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			n:        100,
+			expected: "45671926166590716193865151022383844364247891967",
+		},
+		{
+			name:     "x is non-neg & n is smaller than 64",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			n:        32,
+			expected: "13479973333575319897333507543509815336818572211270286240551805124607",
+		},
+		{
+			name:     "x is neg & n is smaller than 256 and greater than or equal 192",
+			x:        "-11111",
+			n:        200,
+			expected: "-1",
+		},
+		{
+			name:     "x is neg & n is smaller than 192 and greater than or equal 128",
+			x:        "-11111",
+			n:        150,
+			expected: "-1",
+		},
+		{
+			name:     "x is neg & n is smaller than 128 and greater than or equal 64",
+			x:        "-11111",
+			n:        100,
+			expected: "-1",
+		},
+		{
+			name:     "x is neg & n is smaller than 64",
+			x:        "-11111",
+			n:        2,
+			expected: "-2778",
+		},
+		{
+			name:     "x is neg & n is greater than or equal 255",
+			x:        "-11111",
+			n:        255,
+			expected: "-1",
+		},
 	}
 
-	for _, tc := range tests {
-		x, err := FromDecimal(tc.x)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		got := New()
-		got.Rsh(x, tc.n)
-
-		if got.ToString() != tc.want {
-			t.Errorf("Rsh(%s, %d) = %v, want %v", tc.x, tc.n, got.ToString(), tc.want)
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			x := MustFromDecimal(tt.x)
+			z := new(Int).Rsh(x, tt.n)
+			uassert.Equal(t, tt.expected, z.ToString())
+		})
 	}
 }
 
-func TestLsh(t *testing.T) {
-	tests := []struct {
-		x    string
-		n    uint
-		want string
-		expectPanic bool
-	}{
-		{"1", 0, "1", false},
-		{"1", 1, "2", false},
-		{"1", 2, "4", false},
-		{"2", 0, "2", false},
-		{"2", 1, "4", false},
-		{"2", 2, "8", false},
-		{"-2", 0, "-2", false},
-		{"-4", 0, "-4", false},
-		{"-8", 0, "-8", false},
-		{"-1", 255, "-57896044618658097711785492504343953926634992332820282019728792003956564819968", false},
-		{"-1", 256, "0", true},
-		{"-2", 255, "0", true},
-		{"-4", 254, "0", true},
-		{"-8", 253, "0", true},
+func TestLsh_NoPanic(t *testing.T) {
+	x := MustFromDecimal("-12345678901234567890")
+
+	for n := uint(0); n < 300; n++ {
+		uassert.NotPanics(t, func() {
+			_ = new(Int).Lsh(x, n)
+		})
 	}
+}
 
-	for _, tc := range tests {
-		x, err := FromDecimal(tc.x)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
+func TestRsh_NoPanic(t *testing.T) {
+	x := MustFromDecimal("-12345678901234567890")
 
-		got := New()
-		if tc.expectPanic {
-			uassert.PanicsWithMessage(t, "Lsh: overflow", func() {
-				got.Lsh(x, tc.n)
-			})
-		} else {
-			got.Lsh(x, tc.n)
-			uassert.Equal(t, tc.want, got.ToString())
-		}
+	for n := uint(0); n < 300; n++ {
+		uassert.NotPanics(t, func() {
+			_ = new(Int).Rsh(x, n)
+		})
+	}
+}
+
+func TestRsh_SignExtendProperty(t *testing.T) {
+	// For all negative integers, Rsh should satisfy:
+	//  - Rsh(x, n) <= 0
+	//  - Rsh(x, n+1) == Rsh(Rsh(x,n), 1)
+	x := MustFromDecimal("-11111")
+
+	for n := uint(0); n < 255; n++ {
+		z := new(Int).Rsh(x, n)
+		zz := new(Int).Rsh(z, 1)
+		z2 := new(Int).Rsh(x, n+1)
+
+		uassert.Equal(t, z2.ToString(), zz.ToString())
 	}
 }
