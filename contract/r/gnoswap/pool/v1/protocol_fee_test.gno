@@ -579,17 +579,14 @@ func TestProtocolFeesDisabledWhenNotConfigured(t *testing.T) {
 		adminAddr,
 	)
 
-	swapCallback := func(cur realm, amount0Delta string, amount1Delta string) error {
+	swapCallback := func(cur realm, amount0Delta int64, amount1Delta int64) error {
 		testing.SetRealm(adminRealm)
 
-		amount0Int64, _ := strconv.ParseInt(amount0Delta, 10, 64)
-		amount1Int64, _ := strconv.ParseInt(amount1Delta, 10, 64)
-
-		if amount0Int64 > 0 {
-			common.SafeGRC20Transfer(cross, barPath, poolAddr, amount0Int64)
+		if amount0Delta > 0 {
+			common.SafeGRC20Transfer(cross, barPath, poolAddr, amount0Delta)
 		}
-		if amount1Int64 > 0 {
-			common.SafeGRC20Transfer(cross, fooPath, poolAddr, amount1Int64)
+		if amount1Delta > 0 {
+			common.SafeGRC20Transfer(cross, fooPath, poolAddr, amount1Delta)
 		}
 
 		return nil

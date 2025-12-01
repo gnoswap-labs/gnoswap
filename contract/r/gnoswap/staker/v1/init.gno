@@ -19,7 +19,7 @@ const (
 	defaultUnstakingFee = int64(100) // 1%
 )
 
-var defaultAllowedTokens = []string{GNS_PATH, GNOT}
+var defaultAllowedTokens = []string{GNS_PATH, GNOT_DENOM}
 
 func init() {
 	registerStakerV1()
@@ -35,9 +35,7 @@ func registerStakerV1() {
 		instance := NewStakerV1(stakerStore, poolAccessor, emissionAccessor, nftAccessor)
 
 		instance.setupSwapHooks()
-		emissionAccessor.SetOnDistributionPctChangeCallback(func(emissionAmountPerSecond int64) {
-			instance.emissionCacheUpdateHook(emissionAmountPerSecond)
-		})
+		emissionAccessor.SetOnDistributionPctChangeCallback(instance.emissionCacheUpdateHook)
 
 		return instance
 	})

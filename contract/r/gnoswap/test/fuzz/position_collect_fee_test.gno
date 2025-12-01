@@ -2,7 +2,6 @@ package fuzz
 
 import (
 	"math"
-	"strconv"
 	"testing"
 
 	"gno.land/p/gnoswap/fuzz"
@@ -193,28 +192,20 @@ func generateFeesWithSwap(ft *fuzz.T, adminAddr, poolAddr address, positionId ui
 	common.SafeGRC20Approve(cross, token1Path, poolAddr, math.MaxInt64)
 
 	// Swap callback function
-	swapCallback := func(cur realm, amount0Delta, amount1Delta string) error {
-		delta0, err0 := strconv.ParseInt(amount0Delta, 10, 64)
-		delta1, err1 := strconv.ParseInt(amount1Delta, 10, 64)
-
-		if err0 != nil || err1 != nil {
-			panic(ufmt.Sprintf("failed to parse delta: amount0Delta=%s, amount1Delta=%s, err0=%v, err1=%v",
-				amount0Delta, amount1Delta, err0, err1))
-		}
-
+	swapCallback := func(cur realm, amount0Delta, amount1Delta int64) error {
 		// Pay token0 if delta0 > 0
-		if delta0 > 0 {
+		if amount0Delta > 0 {
 			func(cur realm) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				common.SafeGRC20Transfer(cross, token0Path, poolAddr, delta0)
+				common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
 			}(cross)
 		}
 
 		// Pay token1 if delta1 > 0
-		if delta1 > 0 {
+		if amount1Delta > 0 {
 			func(cur realm) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				common.SafeGRC20Transfer(cross, token1Path, poolAddr, delta1)
+				common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
 			}(cross)
 		}
 

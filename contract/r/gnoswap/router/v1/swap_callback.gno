@@ -1,10 +1,12 @@
 package v1
 
 import (
-	i256 "gno.land/p/gnoswap/int256"
+	"chain/runtime"
+
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/halt"
 )
 
 // swapCallback implements the pool's SwapCallback interface.
@@ -15,26 +17,30 @@ import (
 // 1. Flash swaps (receive tokens before paying)
 // 2. Just-in-time token transfers
 // 3. Complex multi-hop swaps without intermediate transfers
+//
+// Parameters follow the Uniswap V3 convention:
+//   - Positive delta: tokens the pool must receive (input token)
+//   - Negative delta: tokens the pool has sent (output token)
 func (r *routerV1) SwapCallback(
 	token0Path, token1Path string,
-	amount0Delta, amount1Delta string,
+	amount0Delta, amount1Delta int64,
 	payer address,
 ) error {
+	halt.AssertIsNotHaltedRouter()
+
+	caller := runtime.PreviousRealm().Address()
+	assertIsRouterV1(caller)
+
 	var tokenToPay string
-
-	amountToPay := i256.Zero()
-
-	amount0DeltaI256 := i256.MustFromDecimal(amount0Delta)
-	amount1DeltaI256 := i256.MustFromDecimal(amount1Delta)
+	var amountToPay int64
 
 	// amount0Delta > 0 means pool wants token0
 	// amount1Delta > 0 means pool wants token1
-	if amount0DeltaI256.Gt(i256.Zero()) {
-		amountToPay = amount0DeltaI256
+	if amount0Delta > 0 {
+		amountToPay = amount0Delta
 		tokenToPay = token0Path
-		// Token0 is needed - this will be determined from context
-	} else if amount1DeltaI256.Gt(i256.Zero()) {
-		amountToPay = amount1DeltaI256
+	} else if amount1Delta > 0 {
+		amountToPay = amount1Delta
 		tokenToPay = token1Path
 	} else {
 		return nil
@@ -42,7 +48,7 @@ func (r *routerV1) SwapCallback(
 
 	// Transfer tokens from router to pool
 	// The router should already have the tokens from the user
-	r.transferToPool(tokenToPay, amountToPay.Abs(), payer)
+	r.transferToPool(tokenToPay, u256.NewUintFromInt64(amountToPay), payer)
 
 	return nil
 }

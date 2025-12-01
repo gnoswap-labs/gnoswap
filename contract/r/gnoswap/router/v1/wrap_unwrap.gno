@@ -13,7 +13,6 @@ import (
 const (
 	UGNOT_MIN_DEPOSIT_TO_WRAP int64 = 1000
 	WUGNOT_PATH                     = "gno.land/r/gnoland/wugnot"
-	GNOT                            = "gnot"
 	GNOT_DENOM                      = "ugnot"
 )
 
@@ -47,7 +46,7 @@ func wrapWithTransfer(toAddress address, amount int64) error {
 		)
 	}
 
-	// wrap gnot to wugnot
+	// wrap ugnot to wugnot
 	wugnotAddr := chain.PackageAddress(WUGNOT_PATH)
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	banker_.SendCoins(currentRealmAddr, wugnotAddr, sentCoins)
@@ -87,10 +86,10 @@ func unwrapWithTransfer(toAddress address, amount int64) error {
 		return nil
 	}
 
-	// unwrap wugnot to gnot
+	// unwrap wugnot to ugnot
 	wugnot.Withdraw(cross, amount)
 
-	// send gnot to user
+	// send ugnot to user
 	sendCoins := chain.Coins{{Denom: GNOT_DENOM, Amount: amount}}
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 	currentRealmAddr := runtime.CurrentRealm().Address()

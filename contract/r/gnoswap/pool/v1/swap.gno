@@ -132,7 +132,7 @@ func (i *poolV1) Swap(
 	amountSpecified string,
 	sqrtPriceLimitX96 string,
 	payer address,
-	swapCallback func(cur realm, amount0Delta, amount1Delta string) error,
+	swapCallback func(cur realm, amount0Delta, amount1Delta int64) error,
 ) (string, string) {
 	halt.AssertIsNotHaltedPool()
 
@@ -159,7 +159,9 @@ func (i *poolV1) Swap(
 		return "0", "0"
 	}
 
+	// Apply reentrancy lock to the actual pool state
 	slot0Start.SetUnlocked(false)
+	pool.SetSlot0(slot0Start)
 
 	// Call swap start hook if set
 	if i.store.HasSwapStartHook() {
@@ -172,7 +174,10 @@ func (i *poolV1) Swap(
 	}
 
 	defer func() {
-		slot0Start.SetUnlocked(true)
+		// Release reentrancy lock on the actual pool state
+		slot0End := pool.Slot0()
+		slot0End.SetUnlocked(true)
+		pool.SetSlot0(slot0End)
 
 		if i.store.HasSwapEndHook() {
 			swapEndHook := i.store.GetSwapEndHook()
@@ -233,17 +238,17 @@ func (i *poolV1) Swap(
 		// receive token0 from swap callback
 		// send token1 to recipient (output)
 		if result.Amount1.IsNeg() {
-			i.safeSwapCallback(pool, token0Path, result.Amount0.Abs(), zeroForOne, swapCallback)
-
 			i.safeTransfer(pool, recipient, token1Path, result.Amount1.Abs(), false)
+
+			i.safeSwapCallback(pool, token0Path, result.Amount0, result.Amount1, zeroForOne, swapCallback)
 		}
 	} else {
 		// receive token1 from swap callback
 		// send token0 to recipient (output)
 		if result.Amount0.IsNeg() {
-			i.safeSwapCallback(pool, token1Path, result.Amount1.Abs(), zeroForOne, swapCallback)
-
 			i.safeTransfer(pool, recipient, token0Path, result.Amount0.Abs(), true)
+
+			i.safeSwapCallback(pool, token1Path, result.Amount1, result.Amount0, zeroForOne, swapCallback)
 		}
 	}
 
