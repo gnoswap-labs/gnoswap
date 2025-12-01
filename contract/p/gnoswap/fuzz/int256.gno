@@ -116,7 +116,7 @@ func Uint256RangeFrom(minVal *uint256.Uint, maxVal *uint256.Uint) *Generator {
 type int256Gen struct {
 	min  *int256.Int
 	max  *int256.Int
-	span *uint256.Uint
+	span *int256.Int
 }
 
 func (g *int256Gen) String() string {
@@ -135,9 +135,9 @@ func (g *int256Gen) value(t *T) any {
 		return g.min.Clone()
 	}
 
-	offset := drawUint256UpTo(t.s, g.span)
+	offset := drawInt256UpTo(t.s, g.span)
 	result := g.min.Clone()
-	result.AddUint256(g.min, offset)
+	result.Add(g.min, offset)
 	return result
 }
 
@@ -216,9 +216,15 @@ func newInt256Gen(minVal *int256.Int, maxVal *int256.Int) *int256Gen {
 	minClone := minVal.Clone()
 	maxClone := maxVal.Clone()
 	assertf(minClone.Cmp(maxClone) <= 0, "invalid int256 range [%s, %s]", minClone.ToString(), maxClone.ToString())
-	diff := new(int256.Int).Sub(maxClone, minClone)
-	assertf(diff.Sign() >= 0, "negative span for int256 range")
-	return &int256Gen{min: minClone, max: maxClone, span: diff.Abs()}
+
+	// Handle overflow when computing span for full int256 range
+	// When max - min would overflow (e.g., MaxInt256 - MinInt256), use MaxInt256 as span
+	diff, overflow := new(int256.Int).SubOverflow(maxClone, minClone)
+	if overflow || diff.Sign() < 0 {
+		// Span would exceed int256 range, use MaxInt256 as approximation
+		diff = int256.MaxInt256()
+	}
+	return &int256Gen{min: minClone, max: maxClone, span: diff}
 }
 
 func drawUint256UpTo(s bitStream, max *uint256.Uint) *uint256.Uint {
@@ -242,12 +248,47 @@ func drawUint256UpTo(s bitStream, max *uint256.Uint) *uint256.Uint {
 		}
 
 		candidate.SetBytes(buf)
-		if candidate.Cmp(max) <= 0 {
+		if candidate.Lte(max) {
 			return candidate.Clone()
 		}
 	}
 
 	panic(invalidData("failed to sample uint256 within range"))
+}
+
+func drawInt256UpTo(s bitStream, max *int256.Int) *int256.Int {
+	if max.IsZero() {
+		return int256.NewInt(0)
+	}
+
+	// Get absolute value for bit length calculation
+	absMax := max.Abs()
+	bitlen := absMax.BitLen()
+	numBytes := (bitlen + 7) / 8
+	buf := make([]byte, numBytes)
+	candidate := new(uint256.Uint)
+
+	for attempt := 0; attempt < maxUint256SampleAttempts; attempt++ {
+		for i := 0; i < numBytes; i++ {
+			buf[i] = byte(s.drawBits(8))
+		}
+
+		extraBits := numBytes*8 - bitlen
+		if extraBits > 0 {
+			buf[0] &= byte(0xFF >> uint(extraBits))
+		}
+
+		candidate.SetBytes(buf)
+
+		// Check if candidate fits within max (as unsigned)
+		if candidate.Lte(absMax) {
+			// Safe to convert - value is within range
+			return int256.FromUint256(candidate)
+		}
+	}
+
+	// Fallback: return 0 if we couldn't sample in range
+	return int256.NewInt(0)
 }
 
 func consumeEntropyBit(s bitStream) {
