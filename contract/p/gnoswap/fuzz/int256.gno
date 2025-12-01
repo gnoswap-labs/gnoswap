@@ -1,64 +1,51 @@
 package fuzz
 
 import (
+	"strings"
+
 	"gno.land/p/gnoswap/int256"
 	"gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/ufmt"
+)
+
+const (
+	maxUint256SampleAttempts = 64
+	maxUint256Dec            = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+	maxInt256Dec             = "57896044618658097711785492504343953926634992332820282019728792003956564819967"
+	minInt256Dec             = "-57896044618658097711785492504343953926634992332820282019728792003956564819968"
+)
+
+var (
+	maxUint256Value = uint256.MustFromDecimal(maxUint256Dec)
+	maxInt256Value  = int256.MustFromDecimal(maxInt256Dec)
+	minInt256Value  = int256.MustFromDecimal(minInt256Dec)
 )
 
 // Uint256 Generators
 
 type uint256Gen struct {
-	min *uint256.Uint
-	max *uint256.Uint
+	min  *uint256.Uint
+	max  *uint256.Uint
+	span *uint256.Uint
 }
 
 func (g *uint256Gen) String() string {
-	return ufmt.Sprintf("Uint256(%s, %s)", g.min.ToString(), g.max.ToString())
+	var b strings.Builder
+	b.WriteString("Uint256(")
+	b.WriteString(g.min.ToString())
+	b.WriteString(", ")
+	b.WriteString(g.max.ToString())
+	b.WriteByte(')')
+	return b.String()
 }
 
 func (g *uint256Gen) value(t *T) any {
-	// If min >= max, return min
-	if g.min.Cmp(g.max) >= 0 {
+	if g.span.IsZero() {
+		consumeEntropyBit(t.s)
 		return g.min.Clone()
 	}
 
-	// Calculate range = max - min
-	rangeVal := new(uint256.Uint).Sub(g.max, g.min)
-
-	// For small ranges that fit in uint64
-	if rangeVal.IsUint64() {
-		rangeU64 := rangeVal.Uint64()
-		if rangeU64 == 0 {
-			return g.min.Clone()
-		}
-		randomOffset := Uint64Range(0, rangeU64).Draw(t, "offset").(uint64)
-		result := new(uint256.Uint).Add(g.min, uint256.NewUint(randomOffset))
-		return result
-	}
-
-	// For larger ranges, generate a random value using digit-based approach
-	minDigits := len(g.min.ToString())
-	maxDigits := len(g.max.ToString())
-
-	numDigits := IntRange(minDigits, maxDigits).Draw(t, "numDigits").(int)
-
-	// Build random decimal string
-	firstDigit := IntRange(1, 9).Draw(t, "firstDigit").(int)
-	result := ufmt.Sprintf("%d", firstDigit)
-
-	for i := 1; i < numDigits; i++ {
-		digit := IntRange(0, 9).Draw(t, ufmt.Sprintf("digit%d", i)).(int)
-		result += ufmt.Sprintf("%d", digit)
-	}
-
-	val, err := uint256.FromDecimal(result)
-	if err != nil || val.Cmp(g.min) < 0 || val.Cmp(g.max) > 0 {
-		// If out of range, return min
-		return g.min.Clone()
-	}
-
-	return val
+	offset := drawUint256UpTo(t.s, g.span)
+	return new(uint256.Uint).Add(g.min, offset)
 }
 
 // Uint256 generates random uint256 values across the full uint256 range [0, 2^256-1]
@@ -67,13 +54,7 @@ func (g *uint256Gen) value(t *T) any {
 //
 //	Uint256() generates values from 0 to max uint256
 func Uint256() *Generator {
-	// Max uint256: 2^256 - 1
-	maxStr := "115792089237316195423570985008687907853269984665640564039457584007913129639935"
-	max, _ := uint256.FromDecimal(maxStr)
-	return newGenerator(&uint256Gen{
-		min: uint256.NewUint(0),
-		max: max,
-	})
+	return Uint256RangeFrom(uint256.NewUint(0), maxUint256Value)
 }
 
 // Uint256Max generates uint256 values from 0 to the specified max
@@ -87,10 +68,7 @@ func Uint256Max(max string) *Generator {
 	if err != nil {
 		maxVal = uint256.NewUint(1000000)
 	}
-	return newGenerator(&uint256Gen{
-		min: uint256.NewUint(0),
-		max: maxVal,
-	})
+	return Uint256RangeFrom(uint256.NewUint(0), maxVal)
 }
 
 // Uint256Range generates uint256 values within a specified range [min, max]
@@ -110,10 +88,7 @@ func Uint256Range(minStr, maxStr string) *Generator {
 		max = uint256.NewUint(1000000)
 	}
 
-	return newGenerator(&uint256Gen{
-		min: min,
-		max: max,
-	})
+	return Uint256RangeFrom(min, max)
 }
 
 // Uint256Min generates uint256 values from the specified min to uint256 max
@@ -127,124 +102,43 @@ func Uint256Min(min string) *Generator {
 	if err != nil {
 		minVal = uint256.NewUint(0)
 	}
-	maxStr := "115792089237316195423570985008687907853269984665640564039457584007913129639935"
-	maxVal, _ := uint256.FromDecimal(maxStr)
-	return newGenerator(&uint256Gen{
-		min: minVal,
-		max: maxVal,
-	})
+	return Uint256RangeFrom(minVal, maxUint256Value)
+}
+
+// Uint256RangeFrom builds a uint256 generator from already parsed bounds.
+func Uint256RangeFrom(minVal *uint256.Uint, maxVal *uint256.Uint) *Generator {
+	assertf(minVal != nil && maxVal != nil, "Uint256RangeFrom: nil bounds")
+	return newGenerator(newUint256Gen(minVal, maxVal))
 }
 
 // Int256 Generators
 
 type int256Gen struct {
-	min *int256.Int
-	max *int256.Int
+	min  *int256.Int
+	max  *int256.Int
+	span *int256.Int
 }
 
 func (g *int256Gen) String() string {
-	return ufmt.Sprintf("Int256(%s, %s)", g.min.ToString(), g.max.ToString())
+	var b strings.Builder
+	b.WriteString("Int256(")
+	b.WriteString(g.min.ToString())
+	b.WriteString(", ")
+	b.WriteString(g.max.ToString())
+	b.WriteByte(')')
+	return b.String()
 }
 
 func (g *int256Gen) value(t *T) any {
-	// If min >= max, return min
-	if g.min.Cmp(g.max) >= 0 {
+	if g.span.IsZero() {
+		consumeEntropyBit(t.s)
 		return g.min.Clone()
 	}
 
-	// Calculate range = max - min
-	rangeVal := new(int256.Int).Sub(g.max, g.min)
-
-	// Get absolute value for range calculation
-	rangeAbs := rangeVal.Abs()
-
-	// For small ranges that fit in uint64
-	if rangeAbs.IsUint64() {
-		rangeU64 := rangeAbs.Uint64()
-		if rangeU64 == 0 {
-			return g.min.Clone()
-		}
-		randomOffset := Uint64Range(0, rangeU64).Draw(t, "offset").(uint64)
-		result := new(int256.Int).Add(g.min, int256.FromUint256(uint256.NewUint(randomOffset)))
-		return result
-	}
-
-	// For larger ranges, use digit-based approach
-	minStr := g.min.ToString()
-	maxStr := g.max.ToString()
-
-	// Determine if result should be positive or negative
-	minNeg := g.min.Sign() < 0
-	maxPos := g.max.Sign() > 0
-
-	var isNegative bool
-	if minNeg && maxPos {
-		// Range spans zero, randomly choose
-		isNegative = Bool().Draw(t, "isNegative").(bool)
-	} else {
-		isNegative = minNeg
-	}
-
-	// Calculate digit range based on sign
-	var minDigits, maxDigits int
-	if isNegative {
-		// For negative, use min's digits (or 1 if positive min)
-		if minNeg {
-			minDigits = len(minStr) - 1 // subtract '-'
-		} else {
-			minDigits = 1
-		}
-		// For max digits, use max if it's negative
-		if maxPos {
-			// Range crosses zero, so pick moderate size
-			maxDigits = minDigits + 10
-		} else {
-			maxDigits = len(maxStr) - 1 // subtract '-'
-		}
-	} else {
-		// For positive, use min's digits (or 1 if negative min)
-		if maxPos {
-			maxDigits = len(maxStr)
-		} else {
-			maxDigits = 1
-		}
-		if minPos := g.min.Sign() > 0; minPos {
-			minDigits = len(minStr)
-		} else {
-			minDigits = 1
-		}
-	}
-
-	// Ensure minDigits <= maxDigits
-	if minDigits > maxDigits {
-		minDigits, maxDigits = maxDigits, minDigits
-	}
-	if minDigits < 1 {
-		minDigits = 1
-	}
-
-	numDigits := IntRange(minDigits, maxDigits).Draw(t, "numDigits").(int)
-
-	// Build random decimal string
-	firstDigit := IntRange(1, 9).Draw(t, "firstDigit").(int)
-	result := ufmt.Sprintf("%d", firstDigit)
-
-	for i := 1; i < numDigits; i++ {
-		digit := IntRange(0, 9).Draw(t, ufmt.Sprintf("digit%d", i)).(int)
-		result += ufmt.Sprintf("%d", digit)
-	}
-
-	if isNegative {
-		result = "-" + result
-	}
-
-	val, err := int256.FromDecimal(result)
-	if err != nil || val.Cmp(g.min) < 0 || val.Cmp(g.max) > 0 {
-		// If out of range, return min
-		return g.min.Clone()
-	}
-
-	return val
+	offset := drawInt256UpTo(t.s, g.span)
+	result := g.min.Clone()
+	result.Add(g.min, offset)
+	return result
 }
 
 // Int256 generates random int256 values across the full int256 range [-2^255, 2^255-1]
@@ -253,16 +147,7 @@ func (g *int256Gen) value(t *T) any {
 //
 //	Int256() generates values from min int256 to max int256
 func Int256() *Generator {
-	// Max int256: 2^255 - 1
-	// Min int256: -2^255
-	minStr := "-57896044618658097711785492504343953926634992332820282019728792003956564819968"
-	maxStr := "57896044618658097711785492504343953926634992332820282019728792003956564819967"
-	min, _ := int256.FromDecimal(minStr)
-	max, _ := int256.FromDecimal(maxStr)
-	return newGenerator(&int256Gen{
-		min: min,
-		max: max,
-	})
+	return Int256RangeFrom(minInt256Value, maxInt256Value)
 }
 
 // Int256Max generates int256 values from min int256 to the specified max
@@ -276,12 +161,7 @@ func Int256Max(max string) *Generator {
 	if err != nil {
 		maxVal = int256.NewInt(1000000)
 	}
-	minStr := "-57896044618658097711785492504343953926634992332820282019728792003956564819968"
-	minVal, _ := int256.FromDecimal(minStr)
-	return newGenerator(&int256Gen{
-		min: minVal,
-		max: maxVal,
-	})
+	return Int256RangeFrom(minInt256Value, maxVal)
 }
 
 // Int256Range generates int256 values within a specified range [min, max]
@@ -301,10 +181,7 @@ func Int256Range(minStr, maxStr string) *Generator {
 		max = int256.NewInt(1000000)
 	}
 
-	return newGenerator(&int256Gen{
-		min: min,
-		max: max,
-	})
+	return Int256RangeFrom(min, max)
 }
 
 // Int256Min generates int256 values from the specified min to max int256
@@ -318,10 +195,102 @@ func Int256Min(min string) *Generator {
 	if err != nil {
 		minVal = int256.NewInt(0)
 	}
-	maxStr := "57896044618658097711785492504343953926634992332820282019728792003956564819967"
-	maxVal, _ := int256.FromDecimal(maxStr)
-	return newGenerator(&int256Gen{
-		min: minVal,
-		max: maxVal,
-	})
+	return Int256RangeFrom(minVal, maxInt256Value)
+}
+
+// Int256RangeFrom builds an int256 generator from already parsed bounds.
+func Int256RangeFrom(minVal *int256.Int, maxVal *int256.Int) *Generator {
+	assertf(minVal != nil && maxVal != nil, "Int256RangeFrom: nil bounds")
+	return newGenerator(newInt256Gen(minVal, maxVal))
+}
+
+func newUint256Gen(minVal *uint256.Uint, maxVal *uint256.Uint) *uint256Gen {
+	minClone := minVal.Clone()
+	maxClone := maxVal.Clone()
+	assertf(minClone.Cmp(maxClone) <= 0, "invalid uint256 range [%s, %s]", minClone.ToString(), maxClone.ToString())
+	span := new(uint256.Uint).Sub(maxClone, minClone)
+	return &uint256Gen{min: minClone, max: maxClone, span: span}
+}
+
+func newInt256Gen(minVal *int256.Int, maxVal *int256.Int) *int256Gen {
+	minClone := minVal.Clone()
+	maxClone := maxVal.Clone()
+	assertf(minClone.Cmp(maxClone) <= 0, "invalid int256 range [%s, %s]", minClone.ToString(), maxClone.ToString())
+
+	// Handle overflow when computing span for full int256 range
+	// When max - min would overflow (e.g., MaxInt256 - MinInt256), use MaxInt256 as span
+	diff, overflow := new(int256.Int).SubOverflow(maxClone, minClone)
+	if overflow || diff.Sign() < 0 {
+		// Span would exceed int256 range, use MaxInt256 as approximation
+		diff = int256.MaxInt256()
+	}
+	return &int256Gen{min: minClone, max: maxClone, span: diff}
+}
+
+func drawUint256UpTo(s bitStream, max *uint256.Uint) *uint256.Uint {
+	if max.IsZero() {
+		return uint256.NewUint(0)
+	}
+
+	bitlen := max.BitLen()
+	numBytes := (bitlen + 7) / 8
+	buf := make([]byte, numBytes)
+	candidate := new(uint256.Uint)
+
+	for attempt := 0; attempt < maxUint256SampleAttempts; attempt++ {
+		for i := 0; i < numBytes; i++ {
+			buf[i] = byte(s.drawBits(8))
+		}
+
+		extraBits := numBytes*8 - bitlen
+		if extraBits > 0 {
+			buf[0] &= byte(0xFF >> uint(extraBits))
+		}
+
+		candidate.SetBytes(buf)
+		if candidate.Lte(max) {
+			return candidate.Clone()
+		}
+	}
+
+	panic(invalidData("failed to sample uint256 within range"))
+}
+
+func drawInt256UpTo(s bitStream, max *int256.Int) *int256.Int {
+	if max.IsZero() {
+		return int256.NewInt(0)
+	}
+
+	// Get absolute value for bit length calculation
+	absMax := max.Abs()
+	bitlen := absMax.BitLen()
+	numBytes := (bitlen + 7) / 8
+	buf := make([]byte, numBytes)
+	candidate := new(uint256.Uint)
+
+	for attempt := 0; attempt < maxUint256SampleAttempts; attempt++ {
+		for i := 0; i < numBytes; i++ {
+			buf[i] = byte(s.drawBits(8))
+		}
+
+		extraBits := numBytes*8 - bitlen
+		if extraBits > 0 {
+			buf[0] &= byte(0xFF >> uint(extraBits))
+		}
+
+		candidate.SetBytes(buf)
+
+		// Check if candidate fits within max (as unsigned)
+		if candidate.Lte(absMax) {
+			// Safe to convert - value is within range
+			return int256.FromUint256(candidate)
+		}
+	}
+
+	// Fallback: return 0 if we couldn't sample in range
+	return int256.NewInt(0)
+}
+
+func consumeEntropyBit(s bitStream) {
+	s.drawBits(1)
 }
