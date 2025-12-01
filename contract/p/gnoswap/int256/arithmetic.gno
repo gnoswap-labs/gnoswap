@@ -71,14 +71,15 @@ func udivremBy1(quot, u []uint64, d uint64) (rem uint64) {
 }
 
 func udivremKnuth(quot, u, d []uint64) {
-	dh := d[len(d)-1]
-	dl := d[len(d)-2]
+	dLen := len(d)
+	dh := d[dLen-1]
+	dl := d[dLen-2]
 	reciprocal := reciprocal2by1(dh)
 
-	for j := len(u) - len(d) - 1; j >= 0; j-- {
-		u2 := u[j+len(d)]
-		u1 := u[j+len(d)-1]
-		u0 := u[j+len(d)-2]
+	for j := len(u) - dLen - 1; j >= 0; j-- {
+		u2 := u[j+dLen]
+		u1 := u[j+dLen-1]
+		u0 := u[j+dLen-2]
 
 		var qhat, rhat uint64
 		if u2 >= dh {
@@ -92,10 +93,10 @@ func udivremKnuth(quot, u, d []uint64) {
 		}
 
 		borrow := subMulTo(u[j:], d, qhat)
-		u[j+len(d)] = u2 - borrow
+		u[j+dLen] = u2 - borrow
 		if u2 < borrow {
 			qhat--
-			u[j+len(d)] += addTo(u[j:], d)
+			u[j+dLen] += addTo(u[j:], d)
 		}
 
 		quot[j] = qhat
