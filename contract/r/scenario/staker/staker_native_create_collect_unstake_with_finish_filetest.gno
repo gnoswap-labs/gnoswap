@@ -203,12 +203,12 @@ func mintNativePosition01() {
 	adminOldWugnotBalance := wugnot.BalanceOf(adminUser)
 	ufmt.Printf("[INFO] admin wugnot balance before mint: %d\n", adminOldWugnotBalance)
 
-	println("[INFO] mint native position 01 (gns:gnot)")
+	println("[INFO] mint native position 01 (gns:ugnot)")
 	testing.SetOriginSend(chain.Coins{{"ugnot", 1000}})
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		"gno.land/r/gnoswap/gns",
-		"gnot",
+		"ugnot",
 		fee500,
 		int32(9000),
 		int32(11000),
@@ -255,12 +255,12 @@ func mintNativePosition02() {
 	adminOldWugnotBalance := wugnot.BalanceOf(adminUser)
 	ufmt.Printf("[INFO] admin wugnot balance before second mint: %d\n", adminOldWugnotBalance)
 
-	println("[INFO] mint native position 02 (gns:gnot)")
+	println("[INFO] mint native position 02 (gns:ugnot)")
 	testing.SetOriginSend(chain.Coins{{"ugnot", 1000}})
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
 		"gno.land/r/gnoswap/gns",
-		"gnot",
+		"ugnot",
 		fee500,
 		int32(9000),
 		int32(11000),
@@ -308,7 +308,7 @@ func createExternalIncentiveNative() {
 	sr.CreateExternalIncentive(
 		cross,
 		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500", // targetPoolPath
-		"gnot",                      // rewardToken (native)
+		"ugnot",                     // rewardToken (native)
 		10_000_000_000,              // rewardAmount
 		1234569600,                  // startTimestamp
 		1234569600+TIMESTAMP_90DAYS, // endTimestamp
@@ -499,7 +499,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] admin ugnot balance after send: 0
 // [INFO] position contract ugnot balance after send: 50000005
 // [INFO] admin wugnot balance before mint: 0
-// [INFO] mint native position 01 (gns:gnot)
+// [INFO] mint native position 01 (gns:ugnot)
 // [EXPECTED] position 01 - ID: 1
 // [EXPECTED] liquidity: 12437
 // [EXPECTED] amount0: 1000, amount1: 368
@@ -511,7 +511,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [INFO] admin ugnot balance before second mint: 1000
 // [INFO] send ugnot to position contract for second mint
 // [INFO] admin wugnot balance before second mint: 0
-// [INFO] mint native position 02 (gns:gnot)
+// [INFO] mint native position 02 (gns:ugnot)
 // [EXPECTED] position 02 - ID: 2
 // [EXPECTED] liquidity: 12437
 // [EXPECTED] amount0: 1000, amount1: 368

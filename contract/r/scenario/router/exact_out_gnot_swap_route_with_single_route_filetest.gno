@@ -167,7 +167,7 @@ func exactOutSwapRouteBy(
 	_, outputTokenAmount := router.ExactOutSwapRoute(
 		cross,
 		inputToken,
-		"gnot",
+		"ugnot",
 		specifiedAmount,
 		routeQueryString,
 		queryRatios,
@@ -178,7 +178,7 @@ func exactOutSwapRouteBy(
 
 	afterBalance := banker_.GetCoins(adminAddr).AmountOf("ugnot")
 
-	ufmt.Printf("[EXPECTED] gnot balance of admin: %d\n", afterBalance-prevBalance)
+	ufmt.Printf("[EXPECTED] ugnot balance of admin: %d\n", afterBalance-prevBalance)
 	ufmt.Printf("[EXPECTED] outputTokenAmount: %s\n", outputTokenAmount)
 }
 
@@ -218,5 +218,5 @@ func exactOutSwapRouteBy(
 // [INFO] routeQueryString: gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:500
 // [INFO] queryRatios: 100
 // [INFO] amountInMax: 10000000
-// [EXPECTED] gnot balance of admin: 1001502
+// [EXPECTED] ugnot balance of admin: 1001502
 // [EXPECTED] outputTokenAmount: -1001502

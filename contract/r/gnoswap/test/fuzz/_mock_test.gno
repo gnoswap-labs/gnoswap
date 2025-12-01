@@ -644,7 +644,7 @@ func newMockStakerStore() *MockStakerStore {
 		externalIncentives:          avl.NewTree(),
 		stakers:                     avl.NewTree(),
 		totalEmissionSent:           0,
-		allowedTokens:               []string{"gnot", "gno.land/r/gnoswap/gns", oblPath},
+		allowedTokens:               []string{"ugnot", "gno.land/r/gnoswap/gns", oblPath},
 		incentiveCounter:            sr.NewCounter(),
 		tokenSpecificMinimumRewards: avl.NewTree(),
 		unstakingFee:                0,

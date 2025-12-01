@@ -98,8 +98,8 @@ func createPools() {
 	gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
 	testing.SkipHeights(1)
 
-	println("[INFO] create gnot:gns:3000 pool")
-	pl.CreatePool(cross, "gnot", "gno.land/r/gnoswap/gns", 3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // price ratio 1:1
+	println("[INFO] create ugnot:gns:3000 pool")
+	pl.CreatePool(cross, "ugnot", "gno.land/r/gnoswap/gns", 3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // price ratio 1:1
 
 	println("[INFO] create bar:qux:3000 pool")
 	pl.CreatePool(cross, barPath, quxPath, 3000, common.TickMathGetSqrtRatioAtTick(10000).ToString()) // tick 10_000 ≈ x2.7
@@ -141,7 +141,7 @@ func mintAndStakeNative() {
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000}})
 	lpTokenId, liquidity, amount0, amount1, poolPath := sr.MintAndStake(
 		cross,
-		"gnot",
+		"ugnot",
 		"gno.land/r/gnoswap/gns",
 		fee3000,
 		int32(-5040),
@@ -234,7 +234,7 @@ func positionIdFrom(positionId any) grc721.TokenID {
 //
 // [SCENARIO] 2. Create pools
 // [INFO] approve gns for pool creation
-// [INFO] create gnot:gns:3000 pool
+// [INFO] create ugnot:gns:3000 pool
 // [INFO] create bar:qux:3000 pool
 // [INFO] set bar:qux:3000 pool to tier 1
 //

@@ -129,7 +129,7 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 		},
 		{
 			name:            "Fail: GNOT input with insufficient sent amount",
-			inputToken:      "gnot",
+			inputToken:      "ugnot",
 			outputToken:     "token2",
 			specifiedAmount: i256.NewInt(1000),
 			sentAmount:      500,
@@ -138,7 +138,7 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 		},
 		{
 			name:            "Fail: GNOT input with excess sent amount",
-			inputToken:      "gnot",
+			inputToken:      "ugnot",
 			outputToken:     "token2",
 			specifiedAmount: i256.NewInt(1000),
 			sentAmount:      1500,
@@ -147,7 +147,7 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 		},
 		{
 			name:            "Fail: GNOT input with zero sent amount",
-			inputToken:      "gnot",
+			inputToken:      "ugnot",
 			outputToken:     "token2",
 			specifiedAmount: i256.NewInt(1000),
 			sentAmount:      0,
@@ -156,7 +156,7 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 		},
 		{
 			name:            "Pass: GNOT input with zero specified amount",
-			inputToken:      "gnot",
+			inputToken:      "ugnot",
 			outputToken:     "token2",
 			specifiedAmount: i256.NewInt(0),
 			sentAmount:      0,
@@ -563,17 +563,17 @@ func TestSwapRouteParams_IsUnwrap(t *testing.T) {
 		expected    bool
 	}{
 		{
-			name:        "output token is gnot",
-			outputToken: "gnot",
+			name:        "output token is ugnot",
+			outputToken: "ugnot",
 			expected:    true,
 		},
 		{
-			name:        "output token is not gnot - WUGNOT",
+			name:        "output token is not ugnot - WUGNOT",
 			outputToken: "gno.land/r/gnoland/wugnot",
 			expected:    false,
 		},
 		{
-			name:        "output token is not gnot - other token",
+			name:        "output token is not ugnot - other token",
 			outputToken: "gno.land/r/demo/gns",
 			expected:    false,
 		},
@@ -1065,7 +1065,7 @@ func TestHandleSingleSwap_Parameters(t *testing.T) {
 		},
 		{
 			name:                 "single hop with unwrap",
-			route:                "tokenA:gnot:500",
+			route:                "tokenA:ugnot:500",
 			amountSpecified:      i256.NewInt(1000),
 			withUnwrap:           true,
 			sqrtPriceLimitX96:    "",
@@ -1385,20 +1385,20 @@ func TestHandleNativeTokenWrapping_BothNative(t *testing.T) {
 		description     string
 	}{
 		{
-			name:            "both input and output are gnot (invalid)",
-			inputToken:      "gnot",
-			outputToken:     "gnot",
+			name:            "both input and output are ugnot (invalid)",
+			inputToken:      "ugnot",
+			outputToken:     "ugnot",
 			specifiedAmount: i256.NewInt(1000),
 			expectError:     true,
-			description:     "Cannot swap gnot to gnot",
+			description:     "Cannot swap ugnot to ugnot",
 		},
 		{
-			name:            "input gnot, output wugnot",
-			inputToken:      "gnot",
+			name:            "input ugnot, output wugnot",
+			inputToken:      "ugnot",
 			outputToken:     "gno.land/r/gnoland/wugnot",
 			specifiedAmount: i256.NewInt(1000),
 			expectError:     false,
-			description:     "Valid: wrapping gnot to wugnot",
+			description:     "Valid: wrapping ugnot to wugnot",
 		},
 	}
 

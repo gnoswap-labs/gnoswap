@@ -33,7 +33,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 	}{
 		{
 			name:           "mint and stake with GNOT as token0 - sufficient amount",
-			token0:         GNOT,
+			token0:         GNOT_DENOM,
 			token1:         fooPath,
 			fee:            uint32(100),
 			tickLower:      -887220,
@@ -50,7 +50,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 		{
 			name:           "mint and stake with GNOT as token1 - sufficient amount",
 			token0:         fooPath,
-			token1:         GNOT,
+			token1:         GNOT_DENOM,
 			fee:            uint32(100),
 			tickLower:      -887220,
 			tickUpper:      887220,
@@ -65,7 +65,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 		},
 		{
 			name:             "mint and stake with GNOT - insufficient amount",
-			token0:           GNOT,
+			token0:           GNOT_DENOM,
 			token1:           fooPath,
 			fee:              uint32(100),
 			tickLower:        -887220,
@@ -82,7 +82,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 		},
 		{
 			name:             "mint and stake with GNOT - zero amount",
-			token0:           GNOT,
+			token0:           GNOT_DENOM,
 			token1:           fooPath,
 			fee:              uint32(100),
 			tickLower:        -887220,
@@ -99,7 +99,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 		},
 		{
 			name:           "mint and stake with valid referrer",
-			token0:         GNOT,
+			token0:         GNOT_DENOM,
 			token1:         fooPath,
 			fee:            uint32(100),
 			tickLower:      -887220,
@@ -115,7 +115,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 		},
 		{
 			name:           "mint and stake with fee tier 100",
-			token0:         GNOT,
+			token0:         GNOT_DENOM,
 			token1:         fooPath,
 			fee:            fee100,
 			tickLower:      -887220,
@@ -131,7 +131,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 		},
 		{
 			name:           "mint and stake with fee tier 500",
-			token0:         GNOT,
+			token0:         GNOT_DENOM,
 			token1:         fooPath,
 			fee:            uint32(500),
 			tickLower:      -887200,
@@ -147,7 +147,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 		},
 		{
 			name:             "mint and stake with fee tier 500 with invalid tick range",
-			token0:           GNOT,
+			token0:           GNOT_DENOM,
 			token1:           fooPath,
 			fee:              uint32(500),
 			tickLower:        -887221,
@@ -164,7 +164,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 		},
 		{
 			name:             "mint and stake with fee tier 10000",
-			token0:           GNOT,
+			token0:           GNOT_DENOM,
 			token1:           fooPath,
 			fee:              uint32(10000),
 			tickLower:        -880000,
@@ -181,7 +181,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 		},
 		{
 			name:             "mint and stake with fee tier 10000 with invalid tick range",
-			token0:           GNOT,
+			token0:           GNOT_DENOM,
 			token1:           fooPath,
 			fee:              uint32(10000),
 			tickLower:        -887222,
@@ -198,7 +198,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 		},
 		{
 			name:             "mint and stake with invalid minimum amounts",
-			token0:           GNOT,
+			token0:           GNOT_DENOM,
 			token1:           fooPath,
 			fee:              uint32(100),
 			tickLower:        -887220,
@@ -215,7 +215,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 		},
 		{
 			name:           "mint and stake with desired amounts equal to minimums",
-			token0:         GNOT,
+			token0:         GNOT_DENOM,
 			token1:         fooPath,
 			fee:            uint32(100),
 			tickLower:      -887220,
@@ -243,10 +243,10 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 			token0Path := tt.token0
 			token1Path := tt.token1
 
-			if token0Path == GNOT {
+			if token0Path == GNOT_DENOM {
 				token0Path = wugnotPath
 			}
-			if token1Path == GNOT {
+			if token1Path == GNOT_DENOM {
 				token1Path = wugnotPath
 			}
 
@@ -287,7 +287,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 			testing.SetOriginSend(chain.Coins{})
 
 			if tt.ugnotSent > 0 {
-				sendCoins := chain.Coins{chain.Coin{"ugnot", tt.ugnotSent}}
+				sendCoins := chain.Coins{chain.Coin{GNOT_DENOM, tt.ugnotSent}}
 
 				testing.SetRealm(adminRealm)
 				testing.SetOriginSend(sendCoins)
@@ -511,7 +511,7 @@ func TestMintAndStakeWithoutNativeToken(t *testing.T) {
 			pl.SetPoolCreationFee(cross, 0)
 
 			// Verify no GNOT check is performed for non-GNOT pairs
-			hasGNOT := tt.token0 == GNOT || tt.token1 == GNOT
+			hasGNOT := tt.token0 == GNOT_DENOM || tt.token1 == GNOT_DENOM
 			uassert.False(t, hasGNOT)
 
 			poolPath := pl.GetPoolPath(tt.token0, tt.token1, tt.fee)

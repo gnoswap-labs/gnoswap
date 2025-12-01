@@ -29,7 +29,7 @@ import (
 
 func TestFinalizeSwap(t *testing.T) {
 	t.Skip("finalize swap's behaviour seems change. need to check")
-	gnot := "gnot"
+	ugnot := "ugnot"
 
 	newUint256 := func(val string) *u256.Uint {
 		return u256.MustFromDecimal(val)
@@ -95,7 +95,7 @@ func TestFinalizeSwap(t *testing.T) {
 		},
 		{
 			name:                    "GNOT: Slippage error",
-			inputToken:              gnot,
+			inputToken:              ugnot,
 			outputToken:             barPath,
 			resultAmountIn:          newUint256("300"),
 			resultAmountOut:         newUint256("90"),
@@ -123,7 +123,7 @@ func TestFinalizeSwap(t *testing.T) {
 		},
 		{
 			name:                    "GNOT: Overflow in balance calculation",
-			inputToken:              gnot,
+			inputToken:              ugnot,
 			outputToken:             barPath,
 			resultAmountIn:          newUint256("100"),
 			resultAmountOut:         newUint256("90"),
@@ -137,7 +137,7 @@ func TestFinalizeSwap(t *testing.T) {
 		},
 		{
 			name:                    "GNOT: Large balance causing excessive spend error",
-			inputToken:              gnot,
+			inputToken:              ugnot,
 			outputToken:             barPath,
 			resultAmountIn:          newUint256("100"),
 			resultAmountOut:         newUint256("90"),
@@ -243,7 +243,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 		expectPanic      bool
 	}{
 		{
-			name:             "success - gnot -> gns",
+			name:             "success - ugnot -> gns",
 			tokenPath0:       wugnotTokenPath,
 			tokenPath1:       gnsTokenPath,
 			feeTier:          uint32(500),
@@ -411,7 +411,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(t *testing.T) {
 		expectPanic      bool
 	}{
 		{
-			name:             "success - gnot -> gns",
+			name:             "success - ugnot -> gns",
 			tokenPath0:       wugnotTokenPath,
 			tokenPath1:       gnsTokenPath,
 			feeTier:          uint32(500),
@@ -594,7 +594,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 		expectPanic      bool
 	}{
 		{
-			name:             "success - gns -> gnot",
+			name:             "success - gns -> ugnot",
 			tokenPath0:       wugnotTokenPath,
 			tokenPath1:       gnsTokenPath,
 			feeTier:          uint32(10000),

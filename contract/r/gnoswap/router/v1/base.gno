@@ -24,9 +24,8 @@ const (
 // swap can be done by multiple pools
 // to separate each pool, we use POOL_SEPARATOR
 const (
-	POOL_SEPARATOR        = "*POOL*"
-	gnot           string = "gnot"
-	wugnotPath     string = "gno.land/r/gnoland/wugnot"
+	POOL_SEPARATOR = "*POOL*"
+	wugnotPath     = "gno.land/r/gnoland/wugnot"
 )
 
 type RouterOperation interface {
@@ -88,7 +87,7 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 	// Handle input token independently
 	if isInputNativeToken {
 		sent := banker.OriginSend()
-		ugnotSentByUser := sent.AmountOf("ugnot")
+		ugnotSentByUser := sent.AmountOf(GNOT_DENOM)
 		amountSpecified := specifiedAmount.Int64()
 
 		if ugnotSentByUser != amountSpecified {
@@ -274,7 +273,7 @@ func (p *SwapRouteParams) ExpectedExactAmountByFee(feeBps uint64) string {
 
 // IsUnwrap checks if the swap output is native token.
 func (p *SwapRouteParams) IsUnwrap() bool {
-	return p.outputToken == gnot
+	return p.outputToken == GNOT_DENOM
 }
 
 func (p *SwapRouteParams) SwapCount() int64 {
