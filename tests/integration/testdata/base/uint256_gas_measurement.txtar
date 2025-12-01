@@ -1,0 +1,352 @@
+loadpkg gno.land/p/gnoswap/uint256
+
+## start a new node
+gnoland start
+
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/gnoswap/uint256gas -gas-fee 100000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+# Call Empty
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   451086'
+
+### Constructor Methods ###
+# NewUint
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestNewUint -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2698067'
+
+# Zero
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestZero -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2699189'
+
+# One
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestOne -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2699179'
+
+# MustFromDecimal
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestMustFromDecimal -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   5656423'
+
+### Arithmetic Operations ###
+# Add
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestAdd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3408801'
+
+# AddOverflow
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestAddOverflow -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   6951954'
+
+# Sub
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestSub -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3408985'
+
+# SubOverflow
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestSubOverflow -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3409568'
+
+# Mul
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestMul -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3476059'
+
+# MulOverflow
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestMulOverflow -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   7178360'
+
+# Div
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestDiv -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3430486'
+
+# Mod
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestMod -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3431140'
+
+# DivMod
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestDivMod -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3435902'
+
+# MulMod
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestMulMod -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3695358'
+
+# Neg
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestNeg -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3411715'
+
+### Bitwise Operations ###
+# And
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestAnd -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2712111'
+
+# Or
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestOr -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2712157'
+
+# Xor
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestXor -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2712127'
+
+# Not
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestNot -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2706868'
+
+# Lsh (Left Shift)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestLsh -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3422242'
+
+# Rsh (Right Shift)
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestRsh -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2715515'
+
+### Comparison Operations ###
+# Eq
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestEq -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2707909'
+
+# Lt
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestLt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3403612'
+
+# Gt
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestGt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3405480'
+
+# Cmp
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestCmp -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3404276'
+
+# IsZero
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestIsZero -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2702757'
+
+### Conversion Methods ###
+# ToString
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestToString -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   4410493'
+
+# Uint64
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestUint64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2700281'
+
+# Clone
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestClone -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   2703826'
+
+### FullMath Operations ###
+# MulDiv
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestMulDiv -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3677533'
+
+# MulDivRoundingUp
+gnokey maketx call -pkgpath gno.land/r/gnoswap/uint256gas -func TestMulDivRoundingUp -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   7564847'
+
+-- gnomod.toml --
+module = "gno.land/r/gnoswap/uint256gas"
+gno = "0.9"
+
+-- main.gno --
+package uint256gas
+
+import (
+	"gno.land/p/gnoswap/uint256"
+)
+
+func Empty(cur realm) {
+	return
+}
+
+// Constructor Methods
+func TestNewUint(cur realm) {
+	uint256.NewUint(12345)
+}
+
+func TestZero(cur realm) {
+	uint256.Zero()
+}
+
+func TestOne(cur realm) {
+	uint256.One()
+}
+
+func TestMustFromDecimal(cur realm) {
+	uint256.MustFromDecimal("123456789012345678901234567890")
+}
+
+// Arithmetic Operations
+func TestAdd(cur realm) {
+	x := uint256.NewUint(1000000)
+	y := uint256.NewUint(500000)
+	z := uint256.Zero()
+	z.Add(x, y)
+}
+
+func TestAddOverflow(cur realm) {
+	x := uint256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935")
+	y := uint256.NewUint(1)
+	z := uint256.Zero()
+	z.AddOverflow(x, y)
+}
+
+func TestSub(cur realm) {
+	x := uint256.NewUint(1000000)
+	y := uint256.NewUint(300000)
+	z := uint256.Zero()
+	z.Sub(x, y)
+}
+
+func TestSubOverflow(cur realm) {
+	x := uint256.NewUint(100)
+	y := uint256.NewUint(200)
+	z := uint256.Zero()
+	z.SubOverflow(x, y)
+}
+
+func TestMul(cur realm) {
+	x := uint256.NewUint(1000)
+	y := uint256.NewUint(2000)
+	z := uint256.Zero()
+	z.Mul(x, y)
+}
+
+func TestMulOverflow(cur realm) {
+	x := uint256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935")
+	y := uint256.NewUint(2)
+	z := uint256.Zero()
+	z.MulOverflow(x, y)
+}
+
+func TestDiv(cur realm) {
+	x := uint256.NewUint(1000000)
+	y := uint256.NewUint(3)
+	z := uint256.Zero()
+	z.Div(x, y)
+}
+
+func TestMod(cur realm) {
+	x := uint256.NewUint(1000000)
+	y := uint256.NewUint(7)
+	z := uint256.Zero()
+	z.Mod(x, y)
+}
+
+func TestDivMod(cur realm) {
+	x := uint256.NewUint(1000000)
+	y := uint256.NewUint(7)
+	z := uint256.Zero()
+	m := uint256.Zero()
+	z.DivMod(x, y, m)
+}
+
+func TestMulMod(cur realm) {
+	x := uint256.NewUint(1000)
+	y := uint256.NewUint(2000)
+	m := uint256.NewUint(997)
+	z := uint256.Zero()
+	z.MulMod(x, y, m)
+}
+
+func TestNeg(cur realm) {
+	x := uint256.NewUint(12345)
+	z := uint256.Zero()
+	z.Neg(x)
+}
+
+// Bitwise Operations
+func TestAnd(cur realm) {
+	x := uint256.NewUint(0xFF00)
+	y := uint256.NewUint(0x0F0F)
+	z := uint256.Zero()
+	z.And(x, y)
+}
+
+func TestOr(cur realm) {
+	x := uint256.NewUint(0xFF00)
+	y := uint256.NewUint(0x0F0F)
+	z := uint256.Zero()
+	z.Or(x, y)
+}
+
+func TestXor(cur realm) {
+	x := uint256.NewUint(0xFF00)
+	y := uint256.NewUint(0x0F0F)
+	z := uint256.Zero()
+	z.Xor(x, y)
+}
+
+func TestNot(cur realm) {
+	x := uint256.NewUint(0xFF00)
+	z := uint256.Zero()
+	z.Not(x)
+}
+
+func TestLsh(cur realm) {
+	x := uint256.NewUint(1)
+	z := uint256.Zero()
+	z.Lsh(x, 10)
+}
+
+func TestRsh(cur realm) {
+	x := uint256.NewUint(1024)
+	z := uint256.Zero()
+	z.Rsh(x, 5)
+}
+
+// Comparison Operations
+func TestEq(cur realm) {
+	x := uint256.NewUint(12345)
+	y := uint256.NewUint(12345)
+	x.Eq(y)
+}
+
+func TestLt(cur realm) {
+	x := uint256.NewUint(100)
+	y := uint256.NewUint(200)
+	x.Lt(y)
+}
+
+func TestGt(cur realm) {
+	x := uint256.NewUint(200)
+	y := uint256.NewUint(100)
+	x.Gt(y)
+}
+
+func TestCmp(cur realm) {
+	x := uint256.NewUint(100)
+	y := uint256.NewUint(200)
+	x.Cmp(y)
+}
+
+func TestIsZero(cur realm) {
+	x := uint256.Zero()
+	x.IsZero()
+}
+
+// Conversion Methods
+func TestToString(cur realm) {
+	x := uint256.NewUint(123456789)
+	x.ToString()
+}
+
+func TestUint64(cur realm) {
+	x := uint256.NewUint(12345)
+	x.Uint64()
+}
+
+func TestClone(cur realm) {
+	x := uint256.NewUint(12345)
+	x.Clone()
+}
+
+// FullMath Operations
+func TestMulDiv(cur realm) {
+	a := uint256.NewUint(1000000)
+	b := uint256.NewUint(2000000)
+	denominator := uint256.NewUint(3)
+	uint256.MulDiv(a, b, denominator)
+}
+
+func TestMulDivRoundingUp(cur realm) {
+	a := uint256.NewUint(1000000)
+	b := uint256.NewUint(2000000)
+	denominator := uint256.NewUint(3)
+	uint256.MulDivRoundingUp(a, b, denominator)
+}

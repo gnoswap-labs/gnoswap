@@ -1,9 +1,12 @@
 package v1
 
 import (
+	"chain/runtime"
+
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/halt"
 )
 
 // swapCallback implements the pool's SwapCallback interface.
@@ -23,6 +26,11 @@ func (r *routerV1) SwapCallback(
 	amount0Delta, amount1Delta int64,
 	payer address,
 ) error {
+	halt.AssertIsNotHaltedRouter()
+
+	caller := runtime.PreviousRealm().Address()
+	assertIsRouterV1(caller)
+
 	var tokenToPay string
 	var amountToPay int64
 
