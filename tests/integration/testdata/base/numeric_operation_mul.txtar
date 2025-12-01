@@ -1,0 +1,221 @@
+loadpkg gno.land/p/gnoswap/uint256
+loadpkg gno.land/p/gnoswap/int256
+
+## start a new node
+gnoland start 
+
+gnokey maketx addpkg -pkgdir $WORK -pkgpath gno.land/r/basic -gas-fee 100000ugnot -gas-wanted 30000000 -broadcast -chainid=tendermint_test test1
+
+# Call Empty
+gnokey maketx call -pkgpath gno.land/r/basic -func Empty -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   362916'
+
+### Only Gas Test ###
+# Int Mul Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func MulInt -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   363301'
+
+# Int8 Mul Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func MulInt8 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   363311'
+
+# Int32 Mul Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func MulInt32 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   363321'
+
+# Int64 Mul Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func MulInt64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   363321'
+
+# Int256 Mul Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func MulInt256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   4290750'
+
+# Uint Mul Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func MulUint -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   363341'
+
+# Uint8 Mul Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func MulUint8 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   363357'
+
+# Uint32 Mul Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func MulUint32 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   363367'
+
+# Uint64 Mul Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func MulUint64 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   363367'
+
+# Uint256 Mul Operation
+gnokey maketx call -pkgpath gno.land/r/basic -func MulUint256 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3389843'
+
+### With Storage Test ###
+# Int Mul Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func MulInt_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   455864'
+# stdout 'STORAGE FEE:    500ugnot'
+
+# Int8 Mul Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func MulInt8_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   455970'
+# stdout 'STORAGE FEE:    500ugnot'
+
+# Int32 Mul Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func MulInt32_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   456060'
+# stdout 'STORAGE FEE:    500ugnot'
+
+# Int64 Mul Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func MulInt64_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   456140'
+# stdout 'STORAGE FEE:    500ugnot'
+
+# Int256 Mul Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func MulInt256_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   4450672'
+# stdout 'STORAGE FEE:    194800ugnot'
+
+# Uint Mul Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func MulUint_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   458370'
+# stdout 'STORAGE FEE:    500ugnot'
+
+# Uint8 Mul Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func MulUint8_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   458460'
+# stdout 'STORAGE FEE:    500ugnot'
+
+# Uint32 Mul Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func MulUint32_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   458566'
+# stdout 'STORAGE FEE:    500ugnot'
+
+# Uint64 Mul Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func MulUint64_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   458646'
+# stdout 'STORAGE FEE:    500ugnot'
+
+# Uint256 Mul Operation With Storage
+gnokey maketx call -pkgpath gno.land/r/basic -func MulUint256_With_Storage -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   3540941'
+# stdout 'STORAGE FEE:    116900ugnot'
+
+-- gnomod.toml --
+module = "gno.land/r/basic"
+gno = "0.9"
+-- main.gno --
+package basic
+
+import u256 "gno.land/p/gnoswap/uint256"
+import i256 "gno.land/p/gnoswap/int256"
+
+func MulInt(cur realm) {
+    result := int(1)
+    result *= 1
+}
+
+func MulInt8(cur realm) {
+    result := int8(1)
+    result *= 1
+}
+
+func MulInt32(cur realm) {
+    result := int64(1)
+    result *= 1
+}
+
+func MulInt64(cur realm) {
+    result := int64(1)
+    result *= 1
+}
+
+func MulInt256(cur realm) {
+    result := i256.One()
+    result = i256.Zero().Mul(result, i256.One())
+}
+
+func MulUint(cur realm) {
+    result := uint(1)
+    result *= 1
+}
+
+func MulUint8(cur realm) {
+    result := uint8(1)
+    result *= 1
+}
+
+func MulUint32(cur realm) {
+    result := uint32(1)
+    result *= 1
+}
+
+func MulUint64(cur realm) {
+    result := uint64(1)
+    result *= 1
+}
+
+func MulUint256(cur realm) {
+    result := u256.One()
+    result = u256.Zero().Mul(result, u256.One())
+}
+
+var (
+    rusultInt int
+    resultInt8 int8
+    resultInt32 int64
+    resultInt64 int64
+    resultInt256 *i256.Int
+    resultUint uint
+    resultUint8 uint8
+    resultUint32 uint32
+    resultUint64 uint64
+    resultUint256 *u256.Uint
+)
+
+func MulInt_With_Storage(cur realm) {
+    rusultInt *= 1
+}
+
+func MulInt8_With_Storage(cur realm) {
+    resultInt8 *= 1
+}
+
+func MulInt32_With_Storage(cur realm) {
+    resultInt32 *= 1
+}
+
+func MulInt64_With_Storage(cur realm) {
+    resultInt64 *= 1
+}
+
+func MulInt256_With_Storage(cur realm) {
+    resultInt256 = i256.One()
+    resultInt256 = i256.Zero().Mul(resultInt256, i256.One())
+}
+
+func MulUint_With_Storage(cur realm) {
+    resultUint *= 1
+}
+
+func MulUint8_With_Storage(cur realm) {
+    resultUint8 *= 1
+}
+
+func MulUint32_With_Storage(cur realm) {
+    resultUint32 *= 1
+}
+
+func MulUint64_With_Storage(cur realm) {
+    resultUint64 *= 1
+}
+
+func MulUint256_With_Storage(cur realm) {
+    resultUint256 = u256.One()
+    resultUint256 = u256.Zero().Mul(resultUint256, u256.One())
+}
+
+func Empty(cur realm) {
+    return
+}

@@ -186,17 +186,77 @@ def setup_contracts(workdir: str, exclude_tests: bool = False) -> None:
         copier.process_directory(root, dirs, files)
 
 
-def copy_integration_tests(workdir: str) -> None:
+_INTEGRATION_TESTDATA_DIR = "tests/integration/testdata"
+_INTEGRATION_SKIP_FILE = "tests/integration/testdata-skip.txt"
+
+
+def _load_skip_tests() -> set:
+    """Load skip list from file."""
+    skip_tests = set()
+    if os.path.exists(_INTEGRATION_SKIP_FILE):
+        with open(_INTEGRATION_SKIP_FILE) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    skip_tests.add(line)
+    return skip_tests
+
+
+def _get_all_integration_tests() -> list:
+    """Get all integration tests with their source paths and converted names.
+
+    Returns:
+        List of tuples: (src_file_path, converted_name)
+    """
+    if not os.path.exists(_INTEGRATION_TESTDATA_DIR):
+        return []
+
+    tests = []
+    for root, _, files in os.walk(_INTEGRATION_TESTDATA_DIR):
+        for file in files:
+            if file.endswith(".txtar"):
+                src_file = os.path.abspath(os.path.join(root, file))
+                rel_dir = os.path.relpath(root, _INTEGRATION_TESTDATA_DIR)
+                name_without_ext = file.replace(".txtar", "")
+
+                if rel_dir != ".":
+                    prefix = rel_dir.replace(os.sep, "_") + "_"
+                    converted_name = prefix + name_without_ext
+                else:
+                    converted_name = name_without_ext
+
+                tests.append((src_file, converted_name))
+
+    return tests
+
+
+def get_integration_tests(skip: bool = False) -> list:
+    """Get integration tests, optionally excluding those in skip list.
+
+    Args:
+        skip: If True, exclude tests listed in testdata-skip.txt
+
+    Returns:
+        List of tuples: (src_file_path, converted_name)
+    """
+    tests = _get_all_integration_tests()
+    if not skip:
+        return tests
+
+    skip_tests = _load_skip_tests()
+    return [(src, name) for src, name in tests if name not in skip_tests]
+
+
+def copy_integration_tests(workdir: str, skip: bool = False) -> None:
     """Copy integration test files from tests/integration to gno/gno.land/pkg/integration."""
     module_manager = GnoModuleManager(workdir)
 
     # Copy testdata txtar files
-    src_testdata = "tests/integration/testdata"
     dest_testdata = os.path.join(
         module_manager.gno_root_dir, "pkg", "integration", "testdata"
     )
 
-    if os.path.exists(src_testdata):
+    if os.path.exists(_INTEGRATION_TESTDATA_DIR):
         # Create destination directory if it doesn't exist
         if os.path.islink(dest_testdata) or os.path.isfile(dest_testdata):
             os.unlink(dest_testdata)
@@ -204,34 +264,18 @@ def copy_integration_tests(workdir: str) -> None:
             shutil.rmtree(dest_testdata)
         os.makedirs(dest_testdata, exist_ok=True)
 
-        print(f"Copying integration tests from {src_testdata} to {dest_testdata}")
+        print(f"Copying integration tests from {_INTEGRATION_TESTDATA_DIR} to {dest_testdata}")
 
-        # Walk through all directories and find txtar files
-        for root, _, files in os.walk(src_testdata):
-            for file in files:
-                if file.endswith(".txtar"):
-                    src_file = os.path.abspath(os.path.join(root, file))
+        for src_file, converted_name in get_integration_tests(skip=skip):
+            dest_file = os.path.join(dest_testdata, converted_name + ".txtar")
 
-                    # Calculate relative path from src_testdata
-                    rel_dir = os.path.relpath(root, src_testdata)
+            # Remove existing file/link if present
+            if os.path.exists(dest_file) or os.path.islink(dest_file):
+                os.unlink(dest_file)
 
-                    # If file is in a subdirectory, add directory name as prefix
-                    if rel_dir != ".":
-                        # Convert nested paths to prefix (e.g., "gov/governance" -> "gov_governance_")
-                        prefix = rel_dir.replace(os.sep, "_") + "_"
-                        dest_filename = prefix + file
-                    else:
-                        dest_filename = file
-
-                    dest_file = os.path.join(dest_testdata, dest_filename)
-
-                    # Remove existing file/link if present
-                    if os.path.exists(dest_file) or os.path.islink(dest_file):
-                        os.unlink(dest_file)
-
-                    # Create symlink
-                    os.symlink(src_file, dest_file)
-                    print(f"  Linked: {file} -> {dest_filename}")
+            # Create symlink
+            os.symlink(src_file, dest_file)
+            print(f"  Linked: {os.path.basename(src_file)} -> {converted_name}.txtar")
 
     # Copy bless directory
     src_bless = "tests/integration/bless"
@@ -264,33 +308,15 @@ def copy_integration_tests(workdir: str) -> None:
                 print(f"  Linked: {file}")
 
 
-def list_integration_tests() -> None:
+def list_integration_tests(skip: bool = False) -> None:
     """List all integration tests with their converted names."""
-    src_testdata = "tests/integration/testdata"
-
-    if not os.path.exists(src_testdata):
+    tests = get_integration_tests(skip=skip)
+    if not tests:
         print("Error: Test directory not found", file=sys.stderr)
         sys.exit(1)
 
-    tests = []
-    for root, _, files in os.walk(src_testdata):
-        for file in files:
-            if file.endswith(".txtar"):
-                # Get relative directory from testdata root
-                rel_dir = os.path.relpath(root, src_testdata)
-                name_without_ext = file.replace(".txtar", "")
-
-                # If in subdirectory, add prefix
-                if rel_dir != ".":
-                    prefix = rel_dir.replace(os.sep, "_") + "_"
-                    converted_name = prefix + name_without_ext
-                else:
-                    converted_name = name_without_ext
-
-                tests.append(converted_name)
-
-    for test in sorted(tests):
-        print(test)
+    for _, converted_name in sorted(tests, key=lambda x: x[1]):
+        print(converted_name)
 
 
 def main() -> None:
@@ -315,18 +341,23 @@ def main() -> None:
         action="store_true",
         help="List all integration tests with converted names",
     )
+    parser.add_argument(
+        "--skip",
+        action="store_true",
+        help="Exclude tests listed in testdata-skip.txt",
+    )
 
     args = parser.parse_args()
 
     if args.list_tests:
-        list_integration_tests()
+        list_integration_tests(skip=args.skip)
         return
 
     if args.clone:
         clone_repository(args.workdir)
 
     setup_contracts(args.workdir, exclude_tests=args.exclude_tests)
-    copy_integration_tests(args.workdir)
+    copy_integration_tests(args.workdir, args.skip)
     print("Setup completed successfully!")
 
 
