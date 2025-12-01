@@ -144,11 +144,11 @@ func LiquidityMathAddDelta(cur realm) {
 }
 
 func IsGNOTPath(cur realm) {
-	common.IsGNOTPath("gnot")
+	common.IsGNOTPath("ugnot")
 }
 
 func IsGNOTNativePath(cur realm) {
-	common.IsGNOTNativePath("gnot")
+	common.IsGNOTNativePath("ugnot")
 }
 
 func IsGNOTWrappedPath(cur realm) {

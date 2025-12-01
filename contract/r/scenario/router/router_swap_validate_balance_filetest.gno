@@ -45,7 +45,7 @@ var (
 
 	wugnotPath = "gno.land/r/gnoland/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/gns"
-	gnotPath   = "gnot"
+	gnotPath   = "ugnot"
 
 	fee500 uint32 = 500
 
@@ -207,7 +207,7 @@ func mintPositionWithGnot() BalanceSnapshot {
 	testing.SetOriginSend(chain.Coins{{"ugnot", 50000000}})
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross,
-		"gnot",
+		"ugnot",
 		gnsPath,      // token0Path
 		fee500,       // fee
 		int32(-6960), // tickLower

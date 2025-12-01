@@ -3,6 +3,7 @@ package v1
 import (
 	"chain"
 	"chain/banker"
+	"strconv"
 	"testing"
 
 	"gno.land/p/nt/testutils"
@@ -30,8 +31,7 @@ import (
 )
 
 const (
-	ugnotDenom string = "ugnot"
-	ugnotPath  string = "ugnot"
+	gnotDenom string = "ugnot"
 
 	gnsPath string = "gno.land/r/gnoswap/gns"
 	barPath string = "gno.land/r/onbloc/bar"
@@ -282,9 +282,9 @@ func ugnotTransfer(t *testing.T, from, to address, amount int64) {
 	t.Helper()
 
 	testing.SetRealm(testing.NewUserRealm(from))
-	testing.SetOriginSend(chain.Coins{{ugnotDenom, int64(amount)}})
+	testing.SetOriginSend(chain.Coins{{gnotDenom, int64(amount)}})
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(from, to, chain.Coins{{ugnotDenom, int64(amount)}})
+	banker_.SendCoins(from, to, chain.Coins{{gnotDenom, int64(amount)}})
 }
 
 func ugnotBalanceOf(t *testing.T, addr address) int64 {
@@ -296,7 +296,7 @@ func ugnotBalanceOf(t *testing.T, addr address) int64 {
 		return 0
 	}
 
-	return coins.AmountOf(ugnotDenom)
+	return coins.AmountOf(gnotDenom)
 }
 
 func ugnotMint(t *testing.T, addr address, denom string, amount int64) {
@@ -318,7 +318,7 @@ func ugnotFaucet(t *testing.T, to address, amount int64) {
 	testing.SetOriginCaller(faucetAddress)
 
 	if ugnotBalanceOf(t, faucetAddress) < amount {
-		newCoins := chain.Coins{{ugnotDenom, int64(amount)}}
+		newCoins := chain.Coins{{gnotDenom, int64(amount)}}
 		ugnotMint(t, faucetAddress, newCoins[0].Denom, newCoins[0].Amount)
 		testing.SetOriginSend(newCoins)
 	}
@@ -330,7 +330,7 @@ func ugnotDeposit(t *testing.T, addr address, amount uint64) {
 	testing.SetRealm(testing.NewUserRealm(addr))
 	wugnotAddr := wugnotAddr
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(addr, wugnotAddr, chain.Coins{{ugnotDenom, int64(amount)}})
+	banker_.SendCoins(addr, wugnotAddr, chain.Coins{{gnotDenom, int64(amount)}})
 	wugnot.Deposit(cross)
 }
 
@@ -526,9 +526,17 @@ func mockInstanceSwapCallback(
 	amount1Delta string,
 	payer address,
 ) error {
+	amount0DeltaInt64, err := strconv.ParseInt(amount0Delta, 10, 64)
+	if err != nil {
+		return err
+	}
+	amount1DeltaInt64, err := strconv.ParseInt(amount1Delta, 10, 64)
+	if err != nil {
+		return err
+	}
 	// mock instance using a closure
 	return func(cur realm) error {
 		testing.SetRealm(testing.NewCodeRealm(routerPath))
-		return mockInstance.SwapCallback(token0Path, token1Path, amount0Delta, amount1Delta, payer)
+		return mockInstance.SwapCallback(token0Path, token1Path, amount0DeltaInt64, amount1DeltaInt64, payer)
 	}(cross)
 }

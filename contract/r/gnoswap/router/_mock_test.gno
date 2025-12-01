@@ -129,8 +129,8 @@ func (m *MockRouter) DrySwapRoute(
 func (m *MockRouter) SwapCallback(
 	token0Path string,
 	token1Path string,
-	amount0Delta string,
-	amount1Delta string,
+	amount0Delta int64,
+	amount1Delta int64,
 	payer address,
 ) error {
 	m.Response.Get("SwapCallback")

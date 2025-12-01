@@ -53,7 +53,7 @@ func (s *stakerV1) MintAndStake(
 	halt.AssertIsNotHaltedStaker()
 
 	// if one click native
-	if token0 == GNOT || token1 == GNOT {
+	if token0 == GNOT_DENOM || token1 == GNOT_DENOM {
 		// check sent ugnot
 		sent := banker.OriginSend()
 		ugnotSent := sent.AmountOf("ugnot")
@@ -68,7 +68,7 @@ func (s *stakerV1) MintAndStake(
 
 		// send it over to position to wrap
 		banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-		banker_.SendCoins(stakerAddr, positionAddr, chain.Coins{{Denom: "ugnot", Amount: ugnotSent}})
+		banker_.SendCoins(stakerAddr, positionAddr, chain.Coins{{Denom: GNOT_DENOM, Amount: ugnotSent}})
 	}
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(

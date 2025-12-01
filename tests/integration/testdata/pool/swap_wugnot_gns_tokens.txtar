@@ -19,7 +19,6 @@ loadpkg gno.land/r/onbloc/obl
 
 loadpkg gno.land/r/gnoswap/access
 loadpkg gno.land/p/gnoswap/uint256
-loadpkg gno.land/p/gnoswap/int256
 loadpkg gno.land/p/gnoswap/gnsmath
 loadpkg gno.land/p/gnoswap/store
 loadpkg gno.land/p/gnoswap/version_manager
@@ -107,7 +106,7 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6a
 gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 gnokey maketx call -pkgpath gno.land/r/gnoland/wugnot -func Approve -args g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -send "50000000ugnot" -args gno.land/r/gnoswap/gns -args "gnot" -args 500 -args "-887220" -args "887220" -args 50000000 -args 50000000 -args 1 -args 1 -args 9999999999 -args $test1_user_addr -args $test1_user_addr -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -send "50000000ugnot" -args gno.land/r/gnoswap/gns -args "ugnot" -args 500 -args "-887220" -args "887220" -args 50000000 -args 50000000 -args 1 -args 1 -args 9999999999 -args $test1_user_addr -args $test1_user_addr -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 1
 # stdout "50000000"
 # stdout 'EVENTS:     \[{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoland/wugnot.wugnot\"},{\"key\":\"from\",\"value\":\"\"},{\"key\":\"to\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"value\",\"value\":\"50000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoland/wugnot.wugnot\"},{\"key\":\"from\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"to\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"value\",\"value\":\"50000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoland/wugnot.wugnot\"},{\"key\":\"from\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"to\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"},{\"key\":\"value\",\"value\":\"50000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gns.GNS\"},{\"key\":\"from\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"to\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"},{\"key\":\"value\",\"value\":\"50000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Mint\",\"attrs\":\[{\"key\":\"slug\",\"value\":\"GNFT\"},{\"key\":\"to\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"tokenId\",\"value\":\"1\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc721\"},{\"type\":\"SetTokenURI\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"prevRealm\",\"value\":\"gno.land/r/gnoswap/position\"},{\"key\":\"tokenId\",\"value\":\"1\"},{\"key\":\"tokenURI\",\"value\":\"data:image/svg\+xml;base64,.*\"}\],\"pkg_path\":\"gno.land/r/gnoswap/gnft\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"slug\",\"value\":\"GNFT\"},{\"key\":\"from\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"to\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"tokenId\",\"value\":\"1\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc721\"},{\"type\":\"Mint\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"tickLower\",\"value\":\"-887220\"},{\"key\":\"tickUpper\",\"value\":\"887220\"},{\"key\":\"poolPath\",\"value\":\"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:500\"},{\"key\":\"mintTo\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"caller\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"lpPositionId\",\"value\":\"1\"},{\"key\":\"liquidity\",\"value\":\"50000000\"},{\"key\":\"amount0\",\"value\":\"50000000\"},{\"key\":\"amount1\",\"value\":\"50000000\"},{\"key\":\"sqrtPriceX96\",\"value\":\"79228162514264337593543950337\"},{\"key\":\"token0Balance\",\"value\":\"50000000\"},{\"key\":\"token1Balance\",\"value\":\"50000000\"},{\"key\":\"tickCumulative\",\"value\":\"0\"},{\"key\":\"liquidityCumulative\",\"value\":\"0\"},{\"key\":\"secondsPerLiquidityCumulativeX128\",\"value\":\"0\"},{\"key\":\"observationTimestamp\",\"value\":\"[0-9]+\"},{\"key\":\"referrer\",\"value\":\"\"}\],\"pkg_path\":\"gno.land/r/gnoswap/position/v1\"},.*\]'
@@ -161,7 +160,6 @@ package swap_wrapper
 import (
 	"chain"
 
-	i256 "gno.land/p/gnoswap/int256"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 )
@@ -196,7 +194,7 @@ func WrappedSwap(
 		amountSpecified,
 		sqrtPriceLimitX96,
 		payer,
-		func(cur realm, amount0Delta, amount1Delta string) error {
+		func(cur realm, amount0Delta, amount1Delta int64) error {
 			return handleSwapCallback(
 				token0Path,
 				token1Path,
@@ -212,31 +210,24 @@ func handleSwapCallback(
 	token0Path string,
 	token1Path string,
 	payer address,
-	amount0Delta string,
-	amount1Delta string,
+	amount0Delta int64,
+	amount1Delta int64,
 ) error {
-	zero := i256.Zero()
-
-	amount0 := i256.MustFromDecimal(amount0Delta)
-	amount1 := i256.MustFromDecimal(amount1Delta)
-
 	switch {
-	case amount0.Gt(zero):
-		transferToPool(token0Path, amount0, payer)
-	case amount1.Gt(zero):
-		transferToPool(token1Path, amount1, payer)
+	case amount0Delta > 0:
+		transferToPool(token0Path, amount0Delta, payer)
+	case amount1Delta > 0:
+		transferToPool(token1Path, amount1Delta, payer)
 	}
 
 	return nil
 }
 
-func transferToPool(tokenPath string, amount *i256.Int, payer address) {
-	payment := amount.Abs().Int64()
-
+func transferToPool(tokenPath string, amount int64, payer address) {
 	if payer == wrapperAddr {
-		common.SafeGRC20Transfer(cross, tokenPath, poolAddr, payment)
+		common.SafeGRC20Transfer(cross, tokenPath, poolAddr, amount)
 		return
 	}
 
-	common.SafeGRC20TransferFrom(cross, tokenPath, payer, poolAddr, payment)
+	common.SafeGRC20TransferFrom(cross, tokenPath, payer, poolAddr, amount)
 }

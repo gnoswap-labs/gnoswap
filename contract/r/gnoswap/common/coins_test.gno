@@ -220,7 +220,7 @@ func TestCoins_IsGNOTPath(t *testing.T) {
 	}{
 		{
 			name:           "native_gnot_path",
-			path:           GNOT_PATH,
+			path:           GNOT_DENOM,
 			expectedResult: true,
 			description:    "Native GNOT path should return true",
 		},
@@ -244,9 +244,9 @@ func TestCoins_IsGNOTPath(t *testing.T) {
 		},
 		{
 			name:           "similar_but_different_path",
-			path:           "gnot",
+			path:           "ugnot",
 			expectedResult: true,
-			description:    "Exact match with GNOT_PATH should return true",
+			description:    "Exact match with GNOT_DENOM should return true",
 		},
 		{
 			name:           "partial_match",
@@ -274,7 +274,7 @@ func TestCoins_IsGNOTNativePath(t *testing.T) {
 	}{
 		{
 			name:           "native_gnot_path",
-			path:           GNOT_PATH,
+			path:           GNOT_DENOM,
 			expectedResult: true,
 			description:    "Native GNOT path should return true",
 		},
@@ -298,9 +298,9 @@ func TestCoins_IsGNOTNativePath(t *testing.T) {
 		},
 		{
 			name:           "exact_gnot_match",
-			path:           "gnot",
+			path:           "ugnot",
 			expectedResult: true,
-			description:    "Exact match with GNOT_PATH should return true",
+			description:    "Exact match with GNOT_DENOM should return true",
 		},
 	}
 
@@ -328,7 +328,7 @@ func TestCoins_IsGNOTWrappedPath(t *testing.T) {
 		},
 		{
 			name:           "native_gnot_path",
-			path:           GNOT_PATH,
+			path:           GNOT_DENOM,
 			expectedResult: false,
 			description:    "Native GNOT path should return false",
 		},
