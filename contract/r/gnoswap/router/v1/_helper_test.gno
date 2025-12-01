@@ -3,6 +3,7 @@ package v1
 import (
 	"chain"
 	"chain/banker"
+	"strconv"
 	"testing"
 
 	"gno.land/p/nt/testutils"
@@ -526,9 +527,17 @@ func mockInstanceSwapCallback(
 	amount1Delta string,
 	payer address,
 ) error {
+	amount0DeltaInt64, err := strconv.ParseInt(amount0Delta, 10, 64)
+	if err != nil {
+		return err
+	}
+	amount1DeltaInt64, err := strconv.ParseInt(amount1Delta, 10, 64)
+	if err != nil {
+		return err
+	}
 	// mock instance using a closure
 	return func(cur realm) error {
 		testing.SetRealm(testing.NewCodeRealm(routerPath))
-		return mockInstance.SwapCallback(token0Path, token1Path, amount0Delta, amount1Delta, payer)
+		return mockInstance.SwapCallback(token0Path, token1Path, amount0DeltaInt64, amount1DeltaInt64, payer)
 	}(cross)
 }
