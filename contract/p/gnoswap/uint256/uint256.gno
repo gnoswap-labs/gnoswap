@@ -7,27 +7,27 @@ import (
 )
 
 const (
-	MaxUint64   = 1<<64 - 1
+	MAX_UINT64  = ^uint64(0)
 	MAX_UINT256 = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 )
 
+var ErrBig256Range = errors.New("hex number > 256 bits")
+
 var (
-	zero  = Zero()
-	one   = One()
-	two   = NewUint(2)
-	three = NewUint(3)
+	zero  = Uint{0, 0, 0, 0}
+	one   = Uint{1, 0, 0, 0}
+	two   = Uint{2, 0, 0, 0}
+	three = Uint{3, 0, 0, 0}
 )
 
 // Uint represents a 256-bit unsigned integer.
 // It is stored as an array of 4 uint64 in little-endian order,
 // where arr[0] is the least significant and arr[3] is the most significant.
-type Uint struct {
-	arr [4]uint64
-}
+type Uint [4]uint64
 
 // NewUint returns a new Uint initialized with the given uint64 value.
 func NewUint(val uint64) *Uint {
-	return &Uint{arr: [4]uint64{val, 0, 0, 0}}
+	return &Uint{val, 0, 0, 0}
 }
 
 // NewUintFromInt64 returns a new Uint initialized with the given int64 value.
@@ -36,22 +36,22 @@ func NewUintFromInt64(val int64) *Uint {
 	if val < 0 {
 		panic("val is negative")
 	}
-	return NewUint(uint64(val))
+	return &Uint{uint64(val), 0, 0, 0}
 }
 
 // Zero returns a new Uint with value 0.
 func Zero() *Uint {
-	return NewUint(0)
+	return &Uint{0, 0, 0, 0}
 }
 
 // One returns a new Uint with value 1.
 func One() *Uint {
-	return NewUint(1)
+	return &Uint{1, 0, 0, 0}
 }
 
 // SetAllOne sets z to the maximum 256-bit value (all bits set to 1) and returns z.
 func (z *Uint) SetAllOne() *Uint {
-	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = MaxUint64, MaxUint64, MaxUint64, MaxUint64
+	z[3], z[2], z[1], z[0] = MAX_UINT64, MAX_UINT64, MAX_UINT64, MAX_UINT64
 	return z
 }
 
@@ -63,7 +63,7 @@ func (z *Uint) Set(x *Uint) *Uint {
 
 // SetOne sets z to 1 and returns z.
 func (z *Uint) SetOne() *Uint {
-	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, 0, 0, 1
+	z[3], z[2], z[1], z[0] = 0, 0, 0, 1
 	return z
 }
 
@@ -71,12 +71,14 @@ func (z *Uint) SetOne() *Uint {
 // Accepts an optional leading "+" sign but rejects underscores and negative values.
 // Returns ErrBig256Range if the number exceeds 256 bits.
 func (z *Uint) SetFromDecimal(s string) (err error) {
+	sLen := len(s)
 	// Remove max one leading +
-	if len(s) > 0 && s[0] == '+' {
+	if sLen > 0 && s[0] == '+' {
 		s = s[1:]
+		sLen--
 	}
 	// Remove any number of leading zeroes
-	if len(s) > 0 && s[0] == '0' {
+	if sLen > 0 && s[0] == '0' {
 		var i int
 		var c rune
 		for i, c = range s {
@@ -86,10 +88,12 @@ func (z *Uint) SetFromDecimal(s string) (err error) {
 		}
 		s = s[i:]
 	}
-	if len(s) < len(MAX_UINT256) {
+
+	maxLen := len(MAX_UINT256)
+	if sLen < maxLen {
 		return z.fromDecimal(s)
 	}
-	if len(s) == len(MAX_UINT256) {
+	if sLen == maxLen {
 		if s > MAX_UINT256 {
 			return ErrBig256Range
 		}
@@ -119,12 +123,12 @@ func MustFromDecimal(decimal string) *Uint {
 }
 
 // multipliers holds the values that are needed for fromDecimal
-var multipliers = [5]*Uint{
-	nil, // represents first round, no multiplication needed
-	{[4]uint64{10000000000000000000, 0, 0, 0}},                                     // 10 ^ 19
-	{[4]uint64{687399551400673280, 5421010862427522170, 0, 0}},                     // 10 ^ 38
-	{[4]uint64{5332261958806667264, 17004971331911604867, 2938735877055718769, 0}}, // 10 ^ 57
-	{[4]uint64{0, 8607968719199866880, 532749306367912313, 1593091911132452277}},   // 10 ^ 76
+var multipliers = [5]Uint{
+	{0, 0, 0, 0},                                    // 1 (no multiplication needed in the first round)
+	{10000000000000000000, 0, 0, 0},                 // 10 ^ 19
+	{687399551400673280, 5421010862427522170, 0, 0}, // 10 ^ 38
+	{5332261958806667264, 17004971331911604867, 2938735877055718769, 0}, // 10 ^ 57
+	{0, 8607968719199866880, 532749306367912313, 1593091911132452277},   // 10 ^ 76
 }
 
 // fromDecimal parses a decimal string by processing it in 19-character chunks.
@@ -142,11 +146,12 @@ func (z *Uint) fromDecimal(bs string) error {
 	if remaining == 0 {
 		return errors.New("EOF")
 	}
+
 	// We proceed in steps of 19 characters (nibbles), from least significant to most significant.
 	// This means that the first (up to) 19 characters do not need to be multiplied.
-	// In the second iteration, our slice of 19 characters needs to be multipleied
+	// In the second iteration, our slice of 19 characters needs to be multiplied
 	// by a factor of 10^19. Et cetera.
-	for i, mult := range multipliers {
+	for i := range multipliers {
 		if remaining <= 0 {
 			return nil // Done
 		}
@@ -163,18 +168,18 @@ func (z *Uint) fromDecimal(bs string) error {
 		if i == 0 {
 			z.SetUint64(num)
 		} else {
-			base := NewUint(num)
+			base := &Uint{uint64(num), 0, 0, 0}
 			// Check for overflow in multiplication
-			mulResult, overflow := new(Uint).MulOverflow(base, mult)
+			base, overflow := base.MulOverflow(base, &multipliers[i])
 			if overflow {
 				return ErrBig256Range
 			}
 			// Check for overflow in addition
-			addResult, overflow := new(Uint).AddOverflow(z, mulResult)
+			base, overflow = base.AddOverflow(base, z)
 			if overflow {
 				return ErrBig256Range
 			}
-			z.Set(addResult)
+			z.Set(base)
 		}
 		// Chop off another 19 characters
 		if remaining > 19 {
@@ -189,13 +194,13 @@ func (z *Uint) fromDecimal(bs string) error {
 // Position n is counted from the right (0 = least significant byte).
 // Returns 0 if n >= 32.
 func (z *Uint) Byte(n *Uint) *Uint {
-	// in z, z.arr[0] is the least significant
+	// in z, z[0] is the least significant
 	if number, overflow := n.Uint64WithOverflow(); !overflow {
 		if number < 32 {
-			number := z.arr[4-1-number/8]
-			offset := (n.arr[0] & 0x7) << 3 // 8*(n.d % 8)
-			z.arr[0] = (number & (0xff00000000000000 >> offset)) >> (56 - offset)
-			z.arr[3], z.arr[2], z.arr[1] = 0, 0, 0
+			number := z[4-1-number/8]
+			offset := (n[0] & 0x7) << 3 // 8*(n.d % 8)
+			z[0] = (number & (0xff00000000000000 >> offset)) >> (56 - offset)
+			z[3], z[2], z[1] = 0, 0, 0
 			return z
 		}
 	}
@@ -207,14 +212,14 @@ func (z *Uint) Byte(n *Uint) *Uint {
 // BitLen(0) returns 0.
 func (z *Uint) BitLen() int {
 	switch {
-	case z.arr[3] != 0:
-		return 192 + bits.Len64(z.arr[3])
-	case z.arr[2] != 0:
-		return 128 + bits.Len64(z.arr[2])
-	case z.arr[1] != 0:
-		return 64 + bits.Len64(z.arr[1])
+	case z[3] != 0:
+		return 192 + bits.Len64(z[3])
+	case z[2] != 0:
+		return 128 + bits.Len64(z[2])
+	case z[1] != 0:
+		return 64 + bits.Len64(z[1])
 	default:
-		return bits.Len64(z.arr[0])
+		return bits.Len64(z[0])
 	}
 }
 
@@ -226,78 +231,24 @@ func (z *Uint) ByteLen() int {
 
 // Clear sets z to 0 and returns z.
 func (z *Uint) Clear() *Uint {
-	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, 0, 0, 0
+	z[3], z[2], z[1], z[0] = 0, 0, 0, 0
 	return z
-}
-
-const (
-	// hextable  = "0123456789abcdef"
-	bintable  = "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x01\x02\x03\x04\x05\x06\a\b\t\xff\xff\xff\xff\xff\xff\xff\n\v\f\r\x0e\x0f\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\n\v\f\r\x0e\x0f\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-	badNibble = 0xff
-)
-
-// SetFromHex sets z from a hexadecimal string and returns an error if invalid.
-// Requires "0x" or "0X" prefix and rejects leading zeros after prefix, underscores, and negative values.
-// Returns ErrBig256Range if the number exceeds 256 bits.
-func (z *Uint) SetFromHex(hex string) error {
-	return z.fromHex(hex)
-}
-
-// fromHex parses a hex-string into z.
-func (z *Uint) fromHex(hex string) error {
-	if err := checkNumberS(hex); err != nil {
-		return err
-	}
-	if len(hex) > 66 {
-		return ErrBig256Range
-	}
-	z.Clear()
-	end := len(hex)
-	for i := 0; i < 4; i++ {
-		start := end - 16
-		if start < 2 {
-			start = 2
-		}
-		for ri := start; ri < end; ri++ {
-			nib := bintable[hex[ri]]
-			if nib == badNibble {
-				return ErrSyntax
-			}
-			z.arr[i] = z.arr[i] << 4
-			z.arr[i] += uint64(nib)
-		}
-		end = start
-	}
-	return nil
-}
-
-// FromHex creates a new Uint from a hexadecimal string.
-// The string must be 0x-prefixed and represent a value within 256 bits.
-func FromHex(hex string) (*Uint, error) {
-	var z Uint
-	if err := z.fromHex(hex); err != nil {
-		return nil, err
-	}
-	return &z, nil
-}
-
-// MustFromHex creates a new Uint from a hexadecimal string.
-// Panics if the string is invalid or the number exceeds 256 bits.
-func MustFromHex(hex string) *Uint {
-	var z Uint
-	if err := z.fromHex(hex); err != nil {
-		panic(err)
-	}
-	return &z
 }
 
 // Clone returns a new Uint with the same value as z.
 func (z *Uint) Clone() *Uint {
 	var x Uint
-	x.arr[0] = z.arr[0]
-	x.arr[1] = z.arr[1]
-	x.arr[2] = z.arr[2]
-	x.arr[3] = z.arr[3]
+	x[0] = z[0]
+	x[1] = z[1]
+	x[2] = z[2]
+	x[3] = z[3]
 
 	return &x
+}
+
+func (z *Uint) NilToZero() *Uint {
+	if z == nil {
+		z = NewUint(0)
+	}
+	return z
 }

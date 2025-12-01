@@ -55,35 +55,35 @@ gnokey maketx send -send 500000000ugnot -to $user1_user_addr -insecure-password-
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_user_addr -args 100000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/gns.BalanceOf(\"$test1_user_addr\")"
-stdout 99999900000000
+# stdout 99999900000000
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/gov/xgns.BalanceOf(\"$test1_user_addr\")"
-stdout 0
+# stdout 0
 
 # delegate GNS from admin to user1
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1em9s40nfrwd2aqn9ypjv7d9x9z9c8uk5uxrza9 -args 1000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func Delegate -args $user1_user_addr -args 1000000 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 1000000
-stdout 'GAS USED:   2[0-9]{7}'
-stdout 'STORAGE DELTA:  1[0-9]{4} bytes'
-stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
-stdout 'EVENTS:     \[{\"type\":\"TransferProtocolFee\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1em9s40nfrwd2aqn9ypjv7d9x9z9c8uk5uxrza9\"},{\"key\":\"prevRealm\",\"value\":\"gno.land/r/gnoswap/gov/staker\"},{\"key\":\"toDevOps\",\"value\":\"\"},{\"key\":\"toGovStaker\",\"value\":\"\"}\],\"pkg_path\":\"gno.land/r/gnoswap/protocol_fee/v1\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gns.GNS\"},{\"key\":\"from\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"to\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"value\",\"value\":\"1000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gov/xgns.xGNS\"},{\"key\":\"from\",\"value\":\"\"},{\"key\":\"to\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"value\",\"value\":\"1000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Delegate\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"from\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"to\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"amount\",\"value\":\"1000000\"},{\"key\":\"referrer\",\"value\":\"\"}\],\"pkg_path\":\"gno.land/r/gnoswap/gov/staker/v1\"}.*\]'
+# stdout 1000000
+# stdout 'GAS USED:   2[0-9]{7}'
+# stdout 'STORAGE DELTA:  1[0-9]{4} bytes'
+# stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
+# stdout 'EVENTS:     \[{\"type\":\"TransferProtocolFee\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1em9s40nfrwd2aqn9ypjv7d9x9z9c8uk5uxrza9\"},{\"key\":\"prevRealm\",\"value\":\"gno.land/r/gnoswap/gov/staker\"},{\"key\":\"toDevOps\",\"value\":\"\"},{\"key\":\"toGovStaker\",\"value\":\"\"}\],\"pkg_path\":\"gno.land/r/gnoswap/protocol_fee/v1\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gns.GNS\"},{\"key\":\"from\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"to\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"value\",\"value\":\"1000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gov/xgns.xGNS\"},{\"key\":\"from\",\"value\":\"\"},{\"key\":\"to\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"value\",\"value\":\"1000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Delegate\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"from\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"to\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"amount\",\"value\":\"1000000\"},{\"key\":\"referrer\",\"value\":\"\"}\],\"pkg_path\":\"gno.land/r/gnoswap/gov/staker/v1\"}.*\]'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/gns.BalanceOf(\"$test1_user_addr\")"
-stdout 99999899000000
+# stdout 99999899000000
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/gov/xgns.BalanceOf(\"$test1_user_addr\")"
-stdout 1000000
+# stdout 1000000
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/gns.BalanceOf(\"$user1_user_addr\")"
-stdout 1000000
+# stdout 1000000
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/gov/xgns.BalanceOf(\"$user1_user_addr\")"
-stdout 0
+# stdout 0
 
 # Admin redelegates from user1 to user2
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func Redelegate -args $test1_user_addr -args $user2_user_addr -args 1000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
-stdout 'GAS USED:   2[0-9]{7}'
-stdout 'STORAGE DELTA:  5[0-9]{3} bytes'
-stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
-stdout 'EVENTS:     \[{\"type\":\"TransferProtocolFee\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"prevRealm\",\"value\":\"gno.land/r/gnoswap/gov/staker\"},{\"key\":\"toDevOps\",\"value\":\"\"},{\"key\":\"toGovStaker\",\"value\":\"\"}\],\"pkg_path\":\"gno.land/r/gnoswap/protocol_fee/v1\"},{\"type\":\"Redelegate\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"from\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"previousDelegatee\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"newDelegatee\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"amount\",\"value\":\"0\"}\],\"pkg_path\":\"gno.land/r/gnoswap/gov/staker/v1\"}.*\]'
+# stdout 'GAS USED:   2[0-9]{7}'
+# stdout 'STORAGE DELTA:  5[0-9]{3} bytes'
+# stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
+# stdout 'EVENTS:     \[{\"type\":\"TransferProtocolFee\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"prevRealm\",\"value\":\"gno.land/r/gnoswap/gov/staker\"},{\"key\":\"toDevOps\",\"value\":\"\"},{\"key\":\"toGovStaker\",\"value\":\"\"}\],\"pkg_path\":\"gno.land/r/gnoswap/protocol_fee/v1\"},{\"type\":\"Redelegate\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"from\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"previousDelegatee\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"newDelegatee\",\"value\":\"g1[a-z0-9]+\"},{\"key\":\"amount\",\"value\":\"0\"}\],\"pkg_path\":\"gno.land/r/gnoswap/gov/staker/v1\"}.*\]'

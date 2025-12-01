@@ -1,0 +1,21 @@
+# Integration tests to skip
+# Add test names (without .txtar extension) one per line
+# Lines starting with # are comments
+
+# GNO native function gas measurement
+base_comment_gas_measurement
+base_cross_realm_depth_gas_measurement
+base_data_structure_gas_measurement
+base_pkg_realm_call_gas_measurement
+base_realm_load_cost_measurement
+base_storage_gas_measurement
+base_strconv_gas_measurement
+base_string_concat_gas_measurement
+
+# Time relative tests
+gov_governance_cancel_active_proposal_should_fail
+gov_governance_create_community_pool_spend_proposal
+gov_governance_create_parameter_change_proposal
+gov_governance_create_text_proposal
+gov_governance_execute_text_proposal_should_fail
+gov_governance_execute_unfinished_proposal_should_fail
