@@ -9,10 +9,6 @@ import (
 	"gno.land/r/gnoswap/position"
 )
 
-const (
-	WUGNOT_PATH string = "gno.land/r/gnoland/wugnot"
-)
-
 // mint creates a new liquidity position by adding liquidity to a pool and minting an NFT.
 // Panics if position ID already exists or adding liquidity fails.
 func (p *positionV1) mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
