@@ -79,8 +79,14 @@ func (e *emissionAccessor) GetStakerEmissionAmountPerSecondInRange(start, end in
 }
 
 func (e *emissionAccessor) SetOnDistributionPctChangeCallback(callback func(emissionAmountPerSecond int64)) {
+	callbackWithCross := func(emissionAmountPerSecond int64) {
+		func(cur realm) {
+			callback(emissionAmountPerSecond)
+		}(cross)
+	}
+
 	func(cur realm) {
-		emission.SetOnDistributionPctChangeCallback(cross, callback)
+		emission.SetOnDistributionPctChangeCallback(cross, callbackWithCross)
 	}(cross)
 }
 

@@ -87,7 +87,7 @@ func mintInitialPositionWithNativeCoin() {
 	// Set none native coin send
 	testing.SetOriginSend(chain.Coins{})
 
-	inputToken0Path := "gnot"
+	inputToken0Path := "ugnot"
 	inputToken1Path := fooPath
 	minTick := int32(-12000)
 	maxTick := int32(0)
@@ -209,7 +209,7 @@ func checkBalanceChanges(callback func()) {
 //
 // [SCENARIO] 2. Mint initial position (-12000~0)
 // [INFO] Minting initial position with native coin
-// [INFO] Input token0 path: gnot
+// [INFO] Input token0 path: ugnot
 // [INFO] Input token1 path: gno.land/r/onbloc/foo
 // [INFO] Min tick: -12000
 // [INFO] Max tick: 0

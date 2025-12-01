@@ -7,7 +7,6 @@ import (
 	"gno.land/p/gnoswap/fuzz"
 	"gno.land/p/gnoswap/fuzzutils"
 	prabc "gno.land/p/gnoswap/rbac"
-	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
@@ -133,20 +132,18 @@ func callPoolSwap(
 	common.SafeGRC20Approve(cross, token1Path, poolAddr, math.MaxInt64)
 
 	// Define swap callback
-	swapCallback := func(cur realm, amount0Delta, amount1Delta string) error {
+	swapCallback := func(cur realm, amount0Delta, amount1Delta int64) error {
 		func(cur realm) {
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 			// Transfer token0 if needed
-			if len(amount0Delta) > 0 && amount0Delta[0] != '-' && amount0Delta != "0" {
-				delta0 := u256.MustFromDecimal(amount0Delta)
-				common.SafeGRC20Transfer(cross, token0Path, poolAddr, delta0.Int64())
+			if amount0Delta > 0 {
+				common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
 			}
 
 			// Transfer token1 if needed
-			if len(amount1Delta) > 0 && amount1Delta[0] != '-' && amount1Delta != "0" {
-				delta1 := u256.MustFromDecimal(amount1Delta)
-				common.SafeGRC20Transfer(cross, token1Path, poolAddr, delta1.Int64())
+			if amount1Delta > 0 {
+				common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
 			}
 		}(cross)
 

@@ -270,7 +270,7 @@ func transferToken(
 	if isGnoNativeCoin {
 		wugnot.Withdraw(cross, amount)
 
-		sendCoin := chain.Coin{Denom: "ugnot", Amount: amount}
+		sendCoin := chain.Coin{Denom: common.GNOT_DENOM, Amount: amount}
 		banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 		banker_.SendCoins(from, to, chain.Coins{sendCoin})
 

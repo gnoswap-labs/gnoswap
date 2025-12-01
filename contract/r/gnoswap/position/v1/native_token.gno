@@ -28,7 +28,7 @@ func (p *positionV1) wrap(ugnotAmount int64, to address) error {
 		return ufmt.Errorf("amount(%d) < minimum(%d)", ugnotAmount, UGNOT_MIN_DEPOSIT_TO_WRAP)
 	}
 
-	wugnotAddr := chain.PackageAddress(WRAPPED_WUGNOT)
+	wugnotAddr := chain.PackageAddress(WUGNOT_PATH)
 	p.transferUGNOT(positionAddr, wugnotAddr, ugnotAmount)
 
 	wugnot.Deposit(cross)                   // position has wugnot
@@ -62,25 +62,25 @@ func (p *positionV1) transferUGNOT(from, to address, amount int64) {
 	}
 
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	fromBalance := banker_.GetCoins(from).AmountOf(UGNOT)
+	fromBalance := banker_.GetCoins(from).AmountOf(GNOT_DENOM)
 	if fromBalance < amount {
 		panic(newErrorWithDetail(
 			errInsufficientUGNOT,
 			ufmt.Sprintf("from(%s) balance(%d) is less than amount(%d)", from, fromBalance, amount)))
 	}
 	banker_.SendCoins(from, to, chain.Coins{
-		{Denom: UGNOT, Amount: amount},
+		{Denom: GNOT_DENOM, Amount: amount},
 	})
 }
 
 // isNative checks whether the given token is a native token.
 func isNative(token string) bool {
-	return token == GNOT
+	return token == GNOT_DENOM
 }
 
 // isWrappedToken checks whether the tokenPath is wrapped token.
 func isWrappedToken(tokenPath string) bool {
-	return tokenPath == WRAPPED_WUGNOT
+	return tokenPath == WUGNOT_PATH
 }
 
 // safeWrapNativeToken safely wraps the native token ugnot into the wrapped token wugnot for a user.
@@ -93,7 +93,7 @@ func (p *positionV1) safeWrapNativeToken(amount int64, toAddress address) (int64
 	}
 
 	beforeWrappedBalance := wugnot.BalanceOf(toAddress)
-	nativeSentAmount := banker.OriginSend().AmountOf(UGNOT)
+	nativeSentAmount := banker.OriginSend().AmountOf(GNOT_DENOM)
 
 	if nativeSentAmount <= 0 {
 		return 0, makeErrorWithDetails(errZeroUGNOT, "amount of ugnot is zero")
@@ -145,7 +145,7 @@ func (p *positionV1) wrapWithTransfer(ugnotAmount int64, toAddress address) erro
 	currentRealmAddr := runtime.CurrentRealm().Address()
 
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(currentRealmAddr, wugnotAddr, chain.Coins{{"ugnot", ugnotAmount}})
+	banker_.SendCoins(currentRealmAddr, wugnotAddr, chain.Coins{{GNOT_DENOM, ugnotAmount}})
 	wugnot.Deposit(cross) // Position has wugnot
 
 	// send wugnot: position -> user
@@ -167,7 +167,7 @@ func (p *positionV1) unwrapWithTransferFrom(fromAddress, toAddress address, wugn
 	wugnot.Withdraw(cross, wugnotAmount)
 
 	banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
-	banker_.SendCoins(currentRealmAddr, toAddress, chain.Coins{{"ugnot", wugnotAmount}})
+	banker_.SendCoins(currentRealmAddr, toAddress, chain.Coins{{GNOT_DENOM, wugnotAmount}})
 
 	return nil
 }
