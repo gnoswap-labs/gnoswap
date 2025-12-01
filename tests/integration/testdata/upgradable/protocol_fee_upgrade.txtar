@@ -1,0 +1,76 @@
+loadpkg gno.land/p/nt/avl
+loadpkg gno.land/p/nt/ufmt
+loadpkg gno.land/p/onbloc/json
+loadpkg gno.land/p/nt/ownable
+loadpkg gno.land/p/demo/tokens/grc20
+loadpkg gno.land/p/demo/tokens/grc721
+loadpkg gno.land/r/demo/defi/foo20
+
+loadpkg gno.land/r/sys/users
+loadpkg gno.land/r/gnoland/wugnot
+loadpkg gno.land/r/demo/defi/grc20reg
+
+loadpkg gno.land/r/onbloc/usdc
+loadpkg gno.land/r/onbloc/foo
+loadpkg gno.land/r/onbloc/bar
+loadpkg gno.land/r/onbloc/baz
+loadpkg gno.land/r/onbloc/qux
+loadpkg gno.land/r/onbloc/obl
+
+loadpkg gno.land/r/gnoswap/access
+loadpkg gno.land/p/gnoswap/uint256
+loadpkg gno.land/p/gnoswap/int256
+loadpkg gno.land/p/gnoswap/gnsmath
+loadpkg gno.land/p/gnoswap/store
+loadpkg gno.land/p/gnoswap/version_manager
+
+loadpkg gno.land/r/gnoswap/access
+loadpkg gno.land/r/gnoswap/rbac
+loadpkg gno.land/r/gnoswap/halt
+loadpkg gno.land/r/gnoswap/common
+loadpkg gno.land/r/gnoswap/referral
+
+loadpkg gno.land/r/gnoswap/gns
+loadpkg gno.land/r/gnoswap/gnft
+loadpkg gno.land/r/gnoswap/gov/xgns
+loadpkg gno.land/r/gnoswap/emission
+loadpkg gno.land/r/gnoswap/protocol_fee
+loadpkg gno.land/r/gnoswap/protocol_fee/v1
+
+adduser user1
+patchpkg "g16a7etgm9z2r653ucl36rj0l2yqcxgrz2jyegzx" $user1_user_addr
+
+gnoland start
+
+gnokey maketx send -send 15000000000ugnot -to $test1_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/scenario/upgrade/implements/v3_valid/protocol_fee -pkgpath gno.land/r/gnoswap/protocol_fee/v3_valid -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/protocol_fee.GetImplementationPackagePath()"
+# stdout "gno.land/r/gnoswap/protocol_fee/v1"
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/protocol_fee -func UpgradeImpl -args gno.land/r/gnoswap/protocol_fee/v3_valid -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   5[0-9]{6}'
+# stdout 'STORAGE DELTA:  8[0-9]{2} bytes'
+# stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
+# stdout 'EVENTS:     \[{\"type\":\"ChangeImplementation\",\"attrs\":\[{\"key\":\"previousPackagePath\",\"value\":\"gno.land/r/gnoswap/protocol_fee/v1\"},{\"key\":\"newPackagePath\",\"value\":\"gno.land/r/gnoswap/protocol_fee/v3_valid\"}\],\"pkg_path\":\"gno.land/p/gnoswap/version_manager\"},.*,\"pkg_path\":\"gno.land/r/gnoswap/protocol_fee\"}\]'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/protocol_fee.GetImplementationPackagePath()"
+# stdout "gno.land/r/gnoswap/protocol_fee/v3_valid"
+
+# Upgrade to non-exists version
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/protocol_fee -func UpgradeImpl -args gno.land/r/gnoswap/protocol_fee/invalid -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+stderr 'version_manager: initializer not found for package path:gno.land/r/gnoswap/protocol_fee/invalid'
+
+# Rollback to v1 contract
+gnokey maketx call -pkgpath gno.land/r/gnoswap/protocol_fee -func UpgradeImpl -args gno.land/r/gnoswap/protocol_fee/v1 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+# stdout 'GAS USED:   6[0-9]{6}'
+# stdout 'STORAGE DELTA:  -(8|9)[0-9]{2} bytes'
+# stdout 'TOTAL TX COST:  (9|10)[0-9]{7}ugnot'
+# stdout 'EVENTS:     \[{\"type\":\"ChangeImplementation\",\"attrs\":\[{\"key\":\"previousPackagePath\",\"value\":\"gno.land/r/gnoswap/protocol_fee/v3_valid\"},{\"key\":\"newPackagePath\",\"value\":\"gno.land/r/gnoswap/protocol_fee/v1\"}\],\"pkg_path\":\"gno.land/p/gnoswap/version_manager\"},.*,\"pkg_path\":\"gno.land/r/gnoswap/protocol_fee\",\"refund_withheld\":false}\]'
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/protocol_fee.GetImplementationPackagePath()"
+# stdout "gno.land/r/gnoswap/protocol_fee/v1"
+
+# Attempting to upgrade contract version with an address that lacks upgrade authority
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/protocol_fee -func UpgradeImpl -args gno.land/r/gnoswap/protocol_fee/v3_valid -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" $user1_user_addr
+stderr 'unauthorized: caller'

@@ -3,8 +3,10 @@ package v1
 import (
 	"testing"
 
-	"gno.land/p/nt/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
+	"gno.land/r/gnoswap/launchpad"
 )
 
 func TestProjectTier_Getters(t *testing.T) {
@@ -64,18 +66,14 @@ func TestProjectTier_Getters(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			tier := &ProjectTier{
-				id:                            tt.id,
-				totalDistributeAmount:         tt.totalDistributeAmount,
-				distributeAmountPerSecondX128: tt.distributeAmountPerSecondX128,
-				startTime:                     tt.startTime,
-				endTime:                       tt.endTime,
-				totalDepositAmount:            tt.totalDepositAmount,
-				totalWithdrawAmount:           tt.totalWithdrawAmount,
-				totalDepositCount:             tt.totalDepositCount,
-				totalWithdrawCount:            tt.totalWithdrawCount,
-				totalCollectedAmount:          tt.totalCollectedAmount,
-			}
+			tier := launchpad.NewProjectTier("test_project", 180, tt.totalDistributeAmount, tt.startTime, tt.endTime)
+			tier.SetID(tt.id)
+			tier.SetDistributeAmountPerSecondX128(tt.distributeAmountPerSecondX128)
+			tier.SetTotalDepositAmount(tt.totalDepositAmount)
+			tier.SetTotalWithdrawAmount(tt.totalWithdrawAmount)
+			tier.SetTotalDepositCount(tt.totalDepositCount)
+			tier.SetTotalWithdrawCount(tt.totalWithdrawCount)
+			tier.SetTotalCollectedAmount(tt.totalCollectedAmount)
 
 			// Execute and verify
 			var result interface{}
@@ -95,9 +93,9 @@ func TestProjectTier_Getters(t *testing.T) {
 			case "TotalWithdrawCount":
 				result = tier.TotalWithdrawCount()
 			case "CurrentDepositCount":
-				result = tier.CurrentDepositCount()
+				result = getTierCurrentDepositCount(tier)
 			case "CurrentDepositAmount":
-				result = tier.CurrentDepositAmount()
+				result = getTierCurrentDepositAmount(tier)
 			}
 			uassert.Equal(t, result, tt.expectedValue)
 		})
@@ -144,14 +142,11 @@ func TestProjectTier_Status(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			tier := &ProjectTier{
-				startTime: tt.startHeight,
-				endTime:   tt.endHeight,
-			}
+			tier := launchpad.NewProjectTier("test_project", 180, 1000, tt.startHeight, tt.endHeight)
 
 			// Execute and verify
-			isActive := tier.isActivated(tt.currentHeight)
-			isEnded := tier.isEnded(tt.currentHeight)
+			isActive := tier.IsActivated(tt.currentHeight)
+			isEnded := tier.IsEnded(tt.currentHeight)
 
 			uassert.Equal(t, isActive, tt.expectedIsActive)
 			uassert.Equal(t, isEnded, tt.expectedIsEnded)
@@ -212,21 +207,19 @@ func TestProjectTier_DepositAndWithdraw(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			tier := &ProjectTier{
-				totalDepositAmount:  tt.initialDepositAmount,
-				totalWithdrawAmount: tt.initialWithdrawAmount,
-				totalDepositCount:   tt.initialDepositCount,
-				totalWithdrawCount:  tt.initialWithdrawCount,
-			}
-			deposit := &Deposit{
-				depositAmount: tt.depositAmount,
-			}
+			tier := launchpad.NewProjectTier("test_project", 180, 1000, 100, 200)
+			tier.SetTotalDepositAmount(tt.initialDepositAmount)
+			tier.SetTotalWithdrawAmount(tt.initialWithdrawAmount)
+			tier.SetTotalDepositCount(tt.initialDepositCount)
+			tier.SetTotalWithdrawCount(tt.initialWithdrawCount)
+
+			deposit := launchpad.NewDeposit("test_deposit", "test_project", 180, testutils.TestAddress("depositor"), tt.depositAmount, 100, 100, 200)
 
 			// Execute
 			if tt.operation == "deposit" {
-				tier.deposit(deposit)
+				depositToTier(tier, deposit)
 			} else {
-				tier.withdraw(deposit)
+				withdrawToTier(tier, deposit)
 			}
 
 			// Verify
@@ -234,8 +227,8 @@ func TestProjectTier_DepositAndWithdraw(t *testing.T) {
 			uassert.Equal(t, tier.TotalWithdrawAmount(), tt.expectedWithdrawAmount)
 			uassert.Equal(t, tier.TotalDepositCount(), tt.expectedDepositCount)
 			uassert.Equal(t, tier.TotalWithdrawCount(), tt.expectedWithdrawCount)
-			uassert.Equal(t, tier.CurrentDepositAmount(), tt.expectedCurrentAmount)
-			uassert.Equal(t, tier.CurrentDepositCount(), tt.expectedCurrentCount)
+			uassert.Equal(t, getTierCurrentDepositAmount(tier), tt.expectedCurrentAmount)
+			uassert.Equal(t, getTierCurrentDepositCount(tier), tt.expectedCurrentCount)
 		})
 	}
 }
@@ -275,7 +268,7 @@ func TestProjectTier_NewProjectTier(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Execute
-			tier := NewProjectTier(
+			tier := launchpad.NewProjectTier(
 				tt.projectID,
 				tt.tierDuration,
 				tt.totalDistributeAmount,
@@ -338,18 +331,15 @@ func TestProjectTier_UpdateDistributeAmountPerSecond(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create tier with time-based parameters
-			tier := &ProjectTier{
-				id:                    "test:30",
-				totalDistributeAmount: tt.totalDistributeAmount,
-				startTime:             tt.startTime,
-				endTime:               tt.endTime,
-			}
+			tier := launchpad.NewProjectTier("test", 30, tt.totalDistributeAmount, tt.startTime, tt.endTime)
+			tier.SetID("test:30")
 
 			// Update distribute amount per second
-			tier.updateDistributeAmountPerSecond()
+			updateTierDistributeAmountPerSecond(tier)
 
 			// Get the actual value (need to shift right by 128 to get the integer part)
-			actualPerSecond := tier.distributeAmountPerSecondX128.Rsh(tier.distributeAmountPerSecondX128, 128).Int64()
+			distributePerSecond := tier.DistributeAmountPerSecondX128()
+			actualPerSecond := distributePerSecond.Rsh(distributePerSecond, 128).Int64()
 
 			// Verify it's in expected range
 			uassert.Equal(t, true, actualPerSecond > tt.expectedDistributePerSecondGT,
@@ -365,90 +355,77 @@ func TestProjectTier_VaryingBlockTimes(t *testing.T) {
 	// Test that the tier correctly calculates rewards based on time, not blocks
 
 	// Scenario 1: Fast blocks (1 second per block)
-	fastBlockTier := &ProjectTier{
-		id:                    "fast:30",
-		totalDistributeAmount: 1000,
-		startTime:             1000,
-		endTime:               1100, // 100 blocks in 100 seconds
-	}
-	fastBlockTier.updateDistributeAmountPerSecond()
+	fastBlockTier := launchpad.NewProjectTier("fast", 30, 1000, 1000, 1100)
+	fastBlockTier.SetID("fast:30")
+	updateTierDistributeAmountPerSecond(fastBlockTier)
 
 	// Scenario 2: Slow blocks (10 seconds per block)
-	slowBlockTier := &ProjectTier{
-		id:                    "slow:30",
-		totalDistributeAmount: 1000,
-		startTime:             1000,
-		endTime:               1100, // 10 blocks in 100 seconds
-	}
-	slowBlockTier.updateDistributeAmountPerSecond()
+	slowBlockTier := launchpad.NewProjectTier("slow", 30, 1000, 1000, 1100)
+	slowBlockTier.SetID("slow:30")
+	updateTierDistributeAmountPerSecond(slowBlockTier)
 
 	// Both should have the same distribute amount per second
 	uassert.Equal(t,
-		fastBlockTier.distributeAmountPerSecondX128.ToString(),
-		slowBlockTier.distributeAmountPerSecondX128.ToString(),
+		fastBlockTier.DistributeAmountPerSecondX128().ToString(),
+		slowBlockTier.DistributeAmountPerSecondX128().ToString(),
 		"Distribution rate should be the same regardless of block time")
 }
 
 // TestProjectTier_EdgeCases tests edge cases for project tier
 func TestProjectTier_EdgeCases(t *testing.T) {
 	// Test zero duration
-	zeroDurationTier := &ProjectTier{
-		id:                            "zero:30",
-		totalDistributeAmount:         1000,
-		startTime:                     1000,
-		endTime:                       1000, // Same time
-		distributeAmountPerSecondX128: u256.Zero(),
-	}
-	zeroDurationTier.updateDistributeAmountPerSecond()
+	zeroDurationTier := launchpad.NewProjectTier("zero", 30, 1000, 1000, 1000)
+	zeroDurationTier.SetID("zero:30")
+	updateTierDistributeAmountPerSecond(zeroDurationTier)
 
 	// Should result in zero distribution
-	uassert.Equal(t, true, zeroDurationTier.distributeAmountPerSecondX128.IsZero(),
+	uassert.Equal(t, true, zeroDurationTier.DistributeAmountPerSecondX128().IsZero(),
 		"Zero duration should result in zero distribution rate")
 
 	// Test negative duration (end before start - should not happen but test defensive programming)
-	invalidTier := &ProjectTier{
-		id:                            "invalid:30",
-		totalDistributeAmount:         1000,
-		startTime:                     2000,
-		endTime:                       1000, // End before start
-		distributeAmountPerSecondX128: u256.Zero(),
-	}
-	invalidTier.updateDistributeAmountPerSecond()
+	invalidTier := launchpad.NewProjectTier(
+		"invalid",
+		30,
+		1000,
+		2000,
+		1000, // End before start
+	)
 
 	// Should handle gracefully (likely zero or unchanged)
 	// The actual behavior depends on implementation details
+	_ = invalidTier
 }
 
 func TestProjectTier_makeProjectTierID(t *testing.T) {
 	tests := []struct {
 		name       string
 		projectID  string
-		tier   int64
+		tier       int64
 		expectedID string
 	}{
 		{
 			name:       "create tier id with tier 30",
 			projectID:  "gno.land/r/demo/token:100",
-			tier:        30,
+			tier:       30,
 			expectedID: "gno.land/r/demo/token:100:30",
 		},
 		{
 			name:       "create tier id with tier 90",
 			projectID:  "gno.land/r/demo/token:100",
-			tier:        90,
+			tier:       90,
 			expectedID: "gno.land/r/demo/token:100:90",
 		},
 		{
 			name:       "create tier id with tier 180",
 			projectID:  "gno.land/r/demo/token:100",
-			tier:        180,
+			tier:       180,
 			expectedID: "gno.land/r/demo/token:100:180",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := makeProjectTierID(tt.projectID, tt.tier)
+			result := launchpad.MakeProjectTierID(tt.projectID, tt.tier)
 			uassert.Equal(t, result, tt.expectedID)
 		})
 	}

@@ -51,23 +51,13 @@ type ILaunchpadStore interface {
 	GetProjectTierRewardManagers() *avl.Tree
 	SetProjectTierRewardManagers(managers *avl.Tree) error
 
-	HasDepositCounterKey() bool
-	GetDepositCounter() Counter
-	SetDepositCounter(counter Counter) error
+	// DepositCounter
+	HasDepositCounterStoreKey() bool
+	GetDepositCounter() *Counter
+	SetDepositCounter(counter *Counter) error
+	NextDepositID() string
 
 	HasDepositsKey() bool
 	GetDeposits() *avl.Tree
 	SetDeposits(deposits *avl.Tree) error
-}
-
-type LaunchpadState interface {
-	Projects() *avl.Tree
-	ProjectTierRewardManagers() *avl.Tree
-	DepositCounter() Counter
-	Deposits() *avl.Tree
-}
-
-type Counter interface {
-	Get() int64
-	Next() int64
 }

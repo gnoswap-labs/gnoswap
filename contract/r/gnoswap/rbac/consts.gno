@@ -5,7 +5,7 @@ import "chain"
 // Initial addresses for protocol roles.
 const (
 	// ADMIN is the initial admin address for RBAC management.
-	ADMIN address = "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"
+	ADMIN address = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"
 	// DEV_OPS is the initial DevOps address for operational tasks.
 	DEV_OPS address = "g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9"
 )

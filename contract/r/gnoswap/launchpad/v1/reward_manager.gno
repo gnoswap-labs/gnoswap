@@ -1,81 +1,41 @@
 package v1
 
 import (
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
+	"gno.land/r/gnoswap/launchpad"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// RewardManager manages the distribution of rewards for a project tier.
-//
-// This struct contains the necessary data and methods to calculate and track
-// rewards for deposits associated with a project tier.
-//
-// Fields:
-// - rewards (avl.Tree): A map of deposit IDs to their associated reward states.
-// - distributeAmountPerSecondX128 (u256.Uint): The amount of tokens to be distributed per second, represented as a Q128 fixed-point number.
-// - accumulatedRewardPerDepositX128 (u256.Uint): The accumulated reward per GNS stake, represented as a Q128 fixed-point number.
-// - totalDistributeAmount (int64): The total amount of tokens to be distributed.
-// - totalClaimedAmount (int64): The total amount of tokens claimed.
-// - distributeStartTime (int64): The start time of the reward calculation.
-// - distributeEndTime (int64): The end time of the reward calculation.
-// - accumulatedDistributeAmount (int64): The accumulated amount of tokens distributed.
-// - accumulatedHeight (int64): The last height when reward was calculated.
-// - rewardClaimableDuration (int64): The duration of reward claimable.
-type RewardManager struct {
-	rewards *avl.Tree // depositId -> RewardState
+// Helper functions for RewardManager
 
-	distributeAmountPerSecondX128   *u256.Uint // distribute amount per second, Q128
-	accumulatedRewardPerDepositX128 *u256.Uint // accumulated reward per GNS stake, Q128
-
-	totalDistributeAmount       int64 // total distributed amount
-	totalClaimedAmount          int64 // total claimed amount
-	distributeStartTime         int64 // start time of reward calculation
-	distributeEndTime           int64 // end time of reward calculation
-	accumulatedDistributeAmount int64 // accumulated distribute amount
-	accumulatedHeight           int64 // last height when reward was calculated
-	accumulatedTime             int64 // last time when reward was calculated
-	rewardClaimableDuration     int64 // duration of reward claimable
+func isRewardManagerInitialized(r *launchpad.RewardManager) bool {
+	return r.Rewards().Size() > 0
 }
 
-func (r *RewardManager) IsInitialized() bool {
-	return r.rewards.Size() > 0
-}
-
-func (r *RewardManager) DistributeAmountPerSecondX128() *u256.Uint {
-	return r.distributeAmountPerSecondX128
-}
-func (r *RewardManager) AccumulatedHeight() int64 { return r.accumulatedHeight }
-func (r *RewardManager) AccumulatedTime() int64   { return r.accumulatedTime }
-func (r *RewardManager) DistributeEndTime() int64 { return r.distributeEndTime }
-func (r *RewardManager) AccumulatedRewardPerDepositX128() *u256.Uint {
-	return r.accumulatedRewardPerDepositX128
-}
-
-func (r *RewardManager) AccumulatedReward() int64 {
-	res := u256.Zero().Rsh(r.accumulatedRewardPerDepositX128, 128)
+func getAccumulatedReward(r *launchpad.RewardManager) int64 {
+	res := u256.Zero().Rsh(r.AccumulatedRewardPerDepositX128(), 128)
 	return safeConvertToInt64(res)
 }
 
-func (r *RewardManager) getDepositRewardState(depositId string) (*RewardState, error) {
-	rewardStateI, exists := r.rewards.Get(depositId)
+func getDepositRewardState(r *launchpad.RewardManager, depositId string) (*launchpad.RewardState, error) {
+	rewardStateI, exists := r.Rewards().Get(depositId)
 	if !exists {
 		return nil, makeErrorWithDetails(errNotExistDeposit, ufmt.Sprintf("(%s)", depositId))
 	}
 
-	rewardState, ok := rewardStateI.(*RewardState)
+	rewardState, ok := rewardStateI.(*launchpad.RewardState)
 	if !ok {
-		return nil, ufmt.Errorf("failed to cast rewardState to *RewardState: %T", rewardStateI)
+		return nil, ufmt.Errorf("failed to cast rewardState to *launchpad.RewardState: %T", rewardStateI)
 	}
 
 	return rewardState, nil
 }
 
-func (r *RewardManager) calculateRewardPerDepositX128(rewardPerSecondX128 *u256.Uint, totalStaked int64, currentTime int64) (*u256.Uint, error) {
-	accumulatedTime := r.accumulatedTime
-	if r.distributeStartTime > accumulatedTime {
-		accumulatedTime = r.distributeStartTime
+func calculateRewardPerDepositX128(r *launchpad.RewardManager, rewardPerSecondX128 *u256.Uint, totalStaked int64, currentTime int64) (*u256.Uint, error) {
+	accumulatedTime := r.AccumulatedTime()
+	if r.DistributeStartTime() > accumulatedTime {
+		accumulatedTime = r.DistributeStartTime()
 	}
 
 	// not started yet
@@ -84,13 +44,13 @@ func (r *RewardManager) calculateRewardPerDepositX128(rewardPerSecondX128 *u256.
 	}
 
 	// past distribute end time
-	if accumulatedTime > r.distributeEndTime {
+	if accumulatedTime > r.DistributeEndTime() {
 		return u256.Zero(), nil
 	}
 
 	// past distribute end time, set to distribute end time
-	if currentTime > r.distributeEndTime {
-		currentTime = r.distributeEndTime
+	if currentTime > r.DistributeEndTime() {
+		currentTime = r.DistributeEndTime()
 	}
 
 	if rewardPerSecondX128.IsZero() {
@@ -116,51 +76,53 @@ func (r *RewardManager) calculateRewardPerDepositX128(rewardPerSecondX128 *u256.
 	return rewardPerDepositX128, nil
 }
 
-func (r *RewardManager) addRewardStateByDeposit(deposit *Deposit) *RewardState {
-	claimableTime := deposit.DepositTime() + r.rewardClaimableDuration
+func addRewardStateByDeposit(r *launchpad.RewardManager, deposit *launchpad.Deposit) *launchpad.RewardState {
+	claimableTime := deposit.CreatedAt() + r.RewardClaimableDuration()
 
-	rewardState := NewRewardState(
+	rewardState := newRewardState(
 		r.AccumulatedRewardPerDepositX128(),
 		deposit.DepositAmount(),
-		deposit.DepositTime(),
-		r.distributeEndTime,
+		deposit.CreatedAt(),
+		r.DistributeEndTime(),
 		claimableTime,
 	)
 
-	// if the first deposit, set the distribute start height
-	if !r.IsInitialized() {
-		rewardState.setDistributeStartTime(r.distributeStartTime)
-		rewardState.setDistributeEndTime(r.distributeEndTime)
-		rewardState.setAccumulatedTime(r.distributeStartTime)
-		rewardState.setPriceDebtX128(u256.Zero())
+	// if the first deposit, set the distribute start time
+	if !isRewardManagerInitialized(r) {
+		rewardState.SetDistributeStartTime(r.DistributeStartTime())
+		rewardState.SetDistributeEndTime(r.DistributeEndTime())
+		rewardState.SetAccumulatedTime(r.DistributeStartTime())
+		rewardState.SetPriceDebtX128(u256.Zero())
 	}
 
-	return r.addRewardState(deposit, rewardState)
+	return addRewardState(r, deposit, rewardState)
 }
 
-func (r *RewardManager) addRewardState(deposit *Deposit, rewardState *RewardState) *RewardState {
-	r.rewards.Set(deposit.ID(), rewardState)
+func addRewardState(r *launchpad.RewardManager, deposit *launchpad.Deposit, rewardState *launchpad.RewardState) *launchpad.RewardState {
+	rewards := r.Rewards()
+	rewards.Set(deposit.ID(), rewardState)
+	r.SetRewards(rewards)
 
 	return rewardState
 }
 
-func (r *RewardManager) addRewardPerDepositX128(rewardPerDepositX128 *u256.Uint, currentHeight, currentTime int64) error {
+func addRewardPerDepositX128(r *launchpad.RewardManager, rewardPerDepositX128 *u256.Uint, currentHeight, currentTime int64) error {
 	if rewardPerDepositX128.IsZero() {
 		return nil
 	}
 
-	if r.accumulatedTime > currentTime || r.distributeStartTime > currentTime {
+	if r.AccumulatedTime() > currentTime || r.DistributeStartTime() > currentTime {
 		return nil
 	}
 
-	if currentTime > r.distributeEndTime {
-		currentTime = r.distributeEndTime
+	if currentTime > r.DistributeEndTime() {
+		currentTime = r.DistributeEndTime()
 	}
 
-	accumulated := u256.Zero().Add(r.accumulatedRewardPerDepositX128, rewardPerDepositX128)
-	r.accumulatedRewardPerDepositX128 = accumulated
-	r.accumulatedHeight = currentHeight
-	r.accumulatedTime = currentTime
+	accumulated := u256.Zero().Add(r.AccumulatedRewardPerDepositX128(), rewardPerDepositX128)
+	r.SetAccumulatedRewardPerDepositX128(accumulated)
+	r.SetAccumulatedHeight(currentHeight)
+	r.SetAccumulatedTime(currentTime)
 
 	return nil
 }
@@ -176,14 +138,15 @@ func (r *RewardManager) addRewardPerDepositX128(rewardPerDepositX128 *u256.Uint,
 //
 // Returns:
 // - error: If the update fails
-func (r *RewardManager) updateRewardPerDepositX128(totalDepositAmount int64, currentHeight, currentTime int64) error {
+func updateRewardPerDepositX128(r *launchpad.RewardManager, totalDepositAmount int64, currentHeight, currentTime int64) error {
 	if currentTime <= 0 {
 		return makeErrorWithDetails(errInvalidTime, "time must be positive")
 	}
 
 	// Calculate and update rewards
-	rewardPerDepositX128, err := r.calculateRewardPerDepositX128(
-		r.distributeAmountPerSecondX128,
+	rewardPerDepositX128, err := calculateRewardPerDepositX128(
+		r,
+		r.DistributeAmountPerSecondX128(),
 		totalDepositAmount,
 		currentTime,
 	)
@@ -191,7 +154,7 @@ func (r *RewardManager) updateRewardPerDepositX128(totalDepositAmount int64, cur
 		return err
 	}
 
-	err = r.addRewardPerDepositX128(rewardPerDepositX128, currentHeight, currentTime)
+	err = addRewardPerDepositX128(r, rewardPerDepositX128, currentHeight, currentTime)
 	if err != nil {
 		return err
 	}
@@ -199,7 +162,7 @@ func (r *RewardManager) updateRewardPerDepositX128(totalDepositAmount int64, cur
 	return nil
 }
 
-func (r *RewardManager) updateDistributeAmountPerSecondX128(totalDistributeAmount int64, distributeStartTime int64, distributeEndTime int64) {
+func updateDistributeAmountPerSecondX128(r *launchpad.RewardManager, totalDistributeAmount int64, distributeStartTime int64, distributeEndTime int64) {
 	// Use time duration for per-second calculation
 	timeDuration := distributeEndTime - distributeStartTime
 	if timeDuration <= 0 {
@@ -217,9 +180,9 @@ func (r *RewardManager) updateDistributeAmountPerSecondX128(totalDistributeAmoun
 		u256.NewUintFromInt64(timeDuration),
 	)
 
-	r.distributeAmountPerSecondX128 = amountPerSecondX128
-	r.distributeStartTime = distributeStartTime
-	r.distributeEndTime = distributeEndTime
+	r.SetDistributeAmountPerSecondX128(amountPerSecondX128)
+	r.SetDistributeStartTime(distributeStartTime)
+	r.SetDistributeEndTime(distributeEndTime)
 }
 
 // collectReward processes the reward collection for a specific deposit.
@@ -233,20 +196,20 @@ func (r *RewardManager) updateDistributeAmountPerSecondX128(totalDistributeAmoun
 // Returns:
 // - int64: The amount of reward collected
 // - error: If the collection fails
-func (r *RewardManager) collectReward(depositId string, currentTime int64) (int64, error) {
-	if currentTime < r.accumulatedTime {
+func collectReward(r *launchpad.RewardManager, depositId string, currentTime int64) (int64, error) {
+	if currentTime < r.AccumulatedTime() {
 		return 0, makeErrorWithDetails(
 			errInvalidRewardState,
-			ufmt.Sprintf("currentTime %d is less than AccumulatedTime %d", currentTime, r.accumulatedTime),
+			ufmt.Sprintf("currentTime %d is less than AccumulatedTime %d", currentTime, r.AccumulatedTime()),
 		)
 	}
 
-	rewardState, err := r.getDepositRewardState(depositId)
+	rewardState, err := getDepositRewardState(r, depositId)
 	if err != nil {
 		return 0, err
 	}
 
-	if !rewardState.IsClaimable(currentTime) {
+	if !isRewardStateClaimable(rewardState, currentTime) {
 		return 0, makeErrorWithDetails(
 			errInvalidRewardState,
 			ufmt.Sprintf("currentTime %d is less than claimableTime %d", currentTime, rewardState.ClaimableTime()),
@@ -260,42 +223,32 @@ func (r *RewardManager) collectReward(depositId string, currentTime int64) (int6
 		)
 	}
 
-	claimableReward := rewardState.calculateClaimableReward(r.accumulatedRewardPerDepositX128)
+	claimableReward := calculateClaimableReward(rewardState, r.AccumulatedRewardPerDepositX128())
 	if claimableReward == 0 {
 		return 0, nil
 	}
 
-	rewardState.setClaimedAmount(rewardState.ClaimedAmount() + claimableReward)
-	r.rewards.Set(depositId, rewardState)
-	r.totalClaimedAmount += claimableReward
+	rewardState.SetClaimedAmount(rewardState.ClaimedAmount() + claimableReward)
+	rewards := r.Rewards()
+	rewards.Set(depositId, rewardState)
+	r.SetRewards(rewards)
+	r.SetTotalClaimedAmount(r.TotalClaimedAmount() + claimableReward)
 
 	return claimableReward, nil
 }
 
-// NewRewardManager returns a pointer to a new RewardManager with the given values.
-func NewRewardManager(
+// newRewardManager returns a pointer to a new RewardManager with the given values.
+func newRewardManager(
 	totalDistributeAmount int64,
 	distributeStartTime int64,
 	distributeEndTime int64,
 	currentHeight int64,
 	currentTime int64,
-) *RewardManager {
-	manager := &RewardManager{
-		totalDistributeAmount:           totalDistributeAmount,
-		distributeStartTime:             distributeStartTime,
-		distributeEndTime:               distributeEndTime,
-		totalClaimedAmount:              0,
-		accumulatedDistributeAmount:     0,
-		accumulatedHeight:               0,
-		accumulatedTime:                 0,
-		accumulatedRewardPerDepositX128: u256.Zero(),
-		distributeAmountPerSecondX128:   u256.Zero(),
-		rewardClaimableDuration:         0,
-		rewards:                         avl.NewTree(),
-	}
+) *launchpad.RewardManager {
+	manager := launchpad.NewRewardManager(totalDistributeAmount, distributeStartTime, distributeEndTime, currentHeight, currentTime)
 
-	manager.updateDistributeAmountPerSecondX128(totalDistributeAmount, distributeStartTime, distributeEndTime)
-	manager.updateRewardPerDepositX128(0, currentHeight, currentTime)
+	updateDistributeAmountPerSecondX128(manager, totalDistributeAmount, distributeStartTime, distributeEndTime)
+	updateRewardPerDepositX128(manager, 0, currentHeight, currentTime)
 
 	return manager
 }

@@ -14,6 +14,7 @@ import (
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/launchpad"
 )
 
 // CreateProject creates a new launchpad project with tiered allocations.
@@ -92,6 +93,21 @@ func (lp *launchpadV1) CreateProject(
 		depositAmount,
 	)
 
+	tier30, err := getProjectTier(project, projectTier30)
+	if err != nil {
+		panic(err)
+	}
+
+	tier90, err := getProjectTier(project, projectTier90)
+	if err != nil {
+		panic(err)
+	}
+
+	tier180, err := getProjectTier(project, projectTier180)
+	if err != nil {
+		panic(err)
+	}
+
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"CreateProject",
@@ -108,12 +124,12 @@ func (lp *launchpadV1) CreateProject(
 		"tier180Ratio", formatInt(params.tier180Ratio),
 		"startTime", formatInt(params.startTime),
 		"projectId", project.ID(),
-		"tier30Amount", formatInt(project.tiers[projectTier30].TotalDistributeAmount()),
-		"tier30EndTime", formatInt(project.tiers[projectTier30].EndTime()),
-		"tier90Amount", formatInt(project.tiers[projectTier90].TotalDistributeAmount()),
-		"tier90EndTime", formatInt(project.tiers[projectTier90].EndTime()),
-		"tier180Amount", formatInt(project.tiers[projectTier180].TotalDistributeAmount()),
-		"tier180EndTime", formatInt(project.tiers[projectTier180].EndTime()),
+		"tier30Amount", formatInt(tier30.TotalDistributeAmount()),
+		"tier30EndTime", formatInt(tier30.EndTime()),
+		"tier90Amount", formatInt(tier90.TotalDistributeAmount()),
+		"tier90EndTime", formatInt(tier90.EndTime()),
+		"tier180Amount", formatInt(tier180.TotalDistributeAmount()),
+		"tier180EndTime", formatInt(tier180.EndTime()),
 	)
 
 	return project.ID()
@@ -123,13 +139,13 @@ func (lp *launchpadV1) CreateProject(
 // This function validates the input parameters, creates the project structure,
 // and sets up the project tiers and reward managers.
 // Returns the created project and any error.
-func (lp *launchpadV1) createProject(params *createProjectParams) (*Project, error) {
+func (lp *launchpadV1) createProject(params *createProjectParams) (*launchpad.Project, error) {
 	if err := params.validate(); err != nil {
 		return nil, err
 	}
 
 	// create project
-	project := NewProject(
+	project := newProject(
 		params.name,
 		params.tokenPath,
 		params.depositAmount,
@@ -150,13 +166,13 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*Project, err
 		)
 	}
 
-	projectConditions, err := NewProjectConditionsWithError(params.conditionTokens, params.conditionAmounts)
+	projectConditions, err := launchpad.NewProjectConditionsWithError(params.conditionTokens, params.conditionAmounts)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, condition := range projectConditions {
-		project.addProjectCondition(condition.tokenPath, condition)
+		addProjectCondition(project, condition.TokenPath(), condition)
 	}
 
 	projectTierRatios := map[int64]int64{
@@ -179,16 +195,16 @@ func (lp *launchpadV1) createProject(params *createProjectParams) (*Project, err
 			tierDistributeAmount += remainTierDistributeAmount
 		}
 
-		projectTier := NewProjectTier(
+		projectTier := newProjectTier(
 			project.ID(),
 			rewardCollectableDuration,
 			tierDistributeAmount,
 			params.startTime,
 			params.startTime+tierDurationTime,
 		)
-		project.addProjectTier(duration, projectTier)
+		addProjectTier(project, duration, projectTier)
 
-		projectTierRewardManagers.Set(projectTier.ID(), NewRewardManager(
+		projectTierRewardManagers.Set(projectTier.ID(), newRewardManager(
 			projectTier.TotalDistributeAmount(),
 			projectTier.StartTime(),
 			projectTier.EndTime(),
@@ -232,20 +248,36 @@ func (lp *launchpadV1) TransferLeftFromProjectByAdmin(projectID string, recipien
 	}
 
 	previousRealm := runtime.PreviousRealm()
+
+	tier30, err := getProjectTier(project, projectTier30)
+	if err != nil {
+		panic(err)
+	}
+
+	tier90, err := getProjectTier(project, projectTier90)
+	if err != nil {
+		panic(err)
+	}
+
+	tier180, err := getProjectTier(project, projectTier180)
+	if err != nil {
+		panic(err)
+	}
+
 	chain.Emit(
 		"TransferLeftFromProjectByAdmin",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"projectId", projectID,
 		"recipient", recipient.String(),
-		"tokenPath", project.tokenPath,
+		"tokenPath", project.TokenPath(),
 		"leftReward", formatInt(projectLeftReward),
-		"tier30Full", formatInt(project.tiers[projectTier30].TotalDepositAmount()),
-		"tier30Left", formatInt(project.tiers[projectTier30].calculateLeftReward()),
-		"tier90Full", formatInt(project.tiers[projectTier90].TotalDepositAmount()),
-		"tier90Left", formatInt(project.tiers[projectTier90].calculateLeftReward()),
-		"tier180Full", formatInt(project.tiers[projectTier180].TotalDepositAmount()),
-		"tier180Left", formatInt(project.tiers[projectTier180].calculateLeftReward()),
+		"tier30Full", formatInt(tier30.TotalDepositAmount()),
+		"tier30Left", formatInt(getCalculatedLeftReward(tier30)),
+		"tier90Full", formatInt(tier90.TotalDepositAmount()),
+		"tier90Left", formatInt(getCalculatedLeftReward(tier90)),
+		"tier180Full", formatInt(tier180.TotalDepositAmount()),
+		"tier180Left", formatInt(getCalculatedLeftReward(tier180)),
 		"currentHeight", formatInt(currentHeight),
 		"currentTime", formatInt(currentTime),
 	)
@@ -273,17 +305,16 @@ func (lp *launchpadV1) transferLeftFromProject(projectID string, recipient addre
 	accumLeftReward := int64(0)
 	accumCollectedReward := int64(0)
 
-	tierMap := project.getTiers()
-	for _, tier := range tierMap {
-		if !tier.isEnded(currentTime) {
+	for _, tier := range project.Tiers() {
+		if !tier.IsEnded(currentTime) {
 			return 0, errors.New(ufmt.Sprintf("tier(%d) is not ended", tier.ID()))
 		}
 
-		if tier.CurrentDepositCount() > 0 {
-			return 0, errors.New(ufmt.Sprintf("tier(%d) has (%d) participants", tier.ID(), tier.CurrentDepositCount()))
+		if getTierCurrentDepositCount(tier) > 0 {
+			return 0, errors.New(ufmt.Sprintf("tier(%d) has (%d) participants", tier.ID(), getTierCurrentDepositCount(tier)))
 		}
 
-		leftReward := tier.calculateLeftReward()
+		leftReward := getCalculatedLeftReward(tier)
 		accumLeftReward += leftReward
 		accumCollectedReward += tier.TotalCollectedAmount()
 		accumTotalDistributeAmount += tier.TotalDistributeAmount()
@@ -293,22 +324,22 @@ func (lp *launchpadV1) transferLeftFromProject(projectID string, recipient addre
 		return 0, errors.New(ufmt.Sprintf("accumTotalDistributeAmount(%d) != accumCollectedReward(%d)+accumLeftReward(%d)", accumTotalDistributeAmount, accumCollectedReward, accumLeftReward))
 	}
 
-	projectLeftReward := project.RemainingAmount()
+	projectLeftReward := getProjectRemainingAmount(project)
 
 	if projectLeftReward > 0 {
-		common.SafeGRC20Transfer(cross, project.tokenPath, recipient, projectLeftReward)
+		common.SafeGRC20Transfer(cross, project.TokenPath(), recipient, projectLeftReward)
 	}
 
 	return projectLeftReward, nil
 }
 
 // validateTransferLeft validates the transfer of remaining tokens
-func validateRefundProject(project *Project, recipient address, currentTime int64) error {
+func validateRefundProject(project *launchpad.Project, recipient address, currentTime int64) error {
 	if !recipient.IsValid() {
 		return errors.New(ufmt.Sprintf("invalid recipient address(%s)", recipient.String()))
 	}
 
-	return project.validateRefundRemainingAmount(currentTime)
+	return validateRefundRemainingAmount(project, currentTime)
 }
 
 type createProjectParams struct {

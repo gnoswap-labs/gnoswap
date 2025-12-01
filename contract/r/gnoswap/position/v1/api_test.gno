@@ -213,7 +213,7 @@ func (h *ApiTestHelper) AssertBoolField(node *json.Node, fieldName string, expec
 var mockPosition = map[string]string{
 	"positionID":               "1",
 	"burned":                   "false",
-	"owner":                    `"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"`,
+	"owner":                    `"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"`,
 	"operator":                 `""`,
 	"poolKey":                  `"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"`,
 	"tickLower":                "-887270",

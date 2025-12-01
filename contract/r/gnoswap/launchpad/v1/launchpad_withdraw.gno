@@ -11,6 +11,7 @@ import (
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/launchpad"
 
 	gov_staker "gno.land/r/gnoswap/gov/staker"
 )
@@ -58,7 +59,7 @@ func (lp *launchpadV1) CollectDepositGns(depositID string) (int64, error) {
 }
 
 // withdrawDeposit withdraws a deposit and updates the reward manager.
-func (lp *launchpadV1) withdrawDeposit(deposit *Deposit, currentHeight, currentTime int64) (address, int64, error) {
+func (lp *launchpadV1) withdrawDeposit(deposit *launchpad.Deposit, currentHeight, currentTime int64) (address, int64, error) {
 	// Input validation
 	if deposit == nil {
 		return "", 0, makeErrorWithDetails(errNotExistDeposit, "deposit is nil")
@@ -83,7 +84,7 @@ func (lp *launchpadV1) withdrawDeposit(deposit *Deposit, currentHeight, currentT
 		return "", 0, err
 	}
 
-	projectTier, err := project.getTier(deposit.Tier())
+	projectTier, err := getProjectTier(project, deposit.Tier())
 	if err != nil {
 		return "", 0, err
 	}
@@ -95,22 +96,23 @@ func (lp *launchpadV1) withdrawDeposit(deposit *Deposit, currentHeight, currentT
 	}
 
 	// Update rewards with current deposit amount
-	err = rewardManager.updateRewardPerDepositX128(projectTier.CurrentDepositAmount(), currentHeight, currentTime)
+	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentHeight, currentTime)
 	if err != nil {
 		return "", 0, err
 	}
 
 	// Process withdrawal from project tier
-	projectTier.withdraw(deposit)
+	withdrawToTier(projectTier, deposit)
+	project.SetTier(deposit.Tier(), projectTier)
 
 	// Update rewards with new deposit amount after withdrawal
-	err = rewardManager.updateRewardPerDepositX128(projectTier.CurrentDepositAmount(), currentHeight, currentTime)
+	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentHeight, currentTime)
 	if err != nil {
 		return "", 0, err
 	}
 
 	// Finalize withdrawal
-	withdrawalAmount := deposit.withdraw(currentHeight, currentTime)
+	withdrawalAmount := withdrawDeposit(deposit, currentHeight, currentTime)
 
 	// Store updated deposit in state
 	deposits := lp.store.GetDeposits()

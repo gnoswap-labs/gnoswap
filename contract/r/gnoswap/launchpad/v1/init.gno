@@ -35,8 +35,8 @@ func initStoreData(launchpadStore launchpad.ILaunchpadStore) error {
 		}
 	}
 
-	if !launchpadStore.HasDepositCounterKey() {
-		err := launchpadStore.SetDepositCounter(NewCounter())
+	if !launchpadStore.HasDepositCounterStoreKey() {
+		err := launchpadStore.SetDepositCounter(launchpad.NewCounter())
 		if err != nil {
 			return err
 		}

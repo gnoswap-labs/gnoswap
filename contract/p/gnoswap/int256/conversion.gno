@@ -1,120 +1,229 @@
 package int256
 
 import (
-	"gno.land/p/gnoswap/uint256"
+	"errors"
+	"math/bits"
+	"strconv"
+
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// SetInt64 sets z to x and returns z.
-//
-// This implementation uses two's complement to handle the edge case of math.MinInt64.
-// When x = math.MinInt64 (-2^63), negating it would cause an overflow since 2^63
-// cannot be represented as a positive int64. By converting to uint64 first and then
-// applying two's complement (^u + 1) when negative, we correctly handle all int64
-// values including the minimum value without overflow.
-func (z *Int) SetInt64(x int64) *Int {
-	z = z.initiateAbs()
-	if z.abs == nil {
-		panic("int256_SetInt64(): abs is nil")
+const (
+	maxAbsI256Dec = "57896044618658097711785492504343953926634992332820282019728792003956564819968"
+	maxWords      = 256 / bits.UintSize
+)
+
+var (
+	ErrOverflow                    = errors.New("int256: overflow")
+	ErrEmptyString                 = errors.New("int256: empty string")
+	ErrInvalidSignInMiddleOfNumber = errors.New("int256: invalid sign in middle of number")
+
+	multipliers = [5]*Int{
+		nil,
+		{0x8ac7230489e80000, 0, 0, 0},
+		{0x98a224000000000, 0x4b3b4ca85a86c47a, 0, 0},
+		{0x4a00000000000000, 0xebfdcb54864ada83, 0x28c87cb5c89a2571, 0},
+		{0, 0x7775a5f171951000, 0x764b4abe8652979, 0x161bcca7119915b5},
 	}
-	u := uint64(x)
-	neg := x < 0
-	if neg {
-		u = ^u + 1 // |x| = two's complement magnitude
+)
+
+func FromDecimal(decimal string) (*Int, error) {
+	z, err := new(Int).SetString(decimal)
+	if err != nil {
+		return nil, err
 	}
-	z.abs = z.abs.SetUint64(u)
-	z.neg = neg && u != 0 // prevent -0
-	return z
+
+	return z, nil
 }
 
-// SetUint64 sets z to x and returns z.
-func (z *Int) SetUint64(x uint64) *Int {
-	z = z.initiateAbs()
-
-	if z.abs == nil {
-		panic("int256_SetUint64(): abs is nil")
-	}
-	z.abs = z.abs.SetUint64(x)
-	z.neg = false
-	return z
-}
-
-// Uint64 returns the lower 64 bits of z as a uint64.
-func (z *Int) Uint64() uint64 {
-	return z.abs.Uint64()
-}
-
-// Int64 returns the lower 64 bits of z, interpreted as a signed int64 (two's complement).
-//
-// Since int64 already uses two's complement representation internally,
-// we can simply apply two's complement to the unsigned magnitude when negative and cast
-// to int64. This approach correctly handles all edge cases including when the magnitude
-// equals 2^63 (which represents math.MinInt64 when negative) without special casing.
-func (z *Int) Int64() int64 {
-	u := z.abs.Uint64() // lower 64 bits of magnitude
-	if z.neg {
-		u = ^u + 1 // apply two's complement for negative sign
-	}
-	return int64(u) // reinterpret as two's complement int64
-}
-
-// Neg sets z to -x and returns z.
-func (z *Int) Neg(x *Int) *Int {
-	z.abs.Set(x.abs)
-	if z.abs.IsZero() {
-		z.neg = false
-	} else {
-		z.neg = !x.neg
+func MustFromDecimal(decimal string) *Int {
+	z, err := FromDecimal(decimal)
+	if err != nil {
+		panic(err)
 	}
 	return z
 }
 
-// NegOverflow sets z to -x and returns z and whether overflow occurred.
-// Overflow occurs when negating the minimum int256 value (-2^255).
-func (z *Int) NegOverflow(x *Int) (*Int, bool) {
-	z = z.initiateAbs()
-
-	if x.IsZero() {
-		z.abs.Clear()
-		z.neg = false
-		return z, false
-	}
-
-	if x.neg && x.abs.Eq(MinInt256().abs) {
-		z.Set(x) // must preserve the original value
-		return z, true
-	}
-
-	z.abs.Set(x.abs)
-	z.neg = !x.neg
-
-	return z, false
-}
-
-// Set sets z to x and returns z.
-func (z *Int) Set(x *Int) *Int {
-	z.abs.Set(x.abs)
-	z.neg = x.neg
-	return z
-}
-
-// SetUint256 sets z to the value of x and returns z.
-func (z *Int) SetUint256(x *uint256.Uint) *Int {
-	z.abs.Set(x)
-	z.neg = false
-	return z
-}
-
-// ToString returns the decimal string representation of z.
-// Panics if z is nil.
-// This differs from the original mempooler int256 implementation.
 func (z *Int) ToString() string {
-	if z == nil {
-		panic("int256: nil pointer to ToString()")
+	s := z.Sign()
+	if s == 0 {
+		return "0"
+	}
+	if z.IsInt64() {
+		return strconv.FormatInt(z.Int64(), 10)
+	}
+	y := new(Int)
+	if s > 0 {
+		y.Set(z)
+	} else {
+		y.Neg(z)
+	}
+	var (
+		out     = []byte("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
+		divisor = new(Int).SetUint64(10000000000000000000)
+		pos     = len(out)
+		buf     = make([]byte, 0, 19)
+	)
+
+	for {
+		var quot Int
+		rem := udivrem(quot[:], y[:], divisor)
+		y.Set(&quot)
+		buf = strconv.AppendUint(buf[:0], rem.Uint64(), 10)
+		copy(out[pos-len(buf):], buf)
+		if y.IsZero() {
+			break
+		}
+		pos -= 19
 	}
 
-	t := z.abs.Dec()
-	if z.neg {
-		return "-" + t
+	var res string
+	if s < 0 {
+		res = "-"
 	}
-	return t
+	res += string(out[pos-len(buf):])
+	return res
+}
+
+func (z *Int) SetString(s string) (*Int, error) {
+	if len(s) == 0 {
+		return nil, ErrEmptyString
+	}
+
+	isNeg := false
+	switch s[0] {
+	case '+':
+		s = s[1:]
+	case '-':
+		isNeg = true
+		s = s[1:]
+	}
+
+	if len(s) == 0 {
+		return nil, ErrEmptyString
+	}
+
+	// Parallel comparison technique for validation
+	// Process in 8-byte chunks for optimal performance
+	sLen := len(s)
+	i := 0
+
+	// Process 8 bytes at a time
+	for i+7 < sLen {
+		// Access up to s[i+7] is safe, then we can reduce the number of bounds checks
+		_ = s[i+7]
+
+		// Convert 8 bytes into a single uint64
+		// This method processes bytes directly, so no endianness issues
+		chunk := uint64(s[i]) | uint64(s[i+1])<<8
+		chunk |= uint64(s[i+2])<<16 | uint64(s[i+3])<<24
+		chunk |= uint64(s[i+4])<<32 | uint64(s[i+5])<<40
+		chunk |= uint64(s[i+6])<<48 | uint64(s[i+7])<<56
+
+		// Check for '+' (0x2B) using SWAR technique
+		// Subtracting 0x2B from each byte makes '+' bytes become 0
+		// Subtracting 0x01 makes bytes in ASCII range (0-127) have 0 in their highest bit
+		// Therefore, AND with 0x80 to check for zero bytes
+		plusTest := ((chunk ^ 0x2B2B2B2B2B2B2B2B) - 0x0101010101010101) & 0x8080808080808080
+
+		// Check for '-' (0x2D) using SWAR technique
+		minusTest := ((chunk ^ 0x2D2D2D2D2D2D2D2D) - 0x0101010101010101) & 0x8080808080808080
+
+		// If either test is non-zero, a sign character exists
+		if (plusTest | minusTest) != 0 {
+			return nil, ErrInvalidSignInMiddleOfNumber
+		}
+
+		i += 8
+	}
+
+	// Process remaining bytes
+	for ; i < sLen; i++ {
+		if s[i] == '+' || s[i] == '-' {
+			return nil, ErrInvalidSignInMiddleOfNumber
+		}
+	}
+
+	// Strip leading zeros
+	if len(s) > 0 && s[0] == '0' {
+		idx := 0
+		for idx < len(s) && s[idx] == '0' {
+			idx++
+		}
+		s = s[idx:]
+		// If all characters were zeros, set to "0"
+		if len(s) == 0 {
+			s = "0"
+		}
+	}
+
+	// Check for overflow
+	if len(s) > len(maxAbsI256Dec) ||
+		(len(s) == len(maxAbsI256Dec) && s > maxAbsI256Dec) ||
+		(s == maxAbsI256Dec && !isNeg) {
+		return nil, ErrOverflow
+	}
+
+	if err := z.fromDecimal(s); err != nil {
+		return nil, err
+	}
+
+	if isNeg {
+		z.Neg(z)
+	}
+
+	return z, nil
+}
+
+func (z *Int) fromDecimal(bs string) error {
+	z.Clear()
+	var (
+		num       uint64
+		err       error
+		remaining = len(bs)
+	)
+
+	if remaining == 0 {
+		return errors.New("EOF")
+	}
+
+	for i, mult := range multipliers {
+		if remaining <= 0 {
+			return nil
+		}
+		if remaining > 19 {
+			num, err = strconv.ParseUint(bs[remaining-19:remaining], 10, 64)
+		} else {
+			num, err = strconv.ParseUint(bs, 10, 64)
+		}
+		if err != nil {
+			return err
+		}
+		if i == 0 {
+			z.SetUint64(num)
+		} else {
+			base := new(Int).SetUint64(num)
+			z.Add(z, base.Mul(base, mult))
+		}
+		if remaining > 19 {
+			bs = bs[0 : remaining-19]
+		}
+		remaining -= 19
+	}
+	return nil
+}
+
+// FromUint256 converts a uint256 to int256.
+// Panics if the uint256 value is greater than MaxInt256 (2^255 - 1).
+func FromUint256(x *u256.Uint) *Int {
+	// Check overflow: if MSB of x[3] is set, value > MaxInt256
+	if x[3] > 0x7fffffffffffffff {
+		panic("int256: overflow - uint256 value exceeds MaxInt256")
+	}
+	z := &Int{}
+	z[0] = x[0]
+	z[1] = x[1]
+	z[2] = x[2]
+	z[3] = x[3]
+	return z
 }

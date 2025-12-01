@@ -17,9 +17,11 @@ func (i *poolV1) ApiGetPool(poolPath string) string {
 		return ""
 	}
 
+	pool := i.mustGetPool(poolPath)
+
 	node := json.ObjectNode("", map[string]*json.Node{
 		"stat":     newStatNode().JSON(),
-		"response": newRpcPool(i, poolPath).JSON(),
+		"response": newRpcPool(pool, poolPath).JSON(),
 	})
 
 	return marshal(node)

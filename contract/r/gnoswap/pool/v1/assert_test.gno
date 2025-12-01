@@ -23,7 +23,7 @@ func TestAssertIsNotAllowedEOA(t *testing.T) {
 			name:         "fail - called from EOA",
 			currentRealm: testing.NewUserRealm(adminAddr),
 			shouldPanic:  true,
-			panicMsg:     "[GNOSWAP-POOL-029] not access EOA || previousRealm(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) is EOA",
+			panicMsg:     "[GNOSWAP-POOL-029] not access EOA || previousRealm(g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5) is EOA",
 		},
 	}
 

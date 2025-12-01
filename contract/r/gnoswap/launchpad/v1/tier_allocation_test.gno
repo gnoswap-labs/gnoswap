@@ -100,9 +100,9 @@ func TestTierAllocationNoLeftover(t *testing.T) {
 			lp.store.SetProjects(projects)
 
 			// get all tiers and calculate total allocated
-			tier30, _ := project.getTier(30)
-			tier90, _ := project.getTier(90)
-			tier180, _ := project.getTier(180)
+			tier30, _ := getProjectTier(project, 30)
+			tier90, _ := getProjectTier(project, 90)
+			tier180, _ := getProjectTier(project, 180)
 
 			tier30Amount := tier30.TotalDistributeAmount()
 			tier90Amount := tier90.TotalDistributeAmount()
@@ -163,9 +163,9 @@ func TestTierAllocationRemainder(t *testing.T) {
 	projects.Set(project.ID(), project)
 	lp.store.SetProjects(projects)
 
-	tier30, _ := project.getTier(30)
-	tier90, _ := project.getTier(90)
-	tier180, _ := project.getTier(180)
+	tier30, _ := getProjectTier(project, 30)
+	tier90, _ := getProjectTier(project, 90)
+	tier180, _ := getProjectTier(project, 180)
 
 	// Manual calculation
 	expected30 := depositAmount * 33 / 100                                 // 330
