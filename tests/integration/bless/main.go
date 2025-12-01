@@ -36,7 +36,7 @@ type ScriptProcessor struct {
 	patterns       []MaskPattern
 	stdoutConv     Converter
 	stderrConv     Converter
-	stdoutPrefixes []string
+	stdoutPrefixes map[string]bool
 }
 
 const (
@@ -48,11 +48,12 @@ const (
 	okOutput          = "OK!"
 )
 
-var defaultStdoutPrefixes = []string{
-	"GAS USED:",
-	"STORAGE DELTA:",
-	"TOTAL TX COST:",
-	"EVENTS:",
+var defaultStdoutPrefixes = map[string]bool{
+	"GAS USED:":      true,
+	"STORAGE DELTA:": true,
+	"STORAGE FEE:":   true,
+	"TOTAL TX COST:": true,
+	"EVENTS:":        true,
 }
 
 func main() {
@@ -366,7 +367,7 @@ func (p *outputParser) shouldKeepStdoutLine(line, cmd string) bool {
 	}
 
 	// Check against known prefixes
-	for _, prefix := range p.processor.stdoutPrefixes {
+	for prefix := range p.processor.stdoutPrefixes {
 		if strings.HasPrefix(line, prefix) {
 			return true
 		}
