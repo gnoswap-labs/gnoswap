@@ -11,7 +11,7 @@ import (
 func RunFuzzTest(t *testing.T, iterations int, fn func(*fuzz.T, *Result, int), options ...any) {
 	result := NewFuzzResult(fuzz.BASE_SEED)
 	isHandlePanic := true
-	isPrintLog := true
+	isPrintLog := false
 	index := 0
 
 	if len(options) > 0 {
