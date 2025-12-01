@@ -234,9 +234,10 @@ func SetOnDistributionPctChangeCallback(cur realm, callback func(int64)) {
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsStaker(caller)
 
-	if onDistributionPctChangeCallback != nil {
-		onDistributionPctChangeCallback(0)
-	}
-
 	onDistributionPctChangeCallback = callback
+
+	if onDistributionPctChangeCallback != nil {
+		emissionAmountPerSecond := GetStakerEmissionAmountPerSecond()
+		onDistributionPctChangeCallback(emissionAmountPerSecond)
+	}
 }

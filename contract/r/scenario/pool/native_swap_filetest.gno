@@ -4,7 +4,6 @@ package main
 
 import (
 	"chain"
-	"strconv"
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -63,7 +62,7 @@ var (
 	MIN_PRICE string = "4295128740"
 	MAX_PRICE string = "1461446703485210103287273052203988822378723970341"
 
-	WUGNOT_PATH string = "gno.land/r/gnoland/wugnot"
+	WRAPPED_WUGNOT string = "gno.land/r/gnoland/wugnot"
 )
 
 func main() {
@@ -71,7 +70,7 @@ func main() {
 	testing.SetRealm(adminRealm)
 
 	gns.Approve(cross, poolAddr, poolCreationFee)
-	pool.CreatePool(cross, WUGNOT_PATH, fooPath, fee500, "130621891405341611593710811006") // x2.7
+	pool.CreatePool(cross, WRAPPED_WUGNOT, fooPath, fee500, "130621891405341611593710811006") // x2.7
 
 	println("[SCENARIO] 1. Mint LP and Get GNFT")
 	TestMint()
@@ -85,7 +84,7 @@ func main() {
 
 // 2. Mint LP and Get GNFT
 func TestMint() {
-	token0, token1 := fooPath, WUGNOT_PATH
+	token0, token1 := fooPath, WRAPPED_WUGNOT
 	if token1 < token0 {
 		token0, token1 = token1, token0
 	}
@@ -112,7 +111,7 @@ func TestMint() {
 	amount0, amount1 := pool.Mint(
 		cross,
 		fooPath,
-		WUGNOT_PATH,
+		WRAPPED_WUGNOT,
 		fee500,
 		test_tickLower,
 		test_tickUpper,
@@ -126,7 +125,7 @@ func TestMint() {
 }
 
 func TestSwapBuyNative() {
-	pools := pool.GetPool(fooPath, WUGNOT_PATH, fee500)
+	pools := pool.GetPool(fooPath, WRAPPED_WUGNOT, fee500)
 
 	adminOldT0Bal := common.GetToken(pools.Token0Path()).BalanceOf(adminAddr)
 	adminOldT1Bal := common.GetToken(pools.Token1Path()).BalanceOf(adminAddr)
@@ -138,16 +137,16 @@ func TestSwapBuyNative() {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	amount0, amount1 := pool.Swap(
 		cross,
-		WUGNOT_PATH, // token0
-		fooPath,     // token1
+		WRAPPED_WUGNOT, // token0
+		fooPath,        // token1
 		fee500,
 		adminAddr,
 		true,
 		"10000",
 		MIN_PRICE,
 		adminAddr,
-		func(cur realm, amount0Delta, amount1Delta string) error {
-			return mockSwapCallback(WUGNOT_PATH, fooPath, amount0Delta, amount1Delta, true)
+		func(cur realm, amount0Delta, amount1Delta int64) error {
+			return mockSwapCallback(WRAPPED_WUGNOT, fooPath, amount0Delta, amount1Delta, true)
 		},
 	)
 
@@ -162,7 +161,7 @@ func TestSwapBuyNative() {
 }
 
 func TestSwapSellNative() {
-	pools := pool.GetPool(fooPath, WUGNOT_PATH, fee500)
+	pools := pool.GetPool(fooPath, WRAPPED_WUGNOT, fee500)
 
 	adminOldT0Bal := common.GetToken(pools.Token0Path()).BalanceOf(adminAddr)
 	adminOldT1Bal := common.GetToken(pools.Token1Path()).BalanceOf(adminAddr)
@@ -174,16 +173,16 @@ func TestSwapSellNative() {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	amount0, amount1 := pool.Swap( // ugnot 10_000 > foo ??
 		cross,
-		WUGNOT_PATH, // token0
-		fooPath,     // token1
+		WRAPPED_WUGNOT, // token0
+		fooPath,        // token1
 		fee500,
 		adminAddr,
 		false,
 		"10000",
 		MAX_PRICE,
 		adminAddr,
-		func(cur realm, amount0Delta, amount1Delta string) error {
-			return mockSwapCallback(WUGNOT_PATH, fooPath, amount0Delta, amount1Delta, false)
+		func(cur realm, amount0Delta, amount1Delta int64) error {
+			return mockSwapCallback(WRAPPED_WUGNOT, fooPath, amount0Delta, amount1Delta, false)
 		},
 	)
 
@@ -197,29 +196,26 @@ func TestSwapSellNative() {
 	println()
 }
 
-func mockSwapCallback(token0Path string, token1Path string, amount0Delta string, amount1Delta string, zeroForOne bool) error {
+func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {
 	testing.SetRealm(adminRealm)
 
 	const wugnotPath = "gno.land/r/gnoland/wugnot"
-	const gnotDenom = "ugnot"
-
-	amount0Int64, _ := strconv.ParseInt(amount0Delta, 10, 64)
-	amount1Int64, _ := strconv.ParseInt(amount1Delta, 10, 64)
+	const ugnotDenom = "ugnot"
 
 	if zeroForOne {
 		if token0Path == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{gnotDenom, amount0Int64}})
+			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount0Delta}})
 			wugnot.Deposit(cross)
 		}
 
-		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Int64)
+		common.SafeGRC20Transfer(cross, token0Path, poolAddr, amount0Delta)
 	} else {
 		if token1Path == wugnotPath {
-			testing.SetOriginSend(chain.Coins{{gnotDenom, amount1Int64}})
+			testing.SetOriginSend(chain.Coins{{ugnotDenom, amount1Delta}})
 			wugnot.Deposit(cross)
 		}
 
-		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Int64)
+		common.SafeGRC20Transfer(cross, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil
