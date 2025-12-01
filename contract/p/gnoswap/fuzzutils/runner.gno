@@ -11,12 +11,20 @@ import (
 func RunFuzzTest(t *testing.T, iterations int, fn func(*fuzz.T, *Result, int), options ...any) {
 	result := NewFuzzResult(fuzz.BASE_SEED)
 	isHandlePanic := true
+	isPrintLog := true
 	index := 0
 
 	if len(options) > 0 {
 		handledPanic, ok := options[0].(bool)
 		if ok {
 			isHandlePanic = handledPanic
+		}
+	}
+
+	if len(options) > 1 {
+		isPrintLogOption, ok := options[1].(bool)
+		if ok {
+			isPrintLog = isPrintLogOption
 		}
 	}
 
@@ -43,6 +51,14 @@ func RunFuzzTest(t *testing.T, iterations int, fn func(*fuzz.T, *Result, int), o
 			}
 		} else {
 			fn(ft, result, index)
+		}
+
+		if isPrintLog {
+			if isError {
+				ufmt.Printf("[LOG-%d] %s (error: %s)\n", index, result.params[index].ToString(), errorMessage)
+			} else {
+				ufmt.Printf("[LOG-%d] %s (valid)\n", index, result.params[index].ToString())
+			}
 		}
 
 		if isError {
