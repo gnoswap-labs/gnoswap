@@ -41,7 +41,7 @@ func TestNewPoolParams(t *testing.T) {
 	)
 
 	t.Run(
-		"Success - native token wrapped wugnot token",
+		"Success - native token wrapped ugnot token",
 		func(t *testing.T) {
 			initPoolTest(t)
 
@@ -54,7 +54,7 @@ func TestNewPoolParams(t *testing.T) {
 				0,
 			)
 			token0, _ := params.wrap()
-			if token0 != WRAPPED_WUGNOT {
+			if token0 != WUGNOT_PATH {
 				t.Errorf("Expected GNOT to be wrapped to WUGNOT")
 			}
 		},
@@ -275,7 +275,7 @@ func TestWrap(t *testing.T) {
 		expectedMsg     string
 	}{
 		{
-			name:            "success - native token wrapped wugnot token",
+			name:            "success - native token wrapped ugnot token",
 			token0Path:      GNOT_DENOM,
 			token1Path:      gnsPath,
 			fee:             FeeTier3000,
@@ -295,10 +295,10 @@ func TestWrap(t *testing.T) {
 			expected1 := params.token1Path
 
 			if params.token0Path == GNOT_DENOM {
-				expected0 = WRAPPED_WUGNOT
+				expected0 = WUGNOT_PATH
 			}
 			if params.token1Path == GNOT_DENOM {
-				expected1 = WRAPPED_WUGNOT
+				expected1 = WUGNOT_PATH
 			}
 
 			uassert.Equal(t, expected0, wrapped0, "Token0 should be wrapped if GNOT")

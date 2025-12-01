@@ -643,7 +643,7 @@ func TestProcessTokens(t *testing.T) {
 			amount0Desired: "1300",
 			amount1Desired: "200",
 			caller:         alice,
-			expected0:      WRAPPED_WUGNOT,
+			expected0:      WUGNOT_PATH,
 			expected1:      "gno.land/r/gnoswap/gns",
 			isNative0:      true,
 			isNative1:      false,
@@ -659,7 +659,7 @@ func TestProcessTokens(t *testing.T) {
 			amount1Desired: "1250",
 			caller:         testutils.TestAddress("user3"),
 			expected0:      "gno.land/r/gnoswap/gns",
-			expected1:      WRAPPED_WUGNOT,
+			expected1:      WUGNOT_PATH,
 			isNative0:      false,
 			isNative1:      true,
 			expectedWrap:   1250,
@@ -672,8 +672,8 @@ func TestProcessTokens(t *testing.T) {
 			amount0Desired: "1100",
 			amount1Desired: "1200",
 			caller:         testutils.TestAddress("user4"),
-			expected0:      WRAPPED_WUGNOT,
-			expected1:      WRAPPED_WUGNOT,
+			expected0:      WUGNOT_PATH,
+			expected1:      WUGNOT_PATH,
 			isNative0:      true,
 			isNative1:      true,
 			expectedWrap:   2300,
@@ -1413,12 +1413,12 @@ func TestValidateTokenPath(t *testing.T) {
 		{
 			name:        "Invalid - ugnot and wugnot conflict",
 			token0:      common.GNOT_DENOM,
-			token1:      WRAPPED_WUGNOT,
+			token1:      WUGNOT_PATH,
 			expectError: true,
 		},
 		{
 			name:        "Invalid - wugnot and ugnot conflict (reversed)",
-			token0:      WRAPPED_WUGNOT,
+			token0:      WUGNOT_PATH,
 			token1:      common.GNOT_DENOM,
 			expectError: true,
 		},
@@ -1708,7 +1708,7 @@ func TestUnwrapLeftoverWrappedToken(t *testing.T) {
 	}{
 		{
 			name:        "Unwrap leftover - wrapped > amount",
-			token:       WRAPPED_WUGNOT,
+			token:       WUGNOT_PATH,
 			wrapped:     1000,
 			amount:      700,
 			expectError: false,
@@ -1716,7 +1716,7 @@ func TestUnwrapLeftoverWrappedToken(t *testing.T) {
 		},
 		{
 			name:        "No unwrap - wrapped == amount",
-			token:       WRAPPED_WUGNOT,
+			token:       WUGNOT_PATH,
 			wrapped:     1000,
 			amount:      1000,
 			expectError: false,
@@ -1724,7 +1724,7 @@ func TestUnwrapLeftoverWrappedToken(t *testing.T) {
 		},
 		{
 			name:        "No unwrap - wrapped < amount",
-			token:       WRAPPED_WUGNOT,
+			token:       WUGNOT_PATH,
 			wrapped:     7000,
 			amount:      10000,
 			expectError: false,
@@ -1740,7 +1740,7 @@ func TestUnwrapLeftoverWrappedToken(t *testing.T) {
 		},
 		{
 			name:        "Unwrap zero leftover",
-			token:       WRAPPED_WUGNOT,
+			token:       WUGNOT_PATH,
 			wrapped:     0,
 			amount:      0,
 			expectError: false,
@@ -1748,7 +1748,7 @@ func TestUnwrapLeftoverWrappedToken(t *testing.T) {
 		},
 		{
 			name:        "Large leftover amount",
-			token:       WRAPPED_WUGNOT,
+			token:       WUGNOT_PATH,
 			wrapped:     1000000000,
 			amount:      500000000,
 			expectError: false,
@@ -1756,7 +1756,7 @@ func TestUnwrapLeftoverWrappedToken(t *testing.T) {
 		},
 		{
 			name:        "Small leftover amount",
-			token:       WRAPPED_WUGNOT,
+			token:       WUGNOT_PATH,
 			wrapped:     100,
 			amount:      99,
 			shouldCall:  true,

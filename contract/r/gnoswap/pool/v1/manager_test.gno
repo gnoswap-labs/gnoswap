@@ -140,10 +140,10 @@ func TestCreatePool(t *testing.T) {
 				}
 
 				if expectedToken0 == GNOT_DENOM {
-					expectedToken0 = WRAPPED_WUGNOT
+					expectedToken0 = WUGNOT_PATH
 				}
 				if expectedToken1 == GNOT_DENOM {
-					expectedToken1 = WRAPPED_WUGNOT
+					expectedToken1 = WUGNOT_PATH
 				}
 
 				if pool.Token0Path() != expectedToken0 || pool.Token1Path() != expectedToken1 {

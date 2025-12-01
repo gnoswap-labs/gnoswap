@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	WRAPPED_WUGNOT string = "gno.land/r/gnoland/wugnot"
+	WUGNOT_PATH string = "gno.land/r/gnoland/wugnot"
 )
 
 // mint creates a new liquidity position by adding liquidity to a pool and minting an NFT.
@@ -151,7 +151,7 @@ func (p *positionV1) processTokens(
 	wrappedAmount := int64(0)
 
 	if isNative(token0) {
-		token0 = WRAPPED_WUGNOT
+		token0 = WUGNOT_PATH
 		token0IsNative = true
 
 		amount0DesiredInt := mustParseInt64(amount0Desired)
@@ -160,7 +160,7 @@ func (p *positionV1) processTokens(
 			return "", "", false, false, 0, err
 		}
 	} else if isNative(token1) {
-		token1 = WRAPPED_WUGNOT
+		token1 = WUGNOT_PATH
 		token1IsNative = true
 
 		amount1DesiredInt := mustParseInt64(amount1Desired)
@@ -271,8 +271,8 @@ func validateTokenPath(token0, token1 string) error {
 	if token0 == token1 {
 		return errInvalidTokenPath
 	}
-	if (token0 == common.GNOT_DENOM && token1 == WRAPPED_WUGNOT) ||
-		(token0 == WRAPPED_WUGNOT && token1 == common.GNOT_DENOM) {
+	if (token0 == common.GNOT_DENOM && token1 == WUGNOT_PATH) ||
+		(token0 == WUGNOT_PATH && token1 == common.GNOT_DENOM) {
 		return errInvalidTokenPath
 	}
 	if (!isNative(token0) && !isValidTokenPath(token0)) ||

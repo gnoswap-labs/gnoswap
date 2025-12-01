@@ -267,7 +267,7 @@ func collectExternalRewardWithoutUnwrap() {
 	}
 
 	if wugnotIncrease <= 0 {
-		panic("should have received wrapped wugnot")
+		panic("should have received wrapped ugnot")
 	}
 }
 

@@ -28,7 +28,7 @@ func (p *positionV1) wrap(ugnotAmount int64, to address) error {
 		return ufmt.Errorf("amount(%d) < minimum(%d)", ugnotAmount, UGNOT_MIN_DEPOSIT_TO_WRAP)
 	}
 
-	wugnotAddr := chain.PackageAddress(WRAPPED_WUGNOT)
+	wugnotAddr := chain.PackageAddress(WUGNOT_PATH)
 	p.transferUGNOT(positionAddr, wugnotAddr, ugnotAmount)
 
 	wugnot.Deposit(cross)                   // position has wugnot
@@ -80,7 +80,7 @@ func isNative(token string) bool {
 
 // isWrappedToken checks whether the tokenPath is wrapped token.
 func isWrappedToken(tokenPath string) bool {
-	return tokenPath == WRAPPED_WUGNOT
+	return tokenPath == WUGNOT_PATH
 }
 
 // safeWrapNativeToken safely wraps the native token ugnot into the wrapped token wugnot for a user.

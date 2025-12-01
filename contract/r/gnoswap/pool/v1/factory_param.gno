@@ -23,8 +23,8 @@ const (
 )
 
 const (
-	GNOT_DENOM     string = "ugnot"
-	WRAPPED_WUGNOT string = "gno.land/r/gnoland/wugnot"
+	GNOT_DENOM  string = "ugnot"
+	WUGNOT_PATH string = "gno.land/r/gnoland/wugnot"
 )
 
 const (
@@ -110,10 +110,10 @@ func (p *poolCreateConfig) isInOrder() bool {
 
 func (p *poolCreateConfig) wrap() (string, string) {
 	if p.token0Path == GNOT_DENOM {
-		p.token0Path = WRAPPED_WUGNOT
+		p.token0Path = WUGNOT_PATH
 	}
 	if p.token1Path == GNOT_DENOM {
-		p.token1Path = WRAPPED_WUGNOT
+		p.token1Path = WUGNOT_PATH
 	}
 	return p.token0Path, p.token1Path
 }
