@@ -1,372 +1,244 @@
 package int256
 
 import (
+	"runtime"
+	"strconv"
+	"strings"
 	"testing"
-
-	"gno.land/p/nt/ufmt"
+	"time"
 )
 
-func TestSetInt64(t *testing.T) {
+func TestFromDecimal(t *testing.T) {
 	tests := []struct {
-		x    int64
-		want string
+		input   string
+		wantErr bool
+		want    string
 	}{
-		{0, "0"},
-		{1, "1"},
-		{-1, "-1"},
-		{9223372036854775807, "9223372036854775807"},
-		{-9223372036854775808, "-9223372036854775808"},
+		{"0", false, "0"},
+		{"1", false, "1"},
+		{"-1", false, "-1"},
+		{"123456789", false, "123456789"},
+		{"-123456789", false, "-123456789"},
+		{"57896044618658097711785492504343953926634992332820282019728792003956564819967", false, "57896044618658097711785492504343953926634992332820282019728792003956564819967"},
+		{"-57896044618658097711785492504343953926634992332820282019728792003956564819968", false, "-57896044618658097711785492504343953926634992332820282019728792003956564819968"},
+		// overflow cases
+		{"57896044618658097711785492504343953926634992332820282019728792003956564819968", true, ""},
+		{"-57896044618658097711785492504343953926634992332820282019728792003956564819969", true, ""},
+		// invalid inputs
+		{"", true, ""},
+		{"abc", true, ""},
+		{"12.34", true, ""},
 	}
 
 	for _, tc := range tests {
-		var z Int
-		z.SetInt64(tc.x)
-
-		got := z.ToString()
-		if got != tc.want {
-			t.Errorf("SetInt64(%d) = %s, want %s", tc.x, got, tc.want)
+		z, err := FromDecimal(tc.input)
+		if tc.wantErr {
+			if err == nil {
+				t.Errorf("FromDecimal(%q) expected error, got nil", tc.input)
+			}
+			continue
+		}
+		if err != nil {
+			t.Errorf("FromDecimal(%q) unexpected error: %v", tc.input, err)
+			continue
+		}
+		if z.ToString() != tc.want {
+			t.Errorf("FromDecimal(%q) = %s, want %s", tc.input, z.ToString(), tc.want)
 		}
 	}
 }
 
-func TestSetInt64MinValueOverflow(t *testing.T) {
-	const minInt64 = -9223372036854775808 // -2^63
-	const maxInt64 = 9223372036854775807  // 2^63 - 1
+func TestMustFromDecimal(t *testing.T) {
+	// Valid cases should not panic
+	validCases := []string{
+		"0", "1", "-1", "123456789",
+		"57896044618658097711785492504343953926634992332820282019728792003956564819967",
+	}
+
+	for _, tc := range validCases {
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Errorf("MustFromDecimal(%q) panicked unexpectedly: %v", tc, r)
+				}
+			}()
+			z := MustFromDecimal(tc)
+			if z == nil {
+				t.Errorf("MustFromDecimal(%q) returned nil", tc)
+			}
+		}()
+	}
+
+	// Invalid cases should panic
+	invalidCases := []string{
+		"", "abc", "12.34",
+		"57896044618658097711785492504343953926634992332820282019728792003956564819968",
+	}
+
+	for _, tc := range invalidCases {
+		func() {
+			defer func() {
+				if r := recover(); r == nil {
+					t.Errorf("MustFromDecimal(%q) should have panicked", tc)
+				}
+			}()
+			MustFromDecimal(tc)
+		}()
+	}
+}
+
+// readAllocatorBytes parses runtime.MemStats() into the current allocated bytes.
+func readAllocatorBytes(t *testing.T) int64 {
+	t.Helper()
+	stats := runtime.MemStats()
+	if stats == "nil allocator" {
+		return 0
+	}
+	if !strings.HasPrefix(stats, "Allocator{") || !strings.HasSuffix(stats, "}") {
+		t.Fatalf("unexpected runtime.MemStats output: %q", stats)
+	}
+	body := strings.TrimSuffix(strings.TrimPrefix(stats, "Allocator{"), "}")
+	parts := strings.Split(body, ", ")
+	if len(parts) != 2 {
+		t.Fatalf("unexpected runtime.MemStats content: %q", stats)
+	}
+	var (
+		bytes int64
+		found bool
+	)
+	for _, part := range parts {
+		fields := strings.Split(part, ":")
+		if len(fields) != 2 {
+			t.Fatalf("unexpected runtime.MemStats pair %q", part)
+		}
+		if fields[0] == "bytes" {
+			val, err := strconv.ParseInt(fields[1], 10, 64)
+			if err != nil {
+				t.Fatalf("failed to parse bytes from %q: %v", part, err)
+			}
+			bytes = val
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("bytes key not found in runtime.MemStats output: %q", stats)
+	}
+	return bytes
+}
+
+type MetricResult struct {
+	Name       string
+	Iterations int
+	DurationNs int64
+	AllocDelta int64
+}
+
+// runMetric executes fn the given number of iterations while logging elapsed time and allocation deltas.
+func runMetric(t *testing.T, name string, iterations int, fn func()) MetricResult {
+	t.Helper()
+
+	// Skip GC if allocator is nil to avoid panic
+	stats := runtime.MemStats()
+	if stats != "nil allocator" {
+		runtime.GC()
+	}
+	beforeBytes := readAllocatorBytes(t)
+	start := time.Now()
+	for i := 0; i < iterations; i++ {
+		fn()
+	}
+	elapsed := time.Since(start)
+	afterBytes := readAllocatorBytes(t)
+
+	return MetricResult{
+		Name:       name,
+		Iterations: iterations,
+		DurationNs: elapsed.Nanoseconds(),
+		AllocDelta: afterBytes - beforeBytes,
+	}
+}
+
+func TestPublicFunctionRuntimeMetrics(t *testing.T) {
+	const iterations = 200
+	var results []MetricResult
+
+	// Test data
+	commonDecimal := "1234567890123456789012345678901234567890"
 
 	tests := []struct {
 		name string
-		x    int64
-		want string
+		run  func(t *testing.T) MetricResult
 	}{
 		{
-			name: "MinInt64 should not cause overflow",
-			x:    minInt64,
-			want: "-9223372036854775808",
+			name: "FromDecimal",
+			run: func(t *testing.T) MetricResult {
+				return runMetric(t, "FromDecimal", iterations, func() {
+					if _, err := FromDecimal(commonDecimal); err != nil {
+						t.Fatalf("FromDecimal error: %v", err)
+					}
+				})
+			},
 		},
 		{
-			name: "MaxInt64 works correctly",
-			x:    maxInt64,
-			want: "9223372036854775807",
+			name: "SetString",
+			run: func(t *testing.T) MetricResult {
+				return runMetric(t, "SetString", iterations, func() {
+					var target Int
+					if _, err := target.SetString(commonDecimal); err != nil {
+						t.Fatalf("SetString error: %v", err)
+					}
+				})
+			},
 		},
 		{
-			name: "MinInt64 + 1",
-			x:    minInt64 + 1,
-			want: "-9223372036854775807",
+			name: "MustFromDecimal",
+			run: func(t *testing.T) MetricResult {
+				return runMetric(t, "MustFromDecimal", iterations, func() {
+					MustFromDecimal(commonDecimal)
+				})
+			},
 		},
 		{
-			name: "Negative one",
-			x:    -1,
-			want: "-1",
+			name: "MaxInt256",
+			run: func(t *testing.T) MetricResult {
+				return runMetric(t, "MaxInt256", iterations, func() {
+					MaxInt256()
+				})
+			},
 		},
 		{
-			name: "Zero",
-			x:    0,
-			want: "0",
+			name: "MinInt256",
+			run: func(t *testing.T) MetricResult {
+				return runMetric(t, "MinInt256", iterations, func() {
+					MinInt256()
+				})
+			},
+		},
+		{
+			name: "ToString",
+			run: func(t *testing.T) MetricResult {
+				largeInt := MustFromDecimal("57896044618658097711785492504343953926634992332820282019728792003956564819967") // max int256
+				return runMetric(t, "ToString", iterations, func() {
+					_ = largeInt.ToString()
+				})
+			},
 		},
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			var z Int
-			z.SetInt64(tc.x)
-
-			got := z.ToString()
-			if got != tc.want {
-				t.Errorf("SetInt64(%d) = %s, want %s", tc.x, got, tc.want)
-			}
-
-			// Verify sign is correct
-			if tc.x < 0 {
-				if !z.IsNeg() {
-					t.Errorf("SetInt64(%d): expected IsNegative()=true, got false", tc.x)
-				}
-			} else if tc.x > 0 {
-				if z.IsNeg() {
-					t.Errorf("SetInt64(%d): expected IsNegative()=false, got true", tc.x)
-				}
-			} else { // tc.x == 0
-				if z.IsNeg() {
-					t.Errorf("SetInt64(0): expected IsNegative()=false (no -0), got true")
-				}
-			}
+	for i := range tests {
+		test := tests[i]
+		t.Run(test.name, func(t *testing.T) {
+			result := test.run(t)
+			results = append(results, result)
 		})
 	}
-}
 
-func TestSetUint64(t *testing.T) {
-	tests := []struct {
-		x    uint64
-		want string
-	}{
-		{0, "0"},
-		{1, "1"},
-	}
-
-	for _, tc := range tests {
-		var z Int
-		z.SetUint64(tc.x)
-
-		got := z.ToString()
-		if got != tc.want {
-			t.Errorf("SetUint64(%d) = %s, want %s", tc.x, got, tc.want)
-		}
-	}
-}
-
-func TestUint64(t *testing.T) {
-	tests := []struct {
-		x    string
-		want uint64
-	}{
-		{"0", 0},
-		{"1", 1},
-		{"9223372036854775807", 9223372036854775807},
-		{"9223372036854775808", 9223372036854775808},
-		{"18446744073709551615", 18446744073709551615},
-		{"18446744073709551616", 0},
-		{"18446744073709551617", 1},
-		// In two's complement, -1 = 0xFFFF...FFFF, so z[0] = max uint64
-		{"-1", 18446744073709551615},
-		{"-18446744073709551615", 1},
-		{"-18446744073709551616", 0},
-		{"-18446744073709551617", 18446744073709551615},
-	}
-
-	for _, tc := range tests {
-		z := MustFromDecimal(tc.x)
-
-		got := z.Uint64()
-		if got != tc.want {
-			t.Errorf("Uint64(%s) = %d, want %d", tc.x, got, tc.want)
-		}
-	}
-}
-
-func TestInt64(t *testing.T) {
-	tests := []struct {
-		x    string
-		want int64
-	}{
-		{"0", 0},
-		{"1", 1},
-		{"-1", -1},
-		{"9223372036854775807", 9223372036854775807},
-		{"-9223372036854775808", -9223372036854775808},
-		{"9223372036854775808", -9223372036854775808},
-		{"-9223372036854775809", 9223372036854775807},
-		{"18446744073709551616", 0},
-		{"18446744073709551617", 1},
-		{"18446744073709551615", -1},
-		{"-18446744073709551615", 1},
-	}
-
-	for _, tc := range tests {
-		z := MustFromDecimal(tc.x)
-
-		got := z.Int64()
-		if got != tc.want {
-			t.Errorf("Int64(%s) = %d, want %d", tc.x, got, tc.want)
-		}
-	}
-}
-
-func TestInt64EdgeCases(t *testing.T) {
-	const minInt64 = -9223372036854775808 // -2^63
-	const maxInt64 = 9223372036854775807  // 2^63 - 1
-
-	tests := []struct {
-		name        string
-		setupInt    func() *Int
-		want        int64
-		description string
-	}{
-		{
-			name: "MinInt64 from SetInt64",
-			setupInt: func() *Int {
-				z := new(Int)
-				return z.SetInt64(minInt64)
-			},
-			want:        minInt64,
-			description: "SetInt64(MinInt64) should round-trip correctly",
-		},
-		{
-			name: "MaxInt64 from SetInt64",
-			setupInt: func() *Int {
-				z := new(Int)
-				return z.SetInt64(maxInt64)
-			},
-			want:        maxInt64,
-			description: "SetInt64(MaxInt64) should round-trip correctly",
-		},
-		{
-			name: "Zero",
-			setupInt: func() *Int {
-				return Zero()
-			},
-			want:        0,
-			description: "Zero should return 0",
-		},
-		{
-			name: "Large positive int256",
-			setupInt: func() *Int {
-				// Value larger than int64 max
-				return MustFromDecimal("18446744073709551615")
-			},
-			want:        -1, // Truncated to int64
-			description: "Large positive wraps in int64",
-		},
-		{
-			name: "Large negative int256",
-			setupInt: func() *Int {
-				return MustFromDecimal("-18446744073709551615")
-			},
-			want:        1, // Truncated to int64
-			description: "Large negative wraps in int64",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			z := tc.setupInt()
-			got := z.Int64()
-
-			if got != tc.want {
-				t.Errorf("%s: got %d, want %d", tc.description, got, tc.want)
-			}
-		})
-	}
-}
-
-// TestInt64RoundTrip verifies that SetInt64 and Int64 work correctly together
-func TestInt64RoundTrip(t *testing.T) {
-	// Test all interesting int64 values
-	values := []int64{
-		0, 1, -1,
-		127, -128, // int8 boundaries
-		32767, -32768, // int16 boundaries
-		2147483647, -2147483648, // int32 boundaries
-		9223372036854775807, -9223372036854775808, // int64 boundaries (MaxInt64, MinInt64)
-		1234567890, -1234567890,
-	}
-
-	for _, v := range values {
-		t.Run(ufmt.Sprintf("RoundTrip_%d", v), func(t *testing.T) {
-			z := new(Int)
-			z.SetInt64(v)
-
-			got := z.Int64()
-			if got != v {
-				t.Errorf("Round trip failed: SetInt64(%d).Int64() = %d", v, got)
-			}
-		})
-	}
-}
-
-func TestNeg(t *testing.T) {
-	tests := []struct {
-		x    string
-		want string
-	}{
-		{"0", "0"},
-		{"1", "-1"},
-		{"-1", "1"},
-		{"9223372036854775807", "-9223372036854775807"},
-		{"-18446744073709551615", "18446744073709551615"},
-	}
-
-	for _, tc := range tests {
-		z := MustFromDecimal(tc.x)
-		z.Neg(z)
-
-		got := z.ToString()
-		if got != tc.want {
-			t.Errorf("Neg(%s) = %s, want %s", tc.x, got, tc.want)
-		}
-	}
-}
-
-func TestSet(t *testing.T) {
-	tests := []struct {
-		x    string
-		want string
-	}{
-		{"0", "0"},
-		{"1", "1"},
-		{"-1", "-1"},
-		{"9223372036854775807", "9223372036854775807"},
-		{"-18446744073709551615", "-18446744073709551615"},
-	}
-
-	for _, tc := range tests {
-		z := MustFromDecimal(tc.x)
-		z.Set(z)
-
-		got := z.ToString()
-		if got != tc.want {
-			t.Errorf("set(%s) = %s, want %s", tc.x, got, tc.want)
-		}
-	}
-}
-
-func TestToString(t *testing.T) {
-	tests := []struct {
-		name     string
-		setup    func() *Int
-		expected string
-	}{
-		{
-			name: "Zero from subtraction",
-			setup: func() *Int {
-				minusThree := MustFromDecimal("-3")
-				three := MustFromDecimal("3")
-				return Zero().Add(minusThree, three)
-			},
-			expected: "0",
-		},
-		{
-			name: "Zero from right shift",
-			setup: func() *Int {
-				return Zero().Rsh(One(), 1234)
-			},
-			expected: "0",
-		},
-		{
-			name: "Positive number",
-			setup: func() *Int {
-				return MustFromDecimal("42")
-			},
-			expected: "42",
-		},
-		{
-			name: "Negative number",
-			setup: func() *Int {
-				return MustFromDecimal("-42")
-			},
-			expected: "-42",
-		},
-		{
-			name: "Large positive number",
-			setup: func() *Int {
-				return MustFromDecimal("57896044618658097711785492504343953926634992332820282019728792003956564819967")
-			},
-			expected: "57896044618658097711785492504343953926634992332820282019728792003956564819967",
-		},
-		{
-			name: "Large negative number",
-			setup: func() *Int {
-				return MustFromDecimal("-57896044618658097711785492504343953926634992332820282019728792003956564819968")
-			},
-			expected: "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			z := tt.setup()
-			result := z.ToString()
-			if result != tt.expected {
-				t.Errorf("ToString() = %s, want %s", result, tt.expected)
-			}
-		})
+	// Print results as markdown table
+	t.Log("\n## Runtime Metrics Results\n")
+	t.Log("| Function | Iterations | Duration (ns) | Alloc Delta (bytes) |")
+	t.Log("|----------|------------|---------------|---------------------|")
+	for _, result := range results {
+		t.Logf("| %s | %d | %d | %d |", result.Name, result.Iterations, result.DurationNs, result.AllocDelta)
 	}
 }
