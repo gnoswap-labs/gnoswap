@@ -29,7 +29,10 @@ import (
 	"gno.land/r/onbloc/qux"
 )
 
-const FUZZ_ITERATIONS = 10
+const (
+	FUZZ_ITERATIONS          = 10   // 10 iterations is enough for basic sanity checks
+	FUZZ_ITERATIONS_EXTENDED = 1000 // 1000 iterations is enough for extended checks
+)
 
 const (
 	MIN_SQRT_RATIO = "4295128739"

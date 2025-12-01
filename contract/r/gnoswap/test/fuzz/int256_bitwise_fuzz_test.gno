@@ -12,7 +12,7 @@ import (
 
 // TestFuzzInt256Lsh_ValidParams_Stateless tests Lsh with valid parameters
 func TestFuzzInt256Lsh_ValidParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256LshParams(ft)
 
@@ -30,7 +30,7 @@ func TestFuzzInt256Lsh_ValidParams_Stateless(t *testing.T) {
 
 // TestFuzzInt256Lsh_RandomizedParams_Stateless tests Lsh with randomized parameters
 func TestFuzzInt256Lsh_RandomizedParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedInt256LshParams(ft)
 
@@ -48,7 +48,7 @@ func TestFuzzInt256Lsh_RandomizedParams_Stateless(t *testing.T) {
 
 // TestFuzzInt256Lsh_ZeroShift tests Lsh with shift by 0 returns same value
 func TestFuzzInt256Lsh_ZeroShift(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256LshParams(ft)
 		params.n = 0
@@ -71,7 +71,7 @@ func TestFuzzInt256Lsh_ZeroShift(t *testing.T) {
 
 // TestFuzzInt256Lsh_SignPreservation tests Lsh preserves sign
 func TestFuzzInt256Lsh_SignPreservation(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256LshParams(ft)
 
@@ -103,7 +103,7 @@ func TestFuzzInt256Lsh_SignPreservation(t *testing.T) {
 
 // TestFuzzInt256Rsh_ValidParams_Stateless tests Rsh with valid parameters
 func TestFuzzInt256Rsh_ValidParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256RshParams(ft)
 
@@ -122,7 +122,7 @@ func TestFuzzInt256Rsh_ValidParams_Stateless(t *testing.T) {
 
 // TestFuzzInt256Rsh_RandomizedParams_Stateless tests Rsh with randomized parameters
 func TestFuzzInt256Rsh_RandomizedParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedInt256RshParams(ft)
 
@@ -141,7 +141,7 @@ func TestFuzzInt256Rsh_RandomizedParams_Stateless(t *testing.T) {
 
 // TestFuzzInt256Rsh_ZeroShift tests Rsh with shift by 0 returns same value
 func TestFuzzInt256Rsh_ZeroShift(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256RshParams(ft)
 		params.n = 0
@@ -163,7 +163,7 @@ func TestFuzzInt256Rsh_ZeroShift(t *testing.T) {
 
 // TestFuzzInt256Rsh_ArithmeticShift tests Rsh performs arithmetic right shift (sign extension)
 func TestFuzzInt256Rsh_ArithmeticShift(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256RshParams(ft)
 
@@ -189,7 +189,7 @@ func TestFuzzInt256Rsh_ArithmeticShift(t *testing.T) {
 
 // TestFuzzInt256And_ValidParams_Stateless tests And with valid parameters
 func TestFuzzInt256And_ValidParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256AndParams(ft)
 
@@ -207,7 +207,7 @@ func TestFuzzInt256And_ValidParams_Stateless(t *testing.T) {
 
 // TestFuzzInt256And_RandomizedParams_Stateless tests And with randomized parameters
 func TestFuzzInt256And_RandomizedParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedInt256AndParams(ft)
 
@@ -225,7 +225,7 @@ func TestFuzzInt256And_RandomizedParams_Stateless(t *testing.T) {
 
 // TestFuzzInt256And_Commutativity tests And commutativity: x & y == y & x
 func TestFuzzInt256And_Commutativity(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256AndParams(ft)
 
@@ -247,7 +247,7 @@ func TestFuzzInt256And_Commutativity(t *testing.T) {
 
 // TestFuzzInt256And_Idempotence tests And idempotence: x & x == x
 func TestFuzzInt256And_Idempotence(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256AndParams(ft)
 
@@ -269,7 +269,7 @@ func TestFuzzInt256And_Idempotence(t *testing.T) {
 
 // TestFuzzInt256Or_ValidParams_Stateless tests Or with valid parameters
 func TestFuzzInt256Or_ValidParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256OrParams(ft)
 
@@ -287,7 +287,7 @@ func TestFuzzInt256Or_ValidParams_Stateless(t *testing.T) {
 
 // TestFuzzInt256Or_RandomizedParams_Stateless tests Or with randomized parameters
 func TestFuzzInt256Or_RandomizedParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedInt256OrParams(ft)
 
@@ -305,7 +305,7 @@ func TestFuzzInt256Or_RandomizedParams_Stateless(t *testing.T) {
 
 // TestFuzzInt256Or_Commutativity tests Or commutativity: x | y == y | x
 func TestFuzzInt256Or_Commutativity(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256OrParams(ft)
 
@@ -327,7 +327,7 @@ func TestFuzzInt256Or_Commutativity(t *testing.T) {
 
 // TestFuzzInt256Or_Idempotence tests Or idempotence: x | x == x
 func TestFuzzInt256Or_Idempotence(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256OrParams(ft)
 
@@ -349,7 +349,7 @@ func TestFuzzInt256Or_Idempotence(t *testing.T) {
 
 // TestFuzzInt256Bitwise_AndZero tests x & 0 == 0
 func TestFuzzInt256Bitwise_AndZero(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256AndParams(ft)
 
@@ -370,7 +370,7 @@ func TestFuzzInt256Bitwise_AndZero(t *testing.T) {
 
 // TestFuzzInt256Bitwise_OrZero tests x | 0 == x
 func TestFuzzInt256Bitwise_OrZero(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256OrParams(ft)
 
@@ -391,7 +391,7 @@ func TestFuzzInt256Bitwise_OrZero(t *testing.T) {
 
 // TestFuzzInt256Bitwise_Absorption tests absorption law: x & (x | y) == x
 func TestFuzzInt256Bitwise_Absorption(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256AndParams(ft)
 
@@ -416,7 +416,7 @@ func TestFuzzInt256Bitwise_Absorption(t *testing.T) {
 
 // TestFuzzInt256Shift_LshMultiplication tests Lsh by 1 is multiplication by 2 for small positive values
 func TestFuzzInt256Shift_LshMultiplication(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given - use small values to avoid overflow
 		x := fuzz.Int64Range(0, 1<<62).Draw(ft, "x").(int64)
 		params := &int256ShiftParams{
@@ -441,7 +441,7 @@ func TestFuzzInt256Shift_LshMultiplication(t *testing.T) {
 
 // TestFuzzInt256Shift_RshDivision tests Rsh by 1 is division by 2 for positive values
 func TestFuzzInt256Shift_RshDivision(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given - use positive values
 		x := fuzz.Int64Range(0, 1<<62).Draw(ft, "x").(int64)
 		params := &int256ShiftParams{
@@ -466,7 +466,7 @@ func TestFuzzInt256Shift_RshDivision(t *testing.T) {
 
 // TestFuzzInt256Shift_LargeRsh tests behavior with large right shift values
 func TestFuzzInt256Shift_LargeRsh(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedInt256ShiftParams(ft)
 
@@ -490,7 +490,7 @@ func TestFuzzInt256Shift_LargeRsh(t *testing.T) {
 
 // TestFuzzInt256Bitwise_SparsePatterns tests bitwise operations with sparse patterns
 func TestFuzzInt256Bitwise_SparsePatterns(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params1 := NewValidInt256BitwiseSparseParams(ft)
 		params2 := NewValidInt256BitwiseSparseParams(ft)
@@ -536,7 +536,7 @@ func TestFuzzInt256Bitwise_SparsePatterns(t *testing.T) {
 
 // TestFuzzInt256Bitwise_AndOrDistributive tests distributive law: x & (y | z) == (x & y) | (x & z)
 func TestFuzzInt256Bitwise_AndOrDistributive(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256IdentityLawParams(ft)
 
@@ -565,7 +565,7 @@ func TestFuzzInt256Bitwise_AndOrDistributive(t *testing.T) {
 
 // TestFuzzInt256Bitwise_OrAndDistributive tests distributive law: x | (y & z) == (x | y) & (x | z)
 func TestFuzzInt256Bitwise_OrAndDistributive(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256IdentityLawParams(ft)
 
@@ -594,7 +594,7 @@ func TestFuzzInt256Bitwise_OrAndDistributive(t *testing.T) {
 
 // TestFuzzInt256Bitwise_Associativity tests associativity of And and Or
 func TestFuzzInt256Bitwise_Associativity(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidInt256IdentityLawParams(ft)
 
