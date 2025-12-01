@@ -11,6 +11,10 @@ func udivrem(quot, u []uint64, d *Int) (rem Int) {
 		}
 	}
 
+	if dLen == 0 {
+		panic("integer divide by zero")
+	}
+
 	shift := uint(bits.LeadingZeros64(d[dLen-1]))
 
 	var dnStorage Int
