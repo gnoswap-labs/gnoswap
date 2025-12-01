@@ -10,7 +10,7 @@ import (
 
 // TestFuzzUint256Mul_ValidParams_Stateless tests Mul with valid parameters
 func TestFuzzUint256Mul_ValidParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidMulParams(ft)
 
@@ -28,7 +28,7 @@ func TestFuzzUint256Mul_ValidParams_Stateless(t *testing.T) {
 
 // TestFuzzUint256Mul_RandomizedParams_Stateless tests Mul with randomized parameters
 func TestFuzzUint256Mul_RandomizedParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedMulParams(ft)
 
@@ -46,7 +46,7 @@ func TestFuzzUint256Mul_RandomizedParams_Stateless(t *testing.T) {
 
 // TestFuzzUint256MulOverflow_ValidParams_Stateless tests MulOverflow with valid (non-overflowing) parameters
 func TestFuzzUint256MulOverflow_ValidParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidMulOverflowParams(ft)
 
@@ -69,7 +69,7 @@ func TestFuzzUint256MulOverflow_ValidParams_Stateless(t *testing.T) {
 
 // TestFuzzUint256MulOverflow_RandomizedParams_Stateless tests MulOverflow with randomized parameters
 func TestFuzzUint256MulOverflow_RandomizedParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedMulOverflowParams(ft)
 
@@ -92,7 +92,7 @@ func TestFuzzUint256MulOverflow_RandomizedParams_Stateless(t *testing.T) {
 
 // TestFuzzUint256Div_ValidParams_Stateless tests Div with valid parameters
 func TestFuzzUint256Div_ValidParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidDivParams(ft)
 
@@ -110,7 +110,7 @@ func TestFuzzUint256Div_ValidParams_Stateless(t *testing.T) {
 
 // TestFuzzUint256Div_RandomizedParams_Stateless tests Div with randomized parameters
 func TestFuzzUint256Div_RandomizedParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedDivParams(ft)
 
@@ -128,7 +128,7 @@ func TestFuzzUint256Div_RandomizedParams_Stateless(t *testing.T) {
 
 // TestFuzzUint256Mod_ValidParams_Stateless tests Mod with valid parameters
 func TestFuzzUint256Mod_ValidParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidModParams(ft)
 
@@ -146,7 +146,7 @@ func TestFuzzUint256Mod_ValidParams_Stateless(t *testing.T) {
 
 // TestFuzzUint256Mod_RandomizedParams_Stateless tests Mod with randomized parameters
 func TestFuzzUint256Mod_RandomizedParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedModParams(ft)
 
@@ -164,7 +164,7 @@ func TestFuzzUint256Mod_RandomizedParams_Stateless(t *testing.T) {
 
 // TestFuzzUint256DivMod_ValidParams_Stateless tests DivMod with valid parameters
 func TestFuzzUint256DivMod_ValidParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidDivModParams(ft)
 
@@ -182,7 +182,7 @@ func TestFuzzUint256DivMod_ValidParams_Stateless(t *testing.T) {
 
 // TestFuzzUint256DivMod_RandomizedParams_Stateless tests DivMod with randomized parameters
 func TestFuzzUint256DivMod_RandomizedParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedDivModParams(ft)
 
@@ -200,7 +200,7 @@ func TestFuzzUint256DivMod_RandomizedParams_Stateless(t *testing.T) {
 
 // TestFuzzUint256Add_ValidParams_Stateless tests Add with valid parameters
 func TestFuzzUint256Add_ValidParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidAddParams(ft)
 
@@ -218,7 +218,7 @@ func TestFuzzUint256Add_ValidParams_Stateless(t *testing.T) {
 
 // TestFuzzUint256Add_RandomizedParams_Stateless tests Add with randomized parameters
 func TestFuzzUint256Add_RandomizedParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedAddParams(ft)
 
@@ -236,7 +236,7 @@ func TestFuzzUint256Add_RandomizedParams_Stateless(t *testing.T) {
 
 // TestFuzzUint256AddOverflow_ValidParams_Stateless tests AddOverflow with valid (non-overflowing) parameters
 func TestFuzzUint256AddOverflow_ValidParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidAddOverflowParams(ft)
 
@@ -259,7 +259,7 @@ func TestFuzzUint256AddOverflow_ValidParams_Stateless(t *testing.T) {
 
 // TestFuzzUint256AddOverflow_RandomizedParams_Stateless tests AddOverflow with randomized parameters
 func TestFuzzUint256AddOverflow_RandomizedParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedAddOverflowParams(ft)
 
@@ -281,7 +281,7 @@ func TestFuzzUint256AddOverflow_RandomizedParams_Stateless(t *testing.T) {
 
 // TestFuzzUint256Sub_ValidParams_Stateless tests Sub with valid parameters
 func TestFuzzUint256Sub_ValidParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidSubParams(ft)
 
@@ -299,7 +299,7 @@ func TestFuzzUint256Sub_ValidParams_Stateless(t *testing.T) {
 
 // TestFuzzUint256Sub_RandomizedParams_Stateless tests Sub with randomized parameters
 func TestFuzzUint256Sub_RandomizedParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedSubParams(ft)
 
@@ -317,7 +317,7 @@ func TestFuzzUint256Sub_RandomizedParams_Stateless(t *testing.T) {
 
 // TestFuzzUint256SubOverflow_ValidParams_Stateless tests SubOverflow with valid (non-underflowing) parameters
 func TestFuzzUint256SubOverflow_ValidParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewValidSubOverflowParams(ft)
 
@@ -340,7 +340,7 @@ func TestFuzzUint256SubOverflow_ValidParams_Stateless(t *testing.T) {
 
 // TestFuzzUint256SubOverflow_RandomizedParams_Stateless tests SubOverflow with randomized parameters
 func TestFuzzUint256SubOverflow_RandomizedParams_Stateless(t *testing.T) {
-	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
+	fuzzutils.RunFuzzTest(t, FUZZ_ITERATIONS_EXTENDED, func(ft *fuzz.T, fuzzResult *fuzzutils.Result, index int) {
 		// given
 		params := NewRandomizedSubOverflowParams(ft)
 
