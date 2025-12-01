@@ -12,8 +12,9 @@ import (
 type Int [4]uint64
 
 var (
-	MinI256 = &Int{0, 0, 0, 0x8000000000000000}
-	MaxI256 = &Int{0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x7fffffffffffffff}
+	MAX_UINT64 = ^uint64(0)
+	MinI256    = &Int{0, 0, 0, 0x8000000000000000}
+	MaxI256    = &Int{0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x7fffffffffffffff}
 
 	ErrZeroDivision = errors.New("zero division")
 	ErrNegativeNum  = errors.New("negative number")

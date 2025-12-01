@@ -83,7 +83,7 @@ func udivremKnuth(quot, u, d []uint64) {
 
 		var qhat, rhat uint64
 		if u2 >= dh {
-			qhat = ^uint64(0)
+			qhat = MAX_UINT64
 		} else {
 			qhat, rhat = udivrem2by1(u2, u1, dh, reciprocal)
 			ph, pl := bits.Mul64(qhat, dl)
@@ -104,7 +104,7 @@ func udivremKnuth(quot, u, d []uint64) {
 }
 
 func reciprocal2by1(d uint64) uint64 {
-	reciprocal, _ := bits.Div64(^d, ^uint64(0), d)
+	reciprocal, _ := bits.Div64(^d, MAX_UINT64, d)
 	return reciprocal
 }
 
