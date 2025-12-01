@@ -238,8 +238,8 @@ func handleSwapCallback(
 	token0Path string,
 	token1Path string,
 	payer address,
-	amount0Delta string,
-	amount1Delta string,
+	amount0Delta int64,
+	amount1Delta int64,
 ) error {
 	zero := i256.Zero()
 
@@ -247,22 +247,20 @@ func handleSwapCallback(
 	amount1 := i256.MustFromDecimal(amount1Delta)
 
 	switch {
-	case amount0.Gt(zero):
+	case amount0Delta > 0:
 		transferToPool(token0Path, amount0, payer)
-	case amount1.Gt(zero):
+	case amount1Delta > 0:
 		transferToPool(token1Path, amount1, payer)
 	}
 
 	return nil
 }
 
-func transferToPool(tokenPath string, amount *i256.Int, payer address) {
-	payment := amount.Abs().Int64()
-
+func transferToPool(tokenPath string, amount int64, payer address) {
 	if payer == wrapperAddr {
-		common.SafeGRC20Transfer(cross, tokenPath, poolAddr, payment)
+		common.SafeGRC20Transfer(cross, tokenPath, poolAddr, amount)
 		return
 	}
 
-	common.SafeGRC20TransferFrom(cross, tokenPath, payer, poolAddr, payment)
+	common.SafeGRC20TransferFrom(cross, tokenPath, payer, poolAddr, amount)
 }
