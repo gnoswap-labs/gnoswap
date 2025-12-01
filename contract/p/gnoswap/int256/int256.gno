@@ -381,19 +381,6 @@ func (z *Int) urem(x, y *Int) *Int {
 	return z.Set(&rem)
 }
 
-func (z *Int) Pow(x *Int, n uint64) *Int {
-	c := x.Clone()
-	z.SetOne()
-	for n > 0 {
-		if n&1 == 1 {
-			z.Mul(z, c)
-		}
-		n >>= 1
-		c.Mul(c, c)
-	}
-	return z
-}
-
 func (z *Int) Lt(x *Int) bool {
 	return z.Cmp(x) < 0
 }
@@ -603,37 +590,6 @@ func (z *Int) negRsh(x *Int, n uint) *Int {
 	return z
 }
 
-func (z *Int) Sqrt(x *Int) *Int {
-	if x.IsNeg() {
-		panic(ErrNegativeNum)
-	}
-	if x.IsInt64() {
-		return z.SetInt64(int64(math.Sqrt(float64(x.Int64()))))
-	}
-	var (
-		z1 = new(Int).SetOne()
-		z2 = new(Int)
-	)
-	z1 = z1.Lsh(z1, uint(x.BitLen()+1)>>1)
-	for {
-		z2 = z2.Div(x, z1)
-		z2 = z2.Add(z2, z1)
-		{
-			a := z2[3] << 63
-			z2[3] = z2[3] >> 1
-			b := z2[2] << 63
-			z2[2] = (z2[2] >> 1) | a
-			a = z2[1] << 63
-			z2[1] = (z2[1] >> 1) | b
-			z2[0] = (z2[0] >> 1) | a
-		}
-		if z2.Cmp(z1) >= 0 {
-			return z.Set(z1)
-		}
-		z1, z2 = z2, z1
-	}
-}
-
 func (z *Int) BitLen() int {
 	switch {
 	case z[3] != 0:
@@ -654,13 +610,6 @@ func (z *Int) SetBytes32(in []byte) *Int {
 	z[1] = binary.BigEndian.Uint64(in[16:24])
 	z[0] = binary.BigEndian.Uint64(in[24:32])
 	return z
-}
-
-// WriteToArray32 writes all 32 bytes of z to the destination array, including zero-bytes
-func (z *Int) WriteToArray32(dest *[32]byte) {
-	for i := 0; i < 32; i++ {
-		dest[31-i] = byte(z[i/8] >> uint64(8*(i%8)))
-	}
 }
 
 func (z *Int) NilToZero() *Int {
