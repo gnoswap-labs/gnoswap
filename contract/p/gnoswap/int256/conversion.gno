@@ -16,7 +16,6 @@ const (
 var (
 	ErrOverflow                    = errors.New("int256: overflow")
 	ErrEmptyString                 = errors.New("int256: empty string")
-	ErrInvalidCharacter            = errors.New("int256: invalid character")
 	ErrInvalidSignInMiddleOfNumber = errors.New("int256: invalid sign in middle of number")
 
 	multipliers = [5]*Int{
@@ -228,4 +227,3 @@ func FromUint256(x *u256.Uint) *Int {
 	z[3] = x[3]
 	return z
 }
-
