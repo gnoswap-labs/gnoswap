@@ -81,7 +81,7 @@ func main() {
 	println("[SCENARIO] 6. ExactInSwapRoute BAR -> GNS -> GNOT")
 	exactInSwapRouteBy(
 		barPath,
-		"gnot",
+		"ugnot",
 		"1000000",
 		"gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000",
 		"100",
@@ -102,7 +102,7 @@ func main() {
 
 	println("[SCENARIO] 8. ExactInSwapRoute GNOT -> GNS -> BAR")
 	exactInSwapRouteBy(
-		"gnot",
+		"ugnot",
 		barPath,
 		"1000000",
 		"gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:3000",
@@ -288,7 +288,7 @@ func exactInSwapRouteBy(
 // [SCENARIO] 6. ExactInSwapRoute BAR -> GNS -> GNOT
 // [INFO] ExactInSwapRoute
 // [INFO] inputToken: gno.land/r/onbloc/bar
-// [INFO] outputToken: gnot
+// [INFO] outputToken: ugnot
 // [INFO] specifiedAmount: 1000000
 // [INFO] routeQueryString: gno.land/r/onbloc/bar:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:3000
 // [INFO] queryRatios: 100
@@ -317,7 +317,7 @@ func exactInSwapRouteBy(
 //
 // [SCENARIO] 8. ExactInSwapRoute GNOT -> GNS -> BAR
 // [INFO] ExactInSwapRoute
-// [INFO] inputToken: gnot
+// [INFO] inputToken: ugnot
 // [INFO] outputToken: gno.land/r/onbloc/bar
 // [INFO] specifiedAmount: 1000000
 // [INFO] routeQueryString: gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000*POOL*gno.land/r/gnoswap/gns:gno.land/r/onbloc/bar:3000

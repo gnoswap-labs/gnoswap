@@ -198,7 +198,7 @@ func TestIsNative(t *testing.T) {
 	}{
 		{
 			name:     "isNative is success by native token",
-			token:    "gnot",
+			token:    "ugnot",
 			expected: true,
 		},
 		{
@@ -233,12 +233,12 @@ func TestIsWrappedToken(t *testing.T) {
 		expected  bool
 	}{
 		{
-			name:      "isWrappedToken is success by wrapped WUGNOT",
-			tokenPath: WRAPPED_WUGNOT,
+			name:      "isWrappedToken is success by wrapped UGNOT",
+			tokenPath: WUGNOT_PATH,
 			expected:  true,
 		},
 		{
-			name:      "isWrappedToken is failed by non-wrapped WUGNOT",
+			name:      "isWrappedToken is failed by non-wrapped UGNOT",
 			tokenPath: "gno.land/r/demo/ugnot",
 			expected:  false,
 		},
