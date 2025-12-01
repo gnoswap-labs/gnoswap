@@ -333,7 +333,7 @@ func (z *Int) uquo(x, y *Int) *Int {
 		panic(ErrZeroDivision)
 	}
 	if x.IsZero() {
-		z.Clear()
+		return z.Clear()
 	}
 	if x.Eq(y) {
 		return z.SetOne()
@@ -366,7 +366,7 @@ func (z *Int) urem(x, y *Int) *Int {
 		panic(ErrZeroDivision)
 	}
 	if x.IsZero() {
-		z.Clear()
+		return z.Clear()
 	}
 	if x.Eq(y) {
 		return z.Clear()
