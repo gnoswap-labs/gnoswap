@@ -97,6 +97,8 @@ var (
 
 	registeredTestStore = false
 	registeredTestPool  = false
+
+	mockInstance *routerV1
 )
 
 func TokenFaucet(t *testing.T, tokenPath string, to address) {
@@ -469,6 +471,10 @@ func initRouterTest(t *testing.T) {
 	registerPositionTest(t)
 
 	registeredTestStore = true
+
+	mockInstance = &routerV1{
+		store: mock.NewMockRouterStore(),
+	}
 }
 
 func initPoolTest(t *testing.T) {
@@ -509,4 +515,19 @@ func registerPositionTest(t *testing.T) {
 
 	testing.SetRealm(adminRealm)
 	pn.UpgradeImpl(cross, positionMockPath)
+}
+
+// mockInstanceSwapCallback is a helper function to call the SwapCallback function on the mock instance
+func mockInstanceSwapCallback(
+	token0Path string,
+	token1Path string,
+	amount0Delta string,
+	amount1Delta string,
+	payer address,
+) error {
+	// mock instance using a closure
+	return func(cur realm) error {
+		testing.SetRealm(testing.NewCodeRealm(routerPath))
+		return mockInstance.SwapCallback(token0Path, token1Path, amount0Delta, amount1Delta, payer)
+	}(cross)
 }
