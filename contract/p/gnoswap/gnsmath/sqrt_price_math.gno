@@ -25,16 +25,21 @@ var (
 func getNextPriceAmount0Add(
 	currentSqrtPriceX96, liquidity, amountToAdd *u256.Uint,
 ) *u256.Uint {
+	liquidityShifted := u256.Zero()
+	amountTimesSqrtPrice := u256.Zero()
+	quotientCheck := u256.Zero()
+	denominator := u256.Zero()
+
 	// liquidityShifted = liquidity << 96
-	liquidityShifted := u256.Zero().Lsh(liquidity, Q96_RESOLUTION)
+	liquidityShifted.Lsh(liquidity, Q96_RESOLUTION)
 	// amountTimesSqrtPrice = amount * sqrtPrice
-	amountTimesSqrtPrice := u256.Zero().Mul(amountToAdd, currentSqrtPriceX96)
+	amountTimesSqrtPrice.Mul(amountToAdd, currentSqrtPriceX96)
 
 	// Overflow check: Ensure (amountTimesSqrtPrice / amountToAdd) == currentSqrtPriceX96
-	quotientCheck := u256.Zero().Div(amountTimesSqrtPrice, amountToAdd)
+	quotientCheck.Div(amountTimesSqrtPrice, amountToAdd)
 	if quotientCheck.Eq(currentSqrtPriceX96) {
 		// denominator = liquidityShifted + amountTimesSqrtPrice
-		denominator := u256.Zero().Add(liquidityShifted, amountTimesSqrtPrice)
+		denominator.Add(liquidityShifted, amountTimesSqrtPrice)
 		// only take this path when denominator >= liquidityShifted
 		if denominator.Gte(liquidityShifted) {
 			return u256.MulDivRoundingUp(liquidityShifted, currentSqrtPriceX96, denominator)
@@ -42,8 +47,9 @@ func getNextPriceAmount0Add(
 	}
 
 	// fallback: liquidityShifted / ((liquidityShifted / sqrtPrice) + amount)
-	divValue := u256.Zero().Div(liquidityShifted, currentSqrtPriceX96)
-	denominator := u256.Zero().Add(divValue, amountToAdd)
+	quotientCheck.Div(liquidityShifted, currentSqrtPriceX96)
+	denominator.Add(quotientCheck, amountToAdd)
+
 	return u256.DivRoundingUp(liquidityShifted, denominator)
 }
 

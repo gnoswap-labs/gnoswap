@@ -9,7 +9,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-const FUZZ_ITERATIONS = 10
+const FUZZ_ITERATIONS = 100
 
 // TestFuzzGetAmount0Delta_ValidParams_Stateless tests GetAmount0Delta with valid parameters
 func TestFuzzGetAmount0Delta_ValidParams_Stateless(t *testing.T) {
