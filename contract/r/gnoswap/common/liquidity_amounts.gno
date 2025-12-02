@@ -17,11 +17,7 @@ const (
 var (
 	maxUint128 = u256.MustFromDecimal(MAX_UINT128)
 	q96Uint    = u256.MustFromDecimal(Q96)
-	q128Mask   = func() *u256.Uint {
-		mask := u256.Zero().Lsh(u256.One(), Q128_RESOLUTION)
-		mask = u256.Zero().Sub(mask, u256.One())
-		return mask
-	}()
+	q128Mask   = u256.MustFromDecimal(MAX_UINT128)
 	// only used for return value
 	zero = u256.Zero()
 )
