@@ -693,6 +693,63 @@ func TestGrc20regHelper_IsRegistered(t *testing.T) {
 	}
 }
 
+func TestGrc20regHelper_MustRegistered(t *testing.T) {
+	tests := []struct {
+		name        string
+		paths       []string
+		shouldPanic bool
+	}{
+		{
+			name:        "must be registered single token",
+			paths:       []string{tokenPath},
+			shouldPanic: false,
+		},
+		{
+			name:        "panic for non registered token",
+			paths:       []string{"not_registered"},
+			shouldPanic: true,
+		},
+		{
+			name:        "must be registered with no parameters",
+			paths:       []string{},
+			shouldPanic: false,
+		},
+		{
+			name:        "must be registered with multiple registered tokens",
+			paths:       []string{tokenPath, tokenPath},
+			shouldPanic: false,
+		},
+		{
+			name:        "panic with first token unregistered in multiple",
+			paths:       []string{"not_registered", tokenPath},
+			shouldPanic: true,
+		},
+		{
+			name:        "panic with second token unregistered in multiple",
+			paths:       []string{tokenPath, "not_registered"},
+			shouldPanic: true,
+		},
+		{
+			name:        "panic with empty string in multiple tokens",
+			paths:       []string{tokenPath, ""},
+			shouldPanic: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("Expected panic for %s", tt.name)
+					}
+				}()
+			}
+			MustRegistered(tt.paths...)
+		})
+	}
+}
+
 func TestGrc20regHelper_TotalSupply(t *testing.T) {
 	tests := []struct {
 		name           string

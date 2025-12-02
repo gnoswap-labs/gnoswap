@@ -25,6 +25,18 @@ func IsRegistered(path string) error {
 	return nil
 }
 
+// MustRegistered checks if all provided tokens are registered, panicking if any is not registered.
+func MustRegistered(paths ...string) {
+	for _, path := range paths {
+		if err := IsRegistered(path); err != nil {
+			panic(newErrorWithDetail(
+				errNotRegistered,
+				ufmt.Sprintf("token(%s)", path),
+			))
+		}
+	}
+}
+
 // TotalSupply returns the total supply of the specified token.
 func TotalSupply(path string) int64 {
 	return GetToken(path).TotalSupply()
