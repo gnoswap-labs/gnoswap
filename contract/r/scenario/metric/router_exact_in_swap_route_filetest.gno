@@ -27,6 +27,8 @@ import (
 	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoland/wugnot"
+
+	"gno.land/r/gnoswap/scenario/metric"
 )
 
 var (
@@ -132,15 +134,18 @@ func exactOutSwapRouteBy(
 	banker.NewBanker(banker.BankerTypeReadonly)
 
 	testing.SetOriginSend(chain.Coins{})
-	_, _ = router.ExactOutSwapRoute(
-		cross,
-		inputToken,
-		"ugnot",
-		specifiedAmount,
-		routeQueryString,
-		queryRatios,
-		amountInMax,
-		int64(9999999999),
-		"",
-	)
+
+	metric.PrintMetricsBy("Router Exact Out Swap Route", func() {
+		_, _ = router.ExactOutSwapRoute(
+			cross,
+			inputToken,
+			"ugnot",
+			specifiedAmount,
+			routeQueryString,
+			queryRatios,
+			amountInMax,
+			int64(9999999999),
+			"",
+		)
+	})
 }

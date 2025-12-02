@@ -25,6 +25,8 @@ import (
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
+
+	"gno.land/r/gnoswap/scenario/metric"
 )
 
 const MIN_PRICE string = "4295128740"
@@ -87,15 +89,17 @@ func increasePositionLiquidity() {
 	bar.Approve(cross, poolAddr, 18394892)
 	foo.Approve(cross, poolAddr, 50000000)
 
-	_, _, _, _, _ = position.IncreaseLiquidity(
-		cross,
-		1,
-		"50000000",
-		"50000000",
-		"0",
-		"0",
-		9999999999,
-	)
+	metric.PrintMetricsBy("Position Increase Liquidity", func() {
+		_, _, _, _, _ = position.IncreaseLiquidity(
+			cross,
+			1,
+			"50000000",
+			"50000000",
+			"0",
+			"0",
+			9999999999,
+		)
+	})
 }
 
 func mockSwapCallback(token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, zeroForOne bool) error {

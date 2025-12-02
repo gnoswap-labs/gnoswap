@@ -26,6 +26,8 @@ import (
 	_ "gno.land/r/gnoswap/staker/v1"
 
 	"gno.land/r/gnoland/wugnot"
+
+	"gno.land/r/gnoswap/scenario/metric"
 )
 
 var (
@@ -124,15 +126,17 @@ func exactOutSingleSwapRouteBy(
 	testing.SetOriginSend(chain.Coins{{"ugnot", maxAmountOutInt}})
 	testing.SetRealm(adminRealm)
 
-	_, _ = router.ExactOutSingleSwapRoute(
-		cross,
-		inputToken,
-		outputToken,
-		specifiedAmount,
-		routeQueryString,
-		maxAmountOut,
-		"78228162514264337593543950336",
-		9999999999,
-		"",
-	)
+	metric.PrintMetricsBy("Router Exact Out Single Swap Route", func() {
+		_, _ = router.ExactOutSingleSwapRoute(
+			cross,
+			inputToken,
+			outputToken,
+			specifiedAmount,
+			routeQueryString,
+			maxAmountOut,
+			"78228162514264337593543950336",
+			9999999999,
+			"",
+		)
+	})
 }

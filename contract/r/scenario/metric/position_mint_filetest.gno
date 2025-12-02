@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/ufmt"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -68,10 +67,8 @@ func initPool() {
 
 	defaultTokenAmount := int64(100000000)
 
-	ufmt.Println("[INFO] Distributing Bar tokens")
 	bar.Transfer(cross, aliceAddr, defaultTokenAmount)
 
-	ufmt.Println("[INFO] Distributing Foo tokens")
 	foo.Transfer(cross, aliceAddr, defaultTokenAmount)
 
 	bar.Approve(cross, poolAddr, INT64_MAX)
