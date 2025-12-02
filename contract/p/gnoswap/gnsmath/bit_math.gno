@@ -7,23 +7,25 @@ import (
 )
 
 var (
+	oneU256 = u256.One() // readonly
+
 	msbShifts = []bitShift{
-		{u256.Zero().Lsh(u256.One(), 128), 128}, // 2^128
-		{u256.Zero().Lsh(u256.One(), 64), 64},   // 2^64
-		{u256.Zero().Lsh(u256.One(), 32), 32},   // 2^32
-		{u256.Zero().Lsh(u256.One(), 16), 16},   // 2^16
-		{u256.Zero().Lsh(u256.One(), 8), 8},     // 2^8
-		{u256.Zero().Lsh(u256.One(), 4), 4},     // 2^4
-		{u256.Zero().Lsh(u256.One(), 2), 2},     // 2^2
-		{u256.Zero().Lsh(u256.One(), 1), 1},     // 2^1
+		{u256.Zero().Lsh(oneU256, 128), 128}, // 2^128
+		{u256.Zero().Lsh(oneU256, 64), 64},   // 2^64
+		{u256.Zero().Lsh(oneU256, 32), 32},   // 2^32
+		{u256.Zero().Lsh(oneU256, 16), 16},   // 2^16
+		{u256.Zero().Lsh(oneU256, 8), 8},     // 2^8
+		{u256.Zero().Lsh(oneU256, 4), 4},     // 2^4
+		{u256.Zero().Lsh(oneU256, 2), 2},     // 2^2
+		{u256.Zero().Lsh(oneU256, 1), 1},     // 2^1
 	}
 
 	lsbShifts = []bitShift{
-		{u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 128), u256.One()), 128}, // 2^128 - 1
-		{u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 64), u256.One()), 64},   // 2^64 - 1
-		{u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 32), u256.One()), 32},   // 2^32 - 1
-		{u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 16), u256.One()), 16},   // 2^16 - 1
-		{u256.Zero().Sub(u256.Zero().Lsh(u256.One(), 8), u256.One()), 8},     // 2^8 - 1
+		{u256.Zero().Sub(u256.Zero().Lsh(oneU256, 128), oneU256), 128}, // 2^128 - 1
+		{u256.Zero().Sub(u256.Zero().Lsh(oneU256, 64), oneU256), 64},   // 2^64 - 1
+		{u256.Zero().Sub(u256.Zero().Lsh(oneU256, 32), oneU256), 32},   // 2^32 - 1
+		{u256.Zero().Sub(u256.Zero().Lsh(oneU256, 16), oneU256), 16},   // 2^16 - 1
+		{u256.Zero().Sub(u256.Zero().Lsh(oneU256, 8), oneU256), 8},     // 2^8 - 1
 		{u256.NewUint(0xf), 4}, // 2^4 - 1 = 15
 		{u256.NewUint(0x3), 2}, // 2^2 - 1 = 3
 		{u256.NewUint(0x1), 1}, // 2^1 - 1 = 1
@@ -68,16 +70,16 @@ func BitMathLeastSignificantBit(x *u256.Uint) uint8 {
 	}
 
 	if x[0] != 0 {
-        return uint8(bits.TrailingZeros64(x[0]))
-    }
+		return uint8(bits.TrailingZeros64(x[0]))
+	}
 
 	if x[1] != 0 {
-        return 64 + uint8(bits.TrailingZeros64(x[1]))
-    }
+		return 64 + uint8(bits.TrailingZeros64(x[1]))
+	}
 
 	if x[2] != 0 {
-        return 128 + uint8(bits.TrailingZeros64(x[2]))
-    }
+		return 128 + uint8(bits.TrailingZeros64(x[2]))
+	}
 
-    return 192 + uint8(bits.TrailingZeros64(x[3]))
+	return 192 + uint8(bits.TrailingZeros64(x[3]))
 }
