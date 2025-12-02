@@ -77,10 +77,6 @@ func initPool() {
 	bar.Approve(cross, poolAddr, INT64_MAX)
 	foo.Approve(cross, poolAddr, INT64_MAX)
 
-	ufmt.Printf("[INFO] Initial Bar balance of Alice: %d\n", bar.BalanceOf(aliceAddr))
-	ufmt.Printf("[INFO] Initial Foo balance of Alice: %d\n", foo.BalanceOf(aliceAddr))
-
-	ufmt.Println("[INFO] Creating pool")
 	pool.CreatePool(
 		cross,
 		barPath,
@@ -94,8 +90,6 @@ func mintPosition() {
 	testing.SetRealm(aliceRealm)
 	bar.Approve(cross, poolAddr, INT64_MAX)
 	foo.Approve(cross, poolAddr, INT64_MAX)
-
-	ufmt.Println("[INFO] Minting position")
 
 	metric.PrintMetricsBy("Position Mint", func() {
 		position.Mint(
