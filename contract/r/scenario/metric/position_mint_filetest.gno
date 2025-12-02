@@ -27,6 +27,8 @@ import (
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
+
+	"gno.land/r/gnoswap/scenario/metric"
 )
 
 const (
@@ -53,11 +55,8 @@ var (
 )
 
 func main() {
-	ufmt.Println("[SCENARIO] 1. Initialize pool")
 	initPool()
-	println()
 
-	ufmt.Println("[SCENARIO] 2. Mint initial position")
 	mintPosition()
 }
 
@@ -98,7 +97,7 @@ func mintPosition() {
 
 	ufmt.Println("[INFO] Minting position")
 
-	printMetricsBy("Position Mint", func() {
+	metric.PrintMetricsBy("Position Mint", func() {
 		position.Mint(
 			cross,
 			barPath,
@@ -116,31 +115,4 @@ func mintPosition() {
 			"",
 		)
 	})
-}
-
-func printMetricsBy(name string, fn func()) {
-	beforeCycles := testing.GetCycles()
-	beforeGas := testing.GetGas()
-	beforeRealmStorageDiff := testing.GetRealmStorageDiffs()
-
-	fn()
-
-	afterCycles := testing.GetCycles()
-	afterGas := testing.GetGas()
-	afterRealmStorageDiff := testing.GetRealmStorageDiffs()
-
-	totalRealmStorageDiff := int64(0)
-
-	for _, diff := range afterRealmStorageDiff {
-		totalRealmStorageDiff += diff
-	}
-
-	for _, diff := range beforeRealmStorageDiff {
-		totalRealmStorageDiff -= diff
-	}
-
-	println(name)
-	ufmt.Printf("- Gas Used: %d\n", afterGas-beforeGas)
-	ufmt.Printf("- Storage Diff: %d\n", totalRealmStorageDiff)
-	ufmt.Printf("- CPU Cycles: %d\n", afterCycles-beforeCycles)
 }
