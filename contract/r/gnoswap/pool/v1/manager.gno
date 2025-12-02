@@ -86,8 +86,7 @@ func (i *poolV1) CreatePool(
 	}
 
 	// check if wrapped token paths are registered
-	common.MustRegistered(poolInfo.token0Path)
-	common.MustRegistered(poolInfo.token1Path)
+	common.MustRegistered(poolInfo.token0Path, poolInfo.token1Path)
 
 	pool := newPool(poolInfo)
 
