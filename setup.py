@@ -1,335 +1,397 @@
-import os
-import sys
-import shutil
+from __future__ import annotations
+
 import argparse
+import os
+import shutil
 import subprocess
-from pathlib import Path
-from typing import Optional, Tuple
+import sys
 from dataclasses import dataclass
+from pathlib import Path
+from typing import FrozenSet, Iterator, List, NamedTuple, Optional, Tuple
 
 try:
     import tomllib  # Python 3.11+
 except ImportError:
     try:
-        import tomli as tomllib  # fallback for older Python versions
+        import tomli as tomllib  # type: ignore[import-not-found]
     except ImportError:
-        import toml as tomllib  # alternative fallback
+        import toml as tomllib  # type: ignore[import-not-found]
 
 
-@dataclass
+GNOSWAP_REPO_URL = "https://github.com/gnoswap-labs/gnoswap.git"
+GNO_LAND_PREFIX = "gno.land/"
+
+INTEGRATION_TESTDATA_DIR = Path("tests/integration/testdata")
+INTEGRATION_SKIP_FILE = Path("tests/integration/testdata-skip.txt")
+INTEGRATION_BLESS_DIR = Path("tests/integration/bless")
+
+CONTRACT_DIR = Path("contract")
+SCENARIO_DIR = Path("tests/scenario")
+
+
+class SetupError(Exception):
+    """Base exception for setup errors."""
+
+
+class ModuleFileError(SetupError):
+    """Error reading or parsing module files."""
+
+
+@dataclass(frozen=True)
 class ModuleInfo:
     """Information about a Gno module."""
 
     module_path: str
-    source_dir: str
-    destination_dir: str
+    source_dir: Path
+    destination_dir: Path
 
 
-class GnoModuleManager:
-    """Manages Gno modules and their paths."""
+class IntegrationTest(NamedTuple):
+    """Integration test file information."""
 
-    def __init__(self, workdir: str):
-        self.workdir = workdir
-        self.gno_dir = os.path.join(workdir, "gno", "examples", "gno.land")
-        self.gno_root_dir = os.path.join(workdir, "gno", "gno.land")
-
-    def extract_module_path_from_gnomod(self, file_path: str) -> Optional[str]:
-        """Extract module path from gno.mod file (legacy format)."""
-        try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                content = f.read()
-                import re
-
-                match = re.search(r"module\s+([\w./]+)", content)
-                return match.group(1) if match else None
-        except (IOError, UnicodeDecodeError):
-            print(f"Error reading file: {file_path}")
-            return None
-
-    def extract_module_path_from_toml(self, file_path: str) -> Optional[str]:
-        """Extract module path from gnomod.toml file."""
-        try:
-            with open(file_path, "rb") as f:
-                data = tomllib.load(f)
-                return data.get("module")
-        except (IOError, tomllib.TOMLDecodeError, KeyError) as e:
-            print(f"Error reading TOML file {file_path}: {e}")
-            return None
-
-    def extract_module_path(self, file_path: str) -> Optional[str]:
-        """Extract module path from either gno.mod or gnomod.toml file."""
-        if file_path.endswith("gnomod.toml"):
-            return self.extract_module_path_from_toml(file_path)
-        else:  # gno.mod
-            return self.extract_module_path_from_gnomod(file_path)
-
-    def find_parent_module(self, directory: str) -> Tuple[Optional[str], Optional[str]]:
-        """Find the nearest parent module path and directory."""
-        current = directory
-        while current != os.path.dirname(current):
-            # Check for new TOML format first
-            toml_file = os.path.join(current, "gnomod.toml")
-            if os.path.exists(toml_file):
-                return self.extract_module_path(toml_file), current
-
-            # Fallback to legacy gno.mod format
-            mod_file = os.path.join(current, "gno.mod")
-            if os.path.exists(mod_file):
-                return self.extract_module_path(mod_file), current
-
-            current = os.path.dirname(current)
-        return None, None
-
-    def get_module_info(self, src_dir: str, module_path: str) -> Optional[ModuleInfo]:
-        """Create ModuleInfo from source directory and module path."""
-        if not module_path or not module_path.startswith("gno.land/"):
-            return None
-
-        relative_path = module_path.replace("gno.land/", "", 1)
-        dest_dir = os.path.join(self.gno_dir, relative_path)
-        return ModuleInfo(module_path, src_dir, dest_dir)
+    source_path: Path
+    converted_name: str
 
 
-class ContractCopier:
-    """Handles linking of contract files and tests."""
+@dataclass(frozen=True)
+class PathConfig:
+    """Configuration for directory paths."""
 
-    def __init__(self, module_manager: GnoModuleManager, exclude_tests: bool = False):
-        self.module_manager = module_manager
-        self.exclude_tests = exclude_tests
+    workdir: Path
+    gno_examples_dir: Path
+    gno_root_dir: Path
 
-    def copy_module(self, module_info: ModuleInfo) -> None:
-        print(
-            f"Linking module from {module_info.source_dir} to {module_info.destination_dir}"
+    @classmethod
+    def from_workdir(cls, workdir: Path) -> PathConfig:
+        """Create `PathConfig` from a working directory."""
+        return cls(
+            workdir=workdir,
+            # If the gno repository name is different, change only `gno` in this path to the appropriate one.
+            # For example, if the cloned repository is `gno-core/...`, replace it with `gno-core`.
+            gno_examples_dir=workdir / "gno" / "examples" / "gno.land",
+            gno_root_dir=workdir / "gno" / "gno.land",
         )
 
-        if os.path.islink(module_info.destination_dir) or os.path.isfile(
-            module_info.destination_dir
-        ):
-            os.unlink(module_info.destination_dir)
-        elif os.path.isdir(module_info.destination_dir):
-            shutil.rmtree(module_info.destination_dir)
 
-        os.makedirs(module_info.destination_dir, exist_ok=True)
-
-        for root, _, files in os.walk(module_info.source_dir):
-            rel_path = os.path.relpath(root, module_info.source_dir)
-            dest_root = os.path.join(module_info.destination_dir, rel_path)
-            os.makedirs(dest_root, exist_ok=True)
-            for file in files:
-                # Skip test files if exclude_tests option is enabled
-                if self.exclude_tests and file.endswith("test.gno"):
-                    continue
-                
-                src_file = os.path.abspath(os.path.join(root, file))
-                dest_file = os.path.join(dest_root, file)
-                if os.path.exists(dest_file) or os.path.islink(dest_file):
-                    os.unlink(dest_file)
-                os.symlink(src_file, dest_file)
-
-    def copy_tests(self, src_test_dir: str, dest_dir: str) -> None:
-        """Symlink test files into the destination directory."""
-        print(f"Linking tests from {src_test_dir} to {dest_dir}")
-        if not os.path.exists(src_test_dir):
-            return
-        if os.path.islink(dest_dir) or os.path.isfile(dest_dir):
-            os.unlink(dest_dir)
-        elif os.path.isdir(dest_dir):
-            shutil.rmtree(dest_dir)
-        os.makedirs(dest_dir, exist_ok=True)
-
-        for test_file in os.listdir(src_test_dir):
-            src_file = os.path.join(src_test_dir, test_file)
-            dest_file = os.path.join(dest_dir, test_file)
-            if os.path.isfile(src_file):
-                if os.path.islink(dest_file) or os.path.isfile(dest_file):
-                    os.unlink(dest_file)
-                elif os.path.isdir(dest_file):
-                    shutil.rmtree(dest_file)
-
-                os.makedirs(os.path.dirname(dest_file), exist_ok=True)
-                os.symlink(src_file, dest_file)
-
-    def process_directory(self, root: str, dirs: list, files: list) -> None:
-        """Process a directory for modules and tests."""
-        module_file = None
-        if "gnomod.toml" in files:
-            module_file = os.path.join(root, "gnomod.toml")
-        elif "gno.mod" in files:
-            raise ValueError(
-                "gno.mod format is outdated. Please use gnomod.toml instead."
-            )
-
-        if module_file:
-            module_path = self.module_manager.extract_module_path(module_file)
-            if module_info := self.module_manager.get_module_info(root, module_path):
-                self.copy_module(module_info)
+def parse_module_from_toml(data: dict) -> Optional[str]:
+    """Parse module path from toml data"""
+    return data.get("module")
 
 
-def clone_repository(workdir: str) -> None:
-    """Clone the GnoSwap repository."""
-    os.chdir(workdir)
-    subprocess.run(
-        ["git", "clone", "https://github.com/gnoswap-labs/gnoswap.git"], check=True
-    )
-    os.chdir("gnoswap")
+def convert_txtar_name(file_path: Path, base_dir: Path) -> str:
+    rel_path = file_path.relative_to(base_dir)
+    name_without_ext = file_path.stem
+
+    if rel_path.parent != Path("."):
+        prefix = str(rel_path.parent).replace(os.sep, "_") + "_"
+        return prefix + name_without_ext
+    return name_without_ext
 
 
-def setup_contracts(workdir: str, exclude_tests: bool = False) -> None:
-    """Set up all contracts and tests."""
-    module_manager = GnoModuleManager(workdir)
-    copier = ContractCopier(module_manager, exclude_tests=exclude_tests)
+def build_module_destination(
+    module_path: str, gno_examples_dir: Path
+) -> Optional[Path]:
+    """Calculate destination directory for a module
 
-    for root, dirs, files in os.walk("contract"):
-        copier.process_directory(root, dirs, files)
-
-    for root, dirs, files in os.walk("tests/scenario"):
-        copier.process_directory(root, dirs, files)
-
-
-_INTEGRATION_TESTDATA_DIR = "tests/integration/testdata"
-_INTEGRATION_SKIP_FILE = "tests/integration/testdata-skip.txt"
-
-
-def _load_skip_tests() -> set:
-    """Load skip list from file."""
-    skip_tests = set()
-    if os.path.exists(_INTEGRATION_SKIP_FILE):
-        with open(_INTEGRATION_SKIP_FILE) as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith("#"):
-                    skip_tests.add(line)
-    return skip_tests
-
-
-def _get_all_integration_tests() -> list:
-    """Get all integration tests with their source paths and converted names.
+    Args:
+        module_path: Full module path (e.g., "gno.land/p/demo/example").
+        gno_examples_dir: Base directory for gno.land examples.
 
     Returns:
-        List of tuples: (src_file_path, converted_name)
+        Destination path if valid gno.land module, None otherwise.
     """
-    if not os.path.exists(_INTEGRATION_TESTDATA_DIR):
-        return []
+    if not module_path.startswith(GNO_LAND_PREFIX):
+        return None
 
-    tests = []
-    for root, _, files in os.walk(_INTEGRATION_TESTDATA_DIR):
-        for file in files:
-            if file.endswith(".txtar"):
-                src_file = os.path.abspath(os.path.join(root, file))
-                rel_dir = os.path.relpath(root, _INTEGRATION_TESTDATA_DIR)
-                name_without_ext = file.replace(".txtar", "")
-
-                if rel_dir != ".":
-                    prefix = rel_dir.replace(os.sep, "_") + "_"
-                    converted_name = prefix + name_without_ext
-                else:
-                    converted_name = name_without_ext
-
-                tests.append((src_file, converted_name))
-
-    return tests
+    relative_path = module_path.replace(GNO_LAND_PREFIX, "", 1)
+    return gno_examples_dir / relative_path
 
 
-def get_integration_tests(skip: bool = False) -> list:
+###### IO / File Operation functions
+
+
+def read_module_path(file_path: Path) -> Optional[str]:
+    """Read and parse module path from toml file"""
+
+    try:
+        content = file_path.read_bytes()
+        data = tomllib.loads(content.decode("utf-8"))
+        return parse_module_from_toml(data)
+    except (IOError, tomllib.TOMLDecodeError, KeyError) as e:
+        print(f"Error reading TOML file {file_path}: {e}")
+        return None
+
+
+def load_skip_tests(skip_file: Path = INTEGRATION_SKIP_FILE) -> FrozenSet[str]:
+    """Load skip list from file"""
+    if not skip_file.exists():
+        return frozenset()
+
+    skip_tests: set = set()
+    for line in skip_file.read_text().splitlines():
+        line = line.strip()
+        if line and not line.startswith("#"):
+            skip_tests.add(line)
+
+    return frozenset(skip_tests)
+
+
+def remove_path(path: Path) -> None:
+    """Remove a file, symlink, or directory"""
+    if path.is_symlink() or path.is_file():
+        path.unlink()
+    elif path.is_dir():
+        shutil.rmtree(path)
+
+
+def ensure_clean_directory(path: Path) -> None:
+    """Ensure directory exists and is empty"""
+    remove_path(path)
+    path.mkdir(parents=True, exist_ok=True)
+
+
+def create_symlink(src: Path, dest: Path) -> None:
+    """Create a symlink, removing existing file if present"""
+    if dest.exists() or dest.is_symlink():
+        dest.unlink()
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.symlink_to(src.resolve())
+
+
+#### Module discovery
+
+
+def find_module_file(dir: Path) -> Optional[Path]:
+    """Find `gnomod.toml` file in directory"""
+    toml_file = dir / "gnomod.toml"
+    if toml_file.exists():
+        return toml_file
+    return None
+
+
+def find_parent_module(dir: Path) -> Tuple[Optional[str], Optional[Path]]:
+    """Find the nearest parent module path and directory"""
+    current = dir.resolve()
+
+    while current != current.parent:
+        toml_file = current / "gnomod.toml"
+        if toml_file.exists():
+            return read_module_path(toml_file), current
+        current = current.parent
+    return None, None
+
+
+def discover_modules(
+    root_dir: Path,
+    config: PathConfig,
+) -> Iterator[ModuleInfo]:
+    """Discover all modules in a directory tree"""
+    for dirpath in root_dir.rglob("*"):
+        if not dirpath.is_dir():
+            continue
+
+        module_file = find_module_file(dirpath)
+        if module_file is None:
+            continue
+
+        module_path = read_module_path(module_file)
+        if module_path is None:
+            continue
+
+        destination = build_module_destination(module_path, config.gno_examples_dir)
+        if destination is None:
+            continue
+
+        yield ModuleInfo(
+            module_path=module_path,
+            source_dir=dirpath,
+            destination_dir=destination,
+        )
+
+
+### Integration Tests Handler
+
+
+def discover_integration_tests(
+    testdata_dir: Path = INTEGRATION_TESTDATA_DIR,
+) -> Iterator[IntegrationTest]:
+    """Discover all integration test files."""
+    if not testdata_dir.exists():
+        return
+
+    for txtar_file in testdata_dir.rglob("*.txtar"):
+        yield IntegrationTest(
+            source_path=txtar_file.resolve(),
+            converted_name=convert_txtar_name(txtar_file, testdata_dir),
+        )
+
+
+def get_integration_tests(
+    skip: bool = False,
+    testdata_dir: Path = INTEGRATION_TESTDATA_DIR,
+    skip_file: Path = INTEGRATION_SKIP_FILE,
+) -> List[IntegrationTest]:
     """Get integration tests, optionally excluding those in skip list.
 
     Args:
-        skip: If True, exclude tests listed in testdata-skip.txt
+        skip: If True, exclude tests listed in skip file.
+        testdata_dir: Directory containing test files.
+        skip_file: Path to skip list file.
 
     Returns:
-        List of tuples: (src_file_path, converted_name)
+        List of IntegrationTest objects.
     """
-    tests = _get_all_integration_tests()
+    tests = list(discover_integration_tests(testdata_dir))
+
     if not skip:
         return tests
 
-    skip_tests = _load_skip_tests()
-    return [(src, name) for src, name in tests if name not in skip_tests]
+    skip_tests = load_skip_tests(skip_file)
+    return [test for test in tests if test.converted_name not in skip_tests]
 
 
-def copy_integration_tests(workdir: str, skip: bool = False) -> None:
-    """Copy integration test files from tests/integration to gno/gno.land/pkg/integration."""
-    module_manager = GnoModuleManager(workdir)
+### Module Linking
 
-    # Copy testdata txtar files
-    dest_testdata = os.path.join(
-        module_manager.gno_root_dir, "pkg", "integration", "testdata"
+
+def link_module(module_info: ModuleInfo, exclude_tests: bool = False) -> None:
+    """Link a module's files to destination directory."""
+    print(
+        f"Linking module from {module_info.source_dir} to {module_info.destination_dir}"
     )
 
-    if os.path.exists(_INTEGRATION_TESTDATA_DIR):
-        # Create destination directory if it doesn't exist
-        if os.path.islink(dest_testdata) or os.path.isfile(dest_testdata):
-            os.unlink(dest_testdata)
-        elif os.path.isdir(dest_testdata):
-            shutil.rmtree(dest_testdata)
-        os.makedirs(dest_testdata, exist_ok=True)
+    ensure_clean_directory(module_info.destination_dir)
 
-        print(f"Copying integration tests from {_INTEGRATION_TESTDATA_DIR} to {dest_testdata}")
+    for source_file in module_info.source_dir.rglob("*"):
+        if not source_file.is_file():
+            continue
 
-        for src_file, converted_name in get_integration_tests(skip=skip):
-            dest_file = os.path.join(dest_testdata, converted_name + ".txtar")
+        if exclude_tests and source_file.name.endswith("test.gno"):
+            continue
 
-            # Remove existing file/link if present
-            if os.path.exists(dest_file) or os.path.islink(dest_file):
-                os.unlink(dest_file)
+        relative = source_file.relative_to(module_info.source_dir)
+        destination = module_info.destination_dir / relative
+        create_symlink(source_file, destination)
 
-            # Create symlink
-            os.symlink(src_file, dest_file)
-            print(f"  Linked: {os.path.basename(src_file)} -> {converted_name}.txtar")
 
-    # Copy bless directory
-    src_bless = "tests/integration/bless"
-    dest_bless = os.path.join(
-        module_manager.gno_root_dir, "pkg", "integration", "bless"
+def link_integration_tests(config: PathConfig, skip: bool = False) -> None:
+    """Link integration test files to gno integration directory."""
+    dest_testdata = config.gno_root_dir / "pkg" / "integration" / "testdata"
+
+    tests = get_integration_tests(skip=skip)
+    if not tests:
+        return
+
+    ensure_clean_directory(dest_testdata)
+    print(
+        f"Linking integration tests from {INTEGRATION_TESTDATA_DIR} to {dest_testdata}"
     )
 
-    if os.path.exists(src_bless):
-        # Create destination directory if it doesn't exist
-        if os.path.islink(dest_bless) or os.path.isfile(dest_bless):
-            os.unlink(dest_bless)
-        elif os.path.isdir(dest_bless):
-            shutil.rmtree(dest_bless)
-        os.makedirs(dest_bless, exist_ok=True)
+    for test in tests:
+        dest_file = dest_testdata / f"{test.converted_name}.txtar"
+        create_symlink(test.source_path, dest_file)
+        print(f"  Linked: {test.source_path.name} -> {test.converted_name}.txtar")
 
-        print(f"Copying bless directory from {src_bless} to {dest_bless}")
 
-        # Copy all files from bless directory
-        for file in os.listdir(src_bless):
-            src_file = os.path.abspath(os.path.join(src_bless, file))
-            dest_file = os.path.join(dest_bless, file)
+def link_bless_directory(config: PathConfig) -> None:
+    """Link bless directory for integration tests."""
+    if not INTEGRATION_BLESS_DIR.exists():
+        return
 
-            if os.path.isfile(src_file):
-                # Remove existing file/link if present
-                if os.path.exists(dest_file) or os.path.islink(dest_file):
-                    os.unlink(dest_file)
+    dest_bless = config.gno_root_dir / "pkg" / "integration" / "bless"
+    ensure_clean_directory(dest_bless)
+    print(f"Linking bless directory from {INTEGRATION_BLESS_DIR} to {dest_bless}")
 
-                # Create symlink
-                os.symlink(src_file, dest_file)
-                print(f"  Linked: {file}")
+    for source_file in INTEGRATION_BLESS_DIR.iterdir():
+        if source_file.is_file():
+            dest_file = dest_bless / source_file.name
+            create_symlink(source_file.resolve(), dest_file)
+            print(f"  Linked: {source_file.name}")
+
+
+### Main Operations
+
+
+def clone_repository(workdir: Path) -> None:
+    """Clone the GnoSwap repository.
+
+    Args:
+        workdir: Working directory for clone.
+    """
+    os.chdir(workdir)
+    subprocess.run(["git", "clone", GNOSWAP_REPO_URL], check=True)
+    os.chdir("gnoswap")
+
+
+def setup_contracts(config: PathConfig, exclude_tests: bool = False) -> None:
+    """Set up all contracts by linking modules.
+
+    Args:
+        config: Path configuration.
+        exclude_tests: If True, exclude test files.
+    """
+    search_dirs = [CONTRACT_DIR, SCENARIO_DIR]
+
+    for search_dir in search_dirs:
+        if not search_dir.exists():
+            continue
+
+        for module_info in discover_modules(search_dir, config):
+            link_module(module_info, exclude_tests=exclude_tests)
+
+
+def copy_integration_tests(config: PathConfig, skip: bool = False) -> None:
+    """Copy all integration test resources.
+
+    Args:
+        config: Path configuration.
+        skip: If True, exclude tests in skip list.
+    """
+    link_integration_tests(config, skip=skip)
+    link_bless_directory(config)
 
 
 def list_integration_tests(skip: bool = False) -> None:
-    """List all integration tests with their converted names."""
+    """Print all integration tests with their converted names.
+
+    Args:
+        skip: If True, exclude tests in skip list.
+    """
     tests = get_integration_tests(skip=skip)
+
     if not tests:
         print("Error: Test directory not found", file=sys.stderr)
         sys.exit(1)
 
-    for _, converted_name in sorted(tests, key=lambda x: x[1]):
-        print(converted_name)
+    for test in sorted(tests, key=lambda t: t.converted_name):
+        print(test.converted_name)
 
 
-def main() -> None:
-    """Main entry point for the script."""
-    parser = argparse.ArgumentParser(description="Set up GnoSwap contracts")
+def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
+    """Parse command line arguments.
+
+    Args:
+        argv: Command line arguments (defaults to sys.argv).
+
+    Returns:
+        Parsed arguments namespace.
+    """
+    parser = argparse.ArgumentParser(
+        description="Set up GnoSwap contracts",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+
     parser.add_argument(
         "-w",
         "--workdir",
-        help="Path to your work directory",
-        default=str(Path.home()),
+        type=Path,
+        default=Path.home(),
+        help="Path to your work directory (default: home directory)",
     )
     parser.add_argument(
-        "-c", "--clone", action="store_true", help="Clone the repository"
+        "-c",
+        "--clone",
+        action="store_true",
+        help="Clone the GnoSwap repository before setup",
     )
     parser.add_argument(
         "--exclude-tests",
@@ -339,7 +401,7 @@ def main() -> None:
     parser.add_argument(
         "--list-tests",
         action="store_true",
-        help="List all integration tests with converted names",
+        help="List all integration tests with converted names and exit",
     )
     parser.add_argument(
         "--skip",
@@ -347,19 +409,35 @@ def main() -> None:
         help="Exclude tests listed in testdata-skip.txt",
     )
 
-    args = parser.parse_args()
+    return parser.parse_args(argv)
+
+
+def main(argv: Optional[List[str]] = None) -> int:
+    """Main entry point for the script.
+
+    Args:
+        argv: Command line arguments.
+
+    Returns:
+        Exit code (0 for success).
+    """
+    args = parse_args(argv)
 
     if args.list_tests:
         list_integration_tests(skip=args.skip)
-        return
+        return 0
 
     if args.clone:
         clone_repository(args.workdir)
 
-    setup_contracts(args.workdir, exclude_tests=args.exclude_tests)
-    copy_integration_tests(args.workdir, args.skip)
+    config = PathConfig.from_workdir(args.workdir)
+
+    setup_contracts(config, exclude_tests=args.exclude_tests)
+    copy_integration_tests(config, skip=args.skip)
+
     print("Setup completed successfully!")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
