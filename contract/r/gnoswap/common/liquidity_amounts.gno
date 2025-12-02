@@ -24,6 +24,7 @@ var (
 	}()
 	// only used for return value
 	zero = u256.Zero()
+	zeroI256 = i256.Zero()
 )
 
 // computeLiquidityForAmount0 calculates the liquidity for a given amount of token0.
@@ -36,16 +37,13 @@ var (
 //   - sqrtRatioBX96: *u256.Uint - The square root price at the upper tick boundary (Q64.96).
 //   - amount0: *u256.Uint - The amount of token0 to be converted to liquidity.
 //
-// Notes:
-//   - The function assumes the input values are already in ascending order.
-//
 // Returns:
 //   - *u256.Uint: The calculated liquidity, represented as an unsigned 128-bit integer (uint128).
 //
 // Panics:
 //   - If the resulting liquidity exceeds the uint128 range, `safeConvertToUint128` will trigger a panic.
 func computeLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0 *u256.Uint) *u256.Uint {
-	// sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
+	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 	intermediate := u256.MulDiv(sqrtRatioAX96, sqrtRatioBX96, q96Uint)
 
 	diff := u256.Zero().Sub(sqrtRatioBX96, sqrtRatioAX96)
@@ -77,11 +75,12 @@ func computeLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0 *u256.Uint
 //   - The result is not directly limited to uint128, as liquidity values can exceed uint128 bounds.
 //   - If `sqrtRatioAX96 == sqrtRatioBX96`, the function will panic due to division by zero.
 //   - Q96 is a constant representing `2^96`, ensuring that precision is maintained during division.
-//   - The function assumes the input values are already in ascending order.
 //
 // Panics:
 //   - If the resulting liquidity exceeds the uint128 range, `safeConvertToUint128` will trigger a panic.
 func computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1 *u256.Uint) *u256.Uint {
+	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
+
 	diff := u256.Zero().Sub(sqrtRatioBX96, sqrtRatioAX96)
 	if diff.IsZero() {
 		panic(newErrorWithDetail(
@@ -152,8 +151,8 @@ func GetLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0,
 // - This function assumes the price bounds are expressed in Q64.96 fixed-point format.
 // - The function returns 0 if the liquidity is 0 or the price bounds are invalid.
 // - Handles edge cases where sqrtRatioAX96 equals sqrtRatioBX96 by returning 0 (to prevent division by zero).
-// - The function assumes the input values are already in ascending order.
 func computeAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Uint) *u256.Uint {
+	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 	if sqrtRatioAX96.IsZero() || sqrtRatioBX96.IsZero() || liquidity.IsZero() || sqrtRatioAX96.Eq(sqrtRatioBX96) {
 		return zero
 	}
@@ -187,8 +186,8 @@ func computeAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Ui
 //     to prevent division by zero.
 //   - The calculation assumes sqrtRatioAX96 is always less than or equal to sqrtRatioBX96 after the initial
 //     ascending order sorting.
-//   - The function assumes the input values are already in ascending order.
 func computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Uint) *u256.Uint {
+	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 	if liquidity.IsZero() || sqrtRatioAX96.Eq(sqrtRatioBX96) {
 		return zero
 	}
@@ -274,32 +273,26 @@ func LiquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 		panic("liquidity_math: x or y is nil")
 	}
 
-	if y.IsZero() {
-		return x.Clone()
-	}
-
 	yAbs := y.Abs()
-	yNeg := y.IsNeg()
-	var z u256.Uint
 
 	// Subtract or add based on the sign of y
-	if yNeg {
-		_, underflow := z.SubOverflow(x, yAbs)
-		if underflow {
+	if y.Lt(zeroI256) {
+		z := u256.Zero().Sub(x, yAbs)
+		if z.Gte(x) {
 			panic(ufmt.Sprintf(
 				"liquidity_math: underflow (x: %s, y: %s, z:%s)",
 				x.ToString(), y.ToString(), z.ToString()))
 		}
-		return &z
+		return z
 	}
 
-	_, overflow := z.AddOverflow(x, yAbs)
-	if overflow {
+	z := u256.Zero().Add(x, yAbs)
+	if z.Lt(x) {
 		panic(ufmt.Sprintf(
 			"liquidity_math: overflow (x: %s, y: %s, z:%s)",
 			x.ToString(), y.ToString(), z.ToString()))
 	}
-	return &z
+	return z
 }
 
 // toAscendingOrder returns the two values in ascending order.
