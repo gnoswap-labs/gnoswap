@@ -1,8 +1,6 @@
 package common
 
 import (
-	"gno.land/p/nt/ufmt"
-
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -87,9 +85,7 @@ func toUint128(value *u256.Uint) *u256.Uint {
 // safeConvertToUint128(u256.MustFromDecimal("340282366920938463463374607431768211456")) // Panics due to overflow
 func safeConvertToUint128(value *u256.Uint) *u256.Uint {
 	if value.Gt(maxUint128) {
-		panic(ufmt.Sprintf(
-			"%v: amount(%s) overflows uint128 range",
-			errOverFlow, value.ToString()))
+		panic(errOverFlow.Error() + ": amount(" + value.ToString() + ") overflows uint128 range")
 	}
 	return value
 }
@@ -117,7 +113,7 @@ func computeLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0 *u256.Uint
 	if diff.IsZero() {
 		panic(newErrorWithDetail(
 			errIdenticalTicks,
-			ufmt.Sprintf("sqrtRatioAX96 (%s) and sqrtRatioBX96 (%s) are identical", sqrtRatioAX96.ToString(), sqrtRatioBX96.ToString()),
+			"sqrtRatioAX96 ("+sqrtRatioAX96.ToString()+") and sqrtRatioBX96 ("+sqrtRatioBX96.ToString()+") are identical",
 		))
 	}
 	res := u256.MulDiv(amount0, intermediate, diff)
@@ -152,7 +148,7 @@ func computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1 *u256.Uint
 	if diff.IsZero() {
 		panic(newErrorWithDetail(
 			errIdenticalTicks,
-			ufmt.Sprintf("sqrtRatioAX96 (%s) and sqrtRatioBX96 (%s) are identical", sqrtRatioAX96.ToString(), sqrtRatioBX96.ToString()),
+			"sqrtRatioAX96 ("+sqrtRatioAX96.ToString()+") and sqrtRatioBX96 ("+sqrtRatioBX96.ToString()+") are identical",
 		))
 	}
 	res := u256.MulDiv(amount1, q96Uint, diff)
@@ -346,18 +342,14 @@ func LiquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 	if y.Lt(i256.Zero()) {
 		z := u256.Zero().Sub(x, yAbs)
 		if z.Gte(x) {
-			panic(ufmt.Sprintf(
-				"liquidity_math: underflow (x: %s, y: %s, z:%s)",
-				x.ToString(), y.ToString(), z.ToString()))
+			panic("liquidity_math: underflow (x: " + x.ToString() + ", y: " + y.ToString() + ", z:" + z.ToString() + ")")
 		}
 		return z
 	}
 
 	z := u256.Zero().Add(x, yAbs)
 	if z.Lt(x) {
-		panic(ufmt.Sprintf(
-			"liquidity_math: overflow (x: %s, y: %s, z:%s)",
-			x.ToString(), y.ToString(), z.ToString()))
+		panic("liquidity_math: overflow (x: " + x.ToString() + ", y: " + y.ToString() + ", z:" + z.ToString() + ")")
 	}
 	return z
 }

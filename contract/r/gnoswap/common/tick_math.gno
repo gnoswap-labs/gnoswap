@@ -1,7 +1,7 @@
 package common
 
 import (
-	"gno.land/p/nt/ufmt"
+	"strconv"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -227,7 +227,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	if sqrtPriceX96.Lt(minSqrtRatio) || sqrtPriceX96.Gte(maxSqrtRatio) {
 		panic(newErrorWithDetail(
 			errOutOfRange,
-			ufmt.Sprintf("sqrtPriceX96(%s) is out of range", sqrtPriceX96.ToString()),
+			"sqrtPriceX96("+sqrtPriceX96.ToString()+") is out of range",
 		))
 	}
 
@@ -312,13 +312,13 @@ func assertValidTickRange(tick int32) {
 	if tick > maxTick {
 		panic(newErrorWithDetail(
 			errOutOfRange,
-			ufmt.Sprintf("tick is out of range (larger than 887272), tick: %d", tick),
+			"tick is out of range (larger than 887272), tick: "+strconv.Itoa(int(tick)),
 		))
 	}
 	if tick < minTick {
 		panic(newErrorWithDetail(
 			errOutOfRange,
-			ufmt.Sprintf("tick is out of range (smaller than -887272), tick: %d", tick),
+			"tick is out of range (smaller than -887272), tick: "+strconv.Itoa(int(tick)),
 		))
 	}
 }

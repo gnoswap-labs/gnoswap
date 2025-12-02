@@ -1,11 +1,11 @@
 package common
 
 import (
+	"errors"
 	"regexp"
 	"strings"
 
 	"gno.land/p/demo/tokens/grc20"
-	"gno.land/p/nt/ufmt"
 	"gno.land/r/demo/defi/grc20reg"
 )
 
@@ -25,7 +25,7 @@ func GetTokenTeller(path string) grc20.Teller {
 func IsRegistered(path string) error {
 	getter := grc20reg.Get(path)
 	if getter == nil {
-		return ufmt.Errorf("token(%s) is not registered to grc20reg", path)
+		return errors.New("token(" + path + ") is not registered to grc20reg")
 	}
 	return nil
 }
@@ -36,7 +36,7 @@ func MustRegistered(paths ...string) {
 		if err := IsRegistered(path); err != nil {
 			panic(newErrorWithDetail(
 				errNotRegistered,
-				ufmt.Sprintf("token(%s)", path),
+				"token("+path+")",
 			))
 		}
 	}
