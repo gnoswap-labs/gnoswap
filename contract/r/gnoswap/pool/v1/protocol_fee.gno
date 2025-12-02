@@ -48,8 +48,7 @@ func (i *poolV1) HandleWithdrawalFee(
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsPosition(caller)
 
-	common.MustRegistered(token0Path)
-	common.MustRegistered(token1Path)
+	common.MustRegistered(token0Path, token1Path)
 
 	fee := i.store.GetWithdrawalFeeBPS()
 	if fee == ZeroBps {

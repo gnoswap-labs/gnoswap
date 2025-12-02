@@ -303,8 +303,7 @@ func (i *poolV1) CollectProtocol(
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	common.MustRegistered(token0Path)
-	common.MustRegistered(token1Path)
+	common.MustRegistered(token0Path, token1Path)
 
 	amount0, amount1 := i.collectProtocol(
 		token0Path,
