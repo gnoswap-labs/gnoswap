@@ -2,8 +2,6 @@ package common
 
 import (
 	"errors"
-
-	"gno.land/p/nt/ufmt"
 )
 
 var (
@@ -24,5 +22,5 @@ var (
 
 // newErrorWithDetail creates an error message with additional context in format "<original_error> || <detail>".
 func newErrorWithDetail(err error, detail string) string {
-	return ufmt.Errorf("%s || %s", err.Error(), detail).Error()
+	return err.Error() + " || " + detail
 }
