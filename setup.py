@@ -97,7 +97,20 @@ class ContractCopier:
         self.module_manager = module_manager
         self.exclude_tests = exclude_tests
 
-    def copy_module(self, module_info: ModuleInfo) -> None:
+    def copy_module(self, module_info: ModuleInfo, with_metrics: bool = False) -> None:
+        is_metric_module = module_info.destination_dir.endswith("/metric")
+        
+        if with_metrics and not is_metric_module:
+            return
+        elif not with_metrics and is_metric_module:
+            if os.path.islink(module_info.destination_dir) or os.path.isfile(
+                module_info.destination_dir
+            ):
+                os.unlink(module_info.destination_dir)
+            elif os.path.isdir(module_info.destination_dir):
+                shutil.rmtree(module_info.destination_dir)
+            return
+        
         print(
             f"Linking module from {module_info.source_dir} to {module_info.destination_dir}"
         )
@@ -149,7 +162,7 @@ class ContractCopier:
                 os.makedirs(os.path.dirname(dest_file), exist_ok=True)
                 os.symlink(src_file, dest_file)
 
-    def process_directory(self, root: str, dirs: list, files: list) -> None:
+    def process_directory(self, root: str, dirs: list, files: list, with_metrics: bool = False) -> None:
         """Process a directory for modules and tests."""
         module_file = None
         if "gnomod.toml" in files:
@@ -162,7 +175,7 @@ class ContractCopier:
         if module_file:
             module_path = self.module_manager.extract_module_path(module_file)
             if module_info := self.module_manager.get_module_info(root, module_path):
-                self.copy_module(module_info)
+                self.copy_module(module_info, with_metrics=with_metrics)
 
 
 def clone_repository(workdir: str) -> None:
@@ -174,16 +187,16 @@ def clone_repository(workdir: str) -> None:
     os.chdir("gnoswap")
 
 
-def setup_contracts(workdir: str, exclude_tests: bool = False) -> None:
+def setup_contracts(workdir: str, exclude_tests: bool = False, with_metrics: bool = False) -> None:
     """Set up all contracts and tests."""
     module_manager = GnoModuleManager(workdir)
     copier = ContractCopier(module_manager, exclude_tests=exclude_tests)
 
     for root, dirs, files in os.walk("contract"):
-        copier.process_directory(root, dirs, files)
+        copier.process_directory(root, dirs, files, with_metrics=with_metrics)
 
     for root, dirs, files in os.walk("tests/scenario"):
-        copier.process_directory(root, dirs, files)
+        copier.process_directory(root, dirs, files, with_metrics=with_metrics)
 
 
 _INTEGRATION_TESTDATA_DIR = "tests/integration/testdata"
@@ -346,6 +359,12 @@ def main() -> None:
         action="store_true",
         help="Exclude tests listed in testdata-skip.txt",
     )
+    parser.add_argument(
+        "--with-metrics",
+        action="store_true",
+        help="Include metrics in the output",
+        default=False,
+    )
 
     args = parser.parse_args()
 
@@ -356,7 +375,7 @@ def main() -> None:
     if args.clone:
         clone_repository(args.workdir)
 
-    setup_contracts(args.workdir, exclude_tests=args.exclude_tests)
+    setup_contracts(args.workdir, exclude_tests=args.exclude_tests, with_metrics=args.with_metrics)
     copy_integration_tests(args.workdir, args.skip)
     print("Setup completed successfully!")
 
