@@ -2,6 +2,7 @@ package v1
 
 import (
 	"encoding/base64"
+	"strconv"
 	"time"
 
 	plp "gno.land/p/gnoswap/gnsmath"
@@ -45,7 +46,7 @@ func getPositionKey(
 		return "", err
 	}
 
-	positionKey := ufmt.Sprintf("%s__%d__%d", positionPackagePath, tickLower, tickUpper)
+	positionKey := positionPackagePath + "__" + strconv.Itoa(int(tickLower)) + "__" + strconv.Itoa(int(tickUpper))
 	encodedPositionKey := base64.StdEncoding.EncodeToString([]byte(positionKey))
 	return encodedPositionKey, nil
 }
