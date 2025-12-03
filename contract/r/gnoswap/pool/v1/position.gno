@@ -57,7 +57,9 @@ func positionUpdate(
 	feeGrowthInside0X128 *u256.Uint,
 	feeGrowthInside1X128 *u256.Uint,
 ) (pl.PositionInfo, error) {
-	if position.Liquidity().IsZero() && liquidityDelta.IsZero() {
+	isZeroLiqudityDelta := liquidityDelta.IsZero()
+
+	if position.Liquidity().IsZero() && isZeroLiqudityDelta {
 		return pl.NewDefaultPositionInfo(), makeErrorWithDetails(
 			errZeroLiquidity,
 			"both liquidityDelta and current position's liquidity are zero",
@@ -79,7 +81,7 @@ func positionUpdate(
 	}
 
 	var liquidityNext *u256.Uint
-	if liquidityDelta.IsZero() {
+	if isZeroLiqudityDelta {
 		liquidityNext = position.Liquidity()
 	} else {
 		liquidityNext = common.LiquidityMathAddDelta(position.Liquidity(), liquidityDelta)
@@ -100,7 +102,7 @@ func positionUpdate(
 		tokensOwed1 = u256.MulDiv(diff1, position.Liquidity(), q128FromDecimal)
 	}
 
-	if !liquidityDelta.IsZero() {
+	if !isZeroLiqudityDelta {
 		position.SetLiquidity(liquidityNext)
 	}
 
