@@ -147,16 +147,7 @@ func (p *Pool) Clone() *Pool {
 			panic(ufmt.Sprintf("failed to cast tickValue to TickInfo: %T", tickValue))
 		}
 
-		ticks.Set(tickKey, TickInfo{
-			feeGrowthOutside0X128:          u256.Zero().Set(tickInfo.feeGrowthOutside0X128),
-			feeGrowthOutside1X128:          u256.Zero().Set(tickInfo.feeGrowthOutside1X128),
-			liquidityGross:                 u256.Zero().Set(tickInfo.liquidityGross),
-			liquidityNet:                   i256.Zero().Set(tickInfo.liquidityNet),
-			tickCumulativeOutside:          tickInfo.tickCumulativeOutside,
-			secondsPerLiquidityOutsideX128: u256.Zero().Set(tickInfo.secondsPerLiquidityOutsideX128),
-			secondsOutside:                 tickInfo.secondsOutside,
-			initialized:                    tickInfo.initialized,
-		})
+		ticks.Set(tickKey, cloneTickInfo(tickInfo))
 		return false
 	})
 
@@ -176,13 +167,7 @@ func (p *Pool) Clone() *Pool {
 		if !ok {
 			panic(ufmt.Sprintf("failed to cast positionValue to PositionInfo: %T", positionValue))
 		}
-		positions.Set(positionKey, PositionInfo{
-			liquidity:                u256.Zero().Set(positionInfo.liquidity),
-			feeGrowthInside0LastX128: u256.Zero().Set(positionInfo.feeGrowthInside0LastX128),
-			feeGrowthInside1LastX128: u256.Zero().Set(positionInfo.feeGrowthInside1LastX128),
-			tokensOwed0:              u256.Zero().Set(positionInfo.tokensOwed0),
-			tokensOwed1:              u256.Zero().Set(positionInfo.tokensOwed1),
-		})
+		positions.Set(positionKey, clonePositionInfo(positionInfo))
 		return false
 	})
 
@@ -197,12 +182,8 @@ func (p *Pool) Clone() *Pool {
 			feeProtocol:  p.slot0.feeProtocol,
 			unlocked:     p.slot0.unlocked,
 		},
-		balances: Balances{
-			TokenPair: NewTokenPair(u256.Zero().Set(p.balances.token0), u256.Zero().Set(p.balances.token1)),
-		},
-		protocolFees: ProtocolFees{
-			TokenPair: NewTokenPair(u256.Zero().Set(p.protocolFees.token0), u256.Zero().Set(p.protocolFees.token1)),
-		},
+		balances:     Balances{TokenPair: p.balances.TokenPair.Clone()},
+		protocolFees: ProtocolFees{TokenPair: p.protocolFees.TokenPair.Clone()},
 		maxLiquidityPerTick:  u256.Zero().Set(p.maxLiquidityPerTick),
 		feeGrowthGlobal0X128: u256.Zero().Set(p.feeGrowthGlobal0X128),
 		feeGrowthGlobal1X128: u256.Zero().Set(p.feeGrowthGlobal1X128),
@@ -277,6 +258,13 @@ func (t *TokenPair) Token1() *u256.Uint { return t.token1 }
 
 func (t *TokenPair) SetToken0(token0 *u256.Uint) { t.token0 = token0 }
 func (t *TokenPair) SetToken1(token1 *u256.Uint) { t.token1 = token1 }
+
+func (t *TokenPair) Clone() TokenPair {
+	return NewTokenPair(
+		u256.Zero().Set(t.token0),
+		u256.Zero().Set(t.token1),
+	)
+}
 
 type Slot0 struct {
 	sqrtPriceX96 *u256.Uint // current price of the pool as a sqrt(token1/token0) Q96 value
@@ -391,6 +379,19 @@ func NewTickInfo() TickInfo {
 	}
 }
 
+func cloneTickInfo(src TickInfo) TickInfo {
+	return TickInfo{
+		feeGrowthOutside0X128:          u256.Zero().Set(src.feeGrowthOutside0X128),
+		feeGrowthOutside1X128:          u256.Zero().Set(src.feeGrowthOutside1X128),
+		liquidityGross:                 u256.Zero().Set(src.liquidityGross),
+		liquidityNet:                   i256.Zero().Set(src.liquidityNet),
+		tickCumulativeOutside:          src.tickCumulativeOutside,
+		secondsPerLiquidityOutsideX128: u256.Zero().Set(src.secondsPerLiquidityOutsideX128),
+		secondsOutside:                 src.secondsOutside,
+		initialized:                    src.initialized,
+	}
+}
+
 type PositionInfo struct {
 	liquidity *u256.Uint // amount of liquidity owned by this position
 
@@ -448,6 +449,16 @@ func NewPositionInfo(
 		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
 		tokensOwed0:              tokensOwed0,
 		tokensOwed1:              tokensOwed1,
+	}
+}
+
+func clonePositionInfo(src PositionInfo) PositionInfo {
+	return PositionInfo{
+		liquidity:                u256.Zero().Set(src.liquidity),
+		feeGrowthInside0LastX128: u256.Zero().Set(src.feeGrowthInside0LastX128),
+		feeGrowthInside1LastX128: u256.Zero().Set(src.feeGrowthInside1LastX128),
+		tokensOwed0:              u256.Zero().Set(src.tokensOwed0),
+		tokensOwed1:              u256.Zero().Set(src.tokensOwed1),
 	}
 }
 

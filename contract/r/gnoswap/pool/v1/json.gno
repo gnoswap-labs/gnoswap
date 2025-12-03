@@ -107,7 +107,7 @@ func newRpcPool(pool *pl.Pool, poolPath string) RpcPool {
 		return false
 	})
 
-	rpcPool.TickBitmaps = RpcTickBitmaps{}
+	rpcPool.TickBitmaps = make(RpcTickBitmaps)
 	pool.TickBitmaps().Iterate("", "", func(tickStr string, iTickBitmap any) bool {
 		tick, err := strconv.ParseInt(tickStr, 10, 16)
 		if err != nil {
@@ -184,7 +184,7 @@ func (r RpcTickInfo) JSON() *json.Node {
 type RpcTickBitmaps map[int16]string // tick(wordPos) => bitmap(tickWord ^ mask)
 
 func (r RpcTickBitmaps) JSON() *json.Node {
-	tickBitmapsJson := map[string]*json.Node{}
+	tickBitmapsJson := make(map[string]*json.Node)
 	for tick, tickBitmap := range r {
 		tickBitmapsJson[strconv.Itoa(int(tick))] = json.StringNode("", tickBitmap)
 	}
@@ -194,7 +194,7 @@ func (r RpcTickBitmaps) JSON() *json.Node {
 type RpcTicks map[int32]RpcTickInfo // tick => RpcTickInfo
 
 func (r RpcTicks) JSON() *json.Node {
-	ticksJson := map[string]*json.Node{}
+	ticksJson := make(map[string]*json.Node)
 	for tick, tickInfo := range r {
 		ticksJson[strconv.Itoa(int(tick))] = tickInfo.JSON()
 	}
