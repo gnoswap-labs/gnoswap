@@ -726,12 +726,12 @@ type mockTickInfo struct {
 }
 
 func (t *mockTickInfo) toTickInfo() pl.TickInfo {
-	tickInfo := pl.TickInfo{}
-	tickInfo.SetFeeGrowthOutside0X128(t.feeGrowthOutside0X128.NilToZero())
-	tickInfo.SetFeeGrowthOutside1X128(t.feeGrowthOutside1X128.NilToZero())
-	tickInfo.SetLiquidityGross(t.liquidityGross.NilToZero())
-	tickInfo.SetLiquidityNet(t.liquidityNet.NilToZero())
-	tickInfo.SetSecondsPerLiquidityOutsideX128(t.secondsPerLiquidityOutsideX128.NilToZero())
+	tickInfo := pl.NewTickInfo()
+	tickInfo.SetFeeGrowthOutside0X128(t.feeGrowthOutside0X128)
+	tickInfo.SetFeeGrowthOutside1X128(t.feeGrowthOutside1X128)
+	tickInfo.SetLiquidityGross(t.liquidityGross)
+	tickInfo.SetLiquidityNet(t.liquidityNet)
+	tickInfo.SetSecondsPerLiquidityOutsideX128(t.secondsPerLiquidityOutsideX128)
 	tickInfo.SetTickCumulativeOutside(t.tickCumulativeOutside)
 	tickInfo.SetSecondsOutside(t.secondsOutside)
 	tickInfo.SetInitialized(t.initialized)
