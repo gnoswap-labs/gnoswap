@@ -92,9 +92,6 @@ func (i *poolV1) CreatePool(
 	poolPath := poolInfo.poolPath()
 
 	pools := i.store.GetPools()
-	if pools == nil {
-		pools = make(map[string]*pl.Pool)
-	}
 	pools[poolPath] = pool
 
 	err = i.store.SetPools(pools)
@@ -187,10 +184,8 @@ func (i *poolV1) mustGetPoolBy(token0Path, token1Path string, fee uint32) *pl.Po
 // This ensures that modifications to pool objects are properly saved.
 func (i *poolV1) savePool(pool *pl.Pool) error {
 	pools := i.store.GetPools()
-	if pools == nil {
-		pools = make(map[string]*pl.Pool)
-	}
 	pools[pool.PoolPath()] = pool
+
 	return i.store.SetPools(pools)
 }
 

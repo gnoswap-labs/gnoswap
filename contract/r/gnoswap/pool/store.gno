@@ -52,11 +52,19 @@ func (s *poolStore) GetPools() map[string]*Pool {
 		panic(ufmt.Sprintf("failed to cast result to map[string]*Pool: %T", result))
 	}
 
+	if pools == nil {
+		panic(ufmt.Sprintf("pools is nil"))
+	}
+
 	return pools
 }
 
 // SetPools stores the map containing all pool data.
 func (s *poolStore) SetPools(pools map[string]*Pool) error {
+	if pools == nil {
+		panic(ufmt.Sprintf("pools is nil"))
+	}
+
 	return s.kvStore.Set(StoreKeyPools.String(), pools)
 }
 
@@ -77,11 +85,19 @@ func (s *poolStore) GetFeeAmountTickSpacing() map[uint32]int32 {
 		panic(ufmt.Sprintf("failed to cast result to map[uint32]int32: %T", result))
 	}
 
+	if feeAmountTickSpacing == nil {
+		panic(ufmt.Sprintf("feeAmountTickSpacing is nil"))
+	}
+
 	return feeAmountTickSpacing
 }
 
 // SetFeeAmountTickSpacing stores the mapping between fee amounts and tick spacing.
 func (s *poolStore) SetFeeAmountTickSpacing(feeAmountTickSpacing map[uint32]int32) error {
+	if feeAmountTickSpacing == nil {
+		panic(ufmt.Sprintf("feeAmountTickSpacing is nil"))
+	}
+
 	return s.kvStore.Set(StoreKeyFeeAmountTickSpacing.String(), feeAmountTickSpacing)
 }
 
