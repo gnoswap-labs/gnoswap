@@ -290,7 +290,9 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	// Select the appropriate tick
 	if tickLowInt32 == tickHiInt32 {
 		return tickLowInt32
-	} else if TickMathGetSqrtRatioAtTick(tickHiInt32).Lte(sqrtPriceX96) {
+	}
+
+	if TickMathGetSqrtRatioAtTick(tickHiInt32).Lte(sqrtPriceX96) {
 		return tickHiInt32
 	}
 

@@ -164,7 +164,7 @@ func NewMockPoolStoreWithHook(
 	}
 
 	return &mockPoolStore{
-		pools:                nil,
+		pools:                make(map[string]*pool.Pool),
 		feeAmountTickSpacing: feeAmountTickSpacing,
 		slot0FeeProtocol:     0,
 		poolCreationFee:      100_000_000,
