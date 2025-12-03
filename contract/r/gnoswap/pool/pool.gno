@@ -385,36 +385,6 @@ func (t *TickInfo) SetTickCumulativeOutside(tickCumulativeOutside int64) {
 	t.tickCumulativeOutside = tickCumulativeOutside
 }
 
-// ValueOrZero ensures that all fields of TickInfo are valid by setting nil fields to zero,
-// while retaining existing values if they are not nil.
-// This function updates the TickInfo struct to replace any nil values in its fields
-// with their respective zero values, ensuring data consistency.
-//
-// Behavior:
-// - If a field is nil, it is replaced with its zero value.
-// - If a field already has a valid value, the value remains unchanged.
-//
-// Fields:
-// - liquidityGross: Gross liquidity for the tick, set to zero if nil, otherwise retains its value.
-// - liquidityNet: Net liquidity for the tick, set to zero if nil, otherwise retains its value.
-// - feeGrowthOutside0X128: Accumulated fee growth for token0 outside the tick, set to zero if nil, otherwise retains its value.
-// - feeGrowthOutside1X128: Accumulated fee growth for token1 outside the tick, set to zero if nil, otherwise retains its value.
-// - secondsPerLiquidityOutsideX128: Time per liquidity outside the tick, set to zero if nil, otherwise retains its value.
-//
-// Use Case:
-// This function ensures all numeric fields in TickInfo are non-nil and have valid values,
-// preventing potential runtime errors caused by nil values during operations like arithmetic or comparisons.
-func (t *TickInfo) ValueOrZero() {
-	t.liquidityGross = t.liquidityGross.NilToZero()
-	t.liquidityNet = t.liquidityNet.NilToZero()
-	t.feeGrowthOutside0X128 = t.feeGrowthOutside0X128.NilToZero()
-	t.feeGrowthOutside1X128 = t.feeGrowthOutside1X128.NilToZero()
-	t.secondsPerLiquidityOutsideX128 = t.secondsPerLiquidityOutsideX128.NilToZero()
-	t.secondsOutside = 0
-	t.initialized = false
-	t.tickCumulativeOutside = 0
-}
-
 func NewTickInfo() TickInfo {
 	return TickInfo{
 		liquidityGross:                 u256.Zero(),
@@ -470,41 +440,6 @@ func (p *PositionInfo) SetTokensOwed0(tokensOwed0 *u256.Uint) {
 
 func (p *PositionInfo) SetTokensOwed1(tokensOwed1 *u256.Uint) {
 	p.tokensOwed1 = tokensOwed1
-}
-
-// valueOrZero initializes nil fields in PositionInfo to zero.
-//
-// This function ensures that all numeric fields in the PositionInfo struct are not nil.
-// If a field is nil, it is replaced with a zero value, maintaining consistency and preventing
-// potential null pointer issues during calculations.
-//
-// Fields affected:
-//   - liquidity: The liquidity amount associated with the position.
-//   - feeGrowthInside0LastX128: Fee growth for token 0 inside the tick range, last recorded value.
-//   - feeGrowthInside1LastX128: Fee growth for token 1 inside the tick range, last recorded value.
-//   - tokensOwed0: The amount of token 0 owed to the position owner.
-//   - tokensOwed1: The amount of token 1 owed to the position owner.
-//
-// Behavior:
-//   - If a field is nil, it is set to its equivalent zero value.
-//   - If a field already has a value, it remains unchanged.
-//
-// Example:
-//
-//	position := &PositionInfo{}
-//	position.valueOrZero()
-//	println(position.liquidity) // Output: 0
-//
-// Notes:
-//   - This function is useful for ensuring numeric fields are properly initialized
-//     before performing operations or calculations.
-//   - Prevents runtime errors caused by nil values.
-func (p *PositionInfo) ValueOrZero() {
-	p.liquidity = p.liquidity.NilToZero()
-	p.feeGrowthInside0LastX128 = p.feeGrowthInside0LastX128.NilToZero()
-	p.feeGrowthInside1LastX128 = p.feeGrowthInside1LastX128.NilToZero()
-	p.tokensOwed0 = p.tokensOwed0.NilToZero()
-	p.tokensOwed1 = p.tokensOwed1.NilToZero()
 }
 
 func NewPositionInfo(

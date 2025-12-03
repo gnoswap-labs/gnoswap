@@ -176,23 +176,19 @@ func tickUpdate(
 	upper bool,
 	maxLiquidity *u256.Uint,
 ) (flipped bool) {
-	liquidityDelta = liquidityDelta.NilToZero()
-	feeGrowthGlobal0X128 = feeGrowthGlobal0X128.NilToZero()
-	feeGrowthGlobal1X128 = feeGrowthGlobal1X128.NilToZero()
-
 	tickInfo := getTick(p, tick)
 
 	liquidityGrossBefore := tickInfo.LiquidityGross().Clone()
 	liquidityGrossAfter := common.LiquidityMathAddDelta(liquidityGrossBefore, liquidityDelta)
 
-	if !(liquidityGrossAfter.Lte(maxLiquidity)) {
+	if !liquidityGrossAfter.Lte(maxLiquidity) {
 		panic(newErrorWithDetail(
 			errLiquidityCalculation,
 			ufmt.Sprintf("liquidityGrossAfter(%s) overflows maxLiquidity(%s)", liquidityGrossAfter.ToString(), maxLiquidity.ToString()),
 		))
 	}
 
-	flipped = (liquidityGrossAfter.IsZero()) != (liquidityGrossBefore.IsZero())
+	flipped = liquidityGrossAfter.IsZero() != liquidityGrossBefore.IsZero()
 
 	if liquidityGrossBefore.IsZero() {
 		if tick <= tickCurrent {

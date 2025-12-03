@@ -59,10 +59,8 @@ func positionUpdate(
 	feeGrowthInside0X128 *u256.Uint,
 	feeGrowthInside1X128 *u256.Uint,
 ) (pl.PositionInfo, error) {
-	position.ValueOrZero()
-
 	if position.Liquidity().IsZero() && liquidityDelta.IsZero() {
-		return pl.PositionInfo{}, makeErrorWithDetails(
+		return pl.NewDefaultPositionInfo(), makeErrorWithDetails(
 			errZeroLiquidity,
 			"both liquidityDelta and current position's liquidity are zero",
 		)
@@ -74,7 +72,7 @@ func positionUpdate(
 		absDelta := i256.Zero().Set(liquidityDelta).Abs()
 		currentLiquidity := position.Liquidity()
 		if absDelta.Gt(currentLiquidity) {
-			return pl.PositionInfo{}, makeErrorWithDetails(
+			return pl.NewDefaultPositionInfo(), makeErrorWithDetails(
 				errZeroLiquidity,
 				ufmt.Sprintf("liquidity delta(%s) is greater than current liquidity(%s)",
 					liquidityDelta.ToString(), position.Liquidity().ToString()),
@@ -115,11 +113,11 @@ func positionUpdate(
 	if tokensOwed0.Gt(zero) || tokensOwed1.Gt(zero) {
 		owed0, overflow := u256.Zero().AddOverflow(position.TokensOwed0(), tokensOwed0)
 		if overflow {
-			return pl.PositionInfo{}, errOverFlow
+			return pl.NewDefaultPositionInfo(), errOverFlow
 		}
 		owed1, overflow := u256.Zero().AddOverflow(position.TokensOwed1(), tokensOwed1)
 		if overflow {
-			return pl.PositionInfo{}, errOverFlow
+			return pl.NewDefaultPositionInfo(), errOverFlow
 		}
 
 		position.SetTokensOwed0(owed0)
@@ -168,8 +166,7 @@ func PositionTokensOwed1(p *pl.Pool, key string) *u256.Uint {
 func GetPositionByPool(p *pl.Pool, key string) (pl.PositionInfo, bool) {
 	iPositionInfo, exist := p.Positions().Get(key)
 	if !exist {
-		newPosition := pl.PositionInfo{}
-		newPosition.ValueOrZero()
+		newPosition := pl.NewDefaultPositionInfo()
 		return newPosition, false
 	}
 
@@ -188,11 +185,6 @@ func positionUpdateWithKey(
 	liquidityDelta *i256.Int,
 	feeGrowthInside0X128, feeGrowthInside1X128 *u256.Uint,
 ) (pl.PositionInfo, error) {
-	// if pointer is nil, set to zero for calculation
-	liquidityDelta = liquidityDelta.NilToZero()
-	feeGrowthInside0X128 = feeGrowthInside0X128.NilToZero()
-	feeGrowthInside1X128 = feeGrowthInside1X128.NilToZero()
-
 	// if position does not exist, create a new position
 	//
 	// Note: The positionUpdate function is designed to handle both new positions and existing positions,
@@ -200,7 +192,7 @@ func positionUpdateWithKey(
 	positionToUpdate, _ := GetPositionByPool(p, positionKey)
 	positionAfterUpdate, err := positionUpdate(positionToUpdate, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
 	if err != nil {
-		return pl.PositionInfo{}, err
+		return pl.NewDefaultPositionInfo(), err
 	}
 
 	setPosition(p, positionKey, positionAfterUpdate)
@@ -244,7 +236,7 @@ func mustGetPositionByPool(p *pl.Pool, positionKey string) *pl.PositionInfo {
 //   - *u256.Uint: amount of token1 needed/returned
 func modifyPosition(p *pl.Pool, params ModifyPositionParams) (pl.PositionInfo, *u256.Uint, *u256.Uint, error) {
 	if err := validateTicks(params.tickLower, params.tickUpper); err != nil {
-		return pl.PositionInfo{}, zero, zero, err
+		return pl.NewDefaultPositionInfo(), zero, zero, err
 	}
 
 	// get current state and price bounds
@@ -252,7 +244,7 @@ func modifyPosition(p *pl.Pool, params ModifyPositionParams) (pl.PositionInfo, *
 	// update position state
 	position, err := updatePosition(p, params, tick)
 	if err != nil {
-		return pl.PositionInfo{}, zero, zero, err
+		return pl.NewDefaultPositionInfo(), zero, zero, err
 	}
 
 	liqDelta := params.liquidityDelta
@@ -285,7 +277,7 @@ func modifyPosition(p *pl.Pool, params ModifyPositionParams) (pl.PositionInfo, *
 		// Update oracle BEFORE liquidity changes
 		err := writeObservationByPool(p, currentTime, tick, liquidityBefore)
 		if err != nil {
-			return pl.PositionInfo{}, zero, zero, err
+			return pl.NewDefaultPositionInfo(), zero, zero, err
 		}
 
 		// token0 used from current price to upper tick
@@ -346,16 +338,29 @@ func modifyPosition(p *pl.Pool, params ModifyPositionParams) (pl.PositionInfo, *
 // ```
 func updatePosition(p *pl.Pool, positionParams ModifyPositionParams, tick int32) (pl.PositionInfo, error) {
 	feeGrowthGlobal0X128 := p.FeeGrowthGlobal0X128().Clone()
+	if feeGrowthGlobal0X128 == nil {
+		feeGrowthGlobal0X128 = u256.Zero()
+	}
+
 	feeGrowthGlobal1X128 := p.FeeGrowthGlobal1X128().Clone()
+	if feeGrowthGlobal1X128 == nil {
+		feeGrowthGlobal1X128 = u256.Zero()
+	}
 
 	var flippedLower, flippedUpper bool
 
-	if !positionParams.liquidityDelta.IsZero() {
+	liquidityDelta := positionParams.liquidityDelta
+	if liquidityDelta == nil {
+		liquidityDelta = i256.Zero()
+		positionParams.liquidityDelta = liquidityDelta
+	}
+
+	if !liquidityDelta.IsZero() {
 		flippedLower = tickUpdate(
 			p,
 			positionParams.tickLower,
 			tick,
-			positionParams.liquidityDelta,
+			liquidityDelta,
 			feeGrowthGlobal0X128,
 			feeGrowthGlobal1X128,
 			false,
@@ -366,7 +371,7 @@ func updatePosition(p *pl.Pool, positionParams ModifyPositionParams, tick int32)
 			p,
 			positionParams.tickUpper,
 			tick,
-			positionParams.liquidityDelta,
+			liquidityDelta,
 			feeGrowthGlobal0X128,
 			feeGrowthGlobal1X128,
 			true,
@@ -391,24 +396,31 @@ func updatePosition(p *pl.Pool, positionParams ModifyPositionParams, tick int32)
 		feeGrowthGlobal1X128,
 	)
 
+	if feeGrowthInside0X128 == nil {
+		feeGrowthInside0X128 = u256.Zero()
+	}
+	if feeGrowthInside1X128 == nil {
+		feeGrowthInside1X128 = u256.Zero()
+	}
+
 	positionKey, err := getPositionKey(positionParams.tickLower, positionParams.tickUpper)
 	if err != nil {
-		return pl.PositionInfo{}, err
+		return pl.NewDefaultPositionInfo(), err
 	}
 
 	position, err := positionUpdateWithKey(
 		p,
 		positionKey,
-		positionParams.liquidityDelta,
+		liquidityDelta,
 		feeGrowthInside0X128.Clone(),
 		feeGrowthInside1X128.Clone(),
 	)
 	if err != nil {
-		return pl.PositionInfo{}, err
+		return pl.NewDefaultPositionInfo(), err
 	}
 
 	// clear any tick data that is no longer needed
-	if positionParams.liquidityDelta.IsNeg() {
+	if liquidityDelta.IsNeg() {
 		if flippedLower {
 			deleteTick(p, positionParams.tickLower)
 		}
