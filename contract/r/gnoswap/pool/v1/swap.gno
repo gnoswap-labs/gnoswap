@@ -23,6 +23,7 @@ var (
 	// MUST BE IMMUTABLE.
 	// DO NOT USE THIS VALUE IN ANY ARITHMETIC OPERATIONS' INITIALIZATION
 	zero           = u256.Zero()
+	zeroI256       = i256.Zero() /* readonly */
 	fixedPointQ128 = u256.MustFromDecimal(Q128)
 
 	maxInt256 = u256.MustFromDecimal(MAX_INT256)
@@ -202,7 +203,7 @@ func (i *poolV1) Swap(
 		AmountSpecified:   amounts,
 		SqrtPriceLimitX96: sqrtPriceLimit,
 		ZeroForOne:        zeroForOne,
-		ExactInput:        amounts.Gt(i256.Zero()),
+		ExactInput:        amounts.Gt(zeroI256),
 		InitialState:      state,
 		Cache:             cache,
 	}
@@ -326,7 +327,7 @@ func (i *poolV1) DrySwap(
 		AmountSpecified:   amounts,
 		SqrtPriceLimitX96: sqrtPriceLimit,
 		ZeroForOne:        zeroForOne,
-		ExactInput:        amounts.Gt(i256.Zero()),
+		ExactInput:        amounts.Gt(zeroI256),
 		InitialState:      state,
 		Cache:             cache,
 	}
