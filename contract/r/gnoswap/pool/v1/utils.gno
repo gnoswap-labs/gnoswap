@@ -30,7 +30,10 @@ const (
 	Q128 string = "340282366920938463463374607431768211456" // 2 ** 128
 )
 
-var maxInt128FromDecimal = i256.MustFromDecimal(MAX_INT128)
+var (
+	maxInt128FromDecimal = i256.MustFromDecimal(MAX_INT128)
+	maxUint128FromDecimal = u256.MustFromDecimal(MAX_UINT128)
+)
 
 // safeConvertToUint64 safely converts a *u256.Uint value to a uint64, ensuring no overflow.
 // This function attempts to convert the given *u256.Uint value to a uint64.
@@ -103,7 +106,7 @@ func toUint128(value *u256.Uint) *u256.Uint {
 		))
 	}
 
-	if value.Gt(u256.MustFromDecimal(MAX_UINT128)) {
+	if value.Gt(maxUint128FromDecimal) {
 		mask := u256.Zero().Lsh(u256.One(), Q128_RESOLUTION)
 		mask = u256.Zero().Sub(mask, u256.One())
 		return u256.Zero().And(value, mask)

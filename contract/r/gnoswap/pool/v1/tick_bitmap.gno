@@ -86,7 +86,7 @@ func getTickBitmap(p *pl.Pool, wordPos int16) *u256.Uint {
 
 	value, exist := p.TickBitmaps().Get(wordPosStr)
 	if !exist {
-		initTickBitmap(p, wordPos)
+		setTickBitmap(p, wordPos, zero)
 		value, exist = p.TickBitmaps().Get(wordPosStr)
 		if !exist {
 			panic(newErrorWithDetail(
@@ -107,11 +107,6 @@ func getTickBitmap(p *pl.Pool, wordPos int16) *u256.Uint {
 func setTickBitmap(p *pl.Pool, wordPos int16, tickBitmap *u256.Uint) {
 	wordPosStr := strconv.Itoa(int(wordPos))
 	p.TickBitmaps().Set(wordPosStr, tickBitmap)
-}
-
-// initTickBitmap initializes the tick bitmap for the given word position
-func initTickBitmap(p *pl.Pool, wordPos int16) {
-	setTickBitmap(p, wordPos, u256.Zero())
 }
 
 // tickBitmapPosition calculates the word and bit position for a given tick
@@ -135,12 +130,12 @@ func getWordAndBitPos(tick int32, lte bool) (int16, uint8) {
 func getMaskBit(bitPos uint, lte bool) *u256.Uint {
 	if lte {
 		if bitPos == bitMask8 {
-			return u256.Zero().Not(u256.Zero()) // all ones
+			return u256.Zero().SetAllOne()
 		}
 		return u256.Zero().Sub(u256.Zero().Lsh(u256.One(), bitPos+1), u256.One())
 	}
 	if bitPos == 0 {
-		return u256.Zero().Not(u256.Zero()) // all ones
+		return u256.Zero().SetAllOne()
 	}
 	return u256.Zero().Not(u256.Zero().Sub(u256.Zero().Lsh(u256.One(), bitPos), u256.One()))
 }

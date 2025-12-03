@@ -89,9 +89,10 @@ func (i *poolV1) CreatePool(
 	common.MustRegistered(poolInfo.token0Path, poolInfo.token1Path)
 
 	pool := newPool(poolInfo)
+	poolPath := poolInfo.poolPath()
 
 	pools := i.store.GetPools()
-	pools.Set(poolInfo.poolPath(), pool)
+	pools.Set(poolPath, pool)
 
 	err = i.store.SetPools(pools)
 	if err != nil {
@@ -103,15 +104,16 @@ func (i *poolV1) CreatePool(
 	if poolCreationFee > 0 {
 		protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 
-		gns.TransferFrom(cross, runtime.PreviousRealm().Address(), protocolFeeAddr, poolCreationFee)
+		previousRealm := runtime.PreviousRealm()
+		previousRealmAddr := previousRealm.Address()
+		gns.TransferFrom(cross, previousRealmAddr, protocolFeeAddr, poolCreationFee)
 		pf.AddToProtocolFee(cross, GNS_PATH, poolCreationFee)
 
-		previousRealm := runtime.PreviousRealm()
 		chain.Emit(
 			"PoolCreationFee",
-			"prevAddr", previousRealm.Address().String(),
+			"prevAddr", previousRealmAddr.String(),
 			"prevRealm", previousRealm.PkgPath(),
-			"poolPath", poolInfo.poolPath(),
+			"poolPath", poolPath,
 			"feeTokenPath", GNS_PATH,
 			"feeAmount", formatInt(poolCreationFee),
 		)
@@ -126,7 +128,7 @@ func (i *poolV1) CreatePool(
 		"token1Path", token1Path,
 		"fee", formatUint(fee),
 		"sqrtPriceX96", sqrtPriceX96,
-		"poolPath", pool.PoolPath(),
+		"poolPath", poolPath,
 		"tick", formatInt(pool.Slot0Tick()),
 		"tickSpacing", formatInt(poolInfo.TickSpacing()),
 	)
