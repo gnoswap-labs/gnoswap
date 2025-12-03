@@ -17,7 +17,7 @@ const (
 	MAX_INT64   string = "9223372036854775807"
 	MAX_INT128  string = "170141183460469231731687303715884105727"
 	MAX_UINT128 string = "340282366920938463463374607431768211455"
-	MAX_INT256 string = "57896044618658097711785492504343953926634992332820282019728792003956564819967"
+	MAX_INT256  string = "57896044618658097711785492504343953926634992332820282019728792003956564819967"
 
 	INT64_MIN int64 = -9223372036854775808
 	INT64_MAX int64 = 9223372036854775807
@@ -31,14 +31,22 @@ const (
 )
 
 var (
-	maxInt128FromDecimal = i256.MustFromDecimal(MAX_INT128)
+	maxInt128FromDecimal  = i256.MustFromDecimal(MAX_INT128)
 	maxUint128FromDecimal = u256.MustFromDecimal(MAX_UINT128)
 )
+
+var uint128Mask = func() *u256.Uint {
+	m := u256.Zero().Lsh(u256.One(), Q128_RESOLUTION)
+	return m.Sub(m, u256.One())
+}()
 
 // safeConvertToUint64 safely converts a *u256.Uint value to a uint64, ensuring no overflow.
 // This function attempts to convert the given *u256.Uint value to a uint64.
 // If the value exceeds the maximum allowable range for uint64 (2^64 - 1), it panics.
 func safeConvertToUint64(value *u256.Uint) uint64 {
+	if value == nil {
+		panic(newErrorWithDetail(errInvalidInput, "value is nil"))
+	}
 	res, overflow := value.Uint64WithOverflow()
 	if overflow {
 		panic(ufmt.Sprintf(
@@ -55,6 +63,9 @@ func safeConvertToUint64(value *u256.Uint) uint64 {
 // This function attempts to convert the given *u256.Uint value to an int64.
 // If the value exceeds the maximum allowable range for int64 (2^63 - 1), it panics.
 func safeConvertToInt64(value *u256.Uint) int64 {
+	if value == nil {
+		panic(newErrorWithDetail(errInvalidInput, "value is nil"))
+	}
 	res, overflow := value.Uint64WithOverflow()
 	if overflow || res > uint64(INT64_MAX) {
 		panic(ufmt.Sprintf(
@@ -100,16 +111,11 @@ func safeConvertToInt128(value *u256.Uint) *i256.Int {
 //   - MAX_UINT128 is a constant representing `2^128 - 1`.
 func toUint128(value *u256.Uint) *u256.Uint {
 	if value == nil {
-		panic(newErrorWithDetail(
-			errInvalidInput,
-			"value is nil",
-		))
+		panic(newErrorWithDetail(errInvalidInput, "value is nil"))
 	}
 
 	if value.Gt(maxUint128FromDecimal) {
-		mask := u256.Zero().Lsh(u256.One(), Q128_RESOLUTION)
-		mask = u256.Zero().Sub(mask, u256.One())
-		return u256.Zero().And(value, mask)
+		return u256.Zero().And(value, uint128Mask)
 	}
 	return value
 }
