@@ -2,12 +2,48 @@ package pool
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/r/gnoswap/mock"
 )
+
+// MockResponse tracks method calls for testing purposes
+type MockResponse struct {
+	responses   map[string][]any
+	methodCalls map[string]int64
+}
+
+func NewMockResponse() *MockResponse {
+	return &MockResponse{
+		responses:   make(map[string][]any),
+		methodCalls: make(map[string]int64),
+	}
+}
+
+func (m *MockResponse) Get(key string) ([]any, bool) {
+	m.call(key)
+	values, ok := m.responses[key]
+	return values, ok
+}
+
+func (m *MockResponse) Set(key string, values ...any) {
+	m.responses[key] = values
+	m.methodCalls[key] = 0
+}
+
+func (m *MockResponse) CallCount(key string) int64 {
+	return m.methodCalls[key]
+}
+
+func (m *MockResponse) call(key string) {
+	callCount := m.methodCalls[key]
+	if callCount == 0 {
+		m.methodCalls[key] = 1
+		return
+	}
+	m.methodCalls[key] = callCount + 1
+}
 
 type MockPool struct {
 	Version  string
-	Response *mock.MockResponse
+	Response *MockResponse
 }
 
 func (m *MockPool) CreatePool(
@@ -548,6 +584,6 @@ func (m *MockPool) ApiGetTWAP(poolPath string, secondsAgo uint32) string {
 func newMockPool(version string) *MockPool {
 	return &MockPool{
 		Version:  version,
-		Response: mock.NewMockResponse(),
+		Response: NewMockResponse(),
 	}
 }

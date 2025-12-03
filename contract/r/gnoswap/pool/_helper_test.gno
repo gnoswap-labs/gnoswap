@@ -8,12 +8,7 @@ import (
 	"gno.land/p/gnoswap/store"
 	"gno.land/p/gnoswap/version_manager"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/mock"
 	_ "gno.land/r/gnoswap/rbac"
-)
-
-var (
-	_ IPoolStore = (*mock.MockPoolStore)(nil)
 )
 
 var adminAddr = access.MustGetAddress(prbac.ROLE_ADMIN.String())

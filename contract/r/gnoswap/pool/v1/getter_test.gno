@@ -3,7 +3,6 @@ package v1
 import (
 	"testing"
 
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/uassert"
 	pl "gno.land/r/gnoswap/pool"
 
@@ -42,7 +41,7 @@ func testInitData(t *testing.T) {
 	}
 	mockPool := makeMockPool(params)
 
-	mockTicks := avl.NewTree()
+	mockTicks := make(map[int32]pl.TickInfo)
 
 	tickInfo := pl.TickInfo{}
 	tickInfo.SetLiquidityGross(u256.NewUint(1000000))
@@ -54,10 +53,10 @@ func testInitData(t *testing.T) {
 	tickInfo.SetSecondsOutside(7)
 	tickInfo.SetInitialized(true)
 
-	mockTicks.Set("0", tickInfo)
+	mockTicks[0] = tickInfo
 	mockPool.SetTicks(mockTicks)
 
-	mockPositions := avl.NewTree()
+	mockPositions := make(map[string]pl.PositionInfo)
 
 	positionInfo := pl.PositionInfo{}
 	positionInfo.SetLiquidity(u256.NewUint(1000000))
@@ -66,11 +65,11 @@ func testInitData(t *testing.T) {
 	positionInfo.SetTokensOwed0(u256.NewUint(4000000))
 	positionInfo.SetTokensOwed1(u256.NewUint(5000000))
 
-	mockPositions.Set("test_position", positionInfo)
+	mockPositions["test_position"] = positionInfo
 	mockPool.SetPositions(mockPositions)
 
 	pools := getMockInstance().store.GetPools()
-	pools.Set("token0:token1:3000", mockPool)
+	pools["token0:token1:3000"] = mockPool
 	err := getMockInstance().store.SetPools(pools)
 	if err != nil {
 		panic(err)

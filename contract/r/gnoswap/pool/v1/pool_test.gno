@@ -78,8 +78,8 @@ func setupStablecoinPool(t *testing.T) *pl.Pool {
 	mockInstanceCreatePool(barTokenPath, bazTokenPath, FeeTier100, EQUAL_PRICE_RATIO)
 
 	pools := getMockInstance().store.GetPools()
-	poolI, _ := pools.Get(GetPoolPath(barTokenPath, bazTokenPath, FeeTier100))
-	return poolI.(*pl.Pool)
+	pool := pools[GetPoolPath(barTokenPath, bazTokenPath, FeeTier100)]
+	return pool
 }
 
 func setupVolatilePool(t *testing.T) *pl.Pool {
@@ -92,8 +92,8 @@ func setupVolatilePool(t *testing.T) *pl.Pool {
 	mockInstanceCreatePool(barTokenPath, fooTokenPath, FeeTier3000, VOLATILE_PRICE_RATIO)
 
 	pools := getMockInstance().store.GetPools()
-	poolI, _ := pools.Get(GetPoolPath(barTokenPath, fooTokenPath, FeeTier3000))
-	return poolI.(*pl.Pool)
+	pool := pools[GetPoolPath(barTokenPath, fooTokenPath, FeeTier3000)]
+	return pool
 }
 
 func addLiquidityWithValidation(t *testing.T, pool *pl.Pool, scenario LiquidityScenario) (string, string) {
