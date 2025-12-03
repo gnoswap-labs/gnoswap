@@ -198,12 +198,10 @@ func (p *Pool) Clone() *Pool {
 			unlocked:     p.slot0.unlocked,
 		},
 		balances: Balances{
-			token0: u256.Zero().Set(p.balances.token0),
-			token1: u256.Zero().Set(p.balances.token1),
+			TokenPair: NewTokenPair(u256.Zero().Set(p.balances.token0), u256.Zero().Set(p.balances.token1)),
 		},
 		protocolFees: ProtocolFees{
-			token0: u256.Zero().Set(p.protocolFees.token0),
-			token1: u256.Zero().Set(p.protocolFees.token1),
+			TokenPair: NewTokenPair(u256.Zero().Set(p.protocolFees.token0), u256.Zero().Set(p.protocolFees.token1)),
 		},
 		maxLiquidityPerTick:  u256.Zero().Set(p.maxLiquidityPerTick),
 		feeGrowthGlobal0X128: u256.Zero().Set(p.feeGrowthGlobal0X128),
@@ -247,43 +245,38 @@ func NewPool(
 	}
 }
 
-type Balances struct {
-	// current balance of the pool in token0/token1
-	token0 *u256.Uint
-	token1 *u256.Uint
-}
-
-func (b *Balances) Token0() *u256.Uint { return b.token0 }
-func (b *Balances) Token1() *u256.Uint { return b.token1 }
-
-func (b *Balances) SetToken0(token0 *u256.Uint) { b.token0 = token0 }
-func (b *Balances) SetToken1(token1 *u256.Uint) { b.token1 = token1 }
+type Balances struct{ TokenPair }
 
 func newBalances() Balances {
 	return Balances{
-		token0: u256.Zero(),
-		token1: u256.Zero(),
+		TokenPair: NewTokenPair(u256.Zero(), u256.Zero()),
 	}
 }
 
-type ProtocolFees struct {
-	// current protocol fees of the pool in token0/token1
-	token0 *u256.Uint
-	token1 *u256.Uint
-}
-
-func (p *ProtocolFees) Token0() *u256.Uint { return p.token0 }
-func (p *ProtocolFees) Token1() *u256.Uint { return p.token1 }
-
-func (p *ProtocolFees) SetToken0(token0 *u256.Uint) { p.token0 = token0 }
-func (p *ProtocolFees) SetToken1(token1 *u256.Uint) { p.token1 = token1 }
+type ProtocolFees struct{ TokenPair }
 
 func newProtocolFees() ProtocolFees {
 	return ProtocolFees{
-		token0: u256.Zero(),
-		token1: u256.Zero(),
+		TokenPair: NewTokenPair(u256.Zero(), u256.Zero()),
 	}
 }
+
+type TokenPair struct {
+	token0, token1 *u256.Uint
+}
+
+func NewTokenPair(token0, token1 *u256.Uint) TokenPair {
+	return TokenPair{
+		token0: token0,
+		token1: token1,
+	}
+}
+
+func (t *TokenPair) Token0() *u256.Uint { return t.token0 }
+func (t *TokenPair) Token1() *u256.Uint { return t.token1 }
+
+func (t *TokenPair) SetToken0(token0 *u256.Uint) { t.token0 = token0 }
+func (t *TokenPair) SetToken1(token1 *u256.Uint) { t.token1 = token1 }
 
 type Slot0 struct {
 	sqrtPriceX96 *u256.Uint // current price of the pool as a sqrt(token1/token0) Q96 value
