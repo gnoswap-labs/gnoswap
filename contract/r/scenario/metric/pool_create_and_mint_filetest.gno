@@ -1,9 +1,12 @@
+// PKGPATH: gno.land/r/demo/main
+
 // Gas and performance metrics for pool create and mint scenario
 // Test cases based on tests/integration/testdata/pool/create_pool_and_mint.txtar
 package main
 
 import (
 	"chain"
+	"chain/banker"
 	"testing"
 
 	prabc "gno.land/p/gnoswap/rbac"
@@ -29,7 +32,8 @@ var (
 	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
 	adminRealm   = testing.NewUserRealm(adminAddr)
 
-	poolAddr, _ = access.GetAddress(prabc.ROLE_POOL.String())
+	poolAddr, _     = access.GetAddress(prabc.ROLE_POOL.String())
+	positionAddr, _ = access.GetAddress(prabc.ROLE_POSITION.String())
 
 	wugnotPath = "gno.land/r/gnoland/wugnot"
 	gnsPath    = "gno.land/r/gnoswap/gns"
@@ -54,14 +58,15 @@ func initializeSetup() {
 	testing.SetRealm(adminRealm)
 	pool.SetPoolCreationFee(cross, 0)
 
-	testing.IssueCoins(chain.PackageAddress("gno.land/r/gnoland/wugnot"), chain.Coins{{"ugnot", 100000000000000}})
-	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100000000000000}})
+	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 1000000000000000}})
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
 	testing.SetRealm(adminRealm)
 	wugnot.Deposit(cross)
 
 	gns.Approve(cross, poolAddr, maxInt64)
 	wugnot.Approve(cross, poolAddr, maxInt64)
+	gns.Approve(cross, positionAddr, maxInt64)
+	wugnot.Approve(cross, positionAddr, maxInt64)
 }
 
 func createPoolMetric() {
@@ -80,9 +85,12 @@ func createPoolMetric() {
 
 func mintPositionMetric() {
 	testing.SetRealm(adminRealm)
-	testing.SetOriginSend(chain.Coins{{"ugnot", 50000000}})
 
-	metric.PrintMetricsBy("Mint Position (wide range)", func() {
+	metric.PrintMetricsBy("Mint Position (fee:3000, wide range)", func() {
+		banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
+		banker_.SendCoins(adminAddr, positionAddr, chain.Coins{{"ugnot", 50000000}})
+		testing.SetOriginSend(chain.Coins{{"ugnot", 50000000}})
+
 		position.Mint(
 			cross,
 			gnsPath,
@@ -104,7 +112,6 @@ func mintPositionMetric() {
 
 func decreaseLiquidityMetric() {
 	testing.SetRealm(adminRealm)
-	testing.SetOriginSend(chain.Coins{})
 
 	metric.PrintMetricsBy("DecreaseLiquidity", func() {
 		position.DecreaseLiquidity(
@@ -121,9 +128,12 @@ func decreaseLiquidityMetric() {
 
 func increaseLiquidityMetric() {
 	testing.SetRealm(adminRealm)
-	testing.SetOriginSend(chain.Coins{})
 
 	metric.PrintMetricsBy("IncreaseLiquidity", func() {
+		banker_ := banker.NewBanker(banker.BankerTypeRealmIssue)
+		banker_.SendCoins(adminAddr, positionAddr, chain.Coins{{"ugnot", 1000000}})
+		testing.SetOriginSend(chain.Coins{{"ugnot", 1000000}})
+
 		position.IncreaseLiquidity(
 			cross,
 			1,
@@ -138,9 +148,10 @@ func increaseLiquidityMetric() {
 
 func swapMetric() {
 	testing.SetRealm(adminRealm)
-	testing.SetOriginSend(chain.Coins{})
+	gns.Approve(cross, poolAddr, maxInt64)
 
-	metric.PrintMetricsBy("Swap (gns -> wugnot)", func() {
+	metric.PrintMetricsBy("Swap (gns -> wugnot, fee:3000)", func() {
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 		pool.Swap(
 			cross,
 			wugnotPath,
@@ -152,6 +163,8 @@ func swapMetric() {
 			"1461446703485210103287273052203988822378723970341",
 			adminAddr,
 			func(cur realm, amount0Delta, amount1Delta int64) error {
+				testing.SetRealm(adminRealm)
+				common.SafeGRC20Transfer(cross, gnsPath, poolAddr, amount1Delta)
 				return nil
 			},
 		)
@@ -160,13 +173,12 @@ func swapMetric() {
 
 func collectFeeMetric() {
 	testing.SetRealm(adminRealm)
-	testing.SetOriginSend(chain.Coins{})
 
-	metric.PrintMetricsBy("CollectFee (with unwrap)", func() {
+	metric.PrintMetricsBy("CollectFee", func() {
 		position.CollectFee(
 			cross,
 			1,
-			true,
+			false,
 		)
 	})
 }
