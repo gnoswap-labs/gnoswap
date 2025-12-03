@@ -340,14 +340,12 @@ func updatePosition(p *pl.Pool, positionParams ModifyPositionParams, tick int32)
 		feeGrowthGlobal1X128 = u256.Zero()
 	}
 
-	var flippedLower, flippedUpper bool
-
-	liquidityDelta := positionParams.liquidityDelta
-	if liquidityDelta == nil {
-		liquidityDelta = i256.Zero()
-		positionParams.liquidityDelta = liquidityDelta
+	if positionParams.liquidityDelta == nil {
+		positionParams.liquidityDelta = i256.Zero()
 	}
+	liquidityDelta := positionParams.liquidityDelta
 
+	var flippedLower, flippedUpper bool
 	if !liquidityDelta.IsZero() {
 		flippedLower = tickUpdate(
 			p,
