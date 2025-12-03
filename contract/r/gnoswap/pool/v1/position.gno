@@ -162,15 +162,10 @@ func PositionTokensOwed1(p *pl.Pool, key string) *u256.Uint {
 
 // GetPosition returns the position info for a given key.
 func GetPositionByPool(p *pl.Pool, key string) (pl.PositionInfo, bool) {
-	iPositionInfo, exist := p.Positions().Get(key)
+	positionInfo, exist := p.Positions()[key]
 	if !exist {
 		newPosition := pl.NewDefaultPositionInfo()
 		return newPosition, false
-	}
-
-	positionInfo, ok := iPositionInfo.(pl.PositionInfo)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast iPositionInfo to PositionInfo: %T", iPositionInfo))
 	}
 
 	return positionInfo, true
@@ -200,7 +195,7 @@ func positionUpdateWithKey(
 
 // setPosition sets the position info for a given key.
 func setPosition(p *pl.Pool, posKey string, positionInfo pl.PositionInfo) {
-	p.Positions().Set(posKey, positionInfo)
+	p.Positions()[posKey] = positionInfo
 }
 
 // mustGetPosition returns the position info for a given key.

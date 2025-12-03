@@ -1,11 +1,8 @@
 package v1
 
 import (
-	"strconv"
-
 	plp "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/ufmt"
 	pl "gno.land/r/gnoswap/pool"
 )
 
@@ -82,31 +79,18 @@ func tickBitmapNextInitializedTickWithInOneWord(
 // getTickBitmap gets the tick bitmap for the given word position
 // if the tick bitmap is not initialized, initialize it to zero
 func getTickBitmap(p *pl.Pool, wordPos int16) *u256.Uint {
-	wordPosStr := strconv.Itoa(int(wordPos))
-
-	value, exist := p.TickBitmaps().Get(wordPosStr)
+	value, exist := p.TickBitmaps()[wordPos]
 	if !exist {
 		setTickBitmap(p, wordPos, zero)
-		value, exist = p.TickBitmaps().Get(wordPosStr)
-		if !exist {
-			panic(newErrorWithDetail(
-				errDataNotFound,
-				ufmt.Sprintf("failed to initialize tickBitmap(%d)", wordPos),
-			))
-		}
+		value = p.TickBitmaps()[wordPos]
 	}
 
-	bitmap, ok := value.(*u256.Uint)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast tickBitmap to *u256.Uint: %T", value))
-	}
-	return bitmap
+	return value
 }
 
 // setTickBitmap sets the tick bitmap for the given word position
 func setTickBitmap(p *pl.Pool, wordPos int16, tickBitmap *u256.Uint) {
-	wordPosStr := strconv.Itoa(int(wordPos))
-	p.TickBitmaps().Set(wordPosStr, tickBitmap)
+	p.TickBitmaps()[wordPos] = tickBitmap
 }
 
 // tickBitmapPosition calculates the word and bit position for a given tick

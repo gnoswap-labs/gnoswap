@@ -3,9 +3,6 @@ package pool
 import (
 	"time"
 
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/ufmt"
-
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -21,13 +18,13 @@ type Pool struct {
 	slot0                Slot0
 	balances             Balances // balances of the pool
 	protocolFees         ProtocolFees
-	maxLiquidityPerTick  *u256.Uint // the maximum amount of liquidity that can be added per tick
-	feeGrowthGlobal0X128 *u256.Uint // uint256
-	feeGrowthGlobal1X128 *u256.Uint // uint256
-	liquidity            *u256.Uint // total amount of active liquidity in the pool (within current tick range)
-	ticks                *avl.Tree  // tick(int32) -> TickInfo
-	tickBitmaps          *avl.Tree  // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(*u256.Uint)
-	positions            *avl.Tree  // maps the key (caller, lower tick, upper tick) to a unique position
+	maxLiquidityPerTick  *u256.Uint              // the maximum amount of liquidity that can be added per tick
+	feeGrowthGlobal0X128 *u256.Uint              // uint256
+	feeGrowthGlobal1X128 *u256.Uint              // uint256
+	liquidity            *u256.Uint              // total amount of active liquidity in the pool (within current tick range)
+	ticks                map[int32]TickInfo      // tick(int32) -> TickInfo
+	tickBitmaps          map[int16]*u256.Uint    // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(*u256.Uint)
+	positions            map[string]PositionInfo // maps the key (caller, lower tick, upper tick) to a unique position
 
 	observationState *ObservationState // oracle state with historical observations
 }
@@ -53,9 +50,9 @@ func (p *Pool) ProtocolFees() ProtocolFees          { return p.protocolFees }
 func (p *Pool) ProtocolFeesToken0() *u256.Uint      { return p.protocolFees.token0 }
 func (p *Pool) ProtocolFeesToken1() *u256.Uint      { return p.protocolFees.token1 }
 func (p *Pool) Liquidity() *u256.Uint               { return p.liquidity }
-func (p *Pool) Ticks() *avl.Tree                    { return p.ticks }
-func (p *Pool) TickBitmaps() *avl.Tree              { return p.tickBitmaps }
-func (p *Pool) Positions() *avl.Tree                { return p.positions }
+func (p *Pool) Ticks() map[int32]TickInfo           { return p.ticks }
+func (p *Pool) TickBitmaps() map[int16]*u256.Uint   { return p.tickBitmaps }
+func (p *Pool) Positions() map[string]PositionInfo  { return p.positions }
 func (p *Pool) ObservationState() *ObservationState { return p.observationState }
 
 // Pool Setters methods
@@ -119,15 +116,15 @@ func (p *Pool) SetLiquidity(liquidity *u256.Uint) {
 	p.liquidity = liquidity
 }
 
-func (p *Pool) SetTicks(ticks *avl.Tree) {
+func (p *Pool) SetTicks(ticks map[int32]TickInfo) {
 	p.ticks = ticks
 }
 
-func (p *Pool) SetTickBitmaps(tickBitmaps *avl.Tree) {
+func (p *Pool) SetTickBitmaps(tickBitmaps map[int16]*u256.Uint) {
 	p.tickBitmaps = tickBitmaps
 }
 
-func (p *Pool) SetPositions(positions *avl.Tree) {
+func (p *Pool) SetPositions(positions map[string]PositionInfo) {
 	p.positions = positions
 }
 
@@ -136,40 +133,39 @@ func (p *Pool) SetObservationState(observationState *ObservationState) {
 }
 
 func (p *Pool) Clone() *Pool {
-	ticks := avl.NewTree()
-	tickBitmaps := avl.NewTree()
-	positions := avl.NewTree()
+	ticks := make(map[int32]TickInfo)
+	tickBitmaps := make(map[int16]*u256.Uint)
+	positions := make(map[string]PositionInfo)
 
 	// clone ticks
-	p.ticks.Iterate("", "", func(tickKey string, tickValue any) bool {
-		tickInfo, ok := tickValue.(TickInfo)
-		if !ok {
-			panic(ufmt.Sprintf("failed to cast tickValue to TickInfo: %T", tickValue))
+	for tickKey, tickInfo := range p.ticks {
+		ticks[tickKey] = TickInfo{
+			feeGrowthOutside0X128:          u256.Zero().Set(tickInfo.feeGrowthOutside0X128),
+			feeGrowthOutside1X128:          u256.Zero().Set(tickInfo.feeGrowthOutside1X128),
+			liquidityGross:                 u256.Zero().Set(tickInfo.liquidityGross),
+			liquidityNet:                   i256.Zero().Set(tickInfo.liquidityNet),
+			tickCumulativeOutside:          tickInfo.tickCumulativeOutside,
+			secondsPerLiquidityOutsideX128: u256.Zero().Set(tickInfo.secondsPerLiquidityOutsideX128),
+			secondsOutside:                 tickInfo.secondsOutside,
+			initialized:                    tickInfo.initialized,
 		}
-
-		ticks.Set(tickKey, cloneTickInfo(tickInfo))
-		return false
-	})
+	}
 
 	// clone tickBitmaps
-	p.tickBitmaps.Iterate("", "", func(tickKey string, tickValue any) bool {
-		tickBitmap, ok := tickValue.(*u256.Uint)
-		if !ok {
-			panic(ufmt.Sprintf("failed to cast tickValue to *u256.Uint: %T", tickValue))
-		}
-		tickBitmaps.Set(tickKey, u256.Zero().Set(tickBitmap))
-		return false
-	})
+	for wordPos, tickBitmap := range p.tickBitmaps {
+		tickBitmaps[wordPos] = u256.Zero().Set(tickBitmap)
+	}
 
 	// clone positions
-	p.positions.Iterate("", "", func(positionKey string, positionValue any) bool {
-		positionInfo, ok := positionValue.(PositionInfo)
-		if !ok {
-			panic(ufmt.Sprintf("failed to cast positionValue to PositionInfo: %T", positionValue))
+	for positionKey, positionInfo := range p.positions {
+		positions[positionKey] = PositionInfo{
+			liquidity:                positionInfo.liquidity.Clone(),
+			feeGrowthInside0LastX128: positionInfo.feeGrowthInside0LastX128.Clone(),
+			feeGrowthInside1LastX128: positionInfo.feeGrowthInside1LastX128.Clone(),
+			tokensOwed0:              positionInfo.tokensOwed0.Clone(),
+			tokensOwed1:              positionInfo.tokensOwed1.Clone(),
 		}
-		positions.Set(positionKey, clonePositionInfo(positionInfo))
-		return false
-	})
+	}
 
 	return &Pool{
 		token0Path:  p.token0Path,
@@ -182,8 +178,8 @@ func (p *Pool) Clone() *Pool {
 			feeProtocol:  p.slot0.feeProtocol,
 			unlocked:     p.slot0.unlocked,
 		},
-		balances:     Balances{TokenPair: p.balances.TokenPair.Clone()},
-		protocolFees: ProtocolFees{TokenPair: p.protocolFees.TokenPair.Clone()},
+		balances:             Balances{TokenPair: p.balances.TokenPair.Clone()},
+		protocolFees:         ProtocolFees{TokenPair: p.protocolFees.TokenPair.Clone()},
 		maxLiquidityPerTick:  u256.Zero().Set(p.maxLiquidityPerTick),
 		feeGrowthGlobal0X128: u256.Zero().Set(p.feeGrowthGlobal0X128),
 		feeGrowthGlobal1X128: u256.Zero().Set(p.feeGrowthGlobal1X128),
@@ -219,9 +215,9 @@ func NewPool(
 		feeGrowthGlobal1X128: u256.Zero(),
 		protocolFees:         newProtocolFees(),
 		liquidity:            u256.Zero(),
-		ticks:                avl.NewTree(),
-		tickBitmaps:          avl.NewTree(),
-		positions:            avl.NewTree(),
+		ticks:                make(map[int32]TickInfo),
+		tickBitmaps:          make(map[int16]*u256.Uint),
+		positions:            make(map[string]PositionInfo),
 		observationState:     NewObservationState(time.Now().Unix()),
 	}
 }
@@ -449,16 +445,6 @@ func NewPositionInfo(
 		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
 		tokensOwed0:              tokensOwed0,
 		tokensOwed1:              tokensOwed1,
-	}
-}
-
-func clonePositionInfo(src PositionInfo) PositionInfo {
-	return PositionInfo{
-		liquidity:                u256.Zero().Set(src.liquidity),
-		feeGrowthInside0LastX128: u256.Zero().Set(src.feeGrowthInside0LastX128),
-		feeGrowthInside1LastX128: u256.Zero().Set(src.feeGrowthInside1LastX128),
-		tokensOwed0:              u256.Zero().Set(src.tokensOwed0),
-		tokensOwed1:              u256.Zero().Set(src.tokensOwed1),
 	}
 }
 

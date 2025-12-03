@@ -93,17 +93,12 @@ func (i *poolV1) MustGetPosition(poolPath, key string) *pl.PositionInfo {
 
 	positions := pool.Positions()
 
-	result, exist := positions.Get(key)
+	position, exist := positions[key]
 	if !exist {
 		panic(newErrorWithDetail(
 			errDataNotFound,
 			ufmt.Sprintf("expected position(%s) to exist", key),
 		))
-	}
-
-	position, ok := result.(pl.PositionInfo)
-	if !ok {
-		panic("failed to cast position to PositionInfo")
 	}
 
 	return &position

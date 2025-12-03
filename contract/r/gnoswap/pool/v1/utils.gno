@@ -7,7 +7,6 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 	pl "gno.land/r/gnoswap/pool"
 )
@@ -202,32 +201,21 @@ func formatBool(v bool) string {
 	return strconv.FormatBool(v)
 }
 
-func tickTreeToString(tickTree *avl.Tree) string {
-	if tickTree == nil {
+func tickTreeToString(tickMap map[int32]pl.TickInfo) string {
+	if tickMap == nil {
 		return "[]"
 	}
 
-	tickInfoStrings := make([]string, 0, tickTree.Size())
+	tickInfoStrings := make([]string, 0, len(tickMap))
 
-	tickTree.Iterate("", "", func(tickKey string, tickValue any) bool {
-		tick, err := strconv.ParseInt(tickKey, 10, 32)
-		if err != nil {
-			panic(err)
-		}
-		tickInfo, ok := tickValue.(pl.TickInfo)
-		if !ok {
-			panic("failed to cast tick info to TickInfo")
-		}
-
+	for tick, tickInfo := range tickMap {
 		tickInfoStrings = append(tickInfoStrings, ufmt.Sprintf(
 			`{"tick":%d,"feeGrowthOutside0X128":"%s","feeGrowthOutside1X128":"%s"}`,
 			tick,
 			tickInfo.FeeGrowthOutside0X128().ToString(),
 			tickInfo.FeeGrowthOutside1X128().ToString(),
 		))
-
-		return false
-	})
+	}
 
 	return "[" + strings.Join(tickInfoStrings, ",") + "]"
 }
