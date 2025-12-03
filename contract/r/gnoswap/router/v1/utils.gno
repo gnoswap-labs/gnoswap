@@ -371,7 +371,7 @@ func BuildSingleHopRoutePath(tokenA, tokenB string, fee uint32) string {
 		panic("tokenA and tokenB cannot be the same")
 	}
 
-	return ufmt.Sprintf("%s:%s:%s", tokenA, tokenB, formatUint(fee))
+	return tokenA + ":" + tokenB + ":" + formatUint(fee)
 }
 
 // BuildMultiHopPath creates a multi-hop route path string by connecting multiple single hops.
