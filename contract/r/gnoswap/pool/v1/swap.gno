@@ -257,6 +257,9 @@ func (i *poolV1) Swap(
 		panic(err)
 	}
 
+	token0Amount := result.Amount0.ToString()
+	token1Amount := result.Amount1.ToString()
+
 	chain.Emit(
 		"Swap",
 		"prevAddr", previousRealm.Address().String(),
@@ -267,8 +270,8 @@ func (i *poolV1) Swap(
 		"sqrtPriceLimitX96", sqrtPriceLimitX96,
 		"payer", payer.String(),
 		"recipient", recipient.String(),
-		"token0Amount", result.Amount0.ToString(),
-		"token1Amount", result.Amount1.ToString(),
+		"token0Amount", token0Amount,
+		"token1Amount", token1Amount,
 		"protocolFee0", pool.ProtocolFeesToken0().ToString(),
 		"protocolFee1", pool.ProtocolFeesToken1().ToString(),
 		"sqrtPriceX96", pool.Slot0SqrtPriceX96().ToString(),
@@ -286,7 +289,7 @@ func (i *poolV1) Swap(
 		"observationTimestamp", formatInt(lastObservation.BlockTimestamp()),
 	)
 
-	return result.Amount0.ToString(), result.Amount1.ToString()
+	return token0Amount, token1Amount
 }
 
 // DrySwap simulates a swap without modifying pool state.
@@ -573,8 +576,7 @@ func computeSwapStepInit(state SwapState, pool *pl.Pool, zeroForOne bool) StepCo
 	// prevent overshoot the min/max tick
 	step.clampTickNext()
 	// get the price for the next tick
-	sqrtPrice := common.TickMathGetSqrtRatioAtTick(step.tickNext).ToString()
-	step.sqrtPriceNextX96 = u256.MustFromDecimal(sqrtPrice)
+	step.sqrtPriceNextX96 = common.TickMathGetSqrtRatioAtTick(step.tickNext)
 	return step
 }
 
