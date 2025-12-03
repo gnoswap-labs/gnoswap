@@ -132,10 +132,18 @@ func (p *Pool) SetObservationState(observationState *ObservationState) {
 	p.observationState = observationState
 }
 
+func (p *Pool) DeleteTick(tick int32) {
+	if _, ok := p.ticks[tick]; !ok {
+		return
+	}
+
+	delete(p.ticks, tick)
+}
+
 func (p *Pool) Clone() *Pool {
-	ticks := make(map[int32]TickInfo)
-	tickBitmaps := make(map[int16]*u256.Uint)
-	positions := make(map[string]PositionInfo)
+	ticks := make(map[int32]TickInfo, len(p.ticks))
+	tickBitmaps := make(map[int16]*u256.Uint, len(p.tickBitmaps))
+	positions := make(map[string]PositionInfo, len(p.positions))
 
 	// clone ticks
 	for tickKey, tickInfo := range p.ticks {
@@ -153,7 +161,7 @@ func (p *Pool) Clone() *Pool {
 
 	// clone tickBitmaps
 	for wordPos, tickBitmap := range p.tickBitmaps {
-		tickBitmaps[wordPos] = u256.Zero().Set(tickBitmap)
+		tickBitmaps[wordPos] = tickBitmap.Clone()
 	}
 
 	// clone positions
@@ -173,17 +181,17 @@ func (p *Pool) Clone() *Pool {
 		fee:         p.fee,
 		tickSpacing: p.tickSpacing,
 		slot0: Slot0{
-			sqrtPriceX96: u256.Zero().Set(p.slot0.sqrtPriceX96),
+			sqrtPriceX96: p.slot0.sqrtPriceX96.Clone(),
 			tick:         p.slot0.tick,
 			feeProtocol:  p.slot0.feeProtocol,
 			unlocked:     p.slot0.unlocked,
 		},
 		balances:             Balances{TokenPair: p.balances.TokenPair.Clone()},
 		protocolFees:         ProtocolFees{TokenPair: p.protocolFees.TokenPair.Clone()},
-		maxLiquidityPerTick:  u256.Zero().Set(p.maxLiquidityPerTick),
-		feeGrowthGlobal0X128: u256.Zero().Set(p.feeGrowthGlobal0X128),
-		feeGrowthGlobal1X128: u256.Zero().Set(p.feeGrowthGlobal1X128),
-		liquidity:            u256.Zero().Set(p.liquidity),
+		maxLiquidityPerTick:  p.maxLiquidityPerTick.Clone(),
+		feeGrowthGlobal0X128: p.feeGrowthGlobal0X128.Clone(),
+		feeGrowthGlobal1X128: p.feeGrowthGlobal1X128.Clone(),
+		liquidity:            p.liquidity.Clone(),
 		ticks:                ticks,
 		tickBitmaps:          tickBitmaps,
 		positions:            positions,
@@ -257,8 +265,8 @@ func (t *TokenPair) SetToken1(token1 *u256.Uint) { t.token1 = token1 }
 
 func (t *TokenPair) Clone() TokenPair {
 	return NewTokenPair(
-		u256.Zero().Set(t.token0),
-		u256.Zero().Set(t.token1),
+		t.token0.Clone(),
+		t.token1.Clone(),
 	)
 }
 
@@ -286,7 +294,7 @@ func newSlot0(
 	unlocked bool,
 ) Slot0 {
 	return Slot0{
-		sqrtPriceX96: sqrtPriceX96,
+		sqrtPriceX96: sqrtPriceX96.Clone(),
 		tick:         tick,
 		feeProtocol:  feeProtocol,
 		unlocked:     unlocked,
@@ -377,12 +385,12 @@ func NewTickInfo() TickInfo {
 
 func cloneTickInfo(src TickInfo) TickInfo {
 	return TickInfo{
-		feeGrowthOutside0X128:          u256.Zero().Set(src.feeGrowthOutside0X128),
-		feeGrowthOutside1X128:          u256.Zero().Set(src.feeGrowthOutside1X128),
-		liquidityGross:                 u256.Zero().Set(src.liquidityGross),
-		liquidityNet:                   i256.Zero().Set(src.liquidityNet),
+		feeGrowthOutside0X128:          src.feeGrowthOutside0X128.Clone(),
+		feeGrowthOutside1X128:          src.feeGrowthOutside1X128.Clone(),
+		liquidityGross:                 src.liquidityGross.Clone(),
+		liquidityNet:                   src.liquidityNet.Clone(),
 		tickCumulativeOutside:          src.tickCumulativeOutside,
-		secondsPerLiquidityOutsideX128: u256.Zero().Set(src.secondsPerLiquidityOutsideX128),
+		secondsPerLiquidityOutsideX128: src.secondsPerLiquidityOutsideX128.Clone(),
 		secondsOutside:                 src.secondsOutside,
 		initialized:                    src.initialized,
 	}

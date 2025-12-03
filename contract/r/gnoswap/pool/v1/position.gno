@@ -57,9 +57,9 @@ func positionUpdate(
 	feeGrowthInside0X128 *u256.Uint,
 	feeGrowthInside1X128 *u256.Uint,
 ) (pl.PositionInfo, error) {
-	isZeroLiqudityDelta := liquidityDelta.IsZero()
+	isZeroLiquidityDelta := liquidityDelta.IsZero()
 
-	if position.Liquidity().IsZero() && isZeroLiqudityDelta {
+	if position.Liquidity().IsZero() && isZeroLiquidityDelta {
 		return pl.NewDefaultPositionInfo(), makeErrorWithDetails(
 			errZeroLiquidity,
 			"both liquidityDelta and current position's liquidity are zero",
@@ -81,7 +81,7 @@ func positionUpdate(
 	}
 
 	var liquidityNext *u256.Uint
-	if isZeroLiqudityDelta {
+	if isZeroLiquidityDelta {
 		liquidityNext = position.Liquidity()
 	} else {
 		liquidityNext = common.LiquidityMathAddDelta(position.Liquidity(), liquidityDelta)
@@ -102,7 +102,7 @@ func positionUpdate(
 		tokensOwed1 = u256.MulDiv(diff1, position.Liquidity(), q128FromDecimal)
 	}
 
-	if !isZeroLiqudityDelta {
+	if !isZeroLiquidityDelta {
 		position.SetLiquidity(liquidityNext)
 	}
 
@@ -333,18 +333,7 @@ func modifyPosition(p *pl.Pool, params ModifyPositionParams) (pl.PositionInfo, *
 // ```
 func updatePosition(p *pl.Pool, positionParams ModifyPositionParams, tick int32) (pl.PositionInfo, error) {
 	feeGrowthGlobal0X128 := p.FeeGrowthGlobal0X128().Clone()
-	if feeGrowthGlobal0X128 == nil {
-		feeGrowthGlobal0X128 = u256.Zero()
-	}
-
 	feeGrowthGlobal1X128 := p.FeeGrowthGlobal1X128().Clone()
-	if feeGrowthGlobal1X128 == nil {
-		feeGrowthGlobal1X128 = u256.Zero()
-	}
-
-	if positionParams.liquidityDelta == nil {
-		positionParams.liquidityDelta = i256.Zero()
-	}
 	liquidityDelta := positionParams.liquidityDelta
 
 	var flippedLower, flippedUpper bool
@@ -388,13 +377,6 @@ func updatePosition(p *pl.Pool, positionParams ModifyPositionParams, tick int32)
 		feeGrowthGlobal0X128,
 		feeGrowthGlobal1X128,
 	)
-
-	if feeGrowthInside0X128 == nil {
-		feeGrowthInside0X128 = u256.Zero()
-	}
-	if feeGrowthInside1X128 == nil {
-		feeGrowthInside1X128 = u256.Zero()
-	}
 
 	positionKey, err := getPositionKey(positionParams.tickLower, positionParams.tickUpper)
 	if err != nil {

@@ -81,7 +81,7 @@ func tickBitmapNextInitializedTickWithInOneWord(
 func getTickBitmap(p *pl.Pool, wordPos int16) *u256.Uint {
 	value, exist := p.TickBitmaps()[wordPos]
 	if !exist {
-		setTickBitmap(p, wordPos, zero)
+		setTickBitmap(p, wordPos, u256.Zero())
 		value = p.TickBitmaps()[wordPos]
 	}
 

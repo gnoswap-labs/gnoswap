@@ -235,7 +235,7 @@ func setTick(p *pl.Pool, tick int32, newTickInfo pl.TickInfo) {
 
 // deleteTick deletes the tick data for the specified tick index in the pool.
 func deleteTick(p *pl.Pool, tick int32) {
-	delete(p.Ticks(), tick)
+	p.DeleteTick(tick)
 }
 
 // getTick retrieves the TickInfo associated with the specified tick index from the pool.
