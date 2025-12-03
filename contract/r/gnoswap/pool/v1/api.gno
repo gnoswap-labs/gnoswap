@@ -9,11 +9,11 @@ import (
 
 	"gno.land/p/nt/ufmt"
 	"gno.land/p/onbloc/json"
-	pl "gno.land/r/gnoswap/pool"
 )
 
 func (i *poolV1) ApiGetPool(poolPath string) string {
-	if !i.store.GetPools().Has(poolPath) {
+	pools := i.store.GetPools()
+	if _, exists := pools[poolPath]; !exists {
 		return ""
 	}
 
@@ -38,7 +38,8 @@ func (i *poolV1) ApiGetTWAP(poolPath string, secondsAgo uint32) string {
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
 
-	poolI, exist := i.store.GetPools().Get(poolPath)
+	pools := i.store.GetPools()
+	pool, exist := pools[poolPath]
 	if !exist {
 		return json.ObjectNode("", map[string]*json.Node{
 			"stat": json.ObjectNode("", map[string]*json.Node{
@@ -47,11 +48,6 @@ func (i *poolV1) ApiGetTWAP(poolPath string, secondsAgo uint32) string {
 			}),
 			"error": json.StringNode("error", "pool not found"),
 		}).String()
-	}
-
-	pool, ok := poolI.(*pl.Pool)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast poolI to *pl.Pool: %T", poolI))
 	}
 
 	twapTick, err := getTWAP(pool, secondsAgo)

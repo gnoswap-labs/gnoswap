@@ -16,8 +16,8 @@ import (
 )
 
 type mockPoolStore struct {
-	pools                *avl.Tree
-	feeAmountTickSpacing *avl.Tree
+	pools                map[string]*pool.Pool
+	feeAmountTickSpacing map[uint32]int32
 	slot0FeeProtocol     uint8
 	poolCreationFee      int64
 	withdrawalFeeBPS     uint64
@@ -30,14 +30,14 @@ func (s *mockPoolStore) HasPools() bool {
 	return s.pools != nil
 }
 
-// GetPools retrieves the AVL tree containing all pool data.
+// GetPools retrieves the map containing all pool data.
 // This is the main data structure that stores all pool instances.
-func (s *mockPoolStore) GetPools() *avl.Tree {
+func (s *mockPoolStore) GetPools() map[string]*pool.Pool {
 	return s.pools
 }
 
-// SetPools stores the AVL tree containing all pool data.
-func (s *mockPoolStore) SetPools(pools *avl.Tree) error {
+// SetPools stores the map containing all pool data.
+func (s *mockPoolStore) SetPools(pools map[string]*pool.Pool) error {
 	s.pools = pools
 	return nil
 }
@@ -48,12 +48,12 @@ func (s *mockPoolStore) HasFeeAmountTickSpacing() bool {
 
 // GetFeeAmountTickSpacing retrieves the mapping between fee amounts and tick spacing.
 // This mapping determines the tick spacing for each supported fee tier.
-func (s *mockPoolStore) GetFeeAmountTickSpacing() *avl.Tree {
+func (s *mockPoolStore) GetFeeAmountTickSpacing() map[uint32]int32 {
 	return s.feeAmountTickSpacing
 }
 
 // SetFeeAmountTickSpacing stores the mapping between fee amounts and tick spacing.
-func (s *mockPoolStore) SetFeeAmountTickSpacing(feeAmountTickSpacing *avl.Tree) error {
+func (s *mockPoolStore) SetFeeAmountTickSpacing(feeAmountTickSpacing map[uint32]int32) error {
 	s.feeAmountTickSpacing = feeAmountTickSpacing
 	return nil
 }
@@ -156,14 +156,15 @@ func NewMockPoolStoreWithHook(
 	swapEndHook func(cur realm, poolPath string) error,
 	tickCrossHook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64),
 ) *mockPoolStore {
-	feeAmountTickSpacing := avl.NewTree()
-	feeAmountTickSpacing.Set("100", int32(1))
-	feeAmountTickSpacing.Set("500", int32(10))
-	feeAmountTickSpacing.Set("3000", int32(60))
-	feeAmountTickSpacing.Set("10000", int32(200))
+	feeAmountTickSpacing := map[uint32]int32{
+		100:   1,
+		500:   10,
+		3000:  60,
+		10000: 200,
+	}
 
 	return &mockPoolStore{
-		pools:                avl.NewTree(),
+		pools:                nil,
 		feeAmountTickSpacing: feeAmountTickSpacing,
 		slot0FeeProtocol:     0,
 		poolCreationFee:      100_000_000,

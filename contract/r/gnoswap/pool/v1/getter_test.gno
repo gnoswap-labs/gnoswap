@@ -70,7 +70,7 @@ func testInitData(t *testing.T) {
 	mockPool.SetPositions(mockPositions)
 
 	pools := getMockInstance().store.GetPools()
-	pools.Set("token0:token1:3000", mockPool)
+	pools["token0:token1:3000"] = mockPool
 	err := getMockInstance().store.SetPools(pools)
 	if err != nil {
 		panic(err)
