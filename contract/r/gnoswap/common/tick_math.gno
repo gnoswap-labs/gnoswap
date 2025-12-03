@@ -57,7 +57,7 @@ var (
 	tickLowOffset  = i256.MustFromDecimal("3402992956809132418596140100660247210")
 	tickHiOffset   = i256.MustFromDecimal("291339464771989622907027621153398088495")
 
-	oneLsh32 = u256.One().Lsh(u256.One(), 32) // 1 << 32
+	oneLsh32 = u256.Zero().Lsh(u256.One(), 32) // 1 << 32
 )
 
 // TickMathGetSqrtRatioAtTick calculates sqrt price ratio for given tick.
@@ -261,7 +261,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 		if overflow {
 			panic(errOverFlow)
 		}
-		r = u256.Zero().Rsh(tempR, 127)
+		r = tempR.Rsh(tempR, 127)
 
 		tempF = tempF.Rsh(r, 128)
 		tempI256 = i256.FromUint256(tempF)
@@ -269,7 +269,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 
 		tempI256 = tempI256.Lsh(tempI256, uint(63-i))
 		log2 = log2.Or(log2, tempI256)
-		r = u256.Zero().Rsh(r, uint(f.Uint64()))
+		r = r.Rsh(r, uint(f.Uint64()))
 	}
 
 	// Calculate tick from log_sqrt10001

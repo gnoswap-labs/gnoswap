@@ -18,8 +18,6 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 )
 
-const MAX_INT256 string = "57896044618658097711785492504343953926634992332820282019728792003956564819967"
-
 // Hook functions allow external contracts to be notified of swap events.
 var (
 	// MUST BE IMMUTABLE.
@@ -338,6 +336,10 @@ func (i *poolV1) DrySwap(
 		return "0", "0", false
 	}
 
+	if result.Amount0.IsZero() || result.Amount1.IsZero() {
+		return "0", "0", false
+	}
+
 	if zeroForOne {
 		if pool.BalanceToken1().Lt(result.Amount1.Abs()) {
 			return "0", "0", false
@@ -346,10 +348,6 @@ func (i *poolV1) DrySwap(
 		if pool.BalanceToken0().Lt(result.Amount0.Abs()) {
 			return "0", "0", false
 		}
-	}
-
-	if result.Amount0.IsZero() || result.Amount1.IsZero() {
-		return "0", "0", false
 	}
 
 	return result.Amount0.ToString(), result.Amount1.ToString(), true

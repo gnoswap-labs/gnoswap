@@ -17,6 +17,7 @@ const (
 	MAX_INT64   string = "9223372036854775807"
 	MAX_INT128  string = "170141183460469231731687303715884105727"
 	MAX_UINT128 string = "340282366920938463463374607431768211455"
+	MAX_INT256 string = "57896044618658097711785492504343953926634992332820282019728792003956564819967"
 
 	INT64_MIN int64 = -9223372036854775808
 	INT64_MAX int64 = 9223372036854775807
@@ -28,6 +29,8 @@ const (
 	Q96  string = "79228162514264337593543950336"           // 2 ** 96
 	Q128 string = "340282366920938463463374607431768211456" // 2 ** 128
 )
+
+var maxInt128FromDecimal = i256.MustFromDecimal(MAX_INT128)
 
 // safeConvertToUint64 safely converts a *u256.Uint value to a uint64, ensuring no overflow.
 // This function attempts to convert the given *u256.Uint value to a uint64.
@@ -66,7 +69,7 @@ func safeConvertToInt64(value *u256.Uint) int64 {
 // If the value exceeds the maximum allowable int128 range (2^127 - 1), it panics.
 func safeConvertToInt128(value *u256.Uint) *i256.Int {
 	liquidityDelta := i256.FromUint256(value)
-	if liquidityDelta.Gt(i256.MustFromDecimal(MAX_INT128)) {
+	if liquidityDelta.Gt(maxInt128FromDecimal) {
 		panic(ufmt.Sprintf(
 			"%v: amount(%s) overflows int128 range",
 			errOverFlow, value.ToString()))
@@ -137,7 +140,7 @@ func u256Min(num1, num2 *u256.Uint) *u256.Uint {
 
 // checkOverFlowInt128 checks if the value overflows the int128 range.
 func checkOverFlowInt128(value *i256.Int) {
-	if value.Gt(i256.MustFromDecimal(MAX_INT128)) {
+	if value.Gt(maxInt128FromDecimal) {
 		panic(ufmt.Sprintf(
 			"%v: amount(%s) overflows int128 range",
 			errOverFlow, value.ToString()))
@@ -194,7 +197,7 @@ func tickTreeToString(tickTree *avl.Tree) string {
 		return "[]"
 	}
 
-	tickInfoStrings := []string{}
+	tickInfoStrings := make([]string, 0, tickTree.Size())
 
 	tickTree.Iterate("", "", func(tickKey string, tickValue any) bool {
 		tick, err := strconv.ParseInt(tickKey, 10, 32)
@@ -221,10 +224,11 @@ func tickTreeToString(tickTree *avl.Tree) string {
 
 // safeAddInt64 performs safe addition of int64 values, panicking on overflow or underflow
 func safeAddInt64(a, b int64) int64 {
-	if a > 0 && b > math.MaxInt64-a {
+	diff := math.MaxInt64 - a
+	if a > 0 && b > diff {
 		panic("int64 addition overflow")
 	}
-	if a < 0 && b < math.MinInt64-a {
+	if a < 0 && b < diff {
 		panic("int64 addition underflow")
 	}
 	return a + b
@@ -232,10 +236,11 @@ func safeAddInt64(a, b int64) int64 {
 
 // safeSubInt64 performs safe subtraction of int64 values, panicking on overflow or underflow
 func safeSubInt64(a, b int64) int64 {
-	if b > 0 && a < math.MinInt64+b {
+	diff := math.MinInt64 + b
+	if b > 0 && a < diff {
 		panic("int64 subtraction underflow")
 	}
-	if b < 0 && a > math.MaxInt64+b {
+	if b < 0 && a > diff {
 		panic("int64 subtraction overflow")
 	}
 	return a - b
