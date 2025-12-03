@@ -16,8 +16,6 @@ import (
 
 const positionPackagePath = "gno.land/r/gnoswap/position"
 
-var convertedQ128 = u256.MustFromDecimal(Q128)
-
 // getPositionKey generates a unique base64-encoded key for a liquidity position.
 //
 // Creates deterministic identifier for position tracking.
@@ -94,12 +92,12 @@ func positionUpdate(
 	// calculate tokensOwed
 	tokensOwed0 := u256.Zero()
 	if !diff0.IsZero() {
-		tokensOwed0 = u256.MulDiv(diff0, position.Liquidity(), convertedQ128)
+		tokensOwed0 = u256.MulDiv(diff0, position.Liquidity(), q128FromDecimal)
 	}
 
 	tokensOwed1 := u256.Zero()
 	if !diff1.IsZero() {
-		tokensOwed1 = u256.MulDiv(diff1, position.Liquidity(), convertedQ128)
+		tokensOwed1 = u256.MulDiv(diff1, position.Liquidity(), q128FromDecimal)
 	}
 
 	if !liquidityDelta.IsZero() {

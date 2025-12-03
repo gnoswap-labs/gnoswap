@@ -127,7 +127,7 @@ func transform(os *pl.ObservationState, currentTime int64, tick int32, liquidity
 		// secondsPerLiquidity += timeDelta * 2^128 / liquidity
 		secondsPerLiquidityDelta := u256.MulDiv(
 			u256.NewUintFromInt64(timeDelta),
-			u256.MustFromDecimal("340282366920938463463374607431768211456"), // 2^128
+			q128FromDecimal,
 			liquidity,
 		)
 		secondsPerLiquidityCumulativeX128 = u256.Zero().Add(

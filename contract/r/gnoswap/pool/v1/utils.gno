@@ -33,6 +33,7 @@ const (
 var (
 	maxInt128FromDecimal  = i256.MustFromDecimal(MAX_INT128)
 	maxUint128FromDecimal = u256.MustFromDecimal(MAX_UINT128)
+	q128FromDecimal       = u256.MustFromDecimal(Q128)
 )
 
 var uint128Mask = func() *u256.Uint {
