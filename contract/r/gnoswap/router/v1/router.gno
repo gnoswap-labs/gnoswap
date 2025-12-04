@@ -166,15 +166,15 @@ func NewRouteParser() *RouteParser {
 
 // ParseRoutes parses route and quote strings into slices and validates them.
 func (p *RouteParser) ParseRoutes(routes, quotes string) ([]string, []string, error) {
-	routesArr, quotesArr, _, err := p.ParseRoutesWithQuoteInts(routes, quotes)
+	routesArr, quotesArr, _, _, err := p.ParseRoutesWithQuoteInts(routes, quotes)
 	return routesArr, quotesArr, err
 }
 
-// ParseRoutesWithQuoteInts parses routes/quotes and also returns parsed quote integers.
-func (p *RouteParser) ParseRoutesWithQuoteInts(routes, quotes string) ([]string, []string, []int64, error) {
+// ParseRoutesWithQuoteInts parses routes/quotes and also returns parsed quote integers and hop counts.
+func (p *RouteParser) ParseRoutesWithQuoteInts(routes, quotes string) ([]string, []string, []int64, []int, error) {
 	// Check for empty routes
 	if routes == "" || quotes == "" {
-		return nil, nil, nil, ufmt.Errorf(errEmptyRoutes)
+		return nil, nil, nil, nil, ufmt.Errorf(errEmptyRoutes)
 	}
 
 	routesArr := splitSingleChar(routes, ',')
@@ -182,10 +182,13 @@ func (p *RouteParser) ParseRoutesWithQuoteInts(routes, quotes string) ([]string,
 
 	quoteInts, err := p.ValidateRoutesAndQuotes(routesArr, quotesArr)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
-	return routesArr, quotesArr, quoteInts, nil
+	// Calculate hops for each route
+	hops := countHopsSlice(routesArr)
+
+	return routesArr, quotesArr, quoteInts, hops, nil
 }
 
 // ValidateRoutesAndQuotes ensures routes and quotes meet required criteria.
@@ -287,6 +290,6 @@ func (r *routerV1) finalizeSwap(
 }
 
 // validateRoutesAndQuotes is a convenience function that parses and validates routes in one call.
-func validateRoutesAndQuotes(routes, quotes string) ([]string, []string, []int64, error) {
+func validateRoutesAndQuotes(routes, quotes string) ([]string, []string, []int64, []int, error) {
 	return NewRouteParser().ParseRoutesWithQuoteInts(routes, quotes)
 }

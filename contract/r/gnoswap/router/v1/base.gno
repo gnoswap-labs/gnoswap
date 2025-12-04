@@ -133,10 +133,6 @@ func (op *baseSwapOperation) processRoutes(r *routerV1, swapType SwapType) (*u25
 	resultAmountIn, resultAmountOut := zero, zero
 	remainRequestAmount := op.amountSpecified
 
-	if len(op.hops) == 0 && len(op.routes) > 0 {
-		op.hops = countHopsSlice(op.routes)
-	}
-
 	for i, route := range op.routes {
 		toSwapAmount := i256.Zero()
 
@@ -186,9 +182,6 @@ func (op *baseSwapOperation) processRoute(
 	swapType SwapType,
 	numHops int,
 ) (amountIn, amountOut *u256.Uint, err error) {
-	if numHops == 0 {
-		numHops = countHops(route)
-	}
 	assertHopsInRange(numHops)
 
 	switch numHops {

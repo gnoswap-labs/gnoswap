@@ -1861,7 +1861,7 @@ func TestValidateRoutesAndQuotes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			routes, quotes, quotesInt, err := validateRoutesAndQuotes(tt.routes, tt.quotes)
+			routes, quotes, quotesInt, hops, err := validateRoutesAndQuotes(tt.routes, tt.quotes)
 
 			if tt.expectError {
 				uassert.Error(t, err)
@@ -1870,6 +1870,8 @@ func TestValidateRoutesAndQuotes(t *testing.T) {
 				uassert.NotNil(t, routes)
 				uassert.NotNil(t, quotes)
 				uassert.NotNil(t, quotesInt)
+				uassert.NotNil(t, hops)
+				uassert.Equal(t, len(routes), len(hops))
 			}
 		})
 	}

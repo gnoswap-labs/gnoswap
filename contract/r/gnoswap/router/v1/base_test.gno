@@ -303,6 +303,7 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 		// allocate 50% to each route
 		quotes:    []string{"50", "50"},
 		quotesInt: []int64{50, 50},
+		hops:      []int{1, 1}, // Both routes are single-hop
 	}
 
 	testing.SetRealm(adminRealm)
@@ -1034,12 +1035,13 @@ func TestProcessRoutes_OverflowDetection(t *testing.T) {
 			panicMsg:    "[GNOSWAP-POOL-026] overflow",
 		},
 		{
-			name: "auto-compute hops when not preset",
+			name: "multi-hop route with pre-calculated hops",
 			op: &baseSwapOperation{
 				amountSpecified: i256.NewInt(1000),
 				routes:          []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:3000"},
 				quotes:          []string{"100"},
 				quotesInt:       []int64{100},
+				hops:            []int{2}, // Pre-calculated hops
 			},
 			expectPanic:  false,
 			expectedHops: []int{2},
@@ -1071,7 +1073,7 @@ func TestProcessRoutes_OverflowDetection(t *testing.T) {
 			router := mockRouter()
 
 			// For multi-hop swaps, router needs tokens to perform intermediate swaps
-			if tt.name == "auto-compute hops when not preset" {
+			if tt.name == "multi-hop route with pre-calculated hops" {
 				// Transfer tokens to router for intermediate swaps
 				bar.Transfer(cross, routerAddr, 10000)
 				baz.Transfer(cross, routerAddr, 10000)
@@ -1298,6 +1300,13 @@ func TestBaseSwapOperation_Initialization(t *testing.T) {
 				routes:                  tt.routes,
 				quotes:                  tt.quotes,
 				amountSpecified:         tt.amountSpecified,
+			}
+			// Add hops if routes are present
+			if len(tt.routes) > 0 {
+				op.hops = make([]int, len(tt.routes))
+				for i := range tt.routes {
+					op.hops[i] = 1 // Assume single-hop for initialization test
+				}
 			}
 
 			uassert.Equal(t, op.sqrtPriceLimitX96, tt.sqrtPriceLimitX96)

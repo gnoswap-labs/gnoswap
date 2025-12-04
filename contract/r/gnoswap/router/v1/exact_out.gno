@@ -226,7 +226,7 @@ func (op *ExactOutSwapOperation) Validate() error {
 	// when it's an ExactOut
 	op.amountSpecified = i256.Zero().Neg(amountOut)
 
-	routes, quotes, quotesInt, err := validateRoutesAndQuotes(op.params.RouteArr, op.params.QuoteArr)
+	routes, quotes, quotesInt, hops, err := validateRoutesAndQuotes(op.params.RouteArr, op.params.QuoteArr)
 	if err != nil {
 		return err
 	}
@@ -234,7 +234,7 @@ func (op *ExactOutSwapOperation) Validate() error {
 	op.routes = routes
 	op.quotes = quotes
 	op.quotesInt = quotesInt
-	op.hops = countHopsSlice(routes)
+	op.hops = hops
 
 	return nil
 }

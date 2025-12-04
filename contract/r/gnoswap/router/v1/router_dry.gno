@@ -191,7 +191,7 @@ func (r *routerV1) drySwapRoute(
 	}
 
 	// confirmed quotes are in the range.
-	routes, _, quotesInt, err := NewRouteParser().ParseRoutesWithQuoteInts(strRouteArr, quoteArr)
+	routes, _, quotesInt, hops, err := NewRouteParser().ParseRoutesWithQuoteInts(strRouteArr, quoteArr)
 	if err != nil {
 		panic(addDetailToError(errInvalidRoutesAndQuotes, err.Error()))
 	}
@@ -207,8 +207,6 @@ func (r *routerV1) drySwapRoute(
 	// initialize accumulators for swap results
 	resultAmountIn, resultAmountOut := zero, zero
 	remainRequestAmount := amountSpecified
-
-	hops := countHopsSlice(routes)
 
 	// Process each route
 	for i, route := range routes {
