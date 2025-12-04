@@ -20,6 +20,10 @@ const (
 	maxSwapFeeBPS = uint64(1000) // 10%
 )
 
+var (
+	fullBPS = u256.NewUint(10000)
+)
+
 // GetSwapFee returns the current swap fee rate in basis points.
 func (r *routerV1) GetSwapFee() uint64 {
 	return r.store.GetSwapFee()
@@ -116,7 +120,7 @@ func calculateRouterFee(amount *u256.Uint, swapFee uint64) int64 {
 		return 0
 	}
 
-	feeAmount := u256.MulDiv(amount, u256.NewUint(swapFee), u256.NewUint(10000))
+	feeAmount := u256.MulDiv(amount, u256.NewUint(swapFee), fullBPS)
 	feeAmountInt64 := safeConvertToInt64(feeAmount)
 
 	return feeAmountInt64
@@ -132,7 +136,7 @@ func calculateExactOutWithRouterFee(amount *u256.Uint, swapFee uint64) *u256.Uin
 		// Use MulDiv to prevent overflow and maintain precision
 		poolAmount := u256.MulDiv(
 			userAmount,
-			u256.NewUint(10000),
+			fullBPS,
 			u256.NewUint(10000-swapFee),
 		)
 

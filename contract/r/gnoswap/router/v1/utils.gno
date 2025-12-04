@@ -51,14 +51,6 @@ func getDataForSinglePathWithError(poolPath string) (string, string, uint32, err
 		)
 	}
 
-	f, err := strconv.Atoi(poolPathSplit[2])
-	if err != nil {
-		return "", "", 0, makeErrorWithDetails(
-			errInvalidPoolPath,
-			ufmt.Sprintf("invalid fee: %s", poolPathSplit[2]),
-		)
-	}
-
 	poolPathSplit[0] = strings.TrimSpace(poolPathSplit[0])
 	poolPathSplit[1] = strings.TrimSpace(poolPathSplit[1])
 
@@ -66,6 +58,14 @@ func getDataForSinglePathWithError(poolPath string) (string, string, uint32, err
 		return "", "", 0, makeErrorWithDetails(
 			errInvalidPoolPath,
 			ufmt.Sprintf("token addresses cannot be empty: %s", poolPath),
+		)
+	}
+
+	f, err := strconv.ParseUint(poolPathSplit[2], 10, 32)
+	if err != nil {
+		return "", "", 0, makeErrorWithDetails(
+			errInvalidPoolPath,
+			ufmt.Sprintf("invalid fee: %s", poolPathSplit[2]),
 		)
 	}
 

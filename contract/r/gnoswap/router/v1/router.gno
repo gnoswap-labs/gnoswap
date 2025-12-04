@@ -94,8 +94,7 @@ type SwapValidator struct{}
 // exactOutAmount checks if output amount meets specified requirements.
 // For exact-out swaps, the output must be exactly the specified amount with tolerance up to swapCount units for rounding.
 func (v *SwapValidator) exactOutAmount(resultAmount, specifiedAmount *u256.Uint, swapCount int64) error {
-	diff := u256.Zero()
-
+	var diff *u256.Uint
 	if resultAmount.Gte(specifiedAmount) {
 		diff = u256.Zero().Sub(resultAmount, specifiedAmount)
 	} else {
