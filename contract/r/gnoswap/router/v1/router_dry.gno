@@ -44,9 +44,7 @@ func (p *SwapProcessor) ProcessSwapAmount(amountSpecified int64, quote string) (
 		return 0, ufmt.Errorf(ErrInvalidQuoteRange, quote, MinQuotePercentage, MaxQuotePercentage)
 	}
 
-	toSwap := amountSpecified * quoteInt / PERCENTAGE_DENOMINATOR
-
-	return toSwap, nil
+	return safeMulDivInt64(amountSpecified, quoteInt, PERCENTAGE_DENOMINATOR), nil
 }
 
 // ProcessSingleSwap handles a single-hop swap simulation.

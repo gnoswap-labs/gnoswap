@@ -117,13 +117,7 @@ func (op *baseSwapOperation) validateRouteQuote(quote string, i int) (int64, err
 		return 0, ufmt.Errorf("invalid quote(%s) at index(%d)", quote, i)
 	}
 
-	// XXX: add safe mul
-	toSwap := op.amountSpecified * quoteInt / PERCENTAGE_DENOMINATOR
-	if toSwap == 0 {
-		return 0, errInvalidSwapAmount
-	}
-
-	return toSwap, nil
+	return safeMulDivInt64(op.amountSpecified, quoteInt, PERCENTAGE_DENOMINATOR), nil
 }
 
 // processRoutes processes all swap routes and returns total amounts.

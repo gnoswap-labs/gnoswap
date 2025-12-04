@@ -430,6 +430,20 @@ func safeSubInt64(a, b int64) int64 {
 	return a - b
 }
 
+func safeMulDivInt64(a, b, c int64) int64 {
+	if c == 0 {
+		panic("division by zero in safeMulDivInt64")
+	}
+
+	if a == 0 || b == 0 {
+		return 0
+	}
+
+	result := u256.MulDiv(u256.NewUintFromInt64(a), u256.NewUintFromInt64(b), u256.NewUintFromInt64(c))
+
+	return safeConvertToInt64(result)
+}
+
 func absInt64(a int64) int64 {
 	if a < 0 {
 		return -a
