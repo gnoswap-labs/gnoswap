@@ -84,10 +84,6 @@ func (s *poolStore) GetPools() map[string]*Pool {
 		return false
 	})
 
-	if len(pools) == 0 {
-		panic(ufmt.Sprintf("pools is empty"))
-	}
-
 	return pools
 }
 
