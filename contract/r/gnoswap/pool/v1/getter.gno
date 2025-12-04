@@ -196,8 +196,7 @@ func (i *poolV1) GetPositionLiquidity(poolPath, key string) *u256.Uint {
 
 func (i *poolV1) ExistsPoolPath(poolPath string) bool {
 	pools := i.store.GetPools()
-	_, exists := pools[poolPath]
-	return exists
+	return pools.Has(poolPath)
 }
 
 func (i *poolV1) GetObservation(poolPath string, secondsAgo int64) (

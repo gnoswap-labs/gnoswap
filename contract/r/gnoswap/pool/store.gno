@@ -2,6 +2,7 @@ package pool
 
 import (
 	"gno.land/p/gnoswap/store"
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 )
 
@@ -41,15 +42,10 @@ func (s *poolStore) HasPools() bool {
 
 // GetPools retrieves the map containing all pool data.
 // This is the main data structure that stores all pool instances.
-func (s *poolStore) GetPools() map[string]*Pool {
-	result, err := s.kvStore.Get(StoreKeyPools.String())
+func (s *poolStore) GetPools() *avl.Tree {
+	pools, err := s.kvStore.GetTree(StoreKeyPools.String())
 	if err != nil {
 		panic(err)
-	}
-
-	pools, ok := result.(map[string]*Pool)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to map[string]*Pool: %T", result))
 	}
 
 	if pools == nil {
@@ -60,7 +56,7 @@ func (s *poolStore) GetPools() map[string]*Pool {
 }
 
 // SetPools stores the map containing all pool data.
-func (s *poolStore) SetPools(pools map[string]*Pool) error {
+func (s *poolStore) SetPools(pools *avl.Tree) error {
 	if pools == nil {
 		panic(ufmt.Sprintf("pools is nil"))
 	}

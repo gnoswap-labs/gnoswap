@@ -16,7 +16,7 @@ import (
 )
 
 type mockPoolStore struct {
-	pools                map[string]*pool.Pool
+	pools                *avl.Tree
 	feeAmountTickSpacing map[uint32]int32
 	slot0FeeProtocol     uint8
 	poolCreationFee      int64
@@ -32,12 +32,12 @@ func (s *mockPoolStore) HasPools() bool {
 
 // GetPools retrieves the map containing all pool data.
 // This is the main data structure that stores all pool instances.
-func (s *mockPoolStore) GetPools() map[string]*pool.Pool {
+func (s *mockPoolStore) GetPools() *avl.Tree {
 	return s.pools
 }
 
 // SetPools stores the map containing all pool data.
-func (s *mockPoolStore) SetPools(pools map[string]*pool.Pool) error {
+func (s *mockPoolStore) SetPools(pools *avl.Tree) error {
 	s.pools = pools
 	return nil
 }
