@@ -9,7 +9,7 @@ import (
 // kvStore represents a domain-specific key-value storage
 // Each domain (pool, position, etc.) creates its own kvStore instance
 type kvStore struct {
-	data              map[string]any // key -> value
+	data              *avl.Tree // key -> value
 	authorizedCallers map[address]Permission
 	domainAddress     address
 }
@@ -18,7 +18,7 @@ type kvStore struct {
 // domain: the name of the domain using this store (e.g., "pool", "position")
 func NewKVStore(domainAddress address) KVStore {
 	return &kvStore{
-		data: make(map[string]any),
+		data: avl.NewTree(),
 		authorizedCallers: map[address]Permission{
 			domainAddress: Write,
 		},
@@ -33,20 +33,19 @@ func (k *kvStore) GetDomainAddress() address {
 
 // GetAllKeys returns all keys stored in this kvStore
 func (k *kvStore) GetAllKeys() ([]string, error) {
-	keys := make([]string, 0, len(k.data))
+	keys := make([]string, 0, k.data.Size())
 
-	for key := range k.data {
+	k.data.Iterate("", "", func(key string, value any) bool {
 		keys = append(keys, key)
-	}
+		return false
+	})
 
 	return keys, nil
 }
 
 // Has checks if a key exists in the store
 func (k *kvStore) Has(key string) bool {
-	_, exists := k.data[k.makeKey(key)]
-
-	return exists
+	return k.data.Has(k.makeKey(key))
 }
 
 // Get retrieves a value by key
@@ -58,7 +57,7 @@ func (k *kvStore) Get(key string) (any, error) {
 		return nil, ErrReadPermissionDenied
 	}
 
-	value, exists := k.data[k.makeKey(key)]
+	value, exists := k.data.Get(k.makeKey(key))
 	if !exists {
 		return nil, ErrKeyNotFound
 	}
@@ -141,7 +140,7 @@ func (k *kvStore) Set(key string, value any) error {
 		return ErrWritePermissionDenied
 	}
 
-	k.data[k.makeKey(key)] = value
+	k.data.Set(k.makeKey(key), value)
 
 	return nil
 }
@@ -159,7 +158,7 @@ func (k *kvStore) Delete(key string) error {
 		return ErrKeyNotFound
 	}
 
-	delete(k.data, k.makeKey(key))
+	k.data.Remove(k.makeKey(key))
 
 	return nil
 }
