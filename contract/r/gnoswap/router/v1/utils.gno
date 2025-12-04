@@ -439,9 +439,18 @@ func safeMulDivInt64(a, b, c int64) int64 {
 		return 0
 	}
 
-	result := u256.MulDiv(u256.NewUintFromInt64(a), u256.NewUintFromInt64(b), u256.NewUintFromInt64(c))
+	// calculate amount to swap for this route
+	toSwap, overflow := i256.Zero().MulOverflow(i256.NewInt(a), i256.NewInt(b))
+	if overflow {
+		panic(errOverFlow)
+	}
 
-	return safeConvertToInt64(result)
+	toSwap = i256.Zero().Div(toSwap, i256.NewInt(PERCENTAGE_DENOMINATOR))
+	if toSwap.IsZero() {
+		panic(errInvalidSwapAmount)
+	}
+
+	return toSwap.Int64()
 }
 
 func absInt64(a int64) int64 {
