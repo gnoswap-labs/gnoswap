@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"strconv"
-
 	"gno.land/p/nt/ufmt"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -176,23 +174,19 @@ func tickUpdate(
 	upper bool,
 	maxLiquidity *u256.Uint,
 ) (flipped bool) {
-	liquidityDelta = liquidityDelta.NilToZero()
-	feeGrowthGlobal0X128 = feeGrowthGlobal0X128.NilToZero()
-	feeGrowthGlobal1X128 = feeGrowthGlobal1X128.NilToZero()
-
 	tickInfo := getTick(p, tick)
 
 	liquidityGrossBefore := tickInfo.LiquidityGross().Clone()
 	liquidityGrossAfter := common.LiquidityMathAddDelta(liquidityGrossBefore, liquidityDelta)
 
-	if !(liquidityGrossAfter.Lte(maxLiquidity)) {
+	if !liquidityGrossAfter.Lte(maxLiquidity) {
 		panic(newErrorWithDetail(
 			errLiquidityCalculation,
 			ufmt.Sprintf("liquidityGrossAfter(%s) overflows maxLiquidity(%s)", liquidityGrossAfter.ToString(), maxLiquidity.ToString()),
 		))
 	}
 
-	flipped = (liquidityGrossAfter.IsZero()) != (liquidityGrossBefore.IsZero())
+	flipped = liquidityGrossAfter.IsZero() != liquidityGrossBefore.IsZero()
 
 	if liquidityGrossBefore.IsZero() {
 		if tick <= tickCurrent {
@@ -236,14 +230,12 @@ func tickCross(
 
 // setTick updates the tick data for the specified tick index in the pool.
 func setTick(p *pl.Pool, tick int32, newTickInfo pl.TickInfo) {
-	tickStr := strconv.Itoa(int(tick))
-	p.Ticks().Set(tickStr, newTickInfo)
+	p.Ticks()[tick] = newTickInfo
 }
 
 // deleteTick deletes the tick data for the specified tick index in the pool.
 func deleteTick(p *pl.Pool, tick int32) {
-	tickStr := strconv.Itoa(int(tick))
-	p.Ticks().Remove(tickStr)
+	p.DeleteTick(tick)
 }
 
 // getTick retrieves the TickInfo associated with the specified tick index from the pool.
@@ -264,15 +256,9 @@ func deleteTick(p *pl.Pool, tick int32) {
 // This function ensures the retrieved tick data is always valid and safe for further operations,
 // such as calculations or updates, by sanitizing nil fields in the TickInfo structure.
 func getTick(p *pl.Pool, tick int32) pl.TickInfo {
-	tickStr := formatInt(tick)
-	iTickInfo, exist := p.Ticks().Get(tickStr)
+	tickInfo, exist := p.Ticks()[tick]
 	if !exist {
 		return pl.NewTickInfo()
-	}
-
-	tickInfo, ok := iTickInfo.(pl.TickInfo)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast tickInfo to TickInfo: %T", iTickInfo))
 	}
 
 	return tickInfo
@@ -306,8 +292,7 @@ func getTick(p *pl.Pool, tick int32) pl.TickInfo {
 //
 // ```
 func mustGetTick(p *pl.Pool, tick int32) *pl.TickInfo {
-	tickStr := formatInt(tick)
-	iTickInfo, exist := p.Ticks().Get(tickStr)
+	tickInfo, exist := p.Ticks()[tick]
 	if !exist {
 		panic(newErrorWithDetail(
 			errDataNotFound,
@@ -315,12 +300,7 @@ func mustGetTick(p *pl.Pool, tick int32) *pl.TickInfo {
 		))
 	}
 
-	info, ok := iTickInfo.(pl.TickInfo)
-	if !ok {
-		panic("failed to cast tick info to TickInfo")
-	}
-
-	return &info
+	return &tickInfo
 }
 
 // calculateMaxLiquidityPerTick calculates the maximum liquidity
@@ -334,7 +314,7 @@ func calculateMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
 	maxTick := (MAX_TICK / tickSpacing) * tickSpacing
 	numTicks := uint64((maxTick-minTick)/tickSpacing) + 1
 
-	return u256.Zero().Div(u256.MustFromDecimal(MAX_UINT128), u256.NewUint(numTicks))
+	return u256.Zero().Div(maxUint128FromDecimal, u256.NewUint(numTicks))
 }
 
 // getFeeGrowthBelowX128 calculates the fee growth below a specified tick.

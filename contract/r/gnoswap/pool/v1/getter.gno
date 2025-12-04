@@ -19,21 +19,14 @@ func (i *poolV1) GetPool(token0Path, token1Path string, fee uint32) *pl.Pool {
 
 // GetFeeAmountTickSpacing retrieves the tick spacing associated with a given fee amount.
 func (i *poolV1) GetFeeAmountTickSpacing(fee uint32) (spacing int32) {
-	feeStr := formatUint(fee)
-
 	feeAmountTickSpacing := i.store.GetFeeAmountTickSpacing()
 
-	iTickSpacing, exist := feeAmountTickSpacing.Get(feeStr)
+	spacing, exist := feeAmountTickSpacing[fee]
 	if !exist {
 		panic(newErrorWithDetail(
 			errUnsupportedFeeTier,
 			ufmt.Sprintf("expected fee(%d) to be one of %d, %d, %d, %d", fee, FeeTier100, FeeTier500, FeeTier3000, FeeTier10000),
 		))
-	}
-
-	spacing, ok := iTickSpacing.(int32)
-	if !ok {
-		panic("failed to cast tick spacing to int32")
 	}
 
 	return spacing
@@ -100,17 +93,12 @@ func (i *poolV1) MustGetPosition(poolPath, key string) *pl.PositionInfo {
 
 	positions := pool.Positions()
 
-	result, exist := positions.Get(key)
+	position, exist := positions[key]
 	if !exist {
 		panic(newErrorWithDetail(
 			errDataNotFound,
 			ufmt.Sprintf("expected position(%s) to exist", key),
 		))
-	}
-
-	position, ok := result.(pl.PositionInfo)
-	if !ok {
-		panic("failed to cast position to PositionInfo")
 	}
 
 	return &position
@@ -202,7 +190,9 @@ func (i *poolV1) GetPositionLiquidity(poolPath, key string) *u256.Uint {
 }
 
 func (i *poolV1) ExistsPoolPath(poolPath string) bool {
-	return i.store.GetPools().Has(poolPath)
+	pools := i.store.GetPools()
+	_, exists := pools[poolPath]
+	return exists
 }
 
 func (i *poolV1) GetObservation(poolPath string, secondsAgo int64) (

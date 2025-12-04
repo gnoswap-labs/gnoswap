@@ -2,7 +2,6 @@ package pool
 
 import (
 	"gno.land/p/gnoswap/store"
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 )
 
@@ -16,7 +15,7 @@ func (s StoreKey) String() string {
 
 const (
 	// Pool data storage keys
-	StoreKeyPools                StoreKey = "pools"                // AVL tree containing all pools
+	StoreKeyPools                StoreKey = "pools"                // Map containing all pools
 	StoreKeyFeeAmountTickSpacing StoreKey = "feeAmountTickSpacing" // Fee tier to tick spacing mapping
 	StoreKeySlot0FeeProtocol     StoreKey = "slot0FeeProtocol"     // Protocol fee percentage
 
@@ -40,24 +39,32 @@ func (s *poolStore) HasPools() bool {
 	return s.kvStore.Has(StoreKeyPools.String())
 }
 
-// GetPools retrieves the AVL tree containing all pool data.
+// GetPools retrieves the map containing all pool data.
 // This is the main data structure that stores all pool instances.
-func (s *poolStore) GetPools() *avl.Tree {
+func (s *poolStore) GetPools() map[string]*Pool {
 	result, err := s.kvStore.Get(StoreKeyPools.String())
 	if err != nil {
 		panic(err)
 	}
 
-	pools, ok := result.(*avl.Tree)
+	pools, ok := result.(map[string]*Pool)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to map[string]*Pool: %T", result))
+	}
+
+	if pools == nil {
+		panic(ufmt.Sprintf("pools is nil"))
 	}
 
 	return pools
 }
 
-// SetPools stores the AVL tree containing all pool data.
-func (s *poolStore) SetPools(pools *avl.Tree) error {
+// SetPools stores the map containing all pool data.
+func (s *poolStore) SetPools(pools map[string]*Pool) error {
+	if pools == nil {
+		panic(ufmt.Sprintf("pools is nil"))
+	}
+
 	return s.kvStore.Set(StoreKeyPools.String(), pools)
 }
 
@@ -67,22 +74,30 @@ func (s *poolStore) HasFeeAmountTickSpacing() bool {
 
 // GetFeeAmountTickSpacing retrieves the mapping between fee amounts and tick spacing.
 // This mapping determines the tick spacing for each supported fee tier.
-func (s *poolStore) GetFeeAmountTickSpacing() *avl.Tree {
+func (s *poolStore) GetFeeAmountTickSpacing() map[uint32]int32 {
 	result, err := s.kvStore.Get(StoreKeyFeeAmountTickSpacing.String())
 	if err != nil {
 		panic(err)
 	}
 
-	feeAmountTickSpacing, ok := result.(*avl.Tree)
+	feeAmountTickSpacing, ok := result.(map[uint32]int32)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to map[uint32]int32: %T", result))
+	}
+
+	if feeAmountTickSpacing == nil {
+		panic(ufmt.Sprintf("feeAmountTickSpacing is nil"))
 	}
 
 	return feeAmountTickSpacing
 }
 
 // SetFeeAmountTickSpacing stores the mapping between fee amounts and tick spacing.
-func (s *poolStore) SetFeeAmountTickSpacing(feeAmountTickSpacing *avl.Tree) error {
+func (s *poolStore) SetFeeAmountTickSpacing(feeAmountTickSpacing map[uint32]int32) error {
+	if feeAmountTickSpacing == nil {
+		panic(ufmt.Sprintf("feeAmountTickSpacing is nil"))
+	}
+
 	return s.kvStore.Set(StoreKeyFeeAmountTickSpacing.String(), feeAmountTickSpacing)
 }
 

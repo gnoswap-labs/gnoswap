@@ -45,7 +45,8 @@ func (i *poolV1) HandleWithdrawalFee(
 	halt.AssertIsNotHaltedWithdraw()
 
 	// only position contract can call this function
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsPosition(caller)
 
 	common.MustRegistered(token0Path, token1Path)
@@ -55,8 +56,9 @@ func (i *poolV1) HandleWithdrawalFee(
 		return amount0, amount1
 	}
 
-	feeAmount0, afterAmount0 := calculateAmountWithFee(u256.MustFromDecimal(amount0), u256.NewUint(fee))
-	feeAmount1, afterAmount1 := calculateAmountWithFee(u256.MustFromDecimal(amount1), u256.NewUint(fee))
+	feeU256 := u256.NewUint(fee)
+	feeAmount0, afterAmount0 := calculateAmountWithFee(u256.MustFromDecimal(amount0), feeU256)
+	feeAmount1, afterAmount1 := calculateAmountWithFee(u256.MustFromDecimal(amount1), feeU256)
 
 	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 
@@ -65,20 +67,22 @@ func (i *poolV1) HandleWithdrawalFee(
 	pf.AddToProtocolFee(cross, token1Path, safeConvertToInt64(feeAmount1))
 	common.SafeGRC20TransferFrom(cross, token1Path, positionCaller, protocolFeeAddr, safeConvertToInt64(feeAmount1))
 
-	previousRealm := runtime.PreviousRealm()
+	afterAmount0Str := afterAmount0.ToString()
+	afterAmount1Str := afterAmount1.ToString()
+
 	chain.Emit(
 		"WithdrawalFee",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"lpTokenId", formatUint(positionId),
 		"poolPath", poolPath,
 		"feeAmount0", feeAmount0.ToString(),
 		"feeAmount1", feeAmount1.ToString(),
-		"amount0WithoutFee", afterAmount0.ToString(),
-		"amount1WithoutFee", afterAmount1.ToString(),
+		"amount0WithoutFee", afterAmount0Str,
+		"amount1WithoutFee", afterAmount1Str,
 	)
 
-	return afterAmount0.ToString(), afterAmount1.ToString()
+	return afterAmount0Str, afterAmount1Str
 }
 
 // SetPoolCreationFee sets the poolCreationFee.
@@ -86,7 +90,8 @@ func (i *poolV1) HandleWithdrawalFee(
 func (i *poolV1) SetPoolCreationFee(fee int64) {
 	halt.AssertIsNotHaltedPool()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	prevPoolCreationFee := i.store.GetPoolCreationFee()
@@ -95,10 +100,9 @@ func (i *poolV1) SetPoolCreationFee(fee int64) {
 		panic(err)
 	}
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"SetPoolCreationFee",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"prevFee", formatInt(prevPoolCreationFee),
 		"newFee", formatInt(fee),
@@ -110,7 +114,8 @@ func (i *poolV1) SetPoolCreationFee(fee int64) {
 func (i *poolV1) SetWithdrawalFee(fee uint64) {
 	halt.AssertIsNotHaltedPool()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	prevWithdrawalFee := i.store.GetWithdrawalFeeBPS()
@@ -120,10 +125,9 @@ func (i *poolV1) SetWithdrawalFee(fee uint64) {
 		panic(err)
 	}
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"SetWithdrawalFee",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"prevFee", formatUint(prevWithdrawalFee),
 		"newFee", formatUint(fee),

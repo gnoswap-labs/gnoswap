@@ -245,10 +245,3 @@ func (z *Uint) Clone() *Uint {
 
 	return &x
 }
-
-func (z *Uint) NilToZero() *Uint {
-	if z == nil {
-		z = NewUint(0)
-	}
-	return z
-}

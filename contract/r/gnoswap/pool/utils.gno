@@ -1,9 +1,8 @@
 package pool
 
 import (
+	"strconv"
 	"strings"
-
-	"gno.land/p/nt/ufmt"
 )
 
 // GetPoolPath generates a unique pool path string based on the token paths and fee tier.
@@ -13,5 +12,5 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 		token0Path, token1Path = token1Path, token0Path
 	}
 
-	return ufmt.Sprintf("%s:%s:%d", token0Path, token1Path, fee)
+	return token0Path + ":" + token1Path + ":" + strconv.FormatUint(uint64(fee), 10)
 }

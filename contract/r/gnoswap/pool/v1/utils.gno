@@ -7,7 +7,6 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 	pl "gno.land/r/gnoswap/pool"
 )
@@ -17,6 +16,7 @@ const (
 	MAX_INT64   string = "9223372036854775807"
 	MAX_INT128  string = "170141183460469231731687303715884105727"
 	MAX_UINT128 string = "340282366920938463463374607431768211455"
+	MAX_INT256  string = "57896044618658097711785492504343953926634992332820282019728792003956564819967"
 
 	INT64_MIN int64 = -9223372036854775808
 	INT64_MAX int64 = 9223372036854775807
@@ -29,10 +29,24 @@ const (
 	Q128 string = "340282366920938463463374607431768211456" // 2 ** 128
 )
 
+var (
+	maxInt128FromDecimal  = i256.MustFromDecimal(MAX_INT128)
+	maxUint128FromDecimal = u256.MustFromDecimal(MAX_UINT128)
+	q128FromDecimal       = u256.MustFromDecimal(Q128)
+)
+
+var uint128Mask = func() *u256.Uint {
+	m := u256.Zero().Lsh(u256.One(), Q128_RESOLUTION)
+	return m.Sub(m, u256.One())
+}()
+
 // safeConvertToUint64 safely converts a *u256.Uint value to a uint64, ensuring no overflow.
 // This function attempts to convert the given *u256.Uint value to a uint64.
 // If the value exceeds the maximum allowable range for uint64 (2^64 - 1), it panics.
 func safeConvertToUint64(value *u256.Uint) uint64 {
+	if value == nil {
+		panic(newErrorWithDetail(errInvalidInput, "value is nil"))
+	}
 	res, overflow := value.Uint64WithOverflow()
 	if overflow {
 		panic(ufmt.Sprintf(
@@ -49,6 +63,9 @@ func safeConvertToUint64(value *u256.Uint) uint64 {
 // This function attempts to convert the given *u256.Uint value to an int64.
 // If the value exceeds the maximum allowable range for int64 (2^63 - 1), it panics.
 func safeConvertToInt64(value *u256.Uint) int64 {
+	if value == nil {
+		panic(newErrorWithDetail(errInvalidInput, "value is nil"))
+	}
 	res, overflow := value.Uint64WithOverflow()
 	if overflow || res > uint64(INT64_MAX) {
 		panic(ufmt.Sprintf(
@@ -66,7 +83,7 @@ func safeConvertToInt64(value *u256.Uint) int64 {
 // If the value exceeds the maximum allowable int128 range (2^127 - 1), it panics.
 func safeConvertToInt128(value *u256.Uint) *i256.Int {
 	liquidityDelta := i256.FromUint256(value)
-	if liquidityDelta.Gt(i256.MustFromDecimal(MAX_INT128)) {
+	if liquidityDelta.Gt(maxInt128FromDecimal) {
 		panic(ufmt.Sprintf(
 			"%v: amount(%s) overflows int128 range",
 			errOverFlow, value.ToString()))
@@ -94,16 +111,11 @@ func safeConvertToInt128(value *u256.Uint) *i256.Int {
 //   - MAX_UINT128 is a constant representing `2^128 - 1`.
 func toUint128(value *u256.Uint) *u256.Uint {
 	if value == nil {
-		panic(newErrorWithDetail(
-			errInvalidInput,
-			"value is nil",
-		))
+		panic(newErrorWithDetail(errInvalidInput, "value is nil"))
 	}
 
-	if value.Gt(u256.MustFromDecimal(MAX_UINT128)) {
-		mask := u256.Zero().Lsh(u256.One(), Q128_RESOLUTION)
-		mask = u256.Zero().Sub(mask, u256.One())
-		return u256.Zero().And(value, mask)
+	if value.Gt(maxUint128FromDecimal) {
+		return u256.Zero().And(value, uint128Mask)
 	}
 	return value
 }
@@ -137,7 +149,7 @@ func u256Min(num1, num2 *u256.Uint) *u256.Uint {
 
 // checkOverFlowInt128 checks if the value overflows the int128 range.
 func checkOverFlowInt128(value *i256.Int) {
-	if value.Gt(i256.MustFromDecimal(MAX_INT128)) {
+	if value.Gt(maxInt128FromDecimal) {
 		panic(ufmt.Sprintf(
 			"%v: amount(%s) overflows int128 range",
 			errOverFlow, value.ToString()))
@@ -189,32 +201,21 @@ func formatBool(v bool) string {
 	return strconv.FormatBool(v)
 }
 
-func tickTreeToString(tickTree *avl.Tree) string {
-	if tickTree == nil {
+func tickTreeToString(tickMap map[int32]pl.TickInfo) string {
+	if tickMap == nil {
 		return "[]"
 	}
 
-	tickInfoStrings := []string{}
+	tickInfoStrings := make([]string, 0, len(tickMap))
 
-	tickTree.Iterate("", "", func(tickKey string, tickValue any) bool {
-		tick, err := strconv.ParseInt(tickKey, 10, 32)
-		if err != nil {
-			panic(err)
-		}
-		tickInfo, ok := tickValue.(pl.TickInfo)
-		if !ok {
-			panic("failed to cast tick info to TickInfo")
-		}
-
+	for tick, tickInfo := range tickMap {
 		tickInfoStrings = append(tickInfoStrings, ufmt.Sprintf(
 			`{"tick":%d,"feeGrowthOutside0X128":"%s","feeGrowthOutside1X128":"%s"}`,
 			tick,
 			tickInfo.FeeGrowthOutside0X128().ToString(),
 			tickInfo.FeeGrowthOutside1X128().ToString(),
 		))
-
-		return false
-	})
+	}
 
 	return "[" + strings.Join(tickInfoStrings, ",") + "]"
 }

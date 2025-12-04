@@ -18,13 +18,12 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 )
 
-const MAX_INT256 string = "57896044618658097711785492504343953926634992332820282019728792003956564819967"
-
 // Hook functions allow external contracts to be notified of swap events.
 var (
 	// MUST BE IMMUTABLE.
 	// DO NOT USE THIS VALUE IN ANY ARITHMETIC OPERATIONS' INITIALIZATION
 	zero           = u256.Zero()
+	zeroI256       = i256.Zero() /* readonly */
 	fixedPointQ128 = u256.MustFromDecimal(Q128)
 
 	maxInt256 = u256.MustFromDecimal(MAX_INT256)
@@ -204,7 +203,7 @@ func (i *poolV1) Swap(
 		AmountSpecified:   amounts,
 		SqrtPriceLimitX96: sqrtPriceLimit,
 		ZeroForOne:        zeroForOne,
-		ExactInput:        amounts.Gt(i256.Zero()),
+		ExactInput:        amounts.Gt(zeroI256),
 		InitialState:      state,
 		Cache:             cache,
 	}
@@ -257,6 +256,9 @@ func (i *poolV1) Swap(
 		panic(err)
 	}
 
+	token0Amount := result.Amount0.ToString()
+	token1Amount := result.Amount1.ToString()
+
 	chain.Emit(
 		"Swap",
 		"prevAddr", previousRealm.Address().String(),
@@ -267,8 +269,8 @@ func (i *poolV1) Swap(
 		"sqrtPriceLimitX96", sqrtPriceLimitX96,
 		"payer", payer.String(),
 		"recipient", recipient.String(),
-		"token0Amount", result.Amount0.ToString(),
-		"token1Amount", result.Amount1.ToString(),
+		"token0Amount", token0Amount,
+		"token1Amount", token1Amount,
 		"protocolFee0", pool.ProtocolFeesToken0().ToString(),
 		"protocolFee1", pool.ProtocolFeesToken1().ToString(),
 		"sqrtPriceX96", pool.Slot0SqrtPriceX96().ToString(),
@@ -286,7 +288,7 @@ func (i *poolV1) Swap(
 		"observationTimestamp", formatInt(lastObservation.BlockTimestamp()),
 	)
 
-	return result.Amount0.ToString(), result.Amount1.ToString()
+	return token0Amount, token1Amount
 }
 
 // DrySwap simulates a swap without modifying pool state.
@@ -325,13 +327,17 @@ func (i *poolV1) DrySwap(
 		AmountSpecified:   amounts,
 		SqrtPriceLimitX96: sqrtPriceLimit,
 		ZeroForOne:        zeroForOne,
-		ExactInput:        amounts.Gt(i256.Zero()),
+		ExactInput:        amounts.Gt(zeroI256),
 		InitialState:      state,
 		Cache:             cache,
 	}
 
 	result, err := i.computeSwap(pool, comp)
 	if err != nil {
+		return "0", "0", false
+	}
+
+	if result.Amount0.IsZero() || result.Amount1.IsZero() {
 		return "0", "0", false
 	}
 
@@ -343,10 +349,6 @@ func (i *poolV1) DrySwap(
 		if pool.BalanceToken0().Lt(result.Amount0.Abs()) {
 			return "0", "0", false
 		}
-	}
-
-	if result.Amount0.IsZero() || result.Amount1.IsZero() {
-		return "0", "0", false
 	}
 
 	return result.Amount0.ToString(), result.Amount1.ToString(), true
@@ -573,8 +575,7 @@ func computeSwapStepInit(state SwapState, pool *pl.Pool, zeroForOne bool) StepCo
 	// prevent overshoot the min/max tick
 	step.clampTickNext()
 	// get the price for the next tick
-	sqrtPrice := common.TickMathGetSqrtRatioAtTick(step.tickNext).ToString()
-	step.sqrtPriceNextX96 = u256.MustFromDecimal(sqrtPrice)
+	step.sqrtPriceNextX96 = common.TickMathGetSqrtRatioAtTick(step.tickNext)
 	return step
 }
 

@@ -7,8 +7,6 @@ import (
 
 	"gno.land/p/onbloc/json"
 	pl "gno.land/r/gnoswap/pool"
-
-	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // JsonResponse is an interface that all JSON response types must implement.
@@ -83,17 +81,8 @@ func newRpcPool(pool *pl.Pool, poolPath string) RpcPool {
 	rpcPool.Liquidity = pool.Liquidity().ToString()
 
 	rpcPool.Ticks = RpcTicks{}
-	pool.Ticks().Iterate("", "", func(tickStr string, iTickInfo any) bool {
-		tick, err := strconv.ParseInt(tickStr, 10, 32)
-		if err != nil {
-			panic(err)
-		}
-		tickInfo, ok := iTickInfo.(pl.TickInfo)
-		if !ok {
-			panic("failed to cast tick info to TickInfo")
-		}
-
-		rpcPool.Ticks[int32(tick)] = RpcTickInfo{
+	for tick, tickInfo := range pool.Ticks() {
+		rpcPool.Ticks[tick] = RpcTickInfo{
 			LiquidityGross:              tickInfo.LiquidityGross().ToString(),
 			LiquidityNet:                tickInfo.LiquidityNet().ToString(),
 			FeeGrowthOutside0X128:       tickInfo.FeeGrowthOutside0X128().ToString(),
@@ -103,24 +92,12 @@ func newRpcPool(pool *pl.Pool, poolPath string) RpcPool {
 			SecondsOutside:              tickInfo.SecondsOutside(),
 			Initialized:                 tickInfo.Initialized(),
 		}
-
-		return false
-	})
+	}
 
 	rpcPool.TickBitmaps = RpcTickBitmaps{}
-	pool.TickBitmaps().Iterate("", "", func(tickStr string, iTickBitmap any) bool {
-		tick, err := strconv.ParseInt(tickStr, 10, 16)
-		if err != nil {
-			panic(err)
-		}
-		bm, ok := iTickBitmap.(*u256.Uint)
-		if !ok {
-			panic("failed to cast tick bitmap to *u256.Uint")
-		}
-
-		rpcPool.TickBitmaps[int16(tick)] = bm.ToString()
-		return false
-	})
+	for wordPos, bm := range pool.TickBitmaps() {
+		rpcPool.TickBitmaps[wordPos] = bm.ToString()
+	}
 
 	return rpcPool
 }
@@ -184,7 +161,7 @@ func (r RpcTickInfo) JSON() *json.Node {
 type RpcTickBitmaps map[int16]string // tick(wordPos) => bitmap(tickWord ^ mask)
 
 func (r RpcTickBitmaps) JSON() *json.Node {
-	tickBitmapsJson := map[string]*json.Node{}
+	tickBitmapsJson := make(map[string]*json.Node)
 	for tick, tickBitmap := range r {
 		tickBitmapsJson[strconv.Itoa(int(tick))] = json.StringNode("", tickBitmap)
 	}
@@ -194,7 +171,7 @@ func (r RpcTickBitmaps) JSON() *json.Node {
 type RpcTicks map[int32]RpcTickInfo // tick => RpcTickInfo
 
 func (r RpcTicks) JSON() *json.Node {
-	ticksJson := map[string]*json.Node{}
+	ticksJson := make(map[string]*json.Node)
 	for tick, tickInfo := range r {
 		ticksJson[strconv.Itoa(int(tick))] = tickInfo.JSON()
 	}
