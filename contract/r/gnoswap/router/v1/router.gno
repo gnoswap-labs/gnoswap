@@ -275,10 +275,7 @@ func (r *routerV1) finalizeSwap(
 		panic(addDetailToError(errSlippage, err.Error()))
 	}
 
-	// calculate final amounts
-	intAmountOut := i256.FromUint256(resultAmountOutWithoutFee)
-
-	return i256.FromUint256(resultAmountIn), intAmountOut
+	return i256.FromUint256(resultAmountIn), i256.FromUint256(resultAmountOutWithoutFee)
 }
 
 // validateRoutesAndQuotes is a convenience function that parses and validates routes in one call.
