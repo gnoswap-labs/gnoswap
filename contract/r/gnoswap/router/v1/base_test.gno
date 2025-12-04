@@ -1382,13 +1382,15 @@ func TestHandleNativeTokenWrapping_BothNative(t *testing.T) {
 // Test validateRouteQuote with extreme values
 func TestValidateRouteQuote_ExtremeValues(t *testing.T) {
 	tests := []struct {
-		name            string
-		amountSpecified int64
-		quote           string
-		index           int
-		expectError     bool
-		expectedResult  int64
-		description     string
+		name             string
+		amountSpecified  int64
+		quote            string
+		index            int
+		expectError      bool
+		expectedResult   int64
+		expectedHasPanic bool
+		expectedPanicMsg string
+		description      string
 	}{
 		{
 			name:            "max int64 amount",
@@ -1400,13 +1402,15 @@ func TestValidateRouteQuote_ExtremeValues(t *testing.T) {
 			description:     "Should handle max int64",
 		},
 		{
-			name:            "amount 1 with quote 1",
-			amountSpecified: 1,
-			quote:           "1",
-			index:           0,
-			expectError:     false,
-			expectedResult:  0,
-			description:     "1 * 1 / 100 = 0",
+			name:             "amount 1 with quote 1",
+			amountSpecified:  1,
+			quote:            "1",
+			index:            0,
+			expectError:      false,
+			expectedHasPanic: true,
+			expectedPanicMsg: "invalid swap amount",
+			expectedResult:   0,
+			description:      "1 * 1 / 100 = 0, should error",
 		},
 	}
 
@@ -1416,13 +1420,19 @@ func TestValidateRouteQuote_ExtremeValues(t *testing.T) {
 				amountSpecified: tt.amountSpecified,
 			}
 
-			result, err := op.validateRouteQuote(tt.quote, tt.index)
-
-			if tt.expectError {
-				uassert.Error(t, err)
+			if tt.expectedHasPanic {
+				uassert.PanicsContains(t, tt.expectedPanicMsg, func() {
+					op.validateRouteQuote(tt.quote, tt.index)
+				})
 			} else {
-				uassert.NoError(t, err, tt.description)
-				uassert.Equal(t, result, tt.expectedResult, tt.description)
+				result, err := op.validateRouteQuote(tt.quote, tt.index)
+
+				if tt.expectError {
+					uassert.Error(t, err)
+				} else {
+					uassert.NoError(t, err, tt.description)
+					uassert.Equal(t, result, tt.expectedResult, tt.description)
+				}
 			}
 		})
 	}
