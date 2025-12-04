@@ -6,7 +6,7 @@ import (
 
 	"gno.land/p/nt/ufmt"
 
-	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
@@ -65,12 +65,14 @@ func (r *routerV1) ExactOutSwapRoute(
 		quoteArr:          quoteArr,
 		deadline:          deadline,
 		typ:               ExactOut,
-		exactAmount:       amountOut,
-		limitAmount:       amountInMax,
-		sqrtPriceLimitX96: zeroString, // multi-hop swap is not allowed to set sqrtPriceLimitX96
+		exactAmount:       safeParseInt64(amountOut),
+		limitAmount:       safeParseInt64(amountInMax),
+		sqrtPriceLimitX96: u256.Zero(), // multi-hop swap is not allowed to set sqrtPriceLimitX96
 	}
 
-	return r.exactOutSwapRoute(params, referrer)
+	inputAmount, outputAmount := r.exactOutSwapRoute(params, referrer)
+
+	return formatInt64(inputAmount), formatInt64(outputAmount)
 }
 
 // ExactOutSingleSwapRoute swaps tokens for an exact output amount through a single route.
@@ -124,12 +126,14 @@ func (r *routerV1) ExactOutSingleSwapRoute(
 		quoteArr:          maxPercentageString, // "100"
 		deadline:          deadline,
 		typ:               ExactOut,
-		exactAmount:       amountOut,
-		limitAmount:       amountInMax,
-		sqrtPriceLimitX96: sqrtPriceLimitX96, // single swap is allowed to set sqrtPriceLimitX96
+		exactAmount:       safeParseInt64(amountOut),
+		limitAmount:       safeParseInt64(amountInMax),
+		sqrtPriceLimitX96: u256.MustFromDecimal(sqrtPriceLimitX96), // single swap is allowed to set sqrtPriceLimitX96
 	}
 
-	return r.exactOutSwapRoute(params, referrer)
+	inputAmount, outputAmount := r.exactOutSwapRoute(params, referrer)
+
+	return formatInt64(inputAmount), formatInt64(outputAmount)
 }
 
 // exactOutSwapRoute executes the swap operation and handles token transfers and referral registration.
@@ -152,19 +156,19 @@ func (r *routerV1) ExactOutSingleSwapRoute(
 func (r *routerV1) exactOutSwapRoute(
 	params SwapRouteParams,
 	referrer string,
-) (string, string) {
+) (int64, int64) {
 	inputAmount, outputAmount, err := r.commonSwapRoute(params)
 	if err != nil {
 		panic(err)
 	}
 
 	if params.IsUnwrap() {
-		err = unwrapWithTransfer(runtime.PreviousRealm().Address(), outputAmount.Int64())
+		err = unwrapWithTransfer(runtime.PreviousRealm().Address(), outputAmount)
 		if err != nil {
 			panic(err)
 		}
 	} else {
-		common.SafeGRC20Transfer(cross, params.outputToken, runtime.PreviousRealm().Address(), outputAmount.Int64())
+		common.SafeGRC20Transfer(cross, params.outputToken, runtime.PreviousRealm().Address(), outputAmount)
 	}
 
 	// handle referral registration
@@ -176,8 +180,8 @@ func (r *routerV1) exactOutSwapRoute(
 		actualReferrer = referral.GetReferral(caller.String())
 	}
 
-	inputAmountStr := inputAmount.ToString()
-	outputAmountStr := i256.Zero().Neg(outputAmount).ToString()
+	resultInputAmount := inputAmount
+	resultOutputAmount := -outputAmount
 
 	chain.Emit(
 		"ExactOutSwap",
@@ -185,15 +189,15 @@ func (r *routerV1) exactOutSwapRoute(
 		"prevRealm", previousRealm.PkgPath(),
 		"input", params.inputToken,
 		"output", params.outputToken,
-		"exactAmount", params.exactAmount,
+		"exactAmount", formatInt64(params.exactAmount),
 		"route", params.routeArr,
 		"quote", params.quoteArr,
-		"resultInputAmount", inputAmountStr,
-		"resultOutputAmount", outputAmountStr,
+		"resultInputAmount", formatInt64(resultInputAmount),
+		"resultOutputAmount", formatInt64(resultOutputAmount),
 		"referrer", actualReferrer,
 	)
 
-	return inputAmountStr, outputAmountStr
+	return resultInputAmount, resultOutputAmount
 }
 
 // ExactOutSwapOperation handles swaps where the output amount is specified.
@@ -217,14 +221,14 @@ func NewExactOutSwapOperation(r *routerV1, pp ExactOutParams) *ExactOutSwapOpera
 
 // Validate ensures the exact-out swap parameters are valid.
 func (op *ExactOutSwapOperation) Validate() error {
-	amountOut := i256.MustFromDecimal(op.params.AmountOut)
-	if amountOut.IsZero() || amountOut.IsNeg() {
-		return ufmt.Errorf("invalid amountOut(%s), must be positive", amountOut.ToString())
+	amountOut := op.params.AmountOut
+	if amountOut <= 0 {
+		return ufmt.Errorf("invalid amountOut(%d), must be positive", amountOut)
 	}
 
 	// assign a signed reversed `amountOut` to `amountSpecified`
 	// when it's an ExactOut
-	op.amountSpecified = i256.Zero().Neg(amountOut)
+	op.amountSpecified = -amountOut
 
 	routes, quotes, err := validateRoutesAndQuotes(op.params.RouteArr, op.params.QuoteArr)
 	if err != nil {
@@ -263,6 +267,6 @@ func (op *ExactOutSwapOperation) handleNativeTokenWrapping() error {
 	return op.baseSwapOperation.handleNativeTokenWrapping(
 		op.params.InputToken,
 		op.params.OutputToken,
-		i256.MustFromDecimal(op.params.AmountInMax),
+		op.params.AmountInMax,
 	)
 }
