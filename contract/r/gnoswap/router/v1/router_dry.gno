@@ -41,7 +41,7 @@ func (p *SwapProcessor) ProcessSwapAmount(amountSpecified int64, quote string) (
 	}
 
 	if quoteInt < MinQuotePercentage || quoteInt > MaxQuotePercentage {
-		return 0, ufmt.Errorf(ErrInvalidQuoteRange, quote, MinQuotePercentage, MaxQuotePercentage)
+		return 0, ufmt.Errorf(ErrInvalidQuoteRange, quoteInt, MinQuotePercentage, MaxQuotePercentage)
 	}
 
 	return safeMulDivInt64(amountSpecified, quoteInt, PERCENTAGE_DENOMINATOR), nil

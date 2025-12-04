@@ -117,6 +117,10 @@ func (op *baseSwapOperation) validateRouteQuote(quote string, i int) (int64, err
 		return 0, ufmt.Errorf("invalid quote(%s) at index(%d)", quote, i)
 	}
 
+	if quoteInt < MinQuotePercentage || quoteInt > MaxQuotePercentage {
+		return 0, ufmt.Errorf(ErrInvalidQuoteRange, quoteInt, MinQuotePercentage, MaxQuotePercentage)
+	}
+
 	return safeMulDivInt64(op.amountSpecified, quoteInt, PERCENTAGE_DENOMINATOR), nil
 }
 
