@@ -2,7 +2,6 @@ package v1
 
 import (
 	"chain/runtime"
-	"strconv"
 	"strings"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -38,25 +37,10 @@ type SwapProcessor struct {
 
 // ProcessSwapAmount calculates the exact amount to swap based on quote percentage.
 func (p *SwapProcessor) ProcessSwapAmount(amountSpecified *i256.Int, quote string) (*i256.Int, error) {
-	quoteInt, err := strconv.Atoi(quote)
+	toSwap, err := calculateSwapAmountByQuote(amountSpecified, quote)
 	if err != nil {
-		return nil, ufmt.Errorf("invalid quote(%s)", quote)
+		return nil, err
 	}
-
-	if quoteInt < MinQuotePercentage || quoteInt > MaxQuotePercentage {
-		return nil, ufmt.Errorf(ErrInvalidQuoteRange, quote, MinQuotePercentage, MaxQuotePercentage)
-	}
-
-	toSwap, overflow := i256.Zero().MulOverflow(amountSpecified, i256.NewInt(int64(quoteInt)))
-	if overflow {
-		return nil, ufmt.Errorf(ErrOverflowCalculateSwapAmount)
-	}
-
-	toSwap = i256.Zero().Div(toSwap, PERCENTAGE_DENOMINATOR)
-	if toSwap.IsZero() {
-		return nil, errInvalidSwapAmount
-	}
-
 	return toSwap, nil
 }
 

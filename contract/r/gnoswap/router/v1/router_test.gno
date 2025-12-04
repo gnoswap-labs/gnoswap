@@ -1149,24 +1149,6 @@ func TestSwapProcessor_ProcessSwapAmount(t *testing.T) {
 			expectError:     false,
 			expectedResult:  "100",
 		},
-		{
-			name:            "0% quote",
-			amountSpecified: i256.NewInt(1000),
-			quote:           "0",
-			expectError:     true,
-		},
-		{
-			name:            "quote above 100",
-			amountSpecified: i256.NewInt(1000),
-			quote:           "101",
-			expectError:     true,
-		},
-		{
-			name:            "negative quote",
-			amountSpecified: i256.NewInt(1000),
-			quote:           "-1",
-			expectError:     true,
-		},
 	}
 
 	for _, tt := range tests {

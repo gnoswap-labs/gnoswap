@@ -21,6 +21,28 @@ const (
 	INITIAL_WUGNOT_BALANCE int64 = 0
 )
 
+// calculateSwapAmountByQuote calculates swap amount based on quote percentage.
+// This common function is used by both validateRouteQuote and ProcessSwapAmount.
+func calculateSwapAmountByQuote(amountSpecified *i256.Int, quote string) (*i256.Int, error) {
+	qt, err := strconv.ParseInt(quote, 10, 64)
+	if err != nil {
+		return nil, ufmt.Errorf("invalid quote(%s)", quote)
+	}
+
+	// calculate amount to swap for this route
+	toSwap, overflow := i256.Zero().MulOverflow(amountSpecified, i256.NewInt(qt))
+	if overflow {
+		return nil, errOverFlow
+	}
+
+	toSwap = i256.Zero().Div(toSwap, PERCENTAGE_DENOMINATOR)
+	if toSwap.IsZero() {
+		return nil, errInvalidSwapAmount
+	}
+
+	return toSwap, nil
+}
+
 // swap can be done by multiple pools
 // to separate each pool, we use POOL_SEPARATOR
 const (
@@ -114,22 +136,10 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 
 // validateRouteQuote validates and converts a route quote to swap amount.
 func (op *baseSwapOperation) validateRouteQuote(quote string, i int) (*i256.Int, error) {
-	qt, err := strconv.Atoi(quote)
+	toSwap, err := calculateSwapAmountByQuote(op.amountSpecified, quote)
 	if err != nil {
-		return nil, ufmt.Errorf("invalid quote(%s) at index(%d)", quote, i)
+		return nil, err
 	}
-
-	// calculate amount to swap for this route
-	toSwap, overflow := i256.Zero().MulOverflow(op.amountSpecified, i256.NewInt(int64(qt)))
-	if overflow {
-		panic(errOverFlow)
-	}
-
-	toSwap = i256.Zero().Div(toSwap, PERCENTAGE_DENOMINATOR)
-	if toSwap.IsZero() {
-		return nil, errInvalidSwapAmount
-	}
-
 	return toSwap, nil
 }
 
