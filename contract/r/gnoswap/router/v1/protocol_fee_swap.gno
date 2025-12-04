@@ -121,9 +121,7 @@ func calculateRouterFee(amount *u256.Uint, swapFee uint64) int64 {
 	}
 
 	feeAmount := u256.MulDiv(amount, u256.NewUint(swapFee), fullBPS)
-	feeAmountInt64 := safeConvertToInt64(feeAmount)
-
-	return feeAmountInt64
+	return safeConvertToInt64(feeAmount)
 }
 
 // calculate amount to fetch from pool including router fee
@@ -134,13 +132,11 @@ func calculateExactOutWithRouterFee(amount *u256.Uint, swapFee uint64) *u256.Uin
 
 	if swapFee > 0 {
 		// Use MulDiv to prevent overflow and maintain precision
-		poolAmount := u256.MulDiv(
+		return u256.MulDiv(
 			userAmount,
 			fullBPS,
 			u256.NewUint(10000-swapFee),
 		)
-
-		return poolAmount
 	}
 
 	return userAmount
