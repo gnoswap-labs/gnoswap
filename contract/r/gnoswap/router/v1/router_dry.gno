@@ -3,7 +3,6 @@ package v1
 import (
 	"chain/runtime"
 	"strconv"
-	"strings"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -209,6 +208,8 @@ func (r *routerV1) drySwapRoute(
 	resultAmountIn, resultAmountOut := zero, zero
 	remainRequestAmount := amountSpecified
 
+	hops := countHopsSlice(routes)
+
 	// Process each route
 	for i, route := range routes {
 		toSwapAmount := i256.Zero()
@@ -230,7 +231,7 @@ func (r *routerV1) drySwapRoute(
 		}
 
 		// determine the number of hops and validate
-		numHops := strings.Count(route, POOL_SEPARATOR) + 1
+		numHops := hops[i]
 		assertHopsInRange(numHops)
 
 		// execute the appropriate swap type

@@ -977,7 +977,7 @@ func TestProcessRoute_MultiHops(t *testing.T) {
 
 			router := mockRouter()
 			processRouteFn := func(cur realm) (*u256.Uint, *u256.Uint, error) {
-				return op.processRoute(router, tt.route, toSwapAmount, tt.swapType)
+				return op.processRoute(router, tt.route, toSwapAmount, tt.swapType, countHops(tt.route))
 			}
 
 			if tt.expectError {

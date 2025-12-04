@@ -64,6 +64,7 @@ type baseSwapOperation struct {
 	routes                  []string
 	quotes                  []string
 	quotesInt               []int64
+	hops                    []int
 	amountSpecified         *i256.Int
 }
 
@@ -132,6 +133,10 @@ func (op *baseSwapOperation) processRoutes(r *routerV1, swapType SwapType) (*u25
 	resultAmountIn, resultAmountOut := zero, zero
 	remainRequestAmount := op.amountSpecified
 
+	if len(op.hops) == 0 && len(op.routes) > 0 {
+		op.hops = countHopsSlice(op.routes)
+	}
+
 	for i, route := range op.routes {
 		toSwapAmount := i256.Zero()
 
@@ -151,7 +156,7 @@ func (op *baseSwapOperation) processRoutes(r *routerV1, swapType SwapType) (*u25
 			toSwapAmount = remainRequestAmount
 		}
 
-		amountIn, amountOut, err := op.processRoute(r, route, toSwapAmount, swapType)
+		amountIn, amountOut, err := op.processRoute(r, route, toSwapAmount, swapType, op.hops[i])
 		if err != nil {
 			return nil, nil, err
 		}
@@ -179,8 +184,11 @@ func (op *baseSwapOperation) processRoute(
 	route string,
 	toSwap *i256.Int,
 	swapType SwapType,
+	numHops int,
 ) (amountIn, amountOut *u256.Uint, err error) {
-	numHops := strings.Count(route, POOL_SEPARATOR) + 1
+	if numHops == 0 {
+		numHops = countHops(route)
+	}
 	assertHopsInRange(numHops)
 
 	switch numHops {

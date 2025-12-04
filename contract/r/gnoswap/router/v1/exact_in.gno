@@ -232,6 +232,7 @@ func (op *ExactInSwapOperation) Validate() error {
 	op.routes = routes
 	op.quotes = quotes
 	op.quotesInt = quotesInt
+	op.hops = countHopsSlice(routes)
 
 	return nil
 }

@@ -107,6 +107,18 @@ func calcQuoteSwapAmount(amountSpecified *i256.Int, quoteInt int64) (*i256.Int, 
 	return i256.Zero().Div(toSwap, PERCENTAGE_DENOMINATOR), false
 }
 
+func countHops(route string) int {
+	return strings.Count(route, POOL_SEPARATOR) + 1
+}
+
+func countHopsSlice(routes []string) []int {
+	hops := make([]int, len(routes))
+	for i, route := range routes {
+		hops[i] = countHops(route)
+	}
+	return hops
+}
+
 // validateRoutePaths validates multiple route paths to ensure they all start with inputToken and end with outputToken.
 // This function processes comma-separated route paths and validates each path individually.
 //

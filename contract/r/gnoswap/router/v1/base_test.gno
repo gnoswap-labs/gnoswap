@@ -17,6 +17,8 @@ import (
 	pn "gno.land/r/gnoswap/position"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
+	"gno.land/r/onbloc/foo"
+	"gno.land/r/onbloc/qux"
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
@@ -283,7 +285,7 @@ func TestProcessRoute(t *testing.T) {
 
 		router := mockRouter()
 		func(cur realm) {
-			amountIn, amountOut, err := op.processRoute(router, route, toSwap, swapType)
+			amountIn, amountOut, err := op.processRoute(router, route, toSwap, swapType, countHops(route))
 			uassert.Equal(t, err, nil)
 			uassert.Equal(t, amountIn.ToString(), "1000")
 			uassert.Equal(t, amountOut.ToString(), "979")
@@ -878,10 +880,10 @@ func TestProcessRoute_ErrorCases(t *testing.T) {
 
 			if tt.expectPanic {
 				uassert.PanicsContains(t, tt.panicMsg, func() {
-					op.processRoute(router, tt.route, tt.toSwap, tt.swapType)
+					op.processRoute(router, tt.route, tt.toSwap, tt.swapType, countHops(tt.route))
 				})
 			} else {
-				op.processRoute(router, tt.route, tt.toSwap, tt.swapType)
+				op.processRoute(router, tt.route, tt.toSwap, tt.swapType, countHops(tt.route))
 			}
 		})
 	}
@@ -999,13 +1001,13 @@ func TestValidateRouteQuote_EdgeCases(t *testing.T) {
 	}
 }
 
-// Test processRoutes with overflow detection
 func TestProcessRoutes_OverflowDetection(t *testing.T) {
 	tests := []struct {
-		name        string
-		op          *baseSwapOperation
-		expectPanic bool
-		panicMsg    string
+		name         string
+		op           *baseSwapOperation
+		expectPanic  bool
+		panicMsg     string
+		expectedHops []int
 	}{
 		{
 			name: "normal amounts - no overflow",
@@ -1013,8 +1015,11 @@ func TestProcessRoutes_OverflowDetection(t *testing.T) {
 				amountSpecified: i256.NewInt(1000),
 				routes:          []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"},
 				quotes:          []string{"100"},
+				quotesInt:       []int64{100},
+				hops:            []int{1},
 			},
-			expectPanic: false,
+			expectPanic:  false,
+			expectedHops: []int{1},
 		},
 		{
 			name: "overflow amounts - MaxInt64 + 1",
@@ -1022,9 +1027,22 @@ func TestProcessRoutes_OverflowDetection(t *testing.T) {
 				amountSpecified: i256.MustFromDecimal("9223372036854775808"), // MaxInt64 + 1
 				routes:          []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"},
 				quotes:          []string{"100"},
+				quotesInt:       []int64{100},
+				hops:            []int{1},
 			},
 			expectPanic: true,
 			panicMsg:    "[GNOSWAP-POOL-026] overflow",
+		},
+		{
+			name: "auto-compute hops when not preset",
+			op: &baseSwapOperation{
+				amountSpecified: i256.NewInt(1000),
+				routes:          []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:3000"},
+				quotes:          []string{"100"},
+				quotesInt:       []int64{100},
+			},
+			expectPanic:  false,
+			expectedHops: []int{2},
 		},
 	}
 
@@ -1036,12 +1054,30 @@ func TestProcessRoutes_OverflowDetection(t *testing.T) {
 			gns.Approve(cross, poolAddr, math.MaxInt64)
 			bar.Approve(cross, poolAddr, math.MaxInt64)
 			baz.Approve(cross, poolAddr, math.MaxInt64)
+			foo.Approve(cross, poolAddr, math.MaxInt64)
+			qux.Approve(cross, poolAddr, math.MaxInt64)
+
 			bar.Approve(cross, routerAddr, math.MaxInt64)
 			baz.Approve(cross, routerAddr, math.MaxInt64)
+			foo.Approve(cross, routerAddr, math.MaxInt64)
+			qux.Approve(cross, routerAddr, math.MaxInt64)
+
 			pl.CreatePool(cross, barPath, bazPath, 500, "79228162514264337593543950336")
 			pn.Mint(cross, barPath, bazPath, 500, int32(-6960), int32(6960), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")
 
+			pl.CreatePool(cross, fooPath, quxPath, 3000, "79228162514264337593543950336")
+			pn.Mint(cross, fooPath, quxPath, 3000, int32(-6960), int32(6960), "100000", "100000", "0", "0", 9999999999, adminAddr, adminAddr, "")
+
 			router := mockRouter()
+
+			// For multi-hop swaps, router needs tokens to perform intermediate swaps
+			if tt.name == "auto-compute hops when not preset" {
+				// Transfer tokens to router for intermediate swaps
+				bar.Transfer(cross, routerAddr, 10000)
+				baz.Transfer(cross, routerAddr, 10000)
+				foo.Transfer(cross, routerAddr, 10000)
+				qux.Transfer(cross, routerAddr, 10000)
+			}
 
 			processRoutesFn := func(cur realm) error {
 				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
@@ -1056,6 +1092,11 @@ func TestProcessRoutes_OverflowDetection(t *testing.T) {
 			} else {
 				err := processRoutesFn(cross)
 				uassert.NoError(t, err)
+				if len(tt.expectedHops) > 0 {
+					for i, hop := range tt.op.hops {
+						uassert.Equal(t, hop, tt.expectedHops[i])
+					}
+				}
 			}
 		})
 	}
