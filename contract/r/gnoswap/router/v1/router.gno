@@ -14,8 +14,6 @@ import (
 
 var (
 	one = u256.One()
-
-	maxInt64 = int64(^uint64(0) >> 1)
 )
 
 // ErrorMessages define all error message templates used throughout the router
