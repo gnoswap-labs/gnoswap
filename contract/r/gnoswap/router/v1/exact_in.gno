@@ -181,7 +181,7 @@ func (r *routerV1) exactInSwapRoute(
 
 	chain.Emit(
 		"ExactInSwap",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"input", params.inputToken,
 		"output", params.outputToken,

@@ -14,9 +14,11 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 )
 
-const (
-	MIN_SQRT_RATIO string = "4295128739"                                        // same as TickMathGetSqrtRatioAtTick(MIN_TICK)
-	MAX_SQRT_RATIO string = "1461446703485210103287273052203988822378723970342" // same as TickMathGetSqrtRatioAtTick(MAX_TICK)
+var (
+	// same as TickMathGetSqrtRatioAtTick(MIN_TICK)
+	minSqrtRatioFromDecimal = u256.MustFromDecimal("4295128739")
+	// same as TickMathGetSqrtRatioAtTick(MAX_TICK)
+	maxSqrtRatioFromDecimal = u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")
 )
 
 // swapInner executes the core swap logic by interacting with the pool contract.
@@ -139,7 +141,7 @@ func calculateSqrtPriceLimitForSwap(zeroForOne bool, fee uint32, sqrtPriceLimitX
 		minTick := getMinTick(fee) + 1
 		sqrtPriceLimitX96 = u256.Zero().Set(common.TickMathGetSqrtRatioAtTick(minTick))
 		if sqrtPriceLimitX96.IsZero() {
-			sqrtPriceLimitX96 = u256.MustFromDecimal(MIN_SQRT_RATIO)
+			sqrtPriceLimitX96 = minSqrtRatioFromDecimal
 		}
 		return u256.Zero().Add(sqrtPriceLimitX96, one)
 	}
@@ -147,7 +149,7 @@ func calculateSqrtPriceLimitForSwap(zeroForOne bool, fee uint32, sqrtPriceLimitX
 	maxTick := getMaxTick(fee) - 1
 	sqrtPriceLimitX96 = u256.Zero().Set(common.TickMathGetSqrtRatioAtTick(maxTick))
 	if sqrtPriceLimitX96.IsZero() {
-		sqrtPriceLimitX96 = u256.MustFromDecimal(MAX_SQRT_RATIO)
+		sqrtPriceLimitX96 = maxSqrtRatioFromDecimal
 	}
 	return u256.Zero().Sub(sqrtPriceLimitX96, one)
 }

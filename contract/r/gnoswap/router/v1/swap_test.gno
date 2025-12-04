@@ -71,17 +71,17 @@ func TestSwapCallback_Token0Delta(t *testing.T) {
 			var tokenToPay string
 			var amountToPay *i256.Int
 
-			if amount0.Gt(i256.Zero()) {
+			if amount0.Gt(zeroI256) {
 				tokenToPay = tt.token0Path
 				amountToPay = amount0
-			} else if amount1.Gt(i256.Zero()) {
+			} else if amount1.Gt(zeroI256) {
 				tokenToPay = tt.token1Path
 				amountToPay = amount1
 			}
 
 			if tt.expectedToken != "" {
 				uassert.Equal(t, tt.expectedToken, tokenToPay)
-				uassert.True(t, amountToPay.Gt(i256.Zero()))
+				uassert.True(t, amountToPay.Gt(zeroI256))
 			}
 		})
 	}
@@ -614,7 +614,7 @@ func TestSwapCallback_EdgeCases(t *testing.T) {
 			amount0 := i256.MustFromDecimal(tt.amount0Delta)
 			amount1 := i256.MustFromDecimal(tt.amount1Delta)
 
-			shouldPay := amount0.Gt(i256.Zero()) || amount1.Gt(i256.Zero())
+			shouldPay := amount0.Gt(zeroI256) || amount1.Gt(zeroI256)
 			uassert.Equal(t, tt.shouldPay, shouldPay)
 		})
 	}
@@ -627,19 +627,13 @@ func TestCalculateSqrtPriceLimitForSwap_AllFees(t *testing.T) {
 		t.Run("zero_for_one_fee_"+u256.NewUint(uint64(fee)).ToString(), func(t *testing.T) {
 			result := calculateSqrtPriceLimitForSwap(true, fee, u256.Zero())
 			uassert.False(t, result.IsZero())
-
-			// Should be greater than MIN_SQRT_RATIO
-			minSqrt := u256.MustFromDecimal(MIN_SQRT_RATIO)
-			uassert.True(t, result.Gt(minSqrt))
+			uassert.True(t, result.Gt(minSqrtRatioFromDecimal))
 		})
 
 		t.Run("one_for_zero_fee_"+u256.NewUint(uint64(fee)).ToString(), func(t *testing.T) {
 			result := calculateSqrtPriceLimitForSwap(false, fee, u256.Zero())
 			uassert.False(t, result.IsZero())
-
-			// Should be less than MAX_SQRT_RATIO
-			maxSqrt := u256.MustFromDecimal(MAX_SQRT_RATIO)
-			uassert.True(t, result.Lt(maxSqrt))
+			uassert.True(t, result.Lt(maxSqrtRatioFromDecimal))
 		})
 	}
 }

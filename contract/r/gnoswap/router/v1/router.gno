@@ -12,7 +12,10 @@ import (
 	"gno.land/r/gnoswap/common"
 )
 
-var one = u256.One()
+var (
+	zeroI256 = i256.Zero()
+	one = u256.One()
+)
 
 // ErrorMessages define all error message templates used throughout the router
 const (
@@ -138,7 +141,7 @@ func (v *SwapValidator) swapType(swapTypeStr string) (SwapType, error) {
 // amount ensures the amount is properly formatted and positive.
 func (v *SwapValidator) amount(amount string) (*i256.Int, error) {
 	parsedAmount := i256.MustFromDecimal(amount)
-	if parsedAmount.Lt(i256.Zero()) {
+	if parsedAmount.Lt(zeroI256) {
 		return nil, ufmt.Errorf(ErrInvalidPositiveAmount, amount)
 	}
 	return parsedAmount, nil

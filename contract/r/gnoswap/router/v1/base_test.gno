@@ -1814,7 +1814,7 @@ func TestProcessRoutes_RemainderAccuracy(t *testing.T) {
 			remainder := i256.Zero().Sub(tt.amountSpecified, totalUsed)
 
 			// Verify remainder is within expected range
-			uassert.True(t, remainder.Cmp(i256.Zero()) >= 0, "remainder should be non-negative")
+			uassert.True(t, remainder.Cmp(zeroI256) >= 0, "remainder should be non-negative")
 			uassert.True(t, remainder.Cmp(tt.amountSpecified) <= 0, "remainder should not exceed total")
 		})
 	}
