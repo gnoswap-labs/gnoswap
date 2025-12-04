@@ -4,6 +4,7 @@ import (
 	"chain"
 	"chain/runtime"
 	"encoding/base64"
+	"strconv"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -586,7 +587,7 @@ func computePositionKey(
 	tickUpper int32,
 ) string {
 	currentRealmPath := runtime.CurrentRealm().PkgPath()
-	key := ufmt.Sprintf("%s__%d__%d", currentRealmPath, tickLower, tickUpper)
+	key := currentRealmPath + "__" + strconv.Itoa(int(tickLower)) + "__" + strconv.Itoa(int(tickUpper))
 	encoded := base64.StdEncoding.EncodeToString([]byte(key))
 	return encoded
 }
