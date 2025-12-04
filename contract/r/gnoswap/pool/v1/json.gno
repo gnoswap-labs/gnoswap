@@ -7,6 +7,8 @@ import (
 
 	"gno.land/p/onbloc/json"
 	pl "gno.land/r/gnoswap/pool"
+
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // JsonResponse is an interface that all JSON response types must implement.
@@ -81,8 +83,17 @@ func newRpcPool(pool *pl.Pool, poolPath string) RpcPool {
 	rpcPool.Liquidity = pool.Liquidity().ToString()
 
 	rpcPool.Ticks = RpcTicks{}
-	for tick, tickInfo := range pool.Ticks() {
-		rpcPool.Ticks[tick] = RpcTickInfo{
+	pool.Ticks().Iterate("", "", func(tickStr string, iTickInfo any) bool {
+		tick, err := strconv.ParseInt(tickStr, 10, 32)
+		if err != nil {
+			panic(err)
+		}
+		tickInfo, ok := iTickInfo.(pl.TickInfo)
+		if !ok {
+			panic("failed to cast tick info to TickInfo")
+		}
+
+		rpcPool.Ticks[int32(tick)] = RpcTickInfo{
 			LiquidityGross:              tickInfo.LiquidityGross().ToString(),
 			LiquidityNet:                tickInfo.LiquidityNet().ToString(),
 			FeeGrowthOutside0X128:       tickInfo.FeeGrowthOutside0X128().ToString(),
@@ -92,12 +103,24 @@ func newRpcPool(pool *pl.Pool, poolPath string) RpcPool {
 			SecondsOutside:              tickInfo.SecondsOutside(),
 			Initialized:                 tickInfo.Initialized(),
 		}
-	}
 
-	rpcPool.TickBitmaps = RpcTickBitmaps{}
-	for wordPos, bm := range pool.TickBitmaps() {
-		rpcPool.TickBitmaps[wordPos] = bm.ToString()
-	}
+		return false
+	})
+
+	rpcPool.TickBitmaps = make(RpcTickBitmaps)
+	pool.TickBitmaps().Iterate("", "", func(tickStr string, iTickBitmap any) bool {
+		tick, err := strconv.ParseInt(tickStr, 10, 16)
+		if err != nil {
+			panic(err)
+		}
+		bm, ok := iTickBitmap.(*u256.Uint)
+		if !ok {
+			panic("failed to cast tick bitmap to *u256.Uint")
+		}
+
+		rpcPool.TickBitmaps[int16(tick)] = bm.ToString()
+		return false
+	})
 
 	return rpcPool
 }

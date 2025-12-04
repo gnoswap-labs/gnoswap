@@ -125,10 +125,11 @@ func createPositionWithValidation(t *testing.T, pool *pl.Pool, scenario Position
 	}
 
 	// Validate position was created
-	position, exists := pool.Positions()[positionKey]
+	positionValue, exists := pool.Positions().Get(positionKey)
 	if !exists {
 		t.Fatalf("Position was not created with key: %s", positionKey)
 	}
+	position := positionValue.(pl.PositionInfo)
 
 	// Validate liquidity
 	if position.Liquidity().ToString() != scenario.liquidity {
@@ -677,8 +678,9 @@ func TestModifyPosition_WithDifferentPrice(t *testing.T) {
 		t.Logf("Liquidity removed: token0=%s, token1=%s", removeAmt0.ToString(), removeAmt1.ToString())
 
 		// Validate final position state
-		position, exists := pool.Positions()[posKey]
+		positionValue, exists := pool.Positions().Get(posKey)
 		uassert.True(t, exists, "Position should still exist")
+		position := positionValue.(pl.PositionInfo)
 		uassert.Equal(t, MEDIUM_LIQUIDITY, position.Liquidity().ToString(), "Final liquidity should match")
 	})
 }
@@ -857,7 +859,8 @@ func TestPositionFeeCollection_Scenarios(t *testing.T) {
 			// In real scenario, this would happen through swaps
 			if scenario.tradingVolume != "none" {
 				// Get current position to update fees
-				position := pool.Positions()[posKey]
+				positionValue, _ := pool.Positions().Get(posKey)
+				position := positionValue.(pl.PositionInfo)
 
 				// Calculate simulated fee amounts based on liquidity share
 				// This is a simplified simulation for testing
@@ -877,14 +880,15 @@ func TestPositionFeeCollection_Scenarios(t *testing.T) {
 				// Update position with simulated fees
 				position.SetTokensOwed0(feeAmount0)
 				position.SetTokensOwed1(feeAmount1)
-				pool.Positions()[posKey] = position
+				pool.Positions().Set(posKey, position)
 			}
 
 			// Update position to trigger any additional calculations
 			updatePositionLiquidity(t, pool, alice, MODERATE_LOWER, MODERATE_UPPER, "0")
 
 			// Then: Validate fee accumulation
-			position := pool.Positions()[posKey]
+			positionValue, _ := pool.Positions().Get(posKey)
+			position := positionValue.(pl.PositionInfo)
 
 			validatePositionFees(t, position, scenario.expectedFeeLevel)
 
@@ -923,7 +927,8 @@ func TestPositionFeeCalculation_EdgeCases(t *testing.T) {
 		uassert.NoError(t, err, "Fee calculation should not overflow")
 
 		posKey, _ := getPositionKey(CONCENTRATED_LOWER, CONCENTRATED_UPPER)
-		position := pool.Positions()[posKey]
+		positionValue, _ := pool.Positions().Get(posKey)
+		position := positionValue.(pl.PositionInfo)
 
 		// Verify fees are calculated
 		uassert.True(t, position.TokensOwed0().Gt(u256.Zero()), "Should have token0 fees")
@@ -968,12 +973,13 @@ func TestPositionFeeCalculation_EdgeCases(t *testing.T) {
 		for _, r := range ranges {
 			if r.inRange {
 				posKey, _ := getPositionKey(r.tickLower, r.tickUpper)
-				position := pool.Positions()[posKey]
+				positionValue, _ := pool.Positions().Get(posKey)
+				position := positionValue.(pl.PositionInfo)
 
 				// Simulate fee accumulation for in-range positions
 				position.SetTokensOwed0(u256.NewUint(1000))
 				position.SetTokensOwed1(u256.NewUint(1000))
-				pool.Positions()[posKey] = position
+				pool.Positions().Set(posKey, position)
 			}
 		}
 
@@ -991,7 +997,8 @@ func TestPositionFeeCalculation_EdgeCases(t *testing.T) {
 			modifyPosition(pool, params)
 
 			posKey, _ := getPositionKey(r.tickLower, r.tickUpper)
-			position := pool.Positions()[posKey]
+			positionValue, _ := pool.Positions().Get(posKey)
+			position := positionValue.(pl.PositionInfo)
 
 			if r.inRange {
 				uassert.True(t, position.TokensOwed0().Gt(u256.Zero()) || position.TokensOwed1().Gt(u256.Zero()),
@@ -1040,8 +1047,9 @@ func TestPositionSecurity_EdgeCases(t *testing.T) {
 		uassert.NoError(t, err, "Adding to existing position should succeed")
 
 		// Then: Verify position is updated, not duplicated
-		position, exists := pool.Positions()[posKey]
+		positionValue, exists := pool.Positions().Get(posKey)
 		uassert.True(t, exists, "Position should exist")
+		position := positionValue.(pl.PositionInfo)
 
 		expectedLiquidity := new(u256.Uint).Add(
 			u256.MustFromDecimal(MEDIUM_LIQUIDITY),
@@ -1133,8 +1141,9 @@ func TestPositionSecurity_EdgeCases(t *testing.T) {
 		uassert.NoError(t, err, "Removing liquidity should succeed")
 
 		// Then: Verify position state
-		position, exists := pool.Positions()[posKey]
+		positionValue, exists := pool.Positions().Get(posKey)
 		uassert.True(t, exists, "Position entry should still exist")
+		position := positionValue.(pl.PositionInfo)
 
 		uassert.Equal(t, "0", position.Liquidity().ToString(),
 			"Liquidity should be zero after complete removal")
