@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"chain/runtime"
 	"strconv"
 	"strings"
 
@@ -11,12 +10,6 @@ import (
 )
 
 const INT64_MAX = 9223372036854775807
-
-// GetOrigPkgAddr returns the original package address.
-// In position contract, original package address is the position address.
-func GetOrigPkgAddr() address {
-	return runtime.CurrentRealm().Address()
-}
 
 // positionIdFrom converts positionId to grc721.TokenID type
 // NOTE: input parameter positionId can be string, int, uint64, or grc721.TokenID
