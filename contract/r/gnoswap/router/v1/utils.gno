@@ -96,6 +96,17 @@ func i256MinMax(x, y *i256.Int) (min, max *u256.Uint) {
 	return y.Abs(), x.Abs()
 }
 
+// calcQuoteSwapAmount multiplies amountSpecified by quote(percentage) and divides by PERCENTAGE_DENOMINATOR.
+// The overflow flag mirrors MulOverflow semantics.
+func calcQuoteSwapAmount(amountSpecified *i256.Int, quoteInt int64) (*i256.Int, bool) {
+	toSwap, overflow := i256.Zero().MulOverflow(amountSpecified, i256.NewInt(quoteInt))
+	if overflow {
+		return nil, true
+	}
+
+	return i256.Zero().Div(toSwap, PERCENTAGE_DENOMINATOR), false
+}
+
 // validateRoutePaths validates multiple route paths to ensure they all start with inputToken and end with outputToken.
 // This function processes comma-separated route paths and validates each path individually.
 //

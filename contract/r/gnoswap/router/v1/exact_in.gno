@@ -224,13 +224,14 @@ func (op *ExactInSwapOperation) Validate() error {
 	// obtained from above.
 	op.amountSpecified = amountIn
 
-	routes, quotes, err := validateRoutesAndQuotes(op.params.RouteArr, op.params.QuoteArr)
+	routes, quotes, quotesInt, err := validateRoutesAndQuotes(op.params.RouteArr, op.params.QuoteArr)
 	if err != nil {
 		return err
 	}
 
 	op.routes = routes
 	op.quotes = quotes
+	op.quotesInt = quotesInt
 
 	return nil
 }

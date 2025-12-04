@@ -165,75 +165,79 @@ func NewRouteParser() *RouteParser {
 
 // ParseRoutes parses route and quote strings into slices and validates them.
 func (p *RouteParser) ParseRoutes(routes, quotes string) ([]string, []string, error) {
+	routesArr, quotesArr, _, err := p.ParseRoutesWithQuoteInts(routes, quotes)
+	return routesArr, quotesArr, err
+}
+
+// ParseRoutesWithQuoteInts parses routes/quotes and also returns parsed quote integers.
+func (p *RouteParser) ParseRoutesWithQuoteInts(routes, quotes string) ([]string, []string, []int64, error) {
 	// Check for empty routes
 	if routes == "" || quotes == "" {
-		return nil, nil, ufmt.Errorf(errEmptyRoutes)
+		return nil, nil, nil, ufmt.Errorf(errEmptyRoutes)
 	}
 
 	routesArr := splitSingleChar(routes, ',')
 	quotesArr := splitSingleChar(quotes, ',')
 
-	if err := p.ValidateRoutesAndQuotes(routesArr, quotesArr); err != nil {
-		return nil, nil, err
+	quoteInts, err := p.ValidateRoutesAndQuotes(routesArr, quotesArr)
+	if err != nil {
+		return nil, nil, nil, err
 	}
 
-	return routesArr, quotesArr, nil
+	return routesArr, quotesArr, quoteInts, nil
 }
 
 // ValidateRoutesAndQuotes ensures routes and quotes meet required criteria.
-func (p *RouteParser) ValidateRoutesAndQuotes(routes, quotes []string) error {
+func (p *RouteParser) ValidateRoutesAndQuotes(routes, quotes []string) ([]int64, error) {
 	rr := len(routes)
 	qq := len(quotes)
 
 	if rr < 1 || rr > 7 {
-		return ufmt.Errorf(errInvalidRouteLength, rr)
+		return nil, ufmt.Errorf(errInvalidRouteLength, rr)
 	}
 
 	if rr != qq {
-		return ufmt.Errorf(errRoutesQuotesMismatch, rr, qq)
+		return nil, ufmt.Errorf(errRoutesQuotesMismatch, rr, qq)
 	}
 
 	return p.ValidateQuoteSum(quotes)
 }
 
 // ValidateQuoteSum ensures all quotes add up to 100%.
-func (p *RouteParser) ValidateQuoteSum(quotes []string) error {
-	const (
-		maxQuote int8 = 100
-		minQuote int8 = 0
-	)
-
+func (p *RouteParser) ValidateQuoteSum(quotes []string) ([]int64, error) {
 	var sum int8
+	parsed := make([]int64, len(quotes))
 
 	for i, quote := range quotes {
 		qt, err := strconv.ParseInt(quote, 10, 8)
 		if err != nil {
-			return ufmt.Errorf(errInvalidQuote, quote, i)
+			return nil, ufmt.Errorf(errInvalidQuote, quote, i)
 		}
 		intQuote := int8(qt)
 
 		// Even if quoteArr itself contains 0, there's no problem as long as the sum equals 100,
 		// but since quote generally won't be 0, we check if it's less than or equal to minQuote.
-		if intQuote <= minQuote {
-			return ufmt.Errorf(errInvalidQuoteValue, quote, i)
+		if intQuote <= MinQuotePercentage {
+			return nil, ufmt.Errorf(errInvalidQuoteValue, quote, i)
 		}
 
-		if intQuote > maxQuote {
-			return ufmt.Errorf(errQuoteExceedsMax, quote, i, maxQuote)
+		if intQuote > MaxQuotePercentage {
+			return nil, ufmt.Errorf(errQuoteExceedsMax, quote, i, MaxQuotePercentage)
 		}
 
-		if sum > maxQuote-intQuote {
-			return ufmt.Errorf(errQuoteSumExceedsMax, i)
+		if sum > MaxQuotePercentage-intQuote {
+			return nil, ufmt.Errorf(errQuoteSumExceedsMax, i)
 		}
 
 		sum += intQuote
+		parsed[i] = int64(intQuote)
 	}
 
-	if sum != maxQuote {
-		return ufmt.Errorf(errInvalidQuoteSum, sum)
+	if sum != MaxQuotePercentage {
+		return nil, ufmt.Errorf(errInvalidQuoteSum, sum)
 	}
 
-	return nil
+	return parsed, nil
 }
 
 // finalizeSwap handles post-swap operations and validations.
@@ -282,6 +286,6 @@ func (r *routerV1) finalizeSwap(
 }
 
 // validateRoutesAndQuotes is a convenience function that parses and validates routes in one call.
-func validateRoutesAndQuotes(routes, quotes string) ([]string, []string, error) {
-	return NewRouteParser().ParseRoutes(routes, quotes)
+func validateRoutesAndQuotes(routes, quotes string) ([]string, []string, []int64, error) {
+	return NewRouteParser().ParseRoutesWithQuoteInts(routes, quotes)
 }

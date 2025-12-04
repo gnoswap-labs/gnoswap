@@ -37,22 +37,23 @@ type SwapProcessor struct {
 }
 
 // ProcessSwapAmount calculates the exact amount to swap based on quote percentage.
+// Note: quotes are already confirmed to be in the range.
 func (p *SwapProcessor) ProcessSwapAmount(amountSpecified *i256.Int, quote string) (*i256.Int, error) {
-	quoteInt, err := strconv.Atoi(quote)
+	qt, err := strconv.ParseInt(quote, 10, 64)
 	if err != nil {
 		return nil, ufmt.Errorf("invalid quote(%s)", quote)
 	}
 
-	if quoteInt < MinQuotePercentage || quoteInt > MaxQuotePercentage {
-		return nil, ufmt.Errorf(ErrInvalidQuoteRange, quote, MinQuotePercentage, MaxQuotePercentage)
-	}
+	return p.ProcessSwapAmountInt(amountSpecified, qt)
+}
 
-	toSwap, overflow := i256.Zero().MulOverflow(amountSpecified, i256.NewInt(int64(quoteInt)))
+// ProcessSwapAmountInt calculates the exact amount to swap based on quote percentage using parsed quote.
+func (p *SwapProcessor) ProcessSwapAmountInt(amountSpecified *i256.Int, quoteInt int64) (*i256.Int, error) {
+	toSwap, overflow := calcQuoteSwapAmount(amountSpecified, quoteInt)
 	if overflow {
 		return nil, ufmt.Errorf(ErrOverflowCalculateSwapAmount)
 	}
 
-	toSwap = i256.Zero().Div(toSwap, PERCENTAGE_DENOMINATOR)
 	if toSwap.IsZero() {
 		return nil, errInvalidSwapAmount
 	}
@@ -190,7 +191,8 @@ func (r *routerV1) drySwapRoute(
 		panic(addDetailToError(errInvalidInput, err.Error()))
 	}
 
-	routes, quotes, err := NewRouteParser().ParseRoutes(strRouteArr, quoteArr)
+	// confirmed quotes are in the range.
+	routes, _, quotesInt, err := NewRouteParser().ParseRoutesWithQuoteInts(strRouteArr, quoteArr)
 	if err != nil {
 		panic(addDetailToError(errInvalidRoutesAndQuotes, err.Error()))
 	}
@@ -208,17 +210,17 @@ func (r *routerV1) drySwapRoute(
 	remainRequestAmount := amountSpecified
 
 	// Process each route
-	for i, route := range routes {
-		toSwapAmount := i256.Zero()
+		for i, route := range routes {
+			toSwapAmount := i256.Zero()
 
-		// if it's the last route, use the remaining amount
-		isLastRoute := i == len(routes)-1
-		if !isLastRoute {
-			// calculate the amount to swap for this route
-			swapAmount, err := processor.ProcessSwapAmount(amountSpecified, quotes[i])
-			if err != nil {
-				return zeroString, zeroString, false
-			}
+			// if it's the last route, use the remaining amount
+			isLastRoute := i == len(routes)-1
+			if !isLastRoute {
+				// calculate the amount to swap for this route
+				swapAmount, err := processor.ProcessSwapAmountInt(amountSpecified, quotesInt[i])
+				if err != nil {
+					return zeroString, zeroString, false
+				}
 
 			// update the remaining amount
 			remainRequestAmount = i256.Zero().Sub(remainRequestAmount, swapAmount)

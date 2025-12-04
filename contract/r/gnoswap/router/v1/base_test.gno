@@ -5,6 +5,7 @@ import (
 	"chain/runtime"
 	"errors"
 	"math"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -248,7 +249,12 @@ func TestValidateRouteQuote(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := op.validateRouteQuote(tt.quote, tt.index)
+			var quoteInt int64
+			if tt.quote != "" {
+				parsed, _ := strconv.ParseInt(tt.quote, 10, 64)
+				quoteInt = parsed
+			}
+			result, err := op.validateRouteQuote(quoteInt, tt.index)
 			if tt.expectError {
 				uassert.Error(t, err)
 			} else {
@@ -293,7 +299,8 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 		amountSpecified: oddAmount,
 		routes:          []string{foobar500, barbaz500},
 		// allocate 50% to each route
-		quotes: []string{"50", "50"},
+		quotes:    []string{"50", "50"},
+		quotesInt: []int64{50, 50},
 	}
 
 	testing.SetRealm(adminRealm)
@@ -320,7 +327,7 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 
 	// check actual swapped amounts for each route
 	for i := range op.routes {
-		toSwap, err := op.validateRouteQuote(op.quotes[i], i)
+		toSwap, err := op.validateRouteQuote(op.quotesInt[i], i)
 		if err != nil {
 			t.Fatalf("unexpected error validating quote: %v", err)
 		}
@@ -886,6 +893,7 @@ func TestValidateRouteQuote_EdgeCases(t *testing.T) {
 		name            string
 		amountSpecified *i256.Int
 		quote           string
+		quoteInt        int64
 		index           int
 		expectError     bool
 		expectedResult  string
@@ -895,6 +903,7 @@ func TestValidateRouteQuote_EdgeCases(t *testing.T) {
 			name:            "zero amount specified",
 			amountSpecified: i256.NewInt(0),
 			quote:           "50",
+			quoteInt:        50,
 			index:           0,
 			expectError:     true,
 			description:     "0 * 50 / 100 = 0, should error",
@@ -903,6 +912,7 @@ func TestValidateRouteQuote_EdgeCases(t *testing.T) {
 			name:            "zero quote percentage",
 			amountSpecified: i256.NewInt(1000),
 			quote:           "0",
+			quoteInt:        0,
 			index:           0,
 			expectError:     true,
 			description:     "1000 * 0 / 100 = 0, should error",
@@ -911,6 +921,7 @@ func TestValidateRouteQuote_EdgeCases(t *testing.T) {
 			name:            "100% quote",
 			amountSpecified: i256.NewInt(1000),
 			quote:           "100",
+			quoteInt:        100,
 			index:           0,
 			expectError:     false,
 			expectedResult:  "1000",
@@ -920,6 +931,7 @@ func TestValidateRouteQuote_EdgeCases(t *testing.T) {
 			name:            "1% quote",
 			amountSpecified: i256.NewInt(10000),
 			quote:           "1",
+			quoteInt:        1,
 			index:           0,
 			expectError:     false,
 			expectedResult:  "100",
@@ -929,6 +941,7 @@ func TestValidateRouteQuote_EdgeCases(t *testing.T) {
 			name:            "negative quote",
 			amountSpecified: i256.NewInt(1000),
 			quote:           "-50",
+			quoteInt:        -50,
 			index:           0,
 			expectError:     false,
 			expectedResult:  "-500",
@@ -938,6 +951,7 @@ func TestValidateRouteQuote_EdgeCases(t *testing.T) {
 			name:            "quote with leading zeros",
 			amountSpecified: i256.NewInt(1000),
 			quote:           "050",
+			quoteInt:        50,
 			index:           0,
 			expectError:     false,
 			expectedResult:  "500",
@@ -947,6 +961,7 @@ func TestValidateRouteQuote_EdgeCases(t *testing.T) {
 			name:            "invalid quote - decimal",
 			amountSpecified: i256.NewInt(1000),
 			quote:           "50.5",
+			quoteInt:        0,
 			index:           0,
 			expectError:     true,
 			description:     "decimal quotes should fail",
@@ -955,6 +970,7 @@ func TestValidateRouteQuote_EdgeCases(t *testing.T) {
 			name:            "quote greater than 100",
 			amountSpecified: i256.NewInt(1000),
 			quote:           "150",
+			quoteInt:        150,
 			index:           0,
 			expectError:     false,
 			expectedResult:  "1500",
@@ -968,7 +984,7 @@ func TestValidateRouteQuote_EdgeCases(t *testing.T) {
 				amountSpecified: tt.amountSpecified,
 			}
 
-			result, err := op.validateRouteQuote(tt.quote, tt.index)
+			result, err := op.validateRouteQuote(tt.quoteInt, tt.index)
 
 			if tt.expectError {
 				uassert.Error(t, err)
@@ -1418,6 +1434,7 @@ func TestValidateRouteQuote_ExtremeValues(t *testing.T) {
 		name            string
 		amountSpecified *i256.Int
 		quote           string
+		quoteInt        int64
 		index           int
 		expectError     bool
 		description     string
@@ -1426,6 +1443,7 @@ func TestValidateRouteQuote_ExtremeValues(t *testing.T) {
 			name:            "max int64 amount",
 			amountSpecified: i256.NewInt(9223372036854775807), // max int64
 			quote:           "1",
+			quoteInt:        1,
 			index:           0,
 			expectError:     false,
 			description:     "Should handle max int64",
@@ -1434,6 +1452,7 @@ func TestValidateRouteQuote_ExtremeValues(t *testing.T) {
 			name:            "very large amount",
 			amountSpecified: i256.MustFromDecimal("999999999999999999999"),
 			quote:           "1",
+			quoteInt:        1,
 			index:           0,
 			expectError:     false,
 			description:     "Should handle very large amounts",
@@ -1442,6 +1461,7 @@ func TestValidateRouteQuote_ExtremeValues(t *testing.T) {
 			name:            "amount 1 with quote 1",
 			amountSpecified: i256.NewInt(1),
 			quote:           "1",
+			quoteInt:        1,
 			index:           0,
 			expectError:     true,
 			description:     "1 * 1 / 100 = 0, should error",
@@ -1454,7 +1474,7 @@ func TestValidateRouteQuote_ExtremeValues(t *testing.T) {
 				amountSpecified: tt.amountSpecified,
 			}
 
-			result, err := op.validateRouteQuote(tt.quote, tt.index)
+			result, err := op.validateRouteQuote(tt.quoteInt, tt.index)
 
 			if tt.expectError {
 				uassert.Error(t, err)
