@@ -177,10 +177,6 @@ func (op *baseSwapOperation) processRoute(
 		amountIn, amountOut = r.handleMultiSwap(swapType, route, numHops, toSwap, op.withUnwrap)
 	}
 
-	if amountIn == 0 || amountOut == 0 {
-		return 0, 0, ufmt.Errorf("swap failed to process route(%s)", route)
-	}
-
 	return amountIn, amountOut, nil
 }
 
