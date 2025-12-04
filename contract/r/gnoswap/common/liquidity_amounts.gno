@@ -20,7 +20,6 @@ var (
 	q128Mask   = u256.MustFromDecimal(MAX_UINT128)
 	// only used for return value
 	zero = u256.Zero()
-	zeroI256 = i256.Zero()
 )
 
 // computeLiquidityForAmount0 calculates the liquidity for a given amount of token0.
@@ -272,7 +271,7 @@ func LiquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 	yAbs := y.Abs()
 
 	// Subtract or add based on the sign of y
-	if y.Lt(zeroI256) {
+	if y.Lt(i256.Zero()) {
 		z := u256.Zero().Sub(x, yAbs)
 		if z.Gte(x) {
 			panic(ufmt.Sprintf(
