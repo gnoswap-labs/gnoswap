@@ -49,8 +49,12 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 			)
 	}
 
-	pToken0, pToken1, pFee := splitOf(position.PoolKey())
-	burn0, burn1 := pl.Burn(cross, pToken0, pToken1, pFee, position.TickLower(), position.TickUpper(), liquidityToRemove.ToString(), caller)
+	poolKey := position.PoolKey()
+	pToken0, pToken1, pFee := splitOf(poolKey)
+
+	tickLower := position.TickLower()
+	tickUpper := position.TickUpper()
+	burn0, burn1 := pl.Burn(cross, pToken0, pToken1, pFee, tickLower, tickUpper, liquidityToRemove.ToString(), caller)
 
 	burnedAmount0 := u256.MustFromDecimal(burn0)
 	burnedAmount1 := u256.MustFromDecimal(burn1)
@@ -73,12 +77,12 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 			)
 	}
 
-	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
+	positionKey := computePositionKey(tickLower, tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
 
-	currentSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(position.PoolKey())
-	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.TickLower())
-	upperTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.TickUpper())
+	currentSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(poolKey)
+	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
+	upperTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
 	calculatedToken0BalanceStr, calculatedToken1BalanceStr := common.GetAmountsForLiquidity(
 		currentSqrtPriceX96,
 		lowerTickSqrtPriceX96,
@@ -123,8 +127,8 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 		pToken1,
 		pFee,
 		caller,
-		position.TickLower(),
-		position.TickUpper(),
+		tickLower,
+		tickUpper,
 		burn0,
 		burn1,
 	)
@@ -165,7 +169,7 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 
 	p.mustUpdatePosition(params.positionId, *position)
 
-	return params.positionId, liquidityToRemove.ToString(), fee0Str, fee1Str, collect0, collect1, position.PoolKey(), nil
+	return params.positionId, liquidityToRemove.ToString(), fee0Str, fee1Str, collect0, collect1, poolKey, nil
 }
 
 // calculateFees calculates the fees for the current position.

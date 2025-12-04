@@ -94,17 +94,20 @@ func (p *positionV1) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint)
 	if overflow {
 		panic(errOverflow)
 	}
-	unclaimedFee1 := u256.Zero().Div(unclaimedFee1X128, q128)
 
-	return unclaimedFee0, unclaimedFee1
+	return unclaimedFee0, u256.Zero().Div(unclaimedFee1X128, q128)
 }
 
 func (p *positionV1) rpcMakePosition(positionId uint64) RpcPosition {
 	position := p.mustGetPosition(positionId)
 
-	currentSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(position.PoolKey())
-	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.TickLower())
-	upperTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.TickUpper())
+	poolKey := position.PoolKey()
+	tickUpper := position.TickUpper()
+	tickLower := position.TickLower()
+
+	currentSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(poolKey)
+	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
+	upperTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
 
 	calculatedToken0Balance, calculatedToken1Balance := common.GetAmountsForLiquidity(
 		currentSqrtPriceX96,
@@ -127,14 +130,16 @@ func (p *positionV1) rpcMakePosition(positionId uint64) RpcPosition {
 		owner = zeroAddress
 	}
 
+	// Note: `TokensOwed0`, `TokensOwed1` are same as `token0Balance`, `token1Balance` semantically.
+	// need to check this should be remove or maintain.
 	return RpcPosition{
 		LpPositionId:             positionId,
 		Burned:                   burned,
 		Owner:                    owner.String(),
 		Operator:                 position.Operator().String(),
-		PoolKey:                  position.PoolKey(),
-		TickLower:                position.TickLower(),
-		TickUpper:                position.TickUpper(),
+		PoolKey:                  poolKey,
+		TickLower:                tickLower,
+		TickUpper:                tickUpper,
 		Liquidity:                position.Liquidity().ToString(),
 		FeeGrowthInside0LastX128: position.FeeGrowthInside0LastX128().ToString(),
 		FeeGrowthInside1LastX128: position.FeeGrowthInside1LastX128().ToString(),

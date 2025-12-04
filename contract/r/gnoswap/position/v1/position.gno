@@ -64,11 +64,12 @@ func (p *positionV1) Mint(
 	halt.AssertIsNotHaltedPosition()
 
 	previousRealm := runtime.PreviousRealm()
+	prevRealmAddr := previousRealm.Address()
 	if !previousRealm.IsUser() {
-		access.AssertIsStaker(previousRealm.Address())
+		access.AssertIsStaker(prevRealmAddr)
 	} else {
-		assertEqualsAddress(previousRealm.Address(), mintTo)
-		assertEqualsAddress(previousRealm.Address(), caller)
+		assertEqualsAddress(prevRealmAddr, mintTo)
+		assertEqualsAddress(prevRealmAddr, caller)
 	}
 
 	// assert that the user has sent the correct amount of native coin
@@ -128,7 +129,7 @@ func (p *positionV1) Mint(
 
 	chain.Emit(
 		"Mint",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", prevRealmAddr.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"tickLower", formatInt(processedInput.tickLower),
 		"tickUpper", formatInt(processedInput.tickUpper),
@@ -186,7 +187,8 @@ func (p *positionV1) IncreaseLiquidity(
 ) (uint64, string, string, string, string) {
 	halt.AssertIsNotHaltedPosition()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	assertIsOwnerForToken(p, positionId, caller)
 
 	assertValidNumberString(amount0DesiredStr)
@@ -253,17 +255,22 @@ func (p *positionV1) IncreaseLiquidity(
 	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp :=
 		pl.GetObservation(poolPath, 0)
 
-	previousRealm := runtime.PreviousRealm()
+
+	amount0Str := amount0.ToString()
+	amount1Str := amount1.ToString()
+	liquidityStr := liquidity.ToString()
+
+	// NOTE: prevAddr, caller are same. need to check this should be remove or maintain.
 	chain.Emit(
 		"IncreaseLiquidity",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", poolPath,
 		"caller", caller.String(),
 		"lpPositionId", formatUint(positionId),
-		"liquidity", liquidity.ToString(),
-		"amount0", amount0.ToString(),
-		"amount1", amount1.ToString(),
+		"liquidity", liquidityStr,
+		"amount0", amount0Str,
+		"amount1", amount1Str,
 		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath).ToString(),
 		"positionLiquidity", p.GetPositionLiquidity(positionId).ToString(),
 		"token0Balance", pl.GetBalanceToken0(poolPath),
@@ -274,7 +281,7 @@ func (p *positionV1) IncreaseLiquidity(
 		"observationTimestamp", formatInt(observationTimestamp),
 	)
 
-	return positionId, liquidity.ToString(), amount0.ToString(), amount1.ToString(), poolPath
+	return positionId, liquidityStr, amount0Str, amount1Str, poolPath
 }
 
 // unwrapLeftoverWrappedToken unwraps leftover wrapped tokens to native tokens.
@@ -420,20 +427,24 @@ func (p *positionV1) collectFee(
 
 	// verify position
 	position := p.mustGetPosition(positionId)
-	token0, token1, fee := splitOf(position.PoolKey())
+	poolKey := position.PoolKey()
+	token0, token1, fee := splitOf(poolKey)
+
+	tickLower := position.TickLower()
+	tickUpper := position.TickUpper()
 
 	pl.Burn(
 		cross,
 		token0,
 		token1,
 		fee,
-		position.TickLower(),
-		position.TickUpper(),
+		tickLower,
+		tickUpper,
 		ZERO_LIQUIDITY_FOR_FEE_COLLECTION, // burn '0' liquidity to collect fee
 		caller,
 	)
 
-	currentFeeGrowth, err := p.getCurrentFeeGrowth(position, caller)
+	currentFeeGrowth, err := p.getCurrentFeeGrowth(position, caller, tickUpper, tickLower)
 	if err != nil {
 		panic(newErrorWithDetail(err, "failed to get current fee growth"))
 	}
@@ -504,23 +515,25 @@ func (p *positionV1) collectFee(
 	amount1WithoutFeeStr := formatInt(amount1WithoutFee)
 
 	previousRealm := runtime.PreviousRealm()
+	prevAddr := previousRealm.Address()
+	prevPkgPath := previousRealm.PkgPath()
 	chain.Emit(
 		"CollectSwapFee",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
+		"prevAddr", prevAddr.String(),
+		"prevRealm", prevPkgPath,
 		"lpPositionId", formatUint(positionId),
 		"feeAmount0", amount0WithoutFeeStr,
 		"feeAmount1", amount1WithoutFeeStr,
-		"poolPath", position.PoolKey(),
+		"poolPath", poolKey,
 		"unwrapResult", formatBool(unwrapResult),
 	)
 
 	chain.Emit(
 		"WithdrawalFee",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
+		"prevAddr", prevAddr.String(),
+		"prevRealm", prevPkgPath,
 		"lpTokenId", formatUint(positionId),
-		"poolPath", position.PoolKey(),
+		"poolPath", poolKey,
 		"feeAmount0", formatInt(fee0),
 		"feeAmount1", formatInt(fee1),
 		"amount0WithoutFee", amount0WithoutFeeStr,
@@ -534,11 +547,11 @@ var feeAmountDivisor = u256.NewUint(10000)
 
 // calculateAmountWithWithdrawalFee calculates amount after deducting withdrawal fee.
 func calculateAmountWithWithdrawalFee(amount string, fee uint64) (int64, int64) {
+	amountUint := u256.MustFromDecimal(amount)
 	if fee == 0 {
-		return safeConvertToInt64(u256.MustFromDecimal(amount)), 0
+		return safeConvertToInt64(amountUint), 0
 	}
 
-	amountUint := u256.MustFromDecimal(amount)
 	feeUint := u256.NewUint(fee)
 
 	feeAmount, overflow := u256.Zero().MulOverflow(amountUint, feeUint)
@@ -569,8 +582,8 @@ func (p *positionV1) SetPositionOperator(
 }
 
 // getCurrentFeeGrowth retrieves current fee growth values for a position.
-func (p *positionV1) getCurrentFeeGrowth(position *position.Position, owner address) (FeeGrowthInside, error) {
-	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
+func (p *positionV1) getCurrentFeeGrowth(position *position.Position, owner address, tickUpper, tickLower int32) (FeeGrowthInside, error) {
+	positionKey := computePositionKey(tickLower, tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
 
 	feeGrowthInside := FeeGrowthInside{
