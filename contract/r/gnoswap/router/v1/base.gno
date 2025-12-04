@@ -61,10 +61,7 @@ type baseSwapOperation struct {
 	withUnwrap              bool
 	userBeforeWugnotBalance int64
 	userWrappedWugnot       int64
-	routes                  []string
-	quotes                  []string
-	quotesInt               []int64
-	hops                    []int
+	parsedRoutes            *ParsedRoutes
 	amountSpecified         *i256.Int
 }
 
@@ -133,14 +130,14 @@ func (op *baseSwapOperation) processRoutes(r *routerV1, swapType SwapType) (*u25
 	resultAmountIn, resultAmountOut := zero, zero
 	remainRequestAmount := op.amountSpecified
 
-	for i, route := range op.routes {
+	for i, route := range op.parsedRoutes.Routes {
 		toSwapAmount := i256.Zero()
 
 		// if it's the last route, use the remaining amount
-		isLastRoute := i == len(op.routes)-1
+		isLastRoute := i == len(op.parsedRoutes.Routes)-1
 		if !isLastRoute {
 			// calculate the amount to swap for this route
-			swapAmount, err := op.validateRouteQuote(op.quotesInt[i], i)
+			swapAmount, err := op.validateRouteQuote(op.parsedRoutes.QuotesInt[i], i)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -152,7 +149,7 @@ func (op *baseSwapOperation) processRoutes(r *routerV1, swapType SwapType) (*u25
 			toSwapAmount = remainRequestAmount
 		}
 
-		amountIn, amountOut, err := op.processRoute(r, route, toSwapAmount, swapType, op.hops[i])
+		amountIn, amountOut, err := op.processRoute(r, route, toSwapAmount, swapType, op.parsedRoutes.Hops[i])
 		if err != nil {
 			return nil, nil, err
 		}

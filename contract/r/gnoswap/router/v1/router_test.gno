@@ -1861,17 +1861,17 @@ func TestValidateRoutesAndQuotes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			routes, quotes, quotesInt, hops, err := validateRoutesAndQuotes(tt.routes, tt.quotes)
+			parsed, err := validateRoutesAndQuotes(tt.routes, tt.quotes)
 
 			if tt.expectError {
 				uassert.Error(t, err)
 			} else {
 				uassert.NoError(t, err)
-				uassert.NotNil(t, routes)
-				uassert.NotNil(t, quotes)
-				uassert.NotNil(t, quotesInt)
-				uassert.NotNil(t, hops)
-				uassert.Equal(t, len(routes), len(hops))
+				uassert.NotNil(t, parsed.Routes)
+				uassert.NotNil(t, parsed.Quotes)
+				uassert.NotNil(t, parsed.QuotesInt)
+				uassert.NotNil(t, parsed.Hops)
+				uassert.Equal(t, len(parsed.Routes), len(parsed.Hops))
 			}
 		})
 	}

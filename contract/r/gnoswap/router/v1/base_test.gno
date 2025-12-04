@@ -299,11 +299,12 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 	op := &baseSwapOperation{
 		// use odd amount to ensure remainder
 		amountSpecified: oddAmount,
-		routes:          []string{foobar500, barbaz500},
-		// allocate 50% to each route
-		quotes:    []string{"50", "50"},
-		quotesInt: []int64{50, 50},
-		hops:      []int{1, 1}, // Both routes are single-hop
+		parsedRoutes: &ParsedRoutes{
+			Routes:    []string{foobar500, barbaz500},
+			Quotes:    []string{"50", "50"},
+			QuotesInt: []int64{50, 50},
+			Hops:      []int{1, 1}, // Both routes are single-hop
+		},
 	}
 
 	testing.SetRealm(adminRealm)
@@ -329,8 +330,8 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 	}(cross)
 
 	// check actual swapped amounts for each route
-	for i := range op.routes {
-		toSwap, err := op.validateRouteQuote(op.quotesInt[i], i)
+	for i := range op.parsedRoutes.Routes {
+		toSwap, err := op.validateRouteQuote(op.parsedRoutes.QuotesInt[i], i)
 		if err != nil {
 			t.Fatalf("unexpected error validating quote: %v", err)
 		}
@@ -1014,10 +1015,12 @@ func TestProcessRoutes_OverflowDetection(t *testing.T) {
 			name: "normal amounts - no overflow",
 			op: &baseSwapOperation{
 				amountSpecified: i256.NewInt(1000),
-				routes:          []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"},
-				quotes:          []string{"100"},
-				quotesInt:       []int64{100},
-				hops:            []int{1},
+				parsedRoutes: &ParsedRoutes{
+					Routes:    []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"},
+					Quotes:    []string{"100"},
+					QuotesInt: []int64{100},
+					Hops:      []int{1},
+				},
 			},
 			expectPanic:  false,
 			expectedHops: []int{1},
@@ -1026,10 +1029,12 @@ func TestProcessRoutes_OverflowDetection(t *testing.T) {
 			name: "overflow amounts - MaxInt64 + 1",
 			op: &baseSwapOperation{
 				amountSpecified: i256.MustFromDecimal("9223372036854775808"), // MaxInt64 + 1
-				routes:          []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"},
-				quotes:          []string{"100"},
-				quotesInt:       []int64{100},
-				hops:            []int{1},
+				parsedRoutes: &ParsedRoutes{
+					Routes:          []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"},
+					Quotes:    []string{"100"},
+					QuotesInt: []int64{100},
+					Hops:      []int{1},
+				},
 			},
 			expectPanic: true,
 			panicMsg:    "[GNOSWAP-POOL-026] overflow",
@@ -1038,10 +1043,12 @@ func TestProcessRoutes_OverflowDetection(t *testing.T) {
 			name: "multi-hop route with pre-calculated hops",
 			op: &baseSwapOperation{
 				amountSpecified: i256.NewInt(1000),
-				routes:          []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:3000"},
-				quotes:          []string{"100"},
-				quotesInt:       []int64{100},
-				hops:            []int{2}, // Pre-calculated hops
+				parsedRoutes: &ParsedRoutes{
+					Routes:          []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:3000"},
+					Quotes:    []string{"100"},
+					QuotesInt: []int64{100},
+					Hops:      []int{2}, // Pre-calculated hops
+				},
 			},
 			expectPanic:  false,
 			expectedHops: []int{2},
@@ -1095,7 +1102,7 @@ func TestProcessRoutes_OverflowDetection(t *testing.T) {
 				err := processRoutesFn(cross)
 				uassert.NoError(t, err)
 				if len(tt.expectedHops) > 0 {
-					for i, hop := range tt.op.hops {
+					for i, hop := range tt.op.parsedRoutes.Hops {
 						uassert.Equal(t, hop, tt.expectedHops[i])
 					}
 				}
@@ -1292,29 +1299,43 @@ func TestBaseSwapOperation_Initialization(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Create ParsedRoutes from test data
+			var parsedRoutes *ParsedRoutes
+			if len(tt.routes) > 0 {
+				hops := make([]int, len(tt.routes))
+				quoteInts := make([]int64, len(tt.quotes))
+				for i := range tt.routes {
+					hops[i] = 1 // Assume single-hop for initialization test
+					if i < len(tt.quotes) {
+						// Parse quote to int64
+						quoteInts[i], _ = strconv.ParseInt(strings.TrimSpace(tt.quotes[i]), 10, 64)
+					}
+				}
+				parsedRoutes = &ParsedRoutes{
+					Routes:    tt.routes,
+					Quotes:    tt.quotes,
+					QuotesInt: quoteInts,
+					Hops:      hops,
+				}
+			}
+
 			op := &baseSwapOperation{
 				sqrtPriceLimitX96:       tt.sqrtPriceLimitX96,
 				withUnwrap:              tt.withUnwrap,
 				userBeforeWugnotBalance: tt.userBeforeWugnotBalance,
 				userWrappedWugnot:       tt.userWrappedWugnot,
-				routes:                  tt.routes,
-				quotes:                  tt.quotes,
+				parsedRoutes:            parsedRoutes,
 				amountSpecified:         tt.amountSpecified,
-			}
-			// Add hops if routes are present
-			if len(tt.routes) > 0 {
-				op.hops = make([]int, len(tt.routes))
-				for i := range tt.routes {
-					op.hops[i] = 1 // Assume single-hop for initialization test
-				}
 			}
 
 			uassert.Equal(t, op.sqrtPriceLimitX96, tt.sqrtPriceLimitX96)
 			uassert.Equal(t, op.withUnwrap, tt.withUnwrap)
 			uassert.Equal(t, op.userBeforeWugnotBalance, tt.userBeforeWugnotBalance)
 			uassert.Equal(t, op.userWrappedWugnot, tt.userWrappedWugnot)
-			uassert.Equal(t, len(op.routes), len(tt.routes))
-			uassert.Equal(t, len(op.quotes), len(tt.quotes))
+			if parsedRoutes != nil {
+				uassert.Equal(t, len(op.parsedRoutes.Routes), len(tt.routes))
+				uassert.Equal(t, len(op.parsedRoutes.Quotes), len(tt.quotes))
+			}
 			uassert.Equal(t, op.amountSpecified.ToString(), tt.amountSpecified.ToString())
 		})
 	}

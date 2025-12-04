@@ -156,6 +156,14 @@ func (v *SwapValidator) amountLimit(amountLimit string) (*i256.Int, error) {
 	return parsedLimit, nil
 }
 
+// ParsedRoutes contains all parsed route information in a single structure.
+type ParsedRoutes struct {
+	Routes    []string
+	Quotes    []string
+	QuotesInt []int64
+	Hops      []int
+}
+
 // RouteParser handles parsing and validation of routes and quotes
 type RouteParser struct{}
 
@@ -166,15 +174,18 @@ func NewRouteParser() *RouteParser {
 
 // ParseRoutes parses route and quote strings into slices and validates them.
 func (p *RouteParser) ParseRoutes(routes, quotes string) ([]string, []string, error) {
-	routesArr, quotesArr, _, _, err := p.ParseRoutesWithQuoteInts(routes, quotes)
-	return routesArr, quotesArr, err
+	parsed, err := p.ParseRoutesWithQuoteInts(routes, quotes)
+	if err != nil {
+		return nil, nil, err
+	}
+	return parsed.Routes, parsed.Quotes, nil
 }
 
-// ParseRoutesWithQuoteInts parses routes/quotes and also returns parsed quote integers and hop counts.
-func (p *RouteParser) ParseRoutesWithQuoteInts(routes, quotes string) ([]string, []string, []int64, []int, error) {
+// ParseRoutesWithQuoteInts parses routes/quotes and returns a ParsedRoutes struct.
+func (p *RouteParser) ParseRoutesWithQuoteInts(routes, quotes string) (*ParsedRoutes, error) {
 	// Check for empty routes
 	if routes == "" || quotes == "" {
-		return nil, nil, nil, nil, ufmt.Errorf(errEmptyRoutes)
+		return nil, ufmt.Errorf(errEmptyRoutes)
 	}
 
 	routesArr := splitSingleChar(routes, ',')
@@ -182,13 +193,18 @@ func (p *RouteParser) ParseRoutesWithQuoteInts(routes, quotes string) ([]string,
 
 	quoteInts, err := p.ValidateRoutesAndQuotes(routesArr, quotesArr)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, err
 	}
 
 	// Calculate hops for each route
 	hops := countHopsSlice(routesArr)
 
-	return routesArr, quotesArr, quoteInts, hops, nil
+	return &ParsedRoutes{
+		Routes:    routesArr,
+		Quotes:    quotesArr,
+		QuotesInt: quoteInts,
+		Hops:      hops,
+	}, nil
 }
 
 // ValidateRoutesAndQuotes ensures routes and quotes meet required criteria.
@@ -290,6 +306,6 @@ func (r *routerV1) finalizeSwap(
 }
 
 // validateRoutesAndQuotes is a convenience function that parses and validates routes in one call.
-func validateRoutesAndQuotes(routes, quotes string) ([]string, []string, []int64, []int, error) {
+func validateRoutesAndQuotes(routes, quotes string) (*ParsedRoutes, error) {
 	return NewRouteParser().ParseRoutesWithQuoteInts(routes, quotes)
 }

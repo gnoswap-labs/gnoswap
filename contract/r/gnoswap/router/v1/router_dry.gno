@@ -191,7 +191,7 @@ func (r *routerV1) drySwapRoute(
 	}
 
 	// confirmed quotes are in the range.
-	routes, _, quotesInt, hops, err := NewRouteParser().ParseRoutesWithQuoteInts(strRouteArr, quoteArr)
+	parsed, err := NewRouteParser().ParseRoutesWithQuoteInts(strRouteArr, quoteArr)
 	if err != nil {
 		panic(addDetailToError(errInvalidRoutesAndQuotes, err.Error()))
 	}
@@ -209,14 +209,14 @@ func (r *routerV1) drySwapRoute(
 	remainRequestAmount := amountSpecified
 
 	// Process each route
-	for i, route := range routes {
+	for i, route := range parsed.Routes {
 		toSwapAmount := i256.Zero()
 
 		// if it's the last route, use the remaining amount
-		isLastRoute := i == len(routes)-1
+		isLastRoute := i == len(parsed.Routes)-1
 		if !isLastRoute {
 			// calculate the amount to swap for this route
-			swapAmount, err := processor.ProcessSwapAmountInt(amountSpecified, quotesInt[i])
+			swapAmount, err := processor.ProcessSwapAmountInt(amountSpecified, parsed.QuotesInt[i])
 			if err != nil {
 				return zeroString, zeroString, false
 			}
@@ -229,7 +229,7 @@ func (r *routerV1) drySwapRoute(
 		}
 
 		// determine the number of hops and validate
-		numHops := hops[i]
+		numHops := parsed.Hops[i]
 		assertHopsInRange(numHops)
 
 		// execute the appropriate swap type

@@ -224,15 +224,12 @@ func (op *ExactInSwapOperation) Validate() error {
 	// obtained from above.
 	op.amountSpecified = amountIn
 
-	routes, quotes, quotesInt, hops, err := validateRoutesAndQuotes(op.params.RouteArr, op.params.QuoteArr)
+	parsed, err := validateRoutesAndQuotes(op.params.RouteArr, op.params.QuoteArr)
 	if err != nil {
 		return err
 	}
 
-	op.routes = routes
-	op.quotes = quotes
-	op.quotesInt = quotesInt
-	op.hops = hops
+	op.parsedRoutes = parsed
 
 	return nil
 }
@@ -251,8 +248,8 @@ func (op *ExactInSwapOperation) Process() (*SwapResult, error) {
 	return &SwapResult{
 		AmountIn:        resultAmountIn,
 		AmountOut:       resultAmountOut,
-		Routes:          op.routes,
-		Quotes:          op.quotes,
+		Routes:          op.parsedRoutes.Routes,
+		Quotes:          op.parsedRoutes.Quotes,
 		AmountSpecified: op.amountSpecified,
 		WithUnwrap:      op.withUnwrap,
 	}, nil

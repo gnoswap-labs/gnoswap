@@ -72,7 +72,7 @@ func TestRouteParser_ParseRoutesWithQuoteInts_HopCalculation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			routes, quotes, quotesInt, hops, err := parser.ParseRoutesWithQuoteInts(tt.routes, tt.quotes)
+			parsed, err := parser.ParseRoutesWithQuoteInts(tt.routes, tt.quotes)
 
 			if tt.expectError {
 				uassert.Error(t, err, "expected error but got none")
@@ -83,20 +83,21 @@ func TestRouteParser_ParseRoutesWithQuoteInts_HopCalculation(t *testing.T) {
 				uassert.NoError(t, err, "unexpected error")
 
 				// Verify hop counts
-				uassert.Equal(t, len(hops), len(tt.expectedHops), "hop count mismatch")
+				uassert.Equal(t, len(parsed.Hops), len(tt.expectedHops), "hop count mismatch")
 				for i, expectedHop := range tt.expectedHops {
-					uassert.Equal(t, hops[i], expectedHop)
+					uassert.Equal(t, parsed.Hops[i], expectedHop)
 				}
 
 				// Verify other return values are consistent
-				uassert.Equal(t, len(routes), len(hops), "routes and hops length mismatch")
-				uassert.Equal(t, len(quotes), len(hops), "quotes and hops length mismatch")
-				uassert.Equal(t, len(quotesInt), len(hops), "quotesInt and hops length mismatch")
+				hops := len(parsed.Hops)
+				uassert.Equal(t, len(parsed.Routes), hops, "routes and hops length mismatch")
+				uassert.Equal(t, len(parsed.Quotes), hops, "quotes and hops length mismatch")
+				uassert.Equal(t, len(parsed.QuotesInt), hops, "quotesInt and hops length mismatch")
 
 				// Verify hop calculation is correct by manually checking
-				for i, route := range routes {
+				for i, route := range parsed.Routes {
 					expectedHopCount := countHops(route)
-					uassert.Equal(t, hops[i], expectedHopCount)
+					uassert.Equal(t, parsed.Hops[i], expectedHopCount)
 				}
 			}
 		})
@@ -134,20 +135,20 @@ func TestValidateRoutesAndQuotes_HopPropagation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			routes, quotes, quotesInt, hops, err := validateRoutesAndQuotes(tt.routes, tt.quotes)
+			parsed, err := validateRoutesAndQuotes(tt.routes, tt.quotes)
 
 			uassert.NoError(t, err)
-			uassert.NotNil(t, hops, "hops should not be nil")
-			uassert.Equal(t, len(hops), len(tt.expectedHops), "hop count mismatch")
+			uassert.NotNil(t, parsed.Hops, "hops should not be nil")
+			uassert.Equal(t, len(parsed.Hops), len(tt.expectedHops), "hop count mismatch")
 
 			for i, expectedHop := range tt.expectedHops {
-				uassert.Equal(t, hops[i], expectedHop)
+				uassert.Equal(t, parsed.Hops[i], expectedHop)
 			}
 
 			// Verify consistency
-			uassert.Equal(t, len(routes), len(hops))
-			uassert.Equal(t, len(quotes), len(hops))
-			uassert.Equal(t, len(quotesInt), len(hops))
+			uassert.Equal(t, len(parsed.Routes), len(parsed.Hops))
+			uassert.Equal(t, len(parsed.Quotes), len(parsed.Hops))
+			uassert.Equal(t, len(parsed.QuotesInt), len(parsed.Hops))
 		})
 	}
 }
@@ -200,10 +201,10 @@ func TestHopCalculation_EdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, _, _, hops, err := parser.ParseRoutesWithQuoteInts(tt.routes, tt.quotes)
+			parsed, err := parser.ParseRoutesWithQuoteInts(tt.routes, tt.quotes)
 
 			uassert.NoError(t, err)
-			tt.validateHops(t, hops)
+			tt.validateHops(t, parsed.Hops)
 		})
 	}
 }
