@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"strconv"
 	"strings"
-	"time"
 
 	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/common"
@@ -26,14 +25,6 @@ func assertHopsInRange(hops int) {
 		return
 	default:
 		panic(errHopsOutOfRange)
-	}
-}
-
-// assertIsNotPassedDeadline ensures the transaction deadline has not expired.
-func assertIsNotPassedDeadline(deadline int64) {
-	if err := checkDeadline(deadline); err != nil {
-		errMsg := addDetailToError(errExpired, err.Error())
-		panic(errMsg)
 	}
 }
 
@@ -214,16 +205,6 @@ func validateRoutePath(routePath, inputToken, outputToken string) error {
 	}
 
 	return nil
-}
-
-// checkDeadline verifies that the transaction deadline has not passed.
-func checkDeadline(deadline int64) error {
-	now := time.Now().Unix()
-	if now <= deadline {
-		return nil
-	}
-
-	return ufmt.Errorf(errTxExpired, now, deadline)
 }
 
 // splitSingleChar splits a string by a single character separator.
