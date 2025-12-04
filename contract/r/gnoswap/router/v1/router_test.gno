@@ -1155,18 +1155,8 @@ func TestSwapProcessor_ProcessSwapAmount(t *testing.T) {
 			quote:           "0",
 			expectError:     true,
 		},
-		// {
-		// 	name:            "quote above 100",
-		// 	amountSpecified: i256.NewInt(1000),
-		// 	quote:           "101",
-		// 	expectError:     true,
-		// },
-		// {
-		// 	name:            "negative quote",
-		// 	amountSpecified: i256.NewInt(1000),
-		// 	quote:           "-1",
-		// 	expectError:     true,
-		// },
+		// Note: Quote range validation (negative and >100) is now handled in ValidateRoutesAndQuotes
+		// These test cases have been moved to TestRouteParser_ValidateRoutesAndQuotes
 	}
 
 	for _, tt := range tests {
@@ -1512,6 +1502,34 @@ func TestRouteParser_ValidateRoutesAndQuotes(t *testing.T) {
 			expectError: true,
 			errorMsg:    "route length(8) must be 1~7",
 		},
+		{
+			name:        "quote above 100",
+			routes:      []string{"route1"},
+			quotes:      []string{"101"},
+			expectError: true,
+			errorMsg:    "must be less than or equal to 100",
+		},
+		{
+			name:        "negative quote",
+			routes:      []string{"route1"},
+			quotes:      []string{"-1"},
+			expectError: true,
+			errorMsg:    "must be positive value",
+		},
+		{
+			name:        "multiple routes with one negative quote",
+			routes:      []string{"route1", "route2"},
+			quotes:      []string{"50", "-50"},
+			expectError: true,
+			errorMsg:    "must be positive valu",
+		},
+		{
+			name:        "multiple routes with one quote above 100",
+			routes:      []string{"route1", "route2", "route3"},
+			quotes:      []string{"30", "40", "150"},
+			expectError: true,
+			errorMsg:    "invalid quote(150)",
+		},
 	}
 
 	for _, tt := range tests {
@@ -1522,7 +1540,7 @@ func TestRouteParser_ValidateRoutesAndQuotes(t *testing.T) {
 				uassert.Error(t, err)
 				if tt.errorMsg != "" {
 					uassert.True(t, strings.Contains(err.Error(), tt.errorMsg),
-						"expected error to contain: "+tt.errorMsg)
+						"expected error to contain: "+tt.errorMsg+" but got: "+err.Error())
 				}
 			} else {
 				uassert.NoError(t, err)

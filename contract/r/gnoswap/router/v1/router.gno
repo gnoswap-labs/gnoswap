@@ -12,9 +12,7 @@ import (
 	"gno.land/r/gnoswap/common"
 )
 
-var (
-	one = u256.One()
-)
+var one = u256.One()
 
 // ErrorMessages define all error message templates used throughout the router
 const (
