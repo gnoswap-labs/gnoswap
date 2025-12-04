@@ -15,7 +15,9 @@ func (s StoreKey) String() string {
 
 const (
 	// Pool data storage keys
-	StoreKeyPools                StoreKey = "pools"                // Map containing all pools
+	StoreKeyPoolPrefix           StoreKey = "pool:"                // Prefix for individual pool storage
+	StoreKeyPoolPaths            StoreKey = "poolPaths"            // List of all pool paths
+	StoreKeyPools                StoreKey = "pools"                // Map containing all pools (deprecated, for backward compatibility)
 	StoreKeyFeeAmountTickSpacing StoreKey = "feeAmountTickSpacing" // Fee tier to tick spacing mapping
 	StoreKeySlot0FeeProtocol     StoreKey = "slot0FeeProtocol"     // Protocol fee percentage
 
@@ -66,6 +68,71 @@ func (s *poolStore) SetPools(pools map[string]*Pool) error {
 	}
 
 	return s.kvStore.Set(StoreKeyPools.String(), pools)
+}
+
+// GetPool retrieves a single pool by its path using individual key storage.
+func (s *poolStore) GetPool(poolPath string) (*Pool, bool) {
+	key := StoreKeyPoolPrefix.String() + poolPath
+	result, err := s.kvStore.Get(key)
+	if err != nil {
+		return nil, false
+	}
+
+	pool, ok := result.(*Pool)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to *Pool: %T", result))
+	}
+
+	return pool, true
+}
+
+// SetPool stores a single pool by its path using individual key storage.
+func (s *poolStore) SetPool(poolPath string, pool *Pool) error {
+	if pool == nil {
+		panic(ufmt.Sprintf("pool is nil"))
+	}
+
+	key := StoreKeyPoolPrefix.String() + poolPath
+	return s.kvStore.Set(key, pool)
+}
+
+// GetPoolPaths retrieves the list of all pool paths.
+func (s *poolStore) GetPoolPaths() []string {
+	if !s.kvStore.Has(StoreKeyPoolPaths.String()) {
+		return []string{}
+	}
+
+	result, err := s.kvStore.Get(StoreKeyPoolPaths.String())
+	if err != nil {
+		panic(err)
+	}
+
+	poolPaths, ok := result.([]string)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to []string: %T", result))
+	}
+
+	return poolPaths
+}
+
+// SetPoolPaths stores the list of all pool paths.
+func (s *poolStore) SetPoolPaths(poolPaths []string) error {
+	return s.kvStore.Set(StoreKeyPoolPaths.String(), poolPaths)
+}
+
+// AddPoolPath adds a new pool path to the list of all pool paths.
+func (s *poolStore) AddPoolPath(poolPath string) error {
+	poolPaths := s.GetPoolPaths()
+
+	// Check if already exists
+	for _, path := range poolPaths {
+		if path == poolPath {
+			return nil // Already exists
+		}
+	}
+
+	poolPaths = append(poolPaths, poolPath)
+	return s.SetPoolPaths(poolPaths)
 }
 
 func (s *poolStore) HasFeeAmountTickSpacing() bool {
