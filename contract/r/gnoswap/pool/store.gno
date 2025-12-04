@@ -2,6 +2,7 @@ package pool
 
 import (
 	"gno.land/p/gnoswap/store"
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 )
 
@@ -39,33 +40,126 @@ func (s *poolStore) HasPools() bool {
 	return s.kvStore.Has(StoreKeyPools.String())
 }
 
-// GetPools retrieves the map containing all pool data.
-// This is the main data structure that stores all pool instances.
-func (s *poolStore) GetPools() map[string]*Pool {
+// getPoolsTree retrieves the AVL tree containing all pool data.
+func (s *poolStore) getPoolsTree() *avl.Tree {
 	result, err := s.kvStore.Get(StoreKeyPools.String())
 	if err != nil {
-		panic(err)
+		// If tree doesn't exist, return new empty tree
+		return avl.NewTree()
 	}
 
-	pools, ok := result.(map[string]*Pool)
+	tree, ok := result.(*avl.Tree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to map[string]*Pool: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
 	}
 
-	if pools == nil {
-		panic(ufmt.Sprintf("pools is nil"))
+	if tree == nil {
+		panic(ufmt.Sprintf("pools tree is nil"))
+	}
+
+	return tree
+}
+
+// setPoolsTree stores the AVL tree containing all pool data.
+func (s *poolStore) setPoolsTree(tree *avl.Tree) error {
+	if tree == nil {
+		panic(ufmt.Sprintf("pools tree is nil"))
+	}
+
+	return s.kvStore.Set(StoreKeyPools.String(), tree)
+}
+
+// GetPools retrieves the map containing all pool data.
+// This is maintained for backward compatibility but converts from AVL tree.
+func (s *poolStore) GetPools() map[string]*Pool {
+	tree := s.getPoolsTree()
+
+	pools := make(map[string]*Pool)
+	tree.Iterate("", "", func(key string, value any) bool {
+		pool, ok := value.(*Pool)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast value to *Pool: %T", value))
+		}
+		pools[key] = pool
+		return false
+	})
+
+	if len(pools) == 0 {
+		panic(ufmt.Sprintf("pools is empty"))
 	}
 
 	return pools
 }
 
 // SetPools stores the map containing all pool data.
+// This is maintained for backward compatibility but converts to AVL tree.
 func (s *poolStore) SetPools(pools map[string]*Pool) error {
 	if pools == nil {
 		panic(ufmt.Sprintf("pools is nil"))
 	}
 
-	return s.kvStore.Set(StoreKeyPools.String(), pools)
+	tree := avl.NewTree()
+	for poolPath, pool := range pools {
+		tree.Set(poolPath, pool)
+	}
+
+	return s.setPoolsTree(tree)
+}
+
+// GetPool retrieves a single pool by its path using AVL tree.
+// This is more efficient than GetPools() when accessing individual pools.
+func (s *poolStore) GetPool(poolPath string) (*Pool, bool) {
+	tree := s.getPoolsTree()
+
+	value, exists := tree.Get(poolPath)
+	if !exists {
+		return nil, false
+	}
+
+	pool, ok := value.(*Pool)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast value to *Pool: %T", value))
+	}
+
+	return pool, true
+}
+
+// SetPool stores a single pool by its path using AVL tree.
+// This is more efficient than GetPools/SetPools when updating individual pools.
+func (s *poolStore) SetPool(poolPath string, pool *Pool) error {
+	if pool == nil {
+		panic(ufmt.Sprintf("pool is nil"))
+	}
+
+	tree := s.getPoolsTree()
+	tree.Set(poolPath, pool)
+
+	return s.setPoolsTree(tree)
+}
+
+// GetPoolPaths retrieves all pool paths from the AVL tree.
+func (s *poolStore) GetPoolPaths() []string {
+	tree := s.getPoolsTree()
+
+	paths := make([]string, 0, tree.Size())
+	tree.Iterate("", "", func(key string, value any) bool {
+		paths = append(paths, key)
+		return false
+	})
+
+	return paths
+}
+
+// SetPoolPaths is not needed with AVL tree as paths are implicit in tree keys.
+func (s *poolStore) SetPoolPaths(poolPaths []string) error {
+	// No-op for AVL tree implementation
+	return nil
+}
+
+// AddPoolPath is not needed with AVL tree as paths are added via SetPool.
+func (s *poolStore) AddPoolPath(poolPath string) error {
+	// No-op for AVL tree implementation
+	return nil
 }
 
 func (s *poolStore) HasFeeAmountTickSpacing() bool {

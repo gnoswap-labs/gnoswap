@@ -91,10 +91,12 @@ func (i *poolV1) CreatePool(
 	pool := newPool(poolInfo)
 	poolPath := poolInfo.poolPath()
 
-	pools := i.store.GetPools()
-	pools[poolPath] = pool
+	err = i.store.SetPool(poolPath, pool)
+	if err != nil {
+		panic(err)
+	}
 
-	err = i.store.SetPools(pools)
+	err = i.store.AddPoolPath(poolPath)
 	if err != nil {
 		panic(err)
 	}
@@ -162,9 +164,7 @@ func (i *poolV1) setFeeAmountTickSpacing(fee uint32, tickSpacing int32) error {
 
 // mustGetPool retrieves a pool instance by its path and ensures it exists.
 func (i *poolV1) mustGetPool(poolPath string) (pool *pl.Pool) {
-	pools := i.store.GetPools()
-
-	pool, exist := pools[poolPath]
+	pool, exist := i.store.GetPool(poolPath)
 	if !exist {
 		panic(newErrorWithDetail(
 			errDataNotFound,
@@ -180,13 +180,10 @@ func (i *poolV1) mustGetPoolBy(token0Path, token1Path string, fee uint32) *pl.Po
 	return i.mustGetPool(poolPath)
 }
 
-// savePool updates a pool in the pools map and persists to storage.
+// savePool updates a pool in storage.
 // This ensures that modifications to pool objects are properly saved.
 func (i *poolV1) savePool(pool *pl.Pool) error {
-	pools := i.store.GetPools()
-	pools[pool.PoolPath()] = pool
-
-	return i.store.SetPools(pools)
+	return i.store.SetPool(pool.PoolPath(), pool)
 }
 
 // setFeeProtocolInternal updates the protocol fee for all pools and emits an event.
@@ -254,14 +251,25 @@ func (i *poolV1) setFeeProtocol(feeProtocol0, feeProtocol1 uint8) (uint8, error)
 	// - feeProtocol1 is shifted the lower 4 positions to occupy the upper 4 bits
 	newFee := feeProtocol0 + (feeProtocol1 << 4) // ( << 4 ) = ( * 16 )
 
-	pools := i.store.GetPools()
+	poolPaths := i.store.GetPoolPaths()
 
 	// Update slot0 for each pool
-	for _, pool := range pools {
+	for _, poolPath := range poolPaths {
+		pool, exist := i.store.GetPool(poolPath)
+		if !exist {
+			continue
+		}
+
 		slot0 := pool.Slot0()
 		slot0.SetFeeProtocol(newFee)
 
 		pool.SetSlot0(slot0)
+
+		// Save the updated pool
+		err := i.store.SetPool(poolPath, pool)
+		if err != nil {
+			return 0, err
+		}
 	}
 
 	// update slot0

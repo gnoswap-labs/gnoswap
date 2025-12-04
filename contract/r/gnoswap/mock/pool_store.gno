@@ -31,6 +31,37 @@ func (s *MockPoolStore) SetPools(pools map[string]*pool.Pool) error {
 	return nil
 }
 
+// GetPool retrieves a single pool by its path.
+func (s *MockPoolStore) GetPool(poolPath string) (*pool.Pool, bool) {
+	pool, exists := s.pools[poolPath]
+	return pool, exists
+}
+
+// SetPool stores a single pool by its path.
+func (s *MockPoolStore) SetPool(poolPath string, pool *pool.Pool) error {
+	s.pools[poolPath] = pool
+	return nil
+}
+
+// GetPoolPaths retrieves the list of all pool paths.
+func (s *MockPoolStore) GetPoolPaths() []string {
+	paths := make([]string, 0, len(s.pools))
+	for path := range s.pools {
+		paths = append(paths, path)
+	}
+	return paths
+}
+
+// SetPoolPaths stores the list of all pool paths (no-op in mock).
+func (s *MockPoolStore) SetPoolPaths(poolPaths []string) error {
+	return nil
+}
+
+// AddPoolPath adds a new pool path (no-op in mock, already handled by SetPool).
+func (s *MockPoolStore) AddPoolPath(poolPath string) error {
+	return nil
+}
+
 func (s *MockPoolStore) HasFeeAmountTickSpacing() bool {
 	return s.feeAmountTickSpacing != nil
 }

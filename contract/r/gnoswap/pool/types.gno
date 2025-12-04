@@ -227,6 +227,13 @@ type IPoolStore interface {
 	GetPools() map[string]*Pool
 	SetPools(pools map[string]*Pool) error
 
+	// Single pool access methods (more efficient for AVL tree)
+	GetPool(poolPath string) (*Pool, bool)
+	SetPool(poolPath string, pool *Pool) error
+	GetPoolPaths() []string
+	SetPoolPaths(poolPaths []string) error
+	AddPoolPath(poolPath string) error
+
 	HasFeeAmountTickSpacing() bool
 	GetFeeAmountTickSpacing() map[uint32]int32
 	SetFeeAmountTickSpacing(feeAmountTickSpacing map[uint32]int32) error
