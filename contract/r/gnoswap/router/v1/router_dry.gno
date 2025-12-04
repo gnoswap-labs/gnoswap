@@ -210,17 +210,17 @@ func (r *routerV1) drySwapRoute(
 	remainRequestAmount := amountSpecified
 
 	// Process each route
-		for i, route := range routes {
-			toSwapAmount := i256.Zero()
+	for i, route := range routes {
+		toSwapAmount := i256.Zero()
 
-			// if it's the last route, use the remaining amount
-			isLastRoute := i == len(routes)-1
-			if !isLastRoute {
-				// calculate the amount to swap for this route
-				swapAmount, err := processor.ProcessSwapAmountInt(amountSpecified, quotesInt[i])
-				if err != nil {
-					return zeroString, zeroString, false
-				}
+		// if it's the last route, use the remaining amount
+		isLastRoute := i == len(routes)-1
+		if !isLastRoute {
+			// calculate the amount to swap for this route
+			swapAmount, err := processor.ProcessSwapAmountInt(amountSpecified, quotesInt[i])
+			if err != nil {
+				return zeroString, zeroString, false
+			}
 
 			// update the remaining amount
 			remainRequestAmount = i256.Zero().Sub(remainRequestAmount, swapAmount)
