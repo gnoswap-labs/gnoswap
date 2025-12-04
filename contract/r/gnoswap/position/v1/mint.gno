@@ -174,11 +174,15 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 	caller := params.caller
 	position := p.mustGetPosition(params.positionId)
 
+	poolKey := position.PoolKey()
+	tickLower := position.TickLower()
+	tickUpper := position.TickUpper()
+
 	liquidity, amount0, amount1 := p.addLiquidity(
 		AddLiquidityParams{
-			poolKey:        position.PoolKey(),
-			tickLower:      position.TickLower(),
-			tickUpper:      position.TickUpper(),
+			poolKey:        poolKey,
+			tickLower:      tickLower,
+			tickUpper:      tickUpper,
 			amount0Desired: params.amount0Desired,
 			amount1Desired: params.amount1Desired,
 			amount0Min:     params.amount0Min,
@@ -187,17 +191,19 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 		},
 	)
 
-	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
+	positionKey := computePositionKey(tickLower, tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
 
-	currentSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(position.PoolKey())
-	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.TickLower())
-	upperTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.TickUpper())
+	currentSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(poolKey)
+	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
+	upperTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
+
+	positionLiquidity := position.Liquidity()
 	calculatedToken0BalanceStr, calculatedToken1BalanceStr := common.GetAmountsForLiquidity(
 		currentSqrtPriceX96,
 		lowerTickSqrtPriceX96,
 		upperTickSqrtPriceX96,
-		position.Liquidity(),
+		positionLiquidity,
 	)
 	calculatedToken0Balance := u256.MustFromDecimal(calculatedToken0BalanceStr)
 	calculatedToken1Balance := u256.MustFromDecimal(calculatedToken1BalanceStr)
@@ -207,7 +213,7 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 		if underflow {
 			return 0, nil, nil, nil, "", makeErrorWithDetails(errUnderflow, "feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128 underflow")
 		}
-		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.Liquidity()), q128)
+		mulDiv := u256.MulDiv(diff, u256.Zero().Set(positionLiquidity), q128)
 
 		tokensOwed0, overflow := u256.Zero().AddOverflow(position.TokensOwed0(), mulDiv)
 		if overflow {
@@ -221,7 +227,7 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 		if underflow {
 			return 0, nil, nil, nil, "", makeErrorWithDetails(errUnderflow, "feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128 underflow")
 		}
-		mulDiv := u256.MulDiv(diff, u256.Zero().Set(position.Liquidity()), q128)
+		mulDiv := u256.MulDiv(diff, u256.Zero().Set(positionLiquidity), q128)
 
 		tokensOwed1, overflow := u256.Zero().AddOverflow(position.TokensOwed1(), mulDiv)
 		if overflow {
@@ -233,7 +239,7 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 	position.SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128)
 	position.SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128)
 
-	liquidityAmount, overflow := u256.Zero().AddOverflow(u256.Zero().Set(position.Liquidity()), liquidity)
+	liquidityAmount, overflow := u256.Zero().AddOverflow(u256.Zero().Set(positionLiquidity), liquidity)
 	if overflow {
 		return 0, nil, nil, nil, "", errOverflow
 	}
@@ -259,7 +265,7 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 		)
 	}
 
-	return params.positionId, liquidity, amount0, amount1, position.PoolKey(), nil
+	return params.positionId, liquidity, amount0, amount1, poolKey, nil
 }
 
 // validateTokenPath validates token paths are not identical, not conflicting, and in valid format.
