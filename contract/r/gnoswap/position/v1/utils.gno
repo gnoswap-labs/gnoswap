@@ -9,8 +9,6 @@ import (
 	"gno.land/p/nt/ufmt"
 )
 
-const INT64_MAX = 9223372036854775807
-
 // positionIdFrom converts positionId to grc721.TokenID type
 // NOTE: input parameter positionId can be string, int, uint64, or grc721.TokenID
 // if positionId is nil or not supported, it will panic
@@ -166,12 +164,9 @@ func isSlippageExceeded(amount0, amount1, amount0Min, amount1Min *u256.Uint) boo
 
 func subUint256(x, y *u256.Uint) *u256.Uint {
 	if x.Cmp(y) < 0 {
-		q256 := u256.MustFromDecimal(MAX_UINT256)
-		diff := u256.Zero().Sub(q256, y)
+		diff := u256.Zero().Sub(u256.MustFromDecimal(MAX_UINT256), y)
 		result := u256.Zero().Add(diff, x)
-
-		// Add 1 to the result since MAX_UINT256 is 2^256 - 1
-		return u256.Zero().Add(result, u256.One())
+		return result.Add(result, u256.One())
 	}
 
 	return u256.Zero().Sub(x, y)
@@ -192,8 +187,9 @@ func subUint256(x, y *u256.Uint) *u256.Uint {
 //   - If the `value` exceeds the range of int64, the function will panic with an error indicating
 //     the overflow and the original value.
 func safeConvertToInt64(value *u256.Uint) int64 {
+	maxInt64 := uint64(9223372036854775807)
 	res, overflow := value.Uint64WithOverflow()
-	if overflow || res > uint64(INT64_MAX) {
+	if overflow || res > maxInt64 {
 		panic(ufmt.Sprintf(
 			"amount(%s) overflows int64 range (max: 9223372036854775807)",
 			value.ToString(),

@@ -85,6 +85,10 @@ func (p *positionV1) Mint(
 	assertValidNumberString(amount0Min)
 	assertValidNumberString(amount1Min)
 
+	// assert that the user has sent the correct amount of native coin
+	assertIsValidUserCoinSendWithTokenPair(token0, token1, amount0Desired, amount1Desired)
+	assertIsNotExpired(deadline)
+
 	previousRealm := runtime.PreviousRealm()
 	prevRealmAddr := previousRealm.Address()
 	if !previousRealm.IsUser() {
@@ -93,10 +97,6 @@ func (p *positionV1) Mint(
 		assertEqualsAddress(prevRealmAddr, mintTo)
 		assertEqualsAddress(prevRealmAddr, caller)
 	}
-
-	// assert that the user has sent the correct amount of native coin
-	assertIsValidUserCoinSendWithTokenPair(token0, token1, amount0Desired, amount1Desired)
-	assertIsNotExpired(deadline)
 
 	success := referral.TryRegister(cross, caller, referrer)
 	actualReferrer := referrer

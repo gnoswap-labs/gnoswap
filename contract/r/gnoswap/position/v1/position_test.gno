@@ -23,6 +23,8 @@ import (
 
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
+
+	pl "gno.land/r/gnoswap/pool"
 )
 
 var mockRegistry = make(map[string]bool)
@@ -1491,35 +1493,35 @@ func TestComputePoolPath(t *testing.T) {
 			token0:       gnsPath,
 			token1:       barPath,
 			fee:          fee3000,
-			expectedPath: computePoolPath(gnsPath, barPath, fee3000),
+			expectedPath: pl.GetPoolPath(gnsPath, barPath, fee3000),
 		},
 		{
 			name:         "Pool path with fee 500",
 			token0:       gnsPath,
 			token1:       wugnotPath,
 			fee:          fee500,
-			expectedPath: computePoolPath(gnsPath, wugnotPath, fee500),
+			expectedPath: pl.GetPoolPath(gnsPath, wugnotPath, fee500),
 		},
 		{
 			name:         "Pool path with fee 100",
 			token0:       barPath,
 			token1:       bazPath,
 			fee:          fee100,
-			expectedPath: computePoolPath(barPath, bazPath, fee100),
+			expectedPath: pl.GetPoolPath(barPath, bazPath, fee100),
 		},
 		{
 			name:         "Pool path with fee 10000",
 			token0:       gnsPath,
 			token1:       oblPath,
 			fee:          fee10000,
-			expectedPath: computePoolPath(gnsPath, oblPath, fee10000),
+			expectedPath: pl.GetPoolPath(gnsPath, oblPath, fee10000),
 		},
 		{
 			name:         "Pool path with reversed token order",
 			token0:       barPath,
 			token1:       gnsPath,
 			fee:          fee3000,
-			expectedPath: computePoolPath(barPath, gnsPath, fee3000),
+			expectedPath: pl.GetPoolPath(barPath, gnsPath, fee3000),
 		},
 	}
 
@@ -1527,7 +1529,7 @@ func TestComputePoolPath(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			initPositionTest(t)
 
-			result := computePoolPath(tt.token0, tt.token1, tt.fee)
+			result := pl.GetPoolPath(tt.token0, tt.token1, tt.fee)
 			uassert.NotEqual(t, "", result, "pool path should not be empty")
 			// The actual pool path format depends on pool.GetPoolPath implementation
 			// We just verify it returns a non-empty string

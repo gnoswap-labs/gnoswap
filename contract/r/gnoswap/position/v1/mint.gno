@@ -113,7 +113,7 @@ func (p *positionV1) processMintInput(input MintInput) (ProcessedMintInput, erro
 		amount1Min:     amount1Min,
 		tickLower:      tickLower,
 		tickUpper:      tickUpper,
-		poolPath:       computePoolPath(pair.token0, pair.token1, input.fee),
+		poolPath:       pl.GetPoolPath(pair.token0, pair.token1, input.fee),
 	}, nil
 }
 
@@ -158,7 +158,6 @@ func (p *positionV1) processTokens(
 
 // increaseLiquidity increases the liquidity of an existing position.
 func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, string, error) {
-	caller := params.caller
 	position := p.mustGetPosition(params.positionId)
 
 	poolKey := position.PoolKey()
@@ -174,12 +173,12 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 			amount1Desired: params.amount1Desired,
 			amount0Min:     params.amount0Min,
 			amount1Min:     params.amount1Min,
-			caller:         caller,
+			caller:         params.caller,
 		},
 	)
 
 	positionKey := computePositionKey(tickLower, tickUpper)
-	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
+	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(poolKey, positionKey)
 
 	positionLiquidity := position.Liquidity()
 	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(poolKey, tickLower, tickUpper, positionLiquidity)
@@ -249,9 +248,4 @@ func isValidTokenPath(tokenPath string) bool {
 // parseAmounts converts amount strings to u256.Uint values.
 func parseAmounts(amount0Desired, amount1Desired, amount0Min, amount1Min string) (*u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint) {
 	return u256.MustFromDecimal(amount0Desired), u256.MustFromDecimal(amount1Desired), u256.MustFromDecimal(amount0Min), u256.MustFromDecimal(amount1Min)
-}
-
-// computePoolPath returns the pool path based on token pair and fee tier.
-func computePoolPath(token0, token1 string, fee uint32) string {
-	return pl.GetPoolPath(token0, token1, fee)
 }
