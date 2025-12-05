@@ -67,7 +67,7 @@ func (r *routerV1) ExactOutSwapRoute(
 		typ:               ExactOut,
 		exactAmount:       amountOut,
 		limitAmount:       amountInMax,
-		sqrtPriceLimitX96: "0", // multi-hop swap is not allowed to set sqrtPriceLimitX96
+		sqrtPriceLimitX96: zeroString, // multi-hop swap is not allowed to set sqrtPriceLimitX96
 	}
 
 	return r.exactOutSwapRoute(params, referrer)
@@ -121,7 +121,7 @@ func (r *routerV1) ExactOutSingleSwapRoute(
 		inputToken:        inputToken,
 		outputToken:       outputToken,
 		routeArr:          routeArr,
-		quoteArr:          "100",
+		quoteArr:          maxPercentageString, // "100"
 		deadline:          deadline,
 		typ:               ExactOut,
 		exactAmount:       amountOut,

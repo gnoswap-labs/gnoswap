@@ -40,12 +40,10 @@ const (
 	oblPath string = "gno.land/r/onbloc/obl"
 	quxPath string = "gno.land/r/onbloc/qux"
 
-	fee100  uint32 = 100
-	fee500  uint32 = 500
-	fee3000 uint32 = 3000
-
-	max_timeout int64 = 9999999999
-	maxApprove  int64 = 9223372036854775807
+	fee100      uint32 = 100
+	fee500      uint32 = 500
+	fee3000     uint32 = 3000
+	max_timeout int64  = 9999999999
 
 	TIER_1 uint64 = 1
 	TIER_2 uint64 = 2
