@@ -5,9 +5,19 @@ import (
 	"strings"
 
 	"gno.land/p/demo/tokens/grc721"
+	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
+	"gno.land/r/gnoswap/access"
 )
+
+func mustGetPositionAddress() address {
+	return access.MustGetAddress(prabc.ROLE_POSITION.String())
+}
+
+func mustGetStakerAddress() address {
+	return access.MustGetAddress(prabc.ROLE_STAKER.String())
+}
 
 // positionIdFrom converts positionId to grc721.TokenID type
 // NOTE: input parameter positionId can be string, int, uint64, or grc721.TokenID
@@ -73,7 +83,7 @@ func (p *positionV1) isStaked(positionId grc721.TokenID) bool {
 		return false
 	}
 	owner, err := p.nftAccessor.OwnerOf(positionId)
-	if err == nil && owner == stakerAddr {
+	if err == nil && owner == mustGetStakerAddress() {
 		return true
 	}
 	return false

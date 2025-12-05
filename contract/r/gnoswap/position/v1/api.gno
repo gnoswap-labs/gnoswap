@@ -116,7 +116,7 @@ func (p *positionV1) rpcMakePosition(positionId uint64) RpcPosition {
 		position.Liquidity(),
 	)
 
-	token0Balance, token1Balance := position.TokensOwed0(), position.TokensOwed1()
+	token0Balance, token1Balance := position.Token0Balance(), position.Token1Balance()
 
 	unclaimedFee0 := u256.Zero()
 	unclaimedFee1 := u256.Zero()
@@ -130,8 +130,6 @@ func (p *positionV1) rpcMakePosition(positionId uint64) RpcPosition {
 		owner = zeroAddress
 	}
 
-	// Note: `TokensOwed0`, `TokensOwed1` are same as `token0Balance`, `token1Balance` semantically.
-	// need to check this should be remove or maintain.
 	return RpcPosition{
 		LpPositionId:             positionId,
 		Burned:                   burned,
@@ -147,8 +145,8 @@ func (p *positionV1) rpcMakePosition(positionId uint64) RpcPosition {
 		TokensOwed1:              position.TokensOwed1().ToString(),
 		Token0Balance:            token0Balance.ToString(),
 		Token1Balance:            token1Balance.ToString(),
-		CalculatedToken0Balance:  calculatedToken0Balance,
-		CalculatedToken1Balance:  calculatedToken1Balance,
+		CalculatedToken0Balance:  calculatedToken0Balance.ToString(),
+		CalculatedToken1Balance:  calculatedToken1Balance.ToString(),
 		FeeUnclaimed0:            unclaimedFee0.ToString(),
 		FeeUnclaimed1:            unclaimedFee1.ToString(),
 	}

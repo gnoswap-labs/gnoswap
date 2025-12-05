@@ -7,9 +7,6 @@ import (
 
 	"gno.land/p/nt/ufmt"
 
-	prabc "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/rbac"
-
 	"gno.land/r/gnoland/wugnot"
 )
 
@@ -19,11 +16,6 @@ const (
 	GNOT_DENOM                = "ugnot"
 )
 
-var (
-	positionAddr = rbac.DefaultRoleAddresses[prabc.ROLE_POSITION]
-	stakerAddr   = rbac.DefaultRoleAddresses[prabc.ROLE_STAKER]
-)
-
 // wrap wraps the specified amount of the native token ugnot into the wrapped token wugnot.
 // Returns an error if ugnotAmount is zero or less than the minimum deposit threshold.
 func (p *positionV1) wrap(ugnotAmount int64, to address) error {
@@ -31,6 +23,7 @@ func (p *positionV1) wrap(ugnotAmount int64, to address) error {
 		return ufmt.Errorf("amount(%d) < minimum(%d)", ugnotAmount, UGNOT_MIN_DEPOSIT_TO_WRAP)
 	}
 
+	positionAddr := mustGetPositionAddress()
 	wugnotAddr := chain.PackageAddress(WUGNOT_PATH)
 	p.transferUGNOT(positionAddr, wugnotAddr, ugnotAmount)
 
@@ -46,6 +39,8 @@ func (p *positionV1) unwrap(wugnotAmount int64, to address) error {
 	if wugnotAmount <= 0 {
 		return ufmt.Errorf("amount(%d) is zero or negative", wugnotAmount)
 	}
+
+	positionAddr := mustGetPositionAddress()
 
 	wugnot.TransferFrom(cross, to, positionAddr, wugnotAmount) // send wugnot: user -> position
 	wugnot.Withdraw(cross, wugnotAmount)                       // position has ugnot
@@ -108,7 +103,7 @@ func (p *positionV1) safeWrapNativeToken(amount int64, toAddress address) (int64
 	// If nativeSentAmount is greater than amount, refund the excess amount.
 	if nativeSentAmount > amount {
 		excessAmount := nativeSentAmount - amount
-		p.transferUGNOT(positionAddr, toAddress, excessAmount)
+		p.transferUGNOT(mustGetPositionAddress(), toAddress, excessAmount)
 
 		nativeSentAmount = amount
 	}
