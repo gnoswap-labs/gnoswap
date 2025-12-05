@@ -13,8 +13,6 @@ import (
 	pf "gno.land/r/gnoswap/protocol_fee"
 )
 
-const FEE_PRECISION = 10000
-
 // GetUnstakingFee returns the current unstaking fee rate in basis points.
 func (s *stakerV1) GetUnstakingFee() int64 { return s.store.GetUnstakingFee() }
 
@@ -30,7 +28,8 @@ func (s *stakerV1) handleStakingRewardFee(
 	}
 
 	// Do not change the order of the operation.
-	feeAmount := (amount * unstakingFee) / FEE_PRECISION
+	// We set precision to 10000
+	feeAmount := (amount * unstakingFee) / 10000
 	if feeAmount < 0 {
 		return 0, 0, ufmt.Errorf("fee amount cannot be negative")
 	}

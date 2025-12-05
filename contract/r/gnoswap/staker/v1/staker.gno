@@ -214,19 +214,6 @@ func retrieveDepositTree(data any) *avl.Tree {
 	return depositTree
 }
 
-const (
-	TIMESTAMP_90DAYS  = int64(7776000)
-	TIMESTAMP_180DAYS = int64(15552000)
-	TIMESTAMP_365DAYS = int64(31536000)
-
-	MAX_UNIX_EPOCH_TIME = 253402300799 // 9999-12-31 23:59:59
-
-	MUST_EXISTS_IN_TIER_1 = "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
-
-	INTERNAL = true
-	EXTERNAL = false
-)
-
 // emissionCacheUpdateHook creates a hook function that updates the emission cache when called.
 // This follows the same pattern as other hooks in the staker contract.
 func (s *stakerV1) emissionCacheUpdateHook(emissionAmountPerSecond int64) {
