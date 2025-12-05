@@ -218,7 +218,7 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/protocol_fee/v
 # stdout 'STORAGE FEE:    (7|8)[0-9]{6}ugnot'
 
 ### deploy pool
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/pool/v1 -pkgpath gno.land/r/gnoswap/pool/v1 -gas-fee 63147ugnot -gas-wanted 63147000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/pool/v1 -pkgpath gno.land/r/gnoswap/pool/v1 -gas-fee 64500ugnot -gas-wanted 64500000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   63[0-9]{6}'
 # stdout 'STORAGE DELTA:  (2|3)[0-9]{5} bytes'
 # stdout 'STORAGE FEE:    (2|3)[0-9]{7}ugnot'
