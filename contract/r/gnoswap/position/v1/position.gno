@@ -4,6 +4,7 @@ import (
 	"chain"
 	"chain/runtime"
 	"encoding/base64"
+	"strconv"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -16,17 +17,7 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 	pf "gno.land/r/gnoswap/protocol_fee"
-	"gno.land/r/gnoswap/rbac"
 	"gno.land/r/gnoswap/referral"
-)
-
-var (
-	positionAddr = rbac.DefaultRoleAddresses[prabc.ROLE_POSITION]
-	stakerAddr   = rbac.DefaultRoleAddresses[prabc.ROLE_STAKER]
-)
-
-const (
-	ZERO_LIQUIDITY_FOR_FEE_COLLECTION = "0"
 )
 
 // Mint creates a new liquidity position NFT.
@@ -63,12 +54,18 @@ func (p *positionV1) Mint(
 	halt.AssertIsNotHaltedPosition()
 
 	previousRealm := runtime.PreviousRealm()
+	prevRealmAddr := previousRealm.Address()
 	if !previousRealm.IsUser() {
-		access.AssertIsStaker(previousRealm.Address())
+		access.AssertIsStaker(prevRealmAddr)
 	} else {
-		assertEqualsAddress(previousRealm.Address(), mintTo)
-		assertEqualsAddress(previousRealm.Address(), caller)
+		assertEqualsAddress(prevRealmAddr, mintTo)
+		assertEqualsAddress(prevRealmAddr, caller)
 	}
+
+	assertValidNumberString(amount0Desired)
+	assertValidNumberString(amount1Desired)
+	assertValidNumberString(amount0Min)
+	assertValidNumberString(amount1Min)
 
 	// assert that the user has sent the correct amount of native coin
 	assertIsValidUserCoinSendWithTokenPair(token0, token1, amount0Desired, amount1Desired)
@@ -127,7 +124,7 @@ func (p *positionV1) Mint(
 
 	chain.Emit(
 		"Mint",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", prevRealmAddr.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"tickLower", formatInt(processedInput.tickLower),
 		"tickUpper", formatInt(processedInput.tickUpper),
@@ -406,6 +403,8 @@ func (p *positionV1) CollectFee(
 	caller := runtime.PreviousRealm().Address()
 	assertIsOwnerOrOperatorForToken(p, positionId, caller)
 
+	emission.MintAndDistributeGns(cross)
+
 	return p.collectFee(positionId, unwrapResult, caller)
 }
 
@@ -415,8 +414,6 @@ func (p *positionV1) collectFee(
 	unwrapResult bool,
 	caller address,
 ) (uint64, string, string, string, string, string) {
-	emission.MintAndDistributeGns(cross)
-
 	// verify position
 	position := p.mustGetPosition(positionId)
 	token0, token1, fee := splitOf(position.PoolKey())
@@ -428,7 +425,7 @@ func (p *positionV1) collectFee(
 		fee,
 		position.TickLower(),
 		position.TickUpper(),
-		ZERO_LIQUIDITY_FOR_FEE_COLLECTION, // burn '0' liquidity to collect fee
+		"0", // burn '0' liquidity to collect fee
 		caller,
 	)
 
@@ -450,16 +447,18 @@ func (p *positionV1) collectFee(
 		position.TickLower(), position.TickUpper(),
 		tokensOwed0.ToString(), tokensOwed1.ToString(),
 	)
+	amount0Uint256 := u256.MustFromDecimal(amount0)
+	amount1Uint256 := u256.MustFromDecimal(amount1)
 
 	// sometimes there will be a few less uBase amount than expected due to rounding down in core, but we just subtract the full amount expected
 	// instead of the actual amount so we can burn the token
-	tokensOwed0Updated, underflow := u256.Zero().SubOverflow(tokensOwed0, u256.MustFromDecimal(amount0))
+	tokensOwed0Updated, underflow := u256.Zero().SubOverflow(tokensOwed0, amount0Uint256)
 	if underflow {
 		panic(newErrorWithDetail(errUnderflow, "tokensOwed0 - amount0 underflow"))
 	}
 	position.SetTokensOwed0(tokensOwed0Updated)
 
-	tokensOwed1Updated, underflow := u256.Zero().SubOverflow(tokensOwed1, u256.MustFromDecimal(amount1))
+	tokensOwed1Updated, underflow := u256.Zero().SubOverflow(tokensOwed1, amount1Uint256)
 	if underflow {
 		panic(newErrorWithDetail(errUnderflow, "tokensOwed1 - amount1 underflow"))
 	}
@@ -467,8 +466,8 @@ func (p *positionV1) collectFee(
 	p.mustUpdatePosition(positionId, *position)
 
 	withdrawalFeeBps := pl.GetWithdrawalFee()
-	amount0WithoutFee, fee0 := calculateAmountWithWithdrawalFee(amount0, withdrawalFeeBps)
-	amount1WithoutFee, fee1 := calculateAmountWithWithdrawalFee(amount1, withdrawalFeeBps)
+	amount0WithoutFee, fee0 := calculateAmountWithWithdrawalFee(amount0Uint256, withdrawalFeeBps)
+	amount1WithoutFee, fee1 := calculateAmountWithWithdrawalFee(amount1Uint256, withdrawalFeeBps)
 
 	poolAddr, ok := access.GetAddress(prabc.ROLE_POOL.String())
 	if !ok {
@@ -529,23 +528,18 @@ func (p *positionV1) collectFee(
 	return positionId, amount0WithoutFeeStr, amount1WithoutFeeStr, position.PoolKey(), amount0, amount1
 }
 
-var feeAmountDivisor = u256.NewUint(10000)
-
 // calculateAmountWithWithdrawalFee calculates amount after deducting withdrawal fee.
-func calculateAmountWithWithdrawalFee(amount string, fee uint64) (int64, int64) {
+func calculateAmountWithWithdrawalFee(amount *u256.Uint, fee uint64) (int64, int64) {
 	if fee == 0 {
-		return safeConvertToInt64(u256.MustFromDecimal(amount)), 0
+		return safeConvertToInt64(amount), 0
 	}
 
-	amountUint := u256.MustFromDecimal(amount)
-	feeUint := u256.NewUint(fee)
-
-	feeAmount, overflow := u256.Zero().MulOverflow(amountUint, feeUint)
+	feeAmount, overflow := u256.Zero().MulOverflow(amount, u256.NewUint(fee))
 	if overflow {
 		panic(errOverflow)
 	}
-	feeAmount = u256.Zero().Div(feeAmount, feeAmountDivisor)
-	amountWithoutFee := u256.Zero().Sub(amountUint, feeAmount)
+	feeAmount = u256.Zero().Div(feeAmount, u256.NewUint(10000))
+	amountWithoutFee := u256.Zero().Sub(amount, feeAmount)
 
 	return safeConvertToInt64(amountWithoutFee), safeConvertToInt64(feeAmount)
 }
@@ -558,8 +552,7 @@ func (p *positionV1) SetPositionOperator(
 ) {
 	halt.AssertIsNotHaltedPosition()
 
-	caller := runtime.PreviousRealm().Address()
-	access.AssertIsStaker(caller)
+	access.AssertIsStaker(runtime.PreviousRealm().Address())
 
 	position := p.mustGetPosition(id)
 	position.SetOperator(operator)
@@ -586,7 +579,22 @@ func computePositionKey(
 	tickUpper int32,
 ) string {
 	currentRealmPath := runtime.CurrentRealm().PkgPath()
-	key := ufmt.Sprintf("%s__%d__%d", currentRealmPath, tickLower, tickUpper)
+	key := currentRealmPath + "__" + strconv.Itoa(int(tickLower)) + "__" + strconv.Itoa(int(tickUpper))
 	encoded := base64.StdEncoding.EncodeToString([]byte(key))
 	return encoded
+}
+
+// calculatePositionBalances computes token balances for a position at current price.
+// Returns calculated token0 and token1 balances based on position liquidity and price range.
+func calculatePositionBalances(position *position.Position) (*u256.Uint, *u256.Uint) {
+	if position.Liquidity().IsZero() {
+		return u256.Zero(), u256.Zero()
+	}
+
+	return common.GetAmountsForLiquidity(
+		pl.GetSlot0SqrtPriceX96(position.PoolKey()), // currentSqrtPriceX96
+		common.TickMathGetSqrtRatioAtTick(position.TickLower()),
+		common.TickMathGetSqrtRatioAtTick(position.TickUpper()),
+		position.Liquidity(),
+	)
 }

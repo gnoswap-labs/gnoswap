@@ -1,21 +1,22 @@
 package v1
 
 import (
-	"chain/runtime"
 	"strconv"
 	"strings"
 
 	"gno.land/p/demo/tokens/grc721"
+	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
+	"gno.land/r/gnoswap/access"
 )
 
-const INT64_MAX = 9223372036854775807
+func mustGetPositionAddress() address {
+	return access.MustGetAddress(prabc.ROLE_POSITION.String())
+}
 
-// GetOrigPkgAddr returns the original package address.
-// In position contract, original package address is the position address.
-func GetOrigPkgAddr() address {
-	return runtime.CurrentRealm().Address()
+func mustGetStakerAddress() address {
+	return access.MustGetAddress(prabc.ROLE_STAKER.String())
 }
 
 // positionIdFrom converts positionId to grc721.TokenID type
@@ -82,7 +83,7 @@ func (p *positionV1) isStaked(positionId grc721.TokenID) bool {
 		return false
 	}
 	owner, err := p.nftAccessor.OwnerOf(positionId)
-	if err == nil && owner == stakerAddr {
+	if err == nil && owner == mustGetStakerAddress() {
 		return true
 	}
 	return false
@@ -173,12 +174,9 @@ func isSlippageExceeded(amount0, amount1, amount0Min, amount1Min *u256.Uint) boo
 
 func subUint256(x, y *u256.Uint) *u256.Uint {
 	if x.Cmp(y) < 0 {
-		q256 := u256.MustFromDecimal(MAX_UINT256)
-		diff := u256.Zero().Sub(q256, y)
+		diff := u256.Zero().Sub(u256.MustFromDecimal(MAX_UINT256), y)
 		result := u256.Zero().Add(diff, x)
-
-		// Add 1 to the result since MAX_UINT256 is 2^256 - 1
-		return u256.Zero().Add(result, u256.One())
+		return result.Add(result, u256.One())
 	}
 
 	return u256.Zero().Sub(x, y)
@@ -200,7 +198,7 @@ func subUint256(x, y *u256.Uint) *u256.Uint {
 //     the overflow and the original value.
 func safeConvertToInt64(value *u256.Uint) int64 {
 	res, overflow := value.Uint64WithOverflow()
-	if overflow || res > uint64(INT64_MAX) {
+	if overflow {
 		panic(ufmt.Sprintf(
 			"amount(%s) overflows int64 range (max: 9223372036854775807)",
 			value.ToString(),

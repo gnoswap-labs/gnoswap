@@ -389,8 +389,8 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 		"currentTick", formatAnyInt(currentTick),
 		"isInRange", formatBool(isInRange),
 		"referrer", actualReferrer,
-		"amount0", amount0,
-		"amount1", amount1,
+		"amount0", amount0.ToString(),
+		"amount1", amount1.ToString(),
 	)
 
 	return poolPath
@@ -710,8 +710,8 @@ func (s *stakerV1) UnStakeToken(positionId uint64, unwrapResult bool) string { /
 		"positionId", formatUint(positionId),
 		"poolPath", poolPath,
 		"liquidity", liquidity.ToString(),
-		"amount0", amount0,
-		"amount1", amount1,
+		"amount0", amount0.ToString(),
+		"amount1", amount1.ToString(),
 		"isRequestUnwrap", formatBool(unwrapResult),
 		"from", stakerAddr.String(),
 		"to", deposit.Owner().String(),
@@ -851,7 +851,7 @@ func getTickOf(positionId uint64) (int32, int32) {
 }
 
 // calculateAmounts calculates the amounts of token0 and token1 for a given liquidity and range.
-func (s *stakerV1) calculateAmounts(poolPath string, tickLower, tickUpper int32, liquidity *u256.Uint) (string, string) {
+func (s *stakerV1) calculateAmounts(poolPath string, tickLower, tickUpper int32, liquidity *u256.Uint) (*u256.Uint, *u256.Uint) {
 	sqrtPriceX96 := s.poolAccessor.GetSlot0SqrtPriceX96(poolPath)
 	sqrtPriceLowerX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
 	sqrtPriceUpperX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
