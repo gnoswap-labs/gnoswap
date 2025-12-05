@@ -59,7 +59,7 @@ func (s *stakerV1) SetDepositGnsAmount(amount int64) {
 
 	assertIsValidAmount(amount)
 
-	prevDepositGnsAmount := s.getDepositGnsAmount()
+	prevDepositGnsAmount := s.GetDepositGnsAmount()
 	s.setDepositGnsAmount(amount)
 
 	previousRealm := runtime.PreviousRealm()
@@ -150,11 +150,6 @@ func (s *stakerV1) setDepositGnsAmount(amount int64) {
 // setMinimumRewardAmount internally updates the minimum reward amount.
 func (s *stakerV1) setMinimumRewardAmount(amount int64) {
 	s.store.SetMinimumRewardAmount(amount)
-}
-
-// getDepositGnsAmount internally retrieves the deposit GNS amount.
-func (s *stakerV1) getDepositGnsAmount() int64 {
-	return s.store.GetDepositGnsAmount()
 }
 
 // getMinimumRewardAmount internally retrieves the minimum reward amount.
