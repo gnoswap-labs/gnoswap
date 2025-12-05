@@ -35,8 +35,9 @@ func (s *stakerV1) CreateExternalIncentive(
 ) {
 	halt.AssertIsNotHaltedStaker()
 
-	caller := runtime.PreviousRealm().Address()
-	access.AssertIsUser(runtime.PreviousRealm())
+	prevRealm := runtime.PreviousRealm()
+	caller := prevRealm.Address()
+	access.AssertIsUser(prevRealm)
 
 	assertIsPoolExists(s, targetPoolPath)
 	assertIsGreaterThanMinimumRewardAmount(s, rewardToken, rewardAmount)
@@ -103,11 +104,10 @@ func (s *stakerV1) CreateExternalIncentive(
 	poolResolver := NewPoolResolver(pool)
 	poolResolver.IncentivesResolver().create(caller, incentive)
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"CreateExternalIncentive",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
+		"prevAddr", caller.String(),
+		"prevRealm", prevRealm.PkgPath(),
 		"incentiveId", incentiveId,
 		"targetPoolPath", targetPoolPath,
 		"rewardToken", rewardToken,
@@ -165,10 +165,9 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 	}
 
 	caller := runtime.PreviousRealm().Address()
-	currentTime := time.Now().Unix()
 
 	// Process ending
-	incentive, refund, err := s.endExternalIncentive(pool, incentiveResolver, caller, currentTime)
+	incentive, refund, err := s.endExternalIncentive(pool, incentiveResolver, caller, time.Now().Unix())
 	if err != nil {
 		panic(err)
 	}

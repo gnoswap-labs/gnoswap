@@ -14,16 +14,12 @@ type Reward struct {
 
 // calculate total position rewards and penalties
 func (s *stakerV1) calcPositionReward(currentHeight, currentTimestamp int64, positionId uint64) Reward {
-	pools := s.getPools()
-	poolTier := s.getPoolTier()
-	deposits := s.getDeposits()
-
 	rewards := s.calculatePositionReward(&CalcPositionRewardParam{
 		CurrentHeight: currentHeight,
 		CurrentTime:   currentTimestamp,
-		Deposits:      deposits,
-		Pools:         pools,
-		PoolTier:      poolTier,
+		Deposits:      s.getDeposits(),
+		Pools:         s.getPools(),
+		PoolTier:      s.getPoolTier(),
 		PositionId:    positionId,
 	})
 
@@ -37,7 +33,8 @@ func (s *stakerV1) calcPositionReward(currentHeight, currentTimestamp int64, pos
 		internalPenalty = safeAddInt64(internalPenalty, reward.InternalPenalty)
 	}
 
-	externalReward := make(map[string]int64)
+	rewardLen := len(rewards)
+	externalReward := make(map[string]int64, rewardLen)
 	for _, reward := range rewards {
 		if reward.External != nil {
 			for incentive, reward := range reward.External {
@@ -46,7 +43,7 @@ func (s *stakerV1) calcPositionReward(currentHeight, currentTimestamp int64, pos
 		}
 	}
 
-	externalPenalty := make(map[string]int64)
+	externalPenalty := make(map[string]int64, rewardLen)
 	for _, reward := range rewards {
 		if reward.ExternalPenalty != nil {
 			for incentive, penalty := range reward.ExternalPenalty {
