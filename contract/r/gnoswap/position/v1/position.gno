@@ -80,6 +80,11 @@ func (p *positionV1) Mint(
 ) (uint64, string, string, string) {
 	halt.AssertIsNotHaltedPosition()
 
+	assertValidNumberString(amount0Desired)
+	assertValidNumberString(amount1Desired)
+	assertValidNumberString(amount0Min)
+	assertValidNumberString(amount1Min)
+
 	previousRealm := runtime.PreviousRealm()
 	prevRealmAddr := previousRealm.Address()
 	if !previousRealm.IsUser() {

@@ -72,12 +72,6 @@ func (p *positionV1) mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u
 // processMintInput processes and validates user input for minting liquidity.
 // It handles token ordering, amount validation, and native token wrapping.
 func (p *positionV1) processMintInput(input MintInput) (ProcessedMintInput, error) {
-	assertValidNumberString(input.amount0Desired)
-	assertValidNumberString(input.amount1Desired)
-	assertValidNumberString(input.amount0Min)
-	assertValidNumberString(input.amount1Min)
-
-	// process tokens
 	token0, token1, token0IsNative, token1IsNative, wrappedAmount, err := p.processTokens(
 		input.token0,
 		input.token1,
