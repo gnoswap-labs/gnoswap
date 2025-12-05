@@ -2,6 +2,7 @@ package v1
 
 import (
 	"chain/runtime"
+	"strconv"
 	"time"
 
 	"gno.land/p/nt/ufmt"
@@ -236,7 +237,7 @@ func makeRewardTokensArray(rewardsTokenList []string) []*json.Node {
 // calculateInternalRewardPerSecondByPoolPath calculates the internal reward per second for a pool.
 func (s *stakerV1) calculateInternalRewardPerSecondByPoolPath(poolPath string) string {
 	reward := s.getPoolTier().CurrentRewardPerPool(poolPath)
-	return ufmt.Sprintf("%d", reward)
+	return strconv.FormatInt(reward, 10)
 }
 
 // ResponseQueryBase contains basic information about a query response.
@@ -326,5 +327,5 @@ func (s *stakerV1) IsStaked(positionId uint64) bool {
 
 // formatInt formats an int64 value to string.
 func formatInt(value int64) string {
-	return ufmt.Sprintf("%d", value)
+	return strconv.FormatInt(value, 10)
 }
