@@ -22,17 +22,17 @@ const (
 
 // calculateSwapAmountByQuote calculates swap amount based on quote percentage.
 // This common function is used by both validateRouteQuote and ProcessSwapAmount.
-func calculateSwapAmountByQuote(amountSpecified *i256.Int, quote string) (*i256.Int, error) {
-  quoteInt, err := strconv.ParseInt(quote, 10, 64)
+func calculateSwapAmountByQuote(amountSpecified int64, quote string) (int64, error) {
+	quoteInt, err := strconv.ParseInt(quote, 10, 64)
 	if err != nil {
-		return 0, ufmt.Errorf("invalid quote(%s) at index(%d)", quote, i)
+		return 0, ufmt.Errorf("invalid quote(%s)", quote)
 	}
 
 	if quoteInt < MinQuotePercentage || quoteInt > MaxQuotePercentage {
 		return 0, ufmt.Errorf(ErrInvalidQuoteRange, quoteInt, MinQuotePercentage, MaxQuotePercentage)
 	}
 
-	return safeMulDivInt64(op.amountSpecified, quoteInt, PERCENTAGE_DENOMINATOR), nil
+	return safeMulDivInt64(amountSpecified, quoteInt, PERCENTAGE_DENOMINATOR), nil
 }
 
 // swap can be done by multiple pools

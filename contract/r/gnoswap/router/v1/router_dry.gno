@@ -36,7 +36,7 @@ type SwapProcessor struct {
 func (p *SwapProcessor) ProcessSwapAmount(amountSpecified int64, quote string) (int64, error) {
 	toSwap, err := calculateSwapAmountByQuote(amountSpecified, quote)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 	return toSwap, nil
 }
