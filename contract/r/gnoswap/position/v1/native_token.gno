@@ -169,3 +169,22 @@ func (p *positionV1) unwrapWithTransferFrom(fromAddress, toAddress address, wugn
 
 	return nil
 }
+
+// wrapNativeTokenIfAllowed wraps native GNOT when the caller provided native coins and the token path
+// represents GNOT (native or wrapped). Returns the wrapped amount and a flag indicating if wrapping occurred.
+func (p *positionV1) wrapNativeTokenIfAllowed(tokenPath, amountStr string, caller address, shouldWrap bool) (int64, bool, error) {
+	if !shouldWrap {
+		return 0, false, nil
+	}
+	if !(isNative(tokenPath) || isWrappedToken(tokenPath)) {
+		return 0, false, nil
+	}
+
+	wrapAmount := mustParseInt64(amountStr)
+	wrapped, err := p.safeWrapNativeToken(wrapAmount, caller)
+	if err != nil {
+		return 0, false, err
+	}
+
+	return wrapped, true, nil
+}

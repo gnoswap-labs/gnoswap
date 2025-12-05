@@ -145,8 +145,7 @@ func (p *positionV1) processTokens(
 		token0 = WUGNOT_PATH
 		token0IsNative = true
 
-		amount0DesiredInt := mustParseInt64(amount0Desired)
-		wrappedAmount, err = p.safeWrapNativeToken(amount0DesiredInt, caller)
+		wrappedAmount, _, err = p.wrapNativeTokenIfAllowed(token0, amount0Desired, caller, true)
 		if err != nil {
 			return "", "", false, false, 0, err
 		}
@@ -154,8 +153,7 @@ func (p *positionV1) processTokens(
 		token1 = WUGNOT_PATH
 		token1IsNative = true
 
-		amount1DesiredInt := mustParseInt64(amount1Desired)
-		wrappedAmount, err = p.safeWrapNativeToken(amount1DesiredInt, caller)
+		wrappedAmount, _, err = p.wrapNativeTokenIfAllowed(token1, amount1Desired, caller, true)
 		if err != nil {
 			return "", "", false, false, 0, err
 		}
