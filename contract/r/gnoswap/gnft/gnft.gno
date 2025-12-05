@@ -32,13 +32,24 @@ func TotalSupply() int64 {
 }
 
 // TokenURI returns the metadata URI for the specified token ID.
+// If stored value is in parameter format (x1,y1,x2,y2,color1,color2),
+// it converts to full base64-encoded SVG image URI on read.
+// Otherwise returns the stored value as-is for backward compatibility.
 func TokenURI(tid grc721.TokenID) (string, error) {
-	uri, err := nft.TokenURI(tid)
+	stored, err := nft.TokenURI(tid)
 	if err != nil {
 		return "", err
 	}
 
-	return string(uri), nil
+	storedStr := string(stored)
+
+	// Check if it looks like SVG parameters format (has exactly 5 commas for 6 fields)
+	if isImageParams(storedStr) {
+		return paramsToImageURI(storedStr), nil
+	}
+
+	// Return as-is for backward compatibility (data URIs or other formats)
+	return storedStr, nil
 }
 
 // BalanceOf returns the number of NFTs owned by the specified address.
@@ -210,8 +221,10 @@ func Mint(cur realm, to address, tid grc721.TokenID) grc721.TokenID {
 
 	checkErr(nft.Mint(ownerAddress, tid))
 
-	tokenURI := genImageURI(generateRandInstance())
-	err := setTokenURI(tid, grc721.TokenURI(tokenURI))
+	// Store only the gradient parameters instead of full base64 SVG to reduce storage costs.
+	// Parameters are converted to full SVG on read via TokenURI().
+	imageParams := genImageParams(generateRandInstance())
+	err := setTokenURI(tid, grc721.TokenURI(imageParams))
 	if err != nil {
 		panic(err)
 	}
