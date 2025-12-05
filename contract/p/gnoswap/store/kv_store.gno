@@ -4,7 +4,6 @@ import (
 	"chain/runtime"
 
 	"gno.land/p/nt/avl"
-	"gno.land/p/nt/ufmt"
 )
 
 // kvStore represents a domain-specific key-value storage
@@ -266,5 +265,5 @@ func (k *kvStore) isUpdatableAuthorizedCaller() bool {
 
 // makeKey creates a prefixed key with the domain address to ensure isolation
 func (k *kvStore) makeKey(key string) string {
-	return ufmt.Sprintf("%s:%s", k.domainAddress, key)
+	return string(k.domainAddress) + ":" + key
 }
