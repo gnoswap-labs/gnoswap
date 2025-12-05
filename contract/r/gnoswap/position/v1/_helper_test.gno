@@ -54,6 +54,9 @@ const (
 )
 
 var (
+	positionAddr = rbac.DefaultRoleAddresses[prabc.ROLE_POSITION]
+	stakerAddr   = rbac.DefaultRoleAddresses[prabc.ROLE_STAKER]
+
 	// define addresses to use in tests
 	addr01 = testutils.TestAddress("addr01")
 	addr02 = testutils.TestAddress("addr02")

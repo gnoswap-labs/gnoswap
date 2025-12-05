@@ -12,9 +12,7 @@ func (p *positionV1) getNextId() uint64 {
 
 // incrementNextId increments the next position ID to be minted
 func (p *positionV1) incrementNextId() error {
-	nextId := p.getNextId()
-
-	return p.store.SetPositionNextID(nextId + 1)
+	return p.store.SetPositionNextID(p.getNextId() + 1)
 }
 
 // createNewPosition creates a new position with the given position data.

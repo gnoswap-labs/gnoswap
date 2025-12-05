@@ -21,7 +21,7 @@ func initialSetup(t *testing.T) {
 }
 
 func TestLiquidityManagement_addLiquidity(t *testing.T) {
-	poolKey := computePoolPath(gnsPath, barPath, fee3000)
+	poolKey := pl.GetPoolPath(gnsPath, barPath, fee3000)
 
 	tests := []struct {
 		name            string
