@@ -265,3 +265,139 @@ func (r *routerV1) multiDrySwapNegative(p SwapParams, numPool int, swapPath stri
 	return NewMultiSwapProcessor(r, true, Backward).
 		processBackwardSwap(p, numPool, swapPath)
 }
+
+// multiSwapParsed performs a multi-hop swap in forward direction using pre-parsed route data.
+func (r *routerV1) multiSwapParsed(p SwapParams, numPools int, parsedRoute ParsedRoute) (*u256.Uint, *u256.Uint) {
+	result, output, err := NewMultiSwapProcessor(r, false, Forward).
+		processForwardSwapParsed(p, numPools, parsedRoute)
+	if err != nil {
+		panic(err)
+	}
+	return result, output
+}
+
+// multiSwapNegativeParsed performs a multi-hop swap in backward direction using pre-parsed route data.
+func (r *routerV1) multiSwapNegativeParsed(p SwapParams, numPools int, parsedRoute ParsedRoute) (*u256.Uint, *u256.Uint) {
+	result, output, err := NewMultiSwapProcessor(r, false, Backward).
+		processBackwardSwapParsed(p, numPools, parsedRoute)
+	if err != nil {
+		panic(err)
+	}
+	return result, output
+}
+
+// processForwardSwapParsed handles forward direction swaps using pre-parsed route data.
+func (p *MultiSwapProcessor) processForwardSwapParsed(sp SwapParams, numPools int, parsedRoute ParsedRoute) (*u256.Uint, *u256.Uint, error) {
+	payer := runtime.PreviousRealm().Address() // Initial payer is the user
+
+	firstAmountIn := zero
+	currentPoolIndex := 0
+
+	for {
+		currentPoolIndex++
+
+		// Execute the swap operation
+		callbackData := newSwapCallbackData(sp, payer)
+		amountIn, amountOut := p.executor.Run(sp, callbackData, sp.recipient)
+
+		// Record the first hop's input amount
+		if currentPoolIndex == 1 {
+			firstAmountIn = amountIn
+		}
+
+		// Check if we've processed all hops
+		if currentPoolIndex >= numPools {
+			return firstAmountIn, amountOut, nil
+		}
+
+		// Update parameters for the next hop using pre-parsed data
+		payer = routerAddr
+		nextPool := parsedRoute.Pools[currentPoolIndex]
+		sp.tokenIn = nextPool.Token0
+		sp.tokenOut = nextPool.Token1
+		sp.fee = nextPool.Fee
+		sp.amountSpecified = i256.FromUint256(amountOut)
+	}
+}
+
+// processBackwardSwapParsed handles backward direction swaps using pre-parsed route data.
+func (p *MultiSwapProcessor) processBackwardSwapParsed(sp SwapParams, numPools int, parsedRoute ParsedRoute) (*u256.Uint, *u256.Uint, error) {
+	if !p.isSimulate {
+		return p.processBackwardRealSwapParsed(sp, numPools, parsedRoute)
+	}
+	return p.processBackwardDrySwapParsed(sp, numPools, parsedRoute)
+}
+
+// processBackwardDrySwapParsed handles backward simulated swaps using pre-parsed route data.
+func (p *MultiSwapProcessor) processBackwardDrySwapParsed(sp SwapParams, numPools int, parsedRoute ParsedRoute) (*u256.Uint, *u256.Uint, error) {
+	firstAmountIn := u256.Zero()
+	currentPoolIndex := numPools - 1
+	payer := routerAddr
+
+	for {
+		callbackData := newSwapCallbackData(sp, payer)
+		amountIn, amountOut := p.executor.Run(sp, callbackData, sp.recipient)
+
+		if currentPoolIndex == 0 {
+			firstAmountIn = amountIn
+		}
+
+		currentPoolIndex--
+
+		if currentPoolIndex == -1 {
+			return firstAmountIn, amountOut, nil
+		}
+
+		// Update parameters for the next hop using pre-parsed data
+		nextPool := parsedRoute.Pools[currentPoolIndex]
+		intAmountIn := i256.FromUint256(amountIn)
+
+		sp.amountSpecified = i256.Zero().Neg(intAmountIn)
+		sp.tokenIn = nextPool.Token0
+		sp.tokenOut = nextPool.Token1
+		sp.fee = nextPool.Fee
+	}
+}
+
+// processBackwardRealSwapParsed handles backward real swaps using pre-parsed route data.
+func (p *MultiSwapProcessor) processBackwardRealSwapParsed(sp SwapParams, numPools int, parsedRoute ParsedRoute) (*u256.Uint, *u256.Uint, error) {
+	// First collect all swap information by simulating backward
+	swapInfo := p.collectBackwardSwapInfoParsed(sp, numPools, parsedRoute)
+
+	// Then execute swaps in forward order
+	return p.executeCollectedSwaps(swapInfo, sp.recipient, sp.withUnwrap)
+}
+
+// collectBackwardSwapInfoParsed simulates swaps backward to collect parameters using pre-parsed route data.
+func (p *MultiSwapProcessor) collectBackwardSwapInfoParsed(sp SwapParams, numPools int, parsedRoute ParsedRoute) []SingleSwapParams {
+	swapInfo := make([]SingleSwapParams, 0, numPools-1)
+	currentPoolIndex := numPools - 1
+
+	for currentPoolIndex >= 0 {
+		thisSwap := SingleSwapParams{
+			tokenIn:         sp.tokenIn,
+			tokenOut:        sp.tokenOut,
+			fee:             sp.fee,
+			amountSpecified: sp.amountSpecified,
+		}
+
+		// dry simulation to calculate input amount
+		amountIn, _ := p.router.singleDrySwap(&thisSwap)
+		swapInfo = append(swapInfo, thisSwap)
+
+		if currentPoolIndex == 0 {
+			break
+		}
+		currentPoolIndex--
+
+		// Update parameters for the next simulation using pre-parsed data
+		nextPool := parsedRoute.Pools[currentPoolIndex]
+
+		sp.tokenIn = nextPool.Token0
+		sp.tokenOut = nextPool.Token1
+		sp.fee = nextPool.Fee
+		sp.amountSpecified = i256.Zero().Neg(i256.FromUint256(amountIn))
+	}
+
+	return swapInfo
+}

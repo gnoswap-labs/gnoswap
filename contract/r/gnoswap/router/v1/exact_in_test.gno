@@ -574,7 +574,7 @@ func TestExactInSwapOperation_Process_Structure(t *testing.T) {
 
 			// Verify the operation structure is correct
 			uassert.NotNil(t, op.amountSpecified)
-			uassert.NotNil(t, op.routes)
+			uassert.NotNil(t, op.parsedRoutes)
 			uassert.NotNil(t, op.quotes)
 		})
 	}
@@ -769,7 +769,7 @@ func TestExactOutSwapOperation_Process_Structure(t *testing.T) {
 
 			// Verify the operation structure is correct
 			uassert.NotNil(t, op.amountSpecified)
-			uassert.NotNil(t, op.routes)
+			uassert.NotNil(t, op.parsedRoutes)
 			uassert.NotNil(t, op.quotes)
 			// Verify amountSpecified is negative for ExactOut
 			uassert.True(t, op.amountSpecified.IsNeg(), "amountSpecified should be negative for ExactOut")
@@ -1028,7 +1028,7 @@ func TestExactInSwapOperation_MultiRoute(t *testing.T) {
 				}
 			} else {
 				uassert.NoError(t, err)
-				uassert.Equal(t, len(op.routes), len(op.quotes))
+				uassert.Equal(t, len(op.parsedRoutes), len(op.quotes))
 			}
 		})
 	}
@@ -1087,7 +1087,7 @@ func TestExactOutSwapOperation_MultiRoute(t *testing.T) {
 				}
 			} else {
 				uassert.NoError(t, err)
-				uassert.Equal(t, len(op.routes), len(op.quotes))
+				uassert.Equal(t, len(op.parsedRoutes), len(op.quotes))
 			}
 		})
 	}

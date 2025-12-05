@@ -62,7 +62,7 @@ type baseSwapOperation struct {
 	withUnwrap              bool
 	userBeforeWugnotBalance int64
 	userWrappedWugnot       int64
-	routes                  []string
+	parsedRoutes            []ParsedRoute // pre-parsed route data to avoid redundant string parsing
 	quotes                  []string
 	amountSpecified         *i256.Int
 }
@@ -139,11 +139,11 @@ func (op *baseSwapOperation) processRoutes(r *routerV1, swapType SwapType) (*u25
 	resultAmountIn, resultAmountOut := zero, zero
 	remainRequestAmount := op.amountSpecified
 
-	for i, route := range op.routes {
+	for i, parsedRoute := range op.parsedRoutes {
 		toSwapAmount := i256.Zero()
 
 		// if it's the last route, use the remaining amount
-		isLastRoute := i == len(op.routes)-1
+		isLastRoute := i == len(op.parsedRoutes)-1
 		if !isLastRoute {
 			// calculate the amount to swap for this route
 			swapAmount, err := op.validateRouteQuote(op.quotes[i], i)
@@ -158,7 +158,7 @@ func (op *baseSwapOperation) processRoutes(r *routerV1, swapType SwapType) (*u25
 			toSwapAmount = remainRequestAmount
 		}
 
-		amountIn, amountOut, err := op.processRoute(r, route, toSwapAmount, swapType)
+		amountIn, amountOut, err := op.processRoute(r, parsedRoute, toSwapAmount, swapType)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -183,22 +183,22 @@ func (op *baseSwapOperation) processRoutes(r *routerV1, swapType SwapType) (*u25
 // processRoute processes a single route with specified swap amount.
 func (op *baseSwapOperation) processRoute(
 	r *routerV1,
-	route string,
+	parsedRoute ParsedRoute,
 	toSwap *i256.Int,
 	swapType SwapType,
 ) (amountIn, amountOut *u256.Uint, err error) {
-	numHops := strings.Count(route, POOL_SEPARATOR) + 1
+	numHops := len(parsedRoute.Pools)
 	assertHopsInRange(numHops)
 
 	switch numHops {
 	case SINGLE_HOP_ROUTE:
-		amountIn, amountOut = r.handleSingleSwap(route, toSwap, op.withUnwrap, op.sqrtPriceLimitX96)
+		amountIn, amountOut = r.handleSingleSwapParsed(parsedRoute.Pools[0], toSwap, op.withUnwrap, op.sqrtPriceLimitX96)
 	default:
-		amountIn, amountOut = r.handleMultiSwap(swapType, route, numHops, toSwap, op.withUnwrap)
+		amountIn, amountOut = r.handleMultiSwapParsed(swapType, parsedRoute, numHops, toSwap, op.withUnwrap)
 	}
 
 	if amountIn == nil || amountOut == nil {
-		return nil, nil, ufmt.Errorf("swap failed to process route(%s)", route)
+		return nil, nil, ufmt.Errorf("swap failed to process route")
 	}
 
 	return amountIn, amountOut, nil
@@ -211,6 +211,20 @@ func (r *routerV1) handleSingleSwap(route string, amountSpecified *i256.Int, wit
 		tokenIn:           input,
 		tokenOut:          output,
 		fee:               fee,
+		amountSpecified:   amountSpecified,
+		withUnwrap:        withUnwrap,
+		sqrtPriceLimitX96: sqrtPriceLimitX96,
+	}
+
+	return r.singleSwap(&singleParams)
+}
+
+// handleSingleSwapParsed executes a single-hop swap using pre-parsed pool data.
+func (r *routerV1) handleSingleSwapParsed(pool ParsedPoolData, amountSpecified *i256.Int, withUnwrap bool, sqrtPriceLimitX96 string) (*u256.Uint, *u256.Uint) {
+	singleParams := SingleSwapParams{
+		tokenIn:           pool.Token0,
+		tokenOut:          pool.Token1,
+		fee:               pool.Fee,
 		amountSpecified:   amountSpecified,
 		withUnwrap:        withUnwrap,
 		sqrtPriceLimitX96: sqrtPriceLimitX96,
@@ -238,6 +252,30 @@ func (r *routerV1) handleMultiSwap(
 		input, output, fee := getDataForMultiPath(route, numHops-1) // last data
 		sp := newSwapParams(input, output, fee, recipient, amountSpecified, withUnwrap)
 		return r.multiSwapNegative(*sp, numHops, route)
+	default:
+		panic(errInvalidSwapType)
+	}
+}
+
+// handleMultiSwapParsed processes multi-hop swaps using pre-parsed route data.
+func (r *routerV1) handleMultiSwapParsed(
+	swapType SwapType,
+	parsedRoute ParsedRoute,
+	numHops int,
+	amountSpecified *i256.Int,
+	withUnwrap bool,
+) (*u256.Uint, *u256.Uint) {
+	recipient := routerAddr
+
+	switch swapType {
+	case ExactIn:
+		firstPool := parsedRoute.Pools[0]
+		sp := newSwapParams(firstPool.Token0, firstPool.Token1, firstPool.Fee, recipient, amountSpecified, withUnwrap)
+		return r.multiSwapParsed(*sp, numHops, parsedRoute)
+	case ExactOut:
+		lastPool := parsedRoute.Pools[numHops-1]
+		sp := newSwapParams(lastPool.Token0, lastPool.Token1, lastPool.Fee, recipient, amountSpecified, withUnwrap)
+		return r.multiSwapNegativeParsed(*sp, numHops, parsedRoute)
 	default:
 		panic(errInvalidSwapType)
 	}

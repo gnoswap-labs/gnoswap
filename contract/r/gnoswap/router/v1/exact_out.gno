@@ -226,12 +226,12 @@ func (op *ExactOutSwapOperation) Validate() error {
 	// when it's an ExactOut
 	op.amountSpecified = i256.Zero().Neg(amountOut)
 
-	routes, quotes, err := validateRoutesAndQuotes(op.params.RouteArr, op.params.QuoteArr)
+	parsedRoutes, quotes, err := parseAndValidateRoutes(op.params.RouteArr, op.params.QuoteArr)
 	if err != nil {
 		return err
 	}
 
-	op.routes = routes
+	op.parsedRoutes = parsedRoutes
 	op.quotes = quotes
 
 	return nil
@@ -251,7 +251,7 @@ func (op *ExactOutSwapOperation) Process() (*SwapResult, error) {
 	return &SwapResult{
 		AmountIn:        resultAmountIn,
 		AmountOut:       resultAmountOut,
-		Routes:          op.routes,
+		ParsedRoutes:    op.parsedRoutes,
 		Quotes:          op.quotes,
 		AmountSpecified: op.amountSpecified,
 		WithUnwrap:      op.withUnwrap,

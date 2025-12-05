@@ -19,6 +19,20 @@ var (
 	errTxExpired    = "transaction too old, now(%d) > deadline(%d)"
 )
 
+// ParsedPoolData holds pre-parsed pool path data to avoid redundant string parsing.
+// Token0 and Token1 are in route order (swap direction), not alphabetical order.
+type ParsedPoolData struct {
+	Token0   string // first token in route order (input token for this hop)
+	Token1   string // second token in route order (output token for this hop)
+	Fee      uint32
+	PoolPath string // canonical pool path (tokens in alphabetical order)
+}
+
+// ParsedRoute represents a parsed multi-hop route containing one or more pools.
+type ParsedRoute struct {
+	Pools []ParsedPoolData
+}
+
 // assertHopsInRange ensures the number of hops is within the valid range of 1-3.
 func assertHopsInRange(hops int) {
 	switch hops {
@@ -79,6 +93,105 @@ func getDataForSinglePathWithError(poolPath string) (string, string, uint32, err
 	}
 
 	return poolPathSplit[0], poolPathSplit[1], uint32(f), nil
+}
+
+// parsePoolPathData parses a pool path string into ParsedPoolData.
+// Returns the parsed data with both route-order tokens and canonical pool path.
+func parsePoolPathData(routePath string) (ParsedPoolData, error) {
+	token0, token1, fee, err := getDataForSinglePathWithError(routePath)
+	if err != nil {
+		return ParsedPoolData{}, err
+	}
+
+	// Get canonical pool path (tokens in alphabetical order)
+	canonicalPoolPath := pool.GetPoolPath(token0, token1, fee)
+
+	return ParsedPoolData{
+		Token0:   token0,
+		Token1:   token1,
+		Fee:      fee,
+		PoolPath: canonicalPoolPath,
+	}, nil
+}
+
+// parseRoute parses a single route string (may contain multiple hops) into ParsedRoute.
+func parseRoute(routePath string) (ParsedRoute, error) {
+	var pools []ParsedPoolData
+
+	if strings.Contains(routePath, POOL_SEPARATOR) {
+		// Multi-hop route
+		poolStrings := strings.Split(routePath, POOL_SEPARATOR)
+		pools = make([]ParsedPoolData, 0, len(poolStrings))
+		for _, poolStr := range poolStrings {
+			parsed, err := parsePoolPathData(poolStr)
+			if err != nil {
+				return ParsedRoute{}, err
+			}
+			pools = append(pools, parsed)
+		}
+	} else {
+		// Single-hop route
+		parsed, err := parsePoolPathData(routePath)
+		if err != nil {
+			return ParsedRoute{}, err
+		}
+		pools = []ParsedPoolData{parsed}
+	}
+
+	return ParsedRoute{Pools: pools}, nil
+}
+
+// parseRouteArr parses the full route array string into a slice of ParsedRoute.
+// This function parses routes ONCE to avoid redundant string splitting.
+func parseRouteArr(routeArr string) ([]ParsedRoute, error) {
+	routeStrings := splitSingleChar(routeArr, ',')
+	parsedRoutes := make([]ParsedRoute, 0, len(routeStrings))
+
+	for _, routeStr := range routeStrings {
+		parsed, err := parseRoute(routeStr)
+		if err != nil {
+			return nil, err
+		}
+		parsedRoutes = append(parsedRoutes, parsed)
+	}
+
+	return parsedRoutes, nil
+}
+
+// mustParseRouteArr is like parseRouteArr but panics on error.
+// Used for testing and when error handling is done elsewhere.
+func mustParseRouteArr(routeArr string) []ParsedRoute {
+	parsedRoutes, err := parseRouteArr(routeArr)
+	if err != nil {
+		panic(err)
+	}
+	return parsedRoutes
+}
+
+// mustParseRoute is like parseRoute but panics on error.
+// Used for testing and when error handling is done elsewhere.
+func mustParseRoute(routePath string) ParsedRoute {
+	parsed, err := parseRoute(routePath)
+	if err != nil {
+		panic(err)
+	}
+	return parsed
+}
+
+// stringRoutesToParsedRoutes converts a slice of route strings to ParsedRoute slice.
+// Used for backward compatibility with tests.
+func stringRoutesToParsedRoutes(routes []string) []ParsedRoute {
+	parsedRoutes := make([]ParsedRoute, 0, len(routes))
+	for _, route := range routes {
+		parsed, err := parseRoute(route)
+		if err != nil {
+			// For test compatibility, create empty ParsedRoute for invalid routes
+			parsedRoutes = append(parsedRoutes, ParsedRoute{})
+			continue
+		}
+		parsedRoutes = append(parsedRoutes, parsed)
+	}
+	return parsedRoutes
 }
 
 // getDataForMultiPath extracts token addresses and fee from a multi-hop path at specified index.
@@ -305,6 +418,17 @@ func safeConvertToInt64(value *u256.Uint) int64 {
 	return int64(res)
 }
 
+// getPoolPathsFromParsedRoutes extracts canonical pool paths from parsed routes.
+func getPoolPathsFromParsedRoutes(parsedRoutes []ParsedRoute) []string {
+	var poolPaths []string
+	for _, route := range parsedRoutes {
+		for _, p := range route.Pools {
+			poolPaths = append(poolPaths, p.PoolPath)
+		}
+	}
+	return poolPaths
+}
+
 // parsePoolPathsByRoutePathArr parses route path array string and returns a slice of pool paths.
 // This function converts route paths (which maintain swap direction) into canonical pool paths
 // (which use alphabetical token ordering).
@@ -328,25 +452,11 @@ func safeConvertToInt64(value *u256.Uint) int64 {
 //	input: "gno.land/r/demo/wugnot:gno.land/r/demo/usdc:500,gno.land/r/demo/usdc:gno.land/r/demo/gns:3000"
 //	output: ["gno.land/r/demo/usdc:gno.land/r/demo/wugnot:500", "gno.land/r/demo/gns:gno.land/r/demo/usdc:3000"]
 func parsePoolPathsByRoutePathArr(routePathArr string) ([]string, error) {
-	poolPaths := make([]string, 0)
-
-	for _, routePaths := range strings.Split(routePathArr, ",") {
-		for _, routePath := range strings.Split(routePaths, POOL_SEPARATOR) {
-			token0Path, token1Path, fee, err := getDataForSinglePathWithError(routePath)
-			if err != nil {
-				return []string{}, err
-			}
-
-			if token0Path > token1Path {
-				token0Path, token1Path = token1Path, token0Path
-			}
-
-			poolPath := pool.GetPoolPath(token0Path, token1Path, fee)
-			poolPaths = append(poolPaths, poolPath)
-		}
+	parsedRoutes, err := parseRouteArr(routePathArr)
+	if err != nil {
+		return nil, err
 	}
-
-	return poolPaths, nil
+	return getPoolPathsFromParsedRoutes(parsedRoutes), nil
 }
 
 // BuildSingleHopPath creates a single-hop route path string.

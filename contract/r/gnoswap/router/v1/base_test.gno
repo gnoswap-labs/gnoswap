@@ -277,7 +277,7 @@ func TestProcessRoute(t *testing.T) {
 
 		router := mockRouter()
 		func(cur realm) {
-			amountIn, amountOut, err := op.processRoute(router, route, toSwap, swapType)
+			amountIn, amountOut, err := op.processRoute(router, mustParseRoute(route), toSwap, swapType)
 			uassert.Equal(t, err, nil)
 			uassert.Equal(t, amountIn.ToString(), "1000")
 			uassert.Equal(t, amountOut.ToString(), "979")
@@ -291,7 +291,7 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 	op := &baseSwapOperation{
 		// use odd amount to ensure remainder
 		amountSpecified: oddAmount,
-		routes:          []string{foobar500, barbaz500},
+		parsedRoutes:    stringRoutesToParsedRoutes([]string{foobar500, barbaz500}),
 		// allocate 50% to each route
 		quotes: []string{"50", "50"},
 	}
@@ -319,7 +319,7 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 	}(cross)
 
 	// check actual swapped amounts for each route
-	for i := range op.routes {
+	for i := range op.parsedRoutes {
 		toSwap, err := op.validateRouteQuote(op.quotes[i], i)
 		if err != nil {
 			t.Fatalf("unexpected error validating quote: %v", err)
@@ -871,10 +871,10 @@ func TestProcessRoute_ErrorCases(t *testing.T) {
 
 			if tt.expectPanic {
 				uassert.PanicsContains(t, tt.panicMsg, func() {
-					op.processRoute(router, tt.route, tt.toSwap, tt.swapType)
+					op.processRoute(router, mustParseRoute(tt.route), tt.toSwap, tt.swapType)
 				})
 			} else {
-				op.processRoute(router, tt.route, tt.toSwap, tt.swapType)
+				op.processRoute(router, mustParseRoute(tt.route), tt.toSwap, tt.swapType)
 			}
 		})
 	}
@@ -995,7 +995,7 @@ func TestProcessRoutes_OverflowDetection(t *testing.T) {
 			name: "normal amounts - no overflow",
 			op: &baseSwapOperation{
 				amountSpecified: i256.NewInt(1000),
-				routes:          []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"},
+				parsedRoutes:    stringRoutesToParsedRoutes([]string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"}),
 				quotes:          []string{"100"},
 			},
 			expectPanic: false,
@@ -1004,7 +1004,7 @@ func TestProcessRoutes_OverflowDetection(t *testing.T) {
 			name: "overflow amounts - MaxInt64 + 1",
 			op: &baseSwapOperation{
 				amountSpecified: i256.MustFromDecimal("9223372036854775808"), // MaxInt64 + 1
-				routes:          []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"},
+				parsedRoutes:    stringRoutesToParsedRoutes([]string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"}),
 				quotes:          []string{"100"},
 			},
 			expectPanic: true,
@@ -1238,7 +1238,7 @@ func TestBaseSwapOperation_Initialization(t *testing.T) {
 				withUnwrap:              tt.withUnwrap,
 				userBeforeWugnotBalance: tt.userBeforeWugnotBalance,
 				userWrappedWugnot:       tt.userWrappedWugnot,
-				routes:                  tt.routes,
+				parsedRoutes:            stringRoutesToParsedRoutes(tt.routes),
 				quotes:                  tt.quotes,
 				amountSpecified:         tt.amountSpecified,
 			}
@@ -1247,7 +1247,7 @@ func TestBaseSwapOperation_Initialization(t *testing.T) {
 			uassert.Equal(t, op.withUnwrap, tt.withUnwrap)
 			uassert.Equal(t, op.userBeforeWugnotBalance, tt.userBeforeWugnotBalance)
 			uassert.Equal(t, op.userWrappedWugnot, tt.userWrappedWugnot)
-			uassert.Equal(t, len(op.routes), len(tt.routes))
+			uassert.Equal(t, len(op.parsedRoutes), len(tt.routes))
 			uassert.Equal(t, len(op.quotes), len(tt.quotes))
 			uassert.Equal(t, op.amountSpecified.ToString(), tt.amountSpecified.ToString())
 		})
@@ -1358,7 +1358,7 @@ func TestSwapResult_Structure(t *testing.T) {
 			result := &SwapResult{
 				AmountIn:        tt.amountIn,
 				AmountOut:       tt.amountOut,
-				Routes:          tt.routes,
+				ParsedRoutes:    stringRoutesToParsedRoutes(tt.routes),
 				Quotes:          tt.quotes,
 				AmountSpecified: tt.amountSpecified,
 				WithUnwrap:      tt.withUnwrap,
@@ -1366,7 +1366,7 @@ func TestSwapResult_Structure(t *testing.T) {
 
 			uassert.NotNil(t, result.AmountIn)
 			uassert.NotNil(t, result.AmountOut)
-			uassert.Equal(t, len(result.Routes), len(tt.routes))
+			uassert.Equal(t, len(result.ParsedRoutes), len(tt.routes))
 			uassert.Equal(t, len(result.Quotes), len(tt.quotes))
 			uassert.NotNil(t, result.AmountSpecified)
 			uassert.Equal(t, result.WithUnwrap, tt.withUnwrap)

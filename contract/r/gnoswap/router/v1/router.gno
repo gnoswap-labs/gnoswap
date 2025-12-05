@@ -287,3 +287,34 @@ func (r *routerV1) finalizeSwap(
 func validateRoutesAndQuotes(routes, quotes string) ([]string, []string, error) {
 	return NewRouteParser().ParseRoutes(routes, quotes)
 }
+
+// parseAndValidateRoutes parses routes into ParsedRoute structs and validates quotes.
+// This function parses routes ONCE to avoid redundant string splitting.
+func parseAndValidateRoutes(routeArr, quoteArr string) ([]ParsedRoute, []string, error) {
+	if routeArr == "" || quoteArr == "" {
+		return nil, nil, ufmt.Errorf(errEmptyRoutes)
+	}
+
+	quotesArr := splitSingleChar(quoteArr, ',')
+	parsedRoutes, err := parseRouteArr(routeArr)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	rr := len(parsedRoutes)
+	qq := len(quotesArr)
+
+	if rr < 1 || rr > 7 {
+		return nil, nil, ufmt.Errorf(errInvalidRouteLength, rr)
+	}
+
+	if rr != qq {
+		return nil, nil, ufmt.Errorf(errRoutesQuotesMismatch, rr, qq)
+	}
+
+	if err := NewRouteParser().ValidateQuoteSum(quotesArr); err != nil {
+		return nil, nil, err
+	}
+
+	return parsedRoutes, quotesArr, nil
+}
