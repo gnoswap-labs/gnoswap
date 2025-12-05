@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"gno.land/p/nt/avl"
 	"gno.land/r/gnoswap/pool"
 )
 
@@ -39,20 +38,21 @@ func registerPoolV1() {
 
 func initStoreData(poolStore pool.IPoolStore) error {
 	if !poolStore.HasPools() {
-		err := poolStore.SetPools(avl.NewTree())
+		err := poolStore.SetPools(make(map[string]*pool.Pool))
 		if err != nil {
 			return err
 		}
 	}
 
 	if !poolStore.HasFeeAmountTickSpacing() {
-		tickSpacingTree := avl.NewTree()
-		tickSpacingTree.Set("100", int32(1))
-		tickSpacingTree.Set("500", int32(10))
-		tickSpacingTree.Set("3000", int32(60))
-		tickSpacingTree.Set("10000", int32(200))
+		tickSpacingMap := map[uint32]int32{
+			100:   1,
+			500:   10,
+			3000:  60,
+			10000: 200,
+		}
 
-		err := poolStore.SetFeeAmountTickSpacing(tickSpacingTree)
+		err := poolStore.SetFeeAmountTickSpacing(tickSpacingMap)
 		if err != nil {
 			return err
 		}

@@ -1,19 +1,17 @@
 package v1
 
 import (
-	"chain/runtime"
 	b64 "encoding/base64"
 	"strconv"
 	"strings"
-	"time"
 
 	"gno.land/p/nt/ufmt"
 	"gno.land/p/onbloc/json"
-	pl "gno.land/r/gnoswap/pool"
 )
 
 func (i *poolV1) ApiGetPool(poolPath string) string {
-	if !i.store.GetPools().Has(poolPath) {
+	pools := i.store.GetPools()
+	if _, exists := pools[poolPath]; !exists {
 		return ""
 	}
 
@@ -35,41 +33,27 @@ func (i *poolV1) ApiGetPool(poolPath string) string {
 //
 // Returns JSON string with TWAP data or error
 func (i *poolV1) ApiGetTWAP(poolPath string, secondsAgo uint32) string {
-	currentTime := time.Now().Unix()
-	currentHeight := runtime.ChainHeight()
+	stat := newStatNode().JSON()
 
-	poolI, exist := i.store.GetPools().Get(poolPath)
+	pools := i.store.GetPools()
+	pool, exist := pools[poolPath]
 	if !exist {
 		return json.ObjectNode("", map[string]*json.Node{
-			"stat": json.ObjectNode("", map[string]*json.Node{
-				"height":    json.StringNode("height", strconv.Itoa(int(currentHeight))),
-				"timestamp": json.StringNode("timestamp", strconv.FormatInt(currentTime, 10)),
-			}),
+			"stat":  stat,
 			"error": json.StringNode("error", "pool not found"),
 		}).String()
-	}
-
-	pool, ok := poolI.(*pl.Pool)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast poolI to *pl.Pool: %T", poolI))
 	}
 
 	twapTick, err := getTWAP(pool, secondsAgo)
 	if err != nil {
 		return json.ObjectNode("", map[string]*json.Node{
-			"stat": json.ObjectNode("", map[string]*json.Node{
-				"height":    json.StringNode("height", strconv.Itoa(int(currentHeight))),
-				"timestamp": json.StringNode("timestamp", strconv.FormatInt(currentTime, 10)),
-			}),
+			"stat":  stat,
 			"error": json.StringNode("error", err.Error()),
 		}).String()
 	}
 
 	return json.ObjectNode("", map[string]*json.Node{
-		"stat": json.ObjectNode("", map[string]*json.Node{
-			"height":    json.StringNode("height", strconv.Itoa(int(currentHeight))),
-			"timestamp": json.StringNode("timestamp", strconv.FormatInt(currentTime, 10)),
-		}),
+		"stat": stat,
 		"response": json.ObjectNode("", map[string]*json.Node{
 			"poolPath":   json.StringNode("poolPath", poolPath),
 			"twapTick":   json.StringNode("twapTick", strconv.FormatInt(int64(twapTick), 10)),

@@ -1,15 +1,10 @@
 package common
 
 import (
-	"regexp"
-	"strings"
-
 	"gno.land/p/demo/tokens/grc20"
 	"gno.land/p/nt/ufmt"
 	"gno.land/r/demo/defi/grc20reg"
 )
-
-var re = regexp.MustCompile(`\[gno\.land/r/[^\]]+\]`)
 
 // GetToken returns a grc20.Token instance for the specified path, panicking if not registered.
 func GetToken(path string) *grc20.Token {
@@ -40,23 +35,6 @@ func MustRegistered(paths ...string) {
 			))
 		}
 	}
-}
-
-// extractTokenPathsFromRender extracts token paths from rendered grc20reg output.
-// Parses the grc20reg.Render() output and extracts all token paths enclosed in brackets.
-// Token paths follow the format: [gno.land/r/package/path]
-//
-// Returns a slice of token paths with brackets removed.
-// Used internally for parsing token registry data.
-func extractTokenPathsFromRender(render string) []string {
-	matches := re.FindAllString(render, -1)
-
-	tokenPaths := make([]string, 0, len(matches))
-	for _, match := range matches {
-		tokenPath := strings.Trim(match, "[]") // Remove the brackets
-		tokenPaths = append(tokenPaths, tokenPath)
-	}
-	return tokenPaths
 }
 
 // TotalSupply returns the total supply of the specified token.

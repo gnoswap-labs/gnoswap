@@ -612,10 +612,3 @@ func (z *Int) SetBytes32(in []byte) *Int {
 	z[0] = binary.BigEndian.Uint64(in[24:32])
 	return z
 }
-
-func (z *Int) NilToZero() *Int {
-	if z == nil {
-		return Zero()
-	}
-	return z
-}

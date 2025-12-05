@@ -161,8 +161,6 @@ func (i *poolV1) Burn(
 	}
 
 	setPosition(pool, positionKey, position)
-
-	// mustGetPosition() is called to ensure the position exists
 	mustGetPositionByPool(pool, positionKey)
 
 	// Save pool state after modifyPosition may have updated liquidity
@@ -300,11 +298,11 @@ func (i *poolV1) CollectProtocol(
 	halt.AssertIsNotHaltedPool()
 	halt.AssertIsNotHaltedWithdraw()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	common.MustRegistered(token0Path)
-	common.MustRegistered(token1Path)
+	common.MustRegistered(token0Path, token1Path)
 
 	amount0, amount1 := i.collectProtocol(
 		token0Path,
@@ -315,10 +313,9 @@ func (i *poolV1) CollectProtocol(
 		amount1Requested,
 	)
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"CollectProtocol",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"token0Path", token0Path,
 		"token1Path", token1Path,

@@ -86,13 +86,13 @@ func (i *poolV1) CreatePool(
 	}
 
 	// check if wrapped token paths are registered
-	common.MustRegistered(poolInfo.token0Path)
-	common.MustRegistered(poolInfo.token1Path)
+	common.MustRegistered(poolInfo.token0Path, poolInfo.token1Path)
 
 	pool := newPool(poolInfo)
+	poolPath := poolInfo.poolPath()
 
 	pools := i.store.GetPools()
-	pools.Set(poolInfo.poolPath(), pool)
+	pools[poolPath] = pool
 
 	err = i.store.SetPools(pools)
 	if err != nil {
@@ -104,15 +104,16 @@ func (i *poolV1) CreatePool(
 	if poolCreationFee > 0 {
 		protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 
-		gns.TransferFrom(cross, runtime.PreviousRealm().Address(), protocolFeeAddr, poolCreationFee)
+		previousRealm := runtime.PreviousRealm()
+		previousRealmAddr := previousRealm.Address()
+		gns.TransferFrom(cross, previousRealmAddr, protocolFeeAddr, poolCreationFee)
 		pf.AddToProtocolFee(cross, GNS_PATH, poolCreationFee)
 
-		previousRealm := runtime.PreviousRealm()
 		chain.Emit(
 			"PoolCreationFee",
-			"prevAddr", previousRealm.Address().String(),
+			"prevAddr", previousRealmAddr.String(),
 			"prevRealm", previousRealm.PkgPath(),
-			"poolPath", poolInfo.poolPath(),
+			"poolPath", poolPath,
 			"feeTokenPath", GNS_PATH,
 			"feeAmount", formatInt(poolCreationFee),
 		)
@@ -127,7 +128,7 @@ func (i *poolV1) CreatePool(
 		"token1Path", token1Path,
 		"fee", formatUint(fee),
 		"sqrtPriceX96", sqrtPriceX96,
-		"poolPath", pool.PoolPath(),
+		"poolPath", poolPath,
 		"tick", formatInt(pool.Slot0Tick()),
 		"tickSpacing", formatInt(poolInfo.TickSpacing()),
 	)
@@ -153,10 +154,8 @@ func (i *poolV1) SetFeeProtocol(feeProtocol0, feeProtocol1 uint8) {
 
 // setFeeAmountTickSpacing associates a tick spacing value with a fee amount.
 func (i *poolV1) setFeeAmountTickSpacing(fee uint32, tickSpacing int32) error {
-	feeStr := formatUint(fee)
-
 	feeAmountTickSpacing := i.store.GetFeeAmountTickSpacing()
-	feeAmountTickSpacing.Set(feeStr, tickSpacing)
+	feeAmountTickSpacing[fee] = tickSpacing
 
 	return i.store.SetFeeAmountTickSpacing(feeAmountTickSpacing)
 }
@@ -165,17 +164,12 @@ func (i *poolV1) setFeeAmountTickSpacing(fee uint32, tickSpacing int32) error {
 func (i *poolV1) mustGetPool(poolPath string) (pool *pl.Pool) {
 	pools := i.store.GetPools()
 
-	iPool, exist := pools.Get(poolPath)
+	pool, exist := pools[poolPath]
 	if !exist {
 		panic(newErrorWithDetail(
 			errDataNotFound,
 			ufmt.Sprintf("expected poolPath(%s) to exist", poolPath),
 		))
-	}
-
-	pool, ok := iPool.(*pl.Pool)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast pool to *Pool: %T", iPool))
 	}
 
 	return pool
@@ -186,11 +180,12 @@ func (i *poolV1) mustGetPoolBy(token0Path, token1Path string, fee uint32) *pl.Po
 	return i.mustGetPool(poolPath)
 }
 
-// savePool updates a pool in the pools tree and persists to storage.
+// savePool updates a pool in the pools map and persists to storage.
 // This ensures that modifications to pool objects are properly saved.
 func (i *poolV1) savePool(pool *pl.Pool) error {
 	pools := i.store.GetPools()
-	pools.Set(pool.PoolPath(), pool)
+	pools[pool.PoolPath()] = pool
+
 	return i.store.SetPools(pools)
 }
 
@@ -262,19 +257,12 @@ func (i *poolV1) setFeeProtocol(feeProtocol0, feeProtocol1 uint8) (uint8, error)
 	pools := i.store.GetPools()
 
 	// Update slot0 for each pool
-	pools.Iterate("", "", func(poolPath string, iPool any) bool {
-		pool, ok := iPool.(*pl.Pool)
-		if !ok {
-			panic("failed to cast pool to *Pool")
-		}
-
+	for _, pool := range pools {
 		slot0 := pool.Slot0()
 		slot0.SetFeeProtocol(newFee)
 
 		pool.SetSlot0(slot0)
-
-		return false
-	})
+	}
 
 	// update slot0
 	err := i.store.SetSlot0FeeProtocol(newFee)

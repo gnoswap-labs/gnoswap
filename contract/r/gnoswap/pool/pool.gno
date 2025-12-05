@@ -3,9 +3,6 @@ package pool
 import (
 	"time"
 
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/ufmt"
-
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -21,13 +18,13 @@ type Pool struct {
 	slot0                Slot0
 	balances             Balances // balances of the pool
 	protocolFees         ProtocolFees
-	maxLiquidityPerTick  *u256.Uint // the maximum amount of liquidity that can be added per tick
-	feeGrowthGlobal0X128 *u256.Uint // uint256
-	feeGrowthGlobal1X128 *u256.Uint // uint256
-	liquidity            *u256.Uint // total amount of active liquidity in the pool (within current tick range)
-	ticks                *avl.Tree  // tick(int32) -> TickInfo
-	tickBitmaps          *avl.Tree  // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(*u256.Uint)
-	positions            *avl.Tree  // maps the key (caller, lower tick, upper tick) to a unique position
+	maxLiquidityPerTick  *u256.Uint              // the maximum amount of liquidity that can be added per tick
+	feeGrowthGlobal0X128 *u256.Uint              // uint256
+	feeGrowthGlobal1X128 *u256.Uint              // uint256
+	liquidity            *u256.Uint              // total amount of active liquidity in the pool (within current tick range)
+	ticks                map[int32]TickInfo      // tick(int32) -> TickInfo
+	tickBitmaps          map[int16]*u256.Uint    // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(*u256.Uint)
+	positions            map[string]PositionInfo // maps the key (caller, lower tick, upper tick) to a unique position
 
 	observationState *ObservationState // oracle state with historical observations
 }
@@ -53,9 +50,9 @@ func (p *Pool) ProtocolFees() ProtocolFees          { return p.protocolFees }
 func (p *Pool) ProtocolFeesToken0() *u256.Uint      { return p.protocolFees.token0 }
 func (p *Pool) ProtocolFeesToken1() *u256.Uint      { return p.protocolFees.token1 }
 func (p *Pool) Liquidity() *u256.Uint               { return p.liquidity }
-func (p *Pool) Ticks() *avl.Tree                    { return p.ticks }
-func (p *Pool) TickBitmaps() *avl.Tree              { return p.tickBitmaps }
-func (p *Pool) Positions() *avl.Tree                { return p.positions }
+func (p *Pool) Ticks() map[int32]TickInfo           { return p.ticks }
+func (p *Pool) TickBitmaps() map[int16]*u256.Uint   { return p.tickBitmaps }
+func (p *Pool) Positions() map[string]PositionInfo  { return p.positions }
 func (p *Pool) ObservationState() *ObservationState { return p.observationState }
 
 // Pool Setters methods
@@ -119,15 +116,15 @@ func (p *Pool) SetLiquidity(liquidity *u256.Uint) {
 	p.liquidity = liquidity
 }
 
-func (p *Pool) SetTicks(ticks *avl.Tree) {
+func (p *Pool) SetTicks(ticks map[int32]TickInfo) {
 	p.ticks = ticks
 }
 
-func (p *Pool) SetTickBitmaps(tickBitmaps *avl.Tree) {
+func (p *Pool) SetTickBitmaps(tickBitmaps map[int16]*u256.Uint) {
 	p.tickBitmaps = tickBitmaps
 }
 
-func (p *Pool) SetPositions(positions *avl.Tree) {
+func (p *Pool) SetPositions(positions map[string]PositionInfo) {
 	p.positions = positions
 }
 
@@ -135,19 +132,22 @@ func (p *Pool) SetObservationState(observationState *ObservationState) {
 	p.observationState = observationState
 }
 
+func (p *Pool) DeleteTick(tick int32) {
+	if _, ok := p.ticks[tick]; !ok {
+		return
+	}
+
+	delete(p.ticks, tick)
+}
+
 func (p *Pool) Clone() *Pool {
-	ticks := avl.NewTree()
-	tickBitmaps := avl.NewTree()
-	positions := avl.NewTree()
+	ticks := make(map[int32]TickInfo, len(p.ticks))
+	tickBitmaps := make(map[int16]*u256.Uint, len(p.tickBitmaps))
+	positions := make(map[string]PositionInfo, len(p.positions))
 
 	// clone ticks
-	p.ticks.Iterate("", "", func(tickKey string, tickValue any) bool {
-		tickInfo, ok := tickValue.(TickInfo)
-		if !ok {
-			panic(ufmt.Sprintf("failed to cast tickValue to TickInfo: %T", tickValue))
-		}
-
-		ticks.Set(tickKey, TickInfo{
+	for tickKey, tickInfo := range p.ticks {
+		ticks[tickKey] = TickInfo{
 			feeGrowthOutside0X128:          u256.Zero().Set(tickInfo.feeGrowthOutside0X128),
 			feeGrowthOutside1X128:          u256.Zero().Set(tickInfo.feeGrowthOutside1X128),
 			liquidityGross:                 u256.Zero().Set(tickInfo.liquidityGross),
@@ -156,35 +156,24 @@ func (p *Pool) Clone() *Pool {
 			secondsPerLiquidityOutsideX128: u256.Zero().Set(tickInfo.secondsPerLiquidityOutsideX128),
 			secondsOutside:                 tickInfo.secondsOutside,
 			initialized:                    tickInfo.initialized,
-		})
-		return false
-	})
+		}
+	}
 
 	// clone tickBitmaps
-	p.tickBitmaps.Iterate("", "", func(tickKey string, tickValue any) bool {
-		tickBitmap, ok := tickValue.(*u256.Uint)
-		if !ok {
-			panic(ufmt.Sprintf("failed to cast tickValue to *u256.Uint: %T", tickValue))
-		}
-		tickBitmaps.Set(tickKey, u256.Zero().Set(tickBitmap))
-		return false
-	})
+	for wordPos, tickBitmap := range p.tickBitmaps {
+		tickBitmaps[wordPos] = tickBitmap.Clone()
+	}
 
 	// clone positions
-	p.positions.Iterate("", "", func(positionKey string, positionValue any) bool {
-		positionInfo, ok := positionValue.(PositionInfo)
-		if !ok {
-			panic(ufmt.Sprintf("failed to cast positionValue to PositionInfo: %T", positionValue))
+	for positionKey, positionInfo := range p.positions {
+		positions[positionKey] = PositionInfo{
+			liquidity:                positionInfo.liquidity.Clone(),
+			feeGrowthInside0LastX128: positionInfo.feeGrowthInside0LastX128.Clone(),
+			feeGrowthInside1LastX128: positionInfo.feeGrowthInside1LastX128.Clone(),
+			tokensOwed0:              positionInfo.tokensOwed0.Clone(),
+			tokensOwed1:              positionInfo.tokensOwed1.Clone(),
 		}
-		positions.Set(positionKey, PositionInfo{
-			liquidity:                u256.Zero().Set(positionInfo.liquidity),
-			feeGrowthInside0LastX128: u256.Zero().Set(positionInfo.feeGrowthInside0LastX128),
-			feeGrowthInside1LastX128: u256.Zero().Set(positionInfo.feeGrowthInside1LastX128),
-			tokensOwed0:              u256.Zero().Set(positionInfo.tokensOwed0),
-			tokensOwed1:              u256.Zero().Set(positionInfo.tokensOwed1),
-		})
-		return false
-	})
+	}
 
 	return &Pool{
 		token0Path:  p.token0Path,
@@ -192,23 +181,17 @@ func (p *Pool) Clone() *Pool {
 		fee:         p.fee,
 		tickSpacing: p.tickSpacing,
 		slot0: Slot0{
-			sqrtPriceX96: u256.Zero().Set(p.slot0.sqrtPriceX96),
+			sqrtPriceX96: p.slot0.sqrtPriceX96.Clone(),
 			tick:         p.slot0.tick,
 			feeProtocol:  p.slot0.feeProtocol,
 			unlocked:     p.slot0.unlocked,
 		},
-		balances: Balances{
-			token0: u256.Zero().Set(p.balances.token0),
-			token1: u256.Zero().Set(p.balances.token1),
-		},
-		protocolFees: ProtocolFees{
-			token0: u256.Zero().Set(p.protocolFees.token0),
-			token1: u256.Zero().Set(p.protocolFees.token1),
-		},
-		maxLiquidityPerTick:  u256.Zero().Set(p.maxLiquidityPerTick),
-		feeGrowthGlobal0X128: u256.Zero().Set(p.feeGrowthGlobal0X128),
-		feeGrowthGlobal1X128: u256.Zero().Set(p.feeGrowthGlobal1X128),
-		liquidity:            u256.Zero().Set(p.liquidity),
+		balances:             Balances{TokenPair: p.balances.TokenPair.Clone()},
+		protocolFees:         ProtocolFees{TokenPair: p.protocolFees.TokenPair.Clone()},
+		maxLiquidityPerTick:  p.maxLiquidityPerTick.Clone(),
+		feeGrowthGlobal0X128: p.feeGrowthGlobal0X128.Clone(),
+		feeGrowthGlobal1X128: p.feeGrowthGlobal1X128.Clone(),
+		liquidity:            p.liquidity.Clone(),
 		ticks:                ticks,
 		tickBitmaps:          tickBitmaps,
 		positions:            positions,
@@ -240,49 +223,51 @@ func NewPool(
 		feeGrowthGlobal1X128: u256.Zero(),
 		protocolFees:         newProtocolFees(),
 		liquidity:            u256.Zero(),
-		ticks:                avl.NewTree(),
-		tickBitmaps:          avl.NewTree(),
-		positions:            avl.NewTree(),
+		ticks:                make(map[int32]TickInfo),
+		tickBitmaps:          make(map[int16]*u256.Uint),
+		positions:            make(map[string]PositionInfo),
 		observationState:     NewObservationState(time.Now().Unix()),
 	}
 }
 
-type Balances struct {
-	// current balance of the pool in token0/token1
-	token0 *u256.Uint
-	token1 *u256.Uint
-}
-
-func (b *Balances) Token0() *u256.Uint { return b.token0 }
-func (b *Balances) Token1() *u256.Uint { return b.token1 }
-
-func (b *Balances) SetToken0(token0 *u256.Uint) { b.token0 = token0 }
-func (b *Balances) SetToken1(token1 *u256.Uint) { b.token1 = token1 }
+type Balances struct{ TokenPair }
 
 func newBalances() Balances {
 	return Balances{
-		token0: u256.Zero(),
-		token1: u256.Zero(),
+		TokenPair: NewTokenPair(u256.Zero(), u256.Zero()),
 	}
 }
 
-type ProtocolFees struct {
-	// current protocol fees of the pool in token0/token1
-	token0 *u256.Uint
-	token1 *u256.Uint
-}
-
-func (p *ProtocolFees) Token0() *u256.Uint { return p.token0 }
-func (p *ProtocolFees) Token1() *u256.Uint { return p.token1 }
-
-func (p *ProtocolFees) SetToken0(token0 *u256.Uint) { p.token0 = token0 }
-func (p *ProtocolFees) SetToken1(token1 *u256.Uint) { p.token1 = token1 }
+type ProtocolFees struct{ TokenPair }
 
 func newProtocolFees() ProtocolFees {
 	return ProtocolFees{
-		token0: u256.Zero(),
-		token1: u256.Zero(),
+		TokenPair: NewTokenPair(u256.Zero(), u256.Zero()),
 	}
+}
+
+type TokenPair struct {
+	token0, token1 *u256.Uint
+}
+
+func NewTokenPair(token0, token1 *u256.Uint) TokenPair {
+	return TokenPair{
+		token0: token0,
+		token1: token1,
+	}
+}
+
+func (t *TokenPair) Token0() *u256.Uint { return t.token0 }
+func (t *TokenPair) Token1() *u256.Uint { return t.token1 }
+
+func (t *TokenPair) SetToken0(token0 *u256.Uint) { t.token0 = token0 }
+func (t *TokenPair) SetToken1(token1 *u256.Uint) { t.token1 = token1 }
+
+func (t *TokenPair) Clone() TokenPair {
+	return NewTokenPair(
+		t.token0.Clone(),
+		t.token1.Clone(),
+	)
 }
 
 type Slot0 struct {
@@ -309,7 +294,7 @@ func newSlot0(
 	unlocked bool,
 ) Slot0 {
 	return Slot0{
-		sqrtPriceX96: sqrtPriceX96,
+		sqrtPriceX96: sqrtPriceX96.Clone(),
 		tick:         tick,
 		feeProtocol:  feeProtocol,
 		unlocked:     unlocked,
@@ -385,36 +370,6 @@ func (t *TickInfo) SetTickCumulativeOutside(tickCumulativeOutside int64) {
 	t.tickCumulativeOutside = tickCumulativeOutside
 }
 
-// ValueOrZero ensures that all fields of TickInfo are valid by setting nil fields to zero,
-// while retaining existing values if they are not nil.
-// This function updates the TickInfo struct to replace any nil values in its fields
-// with their respective zero values, ensuring data consistency.
-//
-// Behavior:
-// - If a field is nil, it is replaced with its zero value.
-// - If a field already has a valid value, the value remains unchanged.
-//
-// Fields:
-// - liquidityGross: Gross liquidity for the tick, set to zero if nil, otherwise retains its value.
-// - liquidityNet: Net liquidity for the tick, set to zero if nil, otherwise retains its value.
-// - feeGrowthOutside0X128: Accumulated fee growth for token0 outside the tick, set to zero if nil, otherwise retains its value.
-// - feeGrowthOutside1X128: Accumulated fee growth for token1 outside the tick, set to zero if nil, otherwise retains its value.
-// - secondsPerLiquidityOutsideX128: Time per liquidity outside the tick, set to zero if nil, otherwise retains its value.
-//
-// Use Case:
-// This function ensures all numeric fields in TickInfo are non-nil and have valid values,
-// preventing potential runtime errors caused by nil values during operations like arithmetic or comparisons.
-func (t *TickInfo) ValueOrZero() {
-	t.liquidityGross = t.liquidityGross.NilToZero()
-	t.liquidityNet = t.liquidityNet.NilToZero()
-	t.feeGrowthOutside0X128 = t.feeGrowthOutside0X128.NilToZero()
-	t.feeGrowthOutside1X128 = t.feeGrowthOutside1X128.NilToZero()
-	t.secondsPerLiquidityOutsideX128 = t.secondsPerLiquidityOutsideX128.NilToZero()
-	t.secondsOutside = 0
-	t.initialized = false
-	t.tickCumulativeOutside = 0
-}
-
 func NewTickInfo() TickInfo {
 	return TickInfo{
 		liquidityGross:                 u256.Zero(),
@@ -425,6 +380,19 @@ func NewTickInfo() TickInfo {
 		secondsOutside:                 0,
 		initialized:                    false,
 		tickCumulativeOutside:          0,
+	}
+}
+
+func cloneTickInfo(src TickInfo) TickInfo {
+	return TickInfo{
+		feeGrowthOutside0X128:          src.feeGrowthOutside0X128.Clone(),
+		feeGrowthOutside1X128:          src.feeGrowthOutside1X128.Clone(),
+		liquidityGross:                 src.liquidityGross.Clone(),
+		liquidityNet:                   src.liquidityNet.Clone(),
+		tickCumulativeOutside:          src.tickCumulativeOutside,
+		secondsPerLiquidityOutsideX128: src.secondsPerLiquidityOutsideX128.Clone(),
+		secondsOutside:                 src.secondsOutside,
+		initialized:                    src.initialized,
 	}
 }
 
@@ -470,41 +438,6 @@ func (p *PositionInfo) SetTokensOwed0(tokensOwed0 *u256.Uint) {
 
 func (p *PositionInfo) SetTokensOwed1(tokensOwed1 *u256.Uint) {
 	p.tokensOwed1 = tokensOwed1
-}
-
-// valueOrZero initializes nil fields in PositionInfo to zero.
-//
-// This function ensures that all numeric fields in the PositionInfo struct are not nil.
-// If a field is nil, it is replaced with a zero value, maintaining consistency and preventing
-// potential null pointer issues during calculations.
-//
-// Fields affected:
-//   - liquidity: The liquidity amount associated with the position.
-//   - feeGrowthInside0LastX128: Fee growth for token 0 inside the tick range, last recorded value.
-//   - feeGrowthInside1LastX128: Fee growth for token 1 inside the tick range, last recorded value.
-//   - tokensOwed0: The amount of token 0 owed to the position owner.
-//   - tokensOwed1: The amount of token 1 owed to the position owner.
-//
-// Behavior:
-//   - If a field is nil, it is set to its equivalent zero value.
-//   - If a field already has a value, it remains unchanged.
-//
-// Example:
-//
-//	position := &PositionInfo{}
-//	position.valueOrZero()
-//	println(position.liquidity) // Output: 0
-//
-// Notes:
-//   - This function is useful for ensuring numeric fields are properly initialized
-//     before performing operations or calculations.
-//   - Prevents runtime errors caused by nil values.
-func (p *PositionInfo) ValueOrZero() {
-	p.liquidity = p.liquidity.NilToZero()
-	p.feeGrowthInside0LastX128 = p.feeGrowthInside0LastX128.NilToZero()
-	p.feeGrowthInside1LastX128 = p.feeGrowthInside1LastX128.NilToZero()
-	p.tokensOwed0 = p.tokensOwed0.NilToZero()
-	p.tokensOwed1 = p.tokensOwed1.NilToZero()
 }
 
 func NewPositionInfo(

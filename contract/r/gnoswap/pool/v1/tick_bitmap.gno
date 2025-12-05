@@ -1,11 +1,8 @@
 package v1
 
 import (
-	"strconv"
-
 	plp "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/ufmt"
 	pl "gno.land/r/gnoswap/pool"
 )
 
@@ -82,36 +79,18 @@ func tickBitmapNextInitializedTickWithInOneWord(
 // getTickBitmap gets the tick bitmap for the given word position
 // if the tick bitmap is not initialized, initialize it to zero
 func getTickBitmap(p *pl.Pool, wordPos int16) *u256.Uint {
-	wordPosStr := strconv.Itoa(int(wordPos))
-
-	value, exist := p.TickBitmaps().Get(wordPosStr)
+	value, exist := p.TickBitmaps()[wordPos]
 	if !exist {
-		initTickBitmap(p, wordPos)
-		value, exist = p.TickBitmaps().Get(wordPosStr)
-		if !exist {
-			panic(newErrorWithDetail(
-				errDataNotFound,
-				ufmt.Sprintf("failed to initialize tickBitmap(%d)", wordPos),
-			))
-		}
+		setTickBitmap(p, wordPos, u256.Zero())
+		value = p.TickBitmaps()[wordPos]
 	}
 
-	bitmap, ok := value.(*u256.Uint)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast tickBitmap to *u256.Uint: %T", value))
-	}
-	return bitmap
+	return value
 }
 
 // setTickBitmap sets the tick bitmap for the given word position
 func setTickBitmap(p *pl.Pool, wordPos int16, tickBitmap *u256.Uint) {
-	wordPosStr := strconv.Itoa(int(wordPos))
-	p.TickBitmaps().Set(wordPosStr, tickBitmap)
-}
-
-// initTickBitmap initializes the tick bitmap for the given word position
-func initTickBitmap(p *pl.Pool, wordPos int16) {
-	setTickBitmap(p, wordPos, u256.Zero())
+	p.TickBitmaps()[wordPos] = tickBitmap
 }
 
 // tickBitmapPosition calculates the word and bit position for a given tick
@@ -135,12 +114,12 @@ func getWordAndBitPos(tick int32, lte bool) (int16, uint8) {
 func getMaskBit(bitPos uint, lte bool) *u256.Uint {
 	if lte {
 		if bitPos == bitMask8 {
-			return u256.Zero().Not(u256.Zero()) // all ones
+			return u256.Zero().SetAllOne()
 		}
 		return u256.Zero().Sub(u256.Zero().Lsh(u256.One(), bitPos+1), u256.One())
 	}
 	if bitPos == 0 {
-		return u256.Zero().Not(u256.Zero()) // all ones
+		return u256.Zero().SetAllOne()
 	}
 	return u256.Zero().Not(u256.Zero().Sub(u256.Zero().Lsh(u256.One(), bitPos), u256.One()))
 }
