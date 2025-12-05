@@ -30,6 +30,23 @@ const (
 	ZERO_LIQUIDITY_FOR_FEE_COLLECTION = "0"
 )
 
+// calculatePositionBalances computes token balances for a position at current price.
+// Returns calculated token0 and token1 balances based on position liquidity and price range.
+func calculatePositionBalances(poolKey string, tickLower, tickUpper int32, liquidity *u256.Uint) (*u256.Uint, *u256.Uint) {
+	currentSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(poolKey)
+	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
+	upperTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
+
+	token0BalanceStr, token1BalanceStr := common.GetAmountsForLiquidity(
+		currentSqrtPriceX96,
+		lowerTickSqrtPriceX96,
+		upperTickSqrtPriceX96,
+		liquidity,
+	)
+
+	return u256.MustFromDecimal(token0BalanceStr), u256.MustFromDecimal(token1BalanceStr)
+}
+
 // Mint creates a new liquidity position NFT.
 //
 // Parameters:
@@ -124,8 +141,7 @@ func (p *positionV1) Mint(
 
 	poolSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(processedInput.poolPath)
 
-	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp :=
-		pl.GetObservation(processedInput.poolPath, 0)
+	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetObservation(processedInput.poolPath, 0)
 
 	chain.Emit(
 		"Mint",
@@ -252,9 +268,7 @@ func (p *positionV1) IncreaseLiquidity(
 		panic(err)
 	}
 
-	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp :=
-		pl.GetObservation(poolPath, 0)
-
+	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetObservation(poolPath, 0)
 
 	amount0Str := amount0.ToString()
 	amount1Str := amount1.ToString()
@@ -356,8 +370,7 @@ func (p *positionV1) DecreaseLiquidity(
 		panic(err)
 	}
 
-	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp :=
-		pl.GetObservation(poolPath, 0)
+	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetObservation(poolPath, 0)
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(

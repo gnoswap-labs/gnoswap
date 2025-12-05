@@ -80,17 +80,7 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	positionKey := computePositionKey(tickLower, tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
 
-	currentSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(poolKey)
-	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
-	upperTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
-	calculatedToken0BalanceStr, calculatedToken1BalanceStr := common.GetAmountsForLiquidity(
-		currentSqrtPriceX96,
-		lowerTickSqrtPriceX96,
-		upperTickSqrtPriceX96,
-		position.Liquidity(),
-	)
-	calculatedToken0Balance := u256.MustFromDecimal(calculatedToken0BalanceStr)
-	calculatedToken1Balance := u256.MustFromDecimal(calculatedToken1BalanceStr)
+	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(poolKey, tickLower, tickUpper, position.Liquidity())
 
 	// Add only burned amounts to tokensOwed since fees were already collected and processed in collectFee
 	tokensOwed0 := u256.Zero().Add(position.TokensOwed0(), burnedAmount0)

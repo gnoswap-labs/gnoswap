@@ -194,21 +194,9 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 	positionKey := computePositionKey(tickLower, tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
 
-	currentSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(poolKey)
-	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
-	upperTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
-
 	positionLiquidity := position.Liquidity()
-	calculatedToken0BalanceStr, calculatedToken1BalanceStr := common.GetAmountsForLiquidity(
-		currentSqrtPriceX96,
-		lowerTickSqrtPriceX96,
-		upperTickSqrtPriceX96,
-		positionLiquidity,
-	)
-	calculatedToken0Balance := u256.MustFromDecimal(calculatedToken0BalanceStr)
-	calculatedToken1Balance := u256.MustFromDecimal(calculatedToken1BalanceStr)
+	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(poolKey, tickLower, tickUpper, positionLiquidity)
 
-	// Use calculateFees to get updated tokensOwed values
 	feeGrowth := FeeGrowthInside{
 		feeGrowthInside0LastX128: feeGrowthInside0LastX128,
 		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
