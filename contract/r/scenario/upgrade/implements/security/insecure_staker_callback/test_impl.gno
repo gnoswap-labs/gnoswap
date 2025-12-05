@@ -324,13 +324,6 @@ func (t *TestStaker) GetPoolTierRatio(poolPath string) uint64 {
 	return t.instance.GetPoolTierRatio(poolPath)
 }
 
-func (t *TestStaker) GetPrintExternalInfo() string {
-	if !t.isActive("GetPrintExternalInfo") {
-		panic("test implementation: GetPrintExternalInfo not supported")
-	}
-	return t.instance.GetPrintExternalInfo()
-}
-
 func (t *TestStaker) GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool) {
 	if !t.isActive("GetSpecificTokenMinimumRewardAmount") {
 		panic("test implementation: GetSpecificTokenMinimumRewardAmount not supported")

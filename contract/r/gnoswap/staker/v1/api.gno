@@ -2,6 +2,7 @@ package v1
 
 import (
 	"chain/runtime"
+	"strconv"
 	"time"
 
 	"gno.land/p/nt/ufmt"
@@ -29,20 +30,20 @@ func (s *stakerV1) ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 		thisPoolRewardTokens = append(thisPoolRewardTokens, GNS_PATH)
 	}
 
-	// HANDLE EXTERNAL
-	if poolResolver.IsExternallyIncentivizedPool() {
-		poolResolver.IncentivesResolver().IncentiveTrees().Iterate("", "", func(key string, value any) bool {
-			ictv, ok := value.(*sr.ExternalIncentive)
-			if !ok {
-				panic("failed to cast value to *ExternalIncentive")
-			}
-			if ictv.RewardToken() == "" {
-				return false
-			}
+	currentTime := time.Now().Unix()
+	poolResolver.IncentivesResolver().IncentiveTrees().Iterate("", "", func(key string, value any) bool {
+		ictv, ok := value.(*sr.ExternalIncentive)
+		if !ok {
+			panic("failed to cast value to *ExternalIncentive")
+		}
+
+		// Check if incentive is active and has a reward token
+		incentiveResolver := NewExternalIncentiveResolver(ictv)
+		if incentiveResolver.isActive(currentTime) && ictv.RewardToken() != "" {
 			thisPoolRewardTokens = append(thisPoolRewardTokens, ictv.RewardToken())
-			return false
-		})
-	}
+		}
+		return false
+	})
 
 	rt := newRewardToken(pool.PoolPath(), thisPoolRewardTokens)
 	rewardTokens = append(rewardTokens, rt)
@@ -236,7 +237,7 @@ func makeRewardTokensArray(rewardsTokenList []string) []*json.Node {
 // calculateInternalRewardPerSecondByPoolPath calculates the internal reward per second for a pool.
 func (s *stakerV1) calculateInternalRewardPerSecondByPoolPath(poolPath string) string {
 	reward := s.getPoolTier().CurrentRewardPerPool(poolPath)
-	return ufmt.Sprintf("%d", reward)
+	return strconv.FormatInt(reward, 10)
 }
 
 // ResponseQueryBase contains basic information about a query response.
@@ -326,5 +327,5 @@ func (s *stakerV1) IsStaked(positionId uint64) bool {
 
 // formatInt formats an int64 value to string.
 func formatInt(value int64) string {
-	return ufmt.Sprintf("%d", value)
+	return strconv.FormatInt(value, 10)
 }

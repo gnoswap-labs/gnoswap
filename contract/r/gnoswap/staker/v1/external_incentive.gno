@@ -35,8 +35,9 @@ func (s *stakerV1) CreateExternalIncentive(
 ) {
 	halt.AssertIsNotHaltedStaker()
 
-	caller := runtime.PreviousRealm().Address()
-	access.AssertIsUser(runtime.PreviousRealm())
+	prevRealm := runtime.PreviousRealm()
+	caller := prevRealm.Address()
+	access.AssertIsUser(prevRealm)
 
 	assertIsPoolExists(s, targetPoolPath)
 	assertIsGreaterThanMinimumRewardAmount(s, rewardToken, rewardAmount)
@@ -72,7 +73,7 @@ func (s *stakerV1) CreateExternalIncentive(
 	incentiveId := s.store.NextIncentiveID(caller, currentTime)
 	pool := s.getPools().GetPoolOrNil(targetPoolPath)
 	if pool == nil {
-		pool = sr.NewPool(targetPoolPath, time.Now().Unix())
+		pool = sr.NewPool(targetPoolPath, currentTime)
 		s.getPools().set(targetPoolPath, pool)
 	}
 
@@ -103,11 +104,10 @@ func (s *stakerV1) CreateExternalIncentive(
 	poolResolver := NewPoolResolver(pool)
 	poolResolver.IncentivesResolver().create(caller, incentive)
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"CreateExternalIncentive",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
+		"prevAddr", caller.String(),
+		"prevRealm", prevRealm.PkgPath(),
 		"incentiveId", incentiveId,
 		"targetPoolPath", targetPoolPath,
 		"rewardToken", rewardToken,
@@ -143,17 +143,7 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 	halt.AssertIsNotHaltedWithdraw()
 
 	assertIsPoolExists(s, targetPoolPath)
-
-	pool, exists := s.getPools().Get(targetPoolPath)
-	if !exists {
-		panic(makeErrorWithDetails(
-			errDataNotFound,
-			ufmt.Sprintf("targetPoolPath(%s) does not exist", targetPoolPath),
-		))
-	}
-
-	caller := runtime.PreviousRealm().Address()
-	currentTime := time.Now().Unix()
+	pool, _ := s.getPools().Get(targetPoolPath)
 
 	poolResolver := NewPoolResolver(pool)
 
@@ -174,8 +164,10 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 		))
 	}
 
+	caller := runtime.PreviousRealm().Address()
+
 	// Process ending
-	incentive, refund, err := s.endExternalIncentive(pool, incentiveId, caller, currentTime)
+	incentive, refund, err := s.endExternalIncentive(pool, incentiveResolver, caller, time.Now().Unix())
 	if err != nil {
 		panic(err)
 	}
@@ -233,15 +225,8 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 }
 
 // endExternalIncentive processes the end of an external incentive program.
-func (s *stakerV1) endExternalIncentive(pool *sr.Pool, incentiveId string, caller address, currentTime int64) (*sr.ExternalIncentive, int64, error) {
+func (s *stakerV1) endExternalIncentive(pool *sr.Pool, incentiveResolver *ExternalIncentiveResolver, caller address, currentTime int64) (*sr.ExternalIncentive, int64, error) {
 	poolResolver := NewPoolResolver(pool)
-	incentiveResolver, exists := poolResolver.IncentivesResolver().GetIncentiveResolver(incentiveId)
-	if !exists {
-		return nil, 0, makeErrorWithDetails(
-			errCannotEndIncentive,
-			ufmt.Sprintf("cannot end non existent incentive(%s)", incentiveId),
-		)
-	}
 
 	if currentTime < incentiveResolver.EndTimestamp() {
 		return nil, 0, makeErrorWithDetails(
@@ -266,7 +251,7 @@ func (s *stakerV1) endExternalIncentive(pool *sr.Pool, incentiveId string, calle
 	// calculate total external reward for the incentive
 	s.getDeposits().IterateByPoolPath(0, math.MaxUint64, incentiveResolver.TargetPoolPath(), func(positionId uint64, deposit *sr.Deposit) bool {
 		depositResolver := NewDepositResolver(deposit)
-		lastCollectTime := depositResolver.ExternalRewardLastCollectTime(incentiveId)
+		lastCollectTime := depositResolver.ExternalRewardLastCollectTime(incentiveResolver.IncentiveId())
 
 		if lastCollectTime > incentiveResolver.EndTimestamp() {
 			return false

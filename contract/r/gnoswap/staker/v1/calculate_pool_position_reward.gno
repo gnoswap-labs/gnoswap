@@ -14,44 +14,30 @@ type Reward struct {
 
 // calculate total position rewards and penalties
 func (s *stakerV1) calcPositionReward(currentHeight, currentTimestamp int64, positionId uint64) Reward {
-	pools := s.getPools()
-	poolTier := s.getPoolTier()
-	deposits := s.getDeposits()
-
 	rewards := s.calculatePositionReward(&CalcPositionRewardParam{
 		CurrentHeight: currentHeight,
 		CurrentTime:   currentTimestamp,
-		Deposits:      deposits,
-		Pools:         pools,
-		PoolTier:      poolTier,
+		Deposits:      s.getDeposits(),
+		Pools:         s.getPools(),
+		PoolTier:      s.getPoolTier(),
 		PositionId:    positionId,
 	})
 
 	internal := int64(0)
+	internalPenalty := int64(0)
+	externalReward := make(map[string]int64, len(rewards))
+	externalPenalty := make(map[string]int64, len(rewards))
+
 	for _, reward := range rewards {
 		internal = safeAddInt64(internal, reward.Internal)
-	}
-
-	internalPenalty := int64(0)
-	for _, reward := range rewards {
 		internalPenalty = safeAddInt64(internalPenalty, reward.InternalPenalty)
-	}
 
-	externalReward := make(map[string]int64)
-	for _, reward := range rewards {
-		if reward.External != nil {
-			for incentive, reward := range reward.External {
-				externalReward[incentive] = safeAddInt64(externalReward[incentive], reward)
-			}
+		for incentive, amount := range reward.External {
+			externalReward[incentive] = safeAddInt64(externalReward[incentive], amount)
 		}
-	}
 
-	externalPenalty := make(map[string]int64)
-	for _, reward := range rewards {
-		if reward.ExternalPenalty != nil {
-			for incentive, penalty := range reward.ExternalPenalty {
-				externalPenalty[incentive] = safeAddInt64(externalPenalty[incentive], penalty)
-			}
+		for incentive, penalty := range reward.ExternalPenalty {
+			externalPenalty[incentive] = safeAddInt64(externalPenalty[incentive], penalty)
 		}
 	}
 

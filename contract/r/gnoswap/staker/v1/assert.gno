@@ -9,6 +9,14 @@ import (
 	"gno.land/r/gnoswap/common"
 )
 
+const (
+	TIMESTAMP_90DAYS  = int64(7776000)
+	TIMESTAMP_180DAYS = int64(15552000)
+	TIMESTAMP_365DAYS = int64(31536000)
+
+	MAX_UNIX_EPOCH_TIME = 253402300799 // 9999-12-31 23:59:59
+)
+
 // assertIsValidAmount ensures the amount is non-negative.
 func assertIsValidAmount(amount int64) {
 	if amount < 0 {

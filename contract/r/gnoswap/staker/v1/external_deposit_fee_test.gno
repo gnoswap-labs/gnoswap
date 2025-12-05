@@ -34,7 +34,7 @@ const unauthorizedMsg = "unauthorized: caller %s is not admin or governance"
 
 func TestGetDepositGnsAmount(t *testing.T) {
 	expected := int64(1_000_000_000)
-	actual := getMockInstance().getDepositGnsAmount()
+	actual := getMockInstance().GetDepositGnsAmount()
 	uassert.Equal(t, expected, actual)
 }
 
@@ -72,7 +72,7 @@ func TestSetDepositGnsAmount(t *testing.T) {
 		},
 	}, mockInstanceSetDepositGnsAmount, func() int64 {
 		testing.SetRealm(adminRealm)
-		return getMockInstance().getDepositGnsAmount()
+		return getMockInstance().GetDepositGnsAmount()
 	})
 }
 
@@ -269,13 +269,13 @@ func TestInternalDepositGnsAmountGetterSetter(t *testing.T) {
 	instance := getMockInstance()
 
 	// Test initial value
-	initial := instance.getDepositGnsAmount()
+	initial := instance.GetDepositGnsAmount()
 	uassert.True(t, initial > 0)
 
 	// Test setter and getter
 	newAmount := int64(5_000_000_000)
 	instance.setDepositGnsAmount(newAmount)
-	result := instance.getDepositGnsAmount()
+	result := instance.GetDepositGnsAmount()
 	uassert.Equal(t, newAmount, result)
 }
 

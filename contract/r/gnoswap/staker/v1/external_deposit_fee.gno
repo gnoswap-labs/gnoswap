@@ -54,12 +54,12 @@ func (s *stakerV1) GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64,
 func (s *stakerV1) SetDepositGnsAmount(amount int64) {
 	halt.AssertIsNotHaltedStaker()
 
+	assertIsValidAmount(amount)
+
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	assertIsValidAmount(amount)
-
-	prevDepositGnsAmount := s.getDepositGnsAmount()
+	prevDepositGnsAmount := s.GetDepositGnsAmount()
 	s.setDepositGnsAmount(amount)
 
 	previousRealm := runtime.PreviousRealm()
@@ -77,18 +77,18 @@ func (s *stakerV1) SetDepositGnsAmount(amount int64) {
 func (s *stakerV1) SetMinimumRewardAmount(amount int64) {
 	halt.AssertIsNotHaltedStaker()
 
-	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
-
 	assertIsValidAmount(amount)
+
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
+	access.AssertIsAdminOrGovernance(caller)
 
 	prevMinimumRewardAmount := s.getMinimumRewardAmount()
 	s.setMinimumRewardAmount(amount)
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"SetMinimumRewardAmount",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"prevAmount", formatInt(prevMinimumRewardAmount),
 		"newAmount", formatInt(amount),
@@ -100,7 +100,8 @@ func (s *stakerV1) SetMinimumRewardAmount(amount int64) {
 func (s *stakerV1) SetTokenMinimumRewardAmount(paramsStr string) {
 	halt.AssertIsNotHaltedStaker()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	assertIsValidRewardAmountFormat(paramsStr)
@@ -129,10 +130,9 @@ func (s *stakerV1) SetTokenMinimumRewardAmount(paramsStr string) {
 		s.store.GetTokenSpecificMinimumRewards().Set(tokenPath, amount64)
 	}
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"SetTokenMinimumRewardAmount",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"paramsStr", paramsStr, // Log the raw input string
 		"tokenPath", tokenPath,
@@ -150,11 +150,6 @@ func (s *stakerV1) setDepositGnsAmount(amount int64) {
 // setMinimumRewardAmount internally updates the minimum reward amount.
 func (s *stakerV1) setMinimumRewardAmount(amount int64) {
 	s.store.SetMinimumRewardAmount(amount)
-}
-
-// getDepositGnsAmount internally retrieves the deposit GNS amount.
-func (s *stakerV1) getDepositGnsAmount() int64 {
-	return s.store.GetDepositGnsAmount()
 }
 
 // getMinimumRewardAmount internally retrieves the minimum reward amount.

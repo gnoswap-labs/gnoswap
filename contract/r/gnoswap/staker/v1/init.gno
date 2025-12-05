@@ -203,7 +203,8 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 }
 
 func initializePoolTier(stakerStore sr.IStakerStore) (*PoolTier, *Pools) {
-	// Initialize tier 1 with GNOT:GNS 0.3% pool
+	const MUST_EXISTS_IN_TIER_1 = "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
+
 	pools := NewPools()
 	pl := NewPools().GetPoolOrNil(MUST_EXISTS_IN_TIER_1)
 	if pl == nil {

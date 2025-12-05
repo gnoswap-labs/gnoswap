@@ -124,11 +124,6 @@ func GetPoolTierRatio(poolPath string) uint64 {
 	return getImplementation().GetPoolTierRatio(poolPath)
 }
 
-// GetPrintExternalInfo returns external incentive information as string.
-func GetPrintExternalInfo() string {
-	return getImplementation().GetPrintExternalInfo()
-}
-
 // GetSpecificTokenMinimumRewardAmount returns the minimum reward amount for a specific token.
 func GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool) {
 	return getImplementation().GetSpecificTokenMinimumRewardAmount(tokenPath)

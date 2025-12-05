@@ -320,7 +320,7 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentTimestamp, emiss
 			return false // Skip if no pools in tier
 		}
 
-		reward := emissionInThisInterval * tierRatioInt64 / 100 / tierCount
+		reward := ((emissionInThisInterval * tierRatioInt64) / 100) / tierCount
 		// accumulate the reward for the interval (startBlock to endBlock) in the Pool
 		poolResolver := NewPoolResolver(pool)
 		poolResolver.cacheInternalReward(currentTimestamp, reward)
@@ -334,13 +334,13 @@ func (self *PoolTier) IsInternallyIncentivizedPool(poolPath string) bool {
 }
 
 func (self *PoolTier) CurrentRewardPerPool(poolPath string) int64 {
-	emission := self.getEmission()
-	counts := self.CurrentAllTierCounts()
 	tierNum := self.CurrentTier(poolPath)
-
 	if tierNum == 0 {
 		return 0 // Pool not in any tier
 	}
+
+	emission := self.getEmission()
+	counts := self.CurrentAllTierCounts()
 
 	tierRatio, err := self.tierRatio.Get(tierNum)
 	if err != nil {
@@ -353,5 +353,5 @@ func (self *PoolTier) CurrentRewardPerPool(poolPath string) int64 {
 		return 0 // No pools in tier
 	}
 
-	return emission * tierRatioInt64 / 100 / tierCount
+	return ((emission * tierRatioInt64) / 100) / tierCount
 }

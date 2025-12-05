@@ -76,7 +76,6 @@ type IStakerGetter interface {
 	GetPoolTier(poolPath string) uint64
 	GetPoolTierCount(tier uint64) uint64
 	GetPoolTierRatio(poolPath string) uint64
-	GetPrintExternalInfo() string
 	GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool)
 	GetTargetPoolPathByIncentiveId(poolPath string, incentiveId string) string
 	GetUnstakingFee() int64
