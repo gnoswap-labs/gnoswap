@@ -132,7 +132,7 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/gns -pkgpath g
 # stdout 'STORAGE FEE:    (1|2)[0-9]{7}ugnot'
 
 ### deploy gnft
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/gnft -pkgpath gno.land/r/gnoswap/gnft -gas-fee 24703ugnot -gas-wanted 24703000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/gnft -pkgpath gno.land/r/gnoswap/gnft -gas-fee 26580ugnot -gas-wanted 26580000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   24[0-9]{6}'
 # stdout 'STORAGE DELTA:  (5|6)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (5|6)[0-9]{6}ugnot'

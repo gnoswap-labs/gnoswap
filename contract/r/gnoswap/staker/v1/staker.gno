@@ -744,18 +744,24 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 	upperTick.modifyDepositUpper(currentTime, signedLiquidity)
 	lowerTick.modifyDepositLower(currentTime, signedLiquidity)
 
-	for incentiveID, collectedExternalReward := range depositResolver.CollectedExternalRewards() {
+	deposit.CollectedExternalRewards().Iterate("", "", func(key string, value interface{}) bool {
+		incentiveID := key
+		collectedExternalReward, ok := value.(int64)
+		if !ok {
+			panic("failed to cast value to int64")
+		}
+
 		// if incentive is archived, no need to add distributed and archive
 		if poolResolver.IncentivesResolver().IsArchived(incentiveID) {
-			continue
+			return false // continue iteration
 		}
 
 		externalIncentive, ok := poolResolver.IncentivesResolver().Get(incentiveID)
 		if !ok {
-			return makeErrorWithDetails(
+			panic(makeErrorWithDetails(
 				errDataNotFound,
 				ufmt.Sprintf("incentive(%s) not found", incentiveID),
-			)
+			))
 		}
 
 		externalIncentiveResolver := NewExternalIncentiveResolver(externalIncentive)
@@ -768,7 +774,9 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 				panic(err)
 			}
 		}
-	}
+
+		return false // continue iteration
+	})
 
 	s.getDeposits().remove(positionId)
 	s.getStakers().removeDeposit(deposit.Owner(), positionId)

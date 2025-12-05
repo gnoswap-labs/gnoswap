@@ -23,6 +23,10 @@ var (
 	errTokenNotExists     = errors.New("[GNOSWAP-GNFT-007] token does not exist")
 	errTransferToSelf     = errors.New("[GNOSWAP-GNFT-008] cannot transfer to self")
 	errNotApprovedForAll  = errors.New("[GNOSWAP-GNFT-009] not approved for all tokens")
+
+	errInvalidTokenParams      = errors.New("[GNOSWAP-GNFT-010] invalid token parameters")
+	errInvalidTokenParamsRange = errors.New("[GNOSWAP-GNFT-011] token parameters out of range")
+	errInvalidColorFormat      = errors.New("[GNOSWAP-GNFT-012] invalid color format")
 )
 
 // makeErrorWithDetails creates an error with additional context.

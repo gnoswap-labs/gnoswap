@@ -147,9 +147,10 @@ func (self *PoolResolver) IsExternallyIncentivizedPool() bool {
 
 		if incentiveResolver.isActive(currentTime) {
 			hasActive = true
-			return false
+			return true
 		}
-		return true
+
+		return false
 	})
 
 	return hasActive

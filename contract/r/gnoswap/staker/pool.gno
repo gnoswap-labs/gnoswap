@@ -292,7 +292,7 @@ func (i *Incentives) IterateIncentives(fn func(incentiveId string, incentive *Ex
 		if incentive, ok := value.(*ExternalIncentive); ok {
 			return fn(key, incentive)
 		}
-		return true
+		return false
 	})
 }
 
@@ -302,7 +302,7 @@ func (i *Incentives) IterateArchivedIncentives(fn func(incentiveId string, incen
 		if incentive, ok := value.(*ExternalIncentive); ok {
 			return fn(key, incentive)
 		}
-		return true
+		return false
 	})
 }
 
@@ -587,15 +587,18 @@ func (t *Ticks) SetTick(tickId int32, tick *Tick) {
 // IterateTicks iterates over all ticks
 func (t *Ticks) IterateTicks(fn func(tickId int32, tick *Tick) bool) {
 	t.tree.Iterate("", "", func(key string, value interface{}) bool {
-		if tick, ok := value.(*Tick); ok {
-			// Convert string key back to int32
-			tickId, err := strconv.Atoi(key)
-			if err != nil {
-				return true // skip invalid keys
-			}
-			return fn(int32(tickId), tick)
+		tick, ok := value.(*Tick)
+		if !ok {
+			return false
 		}
-		return true
+
+		// Convert string key back to int32
+		tickId, err := strconv.Atoi(key)
+		if err != nil {
+			return false // skip invalid keys
+		}
+
+		return fn(int32(tickId), tick)
 	})
 }
 

@@ -44,7 +44,7 @@ func (s *stakerV1) GetPoolIncentiveIdList(poolPath string) []string {
 	ids := []string{}
 	incentives.IncentiveTrees().Iterate("", "", func(key string, value any) bool {
 		ids = append(ids, key)
-		return true
+		return false
 	})
 
 	return ids
