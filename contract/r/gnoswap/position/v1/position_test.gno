@@ -1674,10 +1674,10 @@ func TestCalculateAmountWithWithdrawalFee(t *testing.T) {
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.expectedPanicMessage, func() {
-					calculateAmountWithWithdrawalFee(tt.amount, tt.fee)
+					calculateAmountWithWithdrawalFee(u256.MustFromDecimal(tt.amount), tt.fee)
 				})
 			} else {
-				amountNoFee, feeAmount := calculateAmountWithWithdrawalFee(tt.amount, tt.fee)
+				amountNoFee, feeAmount := calculateAmountWithWithdrawalFee(u256.MustFromDecimal(tt.amount), tt.fee)
 
 				uassert.Equal(t, tt.expectedAmountNoFee, amountNoFee)
 				uassert.Equal(t, tt.expectedFee, feeAmount)

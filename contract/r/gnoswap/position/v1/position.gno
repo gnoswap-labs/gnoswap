@@ -27,14 +27,12 @@ func calculatePositionBalances(poolKey string, tickLower, tickUpper int32, liqui
 		return u256.Zero(), u256.Zero()
 	}
 
-	token0BalanceStr, token1BalanceStr := common.GetAmountsForLiquidity(
+	return common.GetAmountsForLiquidity(
 		pl.GetSlot0SqrtPriceX96(poolKey), // currentSqrtPriceX96
 		common.TickMathGetSqrtRatioAtTick(tickLower),
 		common.TickMathGetSqrtRatioAtTick(tickUpper),
 		liquidity,
 	)
-
-	return u256.MustFromDecimal(token0BalanceStr), u256.MustFromDecimal(token1BalanceStr)
 }
 
 // Mint creates a new liquidity position NFT.
@@ -70,15 +68,6 @@ func (p *positionV1) Mint(
 ) (uint64, string, string, string) {
 	halt.AssertIsNotHaltedPosition()
 
-	assertValidNumberString(amount0Desired)
-	assertValidNumberString(amount1Desired)
-	assertValidNumberString(amount0Min)
-	assertValidNumberString(amount1Min)
-
-	// assert that the user has sent the correct amount of native coin
-	assertIsValidUserCoinSendWithTokenPair(token0, token1, amount0Desired, amount1Desired)
-	assertIsNotExpired(deadline)
-
 	previousRealm := runtime.PreviousRealm()
 	prevRealmAddr := previousRealm.Address()
 	if !previousRealm.IsUser() {
@@ -87,6 +76,15 @@ func (p *positionV1) Mint(
 		assertEqualsAddress(prevRealmAddr, mintTo)
 		assertEqualsAddress(prevRealmAddr, caller)
 	}
+
+	assertValidNumberString(amount0Desired)
+	assertValidNumberString(amount1Desired)
+	assertValidNumberString(amount0Min)
+	assertValidNumberString(amount1Min)
+
+	// assert that the user has sent the correct amount of native coin
+	assertIsValidUserCoinSendWithTokenPair(token0, token1, amount0Desired, amount1Desired)
+	assertIsNotExpired(deadline)
 
 	success := referral.TryRegister(cross, caller, referrer)
 	actualReferrer := referrer
@@ -269,7 +267,6 @@ func (p *positionV1) IncreaseLiquidity(
 	amount1Str := amount1.ToString()
 	liquidityStr := liquidity.ToString()
 
-	// NOTE: prevAddr, caller are same. need to check this should be remove or maintain.
 	chain.Emit(
 		"IncreaseLiquidity",
 		"prevAddr", caller.String(),
@@ -474,16 +471,18 @@ func (p *positionV1) collectFee(
 		position.TickLower(), position.TickUpper(),
 		tokensOwed0.ToString(), tokensOwed1.ToString(),
 	)
+	amount0Uint256 := u256.MustFromDecimal(amount0)
+	amount1Uint256 := u256.MustFromDecimal(amount1)
 
 	// sometimes there will be a few less uBase amount than expected due to rounding down in core, but we just subtract the full amount expected
 	// instead of the actual amount so we can burn the token
-	tokensOwed0Updated, underflow := u256.Zero().SubOverflow(tokensOwed0, u256.MustFromDecimal(amount0))
+	tokensOwed0Updated, underflow := u256.Zero().SubOverflow(tokensOwed0, amount0Uint256)
 	if underflow {
 		panic(newErrorWithDetail(errUnderflow, "tokensOwed0 - amount0 underflow"))
 	}
 	position.SetTokensOwed0(tokensOwed0Updated)
 
-	tokensOwed1Updated, underflow := u256.Zero().SubOverflow(tokensOwed1, u256.MustFromDecimal(amount1))
+	tokensOwed1Updated, underflow := u256.Zero().SubOverflow(tokensOwed1, amount1Uint256)
 	if underflow {
 		panic(newErrorWithDetail(errUnderflow, "tokensOwed1 - amount1 underflow"))
 	}
@@ -491,8 +490,8 @@ func (p *positionV1) collectFee(
 	p.mustUpdatePosition(positionId, *position)
 
 	withdrawalFeeBps := pl.GetWithdrawalFee()
-	amount0WithoutFee, fee0 := calculateAmountWithWithdrawalFee(amount0, withdrawalFeeBps)
-	amount1WithoutFee, fee1 := calculateAmountWithWithdrawalFee(amount1, withdrawalFeeBps)
+	amount0WithoutFee, fee0 := calculateAmountWithWithdrawalFee(amount0Uint256, withdrawalFeeBps)
+	amount1WithoutFee, fee1 := calculateAmountWithWithdrawalFee(amount1Uint256, withdrawalFeeBps)
 
 	poolAddr, ok := access.GetAddress(prabc.ROLE_POOL.String())
 	if !ok {
@@ -557,18 +556,17 @@ func (p *positionV1) collectFee(
 }
 
 // calculateAmountWithWithdrawalFee calculates amount after deducting withdrawal fee.
-func calculateAmountWithWithdrawalFee(amount string, fee uint64) (int64, int64) {
-	amountUint := u256.MustFromDecimal(amount)
+func calculateAmountWithWithdrawalFee(amount *u256.Uint, fee uint64) (int64, int64) {
 	if fee == 0 {
-		return safeConvertToInt64(amountUint), 0
+		return safeConvertToInt64(amount), 0
 	}
 
-	feeAmount, overflow := u256.Zero().MulOverflow(amountUint, u256.NewUint(fee))
+	feeAmount, overflow := u256.Zero().MulOverflow(amount, u256.NewUint(fee))
 	if overflow {
 		panic(errOverflow)
 	}
 	feeAmount = u256.Zero().Div(feeAmount, u256.NewUint(10000))
-	amountWithoutFee := u256.Zero().Sub(amountUint, feeAmount)
+	amountWithoutFee := u256.Zero().Sub(amount, feeAmount)
 
 	return safeConvertToInt64(amountWithoutFee), safeConvertToInt64(feeAmount)
 }
