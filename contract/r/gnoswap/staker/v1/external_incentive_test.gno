@@ -169,7 +169,9 @@ func TestEndExternalIncentive(t *testing.T) {
 			incentive.SetRefunded(false)
 			poolResolver.IncentivesResolver().update(creator, incentive)
 
-			_, _, err := instance.endExternalIncentive(pool, incentiveId, tt.caller, tt.currentTime)
+			// Get incentiveResolver for the test
+			incentiveResolver, _ := poolResolver.IncentivesResolver().GetIncentiveResolver(incentiveId)
+			_, _, err := instance.endExternalIncentive(pool, incentiveResolver, tt.caller, tt.currentTime)
 
 			if tt.expectError {
 				uassert.Error(t, err)
