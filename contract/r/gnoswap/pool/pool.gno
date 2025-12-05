@@ -14,6 +14,7 @@ type Pool struct {
 	token0Path           string
 	token1Path           string
 	fee                  uint32 // fee tier of the pool
+	poolPath             string // cached pool path to avoid repeated string concatenation
 	tickSpacing          int32  // spacing between ticks
 	slot0                Slot0
 	balances             Balances // balances of the pool
@@ -30,7 +31,7 @@ type Pool struct {
 }
 
 // Pool Getters methods
-func (p *Pool) PoolPath() string                    { return GetPoolPath(p.token0Path, p.token1Path, p.fee) }
+func (p *Pool) PoolPath() string                    { return p.poolPath }
 func (p *Pool) Token0Path() string                  { return p.token0Path }
 func (p *Pool) Token1Path() string                  { return p.token1Path }
 func (p *Pool) Fee() uint32                         { return p.fee }
@@ -179,6 +180,7 @@ func (p *Pool) Clone() *Pool {
 		token0Path:  p.token0Path,
 		token1Path:  p.token1Path,
 		fee:         p.fee,
+		poolPath:    p.poolPath,
 		tickSpacing: p.tickSpacing,
 		slot0: Slot0{
 			sqrtPriceX96: p.slot0.sqrtPriceX96.Clone(),
@@ -214,8 +216,9 @@ func NewPool(
 	return &Pool{
 		token0Path:           token0Path,
 		token1Path:           token1Path,
-		balances:             newBalances(),
 		fee:                  fee,
+		poolPath:             GetPoolPath(token0Path, token1Path, fee),
+		balances:             newBalances(),
 		tickSpacing:          tickSpacing,
 		maxLiquidityPerTick:  maxLiquidityPerTick,
 		slot0:                slot0,

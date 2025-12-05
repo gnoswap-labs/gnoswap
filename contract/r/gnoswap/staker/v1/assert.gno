@@ -7,6 +7,7 @@ import (
 
 	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/pool"
 )
 
 // assertIsValidAmount ensures the amount is non-negative.
@@ -115,7 +116,8 @@ func assertIsGreaterThanMinimumRewardAmount(s *stakerV1, rewardToken string, rew
 
 // assertIsAllowedForExternalReward ensures the token is allowed for external rewards.
 func assertIsAllowedForExternalReward(s *stakerV1, poolPath, tokenPath string) {
-	token0, token1, _ := poolPathDivide(poolPath)
+	token0 := pool.GetToken0Path(poolPath)
+	token1 := pool.GetToken1Path(poolPath)
 
 	if tokenPath == token0 || tokenPath == token1 {
 		return

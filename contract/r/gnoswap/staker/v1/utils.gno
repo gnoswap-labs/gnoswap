@@ -11,6 +11,7 @@ import (
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/rbac"
 )
 
@@ -20,25 +21,19 @@ func GetOrigPkgAddr() address {
 }
 
 // poolPathAlign ensures pool path tokens are in lexicographical order.
+// It parses the poolPath and uses pool.GetPoolPath which automatically sorts tokens.
 func poolPathAlign(poolPath string) string {
-	pToken0, pToken1, fee := poolPathDivide(poolPath)
-
-	if pToken0 < pToken1 {
-		return ufmt.Sprintf("%s:%s:%s", pToken0, pToken1, fee)
-	}
-
-	return ufmt.Sprintf("%s:%s:%s", pToken1, pToken0, fee)
-}
-
-// poolPathDivide splits a pool path into token addresses and fee tier.
-func poolPathDivide(poolPath string) (string, string, string) {
 	res := strings.Split(poolPath, ":")
 	if len(res) != 3 {
 		panic(errInvalidPoolPath)
 	}
 
-	pToken0, pToken1, fee := res[0], res[1], res[2]
-	return pToken0, pToken1, fee
+	fee, err := strconv.ParseUint(res[2], 10, 32)
+	if err != nil {
+		panic(errInvalidPoolPath)
+	}
+
+	return pool.GetPoolPath(res[0], res[1], uint32(fee))
 }
 
 // positionIdFrom converts various types to grc721.TokenID.
