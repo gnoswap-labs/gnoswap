@@ -33,14 +33,14 @@ const (
 // calculatePositionBalances computes token balances for a position at current price.
 // Returns calculated token0 and token1 balances based on position liquidity and price range.
 func calculatePositionBalances(poolKey string, tickLower, tickUpper int32, liquidity *u256.Uint) (*u256.Uint, *u256.Uint) {
-	currentSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(poolKey)
-	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
-	upperTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
+	if liquidity.IsZero() {
+		return u256.Zero(), u256.Zero()
+	}
 
 	token0BalanceStr, token1BalanceStr := common.GetAmountsForLiquidity(
-		currentSqrtPriceX96,
-		lowerTickSqrtPriceX96,
-		upperTickSqrtPriceX96,
+		pl.GetSlot0SqrtPriceX96(poolKey), // currentSqrtPriceX96
+		common.TickMathGetSqrtRatioAtTick(tickLower),
+		common.TickMathGetSqrtRatioAtTick(tickUpper),
 		liquidity,
 	)
 
@@ -206,12 +206,17 @@ func (p *positionV1) IncreaseLiquidity(
 	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()
 	assertIsOwnerForToken(p, positionId, caller)
+	assertIsNotExpired(deadline)
+
+	if amount0DesiredStr == "0" && amount1DesiredStr == "0" {
+		position := p.mustGetPosition(positionId)
+		return positionId, position.Liquidity().ToString(), "0", "0", position.PoolKey()
+	}
 
 	assertValidNumberString(amount0DesiredStr)
 	assertValidNumberString(amount1DesiredStr)
 	assertValidNumberString(amount0MinStr)
 	assertValidNumberString(amount1MinStr)
-	assertIsNotExpired(deadline)
 
 	emission.MintAndDistributeGns(cross)
 
@@ -338,13 +343,16 @@ func (p *positionV1) DecreaseLiquidity(
 	deadline int64,
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) {
+	if liquidityStr == "0" {
+		panic(newErrorWithDetail(errZeroLiquidity, "liquidity amount must be greater than 0, got 0"))
+	}
+
 	halt.AssertIsNotHaltedPosition()
 	halt.AssertIsNotHaltedWithdraw()
 
 	caller := runtime.PreviousRealm().Address()
 	assertIsOwnerForToken(p, positionId, caller)
 	assertIsNotExpired(deadline)
-	assertValidLiquidityAmount(liquidityStr)
 
 	emission.MintAndDistributeGns(cross)
 

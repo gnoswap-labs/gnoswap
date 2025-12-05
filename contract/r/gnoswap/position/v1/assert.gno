@@ -4,7 +4,8 @@ import (
 	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	ufmt "gno.land/p/nt/ufmt"
+	"gno.land/p/nt/ufmt"
+
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 )
@@ -37,16 +38,6 @@ func assertValidNumberString(input string) {
 				errInvalidInput,
 				ufmt.Sprintf("input string : %s", input)))
 		}
-	}
-}
-
-// assertValidLiquidityAmount panics if the liquidity amount is zero.
-func assertValidLiquidityAmount(liquidity string) {
-	if u256.MustFromDecimal(liquidity).IsZero() {
-		panic(newErrorWithDetail(
-			errZeroLiquidity,
-			ufmt.Sprintf("liquidity amount must be greater than 0, got %s", liquidity),
-		))
 	}
 }
 
