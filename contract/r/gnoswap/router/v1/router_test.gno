@@ -1112,11 +1112,8 @@ func TestCalculateExactOutWithRouterFee(t *testing.T) {
 
 // ========== Router Dry Swap Tests ==========
 
-// Test SwapProcessor ProcessSwapAmount
-func TestSwapProcessor_ProcessSwapAmount(t *testing.T) {
-	router := mockRouter()
-	processor := &SwapProcessor{router: router}
-
+// Test SwapProcessor calculateSwapAmountByQuote
+func TestSwapProcessor_calculateSwapAmountByQuote(t *testing.T) {
 	tests := []struct {
 		name            string
 		amountSpecified int64
@@ -1149,7 +1146,7 @@ func TestSwapProcessor_ProcessSwapAmount(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := processor.ProcessSwapAmount(tt.amountSpecified, tt.quote)
+			result, err := calculateSwapAmountByQuote(tt.amountSpecified, tt.quote)
 
 			if tt.expectError {
 				uassert.Error(t, err)
@@ -1912,9 +1909,6 @@ func TestRouteParser_ValidateQuoteSum_EdgeCases(t *testing.T) {
 
 // Test swap processor with extreme amounts
 func TestSwapProcessor_ProcessSwapAmount_ExtremeValues(t *testing.T) {
-	router := mockRouter()
-	processor := &SwapProcessor{router: router}
-
 	tests := []struct {
 		name            string
 		amountSpecified int64
@@ -1947,7 +1941,7 @@ func TestSwapProcessor_ProcessSwapAmount_ExtremeValues(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := processor.ProcessSwapAmount(tt.amountSpecified, tt.quote)
+			result, err := calculateSwapAmountByQuote(tt.amountSpecified, tt.quote)
 
 			if tt.expectError {
 				uassert.Error(t, err)

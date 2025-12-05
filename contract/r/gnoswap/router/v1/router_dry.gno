@@ -32,15 +32,6 @@ type SwapProcessor struct {
 	router *routerV1
 }
 
-// ProcessSwapAmount calculates the exact amount to swap based on quote percentage.
-func (p *SwapProcessor) ProcessSwapAmount(amountSpecified int64, quote string) (int64, error) {
-	toSwap, err := calculateSwapAmountByQuote(amountSpecified, quote)
-	if err != nil {
-		return 0, err
-	}
-	return toSwap, nil
-}
-
 // ProcessSingleSwap handles a single-hop swap simulation.
 func (p *SwapProcessor) ProcessSingleSwap(route string, amountSpecified int64) (amountIn, amountOut int64, err error) {
 	input, output, fee := getDataForSinglePath(route)
@@ -199,7 +190,7 @@ func (r *routerV1) drySwapRoute(
 		isLastRoute := i == len(routes)-1
 		if !isLastRoute {
 			// calculate the amount to swap for this route
-			swapAmount, err := processor.ProcessSwapAmount(amountSpecified, quotes[i])
+			swapAmount, err := calculateSwapAmountByQuote(amountSpecified, quotes[i])
 			if err != nil {
 				return 0, 0, false
 			}
