@@ -4,7 +4,6 @@ import (
 	"chain/banker"
 	"chain/runtime"
 	"errors"
-	"strconv"
 	"strings"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -110,20 +109,6 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 	return nil
 }
 
-// validateRouteQuote validates and converts a route quote to swap amount.
-func (op *baseSwapOperation) validateRouteQuote(quote string, i int) (int64, error) {
-	quoteInt, err := strconv.ParseInt(quote, 10, 64)
-	if err != nil {
-		return 0, ufmt.Errorf("invalid quote(%s) at index(%d)", quote, i)
-	}
-
-	if quoteInt < MinQuotePercentage || quoteInt > MaxQuotePercentage {
-		return 0, ufmt.Errorf(ErrInvalidQuoteRange, quoteInt, MinQuotePercentage, MaxQuotePercentage)
-	}
-
-	return safeMulDivInt64(op.amountSpecified, quoteInt, PERCENTAGE_DENOMINATOR), nil
-}
-
 // processRoutes processes all swap routes and returns total amounts.
 func (op *baseSwapOperation) processRoutes(r *routerV1, swapType SwapType) (int64, int64, error) {
 	resultAmountIn, resultAmountOut := int64(0), int64(0)
@@ -136,7 +121,7 @@ func (op *baseSwapOperation) processRoutes(r *routerV1, swapType SwapType) (int6
 		isLastRoute := i == len(op.routes)-1
 		if !isLastRoute {
 			// calculate the amount to swap for this route
-			swapAmount, err := op.validateRouteQuote(op.quotes[i], i)
+			swapAmount, err := calculateSwapAmountByQuote(op.amountSpecified, op.quotes[i])
 			if err != nil {
 				return 0, 0, err
 			}

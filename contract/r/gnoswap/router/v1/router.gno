@@ -268,7 +268,6 @@ func (r *routerV1) finalizeSwap(
 		panic(addDetailToError(errSlippage, err.Error()))
 	}
 
-	// calculate final amounts
 	return resultAmountIn, resultAmountOutWithoutFee
 }
 

@@ -53,7 +53,7 @@ func (r *routerV1) ExactInSwapRoute(
 
 	assertIsValidUserCoinSend(inputToken, amountIn)
 	assertIsValidRoutePaths(routeArr, inputToken, outputToken)
-	assertIsNotPassedDeadline(deadline)
+	assertIsNotExpired(deadline)
 	assertIsExistsPools(routeArr)
 
 	emission.MintAndDistributeGns(cross)
@@ -114,7 +114,7 @@ func (r *routerV1) ExactInSingleSwapRoute(
 	assertIsValidUserCoinSend(inputToken, amountIn)
 	assertIsValidSingleSwapRouteArrPath(routeArr, inputToken, outputToken)
 	assertIsValidSqrtPriceLimitX96(sqrtPriceLimitX96)
-	assertIsNotPassedDeadline(deadline)
+	assertIsNotExpired(deadline)
 	assertIsExistsPools(routeArr)
 
 	emission.MintAndDistributeGns(cross)
@@ -123,7 +123,7 @@ func (r *routerV1) ExactInSingleSwapRoute(
 		inputToken:        inputToken,
 		outputToken:       outputToken,
 		routeArr:          routeArr,
-		quoteArr:          maxPercentageString, // "100"
+		quoteArr:          "100",
 		deadline:          deadline,
 		typ:               ExactIn,
 		exactAmount:       safeParseInt64(amountIn),
