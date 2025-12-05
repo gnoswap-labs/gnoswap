@@ -3,6 +3,7 @@ package v1
 import (
 	"testing"
 
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 	pl "gno.land/r/gnoswap/pool"
@@ -62,7 +63,7 @@ func TestcalculateMaxLiquidityPerTick(t *testing.T) {
 func TestCalculateFeeGrowthInside(t *testing.T) {
 	// Create a mock pool
 	pool := makeMockPool(createMockPoolParams{
-		ticks: make(map[int32]pl.TickInfo),
+		ticks: avl.NewTree(),
 	})
 
 	makeTickInfo := func(
@@ -82,20 +83,20 @@ func TestCalculateFeeGrowthInside(t *testing.T) {
 	}
 
 	// Setup test ticks
-	pool.Ticks()[0] = makeTickInfo(
+	pool.Ticks().Set("0", makeTickInfo(
 		u256.NewUint(1000),
 		i256.NewInt(100),
 		u256.NewUint(5),
 		u256.NewUint(7),
 		true,
-	)
-	pool.Ticks()[100] = makeTickInfo(
+	))
+	pool.Ticks().Set("100", makeTickInfo(
 		u256.NewUint(2000),
 		i256.NewInt(-100),
 		u256.NewUint(10),
 		u256.NewUint(15),
 		true,
-	)
+	))
 
 	tests := []struct {
 		name                 string
@@ -249,7 +250,7 @@ func TestCalculateFeeGrowthInside(t *testing.T) {
 
 func TestTickUpdate(t *testing.T) {
 	pool := makeMockPool(createMockPoolParams{
-		ticks: make(map[int32]pl.TickInfo),
+		ticks: avl.NewTree(),
 	})
 
 	tests := []struct {
@@ -480,7 +481,7 @@ func TestTickUpdate(t *testing.T) {
 
 func TestTickCross(t *testing.T) {
 	pool := makeMockPool(createMockPoolParams{
-		ticks: make(map[int32]pl.TickInfo),
+		ticks: avl.NewTree(),
 	})
 
 	// Setup initial tick state
@@ -493,7 +494,7 @@ func TestTickCross(t *testing.T) {
 		initialized:           true,
 	}
 
-	pool.Ticks()[100] = tickInfo.toTickInfo()
+	pool.Ticks().Set("100", tickInfo.toTickInfo())
 
 	tests := []struct {
 		name                 string
@@ -530,7 +531,7 @@ func TestTickCross(t *testing.T) {
 func TestGetTick(t *testing.T) {
 	pool := &pl.Pool{}
 
-	ticks := make(map[int32]pl.TickInfo)
+	ticks := avl.NewTree()
 	tickInfo := mockTickInfo{
 		liquidityGross:        u256.NewUint(1000),
 		liquidityNet:          i256.NewInt(500),
@@ -538,7 +539,7 @@ func TestGetTick(t *testing.T) {
 		feeGrowthOutside1X128: u256.NewUint(15),
 		initialized:           true,
 	}
-	ticks[50] = tickInfo.toTickInfo()
+	ticks.Set("50", tickInfo.toTickInfo())
 
 	pool.SetTicks(ticks)
 
