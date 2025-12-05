@@ -93,12 +93,17 @@ func (i *poolV1) MustGetPosition(poolPath, key string) *pl.PositionInfo {
 
 	positions := pool.Positions()
 
-	position, exist := positions[key]
+	result, exist := positions.Get(key)
 	if !exist {
 		panic(newErrorWithDetail(
 			errDataNotFound,
 			ufmt.Sprintf("expected position(%s) to exist", key),
 		))
+	}
+
+	position, ok := result.(pl.PositionInfo)
+	if !ok {
+		panic("failed to cast position to PositionInfo")
 	}
 
 	return &position
@@ -191,8 +196,7 @@ func (i *poolV1) GetPositionLiquidity(poolPath, key string) *u256.Uint {
 
 func (i *poolV1) ExistsPoolPath(poolPath string) bool {
 	pools := i.store.GetPools()
-	_, exists := pools[poolPath]
-	return exists
+	return pools.Has(poolPath)
 }
 
 func (i *poolV1) GetObservation(poolPath string, secondsAgo int64) (

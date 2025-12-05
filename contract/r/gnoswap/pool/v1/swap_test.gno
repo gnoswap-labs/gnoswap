@@ -5,6 +5,7 @@ import (
 	"chain/banker"
 	"testing"
 
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
 
@@ -822,9 +823,9 @@ func createMockLiquidityPool() *pl.Pool {
 		},
 		feeGrowthGlobal0X128: u256.Zero(),
 		feeGrowthGlobal1X128: u256.Zero(),
-		tickBitmaps:          make(map[int16]*u256.Uint),
-		ticks:                make(map[int32]pl.TickInfo),
-		positions:            make(map[string]pl.PositionInfo),
+		tickBitmaps:          avl.NewTree(),
+		ticks:                avl.NewTree(),
+		positions:            avl.NewTree(),
 	})
 
 	wordPos, _ := tickBitmapPosition(0)
