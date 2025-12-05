@@ -2,7 +2,6 @@ package v1
 
 import (
 	"chain/runtime"
-	"strconv"
 	"strings"
 
 	"gno.land/p/nt/ufmt"
@@ -31,20 +30,6 @@ const (
 // SwapProcessor handles the execution of swap operations
 type SwapProcessor struct {
 	router *routerV1
-}
-
-// ProcessSwapAmount calculates the exact amount to swap based on quote percentage.
-func (p *SwapProcessor) ProcessSwapAmount(amountSpecified int64, quote string) (int64, error) {
-	quoteInt, err := strconv.ParseInt(quote, 10, 64)
-	if err != nil {
-		return 0, ufmt.Errorf("invalid quote(%s)", quote)
-	}
-
-	if quoteInt < MinQuotePercentage || quoteInt > MaxQuotePercentage {
-		return 0, ufmt.Errorf(ErrInvalidQuoteRange, quoteInt, MinQuotePercentage, MaxQuotePercentage)
-	}
-
-	return safeMulDivInt64(amountSpecified, quoteInt, PERCENTAGE_DENOMINATOR), nil
 }
 
 // ProcessSingleSwap handles a single-hop swap simulation.
@@ -205,7 +190,7 @@ func (r *routerV1) drySwapRoute(
 		isLastRoute := i == len(routes)-1
 		if !isLastRoute {
 			// calculate the amount to swap for this route
-			swapAmount, err := processor.ProcessSwapAmount(amountSpecified, quotes[i])
+			swapAmount, err := calculateSwapAmountByQuote(amountSpecified, quotes[i])
 			if err != nil {
 				return 0, 0, false
 			}

@@ -16,10 +16,6 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 )
 
-const (
-	maxSwapFeeBPS = uint64(1000) // 10%
-)
-
 // GetSwapFee returns the current swap fee rate in basis points.
 func (r *routerV1) GetSwapFee() uint64 {
 	return r.store.GetSwapFee()
@@ -34,10 +30,11 @@ func (r *routerV1) SetSwapFee(fee uint64) {
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	if fee > maxSwapFeeBPS {
+	// max swap fee is 1000 (bps)
+	if fee > 1000 {
 		panic(ufmt.Errorf(
-			"%s: fee must be in range 0 to %d. got %d",
-			errInvalidSwapFee.Error(), maxSwapFeeBPS, fee,
+			"%s: fee must be in range 0 to 1000 (10%). got %d",
+			errInvalidSwapFee.Error(), fee,
 		))
 	}
 
@@ -109,7 +106,6 @@ func calculateRouterFee(amount int64, swapFee uint64) int64 {
 	}
 
 	feeAmount := u256.MulDiv(u256.NewUintFromInt64(amount), u256.NewUint(swapFee), u256.NewUint(10000))
-
 	return safeConvertToInt64(feeAmount)
 }
 

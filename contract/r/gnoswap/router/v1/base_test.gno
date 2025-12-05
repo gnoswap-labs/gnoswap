@@ -204,65 +204,6 @@ func TestHandleNativeTokenWrapping(t *testing.T) {
 	}
 }
 
-func TestValidateRouteQuote(t *testing.T) {
-	op := &baseSwapOperation{
-		amountSpecified: 1000,
-	}
-
-	tests := []struct {
-		name        string
-		quote       string
-		index       int
-		expectError bool
-		expected    int64
-	}{
-		{
-			name:        "Pass: valid quote - 100%",
-			quote:       "100",
-			index:       0,
-			expectError: false,
-			expected:    1000, // 1000 * 100 / 100 = 1000
-		},
-		{
-			name:        "Pass: valid quote - 50%",
-			quote:       "50",
-			index:       0,
-			expectError: false,
-			expected:    500, // 1000 * 50 / 100 = 500
-		},
-		{
-			name:        "Fail: invalid quote - string",
-			quote:       "invalid",
-			index:       0,
-			expectError: true,
-			expected:    0,
-		},
-		{
-			name:        "Fail: invalid quote - empty string",
-			quote:       "",
-			index:       0,
-			expectError: true,
-			expected:    0,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result, err := op.validateRouteQuote(tt.quote, tt.index)
-			if tt.expectError {
-				uassert.Error(t, err)
-			} else {
-				if err != nil {
-					t.Errorf("unexpected error: %v", err)
-				}
-				if result != tt.expected {
-					t.Errorf("expected %v but got %v", tt.expected, result)
-				}
-			}
-		})
-	}
-}
-
 func TestProcessRoute(t *testing.T) {
 	op := &baseSwapOperation{}
 
@@ -322,7 +263,7 @@ func TestProcessRoutesWithRemainder(t *testing.T) {
 
 	// check actual swapped amounts for each route
 	for i := range op.routes {
-		toSwap, err := op.validateRouteQuote(op.quotes[i], i)
+		toSwap, err := calculateSwapAmountByQuote(op.amountSpecified, op.quotes[i])
 		if err != nil {
 			t.Fatalf("unexpected error validating quote: %v", err)
 		}
@@ -953,11 +894,7 @@ func TestValidateRouteQuote_EdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			op := &baseSwapOperation{
-				amountSpecified: tt.amountSpecified,
-			}
-
-			result, err := op.validateRouteQuote(tt.quote, tt.index)
+			result, err := calculateSwapAmountByQuote(tt.amountSpecified, tt.quote)
 
 			if tt.expectError {
 				uassert.Error(t, err)
@@ -1416,16 +1353,12 @@ func TestValidateRouteQuote_ExtremeValues(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			op := &baseSwapOperation{
-				amountSpecified: tt.amountSpecified,
-			}
-
 			if tt.expectedHasPanic {
 				uassert.PanicsContains(t, tt.expectedPanicMsg, func() {
-					op.validateRouteQuote(tt.quote, tt.index)
+					calculateSwapAmountByQuote(tt.amountSpecified, tt.quote)
 				})
 			} else {
-				result, err := op.validateRouteQuote(tt.quote, tt.index)
+				result, err := calculateSwapAmountByQuote(tt.amountSpecified, tt.quote)
 
 				if tt.expectError {
 					uassert.Error(t, err)
