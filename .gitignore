@@ -364,3 +364,6 @@ Gemfile.lock
 **/*.*.mk
 **/*/local.mk
 reports/
+
+## temporary folder
+tmp/

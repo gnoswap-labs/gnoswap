@@ -449,6 +449,527 @@ func TestValidateRoutePaths(t *testing.T) {
 	}
 }
 
+func TestSafeAddInt64(t *testing.T) {
+	tests := []struct {
+		name        string
+		a           int64
+		b           int64
+		expected    int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		// Normal cases
+		{
+			name:     "positive + positive",
+			a:        100,
+			b:        200,
+			expected: 300,
+		},
+		{
+			name:     "negative + negative",
+			a:        -100,
+			b:        -200,
+			expected: -300,
+		},
+		{
+			name:     "positive + negative",
+			a:        100,
+			b:        -50,
+			expected: 50,
+		},
+		{
+			name:     "negative + positive",
+			a:        -100,
+			b:        150,
+			expected: 50,
+		},
+		{
+			name:     "zero + zero",
+			a:        0,
+			b:        0,
+			expected: 0,
+		},
+		{
+			name:     "zero + positive",
+			a:        0,
+			b:        100,
+			expected: 100,
+		},
+		{
+			name:     "zero + negative",
+			a:        0,
+			b:        -100,
+			expected: -100,
+		},
+		// Boundary cases - MaxInt64
+		{
+			name:     "MaxInt64 + 0",
+			a:        9223372036854775807,
+			b:        0,
+			expected: 9223372036854775807,
+		},
+		{
+			name:     "MaxInt64 - 1 + 1",
+			a:        9223372036854775806,
+			b:        1,
+			expected: 9223372036854775807,
+		},
+		{
+			name:        "MaxInt64 + 1 overflow",
+			a:           9223372036854775807,
+			b:           1,
+			shouldPanic: true,
+			panicMsg:    "int64 addition overflow",
+		},
+		{
+			name:        "MaxInt64 + MaxInt64 overflow",
+			a:           9223372036854775807,
+			b:           9223372036854775807,
+			shouldPanic: true,
+			panicMsg:    "int64 addition overflow",
+		},
+		{
+			name:     "MaxInt64 + MinInt64",
+			a:        9223372036854775807,
+			b:        -9223372036854775808,
+			expected: -1,
+		},
+		// Boundary cases - MinInt64
+		{
+			name:     "MinInt64 + 0",
+			a:        -9223372036854775808,
+			b:        0,
+			expected: -9223372036854775808,
+		},
+		{
+			name:     "MinInt64 + 1 + (-1)",
+			a:        -9223372036854775807,
+			b:        -1,
+			expected: -9223372036854775808,
+		},
+		{
+			name:        "MinInt64 + (-1) underflow",
+			a:           -9223372036854775808,
+			b:           -1,
+			shouldPanic: true,
+			panicMsg:    "int64 addition underflow",
+		},
+		{
+			name:        "MinInt64 + MinInt64 underflow",
+			a:           -9223372036854775808,
+			b:           -9223372036854775808,
+			shouldPanic: true,
+			panicMsg:    "int64 addition underflow",
+		},
+		{
+			name:     "MinInt64 + MaxInt64",
+			a:        -9223372036854775808,
+			b:        9223372036854775807,
+			expected: -1,
+		},
+		// Large values near boundary
+		{
+			name:        "large positive overflow",
+			a:           9223372036854775800,
+			b:           100,
+			shouldPanic: true,
+			panicMsg:    "int64 addition overflow",
+		},
+		{
+			name:        "large negative underflow",
+			a:           -9223372036854775800,
+			b:           -100,
+			shouldPanic: true,
+			panicMsg:    "int64 addition underflow",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					r := recover()
+					if r == nil {
+						t.Errorf("expected panic but got none")
+						return
+					}
+					if r != tt.panicMsg {
+						t.Errorf("expected panic message %q, got %q", tt.panicMsg, r)
+					}
+				}()
+				safeAddInt64(tt.a, tt.b)
+			} else {
+				result := safeAddInt64(tt.a, tt.b)
+				uassert.Equal(t, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestSafeSubInt64(t *testing.T) {
+	tests := []struct {
+		name        string
+		a           int64
+		b           int64
+		expected    int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		// Normal cases
+		{
+			name:     "positive - positive",
+			a:        200,
+			b:        100,
+			expected: 100,
+		},
+		{
+			name:     "negative - negative",
+			a:        -100,
+			b:        -200,
+			expected: 100,
+		},
+		{
+			name:     "positive - negative",
+			a:        100,
+			b:        -50,
+			expected: 150,
+		},
+		{
+			name:     "negative - positive",
+			a:        -100,
+			b:        50,
+			expected: -150,
+		},
+		{
+			name:     "zero - zero",
+			a:        0,
+			b:        0,
+			expected: 0,
+		},
+		{
+			name:     "zero - positive",
+			a:        0,
+			b:        100,
+			expected: -100,
+		},
+		{
+			name:     "zero - negative",
+			a:        0,
+			b:        -100,
+			expected: 100,
+		},
+		// Boundary cases - MaxInt64
+		{
+			name:     "MaxInt64 - 0",
+			a:        9223372036854775807,
+			b:        0,
+			expected: 9223372036854775807,
+		},
+		{
+			name:     "MaxInt64 - 1",
+			a:        9223372036854775807,
+			b:        1,
+			expected: 9223372036854775806,
+		},
+		{
+			name:     "MaxInt64 - MaxInt64",
+			a:        9223372036854775807,
+			b:        9223372036854775807,
+			expected: 0,
+		},
+		{
+			name:        "MaxInt64 - (-1) overflow",
+			a:           9223372036854775807,
+			b:           -1,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction overflow",
+		},
+		{
+			name:        "MaxInt64 - MinInt64 overflow",
+			a:           9223372036854775807,
+			b:           -9223372036854775808,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction overflow",
+		},
+		// Boundary cases - MinInt64
+		{
+			name:     "MinInt64 - 0",
+			a:        -9223372036854775808,
+			b:        0,
+			expected: -9223372036854775808,
+		},
+		{
+			name:     "MinInt64 - (-1)",
+			a:        -9223372036854775808,
+			b:        -1,
+			expected: -9223372036854775807,
+		},
+		{
+			name:     "MinInt64 - MinInt64",
+			a:        -9223372036854775808,
+			b:        -9223372036854775808,
+			expected: 0,
+		},
+		{
+			name:        "MinInt64 - 1 underflow",
+			a:           -9223372036854775808,
+			b:           1,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction underflow",
+		},
+		{
+			name:        "MinInt64 - MaxInt64 underflow",
+			a:           -9223372036854775808,
+			b:           9223372036854775807,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction underflow",
+		},
+		// Large values near boundary
+		{
+			name:        "large negative - positive underflow",
+			a:           -9223372036854775800,
+			b:           100,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction underflow",
+		},
+		{
+			name:        "large positive - negative overflow",
+			a:           9223372036854775800,
+			b:           -100,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction overflow",
+		},
+		// Edge case: 0 - MinInt64
+		{
+			name:        "0 - MinInt64 overflow",
+			a:           0,
+			b:           -9223372036854775808,
+			shouldPanic: true,
+			panicMsg:    "int64 subtraction overflow",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					r := recover()
+					if r == nil {
+						t.Errorf("expected panic but got none")
+						return
+					}
+					if r != tt.panicMsg {
+						t.Errorf("expected panic message %q, got %q", tt.panicMsg, r)
+					}
+				}()
+				safeSubInt64(tt.a, tt.b)
+			} else {
+				result := safeSubInt64(tt.a, tt.b)
+				uassert.Equal(t, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestSafeMulDivInt64(t *testing.T) {
+	tests := []struct {
+		name        string
+		a           int64
+		b           int64
+		c           int64
+		expected    int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		// Normal cases
+		{
+			name:     "simple multiplication and division",
+			a:        1000,
+			b:        50,
+			c:        100, // PERCENTAGE_DENOMINATOR
+			expected: 500,
+		},
+		{
+			name:     "100% of value",
+			a:        1000,
+			b:        100,
+			c:        100,
+			expected: 1000,
+		},
+		{
+			name:     "10% of value",
+			a:        1000,
+			b:        10,
+			c:        100,
+			expected: 100,
+		},
+		// Zero cases
+		{
+			name:     "a is zero",
+			a:        0,
+			b:        100,
+			c:        100,
+			expected: 0,
+		},
+		{
+			name:     "b is zero",
+			a:        100,
+			b:        0,
+			c:        100,
+			expected: 0,
+		},
+		{
+			name:     "both a and b are zero",
+			a:        0,
+			b:        0,
+			c:        100,
+			expected: 0,
+		},
+		// Division by zero
+		{
+			name:        "division by zero",
+			a:           100,
+			b:           50,
+			c:           0,
+			shouldPanic: true,
+			panicMsg:    "division by zero in safeMulDivInt64",
+		},
+		// Result is zero after division (too small)
+		{
+			name:        "result too small - becomes zero",
+			a:           1,
+			b:           1,
+			c:           100,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-ROUTER-021] invalid swap amount",
+		},
+		// Negative values
+		{
+			name:     "negative a",
+			a:        -1000,
+			b:        50,
+			c:        100,
+			expected: -500,
+		},
+		{
+			name:     "negative b",
+			a:        1000,
+			b:        -50,
+			c:        100,
+			expected: -500,
+		},
+		{
+			name:     "both negative",
+			a:        -1000,
+			b:        -50,
+			c:        100,
+			expected: 500,
+		},
+		// Large values
+		{
+			name:     "large values within range",
+			a:        1000000000000,
+			b:        50,
+			c:        100,
+			expected: 500000000000,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					r := recover()
+					if r == nil {
+						t.Errorf("expected panic but got none")
+						return
+					}
+					panicStr, ok := r.(string)
+					if !ok {
+						// Handle error type
+						if err, isErr := r.(error); isErr {
+							panicStr = err.Error()
+						}
+					}
+					if panicStr != tt.panicMsg {
+						t.Errorf("expected panic message %q, got %q", tt.panicMsg, panicStr)
+					}
+				}()
+				safeMulDivInt64(tt.a, tt.b, tt.c)
+			} else {
+				result := safeMulDivInt64(tt.a, tt.b, tt.c)
+				uassert.Equal(t, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestAbsInt64(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    int64
+		expected int64
+	}{
+		// Normal cases
+		{
+			name:     "positive number",
+			input:    100,
+			expected: 100,
+		},
+		{
+			name:     "negative number",
+			input:    -100,
+			expected: 100,
+		},
+		{
+			name:     "zero",
+			input:    0,
+			expected: 0,
+		},
+		// Boundary cases
+		{
+			name:     "MaxInt64",
+			input:    9223372036854775807,
+			expected: 9223372036854775807,
+		},
+		{
+			name:     "negative one",
+			input:    -1,
+			expected: 1,
+		},
+		{
+			name:     "positive one",
+			input:    1,
+			expected: 1,
+		},
+		// Large values
+		{
+			name:     "large positive",
+			input:    9223372036854775800,
+			expected: 9223372036854775800,
+		},
+		{
+			name:     "large negative",
+			input:    -9223372036854775800,
+			expected: 9223372036854775800,
+		},
+		// Note: MinInt64 (-9223372036854775808) would overflow when negated
+		// as MaxInt64 is 9223372036854775807, but the function doesn't handle this
+		{
+			name:     "MinInt64 + 1",
+			input:    -9223372036854775807,
+			expected: 9223372036854775807,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := absInt64(tt.input)
+			uassert.Equal(t, result, tt.expected)
+		})
+	}
+}
+
 func TestParsePoolPathsByRoutePathArr(t *testing.T) {
 	tests := []struct {
 		name          string

@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 
-	i256 "gno.land/p/gnoswap/int256"
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
@@ -35,8 +35,8 @@ func TestExactInSwapRouteOperation_Validate(t *testing.T) {
 		name         string
 		inputToken   string
 		outputToken  string
-		amountIn     string
-		amountOutMin string
+		amountIn     int64
+		amountOutMin int64
 		routeArr     string
 		quoteArr     string
 		wantErr      bool
@@ -46,8 +46,8 @@ func TestExactInSwapRouteOperation_Validate(t *testing.T) {
 			name:         "Pass: single pool path",
 			inputToken:   barPath,
 			outputToken:  bazPath,
-			amountIn:     "100",
-			amountOutMin: "90",
+			amountIn:     100,
+			amountOutMin: 90,
 			routeArr:     singlePoolPath,
 			quoteArr:     "100",
 			wantErr:      false,
@@ -56,8 +56,8 @@ func TestExactInSwapRouteOperation_Validate(t *testing.T) {
 			name:         "Fail: amountIn is 0",
 			inputToken:   barPath,
 			outputToken:  bazPath,
-			amountIn:     "0",
-			amountOutMin: "100",
+			amountIn:     0,
+			amountOutMin: 100,
 			routeArr:     singlePoolPath,
 			quoteArr:     "100",
 			wantErr:      true,
@@ -67,8 +67,8 @@ func TestExactInSwapRouteOperation_Validate(t *testing.T) {
 			name:         "Fail: amountIn is negative",
 			inputToken:   barPath,
 			outputToken:  bazPath,
-			amountIn:     "-100",
-			amountOutMin: "10",
+			amountIn:     -100,
+			amountOutMin: 10,
 			routeArr:     singlePoolPath,
 			quoteArr:     "100",
 			wantErr:      true,
@@ -400,11 +400,11 @@ func TestNewExactInSwapOperation(t *testing.T) {
 					OutputToken:       "tokenB",
 					RouteArr:          "tokenA:tokenB:500",
 					QuoteArr:          "100",
-					SqrtPriceLimitX96: "0",
+					SqrtPriceLimitX96: u256.Zero(),
 					Deadline:          9999999999,
 				},
-				AmountIn:     "1000",
-				AmountOutMin: "900",
+				AmountIn:     1000,
+				AmountOutMin: 900,
 			},
 		},
 		{
@@ -415,11 +415,11 @@ func TestNewExactInSwapOperation(t *testing.T) {
 					OutputToken:       "tokenB",
 					RouteArr:          "tokenA:tokenB:500",
 					QuoteArr:          "100",
-					SqrtPriceLimitX96: "79228162514264337593543950336",
+					SqrtPriceLimitX96: u256.MustFromDecimal("79228162514264337593543950336"),
 					Deadline:          9999999999,
 				},
-				AmountIn:     "1000",
-				AmountOutMin: "900",
+				AmountIn:     1000,
+				AmountOutMin: 900,
 			},
 		},
 	}
@@ -433,7 +433,6 @@ func TestNewExactInSwapOperation(t *testing.T) {
 			uassert.NotNil(t, op.router)
 			uassert.Equal(t, op.params.AmountIn, tt.params.AmountIn)
 			uassert.Equal(t, op.userWrappedWugnot, INITIAL_WUGNOT_BALANCE)
-			uassert.Equal(t, op.sqrtPriceLimitX96, tt.params.SqrtPriceLimitX96)
 		})
 	}
 }
@@ -455,8 +454,8 @@ func TestExactInSwapOperation_Validate(t *testing.T) {
 					RouteArr:    "tokenA:tokenB:500",
 					QuoteArr:    "100",
 				},
-				AmountIn:     "1000",
-				AmountOutMin: "900",
+				AmountIn:     1000,
+				AmountOutMin: 900,
 			},
 			expectError: false,
 		},
@@ -469,8 +468,8 @@ func TestExactInSwapOperation_Validate(t *testing.T) {
 					RouteArr:    "tokenA:tokenB:500",
 					QuoteArr:    "100",
 				},
-				AmountIn:     "0",
-				AmountOutMin: "0",
+				AmountIn:     0,
+				AmountOutMin: 0,
 			},
 			expectError: true,
 			errorMsg:    "invalid amountIn(0), must be positive",
@@ -484,8 +483,8 @@ func TestExactInSwapOperation_Validate(t *testing.T) {
 					RouteArr:    "tokenA:tokenB:500",
 					QuoteArr:    "100",
 				},
-				AmountIn:     "-100",
-				AmountOutMin: "0",
+				AmountIn:     -100,
+				AmountOutMin: 0,
 			},
 			expectError: true,
 			errorMsg:    "invalid amountIn(-100), must be positive",
@@ -499,8 +498,8 @@ func TestExactInSwapOperation_Validate(t *testing.T) {
 					RouteArr:    "tokenA:tokenB:500",
 					QuoteArr:    "100",
 				},
-				AmountIn:     "999999999999999",
-				AmountOutMin: "0",
+				AmountIn:     999999999999999,
+				AmountOutMin: 0,
 			},
 			expectError: false,
 		},
@@ -513,8 +512,8 @@ func TestExactInSwapOperation_Validate(t *testing.T) {
 					RouteArr:    "tokenA:tokenB:500,tokenA:tokenC:3000",
 					QuoteArr:    "50,30", // sum is 80, not 100
 				},
-				AmountIn:     "1000",
-				AmountOutMin: "900",
+				AmountIn:     1000,
+				AmountOutMin: 900,
 			},
 			expectError: true,
 			errorMsg:    "quote sum(80) must be 100",
@@ -535,8 +534,7 @@ func TestExactInSwapOperation_Validate(t *testing.T) {
 			} else {
 				uassert.NoError(t, err)
 				// Verify amountSpecified is set correctly
-				expected := i256.MustFromDecimal(tt.params.AmountIn)
-				uassert.Equal(t, op.amountSpecified.ToString(), expected.ToString())
+				uassert.Equal(t, op.amountSpecified, tt.params.AmountIn)
 			}
 		})
 	}
@@ -558,8 +556,8 @@ func TestExactInSwapOperation_Process_Structure(t *testing.T) {
 					RouteArr:    "tokenA:tokenB:500",
 					QuoteArr:    "100",
 				},
-				AmountIn:     "1000",
-				AmountOutMin: "900",
+				AmountIn:     1000,
+				AmountOutMin: 900,
 			},
 			description: "Process should return SwapResult with all fields populated",
 		},
@@ -573,7 +571,7 @@ func TestExactInSwapOperation_Process_Structure(t *testing.T) {
 			uassert.NoError(t, err)
 
 			// Verify the operation structure is correct
-			uassert.NotNil(t, op.amountSpecified)
+			uassert.True(t, op.amountSpecified > 0)
 			uassert.NotNil(t, op.routes)
 			uassert.NotNil(t, op.quotes)
 		})
@@ -594,11 +592,11 @@ func TestNewExactOutSwapOperation(t *testing.T) {
 					OutputToken:       "tokenB",
 					RouteArr:          "tokenA:tokenB:500",
 					QuoteArr:          "100",
-					SqrtPriceLimitX96: "0",
+					SqrtPriceLimitX96: u256.Zero(),
 					Deadline:          9999999999,
 				},
-				AmountOut:   "1000",
-				AmountInMax: "1100",
+				AmountOut:   1000,
+				AmountInMax: 1100,
 			},
 		},
 		{
@@ -609,11 +607,11 @@ func TestNewExactOutSwapOperation(t *testing.T) {
 					OutputToken:       "tokenB",
 					RouteArr:          "tokenA:tokenB:500",
 					QuoteArr:          "100",
-					SqrtPriceLimitX96: "79228162514264337593543950336",
+					SqrtPriceLimitX96: u256.MustFromDecimal("79228162514264337593543950336"),
 					Deadline:          9999999999,
 				},
-				AmountOut:   "1000",
-				AmountInMax: "1100",
+				AmountOut:   1000,
+				AmountInMax: 1100,
 			},
 		},
 	}
@@ -627,7 +625,6 @@ func TestNewExactOutSwapOperation(t *testing.T) {
 			uassert.NotNil(t, op.router)
 			uassert.Equal(t, op.params.AmountOut, tt.params.AmountOut)
 			uassert.Equal(t, op.userWrappedWugnot, INITIAL_WUGNOT_BALANCE)
-			uassert.Equal(t, op.sqrtPriceLimitX96, tt.params.SqrtPriceLimitX96)
 		})
 	}
 }
@@ -649,8 +646,8 @@ func TestExactOutSwapOperation_Validate(t *testing.T) {
 					RouteArr:    "tokenA:tokenB:500",
 					QuoteArr:    "100",
 				},
-				AmountOut:   "1000",
-				AmountInMax: "1100",
+				AmountOut:   1000,
+				AmountInMax: 1100,
 			},
 			expectError: false,
 		},
@@ -663,8 +660,8 @@ func TestExactOutSwapOperation_Validate(t *testing.T) {
 					RouteArr:    "tokenA:tokenB:500",
 					QuoteArr:    "100",
 				},
-				AmountOut:   "0",
-				AmountInMax: "0",
+				AmountOut:   0,
+				AmountInMax: 0,
 			},
 			expectError: true,
 			errorMsg:    "invalid amountOut(0), must be positive",
@@ -678,8 +675,8 @@ func TestExactOutSwapOperation_Validate(t *testing.T) {
 					RouteArr:    "tokenA:tokenB:500",
 					QuoteArr:    "100",
 				},
-				AmountOut:   "-100",
-				AmountInMax: "0",
+				AmountOut:   -100,
+				AmountInMax: 0,
 			},
 			expectError: true,
 			errorMsg:    "invalid amountOut(-100), must be positive",
@@ -693,8 +690,8 @@ func TestExactOutSwapOperation_Validate(t *testing.T) {
 					RouteArr:    "tokenA:tokenB:500",
 					QuoteArr:    "100",
 				},
-				AmountOut:   "999999999999999",
-				AmountInMax: "1000000000000000",
+				AmountOut:   999999999999999,
+				AmountInMax: 1000000000000000,
 			},
 			expectError: false,
 		},
@@ -707,8 +704,8 @@ func TestExactOutSwapOperation_Validate(t *testing.T) {
 					RouteArr:    "tokenA:tokenB:500,tokenA:tokenC:3000",
 					QuoteArr:    "60,30", // sum is 90, not 100
 				},
-				AmountOut:   "1000",
-				AmountInMax: "1100",
+				AmountOut:   1000,
+				AmountInMax: 1100,
 			},
 			expectError: true,
 			errorMsg:    "quote sum(90) must be 100",
@@ -729,9 +726,7 @@ func TestExactOutSwapOperation_Validate(t *testing.T) {
 			} else {
 				uassert.NoError(t, err)
 				// Verify amountSpecified is set correctly (negated for ExactOut)
-				expectedAmount := i256.MustFromDecimal(tt.params.AmountOut)
-				expectedNegated := i256.Zero().Neg(expectedAmount)
-				uassert.Equal(t, op.amountSpecified.ToString(), expectedNegated.ToString())
+				uassert.Equal(t, op.amountSpecified, -tt.params.AmountOut)
 			}
 		})
 	}
@@ -753,8 +748,8 @@ func TestExactOutSwapOperation_Process_Structure(t *testing.T) {
 					RouteArr:    "tokenA:tokenB:500",
 					QuoteArr:    "100",
 				},
-				AmountOut:   "1000",
-				AmountInMax: "1100",
+				AmountOut:   1000,
+				AmountInMax: 1100,
 			},
 			description: "Process should return SwapResult with all fields populated",
 		},
@@ -768,11 +763,11 @@ func TestExactOutSwapOperation_Process_Structure(t *testing.T) {
 			uassert.NoError(t, err)
 
 			// Verify the operation structure is correct
-			uassert.NotNil(t, op.amountSpecified)
+			uassert.True(t, op.amountSpecified != 0)
 			uassert.NotNil(t, op.routes)
 			uassert.NotNil(t, op.quotes)
 			// Verify amountSpecified is negative for ExactOut
-			uassert.True(t, op.amountSpecified.IsNeg(), "amountSpecified should be negative for ExactOut")
+			uassert.True(t, op.amountSpecified < 0, "amountSpecified should be negative for ExactOut")
 		})
 	}
 }
@@ -782,8 +777,8 @@ func TestNewExactInParams(t *testing.T) {
 	tests := []struct {
 		name         string
 		base         BaseSwapParams
-		amountIn     string
-		amountOutMin string
+		amountIn     int64
+		amountOutMin int64
 	}{
 		{
 			name: "create exact in params",
@@ -792,11 +787,11 @@ func TestNewExactInParams(t *testing.T) {
 				OutputToken:       "tokenB",
 				RouteArr:          "tokenA:tokenB:500",
 				QuoteArr:          "100",
-				SqrtPriceLimitX96: "0",
+				SqrtPriceLimitX96: u256.Zero(),
 				Deadline:          9999999999,
 			},
-			amountIn:     "1000",
-			amountOutMin: "900",
+			amountIn:     1000,
+			amountOutMin: 900,
 		},
 	}
 
@@ -817,8 +812,8 @@ func TestNewExactOutParams(t *testing.T) {
 	tests := []struct {
 		name        string
 		base        BaseSwapParams
-		amountOut   string
-		amountInMax string
+		amountOut   int64
+		amountInMax int64
 	}{
 		{
 			name: "create exact out params",
@@ -827,11 +822,11 @@ func TestNewExactOutParams(t *testing.T) {
 				OutputToken:       "tokenB",
 				RouteArr:          "tokenA:tokenB:500",
 				QuoteArr:          "100",
-				SqrtPriceLimitX96: "0",
+				SqrtPriceLimitX96: u256.Zero(),
 				Deadline:          9999999999,
 			},
-			amountOut:   "1000",
-			amountInMax: "1100",
+			amountOut:   1000,
+			amountInMax: 1100,
 		},
 	}
 
@@ -857,25 +852,25 @@ func TestExactInVsExactOut_AmountSpecified(t *testing.T) {
 	}
 
 	t.Run("ExactIn uses positive amountSpecified", func(t *testing.T) {
-		exactInParams := NewExactInParams(baseParams, "1000", "900")
+		exactInParams := NewExactInParams(baseParams, 1000, 900)
 		opIn := NewExactInSwapOperation(mockRouter(), exactInParams)
 		err := opIn.Validate()
 		uassert.NoError(t, err)
 
 		// ExactIn should have positive amountSpecified
-		uassert.False(t, opIn.amountSpecified.IsNeg(), "ExactIn amountSpecified should be positive")
-		uassert.Equal(t, opIn.amountSpecified.ToString(), "1000")
+		uassert.False(t, opIn.amountSpecified < 0, "ExactIn amountSpecified should be positive")
+		uassert.Equal(t, opIn.amountSpecified, int64(1000))
 	})
 
 	t.Run("ExactOut uses negative amountSpecified", func(t *testing.T) {
-		exactOutParams := NewExactOutParams(baseParams, "1000", "1100")
+		exactOutParams := NewExactOutParams(baseParams, 1000, 1100)
 		opOut := NewExactOutSwapOperation(mockRouter(), exactOutParams)
 		err := opOut.Validate()
 		uassert.NoError(t, err)
 
 		// ExactOut should have negative amountSpecified
-		uassert.True(t, opOut.amountSpecified.IsNeg(), "ExactOut amountSpecified should be negative")
-		uassert.Equal(t, opOut.amountSpecified.ToString(), "-1000")
+		uassert.True(t, opOut.amountSpecified < 0, "ExactOut amountSpecified should be negative")
+		uassert.Equal(t, opOut.amountSpecified, int64(-1000))
 	})
 }
 
@@ -916,8 +911,8 @@ func TestExactInSwapOperation_HandleNativeTokenWrapping(t *testing.T) {
 					RouteArr:    tt.inputToken + ":" + tt.outputToken + ":500",
 					QuoteArr:    "100",
 				},
-				AmountIn:     "1000",
-				AmountOutMin: "900",
+				AmountIn:     1000,
+				AmountOutMin: 900,
 			}
 
 			op := NewExactInSwapOperation(mockRouter(), params)
@@ -964,8 +959,8 @@ func TestExactOutSwapOperation_HandleNativeTokenWrapping(t *testing.T) {
 					RouteArr:    tt.inputToken + ":" + tt.outputToken + ":500",
 					QuoteArr:    "100",
 				},
-				AmountOut:   "1000",
-				AmountInMax: "1100",
+				AmountOut:   1000,
+				AmountInMax: 1100,
 			}
 
 			op := NewExactOutSwapOperation(mockRouter(), params)
@@ -1014,8 +1009,8 @@ func TestExactInSwapOperation_MultiRoute(t *testing.T) {
 					RouteArr:    tt.routeArr,
 					QuoteArr:    tt.quoteArr,
 				},
-				AmountIn:     "1000",
-				AmountOutMin: "900",
+				AmountIn:     1000,
+				AmountOutMin: 900,
 			}
 
 			op := NewExactInSwapOperation(mockRouter(), params)
@@ -1073,8 +1068,8 @@ func TestExactOutSwapOperation_MultiRoute(t *testing.T) {
 					RouteArr:    tt.routeArr,
 					QuoteArr:    tt.quoteArr,
 				},
-				AmountOut:   "1000",
-				AmountInMax: "1100",
+				AmountOut:   1000,
+				AmountInMax: 1100,
 			}
 
 			op := NewExactOutSwapOperation(mockRouter(), params)

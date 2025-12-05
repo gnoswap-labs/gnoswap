@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
 
@@ -52,26 +51,26 @@ type BaseSwapParams struct {
 	OutputToken       string
 	RouteArr          string
 	QuoteArr          string
-	SqrtPriceLimitX96 string
+	SqrtPriceLimitX96 *u256.Uint
 	Deadline          int64
 }
 
 // common swap operation
 type baseSwapOperation struct {
-	sqrtPriceLimitX96       string
+	sqrtPriceLimitX96       *u256.Uint
 	withUnwrap              bool
 	userBeforeWugnotBalance int64
 	userWrappedWugnot       int64
 	routes                  []string
 	quotes                  []string
-	amountSpecified         *i256.Int
+	amountSpecified         int64
 }
 
 // handleNativeTokenWrapping handles wrapping and unwrapping of native tokens.
 func (op *baseSwapOperation) handleNativeTokenWrapping(
 	inputToken string,
 	outputToken string,
-	specifiedAmount *i256.Int,
+	specifiedAmount int64,
 ) error {
 	isInputNativeToken := common.IsGNOTNativePath(inputToken)
 	isOutputNativeToken := common.IsGNOTNativePath(outputToken)
@@ -88,10 +87,9 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 	if isInputNativeToken {
 		sent := banker.OriginSend()
 		ugnotSentByUser := sent.AmountOf(GNOT_DENOM)
-		amountSpecified := specifiedAmount.Int64()
 
-		if ugnotSentByUser != amountSpecified {
-			return ufmt.Errorf("ugnot sent by user(%d) is not equal to amountSpecified(%d)", ugnotSentByUser, amountSpecified)
+		if ugnotSentByUser != specifiedAmount {
+			return ufmt.Errorf("ugnot sent by user(%d) is not equal to amountSpecified(%d)", ugnotSentByUser, specifiedAmount)
 		}
 
 		// wrap user's GNOT to WUGNOT
@@ -113,34 +111,26 @@ func (op *baseSwapOperation) handleNativeTokenWrapping(
 }
 
 // validateRouteQuote validates and converts a route quote to swap amount.
-func (op *baseSwapOperation) validateRouteQuote(quote string, i int) (*i256.Int, error) {
-	qt, err := strconv.Atoi(quote)
+func (op *baseSwapOperation) validateRouteQuote(quote string, i int) (int64, error) {
+	quoteInt, err := strconv.ParseInt(quote, 10, 64)
 	if err != nil {
-		return nil, ufmt.Errorf("invalid quote(%s) at index(%d)", quote, i)
+		return 0, ufmt.Errorf("invalid quote(%s) at index(%d)", quote, i)
 	}
 
-	// calculate amount to swap for this route
-	toSwap, overflow := i256.Zero().MulOverflow(op.amountSpecified, i256.NewInt(int64(qt)))
-	if overflow {
-		panic(errOverFlow)
+	if quoteInt < MinQuotePercentage || quoteInt > MaxQuotePercentage {
+		return 0, ufmt.Errorf(ErrInvalidQuoteRange, quoteInt, MinQuotePercentage, MaxQuotePercentage)
 	}
 
-	toSwap = i256.Zero().Div(toSwap, PERCENTAGE_DENOMINATOR)
-	if toSwap.IsZero() {
-		return nil, errInvalidSwapAmount
-	}
-
-	return toSwap, nil
+	return safeMulDivInt64(op.amountSpecified, quoteInt, PERCENTAGE_DENOMINATOR), nil
 }
 
 // processRoutes processes all swap routes and returns total amounts.
-func (op *baseSwapOperation) processRoutes(r *routerV1, swapType SwapType) (*u256.Uint, *u256.Uint, error) {
-	zero := u256.Zero()
-	resultAmountIn, resultAmountOut := zero, zero
+func (op *baseSwapOperation) processRoutes(r *routerV1, swapType SwapType) (int64, int64, error) {
+	resultAmountIn, resultAmountOut := int64(0), int64(0)
 	remainRequestAmount := op.amountSpecified
 
 	for i, route := range op.routes {
-		toSwapAmount := i256.Zero()
+		toSwapAmount := int64(0)
 
 		// if it's the last route, use the remaining amount
 		isLastRoute := i == len(op.routes)-1
@@ -148,11 +138,11 @@ func (op *baseSwapOperation) processRoutes(r *routerV1, swapType SwapType) (*u25
 			// calculate the amount to swap for this route
 			swapAmount, err := op.validateRouteQuote(op.quotes[i], i)
 			if err != nil {
-				return nil, nil, err
+				return 0, 0, err
 			}
 
 			// update the remaining amount
-			remainRequestAmount = i256.Zero().Sub(remainRequestAmount, swapAmount)
+			remainRequestAmount = safeSubInt64(remainRequestAmount, swapAmount)
 			toSwapAmount = swapAmount
 		} else {
 			toSwapAmount = remainRequestAmount
@@ -160,21 +150,11 @@ func (op *baseSwapOperation) processRoutes(r *routerV1, swapType SwapType) (*u25
 
 		amountIn, amountOut, err := op.processRoute(r, route, toSwapAmount, swapType)
 		if err != nil {
-			return nil, nil, err
+			return 0, 0, err
 		}
 
-		amountIn, overflow := u256.Zero().AddOverflow(resultAmountIn, amountIn)
-		if overflow {
-			return nil, nil, errOverFlow
-		}
-
-		amountOut, overflow = u256.Zero().AddOverflow(resultAmountOut, amountOut)
-		if overflow {
-			return nil, nil, errOverFlow
-		}
-
-		resultAmountIn = amountIn
-		resultAmountOut = amountOut
+		resultAmountIn = safeAddInt64(resultAmountIn, amountIn)
+		resultAmountOut = safeAddInt64(resultAmountOut, amountOut)
 	}
 
 	return resultAmountIn, resultAmountOut, nil
@@ -184,9 +164,9 @@ func (op *baseSwapOperation) processRoutes(r *routerV1, swapType SwapType) (*u25
 func (op *baseSwapOperation) processRoute(
 	r *routerV1,
 	route string,
-	toSwap *i256.Int,
+	toSwap int64,
 	swapType SwapType,
-) (amountIn, amountOut *u256.Uint, err error) {
+) (amountIn, amountOut int64, err error) {
 	numHops := strings.Count(route, POOL_SEPARATOR) + 1
 	assertHopsInRange(numHops)
 
@@ -197,15 +177,11 @@ func (op *baseSwapOperation) processRoute(
 		amountIn, amountOut = r.handleMultiSwap(swapType, route, numHops, toSwap, op.withUnwrap)
 	}
 
-	if amountIn == nil || amountOut == nil {
-		return nil, nil, ufmt.Errorf("swap failed to process route(%s)", route)
-	}
-
 	return amountIn, amountOut, nil
 }
 
 // handleSingleSwap executes a single-hop swap with the specified amount.
-func (r *routerV1) handleSingleSwap(route string, amountSpecified *i256.Int, withUnwrap bool, sqrtPriceLimitX96 string) (*u256.Uint, *u256.Uint) {
+func (r *routerV1) handleSingleSwap(route string, amountSpecified int64, withUnwrap bool, sqrtPriceLimitX96 *u256.Uint) (int64, int64) {
 	input, output, fee := getDataForSinglePath(route)
 	singleParams := SingleSwapParams{
 		tokenIn:           input,
@@ -224,9 +200,9 @@ func (r *routerV1) handleMultiSwap(
 	swapType SwapType,
 	route string,
 	numHops int,
-	amountSpecified *i256.Int,
+	amountSpecified int64,
 	withUnwrap bool,
-) (*u256.Uint, *u256.Uint) {
+) (int64, int64) {
 	recipient := routerAddr
 
 	switch swapType {
@@ -251,24 +227,22 @@ type SwapRouteParams struct {
 	quoteArr          string
 	deadline          int64
 	typ               SwapType
-	exactAmount       string // amountIn for ExactIn, amountOut for ExactOut
-	limitAmount       string // amountOutMin for ExactIn, amountInMax for ExactOut
-	sqrtPriceLimitX96 string // if sqrtPriceLimitX96 is zero string, it will be set to MIN_PRICE or MAX_PRICE
+	exactAmount       int64      // amountIn for ExactIn, amountOut for ExactOut
+	limitAmount       int64      // amountOutMin for ExactIn, amountInMax for ExactOut
+	sqrtPriceLimitX96 *u256.Uint // if sqrtPriceLimitX96 is zero string, it will be set to MIN_PRICE or MAX_PRICE
 }
 
-func (p *SwapRouteParams) ExactAmount() string {
+func (p *SwapRouteParams) ExactAmount() int64 {
 	return p.exactAmount
 }
 
 // when exact out, calculate amount to fetch from pool including router fee
-func (p *SwapRouteParams) ExpectedExactAmountByFee(feeBps uint64) string {
+func (p *SwapRouteParams) ExpectedExactAmountByFee(feeBps uint64) int64 {
 	if p.typ == ExactIn {
 		return p.exactAmount
 	}
 
-	userAmount := u256.MustFromDecimal(p.exactAmount)
-
-	return calculateExactOutWithRouterFee(userAmount, feeBps).ToString()
+	return calculateExactOutWithRouterFee(p.exactAmount, feeBps)
 }
 
 // IsUnwrap checks if the swap output is native token.
@@ -287,7 +261,7 @@ func (p *SwapRouteParams) SwapCount() int64 {
 }
 
 func (p *SwapRouteParams) IsSetSqrtPriceLimitX96() bool {
-	return p.sqrtPriceLimitX96 != "" && p.sqrtPriceLimitX96 != zeroString
+	return p.sqrtPriceLimitX96 != nil && !p.sqrtPriceLimitX96.IsZero()
 }
 
 // createSwapOperation creates the appropriate swap operation based on swap type.
@@ -331,10 +305,10 @@ func extractSwapOperationData(op RouterOperation) (int64, int64, error) {
 }
 
 // commonSwapRoute handles the common logic for both ExactIn and ExactOut swaps.
-func (r *routerV1) commonSwapRoute(params SwapRouteParams) (*i256.Int, *i256.Int, error) {
+func (r *routerV1) commonSwapRoute(params SwapRouteParams) (int64, int64, error) {
 	op, err := createSwapOperation(r, params)
 	if err != nil {
-		return i256.Zero(), i256.Zero(), err
+		return 0, 0, err
 	}
 
 	result, err := executeSwapOperation(op)
@@ -343,17 +317,12 @@ func (r *routerV1) commonSwapRoute(params SwapRouteParams) (*i256.Int, *i256.Int
 			errInvalidInput,
 			ufmt.Sprintf("invalid %s SwapOperation: %s", params.typ.String(), err.Error()),
 		)
-		return i256.Zero(), i256.Zero(), errors.New(msg)
+		return 0, 0, errors.New(msg)
 	}
 
 	userBeforeWugnotBalance, userWrappedWugnot, err := extractSwapOperationData(op)
 	if err != nil {
-		return i256.Zero(), i256.Zero(), err
-	}
-
-	limitValue, err := u256.FromDecimal(params.limitAmount)
-	if err != nil {
-		return i256.Zero(), i256.Zero(), err
+		return 0, 0, err
 	}
 
 	inputAmount, outputAmount := r.finalizeSwap(
@@ -362,10 +331,10 @@ func (r *routerV1) commonSwapRoute(params SwapRouteParams) (*i256.Int, *i256.Int
 		result.AmountIn,
 		result.AmountOut,
 		params.typ,
-		limitValue,
+		params.limitAmount,
 		userBeforeWugnotBalance,
 		userWrappedWugnot,
-		u256.MustFromDecimal(params.ExactAmount()),
+		params.ExactAmount(),
 		params.SwapCount(),
 		params.IsSetSqrtPriceLimitX96(),
 	)

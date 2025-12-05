@@ -1,9 +1,9 @@
 package v1
 
 import (
+	"strconv"
 	"testing"
 
-	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/uassert"
 
 	prabc "gno.land/p/gnoswap/rbac"
@@ -68,7 +68,7 @@ func TestSingleSwap(t *testing.T) {
 				tt.setupFn(env)
 			}
 			router := mockRouter()
-			singleSwapFn := func(cur realm) (*u256.Uint, *u256.Uint) {
+			singleSwapFn := func(cur realm) (int64, int64) {
 				return router.singleSwap(&tt.params)
 			}
 
@@ -79,8 +79,8 @@ func TestSingleSwap(t *testing.T) {
 
 			amountIn, amountOut := singleSwapFn(cross)
 
-			uassert.Equal(t, amountIn.ToString(), tt.expectedIn)
-			uassert.Equal(t, amountOut.ToString(), tt.expectedOut)
+			uassert.Equal(t, strconv.FormatInt(amountIn, 10), tt.expectedIn)
+			uassert.Equal(t, strconv.FormatInt(amountOut, 10), tt.expectedOut)
 		})
 	}
 }
@@ -228,13 +228,10 @@ func TestSingleSwapInputValidation(t *testing.T) {
 			} else {
 				amountIn, amountOut := router.singleSwap(&tt.params)
 
-				if amountIn == nil || amountOut == nil {
-					t.Error("Expected non-nil amounts for successful swap")
-				}
-				if amountIn.IsZero() {
+				if amountIn == 0 {
 					t.Error("Expected non-zero input amount")
 				}
-				if amountOut.IsZero() {
+				if amountOut == 0 {
 					t.Error("Expected non-zero output amount")
 				}
 			}

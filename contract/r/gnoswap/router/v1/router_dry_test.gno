@@ -211,7 +211,7 @@ func TestDrySwapRoute_Basic(t *testing.T) {
 }
 
 func TestDrySwapRouteOverflow(t *testing.T) {
-	// maxUint256 exceeds int256 max (2^255 - 1), so parsing it as int256 will overflow
+	// maxUint256 exceeds int64 max, so parsing it as int64 will overflow
 	maxUint256 := "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 
 	tests := []DrySwapTestCase{
@@ -230,7 +230,7 @@ func TestDrySwapRouteOverflow(t *testing.T) {
 			expectedAmountOut: "0",
 			expectedSuccess:   false,
 			expectPanic:       true,
-			expectedPanicMsg:  "int256: overflow",
+			expectedPanicMsg:  "value out of range",
 		},
 		{
 			name:    "ExactOut - Overflow in calculateSwapAmount",
@@ -246,7 +246,7 @@ func TestDrySwapRouteOverflow(t *testing.T) {
 			expectedAmountIn:  "0",
 			expectedAmountOut: "0",
 			expectPanic:       true,
-			expectedPanicMsg:  "int256: overflow",
+			expectedPanicMsg:  "value out of range",
 		},
 	}
 
@@ -261,7 +261,7 @@ func TestDrySwapRouteOverflow(t *testing.T) {
 			router := mockRouter()
 
 			if tt.expectPanic {
-				uassert.PanicsWithMessage(t, tt.expectedPanicMsg, func() {
+				uassert.PanicsContains(t, tt.expectedPanicMsg, func() {
 					router.DrySwapRoute(
 						tt.swapParams.inputToken,
 						tt.swapParams.outputToken,

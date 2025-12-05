@@ -3,7 +3,6 @@ package v1
 import (
 	"testing"
 
-	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
@@ -131,7 +130,7 @@ type SwapBuilder struct {
 func NewSwapBuilder() *SwapBuilder {
 	return &SwapBuilder{
 		params: SingleSwapParams{
-			amountSpecified: i256.Zero(),
+			amountSpecified: 0,
 		},
 		multi: false,
 		pools: []PoolRoute{},
@@ -158,14 +157,13 @@ func (b *SwapBuilder) WithFee(fee uint32) *SwapBuilder {
 
 // ExactInput sets exact input amount
 func (b *SwapBuilder) ExactInput(amount string) *SwapBuilder {
-	b.params.amountSpecified = i256.MustFromDecimal(amount)
+	b.params.amountSpecified = safeParseInt64(amount)
 	return b
 }
 
 // ExactOutput sets exact output amount (negative value)
 func (b *SwapBuilder) ExactOutput(amount string) *SwapBuilder {
-	negAmount := "-" + amount
-	b.params.amountSpecified = i256.MustFromDecimal(negAmount)
+	b.params.amountSpecified = -safeParseInt64(amount)
 	return b
 }
 
@@ -324,7 +322,7 @@ func NewSingleSwapParams() *SingleSwapParamsBuilder {
 			tokenIn:         barPath,
 			tokenOut:        bazPath,
 			fee:             3000,
-			amountSpecified: i256.Zero(),
+			amountSpecified: 0,
 		},
 	}
 }
@@ -349,13 +347,13 @@ func (b *SingleSwapParamsBuilder) Fee(fee uint32) *SingleSwapParamsBuilder {
 
 // ExactInput sets exact input amount
 func (b *SingleSwapParamsBuilder) ExactInput(amount string) *SingleSwapParamsBuilder {
-	b.p.amountSpecified = i256.MustFromDecimal(amount)
+	b.p.amountSpecified = safeParseInt64(amount)
 	return b
 }
 
 // ExactOutput sets exact output amount (negative)
 func (b *SingleSwapParamsBuilder) ExactOutput(amount string) *SingleSwapParamsBuilder {
-	b.p.amountSpecified = i256.MustFromDecimal("-" + amount)
+	b.p.amountSpecified = -safeParseInt64(amount)
 	return b
 }
 
@@ -378,7 +376,7 @@ func NewSwapParams() *SwapParamsBuilder {
 				tokenIn:         barPath,
 				tokenOut:        bazPath,
 				fee:             3000,
-				amountSpecified: i256.Zero(),
+				amountSpecified: 0,
 			},
 		},
 	}
@@ -410,13 +408,13 @@ func (b *SwapParamsBuilder) Fee(fee uint32) *SwapParamsBuilder {
 
 // ExactInput sets exact input amount
 func (b *SwapParamsBuilder) ExactInput(amount string) *SwapParamsBuilder {
-	b.p.amountSpecified = i256.MustFromDecimal(amount)
+	b.p.amountSpecified = safeParseInt64(amount)
 	return b
 }
 
 // ExactOutput sets exact output amount
 func (b *SwapParamsBuilder) ExactOutput(amount string) *SwapParamsBuilder {
-	b.p.amountSpecified = i256.MustFromDecimal("-" + amount)
+	b.p.amountSpecified = -safeParseInt64(amount)
 	return b
 }
 

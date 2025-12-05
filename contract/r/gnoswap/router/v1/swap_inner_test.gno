@@ -1,9 +1,9 @@
 package v1
 
 import (
+	"strconv"
 	"testing"
 
-	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/uassert"
 
@@ -71,12 +71,12 @@ func TestSwapInner(t *testing.T) {
 	tests := []struct {
 		name              string
 		setupFn           func(*TestEnv)
-		amountSpecified   *i256.Int
+		amountSpecified   int64
 		recipient         address
 		sqrtPriceLimitX96 *u256.Uint
 		data              SwapCallbackData
-		expectedRecv      string
-		expectedOut       string
+		expectedRecv      int64
+		expectedOut       int64
 		expectError       bool
 		expectedErrorMsg  string
 	}{
@@ -86,7 +86,7 @@ func TestSwapInner(t *testing.T) {
 				defaultSetupFn(env)
 				TokenFaucet(t, barPath, alice)
 			},
-			amountSpecified:   i256.MustFromDecimal("100"),
+			amountSpecified:   100,
 			recipient:         alice,
 			sqrtPriceLimitX96: u256.NewUint(4295128740),
 			data: SwapCallbackData{
@@ -95,17 +95,17 @@ func TestSwapInner(t *testing.T) {
 				fee:      3000,
 				payer:    alice,
 			},
-			expectedRecv: "100",
-			expectedOut:  "98",
+			expectedRecv: 100,
+			expectedOut:  98,
 			expectError:  false,
 		},
 		{
-			name: "overflow case - large amount",
+			name: "insufficient balance - large amount",
 			setupFn: func(env *TestEnv) {
 				defaultSetupFn(env)
 				TokenFaucet(t, barPath, alice)
 			},
-			amountSpecified:   i256.MustFromDecimal("92267581029952440000000"), // Large amount
+			amountSpecified:   9223372036854775807, // Large amount (int64 max)
 			recipient:         alice,
 			sqrtPriceLimitX96: u256.NewUint(4295128740),
 			data: SwapCallbackData{
@@ -114,10 +114,10 @@ func TestSwapInner(t *testing.T) {
 				fee:      3000,
 				payer:    alice,
 			},
-			expectedRecv:     "0",
-			expectedOut:      "0",
+			expectedRecv:     0,
+			expectedOut:      0,
 			expectError:      true,
-			expectedErrorMsg: "[GNOSWAP-POOL-026] overflow",
+			expectedErrorMsg: "insufficient balance in router for callback",
 		},
 	}
 
@@ -142,7 +142,7 @@ func TestSwapInner(t *testing.T) {
 
 			router := mockRouter()
 
-			swapInnerFn := func(cur realm) (*u256.Uint, *u256.Uint) {
+			swapInnerFn := func(cur realm) (int64, int64) {
 				return router.swapInner(
 					tt.amountSpecified,
 					tt.recipient,
@@ -159,8 +159,8 @@ func TestSwapInner(t *testing.T) {
 				poolRecv, poolOut := swapInnerFn(cross)
 
 				if !tt.expectError {
-					uassert.Equal(t, poolRecv.ToString(), tt.expectedRecv)
-					uassert.Equal(t, poolOut.ToString(), tt.expectedOut)
+					uassert.Equal(t, strconv.FormatInt(poolRecv, 10), strconv.FormatInt(tt.expectedRecv, 10))
+					uassert.Equal(t, strconv.FormatInt(poolOut, 10), strconv.FormatInt(tt.expectedOut, 10))
 				}
 			}
 		})
