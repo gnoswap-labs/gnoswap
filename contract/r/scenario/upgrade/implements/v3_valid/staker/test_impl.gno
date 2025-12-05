@@ -186,10 +186,6 @@ func (t *TestStaker) GetPoolTierRatio(poolPath string) uint64 {
 	return t.instance.GetPoolTierRatio(poolPath)
 }
 
-func (t *TestStaker) GetPrintExternalInfo() string {
-	return t.instance.GetPrintExternalInfo()
-}
-
 func (t *TestStaker) GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool) {
 	return t.instance.GetSpecificTokenMinimumRewardAmount(tokenPath)
 }
