@@ -4,7 +4,6 @@ import (
 	"chain/banker"
 	"chain/runtime"
 	"errors"
-	"strconv"
 	"strings"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -19,20 +18,6 @@ const (
 
 	INITIAL_WUGNOT_BALANCE int64 = 0
 )
-
-// calculateSwapAmountByQuote calculates swap amount based on quote percentage.
-func calculateSwapAmountByQuote(amountSpecified int64, quote string) (int64, error) {
-	quoteInt, err := strconv.ParseInt(quote, 10, 64)
-	if err != nil {
-		return 0, ufmt.Errorf("invalid quote(%s)", quote)
-	}
-
-	if quoteInt < MinQuotePercentage || quoteInt > MaxQuotePercentage {
-		return 0, ufmt.Errorf(ErrInvalidQuoteRange, quoteInt, MinQuotePercentage, MaxQuotePercentage)
-	}
-
-	return safeMulDivInt64(amountSpecified, quoteInt, PERCENTAGE_DENOMINATOR), nil
-}
 
 // swap can be done by multiple pools
 // to separate each pool, we use POOL_SEPARATOR

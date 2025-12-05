@@ -19,6 +19,20 @@ var (
 	errTxExpired    = "transaction too old, now(%d) > deadline(%d)"
 )
 
+// calculateSwapAmountByQuote calculates swap amount based on quote percentage.
+func calculateSwapAmountByQuote(amountSpecified int64, quote string) (int64, error) {
+	quoteInt, err := strconv.ParseInt(quote, 10, 64)
+	if err != nil {
+		return 0, ufmt.Errorf("invalid quote(%s)", quote)
+	}
+
+	if quoteInt < MinQuotePercentage || quoteInt > MaxQuotePercentage {
+		return 0, ufmt.Errorf(ErrInvalidQuoteRange, quoteInt, MinQuotePercentage, MaxQuotePercentage)
+	}
+
+	return safeMulDivInt64(amountSpecified, quoteInt, PERCENTAGE_DENOMINATOR), nil
+}
+
 // assertHopsInRange ensures the number of hops is within the valid range of 1-3.
 func assertHopsInRange(hops int) {
 	switch hops {
@@ -62,7 +76,7 @@ func getDataForSinglePathWithError(poolPath string) (string, string, uint32, err
 		)
 	}
 
-	f, err := strconv.ParseUint(poolPathSplit[2], 10, 32)
+	f, err := strconv.Atoi(poolPathSplit[2])
 	if err != nil {
 		return "", "", 0, makeErrorWithDetails(
 			errInvalidPoolPath,
