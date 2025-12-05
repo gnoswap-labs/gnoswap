@@ -24,31 +24,20 @@ func (s *stakerV1) calcPositionReward(currentHeight, currentTimestamp int64, pos
 	})
 
 	internal := int64(0)
+	internalPenalty := int64(0)
+	externalReward := make(map[string]int64, len(rewards))
+	externalPenalty := make(map[string]int64, len(rewards))
+
 	for _, reward := range rewards {
 		internal = safeAddInt64(internal, reward.Internal)
-	}
-
-	internalPenalty := int64(0)
-	for _, reward := range rewards {
 		internalPenalty = safeAddInt64(internalPenalty, reward.InternalPenalty)
-	}
 
-	rewardLen := len(rewards)
-	externalReward := make(map[string]int64, rewardLen)
-	for _, reward := range rewards {
-		if reward.External != nil {
-			for incentive, reward := range reward.External {
-				externalReward[incentive] = safeAddInt64(externalReward[incentive], reward)
-			}
+		for incentive, amount := range reward.External {
+			externalReward[incentive] = safeAddInt64(externalReward[incentive], amount)
 		}
-	}
 
-	externalPenalty := make(map[string]int64, rewardLen)
-	for _, reward := range rewards {
-		if reward.ExternalPenalty != nil {
-			for incentive, penalty := range reward.ExternalPenalty {
-				externalPenalty[incentive] = safeAddInt64(externalPenalty[incentive], penalty)
-			}
+		for incentive, penalty := range reward.ExternalPenalty {
+			externalPenalty[incentive] = safeAddInt64(externalPenalty[incentive], penalty)
 		}
 	}
 
