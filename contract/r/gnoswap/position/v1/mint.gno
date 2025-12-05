@@ -76,7 +76,6 @@ func (p *positionV1) processMintInput(input MintInput) (ProcessedMintInput, erro
 	assertValidNumberString(input.amount1Desired)
 	assertValidNumberString(input.amount0Min)
 	assertValidNumberString(input.amount1Min)
-	var result ProcessedMintInput
 
 	// process tokens
 	token0, token1, token0IsNative, token1IsNative, wrappedAmount, err := p.processTokens(
@@ -112,9 +111,7 @@ func (p *positionV1) processMintInput(input MintInput) (ProcessedMintInput, erro
 		pair.token0IsNative, pair.token1IsNative = pair.token1IsNative, pair.token0IsNative
 	}
 
-	poolPath := computePoolPath(pair.token0, pair.token1, input.fee)
-
-	result = ProcessedMintInput{
+	return ProcessedMintInput{
 		tokenPair:      pair,
 		amount0Desired: amount0Desired,
 		amount1Desired: amount1Desired,
@@ -122,10 +119,8 @@ func (p *positionV1) processMintInput(input MintInput) (ProcessedMintInput, erro
 		amount1Min:     amount1Min,
 		tickLower:      tickLower,
 		tickUpper:      tickUpper,
-		poolPath:       poolPath,
-	}
-
-	return result, nil
+		poolPath:       computePoolPath(pair.token0, pair.token1, input.fee),
+	}, nil
 }
 
 // processTokens validates token paths and handles native token wrapping.
