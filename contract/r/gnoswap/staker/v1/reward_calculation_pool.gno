@@ -130,22 +130,16 @@ func (self *PoolResolver) TickResolver(tickId int32) *TickResolver {
 
 // IsExternallyIncentivizedPool returns true if the pool has any active external incentives.
 func (self *PoolResolver) IsExternallyIncentivizedPool() bool {
-	// Check if there are any active incentives at current time
 	currentTime := time.Now().Unix()
-
 	hasActive := false
-
-	incentives := self.Incentives()
-
-	incentives.IncentiveTrees().Iterate("", "", func(key string, value interface{}) bool {
+	self.Incentives().IncentiveTrees().Iterate("", "", func(key string, value interface{}) bool {
 		incentive, ok := value.(*sr.ExternalIncentive)
 		if !ok {
 			panic("failed to cast value to *ExternalIncentive")
 		}
 
-		incentiveResolver := NewExternalIncentiveResolver(incentive)
-
-		if incentiveResolver.isActive(currentTime) {
+		// Check if there are any active incentives at current time
+		if NewExternalIncentiveResolver(incentive).isActive(currentTime) {
 			hasActive = true
 			return false
 		}
@@ -238,11 +232,12 @@ func (self *PoolResolver) updateGlobalRewardRatioAccumulation(currentTime int64,
 
 // RewardStateOf initializes a new RewardState for the given deposit.
 func (self *PoolResolver) RewardStateOf(deposit *sr.Deposit) *RewardState {
+	warmups := len(deposit.Warmups())
 	result := &RewardState{
 		pool:      self,
 		deposit:   NewDepositResolver(deposit),
-		rewards:   make([]int64, len(deposit.Warmups())),
-		penalties: make([]int64, len(deposit.Warmups())),
+		rewards:   make([]int64, warmups),
+		penalties: make([]int64, warmups),
 	}
 
 	for i := range result.rewards {
@@ -316,19 +311,21 @@ func (self *RewardState) updateExternalReward(startTime, endTime int64, incentiv
 		startTime = lastCollectTime
 	}
 
-	if endTime < incentive.StartTimestamp() {
+	ictvStart := incentive.StartTimestamp()
+	if endTime < ictvStart {
 		return nil // Not started yet
 	}
 
-	if startTime < incentive.StartTimestamp() {
-		startTime = incentive.StartTimestamp()
+	if startTime < ictvStart {
+		startTime = ictvStart
 	}
 
-	if endTime > incentive.EndTimestamp() {
-		endTime = incentive.EndTimestamp()
+	ictvEnd := incentive.EndTimestamp()
+	if endTime > ictvEnd {
+		endTime = ictvEnd
 	}
 
-	if startTime > incentive.EndTimestamp() {
+	if startTime > ictvEnd {
 		return nil // Already ended
 	}
 

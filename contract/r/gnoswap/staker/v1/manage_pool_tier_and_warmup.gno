@@ -47,19 +47,19 @@ func (s *stakerV1) SetPoolTier(poolPath string, tier uint64) {
 func (s *stakerV1) ChangePoolTier(poolPath string, tier uint64) {
 	halt.AssertIsNotHaltedStaker()
 
-	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
-
 	assertIsPoolExists(s, poolPath)
 	assertIsValidPoolTier(tier)
+
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
+	access.AssertIsAdminOrGovernance(caller)
 
 	currentTime := time.Now().Unix()
 	previousTier, newTier := s.changePoolTier(poolPath, tier, currentTime)
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"ChangePoolTier",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", poolPath,
 		"prevTier", formatUint(previousTier),
@@ -74,18 +74,18 @@ func (s *stakerV1) ChangePoolTier(poolPath string, tier uint64) {
 func (s *stakerV1) RemovePoolTier(poolPath string) {
 	halt.AssertIsNotHaltedStaker()
 
-	caller := runtime.PreviousRealm().Address()
-	access.AssertIsAdminOrGovernance(caller)
-
 	assertIsPoolExists(s, poolPath)
+
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
+	access.AssertIsAdminOrGovernance(caller)
 
 	currentTime := time.Now().Unix()
 	s.removePoolTier(poolPath, currentTime)
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"RemovePoolTier",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"poolPath", poolPath,
 		"currentTime", formatInt(currentTime),
@@ -98,15 +98,15 @@ func (s *stakerV1) RemovePoolTier(poolPath string) {
 func (s *stakerV1) SetWarmUp(pct, timeDuration int64) {
 	halt.AssertIsNotHaltedStaker()
 
-	caller := runtime.PreviousRealm().Address()
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	s.setWarmUp(pct, timeDuration)
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"SetWarmUp",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"pct", formatInt(pct),
 		"timeDuration", formatInt(timeDuration),

@@ -10,6 +10,12 @@ type IncentivesResolver struct {
 	*sr.Incentives
 }
 
+func NewIncentivesResolver(incentives *sr.Incentives) *IncentivesResolver {
+	return &IncentivesResolver{
+		Incentives: incentives,
+	}
+}
+
 // Get incentive by incentiveId (checks both active and archived)
 func (self *IncentivesResolver) Get(incentiveId string) (*sr.ExternalIncentive, bool) {
 	// First check active incentives
@@ -213,10 +219,4 @@ func calculateUnClaimableDuration(unclaimableStart, unclaimableEnd, incentiveSta
 
 	// Calculate overlap duration
 	return safeSubInt64(endTime, startTime)
-}
-
-func NewIncentivesResolver(incentives *sr.Incentives) *IncentivesResolver {
-	return &IncentivesResolver{
-		Incentives: incentives,
-	}
 }
