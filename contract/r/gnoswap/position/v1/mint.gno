@@ -208,36 +208,12 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 	calculatedToken0Balance := u256.MustFromDecimal(calculatedToken0BalanceStr)
 	calculatedToken1Balance := u256.MustFromDecimal(calculatedToken1BalanceStr)
 
-	{
-		diff, underflow := u256.Zero().SubOverflow(feeGrowthInside0LastX128, position.FeeGrowthInside0LastX128())
-		if underflow {
-			return 0, nil, nil, nil, "", makeErrorWithDetails(errUnderflow, "feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128 underflow")
-		}
-		mulDiv := u256.MulDiv(diff, u256.Zero().Set(positionLiquidity), q128)
-
-		tokensOwed0, overflow := u256.Zero().AddOverflow(position.TokensOwed0(), mulDiv)
-		if overflow {
-			return 0, nil, nil, nil, "", makeErrorWithDetails(errOverflow, "position.tokensOwed0 + mulDiv overflow")
-		}
-		position.SetTokensOwed0(tokensOwed0)
+	// Use calculateFees to get updated tokensOwed values
+	feeGrowth := FeeGrowthInside{
+		feeGrowthInside0LastX128: feeGrowthInside0LastX128,
+		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
 	}
-
-	{
-		diff, underflow := u256.Zero().SubOverflow(feeGrowthInside1LastX128, position.FeeGrowthInside1LastX128())
-		if underflow {
-			return 0, nil, nil, nil, "", makeErrorWithDetails(errUnderflow, "feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128 underflow")
-		}
-		mulDiv := u256.MulDiv(diff, u256.Zero().Set(positionLiquidity), q128)
-
-		tokensOwed1, overflow := u256.Zero().AddOverflow(position.TokensOwed1(), mulDiv)
-		if overflow {
-			return 0, nil, nil, nil, "", makeErrorWithDetails(errOverflow, "position.tokensOwed1 + mulDiv overflow")
-		}
-		position.SetTokensOwed1(tokensOwed1)
-	}
-
-	position.SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128)
-	position.SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128)
+	tokensOwed0, tokensOwed1 := p.calculateFees(position, feeGrowth)
 
 	liquidityAmount, overflow := u256.Zero().AddOverflow(u256.Zero().Set(positionLiquidity), liquidity)
 	if overflow {
@@ -251,6 +227,12 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 	if overflow {
 		return 0, nil, nil, nil, "", errOverflow
 	}
+
+	position.SetTokensOwed0(tokensOwed0)
+	position.SetTokensOwed1(tokensOwed1)
+
+	position.SetFeeGrowthInside0LastX128(feeGrowthInside0LastX128)
+	position.SetFeeGrowthInside1LastX128(feeGrowthInside1LastX128)
 
 	position.SetLiquidity(liquidityAmount)
 	position.SetToken0Balance(token0Balance)
