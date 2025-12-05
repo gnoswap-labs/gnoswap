@@ -4,7 +4,6 @@ import (
 	"chain/runtime"
 	"strconv"
 
-	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
 
@@ -12,14 +11,12 @@ import (
 	"gno.land/r/gnoswap/common"
 )
 
-var (
-	one = u256.One()
-)
+var one = u256.One()
 
 // ErrorMessages define all error message templates used throughout the router
 const (
 	// slippage validation
-	errExactOutAmountExceeded = "received more than requested in requested=%s, actual=%s"
+	errExactOutAmountExceeded = "received more than requested in requested=%d, actual=%d"
 
 	// route validation
 	errInvalidRouteLength = "route length(%d) must be 1~7"
@@ -37,8 +34,8 @@ const (
 	errTooMuchWugnotSpent = "too much wugnot spent (wrapped: %d, spend: %d)"
 
 	// swap type validation
-	errExactInTooFewReceived = "ExactIn: too few received (min:%s, got:%s)"
-	errExactOutTooMuchSpent  = "ExactOut: too much spent (max:%s, used:%s)"
+	errExactInTooFewReceived = "ExactIn: too few received (min:%d, got:%d)"
+	errExactOutTooMuchSpent  = "ExactOut: too much spent (max:%d, used:%d)"
 
 	// route parsing validation
 	errEmptyRoutes = "routes cannot be empty"
@@ -93,33 +90,32 @@ type SwapValidator struct{}
 
 // exactOutAmount checks if output amount meets specified requirements.
 // For exact-out swaps, the output must be exactly the specified amount with tolerance up to swapCount units for rounding.
-func (v *SwapValidator) exactOutAmount(resultAmount, specifiedAmount *u256.Uint, swapCount int64) error {
-	var diff *u256.Uint
-	if resultAmount.Gte(specifiedAmount) {
-		diff = u256.Zero().Sub(resultAmount, specifiedAmount)
+func (v *SwapValidator) exactOutAmount(resultAmount, specifiedAmount int64, swapCount int64) error {
+	diff := int64(0)
+
+	if resultAmount >= specifiedAmount {
+		diff = resultAmount - specifiedAmount
 	} else {
-		diff = u256.Zero().Sub(specifiedAmount, resultAmount)
+		diff = specifiedAmount - resultAmount
 	}
 
-	if diff.Gt(u256.NewUintFromInt64(swapCount)) {
-		return ufmt.Errorf(errExactOutAmountExceeded, specifiedAmount.ToString(), resultAmount.ToString())
+	if diff > swapCount {
+		return ufmt.Errorf(errExactOutAmountExceeded, specifiedAmount, resultAmount)
 	}
 
 	return nil
 }
 
 // slippage ensures swap amounts meet slippage requirements.
-func (v *SwapValidator) slippage(swapType SwapType, amountIn, amountOut, limit *u256.Uint) error {
+func (v *SwapValidator) slippage(swapType SwapType, amountIn, amountOut, limit int64) error {
 	switch swapType {
 	case ExactIn:
-		if amountOut.Lt(limit) {
-			return ufmt.Errorf(errExactInTooFewReceived,
-				limit.ToString(), amountOut.ToString())
+		if amountOut < limit {
+			return ufmt.Errorf(errExactInTooFewReceived, limit, amountOut)
 		}
 	case ExactOut:
-		if amountIn.Gt(limit) {
-			return ufmt.Errorf(errExactOutTooMuchSpent,
-				limit.ToString(), amountIn.ToString())
+		if amountIn > limit {
+			return ufmt.Errorf(errExactOutTooMuchSpent, limit, amountIn)
 		}
 	default:
 		return errInvalidSwapType
@@ -137,21 +133,19 @@ func (v *SwapValidator) swapType(swapTypeStr string) (SwapType, error) {
 }
 
 // amount ensures the amount is properly formatted and positive.
-func (v *SwapValidator) amount(amount string) (*i256.Int, error) {
-	parsedAmount := i256.MustFromDecimal(amount)
-	if parsedAmount.Lt(i256.Zero()) {
-		return nil, ufmt.Errorf(ErrInvalidPositiveAmount, amount)
+func (v *SwapValidator) amount(amount int64) (int64, error) {
+	if amount < 0 {
+		return 0, ufmt.Errorf(ErrInvalidPositiveAmount, amount)
 	}
-	return parsedAmount, nil
+	return amount, nil
 }
 
 // amountLimit ensures the amount limit is properly formatted and non-zero.
-func (v *SwapValidator) amountLimit(amountLimit string) (*i256.Int, error) {
-	parsedLimit := i256.MustFromDecimal(amountLimit)
-	if parsedLimit.IsZero() {
-		return nil, ufmt.Errorf(ErrInvalidZeroAmountLimit, amountLimit)
+func (v *SwapValidator) amountLimit(amountLimit int64) (int64, error) {
+	if amountLimit <= 0 {
+		return 0, ufmt.Errorf(ErrInvalidZeroAmountLimit, amountLimit)
 	}
-	return parsedLimit, nil
+	return amountLimit, nil
 }
 
 // RouteParser handles parsing and validation of routes and quotes
@@ -238,14 +232,14 @@ func (p *RouteParser) ValidateQuoteSum(quotes []string) error {
 // finalizeSwap handles post-swap operations and validations.
 func (r *routerV1) finalizeSwap(
 	inputToken, outputToken string,
-	resultAmountIn, resultAmountOut *u256.Uint,
+	resultAmountIn, resultAmountOut int64,
 	swapType SwapType,
-	tokenAmountLimit *u256.Uint,
+	tokenAmountLimit int64,
 	userBeforeWugnotBalance, userWrappedWugnot int64,
-	amountSpecified *u256.Uint,
+	amountSpecified int64,
 	swapCount int64,
 	isSetSqrtPriceLimitX96 bool,
-) (*i256.Int, *i256.Int) {
+) (int64, int64) {
 	validator := &SwapValidator{}
 
 	// Handle swap fee
@@ -274,7 +268,7 @@ func (r *routerV1) finalizeSwap(
 		panic(addDetailToError(errSlippage, err.Error()))
 	}
 
-	return i256.FromUint256(resultAmountIn), i256.FromUint256(resultAmountOutWithoutFee)
+	return resultAmountIn, resultAmountOutWithoutFee
 }
 
 // validateRoutesAndQuotes is a convenience function that parses and validates routes in one call.

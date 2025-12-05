@@ -12,9 +12,6 @@ import (
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 
-	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
-
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
@@ -31,21 +28,17 @@ func TestFinalizeSwap(t *testing.T) {
 	t.Skip("finalize swap's behaviour seems change. need to check")
 	ugnot := "ugnot"
 
-	newUint256 := func(val string) *u256.Uint {
-		return u256.MustFromDecimal(val)
-	}
-
 	tests := []struct {
 		name                    string
 		inputToken              string
 		outputToken             string
-		resultAmountIn          *u256.Uint
-		resultAmountOut         *u256.Uint
+		resultAmountIn          int64
+		resultAmountOut         int64
 		swapType                SwapType
-		tokenAmountLimit        *u256.Uint
+		tokenAmountLimit        int64
 		userBeforeWugnotBalance int64
 		userWrappedWugnot       int64
-		amountSpecified         *u256.Uint
+		amountSpecified         int64
 		swapCount               int64
 		expectError             bool
 		errorMessage            string
@@ -54,13 +47,13 @@ func TestFinalizeSwap(t *testing.T) {
 			name:                    "Pass: ExactIn",
 			inputToken:              barPath,
 			outputToken:             bazPath,
-			resultAmountIn:          newUint256("100"),
-			resultAmountOut:         newUint256("90"),
+			resultAmountIn:          100,
+			resultAmountOut:         90,
 			swapType:                ExactIn,
-			tokenAmountLimit:        newUint256("85"),
+			tokenAmountLimit:        85,
 			userBeforeWugnotBalance: 0,
 			userWrappedWugnot:       0,
-			amountSpecified:         newUint256("100"),
+			amountSpecified:         100,
 			swapCount:               1,
 			expectError:             false,
 		},
@@ -68,13 +61,13 @@ func TestFinalizeSwap(t *testing.T) {
 			name:                    "Pass: ExactOut",
 			inputToken:              barPath,
 			outputToken:             bazPath,
-			resultAmountIn:          newUint256("110"),
-			resultAmountOut:         newUint256("100"),
+			resultAmountIn:          110,
+			resultAmountOut:         100,
 			swapType:                ExactOut,
-			tokenAmountLimit:        newUint256("120"),
+			tokenAmountLimit:        120,
 			userBeforeWugnotBalance: 0,
 			userWrappedWugnot:       0,
-			amountSpecified:         newUint256("100"),
+			amountSpecified:         100,
 			swapCount:               1,
 			expectError:             false,
 		},
@@ -82,13 +75,13 @@ func TestFinalizeSwap(t *testing.T) {
 			name:                    "ExactOut: Slippage error",
 			inputToken:              barPath,
 			outputToken:             bazPath,
-			resultAmountIn:          newUint256("100"),
-			resultAmountOut:         newUint256("90"),
+			resultAmountIn:          100,
+			resultAmountOut:         90,
 			swapType:                ExactOut,
-			tokenAmountLimit:        newUint256("100"),
+			tokenAmountLimit:        100,
 			userBeforeWugnotBalance: 0,
 			userWrappedWugnot:       0,
-			amountSpecified:         newUint256("100"),
+			amountSpecified:         100,
 			swapCount:               1,
 			expectError:             true,
 			errorMessage:            "[GNOSWAP-ROUTER-002] slippage check failed || Received more than requested in [EXACT_OUT] requested=100, actual=90",
@@ -97,10 +90,10 @@ func TestFinalizeSwap(t *testing.T) {
 			name:                    "GNOT: Slippage error",
 			inputToken:              ugnot,
 			outputToken:             barPath,
-			resultAmountIn:          newUint256("300"),
-			resultAmountOut:         newUint256("90"),
+			resultAmountIn:          300,
+			resultAmountOut:         90,
 			swapType:                ExactIn,
-			tokenAmountLimit:        newUint256("85"),
+			tokenAmountLimit:        85,
 			userBeforeWugnotBalance: 1000000,
 			userWrappedWugnot:       20000,
 			swapCount:               1,
@@ -111,13 +104,13 @@ func TestFinalizeSwap(t *testing.T) {
 			name:                    "ExactOut: Real world slippage error",
 			inputToken:              barPath,
 			outputToken:             bazPath,
-			resultAmountIn:          newUint256("843455035"),
-			resultAmountOut:         newUint256("600901351"),
+			resultAmountIn:          843455035,
+			resultAmountOut:         600901351,
 			swapType:                ExactOut,
-			tokenAmountLimit:        newUint256("843455036"),
+			tokenAmountLimit:        843455036,
 			userBeforeWugnotBalance: 0,
 			userWrappedWugnot:       0,
-			amountSpecified:         newUint256("600901352"),
+			amountSpecified:         600901352,
 			swapCount:               1,
 			expectError:             false,
 		},
@@ -125,10 +118,10 @@ func TestFinalizeSwap(t *testing.T) {
 			name:                    "GNOT: Overflow in balance calculation",
 			inputToken:              ugnot,
 			outputToken:             barPath,
-			resultAmountIn:          newUint256("100"),
-			resultAmountOut:         newUint256("90"),
+			resultAmountIn:          100,
+			resultAmountOut:         90,
 			swapType:                ExactIn,
-			tokenAmountLimit:        newUint256("85"),
+			tokenAmountLimit:        85,
 			userBeforeWugnotBalance: 1<<63 - 1,
 			userWrappedWugnot:       1,
 			swapCount:               1,
@@ -139,10 +132,10 @@ func TestFinalizeSwap(t *testing.T) {
 			name:                    "GNOT: Large balance causing excessive spend error",
 			inputToken:              ugnot,
 			outputToken:             barPath,
-			resultAmountIn:          newUint256("100"),
-			resultAmountOut:         newUint256("90"),
+			resultAmountIn:          100,
+			resultAmountOut:         90,
 			swapType:                ExactIn,
-			tokenAmountLimit:        newUint256("85"),
+			tokenAmountLimit:        85,
 			userBeforeWugnotBalance: 1 << 61,
 			userWrappedWugnot:       1 << 61,
 			swapCount:               1,
@@ -191,17 +184,14 @@ func TestFinalizeSwap(t *testing.T) {
 			)
 
 			if !tt.expectError {
-				// if amountIn.Int64() <= 0 {
-				// 	t.Errorf("Invalid amountIn: %s", amountIn)
-				// }
-				uassert.True(t, amountIn.Int64() > 0, "amountIn is not positive")
+				uassert.True(t, amountIn > 0, "amountIn is not positive")
 
-				if amountOut.Int64() == 0 {
-					t.Errorf("Invalid amountOut: %s", amountOut)
+				if amountOut == 0 {
+					t.Errorf("Invalid amountOut: %d", amountOut)
 				}
 
-				if amountOut.Int64() > 0 {
-					t.Errorf("Invalid amountOut: %s (should be negative)", amountOut.ToString())
+				if amountOut > 0 {
+					t.Errorf("Invalid amountOut: %d (should be negative)", amountOut)
 				}
 			}
 		})
@@ -364,10 +354,16 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(t *testing.T) {
 				testing.SkipHeights(1)
 				afterWugnotBalance := wugnot.BalanceOf(tt.recipient)
 
-				drySwapAmountOutStr := i256.MustFromDecimal(drySwapAmountOut).Abs().ToString()
-				amountOutStr := i256.MustFromDecimal(amountOut).Abs().ToString()
+				drySwapAmountOutInt := safeParseInt64(drySwapAmountOut)
+				amountOutInt := safeParseInt64(amountOut)
+				if drySwapAmountOutInt < 0 {
+					drySwapAmountOutInt = -drySwapAmountOutInt
+				}
+				if amountOutInt < 0 {
+					amountOutInt = -amountOutInt
+				}
 
-				uassert.Equal(t, drySwapAmountOutStr, amountOutStr, "amountOut is not equal to drySwapAmountOut")
+				uassert.Equal(t, strconv.FormatInt(drySwapAmountOutInt, 10), strconv.FormatInt(amountOutInt, 10), "amountOut is not equal to drySwapAmountOut")
 				uassert.Equal(t, tt.expectedAmount0, amountIn, "amountIn is not equal to expectedAmount0")
 				uassert.Equal(t, tt.expectedAmount1, amountOut, "amountOut is not equal to expectedAmount1")
 				uassert.Equal(t, tt.expectedAmount0, strconv.FormatInt(int64(beforeWugnotBalance-afterWugnotBalance), 10), "amountIn is not equal to expectedAmount0")
@@ -696,7 +692,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(t *testing.T) {
 				tt.quoteArr,
 				tt.amountOutMin,
 			)
-			router.handleSwapFee(tt.outputToken, u256.MustFromDecimal(drySwapAmountOut))
+			router.handleSwapFee(tt.outputToken, safeParseInt64(drySwapAmountOut))
 
 			testing.SetRealm(testing.NewUserRealm(tt.recipient))
 			testing.SetOriginSend(chain.Coins{})
@@ -874,11 +870,11 @@ func TestHandleMultiSwap(t *testing.T) {
 
 			common.SafeGRC20Approve(cross, tt.inputToken, routerAddr, math.MaxInt64)
 
-			amountSpecified := i256.MustFromDecimal(tt.amountSpecified)
+			amountSpecified := safeParseInt64(tt.amountSpecified)
 
 			router := mockRouter()
 
-			handleMultiSwapFn := func(cur realm) (*u256.Uint, *u256.Uint) {
+			handleMultiSwapFn := func(cur realm) (int64, int64) {
 				return router.handleMultiSwap(
 					tt.swapType,
 					tt.route,
@@ -895,8 +891,8 @@ func TestHandleMultiSwap(t *testing.T) {
 			} else {
 				amountIn, amountOut := handleMultiSwapFn(cross)
 
-				uassert.Equal(t, tt.expectedAmountIn, amountIn.ToString())
-				uassert.Equal(t, tt.expectedAmountOut, amountOut.ToString())
+				uassert.Equal(t, tt.expectedAmountIn, strconv.FormatInt(amountIn, 10))
+				uassert.Equal(t, tt.expectedAmountOut, strconv.FormatInt(amountOut, 10))
 			}
 		})
 	}
@@ -967,16 +963,16 @@ func TestProcessRoute_MultiHops(t *testing.T) {
 			createMultiHopPools(t)
 
 			op := &baseSwapOperation{
-				amountSpecified: i256.MustFromDecimal(tt.toSwap),
+				amountSpecified: safeParseInt64(tt.toSwap),
 			}
 
-			toSwapAmount := i256.MustFromDecimal(tt.toSwap)
+			toSwapAmount := safeParseInt64(tt.toSwap)
 			testing.SetRealm(adminRealm)
 
 			common.SafeGRC20Approve(cross, barPath, routerAddr, math.MaxInt64)
 
 			router := mockRouter()
-			processRouteFn := func(cur realm) (*u256.Uint, *u256.Uint, error) {
+			processRouteFn := func(cur realm) (int64, int64, error) {
 				return op.processRoute(router, tt.route, toSwapAmount, tt.swapType)
 			}
 
@@ -987,8 +983,8 @@ func TestProcessRoute_MultiHops(t *testing.T) {
 			} else {
 				amountIn, amountOut, err := processRouteFn(cross)
 
-				uassert.Equal(t, tt.expectedAmountIn, amountIn.ToString())
-				uassert.Equal(t, tt.expectedAmountOut, amountOut.ToString())
+				uassert.Equal(t, tt.expectedAmountIn, strconv.FormatInt(amountIn, 10))
+				uassert.Equal(t, tt.expectedAmountOut, strconv.FormatInt(amountOut, 10))
 				uassert.NoError(t, err)
 			}
 		})
@@ -1028,37 +1024,37 @@ func TestGetSwapFee(t *testing.T) {
 func TestCalculateRouterFee(t *testing.T) {
 	tests := []struct {
 		name     string
-		amount   *u256.Uint
+		amount   int64
 		swapFee  uint64
 		expected int64
 	}{
 		{
 			name:     "zero fee",
-			amount:   u256.NewUint(1000),
+			amount:   1000,
 			swapFee:  0,
 			expected: 0,
 		},
 		{
 			name:     "0.15% fee (15 bps)",
-			amount:   u256.NewUint(10000),
+			amount:   10000,
 			swapFee:  15,
 			expected: 15, // 10000 * 15 / 10000 = 15
 		},
 		{
 			name:     "1% fee (100 bps)",
-			amount:   u256.NewUint(10000),
+			amount:   10000,
 			swapFee:  100,
 			expected: 100, // 10000 * 100 / 10000 = 100
 		},
 		{
 			name:     "10% fee (1000 bps)",
-			amount:   u256.NewUint(10000),
+			amount:   10000,
 			swapFee:  1000,
 			expected: 1000, // 10000 * 1000 / 10000 = 1000
 		},
 		{
 			name:     "small amount with fee",
-			amount:   u256.NewUint(10),
+			amount:   10,
 			swapFee:  100,
 			expected: 0, // 10 * 100 / 10000 = 0.1 rounded down to 0
 		},
@@ -1076,40 +1072,40 @@ func TestCalculateRouterFee(t *testing.T) {
 func TestCalculateExactOutWithRouterFee(t *testing.T) {
 	tests := []struct {
 		name     string
-		amount   *u256.Uint
+		amount   int64
 		swapFee  uint64
-		expected string
+		expected int64
 	}{
 		{
 			name:     "zero fee returns same amount",
-			amount:   u256.NewUint(1000),
+			amount:   1000,
 			swapFee:  0,
-			expected: "1000",
+			expected: 1000,
 		},
 		{
 			name:     "0.15% fee calculation",
-			amount:   u256.NewUint(10000),
+			amount:   10000,
 			swapFee:  15,
-			expected: "10015", // 10000 * 10000 / (10000 - 15) = 10015.01...
+			expected: 10015, // 10000 * 10000 / (10000 - 15) = 10015.01...
 		},
 		{
 			name:     "1% fee calculation",
-			amount:   u256.NewUint(10000),
+			amount:   10000,
 			swapFee:  100,
-			expected: "10101", // 10000 * 10000 / (10000 - 100) = 10101.01...
+			expected: 10101, // 10000 * 10000 / (10000 - 100) = 10101.01...
 		},
 		{
 			name:     "large amount with small fee",
-			amount:   u256.NewUint(1000000000),
+			amount:   1000000000,
 			swapFee:  15,
-			expected: "1001502253", // 1000000000 * 10000 / 9985
+			expected: 1001502253, // 1000000000 * 10000 / 9985
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := calculateExactOutWithRouterFee(tt.amount, tt.swapFee)
-			uassert.Equal(t, result.ToString(), tt.expected)
+			uassert.Equal(t, result, tt.expected)
 		})
 	}
 }
@@ -1123,31 +1119,31 @@ func TestSwapProcessor_ProcessSwapAmount(t *testing.T) {
 
 	tests := []struct {
 		name            string
-		amountSpecified *i256.Int
+		amountSpecified int64
 		quote           string
 		expectError     bool
-		expectedResult  string
+		expectedResult  int64
 	}{
 		{
 			name:            "100% quote",
-			amountSpecified: i256.NewInt(1000),
+			amountSpecified: 1000,
 			quote:           "100",
 			expectError:     false,
-			expectedResult:  "1000",
+			expectedResult:  1000,
 		},
 		{
 			name:            "50% quote",
-			amountSpecified: i256.NewInt(1000),
+			amountSpecified: 1000,
 			quote:           "50",
 			expectError:     false,
-			expectedResult:  "500",
+			expectedResult:  500,
 		},
 		{
 			name:            "1% quote",
-			amountSpecified: i256.NewInt(10000),
+			amountSpecified: 10000,
 			quote:           "1",
 			expectError:     false,
-			expectedResult:  "100",
+			expectedResult:  100,
 		},
 	}
 
@@ -1159,7 +1155,7 @@ func TestSwapProcessor_ProcessSwapAmount(t *testing.T) {
 				uassert.Error(t, err)
 			} else {
 				uassert.NoError(t, err)
-				uassert.Equal(t, result.ToString(), tt.expectedResult)
+				uassert.Equal(t, result, tt.expectedResult)
 			}
 		})
 	}
@@ -1173,55 +1169,55 @@ func TestSwapProcessor_ValidateSwapResults(t *testing.T) {
 	tests := []struct {
 		name            string
 		swapType        SwapType
-		resultAmountIn  *u256.Uint
-		resultAmountOut *u256.Uint
-		amountSpecified *i256.Int
-		amountLimit     *i256.Int
+		resultAmountIn  int64
+		resultAmountOut int64
+		amountSpecified int64
+		amountLimit     int64
 		expectedSuccess bool
 	}{
 		{
 			name:            "ExactIn - success case",
 			swapType:        ExactIn,
-			resultAmountIn:  u256.NewUint(1000),
-			resultAmountOut: u256.NewUint(950),
-			amountSpecified: i256.NewInt(1000),
-			amountLimit:     i256.NewInt(900),
+			resultAmountIn:  1000,
+			resultAmountOut: 950,
+			amountSpecified: 1000,
+			amountLimit:     900,
 			expectedSuccess: true,
 		},
 		{
 			name:            "ExactIn - too few received",
 			swapType:        ExactIn,
-			resultAmountIn:  u256.NewUint(1000),
-			resultAmountOut: u256.NewUint(850),
-			amountSpecified: i256.NewInt(1000),
-			amountLimit:     i256.NewInt(900),
+			resultAmountIn:  1000,
+			resultAmountOut: 850,
+			amountSpecified: 1000,
+			amountLimit:     900,
 			expectedSuccess: false,
 		},
 		{
 			name:            "ExactOut - success case",
 			swapType:        ExactOut,
-			resultAmountIn:  u256.NewUint(1050),
-			resultAmountOut: u256.NewUint(1000),
-			amountSpecified: i256.NewInt(-1000),
-			amountLimit:     i256.NewInt(1100),
+			resultAmountIn:  1050,
+			resultAmountOut: 1000,
+			amountSpecified: 1000,
+			amountLimit:     1100,
 			expectedSuccess: true,
 		},
 		{
 			name:            "ExactOut - too much spent",
 			swapType:        ExactOut,
-			resultAmountIn:  u256.NewUint(1150),
-			resultAmountOut: u256.NewUint(1000),
-			amountSpecified: i256.NewInt(-1000),
-			amountLimit:     i256.NewInt(1100),
+			resultAmountIn:  1150,
+			resultAmountOut: 1000,
+			amountSpecified: 1000,
+			amountLimit:     1100,
 			expectedSuccess: false,
 		},
 		{
 			name:            "zero amounts",
 			swapType:        ExactIn,
-			resultAmountIn:  u256.Zero(),
-			resultAmountOut: u256.Zero(),
-			amountSpecified: i256.NewInt(1000),
-			amountLimit:     i256.NewInt(900),
+			resultAmountIn:  0,
+			resultAmountOut: 0,
+			amountSpecified: 1000,
+			amountLimit:     900,
 			expectedSuccess: false,
 		},
 	}
@@ -1248,43 +1244,43 @@ func TestSwapProcessor_AddSwapResults(t *testing.T) {
 
 	tests := []struct {
 		name            string
-		resultAmountIn  *u256.Uint
-		resultAmountOut *u256.Uint
-		amountIn        *u256.Uint
-		amountOut       *u256.Uint
+		resultAmountIn  int64
+		resultAmountOut int64
+		amountIn        int64
+		amountOut       int64
 		expectError     bool
-		expectedIn      string
-		expectedOut     string
+		expectedIn      int64
+		expectedOut     int64
 	}{
 		{
 			name:            "normal addition",
-			resultAmountIn:  u256.NewUint(1000),
-			resultAmountOut: u256.NewUint(950),
-			amountIn:        u256.NewUint(500),
-			amountOut:       u256.NewUint(475),
+			resultAmountIn:  1000,
+			resultAmountOut: 950,
+			amountIn:        500,
+			amountOut:       475,
 			expectError:     false,
-			expectedIn:      "1500",
-			expectedOut:     "1425",
+			expectedIn:      1500,
+			expectedOut:     1425,
 		},
 		{
 			name:            "zero additions",
-			resultAmountIn:  u256.Zero(),
-			resultAmountOut: u256.Zero(),
-			amountIn:        u256.Zero(),
-			amountOut:       u256.Zero(),
+			resultAmountIn:  0,
+			resultAmountOut: 0,
+			amountIn:        0,
+			amountOut:       0,
 			expectError:     false,
-			expectedIn:      "0",
-			expectedOut:     "0",
+			expectedIn:      0,
+			expectedOut:     0,
 		},
 		{
 			name:            "adding to existing results",
-			resultAmountIn:  u256.NewUint(999999),
-			resultAmountOut: u256.NewUint(888888),
-			amountIn:        u256.NewUint(1),
-			amountOut:       u256.NewUint(1),
+			resultAmountIn:  999999,
+			resultAmountOut: 888888,
+			amountIn:        1,
+			amountOut:       1,
 			expectError:     false,
-			expectedIn:      "1000000",
-			expectedOut:     "888889",
+			expectedIn:      1000000,
+			expectedOut:     888889,
 		},
 	}
 
@@ -1301,8 +1297,8 @@ func TestSwapProcessor_AddSwapResults(t *testing.T) {
 				uassert.Error(t, err)
 			} else {
 				uassert.NoError(t, err)
-				uassert.Equal(t, newIn.ToString(), tt.expectedIn)
-				uassert.Equal(t, newOut.ToString(), tt.expectedOut)
+				uassert.Equal(t, newIn, tt.expectedIn)
+				uassert.Equal(t, newOut, tt.expectedOut)
 			}
 		})
 	}
@@ -1519,32 +1515,32 @@ func TestSwapValidator_Amount(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		amount      string
+		amount      int64
 		expectError bool
-		expected    string
+		expected    int64
 	}{
 		{
 			name:        "positive amount",
-			amount:      "1000",
+			amount:      1000,
 			expectError: false,
-			expected:    "1000",
+			expected:    1000,
 		},
 		{
 			name:        "zero amount",
-			amount:      "0",
+			amount:      0,
 			expectError: false,
-			expected:    "0",
+			expected:    0,
 		},
 		{
 			name:        "negative amount",
-			amount:      "-100",
+			amount:      -100,
 			expectError: true,
 		},
 		{
 			name:        "large amount",
-			amount:      "999999999999999",
+			amount:      999999999999999,
 			expectError: false,
-			expected:    "999999999999999",
+			expected:    999999999999999,
 		},
 	}
 
@@ -1556,7 +1552,7 @@ func TestSwapValidator_Amount(t *testing.T) {
 				uassert.Error(t, err)
 			} else {
 				uassert.NoError(t, err)
-				uassert.Equal(t, result.ToString(), tt.expected)
+				uassert.Equal(t, result, tt.expected)
 			}
 		})
 	}
@@ -1568,26 +1564,25 @@ func TestSwapValidator_AmountLimit(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		amountLimit string
+		amountLimit int64
 		expectError bool
-		expected    string
+		expected    int64
 	}{
 		{
 			name:        "positive limit",
-			amountLimit: "1000",
+			amountLimit: 1000,
 			expectError: false,
-			expected:    "1000",
+			expected:    1000,
 		},
 		{
 			name:        "zero limit",
-			amountLimit: "0",
+			amountLimit: 0,
 			expectError: true,
 		},
 		{
 			name:        "negative limit",
-			amountLimit: "-100",
-			expectError: false,
-			expected:    "-100",
+			amountLimit: -100,
+			expectError: true,
 		},
 	}
 
@@ -1599,7 +1594,7 @@ func TestSwapValidator_AmountLimit(t *testing.T) {
 				uassert.Error(t, err)
 			} else {
 				uassert.NoError(t, err)
-				uassert.Equal(t, result.ToString(), tt.expected)
+				uassert.Equal(t, result, tt.expected)
 			}
 		})
 	}
@@ -1661,41 +1656,41 @@ func TestSwapValidator_Slippage(t *testing.T) {
 	tests := []struct {
 		name        string
 		swapType    SwapType
-		amountIn    *u256.Uint
-		amountOut   *u256.Uint
-		limit       *u256.Uint
+		amountIn    int64
+		amountOut   int64
+		limit       int64
 		expectError bool
 	}{
 		{
 			name:        "ExactIn - sufficient output",
 			swapType:    ExactIn,
-			amountIn:    u256.NewUint(1000),
-			amountOut:   u256.NewUint(950),
-			limit:       u256.NewUint(900),
+			amountIn:    1000,
+			amountOut:   950,
+			limit:       900,
 			expectError: false,
 		},
 		{
 			name:        "ExactIn - insufficient output",
 			swapType:    ExactIn,
-			amountIn:    u256.NewUint(1000),
-			amountOut:   u256.NewUint(850),
-			limit:       u256.NewUint(900),
+			amountIn:    1000,
+			amountOut:   850,
+			limit:       900,
 			expectError: true,
 		},
 		{
 			name:        "ExactOut - acceptable input",
 			swapType:    ExactOut,
-			amountIn:    u256.NewUint(1050),
-			amountOut:   u256.NewUint(1000),
-			limit:       u256.NewUint(1100),
+			amountIn:    1050,
+			amountOut:   1000,
+			limit:       1100,
 			expectError: false,
 		},
 		{
 			name:        "ExactOut - excessive input",
 			swapType:    ExactOut,
-			amountIn:    u256.NewUint(1150),
-			amountOut:   u256.NewUint(1000),
-			limit:       u256.NewUint(1100),
+			amountIn:    1150,
+			amountOut:   1000,
+			limit:       1100,
 			expectError: true,
 		},
 	}
@@ -1719,29 +1714,29 @@ func TestSwapValidator_ExactOutAmount(t *testing.T) {
 
 	tests := []struct {
 		name            string
-		resultAmount    *u256.Uint
-		specifiedAmount *u256.Uint
+		resultAmount    int64
+		specifiedAmount int64
 		swapCount       int64
 		expectError     bool
 	}{
 		{
 			name:            "exact match",
-			resultAmount:    u256.NewUint(1000),
-			specifiedAmount: u256.NewUint(1000),
+			resultAmount:    1000,
+			specifiedAmount: 1000,
 			swapCount:       1,
 			expectError:     false,
 		},
 		{
 			name:            "within tolerance",
-			resultAmount:    u256.NewUint(1001),
-			specifiedAmount: u256.NewUint(1000),
+			resultAmount:    1001,
+			specifiedAmount: 1000,
 			swapCount:       2,
 			expectError:     false,
 		},
 		{
 			name:            "exceeds tolerance",
-			resultAmount:    u256.NewUint(1010),
-			specifiedAmount: u256.NewUint(1000),
+			resultAmount:    1010,
+			specifiedAmount: 1000,
 			swapCount:       1,
 			expectError:     true,
 		},
@@ -1844,25 +1839,25 @@ func TestValidateRoutesAndQuotes(t *testing.T) {
 func TestCalculateRouterFee_BoundaryValues(t *testing.T) {
 	tests := []struct {
 		name     string
-		amount   *u256.Uint
+		amount   int64
 		swapFee  uint64
 		expected int64
 	}{
 		{
 			name:     "minimum non-zero fee",
-			amount:   u256.NewUint(10000),
+			amount:   10000,
 			swapFee:  1,
 			expected: 1,
 		},
 		{
 			name:     "maximum allowed fee (10%)",
-			amount:   u256.NewUint(10000),
+			amount:   10000,
 			swapFee:  1000,
 			expected: 1000,
 		},
 		{
 			name:     "amount of 1 with fee",
-			amount:   u256.NewUint(1),
+			amount:   1,
 			swapFee:  100,
 			expected: 0, // rounds down
 		},
@@ -1922,27 +1917,31 @@ func TestSwapProcessor_ProcessSwapAmount_ExtremeValues(t *testing.T) {
 
 	tests := []struct {
 		name            string
-		amountSpecified *i256.Int
+		amountSpecified int64
 		quote           string
 		expectError     bool
+		expectZero      bool
 	}{
 		{
 			name:            "max int64 amount",
-			amountSpecified: i256.NewInt(9223372036854775807),
+			amountSpecified: 9223372036854775807,
 			quote:           "1",
 			expectError:     false,
+			expectZero:      false,
 		},
 		{
 			name:            "very large amount with 100% quote",
-			amountSpecified: i256.MustFromDecimal("999999999999999999"),
+			amountSpecified: 999999999999999999,
 			quote:           "100",
 			expectError:     false,
+			expectZero:      false,
 		},
 		{
 			name:            "zero amount with any quote",
-			amountSpecified: i256.Zero(),
+			amountSpecified: 0,
 			quote:           "50",
-			expectError:     true,
+			expectError:     false,
+			expectZero:      true,
 		},
 	}
 
@@ -1954,7 +1953,9 @@ func TestSwapProcessor_ProcessSwapAmount_ExtremeValues(t *testing.T) {
 				uassert.Error(t, err)
 			} else {
 				uassert.NoError(t, err)
-				uassert.NotNil(t, result)
+				if !tt.expectZero {
+					uassert.True(t, result != 0, "result should not be zero")
+				}
 			}
 		})
 	}

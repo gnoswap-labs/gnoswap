@@ -2,6 +2,7 @@ package pool
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/avl"
 )
 
 // IPool interface defines all public methods that must be implemented by pool contract versions.
@@ -224,8 +225,8 @@ type IPoolGetter interface {
 // and modify pool state, ensuring data consistency across versions.
 type IPoolStore interface {
 	HasPools() bool
-	GetPools() map[string]*Pool
-	SetPools(pools map[string]*Pool) error
+	GetPools() *avl.Tree
+	SetPools(pools *avl.Tree) error
 
 	HasFeeAmountTickSpacing() bool
 	GetFeeAmountTickSpacing() map[uint32]int32

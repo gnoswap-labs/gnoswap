@@ -69,8 +69,8 @@ func (r *routerV1) setSwapFee(fee uint64) error {
 // handleSwapFee deducts the protocol fee from the swap amount and transfers it to the protocol fee contract.
 func (r *routerV1) handleSwapFee(
 	outputToken string,
-	amount *u256.Uint,
-) *u256.Uint {
+	amount int64,
+) int64 {
 	swapFee := r.store.GetSwapFee()
 	if swapFee <= 0 {
 		return amount
@@ -97,40 +97,36 @@ func (r *routerV1) handleSwapFee(
 		"amount", formatInt64(feeAmountInt64),
 	)
 
-	toUserAfterProtocol, underflow := u256.Zero().SubOverflow(
-		amount,
-		u256.NewUintFromInt64(feeAmountInt64),
-	)
-	if underflow {
-		panic(errProtocolFeeOverflow)
-	}
-
-	return toUserAfterProtocol
+	return safeSubInt64(amount, feeAmountInt64)
 }
 
-func calculateRouterFee(amount *u256.Uint, swapFee uint64) int64 {
+func calculateRouterFee(amount int64, swapFee uint64) int64 {
 	if swapFee <= 0 {
 		return 0
 	}
 
-	feeAmount := u256.MulDiv(amount, u256.NewUint(swapFee), u256.NewUint(10000))
+	feeAmount := u256.MulDiv(u256.NewUintFromInt64(amount), u256.NewUint(swapFee), u256.NewUint(10000))
 	return safeConvertToInt64(feeAmount)
 }
 
 // calculate amount to fetch from pool including router fee
 // poolAmount = userAmount / (1 - feeRate)
 // = userAmount * 10000 / (10000 - swapFeeBPS)
-func calculateExactOutWithRouterFee(amount *u256.Uint, swapFee uint64) *u256.Uint {
-	userAmount := amount.Clone()
+func calculateExactOutWithRouterFee(amount int64, swapFee uint64) int64 {
+	if amount == 0 {
+		return amount
+	}
 
 	if swapFee > 0 {
 		// Use MulDiv to prevent overflow and maintain precision
-		return u256.MulDiv(
-			userAmount,
+		poolAmount := u256.MulDiv(
+			u256.NewUintFromInt64(amount),
 			u256.NewUint(10000),
 			u256.NewUint(10000-swapFee),
 		)
+
+		return safeConvertToInt64(poolAmount)
 	}
 
-	return userAmount
+	return amount
 }

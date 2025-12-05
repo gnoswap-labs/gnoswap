@@ -92,7 +92,7 @@ func (i *poolV1) CreatePool(
 	poolPath := poolInfo.poolPath()
 
 	pools := i.store.GetPools()
-	pools[poolPath] = pool
+	pools.Set(poolPath, pool)
 
 	err = i.store.SetPools(pools)
 	if err != nil {
@@ -164,12 +164,17 @@ func (i *poolV1) setFeeAmountTickSpacing(fee uint32, tickSpacing int32) error {
 func (i *poolV1) mustGetPool(poolPath string) (pool *pl.Pool) {
 	pools := i.store.GetPools()
 
-	pool, exist := pools[poolPath]
+	iPool, exist := pools.Get(poolPath)
 	if !exist {
 		panic(newErrorWithDetail(
 			errDataNotFound,
 			ufmt.Sprintf("expected poolPath(%s) to exist", poolPath),
 		))
+	}
+
+	pool, ok := iPool.(*pl.Pool)
+	if !ok {
+		panic(ufmt.Errorf("failed to cast pool to *Pool: %T", iPool))
 	}
 
 	return pool
@@ -184,7 +189,7 @@ func (i *poolV1) mustGetPoolBy(token0Path, token1Path string, fee uint32) *pl.Po
 // This ensures that modifications to pool objects are properly saved.
 func (i *poolV1) savePool(pool *pl.Pool) error {
 	pools := i.store.GetPools()
-	pools[pool.PoolPath()] = pool
+	pools.Set(pool.PoolPath(), pool)
 
 	return i.store.SetPools(pools)
 }
@@ -257,12 +262,18 @@ func (i *poolV1) setFeeProtocol(feeProtocol0, feeProtocol1 uint8) (uint8, error)
 	pools := i.store.GetPools()
 
 	// Update slot0 for each pool
-	for _, pool := range pools {
+	pools.Iterate("", "", func(poolPath string, poolI any) bool {
+		pool, ok := poolI.(*pl.Pool)
+		if !ok {
+			panic(ufmt.Errorf("failed to cast pool to *Pool: %T", pool))
+		}
+
 		slot0 := pool.Slot0()
 		slot0.SetFeeProtocol(newFee)
 
 		pool.SetSlot0(slot0)
-	}
+		return false
+	})
 
 	// update slot0
 	err := i.store.SetSlot0FeeProtocol(newFee)

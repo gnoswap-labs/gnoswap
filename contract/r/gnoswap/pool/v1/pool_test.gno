@@ -77,8 +77,7 @@ func setupStablecoinPool(t *testing.T) *pl.Pool {
 	// BAR-BAZ: Stablecoin pair simulation (low fee)
 	mockInstanceCreatePool(barTokenPath, bazTokenPath, FeeTier100, EQUAL_PRICE_RATIO)
 
-	pools := getMockInstance().store.GetPools()
-	pool := pools[GetPoolPath(barTokenPath, bazTokenPath, FeeTier100)]
+	pool := getMockInstance().mustGetPool(GetPoolPath(barTokenPath, bazTokenPath, FeeTier100))
 	return pool
 }
 
@@ -91,8 +90,7 @@ func setupVolatilePool(t *testing.T) *pl.Pool {
 	// FOO-BAR: Volatile token pair (high fee)
 	mockInstanceCreatePool(barTokenPath, fooTokenPath, FeeTier3000, VOLATILE_PRICE_RATIO)
 
-	pools := getMockInstance().store.GetPools()
-	pool := pools[GetPoolPath(barTokenPath, fooTokenPath, FeeTier3000)]
+	pool := getMockInstance().mustGetPool(GetPoolPath(barTokenPath, fooTokenPath, FeeTier3000))
 	return pool
 }
 

@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"strconv"
+
 	"gno.land/p/nt/ufmt"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -230,7 +232,8 @@ func tickCross(
 
 // setTick updates the tick data for the specified tick index in the pool.
 func setTick(p *pl.Pool, tick int32, newTickInfo pl.TickInfo) {
-	p.Ticks()[tick] = newTickInfo
+	tickStr := strconv.Itoa(int(tick))
+	p.Ticks().Set(tickStr, newTickInfo)
 }
 
 // deleteTick deletes the tick data for the specified tick index in the pool.
@@ -256,9 +259,15 @@ func deleteTick(p *pl.Pool, tick int32) {
 // This function ensures the retrieved tick data is always valid and safe for further operations,
 // such as calculations or updates, by sanitizing nil fields in the TickInfo structure.
 func getTick(p *pl.Pool, tick int32) pl.TickInfo {
-	tickInfo, exist := p.Ticks()[tick]
+	tickStr := formatInt(tick)
+	iTickInfo, exist := p.Ticks().Get(tickStr)
 	if !exist {
 		return pl.NewTickInfo()
+	}
+
+	tickInfo, ok := iTickInfo.(pl.TickInfo)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast tickInfo to TickInfo: %T", iTickInfo))
 	}
 
 	return tickInfo
@@ -292,7 +301,8 @@ func getTick(p *pl.Pool, tick int32) pl.TickInfo {
 //
 // ```
 func mustGetTick(p *pl.Pool, tick int32) *pl.TickInfo {
-	tickInfo, exist := p.Ticks()[tick]
+	tickStr := formatInt(tick)
+	iTickInfo, exist := p.Ticks().Get(tickStr)
 	if !exist {
 		panic(newErrorWithDetail(
 			errDataNotFound,
@@ -300,7 +310,12 @@ func mustGetTick(p *pl.Pool, tick int32) *pl.TickInfo {
 		))
 	}
 
-	return &tickInfo
+	info, ok := iTickInfo.(pl.TickInfo)
+	if !ok {
+		panic("failed to cast tick info to TickInfo")
+	}
+
+	return &info
 }
 
 // calculateMaxLiquidityPerTick calculates the maximum liquidity

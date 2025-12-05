@@ -41,7 +41,7 @@ func assertIsNotExistsPoolPath(instance *poolV1, token0Path, token1Path string, 
 	poolPath := pl.GetPoolPath(token0Path, token1Path, fee)
 
 	pools := instance.store.GetPools()
-	if _, exists := pools[poolPath]; exists {
+	if pools.Has(poolPath) {
 		panic(newErrorWithDetail(
 			errPoolAlreadyExists,
 			ufmt.Sprintf("expected poolPath(%s:%s:%d) not to exist", token0Path, token1Path, fee),

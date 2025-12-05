@@ -1,7 +1,6 @@
 package v1
 
 import (
-	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/p/nt/ufmt"
@@ -62,9 +61,9 @@ type SingleSwapParams struct {
 	// Amount specified for the swap:
 	//  - Positive: exact input amount (tokenIn)
 	//  - Negative: exact output amount (tokenOut)
-	amountSpecified *i256.Int
+	amountSpecified int64
 
-	sqrtPriceLimitX96 string // sqrtPriceLimitX96 for the swap, empty string or zero string means no limit
+	sqrtPriceLimitX96 *u256.Uint // sqrtPriceLimitX96 for the swap, empty string or zero string means no limit
 }
 
 // TokenIn returns the input token address.
@@ -79,11 +78,11 @@ func (p SingleSwapParams) Fee() uint32 { return p.fee }
 // SqrtPriceLimitX96 returns the sqrtPriceLimitX96 for the swap.
 // If sqrtPriceLimitX96 is empty string, it will return zero.
 func (p SingleSwapParams) SqrtPriceLimitX96() *u256.Uint {
-	if p.sqrtPriceLimitX96 == "" {
+	if p.sqrtPriceLimitX96 == nil {
 		return u256.Zero()
 	}
 
-	return u256.MustFromDecimal(p.sqrtPriceLimitX96)
+	return p.sqrtPriceLimitX96
 }
 
 // SwapParams contains parameters for executing a multi-hop swap operation.
@@ -106,7 +105,7 @@ func (p SwapParams) Fee() uint32 { return p.fee }
 func (p SwapParams) Recipient() address { return p.recipient }
 
 // newSwapParams creates a new SwapParams instance with the provided parameters.
-func newSwapParams(tokenIn, tokenOut string, fee uint32, recipient address, amountSpecified *i256.Int, withUnwrap bool) *SwapParams {
+func newSwapParams(tokenIn, tokenOut string, fee uint32, recipient address, amountSpecified int64, withUnwrap bool) *SwapParams {
 	return &SwapParams{
 		SingleSwapParams: SingleSwapParams{
 			tokenIn:         tokenIn,
@@ -123,9 +122,9 @@ func newSwapParams(tokenIn, tokenOut string, fee uint32, recipient address, amou
 type SwapResult struct {
 	Routes          []string
 	Quotes          []string
-	AmountIn        *u256.Uint
-	AmountOut       *u256.Uint
-	AmountSpecified *i256.Int
+	AmountIn        int64
+	AmountOut       int64
+	AmountSpecified int64
 	WithUnwrap      bool
 }
 
@@ -159,15 +158,15 @@ func newSwapCallbackData(params SwapParamsI, payer address) SwapCallbackData {
 // ExactInParams contains parameters for exact input swaps.
 type ExactInParams struct {
 	BaseSwapParams
-	AmountIn     string
-	AmountOutMin string
+	AmountIn     int64
+	AmountOutMin int64
 }
 
 // NewExactInParams creates a new ExactInParams instance.
 func NewExactInParams(
 	baseParams BaseSwapParams,
-	amountIn string,
-	amountOutMin string,
+	amountIn int64,
+	amountOutMin int64,
 ) ExactInParams {
 	return ExactInParams{
 		BaseSwapParams: baseParams,
@@ -179,15 +178,15 @@ func NewExactInParams(
 // ExactOutParams contains parameters for exact output swaps.
 type ExactOutParams struct {
 	BaseSwapParams
-	AmountOut   string
-	AmountInMax string
+	AmountOut   int64
+	AmountInMax int64
 }
 
 // NewExactOutParams creates a new ExactOutParams instance.
 func NewExactOutParams(
 	baseParams BaseSwapParams,
-	amountOut string,
-	amountInMax string,
+	amountOut int64,
+	amountInMax int64,
 ) ExactOutParams {
 	return ExactOutParams{
 		BaseSwapParams: baseParams,
