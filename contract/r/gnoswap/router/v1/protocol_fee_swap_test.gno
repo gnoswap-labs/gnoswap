@@ -3,40 +3,39 @@ package v1
 import (
 	"testing"
 
-	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/onbloc/bar"
 )
 
 func TestHandleSwapFee(t *testing.T) {
 	tests := []struct {
 		name           string
-		amount         *u256.Uint
+		amount         int64
 		swapFeeValue   uint64
-		expectedAmount *u256.Uint
+		expectedAmount int64
 	}{
 		{
 			name:           "zero swap fee",
-			amount:         u256.NewUint(1000),
+			amount:         1000,
 			swapFeeValue:   0,
-			expectedAmount: u256.NewUint(1000),
+			expectedAmount: 1000,
 		},
 		{
 			name:           "normal swap fee calculation (0.15%)",
-			amount:         u256.NewUint(10000),
+			amount:         10000,
 			swapFeeValue:   15,
-			expectedAmount: u256.NewUint(9985), // 10000 - (10000 * 0.15%)
+			expectedAmount: 9985, // 10000 - (10000 * 0.15%)
 		},
 		{
 			name:           "Dry Run test",
-			amount:         u256.NewUint(10000),
+			amount:         10000,
 			swapFeeValue:   15,
-			expectedAmount: u256.NewUint(9985),
+			expectedAmount: 9985,
 		},
 		{
 			name:           "large amount swap fee calculation",
-			amount:         u256.NewUint(1000000),
+			amount:         1000000,
 			swapFeeValue:   15,
-			expectedAmount: u256.NewUint(998500), // 1000000 - (1000000 * 0.15%)
+			expectedAmount: 998500, // 1000000 - (1000000 * 0.15%)
 		},
 	}
 
@@ -50,14 +49,14 @@ func TestHandleSwapFee(t *testing.T) {
 			}(cross)
 
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
-			bar.Transfer(cross, routerAddr, tt.amount.Int64())
+			bar.Transfer(cross, routerAddr, tt.amount)
 
 			func(cur realm) {
 				testing.SetRealm(routerRealm)
 				result := router.handleSwapFee(barPath, tt.amount)
 
-				if !result.Eq(tt.expectedAmount) {
-					t.Errorf("handleSwapFee() = %v, want %v", result, tt.expectedAmount)
+				if result != tt.expectedAmount {
+					t.Errorf("handleSwapFee() = %d, want %d", result, tt.expectedAmount)
 				}
 			}(cross)
 		})

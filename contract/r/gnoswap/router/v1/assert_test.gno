@@ -97,21 +97,21 @@ func TestAssertIsValidUserCoinSend(t *testing.T) {
 		},
 		{
 			name:        "invalid amount format - non-numeric",
-			tokenPath:   "gno.land/r/demo/gns",
+			tokenPath:   "ugnot",
 			amount:      "abc",
 			shouldPanic: true,
 			errorMsg:    "invalid syntax",
 		},
 		{
 			name:        "invalid amount format - empty string",
-			tokenPath:   "gno.land/r/demo/gns",
+			tokenPath:   "ugnot",
 			amount:      "",
 			shouldPanic: true,
 			errorMsg:    "invalid syntax",
 		},
 		{
 			name:        "invalid amount format - decimal number",
-			tokenPath:   "gno.land/r/demo/gns",
+			tokenPath:   "ugnot",
 			amount:      "100.5",
 			shouldPanic: true,
 			errorMsg:    "invalid syntax",
@@ -136,14 +136,14 @@ func TestAssertIsValidUserCoinSend(t *testing.T) {
 		},
 		{
 			name:        "amount with spaces",
-			tokenPath:   "gno.land/r/demo/gns",
+			tokenPath:   "ugnot",
 			amount:      " 1000 ",
 			shouldPanic: true,
 			errorMsg:    "invalid syntax",
 		},
 		{
 			name:        "amount overflow int64",
-			tokenPath:   "gno.land/r/demo/gns",
+			tokenPath:   "ugnot",
 			amount:      "9223372036854775808", // int64 max + 1
 			shouldPanic: true,
 			errorMsg:    "value out of range",

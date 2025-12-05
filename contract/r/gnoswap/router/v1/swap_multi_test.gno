@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"strconv"
 	"testing"
 
 	prabc "gno.land/p/gnoswap/rbac"
@@ -122,8 +123,8 @@ func TestMultiSwap(t *testing.T) {
 				tt.swapPath,
 			)
 
-			uassert.Equal(t, firstAmountIn.ToString(), tt.expectedFirstIn)
-			uassert.Equal(t, lastAmountOut.ToString(), tt.expectedLastOut)
+			uassert.Equal(t, strconv.FormatInt(firstAmountIn, 10), tt.expectedFirstIn)
+			uassert.Equal(t, strconv.FormatInt(lastAmountOut, 10), tt.expectedLastOut)
 		})
 	}
 }
