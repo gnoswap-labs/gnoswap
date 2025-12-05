@@ -7,6 +7,9 @@ import (
 
 	"gno.land/p/nt/ufmt"
 
+	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/r/gnoswap/rbac"
+
 	"gno.land/r/gnoland/wugnot"
 )
 
@@ -17,14 +20,15 @@ const (
 )
 
 var (
-	errFailedToWrapBelowMin  = "amount(%d) < minimum(%d)"
+	positionAddr = rbac.DefaultRoleAddresses[prabc.ROLE_POSITION]
+	stakerAddr   = rbac.DefaultRoleAddresses[prabc.ROLE_STAKER]
 )
 
 // wrap wraps the specified amount of the native token ugnot into the wrapped token wugnot.
 // Returns an error if ugnotAmount is zero or less than the minimum deposit threshold.
 func (p *positionV1) wrap(ugnotAmount int64, to address) error {
 	if ugnotAmount == 0 || ugnotAmount < UGNOT_MIN_DEPOSIT_TO_WRAP {
-		return ufmt.Errorf(errFailedToWrapBelowMin, ugnotAmount, UGNOT_MIN_DEPOSIT_TO_WRAP)
+		return ufmt.Errorf("amount(%d) < minimum(%d)", ugnotAmount, UGNOT_MIN_DEPOSIT_TO_WRAP)
 	}
 
 	wugnotAddr := chain.PackageAddress(WUGNOT_PATH)
@@ -133,7 +137,7 @@ func (p *positionV1) wrapWithTransfer(ugnotAmount int64, toAddress address) erro
 	if ugnotAmount < UGNOT_MIN_DEPOSIT_TO_WRAP {
 		return makeErrorWithDetails(
 			errWugnotMinimum,
-			ufmt.Sprintf(errFailedToWrapBelowMin, ugnotAmount, UGNOT_MIN_DEPOSIT_TO_WRAP),
+			ufmt.Sprintf("amount(%d) < minimum(%d)", ugnotAmount, UGNOT_MIN_DEPOSIT_TO_WRAP),
 		)
 	}
 

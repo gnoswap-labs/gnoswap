@@ -17,17 +17,7 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 	pf "gno.land/r/gnoswap/protocol_fee"
-	"gno.land/r/gnoswap/rbac"
 	"gno.land/r/gnoswap/referral"
-)
-
-var (
-	positionAddr = rbac.DefaultRoleAddresses[prabc.ROLE_POSITION]
-	stakerAddr   = rbac.DefaultRoleAddresses[prabc.ROLE_STAKER]
-)
-
-const (
-	ZERO_LIQUIDITY_FOR_FEE_COLLECTION = "0"
 )
 
 // calculatePositionBalances computes token balances for a position at current price.
@@ -208,6 +198,11 @@ func (p *positionV1) IncreaseLiquidity(
 ) (uint64, string, string, string, string) {
 	halt.AssertIsNotHaltedPosition()
 
+	assertValidNumberString(amount0DesiredStr)
+	assertValidNumberString(amount1DesiredStr)
+	assertValidNumberString(amount0MinStr)
+	assertValidNumberString(amount1MinStr)
+
 	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()
 	assertIsOwnerForToken(p, positionId, caller)
@@ -217,11 +212,6 @@ func (p *positionV1) IncreaseLiquidity(
 		position := p.mustGetPosition(positionId)
 		return positionId, position.Liquidity().ToString(), "0", "0", position.PoolKey()
 	}
-
-	assertValidNumberString(amount0DesiredStr)
-	assertValidNumberString(amount1DesiredStr)
-	assertValidNumberString(amount0MinStr)
-	assertValidNumberString(amount1MinStr)
 
 	emission.MintAndDistributeGns(cross)
 
@@ -444,15 +434,16 @@ func (p *positionV1) collectFee(
 	unwrapResult bool,
 	caller address,
 ) (uint64, string, string, string, string, string) {
-	emission.MintAndDistributeGns(cross)
-
 	// verify position
 	position := p.mustGetPosition(positionId)
-	poolKey := position.PoolKey()
-	token0, token1, fee := splitOf(poolKey)
 
+	poolKey := position.PoolKey()
 	tickLower := position.TickLower()
 	tickUpper := position.TickUpper()
+
+	emission.MintAndDistributeGns(cross)
+
+	token0, token1, fee := splitOf(poolKey)
 
 	pl.Burn(
 		cross,
@@ -461,7 +452,7 @@ func (p *positionV1) collectFee(
 		fee,
 		tickLower,
 		tickUpper,
-		ZERO_LIQUIDITY_FOR_FEE_COLLECTION, // burn '0' liquidity to collect fee
+		"0", // burn '0' liquidity to collect fee
 		caller,
 	)
 
@@ -538,6 +529,7 @@ func (p *positionV1) collectFee(
 	previousRealm := runtime.PreviousRealm()
 	prevAddr := previousRealm.Address()
 	prevPkgPath := previousRealm.PkgPath()
+
 	chain.Emit(
 		"CollectSwapFee",
 		"prevAddr", prevAddr.String(),
