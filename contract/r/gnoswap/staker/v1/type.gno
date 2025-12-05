@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"gno.land/p/nt/avl"
 	sr "gno.land/r/gnoswap/staker"
 )
 
@@ -79,7 +80,7 @@ func (self *DepositResolver) InternalRewardLastCollectTime() int64 {
 // ExternalRewardLastCollectTime returns the last collect time for the external reward for the given incentive ID.
 // If the last collect time is 0, it returns the staked time.
 func (self *DepositResolver) ExternalRewardLastCollectTime(incentiveID string) int64 {
-	lastCollectTime, exists := self.Deposit.ExternalRewardLastCollectTimes()[incentiveID]
+	lastCollectTime, exists := self.Deposit.GetExternalRewardLastCollectTime(incentiveID)
 	if !exists || lastCollectTime == 0 {
 		return self.Deposit.StakeTime()
 	}
@@ -88,11 +89,7 @@ func (self *DepositResolver) ExternalRewardLastCollectTime(incentiveID string) i
 }
 
 func (self *DepositResolver) CollectedExternalReward(incentiveID string) int64 {
-	if self.CollectedExternalRewards() == nil {
-		return 0
-	}
-
-	collectedExternalReward, exists := self.CollectedExternalRewards()[incentiveID]
+	collectedExternalReward, exists := self.Deposit.GetCollectedExternalReward(incentiveID)
 	if !exists {
 		return 0
 	}
@@ -125,10 +122,10 @@ func (self *DepositResolver) updateInternalRewardLastCollectTime(currentTime int
 // It returns an error if the current time is less than the last collect time for the external reward for the given incentive ID.
 func (self *DepositResolver) updateExternalRewardLastCollectTime(incentiveID string, currentTime int64) error {
 	if self.ExternalRewardLastCollectTimes() == nil {
-		self.SetExternalRewardLastCollectTimes(make(map[string]int64))
+		self.SetExternalRewardLastCollectTimes(avl.NewTree())
 	}
 
-	externalLastCollectTime, exists := self.ExternalRewardLastCollectTimes()[incentiveID]
+	externalLastCollectTime, exists := self.Deposit.GetExternalRewardLastCollectTime(incentiveID)
 	if exists && externalLastCollectTime > currentTime {
 		return makeErrorWithDetails(errNotAvailableUpdateCollectTime, "currentTime must be greater than external reward last collect time")
 	}

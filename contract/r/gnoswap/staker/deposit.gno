@@ -4,20 +4,21 @@ import (
 	"math"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/avl"
 )
 
 type Deposit struct {
-	warmups                        []Warmup         // warmup information
-	liquidity                      *u256.Uint       // liquidity
-	targetPoolPath                 string           // staked position's pool path
-	owner                          address          // owner address
-	stakeTime                      int64            // staked time
-	internalRewardLastCollectTime  int64            // last collect time for internal reward
-	collectedInternalReward        int64            // collected internal reward
-	collectedExternalRewards       map[string]int64 // collected external reward by incentive id
-	externalRewardLastCollectTimes map[string]int64 // last collect time for external rewards by incentive id
-	tickLower                      int32            // tick lower
-	tickUpper                      int32            // tick upper
+	warmups                        []Warmup   // warmup information
+	liquidity                      *u256.Uint // liquidity
+	targetPoolPath                 string     // staked position's pool path
+	owner                          address    // owner address
+	stakeTime                      int64      // staked time
+	internalRewardLastCollectTime  int64      // last collect time for internal reward
+	collectedInternalReward        int64      // collected internal reward
+	collectedExternalRewards       *avl.Tree  // collected external reward by incentive id (incentiveID -> int64)
+	externalRewardLastCollectTimes *avl.Tree  // last collect time for external rewards by incentive id (incentiveID -> int64)
+	tickLower                      int32      // tick lower
+	tickUpper                      int32      // tick upper
 }
 
 func (d *Deposit) Owner() address {
@@ -68,36 +69,64 @@ func (d *Deposit) SetCollectedInternalReward(collectedInternalReward int64) {
 	d.collectedInternalReward = collectedInternalReward
 }
 
-func (d *Deposit) CollectedExternalRewards() map[string]int64 {
+func (d *Deposit) CollectedExternalRewards() *avl.Tree {
 	return d.collectedExternalRewards
 }
 
-func (d *Deposit) SetCollectedExternalRewards(collectedExternalRewards map[string]int64) {
+func (d *Deposit) SetCollectedExternalRewards(collectedExternalRewards *avl.Tree) {
 	d.collectedExternalRewards = collectedExternalRewards
+}
+
+// GetCollectedExternalReward returns the collected external reward for the given incentive ID.
+// Returns 0 if the incentive ID does not exist.
+func (d *Deposit) GetCollectedExternalReward(incentiveID string) (int64, bool) {
+	if d.collectedExternalRewards == nil {
+		return 0, false
+	}
+
+	value, exists := d.collectedExternalRewards.Get(incentiveID)
+	if !exists {
+		return 0, false
+	}
+
+	return value.(int64), true
 }
 
 func (d *Deposit) SetCollectedExternalReward(incentiveID string, reward int64) {
 	if d.collectedExternalRewards == nil {
-		d.collectedExternalRewards = make(map[string]int64)
+		d.collectedExternalRewards = avl.NewTree()
 	}
-
-	d.collectedExternalRewards[incentiveID] = reward
+	d.collectedExternalRewards.Set(incentiveID, reward)
 }
 
-func (d *Deposit) ExternalRewardLastCollectTimes() map[string]int64 {
+func (d *Deposit) ExternalRewardLastCollectTimes() *avl.Tree {
 	return d.externalRewardLastCollectTimes
 }
 
-func (d *Deposit) SetExternalRewardLastCollectTimes(externalRewardLastCollectTimes map[string]int64) {
+func (d *Deposit) SetExternalRewardLastCollectTimes(externalRewardLastCollectTimes *avl.Tree) {
 	d.externalRewardLastCollectTimes = externalRewardLastCollectTimes
+}
+
+// GetExternalRewardLastCollectTime returns the last collect time for the given incentive ID.
+// Returns 0 if the incentive ID does not exist.
+func (d *Deposit) GetExternalRewardLastCollectTime(incentiveID string) (int64, bool) {
+	if d.externalRewardLastCollectTimes == nil {
+		return 0, false
+	}
+
+	value, exists := d.externalRewardLastCollectTimes.Get(incentiveID)
+	if !exists {
+		return 0, false
+	}
+
+	return value.(int64), true
 }
 
 func (d *Deposit) SetExternalRewardLastCollectTime(incentiveID string, currentTime int64) {
 	if d.externalRewardLastCollectTimes == nil {
-		d.externalRewardLastCollectTimes = make(map[string]int64)
+		d.externalRewardLastCollectTimes = avl.NewTree()
 	}
-
-	d.externalRewardLastCollectTimes[incentiveID] = currentTime
+	d.externalRewardLastCollectTimes.Set(incentiveID, currentTime)
 }
 
 func (d *Deposit) TickLower() int32 {
@@ -141,9 +170,9 @@ func NewDeposit(
 		tickLower:                      tickLower,
 		tickUpper:                      tickUpper,
 		internalRewardLastCollectTime:  currentTime,
-		externalRewardLastCollectTimes: make(map[string]int64),
+		externalRewardLastCollectTimes: avl.NewTree(),
 		collectedInternalReward:        0,
-		collectedExternalRewards:       make(map[string]int64),
+		collectedExternalRewards:       avl.NewTree(),
 	}
 }
 
