@@ -287,7 +287,7 @@ func (p *SwapRouteParams) SwapCount() int64 {
 }
 
 func (p *SwapRouteParams) IsSetSqrtPriceLimitX96() bool {
-	return p.sqrtPriceLimitX96 != "" && p.sqrtPriceLimitX96 != zeroString
+	return p.sqrtPriceLimitX96 != "" && p.sqrtPriceLimitX96 != "0"
 }
 
 // createSwapOperation creates the appropriate swap operation based on swap type.
