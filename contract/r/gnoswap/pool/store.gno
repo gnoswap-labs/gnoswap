@@ -49,7 +49,7 @@ func (s *poolStore) GetPools() *avl.Tree {
 	}
 
 	if pools == nil {
-		panic(ufmt.Sprintf("pools is nil"))
+		panic("pools is nil")
 	}
 
 	return pools
@@ -58,7 +58,7 @@ func (s *poolStore) GetPools() *avl.Tree {
 // SetPools stores the map containing all pool data.
 func (s *poolStore) SetPools(pools *avl.Tree) error {
 	if pools == nil {
-		panic(ufmt.Sprintf("pools is nil"))
+		panic("pools is nil")
 	}
 
 	return s.kvStore.Set(StoreKeyPools.String(), pools)
@@ -82,7 +82,7 @@ func (s *poolStore) GetFeeAmountTickSpacing() map[uint32]int32 {
 	}
 
 	if feeAmountTickSpacing == nil {
-		panic(ufmt.Sprintf("feeAmountTickSpacing is nil"))
+		panic("feeAmountTickSpacing is nil")
 	}
 
 	return feeAmountTickSpacing
@@ -91,7 +91,7 @@ func (s *poolStore) GetFeeAmountTickSpacing() map[uint32]int32 {
 // SetFeeAmountTickSpacing stores the mapping between fee amounts and tick spacing.
 func (s *poolStore) SetFeeAmountTickSpacing(feeAmountTickSpacing map[uint32]int32) error {
 	if feeAmountTickSpacing == nil {
-		panic(ufmt.Sprintf("feeAmountTickSpacing is nil"))
+		panic("feeAmountTickSpacing is nil")
 	}
 
 	return s.kvStore.Set(StoreKeyFeeAmountTickSpacing.String(), feeAmountTickSpacing)
