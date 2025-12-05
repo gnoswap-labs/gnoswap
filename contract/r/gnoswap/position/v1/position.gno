@@ -551,8 +551,6 @@ func (p *positionV1) collectFee(
 	return positionId, amount0WithoutFeeStr, amount1WithoutFeeStr, position.PoolKey(), amount0, amount1
 }
 
-var feeAmountDivisor = u256.NewUint(10000)
-
 // calculateAmountWithWithdrawalFee calculates amount after deducting withdrawal fee.
 func calculateAmountWithWithdrawalFee(amount string, fee uint64) (int64, int64) {
 	amountUint := u256.MustFromDecimal(amount)
@@ -560,13 +558,11 @@ func calculateAmountWithWithdrawalFee(amount string, fee uint64) (int64, int64) 
 		return safeConvertToInt64(amountUint), 0
 	}
 
-	feeUint := u256.NewUint(fee)
-
-	feeAmount, overflow := u256.Zero().MulOverflow(amountUint, feeUint)
+	feeAmount, overflow := u256.Zero().MulOverflow(amountUint, u256.NewUint(fee))
 	if overflow {
 		panic(errOverflow)
 	}
-	feeAmount = u256.Zero().Div(feeAmount, feeAmountDivisor)
+	feeAmount = u256.Zero().Div(feeAmount, u256.NewUint(10000))
 	amountWithoutFee := u256.Zero().Sub(amountUint, feeAmount)
 
 	return safeConvertToInt64(amountWithoutFee), safeConvertToInt64(feeAmount)
@@ -580,8 +576,7 @@ func (p *positionV1) SetPositionOperator(
 ) {
 	halt.AssertIsNotHaltedPosition()
 
-	caller := runtime.PreviousRealm().Address()
-	access.AssertIsStaker(caller)
+	access.AssertIsStaker(runtime.PreviousRealm().Address())
 
 	position := p.mustGetPosition(id)
 	position.SetOperator(operator)
