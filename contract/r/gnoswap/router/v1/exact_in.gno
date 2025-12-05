@@ -6,7 +6,7 @@ import (
 
 	"gno.land/p/nt/ufmt"
 
-	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
@@ -53,7 +53,7 @@ func (r *routerV1) ExactInSwapRoute(
 
 	assertIsValidUserCoinSend(inputToken, amountIn)
 	assertIsValidRoutePaths(routeArr, inputToken, outputToken)
-	assertIsNotPassedDeadline(deadline)
+	assertIsNotExpired(deadline)
 	assertIsExistsPools(routeArr)
 
 	emission.MintAndDistributeGns(cross)
@@ -65,12 +65,14 @@ func (r *routerV1) ExactInSwapRoute(
 		quoteArr:          quoteArr,
 		deadline:          deadline,
 		typ:               ExactIn,
-		exactAmount:       amountIn,
-		limitAmount:       amountOutMin,
-		sqrtPriceLimitX96: zeroString, // multi-hop swap is not allowed to set sqrtPriceLimitX96
+		exactAmount:       safeParseInt64(amountIn),
+		limitAmount:       safeParseInt64(amountOutMin),
+		sqrtPriceLimitX96: u256.Zero(), // multi-hop swap is not allowed to set sqrtPriceLimitX96
 	}
 
-	return r.exactInSwapRoute(params, referrer)
+	inputAmount, outputAmount := r.exactInSwapRoute(params, referrer)
+
+	return formatInt64(inputAmount), formatInt64(outputAmount)
 }
 
 // ExactInSingleSwapRoute swaps an exact amount of input tokens for output tokens through a single route.
@@ -112,7 +114,7 @@ func (r *routerV1) ExactInSingleSwapRoute(
 	assertIsValidUserCoinSend(inputToken, amountIn)
 	assertIsValidSingleSwapRouteArrPath(routeArr, inputToken, outputToken)
 	assertIsValidSqrtPriceLimitX96(sqrtPriceLimitX96)
-	assertIsNotPassedDeadline(deadline)
+	assertIsNotExpired(deadline)
 	assertIsExistsPools(routeArr)
 
 	emission.MintAndDistributeGns(cross)
@@ -121,15 +123,17 @@ func (r *routerV1) ExactInSingleSwapRoute(
 		inputToken:        inputToken,
 		outputToken:       outputToken,
 		routeArr:          routeArr,
-		quoteArr:          maxPercentageString, // "100"
+		quoteArr:          "100",
 		deadline:          deadline,
 		typ:               ExactIn,
-		exactAmount:       amountIn,
-		limitAmount:       amountOutMin,
-		sqrtPriceLimitX96: sqrtPriceLimitX96, // single swap is allowed to set sqrtPriceLimitX96
+		exactAmount:       safeParseInt64(amountIn),
+		limitAmount:       safeParseInt64(amountOutMin),
+		sqrtPriceLimitX96: u256.MustFromDecimal(sqrtPriceLimitX96), // single swap is allowed to set sqrtPriceLimitX96
 	}
 
-	return r.exactInSwapRoute(params, referrer)
+	inputAmount, outputAmount := r.exactInSwapRoute(params, referrer)
+
+	return formatInt64(inputAmount), formatInt64(outputAmount)
 }
 
 // exactInSwapRoute executes the swap operation and handles token transfers and referral registration.
@@ -152,19 +156,19 @@ func (r *routerV1) ExactInSingleSwapRoute(
 func (r *routerV1) exactInSwapRoute(
 	params SwapRouteParams,
 	referrer string,
-) (string, string) {
+) (int64, int64) {
 	inputAmount, outputAmount, err := r.commonSwapRoute(params)
 	if err != nil {
 		panic(err)
 	}
 
 	if params.IsUnwrap() {
-		err = unwrapWithTransfer(runtime.PreviousRealm().Address(), outputAmount.Int64())
+		err = unwrapWithTransfer(runtime.PreviousRealm().Address(), outputAmount)
 		if err != nil {
 			panic(err)
 		}
 	} else {
-		common.SafeGRC20Transfer(cross, params.outputToken, runtime.PreviousRealm().Address(), outputAmount.Int64())
+		common.SafeGRC20Transfer(cross, params.outputToken, runtime.PreviousRealm().Address(), outputAmount)
 	}
 
 	// handle referral registration
@@ -176,8 +180,8 @@ func (r *routerV1) exactInSwapRoute(
 		actualReferrer = referral.GetReferral(caller.String())
 	}
 
-	inputAmountStr := inputAmount.ToString()
-	outputAmountStr := i256.Zero().Neg(outputAmount).ToString()
+	resultInputAmount := inputAmount
+	resultOutputAmount := -outputAmount
 
 	chain.Emit(
 		"ExactInSwap",
@@ -185,15 +189,15 @@ func (r *routerV1) exactInSwapRoute(
 		"prevRealm", previousRealm.PkgPath(),
 		"input", params.inputToken,
 		"output", params.outputToken,
-		"exactAmount", params.exactAmount,
+		"exactAmount", formatInt64(params.exactAmount),
 		"route", params.routeArr,
 		"quote", params.quoteArr,
-		"resultInputAmount", inputAmountStr,
-		"resultOutputAmount", outputAmountStr,
+		"resultInputAmount", formatInt64(resultInputAmount),
+		"resultOutputAmount", formatInt64(resultOutputAmount),
 		"referrer", actualReferrer,
 	)
 
-	return inputAmountStr, outputAmountStr
+	return resultInputAmount, resultOutputAmount
 }
 
 type ExactInSwapOperation struct {
@@ -215,9 +219,10 @@ func NewExactInSwapOperation(r *routerV1, pp ExactInParams) *ExactInSwapOperatio
 
 // Validate validates the exact-in swap operation parameters.
 func (op *ExactInSwapOperation) Validate() error {
-	amountIn := i256.MustFromDecimal(op.params.AmountIn)
-	if amountIn.IsZero() || amountIn.IsNeg() {
-		return ufmt.Errorf("invalid amountIn(%s), must be positive", amountIn.ToString())
+	amountIn := op.params.AmountIn
+
+	if amountIn <= 0 {
+		return ufmt.Errorf("invalid amountIn(%d), must be positive", amountIn)
 	}
 
 	// when `SwapType` is `ExactIn`, assign `amountSpecified` the `amountIn`

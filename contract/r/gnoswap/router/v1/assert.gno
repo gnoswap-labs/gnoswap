@@ -26,14 +26,14 @@ func assertIsNotExpired(deadline int64) {
 }
 
 // assertIsValidUserCoinSend asserts that the user has sent the correct amount of native coin.
-func assertIsValidUserCoinSend(tokenPath, amount string) {
-	amountInt, err := strconv.ParseInt(amount, 10, 64)
-	if err != nil {
-		panic(err)
-	}
-
+func assertIsValidUserCoinSend(tokenPath string, amount string) {
 	if common.IsGNOTNativePath(tokenPath) {
-		common.AssertIsUserSendGNOTAmount(amountInt)
+		amountInt64, err := strconv.ParseInt(amount, 10, 64)
+		if err != nil {
+			panic(err)
+		}
+
+		common.AssertIsUserSendGNOTAmount(amountInt64)
 	} else {
 		common.AssertIsNotHandleNativeCoin()
 	}
