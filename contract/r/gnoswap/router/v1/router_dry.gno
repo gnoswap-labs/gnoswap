@@ -201,7 +201,7 @@ func (r *routerV1) drySwapRoute(
 			// calculate the amount to swap for this route
 			swapAmount, err := processor.ProcessSwapAmount(amountSpecified, quotes[i])
 			if err != nil {
-				return zeroString, zeroString, false
+				return "0", "0", false
 			}
 
 			// update the remaining amount
@@ -228,7 +228,7 @@ func (r *routerV1) drySwapRoute(
 		}
 
 		if amountIn.IsZero() || amountOut.IsZero() {
-			return zeroString, zeroString, false
+			return "0", "0", false
 		}
 
 		// update accumulated results
