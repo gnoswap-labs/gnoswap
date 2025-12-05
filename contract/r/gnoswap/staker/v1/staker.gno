@@ -281,16 +281,9 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	owner := s.nftAccessor.MustOwnerOf(positionIdFrom(positionId))
 	currentTime := time.Now().Unix()
 
-	success := referral.TryRegister(cross, caller, referrer)
 	actualReferrer := referrer
-	if !success {
+	if !referral.TryRegister(cross, caller, referrer) {
 		actualReferrer = referral.GetReferral(caller.String())
-	}
-
-	// validate staking requirements
-	exist := s.getDeposits().Has(positionId)
-	if exist {
-		panic(errAlreadyStaked.Error())
 	}
 
 	if err := hasTokenOwnership(owner, caller); err != nil {
@@ -303,14 +296,8 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 
 	// check pool path from positionId
 	poolPath := pn.GetPositionPoolKey(positionId)
-
-	// check pool has internal or external incentives
-	err := s.poolHasIncentives(poolPath)
-	if err != nil {
-		panic(err.Error())
-	}
-
 	pools := s.getPools()
+
 	pool, ok := pools.Get(poolPath)
 	if !ok {
 		panic(makeErrorWithDetails(
@@ -318,8 +305,13 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 			ufmt.Sprintf("can not stake position to non existing pool(%s)", poolPath),
 		))
 	}
-	liquidity := getLiquidity(positionId)
 
+	err := s.poolHasIncentives(poolPath, pool)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	liquidity := getLiquidity(positionId)
 	tickLower, tickUpper := getTickOf(positionId)
 
 	warmups := s.store.GetWarmupTemplate()
@@ -336,8 +328,6 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 		currentWarmups,
 	)
 
-	currentTick := s.poolAccessor.GetSlot0Tick(poolPath)
-
 	deposits := s.getDeposits()
 	deposits.set(positionId, deposit)
 
@@ -351,15 +341,14 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	// after transfer, set caller(user) as position operator (to collect fee and reward)
 	pn.SetPositionOperator(cross, positionId, caller)
 
-	signedLiquidity := i256.FromUint256(liquidity)
-
-	currentHeight := runtime.ChainHeight()
-
 	poolTier := s.getPoolTier()
-	poolTier.cacheReward(currentHeight, currentTime, pools)
+	poolTier.cacheReward(runtime.ChainHeight(), currentTime, pools)
 	s.updatePoolTier(poolTier)
 
 	poolResolver := NewPoolResolver(pool)
+
+	signedLiquidity := i256.FromUint256(liquidity)
+	currentTick := s.poolAccessor.GetSlot0Tick(poolPath)
 
 	isInRange := false
 	if pn.IsInRange(positionId) {
@@ -795,31 +784,23 @@ func hasTokenOwnership(owner, caller address) error {
 }
 
 // poolHasIncentives checks if the pool has any active incentives (internal or external).
-func (s *stakerV1) poolHasIncentives(poolPath string) error {
-	pool, ok := s.getPools().Get(poolPath)
-	if !ok {
-		return ufmt.Errorf(
-			"%v: can not stake position to non existent pool(%s)",
-			errNonIncentivizedPool, poolPath,
-		)
-	}
-	poolResolver := NewPoolResolver(pool)
+func (s *stakerV1) poolHasIncentives(poolPath string, pool *sr.Pool) error {
 	hasInternal := s.getPoolTier().IsInternallyIncentivizedPool(poolPath)
-	hasExternal := poolResolver.IsExternallyIncentivizedPool()
+	hasExternal := NewPoolResolver(pool).IsExternallyIncentivizedPool()
+
 	if hasInternal == false && hasExternal == false {
 		return ufmt.Errorf(
 			"%v: can not stake position to non incentivized pool(%s)",
 			errNonIncentivizedPool, poolPath,
 		)
 	}
+
 	return nil
 }
 
 // tokenHasLiquidity checks if the target positionId has non-zero liquidity
 func tokenHasLiquidity(positionId uint64) error {
-	liquidity := getLiquidity(positionId)
-
-	if liquidity.Lte(u256.Zero()) {
+	if getLiquidity(positionId).Lte(zeroUint256) {
 		return ufmt.Errorf(
 			"%v: positionId(%d) has no liquidity",
 			errZeroLiquidity, positionId,
@@ -829,8 +810,7 @@ func tokenHasLiquidity(positionId uint64) error {
 }
 
 func getLiquidity(positionId uint64) *u256.Uint {
-	liq := pn.GetPositionLiquidity(positionId)
-	return u256.Zero().Set(liq)
+	return u256.Zero().Set(pn.GetPositionLiquidity(positionId))
 }
 
 func getTickOf(positionId uint64) (int32, int32) {
