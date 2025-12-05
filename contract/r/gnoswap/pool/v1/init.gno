@@ -22,6 +22,13 @@ const (
 	defaultWithdrawalFeeBPS = uint64(100)
 )
 
+var defaultFeeAmountTickSpacing = map[uint32]int32{
+	100:   1,
+	500:   10,
+	3000:  60,
+	10000: 200,
+}
+
 func init() {
 	registerPoolV1()
 }
@@ -46,14 +53,7 @@ func initStoreData(poolStore pool.IPoolStore) error {
 	}
 
 	if !poolStore.HasFeeAmountTickSpacing() {
-		tickSpacingMap := map[uint32]int32{
-			100:   1,
-			500:   10,
-			3000:  60,
-			10000: 200,
-		}
-
-		err := poolStore.SetFeeAmountTickSpacing(tickSpacingMap)
+		err := poolStore.SetFeeAmountTickSpacing(defaultFeeAmountTickSpacing)
 		if err != nil {
 			return err
 		}
