@@ -139,7 +139,8 @@ func (p *positionV1) processTokens(
 		token0 = WUGNOT_PATH
 		token0IsNative = true
 
-		wrappedAmount, _, err = p.wrapNativeTokenIfAllowed(token0, amount0Desired, caller, true)
+		amount0DesiredInt := mustParseInt64(amount0Desired)
+		wrappedAmount, err = p.safeWrapNativeToken(amount0DesiredInt, caller)
 		if err != nil {
 			return "", "", false, false, 0, err
 		}
@@ -147,7 +148,8 @@ func (p *positionV1) processTokens(
 		token1 = WUGNOT_PATH
 		token1IsNative = true
 
-		wrappedAmount, _, err = p.wrapNativeTokenIfAllowed(token1, amount1Desired, caller, true)
+		amount1DesiredInt := mustParseInt64(amount1Desired)
+		wrappedAmount, err = p.safeWrapNativeToken(amount1DesiredInt, caller)
 		if err != nil {
 			return "", "", false, false, 0, err
 		}
@@ -158,30 +160,26 @@ func (p *positionV1) processTokens(
 
 // increaseLiquidity increases the liquidity of an existing position.
 func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, string, error) {
+	caller := params.caller
 	position := p.mustGetPosition(params.positionId)
-
-	poolKey := position.PoolKey()
-	tickLower := position.TickLower()
-	tickUpper := position.TickUpper()
 
 	liquidity, amount0, amount1 := p.addLiquidity(
 		AddLiquidityParams{
-			poolKey:        poolKey,
-			tickLower:      tickLower,
-			tickUpper:      tickUpper,
+			poolKey:        position.PoolKey(),
+			tickLower:      position.TickLower(),
+			tickUpper:      position.TickUpper(),
 			amount0Desired: params.amount0Desired,
 			amount1Desired: params.amount1Desired,
 			amount0Min:     params.amount0Min,
 			amount1Min:     params.amount1Min,
-			caller:         params.caller,
+			caller:         caller,
 		},
 	)
 
-	positionKey := computePositionKey(tickLower, tickUpper)
-	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(poolKey, positionKey)
+	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
+	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
 
-	positionLiquidity := position.Liquidity()
-	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(poolKey, tickLower, tickUpper, positionLiquidity)
+	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(position)
 
 	feeGrowth := FeeGrowthInside{
 		feeGrowthInside0LastX128: feeGrowthInside0LastX128,
@@ -189,15 +187,15 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 	}
 	tokensOwed0, tokensOwed1 := p.calculateFees(position, feeGrowth)
 
-	liquidityAmount, overflow := u256.Zero().AddOverflow(u256.Zero().Set(positionLiquidity), liquidity)
+	liquidityAmount, overflow := u256.Zero().AddOverflow(position.Liquidity(), liquidity)
 	if overflow {
 		return 0, nil, nil, nil, "", errOverflow
 	}
-	token0Balance, overflow := u256.Zero().AddOverflow(u256.Zero().Set(calculatedToken0Balance), amount0)
+	token0Balance, overflow := u256.Zero().AddOverflow(calculatedToken0Balance, amount0)
 	if overflow {
 		return 0, nil, nil, nil, "", errOverflow
 	}
-	token1Balance, overflow := u256.Zero().AddOverflow(u256.Zero().Set(calculatedToken1Balance), amount1)
+	token1Balance, overflow := u256.Zero().AddOverflow(calculatedToken1Balance, amount1)
 	if overflow {
 		return 0, nil, nil, nil, "", errOverflow
 	}
@@ -221,7 +219,7 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 		)
 	}
 
-	return params.positionId, liquidity, amount0, amount1, poolKey, nil
+	return params.positionId, liquidity, amount0, amount1, position.PoolKey(), nil
 }
 
 // validateTokenPath validates token paths are not identical, not conflicting, and in valid format.

@@ -90,11 +90,11 @@ func (p *positionV1) Reposition(
 	)
 
 	// update position tickLower, tickUpper to new value
-	// because `getCurrentFeeGrowth` uses tickLower, tickUpper
+	// because getCurrentFeeGrowth() uses tickLower, tickUpper
 	position.SetTickLower(tickLower)
 	position.SetTickUpper(tickUpper)
 
-	currentFeeGrowth, err := p.getCurrentFeeGrowth(position, caller, tickUpper, tickLower)
+	currentFeeGrowth, err := p.getCurrentFeeGrowth(position, caller)
 	if err != nil {
 		panic(newErrorWithDetail(err, "failed to get current fee growth"))
 	}
@@ -117,10 +117,6 @@ func (p *positionV1) Reposition(
 	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp :=
 		pl.GetObservation(poolKey, 0)
 
-	liquidityStr := liquidity.ToString()
-	amount0Str := amount0.ToString()
-	amount1Str := amount1.ToString()
-
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"Reposition",
@@ -129,9 +125,9 @@ func (p *positionV1) Reposition(
 		"lpPositionId", formatUint(positionId),
 		"tickLower", formatInt(tickLower),
 		"tickUpper", formatInt(tickUpper),
-		"liquidity", liquidityStr,
-		"amount0", amount0Str,
-		"amount1", amount1Str,
+		"liquidity", liquidity.ToString(),
+		"amount0", amount0.ToString(),
+		"amount1", amount1.ToString(),
 		"prevTickLower", formatInt(oldTickLower),
 		"prevTickUpper", formatInt(oldTickUpper),
 		"poolPath", poolKey,
@@ -145,5 +141,5 @@ func (p *positionV1) Reposition(
 		"observationTimestamp", formatInt(observationTimestamp),
 	)
 
-	return positionId, liquidityStr, tickLower, tickUpper, amount0Str, amount1Str
+	return positionId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()
 }

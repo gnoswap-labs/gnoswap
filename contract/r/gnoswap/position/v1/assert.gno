@@ -41,6 +41,16 @@ func assertValidNumberString(input string) {
 	}
 }
 
+// assertValidLiquidityAmount panics if the liquidity amount is zero.
+func assertValidLiquidityAmount(liquidity string) {
+	if u256.MustFromDecimal(liquidity).IsZero() {
+		panic(newErrorWithDetail(
+			errZeroLiquidity,
+			ufmt.Sprintf("liquidity amount must be greater than 0, got %s", liquidity),
+		))
+	}
+}
+
 // assertExistsPosition panics if the position does not exist.
 func assertExistsPosition(p *positionV1, positionId uint64) {
 	if !p.exists(positionId) {

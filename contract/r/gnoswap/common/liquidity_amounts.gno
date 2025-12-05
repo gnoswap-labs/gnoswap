@@ -19,7 +19,6 @@ var (
 	q96Uint    = u256.MustFromDecimal(Q96)
 	q128Mask   = u256.MustFromDecimal(MAX_UINT128)
 	// only used for return value
-	zero     = u256.Zero()
 	zeroI256 = i256.Zero()
 )
 
@@ -150,7 +149,7 @@ func GetLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0,
 func computeAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Uint) *u256.Uint {
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 	if sqrtRatioAX96.IsZero() || sqrtRatioBX96.IsZero() || liquidity.IsZero() || sqrtRatioAX96.Eq(sqrtRatioBX96) {
-		return zero
+		return u256.Zero()
 	}
 
 	val1 := u256.Zero().Lsh(liquidity, Q96_RESOLUTION)
@@ -185,7 +184,7 @@ func computeAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Ui
 func computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Uint) *u256.Uint {
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 	if liquidity.IsZero() || sqrtRatioAX96.Eq(sqrtRatioBX96) {
-		return zero
+		return u256.Zero()
 	}
 
 	diff := u256.Zero().Sub(sqrtRatioBX96, sqrtRatioAX96)

@@ -21,8 +21,7 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	_, fee0Str, fee1Str, _, _, _ := p.collectFee(params.positionId, params.unwrapResult, params.caller)
 
 	position := p.mustGetPosition(params.positionId)
-	positionLiquidity := position.Liquidity()
-	if positionLiquidity.IsZero() {
+	if position.Liquidity().IsZero() {
 		return params.positionId,
 			"",
 			fee0Str,
@@ -36,7 +35,7 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	}
 
 	liquidityToRemove := u256.MustFromDecimal(params.liquidity)
-	if liquidityToRemove.Gt(positionLiquidity) {
+	if liquidityToRemove.Gt(position.Liquidity()) {
 		return params.positionId,
 			liquidityToRemove.ToString(),
 			fee0Str,
@@ -45,16 +44,12 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 			position.PoolKey(),
 			makeErrorWithDetails(
 				errInvalidLiquidity,
-				ufmt.Sprintf("Liquidity requested(%s) is greater than liquidity held(%s)", liquidityToRemove.ToString(), positionLiquidity.ToString()),
+				ufmt.Sprintf("Liquidity requested(%s) is greater than liquidity held(%s)", liquidityToRemove.ToString(), position.Liquidity().ToString()),
 			)
 	}
 
-	poolKey := position.PoolKey()
-	pToken0, pToken1, pFee := splitOf(poolKey)
-
-	tickLower := position.TickLower()
-	tickUpper := position.TickUpper()
-	burn0, burn1 := pl.Burn(cross, pToken0, pToken1, pFee, tickLower, tickUpper, liquidityToRemove.ToString(), caller)
+	pToken0, pToken1, pFee := splitOf(position.PoolKey())
+	burn0, burn1 := pl.Burn(cross, pToken0, pToken1, pFee, position.TickLower(), position.TickUpper(), liquidityToRemove.ToString(), caller)
 
 	burnedAmount0 := u256.MustFromDecimal(burn0)
 	burnedAmount1 := u256.MustFromDecimal(burn1)
@@ -77,16 +72,16 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 			)
 	}
 
-	positionKey := computePositionKey(tickLower, tickUpper)
+	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
 
-	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(poolKey, tickLower, tickUpper, position.Liquidity())
+	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(position)
 
 	// Add only burned amounts to tokensOwed since fees were already collected and processed in collectFee
 	tokensOwed0 := u256.Zero().Add(position.TokensOwed0(), burnedAmount0)
 	tokensOwed1 := u256.Zero().Add(position.TokensOwed1(), burnedAmount1)
 
-	newLiquidity, underflow := u256.Zero().SubOverflow(positionLiquidity, liquidityToRemove)
+	newLiquidity, underflow := u256.Zero().SubOverflow(position.Liquidity(), liquidityToRemove)
 	if underflow {
 		panic(newErrorWithDetail(errUnderflow, "positionLiquidity - liquidityToRemove underflow"))
 	}
@@ -117,8 +112,8 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 		pToken1,
 		pFee,
 		caller,
-		tickLower,
-		tickUpper,
+		position.TickLower(),
+		position.TickUpper(),
 		burn0,
 		burn1,
 	)
@@ -159,7 +154,7 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 
 	p.mustUpdatePosition(params.positionId, *position)
 
-	return params.positionId, liquidityToRemove.ToString(), fee0Str, fee1Str, collect0, collect1, poolKey, nil
+	return params.positionId, liquidityToRemove.ToString(), fee0Str, fee1Str, collect0, collect1, position.PoolKey(), nil
 }
 
 // calculateFees calculates the fees for the current position.

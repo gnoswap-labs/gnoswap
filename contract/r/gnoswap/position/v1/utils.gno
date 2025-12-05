@@ -197,9 +197,8 @@ func subUint256(x, y *u256.Uint) *u256.Uint {
 //   - If the `value` exceeds the range of int64, the function will panic with an error indicating
 //     the overflow and the original value.
 func safeConvertToInt64(value *u256.Uint) int64 {
-	maxInt64 := uint64(9223372036854775807)
 	res, overflow := value.Uint64WithOverflow()
-	if overflow || res > maxInt64 {
+	if overflow {
 		panic(ufmt.Sprintf(
 			"amount(%s) overflows int64 range (max: 9223372036854775807)",
 			value.ToString(),

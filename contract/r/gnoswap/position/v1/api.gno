@@ -101,13 +101,9 @@ func (p *positionV1) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint)
 func (p *positionV1) rpcMakePosition(positionId uint64) RpcPosition {
 	position := p.mustGetPosition(positionId)
 
-	poolKey := position.PoolKey()
-	tickUpper := position.TickUpper()
-	tickLower := position.TickLower()
-
-	currentSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(poolKey)
-	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
-	upperTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
+	currentSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(position.PoolKey())
+	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.TickLower())
+	upperTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.TickUpper())
 
 	calculatedToken0Balance, calculatedToken1Balance := common.GetAmountsForLiquidity(
 		currentSqrtPriceX96,
@@ -135,9 +131,9 @@ func (p *positionV1) rpcMakePosition(positionId uint64) RpcPosition {
 		Burned:                   burned,
 		Owner:                    owner.String(),
 		Operator:                 position.Operator().String(),
-		PoolKey:                  poolKey,
-		TickLower:                tickLower,
-		TickUpper:                tickUpper,
+		PoolKey:                  position.PoolKey(),
+		TickLower:                position.TickLower(),
+		TickUpper:                position.TickUpper(),
 		Liquidity:                position.Liquidity().ToString(),
 		FeeGrowthInside0LastX128: position.FeeGrowthInside0LastX128().ToString(),
 		FeeGrowthInside1LastX128: position.FeeGrowthInside1LastX128().ToString(),
