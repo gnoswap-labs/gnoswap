@@ -914,9 +914,11 @@ func TestSafeMulDivInt64(t *testing.T) {
 
 func TestAbsInt64(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    int64
-		expected int64
+		name        string
+		input       int64
+		expected    int64
+		shouldPanic bool
+		panicMsg    string
 	}{
 		// Normal cases
 		{
@@ -968,12 +970,25 @@ func TestAbsInt64(t *testing.T) {
 			input:    -9223372036854775807,
 			expected: 9223372036854775807,
 		},
+		{
+			name:        "MinInt64",
+			input:       -9223372036854775808,
+			expected:    0,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-ROUTER-016] overflow",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := absInt64(tt.input)
-			uassert.Equal(t, result, tt.expected)
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					absInt64(tt.input)
+				})
+			} else {
+				result := absInt64(tt.input)
+				uassert.Equal(t, result, tt.expected)
+			}
 		})
 	}
 }
