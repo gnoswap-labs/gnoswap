@@ -3,6 +3,7 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
+	"errors"
 
 	"gno.land/p/nt/ufmt"
 
@@ -31,7 +32,7 @@ func (s *stakerV1) handleStakingRewardFee(
 	// We set precision to 10000
 	feeAmount := (amount * unstakingFee) / 10000
 	if feeAmount < 0 {
-		return 0, 0, ufmt.Errorf("fee amount cannot be negative")
+		return 0, 0, errors.New("fee amount cannot be negative")
 	}
 
 	if feeAmount == 0 {
