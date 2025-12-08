@@ -144,6 +144,8 @@ func (self *IncentivesResolver) calculateUnclaimableReward(incentiveId string) i
 	startTimestamp := incentive.StartTimestamp()
 	endTimestamp := incentive.EndTimestamp()
 
+	// Unclaimable periods are maintained as non-overlapping intervals;
+	// calculateUnClaimableDuration clamps to overlap only, so a single pass is sufficient.
 	self.UnclaimablePeriods().Iterate(0, endTimestamp, func(key int64, value any) bool {
 		unclaimableStart := key
 		unclaimableEnd, ok := value.(int64)
