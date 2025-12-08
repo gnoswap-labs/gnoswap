@@ -142,8 +142,17 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 	halt.AssertIsNotHaltedStaker()
 	halt.AssertIsNotHaltedWithdraw()
 
+	// checks pool registry
 	assertIsPoolExists(s, targetPoolPath)
-	pool, _ := s.getPools().Get(targetPoolPath)
+
+	// checks if the pool has been incentivized
+	pool, exists := s.getPools().Get(targetPoolPath)
+	if !exists {
+		panic(makeErrorWithDetails(
+			errDataNotFound,
+			ufmt.Sprintf("targetPoolPath(%s) not found", targetPoolPath),
+		))
+	}
 
 	poolResolver := NewPoolResolver(pool)
 
