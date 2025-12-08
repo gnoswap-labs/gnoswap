@@ -101,6 +101,7 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 			ExternalPenalty: make(map[string]int64),
 		}
 	}
+	rewardState.reset()
 
 	// Query incentives only for the time window this position could actually earn rewards.
 	allIncentives := poolResolver.IncentivesResolver().GetAllInTimestamps(0, param.CurrentTime)
