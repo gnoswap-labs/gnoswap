@@ -249,6 +249,14 @@ func (self *PoolResolver) RewardStateOf(deposit *sr.Deposit) *RewardState {
 	return result
 }
 
+// reset clears cached rewards/penalties so a RewardState can be reused without re-allocating.
+func (self *RewardState) reset() {
+	for i := range self.rewards {
+		self.rewards[i] = 0
+		self.penalties[i] = 0
+	}
+}
+
 // NewPool creates a new pool with the given poolPath and currentHeight.
 func NewPoolResolver(pool *sr.Pool) *PoolResolver {
 	return &PoolResolver{

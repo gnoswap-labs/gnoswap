@@ -86,12 +86,16 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 	internalPenalties := make([]int64, warmups)
 	externalRewards := make([]map[string]int64, warmups)
 	externalPenalties := make([]map[string]int64, warmups)
+	rewardState := poolResolver.RewardStateOf(deposit)
 
 	// Calculate internal rewards regardless of current tier status
 	// The reward cache system will automatically handle periods with 0 rewards
 	// This allows collecting rewards earned while the pool was in a tier,
 	// while preventing new rewards after tier removal
-	internalRewards, internalPenalties = poolResolver.RewardStateOf(deposit).calculateInternalReward(lastCollectTime, param.CurrentTime)
+	calculatedInternalRewards, calculatedInternalPenalties := rewardState.calculateInternalReward(lastCollectTime, param.CurrentTime)
+	copy(internalRewards, calculatedInternalRewards)
+	copy(internalPenalties, calculatedInternalPenalties)
+	rewardState.reset()
 
 	// Initialize maps for external rewards
 	for i := range externalRewards {
@@ -99,9 +103,10 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 		externalPenalties[i] = make(map[string]int64)
 	}
 
-	// Get all incentives using a wide time range to ensure we get all possible incentives
-	// We'll filter them individually based on their specific lastCollectTime
-	allIncentives := poolResolver.IncentivesResolver().GetAllInTimestamps(0, param.CurrentTime*2)
+	// Query incentives only for the time window this position could actually earn rewards.
+	// Using the position's stake time as the lower bound avoids scanning incentives that ended
+	// before the deposit existed, and capping at current time prevents unbounded lookups.
+	allIncentives := poolResolver.IncentivesResolver().GetAllInTimestamps(depositResolver.StakeTime(), param.CurrentTime)
 
 	// Process each external incentive with lazy initialization:
 	// When a new incentive is created, we don't iterate through all deposits for performance.
@@ -122,12 +127,14 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 
 		// External incentivized pool.
 		// Calculate reward for each warmup using per-incentive lastCollectTime
-		externalReward, externalPenalty := poolResolver.RewardStateOf(deposit).calculateExternalReward(externalLastCollectTime, param.CurrentTime, incentive)
+		externalReward, externalPenalty := rewardState.calculateExternalReward(externalLastCollectTime, param.CurrentTime, incentive)
 
 		for i := range externalReward {
 			externalRewards[i][incentiveId] = externalReward[i]
 			externalPenalties[i][incentiveId] = externalPenalty[i]
 		}
+
+		rewardState.reset()
 	}
 
 	rewards := make([]Reward, len(internalRewards))
