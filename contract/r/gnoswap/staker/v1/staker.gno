@@ -595,7 +595,6 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 
 	rewardToUser := formatInt(toUser)
 	rewardPenalty := formatInt(reward.InternalPenalty)
-	s.store.SetTotalEmissionSent(totalEmissionSent)
 
 	err = s.store.SetTotalEmissionSent(totalEmissionSent)
 	if err != nil {
