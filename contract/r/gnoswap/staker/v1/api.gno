@@ -284,6 +284,10 @@ func (s *stakerV1) ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 			continue
 		}
 		incentive := s.getExternalIncentives().get(incentiveId)
+		if incentive == nil {
+			// Incentive may have been archived/removed; skip to keep response construction robust.
+			continue
+		}
 		rewards = append(rewards, ApiReward{
 			IncentiveType:     "EXTERNAL",
 			IncentiveId:       incentiveId,

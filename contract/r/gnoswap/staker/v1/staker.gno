@@ -466,13 +466,18 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 		}
 
 		incentive := s.getExternalIncentives().get(incentiveId)
+		if incentive == nil {
+			// Incentive could be archived or missing; skip to keep collection resilient.
+			continue
+		}
 		incentiveResolver := NewExternalIncentiveResolver(incentive)
 		if !incentiveResolver.IsStarted(currentTime) {
 			continue
 		}
 
 		if incentiveResolver.RewardAmount() < rewardAmount {
-			// Emit event for insufficient reward and skip this incentive
+			// Do not update last collect time here; insufficient funds should
+			// leave the incentive collectible when refilled or corrected.
 			chain.Emit(
 				"InsufficientExternalReward",
 				"prevAddr", previousRealm.Address().String(),
