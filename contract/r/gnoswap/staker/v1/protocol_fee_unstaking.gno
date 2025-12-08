@@ -27,8 +27,7 @@ func (s *stakerV1) handleStakingRewardFee(
 	}
 
 	// Do not change the order of the operation.
-	// We set precision to 10000
-	feeAmount := (amount * unstakingFee) / 10000
+	feeAmount := safeMulDivInt64(amount, unstakingFee, FEE_PRECISION)
 	if feeAmount < 0 {
 		return 0, 0, errors.New("fee amount cannot be negative")
 	}

@@ -174,7 +174,7 @@ func (r *routerV1) drySwapRoute(
 
 	// adjust amount sign for exact out swaps
 	if swapType == ExactOut {
-		amountSpecifiedWithRouterFee := calculateExactOutWithRouterFee(absInt64(amountSpecified), swapFee)
+		amountSpecifiedWithRouterFee := calculateExactOutWithRouterFee(safeAbsInt64(amountSpecified), swapFee)
 		amountSpecified = -amountSpecifiedWithRouterFee
 	}
 

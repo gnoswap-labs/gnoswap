@@ -2,6 +2,7 @@ package gns
 
 import (
 	"chain/runtime"
+	"math"
 	"testing"
 	"time"
 
@@ -505,6 +506,94 @@ func TestHalvingDataAmountOperations(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.operation()
 			tt.validateAmount(t)
+		})
+	}
+}
+
+// TestHalvingDataAddAccumAmountOverflow tests overflow protection in HalvingData.addAccumAmount
+func TestHalvingDataAddAccumAmountOverflow(t *testing.T) {
+	tests := []struct {
+		name         string
+		year         int64
+		initialValue int64
+		addAmount    int64
+		shouldPanic  bool
+		panicMsg     string
+	}{
+		{
+			name:         "normal addition year 1",
+			year:         1,
+			initialValue: 1000,
+			addAmount:    2000,
+			shouldPanic:  false,
+		},
+		{
+			name:         "normal addition year 12",
+			year:         12,
+			initialValue: 5000,
+			addAmount:    3000,
+			shouldPanic:  false,
+		},
+		{
+			name:         "overflow - MaxInt64 + 1",
+			year:         1,
+			initialValue: math.MaxInt64,
+			addAmount:    1,
+			shouldPanic:  true,
+			panicMsg:     "int64 addition overflow",
+		},
+		{
+			name:         "overflow - near MaxInt64",
+			year:         2,
+			initialValue: math.MaxInt64 - 50,
+			addAmount:    100,
+			shouldPanic:  true,
+			panicMsg:     "int64 addition overflow",
+		},
+		{
+			name:         "overflow - large positive values",
+			year:         3,
+			initialValue: math.MaxInt64/2 + 1,
+			addAmount:    math.MaxInt64/2 + 1,
+			shouldPanic:  true,
+			panicMsg:     "int64 addition overflow",
+		},
+		{
+			name:         "boundary - exactly MaxInt64",
+			year:         4,
+			initialValue: math.MaxInt64 - 500,
+			addAmount:    500,
+			shouldPanic:  false,
+		},
+		{
+			name:         "add zero",
+			year:         5,
+			initialValue: math.MaxInt64,
+			addAmount:    0,
+			shouldPanic:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hd := NewHalvingData(1000)
+
+			// Set initial accumulated amount
+			hd.setAccumAmount(tt.year, tt.initialValue)
+
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					hd.addAccumAmount(tt.year, tt.addAmount)
+				})
+			} else {
+				err := hd.addAccumAmount(tt.year, tt.addAmount)
+				uassert.NoError(t, err)
+
+				// Verify the result
+				expected := tt.initialValue + tt.addAmount
+				actual := hd.getAccumAmount(tt.year)
+				uassert.Equal(t, expected, actual)
+			}
 		})
 	}
 }

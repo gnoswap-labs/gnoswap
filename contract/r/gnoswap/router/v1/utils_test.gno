@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"math"
 	"strconv"
 	"strings"
 	"testing"
@@ -840,8 +841,7 @@ func TestSafeMulDivInt64(t *testing.T) {
 			a:           1,
 			b:           1,
 			c:           100,
-			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-ROUTER-021] invalid swap amount",
+			shouldPanic: false,
 		},
 		// Negative values
 		{
@@ -872,6 +872,29 @@ func TestSafeMulDivInt64(t *testing.T) {
 			b:        50,
 			c:        100,
 			expected: 500000000000,
+		},
+		{
+			name:        "int64 overflow on final conversion",
+			a:           math.MaxInt64,
+			b:           200,
+			c:           100,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-ROUTER-016] overflow",
+		},
+		{
+			name:     "minInt64 allow negative value",
+			a:        math.MinInt64,
+			b:        -100,
+			c:        -100,
+			expected: math.MinInt64,
+		},
+		{
+			name:        "minInt64 overflow on positive value",
+			a:           math.MinInt64,
+			b:           -100,
+			c:           100,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-ROUTER-016] overflow",
 		},
 	}
 
@@ -904,11 +927,13 @@ func TestSafeMulDivInt64(t *testing.T) {
 	}
 }
 
-func TestAbsInt64(t *testing.T) {
+func TestSafeAbsInt64(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    int64
-		expected int64
+		name        string
+		input       int64
+		expected    int64
+		shouldPanic bool
+		panicMsg    string
 	}{
 		// Normal cases
 		{
@@ -960,12 +985,25 @@ func TestAbsInt64(t *testing.T) {
 			input:    -9223372036854775807,
 			expected: 9223372036854775807,
 		},
+		{
+			name:        "MinInt64",
+			input:       -9223372036854775808,
+			expected:    0,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-ROUTER-016] overflow",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := absInt64(tt.input)
-			uassert.Equal(t, result, tt.expected)
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					safeAbsInt64(tt.input)
+				})
+			} else {
+				result := safeAbsInt64(tt.input)
+				uassert.Equal(t, result, tt.expected)
+			}
 		})
 	}
 }

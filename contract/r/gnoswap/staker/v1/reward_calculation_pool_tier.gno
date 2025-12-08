@@ -241,7 +241,7 @@ func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *
 			return false // Skip if no pools in tier
 		}
 
-		poolReward := currentEmission * tierRatioInt64 / tierCount / 100
+		poolReward := safeMulDivInt64(currentEmission, tierRatioInt64, tierCount) / 100
 		poolResolver := NewPoolResolver(pool)
 		poolResolver.cacheReward(currentTime, poolReward)
 		return false
