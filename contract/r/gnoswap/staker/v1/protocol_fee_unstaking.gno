@@ -3,8 +3,7 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
-
-	"gno.land/p/nt/ufmt"
+	"errors"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
@@ -32,7 +31,7 @@ func (s *stakerV1) handleStakingRewardFee(
 	// Do not change the order of the operation.
 	feeAmount := safeMulDivInt64(amount, unstakingFee, FEE_PRECISION)
 	if feeAmount < 0 {
-		return 0, 0, ufmt.Errorf("fee amount cannot be negative")
+		return 0, 0, errors.New("fee amount cannot be negative")
 	}
 
 	if feeAmount == 0 {
