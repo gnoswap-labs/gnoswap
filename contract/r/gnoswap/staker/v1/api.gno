@@ -313,7 +313,6 @@ func (s *stakerV1) buildApiRewards(deposit *sr.Deposit, reward Reward) []ApiRewa
 			RewardTokenPath:   GNS_PATH,
 			RewardTokenAmount: reward.Internal,
 			StakeTimestamp:    deposit.StakeTime(),
-			StakeTime:         deposit.StakeTime(),
 			IncentiveStart:    deposit.StakeTime(),
 		})
 	}
@@ -334,7 +333,6 @@ func (s *stakerV1) buildApiRewards(deposit *sr.Deposit, reward Reward) []ApiRewa
 			RewardTokenPath:   incentive.RewardToken(),
 			RewardTokenAmount: externalReward,
 			StakeTimestamp:    deposit.StakeTime(),
-			StakeTime:         deposit.StakeTime(),
 			IncentiveStart:    incentive.StartTimestamp(),
 		})
 	}
