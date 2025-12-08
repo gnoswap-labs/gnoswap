@@ -162,6 +162,7 @@ func (self *IncentivesResolver) calculateUnclaimableReward(incentiveId string) i
 		)
 		timeDiff = safeAddInt64(timeDiff, duration)
 
+		// ensures continue iterating through all unclaimable periods
 		return false
 	})
 

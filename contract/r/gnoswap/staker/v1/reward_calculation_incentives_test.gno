@@ -535,9 +535,48 @@ func TestEndUnclaimablePeriod(t *testing.T) {
 	}
 }
 
-// Note: calculateUnclaimableReward is indirectly tested through calculateUnClaimableDuration tests
-// Direct testing of calculateUnclaimableReward is complex due to shared pool state
-// The core logic is validated through TestCalculateUnClaimableDuration below
+func TestCalculateUnclaimableReward_MultipleUnclaimablePeriods(t *testing.T) {
+	poolPath := "test_pool_unclaimable_reward"
+	creator := testutils.TestAddress("creator")
+	currentTime := time.Now().Unix()
+
+	pool := sr.NewPool(poolPath, currentTime)
+	poolResolver := NewPoolResolver(pool)
+	incentives := poolResolver.IncentivesResolver()
+
+	// Clear the initial unclaimable period created with the pool so we can control the windows.
+	incentives.endUnclaimablePeriod(currentTime)
+
+	incentive := sr.NewExternalIncentive(
+		"incentive_multiple_unclaimable",
+		poolPath,
+		GNS_PATH,
+		300,
+		currentTime,
+		currentTime+100,
+		creator,
+		100,
+		runtime.ChainHeight(),
+		currentTime,
+		false,
+	)
+	incentives.create(creator, incentive)
+
+	// Two separate unclaimable windows inside the incentive duration
+	incentives.startUnclaimablePeriod(currentTime + 10)
+	incentives.endUnclaimablePeriod(currentTime + 20)
+	incentives.startUnclaimablePeriod(currentTime + 40)
+	incentives.endUnclaimablePeriod(currentTime + 60)
+
+	got := incentives.calculateUnclaimableReward(incentive.IncentiveId())
+
+	expectedDuration := int64(30) // (20-10) + (60-40)
+	expected := expectedDuration * incentive.RewardPerSecond()
+
+	if got != expected {
+		t.Fatalf("expected unclaimable reward %d, got %d", expected, got)
+	}
+}
 
 // Test calculateUnClaimableDuration function
 func TestCalculateUnClaimableDuration(t *testing.T) {
