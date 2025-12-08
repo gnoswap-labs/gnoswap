@@ -927,7 +927,7 @@ func TestSafeMulDivInt64(t *testing.T) {
 	}
 }
 
-func TestAbsInt64(t *testing.T) {
+func TestSafeAbsInt64(t *testing.T) {
 	tests := []struct {
 		name        string
 		input       int64
@@ -998,10 +998,10 @@ func TestAbsInt64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					absInt64(tt.input)
+					safeAbsInt64(tt.input)
 				})
 			} else {
-				result := absInt64(tt.input)
+				result := safeAbsInt64(tt.input)
 				uassert.Equal(t, result, tt.expected)
 			}
 		})

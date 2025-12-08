@@ -451,7 +451,7 @@ func safeMulDivInt64(a, b, c int64) int64 {
 	return result.Int64()
 }
 
-func absInt64(a int64) int64 {
+func safeAbsInt64(a int64) int64 {
 	if a == math.MinInt64 {
 		panic(errOverFlow)
 	}
