@@ -155,7 +155,7 @@ func (h *HalvingData) addAccumAmount(year, amount int64) error {
 		return err
 	}
 
-	h.accumAmount[year-1] += amount
+	h.accumAmount[year-1] = safeAddInt64(h.accumAmount[year-1], amount)
 
 	return nil
 }

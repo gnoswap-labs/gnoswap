@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"gno.land/p/demo/tokens/grc721"
+	i256 "gno.land/p/gnoswap/int256"
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/ufmt"
@@ -212,4 +213,27 @@ func safeSubInt64(a, b int64) int64 {
 		panic("int64 subtraction overflow")
 	}
 	return a - b
+}
+
+func safeMulDivInt64(a, b, c int64) int64 {
+	if c == 0 {
+		panic("division by zero in safeMulDivInt64")
+	}
+
+	if a == 0 || b == 0 {
+		return 0
+	}
+
+	// calculate amount to swap for this route
+	result, overflow := i256.Zero().MulOverflow(i256.NewInt(a), i256.NewInt(b))
+	if overflow {
+		panic(errOverflow)
+	}
+
+	result = i256.Zero().Div(result, i256.NewInt(c))
+	if !result.IsInt64() {
+		panic(errOverflow)
+	}
+
+	return result.Int64()
 }
