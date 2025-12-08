@@ -21,8 +21,7 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	_, fee0Str, fee1Str, _, _, _ := p.collectFee(params.positionId, params.unwrapResult, params.caller)
 
 	position := p.mustGetPosition(params.positionId)
-	positionLiquidity := position.Liquidity()
-	if positionLiquidity.IsZero() {
+	if position.Liquidity().IsZero() {
 		return params.positionId,
 			"",
 			fee0Str,
@@ -36,7 +35,7 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	}
 
 	liquidityToRemove := u256.MustFromDecimal(params.liquidity)
-	if liquidityToRemove.Gt(positionLiquidity) {
+	if liquidityToRemove.Gt(position.Liquidity()) {
 		return params.positionId,
 			liquidityToRemove.ToString(),
 			fee0Str,
@@ -45,7 +44,7 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 			position.PoolKey(),
 			makeErrorWithDetails(
 				errInvalidLiquidity,
-				ufmt.Sprintf("Liquidity requested(%s) is greater than liquidity held(%s)", liquidityToRemove.ToString(), positionLiquidity.ToString()),
+				ufmt.Sprintf("Liquidity requested(%s) is greater than liquidity held(%s)", liquidityToRemove.ToString(), position.Liquidity().ToString()),
 			)
 	}
 
@@ -76,23 +75,13 @@ func (p *positionV1) decreaseLiquidity(params DecreaseLiquidityParams) (uint64, 
 	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
 
-	currentSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(position.PoolKey())
-	lowerTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.TickLower())
-	upperTickSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(position.TickUpper())
-	calculatedToken0BalanceStr, calculatedToken1BalanceStr := common.GetAmountsForLiquidity(
-		currentSqrtPriceX96,
-		lowerTickSqrtPriceX96,
-		upperTickSqrtPriceX96,
-		position.Liquidity(),
-	)
-	calculatedToken0Balance := u256.MustFromDecimal(calculatedToken0BalanceStr)
-	calculatedToken1Balance := u256.MustFromDecimal(calculatedToken1BalanceStr)
+	calculatedToken0Balance, calculatedToken1Balance := calculatePositionBalances(position)
 
 	// Add only burned amounts to tokensOwed since fees were already collected and processed in collectFee
 	tokensOwed0 := u256.Zero().Add(position.TokensOwed0(), burnedAmount0)
 	tokensOwed1 := u256.Zero().Add(position.TokensOwed1(), burnedAmount1)
 
-	newLiquidity, underflow := u256.Zero().SubOverflow(positionLiquidity, liquidityToRemove)
+	newLiquidity, underflow := u256.Zero().SubOverflow(position.Liquidity(), liquidityToRemove)
 	if underflow {
 		panic(newErrorWithDetail(errUnderflow, "positionLiquidity - liquidityToRemove underflow"))
 	}

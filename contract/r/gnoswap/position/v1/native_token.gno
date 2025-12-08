@@ -16,11 +16,6 @@ const (
 	GNOT_DENOM                = "ugnot"
 )
 
-var (
-	errFailedToWrapZeroUgnot = "cannot wrap 0 ugnot"
-	errFailedToWrapBelowMin  = "amount(%d) < minimum(%d)"
-)
-
 // wrap wraps the specified amount of the native token ugnot into the wrapped token wugnot.
 // Returns an error if ugnotAmount is zero or less than the minimum deposit threshold.
 func (p *positionV1) wrap(ugnotAmount int64, to address) error {
@@ -28,6 +23,7 @@ func (p *positionV1) wrap(ugnotAmount int64, to address) error {
 		return ufmt.Errorf("amount(%d) < minimum(%d)", ugnotAmount, UGNOT_MIN_DEPOSIT_TO_WRAP)
 	}
 
+	positionAddr := mustGetPositionAddress()
 	wugnotAddr := chain.PackageAddress(WUGNOT_PATH)
 	p.transferUGNOT(positionAddr, wugnotAddr, ugnotAmount)
 
@@ -43,6 +39,8 @@ func (p *positionV1) unwrap(wugnotAmount int64, to address) error {
 	if wugnotAmount <= 0 {
 		return ufmt.Errorf("amount(%d) is zero or negative", wugnotAmount)
 	}
+
+	positionAddr := mustGetPositionAddress()
 
 	wugnot.TransferFrom(cross, to, positionAddr, wugnotAmount) // send wugnot: user -> position
 	wugnot.Withdraw(cross, wugnotAmount)                       // position has ugnot
@@ -106,7 +104,7 @@ func (p *positionV1) safeWrapNativeToken(amount int64, toAddress address) (int64
 	// If nativeSentAmount is greater than amount, refund the excess amount.
 	if nativeSentAmount > amount {
 		excessAmount := nativeSentAmount - amount
-		p.transferUGNOT(positionAddr, toAddress, excessAmount)
+		p.transferUGNOT(mustGetPositionAddress(), toAddress, excessAmount)
 
 		nativeSentAmount = amount
 	}
@@ -115,8 +113,7 @@ func (p *positionV1) safeWrapNativeToken(amount int64, toAddress address) (int64
 		return 0, err
 	}
 
-	afterWrappedBalance := wugnot.BalanceOf(toAddress)
-	balanceDiff := afterWrappedBalance - beforeWrappedBalance
+	balanceDiff := wugnot.BalanceOf(toAddress) - beforeWrappedBalance
 
 	if balanceDiff != nativeSentAmount {
 		return 0, makeErrorWithDetails(
@@ -130,13 +127,13 @@ func (p *positionV1) safeWrapNativeToken(amount int64, toAddress address) (int64
 
 func (p *positionV1) wrapWithTransfer(ugnotAmount int64, toAddress address) error {
 	if ugnotAmount <= 0 {
-		return makeErrorWithDetails(errWrapUnwrap, errFailedToWrapZeroUgnot)
+		return makeErrorWithDetails(errWrapUnwrap, "cannot wrap 0 ugnot")
 	}
 
 	if ugnotAmount < UGNOT_MIN_DEPOSIT_TO_WRAP {
 		return makeErrorWithDetails(
 			errWugnotMinimum,
-			ufmt.Sprintf(errFailedToWrapBelowMin, ugnotAmount, UGNOT_MIN_DEPOSIT_TO_WRAP),
+			ufmt.Sprintf("amount(%d) < minimum(%d)", ugnotAmount, UGNOT_MIN_DEPOSIT_TO_WRAP),
 		)
 	}
 

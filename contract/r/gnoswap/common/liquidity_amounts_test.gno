@@ -264,22 +264,22 @@ func TestLiquidityAmounts_ComputeLiquidityForAmount1(t *testing.T) {
 			expectedPanic: false,
 		},
 		{
-            name:          "Large liquidity calculation in reverse price order",
-            sqrtRatioAX96: new(u256.Uint).Mul(q96, u256.NewUint(16)),
-            sqrtRatioBX96: q96,
-            amount1:       u256.MustFromDecimal("1000000000"),
-            expected:      "66666666",
-            expectedPanic: false,
-        },
-        {
-            name:          "Result is greater than u128 - overflow",
-            sqrtRatioAX96: u256.Zero(),
-            sqrtRatioBX96: u256.MustFromDecimal("1"),
-            amount1:       u256.MustFromDecimal("340282366920938463463374607431768211456"), // uint256 max value + 1
-            expected:      "0",
-            expectedPanic: true,
-            expectedPanicMsg: "[GNOSWAP-COMMON-009] overflow: amount(26959946667150639794667015087019630673637144422540572481103610249216) overflows uint128 range",
-        },
+			name:          "Large liquidity calculation in reverse price order",
+			sqrtRatioAX96: new(u256.Uint).Mul(q96, u256.NewUint(16)),
+			sqrtRatioBX96: q96,
+			amount1:       u256.MustFromDecimal("1000000000"),
+			expected:      "66666666",
+			expectedPanic: false,
+		},
+		{
+			name:             "Result is greater than u128 - overflow",
+			sqrtRatioAX96:    u256.Zero(),
+			sqrtRatioBX96:    u256.MustFromDecimal("1"),
+			amount1:          u256.MustFromDecimal("340282366920938463463374607431768211456"), // uint256 max value + 1
+			expected:         "0",
+			expectedPanic:    true,
+			expectedPanicMsg: "[GNOSWAP-COMMON-009] overflow: amount(26959946667150639794667015087019630673637144422540572481103610249216) overflows uint128 range",
+		},
 	}
 
 	for _, tt := range tests {
@@ -572,18 +572,18 @@ func TestLiquidityAmounts_GetAmountsForLiquidity(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			amount0, amount1 := GetAmountsForLiquidity(tt.sqrtRatioX96, tt.sqrtRatioAX96, tt.sqrtRatioBX96, tt.liquidity)
-			uassert.Equal(t, tt.expectedAmount0, amount0, ufmt.Sprintf("expected %s but got %s for amount0", tt.expectedAmount0, amount0))
-			uassert.Equal(t, tt.expectedAmount1, amount1, ufmt.Sprintf("expected %s but got %s for amount1", tt.expectedAmount1, amount1))
+			uassert.Equal(t, tt.expectedAmount0, amount0.ToString(), ufmt.Sprintf("expected %s but got %s for amount0", tt.expectedAmount0, amount0))
+			uassert.Equal(t, tt.expectedAmount1, amount1.ToString(), ufmt.Sprintf("expected %s but got %s for amount1", tt.expectedAmount1, amount1))
 		})
 	}
 }
 
 func TestLiquidityAmounts_ExtremeRatioValues(t *testing.T) {
 	tests := []struct {
-		name             string
-		testFunc         func() string
-		expected         string
-		shouldNotPanic   bool
+		name           string
+		testFunc       func() string
+		expected       string
+		shouldNotPanic bool
 	}{
 		{
 			name: "Zero sqrtRatio handling",

@@ -141,9 +141,10 @@ func (self *PoolResolver) IsExternallyIncentivizedPool() bool {
 		// Check if there are any active incentives at current time
 		if NewExternalIncentiveResolver(incentive).isActive(currentTime) {
 			hasActive = true
-			return false
+			return true
 		}
-		return true
+
+		return false
 	})
 
 	return hasActive
