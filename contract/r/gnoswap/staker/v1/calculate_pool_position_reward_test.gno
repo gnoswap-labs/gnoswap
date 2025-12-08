@@ -1,9 +1,12 @@
 package v1
 
 import (
+	"chain/runtime"
 	"testing"
 	"time"
 
+	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 
 	sr "gno.land/r/gnoswap/staker"
@@ -375,4 +378,53 @@ func TestReward_InternalOnlyNoExternal(t *testing.T) {
 	uassert.Equal(t, int64(50000), reward.InternalPenalty)
 	uassert.Equal(t, 0, len(reward.External))
 	uassert.Equal(t, 0, len(reward.ExternalPenalty))
+}
+
+func TestCalcPositionReward_ExternalPenaltyOnly(t *testing.T) {
+	canonical := Setup(t)
+
+	// Make the first warmup emit 0% reward so only penalties accumulate
+	originalWarmups := append([]sr.Warmup(nil), getMockInstance().store.GetWarmupTemplate()...)
+	modifiedWarmups := append([]sr.Warmup(nil), originalWarmups...)
+	modifiedWarmups[0].WarmupRatio = 0
+	getMockInstance().store.SetWarmupTemplate(modifiedWarmups)
+	defer getMockInstance().store.SetWarmupTemplate(originalWarmups)
+
+	poolPath := "gno.land/r/gnoswap/pool/external-penalty-only-2"
+	canonical.CreatePool(poolPath, 1, 0)
+
+	startTs := time.Now().Unix() - 5
+	endTs := startTs + 100
+	rewardAmount := int64(1_000)
+
+	incentiveId := canonical.CreateExternalIncentive(
+		poolPath,
+		gnsPath,
+		rewardAmount,
+		startTs,
+		endTs,
+		addr01,
+		runtime.ChainHeight(),
+	)
+
+	positionId := uint64(888)
+	owner := testutils.TestAddress("extPenaltyOwner")
+	liquidity := u256.NewUint(1)
+
+	err := canonical.StakeToken(positionId, poolPath, owner, -10, 10, liquidity)
+	if err != nil {
+		t.Fatalf("failed to stake token: %v", err)
+	}
+
+	currentTimestamp := time.Now().Unix() + 1
+	currentHeight := runtime.ChainHeight() + 1
+
+	reward := getMockInstance().calcPositionReward(currentHeight, currentTimestamp, positionId)
+
+	_, hasExternalReward := reward.External[incentiveId]
+	uassert.False(t, hasExternalReward)
+
+	penalty, hasPenalty := reward.ExternalPenalty[incentiveId]
+	uassert.True(t, hasPenalty)
+	uassert.True(t, penalty > 0)
 }
