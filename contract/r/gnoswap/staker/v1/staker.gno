@@ -461,6 +461,10 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 	toUserExternalReward := make(map[string]int64)
 	toUserExternalPenalty := make(map[string]int64)
 	for incentiveId, rewardAmount := range externalReward {
+		if rewardAmount == 0 && reward.ExternalPenalty[incentiveId] == 0 {
+			continue
+		}
+
 		incentive := s.getExternalIncentives().get(incentiveId)
 		incentiveResolver := NewExternalIncentiveResolver(incentive)
 		if !incentiveResolver.IsStarted(currentTime) {

@@ -82,10 +82,6 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 
 	// Initializes reward/penalty arrays for rewards and penalties for each warmup
 	warmups := len(deposit.Warmups())
-	internalRewards := make([]int64, warmups)
-	internalPenalties := make([]int64, warmups)
-	externalRewards := make([]map[string]int64, warmups)
-	externalPenalties := make([]map[string]int64, warmups)
 	rewardState := poolResolver.RewardStateOf(deposit)
 
 	// Calculate internal rewards regardless of current tier status
@@ -93,15 +89,17 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 	// This allows collecting rewards earned while the pool was in a tier,
 	// while preventing new rewards after tier removal
 	calculatedInternalRewards, calculatedInternalPenalties := rewardState.calculateInternalReward(lastCollectTime, param.CurrentTime)
-	copy(internalRewards, calculatedInternalRewards)
-	copy(internalPenalties, calculatedInternalPenalties)
-	rewardState.reset()
 
-	// Initialize maps for external rewards
-	for i := range externalRewards {
-		externalRewards[i] = make(map[string]int64)
-		externalPenalties[i] = make(map[string]int64)
+	rewards := make([]Reward, warmups)
+	for i := 0; i < warmups; i++ {
+		rewards[i] = Reward{
+			Internal:        calculatedInternalRewards[i],
+			InternalPenalty: calculatedInternalPenalties[i],
+			External:        make(map[string]int64),
+			ExternalPenalty: make(map[string]int64),
+		}
 	}
+	rewardState.reset()
 
 	// Query incentives only for the time window this position could actually earn rewards.
 	// Using the position's stake time as the lower bound avoids scanning incentives that ended
@@ -129,22 +127,21 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 		// Calculate reward for each warmup using per-incentive lastCollectTime
 		externalReward, externalPenalty := rewardState.calculateExternalReward(externalLastCollectTime, param.CurrentTime, incentive)
 
+		hasReward := false
 		for i := range externalReward {
-			externalRewards[i][incentiveId] = externalReward[i]
-			externalPenalties[i][incentiveId] = externalPenalty[i]
+			if externalReward[i] != 0 || externalPenalty[i] != 0 {
+				hasReward = true
+				rewards[i].External[incentiveId] = externalReward[i]
+				rewards[i].ExternalPenalty[incentiveId] = externalPenalty[i]
+			}
+		}
+
+		if !hasReward {
+			rewardState.reset()
+			continue
 		}
 
 		rewardState.reset()
-	}
-
-	rewards := make([]Reward, len(internalRewards))
-	for i := range internalRewards {
-		rewards[i] = Reward{
-			Internal:        internalRewards[i],
-			InternalPenalty: internalPenalties[i],
-			External:        externalRewards[i],
-			ExternalPenalty: externalPenalties[i],
-		}
 	}
 
 	return rewards
