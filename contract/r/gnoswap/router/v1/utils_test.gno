@@ -881,6 +881,21 @@ func TestSafeMulDivInt64(t *testing.T) {
 			shouldPanic: true,
 			panicMsg:    "[GNOSWAP-ROUTER-016] overflow",
 		},
+		{
+			name:     "minInt64 allow negative value",
+			a:        math.MinInt64,
+			b:        -100,
+			c:        -100,
+			expected: math.MinInt64,
+		},
+		{
+			name:        "minInt64 overflow on positive value",
+			a:           math.MinInt64,
+			b:           -100,
+			c:           100,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-ROUTER-016] overflow",
+		},
 	}
 
 	for _, tt := range tests {
