@@ -171,7 +171,7 @@ func TestEndExternalIncentive(t *testing.T) {
 
 			// Get incentiveResolver for the test
 			incentiveResolver, _ := poolResolver.IncentivesResolver().GetIncentiveResolver(incentiveId)
-			_, _, err := instance.endExternalIncentive(pool, incentiveResolver, tt.caller, tt.currentTime)
+			_, _, err := instance.endExternalIncentive(poolResolver, incentiveResolver, tt.caller, tt.currentTime)
 
 			if tt.expectError {
 				uassert.Error(t, err)
@@ -220,7 +220,7 @@ func TestArchiveEndedExternalIncentive(t *testing.T) {
 	uassert.True(t, exists)
 
 	// Archive the incentive
-	err := instance.archiveEndedExternalIncentive(incentive)
+	err := instance.archiveEndedExternalIncentive(poolResolver, incentive)
 	uassert.NoError(t, err)
 
 	archived := poolResolver.IncentivesResolver().IsArchived(incentiveId)
