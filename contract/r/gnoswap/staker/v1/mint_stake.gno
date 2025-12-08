@@ -88,7 +88,5 @@ func (s *stakerV1) MintAndStake(
 		referrer,
 	)
 
-	poolPath := s.StakeToken(positionId, referrer)
-
-	return positionId, liquidity, amount0, amount1, poolPath
+	return positionId, liquidity, amount0, amount1, s.StakeToken(positionId, referrer)
 }

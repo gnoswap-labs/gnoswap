@@ -89,7 +89,11 @@ func (d *Deposit) GetCollectedExternalReward(incentiveID string) (int64, bool) {
 		return 0, false
 	}
 
-	return value.(int64), true
+	v, ok := value.(int64)
+	if !ok {
+		panic("failed to cast value to int64")
+	}
+	return v, true
 }
 
 func (d *Deposit) SetCollectedExternalReward(incentiveID string, reward int64) {
@@ -119,7 +123,11 @@ func (d *Deposit) GetExternalRewardLastCollectTime(incentiveID string) (int64, b
 		return 0, false
 	}
 
-	return value.(int64), true
+	v, ok := value.(int64)
+	if !ok {
+		panic("failed to cast value to int64")
+	}
+	return v, true
 }
 
 func (d *Deposit) SetExternalRewardLastCollectTime(incentiveID string, currentTime int64) {

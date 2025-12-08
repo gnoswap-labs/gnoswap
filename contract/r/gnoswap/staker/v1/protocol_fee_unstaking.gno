@@ -5,8 +5,6 @@ import (
 	"chain/runtime"
 	"errors"
 
-	"gno.land/p/nt/ufmt"
-
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
