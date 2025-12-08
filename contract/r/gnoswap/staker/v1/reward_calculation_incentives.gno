@@ -54,7 +54,7 @@ func (self *IncentivesResolver) GetAllInTimestamps(startTimestamp, endTimestamp 
 	incentives := make(map[string]*sr.ExternalIncentive)
 
 	// Only iterate active incentives (not archived)
-	self.IncentiveTrees().Iterate("", "", func(key string, value any) bool {
+	self.IncentiveTrees().Iterate("", "", func(_ string, value any) bool {
 		incentive, ok := value.(*sr.ExternalIncentive)
 		if !ok {
 			return false

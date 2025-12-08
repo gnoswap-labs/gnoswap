@@ -249,7 +249,7 @@ func (s *stakerV1) GetPoolReward(tier uint64) int64 {
 // GetExternalIncentiveByPoolPath returns all external incentives for a pool.
 func (s *stakerV1) GetExternalIncentiveByPoolPath(poolPath string) []sr.ExternalIncentive {
 	incentives := []sr.ExternalIncentive{}
-	s.store.GetExternalIncentives().Iterate("", "", func(key string, value any) bool {
+	s.store.GetExternalIncentives().Iterate("", "", func(_ string, value any) bool {
 		incentive, ok := value.(*sr.ExternalIncentive)
 		if !ok {
 			panic("failed to cast value to *ExternalIncentive")

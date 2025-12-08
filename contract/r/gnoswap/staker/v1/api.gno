@@ -31,7 +31,7 @@ func (s *stakerV1) ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 	}
 
 	currentTime := time.Now().Unix()
-	poolResolver.IncentivesResolver().IncentiveTrees().Iterate("", "", func(key string, value any) bool {
+	poolResolver.IncentivesResolver().IncentiveTrees().Iterate("", "", func(_ string, value any) bool {
 		ictv, ok := value.(*sr.ExternalIncentive)
 		if !ok {
 			panic("failed to cast value to *ExternalIncentive")
@@ -60,13 +60,13 @@ func (s *stakerV1) ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 func (s *stakerV1) ApiGetExternalIncentives() string {
 	apiExternalIncentives := []ApiExternalIncentive{}
 
-	s.getPools().tree.Iterate("", "", func(key string, value any) bool {
+	s.getPools().tree.Iterate("", "", func(_ string, value any) bool {
 		pool, ok := value.(*sr.Pool)
 		if !ok {
 			panic("failed to cast value to *Pool")
 		}
 		poolResolver := NewPoolResolver(pool)
-		poolResolver.IncentivesResolver().IncentiveTrees().Iterate("", "", func(key string, value any) bool {
+		poolResolver.IncentivesResolver().IncentiveTrees().Iterate("", "", func(_ string, value any) bool {
 			ictv, ok := value.(*sr.ExternalIncentive)
 			if !ok {
 				panic("failed to cast value to *ExternalIncentive")
@@ -131,7 +131,7 @@ func (s *stakerV1) ApiGetExternalIncentivesByPoolPath(targetPoolPath string) str
 	}
 
 	poolResolver := NewPoolResolver(pool)
-	poolResolver.IncentivesResolver().IncentiveTrees().Iterate("", "", func(key string, value any) bool {
+	poolResolver.IncentivesResolver().IncentiveTrees().Iterate("", "", func(_ string, value any) bool {
 		incentive, ok := value.(*sr.ExternalIncentive)
 		if !ok {
 			panic("failed to cast value to *ExternalIncentive")
@@ -158,8 +158,7 @@ func (s *stakerV1) ApiGetExternalIncentivesByPoolPath(targetPoolPath string) str
 func (s *stakerV1) ApiGetInternalIncentives() string {
 	apiInternalIncentives := []ApiInternalIncentive{}
 
-	s.getPoolTier().membership.Iterate("", "", func(key string, value any) bool {
-		poolPath := key
+	s.getPoolTier().membership.Iterate("", "", func(poolPath string, value any) bool {
 		internalTier, ok := value.(uint64)
 		if !ok {
 			panic(ufmt.Sprintf("failed to cast value to uint64: %T", value))
@@ -201,8 +200,7 @@ func (s *stakerV1) ApiGetInternalIncentivesByPoolPath(targetPoolPath string) str
 func (s *stakerV1) ApiGetInternalIncentivesByTiers(targetTier uint64) string {
 	apiInternalIncentives := []ApiInternalIncentive{}
 
-	s.getPoolTier().membership.Iterate("", "", func(key string, value any) bool {
-		poolPath := key
+	s.getPoolTier().membership.Iterate("", "", func(poolPath string, value any) bool {
 		internalTier, ok := value.(uint64)
 		if !ok {
 			panic("failed to cast value to uint64")
