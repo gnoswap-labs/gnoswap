@@ -263,7 +263,46 @@ func (s *stakerV1) ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 	deposit := s.getDeposits().get(targetLpTokenId)
 
 	reward := s.calcPositionReward(runtime.ChainHeight(), time.Now().Unix(), targetLpTokenId)
+	rewards := s.buildApiRewards(deposit, reward)
 
+	// API returns gross rewards
+	// penalties/fees are not included.
+	rsps := make([]JsonResponse, len(rewards))
+	for i := range rewards {
+		rsps[i] = rewards[i]
+	}
+
+	return makeApiResponse(rsps)
+}
+
+// ApiGetStakesByLpTokenId returns stake information for a specific LP token ID.
+func (s *stakerV1) ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
+	stakes := []ApiStake{}
+
+	deposit := s.getDeposits().get(targetLpTokenId)
+	stk := newApiStake(targetLpTokenId, deposit)
+	stakes = append(stakes, stk)
+
+	rsps := make([]JsonResponse, len(stakes))
+	for i := range stakes {
+		rsps[i] = stakes[i]
+	}
+
+	return makeApiResponse(rsps)
+}
+
+// IsStaked checks if a position ID is currently staked.
+func (s *stakerV1) IsStaked(positionId uint64) bool {
+	return s.getDeposits().Has(positionId)
+}
+
+// formatInt formats an int64 value to string.
+func formatInt(value int64) string {
+	return strconv.FormatInt(value, 10)
+}
+
+// buildApiRewards converts calculated rewards into API response models.
+func (s *stakerV1) buildApiRewards(deposit *sr.Deposit, reward Reward) []ApiReward {
 	rewards := []ApiReward{}
 
 	if reward.Internal > 0 {
@@ -300,36 +339,5 @@ func (s *stakerV1) ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 		})
 	}
 
-	rsps := make([]JsonResponse, len(rewards))
-	for i := range rewards {
-		rsps[i] = rewards[i]
-	}
-
-	return makeApiResponse(rsps)
-}
-
-// ApiGetStakesByLpTokenId returns stake information for a specific LP token ID.
-func (s *stakerV1) ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
-	stakes := []ApiStake{}
-
-	deposit := s.getDeposits().get(targetLpTokenId)
-	stk := newApiStake(targetLpTokenId, deposit)
-	stakes = append(stakes, stk)
-
-	rsps := make([]JsonResponse, len(stakes))
-	for i := range stakes {
-		rsps[i] = stakes[i]
-	}
-
-	return makeApiResponse(rsps)
-}
-
-// IsStaked checks if a position ID is currently staked.
-func (s *stakerV1) IsStaked(positionId uint64) bool {
-	return s.getDeposits().Has(positionId)
-}
-
-// formatInt formats an int64 value to string.
-func formatInt(value int64) string {
-	return strconv.FormatInt(value, 10)
+	return rewards
 }

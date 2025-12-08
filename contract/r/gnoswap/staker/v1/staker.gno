@@ -595,6 +595,8 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 		depositResolver.addCollectedInternalReward(reward.Internal)
 	}
 
+	// Unclaimable must be processed after regular rewards so that accumulated
+	// unclaimable amounts are reset in the same collect window.
 	unClaimableInternal := s.processUnClaimableReward(depositResolver.TargetPoolPath(), currentTime)
 	if unClaimableInternal > 0 {
 		// internal unClaimable to community pool
