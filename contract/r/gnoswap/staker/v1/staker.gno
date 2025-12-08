@@ -293,7 +293,7 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 		))
 	}
 
-	err := s.poolHasIncentives(poolPath, pool)
+	err := s.poolHasIncentives(pool)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -789,7 +789,8 @@ func hasTokenOwnership(owner, caller address) error {
 }
 
 // poolHasIncentives checks if the pool has any active incentives (internal or external).
-func (s *stakerV1) poolHasIncentives(poolPath string, pool *sr.Pool) error {
+func (s *stakerV1) poolHasIncentives(pool *sr.Pool) error {
+	poolPath := pool.PoolPath()
 	hasInternal := s.getPoolTier().IsInternallyIncentivizedPool(poolPath)
 	hasExternal := NewPoolResolver(pool).IsExternallyIncentivizedPool()
 
