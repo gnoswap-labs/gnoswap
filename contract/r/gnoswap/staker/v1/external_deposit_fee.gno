@@ -54,10 +54,10 @@ func (s *stakerV1) GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64,
 func (s *stakerV1) SetDepositGnsAmount(amount int64) {
 	halt.AssertIsNotHaltedStaker()
 
-	assertIsValidAmount(amount)
-
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
+
+	assertIsValidAmount(amount)
 
 	prevDepositGnsAmount := s.GetDepositGnsAmount()
 	s.setDepositGnsAmount(amount)
@@ -77,11 +77,11 @@ func (s *stakerV1) SetDepositGnsAmount(amount int64) {
 func (s *stakerV1) SetMinimumRewardAmount(amount int64) {
 	halt.AssertIsNotHaltedStaker()
 
-	assertIsValidAmount(amount)
-
 	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
+
+	assertIsValidAmount(amount)
 
 	prevMinimumRewardAmount := s.getMinimumRewardAmount()
 	s.setMinimumRewardAmount(amount)

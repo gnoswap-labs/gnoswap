@@ -1,11 +1,11 @@
 package v1
 
 import (
+	"errors"
 	"testing"
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
-	"gno.land/p/nt/ufmt"
 	"gno.land/r/gnoswap/access"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -209,7 +209,7 @@ func TestModifyTokenList(t *testing.T) {
 			caller:         getAdminAddress(t),
 			inputTokenPath: GNS_PATH,
 			inputValidator: func(tokenPath string) error {
-				return ufmt.Errorf("validation failure")
+				return errors.New("validation failure")
 			},
 			inputExecutor:         addTokenExecutor,
 			expectedAllowedTokens: []string{GNS_PATH, GNOT_DENOM},

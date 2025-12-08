@@ -132,7 +132,7 @@ func (self *PoolResolver) TickResolver(tickId int32) *TickResolver {
 func (self *PoolResolver) IsExternallyIncentivizedPool() bool {
 	currentTime := time.Now().Unix()
 	hasActive := false
-	self.Incentives().IncentiveTrees().Iterate("", "", func(key string, value interface{}) bool {
+	self.Incentives().IncentiveTrees().Iterate("", "", func(key string, value any) bool {
 		incentive, ok := value.(*sr.ExternalIncentive)
 		if !ok {
 			panic("failed to cast value to *ExternalIncentive")

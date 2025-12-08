@@ -51,13 +51,13 @@ func (s *stakerV1) handleStakingRewardFee(
 // SetUnStakingFee sets the unstaking fee rate in basis points.
 // Only admin or governance can call this function.
 func (s *stakerV1) SetUnStakingFee(fee int64) {
-	assertIsValidFeeRate(fee)
-
 	halt.AssertIsNotHaltedStaker()
 
 	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
+
+	assertIsValidFeeRate(fee)
 
 	prevUnStakingFee := s.GetUnstakingFee()
 

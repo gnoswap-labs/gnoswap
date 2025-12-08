@@ -47,12 +47,12 @@ func (s *stakerV1) SetPoolTier(poolPath string, tier uint64) {
 func (s *stakerV1) ChangePoolTier(poolPath string, tier uint64) {
 	halt.AssertIsNotHaltedStaker()
 
-	assertIsPoolExists(s, poolPath)
-	assertIsValidPoolTier(tier)
-
 	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
+
+	assertIsPoolExists(s, poolPath)
+	assertIsValidPoolTier(tier)
 
 	currentTime := time.Now().Unix()
 	previousTier, newTier := s.changePoolTier(poolPath, tier, currentTime)
@@ -74,11 +74,11 @@ func (s *stakerV1) ChangePoolTier(poolPath string, tier uint64) {
 func (s *stakerV1) RemovePoolTier(poolPath string) {
 	halt.AssertIsNotHaltedStaker()
 
-	assertIsPoolExists(s, poolPath)
-
 	previousRealm := runtime.PreviousRealm()
 	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
+
+	assertIsPoolExists(s, poolPath)
 
 	currentTime := time.Now().Unix()
 	s.removePoolTier(poolPath, currentTime)
