@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"math"
 	"strconv"
 	"strings"
 	"testing"
@@ -840,8 +841,7 @@ func TestSafeMulDivInt64(t *testing.T) {
 			a:           1,
 			b:           1,
 			c:           100,
-			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-ROUTER-021] invalid swap amount",
+			shouldPanic: false,
 		},
 		// Negative values
 		{
@@ -872,6 +872,14 @@ func TestSafeMulDivInt64(t *testing.T) {
 			b:        50,
 			c:        100,
 			expected: 500000000000,
+		},
+		{
+			name:        "int64 overflow on final conversion",
+			a:           math.MaxInt64,
+			b:           200,
+			c:           100,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-ROUTER-016] overflow",
 		},
 	}
 

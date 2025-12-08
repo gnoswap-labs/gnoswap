@@ -1934,7 +1934,7 @@ func TestSwapProcessor_ProcessSwapAmount_ExtremeValues(t *testing.T) {
 			name:            "zero amount with any quote",
 			amountSpecified: 0,
 			quote:           "50",
-			expectError:     false,
+			expectError:     true,
 			expectZero:      true,
 		},
 	}

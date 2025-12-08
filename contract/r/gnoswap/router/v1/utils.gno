@@ -30,7 +30,12 @@ func calculateSwapAmountByQuote(amountSpecified int64, quote string) (int64, err
 		return 0, ufmt.Errorf(ErrInvalidQuoteRange, quoteInt, MinQuotePercentage, MaxQuotePercentage)
 	}
 
-	return safeMulDivInt64(amountSpecified, quoteInt, PERCENTAGE_DENOMINATOR), nil
+	toSwap := safeMulDivInt64(amountSpecified, quoteInt, PERCENTAGE_DENOMINATOR)
+	if toSwap == 0 {
+		return 0, errInvalidSwapAmount
+	}
+
+	return toSwap, nil
 }
 
 // assertHopsInRange ensures the number of hops is within the valid range of 1-3.
@@ -433,17 +438,17 @@ func safeMulDivInt64(a, b, c int64) int64 {
 	}
 
 	// calculate amount to swap for this route
-	toSwap, overflow := i256.Zero().MulOverflow(i256.NewInt(a), i256.NewInt(b))
+	result, overflow := i256.Zero().MulOverflow(i256.NewInt(a), i256.NewInt(b))
 	if overflow {
 		panic(errOverFlow)
 	}
 
-	toSwap = i256.Zero().Div(toSwap, i256.NewInt(PERCENTAGE_DENOMINATOR))
-	if toSwap.IsZero() {
-		panic(errInvalidSwapAmount)
+	result = i256.Zero().Div(result, i256.NewInt(c))
+	if !result.IsInt64() {
+		panic(errOverFlow)
 	}
 
-	return toSwap.Int64()
+	return result.Int64()
 }
 
 func absInt64(a int64) int64 {
