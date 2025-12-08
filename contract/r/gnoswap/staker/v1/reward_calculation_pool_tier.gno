@@ -339,19 +339,17 @@ func (self *PoolTier) CurrentRewardPerPool(poolPath string) int64 {
 		return 0 // Pool not in any tier
 	}
 
-	emission := self.getEmission()
-	counts := self.CurrentAllTierCounts()
-
 	tierRatio, err := self.tierRatio.Get(tierNum)
 	if err != nil {
 		panic(makeErrorWithDetails(errInvalidPoolTier, err.Error()))
 	}
 	tierRatioInt64 := int64(tierRatio)
-	tierCount := int64(counts[tierNum])
 
+	counts := self.CurrentAllTierCounts()
+	tierCount := int64(counts[tierNum])
 	if tierCount == 0 {
 		return 0 // No pools in tier
 	}
 
-	return ((emission * tierRatioInt64) / 100) / tierCount
+	return ((self.getEmission() * tierRatioInt64) / 100) / tierCount
 }
