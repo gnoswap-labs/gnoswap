@@ -218,7 +218,7 @@ func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *
 
 	self.tierRatio = TierRatioFromCounts(self.counts[Tier1], self.counts[Tier2], self.counts[Tier3])
 	currentEmission := self.getEmission()
-	tierRewards := self.computeTierRewards(self.counts[:], currentEmission)
+	tierRewards := self.computeTierRewards(currentEmission)
 
 	// Cache updated reward for each tiered pool
 	self.membership.Iterate("", "", func(key string, value any) bool {
@@ -286,7 +286,7 @@ func (self *PoolTier) cacheReward(currentHeight int64, currentTimestamp int64, p
 func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentTimestamp, emissionInThisInterval int64) {
 	// calculate denominator and number of pools in each tier
 	counts := self.CurrentAllTierCounts()
-	tierRewards := self.computeTierRewards(counts, emissionInThisInterval)
+	tierRewards := self.computeTierRewards(emissionInThisInterval)
 
 	// apply cache to all pools
 	self.membership.Iterate("", "", func(key string, value any) bool {
@@ -370,11 +370,11 @@ func calculatePoolReward(emission int64, tierRatio int64, tierCount int64) int64
 }
 
 // computeTierRewards caches per-tier pool rewards to avoid recalculating for each pool iteration.
-func (self *PoolTier) computeTierRewards(counts []uint64, emission int64) map[uint64]int64 {
+func (self *PoolTier) computeTierRewards(emission int64) map[uint64]int64 {
 	tierRewards := make(map[uint64]int64, AllTierCount-1)
 
 	for tierNum := uint64(1); tierNum < AllTierCount; tierNum++ {
-		tierCount := int64(counts[tierNum])
+		tierCount := int64(self.counts[tierNum])
 		if tierCount == 0 {
 			continue
 		}
