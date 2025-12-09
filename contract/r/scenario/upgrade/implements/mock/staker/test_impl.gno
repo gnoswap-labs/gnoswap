@@ -378,13 +378,6 @@ func (t *TestStaker) GetPoolTierRatio(poolPath string) uint64 {
 	).(uint64)
 }
 
-func (t *TestStaker) GetPrintExternalInfo() string {
-	return t.ExecuteFn(
-		"GetPrintExternalInfo",
-		func(args ...any) any { return t.instance.GetPrintExternalInfo() },
-	).(string)
-}
-
 func (t *TestStaker) GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool) {
 	result := t.ExecuteFn(
 		"GetSpecificTokenMinimumRewardAmount",

@@ -1,9 +1,6 @@
 package v1
 
 import (
-	"strconv"
-	"strings"
-
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -15,36 +12,6 @@ var (
 	zeroUint256 = u256.Zero()
 	zeroInt256  = i256.Zero()
 )
-
-// EncodeInt takes an int32 and returns a zero-padded decimal string
-// with up to 10 digits for the absolute value.
-// If the number is negative, the '-' sign comes first, followed by zeros, then digits.
-func EncodeInt(num int32) string {
-	// Convert the absolute value to a decimal string.
-	absValue := int64(num)
-	isNegative := false
-	if num < 0 {
-		isNegative = true
-		absValue = -absValue // Safely negate into int64 to avoid overflow.
-	}
-
-	s := strconv.FormatInt(absValue, 10)
-
-	// Zero-pad to a total of 10 digits for the absolute value.
-	// (The '-' sign will be added later if needed.)
-	zerosNeeded := 10 - len(s)
-	if zerosNeeded < 0 {
-		zerosNeeded = 0
-	}
-
-	padded := strings.Repeat("0", zerosNeeded) + s
-
-	// If the original number was negative, prepend '-'.
-	if isNegative {
-		return "-" + padded
-	}
-	return padded
-}
 
 type TickResolver struct {
 	*sr.Tick

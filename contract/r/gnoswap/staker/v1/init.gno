@@ -203,19 +203,20 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 }
 
 func initializePoolTier(stakerStore sr.IStakerStore) (*PoolTier, *Pools) {
-	// Initialize tier 1 with GNOT:GNS 0.3% pool
+	basicPoolPath := "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:3000"
+
 	pools := NewPools()
-	pl := NewPools().GetPoolOrNil(MUST_EXISTS_IN_TIER_1)
+	pl := NewPools().GetPoolOrNil(basicPoolPath)
 	if pl == nil {
-		pl = sr.NewPool(MUST_EXISTS_IN_TIER_1, time.Now().Unix())
-		pools.set(MUST_EXISTS_IN_TIER_1, pl)
+		pl = sr.NewPool(basicPoolPath, time.Now().Unix())
+		pools.set(basicPoolPath, pl)
 	}
 
 	poolTier := NewPoolTier(
 		pools,
 		runtime.ChainHeight(),
 		time.Now().Unix(),
-		MUST_EXISTS_IN_TIER_1,
+		basicPoolPath,
 		emission.GetStakerEmissionAmountPerSecond,
 		emission.GetStakerEmissionAmountPerSecondInRange,
 	)

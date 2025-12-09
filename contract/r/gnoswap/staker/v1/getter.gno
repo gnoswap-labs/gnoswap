@@ -2,7 +2,6 @@ package v1
 
 import (
 	"chain/runtime"
-	"strconv"
 	"time"
 
 	"gno.land/p/nt/ufmt"
@@ -250,7 +249,7 @@ func (s *stakerV1) GetPoolReward(tier uint64) int64 {
 // GetExternalIncentiveByPoolPath returns all external incentives for a pool.
 func (s *stakerV1) GetExternalIncentiveByPoolPath(poolPath string) []sr.ExternalIncentive {
 	incentives := []sr.ExternalIncentive{}
-	s.store.GetExternalIncentives().Iterate("", "", func(key string, value any) bool {
+	s.store.GetExternalIncentives().Iterate("", "", func(_ string, value any) bool {
 		incentive, ok := value.(*sr.ExternalIncentive)
 		if !ok {
 			panic("failed to cast value to *ExternalIncentive")
@@ -262,71 +261,6 @@ func (s *stakerV1) GetExternalIncentiveByPoolPath(poolPath string) []sr.External
 	})
 
 	return incentives
-}
-
-// GetPrintExternalInfo returns a JSON representation of external incentive debug information.
-func (s *stakerV1) GetPrintExternalInfo() string {
-	externalDebug := ApiExternalDebugInfo{
-		Height: runtime.ChainHeight(),
-		Time:   time.Now().Unix(),
-	}
-
-	externalPositions := []ApiExternalDebugPosition{}
-	s.getDeposits().Iterate(uint64(0), uint64(s.getDeposits().Size()), func(positionId uint64, deposit *sr.Deposit) bool {
-		externalPosition := ApiExternalDebugPosition{
-			PositionId:      positionId,
-			StakedTime:      deposit.StakeTime(),
-			StakedTimestamp: deposit.StakeTime(),
-		}
-
-		externalIncentivesList := []ApiExternalDebugIncentive{}
-		s.store.GetExternalIncentives().Iterate("", "", func(key string, value any) bool {
-			incentive, ok := value.(*sr.ExternalIncentive)
-			if !ok {
-				panic("failed to cast value to *ExternalIncentive")
-			}
-
-			incentiveResolver := NewExternalIncentiveResolver(incentive)
-
-			if incentive.TargetPoolPath() == deposit.TargetPoolPath() {
-				externalIncentive := ApiExternalDebugIncentive{
-					PoolPath:          incentive.TargetPoolPath(),
-					IncentiveId:       key,
-					RewardToken:       incentive.RewardToken(),
-					RewardAmount:      strconv.FormatInt(incentive.RewardAmount(), 10),
-					StartTimestamp:    incentive.StartTimestamp(),
-					EndTimestamp:      incentive.EndTimestamp(),
-					RewardPerSecond:   strconv.FormatInt(incentive.RewardPerSecond(), 10),
-					Refundee:          incentive.Refundee(),
-					TokenAmountFull:   incentive.DepositGnsAmount(),
-					TokenAmountToGive: incentiveResolver.RewardSpent(time.Now().Unix()),
-				}
-
-				externalIncentivesList = append(externalIncentivesList, externalIncentive)
-			}
-			return false
-		})
-
-		externalPosition.Incentive = externalIncentivesList
-		externalPositions = append(externalPositions, externalPosition)
-		return false
-	})
-
-	externalDebug.Position = externalPositions
-
-	// JSON Serialization
-	node := json.ObjectNode("", map[string]*json.Node{
-		"height":   json.NumberNode("", float64(externalDebug.Height)),
-		"time":     json.NumberNode("", float64(externalDebug.Time)),
-		"position": json.ArrayNode("", makeExternalPositionsNode(externalDebug.Position)),
-	})
-
-	b, err := json.Marshal(node)
-	if err != nil {
-		return "JSON MARSHAL ERROR"
-	}
-
-	return string(b)
 }
 
 func (s *stakerV1) IsArchivedExternalIncentive(incentiveId string) bool {

@@ -169,7 +169,9 @@ func TestEndExternalIncentive(t *testing.T) {
 			incentive.SetRefunded(false)
 			poolResolver.IncentivesResolver().update(creator, incentive)
 
-			_, _, err := instance.endExternalIncentive(pool, incentiveId, tt.caller, tt.currentTime)
+			// Get incentiveResolver for the test
+			incentiveResolver, _ := poolResolver.IncentivesResolver().GetIncentiveResolver(incentiveId)
+			_, _, err := instance.endExternalIncentive(poolResolver, incentiveResolver, tt.caller, tt.currentTime)
 
 			if tt.expectError {
 				uassert.Error(t, err)
@@ -211,17 +213,18 @@ func TestArchiveEndedExternalIncentive(t *testing.T) {
 
 	// Add incentive to pool
 	poolResolver := NewPoolResolver(pool)
-	poolResolver.IncentivesResolver().create(testutils.TestAddress("creator"), incentive)
+	incentivesResolver := poolResolver.IncentivesResolver()
+	incentivesResolver.create(testutils.TestAddress("creator"), incentive)
 
 	// Verify incentive exists before archiving
-	_, exists := poolResolver.IncentivesResolver().Get(incentiveId)
+	_, exists := incentivesResolver.Get(incentiveId)
 	uassert.True(t, exists)
 
 	// Archive the incentive
-	err := instance.archiveEndedExternalIncentive(incentive)
+	err := instance.archiveEndedExternalIncentive(incentivesResolver, incentive)
 	uassert.NoError(t, err)
 
-	archived := poolResolver.IncentivesResolver().IsArchived(incentiveId)
+	archived := incentivesResolver.IsArchived(incentiveId)
 	if err == nil {
 		uassert.True(t, archived, "incentive should be archived")
 	} else {

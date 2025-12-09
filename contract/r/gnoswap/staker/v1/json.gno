@@ -50,10 +50,8 @@ type ApiExternalIncentive struct {
 
 func newApiExternalIncentive(ictv *sr.ExternalIncentive) ApiExternalIncentive {
 	now := time.Now().Unix()
-	isActive := false
-	if now >= ictv.StartTimestamp() && now <= ictv.EndTimestamp() {
-		isActive = true
-	}
+	isActive := now >= ictv.StartTimestamp() && now <= ictv.EndTimestamp()
+
 	return ApiExternalIncentive{
 		IncentiveId:      ictv.IncentiveId(),
 		PoolPath:         ictv.TargetPoolPath(),
@@ -71,11 +69,6 @@ func newApiExternalIncentive(ictv *sr.ExternalIncentive) ApiExternalIncentive {
 }
 
 func (r ApiExternalIncentive) JSON() *json.Node {
-	active := false
-	if time.Now().Unix() >= r.StartTimestamp && time.Now().Unix() <= r.EndTimestamp {
-		active = true
-	}
-
 	return json.ObjectNode("", map[string]*json.Node{
 		"incentiveId":      json.StringNode("incentiveId", r.IncentiveId),
 		"poolPath":         json.StringNode("poolPath", r.PoolPath),
@@ -83,7 +76,7 @@ func (r ApiExternalIncentive) JSON() *json.Node {
 		"rewardAmount":     json.StringNode("rewardAmount", strconv.FormatInt(r.RewardAmount, 10)),
 		"startTimestamp":   json.NumberNode("startTimestamp", float64(r.StartTimestamp)),
 		"endTimestamp":     json.NumberNode("endTimestamp", float64(r.EndTimestamp)),
-		"active":           json.BoolNode("active", active),
+		"active":           json.BoolNode("active", r.Active),
 		"rewardPerSecond":  json.StringNode("rewardPerSecond", strconv.FormatInt(r.RewardPerSecond, 10)),
 		"refundee":         json.StringNode("refundee", r.Refundee),
 		"createdHeight":    json.NumberNode("createdHeight", float64(r.CreatedHeight)),
@@ -260,16 +253,7 @@ func makeRewardsArray(rewards []ApiReward) []*json.Node {
 	rewardsArray := make([]*json.Node, len(rewards))
 
 	for i, reward := range rewards {
-		rewardsArray[i] = json.ObjectNode("", map[string]*json.Node{
-			"incentiveType":     json.StringNode("incentiveType", reward.IncentiveType),
-			"incentiveId":       json.StringNode("incentiveId", reward.IncentiveId),
-			"targetPoolPath":    json.StringNode("targetPoolPath", reward.TargetPoolPath),
-			"rewardTokenPath":   json.StringNode("rewardTokenPath", reward.RewardTokenPath),
-			"rewardTokenAmount": json.NumberNode("rewardTokenAmount", float64(reward.RewardTokenAmount)),
-			"stakeTimestamp":    json.NumberNode("stakeTimestamp", float64(reward.StakeTimestamp)),
-			"stakeTime":         json.NumberNode("stakeTime", float64(reward.StakeTime)),
-			"incentiveStart":    json.NumberNode("incentiveStart", float64(reward.IncentiveStart)),
-		})
+		rewardsArray[i] = reward.JSON()
 	}
 	return rewardsArray
 }

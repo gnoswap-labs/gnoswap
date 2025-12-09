@@ -558,3 +558,26 @@ func mockInstanceSetPoolTier(poolPath string, tier uint64) {
 		getMockInstance().SetPoolTier(poolPath, tier)
 	}(cross)
 }
+
+func mockInstanceSetWarmupPeriod(poolPath string, warmupPeriod int64) {
+	// SetWarmUp is a global function that takes percentage and time duration
+	// For test purposes, we'll use 30% and the provided warmup period as duration
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+		getMockInstance().SetWarmUp(30, warmupPeriod)
+	}(cross)
+}
+
+func mockInstanceUnStakeToken(positionId uint64, unwrapResult bool) string {
+	var poolPath string
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm(stakerPackagePath))
+		poolPath = getMockInstance().UnStakeToken(positionId, unwrapResult)
+	}(cross)
+	return poolPath
+}
+
+func getPositionOperator(positionId uint64) address {
+	testing.SetRealm(adminRealm)
+	return pn.GetPositionOperator(positionId)
+}

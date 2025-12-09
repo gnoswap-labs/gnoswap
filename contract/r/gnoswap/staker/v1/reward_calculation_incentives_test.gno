@@ -535,9 +535,48 @@ func TestEndUnclaimablePeriod(t *testing.T) {
 	}
 }
 
-// Note: calculateUnclaimableReward is indirectly tested through calculateUnClaimableDuration tests
-// Direct testing of calculateUnclaimableReward is complex due to shared pool state
-// The core logic is validated through TestCalculateUnClaimableDuration below
+func TestCalculateUnclaimableReward_MultipleUnclaimablePeriods(t *testing.T) {
+	poolPath := "test_pool_unclaimable_reward"
+	creator := testutils.TestAddress("creator")
+	currentTime := time.Now().Unix()
+
+	pool := sr.NewPool(poolPath, currentTime)
+	poolResolver := NewPoolResolver(pool)
+	incentives := poolResolver.IncentivesResolver()
+
+	// Clear the initial unclaimable period created with the pool so we can control the windows.
+	incentives.endUnclaimablePeriod(currentTime)
+
+	incentive := sr.NewExternalIncentive(
+		"incentive_multiple_unclaimable",
+		poolPath,
+		GNS_PATH,
+		300,
+		currentTime,
+		currentTime+100,
+		creator,
+		100,
+		runtime.ChainHeight(),
+		currentTime,
+		false,
+	)
+	incentives.create(creator, incentive)
+
+	// Two separate unclaimable windows inside the incentive duration
+	incentives.startUnclaimablePeriod(currentTime + 10)
+	incentives.endUnclaimablePeriod(currentTime + 20)
+	incentives.startUnclaimablePeriod(currentTime + 40)
+	incentives.endUnclaimablePeriod(currentTime + 60)
+
+	got := incentives.calculateUnclaimableReward(incentive.IncentiveId())
+
+	expectedDuration := int64(30) // (20-10) + (60-40)
+	expected := expectedDuration * incentive.RewardPerSecond()
+
+	if got != expected {
+		t.Fatalf("expected unclaimable reward %d, got %d", expected, got)
+	}
+}
 
 // Test calculateUnClaimableDuration function
 func TestCalculateUnClaimableDuration(t *testing.T) {
@@ -628,5 +667,203 @@ func TestNewIncentivesResolver(t *testing.T) {
 	}
 	if resolver.Incentives == nil {
 		t.Fatal("resolver.Incentives should not be nil")
+	}
+}
+
+// Test 1: Ongoing unclaimable period with end = 0
+func TestCalculateUnclaimableReward_OngoingPeriod(t *testing.T) {
+	poolPath := "test_pool_ongoing_unclaimable"
+	creator := testutils.TestAddress("creator")
+	currentTime := time.Now().Unix()
+
+	pool := sr.NewPool(poolPath, currentTime)
+	poolResolver := NewPoolResolver(pool)
+	incentives := poolResolver.IncentivesResolver()
+
+	// Clear the initial unclaimable period
+	incentives.endUnclaimablePeriod(currentTime)
+
+	// Create incentive from currentTime to currentTime+100
+	incentive := sr.NewExternalIncentive(
+		"incentive_ongoing",
+		poolPath,
+		GNS_PATH,
+		1000, // 10 tokens per second
+		currentTime,
+		currentTime+100,
+		creator,
+		100,
+		runtime.ChainHeight(),
+		currentTime,
+		false,
+	)
+	incentives.create(creator, incentive)
+
+	// Start an unclaimable period at currentTime+30 that is still ongoing (end = 0)
+	incentives.startUnclaimablePeriod(currentTime + 30)
+
+	// Calculate unclaimable reward
+	got := incentives.calculateUnclaimableReward(incentive.IncentiveId())
+
+	// Expected: from currentTime+30 to incentive end (currentTime+100), which is 70 seconds
+	expectedDuration := int64(70)
+	expected := expectedDuration * incentive.RewardPerSecond()
+
+	if got != expected {
+		t.Fatalf("expected unclaimable reward %d for ongoing period, got %d", expected, got)
+	}
+}
+
+// Test 2: Overlapping/merged windows
+func TestCalculateUnclaimableReward_OverlappingWindows(t *testing.T) {
+	poolPath := "test_pool_overlapping_unclaimable"
+	creator := testutils.TestAddress("creator")
+	currentTime := time.Now().Unix()
+
+	pool := sr.NewPool(poolPath, currentTime)
+	poolResolver := NewPoolResolver(pool)
+	incentives := poolResolver.IncentivesResolver()
+
+	// Clear the initial unclaimable period
+	incentives.endUnclaimablePeriod(currentTime)
+
+	// Create incentive from currentTime to currentTime+100
+	incentive := sr.NewExternalIncentive(
+		"incentive_overlapping",
+		poolPath,
+		GNS_PATH,
+		1000, // 10 tokens per second
+		currentTime,
+		currentTime+100,
+		creator,
+		100,
+		runtime.ChainHeight(),
+		currentTime,
+		false,
+	)
+	incentives.create(creator, incentive)
+
+	// Create overlapping unclaimable periods: [10,30] and [20,40]
+	// These should merge to effectively [10,40] = 30 seconds total
+	incentives.startUnclaimablePeriod(currentTime + 10)
+	incentives.endUnclaimablePeriod(currentTime + 30)
+	incentives.startUnclaimablePeriod(currentTime + 20)
+	incentives.endUnclaimablePeriod(currentTime + 40)
+
+	// Calculate unclaimable reward
+	got := incentives.calculateUnclaimableReward(incentive.IncentiveId())
+
+	// Expected: Two windows [10,30] = 20 seconds and [20,40] = 20 seconds
+	// Total unclaimable duration = 40 seconds (not 30 as overlap is counted)
+	expectedDuration := int64(40) // Both periods contribute fully
+	expected := expectedDuration * incentive.RewardPerSecond()
+
+	if got != expected {
+		t.Fatalf("expected unclaimable reward %d for overlapping periods, got %d", expected, got)
+	}
+}
+
+// Test 3: Adjacent windows
+func TestCalculateUnclaimableReward_AdjacentWindows(t *testing.T) {
+	poolPath := "test_pool_adjacent_unclaimable"
+	creator := testutils.TestAddress("creator")
+	currentTime := time.Now().Unix()
+
+	pool := sr.NewPool(poolPath, currentTime)
+	poolResolver := NewPoolResolver(pool)
+	incentives := poolResolver.IncentivesResolver()
+
+	// Clear the initial unclaimable period
+	incentives.endUnclaimablePeriod(currentTime)
+
+	// Create incentive from currentTime to currentTime+100
+	incentive := sr.NewExternalIncentive(
+		"incentive_adjacent",
+		poolPath,
+		GNS_PATH,
+		1000, // 10 tokens per second
+		currentTime,
+		currentTime+100,
+		creator,
+		100,
+		runtime.ChainHeight(),
+		currentTime,
+		false,
+	)
+	incentives.create(creator, incentive)
+
+	// Create adjacent unclaimable periods: [10,20] and [20,30]
+	// These are back-to-back and should not overlap or have gaps
+	incentives.startUnclaimablePeriod(currentTime + 10)
+	incentives.endUnclaimablePeriod(currentTime + 20)
+	incentives.startUnclaimablePeriod(currentTime + 20)
+	incentives.endUnclaimablePeriod(currentTime + 30)
+
+	// Calculate unclaimable reward
+	got := incentives.calculateUnclaimableReward(incentive.IncentiveId())
+
+	// Expected: [10,20] = 10 seconds and [20,30] = 10 seconds
+	// Total = 20 seconds (no overlap, no gap)
+	expectedDuration := int64(20)
+	expected := expectedDuration * incentive.RewardPerSecond()
+
+	if got != expected {
+		t.Fatalf("expected unclaimable reward %d for adjacent periods, got %d", expected, got)
+	}
+}
+
+// Test 4: Outside-range windows
+func TestCalculateUnclaimableReward_OutsideRangeWindows(t *testing.T) {
+	poolPath := "test_pool_outside_unclaimable"
+	creator := testutils.TestAddress("creator")
+	currentTime := time.Now().Unix()
+
+	pool := sr.NewPool(poolPath, currentTime)
+	poolResolver := NewPoolResolver(pool)
+	incentives := poolResolver.IncentivesResolver()
+
+	// Clear the initial unclaimable period
+	incentives.endUnclaimablePeriod(currentTime)
+
+	// Create incentive from currentTime+50 to currentTime+150
+	incentive := sr.NewExternalIncentive(
+		"incentive_outside",
+		poolPath,
+		GNS_PATH,
+		1000, // 10 tokens per second
+		currentTime+50,
+		currentTime+150,
+		creator,
+		100,
+		runtime.ChainHeight(),
+		currentTime,
+		false,
+	)
+	incentives.create(creator, incentive)
+
+	// Create unclaimable periods fully outside the incentive range
+	// Period before incentive starts: [10,30]
+	incentives.startUnclaimablePeriod(currentTime + 10)
+	incentives.endUnclaimablePeriod(currentTime + 30)
+
+	// Period after incentive ends: [200,250]
+	incentives.startUnclaimablePeriod(currentTime + 200)
+	incentives.endUnclaimablePeriod(currentTime + 250)
+
+	// Add one period that partially overlaps: [140,160]
+	// Only [140,150] should count = 10 seconds
+	incentives.startUnclaimablePeriod(currentTime + 140)
+	incentives.endUnclaimablePeriod(currentTime + 160)
+
+	// Calculate unclaimable reward
+	got := incentives.calculateUnclaimableReward(incentive.IncentiveId())
+
+	// Expected: Only the overlapping part [140,150] = 10 seconds
+	// The periods [10,30] and [200,250] contribute 0
+	expectedDuration := int64(10)
+	expected := expectedDuration * incentive.RewardPerSecond()
+
+	if got != expected {
+		t.Fatalf("expected unclaimable reward %d for outside-range periods, got %d", expected, got)
 	}
 }

@@ -15,22 +15,6 @@ import (
 	"gno.land/r/gnoswap/rbac"
 )
 
-// GetOrigPkgAddr returns the original package address.
-func GetOrigPkgAddr() address {
-	return stakerAddr
-}
-
-// poolPathAlign ensures pool path tokens are in lexicographical order.
-func poolPathAlign(poolPath string) string {
-	pToken0, pToken1, fee := poolPathDivide(poolPath)
-
-	if pToken0 < pToken1 {
-		return ufmt.Sprintf("%s:%s:%s", pToken0, pToken1, fee)
-	}
-
-	return ufmt.Sprintf("%s:%s:%s", pToken1, pToken0, fee)
-}
-
 // poolPathDivide splits a pool path into token addresses and fee tier.
 func poolPathDivide(poolPath string) (string, string, string) {
 	res := strings.Split(poolPath, ":")
@@ -155,14 +139,11 @@ func getRoleAddress(role prbac.SystemRole) address {
 //     the overflow and the original value.
 func safeConvertToInt64(value *u256.Uint) int64 {
 	const INT64_MAX = 9223372036854775807
-	const MAX_INT64 = "9223372036854775807"
-
 	res, overflow := value.Uint64WithOverflow()
 	if overflow || res > uint64(INT64_MAX) {
 		panic(ufmt.Sprintf(
-			"amount(%s) overflows int64 range (max %s)",
+			"amount(%s) overflows int64 range (max: 9223372036854775807)",
 			value.ToString(),
-			MAX_INT64,
 		))
 	}
 	return int64(res)

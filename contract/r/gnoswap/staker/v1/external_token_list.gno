@@ -20,18 +20,19 @@ var defaultAllowed = []string{GNOT_DENOM, GNS_PATH}
 // Panics:
 //   - If the caller is not the admin
 func (s *stakerV1) AddToken(tokenPath string) {
-	caller := runtime.PreviousRealm().Address()
 	halt.AssertIsNotHaltedStaker()
+
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	if err := modifyTokenList(s, tokenPath, addTokenValidator, addTokenExecutor); err != nil {
 		panic(err.Error())
 	}
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"AddToken",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"tokenPath", tokenPath,
 	)
@@ -48,18 +49,19 @@ func (s *stakerV1) AddToken(tokenPath string) {
 // Panics:
 //   - If the caller is not the admin
 func (s *stakerV1) RemoveToken(tokenPath string) {
-	caller := runtime.PreviousRealm().Address()
 	halt.AssertIsNotHaltedStaker()
+
+	previousRealm := runtime.PreviousRealm()
+	caller := previousRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
 	if err := modifyTokenList(s, tokenPath, removeTokenValidator, removeTokenExecutor); err != nil {
 		panic(err.Error())
 	}
 
-	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
 		"RemoveToken",
-		"prevAddr", previousRealm.Address().String(),
+		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),
 		"tokenPath", tokenPath,
 	)

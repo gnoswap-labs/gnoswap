@@ -17,7 +17,7 @@ func (gs *govStakerV1) GetLockedAmount() int64 {
 	lockedAmount := int64(0)
 
 	delegations := gs.store.GetAllDelegations()
-	delegations.Iterate("", "", func(key string, value any) bool {
+	delegations.Iterate("", "", func(_ string, value any) bool {
 		delegation, ok := value.(*staker.Delegation)
 		if !ok {
 			panic(ufmt.Sprintf("failed to cast delegations's element to *Delegation: %T", value))

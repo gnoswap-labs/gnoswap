@@ -349,7 +349,7 @@ func TestHandleStakingRewardFeeEdgeCases(t *testing.T) {
 
 			// Prepare token balance
 			if tt.unstakingFee > 0 {
-				calculatedFee := (tt.amount * tt.unstakingFee) / FEE_PRECISION
+				calculatedFee := (tt.amount * tt.unstakingFee) / 10000
 				if calculatedFee > 0 {
 					testing.SetRealm(adminRealm)
 					_ = tt.tokenPath
@@ -372,11 +372,6 @@ func TestHandleStakingRewardFeeEdgeCases(t *testing.T) {
 			}
 		})
 	}
-}
-
-// Test FEE_PRECISION constant
-func TestFeePrecisionConstant(t *testing.T) {
-	uassert.Equal(t, 10000, FEE_PRECISION)
 }
 
 // Test handleStakingRewardFee calculation precision
@@ -421,7 +416,7 @@ func TestHandleStakingRewardFeeCalculationPrecision(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Verify calculation: feeAmount = (amount * fee) / FEE_PRECISION
-			calculatedFee := (tt.amount * tt.fee) / FEE_PRECISION
+			calculatedFee := (tt.amount * tt.fee) / 10000
 			uassert.Equal(t, tt.expectedFee, calculatedFee)
 			uassert.Equal(t, tt.expectedNet, tt.amount-calculatedFee)
 		})
