@@ -293,6 +293,23 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentTimestamp, emiss
 	// calculate denominator and number of pools in each tier
 	counts := self.CurrentAllTierCounts()
 
+	poolRewards := make(map[uint64]int64)
+
+	for index, count := range counts {
+		if index == 0 {
+			continue
+		}
+
+		tierNum := uint64(index)
+
+		tierRatio, err := self.tierRatio.Get(tierNum)
+		if err != nil {
+			panic(makeErrorWithDetails(errInvalidPoolTier, err.Error()))
+		}
+
+		poolRewards[tierNum] = calculatePoolReward(emissionInThisInterval, int64(tierRatio), int64(count))
+	}
+
 	// apply cache to all pools
 	self.membership.Iterate("", "", func(key string, value any) bool {
 		pool, ok := pools.Get(key)
@@ -304,24 +321,17 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentTimestamp, emiss
 		if !ok {
 			panic("failed to cast value to uint64")
 		}
+
 		// Skip pools with tier 0 (removed from tier system)
 		if tierNum == 0 {
 			return false
 		}
 
-		// Calculate real reward with overflow check
-		tierRatio, err := self.tierRatio.Get(tierNum)
-		if err != nil {
-			panic(makeErrorWithDetails(errInvalidPoolTier, err.Error()))
-		}
-		tierRatioInt64 := int64(tierRatio)
-		tierCount := int64(counts[tierNum])
-
-		if tierCount == 0 {
+		if counts[tierNum] == 0 {
 			return false // Skip if no pools in tier
 		}
 
-		poolReward := calculatePoolReward(emissionInThisInterval, tierRatioInt64, tierCount)
+		poolReward := poolRewards[tierNum]
 
 		// accumulate the reward for the interval (startBlock to endBlock) in the Pool
 		poolResolver := NewPoolResolver(pool)
