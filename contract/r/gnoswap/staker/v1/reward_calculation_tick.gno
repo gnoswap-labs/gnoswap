@@ -2,7 +2,6 @@ package v1
 
 import (
 	"strconv"
-	"strings"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -15,6 +14,19 @@ var (
 	zeroUint256 = u256.Zero()
 	zeroInt256  = i256.Zero()
 )
+
+var zeroPaddedPrefixPerLength = map[int]string{
+	1:  "0",
+	2:  "00",
+	3:  "000",
+	4:  "0000",
+	5:  "00000",
+	6:  "000000",
+	7:  "0000000",
+	8:  "00000000",
+	9:  "000000000",
+	10: "0000000000",
+}
 
 // EncodeInt takes an int32 and returns a zero-padded decimal string
 // with up to 10 digits for the absolute value.
@@ -37,7 +49,7 @@ func EncodeInt(num int32) string {
 		zerosNeeded = 0
 	}
 
-	padded := strings.Repeat("0", zerosNeeded) + s
+	padded := zeroPaddedPrefixPerLength[zerosNeeded] + s
 
 	// If the original number was negative, prepend '-'.
 	if isNegative {
