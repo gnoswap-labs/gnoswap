@@ -233,10 +233,14 @@ func (self *PoolResolver) updateGlobalRewardRatioAccumulation(currentTime int64,
 
 // RewardStateOf initializes a new RewardState for the given deposit.
 func (self *PoolResolver) RewardStateOf(deposit *sr.Deposit) *RewardState {
-	warmups := len(deposit.Warmups())
+	return self.RewardStateOfResolver(NewDepositResolver(deposit))
+}
+
+func (self *PoolResolver) RewardStateOfResolver(depositResolver *DepositResolver) *RewardState {
+	warmups := len(depositResolver.Deposit.Warmups())
 	result := &RewardState{
 		pool:      self,
-		deposit:   NewDepositResolver(deposit),
+		deposit:   depositResolver,
 		rewards:   make([]int64, warmups),
 		penalties: make([]int64, warmups),
 	}

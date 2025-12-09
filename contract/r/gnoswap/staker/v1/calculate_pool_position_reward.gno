@@ -84,7 +84,7 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 
 	// Initializes reward/penalty arrays for rewards and penalties for each warmup
 	warmupLen := len(deposit.Warmups())
-	rewardState := poolResolver.RewardStateOf(deposit)
+	rewardState := poolResolver.RewardStateOfResolver(depositResolver)
 
 	// Calculate internal rewards regardless of current tier status
 	// The reward cache system will automatically handle periods with 0 rewards

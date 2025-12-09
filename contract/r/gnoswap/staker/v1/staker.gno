@@ -293,7 +293,9 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 		))
 	}
 
-	err := s.poolHasIncentives(pool)
+	poolResolver := NewPoolResolver(pool)
+	
+	err := s.poolHasIncentivesWithResolver(poolResolver)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -331,8 +333,6 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	poolTier := s.getPoolTier()
 	poolTier.cacheReward(runtime.ChainHeight(), currentTime, pools)
 	s.updatePoolTier(poolTier)
-
-	poolResolver := NewPoolResolver(pool)
 
 	signedLiquidity := i256.FromUint256(liquidity)
 	currentTick := s.poolAccessor.GetSlot0Tick(poolPath)
@@ -733,6 +733,7 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 	upperTick.modifyDepositUpper(currentTime, signedLiquidity)
 	lowerTick.modifyDepositLower(currentTime, signedLiquidity)
 
+	incentivesResolver := poolResolver.IncentivesResolver()
 	deposit.CollectedExternalRewards().Iterate("", "", func(incentiveId string, value any) bool {
 		collectedExternalReward, ok := value.(int64)
 		if !ok {
@@ -740,11 +741,11 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 		}
 
 		// if incentive is archived, no need to add distributed and archive
-		if poolResolver.IncentivesResolver().IsArchived(incentiveId) {
+		if incentivesResolver.IsArchived(incentiveId) {
 			return false // continue iteration
 		}
 
-		externalIncentive, ok := poolResolver.IncentivesResolver().Get(incentiveId)
+		externalIncentive, ok := incentivesResolver.Get(incentiveId)
 		if !ok {
 			panic(makeErrorWithDetails(
 				errDataNotFound,
@@ -758,7 +759,7 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 		// archive incentive if it is finished (all rewards distributed)
 		// this is to prevent re-claiming GNS or rewards after the incentive is finished
 		if externalIncentiveResolver.IsFinished() {
-			if err := s.archiveEndedExternalIncentive(poolResolver, externalIncentive); err != nil {
+			if err := s.archiveEndedExternalIncentive(incentivesResolver, externalIncentive); err != nil {
 				panic(err)
 			}
 		}
@@ -795,6 +796,22 @@ func (s *stakerV1) poolHasIncentives(pool *sr.Pool) error {
 	poolPath := pool.PoolPath()
 	hasInternal := s.getPoolTier().IsInternallyIncentivizedPool(poolPath)
 	hasExternal := NewPoolResolver(pool).IsExternallyIncentivizedPool()
+
+	if hasInternal == false && hasExternal == false {
+		return ufmt.Errorf(
+			"%v: can not stake position to non incentivized pool(%s)",
+			errNonIncentivizedPool, poolPath,
+		)
+	}
+
+	return nil
+}
+
+// poolHasIncentivesWithResolver checks if the pool has any active incentives using existing resolver.
+func (s *stakerV1) poolHasIncentivesWithResolver(poolResolver *PoolResolver) error {
+	poolPath := poolResolver.PoolPath()
+	hasInternal := s.getPoolTier().IsInternallyIncentivizedPool(poolPath)
+	hasExternal := poolResolver.IsExternallyIncentivizedPool()
 
 	if hasInternal == false && hasExternal == false {
 		return ufmt.Errorf(

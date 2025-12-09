@@ -155,9 +155,10 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 	}
 
 	poolResolver := NewPoolResolver(pool)
+	incentivesResolver := poolResolver.IncentivesResolver()
 
 	// Get incentive to check if GNS already refunded
-	incentiveResolver, exists := poolResolver.IncentivesResolver().GetIncentiveResolver(incentiveId)
+	incentiveResolver, exists := incentivesResolver.GetIncentiveResolver(incentiveId)
 	if !exists {
 		panic(makeErrorWithDetails(
 			errCannotEndIncentive,
@@ -206,12 +207,12 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 	// through the `endExternalIncentive` function will be blocked.
 	incentiveResolver.SetRefunded(true)
 	incentiveResolver.addDistributedRewardAmount(refund)
-	poolResolver.IncentivesResolver().update(incentive.Refundee(), incentive)
+	incentivesResolver.update(incentive.Refundee(), incentive)
 
 	// archive incentive if it is finished (all rewards distributed)
 	// this is to prevent re-claiming GNS or rewards after the incentive is finished
 	if incentiveResolver.IsFinished() {
-		err = s.archiveEndedExternalIncentive(poolResolver, incentive)
+		err = s.archiveEndedExternalIncentive(incentivesResolver, incentive)
 		if err != nil {
 			panic(err)
 		}
@@ -278,7 +279,7 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 	return incentiveResolver.ExternalIncentive, refund, nil
 }
 
-func (s *stakerV1) archiveEndedExternalIncentive(resolver *PoolResolver, incentive *sr.ExternalIncentive) error {
-	resolver.IncentivesResolver().archiveIncentive(incentive.IncentiveId())
+func (s *stakerV1) archiveEndedExternalIncentive(resolver *IncentivesResolver, incentive *sr.ExternalIncentive) error {
+	resolver.archiveIncentive(incentive.IncentiveId())
 	return nil
 }
