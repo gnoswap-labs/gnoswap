@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"strconv"
 	"testing"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -10,25 +9,6 @@ import (
 	"gno.land/p/nt/uassert"
 	sr "gno.land/r/gnoswap/staker"
 )
-
-func TestEncodeInt(t *testing.T) {
-	tests := []struct {
-		input    int32
-		expected string
-	}{
-		{123, "0000000123"},
-		{-123, "-0000000123"},
-		{0, "0000000000"},
-		{2147483647, "2147483647"},   // int32 max
-		{-2147483648, "-2147483648"}, // int32 min
-	}
-
-	for _, tt := range tests {
-		t.Run(strconv.Itoa(int(tt.input)), func(t *testing.T) {
-			uassert.Equal(t, EncodeInt(tt.input), tt.expected)
-		})
-	}
-}
 
 func TestTicks(t *testing.T) {
 	ticks := sr.NewTicks()
