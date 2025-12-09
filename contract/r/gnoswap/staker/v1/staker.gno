@@ -293,9 +293,7 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 		))
 	}
 
-	poolResolver := NewPoolResolver(pool)
-
-	err := s.poolHasIncentivesWithResolver(poolResolver)
+	err := s.poolHasIncentives(pool)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -336,6 +334,8 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 
 	signedLiquidity := i256.FromUint256(liquidity)
 	currentTick := s.poolAccessor.GetSlot0Tick(poolPath)
+
+	poolResolver := NewPoolResolver(pool)
 
 	isInRange := false
 	if pn.IsInRange(positionId) {
@@ -806,22 +806,6 @@ func (s *stakerV1) poolHasIncentives(pool *sr.Pool) error {
 	poolPath := pool.PoolPath()
 	hasInternal := s.getPoolTier().IsInternallyIncentivizedPool(poolPath)
 	hasExternal := NewPoolResolver(pool).IsExternallyIncentivizedPool()
-
-	if hasInternal == false && hasExternal == false {
-		return ufmt.Errorf(
-			"%v: can not stake position to non incentivized pool(%s)",
-			errNonIncentivizedPool, poolPath,
-		)
-	}
-
-	return nil
-}
-
-// poolHasIncentivesWithResolver checks if the pool has any active incentives using existing resolver.
-func (s *stakerV1) poolHasIncentivesWithResolver(poolResolver *PoolResolver) error {
-	poolPath := poolResolver.PoolPath()
-	hasInternal := s.getPoolTier().IsInternallyIncentivizedPool(poolPath)
-	hasExternal := poolResolver.IsExternallyIncentivizedPool()
 
 	if hasInternal == false && hasExternal == false {
 		return ufmt.Errorf(
