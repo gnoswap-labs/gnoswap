@@ -24,6 +24,13 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/basic -func TestGetAmount1Delta -
 gnokey maketx call -pkgpath gno.land/r/gnoswap/basic -func TestSwapMathComputeSwapStep -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'GAS USED:   14430494'
 
+### Bit Math Functions
+# BitMathMostSignificantBit
+gnokey maketx call -pkgpath gno.land/r/gnoswap/basic -func TestBitMathMostSignificantBit -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
+# TestBitMathLeastSignificantBit
+gnokey maketx call -pkgpath gno.land/r/gnoswap/basic -func TestBitMathLeastSignificantBit -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" test1
+
 -- gnomod.toml --
 module = "gno.land/r/gnoswap/basic"
 gno = "0.9"
@@ -73,4 +80,14 @@ func TestSwapMathComputeSwapStep(cur realm) {
 		amountRemaining,
 		feePips,
 	)
+}
+
+func TestBitMathMostSignificantBit(cur realm) {
+	x := uint256.MustFromDecimal("57896044618658097711785492504343953926634992332820282019728792003956564819968")
+	gnsmath.BitMathMostSignificantBit(x)
+}
+
+func TestBitMathLeastSignificantBit(cur realm) {
+	x := uint256.MustFromDecimal("57896044618658097711785492504343953926634992332820282019728792003956564819968")
+	gnsmath.BitMathLeastSignificantBit(x)
 }
