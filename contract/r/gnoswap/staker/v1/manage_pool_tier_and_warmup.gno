@@ -119,7 +119,7 @@ func (s *stakerV1) setPoolTier(poolPath string, tier uint64, currentTime int64) 
 
 	pool := s.getPools().GetPoolOrNil(poolPath)
 	if pool == nil {
-		pool = sr.NewPool(poolPath, time.Now().Unix())
+		pool = sr.NewPool(poolPath, currentTime)
 		s.getPools().set(poolPath, pool)
 	}
 	poolTier := s.getPoolTier()
