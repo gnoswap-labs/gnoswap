@@ -382,7 +382,7 @@ func TestReward_InternalOnlyNoExternal(t *testing.T) {
 	uassert.Equal(t, 0, len(reward.ExternalPenalty))
 }
 
-func TestCalcPositionReward_ExternalPenaltyOnly(t *testing.T) {
+func TestCalcPositionReward_Prevent_ExternalPenaltyOnly(t *testing.T) {
 	canonical := Setup(t)
 
 	// Make the first warmup emit 0% reward so only penalties accumulate
@@ -424,7 +424,7 @@ func TestCalcPositionReward_ExternalPenaltyOnly(t *testing.T) {
 	reward := getMockInstance().calcPositionReward(currentHeight, currentTimestamp, positionId)
 
 	_, hasExternalReward := reward.External[incentiveId]
-	uassert.False(t, hasExternalReward)
+	uassert.True(t, hasExternalReward)
 
 	penalty, hasPenalty := reward.ExternalPenalty[incentiveId]
 	uassert.True(t, hasPenalty)

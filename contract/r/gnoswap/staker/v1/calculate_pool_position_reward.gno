@@ -128,10 +128,8 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 		externalReward, externalPenalty := rewardState.calculateExternalReward(externalLastCollectTime, param.CurrentTime, incentive)
 
 		for i := range externalReward {
-			if externalReward[i] > 0 {
+			if externalReward[i] > 0 || externalPenalty[i] > 0 {
 				rewards[i].External[incentiveId] = externalReward[i]
-			}
-			if externalPenalty[i] > 0 {
 				rewards[i].ExternalPenalty[incentiveId] = externalPenalty[i]
 			}
 		}
