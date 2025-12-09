@@ -1359,6 +1359,7 @@ func TestReposition(t *testing.T) {
 						tt.mintAmount1,
 						"0",
 						"0",
+						time.Now().Add(time.Hour).Unix(),
 						adminAddr,
 					)
 				})
@@ -1372,6 +1373,7 @@ func TestReposition(t *testing.T) {
 					tt.mintAmount1,
 					"0",
 					"0",
+					time.Now().Add(time.Hour).Unix(),
 					adminAddr,
 				)
 				uassert.Equal(t, tickL, tt.tickLower)
