@@ -128,26 +128,28 @@ func (self *PoolResolver) TickResolver(tickId int32) *TickResolver {
 	return NewTickResolver(self.Ticks().Get(tickId))
 }
 
-// IsExternallyIncentivizedPool returns true if the pool has any active external incentives.
+// IsExternallyIncentivizedPool returns true if the pool has any external incentives that are:
+// - Active now, or
+// - Scheduled to start within a short allowance window (prevents far-future griefing)
 func (self *PoolResolver) IsExternallyIncentivizedPool() bool {
 	currentTime := time.Now().Unix()
-	hasActive := false
+	hasIncentive := false
 	self.Incentives().IncentiveTrees().Iterate("", "", func(key string, value any) bool {
 		incentive, ok := value.(*sr.ExternalIncentive)
 		if !ok {
 			panic("failed to cast value to *ExternalIncentive")
 		}
 
-		// Check if there are any active incentives at current time
-		if NewExternalIncentiveResolver(incentive).isActive(currentTime) {
-			hasActive = true
+		resolver := NewExternalIncentiveResolver(incentive)
+		if !resolver.IsEnded(currentTime) {
+			hasIncentive = true
 			return true
 		}
 
 		return false
 	})
 
-	return hasActive
+	return hasIncentive
 }
 
 // Get the latest reward in [0, currentTime] range.
