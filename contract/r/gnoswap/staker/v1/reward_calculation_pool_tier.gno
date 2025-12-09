@@ -241,7 +241,7 @@ func (self *PoolTier) changeTier(currentHeight int64, currentTime int64, pools *
 			return false // Skip if no pools in tier
 		}
 
-		poolReward := safeMulDivInt64(currentEmission, tierRatioInt64, tierCount) / 100
+		poolReward := calculatePoolReward(currentEmission, tierRatioInt64, tierCount)
 		poolResolver := NewPoolResolver(pool)
 		poolResolver.cacheReward(currentTime, poolReward)
 		return false
@@ -321,10 +321,11 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentTimestamp, emiss
 			return false // Skip if no pools in tier
 		}
 
-		reward := ((emissionInThisInterval * tierRatioInt64) / 100) / tierCount
+		poolReward := calculatePoolReward(emissionInThisInterval, tierRatioInt64, tierCount)
+
 		// accumulate the reward for the interval (startBlock to endBlock) in the Pool
 		poolResolver := NewPoolResolver(pool)
-		poolResolver.cacheInternalReward(currentTimestamp, reward)
+		poolResolver.cacheInternalReward(currentTimestamp, poolReward)
 		return false
 	})
 }
@@ -352,5 +353,28 @@ func (self *PoolTier) CurrentRewardPerPool(poolPath string) int64 {
 		return 0 // No pools in tier
 	}
 
-	return ((self.getEmission() * tierRatioInt64) / 100) / tierCount
+	return calculatePoolReward(self.getEmission(), tierRatioInt64, tierCount)
+}
+
+// calculatePoolReward calculates the reward for a pool based on the emission, tier ratio, and tier count.
+//
+// Parameters:
+// - emission: The emission for the pool.
+// - tierRatio: The tier ratio for the pool.
+// - tierCount: The tier count for the pool.
+//
+// Returns:
+// - int64: The reward for the pool.
+func calculatePoolReward(emission int64, tierRatio int64, tierCount int64) int64 {
+	if emission < 0 || tierRatio < 0 || tierCount < 0 {
+		panic(errCalculationError)
+	}
+
+	if emission == 0 || tierRatio == 0 || tierCount == 0 {
+		return 0
+	}
+
+	tierReward := safeMulDivInt64(emission, tierRatio, 100)
+
+	return tierReward / tierCount
 }
