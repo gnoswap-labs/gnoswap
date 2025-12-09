@@ -164,6 +164,85 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 	})
 }
 
+// TestCollectReward_NilIncentiveSkipped verifies that CollectReward
+// gracefully skips external incentives that have been archived/removed
+// and returns nil when looked up.
+func TestCollectReward_NilIncentiveSkipped(t *testing.T) {
+	initStakerTest(t)
+
+	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
+	testing.SetRealm(adminRealm)
+	pl.SetPoolCreationFee(cross, 0)
+	CreatePool(barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
+	mockInstanceSetPoolTier(poolPath, 1)
+
+	// Prepare user liquidity and stake
+	TokenFaucet(t, barPath, addr01)
+	TokenFaucet(t, bazPath, addr01)
+
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	TokenApprove(t, barPath, addr01, poolAddr, maxApprove)
+	TokenApprove(t, bazPath, addr01, poolAddr, maxApprove)
+
+	positionId, _, _, _ := MintPosition(
+		t,
+		barPath,
+		bazPath,
+		fee3000,
+		-18000,
+		18000,
+		"1000000",
+		"1000000",
+		"0",
+		"0",
+		max_timeout,
+		addr01,
+		addr01,
+	)
+
+	getMockInstance().nftAccessor.Mint(addr01, positionIdFrom(positionId))
+	getMockInstance().nftAccessor.Approve(stakerAddr, positionIdFrom(positionId))
+	mockInstanceStakeToken(positionId, "")
+
+	// Create an external incentive
+	TokenFaucet(t, gnsPath, addr01)
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	gnsApprove(t, addr01, stakerAddr, maxApprove)
+
+	startTimestamp := int64(1234569600)
+	mockInstanceCreateExternalIncentive(
+		poolPath,
+		gnsPath,
+		rewardMinimumAmount,
+		startTimestamp,
+		startTimestamp+incentiveDuration,
+	)
+
+	// Allow some rewards to accrue
+	testing.SkipHeights(100)
+
+	// Find the incentive ID
+	incentives := getMockInstance().getExternalIncentives()
+	incentiveId := ""
+	incentives.tree.Iterate("", "", func(key string, value any) bool {
+		incentiveId = key
+		return true // stop after first
+	})
+
+	if incentiveId == "" {
+		t.Fatal("expected incentive to be created")
+	}
+
+	// Remove the incentive from the external incentives tree to simulate archived/deleted
+	incentives.tree.Remove(incentiveId)
+
+	// CollectReward should not panic when incentive is nil
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	uassert.NotPanics(t, func() {
+		mockInstanceCollectReward(positionId, false)
+	})
+}
+
 // CollectReward should not process the same external penalty multiple times
 // when an incentive is missing/archived but the deposit's reward state is kept.
 func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(t *testing.T) {
