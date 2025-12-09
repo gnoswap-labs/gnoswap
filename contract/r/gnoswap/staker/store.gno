@@ -503,7 +503,24 @@ func (s *stakerStore) GetWarmupTemplate() []Warmup {
 }
 
 func (s *stakerStore) SetWarmupTemplate(warmups []Warmup) error {
+	if err := validateWarmupTemplate(warmups); err != nil {
+		return err
+	}
 	return s.kvStore.Set(StoreKeyWarmupTemplate.String(), warmups)
+}
+
+func validateWarmupTemplate(warmups []Warmup) error {
+	if len(warmups) == 0 {
+		return ufmt.Errorf("warmup template cannot be empty")
+	}
+
+	for i, warmup := range warmups {
+		if warmup.WarmupRatio == 0 || warmup.WarmupRatio > 100 {
+			return ufmt.Errorf("warmup ratio must be between 1 and 100, got %d at index %d", warmup.WarmupRatio, i)
+		}
+	}
+
+	return nil
 }
 
 // CurrentSwapBatch
