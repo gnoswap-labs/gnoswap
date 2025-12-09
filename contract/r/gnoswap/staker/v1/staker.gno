@@ -587,12 +587,15 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 		totalEmissionSent = safeAddInt64(totalEmissionSent, toUser)
 		gns.Transfer(cross, deposit.Owner(), toUser)
 
+		depositResolver.addCollectedInternalReward(reward.Internal)
+	}
+
+	if reward.InternalPenalty > 0 {
 		// internal penalty to community pool
 		totalEmissionSent = safeAddInt64(totalEmissionSent, reward.InternalPenalty)
 		gns.Transfer(cross, communityPoolAddr, reward.InternalPenalty)
 
 		depositResolver.addCollectedInternalReward(reward.InternalPenalty)
-		depositResolver.addCollectedInternalReward(reward.Internal)
 	}
 
 	// Unclaimable must be processed after regular rewards so that accumulated
