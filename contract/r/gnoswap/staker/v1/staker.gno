@@ -294,7 +294,7 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	}
 
 	poolResolver := NewPoolResolver(pool)
-	
+
 	err := s.poolHasIncentivesWithResolver(poolResolver)
 	if err != nil {
 		panic(err.Error())
@@ -467,9 +467,19 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 
 		incentive := s.getExternalIncentives().get(incentiveId)
 		if incentive == nil {
-			// Incentive could be archived or missing; skip to keep collection resilient.
+			// Incentive could be missing; skip to keep collection working.
+			chain.Emit(
+				"SkippedMissingIncentive",
+				"prevAddr", previousRealm.Address().String(),
+				"prevRealm", previousRealm.PkgPath(),
+				"positionId", formatUint(positionId),
+				"incentiveId", incentiveId,
+				"currentTime", formatInt(currentTime),
+				"currentHeight", formatInt(blockHeight),
+			)
 			continue
 		}
+
 		incentiveResolver := NewExternalIncentiveResolver(incentive)
 		if !incentiveResolver.IsStarted(currentTime) {
 			continue
