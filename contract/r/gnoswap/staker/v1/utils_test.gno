@@ -284,3 +284,84 @@ func TestSafeMulDivInt64(t *testing.T) {
 		})
 	}
 }
+
+func TestSafeMulInt64(t *testing.T) {
+	overflowMsg := "int64 multiplication overflow"
+	underflowMsg := "int64 multiplication underflow"
+
+	tests := []struct {
+		name        string
+		a, b        int64
+		want        int64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name: "simple positive multiplication",
+			a:    3, b: 4,
+			want: 12,
+		},
+		{
+			name: "simple negative multiplication",
+			a:    -3, b: 4,
+			want: -12,
+		},
+		{
+			name: "simple negative negative multiplication",
+			a:    -3, b: -4,
+			want: 12,
+		},
+		{
+			name: "a is zero",
+			a:    0, b: 123456,
+			want: 0,
+		},
+		{
+			name: "b is zero",
+			a:    987654, b: 0,
+			want: 0,
+		},
+		{
+			name: "positive overflow",
+			a:    math.MaxInt64 / 2, b: 3, // 1.5 * 3 > MaxInt64
+			shouldPanic: true,
+			panicMsg:    overflowMsg,
+		},
+		{
+			name: "negative negative overflow",
+			a:    -math.MaxInt64 / 2, b: -3,
+			shouldPanic: true,
+			panicMsg:    overflowMsg,
+		},
+		{
+			name: "positive negative underflow",
+			a:    math.MaxInt64, b: -2,
+			shouldPanic: true,
+			panicMsg:    underflowMsg,
+		},
+		{
+			name: "MinInt64 * -1 overflows",
+			a:    math.MinInt64, b: -1,
+			shouldPanic: true,
+			panicMsg:    overflowMsg,
+		},
+		{
+			name: "MinInt64 * 1 OK",
+			a:    math.MinInt64, b: 1,
+			want: math.MinInt64,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, tt.panicMsg, func() {
+					safeMulInt64(tt.a, tt.b)
+				})
+			} else {
+				result := safeMulInt64(tt.a, tt.b)
+				uassert.Equal(t, result, tt.want)
+			}
+		})
+	}
+}
