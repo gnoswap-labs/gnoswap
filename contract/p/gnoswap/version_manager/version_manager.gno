@@ -159,29 +159,6 @@ func (vm *versionManager) ChangeImplementation(packagePath string) error {
 	vm.currentPackagePath = packagePath
 	vm.currentImplementation = initializer(vm.initializeDomainStoreFn(vm.domainKVStore))
 
-	// Update storage permissions for all registered implementations
-	storeAuthorizedCallers, err := vm.domainKVStore.GetAuthorizedCallers()
-	if err != nil {
-		return err
-	}
-
-	// Reconfigure permissions: write access for new active version, read-only for others
-	packageAddress := chain.PackageAddress(packagePath)
-	for caller := range storeAuthorizedCallers {
-		updatedPermission := store.ReadOnly
-
-		// Grant write access only to the new active implementation
-		isCurrentPackageAddress := caller == packageAddress
-		if isCurrentPackageAddress {
-			updatedPermission = store.Write
-		}
-
-		err := vm.domainKVStore.UpdateAuthorizedCaller(caller, updatedPermission)
-		if err != nil {
-			return err
-		}
-	}
-
 	chain.Emit(
 		"ChangeImplementation",
 		"previousPackagePath", prevPackagePath,
