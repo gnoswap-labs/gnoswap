@@ -1170,6 +1170,7 @@ func TestSwapProcessor_ValidateSwapResults(t *testing.T) {
 		resultAmountOut int64
 		amountSpecified int64
 		amountLimit     int64
+		swapCount       int64
 		expectedSuccess bool
 	}{
 		{
@@ -1179,6 +1180,7 @@ func TestSwapProcessor_ValidateSwapResults(t *testing.T) {
 			resultAmountOut: 950,
 			amountSpecified: 1000,
 			amountLimit:     900,
+			swapCount:       1,
 			expectedSuccess: true,
 		},
 		{
@@ -1188,6 +1190,7 @@ func TestSwapProcessor_ValidateSwapResults(t *testing.T) {
 			resultAmountOut: 850,
 			amountSpecified: 1000,
 			amountLimit:     900,
+			swapCount:       1,
 			expectedSuccess: false,
 		},
 		{
@@ -1195,8 +1198,9 @@ func TestSwapProcessor_ValidateSwapResults(t *testing.T) {
 			swapType:        ExactOut,
 			resultAmountIn:  1050,
 			resultAmountOut: 1000,
-			amountSpecified: 1000,
+			amountSpecified: -1000,
 			amountLimit:     1100,
+			swapCount:       1,
 			expectedSuccess: true,
 		},
 		{
@@ -1204,8 +1208,29 @@ func TestSwapProcessor_ValidateSwapResults(t *testing.T) {
 			swapType:        ExactOut,
 			resultAmountIn:  1150,
 			resultAmountOut: 1000,
-			amountSpecified: 1000,
+			amountSpecified: -1000,
 			amountLimit:     1100,
+			swapCount:       1,
+			expectedSuccess: false,
+		},
+		{
+			name:            "ExactOut - within tolerance",
+			swapType:        ExactOut,
+			resultAmountIn:  1050,
+			resultAmountOut: 998,
+			amountSpecified: -1000,
+			amountLimit:     1100,
+			swapCount:       2,
+			expectedSuccess: true,
+		},
+		{
+			name:            "ExactOut - exceeds tolerance",
+			swapType:        ExactOut,
+			resultAmountIn:  1050,
+			resultAmountOut: 997,
+			amountSpecified: -1000,
+			amountLimit:     1100,
+			swapCount:       2,
 			expectedSuccess: false,
 		},
 		{
@@ -1215,6 +1240,7 @@ func TestSwapProcessor_ValidateSwapResults(t *testing.T) {
 			resultAmountOut: 0,
 			amountSpecified: 1000,
 			amountLimit:     900,
+			swapCount:       1,
 			expectedSuccess: false,
 		},
 	}
@@ -1227,6 +1253,7 @@ func TestSwapProcessor_ValidateSwapResults(t *testing.T) {
 				tt.resultAmountOut,
 				tt.amountSpecified,
 				tt.amountLimit,
+				tt.swapCount,
 			)
 
 			uassert.Equal(t, success, tt.expectedSuccess)
