@@ -271,6 +271,74 @@ func TestRemovePoolTier(t *testing.T) {
 	uassert.Equal(t, NOT_EMISSION_TARGET_TIER, currentTier)
 }
 
+func TestValidateWarmupTemplate(t *testing.T) {
+	tests := []struct {
+		name        string
+		warmups     []sr.Warmup
+		expectedErr string
+	}{
+		{
+			name:        "empty warmup template",
+			warmups:     []sr.Warmup{},
+			expectedErr: "warmup template cannot be empty",
+		},
+		{
+			name: "warmup ratio is 0",
+			warmups: []sr.Warmup{
+				{WarmupRatio: 0, TimeDuration: 86400},
+			},
+			expectedErr: "warmup ratio must be between 1 and 100, got 0 at index 0",
+		},
+		{
+			name: "warmup ratio is greater than 100",
+			warmups: []sr.Warmup{
+				{WarmupRatio: 101, TimeDuration: 86400},
+			},
+			expectedErr: "warmup ratio must be between 1 and 100, got 101 at index 0",
+		},
+		{
+			name: "second warmup has invalid ratio",
+			warmups: []sr.Warmup{
+				{WarmupRatio: 30, TimeDuration: 86400},
+				{WarmupRatio: 150, TimeDuration: 172800},
+			},
+			expectedErr: "warmup ratio must be between 1 and 100, got 150 at index 1",
+		},
+		{
+			name: "valid warmup template",
+			warmups: []sr.Warmup{
+				{WarmupRatio: 30, TimeDuration: 86400},
+				{WarmupRatio: 50, TimeDuration: 172800},
+				{WarmupRatio: 70, TimeDuration: 259200},
+				{WarmupRatio: 100, TimeDuration: math.MaxInt64},
+			},
+			expectedErr: "",
+		},
+		{
+			name: "all valid ratios",
+			warmups: []sr.Warmup{
+				{WarmupRatio: 1, TimeDuration: 100},
+				{WarmupRatio: 50, TimeDuration: 200},
+				{WarmupRatio: 100, TimeDuration: 300},
+			},
+			expectedErr: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateWarmupTemplate(tt.warmups)
+
+			if tt.expectedErr != "" {
+				uassert.NotNil(t, err)
+				uassert.Equal(t, tt.expectedErr, err.Error())
+			} else {
+				uassert.Nil(t, err)
+			}
+		})
+	}
+}
+
 // Test setWarmUp internal function
 func TestSetWarmUp(t *testing.T) {
 	tests := []struct {
