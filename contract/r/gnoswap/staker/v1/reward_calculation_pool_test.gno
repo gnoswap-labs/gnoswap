@@ -607,7 +607,7 @@ func TestProcessUnclaimableReward(t *testing.T) {
 			// Set up some unclaimable accumulation
 			poolResolver.Pool.SetUnclaimableAcc(500)
 
-			unclaimable := poolResolver.processUnclaimableReward(poolTier, tt.currentTime)
+			unclaimable := poolResolver.processUnclaimableReward(tt.currentTime)
 
 			uassert.True(t, unclaimable >= 0)
 			uassert.Equal(t, int64(0), poolResolver.Pool.UnclaimableAcc())

@@ -505,7 +505,7 @@ func (self *PoolResolver) updateUnclaimableAccumulateRewards(currentTime int64) 
 
 // processUnclaimableReward processes the unclaimable reward and returns the accumulated reward.
 // It resets unclaimableAcc to 0 and properly manages lastUnclaimableTime based on pool state.
-func (self *PoolResolver) processUnclaimableReward(poolTier *PoolTier, endTime int64) int64 {
+func (self *PoolResolver) processUnclaimableReward(endTime int64) int64 {
 	// Check current pool liquidity state
 	isZeroStakedLiquidity := self.CurrentStakedLiquidity(endTime).IsZero()
 
