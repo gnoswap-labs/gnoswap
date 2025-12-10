@@ -456,10 +456,21 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 	// get all internal and external rewards
 	reward := s.calcPositionReward(blockHeight, currentTime, positionId)
 
-	// transfer external rewards to user
+	/* Validate and update all state before any external calls */
+
+	// Pending external transfers to be executed after state updates
+	type pendingTransfer struct {
+		token     string
+		recipient address
+		amount    int64
+		isUnwrap  bool
+	}
+	var pendingTransfers []pendingTransfer
+
 	externalReward := reward.External
 	toUserExternalReward := make(map[string]int64)
 	toUserExternalPenalty := make(map[string]int64)
+
 	for incentiveId, rewardAmount := range externalReward {
 		if rewardAmount == 0 && reward.ExternalPenalty[incentiveId] == 0 {
 			continue
@@ -502,7 +513,7 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 			continue
 		}
 
-		// process external reward to user
+		// EFFECTS: Update incentive reward amount
 		incentive.SetRewardAmount(safeSubInt64(incentive.RewardAmount(), rewardAmount))
 		rewardToken := incentive.RewardToken()
 		toUserExternalReward[rewardToken] = safeAddInt64(toUserExternalReward[rewardToken], rewardAmount)
@@ -522,18 +533,19 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 			"currentTime", formatInt(currentTime),
 			"currentHeight", formatInt(blockHeight),
 		)
+
+		// Queue transfer for later (INTERACTIONS phase)
 		if toUser > 0 {
-			if common.IsGNOTWrappedPath(rewardToken) && unwrapResult {
-				tErr := unwrapWithTransfer(deposit.Owner(), toUser)
-				if tErr != nil {
-					panic(tErr)
-				}
-			} else {
-				common.SafeGRC20Transfer(cross, rewardToken, deposit.Owner(), toUser)
-			}
+			shouldUnwrap := common.IsGNOTWrappedPath(rewardToken) && unwrapResult
+			pendingTransfers = append(pendingTransfers, pendingTransfer{
+				token:     rewardToken,
+				recipient: deposit.Owner(),
+				amount:    toUser,
+				isUnwrap:  shouldUnwrap,
+			})
 		}
 
-		// process external penalty
+		// EFFECTS: Process external penalty
 		externalPenalty := reward.ExternalPenalty[incentiveId]
 		incentive.SetRewardAmount(safeSubInt64(incentive.RewardAmount(), externalPenalty))
 		toUserExternalPenalty[rewardToken] = safeAddInt64(toUserExternalPenalty[rewardToken], externalPenalty)
@@ -541,18 +553,23 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 		totalDistributedRewardAmount := safeAddInt64(rewardAmount, externalPenalty)
 		depositResolver.addCollectedExternalReward(incentiveId, totalDistributedRewardAmount)
 
+		// Queue penalty transfer for later (INTERACTIONS phase)
 		if externalPenalty > 0 {
-			common.SafeGRC20Transfer(cross, rewardToken, communityPoolAddr, externalPenalty)
+			pendingTransfers = append(pendingTransfers, pendingTransfer{
+				token:     rewardToken,
+				recipient: communityPoolAddr,
+				amount:    externalPenalty,
+				isUnwrap:  false,
+			})
 		}
 
-		// Update the last collect time ONLY for this specific incentive
-		// This happens only if the reward was successfully transferred.
+		// EFFECTS: Update the last collect time BEFORE any transfers
 		err = depositResolver.updateExternalRewardLastCollectTime(incentiveId, currentTime)
 		if err != nil {
 			panic(err)
 		}
 
-		// update
+		// EFFECTS: Update incentive state
 		s.getExternalIncentives().set(incentiveId, incentive)
 
 		chain.Emit(
@@ -574,7 +591,7 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 		)
 	}
 
-	// internal reward to user
+	// EFFECTS: Process internal reward state
 	toUser, feeAmount, err := s.handleStakingRewardFee(GNS_PATH, reward.Internal, true)
 	if err != nil {
 		panic(err.Error())
@@ -592,19 +609,19 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 
 	totalEmissionSent := s.store.GetTotalEmissionSent()
 
-	if toUser > 0 {
-		// internal reward to user
-		totalEmissionSent = safeAddInt64(totalEmissionSent, toUser)
-		gns.Transfer(cross, deposit.Owner(), toUser)
+	// Track internal transfer amounts for INTERACTIONS phase
+	internalToUser := int64(0)
+	internalToCommunityPool := int64(0)
 
+	if toUser > 0 {
+		totalEmissionSent = safeAddInt64(totalEmissionSent, toUser)
+		internalToUser = toUser
 		depositResolver.addCollectedInternalReward(reward.Internal)
 	}
 
 	if reward.InternalPenalty > 0 {
-		// internal penalty to community pool
 		totalEmissionSent = safeAddInt64(totalEmissionSent, reward.InternalPenalty)
-		gns.Transfer(cross, communityPoolAddr, reward.InternalPenalty)
-
+		internalToCommunityPool = safeAddInt64(internalToCommunityPool, reward.InternalPenalty)
 		depositResolver.addCollectedInternalReward(reward.InternalPenalty)
 	}
 
@@ -612,14 +629,14 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 	// unclaimable amounts are reset in the same collect window.
 	unClaimableInternal := s.processUnClaimableReward(depositResolver.TargetPoolPath(), currentTime)
 	if unClaimableInternal > 0 {
-		// internal unClaimable to community pool
 		totalEmissionSent = safeAddInt64(totalEmissionSent, unClaimableInternal)
-		gns.Transfer(cross, communityPoolAddr, unClaimableInternal)
+		internalToCommunityPool = safeAddInt64(internalToCommunityPool, unClaimableInternal)
 	}
 
 	rewardToUser := formatInt(toUser)
 	rewardPenalty := formatInt(reward.InternalPenalty)
 
+	// EFFECTS: Update total emission sent
 	err = s.store.SetTotalEmissionSent(totalEmissionSent)
 	if err != nil {
 		panic(err)
@@ -641,14 +658,40 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 		"currentTime", formatInt(currentTime),
 	)
 
-	// Update lastCollectTime for internal rewards (GNS emissions)
+	// EFFECTS: Update lastCollectTime for internal rewards BEFORE transfers
 	err = depositResolver.updateInternalRewardLastCollectTime(currentTime)
 	if err != nil {
 		panic(err)
 	}
 
+	// EFFECTS: Persist deposit state BEFORE any external transfers
 	deposits := s.getDeposits()
 	deposits.set(positionId, deposit)
+
+	/* 
+	 * All state has been updated
+	 * now perform external token transfers
+	 */
+
+	// Execute all pending external reward transfers
+	for _, pt := range pendingTransfers {
+		if pt.isUnwrap {
+			tErr := unwrapWithTransfer(pt.recipient, pt.amount)
+			if tErr != nil {
+				panic(tErr)
+			}
+		} else {
+			common.SafeGRC20Transfer(cross, pt.token, pt.recipient, pt.amount)
+		}
+	}
+
+	// Execute internal GNS transfers
+	if internalToUser > 0 {
+		gns.Transfer(cross, deposit.Owner(), internalToUser)
+	}
+	if internalToCommunityPool > 0 {
+		gns.Transfer(cross, communityPoolAddr, internalToCommunityPool)
+	}
 
 	return rewardToUser, rewardPenalty, toUserExternalReward, toUserExternalPenalty
 }
