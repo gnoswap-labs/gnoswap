@@ -384,6 +384,7 @@ func TestReposition(t *testing.T) {
 		amount1DesiredStr string
 		amount0MinStr     string
 		amount1MinStr     string
+		deadline          int64
 		callerRealm       runtime.Realm
 	}{
 		{
@@ -401,6 +402,7 @@ func TestReposition(t *testing.T) {
 			amount1DesiredStr: "1000000",
 			amount0MinStr:     "900000",
 			amount1MinStr:     "900000",
+			deadline:          9999999999,
 			callerRealm:       testing.NewCodeRealm("gno.land/r/gnoswap/position"),
 		},
 	}
@@ -416,7 +418,7 @@ func TestReposition(t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		Reposition(cross, tt.positionId, tt.tickLower, tt.tickUpper, tt.amount0DesiredStr, tt.amount1DesiredStr, tt.amount0MinStr, tt.amount1MinStr)
+		Reposition(cross, tt.positionId, tt.tickLower, tt.tickUpper, tt.amount0DesiredStr, tt.amount1DesiredStr, tt.amount0MinStr, tt.amount1MinStr, tt.deadline)
 
 		// Assert
 		mockPosition := implementation.(*MockPosition)
