@@ -451,8 +451,6 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 	blockHeight := runtime.ChainHeight()
 	previousRealm := runtime.PreviousRealm()
 
-	communityPoolAddr := getRoleAddress(prbac.ROLE_COMMUNITY_POOL)
-
 	// get all internal and external rewards
 	reward := s.calcPositionReward(blockHeight, currentTime, positionId)
 
