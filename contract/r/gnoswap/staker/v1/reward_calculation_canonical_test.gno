@@ -18,7 +18,7 @@ func Setup(t *testing.T) *canonicalRewardState {
 	initStakerTest(t)
 	pools := getMockInstance().getPools()
 	deposits := getMockInstance().getDeposits()
-	tickCrossHook := getMockInstance().tickCrossHook()
+	tickCrossHook := getMockInstance().tickCrossHook
 	poolTier := getMockInstance().getPoolTier()
 
 	return NewCanonicalRewardState(t, poolTier, pools, deposits, tickCrossHook)

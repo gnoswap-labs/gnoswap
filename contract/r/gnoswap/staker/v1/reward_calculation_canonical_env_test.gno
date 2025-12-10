@@ -23,7 +23,7 @@ type canonicalPool struct {
 	tick      int32
 	incentive []*sr.ExternalIncentive
 
-	tickCrossHook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)
+	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)
 }
 
 func (self *canonicalPool) InternalReward(emission uint64, ratio sr.TierRatio, count uint64) int64 {
@@ -62,7 +62,7 @@ type canonicalRewardState struct {
 	global *emulatedGlobalState
 
 	Pool          map[string]*canonicalPool
-	tickCrossHook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)
+	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)
 
 	Reward []map[uint64]Reward // blockNumber -> depositId -> reward
 
@@ -81,7 +81,7 @@ func NewCanonicalRewardState(
 	poolTier *PoolTier,
 	pools *Pools,
 	deposits *Deposits,
-	tickCrossHook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64),
+	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64),
 ) *canonicalRewardState {
 	testing.SkipHeights(1)
 
@@ -586,7 +586,7 @@ func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {
 			}
 
 			// update global state
-			pool.tickCrossHook(cross, pool.poolPath, i, zeroForOne, self.CurrentTime())
+			pool.tickCrossHook(pool.poolPath, i, zeroForOne, self.CurrentTime())
 		}
 	} else {
 		// forward
@@ -597,7 +597,7 @@ func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {
 			}
 
 			// update global state
-			pool.tickCrossHook(cross, pool.poolPath, i, zeroForOne, self.CurrentTime())
+			pool.tickCrossHook(pool.poolPath, i, zeroForOne, self.CurrentTime())
 		}
 	}
 
