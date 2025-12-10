@@ -179,6 +179,9 @@ func (r *routerV1) drySwapRoute(
 
 	swapFee := r.store.GetSwapFee()
 
+	// Store original amount for validation (before router fee adjustment)
+	originalAmountSpecified := amountSpecified
+
 	// adjust amount sign for exact out swaps
 	if swapType == ExactOut {
 		amountSpecifiedWithRouterFee := calculateExactOutWithRouterFee(safeAbsInt64(amountSpecified), swapFee)
@@ -243,7 +246,7 @@ func (r *routerV1) drySwapRoute(
 
 	resultAmountOut = safeSubInt64(resultAmountOut, feeAmountInt64)
 
-	return processor.ValidateSwapResults(swapType, resultAmountIn, resultAmountOut, amountSpecified, amountLimit, swapCount)
+	return processor.ValidateSwapResults(swapType, resultAmountIn, resultAmountOut, originalAmountSpecified, amountLimit, swapCount)
 }
 
 // calculateSwapCount calculates the total number of swaps across all routes.
