@@ -45,42 +45,34 @@ func (s *stakerV1) CreateExternalIncentive(
 	assertIsValidIncentiveStartTime(startTimestamp)
 	assertIsValidIncentiveEndTime(endTimestamp)
 	assertIsValidIncentiveDuration(safeSubInt64(endTimestamp, startTimestamp))
-	// assert that the user has sent the correct amount of native coin
 	assertIsValidUserCoinSend(rewardToken, rewardAmount)
 
 	en.MintAndDistributeGns(cross)
 
-	// transfer reward token from user to staker
-	isRequestUnwrap := false
-	if rewardToken == GNOT_DENOM {
-		isRequestUnwrap = true
-		rewardToken = WUGNOT_PATH
-		err := wrapWithTransfer(stakerAddr, rewardAmount)
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		common.SafeGRC20TransferFrom(cross, rewardToken, caller, stakerAddr, rewardAmount)
+	// cache values for external interactions
+	depositGnsAmount := s.store.GetDepositGnsAmount()
+	isRequestUnwrap := rewardToken == GNOT_DENOM
+	actualRewardToken := rewardToken
+	if isRequestUnwrap {
+		actualRewardToken = WUGNOT_PATH
 	}
 
-	depositGnsAmount := s.store.GetDepositGnsAmount()
-
-	// deposit gns amount
-	gns.TransferFrom(cross, caller, stakerAddr, depositGnsAmount)
-
+	// Update all state BEFORE any external interactions
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
-	incentiveId := s.store.NextIncentiveID(caller, currentTime)
+
 	pool := s.getPools().GetPoolOrNil(targetPoolPath)
 	if pool == nil {
 		pool = sr.NewPool(targetPoolPath, currentTime)
 		s.getPools().set(targetPoolPath, pool)
 	}
 
+	incentiveId := s.store.NextIncentiveID(caller, currentTime)
+
 	incentive := sr.NewExternalIncentive(
 		incentiveId,
 		targetPoolPath,
-		rewardToken,
+		actualRewardToken,
 		rewardAmount,
 		startTimestamp,
 		endTimestamp,
@@ -104,13 +96,26 @@ func (s *stakerV1) CreateExternalIncentive(
 	poolResolver := NewPoolResolver(pool)
 	poolResolver.IncentivesResolver().create(caller, incentive)
 
+	// transfer reward token from user to staker
+	if isRequestUnwrap {
+		err := wrapWithTransfer(stakerAddr, rewardAmount)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		common.SafeGRC20TransferFrom(cross, rewardToken, caller, stakerAddr, rewardAmount)
+	}
+
+	// deposit gns amount
+	gns.TransferFrom(cross, caller, stakerAddr, depositGnsAmount)
+
 	chain.Emit(
 		"CreateExternalIncentive",
 		"prevAddr", caller.String(),
 		"prevRealm", prevRealm.PkgPath(),
 		"incentiveId", incentiveId,
 		"targetPoolPath", targetPoolPath,
-		"rewardToken", rewardToken,
+		"rewardToken", actualRewardToken,
 		"rewardAmount", formatInt(rewardAmount),
 		"startTimestamp", formatInt(startTimestamp),
 		"endTimestamp", formatInt(endTimestamp),
