@@ -187,24 +187,14 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 		refund = poolLeftExternalRewardAmount
 	}
 
-	// handle refund based on original token type
-	if incentiveResolver.IsRequestUnwrap() {
-		// unwrap to GNOT if originally deposited as native GNOT
-		transferErr := unwrapWithTransfer(incentiveResolver.Refundee(), refund)
-		if transferErr != nil {
-			panic(transferErr)
-		}
-	} else {
-		// keep as WUGNOT or other token if originally deposited as wrapped token
-		common.SafeGRC20Transfer(cross, incentiveResolver.RewardToken(), incentiveResolver.Refundee(), refund)
-	}
+	// cache values for external interactions
+	refundee := incentiveResolver.Refundee()
+	rewardToken := incentiveResolver.RewardToken()
+	depositGnsAmount := incentiveResolver.DepositGnsAmount()
+	isRequestUnwrap := incentiveResolver.IsRequestUnwrap()
 
-	// Transfer GNS deposit back to refundee
-	gns.Transfer(cross, incentiveResolver.Refundee(), incentiveResolver.DepositGnsAmount())
-
-	// Mark incentive as refunded and update
-	// After this update, attempts to re-claim GNS or rewards that were deposited
-	// through the `endExternalIncentive` function will be blocked.
+	// Mark incentive as refunded and update state BEFORE any external interactions
+	// This prevents reentrancy attacks by updating state first
 	incentiveResolver.SetRefunded(true)
 	incentiveResolver.addDistributedRewardAmount(refund)
 	incentivesResolver.update(incentive.Refundee(), incentive)
@@ -217,6 +207,21 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 			panic(err)
 		}
 	}
+
+	// handle refund based on original token type
+	if isRequestUnwrap {
+		// unwrap to GNOT if originally deposited as native GNOT
+		transferErr := unwrapWithTransfer(refundee, refund)
+		if transferErr != nil {
+			panic(transferErr)
+		}
+	} else {
+		// keep as WUGNOT or other token if originally deposited as wrapped token
+		common.SafeGRC20Transfer(cross, rewardToken, refundee, refund)
+	}
+
+	// Transfer GNS deposit back to refundee
+	gns.Transfer(cross, refundee, depositGnsAmount)
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
