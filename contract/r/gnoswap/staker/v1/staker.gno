@@ -320,14 +320,6 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 
 	s.getStakers().addDeposit(caller, positionId, deposit)
 
-	// transfer NFT ownership to staker contract
-	if err := s.transferDeposit(positionId, owner, caller, stakerAddr); err != nil {
-		panic(err.Error())
-	}
-
-	// after transfer, set caller(user) as position operator (to collect fee and reward)
-	pn.SetPositionOperator(cross, positionId, caller)
-
 	poolTier := s.getPoolTier()
 	poolTier.cacheReward(runtime.ChainHeight(), currentTime, pools)
 	s.updatePoolTier(poolTier)
@@ -337,9 +329,8 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 
 	poolResolver := NewPoolResolver(pool)
 
-	isInRange := false
-	if pn.IsInRange(positionId) {
-		isInRange = true
+	isInRange := pn.IsInRange(positionId)
+	if isInRange {
 		poolResolver.modifyDeposit(signedLiquidity, currentTime, currentTick)
 	}
 	// historical tick must be set regardless of the deposit's range
@@ -352,6 +343,14 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	s.getPools().set(poolPath, pool)
 
 	amount0, amount1 := s.calculateAmounts(poolPath, tickLower, tickUpper, liquidity)
+
+	// transfer NFT ownership to staker contract
+	if err := s.transferDeposit(positionId, owner, caller, stakerAddr); err != nil {
+		panic(err.Error())
+	}
+
+	// after transfer, set caller(user) as position operator (to collect fee and reward)
+	pn.SetPositionOperator(cross, positionId, caller)
 
 	chain.Emit(
 		"StakeToken",
