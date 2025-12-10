@@ -52,13 +52,11 @@ func (s *stakerV1) MintAndStake(
 ) (uint64, string, string, string, string) {
 	halt.AssertIsNotHaltedStaker()
 
-	// if one click native
+	// handle native token deposit: validate amount first, then transfer
 	if token0 == GNOT_DENOM || token1 == GNOT_DENOM {
-		// check sent ugnot
 		sent := banker.OriginSend()
 		ugnotSent := sent.AmountOf("ugnot")
 
-		// not enough ugnot sent
 		if ugnotSent < UGNOT_MIN_DEPOSIT_TO_WRAP {
 			panic(ufmt.Errorf(
 				"%v: too less ugnot sent(%d), minimum:%d",
@@ -66,7 +64,7 @@ func (s *stakerV1) MintAndStake(
 			))
 		}
 
-		// send it over to position to wrap
+		// send native coins to position contract for wrapping (must happen before Mint)
 		banker_ := banker.NewBanker(banker.BankerTypeRealmSend)
 		banker_.SendCoins(stakerAddr, positionAddr, chain.Coins{{Denom: GNOT_DENOM, Amount: ugnotSent}})
 	}
