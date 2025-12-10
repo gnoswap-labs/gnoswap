@@ -1835,3 +1835,102 @@ func TestUnwrapLeftoverWrappedToken(t *testing.T) {
 func contains(str, substr string) bool {
 	return strings.Contains(str, substr)
 }
+
+// TestDecreaseLiquidity_SlippageOnCollectedAmounts tests that slippage check
+// is enforced on actually collected amounts, not on burned amounts.
+// This prevents cases where user receives less than expected due to pool constraints.
+func TestDecreaseLiquidity_SlippageOnCollectedAmounts(t *testing.T) {
+	tests := []struct {
+		name             string
+		liquidityToRemove string
+		amount0Min       string
+		amount1Min       string
+		expectedHasAbort bool
+		expectedErrorMsg string
+	}{
+		{
+			name:              "success with reasonable slippage bounds",
+			liquidityToRemove: "500000",
+			amount0Min:        "1",
+			amount1Min:        "1",
+			expectedHasAbort:  false,
+		},
+		{
+			name:              "fail when amount0 collected < amount0Min",
+			liquidityToRemove: "500000",
+			amount0Min:        "999999999",
+			amount1Min:        "1",
+			expectedHasAbort:  true,
+			expectedErrorMsg:  "collectAmount0",
+		},
+		{
+			name:              "fail when amount1 collected < amount1Min",
+			liquidityToRemove: "500000",
+			amount0Min:        "1",
+			amount1Min:        "999999999",
+			expectedHasAbort:  true,
+			expectedErrorMsg:  "collectAmount1",
+		},
+		{
+			name:              "fail when both amounts collected < mins",
+			liquidityToRemove: "500000",
+			amount0Min:        "999999999",
+			amount1Min:        "999999999",
+			expectedHasAbort:  true,
+			expectedErrorMsg:  "collectAmount",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			initPositionTest(t)
+
+			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+			testing.SetRealm(adminRealm)
+			mockInstanceMint(
+				barPath,
+				fooPath,
+				fee500,
+				-10000,
+				10000,
+				"1000000",
+				"1000000",
+				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+
+			deadline := time.Now().Add(time.Hour).Unix()
+
+			testing.SetRealm(testing.NewUserRealm(adminAddr))
+			if tc.expectedHasAbort {
+				uassert.AbortsContains(t, tc.expectedErrorMsg, func() {
+					mockInstanceDecreaseLiquidity(
+						1,
+						tc.liquidityToRemove,
+						tc.amount0Min,
+						tc.amount1Min,
+						deadline,
+						false,
+					)
+				})
+			} else {
+				_, liquidity, _, _, collect0, collect1, _ := mockInstanceDecreaseLiquidity(
+					1,
+					tc.liquidityToRemove,
+					tc.amount0Min,
+					tc.amount1Min,
+					deadline,
+					false,
+				)
+				
+				// Verify liquidity was decreased
+				uassert.Equal(t, tc.liquidityToRemove, liquidity)
+				
+				// Verify some tokens were collected
+				collect0Val, _ := strconv.ParseUint(collect0, 10, 64)
+				collect1Val, _ := strconv.ParseUint(collect1, 10, 64)
+				uassert.True(t, collect0Val > 0, "should collect some token0")
+				uassert.True(t, collect1Val > 0, "should collect some token1")
+			}
+		})
+	}
+}
