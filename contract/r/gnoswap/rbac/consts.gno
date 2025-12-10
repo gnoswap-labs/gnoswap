@@ -12,8 +12,6 @@ const (
 
 // Derived addresses for GnoSwap protocol packages.
 var (
-	// GNS_ADDR is the derived address for the GNS token package.
-	GNS_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/gns")
 	// EMISSION_ADDR is the derived address for the emission package.
 	EMISSION_ADDR address = chain.PackageAddress("gno.land/r/gnoswap/emission")
 
