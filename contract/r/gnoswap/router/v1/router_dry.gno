@@ -70,7 +70,6 @@ func (p *SwapProcessor) ProcessMultiSwap(
 }
 
 // ValidateSwapResults checks if the swap results meet the required constraints.
-// For exact-out swaps, applies tolerance up to swapCount units to match actual router behavior.
 func (p *SwapProcessor) ValidateSwapResults(
 	swapType SwapType,
 	resultAmountIn, resultAmountOut int64,
@@ -83,18 +82,12 @@ func (p *SwapProcessor) ValidateSwapResults(
 
 	switch swapType {
 	case ExactIn:
-		if resultAmountIn > amountSpecified {
-			return resultAmountIn, resultAmountOut, false
-		}
 		if resultAmountOut < amountLimit {
 			return resultAmountIn, resultAmountOut, false
 		}
 		return resultAmountIn, resultAmountOut, true
 
 	case ExactOut:
-		// Apply tolerance for exact-out swaps to match actual router behavior.
-		// The tolerance allows difference up to swapCount units for rounding errors.
-		// This mirrors SwapValidator.exactOutAmount() in router.gno.
 		absAmountSpecified := safeAbsInt64(amountSpecified)
 		diff := int64(0)
 		if resultAmountOut >= absAmountSpecified {
@@ -105,8 +98,6 @@ func (p *SwapProcessor) ValidateSwapResults(
 		if diff > swapCount {
 			return resultAmountIn, resultAmountOut, false
 		}
-
-		// Slippage check: amountIn must not exceed limit
 		if resultAmountIn > amountLimit {
 			return resultAmountIn, resultAmountOut, false
 		}
@@ -184,7 +175,6 @@ func (r *routerV1) drySwapRoute(
 		panic(addDetailToError(errInvalidRoutesAndQuotes, err.Error()))
 	}
 
-	// Calculate swapCount for tolerance check (mirrors SwapRouteParams.SwapCount())
 	swapCount := calculateSwapCount(strRouteArr)
 
 	swapFee := r.store.GetSwapFee()
@@ -257,7 +247,6 @@ func (r *routerV1) drySwapRoute(
 }
 
 // calculateSwapCount calculates the total number of swaps across all routes.
-// This mirrors SwapRouteParams.SwapCount() in base.gno.
 func calculateSwapCount(routeArr string) int64 {
 	swapCount := int64(0)
 

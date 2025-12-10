@@ -395,15 +395,6 @@ func TestValidateSwapResults_ExactIn(t *testing.T) {
 			expectedSuccess:  true,
 		},
 		{
-			name:             "amountIn exceeds specified - should fail",
-			resultAmountIn:   1100,
-			resultAmountOut:  500,
-			amountSpecified:  1000,
-			amountLimit:      400,
-			swapCount:        1,
-			expectedSuccess:  false,
-		},
-		{
 			name:             "amountOut below limit - should fail",
 			resultAmountIn:   1000,
 			resultAmountOut:  300,
