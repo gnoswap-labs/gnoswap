@@ -89,19 +89,6 @@ func (vm *versionManager) RegisterInitializer(initializer func(store any) any) e
 	// Register the initializer function for this package path
 	vm.initializers.Set(targetPackagePath, initializer)
 
-	// Determine if this is the first registration (bootstrap case)
-	initialized := vm.currentImplementation != nil
-	if initialized {
-		// Already have an active implementation, add this as read-only
-		return vm.domainKVStore.AddAuthorizedCaller(previousRealm.Address(), store.ReadOnly)
-	}
-
-	// Grant write access to the first (current) implementation
-	err := vm.domainKVStore.AddAuthorizedCaller(previousRealm.Address(), store.Write)
-	if err != nil {
-		return err
-	}
-
 	// First registration: activate this version as the current implementation
 	prevPackagePath := vm.currentPackagePath
 
