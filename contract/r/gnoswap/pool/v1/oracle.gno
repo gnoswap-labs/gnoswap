@@ -53,6 +53,9 @@ func getTWAP(p *pl.Pool, secondsAgo uint32) (int32, error) {
 	// Calculate TWAP: (tickCumulative_now - tickCumulative_before) / timeDelta
 	tickDelta := tickCumulatives[1] - tickCumulatives[0]
 	twapTick := int32(tickDelta / int64(secondsAgo))
+	if tickDelta < 0 && (tickDelta%int64(secondsAgo) != 0) {
+		twapTick--
+	}
 
 	return twapTick, nil
 }
