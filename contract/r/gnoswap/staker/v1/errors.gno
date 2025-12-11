@@ -12,7 +12,7 @@ var (
 	errAlreadyRegistered             = errors.New("[GNOSWAP-STAKER-003] already registered token")
 	errInsufficientReward            = errors.New("[GNOSWAP-STAKER-004] insufficient reward")
 	errWrapUnwrap                    = errors.New("[GNOSWAP-STAKER-005] wrap, unwrap failed")
-	errWugnotMinimum                 = errors.New("[GNOSWAP-STAKER-006] can not wrapless than minimum amount")
+	errWugnotMinimum                 = errors.New("[GNOSWAP-STAKER-006] can not wrap less than minimum amount")
 	errInvalidInput                  = errors.New("[GNOSWAP-STAKER-007] invalid input data")
 	errInvalidUnstakingFee           = errors.New("[GNOSWAP-STAKER-008] invalid unstaking fee")
 	errAlreadyStaked                 = errors.New("[GNOSWAP-STAKER-009] already staked position")
