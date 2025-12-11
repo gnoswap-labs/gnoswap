@@ -5,9 +5,9 @@ import "gno.land/p/nt/avl"
 type Permission uint8
 
 const (
-	None     Permission = 0
-	ReadOnly Permission = 1
-	Write    Permission = 2
+	_ Permission = iota
+	ReadOnly
+	Write
 )
 
 // KVStore interface for domain-specific storage
