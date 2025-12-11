@@ -1934,3 +1934,76 @@ func TestDecreaseLiquidity_SlippageOnCollectedAmounts(t *testing.T) {
 		})
 	}
 }
+
+// TestDecreaseLiquidity_PoolBalanceInsufficient tests the edge case where
+// pool balance is insufficient, causing collect amounts to be less than burn amounts.
+// This verifies that slippage check is enforced on actually collected amounts.
+func TestDecreaseLiquidity_PoolBalanceInsufficient(t *testing.T) {
+	initPositionTest(t)
+
+	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+	testing.SetRealm(adminRealm)
+	// Step 1: Mint position to add liquidity
+	mockInstanceMint(
+		barPath,
+		fooPath,
+		fee500,
+		-10000,
+		10000,
+		"1000000",
+		"1000000",
+		"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+
+	// Step 2: Manually reduce pool balance to simulate insufficient balance
+	pool := pl.GetPool(barPath, fooPath, fee500)
+	currentBalance0 := pool.BalanceToken0()
+	currentBalance1 := pool.BalanceToken1()
+
+	// Reduce pool balance to 50% to create burn > collect scenario
+	reducedBalance0 := u256.NewUint(0).Div(currentBalance0, u256.NewUint(2))
+	reducedBalance1 := u256.NewUint(0).Div(currentBalance1, u256.NewUint(2))
+	pool.SetBalanceToken0(reducedBalance0)
+	pool.SetBalanceToken1(reducedBalance1)
+
+	deadline := time.Now().Add(time.Hour).Unix()
+
+	// Step 3: Try to decrease liquidity with slippage check
+	// burn amounts will be ~500,000 each (50% of 1,000,000)
+	// but collect amounts will be limited by pool balance (~500,000 total / 2 = ~250,000 each)
+	// So if we set amount0Min = 400,000, it should fail because collect0 < 400,000
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+	// This should FAIL because collect0 will be less than amount0Min
+	// Even though burn0 would be >= 400,000, collect0 will be limited by pool balance
+	uassert.AbortsContains(t, "collectAmount0", func() {
+		mockInstanceDecreaseLiquidity(
+			1,
+			"500000",  // Remove 50% liquidity
+			"400000",  // amount0Min - higher than what pool can provide
+			"1",       // amount1Min - low to isolate amount0 failure
+			deadline,
+			false,
+		)
+	})
+
+	// Reset pool balance for next test
+	pool.SetBalanceToken0(currentBalance0)
+	pool.SetBalanceToken1(currentBalance1)
+
+	// This should FAIL for amount1
+	pool.SetBalanceToken0(currentBalance0) // Restore balance0
+	pool.SetBalanceToken1(reducedBalance1) // Keep balance1 reduced
+
+	uassert.AbortsContains(t, "collectAmount1", func() {
+		mockInstanceDecreaseLiquidity(
+			1,
+			"500000",  // Remove 50% liquidity
+			"1",       // amount0Min - low
+			"400000",  // amount1Min - higher than what pool can provide
+			deadline,
+			false,
+		)
+	})
+}
