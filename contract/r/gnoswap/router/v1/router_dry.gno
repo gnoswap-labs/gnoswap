@@ -80,33 +80,19 @@ func (p *SwapProcessor) ValidateSwapResults(
 		return 0, 0, false
 	}
 
-	switch swapType {
-	case ExactIn:
-		if resultAmountOut < amountLimit {
-			return resultAmountIn, resultAmountOut, false
-		}
-		return resultAmountIn, resultAmountOut, true
+	validator := &SwapValidator{}
 
-	case ExactOut:
-		absAmountSpecified := safeAbsInt64(amountSpecified)
-		diff := int64(0)
-		if resultAmountOut >= absAmountSpecified {
-			diff = resultAmountOut - absAmountSpecified
-		} else {
-			diff = absAmountSpecified - resultAmountOut
-		}
-		if diff > swapCount {
+	if swapType == ExactOut {
+		if err := validator.exactOutAmount(resultAmountOut, safeAbsInt64(amountSpecified), swapCount); err != nil {
 			return resultAmountIn, resultAmountOut, false
 		}
-		if resultAmountIn > amountLimit {
-			return resultAmountIn, resultAmountOut, false
-		}
-		return resultAmountIn, resultAmountOut, true
-
-	default:
-		// This should never happen since we validate the swap type earlier
-		return 0, 0, false
 	}
+
+	if err := validator.slippage(swapType, resultAmountIn, resultAmountOut, amountLimit); err != nil {
+		return resultAmountIn, resultAmountOut, false
+	}
+
+	return resultAmountIn, resultAmountOut, true
 }
 
 // AddSwapResults safely adds swap result amounts, checking for overflow.
