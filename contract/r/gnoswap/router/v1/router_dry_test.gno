@@ -453,3 +453,113 @@ func TestDrySwapRouteOverflow(t *testing.T) {
 		})
 	}
 }
+
+func TestDrySwapRouteZeroAmount(t *testing.T) {
+	tests := []DrySwapTestCase{
+		{
+			name:    "ExactIn - Zero amount should panic",
+			setupFn: setupBasicPools,
+			swapParams: NewDrySwapBuilder().
+				InputToken(barPath).
+				OutputToken(bazPath).
+				SpecifiedAmount("0").
+				SwapType("EXACT_IN").
+				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500").
+				TokenAmountLimit("1").
+				Build(),
+			expectedAmountIn:  "0",
+			expectedAmountOut: "0",
+			expectedSuccess:   false,
+			expectPanic:       true,
+			expectedPanicMsg:  "must be positive",
+		},
+		{
+			name:    "ExactOut - Zero amount should panic",
+			setupFn: setupBasicPools,
+			swapParams: NewDrySwapBuilder().
+				InputToken(bazPath).
+				OutputToken(barPath).
+				SpecifiedAmount("0").
+				SwapType("EXACT_OUT").
+				Route("gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500").
+				TokenAmountLimit("100000").
+				Build(),
+			expectedAmountIn:  "0",
+			expectedAmountOut: "0",
+			expectPanic:       true,
+			expectedPanicMsg:  "must be positive",
+		},
+		{
+			name:    "ExactIn - Negative amount should panic",
+			setupFn: setupBasicPools,
+			swapParams: NewDrySwapBuilder().
+				InputToken(barPath).
+				OutputToken(bazPath).
+				SpecifiedAmount("-100").
+				SwapType("EXACT_IN").
+				Route("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500").
+				TokenAmountLimit("1").
+				Build(),
+			expectedAmountIn:  "0",
+			expectedAmountOut: "0",
+			expectedSuccess:   false,
+			expectPanic:       true,
+			expectedPanicMsg:  "must be positive",
+		},
+		{
+			name:    "ExactOut - Negative amount should panic",
+			setupFn: setupBasicPools,
+			swapParams: NewDrySwapBuilder().
+				InputToken(bazPath).
+				OutputToken(barPath).
+				SpecifiedAmount("-100").
+				SwapType("EXACT_OUT").
+				Route("gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500").
+				TokenAmountLimit("100000").
+				Build(),
+			expectedAmountIn:  "0",
+			expectedAmountOut: "0",
+			expectPanic:       true,
+			expectedPanicMsg:  "must be positive",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			env := NewTestEnv(t)
+
+			if tt.setupFn != nil {
+				tt.setupFn(env)
+			}
+
+			router := mockRouter()
+
+			if tt.expectPanic {
+				uassert.PanicsContains(t, tt.expectedPanicMsg, func() {
+					router.DrySwapRoute(
+						tt.swapParams.inputToken,
+						tt.swapParams.outputToken,
+						tt.swapParams.specifiedAmount,
+						tt.swapParams.swapTypeStr,
+						tt.swapParams.strRouteArr,
+						tt.swapParams.quoteArr,
+						tt.swapParams.tokenAmountLimit,
+					)
+				})
+			} else {
+				amountIn, amountOut, success := router.DrySwapRoute(
+					tt.swapParams.inputToken,
+					tt.swapParams.outputToken,
+					tt.swapParams.specifiedAmount,
+					tt.swapParams.swapTypeStr,
+					tt.swapParams.strRouteArr,
+					tt.swapParams.quoteArr,
+					tt.swapParams.tokenAmountLimit,
+				)
+				uassert.Equal(t, amountIn, tt.expectedAmountIn)
+				uassert.Equal(t, amountOut, tt.expectedAmountOut)
+				uassert.Equal(t, success, tt.expectedSuccess)
+			}
+		})
+	}
+}
