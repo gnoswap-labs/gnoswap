@@ -293,6 +293,79 @@ func TestObservationState_LiquidityAccumulation(t *testing.T) {
 	}
 }
 
+// Verify TWAP rounding for a variety of tickDelta/secondsAgo combinations
+func TestGetTWAP_RoundingTable(t *testing.T) {
+	tests := []struct {
+		name       string
+		tickDelta  int64
+		secondsAgo uint32
+		expected   int32
+	}{
+		{
+			name:       "negative with remainder floors down",
+			tickDelta:  -5,
+			secondsAgo: 2,
+			expected:   -3,
+		},
+		{
+			name:       "negative divisible no adjustment",
+			tickDelta:  -4,
+			secondsAgo: 2,
+			expected:   -2,
+		},
+		{
+			name:       "negative small remainder floors to -1",
+			tickDelta:  -1,
+			secondsAgo: 3,
+			expected:   -1,
+		},
+		{
+			name:       "positive with remainder unchanged",
+			tickDelta:  5,
+			secondsAgo: 2,
+			expected:   2,
+		},
+		{
+			name:       "positive divisible unchanged",
+			tickDelta:  6,
+			secondsAgo: 3,
+			expected:   2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pool := createTestPool()
+			observationState := newObservationStateWithDelta(tt.secondsAgo, tt.tickDelta)
+			pool.SetObservationState(observationState)
+
+			twapTick, err := getTWAP(pool, tt.secondsAgo)
+			uassert.NoError(t, err, "getTWAP should succeed for configured observations")
+			uassert.Equal(t, tt.expected, twapTick, "unexpected TWAP tick")
+		})
+	}
+}
+
+// newObservationStateWithDelta seeds a 2-slot observation state so that the
+// tick cumulative delta over secondsAgo is tickDelta.
+func newObservationStateWithDelta(secondsAgo uint32, tickDelta int64) *pl.ObservationState {
+	now := time.Now().Unix()
+	start := now - int64(secondsAgo)
+
+	os := pl.NewObservationState(start)
+	os.SetCardinality(2)
+	os.SetCardinalityLimit(2)
+	os.SetIndex(1)
+	os.Observations()[1] = pl.NewObservation(
+		now,
+		tickDelta,
+		u256.Zero(),
+		u256.Zero(),
+		true,
+	)
+	return os
+}
+
 // Helper types for test data
 type writeOperation struct {
 	time      int64
