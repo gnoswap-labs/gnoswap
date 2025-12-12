@@ -365,7 +365,7 @@ func testExactOut_JustAtOverflow() {
 	if drySuccess {
 		ufmt.Println("[ERROR] DrySwap should have failed but succeeded!")
 		common.SafeGRC20Approve(cross, fooPath, routerAddr, 999999999999999)
-		uassert.AbortsWithMessage(t, "[GNOSWAP-POOL-026] overflow", func() {
+		uassert.AbortsWithMessage(t, "[GNOSWAP-POOL-022] overflow", func() {
 			router.ExactOutSwapRoute(
 				cross, fooPath, barPath, amount, route, "100", "999999999999999",
 				time.Now().Add(time.Hour).Unix(), "",

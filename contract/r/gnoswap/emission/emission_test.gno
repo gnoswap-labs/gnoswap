@@ -153,7 +153,7 @@ func TestMintAndDistributeGnsWithDistributionStartTime(t *testing.T) {
 				testing.SkipHeights(-tt.skipHeight)
 			}()
 
-			distributed := MintAndDistributeGns(cross)
+			distributed, _ := MintAndDistributeGns(cross)
 			if tt.verify != nil {
 				tt.verify(distributed)
 			}
@@ -179,10 +179,15 @@ func TestEmission_MintAndDistributeGns_EdgeCases(t *testing.T) {
 				testing.SetOriginCaller(adminAddr)
 				SetDistributionStartTime(cross, now+100)
 				testing.SkipHeights(200)
+				// First distribution to get some GNS minted
+				MintAndDistributeGns(cross)
+				// Skip more time to allow another mint
+				testing.SkipHeights(100)
+				// Now set leftover amount for next distribution
 				setLeftGNSAmount(100)
 			},
 			verify: func(t *testing.T) {
-				distributed := MintAndDistributeGns(cross)
+				distributed, _ := MintAndDistributeGns(cross)
 				uassert.True(t, distributed >= 0)
 			},
 		},
@@ -193,7 +198,7 @@ func TestEmission_MintAndDistributeGns_EdgeCases(t *testing.T) {
 				distributionStartTimestamp = 0
 			},
 			verify: func(t *testing.T) {
-				distributed := MintAndDistributeGns(cross)
+				distributed, _ := MintAndDistributeGns(cross)
 				uassert.Equal(t, int64(0), distributed)
 			},
 		},
@@ -206,8 +211,9 @@ func TestEmission_MintAndDistributeGns_EdgeCases(t *testing.T) {
 				SetDistributionStartTime(cross, now+1000000)
 			},
 			verify: func(t *testing.T) {
-				distributed := MintAndDistributeGns(cross)
+				distributed, ok := MintAndDistributeGns(cross)
 				uassert.Equal(t, int64(0), distributed)
+				uassert.True(t, ok)
 			},
 		},
 		{
@@ -223,7 +229,8 @@ func TestEmission_MintAndDistributeGns_EdgeCases(t *testing.T) {
 			},
 			verify: func(t *testing.T) {
 				// Second distribution at same timestamp should return 0
-				distributed := MintAndDistributeGns(cross)
+				distributed, ok := MintAndDistributeGns(cross)
+				uassert.True(t, ok)
 				uassert.Equal(t, int64(0), distributed)
 			},
 		},
@@ -238,7 +245,7 @@ func TestEmission_MintAndDistributeGns_EdgeCases(t *testing.T) {
 				setLastExecutedTimestamp(now + 1000)
 			},
 			verify: func(t *testing.T) {
-				distributed := MintAndDistributeGns(cross)
+				distributed, _ := MintAndDistributeGns(cross)
 				uassert.Equal(t, int64(0), distributed)
 			},
 		},

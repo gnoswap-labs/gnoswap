@@ -254,7 +254,7 @@ func demonstrateVulnerability() {
 	println("[FIX VERIFICATION] Attempting to call EndExternalIncentive multiple times")
 	println("[EXPECTED] Second call should fail with 'cannot end non existent incentive' error")
 
-	uassert.AbortsContains(t, "[GNOSWAP-STAKER-012]", func() {
+	uassert.AbortsContains(t, "[GNOSWAP-STAKER-008]", func() {
 		sr.EndExternalIncentive(
 			cross,
 			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",

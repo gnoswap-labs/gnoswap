@@ -147,7 +147,7 @@ func (s *stakerV1) processUnClaimableReward(poolPath string, endTimestamp int64)
 		return 0
 	}
 	poolResolver := NewPoolResolver(pool)
-	return poolResolver.processUnclaimableReward(s.getPoolTier(), endTimestamp)
+	return poolResolver.processUnclaimableReward(endTimestamp)
 }
 
 // getInitialCollectTime determines the initial collection time for an incentive

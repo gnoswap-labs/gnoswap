@@ -84,7 +84,7 @@ func TestFinalizeSwap(t *testing.T) {
 			amountSpecified:         100,
 			swapCount:               1,
 			expectError:             true,
-			errorMessage:            "[GNOSWAP-ROUTER-002] slippage check failed || Received more than requested in [EXACT_OUT] requested=100, actual=90",
+			errorMessage:            "[GNOSWAP-ROUTER-001] slippage check failed || Received more than requested in [EXACT_OUT] requested=100, actual=90",
 		},
 		{
 			name:                    "GNOT: Slippage error",
@@ -857,7 +857,7 @@ func TestHandleMultiSwap(t *testing.T) {
 			numHops:         2,
 			amountSpecified: "1000",
 			shouldPanic:     true,
-			panicMsg:        "[GNOSWAP-ROUTER-008] invalid swap type",
+			panicMsg:        "[GNOSWAP-ROUTER-007] invalid swap type",
 		},
 	}
 
@@ -953,7 +953,7 @@ func TestProcessRoute_MultiHops(t *testing.T) {
 			expectedAmountIn:  "",
 			expectedAmountOut: "",
 			expectError:       true,
-			errorMsg:          "[GNOSWAP-ROUTER-009] invalid pool path || len(poolPathSplit) != 3, poolPath: ",
+			errorMsg:          "[GNOSWAP-ROUTER-008] invalid pool path || len(poolPathSplit) != 3, poolPath: ",
 		},
 	}
 

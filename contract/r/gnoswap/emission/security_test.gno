@@ -214,7 +214,7 @@ func TestAssertValidDistributionPct_SecurityValidation(t *testing.T) {
 			pct03:                3000,
 			pct04:                2000,
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-EMISSION-003] invalid emission percentage || sum of percentages must be 10000, got 11000",
+			expectedPanicMessage: "[GNOSWAP-EMISSION-002] invalid emission percentage || sum of percentages must be 10000, got 11000",
 		},
 		{
 			name:                 "Sum less than 100%",
@@ -223,7 +223,7 @@ func TestAssertValidDistributionPct_SecurityValidation(t *testing.T) {
 			pct03:                2000,
 			pct04:                2000,
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-EMISSION-003] invalid emission percentage || sum of percentages must be 10000, got 8000",
+			expectedPanicMessage: "[GNOSWAP-EMISSION-002] invalid emission percentage || sum of percentages must be 10000, got 8000",
 		},
 		{
 			name:                 "Negative percentage 1",
@@ -232,7 +232,7 @@ func TestAssertValidDistributionPct_SecurityValidation(t *testing.T) {
 			pct03:                3000,
 			pct04:                4000,
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-EMISSION-003] invalid emission percentage || percentage 1 cannot be negative: -1000",
+			expectedPanicMessage: "[GNOSWAP-EMISSION-002] invalid emission percentage || percentage 1 cannot be negative: -1000",
 		},
 		{
 			name:                 "Percentage exceeds 100%",
@@ -241,7 +241,7 @@ func TestAssertValidDistributionPct_SecurityValidation(t *testing.T) {
 			pct03:                0,
 			pct04:                0,
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-EMISSION-003] invalid emission percentage || percentage 1 cannot exceed 100%: 15000",
+			expectedPanicMessage: "[GNOSWAP-EMISSION-002] invalid emission percentage || percentage 1 cannot exceed 100%: 15000",
 		},
 	}
 
@@ -362,7 +362,7 @@ func TestAssertValidDistributionPct_IsolatedSecurity(t *testing.T) {
 			pct03:                3000,
 			pct04:                4000,
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-EMISSION-003] invalid emission percentage || percentage 1 cannot be negative: -1000",
+			expectedPanicMessage: "[GNOSWAP-EMISSION-002] invalid emission percentage || percentage 1 cannot be negative: -1000",
 		},
 	}
 
@@ -430,31 +430,31 @@ func TestAssertValidDistributionTarget(t *testing.T) {
 			name:        "Invalid target 0",
 			target:      0,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(0)",
+			panicMsg:    "[GNOSWAP-EMISSION-001] invalid emission target || invalid target(0)",
 		},
 		{
 			name:        "Invalid target -1",
 			target:      -1,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(-1)",
+			panicMsg:    "[GNOSWAP-EMISSION-001] invalid emission target || invalid target(-1)",
 		},
 		{
 			name:        "Invalid target 5",
 			target:      5,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(5)",
+			panicMsg:    "[GNOSWAP-EMISSION-001] invalid emission target || invalid target(5)",
 		},
 		{
 			name:        "Invalid target 999",
 			target:      999,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(999)",
+			panicMsg:    "[GNOSWAP-EMISSION-001] invalid emission target || invalid target(999)",
 		},
 		{
 			name:        "Invalid target max int",
 			target:      2147483647,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(2147483647)",
+			panicMsg:    "[GNOSWAP-EMISSION-001] invalid emission target || invalid target(2147483647)",
 		},
 	}
 
@@ -507,7 +507,7 @@ func TestAssertValidDistributionTargets_EdgeCases(t *testing.T) {
 			target03:    COMMUNITY_POOL,
 			target04:    GOV_STAKER,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(0)",
+			panicMsg:    "[GNOSWAP-EMISSION-001] invalid emission target || invalid target(0)",
 		},
 		{
 			name:        "Last target invalid",
@@ -516,7 +516,7 @@ func TestAssertValidDistributionTargets_EdgeCases(t *testing.T) {
 			target03:    COMMUNITY_POOL,
 			target04:    99,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(99)",
+			panicMsg:    "[GNOSWAP-EMISSION-001] invalid emission target || invalid target(99)",
 		},
 		{
 			name:        "Duplicate first and second targets",
@@ -525,7 +525,7 @@ func TestAssertValidDistributionTargets_EdgeCases(t *testing.T) {
 			target03:    COMMUNITY_POOL,
 			target04:    GOV_STAKER,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-EMISSION-004] duplicate emission target",
+			panicMsg:    "[GNOSWAP-EMISSION-003] duplicate emission target",
 		},
 		{
 			name:        "Duplicate last two targets",
@@ -534,7 +534,7 @@ func TestAssertValidDistributionTargets_EdgeCases(t *testing.T) {
 			target03:    GOV_STAKER,
 			target04:    GOV_STAKER,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-EMISSION-004] duplicate emission target",
+			panicMsg:    "[GNOSWAP-EMISSION-003] duplicate emission target",
 		},
 		{
 			name:        "All same targets",
@@ -543,7 +543,7 @@ func TestAssertValidDistributionTargets_EdgeCases(t *testing.T) {
 			target03:    LIQUIDITY_STAKER,
 			target04:    LIQUIDITY_STAKER,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-EMISSION-004] duplicate emission target",
+			panicMsg:    "[GNOSWAP-EMISSION-003] duplicate emission target",
 		},
 		{
 			name:        "Three targets same",
@@ -552,7 +552,7 @@ func TestAssertValidDistributionTargets_EdgeCases(t *testing.T) {
 			target03:    DEVOPS,
 			target04:    GOV_STAKER,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-EMISSION-004] duplicate emission target",
+			panicMsg:    "[GNOSWAP-EMISSION-003] duplicate emission target",
 		},
 	}
 

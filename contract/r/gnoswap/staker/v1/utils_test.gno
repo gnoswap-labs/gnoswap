@@ -61,13 +61,13 @@ func TestTid(t *testing.T) {
 		{
 			name:        "Panic - nil",
 			input:       nil,
-			expected:    "[GNOSWAP-STAKER-022] requested data not found || positionId is nil",
+			expected:    "[GNOSWAP-STAKER-013] requested data not found || positionId is nil",
 			shouldPanic: true,
 		},
 		{
 			name:        "Panic - unsupported type",
 			input:       float64(1),
-			expected:    "[GNOSWAP-STAKER-007] invalid input data || unsupported positionId type(unknown)",
+			expected:    "[GNOSWAP-STAKER-004] invalid input data || unsupported positionId type(unknown)",
 			shouldPanic: true,
 		},
 		{
@@ -237,7 +237,7 @@ func TestSafeMulDivInt64(t *testing.T) {
 			b:           200,
 			c:           100,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-STAKER-032] overflow",
+			panicMsg:    "[GNOSWAP-STAKER-019] overflow",
 		},
 		{
 			name:     "minInt64 allow negative value",
@@ -252,7 +252,7 @@ func TestSafeMulDivInt64(t *testing.T) {
 			b:           -100,
 			c:           100,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-STAKER-032] overflow",
+			panicMsg:    "[GNOSWAP-STAKER-019] overflow",
 		},
 	}
 
