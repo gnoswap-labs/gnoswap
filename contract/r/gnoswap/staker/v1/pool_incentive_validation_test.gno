@@ -54,10 +54,21 @@ func TestStakeToken_WithEndedIncentives(t *testing.T) {
 		t.Fatal("pool should NOT have external incentives when only ended incentives exist")
 	}
 
-	// Verify that there are actually no active incentives
-	activeIncentives := poolResolver.IncentivesResolver().GetAllInTimestamps(currentTime, currentTime+3600)
-	if len(activeIncentives) != 0 {
-		t.Fatalf("expected 0 active incentives, got %d", len(activeIncentives))
+	// Verify that there are actually no active incentives in the active tree
+	activeCount := 0
+	poolResolver.IncentivesResolver().IncentiveTrees().Iterate("", "", func(_ string, value any) bool {
+		incentive, ok := value.(*sr.ExternalIncentive)
+		if !ok {
+			return false
+		}
+		// Check if incentive is active at current time
+		if incentive.StartTimestamp() <= currentTime && incentive.EndTimestamp() >= currentTime {
+			activeCount++
+		}
+		return false
+	})
+	if activeCount != 0 {
+		t.Fatalf("expected 0 active incentives, got %d", activeCount)
 	}
 
 	// Clean up
