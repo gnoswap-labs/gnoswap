@@ -253,7 +253,7 @@ func TestLiquidityAmounts_ComputeLiquidityForAmount1(t *testing.T) {
 			sqrtRatioBX96:    q96,
 			amount1:          u256.MustFromDecimal("1000000"),
 			expectedPanic:    true,
-			expectedPanicMsg: "[GNOSWAP-COMMON-010] identical ticks || sqrtRatioAX96 (79228162514264337593543950336) and sqrtRatioBX96 (79228162514264337593543950336) are identical",
+			expectedPanicMsg: "[GNOSWAP-COMMON-005] identical ticks || sqrtRatioAX96 (79228162514264337593543950336) and sqrtRatioBX96 (79228162514264337593543950336) are identical",
 		},
 		{
 			name:          "Large liquidity calculation",
@@ -278,7 +278,7 @@ func TestLiquidityAmounts_ComputeLiquidityForAmount1(t *testing.T) {
 			amount1:          u256.MustFromDecimal("340282366920938463463374607431768211456"), // uint256 max value + 1
 			expected:         "0",
 			expectedPanic:    true,
-			expectedPanicMsg: "[GNOSWAP-COMMON-009] overflow: amount(26959946667150639794667015087019630673637144422540572481103610249216) overflows uint128 range",
+			expectedPanicMsg: "[GNOSWAP-COMMON-004] overflow: amount(26959946667150639794667015087019630673637144422540572481103610249216) overflows uint128 range",
 		},
 	}
 
@@ -638,7 +638,7 @@ func TestLiquidityAmounts_MulDivOverflowProtection(t *testing.T) {
 			sqrtRatioA:       u256.MustFromDecimal(Q96),
 			sqrtRatioB:       new(u256.Uint).Mul(u256.MustFromDecimal(Q96), u256.NewUint(2)),
 			expectedPanic:    true,
-			expectedPanicMsg: "[GNOSWAP-COMMON-009] overflow: amount(115792089237316195423570985008687907853269984665640564039457584007913129639934) overflows uint128 range",
+			expectedPanicMsg: "[GNOSWAP-COMMON-004] overflow: amount(115792089237316195423570985008687907853269984665640564039457584007913129639934) overflows uint128 range",
 		},
 		{
 			name:          "Large but safe values - should not panic",

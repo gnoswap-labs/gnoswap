@@ -344,7 +344,7 @@ func TestLaunchpadProject_CreateProjectPrivateMultiple(t *testing.T) {
 				startTime:        int64(time.Now().Unix() + 3600), // 1 hour
 			},
 			expectedHasError:     true,
-			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-008] can not create same project in same block || project(gno.land/r/onbloc/obl:123) already exists",
+			expectedErrorMessage: "[GNOSWAP-LAUNCHPAD-008] cannot create same project in same block || project(gno.land/r/onbloc/obl:123) already exists",
 		},
 	}
 

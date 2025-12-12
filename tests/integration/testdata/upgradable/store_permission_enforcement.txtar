@@ -62,7 +62,8 @@ gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetImplementationPackagePa
 # stdout "gno.land/r/gnoswap/pool/attempt_store_writer"
 
 # While v_permprobe is active it can write to the pool store
-gnokey maketx call -pkgpath gno.land/r/gnoswap/pool/attempt_store_writer -func AttemptStoreWrite -args 500000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/pool/attempt_store_writer -func AttemptStoreWrite -args 500000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 -memo "" test1
+stderr 'write permission denied'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetPoolCreationFee()"
 # stdout 500000000

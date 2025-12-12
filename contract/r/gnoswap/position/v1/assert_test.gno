@@ -44,25 +44,25 @@ func TestAssertIsNotExpired(t *testing.T) {
 		{
 			name:                 "Expired deadline is past time",
 			deadline:             time.Now().Unix() - 1,
-			expectedPanicMessage: ufmt.Sprintf("[GNOSWAP-POSITION-007] transaction expired || transaction too old, now(%d) > deadline(%d)", time.Now().Unix(), time.Now().Unix()-1),
+			expectedPanicMessage: ufmt.Sprintf("[GNOSWAP-POSITION-006] transaction expired || transaction too old, now(%d) > deadline(%d)", time.Now().Unix(), time.Now().Unix()-1),
 			shouldPanic:          true,
 		},
 		{
 			name:                 "Expired deadline is far past",
 			deadline:             time.Now().Unix() - 86400,
-			expectedPanicMessage: ufmt.Sprintf("[GNOSWAP-POSITION-007] transaction expired || transaction too old, now(%d) > deadline(%d)", time.Now().Unix(), time.Now().Unix()-86400),
+			expectedPanicMessage: ufmt.Sprintf("[GNOSWAP-POSITION-006] transaction expired || transaction too old, now(%d) > deadline(%d)", time.Now().Unix(), time.Now().Unix()-86400),
 			shouldPanic:          true,
 		},
 		{
 			name:                 "Expired deadline is zero deadline",
 			deadline:             0,
-			expectedPanicMessage: ufmt.Sprintf("[GNOSWAP-POSITION-007] transaction expired || transaction too old, now(%d) > deadline(%d)", time.Now().Unix(), 0),
+			expectedPanicMessage: ufmt.Sprintf("[GNOSWAP-POSITION-006] transaction expired || transaction too old, now(%d) > deadline(%d)", time.Now().Unix(), 0),
 			shouldPanic:          true,
 		},
 		{
 			name:                 "Expired deadline is negative deadline",
 			deadline:             -1,
-			expectedPanicMessage: ufmt.Sprintf("[GNOSWAP-POSITION-007] transaction expired || transaction too old, now(%d) > deadline(%d)", time.Now().Unix(), -1),
+			expectedPanicMessage: ufmt.Sprintf("[GNOSWAP-POSITION-006] transaction expired || transaction too old, now(%d) > deadline(%d)", time.Now().Unix(), -1),
 			shouldPanic:          true,
 		},
 	}
@@ -108,7 +108,7 @@ func TestAssertValidLiquidityAmount(t *testing.T) {
 		{
 			name:                 "Invalid liquidity is zero",
 			liquidity:            "0",
-			expectedPanicMessage: "[GNOSWAP-POSITION-010] zero liquidity || liquidity amount must be greater than 0, got 0",
+			expectedPanicMessage: "[GNOSWAP-POSITION-009] zero liquidity || liquidity amount must be greater than 0, got 0",
 			shouldPanic:          true,
 		},
 		{
@@ -165,21 +165,21 @@ func TestAssertExistsPosition(t *testing.T) {
 			name:                 "Position does not exist",
 			positionId:           999,
 			setupPosition:        false,
-			expectedPanicMessage: "[GNOSWAP-POSITION-013] position does not exist || position with position ID(999) doesn't exist",
+			expectedPanicMessage: "[GNOSWAP-POSITION-012] position does not exist || position with position ID(999) doesn't exist",
 			shouldPanic:          true,
 		},
 		{
 			name:                 "Position ID is 0",
 			positionId:           0,
 			setupPosition:        false,
-			expectedPanicMessage: "[GNOSWAP-POSITION-013] position does not exist || position with position ID(0) doesn't exist",
+			expectedPanicMessage: "[GNOSWAP-POSITION-012] position does not exist || position with position ID(0) doesn't exist",
 			shouldPanic:          true,
 		},
 		{
 			name:                 "Large position ID doesn't exist",
 			positionId:           18446744073709551615,
 			setupPosition:        false,
-			expectedPanicMessage: "[GNOSWAP-POSITION-013] position does not exist || position with position ID(18446744073709551615) doesn't exist",
+			expectedPanicMessage: "[GNOSWAP-POSITION-012] position does not exist || position with position ID(18446744073709551615) doesn't exist",
 			shouldPanic:          true,
 		},
 	}
@@ -239,7 +239,7 @@ func TestAssertIsOwnerForToken(t *testing.T) {
 			positionId:           999,
 			caller:               adminAddr,
 			setupPosition:        false,
-			expectedPanicMessage: "[GNOSWAP-POSITION-013] position does not exist || position with position ID(999) doesn't exist",
+			expectedPanicMessage: "[GNOSWAP-POSITION-012] position does not exist || position with position ID(999) doesn't exist",
 			shouldPanic:          true,
 		},
 		{
@@ -332,7 +332,7 @@ func TestAssertIsOwnerOrOperatorForToken(t *testing.T) {
 			isStaked:             false,
 			caller:               adminAddr,
 			setupPosition:        false,
-			expectedPanicMessage: "[GNOSWAP-POSITION-013] position does not exist || position with position ID(999) doesn't exist",
+			expectedPanicMessage: "[GNOSWAP-POSITION-012] position does not exist || position with position ID(999) doesn't exist",
 			shouldPanic:          true,
 		},
 		{
@@ -415,7 +415,7 @@ func TestAssertEqualsAddress(t *testing.T) {
 			name:                 "Different addresses",
 			prevAddr:             adminAddr,
 			otherAddr:            alice,
-			expectedPanicMessage: "[GNOSWAP-POSITION-012] invalid address || (g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5, g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh)",
+			expectedPanicMessage: "[GNOSWAP-POSITION-011] invalid address || (g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5, g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh)",
 			shouldPanic:          true,
 		},
 		{
@@ -620,7 +620,7 @@ func TestAssertIsValidUserCoinSendWithTokenPair(t *testing.T) {
 			amount0:              "1000",
 			amount1:              "2000",
 			sentCoins:            chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 500}},
-			expectedPanicMessage: "[GNOSWAP-COMMON-012] user send gnot amount is not equal to specified amount",
+			expectedPanicMessage: "[GNOSWAP-COMMON-007] sent gnot amount does not match specified amount",
 			shouldPanic:          true,
 		},
 		{
@@ -639,7 +639,7 @@ func TestAssertIsValidUserCoinSendWithTokenPair(t *testing.T) {
 			amount0:              "1000",
 			amount1:              "2000",
 			sentCoins:            chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 100}},
-			expectedPanicMessage: "[GNOSWAP-COMMON-013] handle native coin is not allowed",
+			expectedPanicMessage: "[GNOSWAP-COMMON-008] handle native coin is not allowed",
 			shouldPanic:          true,
 		},
 		{
@@ -755,7 +755,7 @@ func TestAssertIsValidUserCoinSendWithWrappedTokenPair(t *testing.T) {
 			amount0:              "1000",
 			amount1:              "2000",
 			sentCoins:            chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 500}},
-			expectedPanicMessage: "[GNOSWAP-COMMON-012] user send gnot amount is not equal to specified amount",
+			expectedPanicMessage: "[GNOSWAP-COMMON-007] sent gnot amount does not match specified amount",
 			shouldPanic:          true,
 		},
 		{
@@ -774,7 +774,7 @@ func TestAssertIsValidUserCoinSendWithWrappedTokenPair(t *testing.T) {
 			amount0:              "1000",
 			amount1:              "2000",
 			sentCoins:            chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 100}},
-			expectedPanicMessage: "[GNOSWAP-COMMON-013] handle native coin is not allowed",
+			expectedPanicMessage: "[GNOSWAP-COMMON-008] handle native coin is not allowed",
 			shouldPanic:          true,
 		},
 		{
@@ -813,7 +813,7 @@ func TestAssertIsValidUserCoinSendWithWrappedTokenPair(t *testing.T) {
 			amount0:              "0",
 			amount1:              "1000",
 			sentCoins:            chain.Coins{chain.Coin{Denom: gnotDenom, Amount: 100}},
-			expectedPanicMessage: "[GNOSWAP-COMMON-012] user send gnot amount is not equal to specified amount",
+			expectedPanicMessage: "[GNOSWAP-COMMON-007] sent gnot amount does not match specified amount",
 			shouldPanic:          true,
 		},
 		{

@@ -62,7 +62,7 @@ func TestWrap(t *testing.T) {
 			amount:                999,
 			expectedBalanceChange: 0,
 			expectedHasError:      true,
-			expectedError:         errors.New("[GNOSWAP-STAKER-006] can not wrapless than minimum amount || amount(999) < minimum(1000)"),
+			expectedError:         errors.New("[GNOSWAP-STAKER-003] cannot wrap less than minimum amount || amount(999) < minimum(1000)"),
 		},
 	}
 

@@ -215,7 +215,7 @@ func (p *positionV1) increaseLiquidity(params IncreaseLiquidityParams) (uint64, 
 	if err != nil {
 		return 0, nil, nil, nil, "", makeErrorWithDetails(
 			errPositionDoesNotExist,
-			ufmt.Sprintf("can not increase liquidity for non-existent position(%d)", params.positionId),
+			ufmt.Sprintf("cannot increase liquidity for non-existent position(%d)", params.positionId),
 		)
 	}
 
