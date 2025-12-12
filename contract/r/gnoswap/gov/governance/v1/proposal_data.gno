@@ -7,7 +7,7 @@ import (
 	"gno.land/r/gnoswap/gov/governance"
 )
 
-type ProposalMetadataResolver struct{
+type ProposalMetadataResolver struct {
 	*governance.ProposalMetadata
 }
 
@@ -91,7 +91,7 @@ func (r *ProposalMetadataResolver) validateDescription(description string) error
 }
 
 // ProposalDataResolver handles business logic for proposal data.
-type ProposalDataResolver struct{
+type ProposalDataResolver struct {
 	*governance.ProposalData
 }
 
@@ -150,11 +150,11 @@ func (r *ProposalDataResolver) validateCommunityPoolSpend() error {
 		)
 	}
 
-	// Validate amount is positive
-	if communityPoolSpend.Amount() == 0 {
+	// Validate amount is greater than 0
+	if communityPoolSpend.Amount() <= 0 {
 		return makeErrorWithDetails(
 			errInvalidInput,
-			ufmt.Sprintf("amount is 0"),
+			ufmt.Sprintf("amount is not positive"),
 		)
 	}
 

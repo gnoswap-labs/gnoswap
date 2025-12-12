@@ -165,7 +165,7 @@ gnokey query vm/qeval --data "gno.land/r/gnoswap/position.GetPosition(1)"
 # stdout true
 
 ### Repositioning to new range
-gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Reposition -args 1 -args 9000 -args 13000 -args "50000000" -args "50000000" -args "0" -args "0" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Reposition -args 1 -args 9000 -args 13000 -args "50000000" -args "50000000" -args "0" -args "0" -args 9999999999 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 1
 # stdout "432601712"
 # stdout 9000

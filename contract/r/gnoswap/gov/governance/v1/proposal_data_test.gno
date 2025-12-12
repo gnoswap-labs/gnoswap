@@ -71,11 +71,12 @@ func TestProposalMetadata_Validation(t *testing.T) {
 // TestProposalData_Validation tests proposal data validation
 func TestProposalData_Validation(t *testing.T) {
 	tests := []struct {
-		name          string
-		proposalType  governance.ProposalType
-		spendInfo     *governance.CommunityPoolSpendInfo
-		execution     *governance.ExecutionInfo
-		expectedError bool
+		name                 string
+		proposalType         governance.ProposalType
+		spendInfo            *governance.CommunityPoolSpendInfo
+		execution            *governance.ExecutionInfo
+		expectedError        bool
+		expectedErrorMessage string
 	}{
 		{
 			name:          "Success - Valid Text proposal",
@@ -83,28 +84,51 @@ func TestProposalData_Validation(t *testing.T) {
 			expectedError: false,
 		},
 		{
-			name:         "Success - Valid CommunityPoolSpend proposal",
-			proposalType: governance.CommunityPoolSpend,
-			spendInfo: governance.NewCommunityPoolSpendInfo(testutils.TestAddress("g1recipient"), "test/token", 1000),
+			name:          "Success - Valid CommunityPoolSpend proposal",
+			proposalType:  governance.CommunityPoolSpend,
+			spendInfo:     governance.NewCommunityPoolSpendInfo(testutils.TestAddress("g1recipient"), "test/token", 1000),
 			expectedError: false,
 		},
 		{
-			name:         "Success - Valid ParameterChange proposal",
-			proposalType: governance.ParameterChange,
-			execution: governance.NewExecutionInfo(1, []string{"pkg1*EXE*func1*EXE*param1,param2"}),
+			name:          "Success - Valid ParameterChange proposal",
+			proposalType:  governance.ParameterChange,
+			execution:     governance.NewExecutionInfo(1, []string{"pkg1*EXE*func1*EXE*param1,param2"}),
 			expectedError: false,
 		},
 		{
-			name:         "Failure - Invalid CommunityPoolSpend proposal",
-			proposalType: governance.CommunityPoolSpend,
-			spendInfo: governance.NewCommunityPoolSpendInfo(address(""), "", 0),
-			expectedError: true,
+			name:                 "Failure - CommunityPoolSpend with invalid address",
+			proposalType:         governance.CommunityPoolSpend,
+			spendInfo:            governance.NewCommunityPoolSpendInfo(address(""), "test/token", 1000),
+			expectedError:        true,
+			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-002] invalid input || to is invalid address",
 		},
 		{
-			name:         "Failure - Invalid ParameterChange proposal",
-			proposalType: governance.ParameterChange,
-			execution: governance.NewExecutionInfo(0, []string{}),
-			expectedError: true,
+			name:                 "Failure - CommunityPoolSpend with empty tokenPath",
+			proposalType:         governance.CommunityPoolSpend,
+			spendInfo:            governance.NewCommunityPoolSpendInfo(testutils.TestAddress("g1recipient"), "", 1000),
+			expectedError:        true,
+			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-002] invalid input || tokenPath is empty",
+		},
+		{
+			name:                 "Failure - CommunityPoolSpend with zero amount",
+			proposalType:         governance.CommunityPoolSpend,
+			spendInfo:            governance.NewCommunityPoolSpendInfo(testutils.TestAddress("g1recipient"), "test/token", 0),
+			expectedError:        true,
+			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-002] invalid input || amount is not positive",
+		},
+		{
+			name:                 "Failure - CommunityPoolSpend with negative amount",
+			proposalType:         governance.CommunityPoolSpend,
+			spendInfo:            governance.NewCommunityPoolSpendInfo(testutils.TestAddress("g1recipient"), "test/token", -100),
+			expectedError:        true,
+			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-002] invalid input || amount is not positive",
+		},
+		{
+			name:                 "Failure - Invalid ParameterChange proposal",
+			proposalType:         governance.ParameterChange,
+			execution:            governance.NewExecutionInfo(0, []string{}),
+			expectedError:        true,
+			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-002] invalid input || numToExecute is less than or equal to 0",
 		},
 	}
 
@@ -119,6 +143,7 @@ func TestProposalData_Validation(t *testing.T) {
 			// then
 			if tc.expectedError {
 				uassert.Error(t, err)
+				uassert.Equal(t, err.Error(), tc.expectedErrorMessage)
 			} else {
 				uassert.NoError(t, err)
 				uassert.Equal(t, data.ProposalType().String(), tc.proposalType.String())
