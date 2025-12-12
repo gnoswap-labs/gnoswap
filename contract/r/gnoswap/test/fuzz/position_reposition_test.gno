@@ -72,6 +72,7 @@ func TestFuzzPositionReposition_ValidParams_Stateless(t *testing.T) {
 			repositionParams.amount1Desired,
 			repositionParams.amount0Min,
 			repositionParams.amount1Min,
+			repositionParams.deadline,
 		)
 
 		// then - verify new position created
@@ -152,6 +153,7 @@ func TestFuzzPositionReposition_RandomizedParams_Stateless(t *testing.T) {
 			repositionParams.amount1Desired,
 			repositionParams.amount0Min,
 			repositionParams.amount1Min,
+			repositionParams.deadline,
 		)
 	})
 }
@@ -228,6 +230,7 @@ func TestFuzzPositionReposition_ValidParams_Stateful(t *testing.T) {
 			repositionParams.amount1Desired,
 			repositionParams.amount0Min,
 			repositionParams.amount1Min,
+			repositionParams.deadline,
 		)
 
 		// then - verify position was updated
@@ -313,6 +316,7 @@ func TestFuzzPositionReposition_RandomizedParams_Stateful(t *testing.T) {
 			repositionParams.amount1Desired,
 			repositionParams.amount0Min,
 			repositionParams.amount1Min,
+			repositionParams.deadline,
 		)
 	})
 }

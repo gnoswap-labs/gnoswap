@@ -163,19 +163,31 @@ func TestSwapMath_SwapMathComputeSwapStep(t *testing.T) {
 			feeAmount: "10",
 		},
 		{
-			name:            "maximum_fee_100_percent",
+			name:            "maximum_fee_near_100_percent",
 			currentX96:      encodePriceSqrtTest(t, "1", "1"),
 			targetX96:       encodePriceSqrtTest(t, "2", "1"),
 			liquidity:       u256.MustFromDecimal("1000000000000000000"),
 			amountRemaining: i256.MustFromDecimal("1000000"),
-			feePips:         1000000,
+			feePips:         999999,
 			sqrtNextX96:     encodePriceSqrtTest(t, "1", "1"),
 			chkSqrtNextX96: func(sqrtRatioNextX96, priceTarget *u256.Uint) {
-				uassert.True(t, sqrtRatioNextX96.Eq(encodePriceSqrtTest(t, "1", "1")))
+				// With 99.9999% fee, only 1 unit goes to swap, causing minimal price movement
+				// Price should be very close to current (within target bounds)
+				uassert.True(t, sqrtRatioNextX96.Gte(priceTarget))
 			},
-			amountIn:  "0",
+			amountIn:  "1",
 			amountOut: "0",
-			feeAmount: "1000000",
+			feeAmount: "999999",
+		},
+		{
+			name:             "fee_pips_equals_denominator_should_panic",
+			currentX96:       encodePriceSqrtTest(t, "1", "1"),
+			targetX96:        encodePriceSqrtTest(t, "2", "1"),
+			liquidity:        u256.MustFromDecimal("1000000000000000000"),
+			amountRemaining:  i256.MustFromDecimal("1000000"),
+			feePips:          1000000,
+			shouldPanic:      true,
+			panicMsg:         "SwapMathComputeSwapStep: feePips must be less than 1000000",
 		},
 		{
 			name:            "rounding_to_zero_after_fee",
@@ -243,7 +255,7 @@ func TestSwapMath_SwapMathComputeSwapStep(t *testing.T) {
 			amountRemaining:  i256.MustFromDecimal("1000000000000000000"),
 			feePips:          1000001,
 			shouldPanic:      true,
-			panicMsg:         "SwapMathComputeSwapStep: feePips must be less than or equal to 1000000",
+			panicMsg:         "SwapMathComputeSwapStep: feePips must be less than 1000000",
 		},
 		{
 			name:             "sqrt_price_below_minimum",
