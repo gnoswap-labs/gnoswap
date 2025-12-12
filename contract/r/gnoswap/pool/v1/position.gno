@@ -19,7 +19,8 @@ const positionPackagePath = "gno.land/r/gnoswap/position"
 // getPositionKey generates a unique base64-encoded key for a liquidity position.
 //
 // Creates deterministic identifier for position tracking.
-// Ensures unique positions per owner and price range.
+// Ensures unique positions per (position package path, price range) combination.
+//
 // Used internally for position state management.
 //
 // Parameters:
@@ -28,7 +29,7 @@ const positionPackagePath = "gno.land/r/gnoswap/position"
 //
 // Key Format:
 //
-//	base64(position_package_path + tickLower_bytes + tickUpper_bytes)
+//	base64(position_package_path + "__" + tickLower + "__" + tickUpper)
 //
 // Requirements:
 //   - tickLower < tickUpper
@@ -66,7 +67,6 @@ func positionUpdate(
 		)
 	}
 
-	// check negative liquidity
 	if liquidityDelta.IsNeg() {
 		// absolute value of negative liquidity delta must be less than current liquidity
 		absDelta := i256.Zero().Set(liquidityDelta).Abs()
