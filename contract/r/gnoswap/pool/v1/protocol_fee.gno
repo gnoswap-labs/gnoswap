@@ -146,7 +146,7 @@ func (i *poolV1) SetWithdrawalFee(fee uint64) {
 func calculateAmountWithFee(amount, fee *u256.Uint) (feeAmount, afterAmount *u256.Uint) {
 	feeAmount, overflow := u256.Zero().MulOverflow(amount, fee)
 	if overflow {
-		panic(errOverFlow)
+		panic(errOverflow)
 	}
 	feeAmount = u256.Zero().Div(feeAmount, u256.NewUint(MaxBpsValue))
 	afterAmount = u256.Zero().Sub(amount, feeAmount)
