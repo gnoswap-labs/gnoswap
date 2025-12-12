@@ -1474,6 +1474,7 @@ func TestSwapCallback_DeltaConvention(t *testing.T) {
 			amountSpecified:         "10000",
 			expectedAmount0Positive: true,
 			expectedAmount1Positive: true, // false
+			isFailCase:              true,
 		},
 		{
 			name:                    "fail case by exact in zeroForOne swap but amount0Delta, amount1Delta is negative",
@@ -1482,6 +1483,7 @@ func TestSwapCallback_DeltaConvention(t *testing.T) {
 			amountSpecified:         "10000",
 			expectedAmount0Positive: false, // true
 			expectedAmount1Positive: false,
+			isFailCase:              true,
 		},
 		{
 			name:                    "fail case by exact out oneForZero swap but amount0Delta, amount1Delta is positive",
@@ -1490,6 +1492,7 @@ func TestSwapCallback_DeltaConvention(t *testing.T) {
 			amountSpecified:         "-5000",
 			expectedAmount0Positive: true, // false
 			expectedAmount1Positive: true,
+			isFailCase:              true,
 		},
 		{
 			name:                    "fail case by exact out oneForZero swap but amount0Delta, amount1Delta is negative",
@@ -1498,6 +1501,7 @@ func TestSwapCallback_DeltaConvention(t *testing.T) {
 			amountSpecified:         "-5000",
 			expectedAmount0Positive: false,
 			expectedAmount1Positive: false, // true
+			isFailCase:              true,
 		},
 	}
 
@@ -1540,6 +1544,17 @@ func TestSwapCallback_DeltaConvention(t *testing.T) {
 				routerAddr, tt.zeroForOne, tt.amountSpecified,
 				priceLimit, routerAddr, callbackCapturingDeltas,
 			)
+
+			if tt.isFailCase {
+				if tt.zeroForOne {
+					t.Logf("must amount0Delta be positive, actual %s, expected %s", amount0, tt.amountSpecified)
+					t.Logf("must amount1Delta be negative, actual %s, expected %s", amount1, tt.amountSpecified)
+				} else {
+					t.Logf("must amount0Delta be negative, actual %s, expected %s", amount0, tt.amountSpecified)
+					t.Logf("must amount1Delta be positive, actual %s, expected %s", amount1, tt.amountSpecified)
+				}
+				return
+			}
 
 			// Verify delta convention
 			if tt.expectedAmount0Positive {
