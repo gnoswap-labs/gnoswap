@@ -440,12 +440,12 @@ func safeMulDivInt64(a, b, c int64) int64 {
 	// calculate amount to swap for this route
 	result, overflow := i256.Zero().MulOverflow(i256.NewInt(a), i256.NewInt(b))
 	if overflow {
-		panic(errOverFlow)
+		panic(errOverflow)
 	}
 
 	result = i256.Zero().Div(result, i256.NewInt(c))
 	if !result.IsInt64() {
-		panic(errOverFlow)
+		panic(errOverflow)
 	}
 
 	return result.Int64()
@@ -453,7 +453,7 @@ func safeMulDivInt64(a, b, c int64) int64 {
 
 func safeAbsInt64(a int64) int64 {
 	if a == math.MinInt64 {
-		panic(errOverFlow)
+		panic(errOverflow)
 	}
 
 	if a < 0 {

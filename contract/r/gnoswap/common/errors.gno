@@ -14,7 +14,7 @@ var (
 	errInvalidAddr         = errors.New("[GNOSWAP-COMMON-005] invalid address")
 	errInvalidPositionId   = errors.New("[GNOSWAP-COMMON-007] invalid positionId")
 	errInvalidInput        = errors.New("[GNOSWAP-COMMON-008] invalid input data")
-	errOverFlow            = errors.New("[GNOSWAP-COMMON-009] overflow")
+	errOverflow            = errors.New("[GNOSWAP-COMMON-009] overflow")
 	errIdenticalTicks      = errors.New("[GNOSWAP-COMMON-010] identical ticks")
 	errNotSupportedCoins   = errors.New("[GNOSWAP-COMMON-011] user send coins contains not supported coins")
 	errInvalidGNOTAmount   = errors.New("[GNOSWAP-COMMON-012] user send gnot amount is not equal to specified amount")

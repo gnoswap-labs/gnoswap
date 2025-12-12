@@ -32,7 +32,7 @@ var (
 	errInvalidAddress            = errors.New("[GNOSWAP-POOL-023] invalid address")
 	errInvalidTickRange          = errors.New("[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper")
 	errUnderflow                 = errors.New("[GNOSWAP-POOL-025] underflow")
-	errOverFlow                  = errors.New("[GNOSWAP-POOL-026] overflow")
+	errOverflow                  = errors.New("[GNOSWAP-POOL-026] overflow")
 	errBalanceUpdateFailed       = errors.New("[GNOSWAP-POOL-027] balance update failed")
 	errInvalidPayer              = errors.New("[GNOSWAP-POOL-028] invalid payer")
 	errNotAccessEOA              = errors.New("[GNOSWAP-POOL-029] not access EOA")
