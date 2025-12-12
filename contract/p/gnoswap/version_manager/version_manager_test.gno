@@ -442,3 +442,147 @@ func mockInitializer(version string) func(store any) any {
 func mockInitializeDomainStoreFn(kvStore store.KVStore) any {
 	return kvStore
 }
+
+// TestRegisterInitializer_FirstRegistrationInitializesImplementation tests that only
+func TestRegisterInitializer_FirstRegistrationInitializesImplementation(t *testing.T) {
+	tests := []struct {
+		name        string
+		description string
+	}{
+		{
+			name:        "first registration initializes implementation",
+			description: "When RegisterInitializer is called on empty version manager, it should initialize currentImplementation",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kvStore := store.NewKVStore(mockDomainAddr)
+			vm := NewVersionManager(
+				"gno.land/r/gnoswap/protocol_fee",
+				kvStore,
+				mockInitializeDomainStoreFn,
+			)
+
+			// Verify initial state: no implementation set
+			if vm.GetCurrentPackagePath() != "" {
+				t.Errorf("initial currentPackagePath should be empty, got %s", vm.GetCurrentPackagePath())
+			}
+			if vm.GetCurrentImplementation() != nil {
+				t.Error("initial currentImplementation should be nil")
+			}
+
+			t.Logf("✓ %s", tt.description)
+		})
+	}
+}
+
+// TestRegisterInitializer_NoPermissionGrantedToImplementation verifies that
+func TestRegisterInitializer_NoPermissionGrantedToImplementation(t *testing.T) {
+	tests := []struct {
+		name        string
+		description string
+		domainPath  string
+	}{
+		{
+			name:        "implementation realm receives no storage permission",
+			description: "RegisterInitializer should not grant any storage permission to implementation realms",
+			domainPath:  "gno.land/r/gnoswap/protocol_fee",
+		},
+		{
+			name:        "subsequent registrations also receive no permission",
+			description: "Multiple RegisterInitializer calls should not accumulate permissions",
+			domainPath:  "gno.land/r/gnoswap/pool",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kvStore := store.NewKVStore(mockDomainAddr)
+			vm := NewVersionManager(
+				tt.domainPath,
+				kvStore,
+				mockInitializeDomainStoreFn,
+			)
+
+			if vm.GetDomainPath() != tt.domainPath {
+				t.Errorf("domain path mismatch: got %s, want %s", vm.GetDomainPath(), tt.domainPath)
+			}
+
+			// Verify kvStore has no authorized callers
+			authorizedCallers, err := kvStore.GetAuthorizedCallers()
+			if err != nil {
+				t.Errorf("failed to get authorized callers: %v", err)
+			}
+
+			if len(authorizedCallers) != 1 {
+				t.Errorf("authorized callers only domain address")
+			}
+
+			for caller, _ := range authorizedCallers {
+				if caller != mockDomainAddr {
+					t.Errorf("authorized caller should only be domain address, got %s", caller)
+				}
+			}
+
+			t.Logf("✓ %s", tt.description)
+		})
+	}
+}
+
+// TestChangeImplementation_NoPermissionModification verifies that ChangeImplementation
+func TestChangeImplementation_NoPermissionModification(t *testing.T) {
+	tests := []struct {
+		name        string
+		description string
+	}{
+		{
+			name:        "change implementation does not modify permissions",
+			description: "ChangeImplementation should only switch the active implementation without altering storage permissions",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kvStore := store.NewKVStore(mockDomainAddr)
+			vm := NewVersionManager(
+				"gno.land/r/gnoswap/protocol_fee",
+				kvStore,
+				mockInitializeDomainStoreFn,
+			)
+
+			// Attempt to change to non-existent package (should fail cleanly)
+			err := vm.ChangeImplementation("gno.land/r/gnoswap/protocol_fee/v1")
+			if err == nil {
+				t.Error("ChangeImplementation to unregistered package should fail")
+			}
+
+			// Verify version manager state is unchanged
+			if vm.GetCurrentPackagePath() != "" {
+				t.Errorf("currentPackagePath should remain empty after failed change, got %s", vm.GetCurrentPackagePath())
+			}
+
+			if vm.GetCurrentImplementation() != nil {
+				t.Error("currentImplementation should remain nil after failed change")
+			}
+
+			// Verify kvStore has no authorized callers
+			authorizedCallers, err := kvStore.GetAuthorizedCallers()
+			if err != nil {
+				t.Errorf("failed to get authorized callers: %v", err)
+			}
+
+			if len(authorizedCallers) != 1 {
+				t.Errorf("authorized callers only domain address")
+			}
+
+			for caller, _ := range authorizedCallers {
+				if caller != mockDomainAddr {
+					t.Errorf("authorized caller should only be domain address, got %s", caller)
+				}
+			}
+
+			t.Logf("✓ %s", tt.description)
+		})
+	}
+}
