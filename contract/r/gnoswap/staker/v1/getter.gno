@@ -41,7 +41,14 @@ func (s *stakerV1) GetPoolIncentiveIdList(poolPath string) []string {
 	incentives := pool.Incentives()
 
 	ids := []string{}
+	// Iterate active incentives
 	incentives.IncentiveTrees().Iterate("", "", func(key string, value any) bool {
+		ids = append(ids, key)
+		return false
+	})
+
+	// Also iterate archived incentives
+	incentives.ArchivedIncentives().Iterate("", "", func(key string, value any) bool {
 		ids = append(ids, key)
 		return false
 	})
@@ -52,18 +59,15 @@ func (s *stakerV1) GetPoolIncentiveIdList(poolPath string) []string {
 // getIncentive retrieves an external incentive by ID.
 func (s *stakerV1) getIncentive(poolPath string, incentiveId string) *sr.ExternalIncentive {
 	pool := s.getPoolByPoolPath(poolPath)
+	poolResolver := NewPoolResolver(pool)
 
-	incentives := pool.Incentives()
-	incentive, exist := incentives.IncentiveTrees().Get(incentiveId)
+	// Get() searches both active and archived trees
+	incentive, exist := poolResolver.IncentivesResolver().Get(incentiveId)
 	if !exist {
 		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
 	}
 
-	ictv, ok := incentive.(*sr.ExternalIncentive)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast incentive to *ExternalIncentive: %T", incentive))
-	}
-	return ictv
+	return incentive
 }
 
 // GetIncentiveStartTimestamp returns the start timestamp of an incentive.

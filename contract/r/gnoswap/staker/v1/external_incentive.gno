@@ -209,13 +209,13 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 	incentiveResolver.addDistributedRewardAmount(refund)
 	incentivesResolver.update(incentive.Refundee(), incentive)
 
-	// archive incentive if it is finished (all rewards distributed)
-	// this is to prevent re-claiming GNS or rewards after the incentive is finished
-	if incentiveResolver.IsFinished() {
-		err = s.archiveEndedExternalIncentive(incentivesResolver, incentive)
-		if err != nil {
-			panic(err)
-		}
+	// archive incentive immediately after refund
+	// ended incentive should be moved to archived storage
+	// users can still unstake and claim rewards from archived storage
+	// (Get() method searches both active and archived trees)
+	err = s.archiveEndedExternalIncentive(incentivesResolver, incentive)
+	if err != nil {
+		panic(err)
 	}
 
 	previousRealm := runtime.PreviousRealm()
