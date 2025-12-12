@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"chain"
 	"testing"
 
 	"gno.land/p/nt/testutils"
@@ -89,7 +90,7 @@ func TestSwapCallback(t *testing.T) {
 			amount1Delta:     "0",
 			callerRealmPath:  "gno.land/r/unauthorized/contract",
 			shouldError:      true,
-			expectedErrorMsg: "[GNOSWAP-ROUTER-005]",
+			expectedErrorMsg: "[GNOSWAP-ROUTER-022] unauthorized caller",
 		},
 		{
 			name: "fail with insufficient balance",
@@ -155,28 +156,22 @@ func TestSwapCallback_AssertIsRouterV1(t *testing.T) {
 			shouldError:   false,
 		},
 		{
+			name:             "invalid caller from router v2",
+			callerAddress:    chain.PackageAddress("gno.land/r/gnoswap/router/v2"),
+			shouldError:      true,
+			expectedErrorMsg: "[GNOSWAP-ROUTER-022] unauthorized caller",
+		},
+		{
+			name:             "invalid caller from router domain",
+			callerAddress:    chain.PackageAddress("gno.land/r/gnoswap/router"),
+			shouldError:      true,
+			expectedErrorMsg: "[GNOSWAP-ROUTER-022] unauthorized caller",
+		},
+		{
 			name:             "invalid caller from unauthorized contract",
 			callerAddress:    testutils.TestAddress("unauthorized"),
 			shouldError:      true,
-			expectedErrorMsg: "[GNOSWAP-ROUTER-005]",
-		},
-		{
-			name:             "invalid caller from user realm",
-			callerAddress:    testutils.TestAddress("maliciousUser"),
-			shouldError:      true,
-			expectedErrorMsg: "[GNOSWAP-ROUTER-005]",
-		},
-		{
-			name:             "invalid caller from different contract",
-			callerAddress:    testutils.TestAddress("different"),
-			shouldError:      true,
-			expectedErrorMsg: "[GNOSWAP-ROUTER-005]",
-		},
-		{
-			name:             "invalid caller from pool contract",
-			callerAddress:    poolAddr,
-			shouldError:      true,
-			expectedErrorMsg: "[GNOSWAP-ROUTER-005]",
+			expectedErrorMsg: "[GNOSWAP-ROUTER-022] unauthorized caller",
 		},
 	}
 

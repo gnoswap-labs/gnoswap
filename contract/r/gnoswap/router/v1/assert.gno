@@ -107,7 +107,7 @@ func assertIsExistsPools(routePathArr string) {
 func assertIsRouterV1(caller address) {
 	if caller != routerV1Addr {
 		panic(makeErrorWithDetails(
-			errInvalidInput,
+			errUnAuthorizedCaller,
 			ufmt.Sprintf("caller %s is not router v1(%s)", caller, routerV1Addr),
 		))
 	}
