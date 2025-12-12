@@ -54,6 +54,7 @@ type IPositionManager interface {
 		amount1DesiredStr string,
 		amount0MinStr string,
 		amount1MinStr string,
+		deadline int64,
 	) (uint64, string, int32, int32, string, string)
 
 	CollectFee(
