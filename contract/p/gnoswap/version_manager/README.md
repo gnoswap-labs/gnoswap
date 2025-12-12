@@ -150,10 +150,10 @@ func UpgradeToV2() error {
    → Becomes active implementation
    ↓
 3. v2 package calls RegisterInitializer during init()
-   → Registered (available for switching)
+   → Registered
    ↓
 4. v3 package calls RegisterInitializer during init()
-   → Registered (available for switching)
+   → Registered
 ```
 
 ### Version Switching Flow
