@@ -82,19 +82,19 @@ func MintAndDistributeGns(cur realm) (int64, bool) {
 	// If distributionStartTimestamp is 0 (default), skip distribution to prevent immediate start
 	// If current timestamp is below start timestamp, skip distribution
 	if distributionStartTimestamp == 0 || currentTimestamp < distributionStartTimestamp {
-		return 0, false
+		return 0, true
 	}
 
 	// Skip if we've already minted tokens at this timestamp
 	lastMintedTimestamp := gns.LastMintedTimestamp()
 	if currentTimestamp <= lastMintedTimestamp {
-		return 0, false
+		return 0, true
 	}
 
 	// Additional check to prevent re-entrancy
 	if lastExecutedTimestamp >= currentTimestamp {
 		// Skip if we've already processed this height in emission
-		return 0, false
+		return 0, true
 	}
 
 	// Mint new tokens and add any leftover amounts from previous distribution

@@ -213,7 +213,7 @@ func TestEmission_MintAndDistributeGns_EdgeCases(t *testing.T) {
 			verify: func(t *testing.T) {
 				distributed, ok := MintAndDistributeGns(cross)
 				uassert.Equal(t, int64(0), distributed)
-				uassert.False(t, ok)
+				uassert.True(t, ok)
 			},
 		},
 		{
@@ -230,7 +230,7 @@ func TestEmission_MintAndDistributeGns_EdgeCases(t *testing.T) {
 			verify: func(t *testing.T) {
 				// Second distribution at same timestamp should return 0
 				distributed, ok := MintAndDistributeGns(cross)
-				uassert.False(t, ok)
+				uassert.True(t, ok)
 				uassert.Equal(t, int64(0), distributed)
 			},
 		},
