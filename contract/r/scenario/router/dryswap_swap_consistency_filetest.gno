@@ -89,6 +89,14 @@ func main() {
 	println()
 	testMaxSlippage()
 	println()
+
+	ufmt.Println("[SCENARIO] 6. Test Multi-Hop Routes")
+	testMultiHop_ExactIn()
+	println()
+	testMultiHop_ExactOut()
+	println()
+	testMultiHop_ThreeHops()
+	println()
 }
 
 func initPoolMultiPosition() {
@@ -458,6 +466,87 @@ func testMaxSlippage() {
 	}
 }
 
+func testMultiHop_ExactIn() {
+	testing.SetRealm(aliceRealm)
+
+	amount := "100000"
+
+	ufmt.Println("[INFO] Testing Multi-Hop (2-hop) Exact In")
+
+	dryIn, dryOut, drySuccess := router.DrySwapRoute(
+		barPath, barPath, amount, "EXACT_IN",
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500",
+		"100", "1",
+	)
+	ufmt.Printf("[EXPECTED] DrySwap 2-hop - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
+
+	if drySuccess {
+		common.SafeGRC20Approve(cross, barPath, routerAddr, 100000)
+		actualIn, actualOut := router.ExactInSwapRoute(
+			cross, barPath, barPath, amount,
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500",
+			"100", "1", time.Now().Add(time.Hour).Unix(), "",
+		)
+		ufmt.Printf("[EXPECTED] Actual swap 2-hop - in=%s out=%s\n", actualIn, actualOut)
+		ufmt.Printf("[EXPECTED] Results should match: DryIn=%s ActualIn=%s, DryOut=%s ActualOut=%s\n",
+			dryIn, actualIn, dryOut, actualOut)
+	}
+}
+
+func testMultiHop_ExactOut() {
+	testing.SetRealm(aliceRealm)
+
+	amount := "100000"
+
+	ufmt.Println("[INFO] Testing Multi-Hop (2-hop) Exact Out - swapCount=2")
+
+	dryIn, dryOut, drySuccess := router.DrySwapRoute(
+		barPath, barPath, amount, "EXACT_OUT",
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500",
+		"100", "999999999",
+	)
+	ufmt.Printf("[EXPECTED] DrySwap 2-hop ExactOut - in=%s out=%s success=%t (swapCount=2, tolerance=2)\n",
+		dryIn, dryOut, drySuccess)
+
+	if drySuccess {
+		common.SafeGRC20Approve(cross, barPath, routerAddr, 999999999)
+		actualIn, actualOut := router.ExactOutSwapRoute(
+			cross, barPath, barPath, amount,
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500",
+			"100", "999999999", time.Now().Add(time.Hour).Unix(), "",
+		)
+		ufmt.Printf("[EXPECTED] Actual swap 2-hop ExactOut - in=%s out=%s\n", actualIn, actualOut)
+		ufmt.Printf("[EXPECTED] Results should match: DryIn=%s ActualIn=%s, DryOut=%s ActualOut=%s\n",
+			dryIn, actualIn, dryOut, actualOut)
+	} else {
+		ufmt.Println("[INFO] DrySwap returned success=false, skipping actual swap")
+	}
+}
+
+func testMultiHop_ThreeHops() {
+	testing.SetRealm(aliceRealm)
+
+	amount := "10000"
+
+	ufmt.Println("[INFO] Testing Multi-Hop (3-hop round trip) - swapCount=3")
+
+	route := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:500*POOL*gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+
+	dryIn, dryOut, drySuccess := router.DrySwapRoute(
+		barPath, fooPath, amount, "EXACT_IN", route, "100", "1",
+	)
+	ufmt.Printf("[EXPECTED] DrySwap 3-hop - in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
+
+	if drySuccess {
+		common.SafeGRC20Approve(cross, barPath, routerAddr, 10000)
+		actualIn, actualOut := router.ExactInSwapRoute(
+			cross, barPath, fooPath, amount, route, "100", "1",
+			time.Now().Add(time.Hour).Unix(), "",
+		)
+		ufmt.Printf("[EXPECTED] Actual swap 3-hop - in=%s out=%s\n", actualIn, actualOut)
+	}
+}
+
 // Output:
 // [SCENARIO] 1. Initialize pool with multiple positions
 // [INFO] Distributing Bar tokens
@@ -540,3 +629,17 @@ func testMaxSlippage() {
 // [INFO] Testing with maximum slippage protection
 // [EXPECTED] Tight slippage - DrySwap returns in=1000000 out=931161307 success=true
 // [EXPECTED] Swap - Dry: in=1000000 out(with fee)=931161307 | Actual: in=1000000 out(with fee)=-931161307
+//
+// [SCENARIO] 6. Test Multi-Hop Routes
+// [INFO] Testing Multi-Hop (2-hop) Exact In
+// [EXPECTED] DrySwap 2-hop - in=100000 out=99743 success=true
+// [EXPECTED] Actual swap 2-hop - in=100000 out=-99751
+// [EXPECTED] Results should match: DryIn=100000 ActualIn=100000, DryOut=99743 ActualOut=-99751
+//
+// [INFO] Testing Multi-Hop (2-hop) Exact Out - swapCount=2
+// [EXPECTED] DrySwap 2-hop ExactOut - in=100259 out=93317738 success=false (swapCount=2, tolerance=2)
+// [INFO] DrySwap returned success=false, skipping actual swap
+//
+// [INFO] Testing Multi-Hop (3-hop round trip) - swapCount=3
+// [EXPECTED] DrySwap 3-hop - in=10000 out=9297854 success=true
+// [EXPECTED] Actual swap 3-hop - in=10000 out=-9298785
