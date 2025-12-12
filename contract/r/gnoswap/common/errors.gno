@@ -7,19 +7,14 @@ import (
 )
 
 var (
-	errNoPermission        = errors.New("[GNOSWAP-COMMON-001] caller has no permission")
-	errHalted              = errors.New("[GNOSWAP-COMMON-002] halted")
-	errOutOfRange          = errors.New("[GNOSWAP-COMMON-003] value out of range")
-	errNotRegistered       = errors.New("[GNOSWAP-COMMON-004] token is not registered")
-	errInvalidAddr         = errors.New("[GNOSWAP-COMMON-005] invalid address")
-	errOverflow            = errors.New("[GNOSWAP-COMMON-006] overflow")
-	errInvalidPositionId   = errors.New("[GNOSWAP-COMMON-007] invalid positionId")
-	errInvalidInput        = errors.New("[GNOSWAP-COMMON-008] invalid input data")
-	errOverFlow            = errors.New("[GNOSWAP-COMMON-009] overflow")
-	errIdenticalTicks      = errors.New("[GNOSWAP-COMMON-010] identical ticks")
-	errNotSupportedCoins   = errors.New("[GNOSWAP-COMMON-011] user send coins contains not supported coins")
-	errInvalidGNOTAmount   = errors.New("[GNOSWAP-COMMON-012] user send gnot amount is not equal to specified amount")
-	errNotHandleNativeCoin = errors.New("[GNOSWAP-COMMON-013] handle native coin is not allowed")
+	errOutOfRange          = errors.New("[GNOSWAP-COMMON-001] value out of range")
+	errNotRegistered       = errors.New("[GNOSWAP-COMMON-002] token is not registered")
+	errInvalidInput        = errors.New("[GNOSWAP-COMMON-003] invalid input data")
+	errOverFlow            = errors.New("[GNOSWAP-COMMON-004] overflow")
+	errIdenticalTicks      = errors.New("[GNOSWAP-COMMON-005] identical ticks")
+	errNotSupportedCoins   = errors.New("[GNOSWAP-COMMON-006] user send coins contains not supported coins")
+	errInvalidGNOTAmount   = errors.New("[GNOSWAP-COMMON-007] user send gnot amount is not equal to specified amount")
+	errNotHandleNativeCoin = errors.New("[GNOSWAP-COMMON-008] handle native coin is not allowed")
 )
 
 // newErrorWithDetail creates an error message with additional context in format "<original_error> || <detail>".
