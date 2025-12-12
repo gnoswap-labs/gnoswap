@@ -63,7 +63,6 @@ func (i *poolV1) CreatePool(
 ) {
 	halt.AssertIsNotHaltedPool()
 
-	assertIsNotEqualsTokens(token0Path, token1Path)
 	assertIsSupportedFeeTier(fee)
 	assertIsNotExistsPoolPath(i, token0Path, token1Path, fee)
 
@@ -84,6 +83,9 @@ func (i *poolV1) CreatePool(
 	if err != nil {
 		panic(err)
 	}
+
+	// validate token paths are not the same after wrapping
+	assertIsNotEqualsTokens(poolInfo.token0Path, poolInfo.token1Path)
 
 	// check if wrapped token paths are registered
 	common.MustRegistered(poolInfo.token0Path, poolInfo.token1Path)

@@ -122,7 +122,7 @@ func verifyTestImplementation() {
 	ufmt.Println("[INFO] Testing Reposition function panics correctly")
 	testing.SetRealm(adminRealm)
 	uassert.AbortsWithMessage(t, "test implementation: Reposition not supported", func() {
-		position.Reposition(cross, 1, -2000, 2000, "1000", "1000", "0", "0")
+		position.Reposition(cross, 1, -2000, 2000, "1000", "1000", "0", "0", 9999999999)
 	})
 	ufmt.Println("[EXPECTED] Reposition panics correctly")
 

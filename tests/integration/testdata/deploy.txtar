@@ -88,13 +88,13 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/rbac -pkgpath 
 # stdout 'STORAGE FEE:    (4|5)[0-9]{6}ugnot'
 
 ## deploy store
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/store -pkgpath gno.land/p/gnoswap/store -gas-fee 12204ugnot -gas-wanted 12204000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/store -pkgpath gno.land/p/gnoswap/store -gas-fee 12244ugnot -gas-wanted 12244000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   12[0-9]{6}'
 # stdout 'STORAGE DELTA:  (3|4)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (3|4)[0-9]{6}ugnot'
 
 ## deploy version manager
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/version_manager -pkgpath gno.land/p/gnoswap/version_manager -gas-fee 13971ugnot -gas-wanted 13971000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/version_manager -pkgpath gno.land/p/gnoswap/version_manager -gas-fee 14000ugnot -gas-wanted 14000000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   13[0-9]{6}'
 # stdout 'STORAGE DELTA:  (1|2)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (1|2)[0-9]{6}ugnot'
@@ -150,7 +150,7 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/emission -pkgp
 # stdout 'STORAGE FEE:    (5|6)[0-9]{6}ugnot'
 
 ### deploy protocol_fee
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/protocol_fee -pkgpath gno.land/r/gnoswap/protocol_fee -gas-fee 17490ugnot -gas-wanted 17490000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/protocol_fee -pkgpath gno.land/r/gnoswap/protocol_fee -gas-fee 17600ugnot -gas-wanted 17600000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   17[0-9]{6}'
 # stdout 'STORAGE DELTA:  (6|7)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (6|7)[0-9]{6}ugnot'
@@ -168,7 +168,7 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/position -pkgp
 # stdout 'STORAGE FEE:    (7|8)[0-9]{6}ugnot'
 
 ### deploy router
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/router -pkgpath gno.land/r/gnoswap/router -gas-fee 14450ugnot -gas-wanted 14450000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/router -pkgpath gno.land/r/gnoswap/router -gas-fee 14480ugnot -gas-wanted 14480000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   14[0-9]{6}'
 # stdout 'STORAGE DELTA:  (3|4)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (3|4)[0-9]{6}ugnot'
@@ -192,7 +192,7 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/gov/staker -pk
 # stdout 'STORAGE FEE:    (1|2)[0-9]{7}ugnot'
 
 ### deploy gov/governance
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/gov/governance -pkgpath gno.land/r/gnoswap/gov/governance -gas-fee 27293ugnot -gas-wanted 27293000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/gov/governance -pkgpath gno.land/r/gnoswap/gov/governance -gas-fee 27330ugnot -gas-wanted 27330000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   27[0-9]{6}'
 # stdout 'STORAGE DELTA:  (1|2)[0-9]{5} bytes'
 # stdout 'STORAGE FEE:    (1|2)[0-9]{7}ugnot'
