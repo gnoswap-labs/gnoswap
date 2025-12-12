@@ -81,7 +81,7 @@ func TestCreatePool(t *testing.T) {
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-011] same token used in single pool || expected token0Path(gno.land/r/gnoland/wugnot) != token1Path(gno.land/r/gnoland/wugnot)",
+			panicMsg:    "[GNOSWAP-POOL-009] same token used in single pool || expected token0Path(gno.land/r/gnoland/wugnot) != token1Path(gno.land/r/gnoland/wugnot)",
 		},
 		{
 			name:        "fail - same wrapped tokens reversed",
@@ -90,7 +90,7 @@ func TestCreatePool(t *testing.T) {
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-011] same token used in single pool || expected token0Path(gno.land/r/gnoland/wugnot) != token1Path(gno.land/r/gnoland/wugnot)",
+			panicMsg:    "[GNOSWAP-POOL-009] same token used in single pool || expected token0Path(gno.land/r/gnoland/wugnot) != token1Path(gno.land/r/gnoland/wugnot)",
 		},
 		{
 			name:        "success - when tokens not in order, reverse order and create pool",
