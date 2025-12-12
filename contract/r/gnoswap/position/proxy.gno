@@ -109,6 +109,7 @@ func DecreaseLiquidity(
 //   - amount1DesiredStr: desired amount of token1
 //   - amount0MinStr: minimum amount of token0
 //   - amount1MinStr: minimum amount of token1
+//   - deadline: transaction deadline
 //
 // Returns:
 //   - uint64: position ID
@@ -126,8 +127,9 @@ func Reposition(
 	amount1DesiredStr string,
 	amount0MinStr string,
 	amount1MinStr string,
+	deadline int64,
 ) (uint64, string, int32, int32, string, string) {
-	return getImplementation().Reposition(positionId, tickLower, tickUpper, amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr)
+	return getImplementation().Reposition(positionId, tickLower, tickUpper, amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr, deadline)
 }
 
 // CollectFee collects accumulated fees from a position.
