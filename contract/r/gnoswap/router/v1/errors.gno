@@ -26,7 +26,7 @@ var (
 	errInvalidRoutePath         = errors.New("[GNOSWAP-ROUTER-017] invalid route path")
 	errInvalidRouteFirstToken   = errors.New("[GNOSWAP-ROUTER-018] invalid route first token")
 	errInvalidRouteLastToken    = errors.New("[GNOSWAP-ROUTER-019] invalid route last token")
-	errUnderFlowDeductRouterFee = errors.New("[GNOSWAP-ROUTER-020] underflow in deduct router fee")
+	errUnderflowDeductRouterFee = errors.New("[GNOSWAP-ROUTER-020] underflow in deduct router fee")
 	errInvalidSwapAmount        = errors.New("[GNOSWAP-ROUTER-021] invalid swap amount")
 )
 
