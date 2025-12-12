@@ -142,6 +142,7 @@
 //   - ErrUpdatePermissionDenied: Only domain address can manage authorized callers.
 //   - ErrAuthorizedCallerAlreadyRegistered: Attempting to add an already registered caller.
 //   - ErrAuthorizedCallerNotFound: Attempting to update/remove a non-existent caller.
+//   - ErrInvalidPermission: Attempting to assign an unsupported permission level.
 //   - ErrFailedCast: Type casting failed during typed getter operations.
 //
 // ## Type Casting Utilities
