@@ -371,19 +371,33 @@ func testExactOut_JustAtOverflow() {
 func testZeroAmount() {
 	testing.SetRealm(aliceRealm)
 
-	ufmt.Println("[INFO] Testing zero amount swap")
+	ufmt.Println("[INFO] Testing zero amount validation")
 
-	// Test exact in with zero
-	dryIn, dryOut, drySuccess := router.DrySwapRoute(
-		barPath, fooPath, "0", "EXACT_IN", "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", "100", "1",
-	)
-	ufmt.Printf("[EXPECTED] Zero exact in - DrySwap should return in=%s out=%s success=%t\n", dryIn, dryOut, drySuccess)
+	// Test exact in with zero - should abort
+	result := uassert.AbortsContains(t, "must be positive", func() {
+		router.DrySwapRoute(
+			barPath, fooPath, "0", "EXACT_IN",
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", "100", "1",
+		)
+	})
+	if result {
+		ufmt.Println("[PASS] Zero exact in - Correctly aborted with expected message")
+	} else {
+		ufmt.Println("[FAIL] Zero exact in - Did not abort as expected")
+	}
 
-	// Test exact out with zero
-	dryIn2, dryOut2, drySuccess2 := router.DrySwapRoute(
-		barPath, fooPath, "0", "EXACT_OUT", "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", "100", "999999999999",
-	)
-	ufmt.Printf("[EXPECTED] Zero exact out - DrySwap should return in=%s out=%s success=%t\n", dryIn2, dryOut2, drySuccess2)
+	// Test exact out with zero - should abort
+	result = uassert.AbortsContains(t, "must be positive", func() {
+		router.DrySwapRoute(
+			barPath, fooPath, "0", "EXACT_OUT",
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", "100", "999999999999",
+		)
+	})
+	if result {
+		ufmt.Println("[PASS] Zero exact out - Correctly aborted with expected message")
+	} else {
+		ufmt.Println("[FAIL] Zero exact out - Did not abort as expected")
+	}
 }
 
 func testReverseDirection() {
@@ -515,9 +529,9 @@ func testMaxSlippage() {
 // [EXPECTED] DrySwap success should be false
 //
 // [SCENARIO] 5. Test Additional Edge Cases
-// [INFO] Testing zero amount swap
-// [EXPECTED] Zero exact in - DrySwap should return in=0 out=0 success=false
-// [EXPECTED] Zero exact out - DrySwap should return in=0 out=0 success=false
+// [INFO] Testing zero amount validation
+// [PASS] Zero exact in - Correctly aborted with expected message
+// [PASS] Zero exact out - Correctly aborted with expected message
 //
 // [INFO] Testing reverse direction swap consistency
 // [EXPECTED] Forward swap - Dry: in=1000000 out(with fee)=931857046 | Actual: in=1000000 out=-931857046

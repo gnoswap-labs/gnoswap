@@ -1552,8 +1552,7 @@ func TestSwapValidator_Amount(t *testing.T) {
 		{
 			name:        "zero amount",
 			amount:      0,
-			expectError: false,
-			expected:    0,
+			expectError: true,
 		},
 		{
 			name:        "negative amount",
