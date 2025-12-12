@@ -22,6 +22,7 @@ type positionRepositionParams struct {
 	amount1Desired string
 	amount0Min     string
 	amount1Min     string
+	deadline       int64
 	poolPath       string
 }
 
@@ -151,6 +152,7 @@ func newValidPositionRepositionParams(t *fuzz.T, positionId uint64) *positionRep
 
 	amount0 := fuzz.Int64Range(1, 1_000_000_000_000).Draw(t, "amount0").(int64)
 	amount1 := fuzz.Int64Range(1, 1_000_000_000_000).Draw(t, "amount1").(int64)
+	deadline := randomFutureDeadline(t)
 
 	return &positionRepositionParams{
 		positionId:     positionId,
@@ -161,6 +163,7 @@ func newValidPositionRepositionParams(t *fuzz.T, positionId uint64) *positionRep
 		amount1Desired: ufmt.Sprintf("%d", amount1),
 		amount0Min:     "0",
 		amount1Min:     "0",
+		deadline:       deadline,
 		poolPath:       poolPath,
 	}
 }
@@ -186,6 +189,7 @@ func NewRandomizedPositionRepositionParams(t *fuzz.T, existingPositionId uint64)
 		tickUpper := fuzz.Int32Range(math.MinInt32, math.MaxInt32).Draw(t, "tickUpper").(int32)
 		amount0 := fuzz.Int64Range(math.MinInt64, math.MaxInt64).Draw(t, "amount0").(int64)
 		amount1 := fuzz.Int64Range(math.MinInt64, math.MaxInt64).Draw(t, "amount1").(int64)
+		deadline := randomFutureDeadline(t)
 
 		return &positionRepositionParams{
 			positionId:     existingPositionId,
@@ -196,6 +200,7 @@ func NewRandomizedPositionRepositionParams(t *fuzz.T, existingPositionId uint64)
 			amount1Desired: ufmt.Sprintf("%d", amount1),
 			amount0Min:     "0",
 			amount1Min:     "0",
+			deadline:       deadline,
 			poolPath:       "",
 		}
 	}
