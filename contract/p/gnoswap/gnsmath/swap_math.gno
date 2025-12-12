@@ -32,11 +32,11 @@ func SwapMathComputeSwapStep(
 
 	// This function is publicly accessible and can be called by external users or contracts.
 	// While the pool realm only uses predefined fee values (100, 500, 3000, 10000) which are safely within range,
-	// external callers could potentially pass any feePips value. The fee calculation involves subtracting feePips
-	// from 1000000 (representing 100%), and if feePips exceeds 1000000, it would cause an underflow,
-	// leading to incorrect fee calculations.
-	if feePips > denominator {
-		panic("SwapMathComputeSwapStep: feePips must be less than or equal to 1000000")
+	// external callers could potentially pass any feePips value. The fee calculation involves dividing by
+	// (1000000 - feePips), so feePips must be strictly less than 1000000 to avoid division by zero.
+	// This follows Uniswap V3's factory-level validation: require(fee < 1000000).
+	if feePips >= denominator {
+		panic("SwapMathComputeSwapStep: feePips must be less than 1000000")
 	}
 
 	// zeroForOne determines swap direction based on the relationship of current vs. target
