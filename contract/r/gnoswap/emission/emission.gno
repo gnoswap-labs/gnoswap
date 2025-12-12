@@ -70,8 +70,10 @@ func setLastExecutedTimestamp(timestamp int64) {
 //
 // Note: Distribution only occurs if start timestamp is set and reached.
 // Any undistributed tokens from previous calls are carried forward.
-func MintAndDistributeGns(cur realm) int64 {
-	halt.AssertIsNotHaltedEmission()
+func MintAndDistributeGns(cur realm) (int64, bool) {
+	if halt.IsHaltedEmission() {
+		return 0, false
+	}
 
 	currentHeight := runtime.ChainHeight()
 	currentTimestamp := time.Now().Unix()
@@ -80,19 +82,19 @@ func MintAndDistributeGns(cur realm) int64 {
 	// If distributionStartTimestamp is 0 (default), skip distribution to prevent immediate start
 	// If current timestamp is below start timestamp, skip distribution
 	if distributionStartTimestamp == 0 || currentTimestamp < distributionStartTimestamp {
-		return 0
+		return 0, false
 	}
 
 	// Skip if we've already minted tokens at this timestamp
 	lastMintedTimestamp := gns.LastMintedTimestamp()
 	if currentTimestamp <= lastMintedTimestamp {
-		return 0
+		return 0, false
 	}
 
 	// Additional check to prevent re-entrancy
 	if lastExecutedTimestamp >= currentTimestamp {
 		// Skip if we've already processed this height in emission
-		return 0
+		return 0, false
 	}
 
 	// Mint new tokens and add any leftover amounts from previous distribution
@@ -156,7 +158,7 @@ func MintAndDistributeGns(cur realm) int64 {
 		"gnsTotalSupply", formatInt(gns.TotalSupply()),
 	)
 
-	return distributedGNSAmount
+	return distributedGNSAmount, true
 }
 
 // SetDistributionStartTime sets the timestamp when emission distribution starts.

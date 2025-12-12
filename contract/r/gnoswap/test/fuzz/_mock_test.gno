@@ -719,10 +719,15 @@ func newMockPoolAccessor() sr.PoolAccessor {
 
 type mockEmissionAccessor struct{}
 
-func (e *mockEmissionAccessor) MintAndDistributeGns() {
+var _ sr.EmissionAccessor = (*mockEmissionAccessor)(nil)
+
+func (e *mockEmissionAccessor) MintAndDistributeGns() (int64, bool) {
+	var amount int64
+	var ok bool
 	func(cur realm) {
-		emission.MintAndDistributeGns(cross)
+		amount, ok = emission.MintAndDistributeGns(cross)
 	}(cross)
+	return amount, ok
 }
 
 func (e *mockEmissionAccessor) GetStakerEmissionAmountPerSecond() int64 {
