@@ -523,6 +523,7 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 		toUserExternalPenalty[rewardToken] = safeAddInt64(toUserExternalPenalty[rewardToken], externalPenalty)
 		totalDistributedRewardAmount := safeAddInt64(rewardAmount, externalPenalty)
 		depositResolver.addCollectedExternalReward(incentiveId, totalDistributedRewardAmount)
+		incentiveResolver.addDistributedRewardAmount(totalDistributedRewardAmount)
 
 		// Update the last collect time ONLY for this specific incentive
 		// This happens only if the reward was successfully transferred.
