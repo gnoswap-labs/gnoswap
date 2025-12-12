@@ -12,8 +12,8 @@ var (
 	errInvalidInput        = errors.New("[GNOSWAP-COMMON-003] invalid input data")
 	errOverflow            = errors.New("[GNOSWAP-COMMON-004] overflow")
 	errIdenticalTicks      = errors.New("[GNOSWAP-COMMON-005] identical ticks")
-	errNotSupportedCoins   = errors.New("[GNOSWAP-COMMON-006] usent coins contain unsupported coins")
-	errInvalidGNOTAmount   = errors.New("[GNOSWAP-COMMON-007] usent gnot amount does not match specified amount")
+	errNotSupportedCoins   = errors.New("[GNOSWAP-COMMON-006] sent coins contain unsupported coins")
+	errInvalidGNOTAmount   = errors.New("[GNOSWAP-COMMON-007] sent gnot amount does not match specified amount")
 	errNotHandleNativeCoin = errors.New("[GNOSWAP-COMMON-008] handle native coin is not allowed")
 )
 
