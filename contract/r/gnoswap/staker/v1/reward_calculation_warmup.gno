@@ -16,7 +16,7 @@ func modifyWarmup(warmupTemplate []sr.Warmup, index int, timeDuration int64) []s
 		panic(ufmt.Sprintf("index(%d) is out of range", index))
 	}
 
-	// Handle negative duration - set to math.MaxInt64
+	// Handle negative duration - panic with error
 	if timeDuration < 0 {
 		panic(ufmt.Sprintf("warmup duration cannot be negative, got %d seconds", timeDuration))
 	}

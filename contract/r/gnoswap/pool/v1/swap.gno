@@ -108,7 +108,7 @@ type SwapComputation struct {
 	Cache             SwapCache
 }
 
-// SwapWithCallback executes a swap with callback pattern for optimistic transfers.
+// Swap executes a swap with callback pattern for optimistic transfers.
 // This allows flash swaps where tokens are sent before payment is received.
 //
 // The flow is:
@@ -118,14 +118,15 @@ type SwapComputation struct {
 // 4. Pool validates its balance increased correctly
 //
 // Parameters:
-//   - tokenIn: Input token path
-//   - tokenOut: Output token path
+//   - token0Path: Path of token0 in the pool
+//   - token1Path: Path of token1 in the pool
 //   - fee: Pool fee tier
 //   - recipient: Address to receive output tokens
 //   - zeroForOne: Direction of swap (true = token0 to token1)
 //   - amountSpecified: Exact input (positive) or exact output (negative)
 //   - sqrtPriceLimitX96: Price limit for the swap
-//   - data: Arbitrary data passed to callback
+//   - payer: Address that provides input tokens
+//   - swapCallback: Callback function to handle token transfers
 //
 // Returns amount0 and amount1 deltas as strings.
 func (i *poolV1) Swap(
