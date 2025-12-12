@@ -310,7 +310,7 @@ func TestGovernancePropose_ProposeCommunityPoolSpend(t *testing.T) {
 			},
 			maxVotingWeight:  5_000_000_000,
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || amount is 0",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-002] invalid input || amount is not positive",
 		},
 		{
 			name:          "fail - empty token path",
@@ -1035,7 +1035,7 @@ func TestGovernancePropose_CommunityPoolSpendValidation(t *testing.T) {
 			to:            testutils.TestAddress("recipient"),
 			tokenPath:     "gno.land/r/demo/gns",
 			amount:        0,
-			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || amount is 0",
+			expectedError: "[GNOSWAP-GOVERNANCE-002] invalid input || amount is not positive",
 			shouldFail:    true,
 		},
 		{
