@@ -389,9 +389,9 @@ func testZeroAmount() {
 		)
 	})
 	if result {
-		ufmt.Println("[PASS] Zero exact in - Correctly aborted with expected message")
+		ufmt.Println("[EXPECTED] Zero exact in - Correctly aborted with expected message")
 	} else {
-		ufmt.Println("[FAIL] Zero exact in - Did not abort as expected")
+		panic("[FAIL] Zero exact in - Did not abort as expected")
 	}
 
 	// Test exact out with zero - should abort
@@ -402,9 +402,9 @@ func testZeroAmount() {
 		)
 	})
 	if result {
-		ufmt.Println("[PASS] Zero exact out - Correctly aborted with expected message")
+		ufmt.Println("[EXPECTED] Zero exact out - Correctly aborted with expected message")
 	} else {
-		ufmt.Println("[FAIL] Zero exact out - Did not abort as expected")
+		panic("[FAIL] Zero exact out - Did not abort as expected")
 	}
 }
 
@@ -619,8 +619,8 @@ func testMultiHop_ThreeHops() {
 //
 // [SCENARIO] 5. Test Additional Edge Cases
 // [INFO] Testing zero amount validation
-// [PASS] Zero exact in - Correctly aborted with expected message
-// [PASS] Zero exact out - Correctly aborted with expected message
+// [EXPECTED] Zero exact in - Correctly aborted with expected message
+// [EXPECTED] Zero exact out - Correctly aborted with expected message
 //
 // [INFO] Testing reverse direction swap consistency
 // [EXPECTED] Forward swap - Dry: in=1000000 out(with fee)=931857046 | Actual: in=1000000 out=-931857046
