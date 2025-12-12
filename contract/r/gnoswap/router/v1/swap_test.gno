@@ -490,7 +490,7 @@ func TestExecuteSwap_SameToken(t *testing.T) {
 
 	uassert.PanicsWithMessage(
 		t,
-		"[GNOSWAP-ROUTER-014] cannot swap same token",
+		"[GNOSWAP-ROUTER-011] cannot swap same token",
 		func() {
 			router.executeSwap(executor, params)
 		},

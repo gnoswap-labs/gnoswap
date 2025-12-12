@@ -275,7 +275,7 @@ func TestSetApprovalForAll(t *testing.T) {
 			operator:    address(""),
 			approved:    true,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-GNFT-004] invalid addresss",
+			panicMsg:    "[GNOSWAP-GNFT-002] invalid addresss",
 		},
 		{
 			name: "approve self as operator",
@@ -399,7 +399,7 @@ func TestSetTokenURI(t *testing.T) {
 			callerRealm:      positionRealm,
 			tokenId:          1,
 			expectedHasAbort: true,
-			expectedErrMsg:   "[GNOSWAP-GNFT-002] cannot set URI || token id (1) has already set URI",
+			expectedErrMsg:   "[GNOSWAP-GNFT-001] cannot set URI || token id (1) has already set URI",
 		},
 		{
 			name: "fail to set token uri on already set token with token id 999",
@@ -411,7 +411,7 @@ func TestSetTokenURI(t *testing.T) {
 			callerRealm:      positionRealm,
 			tokenId:          999,
 			expectedHasAbort: true,
-			expectedErrMsg:   "[GNOSWAP-GNFT-002] cannot set URI || token id (999) has already set URI",
+			expectedErrMsg:   "[GNOSWAP-GNFT-001] cannot set URI || token id (999) has already set URI",
 		},
 		{
 			name: "fail to set token uri by unauthorized caller with token id 1",
@@ -596,7 +596,7 @@ func TestTransferFrom(t *testing.T) {
 			toAddr:            addr02,
 			tokenIdToTransfer: 1,
 			shouldPanic:       true,
-			panicMsg:          "[GNOSWAP-GNFT-004] invalid addresss || from address ()",
+			panicMsg:          "[GNOSWAP-GNFT-002] invalid addresss || from address ()",
 		},
 		{
 			name:              "transfer to is invalid address",
@@ -605,7 +605,7 @@ func TestTransferFrom(t *testing.T) {
 			toAddr:            address("this_is_invalid_address"),
 			tokenIdToTransfer: 1,
 			shouldPanic:       true,
-			panicMsg:          "[GNOSWAP-GNFT-004] invalid addresss || to address (this_is_invalid_address)",
+			panicMsg:          "[GNOSWAP-GNFT-002] invalid addresss || to address (this_is_invalid_address)",
 		},
 		{
 			name:              "not-staker contract transfer",
@@ -941,7 +941,7 @@ func TestSafeTransferFrom(t *testing.T) {
 			to:          address(""),
 			tokenId:     1,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-GNFT-004] invalid addresss || to address ()",
+			panicMsg:    "[GNOSWAP-GNFT-002] invalid addresss || to address ()",
 		},
 		{
 			name:        "not-staker contract transfer",
@@ -1088,7 +1088,7 @@ func TestApprove(t *testing.T) {
 			approved:    testutils.TestAddress("addr03"),
 			tokenId:     1,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-GNFT-006] caller is not token owner or approved || caller g1v9jxgu3sxf047h6lta047h6lta047h6l8tv5at cannot approve for token 1 owned by g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st",
+			panicMsg:    "[GNOSWAP-GNFT-003] caller is not token owner or approved || caller g1v9jxgu3sxf047h6lta047h6lta047h6l8tv5at cannot approve for token 1 owned by g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st",
 		},
 		{
 			name:        "approve for non-existent token",
@@ -1096,7 +1096,7 @@ func TestApprove(t *testing.T) {
 			approved:    addr02,
 			tokenId:     999,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-GNFT-007] token does not exist || token 999",
+			panicMsg:    "[GNOSWAP-GNFT-004] token does not exist || token 999",
 		},
 		{
 			name:        "approve self",
@@ -1104,7 +1104,7 @@ func TestApprove(t *testing.T) {
 			approved:    addr01,
 			tokenId:     1,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-GNFT-008] cannot transfer to self || cannot approve to current owner g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st for token 1",
+			panicMsg:    "[GNOSWAP-GNFT-005] cannot transfer to self || cannot approve to current owner g1v9jxgu3sx9047h6lta047h6lta047h6l0js7st for token 1",
 		},
 		{
 			name:        "approve invalid address",
@@ -1112,7 +1112,7 @@ func TestApprove(t *testing.T) {
 			approved:    address(""),
 			tokenId:     1,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-GNFT-004] invalid addresss || address ()",
+			panicMsg:    "[GNOSWAP-GNFT-002] invalid addresss || address ()",
 		},
 		{
 			name: "re-approve same address (idempotency)",

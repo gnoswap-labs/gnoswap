@@ -131,7 +131,7 @@ func TestMustGetPosition(t *testing.T) {
 			inputPositionId:      999,
 			expectedPosition:     position.Position{},
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-POSITION-013] position does not exist || position with position ID(999) doesn't exist",
+			expectedPanicMessage: "[GNOSWAP-POSITION-012] position does not exist || position with position ID(999) doesn't exist",
 		},
 	}
 
@@ -636,7 +636,7 @@ func TestProcessTokens(t *testing.T) {
 			isNative1:      false,
 			expectedWrap:   0,
 			expectPanic:    true,
-			expectMsg:      "[GNOSWAP-POSITION-016] invalid token address || token0(gno.land/r/gnoswap/gns), token1(tokenB)",
+			expectMsg:      "[GNOSWAP-POSITION-015] invalid token address || token0(gno.land/r/gnoswap/gns), token1(tokenB)",
 		},
 		{
 			name:           "processTokens is failed by token0 is native",
@@ -651,7 +651,7 @@ func TestProcessTokens(t *testing.T) {
 			isNative1:      false,
 			expectedWrap:   1300,
 			expectPanic:    false,
-			expectMsg:      "[GNOSWAP-POSITION-016] invalid token address || token0(ugnot), token1(gno.land/r/gnoswap/gns)",
+			expectMsg:      "[GNOSWAP-POSITION-015] invalid token address || token0(ugnot), token1(gno.land/r/gnoswap/gns)",
 		},
 		{
 			name:           "processTokens is failed by token1 is native",
@@ -680,7 +680,7 @@ func TestProcessTokens(t *testing.T) {
 			isNative1:      true,
 			expectedWrap:   2300,
 			expectPanic:    true,
-			expectMsg:      "[GNOSWAP-POSITION-016] invalid token address || token0(ugnot), token1(ugnot)",
+			expectMsg:      "[GNOSWAP-POSITION-015] invalid token address || token0(ugnot), token1(ugnot)",
 		},
 		{
 			name:           "processTokens is failed by invalid token path",
@@ -690,7 +690,7 @@ func TestProcessTokens(t *testing.T) {
 			amount1Desired: "200",
 			caller:         testutils.TestAddress("user5"),
 			expectPanic:    true,
-			expectMsg:      "[GNOSWAP-POSITION-016] invalid token address || token0(invalidToken), token1(tokenB)",
+			expectMsg:      "[GNOSWAP-POSITION-015] invalid token address || token0(invalidToken), token1(tokenB)",
 		},
 	}
 
@@ -801,7 +801,7 @@ func TestMint(t *testing.T) {
 			mintTo:           alice,
 			caller:           alice,
 			shouldError:      true,
-			expectedErrorMsg: "[GNOSWAP-POSITION-007] transaction expired || transaction too old, now(1234567890) > deadline(1234567290)",
+			expectedErrorMsg: "[GNOSWAP-POSITION-006] transaction expired || transaction too old, now(1234567890) > deadline(1234567290)",
 			expectedAmount0:  950000,
 			expectedAmount1:  1900000,
 		},
@@ -820,7 +820,7 @@ func TestMint(t *testing.T) {
 			mintTo:           alice,
 			caller:           alice,
 			shouldError:      true,
-			expectedErrorMsg: "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(600), tickUpper(500)",
+			expectedErrorMsg: "[GNOSWAP-POOL-020] tickLower is greater than or equal to tickUpper || tickLower(600), tickUpper(500)",
 			expectedAmount0:  950000,
 			expectedAmount1:  1900000,
 		},
@@ -839,7 +839,7 @@ func TestMint(t *testing.T) {
 			mintTo:           adminAddr,
 			caller:           alice,
 			shouldError:      true,
-			expectedErrorMsg: "[GNOSWAP-POSITION-012] invalid address || (g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh, g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5)",
+			expectedErrorMsg: "[GNOSWAP-POSITION-011] invalid address || (g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh, g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5)",
 			expectedAmount0:  950000,
 			expectedAmount1:  1900000,
 		},
@@ -932,7 +932,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 			amount1Min:       "900000",
 			deadline:         time.Now().Add(-10 * time.Minute).Unix(),
 			expectPanic:      true,
-			expectedErrorMsg: "[GNOSWAP-POSITION-007] transaction expired || transaction too old, now(1234567890) > deadline(1234567290)",
+			expectedErrorMsg: "[GNOSWAP-POSITION-006] transaction expired || transaction too old, now(1234567890) > deadline(1234567290)",
 		},
 		{
 			name:             "increase liquidity is failed by invalid amount string",
@@ -943,7 +943,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 			amount1Min:       "900000",
 			deadline:         time.Now().Add(10 * time.Minute).Unix(),
 			expectPanic:      true,
-			expectedErrorMsg: "[GNOSWAP-POSITION-005] invalid input data || input string : invalid_amount",
+			expectedErrorMsg: "[GNOSWAP-POSITION-004] invalid input data || input string : invalid_amount",
 		},
 		{
 			name:             "increase liquidity is failed by position does not exist",
@@ -954,7 +954,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 			amount1Min:       "900000",
 			deadline:         time.Now().Add(10 * time.Minute).Unix(),
 			expectPanic:      true,
-			expectedErrorMsg: "[GNOSWAP-POSITION-013] position does not exist || position with position ID(999) doesn't exist",
+			expectedErrorMsg: "[GNOSWAP-POSITION-012] position does not exist || position with position ID(999) doesn't exist",
 		},
 	}
 
@@ -1063,7 +1063,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 			deadlineOffset:    time.Hour,
 			unwrapResult:      false,
 			expectedHasAbort:  true,
-			expectedErrorMsg:  "[GNOSWAP-POSITION-010] zero liquidity || liquidity amount must be greater than 0, got 0",
+			expectedErrorMsg:  "[GNOSWAP-POSITION-009] zero liquidity || liquidity amount must be greater than 0, got 0",
 		},
 		{
 			name:              "decrease liquidity is fail by underflow",
@@ -1075,7 +1075,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 			expectedHasAbort:  true,
 			expectedFee0:      "0",
 			expectedFee1:      "0",
-			expectedErrorMsg:  "[GNOSWAP-POSITION-019] invalid liquidity || Liquidity requested(2541593) is greater than liquidity held(2541592)",
+			expectedErrorMsg:  "[GNOSWAP-POSITION-018] invalid liquidity || Liquidity requested(2541593) is greater than liquidity held(2541592)",
 		},
 		{
 			name:              "decrease liquidity is fail by deadline exceeded",
@@ -1085,7 +1085,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 			deadlineOffset:    -time.Hour,
 			unwrapResult:      false,
 			expectedHasAbort:  true,
-			expectedErrorMsg:  "[GNOSWAP-POSITION-007] transaction expired || transaction too old, now(1234567890) > deadline(1234564290)",
+			expectedErrorMsg:  "[GNOSWAP-POSITION-006] transaction expired || transaction too old, now(1234567890) > deadline(1234564290)",
 		},
 		{
 			name:              "decrease liquidity is success by increase and decrease",
@@ -1281,7 +1281,7 @@ func TestReposition(t *testing.T) {
 			tickLower:            -5000,
 			tickUpper:            5000,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "[GNOSWAP-POSITION-009] position is not clear || position(1) isn't clear(liquidity:3812288, tokensOwed0:0, tokensOwed1:0)",
+			expectedAbortMessage: "[GNOSWAP-POSITION-008] position is not clear || position(1) isn't clear(liquidity:3812288, tokensOwed0:0, tokensOwed1:0)",
 		},
 		{
 			name:                 "reposition is failed by partial liquidity removal",
@@ -1293,7 +1293,7 @@ func TestReposition(t *testing.T) {
 			tickLower:            -3000,
 			tickUpper:            3000,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "[GNOSWAP-POSITION-009] position is not clear || position(1) isn't clear(liquidity:3812338, tokensOwed0:0, tokensOwed1:0)",
+			expectedAbortMessage: "[GNOSWAP-POSITION-008] position is not clear || position(1) isn't clear(liquidity:3812338, tokensOwed0:0, tokensOwed1:0)",
 		},
 		{
 			name:                 "reposition is failed by non-existent positionId",
@@ -1303,7 +1303,7 @@ func TestReposition(t *testing.T) {
 			tickLower:            -4000,
 			tickUpper:            4000,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "[GNOSWAP-POSITION-009] position is not clear || position(1) isn't clear(liquidity:2541582, tokensOwed0:0, tokensOwed1:0)",
+			expectedAbortMessage: "[GNOSWAP-POSITION-008] position is not clear || position(1) isn't clear(liquidity:2541582, tokensOwed0:0, tokensOwed1:0)",
 		},
 	}
 

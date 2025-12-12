@@ -78,7 +78,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 			deadline:         time.Now().Unix() + 10000000,
 			referrer:         "",
 			expectPanic:      true,
-			expectedPanicMsg: "[GNOSWAP-COMMON-012] user send gnot amount is not equal to specified amount",
+			expectedPanicMsg: "[GNOSWAP-COMMON-007] user send gnot amount is not equal to specified amount",
 		},
 		{
 			name:             "mint and stake with GNOT - zero amount",
@@ -160,7 +160,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 			deadline:         time.Now().Unix() + 10000000,
 			referrer:         "",
 			expectPanic:      true,
-			expectedPanicMsg: "[GNOSWAP-POOL-022] invalid tick and tick spacing requested",
+			expectedPanicMsg: "[GNOSWAP-POOL-019] invalid tick and tick spacing requested",
 		},
 		{
 			name:             "mint and stake with fee tier 10000",
@@ -194,7 +194,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 			deadline:         time.Now().Unix() + 10000000,
 			referrer:         "",
 			expectPanic:      true,
-			expectedPanicMsg: "[GNOSWAP-POOL-022] invalid tick and tick spacing requested",
+			expectedPanicMsg: "[GNOSWAP-POOL-019] invalid tick and tick spacing requested",
 		},
 		{
 			name:             "mint and stake with invalid minimum amounts",
@@ -391,7 +391,7 @@ func TestMintAndStakeWithoutNativeToken(t *testing.T) {
 			deadline:         time.Now().Unix() + 10000000,
 			referrer:         "",
 			expectPanic:      true,
-			expectedPanicMsg: "[GNOSWAP-COMMON-010] identical ticks",
+			expectedPanicMsg: "[GNOSWAP-COMMON-005] identical ticks",
 		},
 		{
 			name:             "tick lower greater than tick upper - invalid",
@@ -407,7 +407,7 @@ func TestMintAndStakeWithoutNativeToken(t *testing.T) {
 			deadline:         time.Now().Unix() + 10000000,
 			referrer:         "",
 			expectPanic:      true,
-			expectedPanicMsg: "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper",
+			expectedPanicMsg: "[GNOSWAP-POOL-020] tickLower is greater than or equal to tickUpper",
 		},
 		{
 			name:           "valid referrer address",

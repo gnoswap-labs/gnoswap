@@ -369,7 +369,7 @@ func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
 
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-ROUTER-005] invalid input data || pool does not exist: gno.land/r/gnoland/wugnot:gno.land/r/onbloc/qux:3000`,
+		`[GNOSWAP-ROUTER-004] invalid input data || pool does not exist: gno.land/r/gnoland/wugnot:gno.land/r/onbloc/qux:3000`,
 		func() {
 			testing.SetRealm(routerRealm)
 			router.ExactOutSwapRoute(

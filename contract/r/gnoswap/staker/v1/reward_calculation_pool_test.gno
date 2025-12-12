@@ -597,13 +597,6 @@ func TestProcessUnclaimableReward(t *testing.T) {
 			pools := NewPools()
 			pools.set(tt.poolPath, pool)
 
-			poolTier := &PoolTier{
-				getEmission: func() int64 { return 1000 },
-				getHalvingBlocksInRange: func(start, end int64) ([]int64, []int64) {
-					return nil, nil
-				},
-			}
-
 			// Set up some unclaimable accumulation
 			poolResolver.Pool.SetUnclaimableAcc(500)
 
