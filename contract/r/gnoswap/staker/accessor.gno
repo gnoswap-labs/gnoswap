@@ -14,9 +14,9 @@ type PoolAccessor interface {
 	GetSlot0Tick(poolPath string) int32
 	GetSlot0SqrtPriceX96(poolPath string) *u256.Uint
 
-	SetTickCrossHook(hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64))
-	SetSwapStartHook(hook func(cur realm, poolPath string, timestamp int64))
-	SetSwapEndHook(hook func(cur realm, poolPath string) error)
+	SetTickCrossHook(hook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64))
+	SetSwapStartHook(hook func(poolPath string, timestamp int64))
+	SetSwapEndHook(hook func(poolPath string) error)
 }
 
 type poolAccessor struct{}
@@ -33,22 +33,22 @@ func (p *poolAccessor) GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
 	return pool.GetSlot0SqrtPriceX96(poolPath)
 }
 
-func (p *poolAccessor) SetTickCrossHook(hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
-	func(cur realm) {
-		pool.SetTickCrossHook(cross, hook)
-	}(cross)
+func (p *poolAccessor) SetTickCrossHook(hook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
+	pool.SetTickCrossHook(cross, func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
+		hook(poolPath, tickId, zeroForOne, timestamp)
+	})
 }
 
-func (p *poolAccessor) SetSwapStartHook(hook func(cur realm, poolPath string, timestamp int64)) {
-	func(cur realm) {
-		pool.SetSwapStartHook(cross, hook)
-	}(cross)
+func (p *poolAccessor) SetSwapStartHook(hook func(poolPath string, timestamp int64)) {
+	pool.SetSwapStartHook(cross, func(cur realm, poolPath string, timestamp int64) {
+		hook(poolPath, timestamp)
+	})
 }
 
-func (p *poolAccessor) SetSwapEndHook(hook func(cur realm, poolPath string) error) {
-	func(cur realm) {
-		pool.SetSwapEndHook(cross, hook)
-	}(cross)
+func (p *poolAccessor) SetSwapEndHook(hook func(poolPath string) error) {
+	pool.SetSwapEndHook(cross, func(cur realm, poolPath string) error {
+		return hook(poolPath)
+	})
 }
 
 func newPoolAccessor() PoolAccessor {
