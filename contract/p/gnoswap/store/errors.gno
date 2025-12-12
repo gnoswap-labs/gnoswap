@@ -6,6 +6,7 @@ var (
 	// Authorization errors
 	ErrAuthorizedCallerAlreadyRegistered = errors.New("authorized caller already registered")
 	ErrAuthorizedCallerNotFound          = errors.New("authorized caller not found")
+	ErrInvalidPermission                 = errors.New("invalid permission")
 
 	// Data access errors
 	ErrKeyNotFound            = errors.New("key not found")
