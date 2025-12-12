@@ -30,14 +30,14 @@ func TestTickMath_GetSqrtRatioAtTick(t *testing.T) {
 			tick:                 MIN_TICK - 1,
 			expectedSqrtPriceX96: "",
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-COMMON-003] value out of range || tick is out of range (smaller than -887272), tick: -887273",
+			expectedPanicMessage: "[GNOSWAP-COMMON-001] value out of range || tick is out of range (smaller than -887272), tick: -887273",
 		},
 		{
 			name:                 "throws for too high",
 			tick:                 MAX_TICK + 1,
 			expectedSqrtPriceX96: "",
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-COMMON-003] value out of range || tick is out of range (larger than 887272), tick: 887273",
+			expectedPanicMessage: "[GNOSWAP-COMMON-001] value out of range || tick is out of range (larger than 887272), tick: 887273",
 		},
 		{
 			name:                 "min tick",
@@ -208,14 +208,14 @@ func TestTickMath_GetTickAtSqrtRatio(t *testing.T) {
 			sqrtPriceX96:         "4295128738", // MIN_SQRT_RATIO - 1
 			expectedTick:         0,
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-COMMON-003] value out of range || sqrtPriceX96(4295128738) is out of range",
+			expectedPanicMessage: "[GNOSWAP-COMMON-001] value out of range || sqrtPriceX96(4295128738) is out of range",
 		},
 		{
 			name:                 "throws for too high sqrt_ratio",
 			sqrtPriceX96:         "1461446703485210103287273052203988822378723970343", // MAX_SQRT_RATIO + 1
 			expectedTick:         0,
 			expectedHasPanic:     true,
-			expectedPanicMessage: "[GNOSWAP-COMMON-003] value out of range || sqrtPriceX96(1461446703485210103287273052203988822378723970343) is out of range",
+			expectedPanicMessage: "[GNOSWAP-COMMON-001] value out of range || sqrtPriceX96(1461446703485210103287273052203988822378723970343) is out of range",
 		},
 		{
 			name:                 "ratio of min tick",
@@ -531,13 +531,13 @@ func TestTickMath_BoundaryConditions(t *testing.T) {
 			name:             "min_tick_minus_2",
 			tick:             MIN_TICK - 2,
 			expectedPanic:    true,
-			expectedPanicMsg: "[GNOSWAP-COMMON-003] value out of range || tick is out of range (smaller than -887272), tick: -887274",
+			expectedPanicMsg: "[GNOSWAP-COMMON-001] value out of range || tick is out of range (smaller than -887272), tick: -887274",
 		},
 		{
 			name:             "max_tick_plus_2",
 			tick:             MAX_TICK + 2,
 			expectedPanic:    true,
-			expectedPanicMsg: "[GNOSWAP-COMMON-003] value out of range || tick is out of range (larger than 887272), tick: 887274",
+			expectedPanicMsg: "[GNOSWAP-COMMON-001] value out of range || tick is out of range (larger than 887272), tick: 887274",
 		},
 		{
 			name:          "min_tick_valid",
@@ -580,13 +580,13 @@ func TestTickMath_SqrtRatioBoundaryConditions(t *testing.T) {
 			name:             "below_min_sqrt_ratio",
 			sqrtRatio:        "4295128738", // MIN_SQRT_RATIO - 1
 			expectedPanic:    true,
-			expectedPanicMsg: "[GNOSWAP-COMMON-003] value out of range || sqrtPriceX96(4295128738) is out of range",
+			expectedPanicMsg: "[GNOSWAP-COMMON-001] value out of range || sqrtPriceX96(4295128738) is out of range",
 		},
 		{
 			name:             "above_max_sqrt_ratio",
 			sqrtRatio:        "1461446703485210103287273052203988822378723970343", // MAX_SQRT_RATIO + 1
 			expectedPanic:    true,
-			expectedPanicMsg: "[GNOSWAP-COMMON-003] value out of range || sqrtPriceX96(1461446703485210103287273052203988822378723970343) is out of range",
+			expectedPanicMsg: "[GNOSWAP-COMMON-001] value out of range || sqrtPriceX96(1461446703485210103287273052203988822378723970343) is out of range",
 		},
 		{
 			name:          "exact_min_sqrt_ratio",
