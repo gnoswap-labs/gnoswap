@@ -113,11 +113,11 @@ func positionUpdate(
 	if tokensOwed0.Gt(zero) || tokensOwed1.Gt(zero) {
 		owed0, overflow := u256.Zero().AddOverflow(position.TokensOwed0(), tokensOwed0)
 		if overflow {
-			return pl.NewDefaultPositionInfo(), errOverFlow
+			return pl.NewDefaultPositionInfo(), errOverflow
 		}
 		owed1, overflow := u256.Zero().AddOverflow(position.TokensOwed1(), tokensOwed1)
 		if overflow {
-			return pl.NewDefaultPositionInfo(), errOverFlow
+			return pl.NewDefaultPositionInfo(), errOverflow
 		}
 
 		position.SetTokensOwed0(owed0)

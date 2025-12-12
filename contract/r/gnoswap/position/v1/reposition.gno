@@ -14,6 +14,15 @@ import (
 )
 
 // Reposition adjusts the price range and liquidity of an existing position.
+//
+// Parameters:
+//   - positionId: NFT token ID to reposition
+//   - tickLower, tickUpper: new price range boundaries
+//   - amount0DesiredStr, amount1DesiredStr: desired token amounts for new position
+//   - amount0MinStr, amount1MinStr: minimum acceptable amounts (slippage protection)
+//   - deadline: transaction expiration timestamp
+//
+// Returns positionId, liquidity, tickLower, tickUpper, amount0, amount1.
 func (p *positionV1) Reposition(
 	positionId uint64,
 	tickLower int32,
@@ -22,12 +31,14 @@ func (p *positionV1) Reposition(
 	amount1DesiredStr string,
 	amount0MinStr string,
 	amount1MinStr string,
+	deadline int64,
 ) (uint64, string, int32, int32, string, string) {
 	halt.AssertIsNotHaltedPosition()
 	halt.AssertIsNotHaltedWithdraw()
 
 	caller := runtime.PreviousRealm().Address()
 	assertIsOwnerForToken(p, positionId, caller)
+	assertIsNotExpired(deadline)
 
 	emission.MintAndDistributeGns(cross)
 

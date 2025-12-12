@@ -368,7 +368,7 @@ func TestLaunchpadDeposit_DepositGns(t *testing.T) {
 			depositAmount:        1000000,
 			referrer:             "",
 			expectedPanic:        true,
-			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-009] invalid pool || pool type(60) is not available",
+			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-009] invalid tier || pool type(60) is not available",
 		},
 		{
 			name: "fail when project is inactive",

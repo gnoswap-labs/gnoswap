@@ -143,13 +143,13 @@ func (i *poolV1) Burn(
 
 		tokensOwed0, overflow := u256.Zero().AddOverflow(position.TokensOwed0(), amount0)
 		if overflow {
-			panic(errOverFlow)
+			panic(errOverflow)
 		}
 		position.SetTokensOwed0(tokensOwed0)
 
 		tokensOwed1, overflow := u256.Zero().AddOverflow(position.TokensOwed1(), amount1)
 		if overflow {
-			panic(errOverFlow)
+			panic(errOverflow)
 		}
 		position.SetTokensOwed1(tokensOwed1)
 	}
@@ -232,12 +232,12 @@ func (i *poolV1) Collect(
 	if amount0.Gt(zero) {
 		tokenOwed0, overflow := u256.Zero().SubOverflow(position.TokensOwed0(), amount0)
 		if overflow {
-			panic(errOverFlow)
+			panic(errOverflow)
 		}
 
 		token0Balance, overflow := u256.Zero().SubOverflow(pool.BalanceToken0(), amount0)
 		if overflow {
-			panic(errOverFlow)
+			panic(errOverflow)
 		}
 
 		position.SetTokensOwed0(tokenOwed0)
@@ -247,12 +247,12 @@ func (i *poolV1) Collect(
 	if amount1.Gt(zero) {
 		tokenOwed1, overflow := u256.Zero().SubOverflow(position.TokensOwed1(), amount1)
 		if overflow {
-			panic(errOverFlow)
+			panic(errOverflow)
 		}
 
 		token1Balance, overflow := u256.Zero().SubOverflow(pool.BalanceToken1(), amount1)
 		if overflow {
-			panic(errOverFlow)
+			panic(errOverflow)
 		}
 
 		position.SetTokensOwed1(tokenOwed1)
@@ -379,7 +379,7 @@ func (i *poolV1) collectProtocol(
 func (i *poolV1) saveProtocolFees(pool *pl.Pool, amount0, amount1 *u256.Uint) (*u256.Uint, *u256.Uint) {
 	token0Fees, underflow := u256.Zero().SubOverflow(pool.ProtocolFeesToken0(), amount0)
 	if underflow {
-		panic(errOverFlow)
+		panic(errOverflow)
 	}
 	pool.SetProtocolFeesToken0(token0Fees)
 

@@ -284,7 +284,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			userAddress:   alice,
 			sentAmount:    0,
 			expectError:   true,
-			expectedError: "[GNOSWAP-POSITION-008] can not wrap less than minimum amount || amount(50) < minimum(1000)",
+			expectedError: "[GNOSWAP-POSITION-008] cannot wrap less than minimum amount || amount(50) < minimum(1000)",
 		},
 		{
 			name:          "safeWrapNativeToken is failed by insufficient UGNOT",
@@ -292,7 +292,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			userAddress:   alice,
 			sentAmount:    100,
 			expectError:   true,
-			expectedError: "[GNOSWAP-POSITION-008] can not wrap less than minimum amount || amount(150) < minimum(1000)",
+			expectedError: "[GNOSWAP-POSITION-008] cannot wrap less than minimum amount || amount(150) < minimum(1000)",
 		},
 		{
 			name:          "safeWrapNativeToken is failed by invalid desired amount",
@@ -340,7 +340,7 @@ func TestSafeWrapNativeToken(t *testing.T) {
 			userAddress:   alice,
 			sentAmount:    100,
 			expectError:   true, // Simulate wrap error internally
-			expectedError: "[GNOSWAP-POSITION-008] can not wrap less than minimum amount || amount(100) < minimum(1000)",
+			expectedError: "[GNOSWAP-POSITION-008] cannot wrap less than minimum amount || amount(100) < minimum(1000)",
 		},
 	}
 

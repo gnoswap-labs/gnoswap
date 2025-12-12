@@ -203,6 +203,7 @@ func repositionToNewRange() {
 		"50000000",
 		"0",
 		"0",
+		9999999999,
 	)
 
 	ufmt.Printf("[EXPECTED] New liquidity should be %s\n", liquidity)

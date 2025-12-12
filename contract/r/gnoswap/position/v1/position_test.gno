@@ -1359,6 +1359,7 @@ func TestReposition(t *testing.T) {
 						tt.mintAmount1,
 						"0",
 						"0",
+						time.Now().Add(time.Hour).Unix(),
 						adminAddr,
 					)
 				})
@@ -1372,6 +1373,7 @@ func TestReposition(t *testing.T) {
 					tt.mintAmount1,
 					"0",
 					"0",
+					time.Now().Add(time.Hour).Unix(),
 					adminAddr,
 				)
 				uassert.Equal(t, tickL, tt.tickLower)
@@ -1834,4 +1836,284 @@ func TestUnwrapLeftoverWrappedToken(t *testing.T) {
 // Helper function to check if string contains substring
 func contains(str, substr string) bool {
 	return strings.Contains(str, substr)
+}
+
+// TestDecreaseLiquidity_SlippageOnCollectedAmounts tests that slippage check
+// is enforced on actually collected amounts, not on burned amounts.
+// This prevents cases where user receives less than expected due to pool constraints.
+func TestDecreaseLiquidity_SlippageOnCollectedAmounts(t *testing.T) {
+	tests := []struct {
+		name              string
+		liquidityToRemove string
+		amount0Min        string
+		amount1Min        string
+		expectedHasAbort  bool
+		expectedErrorMsg  string
+	}{
+		{
+			name:              "success with reasonable slippage bounds",
+			liquidityToRemove: "500000",
+			amount0Min:        "1",
+			amount1Min:        "1",
+			expectedHasAbort:  false,
+		},
+		{
+			name:              "fail when amount0 collected < amount0Min",
+			liquidityToRemove: "500000",
+			amount0Min:        "999999999",
+			amount1Min:        "1",
+			expectedHasAbort:  true,
+			expectedErrorMsg:  "collectAmount0",
+		},
+		{
+			name:              "fail when amount1 collected < amount1Min",
+			liquidityToRemove: "500000",
+			amount0Min:        "1",
+			amount1Min:        "999999999",
+			expectedHasAbort:  true,
+			expectedErrorMsg:  "collectAmount1",
+		},
+		{
+			name:              "fail when both amounts collected < mins",
+			liquidityToRemove: "500000",
+			amount0Min:        "999999999",
+			amount1Min:        "999999999",
+			expectedHasAbort:  true,
+			expectedErrorMsg:  "collectAmount",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			initPositionTest(t)
+
+			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+			testing.SetRealm(adminRealm)
+			mockInstanceMint(
+				barPath,
+				fooPath,
+				fee500,
+				-10000,
+				10000,
+				"1000000",
+				"1000000",
+				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+
+			deadline := time.Now().Add(time.Hour).Unix()
+
+			testing.SetRealm(testing.NewUserRealm(adminAddr))
+			if tc.expectedHasAbort {
+				uassert.AbortsContains(t, tc.expectedErrorMsg, func() {
+					mockInstanceDecreaseLiquidity(
+						1,
+						tc.liquidityToRemove,
+						tc.amount0Min,
+						tc.amount1Min,
+						deadline,
+						false,
+					)
+				})
+			} else {
+				_, liquidity, _, _, collect0, collect1, _ := mockInstanceDecreaseLiquidity(
+					1,
+					tc.liquidityToRemove,
+					tc.amount0Min,
+					tc.amount1Min,
+					deadline,
+					false,
+				)
+
+				// Verify liquidity was decreased
+				uassert.Equal(t, tc.liquidityToRemove, liquidity)
+
+				// Verify some tokens were collected
+				collect0Val, _ := strconv.ParseUint(collect0, 10, 64)
+				collect1Val, _ := strconv.ParseUint(collect1, 10, 64)
+				uassert.True(t, collect0Val > 0, "should collect some token0")
+				uassert.True(t, collect1Val > 0, "should collect some token1")
+			}
+		})
+	}
+}
+
+// TestDecreaseLiquidity_PoolBalanceInsufficient tests the edge case where
+// pool balance is insufficient, causing collect amounts to be less than burn amounts.
+// This verifies that slippage check is enforced on actually collected amounts.
+func TestDecreaseLiquidity_PoolBalanceInsufficient(t *testing.T) {
+	initPositionTest(t)
+
+	createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+	testing.SetRealm(adminRealm)
+	// Step 1: Mint position to add liquidity
+	mockInstanceMint(
+		barPath,
+		fooPath,
+		fee500,
+		-10000,
+		10000,
+		"1000000",
+		"1000000",
+		"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+
+	// Step 2: Manually reduce pool balance to simulate insufficient balance
+	pool := pl.GetPool(barPath, fooPath, fee500)
+	currentBalance0 := pool.BalanceToken0()
+	currentBalance1 := pool.BalanceToken1()
+
+	// Reduce pool balance to 50% to create burn > collect scenario
+	reducedBalance0 := u256.NewUint(0).Div(currentBalance0, u256.NewUint(2))
+	reducedBalance1 := u256.NewUint(0).Div(currentBalance1, u256.NewUint(2))
+	pool.SetBalanceToken0(reducedBalance0)
+	pool.SetBalanceToken1(reducedBalance1)
+
+	deadline := time.Now().Add(time.Hour).Unix()
+
+	// Step 3: Try to decrease liquidity with slippage check
+	// burn amounts will be ~500,000 each (50% of 1,000,000)
+	// but collect amounts will be limited by pool balance (~500,000 total / 2 = ~250,000 each)
+	// So if we set amount0Min = 400,000, it should fail because collect0 < 400,000
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+
+	// This should FAIL because collect0 will be less than amount0Min
+	// Even though burn0 would be >= 400,000, collect0 will be limited by pool balance
+	uassert.AbortsContains(t, "collectAmount0", func() {
+		mockInstanceDecreaseLiquidity(
+			1,
+			"500000", // Remove 50% liquidity
+			"400000", // amount0Min - higher than what pool can provide
+			"1",      // amount1Min - low to isolate amount0 failure
+			deadline,
+			false,
+		)
+	})
+
+	// Reset pool balance for next test
+	pool.SetBalanceToken0(currentBalance0)
+	pool.SetBalanceToken1(currentBalance1)
+
+	// This should FAIL for amount1
+	pool.SetBalanceToken0(currentBalance0) // Restore balance0
+	pool.SetBalanceToken1(reducedBalance1) // Keep balance1 reduced
+
+	uassert.AbortsContains(t, "collectAmount1", func() {
+		mockInstanceDecreaseLiquidity(
+			1,
+			"500000", // Remove 50% liquidity
+			"1",      // amount0Min - low
+			"400000", // amount1Min - higher than what pool can provide
+			deadline,
+			false,
+		)
+	})
+}
+
+// TestReposition_DeadlineValidation tests that Reposition enforces deadline
+// to prevent stale transactions from being executed after market movements.
+func TestReposition_DeadlineValidation(t *testing.T) {
+	tests := []struct {
+		name             string
+		deadlineOffset   time.Duration
+		expectAbort      bool
+		expectedErrorMsg string
+	}{
+		{
+			name:           "success with valid deadline",
+			deadlineOffset: time.Hour,
+			expectAbort:    false,
+		},
+		{
+			name:             "fail with expired deadline",
+			deadlineOffset:   -time.Hour,
+			expectAbort:      true,
+			expectedErrorMsg: "transaction too old",
+		},
+		{
+			name:             "fail with significantly expired deadline",
+			deadlineOffset:   -24 * time.Hour,
+			expectAbort:      true,
+			expectedErrorMsg: "transaction too old",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+
+			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+			testing.SetOriginCaller(adminAddr)
+			// Step 1: Mint initial position
+			mockInstanceMint(
+				barPath,
+				fooPath,
+				fee500,
+				-10000,
+				10000,
+				"1000000",
+				"1000000",
+				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+
+			// Step 2: Get position liquidity and decrease 100% to clear for reposition
+			position, _ := mockInstance.GetPosition(1)
+			liquidity := position.Liquidity().ToString()
+
+			_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(
+				1,
+				liquidity,
+				"0",
+				"0",
+				time.Now().Add(time.Hour).Unix(),
+				false,
+			)
+
+			// Step 3: Attempt reposition with test deadline
+			deadline := time.Now().Add(tt.deadlineOffset).Unix()
+
+			if tt.expectAbort {
+				uassert.AbortsContains(t, tt.expectedErrorMsg, func() {
+					mockInstanceReposition(
+						1,
+						-5000,
+						5000,
+						"500000",
+						"1000000",
+						"0",
+						"0",
+						deadline,
+						adminAddr,
+					)
+				})
+			} else {
+				posId, liq, tickL, tickH, amt0, amt1 := mockInstanceReposition(
+					1,
+					-5000,
+					5000,
+					"500000",
+					"1000000",
+					"0",
+					"0",
+					deadline,
+					adminAddr,
+				)
+
+				// Verify reposition succeeded
+				uassert.Equal(t, uint64(1), posId)
+				uassert.Equal(t, int32(-5000), tickL)
+				uassert.Equal(t, int32(5000), tickH)
+
+				// Verify liquidity was added
+				liquidityVal, _ := strconv.ParseUint(liq, 10, 64)
+				uassert.True(t, liquidityVal > 0, "liquidity should be greater than 0")
+
+				// Verify amounts were used
+				amt0Val, _ := strconv.ParseUint(amt0, 10, 64)
+				amt1Val, _ := strconv.ParseUint(amt1, 10, 64)
+				uassert.True(t, amt0Val > 0, "amount0 should be greater than 0")
+				uassert.True(t, amt1Val > 0, "amount1 should be greater than 0")
+			}
+		})
+	}
 }

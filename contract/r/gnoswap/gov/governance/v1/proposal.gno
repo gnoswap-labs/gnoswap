@@ -141,7 +141,7 @@ func (r *ProposalResolver) cancel(
 	}
 
 	if !r.statusResolver.IsUpcoming(canceledAt) {
-		return errUnableToCancleVotingProposal
+		return errUnableToCancelVotingProposal
 	}
 
 	// Mark proposal as canceled
