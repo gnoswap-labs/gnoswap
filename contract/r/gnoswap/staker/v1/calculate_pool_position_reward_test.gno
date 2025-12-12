@@ -1614,21 +1614,21 @@ func TestLazyRemovalOfEndedIncentives(t *testing.T) {
 	uassert.False(t, deposit.HasExternalIncentiveId(incentiveId), "deposit should NOT have incentive ID after lazy removal")
 }
 
-// TestLazyRemovalOfArchivedIncentives tests that archived incentives are removed from deposit's index
-func TestLazyRemovalOfArchivedIncentives(t *testing.T) {
+// TestLazyRemovalOfMissingIncentives tests that missing/non-existent incentives are removed from deposit's index
+func TestLazyRemovalOfMissingIncentives(t *testing.T) {
 	initStakerTest(t)
 
 	s := getMockInstance()
 	baseTime := time.Now().Unix()
 	baseHeight := runtime.ChainHeight()
-	poolPath := "gno.land/r/test/lazy_removal_archived"
+	poolPath := "gno.land/r/test/lazy_removal_missing"
 	positionId := uint64(9002)
 
 	// Create pool
 	pool := sr.NewPool(poolPath, baseTime-1000)
 	s.getPools().set(poolPath, pool)
 
-	// Create an active incentive (will NOT be archived)
+	// Create an active incentive
 	activeIncentiveId := "active_incentive"
 	incentive := sr.NewExternalIncentive(
 		activeIncentiveId,
@@ -1647,11 +1647,11 @@ func TestLazyRemovalOfArchivedIncentives(t *testing.T) {
 	poolResolver := NewPoolResolver(pool)
 	poolResolver.IncentivesResolver().create(testutils.TestAddress("refundee"), incentive)
 
-	// Create deposit with an archived incentive ID (not in pool's incentive tree)
-	archivedIncentiveId := "archived_incentive_not_found"
+	// Create deposit with a missing incentive ID (not in pool's incentive tree)
+	missingIncentiveId := "missing_incentive_not_found"
 	warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), baseTime-600)
 	deposit := sr.NewDeposit(
-		testutils.TestAddress("archivedOwner"),
+		testutils.TestAddress("owner"),
 		poolPath,
 		u256.NewUint(1000000),
 		baseTime-600,
@@ -1660,9 +1660,9 @@ func TestLazyRemovalOfArchivedIncentives(t *testing.T) {
 		warmups,
 	)
 
-	// Add both active and "archived" (non-existent) incentive IDs
+	// Add both active and missing (non-existent) incentive IDs
 	deposit.AddExternalIncentiveId(activeIncentiveId)
-	deposit.AddExternalIncentiveId(archivedIncentiveId)
+	deposit.AddExternalIncentiveId(missingIncentiveId)
 
 	s.getDeposits().set(positionId, deposit)
 
@@ -1673,14 +1673,14 @@ func TestLazyRemovalOfArchivedIncentives(t *testing.T) {
 
 	// Verify deposit has both incentive IDs before calculation
 	uassert.True(t, deposit.HasExternalIncentiveId(activeIncentiveId), "deposit should have active incentive ID")
-	uassert.True(t, deposit.HasExternalIncentiveId(archivedIncentiveId), "deposit should have archived incentive ID before calculation")
+	uassert.True(t, deposit.HasExternalIncentiveId(missingIncentiveId), "deposit should have missing incentive ID before calculation")
 
 	// Calculate reward - this should trigger lazy removal of non-existent incentive
 	_ = s.calcPositionReward(baseHeight+10, baseTime, positionId)
 
-	// Verify only archived incentive was removed
+	// Verify only missing incentive was removed
 	uassert.True(t, deposit.HasExternalIncentiveId(activeIncentiveId), "deposit should still have active incentive ID")
-	uassert.False(t, deposit.HasExternalIncentiveId(archivedIncentiveId), "deposit should NOT have archived incentive ID after lazy removal")
+	uassert.False(t, deposit.HasExternalIncentiveId(missingIncentiveId), "deposit should NOT have missing incentive ID after lazy removal")
 }
 
 // TestDepositRemoveExternalIncentiveId tests the RemoveExternalIncentiveId method

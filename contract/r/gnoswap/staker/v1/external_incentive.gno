@@ -212,18 +212,10 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 	// Mark incentive as refunded and update
 	// After this update, attempts to re-claim GNS or rewards that were deposited
 	// through the `endExternalIncentive` function will be blocked.
+	// Incentive remains in active tree but with Refunded=true flag
 	incentiveResolver.SetRefunded(true)
 	incentiveResolver.addDistributedRewardAmount(refund)
 	incentivesResolver.update(incentive.Refundee(), incentive)
-
-	// archive incentive immediately after refund
-	// ended incentive should be moved to archived storage
-	// users can still unstake and claim rewards from archived storage
-	// (Get() method searches both active and archived trees)
-	err = s.archiveEndedExternalIncentive(incentivesResolver, incentive)
-	if err != nil {
-		panic(err)
-	}
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -284,9 +276,4 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 	refund = safeSubInt64(refund, incentiveResolver.DistributedRewardAmount())
 
 	return incentiveResolver.ExternalIncentive, refund, nil
-}
-
-func (s *stakerV1) archiveEndedExternalIncentive(resolver *IncentivesResolver, incentive *sr.ExternalIncentive) error {
-	resolver.archiveIncentive(incentive.IncentiveId())
-	return nil
 }

@@ -33,7 +33,7 @@ func (s *stakerV1) ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 	currentTime := time.Now().Unix()
 	incentivesResolver := poolResolver.IncentivesResolver()
 
-	// Check active incentives only (archived incentives are no longer active reward sources)
+	// Check only currently active (non-refunded) incentives
 	incentivesResolver.IncentiveTrees().Iterate("", "", func(_ string, value any) bool {
 		ictv, ok := value.(*sr.ExternalIncentive)
 		if !ok {
@@ -331,7 +331,7 @@ func (s *stakerV1) buildApiRewards(deposit *sr.Deposit, reward Reward) []ApiRewa
 		}
 		incentive := s.getExternalIncentives().get(incentiveId)
 		if incentive == nil {
-			// Incentive may have been archived/removed; skip to keep response construction robust.
+			// Incentive may have been removed; skip to keep response construction robust.
 			continue
 		}
 		rewards = append(rewards, ApiReward{

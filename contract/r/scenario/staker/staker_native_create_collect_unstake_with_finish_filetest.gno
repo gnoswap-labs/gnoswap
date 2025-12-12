@@ -448,7 +448,6 @@ func endExternalIncentive() {
 	ufmt.Printf("[EXPECTED] ugnot balance after end: %d\n", ugnotBalanceAfter)
 	ufmt.Printf("[EXPECTED] wugnot change: %d\n", wugnotChange)
 	ufmt.Printf("[EXPECTED] ugnot refund: %d\n", ugnotIncrease)
-	ufmt.Printf("[EXPECTED] IsArchivedExternalIncentive: %v\n", sr.IsArchivedExternalIncentive(incentiveID))
 }
 
 func ugnotBalanceOf(addr address) uint64 {
@@ -577,4 +576,3 @@ func positionIdFrom(positionId any) grc721.TokenID {
 // [EXPECTED] ugnot balance after end: 19991242342
 // [EXPECTED] wugnot change: 0
 // [EXPECTED] ugnot refund: 9991242342
-// [EXPECTED] IsArchivedExternalIncentive: true

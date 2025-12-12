@@ -55,7 +55,6 @@ func (s *stakerV1) getIncentive(poolPath string, incentiveId string) *sr.Externa
 	pool := s.getPoolByPoolPath(poolPath)
 	poolResolver := NewPoolResolver(pool)
 
-	// Get() searches both active and archived trees
 	incentive, exist := poolResolver.IncentivesResolver().Get(incentiveId)
 	if !exist {
 		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
@@ -259,33 +258,6 @@ func (s *stakerV1) GetExternalIncentiveByPoolPath(poolPath string) []sr.External
 	})
 
 	return incentives
-}
-
-func (s *stakerV1) IsArchivedExternalIncentive(incentiveId string) bool {
-	incentiveI, exist := s.store.GetExternalIncentives().Get(incentiveId)
-	if !exist {
-		return true
-	}
-
-	incentive, ok := incentiveI.(*sr.ExternalIncentive)
-	if !ok {
-		panic("failed to cast incentive to *ExternalIncentive")
-	}
-
-	result, exists := s.store.GetPools().Get(incentive.TargetPoolPath())
-	if !exists {
-		return true
-	}
-
-	pool, ok := result.(*sr.Pool)
-	if !ok {
-		panic("failed to cast pool to *Pool")
-	}
-
-	incentives := pool.Incentives()
-	incentiveResolver := NewIncentivesResolver(incentives)
-
-	return incentiveResolver.IsArchived(incentiveId)
 }
 
 // makeExternalPositionsNode creates JSON nodes for external position data.

@@ -139,11 +139,6 @@ func GetUnstakingFee() int64 {
 	return getImplementation().GetUnstakingFee()
 }
 
-// IsArchivedExternalIncentive returns whether an external incentive is archived.
-func IsArchivedExternalIncentive(incentiveId string) bool {
-	return getImplementation().IsArchivedExternalIncentive(incentiveId)
-}
-
 // IsStaked returns whether a position is staked.
 func IsStaked(positionId uint64) bool {
 	return getImplementation().IsStaked(positionId)

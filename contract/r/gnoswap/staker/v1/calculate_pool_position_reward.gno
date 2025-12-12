@@ -112,7 +112,7 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 	for _, incentiveId := range incentiveIds {
 		incentive, ok := incentivesResolver.Get(incentiveId)
 		if !ok {
-			// Incentive not found (likely archived) - remove from deposit index
+			// Incentive not found - remove from deposit index
 			deposit.RemoveExternalIncentiveId(incentiveId)
 			continue
 		}

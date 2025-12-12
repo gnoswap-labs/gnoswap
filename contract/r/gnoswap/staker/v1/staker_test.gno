@@ -165,7 +165,7 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 }
 
 // TestCollectReward_NilIncentiveSkipped verifies that CollectReward
-// gracefully skips external incentives that have been archived/removed
+// gracefully skips external incentives that have been removed
 // and returns nil when looked up.
 func TestCollectReward_NilIncentiveSkipped(t *testing.T) {
 	initStakerTest(t)
@@ -233,7 +233,7 @@ func TestCollectReward_NilIncentiveSkipped(t *testing.T) {
 		t.Fatal("expected incentive to be created")
 	}
 
-	// Remove the incentive from the external incentives tree to simulate archived/deleted
+	// Remove the incentive from the external incentives tree to simulate deleted
 	incentives.tree.Remove(incentiveId)
 
 	// CollectReward should not panic when incentive is nil
@@ -244,7 +244,7 @@ func TestCollectReward_NilIncentiveSkipped(t *testing.T) {
 }
 
 // CollectReward should not process the same external penalty multiple times
-// when an incentive is missing/archived but the deposit's reward state is kept.
+// when an incentive is missing but the deposit's reward state is kept.
 func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(t *testing.T) {
 	initStakerTest(t)
 
