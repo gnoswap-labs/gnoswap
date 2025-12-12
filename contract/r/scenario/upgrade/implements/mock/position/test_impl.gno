@@ -111,14 +111,14 @@ func (t *TestPosition) DecreaseLiquidity(positionId uint64, liquidityStr string,
 	return result[0].(uint64), result[1].(string), result[2].(string), result[3].(string), result[4].(string), result[5].(string), result[6].(string)
 }
 
-func (t *TestPosition) Reposition(positionId uint64, tickLower int32, tickUpper int32, amount0DesiredStr string, amount1DesiredStr string, amount0MinStr string, amount1MinStr string) (uint64, string, int32, int32, string, string) {
+func (t *TestPosition) Reposition(positionId uint64, tickLower int32, tickUpper int32, amount0DesiredStr string, amount1DesiredStr string, amount0MinStr string, amount1MinStr string, deadline int64) (uint64, string, int32, int32, string, string) {
 	result := t.ExecuteFn(
 		"Reposition",
 		func(args ...any) any {
-			r1, r2, r3, r4, r5, r6 := t.instance.Reposition(args[0].(uint64), args[1].(int32), args[2].(int32), args[3].(string), args[4].(string), args[5].(string), args[6].(string))
+			r1, r2, r3, r4, r5, r6 := t.instance.Reposition(args[0].(uint64), args[1].(int32), args[2].(int32), args[3].(string), args[4].(string), args[5].(string), args[6].(string), args[7].(int64))
 			return []any{r1, r2, r3, r4, r5, r6}
 		},
-		positionId, tickLower, tickUpper, amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr,
+		positionId, tickLower, tickUpper, amount0DesiredStr, amount1DesiredStr, amount0MinStr, amount1MinStr, deadline,
 	).([]any)
 	return result[0].(uint64), result[1].(string), result[2].(int32), result[3].(int32), result[4].(string), result[5].(string)
 }

@@ -1359,6 +1359,7 @@ func TestReposition(t *testing.T) {
 						tt.mintAmount1,
 						"0",
 						"0",
+						time.Now().Add(time.Hour).Unix(),
 						adminAddr,
 					)
 				})
@@ -1372,6 +1373,7 @@ func TestReposition(t *testing.T) {
 					tt.mintAmount1,
 					"0",
 					"0",
+					time.Now().Add(time.Hour).Unix(),
 					adminAddr,
 				)
 				uassert.Equal(t, tickL, tt.tickLower)
@@ -1841,12 +1843,12 @@ func contains(str, substr string) bool {
 // This prevents cases where user receives less than expected due to pool constraints.
 func TestDecreaseLiquidity_SlippageOnCollectedAmounts(t *testing.T) {
 	tests := []struct {
-		name             string
+		name              string
 		liquidityToRemove string
-		amount0Min       string
-		amount1Min       string
-		expectedHasAbort bool
-		expectedErrorMsg string
+		amount0Min        string
+		amount1Min        string
+		expectedHasAbort  bool
+		expectedErrorMsg  string
 	}{
 		{
 			name:              "success with reasonable slippage bounds",
@@ -1921,10 +1923,10 @@ func TestDecreaseLiquidity_SlippageOnCollectedAmounts(t *testing.T) {
 					deadline,
 					false,
 				)
-				
+
 				// Verify liquidity was decreased
 				uassert.Equal(t, tc.liquidityToRemove, liquidity)
-				
+
 				// Verify some tokens were collected
 				collect0Val, _ := strconv.ParseUint(collect0, 10, 64)
 				collect1Val, _ := strconv.ParseUint(collect1, 10, 64)
@@ -1980,9 +1982,9 @@ func TestDecreaseLiquidity_PoolBalanceInsufficient(t *testing.T) {
 	uassert.AbortsContains(t, "collectAmount0", func() {
 		mockInstanceDecreaseLiquidity(
 			1,
-			"500000",  // Remove 50% liquidity
-			"400000",  // amount0Min - higher than what pool can provide
-			"1",       // amount1Min - low to isolate amount0 failure
+			"500000", // Remove 50% liquidity
+			"400000", // amount0Min - higher than what pool can provide
+			"1",      // amount1Min - low to isolate amount0 failure
 			deadline,
 			false,
 		)
@@ -1999,11 +2001,119 @@ func TestDecreaseLiquidity_PoolBalanceInsufficient(t *testing.T) {
 	uassert.AbortsContains(t, "collectAmount1", func() {
 		mockInstanceDecreaseLiquidity(
 			1,
-			"500000",  // Remove 50% liquidity
-			"1",       // amount0Min - low
-			"400000",  // amount1Min - higher than what pool can provide
+			"500000", // Remove 50% liquidity
+			"1",      // amount0Min - low
+			"400000", // amount1Min - higher than what pool can provide
 			deadline,
 			false,
 		)
 	})
+}
+
+// TestReposition_DeadlineValidation tests that Reposition enforces deadline
+// to prevent stale transactions from being executed after market movements.
+func TestReposition_DeadlineValidation(t *testing.T) {
+	tests := []struct {
+		name             string
+		deadlineOffset   time.Duration
+		expectAbort      bool
+		expectedErrorMsg string
+	}{
+		{
+			name:           "success with valid deadline",
+			deadlineOffset: time.Hour,
+			expectAbort:    false,
+		},
+		{
+			name:             "fail with expired deadline",
+			deadlineOffset:   -time.Hour,
+			expectAbort:      true,
+			expectedErrorMsg: "transaction too old",
+		},
+		{
+			name:             "fail with significantly expired deadline",
+			deadlineOffset:   -24 * time.Hour,
+			expectAbort:      true,
+			expectedErrorMsg: "transaction too old",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initPositionTest(t)
+
+			createPoolWithoutFee(barPath, fooPath, fee500, 0)
+
+			testing.SetOriginCaller(adminAddr)
+			// Step 1: Mint initial position
+			mockInstanceMint(
+				barPath,
+				fooPath,
+				fee500,
+				-10000,
+				10000,
+				"1000000",
+				"1000000",
+				"0", "0", time.Now().Add(time.Hour).Unix(), adminAddr, adminAddr, "")
+
+			// Step 2: Get position liquidity and decrease 100% to clear for reposition
+			position, _ := mockInstance.GetPosition(1)
+			liquidity := position.Liquidity().ToString()
+
+			_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(
+				1,
+				liquidity,
+				"0",
+				"0",
+				time.Now().Add(time.Hour).Unix(),
+				false,
+			)
+
+			// Step 3: Attempt reposition with test deadline
+			deadline := time.Now().Add(tt.deadlineOffset).Unix()
+
+			if tt.expectAbort {
+				uassert.AbortsContains(t, tt.expectedErrorMsg, func() {
+					mockInstanceReposition(
+						1,
+						-5000,
+						5000,
+						"500000",
+						"1000000",
+						"0",
+						"0",
+						deadline,
+						adminAddr,
+					)
+				})
+			} else {
+				posId, liq, tickL, tickH, amt0, amt1 := mockInstanceReposition(
+					1,
+					-5000,
+					5000,
+					"500000",
+					"1000000",
+					"0",
+					"0",
+					deadline,
+					adminAddr,
+				)
+
+				// Verify reposition succeeded
+				uassert.Equal(t, uint64(1), posId)
+				uassert.Equal(t, int32(-5000), tickL)
+				uassert.Equal(t, int32(5000), tickH)
+
+				// Verify liquidity was added
+				liquidityVal, _ := strconv.ParseUint(liq, 10, 64)
+				uassert.True(t, liquidityVal > 0, "liquidity should be greater than 0")
+
+				// Verify amounts were used
+				amt0Val, _ := strconv.ParseUint(amt0, 10, 64)
+				amt1Val, _ := strconv.ParseUint(amt1, 10, 64)
+				uassert.True(t, amt0Val > 0, "amount0 should be greater than 0")
+				uassert.True(t, amt1Val > 0, "amount1 should be greater than 0")
+			}
+		})
+	}
 }
