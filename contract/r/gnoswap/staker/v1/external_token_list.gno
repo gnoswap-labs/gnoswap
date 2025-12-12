@@ -41,7 +41,7 @@ func (s *stakerV1) AddToken(tokenPath string) {
 // RemoveToken removes a token path from the list of allowed tokens.
 // Only the admin  can remove a token.
 //
-// Default tokens can not be removed.
+// Default tokens cannot be removed.
 //
 // Parameters:
 //   - tokenPath (string): The path of the token to remove
@@ -122,7 +122,7 @@ func removeTokenExecutor(tokenPath string, tokens []string) []string {
 // removeTokenValidator validates token removal operation
 func removeTokenValidator(tokenPath string) error {
 	if contains(defaultAllowed, tokenPath) {
-		return ufmt.Errorf("%v: can not remove default token(%s)", errDefaultExternalToken, tokenPath)
+		return ufmt.Errorf("%v: cannot remove default token(%s)", errDefaultExternalToken, tokenPath)
 	}
 
 	return nil
