@@ -398,3 +398,73 @@ func getCurrentInfo() currentInfo {
 		gnsADMIN:         gns.BalanceOf(adminAddr),
 	}
 }
+
+// GetUserIncentives returns all incentives created by a specific user
+// Uses the user incentive index for O(log n) lookup instead of iterating all incentives
+func (s *stakerV1) GetUserIncentives(user address) []sr.ExternalIncentive {
+	refs := s.getUserIncentiveReferences(user)
+	incentives := []sr.ExternalIncentive{}
+
+	for _, ref := range refs {
+		pool, exists := s.getPools().Get(ref.PoolPath())
+		if !exists {
+			continue
+		}
+
+		poolResolver := NewPoolResolver(pool)
+		incentive, exists := poolResolver.IncentivesResolver().Get(ref.IncentiveId())
+		if !exists {
+			continue
+		}
+
+		incentives = append(incentives, *incentive)
+	}
+
+	return incentives
+}
+
+// GetUserActiveIncentives returns only active (non-archived) incentives created by a user
+func (s *stakerV1) GetUserActiveIncentives(user address) []sr.ExternalIncentive {
+	refs := s.getUserActiveIncentiveReferences(user)
+	incentives := []sr.ExternalIncentive{}
+
+	for _, ref := range refs {
+		pool, exists := s.getPools().Get(ref.PoolPath())
+		if !exists {
+			continue
+		}
+
+		poolResolver := NewPoolResolver(pool)
+		incentive, exists := poolResolver.IncentivesResolver().Get(ref.IncentiveId())
+		if !exists {
+			continue
+		}
+
+		incentives = append(incentives, *incentive)
+	}
+
+	return incentives
+}
+
+// GetUserArchivedIncentives returns only archived (ended) incentives created by a user
+func (s *stakerV1) GetUserArchivedIncentives(user address) []sr.ExternalIncentive {
+	refs := s.getUserArchivedIncentiveReferences(user)
+	incentives := []sr.ExternalIncentive{}
+
+	for _, ref := range refs {
+		pool, exists := s.getPools().Get(ref.PoolPath())
+		if !exists {
+			continue
+		}
+
+		poolResolver := NewPoolResolver(pool)
+		incentive, exists := poolResolver.IncentivesResolver().Get(ref.IncentiveId())
+		if !exists {
+			continue
+		}
+
+		incentives = append(incentives, *incentive)
+	}
+
+	return incentives
+}

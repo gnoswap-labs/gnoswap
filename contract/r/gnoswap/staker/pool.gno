@@ -320,6 +320,39 @@ func NewIncentives(targetPoolPath string) *Incentives {
 	return result
 }
 
+// IncentiveReference stores a lightweight reference to an incentive for user-based indexing
+// This struct is used in the user incentive index to avoid duplicating full incentive data
+// and enable fast lookup of a specific user's incentives without iterating all pools
+type IncentiveReference struct {
+	incentiveId string
+	poolPath    string
+	isArchived  bool
+}
+
+func NewIncentiveReference(incentiveId, poolPath string, isArchived bool) *IncentiveReference {
+	return &IncentiveReference{
+		incentiveId: incentiveId,
+		poolPath:    poolPath,
+		isArchived:  isArchived,
+	}
+}
+
+func (r *IncentiveReference) IncentiveId() string {
+	return r.incentiveId
+}
+
+func (r *IncentiveReference) PoolPath() string {
+	return r.poolPath
+}
+
+func (r *IncentiveReference) IsArchived() bool {
+	return r.isArchived
+}
+
+func (r *IncentiveReference) SetIsArchived(isArchived bool) {
+	r.isArchived = isArchived
+}
+
 type ExternalIncentive struct {
 	incentiveId             string  // incentive id
 	startTimestamp          int64   // start time for external reward

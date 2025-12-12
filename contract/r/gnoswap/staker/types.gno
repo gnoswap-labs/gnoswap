@@ -79,6 +79,9 @@ type IStakerGetter interface {
 	GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool)
 	GetTargetPoolPathByIncentiveId(poolPath string, incentiveId string) string
 	GetUnstakingFee() int64
+	GetUserActiveIncentives(user address) []ExternalIncentive
+	GetUserArchivedIncentives(user address) []ExternalIncentive
+	GetUserIncentives(user address) []ExternalIncentive
 	IsArchivedExternalIncentive(incentiveId string) bool
 	IsStaked(positionId uint64) bool
 }
@@ -200,4 +203,9 @@ type IStakerStore interface {
 	HasCurrentSwapBatchStoreKey() bool
 	GetCurrentSwapBatch() *SwapBatchProcessor
 	SetCurrentSwapBatch(batch *SwapBatchProcessor) error
+
+	// UserIncentives
+	HasUserIncentivesStoreKey() bool
+	GetUserIncentives() *avl.Tree
+	SetUserIncentives(userIncentives *avl.Tree) error
 }

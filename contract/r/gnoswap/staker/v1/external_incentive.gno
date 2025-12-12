@@ -104,6 +104,9 @@ func (s *stakerV1) CreateExternalIncentive(
 	poolResolver := NewPoolResolver(pool)
 	poolResolver.IncentivesResolver().create(caller, incentive)
 
+	// Add to user incentive index for O(log n) lookup
+	s.addUserIncentiveReference(caller, incentiveId, targetPoolPath)
+
 	chain.Emit(
 		"CreateExternalIncentive",
 		"prevAddr", caller.String(),
@@ -217,6 +220,9 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 	if err != nil {
 		panic(err)
 	}
+
+	// Update user incentive index to reflect archived status
+	s.updateUserIncentiveArchiveStatus(incentiveResolver.Refundee(), incentiveId, true)
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(

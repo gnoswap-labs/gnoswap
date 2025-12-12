@@ -36,6 +36,7 @@ const (
 	StoreKeyPoolTierGetHalvingBlocksInRange  StoreKey = "poolTierGetHalvingBlocksInRange"
 	StoreKeyWarmupTemplate                   StoreKey = "warmupTemplate"
 	StoreKeyCurrentSwapBatch                 StoreKey = "currentSwapBatch"
+	StoreKeyUserIncentives                   StoreKey = "userIncentives"
 )
 
 type stakerStore struct {
@@ -527,6 +528,29 @@ func (s *stakerStore) GetCurrentSwapBatch() *SwapBatchProcessor {
 
 func (s *stakerStore) SetCurrentSwapBatch(batch *SwapBatchProcessor) error {
 	return s.kvStore.Set(StoreKeyCurrentSwapBatch.String(), batch)
+}
+
+// UserIncentives
+func (s *stakerStore) HasUserIncentivesStoreKey() bool {
+	return s.kvStore.Has(StoreKeyUserIncentives.String())
+}
+
+func (s *stakerStore) GetUserIncentives() *avl.Tree {
+	result, err := s.kvStore.Get(StoreKeyUserIncentives.String())
+	if err != nil {
+		panic(err)
+	}
+
+	userIncentives, ok := result.(*avl.Tree)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+	}
+
+	return userIncentives
+}
+
+func (s *stakerStore) SetUserIncentives(userIncentives *avl.Tree) error {
+	return s.kvStore.Set(StoreKeyUserIncentives.String(), userIncentives)
 }
 
 // NewStakerStore creates a new staker store instance with the provided KV store.

@@ -199,6 +199,13 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 		}
 	}
 
+	if !stakerStore.HasUserIncentivesStoreKey() {
+		err := stakerStore.SetUserIncentives(avl.NewTree())
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
