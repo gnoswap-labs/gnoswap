@@ -415,6 +415,41 @@ func TestMulOverFlow(t *testing.T) {
 			expected:         "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
 			expectedOverflow: false,
 		},
+		{
+			name:             "positive boundary * 2 overflows to min",
+			x:                "28948022309329048855892746252171976963317496166410141009864396001978282409984", // 2^254
+			y:                "2",
+			expected:         "-57896044618658097711785492504343953926634992332820282019728792003956564819968", // -2^255
+			expectedOverflow: true,
+		},
+		{
+			name:             "min negative * 2 overflow",
+			x:                "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:                "2",
+			expected:         "0",
+			expectedOverflow: true,
+		},
+		{
+			name:             "min negative plus one * -1 stays in range",
+			x:                "-57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:                "-1",
+			expected:         "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expectedOverflow: false,
+		},
+		{
+			name:             "max positive * -2 underflows",
+			x:                "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:                "-2",
+			expected:         "2",
+			expectedOverflow: true,
+		},
+		{
+			name:             "min negative * 0 short-circuits",
+			x:                "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:                "0",
+			expected:         "0",
+			expectedOverflow: false,
+		},
 	}
 
 	for _, tt := range tests {
