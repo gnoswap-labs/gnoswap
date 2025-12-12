@@ -134,7 +134,7 @@ func (v *SwapValidator) swapType(swapTypeStr string) (SwapType, error) {
 
 // amount ensures the amount is properly formatted and positive.
 func (v *SwapValidator) amount(amount int64) (int64, error) {
-	if amount < 0 {
+	if amount <= 0 {
 		return 0, ufmt.Errorf(ErrInvalidPositiveAmount, amount)
 	}
 	return amount, nil
