@@ -779,14 +779,6 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 		externalIncentiveResolver := NewExternalIncentiveResolver(externalIncentive)
 		externalIncentiveResolver.addDistributedRewardAmount(collectedExternalReward)
 
-		// archive incentive if it is finished (all rewards distributed)
-		// this is to prevent re-claiming GNS or rewards after the incentive is finished
-		if externalIncentiveResolver.IsFinished() {
-			if err := s.archiveEndedExternalIncentive(incentivesResolver, externalIncentive); err != nil {
-				panic(err)
-			}
-		}
-
 		return false // continue iteration
 	})
 
