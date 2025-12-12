@@ -462,7 +462,7 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 		amount    int64
 		isUnwrap  bool
 	}
-	var pendingTransfers []pendingTransfer
+	pendingTransfers := make([]pendingTransfer, 0)
 
 	externalReward := reward.External
 	toUserExternalReward := make(map[string]int64)
@@ -607,15 +607,12 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 	totalEmissionSent := s.store.GetTotalEmissionSent()
 
 	// Track internal transfer amounts for INTERACTIONS phase
-	internalToUser := int64(0)
-	internalToCommunityPool := int64(0)
-
 	if toUser > 0 {
 		totalEmissionSent = safeAddInt64(totalEmissionSent, toUser)
-		internalToUser = toUser
 		depositResolver.addCollectedInternalReward(reward.Internal)
 	}
 
+	internalToCommunityPool := int64(0)
 	if reward.InternalPenalty > 0 {
 		totalEmissionSent = safeAddInt64(totalEmissionSent, reward.InternalPenalty)
 		internalToCommunityPool = safeAddInt64(internalToCommunityPool, reward.InternalPenalty)
@@ -683,8 +680,8 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 	}
 
 	// Execute internal GNS transfers
-	if internalToUser > 0 {
-		gns.Transfer(cross, deposit.Owner(), internalToUser)
+	if toUser > 0 {
+		gns.Transfer(cross, deposit.Owner(), toUser)
 	}
 	if internalToCommunityPool > 0 {
 		gns.Transfer(cross, communityPoolAddr, internalToCommunityPool)
