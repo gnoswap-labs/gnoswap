@@ -11,7 +11,7 @@ type ExternalIncentiveResolver struct {
 
 // isActive checks if the incentive is currently active at the given timestamp
 func (self *ExternalIncentiveResolver) isActive(currentTimestamp int64) bool {
-	return currentTimestamp >= self.StartTimestamp() && currentTimestamp < self.EndTimestamp()
+	return currentTimestamp >= self.StartTimestamp() && currentTimestamp <= self.EndTimestamp()
 }
 
 func (self *ExternalIncentiveResolver) IsEnded(currentTimestamp int64) bool {

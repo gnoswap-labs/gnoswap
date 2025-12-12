@@ -113,7 +113,7 @@ func TestExternalIncentiveResolver_IsActive(t *testing.T) {
 		{
 			name:       "at end",
 			ts:         endTime,
-			wantActive: false,
+			wantActive: true,
 		},
 		{
 			name:       "after end",

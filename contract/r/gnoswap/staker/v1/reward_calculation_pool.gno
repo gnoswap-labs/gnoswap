@@ -128,9 +128,7 @@ func (self *PoolResolver) TickResolver(tickId int32) *TickResolver {
 	return NewTickResolver(self.Ticks().Get(tickId))
 }
 
-// IsExternallyIncentivizedPool returns true if the pool has any external incentives that are:
-// - Active now, or
-// - Scheduled to start within a short allowance window (prevents far-future griefing)
+// IsExternallyIncentivizedPool returns true if the pool has any active external incentives.
 func (self *PoolResolver) IsExternallyIncentivizedPool() bool {
 	currentTime := time.Now().Unix()
 	hasIncentive := false
