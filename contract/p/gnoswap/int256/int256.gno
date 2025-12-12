@@ -242,8 +242,14 @@ func (z *Int) MulOverflow(x, y *Int) (*Int, bool) {
 	z[0], z[1], z[2], z[3] = p[0], p[1], p[2], p[3]
 
 	var overflow bool
-	if ((p[4] | p[5] | p[6] | p[7]) != 0) || z.IsNeg() {
+	if (p[4] | p[5] | p[6] | p[7]) != 0 {
 		overflow = true
+	} else if z.IsNeg() {
+		// The 256th bit is set, which means the absolute value is >= 2^255
+		// This is only valid if the result should be exactly -2^255
+		if !flipSign || !z.IsMinI256() {
+			overflow = true
+		}
 	}
 
 	if flipSign {
