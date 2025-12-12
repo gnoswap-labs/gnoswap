@@ -87,7 +87,7 @@ func safeConvertToInt128(value *u256.Uint) *i256.Int {
 	if liquidityDelta.Gt(maxInt128FromDecimal) {
 		panic(ufmt.Sprintf(
 			"%v: amount(%s) overflows int128 range",
-			errOverFlow, value.ToString()))
+			errOverflow, value.ToString()))
 	}
 	return liquidityDelta
 }
@@ -153,7 +153,7 @@ func checkOverFlowInt128(value *i256.Int) {
 	if value.Gt(maxInt128FromDecimal) {
 		panic(ufmt.Sprintf(
 			"%v: amount(%s) overflows int128 range",
-			errOverFlow, value.ToString()))
+			errOverflow, value.ToString()))
 	}
 }
 

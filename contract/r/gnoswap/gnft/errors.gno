@@ -15,7 +15,7 @@ var (
 	errTokenBurned       = errors.New("[GNOSWAP-GNFT-002] cannot set URI || token has been burned")
 
 	errNoTokenForCaller = errors.New("[GNOSWAP-GNFT-003] no token for caller")
-	errInvalidAddress   = errors.New("[GNOSWAP-GNFT-004] invalid addresss")
+	errInvalidAddress   = errors.New("[GNOSWAP-GNFT-004] invalid address")
 	errInvalidTokenID   = errors.New("[GNOSWAP-GNFT-005] invalid token ID")
 
 	// Transfer errors

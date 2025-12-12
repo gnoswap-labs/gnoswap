@@ -557,7 +557,7 @@ func updateFeeProtocol(step StepComputations, feeProtocol uint8, state SwapState
 
 	newProtocolFee, overflow := u256.Zero().AddOverflow(state.protocolFee, delta)
 	if overflow {
-		return state, step, errOverFlow
+		return state, step, errOverflow
 	}
 	state.protocolFee = newProtocolFee
 
@@ -631,12 +631,12 @@ func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *pl.Poo
 func updateAmounts(step StepComputations, state SwapState, exactInput bool) (SwapState, error) {
 	amountInWithFeeU256 := u256.Zero().Add(step.amountIn, step.feeAmount)
 	if amountInWithFeeU256.Gt(maxInt256) {
-		return state, errOverFlow
+		return state, errOverflow
 	}
 
 	amountInWithFee := i256.FromUint256(amountInWithFeeU256)
 	if step.amountOut.Gt(maxInt256) {
-		return state, errOverFlow
+		return state, errOverflow
 	}
 
 	var (
@@ -657,17 +657,17 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) (Swa
 	} else {
 		amountSpecifiedRemaining, overflow = i256.Zero().AddOverflow(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
 		if overflow {
-			return state, errOverFlow
+			return state, errOverflow
 		}
 		amountCalculated, overflow = i256.Zero().AddOverflow(state.amountCalculated, amountInWithFee)
 		if overflow {
-			return state, errOverFlow
+			return state, errOverflow
 		}
 	}
 
 	// If an overflowed value is stored in state, it may cause problems in the next step
 	if amountCalculated.Gt(maxInt64) || amountSpecifiedRemaining.Gt(maxInt64) {
-		return state, errOverFlow
+		return state, errOverflow
 	}
 
 	// If an underflowed value is stored in state, it may cause problems in the next step

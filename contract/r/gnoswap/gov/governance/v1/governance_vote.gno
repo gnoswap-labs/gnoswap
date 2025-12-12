@@ -98,7 +98,7 @@ func (gv *governanceV1) vote(
 
 	// Check if current time is within voting period
 	if !proposalResolver.IsVotingPeriod(votedAt) {
-		return nil, 0, 0, makeErrorWithDetails(errUnableToVoteOutOfPeriod, "can not vote out of voting period")
+		return nil, 0, 0, makeErrorWithDetails(errUnableToVoteOutOfPeriod, "cannot vote out of voting period")
 	}
 
 	// Get user's voting information for this proposal

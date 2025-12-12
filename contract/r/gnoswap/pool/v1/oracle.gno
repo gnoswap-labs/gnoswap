@@ -119,7 +119,7 @@ func transform(os *pl.ObservationState, currentTime int64, tick int32, liquidity
 	// calculate liquidity cumulative
 	liquidityDelta, overflow := u256.Zero().MulOverflow(liquidity, u256.NewUintFromInt64(timeDelta))
 	if overflow {
-		panic(errOverFlow)
+		panic(errOverflow)
 	}
 
 	liquidityCumulative := u256.Zero().Add(lastObservation.LiquidityCumulative(), liquidityDelta)
