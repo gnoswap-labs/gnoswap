@@ -20,7 +20,7 @@ var (
 	errInvalidLength       = errors.New("[GNOSWAP-LAUNCHPAD-011] invalid length")
 	errNotEnoughBalance    = errors.New("[GNOSWAP-LAUNCHPAD-012] not enough balance")
 	errInvalidCondition    = errors.New("[GNOSWAP-LAUNCHPAD-013] invalid transfer condition")
-	errConvertFail         = errors.New("[GNOSWAP-LAUNCHPAD-014] convert fail")
+	errConvertFail         = errors.New("[GNOSWAP-LAUNCHPAD-014] convert failed")
 	errNotUserCaller       = errors.New("[GNOSWAP-LAUNCHPAD-015] only user caller")
 	errInvalidData         = errors.New("[GNOSWAP-LAUNCHPAD-016] invalid data")
 	errInvalidAmount       = errors.New("[GNOSWAP-LAUNCHPAD-017] invalid amount")
