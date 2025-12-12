@@ -447,7 +447,7 @@ func TestSwap_ExecutionAndSecurity(t *testing.T) {
 				priceLimit:      EQUAL_PRICE_RATIO,
 			},
 			expectSuccess: false,
-			expectedError: "[GNOSWAP-POOL-016] can't swap while pool is locked",
+			expectedError: "[GNOSWAP-POOL-016] cannot swap while pool is locked",
 			riskFactor:    "Prevent state inconsistency from concurrent transactions",
 		},
 		{
@@ -920,7 +920,7 @@ func TestUpdateAmounts_OverflowProtection(t *testing.T) {
 
 		_, err := updateAmounts(step, state, false)
 
-		uassert.ErrorIs(t, err, errOverFlow,
+		uassert.ErrorIs(t, err, errOverflow,
 			"Should prevent overflow when amountCalculated would exceed MAX_INT64")
 	})
 
@@ -1023,7 +1023,7 @@ func TestUpdateAmounts_OverflowProtection(t *testing.T) {
 		}
 
 		_, err := updateAmounts(step, state, false)
-		uassert.ErrorIs(t, err, errOverFlow,
+		uassert.ErrorIs(t, err, errOverflow,
 			"Should detect overflow caused by fee accumulation")
 	})
 }

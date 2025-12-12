@@ -7,9 +7,8 @@ import (
 )
 
 var (
-	errCannotSetURI = errors.New("[GNOSWAP-GNFT-001] cannot set URI")
-
-	errInvalidAddress = errors.New("[GNOSWAP-GNFT-002] invalid addresss")
+	errCannotSetURI   = errors.New("[GNOSWAP-GNFT-001] cannot set URI")
+	errInvalidAddress = errors.New("[GNOSWAP-GNFT-002] invalid address")
 
 	// Transfer errors
 	errNotOwnerOrApproved = errors.New("[GNOSWAP-GNFT-003] caller is not token owner or approved")

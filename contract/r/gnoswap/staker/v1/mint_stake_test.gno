@@ -78,7 +78,7 @@ func TestMintAndStakeWithGNOT(t *testing.T) {
 			deadline:         time.Now().Unix() + 10000000,
 			referrer:         "",
 			expectPanic:      true,
-			expectedPanicMsg: "[GNOSWAP-COMMON-007] user send gnot amount is not equal to specified amount",
+			expectedPanicMsg: "[GNOSWAP-COMMON-007] sent gnot amount does not match specified amount",
 		},
 		{
 			name:             "mint and stake with GNOT - zero amount",

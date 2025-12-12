@@ -123,7 +123,7 @@ func TestGovernanceExecute_Execute(t *testing.T) {
 				100,
 			),
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-011] can not execute text proposal",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-011] cannot execute text proposal",
 		},
 		{
 			name:       "fail - execution period not started",
@@ -323,7 +323,7 @@ func TestGovernanceExecute_ExecuteProposalPrivate(t *testing.T) {
 				100,
 			),
 			expectedHasError:     true,
-			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-011] can not execute text proposal",
+			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-011] cannot execute text proposal",
 		},
 		{
 			name:           "fail - proposal not executable",
@@ -518,7 +518,7 @@ func TestGovernanceExecute_Cancel(t *testing.T) {
 				return proposal
 			}(),
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-008] can not cancel already canceled proposal",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-008] cannot cancel already canceled proposal",
 		},
 	}
 
@@ -601,7 +601,7 @@ func TestGovernanceExecute_ExecutionValidation(t *testing.T) {
 				statusResolver.vote(true, 6_000_000_000)
 				return proposal
 			},
-			expectedError: "[GNOSWAP-GOVERNANCE-011] can not execute text proposal",
+			expectedError: "[GNOSWAP-GOVERNANCE-011] cannot execute text proposal",
 			shouldFail:    true,
 		},
 		{

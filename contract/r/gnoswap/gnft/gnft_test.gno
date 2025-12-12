@@ -275,7 +275,7 @@ func TestSetApprovalForAll(t *testing.T) {
 			operator:    address(""),
 			approved:    true,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-GNFT-002] invalid addresss",
+			panicMsg:    "[GNOSWAP-GNFT-002] invalid address",
 		},
 		{
 			name: "approve self as operator",
@@ -596,7 +596,7 @@ func TestTransferFrom(t *testing.T) {
 			toAddr:            addr02,
 			tokenIdToTransfer: 1,
 			shouldPanic:       true,
-			panicMsg:          "[GNOSWAP-GNFT-002] invalid addresss || from address ()",
+			panicMsg:          "[GNOSWAP-GNFT-002] invalid address || from address ()",
 		},
 		{
 			name:              "transfer to is invalid address",
@@ -605,7 +605,7 @@ func TestTransferFrom(t *testing.T) {
 			toAddr:            address("this_is_invalid_address"),
 			tokenIdToTransfer: 1,
 			shouldPanic:       true,
-			panicMsg:          "[GNOSWAP-GNFT-002] invalid addresss || to address (this_is_invalid_address)",
+			panicMsg:          "[GNOSWAP-GNFT-002] invalid address || to address (this_is_invalid_address)",
 		},
 		{
 			name:              "not-staker contract transfer",
@@ -941,7 +941,7 @@ func TestSafeTransferFrom(t *testing.T) {
 			to:          address(""),
 			tokenId:     1,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-GNFT-002] invalid addresss || to address ()",
+			panicMsg:    "[GNOSWAP-GNFT-002] invalid address || to address ()",
 		},
 		{
 			name:        "not-staker contract transfer",
@@ -1112,7 +1112,7 @@ func TestApprove(t *testing.T) {
 			approved:    address(""),
 			tokenId:     1,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-GNFT-002] invalid addresss || address ()",
+			panicMsg:    "[GNOSWAP-GNFT-002] invalid address || address ()",
 		},
 		{
 			name: "re-approve same address (idempotency)",

@@ -289,7 +289,7 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	if !ok {
 		panic(makeErrorWithDetails(
 			errNonIncentivizedPool,
-			ufmt.Sprintf("can not stake position to non existing pool(%s)", poolPath),
+			ufmt.Sprintf("cannot stake position to non existing pool(%s)", poolPath),
 		))
 	}
 
@@ -809,7 +809,7 @@ func (s *stakerV1) poolHasIncentives(pool *sr.Pool) error {
 
 	if hasInternal == false && hasExternal == false {
 		return ufmt.Errorf(
-			"%v: can not stake position to non incentivized pool(%s)",
+			"%v: cannot stake position to non incentivized pool(%s)",
 			errNonIncentivizedPool, poolPath,
 		)
 	}

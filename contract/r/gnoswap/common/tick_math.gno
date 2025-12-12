@@ -115,7 +115,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 			}
 			temp, overflow := temp.MulOverflow(ratio, r)
 			if overflow {
-				panic(errOverFlow)
+				panic(errOverflow)
 			}
 			ratio = ratio.Rsh(temp, 128)
 		}
@@ -259,7 +259,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	for i := 0; i < 14; i++ {
 		tempR, overflow := tempR.MulOverflow(r, r)
 		if overflow {
-			panic(errOverFlow)
+			panic(errOverflow)
 		}
 		r = tempR.Rsh(tempR, 127)
 
@@ -275,7 +275,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	// Calculate tick from log_sqrt10001
 	logSqrt10001, overflow := i256.Zero().MulOverflow(log2, log2Multiplier)
 	if overflow {
-		panic(errOverFlow)
+		panic(errOverflow)
 	}
 
 	// Calculate tick bounds
