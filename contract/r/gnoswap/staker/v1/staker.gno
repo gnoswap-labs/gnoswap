@@ -801,13 +801,14 @@ func hasTokenOwnership(owner, caller address) error {
 	return nil
 }
 
-// poolHasIncentives checks if the pool has any active incentives (internal or external).
+// poolHasIncentives checks if the pool has any stakeable incentives (internal or external).
+// External incentive eligibility (active or within short future window) is handled inside IsExternallyIncentivizedPool.
 func (s *stakerV1) poolHasIncentives(pool *sr.Pool) error {
 	poolPath := pool.PoolPath()
 	hasInternal := s.getPoolTier().IsInternallyIncentivizedPool(poolPath)
 	hasExternal := NewPoolResolver(pool).IsExternallyIncentivizedPool()
 
-	if hasInternal == false && hasExternal == false {
+	if !hasInternal && !hasExternal {
 		return ufmt.Errorf(
 			"%v: cannot stake position to non incentivized pool(%s)",
 			errNonIncentivizedPool, poolPath,
