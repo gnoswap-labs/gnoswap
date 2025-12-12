@@ -31,7 +31,25 @@ func (s *stakerV1) ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 	}
 
 	currentTime := time.Now().Unix()
-	poolResolver.IncentivesResolver().IncentiveTrees().Iterate("", "", func(_ string, value any) bool {
+	incentivesResolver := poolResolver.IncentivesResolver()
+
+	// Check active incentives
+	incentivesResolver.IncentiveTrees().Iterate("", "", func(_ string, value any) bool {
+		ictv, ok := value.(*sr.ExternalIncentive)
+		if !ok {
+			panic("failed to cast value to *ExternalIncentive")
+		}
+
+		// Check if incentive is active and has a reward token
+		incentiveResolver := NewExternalIncentiveResolver(ictv)
+		if incentiveResolver.isActive(currentTime) && ictv.RewardToken() != "" {
+			thisPoolRewardTokens = append(thisPoolRewardTokens, ictv.RewardToken())
+		}
+		return false
+	})
+
+	// Also check archived incentives (users may still have unclaimed rewards)
+	incentivesResolver.ArchivedIncentives().Iterate("", "", func(_ string, value any) bool {
 		ictv, ok := value.(*sr.ExternalIncentive)
 		if !ok {
 			panic("failed to cast value to *ExternalIncentive")
@@ -57,6 +75,7 @@ func (s *stakerV1) ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 }
 
 // ApiGetExternalIncentives returns all external incentives across all pools.
+// Includes both active and archived incentives.
 func (s *stakerV1) ApiGetExternalIncentives() string {
 	apiExternalIncentives := []ApiExternalIncentive{}
 
@@ -66,7 +85,10 @@ func (s *stakerV1) ApiGetExternalIncentives() string {
 			panic("failed to cast value to *Pool")
 		}
 		poolResolver := NewPoolResolver(pool)
-		poolResolver.IncentivesResolver().IncentiveTrees().Iterate("", "", func(_ string, value any) bool {
+		incentivesResolver := poolResolver.IncentivesResolver()
+
+		// Iterate active incentives
+		incentivesResolver.IncentiveTrees().Iterate("", "", func(_ string, value any) bool {
 			ictv, ok := value.(*sr.ExternalIncentive)
 			if !ok {
 				panic("failed to cast value to *ExternalIncentive")
@@ -75,6 +97,18 @@ func (s *stakerV1) ApiGetExternalIncentives() string {
 			apiExternalIncentives = append(apiExternalIncentives, externalIctv)
 			return false
 		})
+
+		// Also iterate archived incentives
+		incentivesResolver.ArchivedIncentives().Iterate("", "", func(_ string, value any) bool {
+			ictv, ok := value.(*sr.ExternalIncentive)
+			if !ok {
+				panic("failed to cast value to *ExternalIncentive")
+			}
+			externalIctv := newApiExternalIncentive(ictv)
+			apiExternalIncentives = append(apiExternalIncentives, externalIctv)
+			return false
+		})
+
 		return false
 	})
 
@@ -119,6 +153,7 @@ func (s *stakerV1) ApiGetExternalIncentiveById(poolPath, incentiveId string) str
 }
 
 // ApiGetExternalIncentivesByPoolPath returns all external incentives for a specific pool.
+// Includes both active and archived incentives.
 func (s *stakerV1) ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 	apiExternalIncentives := []ApiExternalIncentive{}
 
@@ -131,7 +166,26 @@ func (s *stakerV1) ApiGetExternalIncentivesByPoolPath(targetPoolPath string) str
 	}
 
 	poolResolver := NewPoolResolver(pool)
-	poolResolver.IncentivesResolver().IncentiveTrees().Iterate("", "", func(_ string, value any) bool {
+	incentivesResolver := poolResolver.IncentivesResolver()
+
+	// Iterate active incentives
+	incentivesResolver.IncentiveTrees().Iterate("", "", func(_ string, value any) bool {
+		incentive, ok := value.(*sr.ExternalIncentive)
+		if !ok {
+			panic("failed to cast value to *ExternalIncentive")
+		}
+		if incentive.TargetPoolPath() != targetPoolPath {
+			return false
+		}
+
+		externalIctv := newApiExternalIncentive(incentive)
+		apiExternalIncentives = append(apiExternalIncentives, externalIctv)
+
+		return false
+	})
+
+	// Also iterate archived incentives
+	incentivesResolver.ArchivedIncentives().Iterate("", "", func(_ string, value any) bool {
 		incentive, ok := value.(*sr.ExternalIncentive)
 		if !ok {
 			panic("failed to cast value to *ExternalIncentive")

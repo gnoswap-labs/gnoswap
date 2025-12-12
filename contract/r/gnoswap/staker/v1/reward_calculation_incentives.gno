@@ -50,17 +50,35 @@ func retrieveIncentive(tree *avl.Tree, id string) (*sr.ExternalIncentive, bool) 
 }
 
 // Get all incentives that is active in given [startTimestamp, endTimestamp)
+// Searches both active and archived trees to ensure ended incentives are included
 func (self *IncentivesResolver) GetAllInTimestamps(startTimestamp, endTimestamp int64) map[string]*sr.ExternalIncentive {
 	incentives := make(map[string]*sr.ExternalIncentive)
 
-	// Only iterate active incentives (not archived)
+	// Iterate active incentives
 	self.IncentiveTrees().Iterate("", "", func(_ string, value any) bool {
 		incentive, ok := value.(*sr.ExternalIncentive)
 		if !ok {
 			return false
 		}
 
-		// incentive is not active
+		// Check if incentive overlaps with the time range
+		if incentive.StartTimestamp() > endTimestamp || incentive.EndTimestamp() < startTimestamp {
+			return false
+		}
+
+		incentives[incentive.IncentiveId()] = incentive
+
+		return false
+	})
+
+	// Also iterate archived incentives (ended incentives that users can still claim from)
+	self.ArchivedIncentives().Iterate("", "", func(_ string, value any) bool {
+		incentive, ok := value.(*sr.ExternalIncentive)
+		if !ok {
+			return false
+		}
+
+		// Check if incentive overlaps with the time range
 		if incentive.StartTimestamp() > endTimestamp || incentive.EndTimestamp() < startTimestamp {
 			return false
 		}

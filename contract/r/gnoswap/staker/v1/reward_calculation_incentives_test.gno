@@ -120,7 +120,8 @@ func TestIncentives_GetAllInTimestamps_ExcludesArchived(t *testing.T) {
 	// Archive the ended incentive
 	incentives.archiveIncentive(endedIncentive.IncentiveId())
 
-	// After archiving: GetAllInTimestamps should still return only the active incentive
+	// After archiving: GetAllInTimestamps should return only the active incentive for current time
+	// (ended incentive is outside the time range)
 	activeIncentives = incentives.GetAllInTimestamps(currentTime, currentTime+1)
 	if len(activeIncentives) != 1 {
 		t.Fatalf("expected 1 active incentive after archiving, got %d", len(activeIncentives))
@@ -128,17 +129,15 @@ func TestIncentives_GetAllInTimestamps_ExcludesArchived(t *testing.T) {
 	if _, exists := activeIncentives[activeIncentive.IncentiveId()]; !exists {
 		t.Fatal("active incentive should still be included after archiving")
 	}
-	if _, exists := activeIncentives[endedIncentive.IncentiveId()]; exists {
-		t.Fatal("archived incentive should NOT be included in GetAllInTimestamps")
-	}
 
-	// Test with broader time range that would include the ended incentive
+	// Test with broader time range that includes the ended incentive
+	// After fix, archived incentives should be included to prevent user reward loss
 	broadRangeIncentives := incentives.GetAllInTimestamps(currentTime-7200, currentTime+3600)
-	if len(broadRangeIncentives) != 1 {
-		t.Fatalf("expected 1 active incentive with broad range, got %d", len(broadRangeIncentives))
+	if len(broadRangeIncentives) != 2 {
+		t.Fatalf("expected 2 incentives with broad range (active + archived), got %d", len(broadRangeIncentives))
 	}
-	if _, exists := broadRangeIncentives[endedIncentive.IncentiveId()]; exists {
-		t.Fatal("archived incentive should NOT be included even with broad time range")
+	if _, exists := broadRangeIncentives[endedIncentive.IncentiveId()]; !exists {
+		t.Fatal("archived incentive should be included with broad time range (users need to claim rewards)")
 	}
 }
 
