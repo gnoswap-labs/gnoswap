@@ -14,6 +14,7 @@ import (
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
+	pl "gno.land/r/gnoswap/pool"
 
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -579,7 +580,7 @@ func TestProtocolFeesDisabledWhenNotConfigured(t *testing.T) {
 		adminAddr,
 	)
 
-	swapCallback := func(cur realm, amount0Delta int64, amount1Delta int64) error {
+	swapCallback := func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 		testing.SetRealm(adminRealm)
 
 		if amount0Delta > 0 {

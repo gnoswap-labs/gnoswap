@@ -493,7 +493,7 @@ func TestSwap_ExecutionAndSecurity(t *testing.T) {
 				mockInstanceSwap(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 					alice, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 					test.swapParams.priceLimit, routerAddr,
-					func(cur realm, amount0Delta int64, amount1Delta int64) error {
+					func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 						return mockSwapCallback(pool.Token0Path(), pool.Token1Path(), amount0Delta, amount1Delta)
 					})
 			})
@@ -571,7 +571,7 @@ func TestSwapConsistency_DryVsActual(t *testing.T) {
 			actualAmount0, actualAmount1 := mockInstanceSwap(wugnotPath, gnsPath, STANDARD_FEE_TIER,
 				routerAddr, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 				test.swapParams.priceLimit, routerAddr,
-				func(cur realm, amount0Delta int64, amount1Delta int64) error {
+				func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 					return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
 				})
 
@@ -675,7 +675,7 @@ func TestSwap_TradingPatterns(t *testing.T) {
 			actualAmount0, actualAmount1 := mockInstanceSwap(wugnotPath, gnsPath, STANDARD_FEE_TIER,
 				alice, pattern.swapParams.zeroForOne, pattern.swapParams.amountSpecified,
 				pattern.swapParams.priceLimit, routerAddr,
-				func(cur realm, amount0Delta int64, amount1Delta int64) error {
+				func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 					return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
 				})
 
@@ -750,7 +750,7 @@ func TestSwap_ExtremeMarketConditions(t *testing.T) {
 			actualAmount0, actualAmount1 := mockInstanceSwap(wugnotPath, gnsPath, STANDARD_FEE_TIER,
 				alice, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 				test.swapParams.priceLimit, routerAddr,
-				func(cur realm, amount0Delta int64, amount1Delta int64) error {
+				func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 					return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
 				})
 
@@ -784,7 +784,7 @@ func TestSwap_FeeTierOptimization(t *testing.T) {
 		actualAmount0, actualAmount1 := mockInstanceSwap(wugnotPath, gnsPath, ULTRA_LOW_FEE_TIER,
 			adminAddr, true, "40012000",
 			common.TickMathGetSqrtRatioAtTick(-887220).ToString(), routerAddr,
-			func(cur realm, amount0Delta int64, amount1Delta int64) error {
+			func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 				return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
 			})
 
@@ -1114,7 +1114,7 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(t *testing.T) {
 	currentPrice := pool.Slot0SqrtPriceX96()
 
 	// when: Define swap callback
-	swapCallback := func(cur realm, amount0Delta, amount1Delta int64) error {
+	swapCallback := func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 		t.Logf("Callback: amount0=%d, amount1=%d", amount0Delta, amount1Delta)
 		testing.SetRealm(adminRealm)
 
