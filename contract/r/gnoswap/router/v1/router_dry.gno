@@ -161,8 +161,6 @@ func (r *routerV1) drySwapRoute(
 		panic(addDetailToError(errInvalidRoutesAndQuotes, err.Error()))
 	}
 
-	swapCount := calculateSwapCount(strRouteArr)
-
 	swapFee := r.store.GetSwapFee()
 
 	// Store original amount for validation (before router fee adjustment)
@@ -177,6 +175,7 @@ func (r *routerV1) drySwapRoute(
 	// initialize accumulators for swap results
 	resultAmountIn, resultAmountOut := int64(0), int64(0)
 	remainRequestAmount := amountSpecified
+	swapCount := int64(0)
 
 	// Process each route
 	for i, route := range routes {
@@ -203,6 +202,9 @@ func (r *routerV1) drySwapRoute(
 		// determine the number of hops and validate
 		numHops := strings.Count(route, POOL_SEPARATOR) + 1
 		assertHopsInRange(numHops)
+
+		// accumulate total swap count for validation
+		swapCount += int64(numHops)
 
 		// execute the appropriate swap type
 		var amountIn, amountOut int64
@@ -233,17 +235,6 @@ func (r *routerV1) drySwapRoute(
 	resultAmountOut = safeSubInt64(resultAmountOut, feeAmountInt64)
 
 	return processor.ValidateSwapResults(swapType, resultAmountIn, resultAmountOut, originalAmountSpecified, amountLimit, swapCount)
-}
-
-// calculateSwapCount calculates the total number of swaps across all routes.
-func calculateSwapCount(routeArr string) int64 {
-	swapCount := int64(0)
-
-	for _, route := range strings.Split(routeArr, ",") {
-		swapCount += int64(strings.Count(route, POOL_SEPARATOR) + 1)
-	}
-
-	return swapCount
 }
 
 // getPathIndex returns the path index based on swap type and number of hops.

@@ -226,52 +226,6 @@ func TestDrySwapRoute_Basic(t *testing.T) {
 	}
 }
 
-func TestCalculateSwapCount(t *testing.T) {
-	tests := []struct {
-		name     string
-		routeArr string
-		expected int64
-	}{
-		{
-			name:     "single hop single route",
-			routeArr: "tokenA:tokenB:500",
-			expected: 1,
-		},
-		{
-			name:     "two hops single route",
-			routeArr: "tokenA:tokenB:500*POOL*tokenB:tokenC:500",
-			expected: 2,
-		},
-		{
-			name:     "three hops single route",
-			routeArr: "tokenA:tokenB:500*POOL*tokenB:tokenC:500*POOL*tokenC:tokenD:500",
-			expected: 3,
-		},
-		{
-			name:     "two single hop routes",
-			routeArr: "tokenA:tokenB:500,tokenA:tokenC:500",
-			expected: 2,
-		},
-		{
-			name:     "mixed routes - one single hop and one two hop",
-			routeArr: "tokenA:tokenB:500,tokenA:tokenC:500*POOL*tokenC:tokenB:500",
-			expected: 3,
-		},
-		{
-			name:     "complex multi-route",
-			routeArr: "tokenA:tokenB:500*POOL*tokenB:tokenC:500,tokenA:tokenD:500*POOL*tokenD:tokenE:500*POOL*tokenE:tokenC:500",
-			expected: 5,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := calculateSwapCount(tt.routeArr)
-			uassert.Equal(t, tt.expected, result)
-		})
-	}
-}
-
 func TestValidateSwapResults_ExactOutTolerance(t *testing.T) {
 	processor := &SwapProcessor{}
 
