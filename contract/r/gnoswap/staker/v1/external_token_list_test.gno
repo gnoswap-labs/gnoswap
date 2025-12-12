@@ -129,7 +129,7 @@ func TestRemoveToken(t *testing.T) {
 			inputTokenPath:        GNS_PATH,
 			expectedAllowedTokens: []string{GNS_PATH, GNOT_DENOM, customTokenPath},
 			expectedHasAbort:      true,
-			expectedAbortMsg:      "[GNOSWAP-STAKER-018] cannot delete default external token: cannot remove default token(gno.land/r/gnoswap/gns)",
+			expectedAbortMsg:      "[GNOSWAP-STAKER-010] cannot delete default external token: cannot remove default token(gno.land/r/gnoswap/gns)",
 			expectedHasPanic:      false,
 			expectedPanicMsg:      "",
 		},

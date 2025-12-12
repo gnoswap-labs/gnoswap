@@ -157,7 +157,7 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 		testing.SetRealm(adminRealm)
 		bar.Approve(cross, stakerAddr, 100)
 
-		expectedMsg := "[GNOSWAP-STAKER-007] invalid input data || rewardAmount(100) is less than minimum required amount(1000000000)"
+		expectedMsg := "[GNOSWAP-STAKER-004] invalid input data || rewardAmount(100) is less than minimum required amount(1000000000)"
 		uassert.AbortsWithMessage(t, expectedMsg, func() {
 			mockInstanceCreateExternalIncentive(poolPath, barPath, 100, incentiveStartTimestamp, incentiveStartTimestamp+incentiveDuration)
 		})

@@ -392,22 +392,22 @@ func (p *mockPoolAccessor) GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
 	}(cross)
 }
 
-func (p *mockPoolAccessor) SetTickCrossHook(hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
-	func(cur realm) {
-		pool.SetTickCrossHook(cross, hook)
-	}(cross)
+func (p *mockPoolAccessor) SetTickCrossHook(hook func(poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
+	pool.SetTickCrossHook(cross, func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
+		hook(poolPath, tickId, zeroForOne, timestamp)
+	})
 }
 
-func (p *mockPoolAccessor) SetSwapStartHook(hook func(cur realm, poolPath string, timestamp int64)) {
-	func(cur realm) {
-		pool.SetSwapStartHook(cross, hook)
-	}(cross)
+func (p *mockPoolAccessor) SetSwapStartHook(hook func(poolPath string, timestamp int64)) {
+	pool.SetSwapStartHook(cross, func(cur realm, poolPath string, timestamp int64) {
+		hook(poolPath, timestamp)
+	})
 }
 
-func (p *mockPoolAccessor) SetSwapEndHook(hook func(cur realm, poolPath string) error) {
-	func(cur realm) {
-		pool.SetSwapEndHook(cross, hook)
-	}(cross)
+func (p *mockPoolAccessor) SetSwapEndHook(hook func(poolPath string) error) {
+	pool.SetSwapEndHook(cross, func(cur realm, poolPath string) error {
+		return hook(poolPath)
+	})
 }
 
 func newMockPoolAccessor() sr.PoolAccessor {
@@ -416,10 +416,13 @@ func newMockPoolAccessor() sr.PoolAccessor {
 
 type mockEmissionAccessor struct{}
 
-func (e *mockEmissionAccessor) MintAndDistributeGns() {
+func (e *mockEmissionAccessor) MintAndDistributeGns() (int64, bool) {
+	var amount int64
+	var ok bool
 	func(cur realm) {
-		emission.MintAndDistributeGns(cross)
+		amount, ok = emission.MintAndDistributeGns(cross)
 	}(cross)
+	return amount, ok
 }
 
 func (e *mockEmissionAccessor) GetStakerEmissionAmountPerSecond() int64 {

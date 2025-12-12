@@ -419,7 +419,7 @@ func TestProtocolFee(t *testing.T) {
 				}
 			},
 			verify:      nil,
-			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage",
+			expected:    "[GNOSWAP-POOL-014] invalid protocol fee percentage",
 			shouldPanic: true,
 		},
 		{
@@ -431,7 +431,7 @@ func TestProtocolFee(t *testing.T) {
 				}
 			},
 			verify:      nil,
-			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage",
+			expected:    "[GNOSWAP-POOL-014] invalid protocol fee percentage",
 			shouldPanic: true,
 		},
 		{
@@ -443,7 +443,7 @@ func TestProtocolFee(t *testing.T) {
 				}
 			},
 			verify:      nil,
-			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage",
+			expected:    "[GNOSWAP-POOL-014] invalid protocol fee percentage",
 			shouldPanic: true,
 		},
 		{
@@ -455,7 +455,7 @@ func TestProtocolFee(t *testing.T) {
 				}
 			},
 			verify:      nil,
-			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage",
+			expected:    "[GNOSWAP-POOL-014] invalid protocol fee percentage",
 			shouldPanic: true,
 		},
 		{
@@ -467,7 +467,7 @@ func TestProtocolFee(t *testing.T) {
 				}
 			},
 			verify:      nil,
-			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage",
+			expected:    "[GNOSWAP-POOL-014] invalid protocol fee percentage",
 			shouldPanic: true,
 		},
 		{
@@ -479,7 +479,7 @@ func TestProtocolFee(t *testing.T) {
 				}
 			},
 			verify:      nil,
-			expected:    "[GNOSWAP-POOL-016] invalid protocol fee percentage",
+			expected:    "[GNOSWAP-POOL-014] invalid protocol fee percentage",
 			shouldPanic: true,
 		},
 		{

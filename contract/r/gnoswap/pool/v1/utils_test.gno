@@ -214,21 +214,21 @@ func TestSafeConvertToUint64(t *testing.T) {
 			value:     u256.MustFromDecimal("18446744073709551616"),
 			wantRes:   0,
 			wantPanic: true,
-			errorMsg:  "[GNOSWAP-POOL-005] out of range for numeric value: amount(18446744073709551616) overflows uint64 range (max 18446744073709551615)",
+			errorMsg:  "[GNOSWAP-POOL-003] out of range for numeric value: amount(18446744073709551616) overflows uint64 range (max 18446744073709551615)",
 		},
 		{
 			name:      "overflow - large value",
 			value:     u256.MustFromDecimal(MAX_UINT128),
 			wantRes:   0,
 			wantPanic: true,
-			errorMsg:  "[GNOSWAP-POOL-005] out of range for numeric value: amount(340282366920938463463374607431768211455) overflows uint64 range (max 18446744073709551615)",
+			errorMsg:  "[GNOSWAP-POOL-003] out of range for numeric value: amount(340282366920938463463374607431768211455) overflows uint64 range (max 18446744073709551615)",
 		},
 		{
 			name:      "overflow - very large value",
 			value:     u256.MustFromDecimal(MAX_UINT256),
 			wantRes:   0,
 			wantPanic: true,
-			errorMsg:  "[GNOSWAP-POOL-005] out of range for numeric value: amount(115792089237316195423570985008687907853269984665640564039457584007913129639935) overflows uint64 range (max 18446744073709551615)",
+			errorMsg:  "[GNOSWAP-POOL-003] out of range for numeric value: amount(115792089237316195423570985008687907853269984665640564039457584007913129639935) overflows uint64 range (max 18446744073709551615)",
 		},
 	}
 
@@ -262,19 +262,19 @@ func TestSafeConvertToInt64(t *testing.T) {
 		// Boundary cases for int64
 		{"max int64 - 1", u256.NewUint(9223372036854775806), 9223372036854775806, false, ""},
 		{"max int64", u256.NewUint(9223372036854775807), 9223372036854775807, false, ""},
-		{"max int64 + 1 (overflow)", u256.NewUint(9223372036854775808), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(9223372036854775808) overflows int64 range (max 9223372036854775807)"},
+		{"max int64 + 1 (overflow)", u256.NewUint(9223372036854775808), 0, true, "[GNOSWAP-POOL-003] out of range for numeric value: amount(9223372036854775808) overflows int64 range (max 9223372036854775807)"},
 
 		// Mid-range boundaries
 		{"2^32", u256.NewUint(4294967296), 4294967296, false, ""},
 		{"2^48", u256.NewUint(281474976710656), 281474976710656, false, ""},
 
 		// Values between max int64 and max uint64
-		{"value between max int64 and max uint64 (1)", u256.NewUint(10000000000000000000), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(10000000000000000000) overflows int64 range (max 9223372036854775807)"},
-		{"value between max int64 and max uint64 (2)", u256.NewUint(15000000000000000000), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(15000000000000000000) overflows int64 range (max 9223372036854775807)"},
+		{"value between max int64 and max uint64 (1)", u256.NewUint(10000000000000000000), 0, true, "[GNOSWAP-POOL-003] out of range for numeric value: amount(10000000000000000000) overflows int64 range (max 9223372036854775807)"},
+		{"value between max int64 and max uint64 (2)", u256.NewUint(15000000000000000000), 0, true, "[GNOSWAP-POOL-003] out of range for numeric value: amount(15000000000000000000) overflows int64 range (max 9223372036854775807)"},
 
 		// Extreme cases - these will fail on uint64 conversion first
-		{"max uint64 + 1 (overflow)", u256.MustFromDecimal("18446744073709551616"), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(18446744073709551616) overflows uint64 range (max 18446744073709551615)"},
-		{"very large number (MAX_UINT128)", u256.MustFromDecimal(MAX_UINT128), 0, true, "[GNOSWAP-POOL-005] out of range for numeric value: amount(340282366920938463463374607431768211455) overflows uint64 range (max 18446744073709551615)"},
+		{"max uint64 + 1 (overflow)", u256.MustFromDecimal("18446744073709551616"), 0, true, "[GNOSWAP-POOL-003] out of range for numeric value: amount(18446744073709551616) overflows uint64 range (max 18446744073709551615)"},
+		{"very large number (MAX_UINT128)", u256.MustFromDecimal(MAX_UINT128), 0, true, "[GNOSWAP-POOL-003] out of range for numeric value: amount(340282366920938463463374607431768211455) overflows uint64 range (max 18446744073709551615)"},
 	}
 
 	for _, tt := range tests {
@@ -321,9 +321,9 @@ func TestSafeConvertToInt128(t *testing.T) {
 		{"MAX_INT128", MAX_INT128, MAX_INT128, false, ""},
 
 		// Overflow cases
-		{"just over MAX_INT128", "170141183460469231731687303715884105728", "", true, "[GNOSWAP-POOL-026] overflow: amount(170141183460469231731687303715884105728) overflows int128 range"},
-		{"large overflow", MAX_UINT128, "", true, "[GNOSWAP-POOL-026] overflow: amount(340282366920938463463374607431768211455) overflows int128 range"},
-		{"extreme overflow", MAX_UINT256, "", true, "[GNOSWAP-POOL-026] overflow: amount(115792089237316195423570985008687907853269984665640564039457584007913129639935) overflows int128 range"},
+		{"just over MAX_INT128", "170141183460469231731687303715884105728", "", true, "[GNOSWAP-POOL-022] overflow: amount(170141183460469231731687303715884105728) overflows int128 range"},
+		{"large overflow", MAX_UINT128, "", true, "[GNOSWAP-POOL-022] overflow: amount(340282366920938463463374607431768211455) overflows int128 range"},
+		{"extreme overflow", MAX_UINT256, "", true, "[GNOSWAP-POOL-022] overflow: amount(115792089237316195423570985008687907853269984665640564039457584007913129639935) overflows int128 range"},
 	}
 
 	for _, tt := range tests {
@@ -564,7 +564,7 @@ func TestCheckOverFlowInt128_BoundaryValues(t *testing.T) {
 			name:        "MAX_INT128 + 1",
 			input:       "170141183460469231731687303715884105728",
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-026] overflow: amount(170141183460469231731687303715884105728) overflows int128 range",
+			errorMsg:    "[GNOSWAP-POOL-022] overflow: amount(170141183460469231731687303715884105728) overflows int128 range",
 		},
 		// Negative values
 		{
@@ -587,7 +587,7 @@ func TestCheckOverFlowInt128_BoundaryValues(t *testing.T) {
 			name:        "Q128 exceeds range",
 			input:       Q128,
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-026] overflow: amount(340282366920938463463374607431768211456) overflows int128 range",
+			errorMsg:    "[GNOSWAP-POOL-022] overflow: amount(340282366920938463463374607431768211456) overflows int128 range",
 		},
 		// Special values
 		{
@@ -648,14 +648,14 @@ func TestCheckTickSpacing(t *testing.T) {
 			tick:        15,
 			tickSpacing: 10,
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick(15) MOD tickSpacing(10) != 0(5)",
+			errorMsg:    "[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(15) MOD tickSpacing(10) != 0(5)",
 		},
 		{
 			name:        "Invalid tick - negative tick",
 			tick:        -35,
 			tickSpacing: 20,
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick(-35) MOD tickSpacing(20) != 0(-15)",
+			errorMsg:    "[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(-35) MOD tickSpacing(20) != 0(-15)",
 		},
 		// Edge cases with extreme tick values
 		{
@@ -739,7 +739,7 @@ func TestCheckTickSpacing_EdgeCases(t *testing.T) {
 			tick:        12345,
 			tickSpacing: 10,
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick(12345) MOD tickSpacing(10) != 0(5)",
+			errorMsg:    "[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(12345) MOD tickSpacing(10) != 0(5)",
 		},
 		{
 			name:        "fee tier 3000 - valid tick",
@@ -752,7 +752,7 @@ func TestCheckTickSpacing_EdgeCases(t *testing.T) {
 			tick:        -12359,
 			tickSpacing: 60,
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick(-12359) MOD tickSpacing(60) != 0(-59)",
+			errorMsg:    "[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(-12359) MOD tickSpacing(60) != 0(-59)",
 		},
 		{
 			name:        "fee tier 10000 - valid tick",
@@ -765,7 +765,7 @@ func TestCheckTickSpacing_EdgeCases(t *testing.T) {
 			tick:        -12399,
 			tickSpacing: 200,
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick(-12399) MOD tickSpacing(200) != 0(-199)",
+			errorMsg:    "[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(-12399) MOD tickSpacing(200) != 0(-199)",
 		},
 		// Extreme boundary cases
 		{
@@ -779,7 +779,7 @@ func TestCheckTickSpacing_EdgeCases(t *testing.T) {
 			tick:        -887271,
 			tickSpacing: 100,
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick(-887271) MOD tickSpacing(100) != 0(-71)",
+			errorMsg:    "[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(-887271) MOD tickSpacing(100) != 0(-71)",
 		},
 		{
 			name:        "maximum tick spacing",
@@ -792,7 +792,7 @@ func TestCheckTickSpacing_EdgeCases(t *testing.T) {
 			tick:        1,
 			tickSpacing: 887272,
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick(1) MOD tickSpacing(887272) != 0(1)",
+			errorMsg:    "[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(1) MOD tickSpacing(887272) != 0(1)",
 		},
 	}
 
@@ -860,7 +860,7 @@ func TestSafeConversions_ExactBoundaries(t *testing.T) {
 		// MAX_UINT64 + 1
 		overValue := new(u256.Uint).Add(maxValue, u256.One())
 		uassert.PanicsWithMessage(t,
-			"[GNOSWAP-POOL-005] out of range for numeric value: amount(18446744073709551616) overflows uint64 range (max 18446744073709551615)",
+			"[GNOSWAP-POOL-003] out of range for numeric value: amount(18446744073709551616) overflows uint64 range (max 18446744073709551615)",
 			func() { safeConvertToUint64(overValue) })
 	})
 
@@ -873,7 +873,7 @@ func TestSafeConversions_ExactBoundaries(t *testing.T) {
 		// MAX_INT64 + 1
 		overValue := new(u256.Uint).Add(maxValue, u256.One())
 		uassert.PanicsWithMessage(t,
-			"[GNOSWAP-POOL-005] out of range for numeric value: amount(9223372036854775808) overflows int64 range (max 9223372036854775807)",
+			"[GNOSWAP-POOL-003] out of range for numeric value: amount(9223372036854775808) overflows int64 range (max 9223372036854775807)",
 			func() { safeConvertToInt64(overValue) })
 	})
 
@@ -886,7 +886,7 @@ func TestSafeConversions_ExactBoundaries(t *testing.T) {
 		// MAX_INT128 + 1
 		overValue := new(u256.Uint).Add(maxValue, u256.One())
 		uassert.PanicsWithMessage(t,
-			"[GNOSWAP-POOL-026] overflow: amount(170141183460469231731687303715884105728) overflows int128 range",
+			"[GNOSWAP-POOL-022] overflow: amount(170141183460469231731687303715884105728) overflows int128 range",
 			func() { safeConvertToInt128(overValue) })
 	})
 }
@@ -1071,7 +1071,7 @@ func TestToUint128(t *testing.T) {
 			name:        "nil value panics",
 			input:       nil,
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-006] invalid input data || value is nil",
+			errorMsg:    "[GNOSWAP-POOL-004] invalid input data || value is nil",
 		},
 		{
 			name:        "zero value",
@@ -1152,7 +1152,7 @@ func TestCheckOverFlowInt128(t *testing.T) {
 			name:        "max int128 + 1",
 			input:       new(i256.Int).Add(i256.MustFromDecimal(MAX_INT128), i256.One()),
 			shouldPanic: true,
-			errorMsg:    "[GNOSWAP-POOL-026] overflow: amount(170141183460469231731687303715884105728) overflows int128 range",
+			errorMsg:    "[GNOSWAP-POOL-022] overflow: amount(170141183460469231731687303715884105728) overflows int128 range",
 		},
 		{
 			name:        "very large value",
