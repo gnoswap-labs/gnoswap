@@ -1594,3 +1594,168 @@ func TestSwapCallback_CallbackUsage(t *testing.T) {
 	uassert.True(t, token1Transferred > 0, "oneForZero: should transfer token1 (positive delta)")
 	t.Logf("oneForZero: token0 transferred=%d, token1 transferred=%d", token0Transferred, token1Transferred)
 }
+
+// TestSwap_FlashSwapPattern tests that the flash swap pattern works correctly.
+//
+// Flash swap invariant:
+// Output tokens MUST be transferred to recipient BEFORE the callback is invoked.
+// This allows the callback to use the received tokens for arbitrage, chained swaps,
+// or other operations before repaying the input amount.
+//
+// Execution order (after fix):
+// 1. Pool computes swap amounts
+// 2. Pool transfers output tokens to recipient  <-- OUTPUT FIRST
+// 3. Pool invokes callback                      <-- CALLBACK SECOND
+// 4. Callback can use received tokens
+// 5. Callback transfers input tokens to pool
+//
+// Before fix (incorrect order):
+// 1. Pool computes swap amounts
+// 2. Pool invokes callback                      <-- CALLBACK FIRST (wrong)
+// 3. Pool transfers output tokens to recipient  <-- OUTPUT SECOND (wrong)
+// This prevented callbacks from using output tokens.
+func TestSwap_FlashSwapPattern(t *testing.T) {
+	tests := []struct {
+		name        string
+		description string
+		zeroForOne  bool
+	}{
+		{
+			name:        "zeroForOne flash swap receives output before callback",
+			description: "Recipient should have output tokens available during callback execution",
+			zeroForOne:  true,
+		},
+		{
+			name:        "oneForZero flash swap receives output before callback",
+			description: "Recipient should have output tokens available during callback execution",
+			zeroForOne:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			resetObject(t)
+			burnTokens(t)
+			InitialisePoolTest(t)
+			MintPositionAll(t, adminAddr)
+
+			TokenFaucet(t, wugnotPath, routerAddr)
+			TokenFaucet(t, gnsPath, routerAddr)
+
+			testing.SetRealm(rouRealm)
+			TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+			TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+
+			// Track balances during callback
+			var recipientBalanceDuringCallback int64
+			var outputTokenPath string
+			if tt.zeroForOne {
+				outputTokenPath = gnsPath // zeroForOne: output is token1
+			} else {
+				outputTokenPath = wugnotPath // oneForZero: output is token0
+			}
+
+			// Callback that checks recipient balance
+			flashSwapCallback := func(cur realm, amount0Delta, amount1Delta int64) error {
+				// Execution flow verification:
+				// At this point, output tokens should ALREADY be transferred to recipient
+				// This is the key invariant of flash swap pattern
+
+				recipientBalanceDuringCallback = common.BalanceOf(outputTokenPath, routerAddr)
+
+				// Complete the swap by paying input tokens
+				return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
+			}
+
+			// Get initial balance
+			initialBalance := common.BalanceOf(outputTokenPath, routerAddr)
+
+			// Determine price limit based on direction
+			var priceLimit string
+			if tt.zeroForOne {
+				priceLimit = common.TickMathGetSqrtRatioAtTick(-887220).ToString()
+			} else {
+				priceLimit = common.TickMathGetSqrtRatioAtTick(887220).ToString()
+			}
+
+			// Execute swap
+			testing.SetRealm(rouRealm)
+			mockInstanceSwap(
+				wugnotPath, gnsPath, STANDARD_FEE_TIER,
+				routerAddr, tt.zeroForOne, "10000",
+				priceLimit, routerAddr, flashSwapCallback,
+			)
+
+			// Verify: recipient balance during callback should be GREATER than initial
+			// This proves output tokens were transferred BEFORE callback was invoked
+			uassert.True(t, recipientBalanceDuringCallback > initialBalance,
+				ufmt.Sprintf("Flash swap failed: recipient should have received output tokens before callback. initial=%d, duringCallback=%d",
+					initialBalance, recipientBalanceDuringCallback))
+
+			t.Logf("passed: %s (initial=%d, duringCallback=%d)",
+				tt.description, initialBalance, recipientBalanceDuringCallback)
+		})
+	}
+}
+
+// TestSwap_FlashSwapArbitragePattern tests a practical flash swap use case:
+// using received output tokens within the callback for arbitrage or chained operations.
+func TestSwap_FlashSwapArbitragePattern(t *testing.T) {
+	// Setup
+	resetObject(t)
+	burnTokens(t)
+	InitialisePoolTest(t)
+	MintPositionAll(t, adminAddr)
+
+	TokenFaucet(t, wugnotPath, routerAddr)
+	TokenFaucet(t, gnsPath, routerAddr)
+
+	testing.SetRealm(rouRealm)
+	TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+	TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+
+	// Simulate arbitrage scenario:
+	// 1. Swap token0 for token1 (receive token1 first via flash swap)
+	// 2. In callback, verify we can "use" the received token1
+	// 3. Pay back token0
+
+	var outputReceivedBeforePayment bool
+	var outputAmountReceived int64
+
+	arbitrageCallback := func(cur realm, amount0Delta, amount1Delta int64) error {
+		// In a real arbitrage scenario, we would:
+		// 1. Use the received token1 (amount1Delta is negative, meaning we received it)
+		// 2. Perform arbitrage operation
+		// 3. Pay back token0 (amount0Delta is positive, meaning we owe it)
+
+		// Verify we received output tokens (negative delta = pool sent to us)
+		if amount1Delta < 0 {
+			outputAmountReceived = -amount1Delta // Convert to positive
+			// Check our balance increased
+			currentBalance := common.BalanceOf(gnsPath, routerAddr)
+			outputReceivedBeforePayment = currentBalance >= outputAmountReceived
+		}
+
+		// Pay back input tokens
+		return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
+	}
+
+	// Execute flash swap
+	testing.SetRealm(rouRealm)
+	amount0, amount1 := mockInstanceSwap(
+		wugnotPath, gnsPath, STANDARD_FEE_TIER,
+		routerAddr, true, "10000", // zeroForOne: swap token0 for token1
+		common.TickMathGetSqrtRatioAtTick(-887220).ToString(),
+		routerAddr, arbitrageCallback,
+	)
+
+	// Verify flash swap pattern worked
+	uassert.True(t, outputReceivedBeforePayment,
+		"Flash swap arbitrage failed: output tokens not available during callback")
+	uassert.True(t, outputAmountReceived > 0,
+		"Flash swap should have received output tokens")
+
+	t.Logf("Flash swap arbitrage pattern verified: received %d output tokens before payment (amount0=%s, amount1=%s)",
+		outputAmountReceived, amount0, amount1)
+}
