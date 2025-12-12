@@ -259,7 +259,7 @@ func TestPositionGetKey(t *testing.T) {
 			tickUpper:       100,
 			strategy:        "invalid",
 			shouldSucceed:   false,
-			expectedError:   "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)",
+			expectedError:   "[GNOSWAP-POOL-020] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)",
 			businessContext: "Prevent position creation errors",
 		},
 		{
@@ -270,7 +270,7 @@ func TestPositionGetKey(t *testing.T) {
 			tickUpper:       100,
 			strategy:        "invalid",
 			shouldSucceed:   false,
-			expectedError:   "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(100), tickUpper(100)",
+			expectedError:   "[GNOSWAP-POOL-020] tickLower is greater than or equal to tickUpper || tickLower(100), tickUpper(100)",
 			businessContext: "Prevent zero liquidity positions",
 		},
 	}
@@ -341,7 +341,7 @@ func TestPositionUpdateWithKey_LPStrategies(t *testing.T) {
 			expectedOutcome:  "",
 			businessContext:  "Prevent empty position creation",
 			shouldError:      true,
-			expectedError:    "[GNOSWAP-POOL-010] zero liquidity || both liquidityDelta and current position's liquidity are zero",
+			expectedError:    "[GNOSWAP-POOL-008] zero liquidity || both liquidityDelta and current position's liquidity are zero",
 		},
 		{
 			name:             "dust_position_creation",
@@ -523,7 +523,7 @@ func TestPositionUpdateNegativeValues(t *testing.T) {
 			initialFeeGrowth0Last: u256.MustFromDecimal("50"),
 			initialFeeGrowth1Last: u256.MustFromDecimal("50"),
 			shouldError:           true,
-			errorMsg:              "[GNOSWAP-POOL-010] zero liquidity || liquidity delta(-2000) is greater than current liquidity(1000)",
+			errorMsg:              "[GNOSWAP-POOL-008] zero liquidity || liquidity delta(-2000) is greater than current liquidity(1000)",
 		},
 		{
 			name:                  "Zero Values",
@@ -534,7 +534,7 @@ func TestPositionUpdateNegativeValues(t *testing.T) {
 			initialFeeGrowth0Last: u256.Zero(),
 			initialFeeGrowth1Last: u256.Zero(),
 			shouldError:           true,
-			errorMsg:              "[GNOSWAP-POOL-010] zero liquidity || both liquidityDelta and current position's liquidity are zero",
+			errorMsg:              "[GNOSWAP-POOL-008] zero liquidity || both liquidityDelta and current position's liquidity are zero",
 		},
 		{
 			name:                  "Large Fee Growth Values",
@@ -707,7 +707,7 @@ func TestModifyPositionEdgeCases(t *testing.T) {
 		}
 
 		_, _, _, err := modifyPosition(pool, params)
-		uassert.Equal(t, err.Error(), "[GNOSWAP-POOL-010] zero liquidity || both liquidityDelta and current position's liquidity are zero")
+		uassert.Equal(t, err.Error(), "[GNOSWAP-POOL-008] zero liquidity || both liquidityDelta and current position's liquidity are zero")
 	})
 
 	t.Run("liquidityDelta is negative", func(t *testing.T) {
@@ -758,14 +758,14 @@ func TestAssertTickLowerLessThanUpper(t *testing.T) {
 			tickLower:   50,
 			tickUpper:   50,
 			shouldPanic: true,
-			expected:    "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(50), tickUpper(50)",
+			expected:    "[GNOSWAP-POOL-020] tickLower is greater than or equal to tickUpper || tickLower(50), tickUpper(50)",
 		},
 		{
 			name:        "tickLower greater than tickUpper",
 			tickLower:   200,
 			tickUpper:   100,
 			shouldPanic: true,
-			expected:    "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)",
+			expected:    "[GNOSWAP-POOL-020] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)",
 		},
 	}
 
@@ -1232,7 +1232,7 @@ func TestPositionLiquidity(t *testing.T) {
 			},
 			expectedResult:       "0",
 			expectedPanic:        true,
-			expectedPanicMessage: "[GNOSWAP-POOL-008] requested data not found || positionKey(Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tMTIwX18xMjA=) does not exist",
+			expectedPanicMessage: "[GNOSWAP-POOL-006] requested data not found || positionKey(Z25vLmxhbmQvci9nbm9zd2FwL3Bvc2l0aW9uX18tMTIwX18xMjA=) does not exist",
 		},
 	}
 

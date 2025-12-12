@@ -72,7 +72,7 @@ func TestCreatePool(t *testing.T) {
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-011] same token used in single pool || expected token0Path(gno.land/r/onbloc/bar) != token1Path(gno.land/r/onbloc/bar)",
+			panicMsg:    "[GNOSWAP-POOL-009] same token used in single pool || expected token0Path(gno.land/r/onbloc/bar) != token1Path(gno.land/r/onbloc/bar)",
 		},
 		{
 			name:        "fail - same wrapped tokens",
@@ -81,7 +81,7 @@ func TestCreatePool(t *testing.T) {
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-011] same token used in single pool || expected token0Path(gno.land/r/gnoland/wugnot) != token1Path(gno.land/r/gnoland/wugnot)",
+			panicMsg:    "[GNOSWAP-POOL-009] same token used in single pool || expected token0Path(gno.land/r/gnoland/wugnot) != token1Path(gno.land/r/gnoland/wugnot)",
 		},
 		{
 			name:        "fail - same wrapped tokens reversed",
@@ -90,7 +90,7 @@ func TestCreatePool(t *testing.T) {
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-011] same token used in single pool || expected token0Path(gno.land/r/gnoland/wugnot) != token1Path(gno.land/r/gnoland/wugnot)",
+			panicMsg:    "[GNOSWAP-POOL-009] same token used in single pool || expected token0Path(gno.land/r/gnoland/wugnot) != token1Path(gno.land/r/gnoland/wugnot)",
 		},
 		{
 			name:        "success - when tokens not in order, reverse order and create pool",
@@ -99,7 +99,7 @@ func TestCreatePool(t *testing.T) {
 			fee:         3000,
 			sqrtPrice:   "4295343490",
 			shouldPanic: false,
-			panicMsg:    "[GNOSWAP-POOL-012] tokens must be in lexicographical order || expected token0Path(gno.land/r/onbloc/foo) < token1Path(gno.land/r/onbloc/baz)",
+			panicMsg:    "[GNOSWAP-POOL-010] tokens must be in lexicographical order || expected token0Path(gno.land/r/onbloc/foo) < token1Path(gno.land/r/onbloc/baz)",
 			inOrder:     true,
 		},
 		{
@@ -109,7 +109,7 @@ func TestCreatePool(t *testing.T) {
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-003] pool already created || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000) not to exist",
+			panicMsg:    "[GNOSWAP-POOL-002] pool already created || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000) not to exist",
 		},
 		{
 			name:        "fail - invalid fee amount",
@@ -118,7 +118,7 @@ func TestCreatePool(t *testing.T) {
 			fee:         1234,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-002] unsupported fee tier || expected fee(1234) to be one of 100, 500, 3000, 10000",
+			panicMsg:    "[GNOSWAP-POOL-001] unsupported fee tier || expected fee(1234) to be one of 100, 500, 3000, 10000",
 		},
 		{
 			name:        "fail - invalid sqrtPrice (too small)",
@@ -127,7 +127,7 @@ func TestCreatePool(t *testing.T) {
 			fee:         3000,
 			sqrtPrice:   "0",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-005] out of range for numeric value || sqrtPriceX96(0) is out of range",
+			panicMsg:    "[GNOSWAP-POOL-003] out of range for numeric value || sqrtPriceX96(0) is out of range",
 		},
 	}
 
@@ -192,7 +192,7 @@ func TestGetPool(t *testing.T) {
 				return getMockInstance().GetPool(barPath, fooPath, fee500)
 			},
 			shouldPanic: true,
-			expected:    "[GNOSWAP-POOL-008] requested data not found || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500) to exist",
+			expected:    "[GNOSWAP-POOL-006] requested data not found || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500) to exist",
 		},
 		{
 			name: "success - get pool (bar:foo:500)",

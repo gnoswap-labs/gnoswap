@@ -74,7 +74,7 @@ func TestExactOutSwapOperation(t *testing.T) {
 	t.Run("exact out swap with expired deadline", func(t *testing.T) {
 		router := mockRouter()
 
-		uassert.PanicsContains(t, "[GNOSWAP-ROUTER-004] transaction expired || transaction too old, now(1234567890) > deadline(1234564290)", func() {
+		uassert.PanicsContains(t, "[GNOSWAP-ROUTER-003] transaction expired || transaction too old, now(1234567890) > deadline(1234564290)", func() {
 			router.ExactOutSwapRoute(
 				fooPath,
 				barPath,

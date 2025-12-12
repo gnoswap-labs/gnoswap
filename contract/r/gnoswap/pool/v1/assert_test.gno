@@ -23,7 +23,7 @@ func TestAssertIsNotAllowedEOA(t *testing.T) {
 			name:         "fail - called from EOA",
 			currentRealm: testing.NewUserRealm(adminAddr),
 			shouldPanic:  true,
-			panicMsg:     "[GNOSWAP-POOL-029] not access EOA || previousRealm(g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5) is EOA",
+			panicMsg:     "[GNOSWAP-POOL-025] not access EOA || previousRealm(g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5) is EOA",
 		},
 	}
 
@@ -61,7 +61,7 @@ func TestAssertIsNotEqualsTokens(t *testing.T) {
 			token0Path:  barPath,
 			token1Path:  barPath,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-011] same token used in single pool || expected token0Path(gno.land/r/onbloc/bar) != token1Path(gno.land/r/onbloc/bar)",
+			panicMsg:    "[GNOSWAP-POOL-009] same token used in single pool || expected token0Path(gno.land/r/onbloc/bar) != token1Path(gno.land/r/onbloc/bar)",
 		},
 	}
 
@@ -109,13 +109,13 @@ func TestAssertIsSupportedFeeTier(t *testing.T) {
 			name:        "fail - unsupported fee tier 1000",
 			fee:         1000,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-002] unsupported fee tier || expected fee(1000) to be one of 100, 500, 3000, 10000",
+			panicMsg:    "[GNOSWAP-POOL-001] unsupported fee tier || expected fee(1000) to be one of 100, 500, 3000, 10000",
 		},
 		{
 			name:        "fail - unsupported fee tier 0",
 			fee:         0,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-002] unsupported fee tier || expected fee(0) to be one of 100, 500, 3000, 10000",
+			panicMsg:    "[GNOSWAP-POOL-001] unsupported fee tier || expected fee(0) to be one of 100, 500, 3000, 10000",
 		},
 	}
 
@@ -166,7 +166,7 @@ func TestAssertIsNotExistsPoolPath(t *testing.T) {
 			token1Path:  fooPath,
 			fee:         fee3000,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-003] pool already created || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000) not to exist",
+			panicMsg:    "[GNOSWAP-POOL-002] pool already created || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000) not to exist",
 		},
 	}
 
@@ -208,7 +208,7 @@ func TestAssertAmountSpecifiedIsNotZero(t *testing.T) {
 			name:            "fail - zero amount",
 			amountSpecified: "0",
 			shouldPanic:     true,
-			panicMsg:        "[GNOSWAP-POOL-015] invalid swap amount || amountSpecified == 0",
+			panicMsg:        "[GNOSWAP-POOL-013] invalid swap amount || amountSpecified == 0",
 		},
 	}
 
@@ -244,14 +244,14 @@ func TestAssertIsValidTokenOrder(t *testing.T) {
 			token0Path:  barPath,
 			token1Path:  barPath,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-006] invalid input data || expected token0Path(gno.land/r/onbloc/bar) < token1Path(gno.land/r/onbloc/bar)",
+			panicMsg:    "[GNOSWAP-POOL-004] invalid input data || expected token0Path(gno.land/r/onbloc/bar) < token1Path(gno.land/r/onbloc/bar)",
 		},
 		{
 			name:        "fail - tokens in reverse order",
 			token0Path:  fooPath,
 			token1Path:  barPath,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-006] invalid input data || expected token0Path(gno.land/r/onbloc/foo) < token1Path(gno.land/r/onbloc/bar)",
+			panicMsg:    "[GNOSWAP-POOL-004] invalid input data || expected token0Path(gno.land/r/onbloc/foo) < token1Path(gno.land/r/onbloc/bar)",
 		},
 	}
 
