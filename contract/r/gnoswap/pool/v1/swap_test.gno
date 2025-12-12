@@ -1408,3 +1408,189 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 		})
 	}
 }
+
+// TestSwapCallback_DeltaConvention tests that swap callback parameters follow
+// the Uniswap V3 delta convention:
+//   - Positive delta: Amount the pool must RECEIVE (input token)
+//   - Negative delta: Amount the pool has SENT (output token)
+//
+// This convention allows callbacks to correctly identify:
+//   - Which tokens were received by the pool (need to be paid by caller)
+//   - Which tokens were sent by the pool (received by recipient)
+//
+// For zeroForOne swaps (token0 → token1):
+//   - amount0Delta > 0: Pool receives token0 (input from user)
+//   - amount1Delta < 0: Pool sends token1 (output to user)
+//
+// For oneForZero swaps (token1 → token0):
+//   - amount0Delta < 0: Pool sends token0 (output to user)
+//   - amount1Delta > 0: Pool receives token1 (input from user)
+func TestSwapCallback_DeltaConvention(t *testing.T) {
+	tests := []struct {
+		name                    string
+		description             string
+		zeroForOne              bool
+		amountSpecified         string
+		expectedAmount0Positive bool // true if amount0Delta should be > 0
+		expectedAmount1Positive bool // true if amount1Delta should be > 0
+	}{
+		{
+			name:                    "zeroForOne swap has positive amount0Delta and negative amount1Delta",
+			description:             "When swapping token0 for token1, pool receives token0 (positive) and sends token1 (negative)",
+			zeroForOne:              true,
+			amountSpecified:         "10000",
+			expectedAmount0Positive: true,
+			expectedAmount1Positive: false,
+		},
+		{
+			name:                    "oneForZero swap has negative amount0Delta and positive amount1Delta",
+			description:             "When swapping token1 for token0, pool sends token0 (negative) and receives token1 (positive)",
+			zeroForOne:              false,
+			amountSpecified:         "10000",
+			expectedAmount0Positive: false,
+			expectedAmount1Positive: true,
+		},
+		{
+			name:                    "exact output zeroForOne swap maintains delta convention",
+			description:             "Exact output swaps should also follow the same delta convention",
+			zeroForOne:              true,
+			amountSpecified:         "-5000",
+			expectedAmount0Positive: true,
+			expectedAmount1Positive: false,
+		},
+		{
+			name:                    "exact output oneForZero swap maintains delta convention",
+			description:             "Exact output oneForZero swaps follow the same delta convention",
+			zeroForOne:              false,
+			amountSpecified:         "-5000",
+			expectedAmount0Positive: false,
+			expectedAmount1Positive: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Common setup
+			resetObject(t)
+			burnTokens(t)
+			InitialisePoolTest(t)
+			MintPositionAll(t, adminAddr)
+
+			TokenFaucet(t, wugnotPath, routerAddr)
+			TokenFaucet(t, gnsPath, routerAddr)
+
+			testing.SetRealm(rouRealm)
+			TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+			TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+
+			// Capture deltas
+			var capturedAmount0Delta, capturedAmount1Delta int64
+
+			callbackCapturingDeltas := func(cur realm, amount0Delta, amount1Delta int64) error {
+				capturedAmount0Delta = amount0Delta
+				capturedAmount1Delta = amount1Delta
+				return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
+			}
+
+			// Determine price limit based on direction
+			var priceLimit string
+			if tt.zeroForOne {
+				priceLimit = common.TickMathGetSqrtRatioAtTick(-887220).ToString()
+			} else {
+				priceLimit = common.TickMathGetSqrtRatioAtTick(887220).ToString()
+			}
+
+			// Execute swap
+			testing.SetRealm(rouRealm)
+			amount0, amount1 := mockInstanceSwap(
+				wugnotPath, gnsPath, STANDARD_FEE_TIER,
+				routerAddr, tt.zeroForOne, tt.amountSpecified,
+				priceLimit, routerAddr, callbackCapturingDeltas,
+			)
+
+			// Verify delta convention
+			if tt.expectedAmount0Positive {
+				uassert.True(t, capturedAmount0Delta > 0,
+					ufmt.Sprintf("amount0Delta should be positive, got %d", capturedAmount0Delta))
+			} else {
+				uassert.True(t, capturedAmount0Delta < 0,
+					ufmt.Sprintf("amount0Delta should be negative, got %d", capturedAmount0Delta))
+			}
+
+			if tt.expectedAmount1Positive {
+				uassert.True(t, capturedAmount1Delta > 0,
+					ufmt.Sprintf("amount1Delta should be positive, got %d", capturedAmount1Delta))
+			} else {
+				uassert.True(t, capturedAmount1Delta < 0,
+					ufmt.Sprintf("amount1Delta should be negative, got %d", capturedAmount1Delta))
+			}
+
+			// Verify deltas match swap result
+			uassert.Equal(t, ufmt.Sprintf("%d", capturedAmount0Delta), amount0,
+				"amount0Delta should match swap result amount0")
+			uassert.Equal(t, ufmt.Sprintf("%d", capturedAmount1Delta), amount1,
+				"amount1Delta should match swap result amount1")
+
+			t.Logf("passed: %s (amount0Delta=%d, amount1Delta=%d)", tt.description, capturedAmount0Delta, capturedAmount1Delta)
+		})
+	}
+}
+
+// TestSwapCallback_CallbackUsage demonstrates that a generic callback
+// can handle both swap directions by checking delta signs.
+func TestSwapCallback_CallbackUsage(t *testing.T) {
+	resetObject(t)
+	burnTokens(t)
+	InitialisePoolTest(t)
+	MintPositionAll(t, adminAddr)
+
+	TokenFaucet(t, wugnotPath, routerAddr)
+	TokenFaucet(t, gnsPath, routerAddr)
+
+	testing.SetRealm(rouRealm)
+	TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+	TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+
+	var token0Transferred, token1Transferred int64
+
+	// Generic callback that works for any swap direction
+	genericCallback := func(cur realm, amount0Delta, amount1Delta int64) error {
+		token0Transferred, token1Transferred = 0, 0
+
+		// Transfer tokens with positive deltas (tokens pool needs to receive)
+		if amount0Delta > 0 {
+			token0Transferred = amount0Delta
+		}
+		if amount1Delta > 0 {
+			token1Transferred = amount1Delta
+		}
+		return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
+	}
+
+	// Test zeroForOne: should transfer token0 only
+	testing.SetRealm(rouRealm)
+	mockInstanceSwap(
+		wugnotPath, gnsPath, STANDARD_FEE_TIER,
+		routerAddr, true, "10000",
+		common.TickMathGetSqrtRatioAtTick(-887220).ToString(),
+		routerAddr, genericCallback,
+	)
+
+	uassert.True(t, token0Transferred > 0, "zeroForOne: should transfer token0 (positive delta)")
+	uassert.Equal(t, int64(0), token1Transferred, "zeroForOne: should not transfer token1 (negative delta)")
+	t.Logf("zeroForOne: token0 transferred=%d, token1 transferred=%d", token0Transferred, token1Transferred)
+
+	// Test oneForZero: should transfer token1 only
+	TokenFaucet(t, gnsPath, routerAddr)
+	testing.SetRealm(rouRealm)
+	mockInstanceSwap(
+		wugnotPath, gnsPath, STANDARD_FEE_TIER,
+		routerAddr, false, "10000",
+		common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+		routerAddr, genericCallback,
+	)
+
+	uassert.Equal(t, int64(0), token0Transferred, "oneForZero: should not transfer token0 (negative delta)")
+	uassert.True(t, token1Transferred > 0, "oneForZero: should transfer token1 (positive delta)")
+	t.Logf("oneForZero: token0 transferred=%d, token1 transferred=%d", token0Transferred, token1Transferred)
+}
