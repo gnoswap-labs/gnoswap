@@ -360,6 +360,30 @@ func (m *MockStaker) IsStaked(positionId uint64) bool {
 	return res[0].(bool)
 }
 
+func (m *MockStaker) GetUserIncentives(user address) []ExternalIncentive {
+	res, ok := m.Response.Get("GetUserIncentives")
+	if !ok {
+		return []ExternalIncentive{}
+	}
+	return res[0].([]ExternalIncentive)
+}
+
+func (m *MockStaker) GetUserActiveIncentives(user address) []ExternalIncentive {
+	res, ok := m.Response.Get("GetUserActiveIncentives")
+	if !ok {
+		return []ExternalIncentive{}
+	}
+	return res[0].([]ExternalIncentive)
+}
+
+func (m *MockStaker) GetUserArchivedIncentives(user address) []ExternalIncentive {
+	res, ok := m.Response.Get("GetUserArchivedIncentives")
+	if !ok {
+		return []ExternalIncentive{}
+	}
+	return res[0].([]ExternalIncentive)
+}
+
 func (m *MockStaker) ApiGetExternalIncentiveById(poolPath, incentiveId string) string {
 	res, ok := m.Response.Get("ApiGetExternalIncentiveById")
 	if !ok {
