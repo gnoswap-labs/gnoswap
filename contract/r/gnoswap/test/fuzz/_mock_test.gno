@@ -336,6 +336,7 @@ type MockStakerStore struct {
 	poolTierGetHalvingBlocksInRange  func(start, end int64) ([]int64, []int64)
 	warmupTemplate                   []sr.Warmup
 	currentSwapBatch                 *sr.SwapBatchProcessor
+	userIncentives                   *avl.Tree
 }
 
 // DepositGnsAmount
@@ -637,6 +638,20 @@ func (s *MockStakerStore) SetCurrentSwapBatch(batch *sr.SwapBatchProcessor) erro
 	return nil
 }
 
+// UserIncentives
+func (s *MockStakerStore) HasUserIncentivesStoreKey() bool {
+	return s.userIncentives != nil
+}
+
+func (s *MockStakerStore) GetUserIncentives() *avl.Tree {
+	return s.userIncentives
+}
+
+func (s *MockStakerStore) SetUserIncentives(userIncentives *avl.Tree) error {
+	s.userIncentives = userIncentives
+	return nil
+}
+
 func newMockStakerStore() *MockStakerStore {
 	return &MockStakerStore{
 		depositGnsAmount:            0,
@@ -666,6 +681,7 @@ func newMockStakerStore() *MockStakerStore {
 		},
 		warmupTemplate:   sr.DefaultWarmupTemplate(),
 		currentSwapBatch: &sr.SwapBatchProcessor{},
+		userIncentives:   avl.NewTree(),
 	}
 }
 

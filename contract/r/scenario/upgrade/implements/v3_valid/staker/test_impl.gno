@@ -206,6 +206,18 @@ func (t *TestStaker) IsStaked(positionId uint64) bool {
 	return t.instance.IsStaked(positionId)
 }
 
+func (t *TestStaker) GetUserIncentives(user address) []staker.ExternalIncentive {
+	return t.instance.GetUserIncentives(user)
+}
+
+func (t *TestStaker) GetUserActiveIncentives(user address) []staker.ExternalIncentive {
+	return t.instance.GetUserActiveIncentives(user)
+}
+
+func (t *TestStaker) GetUserArchivedIncentives(user address) []staker.ExternalIncentive {
+	return t.instance.GetUserArchivedIncentives(user)
+}
+
 // IStakerApi interface
 func (t *TestStaker) ApiGetExternalIncentiveById(poolPath, incentiveId string) string {
 	return t.instance.ApiGetExternalIncentiveById(poolPath, incentiveId)

@@ -354,6 +354,27 @@ func (t *TestStaker) IsStaked(positionId uint64) bool {
 	return t.instance.IsStaked(positionId)
 }
 
+func (t *TestStaker) GetUserIncentives(user address) []staker.ExternalIncentive {
+	if !t.isActive("GetUserIncentives") {
+		panic("test implementation: GetUserIncentives not supported")
+	}
+	return t.instance.GetUserIncentives(user)
+}
+
+func (t *TestStaker) GetUserActiveIncentives(user address) []staker.ExternalIncentive {
+	if !t.isActive("GetUserActiveIncentives") {
+		panic("test implementation: GetUserActiveIncentives not supported")
+	}
+	return t.instance.GetUserActiveIncentives(user)
+}
+
+func (t *TestStaker) GetUserArchivedIncentives(user address) []staker.ExternalIncentive {
+	if !t.isActive("GetUserArchivedIncentives") {
+		panic("test implementation: GetUserArchivedIncentives not supported")
+	}
+	return t.instance.GetUserArchivedIncentives(user)
+}
+
 // IStakerApi interface
 func (t *TestStaker) ApiGetExternalIncentiveById(poolPath, incentiveId string) string {
 	if !t.isActive("ApiGetExternalIncentiveById") {
