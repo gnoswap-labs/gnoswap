@@ -178,6 +178,14 @@ func (d *Deposit) HasExternalIncentiveId(incentiveId string) bool {
 	return d.externalIncentiveIds.Has(incentiveId)
 }
 
+// RemoveExternalIncentiveId removes an external incentive id from the deposit.
+func (d *Deposit) RemoveExternalIncentiveId(incentiveId string) {
+	if d.externalIncentiveIds == nil {
+		return
+	}
+	d.externalIncentiveIds.Remove(incentiveId)
+}
+
 // GetExternalIncentiveIdList returns a list of external incentive ids for the deposit.
 func (d *Deposit) GetExternalIncentiveIdList() []string {
 	if d.externalIncentiveIds == nil {

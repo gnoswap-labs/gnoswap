@@ -105,18 +105,29 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 
 	// Use deposit's indexed incentive IDs instead of iterating all pool incentives
 	// This is O(deposit's incentives) instead of O(pool's all incentives)
+	// Lazy removal: incentive IDs are removed from deposit when no longer needed
 	incentiveIds := deposit.GetExternalIncentiveIdList()
 	incentivesResolver := poolResolver.IncentivesResolver()
 
 	for _, incentiveId := range incentiveIds {
 		incentive, ok := incentivesResolver.Get(incentiveId)
 		if !ok {
+			// Incentive not found (likely archived) - remove from deposit index
+			deposit.RemoveExternalIncentiveId(incentiveId)
 			continue
 		}
 
 		externalLastCollectTime := depositResolver.ExternalRewardLastCollectTime(incentiveId)
 
 		incentiveResolver := NewExternalIncentiveResolver(incentive)
+
+		// If incentive ended and user already collected after end, remove from index
+		// This ensures deposit's incentive list shrinks over time as incentives complete
+		if incentiveResolver.EndTimestamp() < externalLastCollectTime {
+			deposit.RemoveExternalIncentiveId(incentiveId)
+			continue
+		}
+
 		// Check if incentive is active during this specific collection period
 		if !incentiveResolver.IsStarted(param.CurrentTime) || incentiveResolver.StartTimestamp() >= param.CurrentTime {
 			continue
