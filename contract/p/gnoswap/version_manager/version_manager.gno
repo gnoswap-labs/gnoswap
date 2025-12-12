@@ -86,18 +86,23 @@ func (vm *versionManager) RegisterInitializer(initializer func(store any) any) e
 	// Register the initializer function for this package path
 	vm.initializers.Set(targetPackagePath, initializer)
 
-	// First registration: activate this version as the current implementation
-	prevPackagePath := vm.currentPackagePath
-
-	// Update internal state only after successful permission grant
-	vm.currentPackagePath = targetPackagePath
-	vm.currentImplementation = initializer(vm.initializeDomainStoreFn(vm.domainKVStore))
-
 	chain.Emit(
 		"RegisterInitializer",
-		"previousPackagePath", prevPackagePath,
-		"newPackagePath", targetPackagePath,
+		"domainPath", vm.domainPath,
+		"registeredPackagePath", targetPackagePath,
 	)
+
+	// Initialize the current implementation if it hasn't been done yet
+	if vm.currentPackagePath == "" || vm.currentImplementation == nil {
+		vm.currentPackagePath = targetPackagePath
+		vm.currentImplementation = initializer(vm.initializeDomainStoreFn(vm.domainKVStore))
+
+		chain.Emit(
+			"InitializeImplementation",
+			"domainPath", vm.domainPath,
+			"newPackagePath", targetPackagePath,
+		)
+	}
 
 	return nil
 }
@@ -138,6 +143,7 @@ func (vm *versionManager) ChangeImplementation(packagePath string) error {
 
 	chain.Emit(
 		"ChangeImplementation",
+		"domainPath", vm.domainPath,
 		"previousPackagePath", prevPackagePath,
 		"newPackagePath", packagePath,
 	)
