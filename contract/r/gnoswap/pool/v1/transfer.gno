@@ -200,7 +200,7 @@ func (i *poolV1) safeSwapCallback(
 	amountInInt256 *i256.Int,
 	amountOutInt256 *i256.Int,
 	zeroForOne bool,
-	swapCallback func(cur realm, amount0Delta, amount1Delta int64) error,
+	swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error,
 ) {
 	if swapCallback == nil {
 		panic(makeErrorWithDetails(
@@ -235,7 +235,7 @@ func (i *poolV1) safeSwapCallback(
 	}
 
 	// execute swap callback
-	err := swapCallback(cross, amount0Delta, amount1Delta)
+	err := swapCallback(cross, amount0Delta, amount1Delta, &pl.CallbackMarker{})
 	if err != nil {
 		panic(err)
 	}
