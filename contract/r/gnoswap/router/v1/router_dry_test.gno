@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"strings"
 	"testing"
 
 	"gno.land/p/nt/uassert"
@@ -273,7 +274,7 @@ func setupMultiRoutePools(env *TestEnv) {
 func TestDrySwapRoute_MultiRouteSplitQuote(t *testing.T) {
 	tests := []DrySwapTestCase{
 		{
-			name:    "ExactOut - Two routes with split quote (50:50) - swapCount should be sum of all hops",
+			name:    "ExactOut - Two routes with split quote (50:50) - insufficient liquidity",
 			setupFn: setupMultiRoutePools,
 			swapParams: NewDrySwapBuilder().
 				InputToken(barPath).
@@ -284,10 +285,12 @@ func TestDrySwapRoute_MultiRouteSplitQuote(t *testing.T) {
 				Quote("50,50").
 				TokenAmountLimit("10000").
 				Build(),
-			expectedSuccess: true,
+			expectedAmountIn:  "255",
+			expectedAmountOut: "685",
+			expectedSuccess:   false,
 		},
 		{
-			name:    "ExactOut - Three routes mixed hops (1-hop + 2-hop + 1-hop) - swapCount=4",
+			name:    "ExactOut - Three routes mixed hops (1-hop + 2-hop + 1-hop) - insufficient liquidity",
 			setupFn: setupMultiRoutePools,
 			swapParams: NewDrySwapBuilder().
 				InputToken(barPath).
@@ -298,10 +301,12 @@ func TestDrySwapRoute_MultiRouteSplitQuote(t *testing.T) {
 				Quote("33,34,33").
 				TokenAmountLimit("10000").
 				Build(),
-			expectedSuccess: true,
+			expectedAmountIn:  "294",
+			expectedAmountOut: "787",
+			expectedSuccess:   false,
 		},
 		{
-			name:    "ExactIn - Two routes with split quote (70:30)",
+			name:    "ExactIn - Two routes with split quote (70:30) - swapCount=3 total",
 			setupFn: setupMultiRoutePools,
 			swapParams: NewDrySwapBuilder().
 				InputToken(barPath).
@@ -312,7 +317,9 @@ func TestDrySwapRoute_MultiRouteSplitQuote(t *testing.T) {
 				Quote("70,30").
 				TokenAmountLimit("1").
 				Build(),
-			expectedSuccess: true,
+			expectedAmountIn:  "1000",
+			expectedAmountOut: "4094",
+			expectedSuccess:   true,
 		},
 	}
 
