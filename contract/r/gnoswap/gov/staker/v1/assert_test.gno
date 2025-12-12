@@ -28,7 +28,7 @@ func TestStakerDelegate_validateDelegateAmount(t *testing.T) {
 			name:        "Amount less than minimum",
 			amount:      minimumAmount - 1,
 			expectError: true,
-			expectedMsg: "[GNOSWAP-GOV_STAKER-011] can not delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:999999)",
+			expectedMsg: "[GNOSWAP-GOV_STAKER-011] cannot delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:999999)",
 		},
 		{
 			name:        "Amount not multiple of minimum",
@@ -40,13 +40,13 @@ func TestStakerDelegate_validateDelegateAmount(t *testing.T) {
 			name:        "Zero amount",
 			amount:      0,
 			expectError: true,
-			expectedMsg: "[GNOSWAP-GOV_STAKER-011] can not delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:0)",
+			expectedMsg: "[GNOSWAP-GOV_STAKER-011] cannot delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:0)",
 		},
 		{
 			name:        "Negative amount",
 			amount:      -100,
 			expectError: true,
-			expectedMsg: "[GNOSWAP-GOV_STAKER-011] can not delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:-100)",
+			expectedMsg: "[GNOSWAP-GOV_STAKER-011] cannot delegate less than minimum amount || minimum amount to delegate is 1000000 (requested:-100)",
 		},
 	}
 

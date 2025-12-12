@@ -17,7 +17,7 @@ var (
 	errInvalidAddress     = errors.New("[GNOSWAP-GOV_STAKER-008] invalid address")
 	errFutureTime         = errors.New("[GNOSWAP-GOV_STAKER-009] cannot use future time")
 	errNotEnoughBalance   = errors.New("[GNOSWAP-GOV_STAKER-010] not enough balance")
-	errLessThanMinimum    = errors.New("[GNOSWAP-GOV_STAKER-011] can not delegate less than minimum amount")
+	errLessThanMinimum    = errors.New("[GNOSWAP-GOV_STAKER-011] cannot delegate less than minimum amount")
 )
 
 func makeErrorWithDetails(err error, detail string) error {

@@ -100,7 +100,7 @@ func addTokenExecutor(tokenPath string, tokens []string) []string {
 // addTokenValidator validates token addition operation
 func addTokenValidator(tokenPath string) error {
 	if contains(defaultAllowed, tokenPath) {
-		return ufmt.Errorf("%v: can not add existing token(%s)", errAddExistingToken, tokenPath)
+		return ufmt.Errorf("%v: cannot add existing token(%s)", errAddExistingToken, tokenPath)
 	}
 
 	return nil
