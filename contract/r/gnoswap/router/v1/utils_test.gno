@@ -879,7 +879,7 @@ func TestSafeMulDivInt64(t *testing.T) {
 			b:           200,
 			c:           100,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-ROUTER-016] overflow",
+			panicMsg:    "[GNOSWAP-ROUTER-012] overflow",
 		},
 		{
 			name:     "minInt64 allow negative value",
@@ -894,7 +894,7 @@ func TestSafeMulDivInt64(t *testing.T) {
 			b:           -100,
 			c:           100,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-ROUTER-016] overflow",
+			panicMsg:    "[GNOSWAP-ROUTER-012] overflow",
 		},
 	}
 
@@ -990,7 +990,7 @@ func TestSafeAbsInt64(t *testing.T) {
 			input:       -9223372036854775808,
 			expected:    0,
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-ROUTER-016] overflow",
+			panicMsg:    "[GNOSWAP-ROUTER-012] overflow",
 		},
 	}
 

@@ -155,13 +155,13 @@ func TestProtocolFeeStateSetDevOpsPct(t *testing.T) {
 			name:        "set invalid percentage - over 100%",
 			percentage:  10001,
 			shouldError: true,
-			errorMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(10001) should not be bigger than 10000",
+			errorMsg:    "[GNOSWAP-PROTOCOL_FEE-001] invalid percentage || pct(10001) should not be bigger than 10000",
 		},
 		{
 			name:        "set invalid percentage - very large",
 			percentage:  50000,
 			shouldError: true,
-			errorMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(50000) should not be bigger than 10000",
+			errorMsg:    "[GNOSWAP-PROTOCOL_FEE-001] invalid percentage || pct(50000) should not be bigger than 10000",
 		},
 	}
 
@@ -343,19 +343,19 @@ func TestProtocolFeeState_SetDevOpsPct_NegativeValues(t *testing.T) {
 			name:        "error - negative percentage -1",
 			pct:         -1,
 			shouldError: true,
-			errorMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(-1) should not be negative",
+			errorMsg:    "[GNOSWAP-PROTOCOL_FEE-001] invalid percentage || pct(-1) should not be negative",
 		},
 		{
 			name:        "error - large negative percentage",
 			pct:         -9999,
 			shouldError: true,
-			errorMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(-9999) should not be negative",
+			errorMsg:    "[GNOSWAP-PROTOCOL_FEE-001] invalid percentage || pct(-9999) should not be negative",
 		},
 		{
 			name:        "error - very large negative",
 			pct:         -999999999,
 			shouldError: true,
-			errorMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(-999999999) should not be negative",
+			errorMsg:    "[GNOSWAP-PROTOCOL_FEE-001] invalid percentage || pct(-999999999) should not be negative",
 		},
 	}
 
@@ -391,13 +391,13 @@ func TestProtocolFeeState_SetGovStakerPct_EdgeCases(t *testing.T) {
 			name:        "error - negative percentage",
 			pct:         -1,
 			shouldError: true,
-			errorMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(-1) should not be negative",
+			errorMsg:    "[GNOSWAP-PROTOCOL_FEE-001] invalid percentage || pct(-1) should not be negative",
 		},
 		{
 			name:        "error - very large negative",
 			pct:         -999999,
 			shouldError: true,
-			errorMsg:    "[GNOSWAP-PROTOCOL_FEE-002] invalid percentage || pct(-999999) should not be negative",
+			errorMsg:    "[GNOSWAP-PROTOCOL_FEE-001] invalid percentage || pct(-999999) should not be negative",
 		},
 		{
 			name:           "success - minimum boundary 0%",

@@ -289,7 +289,7 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	if !ok {
 		panic(makeErrorWithDetails(
 			errNonIncentivizedPool,
-			ufmt.Sprintf("can not stake position to non existing pool(%s)", poolPath),
+			ufmt.Sprintf("cannot stake position to non existing pool(%s)", poolPath),
 		))
 	}
 
@@ -807,15 +807,16 @@ func hasTokenOwnership(owner, caller address) error {
 	return nil
 }
 
-// poolHasIncentives checks if the pool has any active incentives (internal or external).
+// poolHasIncentives checks if the pool has any stakeable incentives (internal or external).
+// External incentive eligibility (active or within short future window) is handled inside IsExternallyIncentivizedPool.
 func (s *stakerV1) poolHasIncentives(pool *sr.Pool) error {
 	poolPath := pool.PoolPath()
 	hasInternal := s.getPoolTier().IsInternallyIncentivizedPool(poolPath)
 	hasExternal := NewPoolResolver(pool).IsExternallyIncentivizedPool()
 
-	if hasInternal == false && hasExternal == false {
+	if !hasInternal && !hasExternal {
 		return ufmt.Errorf(
-			"%v: can not stake position to non incentivized pool(%s)",
+			"%v: cannot stake position to non incentivized pool(%s)",
 			errNonIncentivizedPool, poolPath,
 		)
 	}

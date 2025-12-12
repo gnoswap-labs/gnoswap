@@ -353,7 +353,7 @@ func safeConvertToUint128(value *u256.Uint) *u256.Uint {
 	if value.Gt(maxUint128) {
 		panic(ufmt.Sprintf(
 			"%v: amount(%s) overflows uint128 range",
-			errOverFlow, value.ToString()))
+			errOverflow, value.ToString()))
 	}
 	return value
 }

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"gno.land/p/nt/testutils"
+	"gno.land/p/nt/uassert"
 	sr "gno.land/r/gnoswap/staker"
 )
 
@@ -61,4 +62,136 @@ func TestStakeToken_WithEndedIncentives(t *testing.T) {
 
 	// Clean up
 	getMockInstance().getPools().tree.Remove(poolPath)
+}
+
+func TestExternalIncentiveResolver_IsActive(t *testing.T) {
+	currentTime := time.Now().Unix()
+	startTime := currentTime + 3600
+	endTime := startTime + 3600
+
+	incentive := sr.NewExternalIncentive(
+		"future_incentive",
+		"test_pool",
+		GNS_PATH,
+		1_000_000,
+		startTime,
+		endTime,
+		testutils.TestAddress("creator"),
+		0,
+		0,
+		currentTime,
+		false,
+	)
+
+	resolver := NewExternalIncentiveResolver(incentive)
+
+	tests := []struct {
+		name       string
+		ts         int64
+		wantActive bool
+	}{
+		{
+			name:       "before start",
+			ts:         startTime - 1,
+			wantActive: false,
+		},
+		{
+			name:       "at start",
+			ts:         startTime,
+			wantActive: true,
+		},
+		{
+			name:       "during incentive",
+			ts:         startTime + 100,
+			wantActive: true,
+		},
+		{
+			name:       "just before end",
+			ts:         endTime - 1,
+			wantActive: true,
+		},
+		{
+			name:       "at end",
+			ts:         endTime,
+			wantActive: true,
+		},
+		{
+			name:       "after end",
+			ts:         endTime + 1,
+			wantActive: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := resolver.isActive(tt.ts)
+			uassert.Equal(t, tt.wantActive, got)
+		})
+	}
+}
+
+func TestExternalIncentiveResolver_IsEnded(t *testing.T) {
+	currentTime := time.Now().Unix()
+	startTime := currentTime + 3600
+	endTime := startTime + 3600
+
+	incentive := sr.NewExternalIncentive(
+		"test_incentive",
+		"test_pool",
+		GNS_PATH,
+		1_000_000,
+		startTime,
+		endTime,
+		testutils.TestAddress("creator"),
+		0,
+		0,
+		currentTime,
+		false,
+	)
+
+	resolver := NewExternalIncentiveResolver(incentive)
+
+	tests := []struct {
+		name      string
+		ts        int64
+		wantEnded bool
+	}{
+		{
+			name:      "before start",
+			ts:        startTime - 1,
+			wantEnded: false,
+		},
+		{
+			name:      "at start",
+			ts:        startTime,
+			wantEnded: false,
+		},
+		{
+			name:      "during incentive",
+			ts:        startTime + 100,
+			wantEnded: false,
+		},
+		{
+			name:      "at end",
+			ts:        endTime,
+			wantEnded: false,
+		},
+		{
+			name:      "after end",
+			ts:        endTime + 1,
+			wantEnded: true,
+		},
+		{
+			name:      "well after end",
+			ts:        endTime + 3600,
+			wantEnded: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := resolver.IsEnded(tt.ts)
+			uassert.Equal(t, tt.wantEnded, got)
+		})
+	}
 }

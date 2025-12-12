@@ -5,8 +5,6 @@ import (
 	"chain/runtime"
 	"time"
 
-	"gno.land/p/nt/ufmt"
-
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
 	sr "gno.land/r/gnoswap/staker"
@@ -174,15 +172,5 @@ func pctToIndex(pct int64) int {
 		return 3
 	default:
 		panic("staker.gno__pctToIndex() || pct is not valid")
-	}
-}
-
-// assertPoolMustExist panics if the pool doesn't exist.
-func assertPoolMustExist(s *stakerV1, poolPath string) {
-	if !s.poolAccessor.ExistsPoolPath(poolPath) {
-		panic(makeErrorWithDetails(
-			errInvalidPoolPath,
-			ufmt.Sprintf("pool(%s) does not exist", poolPath),
-		))
 	}
 }
