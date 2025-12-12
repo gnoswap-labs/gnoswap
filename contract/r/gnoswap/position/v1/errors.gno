@@ -14,7 +14,7 @@ var (
 	errInvalidInput          = errors.New("[GNOSWAP-POSITION-005] invalid input data")
 	errDataNotFound          = errors.New("[GNOSWAP-POSITION-006] requested data not found")
 	errExpired               = errors.New("[GNOSWAP-POSITION-007] transaction expired")
-	errWugnotMinimum         = errors.New("[GNOSWAP-POSITION-008] can not wrap less than minimum amount")
+	errWugnotMinimum         = errors.New("[GNOSWAP-POSITION-008] cannot wrap less than minimum amount")
 	errNotClear              = errors.New("[GNOSWAP-POSITION-009] position is not clear")
 	errZeroLiquidity         = errors.New("[GNOSWAP-POSITION-010] zero liquidity")
 	errPositionExist         = errors.New("[GNOSWAP-POSITION-011] position with same positionId already exists")

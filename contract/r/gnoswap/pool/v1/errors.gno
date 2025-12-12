@@ -25,7 +25,7 @@ var (
 	errInvalidSwapAmount         = errors.New("[GNOSWAP-POOL-015] invalid swap amount")
 	errInvalidProtocolFeePct     = errors.New("[GNOSWAP-POOL-016] invalid protocol fee percentage")
 	errInvalidWithdrawalFeePct   = errors.New("[GNOSWAP-POOL-017] invalid withdrawal fee percentage")
-	errLockedPool                = errors.New("[GNOSWAP-POOL-018] can't swap while pool is locked")
+	errLockedPool                = errors.New("[GNOSWAP-POOL-018] cannot swap while pool is locked")
 	errPriceOutOfRange           = errors.New("[GNOSWAP-POOL-019] swap price out of range")
 	errTransferFailed            = errors.New("[GNOSWAP-POOL-021] token transfer failed")
 	errInvalidTickAndTickSpacing = errors.New("[GNOSWAP-POOL-022] invalid tick and tick spacing requested")
