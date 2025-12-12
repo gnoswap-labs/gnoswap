@@ -66,7 +66,7 @@ func TestIncentives_ArchiveIncentive(t *testing.T) {
 	}
 }
 
-func TestIncentives_GetAllInTimestamps_ExcludesArchived(t *testing.T) {
+func TestIncentives_GetAllInTimestamps_IncludesArchived(t *testing.T) {
 	poolPath := "test_pool_timestamps"
 	creator := testutils.TestAddress("creator")
 

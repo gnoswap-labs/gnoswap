@@ -772,6 +772,8 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 			if err := s.archiveEndedExternalIncentive(incentivesResolver, externalIncentive); err != nil {
 				panic(err)
 			}
+			// Update user incentive index to reflect archived status
+			s.updateUserIncentiveArchiveStatus(externalIncentive.Refundee(), incentiveId, true)
 		}
 
 		return false // continue iteration
