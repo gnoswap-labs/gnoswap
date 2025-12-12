@@ -1433,6 +1433,7 @@ func TestSwapCallback_DeltaConvention(t *testing.T) {
 		amountSpecified         string
 		expectedAmount0Positive bool // true if amount0Delta should be > 0
 		expectedAmount1Positive bool // true if amount1Delta should be > 0
+		isFailCase              bool
 	}{
 		{
 			name:                    "zeroForOne swap has positive amount0Delta and negative amount1Delta",
@@ -1465,6 +1466,38 @@ func TestSwapCallback_DeltaConvention(t *testing.T) {
 			amountSpecified:         "-5000",
 			expectedAmount0Positive: false,
 			expectedAmount1Positive: true,
+		},
+		{
+			name:                    "fail case by exact in zeroForOne swap but amount0Delta, amount1Delta is positive",
+			description:             "Exact in zeroForOne swap but amount0Delta, amount1Delta is positive",
+			zeroForOne:              true,
+			amountSpecified:         "10000",
+			expectedAmount0Positive: true,
+			expectedAmount1Positive: true, // false
+		},
+		{
+			name:                    "fail case by exact in zeroForOne swap but amount0Delta, amount1Delta is negative",
+			description:             "Exact in zeroForOne swap but amount0Delta, amount1Delta is negative",
+			zeroForOne:              true,
+			amountSpecified:         "10000",
+			expectedAmount0Positive: false, // true
+			expectedAmount1Positive: false,
+		},
+		{
+			name:                    "fail case by exact out oneForZero swap but amount0Delta, amount1Delta is positive",
+			description:             "Exact out oneForZero swap but amount0Delta, amount1Delta is positive",
+			zeroForOne:              false,
+			amountSpecified:         "-5000",
+			expectedAmount0Positive: true, // false
+			expectedAmount1Positive: true,
+		},
+		{
+			name:                    "fail case by exact out oneForZero swap but amount0Delta, amount1Delta is negative",
+			description:             "Exact out oneForZero swap but amount0Delta, amount1Delta is negative",
+			zeroForOne:              false,
+			amountSpecified:         "-5000",
+			expectedAmount0Positive: false,
+			expectedAmount1Positive: false, // true
 		},
 	}
 
