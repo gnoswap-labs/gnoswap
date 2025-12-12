@@ -1177,3 +1177,234 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(t *testing.T) {
 		})
 	}(cross)
 }
+
+// TestSwap_ReentrancyProtection tests that the reentrancy lock properly prevents
+// recursive swap calls during callback execution.
+//
+// Security issue addressed:
+// The Swap function uses Slot0.unlocked field as a reentrancy lock. Previously,
+// this lock was ineffective because Slot0() returned a copy of the struct,
+// so SetUnlocked(false) only modified the local copy, not the actual pool state.
+// The fix uses pool.SetSlot0() to persist the lock state.
+//
+// Attack scenario:
+// 1. Attacker calls Swap with a malicious callback
+// 2. Inside the callback (before payment), attacker tries to call Swap again
+// 3. Without proper reentrancy protection, the second Swap would succeed
+// 4. This could allow manipulation of pool state or token theft
+func TestSwap_ReentrancyProtection(t *testing.T) {
+	tests := []struct {
+		name        string
+		description string
+		setup       func(t *testing.T)
+		action      func(t *testing.T)
+		verify      func(t *testing.T)
+	}{
+		{
+			name:        "expected panics by reentrant swap in callback",
+			description: "Reentrancy attack via callback should be blocked by pool lock",
+			setup: func(t *testing.T) {
+				initPoolTest(t)
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
+
+				TokenFaucet(t, gnsPath, routerAddr)
+				TokenFaucet(t, gnsPath, routerAddr)
+				TokenFaucet(t, wugnotPath, routerAddr)
+				TokenFaucet(t, wugnotPath, routerAddr)
+
+				testing.SetRealm(rouRealm)
+				TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+				TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+			},
+			action: func(t *testing.T) {
+				// Execution flow:
+				// 1. User initiates Swap -> pool.Slot0.unlocked = false (locked)
+				// 2. Swap executes computeSwap and transfers output tokens
+				// 3. Swap calls swapCallback (maliciousCallback)
+				// 4. Inside callback, attacker attempts second Swap
+				// 5. Second Swap checks pool.Slot0.unlocked -> false -> PANIC [GNOSWAP-POOL-018]
+				// 6. Callback catches panic, completes token transfer
+				// 7. Original Swap completes successfully
+				// 8. defer unlocks pool -> pool.Slot0.unlocked = true
+
+				testing.SetRealm(rouRealm)
+
+				maliciousCallback := func(cur realm, amount0Delta, amount1Delta int64) error {
+					// Step 4-5: Attempt reentrancy, expect panic due to locked pool
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-018]", func() {
+						getMockInstance().Swap(
+							wugnotPath, gnsPath, STANDARD_FEE_TIER,
+							routerAddr, false, "50",
+							common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+							routerAddr,
+							func(cur realm, a0, a1 int64) error { return nil },
+						)
+					})
+
+					// Step 6: Complete original swap payment
+					return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
+				}
+
+				// Step 1-3, 7: Execute swap with malicious callback
+				amount0, amount1 := mockInstanceSwap(
+					wugnotPath, gnsPath, STANDARD_FEE_TIER,
+					routerAddr, false, "100",
+					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+					routerAddr, maliciousCallback,
+				)
+
+				uassert.True(t, amount0 != "0" || amount1 != "0",
+					"Original swap should complete successfully")
+			},
+			verify: func(t *testing.T) {
+				// Pool should be unlocked after swap
+				pool := getMockInstance().mustGetPoolBy(wugnotPath, gnsPath, STANDARD_FEE_TIER)
+				slot0 := pool.Slot0()
+				uassert.True(t, slot0.Unlocked(), "Pool should be unlocked after swap")
+			},
+		},
+		{
+			name:        "success by unlock after swap completes",
+			description: "Pool should be unlocked after swap completes, allowing subsequent swaps",
+			setup: func(t *testing.T) {
+				resetObject(t)
+				burnTokens(t)
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
+
+				TokenFaucet(t, gnsPath, routerAddr)
+				TokenFaucet(t, wugnotPath, routerAddr)
+
+				testing.SetRealm(rouRealm)
+				TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+				TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+			},
+			action: func(t *testing.T) {
+				// Execution flow:
+				// 1. Check initial state: pool.Slot0.unlocked = true
+				// 2. Execute first Swap:
+				//    a. Swap locks pool -> unlocked = false
+				//    b. Swap executes and calls callback
+				//    c. Callback transfers tokens
+				//    d. defer unlocks pool -> unlocked = true
+				// 3. Verify pool is unlocked after first swap
+				// 4. Execute second Swap (proves unlock worked):
+				//    a. If pool was still locked, this would panic
+				//    b. Swap succeeds -> confirms proper unlock
+
+				// Step 1: Verify initial unlocked state
+				pool := getMockInstance().mustGetPoolBy(wugnotPath, gnsPath, STANDARD_FEE_TIER)
+				slot0 := pool.Slot0()
+				uassert.True(t, slot0.Unlocked(), "Pool should start unlocked")
+
+				// Step 2: Execute first swap
+				testing.SetRealm(rouRealm)
+				mockInstanceSwap(
+					wugnotPath, gnsPath, STANDARD_FEE_TIER,
+					routerAddr, false, "100",
+					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+					routerAddr,
+					func(cur realm, amount0Delta, amount1Delta int64) error {
+						return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
+					},
+				)
+
+				// Step 3: Verify unlocked after first swap
+				pool = getMockInstance().mustGetPoolBy(wugnotPath, gnsPath, STANDARD_FEE_TIER)
+				slot0 = pool.Slot0()
+				uassert.True(t, slot0.Unlocked(), "Pool should be unlocked after first swap")
+
+				// Step 4: Execute second swap to prove unlock worked
+				TokenFaucet(t, gnsPath, routerAddr)
+				TokenFaucet(t, wugnotPath, routerAddr)
+
+				testing.SetRealm(rouRealm)
+				amount0, amount1 := mockInstanceSwap(
+					wugnotPath, gnsPath, STANDARD_FEE_TIER,
+					routerAddr, false, "50",
+					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+					routerAddr,
+					func(cur realm, amount0Delta, amount1Delta int64) error {
+						return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
+					},
+				)
+
+				uassert.True(t, amount0 != "0" || amount1 != "0",
+					"Second swap should succeed after first completes")
+			},
+			verify: func(t *testing.T) {},
+		},
+		{
+			name:        "expected lock state during swap",
+			description: "Pool should be locked during callback execution",
+			setup: func(t *testing.T) {
+				resetObject(t)
+				burnTokens(t)
+				InitialisePoolTest(t)
+				MintPositionAll(t, adminAddr)
+
+				TokenFaucet(t, gnsPath, routerAddr)
+				TokenFaucet(t, gnsPath, routerAddr)
+				TokenFaucet(t, wugnotPath, routerAddr)
+				TokenFaucet(t, wugnotPath, routerAddr)
+
+				testing.SetRealm(rouRealm)
+				TokenApprove(t, gnsPath, routerAddr, poolAddr, maxApprove)
+				TokenApprove(t, wugnotPath, routerAddr, poolAddr, maxApprove)
+			},
+			action: func(t *testing.T) {
+				// Execution flow:
+				// 1. User initiates Swap -> pool.Slot0.unlocked = false (locked)
+				// 2. Swap executes computeSwap
+				// 3. Swap transfers output tokens to recipient
+				// 4. Swap calls swapCallback (callbackWithLockCheck)
+				// 5. Inside callback: check pool.Slot0.unlocked -> should be false (locked)
+				// 6. Callback transfers input tokens to pool
+				// 7. Swap completes, defer unlocks pool -> unlocked = true
+				// 8. Verify: lockStateDuringCallback == true (was locked during callback)
+
+				lockStateDuringCallback := false
+
+				testing.SetRealm(rouRealm)
+				callbackWithLockCheck := func(cur realm, amount0Delta, amount1Delta int64) error {
+					// Step 5: Verify pool is locked during callback
+					pool := getMockInstance().mustGetPoolBy(wugnotPath, gnsPath, STANDARD_FEE_TIER)
+					slot0 := pool.Slot0()
+					lockStateDuringCallback = !slot0.Unlocked() // true if locked
+
+					// Step 6: Complete swap payment
+					return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
+				}
+
+				// Step 1-4, 7: Execute swap
+				amount0, amount1 := mockInstanceSwap(
+					wugnotPath, gnsPath, STANDARD_FEE_TIER,
+					routerAddr, false, "100",
+					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
+					routerAddr, callbackWithLockCheck,
+				)
+
+				// Step 8: Verify lock was active during callback
+				uassert.True(t, lockStateDuringCallback,
+					"Pool should be locked during callback execution")
+				uassert.True(t, amount0 != "0" || amount1 != "0", "Swap should succeed")
+			},
+			verify: func(t *testing.T) {
+				pool := getMockInstance().mustGetPoolBy(wugnotPath, gnsPath, STANDARD_FEE_TIER)
+				slot0 := pool.Slot0()
+				uassert.True(t, slot0.Unlocked(),
+					"Pool should be unlocked after swap completes")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setup(t)
+			tt.action(t)
+			tt.verify(t)
+			t.Logf("passed: %s", tt.description)
+		})
+	}
+}
