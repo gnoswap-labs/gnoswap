@@ -15,7 +15,7 @@ func (self *ExternalIncentiveResolver) isActive(currentTimestamp int64) bool {
 }
 
 func (self *ExternalIncentiveResolver) IsEnded(currentTimestamp int64) bool {
-	return currentTimestamp >= self.EndTimestamp()
+	return currentTimestamp > self.EndTimestamp()
 }
 
 func (self *ExternalIncentiveResolver) IsStarted(currentTimestamp int64) bool {
