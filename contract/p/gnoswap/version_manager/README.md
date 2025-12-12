@@ -9,11 +9,10 @@ Version Manager implements a Strategy Pattern-based system that enables hot-swap
 ## Features
 
 - **Zero-Downtime Upgrades**: Switch implementations at runtime without service interruption
-- **Unified Storage**: All versions share a single KVStore with permission-based access control
+- **Unified Storage**: All versions share a single KVStore owned by the domain (proxy) realm
 - **Domain-Scoped Security**: Only authorized packages within the domain path can register
-- **Permission Management**: Active version gets write access, others remain read-only
 - **Hot-Swapping**: Instant version switching through dynamic strategy replacement
-- **Backward Compatibility**: Previous versions remain accessible in read-only mode
+- **Secure by Design**: Implementation realms cannot directly modify storage (see Storage Access Model below)
 
 **Pattern**: Strategy + Plugin Architecture
 
@@ -97,7 +96,7 @@ type protocolFeeV2 struct {
 }
 
 func init() {
-    // Register v2 - will be read-only until explicitly activated
+    // Register v2
     manager := protocol_fee.GetManager()
     manager.RegisterInitializer(func(store any) any {
         return &protocolFeeV2{store: store}
@@ -137,9 +136,6 @@ func UpgradeToV2() error {
 
     // Hot-swap to v2 - zero downtime
     return manager.ChangeImplementation("gno.land/r/gnoswap/protocol_fee/v2")
-
-    // v2 now has write access
-    // v1 automatically becomes read-only
 }
 ```
 
@@ -151,13 +147,13 @@ func UpgradeToV2() error {
 1. Domain package initializes version manager with KVStore
    ↓
 2. v1 package calls RegisterInitializer during init()
-   → Becomes active implementation (write access)
+   → Becomes active implementation
    ↓
 3. v2 package calls RegisterInitializer during init()
-   → Registered but read-only
+   → Registered
    ↓
 4. v3 package calls RegisterInitializer during init()
-   → Registered but read-only
+   → Registered
 ```
 
 ### Version Switching Flow
@@ -169,20 +165,17 @@ func UpgradeToV2() error {
    ↓
 3. Executes v2 initializer with shared KVStore
    ↓
-4. Updates permissions:
-   - v1: Write → ReadOnly
-   - v2: ReadOnly → Write
-   - v3: ReadOnly (unchanged)
+4. Updates currentImplementation pointer to v2
    ↓
-5. v2 is now active with write access
+5. v2 is now the active implementation
 ```
 
-### Permission Model
+### Storage Access Model
 
-- **Write Access**: Only the active implementation can modify storage
-- **Read-Only Access**: Inactive versions can read but not write
-- **Automatic Transition**: Permission changes are handled by the manager during version switch
-- **Isolation**: Each version operates through the same KVStore but with enforced permissions
+- **Domain Ownership**: The domain (proxy) realm owns the KVStore and has write permission
+- **Realm Context Preservation**: When domain calls implementation, `runtime.CurrentRealm()` remains the domain realm
+- **No Direct Permission Grants**: Implementation realms do not receive storage permissions directly
+- **Security by Design**: External callers cannot invoke implementation realms to modify storage
 
 ### Best Practices
 
@@ -199,7 +192,6 @@ The package returns errors for:
 - Unauthorized caller attempting to register (not in domain path)
 - Duplicate registration of the same package path
 - Attempting to switch to an unregistered version
-- Permission update failures during version switching
 - Invalid initializer function type
 
 ## Use Cases
@@ -238,7 +230,7 @@ manager.ChangeImplementation("gno.land/r/gnoswap/protocol_fee/v1_hotfix")
 
 - Built on Strategy Pattern for runtime algorithm swapping
 - Uses Plugin Architecture for dynamic version loading
-- Leverages KVStore's permission system for access control
+- Storage access controlled via realm context (`runtime.CurrentRealm()`)
 - No data migration required - all versions share the same storage
 - Type assertions required when retrieving current implementation
 - AVL tree used for efficient initializer storage and lookup
@@ -246,9 +238,9 @@ manager.ChangeImplementation("gno.land/r/gnoswap/protocol_fee/v1_hotfix")
 ## Limitations
 
 - **Type Safety**: Requires runtime type assertion to domain interface
-- **Atomic Switching**: Permission updates are not transactionally rolled back on partial failure
 - **Storage Schema**: Requires careful schema design for cross-version compatibility
 - **Registration Order**: First registered version becomes the initial active implementation
+- **Domain Call Requirement**: Implementation functions must be called through domain proxy for storage access
 
 ## Related Packages
 
