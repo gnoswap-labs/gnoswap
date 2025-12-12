@@ -104,6 +104,13 @@ func (s *stakerV1) CreateExternalIncentive(
 	poolResolver := NewPoolResolver(pool)
 	poolResolver.IncentivesResolver().create(caller, incentive)
 
+	// Add incentiveId to all existing deposits in this pool
+	// This enables O(deposit's incentives) lookup instead of O(pool's all incentives)
+	s.getDeposits().IterateByPoolPath(0, math.MaxUint64, targetPoolPath, func(_ uint64, deposit *sr.Deposit) bool {
+		deposit.AddExternalIncentiveId(incentiveId)
+		return false
+	})
+
 	chain.Emit(
 		"CreateExternalIncentive",
 		"prevAddr", caller.String(),

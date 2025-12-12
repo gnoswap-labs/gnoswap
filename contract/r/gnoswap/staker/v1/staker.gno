@@ -315,6 +315,14 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 		currentWarmups,
 	)
 
+	// Add all active external incentives to the deposit
+	// This enables O(deposit's incentives) lookup instead of O(pool's all incentives)
+	poolResolver := NewPoolResolver(pool)
+	poolResolver.Incentives().IncentiveTrees().Iterate("", "", func(incentiveId string, _ any) bool {
+		deposit.AddExternalIncentiveId(incentiveId)
+		return false
+	})
+
 	deposits := s.getDeposits()
 	deposits.set(positionId, deposit)
 
@@ -334,8 +342,6 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 
 	signedLiquidity := i256.FromUint256(liquidity)
 	currentTick := s.poolAccessor.GetSlot0Tick(poolPath)
-
-	poolResolver := NewPoolResolver(pool)
 
 	isInRange := false
 	if pn.IsInRange(positionId) {

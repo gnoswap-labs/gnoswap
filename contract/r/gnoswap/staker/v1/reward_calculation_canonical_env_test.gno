@@ -395,6 +395,13 @@ func (self *canonicalRewardState) StakeToken(positionId uint64, targetPoolPath s
 		return errors.New("pool has no tier or incentive")
 	}
 
+	// Add active incentive IDs to deposit
+	poolResolver := NewPoolResolver(pool)
+	poolResolver.Incentives().IncentiveTrees().Iterate("", "", func(incentiveId string, _ any) bool {
+		deposit.AddExternalIncentiveId(incentiveId)
+		return false
+	})
+
 	// update global state
 	self.global.deposits.set(positionId, deposit)
 
@@ -402,7 +409,6 @@ func (self *canonicalRewardState) StakeToken(positionId uint64, targetPoolPath s
 	getMockInstance().updatePoolTier(self.global.poolTier)
 
 	signedLiquidity := i256.FromUint256(deposit.Liquidity())
-	poolResolver := NewPoolResolver(pool)
 	if self.isInRange(deposit) {
 		poolResolver.modifyDeposit(signedLiquidity, currentTimestamp, canonicalPool.tick)
 	}

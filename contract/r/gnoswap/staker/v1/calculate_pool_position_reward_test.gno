@@ -649,6 +649,8 @@ func TestCalcPositionReward(t *testing.T) {
 					100,
 					warmups,
 				)
+				// Add incentive ID to deposit (required for reward calculation)
+				deposit.AddExternalIncentiveId(incentiveId)
 				s.getDeposits().set(positionId, deposit)
 
 				// Initialize pool state
@@ -681,7 +683,19 @@ func TestCalcPositionReward(t *testing.T) {
 
 				poolResolver := NewPoolResolver(pool)
 
-				// Create multiple external incentives
+				// Create deposit first
+				warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), baseTime-50)
+				deposit := sr.NewDeposit(
+					testutils.TestAddress("owner5"),
+					poolPath,
+					u256.NewUint(1000000),
+					baseTime-50,
+					-100,
+					100,
+					warmups,
+				)
+
+				// Create multiple external incentives and add to deposit
 				for i := 0; i < 3; i++ {
 					incentiveStartTime := baseTime - 50
 					incentiveEndTime := baseTime + 1000
@@ -703,19 +717,11 @@ func TestCalcPositionReward(t *testing.T) {
 					)
 					incentive.SetRewardPerSecond(rewardAmount / (incentiveEndTime - incentiveStartTime))
 					poolResolver.IncentivesResolver().create(testutils.TestAddress("refundee"), incentive)
+
+					// Add incentive ID to deposit (required for reward calculation)
+					deposit.AddExternalIncentiveId(incentiveId)
 				}
 
-				// Create deposit
-				warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), baseTime-50)
-				deposit := sr.NewDeposit(
-					testutils.TestAddress("owner5"),
-					poolPath,
-					u256.NewUint(1000000),
-					baseTime-50,
-					-100,
-					100,
-					warmups,
-				)
 				s.getDeposits().set(positionId, deposit)
 
 				// Initialize pool state
@@ -1007,6 +1013,8 @@ func TestCalcPositionReward(t *testing.T) {
 					100,
 					warmups,
 				)
+				// Add incentive ID to deposit (required for reward calculation)
+				deposit.AddExternalIncentiveId(incentiveId)
 				s.getDeposits().set(positionId, deposit)
 
 				// Initialize pool state

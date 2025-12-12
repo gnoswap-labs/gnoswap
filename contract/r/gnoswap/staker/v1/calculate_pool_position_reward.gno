@@ -103,18 +103,17 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 	}
 	rewardState.reset()
 
-	// Query incentives only for the time window this position could actually earn rewards.
-	allIncentives := poolResolver.IncentivesResolver().GetAllInTimestamps(0, param.CurrentTime)
+	// Use deposit's indexed incentive IDs instead of iterating all pool incentives
+	// This is O(deposit's incentives) instead of O(pool's all incentives)
+	incentiveIds := deposit.GetExternalIncentiveIdList()
+	incentivesResolver := poolResolver.IncentivesResolver()
 
-	// Process each external incentive with lazy initialization:
-	// When a new incentive is created, we don't iterate through all deposits for performance.
-	//
-	// Instead, we determine the appropriate lastCollectTime here:
-	// - If a deposit already has a lastCollectTime for an incentive, use it
-	// - If not (first time collecting), use max(deposit.stakeTime, incentive.startTimestamp)
-	//
-	// This avoids O(n) iteration on every incentive creation while ensuring correct reward calculation.
-	for incentiveId, incentive := range allIncentives {
+	for _, incentiveId := range incentiveIds {
+		incentive, ok := incentivesResolver.Get(incentiveId)
+		if !ok {
+			continue
+		}
+
 		externalLastCollectTime := depositResolver.ExternalRewardLastCollectTime(incentiveId)
 
 		incentiveResolver := NewExternalIncentiveResolver(incentive)

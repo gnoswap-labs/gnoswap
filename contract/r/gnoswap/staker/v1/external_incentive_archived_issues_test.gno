@@ -53,6 +53,7 @@ func TestRealFlow_CollectRewardAfterArchived(t *testing.T) {
 	// User stakes DURING the incentive period
 	positionId := uint64(1)
 	stakeTime := startTime + 100
+	warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), stakeTime)
 	deposit := sr.NewDeposit(
 		staker1,
 		poolPath,
@@ -60,9 +61,15 @@ func TestRealFlow_CollectRewardAfterArchived(t *testing.T) {
 		stakeTime,
 		-10000,
 		10000,
-		[]sr.Warmup{},
+		warmups,
 	)
+	// Add incentive ID to deposit (simulating StakeToken flow)
+	deposit.AddExternalIncentiveId(incentiveId)
 	instance.getDeposits().set(positionId, deposit)
+
+	// Initialize pool state for reward calculation
+	poolResolver.StakedLiquidity().Set(stakeTime, u256.NewUint(1000))
+	poolResolver.HistoricalTick().Set(stakeTime, int32(0))
 
 	// Verify incentive is active before ending
 	uassert.False(t, incentivesResolver.IsArchived(incentiveId), "should not be archived yet")
@@ -136,16 +143,24 @@ func TestRealFlow_UnstakeAfterArchived(t *testing.T) {
 	incentivesResolver.create(creator, incentive)
 
 	positionId := uint64(1)
+	stakeTime := startTime + 100
+	warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), stakeTime)
 	deposit := sr.NewDeposit(
 		staker1,
 		poolPath,
 		u256.NewUint(1000),
-		startTime+100,
+		stakeTime,
 		-10000,
 		10000,
-		[]sr.Warmup{},
+		warmups,
 	)
+	// Add incentive ID to deposit (simulating StakeToken flow)
+	deposit.AddExternalIncentiveId(incentiveId)
 	instance.getDeposits().set(positionId, deposit)
+
+	// Initialize pool state for reward calculation
+	poolResolver.StakedLiquidity().Set(stakeTime, u256.NewUint(1000))
+	poolResolver.HistoricalTick().Set(stakeTime, int32(0))
 
 	// End incentive and archive it
 	incentiveResolver, _ := incentivesResolver.GetIncentiveResolver(incentiveId)
