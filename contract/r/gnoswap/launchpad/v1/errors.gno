@@ -12,7 +12,7 @@ var (
 	errDataNotFound        = errors.New("[GNOSWAP-LAUNCHPAD-003] requested data not found")
 	errActiveProject       = errors.New("[GNOSWAP-LAUNCHPAD-004] project is active")
 	errInactiveProject     = errors.New("[GNOSWAP-LAUNCHPAD-005] project is inactive")
-	errInactiveTier        = errors.New("[GNOSWAP-LAUNCHPAD-006] pool is inactive")
+	errInactiveTier        = errors.New("[GNOSWAP-LAUNCHPAD-006] tier is inactive")
 	errInvalidInput        = errors.New("[GNOSWAP-LAUNCHPAD-007] invalid input data")
 	errDuplicateProject    = errors.New("[GNOSWAP-LAUNCHPAD-008] can not create same project in same block")
 	errInvalidTier         = errors.New("[GNOSWAP-LAUNCHPAD-009] invalid pool")
