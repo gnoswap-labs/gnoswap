@@ -15,7 +15,7 @@ var (
 	errInactiveTier        = errors.New("[GNOSWAP-LAUNCHPAD-006] tier is inactive")
 	errInvalidInput        = errors.New("[GNOSWAP-LAUNCHPAD-007] invalid input data")
 	errDuplicateProject    = errors.New("[GNOSWAP-LAUNCHPAD-008] can not create same project in same block")
-	errInvalidTier         = errors.New("[GNOSWAP-LAUNCHPAD-009] invalid pool")
+	errInvalidTier         = errors.New("[GNOSWAP-LAUNCHPAD-009] invalid tier")
 	errInsufficientBalance = errors.New("[GNOSWAP-LAUNCHPAD-010] insufficient balance")
 	errInvalidLength       = errors.New("[GNOSWAP-LAUNCHPAD-011] invalid length")
 	errNotEnoughBalance    = errors.New("[GNOSWAP-LAUNCHPAD-012] not enough balance")
