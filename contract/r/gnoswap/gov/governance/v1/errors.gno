@@ -15,7 +15,7 @@ var (
 	errAlreadyVoted                                   = errors.New("[GNOSWAP-GOVERNANCE-006] can not vote twice")
 	errNotEnoughVotingWeight                          = errors.New("[GNOSWAP-GOVERNANCE-007] not enough voting power")
 	errAlreadyCanceledProposal                        = errors.New("[GNOSWAP-GOVERNANCE-008] can not cancel already canceled proposal")
-	errUnableToCancleVotingProposal                   = errors.New("[GNOSWAP-GOVERNANCE-009] unable to cancel voting proposal")
+	errUnableToCancelVotingProposal                   = errors.New("[GNOSWAP-GOVERNANCE-009] unable to cancel voting proposal")
 	errUnableToCancelProposalWithVoterEnoughDelegated = errors.New("[GNOSWAP-GOVERNANCE-010] unable to cancel proposal with voter has enough delegation")
 	errTextProposalNotExecutable                      = errors.New("[GNOSWAP-GOVERNANCE-011] can not execute text proposal")
 	errUnsupportedProposalType                        = errors.New("[GNOSWAP-GOVERNANCE-012] unsupported proposal type")
