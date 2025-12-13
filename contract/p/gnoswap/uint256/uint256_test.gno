@@ -738,3 +738,55 @@ func TestOperationConsistency(t *testing.T) {
 		uassert.True(t, result.Eq(x))
 	})
 }
+
+func TestInt64(t *testing.T) {
+	tests := []struct {
+		name string
+		x    string
+		want int64
+	}{
+		{name: "zero", x: "0", want: 0},
+		{name: "small positive", x: "42", want: 42},
+		{name: "max int64", x: "9223372036854775807", want: 9223372036854775807},
+		{name: "max int64 plus one wraps", x: "9223372036854775808", want: -9223372036854775808},
+		{name: "all ones becomes -1", x: MAX_UINT256, want: -1},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			x := MustFromDecimal(tt.x)
+			if got := x.Int64(); got != tt.want {
+				t.Errorf("Int64(%s) = %d, want %d", tt.x, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNewUintFromInt64(t *testing.T) {
+	t.Run("positive", func(t *testing.T) {
+		uassert.Equal(t, uint64(123), NewUintFromInt64(123)[0])
+	})
+
+	t.Run("zero", func(t *testing.T) {
+		uassert.Equal(t, uint64(0), NewUintFromInt64(0)[0])
+	})
+
+	t.Run("negative panics", func(t *testing.T) {
+		uassert.PanicsContains(t, "val is negative", func() {
+			NewUintFromInt64(-1)
+		})
+	})
+}
+
+func TestSetAllOneAndSetOne(t *testing.T) {
+	t.Run("SetAllOne sets max", func(t *testing.T) {
+		z := new(Uint).SetAllOne()
+		uassert.Equal(t, MAX_UINT256, z.ToString())
+	})
+
+	t.Run("SetOne sets one", func(t *testing.T) {
+		z := new(Uint).SetAllOne() // start dirty
+		z.SetOne()
+		uassert.Equal(t, "1", z.ToString())
+	})
+}
