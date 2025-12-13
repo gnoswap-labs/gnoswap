@@ -132,7 +132,7 @@ func callPoolSwap(
 	common.SafeGRC20Approve(cross, token1Path, poolAddr, math.MaxInt64)
 
 	// Define swap callback
-	swapCallback := func(cur realm, amount0Delta, amount1Delta int64) error {
+	swapCallback := func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 		func(cur realm) {
 			testing.SetRealm(testing.NewUserRealm(adminAddr))
 

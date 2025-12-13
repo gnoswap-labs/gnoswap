@@ -96,7 +96,7 @@ func (t *TestPool) HandleWithdrawalFee(positionId uint64, token0Path string, amo
 }
 
 // IPoolSwap interface
-func (t *TestPool) Swap(token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, payer address, swapCallback func(cur realm, amount0Delta, amount1Delta int64) error) (string, string) {
+func (t *TestPool) Swap(token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, payer address, swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error) (string, string) {
 	if !t.isActive("Swap") {
 		panic("test implementation: Swap not supported")
 	}

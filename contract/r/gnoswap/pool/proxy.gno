@@ -184,7 +184,7 @@ func HandleWithdrawalFee(
 //   - amountSpecified: amount to swap (positive for exact input, negative for exact output)
 //   - sqrtPriceLimitX96: price limit for the swap
 //   - payer: address that will pay for the swap
-//   - swapCallback: callback function for token transfer
+//   - swapCallback: callback function for token transfer, callbackMarker is used to identify the callback
 //
 // Returns:
 //   - string: amount of token0 delta
@@ -199,7 +199,7 @@ func Swap(
 	amountSpecified string,
 	sqrtPriceLimitX96 string,
 	payer address,
-	swapCallback func(cur realm, amount0Delta, amount1Delta int64) error,
+	swapCallback func(cur realm, amount0Delta, amount1Delta int64, callbackMarker *CallbackMarker) error,
 ) (string, string) {
 	return getImplementation().Swap(
 		token0Path,

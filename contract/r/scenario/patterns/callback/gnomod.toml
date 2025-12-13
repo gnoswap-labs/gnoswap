@@ -1,0 +1,2 @@
+module = "gno.land/r/gnoswap/scenario/patterns/callback"
+gno = "0.9"

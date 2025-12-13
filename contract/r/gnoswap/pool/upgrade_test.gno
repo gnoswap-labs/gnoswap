@@ -532,7 +532,7 @@ func TestSwap(t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		Swap(cross, tt.token0Path, tt.token1Path, tt.fee, tt.recipient, tt.zeroForOne, tt.amountSpecified, tt.sqrtPriceLimitX96, tt.caller, func(cur realm, amount0Delta int64, amount1Delta int64) error {
+		Swap(cross, tt.token0Path, tt.token1Path, tt.fee, tt.recipient, tt.zeroForOne, tt.amountSpecified, tt.sqrtPriceLimitX96, tt.caller, func(cur realm, amount0Delta int64, amount1Delta int64, _ *CallbackMarker) error {
 			return nil
 		})
 

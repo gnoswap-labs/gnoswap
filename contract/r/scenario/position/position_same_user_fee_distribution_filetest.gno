@@ -235,7 +235,7 @@ func executeSwaps() {
 		"10000000",
 		MIN_PRICE,
 		adminAddr,
-		func(cur realm, amount0Delta, amount1Delta int64) error {
+		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, true)
 		},
 	)
@@ -254,7 +254,7 @@ func executeSwaps() {
 		"10000000",
 		MAX_PRICE,
 		adminAddr,
-		func(cur realm, amount0Delta, amount1Delta int64) error {
+		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(barPath, fooPath, amount0Delta, amount1Delta, false)
 		},
 	)
