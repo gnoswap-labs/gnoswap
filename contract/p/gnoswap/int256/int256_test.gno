@@ -303,6 +303,27 @@ func TestSubOverflow(t *testing.T) {
 			expected:         "1",
 			expectedOverflow: true,
 		},
+		{
+			name:             "min int256 - 1 underflow",
+			x:                "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:                "1",
+			expected:         "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expectedOverflow: true,
+		},
+		{
+			name:             "zero - min int256 overflow",
+			x:                "0",
+			y:                "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expected:         "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expectedOverflow: true,
+		},
+		{
+			name:             "max int256 - (-1) overflow",
+			x:                "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:                "-1",
+			expected:         "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expectedOverflow: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -918,6 +939,18 @@ func TestRsh(t *testing.T) {
 			n:        255,
 			expected: "-1",
 		},
+		{
+			name:     "x is neg & n is greater than or equal 256",
+			x:        "-11111",
+			n:        256,
+			expected: "-1",
+		},
+		{
+			name:     "x is non-neg & n much larger than 256",
+			x:        "11111",
+			n:        300,
+			expected: "0",
+		},
 	}
 
 	for _, tt := range tests {
@@ -961,6 +994,61 @@ func TestRsh_SignExtendProperty(t *testing.T) {
 		z2 := new(Int).Rsh(x, n+1)
 
 		uassert.Equal(t, z2.ToString(), zz.ToString())
+	}
+}
+
+func TestClearAndSetAllBitsOne(t *testing.T) {
+	t.Run("Clear resets to zero", func(t *testing.T) {
+		x := MustFromDecimal("123456789")
+		uassert.Equal(t, "0", x.Clear().ToString())
+	})
+
+	t.Run("SetAllBitsOne sets -1", func(t *testing.T) {
+		x := new(Int).SetAllBitsOne()
+		uassert.Equal(t, "-1", x.ToString())
+	})
+}
+
+func TestBitLen(t *testing.T) {
+	type tc struct {
+		name     string
+		val      *Int
+		expected int
+	}
+
+	one := One()
+	tests := []tc{
+		{name: "zero", val: Zero(), expected: 0},
+		{name: "one", val: one, expected: 1},
+		{name: "two", val: new(Int).SetInt64(2), expected: 2},
+		{name: "three", val: new(Int).SetInt64(3), expected: 2},
+		{name: "seven", val: new(Int).SetInt64(7), expected: 3},
+		{
+			name:     "two_to_64",
+			val:      new(Int).Lsh(one.Clone(), 64),
+			expected: 65,
+		},
+		{
+			name:     "two_to_64_minus_one",
+			val:      new(Int).Sub(new(Int).Lsh(one.Clone(), 64), one),
+			expected: 64,
+		},
+		{
+			name:     "max_int256_boundary",
+			val:      MaxInt256(),
+			expected: 255,
+		},
+		{
+			name:     "min_int256_two_complement_bits",
+			val:      MinInt256(),
+			expected: 256,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			uassert.Equal(t, tt.expected, tt.val.BitLen())
+		})
 	}
 }
 
@@ -1224,6 +1312,32 @@ func TestGt(t *testing.T) {
 		if got != tc.want {
 			t.Errorf("Gt(%s, %s) = %v, want %v", tc.x, tc.y, got, tc.want)
 		}
+	}
+}
+
+func TestLteAndGte(t *testing.T) {
+	tests := []struct {
+		name      string
+		x         string
+		y         string
+		expectLte bool
+		expectGte bool
+	}{
+		{name: "equal values", x: "42", y: "42", expectLte: true, expectGte: true},
+		{name: "less than", x: "-1", y: "0", expectLte: true, expectGte: false},
+		{name: "greater than", x: "1", y: "0", expectLte: false, expectGte: true},
+		{name: "both negative with ordering", x: "-5", y: "-1", expectLte: true, expectGte: false},
+		{name: "negative vs positive", x: "-100", y: "100", expectLte: true, expectGte: false},
+		{name: "zero vs negative", x: "0", y: "-10", expectLte: false, expectGte: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			x := MustFromDecimal(tt.x)
+			y := MustFromDecimal(tt.y)
+			uassert.Equal(t, tt.expectLte, x.Lte(y))
+			uassert.Equal(t, tt.expectGte, x.Gte(y))
+		})
 	}
 }
 

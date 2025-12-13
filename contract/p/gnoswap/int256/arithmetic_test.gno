@@ -35,6 +35,47 @@ func TestNewInt(t *testing.T) {
 	}
 }
 
+func TestIsMinI256(t *testing.T) {
+	tests := []struct {
+		name     string
+		x        string
+		expected bool
+	}{
+		{
+			name:     "exact min",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expected: true,
+		},
+		{
+			name:     "min plus one",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expected: false,
+		},
+		{
+			name:     "negative but not min",
+			x:        "-1",
+			expected: false,
+		},
+		{
+			name:     "zero",
+			x:        "0",
+			expected: false,
+		},
+		{
+			name:     "max int",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			x := MustFromDecimal(tt.x)
+			uassert.Equal(t, tt.expected, x.IsMinI256())
+		})
+	}
+}
+
 func TestGetSetInt64(t *testing.T) {
 	tests := []struct {
 		name string
@@ -149,6 +190,30 @@ func TestRem(t *testing.T) {
 			expected: "1",
 		},
 		{
+			name:     "positive % positive",
+			x:        "13",
+			y:        "3",
+			expected: "1",
+		},
+		{
+			name:     "negative % positive",
+			x:        "-13",
+			y:        "3",
+			expected: "-1",
+		},
+		{
+			name:     "positive % negative (truncated)",
+			x:        "13",
+			y:        "-3",
+			expected: "1",
+		},
+		{
+			name:     "negative % negative",
+			x:        "-13",
+			y:        "-3",
+			expected: "-1",
+		},
+		{
 			name:     "min negative % positive",
 			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
 			y:        "35719473219571942749314729421",
@@ -183,6 +248,12 @@ func TestRem(t *testing.T) {
 			x:        "1974924792517421647328142",
 			y:        "1974924792517421647328142",
 			expected: "0",
+		},
+		{
+			name:     "max positive % small positive",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "2",
+			expected: "1",
 		},
 		{
 			name:        "remainder by zero",
@@ -225,13 +296,33 @@ func TestIsPositive(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:     "smallest positive",
+			x:        "1",
+			expected: true,
+		},
+		{
+			name:     "max positive",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expected: true,
+		},
+		{
 			name:     "negative number",
 			x:        "-100",
 			expected: false,
 		},
 		{
+			name:     "negative one",
+			x:        "-1",
+			expected: false,
+		},
+		{
 			name:     "zero",
 			x:        "0",
+			expected: false,
+		},
+		{
+			name:     "min int256",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
 			expected: false,
 		},
 	}
