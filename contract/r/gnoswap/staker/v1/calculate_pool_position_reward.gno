@@ -103,6 +103,40 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 	}
 	rewardState.reset()
 
+	// Lazy sync: update deposit's incentive list with new incentives created since last update
+	lastUpdate := deposit.LastExternalIncentiveUpdatedAt()
+	if lastUpdate < param.CurrentTime {
+		if s.store.HasExternalIncentivesByCreationTimeStoreKey() {
+			incentivesByTime := s.store.GetExternalIncentivesByCreationTime()
+			incentivesByTime.Iterate(formatInt(lastUpdate), formatInt(param.CurrentTime), func(key string, value any) bool {
+				incentiveId, ok := value.(string)
+				if !ok {
+					return false
+				}
+
+				// Check if this incentive belongs to the current pool
+				externalIncentives := s.store.GetExternalIncentives()
+				incentiveValue, exists := externalIncentives.Get(incentiveId)
+				if !exists {
+					return false
+				}
+
+				incentive, ok := incentiveValue.(*sr.ExternalIncentive)
+				if !ok {
+					return false
+				}
+
+				// Only add if this incentive is for the current pool
+				if incentive.TargetPoolPath() == deposit.TargetPoolPath() {
+					deposit.AddExternalIncentiveId(incentiveId)
+				}
+
+				return false
+			})
+		}
+		deposit.SetLastExternalIncentiveUpdatedAt(param.CurrentTime)
+	}
+
 	// Use deposit's indexed incentive IDs instead of iterating all pool incentives
 	// This is O(deposit's incentives) instead of O(pool's all incentives)
 	// Lazy removal: incentive IDs are removed from deposit when no longer needed

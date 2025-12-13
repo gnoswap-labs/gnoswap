@@ -7,6 +7,7 @@ import (
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
@@ -104,12 +105,15 @@ func (s *stakerV1) CreateExternalIncentive(
 	poolResolver := NewPoolResolver(pool)
 	poolResolver.IncentivesResolver().create(caller, incentive)
 
-	// Add incentiveId to all existing deposits in this pool
-	// This enables O(deposit's incentives) lookup instead of O(pool's all incentives)
-	s.getDeposits().IterateByPoolPath(0, math.MaxUint64, targetPoolPath, func(_ uint64, deposit *sr.Deposit) bool {
-		deposit.AddExternalIncentiveId(incentiveId)
-		return false
-	})
+	// Add to time-based index for lazy discovery during CollectReward
+	var incentivesByTime *avl.Tree
+	if !s.store.HasExternalIncentivesByCreationTimeStoreKey() {
+		incentivesByTime = avl.NewTree()
+	} else {
+		incentivesByTime = s.store.GetExternalIncentivesByCreationTime()
+	}
+	incentivesByTime.Set(formatInt(currentTime), incentiveId)
+	s.store.SetExternalIncentivesByCreationTime(incentivesByTime)
 
 	chain.Emit(
 		"CreateExternalIncentive",

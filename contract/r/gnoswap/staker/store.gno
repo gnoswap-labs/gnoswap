@@ -36,6 +36,7 @@ const (
 	StoreKeyPoolTierGetHalvingBlocksInRange  StoreKey = "poolTierGetHalvingBlocksInRange"
 	StoreKeyWarmupTemplate                   StoreKey = "warmupTemplate"
 	StoreKeyCurrentSwapBatch                 StoreKey = "currentSwapBatch"
+	StoreKeyExternalIncentivesByCreationTime StoreKey = "externalIncentivesByCreationTime"
 )
 
 type stakerStore struct {
@@ -527,6 +528,29 @@ func (s *stakerStore) GetCurrentSwapBatch() *SwapBatchProcessor {
 
 func (s *stakerStore) SetCurrentSwapBatch(batch *SwapBatchProcessor) error {
 	return s.kvStore.Set(StoreKeyCurrentSwapBatch.String(), batch)
+}
+
+// ExternalIncentivesByCreationTime
+func (s *stakerStore) HasExternalIncentivesByCreationTimeStoreKey() bool {
+	return s.kvStore.Has(StoreKeyExternalIncentivesByCreationTime.String())
+}
+
+func (s *stakerStore) GetExternalIncentivesByCreationTime() *avl.Tree {
+	result, err := s.kvStore.Get(StoreKeyExternalIncentivesByCreationTime.String())
+	if err != nil {
+		panic(err)
+	}
+
+	tree, ok := result.(*avl.Tree)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+	}
+
+	return tree
+}
+
+func (s *stakerStore) SetExternalIncentivesByCreationTime(tree *avl.Tree) error {
+	return s.kvStore.Set(StoreKeyExternalIncentivesByCreationTime.String(), tree)
 }
 
 // NewStakerStore creates a new staker store instance with the provided KV store.
