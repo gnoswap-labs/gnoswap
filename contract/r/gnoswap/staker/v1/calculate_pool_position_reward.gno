@@ -128,7 +128,7 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 		}
 
 		// Check if incentive is active during this specific collection period
-		if !incentiveResolver.IsStarted(param.CurrentTime) || incentiveResolver.StartTimestamp() >= param.CurrentTime {
+		if !incentiveResolver.IsStarted(param.CurrentTime) {
 			return false
 		}
 
