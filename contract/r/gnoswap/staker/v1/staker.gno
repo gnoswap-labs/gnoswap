@@ -517,6 +517,7 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 		toUserExternalPenalty[rewardToken] = safeAddInt64(toUserExternalPenalty[rewardToken], externalPenalty)
 		totalDistributedRewardAmount := safeAddInt64(rewardAmount, externalPenalty)
 		depositResolver.addCollectedExternalReward(incentiveId, totalDistributedRewardAmount)
+		incentiveResolver.addDistributedRewardAmount(totalDistributedRewardAmount)
 
 		// Update the last collect time ONLY for this specific incentive
 		// This happens only if the reward was successfully transferred.
@@ -748,40 +749,6 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 	lowerTick := poolResolver.TickResolver(depositResolver.TickLower())
 	upperTick.modifyDepositUpper(currentTime, signedLiquidity)
 	lowerTick.modifyDepositLower(currentTime, signedLiquidity)
-
-	incentivesResolver := poolResolver.IncentivesResolver()
-	deposit.CollectedExternalRewards().Iterate("", "", func(incentiveId string, value any) bool {
-		collectedExternalReward, ok := value.(int64)
-		if !ok {
-			panic("failed to cast value to int64")
-		}
-
-		// if incentive is archived, no need to add distributed and archive
-		if incentivesResolver.IsArchived(incentiveId) {
-			return false // continue iteration
-		}
-
-		externalIncentive, ok := incentivesResolver.Get(incentiveId)
-		if !ok {
-			panic(makeErrorWithDetails(
-				errDataNotFound,
-				ufmt.Sprintf("incentive(%s) not found", incentiveId),
-			))
-		}
-
-		externalIncentiveResolver := NewExternalIncentiveResolver(externalIncentive)
-		externalIncentiveResolver.addDistributedRewardAmount(collectedExternalReward)
-
-		// archive incentive if it is finished (all rewards distributed)
-		// this is to prevent re-claiming GNS or rewards after the incentive is finished
-		if externalIncentiveResolver.IsFinished() {
-			if err := s.archiveEndedExternalIncentive(incentivesResolver, externalIncentive); err != nil {
-				panic(err)
-			}
-		}
-
-		return false // continue iteration
-	})
 
 	s.getDeposits().remove(positionId)
 	s.getStakers().removeDeposit(deposit.Owner(), positionId)

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
@@ -103,6 +104,31 @@ func (s *stakerV1) CreateExternalIncentive(
 
 	poolResolver := NewPoolResolver(pool)
 	poolResolver.IncentivesResolver().create(caller, incentive)
+
+	// Add to time-based index for lazy discovery during CollectReward
+	var incentivesByTime *avl.Tree
+	if !s.store.HasExternalIncentivesByCreationTimeStoreKey() {
+		incentivesByTime = avl.NewTree()
+	} else {
+		incentivesByTime = s.store.GetExternalIncentivesByCreationTime()
+	}
+
+	// Handle timestamp collisions by using slice of incentive IDs
+	timeKey := formatInt(currentTime)
+	var incentiveIds []string
+	if value, exists := incentivesByTime.Get(timeKey); exists {
+		// Append to existing slice
+		existingIds, ok := value.([]string)
+		if !ok {
+			panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected []string, got %T", value))
+		}
+		incentiveIds = append(existingIds, incentiveId)
+	} else {
+		// Create new slice
+		incentiveIds = []string{incentiveId}
+	}
+	incentivesByTime.Set(timeKey, incentiveIds)
+	s.store.SetExternalIncentivesByCreationTime(incentivesByTime)
 
 	chain.Emit(
 		"CreateExternalIncentive",
@@ -205,18 +231,10 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 	// Mark incentive as refunded and update
 	// After this update, attempts to re-claim GNS or rewards that were deposited
 	// through the `endExternalIncentive` function will be blocked.
+	// Incentive remains in active tree but with Refunded=true flag
 	incentiveResolver.SetRefunded(true)
 	incentiveResolver.addDistributedRewardAmount(refund)
 	incentivesResolver.update(incentive.Refundee(), incentive)
-
-	// archive incentive if it is finished (all rewards distributed)
-	// this is to prevent re-claiming GNS or rewards after the incentive is finished
-	if incentiveResolver.IsFinished() {
-		err = s.archiveEndedExternalIncentive(incentivesResolver, incentive)
-		if err != nil {
-			panic(err)
-		}
-	}
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -277,9 +295,4 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 	refund = safeSubInt64(refund, incentiveResolver.DistributedRewardAmount())
 
 	return incentiveResolver.ExternalIncentive, refund, nil
-}
-
-func (s *stakerV1) archiveEndedExternalIncentive(resolver *IncentivesResolver, incentive *sr.ExternalIncentive) error {
-	resolver.archiveIncentive(incentive.IncentiveId())
-	return nil
 }

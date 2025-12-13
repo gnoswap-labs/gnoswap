@@ -321,7 +321,7 @@ func (s *stakerV1) buildApiRewards(deposit *sr.Deposit, reward Reward) []ApiRewa
 		}
 		incentive := s.getExternalIncentives().get(incentiveId)
 		if incentive == nil {
-			// Incentive may have been archived/removed; skip to keep response construction robust.
+			// Incentive may have been removed; skip to keep response construction robust.
 			continue
 		}
 		rewards = append(rewards, ApiReward{

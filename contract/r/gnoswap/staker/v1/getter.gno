@@ -41,6 +41,7 @@ func (s *stakerV1) GetPoolIncentiveIdList(poolPath string) []string {
 	incentives := pool.Incentives()
 
 	ids := []string{}
+	// Iterate active incentives only
 	incentives.IncentiveTrees().Iterate("", "", func(key string, value any) bool {
 		ids = append(ids, key)
 		return false
@@ -52,18 +53,14 @@ func (s *stakerV1) GetPoolIncentiveIdList(poolPath string) []string {
 // getIncentive retrieves an external incentive by ID.
 func (s *stakerV1) getIncentive(poolPath string, incentiveId string) *sr.ExternalIncentive {
 	pool := s.getPoolByPoolPath(poolPath)
+	poolResolver := NewPoolResolver(pool)
 
-	incentives := pool.Incentives()
-	incentive, exist := incentives.IncentiveTrees().Get(incentiveId)
+	incentive, exist := poolResolver.IncentivesResolver().Get(incentiveId)
 	if !exist {
 		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
 	}
 
-	ictv, ok := incentive.(*sr.ExternalIncentive)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast incentive to *ExternalIncentive: %T", incentive))
-	}
-	return ictv
+	return incentive
 }
 
 // GetIncentiveStartTimestamp returns the start timestamp of an incentive.
@@ -261,33 +258,6 @@ func (s *stakerV1) GetExternalIncentiveByPoolPath(poolPath string) []sr.External
 	})
 
 	return incentives
-}
-
-func (s *stakerV1) IsArchivedExternalIncentive(incentiveId string) bool {
-	incentiveI, exist := s.store.GetExternalIncentives().Get(incentiveId)
-	if !exist {
-		return true
-	}
-
-	incentive, ok := incentiveI.(*sr.ExternalIncentive)
-	if !ok {
-		panic("failed to cast incentive to *ExternalIncentive")
-	}
-
-	result, exists := s.store.GetPools().Get(incentive.TargetPoolPath())
-	if !exists {
-		return true
-	}
-
-	pool, ok := result.(*sr.Pool)
-	if !ok {
-		panic("failed to cast pool to *Pool")
-	}
-
-	incentives := pool.Incentives()
-	incentiveResolver := NewIncentivesResolver(incentives)
-
-	return incentiveResolver.IsArchived(incentiveId)
 }
 
 // makeExternalPositionsNode creates JSON nodes for external position data.

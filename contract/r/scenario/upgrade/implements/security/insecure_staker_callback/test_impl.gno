@@ -345,13 +345,6 @@ func (t *TestStaker) GetUnstakingFee() int64 {
 	return t.instance.GetUnstakingFee()
 }
 
-func (t *TestStaker) IsArchivedExternalIncentive(incentiveId string) bool {
-	if !t.isActive("IsArchivedExternalIncentive") {
-		panic("test implementation: IsArchivedExternalIncentive not supported")
-	}
-	return t.instance.IsArchivedExternalIncentive(incentiveId)
-}
-
 func (t *TestStaker) IsStaked(positionId uint64) bool {
 	if !t.isActive("IsStaked") {
 		panic("test implementation: IsStaked not supported")

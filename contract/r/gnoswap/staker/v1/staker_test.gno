@@ -4,7 +4,10 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/p/nt/avl"
+	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
+	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/emission"
 	pl "gno.land/r/gnoswap/pool"
@@ -165,7 +168,7 @@ func TestCollectRewardGracefulDegradation(t *testing.T) {
 }
 
 // TestCollectReward_NilIncentiveSkipped verifies that CollectReward
-// gracefully skips external incentives that have been archived/removed
+// gracefully skips external incentives that have been removed
 // and returns nil when looked up.
 func TestCollectReward_NilIncentiveSkipped(t *testing.T) {
 	initStakerTest(t)
@@ -233,7 +236,7 @@ func TestCollectReward_NilIncentiveSkipped(t *testing.T) {
 		t.Fatal("expected incentive to be created")
 	}
 
-	// Remove the incentive from the external incentives tree to simulate archived/deleted
+	// Remove the incentive from the external incentives tree to simulate deleted
 	incentives.tree.Remove(incentiveId)
 
 	// CollectReward should not panic when incentive is nil
@@ -244,7 +247,7 @@ func TestCollectReward_NilIncentiveSkipped(t *testing.T) {
 }
 
 // CollectReward should not process the same external penalty multiple times
-// when an incentive is missing/archived but the deposit's reward state is kept.
+// when an incentive is missing but the deposit's reward state is kept.
 func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(t *testing.T) {
 	initStakerTest(t)
 
@@ -566,4 +569,108 @@ func TestUnStakeToken(t *testing.T) {
 		"lower tick liquidity should be reduced")
 	uassert.True(t, finalUpperLiquidity.Lt(initialUpperLiquidity) || finalUpperLiquidity.IsZero(),
 		"upper tick liquidity should be reduced")
+}
+
+// TestStakeToken_EmptyIncentiveList tests that after staking,
+// the deposit's external incentive list is empty (lazy sync optimization).
+func TestStakeToken_EmptyIncentiveList(t *testing.T) {
+	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	staker := testutils.TestAddress("staker1")
+	currentTime := time.Now().Unix()
+
+	// Create pool with existing incentive
+	pool := sr.NewPool(poolPath, currentTime)
+
+	creator := testutils.TestAddress("creator")
+	incentiveId := "test-incentive-1"
+	startTime := currentTime - 86400
+	endTime := currentTime + 86400*7
+
+	incentive := sr.NewExternalIncentive(
+		incentiveId,
+		poolPath,
+		WUGNOT_PATH,
+		10_000_000,
+		startTime,
+		endTime,
+		creator,
+		100_000_000,
+		1000,
+		currentTime-86400,
+		false,
+	)
+
+	poolResolver := NewPoolResolver(pool)
+	poolResolver.IncentivesResolver().create(creator, incentive)
+
+	// Create deposit (simulating StakeToken)
+	warmups := sr.DefaultWarmupTemplate()
+	deposit := sr.NewDeposit(
+		staker,
+		poolPath,
+		u256.NewUint(1000),
+		currentTime,
+		-10000,
+		10000,
+		warmups,
+	)
+
+	// Verify deposit's incentive list is empty
+	incentiveIds := deposit.GetExternalIncentiveIdList()
+	if len(incentiveIds) != 0 {
+		t.Errorf("Expected empty incentive list after StakeToken, got %d incentives", len(incentiveIds))
+	}
+
+	// Verify lastExternalIncentiveUpdatedAt is 0
+	lastUpdate := deposit.LastExternalIncentiveUpdatedAt()
+	if lastUpdate != 0 {
+		t.Errorf("Expected lastExternalIncentiveUpdatedAt to be 0, got %d", lastUpdate)
+	}
+}
+
+// TestStore_ExternalIncentivesByCreationTime tests the store functions
+// for the time-based incentive index.
+func TestStore_ExternalIncentivesByCreationTime(t *testing.T) {
+	initStakerTest(t)
+	instance := getMockInstance()
+
+	// Test SetExternalIncentivesByCreationTime
+	tree := avl.NewTree()
+	tree.Set(formatInt(100), []string{"incentive1"})
+	tree.Set(formatInt(200), []string{"incentive2", "incentive3"})
+
+	err := instance.store.SetExternalIncentivesByCreationTime(tree)
+	if err != nil {
+		t.Fatalf("Failed to set incentives tree: %v", err)
+	}
+
+	// Test HasExternalIncentivesByCreationTimeStoreKey - now true
+	if !instance.store.HasExternalIncentivesByCreationTimeStoreKey() {
+		t.Error("Expected store key to exist after set")
+	}
+
+	// Test GetExternalIncentivesByCreationTime
+	retrieved := instance.store.GetExternalIncentivesByCreationTime()
+	if retrieved == nil {
+		t.Fatal("Expected to retrieve tree")
+	}
+
+	// Verify data
+	value1, exists1 := retrieved.Get(formatInt(100))
+	if !exists1 {
+		t.Error("Expected incentive at timestamp 100")
+	}
+	ids1 := value1.([]string)
+	if len(ids1) != 1 || ids1[0] != "incentive1" {
+		t.Errorf("Expected [incentive1], got %v", ids1)
+	}
+
+	value2, exists2 := retrieved.Get(formatInt(200))
+	if !exists2 {
+		t.Error("Expected incentives at timestamp 200")
+	}
+	ids2 := value2.([]string)
+	if len(ids2) != 2 || ids2[0] != "incentive2" || ids2[1] != "incentive3" {
+		t.Errorf("Expected [incentive2, incentive3], got %v", ids2)
+	}
 }

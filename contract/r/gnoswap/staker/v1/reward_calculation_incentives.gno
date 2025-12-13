@@ -16,13 +16,9 @@ func NewIncentivesResolver(incentives *sr.Incentives) *IncentivesResolver {
 	}
 }
 
-// Get incentive by incentiveId (checks both active and archived)
+// Get incentive by incentiveId
 func (self *IncentivesResolver) Get(incentiveId string) (*sr.ExternalIncentive, bool) {
-	// First check active incentives
-	if incentive, ok := retrieveIncentive(self.IncentiveTrees(), incentiveId); ok {
-		return incentive, true
-	}
-	return retrieveIncentive(self.ArchivedIncentives(), incentiveId)
+	return retrieveIncentive(self.IncentiveTrees(), incentiveId)
 }
 
 func (self *IncentivesResolver) GetIncentiveResolver(incentiveId string) (*ExternalIncentiveResolver, bool) {
@@ -30,11 +26,6 @@ func (self *IncentivesResolver) GetIncentiveResolver(incentiveId string) (*Exter
 		return NewExternalIncentiveResolver(incentive), true
 	}
 	return nil, false
-}
-
-func (self *IncentivesResolver) IsArchived(incentiveId string) bool {
-	_, exists := self.ArchivedIncentives().Get(incentiveId)
-	return exists
 }
 
 func retrieveIncentive(tree *avl.Tree, id string) (*sr.ExternalIncentive, bool) {
@@ -47,30 +38,6 @@ func retrieveIncentive(tree *avl.Tree, id string) (*sr.ExternalIncentive, bool) 
 		panic("failed to cast value to *sr.ExternalIncentive")
 	}
 	return v, true
-}
-
-// Get all incentives that is active in given [startTimestamp, endTimestamp)
-func (self *IncentivesResolver) GetAllInTimestamps(startTimestamp, endTimestamp int64) map[string]*sr.ExternalIncentive {
-	incentives := make(map[string]*sr.ExternalIncentive)
-
-	// Only iterate active incentives (not archived)
-	self.IncentiveTrees().Iterate("", "", func(_ string, value any) bool {
-		incentive, ok := value.(*sr.ExternalIncentive)
-		if !ok {
-			return false
-		}
-
-		// incentive is not active
-		if incentive.StartTimestamp() > endTimestamp || incentive.EndTimestamp() < startTimestamp {
-			return false
-		}
-
-		incentives[incentive.IncentiveId()] = incentive
-
-		return false
-	})
-
-	return incentives
 }
 
 // Create a new external incentive
@@ -122,14 +89,6 @@ func (self *IncentivesResolver) endUnclaimablePeriod(endTimestamp int64) {
 		self.UnclaimablePeriods().Remove(startTimestamp)
 	} else {
 		self.UnclaimablePeriods().Set(startTimestamp, endTimestamp)
-	}
-}
-
-// archiveIncentive moves an ended incentive from active to archived storage
-func (self *IncentivesResolver) archiveIncentive(incentiveId string) {
-	if incentive, exists := self.IncentiveTrees().Get(incentiveId); exists {
-		self.ArchivedIncentives().Set(incentiveId, incentive)
-		self.IncentiveTrees().Remove(incentiveId)
 	}
 }
 
