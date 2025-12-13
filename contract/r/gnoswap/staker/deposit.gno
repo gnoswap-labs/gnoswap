@@ -200,6 +200,19 @@ func (d *Deposit) GetExternalIncentiveIdList() []string {
 	return ids
 }
 
+// IterateExternalIncentiveIds iterates over external incentive IDs without allocating a slice.
+// The callback function receives each incentive ID and should return false to continue iteration,
+// or true to stop early. This method is more memory-efficient than GetExternalIncentiveIdList
+// for cases where you only need to process IDs sequentially.
+func (d *Deposit) IterateExternalIncentiveIds(fn func(incentiveId string) bool) {
+	if d.externalIncentiveIds == nil {
+		return
+	}
+	d.externalIncentiveIds.Iterate("", "", func(key string, _ any) bool {
+		return fn(key)
+	})
+}
+
 func (d *Deposit) Warmups() []Warmup {
 	return d.warmups
 }

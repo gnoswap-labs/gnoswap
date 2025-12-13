@@ -301,13 +301,12 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) (
 	}
 
 	// Use deposit-indexed incentive IDs instead of GetAllInTimestamps
-	incentiveIds := deposit.GetExternalIncentiveIdList()
 	incentivesResolver := poolResolver.IncentivesResolver()
 
-	for _, incentiveId := range incentiveIds {
+	deposit.IterateExternalIncentiveIds(func(incentiveId string) bool {
 		incentive, ok := incentivesResolver.Get(incentiveId)
 		if !ok {
-			continue
+			return false
 		}
 
 		externalReward, externalPenalty := poolResolver.RewardStateOf(deposit).calculateExternalReward(lastCollectTimestamp, currentTimestamp, incentive)
@@ -316,7 +315,8 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) (
 			externalRewards[i][incentive.IncentiveId()] = externalReward[i]
 			externalPenalties[i][incentive.IncentiveId()] = externalPenalty[i]
 		}
-	}
+		return false
+	})
 
 	return internalRewards, internalPenalties, externalRewards, externalPenalties
 }
