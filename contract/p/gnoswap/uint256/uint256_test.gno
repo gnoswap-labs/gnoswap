@@ -749,6 +749,7 @@ func TestInt64(t *testing.T) {
 		{name: "small positive", x: "42", want: 42},
 		{name: "max int64", x: "9223372036854775807", want: 9223372036854775807},
 		{name: "max int64 plus one wraps", x: "9223372036854775808", want: -9223372036854775808},
+		{name: "2^64 wraps to zero", x: "18446744073709551616", want: 0},
 		{name: "all ones becomes -1", x: MAX_UINT256, want: -1},
 	}
 
@@ -788,5 +789,29 @@ func TestSetAllOneAndSetOne(t *testing.T) {
 		z := new(Uint).SetAllOne() // start dirty
 		z.SetOne()
 		uassert.Equal(t, "1", z.ToString())
+	})
+}
+
+func TestMustDivModMulPanics(t *testing.T) {
+	one := NewUint(1)
+	zero := NewUint(0)
+	max := MustFromDecimal(MAX_UINT256)
+
+	t.Run("MustDiv panics on zero", func(t *testing.T) {
+		uassert.PanicsContains(t, "division by zero", func() {
+			new(Uint).MustDiv(one, zero)
+		})
+	})
+
+	t.Run("MustMod panics on zero", func(t *testing.T) {
+		uassert.PanicsContains(t, "modulo by zero", func() {
+			new(Uint).MustMod(one, zero)
+		})
+	})
+
+	t.Run("MustMul panics on overflow", func(t *testing.T) {
+		uassert.PanicsContains(t, "uint256: multiplication overflow", func() {
+			new(Uint).MustMul(max, NewUint(2))
+		})
 	})
 }
