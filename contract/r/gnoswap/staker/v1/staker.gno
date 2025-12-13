@@ -318,8 +318,18 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 	// Add all active external incentives to the deposit
 	// This enables O(deposit's incentives) lookup instead of O(pool's all incentives)
 	poolResolver := NewPoolResolver(pool)
-	poolResolver.Incentives().IncentiveTrees().Iterate("", "", func(incentiveId string, _ any) bool {
-		deposit.AddExternalIncentiveId(incentiveId)
+	poolResolver.Incentives().IncentiveTrees().Iterate("", "", func(incentiveId string, value any) bool {
+		incentive, ok := value.(*sr.ExternalIncentive)
+		if !ok {
+			return false
+		}
+
+		incentiveResolver := NewExternalIncentiveResolver(incentive)
+
+		// Only add active or upcoming incentives (skip ended/refunded)
+		if !incentiveResolver.Refunded() && incentiveResolver.EndTimestamp() >= currentTime {
+			deposit.AddExternalIncentiveId(incentiveId)
+		}
 		return false
 	})
 
