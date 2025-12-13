@@ -235,8 +235,8 @@ func (i *poolV1) safeSwapCallback(
 	}
 
 	// execute swap callback
-	// marker is nil just for compatibility with the callback signature
-	err := swapCallback(cross, amount0Delta, amount1Delta, nil)
+	// CallbackMarker is created by the pool module to enforce type-system level validation.
+	err := swapCallback(cross, amount0Delta, amount1Delta, &pl.CallbackMarker{})
 	if err != nil {
 		panic(err)
 	}
