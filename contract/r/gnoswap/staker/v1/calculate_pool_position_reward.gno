@@ -108,6 +108,8 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 	if lastUpdate < param.CurrentTime {
 		if s.store.HasExternalIncentivesByCreationTimeStoreKey() {
 			incentivesByTime := s.store.GetExternalIncentivesByCreationTime()
+			externalIncentives := s.store.GetExternalIncentives()
+
 			incentivesByTime.Iterate(formatInt(lastUpdate), formatInt(param.CurrentTime), func(key string, value any) bool {
 				// Value is a slice of incentive IDs (handles timestamp collisions)
 				incentiveIds, ok := value.([]string)
@@ -118,7 +120,6 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 				// Process each incentive ID in the slice
 				for _, incentiveId := range incentiveIds {
 					// Check if this incentive belongs to the current pool
-					externalIncentives := s.store.GetExternalIncentives()
 					incentiveValue, exists := externalIncentives.Get(incentiveId)
 					if !exists {
 						continue
@@ -166,7 +167,7 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 		}
 
 		// Check if incentive is active during this specific collection period
-		if !incentiveResolver.IsStarted(param.CurrentTime) {
+		if !incentiveResolver.IsStarted(param.CurrentTime) || incentiveResolver.StartTimestamp() >= param.CurrentTime {
 			return false
 		}
 

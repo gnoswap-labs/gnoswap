@@ -119,11 +119,10 @@ func (s *stakerV1) CreateExternalIncentive(
 	if value, exists := incentivesByTime.Get(timeKey); exists {
 		// Append to existing slice
 		existingIds, ok := value.([]string)
-		if ok {
-			incentiveIds = append(existingIds, incentiveId)
-		} else {
-			incentiveIds = []string{incentiveId}
+		if !ok {
+			panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected []string, got %T", value))
 		}
+		incentiveIds = append(existingIds, incentiveId)
 	} else {
 		// Create new slice
 		incentiveIds = []string{incentiveId}
