@@ -112,7 +112,23 @@ func (s *stakerV1) CreateExternalIncentive(
 	} else {
 		incentivesByTime = s.store.GetExternalIncentivesByCreationTime()
 	}
-	incentivesByTime.Set(formatInt(currentTime), incentiveId)
+
+	// Handle timestamp collisions by using slice of incentive IDs
+	timeKey := formatInt(currentTime)
+	var incentiveIds []string
+	if value, exists := incentivesByTime.Get(timeKey); exists {
+		// Append to existing slice
+		existingIds, ok := value.([]string)
+		if ok {
+			incentiveIds = append(existingIds, incentiveId)
+		} else {
+			incentiveIds = []string{incentiveId}
+		}
+	} else {
+		// Create new slice
+		incentiveIds = []string{incentiveId}
+	}
+	incentivesByTime.Set(timeKey, incentiveIds)
 	s.store.SetExternalIncentivesByCreationTime(incentivesByTime)
 
 	chain.Emit(

@@ -109,26 +109,30 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 		if s.store.HasExternalIncentivesByCreationTimeStoreKey() {
 			incentivesByTime := s.store.GetExternalIncentivesByCreationTime()
 			incentivesByTime.Iterate(formatInt(lastUpdate), formatInt(param.CurrentTime), func(key string, value any) bool {
-				incentiveId, ok := value.(string)
+				// Value is a slice of incentive IDs (handles timestamp collisions)
+				incentiveIds, ok := value.([]string)
 				if !ok {
 					return false
 				}
 
-				// Check if this incentive belongs to the current pool
-				externalIncentives := s.store.GetExternalIncentives()
-				incentiveValue, exists := externalIncentives.Get(incentiveId)
-				if !exists {
-					return false
-				}
+				// Process each incentive ID in the slice
+				for _, incentiveId := range incentiveIds {
+					// Check if this incentive belongs to the current pool
+					externalIncentives := s.store.GetExternalIncentives()
+					incentiveValue, exists := externalIncentives.Get(incentiveId)
+					if !exists {
+						continue
+					}
 
-				incentive, ok := incentiveValue.(*sr.ExternalIncentive)
-				if !ok {
-					return false
-				}
+					incentive, ok := incentiveValue.(*sr.ExternalIncentive)
+					if !ok {
+						continue
+					}
 
-				// Only add if this incentive is for the current pool
-				if incentive.TargetPoolPath() == deposit.TargetPoolPath() {
-					deposit.AddExternalIncentiveId(incentiveId)
+					// Only add if this incentive is for the current pool
+					if incentive.TargetPoolPath() == deposit.TargetPoolPath() {
+						deposit.AddExternalIncentiveId(incentiveId)
+					}
 				}
 
 				return false
