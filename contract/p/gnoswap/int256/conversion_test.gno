@@ -1,11 +1,10 @@
 package int256
 
 import (
-	"runtime"
-	"strconv"
-	"strings"
 	"testing"
-	"time"
+
+	"gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/uassert"
 )
 
 func TestFromDecimal(t *testing.T) {
@@ -87,158 +86,44 @@ func TestMustFromDecimal(t *testing.T) {
 	}
 }
 
-// readAllocatorBytes parses runtime.MemStats() into the current allocated bytes.
-func readAllocatorBytes(t *testing.T) int64 {
-	t.Helper()
-	stats := runtime.MemStats()
-	if stats == "nil allocator" {
-		return 0
-	}
-	if !strings.HasPrefix(stats, "Allocator{") || !strings.HasSuffix(stats, "}") {
-		t.Fatalf("unexpected runtime.MemStats output: %q", stats)
-	}
-	body := strings.TrimSuffix(strings.TrimPrefix(stats, "Allocator{"), "}")
-	parts := strings.Split(body, ", ")
-	if len(parts) != 2 {
-		t.Fatalf("unexpected runtime.MemStats content: %q", stats)
-	}
-	var (
-		bytes int64
-		found bool
-	)
-	for _, part := range parts {
-		fields := strings.Split(part, ":")
-		if len(fields) != 2 {
-			t.Fatalf("unexpected runtime.MemStats pair %q", part)
-		}
-		if fields[0] == "bytes" {
-			val, err := strconv.ParseInt(fields[1], 10, 64)
-			if err != nil {
-				t.Fatalf("failed to parse bytes from %q: %v", part, err)
-			}
-			bytes = val
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Fatalf("bytes key not found in runtime.MemStats output: %q", stats)
-	}
-	return bytes
-}
-
-type MetricResult struct {
-	Name       string
-	Iterations int
-	DurationNs int64
-	AllocDelta int64
-}
-
-// runMetric executes fn the given number of iterations while logging elapsed time and allocation deltas.
-func runMetric(t *testing.T, name string, iterations int, fn func()) MetricResult {
-	t.Helper()
-
-	// Skip GC if allocator is nil to avoid panic
-	stats := runtime.MemStats()
-	if stats != "nil allocator" {
-		runtime.GC()
-	}
-	beforeBytes := readAllocatorBytes(t)
-	start := time.Now()
-	for i := 0; i < iterations; i++ {
-		fn()
-	}
-	elapsed := time.Since(start)
-	afterBytes := readAllocatorBytes(t)
-
-	return MetricResult{
-		Name:       name,
-		Iterations: iterations,
-		DurationNs: elapsed.Nanoseconds(),
-		AllocDelta: afterBytes - beforeBytes,
-	}
-}
-
-func TestPublicFunctionRuntimeMetrics(t *testing.T) {
-	const iterations = 200
-	var results []MetricResult
-
-	// Test data
-	commonDecimal := "1234567890123456789012345678901234567890"
-
+func TestFromUint256(t *testing.T) {
 	tests := []struct {
-		name string
-		run  func(t *testing.T) MetricResult
+		name        string
+		input       *uint256.Uint
+		expect      string
+		shouldPanic bool
 	}{
+		{name: "zero", input: uint256.NewUint(0), expect: "0"},
+		{name: "one", input: uint256.NewUint(1), expect: "1"},
+		{name: "max uint64", input: uint256.NewUint(^uint64(0)), expect: "18446744073709551615"},
 		{
-			name: "FromDecimal",
-			run: func(t *testing.T) MetricResult {
-				return runMetric(t, "FromDecimal", iterations, func() {
-					if _, err := FromDecimal(commonDecimal); err != nil {
-						t.Fatalf("FromDecimal error: %v", err)
-					}
-				})
-			},
+			name:   "max int256",
+			input:  uint256.MustFromDecimal("57896044618658097711785492504343953926634992332820282019728792003956564819967"),
+			expect: "57896044618658097711785492504343953926634992332820282019728792003956564819967",
 		},
 		{
-			name: "SetString",
-			run: func(t *testing.T) MetricResult {
-				return runMetric(t, "SetString", iterations, func() {
-					var target Int
-					if _, err := target.SetString(commonDecimal); err != nil {
-						t.Fatalf("SetString error: %v", err)
-					}
-				})
-			},
+			name:        "overflow at 2^255",
+			input:       uint256.MustFromDecimal("57896044618658097711785492504343953926634992332820282019728792003956564819968"),
+			shouldPanic: true,
 		},
 		{
-			name: "MustFromDecimal",
-			run: func(t *testing.T) MetricResult {
-				return runMetric(t, "MustFromDecimal", iterations, func() {
-					MustFromDecimal(commonDecimal)
-				})
-			},
-		},
-		{
-			name: "MaxInt256",
-			run: func(t *testing.T) MetricResult {
-				return runMetric(t, "MaxInt256", iterations, func() {
-					MaxInt256()
-				})
-			},
-		},
-		{
-			name: "MinInt256",
-			run: func(t *testing.T) MetricResult {
-				return runMetric(t, "MinInt256", iterations, func() {
-					MinInt256()
-				})
-			},
-		},
-		{
-			name: "ToString",
-			run: func(t *testing.T) MetricResult {
-				largeInt := MustFromDecimal("57896044618658097711785492504343953926634992332820282019728792003956564819967") // max int256
-				return runMetric(t, "ToString", iterations, func() {
-					_ = largeInt.ToString()
-				})
-			},
+			name:        "max uint256 overflows",
+			input:       uint256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935"),
+			shouldPanic: true,
 		},
 	}
 
-	for i := range tests {
-		test := tests[i]
-		t.Run(test.name, func(t *testing.T) {
-			result := test.run(t)
-			results = append(results, result)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsContains(t, "int256: overflow", func() {
+					FromUint256(tt.input)
+				})
+				return
+			}
+
+			got := FromUint256(tt.input)
+			uassert.Equal(t, tt.expect, got.ToString())
 		})
-	}
-
-	// Print results as markdown table
-	t.Log("\n## Runtime Metrics Results\n")
-	t.Log("| Function | Iterations | Duration (ns) | Alloc Delta (bytes) |")
-	t.Log("|----------|------------|---------------|---------------------|")
-	for _, result := range results {
-		t.Logf("| %s | %d | %d | %d |", result.Name, result.Iterations, result.DurationNs, result.AllocDelta)
 	}
 }
