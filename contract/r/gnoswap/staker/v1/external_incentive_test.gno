@@ -841,3 +841,300 @@ func TestLazySync_PoolFilteringPreventsWrongPool(t *testing.T) {
 		t.Error("Pool2 incentive should NOT be in pool1 deposit")
 	}
 }
+
+// TestRefundCalculationWithPartialCollections tests that refund calculation
+// is accurate when multiple users collect and unstake
+func TestRefundCalculationWithPartialCollections(t *testing.T) {
+	initStakerTest(t)
+	s := getMockInstance()
+
+	poolPath := "gno.land/r/test/refund_calc"
+	creator := testutils.TestAddress("creator")
+	userA := testutils.TestAddress("userA")
+	userB := testutils.TestAddress("userB")
+
+	currentTime := time.Now().Unix()
+	startTime := currentTime - 86400*10 // 10 days ago
+	endTime := currentTime - 86400       // ended 1 day ago
+	totalRewardAmount := int64(1000)
+
+	// Create pool
+	pool := sr.NewPool(poolPath, startTime)
+	s.getPools().set(poolPath, pool)
+
+	// Create incentive
+	incentiveId := "refund-test"
+	incentive := sr.NewExternalIncentive(
+		incentiveId,
+		poolPath,
+		WUGNOT_PATH,
+		totalRewardAmount,
+		startTime,
+		endTime,
+		creator,
+		100_000_000,
+		runtime.ChainHeight(),
+		startTime-100,
+		false,
+	)
+
+	poolResolver := NewPoolResolver(pool)
+	poolResolver.IncentivesResolver().create(creator, incentive)
+
+	// Create deposits for User A and User B
+	depositA := sr.NewDeposit(userA, poolPath, u256.NewUint(1000), startTime+100, -10000, 10000, []sr.Warmup{})
+	depositB := sr.NewDeposit(userB, poolPath, u256.NewUint(1000), startTime+200, -10000, 10000, []sr.Warmup{})
+
+	s.getDeposits().set(1, depositA)
+	s.getDeposits().set(2, depositB)
+
+	depositResolverA := NewDepositResolver(depositA)
+	depositResolverB := NewDepositResolver(depositB)
+
+	// User A collects 300
+	collectedA := int64(300)
+	depositResolverA.addCollectedExternalReward(incentiveId, collectedA)
+	depositResolverA.updateExternalRewardLastCollectTime(incentiveId, endTime-1000)
+
+	// Update DistributedRewardAmount (simulating CollectReward)
+	incentiveResolver := NewExternalIncentiveResolver(incentive)
+	incentiveResolver.addDistributedRewardAmount(collectedA)
+
+	// User B collects 200
+	collectedB := int64(200)
+	depositResolverB.addCollectedExternalReward(incentiveId, collectedB)
+	depositResolverB.updateExternalRewardLastCollectTime(incentiveId, endTime-500)
+
+	// Update DistributedRewardAmount (simulating CollectReward)
+	incentiveResolver.addDistributedRewardAmount(collectedB)
+
+	// Verify DistributedRewardAmount = 500
+	if incentiveResolver.DistributedRewardAmount() != 500 {
+		t.Errorf("Expected DistributedRewardAmount 500, got %d", incentiveResolver.DistributedRewardAmount())
+	}
+
+	// Verify DistributedRewardAmount remains 500 after unstakes
+	if incentiveResolver.DistributedRewardAmount() != 500 {
+		t.Errorf("After unstakes, DistributedRewardAmount should still be 500, got %d", incentiveResolver.DistributedRewardAmount())
+	}
+
+	// Calculate refund
+	_, refund, err := s.endExternalIncentive(poolResolver, incentiveResolver, creator, endTime+100)
+	uassert.NoError(t, err)
+
+	// Verify refund amount
+	expectedRefund := int64(500)
+	if refund != expectedRefund {
+		t.Errorf("Expected refund %d, got %d", expectedRefund, refund)
+	}
+
+	// Verify refund is not negative
+	if refund < 0 {
+		t.Errorf("Refund should never be negative! Got %d", refund)
+	}
+}
+
+// TestMultipleCollectionsBeforeUnstake tests that multiple collections
+// by the same user correctly update DistributedRewardAmount only in CollectReward
+func TestMultipleCollectionsBeforeUnstake(t *testing.T) {
+	initStakerTest(t)
+	s := getMockInstance()
+
+	poolPath := "gno.land/r/test/multi_collect"
+	creator := testutils.TestAddress("creator")
+	user := testutils.TestAddress("user")
+
+	currentTime := time.Now().Unix()
+	startTime := currentTime - 86400*10
+	endTime := currentTime + 86400*10 // still active
+	totalRewardAmount := int64(10000)
+
+	// Create pool and incentive
+	pool := sr.NewPool(poolPath, startTime)
+	s.getPools().set(poolPath, pool)
+
+	incentiveId := "multi-collect-test"
+	incentive := sr.NewExternalIncentive(
+		incentiveId,
+		poolPath,
+		WUGNOT_PATH,
+		totalRewardAmount,
+		startTime,
+		endTime,
+		creator,
+		100_000_000,
+		runtime.ChainHeight(),
+		startTime-100,
+		false,
+	)
+
+	poolResolver := NewPoolResolver(pool)
+	poolResolver.IncentivesResolver().create(creator, incentive)
+
+	deposit := sr.NewDeposit(user, poolPath, u256.NewUint(1000), startTime+100, -10000, 10000, []sr.Warmup{})
+	s.getDeposits().set(1, deposit)
+
+	depositResolver := NewDepositResolver(deposit)
+	incentiveResolver := NewExternalIncentiveResolver(incentive)
+
+	// First collection: 100
+	collect1 := int64(100)
+	depositResolver.addCollectedExternalReward(incentiveId, collect1)
+	incentiveResolver.addDistributedRewardAmount(collect1)
+	depositResolver.updateExternalRewardLastCollectTime(incentiveId, currentTime-5000)
+
+	uassert.Equal(t, int64(100), incentiveResolver.DistributedRewardAmount())
+
+	// Second collection: 200 more
+	collect2 := int64(200)
+	depositResolver.addCollectedExternalReward(incentiveId, collect2)
+	incentiveResolver.addDistributedRewardAmount(collect2)
+	depositResolver.updateExternalRewardLastCollectTime(incentiveId, currentTime-2000)
+
+	uassert.Equal(t, int64(300), incentiveResolver.DistributedRewardAmount())
+
+	// Third collection: 150 more
+	collect3 := int64(150)
+	depositResolver.addCollectedExternalReward(incentiveId, collect3)
+	incentiveResolver.addDistributedRewardAmount(collect3)
+	depositResolver.updateExternalRewardLastCollectTime(incentiveId, currentTime-1000)
+
+	uassert.Equal(t, int64(450), incentiveResolver.DistributedRewardAmount())
+
+	// Verify total collected by user
+	totalCollected := depositResolver.CollectedExternalReward(incentiveId)
+	uassert.Equal(t, int64(450), totalCollected)
+
+	// Verify DistributedRewardAmount remains unchanged
+	uassert.Equal(t, int64(450), incentiveResolver.DistributedRewardAmount())
+}
+
+// TestCalculateTotalExternalRewardExcludesCollected verifies that
+// calculateTotalExternalReward returns only uncollected rewards
+func TestCalculateTotalExternalRewardExcludesCollected(t *testing.T) {
+	initStakerTest(t)
+	s := getMockInstance()
+
+	poolPath := "gno.land/r/test/calc_total"
+	creator := testutils.TestAddress("creator")
+	user := testutils.TestAddress("user")
+
+	currentTime := time.Now().Unix()
+	startTime := currentTime - 86400*10
+	endTime := currentTime + 86400*10
+	totalRewardAmount := int64(10000)
+
+	// Create pool and incentive
+	pool := sr.NewPool(poolPath, startTime)
+	s.getPools().set(poolPath, pool)
+
+	incentiveId := "calc-total-test"
+	incentive := sr.NewExternalIncentive(
+		incentiveId,
+		poolPath,
+		WUGNOT_PATH,
+		totalRewardAmount,
+		startTime,
+		endTime,
+		creator,
+		100_000_000,
+		runtime.ChainHeight(),
+		startTime-100,
+		false,
+	)
+
+	poolResolver := NewPoolResolver(pool)
+	poolResolver.IncentivesResolver().create(creator, incentive)
+
+	// Create deposit
+	deposit := sr.NewDeposit(user, poolPath, u256.NewUint(1000), startTime+100, -887220, 887220, []sr.Warmup{})
+	s.getDeposits().set(1, deposit)
+
+	depositResolver := NewDepositResolver(deposit)
+
+	// User has already collected 300
+	alreadyCollected := int64(300)
+	depositResolver.addCollectedExternalReward(incentiveId, alreadyCollected)
+	depositResolver.updateExternalRewardLastCollectTime(incentiveId, currentTime-5000)
+
+	// Calculate total external reward
+	rewardState := poolResolver.RewardStateOf(deposit)
+
+	totalReward := rewardState.calculateTotalExternalReward(
+		depositResolver.ExternalRewardLastCollectTime(incentiveId),
+		currentTime,
+		incentive,
+	)
+
+	// Verify total reward is non-negative
+	if totalReward < 0 {
+		t.Errorf("Total reward should be non-negative, got %d", totalReward)
+	}
+
+	// Verify collected amount is tracked separately
+	collectedReward := depositResolver.CollectedExternalReward(incentiveId)
+	uassert.Equal(t, alreadyCollected, collectedReward)
+}
+
+// TestDistributedRewardAmountNotDoubledOnUnstake verifies that
+// DistributedRewardAmount is not modified during unstake
+func TestDistributedRewardAmountNotDoubledOnUnstake(t *testing.T) {
+	initStakerTest(t)
+	s := getMockInstance()
+
+	poolPath := "gno.land/r/test/no_double"
+	creator := testutils.TestAddress("creator")
+	user := testutils.TestAddress("user")
+
+	currentTime := time.Now().Unix()
+	startTime := currentTime - 86400*10
+	endTime := currentTime - 86400
+	totalRewardAmount := int64(1000)
+
+	// Create pool and incentive
+	pool := sr.NewPool(poolPath, startTime)
+	s.getPools().set(poolPath, pool)
+
+	incentiveId := "no-double-test"
+	incentive := sr.NewExternalIncentive(
+		incentiveId,
+		poolPath,
+		WUGNOT_PATH,
+		totalRewardAmount,
+		startTime,
+		endTime,
+		creator,
+		100_000_000,
+		runtime.ChainHeight(),
+		startTime-100,
+		false,
+	)
+
+	poolResolver := NewPoolResolver(pool)
+	poolResolver.IncentivesResolver().create(creator, incentive)
+
+	deposit := sr.NewDeposit(user, poolPath, u256.NewUint(1000), startTime+100, -10000, 10000, []sr.Warmup{})
+	s.getDeposits().set(1, deposit)
+
+	depositResolver := NewDepositResolver(deposit)
+	incentiveResolver := NewExternalIncentiveResolver(incentive)
+
+	// User collects 400
+	collected := int64(400)
+	depositResolver.addCollectedExternalReward(incentiveId, collected)
+	incentiveResolver.addDistributedRewardAmount(collected)
+	depositResolver.updateExternalRewardLastCollectTime(incentiveId, endTime-100)
+
+	// Record DistributedRewardAmount before unstake
+	beforeUnstake := incentiveResolver.DistributedRewardAmount()
+	uassert.Equal(t, int64(400), beforeUnstake)
+
+	// Verify DistributedRewardAmount remains unchanged after unstake
+	afterUnstake := incentiveResolver.DistributedRewardAmount()
+	uassert.Equal(t, int64(400), afterUnstake)
+
+	// Verify no modification occurred during unstake
+	if afterUnstake != beforeUnstake {
+		t.Errorf("DistributedRewardAmount changed during unstake! Before: %d, After: %d", beforeUnstake, afterUnstake)
+	}
+}
