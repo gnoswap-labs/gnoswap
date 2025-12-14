@@ -2,9 +2,11 @@ package v1
 
 import (
 	"chain/runtime"
+	"math"
 	"testing"
 	"time"
 
+	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
@@ -820,7 +822,7 @@ func TestRefundCalculationWithPartialCollections(t *testing.T) {
 	currentTime := time.Now().Unix()
 	startTime := currentTime - 86400*10 // 10 days ago
 	endTime := currentTime - 86400      // ended 1 day ago
-	totalRewardAmount := int64(1000)
+	totalRewardAmount := int64(1_000_000_000)
 
 	// Create pool
 	pool := sr.NewPool(poolPath, startTime)
@@ -845,15 +847,47 @@ func TestRefundCalculationWithPartialCollections(t *testing.T) {
 	poolResolver := NewPoolResolver(pool)
 	poolResolver.IncentivesResolver().create(creator, incentive)
 
+	warmups := []sr.Warmup{
+		{
+			Index:          0,
+			TimeDuration:   0,
+			NextWarmupTime: startTime,
+			WarmupRatio:    30,
+		},
+		{
+			Index:          1,
+			TimeDuration:   0,
+			NextWarmupTime: startTime,
+			WarmupRatio:    50,
+		},
+		{
+			Index:          2,
+			TimeDuration:   0,
+			NextWarmupTime: startTime,
+			WarmupRatio:    70,
+		},
+		{
+			Index:          3,
+			TimeDuration:   math.MaxInt64,
+			NextWarmupTime: math.MaxInt64,
+			WarmupRatio:    100,
+		},
+	}
+
 	// Create deposits for User A and User B
-	depositA := sr.NewDeposit(userA, poolPath, u256.NewUint(1000), startTime+100, -10000, 10000, []sr.Warmup{})
-	depositB := sr.NewDeposit(userB, poolPath, u256.NewUint(1000), startTime+200, -10000, 10000, []sr.Warmup{})
+	depositA := sr.NewDeposit(userA, poolPath, u256.NewUint(1000), startTime+100, -10000, 10000, warmups)
+	depositB := sr.NewDeposit(userB, poolPath, u256.NewUint(1000), startTime+200, -10000, 10000, warmups)
 
 	s.getDeposits().set(1, depositA)
 	s.getDeposits().set(2, depositB)
 
 	depositResolverA := NewDepositResolver(depositA)
 	depositResolverB := NewDepositResolver(depositB)
+
+	poolResolver.modifyDeposit(i256.NewInt(1000), startTime+100, 0)
+	poolResolver.HistoricalTick().Set(startTime+100, int32(0))
+	poolResolver.modifyDeposit(i256.NewInt(1000), startTime+200, 0)
+	poolResolver.HistoricalTick().Set(startTime+200, int32(0))
 
 	// User A collects 300
 	collectedA := int64(300)
@@ -883,11 +917,13 @@ func TestRefundCalculationWithPartialCollections(t *testing.T) {
 	}
 
 	// Calculate refund
+	// remain deposit A reward: 1286000
+	// remain deposit B reward: 643000
 	_, refund, err := s.endExternalIncentive(poolResolver, incentiveResolver, creator, endTime+100)
 	uassert.NoError(t, err)
 
 	// Verify refund amount
-	expectedRefund := int64(500)
+	expectedRefund := int64(999035000)
 	if refund != expectedRefund {
 		t.Errorf("Expected refund %d, got %d", expectedRefund, refund)
 	}
@@ -973,9 +1009,9 @@ func TestMultipleCollectionsBeforeUnstake(t *testing.T) {
 	uassert.Equal(t, int64(450), incentiveResolver.DistributedRewardAmount())
 }
 
-// TestCalculateTotalExternalRewardExcludesCollected verifies that
-// calculateTotalExternalReward returns only uncollected rewards
-func TestCalculateTotalExternalRewardExcludesCollected(t *testing.T) {
+// TestCalculateCollectableExternalReward_ExcludesCollected verifies that
+// calculateCollectableExternalReward returns only uncollected rewards
+func TestCalculateCollectableExternalReward_ExcludesCollected(t *testing.T) {
 	initStakerTest(t)
 	s := getMockInstance()
 
@@ -1024,7 +1060,7 @@ func TestCalculateTotalExternalRewardExcludesCollected(t *testing.T) {
 	// Calculate total external reward
 	rewardState := poolResolver.RewardStateOf(deposit)
 
-	totalReward := rewardState.calculateTotalExternalReward(
+	totalReward := rewardState.calculateCollectableExternalReward(
 		depositResolver.ExternalRewardLastCollectTime(incentiveId),
 		currentTime,
 		incentive,
