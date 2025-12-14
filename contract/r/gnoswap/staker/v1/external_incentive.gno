@@ -3,6 +3,7 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
+	"math"
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -208,7 +209,6 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 	// Mark incentive as refunded and update
 	// After this update, attempts to re-claim GNS or rewards that were deposited
 	// through the `endExternalIncentive` function will be blocked.
-	// Incentive remains in active tree but with Refunded=true flag
 	incentiveResolver.SetRefunded(true)
 	incentiveResolver.addDistributedRewardAmount(refund)
 	incentivesResolver.update(incentive.Refundee(), incentive)
@@ -252,7 +252,7 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 	totalReward := int64(0)
 
 	// calculate total external reward for the incentive
-	s.getDeposits().IterateByPoolPath(0, uint64(incentiveResolver.EndTimestamp()), incentiveResolver.TargetPoolPath(), func(positionId uint64, deposit *sr.Deposit) bool {
+	s.getDeposits().IterateByPoolPath(0, math.MaxUint64, incentiveResolver.TargetPoolPath(), func(positionId uint64, deposit *sr.Deposit) bool {
 		depositResolver := NewDepositResolver(deposit)
 		lastCollectTime := depositResolver.ExternalRewardLastCollectTime(incentiveResolver.IncentiveId())
 
