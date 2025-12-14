@@ -1158,9 +1158,11 @@ func TestAddIncentiveIdByCreationTime(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		inputs   []incentiveInput
-		expected []expectedResult
+		name                 string
+		inputs               []incentiveInput
+		expected             []expectedResult
+		expectedHasPanic     bool
+		expectedPanicMessage string
 	}{
 		{
 			name: "new time new pool - basic case",
@@ -1296,13 +1298,8 @@ func TestAddIncentiveIdByCreationTime(t *testing.T) {
 					creationTime: -1000,
 				},
 			},
-			expected: []expectedResult{
-				{
-					creationTime: -1000,
-					poolPath:     "gno.land/r/test/pool",
-					incentiveIds: []string{"negative-time-incentive"},
-				},
-			},
+			expectedHasPanic:     true,
+			expectedPanicMessage: "negative value not supported",
 		},
 		{
 			name: "large creation time",
@@ -1393,6 +1390,16 @@ func TestAddIncentiveIdByCreationTime(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			initStakerTest(t)
 			instance := getMockInstance()
+
+			if tt.expectedHasPanic {
+				uassert.PanicsContains(t, tt.expectedPanicMessage, func() {
+					for _, input := range tt.inputs {
+						instance.addIncentiveIdByCreationTime(input.poolPath, input.incentiveId, input.creationTime)
+					}
+				})
+
+				return
+			}
 
 			// Execute: add all incentives
 			for _, input := range tt.inputs {
