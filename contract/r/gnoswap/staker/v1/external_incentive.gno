@@ -279,7 +279,7 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 	totalReward := int64(0)
 
 	// calculate total external reward for the incentive
-	s.getDeposits().IterateByPoolPath(0, math.MaxUint64, incentiveResolver.TargetPoolPath(), func(positionId uint64, deposit *sr.Deposit) bool {
+	s.getDeposits().Iterate(0, math.MaxUint64, func(positionId uint64, deposit *sr.Deposit) bool {
 		depositResolver := NewDepositResolver(deposit)
 		lastCollectTime := depositResolver.ExternalRewardLastCollectTime(incentiveResolver.IncentiveId())
 
@@ -288,7 +288,7 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 		}
 
 		rewardState := resolver.RewardStateOf(deposit)
-		calculatedTotalReward := rewardState.calculateTotalExternalReward(lastCollectTime, currentTime, incentiveResolver.ExternalIncentive)
+		calculatedTotalReward := rewardState.calculateCollectableExternalReward(lastCollectTime, currentTime, incentiveResolver.ExternalIncentive)
 		totalReward = safeAddInt64(totalReward, calculatedTotalReward)
 
 		return false
@@ -296,6 +296,7 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 
 	// calculate refund amount is the difference between the incentive reward amount and the total external reward
 	refund := safeSubInt64(incentiveResolver.TotalRewardAmount(), totalReward)
+	refund = safeSubInt64(refund, incentiveResolver.DistributedRewardAmount())
 
 	return incentiveResolver.ExternalIncentive, refund, nil
 }
