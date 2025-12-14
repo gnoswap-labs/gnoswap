@@ -105,34 +105,8 @@ func (s *stakerV1) CreateExternalIncentive(
 	poolResolver := NewPoolResolver(pool)
 	poolResolver.IncentivesResolver().create(caller, incentive)
 
-	// Add to time-based index for lazy discovery during CollectReward
-	incentivesByTime := s.getExternalIncentivesByCreationTime()
-
-	currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(currentTime)
-	if !exists {
-		currentPoolIncentiveIdsValue = avl.NewTree()
-	}
-
-	currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*avl.Tree)
-	if !ok {
-		panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected *avl.Tree, got %T", currentPoolIncentiveIdsValue))
-	}
-
-	incentiveIdsValue, exists := currentPoolIncentiveIds.Get(targetPoolPath)
-	if !exists {
-		incentiveIdsValue = []string{}
-	}
-
-	incentiveIds, ok := incentiveIdsValue.([]string)
-	if !ok {
-		panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected []string, got %T", incentiveIdsValue))
-	}
-
-	incentiveIds = append(incentiveIds, incentiveId)
-	currentPoolIncentiveIds.Set(targetPoolPath, incentiveIds)
-	incentivesByTime.Set(currentTime, currentPoolIncentiveIds)
-
-	s.updateExternalIncentivesByCreationTime(incentivesByTime)
+	// add incentive to time-based index for lazy discovery during CollectReward
+	s.addIncentiveIdByCreationTime(targetPoolPath, incentiveId, currentTime)
 
 	chain.Emit(
 		"CreateExternalIncentive",
@@ -299,4 +273,38 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 	refund = safeSubInt64(refund, incentiveResolver.DistributedRewardAmount())
 
 	return incentiveResolver.ExternalIncentive, refund, nil
+}
+
+// addIncentiveIdByCreationTime adds an external incentive to the time-based index.
+//
+// The index structure is:
+//   - creationTime (int64) -> poolPath (string) -> []incentiveIds
+func (s *stakerV1) addIncentiveIdByCreationTime(poolPath, incentiveId string, creationTime int64) {
+	incentivesByTime := s.getExternalIncentivesByCreationTime()
+
+	currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(creationTime)
+	if !exists {
+		currentPoolIncentiveIdsValue = avl.NewTree()
+	}
+
+	currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*avl.Tree)
+	if !ok {
+		panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected *avl.Tree, got %T", currentPoolIncentiveIdsValue))
+	}
+
+	incentiveIdsValue, exists := currentPoolIncentiveIds.Get(poolPath)
+	if !exists {
+		incentiveIdsValue = []string{}
+	}
+
+	incentiveIds, ok := incentiveIdsValue.([]string)
+	if !ok {
+		panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected []string, got %T", incentiveIdsValue))
+	}
+
+	incentiveIds = append(incentiveIds, incentiveId)
+	currentPoolIncentiveIds.Set(poolPath, incentiveIds)
+	incentivesByTime.Set(creationTime, currentPoolIncentiveIds)
+
+	s.updateExternalIncentivesByCreationTime(incentivesByTime)
 }

@@ -8,6 +8,7 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
@@ -1136,5 +1137,415 @@ func TestDistributedRewardAmountNotDoubledOnUnstake(t *testing.T) {
 	// Verify no modification occurred during unstake
 	if afterUnstake != beforeUnstake {
 		t.Errorf("DistributedRewardAmount changed during unstake! Before: %d, After: %d", beforeUnstake, afterUnstake)
+	}
+}
+
+// TestAddIncentiveIdByCreationTime tests the addIncentiveIdByCreationTime function
+// with various scenarios using table-driven tests.
+func TestAddIncentiveIdByCreationTime(t *testing.T) {
+	// incentiveInput represents a single incentive to be added
+	type incentiveInput struct {
+		poolPath     string
+		incentiveId  string
+		creationTime int64
+	}
+
+	// expectedResult represents expected state for a specific pool at a specific time
+	type expectedResult struct {
+		creationTime int64
+		poolPath     string
+		incentiveIds []string
+	}
+
+	tests := []struct {
+		name     string
+		inputs   []incentiveInput
+		expected []expectedResult
+	}{
+		{
+			name: "new time new pool - basic case",
+			inputs: []incentiveInput{
+				{
+					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					incentiveId:  "test-incentive-1",
+					creationTime: 1000,
+				},
+			},
+			expected: []expectedResult{
+				{
+					creationTime: 1000,
+					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					incentiveIds: []string{"test-incentive-1"},
+				},
+			},
+		},
+		{
+			name: "same time same pool - multiple incentives",
+			inputs: []incentiveInput{
+				{
+					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					incentiveId:  "incentive-a",
+					creationTime: 2000,
+				},
+				{
+					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					incentiveId:  "incentive-b",
+					creationTime: 2000,
+				},
+				{
+					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					incentiveId:  "incentive-c",
+					creationTime: 2000,
+				},
+			},
+			expected: []expectedResult{
+				{
+					creationTime: 2000,
+					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					incentiveIds: []string{"incentive-a", "incentive-b", "incentive-c"},
+				},
+			},
+		},
+		{
+			name: "same time different pools - pool isolation",
+			inputs: []incentiveInput{
+				{
+					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					incentiveId:  "pool1-incentive",
+					creationTime: 3000,
+				},
+				{
+					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500",
+					incentiveId:  "pool2-incentive",
+					creationTime: 3000,
+				},
+			},
+			expected: []expectedResult{
+				{
+					creationTime: 3000,
+					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					incentiveIds: []string{"pool1-incentive"},
+				},
+				{
+					creationTime: 3000,
+					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500",
+					incentiveIds: []string{"pool2-incentive"},
+				},
+			},
+		},
+		{
+			name: "different times same pool - time isolation",
+			inputs: []incentiveInput{
+				{
+					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					incentiveId:  "incentive-0",
+					creationTime: 4000,
+				},
+				{
+					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					incentiveId:  "incentive-1",
+					creationTime: 5000,
+				},
+				{
+					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					incentiveId:  "incentive-2",
+					creationTime: 6000,
+				},
+			},
+			expected: []expectedResult{
+				{
+					creationTime: 4000,
+					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					incentiveIds: []string{"incentive-0"},
+				},
+				{
+					creationTime: 5000,
+					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					incentiveIds: []string{"incentive-1"},
+				},
+				{
+					creationTime: 6000,
+					poolPath:     "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000",
+					incentiveIds: []string{"incentive-2"},
+				},
+			},
+		},
+		{
+			name: "zero creation time",
+			inputs: []incentiveInput{
+				{
+					poolPath:     "gno.land/r/test/pool",
+					incentiveId:  "zero-time-incentive",
+					creationTime: 0,
+				},
+			},
+			expected: []expectedResult{
+				{
+					creationTime: 0,
+					poolPath:     "gno.land/r/test/pool",
+					incentiveIds: []string{"zero-time-incentive"},
+				},
+			},
+		},
+		{
+			name: "negative creation time",
+			inputs: []incentiveInput{
+				{
+					poolPath:     "gno.land/r/test/pool",
+					incentiveId:  "negative-time-incentive",
+					creationTime: -1000,
+				},
+			},
+			expected: []expectedResult{
+				{
+					creationTime: -1000,
+					poolPath:     "gno.land/r/test/pool",
+					incentiveIds: []string{"negative-time-incentive"},
+				},
+			},
+		},
+		{
+			name: "large creation time",
+			inputs: []incentiveInput{
+				{
+					poolPath:     "gno.land/r/test/pool",
+					incentiveId:  "large-time-incentive",
+					creationTime: math.MaxInt64 - 1,
+				},
+			},
+			expected: []expectedResult{
+				{
+					creationTime: math.MaxInt64 - 1,
+					poolPath:     "gno.land/r/test/pool",
+					incentiveIds: []string{"large-time-incentive"},
+				},
+			},
+		},
+		{
+			name: "empty incentive id",
+			inputs: []incentiveInput{
+				{
+					poolPath:     "gno.land/r/test/pool",
+					incentiveId:  "",
+					creationTime: 7000,
+				},
+			},
+			expected: []expectedResult{
+				{
+					creationTime: 7000,
+					poolPath:     "gno.land/r/test/pool",
+					incentiveIds: []string{""},
+				},
+			},
+		},
+		{
+			name: "duplicate incentive ids (no deduplication)",
+			inputs: []incentiveInput{
+				{
+					poolPath:     "gno.land/r/test/pool",
+					incentiveId:  "duplicate-incentive",
+					creationTime: 8000,
+				},
+				{
+					poolPath:     "gno.land/r/test/pool",
+					incentiveId:  "duplicate-incentive",
+					creationTime: 8000,
+				},
+				{
+					poolPath:     "gno.land/r/test/pool",
+					incentiveId:  "duplicate-incentive",
+					creationTime: 8000,
+				},
+			},
+			expected: []expectedResult{
+				{
+					creationTime: 8000,
+					poolPath:     "gno.land/r/test/pool",
+					incentiveIds: []string{"duplicate-incentive", "duplicate-incentive", "duplicate-incentive"},
+				},
+			},
+		},
+		{
+			name: "multiple times, pools, and incentives",
+			inputs: []incentiveInput{
+				// Time 1000: pool1 has 2, pool2 has 1
+				{poolPath: "pool1", incentiveId: "t1-p1-i1", creationTime: 1000},
+				{poolPath: "pool1", incentiveId: "t1-p1-i2", creationTime: 1000},
+				{poolPath: "pool2", incentiveId: "t1-p2-i1", creationTime: 1000},
+				// Time 2000: pool2 has 1, pool3 has 2
+				{poolPath: "pool2", incentiveId: "t2-p2-i1", creationTime: 2000},
+				{poolPath: "pool3", incentiveId: "t2-p3-i1", creationTime: 2000},
+				{poolPath: "pool3", incentiveId: "t2-p3-i2", creationTime: 2000},
+				// Time 3000: pool1 has 1
+				{poolPath: "pool1", incentiveId: "t3-p1-i1", creationTime: 3000},
+			},
+			expected: []expectedResult{
+				{creationTime: 1000, poolPath: "pool1", incentiveIds: []string{"t1-p1-i1", "t1-p1-i2"}},
+				{creationTime: 1000, poolPath: "pool2", incentiveIds: []string{"t1-p2-i1"}},
+				{creationTime: 2000, poolPath: "pool2", incentiveIds: []string{"t2-p2-i1"}},
+				{creationTime: 2000, poolPath: "pool3", incentiveIds: []string{"t2-p3-i1", "t2-p3-i2"}},
+				{creationTime: 3000, poolPath: "pool1", incentiveIds: []string{"t3-p1-i1"}},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initStakerTest(t)
+			instance := getMockInstance()
+
+			// Execute: add all incentives
+			for _, input := range tt.inputs {
+				instance.addIncentiveIdByCreationTime(input.poolPath, input.incentiveId, input.creationTime)
+			}
+
+			// Verify: check all expected results
+			incentivesByTime := instance.getExternalIncentivesByCreationTime()
+
+			for _, exp := range tt.expected {
+				// Get time entry
+				value, exists := incentivesByTime.Get(exp.creationTime)
+				uassert.True(t, exists, ufmt.Sprintf("Expected creation time %d to exist", exp.creationTime))
+
+				poolIncentives, ok := value.(*avl.Tree)
+				uassert.True(t, ok, "Expected value to be *avl.Tree")
+
+				// Get pool entry
+				incentiveIdsValue, exists := poolIncentives.Get(exp.poolPath)
+				uassert.True(t, exists, ufmt.Sprintf("Expected pool %s to exist at time %d", exp.poolPath, exp.creationTime))
+
+				incentiveIds, ok := incentiveIdsValue.([]string)
+				uassert.True(t, ok, "Expected value to be []string")
+
+				// Verify count
+				uassert.Equal(t, len(exp.incentiveIds), len(incentiveIds))
+
+				// Verify each incentive ID (order matters)
+				for i, expectedId := range exp.incentiveIds {
+					uassert.Equal(t, expectedId, incentiveIds[i])
+				}
+			}
+		})
+	}
+}
+
+// TestAddIncentiveIdByCreationTime_IterationRange tests time range iteration
+// for retrieving incentives within a specific time window.
+func TestAddIncentiveIdByCreationTime_IterationRange(t *testing.T) {
+	// setup represents incentives to add before testing iteration
+	type setup struct {
+		poolPath     string
+		incentiveId  string
+		creationTime int64
+	}
+
+	tests := []struct {
+		name          string
+		setupData     []setup
+		queryPoolPath string
+		rangeStart    int64
+		rangeEnd      int64
+		expectedIds   []string
+		expectedCount int
+	}{
+		{
+			name: "middle range - partial results",
+			setupData: []setup{
+				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-100", creationTime: 100},
+				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-200", creationTime: 200},
+				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-300", creationTime: 300},
+				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-400", creationTime: 400},
+				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-500", creationTime: 500},
+			},
+			queryPoolPath: "gno.land/r/test/pool",
+			rangeStart:    150,
+			rangeEnd:      350,
+			expectedIds:   []string{"inc-200", "inc-300"},
+			expectedCount: 2,
+		},
+		{
+			name: "full range - all results",
+			setupData: []setup{
+				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-100", creationTime: 100},
+				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-200", creationTime: 200},
+				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-300", creationTime: 300},
+			},
+			queryPoolPath: "gno.land/r/test/pool",
+			rangeStart:    0,
+			rangeEnd:      400,
+			expectedIds:   []string{"inc-100", "inc-200", "inc-300"},
+			expectedCount: 3,
+		},
+		{
+			name: "empty range - no results",
+			setupData: []setup{
+				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-100", creationTime: 100},
+				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-200", creationTime: 200},
+			},
+			queryPoolPath: "gno.land/r/test/pool",
+			rangeStart:    300,
+			rangeEnd:      400,
+			expectedIds:   []string{},
+			expectedCount: 0,
+		},
+		{
+			name: "exact boundary match",
+			setupData: []setup{
+				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-100", creationTime: 100},
+				{poolPath: "gno.land/r/test/pool", incentiveId: "inc-200", creationTime: 200},
+			},
+			queryPoolPath: "gno.land/r/test/pool",
+			rangeStart:    100,
+			rangeEnd:      200,
+			expectedIds:   []string{"inc-100"},
+			expectedCount: 1,
+		},
+		{
+			name: "filter by pool path",
+			setupData: []setup{
+				{poolPath: "pool-a", incentiveId: "a-inc-100", creationTime: 100},
+				{poolPath: "pool-b", incentiveId: "b-inc-100", creationTime: 100},
+				{poolPath: "pool-a", incentiveId: "a-inc-200", creationTime: 200},
+			},
+			queryPoolPath: "pool-a",
+			rangeStart:    0,
+			rangeEnd:      300,
+			expectedIds:   []string{"a-inc-100", "a-inc-200"},
+			expectedCount: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initStakerTest(t)
+			instance := getMockInstance()
+
+			// Setup: add all incentives
+			for _, s := range tt.setupData {
+				instance.addIncentiveIdByCreationTime(s.poolPath, s.incentiveId, s.creationTime)
+			}
+
+			// Execute: iterate over range
+			incentivesByTime := instance.getExternalIncentivesByCreationTime()
+			found := make([]string, 0)
+
+			incentivesByTime.Iterate(tt.rangeStart, tt.rangeEnd, func(key int64, value any) bool {
+				poolTree := value.(*avl.Tree)
+				idsValue, exists := poolTree.Get(tt.queryPoolPath)
+				if exists {
+					ids := idsValue.([]string)
+					found = append(found, ids...)
+				}
+				return false
+			})
+
+			// Verify
+			uassert.Equal(t, tt.expectedCount, len(found))
+			for i, expectedId := range tt.expectedIds {
+				if i < len(found) {
+					uassert.Equal(t, expectedId, found[i])
+				}
+			}
+		})
 	}
 }
