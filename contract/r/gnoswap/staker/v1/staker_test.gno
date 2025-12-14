@@ -5,6 +5,7 @@ import (
 	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 
@@ -628,15 +629,27 @@ func TestStakeToken_EmptyIncentiveList(t *testing.T) {
 }
 
 // TestStore_ExternalIncentivesByCreationTime tests the store functions
-// for the time-based incentive index.
+// for the time-based incentive index with 2-level structure.
 func TestStore_ExternalIncentivesByCreationTime(t *testing.T) {
 	initStakerTest(t)
 	instance := getMockInstance()
 
-	// Test SetExternalIncentivesByCreationTime
+	poolPath1 := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+	poolPath2 := "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000"
+
+	// Test SetExternalIncentivesByCreationTime with 2-level structure
 	tree := sr.NewUintTree()
-	tree.Set(100, []string{"incentive1"})
-	tree.Set(200, []string{"incentive2", "incentive3"})
+
+	// Create pool map for timestamp 100
+	poolMap1 := avl.NewTree()
+	poolMap1.Set(poolPath1, []string{"incentive1"})
+	tree.Set(100, poolMap1)
+
+	// Create pool map for timestamp 200
+	poolMap2 := avl.NewTree()
+	poolMap2.Set(poolPath1, []string{"incentive2"})
+	poolMap2.Set(poolPath2, []string{"incentive3"})
+	tree.Set(200, poolMap2)
 
 	err := instance.store.SetExternalIncentivesByCreationTime(tree)
 	if err != nil {
@@ -654,22 +667,51 @@ func TestStore_ExternalIncentivesByCreationTime(t *testing.T) {
 		t.Fatal("Expected to retrieve tree")
 	}
 
-	// Verify data
+	// Verify data at timestamp 100
 	value1, exists1 := retrieved.Get(100)
 	if !exists1 {
-		t.Error("Expected incentive at timestamp 100")
+		t.Error("Expected pool map at timestamp 100")
 	}
-	ids1 := value1.([]string)
+	pMap1, ok := value1.(*avl.Tree)
+	if !ok {
+		t.Fatalf("Expected *avl.Tree at timestamp 100, got %T", value1)
+	}
+	idsValue1, exists := pMap1.Get(poolPath1)
+	if !exists {
+		t.Error("Expected incentives for poolPath1 at timestamp 100")
+	}
+	ids1 := idsValue1.([]string)
 	if len(ids1) != 1 || ids1[0] != "incentive1" {
 		t.Errorf("Expected [incentive1], got %v", ids1)
 	}
 
+	// Verify data at timestamp 200
 	value2, exists2 := retrieved.Get(200)
 	if !exists2 {
-		t.Error("Expected incentives at timestamp 200")
+		t.Error("Expected pool map at timestamp 200")
 	}
-	ids2 := value2.([]string)
-	if len(ids2) != 2 || ids2[0] != "incentive2" || ids2[1] != "incentive3" {
-		t.Errorf("Expected [incentive2, incentive3], got %v", ids2)
+	pMap2, ok := value2.(*avl.Tree)
+	if !ok {
+		t.Fatalf("Expected *avl.Tree at timestamp 200, got %T", value2)
+	}
+
+	// Check poolPath1 at timestamp 200
+	idsValue2a, exists := pMap2.Get(poolPath1)
+	if !exists {
+		t.Error("Expected incentives for poolPath1 at timestamp 200")
+	}
+	ids2a := idsValue2a.([]string)
+	if len(ids2a) != 1 || ids2a[0] != "incentive2" {
+		t.Errorf("Expected [incentive2], got %v", ids2a)
+	}
+
+	// Check poolPath2 at timestamp 200
+	idsValue2b, exists := pMap2.Get(poolPath2)
+	if !exists {
+		t.Error("Expected incentives for poolPath2 at timestamp 200")
+	}
+	ids2b := idsValue2b.([]string)
+	if len(ids2b) != 1 || ids2b[0] != "incentive3" {
+		t.Errorf("Expected [incentive3], got %v", ids2b)
 	}
 }
