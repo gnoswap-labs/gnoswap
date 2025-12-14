@@ -315,6 +315,9 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 		currentWarmups,
 	)
 
+	// update deposit's incentive list with new incentives created since last update
+	s.updateDepositExternalIncentiveIds(deposit, currentTime)
+
 	deposits := s.getDeposits()
 	deposits.set(positionId, deposit)
 
