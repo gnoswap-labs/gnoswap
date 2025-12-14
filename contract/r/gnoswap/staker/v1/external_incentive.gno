@@ -3,7 +3,6 @@ package v1
 import (
 	"chain"
 	"chain/runtime"
-	"math"
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -253,7 +252,7 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 	totalReward := int64(0)
 
 	// calculate total external reward for the incentive
-	s.getDeposits().Iterate(0, math.MaxUint64, func(positionId uint64, deposit *sr.Deposit) bool {
+	s.getDeposits().IterateByPoolPath(0, uint64(incentiveResolver.EndTimestamp()), incentiveResolver.TargetPoolPath(), func(positionId uint64, deposit *sr.Deposit) bool {
 		depositResolver := NewDepositResolver(deposit)
 		lastCollectTime := depositResolver.ExternalRewardLastCollectTime(incentiveResolver.IncentiveId())
 
