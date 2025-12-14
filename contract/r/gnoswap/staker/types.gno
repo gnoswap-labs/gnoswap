@@ -79,7 +79,6 @@ type IStakerGetter interface {
 	GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool)
 	GetTargetPoolPathByIncentiveId(poolPath string, incentiveId string) string
 	GetUnstakingFee() int64
-	IsArchivedExternalIncentive(incentiveId string) bool
 	IsStaked(positionId uint64) bool
 }
 
