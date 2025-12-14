@@ -1556,3 +1556,265 @@ func TestAddIncentiveIdByCreationTime_IterationRange(t *testing.T) {
 		})
 	}
 }
+
+// TestUpdateDepositExternalIncentiveIds tests the updateDepositExternalIncentiveIds function
+// which synchronizes deposit's external incentive list with newly created incentives.
+func TestUpdateDepositExternalIncentiveIds(t *testing.T) {
+	// incentiveSetup represents an incentive to be added to the time index
+	type incentiveSetup struct {
+		poolPath     string
+		incentiveId  string
+		creationTime int64
+	}
+
+	// depositSetup represents initial deposit state
+	type depositSetup struct {
+		owner                          address
+		poolPath                       string
+		liquidity                      uint64
+		stakeTimestamp                 int64
+		tickLower                      int32
+		tickUpper                      int32
+		lastExternalIncentiveUpdatedAt int64
+		existingIncentiveIds           []string
+	}
+
+	tests := []struct {
+		name                          string
+		incentives                    []incentiveSetup
+		deposit                       depositSetup
+		currentTime                   int64
+		expectedIncentiveIds          []string
+		expectedLastExternalUpdatedAt int64
+		expectedNewIncentiveCount     int
+	}{
+		{
+			name: "basic case - new incentives added to deposit",
+			incentives: []incentiveSetup{
+				{poolPath: "pool-a", incentiveId: "inc-1", creationTime: 100},
+				{poolPath: "pool-a", incentiveId: "inc-2", creationTime: 200},
+			},
+			deposit: depositSetup{
+				owner:                          testutils.TestAddress("user1"),
+				poolPath:                       "pool-a",
+				liquidity:                      1000,
+				stakeTimestamp:                 50,
+				tickLower:                      -1000,
+				tickUpper:                      1000,
+				lastExternalIncentiveUpdatedAt: 0,
+				existingIncentiveIds:           []string{},
+			},
+			currentTime:                   300,
+			expectedIncentiveIds:          []string{"inc-1", "inc-2"},
+			expectedLastExternalUpdatedAt: 300,
+			expectedNewIncentiveCount:     2,
+		},
+		{
+			name: "no update when lastUpdate >= currentTime",
+			incentives: []incentiveSetup{
+				{poolPath: "pool-a", incentiveId: "inc-1", creationTime: 100},
+			},
+			deposit: depositSetup{
+				owner:                          testutils.TestAddress("user1"),
+				poolPath:                       "pool-a",
+				liquidity:                      1000,
+				stakeTimestamp:                 50,
+				tickLower:                      -1000,
+				tickUpper:                      1000,
+				lastExternalIncentiveUpdatedAt: 500,
+				existingIncentiveIds:           []string{},
+			},
+			currentTime:                   500,
+			expectedIncentiveIds:          []string{},
+			expectedLastExternalUpdatedAt: 500,
+			expectedNewIncentiveCount:     0,
+		},
+		{
+			name: "partial update - only new incentives since last update",
+			incentives: []incentiveSetup{
+				{poolPath: "pool-a", incentiveId: "inc-old", creationTime: 100},
+				{poolPath: "pool-a", incentiveId: "inc-new", creationTime: 300},
+			},
+			deposit: depositSetup{
+				owner:                          testutils.TestAddress("user1"),
+				poolPath:                       "pool-a",
+				liquidity:                      1000,
+				stakeTimestamp:                 50,
+				tickLower:                      -1000,
+				tickUpper:                      1000,
+				lastExternalIncentiveUpdatedAt: 200,
+				existingIncentiveIds:           []string{"inc-old"},
+			},
+			currentTime:                   400,
+			expectedIncentiveIds:          []string{"inc-old", "inc-new"},
+			expectedLastExternalUpdatedAt: 400,
+			expectedNewIncentiveCount:     2,
+		},
+		{
+			name: "filter by pool path - only matching pool incentives",
+			incentives: []incentiveSetup{
+				{poolPath: "pool-a", incentiveId: "a-inc-1", creationTime: 100},
+				{poolPath: "pool-b", incentiveId: "b-inc-1", creationTime: 150},
+				{poolPath: "pool-a", incentiveId: "a-inc-2", creationTime: 200},
+				{poolPath: "pool-c", incentiveId: "c-inc-1", creationTime: 250},
+			},
+			deposit: depositSetup{
+				owner:                          testutils.TestAddress("user1"),
+				poolPath:                       "pool-a",
+				liquidity:                      1000,
+				stakeTimestamp:                 50,
+				tickLower:                      -1000,
+				tickUpper:                      1000,
+				lastExternalIncentiveUpdatedAt: 0,
+				existingIncentiveIds:           []string{},
+			},
+			currentTime:                   300,
+			expectedIncentiveIds:          []string{"a-inc-1", "a-inc-2"},
+			expectedLastExternalUpdatedAt: 300,
+			expectedNewIncentiveCount:     2,
+		},
+		{
+			name: "empty time range - no incentives in range",
+			incentives: []incentiveSetup{
+				{poolPath: "pool-a", incentiveId: "inc-1", creationTime: 500},
+			},
+			deposit: depositSetup{
+				owner:                          testutils.TestAddress("user1"),
+				poolPath:                       "pool-a",
+				liquidity:                      1000,
+				stakeTimestamp:                 50,
+				tickLower:                      -1000,
+				tickUpper:                      1000,
+				lastExternalIncentiveUpdatedAt: 100,
+				existingIncentiveIds:           []string{},
+			},
+			currentTime:                   300,
+			expectedIncentiveIds:          []string{},
+			expectedLastExternalUpdatedAt: 300,
+			expectedNewIncentiveCount:     0,
+		},
+		{
+			name: "multiple incentives at same timestamp",
+			incentives: []incentiveSetup{
+				{poolPath: "pool-a", incentiveId: "inc-1", creationTime: 100},
+				{poolPath: "pool-a", incentiveId: "inc-2", creationTime: 100},
+				{poolPath: "pool-a", incentiveId: "inc-3", creationTime: 100},
+			},
+			deposit: depositSetup{
+				owner:                          testutils.TestAddress("user1"),
+				poolPath:                       "pool-a",
+				liquidity:                      1000,
+				stakeTimestamp:                 50,
+				tickLower:                      -1000,
+				tickUpper:                      1000,
+				lastExternalIncentiveUpdatedAt: 0,
+				existingIncentiveIds:           []string{},
+			},
+			currentTime:                   200,
+			expectedIncentiveIds:          []string{"inc-1", "inc-2", "inc-3"},
+			expectedLastExternalUpdatedAt: 200,
+			expectedNewIncentiveCount:     3,
+		},
+		{
+			name: "no incentives exist for pool",
+			incentives: []incentiveSetup{
+				{poolPath: "pool-b", incentiveId: "b-inc-1", creationTime: 100},
+				{poolPath: "pool-c", incentiveId: "c-inc-1", creationTime: 200},
+			},
+			deposit: depositSetup{
+				owner:                          testutils.TestAddress("user1"),
+				poolPath:                       "pool-a",
+				liquidity:                      1000,
+				stakeTimestamp:                 50,
+				tickLower:                      -1000,
+				tickUpper:                      1000,
+				lastExternalIncentiveUpdatedAt: 0,
+				existingIncentiveIds:           []string{},
+			},
+			currentTime:                   300,
+			expectedIncentiveIds:          []string{},
+			expectedLastExternalUpdatedAt: 300,
+			expectedNewIncentiveCount:     0,
+		},
+		{
+			name: "preserve existing incentive ids",
+			incentives: []incentiveSetup{
+				{poolPath: "pool-a", incentiveId: "new-inc", creationTime: 300},
+			},
+			deposit: depositSetup{
+				owner:                          testutils.TestAddress("user1"),
+				poolPath:                       "pool-a",
+				liquidity:                      1000,
+				stakeTimestamp:                 50,
+				tickLower:                      -1000,
+				tickUpper:                      1000,
+				lastExternalIncentiveUpdatedAt: 200,
+				existingIncentiveIds:           []string{"existing-inc-1", "existing-inc-2"},
+			},
+			currentTime:                   400,
+			expectedIncentiveIds:          []string{"existing-inc-1", "existing-inc-2", "new-inc"},
+			expectedLastExternalUpdatedAt: 400,
+			expectedNewIncentiveCount:     3,
+		},
+		{
+			name: "exact boundary - incentive at lastUpdate time excluded",
+			incentives: []incentiveSetup{
+				{poolPath: "pool-a", incentiveId: "boundary-inc", creationTime: 100},
+				{poolPath: "pool-a", incentiveId: "after-inc", creationTime: 150},
+			},
+			deposit: depositSetup{
+				owner:                          testutils.TestAddress("user1"),
+				poolPath:                       "pool-a",
+				liquidity:                      1000,
+				stakeTimestamp:                 50,
+				tickLower:                      -1000,
+				tickUpper:                      1000,
+				lastExternalIncentiveUpdatedAt: 100,
+				existingIncentiveIds:           []string{},
+			},
+			currentTime:                   200,
+			expectedIncentiveIds:          []string{"after-inc"},
+			expectedLastExternalUpdatedAt: 200,
+			expectedNewIncentiveCount:     1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initStakerTest(t)
+			instance := getMockInstance()
+
+			for _, inc := range tt.incentives {
+				instance.addIncentiveIdByCreationTime(inc.poolPath, inc.incentiveId, inc.creationTime)
+			}
+
+			deposit := sr.NewDeposit(
+				tt.deposit.owner,
+				tt.deposit.poolPath,
+				u256.NewUint(tt.deposit.liquidity),
+				tt.deposit.stakeTimestamp,
+				tt.deposit.tickLower,
+				tt.deposit.tickUpper,
+				sr.DefaultWarmupTemplate(),
+			)
+
+			deposit.SetLastExternalIncentiveUpdatedAt(tt.deposit.lastExternalIncentiveUpdatedAt)
+			for _, existingId := range tt.deposit.existingIncentiveIds {
+				deposit.AddExternalIncentiveId(existingId)
+			}
+
+			// Execute
+			instance.updateDepositExternalIncentiveIds(deposit, tt.currentTime)
+
+			actualIds := deposit.GetExternalIncentiveIdList()
+			uassert.Equal(t, tt.expectedNewIncentiveCount, len(actualIds))
+			uassert.Equal(t, tt.expectedLastExternalUpdatedAt, deposit.LastExternalIncentiveUpdatedAt())
+
+			// Verify: each expected incentive ID exists
+			for _, expectedId := range tt.expectedIncentiveIds {
+				uassert.True(t, deposit.HasExternalIncentiveId(expectedId),
+					ufmt.Sprintf("Expected incentive %s to exist in deposit", expectedId))
+			}
+		})
+	}
+}

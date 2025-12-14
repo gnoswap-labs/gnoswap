@@ -106,45 +106,12 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 	}
 	rewardState.reset()
 
-	// Lazy sync: update deposit's incentive list with new incentives created since last update
-	lastUpdate := deposit.LastExternalIncentiveUpdatedAt()
+	// update deposit's incentive list with new incentives created since last update
+	s.updateDepositExternalIncentiveIds(deposit, param.CurrentTime)
 
-	if lastUpdate < param.CurrentTime {
-		incentivesByTime := s.getExternalIncentivesByCreationTime()
-
-		incentivesByTime.Iterate(lastUpdate, param.CurrentTime, func(_ int64, value any) bool {
-			// Value is a slice of incentive IDs (handles timestamp collisions)
-			poolIncentiveIds, ok := value.(*avl.Tree)
-			if !ok {
-				return false
-			}
-
-			incentiveIdsValue, exists := poolIncentiveIds.Get(deposit.TargetPoolPath())
-			if !exists {
-				return false
-			}
-
-			incentiveIds, ok := incentiveIdsValue.([]string)
-			if !ok {
-				return false
-			}
-
-			// Process each incentive ID in the slice
-			for _, incentiveId := range incentiveIds {
-				deposit.AddExternalIncentiveId(incentiveId)
-			}
-
-			return false
-		})
-
-		deposit.SetLastExternalIncentiveUpdatedAt(param.CurrentTime)
-	}
-
-	// Use deposit's indexed incentive IDs instead of iterating all pool incentives
-	// This is O(deposit's incentives) instead of O(pool's all incentives)
-	// Lazy removal: incentive IDs are removed from deposit when no longer needed
 	incentivesResolver := poolResolver.IncentivesResolver()
 
+	// Use deposit's indexed incentive IDs instead of iterating all pool incentives
 	deposit.IterateExternalIncentiveIds(func(incentiveId string) bool {
 		incentive, ok := incentivesResolver.Get(incentiveId)
 		if !ok {
@@ -187,6 +154,42 @@ func (s *stakerV1) processUnClaimableReward(poolPath string, endTimestamp int64)
 	}
 	poolResolver := NewPoolResolver(pool)
 	return poolResolver.processUnclaimableReward(endTimestamp)
+}
+
+// update deposit's incentive list with new incentives created since last update
+func (s *stakerV1) updateDepositExternalIncentiveIds(deposit *sr.Deposit, currentTime int64) {
+	lastUpdate := deposit.LastExternalIncentiveUpdatedAt()
+
+	if lastUpdate < currentTime {
+		incentivesByTime := s.getExternalIncentivesByCreationTime()
+
+		incentivesByTime.Iterate(lastUpdate, currentTime, func(_ int64, value any) bool {
+			// Value is a slice of incentive IDs (handles timestamp collisions)
+			poolIncentiveIds, ok := value.(*avl.Tree)
+			if !ok {
+				return false
+			}
+
+			incentiveIdsValue, exists := poolIncentiveIds.Get(deposit.TargetPoolPath())
+			if !exists {
+				return false
+			}
+
+			incentiveIds, ok := incentiveIdsValue.([]string)
+			if !ok {
+				return false
+			}
+
+			// Process each incentive ID in the slice
+			for _, incentiveId := range incentiveIds {
+				deposit.AddExternalIncentiveId(incentiveId)
+			}
+
+			return false
+		})
+
+		deposit.SetLastExternalIncentiveUpdatedAt(currentTime)
+	}
 }
 
 // getInitialCollectTime determines the initial collection time for an incentive
