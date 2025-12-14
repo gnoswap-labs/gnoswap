@@ -1557,9 +1557,9 @@ func TestAddIncentiveIdByCreationTime_IterationRange(t *testing.T) {
 	}
 }
 
-// TestUpdateDepositExternalIncentiveIds tests the updateDepositExternalIncentiveIds function
-// which synchronizes deposit's external incentive list with newly created incentives.
-func TestUpdateDepositExternalIncentiveIds(t *testing.T) {
+// TestGetExternalIncentiveIdsBy tests the getExternalIncentiveIdsBy function
+// which retrieves external incentive IDs within a specific time range for a pool.
+func TestGetExternalIncentiveIdsBy(t *testing.T) {
 	// incentiveSetup represents an incentive to be added to the time index
 	type incentiveSetup struct {
 		poolPath     string
@@ -1610,7 +1610,7 @@ func TestUpdateDepositExternalIncentiveIds(t *testing.T) {
 			expectedNewIncentiveCount:     2,
 		},
 		{
-			name: "no update when lastUpdate >= currentTime",
+			name: "no incentives when lastUpdate == currentTime",
 			incentives: []incentiveSetup{
 				{poolPath: "pool-a", incentiveId: "inc-1", creationTime: 100},
 			},
@@ -1757,7 +1757,7 @@ func TestUpdateDepositExternalIncentiveIds(t *testing.T) {
 			expectedNewIncentiveCount:     3,
 		},
 		{
-			name: "exact boundary - incentive at lastUpdate time excluded",
+			name: "exact boundary - incentive at lastUpdate time included",
 			incentives: []incentiveSetup{
 				{poolPath: "pool-a", incentiveId: "boundary-inc", creationTime: 100},
 				{poolPath: "pool-a", incentiveId: "after-inc", creationTime: 150},
@@ -1773,9 +1773,9 @@ func TestUpdateDepositExternalIncentiveIds(t *testing.T) {
 				existingIncentiveIds:           []string{},
 			},
 			currentTime:                   200,
-			expectedIncentiveIds:          []string{"after-inc"},
+			expectedIncentiveIds:          []string{"boundary-inc", "after-inc"},
 			expectedLastExternalUpdatedAt: 200,
-			expectedNewIncentiveCount:     1,
+			expectedNewIncentiveCount:     2,
 		},
 	}
 
@@ -1804,7 +1804,14 @@ func TestUpdateDepositExternalIncentiveIds(t *testing.T) {
 			}
 
 			// Execute
-			instance.updateDepositExternalIncentiveIds(deposit, tt.currentTime)
+			lastUpdateTime := tt.deposit.lastExternalIncentiveUpdatedAt
+			newIncentiveIds := instance.getExternalIncentiveIdsBy(tt.deposit.poolPath, lastUpdateTime, tt.currentTime)
+			
+			// Add new incentives to deposit (mimicking what calculatePositionReward does)
+			for _, incentiveId := range newIncentiveIds {
+				deposit.AddExternalIncentiveId(incentiveId)
+			}
+			deposit.SetLastExternalIncentiveUpdatedAt(tt.currentTime)
 
 			actualIds := deposit.GetExternalIncentiveIdList()
 			uassert.Equal(t, tt.expectedNewIncentiveCount, len(actualIds))
