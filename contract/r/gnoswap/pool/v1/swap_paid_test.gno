@@ -8,6 +8,7 @@ import (
 	"gno.land/p/nt/uassert"
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/common"
+	pl "gno.land/r/gnoswap/pool"
 )
 
 func TestSwapCallback_Pay(t *testing.T) {
@@ -271,7 +272,7 @@ func TestSwapCallback_Pay(t *testing.T) {
 					tt.swapInfo.specifiedAmount,
 					tt.swapInfo.sqrtPriceLimitX96,
 					tt.swapInfo.payer,
-					func(cur realm, amount0Delta int64, amount1Delta int64) error {
+					func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 						var currentAmount0Delta int64 = 0
 						var currentAmount1Delta int64 = 0
 

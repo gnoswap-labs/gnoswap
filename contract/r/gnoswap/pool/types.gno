@@ -103,7 +103,7 @@ type IPoolSwap interface {
 		amountSpecified string,
 		sqrtPriceLimitX96 string,
 		payer address,
-		swapCallback func(cur realm, amount0Delta, amount1Delta int64) error,
+		swapCallback func(cur realm, amount0Delta, amount1Delta int64, callbackMarker *CallbackMarker) error,
 	) (string, string)
 
 	SetSwapEndHook(hook func(cur realm, poolPath string) error)
@@ -256,3 +256,5 @@ type IPoolStore interface {
 	GetTickCrossHook() func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)
 	SetTickCrossHook(tickCrossHook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) error
 }
+
+type CallbackMarker struct{}
