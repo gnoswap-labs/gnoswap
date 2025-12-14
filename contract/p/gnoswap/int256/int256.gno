@@ -64,7 +64,7 @@ func (z *Int) IsInt64() bool {
 
 func (z *Int) Int64() int64 {
 	if !z.IsInt64() {
-		return 0
+		panic("int256: int64 overflow")
 	}
 	s := z.Sign()
 	if s == 0 {
@@ -89,7 +89,7 @@ func (z *Int) IsUint64() bool {
 
 func (z *Int) Uint64() uint64 {
 	if !z.IsUint64() {
-		return 0
+		panic("int256: uint64 overflow")
 	}
 	return z[0]
 }
