@@ -106,11 +106,11 @@ func main() {
 	println("[INFO] Attempting ExactOut swap (bar →", expectedAmountSpecified, "baz) with fee is almost 120000")
 	println("[INFO] Expected to fail due to insufficient liquidity")
 
-	println("[EXPECTED] Swap should fail with error: [GNOSWAP-ROUTER-002] slippage check failed || ExactOut: too much spent (max:0, used:168406)")
+	println("[EXPECTED] Swap should fail with error: [GNOSWAP-ROUTER-001] slippage check failed || ExactOut: too much spent (max:0, used:168406)")
 
 	uassert.AbortsWithMessage(
 		t,
-		`[GNOSWAP-ROUTER-002] slippage check failed || ExactOut: too much spent (max:0, used:168406)`,
+		`[GNOSWAP-ROUTER-001] slippage check failed || ExactOut: too much spent (max:0, used:168406)`,
 		func() {
 			router.ExactOutSwapRoute(
 				cross,
@@ -216,5 +216,5 @@ func bazApprove(t *testing.T, owner, spender address, amount int64) {
 // [INFO] Approving tokens for swap
 // [INFO] Attempting ExactOut swap (bar → 119820 baz) with fee is almost 120000
 // [INFO] Expected to fail due to insufficient liquidity
-// [EXPECTED] Swap should fail with error: [GNOSWAP-ROUTER-002] slippage check failed || ExactOut: too much spent (max:0, used:168406)
+// [EXPECTED] Swap should fail with error: [GNOSWAP-ROUTER-001] slippage check failed || ExactOut: too much spent (max:0, used:168406)
 // [INFO] Scenario completed

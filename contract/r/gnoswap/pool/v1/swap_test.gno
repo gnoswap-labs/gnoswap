@@ -447,7 +447,7 @@ func TestSwap_ExecutionAndSecurity(t *testing.T) {
 				priceLimit:      EQUAL_PRICE_RATIO,
 			},
 			expectSuccess: false,
-			expectedError: "[GNOSWAP-POOL-018] cannot swap while pool is locked",
+			expectedError: "[GNOSWAP-POOL-016] cannot swap while pool is locked",
 			riskFactor:    "Prevent state inconsistency from concurrent transactions",
 		},
 		{
@@ -467,7 +467,7 @@ func TestSwap_ExecutionAndSecurity(t *testing.T) {
 				priceLimit:      EQUAL_PRICE_RATIO,
 			},
 			expectSuccess: false,
-			expectedError: "[GNOSWAP-POOL-015] invalid swap amount || amountSpecified == 0",
+			expectedError: "[GNOSWAP-POOL-013] invalid swap amount || amountSpecified == 0",
 			riskFactor:    "Prevent gas waste and system load from meaningless trade",
 		},
 	}
@@ -1162,7 +1162,7 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(t *testing.T) {
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/test/mock_swapper"))
 
-		uassert.PanicsWithMessage(t, "[GNOSWAP-POOL-015] invalid swap amount || amount0 or amount1 is zero", func() {
+		uassert.PanicsWithMessage(t, "[GNOSWAP-POOL-013] invalid swap amount || amount0 or amount1 is zero", func() {
 			getMockInstance().Swap(
 				token0Path,
 				token1Path,

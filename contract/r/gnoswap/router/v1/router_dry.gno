@@ -74,34 +74,25 @@ func (p *SwapProcessor) ValidateSwapResults(
 	swapType SwapType,
 	resultAmountIn, resultAmountOut int64,
 	amountSpecified, amountLimit int64,
+	swapCount int64,
 ) (amountIn, amountOut int64, success bool) {
 	if resultAmountIn == 0 || resultAmountOut == 0 {
 		return 0, 0, false
 	}
 
-	switch swapType {
-	case ExactIn:
-		if resultAmountIn > amountSpecified {
-			return resultAmountIn, resultAmountOut, false
-		}
-		if resultAmountOut < amountLimit {
-			return resultAmountIn, resultAmountOut, false
-		}
-		return resultAmountIn, resultAmountOut, true
+	validator := &SwapValidator{}
 
-	case ExactOut:
-		if resultAmountOut < amountSpecified {
+	if swapType == ExactOut {
+		if err := validator.exactOutAmount(resultAmountOut, safeAbsInt64(amountSpecified), swapCount); err != nil {
 			return resultAmountIn, resultAmountOut, false
 		}
-		if resultAmountIn > amountLimit {
-			return resultAmountIn, resultAmountOut, false
-		}
-		return resultAmountIn, resultAmountOut, true
-
-	default:
-		// This should never happen since we validate the swap type earlier
-		return 0, 0, false
 	}
+
+	if err := validator.slippage(swapType, resultAmountIn, resultAmountOut, amountLimit); err != nil {
+		return resultAmountIn, resultAmountOut, false
+	}
+
+	return resultAmountIn, resultAmountOut, true
 }
 
 // AddSwapResults safely adds swap result amounts, checking for overflow.
@@ -172,6 +163,9 @@ func (r *routerV1) drySwapRoute(
 
 	swapFee := r.store.GetSwapFee()
 
+	// Store original amount for validation (before router fee adjustment)
+	originalAmountSpecified := amountSpecified
+
 	// adjust amount sign for exact out swaps
 	if swapType == ExactOut {
 		amountSpecifiedWithRouterFee := calculateExactOutWithRouterFee(safeAbsInt64(amountSpecified), swapFee)
@@ -181,6 +175,7 @@ func (r *routerV1) drySwapRoute(
 	// initialize accumulators for swap results
 	resultAmountIn, resultAmountOut := int64(0), int64(0)
 	remainRequestAmount := amountSpecified
+	swapCount := int64(0)
 
 	// Process each route
 	for i, route := range routes {
@@ -207,6 +202,9 @@ func (r *routerV1) drySwapRoute(
 		// determine the number of hops and validate
 		numHops := strings.Count(route, POOL_SEPARATOR) + 1
 		assertHopsInRange(numHops)
+
+		// accumulate total swap count for validation
+		swapCount += int64(numHops)
 
 		// execute the appropriate swap type
 		var amountIn, amountOut int64
@@ -236,7 +234,7 @@ func (r *routerV1) drySwapRoute(
 
 	resultAmountOut = safeSubInt64(resultAmountOut, feeAmountInt64)
 
-	return processor.ValidateSwapResults(swapType, resultAmountIn, resultAmountOut, amountSpecified, amountLimit)
+	return processor.ValidateSwapResults(swapType, resultAmountIn, resultAmountOut, originalAmountSpecified, amountLimit, swapCount)
 }
 
 // getPathIndex returns the path index based on swap type and number of hops.

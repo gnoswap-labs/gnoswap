@@ -48,7 +48,7 @@ func TestBurn_CalculateTokensOwed(t *testing.T) {
 			feeGrowthInsideLastX128:         u256.MustFromDecimal("500000000000000000000000000000000000"),
 			positionFeeGrowthInsideLastX128: u256.MustFromDecimal("1000000000000000000000000000000000000"),
 			positionLiquidity:               u256.MustFromDecimal("1000000"),
-			expectedPanicMessage:            "[GNOSWAP-POSITION-018] underflow || feeGrowthInsideLastX128 - positionFeeGrowthInsideLastX128 underflow",
+			expectedPanicMessage:            "[GNOSWAP-POSITION-016] underflow || feeGrowthInsideLastX128 - positionFeeGrowthInsideLastX128 underflow",
 			shouldPanic:                     true,
 		},
 		{
@@ -80,7 +80,7 @@ func TestBurn_CalculateTokensOwed(t *testing.T) {
 			feeGrowthInsideLastX128:         u256.Zero(),
 			positionFeeGrowthInsideLastX128: u256.MustFromDecimal("1"),
 			positionLiquidity:               u256.MustFromDecimal("1000000"),
-			expectedPanicMessage:            "[GNOSWAP-POSITION-018] underflow || feeGrowthInsideLastX128 - positionFeeGrowthInsideLastX128 underflow",
+			expectedPanicMessage:            "[GNOSWAP-POSITION-016] underflow || feeGrowthInsideLastX128 - positionFeeGrowthInsideLastX128 underflow",
 			shouldPanic:                     true,
 		},
 	}
@@ -215,7 +215,7 @@ func TestBurn_CalculateFees(t *testing.T) {
 				feeGrowthInside0LastX128: u256.MustFromDecimal("1"),
 				feeGrowthInside1LastX128: u256.Zero(),
 			},
-			expectedPanicMessage: "[GNOSWAP-POSITION-019] overflow || tokensOwed0 + fee0 overflow",
+			expectedPanicMessage: "[GNOSWAP-POSITION-017] overflow || tokensOwed0 + fee0 overflow",
 			shouldPanic:          true,
 		},
 		{
@@ -241,7 +241,7 @@ func TestBurn_CalculateFees(t *testing.T) {
 				feeGrowthInside0LastX128: u256.Zero(),
 				feeGrowthInside1LastX128: u256.MustFromDecimal("1"),
 			},
-			expectedPanicMessage: "[GNOSWAP-POSITION-019] overflow || tokensOwed1 + fee1 overflow",
+			expectedPanicMessage: "[GNOSWAP-POSITION-017] overflow || tokensOwed1 + fee1 overflow",
 			shouldPanic:          true,
 		},
 		{

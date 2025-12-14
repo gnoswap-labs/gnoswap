@@ -116,7 +116,7 @@ func TestSwapCallback_Pay(t *testing.T) {
 				callbackSendToken1Amount: 0,
 			},
 			expectedHasPanic:        true,
-			expectedHasPanicMessage: "[GNOSWAP-POOL-030] insufficient payment || insufficient payment: expected 1000, received 999",
+			expectedHasPanicMessage: "[GNOSWAP-POOL-026] insufficient payment || insufficient payment: expected 1000, received 999",
 		},
 		{
 			name: "one for zero swap is success for paid amount equal to specified amount",
@@ -212,7 +212,7 @@ func TestSwapCallback_Pay(t *testing.T) {
 				callbackSendToken1Amount: 999, // less than specified amount
 			},
 			expectedHasPanic:        true,
-			expectedHasPanicMessage: "[GNOSWAP-POOL-030] insufficient payment || insufficient payment: expected 1000, received 999",
+			expectedHasPanicMessage: "[GNOSWAP-POOL-026] insufficient payment || insufficient payment: expected 1000, received 999",
 		},
 		{
 			name: "zero for one swap is success for partial paid amount",

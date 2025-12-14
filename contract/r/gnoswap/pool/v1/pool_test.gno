@@ -277,7 +277,7 @@ func TestMint_SecurityAndValidation(t *testing.T) {
 				approveTokensForPool(t, pool)
 				testing.SetRealm(posRealm)
 
-				expectedAbortMsg := "[GNOSWAP-POOL-010] zero liquidity"
+				expectedAbortMsg := "[GNOSWAP-POOL-008] zero liquidity"
 				uassert.AbortsWithMessage(t, expectedAbortMsg, func() {
 					mockInstanceMint(pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 						NARROW_RANGE_LOWER, NARROW_RANGE_UPPER, "0", adminAddr)
@@ -298,7 +298,7 @@ func TestMint_SecurityAndValidation(t *testing.T) {
 				tickUpper := int32(50)
 
 				// tickLower > tickUpper
-				expectedAbortMsg := "[GNOSWAP-POOL-022] invalid tick and tick spacing requested"
+				expectedAbortMsg := "[GNOSWAP-POOL-019] invalid tick and tick spacing requested"
 				uassert.AbortsContains(t,
 					expectedAbortMsg,
 					func() {
@@ -322,7 +322,7 @@ func TestMint_SecurityAndValidation(t *testing.T) {
 				overflowAmount := new(u256.Uint).Add(maxLiquidity, u256.One()).ToString()
 
 				expectedAbortMsg := ufmt.Sprintf(
-					"[GNOSWAP-POOL-009] invalid liquidity calculated || liquidityGrossAfter(%s) overflows maxLiquidity(%s)",
+					"[GNOSWAP-POOL-007] invalid liquidity calculated || liquidityGrossAfter(%s) overflows maxLiquidity(%s)",
 					overflowAmount, maxLiquidity.ToString())
 				uassert.AbortsWithMessage(t, expectedAbortMsg,
 					func() {
@@ -626,7 +626,7 @@ func TestPoolCreation_ValidationAndInitialization(t *testing.T) {
 			fee:             FeeTier3000,
 			sqrtPriceX96:    "1",
 			expectSuccess:   false,
-			expectedError:   "[GNOSWAP-POOL-005] out of range for numeric value || sqrtPriceX96(1) is out of range",
+			expectedError:   "[GNOSWAP-POOL-003] out of range for numeric value || sqrtPriceX96(1) is out of range",
 			businessContext: "Extreme low price causes system instability",
 		},
 		{
@@ -637,7 +637,7 @@ func TestPoolCreation_ValidationAndInitialization(t *testing.T) {
 			fee:             FeeTier3000,
 			sqrtPriceX96:    "1461446703485210103287273052203988822378723970342",
 			expectSuccess:   false,
-			expectedError:   "[GNOSWAP-POOL-005] out of range for numeric value || sqrtPriceX96(4295128738) is out of range",
+			expectedError:   "[GNOSWAP-POOL-003] out of range for numeric value || sqrtPriceX96(4295128738) is out of range",
 			businessContext: "Extreme high price causes calculation overflow risk",
 		},
 		{
@@ -749,7 +749,7 @@ func TestFeeCollection_RevenueDistribution(t *testing.T) {
 				tickUpper := int32(400)
 				positionKey, _ := getPositionKey(tickLower, tickUpper)
 				expectedError := ufmt.Sprintf(
-					"[GNOSWAP-POOL-008] requested data not found || positionKey(%s) does not exist",
+					"[GNOSWAP-POOL-006] requested data not found || positionKey(%s) does not exist",
 					positionKey)
 				uassert.AbortsWithMessage(t, expectedError, func() {
 					mockInstanceCollect(pool.Token0Path(), pool.Token1Path(), pool.Fee(),

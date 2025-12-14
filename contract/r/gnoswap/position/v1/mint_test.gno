@@ -156,7 +156,7 @@ func TestMintInternal_PositionMint(t *testing.T) {
 				Caller(testutils.TestAddress("caller"), testutils.TestAddress("recipient")).
 				Params(),
 			expectPanic: true,
-			expectedMsg: "[GNOSWAP-POOL-010] zero liquidity",
+			expectedMsg: "[GNOSWAP-POOL-008] zero liquidity",
 		},
 		{
 			name: "abort: full range not aligned with tick spacing (0.3% / 60)",
@@ -168,7 +168,7 @@ func TestMintInternal_PositionMint(t *testing.T) {
 				Caller(alice, alice).
 				Params(),
 			expectPanic: true,
-			expectedMsg: "[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick(-887272) MOD tickSpacing(60) != 0(-52)",
+			expectedMsg: "[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(-887272) MOD tickSpacing(60) != 0(-52)",
 		},
 		{
 			name: "success: adjusted full range aligned to spacing",
@@ -195,7 +195,7 @@ func TestMintInternal_PositionMint(t *testing.T) {
 				Caller(alice, alice).
 				Params(),
 			expectPanic: true,
-			expectedMsg: "[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick(-125) MOD tickSpacing(60) != 0(-5)",
+			expectedMsg: "[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(-125) MOD tickSpacing(60) != 0(-5)",
 		},
 		{
 			name: "abort: inverted range (upper < lower)",
@@ -207,7 +207,7 @@ func TestMintInternal_PositionMint(t *testing.T) {
 				Caller(alice, alice).
 				Params(),
 			expectPanic: true,
-			expectedMsg: "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(120), tickUpper(-120)",
+			expectedMsg: "[GNOSWAP-POOL-020] tickLower is greater than or equal to tickUpper || tickLower(120), tickUpper(-120)",
 		},
 		{
 			name: "success: safe extreme range",
@@ -316,7 +316,7 @@ func TestMintInternal_PanicCases(t *testing.T) {
 				WithMins("0", "0").
 				Caller(alice, alice).
 				Params(),
-			expectedMsg: "[GNOSWAP-COMMON-010] identical ticks || sqrtRatioAX96 (79704936542881920863903188246) and sqrtRatioBX96 (79704936542881920863903188246) are identical",
+			expectedMsg: "[GNOSWAP-COMMON-005] identical ticks || sqrtRatioAX96 (79704936542881920863903188246) and sqrtRatioBX96 (79704936542881920863903188246) are identical",
 		},
 		{
 			name: "abort: tick lower below MIN_TICK bound",
@@ -327,7 +327,7 @@ func TestMintInternal_PanicCases(t *testing.T) {
 				WithMins("0", "0").
 				Caller(alice, alice).
 				Params(),
-			expectedMsg: "[GNOSWAP-COMMON-003] value out of range || tick is out of range (smaller than -887272), tick: -887273",
+			expectedMsg: "[GNOSWAP-COMMON-001] value out of range || tick is out of range (smaller than -887272), tick: -887273",
 		},
 	}
 
@@ -444,7 +444,7 @@ func TestMintInternal_FeeTierEdgeCases(t *testing.T) {
 				WithMins("0", "0").
 				Params(),
 			expectPanic: true,
-			expectedMsg: "[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick(-15) MOD tickSpacing(10) != 0(-5)",
+			expectedMsg: "[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(-15) MOD tickSpacing(10) != 0(-5)",
 		},
 		// 0.3% pool (tick spacing 60)
 		{
@@ -485,7 +485,7 @@ func TestMintInternal_FeeTierEdgeCases(t *testing.T) {
 				WithMins("0", "0").
 				Params(),
 			expectPanic: true,
-			expectedMsg: "[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick(-199) MOD tickSpacing(200) != 0(-199)",
+			expectedMsg: "[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(-199) MOD tickSpacing(200) != 0(-199)",
 		},
 		// Edge cases for extreme ticks at spacing=1
 		{
@@ -620,7 +620,7 @@ func TestMintInternal_TickBoundaries(t *testing.T) {
 				WithMins("0", "0").
 				Params(),
 			expectPanic: true,
-			expectedMsg: "[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick(-887272) MOD tickSpacing(10) != 0(-2)",
+			expectedMsg: "[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(-887272) MOD tickSpacing(10) != 0(-2)",
 		},
 		// spacing 60 near MIN
 		{
@@ -646,7 +646,7 @@ func TestMintInternal_TickBoundaries(t *testing.T) {
 				WithMins("0", "0").
 				Params(),
 			expectPanic: true,
-			expectedMsg: "[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick(-887272) MOD tickSpacing(60) != 0(-52)",
+			expectedMsg: "[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(-887272) MOD tickSpacing(60) != 0(-52)",
 		},
 		// spacing 200 near MIN
 		{
@@ -672,7 +672,7 @@ func TestMintInternal_TickBoundaries(t *testing.T) {
 				WithMins("0", "0").
 				Params(),
 			expectPanic: true,
-			expectedMsg: "[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick(-887272) MOD tickSpacing(200) != 0(-72)",
+			expectedMsg: "[GNOSWAP-POOL-019] invalid tick and tick spacing requested || tick(-887272) MOD tickSpacing(200) != 0(-72)",
 		},
 		// spacing 10/60/200 near MAX
 		{

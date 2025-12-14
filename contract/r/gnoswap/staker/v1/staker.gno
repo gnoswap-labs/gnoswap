@@ -436,10 +436,10 @@ func (s *stakerV1) transferDeposit(positionId uint64, owner, caller, to address)
 //
 // Returns poolPath, gnsAmount, externalRewards map, externalPenalties map.
 func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, string, map[string]int64, map[string]int64) {
-	caller := runtime.PreviousRealm().Address()
 	halt.AssertIsNotHaltedStaker()
 	halt.AssertIsNotHaltedWithdraw()
 
+	caller := runtime.PreviousRealm().Address()
 	assertIsDepositor(s, caller, positionId)
 
 	deposit := s.getDeposits().get(positionId)
@@ -451,16 +451,14 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 	blockHeight := runtime.ChainHeight()
 	previousRealm := runtime.PreviousRealm()
 
-	communityPoolAddr := getRoleAddress(prbac.ROLE_COMMUNITY_POOL)
-
 	// get all internal and external rewards
 	reward := s.calcPositionReward(blockHeight, currentTime, positionId)
 
 	// transfer external rewards to user
-	externalReward := reward.External
 	toUserExternalReward := make(map[string]int64)
 	toUserExternalPenalty := make(map[string]int64)
-	for incentiveId, rewardAmount := range externalReward {
+
+	for incentiveId, rewardAmount := range reward.External {
 		if rewardAmount == 0 && reward.ExternalPenalty[incentiveId] == 0 {
 			continue
 		}
@@ -505,10 +503,44 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 		// process external reward to user
 		incentive.SetRewardAmount(safeSubInt64(incentive.RewardAmount(), rewardAmount))
 		rewardToken := incentive.RewardToken()
+
 		toUserExternalReward[rewardToken] = safeAddInt64(toUserExternalReward[rewardToken], rewardAmount)
 		toUser, feeAmount, err := s.handleStakingRewardFee(rewardToken, rewardAmount, false)
 		if err != nil {
 			panic(err.Error())
+		}
+
+		// process external penalty
+		externalPenalty := reward.ExternalPenalty[incentiveId]
+		incentive.SetRewardAmount(safeSubInt64(incentive.RewardAmount(), externalPenalty))
+
+		toUserExternalPenalty[rewardToken] = safeAddInt64(toUserExternalPenalty[rewardToken], externalPenalty)
+		totalDistributedRewardAmount := safeAddInt64(rewardAmount, externalPenalty)
+		depositResolver.addCollectedExternalReward(incentiveId, totalDistributedRewardAmount)
+
+		// Update the last collect time ONLY for this specific incentive
+		// This happens only if the reward was successfully transferred.
+		err = depositResolver.updateExternalRewardLastCollectTime(incentiveId, currentTime)
+		if err != nil {
+			panic(err)
+		}
+
+		// update
+		s.getExternalIncentives().set(incentiveId, incentive)
+
+		if externalPenalty > 0 {
+			common.SafeGRC20Transfer(cross, rewardToken, communityPoolAddr, externalPenalty)
+		}
+
+		if toUser > 0 {
+			if common.IsGNOTWrappedPath(rewardToken) && unwrapResult {
+				tErr := unwrapWithTransfer(deposit.Owner(), toUser)
+				if tErr != nil {
+					panic(tErr)
+				}
+			} else {
+				common.SafeGRC20Transfer(cross, rewardToken, deposit.Owner(), toUser)
+			}
 		}
 
 		chain.Emit(
@@ -522,38 +554,6 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 			"currentTime", formatInt(currentTime),
 			"currentHeight", formatInt(blockHeight),
 		)
-		if toUser > 0 {
-			if common.IsGNOTWrappedPath(rewardToken) && unwrapResult {
-				tErr := unwrapWithTransfer(deposit.Owner(), toUser)
-				if tErr != nil {
-					panic(tErr)
-				}
-			} else {
-				common.SafeGRC20Transfer(cross, rewardToken, deposit.Owner(), toUser)
-			}
-		}
-
-		// process external penalty
-		externalPenalty := reward.ExternalPenalty[incentiveId]
-		incentive.SetRewardAmount(safeSubInt64(incentive.RewardAmount(), externalPenalty))
-		toUserExternalPenalty[rewardToken] = safeAddInt64(toUserExternalPenalty[rewardToken], externalPenalty)
-
-		totalDistributedRewardAmount := safeAddInt64(rewardAmount, externalPenalty)
-		depositResolver.addCollectedExternalReward(incentiveId, totalDistributedRewardAmount)
-
-		if externalPenalty > 0 {
-			common.SafeGRC20Transfer(cross, rewardToken, communityPoolAddr, externalPenalty)
-		}
-
-		// Update the last collect time ONLY for this specific incentive
-		// This happens only if the reward was successfully transferred.
-		err = depositResolver.updateExternalRewardLastCollectTime(incentiveId, currentTime)
-		if err != nil {
-			panic(err)
-		}
-
-		// update
-		s.getExternalIncentives().set(incentiveId, incentive)
 
 		chain.Emit(
 			"CollectReward",
@@ -595,16 +595,12 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 	if toUser > 0 {
 		// internal reward to user
 		totalEmissionSent = safeAddInt64(totalEmissionSent, toUser)
-		gns.Transfer(cross, deposit.Owner(), toUser)
-
 		depositResolver.addCollectedInternalReward(reward.Internal)
 	}
 
 	if reward.InternalPenalty > 0 {
 		// internal penalty to community pool
 		totalEmissionSent = safeAddInt64(totalEmissionSent, reward.InternalPenalty)
-		gns.Transfer(cross, communityPoolAddr, reward.InternalPenalty)
-
 		depositResolver.addCollectedInternalReward(reward.InternalPenalty)
 	}
 
@@ -612,18 +608,37 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 	// unclaimable amounts are reset in the same collect window.
 	unClaimableInternal := s.processUnClaimableReward(depositResolver.TargetPoolPath(), currentTime)
 	if unClaimableInternal > 0 {
-		// internal unClaimable to community pool
 		totalEmissionSent = safeAddInt64(totalEmissionSent, unClaimableInternal)
-		gns.Transfer(cross, communityPoolAddr, unClaimableInternal)
 	}
-
-	rewardToUser := formatInt(toUser)
-	rewardPenalty := formatInt(reward.InternalPenalty)
 
 	err = s.store.SetTotalEmissionSent(totalEmissionSent)
 	if err != nil {
 		panic(err)
 	}
+
+	// Update lastCollectTime for internal rewards (GNS emissions)
+	err = depositResolver.updateInternalRewardLastCollectTime(currentTime)
+	if err != nil {
+		panic(err)
+	}
+
+	deposits := s.getDeposits()
+	deposits.set(positionId, deposit)
+
+	if toUser > 0 {
+		gns.Transfer(cross, deposit.Owner(), toUser)
+	}
+
+	if reward.InternalPenalty > 0 {
+		gns.Transfer(cross, communityPoolAddr, reward.InternalPenalty)
+	}
+
+	if unClaimableInternal > 0 {
+		gns.Transfer(cross, communityPoolAddr, unClaimableInternal)
+	}
+
+	rewardToUser := formatInt(toUser)
+	rewardPenalty := formatInt(reward.InternalPenalty)
 
 	chain.Emit(
 		"CollectReward",
@@ -640,15 +655,6 @@ func (s *stakerV1) CollectReward(positionId uint64, unwrapResult bool) (string, 
 		"rewardUnClaimableAmount", formatInt(unClaimableInternal),
 		"currentTime", formatInt(currentTime),
 	)
-
-	// Update lastCollectTime for internal rewards (GNS emissions)
-	err = depositResolver.updateInternalRewardLastCollectTime(currentTime)
-	if err != nil {
-		panic(err)
-	}
-
-	deposits := s.getDeposits()
-	deposits.set(positionId, deposit)
 
 	return rewardToUser, rewardPenalty, toUserExternalReward, toUserExternalPenalty
 }
@@ -801,13 +807,14 @@ func hasTokenOwnership(owner, caller address) error {
 	return nil
 }
 
-// poolHasIncentives checks if the pool has any active incentives (internal or external).
+// poolHasIncentives checks if the pool has any stakeable incentives (internal or external).
+// External incentive eligibility (active or within short future window) is handled inside IsExternallyIncentivizedPool.
 func (s *stakerV1) poolHasIncentives(pool *sr.Pool) error {
 	poolPath := pool.PoolPath()
 	hasInternal := s.getPoolTier().IsInternallyIncentivizedPool(poolPath)
 	hasExternal := NewPoolResolver(pool).IsExternallyIncentivizedPool()
 
-	if hasInternal == false && hasExternal == false {
+	if !hasInternal && !hasExternal {
 		return ufmt.Errorf(
 			"%v: cannot stake position to non incentivized pool(%s)",
 			errNonIncentivizedPool, poolPath,

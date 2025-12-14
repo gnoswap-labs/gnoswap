@@ -125,36 +125,36 @@ func TestTransferToPool_PayerType(t *testing.T) {
 
 func TestCalculateSqrtPriceLimitForSwap_ZeroForOne(t *testing.T) {
 	tests := []struct {
-		name               string
-		zeroForOne         bool
-		fee                uint32
-		sqrtPriceLimitX96  *u256.Uint
-		expectNonZero      bool
-		shouldUseMinSqrt   bool
+		name              string
+		zeroForOne        bool
+		fee               uint32
+		sqrtPriceLimitX96 *u256.Uint
+		expectNonZero     bool
+		shouldUseMinSqrt  bool
 	}{
 		{
-			name:               "zero for one with zero limit",
-			zeroForOne:         true,
-			fee:                3000,
-			sqrtPriceLimitX96:  u256.Zero(),
-			expectNonZero:      true,
-			shouldUseMinSqrt:   true,
+			name:              "zero for one with zero limit",
+			zeroForOne:        true,
+			fee:               3000,
+			sqrtPriceLimitX96: u256.Zero(),
+			expectNonZero:     true,
+			shouldUseMinSqrt:  true,
 		},
 		{
-			name:               "one for zero with zero limit",
-			zeroForOne:         false,
-			fee:                3000,
-			sqrtPriceLimitX96:  u256.Zero(),
-			expectNonZero:      true,
-			shouldUseMinSqrt:   false,
+			name:              "one for zero with zero limit",
+			zeroForOne:        false,
+			fee:               3000,
+			sqrtPriceLimitX96: u256.Zero(),
+			expectNonZero:     true,
+			shouldUseMinSqrt:  false,
 		},
 		{
-			name:               "with provided limit",
-			zeroForOne:         true,
-			fee:                3000,
-			sqrtPriceLimitX96:  u256.NewUint(1000000),
-			expectNonZero:      true,
-			shouldUseMinSqrt:   false,
+			name:              "with provided limit",
+			zeroForOne:        true,
+			fee:               3000,
+			sqrtPriceLimitX96: u256.NewUint(1000000),
+			expectNonZero:     true,
+			shouldUseMinSqrt:  false,
 		},
 	}
 
@@ -490,7 +490,7 @@ func TestExecuteSwap_SameToken(t *testing.T) {
 
 	uassert.PanicsWithMessage(
 		t,
-		"[GNOSWAP-ROUTER-014] cannot swap same token",
+		"[GNOSWAP-ROUTER-011] cannot swap same token",
 		func() {
 			router.executeSwap(executor, params)
 		},
@@ -675,21 +675,21 @@ func TestSwapInner_ZeroForOneLogic(t *testing.T) {
 
 func TestMultiSwapProcessor_DirectionMatching(t *testing.T) {
 	tests := []struct {
-		name           string
-		swapType       string
-		direction      SwapDirection
+		name            string
+		swapType        string
+		direction       SwapDirection
 		amountSpecified *i256.Int
 	}{
 		{
-			name:           "exactIn uses forward direction",
-			swapType:       "exactIn",
-			direction:      Forward,
+			name:            "exactIn uses forward direction",
+			swapType:        "exactIn",
+			direction:       Forward,
 			amountSpecified: i256.NewInt(1000), // positive
 		},
 		{
-			name:           "exactOut uses backward direction",
-			swapType:       "exactOut",
-			direction:      Backward,
+			name:            "exactOut uses backward direction",
+			swapType:        "exactOut",
+			direction:       Backward,
 			amountSpecified: i256.NewInt(-1000), // negative
 		},
 	}
