@@ -186,6 +186,9 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 		panic(err)
 	}
 
+	// remove incentive from time-based index
+	s.removeIncentiveIdByCreationTime(targetPoolPath, incentiveId, incentive.CreatedTimestamp())
+
 	poolLeftExternalRewardAmount := common.BalanceOf(incentiveResolver.RewardToken(), stakerAddr)
 	if poolLeftExternalRewardAmount < refund {
 		refund = poolLeftExternalRewardAmount
@@ -302,6 +305,66 @@ func (s *stakerV1) addIncentiveIdByCreationTime(poolPath, incentiveId string, cr
 	}
 
 	incentiveIds = append(incentiveIds, incentiveId)
+	currentPoolIncentiveIds.Set(poolPath, incentiveIds)
+	incentivesByTime.Set(creationTime, currentPoolIncentiveIds)
+
+	s.updateExternalIncentivesByCreationTime(incentivesByTime)
+}
+
+// removeIncentiveIdByCreationTime removes an incentive from the time-based index.
+// This is called when an external incentive is ended via EndExternalIncentive.
+//
+// The index structure is:
+//   - creationTime (int64) -> poolPath (string) -> []incentiveId
+func (s *stakerV1) removeIncentiveIdByCreationTime(poolPath, incentiveId string, creationTime int64) {
+	incentivesByTime := s.getExternalIncentivesByCreationTime()
+
+	// check if creation time exists
+	currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(creationTime)
+	if !exists {
+		return
+	}
+
+	currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*avl.Tree)
+	if !ok {
+		panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected *avl.Tree, got %T", currentPoolIncentiveIdsValue))
+	}
+
+	// check if pool path exists at this time
+	incentiveIdsValue, exists := currentPoolIncentiveIds.Get(poolPath)
+	if !exists {
+		return
+	}
+
+	incentiveIds, ok := incentiveIdsValue.([]string)
+	if !ok {
+		panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected []string, got %T", incentiveIdsValue))
+	}
+
+	// if only incentive exists for this pool,remove the entire pool entry
+	if len(incentiveIds) == 1 && incentiveIds[0] == incentiveId {
+		currentPoolIncentiveIds.Remove(poolPath)
+
+		// if no pools remain at this time, remove the time entry
+		if currentPoolIncentiveIds.Size() == 0 {
+			incentivesByTime.Remove(creationTime)
+		} else {
+			incentivesByTime.Set(creationTime, currentPoolIncentiveIds)
+		}
+
+		s.updateExternalIncentivesByCreationTime(incentivesByTime)
+
+		return
+	}
+
+	// remove only the target incentive from slice
+	for index, id := range incentiveIds {
+		if id == incentiveId {
+			incentiveIds = append(incentiveIds[:index], incentiveIds[index+1:]...)
+			break
+		}
+	}
+
 	currentPoolIncentiveIds.Set(poolPath, incentiveIds)
 	incentivesByTime.Set(creationTime, currentPoolIncentiveIds)
 

@@ -288,6 +288,7 @@ type ExternalIncentive struct {
 	startTimestamp          int64   // start time for external reward
 	endTimestamp            int64   // end time for external reward
 	createdHeight           int64   // block height when the incentive was created
+	createdTimestamp        int64   // timestamp when the incentive was created
 	depositGnsAmount        int64   // deposited gns amount
 	targetPoolPath          string  // external reward target pool path
 	rewardToken             string  // external reward token path
@@ -341,6 +342,16 @@ func (e *ExternalIncentive) CreatedHeight() int64 {
 // SetCreatedHeight sets the created height
 func (e *ExternalIncentive) SetCreatedHeight(createdHeight int64) {
 	e.createdHeight = createdHeight
+}
+
+// CreatedTimestamp returns the created timestamp
+func (e *ExternalIncentive) CreatedTimestamp() int64 {
+	return e.createdTimestamp
+}
+
+// SetCreatedTimestamp sets the created timestamp
+func (e *ExternalIncentive) SetCreatedTimestamp(createdTimestamp int64) {
+	e.createdTimestamp = createdTimestamp
 }
 
 // DepositGnsAmount returns the deposit GNS amount
@@ -490,6 +501,7 @@ func NewExternalIncentive(
 		distributedRewardAmount: 0,
 		refundee:                refundee,
 		createdHeight:           createdHeight,
+		createdTimestamp:        currentTime,
 		depositGnsAmount:        depositGnsAmount,
 		refunded:                false,
 		isRequestUnwrap:         isRequestUnwrap,

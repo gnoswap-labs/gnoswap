@@ -2014,7 +2014,7 @@ func TestGetExternalIncentiveIdsBy(t *testing.T) {
 			// Execute
 			lastUpdateTime := tt.deposit.lastExternalIncentiveUpdatedAt
 			newIncentiveIds := instance.getExternalIncentiveIdsBy(tt.deposit.poolPath, lastUpdateTime, tt.currentTime)
-			
+
 			// Add new incentives to deposit (mimicking what calculatePositionReward does)
 			for _, incentiveId := range newIncentiveIds {
 				deposit.AddExternalIncentiveId(incentiveId)
@@ -2029,6 +2029,268 @@ func TestGetExternalIncentiveIdsBy(t *testing.T) {
 			for _, expectedId := range tt.expectedIncentiveIds {
 				uassert.True(t, deposit.HasExternalIncentiveId(expectedId),
 					ufmt.Sprintf("Expected incentive %s to exist in deposit", expectedId))
+			}
+		})
+	}
+}
+
+// TestRemoveIncentiveIdByCreationTime tests the removeIncentiveIdByCreationTime function
+func TestRemoveIncentiveIdByCreationTime(t *testing.T) {
+	// incentiveSetup represents an incentive to be added before testing removal
+	type incentiveSetup struct {
+		poolPath     string
+		incentiveId  string
+		creationTime int64
+	}
+
+	// expectedState represents expected state after removal for a specific time
+	type expectedState struct {
+		creationTime    int64
+		poolPath        string
+		incentiveIds    []string
+		poolShouldExist bool
+		timeShouldExist bool
+	}
+
+	tests := []struct {
+		name              string
+		setupIncentives   []incentiveSetup
+		removePoolPath    string
+		removeIncentiveId string
+		removeTime        int64
+		expected          []expectedState
+	}{
+		{
+			name: "remove non-existent creation time - no change",
+			setupIncentives: []incentiveSetup{
+				{poolPath: "pool-a", incentiveId: "inc-1", creationTime: 100},
+			},
+			removePoolPath:    "pool-a",
+			removeIncentiveId: "inc-1",
+			removeTime:        999, // non-existent time
+			expected: []expectedState{
+				{
+					creationTime:    100,
+					poolPath:        "pool-a",
+					incentiveIds:    []string{"inc-1"},
+					poolShouldExist: true,
+					timeShouldExist: true,
+				},
+			},
+		},
+		{
+			name: "remove non-existent pool path - no change",
+			setupIncentives: []incentiveSetup{
+				{poolPath: "pool-a", incentiveId: "inc-1", creationTime: 100},
+			},
+			removePoolPath:    "pool-b", // non-existent pool
+			removeIncentiveId: "inc-1",
+			removeTime:        100,
+			expected: []expectedState{
+				{
+					creationTime:    100,
+					poolPath:        "pool-a",
+					incentiveIds:    []string{"inc-1"},
+					poolShouldExist: true,
+					timeShouldExist: true,
+				},
+			},
+		},
+		{
+			name: "remove non-existent incentive id - no change",
+			setupIncentives: []incentiveSetup{
+				{poolPath: "pool-a", incentiveId: "inc-1", creationTime: 100},
+			},
+			removePoolPath:    "pool-a",
+			removeIncentiveId: "inc-999", // non-existent incentive
+			removeTime:        100,
+			expected: []expectedState{
+				{
+					creationTime:    100,
+					poolPath:        "pool-a",
+					incentiveIds:    []string{"inc-1"},
+					poolShouldExist: true,
+					timeShouldExist: true,
+				},
+			},
+		},
+		{
+			name: "remove only incentive - removes pool and time entry",
+			setupIncentives: []incentiveSetup{
+				{poolPath: "pool-a", incentiveId: "inc-1", creationTime: 100},
+			},
+			removePoolPath:    "pool-a",
+			removeIncentiveId: "inc-1",
+			removeTime:        100,
+			expected: []expectedState{
+				{
+					creationTime:    100,
+					poolPath:        "pool-a",
+					poolShouldExist: false,
+					timeShouldExist: false,
+				},
+			},
+		},
+		{
+			name: "remove only incentive for pool - keeps time entry with other pools",
+			setupIncentives: []incentiveSetup{
+				{poolPath: "pool-a", incentiveId: "inc-a", creationTime: 100},
+				{poolPath: "pool-b", incentiveId: "inc-b", creationTime: 100},
+			},
+			removePoolPath:    "pool-a",
+			removeIncentiveId: "inc-a",
+			removeTime:        100,
+			expected: []expectedState{
+				{
+					creationTime:    100,
+					poolPath:        "pool-a",
+					poolShouldExist: false,
+					timeShouldExist: true,
+				},
+				{
+					creationTime:    100,
+					poolPath:        "pool-b",
+					incentiveIds:    []string{"inc-b"},
+					poolShouldExist: true,
+					timeShouldExist: true,
+				},
+			},
+		},
+		{
+			name: "remove one of multiple incentives - keeps others",
+			setupIncentives: []incentiveSetup{
+				{poolPath: "pool-a", incentiveId: "inc-1", creationTime: 100},
+				{poolPath: "pool-a", incentiveId: "inc-2", creationTime: 100},
+				{poolPath: "pool-a", incentiveId: "inc-3", creationTime: 100},
+			},
+			removePoolPath:    "pool-a",
+			removeIncentiveId: "inc-2",
+			removeTime:        100,
+			expected: []expectedState{
+				{
+					creationTime:    100,
+					poolPath:        "pool-a",
+					incentiveIds:    []string{"inc-1", "inc-3"},
+					poolShouldExist: true,
+					timeShouldExist: true,
+				},
+			},
+		},
+		{
+			name: "remove first incentive from list",
+			setupIncentives: []incentiveSetup{
+				{poolPath: "pool-a", incentiveId: "inc-1", creationTime: 100},
+				{poolPath: "pool-a", incentiveId: "inc-2", creationTime: 100},
+			},
+			removePoolPath:    "pool-a",
+			removeIncentiveId: "inc-1",
+			removeTime:        100,
+			expected: []expectedState{
+				{
+					creationTime:    100,
+					poolPath:        "pool-a",
+					incentiveIds:    []string{"inc-2"},
+					poolShouldExist: true,
+					timeShouldExist: true,
+				},
+			},
+		},
+		{
+			name: "remove last incentive from list",
+			setupIncentives: []incentiveSetup{
+				{poolPath: "pool-a", incentiveId: "inc-1", creationTime: 100},
+				{poolPath: "pool-a", incentiveId: "inc-2", creationTime: 100},
+			},
+			removePoolPath:    "pool-a",
+			removeIncentiveId: "inc-2",
+			removeTime:        100,
+			expected: []expectedState{
+				{
+					creationTime:    100,
+					poolPath:        "pool-a",
+					incentiveIds:    []string{"inc-1"},
+					poolShouldExist: true,
+					timeShouldExist: true,
+				},
+			},
+		},
+		{
+			name: "remove does not affect other times",
+			setupIncentives: []incentiveSetup{
+				{poolPath: "pool-a", incentiveId: "inc-1", creationTime: 100},
+				{poolPath: "pool-a", incentiveId: "inc-2", creationTime: 200},
+			},
+			removePoolPath:    "pool-a",
+			removeIncentiveId: "inc-1",
+			removeTime:        100,
+			expected: []expectedState{
+				{
+					creationTime:    100,
+					poolPath:        "pool-a",
+					poolShouldExist: false,
+					timeShouldExist: false,
+				},
+				{
+					creationTime:    200,
+					poolPath:        "pool-a",
+					incentiveIds:    []string{"inc-2"},
+					poolShouldExist: true,
+					timeShouldExist: true,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initStakerTest(t)
+			instance := getMockInstance()
+
+			// Setup: add incentives
+			for _, inc := range tt.setupIncentives {
+				instance.addIncentiveIdByCreationTime(inc.poolPath, inc.incentiveId, inc.creationTime)
+			}
+
+			// Execute: remove incentive
+			instance.removeIncentiveIdByCreationTime(tt.removePoolPath, tt.removeIncentiveId, tt.removeTime)
+
+			// Verify
+			incentivesByTime := instance.getExternalIncentivesByCreationTime()
+
+			for _, exp := range tt.expected {
+				timeValue, timeExists := incentivesByTime.Get(exp.creationTime)
+
+				if !exp.timeShouldExist {
+					uassert.False(t, timeExists,
+						ufmt.Sprintf("Time %d should not exist", exp.creationTime))
+					continue
+				}
+
+				uassert.True(t, timeExists,
+					ufmt.Sprintf("Time %d should exist", exp.creationTime))
+
+				poolTree, ok := timeValue.(*avl.Tree)
+				uassert.True(t, ok, "Expected value to be *avl.Tree")
+
+				poolValue, poolExists := poolTree.Get(exp.poolPath)
+
+				if !exp.poolShouldExist {
+					uassert.False(t, poolExists,
+						ufmt.Sprintf("Pool %s should not exist at time %d", exp.poolPath, exp.creationTime))
+					continue
+				}
+
+				uassert.True(t, poolExists,
+					ufmt.Sprintf("Pool %s should exist at time %d", exp.poolPath, exp.creationTime))
+
+				incentiveIds, ok := poolValue.([]string)
+				uassert.True(t, ok, "Expected value to be []string")
+
+				uassert.Equal(t, len(exp.incentiveIds), len(incentiveIds))
+
+				for i, expectedId := range exp.incentiveIds {
+					uassert.Equal(t, expectedId, incentiveIds[i])
+				}
 			}
 		})
 	}
