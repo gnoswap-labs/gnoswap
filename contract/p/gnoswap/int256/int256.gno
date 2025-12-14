@@ -96,10 +96,7 @@ func (z *Int) Uint64() uint64 {
 
 func (z *Int) Abs() *u256.Uint {
 	if z.IsNeg() {
-		if z[3] == 0x8000000000000000 && z[2] == 0 && z[1] == 0 && z[0] == 0 {
-			panic("int256: overflow")
-		}
-		neg := new(Int).Neg(z)
+		neg := new(Int).NegOverflow(z)
 		return &u256.Uint{neg[0], neg[1], neg[2], neg[3]}
 	}
 	return &u256.Uint{z[0], z[1], z[2], z[3]}
@@ -133,6 +130,14 @@ func (z *Int) IsPositive() bool {
 
 func (z *Int) IsMinI256() bool {
 	return (z[3] == 0x8000000000000000) && ((z[2] | z[1] | z[0]) == 0)
+}
+
+func (z *Int) NegOverflow(x *Int) *Int {
+	if x[3] == 0x8000000000000000 && x[2] == 0 && x[1] == 0 && x[0] == 0 {
+		panic("int256: overflow")
+	}
+
+	return z.Neg(x)
 }
 
 func (z *Int) Neg(x *Int) *Int {

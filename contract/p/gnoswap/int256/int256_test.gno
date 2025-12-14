@@ -1653,8 +1653,8 @@ func TestSetUint64(t *testing.T) {
 
 func TestUint64(t *testing.T) {
 	tests := []struct {
-		x    string
-		want uint64
+		x      string
+		want   uint64
 		panics bool
 	}{
 		{"0", 0, false},
@@ -1664,7 +1664,7 @@ func TestUint64(t *testing.T) {
 		{"18446744073709551615", 18446744073709551615, false},
 		{"18446744073709551616", 0, true}, // out of range
 		{"18446744073709551617", 0, true}, // out of range
-		{"-1", 0, true},                  // negative -> panic
+		{"-1", 0, true},                   // negative -> panic
 		{"-18446744073709551615", 0, true},
 		{"-18446744073709551616", 0, true},
 		{"-18446744073709551617", 0, true},
@@ -1694,8 +1694,8 @@ func TestUint64(t *testing.T) {
 
 func TestInt64(t *testing.T) {
 	tests := []struct {
-		x    string
-		want int64
+		x      string
+		want   int64
 		panics bool
 	}{
 		{"0", 0, false},
@@ -1853,6 +1853,42 @@ func TestNeg(t *testing.T) {
 	for _, tc := range tests {
 		z := MustFromDecimal(tc.x)
 		z.Neg(z)
+
+		got := z.ToString()
+		if got != tc.want {
+			t.Errorf("Neg(%s) = %s, want %s", tc.x, got, tc.want)
+		}
+	}
+}
+
+func TestNegOverflow(t *testing.T) {
+	tests := []struct {
+		x           string
+		want        string
+		shouldPanic bool
+	}{
+		{"0", "0", false},
+		{"1", "-1", false},
+		{"-1", "1", false},
+		{"9223372036854775807", "-9223372036854775807", false},
+		{"-18446744073709551615", "18446744073709551615", false},
+		// MinInt256 negation overflows; expect no-op result (still MinInt256)
+		{"-57896044618658097711785492504343953926634992332820282019728792003956564819968", "-57896044618658097711785492504343953926634992332820282019728792003956564819968", true},
+		{"-57896044618658097711785492504343953926634992332820282019728792003956564819967", "57896044618658097711785492504343953926634992332820282019728792003956564819967", false},
+		{"57896044618658097711785492504343953926634992332820282019728792003956564819967", "-57896044618658097711785492504343953926634992332820282019728792003956564819967", false},
+	}
+
+	for _, tc := range tests {
+		z := MustFromDecimal(tc.x)
+
+		if tc.shouldPanic {
+			uassert.PanicsContains(t, "int256: overflow", func() {
+				z.NegOverflow(z)
+			})
+			continue
+		}
+
+		z.NegOverflow(z)
 
 		got := z.ToString()
 		if got != tc.want {
