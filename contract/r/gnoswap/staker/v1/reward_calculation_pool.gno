@@ -344,8 +344,6 @@ func (self *RewardState) updateExternalReward(startTime, endTime int64, incentiv
 // calculateTotalExternalReward calculates the total external reward for the deposit.
 // It calls updateExternalReward for the incentive period, applies warmup and returns the rewards and penalties.
 // used for total reward calculation for a ended incentive
-// Note: This returns only the remaining claimable reward (without already-collected amounts).
-// The already-collected amounts are tracked separately in DistributedRewardAmount.
 func (self *RewardState) calculateTotalExternalReward(startTime, endTime int64, incentive *sr.ExternalIncentive) int64 {
 	err := self.updateExternalReward(startTime, endTime, incentive)
 	if err != nil {
@@ -358,7 +356,9 @@ func (self *RewardState) calculateTotalExternalReward(startTime, endTime int64, 
 		currentReward = currentReward.Add(currentReward, u256.NewUintFromInt64(self.rewards[i]))
 	}
 
-	return safeConvertToInt64(currentReward)
+	collectedReward := self.deposit.CollectedExternalReward(incentive.IncentiveId())
+
+	return safeAddInt64(safeConvertToInt64(currentReward), collectedReward)
 }
 
 // calculateExternalReward calculates the external reward for the deposit.

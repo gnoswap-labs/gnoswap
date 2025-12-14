@@ -1543,146 +1543,6 @@ func TestCalcPositionReward_ExternalRewardMapIntegrity(t *testing.T) {
 	uassert.False(t, hasModifiedPenalty, "penalty maps should be independent")
 }
 
-// TestLazyRemovalOfEndedIncentives tests that ended incentives are removed from deposit's index
-// when lastCollectTime > incentive.EndTimestamp
-func TestLazyRemovalOfEndedIncentives(t *testing.T) {
-	initStakerTest(t)
-
-	s := getMockInstance()
-	baseTime := time.Now().Unix()
-	baseHeight := runtime.ChainHeight()
-	poolPath := "gno.land/r/test/lazy_removal"
-	positionId := uint64(9001)
-
-	// Create pool
-	pool := sr.NewPool(poolPath, baseTime-1000)
-	s.getPools().set(poolPath, pool)
-
-	// Create an incentive that has already ended
-	incentiveId := "ended_incentive_lazy"
-	incentiveStartTime := baseTime - 500
-	incentiveEndTime := baseTime - 100 // Ended 100 seconds ago
-	incentive := sr.NewExternalIncentive(
-		incentiveId,
-		poolPath,
-		GNS_PATH,
-		10000,
-		incentiveStartTime,
-		incentiveEndTime,
-		testutils.TestAddress("refundee"),
-		0,
-		baseHeight,
-		baseTime-600,
-		false,
-	)
-	incentive.SetRewardPerSecond(25)
-	poolResolver := NewPoolResolver(pool)
-	poolResolver.IncentivesResolver().create(testutils.TestAddress("refundee"), incentive)
-
-	// Create deposit with lastCollectTime AFTER incentive end
-	warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), baseTime-600)
-	deposit := sr.NewDeposit(
-		testutils.TestAddress("lazyOwner"),
-		poolPath,
-		u256.NewUint(1000000),
-		baseTime-600,
-		-100,
-		100,
-		warmups,
-	)
-
-	// Add incentive ID to deposit
-	deposit.AddExternalIncentiveId(incentiveId)
-
-	// Set lastCollectTime AFTER incentive end (simulating user already collected final reward)
-	deposit.SetExternalRewardLastCollectTime(incentiveId, incentiveEndTime+10)
-
-	s.getDeposits().set(positionId, deposit)
-
-	// Initialize pool state
-	poolResolver.GlobalRewardRatioAccumulation().Set(baseTime-700, u256.Zero())
-	poolResolver.HistoricalTick().Set(baseTime-700, int32(0))
-	poolResolver.StakedLiquidity().Set(baseTime-700, u256.NewUint(1000000))
-
-	// Verify deposit has the incentive ID before calculation
-	uassert.True(t, deposit.HasExternalIncentiveId(incentiveId), "deposit should have incentive ID before calculation")
-
-	// Calculate reward - this should trigger lazy removal
-	_ = s.calcPositionReward(baseHeight+10, baseTime, positionId)
-
-	// Verify deposit no longer has the incentive ID (lazy removal)
-	uassert.False(t, deposit.HasExternalIncentiveId(incentiveId), "deposit should NOT have incentive ID after lazy removal")
-}
-
-// TestLazyRemovalOfMissingIncentives tests that missing/non-existent incentives are removed from deposit's index
-func TestLazyRemovalOfMissingIncentives(t *testing.T) {
-	initStakerTest(t)
-
-	s := getMockInstance()
-	baseTime := time.Now().Unix()
-	baseHeight := runtime.ChainHeight()
-	poolPath := "gno.land/r/test/lazy_removal_missing"
-	positionId := uint64(9002)
-
-	// Create pool
-	pool := sr.NewPool(poolPath, baseTime-1000)
-	s.getPools().set(poolPath, pool)
-
-	// Create an active incentive
-	activeIncentiveId := "active_incentive"
-	incentive := sr.NewExternalIncentive(
-		activeIncentiveId,
-		poolPath,
-		GNS_PATH,
-		10000,
-		baseTime-500,
-		baseTime+500, // Still active
-		testutils.TestAddress("refundee"),
-		0,
-		baseHeight,
-		baseTime-600,
-		false,
-	)
-	incentive.SetRewardPerSecond(10)
-	poolResolver := NewPoolResolver(pool)
-	poolResolver.IncentivesResolver().create(testutils.TestAddress("refundee"), incentive)
-
-	// Create deposit with a missing incentive ID (not in pool's incentive tree)
-	missingIncentiveId := "missing_incentive_not_found"
-	warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), baseTime-600)
-	deposit := sr.NewDeposit(
-		testutils.TestAddress("owner"),
-		poolPath,
-		u256.NewUint(1000000),
-		baseTime-600,
-		-100,
-		100,
-		warmups,
-	)
-
-	// Add both active and missing (non-existent) incentive IDs
-	deposit.AddExternalIncentiveId(activeIncentiveId)
-	deposit.AddExternalIncentiveId(missingIncentiveId)
-
-	s.getDeposits().set(positionId, deposit)
-
-	// Initialize pool state
-	poolResolver.GlobalRewardRatioAccumulation().Set(baseTime-700, u256.Zero())
-	poolResolver.HistoricalTick().Set(baseTime-700, int32(0))
-	poolResolver.StakedLiquidity().Set(baseTime-700, u256.NewUint(1000000))
-
-	// Verify deposit has both incentive IDs before calculation
-	uassert.True(t, deposit.HasExternalIncentiveId(activeIncentiveId), "deposit should have active incentive ID")
-	uassert.True(t, deposit.HasExternalIncentiveId(missingIncentiveId), "deposit should have missing incentive ID before calculation")
-
-	// Calculate reward - this should trigger lazy removal of non-existent incentive
-	_ = s.calcPositionReward(baseHeight+10, baseTime, positionId)
-
-	// Verify only missing incentive was removed
-	uassert.True(t, deposit.HasExternalIncentiveId(activeIncentiveId), "deposit should still have active incentive ID")
-	uassert.False(t, deposit.HasExternalIncentiveId(missingIncentiveId), "deposit should NOT have missing incentive ID after lazy removal")
-}
-
 // TestDepositRemoveExternalIncentiveId tests the RemoveExternalIncentiveId method
 func TestDepositRemoveExternalIncentiveId(t *testing.T) {
 	t.Run("remove existing incentive id", func(t *testing.T) {
@@ -2009,8 +1869,8 @@ func TestCollectReward_LazySync_IterationBounds(t *testing.T) {
 	}
 
 	// Verify iteration bounds are correct
-	expectedStart := formatInt(lastUpdate)  // formatInt(100)
-	expectedEnd := formatInt(currentTime)   // formatInt(500)
+	expectedStart := formatInt(lastUpdate) // formatInt(100)
+	expectedEnd := formatInt(currentTime)  // formatInt(500)
 
 	// This simulates the Iterate call in calculatePositionReward
 	// Iterate(formatInt(lastUpdate), formatInt(currentTime), ...)

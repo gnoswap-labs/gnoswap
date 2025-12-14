@@ -119,6 +119,13 @@ func initStoreData(stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAcce
 		}
 	}
 
+	if !stakerStore.HasExternalIncentivesByCreationTimeStoreKey() {
+		err := stakerStore.SetExternalIncentivesByCreationTime(sr.NewUintTree())
+		if err != nil {
+			return err
+		}
+	}
+
 	initializedPoolTier, initializedPools := initializePoolTier(stakerStore)
 
 	if !stakerStore.HasPoolsStoreKey() {

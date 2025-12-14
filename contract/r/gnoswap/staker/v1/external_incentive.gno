@@ -106,29 +106,33 @@ func (s *stakerV1) CreateExternalIncentive(
 	poolResolver.IncentivesResolver().create(caller, incentive)
 
 	// Add to time-based index for lazy discovery during CollectReward
-	var incentivesByTime *avl.Tree
-	if !s.store.HasExternalIncentivesByCreationTimeStoreKey() {
-		incentivesByTime = avl.NewTree()
-	} else {
-		incentivesByTime = s.store.GetExternalIncentivesByCreationTime()
+	incentivesByTime := s.getExternalIncentivesByCreationTime()
+
+	currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(currentTime)
+	if !exists {
+		currentPoolIncentiveIdsValue = avl.NewTree()
 	}
 
-	// Handle timestamp collisions by using slice of incentive IDs
-	timeKey := formatInt(currentTime)
-	var incentiveIds []string
-	if value, exists := incentivesByTime.Get(timeKey); exists {
-		// Append to existing slice
-		existingIds, ok := value.([]string)
-		if !ok {
-			panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected []string, got %T", value))
-		}
-		incentiveIds = append(existingIds, incentiveId)
-	} else {
-		// Create new slice
-		incentiveIds = []string{incentiveId}
+	currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*avl.Tree)
+	if !ok {
+		panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected *avl.Tree, got %T", currentPoolIncentiveIdsValue))
 	}
-	incentivesByTime.Set(timeKey, incentiveIds)
-	s.store.SetExternalIncentivesByCreationTime(incentivesByTime)
+
+	incentiveIdsValue, exists := currentPoolIncentiveIds.Get(targetPoolPath)
+	if !exists {
+		incentiveIdsValue = []string{}
+	}
+
+	incentiveIds, ok := incentiveIdsValue.([]string)
+	if !ok {
+		panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected []string, got %T", incentiveIdsValue))
+	}
+
+	incentiveIds = append(incentiveIds, incentiveId)
+	currentPoolIncentiveIds.Set(targetPoolPath, incentiveIds)
+	incentivesByTime.Set(currentTime, currentPoolIncentiveIds)
+
+	s.updateExternalIncentivesByCreationTime(incentivesByTime)
 
 	chain.Emit(
 		"CreateExternalIncentive",
@@ -292,7 +296,6 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 
 	// calculate refund amount is the difference between the incentive reward amount and the total external reward
 	refund := safeSubInt64(incentiveResolver.TotalRewardAmount(), totalReward)
-	refund = safeSubInt64(refund, incentiveResolver.DistributedRewardAmount())
 
 	return incentiveResolver.ExternalIncentive, refund, nil
 }

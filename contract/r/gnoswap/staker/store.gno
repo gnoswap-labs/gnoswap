@@ -531,25 +531,26 @@ func (s *stakerStore) SetCurrentSwapBatch(batch *SwapBatchProcessor) error {
 }
 
 // ExternalIncentivesByCreationTime
+// key: timestamp -> value: *avl.Tree (poolPath -> []string)
 func (s *stakerStore) HasExternalIncentivesByCreationTimeStoreKey() bool {
 	return s.kvStore.Has(StoreKeyExternalIncentivesByCreationTime.String())
 }
 
-func (s *stakerStore) GetExternalIncentivesByCreationTime() *avl.Tree {
+func (s *stakerStore) GetExternalIncentivesByCreationTime() *UintTree {
 	result, err := s.kvStore.Get(StoreKeyExternalIncentivesByCreationTime.String())
 	if err != nil {
 		panic(err)
 	}
 
-	tree, ok := result.(*avl.Tree)
+	tree, ok := result.(*UintTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *avl.Tree: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *UintTree: %T", result))
 	}
 
 	return tree
 }
 
-func (s *stakerStore) SetExternalIncentivesByCreationTime(tree *avl.Tree) error {
+func (s *stakerStore) SetExternalIncentivesByCreationTime(tree *UintTree) error {
 	return s.kvStore.Set(StoreKeyExternalIncentivesByCreationTime.String(), tree)
 }
 

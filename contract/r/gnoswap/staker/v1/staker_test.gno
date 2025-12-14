@@ -4,10 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/avl"
+	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
-	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/emission"
 	pl "gno.land/r/gnoswap/pool"
@@ -635,9 +634,9 @@ func TestStore_ExternalIncentivesByCreationTime(t *testing.T) {
 	instance := getMockInstance()
 
 	// Test SetExternalIncentivesByCreationTime
-	tree := avl.NewTree()
-	tree.Set(formatInt(100), []string{"incentive1"})
-	tree.Set(formatInt(200), []string{"incentive2", "incentive3"})
+	tree := sr.NewUintTree()
+	tree.Set(100, []string{"incentive1"})
+	tree.Set(200, []string{"incentive2", "incentive3"})
 
 	err := instance.store.SetExternalIncentivesByCreationTime(tree)
 	if err != nil {
@@ -656,7 +655,7 @@ func TestStore_ExternalIncentivesByCreationTime(t *testing.T) {
 	}
 
 	// Verify data
-	value1, exists1 := retrieved.Get(formatInt(100))
+	value1, exists1 := retrieved.Get(100)
 	if !exists1 {
 		t.Error("Expected incentive at timestamp 100")
 	}
@@ -665,7 +664,7 @@ func TestStore_ExternalIncentivesByCreationTime(t *testing.T) {
 		t.Errorf("Expected [incentive1], got %v", ids1)
 	}
 
-	value2, exists2 := retrieved.Get(formatInt(200))
+	value2, exists2 := retrieved.Get(200)
 	if !exists2 {
 		t.Error("Expected incentives at timestamp 200")
 	}

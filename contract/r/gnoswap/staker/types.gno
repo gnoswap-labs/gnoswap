@@ -202,6 +202,6 @@ type IStakerStore interface {
 
 	// ExternalIncentivesByCreationTime
 	HasExternalIncentivesByCreationTimeStoreKey() bool
-	GetExternalIncentivesByCreationTime() *avl.Tree
-	SetExternalIncentivesByCreationTime(tree *avl.Tree) error
+	GetExternalIncentivesByCreationTime() *UintTree
+	SetExternalIncentivesByCreationTime(tree *UintTree) error
 }

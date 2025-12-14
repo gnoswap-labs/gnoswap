@@ -1,6 +1,9 @@
 package v1
 
-import sr "gno.land/r/gnoswap/staker"
+import (
+	"gno.land/p/nt/avl"
+	sr "gno.land/r/gnoswap/staker"
+)
 
 // Reward is a struct for storing reward for a position.
 // Internal reward is the GNS reward, external reward is the reward for other incentives.
@@ -105,40 +108,35 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 
 	// Lazy sync: update deposit's incentive list with new incentives created since last update
 	lastUpdate := deposit.LastExternalIncentiveUpdatedAt()
+
 	if lastUpdate < param.CurrentTime {
-		if s.store.HasExternalIncentivesByCreationTimeStoreKey() {
-			incentivesByTime := s.store.GetExternalIncentivesByCreationTime()
-			externalIncentives := s.store.GetExternalIncentives()
+		incentivesByTime := s.getExternalIncentivesByCreationTime()
 
-			incentivesByTime.Iterate(formatInt(lastUpdate), formatInt(param.CurrentTime), func(key string, value any) bool {
-				// Value is a slice of incentive IDs (handles timestamp collisions)
-				incentiveIds, ok := value.([]string)
-				if !ok {
-					return false
-				}
-
-				// Process each incentive ID in the slice
-				for _, incentiveId := range incentiveIds {
-					// Check if this incentive belongs to the current pool
-					incentiveValue, exists := externalIncentives.Get(incentiveId)
-					if !exists {
-						continue
-					}
-
-					incentive, ok := incentiveValue.(*sr.ExternalIncentive)
-					if !ok {
-						continue
-					}
-
-					// Only add if this incentive is for the current pool
-					if incentive.TargetPoolPath() == deposit.TargetPoolPath() {
-						deposit.AddExternalIncentiveId(incentiveId)
-					}
-				}
-
+		incentivesByTime.Iterate(lastUpdate, param.CurrentTime, func(_ int64, value any) bool {
+			// Value is a slice of incentive IDs (handles timestamp collisions)
+			poolIncentiveIds, ok := value.(*avl.Tree)
+			if !ok {
 				return false
-			})
-		}
+			}
+
+			incentiveIdsValue, exists := poolIncentiveIds.Get(deposit.TargetPoolPath())
+			if !exists {
+				return false
+			}
+
+			incentiveIds, ok := incentiveIdsValue.([]string)
+			if !ok {
+				return false
+			}
+
+			// Process each incentive ID in the slice
+			for _, incentiveId := range incentiveIds {
+				deposit.AddExternalIncentiveId(incentiveId)
+			}
+
+			return false
+		})
+
 		deposit.SetLastExternalIncentiveUpdatedAt(param.CurrentTime)
 	}
 
@@ -150,8 +148,6 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 	deposit.IterateExternalIncentiveIds(func(incentiveId string) bool {
 		incentive, ok := incentivesResolver.Get(incentiveId)
 		if !ok {
-			// Incentive not found - remove from deposit index
-			deposit.RemoveExternalIncentiveId(incentiveId)
 			return false
 		}
 
@@ -159,15 +155,8 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 
 		incentiveResolver := NewExternalIncentiveResolver(incentive)
 
-		// If incentive ended and user already collected after end, remove from index
-		// This ensures deposit's incentive list shrinks over time as incentives complete
-		if incentiveResolver.EndTimestamp() < externalLastCollectTime {
-			deposit.RemoveExternalIncentiveId(incentiveId)
-			return false
-		}
-
 		// Check if incentive is active during this specific collection period
-		if !incentiveResolver.IsStarted(param.CurrentTime) || incentiveResolver.StartTimestamp() >= param.CurrentTime {
+		if !incentiveResolver.IsStarted(param.CurrentTime) {
 			return false
 		}
 
@@ -183,6 +172,7 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 		}
 
 		rewardState.reset()
+
 		return false
 	})
 
