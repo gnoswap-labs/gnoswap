@@ -35,6 +35,47 @@ func TestNewInt(t *testing.T) {
 	}
 }
 
+func TestIsMinI256(t *testing.T) {
+	tests := []struct {
+		name     string
+		x        string
+		expected bool
+	}{
+		{
+			name:     "exact min",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expected: true,
+		},
+		{
+			name:     "min plus one",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expected: false,
+		},
+		{
+			name:     "negative but not min",
+			x:        "-1",
+			expected: false,
+		},
+		{
+			name:     "zero",
+			x:        "0",
+			expected: false,
+		},
+		{
+			name:     "max int",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			x := MustFromDecimal(tt.x)
+			uassert.Equal(t, tt.expected, x.IsMinI256())
+		})
+	}
+}
+
 func TestGetSetInt64(t *testing.T) {
 	tests := []struct {
 		name string
@@ -124,6 +165,21 @@ func TestIsUint64(t *testing.T) {
 			x:        "0",
 			expected: true,
 		},
+		{
+			name:     "negative value is -1",
+			x:        "-1",
+			expected: false,
+		},
+		{
+			name:     "negative value is negative max uint64",
+			x:        "-18446744073709551615",
+			expected: false,
+		},
+		{
+			name:     "negative value is negative max uint64 - 1",
+			x:        "-18446744073709551616",
+			expected: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -147,6 +203,30 @@ func TestRem(t *testing.T) {
 			x:        "3",
 			y:        "-2",
 			expected: "1",
+		},
+		{
+			name:     "positive % positive",
+			x:        "13",
+			y:        "3",
+			expected: "1",
+		},
+		{
+			name:     "negative % positive",
+			x:        "-13",
+			y:        "3",
+			expected: "-1",
+		},
+		{
+			name:     "positive % negative (truncated)",
+			x:        "13",
+			y:        "-3",
+			expected: "1",
+		},
+		{
+			name:     "negative % negative",
+			x:        "-13",
+			y:        "-3",
+			expected: "-1",
 		},
 		{
 			name:     "min negative % positive",
@@ -182,6 +262,66 @@ func TestRem(t *testing.T) {
 			name:     "same values",
 			x:        "1974924792517421647328142",
 			y:        "1974924792517421647328142",
+			expected: "0",
+		},
+		{
+			name:     "max positive % small positive",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "2",
+			expected: "1",
+		},
+		{
+			name:     "max positive % one positive",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "1",
+			expected: "0",
+		},
+		{
+			name:     "min negative % small positive",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "2",
+			expected: "0",
+		},
+		{
+			name:     "min negative + 1 % small positive",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "2",
+			expected: "-1",
+		},
+		{
+			name:     "min positive % one positive",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "1",
+			expected: "0",
+		},
+		{
+			name:     "max positive % small negative",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "-2",
+			expected: "1",
+		},
+		{
+			name:     "max positive % one negative",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "-1",
+			expected: "0",
+		},
+		{
+			name:     "min negative % small negative",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "-2",
+			expected: "0",
+		},
+		{
+			name:     "min negative % small negative + 1",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "-2",
+			expected: "-1",
+		},
+		{
+			name:     "min negative % one negative",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "-1",
 			expected: "0",
 		},
 		{
@@ -225,13 +365,33 @@ func TestIsPositive(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:     "smallest positive",
+			x:        "1",
+			expected: true,
+		},
+		{
+			name:     "max positive",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expected: true,
+		},
+		{
 			name:     "negative number",
 			x:        "-100",
 			expected: false,
 		},
 		{
+			name:     "negative one",
+			x:        "-1",
+			expected: false,
+		},
+		{
 			name:     "zero",
 			x:        "0",
+			expected: false,
+		},
+		{
+			name:     "min int256",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
 			expected: false,
 		},
 	}
@@ -269,6 +429,30 @@ func TestLte(t *testing.T) {
 			y:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
 			expected: false,
 		},
+		{
+			name:     "max positive <= zero is false",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "0",
+			expected: false,
+		},
+		{
+			name:     "zero <= max positive is true",
+			x:        "0",
+			y:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expected: true,
+		},
+		{
+			name:     "max negative <= zero is false",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "0",
+			expected: true,
+		},
+		{
+			name:     "zero <= min negative is true",
+			x:        "0",
+			y:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expected: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -302,6 +486,30 @@ func TestGte(t *testing.T) {
 		{
 			name:     "max positive >= min negative",
 			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expected: true,
+		},
+		{
+			name:     "max positive >= zero is true",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "0",
+			expected: true,
+		},
+		{
+			name:     "zero >= max positive is false",
+			x:        "0",
+			y:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expected: false,
+		},
+		{
+			name:     "max negative >= zero is false",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "0",
+			expected: false,
+		},
+		{
+			name:     "zero >= min negative is true",
+			x:        "0",
 			y:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
 			expected: true,
 		},
@@ -342,10 +550,34 @@ func TestXor(t *testing.T) {
 			expected: "-1",
 		},
 		{
+			name:     "max positive ^ zero",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "0",
+			expected: "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+		},
+		{
 			name:     "min negative ^ zero",
 			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
 			y:        "0",
 			expected: "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+		},
+		{
+			name:     "max positive ^ one",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "1",
+			expected: "57896044618658097711785492504343953926634992332820282019728792003956564819966",
+		},
+		{
+			name:     "min negative ^ one",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "1",
+			expected: "-57896044618658097711785492504343953926634992332820282019728792003956564819967",
+		},
+		{
+			name:     "min negative ^ negative one",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "-1",
+			expected: "57896044618658097711785492504343953926634992332820282019728792003956564819967",
 		},
 	}
 
