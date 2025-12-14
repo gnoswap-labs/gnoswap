@@ -82,7 +82,7 @@ func WrappedSwap(
         amountSpecified,
         sqrtPriceLimitX96,
         payer,
-        func(cur realm, amount0Delta, amount1Delta int64) error {
+        func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
             return nil
         },
     )
