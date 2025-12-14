@@ -106,8 +106,15 @@ func (s *stakerV1) calculatePositionReward(param *CalcPositionRewardParam) []Rew
 	}
 	rewardState.reset()
 
-	// update deposit's incentive list with new incentives created since last update
-	s.updateDepositExternalIncentiveIds(deposit, param.CurrentTime)
+	// get new incentives created since last update
+	currentIncentiveIds := s.getExternalIncentiveIdsBy(poolPath, lastCollectTime, param.CurrentTime)
+
+	// add new created incentives to deposit
+	for _, incentiveId := range currentIncentiveIds {
+		deposit.AddExternalIncentiveId(incentiveId)
+	}
+
+	deposit.SetLastExternalIncentiveUpdatedAt(param.CurrentTime)
 
 	incentivesResolver := poolResolver.IncentivesResolver()
 
@@ -156,22 +163,19 @@ func (s *stakerV1) processUnClaimableReward(poolPath string, endTimestamp int64)
 }
 
 // update deposit's incentive list with new incentives created since last update
-func (s *stakerV1) updateDepositExternalIncentiveIds(deposit *sr.Deposit, currentTime int64) {
-	lastUpdatedAt := deposit.LastExternalIncentiveUpdatedAt()
-	if lastUpdatedAt >= currentTime {
-		return
-	}
+func (s *stakerV1) getExternalIncentiveIdsBy(poolPath string, startTime, endTime int64) []string {
+	currentIncentiveIds := make([]string, 0)
 
 	incentivesByTime := s.getExternalIncentivesByCreationTime()
 
-	incentivesByTime.Iterate(lastUpdatedAt, currentTime, func(_ int64, value any) bool {
+	incentivesByTime.Iterate(startTime, endTime, func(_ int64, value any) bool {
 		// Value is a slice of incentive IDs (handles timestamp collisions)
 		poolIncentiveIds, ok := value.(*avl.Tree)
 		if !ok {
 			return false
 		}
 
-		incentiveIdsValue, exists := poolIncentiveIds.Get(deposit.TargetPoolPath())
+		incentiveIdsValue, exists := poolIncentiveIds.Get(poolPath)
 		if !exists {
 			return false
 		}
@@ -181,20 +185,12 @@ func (s *stakerV1) updateDepositExternalIncentiveIds(deposit *sr.Deposit, curren
 			return false
 		}
 
-		// Process each incentive ID in the slice
-		for _, incentiveId := range incentiveIds {
-			incentive := s.getExternalIncentives().get(incentiveId)
-			if incentive.IsEnded(lastUpdatedAt) {
-				continue
-			}
-
-			deposit.AddExternalIncentiveId(incentiveId)
-		}
+		currentIncentiveIds = append(currentIncentiveIds, incentiveIds...)
 
 		return false
 	})
 
-	deposit.SetLastExternalIncentiveUpdatedAt(currentTime)
+	return currentIncentiveIds
 }
 
 // getInitialCollectTime determines the initial collection time for an incentive

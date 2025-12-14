@@ -315,8 +315,21 @@ func (s *stakerV1) StakeToken(positionId uint64, referrer string) string {
 		currentWarmups,
 	)
 
-	// update deposit's incentive list with new incentives created since last update
-	s.updateDepositExternalIncentiveIds(deposit, currentTime)
+	// when staking, add new created incentives to deposit
+	currentIncentiveIds := s.getExternalIncentiveIdsBy(poolPath, 0, currentTime)
+
+	for _, incentiveId := range currentIncentiveIds {
+		incentive := s.getExternalIncentives().get(incentiveId)
+		// If incentive is ended, not available to collect reward
+		if currentTime > incentive.EndTimestamp() {
+			continue
+		}
+
+		deposit.AddExternalIncentiveId(incentiveId)
+	}
+
+	// set last external incentive ids updated at
+	deposit.SetLastExternalIncentiveUpdatedAt(currentTime)
 
 	deposits := s.getDeposits()
 	deposits.set(positionId, deposit)
