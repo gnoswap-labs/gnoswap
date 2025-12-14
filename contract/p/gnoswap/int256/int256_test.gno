@@ -15,6 +15,8 @@ func TestSign(t *testing.T) {
 		{"0", 0},
 		{"1", 1},
 		{"-1", -1},
+		{"-57896044618658097711785492504343953926634992332820282019728792003956564819968", -1},
+		{"57896044618658097711785492504343953926634992332820282019728792003956564819967", 1},
 	}
 
 	for _, tt := range tests {
@@ -28,20 +30,30 @@ func TestSign(t *testing.T) {
 
 func TestAbs(t *testing.T) {
 	tests := []struct {
-		x, want string
+		x, want             string
+		expectedHasOverflow bool
 	}{
-		{"0", "0"},
-		{"1", "1"},
-		{"-1", "1"},
-		{"-2", "2"},
-		{"57896044618658097711785492504343953926634992332820282019728792003956564819967", "57896044618658097711785492504343953926634992332820282019728792003956564819967"},
-		{"-57896044618658097711785492504343953926634992332820282019728792003956564819967", "57896044618658097711785492504343953926634992332820282019728792003956564819967"},
+		{"0", "0", false},
+		{"1", "1", false},
+		{"-1", "1", false},
+		{"-2", "2", false},
+		{"57896044618658097711785492504343953926634992332820282019728792003956564819967", "57896044618658097711785492504343953926634992332820282019728792003956564819967", false},
+		{"-57896044618658097711785492504343953926634992332820282019728792003956564819967", "57896044618658097711785492504343953926634992332820282019728792003956564819967", false},
+		// MinInt256 overflows when taking Abs
+		{"-57896044618658097711785492504343953926634992332820282019728792003956564819968", "", true},
 	}
 
 	for _, tc := range tests {
 		x, err := FromDecimal(tc.x)
 		if err != nil {
 			t.Error(err)
+			continue
+		}
+
+		if tc.expectedHasOverflow {
+			uassert.PanicsContains(t, "int256: overflow", func() {
+				x.Abs()
+			})
 			continue
 		}
 
@@ -65,6 +77,7 @@ func TestAbsWithPanicCases(t *testing.T) {
 		{"-2", "2", false, false},
 		// Int256 min value overflow: out of range, FromDecimal should error
 		{"-115792089237316195423570985008687907853269984665640564039457584007913129639935", "", true, false},
+		{"-57896044618658097711785492504343953926634992332820282019728792003956564819967", "57896044618658097711785492504343953926634992332820282019728792003956564819967", false, false},
 		// Int256 most negative value: FromDecimal succeeds, Abs() panics
 		{"-57896044618658097711785492504343953926634992332820282019728792003956564819968", "57896044618658097711785492504343953926634992332820282019728792003956564819968", false, true},
 	}
@@ -149,6 +162,18 @@ func TestAdd(t *testing.T) {
 			y:        "431405283104328105143242031570231414",
 			expected: "-57896044618658097711785492504343953926634560927537177691623648761924994588561",
 		},
+		{
+			name:     "large positive + one overflow",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "1",
+			expected: "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+		},
+		{
+			name:     "min negative + negative one overflow",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "-1",
+			expected: "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+		},
 	}
 
 	for _, tt := range tests {
@@ -205,6 +230,20 @@ func TestAddOverflow(t *testing.T) {
 			expectedOverflow: true,
 		},
 		{
+			name:             "max positive + one overflow",
+			x:                "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:                "1",
+			expected:         "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expectedOverflow: true,
+		},
+		{
+			name:             "min negative + negative one overflow",
+			x:                "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:                "-1",
+			expected:         "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expectedOverflow: true,
+		},
+		{
 			name:             "large positive + large positive overflow",
 			x:                "57896044618658097711785492504343953926634992332820282019728792003956564819961",
 			y:                "431405283104328105143242031570231414",
@@ -255,6 +294,18 @@ func TestSub(t *testing.T) {
 			y:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
 			expected: "1",
 		},
+		{
+			name:     "large positive - one overflow",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:        "-1",
+			expected: "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+		},
+		{
+			name:     "min negative - negative one overflow",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:        "1",
+			expected: "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+		},
 	}
 
 	for _, tt := range tests {
@@ -301,6 +352,41 @@ func TestSubOverflow(t *testing.T) {
 			x:                "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
 			y:                "57896044618658097711785492504343953926634992332820282019728792003956564819967",
 			expected:         "1",
+			expectedOverflow: true,
+		},
+		{
+			name:             "min int256 - 1 underflow",
+			x:                "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:                "1",
+			expected:         "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expectedOverflow: true,
+		},
+		{
+			name:             "zero - min int256 overflow",
+			x:                "0",
+			y:                "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expected:         "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expectedOverflow: true,
+		},
+		{
+			name:             "max int256 - (-1) overflow",
+			x:                "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:                "-1",
+			expected:         "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expectedOverflow: true,
+		},
+		{
+			name:             "negative two - max int256 overflow",
+			x:                "-2",
+			y:                "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expected:         "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			expectedOverflow: true,
+		},
+		{
+			name:             "one - min int256 overflow",
+			x:                "1",
+			y:                "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			expected:         "-57896044618658097711785492504343953926634992332820282019728792003956564819967",
 			expectedOverflow: true,
 		},
 	}
@@ -426,6 +512,20 @@ func TestMulOverFlow(t *testing.T) {
 			name:             "min negative * 2 overflow",
 			x:                "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
 			y:                "2",
+			expected:         "0",
+			expectedOverflow: true,
+		},
+		{
+			name:             "max positive * 2 overflow",
+			x:                "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			y:                "2",
+			expected:         "-2",
+			expectedOverflow: true,
+		},
+		{
+			name:             "min negative * -2 overflow",
+			x:                "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			y:                "-2",
 			expected:         "0",
 			expectedOverflow: true,
 		},
@@ -918,6 +1018,66 @@ func TestRsh(t *testing.T) {
 			n:        255,
 			expected: "-1",
 		},
+		{
+			name:     "x is neg & n is greater than or equal 256",
+			x:        "-11111",
+			n:        256,
+			expected: "-1",
+		},
+		{
+			name:     "x is non-neg & n much larger than 256",
+			x:        "11111",
+			n:        300,
+			expected: "0",
+		},
+		{
+			name:     "one rsh 0 is one",
+			x:        "1",
+			n:        0,
+			expected: "1",
+		},
+		{
+			name:     "negative one rsh 0 is negative one",
+			x:        "-1",
+			n:        0,
+			expected: "-1",
+		},
+		{
+			name:     "one rsh 1 is zero",
+			x:        "1",
+			n:        1,
+			expected: "0",
+		},
+		{
+			name:     "negative one rsh 1 is negative one",
+			x:        "-1",
+			n:        1,
+			expected: "-1",
+		},
+		{
+			name:     "max int256 rsh 254 is one",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			n:        254,
+			expected: "1",
+		},
+		{
+			name:     "max int256 rsh 255 is zero",
+			x:        "57896044618658097711785492504343953926634992332820282019728792003956564819967",
+			n:        255,
+			expected: "0",
+		},
+		{
+			name:     "min int256 rsh 254 is one",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			n:        254,
+			expected: "-2",
+		},
+		{
+			name:     "min int256 rsh 255 is negative one",
+			x:        "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+			n:        255,
+			expected: "-1",
+		},
 	}
 
 	for _, tt := range tests {
@@ -961,6 +1121,61 @@ func TestRsh_SignExtendProperty(t *testing.T) {
 		z2 := new(Int).Rsh(x, n+1)
 
 		uassert.Equal(t, z2.ToString(), zz.ToString())
+	}
+}
+
+func TestClearAndSetAllBitsOne(t *testing.T) {
+	t.Run("Clear resets to zero", func(t *testing.T) {
+		x := MustFromDecimal("123456789")
+		uassert.Equal(t, "0", x.Clear().ToString())
+	})
+
+	t.Run("SetAllBitsOne sets -1", func(t *testing.T) {
+		x := new(Int).SetAllBitsOne()
+		uassert.Equal(t, "-1", x.ToString())
+	})
+}
+
+func TestBitLen(t *testing.T) {
+	type tc struct {
+		name     string
+		val      *Int
+		expected int
+	}
+
+	one := One()
+	tests := []tc{
+		{name: "zero", val: Zero(), expected: 0},
+		{name: "one", val: one, expected: 1},
+		{name: "two", val: new(Int).SetInt64(2), expected: 2},
+		{name: "three", val: new(Int).SetInt64(3), expected: 2},
+		{name: "seven", val: new(Int).SetInt64(7), expected: 3},
+		{
+			name:     "two_to_64",
+			val:      new(Int).Lsh(one.Clone(), 64),
+			expected: 65,
+		},
+		{
+			name:     "two_to_64_minus_one",
+			val:      new(Int).Sub(new(Int).Lsh(one.Clone(), 64), one),
+			expected: 64,
+		},
+		{
+			name:     "max_int256_boundary",
+			val:      MaxInt256(),
+			expected: 255,
+		},
+		{
+			name:     "min_int256_two_complement_bits",
+			val:      MinInt256(),
+			expected: 256,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			uassert.Equal(t, tt.expected, tt.val.BitLen())
+		})
 	}
 }
 
@@ -1112,6 +1327,8 @@ func TestIsZero(t *testing.T) {
 		{"1", false},
 		{"-1", false},
 		{"10", false},
+		{"57896044618658097711785492504343953926634992332820282019728792003956564819967", false},
+		{"-57896044618658097711785492504343953926634992332820282019728792003956564819968", false},
 	}
 
 	for _, tc := range tests {
@@ -1227,6 +1444,32 @@ func TestGt(t *testing.T) {
 	}
 }
 
+func TestLteAndGte(t *testing.T) {
+	tests := []struct {
+		name      string
+		x         string
+		y         string
+		expectLte bool
+		expectGte bool
+	}{
+		{name: "equal values", x: "42", y: "42", expectLte: true, expectGte: true},
+		{name: "less than", x: "-1", y: "0", expectLte: true, expectGte: false},
+		{name: "greater than", x: "1", y: "0", expectLte: false, expectGte: true},
+		{name: "both negative with ordering", x: "-5", y: "-1", expectLte: true, expectGte: false},
+		{name: "negative vs positive", x: "-100", y: "100", expectLte: true, expectGte: false},
+		{name: "zero vs negative", x: "0", y: "-10", expectLte: false, expectGte: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			x := MustFromDecimal(tt.x)
+			y := MustFromDecimal(tt.y)
+			uassert.Equal(t, tt.expectLte, x.Lte(y))
+			uassert.Equal(t, tt.expectGte, x.Gte(y))
+		})
+	}
+}
+
 func TestClone(t *testing.T) {
 	tests := []struct {
 		x string
@@ -1239,6 +1482,7 @@ func TestClone(t *testing.T) {
 		{"-10"},
 		{"57896044618658097711785492504343953926634992332820282019728792003956564819967"},
 		{"-57896044618658097711785492504343953926634992332820282019728792003956564819967"},
+		{"-57896044618658097711785492504343953926634992332820282019728792003956564819968"},
 	}
 
 	for _, tc := range tests {
@@ -1409,25 +1653,37 @@ func TestSetUint64(t *testing.T) {
 
 func TestUint64(t *testing.T) {
 	tests := []struct {
-		x    string
-		want uint64
+		x      string
+		want   uint64
+		panics bool
 	}{
-		{"0", 0},
-		{"1", 1},
-		{"9223372036854775807", 9223372036854775807},
-		{"9223372036854775808", 9223372036854775808},
-		{"18446744073709551615", 18446744073709551615},
-		{"18446744073709551616", 0},
-		{"18446744073709551617", 1},
-		// In two's complement, -1 = 0xFFFF...FFFF, so z[0] = max uint64
-		{"-1", 18446744073709551615},
-		{"-18446744073709551615", 1},
-		{"-18446744073709551616", 0},
-		{"-18446744073709551617", 18446744073709551615},
+		{"0", 0, false},
+		{"1", 1, false},
+		{"9223372036854775807", 9223372036854775807, false},
+		{"9223372036854775808", 9223372036854775808, false},
+		{"18446744073709551615", 18446744073709551615, false},
+		{"18446744073709551616", 0, true}, // out of range
+		{"18446744073709551617", 0, true}, // out of range
+		{"-1", 0, true},                   // negative -> panic
+		{"-18446744073709551615", 0, true},
+		{"-18446744073709551616", 0, true},
+		{"-18446744073709551617", 0, true},
+		{"-57896044618658097711785492504343953926634992332820282019728792003956564819968", 0, true},
+		{"-57896044618658097711785492504343953926634992332820282019728792003956564819967", 0, true},
+		{"-57896044618658097711785492504343953926634992332820282019728792003956564819966", 0, true},
+		{"57896044618658097711785492504343953926634992332820282019728792003956564819967", 0, true},
+		{"57896044618658097711785492504343953926634992332820282019728792003956564819966", 0, true},
 	}
 
 	for _, tc := range tests {
 		z := MustFromDecimal(tc.x)
+
+		if tc.panics {
+			uassert.PanicsContains(t, "uint64 overflow", func() {
+				z.Uint64()
+			})
+			continue
+		}
 
 		got := z.Uint64()
 		if got != tc.want {
@@ -1438,24 +1694,37 @@ func TestUint64(t *testing.T) {
 
 func TestInt64(t *testing.T) {
 	tests := []struct {
-		x    string
-		want int64
+		x      string
+		want   int64
+		panics bool
 	}{
-		{"0", 0},
-		{"1", 1},
-		{"-1", -1},
-		{"9223372036854775807", 9223372036854775807},
-		{"-9223372036854775808", -9223372036854775808},
-		{"9223372036854775808", -9223372036854775808},
-		{"-9223372036854775809", 9223372036854775807},
-		{"18446744073709551616", 0},
-		{"18446744073709551617", 1},
-		{"18446744073709551615", -1},
-		{"-18446744073709551615", 1},
+		{"0", 0, false},
+		{"1", 1, false},
+		{"-1", -1, false},
+		{"9223372036854775807", 9223372036854775807, false},
+		{"-9223372036854775808", -9223372036854775808, false},
+		{"9223372036854775808", 0, true},  // out of range
+		{"-9223372036854775809", 0, true}, // out of range
+		{"18446744073709551616", 0, true},
+		{"18446744073709551617", 0, true},
+		{"18446744073709551615", 0, true},
+		{"-18446744073709551615", 0, true},
+		{"-57896044618658097711785492504343953926634992332820282019728792003956564819968", 0, true},
+		{"-57896044618658097711785492504343953926634992332820282019728792003956564819967", 0, true},
+		{"-57896044618658097711785492504343953926634992332820282019728792003956564819966", 0, true},
+		{"57896044618658097711785492504343953926634992332820282019728792003956564819967", 0, true},
+		{"57896044618658097711785492504343953926634992332820282019728792003956564819966", 0, true},
 	}
 
 	for _, tc := range tests {
 		z := MustFromDecimal(tc.x)
+
+		if tc.panics {
+			uassert.PanicsContains(t, "int64 overflow", func() {
+				z.Int64()
+			})
+			continue
+		}
 
 		got := z.Int64()
 		if got != tc.want {
@@ -1473,6 +1742,7 @@ func TestInt64EdgeCases(t *testing.T) {
 		setupInt    func() *Int
 		want        int64
 		description string
+		shouldPanic bool
 	}{
 		{
 			name: "MinInt64 from SetInt64",
@@ -1506,24 +1776,32 @@ func TestInt64EdgeCases(t *testing.T) {
 				// Value larger than int64 max
 				return MustFromDecimal("18446744073709551615")
 			},
-			want:        -1, // Truncated to int64
-			description: "Large positive wraps in int64",
+			want:        0,
+			description: "Large positive out of int64 range panics",
+			shouldPanic: true,
 		},
 		{
 			name: "Large negative int256",
 			setupInt: func() *Int {
 				return MustFromDecimal("-18446744073709551615")
 			},
-			want:        1, // Truncated to int64
-			description: "Large negative wraps in int64",
+			want:        0,
+			description: "Large negative out of int64 range panics",
+			shouldPanic: true,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			z := tc.setupInt()
-			got := z.Int64()
+			if tc.shouldPanic {
+				uassert.PanicsContains(t, "int64 overflow", func() {
+					z.Int64()
+				})
+				return
+			}
 
+			got := z.Int64()
 			if got != tc.want {
 				t.Errorf("%s: got %d, want %d", tc.description, got, tc.want)
 			}
@@ -1566,11 +1844,51 @@ func TestNeg(t *testing.T) {
 		{"-1", "1"},
 		{"9223372036854775807", "-9223372036854775807"},
 		{"-18446744073709551615", "18446744073709551615"},
+		// MinInt256 negation overflows; expect no-op result (still MinInt256)
+		{"-57896044618658097711785492504343953926634992332820282019728792003956564819968", "-57896044618658097711785492504343953926634992332820282019728792003956564819968"},
+		{"-57896044618658097711785492504343953926634992332820282019728792003956564819967", "57896044618658097711785492504343953926634992332820282019728792003956564819967"},
+		{"57896044618658097711785492504343953926634992332820282019728792003956564819967", "-57896044618658097711785492504343953926634992332820282019728792003956564819967"},
 	}
 
 	for _, tc := range tests {
 		z := MustFromDecimal(tc.x)
 		z.Neg(z)
+
+		got := z.ToString()
+		if got != tc.want {
+			t.Errorf("Neg(%s) = %s, want %s", tc.x, got, tc.want)
+		}
+	}
+}
+
+func TestNegOverflow(t *testing.T) {
+	tests := []struct {
+		x           string
+		want        string
+		shouldPanic bool
+	}{
+		{"0", "0", false},
+		{"1", "-1", false},
+		{"-1", "1", false},
+		{"9223372036854775807", "-9223372036854775807", false},
+		{"-18446744073709551615", "18446744073709551615", false},
+		// MinInt256 negation overflows; expect no-op result (still MinInt256)
+		{"-57896044618658097711785492504343953926634992332820282019728792003956564819968", "-57896044618658097711785492504343953926634992332820282019728792003956564819968", true},
+		{"-57896044618658097711785492504343953926634992332820282019728792003956564819967", "57896044618658097711785492504343953926634992332820282019728792003956564819967", false},
+		{"57896044618658097711785492504343953926634992332820282019728792003956564819967", "-57896044618658097711785492504343953926634992332820282019728792003956564819967", false},
+	}
+
+	for _, tc := range tests {
+		z := MustFromDecimal(tc.x)
+
+		if tc.shouldPanic {
+			uassert.PanicsContains(t, "int256: overflow", func() {
+				z.NegOverflow(z)
+			})
+			continue
+		}
+
+		z.NegOverflow(z)
 
 		got := z.ToString()
 		if got != tc.want {
