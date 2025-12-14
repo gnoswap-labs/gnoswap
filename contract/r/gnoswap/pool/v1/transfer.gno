@@ -155,7 +155,7 @@ func (i *poolV1) safeTransferFrom(
 //
 // Callback Signature:
 //
-//	func(cur realm, amount0Delta, amount1Delta int64) error
+//	func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error
 //
 // Delta Convention (following Uniswap V3 standard):
 //   - Positive delta: Amount the pool must RECEIVE (input token)
@@ -183,7 +183,7 @@ func (i *poolV1) safeTransferFrom(
 //
 // Example callback implementation:
 //
-//	func(cur realm, amount0Delta, amount1Delta int64) error {
+//	func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 //	    if amount0Delta > 0 {
 //	        // Transfer token0 to pool
 //	        token0.Transfer(poolAddr, amount0Delta)
