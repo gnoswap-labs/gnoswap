@@ -1223,7 +1223,7 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 				// 2. Swap executes computeSwap and transfers output tokens
 				// 3. Swap calls swapCallback (maliciousCallback)
 				// 4. Inside callback, attacker attempts second Swap
-				// 5. Second Swap checks pool.Slot0.unlocked -> false -> PANIC [GNOSWAP-POOL-018]
+				// 5. Second Swap checks pool.Slot0.unlocked -> false -> PANIC [GNOSWAP-POOL-016]
 				// 6. Callback catches panic, completes token transfer
 				// 7. Original Swap completes successfully
 				// 8. defer unlocks pool -> pool.Slot0.unlocked = true
