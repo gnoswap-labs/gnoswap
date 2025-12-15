@@ -564,8 +564,19 @@ func TestSetDistributionStartTime_InitEmissionStateWithBlockHeight(t *testing.T)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Set block height before setup
+			// Reset state before each test
+			resetObject(t)
+
+			// Set block height BEFORE any initialization
 			testing.SetHeight(tt.blockHeight)
+
+			// Manually reset GNS emission state with the correct height
+			// This ensures the emission state is initialized with the test's block height
+			testing.SetOriginCaller(adminAddr)
+			func(cur realm) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/emission"))
+				gns.InitEmissionState(cross, tt.blockHeight, time.Now().Unix())
+			}(cross)
 
 			// Setup and get the start timestamp used
 			startTimestamp := tt.setup()
@@ -576,7 +587,5 @@ func TestSetDistributionStartTime_InitEmissionStateWithBlockHeight(t *testing.T)
 			// Verify expectations
 			tt.wantCheck(t, startTimestamp, startHeight, tt.blockHeight)
 		})
-
-		resetObject(t)
 	}
 }
