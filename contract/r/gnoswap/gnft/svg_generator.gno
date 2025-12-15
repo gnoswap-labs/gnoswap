@@ -118,9 +118,29 @@ func paramsToImageURI(params string) string {
 }
 
 // isImageParams checks if the string is in the expected parameter format.
-// Expected format: "x1,y1,x2,y2,color1,color2" with exactly 5 commas.
+// Expected format: "x1,y1,x2,y2,color1,color2" where:
+//   - x1, y1, x2, y2 are non-negative numeric values (indices 0-3)
+//   - color1, color2 are hex color strings in #XXXXXX format (indices 4-5)
 func isImageParams(s string) bool {
-	return strings.Count(s, ",") == 5
+	parts := strings.Split(s, ",")
+	if len(parts) != 6 {
+		return false
+	}
+
+	// Validate x1, y1, x2, y2 are non-negative numeric values
+	for i := 0; i < 4; i++ {
+		val, err := strconv.Atoi(parts[i])
+		if err != nil || val < 0 {
+			return false
+		}
+	}
+
+	// Validate color format (#XXXXXX)
+	if !isValidHexColor(parts[4]) || !isValidHexColor(parts[5]) {
+		return false
+	}
+
+	return true
 }
 
 // paramsToImageRaw parses parameters and generates SVG image.
