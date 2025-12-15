@@ -407,14 +407,6 @@ func (t *TestStaker) GetUnstakingFee() int64 {
 	).(int64)
 }
 
-func (t *TestStaker) IsArchivedExternalIncentive(incentiveId string) bool {
-	return t.ExecuteFn(
-		"IsArchivedExternalIncentive",
-		func(args ...any) any { return t.instance.IsArchivedExternalIncentive(args[0].(string)) },
-		incentiveId,
-	).(bool)
-}
-
 func (t *TestStaker) IsStaked(positionId uint64) bool {
 	return t.ExecuteFn(
 		"IsStaked",
