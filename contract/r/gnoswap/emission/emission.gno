@@ -213,7 +213,8 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 
 	// Reinitialize emission state if not started yet.
 	if startTimestamp > currentTimestamp && gns.MintedEmissionAmount() == 0 {
-		gns.InitEmissionState(cross, startTimestamp, startTimestamp)
+		currentHeight := runtime.ChainHeight()
+		gns.InitEmissionState(cross, currentHeight, startTimestamp)
 	}
 
 	distributionStartTimestamp = startTimestamp

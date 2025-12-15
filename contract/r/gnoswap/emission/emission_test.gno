@@ -8,6 +8,8 @@ import (
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
 	"gno.land/p/nt/ufmt"
+
+	"gno.land/r/gnoswap/gns"
 )
 
 var alice = testutils.TestAddress("alice")
@@ -500,5 +502,81 @@ func TestEmission_GetDistributionStartTimestamp(t *testing.T) {
 				uassert.True(t, got >= time.Now().Unix()+999)
 			}
 		})
+	}
+}
+
+func TestSetDistributionStartTime_InitEmissionStateWithBlockHeight(t *testing.T) {
+	// This test verifies that InitEmissionState is called with actual block height,
+	// not timestamp value, fixing the semantic inconsistency issue.
+	tests := []struct {
+		name         string
+		blockHeight  int64
+		setup        func() int64
+		wantCheck    func(t *testing.T, startTimestamp, startHeight, expectedHeight int64)
+	}{
+		{
+			name:        "emission start height should be block height not timestamp",
+			blockHeight: 150,
+			setup: func() int64 {
+				now := time.Now().Unix()
+				futureTimestamp := now + 10000
+
+				// Call SetDistributionStartTime which internally calls InitEmissionState
+				testing.SetOriginCaller(adminAddr)
+				SetDistributionStartTime(cross, futureTimestamp)
+
+				return futureTimestamp
+			},
+			wantCheck: func(t *testing.T, startTimestamp, startHeight, expectedHeight int64) {
+				// startHeight should be the block height, not timestamp
+				uassert.Equal(t, expectedHeight, startHeight, "startHeight should match current block height")
+
+				// startHeight should NOT equal startTimestamp (they should be very different)
+				uassert.NotEqual(t, startTimestamp, startHeight, "startHeight should not be timestamp")
+
+				// startTimestamp should be much larger than startHeight
+				// (timestamps are in Unix epoch seconds ~1700000000+, block heights are small numbers)
+				uassert.True(t, startTimestamp > 1000000000, "startTimestamp should be Unix epoch timestamp")
+				uassert.True(t, startHeight < 1000, "startHeight should be block height (small number)")
+			},
+		},
+		{
+			name:        "emission start height tracks blockchain height correctly",
+			blockHeight: 500,
+			setup: func() int64 {
+				now := time.Now().Unix()
+				futureTimestamp := now + 20000
+
+				testing.SetOriginCaller(adminAddr)
+				SetDistributionStartTime(cross, futureTimestamp)
+
+				return futureTimestamp
+			},
+			wantCheck: func(t *testing.T, startTimestamp, startHeight, expectedHeight int64) {
+				// Should capture the exact block height at initialization
+				uassert.Equal(t, expectedHeight, startHeight, "startHeight should match expected height")
+
+				// Verify it's not the timestamp
+				uassert.NotEqual(t, startTimestamp, startHeight)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Set block height before setup
+			testing.SetHeight(tt.blockHeight)
+
+			// Setup and get the start timestamp used
+			startTimestamp := tt.setup()
+
+			// Get the emission start height from GNS
+			startHeight := gns.GetEmissionStartHeight()
+
+			// Verify expectations
+			tt.wantCheck(t, startTimestamp, startHeight, tt.blockHeight)
+		})
+
+		resetObject(t)
 	}
 }
