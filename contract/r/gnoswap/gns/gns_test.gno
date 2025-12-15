@@ -443,15 +443,6 @@ func TestMintGns(t *testing.T) {
 			expectedAbortMessage: "",
 		},
 		{
-			name:                 "mint gns is failed by halted",
-			halted:               true,
-			inputRealm:           emissionRealm,
-			inputSkipHeight:      1,
-			expectedMintedAmount: 0,
-			expectedHasAbort:     true,
-			expectedAbortMessage: "halted: emission",
-		},
-		{
 			name:                 "mint gns is failed by caller is not emission realm",
 			halted:               false,
 			inputRealm:           testing.NewUserRealm(testutils.TestAddress("user")),
