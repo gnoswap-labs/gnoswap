@@ -193,7 +193,5 @@ func (lp *launchpadV1) stakeGovernance(projectID string, depositAmount int64, la
 		depositAmount,
 	)
 
-	xgns.MintByLaunchPad(cross, launchpadAddress, depositAmount)
-
 	return nil
 }
