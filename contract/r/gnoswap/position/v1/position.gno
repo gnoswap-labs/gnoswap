@@ -164,7 +164,7 @@ func (p *positionV1) Mint(
 //
 // Returns:
 //   - positionId: Same NFT ID
-//   - liquidity: Total liquidity after increase
+//   - liquidity: Liquidity amount added (the delta, not total)
 //   - amount0: Token0 actually deposited
 //   - amount1: Token1 actually deposited
 //   - poolPath: Pool identifier
@@ -304,12 +304,12 @@ func (p *positionV1) unwrapLeftoverWrappedToken(token string, wrapped, amount in
 //
 // Returns:
 //   - positionId: Same NFT ID
-//   - liquidity: Remaining liquidity
+//   - liquidity: Amount of liquidity removed (the delta)
 //   - fee0, fee1: Fees collected
 //   - amount0, amount1: Principal collected
 //   - poolPath: Pool identifier
 //
-// Note: Applies 1% withdrawal fee on collected amounts.
+// Note: Applies withdrawal fee on collected amounts.
 func (p *positionV1) DecreaseLiquidity(
 	positionId uint64,
 	liquidityStr string,
@@ -386,9 +386,11 @@ func (p *positionV1) DecreaseLiquidity(
 //
 // Returns:
 //   - positionId: Same NFT ID
-//   - fee0, fee1: Fees collected (after 1% protocol fee)
-//   - amount0, amount1: Always "0" (no principal)
+//   - tokensCollected0: Token0 amount sent to caller (after withdrawal fee)
+//   - tokensCollected1: Token1 amount sent to caller (after withdrawal fee)
 //   - poolPath: Pool identifier
+//   - totalAmount0: Raw token0 collected (before withdrawal fee)
+//   - totalAmount1: Raw token1 collected (before withdrawal fee)
 //
 // Requirements:
 //   - Caller must be owner or approved operator
