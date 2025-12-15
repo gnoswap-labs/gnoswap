@@ -42,7 +42,7 @@ func init() {
 	// leftEmissionAmount will decrease as tokens are minted.
 	setLeftEmissionAmount(MAX_EMISSION_AMOUNT)
 	setMintedEmissionAmount(0)
-	setLastMintedTimestamp(time.Now().Unix())
+	setLastMintedTimestamp(0)
 	burnAmount = 0
 }
 

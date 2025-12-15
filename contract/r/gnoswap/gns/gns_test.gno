@@ -3,6 +3,7 @@ package gns
 import (
 	"chain/runtime"
 	"testing"
+	"time"
 
 	"gno.land/p/nt/testutils"
 	"gno.land/p/nt/uassert"
@@ -162,6 +163,86 @@ func TestGetterSetter(t *testing.T) {
 		setLeftEmissionAmount(value)
 		uassert.Equal(t, value, LeftEmissionAmount())
 	})
+}
+
+func TestLastMintedTimestampInitialization(t *testing.T) {
+	tests := []struct {
+		name string
+		fn   func(t *testing.T)
+	}{
+		{
+			name: "lastMintedTimestamp should be initialized with Unix timestamp, not block height",
+			fn: func(t *testing.T) {
+				InitGnsTest(t)
+
+				timestamp := LastMintedTimestamp()
+				blockHeight := runtime.ChainHeight()
+
+				uassert.NotEqual(t, blockHeight, timestamp)
+			},
+		},
+		{
+			name: "lastMintedTimestamp should be in valid Unix timestamp range",
+			fn: func(t *testing.T) {
+				InitGnsTest(t)
+
+				timestamp := LastMintedTimestamp()
+
+				uassert.True(t, timestamp > 1_000_000_000)
+				uassert.True(t, timestamp < 10_000_000_000)
+			},
+		},
+		{
+			name: "lastMintedTimestamp should match current time",
+			fn: func(t *testing.T) {
+				InitGnsTest(t)
+
+				currentTime := time.Now().Unix()
+				timestamp := LastMintedTimestamp()
+
+				timeDiff := currentTime - timestamp
+				if timeDiff < 0 {
+					timeDiff = -timeDiff
+				}
+
+				uassert.True(t, timeDiff < 5)
+			},
+		},
+		{
+			name: "MintGns should skip minting when called at same timestamp",
+			fn: func(t *testing.T) {
+				InitGnsTest(t)
+
+				testing.SetRealm(emissionRealm)
+
+				amount := MintGns(cross, adminAddr)
+
+				uassert.Equal(t, int64(0), amount)
+			},
+		},
+		{
+			name: "MintGns should mint tokens after time advances",
+			fn: func(t *testing.T) {
+				InitGnsTest(t)
+
+				testing.SetRealm(emissionRealm)
+
+				firstAmount := MintGns(cross, adminAddr)
+				uassert.Equal(t, int64(0), firstAmount)
+
+				testing.SkipHeights(1)
+
+				secondAmount := MintGns(cross, adminAddr)
+				uassert.True(t, secondAmount > 0)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.fn(t)
+		})
+	}
 }
 
 func TestGrc20Methods(t *testing.T) {

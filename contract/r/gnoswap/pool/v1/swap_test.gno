@@ -1232,7 +1232,7 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 
 				maliciousCallback := func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 					// Step 4-5: Attempt reentrancy, expect panic due to locked pool
-					uassert.PanicsContains(t, "[GNOSWAP-POOL-018]", func() {
+					uassert.PanicsContains(t, "[GNOSWAP-POOL-016]", func() {
 						getMockInstance().Swap(
 							wugnotPath, gnsPath, STANDARD_FEE_TIER,
 							routerAddr, false, "50",
