@@ -70,6 +70,7 @@ func TestProposalMetadata_Validation(t *testing.T) {
 
 // TestProposalData_Validation tests proposal data validation
 func TestProposalData_Validation(t *testing.T) {
+	validTokenPath := "gno.land/r/gnoswap/gns"
 	tests := []struct {
 		name                 string
 		proposalType         governance.ProposalType
@@ -86,7 +87,7 @@ func TestProposalData_Validation(t *testing.T) {
 		{
 			name:          "Success - Valid CommunityPoolSpend proposal",
 			proposalType:  governance.CommunityPoolSpend,
-			spendInfo:     governance.NewCommunityPoolSpendInfo(testutils.TestAddress("g1recipient"), "test/token", 1000),
+			spendInfo:     governance.NewCommunityPoolSpendInfo(testutils.TestAddress("g1recipient"), validTokenPath, 1000),
 			expectedError: false,
 		},
 		{
@@ -98,7 +99,7 @@ func TestProposalData_Validation(t *testing.T) {
 		{
 			name:                 "Failure - CommunityPoolSpend with invalid address",
 			proposalType:         governance.CommunityPoolSpend,
-			spendInfo:            governance.NewCommunityPoolSpendInfo(address(""), "test/token", 1000),
+			spendInfo:            governance.NewCommunityPoolSpendInfo(address(""), validTokenPath, 1000),
 			expectedError:        true,
 			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-002] invalid input || to is invalid address",
 		},
@@ -112,14 +113,14 @@ func TestProposalData_Validation(t *testing.T) {
 		{
 			name:                 "Failure - CommunityPoolSpend with zero amount",
 			proposalType:         governance.CommunityPoolSpend,
-			spendInfo:            governance.NewCommunityPoolSpendInfo(testutils.TestAddress("g1recipient"), "test/token", 0),
+			spendInfo:            governance.NewCommunityPoolSpendInfo(testutils.TestAddress("g1recipient"), validTokenPath, 0),
 			expectedError:        true,
 			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-002] invalid input || amount is not positive",
 		},
 		{
 			name:                 "Failure - CommunityPoolSpend with negative amount",
 			proposalType:         governance.CommunityPoolSpend,
-			spendInfo:            governance.NewCommunityPoolSpendInfo(testutils.TestAddress("g1recipient"), "test/token", -100),
+			spendInfo:            governance.NewCommunityPoolSpendInfo(testutils.TestAddress("g1recipient"), validTokenPath, -100),
 			expectedError:        true,
 			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-002] invalid input || amount is not positive",
 		},

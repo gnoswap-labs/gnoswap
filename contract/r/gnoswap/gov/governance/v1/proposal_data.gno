@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"gno.land/p/nt/ufmt"
+
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gov/governance"
 )
 
@@ -135,6 +137,7 @@ func (r *ProposalDataResolver) validateText() error {
 func (r *ProposalDataResolver) validateCommunityPoolSpend() error {
 	// Validate recipient address
 	communityPoolSpend := r.ProposalData.CommunityPoolSpend()
+
 	if !communityPoolSpend.To().IsValid() {
 		return makeErrorWithDetails(
 			errInvalidInput,
@@ -143,10 +146,19 @@ func (r *ProposalDataResolver) validateCommunityPoolSpend() error {
 	}
 
 	// Validate token path is provided
-	if communityPoolSpend.TokenPath() == "" {
+	tokenPath := communityPoolSpend.TokenPath()
+	if tokenPath == "" {
 		return makeErrorWithDetails(
 			errInvalidInput,
 			ufmt.Sprintf("tokenPath is empty"),
+		)
+	}
+
+	// common.MustRegistered(communityPoolSpend.TokenPath())
+	if err := common.IsRegistered(tokenPath); err != nil {
+		return makeErrorWithDetails(
+			errInvalidInput,
+			ufmt.Sprintf("token(%s) is not registered", tokenPath),
 		)
 	}
 
