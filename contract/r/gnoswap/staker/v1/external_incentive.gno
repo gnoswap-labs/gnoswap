@@ -7,6 +7,7 @@ import (
 	"time"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/avl"
 	"gno.land/p/nt/ufmt"
 
 	"gno.land/r/gnoswap/access"
@@ -104,6 +105,9 @@ func (s *stakerV1) CreateExternalIncentive(
 	poolResolver := NewPoolResolver(pool)
 	poolResolver.IncentivesResolver().create(caller, incentive)
 
+	// add incentive to time-based index for lazy discovery during CollectReward
+	s.addIncentiveIdByCreationTime(targetPoolPath, incentiveId, currentTime)
+
 	chain.Emit(
 		"CreateExternalIncentive",
 		"prevAddr", caller.String(),
@@ -182,6 +186,9 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 		panic(err)
 	}
 
+	// remove incentive from time-based index
+	s.removeIncentiveIdByCreationTime(targetPoolPath, incentiveId, incentive.CreatedTimestamp())
+
 	poolLeftExternalRewardAmount := common.BalanceOf(incentiveResolver.RewardToken(), stakerAddr)
 	if poolLeftExternalRewardAmount < refund {
 		refund = poolLeftExternalRewardAmount
@@ -208,15 +215,6 @@ func (s *stakerV1) EndExternalIncentive(targetPoolPath, incentiveId string) {
 	incentiveResolver.SetRefunded(true)
 	incentiveResolver.addDistributedRewardAmount(refund)
 	incentivesResolver.update(incentive.Refundee(), incentive)
-
-	// archive incentive if it is finished (all rewards distributed)
-	// this is to prevent re-claiming GNS or rewards after the incentive is finished
-	if incentiveResolver.IsFinished() {
-		err = s.archiveEndedExternalIncentive(incentivesResolver, incentive)
-		if err != nil {
-			panic(err)
-		}
-	}
 
 	previousRealm := runtime.PreviousRealm()
 	chain.Emit(
@@ -266,7 +264,7 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 		}
 
 		rewardState := resolver.RewardStateOf(deposit)
-		calculatedTotalReward := rewardState.calculateTotalExternalReward(lastCollectTime, currentTime, incentiveResolver.ExternalIncentive)
+		calculatedTotalReward := rewardState.calculateCollectableExternalReward(lastCollectTime, currentTime, incentiveResolver.ExternalIncentive)
 		totalReward = safeAddInt64(totalReward, calculatedTotalReward)
 
 		return false
@@ -279,7 +277,96 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 	return incentiveResolver.ExternalIncentive, refund, nil
 }
 
-func (s *stakerV1) archiveEndedExternalIncentive(resolver *IncentivesResolver, incentive *sr.ExternalIncentive) error {
-	resolver.archiveIncentive(incentive.IncentiveId())
-	return nil
+// addIncentiveIdByCreationTime adds an external incentive to the time-based index.
+//
+// The index structure is:
+//   - creationTime (int64) -> poolPath (string) -> []incentiveIds
+func (s *stakerV1) addIncentiveIdByCreationTime(poolPath, incentiveId string, creationTime int64) {
+	incentivesByTime := s.getExternalIncentivesByCreationTime()
+
+	currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(creationTime)
+	if !exists {
+		currentPoolIncentiveIdsValue = avl.NewTree()
+	}
+
+	currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*avl.Tree)
+	if !ok {
+		panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected *avl.Tree, got %T", currentPoolIncentiveIdsValue))
+	}
+
+	incentiveIdsValue, exists := currentPoolIncentiveIds.Get(poolPath)
+	if !exists {
+		incentiveIdsValue = []string{}
+	}
+
+	incentiveIds, ok := incentiveIdsValue.([]string)
+	if !ok {
+		panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected []string, got %T", incentiveIdsValue))
+	}
+
+	incentiveIds = append(incentiveIds, incentiveId)
+	currentPoolIncentiveIds.Set(poolPath, incentiveIds)
+	incentivesByTime.Set(creationTime, currentPoolIncentiveIds)
+
+	s.updateExternalIncentivesByCreationTime(incentivesByTime)
+}
+
+// removeIncentiveIdByCreationTime removes an incentive from the time-based index.
+// This is called when an external incentive is ended via EndExternalIncentive.
+//
+// The index structure is:
+//   - creationTime (int64) -> poolPath (string) -> []incentiveId
+func (s *stakerV1) removeIncentiveIdByCreationTime(poolPath, incentiveId string, creationTime int64) {
+	incentivesByTime := s.getExternalIncentivesByCreationTime()
+
+	// check if creation time exists
+	currentPoolIncentiveIdsValue, exists := incentivesByTime.Get(creationTime)
+	if !exists {
+		return
+	}
+
+	currentPoolIncentiveIds, ok := currentPoolIncentiveIdsValue.(*avl.Tree)
+	if !ok {
+		panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected *avl.Tree, got %T", currentPoolIncentiveIdsValue))
+	}
+
+	// check if pool path exists at this time
+	incentiveIdsValue, exists := currentPoolIncentiveIds.Get(poolPath)
+	if !exists {
+		return
+	}
+
+	incentiveIds, ok := incentiveIdsValue.([]string)
+	if !ok {
+		panic(ufmt.Sprintf("invalid type in incentivesByTime tree: expected []string, got %T", incentiveIdsValue))
+	}
+
+	// if only incentive exists for this pool,remove the entire pool entry
+	if len(incentiveIds) == 1 && incentiveIds[0] == incentiveId {
+		currentPoolIncentiveIds.Remove(poolPath)
+
+		// if no pools remain at this time, remove the time entry
+		if currentPoolIncentiveIds.Size() == 0 {
+			incentivesByTime.Remove(creationTime)
+		} else {
+			incentivesByTime.Set(creationTime, currentPoolIncentiveIds)
+		}
+
+		s.updateExternalIncentivesByCreationTime(incentivesByTime)
+
+		return
+	}
+
+	// remove only the target incentive from slice
+	for index, id := range incentiveIds {
+		if id == incentiveId {
+			incentiveIds = append(incentiveIds[:index], incentiveIds[index+1:]...)
+			break
+		}
+	}
+
+	currentPoolIncentiveIds.Set(poolPath, incentiveIds)
+	incentivesByTime.Set(creationTime, currentPoolIncentiveIds)
+
+	s.updateExternalIncentivesByCreationTime(incentivesByTime)
 }

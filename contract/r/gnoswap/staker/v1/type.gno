@@ -22,14 +22,6 @@ func (self *ExternalIncentiveResolver) IsStarted(currentTimestamp int64) bool {
 	return currentTimestamp >= self.StartTimestamp()
 }
 
-func (self *ExternalIncentiveResolver) IsFinished() bool {
-	return self.Refunded() && self.DistributedRewardAmount() >= self.TotalRewardAmount()
-}
-
-func (self *ExternalIncentiveResolver) setRefunded(refunded bool) {
-	self.SetRefunded(refunded)
-}
-
 func (self *ExternalIncentiveResolver) RewardSpent(currentTimestamp int64) int64 {
 	// Check timestamps for state validation
 	if currentTimestamp < self.StartTimestamp() {
