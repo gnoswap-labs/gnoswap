@@ -122,10 +122,6 @@ func paramsToImageURI(params string) string {
 //   - x1, y1, x2, y2 are non-negative numeric values (indices 0-3)
 //   - color1, color2 are hex color strings in #XXXXXX format (indices 4-5)
 func isImageParams(s string) bool {
-	if strings.Count(s, ",") != 5 {
-		return false
-	}
-
 	parts := strings.Split(s, ",")
 	if len(parts) != 6 {
 		return false
