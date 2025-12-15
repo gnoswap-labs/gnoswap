@@ -1230,7 +1230,7 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 
 				testing.SetRealm(rouRealm)
 
-				maliciousCallback := func(cur realm, amount0Delta, amount1Delta int64) error {
+				maliciousCallback := func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 					// Step 4-5: Attempt reentrancy, expect panic due to locked pool
 					uassert.PanicsContains(t, "[GNOSWAP-POOL-018]", func() {
 						getMockInstance().Swap(
@@ -1238,7 +1238,7 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 							routerAddr, false, "50",
 							common.TickMathGetSqrtRatioAtTick(887220).ToString(),
 							routerAddr,
-							func(cur realm, a0, a1 int64) error { return nil },
+							func(cur realm, a0, a1 int64, _ *pl.CallbackMarker) error { return nil },
 						)
 					})
 
@@ -1305,7 +1305,7 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 					routerAddr, false, "100",
 					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
 					routerAddr,
-					func(cur realm, amount0Delta, amount1Delta int64) error {
+					func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 						return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
 					},
 				)
@@ -1325,7 +1325,7 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 					routerAddr, false, "50",
 					common.TickMathGetSqrtRatioAtTick(887220).ToString(),
 					routerAddr,
-					func(cur realm, amount0Delta, amount1Delta int64) error {
+					func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 						return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
 					},
 				)
@@ -1367,7 +1367,7 @@ func TestSwap_ReentrancyProtection(t *testing.T) {
 				lockStateDuringCallback := false
 
 				testing.SetRealm(rouRealm)
-				callbackWithLockCheck := func(cur realm, amount0Delta, amount1Delta int64) error {
+				callbackWithLockCheck := func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 					// Step 5: Verify pool is locked during callback
 					pool := getMockInstance().mustGetPoolBy(wugnotPath, gnsPath, STANDARD_FEE_TIER)
 					slot0 := pool.Slot0()
@@ -1523,7 +1523,7 @@ func TestSwapCallback_DeltaConvention(t *testing.T) {
 			// Capture deltas
 			var capturedAmount0Delta, capturedAmount1Delta int64
 
-			callbackCapturingDeltas := func(cur realm, amount0Delta, amount1Delta int64) error {
+			callbackCapturingDeltas := func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 				capturedAmount0Delta = amount0Delta
 				capturedAmount1Delta = amount1Delta
 				return mockSwapCallback(wugnotPath, gnsPath, amount0Delta, amount1Delta)
@@ -1602,7 +1602,7 @@ func TestSwapCallback_CallbackUsage(t *testing.T) {
 	var token0Transferred, token1Transferred int64
 
 	// Generic callback that works for any swap direction
-	genericCallback := func(cur realm, amount0Delta, amount1Delta int64) error {
+	genericCallback := func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 		token0Transferred, token1Transferred = 0, 0
 
 		// Transfer tokens with positive deltas (tokens pool needs to receive)
@@ -1705,7 +1705,7 @@ func TestSwap_FlashSwapPattern(t *testing.T) {
 			}
 
 			// Callback that checks recipient balance
-			flashSwapCallback := func(cur realm, amount0Delta, amount1Delta int64) error {
+			flashSwapCallback := func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 				// Execution flow verification:
 				// At this point, output tokens should ALREADY be transferred to recipient
 				// This is the key invariant of flash swap pattern
@@ -1771,7 +1771,7 @@ func TestSwap_FlashSwapArbitragePattern(t *testing.T) {
 	var outputReceivedBeforePayment bool
 	var outputAmountReceived int64
 
-	arbitrageCallback := func(cur realm, amount0Delta, amount1Delta int64) error {
+	arbitrageCallback := func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 		// In a real arbitrage scenario, we would:
 		// 1. Use the received token1 (amount1Delta is negative, meaning we received it)
 		// 2. Perform arbitrage operation
