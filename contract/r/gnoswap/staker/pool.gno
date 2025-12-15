@@ -206,8 +206,7 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 //     An end timestamp of 0 indicates an ongoing unclaimable period
 //     Used to track intervals when staking rewards are not claimable
 type Incentives struct {
-	incentives         *avl.Tree // (incentiveId) => ExternalIncentive
-	archivedIncentives *avl.Tree // (incentiveId) => ExternalIncentive (ended incentives)
+	incentives *avl.Tree // (incentiveId) => ExternalIncentive
 
 	targetPoolPath string // The target pool path for this incentive collection
 
@@ -224,16 +223,6 @@ func (i *Incentives) IncentiveTrees() *avl.Tree {
 // SetIncentives sets the incentives tree
 func (i *Incentives) SetIncentives(incentives *avl.Tree) {
 	i.incentives = incentives
-}
-
-// ArchivedIncentives returns the archived incentives tree
-func (i *Incentives) ArchivedIncentives() *avl.Tree {
-	return i.archivedIncentives
-}
-
-// SetArchivedIncentives sets the archived incentives tree
-func (i *Incentives) SetArchivedIncentives(archivedIncentives *avl.Tree) {
-	i.archivedIncentives = archivedIncentives
 }
 
 // TargetPoolPath returns the target pool path
@@ -271,34 +260,9 @@ func (i *Incentives) SetIncentive(incentiveId string, incentive *ExternalIncenti
 	i.incentives.Set(incentiveId, incentive)
 }
 
-// ArchivedIncentive returns an archived incentive by ID
-func (i *Incentives) ArchivedIncentive(incentiveId string) (*ExternalIncentive, bool) {
-	value, exists := i.archivedIncentives.Get(incentiveId)
-	if !exists {
-		return nil, false
-	}
-	incentive, ok := value.(*ExternalIncentive)
-	return incentive, ok
-}
-
-// SetArchivedIncentive sets an archived incentive by ID
-func (i *Incentives) SetArchivedIncentive(incentiveId string, incentive *ExternalIncentive) {
-	i.archivedIncentives.Set(incentiveId, incentive)
-}
-
-// IterateIncentives iterates over all active incentives
+// IterateIncentives iterates over all incentives
 func (i *Incentives) IterateIncentives(fn func(incentiveId string, incentive *ExternalIncentive) bool) {
 	i.incentives.Iterate("", "", func(key string, value interface{}) bool {
-		if incentive, ok := value.(*ExternalIncentive); ok {
-			return fn(key, incentive)
-		}
-		return false
-	})
-}
-
-// IterateArchivedIncentives iterates over all archived incentives
-func (i *Incentives) IterateArchivedIncentives(fn func(incentiveId string, incentive *ExternalIncentive) bool) {
-	i.archivedIncentives.Iterate("", "", func(key string, value interface{}) bool {
 		if incentive, ok := value.(*ExternalIncentive); ok {
 			return fn(key, incentive)
 		}
@@ -311,7 +275,6 @@ func NewIncentives(targetPoolPath string) *Incentives {
 		targetPoolPath:     targetPoolPath,
 		unclaimablePeriods: NewUintTree(),
 		incentives:         avl.NewTree(),
-		archivedIncentives: avl.NewTree(),
 	}
 
 	// initial unclaimable period starts, as there cannot be any staked positions yet.
@@ -325,6 +288,7 @@ type ExternalIncentive struct {
 	startTimestamp          int64   // start time for external reward
 	endTimestamp            int64   // end time for external reward
 	createdHeight           int64   // block height when the incentive was created
+	createdTimestamp        int64   // timestamp when the incentive was created
 	depositGnsAmount        int64   // deposited gns amount
 	targetPoolPath          string  // external reward target pool path
 	rewardToken             string  // external reward token path
@@ -378,6 +342,16 @@ func (e *ExternalIncentive) CreatedHeight() int64 {
 // SetCreatedHeight sets the created height
 func (e *ExternalIncentive) SetCreatedHeight(createdHeight int64) {
 	e.createdHeight = createdHeight
+}
+
+// CreatedTimestamp returns the created timestamp
+func (e *ExternalIncentive) CreatedTimestamp() int64 {
+	return e.createdTimestamp
+}
+
+// SetCreatedTimestamp sets the created timestamp
+func (e *ExternalIncentive) SetCreatedTimestamp(createdTimestamp int64) {
+	e.createdTimestamp = createdTimestamp
 }
 
 // DepositGnsAmount returns the deposit GNS amount
@@ -527,6 +501,7 @@ func NewExternalIncentive(
 		distributedRewardAmount: 0,
 		refundee:                refundee,
 		createdHeight:           createdHeight,
+		createdTimestamp:        currentTime,
 		depositGnsAmount:        depositGnsAmount,
 		refunded:                false,
 		isRequestUnwrap:         isRequestUnwrap,

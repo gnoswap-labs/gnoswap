@@ -120,6 +120,17 @@ func (s *stakerV1) getDepositResolver(lpTokenId uint64) *DepositResolver {
 	return NewDepositResolver(s.getDeposit(lpTokenId))
 }
 
+func (s *stakerV1) getExternalIncentivesByCreationTime() *sr.UintTree {
+	return s.store.GetExternalIncentivesByCreationTime()
+}
+
+func (s *stakerV1) updateExternalIncentivesByCreationTime(externalIncentivesByCreationTime *sr.UintTree) {
+	err := s.store.SetExternalIncentivesByCreationTime(externalIncentivesByCreationTime)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func NewStakerV1(stakerStore sr.IStakerStore, poolAccessor sr.PoolAccessor, emissionAccessor sr.EmissionAccessor, nftAccessor sr.NFTAccessor) *stakerV1 {
 	return &stakerV1{
 		store:            stakerStore,
