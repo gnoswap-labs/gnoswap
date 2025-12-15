@@ -149,7 +149,7 @@ func (i *poolV1) safeTransferFrom(
 //
 // Callback Signature:
 //
-//	func(cur realm, amount0Delta, amount1Delta int64) error
+//	func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error
 //
 // Delta Convention (following Uniswap V3 standard):
 //   - Positive delta: Amount the pool must RECEIVE (input token)
@@ -177,7 +177,7 @@ func (i *poolV1) safeTransferFrom(
 //
 // Example callback implementation:
 //
-//	func(cur realm, amount0Delta, amount1Delta int64) error {
+//	func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 //	    if amount0Delta > 0 {
 //	        // Transfer token0 to pool
 //	        token0.Transfer(poolAddr, amount0Delta)
@@ -194,7 +194,7 @@ func (i *poolV1) safeSwapCallback(
 	amountInInt256 *i256.Int,
 	amountOutInt256 *i256.Int,
 	zeroForOne bool,
-	swapCallback func(cur realm, amount0Delta, amount1Delta int64) error,
+	swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error,
 ) {
 	if swapCallback == nil {
 		panic(makeErrorWithDetails(
@@ -229,7 +229,8 @@ func (i *poolV1) safeSwapCallback(
 	}
 
 	// execute swap callback
-	err := swapCallback(cross, amount0Delta, amount1Delta)
+	// CallbackMarker is created by the pool module to enforce type-system level validation.
+	err := swapCallback(cross, amount0Delta, amount1Delta, &pl.CallbackMarker{})
 	if err != nil {
 		panic(err)
 	}
