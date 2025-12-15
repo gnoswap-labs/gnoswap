@@ -77,52 +77,6 @@ func TestPctToIndex(t *testing.T) {
 	}
 }
 
-// Test assertPoolMustExist function
-func TestAssertPoolMustExist(t *testing.T) {
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
-
-	tests := []struct {
-		name        string
-		poolPath    string
-		expectPanic bool
-		panicMsg    string
-	}{
-		{
-			name:        "pool exists",
-			poolPath:    poolPath,
-			expectPanic: false,
-		},
-		{
-			name:        "pool does not exist",
-			poolPath:    "non-existent-pool",
-			expectPanic: true,
-			panicMsg:    "does not exist",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			initStakerTest(t)
-			instance := getMockInstance()
-
-			// Create a test pool
-			testing.SetRealm(adminRealm)
-			pl.SetPoolCreationFee(cross, 0)
-			CreatePool(barPath, fooPath, fee3000, "79228162514264337593543950336", adminAddr)
-
-			if tt.expectPanic {
-				uassert.PanicsContains(t, tt.panicMsg, func() {
-					assertPoolMustExist(instance, tt.poolPath)
-				})
-			} else {
-				uassert.NotPanics(t, func() {
-					assertPoolMustExist(instance, tt.poolPath)
-				})
-			}
-		})
-	}
-}
-
 // Test setPoolTier internal function
 func TestSetPoolTier(t *testing.T) {
 	initStakerTest(t)

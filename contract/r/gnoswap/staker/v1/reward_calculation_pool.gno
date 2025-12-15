@@ -131,23 +131,23 @@ func (self *PoolResolver) TickResolver(tickId int32) *TickResolver {
 // IsExternallyIncentivizedPool returns true if the pool has any active external incentives.
 func (self *PoolResolver) IsExternallyIncentivizedPool() bool {
 	currentTime := time.Now().Unix()
-	hasActive := false
+	hasIncentive := false
 	self.Incentives().IncentiveTrees().Iterate("", "", func(key string, value any) bool {
 		incentive, ok := value.(*sr.ExternalIncentive)
 		if !ok {
 			panic("failed to cast value to *ExternalIncentive")
 		}
 
-		// Check if there are any active incentives at current time
-		if NewExternalIncentiveResolver(incentive).isActive(currentTime) {
-			hasActive = true
+		resolver := NewExternalIncentiveResolver(incentive)
+		if !resolver.IsEnded(currentTime) {
+			hasIncentive = true
 			return true
 		}
 
 		return false
 	})
 
-	return hasActive
+	return hasIncentive
 }
 
 // Get the latest reward in [0, currentTime] range.
@@ -505,7 +505,7 @@ func (self *PoolResolver) updateUnclaimableAccumulateRewards(currentTime int64) 
 
 // processUnclaimableReward processes the unclaimable reward and returns the accumulated reward.
 // It resets unclaimableAcc to 0 and properly manages lastUnclaimableTime based on pool state.
-func (self *PoolResolver) processUnclaimableReward(poolTier *PoolTier, endTime int64) int64 {
+func (self *PoolResolver) processUnclaimableReward(endTime int64) int64 {
 	// Check current pool liquidity state
 	isZeroStakedLiquidity := self.CurrentStakedLiquidity(endTime).IsZero()
 

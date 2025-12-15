@@ -96,7 +96,7 @@ func testInvalidTickRangeBurn() {
 	println("[INFO] Burn amount:", burnAmount)
 
 	// Then: Should abort with specific error message
-	expectedAbortMsg := "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)"
+	expectedAbortMsg := "[GNOSWAP-POOL-020] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)"
 	println("[EXPECTED] Should abort with message:", expectedAbortMsg)
 
 	testing.SetRealm(posRealm)
@@ -123,5 +123,5 @@ func testInvalidTickRangeBurn() {
 // [INFO] Position minted successfully
 // [INFO] Attempting to burn with invalid tick range: 200 to 100
 // [INFO] Burn amount: 1000000
-// [EXPECTED] Should abort with message: [GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)
+// [EXPECTED] Should abort with message: [GNOSWAP-POOL-020] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)
 // [SCENARIO] 3. Invalid Tick Range Burn - PASSED

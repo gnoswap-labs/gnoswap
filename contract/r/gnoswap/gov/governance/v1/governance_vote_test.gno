@@ -132,7 +132,7 @@ func TestGovernanceVote_Vote(t *testing.T) {
 				testutils.TestAddress("voter").String(): governance.NewVotingInfo(5_000_000_000, testutils.TestAddress("voter")),
 			},
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || can not vote out of voting period",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || cannot vote out of voting period",
 		},
 		{
 			name:       "fail - already voted",
@@ -163,7 +163,7 @@ func TestGovernanceVote_Vote(t *testing.T) {
 				}(),
 			},
 			expectedHasAbort: true,
-			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-006] can not vote twice",
+			expectedAbortMsg: "[GNOSWAP-GOVERNANCE-006] cannot vote twice",
 		},
 	}
 
@@ -426,7 +426,7 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 				)
 			},
 			setupHalt:     true,
-			expectedError: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || can not vote out of voting period",
+			expectedError: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || cannot vote out of voting period",
 		},
 		{
 			name:       "fail - canceled proposal voting",
@@ -449,7 +449,7 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 				resolver.cancel(time.Now().Unix(), 100, testutils.TestAddress("canceler"))
 				return proposal
 			},
-			expectedError: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || can not vote out of voting period",
+			expectedError: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || cannot vote out of voting period",
 		},
 		{
 			name:       "fail - executed proposal voting",
@@ -473,7 +473,7 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 				resolver.execute(time.Now().Unix(), 100, testutils.TestAddress("executor"))
 				return proposal
 			},
-			expectedError: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || can not vote out of voting period",
+			expectedError: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || cannot vote out of voting period",
 		},
 		{
 			name:       "fail - expired proposal voting",
@@ -493,7 +493,7 @@ func TestGovernanceVote_VoteValidation(t *testing.T) {
 				)
 				return proposal
 			},
-			expectedError: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || can not vote out of voting period",
+			expectedError: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || cannot vote out of voting period",
 		},
 	}
 
@@ -536,7 +536,7 @@ func TestGovernanceVote_VotePeriod(t *testing.T) {
 			name:          "fail - voting before start delay",
 			proposalTime:  time.Now().Unix() - testConfig.VotingStartDelay + 1,
 			voteTime:      time.Now().Unix(), // Before 24h delay
-			expectedError: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || can not vote out of voting period",
+			expectedError: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || cannot vote out of voting period",
 			shouldPass:    false,
 		},
 		{
@@ -561,7 +561,7 @@ func TestGovernanceVote_VotePeriod(t *testing.T) {
 			name:          "fail - voting after period end",
 			proposalTime:  time.Now().Unix() - testConfig.VotingStartDelay - testConfig.VotingPeriod,
 			voteTime:      time.Now().Unix(), // 1 second after end
-			expectedError: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || can not vote out of voting period",
+			expectedError: "[GNOSWAP-GOVERNANCE-014] unable to vote out of voting period || cannot vote out of voting period",
 			shouldPass:    false,
 		},
 	}
