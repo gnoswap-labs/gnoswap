@@ -188,9 +188,8 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 	caller := runtime.PreviousRealm().Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	// Prevent negative timestamps.
-	if startTimestamp < 0 {
-		panic("distribution start timestamp cannot be negative")
+	if startTimestamp <= 0 {
+		panic("distribution start timestamp must be positive")
 	}
 
 	if startTimestamp > math.MaxInt64-totalDistributionDuration {
@@ -205,14 +204,13 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 	}
 
 	// Must be in the future.
-	if startTimestamp > 0 && startTimestamp <= currentTimestamp {
+	if startTimestamp <= currentTimestamp {
 		panic("distribution start timestamp must be greater than current timestamp")
 	}
 
 	prevStartTimestamp := distributionStartTimestamp
 
-	// Reinitialize emission state if not started yet.
-	if startTimestamp > currentTimestamp && gns.MintedEmissionAmount() == 0 {
+	if gns.MintedEmissionAmount() == 0 {
 		gns.InitEmissionState(cross, startTimestamp, startTimestamp)
 	}
 

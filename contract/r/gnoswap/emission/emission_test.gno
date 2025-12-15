@@ -45,7 +45,7 @@ func TestSetDistributionStartTime(t *testing.T) {
 			timestamp:   -100,
 			caller:      adminAddr,
 			shouldPanic: true,
-			panicMsg:    "distribution start timestamp cannot be negative",
+			panicMsg:    "distribution start timestamp must be positive",
 		},
 		{
 			name: "update existing distribution start time",
@@ -322,10 +322,11 @@ func TestEmission_SetDistributionStartTime_EdgeCases(t *testing.T) {
 			errMsg:    "distribution start timestamp must be greater than current timestamp",
 		},
 		{
-			name:      "success - zero timestamp is valid (resets to default)",
+			name:      "panic - zero timestamp must be positive",
 			timestamp: 0,
 			caller:    adminAddr,
-			wantErr:   false,
+			wantErr:   true,
+			errMsg:    "distribution start timestamp must be positive",
 		},
 		{
 			name:      "panic - max int64 timestamp",
