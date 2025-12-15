@@ -162,7 +162,6 @@ func TestCreateParameterHandlers(t *testing.T) {
 	}
 }
 
-
 // TestParseNumber tests number parsing
 func TestParseNumber(t *testing.T) {
 	tests := []struct {
@@ -257,6 +256,156 @@ func TestParseBool(t *testing.T) {
 			} else {
 				result := parseBool(tc.input)
 				uassert.Equal(t, result, tc.expected)
+			}
+		})
+	}
+}
+
+func TestValidateExecutions(t *testing.T) {
+	tests := []struct {
+		name                  string
+		numToExecute          int64
+		executions            string
+		expectedError         bool
+		expectedErrorContains string
+	}{
+		// Basic validation tests
+		{
+			name:          "Success - Valid execution with registered handler",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE",
+			expectedError: false,
+		},
+		{
+			name:          "Success - Multiple valid executions",
+			numToExecute:  2,
+			executions:    "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*1000",
+			expectedError: false,
+		},
+		{
+			name:                  "Failure - Non-existent package path",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/nonexistent*EXE*SomeFunction*EXE*param1",
+			expectedError:         true,
+			expectedErrorContains: "handler not found for gno.land/r/gnoswap/nonexistent:SomeFunction",
+		},
+		{
+			name:                  "Failure - Non-existent function in valid package",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/halt*EXE*NonExistentFunction*EXE*param1",
+			expectedError:         true,
+			expectedErrorContains: "handler not found for gno.land/r/gnoswap/halt:NonExistentFunction",
+		},
+		{
+			name:                  "Failure - Wrong parameter count",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*param1,param2",
+			expectedError:         true,
+			expectedErrorContains: "function 'gno.land/r/gnoswap/halt:SetHaltLevel' expects 1 parameter(s), but got 2",
+		},
+		{
+			name:                  "Failure - Empty executions",
+			numToExecute:          1,
+			executions:            "",
+			expectedError:         true,
+			expectedErrorContains: "executions is empty",
+		},
+		{
+			name:                  "Failure - Invalid execution count",
+			numToExecute:          0,
+			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE",
+			expectedError:         true,
+			expectedErrorContains: "numToExecute is less than or equal to 0",
+		},
+		{
+			name:                  "Failure - Execution count mismatch",
+			numToExecute:          2,
+			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE",
+			expectedError:         true,
+			expectedErrorContains: "executions count (1) does not match numToExecute (2)",
+		},
+		{
+			name:                  "Failure - Malformed execution format",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/halt*SetHaltLevel",
+			expectedError:         true,
+			expectedErrorContains: "invalid format 'gno.land/r/gnoswap/halt*SetHaltLevel'. Expected format: <package>*EXE*<function>*EXE*<params>",
+		},
+		{
+			name:                  "Failure - Empty package path",
+			numToExecute:          1,
+			executions:            "*EXE*SetHaltLevel*EXE*NONE",
+			expectedError:         true,
+			expectedErrorContains: "package path is empty in '*EXE*SetHaltLevel*EXE*NONE'",
+		},
+		{
+			name:                  "Failure - Empty function name",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/halt*EXE**EXE*NONE",
+			expectedError:         true,
+			expectedErrorContains: "function name is empty in 'gno.land/r/gnoswap/halt*EXE**EXE*NONE'",
+		},
+		{
+			name:         "Failure - Exceeds max executions",
+			numToExecute: 11,
+			executions: "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE",
+			expectedError:         true,
+			expectedErrorContains: "numToExecute is greater than 10",
+		},
+		// Complex scenarios
+		{
+			name:          "Success - Community pool transfer with correct params",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,g1address,1000000",
+			expectedError: false,
+		},
+		{
+			name:                  "Failure - Community pool transfer with wrong param count",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,g1address",
+			expectedError:         true,
+			expectedErrorContains: "function 'gno.land/r/gnoswap/community_pool:TransferToken' expects 3 parameter(s), but got 2",
+		},
+		{
+			name:          "Success - Governance reconfigure with all params",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/gov/governance*EXE*Reconfigure*EXE*86400,604800,3600,500000,1000,86400,259200",
+			expectedError: false,
+		},
+		{
+			name:                  "Failure - Mixed valid and invalid executions",
+			numToExecute:          2,
+			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*gno.land/r/gnoswap/fake*EXE*FakeFunction*EXE*param1",
+			expectedError:         true,
+			expectedErrorContains: "handler not found for gno.land/r/gnoswap/fake:FakeFunction",
+		},
+		{
+			name:          "Success - Staker remove pool tier with single param",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/staker*EXE*RemovePoolTier*EXE*poolId",
+			expectedError: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateExecutions(tc.numToExecute, tc.executions)
+
+			if tc.expectedError {
+				uassert.NotNil(t, err)
+				uassert.ErrorContains(t, err, tc.expectedErrorContains)
+			} else {
+				uassert.Nil(t, err)
 			}
 		})
 	}

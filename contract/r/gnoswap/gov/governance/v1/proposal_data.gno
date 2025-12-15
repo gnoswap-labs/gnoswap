@@ -162,10 +162,12 @@ func (r *ProposalDataResolver) validateCommunityPoolSpend() error {
 }
 
 // validateParameterChange validates parameter change proposal data.
-// Checks execution count, message format, and parameter validity.
+// Performs basic structural validation of the parameter change data.
+// Note: Handler existence validation is performed separately by validateExecutions
+// during proposal creation to ensure the target functions are registered.
 //
 // Returns:
-//   - error: validation error if parameter change data is invalid
+//   - error: validation error if parameter change data structure is invalid
 func (r *ProposalDataResolver) validateParameterChange() error {
 	execution := r.Execution()
 	num := execution.Num()

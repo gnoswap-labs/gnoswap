@@ -557,7 +557,10 @@ func registerHandlers(registry *ParameterRegistry, handlerOptions []*ParameterHa
 
 // validateExecutions validates that all executions in a parameter change proposal
 // correspond to registered handlers in the global parameter registry.
-// This function should be called during proposal creation to fail fast on invalid executions.
+// This function performs comprehensive validation including:
+// - Basic format validation (count, structure)
+// - Handler existence verification in the registry
+// - Parameter count validation against handler expectations
 //
 // Parameters:
 //   - numToExecute: number of parameter changes to execute
@@ -574,17 +577,17 @@ func validateExecutions(numToExecute int64, executions string) error {
 		)
 	}
 
-	// Split execution string into individual messages
-	msgs := strings.Split(executions, messageSeparator)
-	msgCount := len(msgs)
-
-	// Validate execution messages are provided
-	if msgCount == 0 {
+	// Check if executions string is empty
+	if executions == "" {
 		return makeErrorWithDetails(
 			errInvalidInput,
 			ufmt.Sprintf("executions is empty"),
 		)
 	}
+
+	// Split execution string into individual messages
+	msgs := strings.Split(executions, messageSeparator)
+	msgCount := len(msgs)
 
 	// Validate execution count matches message count
 	if msgCount != int(numToExecute) {
@@ -607,9 +610,18 @@ func validateExecutions(numToExecute int64, executions string) error {
 		// Split message into components: pkgPath, function, params
 		parts := strings.Split(msg, parameterSeparator)
 		if len(parts) != 3 {
+			// Provide more helpful error message based on what's wrong
+			var detail string
+			if len(parts) == 1 {
+				detail = ufmt.Sprintf("execution[%d]: invalid format '%s'. Expected format: <package>*EXE*<function>*EXE*<params>", i, msg)
+			} else if len(parts) == 2 {
+				detail = ufmt.Sprintf("execution[%d]: missing parameters in '%s'. Expected format: <package>*EXE*<function>*EXE*<params>", i, msg)
+			} else {
+				detail = ufmt.Sprintf("execution[%d]: too many parts in '%s'. Expected format: <package>*EXE*<function>*EXE*<params>", i, msg)
+			}
 			return makeErrorWithDetails(
 				errInvalidMessageFormat,
-				ufmt.Sprintf("execution[%d]: expected 3 parts (pkgPath, function, params), got %d", i, len(parts)),
+				detail,
 			)
 		}
 
@@ -621,14 +633,14 @@ func validateExecutions(numToExecute int64, executions string) error {
 		if pkgPath == "" {
 			return makeErrorWithDetails(
 				errInvalidInput,
-				ufmt.Sprintf("execution[%d]: package path is empty", i),
+				ufmt.Sprintf("execution[%d]: package path is empty in '%s'", i, msg),
 			)
 		}
 
 		if function == "" {
 			return makeErrorWithDetails(
 				errInvalidInput,
-				ufmt.Sprintf("execution[%d]: function name is empty", i),
+				ufmt.Sprintf("execution[%d]: function name is empty in '%s'", i, msg),
 			)
 		}
 
@@ -660,8 +672,8 @@ func validateExecutions(numToExecute int64, executions string) error {
 		if len(params) != handlerOpts.paramCount {
 			return makeErrorWithDetails(
 				errInvalidInput,
-				ufmt.Sprintf("execution[%d]: expected %d parameters for %s:%s, got %d",
-					i, handlerOpts.paramCount, pkgPath, function, len(params)),
+				ufmt.Sprintf("execution[%d]: function '%s:%s' expects %d parameter(s), but got %d",
+					i, pkgPath, function, handlerOpts.paramCount, len(params)),
 			)
 		}
 	}
