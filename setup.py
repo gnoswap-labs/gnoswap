@@ -20,6 +20,7 @@ except ImportError:
 
 GNOSWAP_REPO_URL = "https://github.com/gnoswap-labs/gnoswap.git"
 GNO_LAND_PREFIX = "gno.land/"
+GNO_REPO_NAME = os.getenv("GNO_REPO_NAME", "gno")
 
 INTEGRATION_TESTDATA_DIR = Path("tests/integration/testdata")
 INTEGRATION_SKIP_FILE = Path("tests/integration/testdata-skip.txt")
@@ -62,15 +63,25 @@ class PathConfig:
     gno_root_dir: Path
 
     @classmethod
-    def from_workdir(cls, workdir: Path) -> PathConfig:
-        """Create `PathConfig` from a working directory."""
+    def from_workdir(cls, workdir: Path, gno_repo: str = GNO_REPO_NAME) -> PathConfig:
+        """Create PathConfig from a working directory.
+
+        if the gno repository name is different, use `export GNO_REPO_NAME=<repository_name>`
+        to set the repository name.
+
+        For example, if the gno repository name is `gno-core`, use
+        `export GNO_REPO_NAME=gno-core python setup.py` to run the script.
+
+        Args:
+            workdir: Working directory path.
+            gno_repo: Name of gno repository directory (default: "gno").
+        """
         return cls(
             workdir=workdir,
-            # If the gno repository name is different, change only `gno` in this path to the appropriate one.
-            # For example, if the cloned repository is `gno-core/...`, replace it with `gno-core`.
-            gno_examples_dir=workdir / "gno-core" / "examples" / "gno.land",
-            gno_root_dir=workdir / "gno-core" / "gno.land",
+            gno_examples_dir=workdir / gno_repo / "examples" / "gno.land",
+            gno_root_dir=workdir / gno_repo / "gno.land",
         )
+
 
 def convert_txtar_name(file_path: Path, base_dir: Path) -> str:
     rel_path = file_path.relative_to(base_dir)
