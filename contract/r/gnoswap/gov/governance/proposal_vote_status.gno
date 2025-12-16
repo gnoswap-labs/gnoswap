@@ -6,7 +6,7 @@ type ProposalVoteStatus struct {
 	yea             int64 // Total weight of "yes" votes collected
 	nay             int64 // Total weight of "no" votes collected
 	maxVotingWeight int64 // The max voting weight at the time of proposal creation
-	quorumAmount    int64 // How many total votes must be collected for the proposal to be valid
+	quorumAmount    int64 // Minimum YES votes required for proposal to pass (NO votes do not count)
 }
 
 /* Getter methods */
@@ -59,13 +59,14 @@ func NewProposalVoteStatus(
 	maxVotingWeight int64,
 	quorum int64,
 ) *ProposalVoteStatus {
-	// Calculate the absolute vote weight needed to meet quorum
+	// Calculate the absolute YES vote weight needed to meet quorum
+	// Note: Only YES votes count towards quorum - NO votes do not contribute
 	quorumAmount := maxVotingWeight * quorum / 100
 
 	return &ProposalVoteStatus{
 		yea:             0,               // Start with no "yes" votes
 		nay:             0,               // Start with no "no" votes
 		maxVotingWeight: maxVotingWeight, // Set maximum possible votes
-		quorumAmount:    quorumAmount,    // Set required votes for passage
+		quorumAmount:    quorumAmount,    // Set required YES votes for passage
 	}
 }

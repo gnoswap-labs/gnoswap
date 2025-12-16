@@ -9,7 +9,7 @@ Governance system enables GNS holders to stake for xGNS voting power, create pro
 ## Configuration
 
 - **Voting Period**: 7 days
-- **Quorum**: 50% of xGNS supply
+- **Quorum**: 50% of active xGNS supply (based on YES votes only)
 - **Proposal Threshold**: 1,000 GNS
 - **Execution Delay**: 1 day timelock
 - **Execution Window**: 30 days
@@ -20,7 +20,7 @@ Governance system enables GNS holders to stake for xGNS voting power, create pro
 
 ### Staking Flow
 
-```
+```plain
 GNS → Stake → xGNS (voting power) → Delegate → Vote
 ```
 
@@ -51,7 +51,9 @@ GNS → Stake → xGNS (voting power) → Delegate → Vote
 
 ### Execution
 
-- Requires quorum (50%) and majority (>50%)
+- Requires quorum[^1] and majority (>50%)
+- Quorum is fulfilled by YES votes only; NO votes do not count towards quorum
+- Proposals can pass with low participation if YES votes meet the quorum threshold
 - 1 day timelock after voting
 - 30 day execution window
 - Anyone can trigger execution
@@ -69,16 +71,21 @@ voteWeight = (snapshot1 + snapshot2) / 2
 
 ### Dynamic Quorum
 
+> Note: Only YES votes count towards quorum fulfillment
+> NO votes do not contribute to meeting the quorum threshold
+
 ```go
 activeXGNS = totalXGNS - launchpadXGNS
 requiredVotes = activeXGNS * 0.5
 ```
 
+The quorum is calculated as 50% of active xGNS supply at the time of proposal creation. Quorum fulfillment is determined solely by YES votes - NO votes do not count towards meeting the quorum threshold. For example, if the quorum requirement is 1000 votes, a proposal with 1000 YES votes and 100 NO votes meets quorum, as does a proposal with 1000 YES votes and 900 NO votes.
+
 ### Rewards Distribution
 
 xGNS holders earn protocol fees:
 
-```
+```go
 userShare = (userXGNS / totalXGNS) * protocolFees
 ```
 
@@ -111,3 +118,5 @@ Undelegate()
 - Timelock prevents rushed execution
 - Single proposal limit per address
 - Dynamic quorum excludes inactive xGNS
+
+- [^1]: YES votes ≥ 50% of active xGNS
